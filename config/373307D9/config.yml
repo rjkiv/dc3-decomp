@@ -1,0 +1,29 @@
+object: orig/373307D9/default.xex
+symbols: config/373307D9/symbols.txt
+splits: config/373307D9/splits.txt
+
+# (optional) Path to the DOL's .map file.
+# This path is relative to the root of the project, and is _not_ affected by `object_base`.
+# This should only used for initial analysis, and generating the symbols and splits files.
+# Once those files are generated, remove this to avoid conflicts.
+# map: orig/373307D9/ham_xbox_r.map
+
+# Change this to match the linker version.
+# See config.example.yml for a list.
+# mw_comment_version: 11
+
+# modules:
+# - object: files/module.rel
+#   hash: 0123456789abcdef0123456789abcdef01234567
+#   symbols: config/GAMEID/module/symbols.txt
+#   splits: config/GAMEID/module/splits.txt
+
+# (optional) When enabled, function boundary analysis will be skipped.
+# Only valid _after_ initial analysis has been performed and
+# the symbols and splits files have been generated. 
+quick_analysis: true
+
+# (optional) Whether to write disassembly to the split output directory.
+# While not used in the build process, the disassembly is useful
+# for reading and usage with other tools, like decomp.me.
+write_asm: false
