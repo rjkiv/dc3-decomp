@@ -700,11 +700,15 @@ def generate_build_ninja(
     )
     n.newline()
 
-    n.comment("MWCC build")
+    # MSVC
+    msvc = compiler_path / "cl.exe"
+    msvc_cmd = f"{wrapper_cmd}{msvc} $cflags /Fo$out $in"
+
+    n.comment("MSVC build")
     n.rule(
-        name="mwcc",
-        command=mwcc_cmd,
-        description="MWCC $out",
+        name="msvc",
+        command=msvc_cmd,
+        description="MSVC $out",
         # depfile="$basefile.d",
         # deps="gcc",
     )
@@ -739,16 +743,16 @@ def generate_build_ninja(
     #     deps="gcc",
     # )
 
-    n.comment("Assemble asm")
-    n.rule(
-        name="as",
-        command=gnu_as_cmd,
-        description="AS $out",
-        # See https://github.com/encounter/dtk-template/issues/51
-        # depfile="$out.d",
-        # deps="gcc",
-    )
-    n.newline()
+    # n.comment("Assemble asm")
+    # n.rule(
+    #     name="as",
+    #     command=gnu_as_cmd,
+    #     description="AS $out",
+    #     # See https://github.com/encounter/dtk-template/issues/51
+    #     # depfile="$out.d",
+    #     # deps="gcc",
+    # )
+    # n.newline()
 
     if len(config.custom_build_rules or {}) > 0:
         n.comment("Custom project build rules (pre/post-processing)")
@@ -916,10 +920,10 @@ def generate_build_ninja(
                 # Ensure extra_cflags is a unique instance,
                 # and insert into there to avoid modifying shared sets of flags
                 extra_cflags = obj.options["extra_cflags"] = list(extra_cflags)
-                if file_is_cpp(src_path):
-                    extra_cflags.insert(0, "-lang=c++")
-                else:
-                    extra_cflags.insert(0, "-lang=c")
+                # if file_is_cpp(src_path):
+                #     extra_cflags.insert(0, "/Tp")
+                # else:
+                #     extra_cflags.insert(0, "/Tc")
 
             all_cflags = cflags + extra_cflags
             cflags_str = make_flags_str(all_cflags)
@@ -927,7 +931,7 @@ def generate_build_ninja(
 
             # Add MWCC build rule
             lib_name = obj.options["lib"]
-            build_rule = "mwcc"
+            build_rule = "msvc"
             build_implcit = mwcc_implicit
             variables = {
                 "mw_version": Path(obj.options["mw_version"]),
@@ -1103,10 +1107,11 @@ def generate_build_ninja(
         ###
         # Link
         ###
-        for step in link_steps:
-            step.write(n)
-            link_outputs.append(step.output())
-        n.newline()
+        # TODO: add this functionality back when you have a few objs together you can work with (X360)
+        # for step in link_steps:
+        #     step.write(n)
+        #     link_outputs.append(step.output())
+        # n.newline()
 
         # Add all build steps needed after linking and before GC/Wii native format generation
         write_custom_step("post-link", "post-compile")
@@ -1114,76 +1119,76 @@ def generate_build_ninja(
         ###
         # Generate DOL
         ###
-        n.build(
-            outputs=link_steps[0].output(),
-            rule="elf2dol",
-            inputs=link_steps[0].partial_output(),
-            implicit=dtk,
-            order_only="post-link",
-        )
+        # n.build(
+        #     outputs=link_steps[0].output(),
+        #     rule="elf2dol",
+        #     inputs=link_steps[0].partial_output(),
+        #     implicit=dtk,
+        #     order_only="post-link",
+        # )
 
-        ###
-        # Generate RELs
-        ###
-        n.comment("Generate REL(s)")
-        flags = "-w"
-        if len(build_config["links"]) > 1:
-            flags += " -q"
-        n.rule(
-            name="makerel",
-            command=f"{dtk} rel make {flags} -c $config $names @$rspfile",
-            description="REL",
-            rspfile="$rspfile",
-            rspfile_content="$in_newline",
-        )
-        generated_rels: List[str] = []
-        for idx, link in enumerate(build_config["links"]):
-            # Map module names to link steps
-            link_steps_local = list(
-                filter(
-                    lambda step: step.name in link["modules"],
-                    link_steps,
-                )
-            )
-            link_steps_local.sort(key=lambda step: step.module_id)
-            # RELs can be the output of multiple link steps,
-            # so we need to filter out duplicates
-            rels_to_generate = list(
-                filter(
-                    lambda step: step.module_id != 0
-                    and step.name not in generated_rels,
-                    link_steps_local,
-                )
-            )
-            if len(rels_to_generate) == 0:
-                continue
-            generated_rels.extend(map(lambda step: step.name, rels_to_generate))
-            rel_outputs = list(
-                map(
-                    lambda step: step.output(),
-                    rels_to_generate,
-                )
-            )
-            rel_names = list(
-                map(
-                    lambda step: step.name,
-                    link_steps_local,
-                )
-            )
-            rel_names_arg = " ".join(map(lambda name: f"-n {name}", rel_names))
-            n.build(
-                outputs=rel_outputs,
-                rule="makerel",
-                inputs=list(map(lambda step: step.partial_output(), link_steps_local)),
-                implicit=[dtk, config.config_path],
-                variables={
-                    "config": config.config_path,
-                    "rspfile": config.out_path() / f"rel{idx}.rsp",
-                    "names": rel_names_arg,
-                },
-                order_only="post-link",
-            )
-            n.newline()
+        # ###
+        # # Generate RELs
+        # ###
+        # n.comment("Generate REL(s)")
+        # flags = "-w"
+        # if len(build_config["links"]) > 1:
+        #     flags += " -q"
+        # n.rule(
+        #     name="makerel",
+        #     command=f"{dtk} rel make {flags} -c $config $names @$rspfile",
+        #     description="REL",
+        #     rspfile="$rspfile",
+        #     rspfile_content="$in_newline",
+        # )
+        # generated_rels: List[str] = []
+        # for idx, link in enumerate(build_config["links"]):
+        #     # Map module names to link steps
+        #     link_steps_local = list(
+        #         filter(
+        #             lambda step: step.name in link["modules"],
+        #             link_steps,
+        #         )
+        #     )
+        #     link_steps_local.sort(key=lambda step: step.module_id)
+        #     # RELs can be the output of multiple link steps,
+        #     # so we need to filter out duplicates
+        #     rels_to_generate = list(
+        #         filter(
+        #             lambda step: step.module_id != 0
+        #             and step.name not in generated_rels,
+        #             link_steps_local,
+        #         )
+        #     )
+        #     if len(rels_to_generate) == 0:
+        #         continue
+        #     generated_rels.extend(map(lambda step: step.name, rels_to_generate))
+        #     rel_outputs = list(
+        #         map(
+        #             lambda step: step.output(),
+        #             rels_to_generate,
+        #         )
+        #     )
+        #     rel_names = list(
+        #         map(
+        #             lambda step: step.name,
+        #             link_steps_local,
+        #         )
+        #     )
+        #     rel_names_arg = " ".join(map(lambda name: f"-n {name}", rel_names))
+        #     n.build(
+        #         outputs=rel_outputs,
+        #         rule="makerel",
+        #         inputs=list(map(lambda step: step.partial_output(), link_steps_local)),
+        #         implicit=[dtk, config.config_path],
+        #         variables={
+        #             "config": config.config_path,
+        #             "rspfile": config.out_path() / f"rel{idx}.rsp",
+        #             "names": rel_names_arg,
+        #         },
+        #         order_only="post-link",
+        #     )
+        #     n.newline()
 
         # Add all build steps needed post-build (re-building archives and such)
         write_custom_step("post-build", "post-link")
@@ -1335,44 +1340,44 @@ def generate_build_ninja(
         # Helper tools
         ###
         # TODO: make these rules work for RELs too
-        dol_link_step = link_steps[0]
-        dol_elf_path = dol_link_step.partial_output()
-        n.comment("Check for mismatching symbols")
-        n.rule(
-            name="dol_diff",
-            command=f"{dtk} -L error dol diff $in",
-            description=f"DIFF {dol_elf_path}",
-        )
-        n.build(
-            inputs=[config.config_path, dol_elf_path],
-            outputs="dol_diff",
-            rule="dol_diff",
-        )
-        n.build(
-            outputs="diff",
-            rule="phony",
-            inputs="dol_diff",
-        )
-        n.newline()
+        # dol_link_step = link_steps[0]
+        # dol_elf_path = dol_link_step.partial_output()
+        # n.comment("Check for mismatching symbols")
+        # n.rule(
+        #     name="dol_diff",
+        #     command=f"{dtk} -L error dol diff $in",
+        #     description=f"DIFF {dol_elf_path}",
+        # )
+        # n.build(
+        #     inputs=[config.config_path, dol_elf_path],
+        #     outputs="dol_diff",
+        #     rule="dol_diff",
+        # )
+        # n.build(
+        #     outputs="diff",
+        #     rule="phony",
+        #     inputs="dol_diff",
+        # )
+        # n.newline()
 
-        n.comment("Apply symbols from linked ELF")
-        n.rule(
-            name="dol_apply",
-            command=f"{dtk} dol apply $in",
-            description=f"APPLY {dol_elf_path}",
-        )
-        n.build(
-            inputs=[config.config_path, dol_elf_path],
-            outputs="dol_apply",
-            rule="dol_apply",
-            implicit=[ok_path],
-        )
-        n.build(
-            outputs="apply",
-            rule="phony",
-            inputs="dol_apply",
-        )
-        n.newline()
+        # n.comment("Apply symbols from linked ELF")
+        # n.rule(
+        #     name="dol_apply",
+        #     command=f"{dtk} dol apply $in",
+        #     description=f"APPLY {dol_elf_path}",
+        # )
+        # n.build(
+        #     inputs=[config.config_path, dol_elf_path],
+        #     outputs="dol_apply",
+        #     rule="dol_apply",
+        #     implicit=[ok_path],
+        # )
+        # n.build(
+        #     outputs="apply",
+        #     rule="phony",
+        #     inputs="dol_apply",
+        # )
+        # n.newline()
 
     ###
     # Split XEX
