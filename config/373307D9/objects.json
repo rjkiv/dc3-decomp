@@ -1,0 +1,20 @@
+{
+    "main": {
+        "progress_category": "game",
+        "mw_version": "X360/16.00.11886.00",
+        "cflags": "base",
+        "objects": {
+            "App.cpp": "MISSING",
+            "BudgetScreen.cpp": "MISSING",
+            "Main.cpp": "MISSING"
+        }
+    },
+    "system": {
+        "progress_category": "engine",
+        "mw_version": "X360/16.00.11886.00",
+        "cflags": "base",
+        "objects": {
+            "system/math/Rand2.cpp": "NonMatching"
+        }
+    }
+}

@@ -1,0 +1,23 @@
+{
+    "progress_categories": {
+        "game": "Game Code",
+        "engine": "Milo Engine Code",
+        "lib": "Third-Party Libraries",
+        "sdk": "SDK Code"
+    },
+    "asflags": [
+    ],
+    "ldflags": [
+    ],
+    "cflags": {
+        "base": {
+            "flags": [
+                "/nologo",
+                "/c",
+                "/Zi",
+                "/O1",
+                "/Tp"
+            ]
+        }
+    }
+}

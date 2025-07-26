@@ -118,8 +118,8 @@ class Object:
                 Path(obj.options["asm_dir"]) / obj.options["source"]
             ).with_suffix(".s")
         base_name = Path(self.name).with_suffix("")
-        obj.src_obj_path = build_dir / "src" / f"{base_name}.o"
-        obj.asm_obj_path = build_dir / "mod" / f"{base_name}.o"
+        obj.src_obj_path = build_dir / "src" / f"{base_name}.obj"
+        obj.asm_obj_path = build_dir / "mod" / f"{base_name}.obj"
         obj.ctx_path = build_dir / "src" / f"{base_name}.ctx"
         return obj
 
@@ -453,9 +453,9 @@ def generate_build_ninja(
     # Variables
     ###
     n.comment("Variables")
-    n.variable("ldflags", make_flags_str(config.ldflags))
-    if config.linker_version is None:
-        sys.exit("ProjectConfig.linker_version missing")
+    # n.variable("ldflags", make_flags_str(config.ldflags))
+    # if config.linker_version is None:
+    #     sys.exit("ProjectConfig.linker_version missing")
     n.variable("mw_version", Path(config.linker_version))
     n.variable("objdiff_report_args", make_flags_str(config.progress_report_args))
     n.newline()
@@ -641,8 +641,8 @@ def generate_build_ninja(
     compiler_path = compilers / "$mw_version"
 
     # MWCC
-    mwcc = compiler_path / "mwcceppc.exe"
-    mwcc_cmd = f"{wrapper_cmd}{mwcc} $cflags -MMD -c $in -o $basedir"
+    mwcc = compiler_path / "cl.exe"
+    mwcc_cmd = f"{wrapper_cmd}{mwcc} $cflags"
     mwcc_implicit: List[Optional[Path]] = [compilers_implicit or mwcc, wrapper_implicit]
 
     # MWCC with UTF-8 to Shift JIS wrapper
@@ -681,6 +681,7 @@ def generate_build_ninja(
         mwcc_extab_implicit.append(transform_dep)
         mwcc_sjis_extab_implicit.append(transform_dep)
 
+
     n.comment("Link ELF file")
     n.rule(
         name="link",
@@ -704,39 +705,39 @@ def generate_build_ninja(
         name="mwcc",
         command=mwcc_cmd,
         description="MWCC $out",
-        depfile="$basefile.d",
-        deps="gcc",
+        # depfile="$basefile.d",
+        # deps="gcc",
     )
     n.newline()
 
-    n.comment("MWCC build (with UTF-8 to Shift JIS wrapper)")
-    n.rule(
-        name="mwcc_sjis",
-        command=mwcc_sjis_cmd,
-        description="MWCC $out",
-        depfile="$basefile.d",
-        deps="gcc",
-    )
-    n.newline()
+    # n.comment("MWCC build (with UTF-8 to Shift JIS wrapper)")
+    # n.rule(
+    #     name="mwcc_sjis",
+    #     command=mwcc_sjis_cmd,
+    #     description="MWCC $out",
+    #     depfile="$basefile.d",
+    #     deps="gcc",
+    # )
+    # n.newline()
 
-    n.comment("MWCC build (with extab post-processing)")
-    n.rule(
-        name="mwcc_extab",
-        command=mwcc_extab_cmd,
-        description="MWCC $out",
-        depfile="$basefile.d",
-        deps="gcc",
-    )
-    n.newline()
+    # n.comment("MWCC build (with extab post-processing)")
+    # n.rule(
+    #     name="mwcc_extab",
+    #     command=mwcc_extab_cmd,
+    #     description="MWCC $out",
+    #     depfile="$basefile.d",
+    #     deps="gcc",
+    # )
+    # n.newline()
 
-    n.comment("MWCC build (with UTF-8 to Shift JIS wrapper and extab post-processing)")
-    n.rule(
-        name="mwcc_sjis_extab",
-        command=mwcc_sjis_extab_cmd,
-        description="MWCC $out",
-        depfile="$basefile.d",
-        deps="gcc",
-    )
+    # n.comment("MWCC build (with UTF-8 to Shift JIS wrapper and extab post-processing)")
+    # n.rule(
+    #     name="mwcc_sjis_extab",
+    #     command=mwcc_sjis_extab_cmd,
+    #     description="MWCC $out",
+    #     depfile="$basefile.d",
+    #     deps="gcc",
+    # )
 
     n.comment("Assemble asm")
     n.rule(
@@ -1374,13 +1375,13 @@ def generate_build_ninja(
         n.newline()
 
     ###
-    # Split DOL
+    # Split XEX
     ###
     build_config_path = build_path / "config.json"
-    n.comment("Split DOL into relocatable objects")
+    n.comment("Split XEX into relocatable objects")
     n.rule(
         name="split",
-        command=f"{dtk} dol split $in $out_dir",
+        command=f"{dtk} xex split $in $out_dir",
         description="SPLIT $in",
         depfile="$out_dir/dep",
         deps="gcc",
