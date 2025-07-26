@@ -445,7 +445,8 @@ def generate_build_ninja(
     python_lib = Path(os.path.relpath(__file__))
     python_lib_dir = python_lib.parent
     n.comment("The arguments passed to configure.py, for rerunning it.")
-    n.variable("configure_args", sys.argv[1:])
+    n.variable("configure_args", [f'"\"{arg}\""' if ' ' in arg else arg for arg in sys.argv[1:]])
+    # for arg in sys.argv[1:] if arg.contains(' ') wrap in quotes else arg
     n.variable("python", f'"{sys.executable}"')
     n.newline()
 
@@ -1405,7 +1406,7 @@ def generate_build_ninja(
     n.comment("Reconfigure on change")
     n.rule(
         name="configure",
-        command=f"$python {configure_script} $configure_args",
+        command=f"$python {configure_script}",
         generator=True,
         description=f"RUN {configure_script}",
     )
