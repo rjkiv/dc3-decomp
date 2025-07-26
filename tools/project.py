@@ -682,23 +682,23 @@ def generate_build_ninja(
         mwcc_sjis_extab_implicit.append(transform_dep)
 
 
-    n.comment("Link ELF file")
-    n.rule(
-        name="link",
-        command=mwld_cmd,
-        description="LINK $out",
-        rspfile="$out.rsp",
-        rspfile_content="$in_newline",
-    )
-    n.newline()
+    # n.comment("Link ELF file")
+    # n.rule(
+    #     name="link",
+    #     command=mwld_cmd,
+    #     description="LINK $out",
+    #     rspfile="$out.rsp",
+    #     rspfile_content="$in_newline",
+    # )
+    # n.newline()
 
-    n.comment("Generate DOL")
-    n.rule(
-        name="elf2dol",
-        command=f"{dtk} elf2dol $in $out",
-        description="DOL $out",
-    )
-    n.newline()
+    # n.comment("Generate DOL")
+    # n.rule(
+    #     name="elf2dol",
+    #     command=f"{dtk} elf2dol $in $out",
+    #     description="DOL $out",
+    # )
+    # n.newline()
 
     # MSVC
     msvc = compiler_path / "cl.exe"
@@ -1207,22 +1207,22 @@ def generate_build_ninja(
         ###
         # Check hash
         ###
-        n.comment("Check hash")
-        ok_path = build_path / "ok"
-        quiet = "-q " if len(link_steps) > 3 else ""
-        n.rule(
-            name="check",
-            command=f"{dtk} shasum {quiet} -c $in -o $out",
-            description="CHECK $in",
-        )
-        n.build(
-            outputs=ok_path,
-            rule="check",
-            inputs=config.check_sha_path,
-            implicit=[dtk, *link_outputs],
-            order_only="post-build",
-        )
-        n.newline()
+        # n.comment("Check hash")
+        # ok_path = build_path / "ok"
+        # quiet = "-q " if len(link_steps) > 3 else ""
+        # n.rule(
+        #     name="check",
+        #     command=f"{dtk} shasum {quiet} -c $in -o $out",
+        #     description="CHECK $in",
+        # )
+        # n.build(
+        #     outputs=ok_path,
+        #     rule="check",
+        #     inputs=config.check_sha_path,
+        #     implicit=[dtk, *link_outputs],
+        #     order_only="post-build",
+        # )
+        # n.newline()
 
         ###
         # Calculate progress
@@ -1237,7 +1237,6 @@ def generate_build_ninja(
             outputs="progress",
             rule="progress",
             implicit=[
-                ok_path,
                 configure_script,
                 python_lib,
                 report_path,
