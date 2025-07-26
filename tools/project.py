@@ -1231,7 +1231,7 @@ def generate_build_ninja(
         n.comment("Calculate progress")
         n.rule(
             name="progress",
-            command=f"$python {configure_script} progress",
+            command=f"$python {configure_script} $configure_args progress",
             description="PROGRESS",
         )
         n.build(
@@ -1406,7 +1406,7 @@ def generate_build_ninja(
     n.comment("Reconfigure on change")
     n.rule(
         name="configure",
-        command=f"$python {configure_script}",
+        command=f"$python {configure_script} $configure_args",
         generator=True,
         description=f"RUN {configure_script}",
     )
