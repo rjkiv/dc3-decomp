@@ -27,6 +27,7 @@ jobs:
     # Install wine
     - name: Wine
       run: apt-get install -y winehq-stable wine-stable wine-stable-i386 wine-stable-amd64
+      shell: bash
 
     # Set Git config
     - name: Git config
