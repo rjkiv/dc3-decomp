@@ -24,11 +24,6 @@ jobs:
       with:
         submodules: recursive
 
-    # Install wine
-    - name: Wine
-      run: /usr/bin/apt install -y winehq-stable wine-stable wine-stable-i386 wine-stable-amd64
-      shell: bash
-
     # Set Git config
     - name: Git config
       run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
@@ -41,7 +36,7 @@ jobs:
     - name: Build
       run: |
         python configure.py --dtk assets/dtk.exe --objdiff assets/objdiff-cli.exe --version ${{ matrix.version }} \
-            --binutils /binutils --wrapper /usr/bin/wine
+            --binutils /binutils --wrapper wibo
         ninja all_source progress build/${{ matrix.version }}/report.json
 
     # # Upload map files
