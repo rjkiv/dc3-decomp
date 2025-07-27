@@ -3,7 +3,7 @@
         "game": "Game Code",
         "engine": "Milo Engine Code",
         "lib": "Third-Party Libraries",
-        "sdk": "SDK Code"
+        "sdk": "XDK Code"
     },
     "asflags": [],
     "ldflags": [],
@@ -12,6 +12,7 @@
             "flags": [
                 "/nologo",
                 "/I src",
+                "/I src/system",
                 "/c",
                 "/Zi",
                 "/O2",
@@ -19,6 +20,12 @@
             ]
         },
         "engine": {
+            "base": "base",
+            "flags": [
+                "/O1"
+            ]
+        },
+        "xdk": {
             "base": "base",
             "flags": [
                 "/O1"

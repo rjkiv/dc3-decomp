@@ -5748,113 +5748,113 @@ net_ham/MotdJobs.cpp:
 	.text       start:0x829A7410 end:0x829A7BC0
 	.data       start:0x82F2DC6C end:0x82F2DC90
 
-LIBCMT/fpinit.cpp:
+xdk/LIBCMT/fpinit.cpp:
 	.rdata      start:0x8213C4B0 end:0x8213C4B4
 	.pdata      start:0x82300B58 end:0x82300B60
 	.text       start:0x829A7C70 end:0x829A7D10
 	.data       start:0x82F2DC90 end:0x82F2DC98
 	.data       start:0x8312A3C0 end:0x8312A3C4 rename:.bss
 
-LIBCMT/rtti.cpp:
+xdk/LIBCMT/rtti.cpp:
 	.rdata      start:0x8213C4B4 end:0x8213C53C
 	.pdata      start:0x82300B60 end:0x82300BC0
 	.text       start:0x829A7D10 end:0x829A8618
 	.data       start:0x82F2DC98 end:0x82F2DD00
 
-LIBCMT/typinfo.cpp:
+xdk/LIBCMT/typinfo.cpp:
 	.rdata      start:0x8213C53C end:0x8213C560
 	.pdata      start:0x82300BC0 end:0x82300BC8
 	.text       start:0x829A8618 end:0x829A8678
 
-LIBCMT/ceil.cpp:
+xdk/LIBCMT/ceil.cpp:
 	.rdata      start:0x8213C560 end:0x8213C5C0
 	.text       start:0x829AA2D0 end:0x829AA310
 
-LIBCMT/tan.cpp:
+xdk/LIBCMT/tan.cpp:
 	.rdata      start:0x8213C5C0 end:0x8213C730
 	.text       start:0x829AAC88 end:0x829AAD60
 
-LIBCMT/pow.cpp:
+xdk/LIBCMT/pow.cpp:
 	.rdata      start:0x8213C730 end:0x8213C798
 	.pdata      start:0x82300D60 end:0x82300D70
 	.text       start:0x829AAD60 end:0x829AB440
 
-LIBCMT/log.cpp:
+xdk/LIBCMT/log.cpp:
 	.rdata      start:0x8213C798 end:0x8213C7D8
 	.pdata      start:0x82300DB8 end:0x82300DC0
 	.text       start:0x829AC0A8 end:0x829AC268
 
-LIBCMT/strerror.cpp:
+xdk/LIBCMT/strerror.cpp:
 	.rdata      start:0x8213C7D8 end:0x8213C818
 	.pdata      start:0x82300F68 end:0x82300F78
 	.text       start:0x829AF428 end:0x829AF538
 
-LIBCMT/cvt.cpp:
+xdk/LIBCMT/cvt.cpp:
 	.rdata      start:0x8213C818 end:0x8213C820
 	.pdata      start:0x823010E8 end:0x82301128
 	.text       start:0x829B2C88 end:0x829B3A30
 
-LIBCMT/frame.cpp:
+xdk/LIBCMT/frame.cpp:
 	.rdata      start:0x8213C820 end:0x8213C824
 	.pdata      start:0x82301130 end:0x823011B0
 	.text       start:0x829B3B48 end:0x829B4B80
 
-LIBCMT/crt0msg.cpp:
+xdk/LIBCMT/crt0msg.cpp:
 	.rdata      start:0x8213C824 end:0x8213D0F0
 	.pdata      start:0x82301250 end:0x82301260
 	.text       start:0x829B55F0 end:0x829B56B0
 
-LIBCMT/winxfltr.cpp:
+xdk/LIBCMT/winxfltr.cpp:
 	.rdata      start:0x8213D0F0 end:0x8213D190
 	.pdata      start:0x82301260 end:0x82301268
 	.text       start:0x829B56B0 end:0x829B5898
 
-LIBCMT/undname.cpp:
+xdk/LIBCMT/undname.cpp:
 	.rdata      start:0x8213D190 end:0x8213DBC0
 	.pdata      start:0x82301268 end:0x82301488
 	.text       start:0x829B58A8 end:0x829BC460
 	.data       start:0x8312A59C end:0x8312A5F8 rename:.bss
 
-LIBCMT/nlsdata2.cpp:
+xdk/LIBCMT/nlsdata2.cpp:
 	.rdata      start:0x8213DBC0 end:0x8213DE80
 	.data       start:0x82F2E560 end:0x82F2E7B0
 
-LIBCMT/output.cpp:
+xdk/LIBCMT/output.cpp:
 	.rdata      start:0x8213DE80 end:0x8213DF70
 	.pdata      start:0x823014A0 end:0x823014B8
 	.text       start:0x829BCA48 end:0x829BD6E0
 
-LIBCMT/outputs.cpp:
+xdk/LIBCMT/outputs.cpp:
 	.rdata      start:0x8213DF70 end:0x8213E124
 	.pdata      start:0x823014B8 end:0x823014C0
 	.text       start:0x829BD6E0 end:0x829BE228
 
-LIBCMT/syserr.cpp:
+xdk/LIBCMT/syserr.cpp:
 	.rdata      start:0x8213E124 end:0x8213E440
 	.text       start:0x829C1B30 end:0x829C1B50
 	.data       start:0x82F2E800 end:0x82F2E8B4
 
-LIBCMT/stat.cpp:
+xdk/LIBCMT/stat.cpp:
 	.rdata      start:0x8213E440 end:0x8213E5C0
 	.pdata      start:0x82301590 end:0x82301598
 	.text       start:0x829C1C98 end:0x829C1DC8
 
-LIBCMT/timeset.cpp:
+xdk/LIBCMT/timeset.cpp:
 	.rdata      start:0x8213E5C0 end:0x8213E680
 	.pdata      start:0x82301618 end:0x82301630
 	.text       start:0x829C4700 end:0x829C4830
 	.data       start:0x82F2E938 end:0x82F2EAC0
 
-LIBCMT/fpexcept.cpp:
+xdk/LIBCMT/fpexcept.cpp:
 	.rdata      start:0x8213E680 end:0x8213E708
 	.pdata      start:0x82301668 end:0x823016A8
 	.text       start:0x829C73B8 end:0x829C7E80
 
-LIBCMT/ctype.cpp:
+xdk/LIBCMT/ctype.cpp:
 	.rdata      start:0x8213E708 end:0x8213EF10
 	.data       start:0x82F2ECCC end:0x82F2ECD8
 
-LIBCMT/x10fout.cpp:
+xdk/LIBCMT/x10fout.cpp:
 	.rdata      start:0x8213EF10 end:0x8213EF30
 	.pdata      start:0x82301770 end:0x82301778
 	.text       start:0x829CA8D0 end:0x829CB4D8
@@ -7193,94 +7193,94 @@ xaudio2/unknwn.cpp:
 xaudio2/oaidl.cpp:
 	.rdata      start:0x821FCCB0 end:0x821FCCC0
 
-d3d9i/texture.cpp:
+xdk/d3d9i/texture.cpp:
 	.rdata      start:0x821FCCC0 end:0x821FCF00
 	.pdata      start:0x8230C8F0 end:0x8230CA18
 	.text       start:0x82BA4418 end:0x82BA6C88
 	.data       start:0x8316AB8C end:0x8316AB90 rename:.bss
 
-d3d9i/query.cpp:
+xdk/d3d9i/query.cpp:
 	.rdata      start:0x821FCF00 end:0x821FD30C
 	.pdata      start:0x8230CA18 end:0x8230CAE8
 	.text       start:0x82BA6C88 end:0x82BA9AD0
 
-d3d9i/state.cpp:
+xdk/d3d9i/state.cpp:
 	.rdata      start:0x821FD30C end:0x821FD3E0
 	.pdata      start:0x8230CAF0 end:0x8230D290
 	.text       start:0x82BA9AF8 end:0x82BB00D0
 	.data       start:0x82F33BD0 end:0x82F34180
 
-d3d9i/device.cpp:
+xdk/d3d9i/device.cpp:
 	.rdata      start:0x821FD3E0 end:0x821FD89C
 	.pdata      start:0x8230D290 end:0x8230D348
 	.text       start:0x82BB00D0 end:0x82BB0FB0
 	.data       start:0x82F34180 end:0x82F341D8
 
-d3d9i/shader.cpp:
+xdk/d3d9i/shader.cpp:
 	.rdata      start:0x821FD89C end:0x821FD960
 	.pdata      start:0x8230D408 end:0x8230D900
 	.text       start:0x82BB2AF8 end:0x82BBAC60
 	.data       start:0x82F341D8 end:0x82F341E8
 	.data       start:0x8316ABA8 end:0x8316ABB8 rename:.bss
 
-d3d9i/clear.cpp:
+xdk/d3d9i/clear.cpp:
 	.rdata      start:0x821FD960 end:0x821FD9D8
 	.pdata      start:0x8230D900 end:0x8230D938
 	.text       start:0x82BBAC60 end:0x82BBC198
 	.data       start:0x82F341E8 end:0x82F342C0
 
-d3d9i/resolve.cpp:
+xdk/d3d9i/resolve.cpp:
 	.rdata      start:0x821FD9D8 end:0x821FDB40
 	.pdata      start:0x8230D9B0 end:0x8230DA08
 	.text       start:0x82BBE4D0 end:0x82BC0420
 	.data       start:0x8316ABB8 end:0x8316ABC4 rename:.bss
 
-d3d9i/swap.cpp:
+xdk/d3d9i/swap.cpp:
 	.rdata      start:0x821FDB40 end:0x821FEA10
 	.pdata      start:0x8230DA08 end:0x8230DA88
 	.text       start:0x82BC0420 end:0x82BC1F78
 	.data       start:0x8316ABC4 end:0x8316ABD0 rename:.bss
 
-d3d9i/pix.cpp:
+xdk/d3d9i/pix.cpp:
 	.rdata      start:0x821FEA10 end:0x821FEBB8
 	.pdata      start:0x8230DBE0 end:0x8230DD58
 	.text       start:0x82BC4A58 end:0x82BC8D58
 	.data       start:0x8316AFF0 end:0x8316B028 rename:.bss
 
-d3d9i/commands.cpp:
+xdk/d3d9i/commands.cpp:
 	.rdata      start:0x821FEBB8 end:0x821FF110
 	.pdata      start:0x8230DD58 end:0x8230DE10
 	.text       start:0x82BC8D58 end:0x82BCB128
 
-d3d9i/precomp.cpp:
+xdk/d3d9i/precomp.cpp:
 	.rdata      start:0x821FF110 end:0x821FF16C
 	.data       start:0x82F342C0 end:0x82F34490
 	.data       start:0x8316B028 end:0x8316B02C rename:.bss
 
-d3d9i/xps.cpp:
+xdk/d3d9i/xps.cpp:
 	.rdata      start:0x821FF16C end:0x821FF178
 	.pdata      start:0x8230E0C0 end:0x8230E190
 	.text       start:0x82BD2068 end:0x82BD3F90
 	.data       start:0x8316B048 end:0x83170058 rename:.bss
 
-d3d9i/gamma.cpp:
+xdk/d3d9i/gamma.cpp:
 	.rdata      start:0x821FF178 end:0x821FF1E0
 	.pdata      start:0x8230E190 end:0x8230E1E8
 	.text       start:0x82BD3F90 end:0x82BD4810
 
-d3d9i/debug.cpp:
+xdk/d3d9i/debug.cpp:
 	.rdata      start:0x821FF1E0 end:0x82200CF8
 	.pdata      start:0x8230E1E8 end:0x8230E230
 	.text       start:0x82BD4810 end:0x82BD5838
 	.data       start:0x83170058 end:0x8317005C rename:.bss
 
-d3d9i/initialize.cpp:
+xdk/d3d9i/initialize.cpp:
 	.rdata      start:0x82200CF8 end:0x82200D0C
 	.pdata      start:0x8230E230 end:0x8230E2C8
 	.text       start:0x82BD5838 end:0x82BD6AE0
 	.data       start:0x82F34490 end:0x82F34500
 
-d3d9i/rtcommon.cpp:
+xdk/d3d9i/rtcommon.cpp:
 	.rdata      start:0x82200D0C end:0x82200E50
 	.pdata      start:0x8230E2C8 end:0x8230E340
 	.pdata      start:0x8231E218 end:0x8231E220
@@ -7289,12 +7289,12 @@ d3d9i/rtcommon.cpp:
 	.data       start:0x82F34500 end:0x82F35690
 	.data       start:0x8317005C end:0x83170170 rename:.bss
 
-d3d9i/scaler.cpp:
+xdk/d3d9i/scaler.cpp:
 	.rdata      start:0x82200E60 end:0x82202C50
 	.pdata      start:0x8230E340 end:0x8230E3D8
 	.text       start:0x82BD8140 end:0x82BDA008
 
-d3d9i/movie.cpp:
+xdk/d3d9i/movie.cpp:
 	.rdata      start:0x82202C50 end:0x82204178
 	.pdata      start:0x8230E460 end:0x8230E4F8
 	.pdata      start:0x8231E220 end:0x8231E240
@@ -7302,25 +7302,25 @@ d3d9i/movie.cpp:
 	.text       start:0x82EEAD48 end:0x82EEB028 rename:.text$yc
 	.data       start:0x82F35690 end:0x82F35770
 
-d3d9i/rtpm4instrumentation.cpp:
+xdk/d3d9i/rtpm4instrumentation.cpp:
 	.rdata      start:0x82204178 end:0x82204330
 	.pdata      start:0x8230E4F8 end:0x8230E718
 	.text       start:0x82BDD400 end:0x82BE47C8
 	.data       start:0x82F35770 end:0x82F358B0
 
-d3d9i/capture.cpp:
+xdk/d3d9i/capture.cpp:
 	.rdata      start:0x82204330 end:0x822043D0
 	.pdata      start:0x8230E718 end:0x8230E868
 	.text       start:0x82BE47C8 end:0x82BE7290
 	.data       start:0x82F358B0 end:0x82F35968
 	.data       start:0x83170170 end:0x83170178 rename:.bss
 
-d3d9i/rtresultstracker.cpp:
+xdk/d3d9i/rtresultstracker.cpp:
 	.rdata      start:0x822043D0 end:0x82204430
 	.pdata      start:0x8230E868 end:0x8230EA68
 	.text       start:0x82BE7290 end:0x82BEAA58
 
-d3d9i/microcode.cpp:
+xdk/d3d9i/microcode.cpp:
 	.rdata      start:0x82204430 end:0x822079A0
 	.data       start:0x82F35968 end:0x82F35970
 
@@ -8655,17 +8655,17 @@ system/utl/BinkIntegration.cpp:
 	.text       start:0x82EEBE88 end:0x82EEBEC0 rename:.text$yc
 	.data       start:0x83185748 end:0x831857A0 rename:.bss
 
-LIBCMT/tanh.cpp:
+xdk/LIBCMT/tanh.cpp:
 	.rdata      start:0x82263418 end:0x82263478
 	.pdata      start:0x8231BA48 end:0x8231BA50
 	.text       start:0x82E6B238 end:0x82E6B340
 
-LIBCMT/sincosh.cpp:
+xdk/LIBCMT/sincosh.cpp:
 	.rdata      start:0x82263478 end:0x822634A0
 	.pdata      start:0x8231BA60 end:0x8231BA70
 	.text       start:0x82E6BA68 end:0x82E6BE98
 
-LIBCMT/huge.cpp:
+xdk/LIBCMT/huge.cpp:
 	.rdata      start:0x822634A0 end:0x822634FC
 
 xaudio2/xapobase.cpp:
@@ -8920,7 +8920,7 @@ xaudio2/spdif_spdtx.cpp:
 	.rdata      start:0x8228459C end:0x82284628
 	.data       start:0x82F5B644 end:0x82F5B970
 
-d3d9i/disassemble.cpp:
+xdk/d3d9i/disassemble.cpp:
 	.rdata      start:0x82284628 end:0x82284AA0
 	.pdata      start:0x8231D218 end:0x8231D368
 	.text       start:0x82EC1A98 end:0x82EC51C0
@@ -9487,692 +9487,692 @@ meta_ham/ChallengeRecord.cpp:
 	.pdata      start:0x822FF268 end:0x822FF280
 	.text       start:0x8298F4C0 end:0x8298F618
 
-LIBCMT/crtgpr.cpp:
+xdk/LIBCMT/crtgpr.cpp:
 	.pdata      start:0x82300B48 end:0x82300B58
 	.text       start:0x829A7BC0 end:0x829A7C70
 
-LIBCMT/trnsctrl.cpp:
+xdk/LIBCMT/trnsctrl.cpp:
 	.pdata      start:0x82300BC8 end:0x82300C20
 	.text       start:0x829A8678 end:0x829A8CC0
 
-LIBCMT/onexit.cpp:
+xdk/LIBCMT/onexit.cpp:
 	.pdata      start:0x82300C20 end:0x82300C40
 	.text       start:0x829A8CC0 end:0x829A8E50
 
-LIBCMT/crtfpr.cpp:
+xdk/LIBCMT/crtfpr.cpp:
 	.pdata      start:0x82300C40 end:0x82300C50
 	.text       start:0x829A8E50 end:0x829A8EE8
 
-LIBCMT/fclose.cpp:
+xdk/LIBCMT/fclose.cpp:
 	.pdata      start:0x82300C50 end:0x82300C68
 	.text       start:0x829A8EE8 end:0x829A9098
 
-LIBCMT/fopen.cpp:
+xdk/LIBCMT/fopen.cpp:
 	.pdata      start:0x82300C68 end:0x82300C80
 	.text       start:0x829A9098 end:0x829A9280
 
-LIBCMT/memsetp.cpp:
+xdk/LIBCMT/memsetp.cpp:
 	.text       start:0x829A9280 end:0x829A9320
 
-LIBCMT/crt0dat.cpp:
+xdk/LIBCMT/crt0dat.cpp:
 	.pdata      start:0x82300C80 end:0x82300CA8
 	.text       start:0x829A9320 end:0x829A9600
 	.data       start:0x8312A3C4 end:0x8312A3E0 rename:.bss
 
-LIBCMT/tidtable.cpp:
+xdk/LIBCMT/tidtable.cpp:
 	.pdata      start:0x82300CA8 end:0x82300CD8
 	.text       start:0x829A9600 end:0x829A99B0
 	.data       start:0x82F2DD00 end:0x82F2DE20
 
-LIBCMT/memmovep.cpp:
+xdk/LIBCMT/memmovep.cpp:
 	.text       start:0x829A99B0 end:0x829A9A78
 
-LIBCMT/typname.cpp:
+xdk/LIBCMT/typname.cpp:
 	.pdata      start:0x82300CD8 end:0x82300CF8
 	.text       start:0x829A9A78 end:0x829A9CC8
 	.data       start:0x8312A3E0 end:0x8312A3EC rename:.bss
 
-LIBCMT/purevirt.cpp:
+xdk/LIBCMT/purevirt.cpp:
 	.pdata      start:0x82300CF8 end:0x82300D00
 	.text       start:0x829A9CC8 end:0x829A9D18
 
-LIBCMT/throw.cpp:
+xdk/LIBCMT/throw.cpp:
 	.pdata      start:0x82300D00 end:0x82300D08
 	.text       start:0x829A9D18 end:0x829A9DA0
 
-LIBCMT/memcpyp.cpp:
+xdk/LIBCMT/memcpyp.cpp:
 	.text       start:0x829A9DA0 end:0x829AA2D0
 
-LIBCMT/free.cpp:
+xdk/LIBCMT/free.cpp:
 	.pdata      start:0x82300D08 end:0x82300D10
 	.text       start:0x829AA310 end:0x829AA370
 
-LIBCMT/strcpy_s.cpp:
+xdk/LIBCMT/strcpy_s.cpp:
 	.pdata      start:0x82300D10 end:0x82300D18
 	.text       start:0x829AA370 end:0x829AA428
 
-LIBCMT/malloc.cpp:
+xdk/LIBCMT/malloc.cpp:
 	.pdata      start:0x82300D18 end:0x82300D20
 	.text       start:0x829AA428 end:0x829AA4F0
 
-LIBCMT/strncpy.cpp:
+xdk/LIBCMT/strncpy.cpp:
 	.text       start:0x829AA4F0 end:0x829AA550
 
-LIBCMT/mdsstrncmp.cpp:
+xdk/LIBCMT/mdsstrncmp.cpp:
 	.text       start:0x829AA550 end:0x829AA5A8
 
-LIBCMT/ehvecdtr.cpp:
+xdk/LIBCMT/ehvecdtr.cpp:
 	.pdata      start:0x82300D20 end:0x82300D40
 	.text       start:0x829AA5A8 end:0x829AA7B0
 
-LIBCMT/ehvecctr.cpp:
+xdk/LIBCMT/ehvecctr.cpp:
 	.pdata      start:0x82300D40 end:0x82300D50
 	.text       start:0x829AA7B0 end:0x829AA8C0
 
-LIBCMT/floor.cpp:
+xdk/LIBCMT/floor.cpp:
 	.text       start:0x829AA8C0 end:0x829AA900
 
-LIBCMT/asincos.cpp:
+xdk/LIBCMT/asincos.cpp:
 	.text       start:0x829AA900 end:0x829AAAC8
 
-LIBCMT/sincos.cpp:
+xdk/LIBCMT/sincos.cpp:
 	.pdata      start:0x82300D50 end:0x82300D60
 	.text       start:0x829AAAC8 end:0x829AAC88
 
-LIBCMT/strstr.cpp:
+xdk/LIBCMT/strstr.cpp:
 	.text       start:0x829AB440 end:0x829AB4B8
 
-LIBCMT/atan.cpp:
+xdk/LIBCMT/atan.cpp:
 	.text       start:0x829AB4B8 end:0x829AB6D0
 	.data       start:0x82F2DE20 end:0x82F2DEE0
 
-LIBCMT/fmod.cpp:
+xdk/LIBCMT/fmod.cpp:
 	.text       start:0x829AB6D0 end:0x829AB858
 
-LIBCMT/atox.cpp:
+xdk/LIBCMT/atox.cpp:
 	.text       start:0x829AB858 end:0x829AB870
 
-LIBCMT/strchrp.cpp:
+xdk/LIBCMT/strchrp.cpp:
 	.text       start:0x829AB870 end:0x829AB8B0
 
-LIBCMT/strrchrp.cpp:
+xdk/LIBCMT/strrchrp.cpp:
 	.text       start:0x829AB8B0 end:0x829AB908
 
-LIBCMT/rand.cpp:
+xdk/LIBCMT/rand.cpp:
 	.pdata      start:0x82300D70 end:0x82300D80
 	.text       start:0x829AB908 end:0x829AB978
 
-LIBCMT/wcslen.cpp:
+xdk/LIBCMT/wcslen.cpp:
 	.text       start:0x829AB978 end:0x829AB9A0
 
-LIBCMT/mbstowcs.cpp:
+xdk/LIBCMT/mbstowcs.cpp:
 	.pdata      start:0x82300D80 end:0x82300D90
 	.text       start:0x829AB9A0 end:0x829ABB78
 
-LIBCMT/vsnprnc.cpp:
+xdk/LIBCMT/vsnprnc.cpp:
 	.pdata      start:0x82300D90 end:0x82300DA0
 	.text       start:0x829ABB78 end:0x829ABD40
 
-LIBCMT/tolower.cpp:
+xdk/LIBCMT/tolower.cpp:
 	.text       start:0x829ABD40 end:0x829ABD60
 
-LIBCMT/_ctype.cpp:
+xdk/LIBCMT/_ctype.cpp:
 	.text       start:0x829ABD60 end:0x829ABE80
 
-LIBCMT/snprintf.cpp:
+xdk/LIBCMT/snprintf.cpp:
 	.pdata      start:0x82300DA0 end:0x82300DA8
 	.text       start:0x829ABE80 end:0x829ABF88
 
-LIBCMT/printf.cpp:
+xdk/LIBCMT/printf.cpp:
 	.pdata      start:0x82300DA8 end:0x82300DB8
 	.text       start:0x829ABF88 end:0x829AC0A8
 
-LIBCMT/fread.cpp:
+xdk/LIBCMT/fread.cpp:
 	.pdata      start:0x82300DC0 end:0x82300DD8
 	.text       start:0x829AC268 end:0x829AC628
 
-LIBCMT/ftell.cpp:
+xdk/LIBCMT/ftell.cpp:
 	.pdata      start:0x82300DD8 end:0x82300DF0
 	.text       start:0x829AC628 end:0x829AC930
 
-LIBCMT/fseek.cpp:
+xdk/LIBCMT/fseek.cpp:
 	.pdata      start:0x82300DF0 end:0x82300E08
 	.text       start:0x829AC930 end:0x829ACAF0
 
-LIBCMT/sprintf.cpp:
+xdk/LIBCMT/sprintf.cpp:
 	.pdata      start:0x82300E08 end:0x82300E18
 	.text       start:0x829ACAF0 end:0x829ACC28
 
-LIBCMT/ppcsecgs.cpp:
+xdk/LIBCMT/ppcsecgs.cpp:
 	.text       start:0x829ACC28 end:0x829ACC40
 
-LIBCMT/calloc.cpp:
+xdk/LIBCMT/calloc.cpp:
 	.pdata      start:0x82300E18 end:0x82300E20
 	.text       start:0x829ACC40 end:0x829ACCA8
 
-LIBCMT/realloc.cpp:
+xdk/LIBCMT/realloc.cpp:
 	.pdata      start:0x82300E20 end:0x82300E28
 	.text       start:0x829ACCA8 end:0x829ACD98
 
-LIBCMT/fwrite.cpp:
+xdk/LIBCMT/fwrite.cpp:
 	.pdata      start:0x82300E28 end:0x82300E40
 	.text       start:0x829ACD98 end:0x829AD0F8
 
-LIBCMT/_file.cpp:
+xdk/LIBCMT/_file.cpp:
 	.pdata      start:0x82300E40 end:0x82300E60
 	.text       start:0x829AD0F8 end:0x829AD398
 	.data       start:0x82F2DEE8 end:0x82F2E2E8
 	.data       start:0x8312A3EC end:0x8312A3F0 rename:.bss
 
-LIBCMT/strtol.cpp:
+xdk/LIBCMT/strtol.cpp:
 	.pdata      start:0x82300E60 end:0x82300E68
 	.text       start:0x829AD398 end:0x829AD680
 
-LIBCMT/sscanf.cpp:
+xdk/LIBCMT/sscanf.cpp:
 	.pdata      start:0x82300E68 end:0x82300E80
 	.text       start:0x829AD680 end:0x829AD808
 
-LIBCMT/time64.cpp:
+xdk/LIBCMT/time64.cpp:
 	.pdata      start:0x82300E80 end:0x82300E88
 	.text       start:0x829AD808 end:0x829AD888
 
-LIBCMT/dosmap.cpp:
+xdk/LIBCMT/dosmap.cpp:
 	.pdata      start:0x82300E88 end:0x82300EA0
 	.text       start:0x829AD888 end:0x829AD9D8
 
-LIBCMT/fflush.cpp:
+xdk/LIBCMT/fflush.cpp:
 	.pdata      start:0x82300EA0 end:0x82300ED8
 	.text       start:0x829AD9D8 end:0x829ADDD0
 
-LIBCMT/strtoq.cpp:
+xdk/LIBCMT/strtoq.cpp:
 	.pdata      start:0x82300ED8 end:0x82300EE0
 	.text       start:0x829ADDD0 end:0x829AE0A0
 
-LIBCMT/memchrp.cpp:
+xdk/LIBCMT/memchrp.cpp:
 	.text       start:0x829AE0A0 end:0x829AE0E8
 
-LIBCMT/fgets.cpp:
+xdk/LIBCMT/fgets.cpp:
 	.pdata      start:0x82300EE0 end:0x82300EF0
 	.text       start:0x829AE0E8 end:0x829AE320
 
-LIBCMT/qsort.cpp:
+xdk/LIBCMT/qsort.cpp:
 	.pdata      start:0x82300EF0 end:0x82300EF8
 	.text       start:0x829AE320 end:0x829AE6B0
 
-LIBCMT/fputs.cpp:
+xdk/LIBCMT/fputs.cpp:
 	.pdata      start:0x82300EF8 end:0x82300F08
 	.text       start:0x829AE6B0 end:0x829AE880
 
-LIBCMT/vsprintf.cpp:
+xdk/LIBCMT/vsprintf.cpp:
 	.pdata      start:0x82300F08 end:0x82300F10
 	.text       start:0x829AE880 end:0x829AE958
 
-LIBCMT/vsnprint.cpp:
+xdk/LIBCMT/vsnprint.cpp:
 	.pdata      start:0x82300F10 end:0x82300F18
 	.text       start:0x829AE958 end:0x829AEA50
 
-LIBCMT/strnicmp.cpp:
+xdk/LIBCMT/strnicmp.cpp:
 	.pdata      start:0x82300F18 end:0x82300F20
 	.text       start:0x829AEA50 end:0x829AEB40
 
-LIBCMT/vprintf.cpp:
+xdk/LIBCMT/vprintf.cpp:
 	.text       start:0x829AEC40 end:0x829AEC60
 
-LIBCMT/fstat64.cpp:
+xdk/LIBCMT/fstat64.cpp:
 	.pdata      start:0x82300F30 end:0x82300F40
 	.text       start:0x829AEC60 end:0x829AEFC8
 
-LIBCMT/lseeki64.cpp:
+xdk/LIBCMT/lseeki64.cpp:
 	.pdata      start:0x82300F40 end:0x82300F58
 	.text       start:0x829AEFC8 end:0x829AF220
 
-LIBCMT/fputc.cpp:
+xdk/LIBCMT/fputc.cpp:
 	.pdata      start:0x82300F58 end:0x82300F68
 	.text       start:0x829AF220 end:0x829AF428
 
-LIBCMT/threadex.cpp:
+xdk/LIBCMT/threadex.cpp:
 	.pdata      start:0x82300F78 end:0x82300F98
 	.text       start:0x829AF538 end:0x829AF720
 
-LIBCMT/stat64.cpp:
+xdk/LIBCMT/stat64.cpp:
 	.pdata      start:0x82300F98 end:0x82300FA0
 	.text       start:0x829AF720 end:0x829AF9A8
 
-LIBCMT/gmtime64.cpp:
+xdk/LIBCMT/gmtime64.cpp:
 	.pdata      start:0x82300FA0 end:0x82300FB0
 	.text       start:0x829AF9A8 end:0x829AFC80
 
-LIBCMT/strtok.cpp:
+xdk/LIBCMT/strtok.cpp:
 	.pdata      start:0x82300FB0 end:0x82300FB8
 	.text       start:0x829AFC80 end:0x829AFDA0
 
-LIBCMT/stricmpp.cpp:
+xdk/LIBCMT/stricmpp.cpp:
 	.text       start:0x829AFDA0 end:0x829AFDF8
 
-LIBCMT/atof.cpp:
+xdk/LIBCMT/atof.cpp:
 	.pdata      start:0x82300FB8 end:0x82300FC0
 	.text       start:0x829AFDF8 end:0x829AFEC8
 
-LIBCMT/fprintf.cpp:
+xdk/LIBCMT/fprintf.cpp:
 	.pdata      start:0x82300FC0 end:0x82300FD0
 	.text       start:0x829AFEC8 end:0x829B0088
 
-LIBCMT/vswprnc.cpp:
+xdk/LIBCMT/vswprnc.cpp:
 	.pdata      start:0x82300FD0 end:0x82300FE0
 	.text       start:0x829B0088 end:0x829B02A0
 
-LIBCMT/wcstombs.cpp:
+xdk/LIBCMT/wcstombs.cpp:
 	.pdata      start:0x82300FE0 end:0x82300FF0
 	.text       start:0x829B02A0 end:0x829B06B0
 
-LIBCMT/wcsncpy.cpp:
+xdk/LIBCMT/wcsncpy.cpp:
 	.text       start:0x829B06B0 end:0x829B0710
 
-LIBCMT/strncat.cpp:
+xdk/LIBCMT/strncat.cpp:
 	.text       start:0x829B0710 end:0x829B0760
 
-LIBCMT/wcsncpy_s.cpp:
+xdk/LIBCMT/wcsncpy_s.cpp:
 	.pdata      start:0x82300FF0 end:0x82300FF8
 	.text       start:0x829B0760 end:0x829B08A8
 
-LIBCMT/wcsncat_s.cpp:
+xdk/LIBCMT/wcsncat_s.cpp:
 	.pdata      start:0x82300FF8 end:0x82301000
 	.text       start:0x829B08A8 end:0x829B0A18
 
-LIBCMT/strcspn.cpp:
+xdk/LIBCMT/strcspn.cpp:
 	.text       start:0x829B0A18 end:0x829B0AD0
 
-LIBCMT/wcscspn.cpp:
+xdk/LIBCMT/wcscspn.cpp:
 	.text       start:0x829B0AD0 end:0x829B0B28
 
-LIBCMT/strlen_s.cpp:
+xdk/LIBCMT/strlen_s.cpp:
 	.text       start:0x829B0B28 end:0x829B0B58
 
-LIBCMT/gcvt.cpp:
+xdk/LIBCMT/gcvt.cpp:
 	.pdata      start:0x82301000 end:0x82301008
 	.text       start:0x829B0B58 end:0x829B0CE0
 
-LIBCMT/lseek.cpp:
+xdk/LIBCMT/lseek.cpp:
 	.pdata      start:0x82301008 end:0x82301020
 	.text       start:0x829B0CE0 end:0x829B0F20
 
-LIBCMT/close.cpp:
+xdk/LIBCMT/close.cpp:
 	.pdata      start:0x82301020 end:0x82301038
 	.text       start:0x829B0F20 end:0x829B1168
 
-LIBCMT/openo.cpp:
+xdk/LIBCMT/openo.cpp:
 	.pdata      start:0x82301038 end:0x82301040
 	.text       start:0x829B1168 end:0x829B11A8
 
-LIBCMT/write.cpp:
+xdk/LIBCMT/write.cpp:
 	.pdata      start:0x82301040 end:0x82301058
 	.text       start:0x829B11A8 end:0x829B1570
 
-LIBCMT/strtok_s.cpp:
+xdk/LIBCMT/strtok_s.cpp:
 	.pdata      start:0x82301058 end:0x82301060
 	.text       start:0x829B1570 end:0x829B16B0
 
-LIBCMT/u64tod.cpp:
+xdk/LIBCMT/u64tod.cpp:
 	.text       start:0x829B16B0 end:0x829B16D8
 
-LIBCMT/swscanf.cpp:
+xdk/LIBCMT/swscanf.cpp:
 	.pdata      start:0x82301060 end:0x82301078
 	.text       start:0x829B16D8 end:0x829B1860
 
-LIBCMT/chkstk.cpp:
+xdk/LIBCMT/chkstk.cpp:
 	.text       start:0x829B1860 end:0x829B1888
 
-LIBCMT/wcschr.cpp:
+xdk/LIBCMT/wcschr.cpp:
 	.text       start:0x829B1888 end:0x829B18C8
 
-LIBCMT/wcscat.cpp:
+xdk/LIBCMT/wcscat.cpp:
 	.text       start:0x829B18C8 end:0x829B18E8
 
-LIBCMT/modf.cpp:
+xdk/LIBCMT/modf.cpp:
 	.pdata      start:0x82301078 end:0x82301080
 	.text       start:0x829B18E8 end:0x829B1A18
 
-LIBCMT/toupper.cpp:
+xdk/LIBCMT/toupper.cpp:
 	.text       start:0x829B1A18 end:0x829B1A38
 
-LIBCMT/strlwr.cpp:
+xdk/LIBCMT/strlwr.cpp:
 	.pdata      start:0x82301080 end:0x82301088
 	.text       start:0x829B1A38 end:0x829B1AB0
 
-LIBCMT/strdup.cpp:
+xdk/LIBCMT/strdup.cpp:
 	.pdata      start:0x82301088 end:0x82301090
 	.text       start:0x829B1AB0 end:0x829B1B40
 
-LIBCMT/fileno.cpp:
+xdk/LIBCMT/fileno.cpp:
 	.pdata      start:0x82301090 end:0x82301098
 	.text       start:0x829B1B40 end:0x829B1B80
 
-LIBCMT/open.cpp:
+xdk/LIBCMT/open.cpp:
 	.pdata      start:0x82301098 end:0x823010C0
 	.text       start:0x829B1B80 end:0x829B23C0
 
-LIBCMT/read.cpp:
+xdk/LIBCMT/read.cpp:
 	.pdata      start:0x823010C0 end:0x823010D8
 	.text       start:0x829B23C0 end:0x829B2B88
 	.data       start:0x82F2E2E8 end:0x82F2E3E8
 
-LIBCMT/xtoa.cpp:
+xdk/LIBCMT/xtoa.cpp:
 	.pdata      start:0x823010D8 end:0x823010E8
 	.text       start:0x829B2B88 end:0x829B2C88
 
-LIBCMT/ehstate.cpp:
+xdk/LIBCMT/ehstate.cpp:
 	.pdata      start:0x82301128 end:0x82301130
 	.text       start:0x829B3A30 end:0x829B3B48
 
-LIBCMT/hooks.cpp:
+xdk/LIBCMT/hooks.cpp:
 	.pdata      start:0x823011B0 end:0x823011D0
 	.text       start:0x829B4B80 end:0x829B4C48
 	.data       start:0x8312A3F0 end:0x8312A3F4 rename:.bss
 
-LIBCMT/msize.cpp:
+xdk/LIBCMT/msize.cpp:
 	.pdata      start:0x823011D0 end:0x823011D8
 	.text       start:0x829B4C48 end:0x829B4CA0
 
-LIBCMT/_freebuf.cpp:
+xdk/LIBCMT/_freebuf.cpp:
 	.pdata      start:0x823011D8 end:0x823011E0
 	.text       start:0x829B4CA0 end:0x829B4D08
 
-LIBCMT/invarg.cpp:
+xdk/LIBCMT/invarg.cpp:
 	.pdata      start:0x823011E0 end:0x823011F0
 	.text       start:0x829B4D08 end:0x829B4E18
 	.data       start:0x8312A3F4 end:0x8312A580 rename:.bss
 
-LIBCMT/_open.cpp:
+xdk/LIBCMT/_open.cpp:
 	.pdata      start:0x823011F0 end:0x823011F8
 	.text       start:0x829B4E18 end:0x829B5060
 
-LIBCMT/stream.cpp:
+xdk/LIBCMT/stream.cpp:
 	.pdata      start:0x823011F8 end:0x82301208
 	.text       start:0x829B5060 end:0x829B5210
 
-LIBCMT/jmpuwind.cpp:
+xdk/LIBCMT/jmpuwind.cpp:
 	.pdata      start:0x82301208 end:0x82301210
 	.text       start:0x829B5210 end:0x829B5238
 
-LIBCMT/mlock.cpp:
+xdk/LIBCMT/mlock.cpp:
 	.pdata      start:0x82301210 end:0x82301248
 	.text       start:0x829B5238 end:0x829B5588
 
-LIBCMT/inithelp.cpp:
+xdk/LIBCMT/inithelp.cpp:
 	.text       start:0x829B5588 end:0x829B5598
 	.data       start:0x8312A580 end:0x8312A584 rename:.bss
 
-LIBCMT/handler.cpp:
+xdk/LIBCMT/handler.cpp:
 	.pdata      start:0x82301248 end:0x82301250
 	.text       start:0x829B5598 end:0x829B55F0
 	.data       start:0x8312A584 end:0x8312A59C rename:.bss
 
-LIBCMT/thread.cpp:
+xdk/LIBCMT/thread.cpp:
 	.text       start:0x829B5898 end:0x829B58A8
 
-LIBCMT/abort.cpp:
+xdk/LIBCMT/abort.cpp:
 	.pdata      start:0x82301488 end:0x82301490
 	.text       start:0x829BC460 end:0x829BC4D0
 	.data       start:0x82F2E530 end:0x82F2E538
 
-LIBCMT/util.cpp:
+xdk/LIBCMT/util.cpp:
 	.text       start:0x829BC4D0 end:0x829BC6C8
 	.data       start:0x82F2E538 end:0x82F2E560
 
-LIBCMT/ieeemisc.cpp:
+xdk/LIBCMT/ieeemisc.cpp:
 	.pdata      start:0x82301490 end:0x82301498
 	.text       start:0x829BC6C8 end:0x829BC870
 
-LIBCMT/_flsbuf.cpp:
+xdk/LIBCMT/_flsbuf.cpp:
 	.pdata      start:0x82301498 end:0x823014A0
 	.text       start:0x829BC870 end:0x829BCA48
 
-LIBCMT/isctype.cpp:
+xdk/LIBCMT/isctype.cpp:
 	.text       start:0x829BE228 end:0x829BE260
 
-LIBCMT/_sftbuf.cpp:
+xdk/LIBCMT/_sftbuf.cpp:
 	.pdata      start:0x823014C0 end:0x823014D0
 	.text       start:0x829BE260 end:0x829BE3B8
 	.data       start:0x8312A5FC end:0x8312B158 rename:.bss
 
-LIBCMT/_filbuf.cpp:
+xdk/LIBCMT/_filbuf.cpp:
 	.pdata      start:0x823014D0 end:0x823014D8
 	.text       start:0x829BE3B8 end:0x829BE568
 
-LIBCMT/memcpy_s.cpp:
+xdk/LIBCMT/memcpy_s.cpp:
 	.pdata      start:0x823014D8 end:0x823014E0
 	.text       start:0x829BE568 end:0x829BE618
 
-LIBCMT/ioinit.cpp:
+xdk/LIBCMT/ioinit.cpp:
 	.pdata      start:0x823014E0 end:0x823014F0
 	.text       start:0x829BE618 end:0x829BE778
 	.data       start:0x82F2E7B0 end:0x82F2E800
 
-LIBCMT/gs_support.cpp:
+xdk/LIBCMT/gs_support.cpp:
 	.pdata      start:0x823014F0 end:0x823014F8
 	.text       start:0x829BE778 end:0x829BE818
 
-LIBCMT/gs_report.cpp:
+xdk/LIBCMT/gs_report.cpp:
 	.pdata      start:0x823014F8 end:0x82301500
 	.text       start:0x829BE818 end:0x829BE8D8
 
-LIBCMT/calloc_impl.cpp:
+xdk/LIBCMT/calloc_impl.cpp:
 	.pdata      start:0x82301500 end:0x82301508
 	.text       start:0x829BE8D8 end:0x829BE9A8
 
-LIBCMT/closeall.cpp:
+xdk/LIBCMT/closeall.cpp:
 	.pdata      start:0x82301508 end:0x82301518
 	.text       start:0x829BE9A8 end:0x829BEA90
 
-LIBCMT/input.cpp:
+xdk/LIBCMT/input.cpp:
 	.pdata      start:0x82301518 end:0x82301520
 	.text       start:0x829BEA90 end:0x829BFCE0
 
-LIBCMT/inputs.cpp:
+xdk/LIBCMT/inputs.cpp:
 	.pdata      start:0x82301520 end:0x82301530
 	.text       start:0x829BFCE0 end:0x829C1188
 
-LIBCMT/commit.cpp:
+xdk/LIBCMT/commit.cpp:
 	.pdata      start:0x82301530 end:0x82301540
 	.text       start:0x829C1188 end:0x829C12F8
 
-LIBCMT/osfinfo.cpp:
+xdk/LIBCMT/osfinfo.cpp:
 	.pdata      start:0x82301540 end:0x82301580
 	.text       start:0x829C12F8 end:0x829C1888
 
-LIBCMT/dtoxtm64.cpp:
+xdk/LIBCMT/dtoxtm64.cpp:
 	.pdata      start:0x82301580 end:0x82301588
 	.text       start:0x829C1888 end:0x829C1B30
 
-LIBCMT/strncpy_s.cpp:
+xdk/LIBCMT/strncpy_s.cpp:
 	.pdata      start:0x82301588 end:0x82301590
 	.text       start:0x829C1B50 end:0x829C1C98
 
-LIBCMT/mbtolwr.cpp:
+xdk/LIBCMT/mbtolwr.cpp:
 	.pdata      start:0x82301598 end:0x823015A0
 	.text       start:0x829C1DC8 end:0x829C1E10
 
-LIBCMT/mbspbrk.cpp:
+xdk/LIBCMT/mbspbrk.cpp:
 	.text       start:0x829C1E10 end:0x829C1E18
 
-LIBCMT/gmtime.cpp:
+xdk/LIBCMT/gmtime.cpp:
 	.pdata      start:0x823015A0 end:0x823015A8
 	.text       start:0x829C1E18 end:0x829C1E88
 
-LIBCMT/cfin.cpp:
+xdk/LIBCMT/cfin.cpp:
 	.pdata      start:0x823015A8 end:0x823015B0
 	.text       start:0x829C1E88 end:0x829C1F40
 
-LIBCMT/strgtold.cpp:
+xdk/LIBCMT/strgtold.cpp:
 	.pdata      start:0x823015B0 end:0x823015B8
 	.text       start:0x829C1F40 end:0x829C28A0
 
-LIBCMT/woutput.cpp:
+xdk/LIBCMT/woutput.cpp:
 	.pdata      start:0x823015B8 end:0x823015C8
 	.text       start:0x829C28A0 end:0x829C3368
 
-LIBCMT/woutputs.cpp:
+xdk/LIBCMT/woutputs.cpp:
 	.pdata      start:0x823015C8 end:0x823015D8
 	.text       start:0x829C3368 end:0x829C3EB8
 
-LIBCMT/tzset.cpp:
+xdk/LIBCMT/tzset.cpp:
 	.pdata      start:0x823015D8 end:0x82301618
 	.text       start:0x829C3EB8 end:0x829C4700
 
-LIBCMT/cfout.cpp:
+xdk/LIBCMT/cfout.cpp:
 	.pdata      start:0x82301630 end:0x82301638
 	.text       start:0x829C4830 end:0x829C49B0
 
-LIBCMT/wopen.cpp:
+xdk/LIBCMT/wopen.cpp:
 	.pdata      start:0x82301638 end:0x82301650
 	.text       start:0x829C49B0 end:0x829C5080
 
-LIBCMT/winput.cpp:
+xdk/LIBCMT/winput.cpp:
 	.pdata      start:0x82301650 end:0x82301660
 	.text       start:0x829C5080 end:0x829C6198
 
-LIBCMT/winputs.cpp:
+xdk/LIBCMT/winputs.cpp:
 	.pdata      start:0x82301660 end:0x82301668
 	.text       start:0x829C6198 end:0x829C7370
 
-LIBCMT/frnd.cpp:
+xdk/LIBCMT/frnd.cpp:
 	.text       start:0x829C7370 end:0x829C73B8
 
-LIBCMT/fpctrl.cpp:
+xdk/LIBCMT/fpctrl.cpp:
 	.text       start:0x829C7E80 end:0x829C7F28
 
-LIBCMT/chsize.cpp:
+xdk/LIBCMT/chsize.cpp:
 	.pdata      start:0x823016A8 end:0x823016B0
 	.text       start:0x829C7F28 end:0x829C80C0
 
-LIBCMT/setmode.cpp:
+xdk/LIBCMT/setmode.cpp:
 	.pdata      start:0x823016B0 end:0x823016B8
 	.text       start:0x829C80C0 end:0x829C81A0
 
-LIBCMT/atodbl.cpp:
+xdk/LIBCMT/atodbl.cpp:
 	.pdata      start:0x823016B8 end:0x823016C8
 	.text       start:0x829C81A0 end:0x829C82F0
 
-LIBCMT/_fptostr.cpp:
+xdk/LIBCMT/_fptostr.cpp:
 	.pdata      start:0x823016C8 end:0x823016D0
 	.text       start:0x829C82F0 end:0x829C8450
 
-LIBCMT/crt0fp.cpp:
+xdk/LIBCMT/crt0fp.cpp:
 	.text       start:0x829C8450 end:0x829C8460
 
-LIBCMT/handlers.cpp:
+xdk/LIBCMT/handlers.cpp:
 	.pdata      start:0x823016D0 end:0x823016D8
 	.text       start:0x829C8460 end:0x829C8580
 
-LIBCMT/validate.cpp:
+xdk/LIBCMT/validate.cpp:
 	.text       start:0x829C8580 end:0x829C85A0
 
-LIBCMT/unwind.cpp:
+xdk/LIBCMT/unwind.cpp:
 	.pdata      start:0x823016D8 end:0x823016F0
 	.text       start:0x829C85A0 end:0x829C8698
 
-LIBCMT/dbghook.cpp:
+xdk/LIBCMT/dbghook.cpp:
 	.text       start:0x829C8698 end:0x829C86A8
 
-LIBCMT/winsig.cpp:
+xdk/LIBCMT/winsig.cpp:
 	.pdata      start:0x823016F0 end:0x82301700
 	.text       start:0x829C86A8 end:0x829C89A8
 
-LIBCMT/ldexp.cpp:
+xdk/LIBCMT/ldexp.cpp:
 	.pdata      start:0x82301700 end:0x82301708
 	.text       start:0x829C89A8 end:0x829C8B80
 
-LIBCMT/mbctype.cpp:
+xdk/LIBCMT/mbctype.cpp:
 	.text       start:0x829C8B80 end:0x829C8BB0
 	.data       start:0x82F2EAC0 end:0x82F2ECCC
 	.data       start:0x8312B170 end:0x8312B18C rename:.bss
 
-LIBCMT/_getbuf.cpp:
+xdk/LIBCMT/_getbuf.cpp:
 	.pdata      start:0x82301708 end:0x82301710
 	.text       start:0x829C8BB0 end:0x829C8C38
 
-LIBCMT/wctomb.cpp:
+xdk/LIBCMT/wctomb.cpp:
 	.pdata      start:0x82301710 end:0x82301718
 	.text       start:0x829C8C38 end:0x829C8D38
 
-LIBCMT/_wctype.cpp:
+xdk/LIBCMT/_wctype.cpp:
 	.text       start:0x829C8D38 end:0x829C8D90
 
-LIBCMT/recalloc.cpp:
+xdk/LIBCMT/recalloc.cpp:
 	.pdata      start:0x82301718 end:0x82301720
 	.text       start:0x829C8D90 end:0x829C8E28
 
-LIBCMT/ungetc.cpp:
+xdk/LIBCMT/ungetc.cpp:
 	.pdata      start:0x82301720 end:0x82301738
 	.text       start:0x829C8E28 end:0x829C90A8
 
-LIBCMT/mbtowc.cpp:
+xdk/LIBCMT/mbtowc.cpp:
 	.text       start:0x829C90A8 end:0x829C90F0
 
-LIBCMT/mbsicmp.cpp:
+xdk/LIBCMT/mbsicmp.cpp:
 	.pdata      start:0x82301738 end:0x82301740
 	.text       start:0x829C90F0 end:0x829C9150
 
-LIBCMT/mbsrchr.cpp:
+xdk/LIBCMT/mbsrchr.cpp:
 	.text       start:0x829C9150 end:0x829C9158
 
-LIBCMT/strpbrk.cpp:
+xdk/LIBCMT/strpbrk.cpp:
 	.text       start:0x829C9158 end:0x829C91E8
 
-LIBCMT/intrncvt.cpp:
+xdk/LIBCMT/intrncvt.cpp:
 	.pdata      start:0x82301740 end:0x82301750
 	.text       start:0x829C91E8 end:0x829CA018
 
-LIBCMT/mantold.cpp:
+xdk/LIBCMT/mantold.cpp:
 	.pdata      start:0x82301750 end:0x82301758
 	.text       start:0x829CA018 end:0x829CA2B0
 
-LIBCMT/fputwc.cpp:
+xdk/LIBCMT/fputwc.cpp:
 	.pdata      start:0x82301758 end:0x82301760
 	.text       start:0x829CA2B0 end:0x829CA508
 
-LIBCMT/vsnwprnt.cpp:
+xdk/LIBCMT/vsnwprnt.cpp:
 	.pdata      start:0x82301760 end:0x82301768
 	.text       start:0x829CA508 end:0x829CA640
 
-LIBCMT/wcstol.cpp:
+xdk/LIBCMT/wcstol.cpp:
 	.pdata      start:0x82301768 end:0x82301770
 	.text       start:0x829CA640 end:0x829CA8D0
 
-LIBCMT/filecrea.cpp:
+xdk/LIBCMT/filecrea.cpp:
 	.pdata      start:0x82301778 end:0x82301780
 	.text       start:0x829CB4D8 end:0x829CB540
 
-LIBCMT/fgetwc.cpp:
+xdk/LIBCMT/fgetwc.cpp:
 	.pdata      start:0x82301780 end:0x82301788
 	.text       start:0x829CB540 end:0x829CB7B8
 
-LIBCMT/ungetwc.cpp:
+xdk/LIBCMT/ungetwc.cpp:
 	.pdata      start:0x82301788 end:0x82301790
 	.text       start:0x829CB7B8 end:0x829CBA40
 
-LIBCMT/iswctype.cpp:
+xdk/LIBCMT/iswctype.cpp:
 	.text       start:0x829CBA40 end:0x829CBA78
 
-LIBCMT/float.cpp:
+xdk/LIBCMT/float.cpp:
 	.pdata      start:0x82301790 end:0x823017A0
 	.text       start:0x829CBA78 end:0x829CBC90
 
-LIBCMT/exsup.cpp:
+xdk/LIBCMT/exsup.cpp:
 	.text       start:0x829CBC90 end:0x829CBCA8
 
-LIBCMT/stricmp.cpp:
+xdk/LIBCMT/stricmp.cpp:
 	.pdata      start:0x823017A0 end:0x823017A8
 	.text       start:0x829CBCA8 end:0x829CBD48
 
-LIBCMT/_flswbuf.cpp:
+xdk/LIBCMT/_flswbuf.cpp:
 	.pdata      start:0x823017A8 end:0x823017B0
 	.text       start:0x829CBD48 end:0x829CBF30
 
-LIBCMT/wchtodig.cpp:
+xdk/LIBCMT/wchtodig.cpp:
 	.text       start:0x829CBF30 end:0x829CC0F0
 
-LIBCMT/_filwbuf.cpp:
+xdk/LIBCMT/_filwbuf.cpp:
 	.pdata      start:0x823017B0 end:0x823017B8
 	.text       start:0x829CC0F0 end:0x829CC2A8
 
@@ -10894,63 +10894,63 @@ xmcore/winhelper.cpp:
 	.pdata      start:0x8230C8E0 end:0x8230C8F0
 	.text       start:0x82BA4350 end:0x82BA4418
 
-d3d9i/resource.cpp:
+xdk/d3d9i/resource.cpp:
 	.pdata      start:0x8230D348 end:0x8230D408
 	.text       start:0x82BB0FB0 end:0x82BB2AF8
 	.data       start:0x8316AB90 end:0x8316ABA8 rename:.bss
 
-d3d9i/draw.cpp:
+xdk/d3d9i/draw.cpp:
 	.pdata      start:0x8230D938 end:0x8230D980
 	.text       start:0x82BBC198 end:0x82BBD858
 
-d3d9i/tile.cpp:
+xdk/d3d9i/tile.cpp:
 	.pdata      start:0x8230D980 end:0x8230D9B0
 	.text       start:0x82BBD858 end:0x82BBE4D0
 
-d3d9i/ring.cpp:
+xdk/d3d9i/ring.cpp:
 	.pdata      start:0x8230DA88 end:0x8230DBE0
 	.text       start:0x82BC1F78 end:0x82BC4A58
 	.data       start:0x8316ABD0 end:0x8316AFF0 rename:.bss
 
-d3d9i/memory.cpp:
+xdk/d3d9i/memory.cpp:
 	.pdata      start:0x8230DE10 end:0x8230DE20
 	.text       start:0x82BCB128 end:0x82BCB258
 
-d3d9i/nui.cpp:
+xdk/d3d9i/nui.cpp:
 	.pdata      start:0x8230DE20 end:0x8230DE40
 	.text       start:0x82BCB258 end:0x82BCB3A0
 
-d3d9i/gpu.cpp:
+xdk/d3d9i/gpu.cpp:
 	.pdata      start:0x8230DE40 end:0x8230DE48
 	.text       start:0x82BCB3A0 end:0x82BCB3E8
 
-d3d9i/lazy.cpp:
+xdk/d3d9i/lazy.cpp:
 	.pdata      start:0x8230DE48 end:0x8230DEF0
 	.text       start:0x82BCB3E8 end:0x82BCDD10
 
-d3d9i/rttexturetracker.cpp:
+xdk/d3d9i/rttexturetracker.cpp:
 	.pdata      start:0x8230DEF0 end:0x8230E098
 	.text       start:0x82BCDD10 end:0x82BD1A18
 
-d3d9i/allocate.cpp:
+xdk/d3d9i/allocate.cpp:
 	.pdata      start:0x8230E098 end:0x8230E0B8
 	.text       start:0x82BD1A18 end:0x82BD1E68
 	.data       start:0x8316B02C end:0x8316B030 rename:.bss
 
-d3d9i/xenongpu.cpp:
+xdk/d3d9i/xenongpu.cpp:
 	.pdata      start:0x8230E0B8 end:0x8230E0C0
 	.text       start:0x82BD1E68 end:0x82BD2068
 	.data       start:0x8316B030 end:0x8316B048 rename:.bss
 
-d3d9i/hsio.cpp:
+xdk/d3d9i/hsio.cpp:
 	.pdata      start:0x8230E3D8 end:0x8230E3E0
 	.text       start:0x82BDA008 end:0x82BDA0F8
 
-d3d9i/lowpri.cpp:
+xdk/d3d9i/lowpri.cpp:
 	.pdata      start:0x8230E3E0 end:0x8230E460
 	.text       start:0x82BDA0F8 end:0x82BDB318
 
-d3d9i/rtshaderhacker.cpp:
+xdk/d3d9i/rtshaderhacker.cpp:
 	.pdata      start:0x8230EA68 end:0x8230EC70
 	.pdata      start:0x8231E240 end:0x8231E250
 	.text       start:0x82BEAA58 end:0x82BEF268
@@ -10958,7 +10958,7 @@ d3d9i/rtshaderhacker.cpp:
 	.data       start:0x82F35970 end:0x82F35A30
 	.data       start:0x83170178 end:0x83170184 rename:.bss
 
-d3d9i/graphmicrocodebuilder.cpp:
+xdk/d3d9i/graphmicrocodebuilder.cpp:
 	.pdata      start:0x8230EC70 end:0x8230ED00
 	.text       start:0x82BEF268 end:0x82BF0050
 
@@ -11614,144 +11614,144 @@ system/utl/EncryptXTEA.cpp:
 	.text       start:0x82E69568 end:0x82E69680
 	.data       start:0x82F595B4 end:0x82F59640
 
-LIBCMT/strcat_s.cpp:
+xdk/LIBCMT/strcat_s.cpp:
 	.pdata      start:0x8231B980 end:0x8231B988
 	.text       start:0x82E69680 end:0x82E69770
 
-LIBCMT/crtvmx.cpp:
+xdk/LIBCMT/crtvmx.cpp:
 	.pdata      start:0x8231B988 end:0x8231B998
 	.text       start:0x82E69770 end:0x82E69CA0
 
-LIBCMT/qsort_s.cpp:
+xdk/LIBCMT/qsort_s.cpp:
 	.pdata      start:0x8231B998 end:0x8231B9A0
 	.text       start:0x82E69CA0 end:0x82E6A050
 
-LIBCMT/exp.cpp:
+xdk/LIBCMT/exp.cpp:
 	.pdata      start:0x8231B9A0 end:0x8231B9A8
 	.text       start:0x82E6A050 end:0x82E6A208
 
-LIBCMT/memmove_s.cpp:
+xdk/LIBCMT/memmove_s.cpp:
 	.pdata      start:0x8231B9A8 end:0x8231B9B0
 	.text       start:0x82E6A208 end:0x82E6A2A0
 
-LIBCMT/feoferr.cpp:
+xdk/LIBCMT/feoferr.cpp:
 	.pdata      start:0x8231B9B0 end:0x8231B9C0
 	.text       start:0x82E6A2A0 end:0x82E6A330
 
-LIBCMT/contrlfp.cpp:
+xdk/LIBCMT/contrlfp.cpp:
 	.pdata      start:0x8231B9C0 end:0x8231B9C8
 	.text       start:0x82E6A330 end:0x82E6A3C0
 
-LIBCMT/xtow.cpp:
+xdk/LIBCMT/xtow.cpp:
 	.pdata      start:0x8231B9C8 end:0x8231B9D0
 	.text       start:0x82E6A3C0 end:0x82E6A480
 
-LIBCMT/wcscpy_s.cpp:
+xdk/LIBCMT/wcscpy_s.cpp:
 	.pdata      start:0x8231B9D0 end:0x8231B9D8
 	.text       start:0x82E6A480 end:0x82E6A538
 
-LIBCMT/wcscmp.cpp:
+xdk/LIBCMT/wcscmp.cpp:
 	.text       start:0x82E6A538 end:0x82E6A588
 
-LIBCMT/wcsnicmp.cpp:
+xdk/LIBCMT/wcsnicmp.cpp:
 	.pdata      start:0x8231B9D8 end:0x8231B9E0
 	.text       start:0x82E6A588 end:0x82E6A650
 
-LIBCMT/wtox.cpp:
+xdk/LIBCMT/wtox.cpp:
 	.text       start:0x82E6A650 end:0x82E6A660
 
-LIBCMT/xtows.cpp:
+xdk/LIBCMT/xtows.cpp:
 	.pdata      start:0x8231B9E0 end:0x8231B9E8
 	.text       start:0x82E6A660 end:0x82E6A7D8
 
-LIBCMT/swprintf.cpp:
+xdk/LIBCMT/swprintf.cpp:
 	.pdata      start:0x8231B9E8 end:0x8231B9F0
 	.text       start:0x82E6A7D8 end:0x82E6A828
 
-LIBCMT/wcsicmp.cpp:
+xdk/LIBCMT/wcsicmp.cpp:
 	.pdata      start:0x8231B9F0 end:0x8231B9F8
 	.text       start:0x82E6A828 end:0x82E6A8D8
 
-LIBCMT/bsearch.cpp:
+xdk/LIBCMT/bsearch.cpp:
 	.pdata      start:0x8231B9F8 end:0x8231BA00
 	.text       start:0x82E6A8D8 end:0x82E6A9E0
 
-LIBCMT/wcslwr.cpp:
+xdk/LIBCMT/wcslwr.cpp:
 	.pdata      start:0x8231BA00 end:0x8231BA08
 	.text       start:0x82E6A9E0 end:0x82E6AA90
 
-LIBCMT/wcsncmp.cpp:
+xdk/LIBCMT/wcsncmp.cpp:
 	.text       start:0x82E6AA90 end:0x82E6AAE0
 
-LIBCMT/wcsrchr.cpp:
+xdk/LIBCMT/wcsrchr.cpp:
 	.text       start:0x82E6AAE0 end:0x82E6AB30
 
-LIBCMT/wcsstr.cpp:
+xdk/LIBCMT/wcsstr.cpp:
 	.text       start:0x82E6AB30 end:0x82E6ABA8
 
-LIBCMT/wcstok_s.cpp:
+xdk/LIBCMT/wcstok_s.cpp:
 	.pdata      start:0x8231BA08 end:0x8231BA10
 	.text       start:0x82E6ABA8 end:0x82E6ACD0
 
-LIBCMT/wfopen.cpp:
+xdk/LIBCMT/wfopen.cpp:
 	.pdata      start:0x8231BA10 end:0x8231BA28
 	.text       start:0x82E6ACD0 end:0x82E6AEA8
 
-LIBCMT/strtod.cpp:
+xdk/LIBCMT/strtod.cpp:
 	.pdata      start:0x8231BA28 end:0x8231BA30
 	.text       start:0x82E6AEA8 end:0x82E6B010
 
-LIBCMT/vwprintf.cpp:
+xdk/LIBCMT/vwprintf.cpp:
 	.text       start:0x82E6B010 end:0x82E6B028
 
-LIBCMT/towlower.cpp:
+xdk/LIBCMT/towlower.cpp:
 	.text       start:0x82E6B028 end:0x82E6B050
 
-LIBCMT/towupper.cpp:
+xdk/LIBCMT/towupper.cpp:
 	.text       start:0x82E6B050 end:0x82E6B078
 
-LIBCMT/wtof.cpp:
+xdk/LIBCMT/wtof.cpp:
 	.pdata      start:0x8231BA30 end:0x8231BA38
 	.text       start:0x82E6B078 end:0x82E6B108
 
-LIBCMT/rewind.cpp:
+xdk/LIBCMT/rewind.cpp:
 	.pdata      start:0x8231BA38 end:0x8231BA48
 	.text       start:0x82E6B108 end:0x82E6B238
 
-LIBCMT/longjmp.cpp:
+xdk/LIBCMT/longjmp.cpp:
 	.pdata      start:0x8231BA50 end:0x8231BA58
 	.text       start:0x82E6B340 end:0x82E6B658
 
-LIBCMT/frexp.cpp:
+xdk/LIBCMT/frexp.cpp:
 	.pdata      start:0x8231BA58 end:0x8231BA60
 	.text       start:0x82E6B658 end:0x82E6B770
 
-LIBCMT/setjmp.cpp:
+xdk/LIBCMT/setjmp.cpp:
 	.text       start:0x82E6B770 end:0x82E6BA40
 
-LIBCMT/_mbslen.cpp:
+xdk/LIBCMT/_mbslen.cpp:
 	.text       start:0x82E6BA40 end:0x82E6BA68
 
-LIBCMT/hypot.cpp:
+xdk/LIBCMT/hypot.cpp:
 	.pdata      start:0x8231BA70 end:0x8231BA78
 	.text       start:0x82E6BE98 end:0x82E6C0C8
 
-LIBCMT/wcslen_s.cpp:
+xdk/LIBCMT/wcslen_s.cpp:
 	.text       start:0x82E6C0C8 end:0x82E6C0F8
 
-LIBCMT/_wopen.cpp:
+xdk/LIBCMT/_wopen.cpp:
 	.pdata      start:0x8231BA78 end:0x8231BA80
 	.text       start:0x82E6C0F8 end:0x82E6C330
 
-LIBCMT/wcfin.cpp:
+xdk/LIBCMT/wcfin.cpp:
 	.pdata      start:0x8231BA80 end:0x8231BA88
 	.text       start:0x82E6C330 end:0x82E6C3E8
 
-LIBCMT/wstrgtold.cpp:
+xdk/LIBCMT/wstrgtold.cpp:
 	.pdata      start:0x8231BA88 end:0x8231BA90
 	.text       start:0x82E6C3E8 end:0x82E6CD40
 
-LIBCMT/rmtmp.cpp:
+xdk/LIBCMT/rmtmp.cpp:
 	.pdata      start:0x8231BA90 end:0x8231BAA8
 	.text       start:0x82E6CD40 end:0x82E6CED0
 	.data       start:0x82F59640 end:0x82F59668
@@ -12040,7 +12040,7 @@ oggvorbis/lsp.cpp:
 	.pdata      start:0x8231DD20 end:0x8231DD28
 	.text       start:0x82EE5DD8 end:0x82EE6100
 
-LIBCMT/memcmpp.cpp:
+xdk/LIBCMT/memcmpp.cpp:
 	.text       start:0x82EE6100 end:0x82EE6190
 
 xapilibi/cancelwaitabletimer.cpp:
@@ -12093,23 +12093,23 @@ system/math/vec.cpp:
 	.data       start:0x82F1F508 end:0x82F1F578
 	.data       start:0x82F72F18 end:0x82F72F38 rename:.bss
 
-LIBCMT/gs_cookie.cpp:
+xdk/LIBCMT/gs_cookie.cpp:
 	.data       start:0x82F2DEE0 end:0x82F2DEE8
 
-LIBCMT/cmiscdat.cpp:
+xdk/LIBCMT/cmiscdat.cpp:
 	.data       start:0x82F2E3E8 end:0x82F2E530
 
-LIBCMT/days.cpp:
+xdk/LIBCMT/days.cpp:
 	.data       start:0x82F2E8B4 end:0x82F2E938
 
-LIBCMT/lconv.cpp:
+xdk/LIBCMT/lconv.cpp:
 	.data       start:0x82F2ECD8 end:0x82F2ED68
 	.data       start:0x8312B18C end:0x8312B194 rename:.bss
 
-LIBCMT/constpow.cpp:
+xdk/LIBCMT/constpow.cpp:
 	.data       start:0x82F2ED68 end:0x82F2F024
 
-LIBCMT/matherr.cpp:
+xdk/LIBCMT/matherr.cpp:
 	.data       start:0x82F2F024 end:0x82F2F040
 
 nuiaudio/knobs.cpp:
@@ -12146,16 +12146,16 @@ os/pch.cpp:
 	.data       start:0x830A99E4 end:0x830A99E8 rename:.bss
 	.data       start:0x830B076C end:0x830B07C8 rename:.bss
 
-LIBCMT/_newmode.cpp:
+xdk/LIBCMT/_newmode.cpp:
 	.data       start:0x8312A5F8 end:0x8312A5FC rename:.bss
 
-LIBCMT/outputformat.cpp:
+xdk/LIBCMT/outputformat.cpp:
 	.data       start:0x8312B158 end:0x8312B15C rename:.bss
 
-LIBCMT/ncommode.cpp:
+xdk/LIBCMT/ncommode.cpp:
 	.data       start:0x8312B15C end:0x8312B170 rename:.bss
 
-LIBCMT/txtmode.cpp:
+xdk/LIBCMT/txtmode.cpp:
 	.data       start:0x8312B194 end:0x8312B198 rename:.bss
 
 nuiapi/idApiprecomp.cpp:
