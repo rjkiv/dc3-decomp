@@ -37,8 +37,9 @@ jobs:
       run: |
         chmod +x assets/dtk
         chmod +x assets/objdiff-cli
+        chmod +x assets/wibo
         python configure.py --dtk assets/dtk --objdiff assets/objdiff-cli --version ${{ matrix.version }} \
-            --binutils /binutils --wrapper wibo
+            --binutils /binutils --wrapper assets/wibo
         ninja all_source progress build/${{ matrix.version }}/report.json
 
     # # Upload map files
