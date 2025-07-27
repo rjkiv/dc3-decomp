@@ -25,9 +25,9 @@ jobs:
         submodules: recursive
 
     # Install wine
-    - name: Wine
-      run: apt-get install -y winehq-stable wine-stable wine-stable-i386 wine-stable-amd64
-      shell: bash
+    - uses: ConorMacBride/install-package@v1
+      with:
+        apt: winehq-stable wine-stable wine-stable-i386 wine-stable-amd64
 
     # Set Git config
     - name: Git config
