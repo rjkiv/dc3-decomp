@@ -3,6 +3,7 @@
 #include <types.h>
 #include "math/Rand2.h"
 #include "os/Platform.h"
+#include "utl/Symbol.h"
 
 enum EofType {
     NotEof = 0,
@@ -68,8 +69,11 @@ public:
     bool AddSharedInlined(const class FilePath &);
 
     BinStream &operator<<(const char *);
-    BinStream &operator<<(const class Symbol &);
+    BinStream &operator<<(const Symbol &);
     BinStream &operator<<(const class String &);
+
+    BinStream &operator>>(Symbol &);
+    BinStream &operator>>(class String &);
 
 #define BS_READ_OP(typename)                                                             \
     BinStream &operator>>(typename &rhs) {                                               \
