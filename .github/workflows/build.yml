@@ -10,7 +10,7 @@ jobs:
     # See docs/github_actions.md for more information.
     container: ghcr.io/rjkiv/dc3-build:main
 
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     strategy:
       fail-fast: false
       matrix:
@@ -24,12 +24,6 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Install Wine
-      run: |
-        dpkg --add-architecture i386
-        apt update
-        apt install -y wine64 wine32
-
     # Set Git config
     - name: Git config
       run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
@@ -41,9 +35,7 @@ jobs:
     # Build the project
     - name: Build
       run: |
-        chmod +x assets/dtk
-        chmod +x assets/objdiff-cli
-        python configure.py --dtk assets/dtk --objdiff assets/objdiff-cli --version ${{ matrix.version }} \
+        python configure.py --dtk assets/dtk.exe --objdiff assets/objdiff-cli.exe --version ${{ matrix.version }} \
             --binutils /binutils --wrapper /usr/bin/wine
         ninja all_source progress build/${{ matrix.version }}/report.json
 
