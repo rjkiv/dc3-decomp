@@ -35,6 +35,8 @@ jobs:
     # Build the project
     - name: Build
       run: |
+        chmod +x assets/dtk
+        chmod +x assets/objdiff-cli
         python configure.py --dtk assets/dtk --objdiff assets/objdiff-cli --version ${{ matrix.version }} \
             --binutils /binutils --compilers /compilers
         ninja all_source progress build/${{ matrix.version }}/report.json
