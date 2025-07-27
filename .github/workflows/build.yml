@@ -40,7 +40,16 @@ jobs:
         chmod +x assets/wibo
         python configure.py --dtk assets/dtk --objdiff assets/objdiff-cli --version ${{ matrix.version }} \
             --binutils /binutils --wrapper assets/wibo
-        ninja all_source progress build/${{ matrix.version }}/report.json
+        ninja -v all_source progress build/${{ matrix.version }}/report.json
+      continue-on-error: true
+
+    - name: Upload ninja.log
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.version }}_ninja_log
+        path: ninja.log
+
 
     # # Upload map files
     # - name: Upload map
