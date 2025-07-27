@@ -5,16 +5,22 @@
         "lib": "Third-Party Libraries",
         "sdk": "SDK Code"
     },
-    "asflags": [
-    ],
-    "ldflags": [
-    ],
+    "asflags": [],
+    "ldflags": [],
     "cflags": {
         "base": {
             "flags": [
                 "/nologo",
+                "/I src",
                 "/c",
                 "/Zi",
+                "/O2",
+                "/EHa"
+            ]
+        },
+        "engine": {
+            "base": "base",
+            "flags": [
                 "/O1"
             ]
         }
