@@ -1094,7 +1094,8 @@ def generate_build_ninja(
         # Check if all compiler versions exist
         for mw_version in used_compiler_versions:
             mw_path = compilers / mw_version / "mwcceppc.exe"
-            if config.compilers_path and not os.path.exists(mw_path):
+            msvc_path = compilers / mw_version / "cl.exe"
+            if config.compilers_path and (not os.path.exists(mw_path) or not os.path.exists(msvc_path)):
                 sys.exit(f"Compiler {mw_path} does not exist")
 
         # Check if linker exists
