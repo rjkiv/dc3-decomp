@@ -1,5 +1,7 @@
 Dance Central 3 
+<!--
 [![Build Status]][actions] [![Code Progress]][progress] [![Data Progress]][progress] [![Discord Badge]][discord]
+-->
 =============
 
 <!--
