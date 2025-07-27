@@ -86,12 +86,16 @@ public:
     BS_READ_OP(u16)
     BS_READ_OP(u32)
     BS_READ_OP(u64)
+    BS_READ_OP(f32)
+    BS_READ_OP(f64)
 
     BS_WRITE_OP(int)
     BS_WRITE_OP(uint)
     BS_WRITE_OP(u16)
     BS_WRITE_OP(u32)
     BS_WRITE_OP(u64)
+    BS_WRITE_OP(f32)
+    BS_WRITE_OP(f64)
 
 #undef BS_READ_OP
 #undef BS_WRITE_OP
