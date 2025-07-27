@@ -40,17 +40,8 @@ jobs:
         chmod +x assets/wibo
         python configure.py --dtk assets/dtk --objdiff assets/objdiff-cli --version ${{ matrix.version }} \
             --binutils /binutils --wrapper assets/wibo
-        ninja -v -d keepdepfile all_source progress build/${{ matrix.version }}/report.json
-      continue-on-error: true
-
-    - name: Upload ninja.log
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: ninja_log
-        path: ninja.log
-
-
+        ninja -v all_source progress build/${{ matrix.version }}/report.json
+        
     # # Upload map files
     # - name: Upload map
     #   uses: actions/upload-artifact@v4
