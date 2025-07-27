@@ -1,8 +1,10 @@
-Dance Central 3 
+Dance Central 3
+=============
+
+<!-- put these in between DC3 and the =='s once you get them working>
 <!--
 [![Build Status]][actions] [![Code Progress]][progress] [![Data Progress]][progress] [![Discord Badge]][discord]
 -->
-=============
 
 <!--
 Replace with your repository's URL.
