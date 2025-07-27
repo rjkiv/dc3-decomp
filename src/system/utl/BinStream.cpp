@@ -1,6 +1,8 @@
 #include "BinStream.h"
 #include "os/Debug.h"
 
+#define BUF_SIZE 512
+
 const char *BinStream::Name() const { return "<unnamed>"; }
 
 BinStream::BinStream(bool b) : mLittleEndian(b), mCrypto(nullptr) {}
@@ -17,7 +19,7 @@ void BinStream::WriteEndian(const void *in, int size) {
 }
 
 bool BinStream::AddSharedInlined(const class FilePath &) {
-    "BinStream::AddSharedInlined is a PC only dev tool !!";
+    MILO_FAIL("BinStream::AddSharedInlined is a PC only dev tool !!");
     return false;
 }
 
@@ -33,8 +35,14 @@ BinStream &BinStream::operator<<(const char *str) {
     Write(str, len);
     return *this;
 }
-BinStream &BinStream::operator<<(const class Symbol &) { return *this; }
-BinStream &BinStream::operator<<(const class String &) { return *this; }
+
+BinStream &BinStream::operator<<(const Symbol &sym) {
+    int len;
+    MILO_ASSERT(len < BUF_SIZE);
+    return *this;
+}
+
+BinStream &BinStream::operator<<(const class String &str) { return *this; }
 
 void BinStream::ReadEndian(void *out, int size) {
     Read(out, size);
@@ -43,7 +51,15 @@ void BinStream::ReadEndian(void *out, int size) {
     }
 }
 
-void BinStream::ReadString(char *, int) {}
+// void BinStream::ReadString(char *, int) {}
+
+BinStream &BinStream::operator>>(Symbol &sym) {
+    char buf[BUF_SIZE];
+    ReadString(buf, BUF_SIZE);
+    sym = buf;
+    return *this;
+}
+BinStream &BinStream::operator>>(class String &) { return *this; }
 
 void BinStream::EnableReadEncryption(void) {}
 
