@@ -17,6 +17,7 @@
             "system/math/Rand2.cpp": "NonMatching",
             "system/rnddx9/RenderState.cpp": "NonMatching",
             "system/rndobj/SIVideo.cpp": "NonMatching",
+            "system/utl/BinStream.cpp": "NonMatching",
             "system/utl/Licenses.cpp": "NonMatching"
         }
     },
