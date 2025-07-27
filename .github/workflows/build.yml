@@ -24,6 +24,10 @@ jobs:
       with:
         submodules: recursive
 
+    # Install wine
+    - name: Wine
+      run: apt install -y winehq-stable wine-stable wine-stable-i386 wine-stable-amd64
+
     # Set Git config
     - name: Git config
       run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
