@@ -5,15 +5,19 @@ Dance Central 3
 <!--
 Replace with your repository's URL.
 -->
+<!--
 [Build Status]: https://github.com/zeldaret/tww/actions/workflows/build.yml/badge.svg
 [actions]: https://github.com/zeldaret/tww/actions/workflows/build.yml
+-->
 <!--
 decomp.dev progress badges
 See https://decomp.dev/api for an API overview.
 -->
+<!--
 [Code Progress]: https://decomp.dev/zeldaret/tww.svg?mode=shield&measure=code&label=Code
 [Data Progress]: https://decomp.dev/zeldaret/tww.svg?mode=shield&measure=data&label=Data
 [progress]: https://decomp.dev/zeldaret/tww
+-->
 <!--
 Replace with your Discord server's ID and invite URL.
 -->
