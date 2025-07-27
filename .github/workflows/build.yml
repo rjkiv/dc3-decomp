@@ -38,7 +38,7 @@ jobs:
         chmod +x assets/dtk
         chmod +x assets/objdiff-cli
         python configure.py --dtk assets/dtk --objdiff assets/objdiff-cli --version ${{ matrix.version }} \
-            --binutils /binutils --compilers /compilers
+            --binutils /binutils 
         ninja all_source progress build/${{ matrix.version }}/report.json
 
     # # Upload map files
