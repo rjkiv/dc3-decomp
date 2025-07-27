@@ -20,7 +20,7 @@ Replace with your Discord server's ID and invite URL.
 [Discord Badge]: https://img.shields.io/discord/727908905392275526?color=%237289DA&logo=discord&logoColor=%23FFFFFF
 [discord]: https://discord.gg/milohax
 
-A decompilation of Dance Central 3 (build Aug 29 2012) for the Xbox 360.
+A decompilation of Dance Central 3 (build Sep 16 2012) for the Xbox 360.
 
 This repository does **not** contain any game assets or assembly whatsoever. An existing copy of the game is required.
 
@@ -75,7 +75,7 @@ Building
   git clone https://github.com/rjkiv/dc3-decomp.git
   ```
 
-- Copy your game's xex to `orig/373307D9`.
+- Copy the xex to `orig/373307D9`.
 
 - Configure:
 
