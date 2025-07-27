@@ -10,7 +10,7 @@ jobs:
     # See docs/github_actions.md for more information.
     container: ghcr.io/rjkiv/dc3-build:main
 
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
