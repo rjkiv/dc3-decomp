@@ -65,7 +65,8 @@
             "xdk/d3d9i/hsio.cpp": "MISSING",
             "xdk/d3d9i/lowpri.cpp": "MISSING",
             "xdk/d3d9i/rtshaderhacker.cpp": "MISSING",
-            "xdk/d3d9i/graphmicrocodebuilder.cpp": "MISSING"
+            "xdk/d3d9i/graphmicrocodebuilder.cpp": "MISSING",
+            "xdk/NUI/nuispeech/mmio.cpp": "NonMatching"
         }
     }
 }

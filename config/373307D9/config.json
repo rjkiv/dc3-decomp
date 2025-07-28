@@ -13,6 +13,7 @@
                 "/nologo",
                 "/I src",
                 "/I src/system",
+                "/I src/xdk/LIBCMT",
                 "/c",
                 "/Zi",
                 "/O2",
