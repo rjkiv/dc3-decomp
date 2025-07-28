@@ -1,0 +1,5 @@
+#pragma once
+
+namespace std {
+	#include "string.h"
+}

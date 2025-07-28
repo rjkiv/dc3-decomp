@@ -13,6 +13,9 @@ u32 strncmp(const char *, const char *, u32);
 u32 strcpy(char *, const char *);
 u32 strncpy(char *, const char *, u32);
 
+void *memcpy(void *dest, const void *src, u32 count);
+void memset(void *dest, u32 data, u32 count);
+
 #ifdef __cplusplus
 }
 #endif

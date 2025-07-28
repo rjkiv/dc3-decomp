@@ -6,6 +6,10 @@ extern "C" {
 
 #include <types.h>
 
+typedef u32 size_t;
+typedef size_t ptrdiff_t;
+#define offsetof(T, mem) ((int)&((T *)0->mem))
+
 #ifdef __cplusplus
 }
 #endif

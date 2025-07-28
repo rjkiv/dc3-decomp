@@ -4,7 +4,7 @@
 extern "C" {
 #endif
 
-#include <types.h>
+#define errno 0
 
 #ifdef __cplusplus
 }
