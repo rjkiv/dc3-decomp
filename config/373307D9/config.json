@@ -13,6 +13,7 @@
                 "/nologo",
                 "/I src",
                 "/I src/system",
+                "/I src/system/stlport",
                 "/I src/xdk/LIBCMT",
                 "/c",
                 "/Zi",

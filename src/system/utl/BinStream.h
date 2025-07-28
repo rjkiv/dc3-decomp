@@ -4,6 +4,7 @@
 #include "math/Rand2.h"
 #include "os/Platform.h"
 #include "utl/Symbol.h"
+#include "utl/Str.h"
 
 enum EofType {
     NotEof = 0,
@@ -70,10 +71,10 @@ public:
 
     BinStream &operator<<(const char *);
     BinStream &operator<<(const Symbol &);
-    BinStream &operator<<(const class String &);
+    BinStream &operator<<(const String &);
 
     BinStream &operator>>(Symbol &);
-    BinStream &operator>>(class String &);
+    BinStream &operator>>(String &);
 
 #define BS_READ_OP(typename)                                                             \
     BinStream &operator>>(typename &rhs) {                                               \

@@ -7,6 +7,7 @@ extern "C" {
 #include <types.h>
 
 void *memcpy(void *dest, const void *src, u32 count);
+void memset(void *dest, u32 data, u32 count);
 
 #ifdef __cplusplus
 }

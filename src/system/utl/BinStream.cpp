@@ -59,7 +59,13 @@ BinStream &BinStream::operator>>(Symbol &sym) {
     sym = buf;
     return *this;
 }
-BinStream &BinStream::operator>>(class String &) { return *this; }
+BinStream &BinStream::operator>>(String &str) {
+    int siz;
+    *this >> siz;
+    str.Resize(siz);
+    Read(str.mStr, siz);
+    return *this;
+}
 
 void BinStream::EnableReadEncryption(void) {}
 
