@@ -179,7 +179,7 @@
 #      define _STLP_LITTLE_ENDIAN 1
 #    endif
 #  else
-#    error "can't determine endianess"
+#    define _STLP_BIG_ENDIAN 1 // hack for 360 cause it sucks
 #  endif
 #endif /* _STLP_BIG_ENDIAN */
 
