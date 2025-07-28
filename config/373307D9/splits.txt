@@ -1583,7 +1583,7 @@ system/math/StreamChecksum.cpp:
 	.pdata      start:0x822C9E90 end:0x822C9ED0
 	.text       start:0x8253C2D0 end:0x8253C6E0
 
-meta/Achievements.cpp:
+system/meta/Achievements.cpp:
 	.rdata      start:0x8205F3A4 end:0x8205F658
 	.rdata      start:0x82294B24 end:0x82294B74 rename:.rdata$r
 	.pdata      start:0x822C9ED0 end:0x822C9F88
@@ -1593,7 +1593,7 @@ meta/Achievements.cpp:
 	.data       start:0x82F0F790 end:0x82F0F7CC
 	.data       start:0x82F636B8 end:0x82F636D0 rename:.bss
 
-meta/FixedSizeSaveable.cpp:
+system/meta/FixedSizeSaveable.cpp:
 	.rdata      start:0x8205F658 end:0x8205F88C
 	.rdata      start:0x82294B74 end:0x82294BBC rename:.rdata$r
 	.pdata      start:0x822C9F88 end:0x822CA028
@@ -1601,7 +1601,7 @@ meta/FixedSizeSaveable.cpp:
 	.data       start:0x82F0F7CC end:0x82F0F830
 	.data       start:0x82F636D0 end:0x82F636D4 rename:.bss
 
-meta/MetaMusicManager.cpp:
+system/meta/MetaMusicManager.cpp:
 	.rdata      start:0x8205F88C end:0x8205FABC
 	.rdata      start:0x82294BBC end:0x82294C0C rename:.rdata$r
 	.pdata      start:0x822CA028 end:0x822CA130
@@ -1609,42 +1609,42 @@ meta/MetaMusicManager.cpp:
 	.data       start:0x82F0F830 end:0x82F0F90C
 	.data       start:0x82F636D4 end:0x82F6376C rename:.bss
 
-meta/DataArraySongInfo.cpp:
+system/meta/DataArraySongInfo.cpp:
 	.rdata      start:0x8205FABC end:0x8205FF30
 	.rdata      start:0x82294C0C end:0x82294CC8 rename:.rdata$r
 	.pdata      start:0x822CA130 end:0x822CA2C0
 	.text       start:0x8253F608 end:0x82540FF8
 	.data       start:0x82F0F90C end:0x82F0F980
 
-meta/SongMgr.cpp:
+system/meta/SongMgr.cpp:
 	.rdata      start:0x8205FF30 end:0x82060C58
 	.rdata      start:0x82294CC8 end:0x82294E14 rename:.rdata$r
 	.pdata      start:0x822CA2C0 end:0x822CA678
 	.text       start:0x82540FF8 end:0x825453A8
 	.data       start:0x82F0F980 end:0x82F0FB94
 
-meta/FixedSizeSaveableStream.cpp:
+system/meta/FixedSizeSaveableStream.cpp:
 	.rdata      start:0x82060C58 end:0x82060D84
 	.rdata      start:0x82294E14 end:0x82294E9C rename:.rdata$r
 	.pdata      start:0x822CA678 end:0x822CA6F8
 	.text       start:0x825453E0 end:0x82545A38
 	.data       start:0x82F0FB94 end:0x82F0FBD4
 
-meta/MetaMusicScene.cpp:
+system/meta/MetaMusicScene.cpp:
 	.rdata      start:0x82060D84 end:0x82060E50
 	.rdata      start:0x82294E9C end:0x82294EE4 rename:.rdata$r
 	.pdata      start:0x822CA6F8 end:0x822CA728
 	.text       start:0x82545A48 end:0x82545CE8
 	.data       start:0x82F0FBD4 end:0x82F0FBF4
 
-meta/SongMetadata.cpp:
+system/meta/SongMetadata.cpp:
 	.rdata      start:0x82060E50 end:0x82061208
 	.rdata      start:0x82294EE4 end:0x82294F34 rename:.rdata$r
 	.pdata      start:0x822CA728 end:0x822CA808
 	.text       start:0x82545CE8 end:0x82546C10
 	.data       start:0x82F0FBF4 end:0x82F0FC14
 
-midi/MidiParser.cpp:
+system/midi/MidiParser.cpp:
 	.rdata      start:0x82061208 end:0x820626E8
 	.rdata      start:0x82294F34 end:0x82294F84 rename:.rdata$r
 	.pdata      start:0x822CA808 end:0x822CAD48
@@ -1655,7 +1655,7 @@ midi/MidiParser.cpp:
 	.data       start:0x82F0FC14 end:0x82F0FC88
 	.data       start:0x82F6376C end:0x82F63844 rename:.bss
 
-midi/MidiParserMgr.cpp:
+system/midi/MidiParserMgr.cpp:
 	.rdata      start:0x820626E8 end:0x82062F40
 	.rdata      start:0x82294F84 end:0x82295024 rename:.rdata$r
 	.pdata      start:0x822CAD48 end:0x822CAF38
@@ -1663,7 +1663,7 @@ midi/MidiParserMgr.cpp:
 	.data       start:0x82F0FC88 end:0x82F0FCC8
 	.data       start:0x82F63844 end:0x82F63850 rename:.bss
 
-midi/MidiReader.cpp:
+system/midi/MidiReader.cpp:
 	.rdata      start:0x82062F40 end:0x82063720
 	.pdata      start:0x822CAF38 end:0x822CB0F0
 	.text       start:0x8254E100 end:0x82550890
@@ -1671,24 +1671,24 @@ midi/MidiReader.cpp:
 	.data       start:0x82F0FCC8 end:0x82F0FCE8
 	.data       start:0x82F63850 end:0x82F6385C rename:.bss
 
-midi/MidiReceiver.cpp:
+system/midi/MidiReceiver.cpp:
 	.rdata      start:0x82063720 end:0x8206375C
 	.pdata      start:0x822CB0F0 end:0x822CB100
 	.text       start:0x82550890 end:0x82550A10
 
-midi/DataEventList.cpp:
+system/midi/DataEventList.cpp:
 	.rdata      start:0x8206375C end:0x82063CC4
 	.pdata      start:0x822CB100 end:0x822CB2C0
 	.text       start:0x82550A10 end:0x82552980
 	.data       start:0x82F0FCE8 end:0x82F0FD24
 	.data       start:0x82F6385C end:0x82F63860 rename:.bss
 
-midi/DisplayEvents.cpp:
+system/midi/DisplayEvents.cpp:
 	.rdata      start:0x82063CC4 end:0x82063D48
 	.pdata      start:0x822CB2C0 end:0x822CB2D8
 	.text       start:0x82552980 end:0x82552D30
 
-midi/MidiVarLen.cpp:
+system/midi/MidiVarLen.cpp:
 	.rdata      start:0x82063D48 end:0x82063D6C
 	.pdata      start:0x822CB2D8 end:0x822CB2E8
 	.text       start:0x82552D30 end:0x82552E18
@@ -2005,7 +2005,7 @@ net/curl_fnmatch.cpp:
 	.pdata      start:0x822CCF58 end:0x822CCF70
 	.text       start:0x8258E6E8 end:0x8258F0E0
 
-obj/Dir.cpp:
+system/obj/Dir.cpp:
 	.rdata      start:0x8206E314 end:0x82070078
 	.rdata      start:0x822958F8 end:0x82295920 rename:.rdata$r
 	.pdata      start:0x822CCF70 end:0x822CD798
@@ -2016,7 +2016,7 @@ obj/Dir.cpp:
 	.data       start:0x82F10380 end:0x82F1047C
 	.data       start:0x82F63B24 end:0x82F64728 rename:.bss
 
-obj/Utl.cpp:
+system/obj/Utl.cpp:
 	.rdata      start:0x82070078 end:0x82070838
 	.rdata      start:0x82295920 end:0x82295970 rename:.rdata$r
 	.pdata      start:0x822CD798 end:0x822CDA60
@@ -2026,7 +2026,7 @@ obj/Utl.cpp:
 	.text       start:0x82EE1F18 end:0x82EE1F38 rename:.text$yd
 	.data       start:0x82F1047C end:0x82F10504
 
-obj/DataNode.cpp:
+system/obj/DataNode.cpp:
 	.rdata      start:0x82070838 end:0x82071260
 	.pdata      start:0x822CDA60 end:0x822CDC28
 	.pdata      start:0x82321308 end:0x82321318
@@ -2034,7 +2034,7 @@ obj/DataNode.cpp:
 	.text       start:0x82EDB5D8 end:0x82EDB6B0 rename:.text$yc
 	.text       start:0x82EE1F38 end:0x82EE1F78 rename:.text$yd
 
-obj/DataArray.cpp:
+system/obj/DataArray.cpp:
 	.rdata      start:0x82071260 end:0x82071A94
 	.pdata      start:0x822CDC28 end:0x822CDEE8
 	.pdata      start:0x82321318 end:0x82321320
@@ -2044,7 +2044,7 @@ obj/DataArray.cpp:
 	.data       start:0x82F10504 end:0x82F10538
 	.data       start:0x82F64728 end:0x82F648D8 rename:.bss
 
-obj/DirLoader.cpp:
+system/obj/DirLoader.cpp:
 	.rdata      start:0x82071A94 end:0x82072958
 	.rdata      start:0x82295970 end:0x82295A40 rename:.rdata$r
 	.pdata      start:0x822CDEE8 end:0x822CE290
@@ -2055,7 +2055,7 @@ obj/DirLoader.cpp:
 	.data       start:0x82F10538 end:0x82F105C8
 	.data       start:0x82F648D8 end:0x82F64A58 rename:.bss
 
-obj/Task.cpp:
+system/obj/Task.cpp:
 	.rdata      start:0x82072958 end:0x820737F8
 	.rdata      start:0x82295A40 end:0x82295B90 rename:.rdata$r
 	.pdata      start:0x822CE290 end:0x822CE710
@@ -2066,7 +2066,7 @@ obj/Task.cpp:
 	.data       start:0x82F105C8 end:0x82F106D0
 	.data       start:0x82F64A58 end:0x82F64AE8 rename:.bss
 
-obj/Object.cpp:
+system/obj/Object.cpp:
 	.rdata      start:0x820737F8 end:0x82074BA8
 	.rdata      start:0x82295B90 end:0x82295BF0 rename:.rdata$r
 	.pdata      start:0x822CE710 end:0x822CEC28
@@ -2077,7 +2077,7 @@ obj/Object.cpp:
 	.data       start:0x82F106D0 end:0x82F1074C
 	.data       start:0x82F64AE8 end:0x82F64C40 rename:.bss
 
-obj/DataFunc.cpp:
+system/obj/DataFunc.cpp:
 	.rdata      start:0x82074BA8 end:0x8207653C
 	.rdata      start:0x82295BF0 end:0x82295D30 rename:.rdata$r
 	.pdata      start:0x822CEC28 end:0x822CF530
@@ -2088,7 +2088,7 @@ obj/DataFunc.cpp:
 	.data       start:0x82F1074C end:0x82F1084C
 	.data       start:0x82F64C40 end:0x82F64C7C rename:.bss
 
-obj/MessageTimer.cpp:
+system/obj/MessageTimer.cpp:
 	.rdata      start:0x8207653C end:0x820766E0
 	.pdata      start:0x822CF530 end:0x822CF6A8
 	.text       start:0x825BBAD8 end:0x825BD648
@@ -2097,12 +2097,12 @@ obj/MessageTimer.cpp:
 	.data       start:0x82F1084C end:0x82F10888
 	.data       start:0x82F64C7C end:0x82F64D1C rename:.bss
 
-obj/PropSync.cpp:
+system/obj/PropSync.cpp:
 	.rdata      start:0x820766E0 end:0x82076C68
 	.pdata      start:0x822CF6A8 end:0x822CF7D0
 	.text       start:0x825BD648 end:0x825BEB70
 
-obj/DataFile.cpp:
+system/obj/DataFile.cpp:
 	.rdata      start:0x82076C68 end:0x820778D8
 	.rdata      start:0x82295D30 end:0x82295DC8 rename:.rdata$r
 	.pdata      start:0x822CF7D0 end:0x822CFA88
@@ -2113,7 +2113,7 @@ obj/DataFile.cpp:
 	.data       start:0x82F10888 end:0x82F10910
 	.data       start:0x82F64D1C end:0x82F64D68 rename:.bss
 
-obj/DataUtl.cpp:
+system/obj/DataUtl.cpp:
 	.rdata      start:0x820778D8 end:0x82077CEC
 	.rdata      start:0x82295DC8 end:0x82295E4C rename:.rdata$r
 	.pdata      start:0x822CFA88 end:0x822CFBD8
@@ -2124,7 +2124,7 @@ obj/DataUtl.cpp:
 	.data       start:0x82F10910 end:0x82F10984
 	.data       start:0x82F64D68 end:0x82F65290 rename:.bss
 
-obj/Msg.cpp:
+system/obj/Msg.cpp:
 	.rdata      start:0x82077CEC end:0x82078700
 	.rdata      start:0x82295E4C end:0x82295E9C rename:.rdata$r
 	.pdata      start:0x822CFBD8 end:0x822CFF08
@@ -2134,30 +2134,30 @@ obj/Msg.cpp:
 	.data       start:0x82F10984 end:0x82F10A68
 	.data       start:0x82F65290 end:0x82F652C0 rename:.bss
 
-obj/TypeProps.cpp:
+system/obj/TypeProps.cpp:
 	.rdata      start:0x82078700 end:0x82078A40
 	.pdata      start:0x822CFF08 end:0x822D0010
 	.text       start:0x825C6620 end:0x825C7C20
 
-obj/DirUnloader.cpp:
+system/obj/DirUnloader.cpp:
 	.rdata      start:0x82078A40 end:0x82078D20
 	.rdata      start:0x82295E9C end:0x82295F20 rename:.rdata$r
 	.pdata      start:0x822D0010 end:0x822D00E8
 	.text       start:0x825C7C20 end:0x825C87A8
 	.data       start:0x82F10A68 end:0x82F11D68
 
-obj/DataFlex.cpp:
+system/obj/DataFlex.cpp:
 	.rdata      start:0x82078D20 end:0x82078E44
 	.pdata      start:0x822D00E8 end:0x822D0110
 	.text       start:0x825C87A8 end:0x825C9160
 	.data       start:0x82F652C0 end:0x82F652DC rename:.bss
 
-obj/TextFile.cpp:
+system/obj/TextFile.cpp:
 	.rdata      start:0x82078E44 end:0x82078F88
 	.pdata      start:0x822D0110 end:0x822D0188
 	.text       start:0x825C9160 end:0x825C9988
 
-os/System.cpp:
+system/os/System.cpp:
 	.rdata      start:0x82078F88 end:0x820796BC
 	.pdata      start:0x822D0188 end:0x822D0370
 	.text       start:0x825C9988 end:0x825CBFE8
@@ -2166,7 +2166,7 @@ os/System.cpp:
 	.data       start:0x82F11D68 end:0x82F11D80
 	.data       start:0x82F652DC end:0x82F655B0 rename:.bss
 
-os/Debug.cpp:
+system/os/Debug.cpp:
 	.rdata      start:0x820796BC end:0x8207A228
 	.rdata      start:0x82295F20 end:0x8229605C rename:.rdata$r
 	.rdata      start:0x822AF660 end:0x822AF6B4 rename:.xdata$x
@@ -2178,7 +2178,7 @@ os/Debug.cpp:
 	.data       start:0x82F11D80 end:0x82F11E54
 	.data       start:0x82F655B0 end:0x82F65728 rename:.bss
 
-os/ThreadCall_Win.cpp:
+system/os/ThreadCall_Win.cpp:
 	.rdata      start:0x8207A228 end:0x8207A29C
 	.pdata      start:0x822D0638 end:0x822D0668
 	.pdata      start:0x82321408 end:0x82321410
@@ -2188,7 +2188,7 @@ os/ThreadCall_Win.cpp:
 	.data       start:0x82F11E54 end:0x82F11E60
 	.data       start:0x82F65728 end:0x82F65878 rename:.bss
 
-os/Timer.cpp:
+system/os/Timer.cpp:
 	.rdata      start:0x8207A29C end:0x8207A4F4
 	.pdata      start:0x822D0668 end:0x822D0720
 	.pdata      start:0x82321410 end:0x82321420
@@ -2198,7 +2198,7 @@ os/Timer.cpp:
 	.data       start:0x82F11E60 end:0x82F11EE8
 	.data       start:0x82F65878 end:0x82F65BC0 rename:.bss
 
-os/File.cpp:
+system/os/File.cpp:
 	.rdata      start:0x8207A4F4 end:0x8207AC48
 	.rdata      start:0x8229605C end:0x822960F0 rename:.rdata$r
 	.pdata      start:0x822D0720 end:0x822D0980
@@ -2209,7 +2209,7 @@ os/File.cpp:
 	.data       start:0x82F11EE8 end:0x82F11F58
 	.data       start:0x82F65BC0 end:0x82F661F8 rename:.bss
 
-os/PlatformMgr_Xbox.cpp:
+system/os/PlatformMgr_Xbox.cpp:
 	.rdata      start:0x8207AC48 end:0x8207C9CC
 	.rdata      start:0x822960F0 end:0x82296654 rename:.rdata$r
 	.pdata      start:0x822D0980 end:0x822D1210
@@ -2220,14 +2220,14 @@ os/PlatformMgr_Xbox.cpp:
 	.data       start:0x82F11F58 end:0x82F122B4
 	.data       start:0x82F661F8 end:0x82F679FC rename:.bss
 
-os/Archive.cpp:
+system/os/Archive.cpp:
 	.rdata      start:0x8207C9CC end:0x8207CFD0
 	.pdata      start:0x822D1210 end:0x822D1410
 	.text       start:0x825DAF30 end:0x825DDD10
 	.data       start:0x82F122B4 end:0x82F122CC
 	.data       start:0x82F679FC end:0x82F67A04 rename:.bss
 
-os/FileCache.cpp:
+system/os/FileCache.cpp:
 	.rdata      start:0x8207CFD0 end:0x8207D470
 	.rdata      start:0x82296654 end:0x822966A0 rename:.rdata$r
 	.pdata      start:0x822D1410 end:0x822D1620
@@ -2238,13 +2238,13 @@ os/FileCache.cpp:
 	.data       start:0x82F122CC end:0x82F12340
 	.data       start:0x82F67A04 end:0x82F67AF8 rename:.bss
 
-os/System_Xbox.cpp:
+system/os/System_Xbox.cpp:
 	.rdata      start:0x8207D470 end:0x8207D988
 	.pdata      start:0x822D1620 end:0x822D1820
 	.text       start:0x825E04B0 end:0x825E1C10
 	.data       start:0x82F12340 end:0x82F12348
 
-os/PlatformMgr.cpp:
+system/os/PlatformMgr.cpp:
 	.rdata      start:0x8207D988 end:0x8207E6CC
 	.rdata      start:0x822966A0 end:0x822966EC rename:.rdata$r
 	.pdata      start:0x822D1820 end:0x822D1AD8
@@ -2255,7 +2255,7 @@ os/PlatformMgr.cpp:
 	.data       start:0x82F12348 end:0x82F1237C
 	.data       start:0x82F67AF8 end:0x82F67C68 rename:.bss
 
-os/Joypad.cpp:
+system/os/Joypad.cpp:
 	.rdata      start:0x8207E6CC end:0x8207EF38
 	.pdata      start:0x822D1AF8 end:0x822D1CF8
 	.pdata      start:0x82321448 end:0x82321450
@@ -2264,12 +2264,12 @@ os/Joypad.cpp:
 	.data       start:0x82F1237C end:0x82F123B8
 	.data       start:0x82F67C68 end:0x82F68174 rename:.bss
 
-os/DateTime.cpp:
+system/os/DateTime.cpp:
 	.rdata      start:0x8207EF38 end:0x8207F3E0
 	.pdata      start:0x822D1CF8 end:0x822D1EF8
 	.text       start:0x825E7B98 end:0x825E9A10
 
-os/ContentMgr_Xbox.cpp:
+system/os/ContentMgr_Xbox.cpp:
 	.rdata      start:0x8207F3E0 end:0x8207FC60
 	.rdata      start:0x822966EC end:0x82296870 rename:.rdata$r
 	.pdata      start:0x822D1EF8 end:0x822D2170
@@ -2280,12 +2280,12 @@ os/ContentMgr_Xbox.cpp:
 	.data       start:0x82F123B8 end:0x82F12508
 	.data       start:0x82F68174 end:0x82F68B90 rename:.bss
 
-os/SynchronizationEvent.cpp:
+system/os/SynchronizationEvent.cpp:
 	.rdata      start:0x8207FC60 end:0x8207FCD0
 	.pdata      start:0x822D2170 end:0x822D2188
 	.text       start:0x825EC628 end:0x825EC758
 
-os/Joypad_Xbox.cpp:
+system/os/Joypad_Xbox.cpp:
 	.rdata      start:0x8207FCD0 end:0x82080438
 	.pdata      start:0x822D2188 end:0x822D2280
 	.pdata      start:0x82321458 end:0x82321460
@@ -2294,12 +2294,12 @@ os/Joypad_Xbox.cpp:
 	.text       start:0x82EE24B8 end:0x82EE24C8 rename:.text$yd
 	.data       start:0x82F68B90 end:0x82F68C0C rename:.bss
 
-os/OnlineID.cpp:
+system/os/OnlineID.cpp:
 	.rdata      start:0x82080438 end:0x820804F4
 	.pdata      start:0x822D2280 end:0x822D22A8
 	.text       start:0x825EDBE8 end:0x825EDEA0
 
-os/NetworkSocket_Win.cpp:
+system/os/NetworkSocket_Win.cpp:
 	.rdata      start:0x820804F4 end:0x820807B0
 	.rdata      start:0x82296870 end:0x82296904 rename:.rdata$r
 	.pdata      start:0x822D22C8 end:0x822D23B8
@@ -2307,12 +2307,12 @@ os/NetworkSocket_Win.cpp:
 	.data       start:0x82F12508 end:0x82F12540
 	.data       start:0x82F68C0C end:0x82F68C10 rename:.bss
 
-os/File_Win.cpp:
+system/os/File_Win.cpp:
 	.rdata      start:0x820807B0 end:0x82080914
 	.pdata      start:0x822D23B8 end:0x822D23F8
 	.text       start:0x825EEE58 end:0x825EF4D0
 
-os/HolmesClient.cpp:
+system/os/HolmesClient.cpp:
 	.rdata      start:0x82080914 end:0x820817D8
 	.pdata      start:0x822D23F8 end:0x822D2710
 	.pdata      start:0x82321460 end:0x82321498
@@ -2322,7 +2322,7 @@ os/HolmesClient.cpp:
 	.data       start:0x82F12540 end:0x82F125A8
 	.data       start:0x82F68C10 end:0x82F69554 rename:.bss
 
-os/VirtualKeyboard.cpp:
+system/os/VirtualKeyboard.cpp:
 	.rdata      start:0x820817D8 end:0x82081B98
 	.rdata      start:0x82296904 end:0x822969A0 rename:.rdata$r
 	.pdata      start:0x822D2710 end:0x822D27F0
@@ -2333,13 +2333,13 @@ os/VirtualKeyboard.cpp:
 	.data       start:0x82F125A8 end:0x82F125F0
 	.data       start:0x82F69554 end:0x82F695B4 rename:.bss
 
-os/AppChild.cpp:
+system/os/AppChild.cpp:
 	.rdata      start:0x82081B98 end:0x82081D68
 	.pdata      start:0x822D27F0 end:0x822D2858
 	.text       start:0x825F3A28 end:0x825F4038
 	.data       start:0x82F695B4 end:0x82F695C0 rename:.bss
 
-os/JoypadClient.cpp:
+system/os/JoypadClient.cpp:
 	.rdata      start:0x82081D68 end:0x820820A8
 	.rdata      start:0x822969A0 end:0x82296A3C rename:.rdata$r
 	.pdata      start:0x822D2868 end:0x822D2978
@@ -2349,7 +2349,7 @@ os/JoypadClient.cpp:
 	.data       start:0x82F125F0 end:0x82F126B8
 	.data       start:0x82F695C0 end:0x82F695D4 rename:.bss
 
-os/Memcard_Xbox.cpp:
+system/os/Memcard_Xbox.cpp:
 	.rdata      start:0x820820A8 end:0x82082928
 	.rdata      start:0x82296A3C end:0x82296CA0 rename:.rdata$r
 	.pdata      start:0x822D2978 end:0x822D2B68
@@ -2360,7 +2360,7 @@ os/Memcard_Xbox.cpp:
 	.data       start:0x82F126B8 end:0x82F127A4
 	.data       start:0x82F695D4 end:0x83099760 rename:.bss
 
-os/BlockMgr.cpp:
+system/os/BlockMgr.cpp:
 	.rdata      start:0x82082928 end:0x82082CE0
 	.pdata      start:0x822D2B68 end:0x822D2CD8
 	.pdata      start:0x823214A8 end:0x823214B0
@@ -2370,27 +2370,27 @@ os/BlockMgr.cpp:
 	.data       start:0x82F127A4 end:0x82F1282C
 	.data       start:0x83099760 end:0x83099C08 rename:.bss
 
-os/AsyncFile.cpp:
+system/os/AsyncFile.cpp:
 	.rdata      start:0x82082CE0 end:0x82083014
 	.rdata      start:0x82296CA0 end:0x82296CEC rename:.rdata$r
 	.pdata      start:0x822D2CD8 end:0x822D2D98
 	.text       start:0x825F9330 end:0x825FA4F8
 	.data       start:0x82F1282C end:0x82F12844
 
-os/ArkFile.cpp:
+system/os/ArkFile.cpp:
 	.rdata      start:0x82083014 end:0x820831E0
 	.rdata      start:0x82296CEC end:0x82296D38 rename:.rdata$r
 	.pdata      start:0x822D2D98 end:0x822D2E18
 	.text       start:0x825FA4F8 end:0x825FAE38
 	.data       start:0x82F12844 end:0x82F12860
 
-os/MapFile_Xbox.cpp:
+system/os/MapFile_Xbox.cpp:
 	.rdata      start:0x820831E0 end:0x820837F8
 	.pdata      start:0x822D2E48 end:0x822D2EA8
 	.text       start:0x825FB750 end:0x825FC238
 	.data       start:0x82F12860 end:0x82F129C0
 
-os/UserMgr.cpp:
+system/os/UserMgr.cpp:
 	.rdata      start:0x820837F8 end:0x820839A0
 	.rdata      start:0x82296D38 end:0x82296D88 rename:.rdata$r
 	.pdata      start:0x822D2EA8 end:0x822D2F20
@@ -2398,7 +2398,7 @@ os/UserMgr.cpp:
 	.data       start:0x82F129C0 end:0x82F12A0C
 	.data       start:0x83099C08 end:0x83099C14 rename:.bss
 
-os/KeyboardJoypadAdapter.cpp:
+system/os/KeyboardJoypadAdapter.cpp:
 	.rdata      start:0x820839A0 end:0x82083A78
 	.rdata      start:0x82296D88 end:0x82296E20 rename:.rdata$r
 	.pdata      start:0x822D2F20 end:0x822D2F50
@@ -2406,7 +2406,7 @@ os/KeyboardJoypadAdapter.cpp:
 	.data       start:0x82F12A0C end:0x82F12A50
 	.data       start:0x83099C14 end:0x83099C28 rename:.bss
 
-os/Joypad_Xinput.cpp:
+system/os/Joypad_Xinput.cpp:
 	.rdata      start:0x82083A78 end:0x82083C58
 	.pdata      start:0x822D2F50 end:0x822D2F80
 	.pdata      start:0x823214B0 end:0x823214B8
@@ -2415,7 +2415,7 @@ os/Joypad_Xinput.cpp:
 	.text       start:0x82EE25A0 end:0x82EE25B0 rename:.text$yd
 	.data       start:0x83099C28 end:0x83099CA4 rename:.bss
 
-os/UsbMidiGuitar.cpp:
+system/os/UsbMidiGuitar.cpp:
 	.rdata      start:0x82083C58 end:0x82083E48
 	.pdata      start:0x822D2FD8 end:0x822D3050
 	.pdata      start:0x823214B8 end:0x823214C8
@@ -2425,7 +2425,7 @@ os/UsbMidiGuitar.cpp:
 	.data       start:0x82F12A50 end:0x82F12A54
 	.data       start:0x83099CB0 end:0x83099D48 rename:.bss
 
-os/JoypadMsgs.cpp:
+system/os/JoypadMsgs.cpp:
 	.rdata      start:0x82083E48 end:0x820841E0
 	.rdata      start:0x82296E20 end:0x82296F04 rename:.rdata$r
 	.pdata      start:0x822D3050 end:0x822D3150
@@ -2433,7 +2433,7 @@ os/JoypadMsgs.cpp:
 	.data       start:0x82F12A54 end:0x82F12AC8
 	.data       start:0x83099D48 end:0x83099D60 rename:.bss
 
-os/ContentMgr.cpp:
+system/os/ContentMgr.cpp:
 	.rdata      start:0x820841E0 end:0x82084778
 	.rdata      start:0x82296F04 end:0x82296F50 rename:.rdata$r
 	.pdata      start:0x822D3150 end:0x822D32F8
@@ -2441,54 +2441,54 @@ os/ContentMgr.cpp:
 	.data       start:0x82F12AC8 end:0x82F12AEC
 	.data       start:0x83099D60 end:0x83099DA0 rename:.bss
 
-os/HolmesClient_NetSocket.cpp:
+system/os/HolmesClient_NetSocket.cpp:
 	.rdata      start:0x82084778 end:0x82084988
 	.pdata      start:0x822D32F8 end:0x822D3330
 	.text       start:0x826005E0 end:0x82600AA0
 
-os/HolmesUtl.cpp:
+system/os/HolmesUtl.cpp:
 	.rdata      start:0x82084988 end:0x82084A2C
 	.pdata      start:0x822D3330 end:0x822D3348
 	.text       start:0x82600AA0 end:0x82600C28
 
-os/HolmesKeyboard.cpp:
+system/os/HolmesKeyboard.cpp:
 	.rdata      start:0x82084A2C end:0x82084BE0
 	.rdata      start:0x82296F50 end:0x82296FA0 rename:.rdata$r
 	.pdata      start:0x822D3348 end:0x822D33C0
 	.text       start:0x82600C28 end:0x82601258
 	.data       start:0x82F12AEC end:0x82F12B08
 
-os/VirtualKeyboard_Xbox.cpp:
+system/os/VirtualKeyboard_Xbox.cpp:
 	.rdata      start:0x82084BE0 end:0x82084CE0
 	.pdata      start:0x822D33C0 end:0x822D33F8
 	.text       start:0x82601258 end:0x82601820
 	.data       start:0x83099DA0 end:0x8309AFB0 rename:.bss
 
-os/NetStream.cpp:
+system/os/NetStream.cpp:
 	.rdata      start:0x82084CE0 end:0x82084E38
 	.rdata      start:0x82296FA0 end:0x82296FEC rename:.rdata$r
 	.pdata      start:0x822D33F8 end:0x822D3448
 	.text       start:0x82601820 end:0x82601DE0
 	.data       start:0x82F12B08 end:0x82F12BA0
 
-os/Keyboard.cpp:
+system/os/Keyboard.cpp:
 	.rdata      start:0x82084E38 end:0x82084E98
 	.pdata      start:0x822D3448 end:0x822D34A0
 	.text       start:0x82601DE0 end:0x82602208
 	.text       start:0x82EDC890 end:0x82EDC8A0 rename:.text$yc
 	.text       start:0x82EE25D0 end:0x82EE2610 rename:.text$yd
 
-os/Memcard.cpp:
+system/os/Memcard.cpp:
 	.rdata      start:0x82084E98 end:0x82084F20
 	.pdata      start:0x822D34A0 end:0x822D34C0
 	.text       start:0x82602208 end:0x82602458
 
-os/AsyncTask.cpp:
+system/os/AsyncTask.cpp:
 	.rdata      start:0x82084F20 end:0x82084F30
 	.pdata      start:0x822D34C0 end:0x822D34D0
 	.text       start:0x82602458 end:0x826025A0
 
-os/CDReader.cpp:
+system/os/CDReader.cpp:
 	.rdata      start:0x82084F30 end:0x82084FDC
 	.pdata      start:0x822D34D0 end:0x822D3520
 	.text       start:0x826025A0 end:0x82602CB8
@@ -2497,7 +2497,7 @@ os/CDReader.cpp:
 	.data       start:0x82F12BA0 end:0x82F12BB0
 	.data       start:0x8309AFB0 end:0x8309AFE4 rename:.bss
 
-os/HDCache.cpp:
+system/os/HDCache.cpp:
 	.rdata      start:0x82084FDC end:0x820854F8
 	.pdata      start:0x822D3520 end:0x822D3618
 	.pdata      start:0x823214C8 end:0x823214D0
@@ -2506,37 +2506,37 @@ os/HDCache.cpp:
 	.text       start:0x82EE2670 end:0x82EE2680 rename:.text$yd
 	.data       start:0x8309AFE4 end:0x8309B04C rename:.bss
 
-os/AsyncFile_Win.cpp:
+system/os/AsyncFile_Win.cpp:
 	.rdata      start:0x820854F8 end:0x82085714
 	.rdata      start:0x82296FEC end:0x8229703C rename:.rdata$r
 	.pdata      start:0x822D3618 end:0x822D3690
 	.text       start:0x82604A70 end:0x826056A8
 	.data       start:0x82F12BB0 end:0x82F12BCC
 
-os/AsyncFileHolmes.cpp:
+system/os/AsyncFileHolmes.cpp:
 	.rdata      start:0x82085714 end:0x820857E0
 	.rdata      start:0x8229703C end:0x8229708C rename:.rdata$r
 	.pdata      start:0x822D3690 end:0x822D36D0
 	.text       start:0x826056A8 end:0x82605960
 	.data       start:0x82F12BCC end:0x82F12BEC
 
-os/jsonstreamer.cpp:
+system/os/jsonstreamer.cpp:
 	.rdata      start:0x820857E0 end:0x820857E4
 	.pdata      start:0x822D3708 end:0x822D37A0
 	.text       start:0x82606138 end:0x826075F8
 
-os/jsonparser.cpp:
+system/os/jsonparser.cpp:
 	.rdata      start:0x820857E4 end:0x820857E8
 	.pdata      start:0x822D37A0 end:0x822D37C0
 	.text       start:0x826075F8 end:0x82607770
 
-os/jsonwriter.cpp:
+system/os/jsonwriter.cpp:
 	.rdata      start:0x820857E8 end:0x82085830
 	.pdata      start:0x822D37C0 end:0x822D3830
 	.text       start:0x82607770 end:0x826083C8
 	.data       start:0x82F12C08 end:0x82F12C0C
 
-os/UsbMidiKeyboardMsgs.cpp:
+system/os/UsbMidiKeyboardMsgs.cpp:
 	.rdata      start:0x82085830 end:0x82086010
 	.rdata      start:0x8229708C end:0x82297384 rename:.rdata$r
 	.pdata      start:0x822D3830 end:0x822D3A30
@@ -2544,7 +2544,7 @@ os/UsbMidiKeyboardMsgs.cpp:
 	.data       start:0x82F12C0C end:0x82F12D98
 	.data       start:0x8309B538 end:0x8309B588 rename:.bss
 
-os/UsbMidiGuitarMsgs.cpp:
+system/os/UsbMidiGuitarMsgs.cpp:
 	.rdata      start:0x82086010 end:0x82086800
 	.rdata      start:0x82297384 end:0x8229767C rename:.rdata$r
 	.pdata      start:0x822D3A30 end:0x822D3C40
@@ -2552,12 +2552,12 @@ os/UsbMidiGuitarMsgs.cpp:
 	.data       start:0x82F12D98 end:0x82F12EE0
 	.data       start:0x8309B588 end:0x8309B5D8 rename:.bss
 
-os/xlrctransport.cpp:
+system/os/xlrctransport.cpp:
 	.rdata      start:0x82086800 end:0x82086820
 	.pdata      start:0x822D3D18 end:0x822D3DF8
 	.text       start:0x8260C600 end:0x8260DB68
 
-os/adapters.cpp:
+system/os/adapters.cpp:
 	.rdata      start:0x82086820 end:0x82086930
 	.pdata      start:0x822D3E88 end:0x822D3EA8
 	.text       start:0x8260E418 end:0x8260E6F0
@@ -2565,30 +2565,30 @@ os/adapters.cpp:
 	.text       start:0x82EE2690 end:0x82EE26C0 rename:.text$yd
 	.data       start:0x82F12F18 end:0x82F12F30
 
-os/xlrccloudtransport.cpp:
+system/os/xlrccloudtransport.cpp:
 	.rdata      start:0x82086930 end:0x8208694C
 	.pdata      start:0x822D3EA8 end:0x822D3EF8
 	.text       start:0x8260E6F0 end:0x8260EC68
 	.data       start:0x82F12F30 end:0x82F12F50
 	.data       start:0x830A0DA8 end:0x830A1210 rename:.bss
 
-os/xamlrcp.cpp:
+system/os/xamlrcp.cpp:
 	.rdata      start:0x8208694C end:0x82086954
 	.pdata      start:0x822D3F48 end:0x822D3F50
 	.text       start:0x8260F428 end:0x8260F520
 	.data       start:0x830A1210 end:0x830A1214 rename:.bss
 
-os/xlrcutil.cpp:
+system/os/xlrcutil.cpp:
 	.rdata      start:0x82086954 end:0x82086968
 	.pdata      start:0x822D3F50 end:0x822D3F68
 	.text       start:0x8260F520 end:0x8260F680
 
-os/xlrctcptransport.cpp:
+system/os/xlrctcptransport.cpp:
 	.rdata      start:0x82086968 end:0x82086984
 	.pdata      start:0x822D3F68 end:0x822D3F98
 	.text       start:0x8260F680 end:0x8260F918
 
-os/xauth.cpp:
+system/os/xauth.cpp:
 	.rdata      start:0x82086984 end:0x820869A0
 	.pdata      start:0x822D3F98 end:0x822D3FA8
 	.text       start:0x8260F918 end:0x8260FBC0
@@ -3407,7 +3407,7 @@ system/rndobj/SoftParticleBuffer.cpp:
 	.text       start:0x82732D88 end:0x82733830
 	.data       start:0x830E1CEC end:0x830E1CF4 rename:.bss
 
-synth/Synth.cpp:
+system/synth/Synth.cpp:
 	.rdata      start:0x820B45A0 end:0x820B6538
 	.rdata      start:0x8229CB40 end:0x8229CC88 rename:.rdata$r
 	.pdata      start:0x822E1B48 end:0x822E24D8
@@ -3417,7 +3417,7 @@ synth/Synth.cpp:
 	.data       start:0x82F16D50 end:0x82F16F34
 	.data       start:0x830E1CF4 end:0x830E1E1C rename:.bss
 
-synth/SynthSample.cpp:
+system/synth/SynthSample.cpp:
 	.rdata      start:0x820B6538 end:0x820B6C70
 	.rdata      start:0x8229CC88 end:0x8229CCD8 rename:.rdata$r
 	.pdata      start:0x822E24D8 end:0x822E26B8
@@ -3425,7 +3425,7 @@ synth/SynthSample.cpp:
 	.data       start:0x82F16F34 end:0x82F16F70
 	.data       start:0x830E1E1C end:0x830E1EF8 rename:.bss
 
-synth/Sound.cpp:
+system/synth/Sound.cpp:
 	.rdata      start:0x820B6C70 end:0x820B78B8
 	.rdata      start:0x8229CCD8 end:0x8229D0B8 rename:.rdata$r
 	.pdata      start:0x822E26B8 end:0x822E2B38
@@ -3434,7 +3434,7 @@ synth/Sound.cpp:
 	.data       start:0x82F16F70 end:0x82F171F4
 	.data       start:0x830E1EF8 end:0x830E1F44 rename:.bss
 
-synth/Faders.cpp:
+system/synth/Faders.cpp:
 	.rdata      start:0x820B78B8 end:0x820B8168
 	.rdata      start:0x8229D0B8 end:0x8229D1D8 rename:.rdata$r
 	.pdata      start:0x822E2B38 end:0x822E2E30
@@ -3442,7 +3442,7 @@ synth/Faders.cpp:
 	.data       start:0x82F171F4 end:0x82F17324
 	.data       start:0x830E1F44 end:0x830E1F50 rename:.bss
 
-synth/Sequence.cpp:
+system/synth/Sequence.cpp:
 	.rdata      start:0x820B8168 end:0x820B9D34
 	.rdata      start:0x8229D1D8 end:0x8229D92C rename:.rdata$r
 	.pdata      start:0x822E2E30 end:0x822E3588
@@ -3450,7 +3450,7 @@ synth/Sequence.cpp:
 	.data       start:0x82F17324 end:0x82F17610
 	.data       start:0x830E1F50 end:0x830E2034 rename:.bss
 
-synth/Pollable.cpp:
+system/synth/Pollable.cpp:
 	.rdata      start:0x820B9D34 end:0x820B9D40
 	.rdata      start:0x8229D92C end:0x8229D940 rename:.rdata$r
 	.pdata      start:0x822E3588 end:0x822E35D8
@@ -3461,25 +3461,25 @@ synth/Pollable.cpp:
 	.data       start:0x82F17610 end:0x82F1764C
 	.data       start:0x830E2034 end:0x830E2070 rename:.bss
 
-synth/MicClientMapper.cpp:
+system/synth/MicClientMapper.cpp:
 	.rdata      start:0x820B9D40 end:0x820B9FD8
 	.pdata      start:0x822E35D8 end:0x822E3678
 	.text       start:0x8274D440 end:0x8274E358
 	.data       start:0x82F1764C end:0x82F176B4
 
-synth/MidiSynth.cpp:
+system/synth/MidiSynth.cpp:
 	.rdata      start:0x820B9FD8 end:0x820BA35C
 	.pdata      start:0x822E3678 end:0x822E37C8
 	.text       start:0x8274E358 end:0x8274F4E8
 
-synth/StreamNull.cpp:
+system/synth/StreamNull.cpp:
 	.rdata      start:0x820BA35C end:0x820BA504
 	.rdata      start:0x8229D940 end:0x8229D9C0 rename:.rdata$r
 	.pdata      start:0x822E37C8 end:0x822E3848
 	.text       start:0x8274F4E8 end:0x8274FB90
 	.data       start:0x82F176B4 end:0x82F17704
 
-synth/MoggClip.cpp:
+system/synth/MoggClip.cpp:
 	.rdata      start:0x820BA504 end:0x820BAC94
 	.rdata      start:0x8229D9C0 end:0x8229DA94 rename:.rdata$r
 	.pdata      start:0x822E3848 end:0x822E3AA0
@@ -3488,14 +3488,14 @@ synth/MoggClip.cpp:
 	.data       start:0x82F17704 end:0x82F17764
 	.data       start:0x830E2070 end:0x830E2088 rename:.bss
 
-synth/ADSR.cpp:
+system/synth/ADSR.cpp:
 	.rdata      start:0x820BAC94 end:0x820BAEB0
 	.rdata      start:0x8229DA94 end:0x8229DAE4 rename:.rdata$r
 	.pdata      start:0x822E3AA0 end:0x822E3B38
 	.text       start:0x82752310 end:0x82752D98
 	.data       start:0x830E2088 end:0x830E210C rename:.bss
 
-synth/Sfx.cpp:
+system/synth/Sfx.cpp:
 	.rdata      start:0x820BAEB0 end:0x820BBC58
 	.rdata      start:0x8229DAE4 end:0x8229DC8C rename:.rdata$r
 	.pdata      start:0x822E3B38 end:0x822E4020
@@ -3503,7 +3503,7 @@ synth/Sfx.cpp:
 	.data       start:0x82F17764 end:0x82F17870
 	.data       start:0x830E210C end:0x830E2150 rename:.bss
 
-synth/AudioDucker.cpp:
+system/synth/AudioDucker.cpp:
 	.rdata      start:0x820BBC58 end:0x820BBFA0
 	.rdata      start:0x8229DC8C end:0x8229DCDC rename:.rdata$r
 	.pdata      start:0x822E4020 end:0x822E4158
@@ -3511,7 +3511,7 @@ synth/AudioDucker.cpp:
 	.data       start:0x82F17870 end:0x82F17894
 	.data       start:0x830E2150 end:0x830E218C rename:.bss
 
-synth/MidiInstrument.cpp:
+system/synth/MidiInstrument.cpp:
 	.rdata      start:0x820BBFA0 end:0x820BC898
 	.rdata      start:0x8229DCDC end:0x8229DE7C rename:.rdata$r
 	.pdata      start:0x822E4158 end:0x822E44A8
@@ -3519,7 +3519,7 @@ synth/MidiInstrument.cpp:
 	.data       start:0x82F17894 end:0x82F17980
 	.data       start:0x830E218C end:0x830E21BC rename:.bss
 
-synth/Emitter.cpp:
+system/synth/Emitter.cpp:
 	.rdata      start:0x820BC898 end:0x820BCD7C
 	.rdata      start:0x8229DE7C end:0x8229E02C rename:.rdata$r
 	.pdata      start:0x822E44A8 end:0x822E4618
@@ -3527,7 +3527,7 @@ synth/Emitter.cpp:
 	.data       start:0x82F17980 end:0x82F17A14
 	.data       start:0x830E21BC end:0x830E21E8 rename:.bss
 
-synth/FxSendReverb.cpp:
+system/synth/FxSendReverb.cpp:
 	.rdata      start:0x820BCD7C end:0x820BCFE4
 	.rdata      start:0x8229E02C end:0x8229E0BC rename:.rdata$r
 	.pdata      start:0x822E4618 end:0x822E46B0
@@ -3535,7 +3535,7 @@ synth/FxSendReverb.cpp:
 	.data       start:0x82F17A14 end:0x82F17A30
 	.data       start:0x830E21E8 end:0x830E221C rename:.bss
 
-synth/FxSendBitCrush.cpp:
+system/synth/FxSendBitCrush.cpp:
 	.rdata      start:0x820BCFE4 end:0x820BD0F8
 	.rdata      start:0x8229E0BC end:0x8229E110 rename:.rdata$r
 	.pdata      start:0x822E46B0 end:0x822E46F8
@@ -3543,7 +3543,7 @@ synth/FxSendBitCrush.cpp:
 	.data       start:0x82F17A30 end:0x82F17A50
 	.data       start:0x830E221C end:0x830E2234 rename:.bss
 
-synth/FxSendChorus.cpp:
+system/synth/FxSendChorus.cpp:
 	.rdata      start:0x820BD0F8 end:0x820BD34C
 	.rdata      start:0x8229E110 end:0x8229E164 rename:.rdata$r
 	.pdata      start:0x822E46F8 end:0x822E4790
@@ -3551,14 +3551,14 @@ synth/FxSendChorus.cpp:
 	.data       start:0x82F17A50 end:0x82F17A6C
 	.data       start:0x830E2234 end:0x830E2260 rename:.bss
 
-synth/FxSendDelay.cpp:
+system/synth/FxSendDelay.cpp:
 	.rdata      start:0x820BD34C end:0x820BD544
 	.rdata      start:0x8229E164 end:0x8229E1B8 rename:.rdata$r
 	.pdata      start:0x822E4790 end:0x822E4818
 	.text       start:0x8275FB28 end:0x82760480
 	.data       start:0x830E2260 end:0x830E228C rename:.bss
 
-synth/FxSendDistortion.cpp:
+system/synth/FxSendDistortion.cpp:
 	.rdata      start:0x820BD544 end:0x820BD65C
 	.rdata      start:0x8229E1B8 end:0x8229E20C rename:.rdata$r
 	.pdata      start:0x822E4818 end:0x822E4868
@@ -3566,7 +3566,7 @@ synth/FxSendDistortion.cpp:
 	.data       start:0x82F17A6C end:0x82F17A8C
 	.data       start:0x830E228C end:0x830E229C rename:.bss
 
-synth/FxSendCompress.cpp:
+system/synth/FxSendCompress.cpp:
 	.rdata      start:0x820BD65C end:0x820BD88C
 	.rdata      start:0x8229E20C end:0x8229E260 rename:.rdata$r
 	.pdata      start:0x822E4868 end:0x822E48F8
@@ -3574,7 +3574,7 @@ synth/FxSendCompress.cpp:
 	.data       start:0x82F17A8C end:0x82F17AAC
 	.data       start:0x830E229C end:0x830E22CC rename:.bss
 
-synth/FxSendEQ.cpp:
+system/synth/FxSendEQ.cpp:
 	.rdata      start:0x820BD88C end:0x820BDB84
 	.rdata      start:0x8229E260 end:0x8229E2B4 rename:.rdata$r
 	.pdata      start:0x822E48F8 end:0x822E49A8
@@ -3582,7 +3582,7 @@ synth/FxSendEQ.cpp:
 	.data       start:0x82F17AAC end:0x82F17AC4
 	.data       start:0x830E22CC end:0x830E2314 rename:.bss
 
-synth/FxSendFlanger.cpp:
+system/synth/FxSendFlanger.cpp:
 	.rdata      start:0x820BDB84 end:0x820BDD90
 	.rdata      start:0x8229E2B4 end:0x8229E308 rename:.rdata$r
 	.pdata      start:0x822E49A8 end:0x822E4A40
@@ -3590,7 +3590,7 @@ synth/FxSendFlanger.cpp:
 	.data       start:0x82F17AC4 end:0x82F17AE0
 	.data       start:0x830E2314 end:0x830E235C rename:.bss
 
-synth/FxSendMeterEffect.cpp:
+system/synth/FxSendMeterEffect.cpp:
 	.rdata      start:0x820BDD90 end:0x820BDFF4
 	.rdata      start:0x8229E308 end:0x8229E35C rename:.rdata$r
 	.pdata      start:0x822E4A40 end:0x822E4AF0
@@ -3598,14 +3598,14 @@ synth/FxSendMeterEffect.cpp:
 	.data       start:0x82F17AE0 end:0x82F17B00
 	.data       start:0x830E235C end:0x830E2364 rename:.bss
 
-synth/FxSendPitchShift.cpp:
+system/synth/FxSendPitchShift.cpp:
 	.rdata      start:0x820BDFF4 end:0x820BE16C
 	.rdata      start:0x8229E35C end:0x8229E3B0 rename:.rdata$r
 	.pdata      start:0x822E4AF0 end:0x822E4B40
 	.text       start:0x82763850 end:0x82763D58
 	.data       start:0x830E2364 end:0x830E2374 rename:.bss
 
-synth/FxSendWah.cpp:
+system/synth/FxSendWah.cpp:
 	.rdata      start:0x820BE16C end:0x820BE41C
 	.rdata      start:0x8229E3B0 end:0x8229E404 rename:.rdata$r
 	.pdata      start:0x822E4B40 end:0x822E4BF0
@@ -3613,7 +3613,7 @@ synth/FxSendWah.cpp:
 	.data       start:0x82F17B00 end:0x82F17B18
 	.data       start:0x830E2374 end:0x830E23B0 rename:.bss
 
-synth/FxSendSynapse.cpp:
+system/synth/FxSendSynapse.cpp:
 	.rdata      start:0x820BE41C end:0x820BE704
 	.rdata      start:0x8229E404 end:0x8229E458 rename:.rdata$r
 	.pdata      start:0x822E4BF0 end:0x822E4CA0
@@ -3621,7 +3621,7 @@ synth/FxSendSynapse.cpp:
 	.data       start:0x82F17B18 end:0x82F17B34
 	.data       start:0x830E23B0 end:0x830E23E0 rename:.bss
 
-synth/ThreeDSound.cpp:
+system/synth/ThreeDSound.cpp:
 	.rdata      start:0x820BE704 end:0x820BECAC
 	.rdata      start:0x8229E458 end:0x8229E534 rename:.rdata$r
 	.pdata      start:0x822E4CA0 end:0x822E4E30
@@ -3629,7 +3629,7 @@ synth/ThreeDSound.cpp:
 	.data       start:0x82F17B34 end:0x82F17BE0
 	.data       start:0x830E23E0 end:0x830E2410 rename:.bss
 
-synth/MeterEffectMonitor.cpp:
+system/synth/MeterEffectMonitor.cpp:
 	.rdata      start:0x820BECAC end:0x820BEFC8
 	.rdata      start:0x8229E534 end:0x8229E638 rename:.rdata$r
 	.pdata      start:0x822E4E30 end:0x822E4F08
@@ -3638,7 +3638,7 @@ synth/MeterEffectMonitor.cpp:
 	.data       start:0x82F17BE0 end:0x82F17C70
 	.data       start:0x830E2410 end:0x830E2550 rename:.bss
 
-synth/Utl.cpp:
+system/synth/Utl.cpp:
 	.rdata      start:0x820BEFC8 end:0x820BF098
 	.rdata      start:0x8229E638 end:0x8229E684 rename:.rdata$r
 	.pdata      start:0x822E4F08 end:0x822E4F48
@@ -3647,12 +3647,12 @@ synth/Utl.cpp:
 	.text       start:0x82EE2E80 end:0x82EE2E98 rename:.text$yd
 	.data       start:0x82F17C70 end:0x82F17CB4
 
-synth/Mic.cpp:
+system/synth/Mic.cpp:
 	.rdata      start:0x820BF098 end:0x820BF0F0
 	.pdata      start:0x822E4F48 end:0x822E4F80
 	.text       start:0x82768B68 end:0x82769118
 
-synth/FxSend.cpp:
+system/synth/FxSend.cpp:
 	.rdata      start:0x820BF0F0 end:0x820BF5B8
 	.rdata      start:0x8229E684 end:0x8229E6E8 rename:.rdata$r
 	.pdata      start:0x822E4F80 end:0x822E50C8
@@ -3660,13 +3660,13 @@ synth/FxSend.cpp:
 	.data       start:0x82F17CB4 end:0x82F17D78
 	.data       start:0x830E2550 end:0x830E2DC8 rename:.bss
 
-synth/ByteGrinder.cpp:
+system/synth/ByteGrinder.cpp:
 	.rdata      start:0x820BF5B8 end:0x820BF7CC
 	.pdata      start:0x822E50C8 end:0x822E5350
 	.text       start:0x8276A9B8 end:0x8276DAA8
 	.data       start:0x82F17D78 end:0x82F17DB0
 
-synth/MicNull.cpp:
+system/synth/MicNull.cpp:
 	.rdata      start:0x820BF7CC end:0x820BF980
 	.rdata      start:0x8229E6E8 end:0x8229E77C rename:.rdata$r
 	.pdata      start:0x822E5350 end:0x822E5388
@@ -3675,7 +3675,7 @@ synth/MicNull.cpp:
 	.data       start:0x82F17DB0 end:0x82F17DDC
 	.data       start:0x830E2DC8 end:0x830E31E0 rename:.bss
 
-synth/WavMgr.cpp:
+system/synth/WavMgr.cpp:
 	.rdata      start:0x820BF980 end:0x820BFAC4
 	.rdata      start:0x8229E77C end:0x8229E800 rename:.rdata$r
 	.pdata      start:0x822E5388 end:0x822E53D0
@@ -3686,33 +3686,33 @@ synth/WavMgr.cpp:
 	.data       start:0x82F17DDC end:0x82F17DF5
 	.data       start:0x830E31E0 end:0x830E3238 rename:.bss
 
-synth/SampleData.cpp:
+system/synth/SampleData.cpp:
 	.rdata      start:0x820BFAC4 end:0x820BFCB8
 	.pdata      start:0x822E53D0 end:0x822E5488
 	.text       start:0x8276E1B8 end:0x8276EF48
 	.data       start:0x830E3238 end:0x830E3284 rename:.bss
 
-synth/Stream.cpp:
+system/synth/Stream.cpp:
 	.rdata      start:0x820BFCB8 end:0x820BFE38
 	.rdata      start:0x8229E800 end:0x8229E814 rename:.rdata$r
 	.pdata      start:0x822E5488 end:0x822E54C0
 	.text       start:0x8276EF98 end:0x8276F1C8
 
-synth/StandardStream.cpp:
+system/synth/StandardStream.cpp:
 	.rdata      start:0x820BFE38 end:0x820C0ADC
 	.rdata      start:0x8229E814 end:0x8229E894 rename:.rdata$r
 	.pdata      start:0x822E54C0 end:0x822E58C8
 	.text       start:0x8276F1C8 end:0x827741B0
 	.data       start:0x82F17DF5 end:0x82F17E8C
 
-synth/MoggClipMap.cpp:
+system/synth/MoggClipMap.cpp:
 	.rdata      start:0x820C0ADC end:0x820C0B1C
 	.rdata      start:0x8229E894 end:0x8229E8DC rename:.rdata$r
 	.pdata      start:0x822E58C8 end:0x822E5900
 	.text       start:0x827741B0 end:0x82774548
 	.data       start:0x82F17E8C end:0x82F17EA8
 
-synth/SampleInst.cpp:
+system/synth/SampleInst.cpp:
 	.rdata      start:0x820C0B1C end:0x820C0E40
 	.rdata      start:0x8229E8DC end:0x8229E948 rename:.rdata$r
 	.pdata      start:0x822E5930 end:0x822E5A28
@@ -3720,7 +3720,7 @@ synth/SampleInst.cpp:
 	.text       start:0x82EE2EA8 end:0x82EE2EE8 rename:.text$yd
 	.data       start:0x82F17EA8 end:0x82F17EC4
 
-synth/aes.cpp:
+system/synth/aes.cpp:
 	.rdata      start:0x820C0E40 end:0x820C4FE0
 	.rdata      start:0x820C4FF8 end:0x820C5084
 	.pdata      start:0x822E5A58 end:0x822E5A78
@@ -3732,7 +3732,7 @@ xgraphics/convert.cpp:
 	.pdata      start:0x82314770 end:0x82314838
 	.text       start:0x82CA72C0 end:0x82CA9B90
 
-synth/StreamReceiver.cpp:
+system/synth/StreamReceiver.cpp:
 	.rdata      start:0x820C5084 end:0x820C51AC
 	.rdata      start:0x8229E948 end:0x8229E990 rename:.rdata$r
 	.pdata      start:0x822E5A78 end:0x822E5AB8
@@ -3740,7 +3740,7 @@ synth/StreamReceiver.cpp:
 	.data       start:0x82F17EC4 end:0x82F17EE4
 	.data       start:0x830E3284 end:0x830E3288 rename:.bss
 
-synth/StreamReceiverFile.cpp:
+system/synth/StreamReceiverFile.cpp:
 	.rdata      start:0x820C51AC end:0x820C5250
 	.rdata      start:0x8229E990 end:0x8229E9DC rename:.rdata$r
 	.pdata      start:0x822E5AB8 end:0x822E5AD0
@@ -3748,18 +3748,18 @@ synth/StreamReceiverFile.cpp:
 	.data       start:0x82F17EE4 end:0x82F17F08
 	.data       start:0x830E3288 end:0x830E3290 rename:.bss
 
-synth/crypt.cpp:
+system/synth/crypt.cpp:
 	.rdata      start:0x820C5250 end:0x820C53A8
 	.pdata      start:0x822E5AD0 end:0x822E5AD8
 	.text       start:0x82779530 end:0x82779660
 	.data       start:0x82F17F08 end:0x82F17F0C
 	.data       start:0x830E3290 end:0x830E3EA4 rename:.bss
 
-synth/TomCryptLicense.cpp:
+system/synth/TomCryptLicense.cpp:
 	.rdata      start:0x820C53A8 end:0x820C53C4
 	.text       start:0x82EDD3C8 end:0x82EDD3E0 rename:.text$yc
 
-ui/UI.cpp:
+system/ui/UI.cpp:
 	.rdata      start:0x820C53C4 end:0x820C7808
 	.rdata      start:0x8229E9DC end:0x8229ECD0 rename:.rdata$r
 	.pdata      start:0x822E5AD8 end:0x822E6398
@@ -3768,23 +3768,23 @@ ui/UI.cpp:
 	.data       start:0x82F17F0C end:0x82F18064
 	.data       start:0x830E3EA4 end:0x830E4054 rename:.bss
 
-ui/ResourceDirPtr.cpp:
+system/ui/ResourceDirPtr.cpp:
 	.rdata      start:0x820C7808 end:0x820C7890
 	.pdata      start:0x822E6398 end:0x822E63F0
 	.text       start:0x82781B70 end:0x827820C8
 
-ui/UIListProvider.cpp:
+system/ui/UIListProvider.cpp:
 	.rdata      start:0x820C7890 end:0x820C7B38
 	.pdata      start:0x822E63F0 end:0x822E64A0
 	.text       start:0x827820C8 end:0x82782D90
 	.text       start:0x82EE2FA8 end:0x82EE2FC8 rename:.text$yd
 
-ui/UIListState.cpp:
+system/ui/UIListState.cpp:
 	.rdata      start:0x820C7B38 end:0x820C7BCC
 	.pdata      start:0x822E64A0 end:0x822E6570
 	.text       start:0x82782D90 end:0x82784638
 
-ui/UIComponent.cpp:
+system/ui/UIComponent.cpp:
 	.rdata      start:0x820C7BCC end:0x820C8358
 	.rdata      start:0x8229ECD0 end:0x8229EE1C rename:.rdata$r
 	.pdata      start:0x822E6570 end:0x822E6770
@@ -3793,7 +3793,7 @@ ui/UIComponent.cpp:
 	.data       start:0x82F18064 end:0x82F180F4
 	.data       start:0x830E4054 end:0x830E4100 rename:.bss
 
-ui/UIListDir.cpp:
+system/ui/UIListDir.cpp:
 	.rdata      start:0x820C8358 end:0x820C8BC8
 	.rdata      start:0x8229EE1C end:0x8229EF8C rename:.rdata$r
 	.pdata      start:0x822E6770 end:0x822E6A68
@@ -3802,7 +3802,7 @@ ui/UIListDir.cpp:
 	.data       start:0x82F180F4 end:0x82F18110
 	.data       start:0x830E4100 end:0x830E410C rename:.bss
 
-ui/UIList.cpp:
+system/ui/UIList.cpp:
 	.rdata      start:0x820C8BC8 end:0x820CA92C
 	.rdata      start:0x8229EF8C end:0x8229F188 rename:.rdata$r
 	.pdata      start:0x822E6A68 end:0x822E72D8
@@ -3810,7 +3810,7 @@ ui/UIList.cpp:
 	.data       start:0x82F18110 end:0x82F18234
 	.data       start:0x830E410C end:0x830E4230 rename:.bss
 
-ui/UILabel.cpp:
+system/ui/UILabel.cpp:
 	.rdata      start:0x820CA92C end:0x820CBB90
 	.rdata      start:0x8229F188 end:0x8229F280 rename:.rdata$r
 	.pdata      start:0x822E72E0 end:0x822E7868
@@ -3819,7 +3819,7 @@ ui/UILabel.cpp:
 	.data       start:0x82F18234 end:0x82F18288
 	.data       start:0x830E4230 end:0x830E4408 rename:.bss
 
-ui/UIListSlot.cpp:
+system/ui/UIListSlot.cpp:
 	.rdata      start:0x820CBB90 end:0x820CBF28
 	.rdata      start:0x8229F280 end:0x8229F310 rename:.rdata$r
 	.pdata      start:0x822E7868 end:0x822E79A8
@@ -3827,7 +3827,7 @@ ui/UIListSlot.cpp:
 	.data       start:0x82F18288 end:0x82F1835A
 	.data       start:0x830E4408 end:0x830E44A4 rename:.bss
 
-ui/PanelDir.cpp:
+system/ui/PanelDir.cpp:
 	.rdata      start:0x820CBF28 end:0x820CCD20
 	.rdata      start:0x8229F310 end:0x8229F39C rename:.rdata$r
 	.pdata      start:0x822E79A8 end:0x822E7E20
@@ -3836,7 +3836,7 @@ ui/PanelDir.cpp:
 	.data       start:0x82F1835A end:0x82F1844C
 	.data       start:0x830E44A4 end:0x830E44E8 rename:.bss
 
-ui/UILabelDir.cpp:
+system/ui/UILabelDir.cpp:
 	.rdata      start:0x820CCD20 end:0x820CD578
 	.rdata      start:0x8229F39C end:0x8229F508 rename:.rdata$r
 	.pdata      start:0x822E7E20 end:0x822E8070
@@ -3844,13 +3844,13 @@ ui/UILabelDir.cpp:
 	.data       start:0x82F1844C end:0x82F1846C
 	.data       start:0x830E44E8 end:0x830E44F0 rename:.bss
 
-ui/UITransitionHandler.cpp:
+system/ui/UITransitionHandler.cpp:
 	.rdata      start:0x820CD578 end:0x820CD5F8
 	.rdata      start:0x8229F508 end:0x8229F51C rename:.rdata$r
 	.pdata      start:0x822E8070 end:0x822E80C8
 	.text       start:0x827A2A88 end:0x827A31B0
 
-ui/UIScreen.cpp:
+system/ui/UIScreen.cpp:
 	.rdata      start:0x820CD5F8 end:0x820CE1B8
 	.rdata      start:0x8229F51C end:0x8229F56C rename:.rdata$r
 	.pdata      start:0x822E80C8 end:0x822E8390
@@ -3859,7 +3859,7 @@ ui/UIScreen.cpp:
 	.data       start:0x82F1846C end:0x82F184A0
 	.data       start:0x830E44F0 end:0x830E4598 rename:.bss
 
-ui/UIPanel.cpp:
+system/ui/UIPanel.cpp:
 	.rdata      start:0x820CE1B8 end:0x820CEBD4
 	.rdata      start:0x8229F56C end:0x8229F594 rename:.rdata$r
 	.pdata      start:0x822E8390 end:0x822E85D8
@@ -3867,14 +3867,14 @@ ui/UIPanel.cpp:
 	.text       start:0x82EE31E8 end:0x82EE3308 rename:.text$yd
 	.data       start:0x830E4598 end:0x830E467C rename:.bss
 
-ui/UIColor.cpp:
+system/ui/UIColor.cpp:
 	.rdata      start:0x820CEBD4 end:0x820CECD8
 	.rdata      start:0x8229F594 end:0x8229F5E4 rename:.rdata$r
 	.pdata      start:0x822E85D8 end:0x822E8628
 	.text       start:0x827A8B38 end:0x827A90B8
 	.data       start:0x830E467C end:0x830E46C4 rename:.bss
 
-ui/UIFontImporter.cpp:
+system/ui/UIFontImporter.cpp:
 	.rdata      start:0x820CECD8 end:0x820D0140
 	.rdata      start:0x8229F5E4 end:0x8229F730 rename:.rdata$r
 	.pdata      start:0x822E8628 end:0x822E8BF0
@@ -3883,7 +3883,7 @@ ui/UIFontImporter.cpp:
 	.data       start:0x82F184A0 end:0x82F18580
 	.data       start:0x830E46C4 end:0x830E47A4 rename:.bss
 
-ui/UIPicture.cpp:
+system/ui/UIPicture.cpp:
 	.rdata      start:0x820D0140 end:0x820D06F8
 	.rdata      start:0x8229F730 end:0x8229F82C rename:.rdata$r
 	.pdata      start:0x822E8BF0 end:0x822E8D98
@@ -3891,7 +3891,7 @@ ui/UIPicture.cpp:
 	.data       start:0x82F18580 end:0x82F18598
 	.data       start:0x830E47A4 end:0x830E47D4 rename:.bss
 
-ui/Screenshot.cpp:
+system/ui/Screenshot.cpp:
 	.rdata      start:0x820D06F8 end:0x820D0900
 	.rdata      start:0x8229F82C end:0x8229F8AC rename:.rdata$r
 	.pdata      start:0x822E8D98 end:0x822E8E58
@@ -3899,7 +3899,7 @@ ui/Screenshot.cpp:
 	.data       start:0x82F18598 end:0x82F185B4
 	.data       start:0x830E47D4 end:0x830E47DC rename:.bss
 
-ui/UITrigger.cpp:
+system/ui/UITrigger.cpp:
 	.rdata      start:0x820D0900 end:0x820D0E24
 	.rdata      start:0x8229F8AC end:0x8229F9A8 rename:.rdata$r
 	.pdata      start:0x822E8E58 end:0x822E8FB0
@@ -3907,7 +3907,7 @@ ui/UITrigger.cpp:
 	.data       start:0x82F185B4 end:0x82F185D8
 	.data       start:0x830E47DC end:0x830E481C rename:.bss
 
-ui/UIGuide.cpp:
+system/ui/UIGuide.cpp:
 	.rdata      start:0x820D0E24 end:0x820D0FE0
 	.rdata      start:0x8229F9A8 end:0x8229F9F8 rename:.rdata$r
 	.pdata      start:0x822E8FB0 end:0x822E9008
@@ -3915,7 +3915,7 @@ ui/UIGuide.cpp:
 	.data       start:0x82F185D8 end:0x82F185F0
 	.data       start:0x830E481C end:0x830E4830 rename:.bss
 
-ui/CheatProvider.cpp:
+system/ui/CheatProvider.cpp:
 	.rdata      start:0x820D0FE0 end:0x820D1768
 	.rdata      start:0x8229F9F8 end:0x8229FA60 rename:.rdata$r
 	.pdata      start:0x822E9008 end:0x822E9218
@@ -3923,13 +3923,13 @@ ui/CheatProvider.cpp:
 	.data       start:0x82F185F0 end:0x82F18630
 	.data       start:0x830E4830 end:0x830E4874 rename:.bss
 
-ui/LocalePanel.cpp:
+system/ui/LocalePanel.cpp:
 	.rdata      start:0x820D1768 end:0x820D1BC0
 	.pdata      start:0x822E9218 end:0x822E9420
 	.text       start:0x827B5C98 end:0x827B7C88
 	.data       start:0x82F18630 end:0x82F18664
 
-ui/LabelShrinkWrapper.cpp:
+system/ui/LabelShrinkWrapper.cpp:
 	.rdata      start:0x820D1BC0 end:0x820D2160
 	.rdata      start:0x8229FA60 end:0x8229FB78 rename:.rdata$r
 	.pdata      start:0x822E9420 end:0x822E9598
@@ -3937,7 +3937,7 @@ ui/LabelShrinkWrapper.cpp:
 	.data       start:0x82F18664 end:0x82F186AC
 	.data       start:0x830E4874 end:0x830E48B8 rename:.bss
 
-ui/LabelNumberTicker.cpp:
+system/ui/LabelNumberTicker.cpp:
 	.rdata      start:0x820D2160 end:0x820D26D8
 	.rdata      start:0x8229FB78 end:0x8229FC40 rename:.rdata$r
 	.pdata      start:0x822E9598 end:0x822E9728
@@ -3945,7 +3945,7 @@ ui/LabelNumberTicker.cpp:
 	.data       start:0x82F186AC end:0x82F186CC
 	.data       start:0x830E48B8 end:0x830E48FC rename:.bss
 
-ui/InlineHelp.cpp:
+system/ui/InlineHelp.cpp:
 	.rdata      start:0x820D26D8 end:0x820D3378
 	.rdata      start:0x8229FC40 end:0x8229FD08 rename:.rdata$r
 	.pdata      start:0x822E9728 end:0x822E9B18
@@ -3953,7 +3953,7 @@ ui/InlineHelp.cpp:
 	.data       start:0x82F186CC end:0x82F18710
 	.data       start:0x830E48FC end:0x830E4978 rename:.bss
 
-ui/UISlider.cpp:
+system/ui/UISlider.cpp:
 	.rdata      start:0x820D3378 end:0x820D3A08
 	.rdata      start:0x8229FD08 end:0x8229FE04 rename:.rdata$r
 	.pdata      start:0x822E9B18 end:0x822E9D00
@@ -3961,7 +3961,7 @@ ui/UISlider.cpp:
 	.data       start:0x82F18710 end:0x82F18728
 	.data       start:0x830E4978 end:0x830E49CC rename:.bss
 
-ui/UIButton.cpp:
+system/ui/UIButton.cpp:
 	.rdata      start:0x820D3A08 end:0x820D3D38
 	.rdata      start:0x8229FE04 end:0x8229FF20 rename:.rdata$r
 	.pdata      start:0x822E9D00 end:0x822E9DE0
@@ -3969,7 +3969,7 @@ ui/UIButton.cpp:
 	.data       start:0x82F18728 end:0x82F18740
 	.data       start:0x830E49CC end:0x830E49DC rename:.bss
 
-ui/UIListMesh.cpp:
+system/ui/UIListMesh.cpp:
 	.rdata      start:0x820D3D38 end:0x820D3EDC
 	.rdata      start:0x8229FF20 end:0x822A000C rename:.rdata$r
 	.pdata      start:0x822E9DE0 end:0x822E9E60
@@ -3977,7 +3977,7 @@ ui/UIListMesh.cpp:
 	.data       start:0x82F18740 end:0x82F1879C
 	.data       start:0x830E49DC end:0x830E49F0 rename:.bss
 
-ui/UIListLabel.cpp:
+system/ui/UIListLabel.cpp:
 	.rdata      start:0x820D3EDC end:0x820D4158
 	.rdata      start:0x822A000C end:0x822A00B0 rename:.rdata$r
 	.pdata      start:0x822E9E60 end:0x822E9F00
@@ -3985,14 +3985,14 @@ ui/UIListLabel.cpp:
 	.data       start:0x82F1879C end:0x82F187C0
 	.data       start:0x830E49F0 end:0x830E4A54 rename:.bss
 
-ui/UIListWidget.cpp:
+system/ui/UIListWidget.cpp:
 	.rdata      start:0x820D4158 end:0x820D4AF0
 	.rdata      start:0x822A00B0 end:0x822A00C4 rename:.rdata$r
 	.pdata      start:0x822E9F00 end:0x822EA140
 	.text       start:0x827C3F68 end:0x827C64D0
 	.data       start:0x830E4A54 end:0x830E4A5C rename:.bss
 
-ui/ScrollSelect.cpp:
+system/ui/ScrollSelect.cpp:
 	.rdata      start:0x820D4AF0 end:0x820D4E28
 	.rdata      start:0x822A00C4 end:0x822A0110 rename:.rdata$r
 	.pdata      start:0x822EA140 end:0x822EA230
@@ -4001,7 +4001,7 @@ ui/ScrollSelect.cpp:
 	.data       start:0x82F187C0 end:0x82F187EC
 	.data       start:0x830E4A5C end:0x830E4AA4 rename:.bss
 
-ui/UIListArrow.cpp:
+system/ui/UIListArrow.cpp:
 	.rdata      start:0x820D4E28 end:0x820D4FF4
 	.rdata      start:0x822A0110 end:0x822A0164 rename:.rdata$r
 	.pdata      start:0x822EA230 end:0x822EA2B0
@@ -4009,7 +4009,7 @@ ui/UIListArrow.cpp:
 	.data       start:0x82F187EC end:0x82F18808
 	.data       start:0x830E4AA4 end:0x830E4AB4 rename:.bss
 
-ui/UIListCustom.cpp:
+system/ui/UIListCustom.cpp:
 	.rdata      start:0x820D4FF4 end:0x820D52A8
 	.rdata      start:0x822A0164 end:0x822A0208 rename:.rdata$r
 	.pdata      start:0x822EA2B0 end:0x822EA358
@@ -4017,7 +4017,7 @@ ui/UIListCustom.cpp:
 	.data       start:0x82F18808 end:0x82F18848
 	.data       start:0x830E4AB4 end:0x830E4AC4 rename:.bss
 
-ui/UIListHighlight.cpp:
+system/ui/UIListHighlight.cpp:
 	.rdata      start:0x820D52A8 end:0x820D53DC
 	.rdata      start:0x822A0208 end:0x822A025C rename:.rdata$r
 	.pdata      start:0x822EA358 end:0x822EA3D0
@@ -4025,7 +4025,7 @@ ui/UIListHighlight.cpp:
 	.data       start:0x82F18848 end:0x82F18868
 	.data       start:0x830E4AC4 end:0x830E4ACC rename:.bss
 
-ui/UIListSubList.cpp:
+system/ui/UIListSubList.cpp:
 	.rdata      start:0x820D53DC end:0x820D55E8
 	.rdata      start:0x822A025C end:0x822A039C rename:.rdata$r
 	.pdata      start:0x822EA3D0 end:0x822EA488
@@ -4435,13 +4435,13 @@ system/utl/Cache.cpp:
 	.pdata      start:0x822ED088 end:0x822ED098
 	.text       start:0x82801230 end:0x82801320
 
-world/World.cpp:
+system/world/World.cpp:
 	.rdata      start:0x820E07A8 end:0x820E1050
 	.pdata      start:0x822ED098 end:0x822ED2E0
 	.text       start:0x82801320 end:0x828028C8
 	.data       start:0x83116070 end:0x831160D0 rename:.bss
 
-world/Dir.cpp:
+system/world/Dir.cpp:
 	.rdata      start:0x820E1050 end:0x820E24F0
 	.rdata      start:0x822A0B68 end:0x822A0F30 rename:.rdata$r
 	.pdata      start:0x822ED2E0 end:0x822ED9A8
@@ -4451,7 +4451,7 @@ world/Dir.cpp:
 	.data       start:0x82F190D0 end:0x82F193B4
 	.data       start:0x831160D0 end:0x8311661C rename:.bss
 
-world/CameraManager.cpp:
+system/world/CameraManager.cpp:
 	.rdata      start:0x820E24F0 end:0x820E34D0
 	.rdata      start:0x822A0F30 end:0x822A106C rename:.rdata$r
 	.pdata      start:0x822ED9A8 end:0x822EDF38
@@ -4461,7 +4461,7 @@ world/CameraManager.cpp:
 	.data       start:0x82F193B4 end:0x82F194C0
 	.data       start:0x8311661C end:0x8311667C rename:.bss
 
-world/CameraShot.cpp:
+system/world/CameraShot.cpp:
 	.rdata      start:0x820E34D0 end:0x820E5A00
 	.rdata      start:0x822A106C end:0x822A1158 rename:.rdata$r
 	.pdata      start:0x822EDF38 end:0x822EE998
@@ -4470,14 +4470,14 @@ world/CameraShot.cpp:
 	.data       start:0x82F194C0 end:0x82F19630
 	.data       start:0x8311667C end:0x83116928 rename:.bss
 
-world/LightPresetManager.cpp:
+system/world/LightPresetManager.cpp:
 	.rdata      start:0x820E5A00 end:0x820E5DD0
 	.rdata      start:0x822A1158 end:0x822A11A0 rename:.rdata$r
 	.pdata      start:0x822EE998 end:0x822EEB20
 	.text       start:0x8281DA58 end:0x8281F6A8
 	.data       start:0x82F19630 end:0x82F19718
 
-world/SpotlightDrawer_NG.cpp:
+system/world/SpotlightDrawer_NG.cpp:
 	.rdata      start:0x820E5DD0 end:0x820E6138
 	.rdata      start:0x820E613C end:0x820E6390
 	.rdata      start:0x822A11A0 end:0x822A12E8 rename:.rdata$r
@@ -4486,7 +4486,7 @@ world/SpotlightDrawer_NG.cpp:
 	.data       start:0x82F19718 end:0x82F1982C
 	.data       start:0x83116928 end:0x83116950 rename:.bss
 
-world/SpotlightDrawer.cpp:
+system/world/SpotlightDrawer.cpp:
 	.rdata      start:0x820E6394 end:0x820E6930
 	.rdata      start:0x822A12E8 end:0x822A1338 rename:.rdata$r
 	.pdata      start:0x822EED68 end:0x822EF020
@@ -4496,7 +4496,7 @@ world/SpotlightDrawer.cpp:
 	.data       start:0x82F1982C end:0x82F19830
 	.data       start:0x83116950 end:0x831169D4 rename:.bss
 
-world/Spotlight.cpp:
+system/world/Spotlight.cpp:
 	.rdata      start:0x820E6930 end:0x820E7BA8
 	.rdata      start:0x822A1338 end:0x822A144C rename:.rdata$r
 	.pdata      start:0x822EF020 end:0x822EF5C0
@@ -4504,7 +4504,7 @@ world/Spotlight.cpp:
 	.data       start:0x82F19830 end:0x82F19880
 	.data       start:0x831169D4 end:0x83116B28 rename:.bss
 
-world/BeatClock.cpp:
+system/world/BeatClock.cpp:
 	.rdata      start:0x820E7BA8 end:0x820E839C
 	.rdata      start:0x822A144C end:0x822A14B4 rename:.rdata$r
 	.pdata      start:0x822EF5C0 end:0x822EF7D0
@@ -4513,7 +4513,7 @@ world/BeatClock.cpp:
 	.data       start:0x82F19880 end:0x82F19898
 	.data       start:0x83116B28 end:0x83116B88 rename:.bss
 
-world/ColorPalette.cpp:
+system/world/ColorPalette.cpp:
 	.rdata      start:0x820E839C end:0x820E8578
 	.rdata      start:0x822A14B4 end:0x822A1504 rename:.rdata$r
 	.pdata      start:0x822EF7D0 end:0x822EF898
@@ -4521,7 +4521,7 @@ world/ColorPalette.cpp:
 	.data       start:0x82F19898 end:0x82F198CC
 	.data       start:0x83116B88 end:0x83116C40 rename:.bss
 
-world/Crowd.cpp:
+system/world/Crowd.cpp:
 	.rdata      start:0x820E8578 end:0x820E9D60
 	.rdata      start:0x822A1504 end:0x822A15A4 rename:.rdata$r
 	.pdata      start:0x822EF898 end:0x822F0078
@@ -4530,14 +4530,14 @@ world/Crowd.cpp:
 	.data       start:0x82F198CC end:0x82F19B14
 	.data       start:0x83116C40 end:0x83116C48 rename:.bss
 
-world/Crowd3DCharHandle.cpp:
+system/world/Crowd3DCharHandle.cpp:
 	.rdata      start:0x820E9D60 end:0x820E9FE0
 	.rdata      start:0x822A15A4 end:0x822A1648 rename:.rdata$r
 	.pdata      start:0x822F0078 end:0x822F0118
 	.text       start:0x8283D148 end:0x8283DA50
 	.data       start:0x83116C48 end:0x83116C58 rename:.bss
 
-world/LightPreset.cpp:
+system/world/LightPreset.cpp:
 	.rdata      start:0x820E9FE0 end:0x820EC8E0
 	.rdata      start:0x822A1648 end:0x822A196C rename:.rdata$r
 	.pdata      start:0x822F0118 end:0x822F1050
@@ -4548,14 +4548,14 @@ world/LightPreset.cpp:
 	.data       start:0x82F19B14 end:0x82F19F5C
 	.data       start:0x83116C58 end:0x83116D7C rename:.bss
 
-world/LightHue.cpp:
+system/world/LightHue.cpp:
 	.rdata      start:0x820EC8E0 end:0x820ECBDC
 	.rdata      start:0x822A196C end:0x822A19BC rename:.rdata$r
 	.pdata      start:0x822F1050 end:0x822F1148
 	.text       start:0x82850940 end:0x82851A98
 	.data       start:0x83116D7C end:0x83116D8C rename:.bss
 
-world/PostProcer.cpp:
+system/world/PostProcer.cpp:
 	.rdata      start:0x820ECBDC end:0x820ECDD8
 	.rdata      start:0x822A19BC end:0x822A1A3C rename:.rdata$r
 	.pdata      start:0x822F1148 end:0x822F11A8
@@ -4563,7 +4563,7 @@ world/PostProcer.cpp:
 	.data       start:0x82F19F5C end:0x82F19F78
 	.data       start:0x83116D8C end:0x83116DB4 rename:.bss
 
-world/Reflection.cpp:
+system/world/Reflection.cpp:
 	.rdata      start:0x820ECDD8 end:0x820ED27C
 	.rdata      start:0x822A1A3C end:0x822A1AE0 rename:.rdata$r
 	.pdata      start:0x822F11A8 end:0x822F1320
@@ -4571,7 +4571,7 @@ world/Reflection.cpp:
 	.data       start:0x82F19F78 end:0x82F19F98
 	.data       start:0x83116DB4 end:0x83116DBC rename:.bss
 
-world/SpotlightEnder.cpp:
+system/world/SpotlightEnder.cpp:
 	.rdata      start:0x820ED27C end:0x820ED3B4
 	.rdata      start:0x822A1AE0 end:0x822A1B60 rename:.rdata$r
 	.pdata      start:0x822F1320 end:0x822F13A0
@@ -4579,7 +4579,7 @@ world/SpotlightEnder.cpp:
 	.data       start:0x82F19F98 end:0x82F19FB8
 	.data       start:0x83116DBC end:0x83116DEC rename:.bss
 
-world/Instance.cpp:
+system/world/Instance.cpp:
 	.rdata      start:0x820ED3B4 end:0x820EDDE4
 	.rdata      start:0x822A1B60 end:0x822A1DBC rename:.rdata$r
 	.pdata      start:0x822F13A0 end:0x822F1640
@@ -4587,7 +4587,7 @@ world/Instance.cpp:
 	.data       start:0x82F19FB8 end:0x82F1A064
 	.data       start:0x83116DEC end:0x83116DF4 rename:.bss
 
-world/PhysicsVolume.cpp:
+system/world/PhysicsVolume.cpp:
 	.rdata      start:0x820EDDE4 end:0x820EE6A0
 	.rdata      start:0x822A1DBC end:0x822A1F98 rename:.rdata$r
 	.pdata      start:0x822F1640 end:0x822F18E0
@@ -4597,7 +4597,7 @@ world/PhysicsVolume.cpp:
 	.data       start:0x82F1A064 end:0x82F1A218
 	.data       start:0x83116DF4 end:0x83116EC8 rename:.bss
 
-world/ThreeDSoundManager.cpp:
+system/world/ThreeDSoundManager.cpp:
 	.rdata      start:0x820EE6A0 end:0x820EE974
 	.rdata      start:0x822A1F98 end:0x822A2080 rename:.rdata$r
 	.pdata      start:0x822F18E0 end:0x822F19B8
@@ -4605,21 +4605,21 @@ world/ThreeDSoundManager.cpp:
 	.text       start:0x82EE3910 end:0x82EE3920 rename:.text$yd
 	.data       start:0x82F1A218 end:0x82F1A2C8
 
-world/PhysicsManager.cpp:
+system/world/PhysicsManager.cpp:
 	.rdata      start:0x820EE974 end:0x820EEDBC
 	.rdata      start:0x822A2080 end:0x822A20D0 rename:.rdata$r
 	.pdata      start:0x822F19B8 end:0x822F1A78
 	.text       start:0x8285BD50 end:0x8285CB68
 	.data       start:0x82F1A2C8 end:0x82F1A2EC
 
-world/FreeCamera.cpp:
+system/world/FreeCamera.cpp:
 	.rdata      start:0x820EEDBC end:0x820EEF60
 	.rdata      start:0x822A20D0 end:0x822A2120 rename:.rdata$r
 	.pdata      start:0x822F1A78 end:0x822F1AE0
 	.text       start:0x8285CB68 end:0x8285D6E8
 	.data       start:0x82F1A2EC end:0x82F1A308
 
-world/DefaultPhysicsManager.cpp:
+system/world/DefaultPhysicsManager.cpp:
 	.rdata      start:0x820EEF60 end:0x820EFDDC
 	.rdata      start:0x822A2120 end:0x822A22AC rename:.rdata$r
 	.pdata      start:0x822F1AE0 end:0x822F1C70
@@ -8081,13 +8081,13 @@ system/math/Interp.cpp:
 	.text       start:0x82E078E8 end:0x82E07C78
 	.data       start:0x82F44964 end:0x82F449A0
 
-meta/Profile.cpp:
+system/meta/Profile.cpp:
 	.rdata      start:0x82255AB4 end:0x82255C7C
 	.rdata      start:0x822AC700 end:0x822AC728 rename:.rdata$r
 	.pdata      start:0x8231AA60 end:0x8231AAC0
 	.text       start:0x82E07C78 end:0x82E08300
 
-meta/HAQManager.cpp:
+system/meta/HAQManager.cpp:
 	.rdata      start:0x82255C7C end:0x82256408
 	.rdata      start:0x822AC728 end:0x822AC778 rename:.rdata$r
 	.pdata      start:0x8231AAC0 end:0x8231ACD0
@@ -8095,7 +8095,7 @@ meta/HAQManager.cpp:
 	.data       start:0x82F449A0 end:0x82F449BC
 	.data       start:0x8316B32C end:0x8316B344 rename:.bss
 
-meta/PreloadPanel.cpp:
+system/meta/PreloadPanel.cpp:
 	.rdata      start:0x82256408 end:0x82256A5C
 	.rdata      start:0x822AC778 end:0x822AC7F8 rename:.rdata$r
 	.pdata      start:0x8231ACD0 end:0x8231AE88
@@ -8104,7 +8104,7 @@ meta/PreloadPanel.cpp:
 	.data       start:0x82F449BC end:0x82F44A40
 	.data       start:0x8316B344 end:0x8316B3A0 rename:.bss
 
-meta/MemcardMgr_Xbox.cpp:
+system/meta/MemcardMgr_Xbox.cpp:
 	.rdata      start:0x82256A5C end:0x82256FB0
 	.rdata      start:0x822AC7F8 end:0x822AC87C rename:.rdata$r
 	.pdata      start:0x8231AE88 end:0x8231B000
@@ -8112,7 +8112,7 @@ meta/MemcardMgr_Xbox.cpp:
 	.text       start:0x82EE5078 end:0x82EE5098 rename:.text$yd
 	.data       start:0x82F44A40 end:0x82F44AC8
 
-meta/MemcardMgr.cpp:
+system/meta/MemcardMgr.cpp:
 	.rdata      start:0x82256FB0 end:0x8225706C
 	.rdata      start:0x822AC87C end:0x822AC8C8 rename:.rdata$r
 	.pdata      start:0x8231B000 end:0x8231B030
@@ -8123,7 +8123,7 @@ meta/MemcardMgr.cpp:
 	.data       start:0x82F44AC8 end:0x82F44AF0
 	.data       start:0x8316B3A0 end:0x8316B450 rename:.bss
 
-meta/CreditsPanel.cpp:
+system/meta/CreditsPanel.cpp:
 	.rdata      start:0x8225706C end:0x822574E4
 	.rdata      start:0x822AC8C8 end:0x822AC948 rename:.rdata$r
 	.pdata      start:0x8231B030 end:0x8231B158
@@ -8132,7 +8132,7 @@ meta/CreditsPanel.cpp:
 	.data       start:0x82F44AF0 end:0x82F44B0C
 	.data       start:0x8316B450 end:0x8316B480 rename:.bss
 
-meta/MoviePanel.cpp:
+system/meta/MoviePanel.cpp:
 	.rdata      start:0x822574E4 end:0x82257978
 	.rdata      start:0x822AC948 end:0x822AC9B0 rename:.rdata$r
 	.pdata      start:0x8231B158 end:0x8231B2A0
@@ -8141,25 +8141,25 @@ meta/MoviePanel.cpp:
 	.data       start:0x82F44B0C end:0x82F44B28
 	.data       start:0x8316B480 end:0x8316B4CC rename:.bss
 
-meta/SongPreview.cpp:
+system/meta/SongPreview.cpp:
 	.rdata      start:0x82257978 end:0x82257E28
 	.rdata      start:0x822AC9B0 end:0x822ACAB4 rename:.rdata$r
 	.pdata      start:0x8231B2A0 end:0x8231B3B8
 	.text       start:0x82E10668 end:0x82E12068
 	.data       start:0x82F44B28 end:0x82F44BF0
 
-meta/Meta.cpp:
+system/meta/Meta.cpp:
 	.rdata      start:0x82257E28 end:0x82258108
 	.pdata      start:0x8231B3B8 end:0x8231B430
 	.text       start:0x82E12068 end:0x82E124F8
 	.data       start:0x8316B4CC end:0x8316B4E4 rename:.bss
 
-meta/Jukebox.cpp:
+system/meta/Jukebox.cpp:
 	.rdata      start:0x82258108 end:0x82258190
 	.pdata      start:0x8231B430 end:0x8231B4A0
 	.text       start:0x82E124F8 end:0x82E12D38
 
-meta/StorePanel.cpp:
+system/meta/StorePanel.cpp:
 	.rdata      start:0x82258190 end:0x82258EFC
 	.rdata      start:0x822ACAB4 end:0x822ACB74 rename:.rdata$r
 	.pdata      start:0x8231B4A0 end:0x8231B848
@@ -8168,7 +8168,7 @@ meta/StorePanel.cpp:
 	.data       start:0x82F44BF0 end:0x82F44C74
 	.data       start:0x8316B4E4 end:0x8316B590 rename:.bss
 
-meta/StorePurchaser.cpp:
+system/meta/StorePurchaser.cpp:
 	.rdata      start:0x82258EFC end:0x8225943C
 	.rdata      start:0x822ACB74 end:0x822ACCC4 rename:.rdata$r
 	.pdata      start:0x8231B848 end:0x8231B998
@@ -8176,18 +8176,18 @@ meta/StorePurchaser.cpp:
 	.data       start:0x82F44C74 end:0x82F44CDC
 	.data       start:0x8316B590 end:0x8316B68C rename:.bss
 
-meta/StoreOffer.cpp:
+system/meta/StoreOffer.cpp:
 	.rdata      start:0x8225943C end:0x82259D10
 	.rdata      start:0x822ACCC4 end:0x822ACCEC rename:.rdata$r
 	.pdata      start:0x8231B998 end:0x8231BB98
 	.text       start:0x82E18360 end:0x82E1A0A8
 
-meta/Sorting.cpp:
+system/meta/Sorting.cpp:
 	.rdata      start:0x82259D10 end:0x82259D54
 	.pdata      start:0x8231BB98 end:0x8231BBB0
 	.text       start:0x82E1A0A8 end:0x82E1A360
 
-meta/ConnectionStatusPanel.cpp:
+system/meta/ConnectionStatusPanel.cpp:
 	.rdata      start:0x82259D54 end:0x8225A01C
 	.rdata      start:0x822ACCEC end:0x822ACD54 rename:.rdata$r
 	.pdata      start:0x8231BBB0 end:0x8231BC50
@@ -8196,7 +8196,7 @@ meta/ConnectionStatusPanel.cpp:
 	.data       start:0x82F44CDC end:0x82F44D00
 	.data       start:0x8316B68C end:0x8316B6A8 rename:.bss
 
-meta/DeJitterPanel.cpp:
+system/meta/DeJitterPanel.cpp:
 	.rdata      start:0x8225A01C end:0x8225A1E8
 	.rdata      start:0x822ACD54 end:0x822ACDBC rename:.rdata$r
 	.pdata      start:0x8231BC50 end:0x8231BCB0
@@ -8204,7 +8204,7 @@ meta/DeJitterPanel.cpp:
 	.data       start:0x82F44D00 end:0x82F44D1C
 	.data       start:0x8316B6A8 end:0x8316B6B0 rename:.bss
 
-meta/HeldButtonPanel.cpp:
+system/meta/HeldButtonPanel.cpp:
 	.rdata      start:0x8225A1E8 end:0x8225A908
 	.rdata      start:0x822ACDBC end:0x822ACE70 rename:.rdata$r
 	.pdata      start:0x8231BCB0 end:0x8231BEB0
@@ -8213,14 +8213,14 @@ meta/HeldButtonPanel.cpp:
 	.data       start:0x82F44D1C end:0x82F44D94
 	.data       start:0x8316B6B0 end:0x8316B6E0 rename:.bss
 
-meta/StoreEnumeration.cpp:
+system/meta/StoreEnumeration.cpp:
 	.rdata      start:0x8225A908 end:0x8225ABA8
 	.rdata      start:0x822ACE70 end:0x822ACF04 rename:.rdata$r
 	.pdata      start:0x8231BEB0 end:0x8231BF48
 	.text       start:0x82E1CDF0 end:0x82E1D8C0
 	.data       start:0x82F44D94 end:0x82F44E0C
 
-meta/StorePreviewMgr.cpp:
+system/meta/StorePreviewMgr.cpp:
 	.rdata      start:0x8225ABA8 end:0x8225B248
 	.rdata      start:0x822ACF04 end:0x822ACFA0 rename:.rdata$r
 	.pdata      start:0x8231BF48 end:0x8231C0C8
@@ -8229,7 +8229,7 @@ meta/StorePreviewMgr.cpp:
 	.data       start:0x82F44E0C end:0x82F44E58
 	.data       start:0x8316B6E0 end:0x8316B764 rename:.bss
 
-meta/ButtonHolder.cpp:
+system/meta/ButtonHolder.cpp:
 	.rdata      start:0x8225B248 end:0x8225B84C
 	.rdata      start:0x822ACFA0 end:0x822ACFF0 rename:.rdata$r
 	.pdata      start:0x8231C0C8 end:0x8231C2B8
@@ -8237,7 +8237,7 @@ meta/ButtonHolder.cpp:
 	.text       start:0x82EE52C8 end:0x82EE52E8 rename:.text$yd
 	.data       start:0x82F44E58 end:0x82F44E74
 
-meta/StreamPlayer.cpp:
+system/meta/StreamPlayer.cpp:
 	.rdata      start:0x8225B84C end:0x8225B990
 	.rdata      start:0x822ACFF0 end:0x822AD040 rename:.rdata$r
 	.pdata      start:0x8231C2B8 end:0x8231C318
@@ -8294,7 +8294,7 @@ net/HttpGet.cpp:
 	.pdata      start:0x8231C8B8 end:0x8231CA18
 	.text       start:0x82E28DD0 end:0x82E2AAF0
 
-os/User.cpp:
+system/os/User.cpp:
 	.rdata      start:0x8225D4A0 end:0x8225DC20
 	.pdata      start:0x8231CA18 end:0x8231CAE0
 	.text       start:0x82E2AAF0 end:0x82E2B648
@@ -8603,7 +8603,7 @@ synth_xbox/FFT.cpp:
 	.pdata      start:0x8231E6E8 end:0x8231E740
 	.text       start:0x82E4E0E0 end:0x82E50AE8
 
-synth/MetaMusic.cpp:
+system/synth/MetaMusic.cpp:
 	.rdata      start:0x822639D4 end:0x82263F0C
 	.rdata      start:0x822AEB48 end:0x822AEB98 rename:.rdata$r
 	.pdata      start:0x8231E740 end:0x8231E908
@@ -8611,14 +8611,14 @@ synth/MetaMusic.cpp:
 	.data       start:0x82F4983C end:0x82F49870
 	.data       start:0x8316C980 end:0x8316C9B8 rename:.bss
 
-synth/WavReader.cpp:
+system/synth/WavReader.cpp:
 	.rdata      start:0x82263F0C end:0x822640B0
 	.rdata      start:0x822AEB98 end:0x822AEC2C rename:.rdata$r
 	.pdata      start:0x8231E908 end:0x8231E978
 	.text       start:0x82E52DE8 end:0x82E53760
 	.data       start:0x82F49870 end:0x82F498A4
 
-synth/VorbisReader.cpp:
+system/synth/VorbisReader.cpp:
 	.rdata      start:0x822640B0 end:0x82264AD4
 	.rdata      start:0x822AEC2C end:0x822AECCC rename:.rdata$r
 	.pdata      start:0x8231E978 end:0x8231EC00
@@ -8629,7 +8629,7 @@ synth/VorbisReader.cpp:
 	.data       start:0x82F498A4 end:0x82F49990
 	.data       start:0x8316C9B8 end:0x8316CB2C rename:.bss
 
-synth/BinkReader.cpp:
+system/synth/BinkReader.cpp:
 	.rdata      start:0x82264AD4 end:0x82264D20
 	.rdata      start:0x822AECCC end:0x822AED18 rename:.rdata$r
 	.pdata      start:0x8231EC00 end:0x8231EC50
@@ -8637,53 +8637,53 @@ synth/BinkReader.cpp:
 	.data       start:0x82F49990 end:0x82F499B4
 	.data       start:0x8316CB2C end:0x83176BF8 rename:.bss
 
-synth/CompressionEffect.cpp:
+system/synth/CompressionEffect.cpp:
 	.rdata      start:0x82264D20 end:0x82264D24
 	.pdata      start:0x8231EC50 end:0x8231EC68
 	.text       start:0x82E57C08 end:0x82E58128
 
-synth/BitCrushEffect.cpp:
+system/synth/BitCrushEffect.cpp:
 	.rdata      start:0x82264D24 end:0x82264D60
 	.pdata      start:0x8231EC68 end:0x8231EC70
 	.text       start:0x82E58128 end:0x82E58240
 
-synth/DistortionEffect.cpp:
+system/synth/DistortionEffect.cpp:
 	.rdata      start:0x82264D60 end:0x82264D7C
 	.pdata      start:0x8231EC70 end:0x8231EC78
 	.text       start:0x82E58240 end:0x82E58378
 
-synth/DelayEffect.cpp:
+system/synth/DelayEffect.cpp:
 	.rdata      start:0x82264D7C end:0x82264DFC
 	.pdata      start:0x8231EC78 end:0x8231EC98
 	.text       start:0x82E58378 end:0x82E58798
 
-synth/FlangerEffect.cpp:
+system/synth/FlangerEffect.cpp:
 	.rdata      start:0x82264DFC end:0x82264E18
 	.pdata      start:0x8231EC98 end:0x8231ECB8
 	.text       start:0x82E58798 end:0x82E58CA0
 
-synth/EQEffect.cpp:
+system/synth/EQEffect.cpp:
 	.rdata      start:0x82264E18 end:0x82264E80
 	.pdata      start:0x8231ECB8 end:0x8231ECE0
 	.text       start:0x82E58CA0 end:0x82E59ED8
 
-synth/WahEffect.cpp:
+system/synth/WahEffect.cpp:
 	.rdata      start:0x82264E80 end:0x82264EA4
 	.pdata      start:0x8231ECE0 end:0x8231ECE8
 	.text       start:0x82E59ED8 end:0x82E5A348
 
-synth/OggMap.cpp:
+system/synth/OggMap.cpp:
 	.rdata      start:0x82264EA4 end:0x82264EFC
 	.pdata      start:0x8231ECE8 end:0x8231ED10
 	.text       start:0x82E5A348 end:0x82E5A5F0
 	.data       start:0x82F499B4 end:0x82F49BB0
 
-synth/Common_Xbox.cpp:
+system/synth/Common_Xbox.cpp:
 	.rdata      start:0x82264EFC end:0x82264F30
 	.pdata      start:0x8231ED30 end:0x8231ED40
 	.text       start:0x82E5A998 end:0x82E5AAC8
 
-synth/filterdesign.cpp:
+system/synth/filterdesign.cpp:
 	.rdata      start:0x82264F30 end:0x82265008
 	.pdata      start:0x8231ED40 end:0x8231EDB0
 	.text       start:0x82E5AAC8 end:0x82E5C400
@@ -9272,7 +9272,7 @@ system/math/DoubleExponentialSmoother.cpp:
 	.pdata      start:0x822C9E88 end:0x822C9E90
 	.text       start:0x8253BDD0 end:0x8253C2D0
 
-meta/Achievements_Xbox.cpp:
+system/meta/Achievements_Xbox.cpp:
 	.text       start:0x825453A8 end:0x825453D8
 
 net/easy.cpp:
@@ -9385,47 +9385,47 @@ net/hmac.cpp:
 	.pdata      start:0x822CCF00 end:0x822CCF18
 	.text       start:0x8258C738 end:0x8258C9A8
 
-os/CritSec.cpp:
+system/os/CritSec.cpp:
 	.pdata      start:0x822D1AD8 end:0x822D1AF8
 	.text       start:0x825E4738 end:0x825E4898
 
-os/NetworkSocket.cpp:
+system/os/NetworkSocket.cpp:
 	.pdata      start:0x822D22A8 end:0x822D22C8
 	.text       start:0x825EDEA0 end:0x825EE030
 
-os/Keyboard_Xbox.cpp:
+system/os/Keyboard_Xbox.cpp:
 	.pdata      start:0x822D2858 end:0x822D2868
 	.text       start:0x825F4038 end:0x825F42C0
 
-os/xbcapi.cpp:
+system/os/xbcapi.cpp:
 	.text       start:0x825FAE38 end:0x825FAE50
 
-os/xjson.cpp:
+system/os/xjson.cpp:
 	.pdata      start:0x822D2E18 end:0x822D2E30
 	.text       start:0x825FAE50 end:0x825FB038
 
-os/socialpostapi.cpp:
+system/os/socialpostapi.cpp:
 	.pdata      start:0x822D2E30 end:0x822D2E48
 	.text       start:0x825FB038 end:0x825FB750
 
-os/UsbMidiKeyboard.cpp:
+system/os/UsbMidiKeyboard.cpp:
 	.pdata      start:0x822D2F80 end:0x822D2FD8
 	.text       start:0x825FD228 end:0x825FD8E8
 	.data       start:0x83099CA4 end:0x83099CB0 rename:.bss
 
-os/xbcimpl.cpp:
+system/os/xbcimpl.cpp:
 	.pdata      start:0x822D36D0 end:0x822D3708
 	.text       start:0x82605960 end:0x82606138
 	.data       start:0x82F12BEC end:0x82F12C08
 	.data       start:0x8309B050 end:0x8309B534 rename:.bss
 
-os/xlrcapi.cpp:
+system/os/xlrcapi.cpp:
 	.text       start:0x8260A7C8 end:0x8260A868
 
-os/jsonbuffer.cpp:
+system/os/jsonbuffer.cpp:
 	.text       start:0x8260A868 end:0x8260AB70
 
-os/xlrcimpl.cpp:
+system/os/xlrcimpl.cpp:
 	.pdata      start:0x822D3C40 end:0x822D3D18
 	.pdata      start:0x823214D0 end:0x823214D8
 	.text       start:0x8260AB70 end:0x8260C600
@@ -9434,17 +9434,17 @@ os/xlrcimpl.cpp:
 	.data       start:0x82F12EE0 end:0x82F12EFC
 	.data       start:0x8309B5E0 end:0x830A0800 rename:.bss
 
-os/xlrcclient.cpp:
+system/os/xlrcclient.cpp:
 	.pdata      start:0x822D3DF8 end:0x822D3E68
 	.text       start:0x8260DB68 end:0x8260E1D0
 
-os/xlrccallout.cpp:
+system/os/xlrccallout.cpp:
 	.pdata      start:0x822D3E68 end:0x822D3E88
 	.text       start:0x8260E1D0 end:0x8260E418
 	.data       start:0x82F12EFC end:0x82F12F18
 	.data       start:0x830A0800 end:0x830A0DA8 rename:.bss
 
-os/xlrclistener.cpp:
+system/os/xlrclistener.cpp:
 	.pdata      start:0x822D3EF8 end:0x822D3F48
 	.text       start:0x8260EC68 end:0x8260F428
 
@@ -9466,18 +9466,18 @@ system/rndobj/wordwrap.cpp:
 	.data       start:0x82F16AB0 end:0x82F16D14
 	.data       start:0x830E1CCC end:0x830E1CE0 rename:.bss
 
-synth/MidiChannel.cpp:
+system/synth/MidiChannel.cpp:
 	.text       start:0x8276EF48 end:0x8276EF98
 
-synth/SfxMap.cpp:
+system/synth/SfxMap.cpp:
 	.pdata      start:0x822E5900 end:0x822E5930
 	.text       start:0x82774548 end:0x827747C0
 
-synth/SampleZone.cpp:
+system/synth/SampleZone.cpp:
 	.pdata      start:0x822E5A28 end:0x822E5A58
 	.text       start:0x82775550 end:0x827758C0
 
-ui/Utl.cpp:
+system/ui/Utl.cpp:
 	.pdata      start:0x822E72D8 end:0x822E72E0
 	.text       start:0x82793018 end:0x82793198
 
@@ -11619,7 +11619,7 @@ system/math/Primes.cpp:
 system/math/Rand2.cpp:
 	.text       start:0x82E07880 end:0x82E078E8
 
-meta/MemcardAction.cpp:
+system/meta/MemcardAction.cpp:
 	.text       start:0x82E12D38 end:0x82E12D70
 
 moviebink/BinkMovieSys_Xbox.cpp:
@@ -11644,11 +11644,11 @@ synth_xbox/Biquad.cpp:
 	.pdata      start:0x8231E5F8 end:0x8231E600
 	.text       start:0x82E4C740 end:0x82E4C7F8
 
-synth/ctr.cpp:
+system/synth/ctr.cpp:
 	.pdata      start:0x8231ED10 end:0x8231ED30
 	.text       start:0x82E5A5F0 end:0x82E5A998
 
-synth/complex.cpp:
+system/synth/complex.cpp:
 	.pdata      start:0x8231EDB0 end:0x8231EDD8
 	.text       start:0x82E5C400 end:0x82E5C7D8
 
@@ -12181,11 +12181,11 @@ oggvorbis/registry.cpp:
 xapilibi/callexitthread.cpp:
 	.data       start:0x82F5E224 end:0x82F5E22C rename:.bss
 
-os/precomp.cpp:
+system/os/precomp.cpp:
 	.data       start:0x8309B04C end:0x8309B050 rename:.bss
 	.data       start:0x8309B5D8 end:0x8309B5E0 rename:.bss
 
-os/pch.cpp:
+system/os/pch.cpp:
 	.data       start:0x8309B534 end:0x8309B538 rename:.bss
 	.data       start:0x830A1214 end:0x830A1270 rename:.bss
 
