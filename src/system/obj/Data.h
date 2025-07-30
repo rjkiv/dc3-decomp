@@ -19,13 +19,13 @@ typedef DataNode DataFunc(DataArray *);
 
 /** The possible DataNode types. */
 enum DataType {
-    kDataUnhandled = 0,
+    kDataInt = 0,
     kDataFloat = 1,
     kDataVar = 2,
     kDataFunc = 3,
     kDataObject = 4,
     kDataSymbol = 5,
-    kDataInt = 6,
+    kDataUnhandled = 6,
     kDataIfdef = 7,
     kDataElse = 8,
     kDataEndif = 9,

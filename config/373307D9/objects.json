@@ -6,8 +6,13 @@
         "objects": {
             "App.cpp": "MISSING",
             "ChecksumData_xbox.cpp": "MISSING",
-            "keygen_xbox.cpp": { "status": "NonMatching", "extra_cflags": [ "/Od" ] },
-            "Main.cpp": "Matching",
+            "keygen_xbox.cpp": {
+                "status": "NonMatching",
+                "extra_cflags": [
+                    "/Od"
+                ]
+            },
+            "Main.cpp": "NonMatching",
             "Memory_Xbox.cpp": "MISSING"
         }
     },
@@ -421,7 +426,7 @@
             "system/math/StreamChecksum.cpp": "MISSING",
             "system/math/Trig.cpp": "MISSING",
             "system/math/mtx.cpp": "MISSING",
-            "system/math/vec.cpp": "Matching",
+            "system/math/vec.cpp": "NonMatching",
             "system/meta/Achievements.cpp": "MISSING",
             "system/meta/Achievements_Xbox.cpp": "MISSING",
             "system/meta/ButtonHolder.cpp": "MISSING",
@@ -766,7 +771,12 @@
             "system/synth/AudioDucker.cpp": "MISSING",
             "system/synth/BinkReader.cpp": "MISSING",
             "system/synth/BitCrushEffect.cpp": "MISSING",
-            "system/synth/ByteGrinder.cpp": "MISSING",
+            "system/synth/ByteGrinder.cpp": {
+                "status": "NonMatching",
+                "extra_cflags": [
+                    "/O1y"
+                ]
+            },
             "system/synth/Common_Xbox.cpp": "MISSING",
             "system/synth/CompressionEffect.cpp": "MISSING",
             "system/synth/DelayEffect.cpp": "MISSING",
@@ -827,7 +837,7 @@
             "system/synth/ctr.cpp": "MISSING",
             "system/synth/filterdesign.cpp": "MISSING",
             "system/synth_xbox/AAFilter.cpp": "MISSING",
-            "system/synth_xbox/Biquad.cpp": "MISSING",
+            "system/synth_xbox/Biquad.cpp": "NonMatching",
             "system/synth_xbox/EnvelopeGenerator.cpp": "MISSING",
             "system/synth_xbox/ExternalMic.cpp": "MISSING",
             "system/synth_xbox/FFT.cpp": "MISSING",

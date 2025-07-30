@@ -3,7 +3,7 @@
 #include <types.h>
 
 class DxRnd {
-    u8 pad[0x1d4];
+    u8 pad[0x224];
     struct D3DDevice *mD3DDevice;
 
 public:
