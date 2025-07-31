@@ -290,7 +290,7 @@
 
 #if !defined (_STLP_NATIVE_HEADER)
 #  if !defined (_STLP_NATIVE_INCLUDE_PATH)
-#    define _STLP_NATIVE_INCLUDE_PATH ../../xdk/LIBCMT
+#    define _STLP_NATIVE_INCLUDE_PATH xdk/LIBCMT
 #  endif
 #  define _STLP_NATIVE_HEADER(header) _STLP_MAKE_HEADER(_STLP_NATIVE_INCLUDE_PATH,header)
 #endif

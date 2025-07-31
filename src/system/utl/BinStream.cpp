@@ -1,13 +1,18 @@
 #include "BinStream.h"
-// #include "os/Debug.h"
+#include "os/Debug.h"
 
 #define BUF_SIZE 512
 
 const char *BinStream::Name() const { return "<unnamed>"; }
 
-BinStream::BinStream(bool b) : mLittleEndian(b), mCrypto(nullptr) {}
+BinStream::BinStream(bool b) : mLittleEndian(b), mCrypto(nullptr), mRevStack(nullptr) {}
 
 void SwapData(const void *in, void *out, int size);
+
+void BinStream::DisableEncryption(){
+    MILO_ASSERT(mCrypto, 0xDC);
+    RELEASE(mCrypto);
+}
 
 void BinStream::WriteEndian(const void *in, int size) {
     if (mLittleEndian) {
@@ -19,12 +24,12 @@ void BinStream::WriteEndian(const void *in, int size) {
 }
 
 bool BinStream::AddSharedInlined(const class FilePath &) {
-    // MILO_FAIL("BinStream::AddSharedInlined is a PC only dev tool !!");
+    MILO_FAIL("BinStream::AddSharedInlined is a PC only dev tool !!");
     return false;
 }
 
 BinStream &BinStream::operator<<(const char *str) {
-    // MILO_ASSERT(str);
+    MILO_ASSERT(str, 0x60);
     int len = 0;
     const char *cc = str;
     while (*++cc)
@@ -38,7 +43,7 @@ BinStream &BinStream::operator<<(const char *str) {
 
 BinStream &BinStream::operator<<(const Symbol &sym) {
     int len;
-    // MILO_ASSERT(len < BUF_SIZE);
+    MILO_ASSERT(len < BUF_SIZE, 0x6C);
     return *this;
 }
 

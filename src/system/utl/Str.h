@@ -25,6 +25,7 @@ public:
     FixedString(char*, int);
     const char* Str() const { return mStr; }
 
+    bool operator<(const FixedString&) const;
     FixedString& operator+=(const char*);
 };
 
@@ -96,7 +97,7 @@ public:
     // void ReplaceAll(char, char);
     // void swap(String &);
     // String &replace(unsigned int, unsigned int, const char *);
-    // String &erase();
+    String &erase();
     // String &erase(unsigned int);
     // String &erase(unsigned int, unsigned int);
     // String &insert(unsigned int, unsigned int, char);

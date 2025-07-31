@@ -1,10 +1,11 @@
 #pragma once
-
 #include <types.h>
 #include "math/Rand2.h"
 #include "os/Platform.h"
 #include "utl/Symbol.h"
 #include "utl/Str.h"
+#include "obj/ObjVersion.h"
+#include <vector>
 
 enum EofType {
     NotEof = 0,
@@ -65,6 +66,7 @@ public:
     void WriteEndian(const void *, int);
 
     void EnableReadEncryption(void);
+    void DisableEncryption();
     void ReadString(char *, int);
 
     bool AddSharedInlined(const class FilePath &);
@@ -105,7 +107,8 @@ public:
 #undef BS_READ_OP
 #undef BS_WRITE_OP
 
-private:
-    bool mLittleEndian;
-    Rand2 *mCrypto;
+protected:
+    bool mLittleEndian; // 0x4
+    Rand2 *mCrypto; // 0x8
+    std::vector<ObjVersion>* mRevStack; // 0xc
 };
