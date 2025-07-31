@@ -8,6 +8,7 @@
 // #include <setjmp.h>
 
 typedef void ExitCallbackFunc(void);
+typedef void FixedStringFunc(FixedString&);
 
 class Debug : public TextStream {
 public:
@@ -29,7 +30,7 @@ public:
     ModalCallbackFunc *mModalCallback; // 0x1c
     std::list<ExitCallbackFunc *> mFailCallbacks; // 0x20
     std::list<ExitCallbackFunc *> mExitCallbacks; // 0x28
-    std::list<int> unk30; // 0x30
+    std::list<FixedStringFunc*> unk30; // 0x30
     int unk38; // 0x38
     unsigned int mFailThreadStack[50]; // starts at 0x3c
     const char *mFailThreadMsg; // 0x104

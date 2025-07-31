@@ -24,6 +24,8 @@ public:
     FixedString(){}
     FixedString(char*, int);
     const char* Str() const { return mStr; }
+
+    FixedString& operator+=(const char*);
 };
 
 class String : public TextStream, public FixedString {
@@ -34,8 +36,8 @@ public:
     virtual void Print(const char *);
 
     String();
-    // String(const char *);
-    // String(Symbol);
+    String(const char *);
+    String(Symbol);
     String(const String &);
     String(unsigned int, char);
 
