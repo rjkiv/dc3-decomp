@@ -8,7 +8,7 @@ VERSIONS = [
 cflags_includes = [
     # C/C++ stdlib
     # STLport requires that it comes first in the include path list
-    # "/I src/system/stlport",
+    "/I src/system/stlport",
     "/I src/xdk/LIBCMT",
     # "-i src/sdk/PowerPC_EABI_Support/MSL/MSL_C",
 

@@ -36,7 +36,9 @@
  * If you want iostreams, you have to compile library in ../build/lib
  * and supply resulting library at link time.
  */
+
 #define _STLP_NO_IOSTREAMS 1
+
 
 /* 
  * Set _STLP_DEBUG to turn the "Debug Mode" on.
@@ -157,13 +159,17 @@
  *  Define this macro to disable anachronistic constructs (like the ones used in HP STL and
  *  not included in final standard, etc. 
  */
+
 #define _STLP_NO_ANACHRONISMS 1
+
 
 /*
  *  Define this macro to disable STLport extensions (for example, to make sure your code will 
  *  compile with some other implementation )
  */
+
 #define _STLP_NO_EXTENSIONS 1
+
 
 /* 
  * You should define this macro if compiling with MFC - STLport <stl/_config.h>
@@ -285,7 +291,9 @@
  * and pointer to class member method. So if you have instanciating any container with
  * such a type compilation will failed.
  */
+
 #define _STLP_USE_PTR_SPECIALIZATIONS 1
+
 
 /*
  * To achieve many different optimizations within the template implementations STLport
@@ -301,10 +309,5 @@
 */
 
 /*==========================================================*/
-
-/* Custom configuration */
-
-#ifdef HX_WII
-#  define _STLP_USE_SIZED_VECTOR
-#  define _STLP_INTERNAL_BVECTOR_H /* disable vector<bool> specialization by pretending its header is included */
-#endif
+#define _STLP_BIG_ENDIAN
+#define _STLP_NATIVE_INCLUDE_PATH              xdk/LIBCMT
