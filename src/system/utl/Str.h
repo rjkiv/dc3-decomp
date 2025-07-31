@@ -2,8 +2,8 @@
 #define UTL_STR_H
 #include "utl/TextStream.h"
 #include "utl/Symbol.h"
-#include <string.h>
-// #include <vector>
+#include <cstring>
+#include <vector>
 
 // i can't think of a better place to put this
 inline bool IsAsciiNum(char c) { return c >= 0x30 && c <= 0x39; }
@@ -16,6 +16,13 @@ inline bool strneq(const char *s1, const char *s2, int n) {
 }
 
 inline bool strieq(const char *s1, const char *s2) { return stricmp(s1, s2) == 0; }
+
+class FixedString {
+private:
+    char** unk0;
+public:
+    FixedString(char*, int);
+};
 
 class String : public TextStream {
 public:
@@ -73,7 +80,7 @@ public:
 
     bool contains(const char *) const;
 
-    // int split(const char *token, std::vector<String> &subStrings) const;
+    int split(const char *token, std::vector<String> &subStrings) const;
 
     String substr(unsigned int) const;
     String substr(unsigned int, unsigned int) const;

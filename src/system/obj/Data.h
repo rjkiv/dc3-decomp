@@ -76,7 +76,7 @@ public:
 
     DataNode(Symbol s) {
         mType = kDataSymbol;
-        mValue.symbol = s.mStr;
+        mValue.symbol = s.Str();
     }
 
     DataNode(Hmx::Object *obj) {
@@ -276,7 +276,7 @@ public:
     static int NodeCmp(const void *, const void *);
     static void SetFile(Symbol);
 
-    const char *File() const { return mFile.mStr; }
+    const char *File() const { return mFile.Str(); }
     int Size() const { return mSize; }
     int Line() const { return mLine; }
 

@@ -18,6 +18,7 @@ public:
     TextStream &operator<<(unsigned int);
     TextStream &operator<<(unsigned short);
     TextStream &operator<<(unsigned long);
+    TextStream &operator<<(unsigned long long);
     TextStream &operator<<(float);
     TextStream &operator<<(double);
     TextStream &operator<<(const char *);
