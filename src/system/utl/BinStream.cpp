@@ -63,7 +63,7 @@ BinStream &BinStream::operator>>(String &str) {
     int siz;
     *this >> siz;
     str.resize(siz);
-    Read(str.mStr, siz);
+    Read((void*)str.Str(), siz);
     return *this;
 }
 

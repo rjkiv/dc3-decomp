@@ -18,93 +18,96 @@ inline bool strneq(const char *s1, const char *s2, int n) {
 inline bool strieq(const char *s1, const char *s2) { return stricmp(s1, s2) == 0; }
 
 class FixedString {
-private:
-    char* mStr;
+protected:
+    char* mStr; // 0x0
 public:
+    FixedString(){}
     FixedString(char*, int);
+    const char* Str() const { return mStr; }
 };
 
-class String : public TextStream {
+class String : public TextStream, public FixedString {
+    // TextStream vtable = 0x0
+    // FixedString = 0x4
 public:
-    unsigned int mCap;
-    char *mStr;
-
     virtual ~String();
     virtual void Print(const char *);
 
     String();
-    String(const char *);
-    String(Symbol);
+    // String(const char *);
+    // String(Symbol);
     String(const String &);
     String(unsigned int, char);
 
-    static const unsigned int npos;
+    bool operator==(const FixedString&) const;
 
-    unsigned int length() const { return strlen(mStr); }
-    unsigned int capacity() const { return mCap; }
-    const char *c_str() const { return mStr; }
-    bool empty() const { return *mStr == '\0'; }
+    // static const unsigned int npos;
 
-    void reserve(unsigned int);
+    // unsigned int length() const { return strlen(mStr); }
+    // unsigned int capacity() const { return mCap; }
+    // const char *c_str() const { return mStr; }
+    // bool empty() const { return *mStr == '\0'; }
 
-    String operator+(const char *) const;
-    String operator+(char) const;
-    String operator+(const String &) const;
-    String &operator+=(const char *);
-    String &operator+=(Symbol);
-    String &operator+=(const String &);
-    String &operator+=(char);
-    String &operator=(const char *);
-    String &operator=(Symbol);
-    String &operator=(const String &);
+    // void reserve(unsigned int);
 
-    char &operator[](unsigned int);
-    char rindex(int) const;
-    char &rindex(int);
+    // String operator+(const char *) const;
+    // String operator+(char) const;
+    // String operator+(const String &) const;
+    // String &operator+=(const char *);
+    // String &operator+=(Symbol);
+    // String &operator+=(const String &);
+    // String &operator+=(char);
+    // String &operator=(const char *);
+    // String &operator=(Symbol);
+    // String &operator=(const String &);
 
-    bool operator!=(const char *) const;
-    bool operator!=(const String &) const;
-    bool operator==(const char *) const;
-    bool operator==(const String &) const;
-    bool operator<(const String &) const;
+    // char &operator[](unsigned int);
+    // char rindex(int) const;
+    // char &rindex(int);
+
+    // bool operator!=(const char *) const;
+    // bool operator!=(const String &) const;
+    // bool operator==(const char *) const;
+    // bool operator==(const String &) const;
+    // bool operator<(const String &) const;
 
     void resize(unsigned int);
-    unsigned int find(char, unsigned int) const;
-    unsigned int find(char) const;
-    unsigned int find(const char *) const;
-    unsigned int find(const char *, unsigned int) const;
-    unsigned int find_first_of(const char *, unsigned int) const;
-    unsigned int find_last_of(char) const;
-    unsigned int find_last_of(const char *) const;
-    unsigned int rfind(const char *) const;
+    // unsigned int find(char, unsigned int) const;
+    // unsigned int find(char) const;
+    // unsigned int find(const char *) const;
+    // unsigned int find(const char *, unsigned int) const;
+    // unsigned int find_first_of(const char *, unsigned int) const;
+    // unsigned int find_last_of(char) const;
+    // unsigned int find_last_of(const char *) const;
+    // unsigned int rfind(const char *) const;
 
-    bool contains(const char *) const;
+    // bool contains(const char *) const;
 
-    int split(const char *token, std::vector<String> &subStrings) const;
+    // int split(const char *token, std::vector<String> &subStrings) const;
 
-    String substr(unsigned int) const;
-    String substr(unsigned int, unsigned int) const;
+    // String substr(unsigned int) const;
+    // String substr(unsigned int, unsigned int) const;
 
-    void ToLower();
-    void ToUpper();
+    // void ToLower();
+    // void ToUpper();
 
-    void ReplaceAll(char, char);
-    void swap(String &);
-    String &replace(unsigned int, unsigned int, const char *);
-    String &erase();
-    String &erase(unsigned int);
-    String &erase(unsigned int, unsigned int);
-    String &insert(unsigned int, unsigned int, char);
-    String &insert(unsigned int, const char *);
-    String &insert(unsigned int, const String &);
+    // void ReplaceAll(char, char);
+    // void swap(String &);
+    // String &replace(unsigned int, unsigned int, const char *);
+    // String &erase();
+    // String &erase(unsigned int);
+    // String &erase(unsigned int, unsigned int);
+    // String &insert(unsigned int, unsigned int, char);
+    // String &insert(unsigned int, const char *);
+    // String &insert(unsigned int, const String &);
 };
 
 bool SearchReplace(const char *, const char *, const char *, char *);
 bool StrNCopy(char *, const char *, int);
 
-inline TextStream &operator<<(TextStream &ts, const String &str) {
-    ts.Print(str.c_str());
-    return ts;
-}
+// inline TextStream &operator<<(TextStream &ts, const String &str) {
+//     ts.Print(str.c_str());
+//     return ts;
+// }
 
 #endif

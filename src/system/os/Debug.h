@@ -1,17 +1,22 @@
 #pragma once
 #include "utl/TextStream.h"
-// #include "utl/Str.h"
+#include "utl/Str.h"
 #include "utl/MakeString.h"
 #include "utl/TextFileStream.h"
 #include <list>
 #include <string.h>
 // #include <setjmp.h>
 
-typedef void ModalCallbackFunc(bool &, char *, bool);
 typedef void ExitCallbackFunc(void);
 
 class Debug : public TextStream {
 public:
+    enum ModalType {
+
+    };
+
+    typedef void ModalCallbackFunc(ModalType &, FixedString&, bool);
+
     bool mNoDebug; // 0x4
     bool mFailing; // 0x5
     bool mExiting; // 0x6
@@ -24,9 +29,17 @@ public:
     ModalCallbackFunc *mModalCallback; // 0x1c
     std::list<ExitCallbackFunc *> mFailCallbacks; // 0x20
     std::list<ExitCallbackFunc *> mExitCallbacks; // 0x28
-    unsigned int mFailThreadStack[50]; // starts at 0x30
-    const char *mFailThreadMsg; // 0xf8
-    const char *mNotifyThreadMsg; // 0xfc
+    std::list<int> unk30; // 0x30
+    int unk38; // 0x38
+    unsigned int mFailThreadStack[50]; // starts at 0x3c
+    const char *mFailThreadMsg; // 0x104
+    const char *mNotifyThreadMsg; // 0x108
+    int unk10c;
+    int unk110;
+    String unk114;
+    String unk11c;
+    String unk124;
+    String unk12c;
 
     Debug();
     virtual ~Debug();
