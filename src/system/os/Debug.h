@@ -1,20 +1,20 @@
 #pragma once
 #include "utl/TextStream.h"
 #include "utl/TextFileStream.h"
+#include "xdk/xapilibi/getcurrentthreadid.h"
 #include <list>
 #include <string.h>
 // #include <setjmp.h>
 
 typedef void ExitCallbackFunc(void);
-typedef void FixedStringFunc(FixedString&);
+typedef void FixedStringFunc(FixedString &);
 
 class Debug : public TextStream {
 public:
     enum ModalType {
-
     };
 
-    typedef void ModalCallbackFunc(ModalType &, FixedString&, bool);
+    typedef void ModalCallbackFunc(ModalType &, FixedString &, bool);
 
     bool mNoDebug; // 0x4
     bool mFailing; // 0x5
@@ -28,7 +28,7 @@ public:
     ModalCallbackFunc *mModalCallback; // 0x1c
     std::list<ExitCallbackFunc *> mFailCallbacks; // 0x20
     std::list<ExitCallbackFunc *> mExitCallbacks; // 0x28
-    std::list<FixedStringFunc*> unk30; // 0x30
+    std::list<FixedStringFunc *> unk30; // 0x30
     int unk38; // 0x38
     unsigned int mFailThreadStack[50]; // starts at 0x3c
     const char *mFailThreadMsg; // 0x104
@@ -57,7 +57,7 @@ public:
     void Modal(bool &, const char *);
 
     void Notify(const char *msg);
-    void Fail(const char *msg, void*);
+    void Fail(const char *msg, void *);
     TextStream *SetReflect(TextStream *ts) {
         TextStream *ret = mReflect;
         mReflect = ts;
@@ -93,3 +93,13 @@ public:
 };
 
 extern DebugFailer TheDebugFailer;
+
+extern u32 gMainThreadID;
+
+inline bool MainThread() {
+    if (gMainThreadID == -1)
+        return true;
+    if (GetCurrentThreadId() == gMainThreadID)
+        return true;
+    return false;
+}
