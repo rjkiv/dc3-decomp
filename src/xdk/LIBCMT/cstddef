@@ -1,6 +1,7 @@
 #pragma once
-#include "stddef.h"~
+#include "stddef.h"
 
 namespace std {
     using ::size_t;
+    using ::ptrdiff_t;
 }
