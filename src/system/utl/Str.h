@@ -19,7 +19,7 @@ inline bool strieq(const char *s1, const char *s2) { return stricmp(s1, s2) == 0
 
 class FixedString {
 private:
-    char** unk0;
+    char* mStr;
 public:
     FixedString(char*, int);
 };
