@@ -2,7 +2,53 @@
 #include "stdlib.h"
 
 namespace std {
-	using ::size_t;
-    
+    using ::div_t;
+    using ::ldiv_t;
+    using ::lldiv_t;
+    using ::size_t;
+
+    using ::calloc;
+    using ::free;
+    using ::malloc;
+    using ::realloc;
+
+    using ::abort;
+    using ::atexit;
+    using ::exit;
+    using ::getenv;
+    using ::system;
+
+    using ::atof;
+    using ::atoi;
+    using ::atol;
+    using ::strtod;
+    using ::strtof;
+    using ::strtol;
+    using ::strtold;
+    using ::strtoul;
+
+    using ::abs;
+    using ::div;
+    using ::labs;
+    using ::ldiv;
+    using ::llabs;
+    using ::lldiv;
+
+    using ::mblen;
+    using ::mbstowcs;
+    using ::mbtowc;
+    using ::wcstombs;
+    using ::wctomb;
+
+    using ::rand;
+    using ::srand;
+
+    using ::bsearch;
     using ::qsort;
+
+    inline long abs(long x) { return labs(x); }
+    inline long long abs(long long x) { return llabs(x); }
+
+    inline ldiv_t div(long x, long y) { return ldiv(x, y); }
+    inline lldiv_t div(long long x, long long y) { return lldiv(x, y); }
 }
