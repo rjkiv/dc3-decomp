@@ -1,14 +1,12 @@
 #pragma once
 
-#include "types.h"
-
 class Licenses {
 public:
     enum Requirement {
     };
-    CDECL Licenses(const char *, Requirement);
+    Licenses(const char *, Requirement);
 
-    static void CDECL PrintAll(void);
+    static void PrintAll(void);
 
 protected:
     static Licenses *sFront;
@@ -16,6 +14,6 @@ protected:
 
 private:
     Requirement unk_0x0;
-    const char *unk_0x4;
+    const char *mName;
     Licenses *mNext; // 0x8
 };
