@@ -9,7 +9,7 @@ BinStream::BinStream(bool b) : mLittleEndian(b), mCrypto(nullptr), mRevStack(nul
 
 void SwapData(const void *in, void *out, int size);
 
-void BinStream::DisableEncryption(){
+void BinStream::DisableEncryption() {
     MILO_ASSERT(mCrypto, 0xDC);
     RELEASE(mCrypto);
 }
@@ -24,7 +24,7 @@ void BinStream::WriteEndian(const void *in, int size) {
 }
 
 bool BinStream::AddSharedInlined(const class FilePath &) {
-    MILO_FAIL("BinStream::AddSharedInlined is a PC only dev tool !!");
+    MILO_FAIL("BinStream::AddSharedInlined is a PC dev tool only !!");
     return false;
 }
 
@@ -68,7 +68,7 @@ BinStream &BinStream::operator>>(String &str) {
     int siz;
     *this >> siz;
     str.resize(siz);
-    Read((void*)str.c_str(), siz);
+    Read((void *)str.c_str(), siz);
     return *this;
 }
 
