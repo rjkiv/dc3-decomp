@@ -2430,7 +2430,7 @@ system/obj/DirUnloader.cpp:
 	.text       start:0x825C7C20 end:0x825C87A8
 	.data       start:0x82F10A68 end:0x82F11D68
 
-system/obj/DataFlex.cpp:
+system/obj/DataFlex.c:
 	.rdata      start:0x82078D20 end:0x82078E44
 	.pdata      start:0x822D00E8 end:0x822D0110
 	.text       start:0x825C87A8 end:0x825C9160
