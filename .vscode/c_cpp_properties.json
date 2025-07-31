@@ -1,0 +1,43 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                // Recursive paths are deliberately not used to
+                // make it easier to spot improper includes
+
+                // C/C++ stdlib
+                // STLport requires that it comes first in the include path list
+                "${workspaceFolder}/src/system/stlport",
+                "${workspaceFolder}/src/xdk/LIBCMT",
+
+                // SDK
+                "${workspaceFolder}/src/xdk",
+
+                // Libraries
+                "${workspaceFolder}/src/lib",
+
+                // Project source
+                "${workspaceFolder}/src",
+                "${workspaceFolder}/src/system",
+                "${workspaceFolder}/src/lazer"
+            ],
+            "cStandard": "c99",
+            "cppStandard": "c++98",
+            "intelliSenseMode": "linux-clang-x86",
+            "compilerPath": "",
+            "configurationProvider": "ms-vscode.makefile-tools",
+            "browse": {
+                "path": [
+                    // Paths here are recursive by default
+                    "${workspaceFolder}/src"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "defines": [
+                "MILO_DEBUG"
+            ]
+        }
+    ],
+    "version": 4
+}
