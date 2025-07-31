@@ -291,9 +291,9 @@
  * and pointer to class member method. So if you have instanciating any container with
  * such a type compilation will failed.
  */
-
+/*
 #define _STLP_USE_PTR_SPECIALIZATIONS 1
-
+*/
 
 /*
  * To achieve many different optimizations within the template implementations STLport
@@ -309,5 +309,3 @@
 */
 
 /*==========================================================*/
-#define _STLP_BIG_ENDIAN
-#define _STLP_NATIVE_INCLUDE_PATH              xdk/LIBCMT

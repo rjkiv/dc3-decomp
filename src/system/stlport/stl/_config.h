@@ -51,9 +51,12 @@
 
 /* Include useful information about system:
  */
+/*
+// decomp hack: skip this include to prevent VS Code include issues
 #ifdef __linux__
 #  include <features.h>
 #endif
+*/
 
 
 /* Definition of the STLport version informations */
@@ -176,7 +179,7 @@
 #      define _STLP_LITTLE_ENDIAN 1
 #    endif
 #  else
-#    error "can't determine endianess"
+#    define _STLP_BIG_ENDIAN 1 // hack for 360 cause it sucks
 #  endif
 #endif /* _STLP_BIG_ENDIAN */
 
@@ -287,7 +290,7 @@
 
 #if !defined (_STLP_NATIVE_HEADER)
 #  if !defined (_STLP_NATIVE_INCLUDE_PATH)
-#    define _STLP_NATIVE_INCLUDE_PATH ../include
+#    define _STLP_NATIVE_INCLUDE_PATH ../../xdk/LIBCMT
 #  endif
 #  define _STLP_NATIVE_HEADER(header) _STLP_MAKE_HEADER(_STLP_NATIVE_INCLUDE_PATH,header)
 #endif
@@ -517,15 +520,15 @@
 #endif
 
 #if !defined (_STLP_USE_RAW_SGI_ALLOCATORS)
-#  define _STLP_DEFAULT_ALLOCATOR(_Tp) allocator< _Tp >
-#  define _STLP_DEFAULT_ALLOCATOR_SELECT( _Tp ) __DFL_TMPL_PARAM(_Alloc, allocator< _Tp >)
-#  define _STLP_DEFAULT_PAIR_ALLOCATOR(_Key, _Tp) allocator< pair < _Key, _Tp > >
+#  define _STLP_DEFAULT_ALLOCATOR(_Tp) StlNodeAlloc< _Tp >
+#  define _STLP_DEFAULT_ALLOCATOR_SELECT( _Tp ) __DFL_TMPL_PARAM(_Alloc, StlNodeAlloc< _Tp >)
+#  define _STLP_DEFAULT_PAIR_ALLOCATOR(_Key, _Tp) StlNodeAlloc< pair < _Key, _Tp > >
 #  if defined (_STLP_LIMITED_DEFAULT_TEMPLATES)
 #    define _STLP_DEFAULT_PAIR_ALLOCATOR_SELECT(_Key, _Tp ) class _Alloc
 #    define _STLP_USE_WRAPPER_FOR_ALLOC_PARAM 1
 #  else
 #    define _STLP_DEFAULT_PAIR_ALLOCATOR_SELECT(_Key, _Tp ) \
-            class _Alloc = allocator< pair < _Key, _Tp > >
+            class _Alloc = StlNodeAlloc< pair < _Key, _Tp > >
 #  endif
 #else
 #  define _STLP_DEFAULT_ALLOCATOR( _Tp ) __sgi_alloc
@@ -643,11 +646,11 @@ namespace __std_alias = std;
 #  if defined (_STLP_USE_OWN_NAMESPACE)
 #    if !defined (_STLP_DEBUG)
 #      if !defined (_STLP_USING_CROSS_NATIVE_RUNTIME_LIB)
-#        ifndef _STLP_THREADS
-#          define _STLP_STD_NAME  stlpmtx_std
-#        else
-#          define _STLP_STD_NAME  stlp_std
-#        endif
+// #        ifndef _STLP_THREADS
+#          define _STLP_STD_NAME  stlpmtx_std // hack because I can't get the system to pick this
+// #        else
+// #          define _STLP_STD_NAME  stlp_std
+// #        endif
 #      else
 #        ifndef _STLP_THREADS
 #          define _STLP_STD_NAME  stlpxmtx_std
