@@ -55,6 +55,8 @@ class ObjPtrVec : public ObjRefOwner {
 
 public:
     ObjPtrVec(Hmx::Object *owner, EraseMode, ObjListMode);
+    bool remove(T1 *);
+    void push_back(T1 *);
 
 private:
     std::vector<Node> mNodes; // 0x4

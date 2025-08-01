@@ -8972,95 +8972,95 @@ system/jpeg/Jpeg.cpp:
 	.pdata      start:0x8230F950 end:0x8230F970
 	.text       start:0x82B8ED40 end:0x82B8EFA8
 
-system/jpeg/jcapimin.cpp:
+system/jpeg/jcapimin.c:
 	.pdata      start:0x8230F970 end:0x8230F980
 	.text       start:0x82B8EFA8 end:0x82B8F2B8
 
-system/jpeg/jcapistd.cpp:
+system/jpeg/jcapistd.c:
 	.pdata      start:0x8230F980 end:0x8230F990
 	.text       start:0x82B8F2B8 end:0x82B8F4C8
 
-system/jpeg/jcparam.cpp:
+system/jpeg/jcparam.c:
 	.pdata      start:0x8230F990 end:0x8230F9B8
 	.text       start:0x82B8F4C8 end:0x82B8FC88
 
-system/jpeg/jerror.cpp:
+system/jpeg/jerror.c:
 	.rdata      start:0x821FD89C end:0x821FED38
 	.pdata      start:0x8230F9B8 end:0x8230F9D8
 	.text       start:0x82B8FC88 end:0x82B8FF28
 
-system/jpeg/jmemmgr.cpp:
+system/jpeg/jmemmgr.c:
 	.pdata      start:0x8230F9D8 end:0x8230FA48
 	.text       start:0x82B8FF28 end:0x82B90FE0
 
-system/jpeg/jcomapi.cpp:
+system/jpeg/jcomapi.c:
 	.pdata      start:0x8230FA48 end:0x8230FA68
 	.text       start:0x82B90FE0 end:0x82B91118
 
-system/jpeg/jcmarker.cpp:
+system/jpeg/jcmarker.c:
 	.pdata      start:0x8230FA68 end:0x8230FAD8
 	.text       start:0x82B91118 end:0x82B91C30
 
-system/jpeg/jcinit.cpp:
+system/jpeg/jcinit.c:
 	.pdata      start:0x8230FAD8 end:0x8230FAE0
 	.text       start:0x82B91C30 end:0x82B91D40
 
-system/jpeg/jmemnobs.cpp:
+system/jpeg/jmemnobs.c:
 	.text       start:0x82B91D40 end:0x82B91D68
 
-system/jpeg/jutils.cpp:
+system/jpeg/jutils.c:
 	.rdata      start:0x821FED38 end:0x821FEF38
 	.pdata      start:0x8230FAE0 end:0x8230FAE8
 	.text       start:0x82B91D68 end:0x82B91E28
 
-system/jpeg/jcmainct.cpp:
+system/jpeg/jcmainct.c:
 	.pdata      start:0x8230FAE8 end:0x8230FAF8
 	.text       start:0x82B91E28 end:0x82B92058
 
-system/jpeg/jccoefct.cpp:
+system/jpeg/jccoefct.c:
 	.pdata      start:0x8230FAF8 end:0x8230FB20
 	.text       start:0x82B92058 end:0x82B92988
 
-system/jpeg/jchuff.cpp:
+system/jpeg/jchuff.c:
 	.pdata      start:0x8230FB20 end:0x8230FB88
 	.text       start:0x82B92988 end:0x82B93BD0
 
-system/jpeg/jcphuff.cpp:
+system/jpeg/jcphuff.c:
 	.pdata      start:0x8230FB88 end:0x8230FBE8
 	.text       start:0x82B93BD0 end:0x82B94BF8
 
-system/jpeg/jcdctmgr.cpp:
+system/jpeg/jcdctmgr.c:
 	.rdata      start:0x821FEF38 end:0x821FEF44
 	.pdata      start:0x8230FBE8 end:0x8230FC08
 	.text       start:0x82B94BF8 end:0x82B952D0
 
-system/jpeg/jcprepct.cpp:
+system/jpeg/jcprepct.c:
 	.pdata      start:0x8230FC08 end:0x8230FC30
 	.text       start:0x82B952D0 end:0x82B95A18
 
-system/jpeg/jcsample.cpp:
+system/jpeg/jcsample.c:
 	.pdata      start:0x8230FC30 end:0x8230FC70
 	.text       start:0x82B95A18 end:0x82B964F0
 
-system/jpeg/jccolor.cpp:
+system/jpeg/jccolor.c:
 	.pdata      start:0x8230FC70 end:0x8230FCA8
 	.text       start:0x82B964F0 end:0x82B96C80
 
-system/jpeg/jcmaster.cpp:
+system/jpeg/jcmaster.c:
 	.rdata      start:0x821FEF44 end:0x821FF058
 	.pdata      start:0x8230FCA8 end:0x8230FCE8
 	.text       start:0x82B96C80 end:0x82B97B98
 	.text       start:0x82EDF4B8 end:0x82EDF4D0 rename:.text$yc
 
-system/jpeg/jfdctint.cpp:
+system/jpeg/jfdctint.c:
 	.pdata      start:0x8230FCE8 end:0x8230FCF0
 	.text       start:0x82B97B98 end:0x82B97E20
 
-system/jpeg/jfdctfst.cpp:
+system/jpeg/jfdctfst.c:
 	.pdata      start:0x8230FCF0 end:0x8230FCF8
 	.text       start:0x82B97E20 end:0x82B98008
 
-system/jpeg/jfdctflt.cpp:
+system/jpeg/jfdctflt.c:
 	.rdata      start:0x821FF058 end:0x821FF068
 	.text       start:0x82B98008 end:0x82B981D0
 

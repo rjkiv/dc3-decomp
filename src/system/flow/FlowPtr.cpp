@@ -6,9 +6,10 @@ bool FlowPtrBase::RefreshParamObject(void) { return false; }
 int FlowPtrBase::GetInitialState(Hmx::Object *obj) {
     if (obj == nullptr)
         return -3;
-    u8 b = ObjectDir::StaticClassName() == "EditDir";
-    b = !b;
-    return b;
+    if (ObjectDir::StaticClassName() == Symbol("EditDir"))
+        return 5;
+    else
+        return 2;
 }
 
 Hmx::Object *FlowPtrBase::GetObject(void) { return nullptr; }

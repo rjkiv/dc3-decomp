@@ -3,6 +3,9 @@
 #include "obj/ObjPtr_p.h"
 #include "os/Debug.h"
 
+float FlowNode::sIntensity = 1.0f;
+bool FlowNode::sPushDrivenProperties = false;
+
 BEGIN_HANDLERS(FlowNode)
     HANDLE_ACTION("activate", Activate());
     HANDLE_ACTION("deactivate", Deactivate(false));
@@ -16,6 +19,10 @@ BEGIN_PROPSYNCS(FlowNode)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
+void FlowNode::MiloPreRun(void) {}
+
+FlowNode *FlowNode::DuplicateChild(FlowNode *) { return nullptr; }
+
 void FlowNode::Deactivate(bool) {
     if (mDebugOutput) {
         MILO_LOG("%s%s", ClassName(), MakeString("Deactivated\n"));
@@ -24,6 +31,12 @@ void FlowNode::Deactivate(bool) {
         }
     }
 }
+
+void FlowNode::ChildFinished(FlowNode *) {}
+
+void FlowNode::PushDrivenProperties(void) { sPushDrivenProperties = true; }
+
+void FlowNode::MoveIntoDir(ObjectDir *, ObjectDir *) {}
 
 void FlowNode::ActivateChild(FlowNode *child) {
     mChildren.insert(mChildren.end(), child);
@@ -55,13 +68,28 @@ bool FlowNode::Activate() {
 }
 
 FlowNode::FlowNode()
-    : mVec1(this, (EraseMode)0, kObjListNoNull), mChildren(this, kObjListNoNull) {}
+    : mVec1(this, (EraseMode)0, kObjListNoNull), mChildren(this, kObjListNoNull),
+      mOwner(nullptr) {
+    mDebugOutput = false;
+}
 
 FlowNode::~FlowNode() {}
 
 void FlowNode::Save(BinStream &bs) {
     bs << 2;
     Hmx::Object::Save(bs);
+}
+
+void FlowNode::SetParent(class FlowNode *new_parent, bool b) {
+    if (mOwner != new_parent) {
+        if (mOwner != nullptr) {
+            mOwner->mVec1.remove(this);
+        }
+        mOwner = new_parent;
+        if (new_parent != nullptr && b) {
+            new_parent->mVec1.push_back(this);
+        }
+    }
 }
 
 void FlowNode::Load(BinStream &bs) {}

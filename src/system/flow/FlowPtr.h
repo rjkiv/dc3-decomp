@@ -21,6 +21,7 @@ class FlowPtr {
 
 public:
     FlowPtr(T *, T *) {}
+    FlowPtr(const FlowPtr<T> &);
 };
 
 template <typename T>

@@ -15,6 +15,10 @@ class FlowMathOp {
 
 public:
     FlowMathOp(Hmx::Object *);
+    FlowMathOp(const FlowMathOp &other)
+        : unk_0x0(other.unk_0x0), unk_0x4(other.unk_0x4), lhs(other.lhs), rhs(other.rhs),
+          unk_0x18(other.unk_0x18) {}
+    FlowMathOp &operator=(const FlowMathOp &);
     ~FlowMathOp();
     void Save(BinStream &);
     void Load(BinStream &, ObjectDir *);
