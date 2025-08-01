@@ -60,8 +60,7 @@ FlowNode::FlowNode()
 FlowNode::~FlowNode() {}
 
 void FlowNode::Save(BinStream &bs) {
-    u32 version = 2;
-    bs << version;
+    bs << 2;
     Hmx::Object::Save(bs);
 }
 
