@@ -102,6 +102,8 @@ const char *PathName(const class Hmx::Object *obj);
         }                                                                                \
     }
 
+#define HANDLE_FORWARD(func) _HANDLE_CHECKED(func(_msg, false))
+
 #define HANDLE_SUPERCLASS(parent) HANDLE_FORWARD(parent::Handle)
 
 #define END_HANDLERS                                                                     \

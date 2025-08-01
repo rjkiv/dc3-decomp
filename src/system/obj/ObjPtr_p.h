@@ -50,6 +50,13 @@ class ObjPtrVec : public ObjRefOwner {
 
         ObjRefOwner *unk10; // 0x10
     };
+    virtual Hmx::Object *RefOwner() const { return mOwner; }
+    virtual bool Replace(ObjRef *, Hmx::Object *);
+
+public:
+    ObjPtrVec(Hmx::Object *owner, EraseMode, ObjListMode);
+
+private:
     std::vector<Node> mNodes; // 0x4
     Hmx::Object *mOwner; // 0x10
     EraseMode mEraseMode; // 0x14
