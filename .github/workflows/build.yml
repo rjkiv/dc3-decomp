@@ -36,7 +36,7 @@ jobs:
     - name: Build
       run: |
         python3 configure.py --version ${{ matrix.version }} \
-            --binutils /binutils --compilers /compilers
+            --binutils /binutils --compilers /compilers --wrapper wine
         ninja -v all_source progress build/${{ matrix.version }}/report.json
 
     # # Upload map files
