@@ -40,7 +40,7 @@ jobs:
         export WINEPREFIX=/root/.wine
         export WINEDEBUG=-all
         python3 configure.py --version ${{ matrix.version }} \
-            --binutils /binutils --compilers /compilers --wrapper wine
+            --binutils /binutils --compilers /compilers --wrapper "wineconsole --backend=curses"
         ninja -v all_source progress build/${{ matrix.version }}/report.json
 
     # # Upload map files
