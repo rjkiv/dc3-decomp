@@ -1103,8 +1103,10 @@ def generate_build_ninja(
 
         # Check if linker exists
         mw_path = compilers / str(config.linker_version) / "mwldeppc.exe"
+        mwcc_check = "X360" not in mw_version
         if config.compilers_path and not os.path.exists(mw_path):
-            sys.exit(f"Linker {mw_path} does not exist")
+            if mwcc_check:
+                sys.exit(f"Linker {mw_path} does not exist")
 
         # Add all build steps needed before we link and after compiling objects
         write_custom_step("post-compile", "pre-compile")
