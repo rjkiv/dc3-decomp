@@ -36,6 +36,9 @@ jobs:
     - name: Build
       run: |
         wineserver -k || true
+        export HOME=/root
+        export WINEPREFIX=/root/.wine
+        export WINEDEBUG=-all
         python3 configure.py --version ${{ matrix.version }} \
             --binutils /binutils --compilers /compilers --wrapper wine
         ninja -v all_source progress build/${{ matrix.version }}/report.json
