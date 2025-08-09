@@ -1,57 +1,54 @@
-# name: Build
+name: Build
 
-# on:
-#   push:
-#   pull_request:
+on:
+  push:
+  pull_request:
 
-# jobs:
-#   build:
-#     # This is a *private* build container.
-#     # See docs/github_actions.md for more information.
-#     container: ghcr.io/rjkiv/dc3-build:main
+jobs:
+  build:
+    # This is a *private* build container.
+    # See docs/github_actions.md for more information.
+    container: ghcr.io/rjkiv/dc3-build:ubuntu
 
-#     runs-on: ubuntu-latest
-#     strategy:
-#       fail-fast: false
-#       matrix:
-#         # Add game versions here
-#         version: [373307D9]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Add game versions here
+        version: [373307D9]
 
-#     steps:
-#     # Checkout the repository
-#     - name: Checkout
-#       uses: actions/checkout@v4
-#       with:
-#         submodules: recursive
+    steps:
+    # Checkout the repository
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
 
-#     # Set Git config
-#     - name: Git config
-#       run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+    # Set Git config
+    - name: Git config
+      run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-#     # Copy the original files to the workspace
-#     - name: Prepare
-#       run: cp -R /orig .
+    # Copy the original files to the workspace
+    - name: Prepare
+      run: cp -R /orig .
 
-#     # Build the project
-#     - name: Build
-#       run: |
-#         chmod +x assets/dtk
-#         chmod +x assets/objdiff-cli
-#         chmod +x assets/wibo
-#         python configure.py --objdiff assets/objdiff-cli --version ${{ matrix.version }} \
-#             --binutils /binutils --compilers /compilers --wrapper assets/wibo
-#         ninja -v all_source progress build/${{ matrix.version }}/report.json
+    # Build the project
+    - name: Build
+      run: |
+        python configure.py --version ${{ matrix.version }} \
+            --binutils /binutils --compilers /compilers --wrapper wine
+        ninja -v all_source progress build/${{ matrix.version }}/report.json
 
-#     # # Upload map files
-#     # - name: Upload map
-#     #   uses: actions/upload-artifact@v4
-#     #   with:
-#     #     name: ${{ matrix.version }}_maps
-#     #     path: build/${{ matrix.version }}/**/*.MAP
+    # # Upload map files
+    # - name: Upload map
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: ${{ matrix.version }}_maps
+    #     path: build/${{ matrix.version }}/**/*.MAP
 
-#     # Upload progress report
-#     - name: Upload report
-#       uses: actions/upload-artifact@v4
-#       with:
-#         name: ${{ matrix.version }}_report
-#         path: build/${{ matrix.version }}/report.json
+    # Upload progress report
+    - name: Upload report
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.version }}_report
+        path: build/${{ matrix.version }}/report.json
