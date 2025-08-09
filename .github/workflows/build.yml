@@ -35,6 +35,7 @@ jobs:
     # Build the project
     - name: Build
       run: |
+        export HOME=/root
         python3 configure.py --version ${{ matrix.version }} \
             --binutils /binutils --compilers /compilers --wrapper wine
         ninja -v all_source progress build/${{ matrix.version }}/report.json
