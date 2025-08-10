@@ -849,11 +849,12 @@
             "system/synth/WahEffect.cpp": "MISSING",
             "system/synth/WavMgr.cpp": "MISSING",
             "system/synth/WavReader.cpp": "MISSING",
-            "system/synth/aes.cpp": "MISSING",
             "system/synth/complex.cpp": "MISSING",
-            "system/synth/crypt.cpp": "MISSING",
-            "system/synth/ctr.cpp": "MISSING",
             "system/synth/filterdesign.cpp": "MISSING",
+
+            "system/synth/tomcrypt/aes.c": "NonMatching",
+            "system/synth/tomcrypt/crypt.c": "NonMatching",
+            "system/synth/tomcrypt/ctr.c": "NonMatching",
 
             "system/synth_xbox/AAFilter.cpp": "MISSING",
             "system/synth_xbox/Biquad.cpp": "NonMatching",

@@ -105,10 +105,12 @@ typedef struct _FILE FILE;
 #define _IOLBF 1
 #define _IOFBF 2
 
+#ifndef SEEK_SET
 /* define standard C file pointer location names */
 #define SEEK_SET (0)
 #define SEEK_CUR (1)
 #define SEEK_END (2)
+#endif
 
 #define stdin &(__files[0])
 #define stdout &(__files[1])

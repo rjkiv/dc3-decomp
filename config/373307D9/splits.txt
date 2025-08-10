@@ -4080,7 +4080,7 @@ system/synth/SampleZone.cpp:
 	.pdata      start:0x822E5A28 end:0x822E5A58
 	.text       start:0x82775550 end:0x827758C0
 
-system/synth/aes.cpp:
+system/synth/tomcrypt/aes.c:
 	.rdata      start:0x820C0E40 end:0x820C4FE0
 	.rdata      start:0x820C4FF8 end:0x820C5084
 	.pdata      start:0x822E5A58 end:0x822E5A78
@@ -4102,7 +4102,7 @@ system/synth/StreamReceiverFile.cpp:
 	.data       start:0x82F17EE4 end:0x82F17F08
 	.data       start:0x830E3288 end:0x830E3290 rename:.bss
 
-system/synth/crypt.cpp:
+system/synth/tomcrypt/crypt.c:
 	.rdata      start:0x820C5250 end:0x820C53A8
 	.pdata      start:0x822E5AD0 end:0x822E5AD8
 	.text       start:0x82779530 end:0x82779660
@@ -11233,7 +11233,7 @@ system/synth/OggMap.cpp:
 	.text       start:0x82E5A348 end:0x82E5A5F0
 	.data       start:0x82F499B4 end:0x82F49BB0
 
-system/synth/ctr.cpp:
+system/synth/tomcrypt/ctr.c:
 	.pdata      start:0x8231ED10 end:0x8231ED30
 	.text       start:0x82E5A5F0 end:0x82E5A998
 
