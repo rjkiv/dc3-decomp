@@ -1,5 +1,5 @@
 #pragma once
-#include "size_def.h"
+#include "stddef.h"
 
 #ifdef __cplusplus
 extern "C" {

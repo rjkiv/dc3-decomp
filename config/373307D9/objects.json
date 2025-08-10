@@ -570,7 +570,7 @@
 
             "system/obj/DataArray.cpp": "NonMatching",
             "system/obj/DataFile.cpp": "MISSING",
-            "system/obj/DataFlex.c": "MISSING",
+            "system/obj/DataFlex.c": "NonMatching",
             "system/obj/DataFunc.cpp": "NonMatching",
             "system/obj/DataNode.cpp": "NonMatching",
             "system/obj/DataUtl.cpp": "NonMatching",

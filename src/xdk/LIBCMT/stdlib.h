@@ -1,5 +1,6 @@
 #pragma once
-#include "size_def.h"
+#include "stddef.h"
+#include "wchar.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,10 +47,10 @@ int __mbtowc_noconv(wchar_t *, const char *, size_t);
 int __wctomb_noconv(char *, wchar_t);
 
 int mblen(const char *s, size_t n);
-int mbtowc(wchar_t * pwc, const char * s, size_t n);
-size_t mbstowcs(wchar_t * dst, const char * src, size_t len);
+int mbtowc(wchar_t *pwc, const char *s, size_t n);
+size_t mbstowcs(wchar_t *dst, const char *src, size_t len);
 int wctomb(char *s, wchar_t wc);
-size_t wcstombs(char * dst, const wchar_t * src, size_t len);
+size_t wcstombs(char *dst, const wchar_t *src, size_t len);
 
 int rand();
 void srand(unsigned int seed);
@@ -64,9 +65,9 @@ long double __strtold(
 
 double atof(const char *str);
 
-float strtof(const char * str, char ** str_end);
-double strtod(const char * str, char ** str_end);
-long double strtold(const char * str, char ** str_end);
+float strtof(const char *str, char **str_end);
+double strtod(const char *str, char **str_end);
+long double strtold(const char *str, char **str_end);
 
 unsigned long __strtoul(
     int base,
@@ -91,10 +92,10 @@ int atoi(const char *str);
 long atol(const char *str);
 long long atoll(const char *str);
 
-long strtol(const char * str, char ** str_end, int base);
-long long strtoll(const char * str, char ** str_end, int base);
-unsigned long strtoul(const char * str, char ** str_end, int base);
-unsigned long long strtoull(const char * str, char ** str_end, int base);
+long strtol(const char *str, char **str_end, int base);
+long long strtoll(const char *str, char **str_end, int base);
+unsigned long strtoul(const char *str, char **str_end, int base);
+unsigned long long strtoull(const char *str, char **str_end, int base);
 
 int system(const char *command);
 char *getenv(const char *name);
