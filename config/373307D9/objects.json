@@ -1039,14 +1039,14 @@
         "cflags": "base",
         "objects": {
             "system/zlib/ZlibLicense.c": "MISSING",
-            "system/zlib/adler32.c": "MISSING",
-            "system/zlib/crc32.c": "MISSING",
-            "system/zlib/deflate.c": "MISSING",
-            "system/zlib/inffast.c": "MISSING",
-            "system/zlib/inflate.c": "MISSING",
-            "system/zlib/inftrees.c": "MISSING",
-            "system/zlib/trees.c": "MISSING",
-            "system/zlib/zutil.c": "MISSING"
+            "system/zlib/adler32.c": "NonMatching",
+            "system/zlib/crc32.c": "NonMatching",
+            "system/zlib/deflate.c": "NonMatching",
+            "system/zlib/inffast.c": "NonMatching",
+            "system/zlib/inflate.c": "NonMatching",
+            "system/zlib/inftrees.c": "NonMatching",
+            "system/zlib/trees.c": "NonMatching",
+            "system/zlib/zutil.c": "NonMatching"
         }
     },
     "lib": {
