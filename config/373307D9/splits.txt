@@ -2072,23 +2072,23 @@ system/net/cookie.cpp:
 	.pdata      start:0x822CC728 end:0x822CC798
 	.text       start:0x82574DE0 end:0x82576610
 
-system/net/json_object.cpp:
+system/net/json-c/json_object.c:
 	.rdata      start:0x820697A0 end:0x82069808
 	.pdata      start:0x822CC798 end:0x822CC838
 	.text       start:0x82576610 end:0x825770D0
 	.data       start:0x82F10334 end:0x82F10348
 
-system/net/printbuf.cpp:
+system/net/json-c/printbuf.c:
 	.pdata      start:0x822CC838 end:0x822CC858
 	.text       start:0x825770D0 end:0x82577380
 
-system/net/json_tokener.cpp:
+system/net/json-c/json_tokener.c:
 	.rdata      start:0x82069808 end:0x8206998C
 	.pdata      start:0x822CC858 end:0x822CC888
 	.text       start:0x82577380 end:0x82578860
 	.data       start:0x82F10348 end:0x82F10380
 
-system/net/linkhash.cpp:
+system/net/json-c/linkhash.c:
 	.rdata      start:0x8206998C end:0x820699B8
 	.pdata      start:0x822CC888 end:0x822CC8D0
 	.text       start:0x82578860 end:0x82578EE8
@@ -2260,7 +2260,7 @@ system/net/JsonMemory.cpp:
 	.pdata      start:0x822CCE98 end:0x822CCEA0
 	.text       start:0x8258BC98 end:0x8258BD40
 
-system/net/arraylist.cpp:
+system/net/json-c/arraylist.c:
 	.pdata      start:0x822CCEA0 end:0x822CCEB8
 	.text       start:0x8258BD40 end:0x8258BF28
 
