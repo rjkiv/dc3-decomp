@@ -24,7 +24,7 @@ struct MemTemp {
 };
 
 void *_MemAllocTemp(int, const char *, int, const char *, int);
-
+void *MemRealloc(void *, int, char const *, int, char const *, int);
 void *MemAlloc(int size, const char *file, int line, const char *name, int align = 0);
 void MemFree(
     void *mem, const char *file = "unknown", int line = 0, const char *name = "unknown"

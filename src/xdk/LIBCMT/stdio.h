@@ -1,7 +1,6 @@
 #pragma once
 #include "file_def.h"
 #include "va_list_def.h"
-#pragma message("hello from stdio.h")
 
 #ifdef __cplusplus
 extern "C" {
