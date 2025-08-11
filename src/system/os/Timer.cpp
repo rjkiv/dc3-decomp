@@ -1,5 +1,6 @@
 #include "os/Timer.h"
 #include "os/Debug.h"
+#include "ppcintrinsics.h"
 
 void Timer::SetLastMs(float ms) {
     mLastMs = ms;
@@ -33,6 +34,18 @@ Timer::Timer(DataArray *config)
       mName(config->Sym(0)), mRunning(0), mBudget(0.0f), mDraw(true) {
     config->FindData("budget", mBudget, false);
     config->FindData("draw", mDraw, false);
+}
+
+void Timer::Restart() {
+    unsigned long long cycle = __mftb();
+    if (mRunning > 0) {
+        mCycles += cycle - mStart;
+    }
+
+    Reset();
+
+    mRunning = 1;
+    mStart = cycle;
 }
 
 void TimerStats::CollectStats(float ms, bool critical, int critCount) {

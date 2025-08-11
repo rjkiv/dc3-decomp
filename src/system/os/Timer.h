@@ -2,14 +2,13 @@
 #include "utl/Symbol.h"
 #include "obj/Data.h"
 #include "os/OSFuncs.h"
-
-#define TIMER_GET_CYCLES(name) u32 cycle;
+#include "ppcintrinsics.h"
 
 class Timer {
 private:
     unsigned int mStart; // 0x00
     // padding, 0x04
-    long long mCycles; // 0x08
+    unsigned long long mCycles; // 0x08
     float mLastMs; // 0x10
     float mWorstMs; // 0x14
     int mWorstMsFrame; // 0x18
@@ -44,18 +43,15 @@ public:
         if (mRunning++ != 0)
             return;
 
-        TIMER_GET_CYCLES(cycle);
-        mStart = cycle;
+        mStart = __mftb();
     }
 
     // Function addresses from retail, not sure what these do yet
-    long long Stop() {
-        long long cycles = 0;
+    unsigned long long Stop() {
+        unsigned long long cycles = 0;
 
-        mRunning--; // Must be outside the if to match
-        if (mRunning == 0) {
-            TIMER_GET_CYCLES(cycle);
-            cycles = cycle - mStart;
+        if (--mRunning == 0) {
+            cycles = __mftb() - mStart;
             mCycles += cycles;
         }
 
@@ -69,8 +65,7 @@ public:
 
         mRunning = -mRunning;
 
-        TIMER_GET_CYCLES(cycle);
-        mCycles += cycle - mStart;
+        mCycles += __mftb() - mStart;
     }
 
     void Resume() {
@@ -80,8 +75,7 @@ public:
 
         mRunning = -mRunning;
 
-        TIMER_GET_CYCLES(cycle);
-        mStart = cycle;
+        mStart = __mftb();
     }
 
     bool Running() const { return mRunning > 0; }
@@ -90,7 +84,7 @@ public:
         if (mRunning <= 0)
             return;
 
-        TIMER_GET_CYCLES(cycle);
+        unsigned long long cycle = __mftb();
 
         mCycles += cycle - mStart;
         mStart = cycle;
