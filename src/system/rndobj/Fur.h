@@ -1,7 +1,7 @@
 #pragma once
 #include "math/Color.h"
 #include "obj/Object.h"
-#include "obj/ObjPtr_p.h"
+#include "obj/Object.h"
 #include "rndobj/Tex.h"
 #include "rndobj/Wind.h"
 #include "utl/BinStream.h"

@@ -1,6 +1,6 @@
 #pragma once
 #include "Object.h"
-#include "obj/ObjPtr_p.h"
+#include "obj/Object.h"
 
 struct ObjVersion {
     ObjVersion(int i, Hmx::Object *o) : revs(i), obj(nullptr, o) {}

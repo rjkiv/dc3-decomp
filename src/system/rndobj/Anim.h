@@ -1,10 +1,10 @@
 #pragma once
 #include "math/Easing.h"
 #include "obj/Data.h"
-#include "obj/ObjRef.h"
+
 #include "obj/Object.h"
 #include "obj/Task.h"
-#include "obj/ObjPtr_p.h"
+#include "obj/Object.h"
 #include "utl/PoolAlloc.h"
 #include <list>
 

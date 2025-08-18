@@ -1,5 +1,5 @@
 #include "os/Keyboard.h"
-#include "obj/ObjPtr_p.h"
+#include "obj/Object.h"
 #include "obj/Object.h"
 
 Hmx::Object *gSource;

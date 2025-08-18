@@ -1,7 +1,7 @@
 #pragma once
 #include "math/Color.h"
 #include "obj/Data.h"
-#include "obj/ObjPtr_p.h"
+#include "obj/Object.h"
 #include "obj/Object.h"
 #include "rndobj/CubeTex.h"
 #include "rndobj/Fur.h"

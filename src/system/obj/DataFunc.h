@@ -2,7 +2,7 @@
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "obj/Dir.h"
-#include "obj/ObjPtr_p.h"
+#include "obj/Object.h"
 #include "obj/DataUtl.h"
 #include "utl/PoolAlloc.h"
 #include <map>

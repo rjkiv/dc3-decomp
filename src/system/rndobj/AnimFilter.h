@@ -1,6 +1,6 @@
 #pragma once
 #include "rndobj/Anim.h"
-#include "obj/ObjPtr_p.h"
+#include "obj/Object.h"
 
 /**
  * @brief: A filter for an animatable object.

@@ -1,6 +1,6 @@
 #include "flow/FlowNode.h"
 
-#include "obj/ObjPtr_p.h"
+#include "obj/Object.h"
 #include "os/Debug.h"
 
 float FlowNode::sIntensity = 1.0f;

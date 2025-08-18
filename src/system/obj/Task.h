@@ -1,6 +1,6 @@
 #pragma once
 #include "obj/Data.h"
-#include "obj/ObjPtr_p.h"
+#include "obj/Object.h"
 #include "obj/Object.h"
 #include "utl/MemMgr.h"
 #include "utl/SongPos.h"

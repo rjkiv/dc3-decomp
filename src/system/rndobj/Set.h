@@ -1,6 +1,6 @@
 #pragma once
 #include "obj/Object.h"
-#include "obj/ObjPtr_p.h"
+#include "obj/Object.h"
 #include <vector>
 
 /**

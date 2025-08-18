@@ -1,6 +1,6 @@
 #include "obj/Msg.h"
 #include "obj/Data.h"
-#include "obj/ObjPtr_p.h"
+#include "obj/Object.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "utl/Str.h"

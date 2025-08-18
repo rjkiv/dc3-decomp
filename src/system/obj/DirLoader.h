@@ -1,7 +1,5 @@
 #pragma once
-#include "obj/ObjRef.h"
 #include "obj/Object.h"
-#include "obj/ObjPtr_p.h"
 #include "utl/BinStream.h"
 #include "utl/FilePath.h"
 #include "utl/Loader.h"

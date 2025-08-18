@@ -1,7 +1,6 @@
 #pragma once
 #include "math/Mtx.h"
 #include "obj/DirLoader.h"
-#include "obj/ObjRef.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "utl/BinStream.h"

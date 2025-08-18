@@ -2,7 +2,7 @@
 #include "rndobj/Trans.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Anim.h"
-#include "obj/ObjPtr_p.h"
+#include "obj/Object.h"
 #include "utl/MemMgr.h"
 #include <vector>
 

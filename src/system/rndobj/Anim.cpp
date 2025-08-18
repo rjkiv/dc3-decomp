@@ -4,8 +4,8 @@
 #include "obj/DataUtl.h"
 
 #include "obj/Msg.h"
-#include "obj/ObjPtr_p.h"
-#include "obj/ObjRef.h"
+#include "obj/Object.h"
+
 #include "obj/Object.h"
 #include "obj/Task.h"
 #include "os/Debug.h"

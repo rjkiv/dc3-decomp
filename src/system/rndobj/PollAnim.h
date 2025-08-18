@@ -1,7 +1,7 @@
 #pragma once
 #include "rndobj/Anim.h"
 #include "rndobj/Poll.h"
-#include "obj/ObjPtr_p.h"
+#include "obj/Object.h"
 
 /**
  * @brief: An object that polls animatables at a set time.

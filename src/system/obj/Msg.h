@@ -1,6 +1,6 @@
 #pragma once
 #include "obj/Data.h"
-#include "obj/ObjPtr_p.h"
+#include "obj/Object.h"
 
 /** A DataArray container to send to other objects for handling. */
 class Message {

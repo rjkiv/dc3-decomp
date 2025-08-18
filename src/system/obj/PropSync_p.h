@@ -80,16 +80,27 @@ inline bool PropSync(Symbol &sym, DataNode &node, DataArray *prop, int i, PropOp
     return true;
 }
 
-#include "obj/ObjPtr_p.h"
+// #include "obj/Object.h"
+template <class T>
+class ObjPtr;
 
 template <class T>
 bool PropSync(ObjPtr<T> &, DataNode &, DataArray *, int, PropOp);
 
 template <class T>
+class ObjOwnerPtr;
+
+template <class T>
 bool PropSync(ObjOwnerPtr<T> &, DataNode &, DataArray *, int, PropOp);
+
+template <class T1, class T2>
+class ObjPtrList;
 
 template <class T>
 bool PropSync(ObjPtrList<T, ObjectDir> &, DataNode &, DataArray *, int, PropOp);
+
+template <class T1, class T2>
+class ObjPtrVec;
 
 template <class T>
 bool PropSync(ObjPtrVec<T, ObjectDir> &, DataNode &, DataArray *, int, PropOp);

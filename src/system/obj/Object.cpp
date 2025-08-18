@@ -1,7 +1,6 @@
 #include "obj/Object.h"
 #include "Dir.h"
 #include "Msg.h"
-#include "ObjRef.h"
 #include "Object.h"
 #include "obj/Data.h"
 #include "obj/DataFunc.h"

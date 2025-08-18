@@ -1,6 +1,6 @@
 #pragma once
 
-#include "obj/ObjPtr_p.h"
+#include "obj/Object.h"
 #include "obj/Object.h"
 
 class FlowNode : public virtual Hmx::Object {
