@@ -5,7 +5,6 @@
 #include "utl/Str.h"
 #include "utl/Symbol.h"
 #include "utl/TextStream.h"
-#include "math/Color.h"
 
 // forward declarations
 class DataNode;
@@ -13,6 +12,7 @@ class DataArray;
 class DataArrayPtr;
 namespace Hmx {
     class Object;
+    class Color;
 }
 
 /** A function which can be called by a script/command. */

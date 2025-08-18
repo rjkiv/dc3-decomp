@@ -2,6 +2,7 @@
 #include "os/Debug.h"
 #include "ppcintrinsics.h"
 #include "xdk/XAPILIB.h"
+#include "math/Utl.h"
 
 // void Timer::Sleep(int ms) { Sleep(ms); } needs to use the XDK Sleep
 
