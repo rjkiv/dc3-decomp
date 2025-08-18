@@ -67,6 +67,7 @@ public:
     Platform GetPlatform() const { return (Platform)mPlatform; }
     int AsyncUnload() const; // { return mAsyncUnload; }
     const std::list<Loader *> &Loaders() const { return mLoaders; }
+    LoaderPos GetLoaderPos() const { return mLoaderPos; }
 
     void SetEditMode(bool);
     void RegisterFactory(const char *, LoaderFactoryFunc *);

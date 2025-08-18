@@ -45,6 +45,18 @@ public:
     void LoadInlinedFile(const FilePath &fp, BinStream &bs) {
         *this = nullptr;
         // there's more
+        mLoader = new DirLoader(
+            fp,
+            TheLoadMgr.GetLoaderPos() == kLoadStayBack
+                    || TheLoadMgr.GetLoaderPos() == kLoadFrontStayBack
+                ? kLoadFrontStayBack
+                : kLoadFront,
+            nullptr,
+            &bs,
+            nullptr,
+            false,
+            nullptr
+        );
     }
 };
 
