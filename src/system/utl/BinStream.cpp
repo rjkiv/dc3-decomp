@@ -1,7 +1,7 @@
 #include "utl/BinStream.h"
 #include "math/Rand.h"
 #include "math/Rand2.h"
-#include "obj/ObjVersion.h"
+#include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/Endian.h"
 #include "os/Timer.h"

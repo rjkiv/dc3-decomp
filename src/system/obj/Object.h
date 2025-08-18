@@ -872,4 +872,13 @@ inline TextStream &operator<<(TextStream &ts, const Hmx::Object *obj) {
     return ts;
 }
 
+// ObjVersion
+struct ObjVersion {
+    ObjVersion(int i, Hmx::Object *o) : revs(i), obj(nullptr, o) {}
+    ~ObjVersion() {}
+
+    ObjPtr<Hmx::Object> obj;
+    int revs;
+};
+
 #include "ObjPtr_p.h"
