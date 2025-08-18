@@ -105,30 +105,33 @@ class ObjPtrVec;
 template <class T>
 bool PropSync(ObjPtrVec<T, ObjectDir> &, DataNode &, DataArray *, int, PropOp);
 
-#include "obj/ObjList.h"
 template <class T>
-bool PropSync(ObjList<T> &objList, DataNode &node, DataArray *prop, int i, PropOp op) {
-    if (op == kPropUnknown0x40)
-        return false;
-    else if (i == prop->Size()) {
-        MILO_ASSERT(op == kPropSize, 0x1A6);
-        node = objList.size();
-        return true;
-    } else {
-        int count = prop->Int(i++);
-        typename std::list<T>::iterator it = NextItr(objList.begin(), count);
-        if (i < prop->Size() || op & (kPropGet | kPropSet | kPropSize)) {
-            return PropSync(*it, node, prop, i, op);
-        } else if (op == kPropRemove) {
-            objList.erase(it);
-            return true;
-        } else if (op == kPropInsert) {
-            T item(objList.Owner());
-            if (PropSync(item, node, prop, i, kPropInsert)) {
-                objList.insert(it, item);
-                return true;
-            }
-        }
-        return false;
-    }
-}
+class ObjList;
+
+template <class T>
+bool PropSync(ObjList<T> &objList, DataNode &node, DataArray *prop, int i, PropOp op);
+// {
+//     if (op == kPropUnknown0x40)
+//         return false;
+//     else if (i == prop->Size()) {
+//         MILO_ASSERT(op == kPropSize, 0x1A6);
+//         node = objList.size();
+//         return true;
+//     } else {
+//         int count = prop->Int(i++);
+//         typename std::list<T>::iterator it = NextItr(objList.begin(), count);
+//         if (i < prop->Size() || op & (kPropGet | kPropSet | kPropSize)) {
+//             return PropSync(*it, node, prop, i, op);
+//         } else if (op == kPropRemove) {
+//             objList.erase(it);
+//             return true;
+//         } else if (op == kPropInsert) {
+//             T item(objList.Owner());
+//             if (PropSync(item, node, prop, i, kPropInsert)) {
+//                 objList.insert(it, item);
+//                 return true;
+//             }
+//         }
+//         return false;
+//     }
+// }

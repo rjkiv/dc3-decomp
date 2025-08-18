@@ -188,7 +188,6 @@ public:
     }                                                                                    \
     ;
 
-#include "obj/ObjList.h"
 #include "obj/Object.h"
 #include "utl/MemMgr.h"
 
