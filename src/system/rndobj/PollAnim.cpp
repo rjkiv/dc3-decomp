@@ -1,5 +1,5 @@
 #include "rndobj/PollAnim.h"
-#include "obj/ObjMacros.h"
+
 #include "obj/ObjPtr_p.h"
 #include "obj/Object.h"
 #include "rndobj/Anim.h"

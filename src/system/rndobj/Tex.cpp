@@ -1,5 +1,5 @@
 #include "rndobj/Tex.h"
-#include "obj/ObjMacros.h"
+#include "os/System.h"
 #include "os/Debug.h"
 #include "rndobj/Bitmap.h"
 #include "utl/BinStream.h"

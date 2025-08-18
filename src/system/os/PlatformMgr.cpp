@@ -1,7 +1,7 @@
 #include "os/PlatformMgr.h"
 #include "obj/Data.h"
 #include "obj/DataUtl.h"
-#include "obj/ObjMacros.h"
+
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/System.h"

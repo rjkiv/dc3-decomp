@@ -1,6 +1,6 @@
 #include "os/ContentMgr.h"
 #include "obj/Data.h"
-#include "obj/ObjMacros.h"
+
 #include "obj/Object.h"
 #include "utl/Loader.h"
 #include "os/ThreadCall.h"

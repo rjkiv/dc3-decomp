@@ -1,5 +1,5 @@
 #include "rndobj/Fur.h"
-#include "obj/ObjMacros.h"
+
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "utl/BinStream.h"

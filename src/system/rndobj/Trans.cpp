@@ -5,7 +5,7 @@
 #include "os/System.h"
 #include "rndobj/Utl.h"
 #include "obj/Data.h"
-#include "obj/ObjMacros.h"
+
 #include "os/Debug.h"
 #include "utl/BinStream.h"
 #include "math/Rot.h"

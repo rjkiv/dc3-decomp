@@ -1,5 +1,5 @@
 #include "os/User.h"
-#include "obj/ObjMacros.h"
+
 #include "obj/Object.h"
 
 void User::Reset() { mMachineID = -1; }

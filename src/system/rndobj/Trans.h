@@ -1,6 +1,6 @@
 #pragma once
 #include "obj/Data.h"
-#include "obj/ObjMacros.h"
+
 #include "rndobj/Highlight.h"
 #include "utl/MemMgr.h"
 

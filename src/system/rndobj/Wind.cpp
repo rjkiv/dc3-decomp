@@ -1,5 +1,5 @@
 #include "rndobj/Wind.h"
-#include "obj/ObjMacros.h"
+
 #include "utl/BinStream.h"
 
 float gUnitsPerMeter = 39.370079f;

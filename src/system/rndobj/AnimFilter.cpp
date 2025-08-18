@@ -1,5 +1,5 @@
 #include "rndobj/AnimFilter.h"
-#include "obj/ObjMacros.h"
+
 #include "rndobj/Anim.h"
 #include "utl/BinStream.h"
 

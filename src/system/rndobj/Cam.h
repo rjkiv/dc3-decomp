@@ -2,7 +2,7 @@
 #include "math/Mtx.h"
 #include "math/Vec.h"
 #include "obj/Data.h"
-#include "obj/ObjMacros.h"
+
 #include "obj/ObjPtr_p.h"
 #include "rndobj/Tex.h"
 #include "rndobj/Trans.h"

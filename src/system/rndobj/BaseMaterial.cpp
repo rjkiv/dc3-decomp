@@ -2,7 +2,7 @@
 #include "Utl.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
-#include "obj/ObjMacros.h"
+
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "utl/BinStream.h"

@@ -1,7 +1,7 @@
 #include "rndobj/Cam.h"
 #include "math/Mtx.h"
 #include "math/Rot.h"
-#include "obj/ObjMacros.h"
+
 #include "obj/Object.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Trans.h"

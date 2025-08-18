@@ -2,7 +2,7 @@
 #include "CubeTex.h"
 #include "os/File.h"
 #include "rndobj/Tex.h"
-#include "obj/ObjMacros.h"
+
 #include "os/Debug.h"
 #include "utl/BinStream.h"
 #include "utl/Loader.h"

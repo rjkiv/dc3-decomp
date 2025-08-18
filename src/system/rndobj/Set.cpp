@@ -1,6 +1,6 @@
 #include "rndobj/Set.h"
 #include "obj/Dir.h"
-#include "obj/ObjMacros.h"
+
 #include "utl/BinStream.h"
 
 bool RndSet::AllowedObject(Hmx::Object *o) {

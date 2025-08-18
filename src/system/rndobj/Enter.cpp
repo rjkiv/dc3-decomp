@@ -1,6 +1,6 @@
 #include "rndobj/Enter.h"
 #include "Poll.h"
-#include "obj/ObjMacros.h"
+
 #include "obj/Object.h"
 
 BEGIN_HANDLERS(RndEnterable)
