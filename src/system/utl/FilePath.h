@@ -36,7 +36,7 @@ inline BinStream &operator<<(BinStream &bs, const FilePath &fp) {
     //   this_00 = BinStream::operator<<(param_1,pcVar1);
 }
 
-BinStream &operator>>(FilePath &);
+BinStream &operator>>(BinStream &, FilePath &);
 
 // inline BinStream &operator>>(BinStream &bs, FilePath &fp) {
 //     char buf[0x100];
