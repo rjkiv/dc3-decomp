@@ -77,7 +77,6 @@ public:
 
     BinStream &operator>>(Symbol &);
     BinStream &operator>>(String &);
-    BinStream &operator>>(FilePath &);
 
 #define BS_READ_OP(typename)                                                             \
     BinStream &operator>>(typename &rhs) {                                               \

@@ -14,7 +14,7 @@ void RndRibbon::DrawShowing() {
 void RndRibbon::ExposeMesh() {}
 
 BEGIN_HANDLERS(RndRibbon)
-    HANDLE_ACTION("expose_mesh", ExposeMesh())
+    HANDLE_ACTION(expose_mesh, ExposeMesh())
     HANDLE_SUPERCLASS(RndDrawable)
     HANDLE_SUPERCLASS(RndPollable)
     HANDLE_SUPERCLASS(Hmx::Object)
@@ -49,15 +49,15 @@ void RndRibbon::SetActive(bool b) {
 }
 
 BEGIN_PROPSYNCS(RndRibbon)
-    SYNC_PROP_SET("active", mActive, SetActive(_val.Int()));
-    SYNC_PROP("num_sides", mNumSides)
-    SYNC_PROP("num_segments", mNumSegments)
-    SYNC_PROP("mat", mMaterial)
-    SYNC_PROP("width", mWidth)
+    SYNC_PROP_SET(active, mActive, SetActive(_val.Int()));
+    SYNC_PROP(num_sides, mNumSides)
+    SYNC_PROP(num_segments, mNumSegments)
+    SYNC_PROP(mat, mMaterial)
+    SYNC_PROP(width, mWidth)
 
-    SYNC_PROP("follow_weight", mFollowWeight)
-    SYNC_PROP("taper", mTaper)
-    SYNC_PROP("decay", mDecay)
+    SYNC_PROP(follow_weight, mFollowWeight)
+    SYNC_PROP(taper, mTaper)
+    SYNC_PROP(decay, mDecay)
     SYNC_SUPERCLASS(RndDrawable)
     SYNC_SUPERCLASS(RndPollable)
     SYNC_SUPERCLASS(Hmx::Object)
