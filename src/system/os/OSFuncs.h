@@ -1,9 +1,8 @@
 #pragma once
 #include "xdk/XAPILIB.h"
+#include "os/ThreadCall.h"
 
 bool MainThread();
-
-extern unsigned int gMainThreadID;
 
 inline bool MainThread() {
     if (gMainThreadID == -1)
