@@ -1,6 +1,5 @@
 #include "rndobj/Wind.h"
 
-#include "obj/Object.h"
 #include "utl/BinStream.h"
 
 float gUnitsPerMeter = 39.370079f;
@@ -27,10 +26,6 @@ void RndWind::Save(BinStream &bs) {
     bs << mMinSpeed;
     bs << mMaxSpeed;
 }
-
-BEGIN_HANDLERS(RndWind)
-    HANDLE_SUPERCLASS(Hmx::Object)
-END_HANDLERS
 
 RndWind::RndWind()
     : mPrevailing(0, 0, 0), mRandom(0, 0, 0), mTrans(this), mWindOwner(this) {

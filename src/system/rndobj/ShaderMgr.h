@@ -30,8 +30,8 @@ public:
     virtual void SetVConstant4x3(VShaderConstant, const Hmx::Matrix4 &) = 0;
     virtual void SetPConstant(PShaderConstant, const Hmx::Matrix4 &) = 0;
     virtual void SetPConstant(PShaderConstant, RndCubeTex *) = 0;
-    virtual void SetPConstant(PShaderConstant, const Vector4 &) = 0;
     virtual void SetPConstant(PShaderConstant, RndTex *) = 0;
+    virtual void SetPConstant(PShaderConstant, const Vector4 &) = 0;
     virtual void SetPConstant(PShaderConstant, int) = 0;
     virtual void SetPConstant(PShaderConstant, bool) = 0;
     virtual void SetPConstant4x3(PShaderConstant, const Hmx::Matrix4 &) = 0;
@@ -51,7 +51,7 @@ protected:
     virtual void LoadShaderFile(FileStream &);
     virtual RndShaderProgram *NewShaderProgram() = 0;
 
-    void ShaderPoolAlloc(int);
+    void ShaderPoolAlloc();
 
     std::list<ShaderTree> mShaderTrees; // 0x4
     bool unkc;

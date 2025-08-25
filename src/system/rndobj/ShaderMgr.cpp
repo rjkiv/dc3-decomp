@@ -1,18 +1,12 @@
 #include "rndobj/ShaderMgr.h"
 #include "Shader.h"
-#include "macros.h"
 #include "math/Mtx.h"
 #include "obj/Data.h"
-#include "obj/Object.h"
-#include "os/Debug.h"
 #include "os/File.h"
 #include "os/Platform.h"
 #include "os/System.h"
-#include "rndobj/ShaderProgram.h"
-#include "rndobj/Utl.h"
 #include "utl/FileStream.h"
 #include "utl/Loader.h"
-#include "utl/MemMgr.h"
 
 void RndShaderMgr::Init() {
     PreInit();
@@ -35,8 +29,6 @@ void RndShaderMgr::UpdateCache(const Transform &xfm, int idx) {
     cacheIdx[11] = xfm.v.z;
 }
 
-void RndShaderMgr::ShaderPoolAlloc(int i) { unk5c = i; }
-
 void RndShaderMgr::SetMeshInfo(int i, bool b) {
     unk10 = i;
     unkc = b;
@@ -53,63 +45,7 @@ unsigned long RndShaderMgr::InitShaders() {
         mCacheShaders = cfg->Int(1);
     }
     RndShader::Init();
-    return RndShaderProgram::InitModTime();
-}
-
-void RndShaderMgr::PreInit() {
-    if (!unk6d) {
-        unkc = 0;
-        unk6d = true;
-        unk10 = 0;
-        unk14 = 1;
-        unk18 = 0;
-        unk1c = 0;
-        unk20 = 0;
-        unk24 = 0;
-        unk25 = 0;
-        unk26 = 0;
-        unk27 = 0;
-        unk28 = 0;
-        unk29 = 0;
-        unk2b = 0;
-        unk2c = 0;
-        unk2d = 0;
-        unk2e = 0;
-        unk2f = 0;
-        unk30 = 0;
-        unk31 = 0;
-        unk34 = 0;
-        unk38 = 0;
-        unk39 = 0;
-        unk3a = 0;
-        unk2a = 0;
-        unk3b = 0;
-        unk3c = 0;
-        unk3d = 0;
-        unk3e = 0;
-        unk3f = 0;
-        unk40 = 1;
-        unk41 = 1;
-        mDisplayShaderError = true;
-        RELEASE(mWorkMat);
-        RELEASE(mPostProcMat);
-        RELEASE(mDrawHighlightMat);
-        RELEASE(mDrawRectMat);
-        mWorkMat = Hmx::Object::New<RndMat>();
-        mPostProcMat = Hmx::Object::New<RndMat>();
-        mDrawHighlightMat = Hmx::Object::New<RndMat>();
-        mDrawRectMat = Hmx::Object::New<RndMat>();
-        CreateAndSetMetaMat(mWorkMat);
-        CreateAndSetMetaMat(mPostProcMat);
-        CreateAndSetMetaMat(mDrawHighlightMat);
-        CreateAndSetMetaMat(mDrawRectMat);
-        MILO_ASSERT(mConstantCache == NULL, 104);
-        unk68 = 0x204;
-        MemPushTemp();
-        mConstantCache = new float[unk68];
-        MemPopTemp();
-        LoadShaders("%s_preinit_shaders");
-    }
+    return 0;
 }
 
 void RndShaderMgr::LoadShaders(const char *cc) {
