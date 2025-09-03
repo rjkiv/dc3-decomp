@@ -635,7 +635,7 @@
             "system/os/JoypadClient.cpp": "MISSING",
             "system/os/JoypadMsgs.cpp": "NonMatching",
             "system/os/Joypad_Xbox.cpp": "MISSING",
-            "system/os/Joypad_Xinput.cpp": "MISSING",
+            "system/os/Joypad_Xinput.cpp": "NonMatching",
             "system/os/Keyboard.cpp": "NonMatching",
             "system/os/KeyboardJoypadAdapter.cpp": "MISSING",
             "system/os/Keyboard_Xbox.cpp": "MISSING",
