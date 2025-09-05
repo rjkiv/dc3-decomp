@@ -247,7 +247,7 @@
             "system/flow/DrivenPropertyEntry.cpp": "NonMatching",
             "system/flow/DrivenPropertyMathOps.cpp": "NonMatching",
             "system/flow/Flow.cpp": "MISSING",
-            "system/flow/FlowAnimate.cpp": "MISSING",
+            "system/flow/FlowAnimate.cpp": "NonMatching",
             "system/flow/FlowCommand.cpp": "MISSING",
             "system/flow/FlowDistance.cpp": "MISSING",
             "system/flow/FlowEventListener.cpp": "MISSING",

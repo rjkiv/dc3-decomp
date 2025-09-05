@@ -1,9 +1,10 @@
 #pragma once
 #include "obj/Object.h"
-#include "flow/DrivenPropertyEntry.h"
+// #include "flow/DrivenPropertyEntry.h"
 #include "utl/MemMgr.h"
 
 class Flow;
+class DrivenPropertyEntry;
 
 /** "A flow node" */
 class FlowNode : public virtual Hmx::Object {
@@ -11,6 +12,16 @@ public:
     enum QueueState {
     };
     enum StopMode {
+        /** "Stop immediately." */
+        kStopImmediate = 0,
+        /** "Stop at the end of this action." */
+        kStopLastFrame = 1,
+        /** "Stop at the next stop marker (stop) or at the end of this action." */
+        kStopOnMarker = 2,
+        /** "Stop if between a stop and no_stop marker, or at the end of the action." */
+        kStopBetweenMarkers = 3,
+        /** "When asked to stop, release but leave the sound playing." */
+        kReleaseAndContinue = 4
     };
     // Hmx::Object
     virtual ~FlowNode();

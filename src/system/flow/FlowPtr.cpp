@@ -4,7 +4,7 @@
 #include "obj/Object.h"
 
 bool FlowPtrBase::RefreshParamObject() {
-    Flow *owner = unk4->GetOwnerFlow();
+    Flow *owner = mOwnerNode->GetOwnerFlow();
     if (owner) {
     }
     return false;
