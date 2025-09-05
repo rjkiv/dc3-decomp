@@ -261,7 +261,7 @@ public:
         bool operator!=(const const_iterator &other) const { return it != other.it; }
     };
 
-    ObjPtrVec(Hmx::Object *owner, EraseMode, ObjListMode);
+    ObjPtrVec(Hmx::Object *owner, EraseMode = (EraseMode)0, ObjListMode = kObjListNoNull);
     virtual ~ObjPtrVec();
 
     iterator begin() { return iterator(mNodes.begin()); }

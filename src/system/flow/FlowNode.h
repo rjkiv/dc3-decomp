@@ -10,6 +10,17 @@ class DrivenPropertyEntry;
 class FlowNode : public virtual Hmx::Object {
 public:
     enum QueueState {
+        /** "If we're activated, ignore the activation" */
+        kIgnore = 0,
+        /** "New activations go in the queue and are executed when this one finishes" */
+        kQueue = 1,
+        /** "New activations go into a one deep queue and are executed when this one
+         * finishes" */
+        kQueueOne = 2,
+        /** "Forcably stop what we're doing and restart" */
+        kImmediate = 3,
+        /** "Ask our children to stop, then run again when they finish" */
+        kWhenAble = 4
     };
     enum StopMode {
         /** "Stop immediately." */
