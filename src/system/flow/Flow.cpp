@@ -10,7 +10,7 @@ Flow::Flow()
       unk170(0), mPrivate(1), mHardStop(0), unk178(0) {}
 
 Flow::~Flow() {
-    if (!mChildren.empty()) {
+    if (!mRunningNodes.empty()) {
         FlowQueueable::Deactivate(true);
     }
     TheFlowMgr->CancelCommand(this);

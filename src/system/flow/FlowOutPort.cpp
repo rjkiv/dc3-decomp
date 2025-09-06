@@ -68,9 +68,9 @@ bool FlowOutPort::Activate() {
                 label->RequestStop();
                 return false;
             }
-            mChildren.push_back(label);
+            mRunningNodes.push_back(label);
             if (!label->Activate(this) || mImmediateRelease) {
-                mChildren.remove(label);
+                mRunningNodes.remove(label);
             }
         }
     }
@@ -78,7 +78,7 @@ bool FlowOutPort::Activate() {
         Message msg(MakeString("port_%s", mLabel.c_str()));
         GetTopFlow()->Dir()->Handle(msg, false);
     }
-    return !mChildren.empty();
+    return !mRunningNodes.empty();
 }
 
 void FlowOutPort::Deactivate(bool b1) {
@@ -89,12 +89,12 @@ void FlowOutPort::Deactivate(bool b1) {
             label->Deactivate(b1);
         }
     }
-    mChildren.clear();
+    mRunningNodes.clear();
 }
 
 void FlowOutPort::ChildFinished(FlowNode *node) {
     FLOW_LOG("ChildFinished, class: %s\n", node->ClassName());
-    if (!mChildren.empty()) {
+    if (!mRunningNodes.empty()) {
         FlowNode::ChildFinished(node);
     }
 }

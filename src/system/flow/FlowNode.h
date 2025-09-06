@@ -81,7 +81,7 @@ protected:
     bool mDebugOutput; // 0x8
     String mDebugComment; // 0xc
     ObjPtrVec<FlowNode> mVec1; // 0x14
-    ObjPtrList<FlowNode> mChildren; // 0x30
+    ObjPtrList<FlowNode> mRunningNodes; // 0x30
     FlowNode *mParent; // 0x44
     ObjVector<DrivenPropertyEntry> unk48; // 0x48
     bool unk58; // 0x58

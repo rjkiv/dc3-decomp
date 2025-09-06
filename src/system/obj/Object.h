@@ -549,6 +549,10 @@ extern DataArray *SystemConfig(Symbol, Symbol, Symbol);
 
 #define HANDLE_SUPERCLASS(parent) HANDLE_FORWARD(parent::Handle)
 
+#define HANDLE_VIRTUAL_SUPERCLASS(parent)                                                \
+    if (ClassName() == StaticClassName())                                                \
+    HANDLE_SUPERCLASS(parent)
+
 #define END_HANDLERS                                                                     \
     if (_warn)                                                                           \
         MILO_NOTIFY("%s unhandled msg: %s", PathName(this), sym);                        \
@@ -675,6 +679,10 @@ extern DataArray *SystemConfig(Symbol, Symbol, Symbol);
     if (parent::SyncProperty(_val, _prop, _i, _op))                                      \
         return true;
 
+#define SYNC_VIRTUAL_SUPERCLASS(parent)                                                  \
+    if (ClassName() == StaticClassName())                                                \
+    SYNC_SUPERCLASS(parent)
+
 #define END_PROPSYNCS                                                                    \
     return false;                                                                        \
     }                                                                                    \
@@ -691,6 +699,11 @@ extern DataArray *SystemConfig(Symbol, Symbol, Symbol);
 #define BEGIN_SAVES(objType) void objType::Save(BinStream &bs) {
 #define SAVE_REVS(rev, alt) bs << packRevs(alt, rev);
 #define SAVE_SUPERCLASS(parent) parent::Save(bs);
+
+#define SAVE_VIRTUAL_SUPERCLASS(parent)                                                  \
+    if (ClassName() == StaticClassName())                                                \
+    SAVE_SUPERCLASS(parent)
+
 #define END_SAVES }
 // END SAVE MACRO ------------------------------------------------------------------------
 
@@ -755,6 +768,10 @@ extern DataArray *SystemConfig(Symbol, Symbol, Symbol);
     }
 
 #define LOAD_SUPERCLASS(parent) parent::Load(bs);
+
+#define LOAD_VIRTUAL_SUPERCLASS(parent)                                                  \
+    if (ClassName() == StaticClassName())                                                \
+    LOAD_SUPERCLASS(parent)
 
 #define LOAD_BITFIELD(type, name)                                                        \
     {                                                                                    \
