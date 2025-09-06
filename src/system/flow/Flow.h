@@ -25,6 +25,8 @@ public:
             kObject,
             kSymbolList
         };
+        DynamicPropertyEntry(Hmx::Object *);
+
         void SetName(DataNode &);
         void ResetDefaultValues();
         Symbol GetDefaultValueSymbol();
