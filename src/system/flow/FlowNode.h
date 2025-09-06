@@ -67,6 +67,7 @@ public:
     bool HasRunningNode(FlowNode *);
     DrivenPropertyEntry *GetDrivenEntry(Symbol);
     DrivenPropertyEntry *GetDrivenEntry(DataArray *);
+    Flow *GetTopFlow();
 
 protected:
     FlowNode();

@@ -2,6 +2,7 @@
 #include "flow/FlowNode.h"
 #include "utl/Str.h"
 
+/** "An output port for flow encapsulation" */
 class FlowOutPort : public FlowNode {
 public:
     // Hmx::Object
@@ -20,11 +21,20 @@ public:
     virtual void RequestStop();
     virtual void RequestStopCancel();
 
+    OBJ_MEM_OVERLOAD(0x2D)
+    NEW_OBJ(FlowOutPort)
+
 protected:
     FlowOutPort();
 
-    String unk5c;
-    bool unk64;
-    bool unk65;
-    bool unk66;
+    void UpdatePortMapping();
+
+    /** "Name to show when encapsulated" */
+    String mLabel; // 0x5c
+    /** "do not wait around for the label to finish?" */
+    bool mImmediateRelease; // 0x64
+    /** "When true, we request the label to stop instead of running it" */
+    bool mStop; // 0x65
+    /** "Is this port exposed for possible linking?" */
+    bool mExposed; // 0x66
 };

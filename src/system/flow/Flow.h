@@ -77,6 +77,10 @@ public:
     OBJ_MEM_OVERLOAD(0x39)
     NEW_OBJ(Flow)
 
+    int GetNumParams() const { return unk178; }
+    void RefreshPortLabelLists();
+    FlowLabel *GetLabelForSym(Symbol);
+
 protected:
     Flow();
 

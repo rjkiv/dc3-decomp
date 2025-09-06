@@ -207,7 +207,10 @@ private:
         Node(const Node &n);
         virtual ~Node() {}
         virtual Hmx::Object *RefOwner() const;
-        virtual void Replace(Hmx::Object *obj);
+        virtual void Replace(Hmx::Object *obj) {
+            ObjPtrVec<T1, T2> *vec = static_cast<ObjPtrVec<T1, T2> *>(mOwner);
+            vec->ReplaceNode(this, obj);
+        }
         virtual ObjRefOwner *Parent() const { return mOwner; }
 
         T1 *Obj() const { return mObject; }
@@ -262,6 +265,7 @@ public:
     };
 
     ObjPtrVec(Hmx::Object *owner, EraseMode = (EraseMode)0, ObjListMode = kObjListNoNull);
+    ObjPtrVec(const ObjPtrVec &);
     virtual ~ObjPtrVec();
 
     iterator begin() { return iterator(mNodes.begin()); }

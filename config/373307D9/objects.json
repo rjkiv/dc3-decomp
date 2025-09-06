@@ -257,7 +257,7 @@
             "system/flow/FlowMultiSetProperty.cpp": "MISSING",
             "system/flow/FlowNode.cpp": "NonMatching",
             "system/flow/FlowOnStop.cpp": "MISSING",
-            "system/flow/FlowOutPort.cpp": "MISSING",
+            "system/flow/FlowOutPort.cpp": "NonMatching",
             "system/flow/FlowPickOne.cpp": "MISSING",
             "system/flow/FlowPtr.cpp": "NonMatching",
             "system/flow/FlowQueueable.cpp": "NonMatching",

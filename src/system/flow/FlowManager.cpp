@@ -52,3 +52,27 @@ void FlowManager::AddEventTime(Symbol s, float f1) {
     }
     unk190 = 0;
 }
+
+void FlowManager::Poll() {
+    float ms = 0;
+    unk18c = 0;
+    Timer timer;
+    timer.Reset();
+    timer.Start();
+    unk2d = true;
+    for (std::map<FlowNode *, FlowNode::QueueState>::iterator it = mFlowQueue.begin();
+         it != mFlowQueue.end();
+         ++it) {
+        if (it->second != FlowNode::kImmediate) {
+            it->first->Execute(it->second);
+        }
+    }
+    mFlowQueue.clear();
+    ObjPtrVec<FlowNode> polls(mPollables);
+    for (ObjPtrVec<FlowNode>::iterator it = polls.begin(); it != polls.end(); ++it) {
+        (*it)->Execute(FlowNode::kWhenAble);
+    }
+    unk2d = false;
+    timer.Stop();
+    unk2c = false;
+}
