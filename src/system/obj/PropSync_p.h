@@ -17,6 +17,20 @@ inline bool PropSync(float &f, DataNode &node, DataArray *prop, int i, PropOp op
     return true;
 }
 
+inline bool PropSync(DataNode &obj, DataNode &node, DataArray *prop, int i, PropOp op) {
+    if (op == kPropUnknown0x40)
+        return false;
+    else {
+        MILO_ASSERT(i == prop->Size() && op <= kPropInsert, 0x19);
+        if (op == kPropGet) {
+            node = obj;
+        } else {
+            obj = node;
+        }
+        return true;
+    }
+}
+
 inline bool
 PropSync(unsigned char &uc, DataNode &node, DataArray *prop, int i, PropOp op) {
     MILO_ASSERT(i == prop->Size() && op <= kPropInsert, 0x21);

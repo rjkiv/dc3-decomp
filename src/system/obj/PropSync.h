@@ -40,6 +40,7 @@ bool PropSync(short &s, DataNode &node, DataArray *prop, int i, PropOp op);
 bool PropSync(bool &b, DataNode &node, DataArray *prop, int i, PropOp op);
 bool PropSync(class Symbol &sym, DataNode &node, DataArray *prop, int i, PropOp op);
 
+bool PropSync(DataNode &, DataNode &, DataArray *, int, PropOp);
 bool PropSync(class DataNodeObjTrack &, DataNode &, DataArray *, int, PropOp);
 
 template <class T>

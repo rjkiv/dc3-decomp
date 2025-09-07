@@ -291,7 +291,7 @@ public:
     bool Load(BinStream &, bool, ObjectDir *);
     void clear() { mNodes.clear(); }
     void reserve(unsigned int n) { mNodes.reserve(n); }
-
+    void unique();
     void Set(iterator it, T1 *obj);
 
     // see Draw.cpp for this
