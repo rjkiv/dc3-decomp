@@ -72,6 +72,7 @@ public:
     NEW_OBJ(FlowNode)
 
     static FlowNode *DuplicateChild(FlowNode *);
+    static Hmx::Object *LoadObjectFromMainOrDir(BinStream &, ObjectDir *);
 
     bool HasRunningNode(FlowNode *);
     DrivenPropertyEntry *GetDrivenEntry(Symbol);

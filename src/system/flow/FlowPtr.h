@@ -13,6 +13,17 @@ public:
 
     int GetInitialState(Hmx::Object *);
 
+    FlowPtrBase &operator=(const FlowPtrBase &other) {
+        mObjName = other.mObjName;
+        mState = other.mState;
+        return *this;
+    }
+
+    void Reset() {
+        mObjName = 0;
+        mState = GetInitialState(nullptr);
+    }
+
 protected:
     bool RefreshParamObject();
     Hmx::Object *GetObject();
@@ -42,6 +53,17 @@ public:
         mObjName = obj ? obj->Name() : 0;
         mState = GetInitialState(obj);
         mObjPtr = obj;
+    }
+
+    FlowPtr &operator=(const FlowPtr &ptr) {
+        mObjPtr = ptr.mObjPtr;
+        FlowPtrBase::operator=(ptr);
+        return *this;
+    }
+
+    void Reset() {
+        mObjPtr = nullptr;
+        FlowPtrBase::Reset();
     }
 
     operator T *() { return Get(); }
