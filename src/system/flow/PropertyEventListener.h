@@ -12,6 +12,7 @@ public:
         ObjPtr<Hmx::Object> unk4;
     };
     PropertyEventListener(Hmx::Object *);
+    virtual ~PropertyEventListener() {}
 
 protected:
     virtual void GenerateAutoNames(FlowNode *, bool);
