@@ -34,6 +34,15 @@ public:
         /** "When asked to stop, release but leave the sound playing." */
         kReleaseAndContinue = 4
     };
+    enum OperatorType {
+        kEqual,
+        kNotEqual,
+        kGreaterThan,
+        kGreaterThanOrEqual,
+        kLessThan,
+        kLessThanOrEqual,
+        kTransition
+    };
     // Hmx::Object
     virtual ~FlowNode();
     OBJ_CLASSNAME(FlowNode)

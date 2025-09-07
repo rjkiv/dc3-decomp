@@ -991,6 +991,35 @@ inline TextStream &operator<<(TextStream &ts, const Hmx::Object *obj) {
     return ts;
 }
 
+// DataNodeObjTrack
+class DataNodeObjTrack {
+public:
+    DataNodeObjTrack(const DataNode &node) : unk0(nullptr, nullptr) {
+        unk14 = node.Evaluate();
+        if (unk14.Type() == kDataObject) {
+            unk0 = unk14.GetObj();
+        }
+    }
+    DataNode Node() const {
+        if (unk14.Type() == kDataObject) {
+            return unk0.Ptr();
+        } else
+            return unk14;
+    }
+    DataNodeObjTrack &operator=(const DataNode &node) {
+        unk14 = node.Evaluate();
+        if (unk14.Type() == kDataObject) {
+            unk0 = unk14.GetObj();
+        }
+        return *this;
+    }
+    // DataNodeObjTrack& operator=(const DataNodeObjTrack&);
+
+protected:
+    ObjPtr<Hmx::Object> unk0; // 0x0
+    DataNode unk14; // 0x14
+};
+
 // ObjVector
 template <class T>
 class ObjVector : public std::vector<T> {
