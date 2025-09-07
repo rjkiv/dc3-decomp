@@ -9,7 +9,7 @@ bool FlowNode::sPushDrivenProperties = false;
 
 FlowNode::FlowNode()
     : mVec1(this, (EraseMode)0, kObjListNoNull), mRunningNodes(this), mParent(nullptr),
-      unk48(this), unk58(0) {
+      mDrivenPropEntries(this), unk58(0) {
     mDebugOutput = false;
 }
 
@@ -44,7 +44,7 @@ BEGIN_COPYS(FlowNode)
     COPY_SUPERCLASS(Hmx::Object)
     CREATE_COPY(FlowNode)
     BEGIN_COPYING_MEMBERS
-        COPY_MEMBER(unk48)
+        COPY_MEMBER(mDrivenPropEntries)
     END_COPYING_MEMBERS
 END_COPYS
 
@@ -56,12 +56,12 @@ BEGIN_LOADS(FlowNode)
 
     int numEntries;
     bs >> numEntries;
-    unk48.clear();
-    unk48.reserve(numEntries);
+    mDrivenPropEntries.clear();
+    mDrivenPropEntries.reserve(numEntries);
     for (int i = 0; i < numEntries; i++) {
         DrivenPropertyEntry entry(this);
         entry.Load(bs, this);
-        unk48.push_back(entry);
+        mDrivenPropEntries.push_back(entry);
     }
 END_LOADS
 
