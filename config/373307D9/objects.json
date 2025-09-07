@@ -265,7 +265,7 @@
             "system/flow/FlowSequence.cpp": "NonMatching",
             "system/flow/FlowSetProperty.cpp": "MISSING",
             "system/flow/FlowSlider.cpp": "NonMatching",
-            "system/flow/FlowSound.cpp": "MISSING",
+            "system/flow/FlowSound.cpp": "NonMatching",
             "system/flow/FlowSwitch.cpp": "NonMatching",
             "system/flow/FlowSwitchCase.cpp": "NonMatching",
             "system/flow/FlowTimer.cpp": "MISSING",
