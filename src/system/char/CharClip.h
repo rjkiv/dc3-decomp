@@ -3,6 +3,7 @@
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "rndobj/Anim.h"
+#include "utl/BinStream.h"
 #include "utl/MemMgr.h"
 #include "char/CharBonesSamples.h"
 
@@ -21,6 +22,11 @@ class CharClip : public Hmx::Object {
 public:
     class NodeVector {
     public:
+        NodeVector *Next() const { return (NodeVector *)(this->nodes + size); }
+
+        ObjOwnerPtr<CharClip> clip; // 0x0
+        int size; // 0x14
+        CharGraphNode nodes[1]; // 0x18
     };
     class Transitions : public ObjRefOwner {
     public:
@@ -31,6 +37,15 @@ public:
         virtual bool Replace(ObjRef *, Hmx::Object *);
 
         void Clear();
+        int Size() const;
+        NodeVector *GetNodes(int) const;
+        NodeVector *Resize(int, const NodeVector *);
+        NodeVector *FindNodes(CharClip *) const;
+        int BytesInMemory() const { return (int)mNodeEnd - (int)mNodeStart; }
+        void RemoveNodes(NodeVector *);
+        void Save(BinStream &);
+        void Load(BinStreamRev &, int);
+        void RemoveClip(CharClip *);
 
         NodeVector *mNodeStart; // 0x4
         NodeVector *mNodeEnd; // 0x8
@@ -39,7 +54,7 @@ public:
 
     class BeatEvent {
     public:
-        BeatEvent();
+        BeatEvent() : beat(0) {}
         BeatEvent(const BeatEvent &e) {
             event = e.event;
             beat = e.beat;
