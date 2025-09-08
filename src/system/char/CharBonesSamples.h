@@ -8,6 +8,9 @@ public:
     virtual void Print();
     virtual bool SyncProperty(DataNode &, DataArray *, int, PropOp);
 
+    int NumSamples() const { return mNumSamples; }
+    int NumFrames() const { return mFrames.size(); }
+
 protected:
     /** "how many keyframes" */
     int mNumSamples; // 0x54

@@ -1,5 +1,6 @@
 #pragma once
 #include "char/CharBones.h"
+#include "obj/Data.h"
 #include "obj/Object.h"
 #include "rndobj/Anim.h"
 #include "utl/MemMgr.h"
@@ -25,9 +26,11 @@ public:
     public:
         Transitions(Hmx::Object *owner)
             : mNodeStart(nullptr), mNodeEnd(nullptr), mOwner(owner) {}
-        virtual ~Transitions();
+        virtual ~Transitions() { Clear(); }
         virtual Hmx::Object *RefOwner() const { return mOwner; }
         virtual bool Replace(ObjRef *, Hmx::Object *);
+
+        void Clear();
 
         NodeVector *mNodeStart; // 0x4
         NodeVector *mNodeEnd; // 0x8
@@ -37,8 +40,15 @@ public:
     class BeatEvent {
     public:
         BeatEvent();
-        BeatEvent(const BeatEvent &);
-        BeatEvent &operator=(const BeatEvent &);
+        BeatEvent(const BeatEvent &e) {
+            event = e.event;
+            beat = e.beat;
+        }
+        BeatEvent &operator=(const BeatEvent &e) {
+            event = e.event;
+            beat = e.beat;
+            return *this;
+        }
         void Load(BinStream &);
 
         /** "The event argument for the {clip_event <event> <clip>}
@@ -107,8 +117,46 @@ public:
         MemFree(v, __FILE__, 0x51, StaticClassName().Str());
     }
 
+    /** "Start beat, beat this clip starts at" */
+    float StartBeat() const { return mBeatTrack.front().value; }
+    /** "End beat, beat this clip ends at" */
+    float EndBeat() const { return mBeatTrack.back().value; }
+    /** "Length in beats" */
+    float LengthBeats() const { return EndBeat() - StartBeat(); }
+    /** "Number of original samples taken, pre-keyframe compression" */
+    int NumFrames() const {
+        return Max<int>(Max<int>(1, mFull.NumSamples()), mFull.NumFrames());
+    }
+    int InGroups();
+    bool SharesGroups(CharClip *);
+    float LengthSeconds() const;
+    float AverageBeatsPerSecond() const;
+    void SetFlags(int);
+    void SetPlayFlags(int);
+    void SetDefaultBlend(int);
+    void SetDefaultLoop(int);
+    void SetBeatAlignMode(int);
+    void SetRelative(CharClip *);
+    void SortEvents();
+    int AllocSize();
+
+    static DataNode GetClipEvents();
+
 protected:
     CharClip();
+
+    DataNode OnGroups(DataArray *);
+    DataNode OnHasGroup(DataArray *);
+
+    static void SetDefaultBlendFlag(int &mask, int blendFlag) {
+        mask = mask & 0xfffffff0 | blendFlag;
+    }
+    static void SetDefaultLoopFlag(int &mask, int loopFlag) {
+        mask = mask & 0xffffff0f | loopFlag;
+    }
+    static void SetDefaultBeatAlignModeFlag(int &mask, int alignFlag) {
+        mask = mask & 0xffff09ff | alignFlag;
+    }
 
     Transitions mTransitions; // 0x2c
     /** "Frames per second" */

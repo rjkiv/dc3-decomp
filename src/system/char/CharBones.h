@@ -58,6 +58,7 @@ public:
         Zero();
         SetWeights(0);
     }
+    CompressionType GetCompression() const { return mCompression; }
 
     static Type TypeOf(Symbol);
     static const char *SuffixOf(Type);
