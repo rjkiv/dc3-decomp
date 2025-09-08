@@ -70,6 +70,7 @@ protected:
     void RecomputeSizes();
 
     CompressionType mCompression; // 0x4
+    /** "Bones that are animated" */
     std::vector<Bone> mBones; // 0x8
     char *mStart; // 0x14
     int mCounts[NUM_TYPES]; // 0x18 - 0x30
