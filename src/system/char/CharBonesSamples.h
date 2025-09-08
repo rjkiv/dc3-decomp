@@ -1,5 +1,6 @@
 #pragma once
 #include "char/CharBones.h"
+#include "utl/BinStream.h"
 
 class CharBonesSamples : public CharBones {
 public:
@@ -10,6 +11,8 @@ public:
 
     int NumSamples() const { return mNumSamples; }
     int NumFrames() const { return mFrames.size(); }
+
+    void Save(BinStream &);
 
 protected:
     /** "how many keyframes" */

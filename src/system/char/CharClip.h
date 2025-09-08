@@ -64,6 +64,7 @@ public:
             beat = e.beat;
             return *this;
         }
+        void Save(BinStream &);
         void Load(BinStream &);
 
         /** "The event argument for the {clip_event <event> <clip>}
@@ -75,9 +76,8 @@ public:
 
     class FacingSet {
     public:
-        class FacingBones : public CharBones {
-        public:
-            FacingBones();
+        struct FacingBones : public CharBones {
+            FacingBones() {}
             virtual ~FacingBones() {}
             virtual void ReallocateInternal();
 
@@ -155,6 +155,7 @@ public:
     void SortEvents();
     int AllocSize();
 
+    static const float kBeatAccuracy;
     static DataNode GetClipEvents();
 
 protected:

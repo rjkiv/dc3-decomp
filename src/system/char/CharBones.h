@@ -100,3 +100,6 @@ public:
 protected:
     virtual void ReallocateInternal();
 };
+
+BinStream &operator<<(BinStream &, const CharBones::Bone &);
+BinStream &operator>>(BinStream &, CharBones::Bone &);

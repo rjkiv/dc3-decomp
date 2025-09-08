@@ -7,6 +7,7 @@
 #include "utl/Str.h"
 #include <vector>
 #include <list>
+#include <map>
 
 namespace Hmx {
     class Object;
@@ -268,5 +269,27 @@ BinStream &operator<<(BinStream &bs, const std::list<T, Allocator> &list) {
 template <class T1, class T2>
 BinStream &operator>>(BinStream &bs, std::pair<T1, T2> &p) {
     bs >> p.first >> p.second;
+    return bs;
+}
+
+template <class T1, class T2>
+BinStream &operator<<(BinStream &bs, const std::map<T1, T2> &map) {
+    bs << map.size();
+    for (typename std::map<T1, T2>::const_iterator it = map.begin(); it != map.end();
+         ++it) {
+        bs << it->first << it->second;
+    }
+    return bs;
+}
+
+template <class T1, class T2>
+BinStream &operator>>(BinStream &bs, std::map<T1, T2> &map) {
+    int size;
+    bs >> size;
+    for (; size != 0; size--) {
+        T1 key;
+        bs >> key;
+        bs >> map[key];
+    }
     return bs;
 }

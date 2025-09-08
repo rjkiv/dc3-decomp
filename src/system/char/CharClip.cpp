@@ -4,6 +4,10 @@
 #include "os/Debug.h"
 #include "utl/BinStream.h"
 
+const float CharClip::kBeatAccuracy = 0.02;
+CharClip::FacingSet::FacingBones CharClip::FacingSet::sFacingPos;
+CharClip::FacingSet::FacingBones CharClip::FacingSet::sFacingRotAndPos;
+
 CharClip::CharClip()
     : mTransitions(this), mFramesPerSec(30), mFlags(0), mPlayFlags(0), mRange(0),
       mRelative(this), mDirty(true), mOldVer(-1), mDoNotCompress(false), mSyncAnim(this),
@@ -102,6 +106,30 @@ BEGIN_PROPSYNCS(CharClip)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
+BEGIN_SAVES(CharClip)
+    SAVE_REVS(22, 0)
+    SAVE_SUPERCLASS(Hmx::Object)
+    bs << mFramesPerSec;
+    bs << mFlags;
+    bs << mPlayFlags;
+    bs << mRange;
+    bs << mRelative;
+    bs << mOldVer;
+    bs << mDoNotCompress;
+    mTransitions.Save(bs);
+    bs << mBeatEvents.size();
+    for (int i = 0; i < mBeatEvents.size(); i++) {
+        mBeatEvents[i].Save(bs);
+    }
+    mFull.Save(bs);
+    mOne.Save(bs);
+    bs << mZeros;
+    bs << mBeatTrack;
+    bs << mSyncAnim;
+    bs << unk18c;
+    bs << unk198;
+END_SAVES
+
 void CharClip::Transitions::Clear() {
     for (NodeVector *it = mNodeStart; it < mNodeEnd; it = it->Next()) {
         it->clip->~CharClip(); // scalar deleting dtor gets called here
@@ -182,7 +210,15 @@ void CharClip::Transitions::Save(BinStream &bs) {
     }
 }
 
-void CharClip::Init() { REGISTER_OBJ_FACTORY(CharClip); }
+void CharClip::FacingSet::Init() {
+    sFacingPos.Set(false);
+    sFacingRotAndPos.Set(true);
+}
+
+void CharClip::Init() {
+    FacingSet::Init();
+    REGISTER_OBJ_FACTORY(CharClip);
+}
 
 void CharClip::SetPlayFlags(int i) {
     if (i != mPlayFlags) {
