@@ -164,14 +164,14 @@ void CharClip::Transitions::RemoveNodes(NodeVector *n) {
 }
 
 void CharClip::Transitions::Save(BinStream &bs) {
-    int total_size = 0;
     int num_nodes = 0;
+    int num_node_vectors = 0;
     for (NodeVector *it = mNodeStart; it < mNodeEnd; it = it->Next()) {
-        num_nodes++;
-        total_size += it->size;
+        num_node_vectors++;
+        num_nodes += it->size;
     }
-    bs << total_size;
     bs << num_nodes;
+    bs << num_node_vectors;
     for (NodeVector *it = mNodeStart; it < mNodeEnd; it = it->Next()) {
         bs << it->clip->Name();
         bs << it->size;
