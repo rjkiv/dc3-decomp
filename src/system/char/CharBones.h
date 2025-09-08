@@ -54,11 +54,14 @@ public:
     void ClearBones();
     void AddBones(const std::vector<Bone> &);
     void AddBones(const std::list<Bone> &);
+    void ScaleAdd(CharBones &, float) const;
+    void ScaleDown(CharBones &, float) const;
     void Enter() {
         Zero();
         SetWeights(0);
     }
     CompressionType GetCompression() const { return mCompression; }
+    int TotalSize() const { return mTotalSize; }
 
     static Type TypeOf(Symbol);
     static const char *SuffixOf(Type);

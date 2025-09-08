@@ -11,8 +11,10 @@ public:
 
     int NumSamples() const { return mNumSamples; }
     int NumFrames() const { return mFrames.size(); }
-
+    int AllocateSize();
     void Save(BinStream &);
+    void Clone(const CharBonesSamples &);
+    void EvaluateChannel(void *, int, int, float);
 
 protected:
     /** "how many keyframes" */

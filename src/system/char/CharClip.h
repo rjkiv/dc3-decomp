@@ -105,7 +105,6 @@ public:
     };
 
     virtual ~CharClip();
-    virtual bool Replace(ObjRef *, Hmx::Object *);
     OBJ_CLASSNAME(CharClip);
     OBJ_SET_TYPE(CharClip);
     virtual DataNode Handle(DataArray *, bool);
@@ -122,10 +121,8 @@ public:
     static void Init();
     static void *operator new(unsigned int s) {
         static int _x = MemFindHeap("char");
-        MemPushHeap(_x);
-        void *mem = MemAlloc(s, __FILE__, 0x51, StaticClassName().Str(), 0);
-        MemPopHeap();
-        return mem;
+        MemTempHeap tmp(_x);
+        return MemAlloc(s, __FILE__, 0x51, StaticClassName().Str(), 0);
     }
     static void *operator new(unsigned int s, void *place) { return place; }
     static void operator delete(void *v) {
@@ -154,6 +151,8 @@ public:
     void SetRelative(CharClip *);
     void SortEvents();
     int AllocSize();
+    void *GetChannel(Symbol);
+    void ScaleDown(CharBones &bones, float f);
 
     static const float kBeatAccuracy;
     static DataNode GetClipEvents();

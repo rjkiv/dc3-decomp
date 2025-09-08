@@ -34,3 +34,5 @@ void IdentityInterp(const Hmx::Quat &, float, Hmx::Quat &);
 void Nlerp(const Hmx::Quat &, const Hmx::Quat &, float, Hmx::Quat &);
 void Interp(const Hmx::Quat &, const Hmx::Quat &, float, Hmx::Quat &);
 void Interp(const Hmx::Matrix3 &, const Hmx::Matrix3 &, float, Hmx::Matrix3 &);
+
+void RotateAboutZ(const Vector3 &, float, Vector3 &);

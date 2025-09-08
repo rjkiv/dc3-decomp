@@ -27,6 +27,11 @@ struct MemTemp {
     ~MemTemp() { MemPopTemp(); }
 };
 
+struct MemTempHeap {
+    MemTempHeap(int x) { MemPushHeap(x); }
+    ~MemTempHeap() { MemPopHeap(); }
+};
+
 void *_MemAllocTemp(int, const char *, int, const char *, int);
 void *MemRealloc(void *, int, char const *, int, char const *, int);
 void *MemAlloc(int size, const char *file, int line, const char *name, int align = 0);

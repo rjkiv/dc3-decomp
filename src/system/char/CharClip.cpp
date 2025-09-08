@@ -1,8 +1,12 @@
 #include "char/CharClip.h"
+#include "char/CharBonesSamples.h"
+#include "math/Rot.h"
+#include "math/Trig.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "utl/BinStream.h"
+#include "utl/MemMgr.h"
 
 const float CharClip::kBeatAccuracy = 0.02;
 CharClip::FacingSet::FacingBones CharClip::FacingSet::sFacingPos;
@@ -130,6 +134,91 @@ BEGIN_SAVES(CharClip)
     bs << unk198;
 END_SAVES
 
+BEGIN_COPYS(CharClip)
+    static int _x = MemFindHeap("char");
+    MemTempHeap tmp(_x);
+    COPY_SUPERCLASS(Hmx::Object)
+    CREATE_COPY(CharClip)
+    BEGIN_COPYING_MEMBERS
+        COPY_MEMBER(mFramesPerSec)
+        COPY_MEMBER(mBeatTrack)
+        if (ty != kCopyFromMax) {
+            COPY_MEMBER(mFlags)
+            COPY_MEMBER(mPlayFlags)
+            COPY_MEMBER(mRange)
+            COPY_MEMBER(mRelative)
+            mBeatEvents.resize(c->mBeatEvents.size());
+            for (int i = 0; i < mBeatEvents.size(); i++) {
+                mBeatEvents[i] = c->mBeatEvents[i];
+            }
+            COPY_MEMBER(mDoNotCompress)
+            COPY_MEMBER(mSyncAnim)
+        }
+        mFull.Clone(c->mFull);
+        mOne.Clone(c->mOne);
+        COPY_MEMBER(mZeros)
+        mFacing.Set(mFull);
+        mDirty = true;
+        COPY_MEMBER(unk18c)
+        COPY_MEMBER(unk198)
+    END_COPYING_MEMBERS
+END_COPYS
+
+BEGIN_LOADS(CharClip)
+    static int _x = MemFindHeap("char");
+    MemTempHeap temp(_x);
+    LOAD_REVS(bs)
+    ASSERT_REVS(0x16, 0)
+    int oldRev = 0;
+    if (gRev < 0x10)
+        bs >> oldRev;
+    else
+        oldRev = 0xD;
+    MILO_ASSERT(oldRev > 1, 0x531);
+    LOAD_SUPERCLASS(Hmx::Object)
+    if (gRev < 0x12) {
+        int x, y;
+        bs >> x;
+        bs >> y;
+    }
+    bs >> mFramesPerSec;
+    bs >> mFlags;
+    bs >> mPlayFlags;
+    if (oldRev < 0xD) {
+        int x;
+        bs >> x;
+    }
+    if (oldRev > 3)
+        bs >> mRange;
+    if (oldRev > 5) {
+        mRelative.Load(bs, false, nullptr);
+    } else if (oldRev > 4) {
+        bool b117;
+        bs >> b117;
+        mRelative = b117 ? this : nullptr;
+    } else
+        mRelative = nullptr;
+    // there's more, the usage of both BinStream and BinStreamRev is weird
+END_LOADS
+
+void CharClip::PreSave(BinStream &) {
+    MILO_NOTIFY("You can only save a CharClip from PC");
+}
+
+void CharClip::Print() {
+    TheDebug << "CharClip: " << Name() << "\n";
+    TheDebug << MakeString("total allocation size %d\n", AllocSize());
+    TheDebug << "Full:\n";
+    mFull.Print();
+    TheDebug << "One:\n";
+    mOne.Print();
+}
+
+void CharClip::SetTypeDef(DataArray *def) {
+    Hmx::Object::SetTypeDef(def);
+    mDirty = true;
+}
+
 void CharClip::Transitions::Clear() {
     for (NodeVector *it = mNodeStart; it < mNodeEnd; it = it->Next()) {
         it->clip->~CharClip(); // scalar deleting dtor gets called here
@@ -215,9 +304,88 @@ void CharClip::FacingSet::Init() {
     sFacingRotAndPos.Set(true);
 }
 
+void CharClip::FacingSet::Set(CharBonesSamples &samples) {
+    mFacingBones = nullptr;
+    mFullRot = -1;
+    mFullPos = samples.FindOffset("bone_facing.pos");
+    if (mFullPos != -1) {
+        mFullRot = samples.FindOffset("bone_facing.rotz");
+        mFacingBones = mFullRot == -1 ? &sFacingPos : &sFacingRotAndPos;
+    }
+}
+
+void CharClip::FacingSet::ListBones(std::list<CharBones::Bone> &bones) {
+    if (mFacingBones) {
+        mFacingBones->SetWeights(mWeight);
+        mFacingBones->ListBones(bones);
+    }
+}
+
+void CharClip::FacingSet::ScaleAddSample(
+    CharBonesSamples &samples,
+    CharBones &bones,
+    float f1,
+    int i1,
+    float f2,
+    int i2,
+    float f3
+) {
+    if (mFacingBones) {
+        Vector3 v;
+        samples.EvaluateChannel(&v, mFullPos, i1, f2);
+        samples.EvaluateChannel(&mFacingBones->mDeltaPos, mFullPos, i2, f3);
+        Subtract(v, mFacingBones->mDeltaPos, mFacingBones->mDeltaPos);
+        if (mFullRot != -1) {
+            float f64, f68;
+            samples.EvaluateChannel(&f64, mFullRot, i1, f2);
+            samples.EvaluateChannel(&f68, mFullRot, i2, f3);
+            mFacingBones->mDeltaAng = LimitAng(f64 - f68);
+            RotateAboutZ(mFacingBones->mDeltaPos, -f68, mFacingBones->mDeltaPos);
+        }
+        mFacingBones->SetWeights(f1);
+        mFacingBones->ScaleAdd(bones, f1);
+    }
+}
+
+void CharClip::FacingSet::FacingBones::Set(bool b) {
+    ClearBones();
+    std::list<CharBones::Bone> bones;
+    bones.push_back(CharBones::Bone("bone_facing_delta.pos", 1));
+    if (b) {
+        bones.push_back(CharBones::Bone("bone_facing_delta.rotz", 1));
+    }
+    AddBones(bones);
+}
+
+void CharClip::FacingSet::ScaleDown(CharBones &bones, float f) {
+    if (mFacingBones)
+        mFacingBones->ScaleDown(bones, f);
+}
+
+void CharClip::FacingSet::FacingBones::ReallocateInternal() {
+    mStart = (char *)&mDeltaPos;
+}
+
+void CharClip::BeatEvent::Save(BinStream &bs) {
+    bs << event;
+    bs << beat;
+}
+
+void CharClip::BeatEvent::Load(BinStream &bs) {
+    bs >> event;
+    bs >> beat;
+}
+
 void CharClip::Init() {
     FacingSet::Init();
     REGISTER_OBJ_FACTORY(CharClip);
+}
+
+int CharClip::AllocSize() {
+    int size = mTransitions.BytesInMemory();
+    size += mFull.AllocateSize() + mOne.AllocateSize();
+    size += sizeof(CharClip);
+    return size;
 }
 
 void CharClip::SetPlayFlags(int i) {
@@ -254,10 +422,29 @@ void CharClip::SetBeatAlignMode(int align) {
 
 struct SortByFrame {
     bool operator()(const CharClip::BeatEvent &e1, const CharClip::BeatEvent &e2) const {
-        return e1.beat < e2.beat ? true : false;
+        return e1.beat < e2.beat;
     }
 };
 
 void CharClip::SortEvents() {
     std::sort(mBeatEvents.begin(), mBeatEvents.end(), SortByFrame());
+}
+
+void *CharClip::GetChannel(Symbol s) {
+    int off = mFull.FindOffset(s);
+    if (off > -1) {
+        return (void *)(off + 1);
+    } else {
+        off = mOne.FindOffset(s);
+        if (off > -1)
+            return (void *)(off + mFull.TotalSize() + 1);
+        else
+            return 0;
+    }
+}
+
+void CharClip::ScaleDown(CharBones &bones, float f) {
+    mFull.ScaleDown(bones, f);
+    mOne.ScaleDown(bones, f);
+    mFacing.ScaleDown(bones, f);
 }
