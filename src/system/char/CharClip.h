@@ -1,6 +1,7 @@
 #pragma once
 #include "char/CharBones.h"
 #include "obj/Data.h"
+#include "obj/Dir.h"
 #include "obj/Object.h"
 #include "rndobj/Anim.h"
 #include "utl/BinStream.h"
@@ -193,9 +194,18 @@ public:
     float DeltaSecondsToDeltaBeat(float f1, float beat);
     int BeatToSample(float f, float *fp) const;
     void EvaluateChannel(void *v1, const void *v2, float f3);
+    void RotateBy(CharBones &, float);
+    void RotateTo(CharBones &, float, float);
+    void ScaleAdd(CharBones &, float, float, float);
+    void ApplyBlendedSkeletons(CharClip **, CharBones &, float, float);
+    void ListBones(std::list<CharBones::Bone> &bones);
+    float SampleToBeat(int) const;
+    void StuffBones(CharBones &);
+    void PoseMeshes(ObjectDir *, float);
 
     static const float kBeatAccuracy;
     static DataNode GetClipEvents();
+    static void LockAndDelete(const CharClip **, int, int);
 
 protected:
     CharClip();

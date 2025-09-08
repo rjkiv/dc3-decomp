@@ -18,6 +18,8 @@ public:
     void ScaleAddSample(CharBones &, float, int, float);
     void Relativize(CharClip *);
     int FracToSample(float *) const;
+    void RotateBy(CharBones &, int);
+    void RotateTo(CharBones &, float, int, float);
 
 protected:
     /** "how many keyframes" */

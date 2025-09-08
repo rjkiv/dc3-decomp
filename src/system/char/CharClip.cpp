@@ -1,5 +1,6 @@
 #include "char/CharClip.h"
 #include "char/CharBones.h"
+#include "char/CharBonesMeshes.h"
 #include "char/CharBonesSamples.h"
 #include "math/Rot.h"
 #include "math/Trig.h"
@@ -7,6 +8,7 @@
 #include "obj/DataUtl.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "os/System.h"
 #include "utl/BinStream.h"
 #include "utl/MemMgr.h"
 
@@ -570,13 +572,13 @@ CharClip::FindNode(CharClip *clip, float f1, int iii, float f2) const {
         n = FindLastNode(clip, f1);
         break;
     default:
-        MILO_WARN("Unknown mode flags %x, default to kPlayNow", iii);
+        MILO_NOTIFY("Unknown mode flags %x, default to kPlayNow", iii);
         break;
     }
     if (!n) {
         static CharGraphNode node;
         node.curBeat = f1;
-        if (blendMode == 4) {
+        if (blendMode == kPlayLast) {
             MaxEq(node.curBeat, EndBeat() - f2 * 0.5f);
         }
         n = &node;
@@ -635,4 +637,100 @@ void CharClip::EvaluateChannel(void *v1, const void *v2, float f3) {
     float fp;
     int sample = BeatToSample(f3, &fp);
     EvaluateChannel(v1, v2, sample, fp);
+}
+
+void CharClip::RotateBy(CharBones &bones, float f) {
+    float frac;
+    int samp = BeatToSample(f, &frac);
+    MILO_ASSERT(frac == 0, 0x36E);
+    mFull.RotateBy(bones, samp);
+    mOne.RotateBy(bones, 0);
+}
+
+void CharClip::RotateTo(CharBones &bones, float f1, float f2) {
+    float fp;
+    int sample = BeatToSample(f2, &fp);
+    mFull.RotateTo(bones, f1, sample, fp);
+    mOne.RotateTo(bones, f1, 0, 0);
+}
+
+void CharClip::ScaleAdd(CharBones &bones, float f1, float f2, float f3) {
+    float fp;
+    float fp2;
+    int samp1 = BeatToSample(f2, &fp);
+    int samp2 = BeatToSample(f2 - f3, &fp2);
+    ScaleAddSample(bones, f1, samp1, fp, samp2, fp2);
+}
+
+void CharClip::SetRelative(CharClip *clip) {
+    if (clip != mRelative) {
+        if (clip == this) {
+            MILO_NOTIFY("%s cannot be relative to itself", PathName(this));
+        } else {
+            mRelative = clip;
+            if (mRelative)
+                Relativize();
+            else
+                MILO_NOTIFY("%s cannot de-relativize clip, must reexport", PathName(this));
+        }
+    }
+}
+
+void CharClip::ListBones(std::list<CharBones::Bone> &bones) {
+    mFull.ListBones(bones);
+    mOne.ListBones(bones);
+    mFacing.ListBones(bones);
+    for (int i = 0; i < mZeros.size(); i++) {
+        bones.push_back(mZeros[i]);
+    }
+}
+
+void CharClip::StuffBones(CharBones &bones) {
+    std::list<CharBones::Bone> blist;
+    ListBones(blist);
+    bones.AddBones(blist);
+}
+
+void CharClip::PoseMeshes(ObjectDir *dir, float f) {
+    CharBonesMeshes meshes;
+    meshes.SetName("tmp_viseme_bones", dir);
+    StuffBones(meshes);
+    ScaleDown(meshes, 0.0f);
+    ScaleAdd(meshes, 1.0f, f, 0.0f);
+    meshes.PoseMeshes();
+}
+
+DataNode CharClip::GetClipEvents() {
+    static Symbol events("events");
+    static DataArray *cfg = SystemConfig("objects", "CharClip");
+    DataNode ret = 0;
+    DataArray *clipArr = cfg->FindArray(events, false);
+    if (clipArr) {
+        ret = clipArr->Array(1);
+    } else {
+        DataArray *arr = new DataArray(1);
+        arr->Node(0) = Symbol();
+        ret = arr;
+    }
+    return ret;
+}
+
+void CharClip::ApplyBlendedSkeletons(
+    CharClip **clips, CharBones &bones, float f1, float f2
+) {
+    float f60;
+    int sample = BeatToSample(f1, &f2);
+    float f7 = 0;
+    std::map<int, float> &curMap = unk18c[sample];
+    float f6 = 1;
+    for (std::map<int, float>::iterator it = curMap.begin(); it != curMap.end(); ++it) {
+        clips[it->first]->ScaleAdd(bones, (f6 - f60) * it->second * f2, f7, f7);
+    }
+    if (f7 < f60) {
+        std::map<int, float> &nextMap = unk18c[sample + 1];
+        for (std::map<int, float>::iterator it = nextMap.begin(); it != nextMap.end();
+             ++it) {
+            clips[it->first]->ScaleAdd(bones, f60 * it->second * f2, f7, f7);
+        }
+    }
 }
