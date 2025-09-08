@@ -1,4 +1,5 @@
 #include "char/CharClip.h"
+#include "CharClipGroup.h"
 #include "char/CharBones.h"
 #include "char/CharBonesMeshes.h"
 #include "char/CharBonesSamples.h"
@@ -733,4 +734,50 @@ void CharClip::ApplyBlendedSkeletons(
             clips[it->first]->ScaleAdd(bones, f60 * it->second * f2, f7, f7);
         }
     }
+}
+
+bool CharClip::SharesGroups(CharClip *clip) {
+    for (ObjRef::iterator it = mRefs.begin(); it != mRefs.end(); ++it) {
+        Hmx::Object *owner = it->RefOwner();
+        CharClipGroup *group = dynamic_cast<CharClipGroup *>(owner);
+        if (group && group->HasClip(clip))
+            return true;
+    }
+    return false;
+}
+
+int CharClip::InGroups() {
+    int num = 0;
+    for (ObjRef::iterator it = mRefs.begin(); it != mRefs.end(); ++it) {
+        Hmx::Object *owner = it->RefOwner();
+        CharClipGroup *group = dynamic_cast<CharClipGroup *>(owner);
+        if (group)
+            num++;
+    }
+    return num;
+}
+
+DataNode CharClip::OnGroups(DataArray *) {
+    DataArray *groups = new DataArray(0);
+    for (ObjRef::iterator it = mRefs.begin(); it != mRefs.end(); ++it) {
+        Hmx::Object *owner = it->RefOwner();
+        CharClipGroup *group = dynamic_cast<CharClipGroup *>(owner);
+        if (group) {
+            groups->Insert(groups->Size(), group);
+        }
+    }
+    DataNode ret(groups);
+    groups->Release();
+    return ret;
+}
+
+DataNode CharClip::OnHasGroup(DataArray *arr) {
+    const char *str = arr->Str(2);
+    for (ObjRef::iterator it = mRefs.begin(); it != mRefs.end(); ++it) {
+        Hmx::Object *owner = it->RefOwner();
+        CharClipGroup *group = dynamic_cast<CharClipGroup *>(owner);
+        if (group && streq(group->Name(), str))
+            return 1;
+    }
+    return 0;
 }

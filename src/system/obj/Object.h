@@ -268,6 +268,7 @@ public:
     ObjPtrVec(const ObjPtrVec &);
     virtual ~ObjPtrVec();
 
+    // i now have the suspicion these might be wrong but idk how to fix it yet
     iterator begin() { return iterator(mNodes.begin()); }
     iterator end() { return iterator(mNodes.end()); }
     const_iterator begin() const { return const_iterator(mNodes.begin()); }

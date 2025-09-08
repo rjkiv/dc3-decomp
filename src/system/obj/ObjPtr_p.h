@@ -159,7 +159,7 @@ ObjPtrVec<T1, T2>::ObjPtrVec(const ObjPtrVec &other)
 
 template <class T1, class T2>
 ObjPtrVec<T1, T2>::Node::Node(const Node &n)
-    : ObjRefConcrete<T1, T2>(n.mObject), mOwner(n.mOwner) {}
+    : ObjRefConcrete<T1, T2>(n), mOwner(n.mOwner) {}
 
 template <class T1, class T2>
 ObjPtrVec<T1, T2>::~ObjPtrVec() {

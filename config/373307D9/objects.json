@@ -197,7 +197,7 @@
             "system/char/CharClip.cpp": "NonMatching",
             "system/char/CharClipDisplay.cpp": "MISSING",
             "system/char/CharClipDriver.cpp": "MISSING",
-            "system/char/CharClipGroup.cpp": "MISSING",
+            "system/char/CharClipGroup.cpp": "NonMatching",
             "system/char/CharClipSet.cpp": "MISSING",
             "system/char/CharCollide.cpp": "MISSING",
             "system/char/CharCuff.cpp": "MISSING",
