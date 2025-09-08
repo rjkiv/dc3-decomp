@@ -104,6 +104,35 @@ public:
         float mWeight; // 0xc
     };
 
+    /** "Blend mode, if any, to use by default for this clip" */
+    enum DefaultBlend {
+        kPlayNoDefault = 0,
+        kPlayNow = 1,
+        kPlayNoBlend = 2,
+        kPlayFirst = 3,
+        kPlayLast = 4,
+        kPlayDirty = 8
+    };
+
+    /** "Looping mode, if any, to use by default for this clip" */
+    enum DefaultLoop {
+        kPlayNoLoop = 0x10,
+        kPlayLoop = 0x20,
+        kPlayGraphLoop = 0x30,
+        kPlayNodeLoop = 0x40
+    };
+
+    /** "Time units/alignment, if any, for this clip" */
+    enum BeatAlignMode {
+        kPlayBeatTime = 0,
+        kPlayRealTime = 0x200,
+        kPlayUserTime = 0x400,
+        kPlayBeatAlign1 = 0x1000,
+        kPlayBeatAlign2 = 0x2000,
+        kPlayBeatAlign4 = 0x4000,
+        kPlayBeatAlign8 = 0x8000
+    };
+
     virtual ~CharClip();
     OBJ_CLASSNAME(CharClip);
     OBJ_SET_TYPE(CharClip);
@@ -153,6 +182,17 @@ public:
     int AllocSize();
     void *GetChannel(Symbol);
     void ScaleDown(CharBones &bones, float f);
+    int GetContext() const;
+    const CharGraphNode *FindFirstNode(CharClip *clip, float beat) const;
+    const CharGraphNode *FindLastNode(CharClip *clip, float beat) const;
+    const CharGraphNode *FindNode(CharClip *clip, float f1, int iii, float f2) const;
+    void EvaluateChannel(void *v1, const void *v2, int iii, float f);
+    void ScaleAddSample(CharBones &bones, float f1, int i1, float f2, int i2, float f3);
+    float FrameToBeat(float frame) const;
+    float BeatToFrame(float beat) const;
+    float DeltaSecondsToDeltaBeat(float f1, float beat);
+    int BeatToSample(float f, float *fp) const;
+    void EvaluateChannel(void *v1, const void *v2, float f3);
 
     static const float kBeatAccuracy;
     static DataNode GetClipEvents();
@@ -160,6 +200,8 @@ public:
 protected:
     CharClip();
 
+    void Relativize();
+    int TransitionVersion();
     DataNode OnGroups(DataArray *);
     DataNode OnHasGroup(DataArray *);
 

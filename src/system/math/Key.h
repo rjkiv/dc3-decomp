@@ -200,9 +200,51 @@ public:
     }
 
     Key<T1 *> KeyNearest(float);
-    bool Linear(float f1, float &fref) const;
+
+    bool Linear(float f1, float &fref) const {
+        if (size() == 0)
+            return false;
+        else {
+            if (size() == 1)
+                fref = front().value;
+            else {
+                int idx = Clamp<int>(0, size() - 2, KeyLessEq(f1));
+                const Key<T1> &keyNow = (*this)[idx];
+                const Key<T1> &keyNext = (*this)[idx + 1];
+                Interp(
+                    keyNow.value,
+                    keyNext.value,
+                    (f1 - keyNow.frame) / (keyNext.frame - keyNow.frame),
+                    fref
+                );
+            }
+            return true;
+        }
+    }
+
+    bool ReverseLinear(const float &fconst, float &fref) const {
+        if (size() == 0)
+            return false;
+        else {
+            if (size() == 1)
+                fref = front().frame;
+            else {
+                int numKeys = size();
+                int idx = Clamp<int>(0, numKeys - 2, ReverseKeyLessEq(fconst));
+                const Key<T1> &keyNow = (*this)[idx];
+                const Key<T1> &keyNext = (*this)[idx + 1];
+                Interp(
+                    keyNow.frame,
+                    keyNext.frame,
+                    (fconst - keyNow.value) / (keyNext.value - keyNow.value),
+                    fref
+                );
+            }
+            return true;
+        }
+    }
+
     int ReverseKeyLessEq(const float &fref) const;
-    bool ReverseLinear(const float &fconst, float &fref) const;
     T1 *Cross(float, float) const;
 };
 

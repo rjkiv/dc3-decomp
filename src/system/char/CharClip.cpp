@@ -1,8 +1,10 @@
 #include "char/CharClip.h"
+#include "char/CharBones.h"
 #include "char/CharBonesSamples.h"
 #include "math/Rot.h"
 #include "math/Trig.h"
 #include "obj/Data.h"
+#include "obj/DataUtl.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "utl/BinStream.h"
@@ -234,6 +236,28 @@ int CharClip::Transitions::Size() const {
     return size;
 }
 
+CharClip::NodeVector *CharClip::Transitions::Resize(int size, const NodeVector *old) {
+    static int _x = MemFindHeap("char");
+    MemTempHeap temp(_x);
+    int n = (int)old - (int)mNodeStart;
+    MILO_ASSERT((old == NULL) || (n >= 0), 0x9B);
+    if (size != BytesInMemory()) {
+        if (size == 0) {
+            MemFree(mNodeStart);
+            mNodeStart = nullptr;
+            MILO_ASSERT(old == NULL, 0xA8);
+        } else if (size < BytesInMemory()) {
+            mNodeStart = (NodeVector *)MemTruncate(mNodeStart, size);
+        } else {
+            mNodeStart = (NodeVector *)MemRealloc(
+                mNodeStart, size, __FILE__, 0xB0, "CharGraphNode", 0
+            );
+        }
+    }
+    mNodeEnd = mNodeStart + size;
+    return mNodeStart + n;
+}
+
 CharClip::NodeVector *CharClip::Transitions::GetNodes(int idx) const {
     NodeVector *ret = mNodeStart;
     for (; idx > 0; idx--)
@@ -447,4 +471,168 @@ void CharClip::ScaleDown(CharBones &bones, float f) {
     mFull.ScaleDown(bones, f);
     mOne.ScaleDown(bones, f);
     mFacing.ScaleDown(bones, f);
+}
+
+int CharClip::GetContext() const {
+    if (TypeDef()) {
+        DataArray *found = TypeDef()->FindArray("resource", false);
+        if (found) {
+            return DataGetMacro(found->Str(2))->Int(0);
+        }
+    }
+    return 0;
+}
+
+const CharGraphNode *CharClip::FindFirstNode(CharClip *clip, float beat) const {
+    NodeVector *nodes = mTransitions.FindNodes(clip);
+    if (nodes) {
+        for (int i = 0; i < nodes->size; i++) {
+            if (nodes->nodes[i].curBeat >= beat)
+                return &nodes->nodes[i];
+        }
+    }
+    return nullptr;
+}
+
+const CharGraphNode *CharClip::FindLastNode(CharClip *clip, float beat) const {
+    NodeVector *nodes = mTransitions.FindNodes(clip);
+    if (nodes) {
+        for (int i = nodes->size - 1; i >= 0; i--) {
+            if (nodes->nodes[i].curBeat >= beat)
+                return &nodes->nodes[i];
+        }
+    }
+    return nullptr;
+}
+
+void CharClip::EvaluateChannel(void *v1, const void *v2, int iii, float f) {
+    if (!v2) {
+        MILO_FAIL("%s passed in NULL for evaluate channel", PathName(this));
+    }
+    int i3 = (int)v2 - 1;
+    if (i3 < mFull.TotalSize()) {
+        mFull.EvaluateChannel(v1, i3, iii, f);
+    } else {
+        int i2 = i3 - mFull.TotalSize();
+        if (i2 < mOne.TotalSize()) {
+            mOne.EvaluateChannel(v1, i2, 0, 0);
+        } else {
+            MILO_FAIL("%s could not find offset %d %d", i3, i2, PathName(this));
+        }
+    }
+}
+
+void CharClip::ScaleAddSample(
+    CharBones &bones, float f1, int i1, float f2, int i2, float f3
+) {
+    mFull.ScaleAddSample(bones, f1, i1, f2);
+    mOne.ScaleAddSample(bones, f1, 0, 0);
+    mFacing.ScaleAddSample(mFull, bones, f1, i1, f2, i2, f3);
+}
+
+void CharClip::Relativize() {
+    if (mFull.GetCompression() != CharBones::kCompressNone) {
+        MILO_NOTIFY("%s relativizing compressed clip, should reexport", PathName(this));
+    }
+    MILO_ASSERT(mRelative, 0x3A3);
+    mFull.Relativize(mRelative);
+    mOne.Relativize(mRelative);
+}
+
+int CharClip::TransitionVersion() {
+    int version = -1;
+    if (!Type().Null()) {
+        const DataNode *prop = Property("transition_version", false);
+        if (prop)
+            version = prop->Int();
+    }
+    return version;
+}
+
+const CharGraphNode *
+CharClip::FindNode(CharClip *clip, float f1, int iii, float f2) const {
+    const CharGraphNode *n = nullptr;
+    int blendMode = iii & 0xF;
+    switch (blendMode) {
+    case kPlayNoDefault:
+        break;
+    case kPlayNow:
+        break;
+    case kPlayDirty:
+        break;
+    case kPlayNoBlend:
+        n = nullptr;
+        break;
+    case kPlayFirst:
+        n = FindFirstNode(clip, f1);
+        break;
+    case kPlayLast:
+        n = FindLastNode(clip, f1);
+        break;
+    default:
+        MILO_WARN("Unknown mode flags %x, default to kPlayNow", iii);
+        break;
+    }
+    if (!n) {
+        static CharGraphNode node;
+        node.curBeat = f1;
+        if (blendMode == 4) {
+            MaxEq(node.curBeat, EndBeat() - f2 * 0.5f);
+        }
+        n = &node;
+        node.nextBeat = StartBeat();
+    }
+    return n;
+}
+
+float CharClip::LengthSeconds() const {
+    if (NumFrames() < 2)
+        return 0;
+    else
+        return (NumFrames() - 1) / mFramesPerSec;
+}
+
+float CharClip::AverageBeatsPerSecond() const {
+    if (LengthSeconds()) {
+        return LengthBeats() / LengthSeconds();
+    } else
+        return 1;
+}
+
+float CharClip::FrameToBeat(float frame) const {
+    float ret = 0;
+    mBeatTrack.Linear(frame, ret);
+    return ret;
+}
+
+float CharClip::BeatToFrame(float beat) const {
+    float ret = 0;
+    mBeatTrack.ReverseLinear(beat, ret);
+    return ret;
+}
+
+float CharClip::DeltaSecondsToDeltaBeat(float f1, float beat) {
+    if (mBeatTrack.size() == 1)
+        return f1;
+    else {
+        float ret = FrameToBeat(f1 * mBeatTrack.front().value + BeatToFrame(beat));
+        ret -= beat;
+        return ret;
+    }
+}
+
+int CharClip::BeatToSample(float f, float *fp) const {
+    float frame = BeatToFrame(f);
+    float f1 = 0;
+    if (mBeatTrack.back().frame != 0) {
+        *fp = frame / mBeatTrack.back().frame;
+    }
+    *fp = f1;
+    return mFull.FracToSample(fp);
+}
+
+void CharClip::EvaluateChannel(void *v1, const void *v2, float f3) {
+    float fp;
+    int sample = BeatToSample(f3, &fp);
+    EvaluateChannel(v1, v2, sample, fp);
 }

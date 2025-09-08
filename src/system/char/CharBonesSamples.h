@@ -15,6 +15,9 @@ public:
     void Save(BinStream &);
     void Clone(const CharBonesSamples &);
     void EvaluateChannel(void *, int, int, float);
+    void ScaleAddSample(CharBones &, float, int, float);
+    void Relativize(CharClip *);
+    int FracToSample(float *) const;
 
 protected:
     /** "how many keyframes" */
