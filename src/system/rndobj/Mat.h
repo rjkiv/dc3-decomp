@@ -35,6 +35,7 @@ public:
     virtual void Load(BinStream &);
 
     NEW_OBJ(RndMat);
+    OBJ_MEM_OVERLOAD(69); // nice
 
     float GetRefractStrength() { return mRefractStrength; }
     RndTex *GetRefractNormalMap() { return mRefractNormalMap; }
