@@ -35,6 +35,7 @@ public:
 
     NEW_OBJ(RndCam);
     OBJ_MEM_OVERLOAD(0x1B);
+    static RndCam *Current() { return sCurrent; }
 
 protected:
     RndCam();
