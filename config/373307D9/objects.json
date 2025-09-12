@@ -1010,7 +1010,7 @@
             "system/world/BeatClock.cpp": "NonMatching",
             "system/world/CameraManager.cpp": "MISSING",
             "system/world/CameraShot.cpp": "MISSING",
-            "system/world/ColorPalette.cpp": "MISSING",
+            "system/world/ColorPalette.cpp": "NonMatching",
             "system/world/Crowd.cpp": "MISSING",
             "system/world/Crowd3DCharHandle.cpp": "MISSING",
             "system/world/DefaultPhysicsManager.cpp": "MISSING",
