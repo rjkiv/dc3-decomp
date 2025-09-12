@@ -38,7 +38,7 @@ protected:
     ObjPtrList<Character> mLodChars; // 0x114
     /** "How far to stretch vertically" */
     float mVerticalStretch; // 0x128
-    std::list<RndMat *> unkd4; // 0x12c
+    std::list<RndMat *> unk12c; // 0x12c
     RndCam *unk134; // 0x134
     bool unk138; // 0x138
     /** "List of objects to hide in the reflection,
