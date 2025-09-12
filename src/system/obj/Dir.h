@@ -43,6 +43,17 @@ public:
     void PostLoad(Loader *);
     void LoadFile(const FilePath &, bool, bool, LoaderPos, bool);
 
+    FilePath &GetFile() const {
+        if (mObject && mObject->Loader()) {
+            return mObject->Loader()->LoaderFile();
+        }
+        if (mLoader)
+            return mLoader->LoaderFile();
+        if (mObject)
+            return mObject->StoredFile();
+        return FilePath::Null();
+    }
+
     void LoadInlinedFile(const FilePath &fp, BinStream &bs) {
         *this = nullptr;
         // there's more
@@ -187,6 +198,7 @@ public:
     const char *GetPathName() const { return mPathName; }
     const std::vector<ObjDirPtr<ObjectDir> > &SubDirs() const { return mSubDirs; }
     InlineDirType InlineProxyType() const { return mInlineProxyType; }
+    FilePath &StoredFile() { return mStoredFile; }
 
     void ResetViewports();
     void SetInlineProxyType(InlineDirType);

@@ -44,6 +44,9 @@ bool PropSync(DataNode &, DataNode &, DataArray *, int, PropOp);
 bool PropSync(class DataNodeObjTrack &, DataNode &, DataArray *, int, PropOp);
 
 template <class T>
+bool PropSync(T *&obj, DataNode &node, DataArray *prop, int i, PropOp op);
+
+template <class T>
 bool PropSync(std::vector<T> &vec, DataNode &node, DataArray *prop, int i, PropOp op);
 
 template <class T>
@@ -72,6 +75,12 @@ class ObjOwnerPtr;
 
 template <class T>
 bool PropSync(ObjOwnerPtr<T> &, DataNode &, DataArray *, int, PropOp);
+
+template <class T>
+class ObjDirPtr;
+
+template <class T>
+bool PropSync(ObjDirPtr<T> &, DataNode &, DataArray *, int, PropOp);
 
 template <class T1, class T2>
 class ObjPtrList;

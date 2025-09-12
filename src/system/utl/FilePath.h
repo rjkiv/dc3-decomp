@@ -20,6 +20,7 @@ public:
     // }
     // void SetRoot(const char *str) { Set(sRoot.c_str(), str); }
     static FilePath &Root() { return sRoot; }
+    static FilePath &Null() { return sNull; }
 };
 
 inline TextStream &operator<<(TextStream &ts, FilePath &fp) {
