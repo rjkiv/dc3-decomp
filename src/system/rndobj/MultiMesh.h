@@ -35,6 +35,8 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1C);
 
+    RndMesh *Mesh() const { return mMesh; }
+
 protected:
     RndMultiMesh();
 

@@ -59,6 +59,20 @@ public:
         mAlphaCut = cut;
         mDirty |= 2;
     }
+    void SetUseEnv(bool use_env) {
+        mUseEnviron = use_env;
+        mDirty |= 2;
+    }
+    void SetPreLit(bool lit) {
+        mPrelit = lit;
+        mDirty |= 2;
+    }
+    void SetAlphaThreshold(int thresh) { mAlphaThreshold = thresh; }
+    void SetPerPixelLit(bool lit) {
+        mPerPixelLit = lit;
+        mDirty |= 2;
+    }
+    void SetPointLights(bool lit) { mPointLights = lit; }
     void SetColorMod(const Hmx::Color &, int);
     void SetSpecularMap(RndTex *);
     void SetMetaMat(MetaMaterial *, bool);

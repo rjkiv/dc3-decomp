@@ -323,6 +323,7 @@ template <class T1, class T2 = class ObjectDir>
 class ObjPtrList : public ObjRefOwner {
 public:
     ObjPtrList(ObjRefOwner *, ObjListMode = kObjListNoNull);
+    ObjPtrList(const ObjPtrList &);
     virtual ~ObjPtrList() { clear(); }
 
 private:

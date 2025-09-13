@@ -1011,7 +1011,7 @@
             "system/world/CameraManager.cpp": "MISSING",
             "system/world/CameraShot.cpp": "MISSING",
             "system/world/ColorPalette.cpp": "NonMatching",
-            "system/world/Crowd.cpp": "MISSING",
+            "system/world/Crowd.cpp": "NonMatching",
             "system/world/Crowd3DCharHandle.cpp": "MISSING",
             "system/world/DefaultPhysicsManager.cpp": "MISSING",
             "system/world/Dir.cpp": "MISSING",

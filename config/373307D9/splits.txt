@@ -4915,7 +4915,7 @@ system/world/ColorPalette.cpp:
 	.pdata      start:0x822EF7D0 end:0x822EF898
 	.text       start:0x82832920 end:0x82833800
 	.data       start:0x82F19898 end:0x82F198CC
-	.data       start:0x83116B88 end:0x83116C40 rename:.bss
+	.data       start:0x83116B88 end:0x83116B98 rename:.bss
 
 system/world/Crowd.cpp:
 	.rdata      start:0x820E8578 end:0x820E9D60
@@ -4924,7 +4924,7 @@ system/world/Crowd.cpp:
 	.text       start:0x82833800 end:0x8283D148
 	.text       start:0x82EE38A0 end:0x82EE38C0 rename:.text$yd
 	.data       start:0x82F198CC end:0x82F19B14
-	.data       start:0x83116C40 end:0x83116C48 rename:.bss
+	.data       start:0x83116B98 end:0x83116C48 rename:.bss
 
 system/world/Crowd3DCharHandle.cpp:
 	.rdata      start:0x820E9D60 end:0x820E9FE0

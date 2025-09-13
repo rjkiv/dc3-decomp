@@ -267,6 +267,14 @@ ObjPtrList<T1, T2>::ObjPtrList(ObjRefOwner *owner, ObjListMode mode)
 }
 
 template <class T1, class T2>
+ObjPtrList<T1, T2>::ObjPtrList(const ObjPtrList &other)
+    : mSize(0), mNodes(nullptr), mOwner(other.mOwner), mListMode(other.mListMode) {
+    for (iterator it = other.begin(); it != other.end(); ++it) {
+        push_back(*it);
+    }
+}
+
+template <class T1, class T2>
 void *ObjPtrList<T1, T2>::Node::operator new(unsigned int s) {
     return PoolAlloc(s, s, __FILE__, 0x122, "ObjPtrList_node");
 }

@@ -15,6 +15,14 @@ class CharInterest;
 class CharacterTest;
 class ShadowBone;
 
+enum LODType {
+    kLODPerFrame = -1,
+    kLOD0 = 0,
+    kLOD1 = 1,
+    kLOD2 = 2,
+    kNumLods = 3
+};
+
 class Character : public RndDir {
 public:
     struct Lod {
@@ -30,12 +38,6 @@ public:
         /** "Translucent drawables to show at this LOD.
             Drawables in it are guaranteed to be drawn last." */
         DrawPtrVec mTranslucent; // 0x20
-    };
-    enum ForceLodType {
-        kLODPerFrame = -1,
-        kLOD0 = 0,
-        kLOD1 = 1,
-        kLOD2 = 2
     };
     Character();
     // Hmx::Object
@@ -104,7 +106,7 @@ protected:
     int mLastLod; // 0x20c
     /** "Forces LOD, kLODPerFrame is normal behavior of picking per frame,
         the others force the lod (0 is highest res lod, 2 is lowest res lod)" */
-    ForceLodType mForceLod; // 0x210
+    LODType mForceLod; // 0x210
     /** "Group containing shadow geometry" */
     DrawPtrVec mShadow; // 0x214
     /** "translucent objects to show independent of lod.
