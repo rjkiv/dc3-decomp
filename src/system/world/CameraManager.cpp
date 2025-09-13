@@ -1,5 +1,5 @@
 #include "world/CameraManager.h"
-#include "CamShot.h"
+#include "world/CameraShot.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 

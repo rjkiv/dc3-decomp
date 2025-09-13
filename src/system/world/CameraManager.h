@@ -2,7 +2,7 @@
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "utl/MemMgr.h"
-#include "world/CamShot.h"
+#include "world/CameraShot.h"
 #include "world/Crowd.h"
 #include "world/FreeCamera.h"
 
