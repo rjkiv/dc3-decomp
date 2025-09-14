@@ -5,10 +5,14 @@
 #include "obj/Object.h"
 #include "rndobj/Anim.h"
 #include "rndobj/Cam.h"
+#include "rndobj/Dir.h"
+#include "rndobj/Draw.h"
 #include "rndobj/Trans.h"
+#include "rndobj/TransAnim.h"
 #include "utl/BinStream.h"
 #include "utl/MemMgr.h"
 #include "world/Crowd.h"
+#include "world/Spotlight.h"
 
 class CamShot;
 
@@ -101,6 +105,8 @@ enum CrowdRotate {
 };
 
 class CamShotCrowd {
+    friend bool PropSync(CamShotCrowd &, DataNode &, DataArray *, int, PropOp);
+
 public:
     CamShotCrowd(Hmx::Object *);
     CamShotCrowd(Hmx::Object *, const CamShotCrowd &);
@@ -150,7 +156,7 @@ public:
     virtual void ListAnimChildren(std::list<RndAnimatable *> &) const;
     // CamShot
     virtual void SetPreFrame(float, float) {}
-    virtual CamShot *CurrentShot() {}
+    virtual CamShot *CurrentShot() { return nullptr; }
     virtual bool CheckShotStarted();
     virtual bool CheckShotOver(float);
 
@@ -168,6 +174,55 @@ protected:
     virtual void ApplyFinalCamTransform(Transform &);
 
     virtual float ZoomFovOffset() { return 0; }
+
+    void CacheFrames();
+    void UnHide();
+
+    /** The collection of keyframes. */
+    ObjVector<CamShotFrame> mKeyframes; // 0xd0
+    bool unke0;
+    int unke4;
+    float unke8;
+    float unkec;
+    bool unkf0;
+    float unkf4;
+    float unkf8;
+    Symbol unkfc;
+    int unk100;
+    ObjPtrList<RndAnimatable> unk104;
+    ObjPtr<RndTransAnim> unk118;
+    float unk12c;
+    int unk130;
+    ObjPtrList<RndDrawable> unk134;
+    ObjPtrList<RndDrawable> unk148;
+    ObjPtrList<RndDrawable> unk15c;
+    int unk170;
+    int unk174;
+    int unk178;
+    ObjPtrList<RndDrawable> unk17c;
+    ObjPtrList<RndDrawable> unk190;
+    ObjPtr<RndDir> unk1a4;
+    ObjVector<CamShotCrowd> unk1b8;
+    Symbol unk1c8;
+    bool unk1cc;
+    ObjPtr<Spotlight> unk1d0;
+    int unk1e4;
+    ObjPtrList<RndDrawable> unk1e8;
+    ObjPtrList<RndDrawable> unk1fc;
+    Vector3 unk210;
+    Vector3 unk220;
+    Vector3 unk230;
+    Vector3 unk240;
+    Vector3 unk250;
+    Vector3 unk260;
+    int unk270;
+    int unk274;
+    float unk278;
+    int unk27c;
+    bool unk280;
+    bool unk281;
+    bool unk282;
+    bool unk283;
 };
 
 class AutoPrepTarget {

@@ -4,8 +4,11 @@
 #include "math/Utl.h"
 #include "math/Vec.h"
 #include "obj/Object.h"
+#include "obj/PropSync.h"
 #include "os/Debug.h"
+#include "rndobj/Anim.h"
 #include "rndobj/Cam.h"
+#include "rndobj/Trans.h"
 #include "utl/BinStream.h"
 #include "utl/Str.h"
 #include <cstdlib>
@@ -262,3 +265,60 @@ void CamShotCrowd::ClearCrowdChars() {
     }
     mCrowd->Set3DCharList(unk18, unk24);
 }
+
+BEGIN_CUSTOM_PROPSYNC(CamShotCrowd)
+    SYNC_PROP_MODIFY(crowd, o.mCrowd, o.unk18.clear())
+    SYNC_PROP(crowd_rotate, (int &)o.mCrowdRotate)
+END_CUSTOM_PROPSYNC
+
+CamShot::CamShot()
+    : mKeyframes(this), unk104(this), unk118(this), unk134(this), unk148(this),
+      unk15c(this), unk17c(this), unk190(this), unk1a4(this), unk1b8(this), unk1d0(this),
+      unk1e8(this), unk1fc(this) {}
+
+#define SYNC_PROP_LIST(s, member)                                                        \
+    {                                                                                    \
+        _NEW_STATIC_SYMBOL(s)                                                            \
+        if (sym == _s) {                                                                 \
+            if (!(_op & (kPropGet | kPropSize)))                                         \
+                UnHide();                                                                \
+            if (PropSync(member, _val, _prop, _i + 1, _op))                              \
+                return true;                                                             \
+            else                                                                         \
+                return false;                                                            \
+        }                                                                                \
+    }
+
+BEGIN_PROPSYNCS(CamShot)
+    SYNC_PROP_MODIFY(keyframes, mKeyframes, CacheFrames())
+    SYNC_PROP(looping, unke0)
+    SYNC_PROP(loop_keyframe, unke4)
+    SYNC_PROP_SET(category, unkfc, unkfc = _val.ForceSym())
+    SYNC_PROP(filter, unkf4)
+    SYNC_PROP(clamp_height, unkf8)
+    SYNC_PROP(near_plane, unke8)
+    SYNC_PROP(far_plane, unkec) {
+        static Symbol _s("duration");
+        if (sym == _s && _op & kPropGet)
+            return PropSync(unk278, _val, _prop, _i + 1, _op);
+    }
+    SYNC_PROP(use_depth_of_field, unkf0)
+    SYNC_PROP(path, unk118)
+    SYNC_PROP(path_frame, unk12c)
+    SYNC_PROP(platform_only, unk130)
+    SYNC_PROP_LIST(hide_list, unk134)
+    SYNC_PROP_LIST(show_list, unk148)
+    SYNC_PROP_LIST(gen_hide_list, unk15c)
+    SYNC_PROP(draw_overrides, unk17c)
+    SYNC_PROP(postproc_overrides, unk190)
+    SYNC_PROP(glow_spot, unk1d0)
+    SYNC_PROP(crowds, unk1b8)
+    SYNC_PROP(crowd_state_override, unk1c8)
+    SYNC_PROP(ps3_per_pixel, unk1cc)
+    SYNC_PROP_BITFIELD(flags, unk1e4, 0xB94)
+    SYNC_PROP_SET(disabled, unk27c, )
+    SYNC_PROP(anims, unk104)
+    SYNC_SUPERCLASS(RndAnimatable)
+    SYNC_SUPERCLASS(RndTransformable)
+    SYNC_SUPERCLASS(Hmx::Object)
+END_PROPSYNCS
