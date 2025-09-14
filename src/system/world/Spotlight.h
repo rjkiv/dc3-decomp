@@ -25,6 +25,7 @@ public:
         };
 
         BeamDef(Hmx::Object *);
+        ~BeamDef() { RELEASE(mBeam); }
         void OnSetMat(RndMat *);
 
         RndMesh *mBeam; // 0x0
@@ -77,7 +78,7 @@ public:
     virtual void Copy(const Hmx::Object *, Hmx::Object::CopyType);
     virtual void Load(BinStream &);
     // RndHighlightable
-    virtual void Highlight();
+    virtual void Highlight() { RndDrawable::Highlight(); }
     // RndDrawable
     virtual void UpdateSphere();
     virtual bool MakeWorldSphere(Sphere &, bool);
@@ -93,11 +94,13 @@ public:
     OBJ_MEM_OVERLOAD(0x22)
     NEW_OBJ(Spotlight)
 
+    Hmx::Color &Color() { return mColorOwner->mColor; }
+    float Intensity() const { return mColorOwner->mIntensity; }
     void SetFlareIsBillboard(bool);
     void SetIntensity(float);
     void SetColorIntensity(const Hmx::Color &c, float f);
-    Hmx::Color &Color() { return mColorOwner->mColor; }
-    float Intensity() const { return mColorOwner->mIntensity; }
+
+    static void RemoveFromLists(Spotlight *);
 
 protected:
     Spotlight();
@@ -106,6 +109,8 @@ protected:
     void UpdateTransforms();
     void UpdateFlare();
     void SetColor(int);
+    void CloseSlaves();
+    void PropogateToPresets(int);
 
     /** "Material to use for the floor spot" */
     ObjPtr<RndMat> mSpotMaterial; // 0x108

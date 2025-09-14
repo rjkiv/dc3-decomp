@@ -113,9 +113,18 @@ protected:
     DataNode OnZeroSphere(const DataArray *);
     DataNode OnGetDrawChildren(const DataArray *);
 
+    /** "Whether the object and its Draw children are drawn or collided with." */
     bool mShowing; // 0x8
+    /** "bounding sphere" */
     Sphere mSphere; // 0xc
+    /** "Draw order within proxies, lower numbers are drawn first,
+        so assign numbers from the outside-in (unless translucent), to minimize overdraw.
+        In groups, draw_order will be ignored unless you explicitly
+        click the sort button."*/
     float mOrder; // 0x20
+    /** "List of up to 6 transformable objects which specify user-defined clip planes
+        (for a given trans, the plane will run through the trans position,
+        and use the rotated z-axis for the plane normal)." */
     ObjPtrVec<RndTransformable> mClipPlanes; // 0x24
 };
 

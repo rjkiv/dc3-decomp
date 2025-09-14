@@ -1,12 +1,45 @@
 #include "world/Spotlight.h"
 #include "math/Color.h"
+#include "math/Utl.h"
 #include "obj/Object.h"
+#include "rndobj/Draw.h"
+#include "rndobj/Flare.h"
 #include "rndobj/Poll.h"
+#include "rndobj/Trans.h"
 
 Spotlight::Spotlight()
-    : mSpotMaterial(this), mColorOwner(this), mLensMaterial(this), mBeam(this),
-      mSlaves(this), mLightCanMesh(this), mTarget(this), mSpotTarget(this),
-      mAdditionalObjects(this) {}
+    : mSpotMaterial(this), mFlare(Hmx::Object::New<RndFlare>()), mFlareEnabled(true),
+      mFlareVisibilityTest(true), mFlareOffset(0), mSpotScale(30), mSpotHeight(0.25),
+      mColor(1, 1, 1), mIntensity(1), mColorOwner(this, this), mLensSize(0),
+      mLensOffset(0), mLensMaterial(this), mBeam(this), mSlaves(this),
+      mLightCanMesh(this), mLightCanOffset(0), mTarget(this), unk2f0(true),
+      mSpotTarget(this), unk308(-1e33), mTargetShadow(false), mLightCanSort(false),
+      unk340(true), mDampingConstant(1), mAdditionalObjects(this),
+      mAnimateColorFromPreset(true), mAnimateOrientationFromPreset(true), unk36e(false) {
+    mFlare->SetTransParent(this, false);
+    unk130.Reset();
+    unk170.Reset();
+    unk298.Reset();
+    unk310.Identity();
+    unk35c.Zero();
+    unk370.Reset();
+    mOrder = -1000;
+}
+
+Spotlight::~Spotlight() {
+    CloseSlaves();
+    RemoveFromLists(this);
+    RELEASE(mFlare);
+}
+
+BEGIN_HANDLERS(Spotlight)
+    HANDLE_ACTION(propogate_targeting_to_presets, PropogateToPresets(2))
+    HANDLE_ACTION(propogate_coloring_to_presets, PropogateToPresets(1))
+    HANDLE_SUPERCLASS(RndDrawable)
+    HANDLE_SUPERCLASS(RndTransformable)
+    HANDLE_SUPERCLASS(RndPollable)
+    HANDLE_SUPERCLASS(Hmx::Object)
+END_HANDLERS
 
 BEGIN_PROPSYNCS(Spotlight)
     SYNC_PROP_MODIFY(length, mBeam.mLength, Generate())
