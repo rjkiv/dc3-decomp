@@ -96,6 +96,11 @@ private:
     CamShot *mCamShot; // 0x114
 };
 
+inline BinStream &operator<<(BinStream &bs, const CamShotFrame &f) {
+    f.Save(bs);
+    return bs;
+}
+
 enum CrowdRotate {
     /** "Face along the placement mesh, or along focus, if set" */
     kCrowdRotateNone = 0,
@@ -135,6 +140,11 @@ private:
     CamShot *unk24; // 0x24
 };
 
+inline BinStream &operator<<(BinStream &bs, const CamShotCrowd &f) {
+    f.Save(bs);
+    return bs;
+}
+
 /** "A camera shot. This is an animated camera path with keyframed settings." */
 class CamShot : public RndAnimatable, public RndTransformable {
 public:
@@ -152,8 +162,8 @@ public:
     virtual void EndAnim();
     virtual void SetFrame(float, float);
     virtual float StartFrame() { return 0; }
-    virtual float EndFrame();
-    virtual Hmx::Object *AnimTarget();
+    virtual float EndFrame() { return mDuration; }
+    virtual Hmx::Object *AnimTarget() { return sAnimTarget; }
     virtual void ListAnimChildren(std::list<RndAnimatable *> &) const;
     // CamShot
     virtual void SetPreFrame(float, float) {}
@@ -163,6 +173,9 @@ public:
 
     OBJ_MEM_OVERLOAD(0xAD)
     NEW_OBJ(CamShot)
+
+    float GetDurationSeconds() const;
+    bool PlatformOk() const;
 
 protected:
     CamShot();
@@ -178,6 +191,15 @@ protected:
 
     void CacheFrames();
     void UnHide();
+
+    DataNode OnHasTargets(DataArray *);
+    DataNode OnSetPos(DataArray *);
+    DataNode OnSetCrowdChars(DataArray *);
+    DataNode OnAddCrowdChars(DataArray *);
+    DataNode OnClearCrowdChars(DataArray *);
+    DataNode OnGetOccluded(DataArray *);
+    DataNode OnSetAllCrowdChars3D(DataArray *);
+    DataNode OnRadio(DataArray *);
 
     /** The collection of keyframes. */
     ObjVector<CamShotFrame> mKeyframes; // 0xd0
@@ -214,7 +236,7 @@ protected:
     /** "Automatically generated list of objects to hide while this camera shot is active,
         shows them when done.  Not editable" */
     ObjPtrList<RndDrawable> mGenHideList; // 0x15c
-    std::vector<RndDrawable *> unk170; // 0x170
+    std::vector<RndDrawable *> mGenHideVector; // 0x170
     /** "List of objects to draw in order instead of whole world" */
     ObjPtrList<RndDrawable> mDrawOverrides; // 0x17c
     /** "List of objects to draw after post-processing" */

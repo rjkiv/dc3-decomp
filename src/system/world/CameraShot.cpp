@@ -13,6 +13,8 @@
 #include "utl/BinStream.h"
 #include "utl/Str.h"
 #include "utl/Symbol.h"
+#include "world/FreeCamera.h"
+#include "world/Dir.h"
 #include <cstdlib>
 
 inline float ComputeFOVScale(float fov) {
@@ -285,6 +287,30 @@ CamShot::CamShot()
       unk240(0, 0, 0), unk250(0, 0, 0), unk260(0, 0, 0), unk270(0), unk274(0),
       mDuration(0), mDisabled(0), unk280(1), unk281(0), unk282(0), unk283(0) {}
 
+CamShot::~CamShot() {}
+
+DataNode CamShot::OnGetOccluded(DataArray *) { return 0; }
+DataNode CamShot::OnSetAllCrowdChars3D(DataArray *) { return 0; }
+
+BEGIN_HANDLERS(CamShot)
+    HANDLE(has_targets, OnHasTargets)
+    HANDLE(set_pos, OnSetPos)
+    HANDLE_EXPR(duration_seconds, GetDurationSeconds())
+    HANDLE(set_3d_crowd, OnSetCrowdChars)
+    HANDLE(add_3d_crowd, OnAddCrowdChars)
+    HANDLE(clear_3d_crowd, OnClearCrowdChars)
+    HANDLE_EXPR(get_crowd_dir, dynamic_cast<WorldDir *>(unk1a4 ? unk1a4->Dir() : Dir()))
+    HANDLE_EXPR(gen_hide_list, 0)
+    HANDLE_EXPR(clear_hide_list, 0)
+    HANDLE(get_occluded, OnGetOccluded)
+    HANDLE_EXPR(platform_ok, PlatformOk())
+    HANDLE(set_all_to_3D, OnSetAllCrowdChars3D)
+    HANDLE(radio, OnRadio)
+    HANDLE_SUPERCLASS(RndAnimatable)
+    HANDLE_SUPERCLASS(RndTransformable)
+    HANDLE_SUPERCLASS(Hmx::Object)
+END_HANDLERS
+
 #define SYNC_PROP_LIST(s, member)                                                        \
     {                                                                                    \
         _NEW_STATIC_SYMBOL(s)                                                            \
@@ -331,3 +357,43 @@ BEGIN_PROPSYNCS(CamShot)
     SYNC_SUPERCLASS(RndTransformable)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
+
+BEGIN_SAVES(CamShot)
+    SAVE_REVS(0x34, 0)
+    SAVE_SUPERCLASS(Hmx::Object)
+    SAVE_SUPERCLASS(RndAnimatable)
+    SAVE_SUPERCLASS(RndTransformable)
+    bs << mKeyframes;
+    bs << mLooping;
+    bs << mLoopKeyframe;
+    bs << mNearPlane;
+    bs << mFarPlane;
+    bs << mUseDepthOfField;
+    bs << mFilter;
+    bs << mClampHeight;
+    bs << mPath;
+    bs << mCategory;
+    bs << mPlatform;
+    bs << mHideList;
+    MILO_ASSERT(mGenHideVector.empty(), 0x3CE);
+    if (bs.Cached()) {
+        for (ObjPtrList<RndDrawable>::iterator it = mHideList.begin();
+             it != mHideList.end();
+             ++it) {
+            mGenHideList.remove(*it);
+        }
+        if (bs.GetPlatform() == kPlatformXBox) {
+            mGenHideList.clear();
+        }
+    }
+    bs << mGenHideList;
+    bs << mShowList;
+    bs << mGlowSpot;
+    bs << mDrawOverrides;
+    bs << mPostProcOverrides;
+    bs << mPS3PerPixel;
+    bs << mFlags;
+    bs << mCrowds;
+    bs << mCrowdStateOverride;
+    bs << mAnims;
+END_SAVES
