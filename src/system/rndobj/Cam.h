@@ -37,6 +37,8 @@ public:
     NEW_OBJ(RndCam);
     OBJ_MEM_OVERLOAD(0x1B);
     static RndCam *Current() { return sCurrent; }
+    static float DefaultNearPlane() { return sDefaultNearPlane; }
+    static float MaxFarNearPlaneRatio() { return sMaxFarNearPlaneRatio; }
 
 protected:
     RndCam();

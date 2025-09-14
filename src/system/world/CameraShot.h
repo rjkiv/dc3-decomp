@@ -3,6 +3,7 @@
 #include "math/Vec.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
+#include "os/Platform.h"
 #include "rndobj/Anim.h"
 #include "rndobj/Cam.h"
 #include "rndobj/Dir.h"
@@ -180,33 +181,56 @@ protected:
 
     /** The collection of keyframes. */
     ObjVector<CamShotFrame> mKeyframes; // 0xd0
-    bool unke0;
-    int unke4;
-    float unke8;
-    float unkec;
-    bool unkf0;
-    float unkf4;
-    float unkf8;
-    Symbol unkfc;
-    int unk100;
-    ObjPtrList<RndAnimatable> unk104;
-    ObjPtr<RndTransAnim> unk118;
-    float unk12c;
-    int unk130;
-    ObjPtrList<RndDrawable> unk134;
-    ObjPtrList<RndDrawable> unk148;
-    ObjPtrList<RndDrawable> unk15c;
-    int unk170;
-    int unk174;
-    int unk178;
-    ObjPtrList<RndDrawable> unk17c;
-    ObjPtrList<RndDrawable> unk190;
+    /** "Whether the animation should loop." */
+    bool mLooping; // 0xe0
+    /** "If looping true, which keyframe to loop to." */
+    int mLoopKeyframe; // 0xe4
+    /** "Near clipping plane for the camera" */
+    float mNearPlane; // 0xe8
+    /** "Far clipping plane for the camera" */
+    float mFarPlane; // 0xec
+    /** "Whether to use depth-of-field effect on platforms that support it" */
+    bool mUseDepthOfField; // 0xf0
+    /** "Filter amount" */
+    float mFilter; // 0xf4
+    /** "Height above target's base at which to clamp camera" */
+    float mClampHeight; // 0xf8
+    /** "Category for shot-picking" */
+    Symbol mCategory; // 0xfc
+    int unk100; // 0x100
+    /** "animatables to be driven with the same frame" */
+    ObjPtrList<RndAnimatable> mAnims; // 0x104
+    /** "Optional camera path to use" */
+    ObjPtr<RndTransAnim> mPath; // 0x118
+    float mPathFrame; // 0x12c
+    /** "Limit this shot to given platform" - the options are kPlatformNone/PS3/Xbox */
+    Platform mPlatform; // 0x130
+    /** "List of objects to hide while this camera shot is active,
+        shows them when done" */
+    ObjPtrList<RndDrawable> mHideList; // 0x134
+    /** "List of objects to show while this camera shot is active,
+        hides them when done" */
+    ObjPtrList<RndDrawable> mShowList; // 0x148
+    /** "Automatically generated list of objects to hide while this camera shot is active,
+        shows them when done.  Not editable" */
+    ObjPtrList<RndDrawable> mGenHideList; // 0x15c
+    std::vector<RndDrawable *> unk170; // 0x170
+    /** "List of objects to draw in order instead of whole world" */
+    ObjPtrList<RndDrawable> mDrawOverrides; // 0x17c
+    /** "List of objects to draw after post-processing" */
+    ObjPtrList<RndDrawable> mPostProcOverrides; // 0x190
     ObjPtr<RndDir> unk1a4;
-    ObjVector<CamShotCrowd> unk1b8;
-    Symbol unk1c8;
-    bool unk1cc;
-    ObjPtr<Spotlight> unk1d0;
-    int unk1e4;
+    ObjVector<CamShotCrowd> mCrowds; // 0x1b8
+    /** "Force the croawd into a particular state".
+        Options are: (none bad ok great
+            skills_bad skills_ok skills_great
+            realtime_idle realtime_bad realtime_ok realtime_great) */
+    Symbol mCrowdStateOverride; // 0x1c8
+    /** "global per-pixel setting for PS3" */
+    bool mPS3PerPixel; // 0x1cc
+    /** "The spotlight to get glow settings from" */
+    ObjPtr<Spotlight> mGlowSpot; // 0x1d0
+    int mFlags; // 0x1e4
     ObjPtrList<RndDrawable> unk1e8;
     ObjPtrList<RndDrawable> unk1fc;
     Vector3 unk210;
@@ -217,8 +241,10 @@ protected:
     Vector3 unk260;
     int unk270;
     int unk274;
-    float unk278;
-    int unk27c;
+    /** "duration of the camshot" */
+    float mDuration; // 0x278
+    /** "disabled bits" */
+    int mDisabled; // 0x27c
     bool unk280;
     bool unk281;
     bool unk282;

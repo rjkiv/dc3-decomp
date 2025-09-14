@@ -6,11 +6,13 @@
 #include "obj/Object.h"
 #include "obj/PropSync.h"
 #include "os/Debug.h"
+#include "os/Platform.h"
 #include "rndobj/Anim.h"
 #include "rndobj/Cam.h"
 #include "rndobj/Trans.h"
 #include "utl/BinStream.h"
 #include "utl/Str.h"
+#include "utl/Symbol.h"
 #include <cstdlib>
 
 inline float ComputeFOVScale(float fov) {
@@ -272,9 +274,16 @@ BEGIN_CUSTOM_PROPSYNC(CamShotCrowd)
 END_CUSTOM_PROPSYNC
 
 CamShot::CamShot()
-    : mKeyframes(this), unk104(this), unk118(this), unk134(this), unk148(this),
-      unk15c(this), unk17c(this), unk190(this), unk1a4(this), unk1b8(this), unk1d0(this),
-      unk1e8(this), unk1fc(this) {}
+    : mKeyframes(this), mLooping(false), mLoopKeyframe(0),
+      mNearPlane(RndCam::DefaultNearPlane()),
+      mFarPlane(mNearPlane * RndCam::MaxFarNearPlaneRatio()), mUseDepthOfField(true),
+      mFilter(0.9), mClampHeight(-1), mAnims(this), mPath(this), mPathFrame(-1),
+      mPlatform(kPlatformNone), mHideList(this), mShowList(this), mGenHideList(this),
+      mDrawOverrides(this), mPostProcOverrides(this), unk1a4(this), mCrowds(this),
+      mCrowdStateOverride(gNullStr), mPS3PerPixel(true), mGlowSpot(this), mFlags(0),
+      unk1e8(this), unk1fc(this), unk210(0, 0, 0), unk220(0, 0, 0), unk230(0, 0, 0),
+      unk240(0, 0, 0), unk250(0, 0, 0), unk260(0, 0, 0), unk270(0), unk274(0),
+      mDuration(0), mDisabled(0), unk280(1), unk281(0), unk282(0), unk283(0) {}
 
 #define SYNC_PROP_LIST(s, member)                                                        \
     {                                                                                    \
@@ -291,33 +300,33 @@ CamShot::CamShot()
 
 BEGIN_PROPSYNCS(CamShot)
     SYNC_PROP_MODIFY(keyframes, mKeyframes, CacheFrames())
-    SYNC_PROP(looping, unke0)
-    SYNC_PROP(loop_keyframe, unke4)
-    SYNC_PROP_SET(category, unkfc, unkfc = _val.ForceSym())
-    SYNC_PROP(filter, unkf4)
-    SYNC_PROP(clamp_height, unkf8)
-    SYNC_PROP(near_plane, unke8)
-    SYNC_PROP(far_plane, unkec) {
+    SYNC_PROP(looping, mLooping)
+    SYNC_PROP(loop_keyframe, mLoopKeyframe)
+    SYNC_PROP_SET(category, mCategory, mCategory = _val.ForceSym())
+    SYNC_PROP(filter, mFilter)
+    SYNC_PROP(clamp_height, mClampHeight)
+    SYNC_PROP(near_plane, mNearPlane)
+    SYNC_PROP(far_plane, mFarPlane) {
         static Symbol _s("duration");
         if (sym == _s && _op & kPropGet)
-            return PropSync(unk278, _val, _prop, _i + 1, _op);
+            return PropSync(mDuration, _val, _prop, _i + 1, _op);
     }
-    SYNC_PROP(use_depth_of_field, unkf0)
-    SYNC_PROP(path, unk118)
-    SYNC_PROP(path_frame, unk12c)
-    SYNC_PROP(platform_only, unk130)
-    SYNC_PROP_LIST(hide_list, unk134)
-    SYNC_PROP_LIST(show_list, unk148)
-    SYNC_PROP_LIST(gen_hide_list, unk15c)
-    SYNC_PROP(draw_overrides, unk17c)
-    SYNC_PROP(postproc_overrides, unk190)
-    SYNC_PROP(glow_spot, unk1d0)
-    SYNC_PROP(crowds, unk1b8)
-    SYNC_PROP(crowd_state_override, unk1c8)
-    SYNC_PROP(ps3_per_pixel, unk1cc)
-    SYNC_PROP_BITFIELD(flags, unk1e4, 0xB94)
-    SYNC_PROP_SET(disabled, unk27c, )
-    SYNC_PROP(anims, unk104)
+    SYNC_PROP(use_depth_of_field, mUseDepthOfField)
+    SYNC_PROP(path, mPath)
+    SYNC_PROP(path_frame, mPathFrame)
+    SYNC_PROP(platform_only, (int &)mPlatform)
+    SYNC_PROP_LIST(hide_list, mHideList)
+    SYNC_PROP_LIST(show_list, mShowList)
+    SYNC_PROP_LIST(gen_hide_list, mGenHideList)
+    SYNC_PROP(draw_overrides, mDrawOverrides)
+    SYNC_PROP(postproc_overrides, mPostProcOverrides)
+    SYNC_PROP(glow_spot, mGlowSpot)
+    SYNC_PROP(crowds, mCrowds)
+    SYNC_PROP(crowd_state_override, mCrowdStateOverride)
+    SYNC_PROP(ps3_per_pixel, mPS3PerPixel)
+    SYNC_PROP_BITFIELD(flags, mFlags, 0xB94)
+    SYNC_PROP_SET(disabled, mDisabled, )
+    SYNC_PROP(anims, mAnims)
     SYNC_SUPERCLASS(RndAnimatable)
     SYNC_SUPERCLASS(RndTransformable)
     SYNC_SUPERCLASS(Hmx::Object)
