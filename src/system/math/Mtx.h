@@ -261,6 +261,7 @@ void Multiply(const Hmx::Matrix3 &, const Hmx::Matrix3 &, Hmx::Matrix3 &);
 void MultiplyInverse(const Transform &, const Transform &, Transform &);
 void Multiply(const Transform &, const Transform &, Transform &);
 void MultiplyTranspose(const Vector3 &, const Transform &, Vector3 &);
+void Multiply(const Vector3 &, const Transform &, Vector3 &);
 
 void Invert(const Transform &, Transform &);
 void Invert(const Hmx::Matrix4 &, Hmx::Matrix4 &);

@@ -276,6 +276,12 @@ template <class T, class Allocator>
 BinStreamRev &operator>>(BinStreamRev &bs, std::list<T, Allocator> &list);
 
 template <class T1, class T2>
+BinStream &operator<<(BinStream &bs, const std::pair<T1, T2> &p) {
+    bs << p.first << p.second;
+    return bs;
+}
+
+template <class T1, class T2>
 BinStream &operator>>(BinStream &bs, std::pair<T1, T2> &p) {
     bs >> p.first >> p.second;
     return bs;

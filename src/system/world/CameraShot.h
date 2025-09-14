@@ -4,9 +4,11 @@
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "rndobj/Anim.h"
+#include "rndobj/Cam.h"
 #include "rndobj/Trans.h"
 #include "utl/BinStream.h"
 #include "utl/MemMgr.h"
+#include "world/Crowd.h"
 
 class CamShot;
 
@@ -27,6 +29,12 @@ public:
 
     void Save(BinStream &) const;
     void Load(BinStreamRev &);
+    bool SameTargets(const CamShotFrame &) const;
+    void GetCurrentTargetPosition(Vector3 &) const;
+    void ApplyScreenOffset(Transform &, RndCam *) const;
+    void UpdateTarget() const;
+    void BuildTransform(RndCam *, Transform &, bool) const;
+    void Interp(const CamShotFrame &, float, float, RndCam *);
     bool
     OnSyncTargets(ObjPtrList<RndTransformable> &, DataNode &, DataArray *, int, PropOp);
     bool OnSyncParent(ObjPtr<RndTransformable> &, DataNode &, DataArray *, int, PropOp);
@@ -73,7 +81,7 @@ private:
     Vector3 mLastTargetPos; // 0x98
     /** "Parent that the camera should attach itself to" */
     ObjPtr<RndTransformable> mParent; // 0xa8
-    Transform unkbc;
+    Transform mTargetXfm; // 0xbc
     /** "The focal point when calculated depth of field" */
     ObjPtr<RndTransformable> mFocalTarget; // 0xfc
     /** "Whether to take the parent object's rotation into account" */
@@ -83,8 +91,41 @@ private:
     CamShot *mCamShot; // 0x114
 };
 
+enum CrowdRotate {
+    /** "Face along the placement mesh, or along focus, if set" */
+    kCrowdRotateNone = 0,
+    /** "Face towards the camera" */
+    kCrowdRotateFace = 1,
+    /** "Face away from the camera" */
+    kCrowdRotateAway = 2
+};
+
 class CamShotCrowd {
 public:
+    CamShotCrowd(Hmx::Object *);
+    CamShotCrowd(Hmx::Object *, const CamShotCrowd &);
+
+    void Save(BinStream &) const;
+    void Load(BinStream &);
+    void AddCrowdChars();
+    void SetCrowdChars();
+    void ClearCrowdChars();
+    void
+    GetSelectedCrowd(std::list<
+                     std::pair<RndMultiMesh *, std::list<RndMultiMesh::Instance>::iterator> >
+                         &);
+    void
+    AddCrowdChars(std::list<
+                  std::pair<RndMultiMesh *, std::list<RndMultiMesh::Instance>::iterator> >
+                      &);
+
+private:
+    /** "The crowd to show for this shot" */
+    ObjPtr<WorldCrowd> mCrowd; // 0x0
+    /** "How to rotate crowd" */
+    CrowdRotate mCrowdRotate; // 0x14
+    std::vector<std::pair<int, int> > unk18; // 0x18
+    CamShot *unk24; // 0x24
 };
 
 /** "A camera shot. This is an animated camera path with keyframed settings." */
@@ -119,10 +160,27 @@ public:
 protected:
     CamShot();
 
+    static Hmx::Object *sAnimTarget;
+
     // these three could be re-ordered, unsure of current order rn
     virtual void ApplyDynamicOffsetPreLookAt(Transform &, bool);
     virtual void ApplyDynamicOffsetPostLookAt(Transform &);
     virtual void ApplyFinalCamTransform(Transform &);
 
     virtual float ZoomFovOffset() { return 0; }
+};
+
+class AutoPrepTarget {
+public:
+    AutoPrepTarget(CamShotFrame &);
+    ~AutoPrepTarget();
+
+    static bool sChanging;
+
+private:
+    CamShotFrame *mFrame; // 0x0
+    CamShot *mShot; // 0x4
+    float mOldFilter; // 0x8
+    float mOldCamHeight; // 0xc
+    float mOldZoomFov; // 0x10
 };

@@ -1,7 +1,11 @@
 #include "world/CameraShot.h"
+#include "math/Mtx.h"
 #include "math/Rot.h"
 #include "math/Utl.h"
+#include "math/Vec.h"
 #include "obj/Object.h"
+#include "os/Debug.h"
+#include "rndobj/Cam.h"
 #include "utl/BinStream.h"
 #include "utl/Str.h"
 #include <cstdlib>
@@ -46,6 +50,95 @@ void CamShotFrame::Save(BinStream &bs) const {
     bs << mShakeMaxAngle;
     bs << mZoomFOV;
     bs << mParentFirstFrame;
+}
+
+bool CamShotFrame::SameTargets(const CamShotFrame &other) const {
+    if (mTargets.size() != other.mTargets.size())
+        return false;
+    for (ObjPtrList<RndTransformable>::iterator it = mTargets.begin();
+         it != mTargets.end();
+         ++it) {
+        ObjPtrList<RndTransformable>::iterator otherIt = other.mTargets.begin();
+        for (; otherIt != other.mTargets.end(); ++otherIt) {
+            if (*it == *otherIt)
+                break;
+        }
+        if (otherIt == other.mTargets.end())
+            return false;
+    }
+    return true;
+}
+
+void CamShotFrame::GetCurrentTargetPosition(Vector3 &v) const {
+    v.Zero();
+    int count = 0;
+    for (ObjPtrList<RndTransformable>::iterator it = mTargets.begin();
+         it != mTargets.end();
+         ++it) {
+        RndTransformable *cur = *it;
+        if (cur) {
+            count++;
+            Add(v, cur->WorldXfm().v, v);
+        }
+    }
+    if (count > 0)
+        v *= (1.0f / (float)count);
+}
+
+void CamShotFrame::ApplyScreenOffset(Transform &xfm, RndCam *cam) const {
+    for (ObjPtrList<RndTransformable>::iterator it = mTargets.begin();
+         it != mTargets.end();
+         ++it) {
+        if (*it) {
+            xfm.LookAt(mLastTargetPos, xfm.m.z);
+            break;
+        }
+    }
+    Vector3 v;
+    Subtract(xfm.v, mLastTargetPos, v);
+    float length = Length(v);
+    Vector3 vother(
+        -(mScreenOffset.x / cam->LocalProjectXfm().m.x.x) * length,
+        0,
+        (mScreenOffset.y / cam->LocalProjectXfm().m.z.y) * length
+    );
+    Multiply(vother, xfm, xfm.v);
+}
+
+void CamShotFrame::UpdateTarget() const {
+    CamShotFrame *me = const_cast<CamShotFrame *>(this);
+    GetCurrentTargetPosition(me->mLastTargetPos);
+    if (mParent) {
+        me->mTargetXfm = mParent->WorldXfm();
+    }
+}
+
+bool CamShotFrame::OnSyncTargets(
+    ObjPtrList<RndTransformable> &transList,
+    DataNode &node,
+    DataArray *prop,
+    int i,
+    PropOp op
+) {
+    bool synced;
+    if (op != kPropGet && op != kPropSize) {
+        AutoPrepTarget target(*this);
+        synced = PropSync(transList, node, prop, i, op);
+    } else
+        synced = PropSync(transList, node, prop, i, op);
+    return synced;
+}
+
+bool CamShotFrame::OnSyncParent(
+    ObjPtr<RndTransformable> &parent, DataNode &node, DataArray *prop, int i, PropOp op
+) {
+    bool synced;
+    if (op != kPropGet) {
+        AutoPrepTarget target(*this);
+        synced = PropSync(parent, node, prop, i, op);
+    } else
+        synced = PropSync(parent, node, prop, i, op);
+    return synced;
 }
 
 Symbol FOV_to_LensSym(float fov) {
@@ -123,3 +216,49 @@ BEGIN_CUSTOM_PROPSYNC(CamShotFrame)
     SYNC_PROP(shake_maxangle, o.mShakeMaxAngle)
     SYNC_PROP_SET(zoom_fov, o.mZoomFOV * RAD2DEG, o.mZoomFOV = _val.Float() * DEG2RAD)
 END_CUSTOM_PROPSYNC
+
+CamShotCrowd::CamShotCrowd(Hmx::Object *owner)
+    : mCrowd(owner), mCrowdRotate(kCrowdRotateNone),
+      unk24(dynamic_cast<CamShot *>(owner)) {}
+
+CamShotCrowd::CamShotCrowd(Hmx::Object *owner, const CamShotCrowd &other)
+    : mCrowd(other.mCrowd), mCrowdRotate(other.mCrowdRotate), unk18(other.unk18),
+      unk24(dynamic_cast<CamShot *>(owner)) {}
+
+void CamShotCrowd::Save(BinStream &bs) const {
+    bs << mCrowd;
+    bs << mCrowdRotate;
+    bs << unk18;
+    // writes whatever unkd4 is of mCrowd
+}
+
+void CamShotCrowd::AddCrowdChars() {
+    std::list<std::pair<RndMultiMesh *, std::list<RndMultiMesh::Instance>::iterator> >
+        selectedCrowd;
+    GetSelectedCrowd(selectedCrowd);
+    if (selectedCrowd.empty()) {
+        MILO_NOTIFY("No selected crowd members in this crowd");
+    } else {
+        AddCrowdChars(selectedCrowd);
+    }
+}
+
+void CamShotCrowd::SetCrowdChars() {
+    std::list<std::pair<RndMultiMesh *, std::list<RndMultiMesh::Instance>::iterator> >
+        selectedCrowd;
+    GetSelectedCrowd(selectedCrowd);
+    if (selectedCrowd.empty()) {
+        MILO_NOTIFY("No selected crowd members in this crowd");
+    } else {
+        ClearCrowdChars();
+        AddCrowdChars(selectedCrowd);
+    }
+}
+
+void CamShotCrowd::ClearCrowdChars() {
+    unk18.clear();
+    if (!mCrowd) {
+        MILO_NOTIFY("No crowd selected");
+    }
+    mCrowd->Set3DCharList(unk18, unk24);
+}

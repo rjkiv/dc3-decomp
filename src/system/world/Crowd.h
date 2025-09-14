@@ -76,6 +76,7 @@ public:
 
     void SetLod(int lod);
     void SetFullness(float, float);
+    void Set3DCharList(const std::vector<std::pair<int, int> > &, Hmx::Object *);
 
 protected:
     WorldCrowd();
