@@ -1012,7 +1012,7 @@
             "system/world/CameraShot.cpp": "NonMatching",
             "system/world/ColorPalette.cpp": "NonMatching",
             "system/world/Crowd.cpp": "NonMatching",
-            "system/world/Crowd3DCharHandle.cpp": "MISSING",
+            "system/world/Crowd3DCharHandle.cpp": "NonMatching",
             "system/world/DefaultPhysicsManager.cpp": "MISSING",
             "system/world/Dir.cpp": "MISSING",
             "system/world/FreeCamera.cpp": "NonMatching",

@@ -3,6 +3,7 @@
 #include "math/Mtx.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
+#include "rndobj/Cam.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Env.h"
 #include "rndobj/Mesh.h"
@@ -77,6 +78,8 @@ public:
     void SetLod(int lod);
     void SetFullness(float, float);
     void Set3DCharList(const std::vector<std::pair<int, int> > &, Hmx::Object *);
+    void Set3DCharXfm(const std::list<CharData>::iterator &, int, const Transform &);
+    void Apply3DCharXfm(const std::list<CharData>::iterator &, int, RndCam *);
 
 protected:
     WorldCrowd();
