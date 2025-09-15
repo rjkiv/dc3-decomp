@@ -145,6 +145,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1B)
     NEW_OBJ(LightPreset)
+    void SetHue(LightHue *hue) { mHue = hue; }
 
 protected:
     LightPreset();

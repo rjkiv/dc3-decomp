@@ -47,24 +47,33 @@ public:
     CastVolume(const Segment *, float, float, bool, unsigned int, Hmx::Object *&, ObjectDir *&, Vector3 &, Vector3 &) {
         return false;
     } // 0x7c
-    virtual void Move(Hmx::Object *, const Vector3 &, bool) {} // 0x80 - tentative
-    virtual void MakeFixed(Hmx::Object *) {} // 0x84 - tentative
-    virtual void MakePhysicsDriven(Hmx::Object *) {} // 0x88 -tentative
-    virtual void MakeAnimDriven(Hmx::Object *) {} // 0x8c - tentative
+    virtual void MakePhysicsDriven(Hmx::Object *) {} // 0x80
+    virtual void MakeAnimDriven(Hmx::Object *) {} // 0x84
+
+    virtual void Move(Hmx::Object *, const Vector3 &, bool) {} // 0x88 - tentative
+    virtual void MakeFixed(Hmx::Object *) {} // 0x8c - tentative
+
     virtual PhysMotionState GetMotionState(Hmx::Object *) {
         return (PhysMotionState)0;
     } // 0x90
+
     virtual void SetMotionState(Hmx::Object *, PhysMotionState) {} // 0x94 - tentative
     virtual void ResetMotionState(Hmx::Object *) {} // 0x98 - tentative
     virtual void ResetMotionType(Hmx::Object *) {} // 0x9c - tentative
+
     virtual void ApplyForce(Hmx::Object *, const Vector3 &) {} // 0xa0
-    virtual void ResetTrans(Hmx::Object *) {} // 0xa4 - tentative
+
+    virtual void SetGravityFactor(Hmx::Object *, float) {} // 0xa4 - tentative
     virtual void SetCollisionFilter(Hmx::Object *, CollisionFilter) {} // 0xa8 - tentative
+
     virtual void GetVelocity(Hmx::Object *, Vector3 &) {} // 0xac
+
     virtual void SetLinearVelocity(Hmx::Object *, const Vector3 &) {} // 0xb0 - tentative
+
     virtual float GetMass(Hmx::Object *) { return 0; } // 0xb4
     virtual void GetAngularVelocity(Hmx::Object *, Vector3 &) {} // 0xb8
     virtual float GetForce(Hmx::Object *) { return 0; } // 0xbc
+
     virtual void SetAngularDamp(Hmx::Object *, float) {} // 0xc0 - tentative
     virtual void SetPenetrationDepth(Hmx::Object *, float) {} // 0xc4 - tentative
     virtual void SetMaxSpeed(Hmx::Object *, float) {} // 0xc8 - tentative
@@ -73,11 +82,14 @@ public:
     virtual void SetLinearDamp(Hmx::Object *, float) {} // 0xd4 - tentative
     virtual void SetRestitution(Hmx::Object *, float) {} // 0xd8 - tentative
     virtual void SetRollingFrictionMult(Hmx::Object *, float) {} // 0xdc - tentative
-    virtual void SetGravityFactor(Hmx::Object *, float) {} // 0xe0 - tentative
+
+    virtual void ResetTrans(Hmx::Object *) {} // 0xe0
     virtual void SetGravityDirection(const Vector3 &) {} // 0xe4
     virtual ObjectDir *GetCollidableDir(Hmx::Object *) { return nullptr; } // 0xe8
+
     virtual void AddContactStateListener(ContactStateListener *) {} // 0xec - tentative
     virtual void RemoveContactStateListener(ContactStateListener *) {} // 0xf0 - tentative
+
     virtual bool IsCollidableActive(Hmx::Object *) { return false; } // 0xf4
     virtual void ActivateCollidable(Hmx::Object *) {} // 0xf8
     virtual void DeactivateCollidable(Hmx::Object *) {} // 0xfc

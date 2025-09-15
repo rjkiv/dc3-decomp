@@ -4,7 +4,7 @@
 #include "world/Dir.h"
 
 ThreeDSoundManager::ThreeDSoundManager(WorldDir *dir)
-    : mParent(dir), unk4(dir), unk58(dir), unk6c(0), unk70(1) {}
+    : mParent(dir), mSounds(dir), mListener(dir), unk6c(0), mDopplerPower(1) {}
 
 ThreeDSoundManager::~ThreeDSoundManager() {}
 
@@ -13,12 +13,13 @@ void ThreeDSoundManager::SyncObjects() {
     HarvestSounds(mParent, sounds);
     for (ObjPtrList<ThreeDSound>::iterator it = sounds.begin(); it != sounds.end();
          ++it) {
-        unk4.remove(*it);
+        mSounds.remove(*it);
     }
-    for (ObjPtrList<ThreeDSound>::iterator it = unk4.begin(); it != unk4.end(); ++it) {
+    for (ObjPtrList<ThreeDSound>::iterator it = mSounds.begin(); it != mSounds.end();
+         ++it) {
         (*it)->Stop(nullptr, false);
     }
-    unk4 = sounds;
+    mSounds = sounds;
 }
 
 void ThreeDSoundManager::HarvestSounds(ObjectDir *dir, ObjPtrList<ThreeDSound> &sounds) {

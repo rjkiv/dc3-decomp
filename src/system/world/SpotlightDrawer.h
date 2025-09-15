@@ -70,6 +70,9 @@ public:
 
     void Select();
     void DeSelect();
+    void ClearLights();
+
+    static SpotlightDrawer *Current() { return sCurrent; }
 
 protected:
     SpotlightDrawer();
