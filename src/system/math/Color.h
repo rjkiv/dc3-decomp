@@ -35,6 +35,7 @@ namespace Hmx {
 
         void Set(float f) { red = green = blue = alpha = f; } // may go unused
         void Reset() { red = green = blue = alpha = 1.0f; }
+        void Zero() { red = green = blue = alpha = 0; }
 
         void Set(float r, float g, float b) {
             red = r;
