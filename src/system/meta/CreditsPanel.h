@@ -13,7 +13,7 @@
 
 class CreditsPanel : public UIListProvider, public UIPanel{
     public:
-        virtual Symbol ClassName() const;
+        OBJ_CLASSNAME(classname)
         virtual void SetType(Symbol);
         virtual void Text(int, int, UIListLabel *, UILabel *) const;
         virtual int NumData() const;

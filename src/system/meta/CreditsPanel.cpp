@@ -25,14 +25,6 @@ CreditsPanel::CreditsPanel()
 
 CreditsPanel::~CreditsPanel(){}
 
-Symbol CreditsPanel::ClassName() const{
-    return StaticClassName();
-}
-
-void CreditsPanel::SetType(Symbol s){
-    
-}
-
 void CreditsPanel::Text(int i, int j, UIListLabel *listlabel, UILabel *label) const{
     DataArray *arr = mNames->Array(j);
     MILO_ASSERT(label, 0xF2);
