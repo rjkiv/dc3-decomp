@@ -5,6 +5,7 @@
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "rndobj/Dir.h"
+#include "world/PhysicsVolume.h"
 
 struct RayCast;
 class RayCastContainer;
@@ -14,12 +15,13 @@ class DetectionVolumeListener;
 class ContactStateListener;
 
 enum PhysMotionState {
-};
-
-enum PhysicsVolumeType {
-};
-
-enum CollisionFilter {
+    /** "Things can collide with me, but I don't move." */
+    kPhysMotion_Fixed = 0,
+    /** "Things can collide with me, and I can be moved by animations." */
+    kPhysMotion_Keyframed = 1,
+    /** "My motion is fully derived from the physics engine" */
+    kPhysMotion_Dynamic = 2,
+    kPhysMotion_Initial = 3
 };
 
 class PhysicsManager : public Hmx::Object {
