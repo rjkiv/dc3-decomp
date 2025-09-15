@@ -53,6 +53,8 @@ class SongMgr : public MemStream, public ContentMgr::Callback, public Hmx::Objec
         virtual void ContentMounted(char const *, char const *);
         virtual void GetContentNames(Symbol, std::vector<Symbol> &) const;
         bool LoadCachedSongInfo(BufStream &);
+        virtual void WriteCachedMetadataFromStream(BinStream &) const = 0;
+        virtual int GetSongIDFromShortName(Symbol, bool) const = 0;
 
         std::set<int> mAvailableSongs; 
         std::map<int, SongMetadata *> mUncachedSongMetadata; 
@@ -72,7 +74,7 @@ class SongMgr : public MemStream, public ContentMgr::Callback, public Hmx::Objec
         void SaveMount();
         void SaveUnmount();
         void SaveWrite();
-        void GetSongsInContent();
+        void GetSongsInContent(Symbol, std::vector<int> &) const;
         char const * ContentNameRoot(Symbol) const;
         int NumSongsInContent(Symbol) const;
         void SetState(SongMgrState);

@@ -47,7 +47,7 @@ void SongMgr::ContentDone(){
 }
 
 SongInfo* SongMgr::SongAudioData(Symbol s) const{
-    
+    //return SongAudioData(GetSongIDFromShortName(s, true));
     return null;
 }
 
@@ -64,7 +64,12 @@ void SongMgr::ClearSongCacheNeedsWrite(){
 }
 
 char const * SongMgr::SongPath(Symbol s, int i) const{
-    return null;
+    SongInfo* info = SongAudioData(s);
+    char const *c = "";
+    if(i!=0){
+
+    }
+    return c;
 }
 
 char const * SongMgr::SongFilePath(Symbol s, char const * path, int i) const{
@@ -80,14 +85,24 @@ bool SongMgr::HasSong(int id) const{
 }
 
 bool SongMgr::HasSong(Symbol s, bool b) const{
-    return true;
+    int songid = GetSongIDFromShortName(s, b);
+    bool ret = songid != 0;
+    if(ret)
+        ret = HasSong(songid);
+    return ret;
 }
 
 int SongMgr::GetCachedSongInfoSize() const{
-    return 0;
+    MemStream ms(false);
+    int rev = 0;
+    ms << rev;
+    ms << mSongIDsInContent;
+    WriteCachedMetadataFromStream(ms);
+    return ms.Tell();
 }
 
 bool SongMgr::IsSongMounted(Symbol s) const{
+    
     return true;
 }
 
@@ -104,11 +119,21 @@ SongMetadata const * SongMgr::Data(int) const{
 }
 
 void SongMgr::ContentStarted(){
-
+    mAvailableSongs.clear();
+    for (std::map<int, SongMetadata *>::iterator it = mCachedSongMetadata.begin();
+         it != mCachedSongMetadata.end();
+         ++it) {
+        it->second->IncrementAge();
+    }
+    mContentUsedForSong.clear();
 }
 
-void SongMgr::ContentUnmounted(char const *){
-
+void SongMgr::ContentUnmounted(char const *cc){
+    std::map<Symbol, String>::iterator it;
+    it = unkmap5.find(cc);
+    if (it != unkmap5.end()) {
+        unkmap5.erase(it);
+    }
 }
 
 void SongMgr::StartSongCacheWrite(){
@@ -174,16 +199,22 @@ void SongMgr::SaveWrite(){
     
 }
 
-void SongMgr::GetSongsInContent(){
-    
+void SongMgr::GetSongsInContent(Symbol s, std::vector<int> &vec) const{
+    std::map<Symbol, std::vector<int> >::const_iterator it = mSongIDsInContent.find(s);
+    if (it != mSongIDsInContent.end())
+        vec = it->second;
 }
 
 char const * SongMgr::ContentNameRoot(Symbol) const{
     return null;
 }
 
-int SongMgr::NumSongsInContent(Symbol) const{
-    return 0;
+int SongMgr::NumSongsInContent(Symbol s) const{
+    const char * c = ContentNameRoot(s);
+    std::map<Symbol, std::vector<int> >::const_iterator it = mSongIDsInContent.find(c);
+    if(it!=mSongIDsInContent.end())
+        return it->second.size();
+    else return 0;
 }
 
 void SongMgr::SetState(SongMgrState state){

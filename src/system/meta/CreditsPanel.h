@@ -19,8 +19,7 @@ class CreditsPanel : public UIListProvider, public UIPanel{
         virtual int NumData() const;
         virtual RndMat* Mat(int, int, UIListMesh *) const;
         virtual DataNode Handle(DataArray *, bool);
-        //OBJ_CLASSNAME(CreditsPanel);
-        //OBJ_SET_TYPE(CreditsPanel);
+
 
     protected:
         DataNode OnMsg(ButtonDownMsg const &);
@@ -46,8 +45,8 @@ class CreditsPanel : public UIListProvider, public UIPanel{
     DataArray *mNames; 
     UIList *mList; 
     Stream *mStream; 
-    bool mAutoScroll; 
-    float mSavedSpeed; 
+    bool mAutoScroll; //0x50
+    float mSavedSpeed; //0x54
     /** Whether or not the panel is paused. */
-    bool mPaused; 
+    bool mPaused; //0x58
 };

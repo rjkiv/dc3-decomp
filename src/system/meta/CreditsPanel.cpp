@@ -8,6 +8,7 @@
 #include "rndobj/Mat.h"
 #include "synth/Stream.h"
 #include "synth/Synth.h"
+#include "ui/PanelDir.h"
 #include "ui/UI.h"
 #include "ui/UILabel.h"
 #include "ui/UIList.h"

@@ -27,6 +27,7 @@ class SongPreview : public ContentMgr::Callback, public Hmx::Object{
         //virtual void ObjRefConcrete<class TexMovie, class ObjectDir>::SetObj();
         virtual ~SongPreview();
         
+        
         bool IsWaitingToDelete() const;
         bool IsFadingOut() const;
         void SetMusicVol(float);
@@ -43,29 +44,27 @@ class SongPreview : public ContentMgr::Callback, public Hmx::Object{
         void PrepareSong(Symbol);
         //class Hmx::Object * ObjRefConcrete<class TexMovie, class ObjDir>::SetObj(class Hmx::Object*);
     
-    const SongMgr &mSongMgr; 
-    Stream *mStream; 
-    Fader *mFader; 
-    Fader *mMusicFader; 
-    Fader *mCrowdSingFader; 
-    int unk34; 
-    float mAttenuation; 
-    float mFadeTime; 
-    bool mRestart; 
-    bool mLoopForever; 
-    State mState; 
-    Symbol mSong; 
-    Symbol mSongContent; 
-    float mStartMs; 
-    float mEndMs; 
-    float mStartPreviewMs; 
-    float mEndPreviewMs; 
-    int unk60; 
-    bool unk64; 
-    float mPreviewRequestedMs; 
-    Symbol unk6c; 
-    bool unk70; 
-    bool unk71; 
-    bool unk72; 
-    bool mSecurePreview; 
+    const SongMgr &mSongMgr; //0x30
+    int unk34;
+    int unk44;
+    Fader* mFader;
+    float unk60;
+    float unk68;
+    bool unk4c;
+    int unk50;
+    int unk54;
+    int unk58;
+    int unk5c;
+    int unk70;
+    Symbol mSong;
+    Symbol mSongContent;
+    float unk7c;
+    float unk80;
+    float unk84;
+    bool unk8c;
+    float unk88;
+    bool unk8d;
+    bool unk8e;
+    
+    
 };

@@ -12,12 +12,12 @@ class StreamPlayer : public Hmx::Object{
         void Poll();
         virtual DataNode Handle(DataArray *, bool);
 
-        float mMasterVol;
-        float mStreamVol;
-        bool mLoop;
-        bool mStarted;
-        bool mPaused;
-        Stream *mStream;
+        float mMasterVol; //0x2c
+        float mStreamVol; //0x30
+        bool mLoop; //0x34
+        bool mStarted; //0x35
+        bool mPaused; //0x36
+        Stream *mStream; //0x38
         
 
     private:

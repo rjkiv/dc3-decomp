@@ -2,6 +2,7 @@
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "synth/Stream.h"
 #include "synth/Synth.h"
 #include "utl/Std.h"
 
@@ -58,15 +59,15 @@ void StreamPlayer::Init(){
     int chanCount = mStream->GetNumChannels();
     if(chanCount==2){
         mStream->SetPan(0, -1.0f);
-        mStream->SetPan(1, 1.0f);
+        mStream->SetPan(1, 1.0f);      
     }
-    else mStream->SetPan(0, 0.0f);
-
+    else{
+        mStream->SetPan(0, 0.0f);
+    }
     if(mLoop){
-    //    mStream->SetJump(Stream::kStreamEndMs, 0.0f, 0);
+        mStream->SetJump(0, 0.0f, 0);
     }
 }
-
 BEGIN_HANDLERS(StreamPlayer)
-    
+    //HANDLE_ACTION()
 END_HANDLERS
