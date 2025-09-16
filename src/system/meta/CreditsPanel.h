@@ -37,9 +37,8 @@ private:
     virtual void Unload();
     virtual void Poll();
 
-#ifdef MILO_DEBUG
     bool mCheatOn;
-#endif
+
     DataLoader *mLoader;
     DataArray *mNames;
     UIList *mList;

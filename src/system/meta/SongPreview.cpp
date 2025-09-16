@@ -109,7 +109,7 @@ DataNode SongPreview::OnStart(DataArray * arr){
         //Start(arr->ForceSym(2));
     }
     return DataNode(1);*/
-    return null;
+    return NULL_OBJ;
 }
 
 void SongPreview::DetachFader(Fader* f){

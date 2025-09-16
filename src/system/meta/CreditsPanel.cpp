@@ -2,6 +2,7 @@
 #include "macros.h"
 #include "obj/Data.h"
 #include "obj/DataFile.h"
+#include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/JoypadMsgs.h"
 #include "os/System.h"
@@ -36,11 +37,11 @@ int CreditsPanel::NumData() const{
 }
 
 RndMat *CreditsPanel::Mat(int i, int j, UIListMesh *mesh) const{
-    return null;
+    return nullptr;
 }
 
 DataNode CreditsPanel::OnMsg(ButtonDownMsg const &msg){
-    return null;
+    return NULL_OBJ;
 }
 
 bool CreditsPanel::IsLoaded() const{
@@ -56,9 +57,9 @@ void CreditsPanel::Exit(){
 
 void CreditsPanel::Enter(){
     UIPanel::Enter();
-    #ifdef MILO_DEBUG
+
         mCheatOn = false;
-    #endif
+
         mPaused=false;
         //mList->SetSelectedAux(1);
         mAutoScroll=true;
@@ -69,7 +70,6 @@ void CreditsPanel::PausePanel(bool b){
     
 }
 
-#ifdef MILO_DEBUG
 void CreditsPanel::DebugToggleAutoScroll(){
     /*if(!mAutoScroll){
         mList->SetSpeed(mSavedSpeed);
@@ -83,7 +83,7 @@ void CreditsPanel::DebugToggleAutoScroll(){
         mCheatOn=true;
     }*/
 }
-#endif
+
 
 void CreditsPanel::Load(){
     UIPanel::Load();
@@ -140,14 +140,9 @@ void CreditsPanel::Poll(){
 
 BEGIN_HANDLERS(CreditsPanel)
     HANDLE_ACTION(pause_panel, PausePanel(_msg->Int(2)))
-#ifdef MILO_DEBUG
     HANDLE_EXPR(is_cheat_on, mCheatOn)
-#else
     HANDLE_EXPR(is_cheat_on, false)
-#endif
-#ifdef MILO_DEBUG
     HANDLE_ACTION(debug_toggle_autoscroll, DebugToggleAutoScroll())
-#endif
     HANDLE_MESSAGE(ButtonDownMsg)
     HANDLE_SUPERCLASS(UIPanel)
 END_HANDLERS

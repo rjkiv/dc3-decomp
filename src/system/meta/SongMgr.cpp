@@ -48,7 +48,7 @@ void SongMgr::ContentDone(){
 
 SongInfo* SongMgr::SongAudioData(Symbol s) const{
     //return SongAudioData(GetSongIDFromShortName(s, true));
-    return null;
+    return nullptr;
 }
 
 bool SongMgr::IsSongCacheWriteDone() const{
@@ -73,7 +73,7 @@ char const * SongMgr::SongPath(Symbol s, int i) const{
 }
 
 char const * SongMgr::SongFilePath(Symbol s, char const * path, int i) const{
-    return null;
+    return nullptr;
 }
 
 void SongMgr::DumpSongMgrContents(bool all){
@@ -115,7 +115,7 @@ bool SongMgr::IsContentUsedForSong(Symbol s, int i) const{
 }
 
 SongMetadata const * SongMgr::Data(int) const{
-    return null;
+    return nullptr;
 }
 
 void SongMgr::ContentStarted(){
@@ -168,7 +168,7 @@ SongMgr::~SongMgr(){
 }
 
 char const * SongMgr::AlternateSongDir() const{
-    return null;
+    return nullptr;
 }
 
 void SongMgr::ContentMounted(char const *, char const *){
@@ -184,7 +184,7 @@ bool SongMgr::LoadCachedSongInfo(BufStream &){
 }
 
 char const * SongMgr::CachedPath(Symbol, char const *, int) const{
-    return null;
+    return nullptr;
 }
 
 void SongMgr::SaveMount(){
@@ -206,7 +206,7 @@ void SongMgr::GetSongsInContent(Symbol s, std::vector<int> &vec) const{
 }
 
 char const * SongMgr::ContentNameRoot(Symbol) const{
-    return null;
+    return nullptr;
 }
 
 int SongMgr::NumSongsInContent(Symbol s) const{
