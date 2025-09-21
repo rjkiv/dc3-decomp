@@ -33,10 +33,6 @@ char const * StorePurchaseable::CostStr() const{
 StoreOffer::StoreOffer(DataArray *a, SongMgr *mgr) : arr(a), mSongMgr(mgr), date(){
     DataNode* node;
     DataArray* focus;
-    int j;
-    int k;
-    int l;
-
     static Symbol id("id");
     static Symbol release_date("release_date");
     focus = a->FindArray(release_date,false);
@@ -48,13 +44,7 @@ StoreOffer::StoreOffer(DataArray *a, SongMgr *mgr) : arr(a), mSongMgr(mgr), date
 
     focus = a->FindArray(release_date, false);
     if(focus!=nullptr){
-        node = &focus->Node(3);
-        j = node->Int(focus);
-        node = &focus->Node(2);
-        k = node->Int(focus);
-        node = &focus->Node(1);
-        l = node->Int(focus);
-        date = DateTime(j,k,l,0,0,0);
+        date = DateTime(focus->Int(3), focus->Int(2), focus->Int(1), 0,0,0);
     }
 
     static Symbol song_ids("song_ids");
