@@ -11,7 +11,7 @@ class StorePurchaser{
         ~StorePurchaser();
 };
 
-class XboxPurchaser : public Hmx::Object, StorePurchaser{
+class XboxPurchaser : public Hmx::Object, public StorePurchaser{
     public:
         XboxPurchaser(int, u64, u64, u64, Symbol, unsigned int);
         ~XboxPurchaser();

@@ -11,7 +11,7 @@ ConnectionStatusChangedMsg(int);
 bool Connected() const { return mData->Int(2); }
 END_MESSAGE
 
-class ConnectionStatusPanel : UIPanel{
+class ConnectionStatusPanel : public UIPanel{
     public:
         ConnectionStatusPanel();
         OBJ_CLASSNAME(ConnectionStatusPanel);

@@ -25,7 +25,7 @@ enum HAQType {
 class HAQManager : public Hmx::Object{
     public:
         HAQManager();
-        ~HAQManager();
+        virtual ~HAQManager();
         UIComponent *GetUIFocusComponent() const;
         static void RawPrint(char const *, char const *);
         static void PrintSongInfo(Symbol, float);
