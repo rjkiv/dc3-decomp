@@ -56,18 +56,16 @@ void StreamPlayer::Delete(){
 
 void StreamPlayer::Init(){
     mStream->SetVolume(mStreamVol*mMasterVol);
-    int chanCount = mStream->GetNumChannels();
-    if(chanCount==2){
-        mStream->SetPan(0, -1.0f);
-        mStream->SetPan(1, 1.0f);      
+    int chanCount = mStream->GetNumChannels(); //0x10 in Stream
+    if(chanCount!=2){
+          MILO_FAIL(kAssertStr,"StreamPlayer.cpp",0x68,"mStream->GetNumChannels() == 2");
     }
-    else{
-        mStream->SetPan(0, 0.0f);
-    }
+    mStream->SetPan(0, -1.0f);
+    mStream->SetPan(1, 1.0f);    
     if(mLoop){
-        mStream->SetJump(0, 0.0f, 0);
+        mStream->SetJump(-0.25,0,0);
     }
 }
 BEGIN_HANDLERS(StreamPlayer)
-    //HANDLE_ACTION()
+    HANDLE_ACTION(set_volume, mStream->SetVolume((_msg->Float(2))))
 END_HANDLERS

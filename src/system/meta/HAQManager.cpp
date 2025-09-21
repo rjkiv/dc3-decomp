@@ -25,6 +25,8 @@ HAQManager::HAQManager() : m_bEnabled(0){
     SetName("haq_mgr", ObjectDir::Main());
 }
 
+HAQManager::~HAQManager(){}
+
 void HAQManager::RawPrint(const char *c1, const char *c2){
     if(TheHAQMgr && TheHAQMgr->Enabled()){
         MILO_LOG("HAQ_%s: %s\n", c1, c2);
@@ -173,8 +175,7 @@ String HAQManager::GetTextForType(HAQType ty) const{
 
 void HAQManager::PrintList(UIList *i_pList){
     MILO_ASSERT(i_pList, 0xC2);
-    /*int pos = UIList::SelectedPos();
-    Print(kHAQType_List, i_pList, pos);*/
+    //Print(4, i_pList, i_pList->SelectedPos());
 }
 
 void HAQManager::PrintSlider(UISlider *slider){
@@ -191,10 +192,10 @@ void HAQManager::PrintComponentInfo(UIComponent *comp){
 }
 
 BEGIN_HANDLERS(HAQManager)
-    //HANDLE_ACTION(toggle_enabled, ToggleEnabled())
+    //HANDLE_ACTION(toggle_enabled, )
     HANDLE_EXPR(is_enabled, m_bEnabled)
-    //HANDLE_ACTION(display_all, DisplayAll())
+    HANDLE_ACTION(display_all, Print(kHAQType_Screen))
+    HANDLE_ACTION(display_all, Print(kHAQType_Focus))
     HANDLE_ACTION(raw_print, RawPrint(_msg->Str(2), _msg->Str(3)))
     HANDLE_SUPERCLASS(Hmx::Object)
-    //HANDLE_CHECK(0x164)
 END_HANDLERS

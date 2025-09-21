@@ -57,11 +57,9 @@ void CreditsPanel::Exit(){
 
 void CreditsPanel::Enter(){
     UIPanel::Enter();
-
         mCheatOn = false;
-
         mPaused=false;
-        //mList->SetSelectedAux(1);
+        //mList->SetSelected(,);
         mAutoScroll=true;
         //mList->AutoScroll();
 }
