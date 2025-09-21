@@ -42,11 +42,76 @@ enum EaseType {
 float EaseLinear(float, float, float);
 float EasePolyIn(float, float, float);
 float EasePolyOut(float, float, float);
-// todo: the rest
+float EasePolyInOut(float, float, float);
+float EasePolyOutIn(float, float, float);
+float EaseBounceIn(float, float, float);
+float EaseBounceOut(float, float, float);
+float EaseBounceInOut(float, float, float);
+float EaseBounceOutIn(float, float, float);
+float EaseElasticIn(float, float, float);
+float EaseElasticOut(float, float, float);
+float EaseElasticInOut(float, float, float);
+float EaseElasticOutIn(float, float, float);
+float EaseBackIn(float, float, float);
+float EaseBackOut(float, float, float);
+float EaseBackInOut(float, float, float);
+float EaseBackOutIn(float, float, float);
+float EaseSineIn(float, float, float);
+float EaseSineOut(float, float, float);
+float EaseSineInOut(float, float, float);
+float EaseSineOutIn(float, float, float);
+float EaseExpoIn(float, float, float);
+float EaseExpoOut(float, float, float);
+float EaseExpoInOut(float, float, float);
+float EaseExpoOutIn(float, float, float);
+float EaseCircIn(float, float, float);
+float EaseCircOut(float, float, float);
+float EaseCircInOut(float, float, float);
+float EaseCircOutIn(float, float, float);
+float EaseStairstep(float, float, float);
+float EaseThirdStairstep(float, float, float);
+float EaseQuarterStairstep(float, float, float);
+float EaseHalfQuarterStairstep(float, float, float);
+float EaseQuarterHalfStairstep(float, float, float);
 
 typedef float EaseFunc(float, float, float);
 
-EaseFunc *gEaseFuncs[35] = { EaseLinear, EasePolyIn, EasePolyOut };
+EaseFunc *gEaseFuncs[35] = {
+    EaseLinear,
+    EasePolyIn,
+    EasePolyOut,
+    EasePolyInOut,
+    EasePolyOutIn,
+    EaseBounceIn,
+    EaseBounceOut,
+    EaseBounceInOut,
+    EaseBounceOutIn,
+    EaseElasticIn,
+    EaseElasticOut,
+    EaseElasticInOut,
+    EaseElasticOutIn,
+    EaseBackIn,
+    EaseBackOut,
+    EaseBackInOut,
+    EaseBackOutIn,
+    EaseSineIn,
+    EaseSineOut,
+    EaseSineInOut,
+    EaseSineOutIn,
+    EaseExpoIn,
+    EaseExpoOut,
+    EaseExpoInOut,
+    EaseExpoOutIn,
+    EaseCircIn,
+    EaseCircOut,
+    EaseCircInOut,
+    EaseCircOutIn,
+    EaseStairstep,
+    EaseThirdStairstep,
+    EaseQuarterStairstep,
+    EaseHalfQuarterStairstep,
+    EaseQuarterHalfStairstep,
+};
 
 inline EaseFunc *GetEaseFunction(EaseType e) {
     MILO_ASSERT(e >= kEaseLinear && e <= kEaseQuarterHalfStairstep, 0x16B);
