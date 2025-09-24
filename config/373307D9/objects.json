@@ -211,7 +211,7 @@
             "system/char/CharHair.cpp": "NonMatching",
             "system/char/CharIKFingers.cpp": "MISSING",
             "system/char/CharIKFoot.cpp": "MISSING",
-            "system/char/CharIKHand.cpp": "MISSING",
+            "system/char/CharIKHand.cpp": "NonMatching",
             "system/char/CharIKHead.cpp": "MISSING",
             "system/char/CharIKMidi.cpp": "MISSING",
             "system/char/CharIKRod.cpp": "MISSING",
