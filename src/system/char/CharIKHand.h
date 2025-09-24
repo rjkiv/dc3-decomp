@@ -69,7 +69,7 @@ protected:
     /** "Are we allowed to pull the shoulder to reach goal,
         or do we lock the elbow when goal is too far?" */
     bool mPullShoulder; // 0x71
-    bool unk72;
+    bool mHandChanged; // 0x72
     float unk74;
     float unk78;
     float unk7c;

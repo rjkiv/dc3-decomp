@@ -93,5 +93,5 @@ END_COPYS
 
 void CharIKHand::SetHand(RndTransformable *t) {
     mHand = t;
-    unk72 = true;
+    mHandChanged = true;
 }
