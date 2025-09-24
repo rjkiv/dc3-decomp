@@ -11,18 +11,27 @@ class CharIKFingers : public RndHighlightable,
                       public CharWeightable,
                       public CharPollable {
 public:
+    enum FingerNum {
+        kFingerThumb,
+        kFingerIndex,
+        kFingerMiddle,
+        kFingerRing,
+        kFingerPinky,
+        kFingerNone
+    };
     struct FingerDesc {
         FingerDesc()
-            : unk0(0), unk8(0, 0, 0), unk18(0, 0, 0), unk28(nullptr), unk3c(nullptr),
-              unk50(nullptr), unk64(nullptr), unk88(0), unk8c(0), unk90(1) {}
+            : unk0(0), unk8(0, 0, 0), unk18(0, 0, 0), mFinger01(nullptr),
+              mFinger02(nullptr), mFinger03(nullptr), mFingertip(nullptr), unk88(0),
+              unk8c(0), unk90(1) {}
         bool unk0;
         float unk4;
         Vector3 unk8;
         Vector3 unk18;
-        ObjPtr<RndTransformable> unk28;
-        ObjPtr<RndTransformable> unk3c;
-        ObjPtr<RndTransformable> unk50;
-        ObjPtr<RndTransformable> unk64;
+        ObjPtr<RndTransformable> mFinger01; // 0x28
+        ObjPtr<RndTransformable> mFinger02; // 0x3c
+        ObjPtr<RndTransformable> mFinger03; // 0x50
+        ObjPtr<RndTransformable> mFingertip; // 0x64
         float unk78;
         float unk7c;
         float unk80;
@@ -53,24 +62,26 @@ public:
     OBJ_MEM_OVERLOAD(0x1F)
     NEW_OBJ(CharIKFingers)
 
+    void MeasureLengths();
+
 protected:
     CharIKFingers();
 
-    ObjPtr<RndTransformable> unk30; // 0x30
-    ObjPtr<RndTransformable> unk44; // 0x44
-    ObjPtr<RndTransformable> unk58; // 0x58
-    int unk6c;
-    int unk70;
-    bool unk74;
-    bool unk75;
-    Transform unk78;
-    Transform unkc8;
-    float unkf8;
-    Vector3 unkfc; // 0xfc
-    Vector3 unk10c; // 0x10c
+    ObjPtr<RndTransformable> mHand; // 0x30
+    ObjPtr<RndTransformable> mForeArm; // 0x44
+    ObjPtr<RndTransformable> mUpperArm; // 0x58
+    int mBlendInFrames; // 0x6c
+    int mBlendOutFrames; // 0x70
+    bool mResetHandDest; // 0x74
+    bool mResetCurHandTrans; // 0x75
+    Transform mCurHandTrans; // 0x78
+    Transform mDestHandTrans; // 0xc8
+    float mFingerCurledLength; // 0xf8
+    Vector3 mDestForwardVector; // 0xfc
+    Vector3 mCurForwardVector; // 0x10c
     /** "Starting hand offset from keyboard." */
     Vector3 mHandKeyboardOffset; // 0x11c
-    Hmx::Matrix3 unk12c; // 0x12c
+    Hmx::Matrix3 mtx; // 0x12c
     /** "how much to move forward when pinky or thumb is engaged" */
     float mHandMoveForward; // 0x15c
     /** "how much to rotate the hand (radians) when pinky is engaged" */
@@ -82,8 +93,8 @@ protected:
     /** "Does this run the right or left hand?" */
     bool mIsRightHand; // 0x16c
     bool unk16d;
-    bool unk16e;
-    std::vector<FingerDesc> mFingerDescs; // 0x170
+    bool mIsSetup; // 0x16e
+    std::vector<FingerDesc> mFingers; // 0x170
     int unk17c;
     int unk180;
     /** "This trans will be set to the desired hand position." */
