@@ -9,8 +9,8 @@ class CharIKFoot : public CharIKHand {
 public:
     // Hmx::Object
     virtual ~CharIKFoot();
-    OBJ_CLASSNAME(CharIKHand);
-    OBJ_SET_TYPE(CharIKHand);
+    OBJ_CLASSNAME(CharIKFoot);
+    OBJ_SET_TYPE(CharIKFoot);
     virtual DataNode Handle(DataArray *, bool);
     virtual bool SyncProperty(DataNode &, DataArray *, int, PropOp);
     virtual void Save(BinStream &);

@@ -212,7 +212,7 @@
             "system/char/CharIKFingers.cpp": "NonMatching",
             "system/char/CharIKFoot.cpp": "NonMatching",
             "system/char/CharIKHand.cpp": "NonMatching",
-            "system/char/CharIKHead.cpp": "MISSING",
+            "system/char/CharIKHead.cpp": "NonMatching",
             "system/char/CharIKMidi.cpp": "MISSING",
             "system/char/CharIKRod.cpp": "MISSING",
             "system/char/CharIKScale.cpp": "MISSING",
