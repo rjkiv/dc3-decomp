@@ -88,6 +88,7 @@ public:
     Symbol GetFaceOverrideClip();
     void ResetFaceOverrideBlending();
     int SongAnimation();
+    ObjectDir *GetNeutralSkeleton();
 
 protected:
     virtual void AddedObject(Hmx::Object *);
