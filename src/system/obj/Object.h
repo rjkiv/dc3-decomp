@@ -957,6 +957,7 @@ namespace Hmx {
         const char *AllocHeapName() { return MemHeapName(MemFindAddrHeap(this)); }
         void AddRef(ObjRef *ref) { ref->AddRef(&mRefs); }
         void Release(ObjRef *ref) { ref->Release(&mRefs); }
+        MsgSinks *Sinks() const { return mSinks; }
 
         void ReplaceRefs(Hmx::Object *);
         void ReplaceRefsFrom(Hmx::Object *, Hmx::Object *);
