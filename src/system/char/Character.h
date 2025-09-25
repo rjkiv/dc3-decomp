@@ -91,6 +91,7 @@ public:
     void ForceBlink();
 
     static void Init();
+    static Character *Current() { return sCurrent; }
 
 protected:
     virtual void AddedObject(Hmx::Object *);

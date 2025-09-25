@@ -13,6 +13,7 @@ class CharIKHand : public RndHighlightable, public CharWeightable, public CharPo
 public:
     struct IKTarget {
         IKTarget(Hmx::Object *owner) : mTarget(owner), mExtent(0) {}
+        IKTarget(ObjPtr<RndTransformable> t, float e) : mTarget(t), mExtent(e) {}
 
         /** "Where to move the hand to" */
         ObjPtr<RndTransformable> mTarget; // 0x0
