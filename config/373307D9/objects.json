@@ -214,7 +214,7 @@
             "system/char/CharIKHand.cpp": "NonMatching",
             "system/char/CharIKHead.cpp": "NonMatching",
             "system/char/CharIKMidi.cpp": "MISSING",
-            "system/char/CharIKRod.cpp": "MISSING",
+            "system/char/CharIKRod.cpp": "NonMatching",
             "system/char/CharIKScale.cpp": "MISSING",
             "system/char/CharIKSliderMidi.cpp": "MISSING",
             "system/char/CharInterest.cpp": "NonMatching",
