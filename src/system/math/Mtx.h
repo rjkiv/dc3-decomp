@@ -233,6 +233,12 @@ inline BinStream &operator>>(BinStream &bs, Transform &tf) {
     return bs;
 }
 
+class QuatXfm {
+public:
+    Vector3 v;
+    Hmx::Quat q;
+};
+
 class Plane {
 public:
     Plane() {}

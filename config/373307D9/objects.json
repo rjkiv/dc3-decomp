@@ -337,7 +337,7 @@
             "system/hamobj/HamDirector.cpp": "MISSING",
             "system/hamobj/HamDriver.cpp": "NonMatching",
             "system/hamobj/HamGameData.cpp": "NonMatching",
-            "system/hamobj/HamIKEffector.cpp": "MISSING",
+            "system/hamobj/HamIKEffector.cpp": "NonMatching",
             "system/hamobj/HamIKSkeleton.cpp": "NonMatching",
             "system/hamobj/HamIconMan.cpp": "MISSING",
             "system/hamobj/HamLabel.cpp": "NonMatching",
