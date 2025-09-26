@@ -8,13 +8,13 @@ float FlowNode::sIntensity = 1.0f;
 bool FlowNode::sPushDrivenProperties = false;
 
 FlowNode::FlowNode()
-    : mVec1(this, (EraseMode)0, kObjListNoNull), mChildren(this), mParent(nullptr),
-      unk48(this), unk58(0) {
+    : mVec1(this, (EraseMode)0, kObjListNoNull), mRunningNodes(this), mParent(nullptr),
+      mDrivenPropEntries(this), unk58(0) {
     mDebugOutput = false;
 }
 
 FlowNode::~FlowNode() {
-    if (!mChildren.empty()) {
+    if (!mRunningNodes.empty()) {
         Deactivate(true);
     }
     for (ObjPtrVec<FlowNode>::iterator it = mVec1.begin(); it != mVec1.end(); ++it) {
@@ -44,7 +44,7 @@ BEGIN_COPYS(FlowNode)
     COPY_SUPERCLASS(Hmx::Object)
     CREATE_COPY(FlowNode)
     BEGIN_COPYING_MEMBERS
-        COPY_MEMBER(unk48)
+        COPY_MEMBER(mDrivenPropEntries)
     END_COPYING_MEMBERS
 END_COPYS
 
@@ -56,12 +56,12 @@ BEGIN_LOADS(FlowNode)
 
     int numEntries;
     bs >> numEntries;
-    unk48.clear();
-    unk48.reserve(numEntries);
+    mDrivenPropEntries.clear();
+    mDrivenPropEntries.reserve(numEntries);
     for (int i = 0; i < numEntries; i++) {
         DrivenPropertyEntry entry(this);
         entry.Load(bs, this);
-        unk48.push_back(entry);
+        mDrivenPropEntries.push_back(entry);
     }
 END_LOADS
 
@@ -76,12 +76,12 @@ void FlowNode::PushDrivenProperties(void) { sPushDrivenProperties = true; }
 void FlowNode::MoveIntoDir(ObjectDir *, ObjectDir *) {}
 
 void FlowNode::ActivateChild(FlowNode *child) {
-    mChildren.push_back(child);
+    mRunningNodes.push_back(child);
     if (!child->Activate()) {
         FLOW_LOG(
             "Activated Child %s, which ran in full immediately.\n", child->ClassName()
         );
-        mChildren.remove(child);
+        mRunningNodes.remove(child);
     }
 }
 
@@ -103,11 +103,12 @@ void FlowNode::SetParent(class FlowNode *new_parent, bool b) {
 }
 
 bool FlowNode::HasRunningNode(FlowNode *node) {
-    return mChildren.find(node) != mChildren.end();
+    return mRunningNodes.find(node) != mRunningNodes.end();
 }
 
 void FlowNode::UpdateIntensity() {
-    for (ObjPtrList<FlowNode>::iterator it = mChildren.begin(); it != mChildren.end();
+    for (ObjPtrList<FlowNode>::iterator it = mRunningNodes.begin();
+         it != mRunningNodes.end();
          ++it) {
         (*it)->UpdateIntensity();
     }
@@ -116,7 +117,8 @@ void FlowNode::UpdateIntensity() {
 void FlowNode::RequestStop() {
     FLOW_LOG("RequestStop\n");
     unk58 = true;
-    for (ObjPtrList<FlowNode>::iterator it = mChildren.begin(); it != mChildren.end();
+    for (ObjPtrList<FlowNode>::iterator it = mRunningNodes.begin();
+         it != mRunningNodes.end();
          ++it) {
         (*it)->RequestStop();
     }
@@ -125,7 +127,8 @@ void FlowNode::RequestStop() {
 void FlowNode::RequestStopCancel() {
     FLOW_LOG("RequestStopCancel\n");
     unk58 = false;
-    for (ObjPtrList<FlowNode>::iterator it = mChildren.begin(); it != mChildren.end();
+    for (ObjPtrList<FlowNode>::iterator it = mRunningNodes.begin();
+         it != mRunningNodes.end();
          ++it) {
         (*it)->RequestStopCancel();
     }
@@ -139,8 +142,8 @@ DrivenPropertyEntry *FlowNode::GetDrivenEntry(Symbol s) {
 
 void FlowNode::ChildFinished(FlowNode *node) {
     FLOW_LOG("Child Finished of class:%s\n", node->ClassName());
-    mChildren.remove(node);
-    if (mChildren.empty()) {
+    mRunningNodes.remove(node);
+    if (mRunningNodes.empty()) {
         FLOW_LOG("Releasing\n");
         if (mParent)
             mParent->ChildFinished(this);

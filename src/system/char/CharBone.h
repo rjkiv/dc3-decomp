@@ -27,7 +27,13 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1B);
 
+    int PositionContext() const { return mPositionContext; }
+    int ScaleContext() const { return mScaleContext; }
+    CharBones::Type RotationType() const { return mRotation; }
+    int RotationContext() const { return mRotationContext; }
+    CharBone *Target() const { return mTarget; }
     void ClearContext(int);
+    void StuffBones(std::list<CharBones::Bone> &, int) const;
 
 protected:
     CharBone();

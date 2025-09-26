@@ -28,6 +28,8 @@ public:
     virtual bool IsConnected() const { return mConnected; }
     virtual void PollTracking();
 
+    int MaxSnapshots() const { return mMaxSnapshots; }
+    int NumSnapshots() const;
     RndMat *GetSnapshot(int) const;
     int GetSnapshotBatchStartingIndex(int) const;
     RndTex *GetStoredTexture(int) const;
@@ -38,6 +40,14 @@ public:
     void StartSnapshotBatch();
     void StoreTextureClipAt(float, float, float, float, int, int);
     void ResetSnapshots();
+    int NumSnapshotBatches() const;
+    bool GetTweakedAutoexposure() const;
+    bool SetTweakedAutoexposure(bool);
+    void SetExposureRegion(float, float, float, float);
+    bool SetAutoexposure(bool);
+    bool GetAutoexposure() const;
+    void DumpProperties();
+    void SetTrackedSkeletons(int, int) const;
 
     static void PreInit();
     static void Init();

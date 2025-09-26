@@ -69,7 +69,7 @@ public:
     NEW_OBJ(SkeletonClip);
 
     void SetRecordedTime(const DateTime &dt) { mTimeRecorded = dt; }
-    void SetSong(Symbol sym) { unk1208 = sym; }
+    void SetSong(Symbol sym) { mSong = sym; }
     void SetDifficulty(Difficulty d) { mDifficulty = d; }
     void SetBuild(const String &str) { mBuild = str; }
     bool IsRecording() const;
@@ -112,7 +112,7 @@ protected:
     String *unk11f8; // 0x11f8
     int unk11fc; // 0x11fc
     DateTime mTimeRecorded; // 0x1200
-    Symbol unk1208; // 0x1208 - mSong?
+    Symbol mSong; // 0x1208
     Difficulty mDifficulty; // 0x120c
     String mBuild; // 0x1210
     Symbol mDefaultRating; // 0x1218

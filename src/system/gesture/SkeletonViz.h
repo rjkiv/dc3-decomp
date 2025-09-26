@@ -74,3 +74,5 @@ protected:
     float unk214; // 0x214
     bool unk218; // 0x218
 };
+
+extern SkeletonViz *TheSkeletonViz;

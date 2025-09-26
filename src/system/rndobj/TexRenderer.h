@@ -7,6 +7,7 @@
 #include "rndobj/Env.h"
 #include "rndobj/Poll.h"
 #include "rndobj/Tex.h"
+#include "utl/MemMgr.h"
 
 class RndTexRenderer : public RndDrawable, public RndAnimatable, public RndPollable {
 public:
@@ -31,6 +32,9 @@ public:
     virtual void ListAnimChildren(std::list<RndAnimatable *> &) const;
     // RndPollable: `this` at 0x50
     virtual void ListPollChildren(std::list<RndPollable *> &) const;
+
+    OBJ_MEM_OVERLOAD(0x1A)
+    NEW_OBJ(RndTexRenderer)
 
     void DrawToTexture(void);
 

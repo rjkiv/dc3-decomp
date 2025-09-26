@@ -1,20 +1,36 @@
 #pragma once
+#include "PropSync.h"
 #include "math/Key.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "obj/PropSync.h"
+#include "os/Debug.h"
 #include "utl/Std.h"
 
 // DO NOT try to include this header directly!
 // include obj/PropSync.h instead
 
 inline bool PropSync(float &f, DataNode &node, DataArray *prop, int i, PropOp op) {
-    MILO_ASSERT(i == prop->Size() && op <= kPropInsert, 0x17);
+    MILO_ASSERT(i == prop->Size() && op <= kPropInsert, 0x2F);
     if (op == kPropGet)
         node = f;
     else
         f = node.Float();
     return true;
+}
+
+inline bool PropSync(DataNode &obj, DataNode &node, DataArray *prop, int i, PropOp op) {
+    if (op == kPropUnknown0x40)
+        return false;
+    else {
+        MILO_ASSERT(i == prop->Size() && op <= kPropInsert, 0x19);
+        if (op == kPropGet) {
+            node = obj;
+        } else {
+            obj = node;
+        }
+        return true;
+    }
 }
 
 inline bool
@@ -25,6 +41,24 @@ PropSync(unsigned char &uc, DataNode &node, DataArray *prop, int i, PropOp op) {
     else
         uc = node.Int();
     return true;
+}
+
+inline bool
+PropSync(DataNodeObjTrack &objTrack, DataNode &node, DataArray *prop, int i, PropOp op) {
+    if (op == kPropUnknown0x40)
+        return false;
+    else {
+        MILO_ASSERT(i == prop->Size() && op <= kPropInsert, 0x25);
+        // lol, yet another circular dependency moment
+        // DataNodeObjTrack is in Object.h,
+        // which depends on PropSync.h for the PropOp enum
+        if (op == kPropGet) {
+            // node = objTrack.Node();
+        } else {
+            // objTrack = node;
+        }
+        return true;
+    }
 }
 
 inline bool PropSync(int &iref, DataNode &node, DataArray *prop, int i, PropOp op) {
@@ -72,17 +106,22 @@ bool PropSync(std::vector<T> &vec, DataNode &node, DataArray *prop, int i, PropO
         node = (int)vec.size();
         return true;
     } else {
-        typename std::vector<T>::iterator it = vec.begin() + prop->Int(i++);
-        if (i < prop->Size() || op & (kPropGet | kPropSet | kPropSize)) {
-            return PropSync(*it, node, prop, i, op);
-        } else if (op == kPropRemove) {
-            vec.erase(it);
-            return true;
-        } else if (op == kPropInsert) {
-            T item;
-            if (PropSync(item, node, prop, i, op)) {
-                vec.insert(it, item);
+        int idx = prop->Int(i++);
+        if (idx >= vec.size() + (op == kPropInsert))
+            return false;
+        else {
+            typename std::vector<T>::iterator it = vec.begin() + idx;
+            if (i < prop->Size() || op & (kPropGet | kPropSet | kPropSize)) {
+                return PropSync(*it, node, prop, i, op);
+            } else if (op == kPropRemove) {
+                vec.erase(it);
                 return true;
+            } else if (op == kPropInsert) {
+                T item;
+                if (PropSync(item, node, prop, i, op)) {
+                    vec.insert(it, item);
+                    return true;
+                }
             }
         }
         return false;
@@ -99,19 +138,23 @@ bool PropSync(std::list<T> &pList, DataNode &node, DataArray *prop, int i, PropO
         return true;
     } else {
         int idx = prop->Int(i++);
-        typename std::list<T>::iterator it = pList.begin();
-        while (idx-- > 0)
-            it++;
-        if (i < prop->Size() || op & (kPropGet | kPropSet | kPropSize)) {
-            return PropSync(*it, node, prop, i, op);
-        } else if (op == kPropRemove) {
-            pList.erase(it);
-            return true;
-        } else if (op == kPropInsert) {
-            T item;
-            if (PropSync(item, node, prop, i, op)) {
-                pList.insert(it, item);
+        if (idx >= pList.size() + (op == kPropInsert))
+            return false;
+        else {
+            typename std::list<T>::iterator it = pList.begin();
+            while (idx-- > 0)
+                it++;
+            if (i < prop->Size() || op & (kPropGet | kPropSet | kPropSize)) {
+                return PropSync(*it, node, prop, i, op);
+            } else if (op == kPropRemove) {
+                pList.erase(it);
                 return true;
+            } else if (op == kPropInsert) {
+                T item;
+                if (PropSync(item, node, prop, i, op)) {
+                    pList.insert(it, item);
+                    return true;
+                }
             }
         }
         return false;
@@ -172,7 +215,18 @@ bool PropSync(Keys<T, T> &keys, DataNode &node, DataArray *prop, int i, PropOp o
 }
 
 template <class T>
-bool PropSync(T *&obj, DataNode &node, DataArray *prop, int i, PropOp op);
+bool PropSync(T *&obj, DataNode &node, DataArray *prop, int i, PropOp op) {
+    if (op == kPropUnknown0x40)
+        return false;
+    else {
+        MILO_ASSERT(i == prop->Size() && op <= kPropInsert, 0x66);
+        if (op == kPropGet)
+            node = obj;
+        else
+            obj = node.Obj<T>();
+        return true;
+    }
+}
 
 template <class T>
 bool PropSync(ObjPtr<T> &ptr, DataNode &node, DataArray *prop, int i, PropOp op) {
@@ -251,6 +305,32 @@ bool PropSync(
 
 template <class T>
 bool PropSync(ObjPtrVec<T, ObjectDir> &, DataNode &, DataArray *, int, PropOp);
+
+template <class T>
+bool PropSync(ObjVector<T> &objVec, DataNode &node, DataArray *prop, int i, PropOp op) {
+    if (op == kPropUnknown0x40)
+        return false;
+    else if (i == prop->Size()) {
+        MILO_ASSERT(op == kPropSize || op == kPropInsert, 0x18B);
+        node = (int)objVec.size();
+        return true;
+    } else {
+        typename ObjVector<T>::iterator it = objVec.begin() + prop->Int(i++);
+        if (i < prop->Size() || op & (kPropGet | kPropSet | kPropSize)) {
+            return PropSync(*it, node, prop, i, op);
+        } else if (op == kPropRemove) {
+            objVec.erase(it);
+            return true;
+        } else if (op == kPropInsert) {
+            T item(objVec.Owner());
+            if (PropSync(item, node, prop, i, op)) {
+                objVec.insert(it, item);
+                return true;
+            }
+        }
+        return false;
+    }
+}
 
 template <class T>
 bool PropSync(ObjList<T> &objList, DataNode &node, DataArray *prop, int i, PropOp op) {

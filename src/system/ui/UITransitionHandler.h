@@ -1,6 +1,7 @@
 #pragma once
 #include "obj/Object.h"
 #include "rndobj/Anim.h"
+#include "utl/BinStream.h"
 
 enum UITransitionAnimationState {
     kUITransitionAnimationInvalid,
@@ -14,9 +15,21 @@ class UITransitionHandler {
 public:
     UITransitionHandler(Hmx::Object *);
     virtual ~UITransitionHandler();
+
+    void SetInAnim(RndAnimatable *);
+    void SetOutAnim(RndAnimatable *);
+
+    RndAnimatable *GetInAnim() const; //{ return mInAnim; }
+    RndAnimatable *GetOutAnim() const; //{ return mOutAnim; }
+
+protected:
     virtual void FinishValueChange();
     virtual void StartValueChange();
     virtual bool IsEmptyValue() const = 0;
+
+    void UpdateHandler();
+    void SaveHandlerData(BinStream &);
+    void CopyHandlerData(const UITransitionHandler *);
 
     /** "animation kicked off before [transition]" */
     ObjPtr<RndAnimatable> mInAnim; // 0x4

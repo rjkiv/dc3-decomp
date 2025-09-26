@@ -10,7 +10,7 @@
 Hmx::Object *ObjectStage::sOwner;
 Message PropKeys::sInterpMessage(gNullStr, 0, 0, 0, 0, 0);
 
-float CalcSpline(float, const float *);
+float CalcSpline(float, float *const);
 
 void PropKeys::Copy(const PropKeys *keys) {
     mInterpolation = keys->mInterpolation;
@@ -273,7 +273,6 @@ void BoolKeys::SetFrame(float frame, float f2, float f3) {
 }
 
 BinStreamRev &operator>>(BinStreamRev &bs, ObjectStage &stage) {
-    ObjectDir *dir = nullptr;
     if (bs.mRev > 8) {
         ObjPtr<ObjectDir> ptr(stage.Owner());
         bs >> ptr;
@@ -582,7 +581,7 @@ void SymbolKeys::Copy(const PropKeys *keys) {
 }
 
 int FloatKeys::FloatAt(float frame, float &fl) {
-    MILO_ASSERT(size(), 0x188);
+    MILO_ASSERT(size(), 0x1B5);
     fl = 0.0f;
     float ref = 0.0f;
     const Key<float> *prev;

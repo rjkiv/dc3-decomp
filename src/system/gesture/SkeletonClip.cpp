@@ -91,7 +91,7 @@ BEGIN_PROPSYNCS(SkeletonClip)
     SYNC_PROP_SET(autoplay, mAutoplay, SetAutoplay(_val.Int()))
     SYNC_PROP_SET(time_recorded, DateTimeStr(), )
     SYNC_PROP_SET(build, mBuild, )
-    SYNC_PROP_SET(song, !mFile.empty() && unk1208.Null() ? "N/A" : unk1208.Str(), )
+    SYNC_PROP_SET(song, !mFile.empty() && mSong.Null() ? "N/A" : mSong.Str(), )
     SYNC_PROP_SET(difficulty, DifficultyStr(), )
     SYNC_PROP(default_rating, mDefaultRating)
     SYNC_PROP_SET(weighted, mWeighted, mWeighted = _val.Int())
@@ -175,7 +175,7 @@ void SkeletonClip::WriteClipHeader(FileStream &stream) {
     stream << 8;
     GetDateAndTime(mTimeRecorded);
     stream << mTimeRecorded;
-    stream << unk1208;
+    stream << mSong;
     stream << mDifficulty;
     DataArray *arr = SystemConfig()->FindArray("version", false);
     const char *str = arr ? arr->Str(1) : "milo";

@@ -138,9 +138,7 @@ inline bool IsFloatOne(float f) {
 
 inline bool IsFabsZero(float f) { return fabs(f) < 0.000099999997f ? true : false; }
 
-inline bool NearlyEqual(float f1, float f2) {
-    return fabs(f1 - f2) < 0.000099999997f ? true : false;
-}
+inline bool NearlyEqual(float f1, float f2) { return fabs(f1 - f2) < 0.000099999997f; }
 
 inline float Mod(float f1, float f2) {
     if (f2 == 0.0f)
@@ -185,6 +183,8 @@ inline float Limit(float f1, float f2, float f3, int &i) {
     i = floored;
     return -(floored * fsub - f3);
 }
+
+inline float pow(float x, float y) { return std::pow(x, y); }
 
 inline float Sigmoid(float t) {
     // MILO_ASSERT(t >= 0 && t <= 1, 0x1DB); FIXME: uncommenting this line results in a

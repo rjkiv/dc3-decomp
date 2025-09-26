@@ -1,4 +1,5 @@
 #pragma once
+#include "math/Mtx.h"
 #include "obj/Data.h"
 
 #include "rndobj/Highlight.h"
@@ -63,6 +64,8 @@ public:
     OBJ_MEM_OVERLOAD(0x1C);
 
     const Transform &LocalXfm() const { return mLocalXfm; }
+    RndTransformable *TransParent() const { return mParent; }
+    bool Dirty() const { return mDirty; }
 
     Transform &DirtyLocalXfm() {
         SetDirty();

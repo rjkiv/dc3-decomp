@@ -1,5 +1,6 @@
 #pragma once
 #include "obj/Data.h" /* IWYU pragma: keep */
+#include "obj/DataUtl.h"
 #include "obj/PropSync.h" /* IWYU pragma: keep */
 #include "obj/MessageTimer.h" /* IWYU pragma: keep */
 #include "utl/BinStream.h" /* IWYU pragma: keep */
@@ -161,8 +162,8 @@ public:
     Hmx::Object *Owner() const { return mOwner; }
 };
 
-template <class T1>
-BinStream &operator<<(BinStream &bs, const ObjPtr<T1> &ptr);
+// template <class T1>
+// BinStream &operator<<(BinStream &bs, const ObjPtr<T1> &ptr);
 
 template <class T1>
 BinStream &operator>>(BinStream &bs, ObjPtr<T1> &ptr);
@@ -207,7 +208,10 @@ private:
         Node(const Node &n);
         virtual ~Node() {}
         virtual Hmx::Object *RefOwner() const;
-        virtual void Replace(Hmx::Object *obj);
+        virtual void Replace(Hmx::Object *obj) {
+            ObjPtrVec<T1, T2> *vec = static_cast<ObjPtrVec<T1, T2> *>(mOwner);
+            vec->ReplaceNode(this, obj);
+        }
         virtual ObjRefOwner *Parent() const { return mOwner; }
 
         T1 *Obj() const { return mObject; }
@@ -215,10 +219,17 @@ private:
         /** The ObjPtrVec this Node belongs to. */
         ObjRefOwner *mOwner; // 0x10
     };
-    virtual Hmx::Object *RefOwner() const { return mOwner; }
-    virtual bool Replace(ObjRef *, Hmx::Object *);
 
 protected:
+    virtual Hmx::Object *RefOwner() const {
+        MILO_FAIL("should never be called");
+        return nullptr;
+    }
+    virtual bool Replace(ObjRef *, Hmx::Object *) {
+        MILO_FAIL("should never be called");
+        return false;
+    }
+
     void ReplaceNode(Node *, Hmx::Object *);
 
 public:
@@ -261,9 +272,11 @@ public:
         bool operator!=(const const_iterator &other) const { return it != other.it; }
     };
 
-    ObjPtrVec(Hmx::Object *owner, EraseMode, ObjListMode);
+    ObjPtrVec(Hmx::Object *owner, EraseMode = (EraseMode)0, ObjListMode = kObjListNoNull);
+    ObjPtrVec(const ObjPtrVec &);
     virtual ~ObjPtrVec();
 
+    // i now have the suspicion these might be wrong but idk how to fix it yet
     iterator begin() { return iterator(mNodes.begin()); }
     iterator end() { return iterator(mNodes.end()); }
     const_iterator begin() const { return const_iterator(mNodes.begin()); }
@@ -273,6 +286,7 @@ public:
     iterator insert(const_iterator, T1 *);
     const_iterator find(const Hmx::Object *) const;
     int size() const { return mNodes.size(); }
+    bool empty() const { return mNodes.empty(); }
     T1 *front() const { return mNodes.front(); }
     T1 *operator[](int idx) { return mNodes[idx].Obj(); }
     const T1 *operator[](int idx) const { return mNodes[idx].Obj(); }
@@ -286,7 +300,7 @@ public:
     bool Load(BinStream &, bool, ObjectDir *);
     void clear() { mNodes.clear(); }
     void reserve(unsigned int n) { mNodes.reserve(n); }
-
+    void unique();
     void Set(iterator it, T1 *obj);
 
     // see Draw.cpp for this
@@ -310,6 +324,7 @@ template <class T1, class T2 = class ObjectDir>
 class ObjPtrList : public ObjRefOwner {
 public:
     ObjPtrList(ObjRefOwner *, ObjListMode = kObjListNoNull);
+    ObjPtrList(const ObjPtrList &);
     virtual ~ObjPtrList() { clear(); }
 
 private:
@@ -521,6 +536,21 @@ extern DataArray *SystemConfig(Symbol, Symbol, Symbol);
         }                                                                                \
     }
 
+#define HANDLE_ACTION_IF_ELSE(s, cond, action_true, action_false)                        \
+    {                                                                                    \
+        _NEW_STATIC_SYMBOL(s)                                                            \
+        if (sym == _s) {                                                                 \
+            if (cond) {                                                                  \
+                /* for style, require any side-actions to be performed via comma         \
+                 * operator */                                                           \
+                (action_true);                                                           \
+            } else {                                                                     \
+                (action_false);                                                          \
+            }                                                                            \
+            return 0;                                                                    \
+        }                                                                                \
+    }
+
 #define HANDLE_ARRAY(array)                                                              \
     {                                                                                    \
         /* this needs to be placed up here to match Hmx::Object::Handle */               \
@@ -543,6 +573,10 @@ extern DataArray *SystemConfig(Symbol, Symbol, Symbol);
     HANDLE_FORWARD(member->Handle)
 
 #define HANDLE_SUPERCLASS(parent) HANDLE_FORWARD(parent::Handle)
+
+#define HANDLE_VIRTUAL_SUPERCLASS(parent)                                                \
+    if (ClassName() == StaticClassName())                                                \
+    HANDLE_SUPERCLASS(parent)
 
 #define END_HANDLERS                                                                     \
     if (_warn)                                                                           \
@@ -615,60 +649,67 @@ extern DataArray *SystemConfig(Symbol, Symbol, Symbol);
         }                                                                                \
     }
 
-#define SYNC_PROP_BITFIELD(symbol, mask_member, line_num)                                \
-    if (sym == symbol) {                                                                 \
-        _i++;                                                                            \
-        if (_i < _prop->Size()) {                                                        \
-            DataNode &node = _prop->Node(_i);                                            \
-            int res = 0;                                                                 \
-            switch (node.Type()) {                                                       \
-            case kDataInt:                                                               \
-                res = node.Int();                                                        \
-                break;                                                                   \
-            case kDataSymbol: {                                                          \
-                const char *bitstr = node.Sym().Str();                                   \
-                MILO_ASSERT_FMT(                                                         \
-                    strncmp("BIT_", bitstr, 4) == 0,                                     \
-                    "%s does not begin with BIT_",                                       \
-                    bitstr                                                               \
-                );                                                                       \
-                Symbol bitsym(bitstr + 4);                                               \
-                const Symbol &test = Symbol(bitsym);                                     \
-                DataArray *macro = DataGetMacro(test);                                   \
-                MILO_ASSERT_FMT(                                                         \
-                    macro, "PROPERTY_BITFIELD %s could not find macro %s", symbol, test  \
-                );                                                                       \
-                res = macro->Int(0);                                                     \
-                break;                                                                   \
-            }                                                                            \
-            default:                                                                     \
-                MILO_ASSERT(0, line_num);                                                 \
-                break;                                                                   \
-            }                                                                            \
-            MILO_ASSERT(_op <= kPropInsert, line_num);                                      \
-            if (_op == kPropGet) {                                                       \
-                int final = mask_member & res;                                           \
-                _val = DataNode(final > 0);                                              \
-            } else {                                                                     \
-                if (_val.Int() != 0)                                                     \
-                    mask_member |= res;                                                  \
-                else                                                                     \
-                    mask_member &= ~res;                                                 \
-            }                                                                            \
-            return true;                                                                 \
-        } else                                                                           \
-            return PropSync(mask_member, _val, _prop, _i, _op);                          \
+#define _SYNC_PROP_BITFIELD(symbol, mask_member, line_num)                                \
+    if (sym == symbol) {                                                                  \
+        _i++;                                                                             \
+        if (_i < _prop->Size()) {                                                         \
+            DataNode &node = _prop->Node(_i);                                             \
+            int res = 0;                                                                  \
+            switch (node.Type()) {                                                        \
+            case kDataInt:                                                                \
+                res = node.Int();                                                         \
+                break;                                                                    \
+            case kDataSymbol: {                                                           \
+                Symbol bitsym = node.Sym();                                               \
+                MILO_ASSERT_FMT(                                                          \
+                    strneq("BIT_", bitsym.Str(), 4),                                      \
+                    "%s does not begin with BIT_",                                        \
+                    bitsym.Str()                                                          \
+                );                                                                        \
+                bitsym = bitsym.Str() + 4;                                                \
+                DataArray *macro = DataGetMacro(bitsym);                                  \
+                MILO_ASSERT_FMT(                                                          \
+                    macro, "PROPERTY_BITFIELD %s could not find macro %s", symbol, bitsym \
+                );                                                                        \
+                res = macro->Int(0);                                                      \
+                break;                                                                    \
+            }                                                                             \
+            default:                                                                      \
+                MILO_ASSERT(0, line_num);                                                  \
+                break;                                                                    \
+            }                                                                             \
+            MILO_ASSERT(_op <= kPropInsert, line_num);                                       \
+            if (_op == kPropGet) {                                                        \
+                int final = mask_member & res;                                            \
+                _val = (final > 0);                                                       \
+            } else {                                                                      \
+                if (_val.Int() != 0)                                                      \
+                    mask_member |= res;                                                   \
+                else                                                                      \
+                    mask_member &= ~res;                                                  \
+            }                                                                             \
+            return true;                                                                  \
+        } else                                                                            \
+            return PropSync(mask_member, _val, _prop, _i, _op);                           \
     }
 
-#define SYNC_PROP_MODIFY_STATIC(symbol, member, func)                                    \
-    { _NEW_STATIC_SYMBOL(symbol) SYNC_PROP_MODIFY(_s, member, func) }
+#define SYNC_PROP_BITFIELD(symbol, mask_member, line_num)                                \
+    { _NEW_STATIC_SYMBOL(symbol) _SYNC_PROP_BITFIELD(_s, mask_member, line_num) }
 
-#define SYNC_PROP_BITFIELD_STATIC(symbol, mask_member, line_num)                         \
-    { _NEW_STATIC_SYMBOL(symbol) SYNC_PROP_BITFIELD(_s, mask_member, line_num) }
+#define SYNC_MEMBER(s, member)                                                           \
+    {                                                                                    \
+        _NEW_STATIC_SYMBOL(s)                                                            \
+        if (sym == _s)                                                                   \
+            return member.SyncProperty(_val, _prop, _i + 1, _op);                        \
+    }
 
 #define SYNC_SUPERCLASS(parent)                                                          \
     if (parent::SyncProperty(_val, _prop, _i, _op))                                      \
         return true;
+
+#define SYNC_VIRTUAL_SUPERCLASS(parent)                                                  \
+    if (ClassName() == StaticClassName())                                                \
+    SYNC_SUPERCLASS(parent)
 
 #define END_PROPSYNCS                                                                    \
     return false;                                                                        \
@@ -686,6 +727,11 @@ extern DataArray *SystemConfig(Symbol, Symbol, Symbol);
 #define BEGIN_SAVES(objType) void objType::Save(BinStream &bs) {
 #define SAVE_REVS(rev, alt) bs << packRevs(alt, rev);
 #define SAVE_SUPERCLASS(parent) parent::Save(bs);
+
+#define SAVE_VIRTUAL_SUPERCLASS(parent)                                                  \
+    if (ClassName() == StaticClassName())                                                \
+    SAVE_SUPERCLASS(parent)
+
 #define END_SAVES }
 // END SAVE MACRO ------------------------------------------------------------------------
 
@@ -750,6 +796,10 @@ extern DataArray *SystemConfig(Symbol, Symbol, Symbol);
     }
 
 #define LOAD_SUPERCLASS(parent) parent::Load(bs);
+
+#define LOAD_VIRTUAL_SUPERCLASS(parent)                                                  \
+    if (ClassName() == StaticClassName())                                                \
+    LOAD_SUPERCLASS(parent)
 
 #define LOAD_BITFIELD(type, name)                                                        \
     {                                                                                    \
@@ -907,6 +957,7 @@ namespace Hmx {
         const char *AllocHeapName() { return MemHeapName(MemFindAddrHeap(this)); }
         void AddRef(ObjRef *ref) { ref->AddRef(&mRefs); }
         void Release(ObjRef *ref) { ref->Release(&mRefs); }
+        MsgSinks *Sinks() const { return mSinks; }
 
         void ReplaceRefs(Hmx::Object *);
         void ReplaceRefsFrom(Hmx::Object *, Hmx::Object *);
@@ -969,6 +1020,35 @@ inline TextStream &operator<<(TextStream &ts, const Hmx::Object *obj) {
     return ts;
 }
 
+// DataNodeObjTrack
+class DataNodeObjTrack {
+public:
+    DataNodeObjTrack(const DataNode &node) : unk0(nullptr, nullptr) {
+        unk14 = node.Evaluate();
+        if (unk14.Type() == kDataObject) {
+            unk0 = unk14.GetObj();
+        }
+    }
+    DataNode Node() const {
+        if (unk14.Type() == kDataObject) {
+            return unk0.Ptr();
+        } else
+            return unk14;
+    }
+    DataNodeObjTrack &operator=(const DataNode &node) {
+        unk14 = node.Evaluate();
+        if (unk14.Type() == kDataObject) {
+            unk0 = unk14.GetObj();
+        }
+        return *this;
+    }
+    // DataNodeObjTrack& operator=(const DataNodeObjTrack&);
+
+protected:
+    ObjPtr<Hmx::Object> unk0; // 0x0
+    DataNode unk14; // 0x14
+};
+
 // ObjVector
 template <class T>
 class ObjVector : public std::vector<T> {
@@ -978,7 +1058,6 @@ private:
 
 public:
     ObjVector(Hmx::Object *o) : mOwner(o) {}
-
     Hmx::Object *Owner() { return mOwner; }
 
     void push_back() { resize(size() + 1); }
@@ -997,6 +1076,22 @@ public:
         }
     }
 };
+
+// there are symbols for both BinStreamRev >> ObjVector
+// and BinStream >> ObjVector
+// hmx why??? pick one and stick with it pls
+
+template <class T>
+BinStream &operator>>(BinStreamRev &bs, ObjVector<T> &vec) {
+    unsigned int length;
+    bs >> length;
+    vec.resize(length);
+
+    for (ObjVector<T>::iterator it = vec.begin(); it != vec.end(); it++) {
+        bs >> *it;
+    }
+    return bs;
+}
 
 template <class T>
 BinStream &operator>>(BinStream &bs, ObjVector<T> &vec) {
@@ -1019,7 +1114,6 @@ private:
 
 public:
     ObjList(Hmx::Object *o) : mOwner(o) {}
-
     Hmx::Object *Owner() { return mOwner; }
 
     void resize(unsigned int ul) { Base::resize(ul, T(mOwner)); }
@@ -1047,7 +1141,7 @@ public:
 };
 
 template <class T>
-BinStream &operator>>(BinStream &bs, ObjList<T> &oList) {
+BinStream &operator>>(BinStreamRev &bs, ObjList<T> &oList) {
     unsigned int length;
     bs >> length;
     oList.resize(length);

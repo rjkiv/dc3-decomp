@@ -1,24 +1,35 @@
 #pragma once
 
-#include <types.h>
+#include "xdk/d3d9i/d3dtypes.h"
+#include "xdk/d3d9i/device.h"
 
 extern "C" {
-void D3DDevice_SetRenderState_AlphaBlendEnable(struct D3DDevice *, uint);
-void D3DDevice_SetRenderState_BlendOp(struct D3DDevice *, uint);
-uint D3DDevice_GetRenderState_BlendOp(struct D3DDevice *);
-void D3DDevice_SetRenderState_SrcBlend(struct D3DDevice *, uint);
-void D3DDevice_SetRenderState_DestBlend(struct D3DDevice *, uint);
-void D3DDevice_SetRenderState_SrcBlendAlpha(struct D3DDevice *, uint);
-void D3DDevice_SetRenderState_DestBlendAlpha(struct D3DDevice *, uint);
-uint D3DDevice_GetRenderState_SrcBlend(struct D3DDevice *);
-uint D3DDevice_GetRenderState_DestBlend(struct D3DDevice *);
-uint D3DDevice_GetRenderState_SrcBlendAlpha(struct D3DDevice *);
-uint D3DDevice_GetRenderState_DestBlendAlpha(struct D3DDevice *);
-void D3DDevice_SetRenderState_ColorWriteEnable(struct D3DDevice *, uint);
-void D3DDevice_SetRenderState_FillMode(struct D3DDevice *, uint);
-void D3DDevice_SetRenderState_CullMode(struct D3DDevice *, uint);
-void D3DDevice_SetRenderState_StencilEnable(struct D3DDevice *, uint);
-void D3DDevice_SetRenderState_StencilFail(struct D3DDevice *, uint);
-void D3DDevice_SetRenderState_StencilZFail(struct D3DDevice *, uint);
-void D3DDevice_SetRenderState_StencilPass(struct D3DDevice *, uint);
+
+uint D3DDevice_GetRenderState_BlendOp(D3DDevice *);
+uint D3DDevice_GetRenderState_SrcBlend(D3DDevice *);
+uint D3DDevice_GetRenderState_DestBlend(D3DDevice *);
+uint D3DDevice_GetRenderState_SrcBlendAlpha(D3DDevice *);
+uint D3DDevice_GetRenderState_DestBlendAlpha(D3DDevice *);
+
+void D3DDevice_SetRenderState_AlphaBlendEnable(D3DDevice *, uint);
+void D3DDevice_SetRenderState_AlphaFunc(D3DDevice *, D3DCMPFUNC);
+void D3DDevice_SetRenderState_AlphaRef(D3DDevice *, DWORD);
+void D3DDevice_SetRenderState_AlphaTestEnable(D3DDevice *, uint);
+void D3DDevice_SetRenderState_BlendOp(D3DDevice *, uint);
+void D3DDevice_SetRenderState_SrcBlend(D3DDevice *, uint);
+void D3DDevice_SetRenderState_DestBlend(D3DDevice *, uint);
+void D3DDevice_SetRenderState_SrcBlendAlpha(D3DDevice *, uint);
+void D3DDevice_SetRenderState_DestBlendAlpha(D3DDevice *, uint);
+void D3DDevice_SetRenderState_ColorWriteEnable(D3DDevice *, uint);
+void D3DDevice_SetRenderState_FillMode(D3DDevice *, uint);
+void D3DDevice_SetRenderState_CullMode(D3DDevice *, uint);
+void D3DDevice_SetRenderState_StencilEnable(D3DDevice *, uint);
+void D3DDevice_SetRenderState_StencilFail(D3DDevice *, uint);
+void D3DDevice_SetRenderState_StencilZFail(D3DDevice *, uint);
+void D3DDevice_SetRenderState_StencilPass(D3DDevice *, uint);
+void D3DDevice_SetRenderState_StencilFunc(D3DDevice *, D3DCMPFUNC);
+void D3DDevice_SetRenderState_StencilRef(D3DDevice *, DWORD);
+void D3DDevice_SetRenderState_ZEnable(D3DDevice *, DWORD);
+void D3DDevice_SetRenderState_ZFunc(D3DDevice *, D3DCMPFUNC);
+void D3DDevice_SetRenderState_ZWriteEnable(D3DDevice *, DWORD);
 }

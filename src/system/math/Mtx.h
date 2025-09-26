@@ -217,6 +217,8 @@ public:
 
     bool operator==(const Transform &tf) const { return m == tf.m && v == tf.v; }
     bool operator!=(const Transform &tf) const { return m != tf.m || v != tf.v; }
+
+    static const Transform &IDXfm() { return sID; }
 };
 
 TextStream &operator<<(TextStream &, const Transform &);
@@ -230,6 +232,12 @@ inline BinStream &operator>>(BinStream &bs, Transform &tf) {
     bs >> tf.m >> tf.v;
     return bs;
 }
+
+class QuatXfm {
+public:
+    Vector3 v;
+    Hmx::Quat q;
+};
 
 class Plane {
 public:
@@ -261,6 +269,7 @@ void Multiply(const Hmx::Matrix3 &, const Hmx::Matrix3 &, Hmx::Matrix3 &);
 void MultiplyInverse(const Transform &, const Transform &, Transform &);
 void Multiply(const Transform &, const Transform &, Transform &);
 void MultiplyTranspose(const Vector3 &, const Transform &, Vector3 &);
+void Multiply(const Vector3 &, const Transform &, Vector3 &);
 
 void Invert(const Transform &, Transform &);
 void Invert(const Hmx::Matrix4 &, Hmx::Matrix4 &);

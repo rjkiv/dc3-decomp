@@ -10,6 +10,9 @@ public:
     void SetSidewaysCutoffThreshold(float);
     void RestoreDefaultSidewaysCutoffThreshold();
     void Update(const Skeleton &, bool);
+    bool Valid() const { return mValid; }
+    bool Sitting() const { return mSitting; }
+    bool Sideways() const { return mSideways; }
 
 private:
     void UpdateIsConfident(const TrackedJoint *);
@@ -18,10 +21,10 @@ private:
 
     float unk4;
     float unk8;
-    bool unkc;
+    bool mValid; // 0xc
     float unk10;
     bool unk14;
-    bool unk15;
-    bool unk16;
+    bool mSitting; // 0x15
+    bool mSideways; // 0x16
     float mSidewaysCutoffThreshold; // 0x18
 };

@@ -32,9 +32,13 @@ public:
     void GetCamFrustum(Vector3 &, Vector3 (&)[4]);
     void SetTargetTex(RndTex *);
     void SetFrustum(float, float, float, float);
+    Transform &LocalProjectXfm() { return mLocalProjectXfm; }
 
     NEW_OBJ(RndCam);
     OBJ_MEM_OVERLOAD(0x1B);
+    static RndCam *Current() { return sCurrent; }
+    static float DefaultNearPlane() { return sDefaultNearPlane; }
+    static float MaxFarNearPlaneRatio() { return sMaxFarNearPlaneRatio; }
 
 protected:
     RndCam();

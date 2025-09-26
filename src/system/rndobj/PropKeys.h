@@ -1,4 +1,5 @@
 #pragma once
+#include "math/Key.h"
 #include "math/Color.h"
 #include "math/Mtx.h"
 #include "math/Vec.h"
@@ -223,6 +224,12 @@ public:
 
     AnimKeysType KeysType() const { return mKeysType; }
     void ResetLastKeyFrameIndex() { mLastKeyFrameIndex = -2; }
+    Hmx::Object *Target() const { return mTarget; }
+    DataArray *Prop() const { return mProp; }
+    Interpolation GetInterpolation() const { return mInterpolation; }
+    void SetInterpolation(Interpolation interp) { mInterpolation = interp; }
+    Symbol InterpHandler() const { return mInterpHandler; }
+    ExceptionID GetExceptionID() const { return mPropExceptionID; }
 
     static ExceptionID PropExceptionID(Hmx::Object *, DataArray *);
     static Message sInterpMessage;

@@ -30,6 +30,7 @@ public:
     void SetGrammarState(Symbol, bool);
     void InitGrammars(const DataArray *);
     void LoadGrammar(Symbol, const char *, bool);
+    void Poll();
 
 private:
     bool GetSpeechLanguage(NUI_SPEECH_LANGUAGE &) const;

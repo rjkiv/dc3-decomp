@@ -1,4 +1,5 @@
 #pragma once
+#include "os/Debug.h"
 #include "utl/BinStream.h"
 #include "utl/TextStream.h"
 #include <vector>
@@ -31,6 +32,7 @@ BinStream &operator<<(BinStream &bs, const Key<T> &key) {
     return bs;
 }
 
+// TODO: this needs to use BinStreamRev for both return value and input
 template <class T>
 BinStream &operator>>(BinStream &bs, Key<T> &key) {
     bs >> key.value >> key.frame;
@@ -117,7 +119,29 @@ public:
      * @returns The index in the vector where this keyframe resides.
      */
     int
-    AtFrame(float frame, const Key<T1> *&prev, const Key<T1> *&next, float &ref) const;
+    AtFrame(float frame, const Key<T1> *&prev, const Key<T1> *&next, float &ref) const {
+        if (empty()) {
+            prev = next = nullptr;
+            ref = 0;
+            return -1;
+        } else if (frame < front().frame) {
+            prev = next = &front();
+            ref = 0;
+            return -1;
+        } else if (frame >= back().frame) {
+            prev = next = &back();
+            ref = 0;
+            return size() - 1;
+        } else {
+            int frameIdx = KeyLessEq(frame);
+            prev = &(*this)[frameIdx];
+            next = &(*this)[frameIdx + 1];
+            float den = next->frame - prev->frame;
+            MILO_ASSERT(den != 0, 0xFF);
+            ref = (frame - prev->frame) / den;
+            return frameIdx;
+        }
+    }
 
     /** Get the first frame of the keys. */
     float FirstFrame() const {
@@ -200,9 +224,51 @@ public:
     }
 
     Key<T1 *> KeyNearest(float);
-    bool Linear(float f1, float &fref) const;
+
+    bool Linear(float f1, float &fref) const {
+        if (size() == 0)
+            return false;
+        else {
+            if (size() == 1)
+                fref = front().value;
+            else {
+                int idx = Clamp<int>(0, size() - 2, KeyLessEq(f1));
+                const Key<T1> &keyNow = (*this)[idx];
+                const Key<T1> &keyNext = (*this)[idx + 1];
+                Interp(
+                    keyNow.value,
+                    keyNext.value,
+                    (f1 - keyNow.frame) / (keyNext.frame - keyNow.frame),
+                    fref
+                );
+            }
+            return true;
+        }
+    }
+
+    bool ReverseLinear(const float &fconst, float &fref) const {
+        if (size() == 0)
+            return false;
+        else {
+            if (size() == 1)
+                fref = front().frame;
+            else {
+                int numKeys = size();
+                int idx = Clamp<int>(0, numKeys - 2, ReverseKeyLessEq(fconst));
+                const Key<T1> &keyNow = (*this)[idx];
+                const Key<T1> &keyNext = (*this)[idx + 1];
+                Interp(
+                    keyNow.frame,
+                    keyNext.frame,
+                    (fconst - keyNow.value) / (keyNext.value - keyNow.value),
+                    fref
+                );
+            }
+            return true;
+        }
+    }
+
     int ReverseKeyLessEq(const float &fref) const;
-    bool ReverseLinear(const float &fconst, float &fref) const;
     T1 *Cross(float, float) const;
 };
 

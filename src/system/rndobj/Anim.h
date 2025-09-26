@@ -5,6 +5,7 @@
 #include "obj/Object.h"
 #include "obj/Task.h"
 #include "obj/Object.h"
+#include "utl/MemMgr.h"
 #include "utl/PoolAlloc.h"
 #include <list>
 
@@ -54,6 +55,9 @@ public:
     /** Get the list of this Object's children that are animatable. */
     virtual void ListAnimChildren(std::list<RndAnimatable *> &) const {}
     virtual DataNode OnListFlowLabels(DataArray *) { return 0; }
+
+    OBJ_MEM_OVERLOAD(0x1B)
+    NEW_OBJ(RndAnimatable)
 
     /** Determine if this animatable has any active tasks associated with it. */
     bool IsAnimating();

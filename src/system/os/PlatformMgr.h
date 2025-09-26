@@ -109,6 +109,8 @@ public:
     void UpdateSigninState();
     void SetPadContext(int, int, int) const;
     void SetPadPresence(int, int) const;
+    bool GuideShowing(){return mGuideShowing;}
+    bool IsConnected(){return mConnected;}
 };
 
 extern PlatformMgr ThePlatformMgr;

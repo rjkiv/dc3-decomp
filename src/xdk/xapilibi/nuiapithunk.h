@@ -7,6 +7,7 @@ extern "C" {
 
 DWORD XShowNuiFriendsUI(DWORD, DWORD);
 DWORD XShowNuiPartyUI(DWORD, DWORD);
+DWORD XShowNuiGuideUI(DWORD);
 
 #ifdef __cplusplus
 }

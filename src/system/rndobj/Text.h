@@ -63,6 +63,7 @@ public:
 
     class Style {
     public:
+        Style(Hmx::Object *);
         /** "Size of the text" */
         float mSize; // 0x0
         /** "Color of the text, put into mesh verts.

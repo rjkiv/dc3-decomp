@@ -107,6 +107,8 @@ public:
     bool TimersShowing() { return mTimersOverlay->Showing(); }
     int Width() const { return mWidth; }
     int Height() const { return mHeight; }
+    int Bpp() const { return mScreenBpp; }
+    bool WorldEnded() const { return mWorldEnded; }
     void ShowConsole(bool);
     bool ConsoleShowing();
     void EndWorld();

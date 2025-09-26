@@ -23,16 +23,27 @@ public:
 
     OBJ_MEM_OVERLOAD(0x18);
 
+    RndMat *GetMat() const { return mMat; }
+    void SetMat(RndMat *mat);
+    Vector2 &Sizes() { return mSizes; }
+    Vector2 &Range() { return mRange; }
+    int GetSteps() const { return mSteps; }
+    void SetSteps(int steps);
+
 protected:
     RndFlare();
 
     bool mPointTest; // 0x100
     bool mAreaTest; // 0x101
     bool mVisible; // 0x102
+    /** "Size of the flare" */
     Vector2 mSizes; // 0x104
+    /** "Material to use for the flare" */
     ObjPtr<RndMat> mMat; // 0x10C
+    /** "Range of the flare" */
     Vector2 mRange; // 0x120
     float mOffset; // 0x128
+    /** "Steps for the flare". Ranges from 1 to 10000. */
     int mSteps; // 0x12c
     int mStep; // 0x130
     Hmx::Rect mArea; // 0x134

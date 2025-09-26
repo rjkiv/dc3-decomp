@@ -27,3 +27,8 @@ splits: config/373307D9/splits.txt
 # While not used in the build process, the disassembly is useful
 # for reading and usage with other tools, like decomp.me.
 # write_asm: false
+
+add_relocations:
+- source: .rdata:0x82089114
+  type: abs
+  target: merged_BufLockIdxSDVD

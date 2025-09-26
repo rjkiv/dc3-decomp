@@ -19,6 +19,7 @@ public:
     void StartCameraTiltingUp();
     void StartCameraTiltingDown();
     void StartCameraTiltingToInital();
+    void Poll();
 
     static void Init();
 

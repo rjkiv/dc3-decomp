@@ -4,6 +4,7 @@
 #include "utl/BinStream.h"
 #include "utl/FilePath.h"
 #include "utl/Loader.h"
+#include "utl/MemMgr.h"
 
 /**
  * @brief A texture.
@@ -52,6 +53,9 @@ public:
     virtual void PresyncBitmap();
     virtual void SyncBitmap();
 
+    OBJ_MEM_OVERLOAD(0x1C)
+    NEW_OBJ(RndTex)
+
     /** Set this texture's bitmap using the supplied parameters.
      * @param [in] w The texture's width.
      * @param [in] h The texture's height.
@@ -74,26 +78,6 @@ public:
     void SaveBitmap(const char *);
     /** Determine whether this texture's dimensions are both powers of 2. */
     void SetPowerOf2();
-
-    /** Handler to set this texture's type to rendered.
-     * Example usage: {$this set_rendered}
-     */
-    DataNode OnSetRendered(const DataArray *);
-    /** Handler to set this texture's bitmap.
-     * @param [in] arr The supplied DataArray.
-     * Expected DataArray contents:
-     *     Node 2: A string containing the path to the texture.
-     * Example usage: {$this set_bitmap texture.tex}
-     * OR
-     * Expected DataArray contents:
-     *     Node 2: The texture width.
-     *     Node 3: The texture height.
-     *     Node 4: The texture bpp.
-     *     Node 5: The texture type.
-     *     Node 6: Whether or not to set a mipmap.
-     * Example usage: {$this set_bitmap 512 512 24 kRendered TRUE}
-     */
-    DataNode OnSetBitmap(const DataArray *arr);
 
     /** Validate the texture based on the supplied properties.
      * @param [in] width The texture's width.
@@ -126,6 +110,27 @@ public:
 protected:
     RndTex();
 
+    /** Handler to set this texture's bitmap.
+     * @param [in] arr The supplied DataArray.
+     * Expected DataArray contents:
+     *     Node 2: A string containing the path to the texture.
+     * Example usage: {$this set_bitmap texture.tex}
+     * OR
+     * Expected DataArray contents:
+     *     Node 2: The texture width.
+     *     Node 3: The texture height.
+     *     Node 4: The texture bpp.
+     *     Node 5: The texture type.
+     *     Node 6: Whether or not to set a mipmap.
+     * Example usage: {$this set_bitmap 512 512 24 kRendered TRUE}
+     */
+    DataNode OnSetBitmap(const DataArray *arr);
+
+    /** Handler to set this texture's type to rendered.
+     * Example usage: {$this set_rendered}
+     */
+    DataNode OnSetRendered(const DataArray *);
+
     int unk2c;
     /** The bitmap associated with this texture. */
     RndBitmap mBitmap; // 0x30
@@ -142,10 +147,10 @@ protected:
     FilePath mFilepath; // 0x64
     /** The number of mips in this texture's mipmap. */
     int mNumMips; // 0x6c
-    /** Whether or not this texture's width and height are powers of 2. */
-    bool mIsPowerOf2; // 0x70
-    // /** Unused. Presumably, whether to use specialized computations for the PS3. */
-    // bool mOptimizeForPS3; // 0x71
+    // /** Whether or not this texture's width and height are powers of 2. */
+    // bool mIsPowerOf2; // 0x70
+    /** Unused. Presumably, whether to use specialized computations for the PS3. */
+    bool mOptimizeForPS3; // 0x70
     FileLoader *mLoader; // 0x74
 };
 

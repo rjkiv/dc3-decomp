@@ -4,7 +4,7 @@
 #include "gesture/Skeleton.h"
 
 SkeletonQualityFilter::SkeletonQualityFilter()
-    : unk4(0), unk8(20), unkc(0), unk10(0), unk15(0), unk16(0),
+    : unk4(0), unk8(20), mValid(0), unk10(0), mSitting(0), mSideways(0),
       mSidewaysCutoffThreshold(0.55) {}
 
 void SkeletonQualityFilter::Init(float f1, float f2) {

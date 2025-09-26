@@ -128,6 +128,10 @@ public:
     void SetMat(RndMat *);
     void SetGeomOwner(RndMesh *);
     void SetKeepMeshData(bool);
+    void SetNumBones(int);
+    void SetBone(int, RndTransformable *, bool);
+    void SetNumVerts(int verts) { mGeomOwner->mVerts.resize(verts); }
+    void SetNumFaces(int faces) { mGeomOwner->mFaces.resize(faces); }
 
 protected:
     RndMesh();

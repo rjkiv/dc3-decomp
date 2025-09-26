@@ -1,5 +1,6 @@
 #pragma once
 #include "obj/Object.h"
+#include "os/Debug.h"
 #include "rndobj/Text.h"
 #include "ui/UIComponent.h"
 #include "utl/MemMgr.h"
@@ -33,8 +34,9 @@ public:
     virtual void PostLoad(BinStream &);
     // RndText
     virtual Symbol TextToken();
-    virtual void SetCreditsText(DataArray *, class UIListSlot *);
-    virtual void SetDisplayText(const char *, bool);
+    virtual void SetCreditsText(DataArray *, class UIListSlot *) {
+        MILO_ASSERT(false, 0x50);
+    }
     // UIComponent
     virtual void Poll();
     virtual void OldResourcePreload(BinStream &);
@@ -45,8 +47,27 @@ public:
 
     OBJ_MEM_OVERLOAD(0x26);
 
+    void SetTokenFmt(const DataArray *);
+
+    template <class T1>
+    void SetTokenFmt(Symbol s, T1 t1) {
+        SetTokenFmt(DataArrayPtr(s, t1));
+    }
+
+    template <class T1, class T2>
+    void SetTokenFmt(Symbol s, T1 t1, T2 t2) {
+        SetTokenFmt(DataArrayPtr(s, t1, t2));
+    }
+
+    template <class T1, class T2, class T3>
+    void SetTokenFmt(Symbol s, T1 t1, T2 t2, T3 t3) {
+        SetTokenFmt(DataArrayPtr(s, t1, t2, t3));
+    }
+
 protected:
     UILabel();
+
+    virtual void SetDisplayText(const char *, bool);
 
     Symbol unk114; // 0x114
     String unk118; // 0x118

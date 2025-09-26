@@ -61,3 +61,35 @@ public:
     virtual void UnHighlightCurrent() {}
     virtual void ClearIconLabels() {}
 };
+
+class DataProvider : public UIListProvider {
+public:
+    DataProvider(DataArray *arr, int i, bool b1, bool b2, UIList *ul)
+        : mData(0), mOffset(i), mFluidWidth(b1), unkd(b2), mList(ul) {
+        SetData(arr);
+    }
+    virtual ~DataProvider() {}
+    virtual void Text(int, int, UIListLabel *, UILabel *) const;
+    virtual RndMat *Mat(int, int, UIListMesh *) const;
+    virtual Symbol DataSymbol(int) const;
+    virtual int NumData() const { return mData->Size() - mOffset; }
+    virtual bool IsActive(int) const;
+    virtual float GapSize(int, int, int, int) const;
+    virtual UIListWidgetState ElementStateOverride(int, int, UIListWidgetState) const;
+
+    void SetData(DataArray *);
+    void Enable(Symbol);
+    void Disable(Symbol);
+    void Dim(Symbol);
+    void UnDim(Symbol);
+
+protected:
+    DataArray *mData; // 0x4
+    int mOffset; // 0x8
+    bool mFluidWidth; // 0xc
+    bool unkd; // 0xd
+    std::list<Symbol> mDisabled; // 0x10
+    std::list<Symbol> mDimmed; // 0x18
+    std::vector<float> mWidths; // 0x20
+    UIList *mList; // 0x2c
+};

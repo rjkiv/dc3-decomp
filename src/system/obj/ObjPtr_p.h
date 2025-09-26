@@ -152,12 +152,30 @@ ObjPtrVec<T1, T2>::ObjPtrVec(Hmx::Object *owner, EraseMode e, ObjListMode o)
 }
 
 template <class T1, class T2>
+ObjPtrVec<T1, T2>::ObjPtrVec(const ObjPtrVec &other)
+    : mOwner(other.mOwner), mEraseMode(other.mEraseMode), mListMode(other.mListMode) {
+    *this = other;
+}
+
+template <class T1, class T2>
 ObjPtrVec<T1, T2>::Node::Node(const Node &n)
-    : ObjRefConcrete<T1, T2>(n.mObject), mOwner(n.mOwner) {}
+    : ObjRefConcrete<T1, T2>(n), mOwner(n.mOwner) {}
 
 template <class T1, class T2>
 ObjPtrVec<T1, T2>::~ObjPtrVec() {
     mNodes.clear();
+}
+
+template <class T1, class T2>
+void ObjPtrVec<T1, T2>::ReplaceNode(Node *n, Hmx::Object *obj) {
+    if (mListMode == kObjListOwnerControl) {
+        mOwner->Replace(n, obj);
+    } else {
+        Hmx::Object *oldObj = n->SetObj(obj);
+        if (!oldObj && mListMode == kObjListNoNull) {
+            erase(n);
+        }
+    }
 }
 
 template <class T1, class T2>
@@ -183,7 +201,18 @@ void ObjPtrVec<T1, T2>::operator=(const ObjPtrVec &other) {
 
 template <class T1, class T2>
 void ObjPtrVec<T1, T2>::push_back(T1 *obj) {
-    insert(!mNodes.empty() ? mNodes.end() : mNodes.begin() + size(), obj);
+    insert(mNodes.empty() ? mNodes.begin() : mNodes.end(), obj);
+}
+
+template <class T1, class T2>
+typename ObjPtrVec<T1, T2>::iterator
+ObjPtrVec<T1, T2>::insert(typename ObjPtrVec<T1, T2>::const_iterator it, T1 *obj) {
+    int idx = *it != nullptr ? size() : 0;
+    if (obj || mListMode != kObjListNoNull) {
+        // mNodes.insert(it, Node(obj));
+        Set(iterator(0), obj);
+    }
+    return iterator(&Node(obj));
 }
 
 template <class T1, class T2>
@@ -238,6 +267,14 @@ ObjPtrList<T1, T2>::ObjPtrList(ObjRefOwner *owner, ObjListMode mode)
 }
 
 template <class T1, class T2>
+ObjPtrList<T1, T2>::ObjPtrList(const ObjPtrList &other)
+    : mSize(0), mNodes(nullptr), mOwner(other.mOwner), mListMode(other.mListMode) {
+    for (iterator it = other.begin(); it != other.end(); ++it) {
+        push_back(*it);
+    }
+}
+
+template <class T1, class T2>
 void *ObjPtrList<T1, T2>::Node::operator new(unsigned int s) {
     return PoolAlloc(s, s, __FILE__, 0x122, "ObjPtrList_node");
 }
@@ -278,6 +315,12 @@ template <class T1, class T2>
 void ObjPtrList<T1, T2>::pop_back() {
     MILO_ASSERT(mNodes != NULL, 0x18B);
     erase(mNodes->prev);
+}
+
+template <class T1, class T2>
+void ObjPtrList<T1, T2>::pop_front() {
+    MILO_ASSERT(mNodes != NULL, 0x18C);
+    erase(mNodes);
 }
 
 template <class T1, class T2>

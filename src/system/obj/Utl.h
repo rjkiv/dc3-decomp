@@ -14,7 +14,12 @@ void InitObject(Hmx::Object *);
  * @param [in] obj The Object.
  * @returns The Object's name, or "NULL" if the object doesn't exist.
  */
-const char *SafeName(Hmx::Object *obj);
+const char *SafeName(Hmx::Object *obj) {
+    if (obj)
+        return obj->Name();
+    else
+        return "NULL";
+}
 
 /** Gets a list of every Object inside ObjectDir dir that is a subclass of class with name
  * parentSym. The list is in DataArray form, with each node containing the qualifying

@@ -1,5 +1,7 @@
 #pragma once
+#include "nuiapi/identityapi.h"
 #include "nuiapi/nuidetroit.h"
+#include "nuiapi/nuidiagnostics.h"
 #include "nuiapi/nuifitnesslib.h"
 #include "nuiapi/nuiskeleton.h"
 #include "nuiapi/nuiwave.h"

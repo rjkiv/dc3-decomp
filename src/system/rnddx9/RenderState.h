@@ -1,4 +1,5 @@
 #pragma once
+#include <xdk/D3D9.h>
 #include <types.h>
 class RndRenderState {
 public:
@@ -18,6 +19,7 @@ public:
     };
     enum TestFunc {
     };
+    static D3DCMPFUNC tf2cf[];
 
     void SetBlendEnable(bool);
     void SetBlendOp(BlendOp);

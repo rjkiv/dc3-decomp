@@ -281,6 +281,11 @@ void MetaMaterial::Init() {
     }
 }
 
+BinStream &operator>>(BinStream &bs, MatPropEditAction &a) {
+    bs >> (int &)a;
+    return bs;
+}
+
 BEGIN_LOADS(MetaMaterial)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)

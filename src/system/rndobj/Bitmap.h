@@ -49,7 +49,7 @@ struct tagBITMAPINFOHEADER {
 BinStream &operator>>(BinStream &, tagBITMAPINFOHEADER &);
 BinStream &operator<<(BinStream &, const tagBITMAPINFOHEADER &);
 
-class RndBitmap { // 0x1c
+class RndBitmap { // 0x20
 public:
     enum AlphaFlag {
         kGrayscaleAlpha = 0,

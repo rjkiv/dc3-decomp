@@ -1,5 +1,6 @@
 #pragma once
 #include "math/Vec.h"
+#include "utl/BinStream.h"
 
 class Segment {
 public:
@@ -63,6 +64,11 @@ public:
     Vector3 mMin;
     Vector3 mMax;
 };
+
+inline BinStream &operator<<(BinStream &bs, const Box &box) {
+    bs << box.mMin << box.mMax;
+    return bs;
+}
 
 class Triangle {
 public:

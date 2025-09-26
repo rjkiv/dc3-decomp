@@ -11,12 +11,34 @@ public:
     void SetNumDisplay(int, bool);
     void SetGridSpan(int, bool);
     void SetSelected(int, int, bool);
+    void SetSpeed(float);
+    void SetMinDisplay(int);
+    void SetMaxDisplay(int);
+    void SetScrollPastMinDisplay(bool);
+    void SetScrollPastMaxDisplay(bool);
+    int Selected() const;
+    int SelectedData() const;
+    int CurrentScroll() const;
+
+    bool Circular() const { return mCircular; }
+    int NumDisplay() const { return mNumDisplay; }
+    int FirstShowing() const { return mFirstShowing; }
+    int GridSpan() const { return mGridSpan; }
+    float Speed() const;
+    int MinDisplay();
+    int MaxDisplay() const;
+    bool ScrollPastMinDisplay() const;
+    bool ScrollPastMaxDisplay() const;
+    bool IsScrolling() const;
 
 private:
     /** "Does the list scrolling wrap?" */
     bool mCircular; // 0x0
+    /** "Number of rows/columns" */
     int mNumDisplay; // 0x4
+    /** "Number \\" 'across\\"' for a 'grid."' */
     int mGridSpan; // 0x8
+    /** "Time (seconds) to scroll one step - 0 for instant scrolling" */
     float mSpeed; // 0xc
     /** "How far from top of list to start scrolling". Range from 0 to 50 */
     int mMinDisplay; // 0x10

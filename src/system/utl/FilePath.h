@@ -12,7 +12,6 @@ public:
     FilePath() : String() {}
     FilePath(const char *str);
     FilePath(const char *cc, const char *cc2);
-    // virtual ~FilePath() {} // i guess hmx didn't have this for FilePath?
 
     void Set(const char *, const char *);
 
@@ -21,6 +20,7 @@ public:
     // }
     // void SetRoot(const char *str) { Set(sRoot.c_str(), str); }
     static FilePath &Root() { return sRoot; }
+    static FilePath &Null() { return sNull; }
 };
 
 inline TextStream &operator<<(TextStream &ts, FilePath &fp) {
@@ -45,9 +45,12 @@ BinStream &operator>>(BinStream &, FilePath &);
 
 class FilePathTracker {
 public:
-    FilePathTracker(const char *root);
+    FilePathTracker(const char *root) {
+        mOldRoot = FilePath::Root();
+        FilePath::Root().Set(FileRoot(), root);
+    }
 
-    ~FilePathTracker();
+    ~FilePathTracker() { FilePath::Root() = mOldRoot; }
 
     FilePath mOldRoot;
 };

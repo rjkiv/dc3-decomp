@@ -1,9 +1,11 @@
 #include "char/CharBones.h"
+#include "char/CharClip.h"
 #include "math/Mtx.h"
 #include "math/Vec.h"
 #include "os/Debug.h"
 #include "utl/BinStream.h"
 #include "obj/Object.h"
+#include "utl/MemMgr.h"
 
 CharBones *gPropBones;
 
@@ -183,3 +185,12 @@ BEGIN_PROPSYNCS(CharBonesObject)
     SYNC_PROP(bones, mBones)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
+
+void CharBones::ScaleAdd(CharClip *clip, float f1, float f2, float f3) {
+    clip->ScaleAdd(*this, f1, f2, f3);
+}
+
+void CharBonesAlloc::ReallocateInternal() {
+    MemFree(mStart);
+    mStart = (char *)MemAlloc(mTotalSize, __FILE__, 0x6C0, "CharBones");
+}

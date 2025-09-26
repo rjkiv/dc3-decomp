@@ -1,0 +1,75 @@
+#pragma once
+#include "obj/Data.h"
+#include "obj/Object.h"
+#include "utl/MemMgr.h"
+#include "world/CameraShot.h"
+#include "world/Crowd.h"
+#include "world/FreeCamera.h"
+
+class WorldDir;
+
+/** "Searches for and sequences CamShots" */
+class CameraManager : public Hmx::Object {
+public:
+    class Category {
+    public:
+        Symbol unk0;
+        ObjPtrList<CamShot> *unk4;
+    };
+
+    struct PropertyFilter {
+        DataNode prop; // 0x0
+        DataNode match; // 0x8
+        int mask; // 0x10
+    };
+
+    CameraManager(WorldDir *);
+    // Hmx::Object
+    virtual ~CameraManager();
+    OBJ_CLASSNAME(CameraManager);
+    OBJ_SET_TYPE(CameraManager);
+    virtual DataNode Handle(DataArray *, bool);
+    virtual bool SyncProperty(DataNode &, DataArray *, int, PropOp);
+    virtual void Save(BinStream &);
+    virtual void Copy(const Hmx::Object *, Hmx::Object::CopyType);
+    virtual void Load(BinStream &);
+
+    OBJ_MEM_OVERLOAD(0x15)
+    NEW_OBJ(CameraManager)
+
+    CamShot *NextShot() const { return mNextShot; }
+    CamShot *CurrentShot() const { return mCurrentShot; }
+    bool HasFreeCam() const { return mFreeCam; }
+    void ForceCamShot(CamShot *);
+    FreeCamera *GetFreeCam(int);
+    void DeleteFreeCam();
+    CamShot *ShotAfter(CamShot *);
+
+private:
+    void StartShot_(CamShot *);
+
+    DataNode OnPickCameraShot(DataArray *);
+    DataNode OnFindCameraShot(DataArray *);
+    DataNode OnCycleShot(DataArray *);
+    DataNode OnRandomSeed(DataArray *);
+    DataNode OnIterateShot(DataArray *);
+    DataNode OnNumCameraShots(DataArray *);
+    DataNode OnGetShotList(DataArray *);
+
+protected:
+    CameraManager();
+
+    /** "Controlling world object" */
+    WorldDir *mParent; // 0x2c
+    std::vector<Category> mCameraShotCategories; // 0x30
+    /** "Which shot to play right now" */
+    ObjPtr<CamShot> mNextShot; // 0x3c
+    /** "Next camera blend time in units of camera, is run-time, not serialized" */
+    float mBlendTime; // 0x50
+    int unk54; // 0x54
+    bool unk58; // 0x58
+    ObjPtr<CamShot> mCurrentShot; // 0x5c
+    float unk70; // 0x70
+    FreeCamera *mFreeCam; // 0x74
+    ObjPtrList<WorldCrowd> unk78; // 0x78
+};

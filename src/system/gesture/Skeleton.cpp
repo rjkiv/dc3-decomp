@@ -1,5 +1,6 @@
 #include "gesture/Skeleton.h"
 #include "ArchiveSkeleton.h"
+#include "IdentityInfo.h"
 #include "gesture/GestureMgr.h"
 #include "gesture/BaseSkeleton.h"
 #include "gesture/SkeletonHistory.h"
@@ -78,9 +79,9 @@ void SkeletonFrame::Init() {
 
 void SkeletonFrame::Create(const NUI_SKELETON_FRAME &nui_frame, int i2) {
     unk0 = nui_frame.dwFrameNumber;
-    unk4 = i2;
+    mElapsedMs = i2;
     unk8 = sUpVectorSmoother.Value();
-    unk18 = nui_frame.vFloorClipPlane;
+    unk18 = *reinterpret_cast<const Vector4 *>(&nui_frame.vFloorClipPlane);
 }
 
 void Skeleton::JointPos(SkeletonCoordSys cs, SkeletonJoint joint, Vector3 &pos) const {
@@ -108,7 +109,7 @@ float Skeleton::BoneLength(SkeletonBone bone, SkeletonCoordSys cs) const {
 }
 
 void Skeleton::ScreenPos(SkeletonJoint joint, Vector2 &pos) const {
-    if (unkaa0 == 2) {
+    if (mTracking == kSkeletonTracked) {
         JointScreenPos(mTrackedJoints[joint], pos);
     } else
         pos.Zero();
@@ -118,7 +119,8 @@ bool Skeleton::PrevTrackedSkeleton(
     const SkeletonHistory *history, int i2, int &iref, ArchiveSkeleton &archiveSkeleton
 ) const {
     MILO_ASSERT(history, 0x169);
-    if (unkaa0 == 2 && history->PrevSkeleton(*this, i2, archiveSkeleton, iref)) {
+    if (mTracking == kSkeletonTracked
+        && history->PrevSkeleton(*this, i2, archiveSkeleton, iref)) {
         return archiveSkeleton.IsTracked();
     } else
         return false;
@@ -161,32 +163,8 @@ bool Skeleton::Velocity(
     }
 }
 
-// bool __thiscall
-// Skeleton::Velocity(Skeleton *this,SkeletonHistory *param_1,SkeletonCoordSys param_2,
-//                   SkeletonJoint param_3,int param_4,Vector3 *param_5,int *param_6)
-
-// {
-//   float fVar1;
-//   char cVar2;
-
-//   cVar2 = (**((this->super_BaseSkeleton).vptr +
-//   8))(this,param_1,param_2,param_3,param_4); if (cVar2 == '\0') {
-//     fVar1 = 0.0;
-//     param_5->y = 0.0;
-//     param_5->x = 0.0;
-//   }
-//   else {
-//     fVar1 = 1.0 / (*param_6 * 0.001);
-//     param_5->x = param_5->x * fVar1;
-//     param_5->y = fVar1 * param_5->y;
-//     fVar1 = fVar1 * param_5->z;
-//   }
-//   param_5->z = fVar1;
-//   return cVar2 != '\0';
-// }
-
 void Skeleton::Init() {
-    unkaa0 = 0;
+    mTracking = kSkeletonNotTracked;
     mSkeletonIdx = -1;
     mQualityFlags = 0;
     unkab0.Zero();
@@ -204,6 +182,22 @@ void Skeleton::Init() {
     mCamDisplacements.clear();
 }
 
-Skeleton::Skeleton() : unkaa0(0), unkaac(-1), unkac4(0) { Init(); }
-bool Skeleton::IsTracked() const { return unkaa0 == 2; }
+Skeleton::Skeleton() : mTracking(kSkeletonNotTracked), mTrackingID(-1), unkac4(0) {
+    Init();
+}
+bool Skeleton::IsTracked() const { return mTracking == kSkeletonTracked; }
 int Skeleton::ElapsedMs() const { return mElapsedMs; }
+
+bool Skeleton::ProfileMatched() const {
+    IdentityInfo *info = TheGestureMgr->GetIdentityInfo(mSkeletonIdx);
+    return info ? info->ProfileMatched() : false;
+}
+
+int Skeleton::GetEnrollmentIndex() const {
+    IdentityInfo *info = TheGestureMgr->GetIdentityInfo(mSkeletonIdx);
+    return info ? info->EnrollmentIndex() : -1;
+}
+
+bool Skeleton::NeedIdentify() const {
+    return GetEnrollmentIndex() == -1 || GetEnrollmentIndex() == -5;
+}

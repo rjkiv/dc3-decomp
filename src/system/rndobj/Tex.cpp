@@ -1,8 +1,76 @@
 #include "rndobj/Tex.h"
+#include "obj/Object.h"
 #include "os/System.h"
 #include "os/Debug.h"
 #include "rndobj/Bitmap.h"
 #include "utl/BinStream.h"
+
+bool UseBottomMip() {
+    DataArray *found = SystemConfig("rnd")->FindArray("use_bottom_mip", false);
+    if (found)
+        return found->Int(1);
+    else
+        return false;
+}
+
+void CopyBottomMip(RndBitmap &dst, const RndBitmap &src) {
+    MILO_ASSERT(&src != &dst, 0x25);
+    const RndBitmap *srcPtr = &src;
+    while (srcPtr->nextMip())
+        srcPtr = srcPtr->nextMip();
+    dst.Create(*srcPtr, srcPtr->Bpp(), srcPtr->Order(), nullptr);
+}
+
+RndTex::RndTex()
+    : unk2c(0), mMipMapK(-8.0f), mType(kTexRegular), mWidth(0), mHeight(0), mBpp(32),
+      mFilepath(), mNumMips(0), mOptimizeForPS3(0), mLoader(0) {}
+
+RndTex::~RndTex() { delete mLoader; }
+
+BEGIN_HANDLERS(RndTex)
+    HANDLE(set_bitmap, OnSetBitmap)
+    HANDLE(set_rendered, OnSetRendered)
+    HANDLE_EXPR(file_path, mFilepath.c_str())
+    HANDLE_ACTION(set_file_path, mFilepath.Set(FilePath::Root().c_str(), _msg->Str(2)))
+    HANDLE_EXPR(size_kb, SizeKb())
+    HANDLE_EXPR(tex_type, mType)
+    HANDLE_ACTION(save_bmp, SaveBitmap(_msg->Str(2)))
+    HANDLE_ACTION(save_png, _msg->Str(2)) // musta got stubbed out
+    HANDLE_SUPERCLASS(Hmx::Object)
+END_HANDLERS
+
+BEGIN_PROPSYNCS(RndTex)
+    SYNC_PROP_SET(width, mWidth, _val.Int())
+    SYNC_PROP_SET(height, mHeight, _val.Int()) {
+        static Symbol _s("bpp");
+        if (sym == _s && _op & kPropGet)
+            return PropSync(mBpp, _val, _prop, _i + 1, _op);
+    }
+    SYNC_PROP(mip_map_k, mMipMapK)
+    SYNC_PROP(optimize_for_ps3, mOptimizeForPS3)
+    SYNC_PROP_MODIFY(file_path, mFilepath, SetBitmap(mFilepath))
+    SYNC_SUPERCLASS(Hmx::Object)
+END_PROPSYNCS
+
+BEGIN_SAVES(RndTex)
+    SAVE_REVS(11, 0)
+    SAVE_SUPERCLASS(Hmx::Object)
+    bs << mWidth << mHeight << mBpp << mFilepath << mMipMapK << mType;
+    bs << (bool)mNumMips;
+    bs << mOptimizeForPS3;
+    if (bs.Cached()) {
+        mBitmap.Save(bs);
+    }
+END_SAVES
+
+void RndTex::Print() {
+    TheDebug << "   width: " << mWidth << "\n";
+    TheDebug << "   height: " << mHeight << "\n";
+    TheDebug << "   bpp: " << mBpp << "\n";
+    TheDebug << "   mipMapK: " << mMipMapK << "\n";
+    TheDebug << "   file: " << mFilepath << "\n";
+    TheDebug << "   type: " << mType << "\n";
+}
 
 void RndTex::LockBitmap(RndBitmap &bmap, int i) {
     if (mBitmap.Order() & 0x38) {
@@ -71,25 +139,6 @@ void RndTex::SaveBitmap(const char *bmp) {
     bitmap2.SaveBmp(bmp);
     UnlockBitmap();
 }
-
-bool UseBottomMip() {
-    DataArray *found = SystemConfig("rnd")->FindArray("use_bottom_mip", false);
-    return found ? (found->Int(1) != 0) : false;
-}
-
-void CopyBottomMip(RndBitmap &dst, const RndBitmap &src) {
-    MILO_ASSERT(&src != &dst, 0x25);
-    // while (src.nextMip()) {
-    //     &src = src.nextMip();
-    // }
-    dst.Create(src, src.Bpp(), src.Order(), nullptr);
-}
-
-RndTex::RndTex()
-    : unk2c(0), mMipMapK(-8.0f), mType(kTexRegular), mWidth(0), mHeight(0), mBpp(32),
-      mFilepath(), mNumMips(0), mIsPowerOf2(0), mLoader(0) {}
-
-RndTex::~RndTex() { delete mLoader; }
 
 void RndTex::PlatformBppOrder(const char *path, int &bpp, int &order, bool hasAlpha) {
     Platform plat = TheLoadMgr.GetPlatform();
@@ -167,23 +216,4 @@ const char *CheckDim(int dim, RndTex::Type ty, bool b) {
         }
     }
     return ret;
-}
-
-void RndTex::Save(BinStream &bs) {
-    bs << 11;
-    SAVE_SUPERCLASS(Hmx::Object)
-    bs << mWidth << mHeight << mBpp << mFilepath << mMipMapK << mType
-       << (unsigned char)mNumMips << mIsPowerOf2;
-    if (bs.Cached()) {
-        mBitmap.Save(bs);
-    }
-}
-
-void RndTex::Print() {
-    TheDebug << "   width: " << mWidth << "\n";
-    TheDebug << "   height: " << mHeight << "\n";
-    TheDebug << "   bpp: " << mBpp << "\n";
-    TheDebug << "   mipMapK: " << mMipMapK << "\n";
-    TheDebug << "   file: " << mFilepath << "\n";
-    TheDebug << "   type: " << mType << "\n";
 }

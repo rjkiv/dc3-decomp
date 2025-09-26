@@ -571,6 +571,7 @@ private:
 
 public:
     DataArrayPtr() { mData = new DataArray(0); }
+    DataArrayPtr(const DataArrayPtr &ptr) : mData(ptr.mData) { mData->AddRef(); }
 
     DataArrayPtr(const DataNode &node) {
         mData = new DataArray(1);
@@ -609,7 +610,9 @@ public:
             mData = new DataArray(0);
     }
 
-    DataArrayPtr &operator=(DataArray *da) {
+    void operator=(const DataArrayPtr &ptr) { *this = (DataArray *)ptr; }
+
+    void operator=(DataArray *da) {
         if (mData != da) {
             mData->Release();
             mData = da;
@@ -618,7 +621,6 @@ public:
             else
                 mData = new DataArray(0);
         }
-        return *this;
     }
 
     operator DataArray *() const { return mData; }

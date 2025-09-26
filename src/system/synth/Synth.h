@@ -90,6 +90,7 @@ public:
     virtual float UpdateOverlay(RndOverlay *, float);
 
     Fader *MasterFader() const { return mMasterFader; }
+    void RemovePlayHandler(Hmx::Object *);
 
 protected:
     virtual ~Synth() {}

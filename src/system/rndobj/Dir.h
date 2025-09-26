@@ -58,6 +58,8 @@ public:
 
     OBJ_MEM_OVERLOAD(0x19);
 
+    void SetEnv(RndEnviron *env) { mEnv = env; }
+
 protected:
     RndDir();
 
