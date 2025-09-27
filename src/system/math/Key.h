@@ -269,7 +269,7 @@ public:
     }
 
     int ReverseKeyLessEq(const float &fref) const;
-    T1 *Cross(float, float) const;
+    const T1 *Cross(float, float) const;
 };
 
 /** Scale keyframes by a supplied multiplier.

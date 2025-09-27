@@ -6,6 +6,7 @@ enum Difficulty {
     kDifficultyMedium = 1,
     kDifficultyExpert = 2,
     kDifficultyBeginner = 3,
+    kNumDifficultiesDC2 = 3,
     kNumDifficulties = 4
 };
 
@@ -18,3 +19,7 @@ Difficulty DifficultyOneEasier(Difficulty);
 void DifficultyInit();
 Difficulty DefaultDifficulty();
 Difficulty EasiestDifficulty();
+
+Difficulty LegacyDifficulty(Difficulty d) {
+    return d == kDifficultyBeginner ? kDifficultyEasy : d;
+}

@@ -15,8 +15,11 @@
 #include "rndobj/Poll.h"
 #include "rndobj/PostProc.h"
 #include "rndobj/PropAnim.h"
+#include "rndobj/PropKeys.h"
 #include "rndobj/TexRenderer.h"
 #include "utl/MemMgr.h"
+#include "utl/Symbol.h"
+#include "world/CameraManager.h"
 #include "world/Dir.h"
 
 class AnimPtr;
@@ -24,7 +27,10 @@ class AnimPtr;
 /** "Hammer Director, sits in each song file and manages camera + scene changes" */
 class HamDirector : public RndPollable, public RndDrawable {
 public:
-    struct DircutEntry {};
+    struct DircutEntry {
+        HamCamShot *unk0;
+        bool unk4;
+    };
     // Hmx::Object
     virtual ~HamDirector();
     OBJ_CLASSNAME(HamDirector);
@@ -46,6 +52,10 @@ public:
 
     OBJ_MEM_OVERLOAD(0x6D)
     NEW_OBJ(HamDirector)
+
+    WorldDir *GetWorldDir() const {
+        return mMerger ? dynamic_cast<WorldDir *>(mMerger->Dir()) : nullptr;
+    }
 
     float GetMainFaceOverrideWeight();
     void SetMainFaceOverrideWeight(float);
@@ -80,6 +90,13 @@ public:
     void SetupAnims();
     RndPropAnim *GetPropAnim(Difficulty, const char *, bool);
     void SetupRoutineBuilderAnims();
+    PropKeys *GetPropKeys(Difficulty, Symbol);
+    void VenueEnter(WorldDir *);
+    void ForceShot(const char *);
+    PropKeys *GetMasterKeys(Symbol);
+    Key<Symbol> *GetMasterPracticeFrame(Symbol);
+    PropKeys *GetPropKeysByPlayer(int, Symbol);
+    void TriggerNextIntro();
 
     DataNode OnGetDancerVisemes(DataArray *);
 
@@ -110,6 +127,12 @@ protected:
     void PickIntroShot();
     void FindNextShot();
     void PlayNextShot();
+    void SetMasterClipAnim();
+    HamCamShot *FindNextDircut();
+    void SetDircut(Symbol, std::vector<CameraManager::PropertyFilter>);
+    void AddNumPlayers(std::vector<CameraManager::PropertyFilter> &, DataArray *);
+    void ReactToCollision_InsertRealShot(Symbol, float);
+    void ReactToCollision_MoveShot(int, float);
 
     DataNode OnShotOver(DataArray *);
     DataNode OnPostProcInterp(DataArray *);
@@ -138,11 +161,11 @@ protected:
     DataNode OnToggleCamCharacterSkeleton(DataArray *);
 
     ObjDirPtr<RndDir> unk48; // 0x48
-    std::map<Difficulty, AnimPtr> unk5c; // 0x5c
-    std::map<Difficulty, AnimPtr> unk74; // 0x74
-    ObjPtr<RndPropAnim> unk8c; // 0x8c
-    ObjPtr<RndPropAnim> unka0; // 0xa0
-    ObjPtr<RndPropAnim> unkb4; // 0xb4
+    std::map<Difficulty, AnimPtr> mSongAnims; // 0x5c
+    std::map<Difficulty, AnimPtr> mDancerFaceAnims; // 0x74
+    ObjPtr<RndPropAnim> mMasterClipAnim; // 0x8c
+    ObjPtr<RndPropAnim> mPlayer1RoutineBuilderAnim; // 0xa0
+    ObjPtr<RndPropAnim> mPlayer2RoutineBuilderAnim; // 0xb4
     float unkc8; // 0xc8
     Symbol unkcc; // 0xcc
     /** "How much backup dancers drift, 0 is none, 1 is full" */
@@ -175,20 +198,17 @@ protected:
     ObjPtr<RndPostProc> unk1ec; // 0x1ec
     /** "TRUE if freestyle is allowed" */
     bool mFreestyleEnabled; // 0x200
-    ObjPtr<HamCharacter> unk204; // 0x204
-    ObjPtr<HamCharacter> unk218; // 0x218
-    ObjPtr<HamCharacter> unk22c; // 0x22c
-    ObjPtr<HamCharacter> unk240; // 0x240
+    ObjPtr<HamCharacter> mPlayer0Char; // 0x204
+    ObjPtr<HamCharacter> mPlayer1Char; // 0x218
+    ObjPtr<HamCharacter> mBackup0Char; // 0x22c
+    ObjPtr<HamCharacter> mBackup1Char; // 0x240
     bool unk254; // 0x254
-    bool unk255;
-    bool unk256;
-    bool unk257;
-    bool unk258;
+    bool unk255[4]; // 0x255
     bool mDisabled; // 0x259
     bool unk25a;
     /** "currently shown camshot, nice for debugging." */
     ObjPtr<HamCamShot> mCurShot; // 0x25c
-    ObjPtr<HamCamShot> unk270; // 0x270
+    ObjPtr<HamCamShot> mNextShot; // 0x270
     ObjPtr<HamCamShot> unk284; // 0x284
     /** "HamCamShot category" */
     Symbol mShot; // 0x298
@@ -220,8 +240,8 @@ protected:
     Symbol unk2f4[2]; // 0x2f4
     Symbol unk2fc[2]; // 0x2fc
     int unk304; // 0x304
-    ObjPtr<ObjectDir> unk308; // 0x308
-    ObjPtr<ObjectDir> unk31c; // 0x31c
+    ObjPtr<ObjectDir> mClipDir; // 0x308
+    ObjPtr<ObjectDir> mMoveDir; // 0x31c
     Symbol unk330; // 0x330
     /** "If true, does not play transitions" */
     bool mNoTransitions; // 0x334
@@ -231,8 +251,8 @@ protected:
     PoseFatalities *mPoseFatalities; // 0x338
     bool unk33c; // 0x33c
     bool unk33d; // 0x33d
-    ObjPtr<Character> unk340; // 0x340
-    ObjPtr<RndTexRenderer> unk354; // 0x354
+    ObjPtr<Character> mIconManChar; // 0x340
+    ObjPtr<RndTexRenderer> mIconManTex; // 0x354
     bool unk368; // 0x368
     bool unk369; // 0x369
     int mOfflineSong; // 0x36c - Song*

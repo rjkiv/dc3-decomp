@@ -1,44 +1,54 @@
 #include "hamobj/HamDirector.h"
 #include "PoseFatalities.h"
 #include "SongCollision.h"
+#include "SongUtl.h"
 #include "char/Character.h"
 #include "char/FileMerger.h"
 #include "flow/PropertyEventProvider.h"
 #include "hamobj/Difficulty.h"
+#include "hamobj/HamCamShot.h"
+#include "hamobj/HamCharacter.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
+#include "math/Mtx.h"
 #include "math/Rand.h"
 #include "math/Utl.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
+#include "obj/Task.h"
+#include "obj/Utl.h"
 #include "os/Debug.h"
 #include "rndobj/Anim.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Poll.h"
 #include "rndobj/PropAnim.h"
+#include "rndobj/PropKeys.h"
 #include "rndobj/TexRenderer.h"
+#include "rndobj/Trans.h"
 #include "utl/Str.h"
 #include "utl/Symbol.h"
+#include "world/CameraManager.h"
 #include "world/Dir.h"
 
 HamDirector *TheHamDirector;
 
 HamDirector::HamDirector()
-    : unk8c(this), unka0(this), unkb4(this), unkc8(0), unkcc(""), mBackupDrift(1),
+    : mMasterClipAnim(this), mPlayer1RoutineBuilderAnim(this),
+      mPlayer2RoutineBuilderAnim(this), unkc8(0), unkcc(""), mBackupDrift(1),
       mMerger(this), mMoveMerger(this), mGameModeMerger(this), mCurWorld(this),
       unk124(this), unk140(0), unk14c(0), unk150(this), mCamPostProc(this),
       mForcePostProc(this), unk18c(this), mForcePostProcBlend(0),
       mForcePostProcBlendRate(1), unk1a8(this), unk1bc(this), unk1d0(0), unk1d4(0),
-      unk1d8(this), unk1ec(this), mFreestyleEnabled(1), unk204(this), unk218(this),
-      unk22c(this), unk240(this), unk254(0), mDisabled(0), unk25a(0), mCurShot(this),
-      unk270(this), unk284(this), unk29c(-kHugeFloat), mDisablePicking(0), unk2a1(0),
-      unk2a4(0), unk2a8(-kHugeFloat), unk2ac(1), mPlayerFreestyle(0),
-      mPlayerFreestylePaused(0), unk2c0(this), mPracticeStart(0), mPracticeEnd(0),
-      mStartLoopMargin(1), mEndLoopMargin(1), mBlendDebug(0), unk304(0), unk308(this),
-      unk31c(this), mNoTransitions(0), mCollisionChecks(1), mLoadedNewSong(1),
-      mPoseFatalities(0), unk33c(RandomInt(0, 2)), unk33d(0), unk340(this), unk354(this),
-      unk369(0), mOfflineSong(0) {
+      unk1d8(this), unk1ec(this), mFreestyleEnabled(1), mPlayer0Char(this),
+      mPlayer1Char(this), mBackup0Char(this), mBackup1Char(this), unk254(0), mDisabled(0),
+      unk25a(0), mCurShot(this), mNextShot(this), unk284(this), unk29c(-kHugeFloat),
+      mDisablePicking(0), unk2a1(0), unk2a4(0), unk2a8(-kHugeFloat), unk2ac(1),
+      mPlayerFreestyle(0), mPlayerFreestylePaused(0), unk2c0(this), mPracticeStart(0),
+      mPracticeEnd(0), mStartLoopMargin(1), mEndLoopMargin(1), mBlendDebug(0), unk304(0),
+      mClipDir(this), mMoveDir(this), mNoTransitions(0), mCollisionChecks(1),
+      mLoadedNewSong(1), mPoseFatalities(0), unk33c(RandomInt(0, 2)), unk33d(0),
+      mIconManChar(this), mIconManTex(this), unk369(0), mOfflineSong(0) {
     static DataNode &n = DataVariable("hamdirector");
     n = this;
     TheHamDirector = this;
@@ -95,7 +105,8 @@ BEGIN_HANDLERS(HamDirector)
     HANDLE_EXPR(player_song_anim, SongAnim(_msg->Int(2)))
     HANDLE_EXPR(difficulty_song_anim, SongAnimByDifficulty((Difficulty)_msg->Int(2)))
     HANDLE_EXPR(
-        dancer_face_anim_by_difficulty, unk74[(Difficulty)(_msg->Int(2) != 3)].Ptr()
+        dancer_face_anim_by_difficulty,
+        mDancerFaceAnims[LegacyDifficulty((Difficulty)_msg->Int(2))].Ptr()
     )
     HANDLE_EXPR(dancer_face_anim_by_player, DancerFaceAnimByPlayer(_msg->Int(2)))
     HANDLE_EXPR(toggle_camshot_flag, OnToggleCamshotFlag())
@@ -203,6 +214,18 @@ BEGIN_SAVES(HamDirector)
     bs << mEndLoopMargin;
 END_SAVES
 
+void HamDirector::ListPollChildren(std::list<RndPollable *> &polls) const {
+    if (mCurWorld) {
+        polls.push_back(mCurWorld);
+    }
+}
+
+void HamDirector::ListDrawChildren(std::list<RndDrawable *> &draws) {
+    if (mCurWorld) {
+        draws.push_back(mCurWorld);
+    }
+}
+
 DataNode HamDirector::OnSaveSong(DataArray *) { return 0; }
 DataNode HamDirector::OnSaveFaceAnims(DataArray *) { return 0; }
 DataNode HamDirector::OnFileMerged(DataArray *) { return 0; }
@@ -240,7 +263,7 @@ void HamDirector::PlayIntroShot() {
             static Message msg("set_intro_shot", 0);
             msg[0] = unk284.Ptr();
             DataNode handled = HandleType(msg);
-            unk270 = unk284;
+            mNextShot = unk284;
             unk284 = nullptr;
         } else
             FindNextShot();
@@ -249,47 +272,305 @@ void HamDirector::PlayIntroShot() {
 }
 
 void HamDirector::SetupAnims() {
-    unk5c.clear();
-    unk74.clear();
+    mSongAnims.clear();
+    mDancerFaceAnims.clear();
     for (int i = 0; i < 3; i++) {
         Difficulty d = (Difficulty)i;
-        unk5c[d] = GetPropAnim(d, "song.anim", true);
-        unk74[d] = GetPropAnim(d, "dancer_face.anim", false);
+        mSongAnims[d] = GetPropAnim(d, "song.anim", true);
+        mDancerFaceAnims[d] = GetPropAnim(d, "dancer_face.anim", false);
     }
     SetupRoutineBuilderAnims();
-    unk308 = mMerger->Dir()->Find<ObjectDir>("clips", false);
-    unk31c = mMerger->Dir()->Find<ObjectDir>("moves", false);
-    ObjDirItr<SongCollision> it(unk31c, true);
+    mClipDir = mMerger->Dir()->Find<ObjectDir>("clips", false);
+    mMoveDir = mMerger->Dir()->Find<ObjectDir>("moves", false);
+    ObjDirItr<SongCollision> it(mMoveDir, true);
     if (it)
         unk124 = &*it;
 }
 
 void HamDirector::Initialize() {
     SetupAnims();
-    WorldDir *dir = mMerger ? dynamic_cast<WorldDir *>(mMerger->Dir()) : nullptr;
-    ObjectDir *iconManDir = dir->Find<ObjectDir>("iconmandir", false);
+    ObjectDir *iconManDir = GetWorldDir()->Find<ObjectDir>("iconmandir", false);
     if (iconManDir) {
-        unk340 = iconManDir->Find<Character>("iconman", false);
-        if (unk340) {
-            RndAnimatable *anim = unk340->Find<RndAnimatable>("outline.anim", false);
+        mIconManChar = iconManDir->Find<Character>("iconman", false);
+        if (mIconManChar) {
+            RndAnimatable *anim =
+                mIconManChar->Find<RndAnimatable>("outline.anim", false);
             if (anim)
                 anim->SetFrame(1, 1);
         }
-        unk354 = iconManDir->Find<RndTexRenderer>("iconman.rndtex", false);
+        mIconManTex = iconManDir->Find<RndTexRenderer>("iconman.rndtex", false);
     }
     delete mPoseFatalities;
     mPoseFatalities = Hmx::Object::New<PoseFatalities>();
 }
 
 RndPropAnim *HamDirector::SongAnim(int playerIndex) {
-    if (unk5c[kDifficultyEasy]) {
+    if (!mSongAnims[kDifficultyEasy]) {
+        return nullptr;
+    } else {
         MILO_ASSERT((0) <= (playerIndex) && (playerIndex) < (2), 0x620);
         if (TheHamProvider->Property("merge_moves", true)->Int()) {
-            return playerIndex == 0 ? unka0 : unkb4;
+            return playerIndex == 0 ? mPlayer1RoutineBuilderAnim
+                                    : mPlayer2RoutineBuilderAnim;
         } else {
             HamPlayerData *hpd = TheGameData->Player(playerIndex);
-            return SongAnimByDifficulty(hpd->GetDifficulty());
+            return SongAnimByDifficulty(LegacyDifficulty(hpd->GetDifficulty()));
         }
-    } else
+    }
+}
+
+PropKeys *HamDirector::GetPropKeys(Difficulty d, Symbol s) {
+    RndPropAnim *anim = GetPropAnim(d, "song.anim", false);
+    if (!anim) {
         return nullptr;
+    } else {
+        return anim->GetKeys(this, DataArrayPtr(s));
+    }
+}
+
+void HamDirector::VenueEnter(WorldDir *dir) {
+    if (dir)
+        dir->Enter();
+    mPlayer0Char = dir ? dir->Find<HamCharacter>("player0", true) : nullptr;
+    mPlayer1Char = dir ? dir->Find<HamCharacter>("player1", true) : nullptr;
+    mBackup0Char = dir ? dir->Find<HamCharacter>("backup0", true) : nullptr;
+    mBackup1Char = dir ? dir->Find<HamCharacter>("backup1", true) : nullptr;
+
+    RndTransformable *p0 =
+        dir ? dir->Find<RndTransformable>("player0.trans", true) : nullptr;
+    RndTransformable *p1 =
+        dir ? dir->Find<RndTransformable>("player1.trans", true) : nullptr;
+    RndTransformable *b0 =
+        dir ? dir->Find<RndTransformable>("backup0.trans", true) : nullptr;
+    RndTransformable *b1 =
+        dir ? dir->Find<RndTransformable>("backup1.trans", true) : nullptr;
+
+    if (b1) {
+        MILO_LOG(
+            "(%7.2f,%7.2f,%7.2f)\n",
+            b1->LocalXfm().v.x,
+            b1->LocalXfm().v.y,
+            b1->LocalXfm().v.z
+        );
+    } else {
+        MILO_LOG("NULL\n");
+    }
+
+    if (p0) {
+        p0->SetLocalXfm(Transform::IDXfm());
+    }
+    if (p1) {
+        p1->SetLocalXfm(Transform::IDXfm());
+    }
+    if (b0) {
+        b0->SetLocalXfm(Transform::IDXfm());
+    }
+    if (b1) {
+        b1->SetLocalXfm(Transform::IDXfm());
+    }
+    unk254 = false;
+    for (int i = 0; i < 4; i++) {
+        unk255[i] = false;
+    }
+}
+
+void HamDirector::SetMasterClipAnim() {
+    WorldDir *dir = GetWorldDir();
+    if (dir) {
+        ObjectDir *clipDir = dir->Find<ObjectDir>("master_clips", false);
+        if (clipDir) {
+            mMasterClipAnim = clipDir->Find<RndPropAnim>("song.anim", false);
+        }
+        if (!mMasterClipAnim) {
+            mMasterClipAnim = GetPropAnim(kDifficultyExpert, "song.anim", false);
+        }
+    }
+}
+
+void HamDirector::PickIntroShot() {
+    if (!DataVariable("skip_intro").Int()) {
+        mNextShot = nullptr;
+        static Message m("pick_intro_shot");
+        DataNode n = HandleType(m);
+        unk284 = mNextShot;
+        mNextShot = nullptr;
+    }
+}
+
+void HamDirector::ForceShot(const char *name) {
+    if (mCurWorld) {
+        mNextShot = mCurWorld->Find<HamCamShot>(name, false);
+        mDisablePicking = mNextShot;
+    }
+}
+
+PropKeys *HamDirector::GetMasterKeys(Symbol s) {
+    if (!mMasterClipAnim) {
+        SetMasterClipAnim();
+    }
+    if (!mMasterClipAnim) {
+        MILO_NOTIFY(
+            "HamDirector::GetMasterKeys: no master clip anim, can't return PropKeys."
+        );
+        return nullptr;
+    } else {
+        return mMasterClipAnim->GetKeys(this, DataArrayPtr(s));
+    }
+}
+
+Key<Symbol> *HamDirector::GetMasterPracticeFrame(Symbol s) {
+    if (!mMasterClipAnim) {
+        SetMasterClipAnim();
+    }
+    MILO_ASSERT(mMasterClipAnim, 0x23E);
+    static Symbol practice("practice");
+    PropKeys *keys = mMasterClipAnim->GetKeys(this, DataArrayPtr(practice));
+    if (keys) {
+        Keys<Symbol, Symbol> *symKeys = keys->AsSymbolKeys();
+        int i = 0;
+        for (; i < symKeys->size(); i++) {
+            if (s == (*symKeys)[i].value) {
+                goto done;
+            }
+        }
+        i = -1;
+    done:
+        if (i != -1) {
+            return &(*symKeys)[i];
+        }
+    }
+    return nullptr;
+}
+
+HamCamShot *HamDirector::FindNextDircut() {
+    float secs = TheTaskMgr.Seconds(TaskMgr::kRealTime);
+    const DircutEntry *entry = mDirCutKeys.Cross(secs, secs - TheTaskMgr.DeltaSeconds());
+    if (entry) {
+        HamCamShot *ret = nullptr;
+        if (mNumPlayersFailed != 0 || (entry->unk4 && mExcitement < 3)) {
+            ret = entry->unk0;
+            unk140 = true;
+        }
+        return ret;
+    }
+    return nullptr;
+}
+
+void HamDirector::SetDircut(Symbol s, std::vector<CameraManager::PropertyFilter> filters) {
+    static Symbol gameplay_mode("gameplay_mode");
+    static Symbol holla_back("holla_back");
+    if (TheHamProvider->Property(gameplay_mode, true)->Sym() == holla_back) {
+        return;
+    } else {
+        MILO_LOG("HamDirector::SetDircut cat = '%s'\n", s.Str());
+        mNextShot = dynamic_cast<HamCamShot *>(
+            mCurWorld->GetCameraManager()->FindCameraShot(s, filters)
+        );
+        MILO_LOG("   mNextShot = '%s'\n", SafeName(mNextShot));
+    }
+}
+
+void HamDirector::SetupRoutineBuilderAnims() {
+    for (int i = 0; i < 2; i++) {
+        RndPropAnim *routineBuilderAnim;
+        if (i == 0) {
+            mPlayer1RoutineBuilderAnim =
+                GetWorldDir()->Find<RndPropAnim>("player_1_routine_builder.anim", true);
+            routineBuilderAnim = mPlayer1RoutineBuilderAnim;
+        } else {
+            mPlayer2RoutineBuilderAnim =
+                GetWorldDir()->Find<RndPropAnim>("player_2_routine_builder.anim", true);
+            routineBuilderAnim = mPlayer2RoutineBuilderAnim;
+        }
+        HamPlayerData *hpd = TheGameData->Player(i);
+        RndPropAnim *anim = mSongAnims[LegacyDifficulty(hpd->GetDifficulty())];
+        if (anim) {
+            routineBuilderAnim->Copy(anim, kCopyDeep);
+            Symbol syms[3] = { "clip", "move", "practice" };
+            for (int i = 0; i < 3; i++) {
+                DataArrayPtr ptr(syms[i]);
+                routineBuilderAnim->GetKeys(this, ptr)->AsSymbolKeys()->clear();
+            }
+        }
+    }
+}
+
+RndPropAnim *HamDirector::SongAnimByDifficulty(Difficulty diff) {
+    MILO_ASSERT((0) <= (diff) && (diff) < (kNumDifficultiesDC2), 0x633);
+    return mSongAnims[diff];
+}
+
+RndPropAnim *HamDirector::DancerFaceAnimByPlayer(int player) {
+    return mDancerFaceAnims[LegacyDifficulty(TheGameData->Player(player)->GetDifficulty()
+    )];
+}
+
+void HamDirector::AddNumPlayers(
+    std::vector<CameraManager::PropertyFilter> &filters, DataArray *arr
+) {
+    CameraManager::PropertyFilter filter;
+    if (arr) {
+        filter.prop = arr->Sym(0);
+        filter.match = arr->Array(1);
+    } else {
+        static Symbol player_flag("player_flag");
+        filter.prop = player_flag;
+        static Symbol cam_player_config("cam_player_config");
+        DataArrayPtr ptr(3, TheHamProvider->Property(cam_player_config, true)->Int());
+        filter.match = (DataArray *)ptr;
+    }
+    filters.push_back(filter);
+}
+
+PropKeys *HamDirector::GetPropKeysByPlayer(int player, Symbol s) {
+    RndPropAnim *anim = SongAnim(player);
+    if (!anim) {
+        return nullptr;
+    } else {
+        return anim->GetKeys(this, DataArrayPtr(s));
+    }
+}
+
+Symbol HamDirector::MoveNameFromBeat(float f1, int player) {
+    RndPropAnim *anim = SongAnim(player);
+    if (!anim)
+        return gNullStr;
+    else {
+        PropKeys *keys = anim->GetKeys(this, DataArrayPtr(Symbol("move")));
+        if (!keys)
+            return gNullStr;
+        else {
+            Symbol ret;
+            float frame = BeatToFrame(f1);
+            Keys<Symbol, Symbol> *symKeys = keys->AsSymbolKeys();
+            symKeys->AtFrame(frame, ret);
+            return ret;
+        }
+    }
+}
+
+void HamDirector::TriggerNextIntro() {
+    mDisablePicking = false;
+    std::vector<CameraManager::PropertyFilter> filters;
+    static Symbol s("CAMP_SONG1_INTRO_CONTINUE");
+    SetDircut(s, filters);
+    unk284 = mNextShot;
+    mNextShot = nullptr;
+    PlayIntroShot();
+    unk33d = false;
+}
+
+void HamDirector::ReactToCollision_InsertRealShot(Symbol s, float f2) {
+    static Symbol shot("shot");
+    PropKeys *keys = GetPropKeysByPlayer(0, shot);
+    Keys<Symbol, Symbol> *shot_keys = keys->AsSymbolKeys();
+    MILO_ASSERT(shot_keys, 0xE08);
+    shot_keys->Add(s, BeatToFrame(TheTaskMgr.Beat()), false);
+}
+
+void HamDirector::ReactToCollision_MoveShot(int shotIdx, float beat) {
+    static Symbol shot("shot");
+    PropKeys *shot_keys = GetPropKeysByPlayer(0, shot);
+    MILO_ASSERT(shot_keys, 0xE10);
+    shot_keys->ChangeFrame(shotIdx, BeatToFrame(beat), true);
 }

@@ -44,6 +44,7 @@ public:
     FreeCamera *GetFreeCam(int);
     void DeleteFreeCam();
     CamShot *ShotAfter(CamShot *);
+    CamShot *FindCameraShot(Symbol, const std::vector<PropertyFilter> &);
 
 private:
     void StartShot_(CamShot *);

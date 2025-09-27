@@ -83,6 +83,7 @@ public:
     NEW_OBJ(WorldDir)
 
     void ClearDeltas();
+    CameraManager *GetCameraManager() const { return unk300; }
 
     DataNode OnGetPhysicsManager(const DataArray *);
 

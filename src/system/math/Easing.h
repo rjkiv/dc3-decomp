@@ -99,9 +99,8 @@ inline float EaseElasticIn(float t, float power, float f3) {
     if (t > 0 && t < 1.0f) {
         if (f3 <= 0)
             f3 = 0.45;
-    } else {
-        return t;
     }
+    return t;
 }
 
 inline float EaseElasticOut(float t, float power, float f3) {
