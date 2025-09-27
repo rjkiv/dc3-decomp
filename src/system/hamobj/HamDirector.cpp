@@ -1,15 +1,26 @@
 #include "hamobj/HamDirector.h"
+#include "PoseFatalities.h"
+#include "SongCollision.h"
+#include "char/Character.h"
+#include "char/FileMerger.h"
+#include "flow/PropertyEventProvider.h"
 #include "hamobj/Difficulty.h"
 #include "hamobj/HamGameData.h"
+#include "hamobj/HamPlayerData.h"
 #include "math/Rand.h"
 #include "math/Utl.h"
 #include "obj/Data.h"
+#include "obj/Dir.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "rndobj/Anim.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Poll.h"
+#include "rndobj/PropAnim.h"
+#include "rndobj/TexRenderer.h"
 #include "utl/Str.h"
 #include "utl/Symbol.h"
+#include "world/Dir.h"
 
 HamDirector *TheHamDirector;
 
@@ -25,9 +36,9 @@ HamDirector::HamDirector()
       unk2a4(0), unk2a8(-kHugeFloat), unk2ac(1), mPlayerFreestyle(0),
       mPlayerFreestylePaused(0), unk2c0(this), mPracticeStart(0), mPracticeEnd(0),
       mStartLoopMargin(1), mEndLoopMargin(1), mBlendDebug(0), unk304(0), unk308(this),
-      unk31c(this), mNoTransitions(0), mCollisionChecks(1), mLoadedNewSong(1), unk338(0),
-      unk33c(RandomInt(0, 2)), unk33d(0), unk340(this), unk354(this), unk369(0),
-      unk36c(0) {
+      unk31c(this), mNoTransitions(0), mCollisionChecks(1), mLoadedNewSong(1),
+      mPoseFatalities(0), unk33c(RandomInt(0, 2)), unk33d(0), unk340(this), unk354(this),
+      unk369(0), mOfflineSong(0) {
     static DataNode &n = DataVariable("hamdirector");
     n = this;
     TheHamDirector = this;
@@ -42,6 +53,7 @@ HamDirector::~HamDirector() {
         n = NULL_OBJ;
         TheHamDirector = nullptr;
     }
+    delete mPoseFatalities;
 }
 
 BEGIN_HANDLERS(HamDirector)
@@ -64,7 +76,7 @@ BEGIN_HANDLERS(HamDirector)
     HANDLE(cur_postprocs, OnPostProcs)
     HANDLE_ACTION(reselect_world_postproc, ReselectWorldPostProc())
     HANDLE_EXPR(get_venue_world, mCurWorld)
-    HANDLE_EXPR(get_world, mCurWorld)
+    HANDLE_EXPR(get_world, mMerger ? mMerger->Dir() : (ObjectDir *)nullptr)
     HANDLE(set_dircut, OnSetDircut)
     HANDLE(get_dancer_visemes, OnGetDancerVisemes)
     HANDLE_ACTION(play_base_visemes, PlayCharBaseVisemes())
@@ -82,7 +94,9 @@ BEGIN_HANDLERS(HamDirector)
     HANDLE_ACTION(initialize, Initialize())
     HANDLE_EXPR(player_song_anim, SongAnim(_msg->Int(2)))
     HANDLE_EXPR(difficulty_song_anim, SongAnimByDifficulty((Difficulty)_msg->Int(2)))
-    HANDLE_EXPR(dancer_face_anim_by_difficulty, unk5c[(Difficulty)_msg->Int(2)].Ptr())
+    HANDLE_EXPR(
+        dancer_face_anim_by_difficulty, unk74[(Difficulty)(_msg->Int(2) != 3)].Ptr()
+    )
     HANDLE_EXPR(dancer_face_anim_by_player, DancerFaceAnimByPlayer(_msg->Int(2)))
     HANDLE_EXPR(toggle_camshot_flag, OnToggleCamshotFlag())
     HANDLE_EXPR(get_character_sym, unk2f4[_msg->Int(2)])
@@ -95,7 +109,7 @@ BEGIN_HANDLERS(HamDirector)
     HANDLE_ACTION(set_grooviness, unk2c0->SetGrooviness(_msg->Float(2)))
     HANDLE_ACTION(start_stop_visualizer, StartStopVisualizer(_msg->Int(2), _msg->Int(3)))
     HANDLE_ACTION(set_player_spotlights_enabled, SetPlayerSpotlightsEnabled(_msg->Int(2)))
-    HANDLE_ACTION(hud_entered, 0)
+    HANDLE_ACTION(hud_entered, HudEntered())
     HANDLE_ACTION(
         change_player_character,
         ChangePlayerCharacter(_msg->Int(2), _msg->Sym(3), _msg->Sym(4), _msg->Sym(5))
@@ -175,6 +189,20 @@ BEGIN_PROPSYNCS(HamDirector)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
+BEGIN_SAVES(HamDirector)
+    SAVE_REVS(9, 0)
+    SAVE_SUPERCLASS(Hmx::Object)
+    SAVE_SUPERCLASS(RndPollable)
+    SAVE_SUPERCLASS(RndDrawable)
+    bs << mPracticeStart;
+    bs << mPracticeEnd;
+    bs << mBlendDebug;
+    bs << mNoTransitions;
+    bs << mCollisionChecks;
+    bs << mStartLoopMargin;
+    bs << mEndLoopMargin;
+END_SAVES
+
 DataNode HamDirector::OnSaveSong(DataArray *) { return 0; }
 DataNode HamDirector::OnSaveFaceAnims(DataArray *) { return 0; }
 DataNode HamDirector::OnFileMerged(DataArray *) { return 0; }
@@ -187,4 +215,81 @@ void HamDirector::ForceScene(Symbol s) {
 void HamDirector::ForceMiniVenue(Symbol s) {
     unk138 = s;
     Symbol idk(gNullStr);
+}
+
+void HamDirector::DrawDebug() {
+    if (mPoseFatalities)
+        mPoseFatalities->DrawDebug();
+}
+
+void HamDirector::ArmMultiIntroMode() {
+    unk33d = true;
+    mDisablePicking = true;
+}
+
+void HamDirector::HudEntered() {
+    if (mPoseFatalities)
+        mPoseFatalities->Enter();
+}
+
+void HamDirector::PlayIntroShot() {
+    if (!unk284)
+        PickIntroShot();
+    if (!unk2a1) {
+        if (unk284) {
+            static Message msg("set_intro_shot", 0);
+            msg[0] = unk284.Ptr();
+            DataNode handled = HandleType(msg);
+            unk270 = unk284;
+            unk284 = nullptr;
+        } else
+            FindNextShot();
+        PlayNextShot();
+    }
+}
+
+void HamDirector::SetupAnims() {
+    unk5c.clear();
+    unk74.clear();
+    for (int i = 0; i < 3; i++) {
+        Difficulty d = (Difficulty)i;
+        unk5c[d] = GetPropAnim(d, "song.anim", true);
+        unk74[d] = GetPropAnim(d, "dancer_face.anim", false);
+    }
+    SetupRoutineBuilderAnims();
+    unk308 = mMerger->Dir()->Find<ObjectDir>("clips", false);
+    unk31c = mMerger->Dir()->Find<ObjectDir>("moves", false);
+    ObjDirItr<SongCollision> it(unk31c, true);
+    if (it)
+        unk124 = &*it;
+}
+
+void HamDirector::Initialize() {
+    SetupAnims();
+    WorldDir *dir = mMerger ? dynamic_cast<WorldDir *>(mMerger->Dir()) : nullptr;
+    ObjectDir *iconManDir = dir->Find<ObjectDir>("iconmandir", false);
+    if (iconManDir) {
+        unk340 = iconManDir->Find<Character>("iconman", false);
+        if (unk340) {
+            RndAnimatable *anim = unk340->Find<RndAnimatable>("outline.anim", false);
+            if (anim)
+                anim->SetFrame(1, 1);
+        }
+        unk354 = iconManDir->Find<RndTexRenderer>("iconman.rndtex", false);
+    }
+    delete mPoseFatalities;
+    mPoseFatalities = Hmx::Object::New<PoseFatalities>();
+}
+
+RndPropAnim *HamDirector::SongAnim(int playerIndex) {
+    if (unk5c[kDifficultyEasy]) {
+        MILO_ASSERT((0) <= (playerIndex) && (playerIndex) < (2), 0x620);
+        if (TheHamProvider->Property("merge_moves", true)->Int()) {
+            return playerIndex == 0 ? unka0 : unkb4;
+        } else {
+            HamPlayerData *hpd = TheGameData->Player(playerIndex);
+            return SongAnimByDifficulty(hpd->GetDifficulty());
+        }
+    } else
+        return nullptr;
 }

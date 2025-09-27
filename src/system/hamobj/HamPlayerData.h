@@ -32,6 +32,7 @@ public:
     String GetPlayerName() const;
     SkeletonSide Side() const;
     void SetUsingFitness(bool);
+    Difficulty GetDifficulty() { return mDifficulty; }
 
 private:
     void SetSkeletonTrackingID(int);

@@ -1,4 +1,5 @@
 #pragma once
+#include "PoseFatalities.h"
 #include "SongCollision.h"
 #include "char/Character.h"
 #include "char/FileMerger.h"
@@ -73,6 +74,12 @@ public:
     void ChangePlayerCharacter(int, Symbol, Symbol, Symbol);
     void InitOffline();
     void OfflineLoadSong(Symbol);
+    void DrawDebug();
+    void ArmMultiIntroMode();
+    void PlayIntroShot();
+    void SetupAnims();
+    RndPropAnim *GetPropAnim(Difficulty, const char *, bool);
+    void SetupRoutineBuilderAnims();
 
     DataNode OnGetDancerVisemes(DataArray *);
 
@@ -99,6 +106,10 @@ protected:
     void OnPopulateMoves();
     void OnPopulateMoveMgr();
     void OnPopulateFromFile();
+    void HudEntered();
+    void PickIntroShot();
+    void FindNextShot();
+    void PlayNextShot();
 
     DataNode OnShotOver(DataArray *);
     DataNode OnPostProcInterp(DataArray *);
@@ -217,14 +228,14 @@ protected:
     /** "If true, check character collisions when picking cam shots" */
     bool mCollisionChecks; // 0x335
     bool mLoadedNewSong; // 0x336
-    int unk338; // 0x338
+    PoseFatalities *mPoseFatalities; // 0x338
     bool unk33c; // 0x33c
     bool unk33d; // 0x33d
     ObjPtr<Character> unk340; // 0x340
     ObjPtr<RndTexRenderer> unk354; // 0x354
     bool unk368; // 0x368
     bool unk369; // 0x369
-    int unk36c; // 0x36c
+    int mOfflineSong; // 0x36c - Song*
     std::set<Hmx::Object *> unk370; // 0x370
 };
 
@@ -232,5 +243,6 @@ extern HamDirector *TheHamDirector;
 
 class AnimPtr : public ObjPtr<RndPropAnim> {
 public:
-    AnimPtr(RndPropAnim *anim = nullptr) : ObjPtr<RndPropAnim>(TheHamDirector, anim) {}
+    AnimPtr() : ObjPtr<RndPropAnim>(TheHamDirector) {}
+    AnimPtr(RndPropAnim *anim) : ObjPtr<RndPropAnim>(TheHamDirector, anim) {}
 };
