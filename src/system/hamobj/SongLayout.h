@@ -65,6 +65,10 @@ public:
     OBJ_MEM_OVERLOAD(0x47)
     NEW_OBJ(SongLayout)
 
+    void SetDefaultPattern(int);
+    void SetDefaultReplacer();
+    int NumReplacers() const { return mMoveReplacers.size(); }
+
     DataNode GetPatternName(int) const;
 
 protected:

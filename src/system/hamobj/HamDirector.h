@@ -7,6 +7,7 @@
 #include "hamobj/HamCamShot.h"
 #include "hamobj/HamCharacter.h"
 #include "hamobj/HamVisDir.h"
+#include "hamobj/MoveGraph.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
@@ -100,6 +101,7 @@ public:
     bool GetPracticeFrames(Key<Symbol> *&, Key<Symbol> *&);
     HamCharacter *GetCharacter(int) const;
     HamCharacter *GetBackup(int);
+    void LoadRoutineBuilderData(std::set<const MoveVariant *> &, bool);
 
     DataNode OnGetDancerVisemes(DataArray *);
 

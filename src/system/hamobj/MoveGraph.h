@@ -125,6 +125,7 @@ public:
     Symbol HamMoveName() const { return mHamMoveName; }
     Symbol Genre() const { return mGenre; }
     bool IsFinalPose() const { return mFlags & 8; }
+    MoveParent *Parent() const { return mMoveParent; }
 
 private:
     Vector3 mPositionOffset; // 0x0
