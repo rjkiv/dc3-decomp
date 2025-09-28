@@ -53,9 +53,7 @@ public:
     OBJ_MEM_OVERLOAD(0x6D)
     NEW_OBJ(HamDirector)
 
-    WorldDir *GetWorldDir() const {
-        return mMerger ? dynamic_cast<WorldDir *>(mMerger->Dir()) : nullptr;
-    }
+    WorldDir *GetWorld();
 
     float GetMainFaceOverrideWeight();
     void SetMainFaceOverrideWeight(float);
@@ -97,6 +95,8 @@ public:
     Key<Symbol> *GetMasterPracticeFrame(Symbol);
     PropKeys *GetPropKeysByPlayer(int, Symbol);
     void TriggerNextIntro();
+    WorldDir *GetVenueWorld();
+    void UnselectVisualizerPostProc();
 
     DataNode OnGetDancerVisemes(DataArray *);
 
@@ -113,8 +113,8 @@ protected:
     void SetCharSpot(Symbol, Symbol);
     void PausePlayerFreestyle(bool pause) {
         mPlayerFreestylePaused = pause;
-        if (unk2c0)
-            unk2c0->SetShowing(!pause);
+        if (mVisualizer)
+            mVisualizer->SetShowing(!pause);
     }
     void Initialize();
     void HideBackups(bool, bool);
@@ -133,6 +133,9 @@ protected:
     void AddNumPlayers(std::vector<CameraManager::PropertyFilter> &, DataArray *);
     void ReactToCollision_InsertRealShot(Symbol, float);
     void ReactToCollision_MoveShot(int, float);
+    bool ShouldDoCollisionPrevention() const;
+    void StartStopVisualizer();
+    void SendCurWorldMsg(Symbol, bool);
 
     DataNode OnShotOver(DataArray *);
     DataNode OnPostProcInterp(DataArray *);
@@ -173,7 +176,7 @@ protected:
     ObjPtr<FileMerger> mMerger; // 0xd4
     ObjPtr<FileMerger> mMoveMerger; // 0xe8
     ObjPtr<FileMerger> mGameModeMerger; // 0xfc
-    ObjPtr<WorldDir> mCurWorld; // 0x110
+    ObjPtr<WorldDir> mVenue; // 0x110
     ObjPtr<SongCollision> unk124; // 0x124
     Symbol unk138; // 0x138
     Symbol unk13c; // 0x13c
@@ -183,7 +186,7 @@ protected:
     /** "excitement level" */
     int mExcitement; // 0x148
     bool unk14c; // 0x14c
-    ObjPtr<RndPostProc> unk150; // 0x150
+    ObjPtr<RndPostProc> mWorldPostProc; // 0x150
     /** "camera postproc override.  If set, does no postproc blends" */
     ObjPtr<RndPostProc> mCamPostProc; // 0x164
     ObjPtr<RndPostProc> mForcePostProc; // 0x178
@@ -195,7 +198,7 @@ protected:
     float unk1d0; // 0x1d0
     float unk1d4; // 0x1d4
     ObjPtr<RndPostProc> unk1d8; // 0x1d8
-    ObjPtr<RndPostProc> unk1ec; // 0x1ec
+    ObjPtr<RndPostProc> mVisualizerPostProc; // 0x1ec
     /** "TRUE if freestyle is allowed" */
     bool mFreestyleEnabled; // 0x200
     ObjPtr<HamCharacter> mPlayer0Char; // 0x204
@@ -221,7 +224,7 @@ protected:
     Keys<DircutEntry, DircutEntry> mDirCutKeys; // 0x2b0
     bool mPlayerFreestyle; // 0x2bc
     bool mPlayerFreestylePaused; // 0x2bd
-    ObjPtr<HamVisDir> unk2c0; // 0x2c0
+    ObjPtr<HamVisDir> mVisualizer; // 0x2c0
     /** "start frame of practice mode" */
     Symbol mPracticeStart; // 0x2d4
     /** "end frame of practice mode" */

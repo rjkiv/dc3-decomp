@@ -4,6 +4,7 @@
 #include "SongUtl.h"
 #include "char/Character.h"
 #include "char/FileMerger.h"
+#include "flow/Flow.h"
 #include "flow/PropertyEventProvider.h"
 #include "hamobj/Difficulty.h"
 #include "hamobj/HamCamShot.h"
@@ -15,6 +16,7 @@
 #include "math/Utl.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
+#include "obj/Msg.h"
 #include "obj/Object.h"
 #include "obj/Task.h"
 #include "obj/Utl.h"
@@ -26,6 +28,7 @@
 #include "rndobj/PropKeys.h"
 #include "rndobj/TexRenderer.h"
 #include "rndobj/Trans.h"
+#include "utl/Loader.h"
 #include "utl/Str.h"
 #include "utl/Symbol.h"
 #include "world/CameraManager.h"
@@ -36,19 +39,19 @@ HamDirector *TheHamDirector;
 HamDirector::HamDirector()
     : mMasterClipAnim(this), mPlayer1RoutineBuilderAnim(this),
       mPlayer2RoutineBuilderAnim(this), unkc8(0), unkcc(""), mBackupDrift(1),
-      mMerger(this), mMoveMerger(this), mGameModeMerger(this), mCurWorld(this),
-      unk124(this), unk140(0), unk14c(0), unk150(this), mCamPostProc(this),
+      mMerger(this), mMoveMerger(this), mGameModeMerger(this), mVenue(this), unk124(this),
+      unk140(0), unk14c(0), mWorldPostProc(this), mCamPostProc(this),
       mForcePostProc(this), unk18c(this), mForcePostProcBlend(0),
       mForcePostProcBlendRate(1), unk1a8(this), unk1bc(this), unk1d0(0), unk1d4(0),
-      unk1d8(this), unk1ec(this), mFreestyleEnabled(1), mPlayer0Char(this),
+      unk1d8(this), mVisualizerPostProc(this), mFreestyleEnabled(1), mPlayer0Char(this),
       mPlayer1Char(this), mBackup0Char(this), mBackup1Char(this), unk254(0), mDisabled(0),
       unk25a(0), mCurShot(this), mNextShot(this), unk284(this), unk29c(-kHugeFloat),
       mDisablePicking(0), unk2a1(0), unk2a4(0), unk2a8(-kHugeFloat), unk2ac(1),
-      mPlayerFreestyle(0), mPlayerFreestylePaused(0), unk2c0(this), mPracticeStart(0),
-      mPracticeEnd(0), mStartLoopMargin(1), mEndLoopMargin(1), mBlendDebug(0), unk304(0),
-      mClipDir(this), mMoveDir(this), mNoTransitions(0), mCollisionChecks(1),
-      mLoadedNewSong(1), mPoseFatalities(0), unk33c(RandomInt(0, 2)), unk33d(0),
-      mIconManChar(this), mIconManTex(this), unk369(0), mOfflineSong(0) {
+      mPlayerFreestyle(0), mPlayerFreestylePaused(0), mVisualizer(this),
+      mPracticeStart(0), mPracticeEnd(0), mStartLoopMargin(1), mEndLoopMargin(1),
+      mBlendDebug(0), unk304(0), mClipDir(this), mMoveDir(this), mNoTransitions(0),
+      mCollisionChecks(1), mLoadedNewSong(1), mPoseFatalities(0), unk33c(RandomInt(0, 2)),
+      unk33d(0), mIconManChar(this), mIconManTex(this), unk369(0), mOfflineSong(0) {
     static DataNode &n = DataVariable("hamdirector");
     n = this;
     TheHamDirector = this;
@@ -80,12 +83,12 @@ BEGIN_HANDLERS(HamDirector)
     HANDLE(select_camera, OnSelectCamera)
     HANDLE(cycle_shot, OnCycleShot)
     HANDLE(force_shot, OnForceShot)
-    HANDLE_EXPR(camera_source, mCurWorld)
+    HANDLE_EXPR(camera_source, mVenue)
     HANDLE_ACTION(force_scene, ForceScene(_msg->Sym(2)))
     HANDLE_ACTION(force_minivenue, ForceMiniVenue(_msg->Sym(2)))
     HANDLE(cur_postprocs, OnPostProcs)
     HANDLE_ACTION(reselect_world_postproc, ReselectWorldPostProc())
-    HANDLE_EXPR(get_venue_world, mCurWorld)
+    HANDLE_EXPR(get_venue_world, GetVenueWorld())
     HANDLE_EXPR(get_world, mMerger ? mMerger->Dir() : (ObjectDir *)nullptr)
     HANDLE(set_dircut, OnSetDircut)
     HANDLE(get_dancer_visemes, OnGetDancerVisemes)
@@ -117,7 +120,7 @@ BEGIN_HANDLERS(HamDirector)
     HANDLE_ACTION(reteleport, Reteleport())
     HANDLE_EXPR(list_possible_move, OnListPossibleMoves())
     HANDLE_EXPR(list_possible_variants, OnListPossibleVariants())
-    HANDLE_ACTION(set_grooviness, unk2c0->SetGrooviness(_msg->Float(2)))
+    HANDLE_ACTION(set_grooviness, mVisualizer->SetGrooviness(_msg->Float(2)))
     HANDLE_ACTION(start_stop_visualizer, StartStopVisualizer(_msg->Int(2), _msg->Int(3)))
     HANDLE_ACTION(set_player_spotlights_enabled, SetPlayerSpotlightsEnabled(_msg->Int(2)))
     HANDLE_ACTION(hud_entered, HudEntered())
@@ -176,7 +179,7 @@ BEGIN_PROPSYNCS(HamDirector)
     SYNC_PROP(num_players_failed, mNumPlayersFailed)
     SYNC_PROP(cam_postproc, mCamPostProc)
     SYNC_PROP_SET(cur_shot, mCurShot.Ptr(), )
-    SYNC_PROP_SET(cur_world, mCurWorld.Ptr(), )
+    SYNC_PROP_SET(cur_world, mVenue.Ptr(), )
     SYNC_PROP_SET(backup_drift, mBackupDrift, )
     SYNC_PROP_SET(spot_instructor, Symbol("off"), SetCharSpot("instructor", _val.Sym()))
     SYNC_PROP(practice_start, mPracticeStart)
@@ -215,14 +218,14 @@ BEGIN_SAVES(HamDirector)
 END_SAVES
 
 void HamDirector::ListPollChildren(std::list<RndPollable *> &polls) const {
-    if (mCurWorld) {
-        polls.push_back(mCurWorld);
+    if (mVenue) {
+        polls.push_back(mVenue);
     }
 }
 
 void HamDirector::ListDrawChildren(std::list<RndDrawable *> &draws) {
-    if (mCurWorld) {
-        draws.push_back(mCurWorld);
+    if (mVenue) {
+        draws.push_back(mVenue);
     }
 }
 
@@ -287,9 +290,15 @@ void HamDirector::SetupAnims() {
         unk124 = &*it;
 }
 
+WorldDir *HamDirector::GetWorld() {
+    return mMerger ? dynamic_cast<WorldDir *>(mMerger->Dir()) : nullptr;
+}
+
+WorldDir *HamDirector::GetVenueWorld() { return mVenue; }
+
 void HamDirector::Initialize() {
     SetupAnims();
-    ObjectDir *iconManDir = GetWorldDir()->Find<ObjectDir>("iconmandir", false);
+    ObjectDir *iconManDir = GetWorld()->Find<ObjectDir>("iconmandir", false);
     if (iconManDir) {
         mIconManChar = iconManDir->Find<Character>("iconman", false);
         if (mIconManChar) {
@@ -375,7 +384,7 @@ void HamDirector::VenueEnter(WorldDir *dir) {
 }
 
 void HamDirector::SetMasterClipAnim() {
-    WorldDir *dir = GetWorldDir();
+    WorldDir *dir = GetWorld();
     if (dir) {
         ObjectDir *clipDir = dir->Find<ObjectDir>("master_clips", false);
         if (clipDir) {
@@ -398,8 +407,8 @@ void HamDirector::PickIntroShot() {
 }
 
 void HamDirector::ForceShot(const char *name) {
-    if (mCurWorld) {
-        mNextShot = mCurWorld->Find<HamCamShot>(name, false);
+    if (mVenue) {
+        mNextShot = mVenue->Find<HamCamShot>(name, false);
         mDisablePicking = mNextShot;
     }
 }
@@ -464,7 +473,7 @@ void HamDirector::SetDircut(Symbol s, std::vector<CameraManager::PropertyFilter>
     } else {
         MILO_LOG("HamDirector::SetDircut cat = '%s'\n", s.Str());
         mNextShot = dynamic_cast<HamCamShot *>(
-            mCurWorld->GetCameraManager()->FindCameraShot(s, filters)
+            mVenue->GetCameraManager()->FindCameraShot(s, filters)
         );
         MILO_LOG("   mNextShot = '%s'\n", SafeName(mNextShot));
     }
@@ -475,11 +484,11 @@ void HamDirector::SetupRoutineBuilderAnims() {
         RndPropAnim *routineBuilderAnim;
         if (i == 0) {
             mPlayer1RoutineBuilderAnim =
-                GetWorldDir()->Find<RndPropAnim>("player_1_routine_builder.anim", true);
+                GetWorld()->Find<RndPropAnim>("player_1_routine_builder.anim", true);
             routineBuilderAnim = mPlayer1RoutineBuilderAnim;
         } else {
             mPlayer2RoutineBuilderAnim =
-                GetWorldDir()->Find<RndPropAnim>("player_2_routine_builder.anim", true);
+                GetWorld()->Find<RndPropAnim>("player_2_routine_builder.anim", true);
             routineBuilderAnim = mPlayer2RoutineBuilderAnim;
         }
         HamPlayerData *hpd = TheGameData->Player(i);
@@ -573,4 +582,137 @@ void HamDirector::ReactToCollision_MoveShot(int shotIdx, float beat) {
     PropKeys *shot_keys = GetPropKeysByPlayer(0, shot);
     MILO_ASSERT(shot_keys, 0xE10);
     shot_keys->ChangeFrame(shotIdx, BeatToFrame(beat), true);
+}
+
+bool HamDirector::ShouldDoCollisionPrevention() const {
+    if (TheLoadMgr.EditMode() && !mCollisionChecks) {
+        return false;
+    } else {
+        static Symbol cam_player_config("cam_player_config");
+        return TheHamProvider->Property(cam_player_config, true)->Int() == 2;
+    }
+}
+
+void HamDirector::StartStopVisualizer(bool b1, int i2) {
+    if (mVisualizer && unk368 != b1) {
+        unk368 = b1;
+        mVisualizer->SetShowing(b1);
+        mVisualizer->Run(b1);
+        if (b1) {
+            mVisualizer->Find<Flow>("enter_timeywimey.flow", true)->Activate();
+        } else {
+            if (mVisualizerPostProc) {
+                mVisualizerPostProc->Unselect();
+            }
+            switch (i2) {
+            case 0:
+                mVisualizer->Find<Flow>("exit_timeywimey.flow", true)->Activate();
+                break;
+            case 1:
+                mVisualizer->Find<Flow>("exit_timeywimey_fast.flow", true)->Activate();
+                break;
+            case 2:
+                mVisualizer->Find<Flow>("exit_timeywimey_totimeywimey.flow", true)
+                    ->Activate();
+                mVisualizer->SetShowing(false);
+                break;
+            default:
+                break;
+            }
+        }
+    }
+}
+
+void HamDirector::UnselectVisualizerPostProc() {
+    if (mVisualizerPostProc)
+        mVisualizerPostProc->Unselect();
+}
+
+void HamDirector::ReselectWorldPostProc() {
+    MILO_LOG("HamDirector::ReselectWorldPostProc()\n");
+    if (mWorldPostProc)
+        mWorldPostProc->Select();
+}
+
+void HamDirector::StartStopVisualizer() {
+    if (mVisualizer) {
+        mVisualizer->SetShowing(mPlayerFreestyle);
+    }
+    if (mVisualizer) {
+        StartStopVisualizer(mPlayerFreestyle, 1);
+    }
+}
+
+void HamDirector::UpdatePlayerFreestyle(bool b1) {
+    if (b1 != mPlayerFreestyle) {
+        static Symbol in_freestyle("in_freestyle");
+        static Symbol game_stage("game_stage");
+        mPlayerFreestyle = b1;
+        if (mPlayerFreestyle) {
+            unk1d4 = 0;
+            unk1d8 = mForcePostProc;
+            mForcePostProc = mVisualizerPostProc;
+            mForcePostProcBlend = 0;
+            mForcePostProcBlendRate = 0.625;
+            if (GetWorld()) {
+                static Symbol freestyle("freestyle");
+                TheHamProvider->SetProperty(game_stage, freestyle);
+                HamPlayerData *pPlayer0 = TheGameData->Player(0);
+                MILO_ASSERT(pPlayer0, 0xEDF);
+                HamPlayerData *pPlayer1 = TheGameData->Player(1);
+                MILO_ASSERT(pPlayer1, 0xEE1);
+                PropertyEventProvider *pPlayer0Provider = pPlayer0->Provider();
+                MILO_ASSERT(pPlayer0Provider, 0xEE4);
+                PropertyEventProvider *pPlayer1Provider = pPlayer1->Provider();
+                MILO_ASSERT(pPlayer1Provider, 0xEE6);
+                bool p1InFreestyle = pPlayer1->InFreestyle();
+                pPlayer0Provider->SetProperty(in_freestyle, pPlayer0->InFreestyle());
+                pPlayer1Provider->SetProperty(in_freestyle, p1InFreestyle);
+            }
+        } else {
+            StartStopVisualizer();
+            mForcePostProc = unk1d8;
+            mForcePostProcBlendRate = 0;
+            mForcePostProcBlend = 1;
+            if (GetWorld()) {
+                static Symbol playing("playing");
+                TheHamProvider->SetProperty(game_stage, playing);
+                HamPlayerData *pPlayer0 = TheGameData->Player(0);
+                MILO_ASSERT(pPlayer0, 0xEFA);
+                HamPlayerData *pPlayer1 = TheGameData->Player(1);
+                MILO_ASSERT(pPlayer1, 0xEFC);
+                PropertyEventProvider *pPlayer0Provider = pPlayer0->Provider();
+                MILO_ASSERT(pPlayer0Provider, 0xEFF);
+                PropertyEventProvider *pPlayer1Provider = pPlayer1->Provider();
+                MILO_ASSERT(pPlayer1Provider, 0xF01);
+                pPlayer0Provider->SetProperty(in_freestyle, false);
+                pPlayer1Provider->SetProperty(in_freestyle, false);
+            }
+        }
+    }
+}
+
+void HamDirector::SetWorldEvent(Symbol event) {
+    static Symbol none("none");
+    if (event != none && mVenue) {
+        static Message msg("");
+        msg.SetType(event);
+        mVenue->Handle(msg, false);
+    }
+}
+
+void HamDirector::SendCurWorldMsg(Symbol s, bool b2) {
+    static Message msg("");
+    if (mVenue) {
+        msg.SetType(s);
+        if (b2) {
+            mVenue->HandleType(msg);
+        } else {
+            mVenue->Handle(msg, false);
+        }
+    }
+}
+
+void HamDirector::SetCharSpot(Symbol s1, Symbol s2) {
+    SendCurWorldMsg(MakeString("spotlight_%s_%s", s1.Str(), s2.Str()), false);
 }

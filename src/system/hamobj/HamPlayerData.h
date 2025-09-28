@@ -33,6 +33,8 @@ public:
     SkeletonSide Side() const;
     void SetUsingFitness(bool);
     Difficulty GetDifficulty() { return mDifficulty; }
+    PropertyEventProvider *Provider() const { return mProvider; }
+    bool InFreestyle() const { return mSkeletonTrackingID >= 0; }
 
 private:
     void SetSkeletonTrackingID(int);
