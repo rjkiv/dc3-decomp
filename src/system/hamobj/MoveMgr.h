@@ -70,14 +70,14 @@ private:
     void SongInit();
 
 protected:
-    Keys<Symbol, Symbol> *unk2c[3]; // 0x2c - clip prop keys
+    Keys<Symbol, Symbol> *mClipPropKeys[3]; // 0x2c
     int unk38; // 0x38
-    Keys<Symbol, Symbol> *unk3c; // 0x3c - practice prop keys
+    Keys<Symbol, Symbol> *mPracticePropKeys; // 0x3c
     SongLayout *unk40; // 0x40
     SongLayout *unk44; // 0x44
-    Keys<Symbol, Symbol> *unk48[3]; // 0x48 - move prop keys
+    Keys<Symbol, Symbol> *mMovePropKeys[3]; // 0x48
     std::map<int, MoveVariant *> unk54[3];
-    int unk9c; // 0x9c - MoveDir*
+    int mMovesDir; // 0x9c - MoveDir*
     int unka0;
     MoveGraph mMoveGraph; // 0xa4
     std::set<const MoveVariant *> unk104;

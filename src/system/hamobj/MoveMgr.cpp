@@ -17,13 +17,13 @@
 #include "stl/_algo.h"
 
 MoveMgr::MoveMgr() : unk40(0), unka0(0) {
-    unk9c = 0;
+    mMovesDir = 0;
     for (int i = 0; i < 3; i++) {
         unk54[i].clear();
-        unk48[i] = 0;
-        unk2c[i] = 0;
+        mMovePropKeys[i] = nullptr;
+        mClipPropKeys[i] = nullptr;
     }
-    unk3c = 0;
+    mPracticePropKeys = nullptr;
     unk168 = false;
     unk14c = "";
     //   pSVar1 = Hmx::Object::New<>();
@@ -38,13 +38,13 @@ MoveMgr::~MoveMgr() {}
 
 void MoveMgr::Clear() {
     unka0 = 0;
-    unk9c = 0;
+    mMovesDir = 0;
     for (int i = 0; i < 3; i++) {
         unk54[i].clear();
-        unk48[i] = 0;
-        unk2c[i] = 0;
+        mMovePropKeys[i] = nullptr;
+        mClipPropKeys[i] = nullptr;
     }
-    unk3c = 0;
+    mPracticePropKeys = nullptr;
     unk40 = 0;
     unk104.clear();
     for (int i = 0; i < 2; i++) {
@@ -358,14 +358,14 @@ void MoveMgr::SongInit() {
         PropKeys *pClipPropKeys = TheHamDirector->GetPropKeys((Difficulty)i, clip);
         MILO_ASSERT(pMovePropKeys, 0x132);
         MILO_ASSERT(pClipPropKeys, 0x133);
-        unk48[i] = pMovePropKeys->AsSymbolKeys();
-        unk2c[i] = pClipPropKeys->AsSymbolKeys();
+        mMovePropKeys[i] = pMovePropKeys->AsSymbolKeys();
+        mClipPropKeys[i] = pClipPropKeys->AsSymbolKeys();
     }
     PropKeys *practiceKeys = TheHamDirector->GetPropKeys(kDifficultyExpert, practice);
     if (practiceKeys) {
-        unk3c = practiceKeys->AsSymbolKeys();
+        mPracticePropKeys = practiceKeys->AsSymbolKeys();
     } else
-        unk3c = nullptr;
+        mPracticePropKeys = nullptr;
 }
 
 void MoveMgr::NextMovesToShow(DataArray *a, int measure) {
