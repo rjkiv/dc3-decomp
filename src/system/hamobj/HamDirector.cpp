@@ -1,4 +1,6 @@
 #include "hamobj/HamDirector.h"
+#include "Difficulty.h"
+#include "MoveMgr.h"
 #include "PoseFatalities.h"
 #include "SongCollision.h"
 #include "SongUtl.h"
@@ -11,6 +13,7 @@
 #include "hamobj/HamCharacter.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
+#include "hamobj/HamVisDir.h"
 #include "math/Mtx.h"
 #include "math/Rand.h"
 #include "math/Utl.h"
@@ -21,13 +24,16 @@
 #include "obj/Task.h"
 #include "obj/Utl.h"
 #include "os/Debug.h"
+#include "os/File.h"
 #include "rndobj/Anim.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Poll.h"
+#include "rndobj/PostProc.h"
 #include "rndobj/PropAnim.h"
 #include "rndobj/PropKeys.h"
 #include "rndobj/TexRenderer.h"
 #include "rndobj/Trans.h"
+#include "utl/FilePath.h"
 #include "utl/Loader.h"
 #include "utl/Str.h"
 #include "utl/Symbol.h"
@@ -715,4 +721,238 @@ void HamDirector::SendCurWorldMsg(Symbol s, bool b2) {
 
 void HamDirector::SetCharSpot(Symbol s1, Symbol s2) {
     SendCurWorldMsg(MakeString("spotlight_%s_%s", s1.Str(), s2.Str()), false);
+}
+
+DataNode HamDirector::OnToggleCamshotFlag() { return unk33c = !unk33c; }
+
+#define kBackupDancersNumTypes 4
+
+DataNode HamDirector::OnLoadSong(DataArray *a) {
+    FilePathTracker tracker(FileRoot());
+    MILO_ASSERT(TheGameData, 0xC1D);
+    for (int i = 0; i < 2; i++) {
+        HamPlayerData *hpd = TheGameData->Player(i);
+        MILO_ASSERT(hpd, 0xC21);
+        unk2fc[i] = hpd->Crew();
+        unk2f4[i] = hpd->CharacterOutfit(unk2fc[i]);
+    }
+    int i3 = a->Int(3);
+    bool i4 = a->Int(4);
+    bool b5 = a->Int(5);
+    String str(a->Str(2));
+    int dancers = a->Int(6);
+    MILO_ASSERT(dancers >= 0 && dancers < kBackupDancersNumTypes, 0xC2E);
+    unk304 = dancers;
+    mLoadedNewSong = true;
+    if (mMerger && !str.empty()) {
+        const char *speed;
+        if (i3 < 113)
+            speed = "slow";
+        else if (i3 < 136)
+            speed = "medium";
+        else
+            speed = "fast";
+        unk330 = speed;
+        TheGameData->SetSong(FileGetBase(str.c_str()));
+        mMerger->Select("song", str.c_str(), true);
+        if (i4) {
+            mMerger->StartLoad(b5);
+            if (mVenue) {
+                FileMerger *extras = mVenue->Find<FileMerger>("extras.fm", false);
+                if (extras) {
+                    extras->StartLoad(b5);
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+DataNode HamDirector::OnPostProcs(DataArray *a) {
+    DataNode *var1 = a->Var(2);
+    DataNode *var2 = a->Var(3);
+    DataNode *var3 = a->Var(4);
+    DataNode *var4 = a->Var(5);
+    *var1 = mWorldPostProc.Ptr();
+    *var2 = mCamPostProc.Ptr();
+    *var3 = mForcePostProc.Ptr();
+    *var4 = mVisualizerPostProc.Ptr();
+    return 0;
+}
+
+DataNode HamDirector::OnShotOver(DataArray *a) {
+    if (strneq(a->Obj<HamCamShot>(2)->Category().Str(), "dc_", 3)) {
+        unk140 = true;
+    }
+    unk29c = -kHugeFloat;
+    return 0;
+}
+
+DataNode HamDirector::OnListPossibleMoves() {
+    if (!TheMoveMgr) {
+        MoveMgr::Init("../meta/move_data.dta");
+    }
+    DataArray *moveArr = new DataArray(0);
+    for (std::map<Symbol, MoveParent *>::const_iterator it =
+             TheMoveMgr->MoveParents().begin();
+         it != TheMoveMgr->MoveParents().end();
+         ++it) {
+        moveArr->Insert(moveArr->Size(), it->first);
+    }
+    moveArr->SortNodes(0);
+    DataNode ret(moveArr);
+    moveArr->Release();
+    return ret;
+}
+
+DataNode HamDirector::OnListPossibleVariants() {
+    if (!TheMoveMgr) {
+        MoveMgr::Init("../meta/move_data.dta");
+    }
+    DataArray *moveArr = new DataArray(0);
+    // FIXME: should get MoveMgr's unk104 member
+    for (std::map<Symbol, MoveVariant *>::const_iterator it =
+             TheMoveMgr->MoveVariants().begin();
+         it != TheMoveMgr->MoveVariants().end();
+         ++it) {
+        moveArr->Insert(moveArr->Size(), it->first);
+    }
+    moveArr->SortNodes(0);
+    DataNode ret(moveArr);
+    moveArr->Release();
+    return ret;
+}
+
+namespace {
+    const char *gGrooveName = "groove";
+}
+
+DataNode HamDirector::PracticeList(Difficulty d) {
+    DataArray *arr = new DataArray(0);
+    arr->Insert(0, Symbol());
+    PropKeys *keys = GetPropKeys(d, "practice");
+    if (keys) {
+        Keys<Symbol, Symbol> *symKeys = keys->AsSymbolKeys();
+        for (int i = 0; i < symKeys->size(); i++) {
+            arr->Insert(arr->Size(), (*symKeys)[i].value);
+        }
+    }
+    arr->Insert(arr->Size(), Symbol(gGrooveName));
+    DataNode ret(arr);
+    arr->Release();
+    return ret;
+}
+
+DataNode HamDirector::OnCycleShot(DataArray *a) {
+    if (mVenue) {
+        mNextShot =
+            dynamic_cast<HamCamShot *>(mVenue->GetCameraManager()->ShotAfter(mCurShot));
+        mDisablePicking = mNextShot;
+    }
+    return 0;
+}
+
+DataNode HamDirector::OnForceShot(DataArray *a) {
+    ForceShot(a->Str(2));
+    return 0;
+}
+
+void GetVenuePath(FilePath &path, const char *cc) {
+    FilePathTracker tracker(FileRoot());
+    path.Set(FilePath::Root().c_str(), "");
+    if (*cc == '\0')
+        return;
+    else {
+        path.Set(FilePath::Root().c_str(), MakeString("world/%s/%s.milo", cc, cc));
+    }
+}
+
+DataNode HamDirector::OnFileLoaded(DataArray *a) {
+    static Symbol song("song");
+    static Symbol venue("venue");
+    static Symbol viz("viz");
+    static Symbol game_hud("game_hud");
+    Symbol sym = a->Sym(2);
+    if (sym != game_hud || mMerger) {
+        unk25a = mMerger->AsyncLoad();
+        if (sym == song) {
+            if (!TheGameData->Venue().Null()) {
+                FilePath path;
+                {
+                    FilePathTracker tracker(FileRoot());
+                    path.Set(FilePath::Root().c_str(), "ui/visualizer/visualizer.milo");
+                }
+                mMerger->Select("viz", path, false);
+                GetVenuePath(path, TheGameData->Venue().Str());
+                mMerger->Select("venue", path, false);
+                if (mGameModeMerger) {
+                    static Message load_game_hud("load_game_hud", 0, 0, 0, 0);
+                    mGameModeMerger->HandleType(load_game_hud);
+                    mGameModeMerger->StartLoad(unk25a);
+                }
+            }
+            mMerger->StartLoad(unk25a);
+        } else {
+            ObjectDir *dir = a->Obj<ObjectDir>(3);
+            if (sym == venue && dir) {
+                mVenue = dynamic_cast<WorldDir *>(dir);
+            } else if (sym == viz && dir) {
+                mVisualizer = dynamic_cast<HamVisDir *>(dir);
+            }
+        }
+    }
+    return 0;
+}
+
+DataNode HamDirector::OnPostProcInterp(DataArray *a) {
+    unk1a8 = a->Obj<RndPostProc>(2);
+    unk1bc = a->Obj<RndPostProc>(3);
+    unk1d0 = a->Float(4);
+    return 0;
+}
+
+DataNode HamDirector::OnPracticeBeats(DataArray *a) {
+    Key<Symbol> *key1;
+    Key<Symbol> *key2;
+    if (!GetPracticeFrames(key1, key2)) {
+        return 0;
+    } else {
+        *a->Var(2) = FrameToBeat(key1->frame);
+        *a->Var(3) = FrameToBeat(key2->frame);
+        return 1;
+    }
+}
+
+DataNode HamDirector::OnClipList(DataArray *a) {
+    HamPlayerData *data = TheGameData->Player(0);
+    if (data->GetDifficulty() == kDifficultyExpert) {
+        return ObjectList(
+            mMerger->Dir()->Find<ObjectDir>("clips", true), "CharClip", false
+        );
+    } else {
+        DataNode list = PracticeList(kDifficultyExpert);
+        DataArray *arr = list.Array();
+        arr->SortNodes(0);
+        return list;
+    }
+}
+
+DataNode HamDirector::OnSetDircut(DataArray *a) {
+    if (mVenue && !ShotsDisabled()) {
+        Symbol sym = a->Sym(2);
+        std::vector<CameraManager::PropertyFilter> filters;
+        if (a->Size() > 3) {
+            const DataNode &node = a->Evaluate(3);
+            DataArray *arr;
+            if (node.Type() == kDataInt && node.Int() != 0) {
+                arr = nullptr;
+            } else {
+                MILO_ASSERT(node.Type() == kDataArray, 0xE74);
+                arr = node.Array();
+            }
+            AddNumPlayers(filters, arr);
+        }
+        SetDircut(sym, filters);
+    }
+    return mNextShot;
 }

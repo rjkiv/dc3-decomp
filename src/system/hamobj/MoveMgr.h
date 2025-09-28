@@ -31,6 +31,14 @@ public:
     Symbol PickRandomCategory();
     void
     GenerateMoveChoice(Symbol, std::vector<const MoveVariant *> &, std::vector<const MoveVariant *> &);
+    const std::map<Symbol, MoveParent *> &MoveParents() const {
+        return mMoveGraph.MoveParents();
+    }
+    const std::map<Symbol, MoveVariant *> &MoveVariants() const {
+        return mMoveGraph.MoveVariants();
+    }
+
+    static void Init(const char *);
 
 protected:
     int unk2c;
@@ -46,7 +54,7 @@ protected:
     std::map<int, MoveVariant *> unk54[3];
     int unk9c; // 0x9c - MoveDir*
     int unka0;
-    MoveGraph unka4;
+    MoveGraph mMoveGraph; // 0xa4
     std::set<const MoveVariant *> unk104;
     std::vector<const MoveParent *> unk11c[2];
     std::vector<const MoveVariant *> unk134[2];

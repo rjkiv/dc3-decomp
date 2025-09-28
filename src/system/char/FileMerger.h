@@ -1,6 +1,7 @@
 #pragma once
 #include "obj/Object.h"
 #include "obj/Utl.h"
+#include "utl/FilePath.h"
 #include "utl/Loader.h"
 
 class OriginalPathable {
@@ -41,6 +42,8 @@ public:
 
     bool StartLoad(bool);
     void Clear();
+    void Select(Symbol, const FilePath &, bool);
+    bool AsyncLoad() const { return mAsyncLoad; }
 
 protected:
     FileMerger();

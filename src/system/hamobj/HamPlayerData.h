@@ -35,6 +35,7 @@ public:
     Difficulty GetDifficulty() { return mDifficulty; }
     PropertyEventProvider *Provider() const { return mProvider; }
     bool InFreestyle() const { return mSkeletonTrackingID >= 0; }
+    Symbol Crew() const { return mCrew; }
 
 private:
     void SetSkeletonTrackingID(int);

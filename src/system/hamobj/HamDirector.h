@@ -97,6 +97,7 @@ public:
     void TriggerNextIntro();
     WorldDir *GetVenueWorld();
     void UnselectVisualizerPostProc();
+    bool GetPracticeFrames(Key<Symbol> *&, Key<Symbol> *&);
 
     DataNode OnGetDancerVisemes(DataArray *);
 
@@ -136,6 +137,7 @@ protected:
     bool ShouldDoCollisionPrevention() const;
     void StartStopVisualizer();
     void SendCurWorldMsg(Symbol, bool);
+    bool ShotsDisabled();
 
     DataNode OnShotOver(DataArray *);
     DataNode OnPostProcInterp(DataArray *);

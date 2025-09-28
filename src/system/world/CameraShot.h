@@ -175,6 +175,7 @@ public:
     float GetDurationSeconds() const;
     bool PlatformOk() const;
     void StartAnims(ObjPtrList<RndAnimatable> &);
+    Symbol Category() const { return mCategory; }
 
 protected:
     CamShot();
