@@ -15,6 +15,10 @@ public:
 
 class MoveChoiceSet {
 public:
+    int unk0;
+    int unk4;
+    int unk8;
+    int unkc;
 };
 
 class MoveMgr : public Hmx::Object {
@@ -37,20 +41,20 @@ public:
     const std::map<Symbol, MoveVariant *> &MoveVariants() const {
         return mMoveGraph.MoveVariants();
     }
+    void Clear();
+    bool HasRoutine() const;
+    void InsertMoveInSong(const MoveVariant *, int, int);
+    void SaveRoutine(DataArray *) const;
 
     static void Init(const char *);
 
 protected:
-    int unk2c;
-    int unk30;
-    int unk34;
+    int unk2c[3];
     int unk38;
     int unk3c;
     SongLayout *unk40;
     SongLayout *unk44;
-    int unk48;
-    int unk4c;
-    int unk50;
+    int unk48[3];
     std::map<int, MoveVariant *> unk54[3];
     int unk9c; // 0x9c - MoveDir*
     int unka0;

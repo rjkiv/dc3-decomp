@@ -122,6 +122,8 @@ public:
     void CacheLinks(MoveGraph *);
     void Load(BinStream &, MoveGraph *, MoveParent *);
     Symbol Name() const { return mVariantName; }
+    Symbol HamMoveName() const { return mHamMoveName; }
+    Symbol Genre() const { return mGenre; }
     bool IsFinalPose() const { return mFlags & 8; }
 
 private:

@@ -44,6 +44,8 @@
 
 HamDirector *TheHamDirector;
 
+float BeatToFrame(float beat) { return BeatToSeconds(beat) * 30.0f; }
+
 HamDirector::HamDirector()
     : mMasterClipAnim(this), mPlayer1RoutineBuilderAnim(this),
       mPlayer2RoutineBuilderAnim(this), unkc8(0), unkcc(""), mBackupDrift(1),
