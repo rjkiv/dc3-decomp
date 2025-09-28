@@ -13,6 +13,10 @@
 #include "utl/MemMgr.h"
 #include "utl/Std.h"
 
+enum HamBackupDancers {
+    kBackupDancersNumTypes = 4
+};
+
 enum HamGender {
     /** "female character" */
     kHamFemale = 0,
@@ -89,6 +93,7 @@ public:
     void ResetFaceOverrideBlending();
     int SongAnimation();
     ObjectDir *GetNeutralSkeleton();
+    void SetFaceOverrideClip(Symbol, bool);
 
 protected:
     virtual void AddedObject(Hmx::Object *);

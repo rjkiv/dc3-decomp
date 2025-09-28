@@ -89,6 +89,7 @@ public:
     void SetSelfShadow(bool selfshadow) { mSelfShadow = selfshadow; }
     void SetLodType(LODType lod) { mForceLod = lod; }
     void ForceBlink();
+    void SetTeleport(bool t) { unk298 = t; }
 
     static void Init();
     static Character *Current() { return sCurrent; }

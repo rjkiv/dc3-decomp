@@ -14,6 +14,7 @@
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
 #include "hamobj/HamVisDir.h"
+#include "hamobj/HamWardrobe.h"
 #include "math/Mtx.h"
 #include "math/Rand.h"
 #include "math/Utl.h"
@@ -55,9 +56,10 @@ HamDirector::HamDirector()
       mDisablePicking(0), unk2a1(0), unk2a4(0), unk2a8(-kHugeFloat), unk2ac(1),
       mPlayerFreestyle(0), mPlayerFreestylePaused(0), mVisualizer(this),
       mPracticeStart(0), mPracticeEnd(0), mStartLoopMargin(1), mEndLoopMargin(1),
-      mBlendDebug(0), unk304(0), mClipDir(this), mMoveDir(this), mNoTransitions(0),
-      mCollisionChecks(1), mLoadedNewSong(1), mPoseFatalities(0), unk33c(RandomInt(0, 2)),
-      unk33d(0), mIconManChar(this), mIconManTex(this), unk369(0), mOfflineSong(0) {
+      mBlendDebug(0), mBackupDancers((HamBackupDancers)0), mClipDir(this), mMoveDir(this),
+      mNoTransitions(0), mCollisionChecks(1), mLoadedNewSong(1), mPoseFatalities(0),
+      unk33c(RandomInt(0, 2)), unk33d(0), mIconManChar(this), mIconManTex(this),
+      unk369(0), mOfflineSong(0) {
     static DataNode &n = DataVariable("hamdirector");
     n = this;
     TheHamDirector = this;
@@ -229,10 +231,25 @@ void HamDirector::ListPollChildren(std::list<RndPollable *> &polls) const {
     }
 }
 
+void HamDirector::DrawShowing() {
+    static Symbol hide_venue("hide_venue");
+    bool hide = TheHamProvider->Property(hide_venue, true)->Int();
+    if (mVenue && !hide) {
+        mVenue->DrawShowing();
+    }
+}
+
 void HamDirector::ListDrawChildren(std::list<RndDrawable *> &draws) {
     if (mVenue) {
         draws.push_back(mVenue);
     }
+}
+
+void HamDirector::CollideList(const Segment &s, std::list<Collision> &colls) {
+    if (mVenue) {
+        mVenue->CollideList(s, colls);
+    }
+    RndDrawable::CollideList(s, colls);
 }
 
 DataNode HamDirector::OnSaveSong(DataArray *) { return 0; }
@@ -725,8 +742,6 @@ void HamDirector::SetCharSpot(Symbol s1, Symbol s2) {
 
 DataNode HamDirector::OnToggleCamshotFlag() { return unk33c = !unk33c; }
 
-#define kBackupDancersNumTypes 4
-
 DataNode HamDirector::OnLoadSong(DataArray *a) {
     FilePathTracker tracker(FileRoot());
     MILO_ASSERT(TheGameData, 0xC1D);
@@ -742,7 +757,7 @@ DataNode HamDirector::OnLoadSong(DataArray *a) {
     String str(a->Str(2));
     int dancers = a->Int(6);
     MILO_ASSERT(dancers >= 0 && dancers < kBackupDancersNumTypes, 0xC2E);
-    unk304 = dancers;
+    mBackupDancers = (HamBackupDancers)dancers;
     mLoadedNewSong = true;
     if (mMerger && !str.empty()) {
         const char *speed;
@@ -955,4 +970,154 @@ DataNode HamDirector::OnSetDircut(DataArray *a) {
         SetDircut(sym, filters);
     }
     return mNextShot;
+}
+
+HamCharacter *HamDirector::GetCharacter(int i) const {
+    if (TheHamWardrobe) {
+        return TheHamWardrobe->GetCharacter(i);
+    } else
+        return nullptr;
+}
+
+HamCharacter *HamDirector::GetBackup(int i) {
+    if (TheHamWardrobe) {
+        return TheHamWardrobe->GetBackup(i);
+    } else
+        return nullptr;
+}
+
+void HamDirector::ChangePlayerCharacter(int i1, Symbol s1, Symbol s2, Symbol s3) {
+    HamPlayerData *hpd = TheGameData->Player(i1);
+    hpd->SetCharacter(s1);
+    hpd->SetCharacterOutfit(s3);
+    unk2f4[i1] = s1;
+    unk2fc[i1] = s2;
+    TheHamWardrobe->LoadCharacters(
+        unk2f4[0],
+        unk2f4[1],
+        unk2fc[0],
+        unk2fc[1],
+        mBackupDancers,
+        unk330,
+        TheGameData->Venue().Str(),
+        true
+    );
+}
+
+void HamDirector::SetMainFaceOverrideClip(Symbol s) {
+    HamCharacter *hChar = GetCharacter(0);
+    if (hChar) {
+        String str(s);
+        hChar->SetFaceOverrideClip(str.c_str(), true);
+    }
+}
+
+Symbol HamDirector::GetMainFaceOverrideClip() const {
+    HamCharacter *hChar = GetCharacter(0);
+    if (hChar) {
+        return hChar->GetFaceOverrideClip();
+    } else
+        return Symbol();
+}
+
+void HamDirector::SetMainFaceOverrideWeight(float wt) {
+    HamCharacter *hChar = GetCharacter(0);
+    if (hChar)
+        hChar->SetFaceOverrideWeight(wt);
+}
+
+float HamDirector::GetMainFaceOverrideWeight() {
+    HamCharacter *hChar = GetCharacter(0);
+    if (hChar) {
+        return hChar->GetFaceOverrideWeight();
+    } else
+        return 0;
+}
+
+void HamDirector::TeleportChars() {
+    for (int i = 0; i < 2; i++) {
+        HamCharacter *hChar = GetCharacter(i);
+        if (hChar)
+            hChar->SetTeleport(true);
+    }
+}
+
+bool HamDirector::SongAnimation() {
+    bool ret = false;
+    for (int i = 0; i < 2; i++) {
+        HamCharacter *hChar = GetCharacter(i);
+        if (hChar && hChar->SongAnimation() > -1) {
+            ret = true;
+            break;
+        }
+    }
+    return ret;
+}
+
+void HamDirector::ResyncFaceDrivers() {
+    for (int i = 0; i < 2; i++) {
+        HamCharacter *hChar = GetCharacter(i);
+        if (hChar)
+            hChar->ResyncLipSync(nullptr);
+    }
+    int i = 0;
+    while (true) {
+        HamCharacter *hChar = GetBackup(i++);
+        if (!hChar)
+            break;
+        else {
+            hChar->ResyncLipSync(nullptr);
+        }
+    }
+}
+
+void HamDirector::PlayCharBaseVisemes() {
+    for (int i = 0; i < 2; i++) {
+        HamCharacter *hChar = GetCharacter(i);
+        if (hChar)
+            hChar->PlayBaseViseme();
+    }
+    int i = 0;
+    while (true) {
+        HamCharacter *hChar = GetBackup(i++);
+        if (!hChar)
+            break;
+        else {
+            hChar->PlayBaseViseme();
+        }
+    }
+}
+
+void HamDirector::DisableFacialAnimation() {
+    for (int i = 0; i < 2; i++) {
+        HamCharacter *hChar = GetCharacter(i);
+        if (hChar)
+            hChar->DisableFacialAnimation();
+    }
+    int i = 0;
+    while (true) {
+        HamCharacter *hChar = GetBackup(i++);
+        if (!hChar)
+            break;
+        else {
+            hChar->DisableFacialAnimation();
+        }
+    }
+}
+
+void HamDirector::ResetFacialAnimation() {
+    for (int i = 0; i < 2; i++) {
+        HamCharacter *hChar = GetCharacter(i);
+        if (hChar)
+            hChar->ResetFacialAnimation();
+    }
+    int i = 0;
+    while (true) {
+        HamCharacter *hChar = GetBackup(i++);
+        if (!hChar)
+            break;
+        else {
+            hChar->ResetFacialAnimation();
+        }
+    }
 }

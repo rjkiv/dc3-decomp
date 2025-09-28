@@ -361,7 +361,7 @@
             "system/hamobj/HamSongData.cpp": "MISSING",
             "system/hamobj/HamSupereasyData.cpp": "MISSING",
             "system/hamobj/HamVisDir.cpp": "NonMatching",
-            "system/hamobj/HamWardrobe.cpp": "MISSING",
+            "system/hamobj/HamWardrobe.cpp": "NonMatching",
             "system/hamobj/HollaBackMinigame.cpp": "MISSING",
             "system/hamobj/MeterDisplay.cpp": "MISSING",
             "system/hamobj/MiniGameMgr.cpp": "NonMatching",

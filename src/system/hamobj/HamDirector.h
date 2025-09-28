@@ -98,6 +98,8 @@ public:
     WorldDir *GetVenueWorld();
     void UnselectVisualizerPostProc();
     bool GetPracticeFrames(Key<Symbol> *&, Key<Symbol> *&);
+    HamCharacter *GetCharacter(int) const;
+    HamCharacter *GetBackup(int);
 
     DataNode OnGetDancerVisemes(DataArray *);
 
@@ -138,6 +140,7 @@ protected:
     void StartStopVisualizer();
     void SendCurWorldMsg(Symbol, bool);
     bool ShotsDisabled();
+    bool SongAnimation();
 
     DataNode OnShotOver(DataArray *);
     DataNode OnPostProcInterp(DataArray *);
@@ -244,7 +247,7 @@ protected:
     Symbol unk2f0; // 0x2f0
     Symbol unk2f4[2]; // 0x2f4
     Symbol unk2fc[2]; // 0x2fc
-    int unk304; // 0x304
+    HamBackupDancers mBackupDancers; // 0x304
     ObjPtr<ObjectDir> mClipDir; // 0x308
     ObjPtr<ObjectDir> mMoveDir; // 0x31c
     Symbol unk330; // 0x330
