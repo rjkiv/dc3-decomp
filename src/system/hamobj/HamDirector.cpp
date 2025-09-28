@@ -4,6 +4,7 @@
 #include "PoseFatalities.h"
 #include "SongCollision.h"
 #include "SongUtl.h"
+#include "char/CharLipSync.h"
 #include "char/Character.h"
 #include "char/FileMerger.h"
 #include "flow/Flow.h"
@@ -224,6 +225,21 @@ BEGIN_SAVES(HamDirector)
     bs << mStartLoopMargin;
     bs << mEndLoopMargin;
 END_SAVES
+
+BEGIN_COPYS(HamDirector)
+    COPY_SUPERCLASS(Hmx::Object)
+    COPY_SUPERCLASS(RndPollable)
+    CREATE_COPY(HamDirector)
+    BEGIN_COPYING_MEMBERS
+        COPY_MEMBER(mPracticeStart)
+        COPY_MEMBER(mPracticeEnd)
+        COPY_MEMBER(mBlendDebug)
+        COPY_MEMBER(mNoTransitions)
+        COPY_MEMBER(mCollisionChecks)
+        COPY_MEMBER(mStartLoopMargin)
+        COPY_MEMBER(mEndLoopMargin)
+    END_COPYING_MEMBERS
+END_COPYS
 
 void HamDirector::ListPollChildren(std::list<RndPollable *> &polls) const {
     if (mVenue) {
@@ -892,6 +908,18 @@ DataNode HamDirector::OnFileLoaded(DataArray *a) {
         unk25a = mMerger->AsyncLoad();
         if (sym == song) {
             if (!TheGameData->Venue().Null()) {
+                if (TheHamWardrobe) {
+                    TheHamWardrobe->LoadCharacters(
+                        unk2f4[0],
+                        unk2f4[1],
+                        unk2fc[0],
+                        unk2fc[1],
+                        mBackupDancers,
+                        unk330,
+                        TheGameData->Venue().Str(),
+                        unk25a
+                    );
+                }
                 FilePath path;
                 {
                     FilePathTracker tracker(FileRoot());
@@ -1118,6 +1146,130 @@ void HamDirector::ResetFacialAnimation() {
             break;
         else {
             hChar->ResetFacialAnimation();
+        }
+    }
+}
+
+void HamDirector::SetLipsyncOffsets(float f1) {
+    for (int i = 0; i < 2; i++) {
+        HamCharacter *hChar = GetCharacter(i);
+        if (hChar) {
+            hChar->ResetFaceOverrideBlending();
+            hChar->SetLipsyncOffset(f1);
+        }
+    }
+    int i = 0;
+    while (true) {
+        HamCharacter *hChar = GetBackup(i++);
+        if (!hChar)
+            break;
+        else {
+            hChar->SetLipsyncOffset(f1);
+        }
+    }
+}
+
+void HamDirector::BlendInFaceOverrides(float f1) {
+    for (int i = 0; i < 2; i++) {
+        HamCharacter *hChar = GetCharacter(i);
+        if (hChar) {
+            hChar->BlendInFaceOverrides(f1);
+        }
+    }
+}
+
+void HamDirector::BlendOutFaceOverrides(float f1) {
+    for (int i = 0; i < 2; i++) {
+        HamCharacter *hChar = GetCharacter(i);
+        if (hChar) {
+            hChar->BlendOutFaceOverrides(f1);
+        }
+    }
+}
+
+bool HamDirector::ShotsDisabled() {
+    if (!mDisablePicking) {
+        if (GetWorld() && GetWorld()->GetCameraManager()->HasFreeCam()) {
+            return true;
+        }
+        if (!mPlayerFreestyle || mFreestyleEnabled) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void HamDirector::SyncScene() {
+    unk14c = false;
+    if (!ShotsDisabled() && mVenue) {
+        SetNewWorld();
+    }
+}
+
+void HamDirector::RestoreBackups() {
+    if (unk254) {
+        if (mPlayer0Char) {
+            mPlayer0Char->SetShowing(unk255[0]);
+        }
+        if (mPlayer1Char) {
+            mPlayer1Char->SetShowing(unk255[1]);
+        }
+        mPlayer1Char->SetShowing(unk255[1]);
+        if (mBackup0Char) {
+            mBackup0Char->SetShowing(unk255[2]);
+        }
+        if (mBackup1Char) {
+            mBackup1Char->SetShowing(unk255[3]);
+        }
+        for (int i = 0; i < 4; i++)
+            unk255[i] = false;
+        unk254 = false;
+    }
+}
+
+ObjectDir *HamDirector::GetDifficultyProxy(Difficulty d) {
+    Difficulty d_legacy = LegacyDifficulty(d);
+    WorldDir *dir = GetWorld();
+    if (dir) {
+        Symbol sym = DifficultyToSym(d_legacy);
+        return dir->Find<ObjectDir>(sym.Str(), false);
+    } else
+        return nullptr;
+}
+
+RndPropAnim *HamDirector::GetPropAnim(Difficulty d, const char *name, bool warn) {
+    RndPropAnim *anim = nullptr;
+    ObjectDir *proxy = GetDifficultyProxy(d);
+    if (proxy) {
+        anim = proxy->Find<RndPropAnim>(name, false);
+        if (warn && !anim) {
+            MILO_NOTIFY("%s has no PropAnim \"%s\"", PathName(proxy), name);
+        }
+    }
+    return anim;
+}
+
+void HamDirector::EnableFacialAnimation() {
+    for (int i = 0; i < 2; i++) {
+        CharLipSync *lipsync = nullptr;
+        ObjectDir *proxy = GetDifficultyProxy(TheGameData->Player(i)->GetDifficulty());
+        if (proxy) {
+            lipsync = proxy->Find<CharLipSync>("dancer_face.lipsync", false);
+        }
+        HamCharacter *hChar = GetCharacter(i);
+        if (hChar) {
+            hChar->EnableFacialAnimation(lipsync, 0);
+        }
+        if (i == 0) {
+            int j = 0;
+            while (true) {
+                HamCharacter *hChar = GetBackup(j++);
+                if (!hChar)
+                    break;
+                else {
+                    hChar->EnableFacialAnimation(lipsync, 0);
+                }
+            }
         }
     }
 }

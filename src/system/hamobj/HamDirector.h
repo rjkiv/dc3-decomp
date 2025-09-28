@@ -141,6 +141,9 @@ protected:
     void SendCurWorldMsg(Symbol, bool);
     bool ShotsDisabled();
     bool SongAnimation();
+    void SyncScene();
+    void SetNewWorld();
+    ObjectDir *GetDifficultyProxy(Difficulty);
 
     DataNode OnShotOver(DataArray *);
     DataNode OnPostProcInterp(DataArray *);
