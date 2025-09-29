@@ -26,6 +26,16 @@ void RatingStateThreshold(
     thresh = (*thresholds)[index];
 }
 
+int RatingStateToIndex(Symbol s) {
+    for (int i = 0; i < sRatingStates.size(); i++) {
+        if (s == sRatingStates[i]) {
+            return i;
+        }
+    }
+    MILO_NOTIFY("Could not find rating (%s)", s);
+    return 0;
+}
+
 Symbol RatingState(int index) {
     MILO_ASSERT((0) <= (index) && (index) < (sRatingStates.size()), 0xA7);
     return sRatingStates[index];

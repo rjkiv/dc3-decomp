@@ -68,6 +68,10 @@ void DetectFrame::AddError(const Vector3 (&errors)[kMaxNumErrorNodes], float f) 
     }
 }
 
-// bool DetectFrameMoveIdxCmp::operator()(const DetectFrame &frame, int idx) const {
-//     return frame.unk0->unk0 < idx;
-// }
+bool DetectFrameMoveIdxCmp::operator()(const DetectFrame &frame, int idx) const {
+    return frame.GetDancerFrame()->unk0 < idx;
+}
+
+bool DetectFrameMoveIdxCmp::operator()(int idx, const DetectFrame &frame) const {
+    return idx < frame.GetDancerFrame()->unk0;
+}

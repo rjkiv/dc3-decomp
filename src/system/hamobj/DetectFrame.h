@@ -20,6 +20,9 @@ public:
     void AddError(const Vector3 (&)[kMaxNumErrorNodes], float);
     float LimbPSNR(const FilterVersion *, int) const;
     float Score(const FilterVersion *, MoveMode) const;
+    const DancerFrame *GetDancerFrame() const { return unk0; }
+    const MoveFrame *GetMoveFrame() const { return unk4; }
+    MoveMirrored Mirror() const { return unkc; }
 
 protected:
     const DancerFrame *unk0; // 0x0

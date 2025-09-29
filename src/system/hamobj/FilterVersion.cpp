@@ -1,6 +1,7 @@
 #include "hamobj/FilterVersion.h"
-#include "ErrorNode.h"
-#include "FilterVersion.h"
+#include "hamobj/ErrorNode.h"
+#include "hamobj/DetectFrame.h"
+#include "hamobj/HamMove.h"
 #include "obj/Data.h"
 #include "os/Debug.h"
 
@@ -39,4 +40,20 @@ FilterVersion *FilterVersion::Create(const DataArray *cfg) {
         MILO_FAIL("could not create filter version");
         return nullptr;
     }
+}
+
+void Ham1FilterVersion::NodeInput(
+    int x, const DetectFrame *detectFrame, MoveMode mode, ErrorNodeInput &input
+) const {
+    const Ham1NodeWeight &ham1 =
+        detectFrame->GetMoveFrame()->NodeWeightHam1(x, mode, detectFrame->Mirror());
+    input.Set(detectFrame->NodeComponentWeight(x), &ham1);
+}
+
+void Ham2FilterVersion::NodeInput(
+    int x, const DetectFrame *detectFrame, MoveMode mode, ErrorNodeInput &input
+) const {
+    input.Set(
+        detectFrame->GetMoveFrame()->NodeInverseScale(x, detectFrame->Mirror()), nullptr
+    );
 }
