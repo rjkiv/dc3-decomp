@@ -1,6 +1,7 @@
 #pragma once
 #include "hamobj/DancerSequence.h"
 #include "hamobj/Difficulty.h"
+#include "hamobj/ErrorNode.h"
 #include "hamobj/ScoreUtl.h"
 #include "math/Vec.h"
 #include "obj/Object.h"
@@ -17,27 +18,6 @@ enum MoveMirrored {
     kMirroredNo = 0,
     kMirroredYes = 1,
     kNumMoveMirrored = 2
-};
-
-// Ham1NodeWeight size: 0x14
-struct Ham1NodeWeight {
-    bool unk0;
-    float unk4; // seen this assigned to ScaleOp's mPerfectDist
-    float unk8; // seen this assigned to ScaleOp's mRate
-    float unkc; // seen this assigned to ScaleOp's mPerfectDist
-    float unk10; // seen this assigned to ScaleOp's mRate
-};
-
-// Ham2FrameWeight size: 0x24
-struct Ham2FrameWeight {
-    float unk0;
-    float unk4[4];
-    float unk14[4];
-};
-
-struct OldNodeWeight {
-    float unk0;
-    float unk4, unk8, unkc, unk10;
 };
 
 class MoveFrame {

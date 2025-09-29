@@ -323,7 +323,7 @@
             "system/hamobj/DancerSkeleton.cpp": "NonMatching",
             "system/hamobj/DetectFrame.cpp": "MISSING",
             "system/hamobj/Difficulty.cpp": "NonMatching",
-            "system/hamobj/ErrorNode.cpp": "MISSING",
+            "system/hamobj/ErrorNode.cpp": "NonMatching",
             "system/hamobj/FilterQueue.cpp": "MISSING",
             "system/hamobj/FilterVersion.cpp": "MISSING",
             "system/hamobj/FreestyleMove.cpp": "MISSING",
