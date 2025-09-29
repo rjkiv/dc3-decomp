@@ -2,6 +2,7 @@
 #include "char/Character.h"
 #include "hamobj/HamCharacter.h"
 #include "obj/Data.h"
+#include "obj/Dir.h"
 #include "obj/Object.h"
 #include "rndobj/Overlay.h"
 #include "utl/MemMgr.h"
@@ -32,18 +33,27 @@ public:
     void SetBackupOverrideOutfits(Symbol, Symbol);
     void
     LoadCharacters(Symbol, Symbol, Symbol, Symbol, HamBackupDancers, Symbol, Symbol, bool);
+    Symbol GetBackupOutfitOverride(int);
+    bool AllCharsLoaded();
+    void ClearCrowdClips();
+    void ClearCrowd();
+    void UpdateOverlay();
+    void SetDir(ObjectDir *);
 
 protected:
     HamWardrobe();
 
     Symbol GetCrewChar(Symbol, int);
+    HamCharacter *LoadMainCharacter(int, Symbol, bool);
+    void LoadCrowdClips(Symbol, Symbol, bool);
+    void SyncInterestObjects(ObjectDir *);
 
     DataNode OnSetVenue(DataArray *);
     DataNode OnAddCrowd(DataArray *);
     DataNode OnLoadCharacters(DataArray *);
 
     ObjPtrList<Character> mCrowdMembers; // 0x4
-    ObjPtrVec<HamCharacter> unk18; // 0x18
+    ObjPtrVec<HamCharacter> mMainCharacters; // 0x18
     Symbol unk34; // 0x34
     bool unk38; // 0x38
     Symbol unk3c; // 0x3c
@@ -51,7 +61,7 @@ protected:
     Symbol unk44; // 0x44
     Symbol unk48; // 0x48
     Symbol unk4c[2]; // 0x4c
-    RndOverlay *unk54; // 0x54
+    RndOverlay *mOverlay; // 0x54
 };
 
 extern HamWardrobe *TheHamWardrobe;

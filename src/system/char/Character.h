@@ -2,6 +2,7 @@
 #include "char/CharDriver.h"
 #include "math/Sphere.h"
 #include "obj/Data.h"
+#include "obj/Dir.h"
 #include "obj/Object.h"
 #include "rndobj/Dir.h"
 #include "rndobj/Draw.h"
@@ -86,10 +87,12 @@ public:
     void MergeDraws(const Character *);
     void FindInterestObjects(ObjectDir *);
     void EnableBlinks(bool, bool);
+    void SetInterestObjects(const ObjPtrList<CharInterest> &, ObjectDir *);
     void SetSelfShadow(bool selfshadow) { mSelfShadow = selfshadow; }
     void SetLodType(LODType lod) { mForceLod = lod; }
     void ForceBlink();
     void SetTeleport(bool t) { unk298 = t; }
+    CharDriver *Driver() const { return mDriver; }
 
     static void Init();
     static Character *Current() { return sCurrent; }

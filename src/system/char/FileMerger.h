@@ -44,6 +44,7 @@ public:
     void Clear();
     void Select(Symbol, const FilePath &, bool);
     bool AsyncLoad() const { return mAsyncLoad; }
+    bool HasPendingFiles() const { return !mFilesPending.empty(); }
 
 protected:
     FileMerger();
