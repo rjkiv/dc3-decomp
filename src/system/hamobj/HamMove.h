@@ -1,5 +1,6 @@
 #pragma once
 #include "hamobj/DancerSequence.h"
+#include "hamobj/Difficulty.h"
 #include "hamobj/ScoreUtl.h"
 #include "obj/Object.h"
 #include "rndobj/PropAnim.h"
@@ -41,8 +42,18 @@ public:
 
     OBJ_MEM_OVERLOAD(0x68)
     NEW_OBJ(HamMove)
+    static float sMinFrameDistBeats;
 
     void SetTexture(RndTex *);
+    bool IsRest() const;
+    bool IsFinalPose() const;
+    bool SuppressGuideGesture() const;
+    bool SuppressPracticeOptions() const;
+    void RefreshBarks();
+    float Confusability(const HamMove *) const;
+    const char *DisplayName() const;
+    float AdjustNormalizedPercentToConfusability(float, float);
+    float ConfusabilityWithMoveDataArray(const DataArray *);
 
 protected:
     HamMove();
@@ -72,7 +83,7 @@ protected:
     bool mOmitMinigame; // 0x81
     std::vector<LocalizedName> mLocalizedNames; // 0x84
     const char *mDisplayName; // 0x90
-    int unk94; // 0x94
+    Difficulty mDifficulty; // 0x94
     Symbol mVerb; // 0x98
     Symbol mMoveSound; // 0x9c
     std::vector<float> mRatingStates; // 0xa0
@@ -86,7 +97,7 @@ protected:
     float mOverrides[kNumMoveRatings]; // 0xc0
     bool unkd0; // 0xd0
     /** "id used when comparing to other moves" */
-    int mConfusabilityID; // 0xd4
+    Hmx::CRC mConfusabilityID; // 0xd4
     std::map<Hmx::CRC, float> mConfusabilities; // 0xd8
     ObjPtr<DancerSequence> mDancerSeq; // 0xf0
 };

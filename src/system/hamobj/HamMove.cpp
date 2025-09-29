@@ -1,19 +1,22 @@
 #include "hamobj/HamMove.h"
-#include "HamMove.h"
-#include "ScoreUtl.h"
+#include "hamobj/ScoreUtl.h"
+#include "hamobj/Difficulty.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
+#include "obj/Utl.h"
 #include "os/System.h"
 #include "rndobj/PropAnim.h"
 #include "rndobj/PropKeys.h"
 #include "rndobj/Tex.h"
 #include "utl/Loader.h"
 
+float HamMove::sMinFrameDistBeats = 0.2;
+
 HamMove::HamMove()
     : mMirror(this), mTex(this), mSmallTex(this), mTexState(kTexNormal), mScored(true),
       mParadiddle(false), mFinalPose(false), mSuppressGuide(false),
       mSuppressPracticeOptions(false), mOmitMinigame(false), mDisplayName(nullptr),
-      unk94(2), mShoulderDisplacements(false), unkd0(0), mConfusabilityID(0),
+      mDifficulty(kDifficultyExpert), mShoulderDisplacements(false), unkd0(0),
       mDancerSeq(this) {
     SetRate(k480_fpb);
     SystemLanguage();
@@ -39,6 +42,20 @@ HamMove::HamMove()
 
 HamMove::~HamMove() {}
 
+BEGIN_HANDLERS(HamMove)
+    HANDLE_EXPR(display_name, DisplayName())
+    HANDLE_EXPR(is_rest, IsRest())
+    HANDLE_ACTION(refresh_barks, RefreshBarks())
+    HANDLE_EXPR(confusability, Confusability(_msg->Obj<HamMove>(2)))
+    HANDLE_EXPR(
+        adjust_normalized_percent_to_confusability,
+        AdjustNormalizedPercentToConfusability(_msg->Float(2), _msg->Float(3))
+    )
+    HANDLE_EXPR(
+        confusability_with_move_data_array, ConfusabilityWithMoveDataArray(_msg->Array(2))
+    )
+END_HANDLERS
+
 BEGIN_PROPSYNCS(HamMove)
     SYNC_PROP_MODIFY(mirror, mMirror, SyncMirror())
     SYNC_PROP_SET(tex, mTex.Ptr(), SetTexture(_val.Obj<RndTex>()))
@@ -53,7 +70,7 @@ BEGIN_PROPSYNCS(HamMove)
     SYNC_PROP(omit_minigame, mOmitMinigame)
     SYNC_PROP(suppress_guide, mSuppressGuide)
     SYNC_PROP(suppress_practice_options, mSuppressPracticeOptions)
-    SYNC_PROP_SET(difficulty, unk94, unk94 = _val.Int())
+    SYNC_PROP_SET(difficulty, (int &)mDifficulty, mDifficulty = (Difficulty)_val.Int())
     SYNC_PROP(move_perfect, mRatingStates[RatingStateToIndex("move_perfect")])
     SYNC_PROP(move_awesome, mRatingStates[RatingStateToIndex("move_awesome")])
     SYNC_PROP(move_ok, mRatingStates[RatingStateToIndex("move_ok")])
@@ -67,7 +84,10 @@ BEGIN_PROPSYNCS(HamMove)
     SYNC_PROP(awesome_override, mOverrides[kMoveRatingAwesome])
     SYNC_PROP(ok_override, mOverrides[kMoveRatingOk])
     SYNC_PROP(shoulder_displacements, mShoulderDisplacements)
-    SYNC_PROP(confusability_id, mConfusabilityID)
+    SYNC_PROP(confusability_id, mConfusabilityID.mCRC)
     SYNC_PROP_SET(confusability_count, (int)mConfusabilities.size(), )
     SYNC_SUPERCLASS(RndPropAnim)
 END_PROPSYNCS
+
+bool HamMove::IsRest() const { return !mScored; }
+const char *HamMove::DisplayName() const { return mDisplayName ? mDisplayName : "NULL"; }
