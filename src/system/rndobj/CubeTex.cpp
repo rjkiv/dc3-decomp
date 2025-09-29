@@ -190,7 +190,7 @@ void RndCubeTex::UpdateFace(CubeFace face) {
 
 void RndCubeTex::PostLoad(BinStream &bs) {
     BinStreamRev bsrev(bs, bs.PopRev(this));
-    if (bsrev.mRev < 2) {
+    if (bsrev.rev < 2) {
         bool b;
         bsrev >> b;
     }
@@ -200,7 +200,7 @@ void RndCubeTex::PostLoad(BinStream &bs) {
         } else if (!mFile[i].empty()) {
             SetBitmap((CubeFace)i, mFile[i], false);
         }
-        if (bsrev.mRev < 2) {
+        if (bsrev.rev < 2) {
             props = moreprops[i];
         }
     }

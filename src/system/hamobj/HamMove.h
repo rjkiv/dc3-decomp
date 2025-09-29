@@ -5,12 +5,56 @@
 #include "obj/Object.h"
 #include "rndobj/PropAnim.h"
 #include "rndobj/Tex.h"
+#include "utl/BinStream.h"
 #include "utl/MemMgr.h"
+
+enum MoveMirrored {
+    kMirroredNo = 0,
+    kMirroredYes = 1,
+    kNumMoveMirrored = 2
+};
+
+// Ham1NodeWeight size: 0x14
+struct Ham1NodeWeight {
+    bool unk0;
+    float unk4; // seen this assigned to ScaleOp's mPerfectDist
+    float unk8; // seen this assigned to ScaleOp's mRate
+    float unkc; // seen this assigned to ScaleOp's mPerfectDist
+    float unk10; // seen this assigned to ScaleOp's mRate
+};
+
+// Ham2FrameWeight size: 0x24
+struct Ham2FrameWeight {
+    float unk0;
+    float unk4[4];
+    float unk14[4];
+};
+
+struct OldNodeWeight {
+    float unk0;
+    float unk4, unk8, unkc, unk10;
+};
 
 class MoveFrame {
 public:
+    // num error nodes for each game
+    enum {
+        // for DC1
+        kNumHam1Nodes = 16,
+        // for DC2/DC3
+        kMaxNumErrorNodes = 33
+    };
+
+    void Save(BinStream &) const;
+
+private:
     float mBeat; // 0x0
     int unk4; // 0x4
+    Ham1NodeWeight mHam1NodeWeights[kNumHam1Nodes][4]; // 0x8
+    Vector3 mNodeWeights[kMaxNumErrorNodes][kNumMoveMirrored]; // 0x508
+    Vector3 mNodeScales[kMaxNumErrorNodes][kNumMoveMirrored]; // 0x928
+    Vector3 mNodesInverseScale[kMaxNumErrorNodes][kNumMoveMirrored]; // 0xd48
+    Ham2FrameWeight mFrameWeights[kNumMoveMirrored]; // 0x1168
 };
 
 /** "Data associated with a ham Move" */

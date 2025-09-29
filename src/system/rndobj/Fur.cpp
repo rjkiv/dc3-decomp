@@ -65,7 +65,7 @@ END_PROPSYNCS
 bool RndFur::LoadOld(BinStreamRev &bs) {
     bool ret;
     bs >> ret;
-    if (ret || bs.mRev < 0x20) {
+    if (ret || bs.rev < 0x20) {
         bs >> mLayers;
         bs >> mThickness;
         bs >> mCurvature;
@@ -74,10 +74,10 @@ bool RndFur::LoadOld(BinStreamRev &bs) {
         bs >> mGravity;
         bs >> mFluidity;
         bs >> mRootsTint >> mEndsTint;
-        if (bs.mRev > 0x1E) {
+        if (bs.rev > 0x1E) {
             bs >> mFurDetail >> mFurTiling;
         }
-        if (bs.mRev < 0x24) {
+        if (bs.rev < 0x24) {
             Vector3 v;
             float f;
             bs >> v >> f;

@@ -4,10 +4,12 @@
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "obj/Utl.h"
+#include "os/Debug.h"
 #include "os/System.h"
 #include "rndobj/PropAnim.h"
 #include "rndobj/PropKeys.h"
 #include "rndobj/Tex.h"
+#include "utl/BinStream.h"
 #include "utl/Loader.h"
 
 float HamMove::sMinFrameDistBeats = 0.2;
@@ -54,6 +56,9 @@ BEGIN_HANDLERS(HamMove)
     HANDLE_EXPR(
         confusability_with_move_data_array, ConfusabilityWithMoveDataArray(_msg->Array(2))
     )
+    HANDLE_EXPR(is_loopable, true)
+    HANDLE_EXPR(has_filters, !mMoveFrames.empty())
+    HANDLE_SUPERCLASS(RndPropAnim)
 END_HANDLERS
 
 BEGIN_PROPSYNCS(HamMove)
@@ -89,5 +94,90 @@ BEGIN_PROPSYNCS(HamMove)
     SYNC_SUPERCLASS(RndPropAnim)
 END_PROPSYNCS
 
+BEGIN_SAVES(HamMove)
+    SAVE_REVS(50, 0)
+    SAVE_SUPERCLASS(RndPropAnim)
+    bs << mMirror;
+    bs << mTex;
+    bs << mScored;
+    bs << mFinalPose;
+    bs << mLocalizedNames.size();
+    for (int i = 0; i < mLocalizedNames.size(); i++) {
+        bs << mLocalizedNames[i].mLanguage;
+        bs << mLocalizedNames[i].mName;
+    }
+    bs << mTexState;
+    int numFrames = mMoveFrames.size();
+    bs << numFrames;
+    for (int i = 0; i < numFrames; i++) {
+        mMoveFrames[i].Save(bs);
+    }
+    bs << mParadiddle;
+    bs << mSuppressGuide;
+    bs << mSuppressPracticeOptions;
+    bs << mOmitMinigame;
+    bs << mRatingStates;
+    bs << mShoulderDisplacements;
+    for (int i = 0; i < 4; i++) {
+        bs << mThresholds[i];
+        bs << mOverrides[i];
+    }
+    bs << mConfusabilities;
+    bs << mDifficulty;
+    bs << mDancerSeq;
+    bs << mConfusabilityID;
+END_SAVES
+
 bool HamMove::IsRest() const { return !mScored; }
 const char *HamMove::DisplayName() const { return mDisplayName ? mDisplayName : "NULL"; }
+bool HamMove::IsFinalPose() const { return mFinalPose; }
+bool HamMove::SuppressGuideGesture() const { return mSuppressGuide; }
+bool HamMove::SuppressPracticeOptions() const { return mSuppressPracticeOptions; }
+
+BinStream &operator<<(BinStream &bs, const Ham1NodeWeight &wt) {
+    bs << wt.unk4 << wt.unk8 << wt.unkc << wt.unk10 << wt.unk0;
+    return bs;
+}
+
+BinStream &operator>>(BinStreamRev &d, Ham1NodeWeight &wt) {
+    d >> wt.unk4;
+    d >> wt.unk8;
+    d >> wt.unkc;
+    d >> wt.unk10;
+    if (d.rev > 39) {
+        d >> wt.unk0;
+    } else if (d.rev > 32) {
+        float f1;
+        d >> f1;
+        wt.unk0 = f1 != 0;
+    } else if (d.rev > 24) {
+        d >> wt.unk0;
+    } else
+        wt.unk0 = 1;
+    return d.stream;
+}
+
+BinStream &operator>>(BinStreamRev &d, OldNodeWeight &wt) {
+    MILO_ASSERT(d.rev < 40, 0xA6);
+    d >> wt.unk4;
+    d >> wt.unk8;
+    d >> wt.unkc;
+    d >> wt.unk10;
+    if (d.rev > 32) {
+        d >> wt.unk0;
+    } else if (d.rev > 0x18) {
+        bool b;
+        d >> b;
+        if (b) {
+            wt.unk0 = 1;
+        } else {
+            wt.unk0 = 0;
+        }
+    } else {
+        wt.unk0 = 1;
+    }
+    return d.stream;
+}
+
+// class BinStream & __cdecl operator<<(class BinStream &, struct Ham2FrameWeight const &)
+// class BinStream & __cdecl operator>>(class BinStreamRev &, struct Ham2FrameWeight &)

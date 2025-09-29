@@ -173,30 +173,29 @@ inline int packRevs(unsigned short alt, unsigned short rev) {
 
 #define BSREV_READ(obj)                                                                  \
     BinStreamRev &operator>>(obj &x) {                                                   \
-        mBinStream >> x;                                                                 \
+        stream >> x;                                                                     \
         return *this;                                                                    \
     }
 
 class BinStreamRev {
 public:
-    BinStreamRev(BinStream &bs, int rev, int alt)
-        : mRev(rev), mAltRev(alt), mBinStream(bs) {}
+    BinStreamRev(BinStream &bs, int r, int alt) : rev(r), altRev(alt), stream(bs) {}
     BinStreamRev(BinStream &bs, int revs)
-        : mRev(getHmxRev(revs)), mAltRev(getAltRev(revs)), mBinStream(bs) {}
+        : rev(getHmxRev(revs)), altRev(getAltRev(revs)), stream(bs) {}
 
     BinStreamRev &operator>>(bool &);
 
-    void PushRev(Hmx::Object *obj) { mBinStream.PushRev(packRevs(mAltRev, mRev), obj); }
+    void PushRev(Hmx::Object *obj) { stream.PushRev(packRevs(altRev, rev), obj); }
 
     template <class T>
     BinStreamRev &operator>>(T &t) {
-        mBinStream >> t;
+        stream >> t;
         return *this;
     }
 
-    int mRev;
-    int mAltRev;
-    BinStream &mBinStream;
+    int rev;
+    int altRev;
+    BinStream &stream;
 };
 
 template <class E> // E is an enum type
@@ -209,7 +208,7 @@ public:
 template <class E>
 BinStreamRev &operator>>(BinStreamRev &bs, BinStreamEnum<E> &e) {
     int x;
-    bs.mBinStream >> x;
+    bs.stream >> x;
     e.mEnum = (E)x;
     return bs;
 }

@@ -38,7 +38,7 @@ void MatPerfSettings::Save(BinStream &bs) const {
 void MatPerfSettings::LoadOld(BinStreamRev &bs) {
     bs >> mRecvProjLights;
     bs >> mPS3ForceTrilinear;
-    if (bs.mRev > 0x41)
+    if (bs.rev > 0x41)
         bs >> mRecvPointCubeTex;
 }
 

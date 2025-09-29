@@ -273,7 +273,7 @@ void BoolKeys::SetFrame(float frame, float f2, float f3) {
 }
 
 BinStreamRev &operator>>(BinStreamRev &bs, ObjectStage &stage) {
-    if (bs.mRev > 8) {
+    if (bs.rev > 8) {
         ObjPtr<ObjectDir> ptr(stage.Owner());
         bs >> ptr;
     }
@@ -294,7 +294,7 @@ PropKeys::PropKeys(Hmx::Object *targetOwner, Hmx::Object *target)
       mLastKeyFrameIndex(-2), unk34(false) {}
 
 void PropKeys::Load(BinStreamRev &bs) {
-    if (bs.mRev < 7)
+    if (bs.rev < 7)
         MILO_FAIL("PropKeys::Load should not be called before version 7");
     else {
         int iVal;
@@ -303,20 +303,20 @@ void PropKeys::Load(BinStreamRev &bs) {
         bs >> mTarget;
         bs >> mProp;
 
-        if (bs.mRev >= 8)
+        if (bs.rev >= 8)
             bs >> iVal;
         else if (mKeysType == kObject || mKeysType == kBool)
             iVal = 0;
         else
             iVal = 1;
 
-        if (bs.mRev < 11 && iVal == 4) {
+        if (bs.rev < 11 && iVal == 4) {
             mPropExceptionID = kMacro;
             mInterpolation = kStep;
         } else
             mInterpolation = (Interpolation)iVal;
 
-        if (bs.mRev > 9) {
+        if (bs.rev > 9) {
             Symbol sym;
             bs >> sym;
             if (!sym.Null()) {
@@ -324,12 +324,12 @@ void PropKeys::Load(BinStreamRev &bs) {
             }
         }
 
-        if (bs.mRev > 10) {
+        if (bs.rev > 10) {
             bs >> iVal;
             mPropExceptionID = (ExceptionID)iVal;
         }
 
-        if (bs.mRev > 0xC) {
+        if (bs.rev > 0xC) {
             bs >> unk34;
         }
         SetPropExceptionID();

@@ -222,7 +222,7 @@ void TypeProps::InsertArrayValue(Symbol key, int i, const DataNode &value) {
 }
 
 void TypeProps::Load(BinStreamRev &bs) {
-    bool rev = bs.mRev < 2;
+    bool rev = bs.rev < 2;
     ReleaseObjects();
     DataArray *def = RefOwner()->TypeDef();
     Hmx::Object *theThis = nullptr;

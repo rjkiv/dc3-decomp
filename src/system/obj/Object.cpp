@@ -639,7 +639,7 @@ void Hmx::Object::LoadRest(BinStream &bs) {
     if (!mTypeProps->HasProps()) {
         RELEASE(mTypeProps);
     }
-    if (bsrev.mRev > 0) {
+    if (bsrev.rev > 0) {
         bsrev >> mNote;
     }
 }

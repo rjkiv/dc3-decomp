@@ -32,7 +32,7 @@ BinStream &operator<<(BinStream &bs, const MoggClipMap &mogg) {
 
 void MoggClipMap::myLoad(BinStreamRev &bs) {
     bs >> mMoggClip;
-    if (bs.mRev >= 11) {
+    if (bs.rev >= 11) {
         bs >> mVolume;
         bs >> mPan;
         bs >> mPanWidth;
@@ -42,5 +42,5 @@ void MoggClipMap::myLoad(BinStreamRev &bs) {
 
 BinStream &operator>>(BinStreamRev &bs, MoggClipMap &mogg) {
     mogg.myLoad(bs);
-    return bs.mBinStream;
+    return bs.stream;
 }
