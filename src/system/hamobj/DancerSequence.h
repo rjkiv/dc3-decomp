@@ -4,8 +4,8 @@
 
 // size 0x2dc
 struct DancerFrame {
-    unsigned short unk0; // 0x0
-    unsigned short unk2; // 0x2
+    short unk0; // 0x0
+    short unk2; // 0x2
     DancerSkeleton mSkeleton; // 0x4
 };
 

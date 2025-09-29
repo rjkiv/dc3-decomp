@@ -39,6 +39,11 @@ enum ErrorScaleType {
     kErrorScaleDistSq = 1
 };
 
+enum NumErrorNodes {
+    // for DC2/DC3
+    kMaxNumErrorNodes = 33
+};
+
 struct ScaleOp {
     void Set(const DataArray *);
 
@@ -165,6 +170,10 @@ protected:
 public:
     BaseDisplacementNode(ErrorNodeType, const DataArray *);
     virtual bool SkipFirstFrame() const { return true; }
+    virtual void
+    CalcError(const ErrorFrameInput &, const ErrorNodeInput &, Vector3 &) const = 0;
+    virtual void
+    VizError(SkeletonViz &, const ErrorFrameInput &, const ErrorNodeInput &) const = 0;
 };
 
 // DisplacementNode size: 0x2c

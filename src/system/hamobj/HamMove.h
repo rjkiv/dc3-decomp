@@ -22,14 +22,10 @@ enum MoveMirrored {
 
 class MoveFrame {
 public:
-    // num error nodes for each game
     enum {
         // for DC1
-        kNumHam1Nodes = 16,
-        // for DC2/DC3
-        kMaxNumErrorNodes = 33
+        kNumHam1Nodes = 16
     };
-
     void Save(BinStream &) const;
     void Load(BinStreamRev &);
     const Ham1NodeWeight &NodeWeightHam1(int, MoveMode, MoveMirrored) const;
