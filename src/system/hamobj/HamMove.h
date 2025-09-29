@@ -2,11 +2,16 @@
 #include "hamobj/DancerSequence.h"
 #include "hamobj/Difficulty.h"
 #include "hamobj/ScoreUtl.h"
+#include "math/Vec.h"
 #include "obj/Object.h"
 #include "rndobj/PropAnim.h"
 #include "rndobj/Tex.h"
 #include "utl/BinStream.h"
 #include "utl/MemMgr.h"
+
+enum MoveMode {
+    kNumMoveModes = 2
+};
 
 enum MoveMirrored {
     kMirroredNo = 0,
@@ -46,14 +51,20 @@ public:
     };
 
     void Save(BinStream &) const;
+    void Load(BinStreamRev &);
+    const Ham1NodeWeight &NodeWeightHam1(int, MoveMode, MoveMirrored) const;
+    const Ham2FrameWeight &FrameWeight(MoveMirrored) const;
+    const Vector3 &NodeWeight(int, MoveMirrored) const;
+    const Vector3 &NodeInverseScale(int, MoveMirrored) const;
+    void SetNodeScale(int, MoveMirrored, const Vector3 &);
 
 private:
     float mBeat; // 0x0
     int unk4; // 0x4
-    Ham1NodeWeight mHam1NodeWeights[kNumHam1Nodes][4]; // 0x8
-    Vector3 mNodeWeights[kMaxNumErrorNodes][kNumMoveMirrored]; // 0x508
-    Vector3 mNodeScales[kMaxNumErrorNodes][kNumMoveMirrored]; // 0x928
-    Vector3 mNodesInverseScale[kMaxNumErrorNodes][kNumMoveMirrored]; // 0xd48
+    Ham1NodeWeight mHam1NodeWeights[kNumMoveModes][kNumMoveMirrored][kNumHam1Nodes]; // 0x8
+    Vector3 mNodeWeights[kNumMoveMirrored][kMaxNumErrorNodes]; // 0x508
+    Vector3 mNodeScales[kNumMoveMirrored][kMaxNumErrorNodes]; // 0x928
+    Vector3 mNodesInverseScale[kNumMoveMirrored][kMaxNumErrorNodes]; // 0xd48
     Ham2FrameWeight mFrameWeights[kNumMoveMirrored]; // 0x1168
 };
 
@@ -61,6 +72,8 @@ private:
 class HamMove : public RndPropAnim {
 public:
     struct LocalizedName {
+        bool operator==(const Symbol &s) const { return mLanguage == s; }
+
         Symbol mLanguage; // 0x0
         String mName; // 0x4
     };
@@ -98,11 +111,17 @@ public:
     const char *DisplayName() const;
     float AdjustNormalizedPercentToConfusability(float, float);
     float ConfusabilityWithMoveDataArray(const DataArray *);
+    std::vector<MoveFrame> &GetMoveFrames();
+    const std::vector<MoveFrame> &GetMoveFrames() const;
+    MoveMirrored Mirrored() const;
+    void Update(const HamMove *);
 
 protected:
     HamMove();
 
     void SyncMirror();
+    float FindConfusabilty(const HamMove *) const;
+    void SetName(Symbol, const char *);
 
     /** "Move to mirror" */
     ObjPtr<HamMove> mMirror; // 0x30

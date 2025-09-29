@@ -1,6 +1,9 @@
 #include "hamobj/HamMove.h"
+#include "FilterVersion.h"
 #include "hamobj/ScoreUtl.h"
 #include "hamobj/Difficulty.h"
+#include "math/Utl.h"
+#include "math/Vec.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "obj/Utl.h"
@@ -11,6 +14,7 @@
 #include "rndobj/Tex.h"
 #include "utl/BinStream.h"
 #include "utl/Loader.h"
+#include "utl/Str.h"
 
 float HamMove::sMinFrameDistBeats = 0.2;
 
@@ -165,7 +169,7 @@ BinStream &operator>>(BinStreamRev &d, OldNodeWeight &wt) {
     d >> wt.unk10;
     if (d.rev > 32) {
         d >> wt.unk0;
-    } else if (d.rev > 0x18) {
+    } else if (d.rev > 24) {
         bool b;
         d >> b;
         if (b) {
@@ -179,5 +183,205 @@ BinStream &operator>>(BinStreamRev &d, OldNodeWeight &wt) {
     return d.stream;
 }
 
-// class BinStream & __cdecl operator<<(class BinStream &, struct Ham2FrameWeight const &)
-// class BinStream & __cdecl operator>>(class BinStreamRev &, struct Ham2FrameWeight &)
+BinStream &operator<<(BinStream &bs, const Ham2FrameWeight &wt) {
+    bs << wt.unk0;
+    for (int i = 0; i < 4; i++) {
+        bs << wt.unk4[i];
+        bs << wt.unk14[i];
+    }
+    return bs;
+}
+
+BinStream &operator>>(BinStreamRev &d, Ham2FrameWeight &wt) {
+    if (d.rev > 34) {
+        d >> wt.unk0;
+    }
+    if (d.rev < 33) {
+        if (d.rev > 31) {
+            float f;
+            for (int i = 0; i < 20; i++) {
+                d >> f;
+            }
+        } else if (d.rev > 30) {
+            float f;
+            d >> f;
+        }
+    }
+    if (d.rev < 37) {
+        float x, y;
+        for (int i = 0; i < 4; i++) {
+            d >> x;
+            d >> y;
+        }
+    }
+
+    if (d.rev > 37) {
+        for (int i = 0; i < 4; i++) {
+            d >> wt.unk4[i];
+            d >> wt.unk14[i];
+        }
+    } else {
+        for (int i = 0; i < 4; i++) {
+            wt.unk4[i] = 0;
+            wt.unk14[i] = kHugeFloat;
+        }
+    }
+    return d.stream;
+}
+
+void MoveFrame::Save(BinStream &bs) const {
+    bs << mBeat;
+    bs << unk4;
+    bs << 16;
+    for (int i = 0; i < kNumMoveModes; i++) {
+        for (int j = 0; j < kNumMoveMirrored; j++) {
+            for (int k = 0; k < kNumHam1Nodes; k++) {
+                bs << mHam1NodeWeights[i][j][k];
+            }
+        }
+    }
+    for (int i = 0; i < kNumMoveMirrored; i++) {
+        bs << mFrameWeights[i];
+    }
+    int numHam2Nodes = FilterVersion::NumHam2Nodes();
+    bs << numHam2Nodes;
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < numHam2Nodes; j++) {
+            bs << mNodeWeights[i][j];
+            bs << mNodeScales[i][j];
+        }
+    }
+}
+
+void MoveFrame::Load(BinStreamRev &bs) {
+    bs >> mBeat;
+    if (bs.rev < 14) {
+        MILO_FAIL("Versions less than 14 no longer supported");
+    }
+    if (bs.rev > 0x2B) {
+        bs >> unk4;
+    } else
+        unk4 = -1;
+}
+
+const Ham1NodeWeight &
+MoveFrame::NodeWeightHam1(int node, MoveMode mode, MoveMirrored mirror) const {
+    MILO_ASSERT((0) <= (mode) && (mode) < (kNumMoveModes), 0x20);
+    MILO_ASSERT((0) <= (mirror) && (mirror) < (kNumMoveMirrored), 0x21);
+    MILO_ASSERT((0) <= (node) && (node) < (kNumHam1Nodes), 0x22);
+    return mHam1NodeWeights[mode][mirror][node];
+}
+
+const Ham2FrameWeight &MoveFrame::FrameWeight(MoveMirrored mirror) const {
+    MILO_ASSERT(mFrameWeights, 0x37);
+    MILO_ASSERT((0) <= (mirror) && (mirror) < (kNumMoveMirrored), 0x38);
+    return mFrameWeights[mirror];
+}
+
+const Vector3 &MoveFrame::NodeWeight(int node, MoveMirrored mirror) const {
+    MILO_ASSERT((0) <= (mirror) && (mirror) < (kNumMoveMirrored), 0x28);
+    MILO_ASSERT((0) <= (node) && (node) < (FilterVersion::NumHam2Nodes()), 0x29);
+    return mNodeWeights[mirror][node];
+}
+
+const Vector3 &MoveFrame::NodeInverseScale(int node, MoveMirrored mirror) const {
+    MILO_ASSERT((0) <= (mirror) && (mirror) < (kNumMoveMirrored), 0x30);
+    MILO_ASSERT((0) <= (node) && (node) < (FilterVersion::NumHam2Nodes()), 0x31);
+    return mNodesInverseScale[mirror][node];
+}
+
+void MoveFrame::SetNodeScale(int node, MoveMirrored mirror, const Vector3 &v) {
+    MILO_ASSERT((0) <= (mirror) && (mirror) < (kNumMoveMirrored), 0x6D);
+    MILO_ASSERT((0) <= (node) && (node) < (FilterVersion::NumHam2Nodes()), 0x6E);
+    for (int i = 0; i < 3; i++) {
+        float s = v[i];
+        MILO_ASSERT(s > 0, 0x72);
+        mNodeScales[mirror][node][i] = s;
+        mNodesInverseScale[mirror][node][i] = 1.0f / s;
+    }
+}
+
+std::vector<MoveFrame> &HamMove::GetMoveFrames() {
+    if (mMirror)
+        return mMirror->mMoveFrames;
+    else
+        return mMoveFrames;
+}
+
+const std::vector<MoveFrame> &HamMove::GetMoveFrames() const {
+    if (mMirror)
+        return mMirror->mMoveFrames;
+    else
+        return mMoveFrames;
+}
+
+MoveMirrored HamMove::Mirrored() const { return (MoveMirrored)(mMirror != nullptr); }
+
+void HamMove::RefreshBarks() {
+    static Symbol hud_panel("hud_panel");
+    DataNode &n = DataVariable(hud_panel);
+    if (n.Type() == kDataObject) {
+        static Message msg("add_all_barks");
+        n.Obj<Hmx::Object>()->HandleType(msg);
+    }
+}
+
+void HamMove::SetTexture(RndTex *tex) {
+    mTex = tex;
+    if (mTex) {
+        mSmallTex = nullptr;
+        String texName(mTex->Name());
+        if (texName.find_last_of(".tex") != FixedString::npos) {
+            texName.replace(texName.length() - 4, 4, "_sm.tex");
+            mSmallTex = mTex->Dir()->Find<RndTex>(texName.c_str(), false);
+        }
+        if (!mSmallTex) {
+            mSmallTex = mTex;
+        }
+    } else {
+        mSmallTex = nullptr;
+    }
+}
+
+float HamMove::FindConfusabilty(const HamMove *move) const {
+    std::map<Hmx::CRC, float>::const_iterator it =
+        mConfusabilities.find(move->mConfusabilityID);
+    if (it == mConfusabilities.end())
+        return -1;
+    else
+        return it->second;
+}
+
+void HamMove::Update(const HamMove *other) {
+    for (std::vector<LocalizedName>::const_iterator it = other->mLocalizedNames.begin();
+         it != other->mLocalizedNames.end();
+         ++it) {
+        SetName(it->mLanguage, it->mName.c_str());
+    }
+    mOmitMinigame = other->mOmitMinigame;
+    mConfusabilities = other->mConfusabilities;
+    mConfusabilityID = other->mConfusabilityID;
+    mDifficulty = other->mDifficulty;
+    unkd0 = true;
+}
+
+void HamMove::SyncMirror() {
+    if (mMirror == this) {
+        MILO_NOTIFY("A HamMove can't mirror itself");
+        mMirror = nullptr;
+    }
+    mMoveFrames.clear();
+}
+
+void HamMove::SetName(Symbol language, const char *name) {
+    std::vector<LocalizedName>::iterator it =
+        std::find(mLocalizedNames.begin(), mLocalizedNames.end(), language);
+    if (it != mLocalizedNames.end() && it) {
+        it->mName = name;
+        if (language == SystemLanguage()) {
+            mDisplayName = it->mName.c_str();
+        }
+    } else {
+        MILO_NOTIFY("Could not find string for language %s", language);
+    }
+}
