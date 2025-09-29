@@ -16,3 +16,4 @@ float RatingToDetectFrac(Symbol, const std::vector<float> *);
 float RatingToRatingFrac(Symbol);
 Symbol RatingState(int);
 void RatingStateThreshold(int, Symbol &, float &, const std::vector<float> *);
+int RatingStateToIndex(Symbol);

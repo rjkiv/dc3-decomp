@@ -344,7 +344,7 @@
             "system/hamobj/HamList.cpp": "NonMatching",
             "system/hamobj/HamListRibbon.cpp": "NonMatching",
             "system/hamobj/HamMaster.cpp": "MISSING",
-            "system/hamobj/HamMove.cpp": "MISSING",
+            "system/hamobj/HamMove.cpp": "NonMatching",
             "system/hamobj/HamNavList.cpp": "MISSING",
             "system/hamobj/HamNavProvider.cpp": "MISSING",
             "system/hamobj/HamPartyJumpData.cpp": "MISSING",
