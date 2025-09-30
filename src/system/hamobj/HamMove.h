@@ -140,3 +140,8 @@ protected:
     std::map<Hmx::CRC, float> mConfusabilities; // 0xd8
     ObjPtr<DancerSequence> mDancerSeq; // 0xf0
 };
+
+struct HamMoveKey {
+    HamMove *move;
+    float beat;
+};

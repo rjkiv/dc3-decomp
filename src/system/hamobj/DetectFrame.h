@@ -6,6 +6,7 @@
 #include "hamobj/HamMove.h"
 #include "math/Vec.h"
 
+// size 0x430
 class DetectFrame {
 public:
     DetectFrame();
@@ -31,6 +32,7 @@ protected:
     MoveMirrored unkc; // 0xc
     Vector3 mBestNodeErrors[kMaxNumErrorNodes]; // 0x10
     Vector3 mNodeComponentWeights[MoveFrame::kNumHam1Nodes]; // 0x220
+    // something else at 0x320...
 };
 
 struct DetectFrameMoveIdxCmp {
