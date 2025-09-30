@@ -22,30 +22,31 @@ enum HAQType {
     kHAQType_Checkbox
 };
 
-class HAQManager : public Hmx::Object{
-    public:
-        HAQManager();
-        virtual ~HAQManager();
-        UIComponent *GetUIFocusComponent() const;
-        static void RawPrint(char const *, char const *);
-        static void PrintSongInfo(Symbol, float);
-        static void Print(HAQType, Hmx::Object *, int);
-        static void Print(HAQType);
-        virtual DataNode Handle(DataArray *, bool);
-        bool Enabled() const {return m_bEnabled;}
+class HAQManager : public Hmx::Object {
+public:
+    HAQManager();
+    virtual ~HAQManager();
+    UIComponent *GetUIFocusComponent() const;
+    static void RawPrint(char const *, char const *);
+    static void PrintSongInfo(Symbol, float);
+    static void Print(HAQType, Hmx::Object *, int);
+    static void Print(HAQType);
+    virtual DataNode Handle(DataArray *, bool);
+    bool Enabled() const { return m_bEnabled; }
 
-        bool m_bEnabled;
-    private:
-        String GetLabelForType(HAQType) const;
-        String GetScreenText() const;
-        String GetFocusText() const;
-        String GetPressedStringForButton(int, JoypadButton, String) const;
-        String GetButtonStatePressedString(int) const;
-        String GetButtonText() const;
-        String GetTextForType(HAQType) const;
-        void PrintList(UIList *);
-        void PrintSlider(UISlider *);
-        void PrintComponentInfo(UIComponent *);
+    bool m_bEnabled;
+
+private:
+    String GetLabelForType(HAQType) const;
+    String GetScreenText() const;
+    String GetFocusText() const;
+    String GetPressedStringForButton(int, JoypadButton, String) const;
+    String GetButtonStatePressedString(int) const;
+    String GetButtonText() const;
+    String GetTextForType(HAQType) const;
+    void PrintList(UIList *);
+    void PrintSlider(UISlider *);
+    void PrintComponentInfo(UIComponent *);
 };
 
 extern HAQManager *TheHAQMgr;

@@ -6,41 +6,42 @@
 #include "ui/UI.h"
 #include "utl/Symbol.h"
 
-class StorePurchaser{
-    public:
-        ~StorePurchaser();
+class StorePurchaser {
+public:
+    ~StorePurchaser();
 };
 
-class XboxPurchaser : public Hmx::Object, public StorePurchaser{
-    public:
-        XboxPurchaser(int, u64, u64, u64, Symbol, unsigned int);
-        ~XboxPurchaser();
-        virtual void Initiate();
-        virtual bool IsSuccess() const;
-        virtual bool PurchaseMade() const;
-        virtual bool IsPurchasing() const;
-        virtual DataNode Handle(DataArray *, bool);
+class XboxPurchaser : public Hmx::Object, public StorePurchaser {
+public:
+    XboxPurchaser(int, u64, u64, u64, Symbol, unsigned int);
+    ~XboxPurchaser();
+    virtual void Initiate();
+    virtual bool IsSuccess() const;
+    virtual bool PurchaseMade() const;
+    virtual bool IsPurchasing() const;
+    virtual DataNode Handle(DataArray *, bool);
 
-        Symbol unk4;
-        unsigned int unk8;
-        Hmx::Object unkc; 
-        int unk38;
-        u64 unk40;
-        int unk48;
+    Symbol unk4;
+    unsigned int unk8;
+    Hmx::Object unkc;
+    int unk38;
+    u64 unk40;
+    int unk48;
 
-    private:
-        DataNode OnMsg(UIChangedMsg const &);
+private:
+    DataNode OnMsg(UIChangedMsg const &);
 };
 
-class XboxMultipleItemsPurchaser : public StorePurchaser, public Hmx::Object{
-    public:
-        virtual bool IsSuccess() const;
-        virtual bool PurchaseMade() const;
-        virtual bool IsPurchasing() const;
-        virtual void Initiate();
-        virtual DataNode Handle(DataArray *, bool);
-        virtual ~XboxMultipleItemsPurchaser();
-        XboxMultipleItemsPurchaser(int, std::vector<u64>, Symbol, unsigned int);
-    private:
-        DataNode OnMsg(UIChangedMsg const &);
+class XboxMultipleItemsPurchaser : public StorePurchaser, public Hmx::Object {
+public:
+    virtual bool IsSuccess() const;
+    virtual bool PurchaseMade() const;
+    virtual bool IsPurchasing() const;
+    virtual void Initiate();
+    virtual DataNode Handle(DataArray *, bool);
+    virtual ~XboxMultipleItemsPurchaser();
+    XboxMultipleItemsPurchaser(int, std::vector<u64>, Symbol, unsigned int);
+
+private:
+    DataNode OnMsg(UIChangedMsg const &);
 };

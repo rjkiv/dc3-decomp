@@ -6,31 +6,31 @@
 #include "ui/UIPanel.h"
 #include "utl/Symbol.h"
 
-ConnectionStatusPanel::ConnectionStatusPanel(){}
+ConnectionStatusPanel::ConnectionStatusPanel() {}
 
-ConnectionStatusPanel::~ConnectionStatusPanel(){}
+ConnectionStatusPanel::~ConnectionStatusPanel() {}
 
-void ConnectionStatusPanel::Exit(){
+void ConnectionStatusPanel::Exit() {
     static Symbol connection_status_changed("connection_status_changed");
     ThePlatformMgr.RemoveSink(this, connection_status_changed);
     UIPanel::Exit();
 }
 
-void ConnectionStatusPanel::Enter(){
+void ConnectionStatusPanel::Enter() {
     UIPanel::Enter();
     static Symbol connection_status_changed("connection_status_changed");
     ThePlatformMgr.AddSink(this, connection_status_changed);
     CheckForLostConnection();
 }
 
-void ConnectionStatusPanel::CheckForLostConnection(){
-    if(!ThePlatformMgr.IsConnected()){
+void ConnectionStatusPanel::CheckForLostConnection() {
+    if (!ThePlatformMgr.IsConnected()) {
         static Message msg("on_connection_lost");
-        Handle(msg,true);
+        Handle(msg, true);
     }
 }
 
-DataNode ConnectionStatusPanel::OnMsg(const ConnectionStatusChangedMsg &msg){
+DataNode ConnectionStatusPanel::OnMsg(const ConnectionStatusChangedMsg &msg) {
     CheckForLostConnection();
     return 0;
 }

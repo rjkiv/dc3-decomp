@@ -20,21 +20,21 @@ UIComponent *HAQManager::GetUIFocusComponent() const {
     return ret;
 }
 
-HAQManager::HAQManager() : m_bEnabled(0){
+HAQManager::HAQManager() : m_bEnabled(0) {
     MILO_ASSERT(!TheHAQMgr, 0x1A);
     TheHAQMgr = this;
     SetName("haq_mgr", ObjectDir::Main());
 }
 
-HAQManager::~HAQManager(){}
+HAQManager::~HAQManager() {}
 
-void HAQManager::RawPrint(const char *c1, const char *c2){
-    if(TheHAQMgr && TheHAQMgr->Enabled()){
+void HAQManager::RawPrint(const char *c1, const char *c2) {
+    if (TheHAQMgr && TheHAQMgr->Enabled()) {
         MILO_LOG("HAQ_%s: %s\n", c1, c2);
     }
 }
 
-void HAQManager::PrintSongInfo(Symbol s, float f){
+void HAQManager::PrintSongInfo(Symbol s, float f) {
     if (TheHAQMgr && TheHAQMgr->Enabled()) {
         String text = String(MakeString("%s %f", s, f / 1000.0f));
         String label = TheHAQMgr->GetLabelForType(kHAQType_Song);
@@ -42,7 +42,7 @@ void HAQManager::PrintSongInfo(Symbol s, float f){
     }
 }
 
-void HAQManager::Print(HAQType ty, Hmx::Object *o, int i){
+void HAQManager::Print(HAQType ty, Hmx::Object *o, int i) {
     if (TheHAQMgr && TheHAQMgr->Enabled()) {
         String label = TheHAQMgr->GetLabelForType(ty);
         String text = String(MakeString("%s %i", o->Name(), i));
@@ -50,7 +50,7 @@ void HAQManager::Print(HAQType ty, Hmx::Object *o, int i){
     }
 }
 
-void HAQManager::Print(HAQType ty){
+void HAQManager::Print(HAQType ty) {
     if (TheHAQMgr && TheHAQMgr->Enabled()) {
         String label = TheHAQMgr->GetLabelForType(ty);
         String text = TheHAQMgr->GetTextForType(ty);
@@ -63,7 +63,7 @@ void HAQManager::Print(HAQType ty){
     }
 }
 
-String HAQManager::GetLabelForType(HAQType type) const{
+String HAQManager::GetLabelForType(HAQType type) const {
     String ret("");
     switch (type) {
     case kHAQType_Screen:
@@ -91,7 +91,7 @@ String HAQManager::GetLabelForType(HAQType type) const{
     return ret;
 }
 
-String HAQManager::GetScreenText() const{
+String HAQManager::GetScreenText() const {
     const char *cc;
     UIScreen *screen = TheUI->CurrentScreen();
     if (screen)
@@ -101,7 +101,7 @@ String HAQManager::GetScreenText() const{
     return String(cc);
 }
 
-String HAQManager::GetFocusText() const{
+String HAQManager::GetFocusText() const {
     String str("<NONE>");
     UIComponent *comp = GetUIFocusComponent();
     if (comp)
@@ -109,7 +109,8 @@ String HAQManager::GetFocusText() const{
     return str;
 }
 
-String HAQManager::GetPressedStringForButton(int padnum, JoypadButton btn, String str) const{
+String
+HAQManager::GetPressedStringForButton(int padnum, JoypadButton btn, String str) const {
     JoypadData *pData = JoypadGetPadData(padnum);
     MILO_ASSERT(pData, 0x82);
     if (pData->mButtons & 1 << btn) {
@@ -118,7 +119,7 @@ String HAQManager::GetPressedStringForButton(int padnum, JoypadButton btn, Strin
         return String("");
 }
 
-String HAQManager::GetButtonStatePressedString(int pad) const{
+String HAQManager::GetButtonStatePressedString(int pad) const {
     String ret("");
     ret += GetPressedStringForButton(pad, kPad_Xbox_A, "A");
     ret += GetPressedStringForButton(pad, kPad_Xbox_B, "B");
@@ -147,7 +148,7 @@ String HAQManager::GetButtonStatePressedString(int pad) const{
     return ret;
 }
 
-String HAQManager::GetButtonText() const{
+String HAQManager::GetButtonText() const {
     String ret("");
     for (int i = 0; i < 4; i++) {
         ret += MakeString("%i %s | ", i, String(GetButtonStatePressedString(i)));
@@ -155,7 +156,7 @@ String HAQManager::GetButtonText() const{
     return ret;
 }
 
-String HAQManager::GetTextForType(HAQType ty) const{
+String HAQManager::GetTextForType(HAQType ty) const {
     String ret("");
     switch (ty) {
     case kHAQType_Screen:
@@ -174,19 +175,19 @@ String HAQManager::GetTextForType(HAQType ty) const{
     return ret;
 }
 
-void HAQManager::PrintList(UIList *i_pList){
-    if(i_pList==nullptr){
-        MILO_FAIL(kAssertStr,"HAQManager.cpp",0xc2,"i_pList");
+void HAQManager::PrintList(UIList *i_pList) {
+    if (i_pList == nullptr) {
+        MILO_FAIL(kAssertStr, "HAQManager.cpp", 0xc2, "i_pList");
     }
     int i = i_pList->SelectedPos();
     Print(kHAQType_List, i_pList, i);
 }
 
-void HAQManager::PrintSlider(UISlider *slider){
+void HAQManager::PrintSlider(UISlider *slider) {
     Print(kHAQType_Slider, slider, slider->Current());
 }
 
-void HAQManager::PrintComponentInfo(UIComponent *comp){
+void HAQManager::PrintComponentInfo(UIComponent *comp) {
     UIList *list = dynamic_cast<UIList *>(comp);
     if (list)
         PrintList(list);
@@ -196,7 +197,7 @@ void HAQManager::PrintComponentInfo(UIComponent *comp){
 }
 
 BEGIN_HANDLERS(HAQManager)
-    //HANDLE_ACTION(toggle_enabled)
+    // HANDLE_ACTION(toggle_enabled)
     HANDLE_EXPR(is_enabled, m_bEnabled)
     HANDLE_ACTION(display_all, Print(kHAQType_Screen))
     HANDLE_ACTION(display_all, Print(kHAQType_Focus))

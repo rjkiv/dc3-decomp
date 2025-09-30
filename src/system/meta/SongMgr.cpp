@@ -18,90 +18,78 @@
 SongMgr *TheBaseSongManager;
 const char *SONG_CACHE_CONTAINER_NAME = "songcache_bb";
 
-int GetSongID(DataArray *main_arr, DataArray *backup_arr){
+int GetSongID(DataArray *main_arr, DataArray *backup_arr) {
     static Symbol song_id("song_id");
     int x = 0;
-    main_arr->FindData(song_id,x,false);
-    if(x==0 && backup_arr!=nullptr){
-        backup_arr->FindData(song_id,x,false);
+    main_arr->FindData(song_id, x, false);
+    if (x == 0 && backup_arr != nullptr) {
+        backup_arr->FindData(song_id, x, false);
     }
     return x;
 }
 
-int CountSongsInArray(DataArray *arr){
-    int i=0;
+int CountSongsInArray(DataArray *arr) {
+    int i = 0;
     int size = arr->Size();
-    for (;i < size && arr->Node(i).Type() != kDataArray; i++)
+    for (; i < size && arr->Node(i).Type() != kDataArray; i++)
         ;
     return size - i;
 }
 
-void SongMgr::Init(){
+void SongMgr::Init() {
     mState = kSongMgr_Nil;
-    //mSongCacheID = 0;
-    //mSongCache = 0;
+    // mSongCacheID = 0;
+    // mSongCache = 0;
     unkbc = false;
     mSongCacheNeedsWrite = false;
     mSongCacheWriteAllowed = true;
 }
 
-void SongMgr::ContentDone(){
-    if(!unkbc)
+void SongMgr::ContentDone() {
+    if (!unkbc)
         return;
     mSongCacheNeedsWrite = true;
 }
 
-SongInfo* SongMgr::SongAudioData(Symbol s) const{
-    return nullptr;
+SongInfo *SongMgr::SongAudioData(Symbol s) const { return nullptr; }
 
-}
-
-bool SongMgr::IsSongCacheWriteDone() const{
+bool SongMgr::IsSongCacheWriteDone() const {
     return mState == kSongMgr_Ready || mState == kSongMgr_Failure;
 }
 
-char const * SongMgr::GetCachedSongInfoName() const{
-    return SONG_CACHE_CONTAINER_NAME;
-}
+char const *SongMgr::GetCachedSongInfoName() const { return SONG_CACHE_CONTAINER_NAME; }
 
-void SongMgr::ClearSongCacheNeedsWrite(){
-    mSongCacheNeedsWrite = false;
-}
+void SongMgr::ClearSongCacheNeedsWrite() { mSongCacheNeedsWrite = false; }
 
-bool SongMgr::SongCacheNeedsWrite() const{
-    return mSongCacheNeedsWrite;
-}
+bool SongMgr::SongCacheNeedsWrite() const { return mSongCacheNeedsWrite; }
 
-char const * SongMgr::SongPath(Symbol s, int i) const{
-    SongInfo* info = SongAudioData(s);
+char const *SongMgr::SongPath(Symbol s, int i) const {
+    SongInfo *info = SongAudioData(s);
     char const *c = "";
-    if(i!=0){
-
+    if (i != 0) {
     }
     return c;
 }
 
-char const * SongMgr::SongFilePath(Symbol s, char const * path, int i) const{
+char const *SongMgr::SongFilePath(Symbol s, char const *path, int i) const {
     return nullptr;
 }
 
-void SongMgr::DumpSongMgrContents(bool all){
+void SongMgr::DumpSongMgrContents(bool all) {}
 
-}
-
-bool SongMgr::HasSong(int id) const{
+bool SongMgr::HasSong(int id) const {
     return mAvailableSongs.find(id) != mAvailableSongs.end();
 }
 
-bool SongMgr::HasSong(Symbol s, bool b) const{
+bool SongMgr::HasSong(Symbol s, bool b) const {
     int songid = GetSongIDFromShortName(s, b);
     bool ret = songid != 0;
-    if(ret)
+    if (ret)
         ret = HasSong(songid);
     return ret;
 }
 
-int SongMgr::GetCachedSongInfoSize() const{
+int SongMgr::GetCachedSongInfoSize() const {
     MemStream ms(false);
     int rev = 0;
     ms << rev;
@@ -110,24 +98,15 @@ int SongMgr::GetCachedSongInfoSize() const{
     return ms.Tell();
 }
 
-bool SongMgr::IsSongMounted(Symbol s) const{
-    
-    return true;
-}
+bool SongMgr::IsSongMounted(Symbol s) const { return true; }
 
-bool SongMgr::SaveCachedSongInfo(BufStream &bs){
-    return true;
-}
+bool SongMgr::SaveCachedSongInfo(BufStream &bs) { return true; }
 
-bool SongMgr::IsContentUsedForSong(Symbol s, int i) const{
-    return true;
-}
+bool SongMgr::IsContentUsedForSong(Symbol s, int i) const { return true; }
 
-SongMetadata const * SongMgr::Data(int) const{
-    return nullptr;
-}
+SongMetadata const *SongMgr::Data(int) const { return nullptr; }
 
-void SongMgr::ContentStarted(){
+void SongMgr::ContentStarted() {
     mAvailableSongs.clear();
     for (std::map<int, SongMetadata *>::iterator it = mCachedSongMetadata.begin();
          it != mCachedSongMetadata.end();
@@ -137,7 +116,7 @@ void SongMgr::ContentStarted(){
     mContentUsedForSong.clear();
 }
 
-void SongMgr::ContentUnmounted(char const *cc){
+void SongMgr::ContentUnmounted(char const *cc) {
     std::map<Symbol, String>::iterator it;
     it = unkmap5.find(cc);
     if (it != unkmap5.end()) {
@@ -145,15 +124,11 @@ void SongMgr::ContentUnmounted(char const *cc){
     }
 }
 
-void SongMgr::StartSongCacheWrite(){
+void SongMgr::StartSongCacheWrite() {}
 
-}
+bool SongMgr::ContentDiscovered(Symbol) { return true; }
 
-bool SongMgr::ContentDiscovered(Symbol){
-    return true;
-}
-
-void SongMgr::ClearFromCache(Symbol s){
+void SongMgr::ClearFromCache(Symbol s) {
     std::map<Symbol, std::vector<int> >::iterator it;
     it = mSongIDsInContent.find(s);
     MILO_ASSERT_FMT(it != mSongIDsInContent.end(), "Content %s isn't cached!", s);
@@ -162,7 +137,7 @@ void SongMgr::ClearFromCache(Symbol s){
     }
 }
 
-void SongMgr::ClearCachedContent(){
+void SongMgr::ClearCachedContent() {
     mSongIDsInContent.clear();
     for (std::map<int, SongMetadata *>::iterator it = mCachedSongMetadata.begin();
          it != mCachedSongMetadata.end();
@@ -172,88 +147,53 @@ void SongMgr::ClearCachedContent(){
     mCachedSongMetadata.clear();
 }
 
-SongMgr::~SongMgr(){
+SongMgr::~SongMgr() {}
 
-}
+char const *SongMgr::AlternateSongDir() const { return nullptr; }
 
-char const * SongMgr::AlternateSongDir() const{
-    return nullptr;
-}
+void SongMgr::ContentMounted(char const *, char const *) {}
 
-void SongMgr::ContentMounted(char const *, char const *){
+char const *SongMgr::ContentName(int i) const { return nullptr; }
 
-}
+char const *SongMgr::ContentName(Symbol s, bool b) const { return nullptr; }
 
-char const * SongMgr::ContentName(int i) const{
-    return nullptr;
-}
+void SongMgr::GetContentNames(Symbol s, std::vector<Symbol> &vec) const {}
 
-char const * SongMgr::ContentName(Symbol s, bool b) const{
-    return nullptr;
-}
+bool SongMgr::LoadCachedSongInfo(BufStream &) { return true; }
 
-void SongMgr::GetContentNames(Symbol s, std::vector<Symbol> &vec) const{
+char const *SongMgr::CachedPath(Symbol, char const *, int) const { return nullptr; }
 
-}
+void SongMgr::SaveMount() {}
 
-bool SongMgr::LoadCachedSongInfo(BufStream &){
-    return true;
-}
+void SongMgr::SaveUnmount() {}
 
-char const * SongMgr::CachedPath(Symbol, char const *, int) const{
-    return nullptr;
-}
+void SongMgr::SaveWrite() {}
 
-void SongMgr::SaveMount(){
-    
-}
-
-void SongMgr::SaveUnmount(){
-
-}
-
-void SongMgr::SaveWrite(){
-    
-}
-
-void SongMgr::GetSongsInContent(Symbol s, std::vector<int> &vec) const{
+void SongMgr::GetSongsInContent(Symbol s, std::vector<int> &vec) const {
     std::map<Symbol, std::vector<int> >::const_iterator it = mSongIDsInContent.find(s);
     if (it != mSongIDsInContent.end())
         vec = it->second;
 }
 
-char const * SongMgr::ContentNameRoot(Symbol) const{
-    return nullptr;
-}
+char const *SongMgr::ContentNameRoot(Symbol) const { return nullptr; }
 
-int SongMgr::NumSongsInContent(Symbol s) const{
-    const char * c = ContentNameRoot(s);
+int SongMgr::NumSongsInContent(Symbol s) const {
+    const char *c = ContentNameRoot(s);
     std::map<Symbol, std::vector<int> >::const_iterator it = mSongIDsInContent.find(c);
-    if(it!=mSongIDsInContent.end())
+    if (it != mSongIDsInContent.end())
         return it->second.size();
-    else return 0;
+    else
+        return 0;
 }
 
-void SongMgr::SetState(SongMgrState state){
-    
-}
+void SongMgr::SetState(SongMgrState state) {}
 
-void SongMgr::OnCacheMountResult(int){
+void SongMgr::OnCacheMountResult(int) {}
 
-}
+void SongMgr::OnCacheWriteResult(int) {}
 
-void SongMgr::OnCacheWriteResult(int){
+void SongMgr::OnCacheUnmountResult(int) {}
 
-}
+void SongMgr::CacheSongData(DataArray *, DataLoader *, ContentLocT, Symbol) {}
 
-void SongMgr::OnCacheUnmountResult(int){
-
-}
-
-void SongMgr::CacheSongData(DataArray *, DataLoader *, ContentLocT, Symbol){
-
-}
-
-void SongMgr::ContentLoaded(Loader *, ContentLocT, Symbol){
-
-}
+void SongMgr::ContentLoaded(Loader *, ContentLocT, Symbol) {}

@@ -9,49 +9,47 @@
 #include "utl/Symbol.h"
 #include "xdk/win_types.h"
 
+class StorePurchaseable : public Hmx::Object {
+public:
+    StorePurchaseable();
+    bool Exists() const;
+    static unsigned long long OfferStringToID(char const *);
+    char const *CostStr() const;
 
-class StorePurchaseable : public Hmx::Object{
-    public:
-        StorePurchaseable();
-        bool Exists() const;
-        static unsigned long long OfferStringToID(char const *);
-        char const * CostStr() const;
-
-        bool isAvailable; 
-        bool isPurchased;
-        u64 songID; //0x30
-        int cost; //0x38
+    bool isAvailable;
+    bool isPurchased;
+    u64 songID; // 0x30
+    int cost; // 0x38
 };
 
+class StoreOffer : public StorePurchaseable {
+public:
+    Symbol OfferType() const;
+    bool HasData(Symbol) const;
+    DateTime const &ReleaseDate() const;
+    Symbol FirstChar(Symbol, bool) const;
+    Symbol PackFirstLetter() const;
+    char const *OfferName() const;
+    char const *ArtistName() const;
+    char const *AlbumName() const;
+    char const *Description() const;
+    bool IsNewRelease() const;
+    bool IsTest() const;
+    int NumSongs() const;
+    int Song(int) const;
+    bool ValidTitle() const;
+    bool InLibrary() const;
+    bool PartiallyInLibrary() const;
+    int GetSingleSongID() const;
+    DataNode GetData(DataArray const *, bool) const;
+    bool HasSong(StoreOffer const *) const;
+    DataNode OnGetData(DataArray *);
+    virtual DataNode Handle(DataArray *, bool);
+    virtual ~StoreOffer();
+    StoreOffer(DataArray *, SongMgr *);
 
-class StoreOffer : public StorePurchaseable{
-    public:
-        Symbol OfferType() const;
-        bool HasData(Symbol) const;
-        DateTime const & ReleaseDate() const;
-        Symbol FirstChar(Symbol, bool) const;
-        Symbol PackFirstLetter() const;
-        char const * OfferName() const;
-        char const * ArtistName() const;
-        char const * AlbumName() const;
-        char const * Description() const;
-        bool IsNewRelease() const;
-        bool IsTest() const;
-        int NumSongs() const;
-        int Song(int) const;
-        bool ValidTitle() const;
-        bool InLibrary() const;
-        bool PartiallyInLibrary() const;
-        int GetSingleSongID() const;
-        DataNode GetData(DataArray const *, bool) const;
-        bool HasSong(StoreOffer const *) const;
-        DataNode OnGetData(DataArray *);
-        virtual DataNode Handle(DataArray *, bool);
-        virtual ~StoreOffer();
-        StoreOffer(DataArray *, SongMgr *);
-
-        DataArray *storeOfferData; //0x40
-        DateTime date; //0x44
-        SongMgr *mSongMgr; //0x4c
-        std::vector<int> songLib; //0x50
+    DataArray *storeOfferData; // 0x40
+    DateTime date; // 0x44
+    SongMgr *mSongMgr; // 0x4c
+    std::vector<int> songLib; // 0x50
 };

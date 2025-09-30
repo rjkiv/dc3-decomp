@@ -25,74 +25,63 @@
 CreditsPanel::CreditsPanel()
     : mLoader(0), mNames(0), mStream(0), mAutoScroll(1), mSavedSpeed(-1.0f), mPaused(0) {}
 
-CreditsPanel::~CreditsPanel(){}
+CreditsPanel::~CreditsPanel() {}
 
-void CreditsPanel::Text(int i, int j, UIListLabel *listlabel, UILabel *label) const{
+void CreditsPanel::Text(int i, int j, UIListLabel *listlabel, UILabel *label) const {
     DataArray *arr = mNames->Array(j);
     MILO_ASSERT(label, 0xF2);
     label->SetCreditsText(arr, listlabel);
 }
 
-int CreditsPanel::NumData() const{
-    return mNames->Size();
-}
+int CreditsPanel::NumData() const { return mNames->Size(); }
 
-RndMat *CreditsPanel::Mat(int i, int j, UIListMesh *mesh) const{
+RndMat *CreditsPanel::Mat(int i, int j, UIListMesh *mesh) const {
     static Symbol image("image");
     static Symbol blank("blank");
     DataArray *array = mNames->Array(j);
-    if(array->Size()!=0){
+    if (array->Size() != 0) {
         blank = array->Sym(0);
     }
-    if(blank==image){
+    if (blank == image) {
         return mDir->Find<RndMat>(array->Str(1), true);
     }
-    
+
     return nullptr;
 }
 
-DataNode CreditsPanel::OnMsg(ButtonDownMsg const &msg){
-    return NULL_OBJ;
+DataNode CreditsPanel::OnMsg(ButtonDownMsg const &msg) { return NULL_OBJ; }
+
+bool CreditsPanel::IsLoaded() const {
+    return UIPanel::IsLoaded() && mLoader != nullptr && mLoader->IsLoaded();
 }
 
-bool CreditsPanel::IsLoaded() const{
-    return UIPanel::IsLoaded() && mLoader!=nullptr && mLoader->IsLoaded();
-}
-
-void CreditsPanel::Exit(){
-    if(mStream && !mPaused){
+void CreditsPanel::Exit() {
+    if (mStream && !mPaused) {
         mStream->Faders()->FindLocal("fade", true)->DoFade(-96.0f, 2000.0f);
     }
     UIPanel::Exit();
 }
 
-void CreditsPanel::Enter(){
+void CreditsPanel::Enter() {
     UIPanel::Enter();
     mCheatOn = false;
     mPaused = false;
-    mList->SetSelected(0,-1);
+    mList->SetSelected(0, -1);
     mAutoScroll = 1;
     mList->AutoScroll();
 }
 
-void CreditsPanel::PausePanel(bool b){
-    
-}
+void CreditsPanel::PausePanel(bool b) {}
 
-void CreditsPanel::DebugToggleAutoScroll(){
-    
-}
+void CreditsPanel::DebugToggleAutoScroll() {}
 
+void CreditsPanel::Load() { UIPanel::Load(); }
 
-void CreditsPanel::Load(){
-    UIPanel::Load();
-}
-
-bool CreditsPanel::Exiting() const{
+bool CreditsPanel::Exiting() const {
     return mStream && mStream->Faders()->FindLocal("fade", true) || UIPanel::Exiting();
 }
 
-void CreditsPanel::FinishLoad(){
+void CreditsPanel::FinishLoad() {
     UIPanel::FinishLoad();
     mNames = mLoader->Data();
     MILO_ASSERT(mNames, 0x35);
@@ -103,27 +92,26 @@ void CreditsPanel::FinishLoad(){
     mLoader = 0;
 }
 
-void CreditsPanel::Unload(){
+void CreditsPanel::Unload() {
     UIPanel::Unload();
-    if(mNames){
+    if (mNames) {
         mNames->Release();
         mNames = 0;
     }
     RELEASE(mStream);
 }
 
-void CreditsPanel::Poll(){
+void CreditsPanel::Poll() {
     UIPanel::Poll();
-    if(!mStream){
-        mStream=TheSynth->NewStream("sfx/streams/credits", 0, 0, 0);
+    if (!mStream) {
+        mStream = TheSynth->NewStream("sfx/streams/credits", 0, 0, 0);
         MILO_ASSERT_FMT(mStream, "sfx/streams/credits.foo missing");
-        //mStream->SetJump(Stream::kStreamEndMs, 0, 0);
+        // mStream->SetJump(Stream::kStreamEndMs, 0, 0);
         mStream->SetPan(0, -1.0f);
         mStream->SetPan(1, 1.0f);
         mStream->SetVolume(-4.0f);
         mStream->Faders()->AddLocal("fade");
-    }
-    else{
+    } else {
         if (!mStream->IsPlaying() && mStream->IsReady() && !mPaused) {
             mStream->Play();
         }

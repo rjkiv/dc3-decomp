@@ -36,7 +36,7 @@ namespace {
 JoypadRepeat::JoypadRepeat()
     : mLastBtn(kPad_NumButtons), mLastAction(kAction_None), mLastPad(-1) {}
 
-void JoypadRepeat::Start(JoypadButton btn, JoypadAction act, int pad){
+void JoypadRepeat::Start(JoypadButton btn, JoypadAction act, int pad) {
     mHoldTimer.Reset();
     mRepeatTimer.Reset();
     mHoldTimer.Start();
@@ -45,12 +45,12 @@ void JoypadRepeat::Start(JoypadButton btn, JoypadAction act, int pad){
     mLastPad = pad;
 }
 
-void JoypadRepeat::SendRepeat(Hmx::Object *o, int i){
+void JoypadRepeat::SendRepeat(Hmx::Object *o, int i) {
     LocalUser *user = TheUserMgr ? TheUserMgr->GetLocalUserFromPadNum(i) : nullptr;
     o->Handle(ButtonDownMsg(user, mLastBtn, mLastAction, mLastPad), false);
 }
 
-void JoypadRepeat::Poll(float f1, float f2, Hmx::Object *o, int i4){
+void JoypadRepeat::Poll(float f1, float f2, Hmx::Object *o, int i4) {
     mHoldTimer.Pause();
     mRepeatTimer.Pause();
     float holdMs = mHoldTimer.Ms();
@@ -75,38 +75,27 @@ JoypadClient::JoypadClient(Hmx::Object *sink)
     Init();
 }
 
-JoypadClient::~JoypadClient(){
-    //JoypadUnsubscribe();
+JoypadClient::~JoypadClient() {
+    // JoypadUnsubscribe();
 }
 
-void JoypadClient::SetVirtualDpad(bool b){
-    mVirtualDpad = b;
-}
+void JoypadClient::SetVirtualDpad(bool b) { mVirtualDpad = b; }
 
-int JoypadClient::OnMsg(ButtonDownMsg const &msg){
-    return 0;
-}
+int JoypadClient::OnMsg(ButtonDownMsg const &msg) { return 0; }
 
-int JoypadClient::OnMsg(ButtonUpMsg const &msg){
-    return 0;
-}
+int JoypadClient::OnMsg(ButtonUpMsg const &msg) { return 0; }
 
-void JoypadClient::Poll(){
+void JoypadClient::Poll() {
     for (int i = 0; i < 4; i++) {
-        if(ThePlatformMgr.GuideShowing()){
+        if (ThePlatformMgr.GuideShowing()) {
             mRepeats[i].mHoldTimer.Reset();
             mRepeats[i].mRepeatTimer.Reset();
-        }
-        else{
+        } else {
             mRepeats[i].Poll(mHoldMs, mRepeatMs, mSink, i);
         }
     }
-    
 }
 
-void JoypadClient::Init(){
+void JoypadClient::Init() {}
 
-}
-
-void JoypadClientPoll(){
-}
+void JoypadClientPoll() {}
