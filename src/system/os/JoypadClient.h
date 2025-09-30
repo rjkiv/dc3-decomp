@@ -21,10 +21,12 @@ public:
 
 class JoypadClient : public Hmx::Object {
 public:
-    void SetVirtualDpad(bool);
-    virtual DataNode Handle(DataArray *, bool);
+    // Hmx::Object
     virtual ~JoypadClient();
+    virtual DataNode Handle(DataArray *, bool);
+
     JoypadClient(Hmx::Object *sink);
+    void SetVirtualDpad(bool);
 
     LocalUser *mUser; // 0x2c
     Hmx::Object *mSink; // 0x30

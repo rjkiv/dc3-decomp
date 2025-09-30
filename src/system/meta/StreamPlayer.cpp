@@ -50,10 +50,7 @@ void StreamPlayer::Delete() {
 
 void StreamPlayer::Init() {
     mStream->SetVolume(mStreamVol * mMasterVol);
-    int chanCount = mStream->GetNumChannels(); // 0x10 in Stream
-    if (chanCount != 2) {
-        MILO_FAIL(kAssertStr, "StreamPlayer.cpp", 0x68, "mStream->GetNumChannels() == 2");
-    }
+    MILO_ASSERT(mStream->GetNumChannels() == 2, 0x68);
     mStream->SetPan(0, -1.0f);
     mStream->SetPan(1, 1.0f);
     if (mLoop) {

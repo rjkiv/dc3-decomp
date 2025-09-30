@@ -24,14 +24,16 @@ enum HAQType {
 
 class HAQManager : public Hmx::Object {
 public:
-    HAQManager();
+    // Hmx::Object
     virtual ~HAQManager();
+    virtual DataNode Handle(DataArray *, bool);
+
+    HAQManager();
     UIComponent *GetUIFocusComponent() const;
     static void RawPrint(char const *, char const *);
     static void PrintSongInfo(Symbol, float);
     static void Print(HAQType, Hmx::Object *, int);
     static void Print(HAQType);
-    virtual DataNode Handle(DataArray *, bool);
     bool Enabled() const { return m_bEnabled; }
 
     bool m_bEnabled;

@@ -46,20 +46,20 @@ StoreOffer::StoreOffer(DataArray *a, SongMgr *mgr) : storeOfferData(a), mSongMgr
     DataArray *idArray = storeOfferData->FindArray(song_ids, false);
     if (idArray) {
         for (int i = 1; i < idArray->Size(); i++) {
-            songLib.push_back(idArray->Int(i));
+            mSongsInOffer.push_back(idArray->Int(i));
         }
     }
 
     static Symbol avatar("avatar");
-    if (songLib.empty() && OfferType() != avatar) {
+    if (mSongsInOffer.empty() && OfferType() != avatar) {
         MILO_NOTIFY("%s does not have song_ids", OfferName());
     }
     storeOfferData->AddRef();
 }
 
 Symbol StoreOffer::OfferType() const {
-    Symbol type("type");
-    return nullptr;
+    static Symbol type("type");
+    return storeOfferData->FindArray(type)->Sym(1);
 }
 
 StoreOffer::~StoreOffer() { storeOfferData->Release(); }
@@ -122,21 +122,13 @@ bool StoreOffer::IsTest() const {
 }
 
 int StoreOffer::NumSongs() const {
-    if (OfferType() != "pack" && OfferType() != "album") {
-        MILO_FAIL(
-            kAssertStr,
-            "StoreOffer.cpp",
-            0x100,
-            "OfferType() == \"pack\" || OfferType() == \"album\""
-        );
-    }
-    return songLib.size();
+    MILO_ASSERT(OfferType() == "pack" || OfferType() == "album", 0x100);
+    return mSongsInOffer.size();
 }
 
 int StoreOffer::Song(int i) const {
-    if (songLib.size() <= i)
-        MILO_FAIL(kAssertStr, "StoreOffer.cpp", 0x106, "mSongsInOffer.size() > i");
-    return songLib[i];
+    MILO_ASSERT(mSongsInOffer.size() > i, 0x106);
+    return mSongsInOffer[i];
 }
 
 bool StoreOffer::ValidTitle() const {
@@ -154,17 +146,19 @@ bool StoreOffer::ValidTitle() const {
 }
 
 bool StoreOffer::InLibrary() const {
-    for (std::vector<int>::const_iterator it = songLib.begin(); it != songLib.end();
+    for (std::vector<int>::const_iterator it = mSongsInOffer.begin();
+         it != mSongsInOffer.end();
          ++it) {
         int i = *it;
         if (mSongMgr == nullptr || !mSongMgr->HasSong(i))
             return false;
     }
-    return songLib.size() > 0;
+    return mSongsInOffer.size() > 0;
 }
 
 bool StoreOffer::PartiallyInLibrary() const {
-    for (std::vector<int>::const_iterator it = songLib.begin(); it != songLib.end();
+    for (std::vector<int>::const_iterator it = mSongsInOffer.begin();
+         it != mSongsInOffer.end();
          ++it) {
         int i = *it;
         if (mSongMgr != nullptr && mSongMgr->HasSong(i))
@@ -174,13 +168,13 @@ bool StoreOffer::PartiallyInLibrary() const {
 }
 
 int StoreOffer::GetSingleSongID() const {
-    if (songLib.empty()) {
+    if (mSongsInOffer.empty()) {
         MILO_NOTIFY("No SongIDs in an offer that expects to have one!");
         return 0;
-    } else if (1 < songLib.size()) {
+    } else if (1 < mSongsInOffer.size()) {
         MILO_NOTIFY("More than one SongID in an offer that expects to just have one!");
     }
-    return songLib.front();
+    return mSongsInOffer.front();
 }
 
 DataNode StoreOffer::GetData(DataArray const *data, bool b) const {
@@ -192,18 +186,8 @@ DataNode StoreOffer::GetData(DataArray const *data, bool b) const {
 }
 
 bool StoreOffer::HasSong(StoreOffer const *c) const {
-    if (OfferType() != "pack" && OfferType() != "album") {
-        MILO_FAIL(
-            kAssertStr,
-            "StoreOffer.cpp",
-            0x10c,
-            "OfferType() == \"pack\" || OfferType() == \"album\""
-        );
-    }
-    if (OfferType() != "song") {
-        MILO_FAIL(kAssertStr, "StoreOffer.cpp", 0x10d, "o->OfferType() == \"song\"");
-    }
-
+    MILO_ASSERT(OfferType() == "pack" || OfferType() == "album",0x10c);
+    MILO_ASSERT(OfferType() == "song", 0x10d);
     for (int i = 0; i < NumSongs(); i++) {
         if (Song(i) == c->GetSingleSongID()) {
             return true;

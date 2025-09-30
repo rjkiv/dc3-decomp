@@ -13,13 +13,17 @@ public:
 
 class XboxPurchaser : public Hmx::Object, public StorePurchaser {
 public:
-    XboxPurchaser(int, u64, u64, u64, Symbol, unsigned int);
+    // Hmx::Object
     ~XboxPurchaser();
+    virtual DataNode Handle(DataArray *, bool);
+
+    // StorePurchaser
     virtual void Initiate();
+    virtual bool IsPurchasing() const;
     virtual bool IsSuccess() const;
     virtual bool PurchaseMade() const;
-    virtual bool IsPurchasing() const;
-    virtual DataNode Handle(DataArray *, bool);
+
+    XboxPurchaser(int, u64, u64, u64, Symbol, unsigned int);
 
     Symbol unk4;
     unsigned int unk8;
@@ -32,14 +36,18 @@ private:
     DataNode OnMsg(UIChangedMsg const &);
 };
 
-class XboxMultipleItemsPurchaser : public StorePurchaser, public Hmx::Object {
+class XboxMultipleItemsPurchaser : public Hmx::Object, public StorePurchaser {
 public:
+    // Hmx::Object
+    virtual ~XboxMultipleItemsPurchaser();
+    virtual DataNode Handle(DataArray *, bool);
+
+    // StorePurchaser
+    virtual void Initiate();
+    virtual bool IsPurchasing() const;
     virtual bool IsSuccess() const;
     virtual bool PurchaseMade() const;
-    virtual bool IsPurchasing() const;
-    virtual void Initiate();
-    virtual DataNode Handle(DataArray *, bool);
-    virtual ~XboxMultipleItemsPurchaser();
+
     XboxMultipleItemsPurchaser(int, std::vector<u64>, Symbol, unsigned int);
 
 private:

@@ -55,12 +55,13 @@ private:
     DataNode OnSignInUsers(DataArray *);
 
 public:
-    PlatformMgr();
+    // Hmx::Object
     virtual ~PlatformMgr();
     virtual DataNode Handle(DataArray *, bool);
 
     static XCallbackFunc *sXShowCallback;
 
+    PlatformMgr();
     PlatformRegion GetRegion() const;
     bool IsAnyUserSignedIntoLive() const;
     bool IsSignedIntoLive(int) const;

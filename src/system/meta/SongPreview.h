@@ -19,14 +19,19 @@ public:
         kFadingOutSong = 5,
     };
 
-    SongPreview(class SongMgr const &);
+    // ContentMgr::Callback
+    virtual ~SongPreview();
     virtual void ContentMounted(char const *, char const *);
     virtual void ContentFailed(char const *);
-    // virtual ObjPtr<class TexMovie>::ObjPtr<class TexMovie>(void);
-    virtual DataNode Handle(DataArray *, bool);
-    // virtual void ObjRefConcrete<class TexMovie, class ObjectDir>::SetObj();
-    virtual ~SongPreview();
 
+    // Hmx::Object
+    virtual DataNode Handle(DataArray *, bool);
+
+    // unsure about these, will wait until TexMovie is filled out
+    // virtual ObjPtr<class TexMovie>::ObjPtr<class TexMovie>(void);
+    // virtual void ObjRefConcrete<class TexMovie, class ObjectDir>::SetObj();
+
+    SongPreview(class SongMgr const &);
     bool IsWaitingToDelete() const;
     bool IsFadingOut() const;
     void SetMusicVol(float);
@@ -41,9 +46,9 @@ public:
     Stream *unk34;
     ObjPtr<SongPreview> unk38;
     bool unk4c;
-    Fader *unk50;
-    Fader *unk54;
-    Fader *unk58;
+    Fader *mFader; // 0x50
+    Fader *mMusicFader; // 0x54
+    Fader *mCrowdSingFader; // 0x58
     int unk5c;
     float unk60;
     float unk64;

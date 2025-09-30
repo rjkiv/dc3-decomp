@@ -19,12 +19,7 @@ void XboxPurchaser::Initiate() {}
 
 bool XboxPurchaser::IsSuccess() const { return false; }
 
-bool XboxPurchaser::PurchaseMade() const {
-    // if(unk38!=2){
-    //     MILO_FAIL(kAssertStr,"StorePurchaser.cpp",0x3c9,"mState == kSuccess");
-    // }
-    return false;
-}
+bool XboxPurchaser::PurchaseMade() const { return false; }
 
 bool XboxPurchaser::IsPurchasing() const { return false; }
 

@@ -12,13 +12,17 @@ END_MESSAGE
 
 class ConnectionStatusPanel : public UIPanel {
 public:
-    ConnectionStatusPanel();
-    OBJ_CLASSNAME(ConnectionStatusPanel);
-    virtual void Exit();
+    // Hmx::Object
+    OBJ_CLASSNAME(ConnectionStatusPanel)
     OBJ_SET_TYPE(ConnectionStatusPanel)
-    ~ConnectionStatusPanel();
-    virtual void Enter();
     virtual DataNode Handle(DataArray *, bool);
+
+    // UIPanel
+    virtual void Enter();
+    virtual void Exit();
+
+    ConnectionStatusPanel();
+    ~ConnectionStatusPanel();
 
 protected:
     void CheckForLostConnection();

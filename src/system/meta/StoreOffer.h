@@ -24,6 +24,10 @@ public:
 
 class StoreOffer : public StorePurchaseable {
 public:
+    // Hmx::Object
+    virtual ~StoreOffer();
+    virtual DataNode Handle(DataArray *, bool);
+
     Symbol OfferType() const;
     bool HasData(Symbol) const;
     DateTime const &ReleaseDate() const;
@@ -44,12 +48,10 @@ public:
     DataNode GetData(DataArray const *, bool) const;
     bool HasSong(StoreOffer const *) const;
     DataNode OnGetData(DataArray *);
-    virtual DataNode Handle(DataArray *, bool);
-    virtual ~StoreOffer();
     StoreOffer(DataArray *, SongMgr *);
 
     DataArray *storeOfferData; // 0x40
     DateTime date; // 0x44
     SongMgr *mSongMgr; // 0x4c
-    std::vector<int> songLib; // 0x50
+    std::vector<int> mSongsInOffer; // 0x50
 };

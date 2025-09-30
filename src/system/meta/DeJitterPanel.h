@@ -5,8 +5,10 @@
 
 class DeJitterPanel : public UIPanel {
 public:
-    DeJitterPanel();
+    // Hmx::Object
     OBJ_CLASSNAME(DeJitterPanel)
+
+    DeJitterPanel();
 };
 
 class DeJitterSetter {

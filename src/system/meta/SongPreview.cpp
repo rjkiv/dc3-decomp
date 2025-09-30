@@ -13,25 +13,25 @@
 #include "utl/Symbol.h"
 
 SongPreview::SongPreview(const SongMgr &mgr)
-    : mSongMgr(mgr), unk34(0), unk38(this), unk4c(0), unk50(0), unk54(0), unk58(0),
-      unk5c(0), unk60(0.0f), unk68(0.0f), unk70(0), unk7c(0.0f), unk80(0.0f), unk84(0.0f),
-      unk88(0.0f), unk8c(0), unk8d(0), unk8e(0) {}
+    : mSongMgr(mgr), unk34(0), unk38(this), unk4c(0), mFader(0), mMusicFader(0),
+      mCrowdSingFader(0), unk5c(0), unk60(0.0f), unk68(0.0f), unk70(0), unk7c(0.0f),
+      unk80(0.0f), unk84(0.0f), unk88(0.0f), unk8c(0), unk8d(0), unk8e(0) {}
 
-void SongPreview::ContentMounted(char const *c, char const *cc2) {
-    if (c == nullptr) {
-        MILO_FAIL(kAssertStr, "SongPreview.cpp", 0xbf, "contentName");
+void SongPreview::ContentMounted(char const *contentName, char const *cc2) {
+    if (contentName == nullptr) {
+        MILO_ASSERT(contentName, 0xbf);
     }
-    Symbol s = Symbol(c);
+    Symbol s = Symbol(contentName);
     if (s == unk78) {
         unk78 = 0;
     }
 }
 
-void SongPreview::ContentFailed(char const *c) {
-    if (c == nullptr) {
-        MILO_FAIL(kAssertStr, "SongPreview.cpp", 0xcb, "contentName");
+void SongPreview::ContentFailed(char const *contentName) {
+    if (contentName == nullptr) {
+        MILO_ASSERT(contentName, 0xcb);
     }
-    Symbol sym = c;
+    Symbol sym = contentName;
     if (sym == unk78) {
         unk74 = 0;
         unk70 = 0;
@@ -49,10 +49,10 @@ void SongPreview::SetMusicVol(float f) {
     if (unk4c == 0) {
         return;
     }
-    if (f < unk54->GetMLevelTarget()) {
-        unk54->DoFade(f, 250.0f);
+    if (f < mMusicFader->GetMLevelTarget()) {
+        mMusicFader->DoFade(f, 250.0f);
     } else {
-        unk54->DoFade(f, 1000.0f);
+        mMusicFader->DoFade(f, 1000.0f);
     }
 }
 
@@ -74,24 +74,24 @@ void SongPreview::Init() {
         cfg->FindData("attenuation", unk60, true);
         cfg->FindData("preview_db", unk68, true);
         unk64 *= 1000.0f;
-        unk50 = Hmx::Object::New<Fader>();
-        unk54 = Hmx::Object::New<Fader>();
-        unk58 = Hmx::Object::New<Fader>();
-        unk58->SetVolume(-96.0f);
+        mFader = Hmx::Object::New<Fader>();
+        mMusicFader = Hmx::Object::New<Fader>();
+        mCrowdSingFader = Hmx::Object::New<Fader>();
+        mCrowdSingFader->SetVolume(-96.0f);
     }
 }
 
 void SongPreview::Terminate() {
     if (unk4c) {
         unk4c = 0;
-        DetachFader(unk54);
-        DetachFader(unk58);
+        DetachFader(mMusicFader);
+        DetachFader(mCrowdSingFader);
         unk74 = 0;
         unk78 = 0;
         RELEASE(unk34);
-        RELEASE(unk50);
-        RELEASE(unk54);
-        RELEASE(unk58);
+        RELEASE(mFader);
+        RELEASE(mMusicFader);
+        RELEASE(mCrowdSingFader);
 
         if (unk8c) {
             TheContentMgr->UnregisterCallback(this, true);
@@ -102,14 +102,7 @@ void SongPreview::Terminate() {
 
 void SongPreview::Start(Symbol s, TexMovie *t) {
     if (unk4c || s) {
-        if (unk50 == 0 || unk54 == 0 || unk58 == 0) {
-            MILO_FAIL(
-                kAssertStr,
-                "SongPreview.cpp",
-                0x6c,
-                "mFader && mMusicFader && mCrowdSingFader"
-            );
-        }
+        MILO_ASSERT(mFader && mMusicFader && mCrowdSingFader,0x6c);
         // unk38->SetObjConcrete(t);
         if (s == unk74) {
             unk8d = true;
@@ -129,8 +122,8 @@ void SongPreview::Start(Symbol s, TexMovie *t) {
                 }
             }
             unk6c = true;
-            unk54->SetVolume(unk68);
-            unk58->SetVolume(-96.0f);
+            mMusicFader->SetVolume(unk68);
+            mCrowdSingFader->SetVolume(-96.0f);
             int x;
             if (unk70 < 2) {
                 if (unk34) {
@@ -144,7 +137,7 @@ void SongPreview::Start(Symbol s, TexMovie *t) {
                 if (unk70 != 4)
                     return;
                 else {
-                    unk50->DoFade(-48.0f);
+                    mFader->DoFade(-48.0f);
                 }
             }
             unk70 = x;
@@ -182,7 +175,7 @@ void SongPreview::DetachFader(Fader *f) {
 void SongPreview::PrepareFaders(SongInfo const *info) {
     for (int i = 0; i < unk5c; i++) {
         FaderGroup *f = unk34->ChannelFaders(i);
-        f->Add(unk54);
+        f->Add(mMusicFader);
     }
 }
 

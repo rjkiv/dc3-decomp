@@ -5,12 +5,14 @@
 
 class StreamPlayer : public Hmx::Object {
 public:
+    // Hmx::Object
+    virtual ~StreamPlayer();
+    virtual DataNode Handle(DataArray *, bool);
+
     StreamPlayer();
     void StopPlaying();
-    virtual ~StreamPlayer();
     void PlayFile(char const *, float, float, bool);
     void Poll();
-    virtual DataNode Handle(DataArray *, bool);
     void SetVolume(float);
 
     float mMasterVol; // 0x2c

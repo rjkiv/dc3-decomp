@@ -177,7 +177,7 @@ String HAQManager::GetTextForType(HAQType ty) const {
 
 void HAQManager::PrintList(UIList *i_pList) {
     if (i_pList == nullptr) {
-        MILO_FAIL(kAssertStr, "HAQManager.cpp", 0xc2, "i_pList");
+        MILO_ASSERT(i_pList,0xc2);
     }
     int i = i_pList->SelectedPos();
     Print(kHAQType_List, i_pList, i);
