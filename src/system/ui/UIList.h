@@ -69,6 +69,8 @@ public:
     void UnDimData(Symbol);
     void Refresh(bool);
     void AutoScroll();
+    void StopAutoScroll();
+    void SetSelected(int, int);
 
     int NumDisplay() const { return mListState.NumDisplay(); }
     int GridSpan() const { return mListState.GridSpan(); }

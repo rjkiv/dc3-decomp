@@ -38,33 +38,35 @@ class SongPreview : public ContentMgr::Callback, public Hmx::Object{
         void Poll();
         DataNode OnStart(DataArray *);
 
+        const SongMgr &mSongMgr; //0x30
+        Stream* unk34;
+        ObjPtr<SongPreview> unk38; 
+        bool unk4c;
+        Fader* unk50;
+        Fader* unk54;
+        Fader* unk58;
+        int unk5c;
+        float unk60;
+        float unk64;
+        float unk68;
+        bool unk6c;
+        bool unk6d;
+        bool unk6e;
+        bool unk6f;
+        int unk70;
+        Symbol unk74;
+        Symbol unk78;
+        float unk7c;
+        float unk80;
+        float unk84;
+        float unk88;
+        bool unk8c;
+        bool unk8d;
+        bool unk8e;  
+
     private:
         void DetachFader(Fader*);
         void PrepareFaders(class SongInfo const *);
         void PrepareSong(Symbol);
         //class Hmx::Object * ObjRefConcrete<class TexMovie, class ObjDir>::SetObj(class Hmx::Object*);
-    
-    const SongMgr &mSongMgr; //0x30
-    int unk34;
-    int unk44;
-    Fader* mFader;
-    float unk60;
-    float unk68;
-    bool unk4c;
-    int unk50;
-    int unk54;
-    int unk58;
-    int unk5c;
-    int unk70;
-    Symbol mSong;
-    Symbol mSongContent;
-    float unk7c;
-    float unk80;
-    float unk84;
-    bool unk8c;
-    float unk88;
-    bool unk8d;
-    bool unk8e;
-    
-    
 };

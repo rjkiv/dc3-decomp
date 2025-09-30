@@ -37,14 +37,13 @@ private:
     virtual void Unload();
     virtual void Poll();
 
-    bool mCheatOn;
-
-    DataLoader *mLoader;
-    DataArray *mNames;
-    UIList *mList;
+    bool mCheatOn; 
+    DataLoader *mLoader; 
+    DataArray *mNames; //0x40
+    UIList *mList; 
     Stream *mStream;
-    bool mAutoScroll; // 0x50
-    float mSavedSpeed; // 0x54
+    bool mAutoScroll; //0x50
+    float mSavedSpeed; //0x54
     /** Whether or not the panel is paused. */
-    bool mPaused; // 0x58
+    bool mPaused; 
 };

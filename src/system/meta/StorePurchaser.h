@@ -21,15 +21,18 @@ class XboxPurchaser : public Hmx::Object, public StorePurchaser{
         virtual bool IsPurchasing() const;
         virtual DataNode Handle(DataArray *, bool);
 
-        
+        Symbol unk4;
+        unsigned int unk8;
+        Hmx::Object unkc; 
         int unk38;
         u64 unk40;
         int unk48;
+
     private:
         DataNode OnMsg(UIChangedMsg const &);
 };
 
-class XboxMultipleItemsPurchaser : public StorePurchaser, Hmx::Object{
+class XboxMultipleItemsPurchaser : public StorePurchaser, public Hmx::Object{
     public:
         virtual bool IsSuccess() const;
         virtual bool PurchaseMade() const;

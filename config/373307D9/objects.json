@@ -861,7 +861,7 @@
             "system/synth_xbox/FFT.cpp": "MISSING",
             "system/synth_xbox/FIFOSampleBuffer.cpp": "MISSING",
             "system/synth_xbox/FIRFilter.cpp": "MISSING",
-            "system/synth_xbox/FftIpp.cpp": "MISSING",
+            "system/synth_xbox/FftIpp.cpp": "NonMatching",
             "system/synth_xbox/FilterCoeffs.cpp": "MISSING",
             "system/synth_xbox/FxSend.cpp": "MISSING",
             "system/synth_xbox/FxSendBitCrush.cpp": "MISSING",
@@ -1003,7 +1003,7 @@
             "system/utl/TimeConversion.cpp": "NonMatching",
             "system/utl/UTF8.cpp": "NonMatching",
             "system/utl/UrlEncode.cpp": "NonMatching",
-            "system/utl/VarTimer.cpp": "MISSING",
+            "system/utl/VarTimer.cpp": "NonMatching",
             "system/utl/WaveFile.cpp": "MISSING",
             "system/utl/trie.cpp": "MISSING",
 

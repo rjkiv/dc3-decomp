@@ -11,6 +11,7 @@ class StreamPlayer : public Hmx::Object{
         void PlayFile(char const *, float, float, bool);
         void Poll();
         virtual DataNode Handle(DataArray *, bool);
+        void SetVolume(float);
 
         float mMasterVol; //0x2c
         float mStreamVol; //0x30

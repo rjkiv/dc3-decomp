@@ -1,10 +1,10 @@
 #include "meta/StreamPlayer.h"
+#include "macros.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "synth/Stream.h"
 #include "synth/Synth.h"
-#include "utl/Std.h"
 
 StreamPlayer::StreamPlayer()
     : mMasterVol(1.0f), mStreamVol(1.0f), mLoop(0), mStarted(0), mPaused(0), mStream(0){}
@@ -66,6 +66,14 @@ void StreamPlayer::Init(){
         mStream->SetJump(-0.25,0,0);
     }
 }
+
+void StreamPlayer::SetVolume(float value) {
+    mMasterVol = value;
+    if (mStream) {
+        mStream->SetVolume(value * mStreamVol);
+    }
+}
+
 BEGIN_HANDLERS(StreamPlayer)
-    HANDLE_ACTION(set_volume, mStream->SetVolume((_msg->Float(2))))
+    HANDLE_ACTION(set_volume, SetVolume(_msg->Float(2)))
 END_HANDLERS

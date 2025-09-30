@@ -1,5 +1,6 @@
 #include "SongMgr.h"
 #include "SongMetadata.h"
+#include "macros.h"
 #include "obj/Data.h"
 #include "obj/DataFile.h"
 #include "obj/Object.h"
@@ -18,9 +19,13 @@ SongMgr *TheBaseSongManager;
 const char *SONG_CACHE_CONTAINER_NAME = "songcache_bb";
 
 int GetSongID(DataArray *main_arr, DataArray *backup_arr){
-    static int sDebugSongID = 99000001;
-    int theID = 0;
-    return theID;
+    static Symbol song_id("song_id");
+    int x = 0;
+    main_arr->FindData(song_id,x,false);
+    if(x==0 && backup_arr!=nullptr){
+        backup_arr->FindData(song_id,x,false);
+    }
+    return x;
 }
 
 int CountSongsInArray(DataArray *arr){
@@ -47,7 +52,7 @@ void SongMgr::ContentDone(){
 }
 
 SongInfo* SongMgr::SongAudioData(Symbol s) const{
-    //return SongAudioData(GetSongIDFromShortName(s, true));
+    //return SongAudioData(GetSongIDFromShortName(s.Str(), true));
     return nullptr;
 }
 

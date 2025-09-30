@@ -1,6 +1,8 @@
 #include "meta/StorePurchaser.h"
+#include "meta/StoreOffer.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
+#include "os/Debug.h"
 #include "ui/UI.h"
 #include "utl/Symbol.h"
 
@@ -8,8 +10,7 @@
 StorePurchaser::~StorePurchaser(){}
 
 XboxPurchaser::XboxPurchaser(int param1, u64 param2, u64 param3, u64 param4, Symbol s, unsigned int ui) 
-    : unk38(0), unk40(param2), unk48(param1){  
-
+    : unk4(s), unk8(ui), unkc(), unk40(param2), unk48(param1), unk38(0){  
 
     }
 
@@ -26,6 +27,9 @@ bool XboxPurchaser::IsSuccess() const{
 }
 
 bool XboxPurchaser::PurchaseMade() const{
+    // if(unk38!=2){
+    //     MILO_FAIL(kAssertStr,"StorePurchaser.cpp",0x3c9,"mState == kSuccess");
+    // }
     return false;
 }
 
@@ -54,10 +58,10 @@ void XboxMultipleItemsPurchaser::Initiate(){
 }
 
 XboxMultipleItemsPurchaser::~XboxMultipleItemsPurchaser(){
-    Symbol ui_changed("ui_changed");
+    static Symbol ui_changed("ui_changed");
 }
 
-XboxMultipleItemsPurchaser::XboxMultipleItemsPurchaser(int, std::vector<u64>, Symbol, unsigned int){
+XboxMultipleItemsPurchaser::XboxMultipleItemsPurchaser(int, std::vector<u64> , Symbol, unsigned int){
     
 }
 

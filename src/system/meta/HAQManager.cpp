@@ -1,5 +1,6 @@
 #include "meta/HAQManager.h"
 #include "HAQManager.h"
+#include "obj/Object.h"
 #include "os/Debug.h"
 #include "ui/UI.h"
 #include "ui/UIComponent.h"
@@ -174,8 +175,11 @@ String HAQManager::GetTextForType(HAQType ty) const{
 }
 
 void HAQManager::PrintList(UIList *i_pList){
-    MILO_ASSERT(i_pList, 0xC2);
-    //Print(4, i_pList, i_pList->SelectedPos());
+    if(i_pList==nullptr){
+        MILO_FAIL(kAssertStr,"HAQManager.cpp",0xc2,"i_pList");
+    }
+    int i = i_pList->SelectedPos();
+    Print(kHAQType_List, i_pList, i);
 }
 
 void HAQManager::PrintSlider(UISlider *slider){
@@ -192,7 +196,7 @@ void HAQManager::PrintComponentInfo(UIComponent *comp){
 }
 
 BEGIN_HANDLERS(HAQManager)
-    //HANDLE_ACTION(toggle_enabled, )
+    //HANDLE_ACTION(toggle_enabled)
     HANDLE_EXPR(is_enabled, m_bEnabled)
     HANDLE_ACTION(display_all, Print(kHAQType_Screen))
     HANDLE_ACTION(display_all, Print(kHAQType_Focus))

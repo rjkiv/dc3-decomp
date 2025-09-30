@@ -15,6 +15,7 @@
 #include "ui/UIList.h"
 #include "ui/UIListLabel.h"
 #include "ui/UIListMesh.h"
+#include "ui/UIListProvider.h"
 #include "ui/UIPanel.h"
 #include "utl/ChunkStream.h"
 #include "utl/FilePath.h"
@@ -37,6 +38,16 @@ int CreditsPanel::NumData() const{
 }
 
 RndMat *CreditsPanel::Mat(int i, int j, UIListMesh *mesh) const{
+    static Symbol image("image");
+    static Symbol blank("blank");
+    DataArray *array = mNames->Array(j);
+    if(array->Size()!=0){
+        blank = array->Sym(0);
+    }
+    if(blank==image){
+        return mDir->Find<RndMat>(array->Str(1), true);
+    }
+    
     return nullptr;
 }
 
@@ -45,7 +56,7 @@ DataNode CreditsPanel::OnMsg(ButtonDownMsg const &msg){
 }
 
 bool CreditsPanel::IsLoaded() const{
-    return UIPanel::IsLoaded() && mLoader->IsLoaded();
+    return UIPanel::IsLoaded() && mLoader!=nullptr && mLoader->IsLoaded();
 }
 
 void CreditsPanel::Exit(){
@@ -57,11 +68,11 @@ void CreditsPanel::Exit(){
 
 void CreditsPanel::Enter(){
     UIPanel::Enter();
-        mCheatOn = false;
-        mPaused=false;
-        //mList->SetSelected(,);
-        mAutoScroll=true;
-        //mList->AutoScroll();
+    mCheatOn = false;
+    mPaused = false;
+    mList->SetSelected(0,-1);
+    mAutoScroll = 1;
+    mList->AutoScroll();
 }
 
 void CreditsPanel::PausePanel(bool b){
@@ -69,23 +80,12 @@ void CreditsPanel::PausePanel(bool b){
 }
 
 void CreditsPanel::DebugToggleAutoScroll(){
-    /*if(!mAutoScroll){
-        mList->SetSpeed(mSavedSpeed);
-        SetAutoScroll(true);
-        mCheatOn = false;
-    }
-    else{
-        mSavedSpeed = mList->Speed();
-        mList->SetSpeed(0.0f);
-        SetAutoScroll(false);
-        mCheatOn=true;
-    }*/
+    
 }
 
 
 void CreditsPanel::Load(){
     UIPanel::Load();
-    //mLoader = new DataLoader(FilePath(SystemConfig("credits_file")->Str(1)), kLoadFront, true); 
 }
 
 bool CreditsPanel::Exiting() const{
@@ -97,8 +97,8 @@ void CreditsPanel::FinishLoad(){
     mNames = mLoader->Data();
     MILO_ASSERT(mNames, 0x35);
     mNames->AddRef();
-    //mList = mDir->Find<UIList>("credits.lst", true);
-    //mList->SetProvider(this);
+    mList = mDir->Find<UIList>("credits.lst", true);
+    mList->SetProvider(this);
     delete mLoader;
     mLoader = 0;
 }

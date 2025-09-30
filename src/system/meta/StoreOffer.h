@@ -7,6 +7,7 @@
 #include "stl/_vector.h"
 #include "types.h"
 #include "utl/Symbol.h"
+#include "xdk/win_types.h"
 
 
 class StorePurchaseable : public Hmx::Object{
@@ -16,10 +17,10 @@ class StorePurchaseable : public Hmx::Object{
         static unsigned long long OfferStringToID(char const *);
         char const * CostStr() const;
 
-        bool unk2c;
-        bool unk2d;
+        bool isAvailable; 
+        bool isPurchased;
         u64 songID; //0x30
-        int unk38;
+        int cost; //0x38
 };
 
 
@@ -27,6 +28,7 @@ class StoreOffer : public StorePurchaseable{
     public:
         Symbol OfferType() const;
         bool HasData(Symbol) const;
+        DateTime const & ReleaseDate() const;
         Symbol FirstChar(Symbol, bool) const;
         Symbol PackFirstLetter() const;
         char const * OfferName() const;
@@ -48,9 +50,8 @@ class StoreOffer : public StorePurchaseable{
         virtual ~StoreOffer();
         StoreOffer(DataArray *, SongMgr *);
 
-        DataArray *arr; //0x40
+        DataArray *storeOfferData; //0x40
         DateTime date; //0x44
         SongMgr *mSongMgr; //0x4c
-        std::vector<int> unk50; //0x50, 0x54, 0x58
-        
+        std::vector<int> songLib; //0x50
 };
