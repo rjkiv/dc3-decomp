@@ -1,4 +1,5 @@
 #pragma once
+#include "obj/Data.h"
 #include "utl/Symbol.h"
 #include <vector>
 
@@ -17,3 +18,4 @@ float RatingToRatingFrac(Symbol);
 Symbol RatingState(int);
 void RatingStateThreshold(int, Symbol &, float &, const std::vector<float> *);
 int RatingStateToIndex(Symbol);
+void ScoreUtlInit(const DataArray *);

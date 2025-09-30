@@ -163,6 +163,8 @@ public:
     void QueueTaskDelete(Task *);
     void ResetTaskTime(float, float);
     void ResetBeatTaskTime(float);
+    int CurrentMeasure() const { return mSongPos.GetMeasure(); }
+    int CurrentBeat() const { return mSongPos.GetBeat(); }
 
 private:
     DataNode OnTimeTilNext(DataArray *);

@@ -92,6 +92,7 @@ public:
     float SongEndSeconds() const;
     void LoadClip(bool);
     void FillMoveRatings();
+    void SwapMoveRecord();
 
     static void Init();
     static const RecordedFrame *

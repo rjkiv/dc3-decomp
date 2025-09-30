@@ -14,8 +14,6 @@ class DetectFrame;
 
 // FilterVersion size: 0x9c
 class FilterVersion {
-    friend class DetectFrame;
-
 public:
     virtual ~FilterVersion();
     virtual void
@@ -32,7 +30,9 @@ protected:
 
     static int sNumHam2Nodes;
 
-    Symbol mFilterVersionSym; // 0x4 - i've seen it be either ham1 or ham2
+    // why are these members public? hmx pls
+public:
+    Symbol mVersionSym; // 0x4 - i've seen it be either ham1 or ham2
     FilterVersionType mType; // 0x8
     ScaleOp mScaleOp; // 0xc
     ErrorNode *mErrorNodes[kMaxNumErrorNodes]; // 0x18

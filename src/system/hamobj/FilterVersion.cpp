@@ -6,7 +6,7 @@
 #include "os/Debug.h"
 
 FilterVersion::FilterVersion(FilterVersionType t, const DataArray *cfg)
-    : mFilterVersionSym(cfg->Sym(0)), mType(t) {
+    : mVersionSym(cfg->Sym(0)), mType(t) {
     static Symbol time_error("time_error");
     mScaleOp.Set(cfg->FindArray(time_error));
     static Symbol nodes("nodes");

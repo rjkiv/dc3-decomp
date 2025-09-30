@@ -102,6 +102,7 @@ public:
     HamCharacter *GetCharacter(int) const;
     HamCharacter *GetBackup(int);
     void LoadRoutineBuilderData(std::set<const MoveVariant *> &, bool);
+    bool InPracticeMode();
 
     DataNode OnGetDancerVisemes(DataArray *);
 

@@ -6,9 +6,11 @@
 #include "gesture/SkeletonViz.h"
 #include "hamobj/CharFeedback.h"
 #include "hamobj/DancerSequence.h"
+#include "hamobj/Difficulty.h"
 #include "hamobj/FilterVersion.h"
 #include "hamobj/HamMove.h"
 #include "math/DoubleExponentialSmoother.h"
+#include "obj/Data.h"
 #include "obj/Object.h"
 #include "rndobj/Overlay.h"
 #include "ui/UILabelDir.h"
@@ -64,22 +66,46 @@ public:
 
     OBJ_MEM_OVERLOAD(0x2F)
     NEW_OBJ(MoveDir)
+
     void ClearLimbFeedback(int);
     void SetFiltersEnabled(bool);
     void SetMoveOverlay(bool);
     void SetSongPlayClip(SkeletonClip *);
+    HamMove *CurrentMove(int) const;
+    int MoveIdx() const;
+    int MoveBeat() const;
+    void StopSongRecord();
+    void FlushMoveRecord();
+    void SwapMoveRecord();
+    HamMove *GetMoveAtMeasure(int, int);
+    DancerSequence *PerformanceSequence(Difficulty);
+    void FinishGameRecord();
+    void SetupSongRecordClip();
+    void SetDancerSequence(DancerSequence *);
+    void ResetDetection();
+    void ResetDetectFrames(int, Difficulty);
+    void SetCurrentMove(int, HamMove *);
+
+    static void LoadScoring(const DataArray *);
+    static const FilterVersion *FindFilterVersion(FilterVersionType);
+    static bool sGameRecord;
+    static bool sGameRecord2Player;
 
 private:
     void SetFilterVersion(Symbol);
+    SkeletonClip *ImportClip(bool);
+    void ReloadScoring();
 
     static std::vector<FilterVersion *> sFilterVersions;
+    static float sLatencySeconds;
+    static float sPLFMinTimeError;
 
 protected:
     MoveDir();
 
     virtual void MiloUpdate();
 
-    int unk288; // 0x288
+    FilterVersion *mFilterVer; // 0x288
     /** "Show debugging overlay for the current HamMove" */
     bool mShowMoveOverlay; // 0x28c
     /** "Types of error nodes to show" */
@@ -98,7 +124,7 @@ protected:
     /** "The pre-recorded .clp file to import" */
     String mImportClipPath; // 0x2fc
     bool mFiltersEnabled; // 0x304
-    int unk308; // 0x308
+    Hmx::Object *unk308; // 0x308 - ptr to some Object
     float unk30c; // 0x30c
     int unk310; // 0x310
     int mFilterQueue; // 0x314 - FilterQueue*
@@ -110,7 +136,7 @@ protected:
     char buffer[0x30];
     int unk3f8; // 0x3f8
     RndOverlay *mMoveOverlay; // 0x3fc
-    ObjPtr<DancerSequence> unk400; // 0x400
+    ObjPtr<DancerSequence> mDancerSeq; // 0x400
     int unk414; // 0x414
     SkeletonViz *mSkeletonViz; // 0x418
     int unk41c; // 0x41c
