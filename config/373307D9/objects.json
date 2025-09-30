@@ -324,7 +324,7 @@
             "system/hamobj/DetectFrame.cpp": "NonMatching",
             "system/hamobj/Difficulty.cpp": "NonMatching",
             "system/hamobj/ErrorNode.cpp": "NonMatching",
-            "system/hamobj/FilterQueue.cpp": "MISSING",
+            "system/hamobj/FilterQueue.cpp": "NonMatching",
             "system/hamobj/FilterVersion.cpp": "NonMatching",
             "system/hamobj/FreestyleMove.cpp": "MISSING",
             "system/hamobj/FreestyleMoveRecorder.cpp": "MISSING",

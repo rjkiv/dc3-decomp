@@ -1,5 +1,6 @@
 #pragma once
 #include "DetectFrame.h"
+#include "FilterQueue.h"
 #include "gesture/Skeleton.h"
 #include "gesture/SkeletonClip.h"
 #include "gesture/SkeletonDir.h"
@@ -127,7 +128,7 @@ protected:
     Hmx::Object *unk308; // 0x308 - ptr to some Object
     float unk30c; // 0x30c
     int unk310; // 0x310
-    int mFilterQueue; // 0x314 - FilterQueue*
+    FilterQueue *mFilterQueue; // 0x314
     MovePlayerData mMovePlayerData[2]; // 0x318
     int unk390; // 0x390 - MoveAsyncDetector*
     int unk394; // 0x394
