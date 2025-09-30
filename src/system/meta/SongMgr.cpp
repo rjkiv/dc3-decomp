@@ -52,7 +52,7 @@ void SongMgr::ContentDone(){
 }
 
 SongInfo* SongMgr::SongAudioData(Symbol s) const{
-    //return SongAudioData(GetSongIDFromShortName(s.Str(), true));
+    //return SongAudioData(GetSongIDFromShortName(s, true));
     return nullptr;
 }
 
