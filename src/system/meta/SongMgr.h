@@ -31,6 +31,7 @@ class SongMgr : public MemStream, public ContentMgr::Callback, public Hmx::Objec
         bool IsSongCacheWriteDone() const;
         char const * GetCachedSongInfoName() const;
         virtual void ClearSongCacheNeedsWrite();
+        virtual bool SongCacheNeedsWrite() const;
         char const * SongPath(Symbol, int) const;
         char const * SongFilePath(Symbol, char const *, int) const;
         void DumpSongMgrContents(bool);
@@ -51,6 +52,8 @@ class SongMgr : public MemStream, public ContentMgr::Callback, public Hmx::Objec
         virtual ~SongMgr();
         virtual char const * AlternateSongDir() const;
         virtual void ContentMounted(char const *, char const *);
+        char const * ContentName(int) const;
+        char const * ContentName(Symbol, bool) const;
         virtual void GetContentNames(Symbol, std::vector<Symbol> &) const;
         bool LoadCachedSongInfo(BufStream &);
         virtual void WriteCachedMetadataFromStream(BinStream &) const = 0;

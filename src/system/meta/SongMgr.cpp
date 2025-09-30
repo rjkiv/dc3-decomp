@@ -52,8 +52,8 @@ void SongMgr::ContentDone(){
 }
 
 SongInfo* SongMgr::SongAudioData(Symbol s) const{
-    //return SongAudioData(GetSongIDFromShortName(s, true));
     return nullptr;
+
 }
 
 bool SongMgr::IsSongCacheWriteDone() const{
@@ -66,6 +66,10 @@ char const * SongMgr::GetCachedSongInfoName() const{
 
 void SongMgr::ClearSongCacheNeedsWrite(){
     mSongCacheNeedsWrite = false;
+}
+
+bool SongMgr::SongCacheNeedsWrite() const{
+    return mSongCacheNeedsWrite;
 }
 
 char const * SongMgr::SongPath(Symbol s, int i) const{
@@ -178,6 +182,14 @@ char const * SongMgr::AlternateSongDir() const{
 
 void SongMgr::ContentMounted(char const *, char const *){
 
+}
+
+char const * SongMgr::ContentName(int i) const{
+    return nullptr;
+}
+
+char const * SongMgr::ContentName(Symbol s, bool b) const{
+    return nullptr;
 }
 
 void SongMgr::GetContentNames(Symbol s, std::vector<Symbol> &vec) const{
