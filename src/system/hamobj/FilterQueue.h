@@ -5,6 +5,7 @@
 #include "hamobj/HamMove.h"
 #include <vector>
 
+// size 0x34
 class FilterQueue {
 public:
     // size 0x14

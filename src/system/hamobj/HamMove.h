@@ -44,6 +44,8 @@ private:
     Ham2FrameWeight mFrameWeights[kNumMoveMirrored]; // 0x1168
 };
 
+class FilterVersion;
+
 /** "Data associated with a ham Move" */
 class HamMove : public RndPropAnim {
 public:
@@ -91,6 +93,10 @@ public:
     const std::vector<MoveFrame> &GetMoveFrames() const;
     MoveMirrored Mirrored() const;
     void Update(const HamMove *);
+    const FilterVersion *FilterVer() const;
+
+    bool Scored() const { return mScored; }
+    DancerSequence *GetDancerSequence() const { return mDancerSeq; }
 
 protected:
     HamMove();

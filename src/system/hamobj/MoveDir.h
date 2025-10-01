@@ -10,6 +10,7 @@
 #include "hamobj/Difficulty.h"
 #include "hamobj/FilterVersion.h"
 #include "hamobj/HamMove.h"
+#include "hamobj/MoveDetector.h"
 #include "math/DoubleExponentialSmoother.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
@@ -86,6 +87,10 @@ public:
     void ResetDetection();
     void ResetDetectFrames(int, Difficulty);
     void SetCurrentMove(int, HamMove *);
+    float
+    DetectFrac(int, const HamMove *, const std::pair<DetectFrame *, DetectFrame *> &);
+    void
+    EnqueueDetectFrames(float, int, std::vector<DetectFrame> &, const FilterVersion *);
 
     static void LoadScoring(const DataArray *);
     static const FilterVersion *FindFilterVersion(FilterVersionType);
@@ -130,7 +135,7 @@ protected:
     int unk310; // 0x310
     FilterQueue *mFilterQueue; // 0x314
     MovePlayerData mMovePlayerData[2]; // 0x318
-    int unk390; // 0x390 - MoveAsyncDetector*
+    MoveAsyncDetector *unk390; // 0x390
     int unk394; // 0x394
     std::list<ObjDirPtr<UILabelDir> > unk398; // 0x398
     Vector2DESmoother unk3a0; // 0x3a0

@@ -6,6 +6,7 @@
 #include "hamobj/Difficulty.h"
 #include "hamobj/HamCamShot.h"
 #include "hamobj/HamCharacter.h"
+#include "hamobj/HamMove.h"
 #include "hamobj/HamVisDir.h"
 #include "hamobj/MoveGraph.h"
 #include "obj/Data.h"
@@ -103,6 +104,7 @@ public:
     HamCharacter *GetBackup(int);
     void LoadRoutineBuilderData(std::set<const MoveVariant *> &, bool);
     bool InPracticeMode();
+    void MoveKeys(Difficulty, class MoveDir *, std::vector<HamMoveKey> &);
 
     DataNode OnGetDancerVisemes(DataArray *);
 

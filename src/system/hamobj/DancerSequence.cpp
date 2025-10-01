@@ -26,7 +26,7 @@ BEGIN_SAVES(DancerSequence)
     for (int i = 0; i < numFrames; i++) {
         const DancerFrame &curFrame = mDancerFrames[i];
         bs << curFrame.unk0;
-        bs << curFrame.unk2;
+        bs << curFrame.mMoveFrameIdx;
         const DancerSkeleton &skeleton = curFrame.mSkeleton;
         for (int j = 0; j < kNumJoints; j++) {
             bs << skeleton.CamJointPos((SkeletonJoint)j);
