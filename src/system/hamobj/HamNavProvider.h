@@ -8,10 +8,22 @@ class HamNavList;
 
 class HamNavProvider : public Hmx::Object, public UIListProvider {
 public:
+    enum CheckboxMode {
+        kCheckbox_None = 0,
+        kCheckbox_Disabled = 1,
+        kCheckbox_Enabled = 2
+    };
     struct NavItem {
         NavItem()
-            : mLabel(gNullStr), mCheckbox(0), unkc(0), unk10(1), unk11(0), unk14(0),
-              unk24(0) {}
+            : mLabel(gNullStr), mCheckboxState(kCheckbox_None), unkc(0), unk10(1),
+              unk11(0), unk14(0), unk24(0) {}
+        NavItem(const NavItem &other)
+            : mLabel(other.mLabel), mCheckboxState(other.mCheckboxState),
+              unk8(other.unk8), unkc(other.unkc), unk10(other.unk10), unk11(other.unk11),
+              unk14(other.unk14), mLabels(other.mLabels), unk24(other.unk24) {
+            if (unk14)
+                unk14->AddRef();
+        }
         ~NavItem() {
             if (unk14) {
                 unk14->Release();
@@ -20,7 +32,7 @@ public:
         }
 
         Symbol mLabel; // 0x0
-        int mCheckbox; // 0x4
+        CheckboxMode mCheckboxState; // 0x4
         int unk8;
         int unkc;
         bool unk10;
@@ -51,11 +63,17 @@ public:
     NEW_OBJ(HamNavProvider)
     static void Init();
 
-    void Refresh();
     void SetChecked(Symbol, bool, bool);
     void SelectRadioButton(Symbol);
     void SetStars(Symbol, int, bool);
     void SetLabel(int, Symbol);
+    Symbol DataSymbol(int, int) const;
+    void SetLabel(int, int, Symbol);
+    void SetLabels(int, DataArray *);
+    void ResetLabelProvider(int);
+    void SetEnabled(int, bool);
+    bool IsEnabled(int) const;
+    void SetHidden(int, bool);
 
     DataNode OnSetHidden(const DataArray *);
 
@@ -63,6 +81,7 @@ protected:
     HamNavProvider();
 
     void CreateSubListProvider(int);
+    int FindLabel(Symbol);
 
     DataNode OnSetEnabled(const DataArray *);
     DataNode OnSetFormatArgs(const DataArray *);

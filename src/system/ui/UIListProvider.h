@@ -97,6 +97,7 @@ public:
     void Disable(Symbol);
     void Dim(Symbol);
     void UnDim(Symbol);
+    DataArray *Data() const { return mData; }
 
 protected:
     DataArray *mData; // 0x4

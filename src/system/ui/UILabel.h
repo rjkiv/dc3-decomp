@@ -47,6 +47,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x26);
 
+    void SetIcon(char);
     void SetTokenFmt(const DataArray *);
 
     template <class T1>

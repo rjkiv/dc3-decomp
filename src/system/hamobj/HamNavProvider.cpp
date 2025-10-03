@@ -2,8 +2,12 @@
 #include "hamobj/HamNavList.h"
 #include "hamobj/HamNavProvider.h"
 #include "obj/Data.h"
+#include "obj/Msg.h"
 #include "obj/Object.h"
+#include "os/Debug.h"
+#include "ui/UIListLabel.h"
 #include "ui/UIListProvider.h"
+#include "ui/UIListSubList.h"
 #include "utl/BinStream.h"
 #include "utl/Symbol.h"
 
@@ -35,17 +39,21 @@ END_HANDLERS
 BEGIN_CUSTOM_PROPSYNC(HamNavProvider::NavItem)
     SYNC_PROP(label, o.mLabel)
     SYNC_PROP(labels, o.mLabels)
-    SYNC_PROP_SET(checkbox, o.mCheckbox, o.mCheckbox = _val.Int())
+    SYNC_PROP_SET(
+        checkbox,
+        (int &)o.mCheckboxState,
+        o.mCheckboxState = (HamNavProvider::CheckboxMode)_val.Int()
+    )
 END_CUSTOM_PROPSYNC
 
 BEGIN_PROPSYNCS(HamNavProvider)
-    SYNC_PROP_MODIFY(nav_items, mNavItems, Refresh())
+    SYNC_PROP_MODIFY(nav_items, mNavItems, if (mNavList) mNavList->Refresh())
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
 BinStream &operator<<(BinStream &bs, const HamNavProvider::NavItem &item) {
     bs << item.mLabel;
-    bs << item.mCheckbox;
+    bs << item.mCheckboxState;
     bs << item.mLabels;
     return bs;
 }
@@ -67,7 +75,7 @@ END_COPYS
 BinStreamRev &operator>>(BinStreamRev &bs, HamNavProvider::NavItem &item) {
     bs >> item.mLabel;
     if (bs.rev > 0) {
-        bs >> item.mCheckbox;
+        bs >> (int &)item.mCheckboxState;
     }
     if (bs.rev >= 2) {
         bs >> item.mLabels;
@@ -83,8 +91,70 @@ BEGIN_LOADS(HamNavProvider)
     for (int i = 0; i < mNavItems.size(); i++) {
         mNavItems[i].unk24 = 0;
     }
-    Refresh();
+    if (mNavList)
+        mNavList->Refresh();
 END_LOADS
+
+void HamNavProvider::Text(int i1, int i2, UIListLabel *list, UILabel *label) const {
+    if (list->Matches("label")) {
+        if (mNavItems[i2].unk14) {
+            mNavItems[i2].unk14->Node(0) = mNavItems[i2].mLabel;
+            Message msg("set_token_fmt", mNavItems[i2].unk14);
+            label->Handle(msg, false);
+        } else
+            label->SetTextToken(mNavItems[i2].mLabel);
+    } else if (list->Matches("checkbox")) {
+        switch (mNavItems[i2].mCheckboxState) {
+        case 0:
+            label->SetIcon('\0');
+            break;
+        case 1:
+            label->SetIcon('a');
+            break;
+        case 2:
+            label->SetIcon('b');
+            break;
+        default:
+            break;
+        }
+    } else if (list->Matches("song")) {
+        if (mNavItems[i2].unk14) {
+            mNavItems[i2].unk14->Node(0) = mNavItems[i2].mLabel;
+            Message msg("set_token_fmt", mNavItems[i2].unk14);
+            label->Handle(msg, false);
+        }
+    } else {
+        label->SetTextToken(gNullStr);
+    }
+}
+
+UIListProvider *HamNavProvider::Provider(int, int data, UIListSubList *) const {
+    MILO_ASSERT(data < mNavItems.size(), 0x81);
+    return mNavItems[data].unk24;
+}
+
+Symbol HamNavProvider::DataSymbol(int idx) const {
+    if (idx >= 0 && idx < mNavItems.size()) {
+        MILO_ASSERT((0) <= (idx) && (idx) < (mNavItems.size()), 99);
+        for (int i = 0; i <= idx; i++) {
+            if (mNavItems[i].unk11)
+                idx++;
+        }
+        return mNavItems[idx].mLabel;
+    } else {
+        MILO_NOTIFY(
+            "HamNavProvider::DataSymbol out of bounds %d %d", idx, mNavItems.size()
+        );
+        return gNullStr;
+    }
+}
+
+bool HamNavProvider::IsActive(int idx) const {
+    if (idx >= 0 && idx < mNavItems.size()) {
+        return mNavItems[idx].unk10;
+    } else
+        return true;
+}
 
 bool HamNavProvider::IsHidden(int idx) const {
     if (idx >= 0 && idx < mNavItems.size()) {
@@ -94,11 +164,6 @@ bool HamNavProvider::IsHidden(int idx) const {
 }
 
 void HamNavProvider::Init() { REGISTER_OBJ_FACTORY(HamNavProvider); }
-
-void HamNavProvider::Refresh() {
-    if (mNavList)
-        mNavList->Refresh();
-}
 
 void HamNavProvider::CreateSubListProvider(int i1) {
     NavItem &curItem = mNavItems[i1];
@@ -111,4 +176,155 @@ void HamNavProvider::CreateSubListProvider(int i1) {
         curItem.unk24 = new DataProvider(arr, 0, false, false, nullptr);
         arr->Release();
     }
+}
+
+Symbol HamNavProvider::DataSymbol(int idx, int subIdx) const {
+    MILO_ASSERT((0) <= (idx) && (idx) < (mNavItems.size()), 0x73);
+    MILO_ASSERT((0) <= (subIdx) && (subIdx) < (mNavItems[idx].mLabels.size()), 0x74);
+    return mNavItems[idx].mLabels[subIdx];
+}
+
+int HamNavProvider::FindLabel(Symbol s) {
+    for (int i = 0; i < mNavItems.size(); i++) {
+        if (s == mNavItems[i].mLabel) {
+            return i;
+        }
+    }
+    MILO_ASSERT(false, 0xA9);
+    return -1;
+}
+
+void HamNavProvider::SetLabel(int elementIndex, int i2, Symbol s) {
+    MILO_ASSERT(elementIndex >= 0 && elementIndex < mNavItems.size(), 0xEF);
+    NavItem &curItem = mNavItems[elementIndex];
+    curItem.mLabels.clear();
+    curItem.mLabels.push_back(s);
+    if (curItem.unk24) {
+        DataArray *provData = curItem.unk24->Data();
+        if (i2 < provData->Size()) {
+            DataArray *cloned = provData->Clone(true, false, 0);
+            cloned->Node(i2) = s;
+            curItem.unk24->SetData(cloned);
+            cloned->Release();
+        }
+    } else {
+        CreateSubListProvider(elementIndex);
+    }
+}
+
+void HamNavProvider::SetLabels(int index, DataArray *a) {
+    MILO_ASSERT(index >= 0 && index < mNavItems.size(), 0x107);
+    NavItem &curItem = mNavItems[index];
+    curItem.mLabels.clear();
+    for (int i = 0; i < a->Size(); i++) {
+        curItem.mLabels.push_back(a->Sym(i));
+    }
+    if (curItem.unk24) {
+        curItem.unk24->SetData(a);
+    } else {
+        CreateSubListProvider(index);
+    }
+}
+
+void HamNavProvider::SetChecked(Symbol s, bool b2, bool b3) {
+    int index = FindLabel(s);
+    MILO_ASSERT(mNavItems[index].mCheckboxState != kCheckbox_None, 0xB0);
+    if (b2) {
+        mNavItems[index].mCheckboxState = kCheckbox_Enabled;
+    } else {
+        mNavItems[index].mCheckboxState = kCheckbox_Disabled;
+    }
+    if (b3 && mNavList) {
+        mNavList->Refresh();
+    }
+}
+
+void HamNavProvider::SelectRadioButton(Symbol s) {
+    for (int i = 0; i < mNavItems.size(); i++) {
+        if (s == mNavItems[i].mLabel) {
+            mNavItems[i].mCheckboxState = kCheckbox_Enabled;
+        } else {
+            mNavItems[i].mCheckboxState = kCheckbox_None;
+        }
+    }
+    if (mNavList) {
+        mNavList->Refresh();
+    }
+}
+
+void HamNavProvider::SetStars(Symbol s, int i2, bool b3) {
+    int index = FindLabel(s);
+    mNavItems[index].unk8 = i2;
+    if (b3) {
+        mNavItems[index].unkc = 3;
+    } else {
+        mNavItems[index].unkc = 1;
+    }
+    if (mNavList) {
+        mNavList->Refresh();
+    }
+}
+
+void HamNavProvider::ResetLabelProvider(int idx) {
+    NavItem &curItem = mNavItems[idx];
+    if (curItem.unk24) {
+        RELEASE(curItem.unk24);
+    }
+}
+
+void HamNavProvider::SetLabel(int index, Symbol label) {
+    MILO_ASSERT(index >= 0 && index < mNavItems.size(), 0xE8);
+    mNavItems[index].mLabel = label;
+    if (mNavList) {
+        mNavList->Refresh();
+    }
+}
+
+void HamNavProvider::SetEnabled(int index, bool b2) {
+    MILO_ASSERT(index >= 0 && index < mNavItems.size(), 0x123);
+    mNavItems[index].unk10 = b2;
+    if (!b2) {
+        if (mNavItems[index].unk24) {
+            DataArray *data = mNavItems[index].unk24->Data();
+            for (int i = 0; i < data->Size(); i++) {
+                mNavItems[index].unk24->Disable(data->Node(i).Sym());
+            }
+        }
+    }
+    if (mNavList) {
+        mNavList->Refresh();
+    }
+}
+
+bool HamNavProvider::IsEnabled(int index) const {
+    MILO_ASSERT(index >= 0 && index < mNavItems.size(), 0x137);
+    return mNavItems[index].unk10;
+}
+
+void HamNavProvider::SetHidden(int index, bool b2) {
+    MILO_ASSERT(index >= 0 && index < mNavItems.size(), 0x14D);
+    mNavItems[index].unk11 = b2;
+    if (mNavList) {
+        mNavList->Refresh();
+    }
+}
+
+DataNode HamNavProvider::OnSetEnabled(const DataArray *a) {
+    const DataNode &node = a->Evaluate(2);
+    if (node.Type() == kDataInt) {
+        SetEnabled(node.Int(), a->Int(3));
+    } else {
+        SetEnabled(FindLabel(node.ForceSym()), a->Int(3));
+    }
+    return 0;
+}
+
+DataNode HamNavProvider::OnSetHidden(const DataArray *a) {
+    const DataNode &node = a->Evaluate(2);
+    if (node.Type() == kDataInt) {
+        SetHidden(node.Int(), a->Int(3));
+    } else {
+        SetHidden(FindLabel(node.ForceSym()), a->Int(3));
+    }
+    return 0;
 }
