@@ -74,6 +74,7 @@ public:
     void OnSelectDone();
     void PlayHighlightSound(int);
     void PlaySelectSound(int);
+    Sound *SlideSound() const { return mSlideSound; }
 
 private:
     void ResetAnims(bool);

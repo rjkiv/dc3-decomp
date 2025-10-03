@@ -1,4 +1,5 @@
 #pragma once
+#include "UIListWidget.h"
 #include "obj/Data.h"
 #include "rndobj/Dir.h"
 #include "rndobj/Mat.h"
@@ -68,14 +69,28 @@ public:
         : mData(0), mOffset(i), mFluidWidth(b1), unkd(b2), mList(ul) {
         SetData(arr);
     }
-    virtual ~DataProvider() {}
+    virtual ~DataProvider() { mData->Release(); }
     virtual void Text(int, int, UIListLabel *, UILabel *) const;
     virtual RndMat *Mat(int, int, UIListMesh *) const;
-    virtual Symbol DataSymbol(int) const;
+    virtual Symbol DataSymbol(int idx) const {
+        DataNode &node = mData->Node(idx + mOffset);
+        if (node.Type() == kDataArray) {
+            return node.Array()->Sym(0);
+        } else
+            return node.ForceSym();
+    }
     virtual int NumData() const { return mData->Size() - mOffset; }
-    virtual bool IsActive(int) const;
+    virtual bool IsActive(int idx) const {
+        return std::find(mDisabled.begin(), mDisabled.end(), DataSymbol(idx))
+            == mDisabled.end();
+    }
     virtual float GapSize(int, int, int, int) const;
-    virtual UIListWidgetState ElementStateOverride(int, int, UIListWidgetState) const;
+    virtual UIListWidgetState
+    ElementStateOverride(int, int idx, UIListWidgetState s) const {
+        return std::find(mDimmed.begin(), mDimmed.end(), DataSymbol(idx)) != mDimmed.end()
+            ? kUIListWidgetInactive
+            : s;
+    }
 
     void SetData(DataArray *);
     void Enable(Symbol);
