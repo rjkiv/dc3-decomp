@@ -69,6 +69,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x2E)
     NEW_OBJ(HamListRibbon)
+    static const int sNumListSelectable;
 
     void HandleEnter();
     void OnSelectDone();

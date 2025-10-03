@@ -58,6 +58,10 @@ public:
     OBJ_MEM_OVERLOAD(0x26)
     NEW_OBJ(HamNavList)
     void Refresh();
+    void HandleHighlightChanged(int);
+    void PlayScrollSound();
+    void StopScrollSound();
+    void SetScrollSoundFrame(float);
 
 protected:
     HamNavList();
