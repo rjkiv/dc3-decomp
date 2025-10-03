@@ -10,13 +10,6 @@
 #include "utl/BinStream.h"
 #include "utl/MemMgr.h"
 
-enum RibbonMode {
-    kRibbonSwell = 0,
-    kRibbonSlide = 1,
-    kRibbonSelect = 2,
-    kRibbonDisengaged = 3
-};
-
 struct HamListRibbonDrawState {
     DoubleExponentialSmoother unk0;
     bool unk14;
@@ -29,6 +22,12 @@ struct HamListRibbonDrawState {
 /** "Top-level resource object for UILists" */
 class HamListRibbon : public RndDir {
 public:
+    enum RibbonMode {
+        kRibbonSwell = 0,
+        kRibbonSlide = 1,
+        kRibbonSelect = 2,
+        kRibbonDisengaged = 3
+    };
     class ScrollAnims {
     public:
         ScrollAnims(Hmx::Object *owner)

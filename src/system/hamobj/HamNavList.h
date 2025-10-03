@@ -6,6 +6,7 @@
 #include "hamobj/HamScrollSpeedIndicator.h"
 #include "math/DoubleExponentialSmoother.h"
 #include "obj/Object.h"
+#include "os/JoypadMsgs.h"
 #include "rndobj/Anim.h"
 #include "ui/ResourceDirPtr.h"
 #include "ui/UIComponent.h"
@@ -62,46 +63,66 @@ public:
     void PlayScrollSound();
     void StopScrollSound();
     void SetScrollSoundFrame(float);
+    void SetNavProvider(HamNavProvider *);
+    Symbol GetSelectedSym() const;
+    void ScrollToIndex(int, int);
+    void PlayEnterAnim();
+    void ScrollSubList(int, int);
+    void ScrollSubListToIndex(int, int);
+    bool IsDataHeader(int);
+    void SetProvider(UIListProvider *);
+
+private:
+    void SetRibbonMode(HamListRibbon::RibbonMode);
+    void SetHighlight(int);
+    void SetSliding(float);
+    void SetSelecting(bool);
+
+    DataNode OnMsg(const ButtonDownMsg &);
 
 protected:
     HamNavList();
 
-    int unk60; // 0x60
+    void Update();
+    void SetSwelling();
+    void SetControllerFocus(int);
+
+    int mNavInputType; // 0x60
     std::vector<UIListWidget *> unk64; // 0x64
-    UIListState unk70; // 0x70
+    UIListState mListState; // 0x70
     std::vector<HamListRibbonDrawState> unkb8; // 0xb8
-    int unkc4; // 0xc4
+    HamListRibbon::RibbonMode mRibbonMode; // 0xc4
     bool unkc8; // 0xc8
-    ResourceDirPtr<HamListRibbon> unkcc; // 0xcc
-    ResourceDirPtr<HamListRibbon> unke4; // 0xe4
-    ResourceDirPtr<UIListDir> unkfc; // 0xfc
-    ResourceDirPtr<HamScrollSpeedIndicator> unk114; // 0x114
-    ObjPtr<HamNavProvider> unk12c; // 0x12c
-    ObjPtr<RndAnimatable> unk140; // 0x140
+    ResourceDirPtr<HamListRibbon> mListRibbonResource; // 0xcc
+    ResourceDirPtr<HamListRibbon> mHeaderRibbonResource; // 0xe4
+    ResourceDirPtr<UIListDir> mListDirResource; // 0xfc
+    ResourceDirPtr<HamScrollSpeedIndicator> mScrollSpeedIndicatorResource; // 0x114
+    ObjPtr<HamNavProvider> mNavProvider; // 0x12c
+    ObjPtr<RndAnimatable> mScrollSpeedAnim; // 0x140
     bool unk154; // 0x154
-    bool unk155; // 0x155
-    bool unk156; // 0x156
+    bool mSkipEnterAnim; // 0x155
+    bool mSuppressAutomaticEnter; // 0x156
     bool unk157; // 0x157
     float unk158; // 0x158
     DoubleExponentialSmoother unk15c; // 0x15c
     DoubleExponentialSmoother unk170; // 0x170
     int unk184;
     int unk188;
-    int unk18c;
+    int mSkeletonTrackingID; // 0x18c
     HamScrollBehavior unk190;
-    bool unk1e4;
-    bool unk1e5;
-    bool unk1e6;
-    bool unk1e7;
-    bool unk1e8;
-    bool unk1e9;
-    float unk1ec;
-    bool unk1f0;
-    Symbol unk1f4;
+    bool mDisableSlideSound; // 0x1e4
+    bool mDisableSelectSound; // 0x1e5
+    bool mEnabled; // 0x1e6
+    bool unk1e7; // 0x1e7
+    bool mAlwaysUseActiveSkeleton; // 0x1e8
+    bool mOnlyUseWhenFocused; // 0x1e9
+    float unk1ec; // 0x1ec
+    bool unk1f0; // 0x1f0
+    Symbol unk1f4; // 0x1f4
     int unk1f8;
     bool unk1fc;
     bool unk1fd;
     bool unk1fe;
-    std::vector<Symbol> unk200;
-    std::vector<int> unk20c;
+    std::vector<Symbol> mBigElements; // 0x200
+    std::vector<int> unk20c; // 0x20c
 };
