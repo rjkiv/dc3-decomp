@@ -126,6 +126,14 @@ protected:
 template <class C>
 BinStream &operator<<(BinStream &bs, const ObjDirPtr<C> &ptr);
 
+template <class T>
+BinStream &operator>>(BinStream &bs, ObjDirPtr<T> &ptr) {
+    FilePath path;
+    bs >> path;
+    ptr.LoadFile(path, true, true, kLoadFront, false);
+    return bs;
+}
+
 class ObjectDir : public virtual Hmx::Object {
     friend class Hmx::Object;
 

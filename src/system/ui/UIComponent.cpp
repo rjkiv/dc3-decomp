@@ -1,6 +1,7 @@
 #include "ui/UIComponent.h"
 #include "obj/Object.h"
 #include "rndobj/Poll.h"
+#include "utl/BinStream.h"
 
 Symbol UIComponentStateToSym(UIComponent::State s) {
     static Symbol syms[5] = { "normal", "focused", "disabled", "selecting", "selected" };
@@ -30,3 +31,5 @@ BEGIN_PROPSYNCS(UIComponent)
     SYNC_SUPERCLASS(RndTransformable)
     SYNC_SUPERCLASS(RndPollable)
 END_PROPSYNCS
+
+void UIComponent::PostLoad(BinStream &) {}

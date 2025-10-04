@@ -13,6 +13,7 @@
 #include "rndobj/Trans.h"
 #include "synth/Sound.h"
 #include "ui/UIComponent.h"
+#include "utl/BinStream.h"
 #include "utl/Std.h"
 
 HamNavList::HamNavList()
@@ -158,6 +159,69 @@ BEGIN_COPYS(HamNavList)
     END_COPYING_MEMBERS
     Update();
 END_COPYS
+
+BEGIN_LOADS(HamNavList)
+    PreLoad(bs);
+    PostLoad(bs);
+END_LOADS
+
+void HamNavList::PreLoad(BinStream &bs) {
+    LOAD_REVS(bs)
+    ASSERT_REVS(10, 0)
+    UIComponent::PreLoad(bs);
+    if (gRev >= 2) {
+        LOAD_SUPERCLASS(RndAnimatable)
+    }
+    if (gRev >= 1) {
+        bs >> mListRibbonResource;
+        bs >> mListDirResource;
+    } else {
+        char buf[0x100];
+        bs.ReadString(buf, 0x100);
+        mListDirResource.SetName(buf, true);
+    }
+    bs >> mNavProvider;
+    SetNavProvider(mNavProvider);
+    if (gRev >= 3) {
+        bsrev >> mDisableSelectSound;
+        bsrev >> mDisableSlideSound;
+        bsrev >> mEnabled;
+        bsrev >> mAlwaysUseActiveSkeleton;
+        bsrev >> (int &)mNavInputType; // should be BinStreamEnum read
+    }
+    if (gRev >= 5) {
+        bsrev >> mOnlyUseWhenFocused;
+    }
+    if (gRev >= 4) {
+        bs >> mScrollSpeedAnim;
+    }
+    if (gRev >= 6) {
+        bsrev >> mSuppressAutomaticEnter;
+    }
+    if (gRev >= 7) {
+        bsrev >> mBigElements;
+    }
+    if (gRev >= 8) {
+        bs >> mHeaderRibbonResource;
+    }
+    if (gRev >= 9) {
+        bs >> mScrollSpeedIndicatorResource;
+    }
+    if (gRev >= 10) {
+        bsrev >> mSkipEnterAnim;
+    }
+    bsrev.PushRev(this);
+}
+
+void HamNavList::PostLoad(BinStream &bs) {
+    bs.PopRev(this);
+    UIComponent::PostLoad(bs);
+    mListDirResource.PostLoad(nullptr);
+    mListRibbonResource.PostLoad(nullptr);
+    mHeaderRibbonResource.PostLoad(nullptr);
+    mScrollSpeedIndicatorResource.PostLoad(nullptr);
+    Update();
+}
 
 void HamNavList::SetControllerFocus(int i1) {
     if (TheGestureMgr && TheGestureMgr->InControllerMode()) {
