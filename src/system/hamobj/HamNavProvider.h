@@ -6,6 +6,7 @@
 
 class HamNavList;
 
+/** "List of data for HamNavList" */
 class HamNavProvider : public Hmx::Object, public UIListProvider {
 public:
     enum CheckboxMode {
@@ -31,6 +32,7 @@ public:
             }
         }
 
+        /** "used for a list entry with a single label" */
         Symbol mLabel; // 0x0
         CheckboxMode mCheckboxState; // 0x4
         int unk8;
@@ -38,6 +40,7 @@ public:
         bool unk10;
         bool unk11;
         DataArray *unk14;
+        /** "used for a list entry with a list of labels" */
         std::vector<Symbol> mLabels; // 0x18
         DataProvider *unk24;
     };

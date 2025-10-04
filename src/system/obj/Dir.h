@@ -31,17 +31,65 @@ public:
         *this = o ? dynamic_cast<C *>(o) : nullptr;
     }
 
-    class DirLoader *mLoader; // 0x10
-
     bool IsLoaded() const;
-    ObjDirPtr &operator=(C *);
+
+    ObjDirPtr &operator=(C *dir) {
+        if (mLoader && mLoader->IsLoaded())
+            PostLoad(nullptr);
+        if ((dir != mObject) || !dir) {
+            RELEASE(mLoader);
+            if (mObject) {
+                mObject->Release(this);
+                if (!mObject->HasDirPtrs()) {
+                    delete mObject;
+                }
+            }
+            mObject = dir;
+            if (mObject)
+                dir->AddRef(this);
+        }
+        return *this;
+    }
+
     operator C *() const { return mObject; }
     C *operator->() const {
         MILO_ASSERT(ObjRefConcrete<C>::mObject, 0x5F);
         return mObject;
     }
-    void PostLoad(Loader *);
-    void LoadFile(const FilePath &, bool, bool, LoaderPos, bool);
+    void PostLoad(Loader *loader) {
+        if (mLoader) {
+            TheLoadMgr.PollUntilLoaded(mLoader, loader);
+            C *gotten = dynamic_cast<C *>(mLoader->GetDir());
+            mLoader = nullptr;
+            *this = gotten;
+        }
+    }
+
+    void LoadFile(const FilePath &p, bool async, bool share, LoaderPos pos, bool b3) {
+        *this = nullptr;
+        DirLoader *d = nullptr;
+        if (share) {
+            d = DirLoader::Find(p);
+            if (d && !d->IsLoaded()) {
+                MILO_NOTIFY("Can't share unloaded dir %s", p.c_str());
+                d = nullptr;
+            }
+        }
+        if (!d) {
+            if (TheLoadMgr.GetLoaderPos() == kLoadStayBack
+                || TheLoadMgr.GetLoaderPos() == kLoadFrontStayBack) {
+                pos = kLoadFrontStayBack;
+            }
+            if (!p.empty())
+                d = new DirLoader(p, pos, nullptr, nullptr, nullptr, b3, nullptr);
+        }
+        mLoader = d;
+        if (d) {
+            if (!async || mLoader->IsLoaded())
+                PostLoad(nullptr);
+        } else if (!p.empty())
+            MILO_NOTIFY("Couldn't load %s", p);
+    }
 
     FilePath &GetFile() const {
         if (mObject && mObject->Loader()) {
@@ -70,6 +118,9 @@ public:
             nullptr
         );
     }
+
+protected:
+    class DirLoader *mLoader; // 0x10
 };
 
 template <class C>

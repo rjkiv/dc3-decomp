@@ -16,12 +16,18 @@
 #include "ui/UIListWidget.h"
 #include "utl/MemMgr.h"
 
+/** "List of navigation actions controlled by a single hand with gestures" */
 class HamNavList : public UIComponent,
                    public RndAnimatable,
                    public UIListProvider,
                    public UIListStateCallback,
                    public SkeletonCallback {
 public:
+    enum NavInputType {
+        kNavInput_RightHand = 0,
+        kNavInput_LeftHand = 1
+    };
+
     // Hmx::Object
     virtual ~HamNavList();
     virtual bool Replace(ObjRef *, Hmx::Object *);
@@ -71,12 +77,19 @@ public:
     void ScrollSubListToIndex(int, int);
     bool IsDataHeader(int);
     void SetProvider(UIListProvider *);
+    void PushBackBigElement(Symbol);
+    void EraseBigElement(int);
+
+    static void Init();
 
 private:
     void SetRibbonMode(HamListRibbon::RibbonMode);
     void SetHighlight(int);
     void SetSliding(float);
     void SetSelecting(bool);
+
+    static float sSlideSmoothAmount;
+    static float sSlideTrendAmount;
 
     DataNode OnMsg(const ButtonDownMsg &);
 
@@ -87,20 +100,27 @@ protected:
     void SetSwelling();
     void SetControllerFocus(int);
 
-    int mNavInputType; // 0x60
+    NavInputType mNavInputType; // 0x60
     std::vector<UIListWidget *> unk64; // 0x64
     UIListState mListState; // 0x70
     std::vector<HamListRibbonDrawState> unkb8; // 0xb8
+    /** "Mode for animations" */
     HamListRibbon::RibbonMode mRibbonMode; // 0xc4
     bool unkc8; // 0xc8
+    /** "HamListRibbon resource file" */
     ResourceDirPtr<HamListRibbon> mListRibbonResource; // 0xcc
+    /** "HamListRibbon resource file" */
     ResourceDirPtr<HamListRibbon> mHeaderRibbonResource; // 0xe4
+    /** "UIListDir resource file" */
     ResourceDirPtr<UIListDir> mListDirResource; // 0xfc
+    /** "HamScrollSpeedIndicator resource file" */
     ResourceDirPtr<HamScrollSpeedIndicator> mScrollSpeedIndicatorResource; // 0x114
     ObjPtr<HamNavProvider> mNavProvider; // 0x12c
     ObjPtr<RndAnimatable> mScrollSpeedAnim; // 0x140
     bool unk154; // 0x154
+    /** "Skip the enter anim altogether" */
     bool mSkipEnterAnim; // 0x155
+    /** "Don't automatically play the enter anim when this component enters" */
     bool mSuppressAutomaticEnter; // 0x156
     bool unk157; // 0x157
     float unk158; // 0x158
@@ -114,7 +134,9 @@ protected:
     bool mDisableSelectSound; // 0x1e5
     bool mEnabled; // 0x1e6
     bool unk1e7; // 0x1e7
+    /** "Automatically tie this navlist to the active skeleton" */
     bool mAlwaysUseActiveSkeleton; // 0x1e8
+    /** "This list can only be used when it is focused" */
     bool mOnlyUseWhenFocused; // 0x1e9
     float unk1ec; // 0x1ec
     bool unk1f0; // 0x1f0
@@ -123,6 +145,7 @@ protected:
     bool unk1fc;
     bool unk1fd;
     bool unk1fe;
+    /** "Elements that match these will be bigger than the other elements" */
     std::vector<Symbol> mBigElements; // 0x200
     std::vector<int> unk20c; // 0x20c
 };

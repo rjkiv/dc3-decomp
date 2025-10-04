@@ -2,13 +2,19 @@
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
+#include "obj/PropSync.h"
+#include "os/File.h"
+#include "utl/BinStream.h"
 #include "utl/FilePath.h"
+#include "utl/Loader.h"
 #include "utl/Symbol.h"
 
 class ResourceDirBase {
 public:
     static bool MakeResourcePath(FilePath &, Symbol, Symbol, const char *);
     static DataNode GetFileList(Symbol, Symbol);
+
+    DataNode GetFileList(Symbol);
 
 protected:
     static const char *GetResourcesPath(Symbol, Symbol);
@@ -18,10 +24,53 @@ template <class T>
 class ResourceDirPtr : public ObjDirPtr<T>, public ResourceDirBase {
 public:
     // i have no idea if this is right
-    ResourceDirPtr(Hmx::Object *owner) : unk14(owner) {}
+    ResourceDirPtr(Hmx::Object *owner) : mOwner(owner) {}
+    ResourceDirPtr &operator=(const ResourceDirPtr &other) {
+        ObjDirPtr<T>::operator=((T *)other);
+        mOwner = other.mOwner;
+        return *this;
+    }
 
-    void SetName(const char *, bool);
-    const char *GetName() const;
+    const char *GetName() const { return FileGetBase(GetFile().c_str()); }
+    void SetName(const char *name, bool b2) {
+        FilePath path;
+        if (MakeResourcePath(path, mOwner->ClassName(), T::StaticClassName(), name)) {
+            LoadFile(path, b2, true, kLoadFront, false);
+        } else {
+            ObjDirPtr<T>::operator=(nullptr);
+        }
+    }
 
-    Hmx::Object *unk14; // 0x14
+    // probably some derivative of a Hmx::Object, if SetName is anything to go off of
+    Hmx::Object *mOwner; // 0x14
 };
+
+template <class T>
+BinStream &operator>>(BinStream &bs, ResourceDirPtr<T> &ptr) {
+    FilePath path;
+    bs >> path;
+    ptr.LoadFile(path, true, true, kLoadFront, false);
+    return bs;
+}
+
+template <class T>
+bool PropSync(ResourceDirPtr<T> &ptr, DataNode &node, DataArray *prop, int i, PropOp op) {
+    if (i < prop->Size()) {
+        static Symbol list("list");
+        static Symbol file_path("file_path");
+        Symbol sym = prop->Sym(prop->Size() - 1);
+        if (sym == list) {
+            node = ptr.GetFileList(T::StaticClassName());
+            return true;
+        } else if (sym == file_path) {
+            node = ptr.GetFile();
+            return true;
+        }
+    }
+    if (op == kPropGet) {
+        node = ptr.GetName();
+    } else {
+        ptr.SetName(node.Str(), false);
+    }
+    return true;
+}

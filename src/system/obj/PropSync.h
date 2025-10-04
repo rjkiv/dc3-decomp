@@ -82,12 +82,6 @@ class ObjDirPtr;
 template <class T>
 bool PropSync(ObjDirPtr<T> &, DataNode &, DataArray *, int, PropOp);
 
-template <class T>
-class ResourceDirPtr;
-
-template <class T>
-bool PropSync(ResourceDirPtr<T> &, DataNode &, DataArray *, int, PropOp);
-
 template <class T1, class T2>
 class ObjPtrList;
 
