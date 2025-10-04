@@ -31,7 +31,7 @@ std::vector<FilterVersion *> MoveDir::sFilterVersions;
 MoveDir::MoveDir()
     : mShowMoveOverlay(0), mErrorNodeInfo(0), mPlayClip(this), mRecordClip(this),
       unk2bc(this), unk2d0(this), unk2e4(0), mReportMove(this), mFiltersEnabled(0),
-      unk308(0), unk30c(0), mFilterQueue(0), unk390(0), unk394(0), unk3f8(10000),
+      unk308(0), unk30c(0), mFilterQueue(0), mAsyncDetector(0), unk394(0), unk3f8(10000),
       mMoveOverlay(RndOverlay::Find("ham_move", true)), mDancerSeq(this), unk414(0),
       mSkeletonViz(Hmx::Object::New<SkeletonViz>()), unk41c(0), mDebugLatencyOffset(0),
       unkef8(0), mLastPollMs(0), mDebugCollision(0), unkf84(-1) {

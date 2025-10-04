@@ -21,6 +21,8 @@ public:
 };
 
 class MoveMgr : public Hmx::Object {
+    friend class DanceRemixer;
+
 protected:
     MoveMgr();
     // Hmx::Object
@@ -64,6 +66,7 @@ public:
     Symbol PickRandomGenre();
     const std::pair<const MoveVariant *, const MoveVariant *> *
     GetRoutineMeasure(int, int) const;
+    std::vector<const MoveParent *> &CurParents(int i) { return mMoveParents[i]; }
 
     static void Init(const char *);
 
@@ -84,10 +87,10 @@ protected:
     int unka0;
     MoveGraph mMoveGraph; // 0xa4
     std::set<const MoveVariant *> unk104;
-    std::vector<const MoveParent *> unk11c[2];
-    std::vector<const MoveVariant *> unk134[2];
+    std::vector<const MoveParent *> mMoveParents[2]; // 0x11c
+    std::vector<const MoveVariant *> unk134[2]; // 0x134
     Symbol unk14c;
-    std::vector<std::pair<const MoveVariant *, const MoveVariant *> > unk150[2];
+    std::vector<std::pair<const MoveVariant *, const MoveVariant *> > unk150[2]; // 0x150
     bool unk168;
     std::vector<MoveChoiceSet> unk16c;
     std::vector<CategoryData> unk178; // 0x178 - genre data

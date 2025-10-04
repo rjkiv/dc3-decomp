@@ -92,6 +92,8 @@ public:
     void
     EnqueueDetectFrames(float, int, std::vector<DetectFrame> &, const FilterVersion *);
 
+    MoveAsyncDetector *GetAsyncDetector() const { return mAsyncDetector; }
+
     static void LoadScoring(const DataArray *);
     static const FilterVersion *FindFilterVersion(FilterVersionType);
     static bool sGameRecord;
@@ -135,7 +137,7 @@ protected:
     int unk310; // 0x310
     FilterQueue *mFilterQueue; // 0x314
     MovePlayerData mMovePlayerData[2]; // 0x318
-    MoveAsyncDetector *unk390; // 0x390
+    MoveAsyncDetector *mAsyncDetector; // 0x390
     int unk394; // 0x394
     std::list<ObjDirPtr<UILabelDir> > unk398; // 0x398
     Vector2DESmoother unk3a0; // 0x3a0

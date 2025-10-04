@@ -318,7 +318,7 @@
             "system/hamobj/CharFeedback.cpp": "NonMatching",
             "system/hamobj/ClipPlayer.cpp": "NonMatching",
             "system/hamobj/CrazeHollaback.cpp": "NonMatching",
-            "system/hamobj/DanceRemixer.cpp": "MISSING",
+            "system/hamobj/DanceRemixer.cpp": "NonMatching",
             "system/hamobj/DancerSequence.cpp": "NonMatching",
             "system/hamobj/DancerSkeleton.cpp": "NonMatching",
             "system/hamobj/DetectFrame.cpp": "NonMatching",

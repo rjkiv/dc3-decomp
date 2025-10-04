@@ -49,7 +49,7 @@ void MoveMgr::Clear() {
     unk104.clear();
     for (int i = 0; i < 2; i++) {
         unk150[i].clear();
-        unk11c[i].clear();
+        mMoveParents[i].clear();
         unk134[i].clear();
     }
     unk168 = false;
@@ -98,10 +98,10 @@ void MoveMgr::InsertMoveInSong(const MoveVariant *var, int i2, int i3) {
 }
 
 void MoveMgr::SaveRoutine(DataArray *a) const {
-    a->Resize(unk11c[0].size());
+    a->Resize(mMoveParents[0].size());
     int i = 0;
-    for (std::vector<const MoveParent *>::const_iterator it = unk11c[0].begin();
-         it != unk11c[0].end();
+    for (std::vector<const MoveParent *>::const_iterator it = mMoveParents[0].begin();
+         it != mMoveParents[0].end();
          ++it, ++i) {
         if (*it) {
             // a->Node(i) = (*it)->unk4;
@@ -256,7 +256,7 @@ void MoveMgr::Init(const char *filename) {
 const MoveVariant *MoveMgr::GetRoutinePreferredVariant(int i1, int i2) const {
     if (i2 < unk134[i1].size()) {
         const MoveVariant *var = unk134[i1][i2];
-        if (var && var->Parent() == unk11c[i1].at(i2)) {
+        if (var && var->Parent() == mMoveParents[i1].at(i2)) {
             return var;
         }
     }
@@ -266,9 +266,9 @@ const MoveVariant *MoveMgr::GetRoutinePreferredVariant(int i1, int i2) const {
 void MoveMgr::LoadSongData() { ImportMoveData("../meta/move_data.dta", true); }
 
 void MoveMgr::ComputePotentialMoves(std::set<const MoveParent *> &moves, int i2) {
-    unk11c[0].resize(i2 + 1);
-    if (unk11c[0][i2]) {
-        moves.insert(unk11c[0][i2]);
+    mMoveParents[0].resize(i2 + 1);
+    if (mMoveParents[0][i2]) {
+        moves.insert(mMoveParents[0][i2]);
     } else {
         if (unk16c.size() < i2 + 1) {
             unk16c.resize(i2 + 1);
@@ -299,8 +299,8 @@ void MoveMgr::ComputePotentialMoves(std::set<const MoveParent *> &moves, int i2)
 
 void MoveMgr::AutoFillParents() {
     int i = 0;
-    for (std::vector<const MoveParent *>::iterator it = unk11c[0].begin();
-         it != unk11c[0].end();
+    for (std::vector<const MoveParent *>::iterator it = mMoveParents[0].begin();
+         it != mMoveParents[0].end();
          ++it, ++i) {
         if (!*it) {
             int set = ComputeRandomChoiceSet(i);
@@ -391,7 +391,7 @@ void MoveMgr::PrepareNextChoiceSet(int measure) {
 
 void MoveMgr::FillRoutineFromParents(int x) {
     if (x < 0) {
-        x = unk11c[0].size() - 1;
+        x = mMoveParents[0].size() - 1;
     }
     for (int i = 0; i <= x; i++) {
         FillInRoutineAt(0, i);
