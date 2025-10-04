@@ -115,6 +115,12 @@ struct SkeletonData {
     Vector3 unk2e0;
 };
 
+struct SkeletonUpdateData {
+    // 0x4: Skeleton*(&)[6](?)
+    // 0x8: SkeletonFrame*
+    // 0xc: SkeletonHistory*
+};
+
 // size 0x11c8
 struct SkeletonFrame {
     void Create(const NUI_SKELETON_FRAME &, int);

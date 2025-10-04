@@ -359,7 +359,7 @@
             "system/hamobj/HamSkeletonConverter.cpp": "NonMatching",
             "system/hamobj/HamSong.cpp": "MISSING",
             "system/hamobj/HamSongData.cpp": "MISSING",
-            "system/hamobj/HamSupereasyData.cpp": "MISSING",
+            "system/hamobj/HamSupereasyData.cpp": "NonMatching",
             "system/hamobj/HamVisDir.cpp": "NonMatching",
             "system/hamobj/HamWardrobe.cpp": "NonMatching",
             "system/hamobj/HollaBackMinigame.cpp": "MISSING",
