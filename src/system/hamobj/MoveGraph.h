@@ -44,6 +44,7 @@ public:
     MoveGraph &operator=(const MoveGraph &);
     const std::map<Symbol, MoveParent *> &MoveParents() const { return mMoveParents; }
     const std::map<Symbol, MoveVariant *> &MoveVariants() const { return mMoveVariants; }
+    const DataArrayPtr &Layout() const { return mLayoutData; }
 
 private:
     std::map<Symbol, MoveParent *> mMoveParents; // 0x2c

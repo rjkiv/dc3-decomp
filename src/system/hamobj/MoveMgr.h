@@ -42,6 +42,7 @@ public:
     const std::map<Symbol, MoveVariant *> &MoveVariants() const {
         return mMoveGraph.MoveVariants();
     }
+    const DataArrayPtr &Layout() const { return mMoveGraph.Layout(); }
     void Clear();
     bool HasRoutine() const;
     void InsertMoveInSong(const MoveVariant *, int, int);
@@ -67,6 +68,10 @@ public:
     const std::pair<const MoveVariant *, const MoveVariant *> *
     GetRoutineMeasure(int, int) const;
     std::vector<const MoveParent *> &CurParents(int i) { return mMoveParents[i]; }
+    bool HasVariantPair(const MoveParent *p1, const MoveParent *p2) const {
+        return mMoveGraph.HasVariantPair(p1, p2);
+    }
+    MoveGraph &Graph() { return mMoveGraph; }
 
     static void Init(const char *);
 

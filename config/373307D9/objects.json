@@ -373,7 +373,7 @@
             "system/hamobj/MoveMgr.cpp": "NonMatching",
             "system/hamobj/MoveParent.cpp": "NonMatching",
             "system/hamobj/MoveVariant.cpp": "NonMatching",
-            "system/hamobj/OriginalChoreoRemixer.cpp": "MISSING",
+            "system/hamobj/OriginalChoreoRemixer.cpp": "NonMatching",
             "system/hamobj/PhotoSpotlightPositioner.cpp": "NonMatching",
             "system/hamobj/Pose.cpp": "NonMatching",
             "system/hamobj/PoseFatalities.cpp": "MISSING",

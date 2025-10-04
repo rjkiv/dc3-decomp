@@ -37,12 +37,15 @@ public:
     void SetUnscoredMeasure(int, int);
     void ClearUnscoredMeasure(int, int);
     const MoveVariant *MoveVariantFromHamMove(const HamMove *) const;
+    int JumpedMoveIdxAdd(int, int) const;
+
+    bool ValidMoveIdx(int idx) const { return idx >= 0 && idx < mTotalMeasures; }
 
 protected:
     DanceRemixer();
 
     virtual void UpdateHamDirector();
-    virtual void SelectMove(int, int) {}
+    virtual void SelectMove(int, int);
 
     const MoveParent *GetMoveParent(int, int);
     void AddRoutineMove(int, int, const MoveParent *, const MoveVariant *);

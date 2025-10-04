@@ -180,6 +180,8 @@ void DanceRemixer::UpdateHamDirector() {
     }
 }
 
+void DanceRemixer::SelectMove(int, int) {}
+
 int DanceRemixer::JumpedMoveIdx(int idx) const { return Round(JumpedBeat(idx * 4)) / 4; }
 
 const MoveParent *DanceRemixer::GetMoveParent(int x, int y) {
