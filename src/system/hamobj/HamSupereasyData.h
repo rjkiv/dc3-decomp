@@ -13,6 +13,8 @@ struct HamSupereasyMeasure {
 
 /** "Moves for a super easy dance routine" */
 class HamSupereasyData : public Hmx::Object {
+    friend class SuperEasyRemixer;
+
 public:
     // Hmx::Object
     virtual ~HamSupereasyData();

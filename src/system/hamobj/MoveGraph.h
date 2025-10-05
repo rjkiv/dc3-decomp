@@ -72,6 +72,8 @@ public:
     bool HasEra(Symbol) const;
     bool HasCategory(Symbol) const;
     Difficulty GetDifficulty() const { return mDifficulty; }
+    const std::vector<MoveVariant *> &Variants() const { return mVariants; }
+    Symbol Name() const { return unk4; }
 
 private:
     void PopulateAdjacentParents();
