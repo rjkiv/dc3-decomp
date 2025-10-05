@@ -377,7 +377,7 @@
             "system/hamobj/PhotoSpotlightPositioner.cpp": "NonMatching",
             "system/hamobj/Pose.cpp": "NonMatching",
             "system/hamobj/PoseFatalities.cpp": "MISSING",
-            "system/hamobj/PracticeOptionsProvider.cpp": "MISSING",
+            "system/hamobj/PracticeOptionsProvider.cpp": "NonMatching",
             "system/hamobj/PracticeSection.cpp": "NonMatching",
             "system/hamobj/RhythmBattle.cpp": "MISSING",
             "system/hamobj/RhythmBattlePlayer.cpp": "MISSING",
