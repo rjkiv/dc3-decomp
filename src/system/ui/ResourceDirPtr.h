@@ -14,17 +14,22 @@ public:
     static bool MakeResourcePath(FilePath &, Symbol, Symbol, const char *);
     static DataNode GetFileList(Symbol, Symbol);
 
-    DataNode GetFileList(Symbol);
+    DataNode GetFileList(Symbol s) { return GetFileList(mOwner->ClassName(), s); }
 
 protected:
+    ResourceDirBase(Hmx::Object *owner) : mOwner(owner) {}
+
     static const char *GetResourcesPath(Symbol, Symbol);
+
+    // probably some derivative of a Hmx::Object, if SetName is anything to go off of
+    Hmx::Object *mOwner; // 0x0
 };
 
 template <class T>
 class ResourceDirPtr : public ObjDirPtr<T>, public ResourceDirBase {
 public:
     // i have no idea if this is right
-    ResourceDirPtr(Hmx::Object *owner) : mOwner(owner) {}
+    ResourceDirPtr(Hmx::Object *owner) : ResourceDirBase(owner) {}
     ResourceDirPtr &operator=(const ResourceDirPtr &other) {
         ObjDirPtr<T>::operator=((T *)other);
         mOwner = other.mOwner;
@@ -40,9 +45,6 @@ public:
             ObjDirPtr<T>::operator=(nullptr);
         }
     }
-
-    // probably some derivative of a Hmx::Object, if SetName is anything to go off of
-    Hmx::Object *mOwner; // 0x14
 };
 
 template <class T>
