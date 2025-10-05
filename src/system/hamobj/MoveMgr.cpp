@@ -1,8 +1,11 @@
 #include "hamobj/MoveMgr.h"
 #include "SongUtl.h"
+#include "SuperEasyRemixer.h"
+#include "char/CharClip.h"
 #include "flow/PropertyEventProvider.h"
 #include "hamobj/Difficulty.h"
 #include "hamobj/HamDirector.h"
+#include "hamobj/HamMove.h"
 #include "hamobj/MoveGraph.h"
 #include "hamobj/SongLayout.h"
 #include "math/Rand.h"
@@ -17,7 +20,7 @@
 #include "stl/_algo.h"
 
 MoveMgr::MoveMgr() : unk40(0), unka0(0) {
-    mMovesDir = 0;
+    mMovesDir = nullptr;
     for (int i = 0; i < 3; i++) {
         unk54[i].clear();
         mMovePropKeys[i] = nullptr;
@@ -26,15 +29,29 @@ MoveMgr::MoveMgr() : unk40(0), unka0(0) {
     mPracticePropKeys = nullptr;
     unk168 = false;
     unk14c = "";
-    //   pSVar1 = Hmx::Object::New<>();
-    //   *(this + 0x1ac) = pSVar1;
-    //   puVar2 = Symbol::Symbol(local_5c,"easeup_remixer");
-    //   (**(**(this + 0x1ac) + 0x10))(*(this + 0x1ac),*puVar2);
+    unk1ac = Hmx::Object::New<SuperEasyRemixer>();
+    unk1ac->SetType("easeup_remixer");
     unk1a8 = nullptr;
     unk44 = dynamic_cast<SongLayout *>(Hmx::Object::NewObject("SongLayout"));
 }
 
-MoveMgr::~MoveMgr() {}
+MoveMgr::~MoveMgr() {
+    RELEASE(unk1ac);
+    unk178.clear();
+    unk184.clear();
+    unk190.clear();
+    unk19c.clear();
+    unka0 = 0;
+    mMovesDir = nullptr;
+    for (int i = 0; i < 3; i++) {
+        unk54[i].clear();
+        mMovePropKeys[i] = nullptr;
+        mClipPropKeys[i] = nullptr;
+    }
+    mPracticePropKeys = nullptr;
+    unk1a8 = nullptr;
+    RELEASE(unk44);
+}
 
 void MoveMgr::Clear() {
     unka0 = 0;
@@ -72,12 +89,7 @@ bool MoveVariantsWithHamMove(const MoveVariant *var, void *v) {
 bool MoveMgr::HasRoutine() const {
     static Symbol gameplay_mode("gameplay_mode");
     static Symbol practice("practice");
-    if (unk168) {
-        if (TheHamProvider->Property(gameplay_mode, true)->Sym() != practice) {
-            return true;
-        }
-    }
-    return false;
+    return unk168 && TheHamProvider->Property(gameplay_mode, true)->Sym() != practice;
 }
 
 void MoveMgr::InsertMoveInSong(const MoveVariant *var, int i2, int i3) {
@@ -104,7 +116,7 @@ void MoveMgr::SaveRoutine(DataArray *a) const {
          it != mMoveParents[0].end();
          ++it, ++i) {
         if (*it) {
-            // a->Node(i) = (*it)->unk4;
+            a->Node(i) = (*it)->Name();
         } else {
             a->Node(i) = 0;
         }
@@ -326,10 +338,7 @@ SongLayout *MoveMgr::GetSongLayout() {
 Symbol MoveMgr::PickRandomGenre() {
     static Symbol genre_none("genre_none");
     int size = unk190.size();
-    if (size != 0) {
-        return unk190[RandomInt(0, size)].unk0;
-    } else
-        return genre_none;
+    return size != 0 ? unk190[RandomInt(0, size)].unk0 : genre_none;
 }
 
 Symbol MoveMgr::PickRandomCategory() { return PickRandomGenre(); }
@@ -348,7 +357,8 @@ bool IsSuperEasyMove(Symbol move) {
 void MoveMgr::SongInit() {
     unka0 = 0;
     MILO_ASSERT(TheHamDirector, 0x123);
-    // mMovesDir gets assigned here
+    mMovesDir = TheHamDirector->GetWorld()->Find<MoveDir>("moves", false);
+    MILO_ASSERT(mMovesDir, 0x126);
     static Symbol move("move");
     static Symbol clip("clip");
     static Symbol practice("practice");
@@ -378,9 +388,12 @@ void MoveMgr::NextMovesToShow(DataArray *a, int measure) {
         PrepareNextChoiceSet(measure - 1);
     }
     for (int i = 0; i < 4; i++) {
-        // MILO_LOG("\t%s\n", unk16c[measure].unk0[i]->unk4);
+        MILO_LOG("\t%s\n", unk16c[measure].unk0[i]->Name());
     }
     a->Resize(4);
+    for (int i = 0; i < 4; i++) {
+        a->Node(i) = unk16c[measure].unk0[i]->Name();
+    }
 }
 
 void MoveMgr::PrepareNextChoiceSet(int measure) {
@@ -403,4 +416,96 @@ void MoveMgr::FillRoutineFromParents(int x) {
         }
     }
     unk168 = true;
+}
+
+void MoveMgr::ResetRemixer() {
+    if (unk1ac)
+        unk1ac->Reset();
+}
+
+void MoveMgr::RegisterSongLayout(SongLayout *sl) { unk40 = sl; }
+
+void MoveMgr::UnRegisterSongLayout(SongLayout *sl) {
+    if (unk40 == sl) {
+        unk40 = nullptr;
+    }
+}
+
+const std::pair<const MoveVariant *, const MoveVariant *> *
+MoveMgr::GetRoutineMeasure(int x, int y) const {
+    const std::vector<std::pair<const MoveVariant *, const MoveVariant *> > &vec =
+        unk150[x & 2];
+    if (vec.size() <= y) {
+        return 0;
+    }
+    return &vec[y];
+}
+
+CategoryData MoveMgr::GetCategoryByName(Symbol name) {
+    for (int i = 0; i < unk178.size(); i++) {
+        if (unk178[i].unk0 == name) {
+            return unk178[i];
+        }
+    }
+    for (int i = 0; i < unk184.size(); i++) {
+        if (unk184[i].unk0 == name) {
+            return unk184[i];
+        }
+    }
+    CategoryData data;
+    data.unk0 = name;
+    data.unk4 = "category_unknown";
+    return data;
+}
+
+void MoveMgr::SaveRoutineVariants(DataArray *a) const {
+    a->Resize(unk150[0].size());
+    int idx = 0;
+    for (std::vector<std::pair<const MoveVariant *, const MoveVariant *> >::const_iterator
+             it = unk150[0].begin();
+         it != unk150[0].end();
+         ++it, ++idx) {
+        if (it->first) {
+            Symbol first_name = it->first->Name();
+            Symbol second_name = first_name;
+            if (it->second)
+                second_name = it->second->Name();
+            else
+                second_name = first_name;
+            a->Node(idx) = DataArrayPtr(first_name, second_name);
+        } else {
+            a->Node(idx) = DataArrayPtr(0, 0);
+        }
+    }
+}
+
+HamMove *MoveMgr::FindHamMoveFromName(Symbol name) const {
+    if (name == Symbol("") && TheHamDirector->GetMoveDir()) {
+        HamMove *move = TheHamDirector->GetMoveDir()->Find<HamMove>(name.Str(), false);
+        if (!move) {
+            move = TheHamDirector->GetMerger()->Dir()->Find<HamMove>(name.Str(), false);
+            if (!move) {
+                MILO_NOTIFY(
+                    "MoveMgr::FindHamMoveFromName couldn't find a move for %s", name
+                );
+            }
+        }
+        return move;
+    }
+    return nullptr;
+}
+
+CharClip *MoveMgr::FindCharClip(Symbol s) const {
+    for (std::set<const MoveVariant *>::const_iterator it = unk104.begin();
+         it != unk104.end();
+         ++it) {
+        if ((*it)->Name() = s) {
+            break;
+        }
+    }
+    CharClip *clip = TheHamDirector->ClipDir()->Find<CharClip>(s.Str(), false);
+    if (!clip) {
+        MILO_LOG("Error: could not find clip for %s\n", s.Str());
+    }
+    return clip;
 }

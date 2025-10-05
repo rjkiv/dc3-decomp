@@ -109,6 +109,7 @@ public:
     ObjectDir *ClipDir() const { return mClipDir; }
     bool NoTransitions() const { return mNoTransitions; }
     MoveDir *GetMoveDir() const { return static_cast<MoveDir *>(mMoveDir.Ptr()); }
+    FileMerger *GetMerger() const { return mMerger; }
 
     DataNode OnGetDancerVisemes(DataArray *);
 
