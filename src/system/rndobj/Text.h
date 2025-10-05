@@ -64,6 +64,7 @@ public:
     class Style {
     public:
         Style(Hmx::Object *);
+        void SetAlpha(float alpha) { mFontColor.alpha = alpha; }
         /** "Size of the text" */
         float mSize; // 0x0
         /** "Color of the text, put into mesh verts.

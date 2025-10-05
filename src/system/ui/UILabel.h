@@ -49,6 +49,7 @@ public:
 
     void SetIcon(char);
     void SetTokenFmt(const DataArray *);
+    RndText::Style &Style(int);
 
     template <class T1>
     void SetTokenFmt(Symbol s, T1 t1) {

@@ -1,5 +1,6 @@
 #pragma once
 #include "UIListDir.h"
+#include "math/Geo.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/JoypadMsgs.h"
@@ -124,4 +125,11 @@ protected:
     bool mLimitCircularDisplayNumToDataNum; // 0x15e
     int unk160;
     bool mAllowHighlight; // 0x164
+};
+
+class UIListCustomTemplate {
+public:
+    virtual ~UIListCustomTemplate() {}
+    virtual void SetAlphaColor(float, class UIColor *) = 0;
+    virtual void GrowBoundingBox(Box &) const = 0;
 };
