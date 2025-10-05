@@ -278,6 +278,32 @@ void Multiply(const Frustum &, const Transform &, Frustum &);
 
 void MakeRotMatrix(const Hmx::Quat &, Hmx::Matrix3 &);
 
+void Scale(const Hmx::Matrix3 &mtx, const Vector3 &vec, Hmx::Matrix3 &res);
+
+// void Scale(const Hmx::Matrix3 &mtx, const Vector3 &vec, Hmx::Matrix3 &res) {
+//     Scale(mtx.x, vec.x, res.x);
+//     Scale(mtx.y, vec.y, res.y);
+//     Scale(mtx.z, vec.z, res.z);
+// }
+
+// // void Scale(Matrix3 *param_1,Vector3 *param_2,Matrix3 *param_3)
+
+// // {
+
+// //   (param_3->x).x = (param_1->x).x * param_2->x;
+// //   (param_3->x).z = (param_1->x).z * param_2->z;
+// //   (param_3->x).y = (param_1->x).y * param_2->y;
+
+// //   (param_3->y).x = (param_1->y).x * param_2->x;
+// //   (param_3->y).y = (param_1->y).y * param_2->y;
+// //   (param_3->y).z = (param_1->y).z * param_2->z;
+
+// //   (param_3->z).x = (param_1->z).x * param_2->x;
+// //   (param_3->z).y = (param_1->z).y * param_2->y;
+// //   (param_3->z).z = (param_1->z).z * param_2->z;
+// //   return;
+// // }
+
 inline void Scale(const Vector3 &vec, const Hmx::Matrix3 &mtx, Hmx::Matrix3 &res) {
     Scale(mtx.x, vec.x, res.x);
     Scale(mtx.y, vec.y, res.y);

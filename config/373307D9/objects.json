@@ -390,7 +390,7 @@
             "system/hamobj/SongUtl.cpp": "NonMatching",
             "system/hamobj/StarsDisplay.cpp": "MISSING",
             "system/hamobj/SuperEasyRemixer.cpp": "NonMatching",
-            "system/hamobj/TransConstraint.cpp": "MISSING",
+            "system/hamobj/TransConstraint.cpp": "NonMatching",
 
             "system/jpeg/Jpeg.cpp": "MISSING",
             "system/jpeg/jcapimin.c": "MISSING",
