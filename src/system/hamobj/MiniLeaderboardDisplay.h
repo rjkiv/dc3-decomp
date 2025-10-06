@@ -5,6 +5,7 @@
 #include "ui/UIComponent.h"
 #include "utl/MemMgr.h"
 
+/** "Mini Leaderboard Display" */
 class MiniLeaderboardDisplay : public UIComponent {
 public:
     // Hmx::Object

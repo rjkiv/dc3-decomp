@@ -363,7 +363,7 @@
             "system/hamobj/HamVisDir.cpp": "NonMatching",
             "system/hamobj/HamWardrobe.cpp": "NonMatching",
             "system/hamobj/HollaBackMinigame.cpp": "MISSING",
-            "system/hamobj/MeterDisplay.cpp": "MISSING",
+            "system/hamobj/MeterDisplay.cpp": "NonMatching",
             "system/hamobj/MiniGameMgr.cpp": "NonMatching",
             "system/hamobj/MiniLeaderboardDisplay.cpp": "NonMatching",
             "system/hamobj/MocapSkeletonIterator.cpp": "NonMatching",

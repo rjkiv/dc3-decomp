@@ -50,6 +50,7 @@ public:
     void SetIcon(char);
     void SetTokenFmt(const DataArray *);
     RndText::Style &Style(int);
+    void SetPrelocalizedString(String &);
 
     template <class T1>
     void SetTokenFmt(Symbol s, T1 t1) {
