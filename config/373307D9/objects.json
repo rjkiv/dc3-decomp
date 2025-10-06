@@ -385,7 +385,7 @@
             "system/hamobj/RhythmDetectorGroup.cpp": "MISSING",
             "system/hamobj/ScoreUtl.cpp": "NonMatching",
             "system/hamobj/SongCollision.cpp": "NonMatching",
-            "system/hamobj/SongDifficultyDisplay.cpp": "MISSING",
+            "system/hamobj/SongDifficultyDisplay.cpp": "NonMatching",
             "system/hamobj/SongLayout.cpp": "NonMatching",
             "system/hamobj/SongUtl.cpp": "NonMatching",
             "system/hamobj/StarsDisplay.cpp": "NonMatching",
