@@ -8,6 +8,7 @@ public:
     CSHA1 mSHA1;
 
     StreamChecksum() : mState(0), mSHA1() {}
+    ~StreamChecksum() {}
     void Begin();
     void Update(const unsigned char *, unsigned int);
     void End();
@@ -21,6 +22,7 @@ public:
     const char *mFile;
 
     StreamChecksumValidator() : mStreamChecksum(), mSignature(0), mFile(0) {}
+    ~StreamChecksumValidator() {}
     bool Begin(const char *, bool);
     void Update(const unsigned char *, unsigned int);
     void End();

@@ -219,3 +219,5 @@ CSHA1::CSHA1() {
     // &m_block->c = &m_workspace;
     Reset();
 }
+
+CSHA1::~CSHA1() { Reset(); }

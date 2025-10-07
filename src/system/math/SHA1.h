@@ -10,7 +10,7 @@ public:
     };
 
     CSHA1();
-    ~CSHA1() { Reset(); }
+    ~CSHA1();
     void Reset() {
         m_state[0] = 0x67452301;
         m_state[1] = 0xEFCDAB89;

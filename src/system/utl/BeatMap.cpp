@@ -4,6 +4,8 @@
 BeatMap gDefaultBeatMap;
 BeatMap *TheBeatMap = &gDefaultBeatMap;
 
+BeatMap::BeatMap() {}
+
 void SetTheBeatMap(BeatMap *bmap) { TheBeatMap = bmap; }
 
 void ResetTheBeatMap() { TheBeatMap = &gDefaultBeatMap; }

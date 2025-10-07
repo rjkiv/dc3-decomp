@@ -38,7 +38,7 @@ private:
     }
 
 public:
-    BeatMap() {}
+    BeatMap();
     ~BeatMap() {}
 
     /** Attempt to add a new beat marker with the supplied tick and level.
