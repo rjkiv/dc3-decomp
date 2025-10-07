@@ -312,7 +312,7 @@
             "system/gesture/StubCameraInput.cpp": "MISSING",
             "system/gesture/WaveToTurnOnLight.cpp": "NonMatching",
 
-            "system/hamobj/BustAMoveData.cpp": "MISSING",
+            "system/hamobj/BustAMoveData.cpp": "NonMatching",
             "system/hamobj/CamShotCatVO.cpp": "NonMatching",
             "system/hamobj/CharCameraInput.cpp": "NonMatching",
             "system/hamobj/CharFeedback.cpp": "NonMatching",
@@ -347,7 +347,7 @@
             "system/hamobj/HamMove.cpp": "NonMatching",
             "system/hamobj/HamNavList.cpp": "NonMatching",
             "system/hamobj/HamNavProvider.cpp": "NonMatching",
-            "system/hamobj/HamPartyJumpData.cpp": "MISSING",
+            "system/hamobj/HamPartyJumpData.cpp": "NonMatching",
             "system/hamobj/HamPhotoDisplay.cpp": "NonMatching",
             "system/hamobj/HamPhraseMeter.cpp": "NonMatching",
             "system/hamobj/HamPlayerData.cpp": "NonMatching",
