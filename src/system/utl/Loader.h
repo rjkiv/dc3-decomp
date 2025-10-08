@@ -85,7 +85,7 @@ typedef void (FileLoader::*FileLoaderStateFunc)(void);
 
 class FileLoader : public Loader {
 public:
-    FileLoader(const FilePath &, const char *, LoaderPos, int, bool, bool, BinStream *);
+    FileLoader(const FilePath &, const char *, LoaderPos, int, bool, bool, BinStream *, const char *);
     virtual ~FileLoader();
     virtual const char *DebugText();
     virtual bool IsLoaded() const;

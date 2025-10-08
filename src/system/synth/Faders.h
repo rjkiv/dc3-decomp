@@ -39,6 +39,7 @@ public:
     void DoFade(float, float);
     void AddDuckedVolume(float);
     void RemoveDuckedVolume(float);
+    float DuckedValue() const { return GetDuckedVolume() + mLevel; }
 
     NEW_OBJ(Fader)
 

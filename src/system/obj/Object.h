@@ -1011,6 +1011,7 @@ namespace Hmx {
 }
 
 extern bool gLoadingProxyFromDisk;
+extern bool gMiloTool;
 
 inline TextStream &operator<<(TextStream &ts, const Hmx::Object *obj) {
     if (obj)

@@ -91,6 +91,25 @@ public:
 
     Fader *MasterFader() const { return mMasterFader; }
     void RemovePlayHandler(Hmx::Object *);
+    bool CheckCommonBank(bool);
+
+    template <class T>
+    T *Find(const char *name, bool fail) {
+        if (!CheckCommonBank(false))
+            return nullptr;
+        else {
+            T *obj = unk64->Find<T>(name, false);
+            if (!obj && fail) {
+                MILO_FAIL(
+                    "Synth::Find() - %s %s not found in %s",
+                    T::StaticClassName(),
+                    name,
+                    unk64->GetPathName()
+                );
+            }
+            return obj;
+        }
+    }
 
 protected:
     virtual ~Synth() {}

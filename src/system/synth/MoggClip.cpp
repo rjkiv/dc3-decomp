@@ -193,7 +193,8 @@ void MoggClip::LoadFile(BinStream *bs) {
                 0,
                 false,
                 true,
-                bs
+                bs,
+                0
             );
             if (!mLoader) {
                 MILO_NOTIFY("Could not load mogg file '%s'", mMoggFile.c_str());

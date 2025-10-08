@@ -14,6 +14,7 @@
 #include "utl/Symbol.h"
 
 bool gLoadingProxyFromDisk = false;
+bool gMiloTool = false;
 std::map<Symbol, ObjectFunc *> Hmx::Object::sFactories;
 DataArrayPtr gPropPaths[8] = {
     DataArrayPtr(new DataArray(1)), DataArrayPtr(new DataArray(1)),
