@@ -1,83 +1,127 @@
 #!/usr/bin/env python3
 
-###
-# Transforms .d files, converting Windows paths to Unix paths.
-# Allows usage of the mwcc -MMD flag on platforms other than Windows.
-#
-# Usage:
-#   python3 tools/transform_dep.py build/src/file.d build/src/file.d
-#
-# If changes are made, please submit a PR to
-# https://github.com/encounter/dtk-template
-###
+"""
+Normalise MSVC /showIncludes output so Ninja can consume it on non-Windows
+platforms. Reads from stdin, writes the transformed lines to stdout.
+"""
 
-import argparse
 import os
+import sys
 from platform import uname
 
-wineprefix = os.path.join(os.environ["HOME"], ".wine")
+wineprefix = os.path.join(os.environ.get("HOME", ""), ".wine")
 if "WINEPREFIX" in os.environ:
     wineprefix = os.environ["WINEPREFIX"]
 winedevices = os.path.join(wineprefix, "dosdevices")
+
+INCLUDE_PREFIX = "Note: including file:"
 
 
 def in_wsl() -> bool:
     return "microsoft-standard" in uname().release
 
 
-def import_d_file(in_file: str) -> str:
-    out_text = ""
+def normalize_path_case(path: str) -> str:
+    if not path or not os.path.isabs(path):
+        return path
+    if path == "/":
+        return path
 
-    with open(in_file) as file:
-        for idx, line in enumerate(file):
-            if idx == 0:
-                if line.endswith(" \\\n"):
-                    out_text += line[:-3].replace("\\", "/") + " \\\n"
-                else:
-                    out_text += line.replace("\\", "/")
+    pieces = [piece for piece in path.split("/") if piece]
+    if not pieces:
+        return "/"
+
+    corrected = []
+    for idx, piece in enumerate(pieces):
+        parent = "/" if not corrected else "/" + "/".join(corrected)
+        try:
+            entries = os.listdir(parent)
+        except OSError:
+            corrected.extend(pieces[idx:])
+            break
+
+        match = next(
+            (entry for entry in entries if entry.lower() == piece.lower()), None
+        )
+        if match is None:
+            corrected.append(piece)
+            corrected.extend(pieces[idx + 1 :])
+            break
+
+        corrected.append(match)
+
+    result = "/" + "/".join(corrected)
+    if path.endswith("/") and not result.endswith("/"):
+        result += "/"
+    return result
+
+
+def resolve_windows_path(raw_path: str) -> str:
+    stripped = raw_path.strip()
+    if not stripped:
+        return stripped
+
+    # Handle paths with drive letters (e.g. C:\ or Z:\)
+    if len(stripped) >= 2 and stripped[1] == ":":
+        drive = stripped[0].lower()
+        remainder = stripped[2:].lstrip("\\/")
+        remainder = remainder.replace("\\", "/")
+
+        if drive == "z":
+            result = "/" + remainder.lstrip("/")
+        elif in_wsl():
+            result = os.path.join("/mnt", drive, remainder)
+        else:
+            drive_path = os.path.join(winedevices, f"{drive}:")
+            if os.path.isdir(drive_path):
+                result = os.path.join(drive_path, remainder)
+                result = os.path.realpath(result)
             else:
-                suffix = ""
-                if line.endswith(" \\\n"):
-                    suffix = " \\"
-                    path = line.lstrip()[:-3]
-                else:
-                    path = line.strip()
-                # lowercase drive letter
-                path = path[0].lower() + path[1:]
-                if path[0] == "z":
-                    # shortcut for z:
-                    path = path[2:].replace("\\", "/")
-                elif in_wsl():
-                    path = path[0:1] + path[2:]
-                    path = os.path.join("/mnt", path.replace("\\", "/"))
-                else:
-                    # use $WINEPREFIX/dosdevices to resolve path
-                    path = os.path.realpath(
-                        os.path.join(winedevices, path.replace("\\", "/"))
-                    )
-                out_text += "\t" + path + suffix + "\n"
+                result = f"/mnt/{drive}/{remainder}"
 
-    return out_text
+        result = os.path.normpath(result)
+        return normalize_path_case(result)
+
+    result = stripped.replace("\\", "/")
+    if os.path.isabs(result):
+        result = os.path.normpath(result)
+        return normalize_path_case(result)
+    return result
+
+
+def transform_line(line: str) -> str:
+    newline = ""
+    if line.endswith("\r\n"):
+        newline = "\r\n"
+        content = line[:-2]
+    elif line.endswith("\n"):
+        newline = "\n"
+        content = line[:-1]
+    else:
+        content = line
+
+    if not content.startswith(INCLUDE_PREFIX):
+        return line
+
+    remainder = content[len(INCLUDE_PREFIX) :]
+    indent_len = len(remainder) - len(remainder.lstrip(" "))
+    indent = remainder[:indent_len]
+    path_segment = remainder[indent_len:]
+
+    if not path_segment.strip():
+        return line
+
+    trailing_ws_len = len(path_segment) - len(path_segment.rstrip(" "))
+    trailing_ws = path_segment[-trailing_ws_len:] if trailing_ws_len else ""
+    resolved = resolve_windows_path(path_segment)
+
+    return f"{INCLUDE_PREFIX}{indent}{resolved}{trailing_ws}{newline}"
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="""Transform a .d file from Wine paths to normal paths"""
-    )
-    parser.add_argument(
-        "d_file",
-        help="""Dependency file in""",
-    )
-    parser.add_argument(
-        "d_file_out",
-        help="""Dependency file out""",
-    )
-    args = parser.parse_args()
-
-    output = import_d_file(args.d_file)
-
-    with open(args.d_file_out, "w", encoding="UTF-8") as f:
-        f.write(output)
+    for line in sys.stdin:
+        sys.stdout.write(transform_line(line))
+    sys.stdout.flush()
 
 
 if __name__ == "__main__":
