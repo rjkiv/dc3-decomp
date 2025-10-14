@@ -46,7 +46,7 @@ private:
 
     bool mCheatOn;
     DataLoader *mLoader;
-    DataArray *mNames; // 0x40
+    DataArray *mNames;
     UIList *mList;
     Stream *mStream;
     bool mAutoScroll; // 0x50

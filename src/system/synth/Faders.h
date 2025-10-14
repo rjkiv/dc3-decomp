@@ -93,6 +93,7 @@ public:
     void Remove(Fader *);
     void Save(BinStream &);
     void Load(BinStream &);
+    bool Dirty();
 
 private:
     ObjPtrList<Fader> mFaders; // 0x0

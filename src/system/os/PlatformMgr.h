@@ -4,6 +4,7 @@
 #include "obj/Object.h"
 #include "os/User.h"
 #include "os/socialpostapi.h"
+#include "utl/JobMgr.h"
 
 enum DiskError {
     kNoDiskError,
@@ -50,7 +51,7 @@ private:
     bool mScreenSaver; // 0x5b
     PlatformRegion mRegion; // 0x5c
     DiskError mDiskError; // 0x60
-    // JobMgr* mJobMgr; // 0x64
+    JobMgr *mJobMgr; // 0x64
 
     DataNode OnSignInUsers(DataArray *);
 
@@ -112,6 +113,8 @@ public:
     void SetPadPresence(int, int) const;
     bool GuideShowing() { return mGuideShowing; }
     bool IsConnected() { return mConnected; }
+    void QueueEnumJob(Job *);
+    void CancelEnumJob(int);
 };
 
 extern PlatformMgr ThePlatformMgr;

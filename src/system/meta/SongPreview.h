@@ -1,9 +1,8 @@
 #pragma once
 #include "obj/Data.h"
-#include "obj/Dir.h"
 #include "obj/Object.h"
 #include "os/ContentMgr.h"
-#include "os/VirtualKeyboard.h"
+#include "movie/TexMovie.h"
 #include "synth/Faders.h"
 #include "utl/Symbol.h"
 #include "synth/Stream.h"
@@ -44,7 +43,7 @@ public:
 
     const SongMgr &mSongMgr; // 0x30
     Stream *unk34;
-    ObjPtr<SongPreview> unk38;
+    ObjPtr<TexMovie> unk38;
     bool unk4c;
     Fader *mFader; // 0x50
     Fader *mMusicFader; // 0x54
@@ -72,6 +71,4 @@ private:
     void DetachFader(Fader *);
     void PrepareFaders(class SongInfo const *);
     void PrepareSong(Symbol);
-    // class Hmx::Object * ObjRefConcrete<class TexMovie, class ObjDir>::SetObj(class
-    // Hmx::Object*);
 };

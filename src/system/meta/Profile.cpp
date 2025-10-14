@@ -12,7 +12,14 @@ bool Profile::HasValidSaveData() const {
 
 ProfileSaveState Profile::GetSaveState() const { return mState; }
 
-bool Profile::IsUnsaved() const { return HasCheated() ? false : mDirty; }
+bool Profile::IsUnsaved() const {
+    bool b = HasCheated();
+    if (b != false) {
+        b = false;
+    } else
+        b = mDirty != 0;
+    return b;
+}
 
 Profile::~Profile() { mDirty = true; }
 

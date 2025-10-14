@@ -17,18 +17,22 @@ protected:
     int mPadNum; // 0x10
     ProfileSaveState mState; // 0x14
 public:
-    Profile(int);
+    // Hmx::Object
     virtual ~Profile();
-    virtual void SaveFixed(FixedSizeSaveableStream &) const = 0;
-    virtual void LoadFixed(FixedSizeSaveableStream &, int) = 0;
     virtual DataNode Handle(DataArray *, bool);
-    virtual bool HasCheated() const { return false; }
-    virtual bool IsUnsaved() const;
-    virtual void SaveLoadComplete(ProfileSaveState);
-    virtual bool HasSomethingToUpload();
-    virtual void DeleteAll();
     virtual void PreLoad() {}
 
+    // FixedSizeSaveable
+    virtual bool IsUnsaved() const;
+    virtual void SaveLoadComplete(ProfileSaveState);
+    virtual void SaveFixed(FixedSizeSaveableStream &) const = 0;
+
+    virtual void LoadFixed(FixedSizeSaveableStream &, int) = 0;
+    virtual bool HasCheated() const { return false; }
+    virtual bool HasSomethingToUpload();
+    virtual void DeleteAll();
+
+    Profile(int);
     bool IsAutosaveEnabled() const;
     bool HasValidSaveData() const;
     ProfileSaveState GetSaveState() const;

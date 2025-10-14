@@ -161,6 +161,10 @@ void PlatformMgr::DebugFakeSigninChangeMsg(int padnum) {
     Handle(msg, false);
 }
 
+void PlatformMgr::QueueEnumJob(Job *j) { mJobMgr->QueueJob(j); }
+
+void PlatformMgr::CancelEnumJob(int i) { mJobMgr->CancelJob(i); }
+
 BEGIN_HANDLERS(PlatformMgr)
     HANDLE_EXPR(is_connected, mConnected)
     HANDLE_EXPR(is_ethernet_cable_connected, IsEthernetCableConnected())

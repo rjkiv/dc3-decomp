@@ -49,7 +49,11 @@ RndMat *CreditsPanel::Mat(int i, int j, UIListMesh *mesh) const {
     return nullptr;
 }
 
-DataNode CreditsPanel::OnMsg(ButtonDownMsg const &msg) { return NULL_OBJ; }
+DataNode CreditsPanel::OnMsg(ButtonDownMsg const &msg) {
+    if (!mAutoScroll)
+        return DataNode(kDataUnhandled, 0);
+    return 1;
+}
 
 bool CreditsPanel::IsLoaded() const {
     return UIPanel::IsLoaded() && mLoader != nullptr && mLoader->IsLoaded();
@@ -71,9 +75,47 @@ void CreditsPanel::Enter() {
     mList->AutoScroll();
 }
 
-void CreditsPanel::PausePanel(bool b) {}
+void CreditsPanel::PausePanel(bool b) {
+    if (mPaused != b) {
+        mPaused = b;
+        if (mPaused) {
+            if (mAutoScroll) {
+                mAutoScroll = false;
+                mList->StopAutoScroll();
+            }
+            if (mStream == nullptr) {
+                return;
+            }
+        }
+    } else {
+        if (mAutoScroll != 0) {
+            mAutoScroll = true;
+            mList->AutoScroll();
+        }
+        if (mStream) {
+            return;
+        }
+    }
+}
 
-void CreditsPanel::DebugToggleAutoScroll() {}
+void CreditsPanel::DebugToggleAutoScroll() {
+    if (mAutoScroll == false) {
+        mList->SetSpeed(mSavedSpeed);
+        if (mAutoScroll != true) {
+            mAutoScroll = true;
+            mList->AutoScroll();
+        }
+        mCheatOn = false;
+    } else {
+        mSavedSpeed = mList->Speed();
+        mList->SetSpeed(0.0f);
+        if (mAutoScroll) {
+            mAutoScroll = false;
+            mList->StopAutoScroll();
+        }
+        mCheatOn = true;
+    }
+}
 
 void CreditsPanel::Load() { UIPanel::Load(); }
 

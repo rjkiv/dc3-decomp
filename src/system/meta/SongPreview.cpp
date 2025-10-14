@@ -2,6 +2,7 @@
 #include "SongMetadata.h"
 #include "SongMgr.h"
 #include "macros.h"
+#include "movie/TexMovie.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "obj/Task.h"

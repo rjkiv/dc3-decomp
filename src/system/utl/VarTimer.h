@@ -2,7 +2,7 @@
 
 #include "os/Timer.h"
 
-class VarTimer : public Timer {
+class VarTimer {
 public:
     VarTimer();
     void Start();
@@ -11,6 +11,7 @@ public:
     void SetSpeed(float);
     float Ms();
 
-    float unk30;
-    float unk34;
+    Timer mRawTimer; // 0x0
+    float mAccumMs; // 0x30
+    float mSpeed; // 0x34
 };
