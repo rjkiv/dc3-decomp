@@ -44,11 +44,11 @@ bool TexMovie::Replace(ObjRef *a, Hmx::Object *b) {
 }
 
 BEGIN_PROPSYNCS(TexMovie)
-    SYNC_PROP_MODIFY("output_texture", mTex, DoBeginMovieFromFile(nullptr, kLoadBack))
-    SYNC_PROP_SET("bink_movie_file", sRoot, SetFile(sRoot.c_str()))
-    SYNC_PROP("loop", unk5e)
-    SYNC_PROP("is_localized", unk5d)
-    SYNC_PROP("is_empty", sRoot)
+    SYNC_PROP_MODIFY(output_texture, mTex, DoBeginMovieFromFile(nullptr, kLoadBack))
+    SYNC_PROP_SET(bink_movie_file, sRoot, SetFile(sRoot.c_str()))
+    SYNC_PROP(loop, unk5e)
+    SYNC_PROP(is_localized, unk5d)
+    SYNC_PROP(is_empty, sRoot)
     SYNC_SUPERCLASS(RndDrawable)
     SYNC_SUPERCLASS(Hmx::Object)
     SYNC_SUPERCLASS(RndPollable)
@@ -194,8 +194,8 @@ DataNode TexMovie::OnPlayMovie(DataArray *d) {
 DataNode TexMovie::OnGetRenderTextures(DataArray *d) { return GetRenderTextures(Dir()); }
 
 BEGIN_HANDLERS(TexMovie)
-    HANDLE("get_render_textures", OnGetRenderTextures)
-    HANDLE("play_movie", OnPlayMovie)
+    HANDLE(get_render_textures, OnGetRenderTextures)
+    HANDLE(play_movie, OnPlayMovie)
     HANDLE_SUPERCLASS(RndDrawable)
     HANDLE_SUPERCLASS(RndPollable)
     HANDLE_SUPERCLASS(Hmx::Object)
