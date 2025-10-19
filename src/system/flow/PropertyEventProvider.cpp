@@ -24,6 +24,6 @@ END_COPYS
 BEGIN_LOADS(PropertyEventProvider)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)
-    if (gRev < 1 || ClassName() == StaticClassName())
+    if (d.rev < 1 || ClassName() == StaticClassName())
         LOAD_SUPERCLASS(Hmx::Object)
 END_LOADS

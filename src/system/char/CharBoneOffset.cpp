@@ -34,6 +34,6 @@ BEGIN_LOADS(CharBoneOffset)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    bs >> mDest;
-    bs >> mOffset;
+    d >> mDest;
+    d >> mOffset;
 END_LOADS

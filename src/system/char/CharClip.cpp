@@ -175,31 +175,31 @@ BEGIN_LOADS(CharClip)
     LOAD_REVS(bs)
     ASSERT_REVS(0x16, 0)
     int oldRev = 0;
-    if (gRev < 0x10)
-        bs >> oldRev;
+    if (d.rev < 0x10)
+        d >> oldRev;
     else
         oldRev = 0xD;
     MILO_ASSERT(oldRev > 1, 0x531);
     LOAD_SUPERCLASS(Hmx::Object)
-    if (gRev < 0x12) {
+    if (d.rev < 0x12) {
         int x, y;
-        bs >> x;
-        bs >> y;
+        d >> x;
+        d >> y;
     }
-    bs >> mFramesPerSec;
-    bs >> mFlags;
-    bs >> mPlayFlags;
+    d >> mFramesPerSec;
+    d >> mFlags;
+    d >> mPlayFlags;
     if (oldRev < 0xD) {
         int x;
-        bs >> x;
+        d >> x;
     }
     if (oldRev > 3)
-        bs >> mRange;
+        d >> mRange;
     if (oldRev > 5) {
-        mRelative.Load(bs, false, nullptr);
+        mRelative.Load(d.stream, false, nullptr);
     } else if (oldRev > 4) {
         bool b117;
-        bs >> b117;
+        d >> b117;
         mRelative = b117 ? this : nullptr;
     } else
         mRelative = nullptr;

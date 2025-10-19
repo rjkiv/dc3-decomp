@@ -39,13 +39,13 @@ BEGIN_LOADS(CharForeTwist)
     LOAD_REVS(bs)
     ASSERT_REVS(4, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    bs >> mOffset;
-    bs >> mHand;
-    bs >> mTwist2;
-    if (gRev > 1 && gRev < 3) {
+    d >> mOffset;
+    d >> mHand;
+    d >> mTwist2;
+    if (d.rev > 1 && d.rev < 3) {
         int dummy;
-        bs >> dummy;
+        d >> dummy;
     }
-    if (gRev > 3)
-        bs >> mBias;
+    if (d.rev > 3)
+        d >> mBias;
 END_LOADS

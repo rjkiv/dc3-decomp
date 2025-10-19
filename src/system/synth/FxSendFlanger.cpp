@@ -44,7 +44,7 @@ BEGIN_LOADS(FxSendFlanger)
     LOAD_REVS(bs)
     ASSERT_REVS(7, 0)
     LOAD_SUPERCLASS(FxSend)
-    if (gRev <= 4) {
+    if (d.rev <= 4) {
         mDryGain = -3.0f;
         mWetGain = -3.0f;
         UpdateMix();
@@ -52,17 +52,17 @@ BEGIN_LOADS(FxSendFlanger)
     bs >> mDelayMs >> mRate;
     int dummy;
 
-    if (gRev >= 4)
+    if (d.rev >= 4)
         bs >> mDepthPct;
     else
         bs >> dummy;
-    if (gRev >= 2)
+    if (d.rev >= 2)
         bs >> mFeedbackPct;
-    if (gRev >= 3)
+    if (d.rev >= 3)
         bs >> mOffsetPct;
 
-    if (gRev >= 6) {
-        bsrev >> mTempoSync;
+    if (d.rev >= 6) {
+        d >> mTempoSync;
         bs >> mSyncType;
         bs >> mTempo;
     }

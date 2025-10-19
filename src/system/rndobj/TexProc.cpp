@@ -80,12 +80,12 @@ BEGIN_LOADS(TexProc)
     bs >> mInputTex;
     bs >> mOutputTex;
     bs >> (int &)mShaderType;
-    bsrev >> mDrawPreClear;
+    d >> mDrawPreClear;
     mDrawPreClear = true;
-    if (gRev > 1) {
+    if (d.rev > 1) {
         bs >> mFrequency;
         bs >> mAmplitude;
-        if (gRev > 2) {
+        if (d.rev > 2) {
             bs >> mAmplitudeBump;
         } else {
             float x;

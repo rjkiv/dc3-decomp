@@ -65,30 +65,30 @@ BEGIN_COPYS(RndMultiMesh)
     UpdateMesh();
 END_COPYS
 
-BinStreamRev &operator>>(BinStreamRev &bsrev, RndMultiMesh::Instance &inst) {
-    inst.Load(bsrev);
-    return bsrev;
+BinStreamRev &operator>>(BinStreamRev &d, RndMultiMesh::Instance &inst) {
+    inst.Load(d);
+    return d;
 }
 
 BEGIN_LOADS(RndMultiMesh)
     LOAD_REVS(bs)
     ASSERT_REVS(5, 0)
-    if (gRev > 0)
+    if (d.rev > 0)
         LOAD_SUPERCLASS(Hmx::Object)
     LOAD_SUPERCLASS(RndDrawable)
     bs >> mMesh;
-    if (gRev < 2) {
+    if (d.rev < 2) {
         std::list<Transform> xfms;
-        bsrev >> xfms;
+        d >> xfms;
         mInstances.clear();
         for (std::list<Transform>::iterator it = xfms.begin(); it != xfms.end(); ++it) {
             mInstances.push_back(Instance(*it));
         }
     } else {
-        bsrev >> mInstances;
-        if (gRev < 4) {
+        d >> mInstances;
+        if (d.rev < 4) {
             bool dump;
-            bsrev >> dump;
+            d >> dump;
         }
     }
 END_LOADS

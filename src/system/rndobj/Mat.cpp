@@ -178,22 +178,22 @@ BEGIN_LOADS(RndMat)
     LOAD_REVS(bs)
     ASSERT_REVS(0x46, 0)
     MILO_ASSERT_FMT(
-        bsrev.rev >= 0x19,
+        d.rev >= 0x19,
         "%s can't load old %s version %d < %d.  Use RB2 Milo to load.",
         PathName(this),
         ClassName(),
-        bsrev.rev,
+        d.rev,
         0x19
     );
     mDirty = 3;
     ResetColors(mColorMod, 3);
-    if (bsrev.rev < 0x45) {
-        LoadOld(bsrev);
+    if (d.rev < 0x45) {
+        LoadOld(d);
     } else {
-        BaseMaterial::Load(bsrev.stream);
+        BaseMaterial::Load(d.stream);
     }
-    if (bsrev.rev > 0x45) {
-        mMetaMaterial.Load(bsrev.stream, true, sMetaMaterials);
+    if (d.rev > 0x45) {
+        mMetaMaterial.Load(d.stream, true, sMetaMaterials);
     }
     UpdatePropertiesFromMetaMat();
 END_LOADS

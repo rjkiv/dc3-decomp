@@ -56,14 +56,14 @@ END_LOADS
 void StarsDisplay::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(3, 0)
-    if (gRev >= 2) {
+    if (d.rev >= 2) {
         bs >> mAlpha;
     }
     UIComponent::PreLoad(bs);
-    if (gRev >= 3) {
+    if (d.rev >= 3) {
         bs >> mResourceDir;
     }
-    bsrev.PushRev(this);
+    d.PushRev(this);
 }
 
 void StarsDisplay::PostLoad(BinStream &bs) {

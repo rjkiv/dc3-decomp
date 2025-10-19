@@ -290,8 +290,8 @@ BEGIN_LOADS(MetaMaterial)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)
     LOAD_SUPERCLASS(BaseMaterial)
-    if (gRev > 1) {
-        bsrev >> mMatPropEditActions;
+    if (d.rev > 1) {
+        d >> mMatPropEditActions;
     }
 END_LOADS
 

@@ -79,10 +79,10 @@ BEGIN_LOADS(FlowAnimate)
     LOAD_REVS(bs)
     ASSERT_REVS(3, 0)
     LOAD_SUPERCLASS(FlowNode)
-    if (gRev < 3) {
-        mAnim = mAnim.LoadFromMainOrDir(bs);
+    if (d.rev < 3) {
+        mAnim = mAnim.LoadFromMainOrDir(d.stream);
     } else
-        mAnim.LoadFromMainOrDir(bs);
+        mAnim.LoadFromMainOrDir(d.stream);
 END_LOADS
 
 void FlowAnimate::ResetAnim() {

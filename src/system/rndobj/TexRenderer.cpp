@@ -152,59 +152,59 @@ BEGIN_LOADS(RndTexRenderer)
     LOAD_REVS(bs)
     ASSERT_REVS(13, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    if (gRev > 2) {
+    if (d.rev > 2) {
         LOAD_SUPERCLASS(RndAnimatable)
         LOAD_SUPERCLASS(RndDrawable)
-        if (gRev > 10)
+        if (d.rev > 10)
             LOAD_SUPERCLASS(RndPollable)
     }
-    if (gRev < 1) {
+    if (d.rev < 1) {
         FilePath fp;
         bs >> fp;
     } else {
         mDrawable.Load(bs, false, nullptr);
     }
-    if (gRev > 3) {
+    if (d.rev > 3) {
         bs >> mCamera;
     } else {
         mCamera = nullptr;
     }
     bs >> mOutputTexture;
     InitTexture();
-    if (gRev > 1) {
-        bsrev >> mForce;
+    if (d.rev > 1) {
+        d >> mForce;
         bs >> mImpostorHeight;
     }
-    if (gRev > 4) {
-        bsrev >> mDrawResponsible;
+    if (d.rev > 4) {
+        d >> mDrawResponsible;
     } else {
         mDrawResponsible = true;
     }
-    if (gRev > 5) {
-        bsrev >> mDrawPreClear;
+    if (d.rev > 5) {
+        d >> mDrawPreClear;
     } else {
         mDrawPreClear = true;
     }
-    if (gRev > 6) {
-        bsrev >> mDrawWorldOnly;
+    if (d.rev > 6) {
+        d >> mDrawWorldOnly;
     }
-    if (gRev > 7) {
-        bsrev >> mPrimeDraw;
+    if (d.rev > 7) {
+        d >> mPrimeDraw;
     }
-    if (gRev > 8) {
-        bsrev >> mForce;
+    if (d.rev > 8) {
+        d >> mForce;
     }
-    if (gRev > 9) {
+    if (d.rev > 9) {
         bs >> mMirrorCam;
     }
-    if (gRev > 10) {
-        bsrev >> mNoPoll;
+    if (d.rev > 10) {
+        d >> mNoPoll;
     }
-    if (gRev > 11) {
+    if (d.rev > 11) {
         bs >> mEnviron;
     }
-    if (gRev > 12) {
-        bsrev >> mClearBuffer;
+    if (d.rev > 12) {
+        d >> mClearBuffer;
         bs >> mClearColor;
     }
     unk_0x58 = true;

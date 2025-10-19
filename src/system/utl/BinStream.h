@@ -171,7 +171,7 @@ inline int packRevs(unsigned short alt, unsigned short rev) {
     return (rev & ~0xFFFF0000) | (alt << 0x10);
 }
 
-#define BSREV_READ(obj)                                                                  \
+#define d_READ(obj)                                                                      \
     BinStreamRev &operator>>(obj &x) {                                                   \
         stream >> x;                                                                     \
         return *this;                                                                    \

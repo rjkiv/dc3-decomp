@@ -47,12 +47,12 @@ BEGIN_LOADS(FlowOutPort)
     ASSERT_REVS(2, 0)
     LOAD_SUPERCLASS(FlowNode)
     bs >> mLabel;
-    bsrev >> mImmediateRelease;
-    if (gRev > 0) {
-        bsrev >> mStop;
+    d >> mImmediateRelease;
+    if (d.rev > 0) {
+        d >> mStop;
     }
-    if (gRev > 1) {
-        bsrev >> mExposed;
+    if (d.rev > 1) {
+        d >> mExposed;
     }
     UpdatePortMapping();
 END_LOADS

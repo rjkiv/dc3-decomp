@@ -43,10 +43,10 @@ BEGIN_LOADS(CharGuitarString)
     LOAD_REVS(bs)
     ASSERT_REVS(0, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    bs >> mNut;
-    bs >> mBridge;
-    bs >> mBend;
-    bs >> mTarget;
+    d >> mNut;
+    d >> mBridge;
+    d >> mBend;
+    d >> mTarget;
 END_LOADS
 
 void CharGuitarString::PollDeps(

@@ -49,11 +49,11 @@ END_COPYS
 BEGIN_LOADS(CharWeightable)
     LOAD_REVS(bs)
     ASSERT_REVS(3, 0)
-    if (gRev > 2) {
+    if (d.rev > 2) {
         LOAD_VIRTUAL_SUPERCLASS(Hmx::Object)
     }
-    bs >> mWeight;
-    if (gRev > 1) {
-        bs >> mWeightOwner;
+    d >> mWeight;
+    if (d.rev > 1) {
+        d >> mWeightOwner;
     }
 END_LOADS

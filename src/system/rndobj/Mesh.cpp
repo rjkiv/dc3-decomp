@@ -248,22 +248,22 @@ BinStream &CachedRead(BinStream &, std::vector<T1, T2> &);
 BEGIN_LOADS(RndMesh)
     LOAD_REVS(bs)
     ASSERT_REVS(0x26, 0)
-    if (bsrev.rev > 0x19) {
-        Hmx::Object::Load(bsrev.stream);
+    if (d.rev > 0x19) {
+        Hmx::Object::Load(d.stream);
     }
-    RndTransformable::Load(bsrev.stream);
-    RndDrawable::Load(bsrev.stream);
-    if (bsrev.rev < 15) {
+    RndTransformable::Load(d.stream);
+    RndDrawable::Load(d.stream);
+    if (d.rev < 15) {
         ObjPtrList<Hmx::Object> oList(this);
         int dummy;
-        bsrev.stream >> dummy;
-        bsrev.stream >> oList;
+        d.stream >> dummy;
+        d.stream >> oList;
     }
     int i22 = 0;
-    if (bsrev.rev < 0x14) {
+    if (d.rev < 0x14) {
         int ib8, ie8;
-        bsrev.stream >> ib8;
-        bsrev.stream >> ie8;
+        d.stream >> ib8;
+        d.stream >> ie8;
         if (ib8 == 0 || ie8 == 0) {
             i22 = 0;
         } else if (ib8 == 1) {
@@ -274,106 +274,106 @@ BEGIN_LOADS(RndMesh)
             i22 = 1;
         }
     }
-    if (bsrev.rev < 3) {
+    if (d.rev < 3) {
         int dummy;
-        bsrev.stream >> dummy;
+        d.stream >> dummy;
     }
-    bsrev.stream >> mMat;
-    if (bsrev.rev > 0x1A && bsrev.rev < 0x1C) {
+    d.stream >> mMat;
+    if (d.rev > 0x1A && d.rev < 0x1C) {
         char buf[0x80];
-        bsrev.stream.ReadString(buf, 0x80);
+        d.stream.ReadString(buf, 0x80);
         if (!mMat && buf[0] != '\0') {
             mMat = LookupOrCreateMat(buf, Dir());
         }
     }
-    bsrev.stream >> mGeomOwner;
+    d.stream >> mGeomOwner;
     if (!mGeomOwner) {
         mGeomOwner = this;
     }
-    if (bsrev.rev < 0x14 && mMat && (i22 == 0 || mMat->GetZMode() != kZModeDisable)) {
+    if (d.rev < 0x14 && mMat && (i22 == 0 || mMat->GetZMode() != kZModeDisable)) {
         mMat->SetZMode((ZMode)i22);
     }
-    if (bsrev.rev < 0xD) {
+    if (d.rev < 0xD) {
         ObjOwnerPtr<RndMesh> mesh(this);
-        bsrev.stream >> mesh;
+        d.stream >> mesh;
         if (mesh != mGeomOwner) {
             MILO_NOTIFY("Combining face and vert owner of %s", Name());
         }
     }
-    if (bsrev.rev < 0xF) {
+    if (d.rev < 0xF) {
         ObjPtr<RndTransformable> trans(this);
-        bsrev.stream >> trans;
+        d.stream >> trans;
         SetTransParent(trans, false);
         SetTransConstraint((Constraint)2, nullptr, false);
     }
-    if (bsrev.rev < 0xE) {
+    if (d.rev < 0xE) {
         ObjPtr<RndTransformable> trans1(this);
         ObjPtr<RndTransformable> trans2(this);
-        bsrev.stream >> trans1 >> trans2;
+        d.stream >> trans1 >> trans2;
     }
-    if (bsrev.rev < 3) {
+    if (d.rev < 3) {
         Vector3 v;
-        bsrev.stream >> v;
+        d.stream >> v;
     }
-    if (bsrev.rev < 0xF) {
+    if (d.rev < 0xF) {
         Sphere s;
-        bsrev.stream >> s;
+        d.stream >> s;
         SetSphere(s);
     }
-    if (bsrev.rev > 4 && bsrev.rev < 8) {
+    if (d.rev > 4 && d.rev < 8) {
         bool b;
-        bsrev >> b;
+        d >> b;
     }
-    if (bsrev.rev > 5 && bsrev.rev < 0x15) {
+    if (d.rev > 5 && d.rev < 0x15) {
         String str;
         int x;
-        bsrev.stream >> str;
-        bsrev.stream >> x;
+        d.stream >> str;
+        d.stream >> x;
     }
-    if (bsrev.rev > 0xF) {
-        bsrev.stream >> mMutable;
-    } else if (bsrev.rev > 0xB) {
+    if (d.rev > 0xF) {
+        d.stream >> mMutable;
+    } else if (d.rev > 0xB) {
         bool b;
-        bsrev >> b;
+        d >> b;
         mMutable = b ? 31 : 0;
     }
-    if (bsrev.rev > 0x11) {
-        bsrev.stream >> (int &)mVolume;
+    if (d.rev > 0x11) {
+        d.stream >> (int &)mVolume;
     }
-    if (bsrev.rev > 0x12) {
+    if (d.rev > 0x12) {
         RELEASE(mBSPTree);
-        bsrev.stream >> mBSPTree;
+        d.stream >> mBSPTree;
     }
-    if (bsrev.rev > 6 && bsrev.rev < 8) {
+    if (d.rev > 6 && d.rev < 8) {
         bool b;
-        bsrev >> b;
+        d >> b;
     }
-    if (bsrev.rev > 8 && bsrev.rev < 0xB) {
+    if (d.rev > 8 && d.rev < 0xB) {
         int x;
-        bsrev.stream >> x;
+        d.stream >> x;
     }
-    LoadVertices(bsrev);
-    if (bsrev.stream.Cached()) {
-        CachedRead(bsrev.stream, mFaces);
+    LoadVertices(d);
+    if (d.stream.Cached()) {
+        CachedRead(d.stream, mFaces);
     } else {
-        bsrev >> mFaces;
+        d >> mFaces;
     }
-    if (bsrev.rev > 4 && bsrev.rev < 0x18) {
+    if (d.rev > 4 && d.rev < 0x18) {
         int count;
         unsigned short s1, s2;
-        bsrev.stream >> count;
+        d.stream >> count;
         for (; count != 0; count--) {
-            bsrev.stream >> s1;
-            bsrev.stream >> s2;
+            d.stream >> s1;
+            d.stream >> s2;
         }
     }
-    if (bsrev.rev > 0x17) {
-        if (bsrev.stream.Cached()) {
-            CachedRead(bsrev.stream, mPatches);
+    if (d.rev > 0x17) {
+        if (d.stream.Cached()) {
+            CachedRead(d.stream, mPatches);
         } else {
-            bsrev >> mPatches;
+            d >> mPatches;
         }
-    } else if (bsrev.rev > 0x15) {
+    } else if (d.rev > 0x15) {
         mPatches.clear();
         int count;
         unsigned int ui;
@@ -381,13 +381,13 @@ BEGIN_LOADS(RndMesh)
         for (; count != 0; count--) {
             std::vector<unsigned short> usvec;
             std::vector<unsigned int> uivec;
-            bsrev >> ui >> usvec >> uivec;
+            d >> ui >> usvec >> uivec;
             mPatches.push_back(ui);
         }
-    } else if (bsrev.rev > 0x10)
-        bsrev >> mPatches;
-    if (bsrev.rev > 0x1C) {
-        bsrev >> mBones;
+    } else if (d.rev > 0x10)
+        d >> mPatches;
+    if (d.rev > 0x1C) {
+        d >> mBones;
         int max = MaxBones();
         if (mBones.size() > max) {
             MILO_NOTIFY(
@@ -398,17 +398,17 @@ BEGIN_LOADS(RndMesh)
             );
             mBones.resize(MaxBones());
         }
-    } else if (bsrev.rev > 0xD) {
+    } else if (d.rev > 0xD) {
         ObjPtr<RndTransformable> trans(this);
-        bsrev.stream >> trans;
+        d.stream >> trans;
         if (trans) {
             mBones.resize(4);
-            if (bsrev.rev > 0x16) {
+            if (d.rev > 0x16) {
                 mBones[0].mBone = trans;
                 bs >> mBones[1].mBone >> mBones[2].mBone >> mBones[3].mBone;
                 bs >> mBones[0].mOffset >> mBones[1].mOffset >> mBones[2].mOffset
                     >> mBones[3].mOffset;
-                if (bsrev.rev < 0x19) {
+                if (d.rev < 0x19) {
                     for (Vert *it = mVerts.begin(); it != mVerts.end(); ++it) {
                         it->boneWeights.Set(
                             ((1.0f - it->boneWeights.x) - it->boneWeights.y)
@@ -441,37 +441,37 @@ BEGIN_LOADS(RndMesh)
             mBones.clear();
     }
     RemoveInvalidBones();
-    if (bsrev.rev > 0 && bsrev.rev < 4) {
+    if (d.rev > 0 && d.rev < 4) {
         std::vector<std::vector<unsigned short> > usvec;
-        bsrev >> usvec;
+        d >> usvec;
     }
-    if (bsrev.rev == 0) {
+    if (d.rev == 0) {
         bool bd4;
         int ic0, ic4, ic8, icc;
-        bsrev >> bd4 >> ic0 >> ic4 >> ic8;
-        bsrev >> icc;
+        d >> bd4 >> ic0 >> ic4 >> ic8;
+        d >> icc;
     }
-    if (bsrev.rev == 0x12) {
+    if (d.rev == 0x12) {
         if (mGeomOwner == this) {
             SetVolume(mVolume);
             goto yes;
         }
     } else {
     yes:
-        if (bsrev.rev >= 0x1E)
+        if (d.rev >= 0x1E)
             goto next;
     }
     if (mMat && mMat->NormalMap()) {
         MakeTangentsLate(this);
     }
 next:
-    if (bsrev.rev < 0x1F) {
+    if (d.rev < 0x1F) {
         SetZeroWeightBones();
     }
-    if (bsrev.rev > 0x23) {
-        bsrev >> mKeepMeshData;
+    if (d.rev > 0x23) {
+        d >> mKeepMeshData;
     }
-    if (gRev < MESH_REV_SEP_COLOR && IsSkinned()) {
+    if (d.rev < MESH_REV_SEP_COLOR && IsSkinned()) {
         for (Vert *it = mVerts.begin(); it != mVerts.end(); ++it) {
             it->boneWeights.Set(
                 it->color.red, it->color.green, it->color.blue, it->color.alpha
@@ -479,8 +479,8 @@ next:
             it->color.Zero();
         }
     }
-    if (bsrev.rev > 0x25) {
-        bsrev >> mHasAOCalc;
+    if (d.rev > 0x25) {
+        d >> mHasAOCalc;
     }
     Sync(0xBF);
 END_LOADS

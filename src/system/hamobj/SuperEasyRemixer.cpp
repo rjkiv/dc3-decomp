@@ -51,7 +51,7 @@ BEGIN_COPYS(SuperEasyRemixer)
 END_COPYS
 
 BEGIN_LOADS(SuperEasyRemixer)
-    LOAD_SUPERCLASS(OriginalChoreoRemixer)
+    OriginalChoreoRemixer::Load(bs);
 END_LOADS
 
 void SuperEasyRemixer::Reset() { OriginalChoreoRemixer::Reset(); }

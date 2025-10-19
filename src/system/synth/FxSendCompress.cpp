@@ -39,16 +39,16 @@ BEGIN_LOADS(FxSendCompress)
     ASSERT_REVS(4, 0)
     LOAD_SUPERCLASS(FxSend)
     bs >> mThresholdDB >> mRatio >> mOutputLevel;
-    if (gRev < 2)
+    if (d.rev < 2)
         mOutputLevel = 0.0f;
     bs >> mAttack >> mRelease;
     int dummy;
-    if (gRev < 2)
+    if (d.rev < 2)
         bs >> dummy;
-    if (gRev >= 3) {
+    if (d.rev >= 3) {
         bs >> mExpRatio >> mExpAttack >> mExpRelease;
     }
-    if (gRev >= 4)
+    if (d.rev >= 4)
         bs >> mGateThresholdDB;
     OnParametersChanged();
 END_LOADS

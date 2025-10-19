@@ -74,9 +74,10 @@ BEGIN_LOADS(CharEyeDartRuleset)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    bs >> mData.mMinRadius >> mData.mMaxRadius >> mData.mOnTargetAngleThresh
+    d.stream >> mData.mMinRadius >> mData.mMaxRadius >> mData.mOnTargetAngleThresh
         >> mData.mMinDartsPerSequence >> mData.mMaxDartsPerSequence
         >> mData.mMinSecsBetweenDarts >> mData.mMaxSecsBetweenDarts
-        >> mData.mMinSecsBetweenSequences >> mData.mMaxSecsBetweenSequences
-        >> mData.mScaleWithDistance >> mData.mReferenceDistance;
+        >> mData.mMinSecsBetweenSequences >> mData.mMaxSecsBetweenSequences;
+    d.stream >> mData.mScaleWithDistance;
+    d >> mData.mReferenceDistance;
 END_LOADS

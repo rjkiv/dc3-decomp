@@ -56,10 +56,10 @@ BEGIN_LOADS(CharBonesBlender)
     ASSERT_REVS(2, 0)
     LOAD_SUPERCLASS(Hmx::Object)
     ObjPtr<CharBonesObject> boneObjPtr(this);
-    bs >> boneObjPtr;
+    d >> boneObjPtr;
     Symbol s;
-    if (gRev > 1)
-        bs >> s;
+    if (d.rev > 1)
+        d >> s;
     SetClipType(s);
     SetDest(boneObjPtr);
 END_LOADS

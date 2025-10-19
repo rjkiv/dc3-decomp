@@ -146,16 +146,16 @@ BinStream &operator<<(BinStream &bs, const SkeletonClip::MoveRating &mr) {
     return bs;
 }
 
-BinStream &operator>>(BinStreamRev &bsrev, SkeletonClip::MoveRating &mr) {
-    bsrev >> mr.mName;
-    bsrev >> mr.mExpected;
-    if (bsrev.altRev > 0) {
+BinStream &operator>>(BinStreamRev &d, SkeletonClip::MoveRating &mr) {
+    d >> mr.mName;
+    d >> mr.mExpected;
+    if (d.altRev > 0) {
         int x;
-        bsrev >> x;
+        d >> x;
         mr.unkc = x;
-    } else if (bsrev.rev > 8) {
+    } else if (d.rev > 8) {
         Symbol s;
-        bsrev >> s;
+        d >> s;
         if (s == "weighted") {
             mr.unkc = 1;
         } else if (s == "unweighted") {
@@ -166,7 +166,7 @@ BinStream &operator>>(BinStreamRev &bsrev, SkeletonClip::MoveRating &mr) {
     } else {
         mr.unkc = 2;
     }
-    return bsrev.stream;
+    return d.stream;
 }
 
 int SkeletonClip::NumMoveRatings() const { return mMoveRatings.size(); }

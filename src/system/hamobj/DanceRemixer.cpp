@@ -86,7 +86,7 @@ BEGIN_COPYS(DanceRemixer)
 END_COPYS
 
 BEGIN_LOADS(DanceRemixer)
-    LOAD_SUPERCLASS(Hmx::Object)
+    Hmx::Object::Load(bs);
 END_LOADS
 
 void DanceRemixer::Init(int x) {

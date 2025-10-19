@@ -56,14 +56,14 @@ void RndCam::SetTargetTex(RndTex *tex) {
 BEGIN_LOADS(RndCam)
     LOAD_REVS(bs)
     ASSERT_REVS(12, 0)
-    if (gRev > 10) {
+    if (d.rev > 10) {
         LOAD_SUPERCLASS(Hmx::Object)
     }
     LOAD_SUPERCLASS(RndTransformable)
-    if (gRev < 10) {
+    if (d.rev < 10) {
         RndDrawable::DumpLoad(bs);
     }
-    if (gRev == 8) {
+    if (d.rev == 8) {
         int x;
         ObjPtrList<Hmx::Object> objList(this, kObjListNoNull);
         bs >> x >> objList;

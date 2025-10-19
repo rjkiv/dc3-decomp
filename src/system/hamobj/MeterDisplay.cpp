@@ -65,19 +65,19 @@ END_LOADS
 void MeterDisplay::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(4, 0)
-    bsrev >> mShowText;
-    if (gRev >= 1) {
+    d >> mShowText;
+    if (d.rev >= 1) {
         bs >> mCurrentValue;
         bs >> mMaxValue;
     }
-    if (gRev >= 2) {
-        bsrev >> mPercentageText;
+    if (d.rev >= 2) {
+        d >> mPercentageText;
     }
-    if (gRev >= 3) {
+    if (d.rev >= 3) {
         bs >> mAnimPeriod;
     }
-    if (gRev >= 4) {
-        bsrev >> mHideDenominator;
+    if (d.rev >= 4) {
+        d >> mHideDenominator;
         bs >> mWrapperText;
     }
     bs >> mResourceDir;

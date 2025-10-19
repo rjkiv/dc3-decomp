@@ -87,7 +87,7 @@ BEGIN_LOADS(HamNavProvider)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    bsrev >> mNavItems;
+    d >> mNavItems;
     for (int i = 0; i < mNavItems.size(); i++) {
         mNavItems[i].unk24 = 0;
     }

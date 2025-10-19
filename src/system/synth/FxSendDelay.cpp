@@ -39,12 +39,12 @@ BEGIN_LOADS(FxSendDelay)
     ASSERT_REVS(3, 0)
     LOAD_SUPERCLASS(FxSend)
     bs >> mDelayTime >> mGain;
-    if (gRev >= 2) {
-        bsrev >> mTempoSync;
+    if (d.rev >= 2) {
+        d >> mTempoSync;
         bs >> mSyncType;
         bs >> mTempo;
     }
-    if (gRev >= 3) {
+    if (d.rev >= 3) {
         bs >> mPingPongPct;
     }
     OnParametersChanged();

@@ -33,8 +33,8 @@ BEGIN_LOADS(CharNeckTwist)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    bs >> mHead;
-    bs >> mTwist;
+    d >> mHead;
+    d >> mTwist;
 END_LOADS
 
 void CharNeckTwist::PollDeps(

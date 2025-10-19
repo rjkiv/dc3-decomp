@@ -69,7 +69,7 @@ BEGIN_LOADS(TexMovie)
     LOAD_SUPERCLASS(Hmx::Object)
     LOAD_SUPERCLASS(RndDrawable)
     LOAD_SUPERCLASS(RndPollable)
-    if (gAltRev < 4)
+    if (d.altRev < 4)
         bs >> unk5e;
     bs >> mTex >> unk5c;
 

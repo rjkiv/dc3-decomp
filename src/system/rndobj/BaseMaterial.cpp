@@ -226,68 +226,68 @@ BEGIN_LOADS(BaseMaterial)
     LOAD_REVS(bs)
     ASSERT_REVS(8, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    bsrev >> (int &)mBlend;
+    d >> (int &)mBlend;
     mBlend = CheckBlendMode(mBlend, this);
-    bsrev >> mColor >> mUseEnviron >> mPrelit;
-    bsrev >> (int &)mZMode;
-    bsrev >> mAlphaCut;
-    bsrev >> mAlphaThreshold;
-    bsrev >> mAlphaWrite;
-    bsrev >> (int &)mTexGen >> (int &)mTexWrap >> mTexXfm >> mDiffuseTex >> mNextPass;
-    bsrev >> mIntensify;
-    if (bsrev.rev < 3) {
+    d >> mColor >> mUseEnviron >> mPrelit;
+    d >> (int &)mZMode;
+    d >> mAlphaCut;
+    d >> mAlphaThreshold;
+    d >> mAlphaWrite;
+    d >> (int &)mTexGen >> (int &)mTexWrap >> mTexXfm >> mDiffuseTex >> mNextPass;
+    d >> mIntensify;
+    if (d.rev < 3) {
         bool cull;
-        bsrev >> cull;
+        d >> cull;
         mCull = (Cull)(cull != 0);
     } else {
-        bsrev >> (int &)mCull;
+        d >> (int &)mCull;
     }
-    bsrev >> mEmissiveMultiplier;
-    bsrev >> mSpecularRGB >> mNormalMap;
-    bsrev >> mEmissiveMap;
-    bsrev >> mSpecularMap;
-    bsrev >> mEnvironMap >> mEnvironMapFalloff >> mEnvironMapSpecMask;
-    bsrev >> mPerPixelLit >> (int &)mStencilMode;
-    bsrev >> mFur;
-    bsrev >> mDeNormal;
-    bsrev >> mAnisotropy;
-    bsrev >> mNormDetailTiling;
-    bsrev >> mNormDetailStrength;
-    bsrev >> mNormDetailMap;
-    bsrev >> mPointLights >> mFog >> mFadeout >> mColorAdjust;
-    bsrev >> mRimRGB;
-    bsrev >> mRimMap;
-    bsrev >> mRimLightUnder;
-    bsrev >> mScreenAligned;
-    bsrev >> (int &)mShaderVariation;
-    bsrev >> mSpecular2RGB;
+    d >> mEmissiveMultiplier;
+    d >> mSpecularRGB >> mNormalMap;
+    d >> mEmissiveMap;
+    d >> mSpecularMap;
+    d >> mEnvironMap >> mEnvironMapFalloff >> mEnvironMapSpecMask;
+    d >> mPerPixelLit >> (int &)mStencilMode;
+    d >> mFur;
+    d >> mDeNormal;
+    d >> mAnisotropy;
+    d >> mNormDetailTiling;
+    d >> mNormDetailStrength;
+    d >> mNormDetailMap;
+    d >> mPointLights >> mFog >> mFadeout >> mColorAdjust;
+    d >> mRimRGB;
+    d >> mRimMap;
+    d >> mRimLightUnder;
+    d >> mScreenAligned;
+    d >> (int &)mShaderVariation;
+    d >> mSpecular2RGB;
     mPerfSettings.Load(bs);
-    bsrev >> mRefractEnabled;
-    bsrev >> mRefractStrength;
-    bsrev >> mRefractNormalMap;
-    if (bsrev.rev > 1) {
-        bsrev >> mBloomMultiplier;
+    d >> mRefractEnabled;
+    d >> mRefractStrength;
+    d >> mRefractNormalMap;
+    if (d.rev > 1) {
+        d >> mBloomMultiplier;
     }
-    if (bsrev.rev > 3) {
-        bsrev >> mNeverFitToSpline;
-        if (bsrev.rev < 5) {
+    if (d.rev > 3) {
+        d >> mNeverFitToSpline;
+        if (d.rev < 5) {
             bool b1;
-            bsrev >> b1;
-            bsrev >> b1;
+            d >> b1;
+            d >> b1;
         }
-        if (bsrev.rev > 5) {
-            bsrev >> mAllowDistortionEffects;
-            bsrev >> mShockwaveMult;
+        if (d.rev > 5) {
+            d >> mAllowDistortionEffects;
+            d >> mShockwaveMult;
         }
     }
-    if (bsrev.rev > 6) {
-        bsrev >> mWorldProjectionTiling;
-        bsrev >> mWorldProjectionStartBlend;
-        bsrev >> mWorldProjectionEndBlend;
-        bsrev >> mDiffuseTex2;
+    if (d.rev > 6) {
+        d >> mWorldProjectionTiling;
+        d >> mWorldProjectionStartBlend;
+        d >> mWorldProjectionEndBlend;
+        d >> mDiffuseTex2;
     }
-    if (bsrev.rev > 7) {
-        bsrev >> mForceAlphaWrite;
+    if (d.rev > 7) {
+        d >> mForceAlphaWrite;
     }
 END_LOADS
 

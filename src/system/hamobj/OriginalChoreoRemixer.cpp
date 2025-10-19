@@ -50,7 +50,7 @@ BEGIN_COPYS(OriginalChoreoRemixer)
 END_COPYS
 
 BEGIN_LOADS(OriginalChoreoRemixer)
-    LOAD_SUPERCLASS(DanceRemixer)
+    DanceRemixer::Load(bs);
 END_LOADS
 
 void OriginalChoreoRemixer::Reset() {

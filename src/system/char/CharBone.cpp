@@ -60,7 +60,7 @@ BEGIN_LOADS(CharBone)
     LOAD_REVS(bs)
     ASSERT_REVS(10, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    if (gRev < 9) {
+    if (d.rev < 9) {
         RndTransformableRemover t;
         t.Load(bs);
     }

@@ -102,52 +102,52 @@ BEGIN_LOADS(RndPartLauncher)
     LOAD_REVS(bs)
     ASSERT_REVS(4, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    if (gRev < 2) {
+    if (d.rev < 2) {
         LOAD_SUPERCLASS(RndPollable)
         ObjPtr<RndMultiMesh> multiMesh(this);
         bs >> multiMesh;
-        if (gRev > 0) {
+        if (d.rev > 0) {
             bs >> mPart;
             bs >> mTrans;
             bs >> mNumParts;
 
             bool bit1;
-            bsrev >> bit1;
+            d >> bit1;
             SetBit(1, bit1);
             bs >> mPartOverride.life;
 
             bool bit2;
-            bsrev >> bit2;
+            d >> bit2;
             SetBit(2, bit2);
             bs >> mPartOverride.speed;
 
             bool bit4;
-            bsrev >> bit4;
+            d >> bit4;
             SetBit(4, bit4);
             bs >> mPartOverride.size;
 
             bool bit8;
-            bsrev >> bit8;
+            d >> bit8;
             SetBit(8, bit8);
             bs >> mPartOverride.deltaSize;
 
             bool bit10;
-            bsrev >> bit10;
+            d >> bit10;
             SetBit(0x10, bit10);
             bs >> mPartOverride.startColor;
 
             bool bit20;
-            bsrev >> bit20;
+            d >> bit20;
             SetBit(0x20, bit20);
             bs >> mPartOverride.midColor;
 
             bool bit40;
-            bsrev >> bit40;
+            d >> bit40;
             SetBit(0x40, bit40);
             bs >> mPartOverride.endColor;
 
             bool bit80;
-            bsrev >> bit80;
+            d >> bit80;
             SetBit(0x80, bit80);
             bs >> mPartOverride.pitch;
             bs >> mPartOverride.yaw;
@@ -166,11 +166,11 @@ BEGIN_LOADS(RndPartLauncher)
         bs >> mPartOverride.endColor;
         bs >> mPartOverride.pitch;
         bs >> mPartOverride.yaw;
-        if (gRev > 2) {
+        if (d.rev > 2) {
             bs >> mPartOverride.box;
             bs >> mMeshEmitter;
         }
-        if (gRev > 3) {
+        if (d.rev > 3) {
             bs >> mEmitRate;
         }
     }

@@ -770,32 +770,30 @@ extern DataArray *SystemConfig(Symbol, Symbol, Symbol);
 #define LOAD_REVS(bs)                                                                    \
     int revs;                                                                            \
     bs >> revs;                                                                          \
-    BinStreamRev bsrev(bs, revs);                                                        \
-    int gRev = bsrev.rev;                                                                \
-    int gAltRev = bsrev.altRev;
+    BinStreamRev d(bs, revs);
 
 #define ASSERT_REVS(rev1, rev2)                                                          \
     static const unsigned short gRevs[4] = { rev1, 0, rev2, 0 };                         \
-    if (bsrev.rev > rev1) {                                                              \
+    if (d.rev > rev1) {                                                                  \
         MILO_FAIL(                                                                       \
             "%s can't load new %s version %d > %d",                                      \
             PathName(this),                                                              \
             ClassName(),                                                                 \
-            bsrev.rev,                                                                   \
+            d.rev,                                                                       \
             gRevs[0]                                                                     \
         );                                                                               \
     }                                                                                    \
-    if (bsrev.altRev > rev2) {                                                           \
+    if (d.altRev > rev2) {                                                               \
         MILO_FAIL(                                                                       \
             "%s can't load new %s alt version %d > %d",                                  \
             PathName(this),                                                              \
             ClassName(),                                                                 \
-            bsrev.altRev,                                                                \
+            d.altRev,                                                                    \
             gRevs[2]                                                                     \
         );                                                                               \
     }
 
-#define LOAD_SUPERCLASS(parent) parent::Load(bs);
+#define LOAD_SUPERCLASS(parent) parent::Load(d.stream);
 
 #define LOAD_VIRTUAL_SUPERCLASS(parent)                                                  \
     if (ClassName() == StaticClassName())                                                \
@@ -804,14 +802,14 @@ extern DataArray *SystemConfig(Symbol, Symbol, Symbol);
 #define LOAD_BITFIELD(type, name)                                                        \
     {                                                                                    \
         type bs_name;                                                                    \
-        bs >> bs_name;                                                                   \
+        d >> bs_name;                                                                    \
         name = bs_name;                                                                  \
     }
 
 #define LOAD_BITFIELD_ENUM(type, name, enum_name)                                        \
     {                                                                                    \
         type bs_name;                                                                    \
-        bs >> bs_name;                                                                   \
+        d >> bs_name;                                                                    \
         name = (enum_name)bs_name;                                                       \
     }
 

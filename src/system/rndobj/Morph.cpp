@@ -74,16 +74,16 @@ BinStreamRev &operator>>(BinStreamRev &bs, RndMorph::Pose &pose) {
 BEGIN_LOADS(RndMorph)
     LOAD_REVS(bs)
     ASSERT_REVS(4, 0)
-    if (bsrev.rev > 3) {
+    if (d.rev > 3) {
         LOAD_SUPERCLASS(Hmx::Object)
     }
     LOAD_SUPERCLASS(RndAnimatable)
-    bsrev >> mPoses >> mTarget;
-    if (bsrev.rev > 0) {
-        bsrev >> mNormals >> mSpline;
+    d >> mPoses >> mTarget;
+    if (d.rev > 0) {
+        d >> mNormals >> mSpline;
     }
-    if (bsrev.rev > 2) {
-        bsrev >> mIntensity;
+    if (d.rev > 2) {
+        d >> mIntensity;
     }
 END_LOADS
 

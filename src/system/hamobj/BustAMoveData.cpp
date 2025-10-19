@@ -46,5 +46,5 @@ BEGIN_LOADS(BustAMoveData)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    bsrev >> mPhrases;
+    d >> mPhrases;
 END_LOADS

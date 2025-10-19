@@ -80,13 +80,13 @@ BEGIN_LOADS(RndRibbon)
     LOAD_SUPERCLASS(RndDrawable)
     bs >> mNumSides;
     bs >> mMat;
-    bsrev >> mActive;
+    d >> mActive;
     bs >> mWidth;
     bs >> mNumSegments;
     bs >> mFollowA;
     bs >> mFollowB;
     bs >> mFollowWeight;
-    bsrev >> mTaper;
+    d >> mTaper;
     bs >> mDecay;
     mDirty = 1;
     mMesh->SetMat(mMat);

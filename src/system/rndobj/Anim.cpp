@@ -302,13 +302,13 @@ END_HANDLERS
 BEGIN_LOADS(RndAnimatable)
     LOAD_REVS(bs)
     ASSERT_REVS(4, 0)
-    if (gRev > 1)
+    if (d.rev > 1)
         bs >> mFrame;
-    if (gRev > 3) {
+    if (d.rev > 3) {
         bs >> (int &)mRate;
-    } else if (gRev > 2) {
+    } else if (d.rev > 2) {
         bool rate;
-        bsrev >> rate;
+        d >> rate;
         mRate = (Rate)(!rate);
     }
 END_LOADS

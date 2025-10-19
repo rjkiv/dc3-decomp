@@ -49,7 +49,7 @@ BEGIN_LOADS(FlowRun)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)
     LOAD_SUPERCLASS(FlowNode)
-    if (gRev < 2) {
+    if (d.rev < 2) {
         Hmx::Object *obj = LoadObjectFromMainOrDir(bs, Dir());
         if (obj) {
             mTargetDir = dynamic_cast<ObjectDir *>(obj);
@@ -60,8 +60,8 @@ BEGIN_LOADS(FlowRun)
         bs >> mTargetName;
         mTarget.Reset();
     }
-    bsrev >> mStop;
-    bsrev >> mImmediateRelease;
+    d >> mStop;
+    d >> mImmediateRelease;
 END_LOADS
 
 void FlowRun::ChildFinished(FlowNode *node) {

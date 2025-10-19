@@ -73,43 +73,43 @@ END_COPYS
 BEGIN_LOADS(RndGenerator)
     LOAD_REVS(bs)
     ASSERT_REVS(0xB, 0)
-    if (bsrev.rev > 9) {
-        Hmx::Object::Load(bsrev.stream);
+    if (d.rev > 9) {
+        LOAD_SUPERCLASS(Hmx::Object)
     }
-    if (bsrev.rev > 1) {
-        RndTransformable::Load(bsrev.stream);
-        RndDrawable::Load(bsrev.stream);
-        RndAnimatable::Load(bsrev.stream);
+    if (d.rev > 1) {
+        LOAD_SUPERCLASS(RndTransformable)
+        LOAD_SUPERCLASS(RndDrawable)
+        LOAD_SUPERCLASS(RndAnimatable)
     }
     ResetInstances();
-    bsrev.stream >> mMesh >> mPath;
-    if (bsrev.rev < 7) {
+    d.stream >> mMesh >> mPath;
+    if (d.rev < 7) {
         bool bd0;
-        bsrev >> bd0;
+        d >> bd0;
         if (!bd0) {
             MILO_NOTIFY("%s no longer supports childOfGen", Name());
         }
     }
-    if (bsrev.rev < 1) {
-        bsrev.stream >> mRateGenHigh;
-        bsrev.stream >> mScaleGenHigh;
+    if (d.rev < 1) {
+        d.stream >> mRateGenHigh;
+        d.stream >> mScaleGenHigh;
     }
-    if (bsrev.rev < 8) {
+    if (d.rev < 8) {
         ObjPtr<RndCam> cam(this);
         bool bd0;
         int ic0;
-        bsrev >> bd0 >> ic0 >> cam;
+        d >> bd0 >> ic0 >> cam;
     }
 
-    if (bsrev.rev > 0) {
-        bsrev.stream >> mRateGenLow;
-        bsrev.stream >> mRateGenHigh;
-        bsrev.stream >> mScaleGenLow;
-        bsrev.stream >> mScaleGenHigh;
-        bsrev.stream >> mPathVarMaxX;
-        bsrev.stream >> mPathVarMaxY;
-        bsrev.stream >> mPathVarMaxZ;
-        if (bsrev.rev < 9) {
+    if (d.rev > 0) {
+        d.stream >> mRateGenLow;
+        d.stream >> mRateGenHigh;
+        d.stream >> mScaleGenLow;
+        d.stream >> mScaleGenHigh;
+        d.stream >> mPathVarMaxX;
+        d.stream >> mPathVarMaxY;
+        d.stream >> mPathVarMaxZ;
+        if (d.rev < 9) {
             mPathVarMaxX *= DEG2RAD;
             mPathVarMaxY *= DEG2RAD;
             mPathVarMaxZ *= DEG2RAD;
@@ -119,29 +119,29 @@ BEGIN_LOADS(RndGenerator)
         mScaleGenLow = mScaleGenHigh;
         mPathVarMaxX = mPathVarMaxY = mPathVarMaxZ = 0;
     }
-    if (bsrev.rev == 3) {
+    if (d.rev == 3) {
         int x;
         ObjPtr<Hmx::Object> obj(this);
-        bsrev.stream >> obj >> x;
+        d.stream >> obj >> x;
     }
-    if (bsrev.rev > 3 && bsrev.rev < 0xB) {
+    if (d.rev > 3 && d.rev < 0xB) {
         ObjPtr<Hmx::Object> obj(this);
-        bsrev.stream >> obj;
+        d.stream >> obj;
     }
-    if (bsrev.rev > 4 && bsrev.rev < 0xB) {
+    if (d.rev > 4 && d.rev < 0xB) {
         bool bd0;
-        bsrev >> bd0;
+        d >> bd0;
     }
-    if (bsrev.rev > 5) {
-        bsrev.stream >> mPathEndFrame;
-        bsrev.stream >> mPathStartFrame;
+    if (d.rev > 5) {
+        d.stream >> mPathEndFrame;
+        d.stream >> mPathStartFrame;
     } else {
         if (mPath)
             mPathEndFrame = mPath->EndFrame();
         mPathStartFrame = 0;
     }
-    if (bsrev.rev > 6) {
-        bsrev.stream >> mMultiMesh >> mParticleSys;
+    if (d.rev > 6) {
+        d.stream >> mMultiMesh >> mParticleSys;
     }
 END_LOADS
 

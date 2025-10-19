@@ -164,7 +164,7 @@ void Hmx::Object::LoadType(BinStream &bs) {
     Symbol s;
     bs >> s;
     SetType(s);
-    bsrev.PushRev(this);
+    d.PushRev(this);
 }
 
 const char *Hmx::Object::FindPathName() {
@@ -632,16 +632,16 @@ void Hmx::Object::Copy(const Hmx::Object *o, CopyType ty) {
 }
 
 void Hmx::Object::LoadRest(BinStream &bs) {
-    BinStreamRev bsrev(bs, bs.PopRev(this));
+    BinStreamRev d(bs, bs.PopRev(this));
     if (!mTypeProps) {
         mTypeProps = new TypeProps(this);
     }
-    mTypeProps->Load(bsrev);
+    mTypeProps->Load(d);
     if (!mTypeProps->HasProps()) {
         RELEASE(mTypeProps);
     }
-    if (bsrev.rev > 0) {
-        bsrev >> mNote;
+    if (d.rev > 0) {
+        d >> mNote;
     }
 }
 

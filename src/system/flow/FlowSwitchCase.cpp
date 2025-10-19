@@ -48,7 +48,7 @@ BEGIN_LOADS(FlowSwitchCase)
     LOAD_REVS(bs)
     ASSERT_REVS(3, 0)
     LOAD_SUPERCLASS(FlowNode)
-    if (gRev < 2) {
+    if (d.rev < 2) {
         DataNode n;
         bs >> n;
         mFromValue = n;

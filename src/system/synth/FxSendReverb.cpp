@@ -40,7 +40,7 @@ BEGIN_LOADS(FxSendReverb)
     ASSERT_REVS(2, 0);
     LOAD_SUPERCLASS(FxSend)
     bs >> mEnvironmentPreset;
-    if (gRev >= 2) {
+    if (d.rev >= 2) {
         bs >> mPreDelayMs >> mHighCut >> mLowCut >> mRoomSize >> mDamping >> mDiffusion
             >> mEarlyLate;
     }

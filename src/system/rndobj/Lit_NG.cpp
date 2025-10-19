@@ -5,6 +5,7 @@
 #include "os/System.h"
 #include "rndobj/Draw.h"
 #include "Memory.h"
+#include "rndobj/Lit.h"
 
 bool NgLight::WantShadows() const {
     return GetGfxMode() == kNewGfx && mShadowOverride && !mShadowOverride->empty();
@@ -30,7 +31,7 @@ BEGIN_COPYS(NgLight)
 END_COPYS
 
 BEGIN_LOADS(NgLight)
-    LOAD_SUPERCLASS(RndLight)
+    RndLight::Load(bs);
     CheckShadowMap();
 END_LOADS
 

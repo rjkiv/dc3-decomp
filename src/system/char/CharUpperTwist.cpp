@@ -37,9 +37,9 @@ BEGIN_LOADS(CharUpperTwist)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    bs >> mUpperArm;
-    bs >> mTwist1;
-    bs >> mTwist2;
+    d >> mUpperArm;
+    d >> mTwist1;
+    d >> mTwist2;
 END_LOADS
 
 void CharUpperTwist::PollDeps(

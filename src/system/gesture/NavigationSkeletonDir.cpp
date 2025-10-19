@@ -1,5 +1,6 @@
 #include "gesture/NavigationSkeletonDir.h"
 #include "SkeletonDir.h"
+#include "gesture/SkeletonDir.h"
 #include "obj/Object.h"
 
 NavigationSkeletonDir::NavigationSkeletonDir() : mDirectionGestureFilter(0) {}
@@ -23,5 +24,5 @@ BEGIN_COPYS(NavigationSkeletonDir)
 END_COPYS
 
 BEGIN_LOADS(NavigationSkeletonDir)
-    LOAD_SUPERCLASS(SkeletonDir)
+    SkeletonDir::Load(bs);
 END_LOADS

@@ -83,7 +83,7 @@ void RndCubeTex::PreLoad(BinStream &bs) {
     LOAD_REVS(bs);
     ASSERT_REVS(2, 0);
     LOAD_SUPERCLASS(Hmx::Object)
-    if (gRev > 1) {
+    if (d.rev > 1) {
         if (bs.Cached()) {
             props.Load(bs);
             for (int i = 0; i < kNumCubeFaces; i++) {
@@ -109,7 +109,7 @@ void RndCubeTex::PreLoad(BinStream &bs) {
         if (!bs.Cached())
             TheLoadMgr.AddLoader(mFile[i], kLoadFront);
     }
-    bsrev.PushRev(this);
+    d.PushRev(this);
 }
 
 bool RndCubeTex::ValidateBitmapProperties(std::vector<CubeFace> &faces) {
@@ -189,10 +189,10 @@ void RndCubeTex::UpdateFace(CubeFace face) {
 }
 
 void RndCubeTex::PostLoad(BinStream &bs) {
-    BinStreamRev bsrev(bs, bs.PopRev(this));
-    if (bsrev.rev < 2) {
+    BinStreamRev d(bs, bs.PopRev(this));
+    if (d.rev < 2) {
         bool b;
-        bsrev >> b;
+        d >> b;
     }
     for (int i = 0; i < kNumCubeFaces; i++) {
         if (bs.Cached()) {
@@ -200,7 +200,7 @@ void RndCubeTex::PostLoad(BinStream &bs) {
         } else if (!mFile[i].empty()) {
             SetBitmap((CubeFace)i, mFile[i], false);
         }
-        if (bsrev.rev < 2) {
+        if (d.rev < 2) {
             props = moreprops[i];
         }
     }

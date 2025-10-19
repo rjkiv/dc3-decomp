@@ -235,31 +235,11 @@ void RemoveNullEvents(std::list<Symbol> &vec) {
 }
 
 BEGIN_LOADS(EventTrigger)
-    int revs;
-    bs >> revs;
-    BinStreamRev d(bs, revs);
-    static const unsigned short gRevs[4] = { 0x11, 0, 0, 0 };
-    if (d.rev > 0x11) {
-        MILO_FAIL(
-            "%s can't load new %s version %d > %d",
-            PathName(this),
-            ClassName(),
-            d.rev,
-            gRevs[0]
-        );
-    }
-    if (d.altRev > 0) {
-        MILO_FAIL(
-            "%s can't load new %s alt version %d > %d",
-            PathName(this),
-            ClassName(),
-            d.altRev,
-            gRevs[2]
-        );
-    }
-    Hmx::Object::Load(d.stream);
+    LOAD_REVS(bs)
+    ASSERT_REVS(0x11, 0)
+    LOAD_SUPERCLASS(Hmx::Object)
     if (d.rev > 0xF) {
-        RndAnimatable::Load(d.stream);
+        LOAD_SUPERCLASS(RndAnimatable)
     }
     UnregisterEvents();
     std::list<EventTrigger *> triggers;

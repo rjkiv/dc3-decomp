@@ -39,6 +39,6 @@ BEGIN_LOADS(CharBoneTwist)
     ASSERT_REVS(0, 0)
     LOAD_SUPERCLASS(Hmx::Object)
     LOAD_SUPERCLASS(CharWeightable)
-    bs >> mBone;
-    bs >> mTargets;
+    d >> mBone;
+    d >> mTargets;
 END_LOADS

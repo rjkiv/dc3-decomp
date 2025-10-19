@@ -74,5 +74,5 @@ BEGIN_LOADS(HamBattleData)
     LOAD_REVS(bs)
     ASSERT_REVS(4, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    bsrev >> mSteps;
+    d >> mSteps;
 END_LOADS

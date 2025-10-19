@@ -39,7 +39,7 @@ BEGIN_LOADS(RndTransProxy)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    if (bsrev.rev > 0) {
+    if (d.rev > 0) {
         LOAD_SUPERCLASS(RndTransformable)
     }
     bs >> mProxy;

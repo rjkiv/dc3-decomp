@@ -63,11 +63,11 @@ BEGIN_LOADS(WorldReflection)
     LOAD_SUPERCLASS(RndDrawable)
     bs >> mVerticalStretch;
     bs >> mDraws;
-    if (gRev > 1) {
+    if (d.rev > 1) {
         bs >> mHideList;
         bs >> mShowList;
     }
-    if (gRev > 2) {
+    if (d.rev > 2) {
         bs >> mLodChars;
     }
 END_LOADS

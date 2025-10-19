@@ -69,7 +69,7 @@ BEGIN_COPYS(RndDir)
 END_COPYS
 
 BEGIN_LOADS(RndDir)
-    LOAD_SUPERCLASS(ObjectDir)
+    ObjectDir::Load(bs);
 END_LOADS
 
 void RndDir::Export(DataArray *a, bool b2) {
@@ -85,36 +85,36 @@ void RndDir::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(10, 0)
     ObjectDir::PreLoad(bs);
-    bsrev.PushRev(this);
+    d.PushRev(this);
 }
 
 void RndDir::PostLoad(BinStream &bs) {
-    BinStreamRev bsrev(bs, bs.PopRev(this));
+    BinStreamRev d(bs, bs.PopRev(this));
     ObjectDir::PostLoad(bs);
-    RndAnimatable::Load(bsrev.stream);
-    RndDrawable::Load(bsrev.stream);
-    if (bsrev.rev > 0) {
-        RndTransformable::Load(bsrev.stream);
+    RndAnimatable::Load(d.stream);
+    RndDrawable::Load(d.stream);
+    if (d.rev > 0) {
+        RndTransformable::Load(d.stream);
     }
-    if (bsrev.rev > 1) {
+    if (d.rev > 1) {
         if (gLoadingProxyFromDisk) {
             ObjPtr<RndEnviron> env(this);
-            env.Load(bsrev.stream, false, nullptr);
+            env.Load(d.stream, false, nullptr);
         } else {
-            bsrev.stream >> mEnv;
+            d.stream >> mEnv;
         }
     }
-    if (bsrev.rev > 2 && bsrev.rev != 9) {
-        bsrev.stream >> mTestEvent;
+    if (d.rev > 2 && d.rev != 9) {
+        d.stream >> mTestEvent;
     }
-    if (bsrev.rev > 3 && bsrev.rev < 9) {
+    if (d.rev > 3 && d.rev < 9) {
         Symbol s;
-        bsrev.stream >> s;
-        bsrev.stream >> s;
+        d.stream >> s;
+        d.stream >> s;
     }
-    if (bsrev.rev > 4 && bsrev.rev < 8) {
+    if (d.rev > 4 && d.rev < 8) {
         RndPostProc *pp = Hmx::Object::New<RndPostProc>();
-        pp->LoadRev(bsrev);
+        pp->LoadRev(d);
         delete pp;
     }
 }

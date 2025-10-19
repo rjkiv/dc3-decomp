@@ -37,7 +37,7 @@ BEGIN_LOADS(ColorPalette)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    if (gRev < 1) {
+    if (d.rev < 1) {
         std::vector<ColorSet> vec;
         bs >> vec;
         mColors.clear();

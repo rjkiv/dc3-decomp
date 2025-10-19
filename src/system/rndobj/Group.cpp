@@ -92,36 +92,36 @@ END_COPYS
 BEGIN_LOADS(RndGroup)
     LOAD_REVS(bs)
     ASSERT_REVS(0x10, 0)
-    if (gRev > 7) {
+    if (d.rev > 7) {
         LOAD_SUPERCLASS(Hmx::Object)
     }
     LOAD_SUPERCLASS(RndAnimatable)
     LOAD_SUPERCLASS(RndTransformable)
     LOAD_SUPERCLASS(RndDrawable)
-    if (gRev > 10) {
+    if (d.rev > 10) {
         bs >> mObjects;
-        if (gRev < 0x10) {
+        if (d.rev < 0x10) {
             ObjPtr<RndEnviron> env(this);
             bs >> env;
             if (env) {
                 mObjects.push_back(env);
             }
         }
-        if (gRev > 0xC) {
+        if (d.rev > 0xC) {
             bs >> mDrawOnly;
         } else {
             mDrawOnly = nullptr;
         }
         Update();
     }
-    if (gRev > 0xB && gRev < 0xF) {
+    if (d.rev > 0xB && d.rev < 0xF) {
         String str;
         float x;
         bs >> str;
         bs >> x;
     }
-    if (gRev > 0xD) {
-        bsrev >> mSortInWorld;
+    if (d.rev > 0xD) {
+        d >> mSortInWorld;
     }
 END_LOADS
 

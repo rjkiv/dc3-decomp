@@ -55,11 +55,11 @@ BEGIN_LOADS(FxSendEQ)
     LOAD_SUPERCLASS(FxSend)
     bs >> mHighFreqCutoff >> mHighFreqGain >> mMidFreqCutoff >> mMidFreqBandwidth
         >> mMidFreqGain >> mLowFreqCutoff >> mLowFreqGain;
-    if (gRev >= 2) {
+    if (d.rev >= 2) {
         bs >> mLowPassCutoff >> mLowPassReso >> mHighPassCutoff >> mHighPassReso;
     }
-    if (gRev >= 3) {
-        bsrev >> mLRMode;
+    if (d.rev >= 3) {
+        d >> mLRMode;
         bs >> mTransitionTime;
     }
     OnParametersChanged();

@@ -61,11 +61,11 @@ BEGIN_LOADS(RndDrawable)
     ASSERT_REVS(4, 0)
     if (gLoadingProxyFromDisk) {
         bool dummy;
-        bsrev >> dummy;
+        d >> dummy;
     } else {
-        bsrev >> mShowing;
+        d >> mShowing;
     }
-    if (gRev < 2) {
+    if (d.rev < 2) {
         int count;
         bs >> count;
         RndGroup *grp = dynamic_cast<RndGroup *>(this);
@@ -83,16 +83,16 @@ BEGIN_LOADS(RndDrawable)
                 MILO_NOTIFY("%s not in group", buf);
         }
     }
-    if (gRev > 0)
+    if (d.rev > 0)
         bs >> mSphere;
-    if (gRev > 2) {
+    if (d.rev > 2) {
         if (gLoadingProxyFromDisk) {
             float dummy;
             bs >> dummy;
         } else
             bs >> mOrder;
     }
-    if (gRev > 3)
+    if (d.rev > 3)
         bs >> mClipPlanes;
 END_LOADS
 

@@ -38,7 +38,7 @@ BEGIN_LOADS(FlowPickOne)
     ASSERT_REVS(1, 0)
     LOAD_SUPERCLASS(FlowNode)
     bs >> (int &)mChoiceType;
-    if (gRev > 0) {
+    if (d.rev > 0) {
         bs >> mChance;
     }
 END_LOADS

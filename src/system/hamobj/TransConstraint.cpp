@@ -81,20 +81,20 @@ BEGIN_LOADS(TransConstraint)
     bs >> mChild;
     bs >> mStaticCube;
     for (int i = 0; i < 3; i++) {
-        bsrev >> mTracks[i];
+        d >> mTracks[i];
     }
-    if (gRev > 0) {
+    if (d.rev > 0) {
         bs >> mSpeed;
     }
-    if (gRev > 1) {
-        if (gRev <= 3) {
+    if (d.rev > 1) {
+        if (d.rev <= 3) {
             bool b;
-            bsrev >> b;
+            d >> b;
         }
-        bsrev >> mAffectScale;
+        d >> mAffectScale;
     }
-    if (gRev > 2) {
-        bsrev >> mUseUITime;
+    if (d.rev > 2) {
+        d >> mUseUITime;
     }
 END_LOADS
 

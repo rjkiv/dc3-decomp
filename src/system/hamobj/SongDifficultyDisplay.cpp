@@ -43,7 +43,7 @@ void SongDifficultyDisplay::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)
     UIComponent::PreLoad(bs);
-    if (gRev >= 2) {
+    if (d.rev >= 2) {
         bs >> mResourceDir;
     }
 }

@@ -93,7 +93,7 @@ BEGIN_LOADS(RndFur)
     bs >> mLayers;
     bs >> mThickness;
     bs >> mCurvature;
-    if (gRev > 1) {
+    if (d.rev > 1) {
         bs >> mShellOut;
         bs >> mAlphaFalloff;
     }
@@ -104,7 +104,7 @@ BEGIN_LOADS(RndFur)
     bs >> mRootsTint >> mEndsTint;
     bs >> mFurDetail;
     bs >> mFurTiling;
-    if (gRev > 2) {
+    if (d.rev > 2) {
         bs >> mWind;
     }
 END_LOADS

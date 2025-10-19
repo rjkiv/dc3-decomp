@@ -52,7 +52,7 @@ BEGIN_LOADS(HamSupereasyData)
          ++it) {
         bs >> it->first;
         bs >> it->second;
-        if (bsrev.altRev > 0)
+        if (d.altRev > 0)
             bs >> it->preferred;
     }
 END_LOADS

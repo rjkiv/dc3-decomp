@@ -44,13 +44,13 @@ BEGIN_LOADS(FxSendChorus)
     LOAD_REVS(bs)
     ASSERT_REVS(3, 0)
     LOAD_SUPERCLASS(FxSend)
-    if (gRev == 1) {
+    if (d.rev == 1) {
         mDryGain = -3.0f;
         mWetGain = -3.0f;
         UpdateMix();
     }
     bs >> mDelayMs >> mRate >> mDepth;
-    if (gRev < 4) {
+    if (d.rev < 4) {
         int feedbackInt;
         bs >> feedbackInt;
         mFeedbackPct = feedbackInt;
@@ -60,8 +60,8 @@ BEGIN_LOADS(FxSendChorus)
     } else {
         bs >> mFeedbackPct >> mOffsetPct;
     }
-    if (gRev >= 3) {
-        bsrev >> mTempoSync;
+    if (d.rev >= 3) {
+        d >> mTempoSync;
         bs >> mSyncType;
         bs >> mTempo;
     }

@@ -98,16 +98,16 @@ BEGIN_LOADS(PracticeSection)
     LOAD_REVS(bs)
     ASSERT_REVS(3, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    if (gRev > 1) {
+    if (d.rev > 1) {
         LOAD_SUPERCLASS(RndAnimatable)
     }
     bs >> mDisplayName;
     int diff;
     bs >> diff;
     mDifficulty = (Difficulty)diff;
-    bsrev >> mSteps;
+    d >> mSteps;
     DeleteAll(mSeqs);
-    if (gRev > 1) {
+    if (d.rev > 1) {
         int numSeqs;
         bs >> numSeqs;
         for (int i = 0; i < numSeqs; i++) {

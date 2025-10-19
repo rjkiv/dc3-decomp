@@ -169,10 +169,10 @@ void HamNavList::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(10, 0)
     UIComponent::PreLoad(bs);
-    if (gRev >= 2) {
+    if (d.rev >= 2) {
         LOAD_SUPERCLASS(RndAnimatable)
     }
-    if (gRev >= 1) {
+    if (d.rev >= 1) {
         bs >> mListRibbonResource;
         bs >> mListDirResource;
     } else {
@@ -182,35 +182,35 @@ void HamNavList::PreLoad(BinStream &bs) {
     }
     bs >> mNavProvider;
     SetNavProvider(mNavProvider);
-    if (gRev >= 3) {
-        bsrev >> mDisableSelectSound;
-        bsrev >> mDisableSlideSound;
-        bsrev >> mEnabled;
-        bsrev >> mAlwaysUseActiveSkeleton;
-        bsrev >> (int &)mNavInputType; // should be BinStreamEnum read
+    if (d.rev >= 3) {
+        d >> mDisableSelectSound;
+        d >> mDisableSlideSound;
+        d >> mEnabled;
+        d >> mAlwaysUseActiveSkeleton;
+        d >> (int &)mNavInputType; // should be BinStreamEnum read
     }
-    if (gRev >= 5) {
-        bsrev >> mOnlyUseWhenFocused;
+    if (d.rev >= 5) {
+        d >> mOnlyUseWhenFocused;
     }
-    if (gRev >= 4) {
+    if (d.rev >= 4) {
         bs >> mScrollSpeedAnim;
     }
-    if (gRev >= 6) {
-        bsrev >> mSuppressAutomaticEnter;
+    if (d.rev >= 6) {
+        d >> mSuppressAutomaticEnter;
     }
-    if (gRev >= 7) {
-        bsrev >> mBigElements;
+    if (d.rev >= 7) {
+        d >> mBigElements;
     }
-    if (gRev >= 8) {
+    if (d.rev >= 8) {
         bs >> mHeaderRibbonResource;
     }
-    if (gRev >= 9) {
+    if (d.rev >= 9) {
         bs >> mScrollSpeedIndicatorResource;
     }
-    if (gRev >= 10) {
-        bsrev >> mSkipEnterAnim;
+    if (d.rev >= 10) {
+        d >> mSkipEnterAnim;
     }
-    bsrev.PushRev(this);
+    d.PushRev(this);
 }
 
 void HamNavList::PostLoad(BinStream &bs) {

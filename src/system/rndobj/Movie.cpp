@@ -60,25 +60,25 @@ END_LOADS
 void RndMovie::PreLoad(BinStream &bs) {
     LOAD_REVS(bs);
     ASSERT_REVS(8, 0);
-    if (gRev > 6)
+    if (d.rev > 6)
         Hmx::Object::Load(bs);
     RndAnimatable::Load(bs);
     bs >> mFile;
-    if (gRev > 3)
+    if (d.rev > 3)
         bs >> mTex;
-    if (gRev > 4)
+    if (d.rev > 4)
         bs >> mStream;
-    if (gRev > 7 && !mStream) {
+    if (d.rev > 7 && !mStream) {
         TheLoadMgr.AddLoader(mFile, kLoadFront);
     }
-    bsrev.PushRev(this);
+    d.PushRev(this);
 }
 
 void RndMovie::PostLoad(BinStream &bs) {
-    BinStreamRev bsrev(bs, bs.PopRev(this));
-    if (bsrev.rev > 5) {
-        bsrev >> mLoop;
-    } else if (bsrev.rev == 5) {
+    BinStreamRev d(bs, bs.PopRev(this));
+    if (d.rev > 5) {
+        d >> mLoop;
+    } else if (d.rev == 5) {
         mLoop = !mStream;
     }
     SetFile(mFile, mStream);
