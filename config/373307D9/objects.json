@@ -500,7 +500,7 @@
             "system/net/WebSvcMgrCurl.cpp": "MISSING",
             "system/net/WebSvcReq.cpp": "MISSING",
             "system/net/XLSPConnection.cpp": "MISSING",
-            
+
             "system/net/asyn-thread.cpp": "MISSING",
             "system/net/base64.cpp": "MISSING",
             "system/net/connect.cpp": "MISSING",
@@ -563,7 +563,7 @@
             "system/net/url.cpp": "MISSING",
             "system/net/warnless.cpp": "MISSING",
             "system/net/wildcard.cpp": "MISSING",
-            
+
             "system/net/json-c/arraylist.c": "NonMatching",
             "system/net/json-c/json_object.c": "NonMatching",
             "system/net/json-c/json_tokener.c": "NonMatching",
@@ -587,7 +587,7 @@
             "system/obj/TextFile.cpp": "NonMatching",
             "system/obj/TypeProps.cpp": "NonMatching",
             "system/obj/Utl.cpp": "NonMatching",
-            
+
             "system/oggvorbis/VorbisMem.cpp": "MISSING",
             "system/oggvorbis/bitrate.c": "NonMatching",
             "system/oggvorbis/bitwise.c": "NonMatching",
@@ -679,7 +679,7 @@
             "system/os/xlrc/xlrctcptransport.cpp": "MISSING",
             "system/os/xlrc/xlrctransport.cpp": "MISSING",
             "system/os/xlrc/xlrcutil.cpp": "MISSING",
-            
+
             "system/os/pch.cpp": "MISSING",
             "system/os/precomp.cpp": "MISSING",
             "system/os/socialpostapi.cpp": "MISSING",
@@ -816,7 +816,7 @@
             "system/synth/FxSendReverb.cpp": "NonMatching",
             "system/synth/FxSendSynapse.cpp": "NonMatching",
             "system/synth/FxSendWah.cpp": "NonMatching",
-            "system/synth/MetaMusic.cpp": "MISSING",
+            "system/synth/MetaMusic.cpp": "NonMatching",
             "system/synth/MeterEffectMonitor.cpp": "MISSING",
             "system/synth/Mic.cpp": "NonMatching",
             "system/synth/MicClientMapper.cpp": "NonMatching",
