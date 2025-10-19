@@ -34,3 +34,4 @@ compile_commands.json
 /*.txt
 *.exe
 *.pdb
+_CL_*

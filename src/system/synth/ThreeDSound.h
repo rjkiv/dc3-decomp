@@ -51,12 +51,12 @@ protected:
     float unk1b8;
     bool unk1bc;
     bool unk1bd;
-    int unk1c0;
-    float unk1c4;
+    int mShape;
+    float mRadius; // 0x1C4
     Fader *unk1c8;
     Transform unk1cc;
     float unk20c;
     float unk210;
-    float unk214;
+    float mDopplerPower; // 0x214
     bool unk218;
 };

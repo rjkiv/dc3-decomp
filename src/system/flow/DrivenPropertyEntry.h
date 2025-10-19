@@ -13,6 +13,8 @@ public:
     void Save(BinStream &);
     void Load(BinStream &, FlowNode *);
 
+    bool Empty() { return mMathOps.empty(); }
+
 protected:
     DataNode unk0; // 0x0
     ObjVector<FlowMathOp> mMathOps; // 0x8
