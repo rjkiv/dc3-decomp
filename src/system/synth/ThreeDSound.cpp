@@ -22,15 +22,13 @@ ThreeDSound::ThreeDSound()
 }
 
 BEGIN_PROPSYNCS(ThreeDSound)
-    SYNC_PROP_SET(
-        enable_doppler, unk1bc, bool doppler = _val.Int(); unk1c8->SetTranspose(0);
-        unk1bc = doppler
-    )
+    SYNC_PROP_SET(enable_doppler, unk1bc, bool doppler = _val.Int();
+                  unk1c8->SetTranspose(0);
+                  unk1bc = doppler)
     SYNC_PROP_SET(enable_pan, unk1bd, EnablePan(_val.Int()))
     SYNC_PROP_SET(falloff_type, unk1ac, unk1ac = _val.Int(); CalculateFaderVolume();)
-    SYNC_PROP_SET(
-        falloff_parameter, unk1a8, unk1a8 = _val.Float(); CalculateFaderVolume();
-    )
+    SYNC_PROP_SET(falloff_parameter, unk1a8, unk1a8 = _val.Float();
+                  CalculateFaderVolume();)
     SYNC_PROP(min_falloff_distance, unk1b0)
     SYNC_PROP(silence_distance, unk1b0)
     SYNC_PROP_SET(shape, mShape, mShape = _val.Int(); CalculateFaderVolume();)
@@ -86,30 +84,30 @@ BEGIN_LOADS(ThreeDSound)
     LOAD_REVS(bs)
     ASSERT_REVS(6, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    if (gRev >= 2) {
+    if (d.rev >= 2) {
         LOAD_SUPERCLASS(RndTransformable)
     }
     LOAD_SUPERCLASS(Sound)
-    bsrev >> unk1ac;
-    bsrev >> unk1b0;
-    bsrev >> unk1b4;
-    bsrev >> unk1b8;
+    d >> unk1ac;
+    d >> unk1b0;
+    d >> unk1b4;
+    d >> unk1b8;
 
-    if (gRev >= 1) {
-        bsrev >> unk1bc;
+    if (d.rev >= 1) {
+        d >> unk1bc;
     }
-    if (gRev >= 3) {
-        bsrev >> unk1bd;
+    if (d.rev >= 3) {
+        d >> unk1bd;
     }
-    if (gRev >= 4) {
-        bsrev >> mShape;
-        bsrev >> mRadius;
+    if (d.rev >= 4) {
+        d >> mShape;
+        d >> mRadius;
     }
-    if (gRev >= 5) {
-        bsrev >> unk195;
+    if (d.rev >= 5) {
+        d >> unk195;
     }
-    if (gRev >= 6) {
-        bsrev >> mDopplerPower;
+    if (d.rev >= 6) {
+        d >> mDopplerPower;
     }
     SetLocalScale(this, Vector3(unk1b4, unk1b8, mRadius));
     CalculateFaderVolume();

@@ -37,8 +37,8 @@ BEGIN_LOADS(CrazeHollaback)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    bs >> mMusicRange.start;
-    bs >> mMusicRange.end;
-    bs >> mPlayRange.start;
-    bs >> mPlayRange.end;
+    d >> mMusicRange.start;
+    d >> mMusicRange.end;
+    d >> mPlayRange.start;
+    d >> mPlayRange.end;
 END_LOADS

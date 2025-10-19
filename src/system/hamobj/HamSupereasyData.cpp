@@ -45,14 +45,14 @@ BEGIN_LOADS(HamSupereasyData)
     ASSERT_REVS(0, 1)
     LOAD_SUPERCLASS(Hmx::Object)
     int numMeasures;
-    bs >> numMeasures;
+    d >> numMeasures;
     mRoutine.resize(numMeasures);
     for (std::vector<HamSupereasyMeasure>::iterator it = mRoutine.begin();
          it != mRoutine.end();
          ++it) {
-        bs >> it->first;
-        bs >> it->second;
+        d >> it->first;
+        d >> it->second;
         if (d.altRev > 0)
-            bs >> it->preferred;
+            d >> it->preferred;
     }
 END_LOADS

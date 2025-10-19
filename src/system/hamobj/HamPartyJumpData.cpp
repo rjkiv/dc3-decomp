@@ -59,12 +59,12 @@ BEGIN_LOADS(HamPartyJumpData)
     ASSERT_REVS(0, 0)
     LOAD_SUPERCLASS(Hmx::Object)
     int numJumps;
-    bs >> numJumps;
+    d >> numJumps;
     mJumps.resize(numJumps);
     for (std::vector<std::pair<int, int> >::iterator it = mJumps.begin();
          it != mJumps.end();
          ++it) {
-        bs >> it->first;
-        bs >> it->second;
+        d >> it->first;
+        d >> it->second;
     }
 END_LOADS

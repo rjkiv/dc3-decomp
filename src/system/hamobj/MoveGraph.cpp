@@ -23,17 +23,17 @@ BEGIN_LOADS(MoveGraph)
     ASSERT_REVS(0, 0)
     LOAD_SUPERCLASS(Hmx::Object)
     int numParents;
-    bs >> numParents;
+    d >> numParents;
     for (int i = 0; i < numParents; i++) {
         while (bs.Eof() != NotEof) {
             Timer::Sleep(100);
         }
         MoveParent *parent = new MoveParent();
-        parent->Load(bs, this);
+        parent->Load(d.stream, this);
         mMoveParents[parent->unk4] = parent;
     }
     CacheLinks();
-    mLayoutData->Load(bs);
+    mLayoutData->Load(d.stream);
 END_LOADS
 
 void MoveGraph::Clear() {

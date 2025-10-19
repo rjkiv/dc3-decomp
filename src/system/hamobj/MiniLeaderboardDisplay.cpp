@@ -39,7 +39,7 @@ void MiniLeaderboardDisplay::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(0, 0)
     UIComponent::PreLoad(bs);
-    bs >> mResourceDir;
+    d >> mResourceDir;
 }
 
 void MiniLeaderboardDisplay::PostLoad(BinStream &bs) {

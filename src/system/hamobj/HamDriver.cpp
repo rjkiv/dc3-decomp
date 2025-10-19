@@ -49,7 +49,7 @@ void HamDriver::PreLoad(BinStream &bs) {
     ASSERT_REVS(1, 0)
     LOAD_SUPERCLASS(Hmx::Object)
     LOAD_SUPERCLASS(CharWeightable)
-    bs >> mBones;
+    d >> mBones;
 }
 
 void HamDriver::Enter() { Clear(); }

@@ -38,9 +38,9 @@ BEGIN_LOADS(PhotoSpotlightPositioner)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    bs >> mPlayer;
-    bs >> mSpotlight;
-    bs >> mRefImage;
+    d >> mPlayer;
+    d >> mSpotlight;
+    d >> mRefImage;
 END_LOADS
 
 void PhotoSpotlightPositioner::Init() { REGISTER_OBJ_FACTORY(PhotoSpotlightPositioner); }

@@ -49,7 +49,7 @@ BEGIN_LOADS(HamSkeletonConverter)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    bs >> mBones;
+    d >> mBones;
 END_LOADS
 
 void HamSkeletonConverter::SetName(const char *name, ObjectDir *dir) {
