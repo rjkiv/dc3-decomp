@@ -36,10 +36,10 @@ BEGIN_LOADS(FlowLabel)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)
     LOAD_SUPERCLASS(FlowQueueable)
-    bs >> mLabel;
+    d >> mLabel;
     if (d.rev > 0) {
         ObjPtr<FlowNode> node(this);
-        bs >> node;
+        d >> node;
         if (mParent != node) {
         }
     }

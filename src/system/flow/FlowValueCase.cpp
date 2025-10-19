@@ -34,8 +34,8 @@ BEGIN_LOADS(FlowValueCase)
     LOAD_SUPERCLASS(FlowNode)
     if (d.rev < 1) {
         DataNode n;
-        bs >> n;
+        d >> n;
         mValue = n.Float();
     } else
-        bs >> mValue;
+        d >> mValue;
 END_LOADS

@@ -50,7 +50,7 @@ BEGIN_LOADS(FlowSwitchCase)
     LOAD_SUPERCLASS(FlowNode)
     if (d.rev < 2) {
         DataNode n;
-        bs >> n;
+        d >> n;
         mFromValue = n;
     }
 END_LOADS

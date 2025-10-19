@@ -45,7 +45,7 @@ END_COPYS
 BEGIN_LOADS(FlowOutPort)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)
-    LOAD_SUPERCLASS(FlowNode)
+    FlowNode::Load(bs);
     bs >> mLabel;
     d >> mImmediateRelease;
     if (d.rev > 0) {

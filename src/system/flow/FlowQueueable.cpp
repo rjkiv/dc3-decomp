@@ -33,7 +33,7 @@ BEGIN_LOADS(FlowQueueable)
     LOAD_REVS(bs)
     ASSERT_REVS(0, 0)
     LOAD_SUPERCLASS(FlowNode)
-    bs >> (int &)mInterrupt;
+    d >> (int &)mInterrupt;
 END_LOADS
 
 void FlowQueueable::ReleaseListener(Hmx::Object *obj) {

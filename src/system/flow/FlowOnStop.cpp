@@ -32,5 +32,5 @@ BEGIN_LOADS(FlowOnStop)
     LOAD_REVS(bs)
     ASSERT_REVS(0, 0)
     LOAD_SUPERCLASS(FlowNode)
-    bs >> (int &)mMode;
+    d >> (int &)mMode;
 END_LOADS

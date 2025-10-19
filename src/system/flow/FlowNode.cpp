@@ -52,15 +52,15 @@ BEGIN_LOADS(FlowNode)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    bs >> mVec1;
+    d >> mVec1;
 
     int numEntries;
-    bs >> numEntries;
+    d >> numEntries;
     mDrivenPropEntries.clear();
     mDrivenPropEntries.reserve(numEntries);
     for (int i = 0; i < numEntries; i++) {
         DrivenPropertyEntry entry(this);
-        entry.Load(bs, this);
+        entry.Load(d.stream, this);
         mDrivenPropEntries.push_back(entry);
     }
 END_LOADS

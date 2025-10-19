@@ -40,7 +40,7 @@ END_COPYS
 BEGIN_LOADS(FlowSequence)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)
-    LOAD_SUPERCLASS(FlowNode)
+    FlowNode::Load(bs);
     d >> mLooping;
     bs >> mRepeats;
     if (d.rev > 0)
