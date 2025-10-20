@@ -46,7 +46,7 @@ bool Movie::IsLoading() const { return mImpl->IsLoading(); }
 
 bool Movie::CheckOpen(bool b) { return mImpl->CheckOpen(b); }
 
-bool Movie::Ready() { return mImpl->Ready(); }
+bool Movie::Ready() const { return mImpl->Ready(); }
 
 void Movie::SetPaused(bool b) { mImpl->SetPaused(b); }
 

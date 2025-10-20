@@ -19,9 +19,8 @@ SongPreview::SongPreview(const SongMgr &mgr)
       unk80(0.0f), unk84(0.0f), unk88(0.0f), unk8c(0), unk8d(0), unk8e(0) {}
 
 void SongPreview::ContentMounted(char const *contentName, char const *cc2) {
-    if (contentName == nullptr) {
-        MILO_ASSERT(contentName, 0xbf);
-    }
+    MILO_ASSERT(contentName, 0xbf);
+
     Symbol s = Symbol(contentName);
     if (s == unk78) {
         unk78 = 0;
@@ -29,9 +28,8 @@ void SongPreview::ContentMounted(char const *contentName, char const *cc2) {
 }
 
 void SongPreview::ContentFailed(char const *contentName) {
-    if (contentName == nullptr) {
-        MILO_ASSERT(contentName, 0xcb);
-    }
+    MILO_ASSERT(contentName, 0xcb);
+
     Symbol sym = contentName;
     if (sym == unk78) {
         unk74 = 0;
@@ -104,7 +102,7 @@ void SongPreview::Terminate() {
 void SongPreview::Start(Symbol s, TexMovie *t) {
     if (unk4c || s) {
         MILO_ASSERT(mFader && mMusicFader && mCrowdSingFader,0x6c);
-        // unk38->SetObjConcrete(t);
+        unk38.SetObjConcrete(t);
         if (s == unk74) {
             unk8d = true;
         } else {

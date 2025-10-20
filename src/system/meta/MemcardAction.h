@@ -4,9 +4,10 @@ class Profile;
 
 class MemcardAction {
     MemcardAction(Profile *);
+    virtual ~MemcardAction() {}
 
-    int unk_04;
-    int unk_08;
-    int unk_c;
-    Profile *unk_10;
+    int unk4;
+    int unk8;
+    int unkc;
+    Profile *unk10;
 };

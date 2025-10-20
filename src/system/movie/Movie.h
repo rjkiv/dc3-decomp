@@ -17,7 +17,7 @@ public:
     bool IsOpen() const;
     bool IsLoading() const;
     bool CheckOpen(bool);
-    bool Ready();
+    bool Ready() const;
     void SetPaused(bool);
     void UnlockThread();
     void LockThread();

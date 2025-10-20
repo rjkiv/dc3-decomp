@@ -1,5 +1,6 @@
 #pragma once
 
+#include "utl/MemMgr.h"
 enum OpType {
     kOpNone = 0,
     kOpDirectory = 1,
@@ -49,6 +50,8 @@ public:
 
     Cache();
     bool IsDone();
+
+    MEM_OVERLOAD(Cache, 0x56);
 
     OpType mOpCur; // 0x4
     CacheResult mLastResult; // 0x8

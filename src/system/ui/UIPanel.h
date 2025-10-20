@@ -50,6 +50,8 @@ public:
     void SetLoadedDir(PanelDir *, bool);
     void UnsetLoadedDir();
     void CheckUnload();
+    static bool GetFinalDrawPass() { return sIsFinalDrawPass; }
+    State GetState() { return mState; }
 
 protected:
     virtual void Unload();
