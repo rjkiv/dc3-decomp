@@ -31,6 +31,12 @@
             "flags": [
                 
             ]
+        },
+        "jpeg":{
+            "base": "base",
+            "flags": [ 
+                "/TP"
+            ]
         }
     }
 }
