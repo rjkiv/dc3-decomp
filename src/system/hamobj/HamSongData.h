@@ -45,6 +45,8 @@ public:
     void SetMaps();
     bool Poll();
 
+    MEM_OVERLOAD(HamSongData, 0x2d);
+
 private:
     void Load(const char *, const SongInfo *, bool);
     void PostLoad();

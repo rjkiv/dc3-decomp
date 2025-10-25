@@ -1,7 +1,6 @@
 #include "meta/StoreEnumeration.h"
 
-XboxEnumeration::XboxEnumeration(int i, std::vector<unsigned long long> *v)
-    : mLoading(true) {}
+XboxEnumeration::XboxEnumeration(int i, std::vector<unsigned long long> *v) {}
 
 XboxEnumeration::~XboxEnumeration() {}
 

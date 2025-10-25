@@ -24,6 +24,8 @@ bool DataUpdateArray(DataArray *, DataArray *);
 void DataPushVar(DataNode *var);
 void DataPopVar();
 
+void DataMergeTags(DataArray *, DataArray *);
+
 DataArray *DataGetMacro(Symbol s);
 Symbol DataGetMacroByInt(int value, const char *prefix);
 void DataSetMacro(Symbol key, DataArray *macro);

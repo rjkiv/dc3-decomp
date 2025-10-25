@@ -49,6 +49,8 @@ public:
 
     XboxEnumeration(int, std::vector<unsigned long long> *);
 
-    bool mLoading;
-    StoreEnumeration::State mState;
+    std::list<int> unk4;
+    std::vector<unsigned long long> unkc;
+    int unk18;
+    bool unk1c;
 };
