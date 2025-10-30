@@ -86,7 +86,7 @@
             "lazer/meta_ham/FitnessGoalMgr.cpp": "MISSING",
             "lazer/meta_ham/FitnessProvider.cpp": "MISSING",
             "lazer/meta_ham/HamMemcardAction.cpp": "MISSING",
-            "lazer/meta_ham/HamPanel.cpp": "MISSING",
+            "lazer/meta_ham/HamPanel.cpp": "NonMatching",
             "lazer/meta_ham/HamProfile.cpp": "MISSING",
             "lazer/meta_ham/HamScreen.cpp": "MISSING",
             "lazer/meta_ham/HamSongMetadata.cpp": "NonMatching",
