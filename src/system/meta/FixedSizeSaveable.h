@@ -353,12 +353,12 @@ protected:
     static void PadStream(FixedSizeSaveableStream &, int);
     static void DepadStream(FixedSizeSaveableStream &, int);
 
+    SaveSizeMethodFunc *mSaveSizeMethod; // 0x4
+
 private:
     static int sCurrentMemcardLoadVer;
     static int sSaveVersion;
     static int sMaxSymbols;
-
-    SaveSizeMethodFunc *mSaveSizeMethod; // 0x4
 };
 
 FixedSizeSaveableStream &operator<<(FixedSizeSaveableStream &, const FixedSizeSaveable &);

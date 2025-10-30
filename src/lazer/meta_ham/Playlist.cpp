@@ -1,4 +1,6 @@
 #include "lazer/meta_ham/Playlist.h"
+#include "HamSongMgr.h"
+#include "lazer/meta_ham/HamSongMgr.h"
 #include "math/Rand.h"
 #include "meta/FixedSizeSaveable.h"
 #include "meta/FixedSizeSaveableStream.h"
@@ -18,10 +20,14 @@ void Playlist::SwapSongs(int index1, int index2) {
     int i = m_vSongs[index1];
     m_vSongs[index1] = m_vSongs[index2];
     m_vSongs[index2] = i;
+    HandleChange();
 }
 
 void Playlist::MoveSong(int from_index, int to_index) {
     MILO_ASSERT((0) <= (from_index) && (from_index) < (GetNumSongs()), 0xcf);
+    if (to_index - from_index < 1) {
+    }
+    HandleChange();
 }
 
 void Playlist::ShuffleSongs() {
@@ -31,7 +37,7 @@ void Playlist::ShuffleSongs() {
 
 bool Playlist::IsValidSong(int i_iIndex) const {
     MILO_ASSERT((0) <= (i_iIndex) && (i_iIndex) < (m_vSongs.size()), 0x103);
-    return false;
+    return TheHamSongMgr.HasSong(m_vSongs[i_iIndex]);
 }
 
 int Playlist::GetSong(int i_iIndex) const {
@@ -39,23 +45,43 @@ int Playlist::GetSong(int i_iIndex) const {
     return m_vSongs[i_iIndex];
 }
 
-int Playlist::GetDuration() const { return 1; }
+int Playlist::GetDuration() const {
+    int totalDur = 0;
+    if (!m_vSongs.empty()) {
+        for (int i = 0; i < m_vSongs.size(); i++) {
+            if (IsValidSong(i)) {
+                int id = GetSong(i);
+                Symbol name = TheHamSongMgr.GetShortNameFromSongID(id, 1);
+                id = TheHamSongMgr.GetDuration(name);
+                totalDur += id;
+            }
+        }
+    }
+    return totalDur;
+}
 
 int Playlist::GetSongDuration(int i_iIndex) const {
     MILO_ASSERT((0) <= (i_iIndex) && (i_iIndex) < (m_vSongs.size()), 0x125);
     int i = 0;
     if (IsValidSong(i_iIndex)) {
         i = GetSong(i_iIndex);
+        Symbol name = TheHamSongMgr.GetShortNameFromSongID(i, true);
+        i = TheHamSongMgr.GetDuration(name);
     }
-    return 1;
+    return i;
 }
 
-void Playlist::RemoveSong() { m_vSongs.pop_back(); }
+void Playlist::RemoveSong() {
+    m_vSongs.pop_back();
+    HandleChange();
+}
 
 int Playlist::GetLastValidSongIndex() const {
     int index = -1;
-    if (0 < m_vSongs.size()) {
-        for (int i = 0; i < m_vSongs.size(); i++) {
+    int i = 0;
+    int size = m_vSongs.size();
+    if (0 < size) {
+        for (i; i < size; i++) {
             if (IsValidSong(i)) {
                 index = i;
             }
@@ -64,24 +90,31 @@ int Playlist::GetLastValidSongIndex() const {
     return index;
 }
 
-void Playlist::RemoveSongAtIndex(int i) {}
+void Playlist::RemoveSongAtIndex(int i) {
+    m_vSongs.erase(m_vSongs.begin() + i);
+    HandleChange();
+}
 
 void Playlist::AddSong(int index) {
-    if (!m_vSongs.empty()) {
+    int size = m_vSongs.size();
+    if (size < 0x50 || !IsDirty()) {
         m_vSongs.push_back(index);
     } else {
         MILO_NOTIFY("Trying to add too many songs to playlist!");
     }
+    HandleChange();
 }
 
 void Playlist::Clear() { m_vSongs.clear(); }
 
 void Playlist::InsertSong(int index1, int index2) {
-    if (index2 < m_vSongs.size()) {
-        m_vSongs.insert(m_vSongs.begin() + index2, index1);
-    } else {
+    int size = m_vSongs.size();
+    if (index2 >= size) {
         m_vSongs.push_back(index1);
+    } else {
+        m_vSongs.insert(m_vSongs.begin() + index2, index1);
     }
+    HandleChange();
 }
 
 int Playlist::GetNumSongs() const { return m_vSongs.size(); }
@@ -99,11 +132,12 @@ void CustomPlaylist::LoadFixed(FixedSizeSaveableStream &, int) {}
 
 void CustomPlaylist::SetParentProfile(class HamProfile *hp) { unk20 = hp; }
 
-int CustomPlaylist::SaveSize(int) {
+int CustomPlaylist::SaveSize(int x) {
+    int i = 0x58;
     if (FixedSizeSaveable::sPrintoutsEnabled) {
-        MILO_LOG("* %s = %i\n", "Playlist", 0x58);
+        MILO_LOG("* %s = %i\n", "Playlist", i);
     }
-    return 0x58;
+    return i;
 }
 
 void CustomPlaylist::Copy(CustomPlaylist *customP) {
