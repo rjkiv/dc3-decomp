@@ -13,6 +13,7 @@
 #include "xapilibi/sysinfoapi.h"
 #include "xapilibi/timezoneapi.h"
 #include "xapilibi/winbase.h"
+#include "xapilibi/winerror.h"
 #include "xapilibi/xinput.h"
 // inferred .h for Xbox 360 specific functions
 // condensed into one single .h to avoid dependency hell

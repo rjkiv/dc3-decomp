@@ -12,7 +12,7 @@ void ReadError(const char *cc) {
     String str;
     if (FileIsLocal(cc) && TheContentMgr.Contains(cc, str)) {
         MILO_LOG("ReadError in package '%s', err = 0x%08x\n", str, err);
-        bool b3 = err == 0x570 || err == 0x571;
+        bool b3 = err == ERROR_FILE_CORRUPT || err == ERROR_DISK_CORRUPT;
         TheContentMgr.OnReadFailure(b3, str.c_str());
 
     } else if (UsingCD()) {

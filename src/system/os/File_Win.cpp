@@ -86,13 +86,13 @@ void FileEnumerate(
         if (hFindFile == (HANDLE)-1) {
             DWORD err = GetLastError();
             switch (err) {
-            case 2:
+            case ERROR_FILE_NOT_FOUND:
                 MILO_LOG("FileEnumerate: path empty %s\n", qualified);
                 break;
-            case 3:
+            case ERROR_PATH_NOT_FOUND:
                 MILO_LOG("FileEnumerate: path not found %s\n", qualified);
                 break;
-            case 0x7B:
+            case ERROR_INVALID_NAME:
                 MILO_LOG("FileEnumerate: path invalid name %s\n", qualified);
                 break;
             default:
