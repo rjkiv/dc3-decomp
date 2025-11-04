@@ -1,11 +1,17 @@
 #pragma once
+#include "StorePurchaser.h"
+#include "meta/Profile.h"
 #include "meta/StoreEnumeration.h"
 #include "meta/StoreOffer.h"
+#include "meta/StorePreviewMgr.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/PlatformMgr.h"
+#include "rndobj/Tex.h"
 #include "stl/_vector.h"
+#include "types.h"
 #include "ui/UIPanel.h"
+#include "utl/NetCacheLoader.h"
 #include "utl/Symbol.h"
 #include <list>
 
@@ -36,25 +42,23 @@ public:
     std::vector<StoreOffer *> unk38;
     std::vector<StoreOffer *> unk44;
     bool unk50;
-    bool unk51;
+    bool mLoadOk; // 0x51
     bool unk52;
-    std::list<StorePanel *> unk54;
+    std::list<NetCacheLoader *> unk54;
     int unk5c;
-    Hmx::Object unk60;
-    int unk64;
+    RndTex *unk60;
+    UIPanel *mPendingArtCallback; // 0x64
     int unk68;
-    int unk6c;
+    StorePreviewMgr *mStorePreviewMgr; // 0x6c
     bool unk70;
-    int unk74;
+    StorePurchaser *mPurchaser; // 0x74
     int unk78;
     int unk7c;
-    int unk80;
-    int unk84;
-    int unk88;
+    std::vector<StoreOffer *> unk80;
     Symbol unk8c;
     Symbol unk90;
     int unk94;
-    int unk98;
+    Job *unk98;
 
 protected:
     // UIPanel
@@ -66,6 +70,7 @@ protected:
 
     void StartReEnum();
     DataNode OnMsg(SigninChangedMsg const &);
+    DataNode OnMsg(ProfileSwappedMsg const &);
     void ValidateOffers(std::vector<StoreOffer *> &);
     // DataNode __cdecl OnMsg(SingleItemEnumCompleteMsg const &);
     // DataNode __cdecl OnMsg(MultipleItemsEnumCompleteMsg const &);

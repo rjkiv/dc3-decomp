@@ -3,42 +3,90 @@
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "os/PlatformMgr.h"
 #include "ui/UI.h"
 #include "utl/Symbol.h"
 
-StorePurchaser::~StorePurchaser() {}
+#pragma region XboxPurchaser
 
 XboxPurchaser::XboxPurchaser(
-    int param1, u64 param2, u64 param3, u64 param4, Symbol s, unsigned int ui
+    int param1,
+    unsigned long long param2,
+    unsigned long long param3,
+    unsigned long long param4,
+    Symbol s,
+    unsigned int ui
 )
-    : unk4(s), unk8(ui), unkc(), unk40(param2), unk48(param1), unk38(0) {}
+    : StorePurchaser(s, ui), mState(state0), unk40(param2), unk48(param1) {}
 
-XboxPurchaser::~XboxPurchaser() {}
+XboxPurchaser::~XboxPurchaser() {
+    static Symbol ui_changed("ui_changed");
+    ThePlatformMgr.RemoveSink(this, ui_changed);
+}
 
-void XboxPurchaser::Initiate() {}
+void XboxPurchaser::Initiate() {
+    MILO_ASSERT(!IsPurchasing(), 0x39a);
 
-bool XboxPurchaser::IsSuccess() const { return false; }
+    static Symbol ui_changed("ui_changed");
+    ThePlatformMgr.AddSink(this, ui_changed);
+}
 
-bool XboxPurchaser::PurchaseMade() const { return false; }
+bool XboxPurchaser::IsSuccess() const {
+    MILO_ASSERT(!IsPurchasing(), 0x3c3);
+    return mState == kSuccess;
+}
 
-bool XboxPurchaser::IsPurchasing() const { return false; }
+bool XboxPurchaser::PurchaseMade() const {
+    MILO_ASSERT(mState == kSuccess, 0x3c9);
+    return false;
+}
+
+bool XboxPurchaser::IsPurchasing() const {
+    return !(mState == state0 || mState == kSuccess || mState == state3);
+}
 
 DataNode XboxPurchaser::OnMsg(UIChangedMsg const &) { return NULL_OBJ; }
 
-bool XboxMultipleItemsPurchaser::IsSuccess() const { return false; }
+BEGIN_HANDLERS(XboxPurchaser)
+    HANDLE_SUPERCLASS(Hmx::Object)
+END_HANDLERS
 
-bool XboxMultipleItemsPurchaser::PurchaseMade() const { return false; }
+#pragma endregion XboxPurchaser
+#pragma region XboxMultipleItemsPurchaser
 
-bool XboxMultipleItemsPurchaser::IsPurchasing() const { return false; }
+bool XboxMultipleItemsPurchaser::IsSuccess() const {
+    MILO_ASSERT(!IsPurchasing(), 0x365);
+    return mState == kSuccess;
+}
 
-void XboxMultipleItemsPurchaser::Initiate() {}
+bool XboxMultipleItemsPurchaser::PurchaseMade() const {
+    MILO_ASSERT(mState == kSuccess, 0x36b);
+    return false;
+}
+
+bool XboxMultipleItemsPurchaser::IsPurchasing() const {
+    return !(mState == state0 || mState == kSuccess || mState == state3);
+}
+
+void XboxMultipleItemsPurchaser::Initiate() { MILO_ASSERT(!IsPurchasing(), 0x343); }
 
 XboxMultipleItemsPurchaser::~XboxMultipleItemsPurchaser() {
     static Symbol ui_changed("ui_changed");
+    ThePlatformMgr.RemoveSink(this, ui_changed);
 }
 
 XboxMultipleItemsPurchaser::XboxMultipleItemsPurchaser(
-    int, std::vector<u64>, Symbol, unsigned int
-) {}
+    int i, std::vector<unsigned long long> &offerIDs, Symbol s, unsigned int ui
+)
+    : StorePurchaser(s, ui), mState(state0), unk48(i) {
+    MILO_ASSERT(offerIDs.size() >= 1 && offerIDs.size() <= 6, 0x337);
+    unk3c = offerIDs;
+}
 
 DataNode XboxMultipleItemsPurchaser::OnMsg(UIChangedMsg const &) { return NULL_OBJ; }
+
+BEGIN_HANDLERS(XboxMultipleItemsPurchaser)
+    HANDLE_SUPERCLASS(Hmx::Object)
+END_HANDLERS
+
+#pragma endregion XboxMultipleItemsPurchaser

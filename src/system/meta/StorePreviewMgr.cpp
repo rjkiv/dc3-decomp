@@ -40,10 +40,7 @@ bool StorePreviewMgr::GetLastFailure(NetCacheMgrFailType &t) {
 }
 
 bool StorePreviewMgr::IsPlaying() const {
-    if (!unk34.empty() && TheNetCacheMgr->IsLocalFile(unk34.c_str()))
-        return true;
-
-    return false;
+    return (!unk34.empty() && TheNetCacheMgr->IsLocalFile(unk34.c_str()));
 }
 
 void StorePreviewMgr::ClearCurrentPreview() {

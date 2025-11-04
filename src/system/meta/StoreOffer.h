@@ -15,6 +15,7 @@ public:
     bool Exists() const;
     static unsigned long long OfferStringToID(char const *);
     char const *CostStr() const;
+    bool IsAvailable() { return isAvailable; }
 
     bool isAvailable;
     bool isPurchased;

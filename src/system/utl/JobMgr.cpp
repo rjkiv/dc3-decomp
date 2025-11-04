@@ -6,7 +6,7 @@ namespace {
     int gJobIDCounter;
 }
 
-Job::Job() : mID() { mID = gJobIDCounter++; }
+Job::Job() { mID = gJobIDCounter++; }
 
 void JobMgr::Poll() {}
 

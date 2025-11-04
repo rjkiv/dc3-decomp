@@ -1,6 +1,7 @@
 #pragma once
 #include "meta/StoreEnumeration.h"
 #include "stl/_vector.h"
+#include "types.h"
 #include "utl/Str.h"
 #include <list>
 
@@ -17,7 +18,14 @@ enum StoreError {
     kStoreErrorNoEula = 9
 };
 
-struct EnumProduct {};
+struct EnumProduct {
+    u32 unk0;
+    u32 unk4;
+    u32 unk8;
+    u32 unkc;
+    int unk10;
+    int unk14;
+};
 
 class StoreEnumeration {
 public:
@@ -44,6 +52,7 @@ public:
     // StoreEnumeration
     virtual ~XboxEnumeration();
     virtual void Start();
+    virtual bool IsEnumerating() const;
     virtual bool IsSuccess() const;
     virtual void Poll();
 
