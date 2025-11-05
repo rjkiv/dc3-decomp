@@ -118,6 +118,8 @@ public:
     void Init();
     void RegionInit();
     void PreInit();
+    DWORD
+    ShowDeviceSelectorUI(DWORD, DWORD, DWORD, ULARGE_INTEGER, DWORD *, XOVERLAPPED *);
 };
 
 extern PlatformMgr ThePlatformMgr;

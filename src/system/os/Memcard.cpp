@@ -3,6 +3,8 @@
 #include "os/Debug.h"
 
 void Memcard::Init() { SetName("memcard", ObjectDir::Main()); }
+void Memcard::Terminate() {}
+void Memcard::Poll() {}
 
 void Memcard::ShowDeviceSelector(const ContainerId &, Hmx::Object *obj, int, bool) {
     if (obj) {

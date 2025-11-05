@@ -71,7 +71,18 @@ typedef u64 UINT64, *PUINT64;
 typedef u64 ULONG64, *PULONG64;
 typedef u64 DWORDLONG, *PDWORDLONG;
 typedef u64 DWORD64, *PDWORD64;
-typedef u64 ULARGE_INTEGER, *PULARGE_INTEGER;
+
+typedef union _ULARGE_INTEGER { /* Size=0x8 */
+    struct {
+        /* 0x0000 */ DWORD HighPart;
+        /* 0x0004 */ DWORD LowPart;
+    };
+    struct {
+        /* 0x0000 */ DWORD HighPart;
+        /* 0x0004 */ DWORD LowPart;
+    } u;
+    /* 0x0000 */ ULONGLONG QuadPart;
+} ULARGE_INTEGER, *PULARGE_INTEGER;
 
 typedef LONG_PTR LPARAM;
 typedef LONG_PTR LRESULT;

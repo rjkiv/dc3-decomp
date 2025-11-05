@@ -1,11 +1,12 @@
 #pragma once
 #include "os/Memcard.h"
+#include "xdk/win_types.h"
 
 class MCContainerXbox;
 
 class MCFileXbox : public MCFile {
 public:
-    MCFileXbox() {}
+    MCFileXbox(MCContainerXbox *mcx) : mContainer(mcx), mFile(INVALID_HANDLE_VALUE) {}
     virtual ~MCFileXbox() {}
     virtual MCResult Open(const char *, AccessType, CreateType);
     virtual MCResult Read(void *, int);
@@ -17,7 +18,7 @@ public:
     MCResult GetSize(int *);
 
 protected:
-    MCContainerXbox *unk4; // 0x4
+    MCContainerXbox *mContainer; // 0x4
     HANDLE mFile; // 0x8
 };
 
@@ -32,7 +33,7 @@ public:
     virtual MCResult Delete(const char *);
     virtual MCResult RemoveDir(const char *);
     virtual MCResult MakeDir(const char *);
-    virtual MCResult GetSize(const char *, int);
+    virtual MCResult GetSize(const char *, int *);
     virtual MCResult Format() { return (MCResult)0xD; }
     virtual MCResult Unformat() { return (MCResult)0xD; }
     virtual MCFile *CreateMCFile();
@@ -40,32 +41,37 @@ public:
     virtual MCResult PrintDir(const char *, bool);
 
 protected:
-    String unk14;
+    String mDriveName; // 0x14
 };
 
 class MemcardXbox : public Memcard {
 public:
     MemcardXbox() : unk156(0), unk158(0), unk15c(0) {}
     virtual ~MemcardXbox() {}
-    virtual void Init();
-    virtual void Terminate();
+    virtual void Init() { Memcard::Init(); }
+    virtual void Terminate() { Memcard::Terminate(); }
     virtual void Poll();
     virtual void SetContainerName(const char *);
     virtual void SetContainerDisplayName(const wchar_t *);
-    virtual const char *GetContainerName();
-    virtual const wchar_t *GetDisplayName();
+    virtual const char *GetContainerName() { return mFileName; }
+    virtual const wchar_t *GetDisplayName() { return mDisplayName; }
     virtual void ShowDeviceSelector(const ContainerId &, Hmx::Object *, int, bool);
     virtual bool IsDeviceValid(const ContainerId &);
     virtual MCResult DeleteContainer(const ContainerId &);
     virtual MCContainer *CreateContainer(const ContainerId &);
 
+    String GenerateDriveName(DWORD, int);
+    MCResult FindValidUnit(ContainerId *);
+    char *FileName() { return mFileName; }
+    wchar_t *DisplayName() { return mDisplayName; }
+
 protected:
-    char filler[0x128]; // 0x2c
-    bool unk154; // 0x154
-    bool unk155; // 0x155
+    char mFileName[XCONTENT_MAX_FILENAME_LENGTH]; // 0x2c
+    wchar_t mDisplayName[XCONTENT_MAX_DISPLAYNAME_LENGTH]; // 0x56
     bool unk156; // 0x156
-    int unk158; // 0x158
-    int unk15c; // 0x15c
+    Hmx::Object *unk158; // 0x158
+    DWORD unk15c; // 0x15c
+    XOVERLAPPED mXOverlapped; // 0x160
 };
 
 extern MemcardXbox TheMC;

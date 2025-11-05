@@ -1,7 +1,9 @@
 #pragma once
 #include "obj/Msg.h"
 #include "obj/Object.h"
+#include "utl/MemMgr.h"
 #include "utl/Str.h"
+#include "xdk/XAPILIB.h"
 
 enum AccessType {
     kAccessRead = 0,
@@ -48,9 +50,11 @@ enum MCResult {
 };
 
 struct ContainerId {
-    int unk0;
-    int unk4;
-    unsigned long unk8;
+    void Set(int userIdx, DWORD);
+
+    int mUserIndex; // 0x0
+    XCONTENTDEVICEID mDeviceId; // 0x4
+    DWORD unk8; // 0x8 - size?
 };
 
 class MCFile {
@@ -63,11 +67,13 @@ public:
     virtual MCResult Seek(int, SeekType) = 0;
     virtual MCResult Close() = 0;
     virtual bool IsOpen() = 0;
+
+    MEM_OVERLOAD(MCFile, 0x13C);
 };
 
 class MCContainer {
 public:
-    MCContainer() {}
+    MCContainer(const ContainerId &c) : mContainerID(c), mMounted(false) {}
     virtual ~MCContainer() {}
     virtual MCResult Mount(CreateType) = 0;
     virtual MCResult Unmount() = 0;
@@ -76,17 +82,20 @@ public:
     virtual MCResult Delete(const char *) = 0;
     virtual MCResult RemoveDir(const char *) = 0;
     virtual MCResult MakeDir(const char *) = 0;
-    virtual MCResult GetSize(const char *, int) = 0;
+    virtual MCResult GetSize(const char *, int *) = 0;
     virtual MCResult Format() = 0;
     virtual MCResult Unformat() = 0;
     virtual MCFile *CreateMCFile() = 0;
     virtual void DestroyMCFile(MCFile *);
-    virtual String BuildPath(const char *);
+    virtual String BuildPath(const char *cc) { return cc; }
     virtual MCResult PrintDir(const char *, bool) = 0;
 
+    MEM_OVERLOAD(MCContainer, 0xFE);
     bool IsMounted() const { return mMounted; }
+    void SetMounted(bool mount) { mMounted = mount; }
+    const ContainerId &Cid() const { return mContainerID; }
 
-protected:
+private:
     ContainerId mContainerID; // 0x4
     bool mMounted; // 0x10
 };
@@ -96,8 +105,8 @@ public:
     Memcard() {}
     virtual ~Memcard() {}
     virtual void Init();
-    virtual void Terminate() {}
-    virtual void Poll() {}
+    virtual void Terminate();
+    virtual void Poll();
     virtual void SetContainerName(const char *) {}
     virtual void SetContainerDisplayName(const wchar_t *) {}
     virtual const char *GetContainerName() { return ""; }
@@ -112,4 +121,9 @@ public:
 #include "obj/Msg.h"
 DECLARE_MESSAGE(DeviceChosenMsg, "device_chosen")
 DeviceChosenMsg(int x) : Message(Type(), x) {}
+int Device() const { return mData->Int(2); }
+END_MESSAGE
+
+DECLARE_MESSAGE(NoDeviceChosenMsg, "no_device_chosen")
+NoDeviceChosenMsg() : Message(Type()) {}
 END_MESSAGE

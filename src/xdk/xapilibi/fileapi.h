@@ -99,6 +99,9 @@ HANDLE CreateFileA(
     HANDLE hTemplateFile
 );
 BOOL DeleteFileA(LPCSTR lpFileName);
+
+BOOL FileTimeToLocalFileTime(const FILETIME *lpFileTime, LPFILETIME lpLocalFileTime);
+
 HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData);
 BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData);
 BOOL GetDiskFreeSpaceExA(
