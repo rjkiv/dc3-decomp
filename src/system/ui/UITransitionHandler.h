@@ -22,6 +22,8 @@ public:
     RndAnimatable *GetInAnim() const; //{ return mInAnim; }
     RndAnimatable *GetOutAnim() const; //{ return mOutAnim; }
 
+    void ClearAnimationState();
+
 protected:
     virtual void FinishValueChange();
     virtual void StartValueChange();
@@ -30,6 +32,10 @@ protected:
     void UpdateHandler();
     void SaveHandlerData(BinStream &);
     void CopyHandlerData(const UITransitionHandler *);
+
+    bool HasTransitions() const;
+    bool IsReadyToChange() const;
+    void LoadHandlerData(BinStream &);
 
     /** "animation kicked off before [transition]" */
     ObjPtr<RndAnimatable> mInAnim; // 0x4

@@ -21,12 +21,25 @@ public:
     virtual void Poll();
     virtual void Enter();
 
+    bool IsDone() const;
+    bool IsBlocking() const;
+    void StopAnimations();
+    void PlayStartOfAnims();
+    void PlayEndOfAnims();
+
 protected:
     UITrigger();
 
-    bool unk11c; // 0x11c
+    bool mBlockTransition; // 0x11c
     ObjPtr<Hmx::Object> mCallbackObject; // 0x120
-    int unk134;
-    float unk138;
-    bool unk13c;
+    float mStartTime;
+    float mEndTime; // 0x138
+    bool unk13c; // 0x13c
 };
+
+#include "obj/Msg.h"
+
+DECLARE_MESSAGE(UITriggerCompleteMsg, "ui_trigger_complete");
+UITriggerCompleteMsg(UITrigger *trig) : Message(Type(), trig) {}
+UITrigger *GetTrigger() const { return mData->Obj<UITrigger>(2); }
+END_MESSAGE

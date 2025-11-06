@@ -1,4 +1,5 @@
 #pragma once
+#include "rndobj/Dir.h"
 #include <vector>
 
 class UIListProvider;
@@ -20,11 +21,30 @@ public:
     int SelectedData() const;
     int CurrentScroll() const;
 
+    int SelectedDisplay() const;
+    int WrapShowing(int) const;
+    int Display2Showing(int) const;
+    int Showing2Data(int) const;
+    int NumDisplayWithData() const;
+    int MaxFirstShowing() const;
+    int ScrollMaxDisplay() const;
+    int SelectedNoWrap() const;
+    int Display2Data(int) const;
+    int SnappedDataForDisplay(int) const;
+    void SetCircular(bool, bool);
+    void Poll(float);
+    bool CanScrollBack(bool) const;
+    bool CanScrollNext(bool) const;
+    bool ShouldHoldDisplayInPlace(int) const;
+    void Scroll(int, bool);
+    void PageScroll(int);
+    void SetSelectedSimulateScroll(int);
+
     bool Circular() const { return mCircular; }
     int NumDisplay() const { return mNumDisplay; }
     int FirstShowing() const { return mFirstShowing; }
     int GridSpan() const { return mGridSpan; }
-    float Speed() const;
+    float Speed() const { return mSpeed; }
     int MinDisplay();
     int MaxDisplay() const;
     bool ScrollPastMinDisplay() const;
@@ -32,6 +52,11 @@ public:
     bool IsScrolling() const;
     int NumShowing() const;
     UIListProvider *Provider();
+    void SetProvider(UIListProvider *, RndDir *);
+
+protected:
+    int ScrollToTarget(int) const;
+    // bool BuildScroll(int, int, int, ScrollState &) const;
 
 private:
     /** "Does the list scrolling wrap?" */

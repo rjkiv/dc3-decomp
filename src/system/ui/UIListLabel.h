@@ -12,13 +12,13 @@ public:
     virtual void Save(BinStream &);
     virtual void Copy(const Hmx::Object *, CopyType);
     virtual void Load(BinStream &);
-    virtual UIListSlotElement *CreateElement(UIList *);
     virtual RndTransformable *RootTrans();
 
     const char *GetDefaultText() const;
     UILabel *ElementLabel(int) const;
 
 protected:
+    virtual UIListSlotElement *CreateElement(UIList *);
     UIListLabel();
 
     /** "label to draw/transform" */

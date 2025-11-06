@@ -56,8 +56,8 @@ protected:
     virtual UIListSlotElement *CreateElement(UIList *) { return nullptr; }
     virtual RndTransformable *RootTrans() { return nullptr; }
 
-    std::vector<UIListSlotElement *> mElements; // 0x40
-    UIListSlotDrawType mSlotDrawType; // 0x48
-    UIListSlotElement *mNextElement; // 0x4c
-    String mMatchName; // 0x50
+    std::vector<UIListSlotElement *> mElements; // 0x5c
+    UIListSlotDrawType mSlotDrawType; // 0x68
+    UIListSlotElement *mNextElement; // 0x6c
+    String mMatchName; // 0x70
 };

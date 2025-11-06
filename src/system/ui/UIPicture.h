@@ -22,14 +22,21 @@ public:
     // RndPollable
     virtual void Poll();
     virtual void Exit();
+
+    void SetTex(FilePath const &);
+    void SetHookTex(bool);
+
+protected:
     // UITransitionHandler
     virtual void FinishValueChange();
     virtual bool IsEmptyValue() const;
 
-protected:
     UIPicture();
 
     void CancelLoading();
+    void HookupMesh();
+    void FinishLoading();
+    void UpdateTexture(FilePath const &);
 
     /** "Mesh to show loaded tex on (should have Mat)" */
     ObjPtr<RndMesh> mMesh; // 0x12c

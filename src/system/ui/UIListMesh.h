@@ -1,4 +1,5 @@
 #pragma once
+#include "ui/UIListProvider.h"
 #include "ui/UIListSlot.h"
 #include "rndobj/Mat.h"
 #include "rndobj/Mesh.h"
@@ -21,17 +22,30 @@ public:
         Box *,
         DrawCommand
     );
-    virtual UIListSlotElement *CreateElement(UIList *);
-    virtual RndTransformable *RootTrans();
 
     RndMat *DefaultMat() const;
     RndMesh *Mesh() const { return mMesh; }
 
 protected:
+    virtual UIListSlotElement *CreateElement(UIList *);
+    virtual RndTransformable *RootTrans();
     UIListMesh();
 
     /** "mesh to draw/transform" */
     ObjPtr<RndMesh> mMesh; // 0x78
     /** "default material" */
     ObjPtr<RndMat> mDefaultMat; // 0x8c
+};
+
+class UIListMeshElement : public UIListSlotElement {
+public:
+    UIListMeshElement(UIListMesh *lm) : mListMesh(lm), mMat(0) {}
+    virtual ~UIListMeshElement() {}
+    virtual void Fill(const UIListProvider &prov, int i, int j) {
+        mMat = prov.Mat(i, j, mListMesh);
+    }
+    virtual void Draw(const Transform &, float, UIColor *, Box *);
+
+    UIListMesh *mListMesh;
+    RndMat *mMat;
 };

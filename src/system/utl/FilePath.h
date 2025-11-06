@@ -18,7 +18,7 @@ public:
     // const char *FilePathRelativeToRoot() {
     //     return FileRelativePath(sRoot.c_str(), this->c_str());
     // }
-    // void SetRoot(const char *str) { Set(sRoot.c_str(), str); }
+    void SetRoot(const char *str) { Set(sRoot.c_str(), str); }
     static FilePath &Root() { return sRoot; }
     static FilePath &Null() { return sNull; }
 };

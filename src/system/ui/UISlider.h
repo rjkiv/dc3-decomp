@@ -31,22 +31,22 @@ public:
     virtual void SetCurrent(int);
     // ScrollSelect
     virtual int SelectedAux() const;
-    virtual void SetSelectedAux(int);
 
     OBJ_MEM_OVERLOAD(0x18);
 
-    DataNode OnMsg(const ButtonDownMsg &);
-
-    void SyncSlider();
     float Frame() const;
     void SetNumSteps(int);
     void SetFrame(float);
     int Current() const;
+    static void Init();
 
 protected:
-    UISlider();
-
+    virtual void SetSelectedAux(int);
     virtual void OldResourcePreload(BinStream &);
+
+    UISlider();
+    void Update();
+    DataNode OnMsg(const ButtonDownMsg &);
 
     ResourceDirPtr<RndDir> unk50; // 0x50
     int unk68;
@@ -58,4 +58,7 @@ protected:
     int mCurrent; // 0x80
     int mNumSteps; // 0x84
     bool mVertical; // 0x88
+
+private:
+    void SyncSlider();
 };

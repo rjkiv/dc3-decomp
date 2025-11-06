@@ -64,8 +64,10 @@ BEGIN_PROPSYNCS(UIFontImporter)
                                      : ConvertHeightOGToPctHeight(-_val.Int())
     )
     SYNC_PROP_MODIFY(weight, mFontWeight, GenerateBitmapFilename())
-    SYNC_PROP_SET(bold, std::abs(mFontWeight), mFontWeight = _val.Int() != 0 ? 800 : 400;
-                  GenerateBitmapFilename())
+    SYNC_PROP_SET(
+        bold, std::abs(mFontWeight), mFontWeight = _val.Int() != 0 ? 800 : 400;
+        GenerateBitmapFilename()
+    )
     SYNC_PROP_MODIFY(italics, mItalics, GenerateBitmapFilename())
     SYNC_PROP_MODIFY(drop_shadow, mDropShadow, GenerateBitmapFilename())
     SYNC_PROP(drop_shadow_opacity, mDropShadowOpacity)
