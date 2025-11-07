@@ -52,6 +52,7 @@ public:
     bool IsScrolling() const;
     int NumShowing() const;
     UIListProvider *Provider();
+    UIListProvider *Provider() const;
     void SetProvider(UIListProvider *, RndDir *);
 
 protected:

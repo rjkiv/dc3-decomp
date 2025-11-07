@@ -1,10 +1,13 @@
 #pragma once
+#include "UIComponent.h"
 #include "rndobj/Anim.h"
 #include "rndobj/Dir.h"
+#include "rndobj/FontBase.h"
 #include "rndobj/Group.h"
 #include "ui/UIColor.h"
 #include "ui/UIFontImporter.h"
 #include "utl/MemMgr.h"
+#include "utl/Symbol.h"
 
 /** "Top-level resource object for UILabels" */
 class UILabelDir : public RndDir, public UIFontImporter {
@@ -21,6 +24,12 @@ public:
     virtual void PostLoad(BinStream &);
 
     OBJ_MEM_OVERLOAD(0x19);
+
+    bool AllowEditText() const;
+    RndFontBase *FontObj(Symbol) const;
+    UIColor *GetStateColor(UIComponent::State) const;
+    static DataNode GetMatVariations(UILabelDir *);
+    static void Init();
 
 protected:
     UILabelDir();

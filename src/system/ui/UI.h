@@ -2,12 +2,14 @@
 #include "obj/Data.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
+#include "os/Joypad.h"
 #include "os/Timer.h"
 #include "rndobj/Cam.h"
 #include "rndobj/Env.h"
 #include "rndobj/Overlay.h"
 #include "ui/UIScreen.h"
 #include "ui/UIComponent.h"
+#include "utl/Symbol.h"
 
 class Automator;
 class JoypadClient;
@@ -41,6 +43,8 @@ public:
     UIScreen *TransitionScreen() { return mTransitionScreen; }
     bool InTransition() { return mTransitionState != kTransitionNone; }
     TransitionState GetTransitionState() const { return mTransitionState; }
+    RndCam *GetCam() { return mCam; }
+    bool WentBack() { return mWentBack; }
     void SetScreenBlacklghtDisabled(bool);
     UIPanel *FocusPanel();
     UIComponent *FocusComponent();
@@ -48,12 +52,24 @@ public:
     UIScreen *BottomScreen();
     UIScreen *ScreenAtDepth(int);
     int PushDepth() const;
+    void UseJoypad(bool, bool);
+    bool OverloadHorizontalNav(JoypadAction, JoypadButton, bool) const;
+    bool IsGameScreenActive();
 
 private:
     void ToggleLoadTimes();
     void CancelTransition();
+    bool BlockHandlerDuringTransition(Symbol, DataArray *);
+    void GotoScreenImpl(UIScreen *, bool, bool);
+    DataNode OnIsResource(DataArray *);
+    DataNode OnGotoScreen(DataArray const *);
+    DataNode OnGoBackScreen(DataArray const *);
+    void FakeKeyboardAction(JoypadButton, JoypadAction);
+    DataNode OnForeachCurrentScreen(DataArray const *);
 
 protected:
+    void ReloadStrings();
+
     TransitionState mTransitionState; // 0x2c
     bool mWentBack; // 0x30
     std::vector<UIScreen *> mPushedScreens; // 0x34
@@ -92,6 +108,10 @@ public:
         else
             return "OFF";
     }
+    void AdvanceScript(Symbol);
+    const char *ToggleRecord();
+    void Poll();
+    void AddMessageType(Hmx::Object *, Symbol);
 
 private:
     void FinishRecord();
@@ -99,8 +119,13 @@ private:
     void StartAuto(UIScreen *);
     void AddRecord(Symbol, DataArray *);
     Symbol CurRecordScreen();
+    Symbol CurScreenName();
 
     DataNode OnCustomMsg(const Message &);
+    DataNode OnMsg(UITransitionCompleteMsg const &);
+    DataNode OnMsg(ButtonDownMsg const &);
+    void FillButtonMsg(ButtonDownMsg &, int);
+    DataNode OnCheatInvoked(DataArray const *);
 
     UIManager &mUIManager; // 0x2c
     DataArray *mScreenScripts; // 0x30

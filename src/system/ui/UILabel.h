@@ -1,15 +1,19 @@
 #pragma once
 #include "obj/Data.h"
 #include "obj/Object.h"
+#include "os/DateTime.h"
 #include "os/Debug.h"
 #include "rndobj/Text.h"
 #include "ui/UIComponent.h"
+#include "utl/BinStream.h"
 #include "utl/MemMgr.h"
+#include "utl/Symbol.h"
 
 class UILabel : public RndText, public UIComponent, public TextHolder {
 public:
     struct LabelStyle {
         LabelStyle(Hmx::Object *);
+        ~LabelStyle();
         int unk0;
         int unk4;
         int unk8;
@@ -40,19 +44,31 @@ public:
     }
     // UIComponent
     virtual void Poll();
-    virtual void OldResourcePreload(BinStream &);
     virtual void Highlight();
     // TextHolder
     virtual void SetTextToken(Symbol);
     virtual void SetInt(int, bool);
 
+    virtual void DrawShowing();
+
     OBJ_MEM_OVERLOAD(0x26);
 
+    static void Init();
+
+    void SetFloat(char const *, float);
+    void SetDateTime(DateTime const &, Symbol);
     void SetIcon(char);
     void SetTokenFmt(const DataArray *);
     RndText::Style &Style(int);
     void SetPrelocalizedString(String &);
     void SetSubtitle(const DataArray *);
+    void SetTimeHMS(int, bool);
+    bool CheckValid(bool);
+    void SetEditText(char const *);
+
+    char const *GetDefaultText() const;
+    void CenterWithLabel(UILabel *, bool, float);
+    LabelStyle &LStyle(int);
 
     template <class T1>
     void SetTokenFmt(Symbol s, T1 t1) {
@@ -70,14 +86,28 @@ public:
     }
 
 protected:
-    UILabel();
-
+    virtual void OldResourcePreload(BinStream &);
     virtual void SetDisplayText(const char *, bool);
 
-    Symbol unk114; // 0x114
+    UILabel();
+    void SetTokenFmtImp(Symbol, DataArray const *, DataArray const *, int, bool);
+    DataNode OnSetPrelocalizedString(DataArray const *);
+    DataNode OnSetTokenFmt(DataArray const *);
+    DataNode OnSetInt(DataArray const *);
+    DataNode OnSetTimeHMS(DataArray const *);
+    bool AllowEditText() const;
+    void LabelUpdate(bool);
+    DataNode OnSetHeightFromText(DataArray *);
+    void SetFontMat(char const *, int);
+    char const *GetFontMat(int);
+    void RefreshFontMat(int);
+
+    Symbol mTextToken; // 0x114
     String unk118; // 0x118
-    bool unk120;
+    char unk120;
     bool unk121;
     bool unk122;
     ObjVector<LabelStyle> unk124; // 0x124
 };
+
+bool PropSync(UILabel::LabelStyle &, DataNode &, DataArray *, int, PropOp);

@@ -18,8 +18,6 @@ public:
     void Store();
     void Reset();
     bool SelectScrollSelect(UIComponent *, LocalUser *);
-    UIComponent::State DrawState(UIComponent *) const;
-    bool CatchNavAction(JoypadAction) const;
     bool RevertScrollSelect(UIComponent *, LocalUser *, Hmx::Object *);
     bool IsScrollSelected() const { return mSelectedAux != -1; }
 
@@ -28,6 +26,9 @@ private:
 
 protected:
     bool CanScroll() const;
+
+    UIComponent::State DrawState(UIComponent *) const;
+    bool CatchNavAction(JoypadAction) const;
 
     /** "Does [UI item] need to be selected before user can scroll?" */
     bool mSelectToScroll; // 0x4

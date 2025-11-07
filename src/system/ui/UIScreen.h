@@ -1,9 +1,24 @@
 #pragma once
+#include "obj/Data.h"
 #include "obj/Object.h"
+#include "os/JoypadMsgs.h"
 
 class UIPanel;
 
-struct PanelRef {};
+struct PanelRef { // taken from rb3
+public:
+    class UIPanel *mPanel; // 0x0
+    bool mActive; // 0x4
+    bool mAlwaysLoad; // 0x5
+    bool mLoaded; // 0x6
+
+    friend class UIScreen;
+
+    PanelRef() : mLoaded(false) {}
+
+    bool Active() const { return mActive && mLoaded; }
+    bool GetActive() { return mActive; }
+};
 
 class UIScreen : public Hmx::Object {
 public:
@@ -24,12 +39,26 @@ public:
     virtual void Exit(UIScreen *);
     virtual bool Exiting() const;
     virtual void Print(TextStream &);
-    virtual bool Unloading() const;
 
     UIPanel *FocusPanel() const { return mFocusPanel; }
 
+    void SetFocusPanel(UIPanel *);
+    void SetShowing(bool);
+    bool HasPanel(UIPanel *);
+    void ReenterScreen();
+    void SetPanelActive(UIPanel *, bool);
+    bool AllPanelsDown();
+    bool SharesPanels(UIScreen *);
+
 protected:
     static int sMaxScreenId;
+    static UIScreen *sUnloadingScreen;
+
+    virtual bool Unloading() const;
+
+    DataNode OnMsg(ButtonDownMsg const &);
+    DataNode ForeachPanel(DataArray const *);
+    void ReloadStrings();
 
     std::list<PanelRef> mPanelList; // 0x2c
     UIPanel *mFocusPanel; // 0x34
@@ -38,6 +67,9 @@ protected:
     bool mShowing; // 0x3d
     int mScreenId; // 0x40
 };
+
+void EnterGlitchCB(float, void *);
+void UnloadGlitchCB(float, void *);
 
 #include "obj/Msg.h"
 

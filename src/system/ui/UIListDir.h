@@ -1,7 +1,9 @@
 #pragma once
 #include "rndobj/Dir.h"
+#include "stl/_vector.h"
 #include "ui/UIListProvider.h"
 #include "ui/UIListState.h"
+#include "ui/UIListWidget.h"
 
 enum UIListOrientation {
     kUIListVertical,
@@ -36,6 +38,29 @@ public:
     virtual void StartScroll(const UIListState &, int, bool);
     virtual void CompleteScroll(const UIListState &);
 
+    UIListOrientation Orientation() const;
+    float ElementSpacing() const;
+    UIList *SubList(int, std::vector<UIListWidget *> &);
+    void DrawWidgets(
+        UIListWidgetDrawState &,
+        UIListState const &,
+        std::vector<UIListWidget *> &,
+        class Transform const &,
+        UIComponent::State,
+        Box *,
+        bool
+    );
+    void PollWidgets(std::vector<UIListWidget *> &);
+    void FillElement(UIListState const &, std::vector<UIListWidget *> &, int);
+    void StartScroll(UIListState const &, std::vector<UIListWidget *> &, int, bool);
+    void CompleteScroll(UIListState const &, std::vector<UIListWidget *> &);
+    void FillElements(UIListState const &, std::vector<UIListWidget *> &);
+    void ListEntered();
+    void BuildDrawState(
+        UIListWidgetDrawState &, UIListState const &, UIComponent::State, float, bool
+    ) const;
+    void CreateElements(UIList *, std::vector<UIListWidget *> &, int);
+
 protected:
     /** "scroll direction of list" */
     UIListOrientation mOrientation; // 0x204
@@ -57,4 +82,8 @@ protected:
     bool mTestDisableElements; // 0x26c
     std::vector<UIListWidget *> unk270; // 0x270
     int mDirection; // 0x27c
+
+private:
+    float SetElementPos(Vector3 &, float, int, float, float) const;
+    void Reset();
 };

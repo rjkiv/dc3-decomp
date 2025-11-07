@@ -1,5 +1,14 @@
 #include "ui/UILabel.h"
+#include "macros.h"
+#include "obj/Data.h"
+#include "obj/Object.h"
+#include "rndobj/Text.h"
+#include "rndobj/Trans.h"
 #include "utl/BinStream.h"
+#include "utl/Loader.h"
+#include "utl/Locale.h"
+#include "utl/Str.h"
+#include "utl/Symbol.h"
 
 void UILabel::Load(BinStream &bs) {
     PreLoad(bs);
@@ -8,6 +17,117 @@ void UILabel::Load(BinStream &bs) {
 
 UILabel::UILabel() : unk122(1), unk124(this) {
     unk124.resize(1);
-    unk120 = false;
+    unk120 = 0;
     unk121 = false;
+}
+
+BEGIN_PROPSYNCS(UILabel)
+END_PROPSYNCS
+
+BEGIN_COPYS(UILabel)
+
+END_COPYS
+
+BEGIN_SAVES(UILabel)
+END_SAVES
+
+void UILabel::PreLoad(BinStream &) {}
+
+void UILabel::PostLoad(BinStream &bs) {}
+
+Symbol UILabel::TextToken() { return mTextToken; }
+
+void UILabel::Poll() {}
+
+void UILabel::Highlight() {}
+
+void UILabel::DrawShowing() {}
+
+void UILabel::SetTextToken(Symbol s) {
+    mTextToken = s;
+
+    SetTokenFmtImp(mTextToken, 0, 0, 0, true);
+}
+
+void UILabel::SetInt(int i, bool b) {
+    if (b) {
+        SetDisplayText(LocalizeSeparatedInt(i, TheLocale), true);
+    } else
+        SetDisplayText(MakeString("%d", i), true);
+}
+
+void UILabel::SetFloat(const char *cc, float f) {
+    SetDisplayText(LocalizeFloat(cc, f), true);
+}
+
+void UILabel::SetDateTime(DateTime const &dt, Symbol s) {
+    String str(Localize(s, false, TheLocale));
+    dt.Format(str);
+    SetDisplayText(str.c_str(), true);
+}
+
+void UILabel::SetIcon(char c) {}
+
+void UILabel::SetTokenFmt(const DataArray *) {}
+
+RndText::Style &UILabel::Style(int) { return Style(0); }
+
+void UILabel::SetPrelocalizedString(String &) {}
+
+void UILabel::SetSubtitle(const DataArray *) {}
+
+void UILabel::SetTimeHMS(int, bool) {}
+
+bool UILabel::CheckValid(bool) { return false; }
+
+void UILabel::SetEditText(const char *) {}
+
+char const *UILabel::GetDefaultText() const {
+    if (unk120 != 0) {
+        return &unk120;
+    }
+
+    if (TheLoadMgr.EditMode() && !unk118.empty())
+        return unk118.c_str();
+    else
+        return Localize(mTextToken, nullptr, TheLocale);
+}
+
+void UILabel::CenterWithLabel(UILabel *, bool, float) {}
+
+// UILabel::LabelStyle &UILabel::LStyle(int) { return new LabelStyle(0); }
+
+void UILabel::OldResourcePreload(BinStream &) {}
+
+void UILabel::SetDisplayText(const char *, bool) {}
+
+void UILabel::Init() {}
+
+void UILabel::SetTokenFmtImp(
+    Symbol s, const DataArray *da1, const DataArray *da2, int i, bool b
+) {}
+
+DataNode UILabel::OnSetTokenFmt(DataArray const *da) { return NULL_OBJ; }
+
+DataNode UILabel::OnSetInt(DataArray const *da) { return DataNode(1); }
+
+DataNode UILabel::OnSetTimeHMS(DataArray const *) { return NULL_OBJ; }
+
+bool UILabel::AllowEditText() const { return false; }
+
+void UILabel::LabelUpdate(bool) {}
+
+DataNode UILabel::OnSetHeightFromText(DataArray *) { return NULL_OBJ; }
+
+void UILabel::SetFontMat(char const *, int) {}
+
+char const *UILabel::GetFontMat(int) { return 0; }
+
+void UILabel::RefreshFontMat(int i) {}
+
+BEGIN_HANDLERS(UILabel)
+END_HANDLERS
+
+bool PropSync(UILabel::LabelStyle &, DataNode &, DataArray *, int, PropOp) {
+    return false;
 }

@@ -2,6 +2,14 @@
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/System.h"
+#include "rndobj/Font.h"
+#include "rndobj/FontBase.h"
+#include "rndobj/Mat.h"
+#include "rndobj/Text.h"
+#include "stl/_vector.h"
+#include "utl/Std.h"
+#include "utl/Str.h"
+#include "utl/Symbol.h"
 #include "utl/UTF8.h"
 
 #define HEIGHT_SD 480.0f
@@ -91,3 +99,210 @@ BEGIN_PROPSYNCS(UIFontImporter)
     SYNC_PROP(last_genned_ng, mLastGenWasNG)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
+
+BEGIN_SAVES(UIFontImporter)
+END_SAVES
+
+BEGIN_COPYS(UIFontImporter)
+    CREATE_COPY(UIFontImporter)
+    BEGIN_COPYING_MEMBERS
+        COPY_MEMBER(mLowerCaseAthroughZ)
+        COPY_MEMBER(mUpperCaseAthroughZ)
+        COPY_MEMBER(mNumbers0through9)
+        COPY_MEMBER(mPunctuation)
+        COPY_MEMBER(mUpperEuro)
+        COPY_MEMBER(mLowerEuro)
+        COPY_MEMBER(mRussian)
+        COPY_MEMBER(mPolish)
+        COPY_MEMBER(mIncludeLocale)
+        COPY_MEMBER(mIncludeFile)
+        COPY_MEMBER(mPlus)
+        COPY_MEMBER(mMinus)
+        COPY_MEMBER(mFontName)
+        COPY_MEMBER(mFontPctSize)
+        COPY_MEMBER(mFontWeight)
+        COPY_MEMBER(mItalics)
+        COPY_MEMBER(mDropShadow)
+        COPY_MEMBER(mDropShadowOpacity)
+        COPY_MEMBER(mFontQuality)
+        COPY_MEMBER(mPitchAndFamily)
+        COPY_MEMBER(mFontQuality)
+        COPY_MEMBER(mFontCharset)
+        COPY_MEMBER(mBitmapSavePath)
+        COPY_MEMBER(mBitMapSaveName)
+        COPY_MEMBER(mFontSupersample)
+        COPY_MEMBER(mLeft)
+        COPY_MEMBER(mRight)
+        COPY_MEMBER(mTop)
+        COPY_MEMBER(mBottom)
+        COPY_MEMBER(mFillWithSafeWhite)
+        COPY_MEMBER(mGennedFonts)
+        COPY_MEMBER(mReferenceKerning)
+        COPY_MEMBER(mMatVariations)
+        COPY_MEMBER(mHandmadeFont)
+        COPY_MEMBER(mSyncResource)
+        COPY_MEMBER(mLastGenWasNG)
+    END_COPYING_MEMBERS
+END_COPYS
+
+BEGIN_LOADS(UIFontImporter)
+
+END_LOADS
+
+void UIFontImporter::ImportSettingsFromFont(RndFontBase *font) {
+    if (font) {
+        Symbol imported_font("imported_font");
+        if (font->Type() == imported_font) {
+            SetProperty("font_name", DataNode(font->Property("font_name", true)->Str()));
+            SetProperty(
+                "font_size",
+                DataNode(
+                    ConvertHeightNGToPctHeight(-font->Property("font_size", true)->Int())
+                )
+            );
+
+            SetProperty("weight", DataNode(font->Property("weight", true)->Int()));
+            SetProperty("italics", DataNode(font->Property("italics", true)->Int()));
+            SetProperty(
+                "drop_shadow", DataNode(font->Property("drop_shadow", true)->Int())
+            );
+            SetProperty(
+                "drop_shadow_opacity",
+                DataNode(font->Property("drop_shadow_opacity", true)->Int())
+            );
+            SetProperty("left", DataNode(font->Property("left", true)->Int()));
+            SetProperty("right", DataNode(font->Property("right", true)->Int()));
+            SetProperty("top", DataNode(font->Property("top", true)->Int()));
+            SetProperty("bottom", DataNode(font->Property("bottom", true)->Int()));
+        }
+    }
+    MILO_NOTIFY("Can't import settings from Font because it doesnt have import_font type");
+}
+
+Symbol UIFontImporter::GetMatVariationName(unsigned int ui) const { return Symbol(0); }
+
+char const *UIFontImporter::GetMatVariationName(RndFontBase *) const { return 0; }
+
+int UIFontImporter::GetMatVariationIdx(Symbol s) const {
+    int size = NumMatVariations();
+    for (int ret = 0; ret < size; ret++) {
+        if (GetMatVariationName(ret) == s)
+            return ret;
+    }
+    return -1;
+}
+
+RndFontBase *UIFontImporter::GetGennedFont(Symbol s) const { return nullptr; }
+
+void UIFontImporter::AttachImporterToFont(RndFontBase *font) {
+    if (font) {
+        if (font->Dir() != Dir())
+            MILO_NOTIFY(
+                "Cannot attach font %s to font resource %s because its in a different dir.  Notify a programmer!"
+            );
+        else {
+            mGennedFonts.clear();
+            mMatVariations.clear();
+            mGennedFonts.push_back(font);
+            mReferenceKerning = font;
+            ImportSettingsFromFont(font);
+        }
+    }
+}
+
+void UIFontImporter::GenerateBitmapFilename() {
+    const char *mult = "";
+    if (mFontSupersample == kFontSuperSample_2x)
+        mult = "2x";
+    else if (mFontSupersample == kFontSuperSample_4x)
+        mult = "4x";
+
+    class String s28(MakeString("%.2f", mFontPctSize * 100.0f));
+    s28.ReplaceAll('.', '_');
+    const char *s = mDropShadow ? "S" : "";
+    const char *b = (mFontWeight > 500) ? "B" : "";
+    const char *i = mItalics ? "I" : "";
+    mBitMapSaveName =
+        MakeString("%s(%s)%s%s%s%s.bmp", mFontName.c_str(), s28.c_str(), i, b, s, mult);
+    mBitMapSaveName.ReplaceAll(' ', '_');
+}
+
+String UIFontImporter::GetASCIIPlusChars() { return String(); }
+
+String UIFontImporter::GetASCIIMinusChars() { return 0; }
+
+void UIFontImporter::SyncWithGennedFonts() {}
+
+void UIFontImporter::HandmadeFontChanged() {}
+
+RndFontBase *UIFontImporter::FindFontForMat(RndMat *mat) const {
+    if (mat) {
+        static Symbol Font("Font");
+        static Symbol Font3d("Font3d");
+        FOREACH (it, mat->Refs()) {
+            Hmx::Object *owner = (*it).RefOwner();
+            if (owner) {
+                if (owner->ClassName() == Font) {
+                    return dynamic_cast<RndFont *>(owner);
+                }
+                if (owner->ClassName() == Font3d)
+                    return dynamic_cast<RndFont3d *>(owner);
+            }
+        }
+    }
+    return nullptr;
+}
+
+DataNode UIFontImporter::OnGetGennedBitmapPath(DataArray *da) { return DataNode(""); }
+
+DataNode UIFontImporter::OnImportSettings(DataArray *da) {
+    ImportSettingsFromFont(mFontToImportFrom);
+    return DataNode(0);
+}
+
+DataNode UIFontImporter::OnForgetGened(DataArray *) {
+    mGennedFonts.clear();
+    return 0;
+}
+
+DataNode UIFontImporter::OnAttachToImportFont(DataArray *) {
+    AttachImporterToFont(mFontToImportFrom);
+    return 0;
+}
+
+void UIFontImporter::OnSetCharsetUTF8(String const &s) {
+    mLowerEuro = false;
+    mUpperEuro = false;
+    mPunctuation = false;
+    mNumbers0through9 = false;
+    mLowerCaseAthroughZ = false;
+    mUpperCaseAthroughZ = false;
+    mIncludeLocale = false;
+    mPolish = false;
+    mRussian = false;
+    mIncludeFile = "";
+    mMinus.clear();
+    mPlus.clear();
+    UTF8toWideVector(mPlus, s.c_str());
+}
+
+DataNode UIFontImporter::OnSyncWithResourceFile(DataArray *) { return NULL_OBJ; }
+
+RndText *UIFontImporter::FindTextForFont(RndFontBase *font) const {
+    if (font) {
+        static Symbol Text("Text");
+        FOREACH (it, font->Refs()) {
+            Hmx::Object *owner = (*it).RefOwner();
+            if (owner) {
+                if (owner->ClassName() == Text) {
+                    return dynamic_cast<RndText *>(owner);
+                }
+            }
+        }
+    }
+    return nullptr;
+}
+
+BEGIN_HANDLERS(UIFontImporter)
+    HANDLE_SUPERCLASS(Hmx::Object)
+END_HANDLERS

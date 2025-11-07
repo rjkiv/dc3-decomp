@@ -9,6 +9,11 @@ class UITrigger;
 
 class PanelDir : public RndDir {
 public:
+    enum RequestFocus {
+        kNoFocus = 0,
+        kMaybeFocus = 1,
+        kAlwaysFocus = 2,
+    };
     PanelDir();
     // Hmx::Object
     virtual ~PanelDir();
@@ -38,13 +43,28 @@ public:
     OBJ_MEM_OVERLOAD(0x19);
 
     void SetOwnerPanel(UIPanel *panel) { mOwnerPanel = panel; }
+    void EnableComponent(UIComponent *, PanelDir::RequestFocus);
+    void DisableComponent(UIComponent *, JoypadAction);
+    DataNode GetFocusableComponentList();
+    void SetShowFocusComponent(bool show);
+    void UpdateFocusComponentState();
 
 private:
     UIComponent *GetFirstFocusableComponent();
+    UIComponent *ComponentNav(UIComponent *, JoypadAction, JoypadButton, Symbol);
+    DataNode OnEnableComponent(DataArray const *);
+    bool PanelNav(JoypadAction, JoypadButton, Symbol);
+    DataNode OnMsg(ButtonDownMsg const &);
+    DataNode OnDisableComponent(DataArray const *);
+    void SyncEditModePanels();
+    bool
+    PropSyncEditModePanels(std::vector<FilePath> &, DataNode &, DataArray *, int, PropOp);
 
     static bool sAlwaysNeedFocus;
 
 protected:
+    void SendTransition(Message const &, Symbol, Symbol);
+
     /** The currently focused-on component. */
     UIComponent *mFocusComponent; // 0x1fc
     class UIPanel *mOwnerPanel; // 0x200

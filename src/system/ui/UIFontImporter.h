@@ -1,12 +1,24 @@
 #pragma once
 #include "obj/Object.h"
 #include "rndobj/Font.h"
+#include "rndobj/Text.h"
 #include "utl/MemMgr.h"
 #include "utl/Str.h"
 
 /** "Class supporting font importing.  To be included in font resource file classes." */
 class UIFontImporter : public virtual Hmx::Object {
 public:
+    enum FontQuality {
+        kFontQuality_AntiAliased,
+        kFontQuality_ClearType,
+        kFontQuality_Default
+    };
+
+    enum FontSuperSample {
+        kFontSuperSample_None,
+        kFontSuperSample_2x,
+        kFontSuperSample_4x
+    };
     // Hmx::Object
     virtual ~UIFontImporter() {}
     OBJ_CLASSNAME(UIFontImporter);
@@ -19,6 +31,17 @@ public:
 
     OBJ_MEM_OVERLOAD(0x2A);
 
+    void ImportSettingsFromFont(RndFontBase *);
+    Symbol GetMatVariationName(unsigned int) const;
+    char const *GetMatVariationName(RndFontBase *) const;
+    int GetMatVariationIdx(Symbol) const;
+    RndFontBase *GetGennedFont(Symbol) const;
+    void AttachImporterToFont(RndFontBase *);
+
+    int NumMatVariations() const { return mMatVariations.size(); }
+    int NumGennedFonts() const { return mGennedFonts.size(); }
+    bool HandMadeFontExists() const { return mHandmadeFont; }
+
 protected:
     UIFontImporter();
 
@@ -27,6 +50,14 @@ protected:
     String GetASCIIMinusChars();
     void SyncWithGennedFonts();
     void HandmadeFontChanged();
+    RndFontBase *FindFontForMat(RndMat *) const;
+    DataNode OnGetGennedBitmapPath(DataArray *);
+    DataNode OnImportSettings(DataArray *);
+    DataNode OnForgetGened(DataArray *);
+    DataNode OnAttachToImportFont(DataArray *);
+    void OnSetCharsetUTF8(String const &);
+    DataNode OnSyncWithResourceFile(DataArray *);
+    RndText *FindTextForFont(RndFontBase *) const;
 
     /** "include uppercase letters" */
     bool mUpperCaseAthroughZ; // 0x4

@@ -25,4 +25,7 @@ protected:
     FilePath mTexPath; // 0x20
     RndTex *mTex; // 0x2c
     RndMat *mMat; // 0x30
+
+private:
+    void Sync();
 };

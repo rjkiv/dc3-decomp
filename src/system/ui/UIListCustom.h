@@ -1,4 +1,5 @@
 #pragma once
+#include "obj/Object.h"
 #include "ui/UIListSlot.h"
 
 /** "Custom slot for use with UIList" */
@@ -11,6 +12,8 @@ public:
     virtual void Save(BinStream &);
     virtual void Copy(const Hmx::Object *, CopyType);
     virtual void Load(BinStream &);
+
+    void SetObject(Hmx::Object *);
 
 protected:
     UIListCustom();

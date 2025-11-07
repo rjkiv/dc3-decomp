@@ -44,6 +44,7 @@ public:
     bool Showing() const { return mShowing; }
     void SetShowing(bool b) { mShowing = b; }
     bool IsReferenced() const { return mLoadRefs != 0; }
+    bool Paused() { return mPaused; }
     void CheckLoad();
     bool CheckIsLoaded();
     void SetFocusComponent(UIComponent *);

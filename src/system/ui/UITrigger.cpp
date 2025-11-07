@@ -4,6 +4,7 @@
 #include "obj/Object.h"
 #include "rndobj/Anim.h"
 #include "rndobj/EventTrigger.h"
+#include "ui/UIComponent.h"
 #include "utl/Loader.h"
 
 UITrigger::UITrigger()
@@ -30,7 +31,27 @@ BEGIN_COPYS(UITrigger)
 END_COPYS
 
 BEGIN_LOADS(UITrigger)
-
+    LOAD_REVS(bs)
+    ASSERT_REVS(1, 0)
+    if (d.rev < 1) {
+        UIComponent *uiCom = Hmx::Object::New<UIComponent>();
+        uiCom->Load(bs);
+        delete uiCom;
+        Symbol sym;
+        bs >> sym;
+        UnregisterEvents();
+        mTriggerEvents.clear();
+        mTriggerEvents.push_back(sym);
+        RegisterEvents();
+        ObjPtr<RndAnimatable> animPtr(this);
+        bs >> animPtr;
+        mAnims.clear();
+        mAnims.push_back();
+        EventTrigger::Anim &anim = mAnims.back();
+        anim.mAnim = animPtr;
+    } else
+        LOAD_SUPERCLASS(EventTrigger);
+    bs >> mBlockTransition;
 END_LOADS
 
 void UITrigger::Trigger() {}

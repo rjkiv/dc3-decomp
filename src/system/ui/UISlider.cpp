@@ -1,10 +1,12 @@
 #include "ui/UISlider.h"
+#include "UIComponent.h"
 #include "math/Mtx.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/JoypadMsgs.h"
 #include "rndobj/Draw.h"
 #include "utl/BinStream.h"
+#include "utl/Symbol.h"
 
 void UISlider::OldResourcePreload(BinStream &bs) {
     char buf[256];
@@ -15,13 +17,21 @@ void UISlider::OldResourcePreload(BinStream &bs) {
 UISlider::UISlider() : unk50(this), mCurrent(0), mNumSteps(10), mVertical(0) {}
 
 BEGIN_PROPSYNCS(UISlider)
-
+    SYNC_PROP_MODIFY(slider_resource, unk50, Update())
+    SYNC_PROP(vertical, mVertical)
+    SYNC_SUPERCLASS(ScrollSelect)
+    SYNC_SUPERCLASS(UIComponent)
 END_PROPSYNCS
 
 BEGIN_SAVES(UISlider)
+    SAVE_REVS(3, 0)
+    SAVE_SUPERCLASS(UIComponent)
+    bs << unk50;
+    bs << mVertical;
 END_SAVES
 
 BEGIN_COPYS(UISlider)
+
 END_COPYS
 
 BEGIN_LOADS(UISlider)
@@ -86,7 +96,17 @@ int UISlider::Current() const { return mCurrent; }
 
 void UISlider::Init() {}
 
-void UISlider::Update() {}
+void UISlider::Update() {
+    static Symbol mesh("mesh");
+    static Symbol mats("mats");
+
+    unk68 = 0;
+    unk6c = 0;
+    unk70 = 0;
+    unk74 = 0;
+    unk78 = 0;
+    unk7c = 0;
+}
 
 BEGIN_HANDLERS(UISlider)
 

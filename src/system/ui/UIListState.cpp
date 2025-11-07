@@ -207,6 +207,8 @@ int UIListState::NumShowing() const { return mProvider->NumData() - mHiddenData.
 
 UIListProvider *UIListState::Provider() { return mProvider; }
 
+UIListProvider *UIListState::Provider() const { return mProvider; }
+
 void UIListState::SetProvider(UIListProvider *provider, RndDir *rdir) {
     MILO_ASSERT(provider, 0x126);
     provider->InitData(rdir);
