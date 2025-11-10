@@ -1,12 +1,15 @@
 #pragma once
 #include "rndobj/Dir.h"
+#include "rndobj/Mesh.h"
 #include "ui/ResourceDirPtr.h"
 #include "ui/UIComponent.h"
+#include "ui/UILabel.h"
 
 /** "a mesh shrink wrapped to selected label" */
 class LabelShrinkWrapper : public UIComponent {
 public:
     // Hmx::Object
+    virtual ~LabelShrinkWrapper();
     OBJ_CLASSNAME(LabelShrinkWrapper)
     OBJ_SET_TYPE(LabelShrinkWrapper)
     virtual DataNode Handle(DataArray *, bool);
@@ -28,5 +31,10 @@ public:
 protected:
     LabelShrinkWrapper();
 
-    ResourceDirPtr<RndDir> unk44; // 0x44
+    ObjPtr<UILabel> m_pLabel; // 0x44
+
+    RndMesh *m_pTopLeftBone;
+    RndMesh *m_pTopRightBone;
+    RndMesh *m_pBottomLeftBone;
+    RndMesh *m_pBottomRightBone;
 };

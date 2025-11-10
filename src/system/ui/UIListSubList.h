@@ -21,14 +21,29 @@ public:
         Box *,
         DrawCommand
     );
-    virtual UIListSlotElement *CreateElement(UIList *);
+
     virtual RndTransformable *RootTrans();
 
     static int sNextFillSelection;
 
 protected:
+    virtual UIListSlotElement *CreateElement(UIList *);
+
     UIListSubList();
 
     /** "sub list template" */
     ObjPtr<UIList> mList; // 0x78
+};
+
+class UIListSubListElement : public UIListSlotElement {
+public:
+    UIListSubListElement(UIListSubList *sl, UIList *l) : mSlot(sl), mList(l) {}
+    virtual ~UIListSubListElement();
+    virtual void Fill(const UIListProvider &, int, int);
+    virtual void Draw(const Transform &, float, UIColor *, Box *);
+    virtual void Poll() { mList->Poll(); }
+    virtual UIList *List() { return mList; }
+
+    UIListSubList *mSlot;
+    UIList *mList;
 };

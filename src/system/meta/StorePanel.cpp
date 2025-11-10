@@ -18,7 +18,7 @@
 StorePanel::StorePanel()
     : unk50(false), mLoadOk(false), unk52(false), unk5c(0),
       unk60(Hmx::Object::New<RndTex>()), mPendingArtCallback(0), unk68(-1),
-      mStorePreviewMgr(0), unk70(false), mPurchaser(0), unk78(0), unk7c(0),
+      mStorePreviewMgr(0), unk70(false), mPurchaser(0), unk78(nullptr), unk7c(0),
       unk8c(gNullStr), unk90(gNullStr), unk94(0), unk98(0) {}
 
 StorePanel::~StorePanel() {}
@@ -34,14 +34,22 @@ void StorePanel::Enter() {}
 
 void StorePanel::Exit() {
     XBackgroundDownloadSetMode(XBACKGROUND_DOWNLOAD_MODE_AUTO);
-    ThePlatformMgr.RemoveSink(unk60, gNullStr);
-    if (-1 < unk68)
+    ThePlatformMgr.RemoveSink(this, gNullStr);
+    if (0 <= unk68)
         ThePlatformMgr.CancelEnumJob(unk68);
     unk68 = -1;
     UIPanel::Exit();
 }
 
-bool StorePanel::Exiting() const { return false; }
+bool StorePanel::Exiting() const {
+    bool b;
+    if (mPurchaser && mPurchaser->unk8 != 0) {
+        b = UIPanel::Exiting();
+    }
+    b = true;
+
+    return b;
+}
 
 void StorePanel::Poll() {}
 
@@ -72,7 +80,10 @@ void StorePanel::Unload() {
 
 void StorePanel::LoadArt(char const *, UIPanel *) {}
 
-void StorePanel::CheckOut(StorePurchaseable *p) { MILO_ASSERT(p->IsAvailable(), 0x2c0); }
+void StorePanel::CheckOut(StorePurchaseable *p) {
+    MILO_ASSERT(p->IsAvailable(), 0x2c0);
+    MILO_ASSERT(!mPurchaser, 0x2c1);
+}
 
 void StorePanel::ExitError(StoreError e) {
     MILO_ASSERT(e != kStoreErrorSuccess, 0x405);

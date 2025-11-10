@@ -30,7 +30,10 @@ BEGIN_COPYS(UIListMesh)
 END_COPYS
 
 BEGIN_LOADS(UIListMesh)
-
+    LOAD_REVS(bs)
+    ASSERT_REVS(0, 0)
+    LOAD_SUPERCLASS(UIListSlot)
+    bs >> mMesh >> mDefaultMat;
 END_LOADS
 
 void UIListMesh::Draw(

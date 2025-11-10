@@ -1,6 +1,7 @@
 #pragma once
 #include "UIListDir.h"
 #include "math/Geo.h"
+#include "math/Mtx.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/JoypadMsgs.h"
@@ -14,6 +15,7 @@
 #include "ui/UIListState.h"
 #include "ui/UIListWidget.h"
 #include "ui/UITransitionHandler.h"
+#include "utl/Symbol.h"
 
 /**
  * @brief A UI Object representing a list element.
@@ -47,20 +49,21 @@ public:
     virtual void DrawShowing();
     virtual RndDrawable *CollideShowing(const Segment &, float &, Plane &);
     virtual int CollidePlane(const Plane &);
-    // ScrollSelect
-    virtual int SelectedAux() const;
-    virtual void SetSelectedAux(int);
     // UIListStateCallback
     virtual void StartScroll(const UIListState &, int, bool);
     virtual void CompleteScroll(const UIListState &);
-    // UITransitionHandler
-    virtual void FinishValueChange();
-    virtual bool IsEmptyValue() const;
+
+    // unsure where these go
+    virtual void Enter();
+    virtual void Poll();
+
+    static void Init();
 
     void SetNumDisplay(int);
     void SetGridSpan(int);
     void SetCircular(bool);
     void SetSpeed(float speed); // { mListState.SetSpeed(speed); }
+    void SetParent(UIList *);
     void LimitCircularDisplay(bool);
     void SetProvider(UIListProvider *);
     int NumProviderData() const;
@@ -72,8 +75,13 @@ public:
     void AutoScroll();
     void StopAutoScroll();
     void SetSelected(int, int);
+    bool SetSelected(Symbol, bool, int);
     int SelectedPos() const;
     void Scroll(int);
+    void CalcBoundingBox(Box &);
+    Symbol SelectedSym(bool) const;
+    void SetSelectedSimulateScroll(int);
+    bool SetSelectedSimulateScroll(Symbol, bool);
 
     int NumDisplay() const { return mListState.NumDisplay(); }
     int GridSpan() const { return mListState.GridSpan(); }
@@ -85,8 +93,16 @@ public:
 
 private:
     void Update();
+    void OldResourcePreload(BinStream &);
 
 protected:
+    // ScrollSelect
+    virtual int SelectedAux() const;
+    virtual void SetSelectedAux(int);
+    // UITransitionHandler
+    virtual void FinishValueChange();
+    virtual bool IsEmptyValue() const;
+
     UIList();
 
     DataNode OnMsg(const ButtonDownMsg &);
@@ -96,8 +112,14 @@ protected:
     DataNode OnSetSelectedSimulateScroll(DataArray *);
     DataNode OnScroll(DataArray *);
 
-    ResourceDirPtr<UIListDir> mListResource; // 0x8c
-    std::vector<UIListWidget *> unka4; // 0xa4
+    int CollidePlane(std::vector<Vector3> const &, Plane const &);
+    void HandleSelectionUpdated();
+    void UpdateExtendedEntries(UIListState const &);
+    void PreLoadWithRev(BinStreamRev &);
+    void BoundingBoxTriangles(std::vector<std::vector<Vector3> > &);
+
+    ResourceDirPtr<UIListDir> mListDir; // 0x8c
+    std::vector<UIListWidget *> mWidgets; // 0xa4
     UIListState mListState; // 0xb0
     DataProvider *mDataProvider; // 0xf8
     /** "Num data to show (only for milo)". Ranges from 1 to 1000. */

@@ -4,6 +4,7 @@
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/File.h"
+#include "rndobj/Mesh.h"
 #include "utl/BinStream.h"
 #include "utl/FilePath.h"
 #include "utl/Loader.h"
@@ -19,7 +20,11 @@ UIPicture::~UIPicture() {
 }
 
 BEGIN_PROPSYNCS(UIPicture)
-
+    SYNC_PROP_SET(tex_file, mTexFile, SetTex(FilePath(_val.Str())))
+    SYNC_PROP_SET(in_anim, GetInAnim(), SetInAnim(_val.Obj<RndAnimatable>()))
+    SYNC_PROP_SET(out_anim, GetOutAnim(), SetOutAnim(_val.Obj<RndAnimatable>()))
+    SYNC_PROP_MODIFY(mesh, mMesh, HookupMesh())
+    SYNC_SUPERCLASS(UIComponent)
 END_PROPSYNCS
 
 BEGIN_SAVES(UIPicture)
@@ -39,13 +44,48 @@ BEGIN_COPYS(UIPicture)
 END_COPYS
 
 BEGIN_LOADS(UIPicture)
+    PreLoad(bs);
+    PostLoad(bs);
 END_LOADS
 
-void UIPicture::SetTypeDef(DataArray *da) {}
+void UIPicture::SetTypeDef(DataArray *da) {
+    UIComponent::SetTypeDef(da);
+    if (da) {
+        DataArray *findtex = da->FindArray("tex_file", false);
+        if (findtex) {
+            if (strlen(findtex->Str(1))) {
+                FilePath fp(FilePath(FileGetPath(findtex->File()), findtex->Str(1)));
+                SetTex(fp);
+            }
+        }
+    }
+}
 
-void UIPicture::PreLoad(BinStream &) {}
+void UIPicture::PreLoad(BinStream &bs) {
+    LOAD_REVS(bs)
+    ASSERT_REVS(2, 0)
+    if (d.rev > 0) {
+        if (TheLoadMgr.EditMode()) {
+            FilePath fp;
+            bs >> fp;
+            SetTex(fp);
+        } else {
+            bs >> mTexFile;
+        }
+        bs >> mMesh;
+    }
+    if (d.rev >= 2)
+        UITransitionHandler::LoadHandlerData(bs);
+    UIComponent::PreLoad(bs);
+}
 
-void UIPicture::PostLoad(BinStream &) {}
+void UIPicture::PostLoad(BinStream &bs) {
+    UIComponent::PostLoad(bs);
+    CancelLoading();
+    if (!TheLoadMgr.EditMode() && mMesh) {
+        mMesh->SetShowing(false);
+    }
+}
 
 void UIPicture::Poll() {
     UIComponent::Poll();

@@ -2,6 +2,7 @@
 #include "macros.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
+#include "obj/Task.h"
 #include "rndobj/Text.h"
 #include "rndobj/Trans.h"
 #include "utl/BinStream.h"
@@ -9,6 +10,9 @@
 #include "utl/Locale.h"
 #include "utl/Str.h"
 #include "utl/Symbol.h"
+#include <cstring>
+
+bool UILabel::sDeferUpdate;
 
 void UILabel::Load(BinStream &bs) {
     PreLoad(bs);
@@ -72,7 +76,7 @@ void UILabel::SetTokenFmt(const DataArray *) {}
 
 RndText::Style &UILabel::Style(int) { return Style(0); }
 
-void UILabel::SetPrelocalizedString(String &) {}
+void UILabel::SetPrelocalizedString(String &s) {}
 
 void UILabel::SetSubtitle(const DataArray *) {}
 
@@ -99,7 +103,16 @@ void UILabel::CenterWithLabel(UILabel *, bool, float) {}
 
 void UILabel::OldResourcePreload(BinStream &) {}
 
-void UILabel::SetDisplayText(const char *, bool) {}
+void UILabel::SetDisplayText(const char *cc, bool b) {
+    if (b)
+        mTextToken = gNullStr;
+    RndText::SetText(cc);
+    if (strchr(cc, 60)) {
+        mMarkup = true;
+    }
+    if (!sDeferUpdate)
+        LabelUpdate(false);
+}
 
 void UILabel::Init() {}
 
@@ -115,7 +128,7 @@ DataNode UILabel::OnSetTimeHMS(DataArray const *) { return NULL_OBJ; }
 
 bool UILabel::AllowEditText() const { return false; }
 
-void UILabel::LabelUpdate(bool) {}
+void UILabel::LabelUpdate(bool b) { unk122 = false; }
 
 DataNode UILabel::OnSetHeightFromText(DataArray *) { return NULL_OBJ; }
 

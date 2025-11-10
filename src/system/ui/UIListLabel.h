@@ -1,4 +1,5 @@
 #pragma once
+#include "ui/UIListProvider.h"
 #include "ui/UIListSlot.h"
 #include "ui/UILabel.h"
 
@@ -24,4 +25,17 @@ protected:
     /** "label to draw/transform" */
     ObjPtr<UILabel> mLabel; // 0x78
     bool unk8c;
+};
+
+class UIListLabelElement : public UIListSlotElement {
+public:
+    UIListLabelElement(UIListLabel *ll, UILabel *l) : mListLabel(ll), mLabel(l) {}
+    virtual ~UIListLabelElement();
+    virtual void Fill(const UIListProvider &prov, int i, int j) {
+        prov.Text(i, j, mListLabel, mLabel);
+    }
+    virtual void Draw(const Transform &, float, UIColor *, Box *);
+
+    UIListLabel *mListLabel;
+    UILabel *mLabel;
 };

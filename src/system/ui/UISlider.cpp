@@ -5,6 +5,7 @@
 #include "obj/Object.h"
 #include "os/JoypadMsgs.h"
 #include "rndobj/Draw.h"
+#include "ui/UIPanel.h"
 #include "utl/BinStream.h"
 #include "utl/Symbol.h"
 
@@ -31,6 +32,11 @@ BEGIN_SAVES(UISlider)
 END_SAVES
 
 BEGIN_COPYS(UISlider)
+    COPY_SUPERCLASS(UIComponent)
+    CREATE_COPY_AS(UISlider, c)
+
+    COPY_MEMBER_FROM(c, mSelectToScroll)
+    COPY_MEMBER_FROM(c, mVertical)
 
 END_COPYS
 
@@ -41,9 +47,21 @@ END_LOADS
 
 void UISlider::SetTypeDef(DataArray *) {}
 
-void UISlider::PreLoad(BinStream &bs) {}
+void UISlider::PreLoad(BinStream &bs) {
+    LOAD_REVS(bs);
+    ASSERT_REVS(3, 0);
+    UIComponent::PreLoad(bs);
+    if (d.rev >= 3)
+        bs >> unk50;
+    bs.PushRev(packRevs(d.altRev, d.rev), this);
+}
 
-void UISlider::PostLoad(BinStream &bs) {}
+void UISlider::PostLoad(BinStream &bs) {
+    bs.PopRev(this);
+    UIComponent::PostLoad(bs);
+
+    Update();
+}
 
 void UISlider::DrawShowing() {}
 
@@ -69,7 +87,7 @@ int UISlider::SelectedAux() const { return Current(); }
 
 void UISlider::SetSelectedAux(int i) { SetCurrent(i); }
 
-DataNode UISlider::OnMsg(const ButtonDownMsg &) { return NULL_OBJ; }
+DataNode UISlider::OnMsg(const ButtonDownMsg &msg) { return NULL_OBJ; }
 
 void UISlider::SyncSlider() {}
 
@@ -109,5 +127,20 @@ void UISlider::Update() {
 }
 
 BEGIN_HANDLERS(UISlider)
-
+    HANDLE_MESSAGE(ButtonDownMsg)
+    HANDLE_EXPR(current, mCurrent)
+    HANDLE_EXPR(num_steps, mNumSteps)
+    HANDLE_EXPR(frame, Frame())
+    HANDLE_ACTION(set_num_steps, SetNumSteps(_msg->Int(2)))
+    HANDLE_ACTION(set_current, SetCurrent(_msg->Int(2)))
+    HANDLE_ACTION(set_frame, SetFrame(_msg->Float(2)))
+    HANDLE_ACTION(store, Store())
+    HANDLE_ACTION(undo, RevertScrollSelect(this, _msg->Obj<LocalUser>(2), 0))
+    HANDLE_ACTION(
+        undo_handled_by,
+        RevertScrollSelect(this, _msg->Obj<LocalUser>(2), _msg->Obj<UIPanel>(3))
+    )
+    HANDLE_ACTION(confirm, Reset())
+    HANDLE_SUPERCLASS(ScrollSelect)
+    HANDLE_SUPERCLASS(UIComponent)
 END_HANDLERS

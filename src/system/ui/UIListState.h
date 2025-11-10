@@ -44,7 +44,7 @@ public:
     int NumDisplay() const { return mNumDisplay; }
     int FirstShowing() const { return mFirstShowing; }
     int GridSpan() const { return mGridSpan; }
-    float Speed() const { return mSpeed; }
+    float Speed() const;
     int MinDisplay();
     int MaxDisplay() const;
     bool ScrollPastMinDisplay() const;

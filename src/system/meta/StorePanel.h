@@ -52,7 +52,7 @@ public:
     StorePreviewMgr *mStorePreviewMgr; // 0x6c
     bool unk70;
     StorePurchaser *mPurchaser; // 0x74
-    int unk78;
+    StorePurchaseable *unk78;
     int unk7c;
     std::vector<StoreOffer *> unk80;
     Symbol unk8c;

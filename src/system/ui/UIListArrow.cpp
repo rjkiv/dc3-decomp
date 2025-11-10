@@ -34,7 +34,16 @@ BEGIN_COPYS(UIListArrow)
 END_COPYS
 
 BEGIN_LOADS(UIListArrow)
-
+    LOAD_REVS(bs)
+    ASSERT_REVS(1, 0)
+    UIListWidget::Load(bs);
+    int dump;
+    bool tmp;
+    bs >> mMesh >> dump >> mShowOnlyScroll >> tmp;
+    mOnHighlight = tmp;
+    mPosition = (UIListArrowPosition)dump;
+    if (d.rev != 0)
+        bs >> mScrollAnim;
 END_LOADS
 
 void UIListArrow::Draw(

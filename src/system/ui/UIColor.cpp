@@ -26,3 +26,10 @@ BEGIN_PROPSYNCS(UIColor)
     SYNC_PROP(color, mColor)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
+
+BEGIN_LOADS(UIColor)
+    LOAD_REVS(bs);
+    ASSERT_REVS(0, 0);
+    Hmx::Object::Load(bs);
+    bs >> mColor;
+END_LOADS

@@ -2,6 +2,7 @@
 #include "math/Mtx.h"
 #include "math/Vec.h"
 #include "obj/Object.h"
+#include "rndobj/Mesh.h"
 #include "ui/UIColor.h"
 #include "ui/UIComponent.h"
 #include "ui/UIListState.h"
@@ -60,12 +61,15 @@ public:
 
     float DrawOrder() const;
     void SetParentList(UIList *);
+    void SetColor(UIListWidgetState, UIComponent::State, UIColor *);
 
 protected:
     UIListWidget();
 
     void CalcXfm(const Transform &, const Vector3 &, Transform &);
     UIColor *DisplayColor(UIListWidgetState, UIComponent::State) const;
+    void
+    DrawMesh(RndMesh *, UIListWidgetState, UIComponent::State, Transform const &, Box *);
 
     float mDrawOrder; // 0x2c
     float mDisabledAlphaScale; // 0x30

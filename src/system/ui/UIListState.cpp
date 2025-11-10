@@ -40,6 +40,8 @@ void UIListState::SetSpeed(float speed) {
     mSpeed = speed;
 }
 
+float UIListState::Speed() const { return mSpeed; }
+
 void UIListState::SetMinDisplay(int min) {
     MILO_ASSERT(min >= 0, 0x149);
     mMinDisplay = min;

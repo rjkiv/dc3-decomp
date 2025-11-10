@@ -102,6 +102,8 @@ protected:
     char const *GetFontMat(int);
     void RefreshFontMat(int);
 
+    static bool sDeferUpdate;
+
     Symbol mTextToken; // 0x114
     String unk118; // 0x118
     char unk120;

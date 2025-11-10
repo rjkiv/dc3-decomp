@@ -1,21 +1,34 @@
 #include "ui/UIList.h"
+#include "math/Geo.h"
+#include "math/Utl.h"
+#include "math/Vec.h"
+#include "obj/Data.h"
 #include "obj/Object.h"
+#include "os/Debug.h"
 #include "os/JoypadMsgs.h"
 #include "os/User.h"
+#include "rndobj/Draw.h"
+#include "rndobj/FontBase.h"
 #include "ui/UIComponent.h"
+#include "ui/UIListProvider.h"
+#include "ui/UIListState.h"
 #include "ui/UITransitionHandler.h"
+#include "utl/BinStream.h"
+#include "utl/Loader.h"
 #include "utl/Std.h"
+#include "utl/Symbol.h"
+
+static bool gLoading = false;
 
 UIList::UIList()
-    : UITransitionHandler(this), mListResource(this), mListState(this, this),
-      mDataProvider(0), mNumData(100), mPaginate(0), mUser(0), mParent(0),
-      mExtendedLabelEntries(this), mExtendedMeshEntries(this),
-      mExtendedCustomEntries(this), mAutoScrollPause(2), mAutoScrollSendMsgs(0),
-      unk150(1), mAutoScrolling(0), unk158(-1), unk15c(0), unk15d(0), unk160(1),
-      mAllowHighlight(1) {}
+    : UITransitionHandler(this), mListDir(this), mListState(this, this), mDataProvider(0),
+      mNumData(100), mPaginate(0), mUser(0), mParent(0), mExtendedLabelEntries(this),
+      mExtendedMeshEntries(this), mExtendedCustomEntries(this), mAutoScrollPause(2),
+      mAutoScrollSendMsgs(0), unk150(1), mAutoScrolling(0), unk158(-1), unk15c(0),
+      unk15d(0), unk160(1), mAllowHighlight(1) {}
 
 UIList::~UIList() {
-    DeleteAll(unka4);
+    DeleteAll(mWidgets);
     RELEASE(mDataProvider);
 }
 
@@ -55,7 +68,7 @@ BEGIN_HANDLERS(UIList)
 END_HANDLERS
 
 BEGIN_PROPSYNCS(UIList)
-    SYNC_PROP_MODIFY(list_resource, mListResource, Update())
+    SYNC_PROP_MODIFY(list_resource, mListDir, Update())
     SYNC_PROP_SET(display_num, NumDisplay(), SetNumDisplay(_val.Int()))
     SYNC_PROP_SET(grid_span, GridSpan(), SetGridSpan(_val.Int()))
     SYNC_PROP_SET(circular, Circular(), SetCircular(_val.Int()))
@@ -102,7 +115,7 @@ END_PROPSYNCS
 BEGIN_SAVES(UIList)
     SAVE_REVS(0x15, 0)
     SAVE_SUPERCLASS(UIComponent)
-    bs << mListResource;
+    bs << mListDir;
     bs << NumDisplay();
     bs << GridSpan();
     bs << Circular();
@@ -128,7 +141,250 @@ BEGIN_LOADS(UIList)
     PostLoad(bs);
 END_LOADS
 
+BEGIN_COPYS(UIList)
+
+END_COPYS
+
 int UIList::SelectedPos() const { return mListState.Selected(); }
+
 bool UIList::IsScrolling() const { return mListState.IsScrolling(); }
+
 void UIList::SetSpeed(float speed) { mListState.SetSpeed(speed); }
+
 float UIList::Speed() const { return mListState.Speed(); }
+
+void UIList::SetParent(UIList *uilist) { mParent = uilist; }
+
+void UIList::CalcBoundingBox(Box &box) {}
+
+Symbol UIList::SelectedSym(bool fail) const {
+    Symbol sym = mListState.Provider()->DataSymbol(mListState.SelectedData());
+    if (fail) {
+        if (sym == gNullStr)
+            MILO_FAIL("DataSymbol() not implemented in UIList provider");
+    }
+    return sym;
+}
+
+void UIList::Scroll(int i) {
+    unk15c = true;
+    mListState.Scroll(i, false);
+}
+
+void UIList::StopAutoScroll() { mAutoScrolling = false; }
+
+int UIList::NumProviderData() const {
+    UIListProvider *p = mListState.Provider();
+    if (p)
+        return p->NumData();
+    else
+        return NumData();
+}
+
+int UIList::SelectedAux() const { return mListState.Selected(); }
+
+bool UIList::IsEmptyValue() const { return SelectedData() == -1; }
+
+void UIList::AutoScroll() {
+    UIListProvider *prov = mListState.Provider();
+    if (!prov)
+        prov = this;
+    if (prov->NumData() <= NumDisplay()) {
+        StopAutoScroll();
+    } else {
+        mAutoScrolling = true;
+        unk150 = 1;
+        unk158 = mAutoScrollPause + TheTaskMgr.UISeconds();
+    }
+}
+
+void UIList::Enter() {
+    UIComponent::Enter();
+    Reset();
+    mListDir->ListEntered();
+}
+
+void UIList::Poll() { UIComponent::Poll(); }
+
+int UIList::CollidePlane(std::vector<Vector3> const &vec, Plane const &p) { return 0; }
+
+void UIList::StartScroll(UIListState const &, int, bool) {}
+
+void UIList::HandleSelectionUpdated() { UITransitionHandler::StartValueChange(); }
+
+void UIList::UpdateExtendedEntries(UIListState const &) {}
+
+DataNode UIList::OnScroll(DataArray *) { return NULL_OBJ; }
+
+DataNode UIList::OnSelectedSym(DataArray *) { return NULL_OBJ; }
+
+void UIList::FinishValueChange() {}
+
+void UIList::PreLoadWithRev(BinStreamRev &) {}
+
+void UIList::SetSelected(int i, int j) {
+    mListDir->CompleteScroll(mListState, mWidgets);
+    mListState.SetSelected(i, j, true);
+    Refresh(false);
+    mListDir->Poll();
+}
+
+bool UIList::SetSelected(Symbol sym, bool b, int i) {
+    int index = mListState.Provider()->DataIndex(sym);
+    if (index == -1) {
+        if (b) {
+            MILO_NOTIFY("Couldn't find %s in UIList provider", sym);
+        }
+        return false;
+    } else {
+        SetSelected(index, i);
+        return true;
+    }
+}
+
+void UIList::Refresh(bool b) {
+    mListDir->FillElements(mListState, mWidgets);
+    if (b) {
+        int nowrap = mListState.SelectedNoWrap();
+        if (nowrap >= NumProviderData() && nowrap != 0)
+            SetSelected(NumProviderData() - 1, -1);
+        else {
+            if (!mListState.Provider()->IsActive(mListState.SelectedData())
+                && !mListState.IsScrolling()) {
+                SetSelected(nowrap, -1);
+            }
+        }
+    }
+}
+
+void UIList::EnableData(Symbol s) {
+    MILO_ASSERT(mDataProvider, 0x382);
+    mDataProvider->Enable(s);
+    Refresh(false);
+}
+
+void UIList::DisableData(Symbol s) {
+    MILO_ASSERT(mDataProvider, 0x389);
+    mDataProvider->Disable(s);
+    Refresh(false);
+    if (!mDataProvider->IsActive(SelectedData())) {
+        mListState.SetSelected(0, -1, true);
+    }
+}
+
+void UIList::DimData(Symbol s) {
+    MILO_ASSERT(mDataProvider, 0x396);
+    mDataProvider->Dim(s);
+    Refresh(false);
+}
+
+void UIList::UnDimData(Symbol s) {
+    MILO_ASSERT(mDataProvider, 0x39d);
+    mDataProvider->UnDim(s);
+    Refresh(false);
+}
+
+void UIList::SetSelectedAux(int i) { SetSelected(i, -1); }
+
+void UIList::CompleteScroll(UIListState const &) {}
+
+DataNode UIList::OnSetSelected(DataArray *) { return NULL_OBJ; }
+
+void UIList::PreLoad(BinStream &) {}
+
+void UIList::PostLoad(BinStream &) {}
+
+void UIList::SetSelectedSimulateScroll(int) {}
+
+bool UIList::SetSelectedSimulateScroll(Symbol, bool) { return false; }
+
+void UIList::Update() {
+    if (!gLoading) {
+        MILO_ASSERT(mListDir, 0x238);
+        mListDir->CreateElements(this, mWidgets, mListState.NumDisplay());
+
+        if (TheLoadMgr.EditMode())
+            Refresh(false);
+    }
+}
+
+DataNode UIList::OnMsg(const ButtonDownMsg &msg) { return NULL_OBJ; }
+
+DataNode UIList::OnSetSelectedSimulateScroll(DataArray *) { return NULL_OBJ; }
+
+void UIList::OldResourcePreload(BinStream &bs) {}
+
+void UIList::SetNumDisplay(int i) {
+    mListState.SetNumDisplay(i, gLoading == 0);
+    Update();
+}
+
+void UIList::SetGridSpan(int i) {
+    mListState.SetGridSpan(i, gLoading == 0);
+    Update();
+}
+
+void UIList::SetCircular(bool b) {
+    mListState.SetCircular(b, gLoading == 0);
+    Update();
+    if (!gLoading)
+        Refresh(false);
+}
+
+void UIList::LimitCircularDisplay(bool b) {
+    if (&mListState) {
+        int val;
+        mLimitCircularDisplayNumToDataNum = b;
+        if (b) {
+            int numprov = NumProviderData();
+            int i = unk160;
+            if (numprov < i)
+                val = numprov;
+            else
+                val = 1;
+
+        } else {
+            val = unk160;
+        }
+        SetNumDisplay(val);
+        Refresh(false);
+    }
+}
+
+void UIList::SetProvider(UIListProvider *prov) {}
+
+DataNode UIList::OnSetData(DataArray *) { return NULL_OBJ; }
+
+void UIList::DrawShowing() {}
+
+float UIList::GetDistanceToPlane(const Plane &p, Vector3 &v) {
+    float ret = 0;
+    bool first = true;
+    Box box;
+    CalcBoundingBox(box);
+    Vector3 boxVecs[8] = { Vector3(box.mMin.x, box.mMin.y, box.mMin.z),
+                           Vector3(box.mMax.x, box.mMin.y, box.mMin.z),
+                           Vector3(box.mMax.x, box.mMax.y, box.mMin.z),
+                           Vector3(box.mMin.x, box.mMax.y, box.mMin.z),
+                           Vector3(box.mMin.x, box.mMin.y, box.mMax.z),
+                           Vector3(box.mMax.x, box.mMin.y, box.mMax.z),
+                           Vector3(box.mMax.x, box.mMax.y, box.mMax.z),
+                           Vector3(box.mMin.x, box.mMax.y, box.mMax.z) };
+    for (int i = 0; i < 8; i++) {
+        float dot = p.Dot(boxVecs[i]);
+        if (first || (std::fabs(dot) < std::fabs(ret))) {
+            ret = dot;
+            v = boxVecs[i];
+            first = false;
+        }
+    }
+    return ret;
+}
+
+void UIList::Init() {}
+
+void UIList::BoundingBoxTriangles(std::vector<std::vector<Vector3> > &) {}
+
+RndDrawable *UIList::CollideShowing(const Segment &, float &, Plane &) { return nullptr; }
+
+int UIList::CollidePlane(const Plane &) { return 1; }

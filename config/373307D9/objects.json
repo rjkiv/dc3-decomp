@@ -283,7 +283,7 @@
             "system/gesture/DepthBuffer3D.cpp": "MISSING",
             "system/gesture/DirectionGestureFilter.cpp": "NonMatching",
             "system/gesture/DrawUtl.cpp": "MISSING",
-            "system/gesture/FitnessFilter.cpp": "MISSING",
+            "system/gesture/FitnessFilter.cpp": "NonMatching",
             "system/gesture/FreestyleMotionFilter.cpp": "MISSING",
             "system/gesture/Gesture.cpp": "MISSING",
             "system/gesture/GestureMgr.cpp": "NonMatching",
@@ -444,7 +444,7 @@
             "system/meta/StreamPlayer.cpp": "NonMatching",
 
             "system/midi/DataEventList.cpp": "NonMatching",
-            "system/midi/DisplayEvents.cpp": "MISSING",
+            "system/midi/DisplayEvents.cpp": "NonMatching",
             "system/midi/MidiParser.cpp": "NonMatching",
             "system/midi/MidiParserMgr.cpp": "NonMatching",
             "system/midi/MidiReader.cpp": "NonMatching",

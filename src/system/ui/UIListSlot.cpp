@@ -12,7 +12,9 @@ BEGIN_PROPSYNCS(UIListSlot)
 END_PROPSYNCS
 
 BEGIN_SAVES(UIListSlot)
+    SAVE_REVS(0, 0)
     SAVE_SUPERCLASS(UIListWidget)
+    bs << mSlotDrawType;
 END_SAVES
 
 BEGIN_COPYS(UIListSlot)
@@ -23,12 +25,28 @@ BEGIN_COPYS(UIListSlot)
 END_COPYS
 
 BEGIN_LOADS(UIListSlot)
-
+    LOAD_REVS(bs)
+    ASSERT_REVS(0, 0)
+    LOAD_SUPERCLASS(UIListWidget)
+    int ty;
+    bs >> ty;
+    mSlotDrawType = (UIListSlotDrawType)ty;
 END_LOADS
 
-void UIListSlot::ResourceCopy(const UIListWidget *w) {}
+void UIListSlot::ResourceCopy(const UIListWidget *w) {
+    UIListWidget::ResourceCopy(w);
+    mMatchName = w->Name();
+}
 
-void UIListSlot::CreateElements(UIList *, int) {}
+void UIListSlot::CreateElements(UIList *uilist, int count) {
+    if (RootTrans()) {
+        ClearElements();
+        for (int i = 0; i < count; i++) {
+            mElements.push_back(CreateElement(uilist));
+        }
+        mNextElement = CreateElement(uilist);
+    }
+}
 
 void UIListSlot::Draw(
     const UIListWidgetDrawState &,
