@@ -3,6 +3,55 @@
 #include "os/Debug.h"
 #include <cstring>
 
+unsigned short WToLower(unsigned short us) {
+    if ((us >= 0x41 && us <= 0x5A) || (us >= 0xC0 && us <= 0xDE)) {
+        return us + 0x20;
+    } else if ((us >= 0x100 && us <= 0x137 && (us & 1) == 0)
+               || (us >= 0x139 && us <= 0x148 && (us & 1) == 1)
+               || (us >= 0x14A && us <= 0x177 && (us & 1) == 0)
+               || (us >= 0x179 && us <= 0x17E && (us & 1) == 1)) {
+        return us + 1;
+    }
+    // else if (us != 0x178) {
+    //     return us;
+    // } else {
+    //     return 0xFF;
+    // }
+}
+
+unsigned short WToUpper(unsigned short us) {
+    if ((us >= 0x61 && us <= 0x7A) || (us >= 0xE0 && us <= 0xFE)) {
+        return us - 0x20;
+    } else if ((us >= 0x100 && us <= 0x137 && (us & 1) == 1)
+               || (us >= 0x139 && us <= 0x148 && (us & 1) == 0)
+               || (us >= 0x14A && us <= 0x177 && (us & 1) == 1)
+               || (us >= 0x179 && us <= 0x17E && (us & 1) == 0)) {
+        return us - 1;
+    }
+    // else if (us != 0xFF) {
+    //     return us;
+    // } else {
+    //     return 0x178;
+    // }
+}
+
+int WStrniCmp(const unsigned short *str1, const unsigned short *str2, int n) {
+    const unsigned short *p1 = str1;
+    const unsigned short *p2 = str2;
+    for (; n != 0; n--) {
+        unsigned short char1 = WToLower(*p1);
+        unsigned short char2 = WToLower(*p2);
+        p1++;
+        p2++;
+        if (char1 != char2) {
+            return char1 - char2;
+        }
+        if (char1 == 0)
+            break;
+    }
+    return 0;
+}
+
 unsigned int DecodeUTF8(unsigned short &us, const char *str) {
     unsigned char uc = str[0];
     if (uc <= 0x7FU) {
@@ -11,18 +60,18 @@ unsigned int DecodeUTF8(unsigned short &us, const char *str) {
     }
 
     unsigned char uc1 = str[1];
-    if ((unsigned char)(uc + 0x40) <= 0x1FU) {
-        us = ((uc - 0xC0) << 6) + uc1 - 0x80;
+    if (uc >= 0xC0 && uc <= 0xDF) {
+        us = ((uc - 0xC0) * 0x40) + uc1 - 0x80;
         return 2;
     }
 
     unsigned char uc2 = str[2];
-    if ((unsigned char)(uc + 0x20) <= 0xFU) {
-        us = ((uc - 0xe0) << 0xC) + ((uc1 - 0x80) << 6) + (uc2 - 0x80);
+    if (uc >= 0xE0 && uc <= 0xEF) {
+        us = ((uc - 0xE0) * 0x40 + (uc1 - 0x80)) * 0x40 + (uc2 - 0x80);
         return 3;
     }
 
-    if ((unsigned char)(uc + 0x10) <= 0xDU) {
+    if (uc >= 0xF0 && uc <= 0xFD) {
         MILO_NOTIFY("HMX wide chars cannot exceed 16 bits: %s (0x%02x)", str, uc);
         us = 0x2A;
         return 1;
@@ -33,49 +82,51 @@ unsigned int DecodeUTF8(unsigned short &us, const char *str) {
     return 1;
 }
 
-unsigned int EncodeUTF8(String &s, unsigned int ui) {
-    if (ui < 0x80) {
-        s.resize(2);
-        s[0] = ui & 0xFF;
-        s[1] = 0;
+unsigned int EncodeUTF8(String &out, unsigned int in) {
+    if (in < 0x80) {
+        out.resize(2);
+        out[0] = in & 0xFF;
+        out[1] = 0;
         return 1;
-    } else if (ui <= 0x7FF) {
-        s.resize(3);
-        s[0] = (ui >> 6) + 0xC0;
-        s[1] = (ui & 0x3F) + 0x80;
-        s[2] = 0;
+    } else if (in <= 0x7FF) {
+        out.resize(3);
+        out[0] = (in >> 6) + 0xC0;
+        out[1] = (in & 0x3F) + 0x80;
+        out[2] = 0;
         return 2;
-    } else if (ui <= 0xFFFF) {
-        s.resize(4);
-        s[0] = (ui >> 0xC) + 0xE0;
-        s[1] = ((ui >> 6) & 0x3F) + 0x80;
-        s[2] = (ui & 0x3F) + 0x80;
-        s[3] = 0;
+    } else if (in <= 0xFFFF) {
+        out.resize(4);
+        out[0] = (in >> 0xC) + 0xE0;
+        out[1] = ((in >> 6) & 0x3F) + 0x80;
+        out[2] = (in & 0x3F) + 0x80;
+        out[3] = 0;
         return 3;
-    } else if (ui <= 0x7FFFFFFF) {
-        MILO_NOTIFY("HMX wide chars cannot exceed 16 bits: %d (0x%02x)", ui, ui);
-        s = "*";
+    } else if (in <= 0x7FFFFFFF) {
+        MILO_NOTIFY("HMX wide chars cannot exceed 16 bits: %d (0x%02x)", in, in);
+        out = "*";
         return 1;
     } else {
-        MILO_NOTIFY("Invalid UTF character: %d (0x%02x)", ui, ui);
-        s = "*";
+        MILO_NOTIFY("Invalid UTF character: %d (0x%02x)", in, in);
+        out = "*";
         return 1;
     }
 }
 
-void UTF8toASCIIs(char *out, int len, const char *in, char c) {
+void UTF8toASCIIs(char *out, int len, const char *in, char sub) {
     unsigned short us;
     MILO_ASSERT(out, 0x5E);
     MILO_ASSERT(in, 0x5F);
     MILO_ASSERT(len > 0, 0x60);
-    for (int i = 0; *in != 0 && i < len - 1; i++) {
+    int i = 0;
+    char *p = out;
+    for (; *in != 0 && i < len - 1; i++) {
         in += DecodeUTF8(us, in);
         if (us < 0x100)
-            *out++ = us;
+            *p++ = us;
         else
-            *out++ = c;
+            *p++ = sub;
     }
-    *out = '\0';
+    *p = '\0';
 }
 
 void ASCIItoUTF8(char *out, int len, const char *in) {
@@ -187,11 +238,11 @@ void UTF8ToUpper(unsigned short arg0, char *arg1) {
     }
 }
 
-void UTF8FilterString(char *out, int len, const char *in, const char *allowed, char c) {
-    MILO_ASSERT(out, 0x191);
-    MILO_ASSERT(in, 0x192);
-    MILO_ASSERT(len > 0, 0x193);
-    MILO_ASSERT(allowed, 0x194);
+void UTF8FilterString(char *out, int len, const char *in, const char *allowed, char sub) {
+    MILO_ASSERT(out, 0x18F);
+    MILO_ASSERT(in, 0x190);
+    MILO_ASSERT(len > 0, 0x191);
+    MILO_ASSERT(allowed, 0x192);
     unsigned short us;
     int decoded;
     char *out_beg = out;
@@ -203,11 +254,11 @@ void UTF8FilterString(char *out, int len, const char *in, const char *allowed, c
             for (unsigned int i = 0; i < decoded; i++)
                 *out++ = *in++;
         } else {
-            *out++ = c;
+            *out++ = sub;
             in += decoded;
         }
     }
-    MILO_ASSERT((out - out_beg) < len, 0x1A7);
+    MILO_ASSERT((out - out_beg) < len, 0x1A5);
     *out = 0;
 }
 
@@ -265,22 +316,23 @@ int UTF16toUTF8(char *c, const unsigned short *us) {
 
 void ASCIItoWideVector(std::vector<unsigned short> &vec, const char *cc) {
     vec.clear();
-    for (int i = 0; i < strlen(cc); cc++, i++) {
+    for (int i = 0; i < strlen(cc); i++) {
         String str;
-        EncodeUTF8(str, (unsigned char)*cc);
+        EncodeUTF8(str, (unsigned char)cc[i]);
         unsigned short us;
         DecodeUTF8(us, str.c_str());
         vec.push_back(us);
     }
 }
 
-String WideVectorToASCII(const std::vector<unsigned short> &vec) {
+String WideVectorToASCII(const std::vector<unsigned short> &wideVec) {
     String str;
-    for (int i = 0; i < vec.size(); i++) {
-        if (vec[i] > 0xFF)
+    for (int i = 0; i < wideVec.size(); i++) {
+        unsigned short curChar = wideVec[i];
+        if (curChar > 0xFF)
             str += '*';
         else
-            str += vec[i];
+            str += curChar;
     }
     return str;
 }
@@ -305,7 +357,31 @@ unsigned int WideVectorToUTF8(const std::vector<unsigned short> &vec, String &st
     str.erase();
     for (int i = 0; i < vec.size(); i++) {
         EncodeUTF8(thisStr, vec[i]);
-        // str << thisStr;
+        str << thisStr;
     }
     return i3;
+}
+
+void UTF8toWideVector(std::vector<unsigned short> &vec, const char *cc) {
+    while (*cc != '\0') {
+        unsigned short us;
+        cc += DecodeUTF8(us, cc);
+        vec.push_back(us);
+    };
+}
+
+const unsigned short *CharToWideChar(const char *str) {
+    if (str) {
+        int len = strlen(str);
+        static std::vector<unsigned short> wstring;
+        wstring.clear();
+        const char *p = str;
+        while (len > 0) {
+            wstring.push_back(*p++);
+            len--;
+        }
+        wstring.push_back(0);
+        return &wstring[0];
+    } else
+        return nullptr;
 }

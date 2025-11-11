@@ -32,7 +32,7 @@ void DiffTblReport(const char *, BlockStatTable &, BlockStatTable &, TextStream 
 
 MemTracker::MemTracker(int x, int y)
     : mHashMem(nullptr), mHashTable(nullptr), mTimeSlice(0), mCurStatTable(0),
-      mFreedInfos(y), mLog(0), unk18190(0), mHeap(x) {
+      mFreedInfos(y), mLog(0), mReport(0), mHeap(x) {
     mHashMem = DebugHeapAlloc(y * 8);
     MILO_ASSERT(mHashMem, 0x4E);
     mHashTable = new KeylessHash<void *, AllocInfo *>(
@@ -96,7 +96,7 @@ void MemTracker::Alloc(
                 if (mLog) {
                     *mLog << " ((com new) " << "(mem " << memory << ") " << info << ")\n";
                 }
-                if (unk181a0) {
+                if (mSpew) {
                     TheDebug << "::Alloc::" << info->mType << " Allocated "
                              << info->mActSize << " Requested " << info->mReqSize
                              << " Address " << info->mMem << " Heap " << info->mHeap
@@ -142,9 +142,9 @@ void MemTracker::ColatedPrint(TextStream &ts, AllocInfo *info, const char *com) 
 }
 
 void MemTracker::CloseReport() {
-    if (unk18190) {
+    if (mReport) {
         MemNumHeaps();
-        TextStream &ts = *unk18190;
+        TextStream &ts = *mReport;
         ts << "\n";
         ts << "\n";
         ts << "Category,CategoryName,Column,Budget,BudgetType,AlwaysShow,Tooltip\n";
@@ -177,8 +177,8 @@ void MemTracker::CloseReport() {
         ts << "category_info,game\n";
         ts << "category_info,base\n";
         ts << "\nDone\n";
-        unk18190->File().Flush();
-        RELEASE(unk18190);
+        mReport->File().Flush();
+        RELEASE(mReport);
     }
 }
 

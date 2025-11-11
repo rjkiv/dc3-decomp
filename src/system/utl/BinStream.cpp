@@ -52,7 +52,7 @@ void BinStream::Write(const void *void_data, int bytes) {
         if (!mCrypto) {
             WriteImpl(void_data, bytes);
         } else {
-            u8 crypt[512];
+            char crypt[512];
             while (bytes > 0) {
                 int x = Min(512, bytes);
                 for (int i = 0; i < x; i++) {
@@ -165,7 +165,7 @@ void BinStream::Read(void *data, int bytes) {
 
 int BinStream::ReadAsync(void *v, int i) {
     Read(v, i);
-    return Fail() & i; // fix this
+    return Fail() ? 0 : i;
 }
 
 void BinStream::ReadEndian(void *out, int size) {

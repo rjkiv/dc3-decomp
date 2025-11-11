@@ -13,7 +13,15 @@ public:
     MemTracker(int, int);
     const AllocInfo *GetInfo(void *) const;
     void Alloc(
-        int, int, const char *, void *, signed char, bool, unsigned char, const char *, int
+        int requestedSize,
+        int actualSize,
+        const char *type,
+        void *memory,
+        signed char heap,
+        bool pooled,
+        unsigned char strat,
+        const char *file,
+        int line
     );
     void Free(void *);
     void CloseReport();
@@ -23,6 +31,13 @@ public:
     void Realloc(void *, int, int, void *);
     void HeapReport(TextStream &);
     void DiffDump(TextStream &);
+    void ReportMemoryAlloc(const char *);
+    void ReportMemoryUsage(const char *);
+    void ReportMemoryUsageOverview(const char *);
+    void Report(int, TextStream &);
+    void SetSpew(bool spew) { mSpew = spew; }
+    void SetReport(TextFileStream *s) { mReport = s; }
+    signed char Heap() const { return mHeap; }
 
     static void *operator new(unsigned int);
     static void operator delete(void *);
@@ -43,12 +58,12 @@ private:
     int mCurStatTable; // 0x1817c
     AllocInfoVec mFreedInfos; // 0x18180
     TextStream *mLog; // 0x1818c
-    TextFileStream *unk18190; // 0x18190
+    TextFileStream *mReport; // 0x18190
     signed char mHeap; // 0x18194
     bool unk18195;
     int mFreeSysMem; // 0x18198
     int mFreePhysMem; // 0x1819c
-    int unk181a0;
+    bool mSpew; // 0x181a0
     String unk181a4;
     String unk181ac;
     String unk181b4;

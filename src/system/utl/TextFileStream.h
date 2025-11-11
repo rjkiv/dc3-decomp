@@ -4,7 +4,7 @@
 
 class TextFileStream : public TextStream {
 public:
-    TextFileStream(const char *, bool);
+    TextFileStream(const char *file, bool append);
     virtual void Print(const char *);
 
     FileStream &File() { return mFile; }

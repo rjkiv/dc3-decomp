@@ -4,19 +4,16 @@
 
 FileStream::FileStream(const char *file, FileType type, bool lilEndian)
     : BinStream(lilEndian), mChecksumValidator(0), mBytesChecksummed(0) {
-    int fsize;
+    int fmode;
     if (type == kRead) {
-        fsize = 2;
+        fmode = 2;
     } else if (type == kReadNoArk) {
-        fsize = 0x10002;
+        fmode = 0x10002;
     } else {
-        fsize = 0xA04;
-        if (type == kAppend) {
-            fsize = 0x304;
-        }
+        fmode = type == kAppend ? 0x109 : 0x301;
     }
     mFilename = file;
-    mFile = NewFile(file, fsize);
+    mFile = NewFile(file, fmode);
     mFail = (mFile == 0);
 }
 

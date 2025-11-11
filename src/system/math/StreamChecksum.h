@@ -1,5 +1,6 @@
 #pragma once
 #include "math/SHA1.h"
+#include "utl/MemMgr.h"
 
 class StreamChecksum {
 private:
@@ -28,6 +29,8 @@ private:
 public:
     StreamChecksumValidator() : mStreamChecksum(), mSignature(0), mFile(0) {}
     ~StreamChecksumValidator() {}
+
+    MEM_OVERLOAD(StreamChecksumValidator, 0x3D);
     bool Begin(const char *, bool);
     void Update(const unsigned char *, unsigned int);
     void End();
