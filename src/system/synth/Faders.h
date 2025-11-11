@@ -4,6 +4,7 @@
 #include "os/Timer.h"
 #include "synth/Pollable.h"
 #include "utl/BinStream.h"
+#include "utl/MemMgr.h"
 #include <set>
 
 class FaderGroup;
@@ -42,6 +43,7 @@ public:
     float DuckedValue() const { return GetDuckedVolume() + mLevel; }
     bool IsFading() const { return mTimer.Running(); }
 
+    OBJ_MEM_OVERLOAD(0x16)
     NEW_OBJ(Fader)
 
 private:

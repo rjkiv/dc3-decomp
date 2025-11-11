@@ -6,6 +6,9 @@
 #define FILE_OPEN_READ 2
 #define FILE_OPEN_NOARK 0x10000
 
+#define FILE_SEEK_SET 0
+#define FILE_SEEK_CUR 1
+
 extern bool gNullFiles;
 extern bool gFakeFileErrors;
 

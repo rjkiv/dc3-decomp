@@ -378,3 +378,5 @@ public:
     operator T *() { return mObj; }
     T *operator->() { return mObj; }
 };
+
+void PreloadSharedSubdirs(Symbol s);

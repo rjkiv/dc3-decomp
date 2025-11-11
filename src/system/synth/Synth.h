@@ -1,7 +1,10 @@
 #pragma once
+#include "ADSR.h"
 #include "SynthSample.h"
+#include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
+#include "os/Platform.h"
 #include "rndobj/Overlay.h"
 #include "synth/ADSR.h"
 #include "synth/ByteGrinder.h"
@@ -9,6 +12,7 @@
 #include "synth/Mic.h"
 #include "synth/MicClientMapper.h"
 #include "synth/MidiSynth.h"
+#include "synth/Sound.h"
 #include "synth/StandardStream.h"
 #include "synth/Stream.h"
 #include "utl/Str.h"
@@ -58,7 +62,7 @@ public:
     virtual bool GetFXChain() const { return false; }
     virtual void SetChatVoiceGain(int, float) {}
     virtual float GetChatVoiceGain(int) { return 1; }
-    virtual Mic *GetMic(int);
+    virtual Mic *GetMic(int idx) { return mMics[idx]; }
     virtual void SetMicFX(bool) {}
     virtual bool GetMicFX() const { return false; }
     virtual void SetMicVolume(float) {}
@@ -90,9 +94,27 @@ public:
     virtual float UpdateOverlay(RndOverlay *, float);
 
     Fader *MasterFader() const { return mMasterFader; }
-    void RemovePlayHandler(Hmx::Object *);
-    bool CheckCommonBank(bool);
     void SetDir(ObjectDir *dir) { unk64 = dir; }
+    bool CheckCommonBank(bool);
+    void SetMasterVolume(float);
+    float GetMasterVolume();
+    void ToggleHud();
+    const ADSRImpl *DefaultADSR();
+    void SetFX(const DataArray *);
+    void SetMic(const DataArray *);
+    int GetFXOverhead();
+    int GetSPUOverhead();
+    void RunFlow(const char *);
+    void StopPlaybackAllMics();
+    void StopAllSfx(bool);
+    void PauseAllSfx(bool);
+    int GetSampleMem(ObjectDir *, Platform);
+    void StopAllSounds();
+    void AddPlayHandler(Hmx::Object *);
+    void RemovePlayHandler(Hmx::Object *);
+    void SendToPlayHandlers(Sound *);
+    void PlaySound(const char *, float, float, float);
+    void AddZombie(SampleInst *);
 
     template <class T>
     T *Find(const char *name, bool fail) {
@@ -111,6 +133,19 @@ public:
             return obj;
         }
     }
+
+private:
+    void CullZombies();
+
+    DataNode OnPassthrough(DataArray *);
+    DataNode OnStartMic(const DataArray *);
+    DataNode OnStopMic(const DataArray *);
+    DataNode OnNumConnectedMics(const DataArray *);
+    DataNode OnSetMicVolume(const DataArray *);
+    DataNode OnSetFX(const DataArray *);
+    DataNode OnSetFXVol(const DataArray *);
+
+    static Synth *New();
 
 protected:
     virtual ~Synth() {}
@@ -137,6 +172,7 @@ protected:
     String unka8; // 0xa8
 };
 
+void SynthPreInit();
 void SynthInit();
 void SynthTerminate();
 

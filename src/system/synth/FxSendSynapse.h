@@ -1,4 +1,5 @@
 #pragma once
+#include "obj/Object.h"
 #include "synth/FxSend.h"
 
 /** "synapse effect" */
@@ -13,6 +14,7 @@ public:
     virtual void Load(BinStream &);
 
     OBJ_MEM_OVERLOAD(0x10);
+    NEW_OBJ(FxSendSynapse)
 
 protected:
     FxSendSynapse();

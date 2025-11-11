@@ -1,4 +1,5 @@
 #pragma once
+#include "obj/Object.h"
 #include "synth/FxSend.h"
 
 class FxSendPitchShift : public FxSend {
@@ -12,6 +13,7 @@ public:
     virtual void Load(BinStream &);
 
     OBJ_MEM_OVERLOAD(0x10);
+    NEW_OBJ(FxSendPitchShift)
 
 protected:
     FxSendPitchShift();

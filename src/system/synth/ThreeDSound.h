@@ -1,5 +1,6 @@
 #pragma once
 #include "math/Mtx.h"
+#include "obj/Object.h"
 #include "rndobj/Trans.h"
 #include "synth/Faders.h"
 #include "synth/Sound.h"
@@ -27,6 +28,7 @@ public:
     virtual bool IsPlaying() const;
 
     OBJ_MEM_OVERLOAD(0x14);
+    NEW_OBJ(ThreeDSound)
 
     void EnablePan(bool);
     void SaveWorldXfm();

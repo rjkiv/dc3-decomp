@@ -1,4 +1,5 @@
 #pragma once
+#include "obj/Object.h"
 #include "synth/FxSend.h"
 
 class FxSendBitCrush : public FxSend {
@@ -13,6 +14,7 @@ public:
     virtual void Load(BinStream &);
 
     OBJ_MEM_OVERLOAD(0xF);
+    NEW_OBJ(FxSendBitCrush)
 
 protected:
     FxSendBitCrush();

@@ -8,6 +8,7 @@
 #include "synth/MoggClip.h"
 #include "synth/Pollable.h"
 #include "synth/PlayableSample.h"
+#include "utl/MemMgr.h"
 
 /** "Basic sound effect object.  Plays several samples with a given volume, pan,
  * transpose, and envelope settings." */
@@ -41,6 +42,9 @@ public:
     void SetReverbEnable(bool);
     void SetSynthSample(SynthSample *);
     void SetMoggClip(MoggClip *);
+
+    OBJ_MEM_OVERLOAD(0x16)
+    NEW_OBJ(Sound)
 
 private:
     void OnTriggerSound(int);
@@ -86,3 +90,9 @@ protected:
     ObjPtr<Hmx::Object> unkb8;
     std::list<DelayArgs *> unkcc;
 };
+
+#include "obj/Msg.h"
+
+DECLARE_MESSAGE(SoundPlayMsg, "sound_play")
+SoundPlayMsg(Sound *snd) : Message(Type(), snd) {}
+END_MESSAGE

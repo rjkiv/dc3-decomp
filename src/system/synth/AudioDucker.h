@@ -62,6 +62,7 @@ public:
     virtual void Load(BinStream &);
 
     OBJ_MEM_OVERLOAD(0x3F);
+    NEW_OBJ(AudioDuckerTrigger)
 
 protected:
     AudioDuckerTrigger();

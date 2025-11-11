@@ -61,6 +61,7 @@ public:
     virtual void Load(BinStream &);
 
     OBJ_MEM_OVERLOAD(0x61);
+    NEW_OBJ(ADSR)
 
 protected:
     ADSR();

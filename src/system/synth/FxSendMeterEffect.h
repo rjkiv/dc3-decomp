@@ -1,4 +1,5 @@
 #pragma once
+#include "obj/Object.h"
 #include "synth/FxSend.h"
 #include "utl/Str.h"
 #include <vector>
@@ -15,6 +16,7 @@ public:
     virtual void Load(BinStream &);
 
     OBJ_MEM_OVERLOAD(0x11);
+    NEW_OBJ(FxSendMeterEffect)
 
     float ChannelData(int);
 

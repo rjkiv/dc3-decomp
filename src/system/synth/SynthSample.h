@@ -38,6 +38,7 @@ public:
     void RegisterChild(SampleInst *);
     void UnregisterChild(SampleInst *);
 
+    static void Init();
     static void Disable();
 
 protected:

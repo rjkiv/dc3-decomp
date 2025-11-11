@@ -23,3 +23,5 @@ protected:
 };
 
 extern WavMgr *TheWavMgr;
+
+void InitWavMgr();

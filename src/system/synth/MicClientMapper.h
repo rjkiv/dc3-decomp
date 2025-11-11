@@ -31,6 +31,7 @@ public:
     void UnlockAllMicIDs();
     bool IsMicIDLocked(int) const;
     bool GetFirstUnlockedMicID(int &) const;
+    MicManagerInterface *GetMicMgrInterface() const { return mMicManager; }
 
 private:
     void LockMicID(int);
