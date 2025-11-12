@@ -3,6 +3,7 @@
 #include "math/Mtx.h"
 #include "obj/Object.h"
 #include "rndobj/Draw.h"
+#include "rndobj/Env.h"
 #include "rndobj/Flare.h"
 #include "rndobj/Lit.h"
 #include "rndobj/Mat.h"
@@ -91,6 +92,10 @@ public:
     // RndPollable
     virtual void Poll();
 
+    static RndEnviron *sEnviron;
+
+    static void Init();
+
     OBJ_MEM_OVERLOAD(0x22)
     NEW_OBJ(Spotlight)
 
@@ -111,6 +116,8 @@ protected:
     void SetColor(int);
     void CloseSlaves();
     void PropogateToPresets(int);
+
+    static void BuildBoard();
 
     /** "Material to use for the floor spot" */
     ObjPtr<RndMat> mSpotMaterial; // 0x108

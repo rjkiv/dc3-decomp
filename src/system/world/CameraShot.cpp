@@ -397,3 +397,8 @@ BEGIN_SAVES(CamShot)
     bs << mCrowdStateOverride;
     bs << mAnims;
 END_SAVES
+
+void CamShot::Init() {
+    REGISTER_OBJ_FACTORY(CamShot)
+    sAnimTarget = Hmx::Object::New<Hmx::Object>();
+}

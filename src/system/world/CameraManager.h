@@ -1,7 +1,9 @@
 #pragma once
+#include "math/Rand.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "utl/MemMgr.h"
+#include "utl/Symbol.h"
 #include "world/CameraShot.h"
 #include "world/Crowd.h"
 #include "world/FreeCamera.h"
@@ -36,6 +38,8 @@ public:
 
     OBJ_MEM_OVERLOAD(0x15)
     NEW_OBJ(CameraManager)
+    static Rand sRand;
+    static int sSeed;
 
     CamShot *NextShot() const { return mNextShot; }
     CamShot *CurrentShot() const { return mCurrentShot; }
@@ -45,9 +49,19 @@ public:
     void DeleteFreeCam();
     CamShot *ShotAfter(CamShot *);
     CamShot *FindCameraShot(Symbol, const std::vector<PropertyFilter> &);
+    CamShot *MiloCamera();
+    void ForceCameraShot(CamShot *, bool);
+    void PrePoll();
+    void Randomize();
+    void Enter();
+    bool SetCrowds(ObjVector<CamShotCrowd> &);
+    int NumCameraShots(Symbol s, const std::vector<PropertyFilter> &);
 
 private:
     void StartShot_(CamShot *);
+    float CalcFrame();
+    void FirstShotOk(Symbol);
+    void RandomizeCategory(ObjPtrList<CamShot> &);
 
     DataNode OnPickCameraShot(DataArray *);
     DataNode OnFindCameraShot(DataArray *);
@@ -56,6 +70,8 @@ private:
     DataNode OnIterateShot(DataArray *);
     DataNode OnNumCameraShots(DataArray *);
     DataNode OnGetShotList(DataArray *);
+    Symbol MakeCategoryAndFilters(DataArray *da, std::vector<PropertyFilter> &, float *);
+    ObjPtrList<CamShot> &FindOrAddCategory(Symbol);
 
 protected:
     CameraManager();
@@ -67,10 +83,10 @@ protected:
     ObjPtr<CamShot> mNextShot; // 0x3c
     /** "Next camera blend time in units of camera, is run-time, not serialized" */
     float mBlendTime; // 0x50
-    int unk54; // 0x54
+    float unk54; // 0x54
     bool unk58; // 0x58
     ObjPtr<CamShot> mCurrentShot; // 0x5c
-    float unk70; // 0x70
+    float mCamStartTime; // 0x70
     FreeCamera *mFreeCam; // 0x74
     ObjPtrList<WorldCrowd> unk78; // 0x78
 };

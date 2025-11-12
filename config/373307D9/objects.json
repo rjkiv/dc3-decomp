@@ -1007,7 +1007,7 @@
             "system/world/SpotlightDrawer_NG.cpp": "MISSING",
             "system/world/SpotlightEnder.cpp": "NonMatching",
             "system/world/ThreeDSoundManager.cpp": "NonMatching",
-            "system/world/World.cpp": "MISSING"
+            "system/world/World.cpp": "NonMatching"
         }
     },
     "zlib": {

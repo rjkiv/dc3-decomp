@@ -38,7 +38,9 @@ public:
     OBJ_MEM_OVERLOAD(0x3F)
     NEW_OBJ(WorldInstance)
 private:
+    void LoadPersistentObjects(BinStreamRev &);
     void SavePersistentObjects(BinStream &);
+    void DeleteTransientObjects();
     void SyncDir();
 
 protected:
@@ -59,6 +61,13 @@ public:
     void ClearPollMaster();
     RndGroup *Group() const { return mGroup; }
     WorldInstance *PollMaster() const { return mPollMaster; }
+
+    void TryPoll(WorldInstance *);
+    void TryEnter(WorldInstance *);
+    float DistanceToPlane(const Transform &tf, const Plane &pl, Vector3 &v);
+    void MakeWorldSphere(const Transform &tf, Sphere &s);
+    bool Collide(const Transform &tf, const Segment &s, float &f, Plane &pl);
+    void Draw(const Transform &tf);
 
 private:
     void AddPolls(RndGroup *);

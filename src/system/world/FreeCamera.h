@@ -12,6 +12,7 @@ public:
 
     void Poll();
     void SetParentDof(bool b1, bool b2, bool b3);
+    void SetPadNum(int p) { mPadNum = p; }
 
 protected:
     void UpdateFromCamera();

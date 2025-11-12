@@ -122,14 +122,12 @@ public:
     void AddCrowdChars();
     void SetCrowdChars();
     void ClearCrowdChars();
-    void
-    GetSelectedCrowd(std::list<
-                     std::pair<RndMultiMesh *, std::list<RndMultiMesh::Instance>::iterator> >
-                         &);
-    void
-    AddCrowdChars(std::list<
-                  std::pair<RndMultiMesh *, std::list<RndMultiMesh::Instance>::iterator> >
-                      &);
+    void GetSelectedCrowd(
+        std::list<std::pair<RndMultiMesh *, std::list<RndMultiMesh::Instance>::iterator> > &
+    );
+    void AddCrowdChars(
+        std::list<std::pair<RndMultiMesh *, std::list<RndMultiMesh::Instance>::iterator> > &
+    );
 
 private:
     /** "The crowd to show for this shot" */
@@ -168,6 +166,8 @@ public:
     // CamShot
     virtual void SetPreFrame(float, float) {}
     virtual CamShot *CurrentShot() { return nullptr; }
+
+    static void Init();
 
     OBJ_MEM_OVERLOAD(0xAD)
     NEW_OBJ(CamShot)

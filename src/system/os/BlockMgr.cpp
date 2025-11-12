@@ -3,6 +3,7 @@
 #include "os/Block.h"
 #include "os/Debug.h"
 #include "os/HDCache.h"
+#include "os/System.h"
 #include "utl/MemMgr.h"
 
 #define kNumBlockBuffers 0x13

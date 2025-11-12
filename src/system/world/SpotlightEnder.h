@@ -1,4 +1,5 @@
 #pragma once
+#include "obj/Object.h"
 #include "rndobj/Draw.h"
 
 /** "Object that ends spotlights, must put after the last spotlight
@@ -16,6 +17,8 @@ public:
     virtual void Load(BinStream &);
     // RndDrawable
     virtual void DrawShowing();
+
+    NEW_OBJ(SpotlightEnder)
 
 protected:
     SpotlightEnder();

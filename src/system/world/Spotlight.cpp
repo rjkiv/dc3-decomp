@@ -3,9 +3,12 @@
 #include "math/Utl.h"
 #include "obj/Object.h"
 #include "rndobj/Draw.h"
+#include "rndobj/Env.h"
 #include "rndobj/Flare.h"
 #include "rndobj/Poll.h"
 #include "rndobj/Trans.h"
+
+RndEnviron *Spotlight::sEnviron;
 
 Spotlight::Spotlight()
     : mSpotMaterial(this), mFlare(Hmx::Object::New<RndFlare>()), mFlareEnabled(true),
@@ -109,7 +112,14 @@ void Spotlight::SetColor(int packed) {
 }
 
 void Spotlight::SetIntensity(float f) { SetColorIntensity(Color(), f); }
+
 void Spotlight::SetColorIntensity(const Hmx::Color &c, float f) {
     mColorOwner->mColor = c;
     mColorOwner->mIntensity = f;
+}
+
+void Spotlight::Init() {
+    REGISTER_OBJ_FACTORY(Spotlight)
+    sEnviron = Hmx::Object::New<RndEnviron>();
+    BuildBoard();
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include "obj/Object.h"
 #include "rndobj/Draw.h"
+#include "rndobj/Env.h"
 #include "rndobj/PostProc.h"
 #include "utl/BinStream.h"
 #include "utl/MemMgr.h"
@@ -67,6 +68,10 @@ public:
 
     OBJ_MEM_OVERLOAD(0x34)
     NEW_OBJ(SpotlightDrawer)
+
+    static RndEnviron *sEnviron;
+
+    static void Init();
 
     void Select();
     void DeSelect();

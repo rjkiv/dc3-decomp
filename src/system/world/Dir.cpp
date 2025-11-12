@@ -124,3 +124,8 @@ void WorldDir::ClearDeltas() {
     for (int i = 0; i < 4; i++)
         mDeltaSincePoll[i] = 0;
 }
+
+void WorldDir::Init() {
+    REGISTER_OBJ_FACTORY(WorldDir)
+    SetTheWorld(nullptr);
+}

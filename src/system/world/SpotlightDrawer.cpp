@@ -1,7 +1,11 @@
 #include "world/SpotlightDrawer.h"
 #include "obj/Object.h"
 #include "rndobj/Draw.h"
+#include "rndobj/Env.h"
 #include "utl/BinStream.h"
+
+RndEnviron *SpotlightDrawer::sEnviron;
+SpotlightDrawer *SpotlightDrawer::sDefault;
 
 SpotlightDrawer::SpotlightDrawer() : mParams(this) { mOrder = -100000; }
 
@@ -49,3 +53,12 @@ BEGIN_SAVES(SpotlightDrawer)
     SAVE_SUPERCLASS(RndDrawable)
     mParams.Save(bs);
 END_SAVES
+
+void SpotlightDrawer::Init() {
+    sEnviron = Hmx::Object::New<RndEnviron>();
+    sEnviron->SetUseApproxes(false);
+    REGISTER_OBJ_FACTORY(SpotlightDrawer)
+    sDefault = Hmx::Object::New<SpotlightDrawer>();
+    sDefault->mParams.mLightingInfluence = 0.0f;
+    sDefault->Select();
+}

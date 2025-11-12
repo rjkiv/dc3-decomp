@@ -2,6 +2,7 @@
 #include "hamobj/MoveGraph.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
+#include "stl/_vector.h"
 #include <set>
 
 class MiniGameMgr : public Hmx::Object {
@@ -16,6 +17,14 @@ public:
     void GetMoveOptions(DataArray *, DataArray *);
     void LoadMoveOptions(std::set<const MoveVariant *> &, bool);
     void InitNTD(int);
+    void InitCascade(int, int);
+    void UpdateCascadeMovePool(
+        MoveGraph &,
+        std::vector<const MoveVariant *> &,
+        std::vector<const MoveVariant *> &
+    );
+    void LoadValidMoves(bool);
+    void GetCascadeMoveList(DataArray *, DataArray *);
 
     static void Init();
 

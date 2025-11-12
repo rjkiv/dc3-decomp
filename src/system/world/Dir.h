@@ -82,6 +82,8 @@ public:
     OBJ_MEM_OVERLOAD(0x1E)
     NEW_OBJ(WorldDir)
 
+    static void Init();
+
     void ClearDeltas();
     CameraManager *GetCameraManager() const { return unk300; }
 

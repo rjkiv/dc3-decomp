@@ -28,8 +28,10 @@ END_HANDLERS
 BEGIN_PROPSYNCS(PhysicsVolume)
     SYNC_PROP_SET(active, mActive, SetActiveState(_val.Int()))
     SYNC_PROP(report_on_overlaps, mReportOnOverlaps)
-    SYNC_PROP_SET(collision_filter, (int &)mFilter, mFilter = (CollisionFilter)_val.Int();
-                  if (mDetectionVolume) mDetectionVolume->SetCollisionFilter(mFilter))
+    SYNC_PROP_SET(
+        collision_filter, (int &)mFilter, mFilter = (CollisionFilter)_val.Int();
+        if (mDetectionVolume) mDetectionVolume->SetCollisionFilter(mFilter)
+    )
     SYNC_PROP(radial_force, mRadialForce)
     SYNC_PROP(directional_force, mDirectionalForce)
     SYNC_PROP(tangential_force, mTangentialForce)
