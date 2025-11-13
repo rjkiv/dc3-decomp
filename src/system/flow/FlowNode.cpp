@@ -8,8 +8,8 @@ float FlowNode::sIntensity = 1.0f;
 bool FlowNode::sPushDrivenProperties = false;
 
 FlowNode::FlowNode()
-    : mVec1(this, (EraseMode)0, kObjListNoNull), mRunningNodes(this), mParent(nullptr),
-      mDrivenPropEntries(this), unk58(0) {
+    : mVec1(this, (EraseMode)0, kObjListNoNull), mRunningNodes(this),
+      mFlowParent(nullptr), mDrivenPropEntries(this), unk58(0) {
     mDebugOutput = false;
 }
 
@@ -91,11 +91,11 @@ bool FlowNode::Activate() {
 }
 
 void FlowNode::SetParent(class FlowNode *new_parent, bool b) {
-    if (mParent != new_parent) {
-        if (mParent != nullptr) {
-            mParent->mVec1.remove(this);
+    if (mFlowParent != new_parent) {
+        if (mFlowParent != nullptr) {
+            mFlowParent->mVec1.remove(this);
         }
-        mParent = new_parent;
+        mFlowParent = new_parent;
         if (new_parent != nullptr && b) {
             new_parent->mVec1.push_back(this);
         }
@@ -145,7 +145,7 @@ void FlowNode::ChildFinished(FlowNode *node) {
     mRunningNodes.remove(node);
     if (mRunningNodes.empty()) {
         FLOW_LOG("Releasing\n");
-        if (mParent)
-            mParent->ChildFinished(this);
+        if (mFlowParent)
+            mFlowParent->ChildFinished(this);
     }
 }

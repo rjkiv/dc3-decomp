@@ -20,7 +20,7 @@ BEGIN_SAVES(FlowLabel)
     SAVE_SUPERCLASS(FlowQueueable)
     bs << mLabel;
     ObjPtr<FlowNode> node(this);
-    node = mParent;
+    node = mFlowParent;
     bs << node;
 END_SAVES
 
@@ -40,7 +40,7 @@ BEGIN_LOADS(FlowLabel)
     if (d.rev > 0) {
         ObjPtr<FlowNode> node(this);
         d >> node;
-        if (mParent != node) {
+        if (mFlowParent != node) {
         }
     }
 END_LOADS

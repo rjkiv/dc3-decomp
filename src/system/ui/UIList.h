@@ -82,6 +82,7 @@ public:
     Symbol SelectedSym(bool) const;
     void SetSelectedSimulateScroll(int);
     bool SetSelectedSimulateScroll(Symbol, bool);
+    UIListDir *GetUIListDir() const;
 
     int NumDisplay() const { return mListState.NumDisplay(); }
     int GridSpan() const { return mListState.GridSpan(); }

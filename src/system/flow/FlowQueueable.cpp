@@ -2,6 +2,7 @@
 #include "flow/FlowNode.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
+#include <list>
 
 FlowQueueable::FlowQueueable() : mInterrupt(kImmediate) {}
 FlowQueueable::~FlowQueueable() {}
@@ -41,3 +42,11 @@ void FlowQueueable::ReleaseListener(Hmx::Object *obj) {
         obj->Handle(Message("on_flow_finished", this), true);
     }
 }
+
+void FlowQueueable::RequestStopCancel() {
+    if (!unk58)
+        return;
+    FlowNode::RequestStopCancel();
+}
+
+void FlowQueueable::RequestStop() { FlowNode::RequestStop(); }

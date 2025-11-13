@@ -145,6 +145,8 @@ BEGIN_COPYS(UIList)
 
 END_COPYS
 
+UIListDir *UIList::GetUIListDir() const { return mListDir; }
+
 int UIList::SelectedPos() const { return mListState.Selected(); }
 
 bool UIList::IsScrolling() const { return mListState.IsScrolling(); }

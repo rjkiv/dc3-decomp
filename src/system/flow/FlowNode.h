@@ -55,7 +55,7 @@ public:
     virtual const char *FindPathName();
     // FlowNode
     virtual void SetParent(FlowNode *, bool);
-    virtual FlowNode *GetParent() { return mParent; }
+    virtual FlowNode *GetParent() { return mFlowParent; }
     virtual bool Activate();
     virtual void Deactivate(bool);
     virtual void ChildFinished(FlowNode *);
@@ -92,7 +92,7 @@ protected:
     String mDebugComment; // 0xc
     ObjPtrVec<FlowNode> mVec1; // 0x14
     ObjPtrList<FlowNode> mRunningNodes; // 0x30
-    FlowNode *mParent; // 0x44
+    FlowNode *mFlowParent; // 0x44
     ObjVector<DrivenPropertyEntry> mDrivenPropEntries; // 0x48
     bool unk58; // 0x58
 };

@@ -7,7 +7,7 @@
 FlowSwitchCase::FlowSwitchCase()
     : mToValue(0), mFromValue(0), mOperator(kEqual), mUseLastValue(0),
       mUnregisterParent(0), unk9a(0) {
-    mParent = nullptr;
+    mFlowParent = nullptr;
 }
 
 FlowSwitchCase::~FlowSwitchCase() { TheFlowMgr->CancelCommand(this); }

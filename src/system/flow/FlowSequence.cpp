@@ -58,7 +58,7 @@ void FlowSequence::ChildFinished(FlowNode *node) {
     if (unk58) {
         unk58 = false;
         MILO_LOG("Releasing\n");
-        mParent->ChildFinished(this);
+        mFlowParent->ChildFinished(this);
         return;
     }
     unk5c = (unk5c + 1) % 0x14;

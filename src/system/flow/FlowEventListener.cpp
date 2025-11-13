@@ -75,7 +75,7 @@ void FlowEventListener::RequestStop() {
         unkb4 = false;
         UnregisterEvents();
         if (mRunningNodes.empty()) {
-            mParent->ChildFinished(this);
+            mFlowParent->ChildFinished(this);
         } else {
             FlowQueueable::RequestStop();
         }
