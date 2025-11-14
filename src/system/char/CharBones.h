@@ -1,5 +1,6 @@
 #pragma once
 #include "obj/Object.h"
+#include "stl/_vector.h"
 #include "utl/MemMgr.h"
 #include "utl/Symbol.h"
 #include <vector>
@@ -63,6 +64,8 @@ public:
     }
     CompressionType GetCompression() const { return mCompression; }
     int TotalSize() const { return mTotalSize; }
+    std::vector<Bone> GetBones() { return mBones; }
+    Bone GetBonesAt(int index) { return mBones[index]; }
 
     static Type TypeOf(Symbol);
     static const char *SuffixOf(Type);

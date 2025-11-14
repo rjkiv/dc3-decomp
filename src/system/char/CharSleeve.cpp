@@ -4,9 +4,9 @@
 #include "rndobj/Utl.h"
 
 CharSleeve::CharSleeve()
-    : mSleeve(this), mTopSleeve(this), unk38(0), unk3c(0), unk40(0), unk48(0), unk4c(0),
-      unk50(0), unk58(0), mInertia(0.5f), mGravity(1.0f), mRange(0), mNegLength(0),
-      mPosLength(0), mStiffness(0.02f) {}
+    : mSleeve(this), mTopSleeve(this), unk38(0, 0, 0), unk48(0, 0, 0), unk58(0),
+      mInertia(0.5f), mGravity(1.0f), mRange(0), mNegLength(0), mPosLength(0),
+      mStiffness(0.02f) {}
 
 CharSleeve::~CharSleeve() {}
 

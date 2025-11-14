@@ -1,5 +1,6 @@
 #pragma once
 #include "char/CharPollable.h"
+#include "math/Vec.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "rndobj/Highlight.h"
@@ -29,14 +30,8 @@ public:
 
     ObjPtr<RndTransformable> mSleeve; // 0x10
     ObjPtr<RndTransformable> mTopSleeve; // 0x24
-    float unk38;
-    float unk3c;
-    float unk40;
-    u32 unk44;
-    float unk48;
-    float unk4c;
-    float unk50;
-    u32 unk54;
+    Vector3 unk38;
+    Vector3 unk48;
     float unk58;
     float mInertia; // unk5c
     float mGravity; // 0x60
