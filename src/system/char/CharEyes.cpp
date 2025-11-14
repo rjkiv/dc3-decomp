@@ -1,6 +1,8 @@
 #include "char/CharEyes.h"
+#include "char/CharInterest.h"
 #include "char/CharWeightable.h"
 #include "obj/Object.h"
+#include "obj/Task.h"
 #include "utl/BinStream.h"
 
 CharEyes::CharEyes()
@@ -120,3 +122,35 @@ BEGIN_COPYS(CharEyes)
         COPY_MEMBER(mLowerLidTrackRotate)
     END_COPYING_MEMBERS
 END_COPYS
+
+void CharEyes::ForceBlink() {
+    if (unk1b1 && !unk18c) {
+        unk18c = true;
+        unk190 = TheTaskMgr.Seconds(TaskMgr::kRealTime);
+        unk194++;
+    }
+}
+
+void CharEyes::SetEnableBlinks(bool b1, bool b2) {
+    unk1b1 = b1;
+    if (!b2 || b1 || !unk18c || !mFaceServo)
+        return;
+
+    mFaceServo->SetProceduralBlinkWeight(0.0f);
+    unk18c = false;
+    unk78 = unk1a0;
+}
+
+bool CharEyes::SetFocusInterest(CharInterest *interest, int i) {
+    if (unk114 && unk128 > i)
+        return false;
+
+    unk114 = interest;
+    unk128 = i;
+    if (interest != unk114)
+        unk12c = true;
+    if (!unk114)
+        unk128 = -1;
+
+    return true;
+}

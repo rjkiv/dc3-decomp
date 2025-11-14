@@ -1,6 +1,7 @@
 #include "char/Character.h"
 #include "CharInterest.h"
 #include "Waypoint.h"
+#include "char/CharEyes.h"
 #include "char/CharacterTest.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
@@ -164,3 +165,44 @@ ShadowBone *Character::AddShadowBone(RndTransformable *trans) {
         return mShadowBones.back();
     }
 }
+
+void Character::ForceBlink() {
+    CharEyes *eyes = GetEyes();
+    if (eyes)
+        eyes->ForceBlink();
+}
+
+void Character::EnableBlinks(bool b1, bool b2) {
+    CharEyes *eyes = GetEyes();
+    if (eyes)
+        eyes->SetEnableBlinks(b1, b2);
+}
+
+bool Character::SetFocusInterest(CharInterest *interest, int i) {
+    CharEyes *eyes = GetEyes();
+    return eyes ? eyes->SetFocusInterest(interest, i) : false;
+}
+
+void Character::SetInterestFilterFlags(int i) {
+    CharEyes *eyes = GetEyes();
+    if (eyes) {
+        eyes->SetInterestFilterFlags(i);
+        eyes->SetUnk1b0(true);
+    }
+}
+
+void Character::ClearInterestFilterFlags() {
+    CharEyes *eyes = GetEyes();
+    if (eyes) {
+        eyes->ClearInterestFilterFlags();
+    }
+}
+
+void Character::RemovingObject(Hmx::Object *o) {
+    if (o == mDriver) {
+        mDriver = nullptr;
+    }
+    RndDir::RemovingObject(o);
+}
+
+void Character::SetDebugDrawInterestObjects(bool b) { mDebugDrawInterestObjects = b; }

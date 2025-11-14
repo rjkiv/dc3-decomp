@@ -72,8 +72,14 @@ public:
     OBJ_MEM_OVERLOAD(0x20)
     NEW_OBJ(CharEyes)
 
+    void SetInterestFilterFlags(int i) { mInterestFilterFlags = i; }
+    void ClearInterestFilterFlags() { mInterestFilterFlags = mDefaultFilterFlags; }
+    void SetUnk1b0(bool b) { unk1b0 = b; } // change once context found
+
     void ForceBlink();
     CharInterest *GetCurrentInterest();
+    void SetEnableBlinks(bool, bool);
+    bool SetFocusInterest(CharInterest *, int);
 
 protected:
     CharEyes();
@@ -157,10 +163,7 @@ protected:
     int unk194;
     float unk198;
     float unk19c;
-    int unk1a0;
-    int unk1a4;
-    int unk1a8;
-    int unk1ac;
+    Vector3 unk1a0;
     bool unk1b0;
     bool unk1b1;
 };

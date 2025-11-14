@@ -91,6 +91,7 @@ public:
     void SetInterestObjects(const ObjPtrList<CharInterest> &, ObjectDir *);
     void SetSelfShadow(bool selfshadow) { mSelfShadow = selfshadow; }
     void SetLodType(LODType lod) { mForceLod = lod; }
+    void SetDebugDrawInterestObjects(bool);
     void ForceBlink();
     CharServoBone *BoneServo();
     void SetTeleport(bool t) { unk298 = t; }

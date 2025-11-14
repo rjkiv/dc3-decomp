@@ -38,6 +38,7 @@ public:
     float BlinkWeightLeft() const;
     void ApplyProceduralWeights();
     CharClip *BaseClip() const { return mBaseClip; }
+    void SetProceduralBlinkWeight(float weight) { unk114 = weight; }
 
 protected:
     CharFaceServo();

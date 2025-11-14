@@ -175,6 +175,7 @@ public:
     float LengthSeconds() const;
     float AverageBeatsPerSecond() const;
     void SetFlags(int);
+    int PlayFlags() { return mPlayFlags; }
     void SetPlayFlags(int);
     void SetDefaultBlend(int);
     void SetDefaultLoop(int);
