@@ -23,6 +23,7 @@ public:
     void AddClip(CharClip *);
     void SetClipFlags(int);
     CharClip *FindClip(const char *) const;
+    void Sort();
 
 protected:
     CharClipGroup();
