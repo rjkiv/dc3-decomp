@@ -20,6 +20,8 @@ public:
     // RndDrawable
     virtual void DrawShowing();
 
+    NEW_OBJ(CharTransDraw);
+
     ObjPtrList<Character> mChars; // 0x40
     bool unk54;
 

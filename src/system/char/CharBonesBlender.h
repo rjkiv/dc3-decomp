@@ -20,6 +20,7 @@ public:
     virtual void Load(BinStream &);
 
     OBJ_MEM_OVERLOAD(0x14);
+    NEW_OBJ(CharBonesBlender);
 
     void SetDest(CharBonesObject *);
     void SetClipType(Symbol);

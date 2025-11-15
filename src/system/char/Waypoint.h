@@ -25,6 +25,8 @@ public:
     void SetAngRadius(float r) { mAngRadius = r; }
     void SetStrictAngDelta(float d) { mStrictAngDelta = d; }
     void SetYRadius(float r) { mYRadius = r; }
+    float MYRadius() { return mYRadius; }
+    float Radius() { return mRadius; }
 
     static void Init();
     static void Terminate();

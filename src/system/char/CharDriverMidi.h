@@ -20,6 +20,8 @@ public:
     virtual void Enter();
     virtual void Exit();
 
+    NEW_OBJ(CharDriverMidi);
+
     bool unke0; // unsure why this is here, its def size 0x1
     Symbol mParser; // 0xe4
     Symbol mFlagParser; // 0xe8

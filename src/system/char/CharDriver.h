@@ -29,6 +29,8 @@ public:
     virtual void Exit();
     virtual void PollDeps(std::list<Hmx::Object *> &, std::list<Hmx::Object *> &);
 
+    NEW_OBJ(CharDriver);
+
     ObjectDir *ClipDir() const { return mClips; }
     CharClip *FirstClip();
 

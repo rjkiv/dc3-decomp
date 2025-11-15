@@ -30,6 +30,8 @@ public:
     virtual void Poll();
     virtual void PollDeps(std::list<Hmx::Object *> &, std::list<Hmx::Object *> &);
 
+    NEW_OBJ(CharBlendBone);
+
     ObjVector<ConstraintSystem> mTargets; // 0x8
     ObjPtr<RndTransformable> mSrc1; // 0x18
     ObjPtr<RndTransformable> mSrc2; // 0x2c

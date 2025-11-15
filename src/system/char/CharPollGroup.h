@@ -24,6 +24,8 @@ public:
     virtual void ListPollChildren(std::list<RndPollable *> &) const;
     virtual void PollDeps(std::list<Hmx::Object *> &, std::list<Hmx::Object *> &);
 
+    NEW_OBJ(CharPollGroup);
+
     void SortPolls();
 
     ObjPtrList<CharPollable> mPolls; // 0x28

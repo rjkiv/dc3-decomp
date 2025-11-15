@@ -12,7 +12,7 @@
 #include "utl/MemMgr.h"
 
 struct ObjNameSort {
-    bool operator()(CharClip *c1, CharClip *c2) const {
+    bool operator()(Hmx::Object *c1, Hmx::Object *c2) const {
         return strcmp(c1->Name(), c2->Name()) < 0;
     }
 };

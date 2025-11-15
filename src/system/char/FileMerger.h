@@ -40,6 +40,8 @@ public:
     // OriginalPathable
     virtual bool OriginalPath(Hmx::Object *, String &);
 
+    NEW_OBJ(FileMerger);
+
     bool StartLoad(bool);
     void Clear();
     void Select(Symbol, const FilePath &, bool);
