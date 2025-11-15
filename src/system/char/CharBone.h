@@ -32,6 +32,11 @@ public:
     CharBones::Type RotationType() const { return mRotation; }
     int RotationContext() const { return mRotationContext; }
     CharBone *Target() const { return mTarget; }
+    RndTransformable *BoneTrans() { return mTrans; }
+    void SetTarget(CharBone *b) { mTarget = b; }
+    void SetPositionContext(int c) { mPositionContext = c; }
+    void SetRotationContext(int c) { mRotationContext = c; }
+    void SetRotationType(CharBones::Type ty) { mRotation = ty; }
     void ClearContext(int);
     void StuffBones(std::list<CharBones::Bone> &, int) const;
 
