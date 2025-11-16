@@ -38,7 +38,15 @@ public:
     void InitTextureStore(int);
     void ClearTextureStore();
     void StartSnapshotBatch();
+    int NumStoredTextures() const;
+    int StoreTexture(RndTex *);
+    void StoreTextureAt(RndTex *, int);
     void StoreTextureClipAt(float, float, float, float, int, int);
+    void ApplyTextureClip(RndMat *, int) const;
+    void StoreColorBuffer(int);
+    void StoreColorBufferClip(float, float, float, float, int);
+    void StoreDepthBuffer(int);
+    void StoreDepthBufferClip(float, float, float, float, int);
     void ResetSnapshots();
     int NumSnapshotBatches() const;
     bool GetTweakedAutoexposure() const;

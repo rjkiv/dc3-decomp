@@ -7,8 +7,8 @@
 #include "utl/Symbol.h"
 
 struct PronunciationsLoc {
-    int unk0;
-    u64 unk4;
+    Symbol unk0;
+    std::vector<String> unk4;
 };
 
 class HamSongMetadata : public SongMetadata {
@@ -62,9 +62,12 @@ public:
     Symbol unkcc;
     Symbol unkd0;
     Symbol unkd4;
+    int unk_0xD8;
+    int unk_0xDC;
 
 private:
     void InitHamSongMetadata();
+    static int sHamSaveVer;
 };
 
 int GetNoteNum(DataArray *, Symbol);

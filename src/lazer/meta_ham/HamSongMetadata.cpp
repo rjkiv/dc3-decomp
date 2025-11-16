@@ -9,6 +9,11 @@
 #include "utl/BinStream.h"
 #include "utl/Symbol.h"
 
+#define MIN_SONG_VERSION 0
+#define MAX_SONG_VERSION 99
+
+int HamSongMetadata::sHamSaveVer = 14;
+
 HamSongMetadata::HamSongMetadata() : SongMetadata() { InitHamSongMetadata(); }
 
 HamSongMetadata::HamSongMetadata(DataArray *d1, DataArray *d2, bool b)
@@ -21,12 +26,127 @@ HamSongMetadata::~HamSongMetadata() {}
 
 bool HamSongMetadata::HasAlternatePath() const { return mVersion < 11; }
 
-bool HamSongMetadata::IsVersionOK() const { return false; }
+bool HamSongMetadata::IsVersionOK() const {
+    MILO_ASSERT_RANGE(mVersion, MIN_SONG_VERSION, MAX_SONG_VERSION + 1, 362);
+    int ok;
+    if (mVersion >= 0 && mVersion <= 11)
+        ok = true;
+    else
+        ok = false;
+    return ok;
+}
 
 BEGIN_SAVES(HamSongMetadata)
+    bs << sHamSaveVer;
+    SAVE_SUPERCLASS(SongMetadata)
+    bs << mName;
+    bs << mArtist;
+    bs << isCover;
+    bs << mAlbumName;
+    bs << mRank;
+    bs << mRating;
+    bs << mCharacter;
+    bs << mGender;
+    bs << mLength;
+    bs << mBpm;
+    bs << mAlternatePath;
+    bs << unk90;
+    bs << unk9c;
+    bs << unka8;
+    bs << unkc0;
+    bs << unkc4;
+    bs << unkc8;
+    bs << unkcc;
+    bs << unkd0;
+    bs << unkd4;
+    bs << unk_0xD8;
+    bs << unk_0xDC;
 END_SAVES
 
 BEGIN_LOADS(HamSongMetadata)
+    LOAD_REVS(bs)
+    LOAD_SUPERCLASS(SongMetadata)
+    bs >> mName;
+    bs >> mArtist;
+    if (revs >= 13) {
+        bs >> isCover;
+    }
+    bs >> mAlbumName;
+    if (revs < 3) {
+        Symbol s;
+        int i;
+        DateTime dt;
+        bs >> i;
+        bs >> dt;
+        bs >> dt;
+        bs >> s;
+    }
+    if (revs < 8) {
+        int i;
+        bool b;
+        bs >> i;
+        bs >> b;
+        bs >> b;
+        bs >> b;
+        bs >> b;
+    }
+    bs >> mRank;
+    bs >> mRating;
+    if (revs < 8) {
+        short h;
+        String s;
+        int i;
+        float f;
+        bs >> h;
+        bs >> s;
+        bs >> i;
+        bs >> i;
+        bs >> f;
+    }
+    if (revs >= 10) {
+        bs >> mCharacter;
+    }
+    if (revs > 0 && revs < 12) {
+        Symbol s;
+        bs >> s;
+    }
+    if (revs >= 6) {
+        int i;
+        bs >> i;
+        mGender = i;
+    }
+    if (revs >= 8) {
+        bs >> mLength;
+    } else if (revs == 7) {
+        int i;
+        bs >> i;
+        mLength = i * 1000;
+    }
+    if (revs > 3) {
+        bs >> mBpm;
+    }
+    if (revs >= 5 && revs < 8) {
+        bool b;
+        bs >> b;
+    }
+    if (revs >= 9) {
+        bs >> mAlternatePath;
+    }
+    if (revs >= 11) {
+        bs >> unk90;
+    }
+    if (revs >= 14) {
+        bs >> unk9c;
+        bs >> unka8;
+        bs >> unkc0;
+        bs >> unkc4;
+        bs >> unkc8;
+        bs >> unkcc;
+        bs >> unkd0;
+        bs >> unkd4;
+        bs >> unk_0xD8;
+        bs >> unk_0xDC;
+    }
 END_LOADS
 
 bool HamSongMetadata::IsCover() const { return isCover; }
@@ -48,11 +168,38 @@ bool HamSongMetadata::IsDownload() const {
     return !(GameOrigin() == ham3);
 }
 
-Symbol HamSongMetadata::Outfit() const { return 0; }
+Symbol HamSongMetadata::Outfit() const {
+    Symbol oc1 = GetOutfitCharacter(unkc0, 0);
+    Symbol oc2 = GetOutfitCharacter(unkc8, 0);
+    // if (TheProfileMgr.IsContentUnlocked(oc1))
 
-Symbol HamSongMetadata::Venue() const { return 0; }
+    MILO_NOTIFY(
+        "None of the default/backup characters/outfits for song %s are available.",
+        mName.c_str()
+    );
+    return unkc0;
+}
+
+Symbol HamSongMetadata::Venue() const {
+    MILO_NOTIFY(
+        "using a locked backup venue '%s' for song '%s'", unkd4.Str(), mName.c_str()
+    );
+    return Symbol();
+}
 
 Symbol HamSongMetadata::Character() const { return 0; }
+
+BinStream &operator<<(BinStream &bs, PronunciationsLoc const &pron) {
+    bs << pron.unk0;
+    bs << pron.unk4;
+    return bs;
+}
+
+BinStream &operator>>(BinStream &bs, PronunciationsLoc &pron) {
+    bs >> pron.unk0;
+    bs >> pron.unk4;
+    return bs;
+}
 
 Symbol HamSongMetadata::DrumEvent(int index) {
     auto s = unka8.find(index);

@@ -88,7 +88,14 @@ bool SongStatusMgr::GetLastBattleResult(int) const { return false; }
 
 unsigned int SongStatusMgr::GetLastPlayed(int) const { return 0; }
 
-int SongStatusMgr::GetLastScore(int, bool &) const { return 1; }
+int SongStatusMgr::GetLastScore(int i, bool &b) const {
+    b = 0;
+    std::map<int, SongStatus>::const_iterator it = unk3c.find(i);
+    if (it != unk3c.end()) {
+        const SongStatus &status = GetSongStatus(i);
+    }
+    return 0;
+}
 
 unsigned int SongStatusMgr::GetLastPlayedPractice(int) const { return 0; }
 
@@ -116,8 +123,12 @@ bool SongStatusMgr::UpdateBattleSong(int, int, bool) { return false; }
 
 bool SongStatusMgr::UpdateFlaunt(int, int, Difficulty, bool) { return false; }
 
-void SongStatusMgr::SaveFixed(FixedSizeSaveableStream &) const {}
+void SongStatusMgr::SaveFixed(FixedSizeSaveableStream &stream) const {
+    FixedSizeSaveable::SaveStd(stream, unk3c, 3400, 131);
+}
 
-void SongStatusMgr::LoadFixed(FixedSizeSaveableStream &, int) {}
+void SongStatusMgr::LoadFixed(FixedSizeSaveableStream &stream, int ver) {
+    FixedSizeSaveable::LoadStd(stream, unk3c, 3400, 131);
+}
 
 #pragma endregion SongStatusMgr

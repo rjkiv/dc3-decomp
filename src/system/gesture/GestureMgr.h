@@ -48,6 +48,7 @@ public:
     Skeleton &GetSkeleton(int);
     const Skeleton &GetSkeleton(int) const;
     SkeletonQualityFilter &GetSkeletonQualityFilter(int);
+    LiveCameraInput *GetLiveCameraInput() const;
     void SetTrackedSkeletons(int, int);
     void UpdateTrackedSkeletons();
     int GetActiveSkeletonIndex() const;

@@ -1,4 +1,5 @@
 #pragma once
+#include "lazer/meta_ham/HamMemcardAction.h"
 #include "utl/BinStream.h"
 #include "utl/BufStream.h"
 #include "meta/FixedSizeSaveableStream.h"
@@ -18,6 +19,7 @@ class FixedSizeSaveable {
     operator<<(FixedSizeSaveableStream &fs, const FixedSizeSaveable &saveable);
     friend FixedSizeSaveableStream &
     operator>>(FixedSizeSaveableStream &fs, FixedSizeSaveable &saveable);
+    friend class LoadMemcardAction; // hack
 
 public:
     FixedSizeSaveable();
@@ -142,7 +144,7 @@ public:
     ) {
         int mapsize = map.size();
         if (mapsize > maxsize) {
-            MILO_WARN(
+            MILO_NOTIFY(
                 "The hash_map size is greater than the maximum supplied! size=%i max=%i\n",
                 mapsize,
                 maxsize
@@ -168,7 +170,7 @@ public:
     ) {
         int mapsize = map.size();
         if (mapsize > maxsize) {
-            MILO_WARN(
+            MILO_NOTIFY(
                 "The hash_map size is greater than the maximum supplied! size=%i max=%i\n",
                 mapsize,
                 maxsize
@@ -229,6 +231,31 @@ public:
         stream << lsize;
         for (int i = 0; i < lsize; i++) {
             stream << *vec[i];
+        }
+        if (maxsize > lsize)
+            PadStream(stream, (savesize * (maxsize - lsize)));
+    }
+
+    template <class T>
+    static void SaveStdPtr(
+        FixedSizeSaveableStream &stream,
+        const std::map<Symbol, T *> &map,
+        int maxsize,
+        int savesize
+    ) {
+        int lsize = map.size();
+        if (lsize > maxsize) {
+            MILO_WARN(
+                "The map size is greater than the maximum supplied! size=%i max=%i\n",
+                lsize,
+                maxsize
+            );
+            lsize = maxsize;
+        }
+        stream << lsize;
+        for (auto it = map.begin(); it != map.end(); it++) {
+            FixedSizeSaveable::SaveSymbolID(stream, it->first);
+            stream << it->second;
         }
         if (maxsize > lsize)
             PadStream(stream, (savesize * (maxsize - lsize)));
@@ -322,6 +349,33 @@ public:
         }
         if (maxsize > vecsize)
             DepadStream(stream, savesize * (maxsize - vecsize));
+    }
+
+    template <class T>
+    static void LoadStdPtr(
+        FixedSizeSaveableStream &stream,
+        std::map<Symbol, T *> &map,
+        int maxsize,
+        int savesize
+    ) {
+        if (map.size() != 0) {
+            MILO_NOTIFY("map is not empty!");
+            FOREACH (it, map) {
+                RELEASE(it->second);
+            }
+            map.clear();
+        }
+        int mapsize;
+        stream >> mapsize;
+        for (int i = 0; i < mapsize; i++) {
+            Symbol key;
+            FixedSizeSaveable::LoadSymbolFromID(stream, key);
+            T *obj = new T();
+            stream >> *obj;
+            map[key] = obj;
+        }
+        if (maxsize > mapsize)
+            DepadStream(stream, savesize * (maxsize - mapsize));
     }
 
     template <class T, class Allocator>

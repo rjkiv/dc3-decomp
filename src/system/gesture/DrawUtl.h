@@ -6,3 +6,4 @@
 RndMat *CreateCameraBufferMat(int, int, RndTex::Type);
 void TerminateDrawUtl();
 void InitDrawUtl(const GestureMgr &);
+void SetDrawSpace(float, float, float);

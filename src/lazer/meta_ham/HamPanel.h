@@ -1,4 +1,5 @@
 #pragma once
+#include "hamobj/HamNavList.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "rndobj/Anim.h"
@@ -19,7 +20,10 @@ public:
     virtual void Poll();
     virtual UIComponent *FocusComponent();
 
-    RndAnimatable *unk38;
+    // HamPanel
+    virtual bool HasNavList() const { return mNavList != nullptr; }
+
+    HamNavList *mNavList;
 
     HamPanel();
 };

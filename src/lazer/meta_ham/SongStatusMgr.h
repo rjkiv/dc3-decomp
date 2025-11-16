@@ -27,6 +27,9 @@ public:
     SongStatusData const &GetBestPracticeSongStatusData() const;
 };
 
+BinStream &operator>>(BinStream &, SongStatus &);
+BinStream &operator<<(BinStream &, const SongStatus &);
+
 class SongStatusMgr : public Hmx::Object, public FixedSizeSaveable {
 public:
     virtual ~SongStatusMgr();

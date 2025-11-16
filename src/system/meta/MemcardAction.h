@@ -13,7 +13,7 @@ public:
     MCResult Result() const { return mResult; }
     void SetResult(MCResult res) { mResult = res; }
 
-private:
+protected:
     MCResult mResult; // 0x4
     int unk8;
     int unkc;

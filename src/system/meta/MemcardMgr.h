@@ -10,6 +10,9 @@
 #include "ui/UI.h"
 
 class MemcardMgr : public Hmx::Object, public ThreadCallback {
+    friend class SaveMemcardAction; // hack
+    friend class LoadMemcardAction; // hack
+
 public:
     enum State {
         kS_None = 0,

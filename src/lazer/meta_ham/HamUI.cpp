@@ -1,0 +1,262 @@
+#include "lazer/meta_ham/HamUI.h"
+#include "gesture/DrawUtl.h"
+#include "gesture/GestureMgr.h"
+#include "hamobj/HamGameData.h"
+#include "hamobj/HamPlayerData.h"
+#include "math/Rot.h"
+#include "meta/HAQManager.h"
+#include "obj/Object.h"
+#include "os/ContentMgr.h"
+#include "os/Debug.h"
+#include "os/PlatformMgr.h"
+#include "ui/UI.h"
+#include "ui/UIPanel.h"
+#include "ui/UIScreen.h"
+
+HamUI::HamUI() {
+    unk_0xD8 = 0;
+    unk_0xDC = 0;
+    unk_0xE0 = 0;
+    unk_0xE4 = 0;
+    unk_0xE8 = 0;
+    unk_0xEC = 0;
+    unk_0xF0 = 0;
+    unk_0xF4 = 0;
+    unk_0xF8 = nullptr; // TODO figure type
+    unk_0xFC = 0;
+    unk_0xFD = 0;
+    unk_0x100 = 0;
+    unk_0x104 = new ShellInput;
+    unk_0x108 = 0;
+    unk_0x118 = 0;
+    unk_0x10C = -1;
+    unk_0x11C = 0;
+    mSkelRot = 0.0f;
+    SetFullScreenDraw(false);
+}
+
+HamUI::~HamUI() { RELEASE(unk_0xF8); }
+
+void HamUI::Terminate() {
+    ThePlatformMgr.RemoveSink(this);
+    UIManager::Terminate();
+    // UIEventMgr::Terminate();
+    RELEASE(unk_0x104);
+}
+
+void HamUI::Init() {
+    ThePlatformMgr.AddSink(this, "connection_status_changed");
+    ThePlatformMgr.AddSink(this, "disk_error");
+    TheContentMgr.SetReadFailureHandler(this);
+    // UIEventMgr::Init();
+    UIManager::Init();
+    unk_0x104->Init();
+    UIPanel *helpbar = ObjectDir::Main()->Find<UIPanel>("helpbar", false);
+}
+
+bool HamUI::SetFullScreenDraw(bool b) {
+    mFullScreenDrawActive = b;
+    if (b) {
+        SetDrawSpace(0, 0, 1);
+    } else {
+        SetDrawSpace(0.5, 0.05, 0.4);
+    }
+    return mFullScreenDrawActive;
+}
+
+float HamUI::NextSkeletonDrawRot() {
+    mSkelRot += PI / 2;
+    if (mSkelRot >= PI * 2) {
+        mSkelRot = 0;
+    }
+    return mSkelRot * RAD2DEG;
+}
+
+int HamUI::NumSnapshots() {
+    MILO_ASSERT(TheGestureMgr, 586);
+    if (TheGestureMgr->GetLiveCameraInput())
+        return TheGestureMgr->GetLiveCameraInput()->NumSnapshots();
+    return 0;
+}
+
+void HamUI::ResetSnapshots() {
+    MILO_ASSERT(TheGestureMgr, 595);
+    if (TheGestureMgr->GetLiveCameraInput())
+        TheGestureMgr->GetLiveCameraInput()->ResetSnapshots();
+}
+
+int HamUI::TakeSnapshot() {
+    MILO_ASSERT(TheGestureMgr, 602);
+    for (int i = 0; i < 2; i++) {
+        HamPlayerData *pPlayer = TheGameData->Player(i);
+        MILO_ASSERT(pPlayer, 609);
+        // auto profile = TheProfileMgr->GetProfileFromPad(i);
+    }
+    return NumSnapshots();
+}
+
+void HamUI::ApplySnapshotToMesh(int idx, RndMesh *mesh) {
+    MILO_ASSERT(TheGestureMgr, 635);
+    if (TheGestureMgr->GetLiveCameraInput())
+        mesh->SetMat(TheGestureMgr->GetLiveCameraInput()->GetSnapshot(idx));
+}
+
+void HamUI::InitTextureStore(int size) {
+    MILO_ASSERT(TheGestureMgr, 648);
+    if (TheGestureMgr->GetLiveCameraInput())
+        TheGestureMgr->GetLiveCameraInput()->InitTextureStore(size);
+}
+
+void HamUI::ClearTextureStore() {
+    MILO_ASSERT(TheGestureMgr, 656);
+    if (TheGestureMgr->GetLiveCameraInput())
+        TheGestureMgr->GetLiveCameraInput()->ClearTextureStore();
+}
+
+int HamUI::NumStoredTextures() const {
+    MILO_ASSERT(TheGestureMgr, 664);
+    if (TheGestureMgr->GetLiveCameraInput())
+        return TheGestureMgr->GetLiveCameraInput()->NumStoredTextures();
+    return 0;
+}
+
+int HamUI::StoreTexture(RndTex *tex) {
+    MILO_ASSERT(TheGestureMgr, 674);
+    if (TheGestureMgr->GetLiveCameraInput())
+        return TheGestureMgr->GetLiveCameraInput()->StoreTexture(tex);
+    return 0;
+}
+
+void HamUI::StoreTextureAt(RndTex *tex, int idx) {
+    MILO_ASSERT(TheGestureMgr, 683);
+    if (TheGestureMgr->GetLiveCameraInput())
+        TheGestureMgr->GetLiveCameraInput()->StoreTextureAt(tex, idx);
+}
+
+void HamUI::StoreTextureClipAt(float f1, float f2, float f3, float f4, int i1, int i2) {
+    MILO_ASSERT(TheGestureMgr, 691);
+    if (TheGestureMgr->GetLiveCameraInput())
+        TheGestureMgr->GetLiveCameraInput()->StoreTextureClipAt(f1, f2, f3, f4, i1, i2);
+}
+
+RndTex *HamUI::GetStoredTexture(int idx) const {
+    MILO_ASSERT(TheGestureMgr, 699);
+    if (TheGestureMgr->GetLiveCameraInput())
+        return TheGestureMgr->GetLiveCameraInput()->GetStoredTexture(idx);
+    return nullptr;
+}
+
+void HamUI::ApplyTextureClip(RndMat *mat, int idx) const {
+    MILO_ASSERT(TheGestureMgr, 708);
+    if (TheGestureMgr->GetLiveCameraInput())
+        TheGestureMgr->GetLiveCameraInput()->ApplyTextureClip(mat, idx);
+}
+
+void HamUI::StoreColorBufferAt(int idx) {
+    MILO_ASSERT(TheGestureMgr, 716);
+    if (TheGestureMgr->GetLiveCameraInput())
+        TheGestureMgr->GetLiveCameraInput()->StoreColorBuffer(idx);
+}
+
+void HamUI::StoreColorBufferClipAt(float f1, float f2, float f3, float f4, int i1) {
+    MILO_ASSERT(TheGestureMgr, 724);
+    if (TheGestureMgr->GetLiveCameraInput())
+        TheGestureMgr->GetLiveCameraInput()->StoreColorBufferClip(f1, f2, f3, f4, i1);
+}
+
+void HamUI::StoreDepthBufferAt(int idx) {
+    MILO_ASSERT(TheGestureMgr, 732);
+    if (TheGestureMgr->GetLiveCameraInput())
+        TheGestureMgr->GetLiveCameraInput()->StoreDepthBuffer(idx);
+}
+
+void HamUI::StoreDepthBufferClipAt(float f1, float f2, float f3, float f4, int i1) {
+    MILO_ASSERT(TheGestureMgr, 740);
+    if (TheGestureMgr->GetLiveCameraInput())
+        TheGestureMgr->GetLiveCameraInput()->StoreDepthBufferClip(f1, f2, f3, f4, i1);
+}
+
+Symbol HamUI::DisplayNextCameraOutput() { return Symbol(); }
+
+DataNode HamUI::OnMsg(const UITransitionCompleteMsg &msg) {
+    HAQManager::Print(HAQType::kHAQType_Screen);
+    HAQManager::Print(HAQType::kHAQType_Focus);
+    UIScreen *scr = msg->Obj<UIScreen>(2);
+    if (scr) {
+        Symbol scrname(scr->Name()), disable_screen_saver("disable_screen_saver");
+        auto prop = scr->Property(disable_screen_saver, false);
+    }
+
+    return 1;
+}
+
+void HamUI::ReloadStrings() {
+    Message reload("reload_strings");
+
+    UIManager::ReloadStrings();
+}
+
+BEGIN_HANDLERS(HamUI)
+    HANDLE_EXPR(display_next_camera_output, DisplayNextCameraOutput())
+    // HANDLE_EXPR(toggle_draw_skeletons, ToggleDrawSkeletons())
+    HANDLE_EXPR(toggle_full_screen_draw, SetFullScreenDraw(mFullScreenDrawActive))
+    HANDLE_EXPR(next_skeleton_draw_rot, NextSkeletonDrawRot())
+    HANDLE_EXPR(cycle_draw_cursor, unk_0x104->CycleDrawCursor())
+    HANDLE_EXPR(set_button_spam, unk_0x118 = _msg->Int(2))
+    HANDLE_EXPR(button_spam, unk_0x118)
+    HANDLE_EXPR(toggle_ui_overlay, unk_0x11C)
+    // HANDLE_ACTION(toggle_letterbox, unk_0xDC->ToggleBlacklightMode(0))
+    // HANDLE_ACTION(toggle_letterbox_immediately, unk_0xDC->ToggleBlacklightMode(1))
+    // HANDLE_EXPR(is_letterbox_in_transition, unk_0xDC->InBlacklightTransition())
+    // HANDLE_EXPR(is_blacklight_mode, unk_0xDC->IsBlacklightMode())
+    HANDLE_ACTION(force_letterbox_off, ForceLetterboxOff())
+    HANDLE_ACTION(force_letterbox_off_immediate, ForceLetterboxOffImmediate())
+    HANDLE_ACTION(reset_snapshots, ResetSnapshots())
+    HANDLE_EXPR(take_snapshot, TakeSnapshot())
+    HANDLE_EXPR(num_snapshots, NumSnapshots())
+    HANDLE_ACTION(
+        apply_snapshot_to_mesh, ApplySnapshotToMesh(_msg->Int(2), _msg->Obj<RndMesh>(3))
+    )
+    HANDLE_EXPR(get_augmented_photo, unk_0xF8)
+    HANDLE_EXPR(has_overlay_panel, unk_0xF0 != 0)
+    HANDLE_ACTION(init_texture_store, InitTextureStore(_msg->Int(2)))
+    HANDLE_ACTION(clear_texture_store, ClearTextureStore())
+    HANDLE_EXPR(num_texture_store, NumStoredTextures())
+    HANDLE_EXPR(store_texture, StoreTexture(_msg->Obj<RndTex>(2)))
+    HANDLE_ACTION(store_texture_at, StoreTextureAt(_msg->Obj<RndTex>(2), _msg->Int(3)))
+    HANDLE_ACTION(
+        store_texture_clip_at,
+        StoreTextureClipAt(
+            _msg->Float(2),
+            _msg->Float(3),
+            _msg->Float(4),
+            _msg->Float(5),
+            _msg->Int(6),
+            _msg->Int(7)
+        )
+    )
+    HANDLE_EXPR(get_stored_texture, GetStoredTexture(_msg->Int(2)))
+    HANDLE_ACTION(apply_texture_clip, ApplyTextureClip(_msg->Obj<RndMat>(2), _msg->Int(3)))
+    HANDLE_ACTION(store_color_buff_at, StoreColorBufferAt(_msg->Int(2)))
+    HANDLE_ACTION(
+        store_color_buff_clip_at,
+        StoreColorBufferClipAt(
+            _msg->Float(2), _msg->Float(3), _msg->Float(4), _msg->Float(5), _msg->Int(6)
+        )
+    )
+    HANDLE_ACTION(store_depth_buffer_at, StoreDepthBufferAt(_msg->Int(2)))
+    HANDLE_ACTION(
+        store_depth_buff_clip_at,
+        StoreDepthBufferClipAt(
+            _msg->Float(2), _msg->Float(3), _msg->Float(4), _msg->Float(5), _msg->Int(6)
+        )
+    )
+    HANDLE_ACTION(reload_strings, ReloadStrings())
+    HANDLE_MESSAGE(UITransitionCompleteMsg)
+    HANDLE_MESSAGE(ContentReadFailureMsg)
+    HANDLE_MESSAGE(ConnectionStatusChangedMsg)
+    HANDLE_MESSAGE(DiskErrorMsg)
+    HANDLE_MESSAGE(ButtonDownMsg)
+    // HANDLE_MESSAGE(KinectGuideGestureMsg)
+    HANDLE_SUPERCLASS(UIManager)
+END_HANDLERS

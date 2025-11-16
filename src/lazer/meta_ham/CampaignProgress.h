@@ -2,6 +2,7 @@
 
 #include "meta/FixedSizeSaveable.h"
 #include "meta/FixedSizeSaveableStream.h"
+#include "meta/Profile.h"
 #include "os/ContentMgr.h"
 #include "stl/_map.h"
 #include "utl/Loader.h"
@@ -105,7 +106,7 @@ public:
     bool UpdateEraSongMoveMastered(Symbol, Symbol, Symbol);
     void UnlockAllMoves(Symbol, Symbol);
 
-    int unk8;
+    Profile *unk8;
     bool unkc;
     bool unkd;
     bool unke;
