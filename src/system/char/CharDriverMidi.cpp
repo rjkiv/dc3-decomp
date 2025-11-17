@@ -39,7 +39,7 @@ BEGIN_LOADS(CharDriverMidi)
     ASSERT_REVS(7, 0)
     LOAD_SUPERCLASS(CharDriverMidi)
     if (d.rev < 7) {
-        unk70.Load(bs, false, mClips);
+        mDefaultClip.Load(bs, false, mClips);
     }
     if (d.rev == 2) {
         String str;

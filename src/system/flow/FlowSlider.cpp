@@ -26,6 +26,18 @@ BEGIN_PROPSYNCS(FlowSlider)
     SYNC_SUPERCLASS(FlowNode)
 END_PROPSYNCS
 
+BEGIN_COPYS(FlowSlider)
+    COPY_SUPERCLASS(FlowNode)
+    CREATE_COPY_AS(FlowSlider, c)
+    BEGIN_COPYING_MEMBERS_FROM(c)
+        COPY_MEMBER(mPersistent)
+        COPY_MEMBER(mAlwaysRun)
+        COPY_MEMBER(mValue)
+        COPY_MEMBER(mEaseType)
+        COPY_MEMBER(mEasePower)
+    END_COPYING_MEMBERS
+END_COPYS
+
 BEGIN_SAVES(FlowSlider)
     SAVE_REVS(0, 0)
     SAVE_SUPERCLASS(FlowNode)
@@ -47,3 +59,16 @@ void FlowSlider::RequestStopCancel() {
 }
 
 void FlowSlider::UpdateEase() { mEaseFunc = GetEaseFunction(mEaseType); }
+
+bool FlowSlider::IsRunning() {
+    if (unk14)
+        return true;
+    return !mRunningNodes.empty();
+}
+
+void FlowSlider::Deactivate(bool b) {
+    FLOW_LOG("Deactivated\n");
+    if (unk14)
+        PropertyEventListener::UnregisterEvents(this);
+    FlowNode::Deactivate(b);
+}

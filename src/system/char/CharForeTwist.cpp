@@ -1,4 +1,5 @@
 #include "char/CharForeTwist.h"
+#include "math/Rot.h"
 #include "obj/Object.h"
 
 CharForeTwist::CharForeTwist() : mHand(this), mTwist2(this), mOffset(0), mBias(0) {}
@@ -49,3 +50,12 @@ BEGIN_LOADS(CharForeTwist)
     if (d.rev > 3)
         d >> mBias;
 END_LOADS
+
+void CharForeTwist::PollDeps(
+    std::list<Hmx::Object *> &changedBy, std::list<Hmx::Object *> &change
+) {
+    changedBy.push_back(mHand);
+    change.push_back(mTwist2);
+    if (mTwist2)
+        change.push_back(mTwist2->TransParent());
+}

@@ -2,6 +2,7 @@
 #include "flow/FlowNode.h"
 #include "flow/PropertyEventListener.h"
 #include "math/Easing.h"
+#include "obj/Object.h"
 
 /** "Ramps intensity up/down on child nodes based on value of slider" */
 class FlowSlider : public FlowNode, public PropertyEventListener {
@@ -13,7 +14,7 @@ public:
     virtual DataNode Handle(DataArray *, bool);
     virtual bool SyncProperty(DataNode &, DataArray *, int, PropOp);
     virtual void Save(BinStream &);
-    virtual void Copy(const Hmx::Object *, CopyType);
+    virtual void Copy(const Hmx::Object *, Hmx::Object::CopyType);
     virtual void Load(BinStream &);
     // FlowNode
     virtual bool Activate();

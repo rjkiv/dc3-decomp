@@ -124,3 +124,12 @@ void CharHair::SetName(const char *name, ObjectDir *dir) {
     Hmx::Object::SetName(name, dir);
     mUsePostProc = dynamic_cast<Character *>(dir) || dynamic_cast<WorldDir *>(dir);
 }
+
+void CharHair::PollDeps(
+    std::list<Hmx::Object *> &changedBy, std::list<Hmx::Object *> &change
+) {
+    for (int i = 0; i < mStrands.size(); i++) {
+        changedBy.push_back(mStrands[i].Root());
+        change.push_back(mStrands[i].Root());
+    }
+}

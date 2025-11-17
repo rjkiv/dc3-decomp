@@ -1,5 +1,6 @@
 #include "char/CharClip.h"
 #include "CharClipGroup.h"
+#include "char/CharBoneDir.h"
 #include "char/CharBones.h"
 #include "char/CharBonesMeshes.h"
 #include "char/CharBonesSamples.h"
@@ -780,4 +781,18 @@ DataNode CharClip::OnHasGroup(DataArray *arr) {
             return 1;
     }
     return 0;
+}
+
+CharBoneDir *CharClip::GetResource() const {
+    CharBoneDir *dir = 0;
+    const DataArray *tdef = TypeDef();
+    if (tdef) {
+        DataArray *found = tdef->FindArray("resource", false);
+        if (found)
+            dir = CharBoneDir::FindBoneDirResource(found->Str(1));
+    }
+    if (!dir) {
+        MILO_NOTIFY("%s has no resource", PathName(this));
+    }
+    return dir;
 }

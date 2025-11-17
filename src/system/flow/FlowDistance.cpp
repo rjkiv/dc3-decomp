@@ -1,6 +1,9 @@
 #include "flow/FlowDistance.h"
+#include "flow/Flow.h"
+#include "flow/FlowManager.h"
 #include "flow/FlowNode.h"
 #include "obj/Object.h"
+#include "utl/BinStream.h"
 
 FlowDistance::FlowDistance()
     : mObj1(this, nullptr), mObj2(this, nullptr), mDistance(10), mPersistent(0), unka1(0),
@@ -45,3 +48,25 @@ BEGIN_COPYS(FlowDistance)
         COPY_MEMBER(mDriveIntensity)
     END_COPYING_MEMBERS
 END_COPYS
+
+BEGIN_LOADS(FlowDistance)
+    LOAD_REVS(bs)
+    ASSERT_REVS(0, 0)
+    LOAD_SUPERCLASS(FlowNode)
+    mObj1.LoadFromMainOrDir(bs);
+    mObj2.LoadFromMainOrDir(bs);
+    bs >> mDistance;
+END_LOADS
+
+bool FlowDistance::IsRunning() {
+    if (mPersistent && unka1)
+        return true;
+    return !mRunningNodes.empty();
+}
+
+void FlowDistance::Deactivate(bool b) {
+    FLOW_LOG("Deactivated\n");
+    TheFlowMgr->RemovePollable(this);
+    unka1 = false;
+    FlowNode::Deactivate(b);
+}

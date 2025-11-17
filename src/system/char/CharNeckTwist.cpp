@@ -1,4 +1,5 @@
 #include "char/CharNeckTwist.h"
+#include "math/Rot.h"
 #include "obj/Object.h"
 
 CharNeckTwist::CharNeckTwist() : mTwist(this), mHead(this) {}

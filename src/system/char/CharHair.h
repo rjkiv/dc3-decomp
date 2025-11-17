@@ -45,6 +45,10 @@ public:
         void SetRoot(RndTransformable *);
         void SetAngle(float);
         void Save(BinStream &) const;
+        RndTransformable *Root() { return mRoot; }
+        Hmx::Matrix3 &RootMat() { return mRootMat; }
+        ObjVector<Point> &Points() { return mPoints; }
+        Point &PointAt(int i) { return mPoints[i]; }
 
     private:
         /** "show the points as spheres" */
@@ -84,12 +88,19 @@ public:
     OBJ_MEM_OVERLOAD(0x22)
     NEW_OBJ(CharHair)
 
+    void FreezePoseRaw();
+
 protected:
     CharHair();
 
     void Hookup();
     void SetCloth(bool);
     void FreezePose();
+    float GetFPS();
+    void SimulateInternal(float);
+    void SimulateZeroTime();
+    void DoReset(int);
+    void SimulateLoops(int, float);
 
     /** "stiffness of each strand, 1 means absolutely stiff, can't be bent".
         Ranges from 0 to 1. */

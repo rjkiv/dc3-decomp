@@ -52,6 +52,21 @@ BEGIN_COPYS(CharIKScale)
     END_COPYING_MEMBERS
 END_COPYS
 
+BEGIN_LOADS(CharIKScale)
+    LOAD_REVS(bs)
+    ASSERT_REVS(3, 0)
+    LOAD_SUPERCLASS(Hmx::Object)
+    LOAD_SUPERCLASS(CharWeightable)
+    bs >> mDest;
+    bs >> mScale;
+    if (d.rev > 1)
+        bs >> mSecondaryTargets;
+    if (d.rev > 2) {
+        bs >> mAutoWeight;
+        bs >> mBottomHeight >> mTopHeight;
+    }
+END_LOADS
+
 void CharIKScale::PollDeps(
     std::list<Hmx::Object *> &changedBy, std::list<Hmx::Object *> &change
 ) {

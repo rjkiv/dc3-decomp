@@ -1,4 +1,5 @@
 #pragma once
+#include "char/CharBoneDir.h"
 #include "char/CharBones.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
@@ -176,6 +177,10 @@ public:
     float AverageBeatsPerSecond() const;
     void SetFlags(int);
     int PlayFlags() { return mPlayFlags; }
+    float Range() const { return mRange; }
+    std::vector<BeatEvent> BeatEvents() { return mBeatEvents; }
+    int NumBeatEvents() { return mBeatEvents.size(); }
+    RndAnimatable *SyncAnim() const { return mSyncAnim; }
     void SetPlayFlags(int);
     void SetDefaultBlend(int);
     void SetDefaultLoop(int);
@@ -204,18 +209,11 @@ public:
     float SampleToBeat(int) const;
     void StuffBones(CharBones &);
     void PoseMeshes(ObjectDir *, float);
+    CharBoneDir *GetResource(void) const;
 
     static const float kBeatAccuracy;
     static DataNode GetClipEvents();
     static void LockAndDelete(const CharClip **, int, int);
-
-protected:
-    CharClip();
-
-    void Relativize();
-    int TransitionVersion();
-    DataNode OnGroups(DataArray *);
-    DataNode OnHasGroup(DataArray *);
 
     static void SetDefaultBlendFlag(int &mask, int blendFlag) {
         mask = mask & 0xfffffff0 | blendFlag;
@@ -226,6 +224,14 @@ protected:
     static void SetDefaultBeatAlignModeFlag(int &mask, int alignFlag) {
         mask = mask & 0xffff09ff | alignFlag;
     }
+
+protected:
+    CharClip();
+
+    void Relativize();
+    int TransitionVersion();
+    DataNode OnGroups(DataArray *);
+    DataNode OnHasGroup(DataArray *);
 
     Transitions mTransitions; // 0x2c
     /** "Frames per second" */
