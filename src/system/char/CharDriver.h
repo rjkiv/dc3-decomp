@@ -41,6 +41,7 @@ public:
     NEW_OBJ(CharDriver);
 
     ObjectDir *ClipDir() const { return mClips; }
+    CharBonesObject *GetBones() const { return mBones; }
     CharClip *FirstClip();
     CharClipDriver *FirstPlaying();
     CharClipDriver *Last();

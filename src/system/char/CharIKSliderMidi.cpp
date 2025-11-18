@@ -1,11 +1,15 @@
 #include "char/CharIKSliderMidi.h"
 #include "char/CharWeightable.h"
 #include "obj/Object.h"
+#include "obj/Task.h"
 
 CharIKSliderMidi::CharIKSliderMidi()
-    : mTarget(this), mFirstSpot(this), mSecondSpot(this), unk9c(1), unka4(0), unka8(0),
-      unkac(0), mResetAll(1), mTolerance(0) {
-    RndPollable::Enter();
+    : mTarget(this), mFirstSpot(this), mSecondSpot(this) {
+    mTargetPercentage = 1.0f;
+    mTolerance = 0.0f;
+    mPercentageChanged = false;
+    mResetAll = true;
+    Enter();
 }
 
 CharIKSliderMidi::~CharIKSliderMidi() {}
@@ -58,3 +62,29 @@ void CharIKSliderMidi::PollDeps(
 }
 
 void CharIKSliderMidi::SetupTransforms() { mResetAll = true; }
+
+void CharIKSliderMidi::Enter() {
+    mPercentageChanged = false;
+    mFrac = 0.0f;
+    mFracPerBeat = 0.0f;
+    RndPollable::Enter();
+}
+
+void CharIKSliderMidi::SetFraction(float f1, float f2) {
+    if (f1 != mTargetPercentage) {
+        if (std::fabs(f1 - mTargetPercentage) < mTolerance)
+            return;
+        else {
+            mOldPercentage = mTargetPercentage;
+            mTargetPercentage = f1;
+            if (f2 <= 0)
+                mFracPerBeat = kHugeFloat;
+            else {
+                MaxEq(f2, 0.1f);
+                mFracPerBeat = 1.0f / f2;
+            }
+            mFrac = 0;
+            mPercentageChanged = true;
+        }
+    }
+}

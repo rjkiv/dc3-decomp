@@ -33,6 +33,7 @@ public:
 
 protected:
     void Sync();
+    void PlayNew();
     DataNode OnGetFilteredClips(DataArray *);
 
     Character *mMe; // 0x4

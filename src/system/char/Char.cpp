@@ -39,6 +39,7 @@
 #include "char/CharNeckTwist.h"
 #include "char/CharPosConstraint.h"
 #include "char/CharServoBone.h"
+#include "char/CharSignalApplier.h"
 #include "char/CharSleeve.h"
 #include "char/CharTransDraw.h"
 #include "char/CharUpperTwist.h"
@@ -47,6 +48,7 @@
 #include "char/Character.h"
 #include "char/ClipCollide.h"
 #include "char/FileMerger.h"
+#include "char/Waypoint.h"
 #include "obj/Data.h"
 #include "obj/DataFunc.h"
 #include "obj/Object.h"
@@ -121,13 +123,14 @@ void CharInit() {
     REGISTER_OBJ_FACTORY(CharPollGroup);
     REGISTER_OBJ_FACTORY(CharPosConstraint);
     REGISTER_OBJ_FACTORY(CharServoBone);
-    // REGISTER_OBJ_FACTORY(CharSignalApplier);
+    REGISTER_OBJ_FACTORY(CharSignalApplier);
     REGISTER_OBJ_FACTORY(CharSleeve);
     CharTaskMgr::Init();
     REGISTER_OBJ_FACTORY(CharTransDraw);
     REGISTER_OBJ_FACTORY(CharUpperTwist);
     REGISTER_OBJ_FACTORY(CharWeightable);
     REGISTER_OBJ_FACTORY(CharWeightSetter);
+    Waypoint::Init();
     REGISTER_OBJ_FACTORY(CharGuitarString);
     REGISTER_OBJ_FACTORY(FileMerger);
     REGISTER_OBJ_FACTORY(CharBoneDir);

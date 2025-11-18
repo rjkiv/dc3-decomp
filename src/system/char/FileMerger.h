@@ -15,8 +15,77 @@ class FileMerger : public Hmx::Object,
                    public MergeFilter,
                    public OriginalPathable {
 public:
-    struct Merger {
-        Merger(Hmx::Object *);
+    struct Merger { // taken from RB3 decomp
+    public:
+        struct SortBySelected {
+            bool operator()(const Merger &a, const Merger &b) {
+                return stricmp(a.mSelected.c_str(), b.mSelected.c_str()) < 0;
+            }
+        };
+
+        Merger(Hmx::Object *o)
+            : mProxy(0), mPreClear(0), mSubdirs(4), mDir(o), mLoadedObjects(o),
+              mLoadedSubdirs(o) {}
+        Merger(const Merger &m)
+            : mDir(m.mDir.Owner()), mLoadedObjects(m.mLoadedObjects.Owner()),
+              mLoadedSubdirs(m.mLoadedSubdirs.Owner()) {
+            mName = m.mName;
+            mSelected = m.mSelected;
+            loading = m.loading;
+            mLoaded = m.mLoaded;
+            mDir = m.mDir;
+            mProxy = m.mProxy;
+            mSubdirs = m.mSubdirs;
+            mLoadedObjects = m.mLoadedObjects;
+            mLoadedSubdirs = m.mLoadedSubdirs;
+            mPreClear = m.mPreClear;
+        }
+        ~Merger() {}
+        Merger &operator=(const Merger &m) {
+            mName = m.mName;
+            mSelected = m.mSelected;
+            loading = m.loading;
+            mLoaded = m.mLoaded;
+            mDir = m.mDir;
+            mProxy = m.mProxy;
+            mSubdirs = m.mSubdirs;
+            mLoadedObjects = m.mLoadedObjects;
+            mLoadedSubdirs = m.mLoadedSubdirs;
+            mPreClear = m.mPreClear;
+        }
+
+        void Clear(bool);
+
+        ObjectDir *MergerDir() {
+            if (mDir)
+                return mDir;
+            else
+                return mDir.Owner()->Dir();
+        }
+
+        // gross and convoluted way to basically check if this object is in mLoadedObjects
+        bool IsObjectLoaded(Hmx::Object *obj) {
+            return !mLoadedObjects.find(obj) == false;
+        }
+
+        void SetSelected(const FilePath &fp, bool b) {
+            mSelected = fp;
+            unk29 = b;
+        }
+
+        bool IsProxy() const { return mProxy; }
+
+        Symbol mName; // 0x0
+        FilePath mSelected; // 0x4
+        FilePath loading; // 0x10
+        FilePath mLoaded; // 0x1c
+        bool mProxy; // 0x28
+        bool unk29; // 0x29
+        bool mPreClear; // 0x2a
+        int mSubdirs; // 0x2c
+        ObjPtr<ObjectDir> mDir; // 0x30
+        ObjPtrList<Hmx::Object> mLoadedObjects; // 0x3c
+        ObjPtrList<ObjectDir> mLoadedSubdirs; // 0x4c
     };
     // Hmx::Object
     virtual ~FileMerger();
@@ -42,6 +111,8 @@ public:
 
     NEW_OBJ(FileMerger);
 
+    static FileMerger *sFmDeleting;
+
     bool StartLoad(bool);
     void Clear();
     void Select(Symbol, const FilePath &, bool);
@@ -50,6 +121,8 @@ public:
 
 protected:
     FileMerger();
+    void DeleteCurLoader();
+    bool StartLoadInternal(bool, bool);
 
     ObjVector<Merger> mMergers; // 0x40
     bool mAsyncLoad; // 0x50

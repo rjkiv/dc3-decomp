@@ -71,6 +71,7 @@ public:
     virtual void Teleport(Waypoint *);
     /** "Calculates a new bounding sphere" */
     virtual void CalcBoundingSphere();
+    virtual bool MakeWorldSphere(Sphere &, bool);
     virtual float ComputeScreenSize(RndCam *);
     virtual void DrawOpaque();
     virtual void DrawTranslucent();
@@ -93,12 +94,14 @@ public:
     void SetLodType(LODType lod) { mForceLod = lod; }
     void SetDebugDrawInterestObjects(bool);
     void ForceBlink();
+    void CopyBoundingSphere(Character *);
     CharServoBone *BoneServo();
     void SetTeleport(bool t) { unk298 = t; }
     CharDriver *Driver() const { return mDriver; }
 
     static void Init();
     static Character *Current() { return sCurrent; }
+    static void SetCurrent(Character *c) { sCurrent = c; }
 
 protected:
     virtual void AddedObject(Hmx::Object *);
@@ -149,4 +152,16 @@ protected:
     /** "Props to show and hide for cut scenes" */
     DrawPtrVec mShowableProps; // 0x2b8
     bool mDebugDrawInterestObjects; // 0x2d4
+};
+
+class CharacterTracker {
+public:
+    CharacterTracker(Character *c) : mSavedChar(Character::Current()) {
+        Character::SetCurrent(c);
+    }
+
+    ~CharacterTracker() { Character::SetCurrent(mSavedChar); }
+
+private:
+    Character *mSavedChar;
 };

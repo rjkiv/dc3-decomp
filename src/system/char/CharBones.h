@@ -58,6 +58,8 @@ public:
     void AddBones(const std::list<Bone> &);
     void ScaleAdd(CharBones &, float) const;
     void ScaleDown(CharBones &, float) const;
+    void RotateBy(CharBones &) const;
+    void RotateTo(CharBones &, float) const;
     void Enter() {
         Zero();
         SetWeights(0);

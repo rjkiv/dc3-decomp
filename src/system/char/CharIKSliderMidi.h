@@ -43,11 +43,11 @@ protected:
     Vector3 unk6c;
     Vector3 unk7c;
     Vector3 unk8c;
-    float unk9c;
-    int unka0;
-    float unka4;
-    float unka8;
-    bool unkac;
+    float mTargetPercentage; // 0x9c
+    float mOldPercentage; // 0xa0
+    float mFrac; // 0xa4
+    float mFracPerBeat; // 0xa8
+    bool mPercentageChanged; // 0xac
     bool mResetAll; // 0xad
     /** "Only move if percentage changes more than this (0.0 - 1.0)" */
     float mTolerance; // 0xb0

@@ -1,6 +1,8 @@
 #pragma once
 #include "char/CharBones.h"
+#include "obj/Object.h"
 #include "utl/BinStream.h"
+#include "utl/MemMgr.h"
 
 class CharBonesSamples : public CharBones {
 public:
@@ -12,6 +14,7 @@ public:
     int NumSamples() const { return mNumSamples; }
     int NumFrames() const { return mFrames.size(); }
     int AllocateSize();
+    void Load(BinStream &);
     void Save(BinStream &);
     void Clone(const CharBonesSamples &);
     void EvaluateChannel(void *, int, int, float);
@@ -20,8 +23,12 @@ public:
     int FracToSample(float *) const;
     void RotateBy(CharBones &, int);
     void RotateTo(CharBones &, float, int, float);
+    void LoadData(BinStream &);
+    void Set(const std::vector<CharBones::Bone> &, int, CharBones::CompressionType);
 
 protected:
+    void ReadCounts(BinStream &, int);
+
     /** "how many keyframes" */
     int mNumSamples; // 0x54
     /** "which sample to preview" */

@@ -69,3 +69,52 @@ void CharacterTest::TeleportTo(Waypoint *wp) {
     if (wp)
         mMe->Teleport(wp);
 }
+
+void CharacterTest::Walk() {
+    if (!mWalkPath.empty()) {
+        std::vector<Waypoint *> vec;
+        for (ObjPtrList<Waypoint>::iterator it = mWalkPath.begin(); it != mWalkPath.end();
+             ++it) {
+            vec.push_back(*it);
+        }
+    }
+}
+
+void CharacterTest::Recenter() {
+    Transform xfm;
+    xfm.Reset();
+    mMe->SetLocalXfm(xfm);
+    if (mMe->BoneServo()) {
+        mMe->BoneServo()->SetRegulateWaypoint(nullptr);
+    }
+}
+
+void CharacterTest::SetMoveSelf(bool b) {
+    if (mMe->BoneServo()) {
+        mMe->BoneServo()->SetMoveSelf(b);
+    }
+}
+
+DataNode CharacterTest::OnGetFilteredClips(DataArray *arr) {
+    int count = 0;
+    ObjectDir *clipDir = Clips();
+    if (clipDir) {
+        for (ObjDirItr<CharClip> it(clipDir, true); it != nullptr; ++it) {
+            count++;
+        }
+    }
+    DataArrayPtr ptr;
+    ptr->Resize(count + 1);
+    ptr->Node(0) = NULL_OBJ;
+    if (clipDir) {
+        int idx = 1;
+        for (ObjDirItr<CharClip> it(clipDir, true); it != nullptr; ++it) {
+            if (!mFilterGroup || mFilterGroup->FindClip(it->Name())) {
+                ptr->Node(idx++) = &*it;
+            }
+        }
+        ptr->Resize(idx);
+        ptr->SortNodes(0);
+    }
+    return ptr;
+}

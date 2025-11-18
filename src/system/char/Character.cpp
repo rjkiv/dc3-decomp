@@ -5,10 +5,13 @@
 #include "char/CharacterTest.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
+#include "os/Debug.h"
+#include "rndobj/Cam.h"
 #include "rndobj/Dir.h"
 #include "rndobj/Trans.h"
 #include "utl/BinStream.h"
 #include "utl/MemMgr.h"
+#include "utl/Symbol.h"
 
 Character *Character::sCurrent;
 
@@ -131,6 +134,23 @@ BEGIN_COPYS(Character)
     END_COPYING_MEMBERS
 END_COPYS
 
+void Character::Enter() {
+    CharacterTracker scope(this);
+    mFrozen = false;
+    unk288 = 2;
+    mForceLod = kLODPerFrame;
+    mLastLod = 0;
+    unk298 = true;
+    mInterestToForce = Symbol();
+    RndDir::Enter();
+}
+
+void Character::Exit() {
+    CharacterTracker scope(this);
+    unk288 = 4;
+    RndDir::Exit();
+}
+
 void Character::DrawOpaque() {
     for (std::vector<RndDrawable *>::iterator it = mDraws.begin(); it != mDraws.end();
          ++it) {
@@ -206,3 +226,49 @@ void Character::RemovingObject(Hmx::Object *o) {
 }
 
 void Character::SetDebugDrawInterestObjects(bool b) { mDebugDrawInterestObjects = b; }
+
+void Character::UpdateSphere() {
+    Sphere s78 = mBounding;
+    Transform tf38;
+    FastInvert(WorldXfm(), tf38);
+    Transform tf68;
+    Multiply(mSphereBase->WorldXfm(), tf38, tf68);
+    FastInvert(tf68, tf68);
+    Multiply(s78, tf68, s78);
+    SetSphere(s78);
+}
+
+bool Character::MakeWorldSphere(Sphere &s, bool b) {
+    if (mSphere.GetRadius()) {
+        Multiply(mSphere, mSphereBase->WorldXfm(), s);
+        return true;
+    } else
+        return false;
+}
+
+CharServoBone *Character::BoneServo() {
+    if (mDriver)
+        return dynamic_cast<CharServoBone *>(mDriver->GetBones());
+    else
+        return nullptr;
+}
+
+void Character::AddedObject(Hmx::Object *o) {
+    if (dynamic_cast<CharPollable *>(o)) {
+        CharDriver *driver = dynamic_cast<CharDriver *>(o);
+        if (driver) {
+            if (streq(driver->Name(), "main.drv")) {
+                mDriver = driver;
+            }
+        }
+    }
+}
+
+CharEyes *Character::GetEyes() { return Find<CharEyes>("CharEyes.eyes", false); }
+
+DataNode Character::OnCopyBoundingSphere(DataArray *da) {
+    Character *c = da->Obj<Character>(2);
+    if (c)
+        CopyBoundingSphere(c);
+    return DataNode(0);
+}

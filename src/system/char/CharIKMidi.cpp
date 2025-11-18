@@ -77,3 +77,22 @@ void DoDebugDraws(CharIKMidi *mid, float f) {
         }
     }
 }
+
+void CharIKMidi::NewSpot(RndTransformable *t, float f) {
+    float f18 = f;
+    if (mNewSpot != t) {
+        if (!mNewSpot && f18 <= 0)
+            mFracPerBeat = kHugeFloat;
+        else {
+            MaxEq(f18, 0.1f);
+            mFracPerBeat = 1.0f / f18;
+            if (f18 > 0.2) {
+                mAnimFracPerBeat = mMaxAnimBlend / f18;
+            }
+        }
+        mFrac = 0;
+        mAnimFrac = 0;
+        mSpotChanged = true;
+        mNewSpot = t;
+    }
+}
