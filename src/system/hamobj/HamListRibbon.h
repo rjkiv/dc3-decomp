@@ -75,6 +75,8 @@ public:
     void PlayHighlightSound(int);
     void PlaySelectSound(int);
     Sound *SlideSound() const { return mSlideSound; }
+    Sound *ScrollSound() const { return mScrollSound; }
+    RndAnimatable *ScrollSoundAnim() const { return mScrollSoundAnim; }
 
 private:
     void ResetAnims(bool);

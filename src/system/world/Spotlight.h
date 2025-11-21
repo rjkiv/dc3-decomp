@@ -101,6 +101,9 @@ public:
 
     Hmx::Color &Color() { return mColorOwner->mColor; }
     float Intensity() const { return mColorOwner->mIntensity; }
+    BeamDef GetBeam() const { return mBeam; }
+    RndFlare *GetFlare() const { return mFlare; }
+    ObjPtrList<RndDrawable> GetAdditionalObjects() const { return mAdditionalObjects; }
     void SetFlareIsBillboard(bool);
     void SetIntensity(float);
     void SetColorIntensity(const Hmx::Color &c, float f);

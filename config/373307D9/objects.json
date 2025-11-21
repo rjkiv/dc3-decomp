@@ -977,7 +977,7 @@
             "system/world/Reflection.cpp": "NonMatching",
             "system/world/Spotlight.cpp": "NonMatching",
             "system/world/SpotlightDrawer.cpp": "NonMatching",
-            "system/world/SpotlightDrawer_NG.cpp": "MISSING",
+            "system/world/SpotlightDrawer_NG.cpp": "NonMatching",
             "system/world/SpotlightEnder.cpp": "NonMatching",
             "system/world/ThreeDSoundManager.cpp": "NonMatching",
             "system/world/World.cpp": "NonMatching"

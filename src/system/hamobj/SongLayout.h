@@ -1,8 +1,10 @@
 #pragma once
 #include "MoveGraph.h"
+#include "hamobj/MoveGraph.h"
 #include "hamobj/SongUtl.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
+#include "stl/_vector.h"
 #include "utl/MemMgr.h"
 
 class SongPattern {
@@ -67,6 +69,7 @@ public:
 
     void SetDefaultPattern(int);
     void SetDefaultReplacer();
+    void ClearChosenPatterns();
     int NumReplacers() const { return mMoveReplacers.size(); }
 
     DataNode GetPatternName(int) const;

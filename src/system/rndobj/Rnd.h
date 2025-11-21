@@ -140,6 +140,9 @@ public:
     bool GetUnk1b4() { return unk1b4; } // When named, can replace
     Aspect GetAspect() const { return mAspect; }
     DrawMode GetDrawMode() { return mDrawMode; }
+    RndCam *GetDefaultCam() const { return mDefaultCam; }
+    ProcessCmd ProcCmds() const { return mProcCmds; }
+    bool DisablePP() const { return mDisablePostProc; }
     void ShowConsole(bool);
     bool ConsoleShowing();
     void EndWorld();

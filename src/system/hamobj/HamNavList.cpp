@@ -3,18 +3,26 @@
 #include "HamNavList.h"
 #include "HamScrollBehavior.h"
 #include "gesture/GestureMgr.h"
+#include "gesture/HandsUpGestureFilter.h"
 #include "gesture/SkeletonUpdate.h"
 #include "hamobj/HamNavProvider.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
+#include "obj/Task.h"
+#include "os/Debug.h"
 #include "os/JoypadMsgs.h"
 #include "os/System.h"
 #include "rndobj/Anim.h"
 #include "rndobj/Trans.h"
 #include "synth/Sound.h"
+#include "ui/UI.h"
 #include "ui/UIComponent.h"
+#include "ui/UIList.h"
+#include "ui/UIListProvider.h"
+#include "ui/UIListState.h"
 #include "utl/BinStream.h"
 #include "utl/Std.h"
+#include "utl/Symbol.h"
 
 HamNavList::HamNavList()
     : mNavInputType(kNavInput_RightHand), mListState(this, this),
@@ -240,4 +248,210 @@ void HamNavList::Init() {
 void HamNavList::PushBackBigElement(Symbol element) { mBigElements.push_back(element); }
 void HamNavList::EraseBigElement(int idx) {
     mBigElements.erase(mBigElements.begin() + idx);
+}
+
+bool HamNavList::SkipPoll() const {
+    float uiSeconds = (float)TheTaskMgr.UISeconds();
+    if (unk1ec < uiSeconds - 0.5f) {
+        return true;
+    } else {
+        return mNavInputType == kNavInput_RightHand && mOnlyUseWhenFocused
+            && TheUI->FocusComponent() != this;
+    }
+    return false;
+}
+
+void HamNavList::Refresh() { unk1f0 = true; }
+
+void HamNavList::SetHighButtonMode(bool b) {
+    if (unk184 == 0)
+        return;
+    unk1fe = b;
+}
+
+int HamNavList::NumData() const { return 18; }
+
+void HamNavList::SetSwelling() {
+    if (unk1f0)
+        RealRefresh();
+
+    if (mRibbonMode != HamListRibbon::kRibbonSelect) {
+        if (mRibbonMode == HamListRibbon::kRibbonDisengaged) {
+            SetHighlight(mListState.Selected());
+        }
+        SetRibbonMode(HamListRibbon::kRibbonSwell);
+        float uiSeconds = TheTaskMgr.DeltaUISeconds();
+        unk15c.Smooth(0.0f, uiSeconds);
+    }
+}
+
+bool HamNavList::CanHaveFocus() { return mNavInputType == kNavInput_RightHand; }
+
+bool HamNavList::ShouldSkipSelectAnim(DataNode &node) const {
+    UIListProvider *provider = mListState.Provider();
+    if (!provider || 1 < mListState.NumShowing()) {
+        if (node.Type() != kDataSymbol)
+            return false;
+
+        static Symbol skip_select_anim("skip_select_anim");
+        static Symbol skip_select_anim_and_sound("skip_select_anim_and_sound");
+        if (node.Sym(0) != skip_select_anim) {
+            if (node.Sym(0) != skip_select_anim_and_sound)
+                return false;
+        }
+    }
+    return true;
+}
+
+bool HamNavList::ShouldSkipSelectSound(DataNode &node) const {
+    if (node.Type() != kDataSymbol) {
+        return false;
+    } else {
+        static Symbol skip_select_sound("skip_select_sound");
+        static Symbol skip_select_anim_and_sound("skip_select_anim_and_sound");
+        if (node.Sym(0) != skip_select_sound) {
+            if (node.Sym(0) != skip_select_anim_and_sound)
+                return false;
+        }
+        return true;
+    }
+}
+
+void HamNavList::AddRibbonSinks(Hmx::Object *o, Symbol s) {
+    if (mListRibbonResource && o)
+        o->AddSink(mListRibbonResource, s);
+    if (mHeaderRibbonResource && o)
+        o->AddSink(mHeaderRibbonResource, s);
+}
+
+void HamNavList::RemoveRibbonSinks(Hmx::Object *o, Symbol s) {
+    if (mListRibbonResource && o)
+        o->RemoveSink(mListRibbonResource, s);
+    if (mHeaderRibbonResource && o)
+        o->RemoveSink(mHeaderRibbonResource, s);
+}
+
+void HamNavList::DoSelectFor(int i) {
+    if (unk1f0)
+        RealRefresh();
+    mListState.SetSelected(i, mListState.FirstShowing(), true);
+    sLastSelectInControllerMode = true;
+    SetSelecting(true);
+}
+
+void HamNavList::HandleHighlightChanged(int i) {
+    if (0 <= i && i < mListState.NumShowing()) {
+        SendHighlightMsg(i);
+        if (unk190.GetFirstVal() > 0.0f) {
+            SendHighlightSettledMsg(i);
+        }
+        if (TheGestureMgr->GetBool4271() && mListRibbonResource) {
+            mListRibbonResource->PlayHighlightSound(i);
+        }
+    }
+}
+
+void HamNavList::OldResourcePreload(BinStream &bs) {
+    char name[256];
+    bs.ReadString(name, 0x100);
+    mListRibbonResource.SetName(name, true);
+}
+
+void HamNavList::HideItem(int index, bool b) {
+    if (unk1f0)
+        RealRefresh();
+    MILO_ASSERT_RANGE(index, 0, mRibbonDrawStates.size(), 0x527);
+    mRibbonDrawStates[index].unk1c = b;
+    if (mNavProvider)
+        mNavProvider->SetEnabled(index, b == false);
+}
+
+bool HamNavList::IsDataHeader(int i) {
+    UIListProvider *provider = mListState.Provider();
+    if (provider) {
+        UIListProvider *p = mListState.Provider(); // idk why i had to say it twice
+        return p->IsHeader(i);
+    } else {
+        return false;
+    }
+}
+
+void HamNavList::ScrollSubList(int i, int j) {
+    if (unk1f0)
+        RealRefresh();
+
+    UIList *list = mListDirResource->SubList(i, unk64);
+    if (list)
+        list->Scroll(j);
+}
+
+void HamNavList::ScrollSubListToIndex(int i, int j) {
+    if (unk1f0)
+        RealRefresh();
+
+    UIList *list = mListDirResource->SubList(i, unk64);
+    if (list)
+        list->SetSelected(j, j);
+}
+
+int HamNavList::NumItems() const {
+    int i;
+    if (mListState.ScrollPastMinDisplay()) {
+        if (unk190.AtTop() || unk190.AtBottom()) {
+            i = HamListRibbon::sNumListSelectable + 1;
+        } else
+            i = HamListRibbon::sNumListSelectable + 2;
+    } else {
+        int count = GetDisabledCount(mListState.NumShowing());
+        i = mListState.NumShowing();
+        i -= count;
+    }
+    return i;
+}
+
+float HamNavList::StartFrame() {
+    if (mListRibbonResource) {
+        mListRibbonResource->StartFrame();
+    } else {
+        return 0.0f;
+    }
+}
+
+float HamNavList::EndFrame() {
+    if (mListRibbonResource) {
+        mListRibbonResource->EndFrame();
+    } else {
+        return 0.0f;
+    }
+}
+
+void HamNavList::SendHighlightSettledMsg(int i) {
+    UIListProvider *provider = mListState.Provider();
+    MILO_ASSERT(provider, 0x327);
+}
+
+void HamNavList::SetProvider(UIListProvider *p) {
+    UIListProvider *provider = mListState.Provider();
+    if (p == provider) {
+        RealRefresh();
+    } else {
+        if (mListState.ScrollPastMinDisplay()) {
+            unk190.Exit();
+        }
+        mListState.SetProvider(p, mListDirResource);
+        RealRefresh();
+        mListState.SetSelected(0, -1, true);
+        if (mListState.ScrollPastMinDisplay())
+            unk190.Enter();
+    }
+}
+
+void HamNavList::SetProviderNavItemLabels(int i, DataArray *d) {
+    mNavProvider->SetLabels(i, d);
+}
+
+void HamNavList::StartScroll(UIListState const &state, int i, bool b) {
+    if (mListDirResource) {
+        mListDirResource->StartScroll(state, unk64, i, b);
+    }
 }

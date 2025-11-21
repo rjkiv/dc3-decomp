@@ -71,6 +71,14 @@ BEGIN_SAVES(HamWardrobe)
     bs << unk34;
 END_SAVES
 
+BEGIN_LOADS(HamWardrobe)
+    LOAD_REVS(bs)
+    ASSERT_REVS(2, 0)
+    LOAD_SUPERCLASS(Hmx::Object)
+    if (d.rev > 1)
+        bs >> unk34;
+END_LOADS
+
 BEGIN_COPYS(HamWardrobe)
     COPY_SUPERCLASS(Hmx::Object)
     CREATE_COPY(HamWardrobe)

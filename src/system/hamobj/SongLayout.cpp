@@ -1,6 +1,8 @@
 #include "hamobj/SongLayout.h"
 #include "hamobj/MoveMgr.h"
 #include "obj/Object.h"
+#include "utl/Std.h"
+#include <cstring>
 
 SongLayout::SongLayout() {
     if (TheMoveMgr) {

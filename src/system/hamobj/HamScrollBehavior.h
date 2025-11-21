@@ -7,13 +7,18 @@ class HamNavList;
 class HamScrollBehavior {
 public:
     HamScrollBehavior(HamNavList *, UIListState *);
+    bool ScrollUp(bool);
     bool ScrollDown(bool);
+    bool IsScrolling() const;
     bool AtTop() const;
     bool AtBottom() const;
     void Enter();
     void Reset();
     void Exit();
     void Update(float);
+    void PlayScrollSound();
+
+    float GetFirstVal() { return unk0; } // change once context found
 
     static void Init();
     static float mNeutralToSlowDownDelay;

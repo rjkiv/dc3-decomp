@@ -2,6 +2,7 @@
 #include "obj/Object.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Env.h"
+#include "rndobj/Mesh.h"
 #include "rndobj/PostProc.h"
 #include "utl/BinStream.h"
 #include "utl/MemMgr.h"
@@ -33,9 +34,22 @@ private:
 /** "A SpotlightDrawer draws spotlights." */
 class SpotlightDrawer : public RndDrawable, public PostProcessor {
 public:
-    class SpotMeshEntry {};
+    class SpotMeshEntry { // from RB3 decomp
+    public:
+        SpotMeshEntry() : unk0(0), unk4(0), unk8(0) {}
+        RndMesh *unk0;
+        RndMesh *unk4;
+        Spotlight *unk8;
+        int unkc;
+        Transform unk10;
+    };
 
-    class SpotlightEntry {};
+    class SpotlightEntry { // from RB3 decomp
+    public:
+        SpotlightEntry() : unk0(0), unk4(0) {}
+        unsigned int unk0; // 0x0 - id?
+        Spotlight *unk4; // 0x4 - the spotlight
+    };
 
     // Hmx::Object
     virtual ~SpotlightDrawer();
@@ -53,6 +67,23 @@ public:
     virtual void EndWorld();
     virtual float Priority();
     virtual const char *GetProcType() { return "SpotlightDrawer"; }
+
+    OBJ_MEM_OVERLOAD(0x34)
+    NEW_OBJ(SpotlightDrawer)
+
+    static RndEnviron *sEnviron;
+
+    static void Init();
+
+    void Select();
+    void DeSelect();
+    void ClearLights();
+    void UpdateBoxMap();
+    void ApplyLightingApprox(BoxMapLighting &, float) const;
+
+    static SpotlightDrawer *Current() { return sCurrent; }
+
+protected:
     // SpotlightDrawer
     virtual void SetAmbientColor(const Hmx::Color &);
     virtual void SortLights();
@@ -66,20 +97,6 @@ public:
     virtual void ClearPostDraw();
     virtual void ClearPostProc() {}
 
-    OBJ_MEM_OVERLOAD(0x34)
-    NEW_OBJ(SpotlightDrawer)
-
-    static RndEnviron *sEnviron;
-
-    static void Init();
-
-    void Select();
-    void DeSelect();
-    void ClearLights();
-
-    static SpotlightDrawer *Current() { return sCurrent; }
-
-protected:
     SpotlightDrawer();
 
     static SpotlightDrawer *sCurrent;
@@ -88,6 +105,34 @@ protected:
     static std::vector<SpotlightEntry> sLights;
     static std::vector<SpotMeshEntry> sCans;
     static std::vector<Spotlight *> sShadowSpots;
+    static int sNeedBoxMap;
+    static bool sHaveAdditionals;
+    static bool sHaveLenses;
+    static bool sHaveFlares;
 
     SpotDrawParams mParams; // 0x44
+};
+
+class ByColor {
+public:
+    bool operator()(
+        const SpotlightDrawer::SpotlightEntry &e1,
+        const SpotlightDrawer::SpotlightEntry &e2
+    ) const {
+        return e1.unk0 < e2.unk0;
+    }
+};
+
+class ByEnvMesh {
+public:
+    bool operator()(
+        const SpotlightDrawer::SpotMeshEntry &e1, const SpotlightDrawer::SpotMeshEntry &e2
+    ) const {
+        if (e1.unk4 < e2.unk4)
+            return true;
+        else if (e1.unk4 > e2.unk4)
+            return false;
+        else
+            return e1.unk0 < e2.unk0;
+    }
 };

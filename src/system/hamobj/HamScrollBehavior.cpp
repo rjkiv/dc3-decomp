@@ -1,8 +1,11 @@
 #include "hamobj/HamScrollBehavior.h"
 #include "HamListRibbon.h"
+#include "HamNavProvider.h"
 #include "hamobj/HamNavList.h"
 #include "obj/Data.h"
 #include "os/System.h"
+#include "rndobj/Anim.h"
+#include "ui/UIListProvider.h"
 #include "ui/UIListState.h"
 
 float HamScrollBehavior::sScrollSettleTime = 0.1;
@@ -53,11 +56,25 @@ void HamScrollBehavior::Init() {
     }
 }
 
+bool HamScrollBehavior::ScrollUp(bool b) {
+    if (unk18 > 0.0f && !b)
+        return false;
+    int i = unk4c->FirstShowing() - unk8;
+    if (i >= 0) {
+        unk4c->Scroll(-1, false);
+        unk4c->Poll(0.0f);
+        unk50->HandleHighlightChanged(i);
+        unk24 = 1;
+        unk0 = sScrollSettleTime;
+        return true;
+    }
+}
+
 bool HamScrollBehavior::ScrollDown(bool b1) {
     if (unk18 > 0 && !b1)
         return false;
     else {
-        int i2 = unk4c->FirstShowing() + unk8 + 3;
+        int i2 = unk4c->FirstShowing() + unk8 + HamListRibbon::sNumListSelectable - 1;
         if (i2 - unk8 < unk4c->NumShowing()) {
             unk50->HandleHighlightChanged(i2);
             unk24 = 2;
@@ -67,7 +84,13 @@ bool HamScrollBehavior::ScrollDown(bool b1) {
     }
 }
 
+bool HamScrollBehavior::IsScrolling() const {
+    return unk24 != 0 || (unk30 == 1 && unk4c->FirstShowing() != 0)
+        || (unk30 == 2 && !AtBottom());
+}
+
 bool HamScrollBehavior::AtTop() const { return unk4c->FirstShowing() == 0; }
+
 bool HamScrollBehavior::AtBottom() const {
     return unk4c->FirstShowing()
         == unk4c->NumShowing() - HamListRibbon::sNumListSelectable;
@@ -81,4 +104,31 @@ void HamScrollBehavior::Enter() {
 void HamScrollBehavior::Exit() {
     Reset();
     unk50->StopScrollSound();
+}
+
+void HamNavList::PlayScrollSound() {
+    if (mListRibbonResource) {
+        Sound *scrollSound = mListRibbonResource->ScrollSound();
+        if ((int)scrollSound) {
+            scrollSound->Play(0, 0, 0, 0, 0);
+        }
+    }
+}
+
+void HamNavList::StopScrollSound() {
+    if (mListRibbonResource) {
+        Sound *scrollSound = mListRibbonResource->ScrollSound();
+        if ((int)scrollSound) {
+            scrollSound->Stop(0, false);
+        }
+    }
+}
+
+void HamNavList::SetScrollSoundFrame(float f) {
+    if (mListRibbonResource) {
+        RndAnimatable *scrollSoundAnim = mListRibbonResource->ScrollSoundAnim();
+        if ((int)scrollSoundAnim) {
+            scrollSoundAnim->SetFrame(f, 1.0f);
+        }
+    }
 }

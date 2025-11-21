@@ -29,6 +29,16 @@ BEGIN_SAVES(HamRegulate)
     bs << mRightFoot;
 END_SAVES
 
+BEGIN_LOADS(HamRegulate)
+    LOAD_REVS(bs)
+    ASSERT_REVS(2, 0)
+    LOAD_SUPERCLASS(Hmx::Object)
+    if (d.rev > 1) {
+        bs >> mLeftFoot;
+        bs >> mRightFoot;
+    }
+END_LOADS
+
 BEGIN_COPYS(HamRegulate)
     COPY_SUPERCLASS(Hmx::Object)
     CREATE_COPY(HamRegulate)

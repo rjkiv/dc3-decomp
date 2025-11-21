@@ -47,7 +47,6 @@ public:
     virtual void Enter();
     virtual void Exit();
     virtual bool CanHaveFocus();
-    virtual void OldResourcePreload(BinStream &);
     // RndAnimatable
     virtual float StartFrame();
     virtual float EndFrame();
@@ -79,14 +78,31 @@ public:
     void SetProvider(UIListProvider *);
     void PushBackBigElement(Symbol);
     void EraseBigElement(int);
+    void SetHighButtonMode(bool);
+    void AddRibbonSinks(Hmx::Object *, Symbol);
+    void RemoveRibbonSinks(Hmx::Object *, Symbol);
+    void DoSelectFor(int);
+    void SendHighlightMsg(int);
+    void SendHighlightSettledMsg(int);
+    void ClearBigElements();
+    void HideItem(int, bool);
+    void SetProviderNavItemLabels(int, DataArray *);
 
     static void Init();
+    static bool sLastSelectInControllerMode;
 
 private:
     void SetRibbonMode(HamListRibbon::RibbonMode);
     void SetHighlight(int);
     void SetSliding(float);
     void SetSelecting(bool);
+    bool SkipPoll() const;
+    void RealRefresh();
+    void SetSwelling();
+    bool ShouldSkipSelectAnim(DataNode &) const;
+    bool ShouldSkipSelectSound(DataNode &) const;
+    int NumItems() const;
+    int GetDisabledCount(int) const;
 
     static float sSlideSmoothAmount;
     static float sSlideTrendAmount;
@@ -94,16 +110,17 @@ private:
     DataNode OnMsg(const ButtonDownMsg &);
 
 protected:
+    virtual void OldResourcePreload(BinStream &);
+
     HamNavList();
 
     void Update();
-    void SetSwelling();
     void SetControllerFocus(int);
 
     NavInputType mNavInputType; // 0x60
     std::vector<UIListWidget *> unk64; // 0x64
     UIListState mListState; // 0x70
-    std::vector<HamListRibbonDrawState> unkb8; // 0xb8
+    std::vector<HamListRibbonDrawState> mRibbonDrawStates; // 0xb8
     /** "Mode for animations" */
     HamListRibbon::RibbonMode mRibbonMode; // 0xc4
     bool unkc8; // 0xc8
