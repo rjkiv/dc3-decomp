@@ -15,6 +15,8 @@
 #include "utl/BinStream.h"
 #include "utl/Loader.h"
 #include "utl/Str.h"
+#include "utl/TimeConversion.h"
+#include <cmath>
 
 float HamMove::sMinFrameDistBeats = 0.2;
 
@@ -384,4 +386,40 @@ void HamMove::SetName(Symbol language, const char *name) {
     } else {
         MILO_NOTIFY("Could not find string for language %s", language);
     }
+}
+
+float HamMove::StartFrame() {
+    if (mMirror) {
+        return mMirror->StartFrame();
+    }
+    return RndPropAnim::StartFrame();
+}
+
+float HamMove::EndFrame() {
+    if (mMirror) {
+        return mMirror->EndFrame();
+    }
+    return RndPropAnim::EndFrame();
+}
+
+float HamMove::PSNRThreshold(MoveRating r) const {
+    MILO_ASSERT_RANGE(r, 0, kNumMoveRatings, 0x28f);
+    return 0;
+}
+
+float HamMove::Confusability(HamMove const *move) const {
+    if (move == this)
+        return 4.0f;
+    else if (!move)
+        return 0;
+    else {
+        float moveConfusability = move->FindConfusabilty(this);
+        float thisConfusability = FindConfusabilty(move);
+        return thisConfusability - moveConfusability < 0.0f ? moveConfusability : 0;
+    }
+}
+
+float MoveFrame::QuantizedSeconds(float f) const {
+    float seconds = floor(BeatToSeconds(mBeat + f) * 30.0f + 0.5f);
+    return seconds * 0.033333335f;
 }

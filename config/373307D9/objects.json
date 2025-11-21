@@ -323,7 +323,7 @@
             "system/hamobj/FilterVersion.cpp": "NonMatching",
             "system/hamobj/FreestyleMove.cpp": "MISSING",
             "system/hamobj/FreestyleMoveRecorder.cpp": "MISSING",
-            "system/hamobj/Ham.cpp": "MISSING",
+            "system/hamobj/Ham.cpp": "NonMatching",
             "system/hamobj/HamAudio.cpp": "NonMatching",
             "system/hamobj/HamBattleData.cpp": "NonMatching",
             "system/hamobj/HamCamShot.cpp": "NonMatching",

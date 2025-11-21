@@ -672,8 +672,7 @@ RndPropAnim *HamDirector::SongAnimByDifficulty(Difficulty diff) {
 }
 
 RndPropAnim *HamDirector::DancerFaceAnimByPlayer(int player) {
-    return mDancerFaceAnims[LegacyDifficulty(TheGameData->Player(player)->GetDifficulty()
-    )];
+    return mDancerFaceAnims[LegacyDifficulty(TheGameData->Player(player)->GetDifficulty())];
 }
 
 void HamDirector::AddNumPlayers(

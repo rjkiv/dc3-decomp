@@ -64,6 +64,7 @@ public:
     void SetPlayerSkeletonID(int, int);
     int GetPlayerFilteredSkeletonID(int, bool);
     bool GetBool4271() { return unk4271; } // change once context found
+    int GetVal425C() { return unk425c; } // change once context found
 
     void ShowGestureGuide() {
         int id = 0;

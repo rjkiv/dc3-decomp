@@ -4,6 +4,7 @@
 #include "obj/Object.h"
 #include "rndobj/Anim.h"
 #include "rndobj/Dir.h"
+#include "utl/BinStream.h"
 
 HamScrollSpeedIndicator::HamScrollSpeedIndicator()
     : unk1fc(0), mEnterAnim(this), mExitAnim(this), mIndicatorAnim(this) {}
@@ -80,5 +81,26 @@ void HamScrollSpeedIndicator::Draw(const Transform &xfm) {
     for (std::vector<RndDrawable *>::iterator it = mDraws.begin(); it != mDraws.end();
          ++it) {
         (*it)->Draw();
+    }
+}
+
+void HamScrollSpeedIndicator::PreLoad(BinStream &bs) {
+    LOAD_REVS(bs);
+    ASSERT_REVS(2, 0)
+    RndDir::PreLoad(bs);
+    bs.PushRev(packRevs(d.altRev, d.rev), this);
+}
+
+void HamScrollSpeedIndicator::PostLoad(BinStream &bs) {
+    BinStreamRev d(bs, bs.PopRev(this));
+    RndDir::PostLoad(bs);
+    if ((d.rev & 0xffff) >= 1) {
+        bs >> mEnterAnim;
+        bs >> mExitAnim;
+        bs >> mIndicatorAnim;
+    }
+    if (2 <= (d.rev & 0xffff)) {
+        bs >> mSlowScrollThresholdFrame;
+        bs >> mFastScrollThresholdFrame;
     }
 }

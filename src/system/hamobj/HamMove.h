@@ -35,6 +35,7 @@ public:
     const Vector3 &NodeWeight(int, MoveMirrored) const;
     const Vector3 &NodeInverseScale(int, MoveMirrored) const;
     void SetNodeScale(int, MoveMirrored, const Vector3 &);
+    float QuantizedSeconds(float) const;
 
 private:
     float mBeat; // 0x0
@@ -97,6 +98,7 @@ public:
     void Update(const HamMove *);
     const FilterVersion *FilterVer() const;
     const std::vector<float> *RatingOverride() const;
+    float PSNRThreshold(MoveRating) const;
 
     bool Scored() const { return mScored; }
     DancerSequence *GetDancerSequence() const { return mDancerSeq; }

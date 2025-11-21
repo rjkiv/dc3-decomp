@@ -1,6 +1,7 @@
 #include "hamobj/HamList.h"
 #include "obj/Object.h"
 #include "ui/UIList.h"
+#include "utl/BinStream.h"
 
 HamList::HamList() {}
 
@@ -28,3 +29,14 @@ BEGIN_LOADS(HamList)
 END_LOADS
 
 void HamList::Init() { REGISTER_OBJ_FACTORY(HamList); }
+
+void HamList::PreLoad(BinStream &bs) {
+    LOAD_REVS(bs)
+    ASSERT_REVS(19, 0)
+    if (d.rev <= 0x11) {
+        UIList::PreLoadWithRev(d);
+    } else {
+        UIList::PreLoad(d.stream);
+    }
+    d.stream.PushRev(packRevs(d.altRev, d.rev), this);
+}

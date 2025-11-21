@@ -103,6 +103,7 @@ private:
     bool ShouldSkipSelectSound(DataNode &) const;
     int NumItems() const;
     int GetDisabledCount(int) const;
+    int GetHighlightItem(void) const;
 
     static float sSlideSmoothAmount;
     static float sSlideTrendAmount;

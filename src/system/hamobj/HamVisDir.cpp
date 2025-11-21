@@ -5,6 +5,8 @@
 #include "gesture/SkeletonUpdate.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "ui/PanelDir.h"
+#include "utl/BinStream.h"
 
 PoseOwner::PoseOwner() : pose(0), holder(0), in_pose(0) {}
 
@@ -143,3 +145,14 @@ BEGIN_COPYS(HamVisDir)
 END_COPYS
 
 void HamVisDir::Run(bool run) { mRunning = run; }
+
+void HamVisDir::PreLoad(BinStream &bs) {
+    LOAD_REVS(bs);
+    ASSERT_REVS(13, 0);
+    if (d.rev < 1) {
+        PanelDir::PreLoad(bs);
+    } else {
+        SkeletonDir::PreLoad(bs);
+    }
+    bs.PushRev(packRevs(d.altRev, d.rev), this);
+}

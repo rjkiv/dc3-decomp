@@ -60,3 +60,15 @@ BEGIN_COPYS(HamIconMan)
         COPY_MEMBER(mMoveName)
     END_COPYING_MEMBERS
 END_COPYS
+
+BEGIN_LOADS(HamIconMan)
+    LOAD_REVS(bs)
+    ASSERT_REVS(1, 0)
+    LOAD_SUPERCLASS(Hmx::Object)
+    LOAD_SUPERCLASS(RndAnimatable)
+    LOAD_SUPERCLASS(RndDrawable)
+    bs >> mTexture;
+    bs >> mStartBeat >> mEndBeat >> mOffset;
+    if (d.rev > 0) {
+    }
+END_LOADS

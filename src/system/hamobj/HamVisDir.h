@@ -5,6 +5,7 @@
 #include "math/Mtx.h"
 #include "obj/Object.h"
 #include "rndobj/Anim.h"
+#include "utl/BinStream.h"
 #include "utl/MemMgr.h"
 
 struct PoseOwner {
@@ -29,6 +30,8 @@ public:
     virtual void Save(BinStream &);
     virtual void Copy(const Hmx::Object *, Hmx::Object::CopyType);
     virtual void Load(BinStream &);
+    virtual void PreLoad(BinStream &);
+    virtual void PostLoad(BinStream &);
     // RndPollable
     virtual void Enter();
     // SkeletonCallback

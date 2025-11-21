@@ -1,5 +1,6 @@
 #pragma once
 #include "hamobj/DancerSkeleton.h"
+#include "obj/Object.h"
 #include "rndobj/Anim.h"
 
 // size 0x2dc
@@ -24,6 +25,8 @@ public:
     virtual void SetFrame(float frame, float blend);
     virtual float StartFrame() { return 0; }
     virtual float EndFrame();
+
+    NEW_OBJ(DancerSequence);
 
     const std::vector<DancerFrame> &GetDancerFrames() const;
 

@@ -1,6 +1,7 @@
 #include "hamobj/DancerSequence.h"
 #include "DancerSkeleton.h"
 #include "gesture/BaseSkeleton.h"
+#include "hamobj/MoveDir.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "rndobj/Anim.h"
@@ -49,3 +50,10 @@ const std::vector<DancerFrame> &DancerSequence::GetDancerFrames() const {
 }
 
 float DancerSequence::EndFrame() { return mDancerFrames.size() - 1.0f; }
+
+void DancerSequence::SetFrame(float frame, float blend) {
+    RndAnimatable::SetFrame(frame, blend);
+    MoveDir *m = dynamic_cast<MoveDir *>(this->Dir());
+    if (m)
+        m->SetDancerSequence(this);
+}

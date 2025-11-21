@@ -367,9 +367,8 @@ void HamNavList::HideItem(int index, bool b) {
 }
 
 bool HamNavList::IsDataHeader(int i) {
-    UIListProvider *provider = mListState.Provider();
-    if (provider) {
-        UIListProvider *p = mListState.Provider(); // idk why i had to say it twice
+    if (mListState.Provider()) {
+        UIListProvider *p = mListState.Provider();
         return p->IsHeader(i);
     } else {
         return false;
@@ -454,4 +453,42 @@ void HamNavList::StartScroll(UIListState const &state, int i, bool b) {
     if (mListDirResource) {
         mListDirResource->StartScroll(state, unk64, i, b);
     }
+}
+
+Symbol HamNavList::GetSelectedSym() const {
+    UIListProvider *provider = mListState.Provider();
+    if (provider) {
+        Symbol s = provider->DataSymbol(mListState.SelectedData());
+        if (s == gNullStr) {
+            MILO_FAIL("DataSymbol() not implemented in UIList provider");
+        }
+        return s;
+    } else {
+        return gNullStr;
+    }
+}
+
+void HamNavList::SendHighlightMsg(int i) {
+    if (unk1f0)
+        RealRefresh();
+    UIListProvider *provider = mListState.Provider();
+    MILO_ASSERT(provider, 0x339);
+    bool canSel = provider->CanSelect(i);
+    Symbol dataSym = provider->DataSymbol(i);
+    // continue once NavHighlightMsg is created
+}
+
+int HamNavList::GetHighlightItem() const {
+    if (mListRibbonResource) {
+        int numShowing = mListState.NumShowing();
+        if (mListRibbonResource->IsScrollable(numShowing)) {
+            int selDisplay = mListState.SelectedDisplay();
+            int minDisplay = mListState.MinDisplay();
+            return selDisplay - minDisplay;
+        } else {
+            return mListState.SelectedDisplay()
+                - GetDisabledCount(mListState.SelectedDisplay());
+        }
+    } else
+        return 0;
 }

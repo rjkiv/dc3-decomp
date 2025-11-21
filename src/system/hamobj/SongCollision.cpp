@@ -4,6 +4,7 @@
 #include "obj/Data.h"
 #include "obj/DataUtl.h"
 #include "obj/Object.h"
+#include "utl/Std.h"
 
 std::vector<const char *> sCollisionUsefulBoneNames;
 

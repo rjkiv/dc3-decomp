@@ -23,6 +23,7 @@
 #include "rndobj/Draw.h"
 #include "rndobj/TexBlender.h"
 #include "synth/Synth.h"
+#include "utl/BinStream.h"
 #include "utl/FilePath.h"
 #include "utl/Loader.h"
 #include "utl/Symbol.h"
@@ -396,4 +397,11 @@ void HamCharacter::SetCampaignVo(const char *cc) {
             }
         }
     }
+}
+
+void HamCharacter::PreLoad(BinStream &bs) {
+    LOAD_REVS(bs)
+    ASSERT_REVS(0, 0)
+    Character::PreLoad(bs);
+    bs.PushRev(packRevs(d.altRev, d.rev), this);
 }

@@ -74,9 +74,12 @@ public:
     void OnSelectDone();
     void PlayHighlightSound(int);
     void PlaySelectSound(int);
+    bool IsScrollable(int) const;
     Sound *SlideSound() const { return mSlideSound; }
     Sound *ScrollSound() const { return mScrollSound; }
     RndAnimatable *ScrollSoundAnim() const { return mScrollSoundAnim; }
+    RndAnimatable *EnterAnim() const { return mEnterAnim; }
+    void SetTestEntering(bool b) { mTestEntering = b; }
 
 private:
     void ResetAnims(bool);
