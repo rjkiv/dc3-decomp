@@ -31,6 +31,7 @@ protected:
 
     void DoHide();
     void UnHide();
+    void DoLOD(int);
 
     /** "things to draw in the reflection, in this order" */
     ObjPtrList<RndDrawable> mDraws; // 0x100

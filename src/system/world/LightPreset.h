@@ -2,6 +2,7 @@
 #include "SpotlightDrawer.h"
 #include "math/Color.h"
 #include "math/Mtx.h"
+#include "math/Vec.h"
 #include "obj/Object.h"
 #include "os/Platform.h"
 #include "rndobj/Anim.h"
@@ -147,11 +148,27 @@ public:
     NEW_OBJ(LightPreset)
     void SetHue(LightHue *hue) { mHue = hue; }
 
+    int GetCurrentKeyframe(void) const;
+    bool PlatformOk(void) const;
+
 protected:
     LightPreset();
 
     void Clear();
     void CacheFrames();
+    void GetKey(float, int &, int &, float &) const;
+    void RemoveLight(int);
+    void RemoveSpotlight(int);
+    void RemoveSpotlightDrawer(int);
+    void RemoveEnvironment(int);
+    void AddLight(RndLight *);
+    void AddSpotlightDrawer(SpotlightDrawer *);
+    void AddEnvironment(RndEnviron *);
+    void AdvanceManual(LightPreset::KeyframeCmd);
+    int NextManualFrame(LightPreset::KeyframeCmd) const;
+    void FillLightPresetData(RndLight *, LightPreset::EnvLightEntry &);
+    void AnimateLightFromPreset(RndLight *, const LightPreset::EnvLightEntry &, float);
+    void ApplyState(LightPreset::Keyframe const &);
 
     static std::deque<std::pair<KeyframeCmd, float> > sManualEvents;
 
@@ -170,17 +187,17 @@ protected:
     ObjPtrList<EventTrigger> mSelectTriggers; // 0x9c
     /** "Whether this is a manual keyframe (keyframes controlled by MIDI)" */
     bool mManual; // 0xb0
-    ObjVector<SpotlightEntry> unkb4; // 0xb4
+    ObjVector<SpotlightEntry> mSpotlightState; // 0xb4
     std::vector<EnvironmentEntry> mEnvironmentState; // 0xc4
     std::vector<EnvLightEntry> mLightState; // 0xd0
     std::vector<SpotlightDrawerEntry> mSpotlightDrawerState; // 0xdc
-    int unke8;
-    float unkec;
-    float unkf0;
-    float unkf4;
-    int unkf8;
-    int unkfc;
-    float unk100;
+    Keyframe *mLastKeyframe; // 0xe8
+    float mLastBlend; // 0xec
+    float mStartBeat; // 0xf0
+    float mManualFrameStart; // 0xf4
+    int mManualFrame; // 0xf8
+    int mLastManualFrame; // 0xfc
+    float mManualFadeTime; // 0x100
     float unk104;
     /** "Whether the keyframes are locked (no editing allowed)" */
     bool mLocked; // 0x108

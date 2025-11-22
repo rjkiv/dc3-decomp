@@ -1,4 +1,5 @@
 #include "world/SpotlightEnder.h"
+#include "SpotlightDrawer.h"
 #include "SpotlightEnder.h"
 #include "obj/Object.h"
 #include "rndobj/Draw.h"
@@ -32,3 +33,5 @@ BEGIN_LOADS(SpotlightEnder)
     LOAD_SUPERCLASS(Hmx::Object)
     LOAD_SUPERCLASS(RndDrawable)
 END_LOADS
+
+void SpotlightEnder::DrawShowing() { SpotlightDrawer::Current()->UpdateBoxMap(); }

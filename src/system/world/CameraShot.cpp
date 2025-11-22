@@ -11,6 +11,7 @@
 #include "rndobj/Cam.h"
 #include "rndobj/Trans.h"
 #include "utl/BinStream.h"
+#include "utl/Loader.h"
 #include "utl/Str.h"
 #include "utl/Symbol.h"
 #include "world/FreeCamera.h"
@@ -26,7 +27,7 @@ inline float ScaleToFOV(float scale) {
 
 CamShotFrame::CamShotFrame(Hmx::Object *owner)
     : mDuration(0), mBlend(0), mBlendEase(0), mBlendEaseMode(kBlendEaseInAndOut),
-      unk10(-1), mFOV(1.2217305f), mZoomFOV(0), mShakeNoiseFreq(0), mShakeNoiseAmp(0),
+      mFrame(-1), mFOV(1.2217305f), mZoomFOV(0), mShakeNoiseFreq(0), mShakeNoiseAmp(0),
       mShakeMaxAngle(0, 0), mBlurDepth(0.35), mMaxBlur(1), mMinBlur(0),
       mFocusBlurMultiplier(0), mTargets(owner), mParent(owner), mFocalTarget(owner),
       mUseParentRotation(false), mParentFirstFrame(false),
@@ -180,6 +181,14 @@ float LensSym_to_FOV(Symbol sym) {
         return ScaleToFOV(scale);
     } else
         return -1;
+}
+
+bool CamShotFrame::HasTargets() const {
+    FOREACH (it, mTargets) {
+        if (*it)
+            return true;
+    }
+    return false;
 }
 
 BEGIN_CUSTOM_PROPSYNC(CamShotFrame)
@@ -401,4 +410,106 @@ END_SAVES
 void CamShot::Init() {
     REGISTER_OBJ_FACTORY(CamShot)
     sAnimTarget = Hmx::Object::New<Hmx::Object>();
+}
+
+void CamShot::Disable(bool disable, int mask) {
+    if (disable)
+        mDisabled |= mask;
+    else
+        mDisabled &= ~mask;
+}
+
+bool CamShot::CheckShotStarted() { return unk280; }
+
+bool CamShot::CheckShotOver(float f) { return !unk281 && !mLooping && f >= mDuration; }
+
+bool CamShot::PlatformOk() const {
+    if (TheLoadMgr.EditMode() || mPlatform == kPlatformNone
+        || TheLoadMgr.GetPlatform() == kPlatformNone)
+        return true;
+    Platform plat = TheLoadMgr.GetPlatform();
+    if (TheLoadMgr.GetPlatform() == kPlatformPC)
+        plat = kPlatformXBox;
+    return plat == mPlatform;
+}
+
+float CamShot::GetDurationSeconds() const {
+    if (Units() == kTaskBeats) {
+        return 0.0f;
+    } else {
+        MILO_ASSERT(Units() == kTaskSeconds, 0x5cc);
+        return mDuration / 30.0f;
+    }
+}
+
+void CamShot::CacheFrames() {
+    float frames = 0.0f;
+    for (int i = 0; i != mKeyframes.size(); i++) {
+        CamShotFrame &curframe = mKeyframes[i];
+        curframe.SetFrame(frames);
+        frames += curframe.GetDuration() + curframe.GetBlend();
+    }
+    mDuration = frames;
+}
+
+DataNode CamShot::OnHasTargets(DataArray *da) {
+    return mKeyframes[da->Int(2)].HasTargets();
+}
+
+DataNode CamShot::OnRadio(DataArray *da) {
+    int i2 = da->Int(2);
+    int i3 = da->Int(3);
+    if (mFlags & i2) {
+        mFlags &= ~i3;
+        mFlags |= i2;
+    }
+    return 0;
+}
+
+bool CamShot::ShotOk(CamShot *shot) {
+    static Message msg("shot_ok", 0);
+    msg[0] = shot;
+    DataNode handled = HandleType(msg);
+    if (handled.Type() != kDataUnhandled) {
+        if (handled.Type() == kDataString) {
+            if (DataVariable("camera_spew") != 0)
+
+                MILO_LOG("Shot %s rejected: %s.\n", Name(), handled.Str());
+            return false;
+        } else if (handled.Int() == 0) {
+            if (DataVariable("camera_spew") != 0)
+
+                MILO_LOG("Shot %s rejected: not ok.\n", Name());
+            return false;
+        } else {
+            return true;
+        }
+    } else
+        return true;
+}
+
+DataNode CamShot::OnSetPos(DataArray *da) {
+    int idx = da->Int(2);
+    return SetPos(mKeyframes[idx], RndCam::Current());
+}
+
+DataNode CamShot::OnClearCrowdChars(DataArray *da) {
+    int idx = da->Int(2);
+    MILO_ASSERT(idx < mCrowds.size(), 0xb03);
+    mCrowds[idx].ClearCrowdChars();
+    return 0;
+}
+
+DataNode CamShot::OnAddCrowdChars(DataArray *da) {
+    int idx = da->Int(2);
+    MILO_ASSERT(idx < mCrowds.size(), 0xb0b);
+    mCrowds[idx].AddCrowdChars();
+    return 0;
+}
+
+DataNode CamShot::OnSetCrowdChars(DataArray *da) {
+    int idx = da->Int(2);
+    MILO_ASSERT(idx < mCrowds.size(), 0xb13);
+    mCrowds[idx].SetCrowdChars();
+    return 0;
 }

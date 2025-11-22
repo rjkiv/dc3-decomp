@@ -1,8 +1,10 @@
 #include "world/LightPreset.h"
 #include "LightPreset.h"
 #include "math/Mtx.h"
+#include "obj/Msg.h"
 #include "obj/Object.h"
 #include "rndobj/Anim.h"
+#include "utl/Loader.h"
 
 LightPreset *gEditPreset;
 std::deque<std::pair<LightPreset::KeyframeCmd, float> > LightPreset::sManualEvents;
@@ -12,9 +14,10 @@ LightPreset::LightPreset()
       mEnvironments(this, (EraseMode)0, kObjListOwnerControl),
       mLights(this, (EraseMode)0, kObjListOwnerControl),
       mSpotlightDrawers(this, (EraseMode)0, kObjListOwnerControl), mLooping(0),
-      mPlatformOnly(kPlatformNone), mSelectTriggers(this), mManual(0), unkb4(this),
-      unke8(0), unkec(-1), unkf0(0), unkf4(0), unkf8(0), unkfc(-1), unk100(0), unk104(0),
-      mLocked(0), mHue(0) {}
+      mPlatformOnly(kPlatformNone), mSelectTriggers(this), mManual(0),
+      mSpotlightState(this), mLastKeyframe(0), mLastBlend(-1), mStartBeat(0),
+      mManualFrameStart(0), mManualFrame(0), mLastManualFrame(-1), mManualFadeTime(0),
+      unk104(0), mLocked(0), mHue(0) {}
 
 LightPreset::~LightPreset() { Clear(); }
 
@@ -134,4 +137,131 @@ LightPreset::EnvLightEntry::EnvLightEntry() : mRange(0), mLightType(RndLight::kP
     mPosition.Zero();
     mColor.Zero();
     mRotation.Zero();
+}
+
+void LightPreset::StartAnim() {
+    mManualFrame = 0;
+    mLastManualFrame = -1;
+    mManualFrameStart = 0;
+    mManualFadeTime = 0;
+    mStartBeat = TheTaskMgr.Beat();
+    mLastKeyframe = 0;
+    mLastBlend = -1.0f;
+    static Message start_anim_msg("start_anim_msg");
+    Handle(start_anim_msg, false);
+    FOREACH (it, mSelectTriggers) {
+        (*it)->Trigger();
+    }
+}
+
+int LightPreset::GetCurrentKeyframe() const {
+    if (mManual)
+        return mManualFrame;
+    else if (mKeyframes.empty())
+        return -1;
+    else {
+        int i;
+        int ret;
+        float f;
+        GetKey(GetFrame(), i, ret, f);
+        return ret;
+    }
+}
+
+bool LightPreset::PlatformOk() const {
+    if (TheLoadMgr.EditMode() || !mPlatformOnly
+        || TheLoadMgr.GetPlatform() == kPlatformNone) {
+        return true;
+    } else {
+        Platform plat = TheLoadMgr.GetPlatform();
+        if (TheLoadMgr.GetPlatform() == kPlatformPC) {
+            plat = kPlatformXBox;
+        }
+        return plat == mPlatformOnly;
+    }
+}
+
+int LightPreset::NextManualFrame(LightPreset::KeyframeCmd cmd) const {
+    int frame;
+    if (cmd == kPresetKeyframeFirst) {
+        frame = 0;
+    } else {
+        frame = mManualFrame + (cmd == kPresetKeyframeNext ? 1 : -1);
+    }
+    if (mLooping) {
+        return frame % mKeyframes.size();
+    } else {
+        return Max<int>(0, Min<int>(frame, mKeyframes.size() - 1));
+    }
+}
+
+void LightPreset::AdvanceManual(LightPreset::KeyframeCmd cmd) {
+    MILO_ASSERT(mManual, 0x2c0);
+    if (cmd != kPresetKeyframeFirst || mManualFrame) {
+        mManualFrameStart = GetFrame();
+        mLastManualFrame = mManualFrame;
+        mManualFrame = NextManualFrame(cmd);
+    }
+}
+
+void LightPreset::FillLightPresetData(RndLight *light, LightPreset::EnvLightEntry &entry) {
+    entry.mColor = light->GetColor();
+    entry.unk0 = Hmx::Quat(light->WorldXfm().m);
+    entry.mPosition = light->WorldXfm().v;
+    entry.mRange = light->Range();
+    entry.mLightType = light->GetType();
+}
+
+void LightPreset::RemoveLight(int idx) {
+    for (uint i = 0; i != mKeyframes.size(); i++) {
+        Keyframe &cur = mKeyframes[i];
+        cur.mLightEntries.erase(cur.mLightEntries.begin() + idx);
+    }
+    mLightState.erase(mLightState.begin() + idx);
+    mLights.erase(mLights.begin() + idx);
+}
+
+void LightPreset::RemoveSpotlightDrawer(int idx) {
+    for (uint i = 0; i != mKeyframes.size(); i++) {
+        Keyframe &cur = mKeyframes[i];
+        cur.mSpotlightDrawerEntries.erase(cur.mSpotlightDrawerEntries.begin() + idx);
+    }
+    mSpotlightDrawerState.erase(mSpotlightDrawerState.begin() + idx);
+    mSpotlightDrawers.erase(mSpotlightDrawers.begin() + idx);
+}
+
+void LightPreset::ApplyState(const LightPreset::Keyframe &k) {
+    mSpotlightState = k.mSpotlightEntries;
+    mEnvironmentState = k.mEnvironmentEntries;
+    mLightState = k.mLightEntries;
+    mSpotlightDrawerState = k.mSpotlightDrawerEntries;
+}
+
+void LightPreset::RemoveSpotlight(int idx) {
+    for (uint i = 0; i != mKeyframes.size(); i++) {
+        Keyframe &cur = mKeyframes[i];
+        cur.mSpotlightEntries.erase(cur.mSpotlightEntries.begin() + idx);
+    }
+    mSpotlightState.erase(mSpotlightState.begin() + idx);
+    mSpotlights.erase(mSpotlights.begin() + idx);
+}
+
+void LightPreset::RemoveEnvironment(int idx) {
+    for (uint i = 0; i != mKeyframes.size(); i++) {
+        Keyframe &cur = mKeyframes[i];
+        cur.mEnvironmentEntries.erase(cur.mEnvironmentEntries.begin() + idx);
+    }
+    mEnvironmentState.erase(mEnvironmentState.begin() + idx);
+    mEnvironments.erase(mEnvironments.begin() + idx);
+}
+
+void LightPreset::AddLight(RndLight *lit) {
+    mLights.push_back(lit);
+    EnvLightEntry e;
+    FillLightPresetData(lit, e);
+    for (uint i = 0; i != mKeyframes.size(); i++) {
+        mKeyframes[i].mLightEntries.push_back(e);
+        MILO_ASSERT(mKeyframes[i].mLightEntries.size() == mLights.size(), 0x41a);
+    }
+    mLightState.push_back(e);
 }

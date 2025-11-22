@@ -43,6 +43,12 @@ public:
     bool
     OnSyncTargets(ObjPtrList<RndTransformable> &, DataNode &, DataArray *, int, PropOp);
     bool OnSyncParent(ObjPtr<RndTransformable> &, DataNode &, DataArray *, int, PropOp);
+    bool HasTargets() const;
+
+    float GetDuration() { return mDuration; }
+    float GetBlend() { return mBlend; }
+    float GetFrame() { return mFrame; }
+    void SetFrame(float f) { mFrame = f; }
 
 private:
     /** "Duration this keyframe holds steady" */
@@ -53,7 +59,7 @@ private:
     float mBlendEase; // 0x8
     /** "Amount to ease out to the next keyframe" */
     BlendEaseMode mBlendEaseMode; // 0xc
-    float unk10;
+    float mFrame; // 0x10
     /** "Field of view, in degrees, for this keyframe.
         Same as setting lens focal length below". Ranges from 0 to 360. */
     float mFOV; // 0x14
@@ -176,6 +182,10 @@ public:
     bool PlatformOk() const;
     void StartAnims(ObjPtrList<RndAnimatable> &);
     Symbol Category() const { return mCategory; }
+    void Disable(bool, int);
+    bool ShotOk(CamShot *);
+    bool SetPos(CamShotFrame &, RndCam *);
+    RndCam *GetCam();
 
 protected:
     CamShot();
@@ -193,6 +203,8 @@ protected:
 
     void CacheFrames();
     void UnHide();
+    void DoHide();
+    void SetShotOver();
 
     DataNode OnHasTargets(DataArray *);
     DataNode OnSetPos(DataArray *);

@@ -15,6 +15,7 @@
 #include "world/Reflection.h"
 #include "world/Spotlight.h"
 #include "world/SpotlightEnder.h"
+#include "world/SpotlightDrawer_NG.h"
 
 void WorldInit() {
     WorldDir::Init();
@@ -33,6 +34,6 @@ void WorldInit() {
     REGISTER_OBJ_FACTORY(WorldInstance)
     REGISTER_OBJ_FACTORY(PhysicsVolume)
     REGISTER_OBJ_FACTORY(PostProcer)
-    // NgSpotlightDrawer::Init();
+    NgSpotlightDrawer::Init();
     PreloadSharedSubdirs("world");
 }

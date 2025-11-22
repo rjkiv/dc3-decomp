@@ -20,6 +20,9 @@ public:
 
     OBJ_MEM_OVERLOAD(0x15)
     NEW_OBJ(LightHue)
+
+    void TranslateColor(Hmx::Color const &, Hmx::Color &);
+
 private:
     void Sync();
     DataNode OnSaveDefault(DataArray *);
