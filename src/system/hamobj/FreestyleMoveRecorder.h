@@ -22,6 +22,11 @@ public:
     virtual void PostUpdate(const struct SkeletonUpdateData *) {}
     virtual void Draw(const BaseSkeleton &, class SkeletonViz &) {}
 
+    void Poll();
+    void Free();
+
+    void SetVal44(int i) { unk44 = i; } // change once context found
+
 private:
     float unk4;
     int unk8;

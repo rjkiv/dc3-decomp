@@ -27,6 +27,10 @@ public:
 
     OBJ_MEM_OVERLOAD(0x14)
     NEW_OBJ(RhythmDetector)
+
+    void StopRecording();
+    void StartRecording();
+
 protected:
     RhythmDetector();
 };
