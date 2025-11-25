@@ -6,10 +6,9 @@
 #include "math/Mtx.h"
 #include "obj/Object.h"
 
-HandsUpGestureFilter::HandsUpGestureFilter() : unk2c(false) {
-    unk30 = 0;
-    mRequiredMs = 500;
-}
+HandsUpGestureFilter::HandsUpGestureFilter() : mRequiredMs(500) { Clear(); }
+
+HandsUpGestureFilter::~HandsUpGestureFilter() {}
 
 BEGIN_PROPSYNCS(HandsUpGestureFilter)
     SYNC_PROP(required_ms, mRequiredMs)

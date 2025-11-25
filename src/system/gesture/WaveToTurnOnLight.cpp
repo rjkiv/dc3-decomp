@@ -1,4 +1,5 @@
 #include "gesture/WaveToTurnOnLight.h"
+#include "hamobj/HamDirector.h"
 #include "obj/Dir.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
@@ -70,6 +71,7 @@ void WaveToTurnOnLight::EnableWaveState() {
             static Message cWaveGestureEnabledMsg("wave_gesture_enabled");
             Export(cWaveGestureEnabledMsg, true);
             mTimer.Restart();
+            TheHamDirector->ArmMultiIntroMode();
         } else {
             PrintError(res, "NuiWaveSetEnabled");
         }
