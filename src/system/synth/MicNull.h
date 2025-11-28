@@ -17,7 +17,7 @@ public:
     virtual float GetGain() const { return 0; }
     virtual void SetEarpieceVolume(float) {}
     virtual float GetEarpieceVolume() const { return 0; }
-    virtual int GetClipping() const { return 0; }
+    virtual bool GetClipping() const { return 0; }
     virtual void SetOutputGain(float) {}
     virtual float GetOutputGain() const { return 0; }
     virtual void SetSensitivity(float) {}

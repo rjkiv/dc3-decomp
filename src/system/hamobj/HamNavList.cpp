@@ -2,9 +2,12 @@
 #include "HamListRibbon.h"
 #include "HamNavList.h"
 #include "HamScrollBehavior.h"
+#include "gesture/BaseSkeleton.h"
 #include "gesture/GestureMgr.h"
 #include "gesture/HandsUpGestureFilter.h"
+#include "gesture/Skeleton.h"
 #include "gesture/SkeletonUpdate.h"
+#include "gesture/SkeletonViz.h"
 #include "hamobj/HamNavProvider.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
@@ -491,4 +494,29 @@ int HamNavList::GetHighlightItem() const {
         }
     } else
         return 0;
+}
+
+void HamNavList::SetSliding(float f) {
+    if (unk1f0)
+        RealRefresh();
+
+    if (mRibbonMode != HamListRibbon::kRibbonSelect) {
+        float f1 = 0.0f;
+        if (mRibbonMode != HamListRibbon::kRibbonSlide) {
+            unk15c.Reset();
+            SetRibbonMode(HamListRibbon::kRibbonSlide);
+        }
+        if (sSlideSmoothAmount == f) {
+            unk15c.SetParams(f1, f1, f);
+        } else {
+            unk15c.Smooth(f, TheTaskMgr.DeltaUISeconds());
+            SetFrame(0, 0); // idk whats goin on here but I think SetFrame is involved
+        }
+    }
+}
+
+void HamNavList::Draw(const BaseSkeleton &baseSkeleton, SkeletonViz &skeletonViz) {
+    const Skeleton *skeleton = dynamic_cast<const Skeleton *>(&baseSkeleton);
+    MILO_ASSERT(skeleton, 0x5a3);
+    // call something idk i cant figure it out rn
 }

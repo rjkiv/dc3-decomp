@@ -23,7 +23,7 @@ public:
     virtual void SetEarpieceVolume(float) = 0;
     virtual float GetEarpieceVolume() const = 0;
     virtual void SetMute(bool) {}
-    virtual int GetClipping() const = 0;
+    virtual bool GetClipping() const = 0;
     virtual void SetOutputGain(float) = 0;
     virtual float GetOutputGain() const = 0;
     virtual void SetSensitivity(float) = 0;

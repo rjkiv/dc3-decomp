@@ -3,6 +3,7 @@
 #include "gesture/BaseSkeleton.h"
 #include "gesture/Skeleton.h"
 #include "hamobj/Difficulty.h"
+#include "hamobj/HamDirector.h"
 #include "obj/Data.h"
 #include "obj/DataFunc.h"
 #include "obj/Object.h"
@@ -13,6 +14,7 @@
 #include "rndobj/Poll.h"
 #include "utl/BinStream.h"
 #include "utl/FileStream.h"
+#include "utl/MakeString.h"
 #include "utl/Symbol.h"
 
 // do these correspond to kNumDifficulties?

@@ -153,6 +153,43 @@ typedef enum _XCONTENTDEVICEID {
     // fill in others as you find them out
 } XCONTENTDEVICEID;
 
+struct XAUDIO2_BUFFER { /* Size=0x24 */
+    /* 0x0000 */ UINT32 Flags;
+    /* 0x0004 */ UINT32 AudioBytes;
+    /* 0x0008 */ const BYTE *pAudioData;
+    /* 0x000c */ UINT32 PlayBegin;
+    /* 0x0010 */ UINT32 PlayLength;
+    /* 0x0014 */ UINT32 LoopBegin;
+    /* 0x0018 */ UINT32 LoopLength;
+    /* 0x001c */ UINT32 LoopCount;
+    /* 0x0020 */ void *pContext;
+};
+
+struct tWAVEFORMATEX { /* Size=0x12 */
+    /* 0x0000 */ WORD wFormatTag;
+    /* 0x0002 */ WORD nChannels;
+    /* 0x0004 */ DWORD nSamplesPerSec;
+    /* 0x0008 */ DWORD nAvgBytesPerSec;
+    /* 0x000c */ WORD nBlockAlign;
+    /* 0x000e */ WORD wBitsPerSample;
+    /* 0x0010 */ WORD cbSize;
+};
+
+struct XMA2WAVEFORMATEX { /* Size=0x34 */
+    /* 0x0000 */ tWAVEFORMATEX wfx;
+    /* 0x0012 */ WORD NumStreams;
+    /* 0x0014 */ DWORD ChannelMask;
+    /* 0x0018 */ DWORD SamplesEncoded;
+    /* 0x001c */ DWORD BytesPerBlock;
+    /* 0x0020 */ DWORD PlayBegin;
+    /* 0x0024 */ DWORD PlayLength;
+    /* 0x0028 */ DWORD LoopBegin;
+    /* 0x002c */ DWORD LoopLength;
+    /* 0x0030 */ BYTE LoopCount;
+    /* 0x0031 */ BYTE EncoderVersion;
+    /* 0x0032 */ WORD BlockCount;
+};
+
 #ifdef __cplusplus
 }
 #endif

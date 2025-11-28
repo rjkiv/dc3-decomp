@@ -52,7 +52,13 @@ void UIListState::SetMinDisplay(int min) {
     mSelectedDisplay = x;
 }
 
-void UIListState::SetMaxDisplay(int max) {}
+void UIListState::SetMaxDisplay(int max) {
+    MILO_ASSERT(max >= -1, 0x150);
+    if (TheLoadMgr.EditMode() && (max > mNumDisplay - 1) && max < -1) {
+        max = -1;
+    }
+    mMaxDisplay = max;
+}
 
 void UIListState::SetScrollPastMinDisplay(bool b) {
     mScrollPastMinDisplay = b;

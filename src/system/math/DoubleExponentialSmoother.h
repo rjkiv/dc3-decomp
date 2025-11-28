@@ -19,6 +19,11 @@ public:
         mAlpha = alpha;
         mBeta = beta;
     }
+    void SetParams(float prevLevel, float level, float trend) {
+        mPrevLevel = prevLevel;
+        mLevel = level;
+        mTrend = trend;
+    }
     float Level() const { return mLevel; }
 
 protected:

@@ -5,6 +5,8 @@
 #include "obj/Task.h"
 #include "rndobj/Text.h"
 #include "rndobj/Trans.h"
+#include "ui/UI.h"
+#include "ui/UILabelDir.h"
 #include "utl/BinStream.h"
 #include "utl/Loader.h"
 #include "utl/Locale.h"
@@ -114,7 +116,10 @@ void UILabel::SetDisplayText(const char *cc, bool b) {
         LabelUpdate(false);
 }
 
-void UILabel::Init() {}
+void UILabel::Init() {
+    REGISTER_OBJ_FACTORY(UILabel);
+    UILabelDir::Init();
+}
 
 void UILabel::SetTokenFmtImp(
     Symbol s, const DataArray *da1, const DataArray *da2, int i, bool b

@@ -52,6 +52,7 @@ public:
     virtual void DrawShowing();
 
     OBJ_MEM_OVERLOAD(0x26);
+    NEW_OBJ(UILabel)
 
     static void Init();
 
@@ -103,6 +104,7 @@ protected:
     void RefreshFontMat(int);
 
     static bool sDeferUpdate;
+    static bool sDebugHighlight;
 
     Symbol mTextToken; // 0x114
     String unk118; // 0x118

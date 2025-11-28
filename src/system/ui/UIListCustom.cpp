@@ -1,11 +1,15 @@
 #include "ui/UIListCustom.h"
 #include "obj/Object.h"
 #include "rndobj/Trans.h"
+#include "ui/UIList.h"
 #include "ui/UIListSlot.h"
+
+#pragma region UIListCustom
 
 UIListCustom::UIListCustom() : mObject(this) {}
 
 BEGIN_PROPSYNCS(UIListCustom)
+    SYNC_PROP_SET(object, mObject.Ptr(), SetObject(_val.GetObj(nullptr)))
     SYNC_SUPERCLASS(UIListSlot)
 END_PROPSYNCS
 
@@ -43,8 +47,41 @@ void UIListCustom::SetObject(Hmx::Object *o) {
     mObject = o;
 }
 
-UIListSlotElement *UIListCustom::CreateElement(UIList *) { return nullptr; }
+UIListSlotElement *UIListCustom::CreateElement(UIList *) {
+    MILO_ASSERT(mObject, 0x69);
+    Hmx::Object *c = Hmx::Object::NewObject(mObject->ClassName());
+    c->Copy(mObject.Ptr(), kCopyDeep);
+    return new UIListCustomElement(this, c);
+}
 
 RndTransformable *UIListCustom::RootTrans() {
     return dynamic_cast<RndTransformable *>(mObject.Ptr());
 }
+
+BEGIN_HANDLERS(UIListCustom)
+    HANDLE_SUPERCLASS(UIListSlot)
+END_HANDLERS
+
+#pragma endregion UIListCustom
+#pragma region UIListCustomElement
+
+UIListCustomElement::~UIListCustomElement() { delete mPtr; }
+
+void UIListCustomElement::Draw(const Transform &tf, float f, UIColor *col, Box *box) {
+    RndTransformable *t = dynamic_cast<RndTransformable *>(mPtr);
+    MILO_ASSERT(t, 34);
+    t->SetWorldXfm(tf);
+    UIListCustomTemplate *temp = dynamic_cast<UIListCustomTemplate *>(mPtr);
+    if (box) {
+        if (temp)
+            temp->GrowBoundingBox(*box);
+    } else {
+        if (temp)
+            temp->SetAlphaColor(f, col);
+        RndDrawable *d = dynamic_cast<RndDrawable *>(mPtr);
+        MILO_ASSERT(d, 49);
+        d->Draw();
+    }
+}
+
+#pragma endregion UIListCustomElement

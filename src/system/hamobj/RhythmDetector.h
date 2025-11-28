@@ -1,11 +1,18 @@
 #pragma once
+#include "gesture/BaseSkeleton.h"
 #include "gesture/Skeleton.h"
+#include "math/Vec.h"
 #include "obj/Object.h"
 #include "rndobj/Poll.h"
+#include "stl/_vector.h"
 #include "utl/MemMgr.h"
 
 class RhythmDetector : public RndPollable, public SkeletonCallback {
 public:
+    struct Frame {};
+
+    struct RecordData {};
+
     // Hmx::Object
     virtual ~RhythmDetector();
     OBJ_CLASSNAME(RhythmDetector);
@@ -30,7 +37,23 @@ public:
 
     void StopRecording();
     void StartRecording();
+    float Groove() const;
+    float Freshness() const;
+    Vector4 Data1(int) const;
+    Vector4 Data2(int) const;
+    void AddDebugGraph(float, float, float, float, Hmx::Color);
+    void AddFullDebugGraphs();
+    void RemoveDebugGraphs();
+    void ClearData();
 
 protected:
     RhythmDetector();
+
+private:
+    void AddFrame(BaseSkeleton const &);
+    void ProcessFrames();
 };
+
+void SetupFrame(
+    RhythmDetector::Frame &, float, float, Vector3 const *, Vector3 const *, float
+);

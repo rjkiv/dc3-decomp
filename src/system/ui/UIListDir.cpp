@@ -28,12 +28,64 @@ UIListDir::UIListDir()
 UIListDir::~UIListDir() { DeleteAll(unk270); }
 
 BEGIN_PROPSYNCS(UIListDir)
+    SYNC_PROP_SET(orientation, mOrientation, mOrientation = (UIListOrientation)_val.Int())
+    SYNC_PROP(fade_offset, mFadeOffset)
+    SYNC_PROP(element_spacing, mElementSpacing)
+    SYNC_PROP(scroll_highlight_change, mScrollHighlightChange)
+    SYNC_PROP(test_mode, mTestMode)
+    SYNC_PROP(test_num_data, mTestNumData)
+    SYNC_PROP(test_gap_size, mTestGapSize)
+    SYNC_PROP_SET(
+        test_num_display,
+        mTestState.NumDisplay(),
+        mTestState.SetNumDisplay(_val.Int(), true)
+    )
+    SYNC_PROP_SET(
+        test_grid_span, mTestState.GridSpan(), mTestState.SetGridSpan(_val.Int(), true)
+    )
+    SYNC_PROP_SET(test_scroll_time, mTestState.Speed(), mTestState.SetSpeed(_val.Float()))
+    SYNC_PROP_SET(
+        test_list_state,
+        mTestComponentState,
+        mTestComponentState = (UIComponent::State)_val.Int()
+    )
+    SYNC_PROP_MODIFY(test_disable_elements, mTestDisableElements, Reset())
+    SYNC_SUPERCLASS(RndDir)
 END_PROPSYNCS
 
 BEGIN_SAVES(UIListDir)
+    SAVE_REVS(1, 0)
+    SAVE_SUPERCLASS(RndDir)
+    bs << mOrientation;
+    bs << mFadeOffset;
+    bs << mElementSpacing;
+    bs << mScrollHighlightChange;
+    bs << mTestMode;
+    bs << mTestNumData;
+    bs << mTestComponentState;
+    bs << mTestGapSize;
+    bs << mTestDisableElements;
+    bs << unk270;
+    bs << mDirection;
 END_SAVES
 
 BEGIN_COPYS(UIListDir)
+    COPY_SUPERCLASS(RndDir)
+    CREATE_COPY_AS(UIListDir, c)
+    BEGIN_COPYING_MEMBERS_FROM(c)
+        COPY_MEMBER(mOrientation)
+        COPY_MEMBER(mFadeOffset)
+        COPY_MEMBER(mElementSpacing)
+        COPY_MEMBER(mScrollHighlightChange)
+        COPY_MEMBER(mTestMode)
+        mTestState.SetNumDisplay(c->mTestState.NumDisplay(), true);
+        mTestState.SetGridSpan(c->mTestState.GridSpan(), true);
+        mTestState.SetSpeed(c->mTestState.Speed());
+        COPY_MEMBER(mTestNumData)
+        COPY_MEMBER(mTestComponentState)
+        COPY_MEMBER(mTestGapSize)
+        COPY_MEMBER(mTestDisableElements)
+    END_COPYING_MEMBERS
 END_COPYS
 
 void UIListDir::PreLoad(BinStream &bs) {
@@ -43,7 +95,7 @@ void UIListDir::PreLoad(BinStream &bs) {
     bs.PushRev(packRevs(d.altRev, d.rev), this);
 }
 
-void UIListDir::PostLoad(BinStream &) {}
+void UIListDir::PostLoad(BinStream &bs) {}
 
 void UIListDir::SyncObjects() {
     RndDir::SyncObjects();
@@ -191,7 +243,19 @@ void UIListDir::CreateElements(UIList *uilist, std::vector<UIListWidget *> &vec,
 }
 
 float UIListDir::SetElementPos(Vector3 &v, float f1, int i2, float f3, float f4) const {
-    return 1.0f;
+    v.Zero();
+    int floored = std::floor(f1);
+    float f3toset =
+        mElementSpacing * ((f1 - (float)floored) + (float)(floored / i2)) + f3;
+    float f2toset = mElementSpacing * (float)(floored % i2) + f4;
+    if (mOrientation == kUIListVertical) {
+        v.z -= f3toset;
+        v.x += f2toset;
+    } else {
+        v.x += f3toset;
+        v.z -= f2toset;
+    }
+    return f3toset;
 }
 
 void UIListDir::Reset() {
