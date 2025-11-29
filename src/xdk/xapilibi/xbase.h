@@ -67,6 +67,13 @@ enum XC_LOCALE {
     XC_LOCALE_RUSSIAN_FEDERATION = 37
 };
 
+enum XAUDIO2_FILTER_TYPE {
+    LowPassFilter = 0x0000,
+    BandPassFilter = 0x0001,
+    HighPassFilter = 0x0002,
+    NotchFilter = 0x0003,
+};
+
 struct XUSER_ACHIEVEMENT { /* Size=0x8 */
     /* 0x0000 */ DWORD dwUserIndex;
     /* 0x0004 */ DWORD dwAchievementId;
@@ -153,6 +160,23 @@ typedef enum _XCONTENTDEVICEID {
     // fill in others as you find them out
 } XCONTENTDEVICEID;
 
+struct _GUID { /* Size=0x10 */
+    /* 0x0000 */ DWORD Data1;
+    /* 0x0004 */ WORD Data2;
+    /* 0x0006 */ WORD Data3;
+    /* 0x0008 */ BYTE Data4[8];
+};
+
+struct IUnknown { /* Size=0x4 */
+
+    virtual DWORD QueryInterface(const _GUID &, void **);
+    virtual ULONG AddRef();
+    virtual ULONG Release();
+    IUnknown(const IUnknown &);
+    IUnknown();
+    IUnknown &operator=(const IUnknown &);
+};
+
 struct XAUDIO2_BUFFER { /* Size=0x24 */
     /* 0x0000 */ UINT32 Flags;
     /* 0x0004 */ UINT32 AudioBytes;
@@ -189,6 +213,41 @@ struct XMA2WAVEFORMATEX { /* Size=0x34 */
     /* 0x0031 */ BYTE EncoderVersion;
     /* 0x0032 */ WORD BlockCount;
 };
+
+struct XAUDIO2_VOICE_DETAILS { /* Size=0xc */
+    /* 0x0000 */ UINT32 CreationFlags;
+    /* 0x0004 */ UINT32 InputChannels;
+    /* 0x0008 */ UINT32 InputSampleRate;
+};
+
+struct XAUDIO2_EFFECT_DESCRIPTOR { /* Size=0xc */
+    /* 0x0000 */ IUnknown *pEffect;
+    /* 0x0004 */ BOOL InitialState;
+    /* 0x0008 */ UINT32 OutputChannels;
+};
+
+struct XAUDIO2_EFFECT_CHAIN { /* Size=0x8 */
+    /* 0x0000 */ UINT32 EffectCount;
+    /* 0x0004 */ XAUDIO2_EFFECT_DESCRIPTOR *pEffectDescriptors;
+};
+
+struct XAUDIO2_FILTER_PARAMETERS { /* Size=0xc */
+    /* 0x0000 */ XAUDIO2_FILTER_TYPE Type;
+    /* 0x0004 */ float Frequency;
+    /* 0x0008 */ float OneOverQ;
+};
+
+struct XAUDIO2_SEND_DESCRIPTOR { /* Size=0x8 */
+    /* 0x0000 */ UINT32 Flags;
+    ///* 0x0004 */  IXAudio2Voice *pOutputVoice;
+};
+
+struct XAUDIO2_VOICE_SENDS { /* Size=0x8 */
+    /* 0x0000 */ UINT32 SendCount;
+/* 0x0004 */ XAUDIO2_SEND_DESCRIPTOR
+*pSends;
+}
+;
 
 #ifdef __cplusplus
 }

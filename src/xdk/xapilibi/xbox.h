@@ -55,7 +55,17 @@ DWORD XShowKeyboardUI(
     XOVERLAPPED *pOverlapped
 );
 
-DWORD XContentCrossTitleCreate(DWORD, LPCSTR, XCONTENT_CROSS_TITLE_DATA *, DWORD, DWORD *, DWORD *, int, ULONGLONG, XOVERLAPPED *);
+DWORD XContentCrossTitleCreate(
+    DWORD,
+    LPCSTR,
+    XCONTENT_CROSS_TITLE_DATA *,
+    DWORD,
+    DWORD *,
+    DWORD *,
+    int,
+    ULONGLONG,
+    XOVERLAPPED *
+);
 DWORD XContentCrossTitleDelete(DWORD, const XCONTENT_CROSS_TITLE_DATA *, XOVERLAPPED *);
 
 DWORD XGetOverlappedExtendedError(XOVERLAPPED *);
@@ -65,7 +75,17 @@ DWORD XUserGetSigninInfo(DWORD, DWORD, XUSER_SIGNIN_INFO *);
 
 DWORD XSetThreadProcessor(HANDLE, DWORD);
 
-DWORD XContentCreateEx(DWORD, LPCSTR, CONST XCONTENT_DATA *, DWORD, DWORD *, DWORD *, DWORD, ULARGE_INTEGER, XOVERLAPPED *);
+DWORD XContentCreateEx(
+    DWORD,
+    LPCSTR,
+    CONST XCONTENT_DATA *,
+    DWORD,
+    DWORD *,
+    DWORD *,
+    DWORD,
+    ULARGE_INTEGER,
+    XOVERLAPPED *
+);
 DWORD XContentGetCreator(DWORD, CONST XCONTENT_DATA *, BOOL *, XUID *, XOVERLAPPED *);
 DWORD XContentGetDeviceState(DWORD, XOVERLAPPED *);
 DWORD XContentDelete(DWORD, CONST XCONTENT_DATA *, XOVERLAPPED *);
@@ -73,6 +93,8 @@ DWORD XContentCreateEnumerator(DWORD, DWORD, DWORD, DWORD, DWORD, DWORD *, HANDL
 DWORD XEnumerate(HANDLE, VOID *, DWORD, DWORD *, XOVERLAPPED *);
 DWORD XContentFlush(LPCSTR, XOVERLAPPED *);
 ULONGLONG XContentCalculateSize(ULONGLONG, DWORD);
+
+void XAudioGetSpeakerConfig();
 
 #ifdef __cplusplus
 }

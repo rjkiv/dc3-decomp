@@ -37,6 +37,12 @@
             "flags": [ 
                 "/TP"
             ]
+        },
+        "soundtouch":{
+            "base": "base",
+            "flags":[
+                
+            ]
         }
     }
 }
