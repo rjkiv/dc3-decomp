@@ -61,3 +61,24 @@ struct IXAudio2SubmixVoice : public IXAudio2Voice { /* Size=0x4 */
     IXAudio2SubmixVoice();
     IXAudio2SubmixVoice &operator=(const IXAudio2SubmixVoice &);
 };
+
+struct IXAudioRefCount { /* Size=0x4 */
+    virtual UINT32 AddRef();
+    virtual UINT32 Release();
+    IXAudioRefCount(const IXAudioRefCount &);
+    IXAudioRefCount();
+    IXAudioRefCount &operator=(const IXAudioRefCount &);
+};
+
+struct IXAudioBatchAllocator : public IXAudioRefCount { /* Size=0x4 */
+    /* 0x0000: fields for IXAudioRefCount */
+    virtual UINT32 AddRef() = 0;
+    virtual UINT32 Release() = 0;
+    virtual void GrowHeap(UINT32);
+    virtual DWORD CreateHeap(UINT32);
+    virtual UINT32 GetFreeHeapSize();
+    virtual void *Alloc(UINT32);
+    IXAudioBatchAllocator(const IXAudioBatchAllocator &);
+    IXAudioBatchAllocator();
+    IXAudioBatchAllocator &operator=(const IXAudioBatchAllocator &);
+};
