@@ -11,6 +11,8 @@ FxSendEQ::FxSendEQ()
       mHighPassCutoff(20.0f), mHighPassReso(0.0f), mLRMode(false),
       mTransitionTime(25.0f) {}
 
+FxSendEQ::~FxSendEQ() {}
+
 BEGIN_COPYS(FxSendEQ)
     COPY_SUPERCLASS(FxSend)
     CREATE_COPY(FxSendEQ)

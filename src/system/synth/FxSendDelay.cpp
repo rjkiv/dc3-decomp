@@ -23,6 +23,8 @@ FxSendDelay::FxSendDelay()
     mSyncType = eighth;
 }
 
+FxSendDelay::~FxSendDelay() {}
+
 void FxSendDelay::Save(BinStream &bs) {
     bs << 3;
     SAVE_SUPERCLASS(FxSend)

@@ -7,6 +7,8 @@ FxSendCompress::FxSendCompress()
     : mThresholdDB(-12.0f), mRatio(3.0f), mOutputLevel(0.0f), mAttack(0.005f),
       mRelease(0.12f), mExpRatio(1.0f), mExpAttack(0.12f), mExpRelease(0.005f) {}
 
+FxSendCompress::~FxSendCompress() {}
+
 BEGIN_COPYS(FxSendCompress)
     COPY_SUPERCLASS(FxSend)
     CREATE_COPY(FxSendCompress)

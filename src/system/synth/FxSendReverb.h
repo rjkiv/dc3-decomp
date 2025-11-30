@@ -6,7 +6,7 @@
 /** "A reverb effect." */
 class FxSendReverb : public FxSend {
 public:
-    virtual ~FxSendReverb() {}
+    virtual ~FxSendReverb();
     OBJ_CLASSNAME(FxSendReverb);
     OBJ_SET_TYPE(FxSendReverb);
     virtual DataNode Handle(DataArray *, bool);

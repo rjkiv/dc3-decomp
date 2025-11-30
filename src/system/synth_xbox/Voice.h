@@ -23,7 +23,7 @@ public:
     void SetVolume(float);
     void SetPan(float);
     void SetReverbEnable(bool);
-    // void SetSend(FXSend360 *);
+    // void SetSend(FxSend360 *);
     static bool HasPendingVoices();
     void SetSpeed(float);
     void Init(bool);
@@ -45,7 +45,7 @@ public:
     float unk30;
     float unk34;
     bool unk38;
-    int unk3c;
+    int *unk3c; // 0x3c
     bool unk40;
     float unk44;
     bool unk48;

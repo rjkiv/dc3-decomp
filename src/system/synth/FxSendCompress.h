@@ -5,7 +5,7 @@
 /** "A compression/expansion effect." */
 class FxSendCompress : public FxSend {
 public:
-    virtual ~FxSendCompress() {}
+    virtual ~FxSendCompress();
     OBJ_CLASSNAME(FxSendCompress);
     OBJ_SET_TYPE(FxSendCompress);
     virtual DataNode Handle(DataArray *, bool);

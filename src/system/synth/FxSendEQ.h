@@ -5,7 +5,7 @@
 /** "An equalizer effect." */
 class FxSendEQ : public FxSend {
 public:
-    virtual ~FxSendEQ() {}
+    virtual ~FxSendEQ();
     OBJ_CLASSNAME(FxSendEQ);
     OBJ_SET_TYPE(FxSendEQ);
     virtual DataNode Handle(DataArray *, bool);

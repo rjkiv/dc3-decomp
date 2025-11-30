@@ -27,6 +27,8 @@ FxSendReverb::FxSendReverb()
     mWetGain = -6.0f;
 }
 
+FxSendReverb::~FxSendReverb() {}
+
 void FxSendReverb::Save(BinStream &bs) {
     bs << 2;
     SAVE_SUPERCLASS(FxSend)

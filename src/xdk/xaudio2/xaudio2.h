@@ -1,7 +1,7 @@
 #pragma once
 
-#include "xapilibi/xbase.h"
 #include "xdk/win_types.h"
+#include "xdk/xapilibi/xbase.h"
 
 struct IXAudio2Voice { /* Size=0x4 */
 

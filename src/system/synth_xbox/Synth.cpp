@@ -1,5 +1,16 @@
 #include "synth_xbox/Synth.h"
+#include "FxSendBitCrush.h"
+#include "FxSendChorus.h"
+#include "FxSendCompress.h"
+#include "FxSendDelay.h"
+#include "FxSendDistortion.h"
+#include "FxSendEQ.h"
+#include "FxSendFlanger.h"
+#include "FxSendMeterEffect.h"
+#include "FxSendReverb.h"
+#include "FxSendWah.h"
 #include "obj/Object.h"
+#include "synth/Synth.h"
 
 Synth360 *TheXboxSynth;
 
@@ -10,3 +21,17 @@ Synth360::Synth360()
 BEGIN_HANDLERS(Synth360)
     HANDLE_SUPERCLASS(Synth)
 END_HANDLERS
+
+void Synth360::Init() {
+    Synth::Init();
+    REGISTER_OBJ_FACTORY(FxSendReverb360)
+    REGISTER_OBJ_FACTORY(FxSendDelay360)
+    REGISTER_OBJ_FACTORY(FxSendCompress360)
+    REGISTER_OBJ_FACTORY(FxSendEQ360)
+    REGISTER_OBJ_FACTORY(FxSendFlanger360)
+    REGISTER_OBJ_FACTORY(FxSendMeterEffect360)
+    REGISTER_OBJ_FACTORY(FxSendWah360)
+    REGISTER_OBJ_FACTORY(FxSendBitCrush360)
+    REGISTER_OBJ_FACTORY(FxSendDistortion360)
+    REGISTER_OBJ_FACTORY(FxSendChorus360)
+}

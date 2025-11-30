@@ -5,6 +5,8 @@
 
 FxSendDistortion::FxSendDistortion() : mDrive(0) {}
 
+FxSendDistortion::~FxSendDistortion() {}
+
 BEGIN_COPYS(FxSendDistortion)
     COPY_SUPERCLASS(FxSend)
     CREATE_COPY(FxSendDistortion)

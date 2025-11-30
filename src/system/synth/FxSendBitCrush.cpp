@@ -5,6 +5,8 @@
 
 FxSendBitCrush::FxSendBitCrush() : mAmount(0) {}
 
+FxSendBitCrush::~FxSendBitCrush() {}
+
 BEGIN_COPYS(FxSendBitCrush)
     COPY_SUPERCLASS(FxSend)
     CREATE_COPY(FxSendBitCrush)

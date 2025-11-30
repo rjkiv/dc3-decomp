@@ -4,7 +4,7 @@
 
 class FxSendBitCrush : public FxSend {
 public:
-    virtual ~FxSendBitCrush() {}
+    virtual ~FxSendBitCrush();
     OBJ_CLASSNAME(FxSendBitCrush);
     OBJ_SET_TYPE(FxSendBitCrush);
     virtual DataNode Handle(DataArray *, bool);

@@ -6,7 +6,7 @@
 /** "A delay effect." */
 class FxSendDelay : public FxSend {
 public:
-    virtual ~FxSendDelay() {}
+    virtual ~FxSendDelay();
     OBJ_CLASSNAME(FxSendDelay);
     OBJ_SET_TYPE(FxSendDelay);
     virtual DataNode Handle(DataArray *, bool);

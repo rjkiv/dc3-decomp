@@ -5,7 +5,7 @@
 /** "distortion effect" */
 class FxSendDistortion : public FxSend {
 public:
-    virtual ~FxSendDistortion() {}
+    virtual ~FxSendDistortion();
     OBJ_CLASSNAME(FxSendDistortion);
     OBJ_SET_TYPE(FxSendDistortion);
     virtual DataNode Handle(DataArray *, bool);

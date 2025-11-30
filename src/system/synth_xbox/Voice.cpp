@@ -11,7 +11,7 @@ HANDLE gVoiceThread;
 Voice::Voice(bool b1, int i, bool b2)
     : unk4(0), unk8(0), unkc(0), mNumSamples(0), mSampleRate(0), unk18(0), mLoopStart(-1),
       mLoopEnd(-1), mVolume(1.0f), mPan(0), unk2c(1.0f), unk30(0.001f), unk34(0.001f),
-      unk38(b1), unk3c(0), unk40(false), unk44(-96.0f), unk48(false), unk49(b2), unk4c(i),
+      unk38(b1), unk3c(), unk40(false), unk44(-96.0f), unk48(false), unk49(b2), unk4c(i),
       unk50(0), unk54(false) {
     unk5c = 0;
     unk60 = 0;

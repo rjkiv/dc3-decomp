@@ -1,9 +1,25 @@
 #pragma once
+#include "obj/Data.h"
+#include "os/CritSec.h"
 #include "os/Timer.h"
 #include "stl/_vector.h"
 #include "synth/FxSend.h"
 #include "synth/Mic.h"
+#include "synth_xbox/Mic.h"
+#include "types.h"
 #include "utl/Symbol.h"
+#include "xdk/xapilibi/xbase.h"
+#include "xdk/xvh2/xvh2.h"
+
+class ChatReceiver {
+public:
+    ~ChatReceiver();
+    ChatReceiver(IXHV2Engine *, int);
+    bool ActivateProcessing(bool);
+
+private:
+    void ProcessChatData(void *, unsigned int, int *);
+};
 
 class MicXbox : public Mic {
 public:
@@ -77,3 +93,49 @@ private:
     void ReadChatBuffer(void *, unsigned int);
     static bool AddToBuffer(std::vector<short> &, void *, int, int *);
 };
+
+class MicManagerXbox {
+public:
+    struct ChatBuffer {
+    public:
+        int unk0;
+        int unk4;
+        int unk8[252];
+    };
+
+    void RequirePushToTalk(bool, int);
+    void Poll();
+    void RemoveMic(MicXbox *);
+    void AddMic(MicXbox *);
+    void Shutdown();
+    void AddRemoteMic(unsigned long long const &, XAUDIO2_EFFECT_CHAIN *);
+    void Init();
+
+    static MicManagerXbox *GetInstance();
+
+    std::vector<MicXbox *> unk0;
+    std::vector<ChatReceiver *> unkc;
+    int unk18;
+    int unk1c;
+    std::vector<MicManagerXbox::ChatBuffer> unk20;
+    int unk2c;
+    bool unk30;
+    u32 unk34;
+    Timer unk38;
+    CriticalSection unk68;
+    int unk88;
+
+private:
+    ~MicManagerXbox();
+    MicManagerXbox();
+    void OnDataReady(unsigned long, void *, unsigned long, int *);
+
+    static void DataReadyCallback(unsigned long, void *, unsigned long, int *);
+
+    static MicManagerXbox *sInstance;
+};
+
+DataNode SetNoiseGate(DataArray *);
+DataNode SetLowCut(DataArray *);
+DataNode SetLocalGain(DataArray *);
+DataNode SetRemoteGain(DataArray *);

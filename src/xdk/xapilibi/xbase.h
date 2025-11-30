@@ -249,6 +249,11 @@ struct XAUDIO2_VOICE_SENDS { /* Size=0x8 */
 }
 ;
 
+struct NUI_TALKER_POSITION { /* Size=0x8 */
+    /* 0x0000 */ float fDirection;
+    /* 0x0004 */ float fConfidence;
+};
+
 #ifdef __cplusplus
 }
 #endif
