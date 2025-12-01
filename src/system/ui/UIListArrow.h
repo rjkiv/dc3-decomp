@@ -3,6 +3,7 @@
 #include "rndobj/Anim.h"
 #include "rndobj/Mesh.h"
 #include "ui/UIListWidget.h"
+#include "utl/MemMgr.h"
 
 enum UIListArrowPosition {
     kUIListArrowBack,
@@ -32,6 +33,9 @@ public:
         DrawCommand
     );
     void StartScroll(int, bool);
+
+    NEW_OBJ(UIListArrow)
+    OBJ_MEM_OVERLOAD(0x18)
 
 protected:
     UIListArrow();

@@ -15,6 +15,8 @@ public:
     void Update(int, int);
     void Clear();
 
+    NEW_OBJ(HandsUpGestureFilter)
+
     bool unk2c;
     int unk30;
     int mRequiredMs; // 0x34

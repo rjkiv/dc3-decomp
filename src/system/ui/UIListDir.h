@@ -1,9 +1,11 @@
 #pragma once
+#include "obj/Object.h"
 #include "rndobj/Dir.h"
 #include "stl/_vector.h"
 #include "ui/UIListProvider.h"
 #include "ui/UIListState.h"
 #include "ui/UIListWidget.h"
+#include "utl/MemMgr.h"
 
 enum UIListOrientation {
     kUIListVertical,
@@ -60,6 +62,9 @@ public:
         UIListWidgetDrawState &, UIListState const &, UIComponent::State, float, bool
     ) const;
     void CreateElements(UIList *, std::vector<UIListWidget *> &, int);
+
+    NEW_OBJ(UIListDir)
+    OBJ_MEM_OVERLOAD(0x1b)
 
 protected:
     /** "scroll direction of list" */

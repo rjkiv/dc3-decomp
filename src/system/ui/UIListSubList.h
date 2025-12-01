@@ -1,6 +1,8 @@
 #pragma once
+#include "obj/Object.h"
 #include "ui/UIListSlot.h"
 #include "ui/UIList.h"
+#include "utl/MemMgr.h"
 
 /** "Custom slot for use with UIList" */
 class UIListSubList : public UIListSlot {
@@ -21,6 +23,9 @@ public:
         Box *,
         DrawCommand
     );
+
+    NEW_OBJ(UIListSubList)
+    OBJ_MEM_OVERLOAD(0x11)
 
     virtual RndTransformable *RootTrans();
 

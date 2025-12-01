@@ -2,8 +2,10 @@
 
 #include "gesture/SkeletonViz.h"
 #include "obj/Data.h"
+#include "obj/Object.h"
 #include "rndobj/Overlay.h"
 #include "utl/BinStream.h"
+#include "utl/MemMgr.h"
 class FitnessFilter {
 public:
     virtual ~FitnessFilter();
@@ -38,6 +40,9 @@ public:
 
     bool OnGetFitnessData(DataArray *) const;
     bool OnGetFitnessDataAndReset(DataArray *);
+
+    NEW_OBJ(FitnessFilterObj);
+    OBJ_MEM_OVERLOAD(0x40)
 
     FitnessFilter *unk2c;
 

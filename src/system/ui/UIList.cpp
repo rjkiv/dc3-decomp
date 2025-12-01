@@ -10,8 +10,17 @@
 #include "rndobj/Draw.h"
 #include "rndobj/FontBase.h"
 #include "ui/UIComponent.h"
+#include "ui/UIListArrow.h"
+#include "ui/UIListCustom.h"
+#include "ui/UIListDir.h"
+#include "ui/UIListHighlight.h"
+#include "ui/UIListLabel.h"
+#include "ui/UIListMesh.h"
 #include "ui/UIListProvider.h"
+#include "ui/UIListSlot.h"
 #include "ui/UIListState.h"
+#include "ui/UIListSubList.h"
+#include "ui/UIListWidget.h"
 #include "ui/UITransitionHandler.h"
 #include "utl/BinStream.h"
 #include "utl/Loader.h"
@@ -383,7 +392,18 @@ float UIList::GetDistanceToPlane(const Plane &p, Vector3 &v) {
     return ret;
 }
 
-void UIList::Init() {}
+void UIList::Init() {
+    Register();
+    REGISTER_OBJ_FACTORY(UIListArrow)
+    REGISTER_OBJ_FACTORY(UIListCustom)
+    REGISTER_OBJ_FACTORY(UIListDir)
+    REGISTER_OBJ_FACTORY(UIListHighlight)
+    REGISTER_OBJ_FACTORY(UIListLabel)
+    REGISTER_OBJ_FACTORY(UIListMesh)
+    REGISTER_OBJ_FACTORY(UIListSlot)
+    REGISTER_OBJ_FACTORY(UIListSubList)
+    REGISTER_OBJ_FACTORY(UIListWidget)
+}
 
 void UIList::BoundingBoxTriangles(std::vector<std::vector<Vector3> > &) {}
 

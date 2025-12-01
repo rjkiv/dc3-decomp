@@ -1,8 +1,10 @@
 #pragma once
+#include "obj/Object.h"
 #include "ui/UIListProvider.h"
 #include "ui/UIListSlot.h"
 #include "rndobj/Mat.h"
 #include "rndobj/Mesh.h"
+#include "utl/MemMgr.h"
 
 /** "Custom slot for use with UIList" */
 class UIListMesh : public UIListSlot {
@@ -25,6 +27,9 @@ public:
 
     RndMat *DefaultMat() const;
     RndMesh *Mesh() const { return mMesh; }
+
+    NEW_OBJ(UIListMesh)
+    OBJ_MEM_OVERLOAD(0x11)
 
 protected:
     virtual UIListSlotElement *CreateElement(UIList *);

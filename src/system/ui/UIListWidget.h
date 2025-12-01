@@ -6,6 +6,7 @@
 #include "ui/UIColor.h"
 #include "ui/UIComponent.h"
 #include "ui/UIListState.h"
+#include "utl/MemMgr.h"
 
 class UIList;
 class UIListProvider;
@@ -62,6 +63,9 @@ public:
     float DrawOrder() const;
     void SetParentList(UIList *);
     void SetColor(UIListWidgetState, UIComponent::State, UIColor *);
+
+    NEW_OBJ(UIListWidget)
+    OBJ_MEM_OVERLOAD(0x48)
 
 protected:
     UIListWidget();

@@ -2,6 +2,7 @@
 #include "obj/Object.h"
 #include "ui/UIListProvider.h"
 #include "ui/UIListSlot.h"
+#include "utl/MemMgr.h"
 
 /** "Custom slot for use with UIList" */
 class UIListCustom : public UIListSlot {
@@ -15,6 +16,9 @@ public:
     virtual void Load(BinStream &);
 
     void SetObject(Hmx::Object *);
+
+    NEW_OBJ(UIListCustom)
+    OBJ_MEM_OVERLOAD(0x1a)
 
 protected:
     UIListCustom();

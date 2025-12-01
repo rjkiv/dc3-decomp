@@ -5,6 +5,7 @@
 #include "math/Color.h"
 #include "math/Mtx.h"
 #include "obj/Dir.h"
+#include "obj/Object.h"
 #include "rndobj/Cam.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Env.h"
@@ -35,6 +36,7 @@ public:
     virtual void Poll();
 
     OBJ_MEM_OVERLOAD(0x19);
+    NEW_OBJ(SkeletonViz)
 
     void Init();
     float PhysicalCamRotation() const;

@@ -12,6 +12,8 @@ public:
     bool CheckHighFive();
     void Update(Skeleton const *, Skeleton const *);
 
+    NEW_OBJ(HighFiveGestureFilter)
+
     bool unk2c; // 0x2c
 
 protected:

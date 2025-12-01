@@ -1,4 +1,5 @@
 #pragma once
+#include "obj/Object.h"
 #include "ui/UIListWidget.h"
 #include "utl/MemMgr.h"
 
@@ -47,6 +48,9 @@ public:
 
     bool Matches(const char *) const;
     const char *MatchName() const;
+
+    NEW_OBJ(UIListSlot)
+    OBJ_MEM_OVERLOAD(0x27)
 
 private:
     void ClearElements();

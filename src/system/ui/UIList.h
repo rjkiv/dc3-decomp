@@ -15,6 +15,7 @@
 #include "ui/UIListState.h"
 #include "ui/UIListWidget.h"
 #include "ui/UITransitionHandler.h"
+#include "utl/MemMgr.h"
 #include "utl/Symbol.h"
 
 /**
@@ -91,6 +92,10 @@ public:
     int SelectedData() const { return mListState.SelectedData(); }
     int FirstShowing() const { return mListState.FirstShowing(); }
     bool IsScrolling() const;
+
+    NEW_OBJ(UIList)
+    OBJ_MEM_OVERLOAD(0x21)
+    static void Register() { REGISTER_OBJ_FACTORY(UIList) }
 
 private:
     void Update();

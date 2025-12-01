@@ -1,6 +1,8 @@
 #pragma once
+#include "obj/Object.h"
 #include "ui/UIListWidget.h"
 #include "rndobj/Mesh.h"
+#include "utl/MemMgr.h"
 
 /**
  * @brief Highlighter object for UILists.
@@ -24,6 +26,9 @@ public:
         Box *,
         DrawCommand
     );
+
+    NEW_OBJ(UIListHighlight)
+    OBJ_MEM_OVERLOAD(0x11)
 
 protected:
     UIListHighlight();

@@ -1,7 +1,9 @@
 #pragma once
+#include "obj/Object.h"
 #include "ui/UIListProvider.h"
 #include "ui/UIListSlot.h"
 #include "ui/UILabel.h"
+#include "utl/MemMgr.h"
 
 /** "Custom slot for use with UIList" */
 class UIListLabel : public UIListSlot {
@@ -17,6 +19,9 @@ public:
 
     const char *GetDefaultText() const;
     UILabel *ElementLabel(int) const;
+
+    NEW_OBJ(UIListLabel)
+    OBJ_MEM_OVERLOAD(0x11)
 
 protected:
     virtual UIListSlotElement *CreateElement(UIList *);
