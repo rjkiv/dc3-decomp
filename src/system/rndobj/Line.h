@@ -61,6 +61,7 @@ public:
     Point &PointAt(int idx) { return mPoints[idx]; }
     float GetWidth() const { return mWidth; }
     void SetWidth(float w) { mWidth = w; }
+    RndMat *Mat() const { return mMat.Ptr(); }
 
     void SetPointPos(int, const Vector3 &);
     void SetPointColor(int, const Hmx::Color &, bool);

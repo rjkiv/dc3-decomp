@@ -78,6 +78,8 @@ public:
     bool IsEnabled(int) const;
     void SetHidden(int, bool);
 
+    void SetNavList(HamNavList *l) { mNavList = l; }
+
     DataNode OnSetHidden(const DataArray *);
 
 protected:

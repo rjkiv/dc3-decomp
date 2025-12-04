@@ -9,6 +9,11 @@ public:
     SkeletonRecoverer();
     virtual ~SkeletonRecoverer();
 
+    bool WaitingToRecover();
+
 protected:
     std::list<TrackingIDHistory> mIDHistory; // 0x4
+
+private:
+    bool IsSkeletonTracked(int) const;
 };

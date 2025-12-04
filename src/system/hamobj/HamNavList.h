@@ -104,6 +104,7 @@ private:
     int NumItems() const;
     int GetDisabledCount(int) const;
     int GetHighlightItem(void) const;
+    void DetermineHighlightedItem();
 
     static float sSlideSmoothAmount;
     static float sSlideTrendAmount;

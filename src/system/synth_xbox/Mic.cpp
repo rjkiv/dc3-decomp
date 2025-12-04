@@ -14,10 +14,10 @@ MicManagerXbox *sInstance;
 #pragma region MicXbox
 
 MicXbox::MicXbox(int, float volume)
-    : unkd(false), unk10(0), mChangeNotify(false), unk18(0), unk301c(0), unk9054(1.0f),
-      unk9058(0), unk905c(0), unk9060(0), mVolume(volume), mMute(false), unk906c(0),
-      mGain(1.0f), mOutputGain(1.0f), mSensitivity(1.0f), unk907c(0), mDroppedSamples(0),
-      unk90c4("generic_usb"), mClipping(false) {
+    : unkd(false), unk10(0), mChangeNotify(false), unk18(0), unk301c(unk1c),
+      unk9054(1.0f), unk9058(0), unk905c(0), unk9060(0), mVolume(volume), mMute(false),
+      unk906c(0), mGain(1.0f), mOutputGain(1.0f), mSensitivity(1.0f), unk907c(0),
+      mDroppedSamples(0), unk90c4("generic_usb"), mClipping(false) {
     unk302c->Init(0xc00);
     unk3040->Init(0x6000);
     unk3020.reserve(0x1800);
@@ -61,6 +61,38 @@ void MicXbox::SetChangeNotify(bool b) { mChangeNotify = b; }
 void MicXbox::SetMute(bool b) { mMute = b; }
 
 bool MicXbox::IsPlaying() { return unk18; }
+
+void MicXbox::Start() {
+    if (!unkd) {
+        unk301c = unk1c;
+        MicManagerXbox *x = MicManagerXbox::GetInstance();
+        x->AddMic(this);
+        unkd = true;
+    }
+}
+
+void MicXbox::Stop() {
+    if (unkd) {
+        MicManagerXbox *x = MicManagerXbox::GetInstance();
+        x->RemoveMic(this);
+        unkd = false;
+        if (unk18) {
+            StopPlayback();
+        }
+    }
+}
+
+void MicXbox::OnMicConnected(unsigned long ul, bool b, Symbol const &s) {
+    unkc = b;
+    unk90c4 = s;
+    MicManagerXbox *x = MicManagerXbox::GetInstance();
+    x->unk30 = true;
+}
+
+void MicXbox::OnMicDisconnected() {
+    MicManagerXbox *x = MicManagerXbox::GetInstance();
+    x->unk30 = true;
+}
 
 #pragma endregion MicXbox
 #pragma region MicManagerXbox

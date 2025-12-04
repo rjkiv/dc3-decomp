@@ -4,6 +4,7 @@
 #include "gesture/BaseSkeleton.h"
 #include "gesture/GestureMgr.h"
 #include "gesture/JointUtl.h"
+#include "gesture/LiveCameraInput.h"
 #include "gesture/Skeleton.h"
 #include "gesture/SkeletonUpdate.h"
 #include "gesture/SkeletonViz.h"
@@ -11,6 +12,7 @@
 #include "os/Debug.h"
 #include "rndobj/Dir.h"
 #include "ui/PanelDir.h"
+#include "utl/BinStream.h"
 #include "utl/Loader.h"
 
 SkeletonDir::SkeletonDir() : mMiloInitted(0), mTestClip(this) {}
@@ -52,6 +54,13 @@ BEGIN_LOADS(SkeletonDir)
     PreLoad(bs);
     PostLoad(bs);
 END_LOADS
+
+void SkeletonDir::PreLoad(BinStream &bs) {
+    LOAD_REVS(bs);
+    ASSERT_REVS(4, 0);
+    PanelDir::PreLoad(bs);
+    bs.PushRev(packRevs(d.altRev, d.rev), this);
+}
 
 void SkeletonDir::DrawShowing() {
     PanelDir::DrawShowing();

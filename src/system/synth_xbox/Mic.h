@@ -6,6 +6,7 @@
 #include "synth/FxSend.h"
 #include "synth/Mic.h"
 #include "synth_xbox/Mic.h"
+#include "synth_xbox/Voice.h"
 #include "types.h"
 #include "utl/Symbol.h"
 #include "xdk/xapilibi/xbase.h"
@@ -57,9 +58,9 @@ public:
     bool unkd;
     int unk10;
     bool mChangeNotify; // 0x14
-    int *unk18; // this is a Voice object
+    Voice *unk18;
     short unk1c[6144];
-    int unk301c;
+    short *unk301c;
     std::vector<short> unk3020;
     RingBuffer *unk302c;
     u32 unk3030;

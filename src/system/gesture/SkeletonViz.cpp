@@ -4,6 +4,7 @@
 #include "hamobj/HamCharacter.h"
 #include "math/Geo.h"
 #include "math/Mtx.h"
+#include "math/Vec.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/File.h"
@@ -11,6 +12,7 @@
 #include "rndobj/Draw.h"
 #include "rndobj/Env.h"
 #include "rndobj/Line.h"
+#include "rndobj/Mat.h"
 #include "rndobj/Poll.h"
 #include "rndobj/Trans.h"
 #include "utl/BinStream.h"
@@ -184,4 +186,31 @@ void SkeletonViz::SetPhysicalCamScreenRect(const Hmx::Rect &r) {
     MILO_ASSERT(r.x >= 0 && r.y >= 0 && r.w > 0 && r.h > 0, 0x64);
     MILO_ASSERT(mPhysicalCam, 0x65);
     mPhysicalCam->SetScreenRect(r);
+}
+
+void SkeletonViz::DrawLine3D(
+    const Vector3 &vec1,
+    const Vector3 &vec2,
+    float f,
+    const Hmx::Color &color1,
+    Hmx::Color *color2
+) {
+    Vector3 localVec1, localVec2;
+    Multiply(vec1, unk1d4, localVec1);
+    Multiply(vec2, unk1d4, localVec2);
+    mUtlLine->SetPointPos(0, localVec1);
+    mUtlLine->SetPointPos(1, localVec2);
+    RndMat *mat = mUtlLine->Mat();
+    MILO_ASSERT(mat, 0x178);
+
+    if (!color2) {
+        mat->SetColor(color2->red, color2->green, color2->blue);
+    } else {
+        mUtlLine->SetMat(0);
+        mUtlLine->SetPointColor(0, *color2, true);
+        mUtlLine->SetPointColor(1, color1, true);
+    }
+    mUtlLine->SetWidth(unk214 * f);
+    mUtlLine->DrawShowing();
+    mUtlLine->SetMat(mat);
 }

@@ -831,7 +831,7 @@
             "system/synth_xbox/GranularSynth.cpp": "MISSING",
             "system/synth_xbox/HeadsetPlaybackEffect.cpp": "MISSING",
             "system/synth_xbox/HeadsetXferEffect.cpp": "MISSING",
-            "system/synth_xbox/IPP_basicmath_xbox.cpp": "MISSING",
+            "system/synth_xbox/IPP_basicmath_xbox.cpp": "NonMatching",
             "system/synth_xbox/MeterEffect.cpp": "MISSING",
             "system/synth_xbox/Mic.cpp": "NonMatching",
             "system/synth_xbox/PeakDetector.cpp": "MISSING",

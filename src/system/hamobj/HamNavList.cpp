@@ -520,3 +520,14 @@ void HamNavList::Draw(const BaseSkeleton &baseSkeleton, SkeletonViz &skeletonViz
     MILO_ASSERT(skeleton, 0x5a3);
     // call something idk i cant figure it out rn
 }
+
+void HamNavList::SetHighlight(int i) {
+    if (unk1f0)
+        RealRefresh();
+    UIListProvider *provider = mListState.Provider();
+    if (provider && (0 <= i) && (i < mListState.NumShowing())) {
+        // object at 0x184 calls vfunc here
+        mListState.SetSelected(i, mListState.FirstShowing(), true);
+        HandleHighlightChanged(i);
+    }
+}

@@ -4,6 +4,8 @@
 #include "xdk/xapilibi/synchapi.h"
 #include "xdk/xapilibi/xbase.h"
 
+#define SUCCEEDED(hr) (((HRESULT)(hr)) >= 0)
+
 class Voice {
 public:
     Voice(bool, int, bool);
@@ -32,7 +34,7 @@ public:
 
     u32 unk0;
     int unk4;
-    int unk8;
+    const void *unk8;
     int unkc;
     int mNumSamples; // 0x10
     int mSampleRate; // 0x14
@@ -44,13 +46,13 @@ public:
     float unk2c;
     float unk30;
     float unk34;
-    bool unk38;
+    bool mXMA; // 0x38
     int *unk3c; // 0x3c
     bool unk40;
     float unk44;
     bool unk48;
     bool unk49;
-    int unk4c;
+    int mChannels; // 0x4c
     int unk50;
     bool unk54;
     int unk58;

@@ -4,6 +4,7 @@
 #include "os/CritSec.h"
 #include "os/Timer.h"
 #include "stl/_vector.h"
+#include "synth/FxSend.h"
 #include "synth/Mic.h"
 #include "synth/Synth.h"
 #include "xdk/xaudio2/xaudio2.h"
@@ -38,7 +39,7 @@ public:
     virtual void Init();
 
     CriticalSection unkb0;
-    std::vector<Mic *> unkd0;
+    std::vector<Mic *> mMics; // 0xd0
     std::vector<IXAudio2SubmixVoice *> unkdc;
     int unke8;
     int unkec;
@@ -52,7 +53,7 @@ public:
     Timer unk108;
     bool unk138;
     int unk13c;
-    std::vector<int> unk140;
+    std::vector<FxSend360 *> unk140;
     bool unk14c;
 
     Synth360();
