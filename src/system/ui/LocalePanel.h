@@ -1,6 +1,10 @@
 #pragma once
+#include "obj/Dir.h"
+#include "ui/UILabel.h"
 #include "ui/UIListProvider.h"
 #include "ui/UIPanel.h"
+#include "ui/UIScreen.h"
+#include "utl/Symbol.h"
 
 class LocalePanel : public UIPanel, public UIListProvider {
 public:
@@ -25,6 +29,13 @@ public:
     virtual bool IsActive(int) const;
     virtual float GapSize(int, int, int, int) const;
 
+    UIScreen *Screen();
+
 protected:
     std::vector<Entry> mEntries; // 0x3c
+
+private:
+    Symbol TokenForLabel(UILabel *);
+    void AddHeading(char const *);
+    void AddDirEntries(ObjectDir *, char const *);
 };

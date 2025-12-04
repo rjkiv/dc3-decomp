@@ -41,6 +41,7 @@ public:
     virtual void Print(TextStream &);
 
     UIPanel *FocusPanel() const { return mFocusPanel; }
+    std::list<PanelRef> &PanelList() { return mPanelList; }
 
     void SetFocusPanel(UIPanel *);
     void SetShowing(bool);
