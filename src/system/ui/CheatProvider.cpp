@@ -3,9 +3,13 @@
 #include "os/Debug.h"
 #include "os/System.h"
 // #include "ui/UIListLabel.h"
+#include "ui/UIListLabel.h"
 #include "utl/Cheats.h"
+#include "utl/Symbol.h"
 
 CheatProvider *CheatProvider::sInstance;
+
+#pragma region CheatProvider
 
 CheatProvider::CheatProvider() : mFilterIdx(0) {
     SetName("cheat_provider", ObjectDir::Main());
@@ -59,3 +63,76 @@ CheatProvider::CheatProvider() : mFilterIdx(0) {
     }
     ApplyFilter();
 }
+
+void CheatProvider::Init() {
+    if (CheatsInitialized()) {
+        MILO_ASSERT(!sInstance, 0x60);
+        sInstance = new CheatProvider();
+    }
+}
+
+void CheatProvider::Terminate() {
+    MILO_ASSERT(sInstance, 0x66);
+    RELEASE(sInstance);
+}
+
+void CheatProvider::InitData(RndDir *) { ApplyFilter(); }
+
+int CheatProvider::NumData() const { return mFilterCheats.size(); }
+
+bool CheatProvider::IsActive(int i) const { return !mFilterCheats[i].mKey.empty(); }
+
+void CheatProvider::Text(int i, int j, UIListLabel *listlabel, UILabel *label) const {
+    const Cheat &cheat = mFilterCheats[j];
+
+    if (listlabel->Matches("key")) {
+        label->SetEditText(cheat.mKey.c_str());
+    } else if (listlabel->Matches("description")) {
+        label->SetEditText(cheat.mDesc.c_str());
+    } else if (listlabel->Matches("value")) {
+        static Symbol value_bool("value_bool");
+        static Symbol value("value");
+        if (!cheat.mScript)
+            label->SetTextToken(gNullStr);
+        else {
+            DataArray *bool_arr = cheat.mScript->FindArray(value_bool, false);
+            if (bool_arr) {
+                label->SetEditText(bool_arr->Int(1) != 0 ? "ON" : "OFF");
+            } else {
+                DataArray *value_arr = cheat.mScript->FindArray(value, false);
+                if (value_arr) {
+                    const DataNode &n = value_arr->Node(1).Evaluate();
+                    if (n.Type() == kDataSymbol || n.Type() == kDataString) {
+                        label->SetEditText(n.Str());
+                    } else if (n.Type() == kDataInt) {
+                        label->SetInt(n.Int(), false);
+                    } else if (n.Type() == kDataFloat) {
+                        label->SetFloat("%f", n.Float());
+                    } else
+                        label->SetEditText("?");
+                } else
+                    label->SetEditText(gNullStr);
+            }
+        }
+    }
+}
+
+BEGIN_HANDLERS(CheatProvider)
+    HANDLE_ACTION(
+        invoke,
+        CallQuickCheat(mFilterCheats[_msg->Int(2)].mScript, _msg->Obj<LocalUser>(3))
+    )
+    HANDLE_ACTION(next_filter, ApplyFilter())
+    HANDLE_EXPR(filter, mFilters[mFilterIdx])
+    HANDLE_SUPERCLASS(Hmx::Object)
+END_HANDLERS
+
+#pragma endregion CheatProvider
+#pragma region CheatProvider::Cheat
+
+CheatProvider::Cheat::Cheat(const char *desc) : mKey(), mDesc(desc), mScript(0) {}
+
+CheatProvider::Cheat::Cheat(String &key, String &desc, DataArray *script)
+    : mKey(key), mDesc(desc), mScript(script) {}
+
+#pragma endregion CheatProvider::Cheat

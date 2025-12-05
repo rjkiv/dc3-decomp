@@ -11,15 +11,14 @@ public:
      * @brief Handles individual entries in cheats.lst
      */
     struct Cheat {
-        Cheat(const char *desc) : mKey(), mDesc(desc), mScript(0) {}
-        Cheat(const String &key, const String &desc, DataArray *script)
-            : mKey(key), mDesc(desc), mScript(script) {}
+        Cheat(const char *);
+        Cheat(String &, String &, DataArray *);
         /** The key(s) to press to activate this cheat. */
         String mKey; // 0x0
         /** A quick description of what this cheat does. */
-        String mDesc; // 0xc
+        String mDesc; // 0x8
         /** The script performing this cheat. */
-        DataArray *mScript; // 0x18
+        DataArray *mScript; // 0x10
     };
 
     CheatProvider();
@@ -46,12 +45,12 @@ private:
     void ApplyFilter();
 
     /** The complete series of cheats. */
-    std::vector<Cheat> mCheats; // 0x20
+    std::vector<Cheat> mCheats; // 0x30
     /** The series of filtered cheats. */
-    std::vector<Cheat> mFilterCheats; // 0x28
+    std::vector<Cheat> mFilterCheats; // 0x3c
     /** The series of filters (places where certain cheats are only allowed to work, i.e.
      * game, meta, store, writer, all) */
-    std::vector<Symbol> mFilters; // 0x30
+    std::vector<Symbol> mFilters; // 0x48
     /** The current filter being applied. */
-    int mFilterIdx; // 0x38
+    int mFilterIdx; // 0x54
 };
