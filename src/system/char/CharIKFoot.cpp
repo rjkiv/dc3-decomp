@@ -37,6 +37,28 @@ BEGIN_COPYS(CharIKFoot)
     END_COPYING_MEMBERS
 END_COPYS
 
+BEGIN_LOADS(CharIKFoot)
+    LOAD_REVS(bs)
+    ASSERT_REVS(6, 0)
+    LOAD_SUPERCLASS(CharIKHand)
+    if (d.rev < 6) {
+        Symbol s;
+        bs >> s;
+    }
+    if (d.rev < 5) {
+        int i;
+        if (d.rev > 1)
+            bs >> i;
+        if (d.rev > 2)
+            bs >> i;
+        if (d.rev > 3)
+            bs >> i;
+    } else {
+        bs >> mData;
+        bs >> mDataIndex;
+    }
+END_LOADS
+
 void CharIKFoot::Enter() {
     unkc4 = 0;
     unkf0 = 0.0f;

@@ -2,19 +2,57 @@
 #include "UIComponent.h"
 #include "obj/Data.h"
 #include "obj/DataFile.h"
+#include "obj/Dir.h"
 #include "obj/MessageTimer.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/JoypadClient.h"
+#include "os/Keyboard.h"
+#include "os/System.h"
 #include "os/UserMgr.h"
+#include "rndobj/Cam.h"
 #include "ui/CheatProvider.h"
+#include "ui/InlineHelp.h"
+#include "ui/LabelNumberTicker.h"
+#include "ui/LabelShrinkWrapper.h"
+#include "ui/LocalePanel.h"
+#include "ui/PanelDir.h"
+#include "ui/Screenshot.h"
+#include "ui/UIButton.h"
+#include "ui/UIColor.h"
+#include "ui/UIFontImporter.h"
+#include "ui/UIGuide.h"
 #include "ui/UILabel.h"
+#include "ui/UIList.h"
+#include "ui/UIPicture.h"
 #include "ui/UIScreen.h"
 #include "ui/UIPanel.h"
+#include "ui/UISlider.h"
+#include "ui/UITrigger.h"
+#include "utl/KnownIssues.h"
+#include "utl/Locale.h"
+#include "utl/OSCMessenger.h"
 #include "utl/Std.h"
 #include "utl/Str.h"
 #include "utl/Symbol.h"
+
+namespace {
+    JoypadAction NavButtonToNavAction(JoypadButton btn) {
+        switch (btn) {
+        case kPad_DLeft:
+            return kAction_Left;
+        case kPad_DRight:
+            return kAction_Right;
+        case kPad_DDown:
+            return kAction_Down;
+        case kPad_DUp:
+            return kAction_Up;
+        default:
+            return kAction_None;
+        }
+    }
+}
 
 const char *TransitionStateString(UIManager::TransitionState s) {
     switch (s) {
@@ -174,12 +212,13 @@ void UIManager::CancelTransition() {
     }
 }
 
-bool UIManager::OverloadHorizontalNav(JoypadAction, JoypadButton, bool) const {
-    return false;
+bool UIManager::OverloadHorizontalNav(JoypadAction act, JoypadButton btn, bool b) const {
+    return !(!mOverloadHorizontalNav || NavButtonToNavAction(btn) == act && !b);
 }
 
 void UIManager::Terminate() {
     CheatProvider::Terminate();
+    UILabel::Terminate();
     SetName(0, 0);
     KeyboardUnsubscribe(this);
     RELEASE(mCam);
@@ -278,7 +317,85 @@ void UIManager::PushScreen(UIScreen *screen) { MILO_ASSERT(screen, 0x38c); }
 
 DataNode UIManager::OnForeachCurrentScreen(DataArray const *) { return NULL_OBJ; }
 
-void UIManager::Init() {}
+void UITerminateCallback() { TheUI->Terminate(); }
+
+void UIManager::Init() {
+    MILO_ASSERT(TheUI, 0x1f3);
+    mAutomator = new Automator(*this);
+    SetName("ui", ObjectDir::Main());
+    DataArray *cfg = SystemConfig("ui");
+    SetTypeDef(SystemConfig("ui"));
+    UseJoypad(cfg->FindInt("use_joypad"), cfg->FindInt("enable_auto_repeat"));
+    KeyboardSubscribe(this);
+    mCurrentScreen = nullptr;
+    mTransitionState = kTransitionNone;
+    mTransitionScreen = nullptr;
+    mWentBack = false;
+    mCam = ObjectDir::Main()->New<RndCam>("[ui.cam]");
+    DataArray *camCfg = cfg->FindArray("cam");
+    mCam->SetFrustum(
+        camCfg->FindFloat("near"),
+        camCfg->FindFloat("far"),
+        camCfg->FindFloat("fov") * DEG2RAD,
+        1.0f
+    );
+    // mCam->SetLocalPos(0, camCfg->FindFloat("y"), 0);
+    DataArray *zArr = camCfg->FindArray("z-range");
+    mCam->SetZRange(zArr->Float(1), zArr->Float(2));
+    mEnv = Hmx::Object::New<RndEnviron>();
+    Hmx::Color envAmbientColor;
+    cfg->FindArray("env")->FindData("ambient", envAmbientColor, true);
+    mEnv->SetAmbientColor(envAmbientColor);
+    cfg->FindData("max_push_depth", mMaxPushDepth, false);
+    cfg->FindData("cancel_transition_notify", mCancelTransitionNotify, false);
+    cfg->FindData("default_allow_edit_text", mDefaultAllowEditText, false);
+    bool notify = false;
+    cfg->FindData("verbose_locale_notifies", notify, false);
+    Locale::SetLocaleVerboseNotify(false);
+    REGISTER_OBJ_FACTORY(UIScreen)
+    REGISTER_OBJ_FACTORY(UIPanel)
+    REGISTER_OBJ_FACTORY(PanelDir)
+    UIComponent::Init();
+    UIButton::Init();
+    REGISTER_OBJ_FACTORY(UIColor)
+    UILabel::Init();
+    UIList::Init();
+    REGISTER_OBJ_FACTORY(UIPicture)
+    UISlider::Init();
+    REGISTER_OBJ_FACTORY(UITrigger)
+    InlineHelp::Init();
+    REGISTER_OBJ_FACTORY(UIFontImporter)
+    REGISTER_OBJ_FACTORY(UIGuide)
+    REGISTER_OBJ_FACTORY(Screenshot)
+    LabelNumberTicker::Init();
+    LabelShrinkWrapper::Init();
+    TheDebug.AddExitCallback(UITerminateCallback);
+
+    std::vector<ObjDirPtr<ObjectDir> > dirPtrs;
+    DataArray *frontloadArr = cfg->FindArray("frontload_subdirs", false);
+    if (frontloadArr) {
+        dirPtrs.resize(frontloadArr->Size() - 1);
+        for (int i = 1; i < frontloadArr->Size(); i++) {
+            String curStr = frontloadArr->Str(i);
+            dirPtrs[i - 1].LoadFile(curStr.c_str(), false, true, kLoadFront, false);
+        }
+    }
+    CheatProvider::Init();
+    REGISTER_OBJ_FACTORY(LocalePanel)
+    static Message cheat_init("cheat_init");
+    Hmx::Object::Handle(cheat_init, false);
+    mOverlay = RndOverlay::Find("ui", true);
+    mOverlay->SetShowing(false);
+    TheOSCMessenger.Connect();
+    PreloadSharedSubdirs("ui");
+    // FailAppendCallback(FixedString &str); unsure
+    UILabel::sRequireFixedLength = true;
+    static Message init("init");
+    Hmx::Object::Handle(init, false);
+    mTimer.Restart();
+    cfg->FindData("overload_horizontal_nav", mOverloadHorizontalNav, false);
+    TheKnownIssues.Init();
+}
 
 BEGIN_HANDLERS(UIManager)
 END_HANDLERS

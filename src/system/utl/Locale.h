@@ -33,17 +33,24 @@ public:
     void Init();
     void Terminate();
 
-    // static bool sVerboseNotify;
     // static const char *sIgnoreMissingText;
 
     void SetMagnuStrings(DataArray *);
     // bool FindDataIndex(Symbol, int &, bool) const;
     // const char *Localize(Symbol, bool) const;
+
+    static void SetLocaleVerboseNotify(bool set) { Locale::sVerboseNotify = set; }
+
+protected:
+    static bool sVerboseNotify;
 };
 
 extern Locale TheLocale;
 
-const char *Localize(Symbol, bool *, Locale &);
+inline
+
+    const char *
+    Localize(Symbol, bool *, Locale &);
 const char *LocalizeSeparatedInt(int, Locale &);
 const char *LocalizeFloat(const char *, float);
 void SyncReloadLocale();

@@ -43,6 +43,8 @@ public:
 
 protected:
     CharIKHand();
+    void PullShoulder(Vector3 &, Transform const &, Vector3 const &, float);
+    void IKElbow(RndTransformable *, RndTransformable *);
 
     /** "The hand to be moved, must be child of elbow" */
     ObjPtr<RndTransformable> mHand; // 0x30
@@ -75,8 +77,8 @@ protected:
     float unk78;
     float unk7c;
     float unk80;
-    int unk84;
-    int unk88;
+    float unk84;
+    float unk88;
     float unk8c;
     /** "Constrain the wrist rotation to be believable" */
     bool mConstraintWrist; // 0x90

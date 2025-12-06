@@ -1,4 +1,5 @@
 #include "char/CharLipSyncDriver.h"
+#include "char/Char.h"
 #include "char/CharFaceServo.h"
 #include "char/CharLipSync.h"
 #include "char/CharWeightable.h"
@@ -6,6 +7,7 @@
 #include "obj/Object.h"
 #include "obj/Utl.h"
 #include "rndobj/Poll.h"
+#include "rndobj/Rnd.h"
 
 CharLipSyncDriver::CharLipSyncDriver()
     : mLipSync(this), mClips(this), mBlinkClip(this), mSongOwner(this), mSongOffset(0),
@@ -175,4 +177,46 @@ void CharLipSyncDriver::ClearLipSync() {
     mLipSync = nullptr;
     unk8c = false;
     unk90 = 1;
+}
+
+void CharLipSyncDriver::BlendInOverrides(float f) {
+    unkcc = f;
+    unkc8 = true;
+    unkc9 = false;
+    unkd0 = true;
+}
+
+void CharLipSyncDriver::BlendOutOverrides(float f) {
+    unkcc = f;
+    unkc9 = true;
+    unkc8 = false;
+    unkd0 = true;
+}
+
+void CharLipSyncDriver::Highlight() {
+    if (gCharHighlightY == -1.0f) {
+        CharDeferHighlight(this);
+    } else {
+        Hmx::Color white(1, 1, 1);
+        Vector2 v2(5.0f, gCharHighlightY);
+        float y = TheRnd.DrawString(MakeString("%s:", PathName(this)), v2, white, true).y;
+        v2.y += y;
+        if (unk88) {
+            TheRnd.DrawString(MakeString("frame %d", unk88->mFrame), v2, white, true);
+            v2.y += y;
+            std::vector<CharLipSync::PlayBack::Weight> &weights = unk88->mWeights;
+            for (int i = 0; i < weights.size(); i++) {
+                CharLipSync::PlayBack::Weight &curWeight = weights[i];
+                float f14 = curWeight.unk14;
+                CharClip *clip = curWeight.unk0;
+                if (f14 != 0 && clip) {
+                    TheRnd.DrawString(
+                        MakeString("%s %.4f", clip->Name(), f14), v2, white, true
+                    );
+                    v2.y += y;
+                }
+            }
+        }
+        gCharHighlightY = v2.y + y;
+    }
 }

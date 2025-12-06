@@ -95,3 +95,36 @@ void CharIKHand::SetHand(RndTransformable *t) {
     mHand = t;
     mHandChanged = true;
 }
+
+void CharIKHand::PullShoulder(
+    Vector3 &v, const Transform &tf, const Vector3 &vconst, float fff
+) {
+    if (mPullShoulder) {
+        Subtract(vconst, tf.v, v);
+        float lensq = LengthSquared(v);
+        float f2 = fff * 0.95f;
+        if (lensq > f2 * f2) {
+            v *= 1.0f - f2 / (float)std::sqrt(lensq);
+        } else {
+            v.x = 0;
+            v.y = 0;
+            v.z = 0;
+        }
+    }
+}
+
+void CharIKHand::MeasureLengths() {
+    if (mHand) {
+        if (mHand->TransParent()) {
+            if (mHand->TransParent()->TransParent()) {
+                float len = Length(mHand->LocalXfm().v);
+                float parentlen = Length(mHand->TransParent()->LocalXfm().v);
+                unk84 = parentlen * 2.0f * len;
+                unk88 = (parentlen * parentlen) + len * len;
+                if (unk84 != 0.0f)
+                    unk84 = 1.0f / unk84;
+                unk8c = len + parentlen;
+            }
+        }
+    }
+}

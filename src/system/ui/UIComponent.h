@@ -1,4 +1,5 @@
 #pragma once
+#include "obj/Object.h"
 #include "os/User.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Trans.h"
@@ -49,9 +50,11 @@ public:
     virtual void OldResourcePreload(BinStream &);
 
     OBJ_MEM_OVERLOAD(0x19);
+    NEW_OBJ(UIComponent)
 
     State GetState() { return mState; }
     void SendSelect(LocalUser *);
+    static void Init();
 
 protected:
     UIComponent();

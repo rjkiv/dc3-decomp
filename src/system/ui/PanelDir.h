@@ -1,4 +1,5 @@
 #pragma once
+#include "obj/Object.h"
 #include "rndobj/Cam.h"
 #include "rndobj/Dir.h"
 #include "ui/UIComponent.h"
@@ -41,6 +42,7 @@ public:
     virtual void Exit();
 
     OBJ_MEM_OVERLOAD(0x19);
+    NEW_OBJ(PanelDir)
 
     void SetOwnerPanel(UIPanel *panel) { mOwnerPanel = panel; }
     RndCam *Cam() const { return mCam; }

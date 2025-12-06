@@ -22,7 +22,55 @@ void CharUtlInit() {
     DataRegisterFunc("char_merge_bones", OnCharMergeBones);
 }
 
-void CharUtlMergeBones(ObjectDir *dir1, ObjectDir *dir2, int i) {}
+void CharUtlMergeBones(ObjectDir *dir1, ObjectDir *dir2, int i) {
+    for (ObjDirItr<CharBone> it(dir1, true); it != 0; ++it) {
+        if (it->Target()) {
+            CharBone *bone = GrabBone(it, dir2);
+            if (bone) {
+                if (!bone->Target()) {
+                    const char *name = it->Target()->Name();
+                    CharBone *findbone = CharUtlFindBone(name, dir2);
+                    if (!findbone)
+                        MILO_NOTIFY("could not find target %s in dest, must merge", name);
+                    bone->SetTarget(findbone);
+                } else {
+                    if (!streq(it->Target()->Name(), bone->Target()->Name())) {
+                        MILO_NOTIFY(
+                            "%s has different targets %s v %s, must resolve",
+                            it->Name(),
+                            it->Target()->Name(),
+                            bone->Target()->Name()
+                        );
+                    }
+                }
+            }
+        }
+        if (it->PositionContext() != 0) {
+            CharBone *bone = GrabBone(it, dir2);
+            if (bone)
+                bone->SetPositionContext(bone->PositionContext() | i);
+        }
+        if (it->ScaleContext() != 0) {
+            CharBone *bone = GrabBone(it, dir2);
+            if (bone)
+                bone->SetPositionContext(bone->ScaleContext() | i);
+        }
+        if (it->RotationContext() != 0 && it->RotationType() != CharBones::TYPE_END) {
+            CharBone *bone = GrabBone(it, dir2);
+            if (bone) {
+                if (bone->RotationType() != CharBones::TYPE_END
+                    && bone->RotationType() != it->RotationType()) {
+                    MILO_NOTIFY(
+                        "bones %s have different rotations, must hand resolve", it->Name()
+                    );
+                } else {
+                    bone->SetRotationType(it->RotationType());
+                    bone->SetRotationContext(bone->RotationContext() | i);
+                }
+            }
+        }
+    }
+}
 
 RndTransformable *CharUtlFindBoneTrans(const char *cc, ObjectDir *dir) {
     if (!dir)

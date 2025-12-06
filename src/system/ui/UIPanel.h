@@ -23,6 +23,9 @@ public:
     virtual void Load(BinStream &bs) { Hmx::Object::Load(bs); }
     virtual void SetTypeDef(DataArray *);
     virtual class ObjectDir *DataDir();
+
+    NEW_OBJ(UIPanel)
+
     // UIPanel
 protected:
     virtual void Load();

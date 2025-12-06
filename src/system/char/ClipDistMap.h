@@ -34,7 +34,7 @@ public:
         float *mData; // 0x8
     };
 
-    class Node {
+    struct Node {
     public:
         float unk0;
         float unk4;
@@ -48,6 +48,8 @@ public:
     void Draw(float, float, CharDriver *);
     void FindNodes(float, float, float);
     void FindDists(float, DataArray *);
+    CharClip *ClipA() { return mClipA; }
+    CharClip *ClipB() { return mClipB; }
 
     CharClip *mClipA; // 0x0
     CharClip *mClipB; // 0x4

@@ -29,6 +29,7 @@ public:
     virtual void Copy(const Hmx::Object *, Hmx::Object::CopyType);
     virtual void Load(BinStream &);
 
+    NEW_OBJ(UIFontImporter)
     OBJ_MEM_OVERLOAD(0x2A);
 
     void ImportSettingsFromFont(RndFontBase *);

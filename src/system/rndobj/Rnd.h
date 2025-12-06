@@ -93,9 +93,13 @@ public:
     virtual void ForceColorClear() {}
     virtual void ScreenDump(const char *);
     virtual void ScreenDumpUnique(const char *);
-    virtual void
-    DrawRect(const Hmx::Rect &, const Hmx::Color &, RndMat *, const Hmx::Color *, const Hmx::Color *) {
-    }
+    virtual void DrawRect(
+        const Hmx::Rect &,
+        const Hmx::Color &,
+        RndMat *,
+        const Hmx::Color *,
+        const Hmx::Color *
+    ) {}
     virtual Vector2 &
     DrawString(const char *, const Vector2 &, const Hmx::Color &, bool); // 0x80
     virtual void DrawLine(const Vector3 &, const Vector3 &, const Hmx::Color &, bool) {
@@ -142,6 +146,7 @@ public:
     RndCam *GetDefaultCam() const { return mDefaultCam; }
     ProcessCmd ProcCmds() const { return mProcCmds; }
     bool DisablePP() const { return mDisablePostProc; }
+    DataArray *Font() const { return mFont; }
     void ShowConsole(bool);
     bool ConsoleShowing();
     void EndWorld();
@@ -151,8 +156,13 @@ public:
     void ResetProcCounter();
     bool GetEvenOddDisabled() const;
     void SetEvenOddDisabled(bool);
-    void
-    DrawRectScreen(const Hmx::Rect &, const Hmx::Color &, RndMat *, const Hmx::Color *, const Hmx::Color *);
+    void DrawRectScreen(
+        const Hmx::Rect &,
+        const Hmx::Color &,
+        RndMat *,
+        const Hmx::Color *,
+        const Hmx::Color *
+    );
     const Vector2 &
     DrawStringScreen(const char *c, const Vector2 &v, const Hmx::Color &color, bool b4);
     RndPostProc *GetPostProcOverride();

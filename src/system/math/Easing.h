@@ -259,6 +259,15 @@ inline float EaseCircIn(float t, float power, float) {
     return -ret;
 }
 
+inline float EaseSigmoid(float t, float, float) {
+    MILO_ASSERT(t >= 0 && t <= 1, 0x51);
+    float ret = (t * t * 3.0f) - (t * t * t * 2.0f);
+    if (ret < 0)
+        return 0;
+    if (ret > 1.0f)
+        return 1.0f;
+}
+
 inline float EaseCircOut(float t, float power, float) {
     MILO_ASSERT(t >= 0 && t <= 1, 272);
     float ret = t - 1;

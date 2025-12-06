@@ -1,7 +1,11 @@
 #include "char/CharIKSliderMidi.h"
 #include "char/CharWeightable.h"
+#include "char/Character.h"
+#include "math/Easing.h"
+#include "math/Key.h"
 #include "obj/Object.h"
 #include "obj/Task.h"
+#include "rndobj/Utl.h"
 
 CharIKSliderMidi::CharIKSliderMidi()
     : mTarget(this), mFirstSpot(this), mSecondSpot(this) {
@@ -52,6 +56,16 @@ BEGIN_COPYS(CharIKSliderMidi)
     END_COPYING_MEMBERS
 END_COPYS
 
+BEGIN_LOADS(CharIKSliderMidi)
+    LOAD_REVS(bs)
+    ASSERT_REVS(2, 0)
+    LOAD_SUPERCLASS(Hmx::Object)
+    if (1 < d.rev)
+        CharWeightable::Load(bs);
+    bs >> mTarget >> mFirstSpot >> mSecondSpot;
+    bs >> mTolerance;
+END_LOADS
+
 void CharIKSliderMidi::PollDeps(
     std::list<Hmx::Object *> &changedBy, std::list<Hmx::Object *> &change
 ) {
@@ -85,6 +99,63 @@ void CharIKSliderMidi::SetFraction(float f1, float f2) {
             }
             mFrac = 0;
             mPercentageChanged = true;
+        }
+    }
+}
+
+void CharIKSliderMidi::Highlight() {
+    UtilDrawSphere(mFirstSpot->WorldXfm().v, 1.0f, Hmx::Color(1, 1, 1), 0);
+    UtilDrawSphere(mSecondSpot->WorldXfm().v, 1.0f, Hmx::Color(1, 1, 1), 0);
+    UtilDrawSphere(mDestPos, 1.0f, Hmx::Color(1, 0, 0), 0);
+    UtilDrawSphere(mCurPos, 1.0f, Hmx::Color(0, 1, 0), 0);
+}
+
+void CharIKSliderMidi::Poll() {
+    if (!mTarget || !mFirstSpot || !mSecondSpot)
+        return;
+    else {
+        float weight = Weight();
+        if (weight != 0) {
+            if (Character::Current() && Character::Current()->Teleported()) {
+                mResetAll = true;
+            }
+            if (mResetAll) {
+                Interp(
+                    mFirstSpot->WorldXfm().v,
+                    mSecondSpot->WorldXfm().v,
+                    mTargetPercentage,
+                    mOldPos
+                );
+                Interp(
+                    mFirstSpot->WorldXfm().v,
+                    mSecondSpot->WorldXfm().v,
+                    mTargetPercentage,
+                    mDestPos
+                );
+                mResetAll = false;
+            }
+            if (mPercentageChanged) {
+                mPercentageChanged = false;
+                mOldPos = mDestPos;
+            }
+            Interp(
+                mFirstSpot->WorldXfm().v,
+                mSecondSpot->WorldXfm().v,
+                mTargetPercentage,
+                mDestPos
+            );
+            mFrac += mFracPerBeat * TheTaskMgr.DeltaBeat();
+            ClampEq<float>(mFrac, 0, 1);
+            float f = EaseSigmoid(mFrac, 0, 0);
+            Interp(mOldPos, mDestPos, f, mCurPos);
+            if (weight < 1.0f) {
+                Interp(mTarget->WorldXfm().v, mCurPos, weight, mCurPos);
+            }
+            Transform tf48;
+            Invert(mTarget->TransParent()->WorldXfm(), tf48);
+            Vector3 v58;
+            Multiply(mCurPos, tf48, v58);
+            mTarget->SetLocalPos(v58);
         }
     }
 }

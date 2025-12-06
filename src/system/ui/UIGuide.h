@@ -1,5 +1,6 @@
 #pragma once
 #include "obj/Object.h"
+#include "utl/MemMgr.h"
 
 /** "a guide used to line up UI elements" */
 class UIGuide : public Hmx::Object {
@@ -16,6 +17,9 @@ public:
     virtual void Save(BinStream &);
     virtual void Copy(const Hmx::Object *, Hmx::Object::CopyType);
     virtual void Load(BinStream &);
+
+    NEW_OBJ(UIGuide)
+    OBJ_MEM_OVERLOAD(0x11)
 
 protected:
     UIGuide();

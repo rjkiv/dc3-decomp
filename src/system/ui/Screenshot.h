@@ -1,8 +1,10 @@
 #pragma once
+#include "obj/Object.h"
 #include "rndobj/Draw.h"
 #include "utl/FilePath.h"
 #include "rndobj/Tex.h"
 #include "rndobj/Mat.h"
+#include "utl/MemMgr.h"
 
 class Screenshot : public RndDrawable {
 public:
@@ -16,6 +18,9 @@ public:
     virtual void Load(BinStream &);
     // RndDrawable
     virtual void DrawShowing();
+
+    NEW_OBJ(Screenshot)
+    OBJ_MEM_OVERLOAD(0x13)
 
 protected:
     Screenshot();

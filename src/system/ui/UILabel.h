@@ -55,6 +55,8 @@ public:
     NEW_OBJ(UILabel)
 
     static void Init();
+    static void Terminate();
+    static bool sRequireFixedLength;
 
     void SetFloat(char const *, float);
     void SetDateTime(DateTime const &, Symbol);

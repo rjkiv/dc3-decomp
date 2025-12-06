@@ -40,6 +40,8 @@ public:
     virtual bool Exiting() const;
     virtual void Print(TextStream &);
 
+    NEW_OBJ(UIScreen)
+
     UIPanel *FocusPanel() const { return mFocusPanel; }
     std::list<PanelRef> &PanelList() { return mPanelList; }
 

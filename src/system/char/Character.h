@@ -120,6 +120,7 @@ public:
     // rename once you have a better idea of what this does
     bool LODCheck() const { return mForceLod > 0; }
     PollState GetPollState() const { return mPollState; }
+    int LastLod() const { return mLastLod; }
 
     static void Init();
     static void Terminate();

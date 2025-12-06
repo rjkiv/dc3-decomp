@@ -2,6 +2,8 @@
 #include "char/CharWeightable.h"
 #include "math/Mtx.h"
 #include "obj/Object.h"
+#include "rndobj/Rnd.h"
+#include "rndobj/Utl.h"
 
 CharIKFingers::CharIKFingers()
     : mHand(nullptr), mForeArm(nullptr), mUpperArm(nullptr), mBlendInFrames(0),
@@ -65,6 +67,26 @@ BEGIN_COPYS(CharIKFingers)
         COPY_MEMBER(mHandDestOffset)
     END_COPYING_MEMBERS
 END_COPYS
+
+BEGIN_LOADS(CharIKFingers)
+    LOAD_REVS(bs)
+    ASSERT_REVS(5, 0)
+    LOAD_SUPERCLASS(Hmx::Object)
+    LOAD_SUPERCLASS(CharWeightable)
+    if (d.rev > 1)
+        d >> mIsRightHand;
+    if (d.rev > 2)
+        bs >> mOutputTrans;
+    if (d.rev > 3)
+        bs >> mKeyboardRefBone;
+    if (d.rev > 4) {
+        bs >> mHandKeyboardOffset;
+        bs >> mHandThumbRotation;
+        bs >> mHandPinkyRotation;
+        bs >> mHandMoveForward;
+        bs >> mHandDestOffset;
+    }
+END_LOADS
 
 void CharIKFingers::SetName(const char *name, ObjectDir *dir) {
     Hmx::Object::SetName(name, dir);
@@ -196,4 +218,136 @@ void CharIKFingers::SetName(const char *name, ObjectDir *dir) {
         }
     }
     MeasureLengths();
+}
+
+void CharIKFingers::PollDeps(
+    std::list<Hmx::Object *> &changedBy, std::list<Hmx::Object *> &change
+) {
+    change.push_back(mHand);
+    changedBy.push_back(mHand);
+    for (int i = 0; i < 5; i++) {
+        FingerDesc desc(mFingers[i]);
+        if (desc.mFinger01) {
+            changedBy.push_back(desc.mFinger01);
+        }
+        if (desc.mFinger02) {
+            changedBy.push_back(desc.mFinger02);
+        }
+        if (desc.mFinger03) {
+            changedBy.push_back(desc.mFinger03);
+        }
+        if (desc.mFingertip) {
+            changedBy.push_back(desc.mFingertip);
+        }
+    }
+    if (mForeArm) {
+        change.push_back(mForeArm);
+        changedBy.push_back(mForeArm);
+    }
+    if (mUpperArm) {
+        change.push_back(mUpperArm);
+        changedBy.push_back(mUpperArm);
+    }
+}
+
+void CharIKFingers::Highlight() {
+    for (int i = 0; i < 5; i++) {
+        FingerDesc desc(mFingers[i]);
+        if (desc.unk0) {
+            UtilDrawSphere(desc.unk8, 0.2f, Hmx::Color(1, 0, 0), 0);
+            UtilDrawSphere(desc.unk18, 0.2f, Hmx::Color(0, 1, 0), 0);
+            UtilDrawAxes(desc.mFinger01->WorldXfm(), 1.0f, Hmx::Color(1, 1, 1));
+            TheRnd.DrawLine(
+                desc.mFinger01->WorldXfm().v,
+                desc.mFinger02->WorldXfm().v,
+                Hmx::Color(1, 1, 1),
+                false
+            );
+            TheRnd.DrawLine(
+                desc.mFinger02->WorldXfm().v,
+                desc.mFinger03->WorldXfm().v,
+                Hmx::Color(1, 1, 1),
+                false
+            );
+            TheRnd.DrawLine(
+                desc.mFinger03->WorldXfm().v,
+                desc.mFingertip->WorldXfm().v,
+                Hmx::Color(1, 1, 1),
+                false
+            );
+        }
+    }
+}
+
+void CharIKFingers::Poll() {
+    if (!mHand || !mIsSetup)
+        return;
+    else {
+        Hmx::Matrix3 mtx58;
+        Hmx::Matrix3 mtx7c;
+        Invert(mKeyboardRefBone->WorldXfm().m, mtx58);
+        Multiply(mHand->WorldXfm().m, mtx58, mtx7c);
+        Vector3 v88;
+        Subtract(mKeyboardRefBone->WorldXfm().v, mHand->WorldXfm().v, v88);
+        float weight = Weight();
+        if (weight < 1.0) {
+            if (mOutputTrans) {
+                mOutputTrans->SetWorldXfm(mHand->WorldXfm());
+            }
+        } else {
+            if (mResetCurHandTrans) {
+                mCurHandTrans.Set(mHand->WorldXfm().m, mHand->WorldXfm().v);
+                mDestHandTrans.Set(mHand->WorldXfm().m, mHand->WorldXfm().v);
+                mResetCurHandTrans = false;
+            }
+            int i3 = 0;
+            float f8 = 1.0f;
+            int i1 = -1;
+            for (int i = 0; i < 5; i++) {
+                if (mFingers[i].unk0) {
+                    if (i1 == -1)
+                        i1 = i;
+                    i3++;
+                }
+            }
+            CalculateHandDest(i3, i1);
+            if (mBlendInFrames > 0) {
+                f8 = 1.0f - mBlendInFrames / 5.0f;
+            } else if (mBlendOutFrames > 0) {
+                f8 = 1.0f - mBlendOutFrames / 5.0f;
+            }
+            Interp(mCurHandTrans.v, mDestHandTrans.v, f8, mCurHandTrans.v);
+            Interp(mCurHandTrans.m, mDestHandTrans.m, f8, mCurHandTrans.m);
+            if (mOutputTrans) {
+                mOutputTrans->SetWorldXfm(mCurHandTrans);
+            }
+            for (int i = 0; i < 5; i++) {
+                CalculateFingerDest((FingerNum)i);
+                MoveFinger((FingerNum)i);
+            }
+            if (i3 > 0) {
+                for (int i = 2; i <= 4; i++) {
+                    FingerDesc &prevFinger = mFingers[i - 1];
+                    FingerDesc &curFinger = mFingers[i];
+                    if (!curFinger.unk0) {
+                        if (i == 4) {
+                            FixSingleFinger(
+                                prevFinger.mFinger01, curFinger.mFinger01, nullptr
+                            );
+                        } else {
+                            FixSingleFinger(
+                                prevFinger.mFinger01,
+                                curFinger.mFinger01,
+                                mFingers[i + 1].mFinger01
+                            );
+                        }
+                    }
+                }
+            }
+            if (mBlendInFrames > 0)
+                mBlendInFrames--;
+            if (mBlendOutFrames > 0)
+                mBlendOutFrames--;
+        }
+    }
 }

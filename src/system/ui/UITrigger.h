@@ -1,6 +1,8 @@
 #pragma once
+#include "obj/Object.h"
 #include "rndobj/EventTrigger.h"
 #include "rndobj/Poll.h"
+#include "utl/MemMgr.h"
 
 /** "Triggers anims based on UI events (enter, exit, etc.)" */
 class UITrigger : public EventTrigger, public RndPollable {
@@ -20,6 +22,9 @@ public:
     // RndPollable
     virtual void Poll();
     virtual void Enter();
+
+    NEW_OBJ(UITrigger)
+    OBJ_MEM_OVERLOAD(0x14)
 
     bool IsDone() const;
     bool IsBlocking() const;

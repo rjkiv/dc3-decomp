@@ -1,4 +1,5 @@
 #pragma once
+#include "char/ClipDistMap.h"
 #include "char/Waypoint.h"
 #include "char/CharClip.h"
 #include "char/CharClipGroup.h"
@@ -17,7 +18,6 @@ class CharacterTest : public RndOverlay::Callback {
 public:
     CharacterTest(Character *);
     virtual ~CharacterTest();
-    virtual float UpdateOverlay(RndOverlay *, float);
     virtual DataNode Handle(DataArray *, bool);
 
     void Save(BinStream &);
@@ -32,8 +32,10 @@ public:
     void Walk();
     void Recenter();
     void Poll();
+    void Draw();
 
 protected:
+    virtual float UpdateOverlay(RndOverlay *, float);
     void Sync();
     void PlayNew();
     DataNode OnGetFilteredClips(DataArray *);
@@ -66,7 +68,7 @@ protected:
     bool mShowFootExtents; // 0x8c
     int unk90;
     int unk94;
-    int unk98;
+    ClipDistMap *unk98;
     RndOverlay *mOverlay; // 0x9c
 };
 

@@ -1,6 +1,17 @@
 #include "char/CharacterTest.h"
 #include "Character.h"
+#include "char/CharForeTwist.h"
+#include "char/CharUpperTwist.h"
+#include "char/CharUtl.h"
+#include "char/ClipGraphGen.h"
+#include "obj/Object.h"
+#include "rndobj/Cam.h"
+#include "rndobj/Graph.h"
 #include "rndobj/Overlay.h"
+#include "utl/Symbol.h"
+#include "rndobj/Utl.h"
+
+Hmx::Object *gClick;
 
 CharacterTest::CharacterTest(Character *theChar)
     : mMe(theChar), mDriver(theChar), mClip1(theChar), mClip2(theChar),
@@ -117,4 +128,129 @@ DataNode CharacterTest::OnGetFilteredClips(DataArray *arr) {
         ptr->SortNodes(0);
     }
     return ptr;
+}
+
+float CharacterTest::UpdateOverlay(RndOverlay *o, float f) {
+    if (unk98)
+        unk98->Draw(40.0f, 40.0f, mDriver);
+    return f;
+}
+
+void CharacterTest::AddDefaults() {
+    static Symbol hand("hand");
+    static Symbol twist1("twist1");
+    static Symbol twist2("twist2");
+    static Symbol offset("offset");
+    static Symbol upper_arm("upper_arm");
+    if (!mMe->Driver())
+        mMe->New<CharDriver>("main.drv");
+    if (!mMe->BoneServo()) {
+        if (!mMe->Find<CharServoBone>("bone.servo", false)) {
+            mMe->New<CharServoBone>("bone.servo");
+        }
+        mMe->Driver()->SetBones(mMe->Find<CharBonesObject>("bone.servo", true));
+    }
+    if (!mMe->Find<CharForeTwist>("foreTwist_L.ik", false)) {
+        RndTransformable *lhand = CharUtlFindBoneTrans("bone_L-hand", mMe);
+        if (lhand) {
+            RndTransformable *ltwist2 = CharUtlFindBoneTrans("bone_L-foreTwist2", mMe);
+            if (ltwist2) {
+                CharForeTwist *ltwist = mMe->New<CharForeTwist>("foreTwist_L.ik");
+                ltwist->SetProperty(hand, lhand);
+                ltwist->SetProperty(twist2, ltwist2);
+                ltwist->SetProperty(offset, 90);
+            }
+        }
+    }
+    if (!mMe->Find<CharForeTwist>("foreTwist_R.ik", false)) {
+        RndTransformable *rtwist2;
+        RndTransformable *rhand;
+        rhand = CharUtlFindBoneTrans("bone_R-hand", mMe);
+        if (rhand) {
+            rtwist2 = CharUtlFindBoneTrans("bone_R-foreTwist2", mMe);
+            if (rtwist2) {
+                CharForeTwist *rtwist = mMe->New<CharForeTwist>("foreTwist_R.ik");
+                rtwist->SetProperty(hand, rhand);
+                rtwist->SetProperty(twist2, rtwist2);
+                rtwist->SetProperty(offset, -90);
+            }
+        }
+    }
+    RndTransformable *utwist2;
+    RndTransformable *utwist1;
+    RndTransformable *uarm;
+    CharUpperTwist *twist;
+    if (!mMe->Find<CharUpperTwist>("upperTwist_L.ik", false)) {
+        utwist1 = CharUtlFindBoneTrans("bone_L-upperTwist1", mMe);
+        if (utwist1) {
+            utwist2 = CharUtlFindBoneTrans("bone_L-upperTwist2", mMe);
+            if (utwist2) {
+                uarm = CharUtlFindBoneTrans("bone_L-upperArm", mMe);
+                if (uarm) {
+                    twist = mMe->New<CharUpperTwist>("upperTwist_L.ik");
+                    twist->SetProperty(twist1, utwist1);
+                    twist->SetProperty(twist2, utwist2);
+                    twist->SetProperty(upper_arm, uarm);
+                }
+            }
+        }
+    }
+    if (!mMe->Find<CharUpperTwist>("upperTwist_R.ik", false)) {
+        utwist1 = CharUtlFindBoneTrans("bone_R-upperTwist1", mMe);
+        if (utwist1) {
+            utwist2 = CharUtlFindBoneTrans("bone_R-upperTwist2", mMe);
+            if (utwist2) {
+                uarm = CharUtlFindBoneTrans("bone_R-upperArm", mMe);
+                if (uarm) {
+                    twist = mMe->New<CharUpperTwist>("upperTwist_R.ik");
+                    twist->SetProperty(twist1, utwist1);
+                    twist->SetProperty(twist2, utwist2);
+                    twist->SetProperty(upper_arm, uarm);
+                }
+            }
+        }
+    }
+}
+
+void CharacterTest::Draw() {
+    if (mDriver && (mClip1 || mClip2))
+        mDriver->Highlight();
+    RndTransformable *trans = CharUtlFindBoneTrans("bone_head", mMe);
+    if (!trans)
+        trans = mMe;
+    if (mShowScreenSize) {
+        UtilDrawString(
+            MakeString(
+                "lod %d %.3f", mMe->LastLod(), mMe->ComputeScreenSize(RndCam::Current())
+            ),
+            trans->WorldXfm().v,
+            Hmx::Color(1.0f, 1.0f, 1.0f)
+
+        );
+    }
+}
+
+bool CharacterTest::MovingSelf() const {
+    return mMe->BoneServo() ? mMe->BoneServo()->mMoveSelf : false;
+}
+
+void CharacterTest::SetDistMap(Symbol s) {
+    static Symbol none("none");
+    static Symbol nodes("nodes");
+    static Symbol raw("raw");
+    mShowDistMap = s;
+    RELEASE(unk98);
+    if (s != none) {
+        mOverlay->SetCallback(this);
+        mOverlay->SetShowing(true);
+        if (mClip1 && mClip2 && Clips()) {
+            if (s == raw) {
+                unk98 = new ClipDistMap(mClip1, mClip2, 1, 1, 3, nullptr);
+                unk98->FindDists(0, nullptr);
+            } else {
+                ClipGraphGenerator gen;
+                unk98 = gen.GeneratePair(mClip1, mClip2, nullptr, nullptr);
+            }
+        }
+    }
 }

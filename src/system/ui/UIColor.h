@@ -1,6 +1,7 @@
 #pragma once
 #include "math/Color.h"
 #include "obj/Object.h"
+#include "utl/MemMgr.h"
 
 /**
  * @brief A color to used by UI objects.
@@ -16,6 +17,9 @@ public:
     virtual void Save(BinStream &);
     virtual void Copy(const Hmx::Object *, Hmx::Object::CopyType);
     virtual void Load(BinStream &);
+
+    NEW_OBJ(UIColor)
+    OBJ_MEM_OVERLOAD(0x10)
 
     const Hmx::Color &GetColor() const;
     void SetColor(const Hmx::Color &);

@@ -1,8 +1,10 @@
 #pragma once
+#include "obj/Object.h"
 #include "ui/UIComponent.h"
 #include "ui/UITransitionHandler.h"
 #include "rndobj/Mesh.h"
 #include "utl/FilePath.h"
+#include "utl/MemMgr.h"
 
 /** "A picture object with asynchronously loading texture" */
 class UIPicture : public UIComponent, public UITransitionHandler {
@@ -22,6 +24,9 @@ public:
     // RndPollable
     virtual void Poll();
     virtual void Exit();
+
+    NEW_OBJ(UIPicture)
+    OBJ_MEM_OVERLOAD(0x23)
 
     void SetTex(FilePath const &);
     void SetHookTex(bool);

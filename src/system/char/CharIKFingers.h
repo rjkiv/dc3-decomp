@@ -66,6 +66,10 @@ public:
 
 protected:
     CharIKFingers();
+    void CalculateHandDest(int, int);
+    void CalculateFingerDest(FingerNum);
+    void MoveFinger(FingerNum);
+    void FixSingleFinger(RndTransformable *, RndTransformable *, RndTransformable *);
 
     ObjPtr<RndTransformable> mHand; // 0x30
     ObjPtr<RndTransformable> mForeArm; // 0x44

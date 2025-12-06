@@ -40,9 +40,9 @@ protected:
     ObjPtr<RndTransformable> mFirstSpot; // 0x44
     /** "Spot at 100%" */
     ObjPtr<RndTransformable> mSecondSpot; // 0x58
-    Vector3 unk6c;
-    Vector3 unk7c;
-    Vector3 unk8c;
+    Vector3 mDestPos; // 0x6c
+    Vector3 mOldPos; // 0x7c
+    Vector3 mCurPos; // 0x8c
     float mTargetPercentage; // 0x9c
     float mOldPercentage; // 0xa0
     float mFrac; // 0xa4
