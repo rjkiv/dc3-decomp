@@ -43,6 +43,13 @@
             "flags":[
                 
             ]
+        },
+        "curl": {
+            "base": "base",
+            "flags": [
+                "/TC",
+                "/GS"
+            ]
         }
     }
 }

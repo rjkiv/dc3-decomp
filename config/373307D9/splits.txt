@@ -1993,12 +1993,12 @@ system/net/llist.cpp:
 	.pdata      start:0x822CC2E0 end:0x822CC300
 	.text       start:0x82564B38 end:0x82564E80
 
-system/net/url.cpp:
+system/net/curl/lib/url.c:
 	.rdata      start:0x820672D4 end:0x82067B24
 	.pdata      start:0x822CC300 end:0x822CC458
 	.text       start:0x82564E80 end:0x8256A5C0
 
-system/net/hostip.cpp:
+system/net/curl/lib/hostip.c:
 	.rdata      start:0x82067B24 end:0x82067B74
 	.pdata      start:0x822CC458 end:0x822CC490
 	.text       start:0x8256A5C0 end:0x8256AC68
@@ -2020,12 +2020,12 @@ system/net/splay.cpp:
 	.pdata      start:0x822CC548 end:0x822CC560
 	.text       start:0x8256D8F8 end:0x8256DD68
 
-system/net/timeval.cpp:
+system/net/curl/lib/timeval.c:
 	.rdata      start:0x820683E0 end:0x82068444
 	.pdata      start:0x822CC560 end:0x822CC568
 	.text       start:0x8256DD68 end:0x8256DE38
 
-system/net/sendf.cpp:
+system/net/curl/lib/sendf.c:
 	.rdata      start:0x82068444 end:0x82068514
 	.pdata      start:0x822CC568 end:0x822CC5C0
 	.text       start:0x8256DE38 end:0x8256E928
@@ -2053,7 +2053,7 @@ system/net/wildcard.cpp:
 	.pdata      start:0x822CC6F0 end:0x822CC700
 	.text       start:0x825745C8 end:0x825746B0
 
-system/net/curl_rand.cpp:
+system/net/curl/lib/curl_rand.c:
 	.pdata      start:0x822CC700 end:0x822CC708
 	.text       start:0x825746B0 end:0x82574730
 
@@ -2062,7 +2062,7 @@ system/net/getinfo.cpp:
 	.pdata      start:0x822CC708 end:0x822CC718
 	.text       start:0x82574730 end:0x82574CC8
 
-system/net/slist.cpp:
+system/net/curl/lib/slist.c:
 	.pdata      start:0x822CC718 end:0x822CC728
 	.text       start:0x82574CC8 end:0x82574DE0
 
@@ -2107,12 +2107,12 @@ system/net/smtp.cpp:
 	.pdata      start:0x822CC910 end:0x822CC9C8
 	.text       start:0x8257A050 end:0x8257BBD8
 
-system/net/pop3.cpp:
+system/net/curl/lib/pop3.c:
 	.rdata      start:0x8206A1D8 end:0x8206A354
 	.pdata      start:0x822CC9C8 end:0x822CCA28
 	.text       start:0x8257BBD8 end:0x8257C740
 
-system/net/imap.cpp:
+system/net/curl/lib/imap.c:
 	.rdata      start:0x8206A354 end:0x8206A52C
 	.pdata      start:0x822CCA28 end:0x822CCA80
 	.text       start:0x8257C740 end:0x8257D380
@@ -2127,7 +2127,7 @@ system/net/file.cpp:
 	.pdata      start:0x822CCAF8 end:0x822CCB20
 	.text       start:0x8257EDD0 end:0x8257F778
 
-system/net/dict.cpp:
+system/net/curl/lib/dict.c:
 	.rdata      start:0x8206AB78 end:0x8206ACAC
 	.pdata      start:0x822CCB20 end:0x822CCB30
 	.text       start:0x8257F778 end:0x8257FBA0
@@ -2150,7 +2150,7 @@ system/net/socks.cpp:
 	.pdata      start:0x822CCCA0 end:0x822CCCB8
 	.text       start:0x82584E38 end:0x82585A30
 
-system/net/rawstr.cpp:
+system/net/curl/lib/rawstr.c:
 	.pdata      start:0x822CCCB8 end:0x822CCCD0
 	.text       start:0x82585A30 end:0x82585CB8
 
@@ -2168,16 +2168,16 @@ system/net/netrc.cpp:
 	.pdata      start:0x822CCD20 end:0x822CCD28
 	.text       start:0x82587248 end:0x82587500
 
-system/net/speedcheck.cpp:
+system/net/curl/lib/speedcheck.c:
 	.rdata      start:0x8206C398 end:0x8206C4BC
 	.pdata      start:0x822CCD28 end:0x822CCD30
 	.text       start:0x82587500 end:0x825875D8
 
-system/net/strequal.cpp:
+system/net/curl/lib/strequal.c:
 	.pdata      start:0x822CCD30 end:0x822CCD40
 	.text       start:0x825875D8 end:0x825876C8
 
-system/net/share.cpp:
+system/net/curl/lib/share.c:
 	.pdata      start:0x822CCD40 end:0x822CCD50
 	.text       start:0x825876C8 end:0x82587788
 
@@ -2186,7 +2186,7 @@ system/net/http_digest.cpp:
 	.pdata      start:0x822CCD50 end:0x822CCD78
 	.text       start:0x82587788 end:0x825883A0
 
-system/net/inet_ntop.cpp:
+system/net/curl/lib/inet_ntop.c:
 	.pdata      start:0x822CCD78 end:0x822CCD88
 	.text       start:0x825883A0 end:0x825884D8
 
@@ -2194,7 +2194,7 @@ system/net/curl_addrinfo.cpp:
 	.pdata      start:0x822CCD88 end:0x822CCDA8
 	.text       start:0x825884D8 end:0x82588850
 
-system/net/hostip4.cpp:
+system/net/curl/lib/hostip4.c:
 	.text       start:0x82588850 end:0x82588868
 
 system/net/content_encoding.cpp:
@@ -2202,33 +2202,33 @@ system/net/content_encoding.cpp:
 	.pdata      start:0x822CCDA8 end:0x822CCDC8
 	.text       start:0x82588868 end:0x82588FB0
 
-system/net/http_chunks.cpp:
+system/net/curl/lib/http_chunks.c:
 	.pdata      start:0x822CCDC8 end:0x822CCDD0
 	.text       start:0x82588FB0 end:0x82589420
 
-system/net/strerror.cpp:
+system/net/curl/lib/strerror.c:
 	.rdata      start:0x8206C8E4 end:0x8206D564
 	.pdata      start:0x822CCDD0 end:0x822CCDD8
 	.text       start:0x82589420 end:0x825898C8
 
-system/net/curl_threads.cpp:
+system/net/curl/lib/curl_threads.c:
 	.pdata      start:0x822CCDD8 end:0x822CCDE8
 	.text       start:0x825898C8 end:0x82589970
 
-system/net/inet_pton.cpp:
+system/net/curl/lib/inet_pton.c:
 	.pdata      start:0x822CCDE8 end:0x822CCDF8
 	.text       start:0x82589970 end:0x82589AB0
 
-system/net/nonblock.cpp:
+system/net/curl/lib/nonblock.c:
 	.pdata      start:0x822CCDF8 end:0x822CCE00
 	.text       start:0x82589AB0 end:0x82589AE8
 
-system/net/base64.cpp:
+system/net/curl/lib/base64.c:
 	.rdata      start:0x8206D564 end:0x8206D5C4
 	.pdata      start:0x822CCE00 end:0x822CCE18
 	.text       start:0x82589AE8 end:0x82589EB8
 
-system/net/http_proxy.cpp:
+system/net/curl/lib/http_proxy.c:
 	.rdata      start:0x8206D5C4 end:0x8206D7B8
 	.pdata      start:0x822CCE18 end:0x822CCE20
 	.text       start:0x82589EB8 end:0x8258A878
@@ -2238,20 +2238,20 @@ system/net/formdata.cpp:
 	.pdata      start:0x822CCE20 end:0x822CCE60
 	.text       start:0x8258A878 end:0x8258B3F0
 
-system/net/parsedate.cpp:
+system/net/curl/lib/parsedate.c:
 	.rdata      start:0x8206DA18 end:0x8206DFE4
 	.pdata      start:0x822CCE60 end:0x822CCE80
 	.text       start:0x8258B3F0 end:0x8258BAB0
 
-system/net/fileinfo.cpp:
+system/net/curl/lib/fileinfo.c:
 	.pdata      start:0x822CCE80 end:0x822CCE90
 	.text       start:0x8258BAB0 end:0x8258BB80
 
-system/net/strtok.cpp:
+system/net/curl/lib/strtok.c:
 	.pdata      start:0x822CCE90 end:0x822CCE98
 	.text       start:0x8258BB80 end:0x8258BC58
 
-system/net/curl_memrchr.cpp:
+system/net/curl/lib/curl_memrchr.c:
 	.text       start:0x8258BC58 end:0x8258BC98
 
 system/net/JsonMemory.cpp:
@@ -2263,16 +2263,16 @@ system/net/json-c/arraylist.c:
 	.pdata      start:0x822CCEA0 end:0x822CCEB8
 	.text       start:0x8258BD40 end:0x8258BF28
 
-system/net/pingpong.cpp:
+system/net/curl/lib/pingpong.c:
 	.rdata      start:0x8206E034 end:0x8206E190
 	.pdata      start:0x822CCEB8 end:0x822CCF00
 	.text       start:0x8258BF28 end:0x8258C738
 
-system/net/hmac.cpp:
+system/net/curl/lib/hmac.c:
 	.pdata      start:0x822CCF00 end:0x822CCF18
 	.text       start:0x8258C738 end:0x8258C9A8
 
-system/net/md5.cpp:
+system/net/curl/lib/md5.c:
 	.rdata      start:0x8206E190 end:0x8206E24C
 	.pdata      start:0x822CCF18 end:0x822CCF38
 	.text       start:0x8258C9A8 end:0x8258D660
@@ -2282,7 +2282,7 @@ system/net/ftplistparser.cpp:
 	.pdata      start:0x822CCF38 end:0x822CCF58
 	.text       start:0x8258D660 end:0x8258E6E8
 
-system/net/curl_fnmatch.cpp:
+system/net/curl/lib/curl_fnmatch.c:
 	.rdata      start:0x8206E2D4 end:0x8206E314
 	.pdata      start:0x822CCF58 end:0x822CCF70
 	.text       start:0x8258E6E8 end:0x8258F0E0

@@ -32,5 +32,6 @@ cflags_includes = [
 
     # Libraries
     "/I src/system/oggvorbis",
-    "/I src/system/synth/tomcrypt"
+    "/I src/system/synth/tomcrypt",
+    "/I src/system/net/curl/include"
 ]

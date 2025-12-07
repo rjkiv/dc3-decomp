@@ -6,6 +6,8 @@ extern "C" {
 
 #define errno 0
 
+#define ENOSPC 28
+
 #ifdef __cplusplus
 }
 #endif
