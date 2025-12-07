@@ -1,5 +1,6 @@
 #include "char/CharIKRod.h"
 #include "obj/Object.h"
+#include "utl/BinStream.h"
 
 CharIKRod::CharIKRod()
     : mLeftEnd(this), mRightEnd(this), mDestPos(0.5), mSideAxis(this), mVertical(0),
@@ -47,6 +48,19 @@ BEGIN_COPYS(CharIKRod)
     END_COPYING_MEMBERS
 END_COPYS
 
+BEGIN_LOADS(CharIKRod)
+    LOAD_REVS(bs)
+    ASSERT_REVS(2, 0)
+    LOAD_SUPERCLASS(Hmx::Object)
+    bs >> mLeftEnd;
+    bs >> mRightEnd;
+    bs >> mDestPos;
+    bs >> mSideAxis;
+    bs >> mVertical;
+    bs >> mDest;
+    bs >> mXfm;
+END_LOADS
+
 void CharIKRod::Poll() {
     Transform tf38;
     if (ComputeRod(tf38)) {
@@ -71,4 +85,24 @@ void CharIKRod::SyncBones() {
         Invert(tf38, tf38);
         Multiply(mDest->WorldXfm(), tf38, mXfm);
     }
+}
+
+bool CharIKRod::ComputeRod(Transform &tf) {
+    if (mDest == 0 || mLeftEnd == 0 || mRightEnd == 0)
+        return false;
+    Interp(mLeftEnd->WorldXfm().v, mRightEnd->WorldXfm().v, mDestPos, tf.v);
+    if (mVertical)
+        tf.m.x.Set(0.0f, 0.0f, -1.0f);
+    else {
+        Interp(mLeftEnd->WorldXfm().m.x, mRightEnd->WorldXfm().m.x, mDestPos, tf.m.x);
+        Normalize(tf.m.x, tf.m.x);
+    }
+    if (mSideAxis)
+        tf.m.z = mSideAxis->WorldXfm().m.z;
+    else
+        Subtract(mLeftEnd->WorldXfm().v, mRightEnd->WorldXfm().v, tf.m.z);
+    Cross(tf.m.z, tf.m.x, tf.m.y);
+    Normalize(tf.m.y, tf.m.y);
+    Cross(tf.m.x, tf.m.y, tf.m.z);
+    return true;
 }

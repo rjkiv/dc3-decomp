@@ -37,3 +37,21 @@ BEGIN_LOADS(CharBoneOffset)
     d >> mDest;
     d >> mOffset;
 END_LOADS
+
+void CharBoneOffset::Poll() {
+    if (!mDest || !mDest->TransParent())
+        return;
+    Transform tf(mDest->LocalXfm());
+    tf.v += mOffset;
+    Transform tRes;
+    Multiply(tf, mDest->TransParent()->WorldXfm(), tRes);
+    mDest->SetWorldXfm(tRes);
+}
+
+void CharBoneOffset::PollDeps(
+    std::list<Hmx::Object *> &changedBy, std::list<Hmx::Object *> &change
+) {
+    change.push_back(mDest);
+    if (mDest && mDest->TransParent())
+        changedBy.push_back(mDest->TransParent());
+}

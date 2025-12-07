@@ -94,4 +94,6 @@ void CharMirror::SetMirrorServo(CharServoBone *bone) {
 }
 
 BEGIN_HANDLERS(CharMirror)
+    HANDLE_SUPERCLASS(CharWeightable)
+    HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS

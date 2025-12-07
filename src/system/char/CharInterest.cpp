@@ -2,7 +2,9 @@
 #include "CharInterest.h"
 #include "math/Rot.h"
 #include "obj/Object.h"
+#include "rndobj/Graph.h"
 #include "rndobj/Trans.h"
+#include "math/Rand.h"
 
 CharInterest::CharInterest()
     : mMaxViewAngle(20), mPriority(1), mMinLookTime(1), mMaxLookTime(3),
@@ -15,6 +17,36 @@ BEGIN_HANDLERS(CharInterest)
     HANDLE_SUPERCLASS(RndTransformable)
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
+
+BEGIN_LOADS(CharInterest)
+    LOAD_REVS(bs)
+    ASSERT_REVS(6, 0)
+    LOAD_SUPERCLASS(Hmx::Object)
+    LOAD_SUPERCLASS(RndTransformable)
+    bs >> mMaxViewAngle;
+    bs >> mPriority;
+    bs >> mMinLookTime;
+    bs >> mMaxLookTime;
+    bs >> mRefractoryPeriod;
+    if (d.rev > 1 && d.rev <= 5) {
+        ObjPtr<Hmx::Object> obj(this);
+        bs >> obj;
+    } else if (d.rev > 5) {
+        bs >> mDartRulesetOverride;
+    }
+    if (d.rev > 2) {
+        bs >> mCategoryFlags;
+        if (d.rev == 3) {
+            bool x;
+            d >> x;
+        }
+    }
+    if (d.rev > 4) {
+        d >> mOverridesMinTargetDist;
+        bs >> mMinTargetDistOverride;
+    }
+    SyncMaxViewAngle();
+END_LOADS
 
 BEGIN_PROPSYNCS(CharInterest)
     SYNC_PROP_MODIFY(max_view_angle, mMaxViewAngle, SyncMaxViewAngle())
@@ -63,4 +95,44 @@ BEGIN_COPYS(CharInterest)
     END_COPYING_MEMBERS
 END_COPYS
 
-void CharInterest::SyncMaxViewAngle() { unkf4 = std::cos(mMaxViewAngle * DEG2RAD); }
+void CharInterest::SyncMaxViewAngle() {
+    mMaxViewAngleCos = std::cos(mMaxViewAngle * DEG2RAD);
+}
+
+void CharInterest::Highlight() {
+    RndGraph *oneframe = RndGraph::GetOneFrame();
+    oneframe->AddSphere(WorldXfm().v, 1.0f, Hmx::Color(1.0f, 0.0f, 0.0f));
+    Vector2 vec2;
+    float wts = RndCam::Current()->WorldToScreen(WorldXfm().v, vec2);
+    if (wts > 0.0f) {
+        vec2.x = vec2.x * TheRnd.Width();
+        vec2.y = vec2.y * TheRnd.Height();
+        vec2.y += 15.0;
+        vec2.x -= 30.0;
+        oneframe->AddString(MakeString("%s", Name()), vec2, Hmx::Color(1.0f, 1.0f, 1.0f));
+    }
+    if (mDartRulesetOverride) {
+        const DataNode *minrad = mDartRulesetOverride->Property("min_radius", false);
+        const DataNode *maxrad = mDartRulesetOverride->Property("max_radius", false);
+        if (minrad && maxrad) {
+            oneframe->AddSphere(
+                WorldXfm().v, minrad->Float(), Hmx::Color(0.7f, 0.7f, 0.7f)
+            );
+            oneframe->AddSphere(
+                WorldXfm().v, maxrad->Float(), Hmx::Color(1.0f, 1.0f, 1.0f)
+            );
+        }
+    }
+}
+
+bool CharInterest::IsWithinViewCone(const Vector3 &v1, const Vector3 &v2) {
+    Vector3 v1c;
+    v1c = WorldXfm().v;
+    Vector3 v28;
+    Subtract(v1c, v1, v28);
+    Normalize(v28, v28);
+    if (Dot(v2, v28) >= mMaxViewAngleCos)
+        return true;
+    else
+        return false;
+}

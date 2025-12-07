@@ -21,6 +21,8 @@ public:
 protected:
     virtual void ReallocateInternal();
 
+    static RndTransformable *sDummyMesh;
+
     /** "Transes we will change" */
     ObjPtrVec<RndTransformable> mMeshes; // 0x58
 };
