@@ -110,6 +110,9 @@ void exit(int);
 void abort(void);
 void _Exit(int exit_code);
 
+int *__sys_nerr(void);
+#define sys_nerr (*__sys_nerr())
+
 #ifdef __cplusplus
 }
 #endif
