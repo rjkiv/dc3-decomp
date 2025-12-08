@@ -53,6 +53,7 @@ public:
     void SetFocusComponent(UIComponent *);
     void SetLoadedDir(PanelDir *, bool);
     void UnsetLoadedDir();
+    PanelDir *LoadedDir() { return mDir; }
     void CheckUnload();
     static bool GetFinalDrawPass() { return sIsFinalDrawPass; }
     State GetState() { return mState; }

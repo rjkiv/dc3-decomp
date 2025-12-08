@@ -134,7 +134,7 @@
             "lazer/meta_ham/PracticeChoosePanel.cpp": "MISSING",
             "lazer/meta_ham/ProfileMgr.cpp": "MISSING",
             "lazer/meta_ham/SaveLoadManager.cpp": "MISSING",
-            "lazer/meta_ham/ShellInput.cpp": "MISSING",
+            "lazer/meta_ham/ShellInput.cpp": "NonMatching",
             "lazer/meta_ham/SigninScreen.cpp": "NonMatching",
             "lazer/meta_ham/SingleUserCrewSelectPanel.cpp": "MISSING",
             "lazer/meta_ham/SkeletonChooser.cpp": "MISSING",

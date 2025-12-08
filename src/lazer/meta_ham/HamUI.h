@@ -1,5 +1,6 @@
 #pragma once
 
+#include "lazer/meta_ham/HelpBarPanel.h"
 #include "lazer/meta_ham/ShellInput.h"
 #include "meta/ConnectionStatusPanel.h"
 #include "os/ContentMgr.h"
@@ -19,7 +20,7 @@ public:
     void ForceLetterboxOff();
     void ForceLetterboxOffImmediate();
 
-    u32 unk_0xD8;
+    HelpBarPanel *unk_0xD8;
     u32 unk_0xDC; // LetterboxPanel*
     u32 unk_0xE0;
     u32 unk_0xE4;
@@ -32,7 +33,7 @@ public:
     u8 unk_0xFD;
     u32 unk_0x100;
     ShellInput *unk_0x104;
-    u32 unk_0x108;
+    s32 unk_0x108;
     u32 unk_0x10C;
     bool mFullScreenDrawActive;
     float mSkelRot;
