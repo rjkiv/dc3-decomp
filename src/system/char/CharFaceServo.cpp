@@ -8,7 +8,8 @@
 CharFaceServo::CharFaceServo()
     : mClips(this), mBaseClip(this), mBlinkClipLeft(this), mBlinkClipLeft2(this),
       mBlinkClipRight(this), mBlinkClipRight2(this), mBlinkWeightLeft(0),
-      mBlinkWeightRight(0), unk110(0), unk114(0), unk118(0) {}
+      mBlinkWeightRight(0), mNeedScaleDown(0), mProceduralBlinkWeight(0),
+      mAppliedProceduralBlink(0) {}
 
 CharFaceServo::~CharFaceServo() {}
 
@@ -53,10 +54,40 @@ BEGIN_COPYS(CharFaceServo)
     END_COPYING_MEMBERS
 END_COPYS
 
+BEGIN_LOADS(CharFaceServo)
+    LOAD_REVS(bs)
+    ASSERT_REVS(4, 0)
+    LOAD_SUPERCLASS(Hmx::Object)
+    ObjPtr<ObjectDir> oDirPtr(this);
+    bs >> oDirPtr;
+    Symbol sym;
+    if (d.rev > 3)
+        bs >> sym;
+    else if (oDirPtr) {
+        sym = oDirPtr->Type();
+        if (sym.Null()) {
+            for (ObjDirItr<CharClip> it(oDirPtr, true); it != nullptr; ++it) {
+                sym = it->Type();
+                break;
+            }
+        }
+    }
+    if (d.rev != 0)
+        bs >> mBlinkClipLeftName;
+    if (d.rev > 1)
+        bs >> mBlinkClipRightName;
+    if (d.rev > 2) {
+        bs >> mBlinkClipLeftName2;
+        bs >> mBlinkClipRightName2;
+    }
+    SetClips(oDirPtr);
+    SetClipType(sym);
+END_LOADS
+
 void CharFaceServo::Enter() {
     RndPollable::Enter();
-    unk110 = true;
-    unk114 = 0;
+    mNeedScaleDown = true;
+    mProceduralBlinkWeight = 0;
 }
 
 float CharFaceServo::BlinkWeightLeft() const { return mBlinkWeightLeft; }
@@ -89,6 +120,71 @@ void CharFaceServo::SetClipType(Symbol type) {
         mClipType = type;
         ClearBones();
         CharBoneDir::StuffBones(*this, mClipType);
-        unk110 = true;
+        mNeedScaleDown = true;
     }
+}
+
+void CharFaceServo::TryScaleDown() {
+    if (mNeedScaleDown) {
+        mNeedScaleDown = false;
+        if (mBaseClip && !mClipType.Null()) {
+            mBaseClip->ScaleDown(*this, 0.0f);
+        }
+        mBlinkWeightRight = 0.0f;
+        mBlinkWeightLeft = 0.0f;
+    }
+}
+
+void CharFaceServo::ApplyProceduralWeights() {
+    if (mProceduralBlinkWeight > 0.0f && !mAppliedProceduralBlink) {
+        TryScaleDown();
+        if (mBlinkClipLeft) {
+            mBlinkClipLeft->ScaleAdd(
+                *this,
+                Interp(0.0f, 1.0f - mBlinkWeightLeft, mProceduralBlinkWeight),
+                mBlinkClipLeft->StartBeat(),
+                0.0f
+            );
+        }
+        if (mBlinkClipRight && mBlinkClipRight != mBlinkClipLeft) {
+            mBlinkClipRight->ScaleAdd(
+                *this,
+                Interp(0.0f, 1.0f - mBlinkWeightRight, mProceduralBlinkWeight),
+                mBlinkClipRight->StartBeat(),
+                0.0f
+            );
+        }
+        mAppliedProceduralBlink = true;
+    }
+}
+
+void CharFaceServo::ScaleAdd(CharClip *clip, float weight, float f2, float f3) {
+    if (!clip->Relative()) {
+        MILO_NOTIFY_ONCE(
+            "%s playing non-relative clip %s, cut it out!", PathName(this), PathName(clip)
+        );
+    } else {
+        MILO_ASSERT(weight >= 0, 0x88);
+        TryScaleDown();
+        if (clip == mBlinkClipLeft || clip == mBlinkClipLeft2) {
+            mBlinkWeightLeft += weight;
+            mBlinkWeightLeft = Clamp(0.0f, 1.0f, mBlinkWeightLeft);
+        } else if (clip == mBlinkClipRight || clip == mBlinkClipRight2) {
+            mBlinkWeightRight += weight;
+            mBlinkWeightRight = Clamp(0.0f, 1.0f, mBlinkWeightRight);
+        }
+        clip->ScaleAdd(*this, weight, f2, f3);
+    }
+}
+
+void CharFaceServo::Poll() {
+    START_AUTO_TIMER("faceservo");
+    if (mBaseClip) {
+        TryScaleDown();
+        ScaleAddIdentity();
+        mBaseClip->RotateBy(*this, mBaseClip->StartBeat());
+        PoseMeshes();
+    }
+    mNeedScaleDown = true;
+    mAppliedProceduralBlink = false;
 }

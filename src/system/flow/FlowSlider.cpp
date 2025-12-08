@@ -5,6 +5,7 @@
 #include "flow/Flow.h"
 #include "math/Easing.h"
 #include "obj/Object.h"
+#include "os/Debug.h"
 
 FlowSlider::FlowSlider()
     : PropertyEventListener(this), mPersistent(1), mAlwaysRun(0), mValue(0),
@@ -49,6 +50,19 @@ BEGIN_COPYS(FlowSlider)
         COPY_MEMBER(mEasePower)
     END_COPYING_MEMBERS
 END_COPYS
+
+BEGIN_LOADS(FlowSlider)
+    LOAD_REVS(bs)
+    ASSERT_REVS(0, 0)
+    LOAD_SUPERCLASS(FlowNode)
+    d >> mPersistent;
+    d >> mAlwaysRun;
+    bs >> mValue;
+    bs >> (int &)mEaseType;
+    bs >> mEasePower;
+    bs >> (int &)mEaseFunc;
+    UpdateEase();
+END_LOADS
 
 bool FlowSlider::Activate() {
     FLOW_LOG("Activate\n");
@@ -118,7 +132,9 @@ void FlowSlider::UpdateIntensity() {
 }
 
 __declspec(noinline) void FlowSlider::UpdateEase() {
-    mEaseFunc = GetEaseFunction(mEaseType);
+    EaseType e = mEaseType;
+    MILO_ASSERT(e >= kEaseLinear && e <= kEaseQuarterHalfStairstep, 0x16b);
+    mEaseFunc = GetEaseFunction(e);
 }
 
 void FlowSlider::ReActivate() {

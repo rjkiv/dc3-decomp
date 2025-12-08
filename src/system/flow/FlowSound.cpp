@@ -2,8 +2,10 @@
 #include "FlowNode.h"
 #include "flow/FlowManager.h"
 #include "flow/FlowNode.h"
+#include "flow/FlowPtr.h"
 #include "math/Decibels.h"
 #include "obj/Object.h"
+#include "synth/Sound.h"
 
 FlowSound::FlowSound()
     : mImmediateRelease(true), mStopMode(kStopLastFrame), unk64(false), unk68(0),
@@ -42,6 +44,38 @@ BEGIN_SAVES(FlowSound)
     bs << mForceStop;
     bs << mUseIntensity;
 END_SAVES
+
+BEGIN_LOADS(FlowSound)
+    LOAD_REVS(bs)
+    ASSERT_REVS(3, 0)
+    LOAD_SUPERCLASS(FlowNode)
+    d >> mImmediateRelease;
+    if (d.rev < 2) {
+        mSound = mSound.LoadFromMainOrDir(bs);
+    } else {
+        mSound.LoadFromMainOrDir(bs);
+    }
+    bs >> mVolume >> mPan >> mTranspose;
+    if (d.rev > 0)
+        d >> mForceStop;
+    if (2 < d.rev)
+        d >> mUseIntensity;
+END_LOADS
+
+BEGIN_COPYS(FlowSound)
+    COPY_SUPERCLASS(FlowNode)
+    CREATE_COPY_AS(FlowSound, c)
+    BEGIN_COPYING_MEMBERS_FROM(c)
+        COPY_MEMBER(mImmediateRelease)
+        // something with mSound here
+        COPY_MEMBER(mVolume)
+        COPY_MEMBER(mPan)
+        COPY_MEMBER(mTranspose)
+        COPY_MEMBER(mStopMode)
+        COPY_MEMBER(mForceStop)
+        COPY_MEMBER(mUseIntensity)
+    END_COPYING_MEMBERS
+END_COPYS
 
 bool FlowSound::Activate() {
     FLOW_LOG("Activate\n");

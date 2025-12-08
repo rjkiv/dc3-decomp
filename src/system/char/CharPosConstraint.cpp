@@ -45,3 +45,16 @@ void CharPosConstraint::PollDeps(
         changedBy.push_back(*it);
     }
 }
+
+void CharPosConstraint::Load(BinStream &bs) {
+    LOAD_REVS(bs);
+    ASSERT_REVS(2, 0);
+    Hmx::Object::Load(bs);
+    bs >> mTargets;
+    bs >> mSrc;
+    if (d.rev > 1) {
+        bs >> mBox;
+    } else {
+        mBox.Set(Vector3(1.0f, 1.0f, 0.0f), Vector3(-1.0f, -1.0f, 1000.0f));
+    }
+}

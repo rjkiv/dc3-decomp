@@ -133,3 +133,15 @@ DataNode Waypoint::OnWaypointFind(DataArray *da) { return Waypoint::Find(da->Int
 DataNode Waypoint::OnWaypointNearest(DataArray *da) {
     return FindNearest(da->Obj<RndTransformable>(1)->WorldXfm().v, da->Int(2));
 }
+
+float Waypoint::ShapeDeltaAng(float f1, float f2) {
+    float limited = LimitAng(GetZAngle(WorldXfm().m) - f2);
+    float clamped = Clamp(-f1, f1, limited);
+    return limited - clamped;
+}
+
+float Waypoint::ShapeDelta(float f) { return ShapeDeltaAng(mAngRadius, f); }
+
+void Waypoint::ShapeDelta(const Vector3 &v, Vector3 &vout) {
+    ShapeDeltaBox(v, mRadius, mYRadius, vout);
+}

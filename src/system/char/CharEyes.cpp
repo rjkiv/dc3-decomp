@@ -154,3 +154,18 @@ bool CharEyes::SetFocusInterest(CharInterest *interest, int i) {
 
     return true;
 }
+
+void CharEyes::ToggleInterestsDebugOverlay() {
+    if (mEyeStatusOverlay)
+        mEyeStatusOverlay->SetShowing(!mEyeStatusOverlay->Showing());
+}
+
+bool CharEyes::IsHeadIKWeightIncreasing() {
+    if (mHeadLookAt) {
+        float weight = mHeadLookAt->Weight();
+        return (weight > 0 && weight - unk140 > 0);
+    }
+    return false;
+}
+
+void CharEyes::ClearAllInterestObjects() { mInterests.clear(); }

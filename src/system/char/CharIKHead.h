@@ -10,7 +10,8 @@
 class CharIKHead : public RndHighlightable, public CharWeightable, public CharPollable {
 public:
     struct Point {
-        Point(Hmx::Object *owner) : unk0(owner), unk14(0, 0, 0), unk18(0), unk1c(0) {}
+        Point(Hmx::Object *);
+        Point(CharIKHead::Point const &);
 
         ObjPtr<RndTransformable> unk0;
         Vector3 unk14;

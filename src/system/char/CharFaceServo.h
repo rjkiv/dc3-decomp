@@ -35,15 +35,17 @@ public:
     void SetClipType(Symbol);
     void SetBlinkClipLeft(Symbol);
     void SetBlinkClipRight(Symbol);
+
     float BlinkWeightLeft() const;
     void ApplyProceduralWeights();
     CharClip *BaseClip() const { return mBaseClip; }
-    void SetProceduralBlinkWeight(float weight) { unk114 = weight; }
+    void SetProceduralBlinkWeight(float weight) { mProceduralBlinkWeight = weight; }
     Symbol BlinkClipLeftName() const { return mBlinkClipLeftName; }
     Symbol BlinkClipRightName() const { return mBlinkClipRightName; }
 
 protected:
     CharFaceServo();
+    void TryScaleDown();
 
     virtual void ReallocateInternal() { CharBonesMeshes::ReallocateInternal(); }
 
@@ -66,7 +68,7 @@ protected:
     ObjPtr<CharClip> mBlinkClipRight2; // 0xf4
     float mBlinkWeightLeft; // 0x108
     float mBlinkWeightRight; // 0x10c
-    bool unk110; // 0x110
-    float unk114; // 0x114
-    bool unk118; // 0x118
+    bool mNeedScaleDown; // 0x110
+    float mProceduralBlinkWeight; // 0x114
+    bool mAppliedProceduralBlink; // 0x118
 };

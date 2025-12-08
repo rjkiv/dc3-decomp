@@ -1,4 +1,5 @@
 #pragma once
+#include "math/Mtx.h"
 #include "math/Vec.h"
 #include "obj/Object.h"
 #include "rndobj/Trans.h"
@@ -28,6 +29,10 @@ public:
     float MYRadius() { return mYRadius; }
     float Radius() { return mRadius; }
 
+    float ShapeDelta(float);
+    void ShapeDelta(Vector3 const &, Vector3 &);
+    void Constrain(class Transform &);
+
     static void Init();
     static void Terminate();
     static Waypoint *FindNearest(const Vector3 &, int);
@@ -40,6 +45,9 @@ private:
     static DataNode OnWaypointFind(DataArray *);
     static DataNode OnWaypointNearest(DataArray *);
     static DataNode OnWaypointLast(DataArray *);
+
+    float ShapeDeltaAng(float, float);
+    void ShapeDeltaBox(Vector3 const &, float, float, Vector3 &);
 
 protected:
     Waypoint();

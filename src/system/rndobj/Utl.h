@@ -71,3 +71,5 @@ void BuildFromBSP(RndMesh *);
 void ConvertBonesToTranses(ObjectDir *, bool);
 
 const char *CacheResource(const char *, const Hmx::Object *);
+
+int GenerationCount(RndTransformable *, RndTransformable *);

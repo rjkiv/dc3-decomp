@@ -51,7 +51,7 @@ public:
     virtual DataNode Handle(DataArray *, bool);
     virtual bool SyncProperty(DataNode &, DataArray *, int, PropOp);
     virtual void Save(BinStream &);
-    virtual void Copy(const Hmx::Object *, CopyType);
+    virtual void Copy(const Hmx::Object *, Hmx::Object::CopyType);
     virtual void Load(BinStream &);
     virtual const char *FindPathName();
     // FlowNode

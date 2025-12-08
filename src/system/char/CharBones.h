@@ -64,6 +64,7 @@ public:
         Zero();
         SetWeights(0);
     }
+    void ScaleAddIdentity();
     CompressionType GetCompression() const { return mCompression; }
     int TotalSize() const { return mTotalSize; }
     std::vector<Bone> GetBones() { return mBones; }

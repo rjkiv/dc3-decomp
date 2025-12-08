@@ -12,8 +12,8 @@
 class CharIKHand : public RndHighlightable, public CharWeightable, public CharPollable {
 public:
     struct IKTarget {
-        IKTarget(Hmx::Object *owner) : mTarget(owner), mExtent(0) {}
-        IKTarget(ObjPtr<RndTransformable> t, float e) : mTarget(t), mExtent(e) {}
+        IKTarget(Hmx::Object *);
+        IKTarget(ObjPtr<RndTransformable>, float);
 
         /** "Where to move the hand to" */
         ObjPtr<RndTransformable> mTarget; // 0x0
@@ -89,3 +89,5 @@ protected:
     /** "Choose the clockwise solution for the collision detection" */
     bool mClockwise; // 0xac
 };
+
+BinStream &operator>>(BinStream &, CharIKHand::IKTarget &);

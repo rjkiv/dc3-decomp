@@ -180,6 +180,7 @@ public:
     float AverageBeatsPerSecond() const;
     void SetFlags(int);
     int PlayFlags() { return mPlayFlags; }
+    CharClip *Relative() const { return mRelative; }
     float Range() const { return mRange; }
     std::vector<BeatEvent> BeatEvents() { return mBeatEvents; }
     int NumBeatEvents() { return mBeatEvents.size(); }

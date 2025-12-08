@@ -10,6 +10,8 @@
 CharHair *gHair;
 CharHair::Strand *gStrand;
 
+#pragma region CharHair
+
 CharHair::CharHair()
     : mStiffness(0.04), mTorsion(0.1), mInertia(0.7), mGravity(1), mWeight(0.5),
       mFriction(0.3), mWind(1), mFlat(1), mMinSlack(0), mMaxSlack(0), mStrands(this),
@@ -26,26 +28,6 @@ BEGIN_HANDLERS(CharHair)
     HANDLE_SUPERCLASS(RndPollable)
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
-
-BEGIN_CUSTOM_PROPSYNC(CharHair::Point)
-    SYNC_PROP(bone, o.bone)
-    SYNC_PROP(length, o.length)
-    SYNC_PROP(collides, o.collides)
-    SYNC_PROP(radius, o.radius)
-    SYNC_PROP(outer_radius, o.outerRadius)
-    SYNC_PROP(side_length, o.sideLength)
-END_CUSTOM_PROPSYNC
-
-BEGIN_CUSTOM_PROPSYNC(CharHair::Strand)
-    gStrand = &o;
-    SYNC_PROP_SET(root, o.mRoot.Ptr(), o.SetRoot(_val.Obj<RndTransformable>()))
-    SYNC_PROP_SET(angle, o.mAngle, o.SetAngle(_val.Float()))
-    SYNC_PROP(points, o.mPoints)
-    SYNC_PROP(hookup_flags, o.mHookupFlags)
-    SYNC_PROP(show_spheres, o.mShowSpheres)
-    SYNC_PROP(show_collide, o.mShowCollide)
-    SYNC_PROP(show_pose, o.mShowPose)
-END_CUSTOM_PROPSYNC
 
 BEGIN_PROPSYNCS(CharHair)
     gHair = this;
@@ -65,16 +47,6 @@ BEGIN_PROPSYNCS(CharHair)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
-void operator<<(BinStream &bs, const CharHair::Point &p) {
-    bs << p.pos;
-    bs << p.bone;
-    bs << p.length;
-    bs << p.radius;
-    bs << p.outerRadius;
-    bs << p.sideLength;
-    bs << p.unk78;
-}
-
 BEGIN_SAVES(CharHair)
     SAVE_REVS(0xD, 0)
     SAVE_SUPERCLASS(Hmx::Object)
@@ -92,15 +64,6 @@ BEGIN_SAVES(CharHair)
     bs << mWind;
     bs << mFlat;
 END_SAVES
-
-void CharHair::Strand::Save(BinStream &bs) const {
-    bs << mRoot;
-    bs << mAngle;
-    bs << mPoints;
-    bs << mBaseMat;
-    bs << mRootMat;
-    bs << mHookupFlags;
-}
 
 BEGIN_COPYS(CharHair)
     COPY_SUPERCLASS(Hmx::Object)
@@ -198,3 +161,73 @@ void CharHair::FreezePose() {
     mSimulate = oldSim;
     FreezePoseRaw();
 }
+
+void CharHair::Load(BinStream &bs) {
+    LOAD_REVS(bs);
+    ASSERT_REVS(11, 0);
+    LOAD_SUPERCLASS(Hmx::Object)
+    bs >> mStiffness >> mTorsion >> mInertia >> mGravity >> mWeight >> mFriction;
+    if (d.rev < 8) {
+        mMinSlack = 0.0f;
+        mMaxSlack = 0.0f;
+    } else
+        bs >> mMinSlack >> mMaxSlack;
+    // bs >> mStrands;
+    bs >> mSimulate;
+    if (d.rev > 10)
+        bs >> mWind;
+}
+
+#pragma endregion CharHair
+#pragma region CharHair::Point
+
+BEGIN_CUSTOM_PROPSYNC(CharHair::Point)
+    SYNC_PROP(bone, o.bone)
+    SYNC_PROP(length, o.length)
+    SYNC_PROP(collides, o.collides)
+    SYNC_PROP(radius, o.radius)
+    SYNC_PROP(outer_radius, o.outerRadius)
+    SYNC_PROP(side_length, o.sideLength)
+END_CUSTOM_PROPSYNC
+
+void operator<<(BinStream &bs, const CharHair::Point &p) {
+    bs << p.pos;
+    bs << p.bone;
+    bs << p.length;
+    bs << p.radius;
+    bs << p.outerRadius;
+    bs << p.sideLength;
+    bs << p.unk78;
+}
+
+#pragma endregion CharHair::Point
+#pragma region CharHair::Strand
+
+CharHair::Strand::Strand(Hmx::Object *o)
+    : mShowSpheres(0), mShowCollide(0), mShowPose(0), mRoot(o, 0), mAngle(0.0f),
+      mPoints(o), mHookupFlags(0) {
+    mBaseMat.Identity();
+    mRootMat.Identity();
+}
+
+BEGIN_CUSTOM_PROPSYNC(CharHair::Strand)
+    gStrand = &o;
+    SYNC_PROP_SET(root, o.mRoot.Ptr(), o.SetRoot(_val.Obj<RndTransformable>()))
+    SYNC_PROP_SET(angle, o.mAngle, o.SetAngle(_val.Float()))
+    SYNC_PROP(points, o.mPoints)
+    SYNC_PROP(hookup_flags, o.mHookupFlags)
+    SYNC_PROP(show_spheres, o.mShowSpheres)
+    SYNC_PROP(show_collide, o.mShowCollide)
+    SYNC_PROP(show_pose, o.mShowPose)
+END_CUSTOM_PROPSYNC
+
+void CharHair::Strand::Save(BinStream &bs) const {
+    bs << mRoot;
+    bs << mAngle;
+    bs << mPoints;
+    bs << mBaseMat;
+    bs << mRootMat;
+    bs << mHookupFlags;
+}
+
+#pragma endregion CharHair::Strand
