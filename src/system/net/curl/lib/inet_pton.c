@@ -34,11 +34,9 @@
 #endif
 
 #include "inet_pton.h"
-
 #define IN6ADDRSZ 16
 #define INADDRSZ 4
 #define INT16SZ 2
-#define DWORD unsigned long
 /*
  * WARNING: Don't even consider trying to compile this on a system where
  * sizeof(int) < 4.  sizeof(int) > 4 is fine; all the world's not a VAX.

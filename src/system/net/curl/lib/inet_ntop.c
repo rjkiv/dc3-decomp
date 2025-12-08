@@ -43,8 +43,6 @@
 #define IN6ADDRSZ 16
 #define INADDRSZ 4
 #define INT16SZ 2
-#define DWORD unsigned long
-
 /*
  * Format an IPv4 address, more or less like inet_ntoa().
  *

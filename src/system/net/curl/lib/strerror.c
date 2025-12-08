@@ -31,9 +31,7 @@
 #error "strerror_r MUST be either POSIX, glibc or vxworks-style"
 #endif
 #endif
-
 #include <curl/curl.h>
-#define DWORD unsigned long
 #ifdef USE_LIBIDN
 #include <idna.h>
 #endif
