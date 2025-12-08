@@ -46,6 +46,7 @@
 #else
 #ifdef WIN32
 #include "config-win32.h"
+// #include "xdk/win_types.h"
 #endif
 #endif
 

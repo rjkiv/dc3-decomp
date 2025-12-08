@@ -1,4 +1,5 @@
 #pragma once
+// #include "xdk/win_types.h"
 
 #define IOCPARAM_MASK 0x7f
 #define IOC_VOID 0x20000000
@@ -112,3 +113,24 @@ struct sockaddr_in {
     struct in_addr sin_addr;
     char sin_zero[0];
 };
+
+typedef struct hostent {
+    char *h_name;
+    char **h_aliases;
+    short h_addrtype;
+    short h_length;
+    char **h_addr_list;
+} HOSTENT, *PHOSTEND, *LPHOSTENT;
+
+#define WSADESCRIPTION_LEN 256
+#define WSASYS_STATUS_LEN
+typedef unsigned short WORD;
+typedef struct WSADATA {
+    WORD wVersion;
+    WORD wHighVersion;
+    char szDescription[WSADESCRIPTION_LEN + 1];
+    char szSystemStatus[WSASYS_STATUS_LEN + 1];
+    unsigned short iMaxSockets;
+    unsigned short iMaxUdpDg;
+    char *lpVendorInfo;
+} WSADATA, *LPWSADATA;

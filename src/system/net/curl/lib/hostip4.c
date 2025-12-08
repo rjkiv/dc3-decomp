@@ -45,6 +45,7 @@
 #ifdef HAVE_PROCESS_H
 #include <process.h>
 #endif
+#include "xdk/win_types.h"
 
 #include "urldata.h"
 #include "sendf.h"

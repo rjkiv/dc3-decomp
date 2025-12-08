@@ -61,7 +61,8 @@
 #include <winbase.h>
 #include <winnt.h>
 #include <winsockx.h>
-// #include <ws2tcpip.h>
+// #include "xdk/win_types.h"
+//   #include <ws2tcpip.h>
 #endif
 #endif
 
@@ -1802,7 +1803,7 @@ CURL_EXTERN void curl_free(void *p);
  *
  * This function is not thread-safe!
  */
-CURL_EXTERN CURLcode curl_global_init(long flags);
+// CURL_EXTERN CURLcode curl_global_init(long flags);
 
 /*
  * NAME curl_global_init_mem()
@@ -1817,14 +1818,14 @@ CURL_EXTERN CURLcode curl_global_init(long flags);
  * callback routines with be invoked by this library instead of the system
  * memory management routines like malloc, free etc.
  */
-CURL_EXTERN CURLcode curl_global_init_mem(
-    long flags,
-    curl_malloc_callback m,
-    curl_free_callback f,
-    curl_realloc_callback r,
-    curl_strdup_callback s,
-    curl_calloc_callback c
-);
+// CURL_EXTERN CURLcode curl_global_init_mem(
+//     long flags,
+//     curl_malloc_callback m,
+//     curl_free_callback f,
+//     curl_realloc_callback r,
+//     curl_strdup_callback s,
+//     curl_calloc_callback c
+//);
 
 /*
  * NAME curl_global_cleanup()
@@ -1834,7 +1835,7 @@ CURL_EXTERN CURLcode curl_global_init_mem(
  * curl_global_cleanup() should be invoked exactly once for each application
  * that uses libcurl
  */
-CURL_EXTERN void curl_global_cleanup(void);
+// CURL_EXTERN void curl_global_cleanup(void);
 
 /* linked-list structure for the CURLOPT_QUOTE option (and other) */
 struct curl_slist {
@@ -2123,7 +2124,7 @@ CURL_EXTERN const char *curl_share_strerror(CURLSHcode);
  * state by setting the bitmask, use the convenience defines below.
  *
  */
-CURL_EXTERN CURLcode curl_easy_pause(CURL *handle, int bitmask);
+// CURL_EXTERN CURLcode curl_easy_pause(CURL *handle, int bitmask);
 
 #define CURLPAUSE_RECV (1 << 0)
 #define CURLPAUSE_RECV_CONT (0)
