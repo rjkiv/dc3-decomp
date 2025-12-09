@@ -224,7 +224,7 @@ Error Compilation_aborted_SIZEOF_CURL_OFF_T_shall_not_be_defined
 #endif
 // #include <windows.h>
 #ifdef HAVE_WINSOCK2_H
-#include <winsockx.h>
+#include <xdk/xapilibi/winsockx.h>
 #ifdef HAVE_WS2TCPIP_H
 // #include <ws2tcpip.h>
 #endif

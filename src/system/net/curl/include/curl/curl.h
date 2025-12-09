@@ -58,9 +58,9 @@
 #if !(defined(_WINSOCKAPI_) || defined(_WINSOCK_H) || defined(__LWIP_OPT_H__))
 /* The check above prevents the winsock2 inclusion if winsock.h already was
    included, since they can't co-exist without problems */
-#include <winbase.h>
-#include <winnt.h>
-#include <winsockx.h>
+#include <xdk/xapilibi/winbase.h>
+#include <xdk/xapilibi/winnt.h>
+#include <xdk/xapilibi/winsockx.h>
 // #include "xdk/win_types.h"
 //   #include <ws2tcpip.h>
 #endif

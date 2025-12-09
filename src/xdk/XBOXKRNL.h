@@ -2,8 +2,8 @@
 
 // size 0x8
 struct _LIST_ENTRY {
-    _LIST_ENTRY *Flink;
-    _LIST_ENTRY *Blink;
+    struct _LIST_ENTRY *Flink;
+    struct _LIST_ENTRY *Blink;
 };
 
 // size 0x1C
@@ -15,7 +15,7 @@ struct _RTL_CRITICAL_SECTION {
             unsigned char Size;
             unsigned char Inserted;
             int SignalState;
-            _LIST_ENTRY WaitListHead;
+            struct _LIST_ENTRY WaitListHead;
         } Event;
         struct {
             unsigned int SpinCount;
@@ -28,7 +28,7 @@ struct _RTL_CRITICAL_SECTION {
     void *OwningThread; // 0x18
 };
 
-typedef _RTL_CRITICAL_SECTION RTL_CRITICAL_SECTION;
+typedef struct _RTL_CRITICAL_SECTION RTL_CRITICAL_SECTION;
 
 #ifdef __cplusplus
 extern "C" {
