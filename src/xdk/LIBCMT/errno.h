@@ -6,6 +6,7 @@ extern "C" {
 
 #define errno 0
 
+#define EACCES 13
 #define ENOSPC 28
 #define ERANGE 34
 

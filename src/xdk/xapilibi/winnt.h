@@ -7,6 +7,9 @@
 extern "C" {
 #endif
 
+#define STATUS_WAIT_0 0x00000000L
+#define LANG_NEUTRAL 0x00
+
 typedef struct _CONTEXT { /* Size=0xa40 */
     /* 0x0000 */ DWORD ContextFlags;
     /* 0x0004 */ DWORD Msr;

@@ -1,5 +1,4 @@
 #pragma once
-// #include "xdk/win_types.h"
 
 #define IOCPARAM_MASK 0x7f
 #define IOC_VOID 0x20000000
@@ -15,6 +14,10 @@
 #define INVALID_SOCKET (SOCKET)(~0)
 #define SOCK_STREAM 1
 #define SOCK_DGRAM 2
+#define IPPROTO_UDP 17
+
+#define SOL_SOCKET 0xffff
+#define SO_SNDBUF 0x1001
 
 #define WSABASEERR 10000
 #define WSAEINTR WSABASEERR + 4
@@ -125,6 +128,17 @@ struct sockaddr_in {
     unsigned short sin_port;
     struct in_addr sin_addr;
     char sin_zero[0];
+};
+
+#define _SS_MAXSIZE 128
+#define _SS_ALIGNSIZE (sizeof(long long))
+#define _SS_PAD1SIZE (_SS_ALIGNSIZE - sizeof(short))
+#define _SS_PAD2SIZE (_SS_MAXSIZE - sizeof(short) + _SS_PAD1SIZE + _SS_ALIGNSIZE)
+struct sockaddr_storage {
+    short ss_family;
+    char __ss_pad1[_SS_PAD1SIZE];
+    long long __ss_align;
+    char __ss_pad2[_SS_PAD2SIZE];
 };
 
 typedef struct hostent {

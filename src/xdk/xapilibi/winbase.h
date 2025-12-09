@@ -7,6 +7,11 @@
 extern "C" {
 #endif
 
+#define INFINITE 0xFFFFFFFF
+#define WAIT_OBJECT_0 ((STATUS_WAIT_0) + 0)
+
+#define FORMAT_MESSAGE_FROM_SYSTEM 0x00001000
+
 typedef struct _MEMORYSTATUS {
     DWORD dwLength;
     DWORD dwMemoryLoad;

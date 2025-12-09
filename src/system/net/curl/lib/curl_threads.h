@@ -22,10 +22,10 @@
  *
  ***************************************************************************/
 #include "setup.h"
-#include "winnt.h"
+#include "xdk/XBOXKRNL.h"
 
 #define CURL_STDCALL __stdcall
-#define curl_mutex_t struct RTL_CRITICAL_SECTION
+#define curl_mutex_t RTL_CRITICAL_SECTION
 #define curl_thread_t HANDLE
 #define curl_thread_t_null (HANDLE)0
 #define Curl_mutex_init(m) InitializeCriticalSection(m)

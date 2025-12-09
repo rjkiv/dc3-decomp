@@ -2003,7 +2003,7 @@ system/net/curl/lib/hostip.c:
 	.pdata      start:0x822CC458 end:0x822CC490
 	.text       start:0x8256A5C0 end:0x8256AC68
 
-system/net/transfer.cpp:
+system/net/curl/lib/transfer.c:
 	.rdata      start:0x82067B74 end:0x820682DC
 	.pdata      start:0x822CC490 end:0x822CC510
 	.text       start:0x8256AC68 end:0x8256D270
@@ -2030,17 +2030,17 @@ system/net/curl/lib/sendf.c:
 	.pdata      start:0x822CC568 end:0x822CC5C0
 	.text       start:0x8256DE38 end:0x8256E928
 
-system/net/progress.cpp:
+system/net/curl/lib/progress.c:
 	.rdata      start:0x82068514 end:0x82068714
 	.pdata      start:0x822CC5C0 end:0x822CC5E8
 	.text       start:0x8256E928 end:0x8256F358
 
-system/net/connect.cpp:
+system/net/curl/lib/connect.c:
 	.rdata      start:0x82068714 end:0x820689E4
 	.pdata      start:0x822CC5E8 end:0x822CC630
 	.text       start:0x8256F358 end:0x82570388
 
-system/net/http.cpp:
+system/net/curl/lib/http.c:
 	.rdata      start:0x820689E4 end:0x82069508
 	.pdata      start:0x822CC630 end:0x822CC6E0
 	.text       start:0x82570388 end:0x825744A8
@@ -2066,7 +2066,7 @@ system/net/curl/lib/slist.c:
 	.pdata      start:0x822CC718 end:0x822CC728
 	.text       start:0x82574CC8 end:0x82574DE0
 
-system/net/cookie.cpp:
+system/net/curl/lib/cookie.c:
 	.rdata      start:0x8206959C end:0x820697A0
 	.pdata      start:0x822CC728 end:0x822CC798
 	.text       start:0x82574DE0 end:0x82576610
@@ -2097,12 +2097,12 @@ system/net/curl/lib/gopher.c:
 	.pdata      start:0x822CC8D0 end:0x822CC8D8
 	.text       start:0x82578EE8 end:0x82579100
 
-system/net/rtsp.cpp:
+system/net/curl/lib/rtsp.c:
 	.rdata      start:0x82069A6C end:0x82069EF4
 	.pdata      start:0x822CC8D8 end:0x822CC910
 	.text       start:0x82579100 end:0x8257A050
 
-system/net/smtp.cpp:
+system/net/curl/lib/smtp.c:
 	.rdata      start:0x82069EF4 end:0x8206A1D8
 	.pdata      start:0x822CC910 end:0x822CC9C8
 	.text       start:0x8257A050 end:0x8257BBD8
@@ -2117,7 +2117,7 @@ system/net/curl/lib/imap.c:
 	.pdata      start:0x822CCA28 end:0x822CCA80
 	.text       start:0x8257C740 end:0x8257D380
 
-system/net/tftp.cpp:
+system/net/curl/lib/tftp.c:
 	.rdata      start:0x8206A52C end:0x8206A9B8
 	.pdata      start:0x822CCA80 end:0x822CCAF8
 	.text       start:0x8257D380 end:0x8257EDD0
@@ -2132,7 +2132,7 @@ system/net/curl/lib/dict.c:
 	.pdata      start:0x822CCB20 end:0x822CCB30
 	.text       start:0x8257F778 end:0x8257FBA0
 
-system/net/ftp.cpp:
+system/net/curl/lib/ftp.c:
 	.rdata      start:0x8206ACAC end:0x8206BA14
 	.pdata      start:0x822CCB30 end:0x822CCC80
 	.text       start:0x8257FBA0 end:0x82584830
@@ -2154,7 +2154,7 @@ system/net/curl/lib/rawstr.c:
 	.pdata      start:0x822CCCB8 end:0x822CCCD0
 	.text       start:0x82585A30 end:0x82585CB8
 
-system/net/mprintf.cpp:
+system/net/curl/lib/mprintf.c:
 	.rdata      start:0x8206C22C end:0x8206C31C
 	.pdata      start:0x822CCCD0 end:0x822CCD18
 	.text       start:0x82585CB8 end:0x82587140
@@ -2181,7 +2181,7 @@ system/net/curl/lib/share.c:
 	.pdata      start:0x822CCD40 end:0x822CCD50
 	.text       start:0x825876C8 end:0x82587788
 
-system/net/http_digest.cpp:
+system/net/curl/lib/http_digest.c:
 	.rdata      start:0x8206C4BC end:0x8206C748
 	.pdata      start:0x822CCD50 end:0x822CCD78
 	.text       start:0x82587788 end:0x825883A0
@@ -2197,7 +2197,7 @@ system/net/curl/lib/curl_addrinfo.c:
 system/net/curl/lib/hostip4.c:
 	.text       start:0x82588850 end:0x82588868
 
-system/net/content_encoding.cpp:
+system/net/curl/lib/content_encoding.c:
 	.rdata      start:0x8206C748 end:0x8206C8E4
 	.pdata      start:0x822CCDA8 end:0x822CCDC8
 	.text       start:0x82588868 end:0x82588FB0
@@ -2233,7 +2233,7 @@ system/net/curl/lib/http_proxy.c:
 	.pdata      start:0x822CCE18 end:0x822CCE20
 	.text       start:0x82589EB8 end:0x8258A878
 
-system/net/formdata.cpp:
+system/net/curl/lib/formdata.c:
 	.rdata      start:0x8206D7B8 end:0x8206DA18
 	.pdata      start:0x822CCE20 end:0x822CCE60
 	.text       start:0x8258A878 end:0x8258B3F0
