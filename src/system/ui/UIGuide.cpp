@@ -4,6 +4,8 @@
 
 UIGuide::UIGuide() : mType(kGuideVertical), mPos(0.5f) {}
 
+UIGuide::~UIGuide() {}
+
 BEGIN_COPYS(UIGuide)
     COPY_SUPERCLASS(Hmx::Object)
     CREATE_COPY(UIGuide)

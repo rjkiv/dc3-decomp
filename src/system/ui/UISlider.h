@@ -1,5 +1,6 @@
 #pragma once
 #include "ResourceDirPtr.h"
+#include "obj/Object.h"
 #include "rndobj/Dir.h"
 #include "ui/UIComponent.h"
 #include "ui/ScrollSelect.h"
@@ -33,6 +34,7 @@ public:
     virtual int SelectedAux() const;
 
     OBJ_MEM_OVERLOAD(0x18);
+    NEW_OBJ(UISlider)
 
     float Frame() const;
     void SetNumSteps(int);

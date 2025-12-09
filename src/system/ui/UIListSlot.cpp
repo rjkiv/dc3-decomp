@@ -9,6 +9,10 @@
 UIListSlot::UIListSlot() : mSlotDrawType(kUIListSlotDrawAlways), mNextElement(0) {}
 
 BEGIN_PROPSYNCS(UIListSlot)
+    SYNC_PROP_SET(
+        slot_draw_type, (int)mSlotDrawType, mSlotDrawType = (UIListSlotDrawType)_val.Int()
+    )
+    SYNC_SUPERCLASS(UIListWidget)
 END_PROPSYNCS
 
 BEGIN_SAVES(UIListSlot)
@@ -64,7 +68,12 @@ void UIListSlot::Fill(const UIListProvider &prov, int display, int j, int k) {
     }
 }
 
-void UIListSlot::StartScroll(int i, bool b) {}
+void UIListSlot::StartScroll(int i, bool b) {
+    if (b && RootTrans()) {
+        mElements.insert(i < 0 ? mElements.begin() : mElements.end(), mNextElement);
+        mNextElement = 0;
+    }
+}
 
 void UIListSlot::CompleteScroll(const UIListState &, int) {}
 

@@ -58,6 +58,7 @@ public:
     static bool GetFinalDrawPass() { return sIsFinalDrawPass; }
     State GetState() { return mState; }
     PanelDir *GetPanelDir() { return mDir; }
+    bool ForceExit() const { return mForceExit; }
 
 protected:
     virtual void Unload();

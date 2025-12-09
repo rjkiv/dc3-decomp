@@ -7,6 +7,7 @@
 #include "rndobj/Trans.h"
 #include "ui/UI.h"
 #include "ui/UILabelDir.h"
+#include "ui/UIListWidget.h"
 #include "utl/BinStream.h"
 #include "utl/Loader.h"
 #include "utl/Locale.h"
@@ -28,6 +29,7 @@ UILabel::UILabel() : unk122(1), unk124(this) {
 }
 
 BEGIN_PROPSYNCS(UILabel)
+
 END_PROPSYNCS
 
 BEGIN_COPYS(UILabel)
@@ -144,6 +146,7 @@ char const *UILabel::GetFontMat(int) { return 0; }
 void UILabel::RefreshFontMat(int i) {}
 
 BEGIN_HANDLERS(UILabel)
+
 END_HANDLERS
 
 bool PropSync(UILabel::LabelStyle &, DataNode &, DataArray *, int, PropOp) {

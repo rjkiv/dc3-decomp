@@ -1,7 +1,9 @@
 #include "ui/UIScreen.h"
+#include "gesture/GestureMgr.h"
 #include "obj/Data.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
+#include "os/Archive.h"
 #include "os/Debug.h"
 #include "os/JoypadMsgs.h"
 #include "os/Timer.h"
@@ -19,9 +21,65 @@ UIScreen::UIScreen()
     MILO_ASSERT(sMaxScreenId < 0x8000, 0x20);
 }
 
-void UIScreen::SetTypeDef(DataArray *) {}
+void UIScreen::SetTypeDef(DataArray *data) {
+    Hmx::Object::SetTypeDef(data);
+    mFocusPanel = NULL;
+    mPanelList.clear();
+    static Symbol panels("panels");
+    DataArray *panelsArr = data->FindArray(panels, false);
+    if (panelsArr != NULL) {
+        for (int i = 1; i < panelsArr->Size(); i++) {
+            PanelRef pr;
+            pr.mActive = true;
+            pr.mAlwaysLoad = true;
 
-void UIScreen::LoadPanels() {}
+            if (panelsArr->Node(i).Type() == kDataArray) {
+                static Symbol active("active");
+                static Symbol always_load("always_load");
+                DataArray *panelArray = panelsArr->Array(i);
+                pr.mPanel = panelArray->Obj<class UIPanel>(0);
+                MILO_ASSERT(pr.mPanel, 0x3a);
+                panelArray->FindData(active, pr.mActive, false);
+                panelArray->FindData(always_load, pr.mAlwaysLoad, false);
+            } else {
+                pr.mPanel = panelsArr->Obj<class UIPanel>(i);
+                MILO_ASSERT(pr.mPanel, 0x41);
+            }
+
+            mPanelList.push_back(pr);
+        }
+    }
+    static Symbol focus("focus");
+    DataArray *focusArr = data->FindArray(focus, false);
+    if (focusArr != NULL) {
+        SetFocusPanel(focusArr->Obj<class UIPanel>(1));
+    }
+
+    if (mFocusPanel == NULL && !mPanelList.empty()) {
+        SetFocusPanel(mPanelList.front().mPanel);
+    }
+
+    mBack = data->FindArray("back", false);
+    static Symbol clear_vram("clear_vram");
+    mClearVram = false;
+    data->FindData(clear_vram, mClearVram, false);
+}
+
+void UIScreen::LoadPanels() {
+    if (Archive::DebugArkOrder())
+        MILO_LOG("ArkFile: ;%s\n", Name());
+
+    FOREACH (it, mPanelList) {
+        if (it->mAlwaysLoad || it->mPanel->IsReferenced()) {
+            it->mPanel->CheckLoad();
+            it->mLoaded = true;
+        } else {
+            it->mLoaded = false;
+        }
+    }
+    static Message load_panels("load_panels");
+    HandleType(load_panels);
+}
 
 void UIScreen::UnloadPanels() {
     FOREACH_REVERSE(it, mPanelList) {
@@ -97,7 +155,27 @@ bool UIScreen::Entering() const {
     return false;
 }
 
-void UIScreen::Exit(UIScreen *to) {}
+void UIScreen::Exit(UIScreen *to) {
+    TheGestureMgr->SetInVoiceMode(false);
+    static Message msg("exit", 0);
+    msg[0] = to;
+    HandleType(msg);
+
+    if (to != NULL) {
+        to->LoadPanels();
+    }
+
+    FOREACH (it, mPanelList) {
+        if (!it->mLoaded) {
+            continue;
+        }
+
+        if ((it->mPanel->ForceExit() || to == NULL || !to->HasPanel(it->mPanel))
+            && it->mPanel->GetState() == UIPanel::kUp) {
+            it->mPanel->Exit();
+        }
+    }
+}
 
 bool UIScreen::Exiting() const {
     FOREACH (it, mPanelList) {
@@ -237,7 +315,21 @@ DataNode UIScreen::ForeachPanel(DataArray const *) { return NULL_OBJ; }
 void UIScreen::ReloadStrings() {}
 
 BEGIN_HANDLERS(UIScreen)
-
+    HANDLE_EXPR(focus_panel, mFocusPanel)
+    HANDLE_ACTION(set_focus_panel, SetFocusPanel(_msg->Obj<class UIPanel>(2)))
+    HANDLE_ACTION(print, Print(TheDebug))
+    HANDLE_ACTION(reenter_screen, ReenterScreen())
+    HANDLE_ACTION(
+        set_panel_active, SetPanelActive(_msg->Obj<class UIPanel>(2), _msg->Int(3))
+    )
+    HANDLE_ACTION(set_showing, SetShowing(_msg->Int(2)))
+    HANDLE_EXPR(has_panel, HasPanel(_msg->Obj<class UIPanel>(2)))
+    HANDLE_ACTION(foreach_panel, ForeachPanel(_msg))
+    HANDLE_EXPR(exiting, Exiting())
+    HANDLE_ACTION(reload_strings, ReloadStrings())
+    HANDLE_SUPERCLASS(Hmx::Object)
+    HANDLE_MEMBER_PTR(FocusPanel())
+    HANDLE_MESSAGE(ButtonDownMsg)
 END_HANDLERS
 
 void EnterGlitchCB(float, void *) {}

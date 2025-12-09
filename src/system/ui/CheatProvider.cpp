@@ -5,6 +5,7 @@
 // #include "ui/UIListLabel.h"
 #include "ui/UIListLabel.h"
 #include "utl/Cheats.h"
+#include "utl/Std.h"
 #include "utl/Symbol.h"
 
 CheatProvider *CheatProvider::sInstance;
@@ -114,6 +115,43 @@ void CheatProvider::Text(int i, int j, UIListLabel *listlabel, UILabel *label) c
                     label->SetEditText(gNullStr);
             }
         }
+    }
+}
+
+void CheatProvider::ApplyFilter() {
+    static Symbol all("all");
+    static Symbol filters("filters");
+    static Symbol modes("modes");
+    Symbol curFilt = mFilters[mFilterIdx];
+    mFilterCheats.clear();
+    Cheat *curCheat = nullptr;
+    FOREACH (it, mCheats) {
+        if (it->mScript) {
+            Symbol cheatMode = GetCheatMode();
+            DataArray *modeArr = it->mScript->FindArray(modes, false);
+            if (modeArr && !modeArr->Contains(cheatMode))
+                continue;
+        }
+        if (curFilt != all) {
+            if (!it->mScript) {
+                if (!it->mDesc.empty()) {
+                    curCheat = it;
+                }
+            } else {
+                DataArray *filterArr = it->mScript->FindArray(filters, false);
+                if (filterArr && filterArr->Contains(curFilt)) {
+                    if (curCheat) {
+                        if (!mFilterCheats.empty()) {
+                            mFilterCheats.push_back(gNullStr);
+                        }
+                        mFilterCheats.push_back(*curCheat);
+                        curCheat = nullptr;
+                    }
+                    mFilterCheats.push_back(*it);
+                }
+            }
+        } else
+            mFilterCheats.push_back(*it);
     }
 }
 

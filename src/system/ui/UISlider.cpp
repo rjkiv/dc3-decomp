@@ -34,10 +34,11 @@ END_SAVES
 BEGIN_COPYS(UISlider)
     COPY_SUPERCLASS(UIComponent)
     CREATE_COPY_AS(UISlider, c)
-
-    COPY_MEMBER_FROM(c, mSelectToScroll)
-    COPY_MEMBER_FROM(c, mVertical)
-
+    BEGIN_COPYING_MEMBERS_FROM(c)
+        COPY_MEMBER(mSelectToScroll)
+        COPY_MEMBER(mVertical)
+        COPY_MEMBER(unk50)
+    END_COPYING_MEMBERS
 END_COPYS
 
 BEGIN_LOADS(UISlider)
@@ -89,7 +90,12 @@ void UISlider::SetSelectedAux(int i) { SetCurrent(i); }
 
 DataNode UISlider::OnMsg(const ButtonDownMsg &msg) { return NULL_OBJ; }
 
-void UISlider::SyncSlider() {}
+void UISlider::SyncSlider() {
+    if (unk50) {
+        unk50->SetFrame(Frame(), 1.0f);
+        unk50->SetWorldXfm(WorldXfm());
+    }
+}
 
 float UISlider::Frame() const {
     if (mNumSteps == 1)
@@ -112,7 +118,7 @@ void UISlider::SetFrame(float frame) {
 
 int UISlider::Current() const { return mCurrent; }
 
-void UISlider::Init() {}
+void UISlider::Init() { REGISTER_OBJ_FACTORY(UISlider) }
 
 void UISlider::Update() {
     static Symbol mesh("mesh");
