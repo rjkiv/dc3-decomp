@@ -215,7 +215,19 @@ void UIList::Enter() {
     mListDir->ListEntered();
 }
 
-void UIList::Poll() { UIComponent::Poll(); }
+void UIList::Poll() {
+    UIComponent::Poll();
+    if (mAutoScrolling) {
+        if (unk158 >= 0.0f && TheTaskMgr.UISeconds() >= unk158) {
+            Scroll(unk150);
+            unk158 = -1.0f;
+        }
+    }
+    mListState.Poll(TheTaskMgr.UISeconds());
+    mListDir->PollWidgets(mWidgets);
+    unk15c = false;
+    UpdateHandler();
+}
 
 int UIList::CollidePlane(std::vector<Vector3> const &vec, Plane const &p) { return 0; }
 

@@ -58,3 +58,28 @@ void CharPosConstraint::Load(BinStream &bs) {
         mBox.Set(Vector3(1.0f, 1.0f, 0.0f), Vector3(-1.0f, -1.0f, 1000.0f));
     }
 }
+
+void CharPosConstraint::Poll() {
+    if (mSrc) {
+        const Transform &srcTrans = mSrc->WorldXfm();
+        for (ObjPtrList<RndTransformable>::iterator it = mTargets.begin();
+             it != mTargets.end();
+             ++it) {
+            RndTransformable *curTrans = *it;
+            Transform tf48(curTrans->WorldXfm());
+            if (mBox.mMin.x <= mBox.mMax.x) {
+                float tmp = Clamp(mBox.mMin.x, mBox.mMax.x, tf48.v.x - srcTrans.v.x);
+                tf48.v.x = tmp + srcTrans.v.x;
+            }
+            if (mBox.mMin.y <= mBox.mMax.y) {
+                float tmp = Clamp(mBox.mMin.y, mBox.mMax.y, tf48.v.y - srcTrans.v.y);
+                tf48.v.y = tmp + srcTrans.v.y;
+            }
+            if (mBox.mMin.z <= mBox.mMax.z) {
+                float tmp = Clamp(mBox.mMin.z, mBox.mMax.z, tf48.v.z - srcTrans.v.z);
+                tf48.v.z = tmp + srcTrans.v.z;
+            }
+            curTrans->SetWorldXfm(tf48);
+        }
+    }
+}

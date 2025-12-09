@@ -17,6 +17,7 @@ public:
 
     float Weight() { return mWeightOwner->mWeight; }
     void SetWeightOwner(CharWeightable *o) { mWeightOwner = o ? o : this; }
+    CharWeightable *WeightOwner() { return mWeightOwner; }
 
     OBJ_MEM_OVERLOAD(0x12)
     NEW_OBJ(CharWeightable)

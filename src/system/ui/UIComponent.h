@@ -47,17 +47,20 @@ public:
     virtual bool Entering() const { return false; }
     virtual bool Exiting() const { return mState == kSelecting; }
     virtual bool CanHaveFocus() { return true; }
-    virtual void OldResourcePreload(BinStream &);
 
     OBJ_MEM_OVERLOAD(0x19);
     NEW_OBJ(UIComponent)
 
     State GetState() { return mState; }
-    void SendSelect(LocalUser *);
+
     static void Init();
 
 protected:
+    virtual void OldResourcePreload(BinStream &);
     UIComponent();
+    void SendSelect(LocalUser *);
+
+    static int sSelectFrames;
 
     State mState; // 0x8
     ObjPtr<UIComponent> mNavRight; // 0xc
@@ -66,6 +69,9 @@ protected:
     UIScreen *mSelectScreen; // 0x38
     int mSelected; // 0x3c
     bool unk40; // 0x40
+
+private:
+    void FinishSelecting();
 };
 
 #include "obj/Msg.h"
@@ -75,17 +81,18 @@ protected:
 // {} UIComponent *GetUIComponent() const { return mData->Obj<UIComponent>(2); } LocalUser
 // *GetUser() const { return mData->Obj<LocalUser>(3); } END_MESSAGE
 
-// DECLARE_MESSAGE(UIComponentSelectMsg, "component_select");
-// UIComponentSelectMsg(UIComponent *comp, LocalUser *user) : Message(Type(), comp, user)
-// {} UIComponent *GetComponent() const { return mData->Obj<UIComponent>(2); } LocalUser
-// *GetUser() const { return mData->Obj<LocalUser>(3); } END_MESSAGE
+DECLARE_MESSAGE(UIComponentSelectMsg, "component_select");
+UIComponentSelectMsg(UIComponent *comp, LocalUser *user) : Message(Type(), comp, user) {}
+UIComponent *GetComponent() const { return mData->Obj<UIComponent>(2); }
+LocalUser *GetUser() const { return mData->Obj<LocalUser>(3); }
+END_MESSAGE
 
-// DECLARE_MESSAGE(UIComponentSelectDoneMsg, "component_select_done");
-// UIComponentSelectDoneMsg(UIComponent *comp, LocalUser *user)
-//     : Message(Type(), comp, user) {}
-// UIComponent *GetComponent() const { return mData->Obj<UIComponent>(2); }
-// LocalUser *GetUser() const { return mData->Obj<LocalUser>(3); }
-// END_MESSAGE
+DECLARE_MESSAGE(UIComponentSelectDoneMsg, "component_select_done");
+UIComponentSelectDoneMsg(UIComponent *comp, LocalUser *user)
+    : Message(Type(), comp, user) {}
+UIComponent *GetComponent() const { return mData->Obj<UIComponent>(2); }
+LocalUser *GetUser() const { return mData->Obj<LocalUser>(3); }
+END_MESSAGE
 
 DECLARE_MESSAGE(UIComponentScrollSelectMsg, "component_scroll_select");
 UIComponentScrollSelectMsg(UIComponent *comp, LocalUser *user, bool selected)

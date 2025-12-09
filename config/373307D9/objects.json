@@ -810,7 +810,7 @@
             "system/synth/tomcrypt/TomCryptLicense.cpp": "NonMatching",
             "system/synth_xbox/Biquad.cpp": "NonMatching",
             "system/synth_xbox/EnvelopeGenerator.cpp": "MISSING",
-            "system/synth_xbox/ExternalMic.cpp": "MISSING",
+            "system/synth_xbox/ExternalMic.cpp": "NonMatching",
             "system/synth_xbox/FFT.cpp": "MISSING",
             "system/synth_xbox/FftIpp.cpp": "NonMatching",
             "system/synth_xbox/FilterCoeffs.cpp": "MISSING",

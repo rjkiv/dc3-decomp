@@ -1,4 +1,5 @@
 #include "char/CharBonesBlender.h"
+#include "char/CharBoneDir.h"
 #include "obj/Object.h"
 
 void CharBonesBlender::Enter() { CharBones::Enter(); }
@@ -65,3 +66,18 @@ BEGIN_LOADS(CharBonesBlender)
 END_LOADS
 
 CharBonesBlender::CharBonesBlender() : mDest(this), mClipType("") {}
+
+void CharBonesBlender::SetClipType(Symbol s) {
+    if (s != mClipType) {
+        mClipType = s;
+        ClearBones();
+        CharBoneDir::StuffBones(*this, mClipType);
+    }
+}
+
+void CharBonesBlender::Poll() {
+    if (mBones.empty() || !mDest)
+        return;
+    Blend(*mDest);
+    CharBones::Enter();
+}

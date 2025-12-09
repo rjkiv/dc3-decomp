@@ -126,7 +126,6 @@ void CharIKHead::UpdatePoints(bool b) {
 }
 
 void CharIKHead::Highlight() {
-#ifdef MILO_DEBUG
     float weight = Weight();
     if (weight == 0 || !mHead || !mTarget || !mSpine)
         return;
@@ -142,7 +141,6 @@ void CharIKHead::Highlight() {
             );
         }
     }
-#endif
 }
 
 #pragma endregion CharIKHead

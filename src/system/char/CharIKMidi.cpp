@@ -1,7 +1,11 @@
 #include "char/CharIKMidi.h"
+#include "char/Char.h"
+#include "math/Easing.h"
+#include "math/Rot.h"
 #include "obj/Object.h"
 #include "obj/Msg.h"
 #include "obj/Task.h"
+#include "rndobj/Rnd.h"
 #include "rndobj/Trans.h"
 
 CharIKMidi::CharIKMidi()
@@ -94,5 +98,67 @@ void CharIKMidi::NewSpot(RndTransformable *t, float f) {
         mAnimFrac = 0;
         mSpotChanged = true;
         mNewSpot = t;
+    }
+}
+
+void CharIKMidi::Poll() {
+    if (mBone) {
+        if (mSpotChanged) {
+            mSpotChanged = false;
+            if (!mCurSpot) {
+                mCurSpot = mBone;
+                mOldLocalXfm.Reset();
+            }
+            if (mNewSpot) {
+                Transform tf48;
+                FastInvert(mNewSpot->WorldXfm(), tf48);
+                Multiply(mCurSpot->WorldXfm(), tf48, tf48);
+                Multiply(mOldLocalXfm, tf48, mLocalXfm);
+            }
+            mCurSpot = mNewSpot;
+        }
+        if (mCurSpot) {
+            mFrac += mFracPerBeat * TheTaskMgr.DeltaBeat();
+            if (IsNaN(mFrac))
+                mFrac = 0;
+            ClampEq<float>(mFrac, 0, 1);
+            float sigmoid = EaseSigmoid(mFrac, 0, 0);
+            if (mAnimFracPerBeat > 0 && mAnimBlender) {
+                if (mFrac < 0.5) {
+                    mAnimFrac += mAnimFracPerBeat * TheTaskMgr.DeltaBeat();
+                } else {
+                    mAnimFrac -= mAnimFracPerBeat * TheTaskMgr.DeltaBeat();
+                }
+                ClampEq<float>(mAnimFrac, 0, mMaxAnimBlend);
+                mAnimBlender->SetWeight(mAnimFrac);
+            }
+            Scale(mLocalXfm.v, 1.0f - sigmoid, mOldLocalXfm.v);
+            Hmx::Quat q88(mLocalXfm.m);
+            IdentityInterp(q88, sigmoid, q88);
+            MakeRotMatrix(q88, mOldLocalXfm.m);
+            Transform tf78;
+            Multiply(mOldLocalXfm, mCurSpot->WorldXfm(), tf78);
+            mBone->SetWorldXfm(tf78);
+        }
+    }
+}
+
+void CharIKMidi::Highlight() {
+    if (gCharHighlightY == -1.0f) {
+        CharDeferHighlight(this);
+    } else {
+        Hmx::Color white(1, 1, 1);
+        Vector2 v2(5.0f, gCharHighlightY);
+        TheRnd.DrawString(MakeString("%s:", PathName(this)), v2, white, true);
+        v2.y += 16.0f;
+        TheRnd.DrawString(
+            MakeString("frac %.3f new:%s", mFrac, mCurSpot ? mCurSpot->Name() : "NULL"),
+            v2,
+            white,
+            true
+        );
+        v2.y += 16.0f;
+        DoDebugDraws(this, (v2.y + 24.0f) - 12.0f);
+        gCharHighlightY += 112.0f;
     }
 }

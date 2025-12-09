@@ -65,6 +65,7 @@ public:
         SetWeights(0);
     }
     void ScaleAddIdentity();
+    void Blend(CharBones &) const;
     CompressionType GetCompression() const { return mCompression; }
     int TotalSize() const { return mTotalSize; }
     std::vector<Bone> GetBones() { return mBones; }

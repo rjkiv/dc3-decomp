@@ -1,7 +1,9 @@
 #include "char/CharClipGroup.h"
 #include "CharClipGroup.h"
 #include "char/CharClip.h"
+#include "math/Utl.h"
 #include "obj/Object.h"
+#include <cstring>
 
 CharClipGroup::CharClipGroup()
     : mClips(this, (EraseMode)1), mWhich(0), unk24(0), mFlags(0) {}
