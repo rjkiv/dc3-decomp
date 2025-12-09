@@ -11,8 +11,10 @@
 #define FIONBIO _IOW('f', 126, unsigned long)
 
 #define AF_INET 2
+#define PF_INET AF_INET
 #define INVALID_SOCKET (SOCKET)(~0)
 #define SOCK_STREAM 1
+#define SOCK_DGRAM 2
 
 #define WSABASEERR 10000
 #define WSAEINTR WSABASEERR + 4
@@ -93,6 +95,17 @@ typedef struct fd_set {
 struct timeval {
     long tv_sec;
     long tv_usec;
+};
+
+struct addrinfo {
+    int ai_flags;
+    int ai_family;
+    int ai_socktype;
+    int ai_protocol;
+    unsigned long ai_addrlen;
+    char *ai_canonname;
+    struct sockaddr *ai_addr;
+    struct addrinfo *ai_next;
 };
 
 struct in_addr {

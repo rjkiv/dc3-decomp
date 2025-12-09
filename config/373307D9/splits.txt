@@ -1961,7 +1961,7 @@ system/net/HttpReq.cpp:
 	.text       start:0x8255FDB8 end:0x825601F0
 	.data       start:0x82F10270 end:0x82F10288
 
-system/net/multi.cpp:
+system/net/curl/lib/multi.c:
 	.rdata      start:0x82066CF4 end:0x82066E3C
 	.pdata      start:0x822CC058 end:0x822CC0E8
 	.text       start:0x825601F0 end:0x82562860
@@ -1989,7 +1989,7 @@ system/net/curl/lib/hash.c:
 	.pdata      start:0x822CC298 end:0x822CC2E0
 	.text       start:0x82564448 end:0x82564B38
 
-system/net/llist.cpp:
+system/net/curl/lib/llist.c:
 	.pdata      start:0x822CC2E0 end:0x822CC300
 	.text       start:0x82564B38 end:0x82564E80
 
@@ -2008,7 +2008,7 @@ system/net/transfer.cpp:
 	.pdata      start:0x822CC490 end:0x822CC510
 	.text       start:0x8256AC68 end:0x8256D270
 
-system/net/asyn-thread.cpp:
+system/net/curl/lib/asyn-thread.c:
 	.rdata      start:0x820682DC end:0x820683E0
 	.pdata      start:0x822CC510 end:0x822CC548
 	.text       start:0x8256D270 end:0x8256D8D8
@@ -2016,7 +2016,7 @@ system/net/asyn-thread.cpp:
 system/net/curl/lib/warnless.c:
 	.text       start:0x8256D8D8 end:0x8256D8F8
 
-system/net/splay.cpp:
+system/net/curl/lib/splay.c:
 	.pdata      start:0x822CC548 end:0x822CC560
 	.text       start:0x8256D8F8 end:0x8256DD68
 
@@ -2049,7 +2049,7 @@ system/net/curl/lib/hostasyn.c:
 	.pdata      start:0x822CC6E0 end:0x822CC6F0
 	.text       start:0x825744A8 end:0x825745C8
 
-system/net/wildcard.cpp:
+system/net/curl/lib/wildcard.c:
 	.pdata      start:0x822CC6F0 end:0x822CC700
 	.text       start:0x825745C8 end:0x825746B0
 
@@ -2057,7 +2057,7 @@ system/net/curl/lib/curl_rand.c:
 	.pdata      start:0x822CC700 end:0x822CC708
 	.text       start:0x825746B0 end:0x82574730
 
-system/net/getinfo.cpp:
+system/net/curl/lib/getinfo.c:
 	.rdata      start:0x82069508 end:0x8206959C
 	.pdata      start:0x822CC708 end:0x822CC718
 	.text       start:0x82574730 end:0x82574CC8
@@ -2137,7 +2137,7 @@ system/net/ftp.cpp:
 	.pdata      start:0x822CCB30 end:0x822CCC80
 	.text       start:0x8257FBA0 end:0x82584830
 
-system/net/sslgen.cpp:
+system/net/curl/lib/sslgen.c:
 	.pdata      start:0x822CCC80 end:0x822CCC98
 	.text       start:0x82584830 end:0x82584BB8
 
@@ -2163,7 +2163,7 @@ system/net/curl/lib/escape.c:
 	.pdata      start:0x822CCD18 end:0x822CCD20
 	.text       start:0x82587140 end:0x82587248
 
-system/net/netrc.cpp:
+system/net/curl/lib/netrc.c:
 	.rdata      start:0x8206C31C end:0x8206C398
 	.pdata      start:0x822CCD20 end:0x822CCD28
 	.text       start:0x82587248 end:0x82587500
@@ -2277,7 +2277,7 @@ system/net/curl/lib/md5.c:
 	.pdata      start:0x822CCF18 end:0x822CCF38
 	.text       start:0x8258C9A8 end:0x8258D660
 
-system/net/ftplistparser.cpp:
+system/net/curl/lib/ftplistparser.c:
 	.rdata      start:0x8206E24C end:0x8206E2D4
 	.pdata      start:0x822CCF38 end:0x822CCF58
 	.text       start:0x8258D660 end:0x8258E6E8
