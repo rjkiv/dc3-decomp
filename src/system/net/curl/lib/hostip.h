@@ -185,6 +185,7 @@ struct Curl_dns_entry *Curl_cache_addr(
     struct SessionHandle *data, Curl_addrinfo *addr, const char *hostname, int port
 );
 
+#undef time
 #ifndef INADDR_NONE
 #define CURL_INADDR_NONE (in_addr_t) ~0
 #else

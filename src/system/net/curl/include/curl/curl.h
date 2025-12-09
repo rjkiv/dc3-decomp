@@ -224,6 +224,8 @@ typedef enum {
    achievable (e.g. by FTP LIST parsing). Please see the url_easy_setopt(3) man
    page for callbacks returning this structure -- some fields are mandatory,
    some others are optional. The FLAG field has special meaning. */
+
+#undef time
 struct curl_fileinfo {
     char *filename;
     curlfiletype filetype;
