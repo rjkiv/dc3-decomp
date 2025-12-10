@@ -21,7 +21,7 @@
  ***************************************************************************/
 
 #include "setup.h"
-
+#include "xdk/LIBCMT/va_list_def.h"
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
@@ -565,17 +565,18 @@ void Curl_easy_initHandleData(struct SessionHandle *data) {
  * curl_easy_getinfo() is an external interface that allows an app to retrieve
  * information from a performed transfer and similar.
  */
-// #undef curl_easy_getinfo
-// CURLcode curl_easy_getinfo(CURL *curl, CURLINFO info, ...) {
-//     va_list arg;
-//     void *paramp;
-//     struct SessionHandle *data = (struct SessionHandle *)curl;
-//
-//     va_start(arg, info);
-//     paramp = va_arg(arg, void *);
-//
-//     return Curl_getinfo(data, info, paramp);
-// }
+#undef curl_easy_getinfo
+
+CURLcode curl_easy_getinfo(CURL *curl, CURLINFO info, ...) {
+    va_list arg;
+    void *paramp;
+    struct SessionHandle *data = (struct SessionHandle *)curl;
+
+    va_start(arg, info);
+    paramp = va_arg(arg, void *);
+
+    return Curl_getinfo(data, info, paramp);
+}
 
 /*
  * curl_easy_duphandle() is an external interface to allow duplication of a

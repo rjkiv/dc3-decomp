@@ -271,9 +271,6 @@ static unsigned int CURL_STDCALL getaddrinfo_thread(void *arg) {
 
     return 0;
 }
-
-#else /* HAVE_GETADDRINFO */
-
 /*
  * gethostbyname_thread() resolves a name and then exits.
  */
@@ -294,6 +291,8 @@ unsigned int CURL_STDCALL gethostbyname_thread(void *arg) {
 
     return 0;
 }
+
+#else /* HAVE_GETADDRINFO */
 
 #endif /* HAVE_GETADDRINFO */
 
@@ -592,82 +591,22 @@ static const char *gai_strerror(int ecode) {
 Curl_addrinfo *Curl_resolver_getaddrinfo(
     struct connectdata *conn, const char *hostname, int port, int *waitp
 ) {
-    struct addrinfo hints;
     struct in_addr in;
-    Curl_addrinfo *res;
-    int error;
-    char sbuf[32];
-    int pf = PF_INET;
-#ifdef CURLRES_IPV6
-    struct in6_addr in6;
-#endif /* CURLRES_IPV6 */
 
     *waitp = 0; /* default to synchronous response */
 
-    /* First check if this is an IPv4 address string */
     if (Curl_inet_pton(AF_INET, hostname, &in) > 0)
         /* This is a dotted IP address 123.123.123.123-style */
         return Curl_ip2addr(AF_INET, &in, hostname, port);
 
-#ifdef CURLRES_IPV6
-    /* check if this is an IPv6 address string */
-    if (Curl_inet_pton(AF_INET6, hostname, &in6) > 0)
-        /* This is an IPv6 address literal */
-        return Curl_ip2addr(AF_INET6, &in6, hostname, port);
-
-    /*
-     * Check if a limited name resolve has been requested.
-     */
-    switch (conn->ip_version) {
-    case CURL_IPRESOLVE_V4:
-        pf = PF_INET;
-        break;
-    case CURL_IPRESOLVE_V6:
-        pf = PF_INET6;
-        break;
-    default:
-        pf = PF_UNSPEC;
-        break;
-    }
-
-    if ((pf != PF_INET) && !Curl_ipv6works())
-        /* the stack seems to be a non-ipv6 one */
-        pf = PF_INET;
-
-#endif /* CURLRES_IPV6 */
-
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = pf;
-    hints.ai_socktype = conn->socktype;
-
-    snprintf(sbuf, sizeof(sbuf), "%d", port);
-
     /* fire up a new resolver thread! */
-    if (init_resolve_thread(conn, hostname, port, &hints)) {
+    if (init_resolve_thread(conn, hostname, port, NULL)) {
         *waitp = 1; /* expect asynchronous response */
         return NULL;
     }
 
     /* fall-back to blocking version */
-    infof(
-        conn->data,
-        "init_resolve_thread() failed for %s; %s\n",
-        hostname,
-        Curl_strerror(conn, ERRNO)
-    );
-
-    error = Curl_getaddrinfo_ex(hostname, sbuf, &hints, &res);
-    if (error) {
-        infof(
-            conn->data,
-            "getaddrinfo() failed for %s:%d; %s\n",
-            hostname,
-            port,
-            Curl_strerror(conn, SOCKERRNO)
-        );
-        return NULL;
-    }
-    return res;
+    return Curl_ipv4_resolve_r(hostname, port);
 }
 
 #endif /* !HAVE_GETADDRINFO */
