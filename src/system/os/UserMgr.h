@@ -15,6 +15,8 @@ public:
     virtual LocalUser *GetLocalUser(const UserGuid &, bool) const { return nullptr; }
     virtual RemoteUser *GetRemoteUser(const UserGuid &, bool) const { return nullptr; }
 
+    void SetBool(bool b) { unk2c = b; } // change later
+
     void GetLocalUsers(std::vector<LocalUser *> &) const;
     // void GetRemoteUsers(std::vector<RemoteUser *> &) const; // goes unused in DC3
     LocalUser *GetLocalUserFromPadNum(int) const;

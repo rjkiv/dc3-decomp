@@ -26,7 +26,7 @@
             "lazer/game/GameMode.cpp": "NonMatching",
             "lazer/game/GamePanel.cpp": "MISSING",
             "lazer/game/HamUser.cpp": "NonMatching",
-            "lazer/game/HamUserMgr.cpp": "MISSING",
+            "lazer/game/HamUserMgr.cpp": "NonMatching",
             "lazer/game/LiveInput.cpp": "MISSING",
             "lazer/game/PartyModeMgr.cpp": "MISSING",
             "lazer/game/PresenceMgr.cpp": "MISSING",
