@@ -34,7 +34,7 @@ void *__va_arg(va_list v_list, int type);
 #define _SIZEOFINT(n) ((sizeof(n) + 8 - 1) & ~(8 - 1))
 #define _ALIGN(ap, t) (((int)(ap) + 8 - 1) & ~(8 - 1))
 /* clang-format off */
-#define va_start(ap, v) (ap = ((sizeof(t) > 8 || 0 != (sizeof(t) & (sizeof(t) - 1))) ? (va_list)(&(v)) + _SIZEOFINT(v) : (va_list)(&(v) + 1)))
+#define va_start(ap, v) (ap = ((sizeof(v) > 8 || 0 != (sizeof(v) & (sizeof(v) - 1))) ? (va_list)(&(v)) + _SIZEOFINT(v) : (va_list)(&(v) + 1)))
 
 #define va_arg(ap, t) (ap = (va_list)(_ALIGN(ap, t) + _SIZEOFINT(t)), (sizeof(t) > 8 || 0 != (sizeof(t) & (sizeof(t) - 1))) ? *(t *)((ap) - _SIZEOFINT(t)) : ((t *)(ap))[-1])
 
