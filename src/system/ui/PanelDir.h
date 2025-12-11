@@ -3,6 +3,7 @@
 #include "rndobj/Cam.h"
 #include "rndobj/Dir.h"
 #include "ui/UIComponent.h"
+#include "ui/UIPanel.h"
 #include "utl/MemMgr.h"
 
 class Flow;
@@ -45,6 +46,7 @@ public:
     NEW_OBJ(PanelDir)
 
     void SetOwnerPanel(UIPanel *panel) { mOwnerPanel = panel; }
+    UIPanel *OwnerPanel() { return mOwnerPanel; }
     RndCam *Cam() const { return mCam; }
     void SetCam(RndCam *cam) { mCam = cam; }
     void EnableComponent(UIComponent *, PanelDir::RequestFocus);

@@ -1,0 +1,46 @@
+#include "meta_ham/CrewProvider.h"
+#include "flow/PropertyEventProvider.h"
+#include "game/GameMode.h"
+#include "hamobj/HamGameData.h"
+#include "hamobj/HamPlayerData.h"
+#include "obj/Data.h"
+#include "os/Debug.h"
+#include "utl/Symbol.h"
+
+CrewProvider::CrewProvider() : unk30(0), unk34(0) {}
+
+CrewProvider::~CrewProvider() {}
+
+int CrewProvider::NumData() const { return mCrews.size(); }
+
+Symbol CrewProvider::DataSymbol(int idx) const {
+    MILO_ASSERT_RANGE(idx, 0, mCrews.size(), 0xd3);
+    return mCrews[idx];
+}
+
+int CrewProvider::DataIndex(Symbol s) const {
+    for (int i = 0; i < mCrews.size(); i++) {
+        if (mCrews[i] == s)
+            return i;
+    }
+    return -1;
+}
+
+bool CrewProvider::IsCrewAvailable(Symbol s) const {
+    static Symbol random_crew("random_crew");
+    if (s == random_crew) {
+        // MetaPerformer call right here
+        int index = unk30 == 0;
+        HamPlayerData *pOtherPlayerData = TheGameData->Player(index);
+        MILO_ASSERT(pOtherPlayerData, 0xe5);
+        if (!TheGameMode->InMode("dance_battle", true)) {
+            const DataNode *prop = TheHamProvider->Property("is_in_party_mode", true);
+            if (prop->Int() == 0 && !TheGameData->IsSkeletonPresent(index))
+                return true;
+        }
+        if (pOtherPlayerData->Crew() != s)
+            return true;
+        return false;
+    }
+    return true;
+}
