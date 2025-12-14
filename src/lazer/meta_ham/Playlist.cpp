@@ -10,7 +10,7 @@
 
 #pragma region Playlist
 
-Playlist::Playlist() : unk4(gNullStr), unk8(0), unk9(0) { m_vSongs.clear(); }
+Playlist::Playlist() : mName(gNullStr), unk8(0), unk9(0) { m_vSongs.clear(); }
 
 Playlist::~Playlist() { m_vSongs.clear(); }
 
@@ -143,7 +143,7 @@ int CustomPlaylist::SaveSize(int x) {
 void CustomPlaylist::Copy(CustomPlaylist *customP) {
     unk28 = customP->unk28;
     unk20 = customP->unk20;
-    unk4 = customP->unk4;
+    mName = customP->mName;
     unk8 = customP->unk8;
     unk9 = customP->unk9;
     m_vSongs = customP->m_vSongs;

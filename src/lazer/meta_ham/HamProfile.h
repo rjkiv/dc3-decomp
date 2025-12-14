@@ -1,4 +1,5 @@
 #pragma once
+#include "game/HamUser.h"
 #include "meta/Profile.h"
 
 class HamProfile : public Profile {
@@ -21,6 +22,7 @@ public:
     void CheckForIconManUnlock();
     void CheckForNinjaUnlock();
     void SetFitnessMode(bool);
+    HamUser *GetHamUser() const;
 
 protected:
 };

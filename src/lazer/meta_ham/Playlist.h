@@ -42,8 +42,10 @@ public:
     void InsertSong(int, int);
     int GetNumSongs() const;
     bool IsEmpty() const { return m_vSongs.empty(); }
+    bool IsFull() const { return m_vSongs.size() >= 20; }
+    Symbol GetName() const { return mName; }
 
-    Symbol unk4;
+    Symbol mName;
     bool unk8;
     bool unk9;
     std::vector<int> m_vSongs; // 0xc

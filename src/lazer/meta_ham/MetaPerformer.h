@@ -76,15 +76,27 @@ public:
     void SetVenuePref(Symbol);
     void StartGameplayTimer();
     void CalcPrimarySongCharacter(const HamSongMetadata *, Symbol &, Symbol &, Symbol &);
-    void
-    CalcSecondarySongCharacter(const HamSongMetadata *, bool, Symbol, Symbol &, Symbol &, Symbol &);
+    void CalcSecondarySongCharacter(
+        const HamSongMetadata *, bool, Symbol, Symbol &, Symbol &, Symbol &
+    );
     int GetPlaylistIndex() const;
     Symbol GetCompletedSong() const;
     bool SongInSet(Symbol) const;
     void StopGameplayTimer();
     void ClearCharacters();
-    void
-    CalcCharacters(const HamSongMetadata *, bool, PlayerFlag, HamPlayerData *&, Symbol &, Symbol &, Symbol &, HamPlayerData *&, Symbol &, Symbol &, Symbol &);
+    void CalcCharacters(
+        const HamSongMetadata *,
+        bool,
+        PlayerFlag,
+        HamPlayerData *&,
+        Symbol &,
+        Symbol &,
+        Symbol &,
+        HamPlayerData *&,
+        Symbol &,
+        Symbol &,
+        Symbol &
+    );
     bool SongEndsWithEndgameSequence() const;
     int DetermineDanceBattleWinner();
     bool IsRecommendedPracticeMove(String) const;
@@ -94,6 +106,7 @@ public:
     void SetPlaylist(Playlist *);
 
     bool HasPlaylist() const { return mPlaylist; }
+    Playlist *GetPlaylist() { return mPlaylist; }
 
     static void Init();
     static void SendSpeechDatapoint(DataArray *, float, Symbol);

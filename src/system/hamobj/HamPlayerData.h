@@ -34,6 +34,7 @@ public:
     PropertyEventProvider *Provider() const { return mProvider; }
     bool InFreestyle() const { return mSkeletonTrackingID >= 0; }
     Symbol Crew() const { return mCrew; }
+    Symbol Char() const { return mChar; }
     int GetSkeletonTrackingID() const { return mSkeletonTrackingID; }
     void AssignSkeleton(int id) { SetSkeletonTrackingID(id); }
     int PadNum() const { return mPadNum; }

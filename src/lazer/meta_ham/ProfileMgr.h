@@ -105,6 +105,7 @@ public:
     void HandleProfileSaveComplete();
     void HandleProfileLoadComplete();
     void UpdateUsingFitnessState();
+    bool HasActiveProfileWithInvalidSaveData() const;
 
     bool GetBassBoost() const { return mBassBoost; }
     bool GetDolby() const { return mDolby; }

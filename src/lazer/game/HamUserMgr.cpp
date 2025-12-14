@@ -1,6 +1,7 @@
 #include "lazer/game/HamUserMgr.h"
 #include "game/HamUser.h"
 #include "macros.h"
+#include "meta_ham/HamProfile.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/User.h"
@@ -8,6 +9,7 @@
 #include "stl/_vector.h"
 #include "utl/HxGuid.h"
 #include "utl/Std.h"
+#include "meta_ham/ProfileMgr.h"
 
 HamUserMgr *TheHamUserMgr;
 
@@ -25,8 +27,11 @@ HamUser *HamUserMgr::GetActiveUser() const {
     MILO_NOTIFY(
         "Are you sure you should be calling GetActiveUser()??  You probably want GetActiveProfile()!"
     );
-    // need TheProfileMgr to finish this func
-    return nullptr;
+    HamUser *user = nullptr;
+    HamProfile *h = TheProfileMgr.GetActiveProfile(true);
+    if (h)
+        user = h->GetHamUser();
+    return user;
 }
 
 HamUser *HamUserMgr::GetUserFromPad(int i) const {
