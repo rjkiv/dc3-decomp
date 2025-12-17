@@ -1,7 +1,7 @@
 #pragma once
 
 #include "meta/SongPreview.h"
-#include "meta_ham/NavListNode.h"
+#include "NavListNode.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/ContentMgr.h"
@@ -12,8 +12,7 @@
 class NavListSortMgr : public UIListProvider, Hmx::Object, ContentMgr::Callback {
 public:
     NavListSortMgr(SongPreview &);
-    // ContentMgr::Callback
-    virtual void ContentMounted(const char *, const char *);
+    virtual ~NavListSortMgr();
     // Hmx::Object
 
     // UIListProvider
@@ -29,6 +28,9 @@ public:
     virtual bool IsHeader(int);
     virtual void UnHighlightCurrent();
     virtual void ClearIconLabels();
+    // ContentMgr::Callback
+    virtual void ContentMounted(const char *, const char *);
+
 
     void StopPreview();
     void SetHeaderMode(bool);
@@ -47,6 +49,7 @@ public:
     void StartPreview(int, TexMovie *);
     Symbol OnGetToken(int);
     bool IsIndexHeader(int);
+    virtual int GetListIndexFromHeaderIndex(int);
     int GetHeaderIndexFromListIndex(int);
     int GetHeaderIndexFromChildListIndex(int);
     bool IsHeaderCollapsed(Symbol);
@@ -61,7 +64,7 @@ public:
 protected:
     std::vector<NavListSort *> unk34; // 0x34
     DataArray *unk44; // 0x44
-    bool unk48; // 0x48
+    bool unk48; // 0x48 mHighlightSaved maybe?
     int unk49; // 0x49
     SongPreview *mSongPreview; // 0x4c
     bool mHeaderMode; // 0x50
@@ -69,7 +72,7 @@ protected:
     bool mExitingHeaderMode; // 0x52
     std::vector<int> unk54; // 0x54
     std::vector<int> unk60; // 0x60
-    bool unk6c; // 0x6c
+    bool unk6c; // 0x6c mHeadersSelectable?
     std::list<Symbol> unk70; // 0x70
 };
 
