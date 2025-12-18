@@ -48,13 +48,14 @@ BEGIN_HANDLERS(NavListSortMgr)
     HANDLE_ACTION(do_uncollapse, DoUncollapse())
     HANDLE_ACTION(get_first_child_symbol_from_header_symbol, _msg->Sym(2))
     HANDLE_SUPERCLASS(UIListProvider)
-
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
 
 NavListSortMgr::NavListSortMgr(SongPreview &songprev)
-    : mSongPreview(&songprev), mHeaderMode(0), mEnteringHeaderMode(0),
-      mExitingHeaderMode(0), unk60(0), unk6c(0), unk70(0) {};
+    :  mSongPreview(&songprev), mHeaderMode(0),
+      mEnteringHeaderMode(0), mExitingHeaderMode(0), unk60(0), unk6c(0), unk70(0) {};
+
+NavListSortMgr::~NavListSortMgr() {}
 
 void NavListSortMgr::StopPreview() { mSongPreview->Start(gNullStr, 0); }
 
@@ -81,4 +82,78 @@ bool NavListSortMgr::IsHeader(int idx) {
 void NavListSortMgr::ClearHeaders() {
     unk54.clear();
     unk60.clear();
+}
+
+NavListSortNode *NavListSortMgr::GetHighlightItem() {
+    return unk34[unk40]->GetUnk50();
+}
+
+Symbol NavListSortMgr::GetHeaderSymbolFromChildSymbol(Symbol sym) {
+    auto a = unk34[unk40];
+    if (!a->GetNode(sym.Str())) {
+        sym = gNullStr;
+    }
+    return sym;
+}
+
+NavListSort *NavListSortMgr::GetCurrentSort() {
+    return unk34[unk40];
+}
+
+Symbol NavListSortMgr::GetCurrentSortName() {
+    NavListSort *pCurrentSort = unk34[unk40];
+    if (!pCurrentSort) {
+        MILO_ASSERT(pCurrentSort, 0x19c);
+    }
+    return pCurrentSort->GetSortName();
+}
+
+void NavListSortMgr::SetSort(int idx) {
+    if (idx >= 0 && idx < unk34.size()) {
+        unk70.clear();
+        unk40 = idx;
+    }
+}
+
+void NavListSortMgr::SetSort(Symbol sym) {
+    for (int i = 0; i < unk34.size(); i++) {
+        if (sym == unk34[i]->GetSortName()) {
+            SetSort(i);
+            return;
+        }
+    }
+    MILO_NOTIFY("Failed to find a sort for the symbol %s", sym);
+}
+
+void NavListSortMgr::SetHeaderUncollapsed(Symbol sym) {
+    FOREACH(it, unk70) {
+        if (*it == sym) {
+            return;
+        }
+    }
+    unk70.push_back(sym);
+}
+
+void NavListSortMgr::SetHeaderCollapsed(Symbol sym) {
+    FOREACH(it, unk70) {
+        if (*it == sym) {
+            unk70.erase(it);
+            return;
+        }
+    }
+}
+
+bool NavListSortMgr::IsHeaderCollapsed(Symbol sym) {
+    FOREACH(it, unk70) {
+        if (*it == sym) {
+            return true;
+        }
+    }
+}
+
+bool NavListSortMgr::IsIndexHeader(int idx) {
+    if (idx >= 0 && unk54.size() >= idx) {
+        return 1 + unk54[idx] & true;
+    }
+    return false;
 }

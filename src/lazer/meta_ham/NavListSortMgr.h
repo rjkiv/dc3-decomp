@@ -63,9 +63,10 @@ public:
 
 protected:
     std::vector<NavListSort *> unk34; // 0x34
+    int unk40; // 0x40 - mCurrentSortIndex?
     DataArray *unk44; // 0x44
     bool unk48; // 0x48 mHighlightSaved maybe?
-    int unk49; // 0x49
+    //int unk49; // 0x49
     SongPreview *mSongPreview; // 0x4c
     bool mHeaderMode; // 0x50
     bool mEnteringHeaderMode; // 0x51
@@ -73,7 +74,7 @@ protected:
     std::vector<int> unk54; // 0x54
     std::vector<int> unk60; // 0x60
     bool unk6c; // 0x6c mHeadersSelectable?
-    std::list<Symbol> unk70; // 0x70
+    std::list<Symbol> unk70; // 0x70 mSortNames?
 };
 
 extern NavListSortMgr TheNavListSortMgr;
