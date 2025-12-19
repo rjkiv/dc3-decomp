@@ -23,6 +23,7 @@
 #include "utl/Symbol.h"
 
 HamSongMgr TheHamSongMgr;
+SongMgr &TheSongMgr = TheHamSongMgr;
 
 HamSongMgr::HamSongMgr() : unkd0(0), mJukebox(2000), mRandomSongDebug(false) {
     ClearAndShrink<String>(mContentAltDirs);

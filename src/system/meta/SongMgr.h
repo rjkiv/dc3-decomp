@@ -162,3 +162,5 @@ protected:
     bool mSongCacheNeedsWrite; // 0xcd
     bool mSongCacheWriteAllowed; // 0xce
 };
+
+extern SongMgr &TheSongMgr;
