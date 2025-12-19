@@ -61,6 +61,8 @@ public:
     void FinalizeHeaders();
     void ClearHeaders();
 
+    bool IsInHeaderMode() { return mHeaderMode; }
+
 protected:
     std::vector<NavListSort *> unk34; // 0x34
     int unk40; // 0x40 - mCurrentSortIndex?
@@ -76,5 +78,3 @@ protected:
     bool unk6c; // 0x6c mHeadersSelectable?
     std::list<Symbol> unk70; // 0x70 mSortNames?
 };
-
-extern NavListSortMgr TheNavListSortMgr;

@@ -7,8 +7,6 @@
 #include "utl/Std.h"
 #include "utl/Symbol.h"
 
-// NavListSortMgr TheNavListSortMgr;
-
 BEGIN_HANDLERS(NavListSortMgr)
     HANDLE_EXPR(first_data_index, unk34.front()->GetNode(_msg->Sym(2)))
     HANDLE_EXPR(is_active, IsActive(_msg->Int(2)))
@@ -146,9 +144,10 @@ void NavListSortMgr::SetHeaderCollapsed(Symbol sym) {
 bool NavListSortMgr::IsHeaderCollapsed(Symbol sym) {
     FOREACH(it, unk70) {
         if (*it == sym) {
-            return true;
+            break;
         }
     }
+    return false;
 }
 
 bool NavListSortMgr::IsIndexHeader(int idx) {
@@ -157,3 +156,52 @@ bool NavListSortMgr::IsIndexHeader(int idx) {
     }
     return false;
 }
+
+void NavListSortMgr::Text(int i1, int i2, UIListLabel *listlabel, UILabel *label) const {
+    if (i2 >= 0) {
+        if (listlabel->Matches("header_collapse")) {
+
+        }
+    }
+}
+
+void NavListSortMgr::UnHighlightCurrent() {
+    if (unk34[unk40]->GetUnk54()) {
+        unk34[unk40]->SetHighlightItem(0);
+        unk34[unk40]->SetUnk54(0);
+    }
+}
+
+void NavListSortMgr::DoUncollapse() {
+    if (!IsInHeaderMode()) {
+        MILO_ASSERT(IsInHeaderMode(), 0x264);
+    }
+    mHeaderMode = false;
+    unk34.front()->SetHighlightItem(0);
+    unk34[unk40]->BuildItemList();
+}
+
+UIComponent::State
+NavListSortMgr::ComponentStateOverride(int i1, int i2, UIComponent::State state) const {
+    if (!unk34[unk40]->GetListFromIdx(i2)->IsActive()) {
+        return UIComponent::State::kDisabled;
+    }
+    return state;
+}
+
+int NavListSortMgr::GetListIndexFromHeaderIndex(int idx) {
+    int size = unk60.size();
+    if (idx < 0) {
+        if (0 < size) {
+            return unk60.front();
+        }
+    }
+    if (idx < size) {
+        return 0;
+    }
+    if (size > 0) {
+        return unk60[size-1];
+    }
+    return 0;
+}
+
