@@ -276,6 +276,7 @@ public:
     static void Init();
 
     int GetTextSize() const { return Max<int>(mFixedLength, mText.length()); }
+    static void SetBlacklightModeEnabled(bool b) { sBlacklightModeEnabled = b; }
     void UpdateText();
     void SetText(const char *);
     int FontMapIndex(RndFontBase *, bool);

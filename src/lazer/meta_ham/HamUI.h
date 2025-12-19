@@ -1,6 +1,7 @@
 #pragma once
 #include "meta_ham/BlacklightPanel.h"
 #include "meta_ham/HelpBarPanel.h"
+#include "meta_ham/OverlayPanel.h"
 #include "meta_ham/ShellInput.h"
 #include "meta/ConnectionStatusPanel.h"
 #include "os/ContentMgr.h"
@@ -30,6 +31,9 @@ public:
     HelpBarPanel *GetHelpBarPanel() const { return mHelpBar; }
     int Unk108() const { return unk_0x108; }
     UIPanel *EventDialogPanel() const { return mEventDialogPanel; }
+    OverlayPanel *GetOverlayPanel() const { return mOverlayPanel; }
+
+    void SetOverlayPanel(OverlayPanel *op) { mOverlayPanel = op; }
 
 protected:
     void AttemptEventTransition();
@@ -69,7 +73,7 @@ private:
     UIPanel *mEventDialogPanel; // 0xe4
     UIPanel *mBackgroundPanel; // 0xe8
     UIPanel *mContentLoadingPanel; // 0xec
-    u32 unk_0xF0; // 0xf0 - obj*
+    OverlayPanel *mOverlayPanel; // 0xf0
     u32 mGamePanel; // 0xf4 - GamePanel*
     RndDir *unk_0xF8; // 0xf8
     u8 unk_0xFC;

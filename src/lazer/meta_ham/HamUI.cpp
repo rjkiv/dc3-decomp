@@ -36,7 +36,7 @@ HamUI::HamUI() {
     mEventDialogPanel = nullptr;
     mBackgroundPanel = nullptr;
     mContentLoadingPanel = nullptr;
-    unk_0xF0 = 0;
+    mOverlayPanel = 0;
     mGamePanel = 0;
     unk_0xF8 = nullptr;
     unk_0xFC = 0;
@@ -76,7 +76,7 @@ BEGIN_HANDLERS(HamUI)
         apply_snapshot_to_mesh, ApplySnapshotToMesh(_msg->Int(2), _msg->Obj<RndMesh>(3))
     )
     HANDLE_EXPR(get_augmented_photo, unk_0xF8)
-    HANDLE_EXPR(has_overlay_panel, unk_0xF0 != 0)
+    HANDLE_EXPR(has_overlay_panel, mOverlayPanel != 0)
     HANDLE_ACTION(init_texture_store, InitTextureStore(_msg->Int(2)))
     HANDLE_ACTION(clear_texture_store, ClearTextureStore())
     HANDLE_EXPR(num_texture_store, NumStoredTextures())

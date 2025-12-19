@@ -4,11 +4,12 @@
 #include "lazer/meta_ham/Accomplishment.h"
 #include "obj/Data.h"
 #include "stl/_vector.h"
+#include "utl/Symbol.h"
 
 struct AccomplishmentCondition {
     u32 unk0;
-    u32 unk4;
-    u32 unk8;
+    int unk4;
+    Symbol unk8; // 0x8
     Difficulty mDifficulty; // 0xc
     Symbol mCharacter; // 0x10
     Symbol mMode; // 0x14
