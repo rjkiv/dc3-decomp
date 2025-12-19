@@ -80,7 +80,7 @@ protected:
     int unk68; // 0x68 - CacheResult?
     bool unk6c;
     bool unk6d;
-    int unk70;
+    int unk70; // 0x60 - device id
     int mDeviceIDState; // 0x74
     LoadMemcardAction *unk78; // 0x78
 };

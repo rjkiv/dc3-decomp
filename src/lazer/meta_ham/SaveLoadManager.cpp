@@ -219,12 +219,6 @@ Symbol SaveLoadManager::GetDialogOpt1() {
     case 6:
         out = mc_button_create_data;
         break;
-    case 7:
-        out = mc_button_choose_device;
-        break;
-    case 0xC:
-        out = mc_button_choose_device;
-        break;
     case 0xE:
     case 0xF:
     case 0x10:
@@ -238,12 +232,11 @@ Symbol SaveLoadManager::GetDialogOpt1() {
     case 0x1C:
         out = song_info_cache_button_corrupt_overwrite;
         break;
-    case 0x29:
-        out = global_options_button_create;
-        break;
     case 0x2F:
         out = global_options_button_corrupt_overwrite;
         break;
+    case 0x29:
+    case 0x2A:
     case 0x3A:
         out = global_options_button_create;
         break;
@@ -253,6 +246,8 @@ Symbol SaveLoadManager::GetDialogOpt1() {
     case 0x4A:
         out = mc_button_delete_saves;
         break;
+    case 7:
+    case 0xC:
     case 0x4C:
     case 0x58:
     case 0x5E:
@@ -263,6 +258,57 @@ Symbol SaveLoadManager::GetDialogOpt1() {
         break;
     case 0x5C:
         out = mc_button_yes;
+        break;
+    default:
+        break;
+    }
+    return out;
+}
+
+Symbol SaveLoadManager::GetDialogOpt2() {
+    static Symbol mc_button_cancel("mc_button_cancel");
+    static Symbol mc_button_continue_no_save("mc_button_continue_no_save");
+    static Symbol song_info_cache_button_cancel("song_info_cache_button_cancel");
+    static Symbol global_options_button_cancel("global_options_button_cancel");
+    static Symbol mc_button_retry("mc_button_retry");
+    static Symbol mc_button_disable_autosave("mc_button_disable_autosave");
+    static Symbol mc_button_no("mc_button_no");
+    Symbol out = gNullStr;
+    switch (unk34) {
+    case 0xE:
+    case 0xF:
+    case 0x10:
+    case 0x11:
+        out = mc_button_continue_no_save;
+        break;
+    case 0x17:
+    case 0x18:
+    case 0x1C:
+        out = song_info_cache_button_cancel;
+        break;
+    case 0x29:
+    case 0x2A:
+    case 0x2F:
+    case 0x3A:
+        out = global_options_button_cancel;
+        break;
+    case 0x4A:
+        out = mc_button_retry;
+        break;
+    case 0x4C:
+        out = mc_button_disable_autosave;
+        break;
+    case 0x5C:
+        out = mc_button_no;
+        break;
+    case 6:
+    case 7:
+    case 0xC:
+    case 0x48:
+    case 0x58:
+    case 0x5B:
+    case 0x5E:
+        out = mc_button_cancel;
         break;
     default:
         break;
