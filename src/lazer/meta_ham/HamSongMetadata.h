@@ -2,6 +2,7 @@
 #include "hamobj/HamCharacter.h"
 #include "meta/SongMetadata.h"
 #include "obj/Data.h"
+#include "obj/Object.h"
 #include "stl/_vector.h"
 #include "utl/BinStream.h"
 #include "utl/Symbol.h"

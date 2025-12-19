@@ -22,6 +22,8 @@ public:
     bool InPartyMode() const { return mInPartyMode; }
     bool IsInfinite() const { return mInfinite; }
 
+    Symbol GameplayMode() const { return mGameplayMode; }
+
     DataNode OnInMode(const DataArray *);
     DataNode OnSetMode(const DataArray *);
 

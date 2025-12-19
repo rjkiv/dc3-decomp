@@ -1,6 +1,8 @@
 #pragma once
 #include "game/HamUser.h"
+#include "hamobj/Difficulty.h"
 #include "meta/Profile.h"
+#include "meta_ham/CampaignProgress.h"
 #include "meta_ham/SongStatusMgr.h"
 
 class HamProfile : public Profile {
@@ -25,6 +27,7 @@ public:
     void SetFitnessMode(bool);
     HamUser *GetHamUser() const;
     SongStatusMgr *GetSongStatusMgr() const;
+    CampaignProgress &GetCampaignProgress(Difficulty) const;
 
 protected:
 };

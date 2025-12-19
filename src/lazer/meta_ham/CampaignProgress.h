@@ -92,6 +92,8 @@ public:
     int GetSongStarsEarned(Symbol, Symbol) const;
     bool IsMoveMastered(Symbol, Symbol, Symbol) const;
     bool IsCampaignNew() const;
+    bool IsCampaignIntroCompleted() const;
+    bool IsCampaignMindControlCompleted() const;
     Symbol GetFirstIncompleteEra() const;
     int GetStars() const;
     int GetNumCompletedEras() const;

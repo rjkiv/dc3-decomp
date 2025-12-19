@@ -46,6 +46,7 @@ public:
     Symbol GetMoveVariantName(Symbol, Symbol) const;
     Symbol GetHamMoveNameFromVariant(Symbol, Symbol) const;
     Symbol GetIntroMovie() const;
+    int GetNumSongs() { return m_vSongs.size(); }
 
     Symbol mEra; // 0x4
     std::map<Symbol, int> unk8;
@@ -61,10 +62,10 @@ public:
     Symbol mCompletetion_Accomplishment; // 0x54
     int unk58;
     Symbol mCraze_Song; // 0x5c
-    int unk60;
+    int mStarsRequiredForMastery; // 0x60
     Symbol mMastery_Stars[3]; // 0x64
-    int unk70;
-    int unk74;
+    int mMovesRequiredForMastery; // 0x70
+    int mStarsRequiredForOutfits; // 0x74
     Symbol unk78;
 
 private:

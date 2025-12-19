@@ -57,7 +57,7 @@
             "lazer/meta_ham/CampaignEra.cpp": "NonMatching",
             "lazer/meta_ham/CampaignMasterQuestCrewSelectPanel.cpp": "MISSING",
             "lazer/meta_ham/CampaignMasterQuestSongSelectPanel.cpp": "MISSING",
-            "lazer/meta_ham/CampaignPerformer.cpp": "MISSING",
+            "lazer/meta_ham/CampaignPerformer.cpp": "NonMatching",
             "lazer/meta_ham/CampaignProgress.cpp": "NonMatching",
             "lazer/meta_ham/CampaignSongSelectPanel.cpp": "MISSING",
             "lazer/meta_ham/ChallengeRecord.cpp": "MISSING",

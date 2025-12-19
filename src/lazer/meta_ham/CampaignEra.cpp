@@ -83,7 +83,8 @@ CampaignEra::CampaignEra(DataArray *d1, DataArray *d2)
     : mEra(gNullStr), mCrew(gNullStr), mVenue(gNullStr),
       mEraSong_Unlocked_Token(gNullStr), mEraSong_Complete_Token(gNullStr),
       mEra_Intro_Movie(gNullStr), unk50(false), mCompletetion_Accomplishment(gNullStr),
-      unk58(0), mCraze_Song(gNullStr), unk60(0), unk70(0), unk74(0), unk78(gNullStr) {
+      unk58(0), mCraze_Song(gNullStr), mStarsRequiredForMastery(0),
+      mMovesRequiredForMastery(0), mStarsRequiredForOutfits(0), unk78(gNullStr) {
     Configure(d1, d2);
 }
 
@@ -207,8 +208,8 @@ void CampaignEra::Configure(DataArray *i_pConfig, DataArray *d2) {
     }
 
     MILO_ASSERT(m_vSongs.empty(), 0x168);
-    unk70 = 0;
-    unk60 = 0;
+    mMovesRequiredForMastery = 0;
+    mStarsRequiredForMastery = 0;
 
     static Symbol songs("songs");
     DataArray *pSongArray = i_pConfig->FindArray(songs);

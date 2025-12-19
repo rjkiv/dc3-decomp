@@ -153,7 +153,8 @@ bool CampaignEraProgress::IsMastered() const {
     MILO_ASSERT(pEra, 0x155);
     int totalStars = GetTotalStarsEarned();
     int totalMasteredMoves = GetTotalMovesMastered();
-    if (totalStars < pEra->unk60 || totalMasteredMoves < pEra->unk70) {
+    if (totalStars < pEra->mStarsRequiredForMastery
+        || totalMasteredMoves < pEra->mMovesRequiredForMastery) {
         return false;
     }
     return true;
