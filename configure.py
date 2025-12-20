@@ -176,7 +176,7 @@ config.compilers_tag = "20250812"
 config.dtk_tag = "v0.1.1"
 config.objdiff_tag = "v3.2.1"
 config.sjiswrap_tag = "v1.2.1"
-config.wibo_tag = "1.0.0-alpha.1"
+config.wibo_tag = "1.0.0"
 
 # Project
 config_dir = Path("config") / config.version
