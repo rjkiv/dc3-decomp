@@ -46,6 +46,7 @@ public:
     Symbol GetMoveVariantName(Symbol, Symbol) const;
     Symbol GetHamMoveNameFromVariant(Symbol, Symbol) const;
     Symbol GetIntroMovie() const;
+    Symbol GetName() const;
     int GetNumSongs() { return m_vSongs.size(); }
 
     Symbol mEra; // 0x4

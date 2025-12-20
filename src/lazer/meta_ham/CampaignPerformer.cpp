@@ -378,6 +378,12 @@ int CampaignPerformer::GetEraStarsEarned(Symbol era) const {
     return eraStarsEarned;
 }
 
+Symbol CampaignPerformer::GetFirstEra() const {
+    CampaignEra *pEra = TheCampaign->m_vEras.front();
+    MILO_ASSERT(pEra, 0x32);
+    return pEra->GetName();
+}
+
 int CampaignPerformer::GetMasteryMoves(Symbol era) const {
     HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
     MILO_ASSERT(pProfile, 0x1f6);
