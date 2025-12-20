@@ -83,6 +83,7 @@ public:
     void CheckForSpecificModesAccomplishments(Symbol, HamPlayerData *, HamProfile *);
     void CheckForCrewsAccomplishments(HamProfile *);
     HardCoreStatus GetIconHardCoreStatus(int) const;
+    const std::vector<Symbol> &GetDiscSongs() const { return mDiscSongs; }
 
     static void Init(DataArray *);
 
