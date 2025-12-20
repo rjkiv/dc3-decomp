@@ -2,6 +2,7 @@
 
 #include "meta/SongPreview.h"
 #include "NavListNode.h"
+#include "NavListSort.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/ContentMgr.h"
@@ -36,7 +37,7 @@ public:
     void SetHeaderMode(bool);
     void SetEnteringHeaderMode(bool);
     void SetExitingHeaderMode(bool);
-    NavListSortNode *GetHighlightItem();
+    NavListSortNode *GetHighlightItem() { return mSorts[mCurrentSortIdx]->GetUnk50(); };
     void OnHighlightChanged();
     void OnExit();
     void OnUnload();
@@ -50,6 +51,7 @@ public:
     Symbol OnGetToken(int);
     bool IsIndexHeader(int);
     virtual int GetListIndexFromHeaderIndex(int);
+    virtual Symbol GetFirstChildSymbolFromHeaderSymbol(Symbol);
     int GetHeaderIndexFromListIndex(int);
     int GetHeaderIndexFromChildListIndex(int);
     bool IsHeaderCollapsed(Symbol);
@@ -64,17 +66,16 @@ public:
     bool IsInHeaderMode() { return mHeaderMode; }
 
 protected:
-    std::vector<NavListSort *> unk34; // 0x34
-    int unk40; // 0x40 - mCurrentSortIndex?
+    std::vector<NavListSort *> mSorts; // 0x34
+    int mCurrentSortIdx; // 0x40
     DataArray *unk44; // 0x44
     bool unk48; // 0x48 mHighlightSaved maybe?
-    //int unk49; // 0x49
     SongPreview *mSongPreview; // 0x4c
     bool mHeaderMode; // 0x50
     bool mEnteringHeaderMode; // 0x51
     bool mExitingHeaderMode; // 0x52
-    std::vector<int> unk54; // 0x54
-    std::vector<int> unk60; // 0x60
-    bool unk6c; // 0x6c mHeadersSelectable?
+    std::vector<int> mHeadersA; // 0x54
+    std::vector<int> mHeadersB; // 0x60
+    bool mHeadersSelectable; // 0x6c
     std::list<Symbol> unk70; // 0x70 mSortNames?
 };
