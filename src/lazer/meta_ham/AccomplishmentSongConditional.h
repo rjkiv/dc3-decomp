@@ -9,6 +9,7 @@ class AccomplishmentSongConditional : public AccomplishmentConditional {
 public:
     AccomplishmentSongConditional(DataArray *, int);
     virtual ~AccomplishmentSongConditional();
+    virtual bool ShowBestAfterEarn() const { return false; }
     virtual void UpdateIncrementalEntryName(UILabel *, Symbol);
     virtual bool InqProgressValues(HamProfile *, int &, int &);
     virtual bool IsSymbolEntryFulfilled(HamProfile *, Symbol) const;
