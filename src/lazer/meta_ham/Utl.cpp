@@ -76,3 +76,10 @@ char const *FormatTimeMS(int i) {
     int seconds = i % 60;
     return MakeString("%d:%02d", minutes, seconds);
 }
+
+char const *FormatTimeHMS(int i) {
+    int seconds = i % 60;
+    int minutes = (i % 3600) / 60;
+    int hours = (i / 3600) >= 99 ? 99 : (i / 3600);
+    return MakeString("%02d:%02d:%02d", hours, minutes, seconds);
+}

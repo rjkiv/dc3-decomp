@@ -108,6 +108,11 @@ DataNode HelpBarPanel::OnWaveGestureEnabled(DataArray const *) {
     return DataNode(0);
 }
 
+DataNode HelpBarPanel::OnWaveGestureDisabled(DataArray const *) {
+    HideWaveGestureIcon();
+    return DataNode(0);
+}
+
 DataNode HelpBarPanel::OnEnterBlacklightMode(DataArray const *d) {
     static Symbol list_dir_resource("list_dir_resource");
     static Symbol label_carousel_blacklight("label_carousel_blacklight");

@@ -1,4 +1,5 @@
 #include "meta_ham/CrewProvider.h"
+#include "meta_ham/ProfileMgr.h"
 #include "flow/PropertyEventProvider.h"
 #include "game/GameMode.h"
 #include "hamobj/HamGameData.h"
@@ -43,4 +44,11 @@ bool CrewProvider::IsCrewAvailable(Symbol s) const {
         return false;
     }
     return true;
+}
+
+bool CrewProvider::CanSelect(int idx) const {
+    MILO_ASSERT_RANGE(idx, 0, mCrews.size(), 0xd4);
+    if (TheProfileMgr.IsContentUnlocked(mCrews[idx].Str()))
+        return IsCrewAvailable(mCrews[idx]);
+    return false;
 }
