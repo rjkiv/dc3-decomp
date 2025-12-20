@@ -36,9 +36,11 @@ public:
 
     NavListSortNode *GetUnk50() { return unk50; }
     NavListSortNode *GetUnk54() { return unk54; }
+    void SetUnk50(NavListSortNode *sortnode) { unk50 = sortnode; }
     void SetUnk54(NavListSortNode *sortnode) { unk54 = sortnode; }
     Symbol GetSortName() { return mSortName; }
-    NavListSortNode * GetListFromIdx(int idx) { return mList[idx]; }
+    NavListSortNode *GetListFromIdx(int idx) { return mList[idx]; }
+    int GetListSize() { return mList.size(); }
 
 protected:
     std::vector<NavListShortcutNode *> unk30;

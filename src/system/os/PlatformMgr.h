@@ -121,6 +121,7 @@ public:
     DWORD
     ShowDeviceSelectorUI(DWORD, DWORD, DWORD, ULARGE_INTEGER, DWORD *, XOVERLAPPED *);
     bool GetServiceID(const String &, unsigned int &);
+    void SignInUsers(int, unsigned long);
 };
 
 extern PlatformMgr ThePlatformMgr;
