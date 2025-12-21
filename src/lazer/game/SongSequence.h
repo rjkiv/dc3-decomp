@@ -35,6 +35,7 @@ public:
     void Init();
     void Add(DataArray const *);
 
+protected:
     std::vector<Entry> unk8;
     int mCurrentIndex; // 0x14
     float unk18;

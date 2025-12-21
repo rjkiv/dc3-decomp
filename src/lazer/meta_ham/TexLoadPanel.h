@@ -58,6 +58,7 @@ public:
     DynamicTex *AddTex(const char *, const char *, bool);
     void LoadMoggClip(char const *);
 
+protected:
     std::vector<DynamicTex *> mTexs; // 0x40
     MoggClip *mMoggClip; // 0x4c
     Fader *mFader; // 0x50

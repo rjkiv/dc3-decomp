@@ -14,5 +14,6 @@ public:
 
     PassiveMessagesPanel();
 
+protected:
     PassiveMessenger *unk38; // 0x38
 };

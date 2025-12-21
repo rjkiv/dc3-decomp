@@ -62,6 +62,7 @@ public:
     void Poll();
     bool HasMessages() const;
 
+protected:
     PassiveMessageQueue *mMessageQueueP1; // 0x2c
     PassiveMessageQueue *mMessageQueueP2; // 0x30
     PassiveMessageQueue *mMessageQueueNone; // 0x34
