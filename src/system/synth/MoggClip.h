@@ -5,6 +5,7 @@
 #include "synth/PlayableSample.h"
 #include "synth/StandardStream.h"
 #include "utl/BinStream.h"
+#include "utl/FilePath.h"
 #include "utl/MemMgr.h"
 
 /** "Allows dynamic playback of Mogg-based audio clips, most notably crowd audio loops."
@@ -59,6 +60,7 @@ public:
     void SetFile(const char *);
     void SetPan(int, float);
     void AddFader(Fader *);
+    const FilePath Path() const;
     StandardStream *GetStream() const { return mStream; }
     int NumChannels() const { return unk58; }
 
