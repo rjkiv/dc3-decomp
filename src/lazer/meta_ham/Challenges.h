@@ -51,6 +51,7 @@ public:
     bool CanDownloadPlayerChallenges() const;
     bool IsExportedSongDC1(int);
     bool IsExportedSongDC2(int);
+    bool HasNewChallenges();
 
 protected:
     DataNode OnMsg(const RCJobCompleteMsg &);
@@ -93,3 +94,5 @@ private:
     std::vector<int> mExportedDC1SongIDs; // 0x148
     std::vector<int> mExportedDC2SongIDs; // 0x154
 };
+
+extern Challenges *TheChallenges;

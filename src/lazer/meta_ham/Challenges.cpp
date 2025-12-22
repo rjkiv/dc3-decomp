@@ -5,6 +5,8 @@
 #include "obj/Object.h"
 #include "os/System.h"
 
+Challenges *TheChallenges;
+
 Challenges::Challenges() {
     unk2c = false;
     unk110 = false;
