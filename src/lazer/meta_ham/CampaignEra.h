@@ -47,8 +47,20 @@ public:
     Symbol GetHamMoveNameFromVariant(Symbol, Symbol) const;
     Symbol GetIntroMovie() const;
     Symbol GetName() const;
-    int GetNumSongs() { return m_vSongs.size(); }
 
+    int GetNumSongs() { return m_vSongs.size(); }
+    CampaignEraSongEntry *SongEntryAtIndex(int idx) { return m_vSongs[idx]; }
+    Symbol Crew() const { return mCrew; }
+    Symbol Venue() const { return mVenue; }
+    int StarsRequiredForOutfits() const { return mStarsRequiredForOutfits; }
+    int StarsRequiredForMastery() const { return mStarsRequiredForMastery; }
+    Symbol CompletionAccomplishment() const { return mCompletetion_Accomplishment; }
+    Symbol EraSongUnlockedToken() const { return mEraSong_Unlocked_Token; }
+    Symbol EraSongCompleteToken() const { return mEraSong_Complete_Token; }
+    int MovesRequiredForMastery() const { return mMovesRequiredForMastery; }
+    Symbol Unk78() const { return unk78; } // change once context found
+
+protected:
     Symbol mEra; // 0x4
     std::map<Symbol, int> unk8;
     std::vector<CampaignEraSongEntry *> m_vSongs; // 0x20

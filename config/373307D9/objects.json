@@ -74,7 +74,7 @@
             "lazer/meta_ham/ContextChecker.cpp": "NonMatching",
             "lazer/meta_ham/CorrectIdentityPanel.cpp": "NonMatching",
             "lazer/meta_ham/CrewProvider.cpp": "NonMatching",
-            "lazer/meta_ham/CursorPanel.cpp": "MISSING",
+            "lazer/meta_ham/CursorPanel.cpp": "NonMatching",
             "lazer/meta_ham/DepthBuffer.cpp": "NonMatching",
             "lazer/meta_ham/DifficultyProvider.cpp": "NonMatching",
             "lazer/meta_ham/EventDialogPanel.cpp": "MISSING",

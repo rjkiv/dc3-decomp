@@ -203,7 +203,7 @@ void Campaign::GatherMoveData(Symbol sym) {
     MILO_ASSERT(pEra, 0x2f0);
     Symbol danceCrazeSong = pEra->GetDanceCrazeSong();
 
-    for (int i = 0; i < pEra->m_vSongs.size(); i++) {
+    for (int i = 0; i < pEra->GetNumSongs(); i++) {
         CampaignEraSongEntry *pSongEntry = pEra->GetSongEntry(i);
         MILO_ASSERT(pSongEntry, 0x2f8);
         if (pSongEntry->m_symSong != danceCrazeSong) {

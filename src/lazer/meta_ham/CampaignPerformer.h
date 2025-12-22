@@ -83,7 +83,10 @@ public:
 
     Symbol GetTanBattleEra() { return "era_tan_battle"; }
     Symbol Era() const { return mEra; }
+    Difficulty GetDifficulty() const { return mDifficulty; }
+    bool JustUnlockedEraSong() { return mJustUnlockedEraSong; }
 
+protected:
     Playlist mIntroPlaylist; // 0x114
     Playlist mOutroPlaylist; // 0x12c
     Symbol mEra; // 0x144

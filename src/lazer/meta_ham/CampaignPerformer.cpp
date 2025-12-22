@@ -75,25 +75,25 @@ bool CampaignPerformer::IsCampaignIntroComplete() const {
 int CampaignPerformer::GetStarsRequiredForOutfits(Symbol era) const {
     CampaignEra *pEra = TheCampaign->GetCampaignEra(era);
     MILO_ASSERT(pEra, 0x1d1);
-    return pEra->mStarsRequiredForOutfits;
+    return pEra->StarsRequiredForOutfits();
 }
 
 int CampaignPerformer::GetStarsRequiredForMastery(Symbol era) const {
     CampaignEra *pEra = TheCampaign->GetCampaignEra(era);
     MILO_ASSERT(pEra, 0x1ed);
-    return pEra->mStarsRequiredForMastery;
+    return pEra->StarsRequiredForMastery();
 }
 
 int CampaignPerformer::GetMovesRequiredForMastery(Symbol era) const {
     CampaignEra *pEra = TheCampaign->GetCampaignEra(era);
     MILO_ASSERT(pEra, 0x203);
-    return pEra->mMovesRequiredForMastery;
+    return pEra->MovesRequiredForMastery();
 }
 
 Symbol CampaignPerformer::GetCompletionAccomplishment(Symbol era) const {
     CampaignEra *pEra = TheCampaign->GetCampaignEra(era);
     MILO_ASSERT(pEra, 0x248);
-    return pEra->mCompletetion_Accomplishment;
+    return pEra->CompletionAccomplishment();
 }
 
 void CampaignPerformer::SetCampaignIntroComplete(bool completed) {
@@ -167,9 +167,9 @@ bool CampaignPerformer::HasEraOutfits(Symbol era) const {
     CampaignProgress &pCampaignProgress = pProfile->GetCampaignProgress(mDifficulty);
     CampaignEra *pEra = TheCampaign->GetCampaignEra(era);
     MILO_ASSERT(pEra, 0x395);
-    Symbol s = pEra->unk78;
+    Symbol s = pEra->Unk78();
     if (s != gNullStr
-        && pCampaignProgress.GetEraStarsEarned(era) < pEra->mStarsRequiredForOutfits)
+        && pCampaignProgress.GetEraStarsEarned(era) < pEra->StarsRequiredForOutfits())
         return false;
     return true;
 }
@@ -190,13 +190,13 @@ bool CampaignPerformer::IsAttemptingDanceCrazeSong() const {
 Symbol CampaignPerformer::GetEraSongUnlockedToken() const {
     CampaignEra *pEra = TheCampaign->GetCampaignEra(mEra);
     MILO_ASSERT(pEra, 0x3b9);
-    return pEra->mEraSong_Unlocked_Token;
+    return pEra->EraSongUnlockedToken();
 }
 
 Symbol CampaignPerformer::GetEraCompleteToken() const {
     CampaignEra *pEra = TheCampaign->GetCampaignEra(mEra);
     MILO_ASSERT(pEra, 0x3c0);
-    return pEra->mEraSong_Complete_Token;
+    return pEra->EraSongCompleteToken();
 }
 
 Symbol CampaignPerformer::GetWinInstructionsToken() const {
@@ -413,7 +413,7 @@ void CampaignPerformer::SetEra(Symbol era) {
     CampaignEra *pEra = TheCampaign->GetCampaignEra(mEra);
     MILO_ASSERT(pEra, 0xba);
     TheHamProvider->SetProperty("current_campaign_era", mEra);
-    Symbol crew = pEra->mCrew;
+    Symbol crew = pEra->Crew();
     HamPlayerData *pPlayer1Data = TheGameData->Player(0);
     MILO_ASSERT(pPlayer1Data, 0xc2);
     HamPlayerData *pPlayer2Data = TheGameData->Player(1);
@@ -421,7 +421,7 @@ void CampaignPerformer::SetEra(Symbol era) {
     pPlayer1Data->SetCrew(crew);
     pPlayer2Data->SetCrew(crew);
     SetupCampaignCharacters(crew, gNullStr);
-    TheGameData->SetVenue(pEra->mVenue);
+    TheGameData->SetVenue(pEra->Venue());
     mJustFinishedEra = false;
     mJustUnlockedEraSong = false;
     mStarsEarnedSoFar = 0;

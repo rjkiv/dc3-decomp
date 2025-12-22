@@ -103,7 +103,7 @@ int CampaignEraProgress::GetTotalStarsEarned() const {
     CampaignEra *pEra = TheCampaign->GetCampaignEra(unk8);
     MILO_ASSERT(pEra, 0x106);
 
-    int size = pEra->m_vSongs.size();
+    int size = pEra->GetNumSongs();
     for (int i = 0; i < size; i++) {
         Symbol name = pEra->GetSongName(i);
         int total = 0;
@@ -127,7 +127,7 @@ int CampaignEraProgress::GetTotalMovesMastered() const {
     int total = 0;
     CampaignEra *pEra = TheCampaign->GetCampaignEra(unk8);
     MILO_ASSERT(pEra, 0x124);
-    int size = pEra->m_vSongs.size();
+    int size = pEra->GetNumSongs();
     for (int i = 0; i < size; i++) {
         Symbol songName = pEra->GetSongName(i);
         int x = 0;
@@ -154,8 +154,8 @@ bool CampaignEraProgress::IsMastered() const {
     MILO_ASSERT(pEra, 0x155);
     int totalStars = GetTotalStarsEarned();
     int totalMasteredMoves = GetTotalMovesMastered();
-    if (totalStars < pEra->mStarsRequiredForMastery
-        || totalMasteredMoves < pEra->mMovesRequiredForMastery) {
+    if (totalStars < pEra->StarsRequiredForMastery()
+        || totalMasteredMoves < pEra->MovesRequiredForMastery()) {
         return false;
     }
     return true;
@@ -175,7 +175,7 @@ bool CampaignEraProgress::IsEraComplete() const {
 bool CampaignEraProgress::IsPlayed() const {
     CampaignEra *pEra = TheCampaign->GetCampaignEra(unk8);
     MILO_ASSERT(pEra, 0x16c);
-    int size = pEra->m_vSongs.size();
+    int size = pEra->GetNumSongs();
     for (int i = 0; i < size; i++) {
         Symbol songName = pEra->GetSongName(i);
         CampaignEraSongProgress *pEraSongProgress = GetEraSongProgress(songName);
