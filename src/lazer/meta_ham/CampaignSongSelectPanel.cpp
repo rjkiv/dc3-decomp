@@ -165,10 +165,10 @@ int CampaignSongSelectPanel::GetStarsRequiredForEraSong() const {
 int CampaignSongSelectPanel::GetTimeSinceEnter() const {
     DateTime dt;
     GetDateAndTime(dt);
-    int iEnter = dt.ToCode();
-    int iNow = unk58.ToCode();
+    int iNow = dt.ToCode();
+    int iEnter = unk58.ToCode();
     MILO_ASSERT(iNow >= iEnter, 0x1d2);
-    return iEnter - iNow;
+    return iNow - iEnter;
 }
 
 void CampaignSongSelectPanel::SelectSong() {

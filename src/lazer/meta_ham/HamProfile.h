@@ -108,6 +108,7 @@ public:
 
     void IncrementSkippedSongCount() { mSkippedSongCount++; }
     void UpdateNag() { unk368++; }
+    MoveRatingHistory *GetMoveRatingHistory() const { return mRatingHistory; }
 
 private:
     // FixedSizeSaveable

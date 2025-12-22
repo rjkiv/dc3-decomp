@@ -1,24 +1,23 @@
 #pragma once
+#include "obj/Data.h"
 #include "obj/Object.h"
 #include "stl/_vector.h"
-#include "ui/UIListLabel.h"
 #include "ui/UIListProvider.h"
 #include "utl/Symbol.h"
 
-class OutfitProvider : public UIListProvider, public Hmx::Object {
+class MovieProvider : public UIListProvider, public Hmx::Object {
 public:
     // Hmx::Object
-    virtual ~OutfitProvider();
+    virtual ~MovieProvider();
+    virtual DataNode Handle(DataArray *, bool);
 
     // UIListProvider
     virtual void Text(int, int, UIListLabel *, UILabel *) const;
     virtual Symbol DataSymbol(int) const;
-    virtual bool CanSelect(int) const;
 
-    OutfitProvider();
-    Symbol GetRandomAvailableOutfit() const;
+    MovieProvider();
     void UpdateList();
 
-    int unk30;
-    std::vector<Symbol> mOutfits; // 0x34
+protected:
+    std::vector<Symbol> mMovies; // 0x30
 };

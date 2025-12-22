@@ -18,11 +18,22 @@ bool OutfitProvider::CanSelect(int data) const {
 
 Symbol OutfitProvider::DataSymbol(int i_iData) const {
     MILO_ASSERT_RANGE(i_iData, 0, NumData(), 0xa4);
-    return unk34[i_iData];
+    return mOutfits[i_iData];
 }
 
 void OutfitProvider::UpdateList() {
-    unk34.clear();
+    mOutfits.clear();
     HamPlayerData *pPlayerData = TheGameData->Player(unk30);
     MILO_ASSERT(pPlayerData, 0x36);
+    Symbol character = pPlayerData->Char();
+    int numOutfits = GetNumCharacterOutfits(character, false);
+    for (int i = 0; i < numOutfits; i++) {
+        DataArray *charOutfitEntry = GetCharacterOutfitEntry(character, i);
+        Symbol outfit = charOutfitEntry->Sym(0);
+        bool hiddenCheck = false;
+        charOutfitEntry->FindData("hidden", hiddenCheck, false);
+        if (!hiddenCheck || TheProfileMgr.IsContentUnlocked(outfit)) {
+            mOutfits.push_back(outfit);
+        }
+    }
 }

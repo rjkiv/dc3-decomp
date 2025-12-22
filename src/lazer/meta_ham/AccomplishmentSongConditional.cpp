@@ -4,6 +4,7 @@
 #include "HamSongMgr.h"
 #include "game/GameMode.h"
 #include "hamobj/Difficulty.h"
+#include "meta_ham/AppLabel.h"
 #include "meta_ham/MetaPerformer.h"
 #include "meta_ham/SongStatusMgr.h"
 #include "obj/Data.h"
@@ -17,7 +18,9 @@ AccomplishmentSongConditional::AccomplishmentSongConditional(DataArray *d, int i
 AccomplishmentSongConditional::~AccomplishmentSongConditional() {}
 
 void AccomplishmentSongConditional::UpdateIncrementalEntryName(UILabel *label, Symbol s) {
-    // needs AppLabel*
+    AppLabel *pAppLabel = dynamic_cast<AppLabel *>(label);
+    MILO_ASSERT(pAppLabel, 0xa3);
+    pAppLabel->SetSongName(s, -1, false);
 }
 
 bool AccomplishmentSongConditional::InqProgressValues(

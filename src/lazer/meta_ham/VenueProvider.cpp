@@ -28,17 +28,22 @@ void VenueProvider::UpdateList() {
     mVenues.clear();
     static Symbol Default("default"); // didnt like me using a lowercase d
     mVenues.push_back(Default);
-    DataArray *sysConfig = SystemConfig("venues");
-    for (int i = 1; i < sysConfig->Size(); i++) {
-        DataArray *pVenueEntryArray = sysConfig->Array(i);
-        MILO_ASSERT(pVenueEntryArray, 0x2f);
-        Symbol s = pVenueEntryArray->Sym(0);
-        static Symbol never_show("never_show");
-        if (!pVenueEntryArray->FindData(never_show, unk30, false)) {
-            static Symbol hidden("hidden");
-            if (TheProfileMgr.IsContentUnlocked(s)) {
-                mVenues.push_back(s);
+    DataArray *venueArray = SystemConfig()->FindArray("venues", false);
+    if (venueArray)
+        for (int i = 1; i < venueArray->Size(); i++) {
+            DataArray *pVenueEntryArray = venueArray->Node(i).Array(venueArray);
+            MILO_ASSERT(pVenueEntryArray, 0x2f);
+            Symbol s = pVenueEntryArray->Sym(0);
+            static Symbol never_show("never_show");
+            bool neverShowCheck = false;
+            pVenueEntryArray->FindData(never_show, neverShowCheck, false);
+            if (!neverShowCheck) {
+                static Symbol hidden("hidden");
+                bool hiddenCheck = false;
+                pVenueEntryArray->FindData(hidden, hiddenCheck, false);
+                if (TheProfileMgr.IsContentUnlocked(s) || !hiddenCheck) {
+                    mVenues.push_back(s);
+                }
             }
         }
-    }
 }

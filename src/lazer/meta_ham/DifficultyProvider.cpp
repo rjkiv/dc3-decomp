@@ -1,6 +1,7 @@
 #include "meta_ham/DifficultyProvider.h"
 #include "game/GameMode.h"
 #include "hamobj/Difficulty.h"
+#include "meta_ham/MetaPerformer.h"
 #include "os/Debug.h"
 #include "rndobj/Dir.h"
 #include "utl/Symbol.h"
@@ -16,9 +17,10 @@ bool DifficultyProvider::IsDifficultyUnlocked(Symbol s) const {
     if (TheGameMode->InMode("practice", true)) {
         return true;
     } else {
-        // MetaPerformer call
+        MetaPerformer *performer = MetaPerformer::Current();
+        MILO_ASSERT(performer, 0x6a);
+        return performer->IsDifficultyUnlocked(s);
     }
-    return false;
 }
 
 void DifficultyProvider::InitData(RndDir *dir) {

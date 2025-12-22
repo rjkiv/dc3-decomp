@@ -7,6 +7,7 @@
 #include "game/HamUser.h"
 #include "os/PlatformMgr.h"
 #include "rndobj/Overlay.h"
+#include "utl/Symbol.h"
 
 enum LagContext {
     kGame = 0,
@@ -105,6 +106,7 @@ public:
     void HandleProfileLoadComplete();
     void UpdateUsingFitnessState();
     bool HasActiveProfileWithInvalidSaveData() const;
+    bool HasAnyEraSongBeenPlayed(Symbol) const;
     void Poll();
 
     bool GetBassBoost() const { return mBassBoost; }
