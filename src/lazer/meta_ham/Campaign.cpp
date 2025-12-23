@@ -17,8 +17,8 @@ Campaign *TheCampaign;
 DataArray *s_pReloadedCampaignData;
 
 Campaign::Campaign(DataArray *d)
-    : unk30(state1), unk34(false), unk9c(false), m_pCurLoader(0), unkbc(gNullStr),
-      unkd8(0) {
+    : unk30(state1), unk34(false), mIntroOutroSeen(false), m_pCurLoader(0),
+      unkbc(gNullStr), unkd8(0) {
     MILO_ASSERT(!TheCampaign, 0x41);
     TheCampaign = this;
     SetName("campaign", ObjectDir::Main());
@@ -64,8 +64,6 @@ END_PROPSYNCS
 Symbol Campaign::GetIntroVenue() const { return mIntroVenue; }
 
 Symbol Campaign::GetIntroCrew() const { return mIntroCrew; }
-
-void Campaign::SetCurState(CampaignState state) { unk30 = state; }
 
 int Campaign::GetMaxStars() const {
     int stars = 0;
@@ -177,12 +175,6 @@ CampaignEra *Campaign::GetCampaignEra(Symbol s) const {
     return nullptr;
 }
 
-bool Campaign::UpdateEraSongUnlockInstructions(Symbol, HamLabel *) { return false; }
-
-void Campaign::LoadCampaignDanceMoves(Symbol) {}
-
-void Campaign::CheatReloadData() {}
-
 CampaignEra *Campaign::GetCampaignEra(int i_iIndex) const {
     MILO_ASSERT((0) <= (i_iIndex) && (i_iIndex) < (m_vEras.size()), 0x106);
     return m_vEras[i_iIndex];
@@ -193,10 +185,6 @@ void Campaign::LoadHamMoves(Symbol s) {
     unkb8 = false;
     RELEASE(unkd8);
 }
-
-HamMove *Campaign::GetHamMove(Symbol, int) { return nullptr; }
-
-Symbol Campaign::GetMoveName(Symbol s, int i) { return 0; }
 
 void Campaign::GatherMoveData(Symbol sym) {
     CampaignEra *pEra = GetCampaignEra(sym);
@@ -289,4 +277,42 @@ void Campaign::ConfigureCampaignData(DataArray *i_pConfig) {
 }
 
 BEGIN_HANDLERS(Campaign)
+    HANDLE_ACTION(set_campaign_state, SetCurState((CampaignState)_msg->Int(2)))
+    HANDLE_EXPR(get_campaign_state, unk30)
+    HANDLE_EXPR(get_campaign_state_desc, _msg->Int(2)) // fix
+    HANDLE_EXPR(get_intro_song, GetIntroSong(_msg->Int(2)))
+    HANDLE_EXPR(get_intro_song_character, GetIntroSongCharacter(_msg->Int(2)))
+    HANDLE_EXPR(get_intro_song_stars, GetIntroSongStarsRequired(_msg->Int(2)))
+    HANDLE_EXPR(get_intro_venue, mIntroVenue)
+    HANDLE_EXPR(get_intro_crew, mIntroCrew)
+    HANDLE_EXPR(get_outro_song, GetOutroSong(_msg->Int(2)))
+    HANDLE_EXPR(get_outro_song_character, GetOutroSongCharacter(_msg->Int(2)))
+    HANDLE_EXPR(get_outro_song_stars_required, GetOutroSongStarsRequired(_msg->Int(2)))
+    HANDLE_ACTION(
+        reset_outro_song_stars_earned, ResetOutroStarsEarnedStartingAtIndex(_msg->Int(2))
+    )
+    HANDLE_EXPR(get_outro_song_gameplay_mode, GetOutroSongGameplayMode(_msg->Int(2)))
+    HANDLE_EXPR(
+        get_outro_song_fail_restart_index, GetOutroSongFailRestartIndex(_msg->Int(2))
+    )
+    HANDLE_EXPR(get_outro_song_rehearse_allowed, GetOutroSongRehearseAllowed(_msg->Int(2)))
+    HANDLE_EXPR(get_outro_song_shortened, GetOutroSongShortened(_msg->Int(2)))
+    HANDLE_EXPR(
+        get_outro_song_freestyle_enabled, GetOutroSongFreestyleEnabled(_msg->Int(2))
+    )
+    HANDLE_ACTION(set_master_quest_crew, mMaserQuestCrew = _msg->Sym(2))
+    HANDLE_EXPR(get_master_quest_crew, mMaserQuestCrew)
+    HANDLE_ACTION(set_master_quest_song, mMasterQuestSong = _msg->Sym(2))
+    HANDLE_EXPR(get_master_quest_song, mMasterQuestSong)
+    HANDLE_EXPR(num_campaign_moves, (int)unka8.size()) // idk
+    HANDLE_EXPR(num_campaign_song_moves, unkb8) // idk
+    HANDLE_EXPR(
+        get_campaign_ham_move,
+        dynamic_cast<HamMove *>((GetHamMove(_msg->Sym(2), _msg->Int(3))))
+    )
+    HANDLE_EXPR(get_campaign_move_name, GetMoveName(_msg->Sym(2), _msg->Int(3)))
+    HANDLE_EXPR(get_outro_intro_seen, mIntroOutroSeen)
+    HANDLE_ACTION(set_intro_outro_seen, mIntroOutroSeen = _msg->Int(2))
+    HANDLE_ACTION(cheat_reload_data, CheatReloadData())
+    HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS

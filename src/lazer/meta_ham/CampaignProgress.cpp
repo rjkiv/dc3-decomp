@@ -201,7 +201,12 @@ void CampaignEraProgress::ResetProgressToBookmark() {
     }
 }
 
-void CampaignEraProgress::SetSongPlayed(Symbol s, bool b) {}
+void CampaignEraProgress::SetSongPlayed(Symbol s, bool b) {
+    CampaignEraSongProgress *pEraSongProgress = GetEraSongProgress(s);
+    if (!pEraSongProgress) {
+    }
+    pEraSongProgress->unk24 = b;
+}
 
 void CampaignEraProgress::UpdateSong(Symbol, int) {}
 

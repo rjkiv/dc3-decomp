@@ -14,6 +14,7 @@ public:
     virtual void Text(int, int, UIListLabel *, UILabel *) const;
     virtual Symbol DataSymbol(int) const;
     virtual bool CanSelect(int) const;
+    virtual int NumData() const;
 
     OutfitProvider();
     Symbol GetRandomAvailableOutfit() const;

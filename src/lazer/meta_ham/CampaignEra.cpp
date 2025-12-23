@@ -74,6 +74,11 @@ void CampaignEraSongEntry::Configure(DataArray *pSongEntry, DataArray *pSongEntr
     unkc = pSongEntry->Node(2).Int(pSongEntry);
     Symbol sym_songNameLookup = pSongEntry2->Sym(0);
     MILO_ASSERT(sym_songNameLookup == m_symSong, 0x65);
+    DataArray *songEntryArray2 = pSongEntry2->Node(3).Array(pSongEntry2);
+    Symbol s1 = gNullStr;
+    Symbol s2 = gNullStr;
+    Symbol s3 = gNullStr;
+    DataArray *songEntryArray = pSongEntry->Node(3).Array(pSongEntry);
 }
 
 #pragma endregion CampaignEraSongEntry
@@ -144,7 +149,10 @@ int CampaignEra::GetSongRequiredStars(Symbol song) {
 bool CampaignEra::HasCrazeMove(Symbol song, Symbol crazeMove) const {
     CampaignEraSongEntry *pSongEntry = GetSongEntry(song);
     MILO_ASSERT(pSongEntry, 0x220);
-    return pSongEntry->HasCrazeMove(crazeMove);
+    if (pSongEntry)
+        return pSongEntry->HasCrazeMove(crazeMove);
+    else
+        return false;
 }
 
 Symbol CampaignEra::GetMoveVariantName(Symbol song, Symbol hamMoveName) const {
@@ -163,7 +171,10 @@ Symbol CampaignEra::GetMoveVariantName(Symbol song, Symbol hamMoveName) const {
 Symbol CampaignEra::GetHamMoveNameFromVariant(Symbol song, Symbol variant) const {
     CampaignEraSongEntry *pSongEntry = GetSongEntry(song);
     MILO_ASSERT(pSongEntry, 600);
-    return pSongEntry->GetHamMoveNameFromVariant(variant);
+    if (pSongEntry)
+        return pSongEntry->GetHamMoveNameFromVariant(variant);
+    else
+        return gNullStr;
 }
 
 Symbol CampaignEra::GetIntroMovie() const { return mEra_Intro_Movie; }
@@ -222,6 +233,14 @@ void CampaignEra::Configure(DataArray *i_pConfig, DataArray *d2) {
 
     if (10 < pSongArray->Size()) {
         MILO_NOTIFY("Too many campaign era songs! Era = %s", mEra);
+    }
+
+    for (int i = 1; i < pSongArray->Size(); i++) {
+        DataArray *pSongEntryArray = pSongArray->Node(i).Array(pSongArray);
+        DataArray *pSongLookupDataArray = pSongLookupData->Node(i).Array(pSongLookupData);
+        m_vSongs.push_back(
+            new CampaignEraSongEntry(pSongEntryArray, pSongLookupDataArray)
+        );
     }
 }
 

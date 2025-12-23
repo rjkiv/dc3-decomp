@@ -110,6 +110,7 @@ public:
     void UpdateNag() { unk368++; }
     MoveRatingHistory *GetMoveRatingHistory() const { return mRatingHistory; }
     bool InFitnessMode() { return mInFitnessMode; }
+    MetagameRank *GetMetagameRank() const { return mRank; }
 
 private:
     // FixedSizeSaveable

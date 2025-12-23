@@ -31,8 +31,8 @@ void FitnessProvider::Text(
                     uiLabel->SetIcon('a');
                 return;
             }
-            uiLabel->SetTextToken(gNullStr);
         }
+        uiLabel->SetTextToken(gNullStr);
     } else {
         uiLabel->SetTextToken(uiListLabel->GetDefaultText());
     }

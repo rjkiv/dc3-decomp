@@ -1,6 +1,7 @@
 #pragma once
 #include "obj/Object.h"
 #include "stl/_vector.h"
+#include "ui/PanelDir.h"
 #include "ui/UIListProvider.h"
 #include "utl/Symbol.h"
 
@@ -17,6 +18,7 @@ public:
     bool IsCrewAvailable(Symbol) const;
     Symbol GetRandomAvailableCrew() const;
     void UpdateList();
+    void SetPanelDir(PanelDir *);
 
     int unk30;
     int unk34;

@@ -95,9 +95,9 @@ public:
     std::vector<CampaignOutroSong *> m_vOutroSongs; // 0x88
     Symbol unk94;
     Symbol unk98;
-    bool unk9c;
-    Symbol unka0;
-    Symbol unka4;
+    bool mIntroOutroSeen; // 0x9c
+    Symbol mMaserQuestCrew; // 0xa0
+    Symbol mMasterQuestSong; // 0xa4
     std::vector<CampaignMove *> unka8;
     DirLoader *m_pCurLoader; // 0xb4
     bool unkb8;

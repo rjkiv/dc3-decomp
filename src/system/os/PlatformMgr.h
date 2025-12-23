@@ -113,6 +113,7 @@ public:
     void SetPadPresence(int, int) const;
     bool GuideShowing() { return mGuideShowing; }
     bool IsConnected() { return mConnected; }
+    bool ScreenSaver() { return mScreenSaver; }
     void QueueEnumJob(Job *);
     void CancelEnumJob(int);
     void Init();

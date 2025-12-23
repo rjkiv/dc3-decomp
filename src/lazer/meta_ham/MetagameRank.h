@@ -31,6 +31,8 @@ public:
     static void Preinit();
     static void Init();
 
+    int RankNumber() { return mRankNumber; }
+
 private:
     // FixedSizeSaveable
     virtual void SaveFixed(FixedSizeSaveableStream &) const;

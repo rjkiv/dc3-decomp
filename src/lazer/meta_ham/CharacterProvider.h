@@ -3,6 +3,7 @@
 #include "obj/Object.h"
 #include "rndobj/Mat.h"
 #include "stl/_vector.h"
+#include "ui/PanelDir.h"
 #include "ui/UIListProvider.h"
 #include "utl/Symbol.h"
 
@@ -13,6 +14,7 @@ public:
     virtual Symbol DataSymbol(int) const;
     virtual bool CanSelect(int) const;
     virtual int DataIndex(Symbol) const;
+    virtual int NumData() const;
 
     CharacterProvider();
     bool IsCharacterAvailable(Symbol) const;
@@ -20,6 +22,8 @@ public:
     RndMat *GetMatForCharacter(Symbol) const;
     Symbol GetRandomAvailableCharacter() const;
     void UpdateList();
+    void SetPanelDir(PanelDir *);
+    void SetPlayerIndex(int i) { unk30 = i; }
 
     int unk30;
     std::vector<Symbol> mCharacters; // 0x34
