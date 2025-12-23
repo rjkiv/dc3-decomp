@@ -150,6 +150,8 @@ DWORD XSessionLeaveLocal(
     XOVERLAPPED *pXOverlapped
 );
 
+DWORD XUserGetName(DWORD dwUserIndex, LPSTR szUserName, DWORD cchUserName);
+
 #ifdef __cplusplus
 }
 #endif

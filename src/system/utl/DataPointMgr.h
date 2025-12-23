@@ -178,3 +178,34 @@ void SendDataPoint(
     point.AddPair(name7, value7);
     TheDataPointMgr.RecordDataPoint(point);
 }
+
+template <class N1, class V1>
+void SendDebugDataPoint(const char *type, N1 name1, V1 value1) {
+    DataPoint point(type);
+    point.AddPair(name1, value1);
+    TheDataPointMgr.RecordDebugDataPoint(point);
+}
+
+template <class N1, class V1, class N2, class V2>
+void SendDebugDataPoint(const char *type, N1 name1, V1 value1, N2 name2, V2 value2) {
+    DataPoint point(type);
+    point.AddPair(name1, value1);
+    point.AddPair(name2, value2);
+    TheDataPointMgr.RecordDebugDataPoint(point);
+}
+
+template <class N1, class V1, class N2, class V2, class N3, class V3>
+void SendDebugDataPoint(
+    const char *type,
+    // clang-format off: looks nicer this way
+    N1 name1, V1 value1,
+    N2 name2, V2 value2,
+    N3 name3, V3 value3
+    // clang-format on
+) {
+    DataPoint point(type);
+    point.AddPair(name1, value1);
+    point.AddPair(name2, value2);
+    point.AddPair(name3, value3);
+    TheDataPointMgr.RecordDebugDataPoint(point);
+}

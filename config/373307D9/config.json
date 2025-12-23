@@ -50,6 +50,12 @@
                 "/TC",
                 "/GS"
             ]
+        },
+        "net_xbox": {
+            "base": "base",
+            "flags": [
+                "/GS"
+            ]
         }
     }
 }

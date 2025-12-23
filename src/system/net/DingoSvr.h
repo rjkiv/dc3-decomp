@@ -2,6 +2,7 @@
 #include "net/DingoJob.h"
 #include "meta/ConnectionStatusPanel.h"
 #include "obj/Data.h"
+#include "obj/Msg.h"
 #include "obj/Object.h"
 #include "os/OnlineID.h"
 #include "os/PlatformMgr.h"
@@ -44,7 +45,7 @@ public:
     virtual void SetLoginName(const char *) {}
     virtual void SetLoginPassword(const char *) {}
     virtual const char *GetLoginName() { return nullptr; }
-    virtual bool HasValidLoginCandidate() const { return true; }
+    virtual bool HasValidLoginCandidate() const { return true; } // 0xb8
     virtual bool IsValidLoginCandidate(int) const { return true; }
     virtual void MakeSessionJobComplete(bool) {}
     virtual void JoinSessionComplete(bool) {}
@@ -84,8 +85,8 @@ protected:
     String unk50;
     String mRegion; // 0x58
     String mLanguage; // 0x60
-    String unk68;
-    int unk70;
+    String mUserAgent; // 0x68
+    int unk70; // 0x70 - padnum?
     int unk74;
     bool unk78[4];
     OnlineID unk80;
@@ -94,3 +95,10 @@ protected:
 };
 
 extern DingoServer &TheServer;
+
+enum ServerStatusResult {
+};
+
+DECLARE_MESSAGE(ServerStatusChangedMsg, "server_status_changed")
+ServerStatusChangedMsg(ServerStatusResult r) : Message(Type(), r) {}
+END_MESSAGE
