@@ -345,5 +345,5 @@ FileChecksum gFileChecksums[] = {
 
 
 void SetFileChecksumData() {
-    SetFileChecksumData(gFileChecksums, ARRAY_LENGTH(gFileChecksums));
+    SetFileChecksumData(gFileChecksums, DIM(gFileChecksums));
 }
