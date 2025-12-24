@@ -4,6 +4,7 @@
 #include "hamobj/HamDirector.h"
 #include "hamobj/HamGameData.h"
 #include "macros.h"
+#include "meta_ham/CampaignPerformer.h"
 #include "meta_ham/MetaPerformer.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
@@ -193,7 +194,7 @@ void GameMode::FillModeArrayWithParentData(Symbol sym, DataArray *a1, DataArray 
 }
 
 bool IsInLoaderMode(const Symbol &sym) {
-    if (TheGameMode && TheGameMode->InMode(sym.Str(), true))
+    if (TheGameMode && TheGameMode->InMode(sym, true))
         return true;
 
     static Symbol mind_control("mind_control");
@@ -201,6 +202,13 @@ bool IsInLoaderMode(const Symbol &sym) {
 
     if (sym == mind_control) {
         if (TheGameMode->InMode("campaign", true)) {
+            CampaignPerformer *pPerformer =
+                dynamic_cast<CampaignPerformer *>(MetaPerformer::Current());
+            MILO_ASSERT(pPerformer, 0x28);
+            if (pPerformer->Era() == era05
+                && !pPerformer->IsCampaignMindControlComplete()) {
+                return true;
+            }
         }
     }
     return false;

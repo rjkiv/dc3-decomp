@@ -111,6 +111,7 @@ public:
     void UpdateSigninState();
     void SetPadContext(int, int, int) const;
     void SetPadPresence(int, int) const;
+    void SetPadProperty(int, int, unsigned short const *) const;
     bool GuideShowing() { return mGuideShowing; }
     bool IsConnected() { return mConnected; }
     bool ScreenSaver() { return mScreenSaver; }
