@@ -5,7 +5,7 @@
         "cflags": "base",
         "objects": {
             "App.cpp": "NonMatching",
-            "ChecksumData_xbox.cpp": "MISSING",
+            "ChecksumData_xbox.cpp": "NonMatching",
             "keygen_xbox.cpp": {
                 "status": "NonMatching",
                 "extra_cflags": [

@@ -25,6 +25,8 @@
 
 #define DIM(x) (sizeof((x)) / sizeof((x)[0]))
 
+#define ARRAY_LENGTH(x) (sizeof((x)) / sizeof((x)[0]))
+
 #define null 0
 
 #define RELEASE(x) (delete x, x = null)
