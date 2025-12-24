@@ -20,7 +20,7 @@ public:
     void SetAsOverlay();
     bool IdentitySelected(int);
 
-    std::vector<String> unk44;
+    std::vector<String> mIdentityList; // 0x44
 
 private:
     void UpdateIdentityList();

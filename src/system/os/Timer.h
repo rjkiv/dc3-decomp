@@ -1,4 +1,5 @@
 #pragma once
+#include "utl/MemMgr.h"
 #include "utl/Symbol.h"
 #include "obj/Data.h"
 #include "os/OSFuncs.h"
@@ -104,6 +105,8 @@ public:
         Split();
         return Ms();
     }
+
+    MEM_OVERLOAD(Timer, 0x57);
 
     void Reset();
     void Restart();

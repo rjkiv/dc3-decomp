@@ -21,4 +21,8 @@ DataNode SigninScreen::OnMsg(SigninChangedMsg const &) { return NULL_OBJ; }
 DataNode SigninScreen::OnMsg(UIChangedMsg const &) { return NULL_OBJ; }
 
 BEGIN_HANDLERS(SigninScreen)
+    HANDLE_ACTION(show_signin_ui, ThePlatformMgr.SignInUsers(1, 0x100000))
+    HANDLE_MESSAGE(SigninChangedMsg)
+    HANDLE_MESSAGE(UIChangedMsg)
+    // HANDLE_SUPERCLASS(HamScreen)
 END_HANDLERS

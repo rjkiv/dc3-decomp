@@ -5,6 +5,7 @@
 #include "hamobj/Difficulty.h"
 #include "obj/Object.h"
 #include "utl/Str.h"
+#include "utl/Symbol.h"
 
 class HamPlayerData : public Hmx::Object {
 public:
@@ -40,6 +41,7 @@ public:
     void AssignSkeleton(int id) { SetSkeletonTrackingID(id); }
     int PadNum() const { return mPadNum; }
     bool IsAutoplaying() const { return !mAutoplay.Null(); }
+    void SetUnk48(Symbol s) { unk48 = s; }
 
 private:
     void SetSkeletonTrackingID(int);

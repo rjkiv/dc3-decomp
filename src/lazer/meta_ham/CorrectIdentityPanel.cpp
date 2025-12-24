@@ -1,10 +1,14 @@
 #include "meta_ham/CorrectIdentityPanel.h"
 #include "CorrectIdentityPanel.h"
+#include "meta_ham/AppLabel.h"
 #include "meta_ham/HamUI.h"
 #include "meta_ham/OverlayPanel.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "ui/UILabel.h"
+#include "ui/UIListLabel.h"
 #include "ui/UIListProvider.h"
+#include "utl/Symbol.h"
 
 CorrectIdentityPanel::CorrectIdentityPanel() {}
 

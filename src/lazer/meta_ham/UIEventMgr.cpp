@@ -1,4 +1,5 @@
 #include "meta_ham/UIEventMgr.h"
+#include "meta_ham/EventDialogPanel.h"
 #include "meta_ham/HamUI.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"

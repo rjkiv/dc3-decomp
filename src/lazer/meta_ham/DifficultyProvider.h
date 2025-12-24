@@ -13,6 +13,7 @@ public:
     virtual Symbol DataSymbol(int) const;
     virtual void Text(int, int, UIListLabel *, UILabel *) const;
     virtual void InitData(RndDir *);
+    virtual int NumData() const;
 
     DifficultyProvider();
     bool IsDifficultyUnlocked(Symbol) const;

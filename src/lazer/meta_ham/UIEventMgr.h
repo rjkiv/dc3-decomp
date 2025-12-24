@@ -43,11 +43,3 @@ private:
 };
 
 extern UIEventMgr *TheUIEventMgr;
-
-DECLARE_MESSAGE(EventDialogStartMsg, "event_dialog_start")
-EventDialogStartMsg(DataArray *a1, DataArray *a2) : Message(Type(), a1, a2) {}
-END_MESSAGE
-
-DECLARE_MESSAGE(EventDialogDismissMsg, "event_dialog_dismiss")
-EventDialogDismissMsg(Symbol s1, Symbol s2) : Message(Type(), s1, s2) {}
-END_MESSAGE

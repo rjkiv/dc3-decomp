@@ -1,4 +1,5 @@
 #pragma once
+#include "EventDialogPanel.h"
 #include "meta/MemcardAction.h"
 #include "meta/MemcardMgr.h"
 #include "meta_ham/HamProfile.h"

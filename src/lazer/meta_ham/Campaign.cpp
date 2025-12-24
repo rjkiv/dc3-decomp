@@ -17,8 +17,8 @@ Campaign *TheCampaign;
 DataArray *s_pReloadedCampaignData;
 
 Campaign::Campaign(DataArray *d)
-    : unk30(state1), unk34(false), mIntroOutroSeen(false), m_pCurLoader(0),
-      unkbc(gNullStr), unkd8(0) {
+    : unk30(), unk34(false), mIntroOutroSeen(false), m_pCurLoader(0), unkbc(gNullStr),
+      unkd8(0) {
     MILO_ASSERT(!TheCampaign, 0x41);
     TheCampaign = this;
     SetName("campaign", ObjectDir::Main());
@@ -32,6 +32,17 @@ Campaign::~Campaign() {
     }
     Cleanup();
     RELEASE(unkd8);
+}
+
+void Campaign::SetCurState(CampaignState state) {
+    char const *currState = sCampaignStateDesc[unk30];
+    char const *addState = sCampaignStateDesc[state];
+    MILO_LOG(
+        "[==============================================================================] %-32s -> %s\n",
+        currState,
+        addState
+    );
+    unk30 = state;
 }
 
 void Campaign::FinishLoading(Loader *l) {
@@ -215,6 +226,16 @@ void Campaign::Cleanup() {
     }
 }
 
+int Campaign::NumCampaignSongMoves(Symbol s) {
+    int moves = 0;
+    FOREACH (it, unka8) {
+        CampaignMove *move = *it;
+        if (move->unk10 == 3 && move->unk0 == s)
+            moves++;
+    }
+    return moves;
+}
+
 void Campaign::ConfigureCampaignData(DataArray *i_pConfig) {
     static Symbol venue("venue");
     static Symbol crew("crew");
@@ -279,7 +300,7 @@ void Campaign::ConfigureCampaignData(DataArray *i_pConfig) {
 BEGIN_HANDLERS(Campaign)
     HANDLE_ACTION(set_campaign_state, SetCurState((CampaignState)_msg->Int(2)))
     HANDLE_EXPR(get_campaign_state, unk30)
-    HANDLE_EXPR(get_campaign_state_desc, _msg->Int(2)) // fix
+    HANDLE_EXPR(get_campaign_state_desc, (Symbol)sCampaignStateDesc[_msg->Int(2)])
     HANDLE_EXPR(get_intro_song, GetIntroSong(_msg->Int(2)))
     HANDLE_EXPR(get_intro_song_character, GetIntroSongCharacter(_msg->Int(2)))
     HANDLE_EXPR(get_intro_song_stars, GetIntroSongStarsRequired(_msg->Int(2)))
@@ -304,8 +325,8 @@ BEGIN_HANDLERS(Campaign)
     HANDLE_EXPR(get_master_quest_crew, mMaserQuestCrew)
     HANDLE_ACTION(set_master_quest_song, mMasterQuestSong = _msg->Sym(2))
     HANDLE_EXPR(get_master_quest_song, mMasterQuestSong)
-    HANDLE_EXPR(num_campaign_moves, (int)unka8.size()) // idk
-    HANDLE_EXPR(num_campaign_song_moves, unkb8) // idk
+    HANDLE_EXPR(num_campaign_moves, static_cast<int>(unka8.size())) // idk
+    HANDLE_EXPR(num_campaign_song_moves, NumCampaignSongMoves(_msg->Sym(2))) // idk
     HANDLE_EXPR(
         get_campaign_ham_move,
         dynamic_cast<HamMove *>((GetHamMove(_msg->Sym(2), _msg->Int(3))))

@@ -38,11 +38,11 @@ public:
 
 class CampaignMove {
 public:
-    int unk0;
-    Symbol unk4;
+    Symbol unk0;
+    int unk4;
     Symbol unk8;
-    int unk10;
     int unkc;
+    int unk10;
 };
 
 class Campaign : public Hmx::Object, public Loader::Callback {
@@ -82,6 +82,9 @@ public:
     bool UpdateEraSongUnlockInstructions(Symbol, HamLabel *);
     void LoadCampaignDanceMoves(Symbol);
     void CheatReloadData();
+    int NumCampaignSongMoves(Symbol s);
+
+    static char const *sCampaignStateDesc[];
 
     CampaignState unk30;
     bool unk34;
