@@ -7,10 +7,10 @@
 #include "utl/Symbol.h"
 
 enum PurchaseState { // just know the val of kSuccess
-    state0 = 0,
-    state1 = 1,
+    purchasestate0 = 0,
+    purchasestate1 = 1,
     kSuccess = 2,
-    state3 = 3,
+    purchasestate3 = 3,
 };
 
 class StorePurchaser {

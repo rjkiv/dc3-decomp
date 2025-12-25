@@ -6,11 +6,11 @@
 #include <list>
 
 enum PassiveMessageType {
-    type0,
-    type1,
-    type2,
-    type3,
-    type4
+    passivemessagetype0,
+    passivemessagetype1,
+    passivemessagetype2,
+    passivemessagetype3,
+    passivemessagetype4
 };
 
 class PassiveMessage {

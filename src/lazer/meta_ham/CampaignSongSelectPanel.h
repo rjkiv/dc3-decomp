@@ -46,6 +46,8 @@ public:
     virtual void Unload();
     virtual void FinishLoad();
 
+    NEW_OBJ(CampaignSongSelectPanel)
+
     CampaignSongSelectPanel();
     bool CanSelectSong(int);
     Symbol GetSong(int);

@@ -19,6 +19,8 @@ public:
     virtual void Text(int, int, UIListLabel *, UILabel *) const;
     virtual int NumData() const;
 
+    NEW_OBJ(ChallengeResultPanel)
+
 protected:
     DataNode OnMsg(const UIComponentScrollMsg &);
 

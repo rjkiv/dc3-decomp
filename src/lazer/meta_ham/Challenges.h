@@ -12,6 +12,8 @@ public:
     virtual ~Challenges();
     virtual DataNode Handle(DataArray *, bool);
 
+    static void Init();
+
     void DownloadPlayerChallenges();
     void UploadFlauntForOne();
     void UploadFlauntForAll(bool);

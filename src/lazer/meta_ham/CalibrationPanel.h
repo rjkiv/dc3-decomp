@@ -37,6 +37,8 @@ public:
     virtual void Exit();
     virtual void Poll();
 
+    NEW_OBJ(CalibrationPanel)
+
     CalibrationPanel();
     void StartAudio();
     void InitializeContent();

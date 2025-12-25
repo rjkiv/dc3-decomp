@@ -28,6 +28,8 @@ public:
     virtual void Unload();
     virtual void FinishLoad();
 
+    NEW_OBJ(MoviePanel)
+
     static bool sUseSubtitles;
     MoviePanel();
     void ShowMenu(bool);

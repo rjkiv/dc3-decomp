@@ -22,6 +22,8 @@ public:
     OBJ_SET_TYPE(EventDialogPanel)
     virtual DataNode Handle(DataArray *, bool);
 
+    NEW_OBJ(EventDialogPanel)
+
     EventDialogPanel();
 
 protected:

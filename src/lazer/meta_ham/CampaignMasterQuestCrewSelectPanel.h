@@ -29,6 +29,8 @@ public:
     virtual void Load();
     virtual void FinishLoad();
 
+    NEW_OBJ(CampaignMasterQuestCrewSelectPanel)
+
     CampaignMasterQuestCrewSelectPanel();
     int GetTimeSinceEnter() const;
     Symbol GetSelectedCrew();

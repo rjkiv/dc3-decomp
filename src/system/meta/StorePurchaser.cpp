@@ -17,7 +17,7 @@ XboxPurchaser::XboxPurchaser(
     Symbol s,
     unsigned int ui
 )
-    : StorePurchaser(s, ui), mState(state0), unk40(param2), unk48(param1) {}
+    : StorePurchaser(s, ui), mState(purchasestate0), unk40(param2), unk48(param1) {}
 
 XboxPurchaser::~XboxPurchaser() {
     static Symbol ui_changed("ui_changed");
@@ -42,7 +42,7 @@ bool XboxPurchaser::PurchaseMade() const {
 }
 
 bool XboxPurchaser::IsPurchasing() const {
-    return !(mState == state0 || mState == kSuccess || mState == state3);
+    return !(mState == purchasestate0 || mState == kSuccess || mState == purchasestate3);
 }
 
 DataNode XboxPurchaser::OnMsg(UIChangedMsg const &) { return NULL_OBJ; }
@@ -65,7 +65,7 @@ bool XboxMultipleItemsPurchaser::PurchaseMade() const {
 }
 
 bool XboxMultipleItemsPurchaser::IsPurchasing() const {
-    return !(mState == state0 || mState == kSuccess || mState == state3);
+    return !(mState == purchasestate0 || mState == kSuccess || mState == purchasestate3);
 }
 
 void XboxMultipleItemsPurchaser::Initiate() { MILO_ASSERT(!IsPurchasing(), 0x343); }
@@ -78,7 +78,7 @@ XboxMultipleItemsPurchaser::~XboxMultipleItemsPurchaser() {
 XboxMultipleItemsPurchaser::XboxMultipleItemsPurchaser(
     int i, std::vector<unsigned long long> &offerIDs, Symbol s, unsigned int ui
 )
-    : StorePurchaser(s, ui), mState(state0), unk48(i) {
+    : StorePurchaser(s, ui), mState(purchasestate0), unk48(i) {
     MILO_ASSERT(offerIDs.size() >= 1 && offerIDs.size() <= 6, 0x337);
     unk3c = offerIDs;
 }

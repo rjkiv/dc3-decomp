@@ -89,7 +89,7 @@ CampaignEra::CampaignEra(DataArray *d1, DataArray *d2)
       mEraSong_Unlocked_Token(gNullStr), mEraSong_Complete_Token(gNullStr),
       mEra_Intro_Movie(gNullStr), unk50(false), mCompletetion_Accomplishment(gNullStr),
       unk58(0), mCraze_Song(gNullStr), mStarsRequiredForMastery(0),
-      mMovesRequiredForMastery(0), mStarsRequiredForOutfits(0), unk78(gNullStr) {
+      mMovesRequiredForMastery(0), mStarsRequiredForOutfits(0), mOutfitAward(gNullStr) {
     Configure(d1, d2);
 }
 

@@ -45,6 +45,8 @@ public:
     virtual int NumData() const;
     virtual void InitData(RndDir *);
 
+    NEW_OBJ(PracticeChoosePanel)
+
     PracticeChoosePanel();
     float StepStartBeat(int) const;
     float StepEndBeat(int) const;

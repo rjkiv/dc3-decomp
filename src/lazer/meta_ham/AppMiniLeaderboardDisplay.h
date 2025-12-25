@@ -1,5 +1,6 @@
 #pragma once
 #include "hamobj/MiniLeaderboardDisplay.h"
+#include "obj/Object.h"
 #include "ui/UIListProvider.h"
 
 class AppMiniLeaderboardDisplay : public MiniLeaderboardDisplay, public UIListProvider {
@@ -21,6 +22,8 @@ public:
     virtual void Text(int, int, UIListLabel *, UILabel *) const;
     virtual int NumData() const;
     virtual UIListWidgetState ElementStateOverride(int, int, UIListWidgetState s) const;
+
+    NEW_OBJ(AppMiniLeaderboardDisplay)
 
 protected:
     int unk60;

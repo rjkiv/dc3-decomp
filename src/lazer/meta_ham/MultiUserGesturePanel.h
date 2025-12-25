@@ -24,6 +24,8 @@ public:
     virtual bool HasNavList() const;
     virtual bool Exiting() const;
 
+    NEW_OBJ(MultiUserGesturePanel)
+
     MultiUserGesturePanel();
     void UpdateProviders();
     int GetPlayerIndex(int) const;

@@ -9,6 +9,7 @@ class MovieProvider : public UIListProvider, public Hmx::Object {
 public:
     // Hmx::Object
     virtual ~MovieProvider();
+    OBJ_CLASSNAME(MovieProvider)
     virtual DataNode Handle(DataArray *, bool);
 
     // UIListProvider

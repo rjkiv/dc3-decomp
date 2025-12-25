@@ -27,6 +27,7 @@ public:
     void Poll();
 
     DataNode OnGetJointDepthPos(const DataArray *);
+    int Unk3C() { return unk3c; }
 
 private:
     void SwitchActiveToPlayerIndexImmediate(int);

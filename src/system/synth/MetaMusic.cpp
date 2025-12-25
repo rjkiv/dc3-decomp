@@ -19,6 +19,8 @@
 #include "utl/Std.h"
 #include <cstdio>
 
+MetaMusic *TheMetaMusic;
+
 MetaMusic::MetaMusic(HxMaster *hx, const char *filename)
     : unk2c(0), unk2d(0), unk30(0), mFadeTime(1), mMuteFadeTime(1), mVolume(0),
       mExtraFaders(this), unk60(filename), mStarted(0), unk8c(0), unk98(1), unka8(0),

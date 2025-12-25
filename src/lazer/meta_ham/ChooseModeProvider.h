@@ -13,6 +13,7 @@ class ChooseModeProvider : public UIListProvider, public Hmx::Object {
 public:
     // Hmx::Object
     virtual ~ChooseModeProvider();
+    OBJ_CLASSNAME(ChooseModeProvider)
     virtual DataNode Handle(DataArray *, bool);
 
     // UIListProvider

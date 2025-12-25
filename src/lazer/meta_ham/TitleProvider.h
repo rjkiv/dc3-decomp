@@ -9,6 +9,7 @@ class TitleProvider : public UIListProvider, public Hmx::Object {
 public:
     // Hmx::Object
     virtual ~TitleProvider();
+    OBJ_CLASSNAME(TitleProvider)
     virtual DataNode Handle(DataArray *, bool);
 
     // UIListProvider

@@ -279,11 +279,11 @@ bool PassiveMessenger::HasMessages() const {
 BEGIN_HANDLERS(PassiveMessenger)
     HANDLE_ACTION(
         trigger_message,
-        TriggerGenericMsg(_msg->Sym(2), _msg->Sym(3), type0, gNullStr, -1)
+        TriggerGenericMsg(_msg->Sym(2), _msg->Sym(3), passivemessagetype0, gNullStr, -1)
     )
     HANDLE_ACTION(
         trigger_campaign_message,
-        TriggerGenericMsg(_msg->Sym(2), _msg->Sym(3), type4, gNullStr, -1)
+        TriggerGenericMsg(_msg->Sym(2), _msg->Sym(3), passivemessagetype4, gNullStr, -1)
     )
     HANDLE_EXPR(has_messages, HasMessages())
 END_HANDLERS
