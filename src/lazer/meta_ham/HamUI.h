@@ -27,6 +27,8 @@ public:
     void ForceLetterboxOff();
     void ForceLetterboxOffImmediate();
     void GotoEventScreen(UIScreen *);
+
+    bool IsBlacklightMode();
     ShellInput *GetShellInput() const { return mShellInput; }
     HelpBarPanel *GetHelpBarPanel() const { return mHelpBar; }
     int Unk108() const { return unk_0x108; }

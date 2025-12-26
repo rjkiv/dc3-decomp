@@ -26,6 +26,7 @@ public:
 
     bool IsCover() const;
     bool IsMedley() const;
+    bool IsFake() const { return mIsFake; }
     float Rank() const;
     Symbol DefaultCharacter() const;
     int Bpm() const;
