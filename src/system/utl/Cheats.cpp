@@ -40,6 +40,7 @@ void EnableKeyCheats(bool b) {
     if (gCheatsManager) {
         gCheatsManager->setKeyCheatsEnabled(b);
     }
+
 }
 
 DataNode OnSetCheatMode(DataArray *da) {
@@ -69,6 +70,14 @@ CheatsManager::CheatsManager() : mLongJoyCheats(0), mSymMode(gNullStr), mBuffer(
 void CheatsManager::AppendLog(FixedString &fs) {
     FOREACH(it, mBuffer) {
         fs += "\n\nCheats Used";
+        String s = "\n   %.30s";
+        //memcpy(s, "\n   %.30s", 10);
+        it->mScript.Print(s, true, 0);
+        const char *c = MakeString("\n   %.30s");
+        fs += c;
+    }
+    if (mBuffer.size() == mMaxBuffer) {
+        fs += "\n   ...";
     }
 }
 
@@ -139,7 +148,8 @@ void CheatsTerminate() {
 }
 
 void CheatsManager::RebuildKeyCheatsForMode() {
-
+    return;
 }
+
 
 CheatLog::~CheatLog() {}
