@@ -5,6 +5,8 @@
 #include "math/Rand.h"
 #include "meta/FixedSizeSaveable.h"
 #include "meta/FixedSizeSaveableStream.h"
+#include "net_ham/DataMinerJobs.h"
+#include "net_ham/RockCentral.h"
 #include "os/Debug.h"
 #include "utl/NetLoader.h"
 #include "utl/Symbol.h"
@@ -130,6 +132,7 @@ void CustomPlaylist::SaveFixed(FixedSizeSaveableStream &fs) const {
     FixedSizeSaveable::SaveStd(fs, m_vSongs, 20, 4);
     fs << mOnlineID;
     if (unk24) {
+        TheRockCentral.ManageJob(new PlaylistChangedJob(0, mName, GetNumSongs()));
     }
 }
 
