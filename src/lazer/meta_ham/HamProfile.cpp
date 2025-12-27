@@ -812,8 +812,7 @@ void HamProfile::UpdateFitnessWeight(HamLabel *label) {
     MILO_ASSERT(label, 0x3CE);
     if (mIsFitnessWeightEntered) {
         float weight_lbs = mFitnessPounds;
-        // FIXME: should actually get unk4c
-        if (!TheProfileMgr.GetAllUnlocked()) {
+        if (!TheProfileMgr.GetUnk4c()) {
             static Symbol weight_pounds("weight_pounds");
             label->SetTokenFmt(weight_pounds, (int)weight_lbs);
         } else {

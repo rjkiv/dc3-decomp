@@ -115,6 +115,10 @@ public:
     bool NoFlashcards() const { return mNoFlashcards; }
     bool GetAllUnlocked() { return mAllUnlocked; }
 
+    int GetUnk4c() { return unk4c; }
+    void SetUnk4c(int i) { unk4c = i; };
+    void SetGlobalOptionsDirty(bool b) { mGlobalOptionsDirty = b; }
+
 private:
     void UpdateFriendsList();
 
@@ -130,7 +134,7 @@ protected:
     bool mGlobalOptionsDirty; // 0x44
     bool unk45;
     int mTutorialsSeen; // 0x48
-    int unk4c;
+    int unk4c; // 0x4c - mPreferredWeightUnits? 0 = pounds, 1 = kilograms
     int mMusicVolume; // 0x50
     int mFxVolume; // 0x54
     int mCrowdVolume; // 0x58
