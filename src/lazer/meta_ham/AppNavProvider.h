@@ -4,7 +4,7 @@
 #include "obj/Object.h"
 
 class AppNavProvider : public HamNavProvider {
-    public:
+public:
     AppNavProvider() {};
     ~AppNavProvider();
     OBJ_CLASSNAME(AppNavProvider);
@@ -13,4 +13,5 @@ class AppNavProvider : public HamNavProvider {
     virtual void Custom(int, int, UIListCustom *, Hmx::Object *) const;
     virtual DataNode Handle(DataArray *, bool);
 
+    NEW_OBJ(AppNavProvider)
 };

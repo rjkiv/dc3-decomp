@@ -5,8 +5,12 @@
 #include "hamobj/HamPlayerData.h"
 #include "math/Rot.h"
 #include "meta/HAQManager.h"
+#include "meta_ham/BlacklightPanel.h"
+#include "meta_ham/HelpBarPanel.h"
+#include "meta_ham/LetterboxPanel.h"
 #include "meta_ham/ProfileMgr.h"
 #include "meta_ham/UIEventMgr.h"
+#include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/DirLoader.h"
 #include "obj/Object.h"
@@ -19,6 +23,7 @@
 #include "ui/UI.h"
 #include "ui/UIPanel.h"
 #include "ui/UIScreen.h"
+#include "utl/Symbol.h"
 
 namespace {
     UIPanel *FindPanel(const char *name) {
@@ -31,7 +36,7 @@ namespace {
 
 HamUI::HamUI() {
     mHelpBar = 0;
-    mLetterbox = 0;
+    mLetterbox = nullptr;
     mBlacklight = nullptr;
     mEventDialogPanel = nullptr;
     mBackgroundPanel = nullptr;
@@ -62,11 +67,10 @@ BEGIN_HANDLERS(HamUI)
     HANDLE_EXPR(set_button_spam, unk_0x118 = _msg->Int(2))
     HANDLE_EXPR(button_spam, unk_0x118)
     // HANDLE_EXPR(toggle_ui_overlay, mUIOverlay)
-    // HANDLE_ACTION(toggle_letterbox, mLetterbox->ToggleBlacklightMode(0))
-    // HANDLE_ACTION(toggle_letterbox_immediately,
-    // mLetterbox->ToggleBlacklightMode(1)) HANDLE_EXPR(is_letterbox_in_transition,
-    // mLetterbox->InBlacklightTransition()) HANDLE_EXPR(is_blacklight_mode,
-    // mLetterbox->IsBlacklightMode())
+    HANDLE_ACTION(toggle_letterbox, mLetterbox->ToggleBlacklightMode(0))
+    HANDLE_ACTION(toggle_letterbox_immediately, mLetterbox->ToggleBlacklightMode(1))
+    HANDLE_EXPR(is_letterbox_in_transition, mLetterbox->InBlacklightTransition())
+    HANDLE_EXPR(is_blacklight_mode, mLetterbox->IsBlacklightMode())
     HANDLE_ACTION(force_letterbox_off, ForceLetterboxOff())
     HANDLE_ACTION(force_letterbox_off_immediate, ForceLetterboxOffImmediate())
     HANDLE_ACTION(reset_snapshots, ResetSnapshots())
@@ -189,10 +193,16 @@ void HamUI::ResetSnapshots() {
 
 int HamUI::TakeSnapshot() {
     MILO_ASSERT(TheGestureMgr, 602);
+    unk_0xFC = true;
     for (int i = 0; i < 2; i++) {
         HamPlayerData *pPlayer = TheGameData->Player(i);
         MILO_ASSERT(pPlayer, 609);
-        // auto profile = TheProfileMgr->GetProfileFromPad(i);
+        HamProfile *profile = TheProfileMgr.GetProfileFromPad(pPlayer->PadNum());
+        if (profile) {
+            if (profile->HasValidSaveData()) {
+                profile->GetMetagameStats()->PhotoTaken();
+            }
+        }
     }
     return NumSnapshots();
 }
@@ -292,6 +302,12 @@ DataNode HamUI::OnMsg(const UITransitionCompleteMsg &msg) {
     return 1;
 }
 
+DataNode HamUI::OnMsg(DiskErrorMsg const &) {
+    static Symbol disc_error("disc_error");
+    TheUIEventMgr->TriggerEvent(disc_error, 0);
+    return 1;
+}
+
 void HamUI::ReloadStrings() {
     Message reload("reload_strings");
 
@@ -300,5 +316,50 @@ void HamUI::ReloadStrings() {
 
 void HamUI::GotoEventScreen(UIScreen *scr) {
     mEventScreen = scr;
-    AttemptEventTransition();
+    AttemptEventTranstion();
+}
+
+void HamUI::AttemptEventTranstion() {
+    MILO_ASSERT(mEventScreen, 0x1a7);
+    if (!TheUI->InTransition()) {
+        if (TheUI->BottomScreen() == TheUI->CurrentScreen()) {
+            TheUI->GotoScreen(mEventScreen, 0, 0);
+        } else {
+            TheUI->PopScreen(mEventScreen);
+        }
+        mEventScreen = nullptr;
+    }
+}
+
+bool HamUI::IsBlacklightMode() { return mLetterbox && mLetterbox->IsBlacklightMode(); }
+
+void HamUI::ForceLetterboxOff() {
+    MILO_LOG("HamUI::ForceLetterboxOff()\n");
+    if (mLetterbox && mLetterbox->IsBlacklightMode())
+        mLetterbox->ToggleBlacklightMode(false);
+}
+
+void HamUI::ForceLetterboxOffImmediate() {
+    MILO_LOG("HamUI::ForceLetterboxOffImmediate()\n");
+    if (mLetterbox && mLetterbox->IsBlacklightMode()) {
+        mLetterbox->ToggleBlacklightMode(true);
+        return;
+    }
+    if (mLetterbox && mLetterbox->IsLeavingBlacklightMode()) {
+        MILO_LOG(
+            "ForceLetterboxOffImmediate request - but blacklight is already transitioning to OFF\n"
+        );
+    }
+}
+
+void HamUI::InitPanels() {
+    if (!mHelpBar) {
+        mHelpBar = dynamic_cast<HelpBarPanel *>(FindPanel("helpbar"));
+        mEventDialogPanel = FindPanel("event_dialog_panel");
+        mContentLoadingPanel = FindPanel("content_loading_panel");
+        mBackgroundPanel = ObjectDir::Main()->Find<UIPanel>("background_panel");
+        // gamepanel find
+        mLetterbox = dynamic_cast<LetterboxPanel *>(FindPanel("letterbox"));
+        mBlacklight = dynamic_cast<BlacklightPanel *>(FindPanel("blacklight"));
+    }
 }

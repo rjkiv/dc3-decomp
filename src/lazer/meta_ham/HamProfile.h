@@ -111,6 +111,7 @@ public:
     MoveRatingHistory *GetMoveRatingHistory() const { return mRatingHistory; }
     bool InFitnessMode() { return mInFitnessMode; }
     MetagameRank *GetMetagameRank() const { return mRank; }
+    MetagameStats *GetMetagameStats() const { return mStats; }
     OnlineID *GetOnlineID() { return mOnlineID; }
     bool IsSignedIn() const { return mSignedIn; }
 

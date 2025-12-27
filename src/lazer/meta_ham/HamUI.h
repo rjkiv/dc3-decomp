@@ -1,9 +1,9 @@
 #pragma once
-#include "BlacklightPanel.h"
-#include "HelpBarPanel.h"
-#include "LetterboxPanel.h"
-#include "OverlayPanel.h"
-#include "ShellInput.h"
+#include "meta_ham/BlacklightPanel.h"
+#include "meta_ham/HelpBarPanel.h"
+#include "meta_ham/LetterboxPanel.h"
+#include "meta_ham/OverlayPanel.h"
+#include "meta_ham/ShellInput.h"
 #include "meta/ConnectionStatusPanel.h"
 #include "os/ContentMgr.h"
 #include "os/JoypadMsgs.h"
@@ -42,7 +42,7 @@ public:
     void SetOverlayPanel(OverlayPanel *op) { mOverlayPanel = op; }
 
 protected:
-    void AttemptEventTransition();
+    void AttemptEventTranstion();
 
     DataNode OnMsg(const UITransitionCompleteMsg &);
     DataNode OnMsg(const ContentReadFailureMsg &);
@@ -74,7 +74,7 @@ private:
     void ReloadStrings();
 
     HelpBarPanel *mHelpBar; // 0xd8
-    LetterboxPanel *mLetterbox; // LetterboxPanel*
+    LetterboxPanel *mLetterbox; // 0xdc
     BlacklightPanel *mBlacklight; // 0xe0
     UIPanel *mEventDialogPanel; // 0xe4
     UIPanel *mBackgroundPanel; // 0xe8
@@ -82,12 +82,12 @@ private:
     OverlayPanel *mOverlayPanel; // 0xf0
     u32 mGamePanel; // 0xf4 - GamePanel*
     RndDir *unk_0xF8; // 0xf8
-    u8 unk_0xFC;
+    bool unk_0xFC;
     u8 unk_0xFD;
     UIScreen *mEventScreen; // 0x100
     ShellInput *mShellInput; // 0x104
     s32 unk_0x108; // 0x108
-    u32 unk_0x10C;
+    u32 unk_0x10C; // 0x10C - BufferType
     bool mFullScreenDrawActive;
     float mSkelRot;
     bool unk_0x118;

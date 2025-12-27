@@ -58,7 +58,7 @@ void LoadingPanel::Load() {
 }
 
 bool LoadingPanel::IsLoaded() const {
-    HamAudio *pAudio = sLoadingMaster->Audio();
+    HamAudio *pAudio = sLoadingMaster->GetAudio();
     if (!pAudio)
         MILO_NOTIFY("missing audio object!\n");
 

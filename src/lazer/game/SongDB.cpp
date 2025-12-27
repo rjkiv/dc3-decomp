@@ -12,6 +12,8 @@
 #include "utl/Symbol.h"
 #include "utl/TimeConversion.h"
 
+SongDB *TheSongDB;
+
 SongDB::SongDB() {
     unk0 = new HamSongData();
     unk4 = 0.0f;

@@ -1,5 +1,6 @@
 #include "meta_ham/MetaPanel.h"
 #include "HamProfile.h"
+#include "HamScreen.h"
 #include "TexLoadPanel.h"
 #include "game/SongDB.h"
 #include "hamobj/HamMaster.h"
@@ -10,6 +11,7 @@
 #include "meta/MemcardMgr.h"
 #include "meta/MetaMusicManager.h"
 #include "meta/MoviePanel.h"
+#include "meta_ham/AppNavProvider.h"
 #include "meta_ham/AccomplishmentProgress.h"
 #include "meta_ham/AppLabel.h"
 #include "meta_ham/AppMiniLeaderboardDisplay.h"
@@ -31,7 +33,10 @@
 #include "meta_ham/FitnessProvider.h"
 #include "meta_ham/HamPanel.h"
 #include "meta_ham/HamStarsDisplay.h"
+#include "meta_ham/HamStorePanel.h"
 #include "meta_ham/HelpBarPanel.h"
+#include "meta_ham/KinectSharePanel.h"
+#include "meta_ham/Leaderboards.h"
 #include "meta_ham/LetterboxPanel.h"
 #include "meta_ham/LoadingPanel.h"
 #include "meta_ham/MainMenuPanel.h"
@@ -51,6 +56,7 @@
 #include "meta_ham/SongStatusMgr.h"
 #include "meta_ham/TitleProvider.h"
 #include "meta_ham/VoiceControlPanel.h"
+#include "meta_ham/WeightInput.h"
 #include "obj/Data.h"
 #include "obj/DataFunc.h"
 #include "obj/Object.h"
@@ -99,7 +105,7 @@ void MetaPanel::Init() {
     REGISTER_OBJ_FACTORY(AppLabel)
     REGISTER_OBJ_FACTORY(AppMiniLeaderboardDisplay)
     REGISTER_OBJ_FACTORY(HamPanel)
-    // REGISTER_OBJ_FACTORY(HamScreen)
+    REGISTER_OBJ_FACTORY(HamScreen)
     REGISTER_OBJ_FACTORY(CalibrationPanel)
     REGISTER_OBJ_FACTORY(CampaignDiffSelectPanel)
     REGISTER_OBJ_FACTORY(CampaignDiffProvider)
@@ -113,7 +119,7 @@ void MetaPanel::Init() {
     REGISTER_OBJ_FACTORY(CreditsPanel)
     REGISTER_OBJ_FACTORY(EventDialogPanel)
     REGISTER_OBJ_FACTORY(FitnessProvider)
-    // REGISTER_OBJ_FACTORY(HamStorePanel)
+    REGISTER_OBJ_FACTORY(HamStorePanel)
     REGISTER_OBJ_FACTORY(LetterboxPanel)
     REGISTER_OBJ_FACTORY(BlacklightPanel)
     REGISTER_OBJ_FACTORY(HelpBarPanel)
@@ -137,18 +143,18 @@ void MetaPanel::Init() {
     TheMemcardMgr.Init();
     MetagameRank::Preinit();
     TheProfileMgr.Init();
-    // Leaderboards::Init();
+    Leaderboards::Init();
     Challenges::Init();
     // FitnessGoalMgr::Init();
     REGISTER_OBJ_FACTORY(HamStarsDisplay)
-    // REGISTER_OBJ_FACTORY(WeightInputPanel)
-    // REGISTER_OBJ_FACTORY(AppNavProvider)
+    REGISTER_OBJ_FACTORY(WeightInputPanel)
+    REGISTER_OBJ_FACTORY(AppNavProvider)
     REGISTER_OBJ_FACTORY(MultiUserGesturePanel)
     REGISTER_OBJ_FACTORY(PassiveMessagesPanel)
     REGISTER_OBJ_FACTORY(CursorPanel)
     REGISTER_OBJ_FACTORY(PracticeChoosePanel)
     REGISTER_OBJ_FACTORY(VoiceControlPanel)
-    // REGISTER_OBJ_FACTORY(KinectSharePanel)
+    REGISTER_OBJ_FACTORY(KinectSharePanel)
     // REGISTER_OBJ_FACTORY(VoiceInputPanel)
     DataRegisterFunc("toggle_unlock_all", ToggleUnlockAll);
     DataRegisterFunc("toggle_motd_cheat", ToggleMotdCheat);

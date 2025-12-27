@@ -16,6 +16,7 @@
 #include "meta_ham/CampaignProgress.h"
 #include "meta_ham/FitnessGoalMgr.h"
 #include "meta_ham/HamSongMgr.h"
+#include "meta_ham/MetaPanel.h"
 #include "meta_ham/MetagameRank.h"
 #include "meta_ham/MetagameStats.h"
 #include "meta_ham/MoveRatingHistory.h"
@@ -739,13 +740,19 @@ void HamProfile::SetCharacterOutfit(Symbol character, Symbol outfit) {
 }
 
 bool HamProfile::IsContentUnlockedForProfile(Symbol content) const {
-    return std::find(mUnlockedContent.begin(), mUnlockedContent.end(), content)
-        != mUnlockedContent.end();
+    if (MetaPanel::sUnlockAll)
+        return true;
+    else
+        return std::find(mUnlockedContent.begin(), mUnlockedContent.end(), content)
+            != mUnlockedContent.end();
 }
 
 bool HamProfile::IsContentNew(Symbol content) const {
-    return std::find(mNewContent.begin(), mNewContent.end(), content)
-        != mNewContent.end();
+    if (MetaPanel::sUnlockAll)
+        return false;
+    else
+        return std::find(mNewContent.begin(), mNewContent.end(), content)
+            != mNewContent.end();
 }
 
 void HamProfile::SetFitnessStats(int, float calories, float time) {

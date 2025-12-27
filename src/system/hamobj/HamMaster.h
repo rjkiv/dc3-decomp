@@ -51,7 +51,7 @@ public:
     void SetMaps();
     void LoaderPoll();
     int Unk70() const { return unk60.GetMeasure(); }
-    HamAudio *Audio() const { return mAudio; }
+    HamAudio *GetAudio() const { return mAudio; }
     HamSongData *SongData() const { return mSongData; }
 
 private:

@@ -332,8 +332,8 @@ void RhythmBattle::UpdateMindControl() {
 }
 
 void ClearJump() {
-    if (TheMaster && TheMaster->Audio()) {
-        TheMaster->Audio()->ClearLoop();
+    if (TheMaster && TheMaster->GetAudio()) {
+        TheMaster->GetAudio()->ClearLoop();
     }
 }
 

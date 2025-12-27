@@ -22,3 +22,5 @@ public:
 private:
     void ParseEvents(DataEventList *);
 };
+
+extern SongDB *TheSongDB;

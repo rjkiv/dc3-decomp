@@ -21,7 +21,7 @@ void HamSong::CreateSong(Symbol s, DataArray *a, HxSongData **sd, HxMaster **m) 
     *m = master;
     TheMaster = master;
     TheMaster->SetName("master", ObjectDir::Main());
-    TheMaster->Audio()->SetName("audio", ObjectDir::Main());
+    TheMaster->GetAudio()->SetName("audio", ObjectDir::Main());
     DataMacroWarning(true);
     DataArraySongInfo info(a, nullptr, s);
     bool streamBool;

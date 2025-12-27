@@ -90,7 +90,7 @@ void HollaBackMinigame::Poll() {
             bool b20 = !game ? false : !game->Handle(Message("is_waiting"), true).Int();
             if (b20 && unk474) {
                 JumpToMeasure(mInitialMusicJump);
-                TheMaster->Audio()->SetPaused(true);
+                TheMaster->GetAudio()->SetPaused(true);
                 unk474 = false;
             }
         }
@@ -113,7 +113,7 @@ void HollaBackMinigame::Poll() {
                         ->SetFrame(0, 1);
                 }
             }
-            if (!unk481 && TheMaster->Audio()->IsReady() && unk494-- <= 0) {
+            if (!unk481 && TheMaster->GetAudio()->IsReady() && unk494-- <= 0) {
                 unk481 = true;
                 TheHamProvider->SetProperty(holla_back_stage, Symbol("title"));
                 Hmx::Object *game = ObjectDir::Main()->Find<Hmx::Object>("game", true);
@@ -131,14 +131,14 @@ void HollaBackMinigame::Poll() {
                     ->Find<Flow>("animate_timeywimey.flow", true)
                     ->Activate();
                 SetDefaultShot();
-            } else if (unk481 && TheMaster->Audio()->IsReady()) {
+            } else if (unk481 && TheMaster->GetAudio()->IsReady()) {
                 if (mSound) {
                     SynthSample *sample = mSound->Sample();
                     float f23 = mSound->ElapsedTime() - 1.0f;
                     if (f23 >= sample->LengthMs() / 1000.0f)
                         goto next;
                 }
-                TheMaster->Audio()->SetPaused(false);
+                TheMaster->GetAudio()->SetPaused(false);
                 Hmx::Object *game = ObjectDir::Main()->Find<Hmx::Object>("game", true);
                 if (game) {
                     game->Handle(Message("set_realtime", 0), true);
@@ -539,7 +539,7 @@ void HollaBackMinigame::SetState(State s) {
             unk450 = 420;
             MidiParser *p = TheMidiParserMgr->GetParser("count_in_player");
             p->SetProperty("active", 0);
-            TheMaster->Audio()->SetLoop(0, unk450 * 4.0f);
+            TheMaster->GetAudio()->SetLoop(0, unk450 * 4.0f);
             OnBeat();
             break;
         }

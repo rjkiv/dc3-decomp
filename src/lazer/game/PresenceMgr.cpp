@@ -142,6 +142,17 @@ int PresenceMgr::GetPresenceContextFromMode(Symbol s, bool b) {
     }
 }
 
+bool PresenceMgr::IsPadPlaying(int pad) {
+    for (int i = 0; i < 2; i++) {
+        HamPlayerData *pPlayer = TheGameData->Player(i);
+        MILO_ASSERT(pPlayer, 0x9a);
+        int padNum = pPlayer->PadNum();
+        if (pPlayer->IsPlaying() && padNum == pad)
+            return true;
+    }
+    return false;
+}
+
 BEGIN_HANDLERS(PresenceMgr)
     HANDLE(current_screen_changed, OnPresenceChange)
     HANDLE(signin_changed, OnPresenceChange)
