@@ -1,3 +1,5 @@
+#pragma once
+
 #include "HamPanel.h"
 #include "system/world/Instance.h"
 #include "ProfileMgr.h"
