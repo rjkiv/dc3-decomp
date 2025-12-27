@@ -59,7 +59,6 @@ public:
     static bool GetFinalDrawPass() { return sIsFinalDrawPass; }
     State GetState() { return mState; }
     bool ForceExit() const { return mForceExit; }
-    int LoadRefs() { return mLoadRefs; }
 
 protected:
     virtual void Unload();
