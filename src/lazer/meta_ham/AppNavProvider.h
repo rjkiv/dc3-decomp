@@ -5,7 +5,12 @@
 
 class AppNavProvider : public HamNavProvider {
     public:
+    AppNavProvider() {};
+    ~AppNavProvider();
+    OBJ_CLASSNAME(AppNavProvider);
+    OBJ_SET_TYPE(AppNavProvider);
     virtual void Text(int, int, UIListLabel *, UILabel *) const;
     virtual void Custom(int, int, UIListCustom *, Hmx::Object *) const;
     virtual DataNode Handle(DataArray *, bool);
+
 };
