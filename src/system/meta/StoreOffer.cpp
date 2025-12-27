@@ -29,21 +29,21 @@ unsigned long long StorePurchaseable::OfferStringToID(char const *s) {
 
 char const *StorePurchaseable::CostStr() const { return MakeString("%i -", cost); }
 
-StoreOffer::StoreOffer(DataArray *a, SongMgr *mgr) : storeOfferData(a), mSongMgr(mgr) {
+StoreOffer::StoreOffer(DataArray *a, SongMgr *mgr) : mStoreOfferData(a), mSongMgr(mgr) {
     static Symbol id("id");
     static Symbol release_date("release_date");
 
-    if (storeOfferData->FindData(id, id, false)) {
+    if (mStoreOfferData->FindData(id, id, false)) {
         songID = _strtoui64(id.Str(), nullptr, 16);
     }
 
-    DataArray *dateArray = storeOfferData->FindArray(release_date, false);
+    DataArray *dateArray = mStoreOfferData->FindArray(release_date, false);
     if (dateArray) {
         date = DateTime(dateArray->Int(1), dateArray->Int(2), dateArray->Int(3), 0, 0, 0);
     }
 
     static Symbol song_ids("song_ids");
-    DataArray *idArray = storeOfferData->FindArray(song_ids, false);
+    DataArray *idArray = mStoreOfferData->FindArray(song_ids, false);
     if (idArray) {
         for (int i = 1; i < idArray->Size(); i++) {
             mSongsInOffer.push_back(idArray->Int(i));
@@ -54,24 +54,24 @@ StoreOffer::StoreOffer(DataArray *a, SongMgr *mgr) : storeOfferData(a), mSongMgr
     if (mSongsInOffer.empty() && OfferType() != avatar) {
         MILO_NOTIFY("%s does not have song_ids", OfferName());
     }
-    storeOfferData->AddRef();
+    mStoreOfferData->AddRef();
 }
 
 Symbol StoreOffer::OfferType() const {
     static Symbol type("type");
-    return storeOfferData->FindArray(type)->Sym(1);
+    return mStoreOfferData->FindArray(type)->Sym(1);
 }
 
-StoreOffer::~StoreOffer() { storeOfferData->Release(); }
+StoreOffer::~StoreOffer() { mStoreOfferData->Release(); }
 
 bool StoreOffer::HasData(Symbol s) const {
-    return (storeOfferData->FindArray(s, false) != nullptr);
+    return (mStoreOfferData->FindArray(s, false) != nullptr);
 }
 
 DateTime const &StoreOffer::ReleaseDate() const { return date; }
 
 Symbol StoreOffer::FirstChar(Symbol s, bool b) const {
-    return FirstSortChar(storeOfferData->FindStr(s), b);
+    return FirstSortChar(mStoreOfferData->FindStr(s), b);
 }
 
 Symbol StoreOffer::PackFirstLetter() const {
@@ -79,32 +79,32 @@ Symbol StoreOffer::PackFirstLetter() const {
     static Symbol name("name");
 
     if (OfferType() == pack) {
-        return FirstSortChar(storeOfferData->FindStr(name), 1);
+        return FirstSortChar(mStoreOfferData->FindStr(name), 1);
     } else
         return gNullStr;
 }
 
 char const *StoreOffer::OfferName() const {
     static Symbol name("name");
-    return storeOfferData->FindStr(name);
+    return mStoreOfferData->FindStr(name);
 }
 
 char const *StoreOffer::ArtistName() const {
     static Symbol artist("artist");
-    return storeOfferData->FindStr(artist);
+    return mStoreOfferData->FindStr(artist);
 }
 char const *StoreOffer::AlbumName() const {
     static Symbol album_name("album_name");
-    return storeOfferData->FindStr(album_name);
+    return mStoreOfferData->FindStr(album_name);
 }
 char const *StoreOffer::Description() const {
     static Symbol description("description");
-    return storeOfferData->FindStr(description);
+    return mStoreOfferData->FindStr(description);
 }
 
 bool StoreOffer::IsNewRelease() const {
     static Symbol new_release("new_release");
-    DataArray *r = storeOfferData->FindArray(new_release, false);
+    DataArray *r = mStoreOfferData->FindArray(new_release, false);
     if (r != 0) {
         return r->Int(1) != 0;
     }
@@ -113,7 +113,7 @@ bool StoreOffer::IsNewRelease() const {
 
 bool StoreOffer::IsTest() const {
     static Symbol test("test");
-    DataArray *t = storeOfferData->FindArray(test, false);
+    DataArray *t = mStoreOfferData->FindArray(test, false);
     if (t != nullptr) {
         return t->Int(1);
     }
@@ -133,7 +133,7 @@ int StoreOffer::Song(int i) const {
 
 bool StoreOffer::ValidTitle() const {
     static Symbol titles("titles");
-    DataArray *titleArray = storeOfferData->FindArray(titles, false);
+    DataArray *titleArray = mStoreOfferData->FindArray(titles, false);
     if (titleArray != nullptr) {
         for (int i = 1; i < titleArray->Size(); i++) {
             if (SystemTitles()->FindArray(titleArray->Sym(0), false)) {
@@ -178,7 +178,7 @@ int StoreOffer::GetSingleSongID() const {
 }
 
 DataNode StoreOffer::GetData(DataArray const *data, bool b) const {
-    DataArray *storeData = storeOfferData;
+    DataArray *storeData = mStoreOfferData;
     for (int i = 0; i < data->Size(); i++) {
         storeData = storeData->FindArray(data->Sym(i));
     }
@@ -209,7 +209,7 @@ DataNode StoreOffer::OnGetData(DataArray *d) {
 }
 
 BEGIN_HANDLERS(StoreOffer)
-    HANDLE_EXPR(short_name, storeOfferData->Sym(0))
+    HANDLE_EXPR(short_name, mStoreOfferData->Sym(0))
     HANDLE_EXPR(offer_type, OfferType())
     HANDLE_EXPR(offer_name, OfferName())
     HANDLE_EXPR(artist, ArtistName())
@@ -223,7 +223,7 @@ BEGIN_HANDLERS(StoreOffer)
     HANDLE_EXPR(is_purchased, isPurchased)
     HANDLE_EXPR(is_test, IsTest())
     HANDLE(get_data, OnGetData)
-    HANDLE_EXPR(has_data, storeOfferData->FindArray(_msg->Sym(2), false) != nullptr)
+    HANDLE_EXPR(has_data, mStoreOfferData->FindArray(_msg->Sym(2), false) != nullptr)
     HANDLE_EXPR(first_char, FirstChar(_msg->Sym(2), false))
     HANDLE_EXPR(pack_first_letter, PackFirstLetter())
     HANDLE_SUPERCLASS(Hmx::Object)

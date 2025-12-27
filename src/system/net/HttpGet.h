@@ -4,6 +4,9 @@
 #include "utl/MemMgr.h"
 #include "utl/Str.h"
 
+enum HttpGetFailType {
+};
+
 class HttpGet {
 public:
     enum State {
@@ -24,6 +27,9 @@ public:
     void Send();
     void Poll();
     unsigned int GetBufferSize();
+    void SetTimeout(float);
+    HttpGetFailType FailType() const { return mFailType; }
+    State PrevState() const { return mPrevState; }
 
     MEM_OVERLOAD(HttpGet, 0x1C);
 
@@ -64,8 +70,8 @@ protected:
     int mFileBufSize; // 0x70
     int mFileBufRecvPos; // 0x74
     int unk78;
-    int unk7c;
-    int unk80;
+    HttpGetFailType mFailType; // 0x7c
+    State mPrevState; // 0x80
 };
 
 class HttpPost : public HttpGet {
@@ -82,7 +88,7 @@ protected:
 
     const char *mContent; // 0x88
     unsigned int mContentLength; // 0x8c
-    unsigned int unk90; // 0x90
+    int unk90; // 0x90
     String unk94; // 0x94
     int unk9c;
 };

@@ -1,4 +1,5 @@
 #pragma once
+#include "HamStoreFilterProvider.h"
 #include "hamobj/Difficulty.h"
 #include "hamobj/HamLabel.h"
 #include "meta/StoreOffer.h"
@@ -83,6 +84,7 @@ public:
     void SetExpireTime();
     void SetLastPlayedTime(int);
     void SetEnrolledPlayerName(int);
+    void SetStoreFilterName(HamStoreFilter const *);
 
 protected:
     DataNode OnSetUserName(const DataArray *);

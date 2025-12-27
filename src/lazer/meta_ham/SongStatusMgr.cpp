@@ -18,26 +18,26 @@
 void SongStatusData::SaveToStream(BinStream &bs) const {
     bs << mScore;
     bs << mPracticeScore;
-    bs << unk8;
+    bs << mCoopScore;
     bs << mStars;
     bs << mPercentPassed;
     bs << mNumPerfects;
     bs << mNumNices;
     bs << unk10;
-    bs << unk11;
+    bs << mNoFlashcards;
     bs << mNeedUpload;
 }
 
 void SongStatusData::LoadFromStream(BinStream &bs) {
     bs >> mScore;
     bs >> mPracticeScore;
-    bs >> unk8;
+    bs >> mCoopScore;
     bs >> mStars;
     bs >> mPercentPassed;
     bs >> mNumPerfects;
     bs >> mNumNices;
     bs >> unk10;
-    bs >> unk11;
+    bs >> mNoFlashcards;
     bs >> mNeedUpload;
 }
 
@@ -318,7 +318,7 @@ int SongStatusMgr::GetScore(int songID, bool &bref) const {
     bref = false;
     if (HasSongStatus(songID)) {
         const SongStatusData &data = GetSongStatus(songID).GetBestSongStatusData();
-        bref = data.unk11;
+        bref = data.mNoFlashcards;
         return data.mScore;
     } else {
         return 0;
@@ -327,7 +327,7 @@ int SongStatusMgr::GetScore(int songID, bool &bref) const {
 
 int SongStatusMgr::GetCoopScore(int songID) const {
     if (HasSongStatus(songID)) {
-        return GetSongStatus(songID).GetBestSongStatusData().unk8;
+        return GetSongStatus(songID).GetBestSongStatusData().mCoopScore;
     } else {
         return 0;
     }
@@ -337,7 +337,7 @@ int SongStatusMgr::GetScoreForDifficulty(int songID, Difficulty d, bool &bref) c
     bref = false;
     if (HasSongStatus(songID)) {
         const SongStatus &status = GetSongStatus(songID);
-        bref = status.mStatusData[d].unk11;
+        bref = status.mStatusData[d].mNoFlashcards;
         return status.mStatusData[d].mScore;
     } else {
         return 0;
@@ -352,7 +352,7 @@ int SongStatusMgr::GetBestScore(int songID, bool &bref, Difficulty d) const {
             const SongStatus &status = GetSongStatus(songID);
             int score = status.mStatusData[d].mScore;
             if (score > bestScore) {
-                bref = status.mStatusData[d].unk11;
+                bref = status.mStatusData[d].mNoFlashcards;
                 bestScore = score;
             }
         }
@@ -582,11 +582,11 @@ bool SongStatusMgr::UpdateSong(
             status.unk84 = i3;
             if (status.mStatusData[difficulty].mScore <= score) {
                 status.mStatusData[difficulty].mScore = score;
-                status.mStatusData[difficulty].unk11 = b11;
+                status.mStatusData[difficulty].mNoFlashcards = b11;
                 status.mStatusData[difficulty].mNeedUpload = !b10;
             }
-            if (status.mStatusData[difficulty].unk8 <= i3) {
-                status.mStatusData[difficulty].unk8 = i3;
+            if (status.mStatusData[difficulty].mCoopScore <= i3) {
+                status.mStatusData[difficulty].mCoopScore = i3;
                 status.mStatusData[difficulty].mNeedUpload = !b10;
             }
             if (status.mStatusData[difficulty].mStars <= stars) {
@@ -611,9 +611,9 @@ bool SongStatusMgr::UpdateSong(
         SongStatus status(songID);
         if (TheGameMode->Property(gameplay_mode)->Sym() == perform) {
             status.mStatusData[difficulty].mScore = score;
-            status.mStatusData[difficulty].unk8 = i3;
+            status.mStatusData[difficulty].mCoopScore = i3;
             status.mStatusData[difficulty].mStars = stars;
-            status.mStatusData[difficulty].unk11 = b11;
+            status.mStatusData[difficulty].mNoFlashcards = b11;
             if (5 <= stars) {
                 status.mStatusData[difficulty].unk10 = b11;
             }

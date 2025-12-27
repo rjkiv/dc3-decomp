@@ -15,9 +15,10 @@ public:
     static unsigned long long OfferStringToID(char const *);
     char const *CostStr() const;
     bool IsAvailable() { return isAvailable; }
+    bool IsPurchased() { return isPurchased; }
 
-    bool isAvailable;
-    bool isPurchased;
+    bool isAvailable; // 0x2c
+    bool isPurchased; // 0x2d
     u64 songID; // 0x30
     int cost; // 0x38
 };
@@ -50,7 +51,10 @@ public:
     DataNode OnGetData(DataArray *);
     StoreOffer(DataArray *, SongMgr *);
 
-    DataArray *storeOfferData; // 0x40
+    DataArray *StoreOfferData() { return mStoreOfferData; }
+
+protected:
+    DataArray *mStoreOfferData; // 0x40
     DateTime date; // 0x44
     SongMgr *mSongMgr; // 0x4c
     std::vector<int> mSongsInOffer; // 0x50

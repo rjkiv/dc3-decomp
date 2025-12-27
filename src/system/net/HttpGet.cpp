@@ -22,7 +22,8 @@ namespace {
 HttpGet::HttpGet(unsigned int ip, unsigned short port, const char *c1, const char *c2)
     : mSocket(0), unkc(c1), mPort(port), mState(-1), unk1c(false),
       mTimeoutMs(kDefaultTimeoutMs), mIP(ip), unk58(c2), unk60(0), mRecvBufPos(0),
-      mFileBuf(0), mFileBufSize(0), mFileBufRecvPos(0), unk78(0), unk7c(0), unk80(-1) {
+      mFileBuf(0), mFileBufSize(0), mFileBufRecvPos(0), unk78(0), mFailType(),
+      mPrevState(kHttpGet_Nil) {
     SetState((State)0);
     AddRequiredHeaders();
 }
@@ -32,7 +33,7 @@ HttpGet::HttpGet(
 )
     : mSocket(0), unkc(c1), mPort(port), mState(-1), unk1c(uc & 3),
       mTimeoutMs(kDefaultTimeoutMs), mIP(ip), unk58(c2), unk60(0), mRecvBufPos(0),
-      mFileBuf(0), mFileBufSize(0), mFileBufRecvPos(0), unk78(0), unk7c(0) {
+      mFileBuf(0), mFileBufSize(0), mFileBufRecvPos(0), unk78(0), mFailType() {
     State s;
     if ((uc & 4) == 0) {
         s = (State)8;
@@ -48,7 +49,7 @@ HttpGet::~HttpGet() { SafeShutdown(); }
 void HttpGet::StartSending() {
     MILO_ASSERT(mSocket, 0x311);
     if (!mSocket->CanSend()) {
-        unk7c = 1;
+        mFailType = (HttpGetFailType)1;
         SetState((State)7);
     } else {
         String str("GET ");
@@ -63,7 +64,7 @@ void HttpGet::StartSending() {
         int len = str.length();
         mSocket->Send(str.c_str(), len);
         if (len != 0) {
-            unk7c = 1;
+            mFailType = (HttpGetFailType)1;
             SetState((State)7);
         } else {
             SetState((State)3);
@@ -124,7 +125,7 @@ void HttpGet::StartConnection() {
     MILO_ASSERT(mSocket == NULL, 0x2FF);
     mSocket = NetworkSocket::Create(true);
     if (mSocket->Fail()) {
-        unk7c = 1;
+        mFailType = (HttpGetFailType)1;
         SetState((State)6);
     } else {
         mSocket->Connect(mIP, mPort);
@@ -135,6 +136,8 @@ bool HttpGet::HasTimedOut() {
     unk20.Split();
     return unk20.Ms() > mTimeoutMs;
 }
+
+void HttpGet::SetTimeout(float timeout) { mTimeoutMs = timeout; }
 
 HttpPost::HttpPost(unsigned int ip, unsigned short port, const char *cc, unsigned char uc)
     : HttpGet(ip, port, cc, uc, nullptr) {
@@ -186,6 +189,6 @@ void HttpPost::StartSending() {
             return;
         }
     }
-    unk7c = 1;
+    mFailType = (HttpGetFailType)1;
     SetState((State)7);
 }

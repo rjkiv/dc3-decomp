@@ -21,15 +21,15 @@
 Challenges *TheChallenges;
 
 Challenges::Challenges() {
+    mFlauntingProfile = nullptr;
+    mHasFlaunted = false;
     unk2c = false;
-    unk110 = false;
-    mGetChallengeBadgeCountsJob = 0;
-    unke0 = false;
-    mFlauntingProfile = 0;
+    mGetPlayerChallengesJob = nullptr;
+    mGetOfficialChallengesJob = nullptr;
+    mGetChallengeBadgeCountsJob = nullptr;
     unkd8 = -1;
-    mGetPlayerChallengesJob = 0;
-    mGetOfficialChallengesJob = 0;
-    unke1 = false;
+    mOfficialChallengesDirty = false;
+    mPlayerChallengesDirty = false;
     SetName("challenges", ObjectDir::Main());
     static Symbol udpate_duration("udpate_duration");
     static Symbol auto_update_duration("auto_update_duration");
@@ -81,7 +81,7 @@ BEGIN_HANDLERS(Challenges)
 END_HANDLERS
 
 bool Challenges::CanDownloadPlayerChallenges() const {
-    return !mGetPlayerChallengesJob && !unk60.Running();
+    return !mGetPlayerChallengesJob && !mPlayerChallengeTimer.Running();
 }
 
 bool Challenges::IsExportedSongDC1(int songID) {
@@ -147,10 +147,10 @@ String Challenges::GetDlcChallengeSongName() {
     return gNullStr;
 }
 
-int Challenges::CalculateChallengeXp(int i1, int i2) {
+int Challenges::CalculateChallengeXp(int score, int i2) {
     int rankTier = TheHamSongMgr.RankTier(i2);
     MILO_ASSERT(rankTier >= 0 && rankTier < mSongTierFactor.size(), 0x1CA);
-    return (i1 / mScoreFactorDenom) + mSongTierFactor[rankTier];
+    return (score / mScoreFactorDenom) + mSongTierFactor[rankTier];
 }
 
 bool Challenges::HasFlaunted(HamProfile *profile) {
@@ -297,8 +297,8 @@ int Challenges::GetTotalXpEarned(int player) {
 }
 
 void Challenges::UploadNextFlaunt() {
-    if (!unk110) {
-        unk110 = true;
+    if (!mHasFlaunted) {
+        mHasFlaunted = true;
     }
     mFlauntScoreData.mStatus = &mFlauntList.front();
     MILO_LOG("***********************************\n");
@@ -313,40 +313,44 @@ void Challenges::UploadNextFlaunt() {
 }
 
 void Challenges::ReadPlayerChallengesComplete(bool b1) {
-    unke1 = false;
-    mGetPlayerChallengesJob->GetRows(unk38, unke1);
+    mPlayerChallengesDirty = false;
+    mGetPlayerChallengesJob->GetRows(mProfileChallenges, mPlayerChallengesDirty);
     mGetPlayerChallengesJob = nullptr;
     static Message allUpdatedMsg("all_challenges_updated", 0);
     static Message challengesFailedRcMsg("challenges_failed_rc");
     static Message challengesFailedLiveMsg("challenges_failed_live");
     if (b1) {
         if (!mGetOfficialChallengesJob) {
-            allUpdatedMsg[0] = !unke1 && unke0;
+            bool dirty = mPlayerChallengesDirty || mOfficialChallengesDirty;
+            allUpdatedMsg[0] = dirty;
             TheUI->Handle(allUpdatedMsg, true);
-            unke1 = false;
-            unke0 = false;
+            mPlayerChallengesDirty = false;
+            mOfficialChallengesDirty = false;
         }
     } else if (ThePlatformMgr.IsConnected()) {
         TheUI->Handle(challengesFailedRcMsg, b1);
     } else {
         TheUI->Handle(challengesFailedLiveMsg, b1);
     }
-    unk60.Restart();
+    mPlayerChallengeTimer.Restart();
 }
 
 void Challenges::ReadOfficialChallengesComplete(bool b1) {
-    unke0 = false;
-    mGetOfficialChallengesJob->GetRows(mOfficialChallenges, unkd8, unke0);
+    mOfficialChallengesDirty = false;
+    mGetOfficialChallengesJob->GetRows(
+        mOfficialChallenges, unkd8, mOfficialChallengesDirty
+    );
     mGetOfficialChallengesJob = nullptr;
     static Message allUpdatedMsg("all_challenges_updated", 0);
     static Message challengesFailedRcMsg("challenges_failed_rc");
     static Message challengesFailedLiveMsg("challenges_failed_live");
     if (b1) {
         if (!mGetPlayerChallengesJob) {
-            allUpdatedMsg[0] = !unke1 && unke0;
+            bool dirty = mPlayerChallengesDirty || mOfficialChallengesDirty;
+            allUpdatedMsg[0] = dirty;
             TheUI->Handle(allUpdatedMsg, true);
-            unke1 = false;
-            unke0 = false;
+            mPlayerChallengesDirty = false;
+            mOfficialChallengesDirty = false;
         }
     } else {
         if (ThePlatformMgr.IsConnected()) {
@@ -354,15 +358,15 @@ void Challenges::ReadOfficialChallengesComplete(bool b1) {
         } else {
             TheUI->Handle(challengesFailedLiveMsg, b1);
         }
-        unk90.Restart();
+        mOfficialChallengeTimer.Restart();
     }
 }
 
 void Challenges::UpdateChallengeTimeStamp() {
-    if (unk38.size()) {
+    if (mProfileChallenges.size()) {
         HamProfile *profile = TheProfileMgr.GetActiveProfile(true);
         if (profile) {
-            FOREACH (it, unk38) {
+            FOREACH (it, mProfileChallenges) {
                 if (it->first == profile->GetName()) {
                     MILO_LOG(
                         ">>>> Update challenge time stamp from %i to %i\n",
@@ -407,8 +411,8 @@ int Challenges::GetMedalCount(int type) {
     HamProfile *profile = TheProfileMgr.GetActiveProfile(true);
     if (profile) {
         String name = profile->GetName();
-        auto it = unk130.find(name);
-        if (it != unk130.end()) {
+        auto it = mProfileBadgeInfos.find(name);
+        if (it != mProfileBadgeInfos.end()) {
             return it->second.mMedalCounts[type];
         }
     }
@@ -422,8 +426,8 @@ bool Challenges::NeedToReSyncChallenges() {
         HamProfile *profile = TheProfileMgr.GetProfileFromPad(playerData->PadNum());
         if (profile) {
             String name = profile->GetName();
-            auto it = unk38.find(name);
-            if (it == unk38.end()) {
+            auto it = mProfileChallenges.find(name);
+            if (it == mProfileChallenges.end()) {
                 return true;
             }
         }
@@ -432,13 +436,13 @@ bool Challenges::NeedToReSyncChallenges() {
 }
 
 bool Challenges::GetBeatenChallengeXPs(
-    const HamPlayerData *playerData, int i2, std::vector<int> &vec
+    const HamPlayerData *playerData, int score, std::vector<int> &beatenXPs
 ) {
     MILO_ASSERT(playerData, 0x40C);
     PropertyEventProvider *provider = playerData->Provider();
     MILO_ASSERT(provider, 0x40E);
     static Symbol has_valid_challenge_data("has_valid_challenge_data");
-    vec.clear();
+    beatenXPs.clear();
     if (provider->Property(has_valid_challenge_data)->Int()) {
         for (int i = 0; i < 2; i++) {
             if (playerData == TheGameData->Player(i)) {
@@ -446,11 +450,11 @@ bool Challenges::GetBeatenChallengeXPs(
                 if (challenges.size() == 0)
                     return false;
                 for (int j = 0; j < challenges.size(); j++) {
-                    if (i2 > challenges[j].mScore) {
+                    if (score > challenges[j].mScore) {
                         int xp = CalculateChallengeXp(
                             challenges[j].mScore, challenges[j].mDiff
                         );
-                        vec.push_back(xp);
+                        beatenXPs.push_back(xp);
                         MILO_LOG("XP = %i\n", xp);
                     }
                 }
@@ -462,10 +466,10 @@ bool Challenges::GetBeatenChallengeXPs(
 }
 
 void Challenges::GetPlayerChallenges(std::vector<ChallengeRow> &rows) {
-    if (unk38.size()) {
+    if (mProfileChallenges.size()) {
         HamProfile *profile = TheProfileMgr.GetActiveProfile(true);
         if (profile) {
-            FOREACH (it, unk38) {
+            FOREACH (it, mProfileChallenges) {
                 if (it->first == profile->GetName()) {
                     rows = it->second;
                 }
@@ -500,7 +504,7 @@ void Challenges::DownloadBadgeInfo() {
         mGetChallengeBadgeCountsJob = new GetChallengeBadgeCountsJob(this, profiles);
         TheRockCentral.ManageJob(mGetChallengeBadgeCountsJob);
     } else {
-        unk130.clear();
+        mProfileBadgeInfos.clear();
         mGetChallengeBadgeCountsJob = nullptr;
         static Message badgeUpdatedMsg("player_badge_count_updated");
         TheUI->Handle(badgeUpdatedMsg, false);
@@ -509,8 +513,8 @@ void Challenges::DownloadBadgeInfo() {
 
 void Challenges::ReadBadgeInfo(bool b1) {
     GetChallengeBadgeCountsJob *job = mGetChallengeBadgeCountsJob;
-    unk130.clear();
-    job->GetBadgeInfo(unk130);
+    mProfileBadgeInfos.clear();
+    job->GetBadgeInfo(mProfileBadgeInfos);
     mGetChallengeBadgeCountsJob = nullptr;
     static Message badgeUpdatedMsg("player_badge_count_updated");
     static Message challengesFailedRcMsg("challenges_failed_rc");
