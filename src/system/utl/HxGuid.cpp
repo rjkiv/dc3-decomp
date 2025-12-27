@@ -42,6 +42,8 @@ const char *HxGuid::ToString() const {
     return MakeString("%08x%08x%08x%08x", mData[0], mData[1], mData[2], mData[3]);
 }
 
+const int *HxGuid::Data() const { return mData; }
+
 #define kGuidRev 1
 
 BinStream &operator<<(BinStream &bs, const HxGuid &hx) {

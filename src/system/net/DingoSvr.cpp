@@ -13,7 +13,7 @@
 #include "utl/Symbol.h"
 #include <cstring>
 
-DingoServer::DingoServer() : mAuthState(0), mPort(0), unk70(-1), unk74(-1) {
+DingoServer::DingoServer() : mAuthState(kServerUnauthed), mPort(0), unk70(-1), unk74(-1) {
     for (int i = 0; i < DIM(unk78); i++) {
         unk78[i] = false;
     }
@@ -28,7 +28,7 @@ END_HANDLERS
 
 void DingoServer::Init() {
     SetName("server", ObjectDir::Main());
-    mRegion = PlatformRegionToSymbol(ThePlatformMgr.GetRegion());
+    mLocale = PlatformRegionToSymbol(ThePlatformMgr.GetRegion());
     ThePlatformMgr.AddSink(this, SigninChangedMsg::Type());
     ThePlatformMgr.AddSink(this, ConnectionStatusChangedMsg::Type());
     mLanguage = SystemLanguage();
@@ -36,18 +36,18 @@ void DingoServer::Init() {
 
 void DingoServer::Logout() {
     unk40 = "";
-    mAuthState = 0;
+    mAuthState = kServerUnauthed;
     unk74 = -1;
     for (int i = 0; i < DIM(unk78); i++) {
         unk78[i] = false;
     }
-    unk80.Clear();
+    mOnlineId.Clear();
 }
 
 void DingoServer::ManageJob(DingoJob *job) {
     MILO_ASSERT(job, 0xd0);
     bool b5 = false;
-    FOREACH (it, unk98) {
+    FOREACH (it, mDisabledUrls) {
         String cur(*it);
         if (strncmp(job->GetBaseURL(), cur.c_str(), cur.length()) == 0) {
             b5 = true;
@@ -79,7 +79,7 @@ void DingoServer::ManageJob(DingoJob *job) {
 
 void DingoServer::FillAuthParams(DataPoint &point) {
     static Symbol locale("locale");
-    point.AddPair(locale, mRegion.c_str());
+    point.AddPair(locale, mLocale.c_str());
     static Symbol language("language");
     point.AddPair(language, mLanguage.c_str());
 }

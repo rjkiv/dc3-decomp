@@ -16,6 +16,8 @@ public:
     // UIPanel
     virtual void Enter();
 
+    NEW_OBJ(BlacklightPanel)
+
     BlacklightPanel();
     DataNode OnEnterBlacklightMode(DataArray const *);
     DataNode OnExitBlacklightMode(DataArray const *);

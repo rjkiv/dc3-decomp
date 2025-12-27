@@ -46,6 +46,8 @@ public:
     // ContentMgr::Callback
     virtual void ContentDone();
 
+    NEW_OBJ(MainMenuPanel)
+
     MainMenuPanel();
 
 protected:

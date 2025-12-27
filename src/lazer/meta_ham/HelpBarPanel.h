@@ -16,6 +16,8 @@ public:
     virtual DataNode Handle(DataArray *, bool);
     virtual bool SyncProperty(DataNode &, DataArray *, int, PropOp);
 
+    NEW_OBJ(HelpBarPanel)
+
     // UIPanel
     virtual void Draw();
     virtual void Enter();

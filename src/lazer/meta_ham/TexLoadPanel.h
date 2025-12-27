@@ -1,5 +1,6 @@
 #pragma once
 #include "meta_ham/HamPanel.h"
+#include "obj/Object.h"
 #include "os/ContentMgr.h"
 #include "rndobj/Mat.h"
 #include "rndobj/Tex.h"
@@ -52,6 +53,8 @@ public:
     // ContentMgr::Callback
     virtual void ContentMounted(const char *, const char *);
     virtual void ContentFailed(const char *);
+
+    NEW_OBJ(TexLoadPanel)
 
     TexLoadPanel();
     void FinalizeTexturesChunk();

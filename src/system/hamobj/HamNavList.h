@@ -87,6 +87,7 @@ public:
     void ClearBigElements();
     void HideItem(int, bool);
     void SetProviderNavItemLabels(int, DataArray *);
+    void Enable() { mEnabled = true; }
 
     static void Init();
     static bool sLastSelectInControllerMode;

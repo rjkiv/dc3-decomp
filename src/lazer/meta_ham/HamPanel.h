@@ -23,6 +23,8 @@ public:
     // HamPanel
     virtual bool HasNavList() const { return mNavList != nullptr; }
 
+    NEW_OBJ(HamPanel)
+
     HamNavList *mNavList;
 
     HamPanel();

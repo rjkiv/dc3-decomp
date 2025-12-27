@@ -166,6 +166,7 @@ public:
     int CurrentMeasure() const { return mSongPos.GetMeasure(); }
     int CurrentBeat() const { return mSongPos.GetBeat(); }
     float TotalBeat() const { return mSongPos.GetTotalBeat(); }
+    void SetAutoSecondsBeats(bool b) { mAutoSecondsBeats = b; }
 
 private:
     DataNode OnTimeTilNext(DataArray *);

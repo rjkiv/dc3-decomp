@@ -7,12 +7,12 @@
 
 class AuthenticateReqJob : public DingoJob {
 public:
+    AuthenticateReqJob(const char *url, const DataPoint &pt, Hmx::Object *callback);
     virtual ~AuthenticateReqJob();
     virtual void Start();
 
-    AuthenticateReqJob(char const *, DataPoint const &, Hmx::Object *);
     bool ParseResponse();
 
-    String unkb0;
-    static const char *unkb8;
+private:
+    String mSessionID; // 0xb0
 };

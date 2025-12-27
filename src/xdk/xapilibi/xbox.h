@@ -152,6 +152,8 @@ DWORD XSessionLeaveLocal(
 
 DWORD XUserGetName(DWORD dwUserIndex, LPSTR szUserName, DWORD cchUserName);
 
+DWORD XShowTokenRedemptionUI(DWORD dwUserIndex);
+
 #ifdef __cplusplus
 }
 #endif

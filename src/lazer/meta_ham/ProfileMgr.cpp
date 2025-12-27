@@ -1,5 +1,6 @@
 #include "meta_ham/ProfileMgr.h"
 #include "HamProfile.h"
+#include "HamUI.h"
 #include "ProfileMgr.h"
 #include "flow/PropertyEventProvider.h"
 #include "gesture/SpeechMgr.h"
@@ -10,7 +11,10 @@
 #include "meta/FixedSizeSaveableStream.h"
 #include "meta/MemcardMgr.h"
 #include "meta/Profile.h"
+#include "meta_ham/AccomplishmentManager.h"
 #include "meta_ham/HamProfile.h"
+#include "meta_ham/ShellInput.h"
+#include "meta_ham/SkeletonChooser.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Msg.h"
@@ -713,4 +717,27 @@ int ProfileMgr::GetNumValidProfiles() const {
         }
     }
     return count;
+}
+
+void ProfileMgr::HandleSwagJacked() {
+    HamProfile *pProfile = GetActiveProfile(true);
+    static Symbol acc_jack_swag("acc_jack_swag");
+    TheAccomplishmentMgr->EarnAccomplishmentForProfile(pProfile, acc_jack_swag, true);
+}
+
+bool ProfileMgr::HasActiveProfileWithInvalidSaveData() const {
+    HamProfile *pProfile = GetActiveProfile(true);
+    if (!pProfile) {
+        ShellInput *pShellInput = TheHamUI.GetShellInput();
+        MILO_ASSERT(pShellInput, 0x5bb);
+        SkeletonChooser *pSkeletonChooser = pShellInput->mSkelChooser;
+        MILO_ASSERT(pSkeletonChooser, 0x5be);
+        HamPlayerData *pActivePlayer = TheGameData->Player(pSkeletonChooser->Unk3C());
+        MILO_ASSERT(pActivePlayer, 0x5c2);
+        HamProfile *pProfileFromPad =
+            TheProfileMgr.GetProfileFromPad(pActivePlayer->PadNum());
+        if (pProfileFromPad && !pProfile->HasValidSaveData())
+            return true;
+    }
+    return false;
 }

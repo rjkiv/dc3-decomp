@@ -12,9 +12,9 @@
 
 #pragma region DingoJob
 
-DingoJob::DingoJob(char const *c, Hmx::Object *o)
-    : WebSvcRequest(c, "", o), mResult(0), mDataPoint(0), mJsonResponse(0), unka8(0),
-      unkac(10000) {
+DingoJob::DingoJob(char const *url, Hmx::Object *callback)
+    : WebSvcRequest(url, "", callback), mResult(0), mDataPoint(0), mJsonResponse(0),
+      mJsonResponseVersion(0), mTimeoutMs(10000) {
     unk84 = 0;
 }
 
@@ -34,21 +34,21 @@ void DingoJob::Start() {
     //   return;
 }
 
-void DingoJob::SendCallback(bool b1, bool b2) {
-    if (b1) {
+void DingoJob::SendCallback(bool success, bool cancelled) {
+    if (success) {
         ParseResponse();
         if (!mJsonResponse || mResult == -1 || mResult == -4 || mResult == -0xb
             || mResult == -0x138b) {
-            b1 = false;
+            success = false;
         }
     }
-    if (unk34) {
+    if (mCallback) {
         static DingoJobCompleteMsg msg(this, false);
         msg[0] = this;
-        msg[1] = b1;
-        unk34->Handle(msg, true);
-        if (!b1) {
-            if (!b2) {
+        msg[1] = success;
+        mCallback->Handle(msg, true);
+        if (!success) {
+            if (!cancelled) {
                 DataPoint pt("dingo_job_failed");
                 pt.AddPair("location", "DingoJob::SendCallback");
                 pt.AddPair("mResult", mResult);
@@ -63,9 +63,9 @@ void DingoJob::SendCallback(bool b1, bool b2) {
     }
 }
 
-void DingoJob::CleanUp(bool b) {
-    WebSvcRequest::CleanUp(b);
-    if (b) {
+void DingoJob::CleanUp(bool success) {
+    WebSvcRequest::CleanUp(success);
+    if (success) {
         char *src = mResponseData;
         int size = GetResponseDataLength();
         char *str_buffer =
@@ -106,13 +106,15 @@ void DingoJob::AddContent(HttpReq *httpReq) {
     unk84 = new char[str2.length()];
 }
 
-void DingoJob::SetDataPoint(DataPoint const &point) {
+void DingoJob::SetDataPoint(const DataPoint &point) {
     MILO_ASSERT(mDataPoint == NULL, 0x27);
     mDataPoint = new DataPoint(point);
     MILO_ASSERT(mDataPoint, 0x29);
 }
 
-void DingoJob::ParseResponse() { ParseResponse(&mJsonConverter, &mJsonResponse, &unka8); }
+void DingoJob::ParseResponse() {
+    ParseResponse(&mJsonReader, &mJsonResponse, &mJsonResponseVersion);
+}
 
 void DingoJob::ParseResponse(JsonConverter *json, JsonObject **response, int *iptr) {
     MILO_ASSERT(json, 0x123);

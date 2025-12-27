@@ -11,5 +11,7 @@ public:
     virtual DataNode Handle(DataArray *, bool);
     virtual void Poll();
 
+    NEW_OBJ(CursorPanel)
+
     CursorPanel();
 };

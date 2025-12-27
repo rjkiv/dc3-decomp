@@ -14,7 +14,7 @@ public:
 protected:
     XOVERLAPPED mXOverlapped; // 0x8
     HANDLE mSession; // 0x24
-    bool unk28; // 0x28
+    bool mSuccess; // 0x28
 };
 
 class StartSessionJob : public XboxSessionJob {
@@ -58,7 +58,7 @@ protected:
     int mUserIndex; // 0x10
     XSESSION_INFO mSessionInfo; // 0x14
     XOVERLAPPED mXOverlapped; // 0x50
-    bool unk6c; // 0x6c
+    bool mSuccess; // 0x6c
 };
 
 class DeleteSessionJob : public XboxSessionJob {

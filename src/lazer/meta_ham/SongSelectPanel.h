@@ -19,6 +19,8 @@ public:
     virtual bool IsLoaded() const;
     virtual void FinishLoad();
 
+    NEW_OBJ(SongSelectPanel)
+
     SongSelectPanel();
     RndTex *GetTexForCharacter(Symbol);
     DataNode OnEnterBlacklightMode(DataArray const *);

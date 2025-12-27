@@ -3,12 +3,14 @@
 #include "hamobj/HamLabel.h"
 #include "hamobj/StarsDisplay.h"
 #include "obj/Data.h"
+#include "obj/Object.h"
 
 class HamStarsDisplay : public StarsDisplay {
 public:
     enum StarDisplayMode {
     };
 
+    OBJ_CLASSNAME(StarsDisplay) // bruh
     virtual DataNode Handle(DataArray *, bool);
 
     HamStarsDisplay();

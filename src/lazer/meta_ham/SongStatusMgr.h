@@ -1,7 +1,6 @@
 #pragma once
-
 #include "hamobj/Difficulty.h"
-#include "lazer/meta_ham/HamSongMgr.h"
+#include "meta_ham/HamSongMgr.h"
 #include "meta/FixedSizeSaveable.h"
 #include "meta/FixedSizeSaveableStream.h"
 #include "obj/Data.h"
@@ -17,26 +16,26 @@ struct SongStatusData {
     void Clear() {
         mScore = 0;
         mPracticeScore = 0;
-        unk8 = 0;
+        mCoopScore = 0;
         mStars = 0;
         mPercentPassed = 0;
         mNumPerfects = 0;
         mNumNices = 0;
         unk10 = 0;
-        unk11 = 0;
-        mNeedsUpload = false;
+        mNoFlashcards = 0;
+        mNeedUpload = false;
     }
 
     int mScore; // 0x0
     int mPracticeScore; // 0x4
-    int unk8; // 0x8
+    int mCoopScore; // 0x8
     unsigned char mStars; // 0xc
     unsigned char mPercentPassed; // 0xd
     unsigned char mNumPerfects; // 0xe
     unsigned char mNumNices; // 0xf
     bool unk10;
-    bool unk11;
-    bool mNeedsUpload; // 0x12
+    bool mNoFlashcards; // 0x11
+    bool mNeedUpload; // 0x12
     Difficulty mDifficulty; // 0x14
     int mSongID; // 0x18
 };
@@ -46,8 +45,9 @@ struct FlauntStatusData {
     void LoadFromStream(BinStream &);
 
     int mScore; // 0x0
-    Difficulty mDifficulty; // 0x4
-    bool mNeedsUpload; // 0x8
+    Difficulty mDiff; // 0x4
+    bool mNeedUpload; // 0x8
+    int mSongID; // 0xc
 };
 
 class SongStatus {
@@ -75,7 +75,6 @@ public:
     int unka0;
     int unka4;
     FlauntStatusData mFlauntData; // 0xa8
-    int unkb4;
 };
 
 BinStream &operator<<(BinStream &, const SongStatus &);

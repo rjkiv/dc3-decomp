@@ -1,30 +1,13 @@
 #pragma once
-#include "HamPanel.h"
+#include "meta_ham/HamPanel.h"
 #include "flow/PropertyEventProvider.h"
 #include "hamobj/HamNavList.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
-#include "stl/_vector.h"
 #include "ui/UIList.h"
 #include "ui/UIListProvider.h"
 #include "utl/Symbol.h"
-
-class ChallengeRow { // size 0x3c
-public:
-    ChallengeRow();
-
-    u32 unk0;
-    String unk4;
-    u32 unkc;
-    String unk10;
-    String unk18;
-    u32 unk20;
-    u32 unk24;
-    u32 unk28;
-    String unk2c;
-    u32 unk34;
-    u32 unk38;
-};
+#include "net_ham/ChallengeSystemJobs.h"
 
 class ChallengeResultPanel : public UIListProvider, public HamPanel {
 public:
@@ -36,12 +19,14 @@ public:
     virtual void Text(int, int, UIListLabel *, UILabel *) const;
     virtual int NumData() const;
 
-protected:
-    // DataNode OnMsg(UIComponentScrollMsg const &);
+    NEW_OBJ(ChallengeResultPanel)
 
-    UIList *unk40;
-    HamNavList *unk44;
-    PropertyEventProvider *unk48;
+protected:
+    DataNode OnMsg(const UIComponentScrollMsg &);
+
+    UIList *mChallengeList; // 0x40
+    HamNavList *mRightHandNavList; // 0x44
+    PropertyEventProvider *mResultEventProvider; // 0x48
     int unk4c;
     std::vector<ChallengeRow> mItems; // 0x50
     int unk5c;

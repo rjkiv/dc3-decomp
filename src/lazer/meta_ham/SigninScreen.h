@@ -16,6 +16,8 @@ public:
     virtual void Enter(UIScreen *);
     virtual void Exit(UIScreen *);
 
+    NEW_OBJ(SigninScreen)
+
     SigninScreen();
 
 protected:

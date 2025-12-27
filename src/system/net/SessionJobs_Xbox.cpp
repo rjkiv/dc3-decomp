@@ -5,7 +5,7 @@
 #include "xdk/XAPILIB.h"
 #include "xdk/xapilibi/xbox.h"
 
-XboxSessionJob::XboxSessionJob(void *v) : mSession(v), unk28(true) {
+XboxSessionJob::XboxSessionJob(void *v) : mSession(v), mSuccess(true) {
     memset(&mXOverlapped, 0, sizeof(XOVERLAPPED));
 }
 
@@ -31,7 +31,7 @@ void XboxSessionJob::CheckError(DWORD err, XOVERLAPPED *overlapped) {
         MILO_NOTIFY(
             "Error %i in Xbox Session: %x ", err, XGetOverlappedExtendedError(overlapped)
         );
-        unk28 = false;
+        mSuccess = false;
     }
 }
 
@@ -43,7 +43,7 @@ void StartSessionJob::Start() {
 }
 
 void StartSessionJob::OnCompletion(Hmx::Object *obj) {
-    TheServer.StartSessionComplete(unk28);
+    TheServer.StartSessionComplete(mSuccess);
 }
 
 EndSessionJob::EndSessionJob(void *v) : XboxSessionJob(v) {}
@@ -53,7 +53,9 @@ void EndSessionJob::Start() {
     CheckError(res, &mXOverlapped);
 }
 
-void EndSessionJob::OnCompletion(Hmx::Object *) { TheServer.EndSessionComplete(unk28); }
+void EndSessionJob::OnCompletion(Hmx::Object *) {
+    TheServer.EndSessionComplete(mSuccess);
+}
 
 WriteCareerLeaderboardJob::WriteCareerLeaderboardJob(
     void *v, int i1, int i2, XUID u3, u64 u4
@@ -73,11 +75,11 @@ void WriteCareerLeaderboardJob::Start() {
 }
 
 void WriteCareerLeaderboardJob::OnCompletion(Hmx::Object *) {
-    TheServer.WriteCareerLeaderboardComplete(unk28);
+    TheServer.WriteCareerLeaderboardComplete(mSuccess);
 }
 
 MakeSessionJob::MakeSessionJob(HANDLE *v, DWORD dw, int idx)
-    : mSession(v), mSessionFlags(dw), mUserIndex(idx), unk6c(true) {
+    : mSession(v), mSessionFlags(dw), mUserIndex(idx), mSuccess(true) {
     memset(&mSessionInfo, 0, sizeof(XSESSION_INFO));
     memset(&mXOverlapped, 0, sizeof(XOVERLAPPED));
 }
@@ -101,7 +103,7 @@ bool MakeSessionJob::IsFinished() {
         if (res != 0) {
             *mSession = INVALID_HANDLE_VALUE;
             mSession = nullptr;
-            unk6c = false;
+            mSuccess = false;
         }
         return true;
     }
@@ -115,7 +117,7 @@ void MakeSessionJob::Cancel(Hmx::Object *) {
 }
 
 void MakeSessionJob::OnCompletion(Hmx::Object *) {
-    TheServer.MakeSessionJobComplete(unk6c);
+    TheServer.MakeSessionJobComplete(mSuccess);
 }
 
 void MakeSessionJob::CheckError(DWORD err, XOVERLAPPED *overlapped) {
@@ -123,7 +125,7 @@ void MakeSessionJob::CheckError(DWORD err, XOVERLAPPED *overlapped) {
         MILO_NOTIFY(
             "Error %i in Xbox Session: %x ", err, XGetOverlappedExtendedError(overlapped)
         );
-        unk6c = false;
+        mSuccess = false;
     }
 }
 
@@ -136,7 +138,7 @@ void DeleteSessionJob::Start() {
 
 void DeleteSessionJob::OnCompletion(Hmx::Object *) {
     CloseHandle(mSession);
-    TheServer.DeleteSessionComplete(unk28);
+    TheServer.DeleteSessionComplete(mSuccess);
 }
 
 AddLocalPlayerJob::AddLocalPlayerJob(void *v, int i, bool b)
@@ -148,7 +150,7 @@ void AddLocalPlayerJob::Start() {
 }
 
 void AddLocalPlayerJob::OnCompletion(Hmx::Object *) {
-    TheServer.JoinSessionComplete(unk28);
+    TheServer.JoinSessionComplete(mSuccess);
 }
 
 RemoveLocalPlayerJob::RemoveLocalPlayerJob(void *v, int i)
@@ -160,5 +162,5 @@ void RemoveLocalPlayerJob::Start() {
 }
 
 void RemoveLocalPlayerJob::OnCompletion(Hmx::Object *) {
-    TheServer.LeaveSessionComplete(unk28);
+    TheServer.LeaveSessionComplete(mSuccess);
 }

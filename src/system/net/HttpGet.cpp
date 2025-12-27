@@ -13,26 +13,27 @@ namespace {
     bool ValidateHeader(char *, int, int *, int *) { return false; }
     char *GetNextLine(char *, int *) { return 0; }
     int LineLength(char *, int) { return 1; }
-    bool StrIStartsWith(String const &, char const *) { return false; }
+    bool StrIStartsWith(String const &, const char *) { return false; }
     char *ParseHeader(char *, int, std::vector<String> *) { return 0; }
     unsigned int ParseStatusCode(std::vector<String> const &) { return 1; }
     int GetContentLength(std::vector<String> const &) { return 1; }
 };
 
-HttpGet::HttpGet(unsigned int ui, unsigned short us, char const *c1, char const *c2)
-    : mSocket(0), unkc(c1), unk14(us), unk18(-1), unk1c(false), unk50(kDefaultTimeoutMs),
-      unk54(ui), unk58(c2), unk60(0), mRecvBufPos(0), mFileBuf(0), mFileBufSize(0),
-      mFileBufRecvPos(0), unk78(0), unk7c(0), unk80(-1) {
+HttpGet::HttpGet(unsigned int ip, unsigned short port, const char *c1, const char *c2)
+    : mSocket(0), unkc(c1), mPort(port), mState(-1), unk1c(false),
+      mTimeoutMs(kDefaultTimeoutMs), mIP(ip), unk58(c2), unk60(0), mRecvBufPos(0),
+      mFileBuf(0), mFileBufSize(0), mFileBufRecvPos(0), unk78(0), mFailType(),
+      mPrevState(kHttpGet_Nil) {
     SetState((State)0);
     AddRequiredHeaders();
 }
 
 HttpGet::HttpGet(
-    unsigned int ui, unsigned short us, char const *c1, unsigned char uc, char const *c2
+    unsigned int ip, unsigned short port, const char *c1, unsigned char uc, const char *c2
 )
-    : mSocket(0), unkc(c1), unk14(us), unk18(-1), unk1c(uc & 3), unk50(kDefaultTimeoutMs),
-      unk54(ui), unk58(c2), unk60(0), mRecvBufPos(0), mFileBuf(0), mFileBufSize(0),
-      mFileBufRecvPos(0), unk78(0), unk7c(0) {
+    : mSocket(0), unkc(c1), mPort(port), mState(-1), unk1c(uc & 3),
+      mTimeoutMs(kDefaultTimeoutMs), mIP(ip), unk58(c2), unk60(0), mRecvBufPos(0),
+      mFileBuf(0), mFileBufSize(0), mFileBufRecvPos(0), unk78(0), mFailType() {
     State s;
     if ((uc & 4) == 0) {
         s = (State)8;
@@ -48,7 +49,7 @@ HttpGet::~HttpGet() { SafeShutdown(); }
 void HttpGet::StartSending() {
     MILO_ASSERT(mSocket, 0x311);
     if (!mSocket->CanSend()) {
-        unk7c = 1;
+        mFailType = (HttpGetFailType)1;
         SetState((State)7);
     } else {
         String str("GET ");
@@ -63,7 +64,7 @@ void HttpGet::StartSending() {
         int len = str.length();
         mSocket->Send(str.c_str(), len);
         if (len != 0) {
-            unk7c = 1;
+            mFailType = (HttpGetFailType)1;
             SetState((State)7);
         } else {
             SetState((State)3);
@@ -82,16 +83,16 @@ void HttpGet::SafeShutdown() {
 }
 
 void HttpGet::Send() {
-    if (unk18 == 8) {
+    if (mState == 8) {
         SetState((State)0);
     }
 }
 
-bool HttpGet::IsDownloaded() { return unk18 == 5; }
-bool HttpGet::HasFailed() { return unk18 == 6; }
+bool HttpGet::IsDownloaded() { return mState == 5; }
+bool HttpGet::HasFailed() { return mState == 6; }
 
 char *HttpGet::DetachBuffer() {
-    if (unk18 != 5) {
+    if (mState != 5) {
         return nullptr;
     } else {
         char *buffer = mFileBuf;
@@ -124,20 +125,22 @@ void HttpGet::StartConnection() {
     MILO_ASSERT(mSocket == NULL, 0x2FF);
     mSocket = NetworkSocket::Create(true);
     if (mSocket->Fail()) {
-        unk7c = 1;
+        mFailType = (HttpGetFailType)1;
         SetState((State)6);
     } else {
-        mSocket->Connect(unk54, unk14);
+        mSocket->Connect(mIP, mPort);
     }
 }
 
 bool HttpGet::HasTimedOut() {
     unk20.Split();
-    return unk20.Ms() > unk50;
+    return unk20.Ms() > mTimeoutMs;
 }
 
-HttpPost::HttpPost(unsigned int ui, unsigned short us, const char *cc, unsigned char uc)
-    : HttpGet(ui, us, cc, uc, nullptr) {
+void HttpGet::SetTimeout(float timeout) { mTimeoutMs = timeout; }
+
+HttpPost::HttpPost(unsigned int ip, unsigned short port, const char *cc, unsigned char uc)
+    : HttpGet(ip, port, cc, uc, nullptr) {
     String newLine;
     newLine = MakeString("\r\n");
     String post("POST ");
@@ -146,9 +149,9 @@ HttpPost::HttpPost(unsigned int ui, unsigned short us, const char *cc, unsigned 
     post += "HTTP/1.1";
     post += newLine;
     post += "Host: ";
-    post += NetworkSocket::IPIntToString(ui);
+    post += NetworkSocket::IPIntToString(ip);
     post += ":";
-    post += MakeString("%d", unk14);
+    post += MakeString("%d", mPort);
     post += newLine;
     post += "Content-Type: application/x-www-form-urlencoded";
     post += newLine;
@@ -186,6 +189,6 @@ void HttpPost::StartSending() {
             return;
         }
     }
-    unk7c = 1;
+    mFailType = (HttpGetFailType)1;
     SetState((State)7);
 }

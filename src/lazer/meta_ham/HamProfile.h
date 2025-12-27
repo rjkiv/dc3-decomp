@@ -111,6 +111,8 @@ public:
     MoveRatingHistory *GetMoveRatingHistory() const { return mRatingHistory; }
     bool InFitnessMode() { return mInFitnessMode; }
     MetagameRank *GetMetagameRank() const { return mRank; }
+    OnlineID *GetOnlineID() { return mOnlineID; }
+    bool IsSignedIn() const { return mSignedIn; }
 
 private:
     // FixedSizeSaveable
@@ -143,7 +145,7 @@ private:
     OnlineID *mOnlineID; // 0x318
     bool mSignedIn; // 0x31c
     int unk320;
-    int unk324;
+    int unk324; // 0x324 - challenge timestamp?
     int mSkippedSongCount; // 0x328
     int unk32c;
     int unk330;

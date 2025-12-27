@@ -8,7 +8,7 @@ const char *kHMXDomain = "harmonixmusic.com";
 
 WebSvcMgr::WebSvcMgr() {}
 
-WebSvcMgr::~WebSvcMgr() { DeleteAll(unk2c); }
+WebSvcMgr::~WebSvcMgr() { DeleteAll(mRequests); }
 
 BEGIN_HANDLERS(WebSvcMgr)
 END_HANDLERS
@@ -22,41 +22,43 @@ void WebSvcMgr::OnReqFinished(WebSvcRequest *req) {
 }
 
 int WebSvcMgr::NumRequestsStarted() {
-    int listSize = unk2c.size();
-    int num = 0;
-    FOREACH (it, unk2c) {
+    int numTotalReqs = mRequests.size();
+    int numUnstartedReqs = 0;
+    FOREACH (it, mRequests) {
         WebSvcRequest *cur = *it;
-        if (cur->StateZero()) {
-            num++;
+        if (cur->IsNotStarted()) {
+            numUnstartedReqs++;
         }
     }
-    return listSize - num;
+    return numTotalReqs - numUnstartedReqs;
 }
 
-int WebSvcMgr::NumRequests() { return unk2c.size(); }
+int WebSvcMgr::NumRequests() { return mRequests.size(); }
 
 void WebSvcMgr::Start(WebSvcRequest *req) { req->Start(); }
 
 void WebSvcMgr::CancelOutstandingCalls() {
-    FOREACH (it, unk2c) {
+    FOREACH (it, mRequests) {
         WebSvcRequest *cur = *it;
-        if (!cur->IsWebSvcRequest() && (cur->StateZero() || cur->StateOne())) {
+        if (!cur->IsWebSvcRequest() && (cur->IsNotStarted() || cur->IsRunning())) {
             cur->Cancel(true);
         }
     }
 }
 
-bool WebSvcMgr::AddRequest(WebSvcRequest *req, unsigned int ui, bool b3, bool b4) {
+bool WebSvcMgr::AddRequest(
+    WebSvcRequest *req, unsigned int timeout_ms, bool immediate, bool resolve
+) {
     MILO_ASSERT(req, 0xD7);
-    if (b4 && !ResolveHostname(req)) {
+    if (resolve && !ResolveHostname(req)) {
         req->Cancel(true);
         return false;
     }
-    req->SetTimeout(ui);
-    if (b3) {
-        unk2c.push_front(req);
+    req->SetTimeout(timeout_ms);
+    if (immediate) {
+        mRequests.push_front(req);
     } else {
-        unk2c.push_back(req);
+        mRequests.push_back(req);
     }
     return true;
 }
@@ -76,21 +78,22 @@ bool WebSvcMgr::ResolveHostname(WebSvcRequest *req) {
     return true;
 }
 
-NetAddress WebSvcMgr::ResolveHostname(const char *c1, const char *c2, unsigned short us) {
+NetAddress
+WebSvcMgr::ResolveHostname(const char *hostname, const char *domain, unsigned short port) {
     NetAddress ret;
-    String str(c1);
-    if (c2) {
+    String str(hostname);
+    if (domain) {
         str += ".";
-        str += c2;
+        str += domain;
     }
-    auto it = unk34.find(str.c_str());
-    if (it != unk34.end()) {
+    auto it = mHostCache.find(str.c_str());
+    if (it != mHostCache.end()) {
         ret = it->second;
     } else {
-        ret = NetworkSocket::SetIPPortFromHostPort(c1, c2, us);
+        ret = NetworkSocket::SetIPPortFromHostPort(hostname, domain, port);
     }
-    if (ret.mIP != 0 && it == unk34.end()) {
-        unk34.insert(std::make_pair(str, ret));
+    if (ret.mIP != 0 && it == mHostCache.end()) {
+        mHostCache.insert(std::make_pair(str, ret));
     }
     return ret;
 }

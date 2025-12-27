@@ -1,4 +1,5 @@
 #pragma once
+#include "HamStoreFilterProvider.h"
 #include "hamobj/Difficulty.h"
 #include "hamobj/HamLabel.h"
 #include "meta/StoreOffer.h"
@@ -7,7 +8,9 @@
 #include "meta_ham/NavListNode.h"
 #include "meta_ham/Playlist.h"
 #include "obj/Data.h"
+#include "obj/Object.h"
 #include "ui/UIListSlot.h"
+#include "utl/MemMgr.h"
 #include "utl/Symbol.h"
 
 class AppLabel : public HamLabel {
@@ -22,6 +25,8 @@ public:
     virtual DataNode Handle(DataArray *, bool);
     // HamLabel
     virtual void SetCreditsText(DataArray *, UIListSlot *);
+
+    NEW_OBJ(AppLabel)
 
     void SetUserName(const User *);
     void SetUserName(int);
@@ -79,6 +84,7 @@ public:
     void SetExpireTime();
     void SetLastPlayedTime(int);
     void SetEnrolledPlayerName(int);
+    void SetStoreFilterName(HamStoreFilter const *);
 
 protected:
     DataNode OnSetUserName(const DataArray *);

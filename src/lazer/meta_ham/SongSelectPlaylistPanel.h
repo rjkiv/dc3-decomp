@@ -22,6 +22,9 @@ public:
     virtual void Unload();
     virtual void FinishLoad();
 
+    NEW_OBJ(SongSelectPlaylistPanel)
+
+    SongSelectPlaylistPanel();
     int GetSelectedPlaylistIndex();
     void UpdateSongs(int);
     Playlist *GetSelectedPlaylist();
@@ -31,8 +34,6 @@ public:
 
     int *m_pSongSelectPlaylistProvider; // 0x3c
     PlaylistSongProvider *m_pPlaylistSongProvider; // 0x40
-
-    SongSelectPlaylistPanel();
 };
 
 class SongSelectPlaylistProvider : public HamNavProvider {

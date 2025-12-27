@@ -6,6 +6,7 @@
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamMove.h"
 #include "hamobj/HamPlayerData.h"
+#include "meta_ham/AccomplishmentManager.h"
 #include "meta_ham/Campaign.h"
 #include "meta_ham/CampaignEra.h"
 #include "meta_ham/CampaignProgress.h"
@@ -205,7 +206,7 @@ bool CampaignPerformer::HasEraOutfits(Symbol era) const {
         pProfile->GetCampaignProgress(mDifficulty);
     CampaignEra *pEra = TheCampaign->GetCampaignEra(era);
     MILO_ASSERT(pEra, 0x395);
-    Symbol s = pEra->Unk78();
+    Symbol s = pEra->OutfitAward();
     if (s != gNullStr
         && pCampaignProgress.GetEraStarsEarned(era) < pEra->StarsRequiredForOutfits())
         return false;
@@ -506,6 +507,57 @@ void CampaignPerformer::SetEra(Symbol era) {
     TheCampaign->LoadCampaignDanceMoves(mEra);
 }
 
+void CampaignPerformer::CheckForMasteryGoal(Difficulty diff, Symbol era) {
+    HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
+    MILO_ASSERT(pProfile, 0x1bd);
+    const CampaignProgress &pProgress = pProfile->GetCampaignProgress(diff);
+    CampaignEra *pEra = TheCampaign->GetCampaignEra(era);
+    MILO_ASSERT(pEra, 0x1c0);
+    Symbol masteryStars = pEra->GetMasteryStars(diff);
+
+    if (masteryStars != gNullStr) {
+        int eraEarned = pProgress.GetEraStarsEarned(era);
+        if (eraEarned >= pEra->StarsRequiredForMastery()) {
+            TheAccomplishmentMgr->EarnAccomplishmentForProfile(
+                pProfile, masteryStars, true
+            );
+        }
+    }
+}
+
+void CampaignPerformer::CheckForOutfitAwards(Difficulty diff, Symbol era) {
+    HamProfile *pActiveProfile = TheProfileMgr.GetActiveProfile(true);
+    MILO_ASSERT(pActiveProfile, 0x17d);
+    const CampaignProgress &pProgress = pActiveProfile->GetCampaignProgress(diff);
+    CampaignEra *pEra = TheCampaign->GetCampaignEra(era);
+    MILO_ASSERT(pEra, 0x180);
+    Symbol outfitAwards = pEra->OutfitAward();
+
+    if (outfitAwards != gNullStr) {
+        int eraEarned = pProgress.GetEraStarsEarned(era);
+        if (pProgress.IsEraComplete(era)
+            && eraEarned >= pEra->StarsRequiredForOutfits()) {
+            TheAccomplishmentMgr->EarnAwardForAll(outfitAwards, false);
+        }
+    }
+}
+
+bool CampaignPerformer::CanSelectEraSong(Symbol song) {
+    CampaignEra *pEra = TheCampaign->GetCampaignEra(mEra);
+    MILO_ASSERT(pEra, 0x4bc);
+    CampaignEraSongEntry *pSongEntry = pEra->GetSongEntry(song);
+    MILO_ASSERT(pSongEntry, 0x4be);
+    Symbol introSong = GetEraIntroSong();
+    if (!HasSongBeenAttempted(introSong)) {
+        return song == introSong;
+    } else {
+        HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
+        MILO_ASSERT(pProfile, 0x4d3);
+        const CampaignProgress &pProgress = pProfile->GetCampaignProgress(mDifficulty);
+        return pProgress.IsEraSongAvailable(mEra, song);
+    }
+}
+
 BEGIN_HANDLERS(CampaignPerformer)
     HANDLE_EXPR(is_campaign_new, IsCampaignNew())
     HANDLE_EXPR(is_campaign_intro_complete, IsCampaignIntroComplete())
@@ -520,7 +572,7 @@ BEGIN_HANDLERS(CampaignPerformer)
     HANDLE_ACTION(set_era, SetEra(_msg->Sym(2)))
     HANDLE_EXPR(first_era, GetFirstEra())
     HANDLE_EXPR(last_era, GetLastEra())
-    HANDLE_EXPR(tan_battle_era, GetTanBattleEra()) // fix dis
+    HANDLE_EXPR(tan_battle_era, GetTanBattleEra())
     HANDLE_EXPR(just_finished_era, mJustFinishedEra)
     HANDLE_EXPR(set_era_to_first_incomplete, SetEraToFirstIncomplete())
     HANDLE_EXPR(is_era_new, IsEraNew())

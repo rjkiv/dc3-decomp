@@ -3,6 +3,7 @@
 #include "curl/curl.h"
 #include "curl/multi.h"
 #include "net/HttpReq.h"
+#include "net/HttpReqCurl.h"
 #include "net/WebSvcMgr.h"
 #include "os/Debug.h"
 
@@ -57,16 +58,16 @@ bool WebSvcMgrCurl::DoRequest(
     ReqType type,
     unsigned int ip_addr,
     unsigned short port,
-    const char *c4,
-    const char *c5,
+    const char *url,
+    const char *additional_hdr,
     unsigned int timeout,
-    const char *c7,
-    unsigned int ui8
+    const char *content,
+    unsigned int content_length
 ) {
     MILO_ASSERT(ip_addr, 0x51);
     MILO_ASSERT(port, 0x52);
-    WebSvcRequest req(c4, c5, nullptr);
-    InitRequest(&req, type, ip_addr, port, c7, ui8);
+    WebSvcRequest req(url, additional_hdr, nullptr);
+    InitRequest(&req, type, ip_addr, port, content, content_length);
     req.Start();
     req.SetTimeout(timeout);
     req.Do();
@@ -75,40 +76,67 @@ bool WebSvcMgrCurl::DoRequest(
 
 bool WebSvcMgrCurl::InitRequest(
     WebSvcRequest *req,
-    ReqType type,
+    ReqType req_type,
     unsigned int ip_addr,
     unsigned short port,
-    const char *cc,
-    unsigned int ui
+    const char *content,
+    unsigned int content_length
 ) {
     MILO_ASSERT(ip_addr, 0x91);
     MILO_ASSERT(port, 0x92);
     MILO_ASSERT(req, 0x93);
-    return InitRequest(req, type, nullptr, ip_addr, port, cc, ui);
+    return InitRequest(req, req_type, nullptr, ip_addr, port, content, content_length);
 }
 
 bool WebSvcMgrCurl::InitRequest(
     WebSvcRequest *req,
-    ReqType type,
+    ReqType req_type,
     const char *host_name,
     unsigned short port,
-    const char *cc,
-    unsigned int ui
+    const char *content,
+    unsigned int content_length
 ) {
     MILO_ASSERT(strlen(host_name), 0xA0);
     MILO_ASSERT(port, 0xA1);
     MILO_ASSERT(req, 0xA2);
-    return InitRequest(req, type, host_name, 0, port, cc, ui);
+    return InitRequest(req, req_type, host_name, 0, port, content, content_length);
 }
 
 void WebSvcMgrCurl::Start(WebSvcRequest *req) {
     WebSvcMgr::Start(req);
     MILO_ASSERT(req->GetRequest(), 0x40);
-    CURL *curl_req = static_cast<CURL *>(req->GetRequest());
+    CURL *curl_req = req->GetRequest();
     MILO_ASSERT(CURLM_OK == curl_multi_add_handle(mCurlMultiHandle, curl_req), 0x42);
 }
 
 void WebSvcMgrCurl::InitCurl() {
     mCurlMultiHandle = curl_multi_init();
     MILO_ASSERT(mCurlMultiHandle, 0x31);
+}
+
+bool WebSvcMgrCurl::InitRequest(
+    WebSvcRequest *req,
+    ReqType req_type,
+    const char *host_name,
+    unsigned int ip_addr,
+    unsigned short port,
+    const char *content,
+    unsigned int content_length
+) {
+    MILO_ASSERT(port, 0x6D);
+    HttpReqCurl *curl_req;
+    if (ip_addr != 0) {
+        curl_req = new HttpReqCurl(req_type, ip_addr, port, req->GetBaseURL());
+    } else {
+        curl_req = new HttpReqCurl(req_type, host_name, port, req->GetBaseURL());
+    }
+    MILO_ASSERT(curl_req, 0x79);
+    if (content_length != 0) {
+        MILO_ASSERT(content != NULL && req_type == kHttpReqType_POST, 0x7E);
+        curl_req->SetContent(content);
+        curl_req->SetContentLength(content_length);
+    }
+    curl_req->SetCookies(req->GetCookies());
+    req->SetHttpReq(curl_req);
+    return true;
 }

@@ -20,6 +20,8 @@ public:
     virtual void Poll();
     virtual void Unload();
 
+    NEW_OBJ(LetterboxPanel)
+
     static LetterboxPanel *sInstance;
 
     LetterboxPanel();

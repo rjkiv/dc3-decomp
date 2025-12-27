@@ -70,11 +70,11 @@ bool DingoSvrXbox::HasValidLoginCandidate() const {
     return GetValidLoginCandidate(buf, xuid) != -1;
 }
 
-bool DingoSvrXbox::IsValidLoginCandidate(int i1) const {
-    if (!ThePlatformMgr.IsSignedIntoLive(i1)) {
+bool DingoSvrXbox::IsValidLoginCandidate(int pad) const {
+    if (!ThePlatformMgr.IsSignedIntoLive(pad)) {
         return false;
     } else {
-        return !ThePlatformMgr.IsPadAGuest(i1);
+        return !ThePlatformMgr.IsPadAGuest(pad);
     }
 }
 
@@ -204,8 +204,8 @@ bool DingoSvrXbox::FillAuthParamsFromPadNum(DataPoint &pt, int padnum) {
 
 void DingoSvrXbox::OnAuthSuccess() {
     unk78[unk70] = true;
-    unk80.SetXUID(mXUID);
-    unk80.SetPlayerName(ThePlatformMgr.GetName(unk70));
+    mOnlineId.SetXUID(mXUID);
+    mOnlineId.SetPlayerName(ThePlatformMgr.GetName(unk70));
     int old = unk70;
     unk70 = -1;
     unk74 = old;

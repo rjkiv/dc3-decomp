@@ -5,19 +5,21 @@
 
 class HttpReqCurl : public HttpReq {
 public:
-    HttpReqCurl(ReqType, unsigned int, unsigned short, char const *);
-    HttpReqCurl(ReqType, char const *, unsigned short, char const *);
+    HttpReqCurl(ReqType type, unsigned int ip, unsigned short port, const char *url);
+    HttpReqCurl(ReqType type, const char *hostname, unsigned short port, const char *url);
     virtual ~HttpReqCurl();
     virtual void Start();
+    virtual void Poll() {}
     virtual void Do();
     virtual void Reset();
+    virtual void *GetRequest() { return mReq; }
     virtual char *DetachBuffer();
     virtual unsigned int GetBufferSize();
-    virtual void SetTimeout(unsigned int);
-    virtual void SetSSLCertPath(char const *);
-    virtual void SetSSLCertName(char const *);
-    virtual void SetSSLVerifyPeer(unsigned short);
-    virtual void SetSSLVerifyHost(unsigned short);
+    virtual void SetTimeout(unsigned int timeout);
+    virtual void SetSSLCertPath(const char *path);
+    virtual void SetSSLCertName(const char *name);
+    virtual void SetSSLVerifyPeer(unsigned short value);
+    virtual void SetSSLVerifyHost(unsigned short value);
 
 private:
     curl_slist *mHeaders; // 0x50
@@ -28,5 +30,5 @@ private:
     String mSSLCertName; // 0x68
     unsigned short mSSLVerifyPeer; // 0x70
     unsigned short mSSLVerifyHost; // 0x72
-    unsigned int mTimeout; // 0x74
+    unsigned int mTimeoutMs; // 0x74
 };

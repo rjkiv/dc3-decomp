@@ -76,10 +76,11 @@ private:
 
 #include "obj/Msg.h"
 
-// DECLARE_MESSAGE(UIComponentScrollMsg, "component_scroll");
-// UIComponentScrollMsg(UIComponent *comp, LocalUser *user) : Message(Type(), comp, user)
-// {} UIComponent *GetUIComponent() const { return mData->Obj<UIComponent>(2); } LocalUser
-// *GetUser() const { return mData->Obj<LocalUser>(3); } END_MESSAGE
+DECLARE_MESSAGE(UIComponentScrollMsg, "component_scroll");
+UIComponentScrollMsg(UIComponent *comp, LocalUser *user) : Message(Type(), comp, user) {}
+UIComponent *GetUIComponent() const { return mData->Obj<UIComponent>(2); }
+LocalUser *GetUser() const { return mData->Obj<LocalUser>(3); }
+END_MESSAGE
 
 DECLARE_MESSAGE(UIComponentSelectMsg, "component_select");
 UIComponentSelectMsg(UIComponent *comp, LocalUser *user) : Message(Type(), comp, user) {}

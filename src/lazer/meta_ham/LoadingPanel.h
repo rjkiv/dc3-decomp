@@ -19,6 +19,8 @@ public:
     virtual DataNode Handle(DataArray *, bool);
     virtual bool SyncProperty(DataNode &, DataArray *, int, PropOp);
 
+    NEW_OBJ(LoadingPanel)
+
     LoadingPanel();
 
     static HamMaster *sLoadingMaster; // DAT_8311A440

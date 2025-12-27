@@ -11,7 +11,7 @@
 class SingleUserCrewSelectPanel : public TexLoadPanel {
 public:
     // Hmx::Object
-    OBJ_CLASSNAME(classname)
+    OBJ_CLASSNAME(SingleUserCrewSelectPanel)
     OBJ_SET_TYPE(SingleUserCrewSelectPanel)
     virtual DataNode Handle(DataArray *, bool);
 
@@ -20,6 +20,8 @@ public:
     virtual void Poll();
     virtual void Unload();
     virtual void FinishLoad();
+
+    NEW_OBJ(SingleUserCrewSelectPanel)
 
     SingleUserCrewSelectPanel();
     void UpdateProviders();

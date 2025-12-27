@@ -27,6 +27,8 @@ public:
     virtual RndMat *Mat(int, int, UIListMesh *) const;
     virtual int NumData() const;
 
+    NEW_OBJ(CreditsPanel)
+
 protected:
     DataNode OnMsg(const ButtonDownMsg &);
 

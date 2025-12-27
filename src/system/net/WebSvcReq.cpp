@@ -7,9 +7,12 @@
 #include "utl/MemMgr.h"
 #include "utl/Symbol.h"
 
-WebSvcRequest::WebSvcRequest(const char *c1, const char *c2, Hmx::Object *o)
-    : mResponseData(0), mResponseDataLength(0), unk34(this, o), mBaseUrl(c1), mHttpReq(0),
-      unk54(0), unk58(c2), mResponseStatusCode(0) {}
+WebSvcRequest::WebSvcRequest(
+    const char *url, const char *additional_hdr, Hmx::Object *callback
+)
+    : mResponseData(0), mResponseDataLength(0), mCallback(this, callback), mBaseUrl(url),
+      mHttpReq(0), mState(kNotStarted), mAdditionalHdr(additional_hdr),
+      mResponseStatusCode(0) {}
 
 WebSvcRequest::~WebSvcRequest() {
     Reset();
@@ -20,25 +23,25 @@ void WebSvcRequest::Start() {
     MILO_ASSERT(!mResponseData, 0x40);
     MILO_ASSERT(mHttpReq, 0x41);
     mHttpReq->Start();
-    unk54 = 1;
+    mState = kRunning;
 }
 
-void WebSvcRequest::CleanUp(bool b) {
+void WebSvcRequest::CleanUp(bool success) {
     MILO_ASSERT(mHttpReq, 0x16e);
     MILO_ASSERT(!mResponseData, 0x16f);
-    if (b) {
+    if (success) {
         mResponseData = mHttpReq->DetachBuffer();
         mResponseDataLength = mHttpReq->GetBufferSize();
     }
     mResponseStatusCode = mHttpReq->GetStatusCode();
 }
 
-void WebSvcRequest::SendCallback(bool b1, bool b2) {
-    if (unk34) {
+void WebSvcRequest::SendCallback(bool success, bool cancelled) {
+    if (mCallback) {
         static WebReqCompleteMsg msg(this, false);
         msg[0] = this;
-        msg[1] = b1;
-        unk34->Handle(msg, true);
+        msg[1] = success;
+        mCallback->Handle(msg, true);
     }
 }
 
@@ -49,16 +52,16 @@ void WebSvcRequest::Reset() {
     }
     mResponseDataLength = 0;
     mResponseStatusCode = 0;
-    unk54 = 0;
+    mState = kNotStarted;
     if (mHttpReq) {
         SetURL(mBaseUrl.c_str());
         mHttpReq->Reset();
     }
 }
 
-void WebSvcRequest::Cancel(bool b) {
-    unk54 = 2;
-    if (b) {
+void WebSvcRequest::Cancel(bool send_callback) {
+    mState = kFinished;
+    if (send_callback) {
         SendCallback(false, true);
     }
 }
@@ -79,18 +82,16 @@ bool WebSvcRequest::HasSucceeded() {
     return mHttpReq->HasSucceeded();
 }
 
-bool WebSvcRequest::IsRunning() { return unk54 != 1; }
-
-void WebSvcRequest::SetTimeout(unsigned int ui) {
+void WebSvcRequest::SetTimeout(unsigned int ms) {
     MILO_ASSERT(mHttpReq, 0x8f);
-    mHttpReq->SetTimeout(ui);
+    mHttpReq->SetTimeout(ms);
 }
 
 void WebSvcRequest::OnReqFailed() {
     MILO_ASSERT(HasFailed(), 0x96);
     CleanUp(false);
-    if (unk54 != 2) {
-        unk54 = 2;
+    if (mState != kFinished) {
+        mState = kFinished;
         SendCallback(false, false);
     }
 }
@@ -99,10 +100,10 @@ void WebSvcRequest::OnReqSucceeded() {
     MILO_ASSERT(HasSucceeded(), 0xa3);
     CleanUp(true);
     if (CheckReqResult()) {
-        unk54 = 2;
+        mState = kFinished;
         SendCallback(true, false);
     } else {
-        unk54 = 3;
+        mState = kReadyForRemoval;
     }
 }
 
@@ -117,14 +118,14 @@ void WebSvcRequest::SetHttpReq(HttpReq *req) {
     mHttpReq = req;
 }
 
-void WebSvcRequest::SetUserAgent(const char *c) {
+void WebSvcRequest::SetUserAgent(const char *agent) {
     MILO_ASSERT(mHttpReq, 0x103);
-    mHttpReq->SetUserAgent(c);
+    mHttpReq->SetUserAgent(agent);
 }
 
-void WebSvcRequest::SetStatusCode(unsigned int ui) {
+void WebSvcRequest::SetStatusCode(unsigned int code) {
     MILO_ASSERT(mHttpReq, 300);
-    mHttpReq->SetStatusCode(ui);
+    mHttpReq->SetStatusCode(code);
 }
 
 const char *WebSvcRequest::GetHostName() {
@@ -143,8 +144,8 @@ const char *WebSvcRequest::GetURL() {
 }
 
 void WebSvcRequest::Poll() {
-    switch (unk54) {
-    case 1: {
+    switch (mState) {
+    case kRunning: {
         MILO_ASSERT(mHttpReq, 0x53);
         mHttpReq->Poll();
         if (HasFailed()) {
@@ -154,18 +155,18 @@ void WebSvcRequest::Poll() {
         }
         break;
     }
-    case 2: {
+    case kFinished: {
         if (mHttpReq->IsSafeToDelete()) {
-            unk54 = 4;
+            mState = kReadyForDeletion;
         }
         break;
     }
-    case 0:
-    case 3:
-    case 4:
+    case kNotStarted:
+    case kReadyForRemoval:
+    case kReadyForDeletion:
         break;
     default:
-        int state = unk54;
+        int state = mState;
         MILO_NOTIFY("WebSvcRequest: Unknown state %d", state);
         break;
     }
@@ -174,14 +175,14 @@ void WebSvcRequest::Poll() {
 const std::map<String, String> &WebSvcRequest::GetCookies() const { return mCookies; }
 void WebSvcRequest::SetCookies(std::map<String, String> const &map) { mCookies = map; }
 
-void WebSvcRequest::SetIPAddr(unsigned int ui) {
+void WebSvcRequest::SetIPAddr(unsigned int ip) {
     MILO_ASSERT(mHttpReq, 0xe7);
-    mHttpReq->SetIPAddr(ui);
+    mHttpReq->SetIPAddr(ip);
 }
 
-void WebSvcRequest::SetURL(char const *c) {
+void WebSvcRequest::SetURL(char const *url) {
     MILO_ASSERT(mHttpReq, 0xfc);
-    mHttpReq->SetURL(c);
+    mHttpReq->SetURL(url);
 }
 
 void WebSvcRequest::MarkSuccess() {

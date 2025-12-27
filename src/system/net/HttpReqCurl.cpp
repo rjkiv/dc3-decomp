@@ -11,16 +11,20 @@ namespace {
     unsigned int WriteMemoryCallback(void *, unsigned int, unsigned int, void *);
 }
 
-HttpReqCurl::HttpReqCurl(ReqType rt, unsigned int ui, unsigned short us, char const *c)
-    : HttpReq(rt, ui, us, c), mHeaders(0), mReq(0), mSSLVerifyPeer(0), mSSLVerifyHost(0),
-      mTimeout(10000) {
+HttpReqCurl::HttpReqCurl(
+    ReqType type, unsigned int ip, unsigned short port, const char *url
+)
+    : HttpReq(type, ip, port, url), mHeaders(0), mReq(0), mSSLVerifyPeer(0),
+      mSSLVerifyHost(0), mTimeoutMs(10000) {
     mBuffer = 0;
     mBufferLength = 0;
 }
 
-HttpReqCurl::HttpReqCurl(ReqType rt, char const *c1, unsigned short us, char const *c2)
-    : HttpReq(rt, c1, us, c2), mHeaders(0), mReq(0), mSSLVerifyPeer(0), mSSLVerifyHost(0),
-      mTimeout(10000) {
+HttpReqCurl::HttpReqCurl(
+    ReqType type, const char *hostname, unsigned short port, const char *url
+)
+    : HttpReq(type, hostname, port, url), mHeaders(0), mReq(0), mSSLVerifyPeer(0),
+      mSSLVerifyHost(0), mTimeoutMs(10000) {
     mBuffer = 0;
     mBufferLength = 0;
 }
@@ -69,7 +73,7 @@ void HttpReqCurl::Start() {
     curl_easy_setopt(mReq, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
     curl_easy_setopt(mReq, CURLOPT_FILE, &mBuffer);
     curl_easy_setopt(mReq, CURLOPT_COOKIEFILE, "");
-    SetTimeout(mTimeout);
+    SetTimeout(mTimeoutMs);
     String cookieStr;
     FOREACH (it, mCookies) {
         if (cookieStr.length()) {
@@ -88,11 +92,11 @@ void HttpReqCurl::Start() {
         curl_easy_setopt(mReq, CURLOPT_HTTPHEADER, mHeaders);
     }
     switch (mType) {
-    case 1:
-    case 3:
+    case kHttpReqType_GET:
+    case kHttpReqType_HTTPS_POST:
         break;
     case kHttpReqType_POST:
-    case 2:
+    case kHttpReqType_PUT:
         curl_easy_setopt(mReq, CURLOPT_POST, 1);
         curl_easy_setopt(mReq, CURLOPT_POSTFIELDS, mContent);
         curl_easy_setopt(mReq, CURLOPT_POSTFIELDSIZE, mContentLength);
@@ -107,9 +111,9 @@ void HttpReqCurl::Do() {
     MILO_ASSERT(mReq, 0x122);
     int ret = curl_easy_perform(mReq);
     if (ret == 0) {
-        unk4c = 3;
+        mState = kHttpReq_Done;
     } else {
-        unk4c = 4;
+        mState = kHttpReq_Failure;
     }
 }
 
@@ -143,7 +147,7 @@ unsigned int HttpReqCurl::GetBufferSize() {
 }
 
 void HttpReqCurl::SetTimeout(unsigned int timeout) {
-    mTimeout = timeout;
+    mTimeoutMs = timeout;
     if (mReq) {
         CURLcode code = curl_easy_setopt(mReq, CURLOPT_TIMEOUT_MS, timeout);
         if (code != CURLE_OK) {

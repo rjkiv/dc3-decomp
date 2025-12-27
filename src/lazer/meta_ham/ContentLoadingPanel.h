@@ -19,6 +19,8 @@ public:
     virtual void ContentMountBegun(int);
     virtual void ContentDone();
 
+    NEW_OBJ(ContentLoadingPanel)
+
     ContentLoadingPanel();
     void AllowedToShow(bool);
 

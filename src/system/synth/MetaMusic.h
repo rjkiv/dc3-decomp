@@ -33,6 +33,7 @@ public:
 
     // float SomeMinusFunc() { return 1.0f - (float)unk84 / 90.0f; }
     // float SomePlusFunc() { return (float)unk84 / 90.0f; }
+    DataArraySongInfo *SongInfo() { return mSongInfo; }
 
 private:
     Stream *GetStream() const;
@@ -66,3 +67,5 @@ private:
     DataArraySongInfo *mSongInfo; // 0xac
     HxMaster *unkb0; // 0xb0
 };
+
+extern MetaMusic *TheMetaMusic;

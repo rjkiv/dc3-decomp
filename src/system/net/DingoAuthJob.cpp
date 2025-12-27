@@ -7,9 +7,9 @@
 #include "utl/MakeString.h"
 
 AuthenticateReqJob::AuthenticateReqJob(
-    char const *c, DataPoint const &point, Hmx::Object *o
+    char const *url, const DataPoint &point, Hmx::Object *callback
 )
-    : DingoJob(c, o) {
+    : DingoJob(url, callback) {
     DingoJob::SetDataPoint(point);
 }
 
@@ -18,21 +18,24 @@ AuthenticateReqJob::~AuthenticateReqJob() {}
 void AuthenticateReqJob::Start() {
     MILO_ASSERT(GetURL(), 0x24);
     MILO_ASSERT(strlen(GetURL()) != 0, 0x25);
+    SetURL(MakeString("/%s/%s/%s", "1", TheServer.GetPlatform(), GetURL()));
+    StartImpl();
 }
 
 bool AuthenticateReqJob::ParseResponse() {
-    unkb0 = "";
-    if (mJsonResponse && unka8 == 1) {
-        JsonObject *o = mJsonConverter.GetByName(mJsonResponse, "session_id");
-        if (o) {
-            unkb0 = o->Str();
-            return true;
+    mSessionID = "";
+    if (mJsonResponse) {
+        if (mJsonResponseVersion == 1) {
+            JsonObject *o = mJsonReader.GetByName(mJsonResponse, "session_id");
+            if (o) {
+                mSessionID = o->Str();
+                return true;
+            }
+        } else {
+            MILO_NOTIFY(
+                "AuthenticateReqJob: New version of Authenticate response API!  Needs attention!"
+            );
         }
-
-    } else {
-        MILO_NOTIFY(
-            "AuthenticateReqJob: New version of Authenticate response API!  Needs attention!"
-        );
     }
     return false;
 }

@@ -15,6 +15,8 @@
 #include "meta_ham/HamProfile.h"
 #include "meta_ham/HamSongMgr.h"
 #include "meta_ham/ProfileMgr.h"
+#include "meta_ham/Utl.h"
+#include "net_ham/DataMinerJobs.h"
 #include "net_ham/RockCentral.h"
 #include "obj/Data.h"
 #include "obj/DataUtl.h"
@@ -23,6 +25,8 @@
 #include "os/Debug.h"
 #include "os/System.h"
 #include "utl/DataPointMgr.h"
+#include "utl/Locale.h"
+#include "utl/MakeString.h"
 #include "utl/Std.h"
 #include "utl/Symbol.h"
 
@@ -300,7 +304,7 @@ bool MetaPerformer::IsLastSong() const {
     if (mPlaylist) {
         return mPlaylist->GetLastValidSongIndex() <= mPlaylistIndex;
     } else {
-        return false;
+        return TheGameMode->IsInfinite() == false;
     }
 }
 
@@ -705,6 +709,38 @@ void QuickplayPerformer::ChooseVenue() {
 DataNode QuickplayPerformer::OnSetSong(DataArray *a) {
     SetSong(a->ForceSym(2));
     return 0;
+}
+
+void MetaPerformer::SendOmgDatapoint(int p1Score, int p2Score) {
+    TheRockCentral.ManageJob(new OmgScoresJob(nullptr, p1Score, p2Score));
+}
+
+void MetaPerformer::SendDropInDatapoint(int playerIdx) {
+    TheRockCentral.ManageJob(new PlayerDroppedInJob(nullptr, playerIdx));
+}
+
+void MetaPerformer::SendDropOutDatapoint(int playerIdx) {
+    TheRockCentral.ManageJob(new PlayerDroppedOutJob(nullptr, playerIdx));
+}
+
+String MetaPerformer::GetPlaylistElapsedTimeString() const {
+    if (!mPlaylist && !TheGameMode->IsInfinite())
+        return "";
+    else
+        return FormatTimeMS(mPlaylistElapsedTime);
+}
+
+String MetaPerformer::GetPlaylistNameAndDuration() const {
+    if (!mPlaylist)
+        return "";
+    else {
+        mPlaylist->GetDuration();
+        return MakeString(
+            "%s (%s)",
+            Localize(mPlaylist->GetName(), false, TheLocale),
+            FormatTimeMS(mPlaylist->GetDuration())
+        );
+    }
 }
 
 #pragma endregion

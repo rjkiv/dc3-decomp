@@ -10,31 +10,33 @@ public:
     virtual DataNode Handle(DataArray *, bool);
     virtual void Init();
     virtual void CreateAccount() {}
-    virtual bool Authenticate(int);
+    virtual bool Authenticate(int padnum);
     virtual void Logout();
     virtual void Disconnect();
     virtual void Poll();
     virtual const char *GetPlatform() { return "xbl"; }
-    virtual void SetLBView(unsigned int view) { mLeaderboardID = view; }
-    virtual void SetLBScoreProperty(unsigned int prop) { mLeaderboardScorePropID = prop; }
+    virtual void SetLBView(unsigned int lb_id) { mLeaderboardID = lb_id; }
+    virtual void SetLBScoreProperty(unsigned int prop_id) {
+        mLeaderboardScorePropID = prop_id;
+    }
     virtual bool HasValidLoginCandidate() const;
-    virtual bool IsValidLoginCandidate(int) const;
-    virtual void MakeSessionJobComplete(bool);
-    virtual void JoinSessionComplete(bool);
-    virtual void StartSessionComplete(bool);
-    virtual void WriteCareerLeaderboardComplete(bool);
-    virtual void LeaveSessionComplete(bool);
-    virtual void EndSessionComplete(bool);
-    virtual void DeleteSessionComplete(bool);
-    virtual void StartUploadCareerScore(u64);
+    virtual bool IsValidLoginCandidate(int padnum) const;
+    virtual void MakeSessionJobComplete(bool success);
+    virtual void JoinSessionComplete(bool success);
+    virtual void StartSessionComplete(bool success);
+    virtual void WriteCareerLeaderboardComplete(bool success);
+    virtual void LeaveSessionComplete(bool success);
+    virtual void EndSessionComplete(bool success);
+    virtual void DeleteSessionComplete(bool success);
+    virtual void StartUploadCareerScore(u64 career_score);
 
 private:
     int GetValidLoginCandidate(char *, u64 &) const;
     void CreateSession();
 
 protected:
-    virtual void FillAuthParams(DataPoint &);
-    virtual bool FillAuthParamsFromPadNum(DataPoint &, int);
+    virtual void FillAuthParams(DataPoint &pt);
+    virtual bool FillAuthParamsFromPadNum(DataPoint &pt, int padnum);
     virtual void OnAuthSuccess();
 
     int unkb0;

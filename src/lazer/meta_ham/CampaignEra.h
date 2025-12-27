@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hamobj/Difficulty.h"
 #include "obj/Data.h"
 #include "stl/_vector.h"
 #include "utl/Str.h"
@@ -58,7 +59,8 @@ public:
     Symbol EraSongUnlockedToken() const { return mEraSong_Unlocked_Token; }
     Symbol EraSongCompleteToken() const { return mEraSong_Complete_Token; }
     int MovesRequiredForMastery() const { return mMovesRequiredForMastery; }
-    Symbol Unk78() const { return unk78; } // change once context found
+    Symbol OutfitAward() const { return mOutfitAward; }
+    Symbol GetMasteryStars(Difficulty d) { return mMastery_Stars[d]; }
 
 protected:
     Symbol mEra; // 0x4
@@ -79,7 +81,7 @@ protected:
     Symbol mMastery_Stars[3]; // 0x64
     int mMovesRequiredForMastery; // 0x70
     int mStarsRequiredForOutfits; // 0x74
-    Symbol unk78;
+    Symbol mOutfitAward; // 0x78
 
 private:
     void Cleanup();

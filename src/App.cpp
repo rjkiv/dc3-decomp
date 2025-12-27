@@ -1,4 +1,5 @@
 #include "App.h"
+#include "ChecksumData_xbox.h"
 #include "obj/Dir.h"
 #include "os/Timer.h"
 

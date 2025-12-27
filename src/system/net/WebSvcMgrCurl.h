@@ -11,39 +11,49 @@ public:
     virtual void Init();
     virtual void Poll();
     virtual bool DoRequest(
-        ReqType,
-        unsigned int,
-        unsigned short,
-        const char *,
-        const char *,
-        unsigned int,
-        const char *,
-        unsigned int
+        ReqType req_type,
+        unsigned int ip_addr,
+        unsigned short port,
+        const char *url,
+        const char *additional_hdr,
+        unsigned int timeout_ms,
+        const char *content,
+        unsigned int content_length
     );
     virtual bool InitRequest(
-        WebSvcRequest *, ReqType, const char *, unsigned short, const char *, unsigned int
+        WebSvcRequest *req,
+        ReqType req_type,
+        const char *host_name,
+        unsigned short port,
+        const char *content,
+        unsigned int content_length
     );
     virtual bool InitRequest(
-        WebSvcRequest *, ReqType, unsigned int, unsigned short, const char *, unsigned int
+        WebSvcRequest *req,
+        ReqType req_type,
+        unsigned int ip_addr,
+        unsigned short port,
+        const char *content,
+        unsigned int content_length
     );
 
     void InitCurl();
 
 private:
-    void FindAndFinish(void *, bool, unsigned int);
+    void FindAndFinish(void *handle, bool success, unsigned int http_status);
 
     bool InitRequest(
-        WebSvcRequest *,
-        ReqType,
-        const char *,
-        unsigned int,
-        unsigned short,
-        const char *,
-        unsigned int
+        WebSvcRequest *req,
+        ReqType req_type,
+        const char *host_name,
+        unsigned int ip_addr,
+        unsigned short port,
+        const char *content,
+        unsigned int content_length
     );
 
 protected:
-    virtual void Start(WebSvcRequest *);
+    virtual void Start(WebSvcRequest *req);
 
     CURLM *mCurlMultiHandle; // 0x4c
 };
