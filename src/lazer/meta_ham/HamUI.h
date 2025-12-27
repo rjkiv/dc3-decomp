@@ -1,8 +1,9 @@
 #pragma once
-#include "meta_ham/BlacklightPanel.h"
-#include "meta_ham/HelpBarPanel.h"
-#include "meta_ham/OverlayPanel.h"
-#include "meta_ham/ShellInput.h"
+#include "BlacklightPanel.h"
+#include "HelpBarPanel.h"
+#include "LetterboxPanel.h"
+#include "OverlayPanel.h"
+#include "ShellInput.h"
 #include "meta/ConnectionStatusPanel.h"
 #include "os/ContentMgr.h"
 #include "os/JoypadMsgs.h"
@@ -27,6 +28,7 @@ public:
     void ForceLetterboxOff();
     void ForceLetterboxOffImmediate();
     void GotoEventScreen(UIScreen *);
+    void InitPanels();
 
     bool IsBlacklightMode();
     ShellInput *GetShellInput() const { return mShellInput; }
@@ -34,6 +36,8 @@ public:
     int Unk108() const { return unk_0x108; }
     UIPanel *EventDialogPanel() const { return mEventDialogPanel; }
     OverlayPanel *GetOverlayPanel() const { return mOverlayPanel; }
+    LetterboxPanel *GetLetterboxPanel() const { return mLetterbox; }
+    UIPanel *GetBlacklightPanel() const { return mBlacklight; }
 
     void SetOverlayPanel(OverlayPanel *op) { mOverlayPanel = op; }
 
@@ -70,7 +74,7 @@ private:
     void ReloadStrings();
 
     HelpBarPanel *mHelpBar; // 0xd8
-    u32 mLetterbox; // LetterboxPanel*
+    LetterboxPanel *mLetterbox; // LetterboxPanel*
     BlacklightPanel *mBlacklight; // 0xe0
     UIPanel *mEventDialogPanel; // 0xe4
     UIPanel *mBackgroundPanel; // 0xe8
