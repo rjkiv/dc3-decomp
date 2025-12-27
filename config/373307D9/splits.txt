@@ -2681,14 +2681,14 @@ system/os/ArkFile.cpp:
 	.text       start:0x825FA4F8 end:0x825FAE38
 	.data       start:0x82F12844 end:0x82F12860
 
-system/os/social/xbcapi.cpp:
+xdk/xbc/xbcapi.cpp:
 	.text       start:0x825FAE38 end:0x825FAE50
 
-system/os/json/xjson.cpp:
+xdk/xjson/xjson.cpp:
 	.pdata      start:0x822D2E18 end:0x822D2E30
 	.text       start:0x825FAE50 end:0x825FB038
 
-system/os/social/socialpostapi.cpp:
+xdk/xsocial/socialpostapi.cpp:
 	.pdata      start:0x822D2E30 end:0x822D2E48
 	.text       start:0x825FB038 end:0x825FB750
 
@@ -2833,23 +2833,23 @@ system/os/AsyncFileHolmes.cpp:
 	.text       start:0x826056A8 end:0x82605960
 	.data       start:0x82F12BCC end:0x82F12BEC
 
-system/os/social/xbcimpl.cpp:
+xdk/xbc/xbcimpl.cpp:
 	.pdata      start:0x822D36D0 end:0x822D3708
 	.text       start:0x82605960 end:0x82606138
 	.data       start:0x82F12BEC end:0x82F12C08
 	.data       start:0x8309B050 end:0x8309B534 rename:.bss
 
-system/os/json/jsonstreamer.cpp:
+xdk/xjson/jsonstreamer.cpp:
 	.rdata      start:0x820857E0 end:0x820857E4
 	.pdata      start:0x822D3708 end:0x822D37A0
 	.text       start:0x82606138 end:0x826075F8
 
-system/os/json/jsonparser.cpp:
+xdk/xjson/jsonparser.cpp:
 	.rdata      start:0x820857E4 end:0x820857E8
 	.pdata      start:0x822D37A0 end:0x822D37C0
 	.text       start:0x826075F8 end:0x82607770
 
-system/os/json/jsonwriter.cpp:
+xdk/xjson/jsonwriter.cpp:
 	.rdata      start:0x820857E8 end:0x82085830
 	.pdata      start:0x822D37C0 end:0x822D3830
 	.text       start:0x82607770 end:0x826083C8
@@ -2871,13 +2871,13 @@ system/os/UsbMidiGuitarMsgs.cpp:
 	.data       start:0x82F12D98 end:0x82F12EE0
 	.data       start:0x8309B588 end:0x8309B5D8 rename:.bss
 
-system/os/xlrc/xlrcapi.cpp:
+xdk/xlrc/xlrcapi.cpp:
 	.text       start:0x8260A7C8 end:0x8260A868
 
-system/os/json/jsonbuffer.cpp:
+xdk/xjson/jsonbuffer.cpp:
 	.text       start:0x8260A868 end:0x8260AB70
 
-system/os/xlrc/xlrcimpl.cpp:
+xdk/xlrc/xlrcimpl.cpp:
 	.pdata      start:0x822D3C40 end:0x822D3D18
 	.pdata      start:0x823214D0 end:0x823214D8
 	.text       start:0x8260AB70 end:0x8260C600
@@ -2886,22 +2886,22 @@ system/os/xlrc/xlrcimpl.cpp:
 	.data       start:0x82F12EE0 end:0x82F12EFC
 	.data       start:0x8309B5E0 end:0x830A0800 rename:.bss
 
-system/os/xlrc/xlrctransport.cpp:
+xdk/xlrc/xlrctransport.cpp:
 	.rdata      start:0x82086800 end:0x82086820
 	.pdata      start:0x822D3D18 end:0x822D3DF8
 	.text       start:0x8260C600 end:0x8260DB68
 
-system/os/xlrc/xlrcclient.cpp:
+xdk/xlrc/xlrcclient.cpp:
 	.pdata      start:0x822D3DF8 end:0x822D3E68
 	.text       start:0x8260DB68 end:0x8260E1D0
 
-system/os/xlrc/xlrccallout.cpp:
+xdk/xlrc/xlrccallout.cpp:
 	.pdata      start:0x822D3E68 end:0x822D3E88
 	.text       start:0x8260E1D0 end:0x8260E418
 	.data       start:0x82F12EFC end:0x82F12F18
 	.data       start:0x830A0800 end:0x830A0DA8 rename:.bss
 
-system/os/xlrc/adapters.cpp:
+xdk/xlrc/adapters.cpp:
 	.rdata      start:0x82086820 end:0x82086930
 	.pdata      start:0x822D3E88 end:0x822D3EA8
 	.text       start:0x8260E418 end:0x8260E6F0
@@ -2909,34 +2909,34 @@ system/os/xlrc/adapters.cpp:
 	.text       start:0x82EE2690 end:0x82EE26C0 rename:.text$yd
 	.data       start:0x82F12F18 end:0x82F12F30
 
-system/os/xlrc/xlrccloudtransport.cpp:
+xdk/xlrc/xlrccloudtransport.cpp:
 	.rdata      start:0x82086930 end:0x8208694C
 	.pdata      start:0x822D3EA8 end:0x822D3EF8
 	.text       start:0x8260E6F0 end:0x8260EC68
 	.data       start:0x82F12F30 end:0x82F12F50
 	.data       start:0x830A0DA8 end:0x830A1210 rename:.bss
 
-system/os/xlrc/xlrclistener.cpp:
+xdk/xlrc/xlrclistener.cpp:
 	.pdata      start:0x822D3EF8 end:0x822D3F48
 	.text       start:0x8260EC68 end:0x8260F428
 
-system/os/xlrc/xamlrcp.cpp:
+xdk/xlrc/xamlrcp.cpp:
 	.rdata      start:0x8208694C end:0x82086954
 	.pdata      start:0x822D3F48 end:0x822D3F50
 	.text       start:0x8260F428 end:0x8260F520
 	.data       start:0x830A1210 end:0x830A1214 rename:.bss
 
-system/os/xlrc/xlrcutil.cpp:
+xdk/xlrc/xlrcutil.cpp:
 	.rdata      start:0x82086954 end:0x82086968
 	.pdata      start:0x822D3F50 end:0x822D3F68
 	.text       start:0x8260F520 end:0x8260F680
 
-system/os/xlrc/xlrctcptransport.cpp:
+xdk/xlrc/xlrctcptransport.cpp:
 	.rdata      start:0x82086968 end:0x82086984
 	.pdata      start:0x822D3F68 end:0x822D3F98
 	.text       start:0x8260F680 end:0x8260F918
 
-system/os/social/xauth.cpp:
+xdk/xsocial/xauth.cpp:
 	.rdata      start:0x82086984 end:0x820869A0
 	.pdata      start:0x822D3F98 end:0x822D3FA8
 	.text       start:0x8260F918 end:0x8260FBC0
@@ -12236,11 +12236,11 @@ xdk/xhv2/ulaw.cpp:
 xdk/xapilibi/callexitthread.cpp:
 	.data       start:0x82F5E224 end:0x82F5E22C rename:.bss
 
-system/os/social/precomp.cpp:
+xdk/xsocial/precomp.cpp:
 	.data       start:0x8309B04C end:0x8309B050 rename:.bss
 	.data       start:0x8309B5D8 end:0x8309B5E0 rename:.bss
 
-system/os/social/pch.cpp:
+xdk/xsocial/pch.cpp:
 	.data       start:0x8309B534 end:0x8309B538 rename:.bss
 	.data       start:0x830A1214 end:0x830A1270 rename:.bss
 

@@ -99,5 +99,5 @@ public:
     }
     bool Success() const { return mData->Int(2); }
     int Arg1() const { return mData->Int(3); }
-    DataNode Arg2() const;
+    DataNode Arg2() const { return mData->Node(4); }
 };

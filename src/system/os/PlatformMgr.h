@@ -3,8 +3,8 @@
 #include "obj/Msg.h"
 #include "obj/Object.h"
 #include "os/User.h"
-#include "os/social/socialpostapi.h"
 #include "utl/JobMgr.h"
+#include "xdk/XSOCIAL.h"
 
 enum DiskError {
     kNoDiskError,

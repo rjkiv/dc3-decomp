@@ -110,6 +110,7 @@ public:
     const FilePath &File() const { return mFilepath; }
     int NumMips() const { return mNumMips; }
     int Bpp() const { return mBpp; }
+    bool PowerOf2();
 
 protected:
     RndTex();
