@@ -1,14 +1,16 @@
 #pragma once
-
+#include "meta_ham/HamScreen.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/PlatformMgr.h"
 #include "ui/UI.h"
 #include "ui/UIScreen.h"
 #include "utl/Symbol.h"
-class SigninScreen : public UIScreen {
+
+class SigninScreen : public HamScreen {
 public:
     // UIScreen
+    virtual ~SigninScreen();
     OBJ_CLASSNAME(SigninScreen);
     OBJ_SET_TYPE(SigninScreen);
     virtual DataNode Handle(DataArray *, bool);

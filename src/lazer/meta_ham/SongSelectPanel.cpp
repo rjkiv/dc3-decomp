@@ -4,6 +4,7 @@
 #include "flow/Flow.h"
 #include "meta_ham/HamPanel.h"
 #include "meta_ham/HamSongMgr.h"
+#include "meta_ham/HamUI.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
@@ -25,6 +26,14 @@ void SongSelectPanel::Load() {
     c->AllowedToShow(true);
 }
 
+void SongSelectPanel::Exit() {
+    if (TheHamUI.GetLetterboxPanel()) {
+        TheHamUI.GetLetterboxPanel()->RemoveSink(this, "enter_blacklight_mode");
+        TheHamUI.GetLetterboxPanel()->RemoveSink(this, "exit_blacklight_mode");
+    }
+    UIPanel::Exit();
+}
+
 void SongSelectPanel::FinishLoad() {
     UIPanel::FinishLoad();
     ContentLoadingPanel *c =
@@ -42,14 +51,14 @@ DataNode SongSelectPanel::OnEnterBlacklightMode(DataArray const *d) {
     Flow *f = DataDir()->Find<Flow>("activate_blacklight.flow", false);
     if (f)
         f->Activate();
-    return DataNode(kDataUnhandled);
+    return kDataUnhandled;
 }
 
 DataNode SongSelectPanel::OnExitBlacklightMode(DataArray const *d) {
     Flow *f = DataDir()->Find<Flow>("deactivate_blacklight.flow", false);
     if (f)
         f->Activate();
-    return DataNode(kDataUnhandled);
+    return kDataUnhandled;
 }
 
 RndTex *SongSelectPanel::GetTexForCharacter(Symbol s) {
@@ -65,7 +74,9 @@ RndTex *SongSelectPanel::GetTexForCharacter(Symbol s) {
 }
 
 BEGIN_HANDLERS(SongSelectPanel)
-    HANDLE_ACTION(is_valid_song, TheHamSongMgr.GetSongIDFromShortName(_msg->Sym(3), false))
+    HANDLE_EXPR(
+        is_valid_song, TheHamSongMgr.GetSongIDFromShortName(_msg->Sym(2), false) != false
+    )
     HANDLE_EXPR(get_char_portrait_texture, GetTexForCharacter(_msg->Sym(2)))
     HANDLE(enter_blacklight_mode, OnEnterBlacklightMode)
     HANDLE(exit_blacklight_mode, OnExitBlacklightMode)

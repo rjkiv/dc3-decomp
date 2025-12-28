@@ -1,6 +1,8 @@
 #include "meta_ham/SongSelectPlaylistCustomizePanel.h"
 #include "SongSelectPlaylistCustomizePanel.h"
+#include "hamobj/HamLabel.h"
 #include "macros.h"
+#include "meta_ham/AppLabel.h"
 #include "meta_ham/HamPanel.h"
 #include "meta_ham/HamSongMgr.h"
 #include "meta_ham/MetaPerformer.h"
@@ -34,11 +36,12 @@ void SongSelectPlaylistCustomizePanel::FinishLoad() {
     m_pPlaylist = pPerformer->GetPlaylist();
 }
 
-void SongSelectPlaylistCustomizePanel::UpdatePlaylistName(HamPanel *i_pLabel) {
+void SongSelectPlaylistCustomizePanel::UpdatePlaylistName(HamLabel *i_pLabel) {
     MILO_ASSERT(i_pLabel, 0x88);
-    // need AppLabel here
+    AppLabel *pAppLabel = dynamic_cast<AppLabel *>(i_pLabel);
+    MILO_ASSERT(pAppLabel, 0x8b);
     MILO_ASSERT(m_pPlaylist, 0x8d);
-    // need AppLabel here too
+    pAppLabel->SetPlaylistName(m_pPlaylist, m_pPlaylist->IsEmpty() == false, false);
 }
 
 bool SongSelectPlaylistCustomizePanel::IsPlaylistEmpty() const {
@@ -113,10 +116,12 @@ BEGIN_HANDLERS(SongSelectPlaylistCustomizePanel)
     HANDLE_ACTION(cancel_song, CancelSong())
     HANDLE_ACTION(cancel_song_at_index, CancelSongAtIndex(_msg->Int(2)))
     HANDLE_ACTION(update_songs, UpdateSongs())
-    HANDLE_ACTION(update_playlist_name, UpdatePlaylistName(_msg->Obj<HamPanel>(2)))
+    HANDLE_ACTION(update_playlist_name, UpdatePlaylistName(_msg->Obj<HamLabel>(2)))
     HANDLE_EXPR(is_playlist_empty, IsPlaylistEmpty())
     HANDLE_EXPR(is_playlist_full, IsPlaylistFull())
-    HANDLE_EXPR(is_valid_song, TheHamSongMgr.GetSongIDFromShortName(_msg->Sym(2), false))
+    HANDLE_EXPR(
+        is_valid_song, TheHamSongMgr.GetSongIDFromShortName(_msg->Sym(2), false) != false
+    )
     HANDLE_ACTION(s, Refresh())
     HANDLE_ACTION(get_playlist_provider, 0)
     HANDLE_ACTION(swap_songs, m_pPlaylist->SwapSongs(_msg->Int(2), _msg->Int(3)))

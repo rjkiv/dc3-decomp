@@ -89,6 +89,8 @@ public:
     void SetProviderNavItemLabels(int, DataArray *);
     void Enable() { mEnabled = true; }
 
+    HamNavProvider *GetHelpbarProvider() { return mNavProvider; }
+
     static void Init();
     static bool sLastSelectInControllerMode;
 

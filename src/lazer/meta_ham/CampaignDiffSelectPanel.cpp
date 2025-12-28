@@ -2,6 +2,7 @@
 #include "Campaign.h"
 #include "hamobj/Difficulty.h"
 #include "macros.h"
+#include "meta_ham/CampaignPerformer.h"
 #include "meta_ham/HamProfile.h"
 #include "meta_ham/MetaPerformer.h"
 #include "meta_ham/ProfileMgr.h"
@@ -28,11 +29,6 @@ void CampaignDiffProvider::UpdateList(bool b) {
     }
 }
 
-Symbol CampaignDiffProvider::DataSymbol(int i_iData) const {
-    MILO_ASSERT_RANGE(i_iData, 0, NumData(), 0x7c);
-    return DifficultyToSym((Difficulty)unk30[i_iData]);
-}
-
 BEGIN_HANDLERS(CampaignDiffProvider)
     HANDLE_ACTION(update_list, UpdateList(_msg->Int(2) != 0))
     HANDLE_SUPERCLASS(Hmx::Object)
@@ -53,6 +49,27 @@ void CampaignDiffSelectPanel::FinishLoad() {
     UIPanel::FinishLoad();
     MILO_ASSERT(!m_pCampaignDiffProvider, 0xbd);
     m_pCampaignDiffProvider = new CampaignDiffProvider();
+}
+
+void CampaignDiffSelectPanel::SelectDiff() {
+    Difficulty diff = GetSelectedDiff();
+    CampaignPerformer *pPerformer =
+        dynamic_cast<CampaignPerformer *>(MetaPerformer::Current());
+    MILO_ASSERT(pPerformer, 0xaf);
+    pPerformer->SetDifficulty(diff);
+}
+
+Difficulty CampaignDiffSelectPanel::GetSelectedDiff() {
+    if (mState == 1) {
+        static Message get_selected_diff_index("get_selected_diff_index");
+        DataNode node = Handle(get_selected_diff_index, true);
+        int i = node.Int();
+        if (0 < i) {
+            Symbol diffSymbol = m_pCampaignDiffProvider->DataSymbol(i);
+            return SymToDifficulty(diffSymbol);
+        }
+    }
+    return kDifficultyEasy;
 }
 
 BEGIN_HANDLERS(CampaignDiffSelectPanel)

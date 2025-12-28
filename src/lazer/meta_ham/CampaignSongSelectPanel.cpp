@@ -8,6 +8,8 @@
 #include "meta_ham/CampaignPerformer.h"
 #include "meta_ham/CampaignProgress.h"
 #include "meta_ham/HamProfile.h"
+#include "meta_ham/HamStarsDisplay.h"
+#include "meta_ham/MetaPanel.h"
 #include "meta_ham/MetaPerformer.h"
 #include "meta_ham/ProfileMgr.h"
 #include "meta_ham/SaveLoadManager.h"
@@ -27,28 +29,35 @@
 CampaignSongProvider::CampaignSongProvider() : unk40(0) {}
 
 void CampaignSongProvider::Custom(
-    int, int i_iData, UIListCustom *uiListCustom, Hmx::Object *
+    int, int i_iData, UIListCustom *uiListCustom, Hmx::Object *o
 ) const {
     MILO_ASSERT_RANGE(i_iData, 0, NumData(), 0x88);
-    // vfunc call
+    Symbol dataSym = DataSymbol(i_iData);
     if (uiListCustom->Matches("stars")) {
-        // need HamStarsDisplay
+        HamStarsDisplay *pStarDisplay = dynamic_cast<HamStarsDisplay *>(o);
+        MILO_ASSERT(pStarDisplay, 0x97);
+        if (!IsSongPlayed(dataSym)) {
+            pStarDisplay->SetShowing(false);
+        } else {
+            pStarDisplay->SetShowing(true);
+            pStarDisplay->SetSongCampaign(TheSongMgr.GetSongIDFromShortName(dataSym));
+        }
     }
 }
 
 int CampaignSongProvider::NumData() const { return unk44.size(); }
 
 bool CampaignSongProvider::IsSongAvailable(Symbol song) const {
-    // if(MetaPanel::sUnlockAll){ doesnt exist yet
-    //     return true;
-    // } else{
-    HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
-    MILO_ASSERT(pProfile, 0xf2);
-    CampaignPerformer *pPerformer =
-        dynamic_cast<CampaignPerformer *>(MetaPerformer::Current());
-    MILO_ASSERT(pPerformer, 0xf4);
-    return pPerformer->CanSelectEraSong(song);
-    // }
+    if (MetaPanel::sUnlockAll) {
+        return true;
+    } else {
+        HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
+        MILO_ASSERT(pProfile, 0xf2);
+        CampaignPerformer *pPerformer =
+            dynamic_cast<CampaignPerformer *>(MetaPerformer::Current());
+        MILO_ASSERT(pPerformer, 0xf4);
+        return pPerformer->CanSelectEraSong(song);
+    }
 }
 
 bool CampaignSongProvider::IsSongPlayed(Symbol song) const {

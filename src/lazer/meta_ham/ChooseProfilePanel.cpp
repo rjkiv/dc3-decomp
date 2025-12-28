@@ -49,8 +49,10 @@ DataNode ChooseProfilePanel::OnMsg(SigninChangedMsg const &s) {
 }
 
 BEGIN_HANDLERS(ChooseProfilePanel)
-    HANDLE_EXPR(profile_selected, mPadNums[_msg->Int(2)])
-    HANDLE_EXPR(get_profile, GetProfile(_msg->Int(2)))
-    HANDLE_ACTION(show_signin, ThePlatformMgr.SignInUsers(0, 256))
+    HANDLE_EXPR(profile_selected, !mPadNums[_msg->Int(2)] == 0)
+    HANDLE_EXPR(get_profile, GetProfile(_msg->Int(2)) == 0)
+    HANDLE_ACTION(show_signin, ThePlatformMgr.SignInUsers(0, 0x1000000))
+    HANDLE_ACTION(num_profiles, mPadNums.size())
+    HANDLE_MESSAGE(SigninChangedMsg)
     HANDLE_SUPERCLASS(HamPanel)
 END_HANDLERS

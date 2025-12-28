@@ -39,6 +39,7 @@
 #include "meta_ham/Leaderboards.h"
 #include "meta_ham/LetterboxPanel.h"
 #include "meta_ham/LoadingPanel.h"
+#include "meta_ham/LockedContentPanel.h"
 #include "meta_ham/MainMenuPanel.h"
 #include "meta_ham/MetaPerformer.h"
 #include "meta_ham/MetagameRank.h"
@@ -124,7 +125,7 @@ void MetaPanel::Init() {
     REGISTER_OBJ_FACTORY(BlacklightPanel)
     REGISTER_OBJ_FACTORY(HelpBarPanel)
     REGISTER_OBJ_FACTORY(LoadingPanel)
-    // REGISTER_OBJ_FACTORY(LockedContentPanel)
+    REGISTER_OBJ_FACTORY(LockedContentPanel)
     REGISTER_OBJ_FACTORY(MainMenuPanel)
     MetaPerformer::Init();
     REGISTER_OBJ_FACTORY(MoviePanel)

@@ -127,6 +127,8 @@ void MainMenuPanel::CleanupNetCacheRelated() {
     unk81 = false;
 }
 
+void MainMenuPanel::ContentDone() { HandleType(Message("content_refresh_Done")); }
+
 BEGIN_HANDLERS(MainMenuPanel)
     HANDLE_ACTION(
         update_main_menu_provider, unk44.UpdateList(_msg->Obj<UIListProvider>(2))

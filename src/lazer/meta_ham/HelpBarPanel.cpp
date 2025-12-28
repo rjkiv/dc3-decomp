@@ -1,9 +1,12 @@
 #include "meta_ham/HelpBarPanel.h"
+#include "HamPanel.h"
 #include "flow/Flow.h"
 #include "gesture/GestureMgr.h"
+#include "meta_ham/SaveLoadManager.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "os/JoypadMsgs.h"
 #include "ui/UIPanel.h"
 #include "utl/Symbol.h"
 
@@ -26,7 +29,7 @@ void HelpBarPanel::Draw() {
 }
 
 void HelpBarPanel::Unload() {
-    // Need SaveLoadMgr
+    TheSaveLoadMgr->RemoveSink(this);
     UIPanel::Unload();
 }
 
@@ -121,4 +124,16 @@ DataNode HelpBarPanel::OnEnterBlacklightMode(DataArray const *d) {
 }
 
 BEGIN_HANDLERS(HelpBarPanel)
+    HANDLE_ACTION(resync, SyncToPanel(unk3c))
+    HANDLE_ACTION(sync_to_panel, SyncToPanel(_msg->Obj<UIPanel>(2)))
+    HANDLE_EXPR(get_helpbar_provider, unkb0->GetHelpbarProvider()) // incorrect variable
+    // HANDLE_EXPR(is_write_icon_up, inlineFunc)
+    HANDLE_ACTION(set_tertiary_labels, unkb0->SetProviderNavItemLabels(0, _msg->Array(2)))
+    HANDLE(enter_blacklight_mode, OnEnterBlacklightMode)
+    HANDLE(exit_blacklight_mode, OnExitBlacklightMode)
+    HANDLE(wave_gesture_enable, OnWaveGestureEnabled)
+    HANDLE(wave_gesture_disabled, OnWaveGestureDisabled)
+    HANDLE_MESSAGE(ButtonDownMsg)
+    HANDLE_MESSAGE(SaveLoadMgrStatusUpdateMsg)
+    HANDLE_SUPERCLASS(HamPanel)
 END_HANDLERS

@@ -1,5 +1,7 @@
 #pragma once
+#include "hamobj/HamNavList.h"
 #include "lazer/meta_ham/HamPanel.h"
+#include "meta_ham/SaveLoadManager.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/JoypadMsgs.h"
@@ -39,7 +41,7 @@ public:
     DataNode OnEnterBlacklightMode(DataArray const *);
     DataNode OnExitBlacklightMode(DataArray const *);
 
-    int unk3c;
+    UIPanel *unk3c;
     RndGroup *unk40;
     bool unk44;
     Timer unk48;
@@ -49,7 +51,7 @@ public:
     bool unk7b;
     bool unk7c;
     Timer unk80;
-    Hmx::Object *unkb0; // change class type
+    HamNavList *unkb0;
 
 private:
     bool ShouldHideHelpbar() const;
@@ -62,5 +64,5 @@ private:
     DataNode OnWaveGestureEnabled(DataArray const *);
     DataNode OnWaveGestureDisabled(DataArray const *);
     DataNode OnMsg(ButtonDownMsg const &);
-    // DataNode OnMsg(SaveLoadMgrStatusUpdateMsg const &);
+    DataNode OnMsg(SaveLoadMgrStatusUpdateMsg const &);
 };

@@ -102,7 +102,7 @@
             "lazer/meta_ham/Leaderboards.cpp": "NonMatching",
             "lazer/meta_ham/LetterboxPanel.cpp": "NonMatching",
             "lazer/meta_ham/LoadingPanel.cpp": "NonMatching",
-            "lazer/meta_ham/LockedContentPanel.cpp": "MISSING",
+            "lazer/meta_ham/LockedContentPanel.cpp": "NonMatching",
             "lazer/meta_ham/MQSongSort.cpp": "MISSING",
             "lazer/meta_ham/MQSongSortByCharacter.cpp": "MISSING",
             "lazer/meta_ham/MQSongSortMgr.cpp": "MISSING",

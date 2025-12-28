@@ -1,5 +1,6 @@
 #include "meta_ham/CampaignMasterQuestSongSelectPanel.h"
 #include "TexLoadPanel.h"
+#include "meta_ham/MetaPerformer.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "utl/Symbol.h"
@@ -23,7 +24,7 @@ bool CampaignMasterQuestSongSelectPanel::CanSelectSong(int i) {
     if (0 < m_pCampaignSongProvider->NumData()) {
         s = m_pCampaignSongProvider->DataSymbol(i);
     }
-    return s == gNullStr;
+    return (s == gNullStr) == 0;
 }
 
 int CampaignMasterQuestSongSelectPanel::GetTimeSinceEnter() const {
@@ -57,10 +58,10 @@ BEGIN_HANDLERS(CampaignMasterQuestSongSelectPanel)
     HANDLE_EXPR(get_selected_song, GetSelectedSong())
     HANDLE_EXPR(can_select_current_song, CanSelectCurrentSong())
     HANDLE_EXPR(can_select_song, CanSelectSong(_msg->Int(2)))
-    HANDLE_ACTION(select_song, GetSelectedSong())
+    HANDLE_ACTION(select_song, MetaPerformer::Current()->SetSong(GetSelectedSong()))
     HANDLE_EXPR(is_preview_delay_finished, unk5e)
     HANDLE_ACTION(refresh, Refresh())
-    HANDLE_EXPR(is_current_selection_character, IsCurrentSelectionSong())
+    HANDLE_EXPR(is_current_selection_character, IsCurrentSelectionSong() == 0)
     HANDLE_EXPR(is_current_selection_song, IsCurrentSelectionSong())
     HANDLE_ACTION(on_highlight_song, OnHighlightSong())
     HANDLE_ACTION(on_highlight_header, OnHighlightHeader())
