@@ -3,6 +3,7 @@
 #include "hamobj/BustAMoveData.h"
 #include "hamobj/DancerSkeleton.h"
 #include "lazer/meta_ham/HamPanel.h"
+#include "obj/Data.h"
 
 class BustAMovePanel : public HamPanel {
 public:
@@ -19,6 +20,7 @@ public:
 
     void OnBeat();
     void SetUpSongStructure(Symbol);
+    void PlayVO(Symbol);
 
 protected:
     u32 unk_0x3C;
@@ -28,7 +30,9 @@ protected:
     u32 unk_0x50;
     u32 unk_0x54;
     u32 unk_0x58; // FreestyleMoveRecorder*
-    u8 pad[0x34];
+    u8 pad[0x24];
+    u32 unk_0x84;
+    u8 pad2[0xc];
 
     ObjectDir *mDirs[2]; // 0x94
     u32 unk_0x9C;
@@ -44,4 +48,6 @@ private:
     float GetMovePromptVOLength();
     void PlayIntroVO();
     void QueueMovePromptVO();
+    void PlayMovePromptVO();
+    DataArray *GetMoveNameData(int);
 };

@@ -4,7 +4,10 @@
 #include "lazer/game/GameMode.h"
 #include "lazer/meta_ham/HamPanel.h"
 #include "math/Easing.h"
+#include "obj/Data.h"
+#include "obj/Msg.h"
 #include "obj/Object.h"
+#include "os/Debug.h"
 #include "ui/UIPanel.h"
 #include "utl/Symbol.h"
 
@@ -29,6 +32,16 @@ BEGIN_PROPSYNCS(BustAMovePanel)
 END_PROPSYNCS
 
 void BustAMovePanel::QueueMovePromptVO() { float vo_length = GetMovePromptVOLength(); }
+
+void BustAMovePanel::PlayMovePromptVO() {
+    int i = unk_0xA0;
+    Symbol vo;
+
+    DataArray *movedata = GetMoveNameData(unk_0x84);
+
+    vo = movedata->Sym(i + 2);
+    PlayVO(vo);
+}
 
 void BustAMovePanel::PlayIntroVO() {}
 
