@@ -3,7 +3,6 @@
 #include "hamobj/BustAMoveData.h"
 #include "hamobj/DancerSkeleton.h"
 #include "lazer/meta_ham/HamPanel.h"
-#include "obj/Data.h"
 
 class BustAMovePanel : public HamPanel {
 public:
