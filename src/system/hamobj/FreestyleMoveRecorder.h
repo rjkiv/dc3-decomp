@@ -24,6 +24,15 @@ public:
 
     void Poll();
     void Free();
+    void StartRecording();
+    void StartRecordingDancerTake();
+    void StopRecording();
+    void ClearRecording();
+    void StartPlayback(bool);
+    void StopPlayback();
+    void ClearDancerTake();
+    BaseSkeleton *GetLiveSkeleton();
+    void AssignStaticInstance();
 
     void SetVal44(int i) { unk44 = i; } // change once context found
 
@@ -56,3 +65,5 @@ private:
     FreeStyleFrameScores unke4[2];
     std::vector<JointPos> unk104;
 };
+
+extern FreestyleMoveRecorder *TheFreestyleMoveRecorder;
