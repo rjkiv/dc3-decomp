@@ -239,7 +239,9 @@ BEGIN_HANDLERS(HamProfile)
     HANDLE_SUPERCLASS(Profile)
 END_HANDLERS
 
-bool HamProfile::HasCheated() const { return TheProfileMgr.GetAllUnlocked(); }
+bool HamProfile::HasCheated() const {
+    return MetaPanel::sUnlockAll || TheProfileMgr.GetAllUnlocked();
+}
 
 bool HamProfile::IsUnsaved() const {
     if (HasCheated()) {
