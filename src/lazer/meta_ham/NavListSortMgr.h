@@ -10,7 +10,7 @@
 #include "ui/UIComponent.h"
 #include "ui/UIListCustom.h"
 #include "ui/UIListProvider.h"
-class NavListSortMgr : public UIListProvider, Hmx::Object, ContentMgr::Callback {
+class NavListSortMgr : public UIListProvider, Hmx::Object, public ContentMgr::Callback {
 public:
     NavListSortMgr(SongPreview &);
     virtual ~NavListSortMgr();
@@ -64,6 +64,9 @@ public:
     void ClearHeaders();
 
     bool IsInHeaderMode() { return mHeaderMode; }
+    bool EnteringHeaderMode() { return mEnteringHeaderMode; }
+    bool HeadersSelectable() { return mHeadersSelectable; }
+    std::vector<NavListSort *> Sorts() { return mSorts; };
 
 protected:
     std::vector<NavListSort *> mSorts; // 0x34
