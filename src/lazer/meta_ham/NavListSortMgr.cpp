@@ -1,12 +1,13 @@
 #include "NavListSortMgr.h"
 
 #include "NavListSort.h"
+#include "macros.h"
 #include "meta/SongPreview.h"
 #include "meta_ham/NavListNode.h"
+#include "obj/Data.h"
 #include "os/System.h"
 #include "utl/Std.h"
 #include "utl/Symbol.h"
-
 
 BEGIN_HANDLERS(NavListSortMgr)
     HANDLE_EXPR(first_data_index, mSorts.front()->GetNode(_msg->Sym(2)))
@@ -14,9 +15,9 @@ BEGIN_HANDLERS(NavListSortMgr)
     HANDLE_EXPR(is_disabled, !IsActive(_msg->Int(2)))
     HANDLE_EXPR(on_select, OnSelect(_msg->Int(2)))
     HANDLE_EXPR(on_select_done, OnSelectDone(_msg->Int(2)))
-    //on_cancel, move_on here
+    // on_cancel, move_on here
     HANDLE_EXPR(clear_saved_highlight, unk48 = _msg->Int(0))
-    //set_highlighted_ix
+    // set_highlighted_ix
     HANDLE_ACTION(get_highlight_item, GetHighlightItem())
     HANDLE_ACTION(next_sort, SetSort(_msg->Sym(2)))
     HANDLE_ACTION(set_sort_index, SetSort(_msg->Int(2)))
@@ -39,11 +40,20 @@ BEGIN_HANDLERS(NavListSortMgr)
     HANDLE_EXPR(exiting_header_mode, mExitingHeaderMode)
     HANDLE_EXPR(sort_with_headers, _msg->Int(2))
     HANDLE_EXPR(is_data_header, mHeadersB[_msg->Int(2)])
-    HANDLE_ACTION(get_header_symbol_from_child_symbol, GetHeaderSymbolFromChildSymbol(_msg->Sym(2)))
+    HANDLE_ACTION(
+        get_header_symbol_from_child_symbol, GetHeaderSymbolFromChildSymbol(_msg->Sym(2))
+    )
     HANDLE_ACTION(get_header_count, mHeadersB.size())
-    HANDLE_ACTION(get_header_index_from_list_index, GetHeaderIndexFromListIndex(_msg->Int(2)))
-    HANDLE_ACTION(get_list_index_from_header_index, GetListIndexFromHeaderIndex(_msg->Int(2)))
-    HANDLE_ACTION(get_header_index_from_child_list_index, GetHeaderIndexFromChildListIndex(_msg->Int(2)))
+    HANDLE_ACTION(
+        get_header_index_from_list_index, GetHeaderIndexFromListIndex(_msg->Int(2))
+    )
+    HANDLE_ACTION(
+        get_list_index_from_header_index, GetListIndexFromHeaderIndex(_msg->Int(2))
+    )
+    HANDLE_ACTION(
+        get_header_index_from_child_list_index,
+        GetHeaderIndexFromChildListIndex(_msg->Int(2))
+    )
     HANDLE_ACTION(do_uncollapse, DoUncollapse())
     HANDLE_ACTION(get_first_child_symbol_from_header_symbol, _msg->Sym(2))
     HANDLE_SUPERCLASS(UIListProvider)
@@ -51,10 +61,15 @@ BEGIN_HANDLERS(NavListSortMgr)
 END_HANDLERS
 
 NavListSortMgr::NavListSortMgr(SongPreview &songprev)
-    :  mSongPreview(&songprev), mHeaderMode(0),
-      mEnteringHeaderMode(0), mExitingHeaderMode(0), mHeadersB(0), mHeadersSelectable(0), unk70(0) {};
+    : mSongPreview(&songprev), mCurrentSortIdx(0), unk48(false), mHeaderMode(0),
+      mEnteringHeaderMode(0), mExitingHeaderMode(0), mHeadersSelectable(0), unk70(0) {
+    unk44 = new DataArray(0);
+};
 
-NavListSortMgr::~NavListSortMgr() {}
+NavListSortMgr::~NavListSortMgr() {
+    DeleteAll(mSorts);
+    unk44->Release();
+}
 
 void NavListSortMgr::StopPreview() { mSongPreview->Start(gNullStr, 0); }
 
@@ -91,9 +106,7 @@ Symbol NavListSortMgr::GetHeaderSymbolFromChildSymbol(Symbol sym) {
     return sym;
 }
 
-NavListSort *NavListSortMgr::GetCurrentSort() {
-    return mSorts[mCurrentSortIdx];
-}
+NavListSort *NavListSortMgr::GetCurrentSort() { return mSorts[mCurrentSortIdx]; }
 
 Symbol NavListSortMgr::GetCurrentSortName() {
     NavListSort *pCurrentSort = mSorts[mCurrentSortIdx];
@@ -125,7 +138,7 @@ void NavListSortMgr::SetSort(Symbol sym) {
 }
 
 void NavListSortMgr::SetHeaderUncollapsed(Symbol sym) {
-    FOREACH(it, unk70) {
+    FOREACH (it, unk70) {
         if (*it == sym) {
             return;
         }
@@ -134,7 +147,7 @@ void NavListSortMgr::SetHeaderUncollapsed(Symbol sym) {
 }
 
 void NavListSortMgr::SetHeaderCollapsed(Symbol sym) {
-    FOREACH(it, unk70) {
+    FOREACH (it, unk70) {
         if (*it == sym) {
             unk70.erase(it);
             return;
@@ -143,7 +156,7 @@ void NavListSortMgr::SetHeaderCollapsed(Symbol sym) {
 }
 
 bool NavListSortMgr::IsHeaderCollapsed(Symbol sym) {
-    FOREACH(it, unk70) {
+    FOREACH (it, unk70) {
         if (*it == sym) {
             break;
         }
@@ -153,7 +166,7 @@ bool NavListSortMgr::IsHeaderCollapsed(Symbol sym) {
 
 bool NavListSortMgr::IsIndexHeader(int idx) {
     if (idx >= 0 && mHeadersA.size() >= idx) {
-        return 1 + mHeadersA[idx] & true;
+        return mHeadersA[idx] != 0;
     }
     return false;
 }
@@ -202,7 +215,7 @@ int NavListSortMgr::GetListIndexFromHeaderIndex(int idx) {
         return 0;
     }
     if (size > 0) {
-        return mHeadersB[size-1];
+        return mHeadersB[size - 1];
     }
     return 0;
 }
@@ -223,15 +236,12 @@ void NavListSortMgr::Custom(int i1, int i2, UIListCustom *uilist, Hmx::Object *o
 RndMat *NavListSortMgr::Mat(int i1, int i2, UIListMesh *mesh) const {
     if (0 > i2 || i2 >= NumData()) {
         return 0;
-    }
-    else {
+    } else {
         return mSorts[mCurrentSortIdx]->GetListFromIdx(i2)->Mat(mesh);
     }
 }
 
-int NavListSortMgr::NumData() const {
-    return mSorts[mCurrentSortIdx]->GetDataCount();
-}
+int NavListSortMgr::NumData() const { return mSorts[mCurrentSortIdx]->GetDataCount(); }
 
 void NavListSortMgr::ClearIconLabels() {
     for (int i = NumData(), j = 0; i != 0; i--, j++) {
@@ -282,7 +292,7 @@ Symbol NavListSortMgr::DataSymbol(int i1) const {
 }
 
 void NavListSortMgr::OnUnload() {
-    FOREACH(it, mSorts) {
+    FOREACH (it, mSorts) {
         (*it)->DeleteItemList();
         (*it)->DeleteTree();
     }

@@ -2,9 +2,11 @@
 #include "meta_ham/HamPanel.h"
 #include "meta_ham/HamProfile.h"
 #include "obj/Data.h"
+#include "obj/Dir.h"
 #include "obj/Object.h"
 #include "os/PlatformMgr.h"
 #include "stl/_vector.h"
+#include "ui/PanelDir.h"
 
 class ChooseProfilePanel : public HamPanel {
 public:
@@ -23,7 +25,7 @@ public:
     HamProfile *GetProfile(int);
     DataNode OnMsg(SigninChangedMsg const &);
 
-    int unk3c;
+    ObjectDir *unk3c;
     std::vector<int> mPadNums; // 0x40
 
 private:

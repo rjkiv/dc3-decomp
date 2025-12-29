@@ -46,6 +46,8 @@ public:
     int NumTrackedSkeletons() const;
     void EnterControllerMode(bool);
 
+    SkeletonChooser *GetSkeletonChooser() { return mSkelChooser; }
+
     bool mVoiceControlEnabled; // 0x30
     bool unk_0x31, unk_0x32;
     ObjPtr<RndAnimatable> unk_0x34; // 0x34

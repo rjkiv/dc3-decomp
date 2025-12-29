@@ -5,10 +5,10 @@
 #include "lazer/meta_ham/ProfileMgr.h"
 
 BEGIN_HANDLERS(WeightInputProvider)
-HANDLE_EXPR(get_weight, GetWeight(_msg->Int(2)))
-HANDLE_EXPR(get_index_for_weight, GetIndexForWeight(_msg->Float(2)))
-HANDLE_EXPR(get_kg_for_pounds, GetKgForPounds(_msg->Float(2)))
-HANDLE_EXPR(get_pounds_for_kgs, GetPoundsForKgs(_msg->Float(2)))
+    HANDLE_EXPR(get_weight, GetWeight(_msg->Int(2)))
+    HANDLE_EXPR(get_index_for_weight, GetIndexForWeight(_msg->Float(2)))
+    HANDLE_EXPR(get_kg_for_pounds, GetKgForPounds(_msg->Float(2)))
+    HANDLE_EXPR(get_pounds_for_kgs, GetPoundsForKgs(_msg->Float(2)))
 END_HANDLERS
 
 WeightInputProvider::WeightInputProvider() {
@@ -28,8 +28,7 @@ float WeightInputProvider::GetWeight(int i_iIndex) const {
     MILO_ASSERT((0) <= (i_iIndex) && (i_iIndex) < (NumData()), 0x76);
     if (TheProfileMgr.GetUnk4c() != 0) {
         return i_iIndex * 5.0f + 45.0f;
-    }
-    else {
+    } else {
         return i_iIndex * 2.5f + 20.0f;
     }
 }
@@ -52,7 +51,9 @@ float WeightInputProvider::GetPoundsForKgs(float kgs) const {
     return result;
 }
 
-void WeightInputProvider::Text(int i1, int i2, UIListLabel *listlabel, UILabel *label) const {
+void WeightInputProvider::Text(
+    int i1, int i2, UIListLabel *listlabel, UILabel *label
+) const {
     static Symbol weight_done("weight_done");
     HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
     MILO_ASSERT(pProfile, 0x22);
@@ -62,37 +63,31 @@ void WeightInputProvider::Text(int i1, int i2, UIListLabel *listlabel, UILabel *
         if (units == 0) {
             static Symbol weight_pounds("weight_pounds");
             label->SetTokenFmt(weight_pounds, weight);
-        }
-        else {
+        } else {
             static Symbol weight_kgs("weight_kgs");
             label->SetTokenFmt(weight_kgs, weight);
         }
-    }
-    else {
-        if (listlabel->Matches("checkbox")) {
-            float pounds = pProfile->GetFitnessPounds();
-            if (units == 1) {
-                pounds = GetKgForPounds(pounds);
-            }
-            if (pounds == weight) {
-                label->SetIcon('b');
-            }
-            else {
-                label->SetTextToken(gNullStr);
-            }
+    } else if (listlabel->Matches("checkbox")) {
+        float pounds = pProfile->GetFitnessPounds();
+        if (units == 1) {
+            pounds = GetKgForPounds(pounds);
+        }
+        if (pounds == weight) {
+            label->SetIcon('b');
+        } else {
+            label->SetTextToken(gNullStr);
         }
     }
 }
 
-
 WeightInputPanel::WeightInputPanel() {};
 
 BEGIN_HANDLERS(WeightInputPanel)
-HANDLE_ACTION(set_preferred_units, SetPreferredUnits(_msg->Sym(2)))
-HANDLE_EXPR(get_preferred_units, GetPreferredUnits())
-HANDLE_EXPR(get_weight, GetWeight())
-HANDLE_ACTION(set_weight, SetWeight(_msg->Float(2)))
-HANDLE_SUPERCLASS(HamPanel)
+    HANDLE_ACTION(set_preferred_units, SetPreferredUnits(_msg->Sym(2)))
+    HANDLE_EXPR(get_preferred_units, GetPreferredUnits())
+    HANDLE_EXPR(get_weight, GetWeight())
+    HANDLE_ACTION(set_weight, SetWeight(_msg->Float(2)))
+    HANDLE_SUPERCLASS(HamPanel)
 END_HANDLERS
 
 void WeightInputPanel::SetWeight(float weight) {

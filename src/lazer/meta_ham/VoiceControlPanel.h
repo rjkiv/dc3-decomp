@@ -22,6 +22,8 @@ public:
 
     virtual void ContentMounted(char const *, char const *);
 
+    NEW_OBJ(VoiceControlPanel)
+
     VoiceControlPanel();
     void SetRules(bool);
     DataNode OnMsg(UITransitionCompleteMsg const &);

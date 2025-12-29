@@ -1,6 +1,8 @@
 #include "meta_ham/DepthBuffer.h"
+#include "meta_ham/HamUI.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
+#include "os/Debug.h"
 #include "ui/UIPanel.h"
 
 DepthBuffer::DepthBuffer() : unk2c(0), mState(kDepthBuffer_Normal), unk34(0) {}

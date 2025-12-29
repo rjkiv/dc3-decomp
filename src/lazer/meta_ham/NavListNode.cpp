@@ -1,7 +1,9 @@
 #include "meta_ham/NavListNode.h"
 #include "game/GameMode.h"
+#include "meta_ham/HamStarsDisplay.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
+#include "os/Debug.h"
 #include "rndobj/Mat.h"
 #include "ui/UILabel.h"
 #include "ui/UIListCustom.h"
@@ -58,7 +60,9 @@ void NavListSortNode::Text(UIListLabel *listLabel, UILabel *label) const {
 
 void NavListSortNode::Custom(UIListCustom *custom, Hmx::Object *obj) const {
     if (custom->Matches("stars")) {
-        // uses HamStarDisplay
+        HamStarsDisplay *pStarsDisplay = dynamic_cast<HamStarsDisplay *>(obj);
+        MILO_ASSERT(pStarsDisplay, 0xec);
+        pStarsDisplay->SetShowing(false);
     }
 }
 

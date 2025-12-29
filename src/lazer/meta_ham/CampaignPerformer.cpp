@@ -454,7 +454,7 @@ int CampaignPerformer::GetEraStarsEarned(Symbol era) const {
 }
 
 Symbol CampaignPerformer::GetFirstEra() const {
-    CampaignEra *pEra = TheCampaign->m_vEras.front();
+    CampaignEra *pEra = TheCampaign->GetFrontEra();
     MILO_ASSERT(pEra, 0x32);
     return pEra->GetName();
 }

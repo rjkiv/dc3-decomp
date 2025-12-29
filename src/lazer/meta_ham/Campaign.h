@@ -84,8 +84,14 @@ public:
     void CheatReloadData();
     int NumCampaignSongMoves(Symbol s);
 
+    CampaignEra *GetFrontEra() { return m_vEras.front(); }
+    CampaignEra *GetBackEra() { return m_vEras.back(); }
+    CampaignEra *GetEraAtIndex(int i) { return m_vEras[i]; }
+    bool IsErasEmpty() { return m_vEras.empty(); }
+
     static char const *sCampaignStateDesc[];
 
+protected:
     CampaignState unk30;
     bool unk34;
     std::map<Symbol, int> unk38;
@@ -108,7 +114,6 @@ public:
     std::map<Symbol, bool> unkc0;
     ObjectDir *unkd8;
 
-protected:
     CampaignEra *GetCampaignEra(int) const;
     void LoadHamMoves(Symbol);
     HamMove *GetHamMove(Symbol, int);

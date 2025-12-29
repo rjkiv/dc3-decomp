@@ -32,7 +32,6 @@ public:
     // ContentMgr::Callback
     virtual void ContentMounted(const char *, const char *);
 
-
     void StopPreview();
     void SetHeaderMode(bool);
     void SetEnteringHeaderMode(bool);

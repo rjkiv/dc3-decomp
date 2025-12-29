@@ -115,6 +115,7 @@ public:
     bool GuideShowing() { return mGuideShowing; }
     bool IsConnected() { return mConnected; }
     bool ScreenSaver() { return mScreenSaver; }
+    int SignInMask() const { return mSigninMask; }
     void QueueEnumJob(Job *);
     void CancelEnumJob(int);
     void Init();

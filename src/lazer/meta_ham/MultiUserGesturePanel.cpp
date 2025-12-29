@@ -1,16 +1,22 @@
 #include "meta_ham/MultiUserGesturePanel.h"
 #include "HamPanel.h"
 #include "MultiUserGesturePanel.h"
+#include "flow/PropertyEventProvider.h"
 #include "game/GameMode.h"
+#include "gesture/BaseSkeleton.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
 #include "meta_ham/CharacterProvider.h"
 #include "meta_ham/CrewProvider.h"
 #include "meta_ham/DifficultyProvider.h"
+#include "meta_ham/HamUI.h"
 #include "meta_ham/MetaPerformer.h"
 #include "meta_ham/OutfitProvider.h"
+#include "meta_ham/SkeletonChooser.h"
 #include "meta_ham/TexLoadPanel.h"
 #include "meta_ham/VenueProvider.h"
+#include "obj/Data.h"
+#include "obj/Msg.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/JoypadMsgs.h"
@@ -160,6 +166,81 @@ void MultiUserGesturePanel::SetDefaultCharacter(int idx) {
             pPlayerData->SetPreferredOutfit(gNullStr);
         }
     }
+}
+
+void MultiUserGesturePanel::SetRandomOutfit(int idx) {
+    int index = GetPlayerIndex(idx);
+    HamPlayerData *pPlayerData = TheGameData->Player(index);
+    MILO_ASSERT(pPlayerData, 0x295);
+    const OutfitProvider *pOutfitProvider = GetOutfitProvider(idx);
+    MILO_ASSERT(pOutfitProvider, 0x298);
+    Symbol randOutfit = pOutfitProvider->GetRandomAvailableOutfit();
+    pPlayerData->SetOutfit(randOutfit);
+}
+
+void MultiUserGesturePanel::SetRandomCrew(int idx) { // registers are off here
+    static Symbol random_crew("random_crew");
+    int index = GetPlayerIndex(idx);
+    HamPlayerData *pPlayerData = TheGameData->Player(index == 0);
+    MILO_ASSERT(pPlayerData, 0x22e);
+    HamPlayerData *pOtherPlayerData = TheGameData->Player(index);
+    MILO_ASSERT(pOtherPlayerData, 0x230);
+    const CrewProvider *pCrewProvider = GetCrewProvider(idx);
+    MILO_ASSERT(pCrewProvider, 0x233);
+    Symbol symRandomCrew = pCrewProvider->GetRandomAvailableCrew();
+    MILO_ASSERT(symRandomCrew != gNullStr, 0x236);
+    pPlayerData->SetCrew(symRandomCrew);
+    const CharacterProvider *pCharacterProvider = GetCharProvider(idx);
+    MILO_ASSERT(pCharacterProvider, 0x23b);
+    const_cast<CharacterProvider *>(pCharacterProvider)->UpdateList();
+    SetRandomCharacter(idx);
+}
+
+void MultiUserGesturePanel::SetCrew(Symbol crew, int idx) { // registers are off here
+    int index = GetPlayerIndex(idx);
+    HamPlayerData *pPlayerData = TheGameData->Player(index == 0);
+    MILO_ASSERT(pPlayerData, 0x131);
+    HamPlayerData *pOtherPlayerData = TheGameData->Player(index);
+    MILO_ASSERT(pOtherPlayerData, 0x133);
+    Symbol s = "";
+    if (crew != s && pOtherPlayerData->Crew() == crew) {
+        pOtherPlayerData->SetCrew(pPlayerData->Crew());
+        pOtherPlayerData->SetCharacter(pPlayerData->Char());
+        pOtherPlayerData->SetOutfit(pPlayerData->Outfit());
+        RefreshUI();
+    }
+    MetaPerformer *performer = MetaPerformer::Current();
+    MILO_ASSERT(performer, 0x143);
+    pPlayerData->SetCrew(crew);
+    Symbol crewCheck = "";
+    if (crew != crewCheck) {
+        const CharacterProvider *pCharacterProvider = GetCharProvider(idx);
+        MILO_ASSERT(pCharacterProvider, 0x14a);
+        const_cast<CharacterProvider *>(pCharacterProvider)->UpdateList();
+        SetRandomCharacter(idx);
+    }
+}
+
+void MultiUserGesturePanel::RefreshUI() {
+    static Message refresh_ui("refresh_ui");
+    TheUI->Handle(refresh_ui, false);
+}
+
+int MultiUserGesturePanel::GetPlayerIndex(int idx) const {
+    SkeletonChooser *pSkeletonChooser = TheHamUI.GetShellInput()->GetSkeletonChooser();
+    MILO_ASSERT(pSkeletonChooser, 0x68);
+    SkeletonSide playerSide = pSkeletonChooser->GetPlayerSide(0);
+    const DataNode *prop = TheHamProvider->Property("is_in_party_mode", true);
+    int check = prop->Int();
+    if (check == 0) {
+        check = playerSide - 1;
+        if (idx == 0) {
+            idx = check - ((playerSide - 2) + (playerSide - 1 == 0));
+        } else {
+            idx = playerSide == 0;
+        }
+    }
+    return idx;
 }
 
 BEGIN_HANDLERS(MultiUserGesturePanel)

@@ -4,9 +4,11 @@
 #include "meta_ham/HamPanel.h"
 #include "meta_ham/HamProfile.h"
 #include "obj/Data.h"
+#include "obj/Dir.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/PlatformMgr.h"
+#include "ui/PanelDir.h"
 #include "ui/UILabel.h"
 #include "ui/UIListLabel.h"
 #include "utl/Symbol.h"
@@ -36,7 +38,7 @@ void ChooseProfilePanel::Text(
     int tag = mPadNums[data];
     if (uiListLabel->Matches("gamertag")) {
         if (data == -1) {
-            // something with applabel
+            app_label->SetTextToken(choose_save_data_sign_in);
         } else {
             app_label->SetUserName(tag);
         }
@@ -46,6 +48,20 @@ void ChooseProfilePanel::Text(
 DataNode ChooseProfilePanel::OnMsg(SigninChangedMsg const &s) {
     UpdateProfiles();
     return DataNode(6);
+}
+
+void ChooseProfilePanel::UpdateProfiles() {
+    mPadNums.clear();
+    PanelDir *panDir = dynamic_cast<PanelDir *>(DataDir());
+    static Symbol choose_save_data_sign_in("choose_save_data_sign_in");
+    int signInMask = ThePlatformMgr.SignInMask();
+    for (int i = 0; i <= signInMask; i++) {
+        if (!ThePlatformMgr.IsPadAGuest(i))
+            mPadNums.push_back(i);
+    }
+    mPadNums.push_back(-1);
+    static Message refresh_ui("refresh_ui");
+    unk3c->Handle(refresh_ui, true);
 }
 
 BEGIN_HANDLERS(ChooseProfilePanel)

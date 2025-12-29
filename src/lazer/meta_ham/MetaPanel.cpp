@@ -57,6 +57,7 @@
 #include "meta_ham/SongStatusMgr.h"
 #include "meta_ham/TitleProvider.h"
 #include "meta_ham/VoiceControlPanel.h"
+#include "meta_ham/VoiceInputPanel.h"
 #include "meta_ham/WeightInput.h"
 #include "obj/Data.h"
 #include "obj/DataFunc.h"
@@ -156,7 +157,7 @@ void MetaPanel::Init() {
     REGISTER_OBJ_FACTORY(PracticeChoosePanel)
     REGISTER_OBJ_FACTORY(VoiceControlPanel)
     REGISTER_OBJ_FACTORY(KinectSharePanel)
-    // REGISTER_OBJ_FACTORY(VoiceInputPanel)
+    REGISTER_OBJ_FACTORY(VoiceInputPanel)
     DataRegisterFunc("toggle_unlock_all", ToggleUnlockAll);
     DataRegisterFunc("toggle_motd_cheat", ToggleMotdCheat);
 }

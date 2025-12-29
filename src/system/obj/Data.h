@@ -528,7 +528,7 @@ public:
     ExecuteScript(int firstCmd, Hmx::Object *_this, const DataArray *_args, int firstArg);
     const DataNode &Evaluate(int i) const { return Node(i).Evaluate(); }
 
-    POOL_OVERLOAD(DataArray, 0xD2);
+    POOL_OVERLOAD(DataArray, 0xd2);
 };
 
 inline TextStream &operator<<(TextStream &ts, const DataNode &node) {

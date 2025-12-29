@@ -7,6 +7,7 @@
 #include "obj/Msg.h"
 #include "obj/Object.h"
 #include "rndobj/Group.h"
+#include "rndobj/PropAnim.h"
 #include "rndobj/Tex.h"
 #include "rndobj/Text.h"
 #include "ui/UIPanel.h"
@@ -119,7 +120,15 @@ void LetterboxPanel::ExitBlacklightMode(bool b) {
         f->Activate();
     if (unk45 != false)
         unk45 = false;
+    DataNode handle;
     RndText::SetBlacklightModeEnabled(false);
+    if (b) {
+        static Message exit_blacklight_mode("exit_blacklight_mode");
+        handle = Handle(exit_blacklight_mode, false);
+    } else {
+        static Message exit_blacklight_mode("exit_blacklight_mode");
+        handle = Handle(exit_blacklight_mode, false);
+    }
 }
 
 bool LetterboxPanel::ShouldHideLetterbox() const {
@@ -135,6 +144,58 @@ bool LetterboxPanel::ShouldShowHandHelp() const {
         return true;
     }
     return false;
+}
+
+void LetterboxPanel::ToggleBlacklightMode(bool toggle) {
+    if (toggle) {
+        SetBlacklightModeImmediately(mIsBlacklightMode == false);
+        return;
+    }
+    SetBlacklightMode(mIsBlacklightMode == false);
+}
+
+void LetterboxPanel::SetBlacklightMode(bool b) {
+    if (b != mIsBlacklightMode) {
+        if (!ShouldHideLetterbox() || !b) {
+            if (!InBlacklightTransition()) {
+                HandleType(Message("on_toggle_blacklight", b));
+                mIsBlacklightMode = b;
+                if (b) {
+                    EnterBlacklightMode();
+                    unk7c = 1;
+                    unk48.Restart();
+                    int temp = unk78;
+                    unk80 = temp;
+                } else
+                    ExitBlacklightMode(false);
+            }
+        }
+    }
+    if (unk7c == 2) {
+        unk48.Restart();
+        unk80 = unk78;
+    }
+}
+
+void LetterboxPanel::SetBlacklightModeImmediately(bool b) {
+    if (b != mIsBlacklightMode) {
+        if (!ShouldHideLetterbox() || !b) {
+            HandleType(Message("on_toggle_blacklight", b));
+            mIsBlacklightMode = b;
+            if (b) {
+                EnterBlacklightMode();
+                unk7c = 1;
+                unk48.Restart();
+                int temp = unk78;
+                unk80 = temp;
+            } else
+                ExitBlacklightMode(true);
+        }
+    }
+    if (unk7c == 2) {
+        unk48.Restart();
+        unk80 = unk78;
+    }
 }
 
 BEGIN_HANDLERS(LetterboxPanel)

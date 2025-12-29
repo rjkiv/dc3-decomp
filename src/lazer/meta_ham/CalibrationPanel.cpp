@@ -2,16 +2,19 @@
 #include "macros.h"
 #include "meta_ham/HamPanel.h"
 #include "meta_ham/ProfileMgr.h"
+#include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "rndobj/Dir.h"
+#include "rndobj/Group.h"
 #include "synth/Stream.h"
 #include "synth/Synth.h"
 #include "ui/UILabel.h"
 #include "ui/UIListLabel.h"
 #include "ui/UIPanel.h"
 #include "utl/Symbol.h"
+#include <cmath>
 
 #pragma region CalibrationOffsetProvider
 
@@ -43,10 +46,26 @@ void CalibrationOffsetProvider::Text(
     if (uiListLabel->Matches("offset")) {
         static Symbol cal_offset("cal_offset");
         uiLabel->SetTokenFmt(cal_offset, mOffsets[data]);
-    } else if (uiListLabel->Matches("label")) {
+        return;
+    }
+
+    if (uiListLabel->Matches("label")) {
+        uiLabel->SetTextToken(gNullStr); // why
         static Symbol cal_default("cal_default");
+        if (mOffsets[data] != 0) {
+            uiLabel->SetTextToken(gNullStr);
+        } else {
+            uiLabel->SetTextToken(cal_default);
+        }
     } else if (uiListLabel->Matches("check")) {
         static Symbol chosen_offset("chosen_offset");
+        const DataNode *node = unk3c->Property(chosen_offset, true);
+        int f = node->Float();
+        if (mOffsets[data] == f) {
+            uiLabel->SetIcon('b');
+            return;
+        }
+        uiLabel->SetTextToken(gNullStr);
     }
 }
 
