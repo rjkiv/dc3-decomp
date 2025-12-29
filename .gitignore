@@ -35,3 +35,6 @@ compile_commands.json
 *.exe
 *.pdb
 _CL_*
+
+# Doxygen output
+doxygen/
