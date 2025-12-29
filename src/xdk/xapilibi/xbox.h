@@ -139,6 +139,24 @@ DWORD XShowNuiMarketplaceUI(
 DWORD XShowMarketplaceUI(
     DWORD dwUserIndex, DWORD dwEntryPoint, QWORD qwOfferID, DWORD dwContentCategories
 );
+DWORD XShowNuiDeviceSelectorUI(
+    DWORD dwTrackingID,
+    DWORD dwUserIndex,
+    DWORD dwContentType,
+    DWORD dwContentFlags,
+    ULARGE_INTEGER uliBytesRequested,
+    DWORD *pDeviceID,
+    XOVERLAPPED *pOverlapped
+);
+DWORD XShowDeviceSelectorUI(
+    DWORD dwUserIndex,
+    DWORD dwContentType,
+    DWORD dwContentFlags,
+    ULARGE_INTEGER uliBytesRequested,
+    DWORD *pDeviceID,
+    XOVERLAPPED *pOverlapped
+);
+DWORD XGetGameRegion();
 
 #ifdef __cplusplus
 }

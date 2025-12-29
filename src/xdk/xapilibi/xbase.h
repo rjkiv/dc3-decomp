@@ -249,7 +249,6 @@ enum GOLD_UPGRADE_REASON {
 };
 
 typedef struct _XSHOWMARKETPLACEUI_PARAMS { /* Size=0xb8 */
-public:
     /* 0x0000 */ DWORD dwTrackingID;
     /* 0x0004 */ DWORD dwUserIndex;
     /* 0x0008 */ ULONGLONG UserXuid;
@@ -262,8 +261,8 @@ public:
     /* 0x0038 */ DWORD dwTitleId;
     /* 0x003c */ GOLD_UPGRADE_REASON eUpgradeReason;
     /* 0x0040 */ unsigned char bOnlineCountry;
-    /* 0x0044 */ MP_BILLING_ACCOUNT_INFO *pBillingInfo;
-    /* 0x0048 */ XOVERLAPPED *pOverlapped;
+    /* 0x0044 */ _MP_BILLING_ACCOUNT_INFO *pBillingInfo;
+    /* 0x0048 */ _XOVERLAPPED *pOverlapped;
     /* 0x004c */ LONG fNuiEnabled;
     /* 0x0050 */ GUID mediaId;
     /* 0x0060 */ DWORD dwMediaType;
@@ -273,6 +272,17 @@ public:
     /* 0x00ac */ LONG *phrResult;
     /* 0x00b0 */ void *pVoid;
 } XSHOWMARKETPLACEUI_PARAMS;
+
+typedef struct _XSHOWDEVICESELECTORUI_PARAMS { /* Size=0x28 */
+    /* 0x0000 */ DWORD dwTrackingID;
+    /* 0x0004 */ DWORD dwUserIndex;
+    /* 0x0008 */ DWORD dwContentType;
+    /* 0x000c */ DWORD dwContentFlags;
+    /* 0x0010 */ _ULARGE_INTEGER uliBytesRequested;
+    /* 0x0018 */ DWORD *pDeviceID;
+    /* 0x001c */ _XOVERLAPPED *pOverlapped;
+    /* 0x0020 */ BOOL fNuiEnabled;
+} XSHOWDEVICESELECTORUI_PARAMS;
 
 #ifdef __cplusplus
 }

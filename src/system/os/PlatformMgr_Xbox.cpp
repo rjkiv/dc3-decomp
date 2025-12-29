@@ -175,3 +175,35 @@ void PlatformMgr::ShowOfferUI(int padNum) {
         }
     }
 }
+
+DWORD PlatformMgr::ShowDeviceSelectorUI(
+    DWORD userIndex,
+    DWORD contentType,
+    DWORD contentFlags,
+    ULARGE_INTEGER bytesRequested,
+    DWORD *deviceID,
+    XOVERLAPPED *overlapped
+) {
+    unsigned long ul;
+    unsigned long ret;
+
+    if (sXShowCallback(ul)) {
+        ret = XShowNuiDeviceSelectorUI(
+            ul, userIndex, contentType, contentFlags, bytesRequested, deviceID, overlapped
+        );
+    } else {
+        ret = XShowDeviceSelectorUI(
+            userIndex, contentType, contentFlags, bytesRequested, deviceID, overlapped
+        );
+    }
+
+    return ret;
+}
+
+void PlatformMgr::RegionInit() {
+    if (XGetGameRegion() != 0xFF) {
+        SetRegion(kRegionEurope);
+    } else {
+        SetRegion(kRegionNA);
+    }
+}
