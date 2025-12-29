@@ -53,8 +53,9 @@ SongSortByDiff::SongSortByDiff() {
 NavListShortcutNode *SongSortByDiff::NewShortcutNode(NavListItemNode *node) const {
     DifficultyCmp *diffcmp = (DifficultyCmp *)node;
     int tier = diffcmp->mTier;
+    static Symbol no_part("no_part");
     DifficultyCmp *cmp = new DifficultyCmp(tier, 0, "");
-    Symbol sym = tier == -1 ? "no_part" : TheHamSongMgr.RankTierToken(tier);
+    Symbol sym = tier == -1 ? no_part : TheHamSongMgr.RankTierToken(tier);
     NavListShortcutNode *newNode = new NavListShortcutNode(cmp, sym, true);
     return newNode;
 }

@@ -34,6 +34,7 @@ public:
     virtual void Custom(UIListCustom *, Hmx::Object *) const;
     virtual Symbol Select();
 
+    void SetInPlaylist(bool);
     bool IsCoverSong(Symbol) const;
     bool IsMedley() const;
     bool IsFake() const;

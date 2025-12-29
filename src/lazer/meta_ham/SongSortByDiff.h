@@ -25,5 +25,5 @@ public:
     virtual NavListShortcutNode *NewShortcutNode(NavListItemNode *) const;
 
 protected:
-
+    const char *unk58; // 0x58 - shows up as 0x5c in asm so we off by 4bytes somewhere
 };

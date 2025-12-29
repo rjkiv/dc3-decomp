@@ -67,6 +67,10 @@ public:
     bool EnteringHeaderMode() { return mEnteringHeaderMode; }
     bool HeadersSelectable() { return mHeadersSelectable; }
     std::vector<NavListSort *> Sorts() { return mSorts; };
+    std::vector<int> GetHeadersA() { return mHeadersA; };
+    std::vector<int> GetHeadersB() { return mHeadersB; };
+    int GetHeadersBAtIdx(int idx) { return mHeadersB[idx]; };
+    int GetCurrentSortIdx() const { return mCurrentSortIdx; };
 
 protected:
     std::vector<NavListSort *> mSorts; // 0x34
