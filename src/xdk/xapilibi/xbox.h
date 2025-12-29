@@ -129,6 +129,16 @@ DWORD XUserAreUsersFriends(
     BOOL *pfResult,
     XOVERLAPPED *pOverlapped
 );
+DWORD XShowNuiMarketplaceUI(
+    DWORD dwTrackingID,
+    DWORD dwUserIndex,
+    DWORD dwEntryPoint,
+    QWORD qwOfferID,
+    DWORD dwContentCategories
+);
+DWORD XShowMarketplaceUI(
+    DWORD dwUserIndex, DWORD dwEntryPoint, QWORD qwOfferID, DWORD dwContentCategories
+);
 
 #ifdef __cplusplus
 }

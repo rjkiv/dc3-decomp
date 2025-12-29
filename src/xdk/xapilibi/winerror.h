@@ -18,6 +18,7 @@
 #define ERROR_IO_PENDING                0x03E5
 #define ERROR_MEDIA_CHANGED             0x0456
 #define ERROR_DEVICE_NOT_CONNECTED      0x048F
+#define ERROR_NO_SUCH_USER              0x0525       
 #define ERROR_FILE_CORRUPT              0x0570
 #define ERROR_DISK_CORRUPT              0x0571
 #define ERROR_DEVICE_REMOVED            0x0651

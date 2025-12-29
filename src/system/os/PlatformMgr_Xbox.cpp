@@ -3,6 +3,8 @@
 #include "xdk/XMP.h"
 #include "xdk/XNET.h"
 #include "xdk/NUI.h"
+#include "xdk/xapilibi/winerror.h"
+#include "xdk/xapilibi/xbox.h"
 
 namespace {
     int mSigninSameGuest;
@@ -61,25 +63,26 @@ bool PlatformMgr::HasKinectSharePrvilege() const {
 
 bool PlatformMgr::IsSmartGlassConnected() { return gNumSmartGlassClients > 0; }
 
-void PlatformMgr::SetPadContext(int i1, int i2, int i3) const {
-    if (i1 != -1 && ThePlatformMgr.IsSignedIn(i1)) {
-        XUserSetContext(i1, i2, i3);
+void PlatformMgr::SetPadContext(int padNum, int i2, int i3) const {
+    if (padNum != -1 && ThePlatformMgr.IsSignedIn(padNum)) {
+        XUserSetContext(padNum, i2, i3);
     }
 }
 
-void PlatformMgr::SetPadPresence(int i1, int i2) const {
-    if (i1 != -1 && ThePlatformMgr.IsSignedIn(i1)) {
-        XUserSetContext(i1, 0x8001, i2);
+void PlatformMgr::SetPadPresence(int padNum, int i2) const {
+    if (padNum != -1 && ThePlatformMgr.IsSignedIn(padNum)) {
+        XUserSetContext(padNum, 0x8001, i2);
     }
 }
 
-void PlatformMgr::ShowFriendsUI(int i1) {
+void PlatformMgr::ShowFriendsUI(int padNum) {
     unsigned long ul;
-    if (IsSignedIn(i1)) {
+
+    if (IsSignedIn(padNum)) {
         if (sXShowCallback(ul)) {
-            XShowNuiFriendsUI(ul, i1);
+            XShowNuiFriendsUI(ul, padNum);
         } else {
-            XShowFriendsUI(i1);
+            XShowFriendsUI(padNum);
         }
     }
 }
@@ -90,30 +93,34 @@ void PlatformMgr::SetBackgroundDownloadPriority(bool b1) {
 
 // int __cdecl ShowControllerRequiredUIThreaded(void)
 
-bool PlatformMgr::ShowPartyUI(int i1) {
+bool PlatformMgr::ShowPartyUI(int padNum) {
     unsigned long ul;
     unsigned long ret = 1;
-    if (IsSignedIn(i1)) {
+
+    if (IsSignedIn(padNum)) {
         if (sXShowCallback(ul)) {
-            ret = XShowNuiPartyUI(ul, i1);
+            ret = XShowNuiPartyUI(ul, padNum);
         } else {
-            ret = XShowPartyUI(i1);
+            ret = XShowPartyUI(padNum);
         }
     }
-    return ret;
+
+    return ret == 0;
 }
 
-bool PlatformMgr::ShowFitnessBodyProfileUI(int i1) {
+bool PlatformMgr::ShowFitnessBodyProfileUI(int padNum) {
     unsigned long ul;
     unsigned long ret = 1;
-    if (IsSignedIn(i1)) {
+
+    if (IsSignedIn(padNum)) {
         if (sXShowCallback(ul)) {
-            ret = XShowNuiFitnessBodyProfileUI(ul, i1);
+            ret = XShowNuiFitnessBodyProfileUI(ul, padNum);
         } else {
-            ret = XShowFitnessBodyProfileUI(i1);
+            ret = XShowFitnessBodyProfileUI(padNum);
         }
     }
-    return ret;
+
+    return ret == 0;
 }
 
 void PlatformMgr::EnableXMP() { XMPRestoreBackgroundMusic(); }
@@ -122,4 +129,49 @@ void PlatformMgr::DisableXMP() { XMPOverrideBackgroundMusic(); }
 void PlatformMgr::SetScreenSaver(bool b1) {
     mScreenSaver = b1;
     XEnableScreenSaver(b1);
+}
+
+bool PlatformMgr::IsSignedIntoLive(int padNum) const {
+    MILO_ASSERT(padNum >= 0, 0x671);
+
+    if (!IsSignedIn(padNum)) {
+        return false;
+    } else {
+        return (XUserGetSigninState(padNum) == eXUserSigninState_SignedInToLive);
+    }
+}
+
+bool PlatformMgr::IsPadAGuest(int padNum) const {
+    XUSER_SIGNIN_INFO signinInfo;
+
+    DWORD ret = XUserGetSigninInfo(padNum, 0, &signinInfo);
+
+    if (ret == ERROR_NO_SUCH_USER) {
+        return IsSignedIn(padNum);
+    } else {
+        MILO_ASSERT(ret != ERROR_SUCCESS, 0x929);
+
+        return signinInfo.dwInfoFlags >> 1 & 1;
+    }
+}
+
+void PlatformMgr::ShowOfferUI(int padNum) {
+    unsigned long ul;
+    unsigned long ret;
+
+    if (IsSignedIn(padNum)) {
+        if (sXShowCallback(ul)) {
+            ret = XShowNuiMarketplaceUI(
+                ul, padNum, XSHOWMARKETPLACEUI_ENTRYPOINT_CONTENTLIST_BACKGROUND, 0, -1
+            );
+        } else {
+            ret = XShowMarketplaceUI(
+                padNum, XSHOWMARKETPLACEUI_ENTRYPOINT_CONTENTLIST_BACKGROUND, 0, -1
+            );
+        }
+
+        if (ret != ERROR_SUCCESS) {
+            MILO_NOTIFY("XShowMarketplaceUI failed (0x%x)", ret);
+        }
+    }
 }
