@@ -133,6 +133,9 @@ typedef struct _XDEVICE_DATA { /* Size=0x50 */
 #define XCONTENT_MAX_DISPLAYNAME_LENGTH 128
 
 typedef struct _XCONTENT_DATA { /* Size=0x134 */
+    /* 0x0000 */ DWORD DeviceID;
+    /* 0x0004 */ DWORD dwContentType;
+    /* 0x0008 */ WCHAR szDisplayName[XCONTENT_MAX_DISPLAYNAME_LENGTH];
     /* 0x0108 */ CHAR szFileName[XCONTENT_MAX_FILENAME_LENGTH];
 } XCONTENT_DATA;
 
