@@ -1063,14 +1063,18 @@ namespace Hmx {
          */
         virtual bool SyncProperty(DataNode &_val, DataArray *_prop, int _i, PropOp _op);
         virtual void InitObject();
-        /** Saves this Object into a BinStream. */
+        /** Saves this Object into a BinStream.
+         * @param [in] bs The BinStream to save into.
+         */
         virtual void Save(BinStream &);
         /** Copy the contents of another Object into this Object based on the CopyType.
          * @param [in] o The other Object to copy from.
          * @param [in] ty The copy type.
          */
         virtual void Copy(const Hmx::Object *o, Hmx::Object::CopyType ty);
-        /** Loads this Object from a BinStream. */
+        /** Loads this Object from a BinStream.
+         * @param [in] bs The BinStream to load from.
+         */
         virtual void Load(BinStream &);
         /** Any routines to write relevant data to a BinStream before the main Save method
          * executes. */
