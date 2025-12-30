@@ -1,6 +1,7 @@
 #include "obj/Data.h"
 #include "os/Debug.h"
 #include "os/File.h"
+#include "os/PlatformMgr.h"
 #include "os/System.h"
 #include "xdk/XAPILIB.h"
 #include "xdk/XBDM.h"
@@ -57,58 +58,78 @@ Symbol GetSystemLanguage(Symbol s) {
     static Symbol cht("cht");
     static Symbol kor("kor");
     static Symbol jpn("jpn");
+
     unsigned long lang = ULSystemLanguage();
     unsigned long locale = ULSystemLocale();
+
     switch (locale) {
-    case XC_LOCALE_DENMARK:
-        if (IsSupportedLanguage(dan, false))
-            return dan;
-    case XC_LOCALE_FINLAND:
-        if (IsSupportedLanguage(fin, false))
-            return fin;
-    case XC_LOCALE_NETHERLANDS:
-        if (IsSupportedLanguage(dut, false))
-            return dut;
-    case XC_LOCALE_NORWAY:
-        if (IsSupportedLanguage(nor, false))
-            return nor;
     case XC_LOCALE_SWEDEN:
         if (IsSupportedLanguage(swe, false))
-            return swe;
+            s = swe;
+        break;
+    case XC_LOCALE_NORWAY:
+        if (IsSupportedLanguage(nor, false))
+            s = nor;
+        break;
+    case XC_LOCALE_NETHERLANDS:
+        if (IsSupportedLanguage(dut, false))
+            s = dut;
+        break;
+    case XC_LOCALE_FINLAND:
+        if (IsSupportedLanguage(fin, false))
+            s = fin;
+        break;
+    case XC_LOCALE_DENMARK:
+        if (IsSupportedLanguage(dan, false))
+            s = dan;
     default:
         break;
     }
 
     switch (lang) {
     case XC_LANGUAGE_ENGLISH:
-        if (locale == XC_LOCALE_BELGIUM && IsSupportedLanguage(dut, false))
-            return dut;
+        if (locale == XC_LOCALE_BELGIUM && IsSupportedLanguage(dut, false)) {
+            s = dut;
+        }
+        break;
     case XC_LANGUAGE_SCHINESE:
-        return eng;
+        s = eng;
+        break;
     case XC_LANGUAGE_JAPANESE:
-        return jpn;
+        s = jpn;
+        break;
     case XC_LANGUAGE_GERMAN:
-        return deu;
+        s = deu;
+        break;
     case XC_LANGUAGE_FRENCH:
-        return fre;
+        s = fre;
+        break;
     case XC_LANGUAGE_SPANISH:
         if (locale == XC_LOCALE_CHILE || locale == XC_LOCALE_COLOMBIA
             || locale == XC_LOCALE_MEXICO) {
-            return IsSupportedLanguage(mex, false) ? mex : esl;
+            if (IsSupportedLanguage(mex, false))
+                s = mex;
+            else
+                s = esl;
         }
         break;
     case XC_LANGUAGE_ITALIAN:
-        return ita;
+        s = ita;
+        break;
     case XC_LANGUAGE_KOREAN:
-        return kor;
+        s = kor;
+        break;
     case XC_LANGUAGE_TCHINESE:
-        return cht;
+        s = cht;
+        break;
     case XC_LANGUAGE_PORTUGUESE:
-        return ptb;
+        s = ptb;
+        break;
     case XC_LANGUAGE_POLISH:
-        return pol;
+        s = pol;
+        break;
     case XC_LANGUAGE_RUSSIAN:
-        return rus;
+        s = rus;
     default:
         break;
     }
@@ -235,7 +256,8 @@ Symbol GetSystemLocale(Symbol s) {
 }
 
 bool HongKongExceptionMet() {
-    if (ULSystemLanguage() == 8 && ULSystemLocale() == XC_LOCALE_HONG_KONG) {
+    if (ULSystemLanguage() == XC_LANGUAGE_TCHINESE
+        && ULSystemLocale() == XC_LOCALE_HONG_KONG) {
         return true;
     } else
         return false;
@@ -272,4 +294,30 @@ bool PlatformDebugBreak() {
         return true;
     }
     return false;
+}
+
+void ShowDirtyDiscError() {
+    unsigned long ul;
+
+    if (ThePlatformMgr.sXShowCallback(ul)) {
+        XShowNuiDirtyDiscErrorUI(ul, 0);
+    }
+
+    XShowDirtyDiscErrorUI(0);
+}
+
+void CaptureStackTrace(int p1, struct StackData *stackData, void *p3) {
+    stackData->mFailThreadStack[0] = 0;
+
+    DmCaptureStackBackTrace(p1, stackData);
+
+    memmove(stackData->mFailThreadStack, stackData->mFailThreadStack + 3, (p1 + -3) * 4);
+
+    if (p3 != 0) {
+        memmove(
+            stackData->mFailThreadStack + 2,
+            stackData->mFailThreadStack + 8,
+            (p1 + -8) * 4
+        );
+    }
 }

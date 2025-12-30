@@ -157,6 +157,8 @@ DWORD XShowDeviceSelectorUI(
     XOVERLAPPED *pOverlapped
 );
 DWORD XGetGameRegion();
+__declspec(noreturn) DWORD XShowNuiDirtyDiscErrorUI(DWORD dwTrackingID, DWORD dwUserIndex);
+__declspec(noreturn) DWORD XShowDirtyDiscErrorUI(DWORD dwUserIndex);
 
 #ifdef __cplusplus
 }
