@@ -12,7 +12,9 @@
 #include "meta/MemcardMgr.h"
 #include "meta/Profile.h"
 #include "meta_ham/AccomplishmentManager.h"
+#include "meta_ham/Challenges.h"
 #include "meta_ham/HamProfile.h"
+#include "meta_ham/MetaPanel.h"
 #include "meta_ham/ShellInput.h"
 #include "meta_ham/SkeletonChooser.h"
 #include "obj/Data.h"
@@ -28,6 +30,7 @@
 #include "synth/FxSend.h"
 #include "synth/Synth.h"
 #include "utl/MemMgr.h"
+#include "utl/Std.h"
 #include "utl/Symbol.h"
 #include "game/HamUser.h"
 
@@ -740,4 +743,30 @@ bool ProfileMgr::HasActiveProfileWithInvalidSaveData() const {
             return true;
     }
     return false;
+}
+
+bool ProfileMgr::IsUnlockableContent(Symbol s) const {
+    return TheAccomplishmentMgr->IsUnlockableAsset(s);
+}
+
+void ProfileMgr::UploadDeferredFlaunt() {
+    if (!unka8)
+        return;
+    unka8 = false;
+    TheChallenges->UploadFlauntForAll(true);
+}
+
+HamProfile *ProfileMgr::GetNonActiveProfile() const {
+    HamProfile *pActiveProfile = GetActiveProfile(false);
+    if (pActiveProfile) {
+        for (int i = 0; i <= 1; i++) {
+            HamPlayerData *pOtherPlayer = TheGameData->Player(i);
+            MILO_ASSERT(pOtherPlayer, 0x595);
+            HamProfile *pProfile =
+                TheProfileMgr.GetProfileFromPad(pOtherPlayer->PadNum());
+            if (pProfile && pProfile->HasValidSaveData() && pProfile != pActiveProfile)
+                return pProfile;
+        }
+    }
+    return nullptr;
 }

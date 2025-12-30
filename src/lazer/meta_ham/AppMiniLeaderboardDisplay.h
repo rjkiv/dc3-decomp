@@ -1,7 +1,13 @@
 #pragma once
 #include "hamobj/MiniLeaderboardDisplay.h"
+#include "net/DingoSvr.h"
+#include "net_ham/LeaderboardJobs.h"
+#include "net_ham/RCJobDingo.h"
+#include "obj/Data.h"
 #include "obj/Object.h"
 #include "ui/UIListProvider.h"
+#include "ui/UIListWidget.h"
+#include "utl/Symbol.h"
 
 class AppMiniLeaderboardDisplay : public MiniLeaderboardDisplay, public UIListProvider {
 public:
@@ -25,10 +31,21 @@ public:
 
     NEW_OBJ(AppMiniLeaderboardDisplay)
 
+    bool UpdateLeaderboard(Symbol);
+
 protected:
+    void UpdateData(GetMiniLeaderboardJob *);
+    void UpdateLeaderboardOnline(int);
+    void ClearData();
+    DataNode OnMsg(ServerStatusChangedMsg const &);
+    DataNode OnMsg(RCJobCompleteMsg const &);
+
     int unk60;
-    int unk64;
+    UIList *mLeaderboardList; // 0x64
     int unk68;
     float unk6c;
-    std::vector<AppMiniLeaderboardDisplay> unk70;
+    std::vector<LeaderboardRow> unk70;
+
+private:
+    void UpdateSelfInRows();
 };

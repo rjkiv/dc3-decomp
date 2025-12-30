@@ -1,4 +1,5 @@
 #include "meta_ham/CampaignMasterQuestSongSelectPanel.h"
+#include "MQSongSortMgr.h"
 #include "TexLoadPanel.h"
 #include "meta_ham/MetaPerformer.h"
 #include "obj/Object.h"

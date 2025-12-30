@@ -59,6 +59,8 @@ public:
     String GetUtilityImage() { return unkc0; }
     String GetUtilitySound() { return unkc8; }
     String GetMiscImage() { return unkd0; }
+    int GetUnk88() { return unk88; }
+    void SetUnk88(int i) { unk88 = i; }
 
 private:
     static const String kServerVer;

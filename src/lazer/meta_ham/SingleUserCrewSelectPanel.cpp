@@ -1,5 +1,6 @@
 #include "meta_ham/SingleUserCrewSelectPanel.h"
 #include "HamPanel.h"
+#include "game/GameMode.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
 #include "meta_ham/CharacterProvider.h"
@@ -92,10 +93,12 @@ void SingleUserCrewSelectPanel::SetRandomOutfit(int index) {
 }
 
 void SingleUserCrewSelectPanel::SetCrew(Symbol crew, int index) {
-    HamPlayerData *pPlayerData = TheGameData->Player(GetPlayerIndex(index));
+    int idx = GetPlayerIndex(index);
+    int otherindex = idx == 0;
+    HamPlayerData *pPlayerData = TheGameData->Player(idx);
     MILO_ASSERT(pPlayerData, 0x9e);
-    HamPlayerData *pOtherPlayerData = TheGameData->Player(GetPlayerIndex(index));
-    MILO_ASSERT(pPlayerData, 0xa0);
+    HamPlayerData *pOtherPlayerData = TheGameData->Player(otherindex);
+    MILO_ASSERT(pOtherPlayerData, 0xa0);
     if (pOtherPlayerData->Crew() == crew) {
         pOtherPlayerData->SetCrew(pPlayerData->Crew());
         pOtherPlayerData->SetCharacter(pPlayerData->Char());
@@ -107,6 +110,8 @@ void SingleUserCrewSelectPanel::SetCrew(Symbol crew, int index) {
     pPlayerData->SetCrew(crew);
     const CharacterProvider *pCharacterProvider = GetCharProvider(index);
     MILO_ASSERT(pCharacterProvider, 0xb2);
+    const_cast<CharacterProvider *>(pCharacterProvider)->UpdateList();
+    SetRandomCharacter(index);
 }
 
 bool SingleUserCrewSelectPanel::IsCrewAvailable(Symbol crew, int i) {
@@ -118,6 +123,55 @@ bool SingleUserCrewSelectPanel::IsCrewAvailable(Symbol crew, int i) {
 void SingleUserCrewSelectPanel::RefreshUI() {
     static Message refresh_ui("refresh_ui");
     TheUI->Handle(refresh_ui, false);
+}
+
+void SingleUserCrewSelectPanel::SetRandomCharacter(int idx) {
+    int index = GetPlayerIndex(idx);
+    int otherindex = index == 0;
+    HamPlayerData *pPlayerData = TheGameData->Player(index);
+    MILO_ASSERT(pPlayerData, 0xfc);
+    HamPlayerData *pOtherPlayerData = TheGameData->Player(otherindex);
+    MILO_ASSERT(pOtherPlayerData, 0xfe);
+    const CharacterProvider *pCharProvider = GetCharProvider(idx);
+    MILO_ASSERT(pCharProvider, 0x101);
+    Symbol symRandomCharacter = pCharProvider->GetRandomAvailableCharacter();
+    MILO_ASSERT(symRandomCharacter != gNullStr, 0x104);
+    Symbol crewForChar = GetCrewForCharacter(symRandomCharacter);
+    pPlayerData->SetCharacter(symRandomCharacter);
+    pPlayerData->SetCrew(crewForChar);
+    if (!TheGameMode->InMode("dance_battle", true)) {
+        if (TheGameMode->InMode("campaign", true)) {
+            pPlayerData->SetUnk48(gNullStr);
+            pPlayerData->SetPreferredOutfit(gNullStr);
+        }
+    }
+    if (TheGameMode->InMode("dance_battle", true)) {
+        pPlayerData->SetOutfit(GetCharacterOutfit(symRandomCharacter, 0));
+    } else {
+        const OutfitProvider *pOutfitProvider = GetOutfitProvider(idx);
+        MILO_ASSERT(pOutfitProvider, 0x129);
+        const_cast<OutfitProvider *>(pOutfitProvider)->UpdateList();
+        SetRandomOutfit(idx);
+    }
+}
+
+void SingleUserCrewSelectPanel::SetRandomCrew(int idx) {
+    static Symbol random_crew("random_crew");
+    int index = GetPlayerIndex(idx);
+    int otherindex = index == 0;
+    HamPlayerData *pPlayerData = TheGameData->Player(index);
+    MILO_ASSERT(pPlayerData, 0xe3);
+    HamPlayerData *pOtherPlayerData = TheGameData->Player(otherindex);
+    MILO_ASSERT(pOtherPlayerData, 0xe5);
+    const CrewProvider *pCrewProvider = GetCrewProvider(idx);
+    MILO_ASSERT(pCrewProvider, 0xe8);
+    Symbol symRandomCrew = pCrewProvider->GetRandomAvailableCrew();
+    MILO_ASSERT(symRandomCrew != gNullStr, 0xeb);
+    pPlayerData->SetCrew(symRandomCrew);
+    const CharacterProvider *pCharacterProvider = GetCharProvider(idx);
+    MILO_ASSERT(pCharacterProvider, 0xf0);
+    const_cast<CharacterProvider *>(pCharacterProvider)->UpdateList();
+    SetRandomCharacter(idx);
 }
 
 BEGIN_HANDLERS(SingleUserCrewSelectPanel)

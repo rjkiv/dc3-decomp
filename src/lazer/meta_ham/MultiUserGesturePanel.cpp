@@ -178,12 +178,13 @@ void MultiUserGesturePanel::SetRandomOutfit(int idx) {
     pPlayerData->SetOutfit(randOutfit);
 }
 
-void MultiUserGesturePanel::SetRandomCrew(int idx) { // registers are off here
+void MultiUserGesturePanel::SetRandomCrew(int idx) {
     static Symbol random_crew("random_crew");
     int index = GetPlayerIndex(idx);
-    HamPlayerData *pPlayerData = TheGameData->Player(index == 0);
+    int otherindex = index == 0;
+    HamPlayerData *pPlayerData = TheGameData->Player(index);
     MILO_ASSERT(pPlayerData, 0x22e);
-    HamPlayerData *pOtherPlayerData = TheGameData->Player(index);
+    HamPlayerData *pOtherPlayerData = TheGameData->Player(otherindex);
     MILO_ASSERT(pOtherPlayerData, 0x230);
     const CrewProvider *pCrewProvider = GetCrewProvider(idx);
     MILO_ASSERT(pCrewProvider, 0x233);
@@ -196,14 +197,14 @@ void MultiUserGesturePanel::SetRandomCrew(int idx) { // registers are off here
     SetRandomCharacter(idx);
 }
 
-void MultiUserGesturePanel::SetCrew(Symbol crew, int idx) { // registers are off here
+void MultiUserGesturePanel::SetCrew(Symbol crew, int idx) {
     int index = GetPlayerIndex(idx);
-    HamPlayerData *pPlayerData = TheGameData->Player(index == 0);
+    int otherindex = index == 0;
+    HamPlayerData *pPlayerData = TheGameData->Player(index);
     MILO_ASSERT(pPlayerData, 0x131);
-    HamPlayerData *pOtherPlayerData = TheGameData->Player(index);
+    HamPlayerData *pOtherPlayerData = TheGameData->Player(otherindex);
     MILO_ASSERT(pOtherPlayerData, 0x133);
-    Symbol s = "";
-    if (crew != s && pOtherPlayerData->Crew() == crew) {
+    if (crew != Symbol("") && pOtherPlayerData->Crew() == crew) {
         pOtherPlayerData->SetCrew(pPlayerData->Crew());
         pOtherPlayerData->SetCharacter(pPlayerData->Char());
         pOtherPlayerData->SetOutfit(pPlayerData->Outfit());
@@ -212,8 +213,7 @@ void MultiUserGesturePanel::SetCrew(Symbol crew, int idx) { // registers are off
     MetaPerformer *performer = MetaPerformer::Current();
     MILO_ASSERT(performer, 0x143);
     pPlayerData->SetCrew(crew);
-    Symbol crewCheck = "";
-    if (crew != crewCheck) {
+    if (crew != Symbol("")) {
         const CharacterProvider *pCharacterProvider = GetCharProvider(idx);
         MILO_ASSERT(pCharacterProvider, 0x14a);
         const_cast<CharacterProvider *>(pCharacterProvider)->UpdateList();
@@ -241,6 +241,66 @@ int MultiUserGesturePanel::GetPlayerIndex(int idx) const {
         }
     }
     return idx;
+}
+
+void MultiUserGesturePanel::SetCharacter(Symbol s, int idx) {
+    int otherindex = idx == 0;
+    HamPlayerData *pPlayerData = TheGameData->Player(idx);
+    MILO_ASSERT(pPlayerData, 0x110);
+    HamPlayerData *pOtherPlayerData = TheGameData->Player(otherindex);
+    MILO_ASSERT(pOtherPlayerData, 0x112);
+    MetaPerformer *performer = MetaPerformer::Current();
+    MILO_ASSERT(performer, 0x115);
+    Symbol crewForChar = GetCrewForCharacter(s);
+    pPlayerData->SetCharacter(s);
+    pPlayerData->SetCrew(crewForChar);
+    pPlayerData->SetOutfit(GetCharacterOutfit(s, false));
+    if (!TheGameMode->InMode("campaign", true)) {
+        pPlayerData->SetUnk48(s);
+        pPlayerData->SetPreferredOutfit(GetCharacterOutfit(s, false));
+    }
+    if (pOtherPlayerData->Char() == s) {
+        performer->SetDefaultSongCharacter(otherindex);
+        RefreshUI();
+    }
+}
+
+void MultiUserGesturePanel::SetRandomCharacter(int idx) {
+    int index = GetPlayerIndex(idx);
+    int otherindex = index == 0;
+    HamPlayerData *pPlayerData = TheGameData->Player(index);
+    MILO_ASSERT(pPlayerData, 0x25d);
+    HamPlayerData *pOtherPlayerData = TheGameData->Player(otherindex);
+    MILO_ASSERT(pOtherPlayerData, 0x25f);
+    const CharacterProvider *pCharProvider = GetCharProvider(idx);
+    MILO_ASSERT(pCharProvider, 0x262);
+    Symbol symRandomCharacter = pCharProvider->GetRandomAvailableCharacter();
+    MILO_ASSERT(symRandomCharacter != gNullStr, 0x265);
+    Symbol crewForChar = GetCrewForCharacter(symRandomCharacter);
+    pPlayerData->SetCharacter(symRandomCharacter);
+    pPlayerData->SetCrew(crewForChar);
+    if (!TheGameMode->InMode("dance_battle", true)) {
+        if (!TheGameMode->InMode("campaign", true)) {
+            pPlayerData->SetUnk48(gNullStr);
+            pPlayerData->SetPreferredOutfit(gNullStr);
+        }
+    }
+
+    if (TheGameMode->InMode("dance_battle", true)) {
+        pPlayerData->SetOutfit(GetCharacterOutfit(symRandomCharacter, false));
+    } else {
+        const OutfitProvider *pOutfitProvider = GetOutfitProvider(idx);
+        MILO_ASSERT(pOutfitProvider, 0x28a);
+        const_cast<OutfitProvider *>(pOutfitProvider)->UpdateList();
+        SetRandomOutfit(idx);
+    }
+}
+
+void MultiUserGesturePanel::DropPlayerOnSide(int idx) {
+    int index = GetPlayerIndex(idx);
+    SkeletonChooser *pSkeletonChooser = TheHamUI.GetShellInput()->GetSkeletonChooser();
+    MILO_ASSERT(pSkeletonChooser, 0x3d);
+    pSkeletonChooser->ClearPlayerSkeletonID(index);
 }
 
 BEGIN_HANDLERS(MultiUserGesturePanel)

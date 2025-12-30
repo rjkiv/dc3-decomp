@@ -25,7 +25,7 @@ void CorrectIdentityPanel::Dismiss() {
 
 void CorrectIdentityPanel::SetAsOverlay() {
     if (TheHamUI.GetOverlayPanel() && TheHamUI.GetOverlayPanel() != this) {
-        TheHamUI.GetOverlayPanel()->Dismiss(); // unsure if correct vfunc
+        TheHamUI.GetOverlayPanel()->Dismiss();
     }
     MILO_ASSERT(this->CheckIsLoaded(), 0x37);
     MILO_ASSERT(this->LoadedDir(), 0x38);

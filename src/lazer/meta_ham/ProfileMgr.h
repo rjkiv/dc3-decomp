@@ -108,6 +108,7 @@ public:
     bool HasActiveProfileWithInvalidSaveData() const;
     bool HasAnyEraSongBeenPlayed(Symbol) const;
     void Poll();
+    void UploadDeferredFlaunt();
 
     bool GetBassBoost() const { return mBassBoost; }
     bool GetDolby() const { return mDolby; }

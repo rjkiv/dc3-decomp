@@ -117,6 +117,8 @@ public:
     bool HasPlaylist() const { return mPlaylist; }
     Playlist *GetPlaylist() { return mPlaylist; }
 
+    void SetSkipPracticeWelcome(bool b) { mSkipPracticeWelcome = b; }
+
     static void Init();
     static void SendSpeechDatapoint(DataArray *, float, Symbol);
     static MetaPerformer *Current();

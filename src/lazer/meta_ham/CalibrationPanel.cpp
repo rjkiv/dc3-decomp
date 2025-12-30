@@ -46,10 +46,7 @@ void CalibrationOffsetProvider::Text(
     if (uiListLabel->Matches("offset")) {
         static Symbol cal_offset("cal_offset");
         uiLabel->SetTokenFmt(cal_offset, mOffsets[data]);
-        return;
-    }
-
-    if (uiListLabel->Matches("label")) {
+    } else if (uiListLabel->Matches("label")) {
         uiLabel->SetTextToken(gNullStr); // why
         static Symbol cal_default("cal_default");
         if (mOffsets[data] != 0) {
@@ -63,9 +60,8 @@ void CalibrationOffsetProvider::Text(
         int f = node->Float();
         if (mOffsets[data] == f) {
             uiLabel->SetIcon('b');
-            return;
-        }
-        uiLabel->SetTextToken(gNullStr);
+        } else
+            uiLabel->SetTextToken(gNullStr);
     }
 }
 

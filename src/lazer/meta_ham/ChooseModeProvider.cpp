@@ -15,10 +15,15 @@ Symbol ChooseModeProvider::DataSymbol(int i_iData) const {
     return unk30[i_iData];
 }
 
-void ChooseModeProvider::Text(int, int i_iData, UIListLabel *listLabel, UILabel *) const {
+void ChooseModeProvider::Text(
+    int, int i_iData, UIListLabel *listLabel, UILabel *uiLabel
+) const {
     MILO_ASSERT(i_iData < NumData(), 0x4e);
-
+    Symbol dataSym = DataSymbol(i_iData);
     if (listLabel->Matches("label")) {
+        uiLabel->SetTextToken(dataSym);
+    } else {
+        uiLabel->SetTextToken(listLabel->GetDefaultText());
     }
 }
 

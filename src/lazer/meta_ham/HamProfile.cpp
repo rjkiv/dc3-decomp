@@ -25,6 +25,7 @@
 #include "meta_ham/SaveLoadManager.h"
 #include "meta_ham/SongStatusMgr.h"
 #include "meta_ham/Utl.h"
+#include "net_ham/RockCentral.h"
 #include "obj/Object.h"
 #include "os/DateTime.h"
 #include "os/Debug.h"
@@ -948,4 +949,18 @@ DataNode HamProfile::OnMsg(const SingleItemEnumCompleteMsg &msg) {
     }
     unk320 = 0;
     return 0;
+}
+
+void HamProfile::SetLastNewSong() {
+    if (IsOkToUpdateProfile() && TheRockCentral.IsOnline()
+        && 0 < TheRockCentral.GetUnk88()) {
+        MILO_LOG(
+            "---- Updating mLastNewSong from %i to %i\n",
+            unk364,
+            TheRockCentral.GetUnk88()
+        );
+        int i = TheRockCentral.GetUnk88();
+        mDirty = true;
+        unk364 = i;
+    }
 }

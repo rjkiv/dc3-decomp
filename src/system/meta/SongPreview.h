@@ -38,7 +38,9 @@ public:
     void Poll();
     DataNode OnStart(DataArray *);
     void SetCrowdSingVol(float);
+
     bool HasMovie() const { return mTexMovie && !mTexMovie->IsEmpty(); }
+    float PreviewDb() const { return mPreviewDb; }
 
     static const float kSilenceVal;
 
