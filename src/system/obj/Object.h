@@ -1044,13 +1044,13 @@ namespace Hmx {
         /** Set this Object's mTypeDef array based this Object's types entry in
          * SystemConfig. */
         OBJ_SET_TYPE(Object);
-        /** Execute code based on the contents of a received message.
+        /** Executes a message/command on the Object.
          * @param [in] _msg The received message.
          * @param [in] _warn If true, and the message goes unhandled, print to console.
          * @returns The return value of whatever code was executed.
          */
         virtual DataNode Handle(DataArray *_msg, bool _warn = true);
-        /** Syncs an Object's property to or from a supplied DataNode.
+        /** Reads or modifies the object property at the given path.
          * @param [out] _val A DataNode to either place the property val into, or set the
          * property val with.
          * @param [in] _prop The DataArray containing the symbol representing the property
@@ -1063,16 +1063,16 @@ namespace Hmx {
          */
         virtual bool SyncProperty(DataNode &_val, DataArray *_prop, int _i, PropOp _op);
         virtual void InitObject();
-        /** Saves this Object into a BinStream.
+        /** Serializes the Object's state
          * @param [in] bs The BinStream to save into.
          */
         virtual void Save(BinStream &);
-        /** Copy the contents of another Object into this Object based on the CopyType.
+        /** Copies the state of the given Object into this one.
          * @param [in] o The other Object to copy from.
          * @param [in] ty The copy type.
          */
         virtual void Copy(const Hmx::Object *o, Hmx::Object::CopyType ty);
-        /** Loads this Object from a BinStream.
+        /** Deserializes the Object's state.
          * @param [in] bs The BinStream to load from.
          */
         virtual void Load(BinStream &);

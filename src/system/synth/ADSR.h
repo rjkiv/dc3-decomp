@@ -49,45 +49,41 @@ public:
     float GetAttackRate() const;
     /** Returns the release rate in seconds */
     float GetReleaseRate() const;
-    /** Saves this ADSRImpl to a BinStream.
+    /** Serializes this ADSRImpl..
      *
      * @param [in] bs The BinStream to save to.
      */
     void Save(BinStream &) const;
-    /** Loads this ADSRImpl from a BinStream.
+    /** Deserializes this ADSRImpl.
      *
      * @param [in] bs The BinStream to load from.
-     * @param [in] adsr The ADSR Object owning this implementation.
-     * @throws MILO_FAIL if trying to load a version newer than 1.0
+     * @param [in] adsr The ADSR owning this implementation.
+     * @milofail When trying to load where rev > 1 or altRev > 0
      */
     void Load(BinStream &, ADSR *);
 
 private:
-    /** Duration of attack in seconds */
+    /** @hmx{Duration of attack in seconds} */
     float mAttackRate; // 0x0
-    /** Duration of decay in seconds */
+    /** @hmx{Duration of decay in seconds} */
     float mDecayRate; // 0x4
-    /** Duration of sustain in seconds */
+    /** @hmx{Duration of sustain in seconds} */
     float mSustainRate; // 0x8
-    /** Duration of release in seconds */
+    /** @hmx{Duration of release in seconds} */
     float mReleaseRate; // 0xc
-    /** Level of sustain volume (0-1) */
+    /** @hmx{Level of sustain volume (0-1)} */
     float mSustainLevel; // 0x10
-    /** Attack mode */
+    /** @hmx{Attack mode} */
     AttackMode mAttackMode; // 0x14
-    /** Sustain mode */
+    /** @hmx{Sustain mode} */
     SustainMode mSustainMode; // 0x18
-    /** Release mode */
+    /** @hmx{Release mode} */
     ReleaseMode mReleaseMode; // 0x1c
     /** Whether the ADSR is synced */
     bool mSynced; // 0x20
 };
 
-/**
- * @brief Envelope settings to modify sounds
- *
- * Attack, Decay, Sustain, Release
- */
+/** @hmx{Attack, decay, sustain, and release. Envelope settings to modify sounds.} */
 class ADSR : public Hmx::Object {
 public:
     virtual ~ADSR() {}
