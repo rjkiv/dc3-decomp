@@ -1,6 +1,7 @@
 #include "lazer/meta_ham/SigninScreen.h"
 #include "meta_ham/HamScreen.h"
 #include "obj/Data.h"
+#include "obj/Msg.h"
 #include "obj/Object.h"
 #include "os/PlatformMgr.h"
 #include "ui/UI.h"
@@ -25,7 +26,13 @@ void SigninScreen::Exit(UIScreen *screen) {
 
 DataNode SigninScreen::OnMsg(SigninChangedMsg const &) { return NULL_OBJ; }
 
-DataNode SigninScreen::OnMsg(UIChangedMsg const &) { return NULL_OBJ; }
+DataNode SigninScreen::OnMsg(UIChangedMsg const &msg) {
+    if (msg->Int(2) == 0 && ThePlatformMgr.SignInMask() == 0) {
+        static Message sign_in_dismissed("sign_in_dismissed");
+        Handle(sign_in_dismissed, false);
+    }
+    return 0;
+}
 
 BEGIN_HANDLERS(SigninScreen)
     HANDLE_ACTION(show_signin_ui, ThePlatformMgr.SignInUsers(1, 0x1000000))

@@ -205,7 +205,8 @@ Symbol CampaignSongSelectPanel::GetSelectedSong() {
 void CampaignSongSelectPanel::Refresh() {
     MILO_ASSERT(m_pCampaignSongProvider, 0x1da);
     m_pCampaignSongProvider->UpdateList();
-    static Message update_song_provider("update_song_provider");
+    static Message update_song_provider("update_song_provider", 0);
+    update_song_provider[0] = m_pCampaignSongProvider;
     Handle(update_song_provider, true);
 }
 

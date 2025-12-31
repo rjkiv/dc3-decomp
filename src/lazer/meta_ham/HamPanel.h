@@ -26,7 +26,7 @@ public:
 
     NEW_OBJ(HamPanel)
 
-    HamNavList *mNavList;
+    HamNavList *mNavList; // 0x38
 
     HamPanel();
 };

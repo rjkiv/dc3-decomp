@@ -14,6 +14,7 @@ void PassiveMessagesPanel::Poll() {
 }
 
 BEGIN_HANDLERS(PassiveMessagesPanel)
-    HANDLE_ACTION(post_setup, nullptr) // idk whats goin on with this one
+    HANDLE_EXPR(post_setup, 0)
     HANDLE_SUPERCLASS(UIPanel)
+    HANDLE_MEMBER_PTR(unk38)
 END_HANDLERS

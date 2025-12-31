@@ -50,10 +50,12 @@ bool CrewProvider::IsCrewAvailable(Symbol s) const {
 }
 
 bool CrewProvider::CanSelect(int idx) const {
-    MILO_ASSERT_RANGE(idx, 0, mCrews.size(), 0xd4);
-    if (TheProfileMgr.IsContentUnlocked(mCrews[idx].Str()))
-        return IsCrewAvailable(mCrews[idx]);
-    return false;
+    MILO_ASSERT_RANGE(idx, 0, NumData(), 0xf4);
+    Symbol dataSym = DataSymbol(idx);
+    if (!TheProfileMgr.IsContentUnlocked(dataSym))
+        return false;
+    else
+        return !IsCrewAvailable(dataSym) == 0;
 }
 
 void CrewProvider::UpdateList() {

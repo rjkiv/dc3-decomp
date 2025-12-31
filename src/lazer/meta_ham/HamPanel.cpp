@@ -11,7 +11,7 @@ HamPanel::HamPanel() : mNavList(nullptr) {}
 
 void HamPanel::Enter() {
     UIPanel::Enter();
-    if (HasNavList()) {
+    if (ShouldUseLocalNavlist()) {
         HamNavList *right_hand = DataDir()->Find<HamNavList>("right_hand.hnl", false);
         mNavList = right_hand;
         if (right_hand == nullptr) {
@@ -30,8 +30,7 @@ void HamPanel::Enter() {
 bool HamPanel::Exiting() const {
     if (UIPanel::Exiting()) {
         return true;
-    }
-    if (HasNavList() && mNavList != nullptr) {
+    } else if (ShouldUseLocalNavlist() && mNavList != nullptr) {
         return !mNavList->IsAnimating();
     }
     return false;

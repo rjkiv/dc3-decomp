@@ -120,7 +120,8 @@ CampaignDiffSelectPanel::CampaignDiffSelectPanel() : m_pCampaignDiffProvider(0) 
 
 void CampaignDiffSelectPanel::Refresh() {
     MILO_ASSERT(m_pCampaignDiffProvider, 0xca);
-    static Message update_diff_provider("update_diff_provider");
+    static Message update_diff_provider("update_diff_provider", 0);
+    update_diff_provider[0] = m_pCampaignDiffProvider;
     DataNode node = Handle(update_diff_provider, true);
 }
 
@@ -143,7 +144,8 @@ Difficulty CampaignDiffSelectPanel::GetSelectedDiff() {
         static Message get_selected_diff_index("get_selected_diff_index");
         DataNode node = Handle(get_selected_diff_index, true);
         int i = node.Int();
-        if (0 < i) {
+        int data = m_pCampaignDiffProvider->NumData();
+        if (0 < data) {
             Symbol diffSymbol = m_pCampaignDiffProvider->DataSymbol(i);
             return SymToDifficulty(diffSymbol);
         }

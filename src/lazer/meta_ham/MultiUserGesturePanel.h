@@ -42,7 +42,7 @@ public:
     int GetCrewIndex(int) const;
     int GetVenueIndex(int, Symbol) const;
     void UpdateCharPic(UIPicture *, int, int, Symbol, Symbol);
-    void UpdateCrewPic(UIPicture *, int, int, class Symbol);
+    void UpdateCrewPic(UIPicture *, int, int, Symbol);
     void SetDefaultCharacter(int);
     void SetRandomOutfit(int);
     Symbol GetCharacter(int, int);

@@ -12,6 +12,7 @@
 #include "meta_ham/HamUI.h"
 #include "meta_ham/MetaPerformer.h"
 #include "meta_ham/OutfitProvider.h"
+#include "meta_ham/ProfileMgr.h"
 #include "meta_ham/SkeletonChooser.h"
 #include "meta_ham/TexLoadPanel.h"
 #include "meta_ham/VenueProvider.h"
@@ -23,6 +24,8 @@
 #include "rndobj/Mesh.h"
 #include "ui/UI.h"
 #include "ui/UIPicture.h"
+#include "utl/FilePath.h"
+#include "utl/MakeString.h"
 #include "utl/Symbol.h"
 
 MultiUserGesturePanel::MultiUserGesturePanel() {
@@ -303,6 +306,24 @@ void MultiUserGesturePanel::DropPlayerOnSide(int idx) {
     pSkeletonChooser->ClearPlayerSkeletonID(index);
 }
 
+void MultiUserGesturePanel::UpdateCrewPic(
+    UIPicture *i_pPic, int i_iSide, int i_iPlayerIndex, Symbol s
+) {
+    MILO_ASSERT(i_pPic, 0x1e9);
+    MILO_ASSERT_RANGE(i_iPlayerIndex, 0, 2, 0x1ea);
+    MILO_ASSERT_RANGE(i_iSide, 0, 2, 0x1eb);
+    const CrewProvider *pProvider = GetCrewProvider(i_iSide);
+    MILO_ASSERT(pProvider, 0x1ee);
+    String str;
+    if (!TheProfileMgr.IsContentUnlocked(s)) {
+        str = MakeString("%s_char_locked_keep.png", s.Str());
+    } else if (pProvider->IsCrewAvailable(s)) {
+        str = MakeString("%s_char_keep.png", s.Str());
+    }
+    FilePath fp = FilePath("ui/image/crew/", str.c_str());
+    i_pPic->SetTex(fp);
+}
+
 BEGIN_HANDLERS(MultiUserGesturePanel)
     HANDLE_EXPR(
         get_char_provider, const_cast<CharacterProvider *>(GetCharProvider(_msg->Int(2)))
@@ -359,6 +380,5 @@ BEGIN_HANDLERS(MultiUserGesturePanel)
         get_voice_command_outfit_tag, GetVoiceCommandOutfitTag(_msg->Int(2), _msg->Sym(3))
     )
     HANDLE_ACTION(update_providers, UpdateProviders())
-    HANDLE_MESSAGE(ButtonDownMsg)
-    HANDLE_SUPERCLASS(TexLoadPanel)
+    HANDLE_MESSAGE(ButtonDownMsg) HANDLE_SUPERCLASS(TexLoadPanel)
 END_HANDLERS

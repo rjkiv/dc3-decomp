@@ -8,6 +8,11 @@
 class HamStarsDisplay : public StarsDisplay {
 public:
     enum StarDisplayMode {
+        kStarDisplay_0,
+        kStarDisplay_1,
+        kStarDisplay_2,
+        kStarDisplay_3,
+        kStarDisplay_4
     };
 
     OBJ_CLASSNAME(StarsDisplay) // bruh

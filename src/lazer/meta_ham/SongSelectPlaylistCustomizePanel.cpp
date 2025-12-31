@@ -101,13 +101,12 @@ void SongSelectPlaylistCustomizePanel::CancelSongAtIndex(int index) {
 void SongSelectPlaylistCustomizePanel::Refresh() {
     MetaPerformer *pPerformer = MetaPerformer::Current();
     MILO_ASSERT(pPerformer, 0x6b);
+    m_pPlaylist = pPerformer->GetPlaylist();
     MILO_ASSERT(m_pPlaylist, 0x6e);
     UpdateSongs();
     MILO_ASSERT(m_pPlaylistSongProvider, 0x72);
-    static Message update_playlist_song_provider("update_playlist_song_provider");
-    if (m_pPlaylistSongProvider) {
-        // something
-    }
+    static Message update_playlist_song_provider("update_playlist_song_provider", 0);
+    update_playlist_song_provider[0] = m_pPlaylistSongProvider;
     Handle(update_playlist_song_provider, true);
 }
 

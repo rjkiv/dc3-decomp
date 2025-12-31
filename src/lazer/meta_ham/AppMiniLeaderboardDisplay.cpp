@@ -1,5 +1,6 @@
 #include "meta_ham/AppMiniLeaderboardDisplay.h"
 #include "flow/Flow.h"
+#include "hamobj/HamList.h"
 #include "hamobj/MiniLeaderboardDisplay.h"
 #include "meta/SongMgr.h"
 #include "meta_ham/ProfileMgr.h"
@@ -15,6 +16,7 @@
 #include "ui/UIComponent.h"
 #include "ui/UIList.h"
 #include "ui/UIListWidget.h"
+#include "utl/Symbol.h"
 
 AppMiniLeaderboardDisplay::AppMiniLeaderboardDisplay()
     : unk60(0), mLeaderboardList(), unk68(0), unk6c(0) {}
@@ -22,6 +24,8 @@ AppMiniLeaderboardDisplay::AppMiniLeaderboardDisplay()
 AppMiniLeaderboardDisplay::~AppMiniLeaderboardDisplay() {
     TheRockCentral.CancelOutstandingCalls(this);
 }
+
+int AppMiniLeaderboardDisplay::NumData() const { return unk70.size(); }
 
 void AppMiniLeaderboardDisplay::Exit() {
     UIComponent::Exit();
@@ -78,6 +82,15 @@ DataNode AppMiniLeaderboardDisplay::OnMsg(ServerStatusChangedMsg const &) {
         UpdateLeaderboard(name);
     }
     return 6;
+}
+
+void AppMiniLeaderboardDisplay::Update() {
+    Init(); // unsure if correct call, doesnt give me much info
+    MILO_ASSERT(mResourceDir, 0x16a);
+    static Symbol leaderboard("leaderboard");
+    HamList *pLeaderboardList = mResourceDir->Find<HamList>("leaderboard.lst");
+    mLeaderboardList = pLeaderboardList;
+    mLeaderboardList->SetProvider(this);
 }
 
 BEGIN_HANDLERS(AppMiniLeaderboardDisplay)

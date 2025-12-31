@@ -10,7 +10,9 @@
 #include "ui/UIComponent.h"
 #include "ui/UIListCustom.h"
 #include "ui/UIListProvider.h"
-class NavListSortMgr : public UIListProvider, Hmx::Object, public ContentMgr::Callback {
+class NavListSortMgr : public UIListProvider,
+                       public Hmx::Object,
+                       public ContentMgr::Callback {
 public:
     NavListSortMgr(SongPreview &);
     virtual ~NavListSortMgr();

@@ -15,33 +15,28 @@ void HamStarsDisplay::SetSongChallenge(Difficulty diff) {
     mNoFlashcardsLabel->SetShowing(false);
 }
 
-void HamStarsDisplay::SetSong(int i) {
-    SetSongImpl(i, kNumDifficulties, (StarDisplayMode)0);
-}
+void HamStarsDisplay::SetSong(int i) { SetSongImpl(i, kNumDifficulties, kStarDisplay_0); }
 
 void HamStarsDisplay::SetSongCampaign(int i) {
-    SetSongImpl(i, kNumDifficulties, (StarDisplayMode)4);
+    SetSongImpl(i, kNumDifficulties, kStarDisplay_4);
 }
 
 void HamStarsDisplay::SetSongWithDifficulty(int i, Difficulty d, bool b) {
-    SetSongImpl(i, d, b ? (StarDisplayMode)2 : (StarDisplayMode)1);
+    SetSongImpl(i, d, b ? kStarDisplay_2 : kStarDisplay_1);
 }
 
 BEGIN_HANDLERS(HamStarsDisplay)
-    HANDLE_ACTION(
-        set_song, SetSongImpl(_msg->Int(2), kNumDifficulties, (StarDisplayMode)0)
-    )
+    HANDLE_ACTION(set_song, SetSongImpl(_msg->Int(2), kNumDifficulties, kStarDisplay_0))
     HANDLE_ACTION(
         set_song_with_diff,
-        SetSongImpl(_msg->Int(2), (Difficulty)_msg->Int(3), (StarDisplayMode)1)
+        SetSongImpl(_msg->Int(2), (Difficulty)_msg->Int(3), kStarDisplay_1)
     )
     HANDLE_ACTION(
         set_song_with_diff_always,
-        SetSongImpl(_msg->Int(2), (Difficulty)_msg->Int(3), (StarDisplayMode)2)
+        SetSongImpl(_msg->Int(2), (Difficulty)_msg->Int(3), kStarDisplay_2)
     )
     HANDLE_ACTION(
-        set_song_last_played,
-        SetSongImpl(_msg->Int(2), kNumDifficulties, (StarDisplayMode)3)
+        set_song_last_played, SetSongImpl(_msg->Int(2), kNumDifficulties, kStarDisplay_3)
     )
     HANDLE_SUPERCLASS(StarsDisplay)
 END_HANDLERS

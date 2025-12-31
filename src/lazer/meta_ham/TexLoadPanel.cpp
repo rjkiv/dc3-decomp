@@ -60,9 +60,8 @@ const FilePath MoggClip::Path() const { return mMoggFile; }
 TexLoadPanel::TexLoadPanel() {
     mMoggClip = New<MoggClip>();
     mFader = New<Fader>();
-    DataArray *sysConfig = SystemConfig("voiceover_db_offset");
-    DataArray *voiceoverArray = sysConfig->FindArray("sound");
-    mFader->SetVolume(voiceoverArray->Float(1));
+    float fadeDbOffset = SystemConfig("sound")->FindFloat("voiceover_db_offset");
+    mFader->SetVolume(fadeDbOffset);
     mMoggClip->AddFader(mFader);
     mMoggClip->UnloadWhenFinishedPlaying(true);
 }
@@ -206,9 +205,8 @@ void TexLoadPanel::FinalizeTextures() {
 void TexLoadPanel::Exit() {
     UIPanel::Exit();
     if (!mMoggClip->Path().empty()) {
-        DataArray *sysConfig = SystemConfig("voiceover_fade_duration");
-        DataArray *soundArray = sysConfig->FindArray("sound");
-        mMoggClip->FadeOut(soundArray->Float(1));
+        float fadeDuration = SystemConfig("sound")->FindFloat("voiceover_fade_duration");
+        mMoggClip->FadeOut(fadeDuration);
     }
 }
 

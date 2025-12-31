@@ -34,6 +34,8 @@ public:
     bool UpdateLeaderboard(Symbol);
 
 protected:
+    virtual void Update();
+
     void UpdateData(GetMiniLeaderboardJob *);
     void UpdateLeaderboardOnline(int);
     void ClearData();
