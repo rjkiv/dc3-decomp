@@ -19,4 +19,5 @@ public:
     virtual void Text(int, int, UIListLabel *, UILabel *) const;
 
     Symbol DetermineHeaderSymbolFromSong(Symbol);
+
 };

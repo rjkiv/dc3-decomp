@@ -27,10 +27,10 @@ public:
     virtual const class DifficultyCmp *GetDifficultyCmp() const;
     virtual const class SongCmp *GetSongCmp() const;
     virtual const class ArtistCmp *GetArtistCmp() const; // tentative
-    virtual const class LocationCmp *GetLocationCmp() const; // tentative
     virtual const class DecadeCmp *GetDecadeCmp() const; // tentative
     virtual const class VenueCmp *GetVenueCmp() const; // tentative
     virtual const class DateCmp *GetDateCmp() const; // tentative
+    virtual const class LocationCmp *GetLocationCmp() const; // tentative - 0x24
     virtual const class AlbumCmp *GetAlbumCmp() const; // tentative
     virtual const class VocalPartsCmp *GetVocalPartsCmp() const; // tentative
     virtual const class PlaylistTypeCmp *GetPlaylistTypeCmp() const;

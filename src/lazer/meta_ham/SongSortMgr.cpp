@@ -1,19 +1,31 @@
 #include "SongSortMgr.h"
 
+#include "HamSongMgr.h"
 #include "lazer/game/GameMode.h"
 #include "SongSort.h"
 #include "SongSortByDiff.h"
+#include "SongSortByLocation.h"
 #include "SongSortNode.h"
 #include "ui/UI.h"
 #include "lazer/meta_ham/MetaPerformer.h"
-
+#include "ProfileMgr.h"
+#include "ui/UIPanel.h"
 BEGIN_HANDLERS(SongSortMgr)
 
 END_HANDLERS
 
+SongSort::SongSort() {  }
+
+SongSortMgr::~SongSortMgr() {}
+
 SongSortByDiff::SongSortByDiff() {
     static Symbol by_difficulty("by_difficulty");
-    unk58 = by_difficulty.Str();
+    SetSortName(by_difficulty);
+}
+
+SongSortByLocation::SongSortByLocation() {
+    static Symbol by_location("by_location");
+    SetSortName(by_location);
 }
 
 void SongSortMgr::Init(SongPreview &preview) {
@@ -25,7 +37,7 @@ void SongSortMgr::Init(SongPreview &preview) {
 void SongSortMgr::Terminate() {
     TheContentMgr.UnregisterCallback(TheSongSortMgr, false);
     MILO_ASSERT(TheSongSortMgr, 0x2b);
-    //TheSongSortMgr->something;
+    //TheSongSortMgr->Handle(null, 1); // cant figure out what function is getting called here
     TheSongSortMgr = nullptr;
 }
 
@@ -46,17 +58,17 @@ bool SongSortMgr::SelectionIs(Symbol sym) {
         }
         //return dynamic_cast<SongFunctionNode>(GetHighlightItem());
     }
-    return dynamic_cast<NavListSortNode *>(GetHighlightItem()) == 0;
+    return GetHighlightItem() == 0;
 }
 
 void SongSortMgr::OnHighlightChanged() {
+    this->UnHighlightCurrent();
     MILO_ASSERT(GetHighlightItem(), 0x75);
-
-    if (GetHighlightItem()->OnSelectDone() /*fix this shxt*/) {
-        if (!TheUI->GetTransitionState()) {
-            static Symbol refresh_selected_song("refresh_selected_song");
-        }
-        // message::message something
+    GetHighlightItem()->OnHighlight();
+    if (!TheUI->GetTransitionState()) {
+        static Symbol refresh_selected_song("refresh_selected_song");
+        static Message msg(refresh_selected_song);
+        TheUI->Handle(msg, false);
     }
 }
 
@@ -81,19 +93,15 @@ void SongSortMgr::MarkElementInPlaylist(Symbol sym, bool b) {
 }
 
 int SongSortMgr::GetListIndexFromHeaderIndex(int i1) {
-    int size = GetHeadersB().size();
-    if (i1 < 0) {
-        if (size > i1) {
-            return GetHeadersBAtIdx(0);
-        }
+    int size = mHeadersB.size();
+    if (i1 < 0 && 0 < size) {
+        return mHeadersB.front();
     }
-    else {
-        if (i1 < size) {
-            return GetHeadersBAtIdx(i1);
-        }
-        if (0 < size) {
-            return GetHeadersBAtIdx(size - 1);
-        }
+    if (i1 >= size) {
+        return mHeadersB[i1];
+    }
+    if (size > 0) {
+        return mHeadersB[size - 1];
     }
     return 1;
 }
@@ -158,6 +166,75 @@ bool SongSortMgr::DataIs(int i1, Symbol sym) {
 }
 
 int SongSortMgr::FirstArtistSongIndex(Symbol sym) {
-
+    int dataCount = mSorts[mCurrentSortIdx]->GetDataCount();
+    for (int i = 0; i < dataCount; i++) {
+        SongSortNode * ssNode = dynamic_cast<SongSortNode *>(mSorts[mCurrentSortIdx]->GetListFromIdx(i));
+        if (ssNode) {
+            Symbol artist = ssNode->GetArtist();
+            if (sym == artist) {
+                int idx = GetHeaderIndexFromChildListIndex(i);
+                return idx;
+            }
+        }
+    }
     return 0;
+}
+
+void SongSortMgr::RebuildSongRecordMap() {
+    unk78.clear();
+    std::vector<int> rankedSongs;
+    TheHamSongMgr.GetRankedSongs(rankedSongs);
+    unk90 = rankedSongs.size();
+    for (int i = 0; i < rankedSongs.size(); i++) {
+        const HamSongMetadata *metadata = TheHamSongMgr.Data(i);
+        if ((metadata && !metadata->IsFake()) && TheProfileMgr.IsContentUnlocked(metadata->ShortName())) {
+
+            //auto first = metadata->DefaultCharacter();
+            SongRecord second = SongRecord(metadata);
+            //std::pair<Symbol, SongRecord> p;
+            unk78.insert(std::pair<Symbol, SongRecord>(metadata->ShortName(), second));
+        }
+    }
+}
+
+Symbol SongSortMgr::MoveOn() {
+    static Symbol song_select_quickplay("song_select_quickplay");
+    static Symbol song_select_story("song_select_story");
+    static Symbol song_select_practice("song_select_practice");
+    static Symbol song_select_jukebox("song_select_jukebox");
+
+    auto mode = TheGameMode->Property("song_select_mode", true)->Sym();
+    if (song_select_quickplay == mode) {
+        static Message move_on_quickplay("move_on_quickplay", 0);
+        auto panel = ObjectDir::Main()->Find<UIPanel>("song_select_panel", true);
+        //HandleType(move_on_quickplay);
+        panel->HandleType(move_on_quickplay);
+    }
+    else {
+        if (song_select_story == mode || song_select_practice == mode || mode == song_select_jukebox) {
+            return TheGameMode->Property("ready_screen", true)->Sym();
+        }
+        FormatString fs = "Unknown song_select_mode\n";
+        TheDebug.Fail(fs.Str(), 0);
+
+    }
+    return 0;
+}
+
+void SongSortMgr::OnEnter() {
+    MetaPerformer::Current()->ResetSongs();
+    static Symbol bass("bass");
+    static Symbol guitar("guitar");
+    static Symbol band("band");
+    RebuildSongRecordMap();
+    FOREACH(it, mSorts) {
+        (*it)->BuildTree();
+    }
+    auto current = mSorts[mCurrentSortIdx];
+    current->BuildItemList();
+    if (unk48) {
+        current->SetHighlightID(unk44);
+        unk48 = false;
+    }
+    current->UpdateHighlight();
 }

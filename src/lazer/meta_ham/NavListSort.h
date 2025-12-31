@@ -39,6 +39,7 @@ public:
     void SetUnk50(NavListSortNode *sortnode) { unk50 = sortnode; }
     void SetUnk54(NavListSortNode *sortnode) { unk54 = sortnode; }
     Symbol GetSortName() { return mSortName; }
+    void SetSortName(Symbol name) { mSortName = name; }
     NavListSortNode *GetListFromIdx(int idx) { return mList[idx]; }
     int GetListSize() { return mList.size(); }
 

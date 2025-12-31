@@ -1,24 +1,22 @@
 #pragma once
 #include "NavListNode.h"
 #include "SongSort.h"
-#include "SongSortNode.h"
 
-class DifficultyCmp : public NavListItemSortCmp {
-    public:
-    DifficultyCmp(int, int, const char *);
-    virtual ~DifficultyCmp() {}
+class SongCmp : public NavListItemSortCmp {
+public:
+    SongCmp();
+    virtual ~SongCmp();
 
     virtual int Compare(const NavListItemSortCmp *,  NavListNodeType) const;
 
-    int mTier; // 0x0
-    float mRank; // 0x4
-    const char *mName; // 0x8
+    const char *unk4;
+    const char *unk8;
 };
 
-class SongSortByDiff : public SongSort {
+class SongSortBySong : public SongSort {
 public:
-    SongSortByDiff();
-    virtual ~SongSortByDiff() {};
+    SongSortBySong();
+    virtual ~SongSortBySong();
 
     virtual NavListItemNode *NewItemNode(void *) const;
     virtual NavListHeaderNode *NewHeaderNode(NavListItemNode *) const;
