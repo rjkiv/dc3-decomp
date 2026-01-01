@@ -1,4 +1,5 @@
 #pragma once
+#include "NavListNode.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "ui/UIListProvider.h"
@@ -41,6 +42,7 @@ public:
     Symbol GetSortName() { return mSortName; }
     void SetSortName(Symbol name) { mSortName = name; }
     NavListSortNode *GetListFromIdx(int idx) { return mList[idx]; }
+    std::vector<NavListSortNode*> GetList() { return mList; }
     int GetListSize() { return mList.size(); }
 
 protected:

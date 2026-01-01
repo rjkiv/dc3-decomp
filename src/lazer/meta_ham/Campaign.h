@@ -88,6 +88,7 @@ public:
     CampaignEra *GetBackEra() { return m_vEras.back(); }
     CampaignEra *GetEraAtIndex(int i) { return m_vEras[i]; }
     bool IsErasEmpty() { return m_vEras.empty(); }
+    Symbol GetMQCrew() { return mMasterQuestCrew; }
 
     static char const *sCampaignStateDesc[];
 
@@ -105,7 +106,7 @@ protected:
     Symbol unk94;
     Symbol unk98;
     bool mIntroOutroSeen; // 0x9c
-    Symbol mMaserQuestCrew; // 0xa0
+    Symbol mMasterQuestCrew; // 0xa0
     Symbol mMasterQuestSong; // 0xa4
     std::vector<CampaignMove *> unka8;
     DirLoader *m_pCurLoader; // 0xb4

@@ -1,6 +1,7 @@
 #include "MQSongSort.h"
 
 #include "AppLabel.h"
+#include "ChallengeSort.h"
 #include "MQSongSortMgr.h"
 
 MQSongSort::MQSongSort() {};
@@ -53,7 +54,15 @@ void MQSongSort::SetHighlightItem(const NavListSortNode *node) {
     if (node) {
         Symbol sortName = node->GetToken();
         if (sortName == 5 || sortName == 4) {
-            // TODO: needs SortNodeFind class - maybe part of NavListNode?
+            SortNodeFind nodeFind = SortNodeFind(node);
+            auto begin = mList.begin();
+            auto end = mList.end();
+            auto a = stlpmtx_std::find_if(begin, end, nodeFind);
+            if (a != end) {
+                unk50 = *a;
+                TheMQSongSortMgr->OnHighlightChanged();
+            }
+
         }
     }
 }

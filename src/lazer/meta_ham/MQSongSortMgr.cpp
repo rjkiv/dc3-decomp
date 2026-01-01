@@ -1,6 +1,18 @@
 #include "MQSongSortMgr.h"
 
-//MQSongSortMgr::MQSongSortMgr(SongPreview &) {};
+#include "Campaign.h"
+#include "hamobj/HamGameData.h"
+#include "HamSongMgr.h"
+#include "MQSongSortByCharacter.h"
+#include "MQSongSortNode.h"
+#include "ProfileMgr.h"
+
+// MQSongSortMgr::MQSongSortMgr(SongPreview &) {};
+
+MQSongSortByCharacter::MQSongSortByCharacter() {
+    static Symbol by_character("by_character");
+    mSortName = by_character;
+}
 
 MQSongSortMgr::~MQSongSortMgr() {};
 
@@ -15,15 +27,16 @@ void MQSongSortMgr::Init(SongPreview &preview) {
 void MQSongSortMgr::OnEnter() {
     mHeadersSelectable = true;
     UpdateList();
-
-    //for (int i = 0; i < mSorts.size(); i++) {
-    //    mSorts[i]->NumData() + mHeadersSelectable;
-    //}
+    FOREACH(it, mSorts) {
+        (*it)->BuildTree();
+    }
+    NavListSort *sort = mSorts[mCurrentSortIdx];
+    sort->BuildItemList();
     if (unk48) {
-        mSorts[mCurrentSortIdx]->SetHighlightID(unk44);
+        sort->SetHighlightID(unk44);
         unk48 = false;
     }
-    mSorts[mCurrentSortIdx]->BuildTree();
+    sort->UpdateHighlight();
 }
 
 Symbol MQSongSortMgr::MoveOn() {
@@ -34,25 +47,49 @@ Symbol MQSongSortMgr::MoveOn() {
 bool MQSongSortMgr::SelectionIs(Symbol sym) {
     static Symbol challenge("challenge");
     static Symbol header("header");
-    NavListSortNode *sortNode;
     if (sym == challenge) {
-        sortNode = NavListSortMgr::GetHighlightItem();
+        NavListSortNode *highlightItem = GetHighlightItem();
+        return dynamic_cast<MQSongSortNode *>(highlightItem) == 0;
     }
-    else {
-        if (sym != header) {
-            return false;
-        }
-        sortNode = NavListSortMgr::GetHighlightItem();
+    if (sym != header) {
+        return false;
     }
-
-    return sortNode->GetFirstActive() == 0;
+    NavListSortNode *highlightItem = GetHighlightItem();
+    return dynamic_cast<MQSongHeaderNode *>(highlightItem) == 0;
 }
 
 bool MQSongSortMgr::IsCharacter(Symbol sym) const {
     FOREACH(it, unk78) {
-        if (*it == sym) {
+        if (it->first == sym) {
             return true;
         }
     }
     return false;
+}
+
+void MQSongSortMgr::UpdateList() {
+    MILO_ASSERT(TheCampaign, 0x6e);
+    if (!unk90.empty()) {
+        unk90.clear();
+    }
+
+    Symbol mqCrew = TheCampaign->GetMQCrew();
+    unk78.clear();
+    std::vector<int> rankedSongs = TheHamSongMgr.RankedSongs((SongType)1);
+    for (int i = 0; i < rankedSongs.size(); i++) {
+        const HamSongMetadata *metadata = TheHamSongMgr.Data(i);
+        Symbol character = GetOutfitCharacter(metadata->Outfit(), true);
+        Symbol crew = GetCrewForCharacter(character, true);
+        Symbol mqHeader = MakeString<char>("mqheader_%s", character);
+        if (!metadata->IsFake() && crew == mqCrew && TheProfileMgr.IsContentUnlocked(metadata->ShortName())) {
+            Symbol shortName = TheHamSongMgr.GetShortNameFromSongID(i);
+            unk78[mqHeader].push_back(shortName);
+        }
+    }
+    FOREACH(it, unk78) {
+        unk90.push_back(it->first);
+        FOREACH(it2, it->second) {
+            unk90.push_back(*it2);
+        }
+    }
 }

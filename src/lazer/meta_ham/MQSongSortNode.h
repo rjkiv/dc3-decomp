@@ -1,5 +1,6 @@
 #pragma once
 #include "NavListNode.h"
+#include "SongRecord.h"
 class MQSongHeaderNode : public NavListHeaderNode {
 public:
     MQSongHeaderNode(NavListItemSortCmp *, Symbol, bool);
@@ -20,3 +21,15 @@ public:
     bool unk5c; // 0x5c
 };
 
+class MQSongSortNode : public NavListItemNode {
+public:
+    MQSongSortNode(NavListItemSortCmp *, SongRecord *);
+    virtual ~MQSongSortNode();
+    virtual Symbol OnSelect();
+    virtual void Text(UIListLabel *, UILabel *) const;
+    virtual void Custom(UIListCustom *, Hmx::Object *) const;
+
+protected:
+    Symbol unk48; // 0x48
+
+};

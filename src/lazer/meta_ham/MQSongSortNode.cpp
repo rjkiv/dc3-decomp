@@ -1,6 +1,9 @@
 #include "MQSongSortNode.h"
 
+#include "AppLabel.h"
+#include "HamUI.h"
 #include "MQSongSortMgr.h"
+#include "HamStarsDisplay.h"
 
 BEGIN_HANDLERS(MQSongHeaderNode)
 HANDLE_EXPR(get_challenge_count, unk58)
@@ -75,3 +78,40 @@ NavListSortNode *MQSongHeaderNode::GetFirstActive() {
     }
 }
 
+Symbol MQSongSortNode::OnSelect() {
+    return Select();
+}
+
+void MQSongSortNode::Text(UIListLabel *listlabel, UILabel *label) const {
+    if (listlabel->Matches("song")) {
+        AppLabel *pAppLabel = dynamic_cast<AppLabel *>(label);
+        MILO_ASSERT(pAppLabel, 0x10f);
+        pAppLabel->SetBlacklightSongName(unk48, -1, false);
+    }
+    else {
+        if (listlabel->Matches("song_prefix")) {
+            AppLabel *pAppLabel = dynamic_cast<AppLabel *>(label);
+            MILO_ASSERT(pAppLabel, 0x116);
+            if (IsHeader() || !TheHamUI.IsBlacklightMode()) {
+                label->SetTextToken(gNullStr);
+            }
+            else {
+                static Symbol song_select_song_prefix("song_select_song_prefix");
+                label->SetTextToken(song_select_song_prefix);
+            }
+        }
+        label->SetTextToken(listlabel->GetDefaultText());
+    }
+}
+
+void MQSongSortNode::Custom(UIListCustom *list, Hmx::Object *obj) const {
+    if (list->Matches("stars")) {
+        HamStarsDisplay *pStarDisplay = dynamic_cast<HamStarsDisplay *>(obj);
+        MILO_ASSERT(pStarDisplay, 0x12d);
+        static DataNode &mq_difficulty = DataVariable("mq_difficulty");
+        Difficulty difficulty = (Difficulty)mq_difficulty.Int();
+        pStarDisplay->SetShowing(true);
+        int songID = TheSongMgr.GetSongIDFromShortName(unk48, true);
+        pStarDisplay->SetSongWithDifficulty(songID, difficulty, false);
+    }
+}

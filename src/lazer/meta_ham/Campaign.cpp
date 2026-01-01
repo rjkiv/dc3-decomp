@@ -321,8 +321,8 @@ BEGIN_HANDLERS(Campaign)
     HANDLE_EXPR(
         get_outro_song_freestyle_enabled, GetOutroSongFreestyleEnabled(_msg->Int(2))
     )
-    HANDLE_ACTION(set_master_quest_crew, mMaserQuestCrew = _msg->Sym(2))
-    HANDLE_EXPR(get_master_quest_crew, mMaserQuestCrew)
+    HANDLE_ACTION(set_master_quest_crew, mMasterQuestCrew = _msg->Sym(2))
+    HANDLE_EXPR(get_master_quest_crew, mMasterQuestCrew)
     HANDLE_ACTION(set_master_quest_song, mMasterQuestSong = _msg->Sym(2))
     HANDLE_EXPR(get_master_quest_song, mMasterQuestSong)
     HANDLE_EXPR(num_campaign_moves, static_cast<int>(unka8.size())) // idk
