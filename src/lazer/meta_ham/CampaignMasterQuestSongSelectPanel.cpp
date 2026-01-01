@@ -1,6 +1,7 @@
 #include "meta_ham/CampaignMasterQuestSongSelectPanel.h"
 #include "MQSongSortMgr.h"
 #include "TexLoadPanel.h"
+#include "macros.h"
 #include "meta_ham/MetaPerformer.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
@@ -9,7 +10,9 @@
 CampaignMasterQuestSongSelectPanel::CampaignMasterQuestSongSelectPanel()
     : m_pCampaignSongProvider(), unk5e(false), unk60() {}
 
-CampaignMasterQuestSongSelectPanel::~CampaignMasterQuestSongSelectPanel() {}
+CampaignMasterQuestSongSelectPanel::~CampaignMasterQuestSongSelectPanel() {
+    RELEASE(unk60);
+}
 
 void CampaignMasterQuestSongSelectPanel::Poll() {
     TexLoadPanel::Poll();
@@ -54,12 +57,17 @@ Symbol CampaignMasterQuestSongSelectPanel::GetSelectedSong() {
     }
 }
 
+void CampaignMasterQuestSongSelectPanel::SelectSong() {
+    Symbol getSelSong = GetSelectedSong();
+    MetaPerformer::Current()->SetSong(getSelSong);
+}
+
 BEGIN_HANDLERS(CampaignMasterQuestSongSelectPanel)
     HANDLE_EXPR(get_song, GetSong(_msg->Int(2)))
     HANDLE_EXPR(get_selected_song, GetSelectedSong())
     HANDLE_EXPR(can_select_current_song, CanSelectCurrentSong())
     HANDLE_EXPR(can_select_song, CanSelectSong(_msg->Int(2)))
-    HANDLE_ACTION(select_song, MetaPerformer::Current()->SetSong(GetSelectedSong()))
+    HANDLE_ACTION(select_song, SelectSong())
     HANDLE_EXPR(is_preview_delay_finished, unk5e)
     HANDLE_ACTION(refresh, Refresh())
     HANDLE_EXPR(is_current_selection_character, IsCurrentSelectionSong() == 0)

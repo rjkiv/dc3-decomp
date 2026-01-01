@@ -1,6 +1,7 @@
 #include "lazer/meta_ham/HamUI.h"
 #include "gesture/DrawUtl.h"
 #include "gesture/GestureMgr.h"
+#include "gesture/SkeletonViz.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
 #include "math/Rot.h"
@@ -60,7 +61,7 @@ HamUI::~HamUI() { RELEASE(unk_0xF8); }
 
 BEGIN_HANDLERS(HamUI)
     HANDLE_EXPR(display_next_camera_output, DisplayNextCameraOutput())
-    // HANDLE_EXPR(toggle_draw_skeletons, ToggleDrawSkeletons())
+    HANDLE_EXPR(toggle_draw_skeletons, ToggleDrawSkeletons())
     HANDLE_EXPR(toggle_full_screen_draw, SetFullScreenDraw(mFullScreenDrawActive))
     HANDLE_EXPR(next_skeleton_draw_rot, NextSkeletonDrawRot())
     HANDLE_EXPR(cycle_draw_cursor, mShellInput->CycleDrawCursor())
@@ -288,7 +289,7 @@ void HamUI::StoreDepthBufferClipAt(float f1, float f2, float f3, float f4, int i
         TheGestureMgr->GetLiveCameraInput()->StoreDepthBufferClip(f1, f2, f3, f4, i1);
 }
 
-Symbol HamUI::DisplayNextCameraOutput() { return Symbol(); }
+// Symbol HamUI::DisplayNextCameraOutput() { return Symbol(); }
 
 DataNode HamUI::OnMsg(const UITransitionCompleteMsg &msg) {
     HAQManager::Print(HAQType::kHAQType_Screen);
@@ -362,4 +363,10 @@ void HamUI::InitPanels() {
         mLetterbox = dynamic_cast<LetterboxPanel *>(FindPanel("letterbox"));
         mBlacklight = dynamic_cast<BlacklightPanel *>(FindPanel("blacklight"));
     }
+}
+
+bool ToggleDrawSkeletons() {
+    MILO_ASSERT(TheSkeletonViz, 0xe2);
+    TheSkeletonViz->SetShowing(TheSkeletonViz->GetForceSubpartSelection());
+    return TheSkeletonViz->GetForceSubpartSelection();
 }

@@ -59,3 +59,8 @@ protected:
     SongMgr *mSongMgr; // 0x4c
     std::vector<int> mSongsInOffer; // 0x50
 };
+
+class SortCmp {
+public:
+    bool operator()(const StoreOffer *, const StoreOffer *) const;
+};

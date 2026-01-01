@@ -29,10 +29,11 @@ public:
     bool IsCurrentSelectionSong();
     void Refresh();
     void OnHighlightHeader();
+    void SelectSong();
 
 protected:
     CampaignSongProvider *m_pCampaignSongProvider; // 0x54
     DateTime mDateTime; // 0x58
     bool unk5e;
-    int unk60;
+    int *unk60; // Impl
 };

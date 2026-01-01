@@ -3,6 +3,7 @@
 #include "HamUI.h"
 #include "ProfileMgr.h"
 #include "flow/PropertyEventProvider.h"
+#include "game/Game.h"
 #include "gesture/SpeechMgr.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
@@ -575,12 +576,12 @@ void ProfileMgr::PushAllOptions() {
     float musicDb = GetMusicVolumeDb();
     float crowdDb = GetCrowdVolumeDb();
     float fxDb = GetFxVolumeDb();
-    // if (TheGame) {
-    //     TheGame->SetBackgroundVolume(musicDb);
-    //     if (TheGame) {
-    //         TheGame->SetBackgroundVolume(musicDb);
-    //     }
-    // }
+    if (TheGame) {
+        TheGame->SetBackgroundVolume(musicDb);
+        if (TheGame) {
+            TheGame->SetBackgroundVolume(musicDb);
+        }
+    }
     Fader *bFade = TheSynth->Find<Fader>("background_music_level.fade", false);
     if (bFade) {
         bFade->SetVolume(musicDb);
@@ -769,4 +770,64 @@ HamProfile *ProfileMgr::GetNonActiveProfile() const {
         }
     }
     return nullptr;
+}
+
+bool ProfileMgr::HasFinishedCampaign() const {
+    if (MetaPanel::sUnlockAll) {
+        return true;
+    } else {
+        FOREACH (it, unk90) {
+            HamProfile *profile = *it;
+            MILO_ASSERT(profile, 0x6ae);
+            if (profile->HasFinishedCampaign()) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool ProfileMgr::HasAnyEraSongBeenPlayed(Symbol era) const {
+    if (MetaPanel::sUnlockAll) {
+        return true;
+    } else {
+        FOREACH (it, unk90) {
+            HamProfile *profile = *it;
+            MILO_ASSERT(profile, 0x6c3);
+            if (profile->HasAnyEraSongBeenPlayed(era)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool ProfileMgr::IsDifficultyUnlocked(Symbol s1, Symbol s2) const {
+    if (MetaPanel::sUnlockAll) {
+        return true;
+    } else {
+        FOREACH (it, unk90) {
+            HamProfile *profile = *it;
+            MILO_ASSERT(profile, 0x6d7);
+            if (profile->IsDifficultyUnlockedForProfile(s1, s2)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool ProfileMgr::IsContentUnlocked(Symbol s) const {
+    if (MetaPanel::sUnlockAll) {
+        return true;
+    } else {
+        FOREACH (it, unk90) {
+            HamProfile *profile = *it;
+            MILO_ASSERT(profile, 0x680);
+            if (profile->IsContentUnlockedForProfile(s)) {
+                return true;
+            }
+        }
+    }
+    return false;
 }

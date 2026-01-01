@@ -94,4 +94,6 @@ private:
     RndOverlay *mUIOverlay; // 0x11c
 };
 
+bool ToggleDrawSkeletons();
+
 extern HamUI TheHamUI;

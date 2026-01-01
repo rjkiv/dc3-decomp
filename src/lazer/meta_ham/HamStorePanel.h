@@ -37,6 +37,7 @@ public:
     virtual Profile *StoreProfile() const;
     virtual StoreOffer *MakeNewOffer(DataArray *);
     virtual StoreOffer *FindOffer(Symbol) const;
+    virtual bool EnumerateSubsetOfOfferIDs() const { return 0; }
     virtual void GetOfferIDsToEnumerate(std::vector<u64> &, bool) const;
 
     // ContentMgr::Callback
@@ -58,8 +59,8 @@ public:
     void AddOfferToCart(StoreOffer *);
 
 protected:
-    virtual void StoreUserProfileSwappedToUser(LocalUser *);
     virtual StoreError UpdateOffers(std::list<EnumProduct> const &, bool);
+    virtual void StoreUserProfileSwappedToUser(LocalUser *);
 
     void ReadLockData();
     void DisableCart();
@@ -87,7 +88,7 @@ protected:
     Timer unkf8;
     int unk128;
     std::vector<CartRow> unk12c;
-    int unk138[7];
+    RCJob *unk138[7];
     bool unk154;
     bool unk155;
     bool unk156;

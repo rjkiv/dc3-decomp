@@ -43,7 +43,7 @@ HamProfile::HamProfile(int i1)
       unk324(0), mSkippedSongCount(0), unk32c(0), unk330(0), unk334(0), unk338(gNullStr),
       mIsFitnessGoalSet(0), mFitnessGoalStartDay(0), mFitnessGoalStartMonth(0),
       mFitnessGoalStartYear(0), mFitnessGoalDaysActive(0), mFitnessGoalCalories(0),
-      mTrackedDaysActive(0), mTrackedCalories(0), unk35c(0), unk360(0), unk364(0),
+      mTrackedDaysActive(0), mTrackedCalories(0), unk35c(0), unk360(0), mProfileTime(0),
       unk368(0), unk36c(1), unk370(0), unk374(3) {
     mSaveSizeMethod = SaveSize;
     mSongStatusMgr = new SongStatusMgr(&TheHamSongMgr);
@@ -105,7 +105,7 @@ void HamProfile::SaveFixed(FixedSizeSaveableStream &fs) const {
     fs << mTrackedCalories;
     fs << unk35c;
     fs << unk32c;
-    fs << unk364;
+    fs << mProfileTime;
     fs << unk368;
     fs << unk36c;
     fs << unk370;
@@ -159,7 +159,7 @@ void HamProfile::LoadFixed(FixedSizeSaveableStream &fs, int i2) {
     fs >> unk35c;
     mSkippedSongCount = 0;
     fs >> unk32c;
-    fs >> unk364;
+    fs >> mProfileTime;
     fs >> unk368;
     fs >> unk36c;
     fs >> unk370;
@@ -298,7 +298,7 @@ void HamProfile::DeleteAll() {
     unk35c = 0;
     unk360 = false;
     mSkippedSongCount = 0;
-    unk364 = 0;
+    mProfileTime = 0;
     unk368 = 0;
     unk36c = true;
     unk370 = 0;
@@ -953,14 +953,14 @@ DataNode HamProfile::OnMsg(const SingleItemEnumCompleteMsg &msg) {
 
 void HamProfile::SetLastNewSong() {
     if (IsOkToUpdateProfile() && TheRockCentral.IsOnline()
-        && 0 < TheRockCentral.GetUnk88()) {
+        && 0 < TheRockCentral.GetRockCentralTime()) {
         MILO_LOG(
             "---- Updating mLastNewSong from %i to %i\n",
-            unk364,
-            TheRockCentral.GetUnk88()
+            mProfileTime,
+            TheRockCentral.GetRockCentralTime()
         );
-        int i = TheRockCentral.GetUnk88();
+        int i = TheRockCentral.GetRockCentralTime();
         mDirty = true;
-        unk364 = i;
+        mProfileTime = i;
     }
 }

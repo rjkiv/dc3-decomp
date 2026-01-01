@@ -1,7 +1,11 @@
 #include "meta_ham/MainMenuProvider.h"
 #include "Challenges.h"
+#include "HamProfile.h"
+#include "ProfileMgr.h"
 #include "meta_ham/AppLabel.h"
+#include "net_ham/RockCentral.h"
 #include "os/Debug.h"
+#include "os/PlatformMgr.h"
 #include "ui/UIListProvider.h"
 #include "utl/Symbol.h"
 
@@ -49,4 +53,24 @@ void MainMenuProvider::UpdateList(UIListProvider *provider) {
     for (int i = 0; i < provider->NumData(); i++) {
         mItems.push_back(provider->DataSymbol(i));
     }
+}
+
+bool MainMenuProvider::HasNewDLC() const {
+    HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
+    if (pProfile) {
+        pProfile->UpdateOnlineID();
+        if (pProfile->IsSignedIn()) {
+            int padNum = pProfile->GetPadNum();
+            if (ThePlatformMgr.IsSignedIntoLive(padNum) && TheRockCentral.IsOnline()) {
+                MILO_LOG(
+                    "---- Compare profile time %i and rc time %i\n",
+                    pProfile->GetProfileTime(),
+                    TheRockCentral.GetRockCentralTime()
+                );
+                if (pProfile->GetProfileTime() < TheRockCentral.GetRockCentralTime())
+                    return true;
+            }
+        }
+    }
+    return false;
 }
