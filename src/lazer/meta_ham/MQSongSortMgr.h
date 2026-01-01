@@ -12,6 +12,7 @@ public:
 
     void UpdateList();
     bool IsCharacter(Symbol) const;
+    bool IsSong(Symbol) const;
 
     std::map<Symbol, std::vector<Symbol>> GetUnk78() { return unk78; }
 
