@@ -1,4 +1,6 @@
 #include "SongSortNode.h"
+
+#include "SongSortMgr.h"
 #include "meta/SongMgr.h"
 #include "meta_ham/AccomplishmentManager.h"
 #include "meta_ham/AppLabel.h"
@@ -68,6 +70,19 @@ void SongHeaderNode::UpdateItemCount(NavListItemNode *itemnode) {
             mDLCSongs++;
         } else {
             mDiscSongs++;
+        }
+    }
+}
+
+void SongHeaderNode::Renumber(std::vector<NavListSortNode *> &vec) {
+    SetStartIndex(vec.size());
+    if (TheSongSortMgr->HeadersSelectable()) { // this is adding in a bunch of other insts for some reason
+        vec.push_back(this);
+        TheSongSortMgr->AddHeaderIndex(StartIndex());
+    }
+    if (!TheSongSortMgr->IsInHeaderMode()) {
+        FOREACH(it, Children()) {
+            (*it)->Renumber(vec);
         }
     }
 }

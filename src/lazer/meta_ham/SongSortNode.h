@@ -18,6 +18,7 @@ public:
     virtual void SetItemCountString(UILabel *) const;
     virtual void UpdateItemCount(NavListItemNode *);
     virtual void Text(UIListLabel *, UILabel *) const;
+    virtual void Renumber(std::vector<NavListSortNode *> &);
 
 private:
     u32 mDiscSongs;

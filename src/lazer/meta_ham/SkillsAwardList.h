@@ -9,6 +9,7 @@ class SkillsAwardList : public FixedSizeSaveable {
 public:
     class Key {
     public:
+        bool operator<(const Key &);
     };
     SkillsAwardList() : unk20(0) { mSaveSizeMethod = SaveSize; }
     virtual ~SkillsAwardList() {}
@@ -17,8 +18,10 @@ public:
 
     bool HasFailure() const;
     SkillsAward GetAward(DataArray *);
+    SkillsAward GetAward(Symbol, DataArray *);
     void SetAward(DataArray *, SkillsAward);
     void Clear();
+    int AwardCount(SkillsAward) const;
 
     static int SaveSize(int);
 

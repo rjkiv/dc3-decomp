@@ -87,6 +87,7 @@ public:
 
     void SetShortcut(NavListShortcutNode *);
     int StartIndex() const { return mStartIx; }
+    void SetStartIndex(int idx) { mStartIx = idx; }
     NavListShortcutNode *GetShortcut() const { return mShortcut; }
     const std::list<NavListSortNode *> &Children() const { return mChildren; }
 
