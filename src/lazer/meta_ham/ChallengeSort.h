@@ -1,5 +1,6 @@
 #pragma once
 #include "NavListNode.h"
+#include "NavListSort.h"
 
 class SortNodeFind {
 public:
@@ -11,4 +12,4 @@ protected:
     NavListNodeType mType; // 0x4
 };
 
-class ChallengeSort {};
+class ChallengeSort : public NavListSort {};
