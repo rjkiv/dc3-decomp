@@ -50,6 +50,7 @@ public:
 
     int Compare(const NavListNode *, NavListNodeType) const;
     void GetID(DataArray *);
+    NavListItemSortCmp *GetCmp() { return mCmp; }
 
 protected:
     NavListItemSortCmp *mCmp; // 0x2c

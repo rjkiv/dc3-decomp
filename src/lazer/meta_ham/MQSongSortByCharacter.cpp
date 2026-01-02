@@ -19,3 +19,11 @@ int MQSongCharCmp::Compare(const NavListItemSortCmp *cmp, NavListNodeType type) 
     }
     return 0;
 }
+
+NavListHeaderNode *MQSongSortByCharacter::NewHeaderNode(NavListItemNode *node) const {
+    //String s = MakeString("mqheader_%s", node->GetCmp()->GetMQSongCharCmp()->unk8);
+    auto cmp = node->GetCmp()->GetMQSongCharCmp();
+    Symbol sym = MakeString("mqheader_%s", cmp->unk8);
+    //auto headerNode = new NavListHeaderNode((NavListItemSortCmp *)cmp, sym, true);
+    return new NavListHeaderNode((NavListItemSortCmp *)cmp, sym, true);;
+}
