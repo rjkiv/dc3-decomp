@@ -42,7 +42,7 @@ public:
     Symbol GetSortName() { return mSortName; }
     void SetSortName(Symbol name) { mSortName = name; }
     NavListSortNode *GetListFromIdx(int idx) { return mList[idx]; }
-    std::vector<NavListSortNode*> GetList() { return mList; }
+    std::vector<NavListSortNode*> &GetList() { return mList; }
     int GetListSize() { return mList.size(); }
 
 protected:

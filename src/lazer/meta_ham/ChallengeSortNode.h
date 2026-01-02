@@ -41,6 +41,8 @@ public:
     void SetNewIcon(UILabel *) const;
     void SetBuyIcon(UILabel *) const;
 
+    ChallengeRecord *GetChallengeRecord() { return unk48; };
+
 private:
     int GetPlayerSide() const;
 
