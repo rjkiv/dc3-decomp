@@ -3,9 +3,7 @@
 #include "NavListNode.h"
 class MQSongCharCmp : public NavListItemSortCmp {
 public:
-    MQSongCharCmp();
-    virtual ~MQSongCharCmp();
-
+    MQSongCharCmp(const char *, const char *);
     virtual int Compare(const NavListItemSortCmp *, NavListNodeType) const;
 
     const char *unk4;

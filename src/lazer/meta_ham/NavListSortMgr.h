@@ -70,6 +70,7 @@ public:
     std::vector<int> GetHeadersB() { return mHeadersB; };
     int GetHeadersBAtIdx(int idx) { return mHeadersB[idx]; };
     int GetCurrentSortIdx() const { return mCurrentSortIdx; };
+    SongPreview *GetSongPreview() { return mSongPreview; };
 
 protected:
     std::vector<NavListSort *> mSorts; // 0x34

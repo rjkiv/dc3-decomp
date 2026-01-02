@@ -1,5 +1,9 @@
 #include "MQSongSortByCharacter.h"
 
+#include "MQSongSortNode.h"
+
+MQSongCharCmp::MQSongCharCmp(const char *c, const char *c2) : unk4(c), unk8(c2){}
+
 int MQSongCharCmp::Compare(const NavListItemSortCmp *cmp, NavListNodeType type) const {
     switch (type) {
     case kNodeShortcut:
@@ -21,9 +25,14 @@ int MQSongCharCmp::Compare(const NavListItemSortCmp *cmp, NavListNodeType type) 
 }
 
 NavListHeaderNode *MQSongSortByCharacter::NewHeaderNode(NavListItemNode *node) const {
-    //String s = MakeString("mqheader_%s", node->GetCmp()->GetMQSongCharCmp()->unk8);
     auto cmp = node->GetCmp()->GetMQSongCharCmp();
+    MQSongCharCmp *songCharCmp = new MQSongCharCmp(cmp->unk4, cmp->unk8);
     Symbol sym = MakeString("mqheader_%s", cmp->unk8);
-    //auto headerNode = new NavListHeaderNode((NavListItemSortCmp *)cmp, sym, true);
-    return new NavListHeaderNode((NavListItemSortCmp *)cmp, sym, true);;
+    return new MQSongHeaderNode(songCharCmp, sym, true);
+}
+
+NavListShortcutNode *MQSongSortByCharacter::NewShortcutNode(NavListItemNode *node) const {
+    auto cmp = node->GetCmp()->GetMQSongCharCmp();
+    MQSongCharCmp *songCharCmp = new MQSongCharCmp(cmp->unk4, cmp->unk8);
+    return new NavListShortcutNode(songCharCmp, cmp->unk8, true);
 }

@@ -1,6 +1,6 @@
 #pragma once
-#include "meta_ham/NavListNode.h"
-#include "meta_ham/Playlist.h"
+#include "NavListNode.h"
+#include "Playlist.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "stl/_vector.h"
@@ -9,7 +9,7 @@
 #include "ui/UIListLabel.h"
 #include "utl/Symbol.h"
 
-class PlaylistSortNode : public NavListSortNode {
+class PlaylistSortNode : public NavListItemNode {
 public:
     virtual Symbol Select();
     virtual void Text(UIListLabel *, UILabel *) const;
@@ -36,11 +36,11 @@ public:
     NavListSortNode *GetFirstActive();
     virtual void Text(UIListLabel *, UILabel) const;
     virtual bool IsActive() const;
-    char const *GetAlbumPartPath();
+    char const *GetAlbumArtPath();
     virtual void Renumber(std::vector<NavListSortNode *> &);
 
     PlaylistHeaderNode(NavListItemSortCmp *, Symbol, bool);
 
 protected:
-    int unk58;
+    int mChallengeCount;
 };

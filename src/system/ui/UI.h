@@ -32,7 +32,7 @@ public:
     virtual void Draw();
     virtual void GotoScreen(const char *, bool, bool);
     virtual void GotoScreen(UIScreen *, bool, bool);
-    virtual void PushScreen(UIScreen *);
+    virtual void PushScreen(UIScreen *); // 0x70
     virtual void PopScreen(UIScreen *);
     virtual void ResetScreen(UIScreen *);
     virtual bool InComponentSelect();
