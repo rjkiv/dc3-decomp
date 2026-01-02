@@ -27,12 +27,12 @@ class Skeleton : public BaseSkeleton {
 public:
     Skeleton();
     virtual void JointPos(SkeletonCoordSys, SkeletonJoint, Vector3 &) const; // 0x4
-    virtual bool
-    Displacement(const SkeletonHistory *, SkeletonCoordSys, SkeletonJoint, int, Vector3 &, int &)
-        const; // 0x8
-    virtual bool
-    Displacements(const SkeletonHistory *, SkeletonCoordSys, int, Vector3 *, int &)
-        const; // 0xc
+    virtual bool Displacement(
+        const SkeletonHistory *, SkeletonCoordSys, SkeletonJoint, int, Vector3 &, int &
+    ) const; // 0x8
+    virtual bool Displacements(
+        const SkeletonHistory *, SkeletonCoordSys, int, Vector3 *, int &
+    ) const; // 0xc
     virtual JointConfidence JointConf(SkeletonJoint) const; // 0x10
     virtual bool IsTracked() const; // 0x14
     virtual int QualityFlags() const; // 0x18
@@ -60,9 +60,9 @@ public:
     int GetEnrollmentIndex() const;
     bool NeedIdentify() const;
     void ScreenPos(SkeletonJoint, Vector2 &) const;
-    bool
-    Velocity(const SkeletonHistory &, SkeletonCoordSys, SkeletonJoint, int, Vector3 &, int &)
-        const;
+    bool Velocity(
+        const SkeletonHistory &, SkeletonCoordSys, SkeletonJoint, int, Vector3 &, int &
+    ) const;
     bool RequestIdentity();
     bool EnrollIdentity(int);
     void Init();

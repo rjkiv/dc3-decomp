@@ -10,7 +10,12 @@
 
 SigninScreen::SigninScreen() {}
 
-SigninScreen::~SigninScreen() {}
+BEGIN_HANDLERS(SigninScreen)
+    HANDLE_ACTION(show_signin_ui, ThePlatformMgr.SignInUsers(1, 0x1000000))
+    HANDLE_MESSAGE(SigninChangedMsg)
+    HANDLE_MESSAGE(UIChangedMsg)
+    HANDLE_SUPERCLASS(HamScreen)
+END_HANDLERS
 
 void SigninScreen::Poll() { UIScreen::Poll(); }
 
@@ -24,19 +29,22 @@ void SigninScreen::Exit(UIScreen *screen) {
     HamScreen::Exit(screen);
 }
 
-DataNode SigninScreen::OnMsg(SigninChangedMsg const &) { return NULL_OBJ; }
-
-DataNode SigninScreen::OnMsg(UIChangedMsg const &msg) {
-    if (msg->Int(2) == 0 && ThePlatformMgr.SignInMask() == 0) {
-        static Message sign_in_dismissed("sign_in_dismissed");
-        Handle(sign_in_dismissed, false);
+DataNode SigninScreen::OnMsg(const SigninChangedMsg &msg) {
+    int mask = ThePlatformMgr.SignInMask();
+    for (int i = 0; mask != 0; mask >>= 1, i++) {
+        if ((mask & 1) && !ThePlatformMgr.IsPadAGuest(i)) {
+            static Message msg("on_signed_in");
+            Handle(msg, true);
+            break;
+        }
     }
     return 0;
 }
 
-BEGIN_HANDLERS(SigninScreen)
-    HANDLE_ACTION(show_signin_ui, ThePlatformMgr.SignInUsers(1, 0x1000000))
-    HANDLE_MESSAGE(SigninChangedMsg)
-    HANDLE_MESSAGE(UIChangedMsg)
-    HANDLE_SUPERCLASS(HamScreen)
-END_HANDLERS
+DataNode SigninScreen::OnMsg(const UIChangedMsg &msg) {
+    if (!msg.Showing() && ThePlatformMgr.SignInMask() == 0) {
+        static Message sign_in_dismissed("sign_in_dismissed", 0);
+        Handle(sign_in_dismissed, false);
+    }
+    return 0;
+}

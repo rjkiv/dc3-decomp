@@ -8,6 +8,7 @@
 #include "hamobj/ScoreUtl.h"
 #include "lazer/meta_ham/HamPanel.h"
 #include "obj/Dir.h"
+#include "obj/Object.h"
 #include "rndobj/Dir.h"
 
 class BustAMovePanel : public HamPanel {
@@ -37,6 +38,8 @@ public:
     virtual void Enter();
     virtual void Exit();
     virtual void Poll();
+
+    NEW_OBJ(BustAMovePanel)
 
     void OnBeat();
     void SetUpSongStructure(Symbol);

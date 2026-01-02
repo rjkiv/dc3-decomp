@@ -2,7 +2,7 @@
 #include "gesture/BaseSkeleton.h"
 #include "gesture/Skeleton.h"
 #include "math/Vec.h"
-#include "xdk/XMVECTOR.h"
+#include "vectorintrinsics.h"
 
 void NuiTransformSkeletonToDepthImage(XMVECTOR, long *, long *, unsigned short *);
 void NuiTransformSkeletonToDepthImage(XMVECTOR, float *, float *);

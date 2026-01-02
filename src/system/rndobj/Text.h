@@ -274,9 +274,12 @@ public:
     void SetFixedLength(int);
 
     static void Init();
+    static void DrawBlacklight();
+    static void ClearBlacklight();
+    static void SetBlacklightModeEnabled(bool b) { sBlacklightModeEnabled = b; }
+    static bool IsBlacklightModeEnabled() { return sBlacklightModeEnabled; }
 
     int GetTextSize() const { return Max<int>(mFixedLength, mText.length()); }
-    static void SetBlacklightModeEnabled(bool b) { sBlacklightModeEnabled = b; }
     void UpdateText();
     void SetText(const char *);
     int FontMapIndex(RndFontBase *, bool);

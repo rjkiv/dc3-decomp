@@ -1,10 +1,10 @@
 #pragma once
-#include "win_types.h"
 
+// A C representation of a VMX register.
 typedef struct __declspec(intrin_type) __declspec(align(16)) __vector4 { /* Size=0x10 */
     union {
         /* 0x0000 */ float vector4_f32[4];
-        /* 0x0000 */ UINT vector4_u32[4];
+        /* 0x0000 */ unsigned int vector4_u32[4];
         struct {
             /* 0x0000 */ float x;
             /* 0x0004 */ float y;
@@ -12,7 +12,7 @@ typedef struct __declspec(intrin_type) __declspec(align(16)) __vector4 { /* Size
             /* 0x000c */ float w;
         };
         /* 0x0000 */ float v[4];
-        /* 0x0000 */ UINT u[4];
+        /* 0x0000 */ unsigned int u[4];
     };
 } __vector4;
 typedef __vector4 XMVECTOR;
@@ -63,34 +63,34 @@ typedef struct _XMMATRIX { /* Size=0x40 */
     };
 
     _XMMATRIX(const float *);
+    // clang-format off
     _XMMATRIX(
-        float,
-        float,
-        float,
-        float,
-        float,
-        float,
-        float,
-        float,
-        float,
-        float,
-        float,
-        float,
-        float,
-        float,
-        float,
-        float
+        float, float, float, float,
+        float, float, float, float,
+        float, float, float, float,
+        float, float, float, float
     );
+    // clang-format on
     _XMMATRIX(const XMVECTOR, const XMVECTOR, const XMVECTOR, const XMVECTOR);
     _XMMATRIX();
-    float &operator()(UINT, UINT);
-    float operator()(UINT, UINT) const;
+    float &operator()(unsigned int, unsigned int);
+    float operator()(unsigned int, unsigned int) const;
     _XMMATRIX &operator=(const _XMMATRIX &);
     _XMMATRIX &operator*=(const _XMMATRIX &);
     _XMMATRIX operator*(const _XMMATRIX &) const;
 } XMMATRIX;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // VMX128 Intrinsics let's goooooooo
+
+// Based on what I found from pdbs,
+// lvx and stvx are the only two VMX128 intrinsics
+// that actually require an explicit implementation.
+// Everything else, you can just add the declaration below
+// and it'll just work:tm:
 
 static inline XMVECTOR __lvx(const void *base, int offset) {
     const char *ret = (const char *)base + offset;
@@ -103,6 +103,19 @@ static inline void __stvx(XMVECTOR vSrc, void *base, int offset) {
     *vDst = vSrc;
 }
 
-// TODO: need intrinsics for:
-// vspltw128, vmaddcfp128, vmaddfp128
-// any others that we find in DC3
+// To add an intrinsic for a particular opcode, please consult:
+// https://github.com/encounter/powerpc-rs/blob/main/isa.yaml#L4635
+// Each VMX register corresponds to an XMVECTOR.
+// Try to infer the function signature based off the args of the opcode.
+// You'll know you got it right if you can call your function
+// and the actual VMX128 PPC instruction shows up.
+
+// Vector128 Multiply Add Floating Point
+XMVECTOR __vmaddfp(XMVECTOR mul1, XMVECTOR mul2, XMVECTOR addend);
+
+// Vector128 Splat Word
+XMVECTOR __vspltw(XMVECTOR vSrcA, unsigned int uImmed);
+
+#ifdef __cplusplus
+}
+#endif

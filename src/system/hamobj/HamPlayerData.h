@@ -42,6 +42,7 @@ public:
     int PadNum() const { return mPadNum; }
     bool IsAutoplaying() const { return !mAutoplay.Null(); }
     void SetUnk48(Symbol s) { unk48 = s; }
+    void SetAutoplay(Symbol s) { mAutoplay = s; }
 
 private:
     void SetSkeletonTrackingID(int);

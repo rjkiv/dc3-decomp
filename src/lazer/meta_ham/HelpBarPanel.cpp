@@ -1,7 +1,9 @@
 #include "meta_ham/HelpBarPanel.h"
 #include "HamPanel.h"
+#include "HelpBarPanel.h"
 #include "flow/Flow.h"
 #include "gesture/GestureMgr.h"
+#include "gesture/WaveToTurnOnLight.h"
 #include "meta_ham/SaveLoadManager.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
@@ -31,6 +33,13 @@ void HelpBarPanel::Draw() {
 void HelpBarPanel::Unload() {
     TheSaveLoadMgr->RemoveSink(this);
     UIPanel::Unload();
+}
+
+void HelpBarPanel::FinishLoad() {
+    UIPanel::FinishLoad();
+    TheSaveLoadMgr->AddSink(this);
+    TheWaveToTurnOnLight->AddSink(this, "wave_gesture_enabled");
+    TheWaveToTurnOnLight->AddSink(this, "wave_gesture_disabled");
 }
 
 void HelpBarPanel::EnterControllerMode() {
@@ -119,7 +128,14 @@ DataNode HelpBarPanel::OnWaveGestureDisabled(DataArray const *) {
 DataNode HelpBarPanel::OnEnterBlacklightMode(DataArray const *d) {
     static Symbol list_dir_resource("list_dir_resource");
     static Symbol label_carousel_blacklight("label_carousel_blacklight");
+    unk3c->SetProperty(list_dir_resource, label_carousel_blacklight);
+    return DataNode(0);
+}
 
+DataNode HelpBarPanel::OnExitBlacklightMode(DataArray const *d) {
+    static Symbol list_dir_resource("list_dir_resource");
+    static Symbol label_carousel("label_carousel");
+    unk3c->SetProperty(list_dir_resource, label_carousel);
     return DataNode(0);
 }
 

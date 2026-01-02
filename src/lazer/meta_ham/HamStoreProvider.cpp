@@ -6,6 +6,7 @@
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "stl/_algo.h"
 #include "ui/UILabel.h"
 #include "ui/UIListLabel.h"
 #include "ui/UIListProvider.h"
@@ -115,6 +116,56 @@ Symbol HamStoreProvider::CurrentSort() const {
         return mSorts[mSortIndex];
     }
     return gNullStr;
+}
+
+void HamStoreProvider::UpdateOffersInCart(StoreOffer *offer, int i) {
+    if (i == 0) {
+        unkb0.push_back(offer);
+    } else if (i == 1) {
+        unkb0.remove(offer);
+    } else if (i < 3) {
+        unkb0.clear();
+    }
+    RefreshFilteredCartOffers();
+}
+
+void HamStoreProvider::SetPackList(StoreOffer const *offer) {
+    static Symbol pack("pack");
+    if (offer->OfferType() == pack) {
+        static Symbol songs("songs");
+        DataArrayPtr ptr = DataArrayPtr(songs);
+        unk78.mSongs = offer->GetData(ptr, false).Array(0);
+        unk78.mSongs->Release();
+    } else {
+        unk78.mSongs = 0;
+    }
+}
+
+bool HamStoreProvider::IsPartiallyPurchased(StoreOffer const *offer) const {
+    static Symbol song("song");
+    static Symbol pack("pack");
+    if (ShowBrowserPurchased(offer)) {
+        return true;
+    } else {
+        if (offer->OfferType() == pack) {
+            for (int i = 0; i < offer->NumSongs(); i++) {
+                const StoreOffer *song = FindSong(offer->Song(i));
+                if (song && const_cast<StoreOffer *>(song)->IsPurchased()) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+void HamStoreProvider::ApplySort() {
+    if (!mSorts.empty()) {
+        MILO_ASSERT_RANGE(mSortIndex, 0, mSorts.size(), 0xf1);
+        if (mSorts[mSortIndex].Str() != gNullStr) {
+            std::sort(mFilteredOffers->begin(), mFilteredOffers->end(), SortCmp());
+        }
+    }
 }
 
 BEGIN_HANDLERS(HamStoreProvider)

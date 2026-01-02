@@ -1,6 +1,6 @@
 #pragma once
 #include "../win_types.h"
-#include "../XMVECTOR.h"
+#include "vectorintrinsics.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,6 +1,6 @@
 #pragma once
 #include "xdk/win_types.h"
-#include "xdk/XMVECTOR.h"
+#include "vectorintrinsics.h"
 
 // Enums and very small struct definitions go here.
 
@@ -539,8 +539,7 @@ typedef struct _D3DVIEWPORT9 { /* Size=0x18 */
     /* 0x0014 */ float MaxZ;
 } D3DVIEWPORT9;
 
-#define D3DDECL_END()                                                                    \
-    { -1, 0, -1, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 }
+#define D3DDECL_END() { -1, 0, -1, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 }
 
 typedef struct _D3DSWAP_STATUS { /* Size=0xc */
     /* 0x0000 */ UINT Flags;

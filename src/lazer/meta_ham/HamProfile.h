@@ -105,6 +105,7 @@ public:
     void UpdateFlaunt();
     bool IsContentUnlockedForProfile(Symbol) const;
     bool IsContentNew(Symbol) const;
+    bool IsDifficultyUnlockedForProfile(Symbol, Symbol);
 
     void IncrementSkippedSongCount() { mSkippedSongCount++; }
     void UpdateNag() { unk368++; }
@@ -116,6 +117,7 @@ public:
     bool IsSignedIn() const { return mSignedIn; }
     float FitnessTime() const { return mFitnessTime; }
     float FitnessCalories() const { return mFitnessCalories; }
+    int GetProfileTime() const { return mProfileTime; }
 
 private:
     // FixedSizeSaveable
@@ -171,7 +173,7 @@ private:
     int mTrackedCalories; // 0x358
     int unk35c;
     bool unk360;
-    int unk364;
+    int mProfileTime; // 0x364
     int unk368;
     bool unk36c;
     int unk370; // 0x370 - nag index?

@@ -15,7 +15,6 @@
 
 class AppLabel : public HamLabel {
 public:
-    AppLabel() {}
     // Hmx::Object
     virtual ~AppLabel();
     // no, this is not an oversight

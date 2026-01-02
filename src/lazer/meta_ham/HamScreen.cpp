@@ -1,25 +1,34 @@
 #include "HamScreen.h"
 #include "HamUI.h"
+#include "meta_ham/BlacklightPanel.h"
+#include "meta_ham/HelpBarPanel.h"
+#include "meta_ham/LetterboxPanel.h"
+#include "meta_ham/UIEventMgr.h"
+#include "obj/Data.h"
+#include "obj/Msg.h"
+#include "os/Debug.h"
 #include "ui/UI.h"
 #include "ui/UIPanel.h"
 
 BEGIN_CUSTOM_HANDLERS(HamScreen)
-    // HANDLE_ACTION_IF(get)
+    HANDLE(get, OnGet)
+    _HANDLE_CHECKED(OnEventMsgCommon(_msg)) // lol
     HANDLE_SUPERCLASS(UIScreen)
 END_CUSTOM_HANDLERS
 
 void HamScreen::Enter(UIScreen *screen) {
     TheHamUI.InitPanels();
-    if (TheHamUI.GetHelpBarPanel()->GetState() != UIPanel::kUp) {
-        TheHamUI.GetHelpBarPanel()->Enter();
+    HelpBarPanel *hbp = TheHamUI.GetHelpBarPanel();
+    if (hbp->GetState() != UIPanel::kUp) {
+        hbp->Enter();
     }
-    if (TheHamUI.GetLetterboxPanel()
-        && TheHamUI.GetLetterboxPanel()->GetState() != UIPanel::kUp) {
-        TheHamUI.GetLetterboxPanel()->Enter();
+    LetterboxPanel *lbp = TheHamUI.GetLetterboxPanel();
+    if (lbp && lbp->GetState() != UIPanel::kUp) {
+        lbp->Enter();
     }
-    if (TheHamUI.GetBlacklightPanel() != 0
-        && TheHamUI.GetBlacklightPanel()->GetState() != UIPanel::kUp) {
-        TheHamUI.GetBlacklightPanel()->Enter();
+    BlacklightPanel *blp = TheHamUI.GetBlacklightPanel();
+    if (blp && blp->GetState() != UIPanel::kUp) {
+        blp->Enter();
     }
     TheHamUI.GetShellInput()->UpdateInputPanel(mFocusPanel);
     UIScreen::Enter(screen);
@@ -42,9 +51,34 @@ bool HamScreen::InComponentSelect() const {
             return component->GetState() == UIComponent::kSelecting;
         }
     }
-    UIComponent *component = TheHamUI.GetOverlayPanel()->FocusComponent();
-    if (component) {
-        return component->GetState() == UIComponent::kSelecting;
+    if (TheHamUI.GetOverlayPanel()) {
+        UIComponent *component = TheHamUI.GetOverlayPanel()->FocusComponent();
+        if (component) {
+            return component->GetState() == UIComponent::kSelecting;
+        }
     }
     return UIScreen::InComponentSelect();
+}
+
+DataNode HamScreen::OnEventMsgCommon(const Message &msg) {
+    if (TheUIEventMgr && TheUIEventMgr->HasActiveDialogEvent()) {
+        DataNode handled = TheHamUI.GetShellInput()->Handle(msg, false);
+        if (handled != DataNode(kDataUnhandled, 0)) {
+            return handled;
+        } else if (IsEventDialogOnTop()) {
+            UIPanel *event_dialog = TheHamUI.EventDialogPanel();
+            MILO_ASSERT(event_dialog, 0x4D);
+            return event_dialog->Handle(msg, false);
+        }
+    }
+    if (TheHamUI.GetOverlayPanel()) {
+        DataNode handled = TheHamUI.GetShellInput()->Handle(msg, false);
+        if (handled != DataNode(kDataUnhandled, 0)) {
+            return handled;
+        } else {
+            return TheHamUI.GetOverlayPanel()->Handle(msg, false);
+        }
+    } else {
+        return DataNode(kDataUnhandled, 0);
+    }
 }

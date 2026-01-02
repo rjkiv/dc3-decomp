@@ -1,7 +1,7 @@
 #pragma once
 #include "../win_types.h"
 #include "xdk/XAPILIB.h"
-#include "../XMVECTOR.h"
+#include "vectorintrinsics.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,7 +26,9 @@ struct _NUI_TILT_OBJECTS { /* Size=0xd0 */
 
 typedef _NUI_TILT_OBJECTS NUI_TILT_OBJECTS;
 
-DWORD NuiCameraAdjustTilt(NUI_TILT_FLAGS, float, float, float, NUI_TILT_OBJECTS *, XOVERLAPPED *);
+DWORD NuiCameraAdjustTilt(
+    NUI_TILT_FLAGS, float, float, float, NUI_TILT_OBJECTS *, XOVERLAPPED *
+);
 HRESULT NuiCameraElevationSetAngle(long);
 
 #ifdef __cplusplus

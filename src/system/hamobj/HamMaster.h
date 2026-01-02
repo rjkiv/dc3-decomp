@@ -53,6 +53,7 @@ public:
     int Unk70() const { return unk60.GetMeasure(); }
     HamAudio *GetAudio() const { return mAudio; }
     HamSongData *SongData() const { return mSongData; }
+    MidiParserMgr *GetMidiParserMgr() const { return mMidiParserMgr; }
 
 private:
     HamSongData *mSongData; // 0x30

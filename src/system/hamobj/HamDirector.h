@@ -142,6 +142,7 @@ public:
     ObjectDir *MergerDir() const { return mMerger ? mMerger->Dir() : nullptr; }
     HamCamShot *CurShot() const { return mCurShot; }
     FileMerger *GetGameModeMerger() const { return mGameModeMerger; }
+    void SetPickingDisabled(bool disable) { mDisablePicking = disable; }
 
     DataNode OnGetDancerVisemes(DataArray *);
 

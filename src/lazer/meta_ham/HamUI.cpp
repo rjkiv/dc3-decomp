@@ -1,14 +1,22 @@
 #include "lazer/meta_ham/HamUI.h"
+#include "game/Game.h"
+#include "gesture/BaseSkeleton.h"
 #include "gesture/DrawUtl.h"
 #include "gesture/GestureMgr.h"
+#include "gesture/SkeletonViz.h"
+#include "gesture/StreamRenderer.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
 #include "math/Rot.h"
 #include "meta/HAQManager.h"
 #include "meta_ham/BlacklightPanel.h"
+#include "meta_ham/HamScreen.h"
 #include "meta_ham/HelpBarPanel.h"
 #include "meta_ham/LetterboxPanel.h"
+#include "meta_ham/PassiveMessenger.h"
 #include "meta_ham/ProfileMgr.h"
+#include "meta_ham/ShellInput.h"
+#include "meta_ham/SkeletonChooser.h"
 #include "meta_ham/UIEventMgr.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
@@ -16,10 +24,15 @@
 #include "obj/Object.h"
 #include "os/ContentMgr.h"
 #include "os/Debug.h"
+#include "os/Joypad.h"
+#include "os/JoypadMsgs.h"
 #include "os/PlatformMgr.h"
 #include "os/System.h"
 #include "rndobj/Dir.h"
+#include "rndobj/Mesh.h"
 #include "rndobj/Overlay.h"
+#include "rndobj/TexRenderer.h"
+#include "rndobj/Text.h"
 #include "ui/UI.h"
 #include "ui/UIPanel.h"
 #include "ui/UIScreen.h"
@@ -34,43 +47,38 @@ namespace {
     }
 }
 
-HamUI::HamUI() {
-    mHelpBar = 0;
-    mLetterbox = nullptr;
-    mBlacklight = nullptr;
-    mEventDialogPanel = nullptr;
-    mBackgroundPanel = nullptr;
-    mContentLoadingPanel = nullptr;
-    mOverlayPanel = 0;
-    mGamePanel = 0;
-    unk_0xF8 = nullptr;
-    unk_0xFC = 0;
-    unk_0xFD = 0;
-    mEventScreen = 0;
-    mShellInput = new ShellInput;
-    unk_0x108 = 0;
-    unk_0x118 = 0;
-    unk_0x10C = -1;
-    mUIOverlay = 0;
-    mSkelRot = 0.0f;
+HamUI::HamUI()
+    : mHelpBar(nullptr), mLetterbox(nullptr), mBlacklight(nullptr),
+      mEventDialogPanel(nullptr), mBackgroundPanel(nullptr),
+      mContentLoadingPanel(nullptr), mOverlayPanel(nullptr), mGamePanel(nullptr),
+      mAugmentedPhoto(nullptr), unk_0xFC(false), unk_0xFD(false), mEventScreen(nullptr),
+      mShellInput(new ShellInput()), unk_0x108(0), unk_0x10C(-1), mSkelRot(0),
+      mButtonSpam(false), mUIOverlay(nullptr) {
     SetFullScreenDraw(false);
 }
 
-HamUI::~HamUI() { RELEASE(unk_0xF8); }
+HamUI::~HamUI() { RELEASE(mAugmentedPhoto); }
 
 BEGIN_HANDLERS(HamUI)
     HANDLE_EXPR(display_next_camera_output, DisplayNextCameraOutput())
-    // HANDLE_EXPR(toggle_draw_skeletons, ToggleDrawSkeletons())
-    HANDLE_EXPR(toggle_full_screen_draw, SetFullScreenDraw(mFullScreenDrawActive))
+    HANDLE_EXPR(toggle_draw_skeletons, ToggleDrawSkeletons())
+    HANDLE_EXPR(toggle_full_screen_draw, SetFullScreenDraw(!mFullScreenDrawActive))
     HANDLE_EXPR(next_skeleton_draw_rot, NextSkeletonDrawRot())
     HANDLE_EXPR(cycle_draw_cursor, mShellInput->CycleDrawCursor())
-    HANDLE_EXPR(set_button_spam, unk_0x118 = _msg->Int(2))
-    HANDLE_EXPR(button_spam, unk_0x118)
-    // HANDLE_EXPR(toggle_ui_overlay, mUIOverlay)
-    HANDLE_ACTION(toggle_letterbox, mLetterbox->ToggleBlacklightMode(0))
-    HANDLE_ACTION(toggle_letterbox_immediately, mLetterbox->ToggleBlacklightMode(1))
-    HANDLE_EXPR(is_letterbox_in_transition, mLetterbox->InBlacklightTransition())
-    HANDLE_EXPR(is_blacklight_mode, mLetterbox->IsBlacklightMode())
+    HANDLE_ACTION(set_button_spam, mButtonSpam = _msg->Int(2))
+    HANDLE_EXPR(button_spam, mButtonSpam)
+    HANDLE_ACTION_IF(
+        toggle_ui_overlay, mUIOverlay, mUIOverlay->SetShowing(!mUIOverlay->Showing())
+    )
+    HANDLE_ACTION_IF(toggle_letterbox, mLetterbox, mLetterbox->ToggleBlacklightMode(false))
+    HANDLE_ACTION_IF(
+        toggle_letterbox_immediately, mLetterbox, mLetterbox->ToggleBlacklightMode(true)
+    )
+    HANDLE_EXPR(
+        is_letterbox_in_transition,
+        mLetterbox ? mLetterbox->InBlacklightTransition() : false
+    )
+    HANDLE_EXPR(is_blacklight_mode, IsBlacklightMode())
     HANDLE_ACTION(force_letterbox_off, ForceLetterboxOff())
     HANDLE_ACTION(force_letterbox_off_immediate, ForceLetterboxOffImmediate())
     HANDLE_ACTION(reset_snapshots, ResetSnapshots())
@@ -79,8 +87,8 @@ BEGIN_HANDLERS(HamUI)
     HANDLE_ACTION(
         apply_snapshot_to_mesh, ApplySnapshotToMesh(_msg->Int(2), _msg->Obj<RndMesh>(3))
     )
-    HANDLE_EXPR(get_augmented_photo, unk_0xF8)
-    HANDLE_EXPR(has_overlay_panel, mOverlayPanel != 0)
+    HANDLE_EXPR(get_augmented_photo, mAugmentedPhoto)
+    HANDLE_EXPR(has_overlay_panel, mOverlayPanel != nullptr)
     HANDLE_ACTION(init_texture_store, InitTextureStore(_msg->Int(2)))
     HANDLE_ACTION(clear_texture_store, ClearTextureStore())
     HANDLE_EXPR(num_texture_store, NumStoredTextures())
@@ -106,7 +114,7 @@ BEGIN_HANDLERS(HamUI)
             _msg->Float(2), _msg->Float(3), _msg->Float(4), _msg->Float(5), _msg->Int(6)
         )
     )
-    HANDLE_ACTION(store_depth_buffer_at, StoreDepthBufferAt(_msg->Int(2)))
+    HANDLE_ACTION(store_depth_buff_at, StoreDepthBufferAt(_msg->Int(2)))
     HANDLE_ACTION(
         store_depth_buff_clip_at,
         StoreDepthBufferClipAt(
@@ -119,8 +127,10 @@ BEGIN_HANDLERS(HamUI)
     HANDLE_MESSAGE(ConnectionStatusChangedMsg)
     HANDLE_MESSAGE(DiskErrorMsg)
     HANDLE_MESSAGE(ButtonDownMsg)
-    // HANDLE_MESSAGE(KinectGuideGestureMsg)
+    HANDLE_MESSAGE(KinectGuideGestureMsg)
     HANDLE_SUPERCLASS(UIManager)
+    HANDLE_MEMBER_PTR(mShellInput)
+    HANDLE_MEMBER_PTR(mHelpBar)
 END_HANDLERS
 
 void HamUI::Init() {
@@ -133,15 +143,23 @@ void HamUI::Init() {
     mShellInput->Init();
     UIPanel *helpBarPanel = ObjectDir::Main()->Find<UIPanel>("helpbar", false);
     for (ObjDirItr<UIScreen> it(ObjectDir::Main(), true); it != nullptr; ++it) {
-        // HamScreen*
+        HamScreen *screen = dynamic_cast<HamScreen *>(&*it);
+        if (!screen) {
+            if (!it->TypeDef() || !strstr(it->TypeDef()->File(), "system/run")) {
+                MILO_NOTIFY("UIScreen %s is not a HamScreen", it->Name());
+            }
+        }
+        if (helpBarPanel && it->HasPanel(helpBarPanel)) {
+            MILO_NOTIFY("Screen %s directly includes helpbar", it->Name());
+        }
     }
     static Symbol ui("ui");
     mUIOverlay = RndOverlay::Find(ui, false);
     const char *photo = nullptr;
     if (SystemConfig("ui")->FindData("augmented_photo", photo, false) && photo) {
         ObjectDir *dir = DirLoader::LoadObjects(photo, nullptr, nullptr);
-        unk_0xF8 = dynamic_cast<RndDir *>(dir);
-        if (!unk_0xF8 && dir) {
+        mAugmentedPhoto = dynamic_cast<RndDir *>(dir);
+        if (!mAugmentedPhoto && dir) {
             delete dir;
         }
     }
@@ -155,9 +173,167 @@ void HamUI::Terminate() {
 }
 
 void HamUI::Poll() {
+    if (TheGame) {
+        TheGame->CheckPauseRequest();
+    }
     UIManager::Poll();
     mShellInput->Poll();
     TheProfileMgr.Poll();
+    if (mHelpBar) {
+        mHelpBar->Poll();
+        if (mLetterbox) {
+            mLetterbox->Poll();
+        }
+        mContentLoadingPanel->Poll();
+        mEventDialogPanel->Poll();
+        if (mOverlayPanel) {
+            mOverlayPanel->Poll();
+        }
+        if (mEventScreen) {
+            AttemptEventTranstion();
+        }
+        if (mButtonSpam) {
+            static Timer t;
+            if (!t.Running()) {
+                t.Restart();
+            }
+            if (t.SplitMs() > 500.0f) {
+                Handle(ButtonDownMsg(nullptr, kPad_Xbox_A, kAction_Confirm, 0), true);
+                t.Stop();
+            }
+        }
+        UpdateUIOverlay();
+    }
+}
+
+void HamUI::Draw() {
+    if (mHelpBar) {
+        RndText::ClearBlacklight();
+        UIPanel::SetFinalDrawPass(false);
+        bool transitioning = TheUI->InTransition();
+        if (TheUIEventMgr->HasActiveDialogEvent() && !transitioning) {
+            mBackgroundPanel->Draw();
+            mEventDialogPanel->Draw();
+            mHelpBar->Draw();
+            if (mLetterbox) {
+                mLetterbox->Draw();
+            }
+            if (RndText::IsBlacklightModeEnabled()) {
+                RndText::DrawBlacklight();
+                RndText::ClearBlacklight();
+            }
+            if (mBlacklight) {
+                mBlacklight->Draw();
+            }
+            DrawDebug();
+            mShellInput->Draw();
+        } else {
+            UIManager::Draw();
+            if (mOverlayPanel) {
+                RndText::ClearBlacklight();
+                mOverlayPanel->Draw();
+            }
+            mHelpBar->Draw();
+            if (mLetterbox) {
+                mLetterbox->Draw();
+            }
+            UIPanel::SetFinalDrawPass(true);
+            UIManager::Draw();
+            UIPanel::SetFinalDrawPass(false);
+            if (RndText::IsBlacklightModeEnabled()) {
+                RndText::DrawBlacklight();
+                RndText::ClearBlacklight();
+            }
+            if (mBlacklight) {
+                mBlacklight->Draw();
+            }
+            if (transitioning && mContentLoadingPanel->Showing()) {
+                mContentLoadingPanel->Draw();
+            }
+            DrawDebug();
+            mShellInput->Draw();
+            static bool sPollAugmentedPhoto = true;
+            if (sPollAugmentedPhoto) {
+                sPollAugmentedPhoto = false;
+                mAugmentedPhoto->Poll();
+                mAugmentedPhoto->Draw();
+            }
+            if (unk_0xFC || unk_0xFD) {
+                LiveCameraInput *cam = TheGestureMgr->GetLiveCameraInput();
+                if (mAugmentedPhoto && cam) {
+                    if (unk_0xFC) {
+                        cam->IncrementSnapshotCount();
+                        unk_0xFC = false;
+                        unk_0xFD = true;
+                    } else {
+                        unk_0xFD = false;
+                    }
+                    RndTexRenderer *renderer =
+                        mAugmentedPhoto->Find<RndTexRenderer>("TexRenderer.rndtex");
+                    RndMat *snapshot = cam->GetSnapshot(cam->NumSnapshots() - 1);
+                    renderer->SetOutputTexture(
+                        snapshot ? snapshot->GetDiffuseTex() : nullptr
+                    );
+                    StreamRenderer *streamRenderer =
+                        mAugmentedPhoto->Find<StreamRenderer>("StreamRendererColor.sr");
+                    ShellInput *pShellInput = TheHamUI.GetShellInput();
+                    MILO_ASSERT(pShellInput, 300);
+                    SkeletonChooser *pSkeletonChooser = pShellInput->GetSkeletonChooser();
+                    MILO_ASSERT(pSkeletonChooser, 0x12E);
+                    for (int i = 0; i < 6; i++) {
+                        streamRenderer->SetCrewPhotoPlayerDetected(
+                            i, pSkeletonChooser->IsSkeletonValid(i)
+                        );
+                    }
+                    HamPlayerData *player0 = TheGameData->Player(0);
+                    HamPlayerData *player1 = TheGameData->Player(1);
+                    streamRenderer->SetPinkPlayer(
+                        TheGestureMgr->GetSkeletonIndexByTrackingID(
+                            player0->GetSkeletonTrackingID()
+                        )
+                        + 1
+                    );
+                    streamRenderer->SetBluePlayer(
+                        TheGestureMgr->GetSkeletonIndexByTrackingID(
+                            player1->GetSkeletonTrackingID()
+                        )
+                        + 1
+                    );
+                    RndMesh *purpleL =
+                        mAugmentedPhoto->Find<RndMesh>("ribbons_purple_l.mesh");
+                    RndMesh *purpleR =
+                        mAugmentedPhoto->Find<RndMesh>("ribbons_purple_r.mesh");
+                    RndMesh *blueL =
+                        mAugmentedPhoto->Find<RndMesh>("ribbons_blue_l.mesh");
+                    RndMesh *blueR =
+                        mAugmentedPhoto->Find<RndMesh>("ribbons_blue_r.mesh");
+                    if ((player0->IsPlaying() && player0->Side() == kSkeletonLeft)
+                        || (player1->IsPlaying() && player1->Side() == kSkeletonRight)) {
+                        purpleL->SetShowing(true);
+                        purpleR->SetShowing(false);
+                        blueL->SetShowing(false);
+                        blueR->SetShowing(true);
+                    } else {
+                        purpleL->SetShowing(false);
+                        purpleR->SetShowing(true);
+                        blueL->SetShowing(true);
+                        blueR->SetShowing(false);
+                    }
+                    mAugmentedPhoto->Poll();
+                    mAugmentedPhoto->DrawShowing();
+                }
+            }
+        }
+    }
+}
+
+bool HamUI::IsTimelineResetAllowed() const {
+    if (!ThePassiveMessenger->HasMessages()
+        && !ThePassiveMessenger->HasRecentlyDismissedMessage()
+        && (!mHelpBar || (!mHelpBar->IsWriteIconShowing() && !mHelpBar->IsAnimating()))) {
+        return true;
+    }
+    return false;
 }
 
 bool HamUI::SetFullScreenDraw(bool b) {
@@ -288,7 +464,7 @@ void HamUI::StoreDepthBufferClipAt(float f1, float f2, float f3, float f4, int i
         TheGestureMgr->GetLiveCameraInput()->StoreDepthBufferClip(f1, f2, f3, f4, i1);
 }
 
-Symbol HamUI::DisplayNextCameraOutput() { return Symbol(); }
+// Symbol HamUI::DisplayNextCameraOutput() { return Symbol(); }
 
 DataNode HamUI::OnMsg(const UITransitionCompleteMsg &msg) {
     HAQManager::Print(HAQType::kHAQType_Screen);
@@ -362,4 +538,10 @@ void HamUI::InitPanels() {
         mLetterbox = dynamic_cast<LetterboxPanel *>(FindPanel("letterbox"));
         mBlacklight = dynamic_cast<BlacklightPanel *>(FindPanel("blacklight"));
     }
+}
+
+bool ToggleDrawSkeletons() {
+    MILO_ASSERT(TheSkeletonViz, 0xe2);
+    TheSkeletonViz->SetShowing(TheSkeletonViz->GetForceSubpartSelection());
+    return TheSkeletonViz->GetForceSubpartSelection();
 }

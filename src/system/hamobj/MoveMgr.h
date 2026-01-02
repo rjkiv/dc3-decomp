@@ -38,8 +38,9 @@ public:
     void RegisterSongLayout(SongLayout *);
     void UnRegisterSongLayout(SongLayout *);
     Symbol PickRandomCategory();
-    void
-    GenerateMoveChoice(Symbol, std::vector<const MoveVariant *> &, std::vector<const MoveVariant *> &);
+    void GenerateMoveChoice(
+        Symbol, std::vector<const MoveVariant *> &, std::vector<const MoveVariant *> &
+    );
     const std::map<Symbol, MoveParent *> &MoveParents() const {
         return mMoveGraph.MoveParents();
     }
@@ -87,6 +88,7 @@ public:
     }
     MoveGraph &Graph() { return mMoveGraph; }
     ObjectDir *MoveDataDir() const { return mMoveDataDir; }
+    void SetSong(Symbol song) { unk14c = song; }
 
     static void Init(const char *);
 

@@ -1,5 +1,6 @@
 #pragma once
 #include "NavListSort.h"
+#include "meta_ham/NavListNode.h"
 
 class PlaylistSort : public NavListSort {
 public:
@@ -16,4 +17,16 @@ public:
     virtual void OnSelectShortcut(int);
 
     PlaylistSort();
+};
+
+class PlaylistSortByType : public PlaylistSort {
+public:
+    virtual NavListItemNode *NewItemNode(void *) const;
+    virtual NavListShortcutNode *NewShortcutNode(NavListItemNode *) const;
+    virtual NavListHeaderNode *NewHeaderNode(NavListItemNode *) const;
+    virtual NavListHeaderNode *NewHeaderNode(NavListItemNode *, NavListItemNode *) const;
+
+    PlaylistSortByType();
+
+    static Symbol unk58;
 };

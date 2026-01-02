@@ -1,5 +1,6 @@
 #pragma once
 #include "NavListSortMgr.h"
+#include "game/PartyModeMgr.h"
 #include "meta/SongPreview.h"
 #include "meta_ham/Playlist.h"
 #include "net_ham/RCJobDingo.h"
@@ -25,6 +26,8 @@ public:
     String unkb0;
     String unkb8;
     std::list<Playlist> unkc0;
+    bool unkc8;
+    u32 unkcc;
     std::vector<CustomPlaylist> unkd0;
 
 private:
@@ -59,7 +62,7 @@ private:
     bool HasValidProfile();
     void UpdateCurrPlaylistWithRC();
     void HandleCmdGetPlaylistsFromRC();
-    // DataNode OnMsg(SmartGlassMsg const &);
+    DataNode OnMsg(SmartGlassMsg const &);
     DataNode OnMsg(RCJobCompleteMsg const &);
 };
 

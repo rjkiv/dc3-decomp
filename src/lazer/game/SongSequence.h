@@ -41,6 +41,7 @@ public:
     bool DoNext(bool, bool);
     void Init();
     void Add(const DataArray *);
+    int CurrentIndex() const { return mCurrentIndex; }
 
 protected:
     std::vector<Entry> mEntries; // 0x8

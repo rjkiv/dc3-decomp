@@ -103,6 +103,7 @@ public:
     void SetDebugLoop(bool);
     PracticeSection *GetPracticeSection(Difficulty);
     DancerSequence *SkillsSequence(Difficulty, Symbol, Symbol);
+    float DetectFrac(int, int);
 
     MoveAsyncDetector *GetAsyncDetector() const { return mAsyncDetector; }
 

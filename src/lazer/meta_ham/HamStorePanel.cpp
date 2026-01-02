@@ -3,8 +3,11 @@
 #include "meta/SongMgr.h"
 #include "meta/StoreOffer.h"
 #include "meta/StorePanel.h"
+#include "meta_ham/HamProfile.h"
 #include "meta_ham/HamStoreProvider.h"
 #include "meta_ham/ProfileMgr.h"
+#include "net_ham/HamStoreCartJobs.h"
+#include "net_ham/RockCentral.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/ContentMgr.h"
@@ -91,4 +94,11 @@ void HamStorePanel::RemoveOfferFromCart(StoreOffer *offer) {
 bool HamStorePanel::IsCurrFilterCart(int id) {
     static Symbol store_filter_shopping_cart("store_filter_shopping_cart");
     return unkac[id]->unk0 == store_filter_shopping_cart;
+}
+
+void HamStorePanel::GetCart() {
+    HamProfile *profile = dynamic_cast<HamProfile *>(StoreProfile());
+    MILO_ASSERT(profile, 0x23d);
+    unk138[3] = new GetCartJob(this, profile);
+    TheRockCentral.ManageJob(unk138[3]);
 }

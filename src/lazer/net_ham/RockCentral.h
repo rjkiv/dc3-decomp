@@ -59,8 +59,8 @@ public:
     String GetUtilityImage() { return unkc0; }
     String GetUtilitySound() { return unkc8; }
     String GetMiscImage() { return unkd0; }
-    int GetUnk88() { return unk88; }
-    void SetUnk88(int i) { unk88 = i; }
+    int GetRockCentralTime() { return mRockCentralTime; }
+    void SetRockCentralTime(int i) { mRockCentralTime = i; }
 
 private:
     static const String kServerVer;
@@ -76,7 +76,7 @@ protected:
     float unk7c;
     GetMotdJob *mMOTDJob; // 0x80
     unsigned int unk84;
-    int unk88;
+    int mRockCentralTime; // 0x88
     bool unk8c;
     int unk90;
     std::vector<String> mCommunityMsgs; // 0x94

@@ -1,10 +1,12 @@
 #pragma once
+#include "game/GamePanel.h"
 #include "meta_ham/BlacklightPanel.h"
 #include "meta_ham/HelpBarPanel.h"
 #include "meta_ham/LetterboxPanel.h"
 #include "meta_ham/OverlayPanel.h"
 #include "meta_ham/ShellInput.h"
 #include "meta/ConnectionStatusPanel.h"
+#include "obj/Msg.h"
 #include "os/ContentMgr.h"
 #include "os/JoypadMsgs.h"
 #include "os/PlatformMgr.h"
@@ -13,6 +15,9 @@
 #include "rndobj/Overlay.h"
 #include "ui/UI.h"
 #include "ui/UIScreen.h"
+
+DECLARE_MESSAGE(KinectGuideGestureMsg, "kinect_guide_gesture")
+END_MESSAGE
 
 class HamUI : public UIManager {
 public:
@@ -37,7 +42,7 @@ public:
     UIPanel *EventDialogPanel() const { return mEventDialogPanel; }
     OverlayPanel *GetOverlayPanel() const { return mOverlayPanel; }
     LetterboxPanel *GetLetterboxPanel() const { return mLetterbox; }
-    UIPanel *GetBlacklightPanel() const { return mBlacklight; }
+    BlacklightPanel *GetBlacklightPanel() const { return mBlacklight; }
 
     void SetOverlayPanel(OverlayPanel *op) { mOverlayPanel = op; }
 
@@ -49,7 +54,7 @@ protected:
     DataNode OnMsg(const ConnectionStatusChangedMsg &);
     DataNode OnMsg(const DiskErrorMsg &);
     DataNode OnMsg(const ButtonDownMsg &);
-    // DataNode OnMsg(const KinectGuideGestureMsg &);
+    DataNode OnMsg(const KinectGuideGestureMsg &);
 
 private:
     bool SetFullScreenDraw(bool);
@@ -72,6 +77,8 @@ private:
     void StoreDepthBufferAt(int);
     void StoreDepthBufferClipAt(float, float, float, float, int);
     void ReloadStrings();
+    void UpdateUIOverlay();
+    void DrawDebug();
 
     HelpBarPanel *mHelpBar; // 0xd8
     LetterboxPanel *mLetterbox; // 0xdc
@@ -80,18 +87,20 @@ private:
     UIPanel *mBackgroundPanel; // 0xe8
     UIPanel *mContentLoadingPanel; // 0xec
     OverlayPanel *mOverlayPanel; // 0xf0
-    u32 mGamePanel; // 0xf4 - GamePanel*
-    RndDir *unk_0xF8; // 0xf8
+    GamePanel *mGamePanel; // 0xf4
+    RndDir *mAugmentedPhoto; // 0xf8
     bool unk_0xFC;
-    u8 unk_0xFD;
+    bool unk_0xFD;
     UIScreen *mEventScreen; // 0x100
     ShellInput *mShellInput; // 0x104
     s32 unk_0x108; // 0x108
     u32 unk_0x10C; // 0x10C - BufferType
     bool mFullScreenDrawActive;
     float mSkelRot;
-    bool unk_0x118;
+    bool mButtonSpam; // 0x118
     RndOverlay *mUIOverlay; // 0x11c
 };
+
+bool ToggleDrawSkeletons();
 
 extern HamUI TheHamUI;

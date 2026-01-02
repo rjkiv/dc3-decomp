@@ -2,6 +2,7 @@
 #include "game/Game.h"
 #include "gesture/FitnessFilter.h"
 #include "obj/Data.h"
+#include "obj/Object.h"
 #include "os/Timer.h"
 #include "rndobj/Overlay.h"
 #include "ui/UIPanel.h"
@@ -29,14 +30,18 @@ public:
     virtual void SetPaused(bool);
     virtual void FinishLoad();
 
+    NEW_OBJ(GamePanel)
+
     void SetGameOver(bool);
     bool IsPastStreamJumpPointOfNoReturn();
     void ResetLimbFeedback();
     void SetLimbFeedbackVisible(bool);
     FitnessFilter *GetFitnessFilter(int);
     void ResetJitter();
+    float DeJitter(float);
 
     DataNode OnGetFitnessData(const DataArray *);
+    bool IsGameOver() const { return mState == kGameOver; }
 
 private:
     void CreateGame();

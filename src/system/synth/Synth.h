@@ -121,7 +121,7 @@ public:
     int GetNumMics() const;
 
     template <class T>
-    T *Find(const char *name, bool fail) {
+    T *Find(const char *name, bool fail = true) {
         if (!CheckCommonBank(false))
             return nullptr;
         else {

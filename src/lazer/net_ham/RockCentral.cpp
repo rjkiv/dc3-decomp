@@ -54,9 +54,9 @@ namespace {
 }
 
 RockCentral::RockCentral()
-    : mState(), unk7c(0), mMOTDJob(0), unk84(60000), unk88(-1), unk8c(0), unk90(0),
-      mMiscArt(0), mLoginBlocked(0), unkdd(0), mKinectShareConnection(0), unk124(0),
-      unk128(0), unk12c(0) {}
+    : mState(), unk7c(0), mMOTDJob(0), unk84(60000), mRockCentralTime(-1), unk8c(0),
+      unk90(0), mMiscArt(0), mLoginBlocked(0), unkdd(0), mKinectShareConnection(0),
+      unk124(0), unk128(0), unk12c(0) {}
 
 RockCentral::~RockCentral() { RELEASE(mKinectShareConnection); }
 
@@ -202,7 +202,7 @@ DataNode RockCentral::OnMsg(const RCJobCompleteMsg &msg) {
     if (msg.Success()) {
         mMOTDJob->GetMotdData(
             unk84,
-            unk88,
+            mRockCentralTime,
             unk8c,
             unk90,
             mCommunityMsgs,

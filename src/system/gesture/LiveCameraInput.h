@@ -56,6 +56,7 @@ public:
     bool GetAutoexposure() const;
     void DumpProperties();
     void SetTrackedSkeletons(int, int) const;
+    void IncrementSnapshotCount();
 
     static void PreInit();
     static void Init();

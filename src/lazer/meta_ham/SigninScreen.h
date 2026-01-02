@@ -9,8 +9,9 @@
 
 class SigninScreen : public HamScreen {
 public:
+    SigninScreen();
     // UIScreen
-    virtual ~SigninScreen();
+    virtual ~SigninScreen() {}
     OBJ_CLASSNAME(SigninScreen);
     OBJ_SET_TYPE(SigninScreen);
     virtual DataNode Handle(DataArray *, bool);
@@ -20,9 +21,7 @@ public:
 
     NEW_OBJ(SigninScreen)
 
-    SigninScreen();
-
 protected:
-    DataNode OnMsg(SigninChangedMsg const &);
-    DataNode OnMsg(UIChangedMsg const &);
+    DataNode OnMsg(const SigninChangedMsg &);
+    DataNode OnMsg(const UIChangedMsg &);
 };

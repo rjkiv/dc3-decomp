@@ -2,6 +2,7 @@
 #include "flow/PropertyEventProvider.h"
 #include "game/GamePanel.h"
 #include "gesture/BaseSkeleton.h"
+#include "gesture/DepthBuffer3D.h"
 #include "hamobj/FreestyleMoveRecorder.h"
 #include "hamobj/HamDirector.h"
 #include "hamobj/HamGameData.h"
@@ -13,7 +14,6 @@
 #include "lazer/meta_ham/HamPanel.h"
 #include "math/Easing.h"
 #include "math/Rand.h"
-#include "meta_ham/DepthBuffer.h"
 #include "meta_ham/MetaPerformer.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
@@ -285,9 +285,20 @@ void BustAMovePanel::CacheObjects() {
     mBAMVisualizerPanel->DataDir()
         ->Find<RndAnimatable>("num_players.anim")
         ->SetFrame(1, 1);
-    // for (ObjDirItr<DepthBuffer3D> it(mBAMVisualizerPanel->DataDir(), true); it !=
-    // nullptr; ++it) {
-    // }
+    for (ObjDirItr<DepthBuffer3D> it(mBAMVisualizerPanel->DataDir(), true); it != nullptr;
+         ++it) {
+        //   while (local_6c != (DepthBuffer3D *)0x0) {
+        //     DepthBuffer3D::SetGrooviness(local_6c,(float)dVar23);
+        //     if (*(int *)(local_6c + 0x198) != 0) {
+        //       *(undefined4 *)(*(int *)(local_6c + 0x194) + 4) = *(undefined4
+        //       *)(local_6c + 400);
+        //       *(undefined4 *)(*(int *)(local_6c + 400) + 8) = *(undefined4 *)(local_6c
+        //       + 0x194);
+        //     }
+        //     *(undefined4 *)(local_6c + 0x198) = 0;
+        //     ObjDirItr<>::operator++(aOStack_70);
+        //   }
+    }
     TheMaster->AddSink(this, "beat");
     mStatusLabel = DataDir()->Find<HamLabel>("status.lbl");
     mMovePromptLabel = DataDir()->Find<HamLabel>("move_prompt.lbl");
