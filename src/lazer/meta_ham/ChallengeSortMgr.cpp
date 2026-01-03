@@ -147,7 +147,7 @@ int ChallengeSortMgr::GetChallengeRecordSongType(int i1) {
         return -1;
     }
     else {
-        return static_cast<ChallengeSortNode *>(mSorts[mCurrentSortIdx]->GetList()[i1])->GetChallengeRecord()->GetChallengeRow().unk38; // needs to grab something at 0x50 - possible wrong cast?
+        return static_cast<ChallengeSortNode *>(mSorts[mCurrentSortIdx]->GetList()[i1])->GetChallengeRecord()->GetChallengeRow().mChallengerXp; // needs to grab something at 0x50 - possible wrong cast?
     }
 }
 

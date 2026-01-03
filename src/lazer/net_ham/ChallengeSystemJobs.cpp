@@ -132,7 +132,7 @@ void GetOfficialChallengesJob::GetRows(
                         }
                         localRows[i].unk2c = "";
                         localRows[i].mTimeStamp = startTime.ToCode();
-                        localRows[i].unk38 = 0;
+                        localRows[i].mChallengerXp = 0;
                         calcedRows.push_back(localRows[i]);
                     }
                 }
@@ -183,7 +183,7 @@ void GetOfficialChallengesJob::GetRows(
                         }
                         localRows[i].unk2c = "";
                         localRows[i].mTimeStamp = startTime.ToCode();
-                        localRows[i].unk38 = 0;
+                        localRows[i].mChallengerXp = 0;
                         calcedRows.push_back(localRows[i]);
                     }
                 }
@@ -303,7 +303,7 @@ void GetRows(
         DateTime dt;
         dt.ParseDate(c.GetValue(cur, 8)->Str());
         curRow.mTimeStamp = dt.ToCode();
-        curRow.unk38 = c.GetValue(cur, 9)->Int();
+        curRow.mChallengerXp = c.GetValue(cur, 9)->Int();
         calcedRows[curRow.unk2c].push_back(curRow);
     }
     bref = false;

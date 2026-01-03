@@ -21,7 +21,7 @@ protected:
     Symbol unk44; // 0x44
     Symbol unk48; // 0x48
     Symbol unk4c; // 0x4c
-    Symbol unk50; // 0x5c
+    Symbol unk50; // 0x50
 };
 
 class ChallengeSortMgr : public NavListSortMgr {

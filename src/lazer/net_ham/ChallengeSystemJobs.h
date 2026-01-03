@@ -22,7 +22,7 @@ public:
             || mSongTitle != other.mSongTitle || (unsigned int)mScore != other.mScore
             || (unsigned int)mDiff != other.mDiff || (unsigned int)mType != other.mType
             || unk2c != other.unk2c || mTimeStamp != other.mTimeStamp
-            || (unsigned int)unk38 != other.unk38;
+            || (unsigned int)mChallengerXp != other.mChallengerXp;
     }
     bool IsHMXChallenge() const {
         return mType >= kChallengeHmxGold && mType <= kChallengeHmxBronze;
@@ -43,7 +43,7 @@ public:
     Type mType; // 0x28
     String unk2c; // 0x2c
     unsigned int mTimeStamp; // 0x34
-    int unk38; // 0x38
+    int mChallengerXp; // 0x38
 };
 
 enum ChallengeBadgeType {

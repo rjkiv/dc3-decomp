@@ -31,6 +31,13 @@ protected:
 class ChallengeSortNode : public NavListItemNode {
 public:
     ChallengeSortNode(NavListItemSortCmp *, ChallengeRecord *); // impl in ChallengeSortByScore
+    virtual Symbol GetToken() const;
+    virtual void Text(UIListLabel *, UILabel *) const;
+    virtual void Custom(UIListCustom *, Hmx::Object *) const;
+    virtual Symbol OnSelect();
+    virtual Symbol Select();
+    virtual void OnContentMounted(const char *, const char *);
+
 
     int GetChallengeExp();
     const char *GetChallengerGamertag();
@@ -41,12 +48,12 @@ public:
     void SetNewIcon(UILabel *) const;
     void SetBuyIcon(UILabel *) const;
 
-    ChallengeRecord *GetChallengeRecord() { return unk48; };
+    ChallengeRecord *GetChallengeRecord() { return mChallengeRecord; };
 
 private:
     int GetPlayerSide() const;
 
 protected:
-    ChallengeRecord *unk48; // 0x48
+    ChallengeRecord *mChallengeRecord; // 0x48
 };
 

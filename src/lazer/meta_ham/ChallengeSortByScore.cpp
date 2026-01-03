@@ -2,4 +2,4 @@
 
 #include "ChallengeSortNode.h"
 
-ChallengeSortNode::ChallengeSortNode(NavListItemSortCmp *cmp, ChallengeRecord *record) : NavListItemNode(cmp), unk48(record){  }
+ChallengeSortNode::ChallengeSortNode(NavListItemSortCmp *cmp, ChallengeRecord *record) : NavListItemNode(cmp), mChallengeRecord(record){  }
