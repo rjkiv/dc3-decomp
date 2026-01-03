@@ -1,6 +1,7 @@
 #include "lazer/meta_ham/PlaylistSongProvider.h"
 #include "Playlist.h"
 #include "macros.h"
+#include "meta_ham/AppLabel.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "ui/UILabel.h"
@@ -25,32 +26,35 @@ Symbol PlaylistSongProvider::DataSymbol(int m_pPlaylist) const {
 }
 
 void PlaylistSongProvider::Text(
-    int, int i_iData, UIListLabel *uiLabel, UILabel *pAppLabel
+    int, int i_iData, UIListLabel *uiListLabel, UILabel *uiLabel
 ) const {
     MILO_ASSERT(i_iData < NumData(), 0x22);
-    if (uiLabel->Matches("song")) {
+    Symbol dataSym = DataSymbol(i_iData);
+    if (uiListLabel->Matches("song")) {
         static Symbol playlist_addsong("playlist_addsong");
         if (DataSymbol(i_iData) == playlist_addsong) {
             static Symbol songname_numbered("songname_numbered");
-            pAppLabel->SetTokenFmt(songname_numbered, i_iData + playlist_addsong);
+            uiLabel->SetTokenFmt(songname_numbered, i_iData + playlist_addsong);
             return;
         }
-
+        AppLabel *pAppLabel = dynamic_cast<AppLabel *>(uiLabel);
         MILO_ASSERT(pAppLabel, 0x31);
         if (NumData() < 0x15 || (i_iData < 0x13)) {
-            // pAppLabel->SetSongName();
+            pAppLabel->SetSongName(dataSym, i_iData + 1, false);
             return;
         }
 
         static Symbol ellipsis("ellipsis");
-    } else if (uiLabel->Matches("song_length")) {
+    } else if (uiListLabel->Matches("song_length")) {
         static Symbol playlist_addsong("playlist_addsong");
         if (DataSymbol(i_iData) != playlist_addsong) {
+            AppLabel *pAppLabel = dynamic_cast<AppLabel *>(uiLabel);
             MILO_ASSERT(pAppLabel, 0x4d);
-            // pAppLabel->SetSongDuration();
+            pAppLabel->SetSongDuration(dataSym);
             return;
         }
         static Symbol ellipsis("ellipsis"); // gets declared then never used ?
+        uiLabel->SetTextToken(ellipsis);
     }
 }
 

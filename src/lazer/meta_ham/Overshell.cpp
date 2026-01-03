@@ -2,11 +2,13 @@
 #include "Overshell.h"
 #include "flow/PropertyEventProvider.h"
 #include "gesture/GestureMgr.h"
+#include "gesture/Skeleton.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
 #include "obj/Dir.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
+#include "utl/Symbol.h"
 
 OvershellSlot::OvershellSlot(HamPlayerData &data)
     : mPlayerData(data), mState((OvershellSlotState)0), unk38(0), unk3c(-1) {}

@@ -66,7 +66,7 @@ void CalibrationOffsetProvider::Text(
 }
 
 BEGIN_HANDLERS(CalibrationOffsetProvider)
-    HANDLE_ACTION(get_offset, GetOffset(_msg->Int(2)))
+    HANDLE_EXPR(get_offset, GetOffset(_msg->Int(2)))
 END_HANDLERS
 
 #pragma endregion CalibrationOffsetProvider

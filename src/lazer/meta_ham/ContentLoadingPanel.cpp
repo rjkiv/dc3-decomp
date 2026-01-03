@@ -41,7 +41,17 @@ void ContentLoadingPanel::ShowIfPossible() {
     }
 }
 
+void ContentLoadingPanel::ContentDone() {
+    unk40 = 0;
+    unk44 = 0;
+    unk3c = false;
+    if (mState == 1 && mShowing) {
+        Exit();
+        mShowing = false;
+    }
+}
+
 BEGIN_HANDLERS(ContentLoadingPanel)
-    HANDLE_ACTION_IF(allowed_to_show, unk3c != _msg->Int(2), ShowIfPossible())
+    HANDLE_ACTION(allowed_to_show, AllowedToShow(_msg->Int(2)))
     HANDLE_SUPERCLASS(UIPanel)
 END_HANDLERS

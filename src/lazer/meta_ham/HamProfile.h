@@ -12,6 +12,7 @@
 #include "meta_ham/SongStatusMgr.h"
 #include "os/OnlineID.h"
 #include "utl/JobMgr.h"
+#include "utl/Symbol.h"
 
 struct CharacterPref {
     bool operator==(Symbol s) const { return mChar == s; }
@@ -118,6 +119,8 @@ public:
     float FitnessTime() const { return mFitnessTime; }
     float FitnessCalories() const { return mFitnessCalories; }
     int GetProfileTime() const { return mProfileTime; }
+    void SetUnk388(Symbol s) { unk338 = s; }
+    void SetUnk334(bool b) { unk334 = b; }
 
 private:
     // FixedSizeSaveable

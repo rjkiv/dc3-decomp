@@ -4,6 +4,7 @@
 #include "MainMenuPanel.h"
 #include "ProfileMgr.h"
 #include "hamobj/HamLabel.h"
+#include "macros.h"
 #include "meta_ham/MainMenuProvider.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
@@ -128,6 +129,28 @@ void MainMenuPanel::CleanupNetCacheRelated() {
 }
 
 void MainMenuPanel::ContentDone() { HandleType(Message("content_refresh_Done")); }
+
+void MainMenuPanel::DownloadMotdArt() {
+    if (unk80) {
+        TheNetCacheMgr->Load((NetCacheMgr::CacheSize)1);
+        unk81 = true;
+        unk80 = false;
+    }
+    unk94 = true;
+    unk95 = true;
+    unk96 = true;
+}
+
+void MainMenuPanel::DeleteDownloadedArts() {
+    if (unk8c) {
+        delete unk8c;
+        unk8c = nullptr;
+    }
+    if (unk90) {
+        delete unk90;
+        unk90 = nullptr;
+    }
+}
 
 BEGIN_HANDLERS(MainMenuPanel)
     HANDLE_ACTION(

@@ -1,4 +1,5 @@
 #include "meta_ham/MetaPanel.h"
+#include "FitnessCalorieSortMgr.h"
 #include "HamProfile.h"
 #include "HamScreen.h"
 #include "TexLoadPanel.h"
@@ -22,6 +23,7 @@
 #include "meta_ham/CampaignMasterQuestSongSelectPanel.h"
 #include "meta_ham/CampaignSongSelectPanel.h"
 #include "meta_ham/ChallengeResultPanel.h"
+#include "meta_ham/ChallengeSortMgr.h"
 #include "meta_ham/Challenges.h"
 #include "meta_ham/ChooseModeProvider.h"
 #include "meta_ham/ChooseProfilePanel.h"
@@ -40,6 +42,7 @@
 #include "meta_ham/LetterboxPanel.h"
 #include "meta_ham/LoadingPanel.h"
 #include "meta_ham/LockedContentPanel.h"
+#include "meta_ham/MQSongSortMgr.h"
 #include "meta_ham/MainMenuPanel.h"
 #include "meta_ham/MetaPerformer.h"
 #include "meta_ham/MetagameRank.h"
@@ -47,6 +50,7 @@
 #include "meta_ham/MultiUserGesturePanel.h"
 #include "meta_ham/OptionsPanel.h"
 #include "meta_ham/PassiveMessagesPanel.h"
+#include "meta_ham/PlaylistSortMgr.h"
 #include "meta_ham/PracticeChoosePanel.h"
 #include "meta_ham/ProfileMgr.h"
 #include "meta_ham/SigninScreen.h"
@@ -54,6 +58,7 @@
 #include "meta_ham/SongSelectPanel.h"
 #include "meta_ham/SongSelectPlaylistCustomizePanel.h"
 #include "meta_ham/SongSelectPlaylistPanel.h"
+#include "meta_ham/SongSortMgr.h"
 #include "meta_ham/SongStatusMgr.h"
 #include "meta_ham/TitleProvider.h"
 #include "meta_ham/VoiceControlPanel.h"
@@ -86,6 +91,11 @@ MetaPanel::MetaPanel() : unk44(0), unk4c(TheHamSongMgr), unkdc(false) {
     unke4 = new Campaign(SystemConfig("campaign"));
     unke8 = new HAQManager();
     unk4c.SetName("song_preview", ObjectDir::Main());
+    SongSortMgr::Init(unk4c);
+    ChallengeSortMgr::Init(unk4c);
+    PlaylistSortMgr::Init(unk4c);
+    MQSongSortMgr::Init(unk4c);
+    FitnessCalorieSortMgr::Init(unk4c);
     unk38.reserve(3);
     for (int i = 3; i != 0; i--) {
         unk38.push_back(-1);
@@ -96,6 +106,9 @@ MetaPanel::MetaPanel() : unk44(0), unk4c(TheHamSongMgr), unkdc(false) {
 }
 
 MetaPanel::~MetaPanel() {
+    SongSortMgr::Terminate();
+    ChallengeSortMgr::Terminate();
+    FitnessCalorieSortMgr::Terminate();
     RELEASE(sSongDB);
     RELEASE(sHamMaster);
     RELEASE(TheMetaMusic);

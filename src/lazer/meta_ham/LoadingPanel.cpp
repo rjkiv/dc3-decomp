@@ -3,6 +3,7 @@
 #include "hamobj/HamAudio.h"
 #include "hamobj/HamMaster.h"
 #include "macros.h"
+#include "meta_ham/ContextChecker.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "obj/Task.h"
@@ -79,6 +80,12 @@ void LoadingPanel::Enter() {
     UIPanel::Enter();
     TheTaskMgr.SetSecondsAndBeat(0, 0, true);
     MILO_ASSERT(sLoadingMaster->GetHxAudio()->IsReady(), 0x6a);
+}
+
+Symbol LoadingPanel::ChooseLoadingScreen() {
+    Symbol randomItem =
+        RandomContextSensitiveItem(SystemConfig("loading_screen_context"));
+    return GetLoadingScreen(randomItem);
 }
 
 BEGIN_HANDLERS(LoadingPanel)

@@ -4,6 +4,7 @@
 #include "HamSongMetadata.h"
 #include "HamSongMgr.h"
 #include "flow/Flow.h"
+#include "game/GameMode.h"
 #include "hamobj/Difficulty.h"
 #include "hamobj/HamLabel.h"
 #include "hamobj/MoveDir.h"
@@ -176,6 +177,36 @@ void LockedContentPanel::SetUpNoFlashcards(Symbol song, Difficulty diff) {
     pFlowSingle->Activate();
     int songID = TheHamSongMgr.GetSongIDFromShortName(song);
     // stuff
+}
+
+void LockedContentPanel::SetUpDifficultyLocked(Symbol s1, Symbol s2) {
+    Difficulty diff = SymToDifficulty(s2);
+    MILO_ASSERT(diff > kDifficultyEasy, 0x111);
+    AppLabel *pContentName = DataDir()->Find<AppLabel>("content_name.lbl");
+    HamLabel *pTeaser = DataDir()->Find<HamLabel>("teaser.lbl");
+    HamLabel *pInstructions = DataDir()->Find<HamLabel>("instructions.lbl");
+    HamLabel *pProgress = DataDir()->Find<HamLabel>("progress.lbl");
+    HamLabel *pPracticeScore = DataDir()->Find<HamLabel>("practice_score.lbl");
+    MILO_ASSERT(pPracticeScore, 0x118);
+    pPracticeScore->SetTextToken(gNullStr);
+    pContentName->SetTextToken(gNullStr);
+    pTeaser->SetTextToken(gNullStr);
+    Flow *pFlow = DataDir()->Find<Flow>("no_teaser_text.flow");
+    pFlow->Activate();
+    static Symbol award_medium_instruction("award_medium_instruction");
+    static Symbol award_expert_instruction("award_expert_instruction");
+    static Symbol award_medium_playlist_instruction("award_medium_playlist_instruction");
+    static Symbol award_hard_playlist_instruction("award_hard_playlist_instruction");
+    static Symbol award_mediummedley_instruction("award_mediummedley_instruction");
+    static Symbol award_hardmedley_instruction("award_hardmedley_instruction");
+    if (TheGameMode->InMode("playlist_perform", true)) {
+        Symbol diffInstruction = award_hard_playlist_instruction;
+        if (diff == kDifficultyMedium) {
+            diffInstruction = award_medium_playlist_instruction;
+        }
+        pInstructions->SetTokenFmt(diffInstruction, 3);
+    } else {
+    }
 }
 
 BEGIN_HANDLERS(LockedContentPanel)

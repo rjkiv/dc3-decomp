@@ -15,12 +15,24 @@ Symbol VenueProvider::DataSymbol(int idx) const {
     return mVenues[idx];
 }
 
-void VenueProvider::Text(int, int data, UIListLabel *uiListLabel, UILabel *) const {
+void VenueProvider::Text(int, int data, UIListLabel *uiListLabel, UILabel *uiLabel) const {
     MILO_ASSERT_RANGE(data, 0, mVenues.size(), 0x4e);
     Symbol ds = DataSymbol(data);
     if (uiListLabel->Matches("venue")) {
         static Symbol player_present("player_present");
         HamPlayerData *pPlayer = TheGameData->Player(unk30);
+        const DataNode *node = pPlayer->Provider()->Property(player_present, true);
+        if (node->Int() != 0) {
+        }
+    } else {
+        if (!uiListLabel->Matches("lock")) {
+            return;
+        }
+        if (!TheProfileMgr.IsContentUnlocked(ds)) {
+            uiLabel->SetIcon('B');
+            return;
+        }
+        uiLabel->SetTextToken(gNullStr);
     }
 }
 

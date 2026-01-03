@@ -558,6 +558,15 @@ bool CampaignPerformer::CanSelectEraSong(Symbol song) {
     }
 }
 
+void CampaignPerformer::AwardBossAccomplishment() {
+    if (IsCampaignComplete()) {
+        HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
+        MILO_ASSERT(pProfile, 0x223);
+        static Symbol acc_boss("acc_boss");
+        TheAccomplishmentMgr->EarnAccomplishmentForProfile(pProfile, acc_boss, false);
+    }
+}
+
 BEGIN_HANDLERS(CampaignPerformer)
     HANDLE_EXPR(is_campaign_new, IsCampaignNew())
     HANDLE_EXPR(is_campaign_intro_complete, IsCampaignIntroComplete())

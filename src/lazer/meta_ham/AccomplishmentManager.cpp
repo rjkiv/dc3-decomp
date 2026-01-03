@@ -1,16 +1,23 @@
 #include "meta_ham/AccomplishmentManager.h"
+#include "AccomplishmentOneShot.h"
 #include "game/GameMode.h"
 #include "game/HamUser.h"
+#include "game/HamUserMgr.h"
 #include "hamobj/Difficulty.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
 #include "meta/Achievements.h"
 #include "meta_ham/Accomplishment.h"
+#include "meta_ham/AccomplishmentCampaignConditional.h"
 #include "meta_ham/AccomplishmentCategory.h"
 #include "meta_ham/AccomplishmentCharacterListConditional.h"
+#include "meta_ham/AccomplishmentCountConditional.h"
+#include "meta_ham/AccomplishmentDiscSongConditional.h"
 #include "meta_ham/AccomplishmentGroup.h"
 #include "meta_ham/AccomplishmentOneShot.h"
 #include "meta_ham/AccomplishmentProgress.h"
+#include "meta_ham/AccomplishmentSongConditional.h"
+#include "meta_ham/AccomplishmentSongListConditional.h"
 #include "meta_ham/Award.h"
 #include "meta_ham/HamProfile.h"
 #include "meta_ham/HamSongMetadata.h"
@@ -924,4 +931,60 @@ DataNode AccomplishmentManager::OnMsg(const SigninChangedMsg &msg) {
         }
     }
     return 0;
+}
+
+Accomplishment *AccomplishmentManager::FactoryCreateAccomplishment(DataArray *d, int i) {
+    static Symbol accomplishment_type("accomplishment_type");
+    int type;
+    d->FindData(accomplishment_type, type);
+    Accomplishment *a = nullptr;
+    switch (type) {
+    case 0:
+        a = new Accomplishment(d, i);
+        break;
+    case 1:
+        a = new AccomplishmentSongListConditional(d, i);
+        break;
+    case 2:
+        a = new AccomplishmentCountConditional(d, i);
+        break;
+    case 3:
+        a = new AccomplishmentOneShot(d, i);
+        break;
+    case 4:
+        a = new AccomplishmentCharacterListConditional(d, i);
+        break;
+    case 5:
+        a = new AccomplishmentDiscSongConditional(d, i);
+        break;
+    case 6:
+        a = new AccomplishmentCampaignConditional(d, i);
+        break;
+    default:
+        MILO_ASSERT(false, 0xde);
+        break;
+    }
+    return a;
+}
+
+void AccomplishmentManager::HandleSongCompleted(Symbol song) {
+    if (TheHamUserMgr) {
+        for (int i = 0; i < 2; i++) {
+            HamPlayerData *pPlayer = TheGameData->Player(i);
+            MILO_ASSERT(pPlayer, 0x41e);
+            int padNum = pPlayer->PadNum();
+            HamProfile *pProfile = TheProfileMgr.GetProfileFromPad(padNum);
+            if (pProfile && pProfile->HasValidSaveData() && pPlayer->IsPlaying()) {
+                static Symbol practice("practice");
+                if (!unk30[i]) {
+                    HandleSongCompletedForProfile(song, pPlayer, pProfile);
+                }
+                if (TheGameMode->InMode(practice, true)) {
+                    pProfile->SetUnk388(song);
+                    pProfile->SetUnk334(true);
+                } else
+                    pProfile->SetUnk334(false);
+            }
+        }
+    }
 }

@@ -9,6 +9,7 @@
 #include "obj/Object.h"
 #include "os/ContentMgr.h"
 #include "os/PlatformMgr.h"
+#include "utl/Symbol.h"
 
 enum HardCoreStatus {
 };
@@ -83,6 +84,7 @@ public:
     void CheckForSpecificModesAccomplishments(Symbol, HamPlayerData *, HamProfile *);
     void CheckForCrewsAccomplishments(HamProfile *);
     HardCoreStatus GetIconHardCoreStatus(int) const;
+    void HandleSongCompleted(Symbol);
     const std::vector<Symbol> &GetDiscSongs() const { return mDiscSongs; }
 
     static void Init(DataArray *);

@@ -81,6 +81,7 @@ RndMat *ChooseModeProvider::Mat(int, int i_iData, UIListMesh *) const {
     static Symbol rhythm_battle("rhythm_battle");
     static Symbol holla_back("holla_back");
     static Symbol bustamove("bustamove");
+    Symbol dataSym = DataSymbol(i_iData);
     return nullptr;
 }
 

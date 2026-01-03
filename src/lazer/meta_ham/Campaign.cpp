@@ -4,6 +4,7 @@
 #include "lazer/meta_ham/CampaignEra.h"
 #include "macros.h"
 #include "obj/Data.h"
+#include "obj/DataFile.h"
 #include "obj/Dir.h"
 #include "obj/DirLoader.h"
 #include "obj/Object.h"
@@ -295,6 +296,26 @@ void Campaign::ConfigureCampaignData(DataArray *i_pConfig) {
         Symbol s = pWinInstructionArray->Sym(i);
         unk68.push_back(s);
     }
+}
+
+void Campaign::LoadCampaignDanceMoves(Symbol s) {
+    if (s != unkbc) {
+        unka8.clear();
+        unkbc = s;
+        GatherMoveData(s);
+        unkb8 = false;
+        m_pCurLoader = nullptr;
+        LoadHamMoves(s);
+    }
+}
+
+void Campaign::CheatReloadData() {
+    if (s_pReloadedCampaignData) {
+        s_pReloadedCampaignData->Release();
+    }
+    s_pReloadedCampaignData = DataReadFile("config/campaign.dta", true);
+    Cleanup();
+    ConfigureCampaignData(s_pReloadedCampaignData);
 }
 
 BEGIN_HANDLERS(Campaign)

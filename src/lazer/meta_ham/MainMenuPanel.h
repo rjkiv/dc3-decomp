@@ -49,6 +49,7 @@ public:
     NEW_OBJ(MainMenuPanel)
 
     MainMenuPanel();
+    MainMenuProvider GetMainMenuProvider() const { return unk44; }
 
 protected:
     int unk40;
