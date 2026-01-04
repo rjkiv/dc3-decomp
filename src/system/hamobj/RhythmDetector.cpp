@@ -1,0 +1,224 @@
+#include "RhythmDetector.h"
+
+#include "obj/DataFunc.h"
+#include "gesture/SkeletonUpdate.h"
+
+
+void CameraToScreenUnit(Vector3 &vec, const Skeleton &skeleton, SkeletonJoint joint) {
+    Vector2 skelPos;
+    skeleton.ScreenPos(joint, skelPos);
+    vec.y = -(skeleton.TrackedJoints()[joint].unk60.z) * 0.22977939;
+    vec.x = (skelPos.x - 0.5f) * 2.0f;
+    vec.z = (0.5f - skelPos.y) * 2.0f;
+}
+
+DebugGraph::DebugGraph(
+    float f1,
+    float f2,
+    float f3,
+    float f4,
+    Hmx::Color color1,
+    Hmx::Color color2,
+    int i1,
+    float f5,
+    float f6,
+    String s
+)
+    : mRect(f1, f2, f3, f4), mColorA(color1), mColorB(color2), unk38(i1), unk3c(f5), unk40(f6),
+      unk44(3.4028235e+38), unk48(s), unk50(1) {}
+
+DebugGraph::~DebugGraph() {}
+
+namespace {
+    int kAnalyzeJoints[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19};
+    int gDebugBone = -1;
+    float gAdjust = 1;
+    int gLog = -1;
+    bool gClamp = true;
+    const char **kConv;
+    int kConvCount = 4;
+    int kConvLen;
+
+    void AnalyzeData(const std::vector<RhythmDetector::Frame> &frames, float &f1, float &f2, float &f3, float f4, bool b1, Symbol sym, bool b2, DebugGraph *dbg, int i1, TextStream *stream) {
+        return;
+    }
+
+    DataNode TightenDebugBone(DataArray *da) {
+        gAdjust *= 1.01f;
+        MILO_LOG("scalar %f\n", gAdjust);
+        return 0;
+    }
+
+    DataNode LoosenDebugBone(DataArray *da) {
+        gAdjust *= 0.990099f;
+        MILO_LOG("scalar %f\n", gAdjust);
+        return 0;
+    }
+
+    DataNode DataSpaceCheat(DataArray *da) {
+        gLog += 1;
+        if (60 <= gLog) {
+            gLog = -1;
+        }
+        return 0;
+    }
+
+    DataNode CycleDebugBone(DataArray *da) {
+        gDebugBone += 1;
+        gAdjust = 1.0;
+
+        if (gDebugBone == 20) {
+            gDebugBone = -1;
+        }
+        MILO_LOG("debug bone %d\n", gDebugBone);
+        return 0;
+    }
+
+    void initCheat() {
+        // if(SomeGlobalOrSymbol == 0) {
+        //SomeGlobalOrSymbol = 1;
+        Symbol cycle_movement_bone("cycle_movement_bone");
+        DataRegisterFunc(cycle_movement_bone, CycleDebugBone);
+        Symbol tighten_current_bone("tighten_current_bone");
+        DataRegisterFunc(tighten_current_bone, TightenDebugBone);
+        Symbol loosen_current_bone("loosen_current_bone");
+        DataRegisterFunc(loosen_current_bone, LoosenDebugBone);
+        Symbol ktb_debug_cheat("ktb_debug_cheat");
+        DataRegisterFunc(ktb_debug_cheat, DataSpaceCheat);
+        //}
+    }
+
+    float Mean(const std::vector<float> &vec, int start, int end) {
+        // some fruity branchless stuff going on in here
+        int size = (vec.size());
+        end = size < end ? size : end;
+        start = start < 0 ? 0 : start;
+        float sum = 0.0f;
+        for (int i = start; i < end; i++) {
+            sum += vec[i];
+        }
+        int count = end - start;
+        if (count == 0) {
+            return 0.0f;
+        }
+        return sum / count;
+    }
+
+    float Variance(const std::vector<float> &vec, float mean, int start, int end) {
+        // dear god please someone figure what isnt right here
+        int size = (vec.size());
+        end = size < end ? size : end;
+        start = start < 0 ? 0 : start;
+        float sum = 0.0f;
+        for (int i = start; i < end; i++) {
+            sum += (vec[i] - mean) * (vec[i] - mean);
+        }
+        int count = end - start;
+        if (count != 0) {
+            return sum / count;
+        }
+        return 0.0f;
+    }
+
+
+}
+
+BEGIN_HANDLERS(RhythmDetector)
+HANDLE_ACTION(start_recording, StartRecording())
+HANDLE_ACTION(stop_recording, StopRecording())
+HANDLE_EXPR(is_recording, mRecording)
+HANDLE_SUPERCLASS(RndPollable)
+HANDLE_SUPERCLASS(Hmx::Object)
+END_HANDLERS
+
+BEGIN_PROPSYNCS(RhythmDetector)
+SYNC_SUPERCLASS(Hmx::Object)
+SYNC_SUPERCLASS(RndPollable)
+SYNC_PROP(rhythm_rating, unk48);
+SYNC_PROP(rhythm_decay, unk4c)
+SYNC_PROP(num_beats_to_cover, unk44)
+SYNC_PROP(beat_fold, unk50)
+SYNC_PROP(tolerance_factor, unk54)
+SYNC_PROP(dir_x, unk58)
+SYNC_PROP(dir_y, unk5c)
+SYNC_PROP(dir_z, unk68)
+END_PROPSYNCS
+
+void EraseNewerData(std::vector<RhythmDetector::Frame> &vec, float time) {
+    for (auto it = vec.begin(); it != vec.end(); ++it) {
+        if (it->unk0 >= time) {
+            vec.erase(it, vec.end());
+            break;
+        }
+    }
+}
+
+void RhythmDetector::Poll() {
+    if (mRecording) {
+        if (TheGestureMgr->GetSkeleton(unk10).IsTracked()) {
+            if (mDebugGraphA) mDebugGraphA->Draw();
+            if (mDebugGraphB) mDebugGraphB->Draw();
+            if (mDebugGraphC) mDebugGraphC->Draw();
+            if (mDebugGraphD) mDebugGraphD->Draw();
+            if (mDebugGraphE) mDebugGraphE->Draw();
+
+        }
+    }
+}
+
+void RhythmDetector::Enter() {
+    bool hasSkelInst = false;
+    RndPollable::Enter();
+    if (SkeletonUpdate::HasInstance()) {
+        //somethign
+        auto skel = SkeletonUpdate::InstanceHandle();
+        hasSkelInst = true;
+        bool hasSkelCallback = skel.HasCallback(this);
+    }
+    if (!SkeletonUpdate::HasInstance()) {
+        auto skel = SkeletonUpdate::InstanceHandle();
+        skel.AddCallback(this);
+    }
+}
+
+float RhythmDetector::Groove() const {
+    if (unkc) return unk48;
+    else return 0;
+}
+
+float RhythmDetector::Freshness() const {
+    if (unkc) return 1 - unk4c;
+    else return 0;
+}
+
+Vector4 RhythmDetector::Data1(int i1) const {
+    //Vector4 out;
+    //out.x = unkaac[i1].x;
+    //out.y = unkaac[i1].y;
+    ////out.w = 0.0;
+    //out.z = unkaac[i1].z;
+    //return out;
+    return Vector4(unka80[i1], unka80[i1], unka80[i1], 0.0);
+ }
+
+Vector4 RhythmDetector::Data2(int i1) const {
+    return Vector4(0, 1, 1, 1);
+}
+
+void RhythmDetector::RemoveDebugGraphs() {
+    delete mDebugGraphA;
+    mDebugGraphA = nullptr;
+    delete mDebugGraphB;
+    mDebugGraphB = nullptr;
+    delete mDebugGraphC;
+    mDebugGraphC = nullptr;
+    delete mDebugGraphD;
+    mDebugGraphD = nullptr;
+    delete mDebugGraphE;
+    mDebugGraphE = nullptr;
+}
+
+ // const RhythmDetector::RecordData &
+//RhythmDetector::GetRecord(float, float, bool, Symbol, TextStream *) {
+//
+//}
