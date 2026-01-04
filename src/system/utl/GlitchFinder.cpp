@@ -63,6 +63,88 @@ void GlitchPoker::PrintNestedStartTimes(TextStream &stream, float f1) {
     }
 }
 
+void GlitchPoker::Dump(TextStream &stream, int i1) {
+    float f1 = 0.0049999999f;
+    if (smLastDumpTime + 0.005 < unk40) {
+        PrintNestedStartTimes(stream, smLastDumpTime);
+        if (!smDumpLeaves) {
+            stream << "TIME GAP (" << unk40 - smLastDumpTime << ")\n";
+        }
+        else if (smThreshold < unk40 - smLastDumpTime) {
+            stream << "   TIME GAP (" << unk40 - smLastDumpTime << ") before " << unk54->unk0 << " : ";
+        }
+        stream << "\n";
+        smTotalLeafTime = (unk40 - smLastDumpTime) + smTotalLeafTime;
+    }
+    PrintNestedStartTimes(stream, unk40);
+    if (smDumpLeaves || !unk48.empty() || f1 <= unk44 - unk40) {
+        if (smLastDumpTime && unk54) {
+            f1 = smThreshold;
+            if (f1 < unk44 - unk40) {
+                if (unk48.empty()) {
+                    stream << "   ";
+                    PrintResult(stream);
+                    stream << "}";
+                    for (int i = 0; i < sizeof(unk54->unk0); i++) {
+                        stream << " : " << unk54->unk0[i];
+                    }
+                }
+                stream << "\n";
+                smTotalLeafTime = (unk44 - unk40) + smTotalLeafTime;
+            }
+            else {
+                for (int i = 0; i < unk48.size(); i++) {
+                    Dump(stream, i1);
+                }
+                f1 = smThreshold;
+
+                if (f1 < unk44 - smLastDumpTime) {
+                    stream << "   TIME GAP (" << unk44 - smLastDumpTime << ") at end of " << unk0;
+                    for (int i = 0; i < sizeof(unk54->unk0); i++) {
+                        stream << " : " << unk54->unk0[i];
+                    }
+                    stream << "\n";
+                    smTotalLeafTime = (unk44 - smLastDumpTime) + smTotalLeafTime;
+                }
+            }
+        }
+        smLastDumpTime = unk44;
+    }
+    PrintResult(stream);
+    for (int i = 0; i < unk48.size(); i++) {
+        stream << "\n";
+        float lastDumpTime = smLastDumpTime;
+        smLastDumpTime = unk40;
+        smNestedStartTimes.push_back(lastDumpTime);
+        for (int i = 0; i < unk48.size(); i++) {
+            Dump(stream, i1 + 1);
+        }
+        if (smLastDumpTime + f1 < unk44) {
+            PrintNestedStartTimes(stream, smLastDumpTime);
+            if (!smDumpLeaves) {
+                stream << "TIME GAP (" << unk44 - smLastDumpTime;
+            }
+            else {
+                if (!(unk40 - smLastDumpTime <= smThreshold)) {
+                    stream << "   TIME GAP (" << unk44 - smLastDumpTime << ") at end of " << unk0;
+                    for (int i = 0; i < sizeof(unk54->unk0); i++) {
+                        stream << " : " << unk54->unk0[i];
+                    }
+                }
+                stream << "\n";
+            }
+        }
+        smLastDumpTime = lastDumpTime;
+        // something DAT here
+        PrintNestedStartTimes(stream, unk44);
+    }
+    if (!smDumpLeaves) {
+        if (!(unk48.empty() && unk44 - unk40 < f1)) {
+
+        }
+    }
+}
+
 GlitchAverager::GlitchAverager() : mAvg(0.0), mMax(0.0), mCount(0), mGlitchAvg(0.0), mGlitchCount(0) {}
 
 void GlitchAverager::PushInstance(float f1, bool b) {

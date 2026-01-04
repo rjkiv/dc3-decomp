@@ -1,8 +1,8 @@
 #include "utl/MemStream.h"
 
 void MemStream::ReadImpl(void *data, int bytes) {
-    int tell = mTell;
     unsigned int size = mBuffer.size();
+    int tell = mTell;
     if (tell + bytes > size) {
         mFail = true;
         bytes = size - tell;
