@@ -191,6 +191,8 @@ void EraseNewerData(std::vector<RhythmDetector::Frame> &vec, float time) {
     }
 }
 
+RhythmDetector::RhythmDetector() : unkc(false), mRecording(0), unk10(0), unk18(0), unk44(0), unk48(0), unk4c(0), unk54(0), unkaa8(0) {}
+
 void RhythmDetector::Poll() {
     if (mRecording) {
         if (TheGestureMgr->GetSkeleton(unk10).IsTracked()) {
@@ -236,7 +238,7 @@ Vector4 RhythmDetector::Data1(int i1) const {
     ////out.w = 0.0;
     //out.z = unkaac[i1].z;
     //return out;
-    return Vector4(unka80[i1], unka80[i1], unka80[i1], 0.0);
+    return Vector4(unkaac.x, unkaac.y, unkaac.z, 0.0);
  }
 
 Vector4 RhythmDetector::Data2(int i1) const {
@@ -273,6 +275,29 @@ void RhythmDetector::AddFullDebugGraphs() {
         auto mDebugGraphA = new DebugGraph(0.1,0.0,0.8,0.06, Hmx::Color(0.0,0.0,0.0,0.0), Hmx::Color(0.0,0.0,0.0,0.0), 0, -1.1, 1.1, "");
         mDebugGraphA->SetUnk50(false);
     }
+}
+
+void RhythmDetector::StartRecording() {
+    char temp = mRecording;
+    mRecording = temp + 1;
+    if (mRecording == 1) {
+        AddFullDebugGraphs();
+        unkaa8 = TheTaskMgr.Beat();
+        ClearData();
+    }
+    MILO_ASSERT(mRecording >= 1, 0x3cc);
+    MILO_ASSERT(mRecording <= 2, 0x3cd);
+}
+
+void RhythmDetector::StopRecording() {
+    char temp = mRecording;
+    mRecording = temp - 1;
+    if (mRecording == 0) {
+        unkaa8 = TheTaskMgr.Beat();
+        ClearData();
+    }
+    MILO_ASSERT(mRecording >= 0, 0x3da);
+    MILO_ASSERT(mRecording <= 1, 0x3db);
 }
 
 // const RhythmDetector::RecordData &
