@@ -18,6 +18,8 @@ public:
     };
 
     struct RecordData {
+    public:
+        ~RecordData();
         float unkbec; // 0xbec
         float unkbf0; // 0xbf0
         float unkbf4; // 0xbf4
@@ -73,16 +75,17 @@ protected:
     std::vector<Vector3> unk20; // 0x20
     std::vector<Frame> unk2c; // 0x2C
     std::vector<Frame> unk38; // 0x38
-    float unk44; // 0x44
+    float unk44; // 0x44 - mBeats?
     float unk48; // 0x48 mGroove?
     float unk4c; // 0x4c mFreshness?
-    int unk50; // 0x50 mBeats?
+    int unk50; // 0x50 - mFold?
     float unk54; // 0x54
-    float unk58; // 0x58
-    float unk5c; // 0x5c
-    float unk60; // 0x60
+    //float unk58; // 0x58 - mDirX?
+    //float unk5c; // 0x5c - mDirY?
+    //float unk60; // 0x60 - mDirZ?
+    Vector3 unk58;
     float unk64; // 0x64
-    float unk68; // 0x68
+    //float unk68; // 0x68
     //float unksomething;
     DebugGraph *mDebugGraphA; // 0x6c
     DebugGraph *mDebugGraphB; // 0x70
@@ -93,14 +96,14 @@ protected:
     //float unk80[256];
     std::vector<float> unka80; // 0xa80
     //double *unka80; // 0xa80
-    float unkaa4; // 0xaa4
+    //float unkaa4; // 0xaa4
     float unkaa8; // 0xaa8
     //std::vector<Vector3> unkaac; // 0xaac - im unsure of these 3 vectors
     //std::vector<Vector3*> unkab0; // 0xab0
     //std::vector<Vector3*> unkab4; // 0xab4
     float unkaac; // 0xaac
     float unkab0; // 0xab0
-    float unkab4; // 0xab4
+    //float unkab4; // 0xab4
     RecordData mRecordData; // 0xbec
     //float unkbec; // 0xbec
     //float unkbf0; // 0xbf0
@@ -109,7 +112,7 @@ protected:
     //float unkbfc; // 0xbfc
     //float unkc00; // 0xc00
     //bool unkc04; // 0xc04
-    //std::vector<Frame> unkc08; // 0xc08
+    std::vector<Frame> unkc08; // 0xc08
 
 private:
     void AddFrame(BaseSkeleton const &);

@@ -14,6 +14,7 @@ public:
     void AddData(float, bool);
     void Draw();
     void SetUnk50(bool b) { unk50 = b; }
+    void SetUnk44(float f) { unk44 = f; }
 
 protected:
     Hmx::Rect mRect; // 0x0

@@ -29,6 +29,8 @@ DebugGraph::DebugGraph(
 
 DebugGraph::~DebugGraph() {}
 
+RhythmDetector::RecordData::~RecordData() {}
+
 namespace {
     int kAnalyzeJoints[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19};
     int gDebugBone = -1;
@@ -124,25 +126,57 @@ namespace {
 }
 
 BEGIN_HANDLERS(RhythmDetector)
-HANDLE_ACTION(start_recording, StartRecording())
-HANDLE_ACTION(stop_recording, StopRecording())
-HANDLE_EXPR(is_recording, mRecording)
-HANDLE_SUPERCLASS(RndPollable)
-HANDLE_SUPERCLASS(Hmx::Object)
+    HANDLE_ACTION(start_recording, StartRecording())
+    HANDLE_ACTION(stop_recording, StopRecording())
+    HANDLE_EXPR(is_recording, mRecording)
+    HANDLE_SUPERCLASS(RndPollable)
+    HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
 
 BEGIN_PROPSYNCS(RhythmDetector)
-SYNC_SUPERCLASS(Hmx::Object)
-SYNC_SUPERCLASS(RndPollable)
-SYNC_PROP(rhythm_rating, unk48);
-SYNC_PROP(rhythm_decay, unk4c)
-SYNC_PROP(num_beats_to_cover, unk44)
-SYNC_PROP(beat_fold, unk50)
-SYNC_PROP(tolerance_factor, unk54)
-SYNC_PROP(dir_x, unk58)
-SYNC_PROP(dir_y, unk5c)
-SYNC_PROP(dir_z, unk68)
+    SYNC_SUPERCLASS(Hmx::Object)
+    SYNC_SUPERCLASS(RndPollable)
+    SYNC_PROP(rhythm_rating, unk48);
+    SYNC_PROP(rhythm_decay, unk4c)
+    SYNC_PROP(num_beats_to_cover, unk44)
+    SYNC_PROP(beat_fold, unk50)
+    SYNC_PROP(tolerance_factor, unk54)
+    SYNC_PROP(dir_x, unk58.x)
+    SYNC_PROP(dir_y, unk58.y)
+    SYNC_PROP(dir_z, unk58.z)
 END_PROPSYNCS
+
+BEGIN_COPYS(RhythmDetector)
+    COPY_SUPERCLASS(RndPollable)
+    CREATE_COPY(RhythmDetector)
+    BEGIN_COPYING_MEMBERS
+    COPY_MEMBER(unk44)
+    COPY_MEMBER(unk50)
+    COPY_MEMBER(unk54)
+    COPY_MEMBER(unk58.x)
+    COPY_MEMBER(unk58.y)
+    COPY_MEMBER(unk58.z)
+    COPY_MEMBER(unk64)
+    END_COPYING_MEMBERS
+END_COPYS
+
+
+BEGIN_LOADS(RhythmDetector)
+LOAD_REVS(bs)
+ASSERT_REVS(2, 0)
+LOAD_SUPERCLASS(RndPollable)
+bs >> unk44;
+bs >> unk50;
+bs >> unk54;
+bs >> unk58.x;
+bs >> unk58.y;
+bs >> unk58.z;
+Normalize(unk58, unk58);
+END_LOADS
+
+BEGIN_SAVES(RhythmDetector)
+
+END_SAVES
 
 void EraseNewerData(std::vector<RhythmDetector::Frame> &vec, float time) {
     for (auto it = vec.begin(); it != vec.end(); ++it) {
@@ -218,7 +252,26 @@ void RhythmDetector::RemoveDebugGraphs() {
     mDebugGraphE = nullptr;
 }
 
- // const RhythmDetector::RecordData &
+void RhythmDetector::AddDebugGraph(float f1, float f2, float f3, float f4, Hmx::Color color) {
+    if (mDebugGraphE) {
+        delete mDebugGraphE;
+    }
+    String s = MakeString("beats %d fold %d dir %.1f %.1f %.1f", unk44, unk50, unk58.x, unk58.y, unk58.z);
+    mDebugGraphE = new DebugGraph(f1, f2, f3, f4, Hmx::Color(0x3ecccccd, 0x3ecccccd, 0x3ecccccd), Hmx::Color(0x3ecccccd, 0x3ecccccd, 0x3ecccccd), s.length(), 0, 2, s);
+    mDebugGraphE->SetUnk44(1.0);
+}
+
+void RhythmDetector::AddFullDebugGraphs() {
+    if (gLog != -1) {
+        if (mDebugGraphA) {
+            delete mDebugGraphA;
+        }
+        auto mDebugGraphA = new DebugGraph(0.1,0.0,0.8,0.06, Hmx::Color(0.0,0.0,0.0,0.0), Hmx::Color(0.0,0.0,0.0,0.0), 0, -1.1, 1.1, "");
+        mDebugGraphA->SetUnk50(false);
+    }
+}
+
+// const RhythmDetector::RecordData &
 //RhythmDetector::GetRecord(float, float, bool, Symbol, TextStream *) {
 //
 //}
