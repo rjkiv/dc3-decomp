@@ -153,10 +153,7 @@ BEGIN_COPYS(RhythmDetector)
     COPY_MEMBER(unk44)
     COPY_MEMBER(unk50)
     COPY_MEMBER(unk54)
-    COPY_MEMBER(unk58.x)
-    COPY_MEMBER(unk58.y)
-    COPY_MEMBER(unk58.z)
-    COPY_MEMBER(unk64)
+    COPY_MEMBER(unk58)
     END_COPYING_MEMBERS
 END_COPYS
 
@@ -175,7 +172,14 @@ Normalize(unk58, unk58);
 END_LOADS
 
 BEGIN_SAVES(RhythmDetector)
-
+SAVE_REVS(2, 0)
+SAVE_SUPERCLASS(RndPollable)
+bs << unk44;
+bs << unk50;
+bs << unk54;
+bs << unk58.x;
+bs << unk58.y;
+bs << unk58.z;
 END_SAVES
 
 void EraseNewerData(std::vector<RhythmDetector::Frame> &vec, float time) {

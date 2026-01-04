@@ -111,7 +111,7 @@ protected:
     //float unkbf8; // 0xbf8
     //float unkbfc; // 0xbfc
     //float unkc00; // 0xc00
-    //bool unkc04; // 0xc04
+    bool unkc04; // 0xc04
     std::vector<Frame> unkc08; // 0xc08
 
 private:
