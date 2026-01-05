@@ -34,6 +34,7 @@ public:
     virtual ~RhythmDetector();
     OBJ_CLASSNAME(RhythmDetector);
     OBJ_SET_TYPE(RhythmDetector);
+
     virtual DataNode Handle(DataArray *, bool);
     virtual bool SyncProperty(DataNode &, DataArray *, int, PropOp);
     virtual void Save(BinStream &);
@@ -50,6 +51,7 @@ public:
     virtual void Draw(const BaseSkeleton &, class SkeletonViz &) {}
 
     OBJ_MEM_OVERLOAD(0x14)
+    NEW_OBJ(RhythmDetector)
 
     void StopRecording();
     void StartRecording();
