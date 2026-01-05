@@ -2,6 +2,7 @@
 #include "obj/Object.h"
 #include "rndobj/Poll.h"
 #include "utl/MemMgr.h"
+#include "RhythmDetector.h"
 
 class RhythmDetectorGroup : public RndPollable {
 public:
@@ -22,6 +23,16 @@ public:
     OBJ_MEM_OVERLOAD(0x13)
     NEW_OBJ(RhythmDetectorGroup)
 
+    void SetSkeletonIndex(int);
+    void RemoveDebugGraphs();
+    void AddDebugGraphs();
+
 protected:
     RhythmDetectorGroup();
+
+    ObjPtrVec<RhythmDetector> mDetectors; //  0xC?
+    float mRating; // 0x24
+    float mFreshness; // 0x28
+    int mSkeletonIndex; // 0x2c
+    DebugGraph *mDebugGraph; // 0x30
 };

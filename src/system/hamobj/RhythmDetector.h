@@ -62,6 +62,7 @@ public:
     void RemoveDebugGraphs();
     void ClearData();
     const RecordData &GetRecord(float, float, bool, Symbol, TextStream *);
+    void SetSkeletonID(int skelID) { unk10 = skelID; }
 
 protected:
     RhythmDetector();
@@ -98,16 +99,7 @@ protected:
     //std::vector<Vector3*> unkab0; // 0xab0
     //std::vector<Vector3*> unkab4; // 0xab4
     Vector3 unkaac;
-    //float unkaac; // 0xaac
-    //float unkab0; // 0xab0
-    //float unkab4; // 0xab4
     RecordData mRecordData; // 0xbec
-    //float unkbec; // 0xbec
-    //float unkbf0; // 0xbf0
-    //float unkbf4; // 0xbf4
-    //float unkbf8; // 0xbf8
-    //float unkbfc; // 0xbfc
-    //float unkc00; // 0xc00
     bool unkc04; // 0xc04
     std::vector<Frame> unkc08; // 0xc08
 
