@@ -14,7 +14,7 @@ class RhythmDetector : public RndPollable, public SkeletonCallback {
 public:
     struct Frame {
         float unk0; // 0x0 time created?
-        std::vector<MoveChoiceSet> mJointVelocities; // 0x4
+        std::vector<MoveChoiceSet> mJointVelocities; // 0x4 - could be vec<vec3> - ghidra doesnt make it clear
     };
 
     struct RecordData {
@@ -66,28 +66,28 @@ public:
 protected:
     RhythmDetector();
 
-    bool unkc; // 0xc
-    char mRecording; // 0xd
-    int unk10; // 0x10 skeletonID?
-    std::list<MoveChoiceSet> unk14; // 0x14
-    int unk18; // 0x18
-    std::vector<Vector3> unk20; // 0x20
-    std::vector<Frame> unk2c; // 0x2C
-    std::vector<Frame> unk38; // 0x38
-    float unk44; // 0x44 - mBeats?
-    float unk48; // 0x48 mGroove?
-    float unk4c; // 0x4c mFreshness?
-    int unk50; // 0x50 - mFold?
+    bool unkc; // 0xc - used in groove/freshness
+    char mRecording; // 0xd - used in recording funcs
+    int unk10; // 0x10 skeletonID? - used in poll
+    std::list<Frame> unk14; // 0x14 - currently unused
+    int unk18; // 0x18 - currently unused
+    std::vector<Vector3> unk20; // 0x20 - currently unused
+    std::vector<Frame> unk2c; // 0x2C - currently unused
+    std::vector<Frame> unk38; // 0x38 - currently unused
+    float unk44; // 0x44 - mBeats? - used in debuggraphs
+    float unk48; // 0x48 mGroove? - used in groove
+    float unk4c; // 0x4c mFreshness? - used in freshness
+    int unk50; // 0x50 - mFold? - used in saves/loads
     float unk54; // 0x54
     Vector3 unk58; // 0x58 - mDirs?
     float unk64; // 0x64
-    //float unk68; // 0x68
+    float unk68; // 0x68 - used in cleardata
     //float unksomething;
-    DebugGraph *mDebugGraphA; // 0x6c
-    DebugGraph *mDebugGraphB; // 0x70
-    DebugGraph *mDebugGraphC; // 0x74
-    DebugGraph *mDebugGraphD; // 0x78
-    DebugGraph *mDebugGraphE; // 0x7c
+    DebugGraph *mDebugGraphA; // 0x6c - used in debuggraphs
+    DebugGraph *mDebugGraphB; // 0x70 - used in debuggraphs
+    DebugGraph *mDebugGraphC; // 0x74 - used in debuggraphs
+    DebugGraph *mDebugGraphD; // 0x78 - used in debuggraphs
+    DebugGraph *mDebugGraphE; // 0x7c - used in debuggraphs
     float unk80[647]; // 0x80 some big ass buffer maybe who knows
     //float unk80[256];
     std::vector<float> unka80; // 0xa80

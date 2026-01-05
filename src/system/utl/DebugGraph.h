@@ -14,7 +14,9 @@ public:
     void AddData(float, bool);
     void Draw();
     void SetUnk50(bool b) { unk50 = b; }
+    bool GetUnk50() { return unk50; }
     void SetUnk44(float f) { unk44 = f; }
+    int GetUnk38() { return unk38; }
 
 protected:
     Hmx::Rect mRect; // 0x0

@@ -1,5 +1,6 @@
 #include "RhythmDetector.h"
 
+#include "ui/UIPanel.h"
 #include "obj/DataFunc.h"
 #include "gesture/SkeletonUpdate.h"
 
@@ -191,7 +192,7 @@ void EraseNewerData(std::vector<RhythmDetector::Frame> &vec, float time) {
     }
 }
 
-RhythmDetector::RhythmDetector() : unkc(false), mRecording(0), unk10(0), unk18(0), unk44(0), unk48(0), unk4c(0), unk54(0), unkaa8(0) {}
+RhythmDetector::RhythmDetector() : unkc(false), mRecording(0), unk10(0), unk18(0), unk44(0), unk48(0), unk4c(0), unk50(2), unk54(0), unkaa8(0) {}
 
 void RhythmDetector::Poll() {
     if (mRecording) {
@@ -300,7 +301,75 @@ void RhythmDetector::StopRecording() {
     MILO_ASSERT(mRecording <= 1, 0x3db);
 }
 
-// const RhythmDetector::RecordData &
-//RhythmDetector::GetRecord(float, float, bool, Symbol, TextStream *) {
-//
-//}
+void RhythmDetector::ClearData() {
+    float temp = 0.0;
+    unk68 = 0.0;
+    unk2c.clear();
+    unk38.clear();
+    unkc08.clear();
+    unk48 = 0.0;
+    unk4c = 0.0;
+    unkc04 = true;
+    mRecordData.unkbf4 = -1.0;
+    mRecordData.unkbf8 = -1.0;
+    mRecordData.unkbec = -1.0;
+    mRecordData.unkbf0 = -1.0;
+    mRecordData.unkbfc = -1.0;
+    mRecordData.unkc00 = -1.0;
+    unk14.clear();
+    AddFullDebugGraphs();
+}
+
+void RhythmDetector::AddFrame(BaseSkeleton const &skel) {
+    auto panel = ObjectDir::Main()->Find<UIPanel>("rhythm_detector_panel", false);
+    if (panel) {
+        Vector3 jointPosVec;
+        for (int skelJoint = 0; skelJoint < kNumJoints; skelJoint++) {
+            skel.JointPos(kCoordCamera, static_cast<SkeletonJoint>(skelJoint), jointPosVec);
+        }
+        float beat = TheTaskMgr.Beat();
+        float seconds =TheTaskMgr.Seconds(TaskMgr::kRealTime);
+        float beatDiff = beat - unkaa8;
+        if (beatDiff < 0.0) {
+            ClearData();
+            beatDiff = 0.0;
+        }
+        int temp = -1;
+        int anotherInt = 0;
+        float something = 0.0;
+        for (int i = 0; i < 8; i++) {
+            if (0.0 < unka80.back() && ((fabs(seconds - unka80.back()) - 0.1) < something || temp == -1)) {
+                something = fabs(seconds - unka80.back()) - 0.1;
+                temp = anotherInt;
+                anotherInt++;
+            }
+        }
+        if (temp != -1) {
+
+        }
+    }
+
+}
+
+const RhythmDetector::RecordData &
+RhythmDetector::GetRecord(float f1, float f2, bool b, Symbol sym, TextStream *stream) {
+    RecordData ret = mRecordData;
+    if (mRecordData.unkbec == f1 && mRecordData.unkbf8 == f2) {
+        if (stream) {
+            AnalyzeData(unk38, mRecordData.unkbfc, mRecordData.unkc00, unk4c, unk54, mDebugGraphA->GetUnk50(), 0, b, 0, mDebugGraphA->GetUnk38(), stream);
+            unkc04 = true;
+        }
+    }
+    else {
+        if (unkc04 == false) {
+            MILO_NOTIFY("new rhythm detector window w/o finalization [%.1f,%.1f] to [%.1f, %.1f]", mRecordData.unkbec, mRecordData.unkbf0, f1, f2);
+        }
+        ClearData();
+        mRecordData.unkbf0 = f2;
+        unkc04 = false;
+        mRecordData.unkbf4 = -1.0;
+        mRecordData.unkbf8 = -1.0;
+        unkc08.clear();
+    }
+    return ret;
+}
