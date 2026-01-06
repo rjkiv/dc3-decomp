@@ -197,7 +197,8 @@ void NavListSortMgr::DoUncollapse() {
         MILO_ASSERT(IsInHeaderMode(), 0x264);
     }
     mHeaderMode = false;
-    mSorts.front()->SetHighlightItem(0);
+    //mSorts.front()->SetHighlightItem(0);
+    UnHighlightCurrent(); // should be a function at 0x7c... but it doesnt seem to exist
     mSorts[mCurrentSortIdx]->BuildItemList();
 }
 
