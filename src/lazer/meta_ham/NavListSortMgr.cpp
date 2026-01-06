@@ -302,11 +302,20 @@ NavListSortNode *NavListSortMgr::GetHighlightItem() {
     return mSorts[mCurrentSortIdx]->GetUnk50();
 }
 
-void NavListSortMgr::StartPreview(int i1, TexMovie *tex) {
-    if (i1 >= 0) {
-        if (i1 < NumData()) {
+void NavListSortMgr::StartPreview(int idx, TexMovie *tex) {
+    if (idx >= 0) {
+        if (idx < NumData()) {
             //auto something = mSorts[mCurrentSortIdx]->GetListFromIdx(i1)->GetToken();
-            mSongPreview->Start(mSorts[mCurrentSortIdx]->GetListFromIdx(i1)->GetToken(), tex);
+            mSongPreview->Start(mSorts[mCurrentSortIdx]->GetListFromIdx(idx)->GetToken(), tex);
         }
+    }
+}
+
+Symbol NavListSortMgr::OnGetToken(int idx) {
+    if (idx < 0 || NumData() <= idx) {
+        return Symbol(gNullStr);
+    }
+    else {
+        return mSorts[mCurrentSortIdx]->GetListFromIdx(idx)->GetToken();
     }
 }
