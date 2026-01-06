@@ -100,10 +100,15 @@ void NavListSortMgr::ClearHeaders() {
 
 Symbol NavListSortMgr::GetHeaderSymbolFromChildSymbol(Symbol sym) {
     auto a = mSorts[mCurrentSortIdx];
-    if (!a->GetNode(sym.Str())) {
-        sym = gNullStr;
+    if (!a->GetNode(sym)) {
+        return Symbol();
     }
-    return sym;
+    else {
+        auto node = dynamic_cast<NavListHeaderNode *>(a->GetNode(sym));
+        if (node) {
+            return node->GetToken();
+        }
+    }
 }
 
 NavListSort *NavListSortMgr::GetCurrentSort() { return mSorts[mCurrentSortIdx]; }
@@ -355,4 +360,14 @@ void NavListSortMgr::FinalizeHeaders() {
         }
         mHeadersA = tempVec;
     }
+}
+
+int NavListSortMgr::GetHeaderIndexFromListIndex(int idx) {
+    auto token = OnGetToken(idx);
+    for (int i = 0; i < mHeadersB.size(); i++) {
+        if (token == mSorts[mCurrentSortIdx]->GetListFromIdx(mHeadersB[i])->GetToken()) {
+            return i;
+        }
+    }
+    return -1;
 }
