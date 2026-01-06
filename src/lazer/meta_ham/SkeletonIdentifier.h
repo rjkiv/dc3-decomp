@@ -46,6 +46,7 @@ public:
     void UpdateIdentityStatus();
     void UpdateEnrolledPlayers();
     void DrawDebug();
+    IdentityStatus GetIDStatus() { return mIdentityStatus; }
 
 private:
     void SetEnrolling();

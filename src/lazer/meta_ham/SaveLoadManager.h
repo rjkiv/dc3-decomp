@@ -97,6 +97,8 @@ public:
 
     static void Init();
 
+    bool GetUnk2c() { return unk2c; }
+
 private:
     bool SongCacheNeedsWrite();
 

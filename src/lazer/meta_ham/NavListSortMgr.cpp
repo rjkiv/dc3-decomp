@@ -301,3 +301,12 @@ void NavListSortMgr::OnUnload() {
 NavListSortNode *NavListSortMgr::GetHighlightItem() {
     return mSorts[mCurrentSortIdx]->GetUnk50();
 }
+
+void NavListSortMgr::StartPreview(int i1, TexMovie *tex) {
+    if (i1 >= 0) {
+        if (i1 < NumData()) {
+            //auto something = mSorts[mCurrentSortIdx]->GetListFromIdx(i1)->GetToken();
+            mSongPreview->Start(mSorts[mCurrentSortIdx]->GetListFromIdx(i1)->GetToken(), tex);
+        }
+    }
+}

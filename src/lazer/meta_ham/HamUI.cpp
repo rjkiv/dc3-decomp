@@ -1,4 +1,6 @@
 #include "lazer/meta_ham/HamUI.h"
+#include "gesture/LiveCameraInput.h"
+#include "SkeletonIdentifier.h"
 #include "game/Game.h"
 #include "game/GamePanel.h"
 #include "game/PresenceMgr.h"
@@ -336,7 +338,8 @@ void HamUI::Draw() {
 bool HamUI::IsTimelineResetAllowed() const {
     if (!ThePassiveMessenger->HasMessages()
         && !ThePassiveMessenger->HasRecentlyDismissedMessage()
-        && (!mHelpBar || (!mHelpBar->IsWriteIconShowing() && !mHelpBar->IsAnimating()))) {
+        && TheSkeletonIdentifier->GetIDStatus() == 0 &&
+        (!mHelpBar || (!mHelpBar->IsWriteIconShowing() && !mHelpBar->IsAnimating()))) {
         return true;
     }
     return false;
