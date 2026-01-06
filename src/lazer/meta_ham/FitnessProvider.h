@@ -8,7 +8,7 @@
 class FitnessProvider : public UIListProvider, public Hmx::Object {
 public:
     // Hmx::Object
-    virtual ~FitnessProvider() {}
+    virtual ~FitnessProvider();
     OBJ_CLASSNAME(FitnessProvider)
     OBJ_SET_TYPE(FitnessProvider)
     virtual DataNode Handle(DataArray *, bool);

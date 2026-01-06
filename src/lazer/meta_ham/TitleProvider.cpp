@@ -7,6 +7,8 @@
 #include "ui/UIListMesh.h"
 #include "utl/Symbol.h"
 
+TitleProvider::~TitleProvider() {}
+
 Symbol TitleProvider::DataSymbol(int i_iData) const {
     MILO_ASSERT_RANGE(i_iData, 0, NumData(), 0x44);
     return mItems[i_iData];

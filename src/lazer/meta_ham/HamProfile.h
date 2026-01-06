@@ -119,6 +119,7 @@ public:
     float FitnessTime() const { return mFitnessTime; }
     float FitnessCalories() const { return mFitnessCalories; }
     int GetProfileTime() const { return mProfileTime; }
+    bool GetUnk360() const { return unk360; }
     void SetUnk388(Symbol s) { unk338 = s; }
     void SetUnk334(bool b) { unk334 = b; }
 

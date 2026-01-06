@@ -26,11 +26,29 @@ DataNode EventDialogPanel::OnMsg(EventDialogStartMsg const &msg) {
     return 1;
 }
 
+DataNode EventDialogPanel::OnMsg(EventDialogDismissMsg const &msg) {
+    Dismiss();
+    SetTypeDef(0);
+    return 1;
+}
+
 DataNode EventDialogPanel::OnMsg(ButtonDownMsg const &msg) {
     if (msg.GetAction() == kAction_Cancel)
         return 0;
     else
         return DataNode(kDataUnhandled, 0);
+}
+
+DataNode EventDialogPanel::OnMsg(UIComponentSelectDoneMsg const &msg) {
+    UIComponent *component = msg.GetComponent();
+    if (!component) {
+        return DataNode(kDataUnhandled, 0);
+    } else {
+        UIComponent *componentCheck =
+            DataDir()->Find<UIComponent>(component->FindPathName(), false); // recheck
+        if (component != componentCheck)
+            return 1;
+    }
 }
 
 BEGIN_HANDLERS(EventDialogPanel)

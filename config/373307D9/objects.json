@@ -82,7 +82,7 @@
             "lazer/meta_ham/FitnessCalorieSortByCalorie.cpp": "MISSING",
             "lazer/meta_ham/FitnessCalorieSortMgr.cpp": "NonMatching",
             "lazer/meta_ham/FitnessCalorieSortNode.cpp": "NonMatching",
-            "lazer/meta_ham/FitnessGoalMgr.cpp": "MISSING",
+            "lazer/meta_ham/FitnessGoalMgr.cpp": "NonMatching",
             "lazer/meta_ham/FitnessProvider.cpp": "NonMatching",
             "lazer/meta_ham/HamMemcardAction.cpp": "NonMatching",
             "lazer/meta_ham/HamPanel.cpp": "NonMatching",

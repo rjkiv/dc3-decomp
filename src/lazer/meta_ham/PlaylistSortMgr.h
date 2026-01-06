@@ -2,7 +2,9 @@
 #include "NavListSortMgr.h"
 #include "game/PartyModeMgr.h"
 #include "meta/SongPreview.h"
+#include "meta_ham/FitnessGoalMgr.h"
 #include "meta_ham/Playlist.h"
+#include "net_ham/PlaylistJobs.h"
 #include "net_ham/RCJobDingo.h"
 #include "obj/Data.h"
 #include "stl/_vector.h"
@@ -25,9 +27,9 @@ public:
     CustomPlaylist unk84;
     String unkb0;
     String unkb8;
-    std::list<Playlist> unkc0;
+    std::list<QueueableCommand *> unkc0;
     bool unkc8;
-    u32 unkcc;
+    RCJob *unkcc;
     std::vector<CustomPlaylist> unkd0;
 
 private:

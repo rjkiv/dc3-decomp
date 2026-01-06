@@ -13,6 +13,8 @@ BEGIN_HANDLERS(ChooseModeProvider)
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
 
+ChooseModeProvider::~ChooseModeProvider() {}
+
 void ChooseModeProvider::Text(
     int, int i_iData, UIListLabel *listLabel, UILabel *uiLabel
 ) const {

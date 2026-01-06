@@ -7,12 +7,15 @@
 #include "meta_ham/HamStoreProvider.h"
 #include "meta_ham/ProfileMgr.h"
 #include "net_ham/HamStoreCartJobs.h"
+#include "net_ham/RCJobDingo.h"
 #include "net_ham/RockCentral.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/ContentMgr.h"
 #include "os/Debug.h"
+#include "os/PlatformMgr.h"
 #include "os/System.h"
+#include "os/User.h"
 #include "utl/Symbol.h"
 
 HamStorePanel::HamStorePanel()
@@ -102,3 +105,56 @@ void HamStorePanel::GetCart() {
     unk138[3] = new GetCartJob(this, profile);
     TheRockCentral.ManageJob(unk138[3]);
 }
+
+void HamStorePanel::LockCart() {
+    HamProfile *profile = dynamic_cast<HamProfile *>(StoreProfile());
+    MILO_ASSERT(profile, 0x246);
+    unk156 = true;
+    unk128 = 0;
+}
+
+void HamStorePanel::StoreUserProfileSwappedToUser(LocalUser *) {
+    RefreshSpecialOfferStatus();
+}
+
+void HamStorePanel::ReadLockData() {
+    ((LockCartJob *)unk138[4])->GetLockData(unk128);
+    unk138[4] = nullptr;
+    unkf8.Restart();
+}
+
+BEGIN_HANDLERS(HamStorePanel)
+    HANDLE_EXPR(get_motd, unkb8)
+    HANDLE_ACTION(set_filter, mOfferProvider->SetFilter(unkac[_msg->Int(2)]))
+    HANDLE_ACTION(
+        set_filter_pack_singles, mOfferProvider->SetFilter(_msg->Obj<StoreOffer>(2))
+    )
+    // HANDLE_EXPR(offer_provider, )
+    // filter_provider
+    // reset_cancel_timer
+    // allow_cancel
+    // is_cart_enabled
+    HANDLE_ACTION(disable_cart, DisableCart())
+    HANDLE_ACTION(get_cart, GetCart())
+    HANDLE_ACTION(add_offer_to_cart, AddOfferToCart(_msg->Obj<StoreOffer>(2)))
+    HANDLE_ACTION(remove_offer_from_cart, RemoveOfferFromCart(_msg->Obj<StoreOffer>(2)))
+    // HANDLE_ACTION(cart_checkout, MultipleItemsCheckout())
+    HANDLE_ACTION(lock_cart, LockCart())
+    HANDLE_ACTION(unlock_cart, UnlockCart())
+    HANDLE_EXPR(is_curr_filter_cart, IsCurrFilterCart(_msg->Int(2)))
+    HANDLE_EXPR(is_cart_empty, mOfferProvider->NumOffersInCart() == 0) // recheck
+    HANDLE_EXPR(is_cart_full, mOfferProvider->NumOffersInCart() < 10) // recheck i made up
+                                                                      // a number
+    HANDLE_ACTION(empty_cart, EmptyCart())
+    HANDLE_ACTION(set_filter_to_cart, SetFilterToCart())
+    HANDLE_ACTION(set_filter_to_songs, SetFilterToSongs())
+    HANDLE_ACTION(refresh_special_offers, RefreshSpecialOfferStatus())
+    HANDLE_EXPR(check_owned, IsSpecialOfferOwned(_msg->ForceSym(2)))
+    HANDLE_EXPR(buy_special, BuySpecialOffer(_msg->ForceSym(2)))
+    HANDLE_MESSAGE(RCJobCompleteMsg)
+    HANDLE_ACTION(buy_dc1_import, BuySpecialOffer("dc1_import"))
+    HANDLE_ACTION(buy_dc2_import, BuySpecialOffer("dc2_import"))
+    HANDLE_ACTION(buy_dc2_pop, BuySpecialOffer("dc2_pop"))
+    HANDLE_ACTION(buy_dc2_gond, BuySpecialOffer("dc2_gond"))
+    HANDLE_SUPERCLASS(StorePanel)
+END_HANDLERS

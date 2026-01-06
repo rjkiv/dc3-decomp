@@ -8,6 +8,8 @@ BEGIN_CUSTOM_HANDLERS(AppNavProvider)
     HANDLE_SUPERCLASS(HamNavProvider)
 END_CUSTOM_HANDLERS
 
+AppNavProvider::~AppNavProvider() {}
+
 void AppNavProvider::Text(int i1, int data, UIListLabel *slot, UILabel *label) const {
     AppLabel *applabel = dynamic_cast<AppLabel *>(label);
     if (slot->Matches("practice_diff")) {

@@ -9,6 +9,8 @@
 #include "ui/UIListProvider.h"
 #include "utl/Symbol.h"
 
+FitnessProvider::~FitnessProvider() {}
+
 void FitnessProvider::Text(
     int, int i_iData, UIListLabel *uiListLabel, UILabel *uiLabel
 ) const {

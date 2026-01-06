@@ -6,7 +6,7 @@
 class AppNavProvider : public HamNavProvider {
 public:
     AppNavProvider() {}
-    ~AppNavProvider() {}
+    ~AppNavProvider();
     OBJ_CLASSNAME(HamNavProvider); // bruh
     OBJ_SET_TYPE(AppNavProvider);
     virtual void Text(int, int, UIListLabel *, UILabel *) const;
