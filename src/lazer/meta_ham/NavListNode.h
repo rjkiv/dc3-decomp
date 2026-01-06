@@ -91,6 +91,7 @@ public:
     NavListShortcutNode *GetShortcut() const { return mShortcut; }
     const std::list<NavListSortNode *> &Children() const { return mChildren; }
     int GetStartIx() { return mStartIx; }
+    void ClearList() { mChildren.clear(); }
 
 protected:
     std::list<NavListSortNode *> mChildren; // 0x34

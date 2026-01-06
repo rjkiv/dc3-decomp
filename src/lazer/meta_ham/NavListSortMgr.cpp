@@ -61,8 +61,8 @@ BEGIN_HANDLERS(NavListSortMgr)
 END_HANDLERS
 
 NavListSortMgr::NavListSortMgr(SongPreview &songprev)
-    : mSongPreview(&songprev), mCurrentSortIdx(0), unk48(false), mHeaderMode(0),
-      mEnteringHeaderMode(0), mExitingHeaderMode(0), mHeadersSelectable(0), unk70(0) {
+    : mSongPreview(&songprev), mCurrentSortIdx(0), unk48(false), mHeaderMode(false),
+      mEnteringHeaderMode(false), mExitingHeaderMode(false), mHeadersSelectable(false), unk70(0) {
     unk44 = new DataArray(0);
 };
 
@@ -317,5 +317,32 @@ Symbol NavListSortMgr::OnGetToken(int idx) {
     }
     else {
         return mSorts[mCurrentSortIdx]->GetListFromIdx(idx)->GetToken();
+    }
+}
+
+int NavListSortMgr::DataIndex(Symbol s) const {
+    static std::list<String> strings;
+    const char *str = FormatString("DataIndex is not necessarily unique\n").Str();
+    //const char *str = "DataIndex is not necessarily unique\n";
+    bool added = AddToStrings(str, strings);
+    if (added)
+        MILO_NOTIFY(str);
+    auto node = mSorts[mCurrentSortIdx]->GetNode(s);
+    if (!node) {
+        return -1;
+    }
+    else {
+        return node->GetStartIx();
+    }
+}
+
+Symbol NavListSortMgr::GetFirstChildSymbolFromHeaderSymbol(Symbol sym) {
+    auto node = dynamic_cast<NavListHeaderNode *>(mSorts[mCurrentSortIdx]->GetNode(sym));
+    if (!node) {
+        return Symbol(gNullStr);
+    }
+    else {
+        std::list<NavListSortNode *> c = node->Children();
+        return c.front()->GetToken();
     }
 }
