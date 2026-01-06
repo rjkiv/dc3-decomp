@@ -346,3 +346,13 @@ Symbol NavListSortMgr::GetFirstChildSymbolFromHeaderSymbol(Symbol sym) {
         return c.front()->GetToken();
     }
 }
+
+void NavListSortMgr::FinalizeHeaders() {
+    if (mHeadersSelectable) {
+        std::vector<int>tempVec(mSorts[mCurrentSortIdx]->GetDataCount(), 0);
+        for (int i = 0; i < mHeadersA.size(); i++) {
+            tempVec[mHeadersA[i]] = 1;
+        }
+        mHeadersA = tempVec;
+    }
+}
