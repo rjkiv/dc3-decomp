@@ -141,4 +141,17 @@ char const *PlaylistHeaderNode::GetAlbumArtPath() {
     return 0;
 }
 
+void PlaylistHeaderNode::Renumber(stlpmtx_std::vector<NavListSortNode *> &vec) {
+    mStartIx = vec.size();
+    if (ThePlaylistSortMgr->HeadersSelectable()) {
+        vec.push_back(this);
+        ThePlaylistSortMgr->AddHeaderIndex(mStartIx);
+    }
+    if (!ThePlaylistSortMgr->IsInHeaderMode()) {
+        FOREACH(it, mChildren) {
+            (*it)->Renumber(vec);
+        }
+    }
+}
+
 #pragma endregion PlaylistHeaderNode
