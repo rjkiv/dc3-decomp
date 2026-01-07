@@ -162,7 +162,7 @@
             "lazer/net_ham/ChallengeSystemJobs.cpp": "NonMatching",
             "lazer/net_ham/DataMinerJobs.cpp": "NonMatching",
             "lazer/net_ham/FitnessGoalJobs.cpp": "NonMatching",
-            "lazer/net_ham/FriendsListJobs.cpp": "MISSING",
+            "lazer/net_ham/FriendsListJobs.cpp": "NonMatching",
             "lazer/net_ham/HamStoreCartJobs.cpp": "NonMatching",
             "lazer/net_ham/KinectShare.cpp": "NonMatching",
             "lazer/net_ham/KinectShareJobs.cpp": "NonMatching",
