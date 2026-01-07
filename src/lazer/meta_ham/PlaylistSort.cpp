@@ -40,3 +40,25 @@ void PlaylistSort::SetHighlightedIx(int i) {
     }
     unk50 = nullptr;
 }
+
+void PlaylistSort::BuildItemList() {
+    Symbol sym(gNullStr);
+    auto sortNode = unk50;
+    if (sortNode && sortNode->GetType() == 5) {
+        sym = sortNode->GetToken();
+    }
+    DeleteItemList();
+    FOREACH(it, unk3c) {
+        (*it)->Renumber(mList);
+    }
+    FOREACH(it, unk30) {
+        (*it)->Renumber(mList);
+    }
+    FOREACH(it, unk30) {
+        (*it)->FinishBuildList(this);
+    }
+    if (!sym.Null()) {
+        unk50 = GetNode(sym);
+    }
+    ThePlaylistSortMgr->FinalizeHeaders();
+}
