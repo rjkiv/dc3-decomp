@@ -73,7 +73,8 @@ void PlaylistSort::BuildTree() {
         nodes.push_back(NewItemNode(it));
     }
     FOREACH(it, nodes) {
-        auto headerRange = std::equal_range(nodes.begin(), nodes.end(), *it);
+        CompareHeaders cmpHeaders;
+        auto headerRange = std::equal_range(nodes.begin(), nodes.end(), *it,  cmpHeaders);
         NavListShortcutNode *node = NewShortcutNode(*it);
         unk30.push_back(node);
         node->InsertHeaderRange(headerRange.first, headerRange.second, this);
