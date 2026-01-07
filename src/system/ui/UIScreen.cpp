@@ -307,7 +307,7 @@ DataNode UIScreen::OnMsg(ButtonDownMsg const &msg) {
         }
     }
 
-    return DataNode(kDataUnhandled, 0);
+    return DATA_UNHANDLED;
 }
 
 DataNode UIScreen::ForeachPanel(DataArray const *) { return NULL_OBJ; }

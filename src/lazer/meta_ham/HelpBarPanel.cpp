@@ -396,7 +396,7 @@ DataNode HelpBarPanel::OnMsg(const ButtonDownMsg &msg) {
             mLeftHandNavList->DoSelectFor(0);
         }
     }
-    return DataNode(kDataUnhandled, 0);
+    return DATA_UNHANDLED;
 }
 
 DataNode HelpBarPanel::OnMsg(const SaveLoadMgrStatusUpdateMsg &msg) {

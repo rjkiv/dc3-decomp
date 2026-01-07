@@ -582,7 +582,7 @@ DataNode Hmx::Object::HandleType(DataArray *msg) {
         MessageTimer timer(this, t);
         return handler->ExecuteScript(1, this, (const DataArray *)msg, 2);
     } else
-        return DataNode(kDataUnhandled, 0);
+        return DATA_UNHANDLED;
 }
 
 #pragma endregion

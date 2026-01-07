@@ -14,13 +14,14 @@ public:
     void Update(Skeleton const &, int);
     void Update(int, int);
     void Clear();
+    void SetRequiredMs(int ms) { mRequiredMs = ms; }
 
     NEW_OBJ(HandsUpGestureFilter)
 
-    bool unk2c;
-    int unk30;
-    int mRequiredMs; // 0x34
-
 protected:
     HandsUpGestureFilter();
+
+    bool mHandsUp; // 0x2c
+    int mRaisedMs; // 0x30
+    int mRequiredMs; // 0x34
 };

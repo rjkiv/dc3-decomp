@@ -36,7 +36,7 @@ DataNode UIButton::OnMsg(const ButtonDownMsg &msg) {
         SendSelect(msg.GetUser());
         return 1;
     }
-    return DataNode(kDataUnhandled, 0);
+    return DATA_UNHANDLED;
 }
 
 BEGIN_HANDLERS(UIButton)

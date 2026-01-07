@@ -7,6 +7,7 @@
 #include "meta_ham/Instarank.h"
 #include "meta_ham/NavListNode.h"
 #include "meta_ham/Playlist.h"
+#include "meta_ham/PracticeChoosePanel.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "ui/UIListSlot.h"
@@ -46,7 +47,7 @@ public:
     void SetBuy(bool);
     void SetDownload(bool);
     void SetRandomTip();
-    // void SetStepMoveName(StepMoves const &);
+    void SetStepMoveName(const StepMoves &);
     void SetStoreOfferName(const StoreOffer *);
     void SetStoreOfferArtist(const StoreOffer *);
     void SetStoreOfferAlbum(const StoreOffer *);

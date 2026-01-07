@@ -23,6 +23,7 @@ private:
     float GetPathLength() const;
     float GetPathError() const;
     void SwipeFailed(const Skeleton &);
+    void CullPath();
 
     static float _swipeRetentionFactor;
     static float _acceptablePathErrorRatio;
@@ -39,4 +40,5 @@ private:
     bool unk35;
     float unk38;
     int unk3c;
+    Vector3 unk40;
 };

@@ -45,7 +45,7 @@ void ChooseProfilePanel::Text(
 
 DataNode ChooseProfilePanel::OnMsg(const SigninChangedMsg &) {
     UpdateProfiles();
-    return DataNode(kDataUnhandled, 0);
+    return DATA_UNHANDLED;
 }
 
 void ChooseProfilePanel::UpdateProfiles() {

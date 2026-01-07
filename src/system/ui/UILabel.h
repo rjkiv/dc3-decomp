@@ -4,6 +4,7 @@
 #include "os/DateTime.h"
 #include "os/Debug.h"
 #include "rndobj/Text.h"
+#include "ui/UIColor.h"
 #include "ui/UIComponent.h"
 #include "utl/BinStream.h"
 #include "utl/MemMgr.h"
@@ -14,11 +15,8 @@ public:
     struct LabelStyle {
         LabelStyle(Hmx::Object *);
         ~LabelStyle();
-        int unk0;
-        int unk4;
-        int unk8;
-        int unkc;
-        int unk10;
+
+        ObjPtr<UIColor> mColorOverride; // 0x0
         int unk14;
         int unk18;
         int unk1c;

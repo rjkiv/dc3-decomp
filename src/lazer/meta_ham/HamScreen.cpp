@@ -63,7 +63,7 @@ bool HamScreen::InComponentSelect() const {
 DataNode HamScreen::OnEventMsgCommon(const Message &msg) {
     if (TheUIEventMgr && TheUIEventMgr->HasActiveDialogEvent()) {
         DataNode handled = TheHamUI.GetShellInput()->Handle(msg, false);
-        if (handled != DataNode(kDataUnhandled, 0)) {
+        if (handled != DATA_UNHANDLED) {
             return handled;
         } else if (IsEventDialogOnTop()) {
             UIPanel *event_dialog = TheHamUI.EventDialogPanel();
@@ -73,12 +73,12 @@ DataNode HamScreen::OnEventMsgCommon(const Message &msg) {
     }
     if (TheHamUI.GetOverlayPanel()) {
         DataNode handled = TheHamUI.GetShellInput()->Handle(msg, false);
-        if (handled != DataNode(kDataUnhandled, 0)) {
+        if (handled != DATA_UNHANDLED) {
             return handled;
         } else {
             return TheHamUI.GetOverlayPanel()->Handle(msg, false);
         }
     } else {
-        return DataNode(kDataUnhandled, 0);
+        return DATA_UNHANDLED;
     }
 }

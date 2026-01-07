@@ -304,7 +304,7 @@ DataNode UIManager::OnGoBackScreen(DataArray const *arr) {
         MILO_FAIL("%s is not a screen", obj->Name());
     }
     GotoScreen(screen, false, true);
-    return DataNode(kDataUnhandled, 0);
+    return DATA_UNHANDLED;
 }
 
 void UIManager::ReloadStrings() {}
@@ -493,13 +493,13 @@ DataNode Automator::OnCustomMsg(const Message &msg) {
         if (it != mCustomMsgs.end())
             HandleMessage(key);
     }
-    return DataNode(kDataUnhandled, 0);
+    return DATA_UNHANDLED;
 }
 
 DataNode Automator::OnMsg(const UITransitionCompleteMsg &msg) {
     if (mScreenScripts && !mRecord)
         StartAuto(msg.GetNewScreen());
-    return DataNode(kDataUnhandled, 0);
+    return DATA_UNHANDLED;
 }
 
 void Automator::FillButtonMsg(ButtonDownMsg &msg, int idx) {
@@ -549,13 +549,9 @@ Symbol Automator::CurScreenName() { return gNullStr; }
 
 void Automator::Poll() {}
 
-DataNode Automator::OnMsg(ButtonDownMsg const &msg) {
-    return DataNode(kDataUnhandled, 0);
-}
+DataNode Automator::OnMsg(ButtonDownMsg const &msg) { return DATA_UNHANDLED; }
 
-DataNode Automator::OnCheatInvoked(DataArray const *arr) {
-    return DataNode(kDataUnhandled, 0);
-}
+DataNode Automator::OnCheatInvoked(DataArray const *arr) { return DATA_UNHANDLED; }
 
 void Automator::HandleMessage(Symbol msgType) {
     if (!mUIManager.InTransition()) {

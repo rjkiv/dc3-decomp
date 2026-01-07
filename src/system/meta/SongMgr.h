@@ -101,7 +101,7 @@ public:
     /** Given a songID, get the name of the content file it comes from. */
     const char *ContentName(int songID) const;
     /** Given a shortname, get the name of the content file it comes from. */
-    const char *ContentName(Symbol shortname, bool fail) const;
+    const char *ContentName(Symbol shortname, bool fail = true) const;
     bool LoadCachedSongInfo(BufStream &);
 
     /** Do we have this content file name in our records? */

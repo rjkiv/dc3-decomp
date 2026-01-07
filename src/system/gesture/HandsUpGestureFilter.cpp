@@ -17,8 +17,8 @@ END_PROPSYNCS
 
 void HandsUpGestureFilter::Update(Skeleton const &skeleton, int i) {
     if (skeleton.IsTracked()) {
-        unk2c = true;
-        unk30 = 1;
+        mHandsUp = true;
+        mRaisedMs = 1;
         return;
     }
 
@@ -38,20 +38,20 @@ void HandsUpGestureFilter::Update(int i, int j) {
     if (skel)
         Update(*skel, j);
     else {
-        unk2c = false;
-        unk30 = 0;
+        mHandsUp = false;
+        mRaisedMs = 0;
     }
 }
 
 void HandsUpGestureFilter::Clear() {
-    unk2c = false;
-    unk30 = 0;
+    mHandsUp = false;
+    mRaisedMs = 0;
 }
 
 BEGIN_HANDLERS(HandsUpGestureFilter)
     HANDLE_ACTION(clear, Clear())
     HANDLE_ACTION(update, Update(_msg->Int(2), _msg->Int(3)))
-    HANDLE_EXPR(check, unk2c)
-    HANDLE_EXPR(raised_ms, unk30)
+    HANDLE_EXPR(check, mHandsUp)
+    HANDLE_EXPR(raised_ms, mRaisedMs)
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS

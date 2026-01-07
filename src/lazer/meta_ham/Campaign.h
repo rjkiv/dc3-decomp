@@ -119,7 +119,7 @@ public:
     bool GetOutroSongFreestyleEnabled(int) const;
     int GetOutroStarsEarned(int) const;
     void SetOutroStarsEarned(int, int);
-    CampaignEra *GetCampaignEra(Symbol) const;
+    CampaignEra *GetCampaignEra(Symbol era) const;
     bool UpdateEraSongUnlockInstructions(Symbol, HamLabel *);
     void LoadCampaignDanceMoves(Symbol);
     void CheatReloadData();
@@ -129,11 +129,12 @@ public:
     CampaignEra *GetLastEra() { return m_vEras.back(); }
     CampaignEra *GetEra(int i) { return m_vEras[i]; }
     int NumEras() const { return m_vEras.size(); }
+    const std::vector<CampaignEra *> &Eras() const { return m_vEras; }
     Symbol GetMQCrew() { return mMasterQuestCrew; }
     bool InDCICutscene() const { return mCampaignState == kCampaignStateDciCutscene; }
 
 protected:
-    CampaignEra *GetCampaignEra(int) const;
+    CampaignEra *GetCampaignEra(int index) const;
     void LoadHamMoves(Symbol);
     HamMove *GetHamMove(Symbol, int);
     Symbol GetMoveName(Symbol, int);
@@ -143,7 +144,8 @@ protected:
 
     CampaignState mCampaignState; // 0x30
     bool mWorkItActive; // 0x34
-    std::map<Symbol, int> unk38;
+    // key = era symbol, value = index into m_vEras
+    std::map<Symbol, int> mEraLookup; // 0x38
     std::vector<CampaignEra *> m_vEras; // 0x50
     std::vector<Symbol> m_vInstructions; // 0x5c
     std::vector<Symbol> mWinInstructions; // 0x68

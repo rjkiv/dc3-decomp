@@ -181,7 +181,7 @@ DataNode PreloadPanel::OnMsg(const UITransitionCompleteMsg &msg) {
         HandleType(msg);
     } else {
         static Message msg("on_preload_failed");
-        if (HandleType(msg).Equal(DataNode(kDataUnhandled, 0), nullptr, true)) {
+        if (HandleType(msg).Equal(DATA_UNHANDLED, nullptr, true)) {
             MILO_ASSERT(mAppReadFailureHandler, 0x15F);
             static ContentReadFailureMsg msg(false, gNullStr);
             msg[0] = unk60;
@@ -190,7 +190,7 @@ DataNode PreloadPanel::OnMsg(const UITransitionCompleteMsg &msg) {
         }
     }
     mAppReadFailureHandler = nullptr;
-    return DataNode(kDataUnhandled, 0);
+    return DATA_UNHANDLED;
 }
 
 void PreloadPanel::OnContentMountedOrFailed(char const *contentName) {

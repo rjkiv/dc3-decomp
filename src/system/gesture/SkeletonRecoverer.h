@@ -10,6 +10,7 @@ public:
     virtual ~SkeletonRecoverer();
 
     bool WaitingToRecover();
+    int GetTrackingIDWithRecovery(int, int);
 
 protected:
     std::list<TrackingIDHistory> mIDHistory; // 0x4

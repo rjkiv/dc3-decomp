@@ -31,9 +31,18 @@ public:
     void InitGrammars(const DataArray *);
     void LoadGrammar(Symbol, const char *, bool);
     void Poll();
-    bool SpeechSupported() const { return mSpeechSupported; }
     bool OnIsSpeechSupportable() const;
     void ForceLanguageSupport();
+    void SetRecognizing(bool);
+    void SetRule(Symbol, Symbol, bool);
+    bool HasGrammar(Symbol);
+    void UnloadGrammar(Symbol);
+    void AddDynamicRule(Symbol, const char *, void **);
+    void AddDynamicRuleWord(Symbol, const char *, const char *, void **, void **);
+    void CommitGrammar(Symbol);
+
+    bool SpeechSupported() const { return mSpeechSupported; }
+    bool Recognizing() const { return mRecognizing; }
 
 private:
     bool GetSpeechLanguage(NUI_SPEECH_LANGUAGE &) const;
@@ -60,4 +69,6 @@ SpeechEnableMsg(bool enabled) : Message(Type(), enabled) {}
 END_MESSAGE
 
 DECLARE_MESSAGE(SpeechRecoMessage, "speech_reco")
+// arg 0 is a DataArray*
+// arg 1 is a float
 END_MESSAGE

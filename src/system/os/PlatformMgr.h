@@ -1,8 +1,10 @@
 #pragma once
+#include "Friend.h"
 #include "obj/Data.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
 #include "os/User.h"
+#include "stl/_vector.h"
 #include "utl/JobMgr.h"
 #include "xdk/XSOCIAL.h"
 
@@ -112,6 +114,8 @@ public:
     void SetPadContext(int, int, int) const;
     void SetPadPresence(int, int) const;
     void SetPadProperty(int, int, unsigned short const *) const;
+    void EnumerateFriends(int, std::vector<Friend *> &, Hmx::Object *);
+
     bool GuideShowing() { return mGuideShowing; }
     bool IsConnected() { return mConnected; }
     bool ScreenSaver() { return mScreenSaver; }

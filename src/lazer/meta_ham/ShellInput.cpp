@@ -97,7 +97,7 @@ void ShellInput::Init() {
     mSkelChooser = new SkeletonChooser;
     mHandInvokeGestureFilter = new HandInvokeGestureFilter;
     mHandsUpGestureFilter = Hmx::Object::New<HandsUpGestureFilter>();
-    mHandsUpGestureFilter->mRequiredMs = 1200;
+    mHandsUpGestureFilter->SetRequiredMs(1200);
     mCursorPanel->Enter();
     TheSpeechMgr->AddSink(TheUI);
     mSkelExtTracker = new SkeletonExtentTracker;
@@ -271,7 +271,7 @@ DataNode ShellInput::OnMsg(const ButtonDownMsg &msg) {
             }
         }
     }
-    return DataNode(kDataUnhandled, 0);
+    return DATA_UNHANDLED;
 }
 
 DataNode ShellInput::OnMsg(const JoypadConnectionMsg &msg) {
@@ -279,7 +279,7 @@ DataNode ShellInput::OnMsg(const JoypadConnectionMsg &msg) {
         if (msg->Int(5) == TheHamUI.GetPadNum())
             ExitControllerMode(false);
     }
-    return DataNode(kDataUnhandled, 0);
+    return DATA_UNHANDLED;
 }
 
 DataNode ShellInput::OnMsg(const SpeechRecoMessage &msg) { return 0; }

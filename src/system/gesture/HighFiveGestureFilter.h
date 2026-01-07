@@ -10,12 +10,12 @@ public:
     OBJ_SET_TYPE(HighFiveGestureFilter)
 
     bool CheckHighFive();
-    void Update(Skeleton const *, Skeleton const *);
+    void Update(const Skeleton *, const Skeleton *);
 
     NEW_OBJ(HighFiveGestureFilter)
 
-    bool unk2c; // 0x2c
-
 protected:
     HighFiveGestureFilter();
+
+    bool mHighFived; // 0x2c
 };

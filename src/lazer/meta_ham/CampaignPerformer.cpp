@@ -947,17 +947,17 @@ void CampaignPerformer::AwardMasterQuestAccomplishments() {
         static Symbol acc_5_star_on_10_master_quest("acc_5_star_on_10_master_quest");
         const CampaignProgress &progress =
             pProfile->GetCampaignProgress(kDifficultyExpert);
-        if (progress.GetUnk28() >= 1) {
+        if (progress.Num5StarredMQSongs() >= 1) {
             TheAccomplishmentMgr->EarnAccomplishmentForProfile(
                 pProfile, acc_5_star_on_1_master_quest, false
             );
         }
-        if (progress.GetUnk28() >= 5) {
+        if (progress.Num5StarredMQSongs() >= 5) {
             TheAccomplishmentMgr->EarnAccomplishmentForProfile(
                 pProfile, acc_5_star_on_5_master_quest, false
             );
         }
-        if (progress.GetUnk28() >= 10) {
+        if (progress.Num5StarredMQSongs() >= 10) {
             TheAccomplishmentMgr->EarnAccomplishmentForProfile(
                 pProfile, acc_5_star_on_10_master_quest, false
             );

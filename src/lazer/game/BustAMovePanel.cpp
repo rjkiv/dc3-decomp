@@ -267,7 +267,7 @@ float BustAMovePanel::GetMovePromptVOLength() {
     static Message voLengthMsg("get_seq_length", 0);
     voLengthMsg[0] = sym;
     DataNode handled = mHUDPanel->Handle(voLengthMsg, true);
-    if (handled != DataNode(kDataUnhandled, 0)) {
+    if (handled != DATA_UNHANDLED) {
         len = handled.Float();
     }
     return len;

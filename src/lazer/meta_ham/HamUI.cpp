@@ -653,7 +653,7 @@ DataNode HamUI::OnMsg(const UITransitionCompleteMsg &msg) {
     mShellInput->SyncToCurrentScreen();
     CurrentScreenChangedMsg screenChangeMsg(s60);
     Export(screenChangeMsg, true);
-    return DataNode(kDataUnhandled, 0);
+    return DATA_UNHANDLED;
 }
 
 DataNode HamUI::OnMsg(const DiskErrorMsg &) {
@@ -664,7 +664,7 @@ DataNode HamUI::OnMsg(const DiskErrorMsg &) {
 
 DataNode HamUI::OnMsg(const KinectGuideGestureMsg &msg) {
     if (IsGameActive() && !mGamePanel->IsGameOver()) {
-        return DataNode(kDataUnhandled, 0);
+        return DATA_UNHANDLED;
     } else {
         XShowNuiGuideUI(msg.TrackingID());
         return 1;
@@ -684,7 +684,7 @@ DataNode HamUI::OnMsg(const ButtonDownMsg &msg) {
     static ResetControllerModeTimeoutMsg resetControllerModeTimeoutMsg;
     Export(resetControllerModeTimeoutMsg, true);
     mPadNum = msg.GetPadNum();
-    return DataNode(kDataUnhandled, 0);
+    return DATA_UNHANDLED;
 }
 
 bool ToggleDrawSkeletons() {

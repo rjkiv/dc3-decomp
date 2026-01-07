@@ -253,9 +253,9 @@ void Campaign::SetOutroStarsEarned(int i1, int i2) {
     }
 }
 
-CampaignEra *Campaign::GetCampaignEra(Symbol s) const {
-    auto it = unk38.find(s);
-    if (it != unk38.end()) {
+CampaignEra *Campaign::GetCampaignEra(Symbol era) const {
+    auto it = mEraLookup.find(era);
+    if (it != mEraLookup.end()) {
         return GetCampaignEra(it->second);
     }
     return nullptr;
@@ -316,7 +316,7 @@ void Campaign::Cleanup() {
     m_vEras.clear();
     m_vIntroSongs.clear();
     m_vOutroSongs.clear();
-    unk38.clear();
+    mEraLookup.clear();
     m_vInstructions.clear();
     mWinInstructions.clear();
 }
@@ -411,7 +411,7 @@ void Campaign::ConfigureCampaignData(DataArray *i_pConfig) {
                 MILO_ASSERT(m_vEras.size(), 0xE4);
                 GetCampaignEra(m_vEras.size() - 1); // ->unk50 = true;
             }
-            unk38[name] = m_vEras.size();
+            mEraLookup[name] = m_vEras.size();
             m_vEras.push_back(pCampaignEra);
         }
     }

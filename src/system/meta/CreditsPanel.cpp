@@ -178,7 +178,7 @@ void CreditsPanel::DebugToggleAutoScroll() {
 
 DataNode CreditsPanel::OnMsg(const ButtonDownMsg &msg) {
     if (mAutoScroll)
-        return DataNode(kDataUnhandled, 0);
+        return DATA_UNHANDLED;
     if (msg.GetButton() == kPad_DDown || msg.GetButton() == kPad_LStickDown) {
         mList->Scroll(1);
     } else if (msg.GetButton() == kPad_DUp || msg.GetButton() == kPad_LStickUp) {

@@ -64,6 +64,7 @@ public:
     void SetBackgroundVolume(float);
 
     MoveDir *GetMoveDir() const { return mMoveDir; }
+    HamMaster *GetMaster() const { return mMaster; }
 
 private:
     void PostWaitStart();

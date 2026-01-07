@@ -33,7 +33,7 @@ DataNode HamProviderPrinter::OnMsg(const Message &msg) {
             MILO_LOG("HamProvider: %s\n", type);
         }
     }
-    return DataNode(kDataUnhandled, 0);
+    return DATA_UNHANDLED;
 }
 
 BEGIN_HANDLERS(HamProviderPrinter)

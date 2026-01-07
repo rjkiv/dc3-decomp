@@ -10,40 +10,25 @@
 
 class VoiceControlPanel : public OverlayPanel, public ContentMgr::Callback {
 public:
+    VoiceControlPanel();
     // Hmx::Object
     virtual ~VoiceControlPanel();
     OBJ_CLASSNAME(VoiceControlPanel)
     OBJ_SET_TYPE(VoiceControlPanel)
     virtual DataNode Handle(DataArray *, bool);
-
     // UIPanel
     virtual void Poll();
     virtual void Dismiss();
-
+    // ContentMgr::Callback
     virtual void ContentMounted(char const *, char const *);
 
     NEW_OBJ(VoiceControlPanel)
 
-    VoiceControlPanel();
     void SetRules(bool);
-    DataNode OnMsg(UITransitionCompleteMsg const &);
-    DataNode OnMsg(SpeechRecoMessage const &);
     void PopUp();
 
-protected:
-    float unk44;
-    bool unk48;
-    float unk4c;
-    float unk50;
-    bool unk54;
-    bool unk55;
-    bool unk56;
-    Symbol unk58;
-    Difficulty mDifficulty; // 0x5c
-    Symbol unk60;
-    bool unk64;
-    int unk68;
-    int unk6c;
+    DataNode OnMsg(const UITransitionCompleteMsg &);
+    DataNode OnMsg(const SpeechRecoMessage &);
 
 private:
     bool DifficultyLocked() const;
@@ -53,4 +38,18 @@ private:
     void EnterGame();
     void CreatePlaySongGrammar() const;
     void CycleTip();
+
+    float unk44;
+    bool unk48;
+    float unk4c;
+    float unk50;
+    bool unk54;
+    bool unk55;
+    bool unk56;
+    Symbol unk58; // 0x58 - song shortname?
+    Difficulty mDifficulty; // 0x5c
+    Symbol unk60; // 0x60 - game mode
+    bool unk64;
+    int unk68;
+    int unk6c;
 };

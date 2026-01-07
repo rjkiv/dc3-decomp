@@ -67,6 +67,7 @@ public:
     bool EnrollIdentity(int);
     void Init();
     void Poll(int, const SkeletonFrame &);
+    const Vector3 &GetUnkab0() const { return unkab0; }
 
     // static int IdentityCallback(void*, _NUI_IDENTITY_MESSAGE*);
 

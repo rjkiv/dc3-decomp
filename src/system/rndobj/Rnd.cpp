@@ -92,13 +92,13 @@ DataNode ModalKeyListener::OnMsg(const KeyboardKeyMsg &k) {
             TheRnd.ShowConsole(true);
             return 0;
         } else
-            return DataNode(kDataUnhandled, 0);
+            return DATA_UNHANDLED;
     } else {
         if (!TheRnd.ConsoleShowing()) {
             gNotifyKeepGoing = true;
             return 0;
         } else
-            return DataNode(kDataUnhandled, 0);
+            return DATA_UNHANDLED;
     }
 }
 
@@ -701,11 +701,13 @@ DataNode Rnd::OnSetClearColor(const DataArray *da) {
 }
 
 DataNode Rnd::OnSetClearColorPacked(const DataArray *da) {
-    SetClearColor(Hmx::Color(
-        (da->Int(2) & 255) / 255.0f,
-        ((da->Int(2) >> 8) & 255) / 255.0f,
-        ((da->Int(2) >> 0x10) & 255) / 255.0f
-    ));
+    SetClearColor(
+        Hmx::Color(
+            (da->Int(2) & 255) / 255.0f,
+            ((da->Int(2) >> 8) & 255) / 255.0f,
+            ((da->Int(2) >> 0x10) & 255) / 255.0f
+        )
+    );
     return 0;
 }
 

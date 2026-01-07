@@ -36,13 +36,13 @@ DataNode EventDialogPanel::OnMsg(ButtonDownMsg const &msg) {
     if (msg.GetAction() == kAction_Cancel)
         return 0;
     else
-        return DataNode(kDataUnhandled, 0);
+        return DATA_UNHANDLED;
 }
 
 DataNode EventDialogPanel::OnMsg(UIComponentSelectDoneMsg const &msg) {
     UIComponent *component = msg.GetComponent();
     if (!component) {
-        return DataNode(kDataUnhandled, 0);
+        return DATA_UNHANDLED;
     } else {
         UIComponent *componentCheck =
             DataDir()->Find<UIComponent>(component->FindPathName(), false); // recheck

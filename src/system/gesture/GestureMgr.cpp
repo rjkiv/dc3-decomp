@@ -39,7 +39,7 @@ GestureMgr::GestureMgr()
         mSkeletons[i].Init();
         mFilters[i].Init(sConfidenceLossThreshold, sConfidenceRegainThreshold);
         mIdentityInfos[i].Init();
-        mCallbacks[i] = nullptr;
+        unk30[i] = 0;
     }
     mTrackingAllSkeletons = false;
     SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
@@ -183,7 +183,9 @@ Skeleton *GestureMgr::GetSkeletonByEnrollmentIndex(int idx) {
     return nullptr;
 }
 
-Skeleton *GestureMgr::GetActiveSkeleton() { return GetSkeletonByTrackingID(unk4260); }
+Skeleton *GestureMgr::GetActiveSkeleton() {
+    return GetSkeletonByTrackingID(mActiveSkelTrackingID);
+}
 
 Skeleton &GestureMgr::GetSkeleton(int idx) {
     MILO_ASSERT((0) <= (idx) && (idx) < (6), 0x99);
@@ -201,9 +203,9 @@ SkeletonQualityFilter &GestureMgr::GetSkeletonQualityFilter(int idx) {
 }
 
 int GestureMgr::GetActiveSkeletonIndex() const {
-    if (unk4260 > 0) {
+    if (mActiveSkelTrackingID > 0) {
         for (int i = 0; i < 6; i++) {
-            if (mSkeletons[i].TrackingID() == unk4260) {
+            if (mSkeletons[i].TrackingID() == mActiveSkelTrackingID) {
                 return i;
             }
         }

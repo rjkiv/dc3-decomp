@@ -89,5 +89,5 @@ DataNode ScrollSelect::Handle(DataArray *_msg, bool _warn) {
             PathName(dynamic_cast<Hmx::Object *>(this)),
             sym
         );
-    return DataNode(kDataUnhandled, 0);
+    return DATA_UNHANDLED;
 }

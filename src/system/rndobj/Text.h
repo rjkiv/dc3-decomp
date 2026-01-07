@@ -280,6 +280,7 @@ public:
     static bool IsBlacklightModeEnabled() { return sBlacklightModeEnabled; }
 
     int GetTextSize() const { return Max<int>(mFixedLength, mText.length()); }
+    void SetCapsMode(CapsMode c) { mCapsMode = c; }
     void UpdateText();
     void SetText(const char *);
     int FontMapIndex(RndFontBase *, bool);

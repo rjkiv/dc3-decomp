@@ -2,30 +2,39 @@
 #include "StandingStillGestureFilter.h"
 #include "gesture/GestureMgr.h"
 #include "gesture/Skeleton.h"
+#include "math/Vec.h"
 #include "obj/Object.h"
 
 StandingStillGestureFilter::StandingStillGestureFilter()
-    : unk34(500), mForwardFacingCutoff(0x3ecccccd), unk4c(false) {
+    : mRequiredMs(500), mForwardFacingCutoff(0.4f), unk4c(false) {
     Clear();
 }
 
 StandingStillGestureFilter::~StandingStillGestureFilter() {}
 
+BEGIN_HANDLERS(StandingStillGestureFilter)
+    HANDLE_ACTION(clear, Clear())
+    HANDLE_ACTION(update, Update(_msg->Int(2), _msg->Int(3)))
+    HANDLE_EXPR(check, mStandingStill)
+    HANDLE_EXPR(raised_ms, mRaisedMs)
+    HANDLE_SUPERCLASS(Hmx::Object)
+END_HANDLERS
+
 BEGIN_PROPSYNCS(StandingStillGestureFilter)
-    SYNC_PROP(required_ms, mHasRequiredMs)
+    SYNC_PROP(required_ms, mStandingStill)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
-void StandingStillGestureFilter::SetForwardFacingCutoff(float f) {
-    mForwardFacingCutoff = f;
+void StandingStillGestureFilter::SetForwardFacingCutoff(float cutoff) {
+    mForwardFacingCutoff = cutoff;
 }
 
 void StandingStillGestureFilter::RestoreDefaultForwardFacingCutoff() {
-    mForwardFacingCutoff = 0x3ecccccd;
+    mForwardFacingCutoff = 0.4f;
 }
 
-void StandingStillGestureFilter::Update(int i, int j) {
-    const Skeleton *skeleton = TheGestureMgr->GetSkeletonByTrackingID(i);
+void StandingStillGestureFilter::Update(int trackingID, int j) {
+    const Skeleton *skeleton = TheGestureMgr->GetSkeletonByTrackingID(trackingID);
     if (skeleton) {
         Update(*skeleton, j);
     } else {
@@ -34,14 +43,6 @@ void StandingStillGestureFilter::Update(int i, int j) {
 }
 
 void StandingStillGestureFilter::Clear() {
-    mHasRequiredMs = 0;
+    mStandingStill = 0;
     mRaisedMs = 0;
 }
-
-BEGIN_HANDLERS(StandingStillGestureFilter)
-    HANDLE_ACTION(clear, Clear())
-    HANDLE_ACTION(update, Update(_msg->Int(2), _msg->Int(3)))
-    HANDLE_EXPR(check, mHasRequiredMs)
-    HANDLE_EXPR(raised_ms, mRaisedMs)
-    HANDLE_SUPERCLASS(Hmx::Object)
-END_HANDLERS

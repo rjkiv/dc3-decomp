@@ -1069,7 +1069,7 @@ DEF_DATA_FUNC(DataContains) {
     const DataNode &n = array->Evaluate(2);
     bool b = !w->Contains(n.UncheckedInt());
     if (b)
-        return DataNode(kDataUnhandled, 0);
+        return DATA_UNHANDLED;
     else
         return 1;
 }
@@ -1091,7 +1091,7 @@ DataNode DataFindExists(DataArray *array, bool fail) {
                         array->Line()
                     );
                 }
-                return DataNode(kDataUnhandled, 0);
+                return DATA_UNHANDLED;
             }
         } else {
             String str;

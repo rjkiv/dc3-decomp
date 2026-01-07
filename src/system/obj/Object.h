@@ -652,7 +652,7 @@ extern DataArray *SystemConfig(Symbol, Symbol, Symbol);
 #define END_HANDLERS                                                                     \
     if (_warn)                                                                           \
         MILO_NOTIFY("%s unhandled msg: %s", PathName(this), sym);                        \
-    return DataNode(kDataUnhandled, 0);                                                  \
+    return DATA_UNHANDLED;                                                               \
     }
 
 // for handlers of objects that aren't directly Hmx::Objects (i.e. UIListProvider)
@@ -661,7 +661,7 @@ extern DataArray *SystemConfig(Symbol, Symbol, Symbol);
         MILO_NOTIFY(                                                                     \
             "%s unhandled msg: %s", PathName(dynamic_cast<Hmx::Object *>(this)), sym     \
         );                                                                               \
-    return DataNode(kDataUnhandled, 0);                                                  \
+    return DATA_UNHANDLED;                                                               \
     }
 // END HANDLE MACROS ---------------------------------------------------------------------
 

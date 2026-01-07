@@ -119,7 +119,7 @@ DataNode ButtonHolder::OnMsg(const ButtonDownMsg &msg) {
         pressRec.iPadNum = msg.GetPadNum();
         return 1;
     } else
-        return DataNode(kDataUnhandled, 0);
+        return DATA_UNHANDLED;
 }
 
 ActionRec::ActionRec(JoypadAction act, float f, UserMgr *umgr)

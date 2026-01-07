@@ -269,6 +269,8 @@ public:
     void Load(BinStream &, class ObjectDir *);
 };
 
+#define DATA_UNHANDLED DataNode(kDataUnhandled, 0)
+
 /** An array of DataNodes. */
 class DataArray {
 private:

@@ -16,17 +16,18 @@ public:
     void SetRequiredMs(int);
     void SetForwardFacingCutoff(float);
     void RestoreDefaultForwardFacingCutoff();
-    void Update(Skeleton const &, int);
+    void Update(const Skeleton &, int);
     void Update(int, int);
     void Clear();
+    bool HandRaised() const { return mHandRaised; }
 
     NEW_OBJ(HandRaisedGestureFilter)
 
-    bool unk2c;
-    int unk30;
-    int mRequiredMs; // 0x34
-    StandingStillGestureFilter unk38;
-
 protected:
     HandRaisedGestureFilter();
+
+    bool mHandRaised; // 0x2c
+    int mRaisedMs; // 0x30
+    int mRequiredMs; // 0x34
+    StandingStillGestureFilter mStandingStillFilter; // 0x38
 };

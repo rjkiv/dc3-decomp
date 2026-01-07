@@ -384,7 +384,7 @@ DataNode SaveLoadManager::OnMsg(const EventDialogDismissMsg &msg) {
     if (s3 != gNullStr && s2 == saveload_dialog_event && s3 != saveload_dialog_event) {
         SetState(kS_Abort);
     }
-    return DataNode(kDataUnhandled, 0);
+    return DATA_UNHANDLED;
 }
 
 DataNode SaveLoadManager::GetDialogMsg() {

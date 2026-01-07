@@ -5,13 +5,13 @@
 #include "math/Vec.h"
 #include "obj/Object.h"
 
-HighFiveGestureFilter::HighFiveGestureFilter() : unk2c(false) {}
+HighFiveGestureFilter::HighFiveGestureFilter() : mHighFived(false) {}
 
 HighFiveGestureFilter::~HighFiveGestureFilter() {}
 
 bool HighFiveGestureFilter::CheckHighFive() {
-    if (unk2c) {
-        unk2c = false;
+    if (mHighFived) {
+        mHighFived = false;
         return true;
     }
     return false;

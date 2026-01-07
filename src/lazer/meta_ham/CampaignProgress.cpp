@@ -1,5 +1,6 @@
 #include "meta_ham/CampaignProgress.h"
 #include "Campaign.h"
+#include "flow/PropertyEventProvider.h"
 #include "meta_ham/CampaignEra.h"
 #include "macros.h"
 #include "meta_ham/HamProfile.h"
@@ -13,94 +14,108 @@
 #pragma region CampaignEraSongProgress
 
 CampaignEraSongProgress::CampaignEraSongProgress()
-    : unk8(-1), unk24(false), unk25(false), unk28(-1), unk44(false) {
+    : mStarsEarned(-1), mSongPlayed(false), unk25(false), mBookmarkedStarsEarned(-1),
+      mBookmarkedSongPlayed(false) {
     mSaveSizeMethod = &SaveSize;
 }
 
 CampaignEraSongProgress::~CampaignEraSongProgress() { Cleanup(); }
 
-int CampaignEraSongProgress::SaveSize(int i) {
-    int s = 0x1a;
-    if (FixedSizeSaveable::sPrintoutsEnabled) {
-        MILO_LOG("* %s = %i\n", "CampaignEraSongProgress", s);
-    }
-    return 0x1a;
-}
-
-bool CampaignEraSongProgress::SetMoveMastered(Symbol s1, Symbol s2, Symbol s3) {
-    CampaignEra *pEra = TheCampaign->GetCampaignEra(s1);
-    MILO_ASSERT(pEra, 0x72);
-    if (s2 == pEra->GetDanceCrazeSong()) {
-        return false;
-    } else {
-        auto it = unkc.find(s3);
-        if (it == unkc.begin()) {
-        }
-        unkc.insert(s2);
-        return true;
-    }
-    return false;
-}
-
-void CampaignEraSongProgress::BookmarkCurrentProgress() {
-    unk28 = unk8;
-    unk2c = unkc;
-    unk44 = unk24;
-}
-
-void CampaignEraSongProgress::ResetProgressToBookmark() {
-    unk8 = unk28;
-    unkc = unk2c;
-    unk24 = unk44;
-}
-
 void CampaignEraSongProgress::SaveFixed(FixedSizeSaveableStream &stream) const {
-    FixedSizeSaveable::SaveStd(stream, unkc, 4);
-    stream << unk8;
-    stream << unk24;
+    FixedSizeSaveable::SaveStd(stream, m_MovesMastered, 4);
+    stream << mStarsEarned;
+    stream << mSongPlayed;
     stream << unk25;
 }
 
 void CampaignEraSongProgress::LoadFixed(FixedSizeSaveableStream &stream, int) {
-    FixedSizeSaveable::LoadStd(stream, unkc, 4);
-    stream >> unk8;
-    stream >> unk24;
+    FixedSizeSaveable::LoadStd(stream, m_MovesMastered, 4);
+    stream >> mStarsEarned;
+    stream >> mSongPlayed;
     stream >> unk25;
     BookmarkCurrentProgress();
 }
 
+int CampaignEraSongProgress::SaveSize(int) {
+    REPORT_SIZE("CampaignEraSongProgress", 0x1A);
+}
+
+bool CampaignEraSongProgress::SetMoveMastered(Symbol era, Symbol song, Symbol move) {
+    CampaignEra *pEra = TheCampaign->GetCampaignEra(era);
+    MILO_ASSERT(pEra, 0x72);
+    if (song == pEra->GetDanceCrazeSong()) {
+        return false;
+    } else {
+        bool inserted = false;
+        if (m_MovesMastered.find(move) == m_MovesMastered.end()) {
+            MILO_ASSERT(m_MovesMastered.size() < kMaxSymbols_CampaignMovesPerSong, 0x7E);
+            m_MovesMastered.insert(move);
+            inserted = true;
+        }
+        return inserted;
+    }
+}
+
+void CampaignEraSongProgress::BookmarkCurrentProgress() {
+    mBookmarkedStarsEarned = mStarsEarned;
+    mBookmarkedMovesMastered = m_MovesMastered;
+    mBookmarkedSongPlayed = mSongPlayed;
+}
+
+void CampaignEraSongProgress::ResetProgressToBookmark() {
+    mStarsEarned = mBookmarkedStarsEarned;
+    m_MovesMastered = mBookmarkedMovesMastered;
+    mSongPlayed = mBookmarkedSongPlayed;
+}
+
 void CampaignEraSongProgress::Cleanup() {
-    unkc.clear();
-    unk8 = -1;
-    unk24 = false;
+    m_MovesMastered.clear();
+    mStarsEarned = -1;
+    mSongPlayed = false;
     BookmarkCurrentProgress();
 }
 
-#pragma endregion CampaignEraSongProgress
+#pragma endregion
 #pragma region CampaignEraProgress
 
-CampaignEraProgress::CampaignEraProgress() : unk8(gNullStr), unkc(false), unkd(false) {
+CampaignEraProgress::CampaignEraProgress()
+    : mEra(gNullStr), mIntroMoviePlayed(false), unkd(false) {
     mSaveSizeMethod = &SaveSize;
 }
 
-CampaignEraProgress::CampaignEraProgress(Symbol s) : unk8(s), unkc(false), unkd(false) {
+CampaignEraProgress::CampaignEraProgress(Symbol era)
+    : mEra(era), mIntroMoviePlayed(false), unkd(false) {
     mSaveSizeMethod = &SaveSize;
 }
 
 CampaignEraProgress::~CampaignEraProgress() { Cleanup(); }
 
+void CampaignEraProgress::SaveFixed(FixedSizeSaveableStream &stream) const {
+    FixedSizeSaveable::SaveSymbolID(stream, mEra);
+    stream << mIntroMoviePlayed;
+    stream << unkd;
+    FixedSizeSaveable::SaveStdPtr(
+        stream, m_mapCampaignEraSongProgress, 10, CampaignEraSongProgress::SaveSize(92) + 4
+    );
+}
+
+void CampaignEraProgress::LoadFixed(FixedSizeSaveableStream &stream, int i) {
+    FixedSizeSaveable::LoadSymbolFromID(stream, mEra);
+    stream >> mIntroMoviePlayed;
+    stream >> unkd;
+    FixedSizeSaveable::LoadStdPtr(
+        stream, m_mapCampaignEraSongProgress, 10, CampaignEraSongProgress::SaveSize(i) + 4
+    );
+}
+
 int CampaignEraProgress::SaveSize(int i) {
     int savesize = CampaignEraSongProgress::SaveSize(i);
-    int x = (savesize + 5) * 10;
-    if (FixedSizeSaveable::sPrintoutsEnabled != false) {
-        MILO_LOG("* %s = %i\n", "CampaignEraSongProgress", x);
-    }
-    return x;
+    REPORT_SIZE("CampaignEraSongProgress", (savesize + 5) * 10);
 }
 
 int CampaignEraProgress::GetTotalStarsEarned() const {
     int totalStars = 0;
-    CampaignEra *pEra = TheCampaign->GetCampaignEra(unk8);
+    CampaignEra *pEra = TheCampaign->GetCampaignEra(mEra);
     MILO_ASSERT(pEra, 0x106);
 
     int size = pEra->GetNumSongs();
@@ -108,24 +123,21 @@ int CampaignEraProgress::GetTotalStarsEarned() const {
         Symbol name = pEra->GetSongName(i);
         int total = 0;
         CampaignEraSongProgress *pEraSongProgress = GetEraSongProgress(name);
-        if (pEraSongProgress)
-            total = pEraSongProgress->unk8;
-
-        if (total < 0)
-            totalStars = 0;
-
-        if (total >= 5)
+        if (pEraSongProgress) {
+            total = pEraSongProgress->GetStarsEarned();
+        }
+        total = Max(total, 0);
+        if (total >= 5) {
             total = 5;
-
+        }
         totalStars += total;
     }
-
     return totalStars;
 }
 
 int CampaignEraProgress::GetTotalMovesMastered() const {
     int total = 0;
-    CampaignEra *pEra = TheCampaign->GetCampaignEra(unk8);
+    CampaignEra *pEra = TheCampaign->GetCampaignEra(mEra);
     MILO_ASSERT(pEra, 0x124);
     int size = pEra->GetNumSongs();
     for (int i = 0; i < size; i++) {
@@ -133,7 +145,7 @@ int CampaignEraProgress::GetTotalMovesMastered() const {
         int x = 0;
         CampaignEraSongProgress *pEraSongProgress = GetEraSongProgress(songName);
         if (pEraSongProgress) {
-            x = pEraSongProgress->unkc.size();
+            x = pEraSongProgress->NumMovesMastered();
         }
         total += x;
     }
@@ -141,31 +153,33 @@ int CampaignEraProgress::GetTotalMovesMastered() const {
 }
 
 bool CampaignEraProgress::IsMoveMastered(Symbol song, Symbol move) const {
+    bool ret = false;
     CampaignEraSongProgress *pEraSongProgress = GetEraSongProgress(song);
     if (pEraSongProgress) {
-        auto it = pEraSongProgress->unkc.find(move);
-        return it != nullptr;
+        ret = pEraSongProgress->IsMoveMastered(move);
     }
-    return false;
+    return ret;
 }
 
 bool CampaignEraProgress::IsMastered() const {
-    CampaignEra *pEra = TheCampaign->GetCampaignEra(unk8);
+    CampaignEra *pEra = TheCampaign->GetCampaignEra(mEra);
     MILO_ASSERT(pEra, 0x155);
     int totalStars = GetTotalStarsEarned();
+    int starsRequired = pEra->StarsRequiredForMastery();
+    int movesRequired = pEra->MovesRequiredForMastery();
     int totalMasteredMoves = GetTotalMovesMastered();
-    if (totalStars < pEra->StarsRequiredForMastery()
-        || totalMasteredMoves < pEra->MovesRequiredForMastery()) {
-        return false;
-    }
-    return true;
+    return totalStars >= starsRequired && totalMasteredMoves >= movesRequired;
 }
 
 bool CampaignEraProgress::IsEraComplete() const {
-    CampaignEra *pEra = TheCampaign->GetCampaignEra(unk8);
+    CampaignEra *pEra = TheCampaign->GetCampaignEra(mEra);
     MILO_ASSERT(pEra, 0x163);
+    Symbol song = pEra->GetDanceCrazeSong();
     if (IsMastered()) {
-        if (pEra->GetDanceCrazeSong()) {
+        bool ret;
+        CampaignEraSongProgress *progress = GetEraSongProgress(song);
+        ret = progress ? progress->IsSongPlayed() : false;
+        if (ret) {
             return true;
         }
     }
@@ -173,13 +187,13 @@ bool CampaignEraProgress::IsEraComplete() const {
 }
 
 bool CampaignEraProgress::IsPlayed() const {
-    CampaignEra *pEra = TheCampaign->GetCampaignEra(unk8);
+    CampaignEra *pEra = TheCampaign->GetCampaignEra(mEra);
     MILO_ASSERT(pEra, 0x16c);
     int size = pEra->GetNumSongs();
     for (int i = 0; i < size; i++) {
         Symbol songName = pEra->GetSongName(i);
         CampaignEraSongProgress *pEraSongProgress = GetEraSongProgress(songName);
-        if (pEraSongProgress && pEraSongProgress->unk24) {
+        if (pEraSongProgress && pEraSongProgress->IsSongPlayed()) {
             return true;
         }
     }
@@ -201,38 +215,41 @@ void CampaignEraProgress::ResetProgressToBookmark() {
     }
 }
 
-void CampaignEraProgress::SetSongPlayed(Symbol s, bool b) {
-    CampaignEraSongProgress *pEraSongProgress = GetEraSongProgress(s);
+void CampaignEraProgress::SetSongPlayed(Symbol song, bool played) {
+    CampaignEraSongProgress *pEraSongProgress = GetEraSongProgress(song);
     if (!pEraSongProgress) {
+        pEraSongProgress = new CampaignEraSongProgress();
+        m_mapCampaignEraSongProgress[song] = pEraSongProgress;
+        MILO_ASSERT(m_mapCampaignEraSongProgress.size() <= kMaxCampaignEraSongs, 0xD8);
     }
-    pEraSongProgress->unk24 = b;
+    pEraSongProgress->SetSongPlayed(played);
 }
 
-void CampaignEraProgress::UpdateSong(Symbol, int) {}
+void CampaignEraProgress::UpdateSong(Symbol song, int stars) {
+    CampaignEraSongProgress *pEraSongProgress = GetEraSongProgress(song);
+    if (!pEraSongProgress) {
+        pEraSongProgress = new CampaignEraSongProgress();
+        m_mapCampaignEraSongProgress[song] = pEraSongProgress;
+        MILO_ASSERT(m_mapCampaignEraSongProgress.size() <= kMaxCampaignEraSongs, 0x190);
+    }
+    if (stars >= pEraSongProgress->GetStarsEarned()) {
+        pEraSongProgress->SetStarsEarned(stars);
+    }
+}
 
-bool CampaignEraProgress::UpdateSongMoveMastered(Symbol, Symbol) { return false; }
+bool CampaignEraProgress::UpdateSongMoveMastered(Symbol song, Symbol move) {
+    CampaignEraSongProgress *pEraSongProgress = GetEraSongProgress(song);
+    if (!pEraSongProgress) {
+        pEraSongProgress = new CampaignEraSongProgress();
+        m_mapCampaignEraSongProgress[song] = pEraSongProgress;
+        MILO_ASSERT(m_mapCampaignEraSongProgress.size() <= kMaxCampaignEraSongs, 0x19F);
+    }
+    return pEraSongProgress->SetMoveMastered(mEra, song, move);
+}
 
-CampaignEraSongProgress *CampaignEraProgress::GetEraSongProgress(Symbol s) const {
-    auto it = m_mapCampaignEraSongProgress.find(s);
+CampaignEraSongProgress *CampaignEraProgress::GetEraSongProgress(Symbol song) const {
+    auto it = m_mapCampaignEraSongProgress.find(song);
     return (it != m_mapCampaignEraSongProgress.end()) ? it->second : nullptr;
-}
-
-void CampaignEraProgress::SaveFixed(FixedSizeSaveableStream &stream) const {
-    FixedSizeSaveable::SaveSymbolID(stream, unk8);
-    stream << unkc;
-    stream << unkd;
-    FixedSizeSaveable::SaveStdPtr(
-        stream, m_mapCampaignEraSongProgress, 10, CampaignEraSongProgress::SaveSize(92) + 4
-    );
-}
-
-void CampaignEraProgress::LoadFixed(FixedSizeSaveableStream &stream, int i) {
-    FixedSizeSaveable::LoadSymbolFromID(stream, unk8);
-    stream >> unkc;
-    stream >> unkd;
-    FixedSizeSaveable::LoadStdPtr(
-        stream, m_mapCampaignEraSongProgress, 10, CampaignEraSongProgress::SaveSize(i) + 4
-    );
 }
 
 void CampaignEraProgress::Cleanup() {
@@ -242,81 +259,80 @@ void CampaignEraProgress::Cleanup() {
     m_mapCampaignEraSongProgress.clear();
 }
 
-#pragma endregion CampaignEraProgress
+#pragma endregion
 #pragma region CampaignProgress
 
 CampaignProgress::CampaignProgress()
-    : unk8(nullptr), unkc(false), unkd(false), unke(false), unk28(0) {
+    : mProfile(nullptr), mIntroCompleted(false), mMindControlCompleted(false),
+      mTanBattleCompleted(false), mNum5StarredMQSongs(0) {
     Clear();
+    mSaveSizeMethod = SaveSize;
 }
 
 CampaignProgress::~CampaignProgress() { Clear(); }
 
 void CampaignProgress::SaveFixed(FixedSizeSaveableStream &stream) const {
     FixedSizeSaveable::SaveStdPtr<CampaignEraProgress>(
-        stream, unk10, 10, CampaignEraProgress::SaveSize(92) + 4
+        stream, m_mapCampaignEraProgress, 10, CampaignEraProgress::SaveSize(92) + 4
     );
-    stream << unkc;
-    stream << unkd;
-    stream << unke;
-    stream << unk28;
+    stream << mIntroCompleted;
+    stream << mMindControlCompleted;
+    stream << mTanBattleCompleted;
+    stream << mNum5StarredMQSongs;
 }
 
 void CampaignProgress::LoadFixed(FixedSizeSaveableStream &stream, int i) {
     FixedSizeSaveable::LoadStdPtr<CampaignEraProgress>(
-        stream, unk10, 10, CampaignEraProgress::SaveSize(i) + 4
+        stream, m_mapCampaignEraProgress, 10, CampaignEraProgress::SaveSize(i) + 4
     );
-    stream >> unkc;
-    stream >> unkd;
-    stream >> unke;
-    stream >> unk28;
+    stream >> mIntroCompleted;
+    stream >> mMindControlCompleted;
+    stream >> mTanBattleCompleted;
+    stream >> mNum5StarredMQSongs;
 }
 
-void CampaignProgress::SetCampaignIntroCompleted(bool b) {
-    unkc = b;
-    unk8->MakeDirty();
+void CampaignProgress::SetCampaignIntroCompleted(bool complete) {
+    mIntroCompleted = complete;
+    mProfile->MakeDirty();
 }
 
-void CampaignProgress::SetCampaignMindControlCompleted(bool b) {
-    unkd = b;
-    unk8->MakeDirty();
+void CampaignProgress::SetCampaignMindControlCompleted(bool complete) {
+    mMindControlCompleted = complete;
+    mProfile->MakeDirty();
 }
 
-bool CampaignProgress::IsCampaignTanBattleCompleted() const { return unke; }
+bool CampaignProgress::IsCampaignTanBattleCompleted() const {
+    return mTanBattleCompleted;
+}
 
-void CampaignProgress::SetCampaignTanBattleCompleted(bool b) {
-    unke = b;
-    unk8->MakeDirty();
+void CampaignProgress::SetCampaignTanBattleCompleted(bool complete) {
+    mTanBattleCompleted = complete;
+    mProfile->MakeDirty();
 }
 
 int CampaignProgress::SaveSize(int ver) {
-    int s = CampaignEraProgress::SaveSize(ver) * 10 + 51;
-    if (FixedSizeSaveable::sPrintoutsEnabled) {
-        MILO_LOG("* %s = %i\n", "CampaignProgress", s);
-    }
-    return s;
+    REPORT_SIZE("CampaignProgress", CampaignEraProgress::SaveSize(ver) * 10 + 51);
 }
 
-int CampaignProgress::GetRequiredStarsForDanceCrazeSong(Symbol s) const {
-    CampaignEra *pEra = TheCampaign->GetCampaignEra(s);
+int CampaignProgress::GetRequiredStarsForDanceCrazeSong(Symbol era) const {
+    CampaignEra *pEra = TheCampaign->GetCampaignEra(era);
     MILO_ASSERT(pEra, 0x310);
     Symbol song = pEra->GetDanceCrazeSong();
     return pEra->GetSongRequiredStars(song);
 }
 
-bool CampaignProgress::IsEraPlayed(Symbol s) const {
-    CampaignEra *pEra = TheCampaign->GetCampaignEra(s);
+bool CampaignProgress::IsEraPlayed(Symbol era) const {
+    CampaignEra *pEra = TheCampaign->GetCampaignEra(era);
     MILO_ASSERT(pEra, 0x287);
-
-    CampaignEraProgress *pEraProgress = GetEraProgress(s);
+    CampaignEraProgress *pEraProgress = GetEraProgress(era);
     if (pEraProgress) {
         return pEraProgress->IsPlayed();
     }
     return false;
 }
 
-bool CampaignProgress::IsEraComplete(Symbol s) const {
-    CampaignEraProgress *pEraProgress = GetEraProgress(s);
+bool CampaignProgress::IsEraComplete(Symbol era) const {
+    CampaignEraProgress *pEraProgress = GetEraProgress(era);
     if (pEraProgress) {
         return pEraProgress->IsEraComplete();
     } else {
@@ -324,8 +340,8 @@ bool CampaignProgress::IsEraComplete(Symbol s) const {
     }
 }
 
-bool CampaignProgress::IsEraMastered(Symbol s) const {
-    CampaignEraProgress *pEraProgress = GetEraProgress(s);
+bool CampaignProgress::IsEraMastered(Symbol era) const {
+    CampaignEraProgress *pEraProgress = GetEraProgress(era);
     if (pEraProgress) {
         return pEraProgress->IsMastered();
     } else {
@@ -333,38 +349,38 @@ bool CampaignProgress::IsEraMastered(Symbol s) const {
     }
 }
 
-int CampaignProgress::GetEraStarsEarned(Symbol s) const {
-    CampaignEraProgress *pEraProgress = GetEraProgress(s);
+int CampaignProgress::GetEraStarsEarned(Symbol era) const {
+    int stars = 0;
+    CampaignEraProgress *pEraProgress = GetEraProgress(era);
     if (pEraProgress) {
-        return pEraProgress->GetTotalStarsEarned();
-    } else {
-        return false;
+        stars = pEraProgress->GetTotalStarsEarned();
     }
+    return stars;
 }
 
-int CampaignProgress::GetEraMovesMastered(Symbol s) const {
+int CampaignProgress::GetEraMovesMastered(Symbol era) const {
     int master_ct = 0;
-    CampaignEraProgress *pEraProgress = GetEraProgress(s);
+    CampaignEraProgress *pEraProgress = GetEraProgress(era);
     if (pEraProgress) {
         master_ct = pEraProgress->GetTotalMovesMastered();
     }
     return master_ct; // why
 }
 
-bool CampaignProgress::GetEraIntroMoviePlayed(Symbol s) const {
-    CampaignEraProgress *pEraProgress = GetEraProgress(s);
+bool CampaignProgress::GetEraIntroMoviePlayed(Symbol era) const {
+    CampaignEraProgress *pEraProgress = GetEraProgress(era);
     if (pEraProgress) {
-        return pEraProgress->unkc;
+        return pEraProgress->GetIntroMoviePlayed();
     } else {
         return false;
     }
 }
 
-void CampaignProgress::SetEraIntroMoviePlayed(Symbol s, bool played) {
-    CampaignEraProgress *pEraProgress = GetEraProgress(s);
+void CampaignProgress::SetEraIntroMoviePlayed(Symbol era, bool played) {
+    CampaignEraProgress *pEraProgress = GetEraProgress(era);
     if (pEraProgress) {
-        pEraProgress->unkc = played;
-        unk8->MakeDirty();
+        pEraProgress->SetIntroMoviePlayed(played);
+        mProfile->MakeDirty();
     }
 }
 
@@ -395,62 +411,218 @@ bool CampaignProgress::IsSongPlayed(Symbol era, Symbol song) const {
         CampaignEraSongProgress *pEraSongProgress =
             pEraProgress->GetEraSongProgress(song);
         if (pEraSongProgress) {
-            return pEraSongProgress->unk24;
+            return pEraSongProgress->IsSongPlayed();
         }
     }
     return false;
 }
 
 int CampaignProgress::GetSongStarsEarned(Symbol era, Symbol song) const {
+    int stars = 0;
     CampaignEraProgress *pEraProgress = GetEraProgress(era);
     if (pEraProgress) {
         CampaignEraSongProgress *pEraSongProgress =
             pEraProgress->GetEraSongProgress(song);
         if (pEraSongProgress) {
-            return pEraSongProgress->unk8;
+            stars = pEraSongProgress->GetStarsEarned();
         }
+        stars = Max(stars, 0);
     }
-    return 0;
+    return stars;
 }
 
 bool CampaignProgress::IsMoveMastered(Symbol era, Symbol song, Symbol move) const {
+    bool b1 = false;
     CampaignEraProgress *pEraProgress = GetEraProgress(era);
     if (pEraProgress) {
-        return pEraProgress->IsMoveMastered(song, move); // msvc inlined this. dickhead
+        b1 = pEraProgress->IsMoveMastered(song, move);
+    }
+    return b1;
+}
+
+CampaignEraProgress *CampaignProgress::GetEraProgress(Symbol era) const {
+    auto it = m_mapCampaignEraProgress.find(era);
+    return (it != m_mapCampaignEraProgress.end()) ? it->second : nullptr;
+}
+
+bool CampaignProgress::IsCampaignNew() const {
+    auto &eras = TheCampaign->Eras();
+    FOREACH (it, eras) {
+        CampaignEra *pEra = *it;
+        MILO_ASSERT(pEra, 0x3BC);
+        if (IsEraPlayed(pEra->GetName())) {
+            return false;
+        }
+    }
+    return true;
+}
+
+Symbol CampaignProgress::GetFirstIncompleteEra() const {
+    auto &eras = TheCampaign->Eras();
+    Symbol era;
+    FOREACH (it, eras) {
+        CampaignEra *pEra = *it;
+        MILO_ASSERT(pEra, 0x3E6);
+        era = pEra->GetName();
+        CampaignEraProgress *progress = GetEraProgress(era);
+        bool canContinue;
+        if (progress) {
+            canContinue = progress->IsEraComplete();
+        } else {
+            canContinue = false;
+        }
+        if (!canContinue)
+            break;
+        if (pEra->GetUnk50()) {
+            static Symbol era_tan_battle("era_tan_battle");
+            return era_tan_battle;
+        }
+    }
+    return era;
+}
+
+int CampaignProgress::GetStars() const {
+    auto &eras = TheCampaign->Eras();
+    int stars = 0;
+    FOREACH (it, eras) {
+        CampaignEra *pEra = *it;
+        MILO_ASSERT(pEra, 0x412);
+        int i4 = 0;
+        CampaignEraProgress *progress = GetEraProgress(pEra->GetName());
+        if (progress) {
+            i4 = progress->GetTotalStarsEarned();
+        }
+        stars += i4;
+    }
+    return stars;
+}
+
+int CampaignProgress::GetNumCompletedEras() const {
+    auto &eras = TheCampaign->Eras();
+    int numCompleted = 0;
+    FOREACH (it, eras) {
+        CampaignEra *pEra = *it;
+        MILO_ASSERT(pEra, 0x423);
+        CampaignEraProgress *progress = GetEraProgress(pEra->GetName());
+        bool b4;
+        if (progress) {
+            b4 = progress->IsEraComplete();
+        } else {
+            b4 = false;
+        }
+        if (b4) {
+            numCompleted++;
+        }
+    }
+    return numCompleted;
+}
+
+void CampaignProgress::Clear() {
+    FOREACH (it, m_mapCampaignEraProgress) {
+        RELEASE(it->second);
+    }
+    m_mapCampaignEraProgress.clear();
+    mIntroCompleted = false;
+    mMindControlCompleted = false;
+    mTanBattleCompleted = false;
+}
+
+bool CampaignProgress::IsDanceCrazeSongAvailable(Symbol era) const {
+    CampaignEra *pEra = TheCampaign->GetCampaignEra(era);
+    MILO_ASSERT(pEra, 0x31B);
+    Symbol song = pEra->GetDanceCrazeSong();
+    if (song != gNullStr) {
+        return IsEraSongAvailable(era, song);
+    } else {
+        return false;
     }
 }
 
-bool CampaignProgress::IsCampaignNew() const { return false; }
-
-Symbol CampaignProgress::GetFirstIncompleteEra() const { return 0; }
-
-int CampaignProgress::GetStars() const { return 1; }
-
-int CampaignProgress::GetNumCompletedEras() const { return 1; }
-
-void CampaignProgress::Clear() {}
-
-bool CampaignProgress::IsDanceCrazeSongAvailable(Symbol) const { return false; }
-
-void CampaignProgress::ResetAllProgress() {}
-
-void CampaignProgress::ClearSongProgress(Symbol, Symbol) {}
-
-void CampaignProgress::BookmarkCurrentProgress() {}
-
-void CampaignProgress::ResetProgressToBookmark() {}
-
-void CampaignProgress::SetSongPlayed(Symbol, Symbol, bool) {}
-
-void CampaignProgress::UpdateEraSong(Symbol, Symbol, int) {}
-
-bool CampaignProgress::UpdateEraSongMoveMastered(Symbol, Symbol, Symbol) { return true; }
-
-void CampaignProgress::UnlockAllMoves(Symbol, Symbol) {}
-
-CampaignEraProgress *CampaignProgress::GetEraProgress(Symbol s) const {
-    auto it = unk10.find(s);
-    return (it != unk10.end()) ? it->second : nullptr;
+void CampaignProgress::ResetAllProgress() {
+    Clear();
+    mProfile->MakeDirty();
 }
 
-#pragma endregion CampaignProgress
+void CampaignProgress::ClearSongProgress(Symbol era, Symbol song) {
+    CampaignEraProgress *p = GetEraProgress(era);
+    if (p) {
+        CampaignEraSongProgress *sp = p->GetEraSongProgress(song);
+        if (sp) {
+            sp->SetStarsEarned(0);
+            sp->ClearMovesMastered();
+            sp->SetSongPlayed(false);
+        }
+    }
+    mProfile->MakeDirty();
+}
+
+void CampaignProgress::BookmarkCurrentProgress() {
+    FOREACH (it, m_mapCampaignEraProgress) {
+        it->second->BookmarkCurrentProgress();
+    }
+}
+
+void CampaignProgress::ResetProgressToBookmark() {
+    FOREACH (it, m_mapCampaignEraProgress) {
+        it->second->ResetProgressToBookmark();
+    }
+}
+
+void CampaignProgress::SetSongPlayed(Symbol era, Symbol song, bool played) {
+    CampaignEra *pEra = TheCampaign->GetCampaignEra(era);
+    MILO_ASSERT(pEra, 0x34E);
+    CampaignEraProgress *progress = GetEraProgress(era);
+    if (!progress) {
+        progress = new CampaignEraProgress(era);
+        m_mapCampaignEraProgress[era] = progress;
+        MILO_ASSERT(m_mapCampaignEraProgress.size() <= kMaxSymbols_CampaignEras, 0x355);
+    }
+    progress->SetSongPlayed(song, played);
+}
+
+void CampaignProgress::UpdateEraSong(Symbol era, Symbol song, int stars) {
+    CampaignEraProgress *progress = GetEraProgress(era);
+    if (!progress) {
+        progress = new CampaignEraProgress(era);
+        m_mapCampaignEraProgress[era] = progress;
+        MILO_ASSERT(m_mapCampaignEraProgress.size() <= kMaxSymbols_CampaignEras, 0x387);
+    }
+    progress->UpdateSong(song, stars);
+    mProfile->MakeDirty();
+}
+
+bool CampaignProgress::UpdateEraSongMoveMastered(Symbol era, Symbol song, Symbol move) {
+    static Symbol metamode("metamode");
+    static Symbol campaign_holla_back("campaign_holla_back");
+    if (TheHamProvider->Property(metamode)->Sym() == campaign_holla_back) {
+        return false;
+    } else {
+        CampaignEraProgress *progress = GetEraProgress(era);
+        if (!progress) {
+            progress = new CampaignEraProgress(era);
+            m_mapCampaignEraProgress[era] = progress;
+            MILO_ASSERT(m_mapCampaignEraProgress.size() <= kMaxSymbols_CampaignEras, 0x3AC);
+        }
+        bool ret = progress->UpdateSongMoveMastered(song, move);
+        mProfile->MakeDirty();
+        return ret;
+    }
+}
+
+void CampaignProgress::UnlockAllMoves(Symbol era, Symbol song) {
+    CampaignEra *pEra = TheCampaign->GetCampaignEra(era);
+    MILO_ASSERT(pEra, 0x43A);
+    CampaignEraSongEntry *pSongEntry = pEra->GetSongEntry(song);
+    MILO_ASSERT(pSongEntry, 0x43C);
+    if (song != pEra->GetDanceCrazeSong()) {
+        int numSongs = pSongEntry->GetNumSongCrazeMoves();
+        for (int i = 0; i < numSongs; i++) {
+            Symbol move = pSongEntry->GetCrazeMoveHamMoveName(i);
+            UpdateEraSongMoveMastered(era, song, move);
+        }
+    }
+    SetSongPlayed(era, song, true);
+    mProfile->MakeDirty();
+}
+
+#pragma endregion

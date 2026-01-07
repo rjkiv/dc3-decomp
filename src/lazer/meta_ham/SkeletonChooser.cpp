@@ -7,6 +7,7 @@
 #include "gesture/HandRaisedGestureFilter.h"
 #include "gesture/HighFiveGestureFilter.h"
 #include "gesture/Skeleton.h"
+#include "gesture/SkeletonRecoverer.h"
 #include "gesture/StandingStillGestureFilter.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
@@ -20,8 +21,9 @@
 #include "ui/UI.h"
 
 SkeletonChooser::SkeletonChooser()
-    : unk34(false), unk3c(0), unk44(1), unk48(true), unk80(0), unk84(0), unk88(0),
-      unk8c(0), unk90(0), unk94(-1), unka0(false), unkbc(-1), unkc0(false) {
+    : mDrawDebug(false), unk3c(0), unk44(1), unk48(true), unk80(0), unk84(0), unk88(0),
+      unk8c(0), unk90(0), mNextSkelIdxToTrack(-1), mInMultiPlayerUpdateMode(false),
+      unkbc(-1), mEnrollmentLocked(false) {
     SetName("skeleton_chooser", ObjectDir::Main());
     unk2c = new DirectionGestureFilterSingleUser(kSkeletonRight, kSkeletonLeft, 0, 0);
     unk30 = new DirectionGestureFilterSingleUser(kSkeletonLeft, kSkeletonRight, 0, 0);
@@ -30,14 +32,14 @@ SkeletonChooser::SkeletonChooser()
         unk4c[i] = Hmx::Object::New<HandRaisedGestureFilter>();
         unk4c[i]->SetRequiredMs(750);
         unk4c[i]->Clear();
-        unk64[i] = Hmx::Object::New<StandingStillGestureFilter>();
-        // unk64[i]->unk34 = 750;
+        unk64[i] = new StandingStillGestureFilter();
+        unk64[i]->SetRequiredMs(750);
         unka4[i] = 0;
     }
     for (int i = 0; i < 2; i++) {
-        unk98[i] = Hmx::Object::New<HandRaisedGestureFilter>();
-        unk98[i]->SetRequiredMs(750);
-        unk98[i]->Clear();
+        mHandRaisedFilters[i] = Hmx::Object::New<HandRaisedGestureFilter>();
+        mHandRaisedFilters[i]->SetRequiredMs(750);
+        mHandRaisedFilters[i]->Clear();
     }
 }
 
@@ -52,7 +54,7 @@ SkeletonChooser::~SkeletonChooser() {
 }
 
 BEGIN_HANDLERS(SkeletonChooser)
-    HANDLE_EXPR(toggle_draw_debug, unk34 = !unk34)
+    HANDLE_EXPR(toggle_draw_debug, mDrawDebug = !mDrawDebug)
     HANDLE_ACTION(
         switch_active_to_player_index_immediate,
         SwitchActiveToPlayerIndexImmediate(_msg->Int(2))
@@ -60,8 +62,8 @@ BEGIN_HANDLERS(SkeletonChooser)
     HANDLE_EXPR(check_hand_raised, IsHandRaised(_msg->Int(2)))
     HANDLE(get_joint_depth_pos, OnGetJointDepthPos)
     HANDLE_EXPR(is_skeleton_valid, IsSkeletonValid(_msg->Int(2)))
-    HANDLE_ACTION(lock_enrollment, unkc0 = _msg->Int(2))
-    HANDLE_EXPR(is_enrollment_locked, unkc0)
+    HANDLE_ACTION(lock_enrollment, mEnrollmentLocked = _msg->Int(2))
+    HANDLE_EXPR(is_enrollment_locked, mEnrollmentLocked)
     HANDLE_EXPR(is_left_player_hand_raised, IsLeftPlayerHandRaised())
     HANDLE_EXPR(is_right_player_hand_raised, IsRightPlayerHandRaised())
     HANDLE_ACTION(force_swap_player_sides, ForceSwapPlayerSides())
@@ -118,7 +120,7 @@ bool SkeletonChooser::IsHandRaised(int idx) {
 
 bool SkeletonChooser::IsPlayerHandRaised(int player) {
     MILO_ASSERT_RANGE(player, 0, 2, 0x6DC);
-    return unk98[player]->unk2c;
+    return mHandRaisedFilters[player]->HandRaised();
 }
 
 void SkeletonChooser::ClearPlayerSkeletonID(int id) {
@@ -234,9 +236,9 @@ void SkeletonChooser::SetPlayerPresent(int player, bool present) {
 }
 
 void SkeletonChooser::EnterMultiPlayerUpdateMode() {
-    if (!unka0) {
+    if (!mInMultiPlayerUpdateMode) {
         TheGestureMgr->StartTrackAllSkeletons();
-        unka0 = true;
+        mInMultiPlayerUpdateMode = true;
         for (int i = 0; i < 6; i++) {
             unka4[i] = 0;
             unk4c[i]->SetRequiredMs(500);
@@ -247,9 +249,9 @@ void SkeletonChooser::EnterMultiPlayerUpdateMode() {
 }
 
 void SkeletonChooser::ExitMultiPlayerUpdateMode() {
-    if (unka0) {
+    if (mInMultiPlayerUpdateMode) {
         TheGestureMgr->CancelTrackAllSkeletons();
-        unka0 = false;
+        mInMultiPlayerUpdateMode = false;
         for (int i = 0; i < 6; i++) {
             unka4[i] = 0;
             unk4c[i]->SetRequiredMs(750);
@@ -392,7 +394,7 @@ void SkeletonChooser::PollUiNavModeStatus() {
     static Symbol ui_nav_mode("ui_nav_mode");
     static Symbol shell_4p("shell_4p");
     bool inShell = TheHamProvider->Property(ui_nav_mode)->Sym() == shell_4p;
-    if (inShell != unka0) {
+    if (inShell != mInMultiPlayerUpdateMode) {
         if (inShell) {
             EnterMultiPlayerUpdateMode();
         } else {
@@ -440,4 +442,165 @@ void SkeletonChooser::SwitchActiveToPlayerIndexImmediate(int playerIndex) {
     MILO_ASSERT_RANGE(playerIndex, 0, 2, 0x581);
     unk38 = -1;
     SetActivePlayer(playerIndex);
+}
+
+bool SkeletonChooser::ShouldWaitForRecovery() {
+    int id0 = TheGameData->Player(0)->GetSkeletonTrackingID();
+    int id1 = TheGameData->Player(1)->GetSkeletonTrackingID();
+    bool skel0 = true;
+    if (id0 > 0) {
+        skel0 = TheGestureMgr->GetSkeletonByTrackingID(id0);
+    }
+    bool skel1 = true;
+    if (id1 > 0) {
+        skel1 = TheGestureMgr->GetSkeletonByTrackingID(id1);
+    }
+    if ((!skel0 || !skel1) && TheGestureMgr->Recoverer().WaitingToRecover()) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool SkeletonChooser::PotentiallyRecoverSkeletons() {
+    SkeletonRecoverer &recoverer = TheGestureMgr->Recoverer();
+    int id0 = TheGameData->Player(0)->GetSkeletonTrackingID();
+    int id1 = TheGameData->Player(1)->GetSkeletonTrackingID();
+    bool ret = false;
+    if (id0 > 0) {
+        int recoveryID = recoverer.GetTrackingIDWithRecovery(id0, id1);
+        if (recoveryID > 0 && recoveryID != id0) {
+            TheGameData->AssignSkeleton(0, recoveryID);
+            id0 = recoveryID;
+            ret = true;
+        }
+    }
+    if (id1 > 0) {
+        int recoveryID = recoverer.GetTrackingIDWithRecovery(id1, id0);
+        if (recoveryID > 0 && recoveryID != id1) {
+            TheGameData->AssignSkeleton(1, recoveryID);
+            id1 = recoveryID;
+            ret = true;
+        }
+    }
+    if (ret) {
+        mNextSkelIdxToTrack = -1;
+        TheGestureMgr->SetTrackedSkeletons(id0, id1);
+    }
+    return ret;
+}
+
+int SkeletonChooser::NextSkeletonIndexToTrack(int i1) {
+    int curSkelIdx = i1 + 1;
+    int idxToTrack = -1;
+    SkeletonRecoverer &recoverer = TheGestureMgr->Recoverer();
+    for (int i = 0; i < 6; i++, curSkelIdx = (curSkelIdx + 1) % 6) {
+        int ivar1 = TheGestureMgr->GetSkeleton(curSkelIdx).TrackingID();
+        if (idxToTrack >= 0) {
+            return idxToTrack;
+        }
+        if (ivar1 > 0) {
+            for (int j = 0; j < 2; j++) {
+                idxToTrack = TheGameData->Player(j)->GetSkeletonTrackingID();
+                int i4 = recoverer.GetTrackingIDWithRecovery(idxToTrack, -1);
+                if (ivar1 == idxToTrack || ivar1 == i4) {
+                    idxToTrack = -1;
+                    break;
+                }
+                idxToTrack = curSkelIdx;
+            }
+        }
+        if (idxToTrack >= 0) {
+            return idxToTrack;
+        }
+    }
+    return idxToTrack;
+}
+
+void SkeletonChooser::ResolveFreestyle() {
+    int id0 = TheGameData->Player(0)->GetSkeletonTrackingID();
+    int id1 = TheGameData->Player(1)->GetSkeletonTrackingID();
+    if (id0 <= 0 && IsPlayerInFreestyle(0)) {
+        id0 = RoundRobinForPlayer(0);
+    } else if (id1 <= 0 && IsPlayerInFreestyle(1)) {
+        id1 = RoundRobinForPlayer(1);
+    }
+    TheGestureMgr->SetTrackedSkeletons(id0, id1);
+}
+
+void SkeletonChooser::ResolveSinglePlayer() {
+    int player = unk3c;
+    int otherPlayer = !player;
+    int skel = GetAssignedPlayerSkeletonID(player); // goes unused
+    int otherSkel = GetAssignedPlayerSkeletonID(otherPlayer);
+    static Symbol gameplay_mode("gameplay_mode");
+    static Symbol practice("practice");
+    if (player != 0) {
+        SwapPlayerDataForPractice();
+        TheGameData->SwapPlayerSidesByIDOnly();
+        player = 0;
+        TheHamProvider->SetProperty("ui_nav_player", 0);
+        unk3c = 0;
+        HamPlayerData *hpd = TheGameData->Player(0);
+        otherPlayer = 1;
+        TheGestureMgr->SetActiveSkeletonTrackingID(hpd->GetSkeletonTrackingID());
+    }
+    if (GetPlayerSide(player) != kSkeletonRight) {
+        SwapPlayerSides();
+    }
+    if (otherSkel > 0) {
+        SetPlayerSkeletonID(otherPlayer, -1);
+    }
+    int assignedID = GetAssignedPlayerSkeletonID(player);
+    if (assignedID <= 0) {
+        assignedID = RoundRobinForPlayer(player);
+    }
+    if (player == 0) {
+        TheGestureMgr->SetTrackedSkeletons(assignedID, -1);
+    } else {
+        TheGestureMgr->SetTrackedSkeletons(-1, assignedID);
+    }
+}
+
+void SkeletonChooser::UpdateTrackedSkeletonsElective() {
+    if (!ShouldWaitForRecovery()) {
+        PollUiNavModeStatus();
+        UpdatePlayerSkeletonNavData();
+        if (IsSinglePlayerMode()) {
+            ResolveSinglePlayer();
+        } else if (IsFreestyleMode()) {
+            ResolveFreestyle();
+        } else if (mInMultiPlayerUpdateMode) {
+            if (!mEnrollmentLocked) {
+                ResolveMultiPlayerUpdate();
+            }
+        } else {
+            int id0 = TheGameData->Player(0)->GetSkeletonTrackingID();
+            int id1 = TheGameData->Player(1)->GetSkeletonTrackingID();
+            if (id0 <= 0) {
+                id0 = RoundRobinForPlayer(0);
+            } else if (id1 <= 0) {
+                id1 = RoundRobinForPlayer(1);
+            }
+            TheGestureMgr->SetTrackedSkeletons(id0, id1);
+        }
+    }
+}
+
+void SkeletonChooser::SetPlayerCloseWarnings(int player, int mask) {
+    MILO_ASSERT_RANGE(player, 0, 2, 0xBB);
+    static Symbol player_tooclose("player_tooclose");
+    static Symbol player_close_top("player_close_top");
+    static Symbol player_close_bottom("player_close_bottom");
+    static Symbol player_close_left("player_close_left");
+    static Symbol player_close_right("player_close_right");
+    HamPlayerData *pPlayer = TheGameData->Player(player);
+    MILO_ASSERT(pPlayer, 0xC4);
+    Hmx::Object *pPlayerProvider = pPlayer->Provider();
+    MILO_ASSERT(pPlayerProvider, 0xC6);
+    pPlayerProvider->SetProperty(player_tooclose, (mask & 4 && mask & 8));
+    pPlayerProvider->SetProperty(player_close_top, (mask & 4) > 0);
+    pPlayerProvider->SetProperty(player_close_bottom, (mask & 8) > 0);
+    pPlayerProvider->SetProperty(player_close_left, (mask & 2) > 0);
+    pPlayerProvider->SetProperty(player_close_right, (mask & 1) > 0);
 }

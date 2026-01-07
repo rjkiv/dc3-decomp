@@ -71,8 +71,8 @@ public:
 
     void ShowGestureGuide() {
         int id = 0;
-        if (unk4260 > 0) {
-            id = unk4260;
+        if (mActiveSkelTrackingID > 0) {
+            id = mActiveSkelTrackingID;
         }
         XShowNuiGuideUI(id);
     }
@@ -84,7 +84,7 @@ public:
         return unk425c;
     }
     void AutoTilt() {
-        if (mOverlapped.InternalLow != 0x3E5) {
+        if (mOverlapped.InternalLow != ERROR_IO_PENDING) {
             memset(&mOverlapped, 0, sizeof(XOVERLAPPED));
         }
     }
@@ -93,6 +93,8 @@ public:
         return mat ? mat->GetDiffuseTex() : nullptr;
     }
     bool InControllerMode() const { return mInControllerMode; }
+    SkeletonRecoverer &Recoverer() { return mRecoverer; }
+    void SetActiveSkeletonTrackingID(int id) { mActiveSkelTrackingID = id; }
 
     static bool sIdentityOpInProgress;
     static void Init();
@@ -111,7 +113,7 @@ private:
     static float sConfidenceLossThreshold;
     static float sConfidenceRegainThreshold;
 
-    SkeletonCallback *mCallbacks[NUM_SKELETONS]; // 0x30
+    int unk30[NUM_SKELETONS]; // 0x30 - maybe this is SkeletonJoint?
     LiveCameraInput *mLiveCamInput; // 0x48
     Skeleton mSkeletons[NUM_SKELETONS]; // 0x4c
     IdentityInfo mIdentityInfos[NUM_SKELETONS]; // 0x4144
@@ -119,14 +121,14 @@ private:
     bool mTrackingAllSkeletons; // 0x424c
     SkeletonRecoverer mRecoverer; // 0x4250
     int unk425c;
-    int unk4260; // 0x4260 - active skeleton tracking ID
+    int mActiveSkelTrackingID; // 0x4260 - active skeleton tracking ID
     int mPlayerSkeletonIDs[2]; // 0x4264
     bool mIDEnabled; // 0x426c
     bool mInControllerMode; // 0x426d
     bool mInVoiceMode; // 0x426e
     bool mGesturingWithVoice; // 0x426f
     bool mInDoubleUserMode; // 0x4270
-    bool unk4271;
+    bool unk4271; // 0x4271 - not in gameplay?
     RndDir *unk4274;
     XOVERLAPPED mOverlapped; // 0x4278
 };

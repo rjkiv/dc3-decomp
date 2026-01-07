@@ -65,6 +65,7 @@ public:
     int MovesRequiredForMastery() const { return mMovesRequiredForMastery; }
     Symbol OutfitAward() const { return mOutfitAward; }
     Symbol GetMasteryStars(Difficulty d) { return mMasteryStars[d]; }
+    bool GetUnk50() const { return unk50; }
 
 protected:
     Symbol mEra; // 0x4
