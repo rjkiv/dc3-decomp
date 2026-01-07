@@ -33,7 +33,7 @@ void PlaylistSort::Text(int, int data, UIListLabel *uiListLabel, UILabel *uiLabe
 
 void PlaylistSort::SetHighlightedIx(int i) {
     unk54 = unk50;
-    if (i >= 0 && GetListSize() >= i) {
+    if (i >= 0 && static_cast<unsigned int>(GetListSize()) >= i) { //lol
         unk50 = mList[i];
         ThePlaylistSortMgr->OnHighlightChanged();
         return;
