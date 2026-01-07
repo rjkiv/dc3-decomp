@@ -25,6 +25,7 @@ public:
     UpdateFriendsListJob(Hmx::Object *, HamProfile *);
     void EnumerateFriends();
 
+protected:
     HamProfile *mProfile; // 0xb0
     int unkb4;
     int unkb8;
