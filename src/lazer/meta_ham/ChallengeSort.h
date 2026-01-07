@@ -2,7 +2,7 @@
 #include "NavListNode.h"
 #include "NavListSort.h"
 
-class SortNodeFind {
+struct SortNodeFind {
 public:
     SortNodeFind(const NavListSortNode *);
     bool operator()(const NavListSortNode *) const;

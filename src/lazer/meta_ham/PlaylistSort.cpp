@@ -1,4 +1,6 @@
 #include "meta_ham/PlaylistSort.h"
+
+#include "ChallengeSort.h"
 #include "NavListNode.h"
 #include "PlaylistSortMgr.h"
 #include "macros.h"
@@ -78,5 +80,20 @@ void PlaylistSort::BuildTree() {
     }
     FOREACH(it, unk30) {
         (*it)->FinishSort(this);
+    }
+}
+
+void PlaylistSort::SetHighlightItem(NavListSortNode const *node) {
+    NavListSortNode *tempNode = unk50;
+    unk50 = nullptr;
+    unk54 = tempNode;
+    if (node) {
+        if (node->GetType() == 5 || node->GetType() == 4) {
+            auto find = std::find_if(mList.begin(), mList.end(), SortNodeFind(node));
+            if (find != mList.end()) {
+                unk50 = *find;
+                ThePlaylistSortMgr->OnHighlightChanged();
+            }
+        }
     }
 }
