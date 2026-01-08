@@ -28,7 +28,7 @@ class ChallengeSortMgr : public NavListSortMgr {
 public:
     virtual DataNode Handle(DataArray *, bool);
     virtual void OnEnter();
-    virtual Symbol MoveOn();
+    virtual Symbol MoveOn(); // 0x78
     virtual bool SelectionIs();
 
     int GetTotalXpEarned(int);

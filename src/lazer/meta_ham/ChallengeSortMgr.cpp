@@ -16,6 +16,9 @@ ChallengeRecord &ChallengeRecord::operator=(const ChallengeRecord &other) {
     return *this;
 }
 
+NavListSort::NavListSort() {}
+ChallengeSort::~ChallengeSort() {}
+
 BEGIN_CUSTOM_HANDLERS(ChallengeSortMgr)
 HANDLE_EXPR(get_target_challenge_score, _msg->Int(2)) // li r11, 0x3e8 inst here?
 HANDLE_EXPR(get_total_earned_xp, GetTotalXpEarned(_msg->Int(2)))

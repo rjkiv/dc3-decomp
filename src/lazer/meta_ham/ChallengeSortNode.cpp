@@ -22,6 +22,17 @@ int ChallengeHeaderNode::GetChallengeExp() {
     }
     return 0;
 }
+
+NavListSortNode *ChallengeHeaderNode::GetFirstActive() {
+    FOREACH(it, mChildren) {
+        auto node = (*it)->GetFirstActive();
+        if (node) break;
+    }
+    auto something = TheChallengeSortMgr->NumData();
+    if (something) return this;
+    return nullptr;
+}
+
 #pragma endregion
 
 #pragma region ChallengeSortNode
