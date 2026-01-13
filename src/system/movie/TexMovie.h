@@ -18,6 +18,7 @@ public:
     virtual bool Replace(ObjRef *, Hmx::Object *);
     OBJ_CLASSNAME(TexMovie);
     OBJ_SET_TYPE(TexMovie);
+    OBJ_MEM_OVERLOAD(0x18);
     virtual DataNode Handle(DataArray *, bool);
     virtual bool SyncProperty(DataNode &, DataArray *, int, PropOp);
     virtual void Save(BinStream &);
@@ -43,6 +44,7 @@ public:
     void SetVolume(float vol) { mMovie.SetVolume(vol); }
     void AddFader(Fader *f) { mMovie.Faders()->Add(f); }
     bool IsOpen() const { return mMovie.IsOpen(); }
+    Movie &GetMovie() { return mMovie; }
 
 protected:
     ObjOwnerPtr<RndTex> mTex; // 0x48 ObjOwnerPtr | 0x54, RndTex

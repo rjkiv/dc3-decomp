@@ -3,6 +3,7 @@
 #include "os/CritSec.h"
 #include "os/SynchronizationEvent.h"
 #include "rndobj/Dir.h"
+#include "rndobj/EventTrigger.h"
 
 class Splash {
 public:
@@ -43,12 +44,12 @@ public:
 
     float unk8;
     bool unkc;
-    std::list<ScreenParams> unk10;
+    std::list<ScreenParams> mScreens; // 0x10
     Timer unk18;
     RndDir *unk48;
-    int unk4c;
+    RndCam *unk4c;
     TexMovie *unk50;
-    int unk54;
+    EventTrigger *unk54;
     int unk58;
     u32 unk5c;
     int unk60;
@@ -57,9 +58,9 @@ public:
     CriticalSection unk6c;
     SynchronizationEvent unk8c;
     SynchronizationEvent unk90;
-    int unk94;
+    int mState; // 0x94
     CriticalSection unk98;
-    std::list<PreparedScreenParams> unkb8;
+    std::list<PreparedScreenParams> mPreparedScreens;
     std::list<RndDir *> unkc0;
     Timer unk200;
     void *mThreadStack;
@@ -69,7 +70,7 @@ protected:
 
     bool SetMutableState(Splash::SplashState);
     bool SetImmutableState(Splash::SplashState);
-    bool WaitForState(Splash::SplashState);
+    void WaitForState(Splash::SplashState);
     void CheckWorkerSuspend(bool);
     bool ShowNext();
     bool Show();
@@ -83,3 +84,6 @@ extern Splash *TheSplasher;
 void SuspendFunc();
 void ResumeFunc();
 void PollFunc();
+
+const char *kSplashMovie = "s_splash.tmov";
+const char *kSplashCam = "s_splash.cam";

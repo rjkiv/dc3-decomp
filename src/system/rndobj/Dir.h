@@ -52,7 +52,7 @@ public:
     // RndPollable
     virtual void Poll();
     virtual void Enter();
-    virtual void Exit();
+    virtual void Exit(); // 0x1ac
     virtual void ListPollChildren(std::list<RndPollable *> &) const;
 
     OBJ_MEM_OVERLOAD(0x19);
