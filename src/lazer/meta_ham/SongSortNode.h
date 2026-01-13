@@ -29,7 +29,7 @@ private:
 class SongSortNode : public NavListItemNode {
 public:
     SongSortNode(NavListItemSortCmp *cmp, SongRecord *song)
-        : NavListItemNode(cmp), unk_0x48(song), unk_0x4C(0), unk44(gNullStr) {}
+        : NavListItemNode(cmp), unk_0x48(song), unk_0x4C(0) {}
 
     virtual DataNode Handle(DataArray *, bool);
     virtual void Text(UIListLabel *, UILabel *) const;
