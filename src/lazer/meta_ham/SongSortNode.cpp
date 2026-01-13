@@ -137,9 +137,9 @@ Symbol SongSortNode::Select() {
 void SongHeaderNode::Text(UIListLabel *, UILabel *ui_label) const {
     AppLabel *app_label = dynamic_cast<AppLabel *>(ui_label);
     MILO_ASSERT(app_label, 182);
-    if (unk44) {
-        static Symbol store_famous_by("store_famous_by");
-    }
+    //if (unk44) {
+    //    static Symbol store_famous_by("store_famous_by");
+    //}
 }
 
 bool SongSortNode::IsCoverSong(Symbol shortname) const {

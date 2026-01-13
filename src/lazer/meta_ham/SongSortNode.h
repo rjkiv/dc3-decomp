@@ -45,7 +45,6 @@ public:
     const SongRecord *Record() const { return unk_0x48; }
 
 private:
-    Symbol unk44; // 0x44
     SongRecord *unk_0x48;
     bool unk_0x4C;
 };
