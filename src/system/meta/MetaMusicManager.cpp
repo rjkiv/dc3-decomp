@@ -68,3 +68,10 @@ Symbol MetaMusicManager::GetSceneForScreen(Symbol sym) const {
     }
     return gNullStr;
 }
+
+bool MetaMusicManager::IsScreenInSceneMap(Symbol sym) const {
+    if (GetSceneForScreen(sym) == gNullStr) {
+        return false;
+    }
+    return true;
+}
