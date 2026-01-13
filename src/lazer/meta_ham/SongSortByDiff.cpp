@@ -39,11 +39,23 @@ SongSortByDiff::SongSortByDiff() {
 }
 
 NavListShortcutNode *SongSortByDiff::NewShortcutNode(NavListItemNode *node) const {
-    DifficultyCmp *diffcmp = (DifficultyCmp *)node;
-    int tier = diffcmp->mTier;
+    auto cmp = node->GetCmp()->GetDifficultyCmp();
+    auto newCmp = new DifficultyCmp(cmp->mTier, 0, "");
     static Symbol no_part("no_part");
-    DifficultyCmp *cmp = new DifficultyCmp(tier, 0, "");
-    Symbol sym = tier == -1 ? no_part : TheHamSongMgr.RankTierToken(tier);
-    NavListShortcutNode *newNode = new NavListShortcutNode(cmp, sym, true);
-    return newNode;
+    Symbol tierToken(no_part);
+    if (tierToken != -1) {
+        tierToken = TheHamSongMgr.RankTierToken(cmp->mTier);
+    }
+    return new NavListShortcutNode(newCmp, tierToken, true);
+}
+
+NavListHeaderNode *SongSortByDiff::NewHeaderNode(NavListItemNode *node) const {
+    auto cmp = node->GetCmp()->GetDifficultyCmp();
+    const auto newCmp = new DifficultyCmp(cmp->mTier, 0.0, "");
+    static Symbol no_part("no_part");
+    Symbol tierToken(no_part);
+    if (cmp->mTier != -1) {
+        tierToken = TheHamSongMgr.RankTierToken(cmp->mTier);
+    }
+    return new SongHeaderNode(newCmp, tierToken, true);
 }

@@ -4,9 +4,13 @@
 #include "SongSortNode.h"
 
 class DifficultyCmp : public NavListItemSortCmp {
-    public:
-    DifficultyCmp(int, int, const char *);
-    virtual ~DifficultyCmp() {}
+public:
+    DifficultyCmp(int tier, float rank, const char *name) {
+        mTier = tier;
+        mRank = rank;
+        mName = name;
+    };
+    virtual ~DifficultyCmp();
 
     virtual int Compare(const NavListItemSortCmp *,  NavListNodeType) const;
 

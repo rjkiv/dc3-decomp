@@ -24,7 +24,7 @@ public:
     virtual ~NavListItemSortCmp() {}
     virtual int Compare(const NavListItemSortCmp *, NavListNodeType) const = 0;
     virtual bool HasSubheader() const { return false; }
-    virtual const class DifficultyCmp *GetDifficultyCmp() const;
+    virtual const class DifficultyCmp *GetDifficultyCmp() const; // 0xc
     virtual const class SongCmp *GetSongCmp() const;
     virtual const class ArtistCmp *GetArtistCmp() const; // tentative
     virtual const class DecadeCmp *GetDecadeCmp() const; // tentative
