@@ -44,34 +44,21 @@ void Splash::Resume() {}
 
 void Splash::AddScreen(char const *c, int i) {
     MILO_ASSERT(!gSplashing, 0x175);
-    CriticalSection *cs = &unk98;
     ScreenParams sp;
     sp.fname = c;
     sp.msecs = i;
-    if (cs != nullptr) {
-        cs->Enter();
-    }
+    CritSecTracker tracker(&unk98);
     mScreens.push_back(sp);
-    if (cs != nullptr)
-        cs->Exit();
 }
 
 bool Splash::PrepareNext() {
-    CriticalSection *cs = &unk98;
-    if (cs) {
-        cs->Enter();
-    }
+    //CriticalSection *cs = &unk98;
+    CritSecTracker tracker(&unk98);
     if (mScreens.empty()) {
-        if (cs) {
-            cs->Exit();
-        }
         return false;
     }
     else {
         auto local58 = mScreens.back().fname;
-        if (cs) {
-            cs->Exit();
-        }
         FilePath fp = local58;
         auto loadedObj = DirLoader::LoadObjects(fp, 0, 0);
         RndDir *rndDir = dynamic_cast<RndDir *>(loadedObj);
@@ -82,15 +69,10 @@ bool Splash::PrepareNext() {
         if (splashMovie) {
             splashMovie->GetMovie().CheckOpen(false);
         }
-        if (cs) {
-            cs->Enter();
-        }
+        CritSecTracker tracker2(&unk98);
         PreparedScreenParams psp = {rndDir};
         mPreparedScreens.push_back(psp);
         mScreens.clear();
-        if (cs) {
-            cs->Exit();
-        }
         return true;
     }
 }
@@ -119,46 +101,29 @@ void Splash::Draw() {}
 
 bool Splash::SetMutableState(Splash::SplashState state) {
     MILO_ASSERT(state <= kResumed, 0x13b);
-    CriticalSection *cs = &unk6c;
-    if (cs) {
-        cs->Enter();
-    }
+    CritSecTracker tracker(&unk6c);
     if (mState <= kResumed) {
         mState = state;
         MainThread() ? unk90.Set() : unk8c.Set();
-        if (cs) {
-            cs->Exit();
-        }
         return true;
     }
     else {
-        if (cs) {
-            cs->Exit();
-        }
         return false;
     }
 }
 
 bool Splash::SetImmutableState(Splash::SplashState state) {
     MILO_ASSERT(state > kResumed, 0x150);
-    CriticalSection *cs = &unk6c;
-    if (cs) {
-        cs->Enter();
-    }
+    CritSecTracker tracker(&unk6c);
     if (mState < kResumed || state <= mState) {
         if (state != kWaitingForTerminating || mState != kTerminating) {
-            if (cs) {
-                cs->Exit();
-            }
             return false;
         }
     }
     else {
         mState = state;
         MainThread() ? unk90.Set() : unk8c.Set();
-        if (cs) {
-            cs->Exit();
-        }
+        return true;
     }
     return true;
 }
@@ -185,31 +150,20 @@ bool Splash::ShowNext() {
         unkc0.push_back(unk48);
         unk48 = nullptr;
     }
-    CriticalSection *cs = &unk98;
     unk4c = 0;
     unk54 = 0;
-    if (cs) {
-        cs->Enter();
-    }
+    CritSecTracker tracker(&unk98);
     FOREACH(it, mPreparedScreens) {
         // not really sure whats going on here
     }
     mPreparedScreens.clear();
-    if (cs) {
-        cs->Exit();
-    }
     return Show();
 }
 
 bool Splash::Show() {
-    CriticalSection *cs = &unk98;
-    if (cs) {
-        cs->Enter();
-    }
+    CritSecTracker tracker(&unk98);
     MILO_ASSERT(!mPreparedScreens.empty(), 0x283);
-    if (cs) {
-        cs->Exit();
-    }
+    tracker.mCritSec->Exit();
     auto rndDir = mPreparedScreens.end()->unk0;
     rndDir->Exit();
     unk4c = unk48->Find<RndCam>(kSplashCam, true);
@@ -248,16 +202,10 @@ bool Splash::UpdateThreadLoop() {
 void Splash::UpdateThread() {
     DWORD threadID = GetCurrentThreadId();
     MILO_ASSERT(!MainThread(), 0x21d);
-    CriticalSection *cs = &unk6c;
-    if (cs) {
-        cs->Enter();
-    }
+    CritSecTracker tracker(&unk6c);
     MILO_ASSERT(mState == kResuming, 0x221);
     mState = kResumed;
     unk8c.Set();
-    if (cs) {
-        cs->Exit();
-    }
     unk18.Start();
     Show();
     bool b = UpdateThreadLoop();
