@@ -31,6 +31,8 @@ public:
     virtual bool IsHeader(int);
     virtual void UnHighlightCurrent();
     virtual void ClearIconLabels();
+    virtual int GetListIndexFromHeaderIndex(int);
+    virtual Symbol GetFirstChildSymbolFromHeaderSymbol(Symbol);
     // ContentMgr::Callback
     virtual void ContentMounted(const char *, const char *);
 
@@ -51,8 +53,6 @@ public:
     void StartPreview(int, TexMovie *);
     Symbol OnGetToken(int);
     bool IsIndexHeader(int);
-    virtual int GetListIndexFromHeaderIndex(int);
-    virtual Symbol GetFirstChildSymbolFromHeaderSymbol(Symbol);
     int GetHeaderIndexFromListIndex(int);
     int GetHeaderIndexFromChildListIndex(int);
     bool IsHeaderCollapsed(Symbol);

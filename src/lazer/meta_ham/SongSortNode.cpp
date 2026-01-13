@@ -26,7 +26,8 @@ SongHeaderNode::SongHeaderNode(NavListItemSortCmp *cmp, Symbol s, bool b)
 SongHeaderNode::~SongHeaderNode() { delete mDateTime; }
 
 void SongHeaderNode::OnHighlight() {
-    // TheSongSortMgr->unk_0x4C->Start(nullptr, nullptr);
+    auto song = TheSongSortMgr->GetSongPreview();
+    song->Start(0, 0);
     SetCollapseStateIcon(true);
 }
 
@@ -38,14 +39,35 @@ void SongHeaderNode::SetCollapseStateIcon(bool) const {
     static Symbol header_closed_highlighted_icon("header_closed_highlighted_icon");
 }
 
-Symbol SongHeaderNode::OnSelect() { return gNullStr; }
+Symbol SongHeaderNode::OnSelect() {
+    if (!TheSongSortMgr->IsInHeaderMode()) {
+        TheSongSortMgr->SetHeaderMode(true);
+        TheSongSortMgr->SetEnteringHeaderMode(true);
+    }
+    else {
+        TheSongSortMgr->SetEnteringHeaderMode(false);
+        TheSongSortMgr->SetExitingHeaderMode(true);
+    }
+    return gNullStr;
+}
 
 Symbol SongHeaderNode::Select() {
     return SelectChildren(mChildren, mDiscSongs + mDLCSongs);
 }
 
 Symbol SongHeaderNode::OnSelectDone() {
-    static_cast<NavListSort *>(nullptr)->BuildItemList();
+    if (TheSongSortMgr->EnteringHeaderMode()) {
+        TheSongSortMgr->SetEnteringHeaderMode(false);
+    }
+    if (TheSongSortMgr->ExitingHeaderMode()) {
+        if (TheSongSortMgr->IsInHeaderMode()) {
+            TheSongSortMgr->SetHeaderMode(false);
+        }
+        TheSongSortMgr->SetExitingHeaderMode(false);
+    }
+    TheSongSortMgr->MoveOn(); // ?? needs func at 0x7c but im certain the class is laid out right
+    auto curSort = TheSongSortMgr->GetCurrentSort();
+    curSort->BuildItemList();
     return gNullStr;
 }
 
@@ -57,7 +79,7 @@ void SongHeaderNode::SetItemCountString(UILabel *lbl) const {
 }
 
 bool SongHeaderNode::IsActive() const {
-    if (mDiscSongs)
+    if (TheSongSortMgr->HeadersSelectable())
         return false;
     else
         return IsActive();
@@ -271,3 +293,52 @@ BEGIN_HANDLERS(SongSortNode)
     HANDLE_MEMBER_PTR(const_cast<HamSongMetadata *>(unk_0x48->Metadata()))
     HANDLE_SUPERCLASS(NavListItemNode)
 END_HANDLERS
+
+void SongFunctionNode::OnHighlight() {
+    TheSongSortMgr->GetSongPreview()->Start(0, 0);
+}
+
+bool SongFunctionNode::IsActive() const {
+    static Symbol play_setlist("play_setlist");
+    return unk4c != play_setlist;
+}
+
+Symbol SongFunctionNode::OnSelect() {
+    static Symbol playlists("playlists");
+    static Symbol finish_setlist("finish_setlist");
+    static Symbol play_setlist("play_setlist");
+    static Symbol random_song("random_song");
+    static Symbol career("career");
+    Symbol mode = GetToken();
+    if (mode == playlists) {
+        static Symbol move_on_quickplay_playlist("move_on_quickplay_playlist");
+        auto pPanel = ObjectDir::Main()->Find<UIPanel>("song_select_panel", true);
+        MILO_ASSERT(pPanel, 0x12d);
+        static Message msg(move_on_quickplay_playlist);
+        HandleType(msg);
+    }
+    else {
+        if (mode != random_song) {
+            return gNullStr;
+        }
+        auto song = TheHamSongMgr.GetRandomSong();
+        static Symbol special_select_song("special_select_song");
+        auto pPanel = ObjectDir::Main()->Find<UIPanel>("song_select_panel", true);
+        MILO_ASSERT(pPanel, 0x139);
+        static Message msg(special_select_song, gNullStr);
+        msg->Node(2).Sym() = song;
+        HandleType(msg);
+    }
+    return gNullStr;
+}
+
+void SongFunctionNode::Text(UIListLabel *listlabel, UILabel *label) const {
+    if (listlabel->Matches("function")) {
+        AppLabel *app_label = dynamic_cast<AppLabel *>(label);
+        MILO_ASSERT(app_label, 0x150);
+        app_label->SetFromSongSelectNode(this);
+    }
+    else {
+        label->SetTextToken(gNullStr);
+    }
+}

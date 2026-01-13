@@ -6,12 +6,12 @@
 class SongSortMgr : public NavListSortMgr {
 public:
     virtual DataNode Handle(DataArray *, bool);
+    virtual bool HeadersSelectable(); // 0x74
     virtual bool SelectionIs(Symbol);
-    virtual bool HeadersSelectable();
-    virtual int GetListIndexFromHeaderIndex(int);
     virtual bool DataIs(int, Symbol);
     virtual Symbol MoveOn();
     virtual void OnEnter();
+    virtual int GetListIndexFromHeaderIndex(int);
 
     void MarkElementsProvided(UIListProvider *);
     void MarkElementInPlaylist(Symbol, bool);
