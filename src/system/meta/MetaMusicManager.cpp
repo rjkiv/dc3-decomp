@@ -60,3 +60,11 @@ void MetaMusicManager::ConfigureMetaMusicSceneData(DataArray *da) {
 void MetaMusicManager::Init(DataArray *da) {
     ConfigureMetaMusicSceneData(da->FindArray("scenes"));
 }
+
+Symbol MetaMusicManager::GetSceneForScreen(Symbol sym) const {
+    auto s = m_mapScreenToScene.find(sym);
+    if (s != m_mapScreenToScene.end()) {
+        return s->second;
+    }
+    return gNullStr;
+}
