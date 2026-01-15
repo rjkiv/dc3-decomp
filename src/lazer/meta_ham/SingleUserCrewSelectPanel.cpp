@@ -1,6 +1,10 @@
 #include "meta_ham/SingleUserCrewSelectPanel.h"
 #include "HamPanel.h"
+#include "HamUI.h"
+#include "SkeletonChooser.h"
+#include "flow/PropertyEventProvider.h"
 #include "game/GameMode.h"
+#include "gesture/BaseSkeleton.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
 #include "meta_ham/CharacterProvider.h"
@@ -172,6 +176,17 @@ void SingleUserCrewSelectPanel::SetRandomCrew(int idx) {
     MILO_ASSERT(pCharacterProvider, 0xf0);
     const_cast<CharacterProvider *>(pCharacterProvider)->UpdateList();
     SetRandomCharacter(idx);
+}
+
+int SingleUserCrewSelectPanel::GetPlayerIndex(int i) const {
+    SkeletonChooser *pSkeletonChooser = TheHamUI.GetShellInput()->mSkelChooser;
+    MILO_ASSERT(pSkeletonChooser, 0x52);
+    SkeletonSide skelSide = pSkeletonChooser->GetPlayerSide(0);
+    Symbol is_in_party_mode("is_in_party_mode");
+    const DataNode *node = TheHamProvider->Property(is_in_party_mode, true);
+    if (node->Int() == 0) {
+    }
+    return i == 0;
 }
 
 BEGIN_HANDLERS(SingleUserCrewSelectPanel)

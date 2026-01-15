@@ -25,19 +25,19 @@ public:
     String GetSongShortTitle();
 
 protected:
-    int unk58; // 0x58
+    int mChallengeCount; // 0x58
 };
 
 class ChallengeSortNode : public NavListItemNode {
 public:
-    ChallengeSortNode(NavListItemSortCmp *, ChallengeRecord *); // impl in ChallengeSortByScore
+    ChallengeSortNode(NavListItemSortCmp *, ChallengeRecord *); // impl in
+                                                                // ChallengeSortByScore
     virtual Symbol GetToken() const;
     virtual void Text(UIListLabel *, UILabel *) const;
     virtual void Custom(UIListCustom *, Hmx::Object *) const;
     virtual Symbol OnSelect();
     virtual Symbol Select();
     virtual void OnContentMounted(const char *, const char *);
-
 
     int GetChallengeExp();
     const char *GetChallengerGamertag();
@@ -56,4 +56,3 @@ private:
 protected:
     ChallengeRecord *mChallengeRecord; // 0x48
 };
-

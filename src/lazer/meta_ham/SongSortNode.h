@@ -2,6 +2,7 @@
 
 #include "meta_ham/NavListNode.h"
 #include "meta_ham/SongRecord.h"
+#include "utl/Symbol.h"
 
 class SongHeaderNode : public NavListHeaderNode {
 public:
@@ -35,6 +36,8 @@ public:
     virtual void Text(UIListLabel *, UILabel *) const;
     virtual void Custom(UIListCustom *, Hmx::Object *) const;
     virtual Symbol Select();
+    virtual Symbol OnSelect();
+    virtual void OnContentMounted(const char *, const char *);
 
     void SetInPlaylist(bool);
     bool IsCoverSong(Symbol) const;

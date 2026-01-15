@@ -41,6 +41,7 @@ public:
     void SetTertiaryLabels(DataArray *);
 
     bool GetUnk7a() const { return unk7a; }
+    bool AllowController() const { return mAllowController; }
 
     DataNode OnEnterBlacklightMode(const DataArray *);
     DataNode OnExitBlacklightMode(const DataArray *);

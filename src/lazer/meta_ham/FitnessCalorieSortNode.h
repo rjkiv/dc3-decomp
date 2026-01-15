@@ -12,6 +12,7 @@ public:
     virtual void Text(UIListLabel *, UILabel *) const;
 
     FitnessCalorieSortNode(NavListItemSortCmp *, int);
+    int GetUnk48() const { return unk48; }
 
 protected:
     Symbol unk44;

@@ -61,7 +61,7 @@ public:
     float unk_0x98;
     float unk_0x9C;
     float unk_0xA0;
-    u8 unk_0xA4;
+    bool unk_0xA4;
     ObjPtr<RndAnimatable> mWrongHandPosAnim; // 0xa8
     UIPanel *mInputPanel; // 0xbc
     UIPanel *mCursorPanel; // 0xc0

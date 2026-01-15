@@ -6,7 +6,7 @@
 class SongSortMgr : public NavListSortMgr {
 public:
     virtual DataNode Handle(DataArray *, bool);
-    virtual bool HeadersSelectable(); // 0x74
+    virtual bool HeadersSelectable(); // 0x6c
     virtual bool SelectionIs(Symbol);
     virtual bool DataIs(int, Symbol);
     virtual Symbol MoveOn();

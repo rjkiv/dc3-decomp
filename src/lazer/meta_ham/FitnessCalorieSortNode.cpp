@@ -3,6 +3,7 @@
 #include "NavListNode.h"
 #include "meta_ham/AppLabel.h"
 #include "os/Debug.h"
+#include "stl/_vector.h"
 #include "ui/UILabel.h"
 #include "ui/UIListLabel.h"
 #include "utl/Locale.h"
@@ -72,7 +73,7 @@ Symbol FitnessCalorieHeaderNode::OnSelectDone() {
 void FitnessCalorieHeaderNode::SetCollapseStateIcon(bool b) const {
     Symbol s = gNullStr;
     UILabel *iconLabel = GetCollapseIconLabel();
-    if (iconLabel) { // idk what the vfunc is
+    if (iconLabel) {
         static Symbol header_open_icon("header_open_icon");
         static Symbol header_open_highlighted_icon("header_open_highlighted_icon");
         static Symbol header_closed_icon("header_closed_icon");
@@ -98,6 +99,19 @@ void FitnessCalorieHeaderNode::Text(UIListLabel *uiListLabel, UILabel *uiLabel) 
     AppLabel *app_label = dynamic_cast<AppLabel *>(uiLabel);
     MILO_ASSERT(app_label, 0x94);
     if (uiListLabel->Matches("sort_header")) {
+    }
+}
+
+void FitnessCalorieHeaderNode::Renumber(std::vector<NavListSortNode *> &vec) {
+    mStartIx = vec.size();
+    if (TheFitnessCalorieSortMgr->HeadersSelectable()) {
+        vec.push_back(this);
+        TheFitnessCalorieSortMgr->AddHeaderIndex(mStartIx);
+    }
+    if (!TheFitnessCalorieSortMgr->IsInHeaderMode()) {
+        FOREACH (it, mChildren) {
+            (*it)->Renumber(vec);
+        }
     }
 }
 

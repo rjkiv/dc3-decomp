@@ -15,6 +15,7 @@ public:
     Symbol GetUnk48() { return unk48; }
     Symbol GetUnk4c() { return unk4c; }
     Symbol GetUnk50() { return unk50; }
+
 protected:
     ChallengeRow mChallengeRow; // 0x4
     Symbol unk40; // 0x40
@@ -27,9 +28,9 @@ protected:
 class ChallengeSortMgr : public NavListSortMgr {
 public:
     virtual DataNode Handle(DataArray *, bool);
-    virtual void OnEnter();
-    virtual Symbol MoveOn(); // 0x78
     virtual bool SelectionIs();
+    virtual Symbol MoveOn(); // 0x78
+    virtual void OnEnter();
 
     int GetTotalXpEarned(int);
     Symbol GetChallengerName();
@@ -49,7 +50,6 @@ public:
 
     static void Init(SongPreview &);
     static void Terminate();
-
 
 private:
     ChallengeSortMgr(SongPreview &);

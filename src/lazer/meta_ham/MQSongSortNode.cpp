@@ -4,6 +4,11 @@
 #include "HamUI.h"
 #include "MQSongSortMgr.h"
 #include "HamStarsDisplay.h"
+#include "meta_ham/NavListNode.h"
+#include "stl/_vector.h"
+#include "utl/MakeString.h"
+#include "utl/Std.h"
+#include "utl/Symbol.h"
 
 BEGIN_HANDLERS(MQSongHeaderNode)
     HANDLE_EXPR(get_challenge_count, unk58)
@@ -52,17 +57,50 @@ const char *MQSongHeaderNode::GetAlbumArtPath() {
 
     NavListSort *sort = TheMQSongSortMgr->GetCurrentSort();
 
-    if (sort->GetSortName() != by_album) {
-        return "";
-    }
-    if (unk5c == singles) {
-        return "";
-    }
-    return TheMQSongSortMgr->GetHighlightItem()->GetAlbumArtPath();
+    if (sort->GetSortName() == by_album && GetToken() != singles && !mChildren.empty())
+        return mChildren.front()->GetAlbumArtPath();
+    else
+        return 0;
 }
 
 void MQSongHeaderNode::Text(UIListLabel *listlabel, UILabel *label) const {
     if (listlabel->Matches("song")) {
+        // const char *c = mCmp->GetMQSongCharCmp()->unk8;
+        // label->SetTextToken(MakeString("mqheader_%s", c));
+    } else {
+        if (!listlabel->Matches("song_prefix")) {
+            if (!listlabel->Matches("header_collapse")) {
+                return;
+            }
+            SetCollapseStateIcon(unk5c);
+            return;
+        }
+        label->SetTextToken(gNullStr);
+    }
+}
+
+void MQSongHeaderNode::SetCollapseStateIcon(bool b) const {
+    Symbol s = gNullStr;
+    UILabel *iconLabel = GetCollapseIconLabel();
+    if (iconLabel) {
+        static Symbol header_open_icon("header_open_icon");
+        static Symbol header_open_highlighted_icon("header_open_highlighted_icon");
+        static Symbol header_closed_icon("header_closed_icon");
+        static Symbol header_closed_highlighted_icon("header_closed_highlighted_icon");
+        if (TheMQSongSortMgr->IsInHeaderMode()) {
+            if (b) {
+                s = header_closed_highlighted_icon;
+            } else {
+                s = header_closed_icon;
+            }
+        } else {
+            if (b) {
+                s = header_open_highlighted_icon;
+            } else {
+                s = header_open_icon;
+            }
+        }
+        iconLabel->SetTextToken(s);
     }
 }
 
@@ -78,6 +116,19 @@ NavListSortNode *MQSongHeaderNode::GetFirstActive() {
     }
 }
 
+void MQSongHeaderNode::Renumber(std::vector<NavListSortNode *> &vec) {
+    mStartIx = vec.size();
+    if (TheMQSongSortMgr->HeadersSelectable()) {
+        vec.push_back(this);
+        TheMQSongSortMgr->AddHeaderIndex(mStartIx);
+    }
+    if (!TheMQSongSortMgr->IsInHeaderMode()) {
+        FOREACH (it, mChildren) {
+            (*it)->Renumber(vec);
+        }
+    }
+}
+
 Symbol MQSongSortNode::OnSelect() { return Select(); }
 
 void MQSongSortNode::Text(UIListLabel *listlabel, UILabel *label) const {
@@ -85,17 +136,16 @@ void MQSongSortNode::Text(UIListLabel *listlabel, UILabel *label) const {
         AppLabel *pAppLabel = dynamic_cast<AppLabel *>(label);
         MILO_ASSERT(pAppLabel, 0x10f);
         pAppLabel->SetBlacklightSongName(unk48, -1, false);
-    } else {
-        if (listlabel->Matches("song_prefix")) {
-            AppLabel *pAppLabel = dynamic_cast<AppLabel *>(label);
-            MILO_ASSERT(pAppLabel, 0x116);
-            if (IsHeader() || !TheHamUI.IsBlacklightMode()) {
-                label->SetTextToken(gNullStr);
-            } else {
-                static Symbol song_select_song_prefix("song_select_song_prefix");
-                label->SetTextToken(song_select_song_prefix);
-            }
+    } else if (listlabel->Matches("song_prefix")) {
+        AppLabel *pAppLabel = dynamic_cast<AppLabel *>(label);
+        MILO_ASSERT(pAppLabel, 0x116);
+        if (IsHeader() || !TheHamUI.IsBlacklightMode()) {
+            label->SetTextToken(gNullStr);
+        } else {
+            static Symbol song_select_song_prefix("song_select_song_prefix");
+            label->SetTextToken(song_select_song_prefix);
         }
+    } else {
         label->SetTextToken(listlabel->GetDefaultText());
     }
 }

@@ -8,13 +8,17 @@
 #include "gesture/SpeechMgr.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamNavList.h"
+#include "hamobj/HamPlayerData.h"
 #include "meta_ham/DepthBuffer.h"
 #include "meta_ham/HamUI.h"
 #include "meta_ham/HelpBarPanel.h"
 #include "meta_ham/LetterboxPanel.h"
+#include "meta_ham/ProfileMgr.h"
 #include "meta_ham/UIEventMgr.h"
+#include "net_ham/RockCentral.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
+#include "obj/MessageTimer.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
 #include "obj/Task.h"
@@ -153,8 +157,73 @@ int ShellInput::CycleDrawCursor() {
     return unk_0xC4;
 }
 
-void ShellInput::SyncVoiceControl() {
+void ShellInput::SyncVoiceControl() { // almost done
     static Symbol allow_voice_control("allow_voice_control");
+    const DataNode *prop;
+    if (mInputPanel) {
+        prop = mInputPanel->Property(allow_voice_control, false);
+    } else {
+        prop = nullptr;
+    }
+    if (!mInputPanel || !prop || prop->Int() != 1 || TheProfileMgr.DisableVoice()
+        || TheUIEventMgr->HasActiveDialogEvent() || !TheSpeechMgr->SpeechSupported()) {
+        TheSpeechMgr->SetRecognizing(false);
+        mVoiceControlEnabled = false;
+        static Symbol hide_microphone_icon("hide_microphone_icon");
+        static Message hide_microphone_msg(hide_microphone_icon);
+        TheHamProvider->Handle(hide_microphone_msg, false);
+        static Symbol voice_commander_help_hide("voice_commander_help_hide");
+        static Message voice_commander_help_hide_msg(voice_commander_help_hide);
+        TheHamProvider->Handle(voice_commander_help_hide_msg, false);
+    } else {
+        TheSpeechMgr->SetRecognizing(true);
+        mVoiceControlEnabled = true;
+        static Symbol show_microphone_icon("show_microphone_icon");
+        static Message show_microphone_msg(show_microphone_icon);
+        TheHamProvider->Handle(show_microphone_msg, false);
+        if (TheProfileMgr.GetShowVoiceTip()) {
+            static Symbol voice_commander_help("voice_commander_help");
+            static Message voice_commander_help_msg(voice_commander_help);
+            TheHamProvider->Handle(voice_commander_help_msg, false);
+        }
+        static Symbol voice_commander_tip_temporary("voice_commander_tip_temporary");
+        const DataNode *voiceProp =
+            mInputPanel->Property(voice_commander_tip_temporary, false);
+        if (!TheProfileMgr.GetShowVoiceTip() || !voiceProp || voiceProp->Int() == 1) {
+            TheHamProvider->SetProperty(voice_commander_tip_temporary, true);
+        } else {
+            TheHamProvider->SetProperty(voice_commander_tip_temporary, false);
+        }
+    }
+}
+
+void ShellInput::EnterControllerMode(bool b) {
+    HelpBarPanel *pHelpbarPanel = TheHamUI.GetHelpBarPanel();
+    MILO_ASSERT(pHelpbarPanel, 0x230);
+    if (pHelpbarPanel->AllowController() || b) {
+        pHelpbarPanel->EnterControllerMode();
+        TheGestureMgr->SetInControllerMode(true);
+        static Message controller_mode_entered("controller_mode_entered");
+        TheUI->Handle(controller_mode_entered, false);
+        unk_0xA4 = false;
+        static Symbol in_controller_mode("in_controller_mode");
+        TheHamProvider->SetProperty(in_controller_mode, true);
+        TheRockCentral.SetUnk128(TheRockCentral.GetUnk128() + 1);
+        unk_0x68.Restart();
+        int hamUIPadNum = TheHamUI.GetPadNum();
+        if (!TheProfileMgr.CriticalProfile()) {
+            for (int i = 0; i < 2; i++) {
+                HamPlayerData *pPlayer = TheGameData->Player(i);
+                MILO_ASSERT(pPlayer, 0x251);
+                if (pPlayer->PadNum() == hamUIPadNum) {
+                    mSkelChooser->SetActivePlayer(i);
+                    return;
+                }
+            }
+        }
+    } else {
+        TheSynth->RunFlow("invalid_select.flow");
+    }
 }
 
 void ShellInput::ExitControllerMode(bool b) {
@@ -165,7 +234,7 @@ void ShellInput::ExitControllerMode(bool b) {
     TheUI->Handle(controllerModeExited, false);
     static Symbol in_controller_mode("in_controller_mode");
     TheHamProvider->SetProperty(in_controller_mode, 0);
-    // TheRockCentral.unk_0x12C++;
+    TheRockCentral.SetUnk12c(TheRockCentral.GetUnk12c() + 1);
 }
 
 void ShellInput::DrawDebug() {
@@ -195,15 +264,15 @@ void ShellInput::SetCursorAlpha(float f1) const {
 }
 
 void ShellInput::SyncToCurrentScreen() {
-    if (TheUIEventMgr->HasActiveDialogEvent()) {
-        UIPanel *input = TheHamUI.EventDialogPanel();
-        if (input->GetState() == UIPanel::kUp) {
-            mInputPanel = input;
-        } else if (TheHamUI.GetOverlayPanel()) {
-            mInputPanel = TheHamUI.GetOverlayPanel();
-        }
+    if (TheUIEventMgr->HasActiveDialogEvent()
+        && TheHamUI.EventDialogPanel()->GetState() == UIPanel::kUp) {
+        mInputPanel = TheHamUI.EventDialogPanel();
+    } else if (TheHamUI.GetOverlayPanel()) {
+        mInputPanel = TheHamUI.GetOverlayPanel();
+    } else {
+        mInputPanel = TheHamUI.FocusPanel();
     }
-    // TheGestureMgr->unk4271 = !IsGameplayPanel();
+    TheGestureMgr->SetBool4271(!IsGameplayPanel());
     TheHamUI.GetHelpBarPanel()->SyncToPanel(mInputPanel);
     unk_0x98 = 5000;
     if (TheHamUI.GetHelpBarPanel()) {
@@ -291,3 +360,33 @@ DataNode ShellInput::OnMsg(const JoypadConnectionMsg &msg) {
 }
 
 DataNode ShellInput::OnMsg(const SpeechRecoMessage &msg) { return 0; }
+
+DataNode ShellInput::OnMsg(const LeftHandListEngagementMsg &msg) {
+    if (msg.Success()) {
+        static Symbol voice_commander_help_hide("voice_commander_help_hide");
+        static Message voice_commander_help_hide_msg(voice_commander_help_hide);
+        TheHamProvider->Handle(voice_commander_help_hide_msg, false);
+
+    } else {
+        if (!mInputPanel) {
+            return DataNode(kDataInt, 0);
+        }
+        static Symbol allow_voice_control("allow_voice_control");
+        const DataNode *voiceProp = mInputPanel->Property(allow_voice_control, false);
+        if (!voiceProp || voiceProp->Int() != 1
+            || TheProfileMgr.GetDisableVoiceCommander()
+            || !TheProfileMgr.GetShowVoiceTip()) {
+            return DataNode(kDataInt, 0);
+        }
+        static Symbol voice_commander_tip_temporary("voice_commander_tip_temporary");
+        const DataNode *voiceHelpProp =
+            mInputPanel->Property(voice_commander_tip_temporary, false);
+        if (voiceHelpProp && voiceHelpProp->Int() != 0) {
+            return DataNode(kDataInt, 0);
+        }
+        static Symbol voice_commander_help("voice_commander_help");
+        static Message voice_commander_help_msg(voice_commander_help);
+        TheHamProvider->Handle(voice_commander_help_msg, false);
+    }
+    return DataNode(kDataInt, 0);
+}

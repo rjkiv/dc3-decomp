@@ -116,6 +116,8 @@ public:
     Symbol GetVenuePreference() const { return mVenuePreference; }
     bool NoFlashcards() const { return mNoFlashcards; }
     bool GetAllUnlocked() { return mAllUnlocked; }
+    HamProfile *CriticalProfile() const { return mCriticalProfile; }
+    bool DisableVoice() const { return mDisableVoice; }
 
     int GetUnk4c() { return unk4c; }
     void SetUnk4c(int i) { unk4c = i; };

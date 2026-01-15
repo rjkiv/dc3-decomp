@@ -61,6 +61,10 @@ public:
     String GetMiscImage() { return unkd0; }
     int GetRockCentralTime() { return mRockCentralTime; }
     void SetRockCentralTime(int i) { mRockCentralTime = i; }
+    int GetUnk12c() const { return unk12c; }
+    void SetUnk12c(int i) { unk12c = i; }
+    int GetUnk128() const { return unk128; }
+    void SetUnk128(int i) { unk128 = i; }
 
 private:
     static const String kServerVer;

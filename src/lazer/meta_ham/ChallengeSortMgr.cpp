@@ -2,9 +2,18 @@
 
 #include "ChallengeSortByScore.h"
 #include "ChallengeSortNode.h"
+#include "hamobj/HamGameData.h"
 #include "lazer/game/GameMode.h"
+#include "macros.h"
+#include "obj/Data.h"
+#include "obj/Dir.h"
+#include "obj/Msg.h"
+#include "ui/UIPanel.h"
+#include "utl/Symbol.h"
 
-ChallengeRecord::ChallengeRecord(const ChallengeRecord &other) : mChallengeRow(other.mChallengeRow), unk40(other.unk40), unk44(other.unk44), unk48(other.unk48), unk4c(other.unk4c), unk50(other.unk50) {}
+ChallengeRecord::ChallengeRecord(const ChallengeRecord &other)
+    : mChallengeRow(other.mChallengeRow), unk40(other.unk40), unk44(other.unk44),
+      unk48(other.unk48), unk4c(other.unk4c), unk50(other.unk50) {}
 ChallengeRecord::~ChallengeRecord() {}
 ChallengeRecord &ChallengeRecord::operator=(const ChallengeRecord &other) {
     this->mChallengeRow = other.mChallengeRow;
@@ -20,19 +29,20 @@ NavListSort::NavListSort() {}
 ChallengeSort::~ChallengeSort() {}
 
 BEGIN_CUSTOM_HANDLERS(ChallengeSortMgr)
-HANDLE_EXPR(get_target_challenge_score, _msg->Int(2)) // li r11, 0x3e8 inst here?
-HANDLE_EXPR(get_total_earned_xp, GetTotalXpEarned(_msg->Int(2)))
-HANDLE_EXPR(get_challenger_name, GetChallengerName())
-HANDLE_EXPR(get_song_id, GetSongID(_msg->Int(2)))
-HANDLE_EXPR(get_song_shortname, GetSongShortName(_msg->Int(2)))
-HANDLE_EXPR(get_song_title, GetSongTitle(_msg->Int(2)))
-HANDLE_EXPR(get_challenger_xp, GetChallengerXp(_msg->Int(2)))
-HANDLE_EXPR(get_challenge_record_song_type, GetChallengeRecordSongType(_msg->Int(2)))
-HANDLE_SUPERCLASS(NavListSortMgr)
+    HANDLE_EXPR(get_target_challenge_score, _msg->Int(2)) // li r11, 0x3e8 inst here?
+    HANDLE_EXPR(get_total_earned_xp, GetTotalXpEarned(_msg->Int(2)))
+    HANDLE_EXPR(get_challenger_name, GetChallengerName())
+    HANDLE_EXPR(get_song_id, GetSongID(_msg->Int(2)))
+    HANDLE_EXPR(get_song_shortname, GetSongShortName(_msg->Int(2)))
+    HANDLE_EXPR(get_song_title, GetSongTitle(_msg->Int(2)))
+    HANDLE_EXPR(get_challenger_xp, GetChallengerXp(_msg->Int(2)))
+    HANDLE_EXPR(get_challenge_record_song_type, GetChallengeRecordSongType(_msg->Int(2)))
+    HANDLE_SUPERCLASS(NavListSortMgr)
 END_CUSTOM_HANDLERS
 
 ChallengeSortMgr::ChallengeSortMgr(SongPreview &preview) : NavListSortMgr(preview) {
     SetName("challenge_provider", ObjectDir::Main());
+    mSorts.push_back(new ChallengeSortByScore());
 }
 
 ChallengeSortMgr::~ChallengeSortMgr() {}
@@ -46,8 +56,11 @@ void ChallengeSortMgr::Init(SongPreview &preview) {
 void ChallengeSortMgr::Terminate() {
     TheContentMgr.UnregisterCallback(TheChallengeSortMgr, false);
     MILO_ASSERT(TheChallengeSortMgr, 0x22);
-    //something else here
-    TheChallengeSortMgr = nullptr;
+    if (!TheChallengeSortMgr) {
+        TheChallengeSortMgr = nullptr;
+        return;
+    }
+    RELEASE(TheChallengeSortMgr);
 }
 
 int ChallengeSortMgr::GetTotalXpEarned(int i1) {
@@ -59,19 +72,22 @@ int ChallengeSortMgr::GetTotalXpEarned(int i1) {
 
 int ChallengeSortMgr::GetPotentialChallengeExp(int i1) {
     if (IsIndexHeader(i1)) {
-        return static_cast<ChallengeHeaderNode *>(mSorts[mCurrentSortIdx]->GetList()[i1])->GetChallengeExp();
-    }
-    else {
+        return static_cast<ChallengeHeaderNode *>(mSorts[mCurrentSortIdx]->GetList()[i1])
+            ->GetChallengeExp();
+    } else {
         auto highlight = GetHighlightItem();
         NavListNode *header = dynamic_cast<ChallengeHeaderNode *>(highlight);
         MILO_ASSERT(header, 0xa5);
-        return static_cast<ChallengeHeaderNode *>(header)->GetPotentialChallengeExp(highlight);
+        return static_cast<ChallengeHeaderNode *>(header)->GetPotentialChallengeExp(
+            highlight
+        );
     }
 }
 
 int ChallengeSortMgr::GetOwnerChallengeScore(int songID) {
     for (int i = 0; i < mChallengeRecords.size(); i++) {
-        if (songID == mChallengeRecords[i].GetChallengeRow().mSongID && mChallengeRecords[i].GetUnk48() == mChallengeRecords[i].GetUnk4c()) {
+        if (songID == mChallengeRecords[i].GetChallengeRow().mSongID
+            && mChallengeRecords[i].GetUnk48() == mChallengeRecords[i].GetUnk4c()) {
             return mChallengeRecords[i].GetChallengeRow().mScore;
         }
     }
@@ -80,30 +96,37 @@ int ChallengeSortMgr::GetOwnerChallengeScore(int songID) {
 
 int ChallengeSortMgr::GetChallengeExp(int i1) {
     if (IsIndexHeader(i1)) {
-        return static_cast<ChallengeHeaderNode *>(mSorts[mCurrentSortIdx]->GetList()[i1])->GetChallengeExp();
-    }
-    else return static_cast<ChallengeSortNode *>(mSorts[mCurrentSortIdx]->GetList()[i1])->GetChallengeExp();
+        return static_cast<ChallengeHeaderNode *>(mSorts[mCurrentSortIdx]->GetList()[i1])
+            ->GetChallengeExp();
+    } else
+        return static_cast<ChallengeSortNode *>(mSorts[mCurrentSortIdx]->GetList()[i1])
+            ->GetChallengeExp();
 }
 
 int ChallengeSortMgr::GetSongID(int i1) {
     if (IsIndexHeader(i1)) {
-        return static_cast<ChallengeHeaderNode *>(mSorts[mCurrentSortIdx]->GetList()[i1])->GetSongID();
-    }
-    else return static_cast<ChallengeSortNode *>(mSorts[mCurrentSortIdx]->GetList()[i1])->GetSongID();
+        return static_cast<ChallengeHeaderNode *>(mSorts[mCurrentSortIdx]->GetList()[i1])
+            ->GetSongID();
+    } else
+        return static_cast<ChallengeSortNode *>(mSorts[mCurrentSortIdx]->GetList()[i1])
+            ->GetSongID();
 }
 
 Symbol ChallengeSortMgr::GetSongShortName(int songID) {
     if (IsIndexHeader(songID)) {
-        return static_cast<ChallengeHeaderNode *>(mSorts[mCurrentSortIdx]->GetList()[songID])->GetSongShortName();
-    }
-    else {
+        return static_cast<ChallengeHeaderNode *>(
+                   mSorts[mCurrentSortIdx]->GetList()[songID]
+        )
+            ->GetSongShortName();
+    } else {
         return mSorts[mCurrentSortIdx]->GetList()[songID]->GetToken();
     }
 }
 
 int ChallengeSortMgr::GetOwnerChallengeTimeStamp(int i1) {
     for (int i = 0; i < mChallengeRecords.size(); i++) {
-        if (i1 == mChallengeRecords[i].GetChallengeRow().mSongID && mChallengeRecords[i].GetUnk48() == mChallengeRecords[i].GetUnk4c()) {
+        if (i1 == mChallengeRecords[i].GetChallengeRow().mSongID
+            && mChallengeRecords[i].GetUnk48() == mChallengeRecords[i].GetUnk4c()) {
             return mChallengeRecords[i].GetChallengeRow().mTimeStamp;
         }
     }
@@ -113,9 +136,9 @@ int ChallengeSortMgr::GetOwnerChallengeTimeStamp(int i1) {
 int ChallengeSortMgr::GetChallengeScore(int i1) {
     if (IsIndexHeader(i1)) {
         return GetBestChallengeScore(GetSongID(i1));
-    }
-    else {
-        return static_cast<ChallengeSortNode *>(mSorts[mCurrentSortIdx]->GetList()[i1])->GetChallengeScore();
+    } else {
+        return static_cast<ChallengeSortNode *>(mSorts[mCurrentSortIdx]->GetList()[i1])
+            ->GetChallengeScore();
     }
 }
 
@@ -129,7 +152,8 @@ int ChallengeSortMgr::GetBestChallengeScore(int songID) {
     int currentHighest = 0;
     for (int i = 0; i < mChallengeRecords.size(); i++) {
         int score = mChallengeRecords[i].GetChallengeRow().mScore;
-        if (songID == mChallengeRecords[i].GetChallengeRow().mSongID && currentHighest < score) {
+        if (songID == mChallengeRecords[i].GetChallengeRow().mSongID
+            && currentHighest < score) {
             currentHighest = score;
         }
     }
@@ -138,31 +162,38 @@ int ChallengeSortMgr::GetBestChallengeScore(int songID) {
 
 String ChallengeSortMgr::GetSongTitle(int songID) {
     if (IsIndexHeader(songID)) {
-        return static_cast<ChallengeHeaderNode *>(mSorts[mCurrentSortIdx]->GetList()[songID])->GetSongShortTitle();;
-    }
-    else {
-        return static_cast<ChallengeSortNode *>(mSorts[mCurrentSortIdx]->GetList()[songID])->GetChallengeRecord()->GetUnk44(); // FIXME
+        return static_cast<ChallengeHeaderNode *>(
+                   mSorts[mCurrentSortIdx]->GetList()[songID]
+        )
+            ->GetSongShortTitle();
+        ;
+    } else {
+        return static_cast<ChallengeSortNode *>(mSorts[mCurrentSortIdx]->GetList()[songID])
+            ->GetChallengeRecord()
+            ->GetUnk44(); // FIXME
     }
 }
 
 int ChallengeSortMgr::GetChallengeRecordSongType(int i1) {
     if (IsIndexHeader(i1)) {
         return -1;
-    }
-    else {
-        return static_cast<ChallengeSortNode *>(mSorts[mCurrentSortIdx]->GetList()[i1])->GetChallengeRecord()->GetChallengeRow().mChallengerXp; // needs to grab something at 0x50 - possible wrong cast?
+    } else {
+        return static_cast<ChallengeSortNode *>(mSorts[mCurrentSortIdx]->GetList()[i1])
+            ->GetChallengeRecord()
+            ->GetChallengeRow()
+            .mChallengerXp; // needs to grab something at 0x50 - possible wrong cast?
     }
 }
 
 Symbol ChallengeSortMgr::MoveOn() {
     static Symbol song_select_quickplay("song_select_quickplay");
-    Symbol song_select_mode = TheGameMode->Property("song_select_mode", true)->Sym();
-    if (song_select_quickplay == song_select_mode) {
+    Symbol songSel = TheGameMode->Property("song_select_mode", true)->Sym();
+    if (song_select_quickplay == songSel) {
         static Symbol move_on_quickplay("move_on_quickplay");
-        UIScreen *panel = ObjectDir::Main()->Find<UIScreen>("challenge_feed_panel"); // FIXME: why uipanel no work
-        Symbol moq("move_on_quickplay");
-        static Message msg(moq);
-        HandleType(msg);
+        UIPanel *challengeFeedPanel =
+            ObjectDir::Main()->Find<UIPanel>("challenge_feed_panel");
+        static Message move_on_quickplay_msg("move_on_quickplay");
+        challengeFeedPanel->HandleType(move_on_quickplay_msg);
     }
-    return 0;
+    return gNullStr;
 }

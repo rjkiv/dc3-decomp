@@ -7,11 +7,13 @@
 #include "meta_ham/HamSongMgr.h"
 #include "meta_ham/HamStarsDisplay.h"
 #include "meta_ham/HamUI.h"
+#include "meta_ham/LockedContentPanel.h"
 #include "meta_ham/MetaPerformer.h"
 #include "meta_ham/NavListNode.h"
 #include "meta_ham/NavListSort.h"
 #include "meta_ham/ProfileMgr.h"
 #include "obj/Object.h"
+#include "os/ContentMgr.h"
 #include "os/Debug.h"
 #include "ui/UIListCustom.h"
 #include "ui/UIListLabel.h"
@@ -43,8 +45,7 @@ Symbol SongHeaderNode::OnSelect() {
     if (!TheSongSortMgr->IsInHeaderMode()) {
         TheSongSortMgr->SetHeaderMode(true);
         TheSongSortMgr->SetEnteringHeaderMode(true);
-    }
-    else {
+    } else {
         TheSongSortMgr->SetEnteringHeaderMode(false);
         TheSongSortMgr->SetExitingHeaderMode(true);
     }
@@ -65,7 +66,7 @@ Symbol SongHeaderNode::OnSelectDone() {
         }
         TheSongSortMgr->SetExitingHeaderMode(false);
     }
-    TheSongSortMgr->MoveOn(); // ?? needs func at 0x7c but im certain the class is laid out right
+    TheSongSortMgr->OnEnter();
     auto curSort = TheSongSortMgr->GetCurrentSort();
     curSort->BuildItemList();
     return gNullStr;
@@ -79,7 +80,7 @@ void SongHeaderNode::SetItemCountString(UILabel *lbl) const {
 }
 
 bool SongHeaderNode::IsActive() const {
-    if (TheSongSortMgr->HeadersSelectable())
+    if (!TheSongSortMgr->HeadersSelectable())
         return false;
     else
         return IsActive();
@@ -98,12 +99,13 @@ void SongHeaderNode::UpdateItemCount(NavListItemNode *itemnode) {
 
 void SongHeaderNode::Renumber(std::vector<NavListSortNode *> &vec) {
     SetStartIndex(vec.size());
-    if (TheSongSortMgr->HeadersSelectable()) { // this is adding in a bunch of other insts for some reason
+    if (TheSongSortMgr->HeadersSelectable()) { // this is adding in a bunch of other insts
+                                               // for some reason
         vec.push_back(this);
         TheSongSortMgr->AddHeaderIndex(StartIndex());
     }
     if (!TheSongSortMgr->IsInHeaderMode()) {
-        FOREACH(it, Children()) {
+        FOREACH (it, Children()) {
             (*it)->Renumber(vec);
         }
     }
@@ -117,8 +119,8 @@ Symbol SongSortNode::Select() {
         static Symbol locked_content_screen("locked_content_screen");
         auto *profile = TheProfileMgr.GetActiveProfile(true);
         Symbol token = GetToken();
-        if (TheProfileMgr.IsContentUnlocked(token)) {
-            // TheLockedContentPanel->SetUp(token);
+        if (!TheProfileMgr.IsContentUnlocked(token)) {
+            TheLockedContentPanel->SetUp(token);
             return invalid_version_screen; // ???
         }
         if (profile != nullptr) {
@@ -134,12 +136,41 @@ Symbol SongSortNode::Select() {
     }
 }
 
+Symbol SongSortNode::OnSelect() {
+    if (UseQuickplayPerformer() && TheSongSortMgr) {
+        MetaPerformer::Current()->ResetSongs();
+    }
+    Symbol sel = Select();
+    if (sel != gNullStr) {
+        auto obj = ObjectDir::Main()->Find<UIScreen>(sel.Str(), true);
+        TheUI->PushScreen(obj);
+        return gNullStr;
+    } else {
+        return TheSongSortMgr->MoveOn();
+    }
+}
+
+void SongSortNode::OnContentMounted(const char *contentName, const char *) {
+    MILO_ASSERT(contentName, 0x1a0);
+    if (!TheContentMgr.RefreshInProgress()) {
+        int songID = TheHamSongMgr.GetSongIDFromShortName(GetToken());
+        if (TheHamSongMgr.IsContentUsedForSong(contentName, songID)) {
+            static Symbol song_data_mounted("song_data_mounted");
+            static Message song_data_mounted_message(song_data_mounted, gNullStr);
+            song_data_mounted_message[0] = GetToken();
+            TheUI->Export(song_data_mounted_message, false);
+        }
+    }
+}
+
+void SongSortNode::SetInPlaylist(bool b) { unk_0x4C = b; }
+
 void SongHeaderNode::Text(UIListLabel *, UILabel *ui_label) const {
     AppLabel *app_label = dynamic_cast<AppLabel *>(ui_label);
     MILO_ASSERT(app_label, 182);
-    //if (unk44) {
-    //    static Symbol store_famous_by("store_famous_by");
-    //}
+    // if (unk44) {
+    //     static Symbol store_famous_by("store_famous_by");
+    // }
 }
 
 bool SongSortNode::IsCoverSong(Symbol shortname) const {
@@ -294,9 +325,7 @@ BEGIN_HANDLERS(SongSortNode)
     HANDLE_SUPERCLASS(NavListItemNode)
 END_HANDLERS
 
-void SongFunctionNode::OnHighlight() {
-    TheSongSortMgr->GetSongPreview()->Start(0, 0);
-}
+void SongFunctionNode::OnHighlight() { TheSongSortMgr->GetSongPreview()->Start(0, 0); }
 
 bool SongFunctionNode::IsActive() const {
     static Symbol play_setlist("play_setlist");
@@ -316,8 +345,7 @@ Symbol SongFunctionNode::OnSelect() {
         MILO_ASSERT(pPanel, 0x12d);
         static Message msg(move_on_quickplay_playlist);
         HandleType(msg);
-    }
-    else {
+    } else {
         if (mode != random_song) {
             return gNullStr;
         }
@@ -337,8 +365,7 @@ void SongFunctionNode::Text(UIListLabel *listlabel, UILabel *label) const {
         AppLabel *app_label = dynamic_cast<AppLabel *>(label);
         MILO_ASSERT(app_label, 0x150);
         app_label->SetFromSongSelectNode(this);
-    }
-    else {
+    } else {
         label->SetTextToken(gNullStr);
     }
 }
