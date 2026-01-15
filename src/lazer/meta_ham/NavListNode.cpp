@@ -1,4 +1,6 @@
 #include "meta_ham/NavListNode.h"
+
+#include "NavListSort.h"
 #include "game/GameMode.h"
 #include "meta_ham/HamStarsDisplay.h"
 #include "obj/Data.h"
@@ -145,6 +147,19 @@ NavListSortNode *NavListShortcutNode::GetFirstActive() {
     return nullptr;
 }
 
+void NavListShortcutNode::Insert(NavListItemNode *node, NavListSort *sort) {
+    auto range = std::equal_range<>(mChildren.begin(), mChildren.end(), node, CompareHeaders());
+    NavListHeaderNode *piVar1;
+    if (range.first != range.second) {
+        piVar1 = sort->NewHeaderNode(node);
+        piVar1->SetShortcut(this);
+        mChildren.insert(range.first, piVar1);
+    } else {
+
+    }
+    piVar1->Insert(node, sort);
+}
+
 #pragma endregion
 #pragma region NavListItemNode
 
@@ -237,3 +252,4 @@ void NavListHeaderNode::SetCollapseStateIcon(bool) const {
         label->SetTextToken(gNullStr);
     }
 }
+#pragma endregion

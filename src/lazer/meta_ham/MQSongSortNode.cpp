@@ -31,8 +31,9 @@ void MQSongHeaderNode::OnUnHighlight() {
 Symbol MQSongHeaderNode::OnSelect() {
     if (!TheMQSongSortMgr->IsInHeaderMode()) {
         TheMQSongSortMgr->SetHeaderMode(true);
+        TheMQSongSortMgr->SetEnteringHeaderMode(true);
     }
-    TheMQSongSortMgr->SetEnteringHeaderMode(TheMQSongSortMgr->IsInHeaderMode() == 0);
+    else TheMQSongSortMgr->SetEnteringHeaderMode(false);
     return gNullStr;
 }
 

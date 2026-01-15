@@ -23,9 +23,10 @@ public:
     virtual void Init() {} // 0x8c
     virtual NavListItemNode *NewItemNode(void *) const = 0;
     virtual NavListShortcutNode *NewShortcutNode(NavListItemNode *) const = 0; // 0x94
+    virtual NavListHeaderNode *NewHeaderNode(NavListItemNode *) const = 0;
     virtual NavListHeaderNode *
     NewHeaderNode(NavListItemNode *, NavListItemNode *) const = 0;
-    virtual NavListHeaderNode *NewHeaderNode(NavListItemNode *) const = 0;
+
 
     int GetCurrentShortcut();
     void ChangeHighlightHeader(int);

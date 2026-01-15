@@ -133,7 +133,7 @@ protected:
 
 class NavListItemNode : public NavListSortNode {
 public:
-    NavListItemNode(NavListItemSortCmp *cmp) : NavListSortNode(cmp) {}
+    NavListItemNode(NavListItemSortCmp *cmp) : NavListSortNode(cmp), mHeader(gNullStr) {}
     virtual ~NavListItemNode() {}
     virtual DataNode Handle(DataArray *, bool);
     virtual NavListNodeType GetType() const { return kNodeItem; }
@@ -221,4 +221,10 @@ protected:
     bool mLocalizeToken; // 0x4c
     DateTime *mDateTime; // 0x50
     UILabel *mCollapseIconLabel; // 0x54
+};
+
+struct CompareHeaders {
+    bool operator()(NavListSortNode *left, NavListSortNode *right) const {
+        return left->GetType() != right->GetType(); // probably not right but whatever for now
+    };
 };

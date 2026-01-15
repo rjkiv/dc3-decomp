@@ -1,8 +1,8 @@
 #include "MQSongSortByCharacter.h"
 
+#include "hamobj/HamGameData.h"
+#include "HamSongMgr.h"
 #include "MQSongSortNode.h"
-
-MQSongCharCmp::MQSongCharCmp(const char *c, const char *c2) : unk4(c), unk8(c2){}
 
 int MQSongCharCmp::Compare(const NavListItemSortCmp *cmp, NavListNodeType type) const {
     switch (type) {
@@ -26,13 +26,27 @@ int MQSongCharCmp::Compare(const NavListItemSortCmp *cmp, NavListNodeType type) 
 
 NavListHeaderNode *MQSongSortByCharacter::NewHeaderNode(NavListItemNode *node) const {
     auto cmp = node->GetCmp()->GetMQSongCharCmp();
-    MQSongCharCmp *songCharCmp = new MQSongCharCmp(cmp->unk4, cmp->unk8);
-    Symbol sym = MakeString("mqheader_%s", cmp->unk8);
+    const char *p1 = cmp->unk4;
+    const char *p2 = cmp->unk8;
+    MQSongCharCmp *songCharCmp = new MQSongCharCmp(p1, p2);
+    Symbol sym(MakeString("mqheader_%s", p2));
     return new MQSongHeaderNode(songCharCmp, sym, true);
 }
 
 NavListShortcutNode *MQSongSortByCharacter::NewShortcutNode(NavListItemNode *node) const {
-    auto cmp = node->GetCmp()->GetMQSongCharCmp();
-    MQSongCharCmp *songCharCmp = new MQSongCharCmp(cmp->unk4, cmp->unk8);
-    return new NavListShortcutNode(songCharCmp, cmp->unk8, true);
+    const char *p1 = node->GetCmp()->GetMQSongCharCmp()->unk4;
+    const char *p2 = node->GetCmp()->GetMQSongCharCmp()->unk8;
+    MQSongCharCmp *songCharCmp = new MQSongCharCmp(p1, p2);
+    return new NavListShortcutNode(songCharCmp, p2, true);
+}
+
+NavListItemNode *MQSongSortByCharacter::NewItemNode(void *node) const {
+    Symbol sym;
+    memcpy(&sym, node, sizeof(sym)); // lol
+    int songID = TheHamSongMgr.GetSongIDFromShortName(sym, true);
+    auto outfit = TheHamSongMgr.Data(songID)->Outfit();
+    auto outfitChar = GetOutfitCharacter(outfit, true);
+    MQSongCharCmp *songCharCmp = new MQSongCharCmp((const char *)node, (const char *)node);
+    MQSongSortNode *mqssn = new MQSongSortNode(songCharCmp, (SongRecord *)node);
+    return mqssn;
 }
