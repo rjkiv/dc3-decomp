@@ -7,7 +7,7 @@ public:
     MQSongSort();
     virtual void Text(int, int, UIListLabel *, UILabel *) const;
     virtual void BuildTree();
-    virtual void DeleteItemList();
+    virtual void DeleteItemList(); // 0x74
     virtual void BuildItemList();
     virtual void SetHighlightedIx(int);
     virtual void SetHighlightItem(const NavListSortNode *);
