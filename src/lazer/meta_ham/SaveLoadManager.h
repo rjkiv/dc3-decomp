@@ -91,6 +91,7 @@ public:
     void AutoLoad();
     void HandleEventResponseStart(int);
     bool IsIdle() const;
+    bool GetDialogFocusOption();
     bool IsInitialLoadDone() const { return !unk2d; }
 
     DataNode GetDialogMsg();

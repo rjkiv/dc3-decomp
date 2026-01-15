@@ -1,4 +1,7 @@
 #include "PlaylistSortNode.h"
+#include "hamobj/HamLabel.h"
+#include "meta_ham/HamSongMgr.h"
+#include "meta_ham/LockedContentPanel.h"
 #include "meta_ham/PlaylistSortNode.h"
 
 #include "Accomplishment.h"
@@ -9,9 +12,13 @@
 #include "MetaPerformer.h"
 #include "PlaylistSortMgr.h"
 #include "ProfileMgr.h"
+#include "obj/Msg.h"
+#include "os/ContentMgr.h"
+#include "os/Debug.h"
 #include "ui/UI.h"
 #include "meta_ham/NavListNode.h"
 #include "meta_ham/PlaylistSortMgr.h"
+#include "ui/UIListLabel.h"
 #include "utl/Symbol.h"
 
 #pragma region PlaylistSortNode
@@ -20,37 +27,37 @@ Symbol PlaylistSortNode::OnSelect() {
     if (UseQuickplayPerformer()) {
         MetaPerformer::Current()->ResetSongs();
     }
-    Select();
-    if (unk44 == gNullStr) {
-        auto obj = ObjectDir::Main()->Find<UIScreen>(unk44.Str(), true);
+    Symbol sel = Select();
+    if (sel != gNullStr) {
+        auto obj = ObjectDir::Main()->Find<UIScreen>(sel.Str(), true);
         TheUI->PushScreen(obj);
-        return 0;
-    }
-    else {
-        return ThePlaylistSortMgr->unk78.front().GetName();
+        return gNullStr;
+    } else {
+        return ThePlaylistSortMgr->MoveOn();
     }
 }
 
 Symbol PlaylistSortNode::Select() {
     static Symbol locked_content_screen("locked_content_screen");
     HamProfile *activeProfile = TheProfileMgr.GetActiveProfile(true);
-    if (TheProfileMgr.IsContentUnlocked(unk44)) {
+    Symbol token = GetToken();
+
+    if (!TheProfileMgr.IsContentUnlocked(token)) {
+        TheLockedContentPanel->SetUp(token);
+        return locked_content_screen;
+
+    } else {
         if (activeProfile) {
-            if (activeProfile->IsContentNew(unk44)) {
-                activeProfile->MarkContentNotNew(unk44);
+            if (activeProfile->IsContentNew(token)) {
+                activeProfile->MarkContentNotNew(token);
             }
         }
         if (UseQuickplayPerformer()) {
-            MetaPerformer *cur = MetaPerformer::Current();
-            cur->SetSong(unk48->GetName());
+            MetaPerformer *pPerformer = MetaPerformer::Current();
+            pPerformer->SetSong(GetToken());
         }
-        return 0;
+        return gNullStr;
     }
-    else {
-        //TheLockedContentPanel->SetUp
-        return locked_content_screen;
-    }
-    return 0;
 }
 
 void PlaylistSortNode::Custom(UIListCustom *list, Hmx::Object *obj) const {
@@ -58,27 +65,42 @@ void PlaylistSortNode::Custom(UIListCustom *list, Hmx::Object *obj) const {
         HamStarsDisplay *pStarsDisplay = dynamic_cast<HamStarsDisplay *>(obj);
         MILO_ASSERT(pStarsDisplay, 0x143);
         pStarsDisplay->SetShowing(true);
-        int id = TheHamSongMgr.GetSongIDFromShortName(unk44);
+        Symbol token = GetToken();
+        int id = TheHamSongMgr.GetSongIDFromShortName(token);
         pStarsDisplay->SetSong(id);
     }
 }
 
-void PlaylistSortNode::Text(UIListLabel *pHamLabel, UILabel *label) const {
-    AppLabel *app_label = dynamic_cast<AppLabel *>(label);
+void PlaylistSortNode::Text(UIListLabel *uiListLabel, UILabel *uiLabel) const {
+    AppLabel *app_label = dynamic_cast<AppLabel *>(uiLabel);
     MILO_ASSERT(app_label, 0x122);
-    if (pHamLabel->Matches("label")) {
+    if (uiListLabel->Matches("label")) {
+        HamLabel *pHamLabel = app_label;
         MILO_ASSERT(pHamLabel, 0x126);
-        pHamLabel->SetNote("test");
+        pHamLabel->SetTextToken(GetToken());
+    } else if (uiListLabel->Matches("duration")) {
+        HamLabel *pHamLabel = app_label;
+        MILO_ASSERT(pHamLabel, 0x12d);
+        int duration = unk48->GetDuration();
+        if (duration > 0) {
+            uiLabel->SetTimeHMS(duration, false);
+            return;
+        }
+        pHamLabel->SetTextToken(gNullStr);
+    } else {
+        uiLabel->SetTextToken(gNullStr);
     }
-    else {
-        if (pHamLabel->Matches("duration")) {
-            MILO_ASSERT(pHamLabel, 0x12d);
-            int duration = unk48->GetDuration();
-            if (duration > 0) {
-                label->SetTimeHMS(duration, false);
-                return;
-            }
+}
 
+void PlaylistSortNode::OnContentMounted(const char *contentName, const char *) {
+    MILO_ASSERT(contentName, 0xfe);
+    if (!TheContentMgr.RefreshInProgress()) {
+        int songID = TheHamSongMgr.GetSongIDFromShortName(GetToken());
+        if (TheHamSongMgr.IsContentUsedForSong(contentName, songID)) {
+            static Symbol song_data_mounted("song_data_mounted");
+            static Message song_data_mounted_message(song_data_mounted, gNullStr);
+            song_data_mounted_message[0] = GetToken();
+            TheUI->Export(song_data_mounted_message, false);
         }
     }
 }
@@ -87,8 +109,8 @@ void PlaylistSortNode::Text(UIListLabel *pHamLabel, UILabel *label) const {
 #pragma region PlaylistHeaderNode
 
 BEGIN_HANDLERS(PlaylistHeaderNode)
-HANDLE_EXPR(get_challenge_count, mChallengeCount)
-HANDLE_SUPERCLASS(NavListSortNode)
+    HANDLE_EXPR(get_challenge_count, mChallengeCount)
+    HANDLE_SUPERCLASS(NavListSortNode)
 END_HANDLERS
 
 PlaylistHeaderNode::PlaylistHeaderNode(NavListItemSortCmp *cmp, Symbol s, bool b)
@@ -96,7 +118,7 @@ PlaylistHeaderNode::PlaylistHeaderNode(NavListItemSortCmp *cmp, Symbol s, bool b
 
 void PlaylistHeaderNode::OnHighlight() {
     SongPreview *preview = ThePlaylistSortMgr->GetSongPreview();
-    preview->Start(GetToken(), 0);
+    preview->Start(0, 0);
 }
 
 Symbol PlaylistHeaderNode::OnSelect() {
@@ -104,8 +126,7 @@ Symbol PlaylistHeaderNode::OnSelect() {
     if (!ThePlaylistSortMgr->IsInHeaderMode()) {
         ThePlaylistSortMgr->SetHeaderMode(true);
         mode = 1;
-    }
-    else {
+    } else {
         mode = 0;
     }
     ThePlaylistSortMgr->SetEnteringHeaderMode(mode);
@@ -113,10 +134,11 @@ Symbol PlaylistHeaderNode::OnSelect() {
 }
 
 Symbol PlaylistHeaderNode::OnSelectDone() {
-    if (ThePlaylistSortMgr->IsInHeaderMode() && !ThePlaylistSortMgr->EnteringHeaderMode()) {
+    if (ThePlaylistSortMgr->IsInHeaderMode()
+        && !ThePlaylistSortMgr->EnteringHeaderMode()) {
         ThePlaylistSortMgr->SetHeaderMode(false);
     }
-    ThePlaylistSortMgr->unk78.back(); // function call to 0x7c??? WHERE IS IT COMING FROM?
+    ThePlaylistSortMgr->OnEnter();
     ThePlaylistSortMgr->GetCurrentSort()->BuildItemList();
     return gNullStr;
 }
@@ -126,8 +148,9 @@ bool PlaylistHeaderNode::IsActive() const {
 }
 
 NavListSortNode *PlaylistHeaderNode::GetFirstActive() {
-    FOREACH(it, Children()) {
-        if ((*it)->GetFirstActive()) return *it;
+    FOREACH (it, Children()) {
+        if ((*it)->GetFirstActive())
+            return *it;
     }
 }
 
@@ -135,8 +158,8 @@ char const *PlaylistHeaderNode::GetAlbumArtPath() {
     static Symbol by_album("by_album");
     static Symbol singles("singles");
     auto curSort = ThePlaylistSortMgr->GetCurrentSort()->GetSortName();
-    if (curSort == by_album && curSort != singles && !Children().empty()) {
-        return Children().front()->GetAlbumArtPath();
+    if (curSort == by_album && GetToken() != singles && HasChildren()) {
+        return FirstChild()->GetAlbumArtPath();
     }
     return 0;
 }
@@ -148,9 +171,21 @@ void PlaylistHeaderNode::Renumber(stlpmtx_std::vector<NavListSortNode *> &vec) {
         ThePlaylistSortMgr->AddHeaderIndex(mStartIx);
     }
     if (!ThePlaylistSortMgr->IsInHeaderMode()) {
-        FOREACH(it, mChildren) {
+        FOREACH (it, mChildren) {
             (*it)->Renumber(vec);
         }
+    }
+}
+
+void PlaylistHeaderNode::Text(UIListLabel *uiListLabel, UILabel *uiLabel) const {
+    AppLabel *app_label = dynamic_cast<AppLabel *>(uiLabel);
+    MILO_ASSERT(app_label, 0x89);
+    if (uiListLabel->Matches("header_label")) {
+        HamLabel *pHamLabel = app_label; // why
+        MILO_ASSERT(pHamLabel, 0x8e);
+        pHamLabel->SetTextToken(GetToken());
+    } else {
+        app_label->SetTextToken(uiListLabel->GetDefaultText());
     }
 }
 

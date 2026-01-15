@@ -3,6 +3,7 @@
 #include "meta_ham/AccomplishmentConditional.h"
 #include "meta_ham/AccomplishmentProgress.h"
 #include "meta_ham/HamProfile.h"
+#include "meta_ham/MetaPerformer.h"
 #include "obj/Data.h"
 #include "os/Debug.h"
 #include "utl/Std.h"
@@ -38,6 +39,7 @@ bool AccomplishmentCountConditional::IsFulfilled(HamProfile *profile) const {
         }
     }
     AccomplishmentProgress &progress = profile->AccessAccomplishmentProgress();
-    // relies on MetaPerformer->unk38
-    return false;
+    MetaPerformer *pPerformer = MetaPerformer::Current();
+    progress.IncrementCount(GetName(), pPerformer->GetUnk38());
+    return progress.GetCount(GetName()) != d; // idk what this line is doin
 }

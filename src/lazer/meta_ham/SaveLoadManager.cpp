@@ -33,6 +33,8 @@ SaveLoadManager::~SaveLoadManager() {
     RELEASE(mAction);
 }
 
+bool SaveLoadManager::GetDialogFocusOption() { return mState == 0x5c; }
+
 BEGIN_HANDLERS(SaveLoadManager)
     HANDLE_ACTION(autosave, AutoSave())
     HANDLE_ACTION(autoload, AutoLoad())
@@ -47,7 +49,7 @@ BEGIN_HANDLERS(SaveLoadManager)
     HANDLE_EXPR(get_dialog_msg, GetDialogMsg())
     HANDLE_EXPR(get_dialog_opt1, GetDialogOpt1())
     HANDLE_EXPR(get_dialog_opt2, GetDialogOpt2())
-    HANDLE_EXPR(get_dialog_focus_option, mState == 0x5c)
+    HANDLE_EXPR(get_dialog_focus_option, GetDialogFocusOption())
     HANDLE_EXPR(is_initial_load_done, IsInitialLoadDone())
     HANDLE_EXPR(is_idle, IsIdle())
     HANDLE_ACTION(activate, Activate())

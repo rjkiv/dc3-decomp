@@ -6,8 +6,8 @@
 #include "HamStarsDisplay.h"
 
 BEGIN_HANDLERS(MQSongHeaderNode)
-HANDLE_EXPR(get_challenge_count, unk58)
-HANDLE_SUPERCLASS(NavListHeaderNode)
+    HANDLE_EXPR(get_challenge_count, unk58)
+    HANDLE_SUPERCLASS(NavListHeaderNode)
 END_HANDLERS
 
 MQSongHeaderNode::MQSongHeaderNode(NavListItemSortCmp *cmp, Symbol sym, bool b)
@@ -42,7 +42,8 @@ Symbol MQSongHeaderNode::OnSelectDone() {
 }
 
 bool MQSongHeaderNode::IsActive() const {
-    return TheMQSongSortMgr->HeadersSelectable() != 0; // fruity function not sure whats going on
+    return TheMQSongSortMgr->HeadersSelectable() != 0; // fruity function not sure whats
+                                                       // going on
 }
 
 const char *MQSongHeaderNode::GetAlbumArtPath() {
@@ -62,12 +63,11 @@ const char *MQSongHeaderNode::GetAlbumArtPath() {
 
 void MQSongHeaderNode::Text(UIListLabel *listlabel, UILabel *label) const {
     if (listlabel->Matches("song")) {
-
     }
 }
 
 NavListSortNode *MQSongHeaderNode::GetFirstActive() {
-    FOREACH(it, Children()) {
+    FOREACH (it, Children()) {
         NavListSortNode *node = (*it)->GetFirstActive();
         if (node) {
             return node;
@@ -78,24 +78,20 @@ NavListSortNode *MQSongHeaderNode::GetFirstActive() {
     }
 }
 
-Symbol MQSongSortNode::OnSelect() {
-    return Select();
-}
+Symbol MQSongSortNode::OnSelect() { return Select(); }
 
 void MQSongSortNode::Text(UIListLabel *listlabel, UILabel *label) const {
     if (listlabel->Matches("song")) {
         AppLabel *pAppLabel = dynamic_cast<AppLabel *>(label);
         MILO_ASSERT(pAppLabel, 0x10f);
         pAppLabel->SetBlacklightSongName(unk48, -1, false);
-    }
-    else {
+    } else {
         if (listlabel->Matches("song_prefix")) {
             AppLabel *pAppLabel = dynamic_cast<AppLabel *>(label);
             MILO_ASSERT(pAppLabel, 0x116);
             if (IsHeader() || !TheHamUI.IsBlacklightMode()) {
                 label->SetTextToken(gNullStr);
-            }
-            else {
+            } else {
                 static Symbol song_select_song_prefix("song_select_song_prefix");
                 label->SetTextToken(song_select_song_prefix);
             }

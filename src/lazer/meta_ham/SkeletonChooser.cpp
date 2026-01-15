@@ -143,7 +143,8 @@ SkeletonSide SkeletonChooser::GetPlayerSide(int player) {
 void SkeletonChooser::SetActivePlayer(int playerIndex) {
     MILO_ASSERT_RANGE(playerIndex, 0, 2, 0x635);
     unk3c = playerIndex;
-    TheGameData->Player(playerIndex)->GetSkeletonTrackingID();
+    int skeletonTrackingID = TheGameData->Player(playerIndex)->GetSkeletonTrackingID();
+    TheGestureMgr->SetActiveSkeletonTrackingID(skeletonTrackingID);
 }
 
 bool SkeletonChooser::IsLeftPlayerHandRaised() {
@@ -603,4 +604,19 @@ void SkeletonChooser::SetPlayerCloseWarnings(int player, int mask) {
     pPlayerProvider->SetProperty(player_close_bottom, (mask & 8) > 0);
     pPlayerProvider->SetProperty(player_close_left, (mask & 2) > 0);
     pPlayerProvider->SetProperty(player_close_right, (mask & 1) > 0);
+}
+
+bool SkeletonChooser::IsBehindPlayer(int skelID, int refSkelID) {
+    Skeleton *pSkeleton = TheGestureMgr->GetSkeletonByTrackingID(skelID);
+    MILO_ASSERT(pSkeleton, 0x56e);
+    Skeleton *pRefSkeleton = TheGestureMgr->GetSkeletonByTrackingID(refSkelID);
+    MILO_ASSERT(pRefSkeleton, 0x570);
+    if (pSkeleton->IsTracked() && pRefSkeleton->IsTracked()) {
+        if (pSkeleton->TrackedJoints()[kJointSpine].mJointPos[kCoordCamera].z
+            > pRefSkeleton->TrackedJoints()[kJointSpine].mJointPos[kCoordCamera].z
+                + 0.3f) {
+            return true;
+        }
+    }
+    return false;
 }

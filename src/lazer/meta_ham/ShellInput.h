@@ -16,6 +16,7 @@
 #include "ui/UIPanel.h"
 
 DECLARE_MESSAGE(LeftHandListEngagementMsg, "left_hand_list_engagement")
+bool Success() const { return mData->Int(2); }
 END_MESSAGE
 
 DECLARE_MESSAGE(ResetControllerModeTimeoutMsg, "reset_controller_mode_timeout")

@@ -151,7 +151,7 @@ void SkeletonIdentifier::NotifyOfRecognition(int i) const {
     Skeleton *skel = TheGestureMgr->GetSkeletonByEnrollmentIndex(i);
     if (skel) {
         if (!IsAssociatedWithProfile(i)) {
-            check = !skel->ProfileMatched();
+            check = !skel->ProfileMatched() == 0;
         }
         if (check) {
             int playerID = TheGameData->GetPlayerFromSkeleton(*skel);
@@ -272,4 +272,9 @@ void SkeletonIdentifier::Poll() {
         }
     }
     UpdateIdentityStatus();
+}
+
+DataNode SkeletonIdentifier::OnMsg(SkeletonEnrollmentChangedMsg const &msg) {
+    UpdateEnrolledPlayers();
+    return DATA_UNHANDLED;
 }

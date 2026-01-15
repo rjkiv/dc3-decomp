@@ -51,7 +51,7 @@ public:
     DataNode OnGetData(DataArray *);
     StoreOffer(DataArray *, SongMgr *);
 
-    DataArray *StoreOfferData() { return mStoreOfferData; }
+    DataArray *StoreOfferData() const { return mStoreOfferData; }
 
 protected:
     DataArray *mStoreOfferData; // 0x40
