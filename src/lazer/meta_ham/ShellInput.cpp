@@ -15,6 +15,7 @@
 #include "meta_ham/UIEventMgr.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
+#include "obj/Msg.h"
 #include "obj/Object.h"
 #include "obj/Task.h"
 #include "os/Debug.h"
@@ -25,6 +26,7 @@
 #include "ui/PanelDir.h"
 #include "ui/UI.h"
 #include "ui/UIPanel.h"
+#include "utl/Symbol.h"
 
 ShellInput::ShellInput()
     : mVoiceControlEnabled(0), unk_0x34(this), unk_0x48(0, 15, 0), unk_0x9C(0.2),
@@ -241,6 +243,12 @@ DataNode ShellInput::OnMsg(const SpeechEnableMsg &msg) {
         SyncVoiceControl();
     return 0;
 }
+
+DataNode ShellInput::OnMsg(const ResetControllerModeTimeoutMsg &msg) {
+    unk_0x68.Restart();
+    return DATA_UNHANDLED;
+}
+
 DataNode ShellInput::OnMsg(const ButtonDownMsg &msg) {
     if (msg.GetButton() == kPad_RStickUp || msg.GetButton() == kPad_RStickDown
         || msg.GetButton() == kPad_RStickLeft || msg.GetButton() == kPad_RStickRight

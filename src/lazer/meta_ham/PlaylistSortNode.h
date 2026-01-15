@@ -34,7 +34,7 @@ public:
     virtual Symbol OnSelectDone();
     virtual void OnHighlight();
     NavListSortNode *GetFirstActive();
-    virtual void Text(UIListLabel *, UILabel) const;
+    virtual void Text(UIListLabel *, UILabel *) const;
     virtual bool IsActive() const;
     char const *GetAlbumArtPath();
     virtual void Renumber(std::vector<NavListSortNode *> &);

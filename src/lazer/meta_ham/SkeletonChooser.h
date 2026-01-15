@@ -63,6 +63,7 @@ private:
     void UpdatePlayerSkeletonNavData();
     void ResolveMultiPlayerUpdate();
     void SetPlayerCloseWarnings(int, int);
+    bool IsBehindPlayer(int, int);
 
 protected:
     DirectionGestureFilterSingleUser *unk2c;

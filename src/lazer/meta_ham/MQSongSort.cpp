@@ -48,21 +48,38 @@ void MQSongSort::Text(int i1, int i2, UIListLabel *listlabel, UILabel *label) co
 }
 
 void MQSongSort::SetHighlightItem(const NavListSortNode *node) {
-    NavListSortNode *node2 = unk50;
-    unk50 = 0;
-    unk54 = node2;
+    NavListSortNode *tempNode = unk50;
+    unk50 = nullptr;
+    unk54 = tempNode;
     if (node) {
-        Symbol sortName = node->GetToken();
-        if (sortName == 5 || sortName == 4) {
-            SortNodeFind nodeFind = SortNodeFind(node);
-            auto begin = mList.begin();
-            auto end = mList.end();
-            auto a = stlpmtx_std::find_if(begin, end, nodeFind);
-            if (a != end) {
-                unk50 = *a;
+        if (node->GetType() == 5 || node->GetType() == 4) {
+            auto find = std::find_if(mList.begin(), mList.end(), SortNodeFind(node));
+            if (find != mList.end()) {
+                unk50 = *find;
                 TheMQSongSortMgr->OnHighlightChanged();
             }
-
         }
     }
+}
+
+void MQSongSort::BuildItemList() {
+    Symbol sym(gNullStr);
+    auto sortNode = unk50;
+    if (sortNode && sortNode->GetType() == 5) {
+        sym = sortNode->GetToken();
+    }
+    DeleteItemList();
+    FOREACH (it, unk3c) {
+        (*it)->Renumber(mList);
+    }
+    FOREACH (it, unk30) {
+        (*it)->Renumber(mList);
+    }
+    FOREACH (it, unk30) {
+        (*it)->FinishBuildList(this);
+    }
+    if (!sym.Null()) {
+        unk50 = GetNode(sym);
+    }
+    TheMQSongSortMgr->FinalizeHeaders();
 }

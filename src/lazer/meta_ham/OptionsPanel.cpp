@@ -43,6 +43,14 @@ void OptionsPanel::OnXboxTokenRedemption(int i) {
     MILO_LOG("XShowTokenRedemptionUI returned %d\n", XShowTokenRedemptionUI(i));
 }
 
+DataNode OptionsPanel::OnMsg(SingleItemEnumCompleteMsg const &msg) {
+    if (msg.Success()) {
+        if (msg.HasOfferID())
+            msg.OfferID();
+    }
+    return 0;
+}
+
 BEGIN_HANDLERS(OptionsPanel)
     HANDLE_EXPR(redeem_token, OnRedeemToken(_msg->Int(2), _msg->Str(3)))
     HANDLE_ACTION(

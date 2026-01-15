@@ -15,7 +15,10 @@
 class PlaylistSortMgr : public NavListSortMgr {
 public:
     virtual DataNode Handle(DataArray *, bool);
+    virtual bool SelectionIs(Symbol) { return 0; }
+    virtual Symbol MoveOn() { return 0; }
     virtual void OnEnter();
+
     int ConvertListIndexToPlaylistIndex(int);
     Playlist *GetPlaylist(int);
     void OnDeletePlaylistFromRC(Playlist *);

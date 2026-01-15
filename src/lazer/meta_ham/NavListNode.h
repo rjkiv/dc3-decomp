@@ -52,6 +52,7 @@ public:
     void GetID(DataArray *);
     NavListItemSortCmp *GetCmp() { return mCmp; }
     NavListNode *Parent() const { return mParent; }
+
 protected:
     NavListItemSortCmp *mCmp; // 0x2c
     NavListNode *mParent; // 0x30
@@ -90,6 +91,8 @@ public:
     void SetStartIndex(int idx) { mStartIx = idx; }
     NavListShortcutNode *GetShortcut() const { return mShortcut; }
     const std::list<NavListSortNode *> &Children() const { return mChildren; }
+    NavListSortNode *FirstChild() const { return mChildren.front(); }
+    bool HasChildren() const { return !mChildren.empty(); }
     int GetStartIx() { return mStartIx; }
     void ClearList() { mChildren.clear(); }
 
@@ -110,14 +113,16 @@ public:
     virtual void DeleteAll();
 
     void Insert(class NavListItemNode *, class NavListSort *);
-    void
-    InsertHeaderRange(class NavListItemNode **, class NavListItemNode **, class NavListSort *);
+    void InsertHeaderRange(
+        class NavListItemNode **, class NavListItemNode **, class NavListSort *
+    );
     NavListSortNode *GetFirstActive();
     bool IsActive() const;
     void FinishBuildList(NavListSort *);
     void FinishSort(NavListSort *);
     void Renumber(std::vector<NavListSortNode *> &);
     const std::list<NavListSortNode *> &Children() const { return mChildren; }
+    NavListSortNode *FirstChild() const { return mChildren.front(); }
 
 protected:
     Symbol mToken; // 0x34

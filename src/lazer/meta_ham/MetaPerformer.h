@@ -122,6 +122,7 @@ public:
     bool HasPlaylist() const { return mPlaylist; }
     Playlist *GetPlaylist() { return mPlaylist; }
     int GetPlaylistElapsedTime() const { return mPlaylistElapsedTime; }
+    int GetUnk38() const { return unk38; }
 
     void SetSkipPracticeWelcome(bool b) { mSkipPracticeWelcome = b; }
 

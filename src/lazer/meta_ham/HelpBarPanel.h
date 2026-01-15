@@ -40,6 +40,8 @@ public:
     void SyncToPanel(UIPanel *);
     void SetTertiaryLabels(DataArray *);
 
+    bool GetUnk7a() const { return unk7a; }
+
     DataNode OnEnterBlacklightMode(const DataArray *);
     DataNode OnExitBlacklightMode(const DataArray *);
 
