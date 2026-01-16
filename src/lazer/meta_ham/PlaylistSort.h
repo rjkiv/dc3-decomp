@@ -2,13 +2,6 @@
 #include "NavListSort.h"
 #include "meta_ham/NavListNode.h"
 
-struct CompareHeaders {
-public:
-    bool operator()(NavListItemNode *left, NavListItemNode *right) {
-        return left->GetType() != right->GetType();
-    };
-};
-
 class PlaylistSort : public NavListSort {
 public:
     // UIListProvider
