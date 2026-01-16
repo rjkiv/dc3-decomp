@@ -12,6 +12,11 @@
 #include "utl/Symbol.h"
 #include <list>
 
+struct CmdAddPlayListToRC : public QueueableCommand {
+    CmdAddPlayListToRC(Playlist *pl) : playlist(pl) {}
+    Playlist *playlist;
+};
+
 class PlaylistSortMgr : public NavListSortMgr {
 public:
     virtual DataNode Handle(DataArray *, bool);
