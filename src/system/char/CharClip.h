@@ -173,7 +173,7 @@ public:
         return Max<int>(Max<int>(1, mFull.NumSamples()), mFull.NumFrames());
     }
     int Flags() const { return mFlags; }
-    Transitions GetTransitions() const { return mTransitions; }
+    Transitions &GetTransitions() { return mTransitions; }
     int InGroups();
     bool SharesGroups(CharClip *);
     float LengthSeconds() const;

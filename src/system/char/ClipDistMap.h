@@ -7,10 +7,12 @@
 #include "obj/Object.h"
 #include "utl/MemMgr.h"
 
-class DistEntry {
+struct DistEntry {
 public:
-    DistEntry() {}
+    DistEntry(const DistEntry &);
     ~DistEntry() {}
+
+    DistEntry &operator= (const DistEntry &right);
 
     float beat; // 0x0
     std::vector<Vector3> bones; // 0x4
