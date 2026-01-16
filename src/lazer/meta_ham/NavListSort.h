@@ -54,3 +54,16 @@ protected:
     NavListSortNode *unk54; // 0x54
     Symbol mSortName; // 0x58
 };
+
+
+struct CompareHeaders {
+    bool operator()(NavListSortNode *left, NavListSortNode *right) const {
+        return left->GetType() != right->GetType(); // probably not right but whatever for now
+    }
+};
+
+struct CompareItems {
+    bool operator()(NavListSortNode *left, NavListSortNode *right) const {
+        return left->GetItemCount() < right->GetItemCount(); // also probably not right
+    }
+};

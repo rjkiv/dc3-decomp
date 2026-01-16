@@ -52,6 +52,7 @@ public:
     void GetID(DataArray *);
     NavListItemSortCmp *GetCmp() { return mCmp; }
     NavListNode *Parent() const { return mParent; }
+    void SetParent(NavListNode *parent) { mParent = parent; }
 
 protected:
     NavListItemSortCmp *mCmp; // 0x2c
@@ -112,10 +113,8 @@ public:
     virtual const DateTime *GetDateTime() const { return mDateTime; }
     virtual void DeleteAll();
 
-    void Insert(class NavListItemNode *, class NavListSort *);
-    void InsertHeaderRange(
-        class NavListItemNode **, class NavListItemNode **, class NavListSort *
-    );
+    void Insert(class NavListItemNode *, NavListSort *);
+    void InsertHeaderRange(NavListItemNode **, NavListItemNode **, NavListSort *);
     NavListSortNode *GetFirstActive();
     bool IsActive() const;
     void FinishBuildList(NavListSort *);
@@ -209,7 +208,7 @@ public:
     virtual bool IsActive() const { return IsActive(); } // ok then
     virtual const char *GetAlbumArtPath() { return nullptr; }
     virtual void Insert(NavListItemNode *, NavListSort *);
-    virtual void UpdateItemCount(NavListItemNode *) {}
+    virtual void UpdateItemCount(NavListItemNode *) {} // 0xb8
     virtual UILabel *GetCollapseIconLabel() const { return mCollapseIconLabel; }
     virtual Symbol SelectChildren(std::list<NavListSortNode *> &, int);
     virtual void SetItemCountString(UILabel *) const;
@@ -221,10 +220,4 @@ protected:
     bool mLocalizeToken; // 0x4c
     DateTime *mDateTime; // 0x50
     UILabel *mCollapseIconLabel; // 0x54
-};
-
-struct CompareHeaders {
-    bool operator()(NavListSortNode *left, NavListSortNode *right) const {
-        return left->GetType() != right->GetType(); // probably not right but whatever for now
-    };
 };
