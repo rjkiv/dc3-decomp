@@ -1,4 +1,8 @@
 #include "obj/DataFile.h"
+
+#include "DataFlex.h"
+#include "utl/Compress.h"
+#include "utl/Std.h"
 #include "math/FileChecksum.h"
 #include "obj/Data.h"
 #include "obj/DataFile_Flex.h"
@@ -6,6 +10,7 @@
 #include "os/Debug.h"
 #include "os/File.h"
 #include "os/OSFuncs.h"
+#include "os/System.h"
 #include "os/ThreadCall.h"
 #include "utl/BufStream.h"
 #include "utl/FilePath.h"
@@ -13,19 +18,53 @@
 #include "utl/MemMgr.h"
 
 CriticalSection gDataReadCrit; // yes these are the bss offsets. this tu sucks
-// DataArray *gArray; // 0x28
-// int gNode; // 0x2c
+//DataArray *gArray; // 0x28
+int gNode; // 0x2c
 Symbol gFile; // 0x30
-// BinStream *gBinStream; // 0x34
+BinStream *gBinStream; // 0x34
 // int gOpenArray = kDataTokenFinished; // 0x38 ?
 // std::list<ConditionalInfo> gConditional; // 0x48 - actually a list of ConditionalInfo
 //                                          // structs
+std::list<bool> gConditional;
 int gDataLine; // 0x50
-// std::map<String, DataNode> gReadFiles; // 0x60
+std::map<String, DataNode> gReadFiles; // 0x60
 
 // bool gCompressCached;
 // bool gCachingFile;
-// bool gReadingFile;
+bool gReadingFile;
+
+void DataWriteFile(const char *file, const DataArray *da, int i) {
+    TextStream *stream;
+    if (file != 0) {
+        stream = new TextFileStream(file, false);
+    }
+    else {
+        stream = new Debug();
+    }
+    for (; i < da->Size(); i++) {
+        da->Node(i).Print(*stream, false, 0);
+        stream->operator<<("\n");
+    }
+    if (stream) {
+        stream->Space(1);
+    }
+}
+
+void BeginDataRead() {
+    MILO_ASSERT(gReadFiles.size() == 0, 0x29b);
+    gReadingFile = 1;
+}
+
+void FinishDataRead() {
+    gReadingFile = 0;
+    std::map<String, DataNode> temp;
+    gReadFiles.swap(temp);
+}
+
+DataArray *DataReadString(const char *c) {
+    BufStream stream = BufStream(&c, strlen(c), true);
+    return DataReadStream(&stream);
+}
 
 DataArray *ReadCacheStream(BinStream &bs, const char *cc) {
     CritSecTracker cst(&gDataReadCrit);
@@ -37,8 +76,86 @@ DataArray *ReadCacheStream(BinStream &bs, const char *cc) {
     return arr;
 }
 
+DataArray *DataReadStream(BinStream *bs) {
+    gDataReadCrit.Enter();
+    Symbol stream(bs->Name());
+    gNode = 0;
+    unsigned int conds1 = 0;
+    gFile = stream;
+    FOREACH(it, gConditional) {
+        conds1++;
+    }
+    DataArray *parse = ParseArray();
+    unsigned int conds2 = 0;
+    FOREACH(it, gConditional) {
+        conds2++;
+    }
+    if (conds2 != conds1) {
+        MILO_FAIL("DataReadFile: conditional block not closed (file %s)", gFile);
+    }
+    gDataReadCrit.Exit();
+    return parse;
+}
+
+DataArray *LoadDtz(const char *c, int i) {
+    char d[4] = {c[i - 1], c[i - 2], c[i - 3], c[i - 4]};
+    int decompSize = reinterpret_cast<int>(d);
+    MILO_ASSERT(decompSize > 0, 0x456);
+    auto pDecompBuf = MemAlloc(decompSize, "DataFile.cpp", 0x459, "LoadDtz", 0);
+    MILO_ASSERT(pDecompBuf, 0x45b);
+    DecompressMem(c, i - 4, pDecompBuf, decompSize, 0, 0);
+    BufStream buf_stream = BufStream(pDecompBuf, decompSize, true);
+    DataArray *da = 0;
+    buf_stream >> da;
+    if (pDecompBuf) {
+        MemFree(pDecompBuf, "DataFile.cpp", 0x46a, "unknown");
+    }
+    return da;
+}
+
+const char *CachedDataFile(const char *file, bool &b) {
+    bool isLocal = FileIsLocal(file);
+    const char *filename = strstr(file, ".dtb");
+    if (filename) {
+        if (UsingCD() && !isLocal) {
+            b = true;
+            const char *filebase = FileGetBase(file);
+            const char *filepath = FileGetPath(file);
+            return MakeString("%s/gen/%s.dtb", filepath, filebase);
+        }
+        b = false;
+    }
+    return file;
+}
+
 void DataFail(const char *msg) {
     MILO_FAIL("%s (file %s, line %d)", msg, gFile, gDataLine);
+}
+
+DataArray *ReadEmbeddedFile(const char *file, bool b) {
+    gDataReadCrit.Enter();
+    const char *filepath = FileGetPath(gFile.Str());
+    const char *madePath = FileMakePath(filepath, file);
+    Symbol localfile = gFile;
+    int dataline = gDataLine;
+    //dat_82f6d14 - are these dats gArray?
+    auto bs = gBinStream;
+    //dat_82f64d0c
+    //dat_82f64d08
+    yyrestart(nullptr);
+    DataArray *da = DataReadFile(madePath, b);
+    if (b && !da) {
+        MILO_FAIL("Couldn\'t open embedded file: %s (file %s, line %d)", madePath, da->File(), da->Line());
+    }
+    //dat_82f64d08
+    //dat_82f64d0c
+    gBinStream = bs;
+    //dat_82f64d14
+    gDataLine = dataline;
+    gFile = localfile;
+    yyrestart(nullptr);
+    gDataReadCrit.Exit();
+    return da;
 }
 
 DataLoader::DataLoader(const FilePath &fp, LoaderPos pos, bool b3)
