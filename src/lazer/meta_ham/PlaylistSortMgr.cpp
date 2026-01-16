@@ -1,8 +1,12 @@
 #include "meta_ham/PlaylistSortMgr.h"
+
+#include "hamobj/HamGameData.h"
 #include "HamProfile.h"
 #include "NavListSortMgr.h"
+#include "PassiveMessenger.h"
 #include "PlaylistSort.h"
 #include "ProfileMgr.h"
+#include "SaveLoadManager.h"
 #include "game/PartyModeMgr.h"
 #include "meta/SongPreview.h"
 #include "net_ham/PlaylistJobs.h"
@@ -17,6 +21,25 @@
 #include "ui/UI.h"
 #include "utl/DataPointMgr.h"
 #include "utl/Symbol.h"
+
+bool CompareType(const Playlist *p1, const Playlist *p2) {
+    int p1type = p1->GetType();
+    int p2type = p2->GetType();
+    if (p1type == p2type) {
+        bool p1custom = p1->IsCustom();
+        bool p2custom = p2->IsCustom();
+        for (int i = 0; i == 0; i = p1custom - p2custom) {
+            if (p1custom == 0) break;
+            p1custom++;
+            p2custom++;
+        }
+    }
+    else {
+        int p1type = p1->GetType();
+        int p2type = p2->GetType();
+        return p2type <= p1type ? false : true;
+    }
+}
 
 PlaylistSortMgr *ThePlaylistSortMgr;
 
@@ -148,6 +171,88 @@ DataNode PlaylistSortMgr::OnMsg(SmartGlassMsg const &) {
     SendDataPoint("smartglass/playlist");
     QueueCmdGetPlaylistsFromRC();
     return 1;
+}
+
+void PlaylistSortMgr::QueueCmdAddPlaylistToRC(Playlist *pl) {
+    CmdAddPlayListToRC *cmd = new CmdAddPlayListToRC(pl);
+    unkc0.push_back(cmd);
+    if (!unkc8) {
+        ProcessNextCommand();
+    }
+}
+
+void PlaylistSortMgr::ProcessNextCommand() {
+    int i = 0;
+    for (auto it = (unkc0).begin(); it != (unkc0).end(); (++it), i++) {
+        if (i != 0) {
+            unkc8 = true;
+            i = (*it)->unk0;
+            if (i == 0) {
+                HandleCmdChangeProfileOnlineID();
+                return;
+            }
+            if (i == 1) {
+                StartCmdGetPlaylistsFromRC();
+                return;
+            }
+            if (i == 2) {
+                HandleCmdResolvePlaylists();
+                return;
+            }
+            if (i == 3) {
+                StartCmdGetPlaylistFromRC();
+                return;
+            }
+            if (i == 4) {
+                StartCmdAddPlaylistToRC();
+                return;
+            }
+            if (i == 5) {
+                StartCmdEditPlaylist();
+                return;
+            }
+            if (i == 6) {
+                StartCmdDeletePlaylistFromRC();
+                return;
+            }
+        }
+    }
+    unkc8 = false;
+}
+
+void PlaylistSortMgr::ResolvePlaylists() {
+    auto activeProfile = TheProfileMgr.GetActiveProfile(true);
+    Playlist *playlist;
+    if (activeProfile) {
+        const char *profileName = activeProfile->GetName();
+        bool flag = unkb0 != profileName;
+        if (!flag) {
+            for (int i = 0; i < unkd0.size(); i++) {
+                *playlist = activeProfile->GetPlaylist(i);
+                auto cusPlaylist = dynamic_cast<CustomPlaylist *>(playlist);
+                cusPlaylist->Copy(&unkd0[i]);
+                cusPlaylist->SetParentProfile(activeProfile);
+            }
+        }
+        for (int i = 0; i < 5; i++) {
+            *playlist = activeProfile->GetPlaylist(i);
+            int numSongs = playlist->GetNumSongs();
+            for (int i = 0; i < numSongs; i++) {
+                playlist->RemoveSong();
+            }
+
+        }
+        if (TheSaveLoadMgr) {
+            TheSaveLoadMgr->AutoSave();
+        }
+        BroadcastSyncMsg("playlists_synced");
+        if (unkd0.size() == 0) {
+            return;
+        }
+        SendPassiveMsg("playlist_syned_with_rc");
+        return;
+    }
+    BroadcastSyncMsg("sync_failed");
 }
 
 BEGIN_HANDLERS(PlaylistSortMgr)
