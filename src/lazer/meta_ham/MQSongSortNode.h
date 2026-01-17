@@ -31,5 +31,4 @@ public:
 
 protected:
     Symbol unk48; // 0x48
-    void *unk4c; // 0x4c
 };
