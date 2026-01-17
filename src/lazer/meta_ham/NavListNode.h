@@ -163,11 +163,9 @@ public:
     bool UseQuickplayPerformer();
 
     Symbol Header() const { return mHeader; }
-    Symbol GetUnk48() const { return unk48; }
 
 protected:
     Symbol mHeader; // 0x44
-    Symbol unk48;
 };
 
 class NavListFunctionNode : public NavListSortNode {

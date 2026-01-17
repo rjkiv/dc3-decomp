@@ -18,14 +18,14 @@ FitnessCalorieSortByCalorie::FitnessCalorieSortByCalorie() {
 
 NavListShortcutNode *
 FitnessCalorieSortByCalorie::NewShortcutNode(NavListItemNode *node) const {
-    Symbol s = MakeString("calorie_shortcut_%i", node->GetUnk48());
+    Symbol s = MakeString("calorie_shortcut_%i", node->Header());
     FitnessCalorieSortCmp *cmp = new FitnessCalorieSortCmp();
     return new NavListShortcutNode(cmp, s, true);
 }
 
 NavListHeaderNode *
 FitnessCalorieSortByCalorie::NewHeaderNode(NavListItemNode *node) const {
-    Symbol s = MakeString("calorie_shortcut_%i", node->GetUnk48());
+    Symbol s = MakeString("calorie_shortcut_%i", node->Header());
     FitnessCalorieSortCmp *cmp = new FitnessCalorieSortCmp();
     return new FitnessCalorieHeaderNode(cmp, s, true);
 }
