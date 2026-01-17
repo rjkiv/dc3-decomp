@@ -2,6 +2,7 @@
 #include "NavListNode.h"
 #include "SongSort.h"
 #include "SongSortNode.h"
+#include "meta_ham/NavListNode.h"
 
 class DifficultyCmp : public NavListItemSortCmp {
 public:
@@ -12,7 +13,7 @@ public:
     };
     virtual ~DifficultyCmp();
 
-    virtual int Compare(const NavListItemSortCmp *,  NavListNodeType) const;
+    virtual int Compare(const NavListItemSortCmp *, NavListNodeType) const;
 
     int mTier; // 0x0
     float mRank; // 0x4
@@ -26,5 +27,6 @@ public:
 
     virtual NavListItemNode *NewItemNode(void *) const;
     virtual NavListHeaderNode *NewHeaderNode(NavListItemNode *) const;
+    virtual NavListHeaderNode *NewHeaderNode(NavListItemNode *, NavListItemNode *) const;
     virtual NavListShortcutNode *NewShortcutNode(NavListItemNode *) const;
 };

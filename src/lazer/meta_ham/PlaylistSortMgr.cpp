@@ -2,13 +2,17 @@
 
 #include "hamobj/HamGameData.h"
 #include "HamProfile.h"
+#include "NavListSort.h"
 #include "NavListSortMgr.h"
 #include "PassiveMessenger.h"
 #include "PlaylistSort.h"
 #include "ProfileMgr.h"
 #include "SaveLoadManager.h"
 #include "game/PartyModeMgr.h"
+#include "macros.h"
 #include "meta/SongPreview.h"
+#include "meta_ham/FitnessGoalMgr.h"
+#include "meta_ham/Playlist.h"
 #include "net_ham/PlaylistJobs.h"
 #include "net_ham/RCJobDingo.h"
 #include "net_ham/RockCentral.h"
@@ -20,7 +24,9 @@
 #include "os/PlatformMgr.h"
 #include "ui/UI.h"
 #include "utl/DataPointMgr.h"
+#include "utl/Std.h"
 #include "utl/Symbol.h"
+#include <list>
 
 bool CompareType(const Playlist *p1, const Playlist *p2) {
     int p1type = p1->GetType();
@@ -29,12 +35,12 @@ bool CompareType(const Playlist *p1, const Playlist *p2) {
         bool p1custom = p1->IsCustom();
         bool p2custom = p2->IsCustom();
         for (int i = 0; i == 0; i = p1custom - p2custom) {
-            if (p1custom == 0) break;
+            if (p1custom == 0)
+                break;
             p1custom++;
             p2custom++;
         }
-    }
-    else {
+    } else {
         int p1type = p1->GetType();
         int p2type = p2->GetType();
         return p2type <= p1type ? false : true;
@@ -166,6 +172,44 @@ void PlaylistSortMgr::BroadcastSyncMsg(Symbol s) {
     TheUI->Handle(msg, false);
 }
 
+void PlaylistSortMgr::OnEnter() {
+    UpdateList();
+    FOREACH (it, mSorts) {
+        (*it)->BuildTree();
+    }
+    NavListSort *sort = mSorts[mCurrentSortIdx];
+    sort->BuildItemList();
+    if (unk48) {
+        sort->SetHighlightID(unk44);
+        unk48 = false;
+    }
+    sort->UpdateHighlight();
+}
+
+void PlaylistSortMgr::StartCmdGetPlaylistFromRC() {
+    QueueableCommand *cmd = unkc0.front();
+    unkcc = new GetPlaylistJob(this, unkb8.c_str(), cmd->unk4.i);
+    TheRockCentral.ManageJob(unkcc);
+}
+
+void PlaylistSortMgr::StartCmdAddPlaylistToRC() {
+    QueueableCommand *cmd = unkc0.front();
+    unkcc = new AddPlaylistJob(this, unkb8.c_str(), cmd->unk4.playlist);
+    TheRockCentral.ManageJob(unkcc);
+}
+
+void PlaylistSortMgr::StartCmdDeletePlaylistFromRC() {
+    QueueableCommand *cmd = unkc0.front();
+    unkcc = new DeletePlaylistJob(this, unkb8.c_str(), cmd->unk4.i);
+    TheRockCentral.ManageJob(unkcc);
+}
+
+void PlaylistSortMgr::StartCmdEditPlaylist() {
+    QueueableCommand *cmd = unkc0.front();
+    unkcc = new EditPlaylistJob(this, unkb8.c_str(), cmd->unk4.playlist);
+    TheRockCentral.ManageJob(unkcc);
+}
+
 DataNode PlaylistSortMgr::OnMsg(SmartGlassMsg const &) {
     MILO_LOG("SmartGlass: I should update playlist options/song from RC\n");
     SendDataPoint("smartglass/playlist");
@@ -181,12 +225,28 @@ void PlaylistSortMgr::QueueCmdAddPlaylistToRC(Playlist *pl) {
     }
 }
 
+void PlaylistSortMgr::QueueCmdDeletePlaylistFromRC(int i) {
+    CmdDeletePlaylistFromRC *cmd = new CmdDeletePlaylistFromRC(i);
+    unkc0.push_back(cmd);
+    if (!unkc8) {
+        ProcessNextCommand();
+    }
+}
+
+void PlaylistSortMgr::QueueCmdEditPlaylist(Playlist *pl) {
+    CmdEditPlaylist *cmd = new CmdEditPlaylist(pl);
+    unkc0.push_back(cmd);
+    if (!unkc8) {
+        ProcessNextCommand();
+    }
+}
+
 void PlaylistSortMgr::ProcessNextCommand() {
     int i = 0;
     for (auto it = (unkc0).begin(); it != (unkc0).end(); (++it), i++) {
         if (i != 0) {
             unkc8 = true;
-            i = (*it)->unk0;
+            i = (*it)->unk4.i;
             if (i == 0) {
                 HandleCmdChangeProfileOnlineID();
                 return;
@@ -240,7 +300,6 @@ void PlaylistSortMgr::ResolvePlaylists() {
             for (int i = 0; i < numSongs; i++) {
                 playlist->RemoveSong();
             }
-
         }
         if (TheSaveLoadMgr) {
             TheSaveLoadMgr->AutoSave();
@@ -255,6 +314,38 @@ void PlaylistSortMgr::ResolvePlaylists() {
     BroadcastSyncMsg("sync_failed");
 }
 
+void PlaylistSortMgr::HandleCmdDeletePlaylistFromRC() {
+    MILO_LOG("===== HandleCmdDeletePlaylistFromRC\n");
+    unkcc = nullptr;
+    RELEASE(unkc0.front());
+    unkc0.pop_front();
+    ProcessNextCommand();
+}
+
+void PlaylistSortMgr::HandleCmdAddPlaylistToRC() {
+    MILO_LOG("===== HandleCmdAddPlaylistToRC\n");
+    ((AddPlaylistJob *)unkcc)->GetPlaylistID(unkc0.front()->unk4.customPlaylist);
+    unkcc = nullptr;
+    RELEASE(unkc0.front());
+    unkc0.pop_front();
+    ProcessNextCommand();
+}
+
+void PlaylistSortMgr::HandleCmdResolvePlaylists() {
+    MILO_LOG("===== HandleCmdResolvePlaylists\n");
+    ResolvePlaylists();
+    RELEASE(unkc0.front());
+    unkc0.pop_front();
+    ProcessNextCommand();
+}
+
+void PlaylistSortMgr::HandleCmdEditPlaylist() {
+    unkcc = nullptr;
+    RELEASE(unkc0.front());
+    unkc0.pop_front();
+    ProcessNextCommand();
+}
+
 BEGIN_HANDLERS(PlaylistSortMgr)
     HANDLE_EXPR(has_valid_profile, HasValidProfile())
     HANDLE_EXPR(is_profile_changed, IsProfileChanged())
@@ -263,6 +354,5 @@ BEGIN_HANDLERS(PlaylistSortMgr)
     HANDLE_ACTION(fake_add_playlists_to_rc, FakeAddPlaylistsToRC())
     HANDLE_ACTION(smart_glass_listen, OnSmartGlassListen(_msg->Int(2)))
     HANDLE_MESSAGE(RCJobCompleteMsg)
-    HANDLE_MESSAGE(SmartGlassMsg)
-    HANDLE_SUPERCLASS(NavListSortMgr)
+    HANDLE_MESSAGE(SmartGlassMsg) HANDLE_SUPERCLASS(NavListSortMgr)
 END_HANDLERS

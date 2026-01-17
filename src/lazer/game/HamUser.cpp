@@ -30,7 +30,7 @@ int HamUser::GetPadNum() const {
     }
 }
 
-bool HamUser::CanSaveData() const { return GetPadNum() != -1; }
+bool HamUser::CanSaveData() const { return GetPadNum() >= 0; }
 
 HamUser *HamUser::NewHamUser(int i) { return new HamUser(i); }
 

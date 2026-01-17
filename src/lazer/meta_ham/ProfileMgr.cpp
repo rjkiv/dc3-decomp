@@ -14,10 +14,12 @@
 #include "meta/Profile.h"
 #include "meta_ham/AccomplishmentManager.h"
 #include "meta_ham/Challenges.h"
+#include "meta_ham/FitnessGoalMgr.h"
 #include "meta_ham/HamProfile.h"
 #include "meta_ham/MetaPanel.h"
 #include "meta_ham/ShellInput.h"
 #include "meta_ham/SkeletonChooser.h"
+#include "meta_ham/UIEventMgr.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Msg.h"
@@ -830,4 +832,62 @@ bool ProfileMgr::IsContentUnlocked(Symbol s) const {
         }
     }
     return false;
+}
+
+void ProfileMgr::UpdateUsingFitnessState() {
+    for (int i = 0; i < 2; i++) {
+        HamPlayerData *pPlayer = TheGameData->Player(i);
+        MILO_ASSERT(pPlayer, 0x729);
+        bool check = false;
+        HamProfile *pProfile = TheProfileMgr.GetProfileFromPad(pPlayer->PadNum());
+        if (pProfile) {
+            if (pProfile->HasValidSaveData()) {
+                check = pProfile->InFitnessMode();
+            }
+        }
+        pPlayer->SetUsingFitness(check);
+    }
+}
+
+void ProfileMgr::UploadDeferredFitnessGoal() {
+    if (unka9) {
+        unka9 = false;
+        FOREACH (it, unk90) {
+            HamProfile *profile = *it;
+            MILO_ASSERT(profile, 0x74a);
+            TheFitnessGoalMgr->UpdateFitnessGoal(profile);
+        }
+    }
+}
+
+void ProfileMgr::TriggerSignoutEvent() {
+    static Symbol sign_out("sign_out");
+    static Message init("init", 0);
+    init[0] = 0;
+    TheUIEventMgr->TriggerEvent(sign_out, init);
+    unk90.front()->SetSaveState(kMetaProfileUnloaded);
+}
+
+HamProfile *ProfileMgr::GetActiveProfile(bool b) const {
+    ShellInput *pShellInput = TheHamUI.GetShellInput();
+    if (CriticalProfile()) {
+        MILO_ASSERT(pShellInput, 0x565);
+        SkeletonChooser *pSkeletonChooser = pShellInput->GetSkeletonChooser();
+        MILO_ASSERT(pSkeletonChooser, 0x568);
+        int index = pSkeletonChooser->Unk3C();
+        HamPlayerData *pActivePlayer = TheGameData->Player(index);
+        MILO_ASSERT(pActivePlayer, 0x56c);
+        HamProfile *pProfileFromPad =
+            TheProfileMgr.GetProfileFromPad(pActivePlayer->PadNum());
+        if (!pProfileFromPad || !pProfileFromPad->HasValidSaveData()) {
+            HamPlayerData *pOtherPlayer = TheGameData->Player(index == 0);
+            MILO_ASSERT(pOtherPlayer, 0x579);
+            HamProfile *pOtherPlayerFromPad =
+                TheProfileMgr.GetProfileFromPad(pOtherPlayer->PadNum());
+            if (!b || pOtherPlayerFromPad || !pOtherPlayerFromPad->HasValidSaveData()) {
+                return pOtherPlayerFromPad;
+            }
+        }
+    }
+    return nullptr;
 }

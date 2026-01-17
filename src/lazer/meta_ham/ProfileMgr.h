@@ -109,6 +109,7 @@ public:
     bool HasAnyEraSongBeenPlayed(Symbol) const;
     void Poll();
     void UploadDeferredFlaunt();
+    void UploadDeferredFitnessGoal();
     Symbol GetAlternateOutfit(Symbol);
 
     bool GetBassBoost() const { return mBassBoost; }
@@ -126,6 +127,7 @@ public:
 
 private:
     void UpdateFriendsList();
+    void TriggerSignoutEvent();
 
     DataNode OnMsg(const SigninChangedMsg &);
 

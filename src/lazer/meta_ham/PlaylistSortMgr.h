@@ -13,7 +13,20 @@
 #include <list>
 
 struct CmdAddPlayListToRC : public QueueableCommand {
+    virtual void pure1() {}
     CmdAddPlayListToRC(Playlist *pl) : playlist(pl) {}
+    Playlist *playlist;
+};
+
+struct CmdDeletePlaylistFromRC : public QueueableCommand {
+    virtual void pure1() {}
+    CmdDeletePlaylistFromRC(int i) : num(i) {}
+    int num;
+};
+
+struct CmdEditPlaylist : public QueueableCommand {
+    virtual void pure1() {}
+    CmdEditPlaylist(Playlist *pl) : playlist(pl) {}
     Playlist *playlist;
 };
 

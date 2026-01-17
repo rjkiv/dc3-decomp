@@ -79,7 +79,7 @@
             "lazer/meta_ham/DifficultyProvider.cpp": "NonMatching",
             "lazer/meta_ham/EventDialogPanel.cpp": "NonMatching",
             "lazer/meta_ham/FitnessCalorieSort.cpp": "NonMatching",
-            "lazer/meta_ham/FitnessCalorieSortByCalorie.cpp": "MISSING",
+            "lazer/meta_ham/FitnessCalorieSortByCalorie.cpp": "NonMatching",
             "lazer/meta_ham/FitnessCalorieSortMgr.cpp": "NonMatching",
             "lazer/meta_ham/FitnessCalorieSortNode.cpp": "NonMatching",
             "lazer/meta_ham/FitnessGoalMgr.cpp": "NonMatching",

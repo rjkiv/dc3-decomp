@@ -29,7 +29,7 @@
 HamStorePanel::HamStorePanel()
     : unka0(), unka4(), mOfferProvider(), unkb8(), unkc0(false), unk128(), unk154(false),
       unk155(true), unk156(false), unk157(false), unk158(false), unk159(false), unk184(),
-      unk188() {
+      mXboxPurchaser() {
     for (int i = 7; i != 0; i--) {
         unk138[i] = 0;
     }
@@ -56,7 +56,7 @@ void HamStorePanel::Load() {
 }
 
 bool HamStorePanel::Exiting() const {
-    if (unk188 != 0)
+    if (mXboxPurchaser != 0)
         return true;
     return StorePanel::Exiting();
 }

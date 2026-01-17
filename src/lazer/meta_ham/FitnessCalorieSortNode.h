@@ -5,7 +5,7 @@
 #include "ui/UIListLabel.h"
 #include "utl/Symbol.h"
 
-class FitnessCalorieSortNode : public NavListSortNode {
+class FitnessCalorieSortNode : public NavListItemNode {
 public:
     virtual Symbol GetToken() const;
     virtual Symbol OnSelect();
@@ -15,7 +15,6 @@ public:
     int GetUnk48() const { return unk48; }
 
 protected:
-    Symbol unk44;
     int unk48;
 };
 

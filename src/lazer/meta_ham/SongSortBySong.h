@@ -20,6 +20,7 @@ public:
     virtual ~SongSortBySong();
 
     virtual NavListItemNode *NewItemNode(void *) const;
-    virtual NavListHeaderNode *NewHeaderNode(NavListItemNode *) const;
     virtual NavListShortcutNode *NewShortcutNode(NavListItemNode *) const;
+    virtual NavListHeaderNode *NewHeaderNode(NavListItemNode *) const;
+    virtual NavListHeaderNode *NewHeaderNode(NavListItemNode *, NavListItemNode *) const;
 };

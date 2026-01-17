@@ -7,6 +7,7 @@
 #include "net_ham/FitnessGoalJobs.h"
 #include "net_ham/RCJobDingo.h"
 #include "net_ham/RockCentral.h"
+#include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
@@ -85,20 +86,94 @@ void FitnessGoalMgr::BroadcastSyncMsg(Symbol s) {
 
 void FitnessGoalMgr::StartCmdSendFitnessGoalToRC() {
     QueueableCommand *cmd = unk3c.front();
-    unk48 = new SetFitnessGoalJob(this, cmd->unk4);
+    unk48 = new SetFitnessGoalJob(this, cmd->unk4.profile);
     TheRockCentral.ManageJob(unk48);
 }
 
 void FitnessGoalMgr::StartCmdUpdateFitnessGoalToRC() {
     QueueableCommand *cmd = unk3c.front();
-    unk48 = new UpdateFitnessGoalJob(this, cmd->unk4);
+    unk48 = new UpdateFitnessGoalJob(this, cmd->unk4.profile);
     TheRockCentral.ManageJob(unk48);
 }
 
 void FitnessGoalMgr::StartCmdDeleteFitnessGoalFromRC() {
     QueueableCommand *cmd = unk3c.front();
-    unk48 = new DeleteFitnessGoalJob(this, cmd->unk4);
+    unk48 = new DeleteFitnessGoalJob(this, cmd->unk4.profile);
     TheRockCentral.ManageJob(unk48);
+}
+
+void FitnessGoalMgr::HandleCmdChangeProfileOnlineID() {
+    MILO_LOG("===== HandleCmdChangeProfileOnlineID\n");
+    unk34 = unk3c.front()->unk4.onlineID;
+    RELEASE(unk3c.front());
+    unk3c.pop_front();
+    ProcessNextCommand();
+}
+
+void FitnessGoalMgr::HandleCmdDeleteFitnessGoalFromRC() {
+    unk48 = nullptr;
+    RELEASE(unk3c.front());
+    unk3c.pop_front();
+    ProcessNextCommand();
+}
+
+void FitnessGoalMgr::HandleCmdUpdateFitnessGoalToRC() {
+    MILO_LOG("===== HandleCmdUpdateFitnessGoalToRC\n");
+    unk48 = nullptr;
+    DataNode fitness("fitness");
+    DataNode updated("updated");
+    ThePlatformMgr.SmartGlassSend(0, DataArrayPtr(fitness, updated));
+    RELEASE(unk3c.front());
+    unk3c.pop_front();
+    if (unk4c) {
+        unk4c->ClearFitnessGoalNeedUpload();
+    }
+    if (unk50.empty()) {
+        unk4c = nullptr;
+    } else {
+        UploadNextProfile();
+    }
+    ProcessNextCommand();
+}
+
+void FitnessGoalMgr::QueueCmdGetFitnessGoalFromRC() {
+    CmdGetFitnessGoalFromRC *cmd = new CmdGetFitnessGoalFromRC();
+    unk3c.push_back(cmd);
+    if (!unk44) {
+        ProcessNextCommand();
+    }
+}
+
+void FitnessGoalMgr::QueueCmdSendFitnessGoalToRC(HamProfile *profile) {
+    CmdSendFitnessGoalToRC *cmd = new CmdSendFitnessGoalToRC(profile);
+    unk3c.push_back(cmd);
+    if (!unk44) {
+        ProcessNextCommand();
+    }
+}
+
+void FitnessGoalMgr::QueueCmdUpdateFitnessGoalToRC(HamProfile *profile) {
+    CmdUpdateFitnessGoalToRC *cmd = new CmdUpdateFitnessGoalToRC(profile);
+    unk3c.push_back(cmd);
+    if (!unk44) {
+        ProcessNextCommand();
+    }
+}
+
+void FitnessGoalMgr::QueueCmdDeleteFitnessGoalFromRC(HamProfile *profile) {
+    CmdDeleteFitnessGoalFromRC *cmd = new CmdDeleteFitnessGoalFromRC(profile);
+    unk3c.push_back(cmd);
+    if (!unk44) {
+        ProcessNextCommand();
+    }
+}
+
+void FitnessGoalMgr::QueueCmdChangeProfileOnlineID(String str) {
+    CmdChangeProfileOnlineID *cmd = new CmdChangeProfileOnlineID(str);
+    unk3c.push_back(cmd);
+    if (!unk44) {
+        ProcessNextCommand();
+    }
 }
 
 BEGIN_HANDLERS(FitnessGoalMgr)
