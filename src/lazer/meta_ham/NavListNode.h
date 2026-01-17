@@ -132,7 +132,7 @@ protected:
 
 class NavListItemNode : public NavListSortNode {
 public:
-    NavListItemNode(NavListItemSortCmp *cmp) : NavListSortNode(cmp), mHeader(gNullStr) {}
+    NavListItemNode(NavListItemSortCmp *cmp) : NavListSortNode(cmp) {}
     virtual ~NavListItemNode() {}
     virtual DataNode Handle(DataArray *, bool);
     virtual NavListNodeType GetType() const { return kNodeItem; }
