@@ -1,5 +1,6 @@
 #pragma once
 
+#include "obj/Msg.h"
 #include "meta/StreamPlayer.h"
 #include "movie/TexMovie.h"
 #include "obj/Data.h"
@@ -37,3 +38,7 @@ protected:
     void PlayCurrentPreview();
     void AddToDownloadQueue(String const &);
 };
+
+DECLARE_MESSAGE(PreviewDownloadCompleteMsg, "preview_download_complete_msg")
+PreviewDownloadCompleteMsg(bool b1, bool b2) : Message(Type(), b1, b2){};
+END_MESSAGE

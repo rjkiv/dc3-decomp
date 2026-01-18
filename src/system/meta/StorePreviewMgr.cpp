@@ -1,5 +1,6 @@
 #include "meta/StorePreviewMgr.h"
 #include "StorePreviewMgr.h"
+
 #include "meta/StreamPlayer.h"
 #include "movie/TexMovie.h"
 #include "obj/Data.h"
@@ -7,6 +8,8 @@
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/System.h"
+#include "rndobj/MetaMaterial.h"
+#include "synth/MoggClip.h"
 #include "utl/NetCacheLoader.h"
 #include "utl/NetCacheMgr.h"
 #include "utl/Str.h"
@@ -78,8 +81,6 @@ bool StorePreviewMgr::AllowPreviewDownload(String const &str) {
         return std::find(unk50.begin(), unk50.end(), str) == unk50.end();
 }
 
-void StorePreviewMgr::Poll() {}
-
 void StorePreviewMgr::PlayCurrentPreview() {
     MILO_ASSERT(mStreamPlayer, 0xd8);
     if (unk34.empty()) {
@@ -99,5 +100,12 @@ void StorePreviewMgr::AddToDownloadQueue(String const &str) {
 }
 
 BEGIN_HANDLERS(StorePreviewMgr)
-
+HANDLE_ACTION(clear_current_preview, ClearCurrentPreview())
+HANDLE_ACTION(set_current_preview_file, SetCurrentPreviewFile(_msg->Str(2), nullptr))
+HANDLE_ACTION(set_current_preview_movie, SetCurrentPreviewFile(_msg->Str(2), _msg->Obj<TexMovie>(3)))
+HANDLE_ACTION(download_preview_file, AddToDownloadQueue(_msg->Str(2)))
+HANDLE_EXPR(is_downloading_file, IsDownloadingFile(_msg->Str(2)))
+HANDLE_EXPR(allow_preview_download, AllowPreviewDownload(_msg->Str(2)))
+HANDLE_EXPR(is_playing, IsPlaying())
+HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
