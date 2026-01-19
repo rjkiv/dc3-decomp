@@ -1,5 +1,11 @@
 #include "gesture/DepthBuffer3D.h"
+#include "gesture/BaseSkeleton.h"
+#include "gesture/GestureMgr.h"
+#include "hamobj/HamGameData.h"
+#include "hamobj/RhythmDetector.h"
+#include "math/Mtx.h"
 #include "obj/Object.h"
+#include "os/Debug.h"
 #include "rnddx9/Rnd.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Rnd_NG.h"
@@ -7,6 +13,12 @@
 #include "rndobj/Trans.h"
 
 LargeQuadRenderData DepthBuffer3D::mQuad;
+
+namespace {
+    void JointToVertexData(Vector3 &, const Skeleton &, SkeletonJoint, const Vector4 &);
+    void VertexToWorld(Vector3 &, const Transform &, float, const Vector4 &);
+    RndMat *SetUpWorkingMat();
+}
 
 DepthBuffer3D::DepthBuffer3D()
     : mDrawSheet(0), mDrawPlayer1(1), mDrawPlayer2(1), mDrawNonPlayers(1),
@@ -60,4 +72,76 @@ END_PROPSYNCS
 void DepthBuffer3D::Init() {
     REGISTER_OBJ_FACTORY(DepthBuffer3D);
     TheNgRnd.CreateLargeQuad(0x140, 0xF0, mQuad);
+}
+
+void DepthBuffer3D::UpdateAttachment(
+    DepthBuffer3DAttachment &attachment, const Vector4 &v1, const Vector4 &v2
+) {
+    int skelIdx = TheGestureMgr->GetSkeletonIndexByTrackingID(
+        TheGameData->Player(attachment.player)->GetSkeletonTrackingID()
+    );
+    bool b5 = false;
+    Vector3 newPos;
+    if (skelIdx + 1 > 0) {
+        Skeleton &skeleton = TheGestureMgr->GetSkeleton(skelIdx);
+        Vector3 localPos = LocalXfm().v;
+        Vector3 pos;
+        JointToVertexData(pos, skeleton, (SkeletonJoint)attachment.unk8, v1);
+        VertexToWorld(pos, LocalXfm(), mStretchNearCamera, v2);
+        Add(pos, localPos, newPos);
+        attachment.obj->SetTransConstraint(mConstraint, nullptr, false);
+        Normalize(mWorldXfm.m, attachment.obj->DirtyLocalXfm().m);
+        b5 = true;
+    }
+    if (!b5) {
+        newPos.Set(100000, 100000, 100000);
+    }
+    attachment.obj->SetLocalPos(newPos);
+}
+
+void DepthBuffer3D::AddAttachment(const DepthBuffer3DAttachment &attachment) {
+    MILO_ASSERT(attachment.obj, 0x390);
+    bool found = false;
+    FOREACH (it, unk200) {
+        if (it->obj == attachment.obj) {
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        unk200.resize(unk200.size() + 1);
+        unk200.back() = attachment;
+        unk200.back().obj->SetTransParent(this, false);
+        unk200.back().obj->SetTransConstraint(mConstraint, nullptr, false);
+    }
+}
+
+void DepthBuffer3D::SetPlayerPalette(RndTex *tex) {
+    if (tex && mPlayerPalette != tex) {
+        if (unk140 != 1) {
+            MILO_WARN_ONCE("dropping boxyman palette animation %f\n", unk140);
+        }
+        unk140 = 0;
+        if (unk12c) {
+            unk12c = mPlayerPalette;
+        }
+        mPlayerPalette = tex;
+    }
+}
+
+void DepthBuffer3D::SetGrooviness(float f1) {
+    unk17c = f1;
+    unk180 = f1;
+    unk1d8 = nullptr;
+    unk1ec = nullptr;
+}
+
+void DepthBuffer3D::SetGrooviness(RhythmDetector *r1, RhythmDetector *r2) {
+    unk1d8 = r1;
+    unk1ec = r2;
+}
+
+void DepthBuffer3D::ForceDrawSkeletonIndex(int i1, bool b2) {
+    unk184 = i1;
+    unk188 = b2;
 }

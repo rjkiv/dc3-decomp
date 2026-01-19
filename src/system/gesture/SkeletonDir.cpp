@@ -62,6 +62,33 @@ void SkeletonDir::PreLoad(BinStream &bs) {
     bs.PushRev(packRevs(d.altRev, d.rev), this);
 }
 
+void SkeletonDir::PostLoad(BinStream &bs) {
+    BinStreamRev d(bs, bs.PopRev(this));
+    PanelDir::PostLoad(bs);
+    if (!IsProxy()) {
+        d >> mTestClip;
+        if (d.rev < 4) {
+            bool b40;
+            if (d.rev > 0) {
+                d >> b40;
+            }
+            if (d.rev > 1) {
+                d >> b40;
+                int x;
+                d >> x;
+                d >> x;
+                d >> x;
+                d >> x;
+                d >> x;
+            }
+            if (d.rev > 2) {
+                d >> b40;
+            }
+        }
+    }
+    mMiloInitted = true;
+}
+
 void SkeletonDir::DrawShowing() {
     PanelDir::DrawShowing();
     if (TheLoadMgr.EditMode()) {
@@ -116,13 +143,23 @@ void SkeletonDir::PrintSkeleton() const {
         if (skel) {
             MILO_LOG("bound: %i\n", skel->IsTracked());
             MILO_LOG("joints:\n");
-            const TrackedJoint *joints = skel->TrackedJoints();
             for (int i = 0; i < kNumJoints; i++) {
                 TheDebug << "\t" << i << ":\t" << JointName((SkeletonJoint)i) << "\t\t"
-                         << joints[i].mJointPos[kCoordCamera] << "\n";
+                         << skel->TrackedJoints()[i].mJointPos[kCoordCamera] << "\n";
             }
         }
     } else {
         MILO_NOTIFY("GestureMgr is not initialized");
     }
+}
+
+void SkeletonDir::SetSkeletonClip(SkeletonClip *clip) {
+    MILO_ASSERT(TheGestureMgr, 0x4E);
+    mTestClip = clip;
+    CameraInput *input = LiveCameraInput::sInstance;
+    if (mTestClip) {
+        input = mTestClip;
+    }
+    SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
+    handle.SetCameraInput(input);
 }

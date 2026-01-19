@@ -44,5 +44,9 @@ HRESULT NuiSkeletonTrackingEnable(HANDLE hNextFrameEvent, DWORD dwFlags);
 }
 #endif
 
-// has a C++ definition
-XMMATRIX NuiTransformMatrixLevel(XMVECTOR);
+// these have C++ definitions
+XMMATRIX NuiTransformMatrixLevel(XMVECTOR vNormalToGravity);
+void NuiTransformSkeletonToDepthImage(
+    XMVECTOR vPoint, LONG *plDepthX, LONG *plDepthY, USHORT *pusDepthValue
+);
+void NuiTransformSkeletonToDepthImage(XMVECTOR vPoint, FLOAT *pfDepthX, FLOAT *pfDepthY);

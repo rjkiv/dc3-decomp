@@ -156,7 +156,7 @@ void RockCentral::ManageJob(RCJob *job) {
 void RockCentral::SetMiscArtBitMap(RndBitmap &bmap) {
     DeleteMiscArt();
     mMiscArt = Hmx::Object::New<RndTex>();
-    mMiscArt->SetBitmap(bmap, nullptr, false, RndTex::kTexRegular);
+    mMiscArt->SetBitmap(bmap, nullptr, false, RndTex::kRegular);
 }
 
 void RockCentral::DeleteMiscArt() {

@@ -53,7 +53,7 @@ void LoadingPanel::Unload() {
 
 void LoadingPanel::Load() {
     UIPanel::Load();
-    // sLoadingMaster = new HamMaster(sSongDB->unk0, nullptr);
+    sLoadingMaster = new HamMaster(sSongDB->SongData(), nullptr);
     PlayLoadingMusic();
     sLoadingMaster->SetMaps();
 }
@@ -92,3 +92,10 @@ BEGIN_HANDLERS(LoadingPanel)
     HANDLE_EXPR(choose_loading_screen, ChooseLoadingScreen())
     HANDLE_SUPERCLASS(UIPanel)
 END_HANDLERS
+
+void ResetLoadingMusic() {
+    static Symbol reset_loading_music_mogg("reset_loading_music_mogg");
+    static DataArrayPtr func(new DataArray(1));
+    func.Node(0) = reset_loading_music_mogg;
+    func->Execute(false);
+}

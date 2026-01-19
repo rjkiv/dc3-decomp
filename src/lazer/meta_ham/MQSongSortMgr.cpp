@@ -1,13 +1,18 @@
 #include "MQSongSortMgr.h"
 
 #include "Campaign.h"
+#include "NavListSortMgr.h"
 #include "hamobj/HamGameData.h"
 #include "HamSongMgr.h"
 #include "MQSongSortByCharacter.h"
 #include "MQSongSortNode.h"
 #include "ProfileMgr.h"
+#include "obj/Dir.h"
 
-// MQSongSortMgr::MQSongSortMgr(SongPreview &) {};
+MQSongSortMgr::MQSongSortMgr(SongPreview &sp) : NavListSortMgr(sp) {
+    SetName("mq_song_provider", ObjectDir::Main());
+    mSorts.push_back(new MQSongSortByCharacter());
+}
 
 MQSongSortByCharacter::MQSongSortByCharacter() {
     static Symbol by_character("by_character");
@@ -27,7 +32,7 @@ void MQSongSortMgr::Init(SongPreview &preview) {
 void MQSongSortMgr::OnEnter() {
     mHeadersSelectable = true;
     UpdateList();
-    FOREACH(it, mSorts) {
+    FOREACH (it, mSorts) {
         (*it)->BuildTree();
     }
     NavListSort *sort = mSorts[mCurrentSortIdx];
@@ -48,18 +53,15 @@ bool MQSongSortMgr::SelectionIs(Symbol sym) {
     static Symbol challenge("challenge");
     static Symbol header("header");
     if (sym == challenge) {
-        NavListSortNode *highlightItem = GetHighlightItem();
-        return dynamic_cast<MQSongSortNode *>(highlightItem) == 0;
+        return dynamic_cast<MQSongSortNode *>(GetHighlightItem()) != nullptr;
+    } else if (sym == header) {
+        return dynamic_cast<MQSongHeaderNode *>(GetHighlightItem()) != nullptr;
     }
-    if (sym != header) {
-        return false;
-    }
-    NavListSortNode *highlightItem = GetHighlightItem();
-    return dynamic_cast<MQSongHeaderNode *>(highlightItem) == 0;
+    return false;
 }
 
 bool MQSongSortMgr::IsCharacter(Symbol sym) const {
-    FOREACH(it, unk78) {
+    FOREACH (it, unk78) {
         if (it->first == sym) {
             return true;
         }
@@ -75,18 +77,19 @@ void MQSongSortMgr::UpdateList() {
     Symbol mqCrew = TheCampaign->GetMQCrew();
     unk78.clear();
     std::vector<int> rankedSongs = TheHamSongMgr.RankedSongs((SongType)1);
-    FOREACH(it, rankedSongs) {
+    FOREACH (it, rankedSongs) {
         const HamSongMetadata *metadata = TheHamSongMgr.Data(*it);
         Symbol character = GetOutfitCharacter(metadata->Outfit(), true);
         Symbol crew = GetCrewForCharacter(character, true);
         Symbol mqHeader = MakeString<char>("mqheader_%s", character);
-        if (!metadata->IsFake() && crew == mqCrew && TheProfileMgr.IsContentUnlocked(metadata->ShortName())) {
+        if (!metadata->IsFake() && crew == mqCrew
+            && TheProfileMgr.IsContentUnlocked(metadata->ShortName())) {
             unk78[mqHeader].push_back(TheHamSongMgr.GetShortNameFromSongID(*it));
         }
     }
-    FOREACH(it, unk78) {
+    FOREACH (it, unk78) {
         unk90.push_back(it->first);
-        FOREACH(it2, it->second) {
+        FOREACH (it2, it->second) {
             unk90.push_back(*it2);
         }
     }
@@ -95,7 +98,7 @@ void MQSongSortMgr::UpdateList() {
 bool MQSongSortMgr::IsSong(Symbol sym) const {
     for (auto it = unk78.begin(); it != unk78.end() && it->first != sym; ++it) {
         std::vector<Symbol> syms = it->second;
-        FOREACH(it2, syms) {
+        FOREACH (it2, syms) {
             if (*it2 == sym) {
                 return true;
             }

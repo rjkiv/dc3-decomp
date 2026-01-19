@@ -51,6 +51,7 @@ public:
     Symbol GetName() const { return mName; }
     void SetName(Symbol name) { mName = name; }
     void SetUnk8(bool b) { unk8 = b; }
+    bool GetUnk8() const { return unk8; }
 
 protected:
     virtual void HandleChange() {}

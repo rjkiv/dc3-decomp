@@ -1,6 +1,7 @@
 #pragma once
 #include "game/PartyModeMgr.h"
 #include "meta_ham/HamProfile.h"
+#include "meta_ham/Playlist.h"
 #include "net_ham/FitnessGoalJobs.h"
 #include "net_ham/RCJobDingo.h"
 #include "obj/Data.h"
@@ -12,8 +13,50 @@
 
 struct QueueableCommand {
 public:
-    int unk0;
-    HamProfile *unk4;
+    virtual void pure1() = 0;
+    ~QueueableCommand() {}
+
+    union {
+        int i;
+        HamProfile *profile;
+        Playlist *playlist;
+        CustomPlaylist *customPlaylist;
+        const char *onlineID;
+    } unk4;
+};
+
+struct CmdGetFitnessGoalFromRC : public QueueableCommand {
+public:
+    virtual void pure1() {}
+    CmdGetFitnessGoalFromRC() {}
+};
+
+struct CmdSendFitnessGoalToRC : public QueueableCommand {
+public:
+    virtual void pure1() {}
+    CmdSendFitnessGoalToRC(HamProfile *p) : profile(p) {}
+    HamProfile *profile;
+};
+
+struct CmdUpdateFitnessGoalToRC : public QueueableCommand {
+public:
+    virtual void pure1() {}
+    CmdUpdateFitnessGoalToRC(HamProfile *p) : profile(p) {}
+    HamProfile *profile;
+};
+
+struct CmdDeleteFitnessGoalFromRC : public QueueableCommand {
+public:
+    virtual void pure1() {}
+    CmdDeleteFitnessGoalFromRC(HamProfile *p) : profile(p) {}
+    HamProfile *profile;
+};
+
+struct CmdChangeProfileOnlineID : public QueueableCommand {
+public:
+    virtual void pure1() {}
+    CmdChangeProfileOnlineID(String s) : str(s) {}
+    String str;
 };
 
 class FitnessGoalMgr : public Hmx::Object {

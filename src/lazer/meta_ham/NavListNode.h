@@ -128,6 +128,7 @@ protected:
     bool mLocalizeToken; // 0x38
     DateTime *mDateTime; // 0x3c
     std::list<NavListSortNode *> mChildren; // 0x40
+    u32 unk44;
 };
 
 class NavListItemNode : public NavListSortNode {
@@ -160,6 +161,8 @@ public:
     bool IsHeader() const;
     Symbol HeaderText() const;
     bool UseQuickplayPerformer();
+
+    Symbol Header() const { return mHeader; }
 
 protected:
     Symbol mHeader; // 0x44

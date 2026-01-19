@@ -17,6 +17,7 @@ class AddPlaylistJob : public RCJob {
 public:
     AddPlaylistJob(Hmx::Object *, char const *, Playlist *);
     AddPlaylistJob(Hmx::Object *, char const *, char const *, char const *);
+    void GetPlaylistID(CustomPlaylist *);
 };
 
 class DeletePlaylistJob : public RCJob {

@@ -93,6 +93,10 @@ public:
         mBlend = blend;
         mDirty |= 2;
     }
+    void SetTexGen(TexGen gen) {
+        mTexGen = gen;
+        mDirty |= 2;
+    }
     void SetAlphaWrite(bool write) {
         mAlphaWrite = write;
         mDirty |= 2;

@@ -9,7 +9,9 @@
 #include "hamobj/CharFeedback.h"
 #include "hamobj/HamDirector.h"
 #include "hamobj/HamGameData.h"
+#include "hamobj/HamMaster.h"
 #include "hamobj/HamPlayerData.h"
+#include "hamobj/HamWardrobe.h"
 #include "meta/HAQManager.h"
 #include "meta/PreloadPanel.h"
 #include "meta_ham/HamProfile.h"
@@ -30,11 +32,16 @@
 #include "os/File.h"
 #include "os/System.h"
 #include "os/Timer.h"
+#include "rndobj/Anim.h"
 #include "rndobj/Overlay.h"
+#include "rndobj/PostProc.h"
 #include "rndobj/Rnd.h"
 #include "synth/Sound.h"
+#include "synth/StandardStream.h"
 #include "synth/Synth.h"
+#include "ui/UI.h"
 #include "ui/UIPanel.h"
+#include "ui/UIScreen.h"
 #include "utl/MBT.h"
 #include "world/Dir.h"
 
@@ -246,6 +253,7 @@ void GamePanel::Reset() {
     for (int i = 0; i < 2; i++) {
         FitnessFilter *filt = GetFitnessFilter(i);
         if (filt) {
+            filt->StartTracking();
         }
     }
     mGame->Reset();
@@ -424,4 +432,66 @@ DataNode GamePanel::OnMsg(const EndGameMsg &msg) {
         }
     }
     return 1;
+}
+
+bool GamePanel::IsPastStreamJumpPointOfNoReturn() {
+    StandardStream *stream =
+        dynamic_cast<StandardStream *>(TheMaster->GetAudio()->GetSongStream());
+    return stream->IsPastStreamJumpPointOfNoReturn();
+}
+
+void GamePanel::PollForLoading() {
+    unk104 = 0;
+    UIPanel::PollForLoading();
+    if (UIPanel::IsLoaded()) {
+        unk104 = 1;
+        UIPanel *worldPanel = ObjectDir::Main()->Find<UIPanel>("world_panel");
+        if (TheUI->TransitionScreen()
+            && TheUI->TransitionScreen()->HasPanel(worldPanel)) {
+            if (!TheHamDirector) {
+                return;
+            }
+            if (!TheHamDirector->IsWorldLoaded()) {
+                return;
+            }
+        }
+        unk104 = 2;
+        const DataNode *prop = TheGameMode->Property("load_chars");
+        if (prop->Int() != 0 && !TheHamWardrobe->AllCharsLoaded()) {
+            return;
+        }
+        unk104 = 3;
+        if (mGame->IsReady()) {
+            unk104 = 4;
+        }
+    }
+}
+
+void GamePanel::Exit() {
+    TheTaskMgr.ClearTimelineTasks(kTaskSeconds);
+    TheTaskMgr.ClearTimelineTasks(kTaskBeats);
+    ThePresenceMgr.SetNotInGame();
+    UIPanel::Exit();
+    unkd8 = true;
+    for (int i = 0; i < 2; i++) {
+        FitnessFilter *filter = GetFitnessFilter(i);
+        if (filter) {
+            filter->StopTracking();
+        }
+    }
+    RndAnimatable *beatRepeatAnim = TheSynth->Find<RndAnimatable>("beat_repeat.anim");
+    if (beatRepeatAnim) {
+        beatRepeatAnim->SetFrame(4.0f, 1.0f);
+    }
+    unk108 = false;
+}
+
+void GamePanel::ClearDrawGlitch() {
+    UIScreen *gameScreen = ObjectDir::Main()->Find<UIScreen>("game_screen");
+    gameScreen->SetShowing(false);
+    RndPostProc::Reset();
+    for (int i = 0; i < 2; i++) {
+        TheRnd.BeginDrawing();
+        TheRnd.EndDrawing();
+    }
 }

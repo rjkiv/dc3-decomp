@@ -43,10 +43,6 @@ public:
     virtual void CamBoneLengths(float *) const; // 0x2c
     virtual float BoneLength(SkeletonBone, SkeletonCoordSys) const; // 0x30
 
-    const TrackedJoint *TrackedJoints() const { return mTrackedJoints; }
-    int TrackingID() const { return mTrackingID; }
-    int SkeletonIndex() const { return mSkeletonIdx; }
-    SkeletonTrackingState TrackingState() const { return mTracking; }
     Skeleton &operator=(const Skeleton &);
     void PostUpdate();
     bool IsValid() const;
@@ -68,9 +64,13 @@ public:
     bool EnrollIdentity(int);
     void Init();
     void Poll(int, const SkeletonFrame &);
+    const TrackedJoint *TrackedJoints() const { return mTrackedJoints; }
+    int TrackingID() const { return mTrackingID; }
+    int SkeletonIndex() const { return mSkeletonIdx; }
+    SkeletonTrackingState TrackingState() const { return mTracking; }
     const Vector3 &GetUnkab0() const { return unkab0; }
 
-    // static int IdentityCallback(void*, _NUI_IDENTITY_MESSAGE*);
+    static int IdentityCallback(void *, NUI_IDENTITY_MESSAGE *);
 
 protected:
     // size 0x148
@@ -136,6 +136,6 @@ struct SkeletonFrame {
     int unk0; // 0x0 - frame number?
     int mElapsedMs; // 0x4
     Vector3 unk8; // 0x8 - camera angle?
-    Vector4 unk18; // 0x18 - maybe Vector4, maybe XMVECTOR, idk
+    Vector4 unk18; // 0x18
     SkeletonData mSkeletonDatas[6]; // 0x28
 };

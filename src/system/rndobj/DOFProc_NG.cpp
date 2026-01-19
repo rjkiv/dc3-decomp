@@ -15,7 +15,7 @@ NgDOFProc::NgDOFProc()
     int w = TheNgRnd.PreProcessTexture()->Width() >> 2;
     int h = TheNgRnd.PreProcessTexture()->Height() >> 2;
     mBlurTex[0] = Hmx::Object::New<RndTex>();
-    mBlurTex[0]->SetBitmap(w, h, TheRnd.Bpp(), RndTex::kTexRenderedNoZ, false, nullptr);
+    mBlurTex[0]->SetBitmap(w, h, TheRnd.Bpp(), RndTex::kRenderedNoZ, false, nullptr);
     mBlurTex[1] = mBlurTex[0];
 }
 

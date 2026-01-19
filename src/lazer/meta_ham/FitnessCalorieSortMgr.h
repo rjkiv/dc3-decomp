@@ -7,11 +7,11 @@
 
 class FitnessCalorieSortMgr : public NavListSortMgr {
 private:
-    virtual ~FitnessCalorieSortMgr();
     FitnessCalorieSortMgr(SongPreview &);
 
 public:
-    virtual DataNode Handle(DataArray *, bool) { return 0; }
+    virtual ~FitnessCalorieSortMgr();
+    virtual DataNode Handle(DataArray *, bool);
     virtual bool SelectionIs(Symbol);
     virtual Symbol MoveOn();
     virtual void OnEnter();

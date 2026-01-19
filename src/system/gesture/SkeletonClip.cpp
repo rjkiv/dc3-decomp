@@ -1,20 +1,27 @@
 #include "gesture/SkeletonClip.h"
 #include "SkeletonClip.h"
 #include "gesture/BaseSkeleton.h"
+#include "gesture/GestureMgr.h"
 #include "gesture/Skeleton.h"
+#include "gesture/SkeletonDir.h"
+#include "gesture/SkeletonUpdate.h"
 #include "hamobj/Difficulty.h"
 #include "hamobj/HamDirector.h"
+#include "hamobj/HamGameData.h"
 #include "obj/Data.h"
 #include "obj/DataFunc.h"
 #include "obj/Object.h"
 #include "os/DateTime.h"
 #include "os/Debug.h"
+#include "os/File.h"
 #include "os/System.h"
 #include "rndobj/Anim.h"
 #include "rndobj/Poll.h"
 #include "utl/BinStream.h"
 #include "utl/FileStream.h"
+#include "utl/Loader.h"
 #include "utl/MakeString.h"
+#include "utl/Str.h"
 #include "utl/Symbol.h"
 
 // do these correspond to kNumDifficulties?
@@ -57,6 +64,29 @@ BEGIN_HANDLERS(SkeletonClip)
     HANDLE_SUPERCLASS(CameraInput)
 END_HANDLERS
 
+BEGIN_CUSTOM_PROPSYNC(SkeletonClip::MoveRating)
+    SYNC_PROP(move_name, o.mName)
+    SYNC_PROP(expected, o.mExpected)
+END_CUSTOM_PROPSYNC
+
+BEGIN_PROPSYNCS(SkeletonClip)
+    SYNC_PROP(file, mFile)
+    SYNC_PROP_SET(autoplay, mAutoplay, SetAutoplay(_val.Int()))
+    SYNC_PROP_SET(time_recorded, DateTimeStr(), )
+    SYNC_PROP_SET(build, mBuild, )
+    SYNC_PROP_SET(song, Song(), )
+    SYNC_PROP_SET(difficulty, DifficultyStr(), )
+    SYNC_PROP(default_rating, mDefaultRating)
+    SYNC_PROP_SET(weighted, mWeighted, mWeighted = _val.Int())
+    SYNC_PROP(move_ratings, mMoveRatings)
+    SYNC_PROP_SET(song_start_seconds, SongStartSeconds(), )
+    SYNC_PROP_SET(song_end_seconds, SongEndSeconds(), )
+    SYNC_PROP_SET(override_diff, mOverrideDiff, mOverrideDiff = _val.Int())
+    SYNC_SUPERCLASS(RndAnimatable)
+    SYNC_SUPERCLASS(RndPollable)
+    SYNC_SUPERCLASS(CameraInput)
+END_PROPSYNCS
+
 BEGIN_SAVES(SkeletonClip)
     SAVE_REVS(9, 1)
     SAVE_SUPERCLASS(RndAnimatable)
@@ -88,23 +118,138 @@ BEGIN_COPYS(SkeletonClip)
     END_COPYING_MEMBERS
 END_COPYS
 
-BEGIN_PROPSYNCS(SkeletonClip)
-    SYNC_PROP(file, mFile)
-    SYNC_PROP_SET(autoplay, mAutoplay, SetAutoplay(_val.Int()))
-    SYNC_PROP_SET(time_recorded, DateTimeStr(), )
-    SYNC_PROP_SET(build, mBuild, )
-    SYNC_PROP_SET(song, !mFile.empty() && mSong.Null() ? "N/A" : mSong.Str(), )
-    SYNC_PROP_SET(difficulty, DifficultyStr(), )
-    SYNC_PROP(default_rating, mDefaultRating)
-    SYNC_PROP_SET(weighted, mWeighted, mWeighted = _val.Int())
-    SYNC_PROP(move_ratings, mMoveRatings)
-    SYNC_PROP_SET(song_start_seconds, SongStartSeconds(), )
-    SYNC_PROP_SET(song_end_seconds, SongEndSeconds(), )
-    SYNC_PROP_SET(override_diff, mOverrideDiff, mOverrideDiff = _val.Int())
-    SYNC_SUPERCLASS(RndAnimatable)
-    SYNC_SUPERCLASS(RndPollable)
-    SYNC_SUPERCLASS(CameraInput)
-END_PROPSYNCS
+BEGIN_LOADS(SkeletonClip)
+    const char *pathName = PathName(this);
+    Symbol className = ClassName();
+    int revs;
+    bs >> revs;
+    BinStreamRev d(bs, revs);
+    if (d.rev == 10) {
+        d.altRev = 1;
+        d.rev = 9;
+    }
+    static const unsigned short gRevs[4] = { 9, 0, 1, 0 };
+    if (d.rev > 9) {
+        MILO_FAIL(
+            "%s can't load new %s version %d > %d", pathName, className, d.rev, gRevs[0]
+        );
+    }
+    if (d.altRev > 1) {
+        MILO_FAIL(
+            "%s can't load new %s alt version %d > %d",
+            pathName,
+            className,
+            d.altRev,
+            gRevs[2]
+        );
+    }
+    RndAnimatable::Load(bs);
+    Hmx::Object::Load(bs);
+    bs >> mFile;
+    if (d.rev < 5) {
+        mFile = MakeString(
+            "%s/%s",
+            FileRelativePath(FileRoot(), FileGetPath(Dir()->GetPathName())),
+            mFile
+        );
+    } else {
+        const char *relative =
+            FileRelativePath(FileRoot(), FileGetPath(Dir()->GetPathName()));
+        if (!strstr(mFile.c_str(), relative)) {
+            mFile =
+                MakeString("%s/%s", relative, mFile.substr(mFile.find_last_of("/") + 1));
+        }
+    }
+    if (!sRemapClipSearch.empty()) {
+        char buffer[1024];
+        SearchReplace(
+            mFile.c_str(), sRemapClipSearch.c_str(), sRemapClipReplace.c_str(), buffer
+        );
+        mFile = buffer;
+    }
+    if (d.rev > 7) {
+        d >> mMoveRatings;
+    }
+    if (d.rev > 0) {
+        d >> unk1240;
+        d >> mAutoplay;
+        if (d.rev < 4) {
+            bool b;
+            d >> b;
+        }
+    }
+    if (d.rev > 1 && d.rev < 7) {
+        int x;
+        d >> x;
+        d >> x;
+    }
+    if (d.rev > 5) {
+        d >> mDefaultRating;
+    }
+    if (d.altRev > 0) {
+        bs >> mWeighted;
+    } else {
+        if (d.rev > 8) {
+            static Symbol weighted("weighted");
+            Symbol s;
+            bs >> s;
+            if (s != weighted) {
+                mWeighted = 0;
+            }
+        } else {
+            mWeighted = 1;
+        }
+    }
+END_LOADS
+
+void SkeletonClip::StartAnim() {
+    if (IsRecording()) {
+        MILO_NOTIFY("Cannot start animating until finished recording.");
+    } else {
+        SkeletonDir *dir = dynamic_cast<SkeletonDir *>(Dir());
+        if (dir) {
+            dir->SetSkeletonClip(this);
+        }
+    }
+}
+
+void SkeletonClip::SetFrame(float frame, float blend) {
+    if ((int)mRecordedFrames->size() > (int)frame && frame >= 0) {
+        RndAnimatable::SetFrame(frame, blend);
+    }
+}
+
+float SkeletonClip::EndFrame() { return mRecordedFrames->size(); }
+
+void SkeletonClip::Poll() {
+    if (IsRecording()) {
+        SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
+        const SkeletonFrame *frame = handle.GetCameraInput()->NewFrame();
+        if (frame) {
+            PollRecording(*frame);
+        }
+    } else {
+        SkeletonDir *dir = dynamic_cast<SkeletonDir *>(Dir());
+        if (mAutoplay && TheLoadMgr.EditMode() && dir && dir->TestClip() == this) {
+            unk1240++;
+            float end = EndFrame() * 2;
+            if (unk1240 >= end) {
+                unk1240 = 0;
+            }
+            SetFrame(unk1240, 1);
+        }
+    }
+}
+
+const char *SkeletonClip::Song() const {
+    if (mFile.empty()) {
+        return gNullStr;
+    } else if (!mSong.Null()) {
+        return mSong.Str();
+    } else {
+        return "N/A";
+    }
+}
 
 bool SkeletonClip::IsRecording() const { return unk1231 && !unk1230; }
 const String &SkeletonClip::Path() const { return mFile; }
@@ -137,7 +282,7 @@ void SkeletonClip::SetPath(const char *path) { mFile = path; }
 
 void SkeletonClip::EnableAlternateRecord(int recordingBuffer) {
     MILO_ASSERT(mFile.empty(), 0x7F);
-    MILO_ASSERT((0) <= (recordingBuffer) && (recordingBuffer) < (4), 0x80);
+    MILO_ASSERT_RANGE(recordingBuffer, 0, 4, 0x80);
     mRecordedFrames = &sFrames[recordingBuffer];
     unk11f4 = &sCamFrame[recordingBuffer];
     unk11f8 = &sLoadedFile[recordingBuffer];
@@ -210,7 +355,7 @@ void SkeletonClip::WriteClip(FileStream &stream) {
 }
 
 const SkeletonClip::MoveRating &SkeletonClip::GetMoveRating(int bar) const {
-    MILO_ASSERT((0) <= (bar) && (bar) < (mMoveRatings.size()), 0x371);
+    MILO_ASSERT_RANGE(bar, 0, mMoveRatings.size(), 0x371);
     return mMoveRatings[bar];
 }
 
@@ -236,11 +381,6 @@ void SkeletonClip::FlushMoveRecord(const char *name) {
     } else
         MILO_LOG("can't save empty recording\n");
 }
-
-BEGIN_CUSTOM_PROPSYNC(SkeletonClip::MoveRating)
-    SYNC_PROP(move_name, o.mName)
-    SYNC_PROP(expected, o.mExpected)
-END_CUSTOM_PROPSYNC
 
 bool SkeletonClip::SkeletonFrameAt(float f1, SkeletonFrame &frame) const {
     int idk1, idk2;
@@ -368,9 +508,38 @@ void SkeletonClip::LoadClip(bool tool_sync) {
         MILO_NOTIFY("Cannot open file while still recording");
     } else {
         mRecordedFrames->clear();
-        if (unk11f8) { // fix this condition
+        if (Dir()) {
             LoadClipFromFile(mFile, this);
             *unk11f8 = mFile;
         }
+    }
+}
+
+void SkeletonClip::SetAutoplay(bool b1) {
+    if (mFile.empty()) {
+        MILO_NOTIFY("Recording hasn't been made yet, can't autoplay");
+    } else if (!TheHamDirector) {
+        MILO_NOTIFY("Autoplay not supported in song playback mode");
+    } else {
+        mAutoplay = b1;
+    }
+}
+
+void SkeletonClip::StartXboxRecording(const char *cc) {
+    MILO_ASSERT(!IsRecording(), 0x2F2);
+    mFile = cc;
+    unk1231 = true;
+    if (TheLoadMgr.EditMode()) {
+        SkeletonDir *dir = dynamic_cast<SkeletonDir *>(Dir());
+        if (dir) {
+            dir->SetSkeletonClip(nullptr);
+        }
+    }
+    if (TheGameData && TheHamDirector) {
+        mSong = TheGameData->GetSong();
+        mDifficulty = TheGameData->Player(0)->GetDifficulty();
+    } else {
+        mSong = gNullStr;
+        mDifficulty = kNumDifficulties;
     }
 }

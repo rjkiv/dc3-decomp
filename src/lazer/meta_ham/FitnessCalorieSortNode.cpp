@@ -13,7 +13,10 @@
 #pragma region FitnessCalorieSortNode
 
 FitnessCalorieSortNode::FitnessCalorieSortNode(NavListItemSortCmp *cmp, int i)
-    : NavListSortNode(cmp) {}
+    : NavListItemNode(cmp) {
+    mHeader = gNullStr;
+    unk48 = i;
+}
 
 Symbol FitnessCalorieSortNode::GetToken() const {
     return MakeString("calorie_node_%i", unk48);

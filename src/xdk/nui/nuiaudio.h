@@ -22,8 +22,12 @@ HRESULT NuiAudioCreate(
     HANDLE Handle,
     UINT32 *pHardwareThreadUsed
 );
+void NuiAudioRelease(const HANDLE Handle);
 void NuiAudioRegisterCallbacks(
     const HANDLE Handle, DWORD Flags, NUIAUDIO_CALLBACK *pfnProcessingCallback
+);
+void NuiAudioUnregisterCallbacks(
+    const HANDLE Handle, NUIAUDIO_CALLBACK *pfnProcessingCallback
 );
 
 #ifdef __cplusplus

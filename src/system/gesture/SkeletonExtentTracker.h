@@ -6,16 +6,20 @@
 
 class SkeletonExtentTracker : public Hmx::Object {
 public:
+    SkeletonExtentTracker();
     // Hmx::Object
     virtual DataNode Handle(DataArray *, bool);
 
-    SkeletonExtentTracker();
     void Poll();
     void ApplyToMeshVerts(RndMesh *, bool) const;
-
-    u32 filler[4];
-    int unk3c;
+    void StartTracking(int);
 
 private:
     Hmx::Rect GetViewBox() const;
+
+    float unk2c;
+    float unk30;
+    float unk34;
+    float unk38;
+    int unk3c;
 };

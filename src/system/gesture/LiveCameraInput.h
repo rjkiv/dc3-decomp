@@ -4,6 +4,7 @@
 #include "rnddx9/Tex.h"
 #include "rndobj/Mat.h"
 #include "rndobj/Tex.h"
+#include "xdk/NUI.h"
 
 struct CamTexClip {
     void StoreTextureClip(RndTex *, float, float, float, float);
@@ -28,7 +29,8 @@ public:
     };
     // size 0x18
     struct Buffer {
-        HANDLE unk0[3]; // NUI_IMAGE_FRAME* s?
+        HANDLE unk0;
+        const NUI_IMAGE_FRAME *unk4[2];
         int unkc;
         int unk10;
         RndMat *unk14;
@@ -82,6 +84,9 @@ public:
     void IncrementSnapshotCount();
     void SetNewFrame(const SkeletonFrame *);
     void PollNewStream(BufferType);
+    void *StreamBufferData(BufferType) const;
+    RndMat *DisplayMat(BufferType) const;
+    RndTex *DisplayTex(BufferType) const;
 
     static void PreInit();
     static void Init();
@@ -92,11 +97,12 @@ public:
 protected:
     LiveCameraInput();
     virtual ~LiveCameraInput();
+    virtual const SkeletonFrame *PollNewFrame() { return nullptr; }
 
     static void Terminate();
 
     int unk11d4;
-    int unk11d8;
+    HANDLE unk11d8;
     int unk11dc;
     int unk11e0;
     int unk11e4;
@@ -117,5 +123,5 @@ protected:
     Buffer mStreams[kBufferNum]; // 0x1448
     DxTex *unk14a8;
     DxTex *unk14ac;
-    int unk14b0;
+    RndTex *unk14b0;
 };

@@ -184,3 +184,24 @@ public:
         static DebugNotifyOncer _dw;                                                     \
         _dw << MakeString(__VA_ARGS__);                                                  \
     }
+
+class DebugWarnOncer {
+private:
+    std::list<String> mStrings;
+
+public:
+    DebugWarnOncer() {}
+    ~DebugWarnOncer() {}
+
+    void operator<<(const char *cc) {
+        if (AddToStrings(cc, mStrings)) {
+            TheDebugWarner << cc;
+        }
+    }
+};
+
+#define MILO_WARN_ONCE(...)                                                              \
+    {                                                                                    \
+        static DebugWarnOncer _dw;                                                       \
+        _dw << MakeString(__VA_ARGS__);                                                  \
+    }

@@ -2,6 +2,7 @@
 #include "Skeleton.h"
 #include "StreamRecorder.h"
 #include "gesture/CameraTilt.h"
+#include "gesture/DepthBuffer3D.h"
 #include "gesture/FitnessFilter.h"
 #include "gesture/GestureMgr.h"
 #include "gesture/HandRaisedGestureFilter.h"
@@ -18,12 +19,12 @@
 void GestureTerminate() { StreamRenderer::Terminate(); }
 
 void GestureInit() {
-    // DepthBuffer3D::Init();
+    DepthBuffer3D::Init();
     REGISTER_OBJ_FACTORY(FitnessFilterObj)
     REGISTER_OBJ_FACTORY(HandRaisedGestureFilter)
     REGISTER_OBJ_FACTORY(HandsUpGestureFilter)
     REGISTER_OBJ_FACTORY(HighFiveGestureFilter)
-    REGISTER_OBJ_FACTORY(StreamRecorder)
+    StreamRenderer::Init();
     REGISTER_OBJ_FACTORY(StreamRecorder)
     SkeletonClip::Init();
     REGISTER_OBJ_FACTORY(SkeletonDir)

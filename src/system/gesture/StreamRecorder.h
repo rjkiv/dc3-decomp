@@ -24,22 +24,39 @@ public:
     virtual void Save(BinStream &);
     virtual void Copy(Hmx::Object const *, Hmx::Object::CopyType);
     virtual void Load(BinStream &);
-
-    // Rnd::CompressTextureCallback
-    virtual void TextureCompressed(int);
-
+    // RndDrawable
+    virtual void DrawShowing();
     // RndPollable
     virtual void Poll();
     virtual void Exit();
-
-    // RndDrawable
-    virtual void DrawShowing();
+    // Rnd::CompressTextureCallback
+    virtual void TextureCompressed(int) { mFramesRecorded++; }
 
     NEW_OBJ(StreamRecorder)
     OBJ_MEM_OVERLOAD(0x24)
 
-    ObjPtr<RndDir> unk4c;
-    ObjPtr<RndTexRenderer> unk60;
+protected:
+    StreamRecorder();
+
+    void StopRecordingImmediate();
+    bool SetFrame(int);
+    void DeleteBuffers();
+    void SetPhotoInput(RndDir *);
+    void StoppedRecordingScript();
+    void CompressTextures();
+    void Reset();
+    void SetDebugFrame(int);
+
+    DataNode OnStopRecording(DataArray *);
+    DataNode OnStopPlayback(DataArray *);
+    DataNode OnPausePlayback(DataArray *);
+    DataNode OnUnpausePlayback(DataArray *);
+    DataNode OnPlayRecording(DataArray *);
+    DataNode OnStartRecording(DataArray *);
+    DataNode OnReset(DataArray *);
+
+    ObjPtr<RndDir> unk4c; // 0x4c
+    ObjPtr<RndTexRenderer> unk60; // 0x60
     ObjPtrVec<RndTex> mBuffers; // 0x74
     ObjPtr<RndMat> mOutputMat; // 0x90
     int mMaxFrames; // 0xa4
@@ -47,30 +64,13 @@ public:
     int mOutputHeight; // 0xac
     int mFramesRecorded; // 0xb0
     int unkb4;
-    int unkb8;
-    int mPlaybackSpeed; // 0xbc
+    int mDebugFrame; // 0xb8
+    int mPlaybackSpeed; // 0xbc - actually an enum StreamPlaybackSpeed
     float unkc0;
     float unkc4;
     float unkc8;
-    std::list<int> unkcc;
+    std::list<int> unkcc; // 0xcc
     bool mUseAlpha; // 0xd4
     int unkd8;
     int unkdc;
-
-protected:
-    StreamRecorder();
-    DataNode OnStopRecording(DataArray *);
-    DataNode OnStopPlayback(DataArray *);
-    DataNode OnPausePlayback(DataArray *);
-    DataNode OnUnpausePlayback(DataArray *);
-    void StopRecordingImmediate();
-    bool SetFrame(int);
-    void DeleteBuffers();
-    void SetPhotoInput(RndDir *);
-    void StoppedRecordingScript();
-    DataNode OnPlayRecording(DataArray *);
-    void CompressTextures();
-    void Reset();
-    DataNode OnStartRecording(DataArray *);
-    DataNode OnReset(DataArray *);
 };

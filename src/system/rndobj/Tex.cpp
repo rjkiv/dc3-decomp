@@ -28,7 +28,7 @@ void CopyBottomMip(RndBitmap &dst, const RndBitmap &src) {
 }
 
 RndTex::RndTex()
-    : mMipMapK(-8.0f), mType(kTexRegular), mWidth(0), mHeight(0), mBpp(32), mFilepath(),
+    : mMipMapK(-8.0f), mType(kRegular), mWidth(0), mHeight(0), mBpp(32), mFilepath(),
       mNumMips(0), mOptimizeForPS3(0), mLoader(0) {}
 
 RndTex::~RndTex() { delete mLoader; }
@@ -121,40 +121,40 @@ void RndTex::LockBitmap(RndBitmap &bmap, int i) {
 
 TextStream &operator<<(TextStream &ts, RndTex::Type ty) {
     switch (ty) {
-    case RndTex::kTexRegular:
+    case RndTex::kRegular:
         ts << "Regular";
         break;
-    case RndTex::kTexRendered:
+    case RndTex::kRendered:
         ts << "Rendered";
         break;
     case RndTex::kMovie:
         ts << "Movie";
         break;
-    case RndTex::kTexBackBuffer:
+    case RndTex::kBackBuffer:
         ts << "BackBuffer";
         break;
-    case RndTex::kTexFrontBuffer:
+    case RndTex::kFrontBuffer:
         ts << "FrontBuffer";
         break;
-    case RndTex::kTexRenderedNoZ:
+    case RndTex::kRenderedNoZ:
         ts << "RenderedNoZ";
         break;
-    case RndTex::kTexShadowMap:
+    case RndTex::kShadowMap:
         ts << "ShadowMap";
         break;
-    case RndTex::kTexDepthVolumeMap:
+    case RndTex::kDepthVolumeMap:
         ts << "DepthVolumeMap";
         break;
-    case RndTex::kTexDensityMap:
+    case RndTex::kDensityMap:
         ts << "DensityMap";
         break;
     case RndTex::kScratch:
         ts << "Scratch";
         break;
-    case RndTex::kTexDeviceTexture:
+    case RndTex::kDeviceTexture:
         ts << "DeviceTexture";
         break;
-    case RndTex::kTexRegularLinear:
+    case RndTex::kRegularLinear:
         ts << "RegularLinear";
         break;
     }
@@ -250,7 +250,7 @@ const char *CheckDim(int dim, RndTex::Type ty, bool b) {
 
 void RndTex::SetBitmap(FileLoader *fl) {
     PresyncBitmap();
-    mType = kTexRegular;
+    mType = kRegular;
     char *buffer;
     if (fl) {
         mFilepath = fl->LoaderFile();
@@ -282,7 +282,7 @@ void RndTex::SetBitmap(FileLoader *fl) {
                 );
             }
         }
-        if (!mBitmap.HasName() && mType == kTexRegular) {
+        if (!mBitmap.HasName() && mType == kRegular) {
             MILO_LOG(
                 "Bitmap %s, does not have name set, it will not be cached!\n",
                 FileRelativePath(FileRoot(), mFilepath.c_str())

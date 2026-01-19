@@ -42,6 +42,8 @@ void StubCameraInput::StubSkeletonData(SkeletonData &data, const Vector3 &vec) {
     data.unk144[18].Set(-0.043792f, -0.917228f, 2.308891f);
     data.unk144[19].Set(0.216633f, -0.932548f, 2.347959f);
     for (int i = 0; i < 20; i++) {
-        data.unk144[i].Set(data.unk144[i].x + vec.x, data.unk144[i].y + vec.y, data.unk144[i].z + vec.z);
+        data.unk144[i].Set(
+            data.unk144[i].x + vec.x, data.unk144[i].y + vec.y, data.unk144[i].z + vec.z
+        );
     }
 }

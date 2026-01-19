@@ -393,7 +393,7 @@ void Rnd::Terminate() {
 void Rnd::ScreenDump(const char *file) {
     RndTex *tex = Hmx::Object::New<RndTex>();
     RndBitmap bmap;
-    tex->SetBitmap(0, 0, 0, RndTex::kTexFrontBuffer, false, nullptr);
+    tex->SetBitmap(0, 0, 0, RndTex::kFrontBuffer, false, nullptr);
     tex->LockBitmap(bmap, 1);
     FileStream stream(file, FileStream::kWrite, true);
     if (stream.Fail()) {

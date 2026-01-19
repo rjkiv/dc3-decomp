@@ -5,6 +5,7 @@
 #include "obj/Object.h"
 #include "rndobj/Cam.h"
 #include "rndobj/Draw.h"
+#include "rndobj/ShaderOptions.h"
 #include "rndobj/Tex.h"
 #include "utl/MemMgr.h"
 
@@ -53,6 +54,7 @@ public:
     void SetPinkPlayer(int);
     void SetBluePlayer(int);
     void SetCrewPhotoPlayerDetected(int, bool);
+    ShaderType GetShaderType() const;
 
     void SetOutputTex() {
         if (mForceMips && mOutputTex) {

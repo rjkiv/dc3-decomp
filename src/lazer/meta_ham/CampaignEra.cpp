@@ -147,7 +147,7 @@ CampaignEraSongEntry *CampaignEra::GetSongEntry(int i_iIndex) const {
 
 CampaignEraSongEntry *CampaignEra::GetSongEntry(Symbol song) const {
     auto it = unk8.find(song);
-    if (it == unk8.end()) {
+    if (it != unk8.end()) {
         return GetSongEntry(it->second);
     } else
         return nullptr;

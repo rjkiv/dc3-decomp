@@ -47,9 +47,6 @@ public:
     virtual void Save(BinStream &);
     virtual void Copy(const Hmx::Object *, Hmx::Object::CopyType);
     virtual void Load(BinStream &);
-    // CameraInput
-protected:
-    virtual const SkeletonFrame *PollNewFrame();
 
 public:
     virtual const SkeletonHistory *History() const { return this; }
@@ -94,6 +91,7 @@ public:
     void FillMoveRatings();
     void SwapMoveRecord();
     void PollRecording(const SkeletonFrame &);
+    const char *Song() const;
 
     static void Init();
     static const RecordedFrame *
@@ -101,6 +99,8 @@ public:
 
 protected:
     SkeletonClip();
+
+    virtual const SkeletonFrame *PollNewFrame();
 
     void WriteClipHeader(FileStream &);
     void WriteClipFrame(FileStream &, const RecordedFrame &);
@@ -110,8 +110,8 @@ protected:
     static void LoadFrame(BinStream &, RecordedFrame &, int);
 
     std::vector<RecordedFrame> *mRecordedFrames; // 0x11f0
-    SkeletonFrame *unk11f4; // 0x11f4
-    String *unk11f8; // 0x11f8
+    SkeletonFrame *unk11f4; // 0x11f4 - current cam frame?
+    String *unk11f8; // 0x11f8 - current loaded file?
     int unk11fc; // 0x11fc
     DateTime mTimeRecorded; // 0x1200
     Symbol mSong; // 0x1208

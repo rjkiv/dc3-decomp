@@ -16,6 +16,9 @@ public:
     void ResetHoverTimer();
     bool IsLockedIn() const;
     float UpdateOverlay(RndOverlay *, float);
+    void Update(const Skeleton &, int);
+    void Draw(const Skeleton &, SkeletonViz &);
+    int NumJointsInPath() const { return mJointPath.size(); }
 
 private:
     Vector3 GetCurveStart() const;

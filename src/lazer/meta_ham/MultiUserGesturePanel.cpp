@@ -324,6 +324,12 @@ void MultiUserGesturePanel::UpdateCrewPic(
     i_pPic->SetTex(fp);
 }
 
+void MultiUserGesturePanel::UpdateNavLists(int player) {
+    MILO_ASSERT_RANGE(player, 0, 2, 0x9d);
+    SkeletonChooser *skeletonChooser = TheHamUI.GetShellInput()->GetSkeletonChooser();
+    MILO_ASSERT(skeletonChooser, 0xa0);
+}
+
 BEGIN_HANDLERS(MultiUserGesturePanel)
     HANDLE_EXPR(
         get_char_provider, const_cast<CharacterProvider *>(GetCharProvider(_msg->Int(2)))

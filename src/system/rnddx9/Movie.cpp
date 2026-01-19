@@ -84,7 +84,7 @@ void DxMovie::SetTex(RndTex *tex) {
                 nullptr
             );
         } else {
-            mTex->SetBitmap(0x10, 0x10, 0x20, RndTex::kTexRegular, false, nullptr);
+            mTex->SetBitmap(0x10, 0x10, 0x20, RndTex::kRegular, false, nullptr);
         }
     }
 }

@@ -19,6 +19,6 @@ void RndShadowMap::Init() {
     sLightCam = Hmx::Object::New<RndCam>();
     delete sShadowTex;
     sShadowTex = Hmx::Object::New<RndTex>();
-    sShadowTex->SetBitmap(512, 512, 32, RndTex::kTexShadowMap, false, nullptr);
+    sShadowTex->SetBitmap(512, 512, 32, RndTex::kShadowMap, false, nullptr);
     sLightCam->SetTargetTex(sShadowTex);
 }

@@ -34,7 +34,7 @@ void DxTex::Compress(AlphaCompress a) {
 
 void DxTex::SetDeviceTex(D3DTexture *tex) {
     mTexture = tex;
-    mType = kTexDeviceTexture;
+    mType = kDeviceTexture;
     if (tex) {
         D3DSURFACE_DESC desc;
         D3DTexture_GetLevelDesc(tex, 0, &desc);

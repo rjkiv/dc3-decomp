@@ -78,7 +78,7 @@ WorldCrowd::WorldCrowd()
         }
         for (int i = 0; i < kNumLods; i++) {
             gImpostorTex[i] = Hmx::Object::New<RndTex>();
-            gImpostorTex[i]->SetBitmap(w, h, bpp, RndTex::kTexRendered, true, nullptr);
+            gImpostorTex[i]->SetBitmap(w, h, bpp, RndTex::kRendered, true, nullptr);
         }
         RELEASE(gImpostorMat);
         RndMat *mat = Hmx::Object::New<RndMat>();

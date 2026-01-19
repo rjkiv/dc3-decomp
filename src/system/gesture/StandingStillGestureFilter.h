@@ -18,6 +18,10 @@ public:
     void Update(int, int);
     void Clear();
     void SetRequiredMs(int ms) { mRequiredMs = ms; }
+    void SetUnk4c(bool b) { unk4c = b; }
+
+    bool StandingStill() const { return mStandingStill; }
+    int RaisedMs() const { return mRaisedMs; }
 
 private:
     bool mStandingStill; // 0x2c

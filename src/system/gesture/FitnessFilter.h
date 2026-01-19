@@ -6,27 +6,30 @@
 #include "utl/BinStream.h"
 #include "utl/MemMgr.h"
 
-class FitnessFilter {
+class FitnessFilter : public RndOverlay::Callback {
 public:
     FitnessFilter();
-    virtual ~FitnessFilter();
+    virtual ~FitnessFilter() {}
+    virtual float UpdateOverlay(RndOverlay *, float f1) { return f1; }
     virtual void Clear();
     virtual void Poll();
-    virtual void Draw(BaseSkeleton const &, SkeletonViz &);
+    virtual void Draw(const BaseSkeleton &, SkeletonViz &);
 
     void SetPlayerIndex(int);
     bool GetFitnessData(float &, float &) const;
     bool GetFitnessDataAndReset(float &, float &);
     void SetPaused(bool);
     void StopTracking();
+    void StartTracking() { unk6 = true; }
 
-    bool unk4;
+private:
+    bool unk4; // 0x4 - paused?
     bool unk5;
     bool unk6;
-    int unk8;
-    bool unkc;
-    RndOverlay *unk10;
-    int unk14;
+    int mTrackingID; // 0x8
+    bool unkc; // 0xc - actively tracking?
+    RndOverlay *mFitnessMeterOverlay; // 0x10
+    int mPlayerIndex; // 0x14
 };
 
 class FitnessFilterObj : public Hmx::Object {
@@ -44,8 +47,8 @@ public:
     NEW_OBJ(FitnessFilterObj);
     OBJ_MEM_OVERLOAD(0x40)
 
-    FitnessFilter *unk2c;
-
 protected:
     FitnessFilterObj();
+
+    FitnessFilter mFilter; // 0x2c
 };

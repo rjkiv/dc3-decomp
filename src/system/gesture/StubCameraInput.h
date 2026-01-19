@@ -4,7 +4,6 @@
 class StubCameraInput : public CameraInput {
 public:
     StubCameraInput();
-    virtual ~StubCameraInput();
     static void StubSkeletonFrame(SkeletonFrame &);
     static void StubSkeletonData(SkeletonData &, const Vector3 &);
 

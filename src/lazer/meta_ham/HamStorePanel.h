@@ -3,6 +3,7 @@
 #include "meta/StoreEnumeration.h"
 #include "meta/StoreOffer.h"
 #include "meta/StorePanel.h"
+#include "meta/StorePurchaser.h"
 #include "meta_ham/HamStoreFilterProvider.h"
 #include "meta_ham/HamStoreProvider.h"
 #include "net_ham/HamStoreCartJobs.h"
@@ -100,5 +101,5 @@ protected:
     std::vector<CartRow> unk16c;
     std::vector<unsigned long long> unk178;
     int unk184;
-    int *unk188;
+    XboxPurchaser *mXboxPurchaser; // 0x188
 };

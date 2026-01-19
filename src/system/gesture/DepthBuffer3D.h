@@ -12,8 +12,8 @@
 #include "utl/MemMgr.h"
 
 struct DepthBuffer3DAttachment {
-    int unk0;
-    int unk4;
+    RndTransformable *obj; // 0x0
+    int player; // 0x4
     int unk8;
     int unkc;
     int unk10;
@@ -46,9 +46,15 @@ public:
     NEW_OBJ(DepthBuffer3D)
 
     void SetPlayerPalette(RndTex *);
+    void AddAttachment(const DepthBuffer3DAttachment &);
+    void SetGrooviness(float);
+    void SetGrooviness(RhythmDetector *, RhythmDetector *);
+    void ForceDrawSkeletonIndex(int, bool);
 
 protected:
     DepthBuffer3D();
+
+    void UpdateAttachment(DepthBuffer3DAttachment &, const Vector4 &, const Vector4 &);
 
     static LargeQuadRenderData mQuad;
 

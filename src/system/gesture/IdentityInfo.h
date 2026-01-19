@@ -8,6 +8,7 @@ public:
     bool ProfileMatched() const { return mProfileMatched; }
     int EnrollmentIndex() const { return mEnrollmentIdx; }
     void Init() { unkc = 0; }
+    void SetUnk0(bool b1) { unk0 = b1; }
 
 private:
     void Identified(unsigned int);

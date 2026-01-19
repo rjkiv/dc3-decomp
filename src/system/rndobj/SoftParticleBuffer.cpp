@@ -27,7 +27,7 @@ void RndSoftParticleBuffer::AllocateData(
         for (int i = 0; i < 2; i++) {
             MILO_ASSERT(mSurfaces[i] == NULL, 0xC6);
             mSurfaces[i] = Hmx::Object::New<RndTex>();
-            mSurfaces[i]->SetBitmap(w, h, bpp, RndTex::kTexRenderedNoZ, false, nullptr);
+            mSurfaces[i]->SetBitmap(w, h, bpp, RndTex::kRenderedNoZ, false, nullptr);
         }
     }
     TheNgRnd.RegisterPostProcessor(this);

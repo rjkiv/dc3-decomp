@@ -421,6 +421,7 @@ int CampaignProgress::GetSongStarsEarned(Symbol era, Symbol song) const {
     int stars = 0;
     CampaignEraProgress *pEraProgress = GetEraProgress(era);
     if (pEraProgress) {
+        stars = 0;
         CampaignEraSongProgress *pEraSongProgress =
             pEraProgress->GetEraSongProgress(song);
         if (pEraSongProgress) {

@@ -54,7 +54,7 @@ void RndVelocityBuffer::AllocateData(
 ) {
     MILO_ASSERT(mVelocityTex == NULL, 0x45);
     mVelocityTex = Hmx::Object::New<RndTex>();
-    mVelocityTex->SetBitmap(ui1 / 2, ui2 / 2, ui3, RndTex::kTexRendered, false, nullptr);
+    mVelocityTex->SetBitmap(ui1 / 2, ui2 / 2, ui3, RndTex::kRendered, false, nullptr);
     MILO_ASSERT(mMat == NULL, 0x4A);
     mMat = Hmx::Object::New<RndMat>();
     mMat->SetPerPixelLit(false);

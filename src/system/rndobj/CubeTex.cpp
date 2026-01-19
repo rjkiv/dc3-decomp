@@ -117,12 +117,7 @@ bool RndCubeTex::ValidateBitmapProperties(std::vector<CubeFace> &faces) {
         return false;
     else {
         const char *sizeStr = RndTex::CheckSize(
-            props.mWidth,
-            props.mHeight,
-            props.mBpp,
-            props.mNumMips,
-            RndTex::kTexRegular,
-            false
+            props.mWidth, props.mHeight, props.mBpp, props.mNumMips, RndTex::kRegular, false
         );
         if (sizeStr) {
             MILO_NOTIFY(sizeStr, Name());

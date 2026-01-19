@@ -22,9 +22,7 @@ NgPostProc::BloomTextureSet::~BloomTextureSet() { FreeTextures(); }
 void NgPostProc::BloomTextureSet::AllocateTextures(unsigned int w, unsigned int h) {
     MILO_ASSERT(mBloomTexture[0] == NULL, 0x48);
     mBloomTexture[0] = Hmx::Object::New<RndTex>();
-    mBloomTexture[0]->SetBitmap(
-        w, h, TheRnd.Bpp(), RndTex::kTexRenderedNoZ, false, nullptr
-    );
+    mBloomTexture[0]->SetBitmap(w, h, TheRnd.Bpp(), RndTex::kRenderedNoZ, false, nullptr);
     mBloomTexture[1] = mBloomTexture[0];
 }
 
