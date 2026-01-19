@@ -53,14 +53,11 @@ bool MQSongSortMgr::SelectionIs(Symbol sym) {
     static Symbol challenge("challenge");
     static Symbol header("header");
     if (sym == challenge) {
-        NavListSortNode *highlightItem = GetHighlightItem();
-        return dynamic_cast<MQSongSortNode *>(highlightItem) == 0;
+        return dynamic_cast<MQSongSortNode *>(GetHighlightItem()) != nullptr;
+    } else if (sym == header) {
+        return dynamic_cast<MQSongHeaderNode *>(GetHighlightItem()) != nullptr;
     }
-    if (sym != header) {
-        return false;
-    }
-    NavListSortNode *highlightItem = GetHighlightItem();
-    return dynamic_cast<MQSongHeaderNode *>(highlightItem) == 0;
+    return false;
 }
 
 bool MQSongSortMgr::IsCharacter(Symbol sym) const {

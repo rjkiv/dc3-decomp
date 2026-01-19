@@ -29,6 +29,11 @@ void VoiceInputPanel::VoiceContext::SetActiveConfig(bool blacklight) {
     }
 }
 
+Symbol VoiceInputPanel::VoiceContext::GetGrammarSym(int index) const {
+    MILO_ASSERT_RANGE(index, 0, mActiveConfig->mGrammars.size(), 0x4B);
+    return mActiveConfig->mGrammars[index];
+}
+
 VoiceInputPanel::VoiceInputPanel() {
     unk3c = false; // i really gotta declare these here huh
     mActiveVoiceContext = nullptr;

@@ -76,22 +76,18 @@ void SongSortMgr::Terminate() {
     RELEASE(TheSongSortMgr);
 }
 
-bool SongSortMgr::SelectionIs(Symbol sym) {
+bool SongSortMgr::SelectionIs(Symbol selection) {
     static Symbol song("song");
     static Symbol header("header");
     static Symbol function("function");
-    NavListSortNode *node;
-    if (sym == song) {
-        return dynamic_cast<SongSortNode *>(GetHighlightItem()) == 0;
-    } else if (sym == header) {
-        return dynamic_cast<SongHeaderNode *>(GetHighlightItem()) == 0;
-    } else {
-        if (sym != function) {
-            return false;
-        }
-        // return dynamic_cast<SongFunctionNode>(GetHighlightItem()) == 0;
+    if (selection == song) {
+        return dynamic_cast<SongSortNode *>(GetHighlightItem()) != nullptr;
+    } else if (selection == header) {
+        return dynamic_cast<SongHeaderNode *>(GetHighlightItem()) != nullptr;
+    } else if (selection == function) {
+        return dynamic_cast<SongFunctionNode *>(GetHighlightItem()) != nullptr;
     }
-    return GetHighlightItem() == 0;
+    return false;
 }
 
 void SongSortMgr::OnHighlightChanged() {

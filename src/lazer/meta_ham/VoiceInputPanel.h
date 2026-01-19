@@ -18,10 +18,7 @@ public:
 
     struct VoiceContext {
         void SetActiveConfig(bool);
-        Symbol GetGrammarSym(int index) const {
-            MILO_ASSERT_RANGE(index, 0, mActiveConfig->mGrammars.size(), 0x4B);
-            return mActiveConfig->mGrammars[index];
-        }
+        Symbol GetGrammarSym(int index) const;
 
         Symbol mName; // 0x0
         Config *mBlacklightOffConfig; // 0x4

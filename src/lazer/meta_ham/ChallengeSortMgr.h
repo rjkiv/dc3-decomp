@@ -1,6 +1,7 @@
 #pragma once
 #include "NavListSortMgr.h"
 #include "lazer/net_ham/ChallengeSystemJobs.h"
+#include "utl/Symbol.h"
 
 class ChallengeRecord {
 public:
@@ -28,7 +29,7 @@ protected:
 class ChallengeSortMgr : public NavListSortMgr {
 public:
     virtual DataNode Handle(DataArray *, bool);
-    virtual bool SelectionIs();
+    virtual bool SelectionIs(Symbol);
     virtual Symbol MoveOn(); // 0x78
     virtual void OnEnter();
 

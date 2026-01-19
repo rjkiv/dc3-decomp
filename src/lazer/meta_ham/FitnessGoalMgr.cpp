@@ -13,6 +13,7 @@
 #include "os/Debug.h"
 #include "os/PlatformMgr.h"
 #include "ui/UI.h"
+#include "utl/DataPointMgr.h"
 #include "utl/Symbol.h"
 
 FitnessGoalMgr::FitnessGoalMgr() {
@@ -174,6 +175,27 @@ void FitnessGoalMgr::QueueCmdChangeProfileOnlineID(String str) {
     if (!unk44) {
         ProcessNextCommand();
     }
+}
+
+void FitnessGoalMgr::OnSendFitnessGoalToRC(HamProfile *profile) {
+    if (!profile) {
+        return;
+    }
+    QueueCmdSendFitnessGoalToRC(profile);
+}
+
+void FitnessGoalMgr::DeleteFitnessGoalFromRC(HamProfile *profile) {
+    if (!profile) {
+        return;
+    }
+    QueueCmdDeleteFitnessGoalFromRC(profile);
+}
+
+DataNode FitnessGoalMgr::OnMsg(const SmartGlassMsg &msg) {
+    MILO_LOG("SmartGlass: I should update fitness goal from RC\n");
+    SendDataPoint("smartglass/fitness");
+    QueueCmdGetFitnessGoalFromRC();
+    return 1;
 }
 
 BEGIN_HANDLERS(FitnessGoalMgr)

@@ -43,3 +43,5 @@ protected:
     Symbol ChooseLoadingScreen();
     void PlayLoadingMusic();
 };
+
+void ResetLoadingMusic();

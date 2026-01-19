@@ -136,6 +136,12 @@ public:
     void SetRightTeamStarBonus();
     void SetPlaylist(Playlist *);
 
+    Difficulty GetDifficulty() const { return mDifficulty; }
+    void SetDifficulty(Difficulty d) { mDifficulty = d; }
+    bool UseFullLengthSongs() const { return mUseFullLengthSongs; }
+    void SetUseFullLengthSongs(bool b) { mUseFullLengthSongs = b; }
+    Playlist *GetPlaylist() const { return mPlaylist; }
+
 private:
     void InitCharacters();
     Symbol GetCurrEventName();

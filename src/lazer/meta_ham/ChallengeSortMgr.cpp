@@ -2,9 +2,11 @@
 
 #include "ChallengeSortByScore.h"
 #include "ChallengeSortNode.h"
+#include "NavListSortMgr.h"
 #include "hamobj/HamGameData.h"
 #include "lazer/game/GameMode.h"
 #include "macros.h"
+#include "meta_ham/NavListNode.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Msg.h"
@@ -196,4 +198,15 @@ Symbol ChallengeSortMgr::MoveOn() {
         challengeFeedPanel->HandleType(move_on_quickplay_msg);
     }
     return gNullStr;
+}
+
+bool ChallengeSortMgr::SelectionIs(Symbol selection) {
+    static Symbol challenge("challenge");
+    static Symbol header("header");
+    if (selection == challenge) {
+        return dynamic_cast<ChallengeSortNode *>(GetHighlightItem()) != nullptr;
+    } else if (selection == header) {
+        return dynamic_cast<ChallengeHeaderNode *>(GetHighlightItem()) != nullptr;
+    }
+    return false;
 }

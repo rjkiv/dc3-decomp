@@ -78,3 +78,14 @@ Symbol FitnessCalorieSortMgr::MoveOn() {
     }
     return gNullStr;
 }
+
+bool FitnessCalorieSortMgr::SelectionIs(Symbol selection) {
+    static Symbol calorie("calorie");
+    static Symbol header("header");
+    if (selection == calorie) {
+        return dynamic_cast<FitnessCalorieSortNode *>(GetHighlightItem()) != nullptr;
+    } else if (selection == header) {
+        return dynamic_cast<FitnessCalorieHeaderNode *>(GetHighlightItem()) != nullptr;
+    }
+    return false;
+}
