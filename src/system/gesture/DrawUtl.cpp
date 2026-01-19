@@ -95,7 +95,11 @@ bool UpdateBufferTex(LiveCameraInput *cam, RndTex *tex, LiveCameraInput::BufferT
     MILO_ASSERT(tex->Bpp() == 16, 0x131);
     MILO_ASSERT(tex->GetType() == RndTex::kScratch, 0x132);
     //tex->TexelsLock(); seemingly pulls param out of nowehere
-    if (bufType == LiveCameraInput::kBufferColor) {}
-    //auto bufStream = StreamBf
+    if (bufType == LiveCameraInput::kBufferColor) {
+        auto bufStream = cam->StreamBufferData(LiveCameraInput::kBufferColor);
+        if (bufStream != nullptr) {
+
+        }
+    }
     return false;
 }

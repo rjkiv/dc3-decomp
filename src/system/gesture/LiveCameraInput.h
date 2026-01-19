@@ -87,6 +87,9 @@ public:
     void *StreamBufferData(BufferType) const;
     RndMat *DisplayMat(BufferType) const;
     RndTex *DisplayTex(BufferType) const;
+    void LockStream(const void *, LockedRect &);
+    void UnlockStream(const void *);
+
 
     static void PreInit();
     static void Init();
