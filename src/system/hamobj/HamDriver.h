@@ -24,7 +24,7 @@ public:
 
         MEM_OVERLOAD(Layer, 0x27)
 
-        float unk4; // 0x4
+        float unk4; // 0x4 - beat?
     };
 
     struct LayerArray : public Layer {
@@ -52,7 +52,7 @@ public:
         virtual CharClip *FirstClip();
         virtual void OffsetSec(float);
 
-        int unk8;
+        float unk8;
         float unkc;
         ObjOwnerPtr<CharClip> unk10; // 0x10
     };
