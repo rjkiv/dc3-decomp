@@ -84,3 +84,18 @@ void InitDrawUtl(const GestureMgr &gm) {
 void SetDrawSpace(float x, float y, float z) {
     DrawUtlVec3.Set(x, y, z);
 }
+
+bool UpdateBufferTex(LiveCameraInput *cam, RndTex *tex, LiveCameraInput::BufferType bufType, GestureMgr *gm) {
+    START_AUTO_TIMER("draw_natal_buffer");
+    MILO_ASSERT(bufType < LiveCameraInput::kBufferNum, 0x12b);
+    if (cam == nullptr) {
+        return false;
+    }
+    MILO_ASSERT(tex, 0x130);
+    MILO_ASSERT(tex->Bpp() == 16, 0x131);
+    MILO_ASSERT(tex->GetType() == RndTex::kScratch, 0x132);
+    //tex->TexelsLock(); seemingly pulls param out of nowehere
+    if (bufType == LiveCameraInput::kBufferColor) {}
+    //auto bufStream = StreamBf
+    return false;
+}
