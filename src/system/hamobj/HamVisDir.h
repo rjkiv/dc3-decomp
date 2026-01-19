@@ -45,6 +45,8 @@ public:
 
 protected:
     HamVisDir();
+    void CheckPose(int, PoseOwner &);
+    void CalcArmLengths(std::vector<float> &, const Skeleton &);
 
     Transform unk284; // 0x284
     FreestyleMotionFilter *mFilter; // 0x2c4

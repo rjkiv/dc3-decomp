@@ -1,4 +1,7 @@
 #include "hamobj/HamVisDir.h"
+
+#include "HamGameData.h"
+#include "gesture/DepthBuffer3D.h"
 #include "Pose.h"
 #include "gesture/BaseSkeleton.h"
 #include "gesture/SkeletonDir.h"
@@ -107,6 +110,55 @@ HamVisDir::~HamVisDir() {
     }
 }
 
+void HamVisDir::SetGrooviness(float groove) {
+    unk334 = Clamp<float>(0.0, 1.0, (groove - 0.5f) * 2/3);
+    auto itr = ObjDirItr<DepthBuffer3D>(this, true);
+    while (itr != nullptr) {
+        itr->SetGrooviness(groove);
+        ++itr;
+    }
+}
+
+void HamVisDir::CheckPose(int i1, PoseOwner &po) {
+    bool flag = false;
+    if (po.in_pose != false || po.pose->CurrentScore() <= 9.0f/10.0f) {
+        if (po.in_pose != false && po.holder->CurrentScore() <= 9.0f/10.0f) {
+            flag = true;
+            po.in_pose = false;
+        }
+    }
+    else {
+        flag = true;
+        po.in_pose = true;
+        TheGameData->HandlePoseFound(i1);
+    }
+    if (flag != false) {
+        static Message msg("whatever");
+        msg.SetType(MakeString("%s_state_changed", po.name));
+        Export(msg, true);
+    }
+}
+
+void HamVisDir::Enter() {
+    PanelDir::Enter();
+    mRunning = TheLoadMgr.EditMode();
+    if (TheLoadMgr.EditMode() == 0 && TheGestureMgr != nullptr) {
+        auto freestyle_filter = ObjectDir::Main()->Find<FreestyleMotionFilter>("freestyle_filter", false);
+        mFilter = freestyle_filter;
+        if (freestyle_filter == nullptr) {
+            freestyle_filter = new FreestyleMotionFilter();
+            mFilter = freestyle_filter;
+        }
+        freestyle_filter->SetName("freestyle_filter", Main());
+    }
+    mFilter->Deactivate();
+}
+
+void HamVisDir::Load(BinStream &bs) {
+    PreLoad(bs);
+    PostLoad(bs);
+}
+
 BEGIN_HANDLERS(HamVisDir)
     HANDLE_SUPERCLASS(SkeletonDir)
 END_HANDLERS
@@ -155,4 +207,8 @@ void HamVisDir::PreLoad(BinStream &bs) {
         SkeletonDir::PreLoad(bs);
     }
     bs.PushRev(packRevs(d.altRev, d.rev), this);
+}
+
+void HamVisDir::PostLoad(BinStream &bs) {
+
 }
