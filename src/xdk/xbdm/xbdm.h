@@ -27,6 +27,7 @@ typedef _DM_SYSTEM_INFO DM_SYSTEM_INFO;
 HRESULT DmGetSystemInfo(DM_SYSTEM_INFO *);
 HRESULT DmIsDebuggerPresent();
 HRESULT DmCaptureStackBackTrace(ULONG, VOID *);
+HRESULT DmMapDevkitDrive();
 
 #ifdef __cplusplus
 }
