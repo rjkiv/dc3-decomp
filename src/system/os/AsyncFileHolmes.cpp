@@ -15,7 +15,7 @@ bool AsyncFileHolmes::Truncate(int x) {
 void AsyncFileHolmes::_OpenAsync() {
     unsigned int x;
     mFail = !HolmesClientOpen(mFilename.c_str(), mMode, x, unk34);
-    mSize = x;
+    mSize = x & (mFail != 0);
 }
 
 void AsyncFileHolmes::_WriteAsync(const void *data, int bytes) {
