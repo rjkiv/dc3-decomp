@@ -78,23 +78,23 @@ protected:
     float Display(float);
 
     /** "The CharBones object to add or blend into." */
-    ObjPtr<CharBonesObject> mBones; // 0x30
+    ObjPtr<CharBonesObject> mBones; // 0x30 / -0xb4
     /** "pointer to clips object" */
-    ObjPtr<ObjectDir> mClips; // 0x44
-    CharClipDriver *mFirst; // 0x58
-    ObjPtr<CharClip> unk5c;
+    ObjPtr<ObjectDir> mClips; // 0x44 / -0xa0
+    CharClipDriver *mFirst; // 0x58 / -0x8c
+    ObjPtr<CharClip> unk5c; // 0x5c / -0x88
     ObjPtr<Hmx::Object> mDefaultClip; // 0x70
     ObjPtr<CharClipGroup> unk84;
-    bool unk98;
+    bool unk98; // 0x98 / -0x74
     Symbol unk9c;
     DataNode mLastNode; // 0xa0
     float mOldBeat; // 0xa8
-    bool mRealign; // 0xac
+    bool mRealign; // 0xac / -0x38
     float mBeatScale; // 0xb0
-    float mBlendWidth; // 0xb4
-    Symbol mClipType; // 0xb8
-    ApplyMode mApply; // 0xbc
+    float mBlendWidth; // 0xb4 / -0x30
+    Symbol mClipType; // 0xb8 / -0x2c
+    ApplyMode mApply; // 0xbc / -0x28;
     CharBonesAlloc *mInternalBones; // 0xc0
-    bool mPlayMultipleClips; // 0xc4
+    bool mPlayMultipleClips; // 0xc4 / -0x20
     std::map<CharClip *, float> unkc8;
 };

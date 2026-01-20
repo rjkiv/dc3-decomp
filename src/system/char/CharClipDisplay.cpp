@@ -33,3 +33,17 @@ float CharClipDisplay::GetX(float f) const {
     float f3 = unk64 + unk14 * sEm * 3.0f;
     return ((TheRnd.Width() - sEm * 3.0f) - f3) * ((f - f1) / f2) + f3;
 }
+
+Hmx::Object *CharClipDisplay::FindSource(Hmx::Object *obj) {
+    for (ObjDirItr<Hmx::Object> it(ObjectDir::Main(), false); it != nullptr; ++it) {
+        if (it->Sinks() != nullptr && it->Sinks()->HasSink(obj)) {
+            return it;
+        }
+    }
+    return nullptr;
+}
+
+void CharClipDisplay::DrawBeatString(char const *c, float f1, Hmx::Color const &color) {
+    // pulls stuff from xdk too
+    TheRnd.DrawString(c, Vector2(GetX(f1), f1), color, true);
+}

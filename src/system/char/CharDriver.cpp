@@ -240,3 +240,43 @@ void CharDriver::SyncInternalBones() {
         CharBoneDir::StuffBones(*mInternalBones, mClipType);
     }
 }
+
+float CharDriver::EvaluateFlags(int i) {
+    float ret = 1.0f;
+    float f1 = 0.0f;
+    for (auto it = mFirst; it != nullptr; it = it->Next()) {
+        float temp = EaseSigmoid(it->mBlendFrac, 0.0f, 0.0f);
+        if ((it->mClip->Flags() & i) != 0) {
+            ret += temp * f1;
+        }
+        f1 *= 1.0f - temp;
+    }
+    return ret;
+}
+
+bool CharDriver::Replace(ObjRef *from, Hmx::Object *to) {
+    bool deleted = false;
+    if (mFirst != nullptr) {
+        mFirst = mFirst->DeleteRef(from, deleted);
+    }
+    if (deleted != false) {
+       return true;
+    }
+    return CharWeightable::Replace(from, to);
+}
+
+BEGIN_SAVES(CharDriver)
+    SAVE_REVS(0xe, 0);
+    SAVE_SUPERCLASS(Hmx::Object)
+    SAVE_SUPERCLASS(CharWeightable)
+    bs << mBones;
+    bs << mClips;
+    bs << mBlendWidth;
+    bs << mRealign;
+    bs << mApply;
+    bs << mClipType;
+    bs << mPlayMultipleClips;
+    bs << unk5c;
+    bs << unk98;
+
+END_SAVES
