@@ -44,6 +44,7 @@ struct DateTime {
     unsigned int DiffSeconds(DateTime &);
     void FromFileTime(const FILETIME &);
     void ParseDate(const char *);
+    void FromUtcToLocal();
 
     static DateFormat GetDateFormatting();
 };

@@ -1,8 +1,12 @@
 #pragma once
+#include "meta_ham/MetaPerformer.h"
 #include "net_ham/RCJobDingo.h"
 #include "obj/Object.h"
 
-class GameEndedDataPointJob {};
+class GameEndedDataPointJob : public RCJob {
+public:
+    GameEndedDataPointJob(Hmx::Object *, EndGameResult const &);
+};
 
 class OmgScoresJob : public RCJob {
 public:

@@ -1,8 +1,39 @@
 #include "net_ham/DataMinerJobs.h"
+#include "hamobj/HamMaster.h"
+#include "meta_ham/MetaPerformer.h"
 #include "net_ham/RCJobDingo.h"
 #include "obj/Object.h"
 #include "utl/DataPointMgr.h"
 #include "utl/Symbol.h"
+
+GameEndedDataPointJob::GameEndedDataPointJob(
+    Hmx::Object *callback, EndGameResult const &result
+)
+    : RCJob("dataminer/game_ended", callback) {
+    static Symbol mode("mode");
+    static Symbol song("song");
+    static Symbol reason("reason");
+    static Symbol song_position("song_position");
+    static Symbol playlist_perform("playlist_perform");
+    static Symbol perform("perform");
+    static Symbol dance_battle("dance_battle");
+    static Symbol perform_legacy("perform_legacy");
+    static Symbol practice("practice");
+    static Symbol showdown("showdown");
+    static Symbol score("score");
+    static Symbol num_stars("num_stars");
+    static Symbol perf_no_flashcard("perf_no_flashcard");
+    static Symbol perf_current_stars("perf_current_stars");
+    static Symbol photos_disabled("photos_disabled");
+    static Symbol freestyle_disabled("freestyle_disabled");
+    static Symbol num_bid_vcmds("num_bid_vcmds");
+    static Symbol num_shell_vcmds("num_shell_vcmds");
+    static Symbol custom_session("custom_session");
+    static Symbol challenge("challenge");
+
+    if (TheMaster && TheMaster->IsLoaded()) {
+    }
+}
 
 OmgScoresJob::OmgScoresJob(Hmx::Object *callback, int p1Score, int p2Score)
     : RCJob("dataminer/omg_scores/", callback) {

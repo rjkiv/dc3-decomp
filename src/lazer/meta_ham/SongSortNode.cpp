@@ -1,5 +1,6 @@
 #include "SongSortNode.h"
 
+#include "HamProfile.h"
 #include "SongSortMgr.h"
 #include "meta/SongMgr.h"
 #include "meta_ham/AccomplishmentManager.h"
@@ -33,12 +34,29 @@ void SongHeaderNode::OnHighlight() {
     SetCollapseStateIcon(true);
 }
 
-void SongHeaderNode::SetCollapseStateIcon(bool) const {
-    auto *label = GetCollapseIconLabel();
-    static Symbol header_open_icon("header_open_icon");
-    static Symbol header_open_highlighted_icon("header_open_highlighted_icon");
-    static Symbol header_closed_icon("header_closed_icon");
-    static Symbol header_closed_highlighted_icon("header_closed_highlighted_icon");
+void SongHeaderNode::SetCollapseStateIcon(bool b) const {
+    Symbol s = gNullStr;
+    UILabel *iconLabel = GetCollapseIconLabel();
+    if (iconLabel) {
+        static Symbol header_open_icon("header_open_icon");
+        static Symbol header_open_highlighted_icon("header_open_highlighted_icon");
+        static Symbol header_closed_icon("header_closed_icon");
+        static Symbol header_closed_highlighted_icon("header_closed_highlighted_icon");
+        if (TheSongSortMgr->IsInHeaderMode()) {
+            if (b) {
+                s = header_closed_highlighted_icon;
+            } else {
+                s = header_closed_icon;
+            }
+        } else {
+            if (b) {
+                s = header_open_highlighted_icon;
+            } else {
+                s = header_open_icon;
+            }
+        }
+        iconLabel->SetTextToken(s);
+    }
 }
 
 Symbol SongHeaderNode::OnSelect() {
@@ -117,11 +135,11 @@ Symbol SongSortNode::Select() {
         return invalid_version_screen;
     } else {
         static Symbol locked_content_screen("locked_content_screen");
-        auto *profile = TheProfileMgr.GetActiveProfile(true);
+        HamProfile *profile = TheProfileMgr.GetActiveProfile(true);
         Symbol token = GetToken();
         if (!TheProfileMgr.IsContentUnlocked(token)) {
             TheLockedContentPanel->SetUp(token);
-            return invalid_version_screen; // ???
+            return locked_content_screen;
         }
         if (profile != nullptr) {
             if (profile->IsContentNew(token)) {

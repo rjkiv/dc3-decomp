@@ -51,14 +51,14 @@ DataNode SongSelectPanel::OnEnterBlacklightMode(DataArray const *d) {
     Flow *f = DataDir()->Find<Flow>("activate_blacklight.flow", false);
     if (f)
         f->Activate();
-    return kDataUnhandled;
+    return DATA_UNHANDLED;
 }
 
 DataNode SongSelectPanel::OnExitBlacklightMode(DataArray const *d) {
     Flow *f = DataDir()->Find<Flow>("deactivate_blacklight.flow", false);
     if (f)
         f->Activate();
-    return kDataUnhandled;
+    return DATA_UNHANDLED;
 }
 
 RndTex *SongSelectPanel::GetTexForCharacter(Symbol s) {

@@ -21,8 +21,8 @@ void HamPanel::Enter() {
     }
     static Symbol draw_after_letterbox("draw_after_letterbox");
     auto letterbox = Property(draw_after_letterbox, false);
-    if (letterbox)
-        unk34 = !letterbox->Int();
+    if (letterbox && letterbox->Int() != 0)
+        unk34 = 1;
     else
         unk34 = 0;
 }
@@ -30,7 +30,7 @@ void HamPanel::Enter() {
 bool HamPanel::Exiting() const {
     if (UIPanel::Exiting()) {
         return true;
-    } else if (ShouldUseLocalNavlist() && mNavList != nullptr) {
+    } else if (ShouldUseLocalNavlist() && mNavList) {
         return !mNavList->IsAnimating();
     }
     return false;
