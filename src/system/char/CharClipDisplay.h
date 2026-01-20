@@ -22,6 +22,7 @@ public:
     void SetClip(CharClip *, bool);
     void DrawBeatString(float, Hmx::Color const &);
     void DrawTrack();
+    static float GetSEm() { return sEm; }
 
     CharClip *unk0;
     float unk4;

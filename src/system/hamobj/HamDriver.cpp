@@ -1,5 +1,6 @@
 #include "hamobj/HamDriver.h"
 
+#include "char/CharClipDisplay.h"
 #include "utl/TimeConversion.h"
 #include "char/Char.h"
 #include "char/CharBones.h"
@@ -8,6 +9,7 @@
 #include "char/CharWeightable.h"
 #include "math/Utl.h"
 #include "obj/Object.h"
+#include "rndobj/Rnd.h"
 #include "utl/BinStream.h"
 
 HamDriver::HamDriver() : mBones(this), unk78(-kHugeFloat) {}
@@ -74,6 +76,21 @@ bool HamDriver::Replace(ObjRef *ref, Hmx::Object *obj) {
     mLayers.Replace(ref, obj);
     bool replaced = CharWeightable::Replace(ref, obj);
     return replaced;
+}
+
+float HamDriver::Display(float f1) {
+    float scaledHeight = TheRnd.Height() * f1;
+    auto pathName = PathName(this);
+    Hmx::Color color(1.0, 1.0, 1.0, 1.0);
+    Vector2 screenPos(CharClipDisplay::GetSEm(), scaledHeight);
+    auto stringDisplay = MakeString("%s beat: %.2f", pathName, unk78);
+    TheRnd.DrawString(stringDisplay, screenPos, color, true);
+    CharClipDisplay::Init(this->Dir());
+    float lineSpacing = CharClipDisplay::LineSpacing() + scaledHeight;
+    for (auto it = mLayers.unk2c.begin(); it != mLayers.unk2c.end() && mWeight != 0.0; ++it) {
+        lineSpacing = DisplayRecurse(*it, 0, lineSpacing);
+    }
+    return lineSpacing / TheRnd.Height();
 }
 
 void HamDriver::Clear() { mLayers.Clear(); }

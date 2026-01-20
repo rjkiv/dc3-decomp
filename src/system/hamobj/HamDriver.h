@@ -90,10 +90,11 @@ protected:
     HamDriver();
 
     float Display(float);
+    float DisplayRecurse(Layer *, int, float);
 
     /** "The CharBones object to add into." */
     ObjPtr<CharBonesObject> mBones; // 0x30
     LayerArray mLayers; // 0x44
-    float unk78; // 0x78
+    float unk78; // 0x78 - beat?
     std::map<CharClip *, float> unk7c; // 0x7c
 };
