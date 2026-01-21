@@ -25,6 +25,6 @@ void Pool::Free(void *v) {
     if (!v) {
         return;
     }
-    // v = *(void **)mFree;
     *(void **)v = mFree;
+    mFree = (char *)v;
 }
