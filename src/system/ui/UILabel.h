@@ -69,7 +69,7 @@ public:
 
     char const *GetDefaultText() const;
     void CenterWithLabel(UILabel *, bool, float);
-    LabelStyle &LStyle(int);
+    LabelStyle &LStyle(int) const;
 
     template <class T1>
     void SetTokenFmt(Symbol s, T1 t1) {

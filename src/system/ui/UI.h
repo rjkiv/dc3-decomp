@@ -55,6 +55,7 @@ public:
     void UseJoypad(bool, bool);
     bool OverloadHorizontalNav(JoypadAction, JoypadButton, bool) const;
     bool IsGameScreenActive();
+    bool DefaultAllowEditText() const { return mDefaultAllowEditText; }
 
 private:
     void ToggleLoadTimes();

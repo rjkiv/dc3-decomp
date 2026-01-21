@@ -1,4 +1,5 @@
 #include "ui/UILabel.h"
+
 #include "macros.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
@@ -29,11 +30,22 @@ UILabel::UILabel() : unk122(1), unk124(this) {
 }
 
 BEGIN_PROPSYNCS(UILabel)
-
+SYNC_PROP_SET(text_token, mTextToken, SetTextToken(_val.ForceSym()))
+SYNC_PROP_SET(icon, unk118, SetIcon(unk120))
 END_PROPSYNCS
 
 BEGIN_COPYS(UILabel)
-
+    COPY_SUPERCLASS(UIComponent)
+    COPY_SUPERCLASS(RndText)
+    CREATE_COPY(UILabel)
+    BEGIN_COPYING_MEMBERS
+        COPY_MEMBER(mTextToken)
+        COPY_MEMBER(unk118)
+        //looks like an strcpy here
+    END_COPYING_MEMBERS
+    if (sDeferUpdate == false) {
+        LabelUpdate(false);
+    }
 END_COPYS
 
 BEGIN_SAVES(UILabel)
@@ -74,7 +86,13 @@ void UILabel::SetDateTime(DateTime const &dt, Symbol s) {
     SetDisplayText(str.c_str(), true);
 }
 
-void UILabel::SetIcon(char c) {}
+void UILabel::SetIcon(char c) {
+    unk120 = c;
+    if (c == '\0' && TheLoadMgr.EditMode() != 0) {
+        SetEditText(unk118.c_str());
+        return;
+    }
+}
 
 void UILabel::SetTokenFmt(const DataArray *) {}
 
@@ -88,7 +106,7 @@ void UILabel::SetTimeHMS(int, bool) {}
 
 bool UILabel::CheckValid(bool) { return false; }
 
-void UILabel::SetEditText(const char *) {}
+void UILabel::SetEditText(const char *c) {}
 
 char const *UILabel::GetDefaultText() const {
     if (unk120 != 0) {
@@ -139,11 +157,21 @@ void UILabel::LabelUpdate(bool b) { unk122 = false; }
 
 DataNode UILabel::OnSetHeightFromText(DataArray *) { return NULL_OBJ; }
 
-void UILabel::SetFontMat(char const *, int) {}
+void UILabel::SetFontMat(char const *c, int i) {
+    RndMat *rndmat = nullptr;
+    auto labelStyle = LStyle(i);
+
+}
 
 char const *UILabel::GetFontMat(int) { return 0; }
 
-void UILabel::RefreshFontMat(int i) {}
+void UILabel::RefreshFontMat(int i) {
+    auto mat = GetFontMat(i);
+    SetFontMat(mat, i);
+    if (sDeferUpdate == false) {
+        LabelUpdate(false);
+    }
+}
 
 BEGIN_HANDLERS(UILabel)
 
