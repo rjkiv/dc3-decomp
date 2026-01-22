@@ -99,24 +99,6 @@ void MemHeap::Init(
     }
 }
 
-//void MemHeap::FirstFit(int i1, int i2, FreeBlockInfo &blockinfo) {
-//    if (mFreeBlockChain == nullptr) {
-//        return;
-//    }
-//    auto blockchain = mFreeBlockChain;
-//    FreeBlock *newBlock = nullptr;
-//    for (auto it = blockchain; it != nullptr; it = it->mNextBlock) {
-//        int temp = ((((1 << (i2) >> 2) + temp - 1U) >> (i2)) << (i2)) - temp;
-//        if (temp + i1 >= (int)it->mSizeWords) {
-//            blockinfo.mSizeWords = it->mSizeWords;
-//            blockinfo.mPadWords = temp;
-//            blockinfo.mBlock = it;
-//            blockinfo.mPrevBlock = newBlock;
-//            return;
-//        }
-//    }
-//}
-
 void MemHeap::FirstFit(int size, int align, FreeBlockInfo &blockinfo) {
     FreeBlock *prev = nullptr;
     for (auto block = mFreeBlockChain; block != nullptr; block = block->mNextBlock) {
