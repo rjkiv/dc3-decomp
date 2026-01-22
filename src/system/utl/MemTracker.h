@@ -38,6 +38,8 @@ public:
     void SetSpew(bool spew) { mSpew = spew; }
     void SetReport(TextFileStream *s) { mReport = s; }
     signed char Heap() const { return mHeap; }
+    bool GetHeapOnly() const { return mHeapOnly; }
+    void SetHeapOnly(bool heapOnly) { mHeapOnly = heapOnly; }
 
     static void *operator new(unsigned int);
     static void operator delete(void *);
@@ -60,7 +62,7 @@ private:
     TextStream *mLog; // 0x1818c
     TextFileStream *mReport; // 0x18190
     signed char mHeap; // 0x18194
-    bool unk18195;
+    bool mHeapOnly; // 0x18195
     int mFreeSysMem; // 0x18198
     int mFreePhysMem; // 0x1819c
     bool mSpew; // 0x181a0

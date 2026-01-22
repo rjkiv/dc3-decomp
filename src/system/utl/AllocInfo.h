@@ -87,3 +87,5 @@ private:
     AllocInfo **mEnd; // 0x4
     AllocInfo **mEndOfStorage; // 0x8
 };
+
+void AllocInfoInit();

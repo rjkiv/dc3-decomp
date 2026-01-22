@@ -74,7 +74,7 @@ void MemTracker::Alloc(
     }
     gMemTrackerTracking = false;
     AllocInfo::bPrintCsv = true;
-    if (!unk18195) {
+    if (!mHeapOnly) {
         String str1;
         String str2;
         AllocInfo *info = new AllocInfo(

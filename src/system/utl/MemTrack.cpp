@@ -1,4 +1,6 @@
 #include "utl/MemTrack.h"
+
+#include "obj/DataFunc.h"
 #include "obj/Data.h"
 #include "os/CritSec.h"
 #include "os/Debug.h"
@@ -17,6 +19,8 @@ bool gMemoryUsageTest;
 // HeapTracker* gHeapTracker;
 int gNumDiffs;
 TextFileStream *gLog;
+char CharArrayArray[256]; // CHAR_ARRAY_ARRAY_830e58f8
+char MemTrackObjectName[256];
 
 void StopLog() {
     if (gLog) {
@@ -190,4 +194,30 @@ DataNode MemTrackLogDF(DataArray *a) {
         StopLog();
     }
     return 0;
+}
+
+void MemTrackInit(int heap, int numAllocs, bool heapOnly) {
+    CritSecTracker tracker(gMemLock);
+    MILO_ASSERT(!gMemTracker, 0x82);
+    if (heapOnly) {
+        numAllocs = 1;
+    }
+    gMemTracker = new MemTracker(heap, numAllocs);
+    gMemTracker->SetHeapOnly(heapOnly);
+    gAllocInfoHeap = (AllocInfo *)malloc(numAllocs * sizeof(AllocInfo));
+    MILO_ASSERT(gAllocInfoHeap, 0x89);
+    AllocInfo::SetPoolMemory(gAllocInfoHeap, numAllocs * sizeof(AllocInfo));
+    DataRegisterFunc("heap_report", MemTrackReportDF);
+    DataRegisterFunc("heap_dump", MemTrackHeapDumpDF);
+    DataRegisterFunc("mem_log", MemTrackLogDF);
+    MemTrackReport(0, false);
+    AllocInfoInit();
+    for (int i = 0; i < sizeof(CharArrayArray); i++) {
+        void *mem = MemAlloc(0x80, __FILE__, 0x9a, "MemTrackStack", 0);
+        CharArrayArray[i] = (char)mem;
+        memset(mem, 0, 0x80);
+        mem = MemAlloc(0x80, __FILE__, 0x9c, "MemTrackStack", 0);
+        MemTrackObjectName[i] = (char)mem;
+        memset(mem, 0, 0x80);
+    }
 }

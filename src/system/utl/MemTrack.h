@@ -12,3 +12,5 @@ void EndMemTrackFileName();
 
 void BeginMemTrackObjectName(const char *);
 void EndMemTrackObjectName();
+
+void MemTrackInit(int, int, bool);
