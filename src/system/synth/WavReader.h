@@ -8,16 +8,14 @@
 
 class WavReader : public StreamReader {
 public:
-    WavReader(File *, bool, StandardStream *);
+    WavReader(File *, StandardStream *);
     ~WavReader();
     virtual void Poll(float);
     virtual void Seek(int);
-    virtual void EnableReads(bool enable) { mEnableReads = enable; }
+   // virtual void EnableReads(bool enable) { mEnableReads = enable; }
     virtual bool Done() { return mSamplesLeft == 0; }
-    virtual bool Fail() { return false; }
-    virtual void Init();
-    virtual void ConsumeData(void **, int, int);
-    virtual void EndData() {}
+    //virtual bool Fail() { return false; }
+    //virtual void EndData() {}
 
     int mNumChannels; // 0x4
     int mSampleRate; // 0x8
@@ -34,4 +32,8 @@ public:
     int mTotalSamplesConsumed; // 0x38
     bool mInitted; // 0x3c
     StandardStream *mOutStream; // 0x40
+
+protected:
+    virtual void Init();
+    virtual int ConsumeData(void **, int, int);
 };

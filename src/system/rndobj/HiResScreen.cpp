@@ -90,3 +90,21 @@ void HiResScreen::BmpCache::FlushCache() {
         mDirtyEnd = 0;
     }
 }
+
+void HiResScreen::TakeShot(const char *c, int i) {
+    mFileBase = c;
+    mTiling = i;
+    mActive = true;
+    mAccumHeight = 0;
+    //BmpCache bmpCache;
+    if (TheRnd.Width() < 481 || TheRnd.Height() < 271) {
+        MILO_NOTIFY("Padding exceeds screen size");
+    }
+    else {
+        mAccumWidth = TheRnd.Width() * i + i * -480;
+        mAccumHeight = TheRnd.Height() * i + i * -270;
+        if (TheRnd.Width() < mAccumWidth && TheRnd.Height() < mAccumHeight) {
+            //bmpCache = MemAlloc(0x2c, __FILE__, 0x6b, "BmpCache", 0);
+        }
+    }
+}

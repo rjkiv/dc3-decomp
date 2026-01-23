@@ -24,12 +24,6 @@ private:
     void ReadNumSamples();
     IListChunk &PrepareToProvideData();
 
-    int NumChannels() const { return mNumChannels; }
-    int BitsPerSample() const { return mBitsPerSample; }
-    int SamplesPerSec() const { return mSamplesPerSec; }
-    int NumSamples() const { return mNumSamples; }
-    short Format() const { return mFormat; }
-    int NumMarkers() const { return mMarkers.size(); }
     short mFormat; // 0x0
     unsigned short mNumChannels; // 0x2
     unsigned int mSamplesPerSec; // 0x4
@@ -37,12 +31,20 @@ private:
     unsigned short mBlockAlign; // 0xC
     unsigned short mBitsPerSample; // 0xE
     int mNumSamples; // 0x10
-    std::vector<WaveFileMarker> mMarkers;
+    std::vector<WaveFileMarker> mMarkers; // 0x14
     IListChunk mRiffList; // 0x20
 
 public:
     WaveFile(BinStream &);
     ~WaveFile();
+
+    unsigned short NumChannels() const { return mNumChannels; }
+    unsigned short BitsPerSample() const { return mBitsPerSample; }
+    unsigned int SamplesPerSec() const { return mSamplesPerSec; }
+    int NumSamples() const { return mNumSamples; }
+    short Format() const { return mFormat; }
+    int NumMarkers() const { return mMarkers.size(); }
+    std::vector<WaveFileMarker> &Markers() { return mMarkers; }
 };
 
 class WaveFileData : public IDataChunk {
