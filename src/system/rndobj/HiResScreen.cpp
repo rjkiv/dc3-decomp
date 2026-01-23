@@ -38,3 +38,55 @@ HiResScreen::BmpCache::~BmpCache() {
     delete mBuffer;
     mBuffer = 0;
 }
+
+Hmx::Rect HiResScreen::InvScreenRect() const {
+    // 20 = x
+    // 1c = y
+    // 18 = w
+    // 14 = h
+    auto screenRect = ScreenRect();
+    float rH = 1 / screenRect.h;
+    float rW = 1 / screenRect.w;
+    float rY = (-screenRect.h * screenRect.y);
+    float rX = (-screenRect.w * screenRect.x);
+    Hmx::Rect rect(rX, rY, rW, rH);
+    return rect;
+}
+
+void HiResScreen::GetBorderForTile(int i1, int i2, int &i3, int &i4, int &i5, int &i6) const {
+    i3 = 0;
+    i4 = 0;
+    i5 = 0;
+    i6 = 0;
+    int width = TheRnd.Width();
+    if (((width - 480) * i1 + width) < mAccumWidth) {
+        i5 = 480;
+    }
+    else if (0 < (i1 + 480) * (width - 1) - width) {
+        i3 = 480;
+    }
+    int height = TheRnd.Height();
+    if ((height - 270) * i2 + height < mAccumHeight) {
+        i6 = 270;
+    }
+    else if (0 < (i2 + 2) * (height - 270) - height) {
+        i4 = 270;
+    }
+}
+
+void HiResScreen::BmpCache::FlushCache() {
+    MILO_ASSERT(mCurrLoadedIndex < mTotalNumCacheLines, 0x9c);
+    if (mDirtyEnd > mDirtyStart) {
+        auto cacheFile = NewFile(mFileNames->c_str(), 1);
+        MILO_ASSERT(cacheFile, 0xa2);
+        cacheFile->Seek(mDirtyStart, 0);
+        unsigned int nBuffRange = mDirtyEnd - mDirtyStart;
+        MILO_ASSERT(nBuffRange < mByteSize, 0xaa);
+        int numWritten = cacheFile->Write((void *)mBuffer[mDirtyStart], nBuffRange);
+        MILO_ASSERT(numWritten == nBuffRange, 0xae);
+        cacheFile->Flush();
+        cacheFile->Truncate(1);
+        mDirtyStart = 0;
+        mDirtyEnd = 0;
+    }
+}

@@ -41,7 +41,7 @@ public:
     Hmx::Rect CurrentTileRect(const Hmx::Rect &, Hmx::Rect &, Hmx::Rect &) const;
     Hmx::Rect ScreenRect(const RndCam *, const Hmx::Rect &) const;
     Hmx::Rect ScreenRect() const;
-    void InvScreenRect() const;
+    Hmx::Rect InvScreenRect() const;
     bool IsActive() const { return mActive; }
 
 private:
