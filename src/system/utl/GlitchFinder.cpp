@@ -246,3 +246,10 @@ void GlitchFinder::PokeEnd(unsigned int ui) {
         unk30058 = unk30058 - ui + mftb;
     }
 }
+
+AutoGlitchPoker::~AutoGlitchPoker() {
+    if (this != nullptr) {
+        unsigned int time = __mftb();
+        TheGlitchFinder.PokeEnd(time);
+    }
+}

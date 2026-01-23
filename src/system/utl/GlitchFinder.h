@@ -17,6 +17,14 @@ public:
     int mGlitchCount; // 0x10
 };
 
+class AutoGlitchPoker {
+public:
+    ~AutoGlitchPoker();
+
+protected:
+    bool mActive;
+};
+
 class GlitchPoker {
 public:
     GlitchPoker();
