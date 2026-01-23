@@ -42,6 +42,7 @@ public:
     void BlendInOverrideClip(CharClip *, float, float);
     void BlendInOverrides(float);
     void BlendOutOverrides(float);
+    void ScaleAddViseme(CharClip *, float);
     void SetSongOffset(float offset) { mSongOffset = offset; }
     void SetOverrideWeight(float weight) { mOverrideWeight = weight; }
     float GetOverrideWeight() const { return mOverrideWeight; }

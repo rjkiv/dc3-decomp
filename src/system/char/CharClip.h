@@ -214,6 +214,7 @@ public:
     void StuffBones(CharBones &);
     void PoseMeshes(ObjectDir *, float);
     CharBoneDir *GetResource(void) const;
+    float FramesPerSec() { return mFramesPerSec; }
 
     static const float kBeatAccuracy;
     static DataNode GetClipEvents();

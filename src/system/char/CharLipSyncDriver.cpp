@@ -220,3 +220,15 @@ void CharLipSyncDriver::Highlight() {
         gCharHighlightY = v2.y + y;
     }
 }
+
+void CharLipSyncDriver::ScaleAddViseme(CharClip *clip, float f1) {
+    float length;
+    float dVar2;
+    if (clip->LengthSeconds() != 0.0) {
+        float temp = clip->LengthSeconds();
+        length = TheTaskMgr.Seconds(TaskMgr::kRealTime);
+        dVar2 = fmod(length, temp);
+    }
+    length = clip->FrameToBeat(clip->FramesPerSec() * dVar2);
+    mBones.Ptr()->ScaleAdd(clip, 0.0, length, f1);
+}
