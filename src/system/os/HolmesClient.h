@@ -1,4 +1,5 @@
 #pragma once
+#include "obj/Data.h"
 #include "os/NetworkSocket.h"
 #include "os/File.h"
 #include "types.h"
@@ -100,6 +101,11 @@ void HolmesClientWrite(int, int, int, const void *);
 void HolmesClientRead(int, int, int, void *, File *);
 bool HolmesClientReadDone(File *);
 void HolmesClientClose(File *, int);
+bool CanUseHolmes(int);
+void HolmesToLocal(char *, const char *);
+char const *HolmesFileHostName();
+void HolmesClientPoll();
+DataNode DumpHolmesLog(DataArray *);
 
 // HolmesClient_NetSocket
 

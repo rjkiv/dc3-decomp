@@ -1,9 +1,11 @@
 #include "HolmesClient.h"
+#include "obj/Data.h"
 #include "obj/DataFunc.h"
 #include "obj/Msg.h"
 #include "os/CritSec.h"
 #include "os/Debug.h"
 #include "os/File.h"
+#include "os/HolmesUtl.h"
 #include "os/NetworkSocket.h"
 #include "os/System.h"
 #include "os/Timer.h"
@@ -51,6 +53,7 @@ namespace {
     String gServerName;
     // HolmesInput gInput; // fuck you mfc
     String gHolmesTarget;
+    bool gPollStreamEof;
 
 #pragma region Private details
 
@@ -73,15 +76,50 @@ namespace {
     void HolmesFlushStreamBuffer();
     void WaitForAnyResponse(Holmes::Protocol prot);
     void WaitForResponse(Holmes::Protocol prot);
+    bool CheckForResponse(Holmes::Protocol prot, bool b);
+    // this should hopefully be correct when someone does HolmesInput
+    void CheckInput(bool b) {
+        if (CheckForResponse(gPendingResponse, b)) {
+            BeginCmd(Holmes::kPollKeyboard, true);
+            // gInput.LoadKeyboard(gHolmesStream);
+            gPendingResponse = Holmes::kInvalidOpcode;
+            EndCmd(Holmes::kPollKeyboard);
+        }
+
+        if (CheckForResponse(gPendingResponse, b)) {
+            BeginCmd(Holmes::kPollJoypad, true);
+            // gInput.LoadJoypad(gHolmesStream);
+            gPendingResponse = Holmes::kInvalidOpcode;
+            EndCmd(Holmes::kPollJoypad);
+        }
+    };
+    bool CheckReads(bool b);
+    void HolmesClientPollInternal(bool b) {
+        CritSecTracker cst(&gCrit);
+
+        if (!gHolmesStream)
+            return;
+
+        CheckInput(b);
+        CheckReads(b);
+    };
 }
 
 #pragma region Public API
 
-bool UsingHolmes(int) { return 0; }
+bool UsingHolmes(int p1) {
+    if (!gHolmesStream)
+        return false;
 
-void HolmesClientTerminate() { return; }
+    return CanUseHolmes(p1);
+}
 
-NetAddress HolmesResolveIP() { return NetAddress(); }
+NetAddress HolmesResolveIP() {
+    if (CanUseHolmes(3))
+        return HolmesClient::PlatformResolveIP();
+    else
+        return NetAddress();
+}
 
 void HolmesClientPollKeyboard() { return; }
 
@@ -345,3 +383,30 @@ void HolmesClientClose(File *, int) { return; }
 void HolmesClientEnumerate(
     const char *, void (*)(const char *, const char *), bool, const char *, bool
 ) {}
+
+bool CanUseHolmes(int p1) {
+    if (!UsingCD())
+        return true;
+
+    if (gHostConfig != false && (p1 & 2U) != 0)
+        return true;
+
+    if (gHostLogging != false && (p1 & 1U) != 0)
+        return true;
+
+    return false;
+}
+
+void HolmesToLocal(char *p1, const char *p2) {}
+
+char const *HolmesFileHostName() { return gMachineName; }
+
+void HolmesClientPoll() {
+    CritSecTracker cst(&gCrit);
+
+    if (!gHolmesStream)
+        return;
+
+    gPollStreamEof = false;
+    HolmesClientPollInternal(true);
+}
