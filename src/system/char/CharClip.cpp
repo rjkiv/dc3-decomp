@@ -476,7 +476,7 @@ BEGIN_LOADS(CharClip)
     if (oldRev > 0xB) {
         d >> mDoNotCompress;
         if (mDoNotCompress)
-            MILO_WARN("mDoNotCompress %s\n", PathName(this));
+            MILO_NOTIFY("mDoNotCompress %s\n", PathName(this));
     }
     mTransitions.Load(d, oldRev);
     if (oldRev < 3) {
@@ -512,12 +512,12 @@ BEGIN_LOADS(CharClip)
             d >> x;
             d >> str;
             if (!str.empty()) {
-                MILO_WARN(
+                MILO_NOTIFY(
                     "%s has old frame %.2f event %s, must port", PathName(this), x, str
                 );
             }
             if (x < f1) {
-                MILO_WARN("Keyframes in %s are out of order.", Name());
+                MILO_NOTIFY("Keyframes in %s are out of order.", Name());
             }
             f1 = x;
         }
@@ -559,7 +559,7 @@ BEGIN_LOADS(CharClip)
     if (d.rev > 0x12)
         d >> mSyncAnim;
     if (EndBeat() == StartBeat() && mFull.NumSamples() > 1) {
-        MILO_WARN(
+        MILO_NOTIFY(
             "%s has endframe == startframe == %.3f but %d samples!\n",
             Name(),
             StartBeat(),
