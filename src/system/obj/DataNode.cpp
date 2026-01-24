@@ -299,8 +299,8 @@ void DataNode::Save(BinStream &d) const {
     case kDataFunc:
         d << DataFuncName(mValue.func);
         break;
-    case kDataUnhandled:
     case kDataInt:
+    case kDataUnhandled:
     case kDataElse:
     case kDataEndif:
     case kDataAutorun:

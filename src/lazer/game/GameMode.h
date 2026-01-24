@@ -73,3 +73,4 @@ void GameModeTerminate();
 bool IsInLoaderMode(const Symbol &);
 
 extern GameMode *TheGameMode;
+extern bool (*g_LoaderModeCallback)(const Symbol &);

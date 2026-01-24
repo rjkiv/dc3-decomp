@@ -1,23 +1,25 @@
 #include "Pool.h"
-#include "macros.h"
 
 Pool::Pool(int i1, void *v, int i2) : mFree((char *)v) {
-    long ull = i1 + 3 & 0xFFFFFFFC;
-    int i3 = i2 / ull;
-    if (i3 > 1) {
-        for (int i = i3 - 1; i < i2; i++) {
-            *(void **)mFree = (char *)v + ull;
-            v = mFree;
-        }
+    char *ptr = (char *)v;
+    int stride = (i1 + 3) & ~3;
+    int count = i2 / stride;
+    if (count > 1) {
+        int n = count - 1;
+        do {
+            char *next = ptr + stride;
+            *(char **)ptr = next;
+            ptr = next;
+        } while (--n);
     }
-    *(void **)v = 0;
+    *(char **)ptr = 0;
 }
 
 void *Pool::Alloc() {
     void *ptr = mFree;
     if (!ptr)
         return nullptr;
-    mFree = nullptr;
+    mFree = *(char **)ptr;
     return ptr;
 }
 

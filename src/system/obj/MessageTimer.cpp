@@ -19,11 +19,9 @@ void EventEntry::Add(Hmx::Object *o, float ms) {
     for (int i = 0; i < objs.size(); i++) {
         if (objs[i]->name == sym) {
             ObjEntry *cur = objs[i];
-            if (cur->maxMs < ms) {
-                cur->maxMs = ms;
-            }
-            cur->num++;
+            MaxEq(cur->maxMs, ms);
             cur->totalMs += ms;
+            cur->num++;
             return;
         }
     }

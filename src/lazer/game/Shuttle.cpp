@@ -4,7 +4,7 @@
 #include "types.h"
 #include <cmath>
 
-Shuttle::Shuttle() : mMs(0.0f), mEndMs(0.0f), mActive(false), mController(0) {}
+Shuttle::Shuttle() : mMs(0), mEndMs(0), mActive(0), mController(0) {}
 Shuttle::~Shuttle() {}
 
 void Shuttle::SetActive(bool b) { mActive = b; }
