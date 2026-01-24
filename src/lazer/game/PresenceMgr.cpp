@@ -12,6 +12,7 @@
 #include "os/Debug.h"
 #include "os/PlatformMgr.h"
 #include "os/System.h"
+#include "ui/UI.h"
 #include "utl/Symbol.h"
 #include "utl/UTF8.h"
 
@@ -162,6 +163,84 @@ bool PresenceMgr::IsPadPlaying(int pad) {
             return true;
     }
     return false;
+}
+
+Symbol PresenceMgr::GetPresenceMode() {
+    if (!mPresenceModes)
+        return gNullStr;
+
+    static Symbol in_game("in_game");
+    static Symbol screens("screens");
+    static Symbol gamemode("gamemode");
+
+    int size = mPresenceModes->Size();
+    for (int i = 1; i < size; i++) {
+        DataArray *arr = mPresenceModes->Array(i);
+        int arrSize = arr->Size();
+        if (arrSize >= 1) {
+            Symbol mode = arr->Sym(0);
+            bool match = true;
+            for (int j = 1; j < arrSize; j++) {
+                DataArray *jArr = arr->Array(j);
+                Symbol condition = jArr->Sym(0);
+                if (condition == in_game) {
+                    if (!mInGame)
+                        match = false;
+                } else if (condition == screens) {
+                    bool found = false;
+                    int jSize = jArr->Size();
+                    for (int k = 1; k < jSize; k++) {
+                        Symbol screen = jArr->Sym(k);
+                        int depth = TheUI->PushDepth();
+                        if (depth < 1) {
+                            if (TheUI->CurrentScreen()) {
+                                if (screen == TheUI->CurrentScreen()->Name()) {
+                                    found = true;
+                                    break;
+                                }
+                            }
+                        } else {
+                            if (TheUI->CurrentScreen()) {
+                                if (screen == TheUI->CurrentScreen()->Name()) {
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            for (int n = 0; n < depth; n++) {
+                                if (TheUI->ScreenAtDepth(n)) {
+                                    if (screen == TheUI->ScreenAtDepth(n)->Name()) {
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (found)
+                                break;
+                        }
+                    }
+                    if (!found)
+                        match = false;
+                } else if (condition == gamemode) {
+                    bool inMode = false;
+                    int jSize = jArr->Size();
+                    for (int k = 1; k < jSize; k++) {
+                        Symbol sym = jArr->Sym(k);
+                        if (TheGameMode->InMode(sym, true)) {
+                            inMode = true;
+                            break;
+                        }
+                    }
+                    if (!inMode)
+                        match = false;
+                }
+                if (!match)
+                    break;
+            }
+            if (match)
+                return mode;
+        }
+    }
+    return gNullStr;
 }
 
 BEGIN_HANDLERS(PresenceMgr)

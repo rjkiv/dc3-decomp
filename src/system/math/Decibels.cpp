@@ -10,6 +10,7 @@ float DbToRatio(float db) {
 }
 
 float RatioToDb(float ratio) {
+    static const float zero = 0.0f;
     MILO_ASSERT(ratio >= 0.0f, 0x1B);
-    return ratio <= 0.0f ? -96.0f : (float)log10(ratio) * 20.0f;
+    return (ratio <= zero) ? -96.0f : (float)log10(ratio) * 20.0f;
 }
