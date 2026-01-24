@@ -36,6 +36,7 @@ public:
     void SetCamJointPos(SkeletonJoint, const Vector3 &);
     void SetCamJointDisplacement(SkeletonJoint, const Vector3 &);
     bool Tracked() const { return mTracked; }
+    void SetTracked(bool b) { mTracked = b; }
 
 private:
     Vector3 mCamJointPositions[kNumJoints]; // 0x4
