@@ -206,10 +206,10 @@ bool String::operator!=(const FixedString &str) const {
 }
 
 bool String::operator==(const FixedString &str) const {
-    return strcmp(mStr, str.c_str()) == 0;
+    return strcmp(str.c_str(), mStr) == 0;
 }
 
-bool String::operator==(Symbol s) const { return strcmp(mStr, s.Str()) == 0; }
+bool String::operator==(Symbol s) const { return strcmp(s.Str(), mStr) == 0; }
 
 void RemoveSpaces(char *out, int len, const char *in) {
     MILO_ASSERT(out, 0x2C0);
@@ -274,10 +274,11 @@ String &String::operator=(const FixedString &str) {
     return *this;
 }
 
-// String &String::operator=(const String &str) {
-//     const char *cstr = str.empty() ? nullptr : str.c_str();
-//     return *this = cstr;
-// }
+String &String::operator=(const String &str) {
+    reserve(str.capacity());
+    strcpy(mStr, str.c_str());
+    return *this;
+}
 
 void String::resize(unsigned int arg) {
     reserve(arg);

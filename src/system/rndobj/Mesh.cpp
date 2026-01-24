@@ -56,7 +56,7 @@ BEGIN_HANDLERS(RndMesh)
     HANDLE_ACTION(reset_normals, ResetNormals())
     HANDLE_ACTION(tessellate, Tessellate())
     HANDLE_ACTION(clear_ao, ClearAO())
-    HANDLE_ACTION(clear_bones, mBones.clear())
+    HANDLE_ACTION(clear_bones, CopyBones(nullptr))
     HANDLE_ACTION(copy_geom_from_owner, CopyGeometryFromOwner())
     HANDLE_SUPERCLASS(RndDrawable)
     HANDLE_SUPERCLASS(RndTransformable)
@@ -697,7 +697,7 @@ void RndMesh::VertVector::resize(int n) {
 int RndMesh::EstimatedSizeKb() const {
     // sizeof(Vert) is 0x50 here
     // but the actual struct is size 0x60
-    return (NumVerts() * 0x50 + NumFaces() * sizeof(Face)) / 1024;
+    return (NumVerts() * 0x50 + NumFaces() * (int)sizeof(Face)) / 1024;
 }
 
 void RndMesh::ClearCompressedVerts() {

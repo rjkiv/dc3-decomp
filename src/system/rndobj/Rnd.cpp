@@ -441,32 +441,32 @@ void Rnd::EndDrawing() {
     EndWorld();
     if (MainThread()) {
         {
-            static Timer *cpu = AutoTimer::GetTimer("cpu");
-            if (cpu)
-                cpu->Stop();
+            static Timer *cpuStop = AutoTimer::GetTimer("cpu");
+            if (cpuStop)
+                cpuStop->Stop();
         }
         {
-            static Timer *draw = AutoTimer::GetTimer("draw");
-            if (draw)
-                draw->Stop();
+            static Timer *drawStop = AutoTimer::GetTimer("draw");
+            if (drawStop)
+                drawStop->Stop();
         }
         static Timer *t = AutoTimer::GetTimer("overlays");
-        AutoTimer at(t, 50, nullptr, nullptr);
-        AutoSlowFrame asf("RndOverlay::DrawAll", 10);
+        AutoTimer at(t, 50.0f, NULL, NULL);
+        AutoSlowFrame asf("RndOverlay::DrawAll", 10.0f);
         if (RndCam::Current()->TargetTex()) {
             mDefaultCam->Select();
         }
         RndOverlay::DrawAll(false);
         RndGraph::DrawAll();
         {
-            static Timer *cpu = AutoTimer::GetTimer("cpu");
-            if (cpu)
-                cpu->Start();
+            static Timer *cpuStart = AutoTimer::GetTimer("cpu");
+            if (cpuStart)
+                cpuStart->Start();
         }
         {
-            static Timer *draw = AutoTimer::GetTimer("draw");
-            if (draw)
-                draw->Start();
+            static Timer *drawStart = AutoTimer::GetTimer("draw");
+            if (drawStart)
+                drawStart->Start();
         }
     }
     mDrawing = false;
@@ -615,7 +615,6 @@ void Rnd::DoPostProcess() {
 }
 
 float Rnd::UpdateOverlay(RndOverlay *o, float f) {
-    float ret = f;
     if (o == mRateOverlay) {
         UpdateRate();
     } else if (o == mHeapOverlay) {
@@ -623,9 +622,9 @@ float Rnd::UpdateOverlay(RndOverlay *o, float f) {
     } else if (o == mWatchOverlay) {
         mWatcher.Update();
     } else if (o == mTimersOverlay) {
-        ret = DrawTimers(f);
+        f = DrawTimers(f);
     }
-    return ret;
+    return f;
 }
 
 DataNode Rnd::OnShowOverlay(const DataArray *da) {
@@ -806,28 +805,28 @@ DataNode Rnd::OnToggleShowShaderErrors(const DataArray *) {
 void Rnd::SetPostProcOverride(RndPostProc *pp) {
     MILO_LOG(
         "Rnd::SetPostProcOverride: %s -> %s\n",
-        !mPostProcOverride ? "NULL" : PathName(mPostProcOverride),
-        !pp ? "NULL" : PathName(pp)
+        mPostProcOverride == 0 ? "NULL" : PathName(mPostProcOverride),
+        pp == 0 ? "NULL" : PathName(pp)
     );
     mPostProcOverride = pp;
     RndOverlay *ppOverlay = RndOverlay::Find("postproc", true);
-    TextStream *old = TheDebug.Reflect();
     if (ppOverlay->Showing()) {
+        TextStream *old = TheDebug.Reflect();
         TheDebug.SetReflect(ppOverlay);
-        MILO_LOG("SETPROSTPROCOVERRIDE: %s\n", !pp ? "NULL" : PathName(pp));
+        MILO_LOG("SETPROSTPROCOVERRIDE: %s\n", pp == 0 ? "NULL" : PathName(pp));
+        TheDebug.SetReflect(old);
     }
-    TheDebug.SetReflect(old);
 }
 
 void Rnd::SetPostProcBlacklightOverride(RndPostProc *pp) {
     mPostProcBlackLightOverride = pp;
     RndOverlay *ppOverlay = RndOverlay::Find("postproc", true);
-    TextStream *old = TheDebug.Reflect();
     if (ppOverlay->Showing()) {
+        TextStream *old = TheDebug.Reflect();
         TheDebug.SetReflect(ppOverlay);
-        MILO_LOG("SETBLACKLIGHTOVERRIDE: %s\n", !pp ? "NULL" : PathName(pp));
+        MILO_LOG("SETBLACKLIGHTOVERRIDE: %s\n", pp == 0 ? "NULL" : PathName(pp));
+        TheDebug.SetReflect(old);
     }
-    TheDebug.SetReflect(old);
 }
 
 void Rnd::CreateDefaults() {

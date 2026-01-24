@@ -121,8 +121,8 @@ int CampaignEraProgress::GetTotalStarsEarned() const {
     int size = pEra->GetNumSongs();
     for (int i = 0; i < size; i++) {
         Symbol name = pEra->GetSongName(i);
-        int total = 0;
         CampaignEraSongProgress *pEraSongProgress = GetEraSongProgress(name);
+        int total = 0;
         if (pEraSongProgress) {
             total = pEraSongProgress->GetStarsEarned();
         }
@@ -176,9 +176,8 @@ bool CampaignEraProgress::IsEraComplete() const {
     MILO_ASSERT(pEra, 0x163);
     Symbol song = pEra->GetDanceCrazeSong();
     if (IsMastered()) {
-        bool ret;
         CampaignEraSongProgress *progress = GetEraSongProgress(song);
-        ret = progress ? progress->IsSongPlayed() : false;
+        bool ret = progress ? progress->IsSongPlayed() : false;
         if (ret) {
             return true;
         }
@@ -396,8 +395,9 @@ bool CampaignProgress::IsEraSongAvailable(Symbol era, Symbol song) const {
             return false;
         }
     } else {
-        int iReqStars = pEra->GetSongRequiredStars(song), iStarCount = 0;
+        int iReqStars = pEra->GetSongRequiredStars(song);
         CampaignEraProgress *pEraProgress = GetEraProgress(era);
+        int iStarCount = 0;
         if (pEraProgress) {
             iStarCount = pEraProgress->GetTotalStarsEarned();
         }
@@ -464,14 +464,8 @@ Symbol CampaignProgress::GetFirstIncompleteEra() const {
     FOREACH (it, eras) {
         CampaignEra *pEra = *it;
         MILO_ASSERT(pEra, 0x3E6);
-        era = pEra->GetName();
-        CampaignEraProgress *progress = GetEraProgress(era);
-        bool canContinue;
-        if (progress) {
-            canContinue = progress->IsEraComplete();
-        } else {
-            canContinue = false;
-        }
+        CampaignEraProgress *progress = GetEraProgress(era = pEra->GetName());
+        bool canContinue = progress ? progress->IsEraComplete() : false;
         if (!canContinue)
             break;
         if (pEra->GetUnk50()) {
@@ -505,12 +499,7 @@ int CampaignProgress::GetNumCompletedEras() const {
         CampaignEra *pEra = *it;
         MILO_ASSERT(pEra, 0x423);
         CampaignEraProgress *progress = GetEraProgress(pEra->GetName());
-        bool b4;
-        if (progress) {
-            b4 = progress->IsEraComplete();
-        } else {
-            b4 = false;
-        }
+        bool b4 = progress ? progress->IsEraComplete() : false;
         if (b4) {
             numCompleted++;
         }

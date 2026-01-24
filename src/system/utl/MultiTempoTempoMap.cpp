@@ -213,7 +213,7 @@ MultiTempoTempoMap::~MultiTempoTempoMap() {}
 void MultiTempoTempoMap::Finalize() { TrimExcess(mTempoPoints); }
 
 bool MultiTempoTempoMap::AddTempoInfoPoint(int tick, int tempo) {
-    if (mTempoPoints.empty()) {
+    if (mTempoPoints.size() == 0) {
         if (tick != 0) {
             return false;
         }

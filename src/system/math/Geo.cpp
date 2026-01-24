@@ -76,10 +76,12 @@ bool Box::Contains(const Sphere &s) const {
 
 bool Box::Contains(const Triangle &t) const {
     Vector3 v1 = t.origin;
-    Vector3 v2;
-    Add(t.origin, t.frame.x, v2);
-    Vector3 v3;
-    Add(t.origin, t.frame.y, v3);
+    Vector3 v2(
+        t.frame.x.x + t.origin.x, t.frame.x.y + t.origin.y, t.frame.x.z + t.origin.z
+    );
+    Vector3 v3(
+        t.frame.y.x + t.origin.x, t.frame.y.y + t.origin.y, t.frame.y.z + t.origin.z
+    );
     return Contains(v1) && Contains(v2) && Contains(v3);
 }
 
@@ -94,7 +96,7 @@ float Box::SurfaceArea() const {
 }
 
 float Box::Volume() const {
-    return (mMax.x - mMin.x) * (mMax.y - mMin.y) * (mMax.z - mMin.z);
+    return (mMax.z - mMin.z) * (mMax.y - mMin.y) * (mMax.x - mMin.x);
 }
 
 void Box::GrowToContain(const Vector3 &vec, bool b) {

@@ -255,23 +255,21 @@ BEGIN_HANDLERS(HamStorePanel)
     HANDLE_ACTION(
         set_filter_pack_singles, mOfferProvider->SetFilter(_msg->Obj<StoreOffer>(2))
     )
-    // HANDLE_EXPR(offer_provider, )
-    // filter_provider
-    // reset_cancel_timer
-    // allow_cancel
-    // is_cart_enabled
+    HANDLE_EXPR(offer_provider, (Hmx::Object *)mOfferProvider)
+    HANDLE_EXPR(filter_provider, (Hmx::Object *)mOfferProvider->GetFilterProvider())
+    HANDLE_ACTION(reset_cancel_timer, (unkc0 = false, unkc4.Restart()))
+    HANDLE_EXPR(allow_cancel, unkc0)
+    HANDLE_EXPR(is_cart_enabled, unk155)
     HANDLE_ACTION(disable_cart, DisableCart())
     HANDLE_ACTION(get_cart, GetCart())
     HANDLE_ACTION(add_offer_to_cart, AddOfferToCart(_msg->Obj<StoreOffer>(2)))
     HANDLE_ACTION(remove_offer_from_cart, RemoveOfferFromCart(_msg->Obj<StoreOffer>(2)))
-    // HANDLE_ACTION(cart_checkout, MultipleItemsCheckout())
+    HANDLE_ACTION(cart_checkout, MultipleItemsCheckout(mOfferProvider->GetCartOffers()))
     HANDLE_ACTION(lock_cart, LockCart())
     HANDLE_ACTION(unlock_cart, UnlockCart())
     HANDLE_EXPR(is_curr_filter_cart, IsCurrFilterCart(_msg->Int(2)))
-    HANDLE_EXPR(is_cart_empty, mOfferProvider->NumOffersInCart() == 0) // recheck
-    HANDLE_EXPR(is_cart_full, mOfferProvider->NumOffersInCart() < 10) // recheck i
-                                                                      // made up a
-                                                                      // number
+    HANDLE_EXPR(is_cart_empty, mOfferProvider->NumOffersInCart() == 0)
+    HANDLE_EXPR(is_cart_full, mOfferProvider->NumOffersInCart() == 6)
     HANDLE_ACTION(empty_cart, EmptyCart())
     HANDLE_ACTION(set_filter_to_cart, SetFilterToCart())
     HANDLE_ACTION(set_filter_to_songs, SetFilterToSongs())

@@ -60,28 +60,26 @@ bool HamScrollBehavior::ScrollUp(bool b) {
     if (unk18 > 0.0f && !b)
         return false;
     int i = unk4c->FirstShowing() - unk8;
-    if (i >= 0) {
-        unk4c->Scroll(-1, false);
-        unk4c->Poll(0.0f);
-        unk50->HandleHighlightChanged(i);
-        unk24 = 1;
-        unk0 = sScrollSettleTime;
-        return true;
-    }
+    if (i < 0)
+        return false;
+    unk4c->Scroll(-1, false);
+    unk4c->Poll(0.0f);
+    unk50->HandleHighlightChanged(i);
+    unk24 = 1;
+    unk0 = sScrollSettleTime;
+    return true;
 }
 
 bool HamScrollBehavior::ScrollDown(bool b1) {
-    if (unk18 > 0 && !b1)
+    if (unk18 > 0.0f && !b1)
         return false;
-    else {
-        int i2 = unk4c->FirstShowing() + unk8 + HamListRibbon::sNumListSelectable - 1;
-        if (i2 - unk8 < unk4c->NumShowing()) {
-            unk50->HandleHighlightChanged(i2);
-            unk24 = 2;
-            unk0 = sScrollSettleTime;
-            return true;
-        }
-    }
+    int i2 = unk4c->FirstShowing() + unk8 + HamListRibbon::sNumListSelectable - 1;
+    if (i2 - unk8 >= unk4c->NumShowing())
+        return false;
+    unk50->HandleHighlightChanged(i2);
+    unk24 = 2;
+    unk0 = sScrollSettleTime;
+    return true;
 }
 
 bool HamScrollBehavior::IsScrolling() const {

@@ -39,9 +39,9 @@ float Sine(float arg8) {
 
 float FastSin(float f) {
     if (f < 0.0f) {
-        return -gBigSinTable[((int)(-40.743664f * f + 0.49998999f) & 0xFF) * 2];
+        return -gBigSinTable[((int)(-40.743664f * f + 0.49999f) & 0xFF) * 2];
     } else
-        return gBigSinTable[((int)(40.743664f * f + 0.49998999f) & 0xFF) * 2];
+        return gBigSinTable[((int)(40.743664f * f + 0.49999f) & 0xFF) * 2];
 }
 
 DataNode DataSin(DataArray *a) { return (float)sin(DegreesToRadians(a->Float(1))); }

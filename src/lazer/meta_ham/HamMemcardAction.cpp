@@ -25,6 +25,10 @@ void SaveMemcardAction::PreAction() {
     mResult = fsss.Fail() ? kMCGeneralError : kMCNoError;
 }
 
+void SaveMemcardAction::PostAction() {}
+
+void LoadMemcardAction::PreAction() {}
+
 void LoadMemcardAction::PostAction() {
     if (mResult == kMCNoError) {
         FixedSizeSaveableStream fsss(TheMemcardMgr.unk34, TheMemcardMgr.unk38, true);

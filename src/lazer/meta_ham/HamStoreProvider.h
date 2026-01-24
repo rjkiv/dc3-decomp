@@ -51,6 +51,8 @@ public:
     bool AllowSortToggle() { return mSorts.size() > 1; }
 
     PackSongListProvider GetPackProvider() { return unk78; }
+    HamStoreFilterProvider *GetFilterProvider() { return unk74; }
+    std::list<StoreOffer *> *GetCartOffers() { return &unkb0; }
 
 protected:
     std::vector<StoreOffer *> *unk30;

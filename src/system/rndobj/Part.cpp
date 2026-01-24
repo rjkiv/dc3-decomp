@@ -466,7 +466,7 @@ BEGIN_COPYS(RndParticleSys)
             COPY_MEMBER(mBirthMomentum)
             COPY_MEMBER(mBirthMomentumAmount)
             mAttractors.clear();
-            for (int i = 0; i != c->mAttractors.size(); i++) {
+            for (unsigned int i = 0; i != c->mAttractors.size(); i++) {
                 mAttractors.push_back(Attractor(c->mAttractors[i], this));
             }
             if (!mPreserveParticles) {

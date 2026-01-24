@@ -33,6 +33,14 @@ public:
     virtual void ClearIconLabels();
     virtual int GetListIndexFromHeaderIndex(int);
     virtual Symbol GetFirstChildSymbolFromHeaderSymbol(Symbol);
+    virtual bool HeadersSelectable() { return false; } // 0x6c
+    virtual bool SelectionIs(Symbol) { return false; } // 0x70
+    virtual bool DataIs(int, Symbol) { return false; } // 0x74
+    virtual Symbol MoveOn() { return gNullStr; } // 0x78
+    virtual void OnEnter() {} // 0x7c
+    // 0x80 = GetListIndexFromHeaderIndex (already declared above)
+    // 0x84 = GetFirstChildSymbolFromHeaderSymbol (already declared above)
+    virtual void OnCancel() {} // 0x88
     // ContentMgr::Callback
     virtual void ContentMounted(const char *, const char *);
 
@@ -66,7 +74,7 @@ public:
 
     bool &IsInHeaderMode() { return mHeaderMode; }
     bool &EnteringHeaderMode() { return mEnteringHeaderMode; }
-    bool &HeadersSelectable() { return mHeadersSelectable; }
+    bool &GetHeadersSelectable() { return mHeadersSelectable; }
     bool &ExitingHeaderMode() { return mExitingHeaderMode; }
     std::vector<NavListSort *> &Sorts() { return mSorts; };
     std::vector<int> &GetHeadersA() { return mHeadersA; };

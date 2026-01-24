@@ -698,9 +698,9 @@ bool AccomplishmentManager::IsAvailable(Symbol s) const {
         for (int i = 0; i < iNumSongs; i++) {
             if (TheHamSongMgr.HasSong(rSongs[i], false)) {
                 thresh++;
-            }
-            if (thresh >= prereqNum) {
-                return true;
+                if (thresh >= prereqNum) {
+                    return true;
+                }
             }
         }
         return false;
@@ -976,7 +976,7 @@ void AccomplishmentManager::HandleSongCompleted(Symbol song) {
             HamProfile *pProfile = TheProfileMgr.GetProfileFromPad(padNum);
             if (pProfile && pProfile->HasValidSaveData() && pPlayer->IsPlaying()) {
                 static Symbol practice("practice");
-                if (!unk30[i]) {
+                if (!unk30[padNum]) {
                     HandleSongCompletedForProfile(song, pPlayer, pProfile);
                 }
                 if (TheGameMode->InMode(practice, true)) {

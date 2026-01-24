@@ -99,6 +99,7 @@ public:
     void CheckForServerCrewUnlock();
     void SetGlobalOptionsSaveState(ProfileSaveState);
     void SaveGlobalOptions(FixedSizeSaveableStream &);
+    static int GlobalOptionsSaveSize();
     bool HasActiveProfile(bool) const;
     std::vector<HamProfile *> GetNewlySignedIn();
     std::vector<HamProfile *> GetShouldAutosave();

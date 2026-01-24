@@ -46,6 +46,7 @@ public:
         mScreenRect = rect;
         UpdateLocal();
     }
+    const Hmx::Rect &GetScreenRect() const { return mScreenRect; }
     float CalcScreenHeight(const Sphere &s) {
         float r = mLocalProjectXfm.m.z.y * s.GetRadius();
         float dist = CalcDistTo(s.center);

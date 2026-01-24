@@ -233,6 +233,7 @@ public:
     int Bpp() const { return mBpp; }
     u8 *Palette() const { return mPalette; }
     u8 *Pixels() const { return mPixels; }
+    u8 *Buffer() const { return mBuffer; }
     RndBitmap *nextMip() const { return mMip; }
     bool HasName() const { return mName.mCRC; }
 

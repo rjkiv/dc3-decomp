@@ -95,7 +95,7 @@ void ChallengeResultPanel::UpdateList(int player) {
     static Symbol xp_total("xp_total");
     static Symbol is_challenging_self("is_challenging_self");
     static Symbol rival_is_self("rival_is_self");
-    String str180;
+    String playerName;
     int numDisplay = mChallengeList->NumDisplay();
     int totalXP = TheChallenges->GetTotalXpEarned(player);
     HamPlayerData *playerData = TheGameData->Player(player);
@@ -105,10 +105,10 @@ void ChallengeResultPanel::UpdateList(int player) {
     unk5c = provider->Property(score)->Int();
     unk60 = provider->Property(challenge_mission_index)->Int() + numDisplay;
     unk68 = provider->Property(side)->Int();
-    str180 = provider->Property(player_name)->Str();
+    playerName = provider->Property(player_name)->Str();
     int challengeScore = provider->Property(challenge_mission_score)->Int();
     bool challengeSelf = provider->Property(is_challenging_self)->Int();
-    unk64 = (numDisplay + 1) % 2; // unsure about this part
+    unk64 = (numDisplay / 2) + 1;
     if (unk5c <= challengeScore) {
         unk60++;
     }
@@ -116,6 +116,91 @@ void ChallengeResultPanel::UpdateList(int player) {
     for (int i = 0; i < mChallengeList->NumDisplay(); i++) {
         mItems.push_back(ChallengeRow());
     }
-    // more
+
+    // Create temp ChallengeRow with player's info
+    ChallengeRow playerRow;
+    playerRow.mScore = unk5c;
+    playerRow.mGamertag = playerName;
+    playerRow.unk2c = playerName;
+
+    // Get player challenges from TheChallenges
+    std::vector<ChallengeRow> &challenges = TheChallenges->mPlayerChallenges[player];
+    bool inserted = false;
+
+    // Insert player row and challenges in sorted order by score
+    for (int n = challenges.size(); n > 0; n--) {
+        int i = challenges.size() - n;
+        if (unk5c <= challenges[i].mScore && !inserted) {
+            unk6c = mItems.size();
+            mItems.push_back(playerRow);
+            inserted = true;
+        }
+        mItems.push_back(challenges[i]);
+    }
+
+    // If player wasn't inserted yet, insert at end
+    if (!inserted) {
+        unk6c = mItems.size();
+        mItems.push_back(playerRow);
+    }
+
+    // Calculate XP values
+    int xpBefore = 0;
+    int xpMission = 0;
+    bool beatRival = false;
+    int beatenCount = 0;
+
+    for (unsigned int i = numDisplay; i < mItems.size(); i++) {
+        if (unk5c > mItems[i].mScore) {
+            if (i < (unsigned int)unk60) {
+                xpBefore += TheChallenges->CalculateChallengeXp(
+                    mItems[i].mScore, mItems[i].mDiff
+                );
+            } else if (i == (unsigned int)unk60) {
+                xpMission = xpBefore + TheChallenges->CalculateChallengeXp(
+                    mItems[i].mScore, mItems[i].mDiff
+                );
+                beatRival = true;
+            }
+            beatenCount++;
+        }
+    }
+
+    // Calculate grade (0-4)
+    int gradeValue;
+    if (beatenCount == 0) {
+        gradeValue = 0;
+    } else if ((unsigned int)beatenCount == mItems.size() - numDisplay - 1) {
+        gradeValue = 4;
+    } else if (beatRival) {
+        if (beatenCount > unk60 + 1) {
+            gradeValue = 3;
+        } else {
+            gradeValue = 2;
+        }
+    } else {
+        gradeValue = 1;
+    }
+
+    // Set properties on UIList
+    mChallengeList->SetProperty(max_display, DataNode(0));
+    mChallengeList->SetProperty(scroll_past_max_display, DataNode(1));
+    mChallengeList->StopAutoScroll();
+    mChallengeList->SetProvider(this);
+
+    // Disable and hide right hand nav list
+    mRightHandNavList->Disable();
+    mRightHandNavList->SetShowing(false);
+
+    // Set properties on mResultEventProvider
+    mResultEventProvider->SetProperty(rival_beaten, DataNode((int)beatRival));
+    mResultEventProvider->SetProperty(grade, DataNode(gradeValue));
+    mResultEventProvider->SetProperty(side, DataNode((int)unk68));
+    mResultEventProvider->SetProperty(xp_before_mission, DataNode(xpBefore));
+    mResultEventProvider->SetProperty(xp_mission, DataNode(xpMission));
+    mResultEventProvider->SetProperty(xp_total, DataNode(totalXP));
+    mResultEventProvider->SetProperty(rival_is_self, DataNode((int)challengeSelf));
+
+    unk4c = 0;
     DataDir()->Find<Flow>("result_init.flow")->Activate();
 }
