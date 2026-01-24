@@ -64,6 +64,13 @@ public:
     void FinalizeHeaders();
     void ClearHeaders();
 
+    // Virtual methods to be overridden by derived classes
+    virtual bool SelectionIs(Symbol) { return false; }
+    virtual bool DataIs(int, Symbol) { return false; }
+    virtual Symbol MoveOn() { return Symbol(); }
+    virtual void OnEnter() {}
+    virtual void OnCancel() {}
+
     bool &IsInHeaderMode() { return mHeaderMode; }
     bool &EnteringHeaderMode() { return mEnteringHeaderMode; }
     bool &HeadersSelectable() { return mHeadersSelectable; }
