@@ -11,9 +11,7 @@ namespace {
 
 ExternalMic::ExternalMic(unsigned long ul)
     : unk4(ul), unk8(false), unk9(false), unkc(-1.0f) {
-    mThread = CreateThread(
-        0, 0, (LPTHREAD_START_ROUTINE(__cdecl *))ExternalMicThreadEntry(0), this, 4, 0
-    );
+    mThread = CreateThread(0, 0, ExternalMicThreadEntry, this, 4, 0);
     MILO_ASSERT(mThread, 0x6a);
     SetThreadPriority(mThread, 15);
     XSetThreadProcessor(mThread, 3);

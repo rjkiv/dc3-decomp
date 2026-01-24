@@ -323,7 +323,7 @@ BinStream &operator<<(BinStream &bs, const std::map<T1, T2> &map) {
 
 template <class T1, class T2>
 BinStream &operator>>(BinStream &bs, std::map<T1, T2> &map) {
-    int size;
+    unsigned int size;
     bs >> size;
     for (; size != 0; size--) {
         T1 key;
