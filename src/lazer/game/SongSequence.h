@@ -42,8 +42,8 @@ public:
     void Init();
     void Add(const DataArray *);
     int CurrentIndex() const { return mCurrentIndex; }
-
-    bool unk28; // 0x28 - venueEntered flag
+    bool GetUnk28() const { return unk28; }
+    void SetUnk28(bool val) { unk28 = val; } // 0x28 - venueEntered flag
 
 protected:
     std::vector<Entry> mEntries; // 0x8
@@ -52,6 +52,7 @@ protected:
     float unk1c;
     u32 unk20;
     float unk24;
+    bool unk28;
     FileCache *mFileCache; // 0x2c
 };
 
