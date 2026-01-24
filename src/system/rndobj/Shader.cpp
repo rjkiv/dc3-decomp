@@ -33,7 +33,7 @@ RndShaderSyncTrack gShaderSyncTrack;
 unsigned int StrHash(const char *str) {
     unsigned int hash = 0;
     int constMult = 0xF8C9;
-    for (const char *p = str; *p != '\0'; p++) {
+    for (const unsigned char *p = (const unsigned char *)str; *p != '\0'; p++) {
         hash = hash * constMult + *p;
         constMult *= 0x5C6B7;
     }
@@ -155,22 +155,22 @@ bool RndShader::MatShaderFlagsOK(RndMat *mat, ShaderType s) {
     if (curShader->CheckError((MatFlagErrorType)0) && !mat->FadeOut()) {
         bool fadeoutCheck = curEnv->FadeOut() && curEnv->FadeEnd() != curEnv->FadeStart();
         if (fadeoutCheck) {
-            WarnMatProp("fadeout checked", (NgMat *)mat, (NgEnviron *)curEnv, s);
-        } else {
-            bool fadeoutUncheck =
-                curEnv->FadeOut() && curEnv->FadeEnd() != curEnv->FadeStart();
-            if (fadeoutUncheck) {
-                WarnMatProp("fadeout unchecked", (NgMat *)mat, (NgEnviron *)curEnv, s);
-            }
+            WarnMatProp("fadeout checked", (NgMat *)mat, curEnv, s);
+        }
+    } else if (mat->FadeOut()) {
+        bool fadeoutUncheck =
+            curEnv->FadeOut() && curEnv->FadeEnd() != curEnv->FadeStart();
+        if (!fadeoutUncheck) {
+            WarnMatProp("fadeout unchecked", (NgMat *)mat, curEnv, s);
         }
     }
     if (curShader->CheckError((MatFlagErrorType)1) && b1824 && !mat->PointLights()
         && curEnv->NumLights_Point()) {
-        WarnMatProp("point_lights checked", (NgMat *)mat, (NgEnviron *)curEnv, s);
+        WarnMatProp("point_lights checked", (NgMat *)mat, curEnv, s);
     }
     if (curShader->CheckError((MatFlagErrorType)2) && !mat->ColorAdjust()
         && curEnv->UseColorAdjust()) {
-        WarnMatProp("color_adjust checked", (NgMat *)mat, (NgEnviron *)curEnv, s);
+        WarnMatProp("color_adjust checked", (NgMat *)mat, curEnv, s);
     }
     return sMatShadersOK;
 }

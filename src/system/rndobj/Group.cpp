@@ -172,7 +172,7 @@ float RndGroup::GetDistanceToPlane(const Plane &p, Vector3 &v) {
         for (std::vector<RndDrawable *>::iterator it = mDraws.begin(); it != mDraws.end();
              ++it) {
             Vector3 locvec;
-            float dist = (*it)->GetDistanceToPlane(p, v);
+            float dist = (*it)->GetDistanceToPlane(p, locvec);
             if (first || (std::fabs(dist) < std::fabs(ret))) {
                 first = false;
                 ret = dist;
@@ -214,14 +214,14 @@ RndDrawable *RndGroup::CollideShowing(const Segment &seg, float &f, Plane &p) {
     RndDrawable *ret = nullptr;
     Segment localseg(seg);
     f = 1.0f;
-    float locf;
     for (std::vector<RndDrawable *>::iterator it = mDraws.begin(); it != mDraws.end();
          ++it) {
+        float locf;
         RndDrawable *collided = (*it)->Collide(localseg, locf, p);
         if (collided) {
+            ret = collided;
             Interp(localseg.start, localseg.end, locf, localseg.end);
             f *= locf;
-            ret = collided;
         }
     }
     return ret;

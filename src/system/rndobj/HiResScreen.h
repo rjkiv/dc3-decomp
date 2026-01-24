@@ -3,6 +3,8 @@
 #include "rndobj/Cam.h"
 #include "utl/Str.h"
 
+class RndBitmap;
+
 class HiResScreen {
 public:
     class BmpCache {
@@ -14,6 +16,8 @@ public:
         void GetLoadedRange(uint &, uint &) const;
         void LoadCache(uint);
         void FlushCache();
+        void GetPixelColor(int, int, unsigned char &, unsigned char &, unsigned char &, unsigned char &) const;
+        void SetPixelColor(int, int, unsigned char, unsigned char, unsigned char, unsigned char);
 
         String *mFileNames; // 0x4
         unsigned char *mBuffer; // 0x8
@@ -38,11 +42,15 @@ public:
     void Finish();
     int GetPaddingX() const;
     int GetPaddingY() const;
-    Hmx::Rect CurrentTileRect(const Hmx::Rect &, Hmx::Rect &, Hmx::Rect &) const;
+    void CurrentTileRect(const Hmx::Rect &, Hmx::Rect &, Hmx::Rect &) const;
     Hmx::Rect ScreenRect(const RndCam *, const Hmx::Rect &) const;
     Hmx::Rect ScreenRect() const;
     Hmx::Rect InvScreenRect() const;
     bool IsActive() const { return mActive; }
+
+protected:
+    void Merge(const RndBitmap &, int, int, int, int, int, int, int, int);
+    void DownSample(RndBitmap &);
 
 private:
     bool mActive; // 0x4

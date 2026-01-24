@@ -25,7 +25,7 @@ unsigned int GatherObjectsFromDir(ObjectDir *dir, std::vector<T *> &objects) {
     RndDir *rDir = dynamic_cast<RndDir *>(dir);
     bool showing = rDir ? rDir->Showing() : true;
     if (showing) {
-        for (ObjDirItr<Hmx::Object> it(dir, true); it != nullptr; ++it) {
+        for (ObjDirItr<Hmx::Object> it(dir, true); it != NULL; ++it) {
             ObjectDir *curDir = dynamic_cast<ObjectDir *>(&*it);
             if (curDir && curDir != dir
                 && dynamic_cast<WorldInstance *>((Hmx::Object *)curDir)) {
@@ -68,7 +68,7 @@ RndAmbientOcclusion::RndAmbientOcclusion()
       mIgnoreTransparent(true), mIgnorePrelit(true), mIgnoreHidden(true),
       mUseMeshNormals(true), mIntersectBackFaces(false), mTessellateTriLimit(8),
       mTessellateTriError(0.67625f), mTessellateTriLarge(gUnitsPerMeter * 2.0f),
-      mTessellateTriSmall(gUnitsPerMeter * 0.5f), mTree(nullptr), mQuality((Quality)1) {}
+      mTessellateTriSmall(gUnitsPerMeter * 0.5f), mTree(0), mQuality((Quality)1) {}
 
 RndAmbientOcclusion::~RndAmbientOcclusion() { Clean(); }
 
@@ -135,10 +135,30 @@ BEGIN_COPYS(RndAmbientOcclusion)
     END_COPYING_MEMBERS
 END_COPYS
 
-BEGIN_LOADS(RndAmbientOcclusion)
-    LOAD_REVS(bs)
-    ASSERT_REVS(4, 0)
-    LOAD_SUPERCLASS(Hmx::Object)
+void RndAmbientOcclusion::Load(BinStream &bs) {
+    int revs;
+    bs >> revs;
+    BinStreamRev d(bs, revs);
+    static const unsigned short gRevs[4] = { 4, 0, 0, 0 };
+    if (d.rev > 4) {
+        MILO_FAIL(
+            "%s can't load new %s version %d > %d",
+            PathName(this),
+            ClassName(),
+            d.rev,
+            gRevs[0]
+        );
+    }
+    if (d.altRev > 0) {
+        MILO_FAIL(
+            "%s can't load new %s alt version %d > %d",
+            PathName(this),
+            ClassName(),
+            d.altRev,
+            gRevs[2]
+        );
+    }
+    Hmx::Object::Load(d.stream);
     d >> mDontReceiveAO;
     d >> mDontCastAO;
     d >> mTessellate;
@@ -158,7 +178,7 @@ BEGIN_LOADS(RndAmbientOcclusion)
     if (d.rev > 2) {
         d >> (int &)mQuality;
     }
-END_LOADS
+}
 
 void RndAmbientOcclusion::BuildTrees(Quality quality) {
     MILO_ASSERT(quality < kQuality_Max, 0x1E3);
@@ -404,14 +424,14 @@ DataNode RndAmbientOcclusion::OnGetRecvMeshes(DataArray *) {
 
 DataNode RndAmbientOcclusion::OnGetValidObjects(DataArray *) const {
     int numObjects = 0;
-    for (ObjDirItr<Hmx::Object> it(Dir(), true); it != nullptr; ++it) {
+    for (ObjDirItr<Hmx::Object> it(Dir(), true); it != NULL; ++it) {
         if (IsValidObject(it) && it != Dir()) {
             numObjects++;
         }
     }
     DataArrayPtr ptr(new DataArray(numObjects));
     int idx = 0;
-    for (ObjDirItr<Hmx::Object> it(Dir(), true); it != nullptr; ++it) {
+    for (ObjDirItr<Hmx::Object> it(Dir(), true); it != NULL; ++it) {
         if (IsValidObject(it) && it != Dir()) {
             ptr->Node(idx++) = &*it;
         }

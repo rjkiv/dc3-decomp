@@ -26,7 +26,7 @@ BEGIN_HANDLERS(RndLine)
         set_point_pos,
         SetPointPos(_msg->Int(2), Vector3(_msg->Float(3), _msg->Float(4), _msg->Float(5)))
     )
-    HANDLE_EXPR(point_color, mPoints[_msg->Int(2)].color.Pack())
+    HANDLE_EXPR(point_color, mPoints[_msg->Int(2)].color.PackAlpha())
     HANDLE_ACTION(
         set_point_color,
         SetPointColor(
@@ -161,20 +161,18 @@ void RndLine::UpdateSphere() {
 float RndLine::GetDistanceToPlane(const Plane &p, Vector3 &v3) {
     if (mPoints.empty())
         return 0;
-    else {
-        WorldXfm();
-        float ret = 0;
-        bool first = true;
-        FOREACH (it, mPoints) {
-            float dot = p.Dot(it->point);
-            if (first || std::fabs(dot) < std::fabs(ret)) {
-                ret = dot;
-                first = false;
-                v3 = it->point;
-            }
+    WorldXfm();
+    bool first = true;
+    float ret = 0;
+    for (std::vector<Point>::iterator it = mPoints.begin(); it != mPoints.end(); ++it) {
+        float dot = p.Dot(it->point);
+        if (first || fabs(dot) < fabs(ret)) {
+            ret = dot;
+            first = false;
+            v3 = it->point;
         }
-        return ret;
     }
+    return ret;
 }
 
 bool RndLine::MakeWorldSphere(Sphere &s, bool b2) {

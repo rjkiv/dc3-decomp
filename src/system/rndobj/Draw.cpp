@@ -66,7 +66,7 @@ BEGIN_LOADS(RndDrawable)
         d >> mShowing;
     }
     if (d.rev < 2) {
-        int count;
+        unsigned int count;
         bs >> count;
         RndGroup *grp = dynamic_cast<RndGroup *>(this);
         for (; count != 0; count--) {
@@ -114,8 +114,10 @@ int RndDrawable::CollidePlane(const Plane &pl) {
         if (MakeWorldSphere(s, false)) {
             if (s >= pl)
                 return 1;
+            else if (s < pl)
+                return -1;
             else
-                return -(s < pl);
+                return 0;
         }
     }
     return -1;

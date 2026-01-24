@@ -399,7 +399,7 @@ DataNode RndAnimatable::OnAnimate(DataArray *arr) {
     arr->FindData(ease, (int &)local_ease, false);
 
     if (arr->FindArray(listener, false)) {
-        local_listener = arr->FindArray(listener, false)->Obj<Hmx::Object>(1);
+        local_listener = arr->FindArray(listener, true)->Obj<Hmx::Object>(1);
     }
     DataArray *rangeArr = arr->FindArray(range, false);
     if (rangeArr) {
@@ -457,8 +457,8 @@ DataNode RndAnimatable::OnAnimate(DataArray *arr) {
         }
     }
     static Symbol trigger_anim_task("trigger_anim_task");
-    if (Property(trigger_anim_task, false)
-        && Property(trigger_anim_task, true)->Int() != 0) {
+    if (!Property(trigger_anim_task, false)
+        || Property(trigger_anim_task, true)->Int() != 0) {
         TheTaskMgr.Start(taskPtr, local_units, local_delay);
     }
 
