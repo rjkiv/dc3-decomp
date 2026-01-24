@@ -698,9 +698,9 @@ bool AccomplishmentManager::IsAvailable(Symbol s) const {
         for (int i = 0; i < iNumSongs; i++) {
             if (TheHamSongMgr.HasSong(rSongs[i], false)) {
                 thresh++;
-                if (thresh >= prereqNum) {
-                    return true;
-                }
+            }
+            if (thresh >= prereqNum) {
+                return true;
             }
         }
         return false;

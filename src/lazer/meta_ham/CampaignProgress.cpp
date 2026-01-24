@@ -121,8 +121,8 @@ int CampaignEraProgress::GetTotalStarsEarned() const {
     int size = pEra->GetNumSongs();
     for (int i = 0; i < size; i++) {
         Symbol name = pEra->GetSongName(i);
-        CampaignEraSongProgress *pEraSongProgress = GetEraSongProgress(name);
         int total = 0;
+        CampaignEraSongProgress *pEraSongProgress = GetEraSongProgress(name);
         if (pEraSongProgress) {
             total = pEraSongProgress->GetStarsEarned();
         }

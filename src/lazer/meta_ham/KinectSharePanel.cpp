@@ -176,8 +176,8 @@ void KinectSharePanel::ConvertImagesForLinkPost() {
         static int _x = MemFindHeap("physical");
         MemHeapTracker mem(_x);
         mLinkPostParams.PreviewImage.Pitch = bitmap90.RowBytes();
-        mLinkPostParams.PreviewImage.Height = bitmap90.Height();
         mLinkPostParams.PreviewImage.Width = bitmap90.Width();
+        mLinkPostParams.PreviewImage.Height = bitmap90.Height();
         mLinkPostParams.PreviewImage.Format = TheDxRnd.D3DFormatForBitmap(bitmap90);
         if (mLinkPostParams.PreviewImage.Format == D3DFMT_A8R8G8B8) {
             mLinkPostParams.PreviewImage.Format = D3DFMT_LIN_A8R8G8B8;
