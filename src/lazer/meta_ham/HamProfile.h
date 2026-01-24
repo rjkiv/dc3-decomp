@@ -26,7 +26,8 @@ struct CharacterPref {
 class HamProfile : public Profile {
 public:
     enum {
-        kMaxPlaylists = 5
+        kMaxPlaylists = 5,
+        kNumCharacters = 23
     };
     HamProfile(int);
     virtual ~HamProfile();

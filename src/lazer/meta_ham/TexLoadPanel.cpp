@@ -204,8 +204,11 @@ bool TexLoadPanel::RegisterForContent() const {
 }
 
 void TexLoadPanel::LoadMoggClip(const char *path) {
+    if (!mMoggClip->Path().empty()) {
+        mMoggClip->SetFile(path);
+        return;
+    }
     MILO_ASSERT(mMoggClip->Path().empty(), 0x118);
-    mMoggClip->SetFile(path);
 }
 
 void TexLoadPanel::FinalizeTextures() {

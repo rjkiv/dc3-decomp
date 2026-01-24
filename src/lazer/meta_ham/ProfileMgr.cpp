@@ -20,6 +20,7 @@
 #include "meta_ham/ShellInput.h"
 #include "meta_ham/SkeletonChooser.h"
 #include "meta_ham/UIEventMgr.h"
+#include "net_ham/FriendsListJobs.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Msg.h"
@@ -30,6 +31,7 @@
 #include "os/User.h"
 #include "rndobj/Overlay.h"
 #include "rndobj/Rnd.h"
+#include "stl/_vector.h"
 #include "synth/FxSend.h"
 #include "synth/Synth.h"
 #include "utl/MemMgr.h"
@@ -662,7 +664,8 @@ void ProfileMgr::HandlePlayerNameChange() {
     MILO_ASSERT(pNavPlayerNode, 0x6FA);
     Symbol nodeSym = pNavPlayerNode->Sym();
     static Symbol store("store");
-    if (nodeSym == store) {
+    if (nodeSym == store
+        && TheHamUI.GetShellInput()->GetSkeletonChooser()->Unk3C() == 0) {
         HamPlayerData *pPlayer0 = TheGameData->Player(0);
         MILO_ASSERT(pPlayer0, 0x704);
         HamProfile *pProfile = GetProfileFromPad(pPlayer0->PadNum());
@@ -670,7 +673,7 @@ void ProfileMgr::HandlePlayerNameChange() {
             if (mCriticalProfile->HasValidSaveData() && pProfile != mCriticalProfile) {
                 static Symbol store_user_change("store_user_change");
                 static Message init("init");
-                // TheUIEventMgr.TriggerEvent
+                TheUIEventMgr->TriggerEvent(store_user_change, init);
             }
         }
     }
@@ -892,4 +895,15 @@ HamProfile *ProfileMgr::GetActiveProfile(bool b) const {
         }
     }
     return nullptr;
+}
+
+void ProfileMgr::UpdateFriendsList() {
+    std::vector<HamProfile *> profiles = GetSignedInProfiles();
+    FOREACH (it, profiles) {
+        HamProfile *profile = *it;
+        if (profile->HasValidSaveData()) {
+            UpdateFriendsListJob *job = new UpdateFriendsListJob(nullptr, profile);
+            job->EnumerateFriends();
+        }
+    }
 }

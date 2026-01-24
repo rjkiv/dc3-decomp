@@ -18,6 +18,7 @@ public:
     void Update(int, int);
     void Clear();
     void SetRequiredMs(int ms) { mRequiredMs = ms; }
+    void SetRaisedMs(int ms) { mRaisedMs = ms; }
     void SetUnk4c(bool b) { unk4c = b; }
 
     bool StandingStill() const { return mStandingStill; }

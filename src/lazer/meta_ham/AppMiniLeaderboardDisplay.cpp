@@ -14,6 +14,7 @@
 #include "obj/Task.h"
 #include "os/Debug.h"
 #include "os/PlatformMgr.h"
+#include "rndobj/Dir.h"
 #include "ui/UIComponent.h"
 #include "ui/UIList.h"
 #include "ui/UIListWidget.h"
@@ -156,4 +157,43 @@ void AppMiniLeaderboardDisplay::UpdateLeaderboardOnline(int i1) {
             mResourceDir->Find<Flow>("no_profile.flow")->Activate();
         }
     }
+}
+
+bool AppMiniLeaderboardDisplay::UpdateLeaderboard(Symbol s) { // has one small discrepancy
+    if (!TheProfileMgr.HasActiveProfile(true)) {
+        if (unk60 != 4) {
+            unk60 = 4;
+            Flow *f = mResourceDir->Find<Flow>("no_profile.flow", true);
+            f->Activate();
+            return true;
+        }
+    } else {
+        HamProfile *profile = TheProfileMgr.GetActiveProfile(true);
+        MILO_ASSERT(profile, 0xb1);
+        profile->UpdateOnlineID();
+        if (profile->IsSignedIn()) {
+            if (!ThePlatformMgr.IsConnected()) { // mismatch right here?
+                if (unk60 != 5) {
+                    unk60 = 5;
+                    Flow *f = mResourceDir->Find<Flow>("no_profile.flow", true);
+                    f->Activate();
+                    return true;
+                }
+            } else {
+                mSongID = TheSongMgr.GetSongIDFromShortName(s, false);
+                ClearData();
+                TheRockCentral.CancelOutstandingCalls(this);
+                if (mSongID == 0) {
+                    return true;
+                }
+                if (unk60 != 0) {
+                    unk60 = 0;
+                    Flow *f = mResourceDir->Find<Flow>("pending.flow", true);
+                    f->Activate();
+                }
+                unk6c = TheTaskMgr.UISeconds();
+            }
+        }
+    }
+    return true;
 }

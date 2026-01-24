@@ -19,6 +19,7 @@
 #include "obj/Task.h"
 #include "os/Debug.h"
 #include "ui/UI.h"
+#include "utl/Symbol.h"
 
 SkeletonChooser::SkeletonChooser()
     : mDrawDebug(false), unk3c(0), unk44(1), unk48(true), unk80(0), unk84(0), unk88(0),
@@ -619,4 +620,113 @@ bool SkeletonChooser::IsBehindPlayer(int skelID, int refSkelID) {
         }
     }
     return false;
+}
+
+void SkeletonChooser::SetPlayerSkeletonWarningData(int p1ID, int p2ID) {
+    static Symbol player_stepback("player_stepback");
+    HamPlayerData *player1 = TheGameData->Player(0);
+    HamPlayerData *player2 = TheGameData->Player(1);
+    int trackingID = player2->GetSkeletonTrackingID();
+    int p1flags = 0;
+    int p2flags = 0;
+    if (0 < p1ID) {
+        Skeleton *pPlayer1Skeleton = TheGestureMgr->GetSkeletonByTrackingID(p1ID);
+        MILO_ASSERT(pPlayer1Skeleton, 0x183);
+        p1flags = pPlayer1Skeleton->QualityFlags();
+    }
+    if (0 < p2ID) {
+        Skeleton *pPlayer2Skeleton = TheGestureMgr->GetSkeletonByTrackingID(p2ID);
+        MILO_ASSERT(pPlayer2Skeleton, 0x18a);
+        p2flags = pPlayer2Skeleton->QualityFlags();
+    }
+
+    int p2warnings = 0;
+    int p1warnings = 0;
+    if (0 < p1ID && p1ID == trackingID) {
+        p1warnings = p1flags;
+        p1warnings = 0;
+        p2warnings = p1flags;
+    }
+
+    if (0 < p2ID && p2ID == trackingID) {
+        p1flags = p2flags;
+        p1flags = p1warnings;
+        p2warnings = p2flags;
+    }
+    SetPlayerCloseWarnings(0, p1flags);
+    SetPlayerCloseWarnings(1, p2warnings);
+}
+
+void SkeletonChooser::SwapPlayerDataForPractice() {
+    HamPlayerData *pPlayer1 = TheGameData->Player(0);
+    const DataNode *player1Prop = pPlayer1->Provider()->Property("using_fitness");
+    int player1PropVal = player1Prop->Int();
+    HamPlayerData *pPlayer2 = TheGameData->Player(0);
+    const DataNode *player2Prop = pPlayer2->Provider()->Property("using_fitness");
+    int player2PropVal = player2Prop->Int();
+    pPlayer1 = TheGameData->Player(0);
+    pPlayer1->SetUsingFitness(player2PropVal == 0);
+    pPlayer2 = TheGameData->Player(1);
+    pPlayer2->SetUsingFitness(player1PropVal == 0);
+
+    pPlayer1 = TheGameData->Player(0);
+    const DataNode *player1CrewProp = pPlayer1->Provider()->Property("crew");
+    Symbol player1Crew = player1CrewProp->Sym();
+    pPlayer2 = TheGameData->Player(1);
+    const DataNode *player2CrewProp = pPlayer2->Provider()->Property("crew");
+    Symbol player2Crew = player2CrewProp->Sym();
+    pPlayer1 = TheGameData->Player(0);
+    pPlayer1->SetCrew(player2Crew);
+    pPlayer2 = TheGameData->Player(1);
+    pPlayer2->SetCrew(player1Crew);
+
+    pPlayer1 = TheGameData->Player(0);
+    player1Crew = pPlayer1->Crew();
+    pPlayer2 = TheGameData->Player(1);
+    player2Crew = pPlayer2->Crew();
+    pPlayer1 = TheGameData->Player(0);
+    pPlayer1->SetCrew(player2Crew);
+    pPlayer2 = TheGameData->Player(1);
+    pPlayer2->SetCrew(player1Crew);
+
+    pPlayer1 = TheGameData->Player(0);
+    Symbol player1Char = pPlayer1->Char();
+    pPlayer2 = TheGameData->Player(1);
+    Symbol player2Char = pPlayer2->Char();
+    pPlayer1 = TheGameData->Player(0);
+    pPlayer1->SetCharacter(player2Char);
+    pPlayer2 = TheGameData->Player(1);
+    pPlayer2->SetCharacter(player1Char);
+
+    pPlayer1 = TheGameData->Player(0);
+    Symbol player1Symbol = pPlayer1->Unk48();
+    pPlayer2 = TheGameData->Player(1);
+    Symbol player2Symbol = pPlayer1->Unk48();
+    pPlayer1 = TheGameData->Player(0);
+    pPlayer1->SetUnk48(player2Symbol);
+    pPlayer2 = TheGameData->Player(1);
+    pPlayer2->SetUnk48(player1Symbol);
+
+    pPlayer1 = TheGameData->Player(0);
+    Symbol player1Outfit = pPlayer1->Outfit();
+    pPlayer2 = TheGameData->Player(1);
+    Symbol player2Outfit = pPlayer2->Outfit();
+    pPlayer1 = TheGameData->Player(0);
+    pPlayer1->SetOutfit(player2Outfit);
+    pPlayer2 = TheGameData->Player(1);
+    pPlayer2->SetOutfit(player1Outfit);
+
+    pPlayer1 = TheGameData->Player(0);
+    Symbol player1PreferredOutfit = pPlayer1->GetPreferredOutfit();
+    pPlayer2 = TheGameData->Player(1);
+    Symbol player2PreferredOutfit = pPlayer2->GetPreferredOutfit();
+    pPlayer1 = TheGameData->Player(0);
+    pPlayer1->SetPreferredOutfit(player2PreferredOutfit);
+    pPlayer2 = TheGameData->Player(1);
+    pPlayer2->SetPreferredOutfit(player1PreferredOutfit);
+
+    pPlayer1 = TheGameData->Player(0);
+    TheGameData->SetAssociatedPadNum(0, pPlayer2->PadNum());
+    pPlayer2 = TheGameData->Player(1);
+    TheGameData->SetAssociatedPadNum(1, pPlayer1->PadNum());
 }

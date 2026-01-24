@@ -26,6 +26,7 @@
 #include "meta_ham/SongStatusMgr.h"
 #include "meta_ham/Utl.h"
 #include "net_ham/RockCentral.h"
+#include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/DateTime.h"
 #include "os/Debug.h"
@@ -962,5 +963,30 @@ void HamProfile::SetLastNewSong() {
         int i = TheRockCentral.GetRockCentralTime();
         mDirty = true;
         mProfileTime = i;
+    }
+}
+
+void HamProfile::ResetOutfitPrefs() {
+    if (IsOkToUpdateProfile()) {
+        mCharPrefs.clear();
+        int playableCount = 0;
+        int numChars = GetNumCharacters();
+        for (int i = 0; i < numChars; i++) {
+            DataArray *charEntry = GetCharacterEntry(i);
+            Symbol charSym = charEntry->Sym(0);
+            static Symbol playable("playable");
+            bool dataFound = true;
+            charEntry->FindData(playable, dataFound, false);
+            if (dataFound) {
+                Symbol outfit = GetCharacterOutfit(charSym, 0);
+                CharacterPref pref;
+                pref.mChar = charSym;
+                pref.mOutfit = outfit;
+                pref.mVoicemailIdx = -1;
+                mCharPrefs.push_back(pref);
+                playableCount++;
+            }
+        }
+        MILO_ASSERT(playableCount == kNumCharacters, 0x147);
     }
 }

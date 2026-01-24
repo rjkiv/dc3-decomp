@@ -175,8 +175,8 @@ void HelpBarPanel::PollSaveDeactivation() {
 
 bool HelpBarPanel::ShouldHideHelpbar() const {
     static Symbol hide_helpbar("hide_helpbar");
-    if (mLeftHandNavList) {
-        const DataNode *prop = mLeftHandNavList->Property(hide_helpbar, false);
+    if (unkb0) {
+        const DataNode *prop = unkb0->Property(hide_helpbar, false);
         if (prop && prop->Int()) {
             return true;
         }
@@ -231,7 +231,11 @@ void HelpBarPanel::SyncToPanel(UIPanel *panel) {
     }
     const DataNode *prop = nullptr;
     if (mLeftHandNavList) {
-        mLeftHandNavList->SetHighButtonMode(updateback || !updatetert);
+        if (!updatetert || updateback) {
+            updatetert = true;
+            updatetert = !updatetert;
+        }
+        mLeftHandNavList->SetHighButtonMode(updatetert);
     }
     static Symbol helpbar_confirm_label("helpbar_confirm_label");
     static Symbol helpbar_allow_controller("helpbar_allow_controller");

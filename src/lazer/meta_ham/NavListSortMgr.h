@@ -10,6 +10,7 @@
 #include "ui/UIComponent.h"
 #include "ui/UIListCustom.h"
 #include "ui/UIListProvider.h"
+#include "utl/Symbol.h"
 class NavListSortMgr : public UIListProvider,
                        public Hmx::Object,
                        public ContentMgr::Callback {
@@ -31,10 +32,16 @@ public:
     virtual bool IsHeader(int);
     virtual void UnHighlightCurrent();
     virtual void ClearIconLabels();
-    virtual int GetListIndexFromHeaderIndex(int);
-    virtual Symbol GetFirstChildSymbolFromHeaderSymbol(Symbol);
+    virtual bool HeadersSelectable(); // 0x6c
+    virtual bool SelectionIs(Symbol); // 0x70
+    virtual bool DataIs(int, Symbol); // 0x74
+    virtual Symbol MoveOn(); // 0x78
+    virtual void OnEnter(); // 0x7c
+    virtual int GetListIndexFromHeaderIndex(int); // 0x80
+    virtual Symbol GetFirstChildSymbolFromHeaderSymbol(Symbol); // 0x84
+    virtual DataNode OnCancel(); // 0x88
     // ContentMgr::Callback
-    virtual void ContentMounted(const char *, const char *);
+    virtual void ContentMounted(const char *, const char *); // 0x8c
 
     void StopPreview();
     void SetHeaderMode(bool);
@@ -45,6 +52,7 @@ public:
     void OnExit();
     void OnUnload();
     NavListSort *GetCurrentSort();
+    NavListSort *GetCurrentSortHandle();
     Symbol GetCurrentSortName();
     Symbol GetHeaderSymbolFromChildSymbol(Symbol);
     void DoUncollapse();
@@ -63,10 +71,17 @@ public:
     void AddHeaderIndex(int);
     void FinalizeHeaders();
     void ClearHeaders();
+    int FirstDataIndex(Symbol);
+    bool IsDisabled(int);
+    void SetHighlightedIx(int);
+    int GetHeaderCount();
+    void SortWithHeaders(int);
+    void SetHeaderMode(int);
+    void NextSort();
 
     bool &IsInHeaderMode() { return mHeaderMode; }
     bool &EnteringHeaderMode() { return mEnteringHeaderMode; }
-    bool &HeadersSelectable() { return mHeadersSelectable; }
+    bool &GetHeadersSelectable() { return mHeadersSelectable; }
     bool &ExitingHeaderMode() { return mExitingHeaderMode; }
     std::vector<NavListSort *> &Sorts() { return mSorts; };
     std::vector<int> &GetHeadersA() { return mHeadersA; };
