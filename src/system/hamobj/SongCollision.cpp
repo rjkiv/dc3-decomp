@@ -10,9 +10,29 @@ std::vector<const char *> sCollisionUsefulBoneNames;
 
 SongCollision::SongCollision() {}
 
+BEGIN_HANDLERS(SongCollision)
+    HANDLE_ACTION("update", Update(_msg->Obj<MoveDir>(2)))
+    HANDLE_ACTION("print", Print())
+    HANDLE_EXPR("equals", Equals(_msg->Obj<SongCollision>(2)))
+    HANDLE_SUPERCLASS(Hmx::Object)
+END_HANDLERS
+
 BEGIN_PROPSYNCS(SongCollision)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
+
+BEGIN_COPYS(SongCollision)
+COPY_SUPERCLASS(Hmx::Object)
+CREATE_COPY(SongCollision)
+BEGIN_COPYING_MEMBERS
+//COPY_MEMBER_FROM(c, mData)
+END_COPYING_MEMBERS
+END_COPYS
+
+BEGIN_SAVES(SongCollision)
+SAVE_REVS(2, 1)
+SAVE_SUPERCLASS(Hmx::Object)
+END_SAVES
 
 void SongCollision::Print() {
     int maxDatas = 0;

@@ -1,4 +1,5 @@
 #pragma once
+#include "MoveDir.h"
 #include "hamobj/Difficulty.h"
 #include "math/Vec.h"
 #include "obj/Object.h"
@@ -26,6 +27,8 @@ public:
     NEW_OBJ(SongCollision)
 
     static void Init();
+    void Update(MoveDir *);
+    bool Equals(SongCollision *);
 
 private:
     static float sCollisionTolerance;
