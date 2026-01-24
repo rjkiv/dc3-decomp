@@ -1464,7 +1464,7 @@ bool HamDirector::IsWorldLoaded() const {
 void HamDirector::CheckBeginFatal(int i1, HamMove *move, int i3) {
     static Symbol gameplay_mode("gameplay_mode");
     static Symbol dance_battle("dance_battle");
-    if (i3 < 2) {
+    if (i3 <= 1) {
         if (move->IsFinalPose() && !mPoseFatalities->InFatality(i1)) {
             if (TheHamProvider->Property(gameplay_mode, true)->Sym() == dance_battle) {
                 mPoseFatalities->ActivateFatal(i1);

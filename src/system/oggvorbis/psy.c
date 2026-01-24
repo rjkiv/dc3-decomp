@@ -852,7 +852,10 @@ void _vp_offset_and_mix(vorbis_look_psy *p,
   for(i=0;i<n;i++){
     float val= noise[i]+p->noiseoffset[offset_select][i];
     if(val>p->vi->noisemaxsupp)val=p->vi->noisemaxsupp;
-    logmask[i]=max(val,tone[i]+toneatt);
+    {
+      float t = tone[i]+toneatt;
+      logmask[i] = val > t ? val : t;
+    }
   }
 }
 

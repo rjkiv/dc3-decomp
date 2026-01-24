@@ -47,6 +47,12 @@ BinStream &operator<<(BinStream &bs, const Key<T> &key) {
 }
 
 template <class T>
+BinStream &operator>>(BinStream &bs, Key<T> &key) {
+    bs >> key.value >> key.frame;
+    return bs;
+}
+
+template <class T>
 BinStreamRev &operator>>(BinStreamRev &bs, Key<T> &key) {
     bs >> key.value >> key.frame;
     return bs;

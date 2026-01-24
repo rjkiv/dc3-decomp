@@ -37,11 +37,14 @@ public:
     void StopPlayback();
     void ClearDancerTake();
     BaseSkeleton *GetLiveSkeleton();
+    float CompareSkeletonPositions(const BaseSkeleton *, const BaseSkeleton *, float) const;
     void AssignStaticInstance();
     void DrawDebug();
     void PlaybackComplete();
     void ClearFrameScores();
     void ReadFreestyleMoveClip(String, int &, FreestyleMoveFrame *);
+    float GetScore(const BaseSkeleton *, int, float, bool);
+    float GetScore(int, int, float, bool);
 
     void SetVal44(int i) { unk44 = i; } // change once context found
 
