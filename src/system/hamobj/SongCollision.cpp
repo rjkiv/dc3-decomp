@@ -11,9 +11,9 @@ std::vector<const char *> sCollisionUsefulBoneNames;
 SongCollision::SongCollision() {}
 
 BEGIN_HANDLERS(SongCollision)
-    HANDLE_ACTION("update", Update(_msg->Obj<MoveDir>(2)))
-    HANDLE_ACTION("print", Print())
-    HANDLE_EXPR("equals", Equals(_msg->Obj<SongCollision>(2)))
+    HANDLE_ACTION(update, Update(_msg->Obj<MoveDir>(2)))
+    HANDLE_ACTION(print, Print())
+    HANDLE_EXPR(equals, Equals(_msg->Obj<SongCollision>(2)))
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
 
@@ -65,7 +65,7 @@ void SongCollision::Init() {
 }
 
 const BeatCollisionData *SongCollision::BeatData(int beat, Difficulty diff) const {
-    MILO_ASSERT((0) <= (diff) && (diff) < (kNumDifficulties), 0xe8);
+    MILO_ASSERT_RANGE(diff, 0, kNumDifficulties, 0xe8);
     MILO_ASSERT(beat >= 0, 0xeb);
     if (beat < mData[diff].size()) {
         return &mData[diff][beat];

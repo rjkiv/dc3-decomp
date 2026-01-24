@@ -24,11 +24,10 @@ class ByteQuat {
 public:
     void Set(const Hmx::Quat &);
     void ToQuat(Hmx::Quat &) const;
-
-    short x;
-    short y;
-    short z;
-    short w;
+    char x;
+    char y;
+    char z;
+    char w;
 };
 
 class CharBones {
