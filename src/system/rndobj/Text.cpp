@@ -219,19 +219,22 @@ BEGIN_LOADS(RndText)
         String str;
         bs >> str;
     }
-    if (d.rev >= 5 && d.rev <= 10) {
+    if (d.rev > 4 && d.rev < 11) {
         bool b;
         d >> b;
         if (style.mFont) {
             RndFont *oldfont2d = dynamic_cast<RndFont *>(style.mFont.Ptr());
             MILO_ASSERT(oldfont2d, 0xBC1);
-            // oldfont2d stuff
+            if (oldfont2d->NumMats() > 0 && oldfont2d->Mat(0)) {
+                int zMode = !mMarkup ? 2 : 0;
+                oldfont2d->Mat(0)->SetZMode((ZMode)zMode);
+            }
         }
     }
     if (d.rev > 7) {
         bs >> mLeading;
     }
-    if (d.rev >= 0xC) {
+    if (d.rev > 0xB) {
         int len;
         bs >> len;
         SetFixedLength(len);
@@ -244,7 +247,63 @@ BEGIN_LOADS(RndText)
             mFixedLength = 0;
         }
     }
-    // more here...
+    if (d.rev > 9 && d.rev < 0x16) {
+        bs >> style.mItalics;
+    }
+    if (d.rev < 0x16) {
+        if (d.rev > 0xB) {
+            bs >> style.mSize;
+        } else if (style.mFont) {
+            RndFont *oldfont2d = dynamic_cast<RndFont *>(style.mFont.Ptr());
+            MILO_ASSERT(oldfont2d, 0xBE9);
+            style.mSize = oldfont2d->DeprecatedSize();
+        }
+        if (d.rev < 0xD) {
+            style.mItalics /= style.mSize;
+        }
+    }
+    if (d.rev > 0xD) {
+        LOAD_BITFIELD(bool, mMarkup)
+    }
+    if (d.rev > 0xE) {
+        bs >> (int &)mCapsMode;
+    } else {
+        mCapsMode = kCapsModeNone;
+    }
+    if (d.rev > 0xF) {
+        bs >> mHeight;
+        bs >> mCircle;
+        bs >> (int &)mFitType;
+    }
+    if (d.rev >= 0x12 && d.rev < 0x15) {
+        bool b;
+        d >> b;
+    }
+    if (d.rev >= 0x13 && d.rev < 0x15) {
+        int i, j, k;
+        bs >> i;
+        bs >> j;
+        bs >> k;
+    }
+    if (d.rev >= 0x16) {
+        if (d.rev == 0x17) {
+            TheDebug.Notify(MakeString("%s was bad version 23, suggest resave", PathName(this)));
+        }
+        bs >> (int &)mFitType;
+        if (d.rev < 0x18) {
+            String str;
+            bs >> str;
+        }
+        if (d.altRev > 0) {
+            bs >> unk90;
+            bs >> unk94;
+        }
+        d >> mStyles;
+    } else {
+        mStyles.resize(1);
+        memcpy(&mStyles[0], &style, 0x34);
+        mStyles[0].mFont = style.mFont;
+    }
     if (d.rev >= 0x1A) {
         bs >> mScrollDelay;
         bs >> mScrollRate;
