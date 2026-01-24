@@ -164,11 +164,11 @@ T2 *KeylessHash<T1, T2>::Insert(const T2 &val) {
         MILO_ASSERT(mOwnEntries, 0x9C);
         Resize(0x19, 0);
     }
-    const char *valStr = (const char *)val;
-    int i = HashString(valStr, mSize);
+    T1 valKey = (T1)val;
+    int i = Hash(valKey, mSize);
     MILO_ASSERT(i >= 0, 0xA2);
     while (mEntries[i] != mEmpty && mEntries[i] != mRemoved
-           && !streq((const char *)mEntries[i], valStr)) {
+           && !Cmp(valKey, mEntries[i])) {
         Advance(i);
     }
     if (mEntries[i] == mEmpty) {
