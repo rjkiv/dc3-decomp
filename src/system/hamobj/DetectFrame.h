@@ -6,9 +6,6 @@
 #include "hamobj/HamMove.h"
 #include "math/Vec.h"
 
-// Vector3 is already 16 bytes (3 floats + internal PAD), so no wrapper needed
-typedef Vector3 Vector3Pad;
-
 // size 0x430
 class DetectFrame {
 public:
@@ -33,8 +30,8 @@ protected:
     const MoveFrame *unk4; // 0x4
     float mSeconds; // 0x8
     MoveMirrored unkc; // 0xc
-    Vector3Pad mBestNodeErrors[kMaxNumErrorNodes]; // 0x10, 33*16=0x210, ends at 0x220
-    Vector3Pad mNodeComponentWeights[MoveFrame::kNumHam1Nodes]; // 0x220, 16*16=0x100, ends at 0x320
+    Vector3 mBestNodeErrors[kMaxNumErrorNodes]; // 0x10, 33*16=0x210, ends at 0x220
+    Vector3 mNodeComponentWeights[MoveFrame::kNumHam1Nodes]; // 0x220, 16*16=0x100, ends at 0x320
     char unk320[0x110]; // 0x320, unknown data to reach size 0x430
 };
 
