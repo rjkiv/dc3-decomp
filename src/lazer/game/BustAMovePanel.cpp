@@ -416,8 +416,6 @@ void BustAMovePanel::AdvanceFlashcards() {}
 int BustAMovePanel::RepsToNextPhrase() { return 0; }
 void BustAMovePanel::SetFlashcardImage(int, int, int) {}
 
-#pragma push
-#pragma dont_inline on
 void BustAMovePanel::OnBeat() {
     if (!InBustAMove())
         return;
@@ -600,4 +598,3 @@ void BustAMovePanel::OnBeat() {
         unk92c = loopTrigger;
     }
 }
-#pragma pop
