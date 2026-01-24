@@ -180,5 +180,9 @@ void CampaignMasterQuestSongSelectPanel::Refresh() {
     HamNavList *list = DataDir()->Find<HamNavList>("right_hand.hnl", false);
     SetNavList(list);
     list->ClearBigElements();
-    // FOREACH(it, m_pCampaignSongProvider->unk90)
+    FOREACH (it, m_pCampaignSongProvider->GetUnk90()) {
+        if (m_pCampaignSongProvider->IsCharacter(*it)) {
+            mNavList->PushBackBigElement(*it);
+        }
+    }
 }

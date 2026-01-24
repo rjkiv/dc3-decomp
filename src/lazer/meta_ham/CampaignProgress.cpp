@@ -396,8 +396,8 @@ bool CampaignProgress::IsEraSongAvailable(Symbol era, Symbol song) const {
         }
     } else {
         int iReqStars = pEra->GetSongRequiredStars(song);
-        CampaignEraProgress *pEraProgress = GetEraProgress(era);
         int iStarCount = 0;
+        CampaignEraProgress *pEraProgress = GetEraProgress(era);
         if (pEraProgress) {
             iStarCount = pEraProgress->GetTotalStarsEarned();
         }
