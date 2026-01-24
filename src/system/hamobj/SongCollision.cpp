@@ -6,8 +6,6 @@
 #include "obj/Object.h"
 #include "utl/Std.h"
 
-using namespace Hmx; // need Matrix3 funcs without Hmx namespace tag for asserts
-
 std::vector<const char *> sCollisionUsefulBoneNames;
 
 SongCollision::SongCollision() {}
@@ -76,6 +74,7 @@ const BeatCollisionData *SongCollision::BeatData(int beat, Difficulty diff) cons
 }
 
 void BeatCollisionData::Set(float minX, float minY, const Transform &start_xfm, const Transform &end_xfm) {
+    using namespace Hmx;
     MILO_ASSERT(start_xfm.m == Matrix3::GetIdentity(), 0x62);
     MILO_ASSERT(end_xfm.m == Matrix3::GetIdentity(), 0x63);
     mMinX = minX;
