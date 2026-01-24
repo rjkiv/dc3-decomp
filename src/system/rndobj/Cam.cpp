@@ -91,7 +91,7 @@ BEGIN_LOADS(RndCam)
         RndDrawable::DumpLoad(bs);
     }
     if (d.rev == 8) {
-        ObjPtrList<Hmx::Object, ObjectDir> objList(this, kObjListNoNull);
+        ObjPtrList<Hmx::Object> objList(this, kObjListNoNull);
         int x;
         bs >> x >> objList;
     }

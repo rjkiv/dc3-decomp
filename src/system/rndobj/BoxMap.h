@@ -54,7 +54,7 @@ public:
     void Clear();
     bool QueueLight(RndLight *, float);
     bool CacheData(LightParams_Spot &);
-    void ApplyQueuedLights(Hmx::Color *__restrict, const Vector3 *) const;
+    void ApplyQueuedLights(Hmx::Color *, const Vector3 *) const;
 
     unsigned int NumQueuedLights() const {
         return mQueued_Directional.NumElements() + mQueued_Point.NumElements()

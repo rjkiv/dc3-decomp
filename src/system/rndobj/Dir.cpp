@@ -222,7 +222,7 @@ void RndDir::OldLoadProxies(BinStream &bs, int rev) {
             showing = true;
         }
         RndDir *loadedDir =
-            dynamic_cast<RndDir *>(DirLoader::LoadObjects(path, 0, 0));
+            dynamic_cast<RndDir *>(DirLoader::LoadObjects(path, nullptr, nullptr));
         MILO_ASSERT(!name.empty(), 0x22A);
         loadedDir->SetName(name.c_str(), this);
         loadedDir->SetLocalXfm(localXfm);

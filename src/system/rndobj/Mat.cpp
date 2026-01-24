@@ -236,7 +236,7 @@ void RndMat::Terminate() { RELEASE(sMetaMaterials); }
 
 void RndMat::ReloadMetaMaterials() {
     ObjectDir *metaDir = LoadMetaMaterials();
-    if (metaDir != 0 && sMetaMaterials != 0) {
+    if (metaDir != nullptr && sMetaMaterials != nullptr) {
         MergeMetaMaterials(sMetaMaterials, metaDir);
         for (ObjDirItr<MetaMaterial> it(sMetaMaterials, true); it != 0; ++it) {
             MetaMaterial *mat = metaDir->Find<MetaMaterial>(it->Name(), false);

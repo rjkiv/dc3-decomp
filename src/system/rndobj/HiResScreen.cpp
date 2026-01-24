@@ -33,7 +33,7 @@ HiResScreen::BmpCache::BmpCache(unsigned int ui1, unsigned int ui2) {
     for (uint i = 0; i < mTotalNumCacheLines; i++) {
         mFileNames[i] = MakeString("_hires_cache_%.2d.dat", i);
     }
-    mBuffer = (unsigned char *)MemAlloc(mByteSize, "HiResScreen.cpp", 0x44, "HiResScreenCache");
+    mBuffer = (unsigned char *)MemAlloc(mByteSize, __FILE__, 0x44, "HiResScreenCache");
     mCurrLoadedIndex = ui2;
     DeleteCache();
 }
@@ -58,7 +58,7 @@ void HiResScreen::BmpCache::FlushCache() {
         MILO_ASSERT(cacheFile, 0xA2);
         cacheFile->Seek(mDirtyStart, 0);
         unsigned int nBuffRange = mDirtyEnd - mDirtyStart;
-        MILO_ASSERT(nBuffRange <= mByteSize, 0xAA);
+        MILO_ASSERT(nBuffRange < mByteSize, 0xAA);
         unsigned int numWritten = cacheFile->Write(mBuffer + mDirtyStart, nBuffRange);
         MILO_ASSERT(numWritten == nBuffRange, 0xAE);
         cacheFile->Flush();
@@ -141,7 +141,7 @@ void HiResScreen::TakeShot(const char *c, int i) {
     mActive = true;
     mCurrTile = 0;
     if (TheRnd.Width() <= 480 || TheRnd.Height() <= 270) {
-        MILO_NOTIFY(FormatString("Padding exceeds screen size").Str());
+        MILO_NOTIFY(MakeString("Padding exceeds screen size"));
         mActive = false;
     } else {
         mAccumWidth = i * (TheRnd.Width() - 480);

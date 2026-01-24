@@ -409,7 +409,7 @@ BEGIN_LOADS(RndFont)
             }
         }
     } else {
-        TheDebug << MakeString("NOTIFY: %s is old version, please resave\n", PathName(this));
+        MILO_LOG("NOTIFY: %s is old version, please resave\n", PathName(this));
         UpdateChars();
     }
     mCharInfoMap[0x20];
@@ -419,7 +419,7 @@ BEGIN_LOADS(RndFont)
         std::vector<KernInfo> kernInfos;
         GetKerning(kernInfos);
         SetKerning(kernInfos);
-        TheDebug << MakeString("NOTIFY: %s is old version, resave file\n", PathName(this));
+        MILO_LOG("NOTIFY: %s is old version, resave file\n", PathName(this));
     }
     if (d.rev > 0x10 && d.altRev < 1) {
         ObjPtr<RndFont> nextFont(this, NULL);
