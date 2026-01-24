@@ -177,7 +177,7 @@ void SpeechMgr::DisableAndUnloadGrammars() {
 
 void SpeechMgr::Enable(bool english) {
     if (mSpeechSupported) {
-        MILO_ASSERT(mEnabled == false, 0x13F);
+        MILO_ASSERT(!mEnabled, 0x13F);
         NUI_SPEECH_INIT_PROPERTIES props;
         memset(&props, 0, sizeof(NUI_SPEECH_INIT_PROPERTIES));
         if (english) {
@@ -197,9 +197,7 @@ void SpeechMgr::Enable(bool english) {
             } else if (enableRes == E_NUI_DATABASE_VERSION_MISMATCH) {
                 MILO_FAIL("NuiSpeechEnable failed E_NUI_DATABASE_VERSION_MISMATCH");
             } else {
-                MILO_LOG(
-                    "NuiSpeechEnable failed with error 0x%x (no Kinect?)\n", enableRes
-                );
+                MILO_LOG("NuiSpeechEnable failed with error 0x%x (no Kinect?)\n", enableRes);
             }
         } else {
             mEnabled = true;

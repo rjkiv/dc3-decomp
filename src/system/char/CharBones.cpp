@@ -53,9 +53,11 @@ void CharBones::SetCompression(CompressionType ty) {
 }
 
 CharBones::Type CharBones::TypeOf(Symbol s) {
-    for (const char *p = s.Str(); *p != 0; p++) {
-        if (*p == '.') {
-            switch (p[1]) {
+    const char *p = s.Str();
+    char c;
+    while ((c = *p++) != 0) {
+        if (c == '.') {
+            switch (*p) {
             case 'p':
                 return TYPE_POS;
             case 's':
@@ -64,9 +66,9 @@ CharBones::Type CharBones::TypeOf(Symbol s) {
                 return TYPE_QUAT;
             case 'r': {
                 // check if rot is x, y, or z
-                unsigned char next = p[3];
-                if ((unsigned char)(next - 'x') <= 2)
-                    return (Type)((char)next - 'u');
+                char next = p[2];
+                if (next >= 'x' && next <= 'z')
+                    return (Type)(next - 'u');
             }
             default:
                 break;

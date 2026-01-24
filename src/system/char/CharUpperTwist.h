@@ -22,7 +22,7 @@ public:
     virtual void Poll();
     virtual void PollDeps(std::list<Hmx::Object *> &, std::list<Hmx::Object *> &);
 
-    OBJ_MEM_OVERLOAD(0x1D)
+    OBJ_MEM_OVERLOAD(0x1B)
     NEW_OBJ(CharUpperTwist)
 
 protected:

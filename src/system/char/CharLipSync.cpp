@@ -156,8 +156,8 @@ void CharLipSync::Generator::NextFrame() {
 CharLipSync *CharLipSync::FindLipSyncForSound(Sound *sound) {
     if (sLipSyncMap) {
         String name(sound->Name());
-        unsigned int ext = name.find_last_of('.');
-        if (ext > 0) {
+        int ext = name.find_last_of('.');
+        if (ext >= 0) {
             name.resize(ext);
             name += ".lipsync";
             return (*sLipSyncMap)[name.c_str()];

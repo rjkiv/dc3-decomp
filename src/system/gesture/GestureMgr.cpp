@@ -203,14 +203,16 @@ SkeletonQualityFilter &GestureMgr::GetSkeletonQualityFilter(int idx) {
 }
 
 int GestureMgr::GetActiveSkeletonIndex() const {
+    int i;
     if (mActiveSkelTrackingID > 0) {
-        for (int i = 0; i < 6; i++) {
-            if (mSkeletons[i].TrackingID() == mActiveSkelTrackingID) {
-                return i;
-            }
+        for (i = 0; i < 6; i++) {
+            if (mSkeletons[i].TrackingID() == mActiveSkelTrackingID)
+                goto done;
         }
     }
-    return -1;
+    i = -1;
+done:
+    return i;
 }
 
 void GestureMgr::SetTrackedSkeletons(int i1, int i2) {
