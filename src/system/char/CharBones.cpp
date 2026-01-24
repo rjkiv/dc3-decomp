@@ -9,6 +9,36 @@
 
 CharBones *gPropBones;
 
+short MakeShortAng(float f) {
+    f = f * 1638.4f + 0.5f;
+    MILO_ASSERT(f < 32768 && f > -32767, 0x60);
+    f = floor(f);
+    return f;
+}
+
+short ShortVector3::ToShort(float f) {
+    float temp = f * 0.039674062281847f + 0.5f;
+    auto clamped = Clamp(-32767.0f, 32767.0f, temp);
+    return floor(clamped);
+}
+
+void ShortVector3::Set(const Vector3 &vec) {
+    x = ToShort(vec.x);
+    y = ToShort(vec.y);
+    z = ToShort(vec.z);
+}
+
+void ShortQuat::Set(const Hmx::Quat &quat) {
+
+}
+
+void ShortQuat::ToQuat(Hmx::Quat &quat) const {
+    quat.x = x * 3.051851e-05f;
+    quat.y = y * 3.051851e-05f;
+    quat.z = z * 3.051851e-05f;
+    quat.w = w * 3.051851e-05f;
+}
+
 void CharBones::Zero() { memset(mStart, 0, mTotalSize); }
 
 int CharBones::TypeSize(int i) const {

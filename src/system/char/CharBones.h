@@ -8,6 +8,29 @@
 
 class CharClip;
 
+
+class ShortQuat {
+public:
+    void Set(const Hmx::Quat &);
+    void ToQuat(Hmx::Quat &) const;
+
+    short x;
+    short y;
+    short z;
+    short w;
+};
+
+class ByteQuat {
+public:
+    void Set(const Hmx::Quat &);
+    void ToQuat(Hmx::Quat &) const;
+
+    short x;
+    short y;
+    short z;
+    short w;
+};
+
 class CharBones {
 public:
     enum Type {
@@ -114,3 +137,5 @@ protected:
 
 BinStream &operator<<(BinStream &, const CharBones::Bone &);
 BinStream &operator>>(BinStream &, CharBones::Bone &);
+
+short MakeShortAng(float);

@@ -150,6 +150,19 @@ private:
     u32 PAD; // should NEVER be used!!!! for simd alignment!!!
 };
 
+class ShortVector3 {
+public:
+    ShortVector3() {}
+    ShortVector3(short *) {}
+
+    void Set(const Vector3 &);
+    static short ToShort(float);
+
+    short x;
+    short y;
+    short z;
+};
+
 inline BinStream &operator<<(BinStream &bs, const Vector3 &vec) {
     bs << vec.x << vec.y << vec.z;
     return bs;
