@@ -32,8 +32,8 @@ Symbol MQSongHeaderNode::OnSelect() {
     if (!TheMQSongSortMgr->IsInHeaderMode()) {
         TheMQSongSortMgr->SetHeaderMode(true);
         TheMQSongSortMgr->SetEnteringHeaderMode(true);
-    }
-    else TheMQSongSortMgr->SetEnteringHeaderMode(false);
+    } else
+        TheMQSongSortMgr->SetEnteringHeaderMode(false);
     return gNullStr;
 }
 
@@ -119,7 +119,7 @@ NavListSortNode *MQSongHeaderNode::GetFirstActive() {
 
 void MQSongHeaderNode::Renumber(std::vector<NavListSortNode *> &vec) {
     mStartIx = vec.size();
-    if (TheMQSongSortMgr->HeadersSelectable()) {
+    if (TheMQSongSortMgr->GetHeadersSelectable()) {
         vec.push_back(this);
         TheMQSongSortMgr->AddHeaderIndex(mStartIx);
     }

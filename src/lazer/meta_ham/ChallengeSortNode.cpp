@@ -51,7 +51,7 @@ NavListSortNode *ChallengeHeaderNode::GetFirstActive() {
 
 void ChallengeHeaderNode::Renumber(std::vector<NavListSortNode *> &vec) {
     mStartIx = vec.size();
-    if (TheChallengeSortMgr->HeadersSelectable()) {
+    if (TheChallengeSortMgr->GetHeadersSelectable()) {
         vec.push_back(this);
         TheChallengeSortMgr->AddHeaderIndex(mStartIx);
     }

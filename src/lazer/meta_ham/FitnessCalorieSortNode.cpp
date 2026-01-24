@@ -107,7 +107,7 @@ void FitnessCalorieHeaderNode::Text(UIListLabel *uiListLabel, UILabel *uiLabel) 
 
 void FitnessCalorieHeaderNode::Renumber(std::vector<NavListSortNode *> &vec) {
     mStartIx = vec.size();
-    if (TheFitnessCalorieSortMgr->HeadersSelectable()) {
+    if (TheFitnessCalorieSortMgr->GetHeadersSelectable()) {
         vec.push_back(this);
         TheFitnessCalorieSortMgr->AddHeaderIndex(mStartIx);
     }
