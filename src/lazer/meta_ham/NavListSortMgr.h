@@ -31,15 +31,8 @@ public:
     virtual bool IsHeader(int);
     virtual void UnHighlightCurrent();
     virtual void ClearIconLabels();
-    // Virtual methods to be overridden by derived classes
-    virtual bool HeadersSelectable() { return false; } // 0x6c
-    virtual bool SelectionIs(Symbol) { return false; } // 0x70
-    virtual bool DataIs(int, Symbol) { return false; } // 0x74
-    virtual Symbol MoveOn() { return gNullStr; } // 0x78
-    virtual void OnEnter() {} // 0x7c
-    virtual int GetListIndexFromHeaderIndex(int); // 0x80
-    virtual Symbol GetFirstChildSymbolFromHeaderSymbol(Symbol); // 0x84
-    virtual void OnCancel() {} // 0x88
+    virtual int GetListIndexFromHeaderIndex(int);
+    virtual Symbol GetFirstChildSymbolFromHeaderSymbol(Symbol);
     // ContentMgr::Callback
     virtual void ContentMounted(const char *, const char *);
 
@@ -73,7 +66,7 @@ public:
 
     bool &IsInHeaderMode() { return mHeaderMode; }
     bool &EnteringHeaderMode() { return mEnteringHeaderMode; }
-    bool &GetHeadersSelectable() { return mHeadersSelectable; }
+    bool &HeadersSelectable() { return mHeadersSelectable; }
     bool &ExitingHeaderMode() { return mExitingHeaderMode; }
     std::vector<NavListSort *> &Sorts() { return mSorts; };
     std::vector<int> &GetHeadersA() { return mHeadersA; };
