@@ -10,26 +10,25 @@
 #include "utl/Symbol.h"
 
 BEGIN_HANDLERS(NavListSortMgr)
-    HANDLE_EXPR(first_data_index, mSorts[mCurrentSortIdx]->GetNode(_msg->Sym(2))->GetStartIx())
+    HANDLE_EXPR(first_data_index, mSorts.front()->GetNode(_msg->Sym(2)))
     HANDLE_EXPR(is_active, IsActive(_msg->Int(2)))
-    HANDLE_EXPR(is_disabled, mSorts[mCurrentSortIdx]->GetListFromIdx(_msg->Int(2))->IsActive())
+    HANDLE_EXPR(is_disabled, !IsActive(_msg->Int(2)))
     HANDLE_EXPR(on_select, OnSelect(_msg->Int(2)))
     HANDLE_EXPR(on_select_done, OnSelectDone(_msg->Int(2)))
-    HANDLE_ACTION(on_cancel, OnCancel())
-    HANDLE_EXPR(move_on, MoveOn())
-    HANDLE_EXPR(clear_saved_highlight, unk48 = false)
-    HANDLE_ACTION(set_highlighted_ix, mSorts[mCurrentSortIdx]->SetHighlightedIx(_msg->Int(2)))
+    // on_cancel, move_on here
+    HANDLE_EXPR(clear_saved_highlight, unk48 = _msg->Int(0))
+    // set_highlighted_ix
     HANDLE_ACTION(get_highlight_item, GetHighlightItem())
-    HANDLE_ACTION(next_sort, SetSort((mCurrentSortIdx + 1) % mSorts.size()))
+    HANDLE_ACTION(next_sort, SetSort(_msg->Sym(2)))
     HANDLE_ACTION(set_sort_index, SetSort(_msg->Int(2)))
     HANDLE_ACTION(set_sort_name, SetSort(_msg->Sym(2)))
     HANDLE_EXPR(get_sort_index, mCurrentSortIdx)
-    HANDLE_EXPR(get_current_sort_name, GetCurrentSortName())
-    HANDLE_EXPR(get_current_sort, GetCurrentSort())
-    HANDLE_EXPR(are_headers_selectable, HeadersSelectable())
-    HANDLE_EXPR(selection_is, SelectionIs(_msg->Sym(2)))
-    HANDLE_EXPR(data_is, DataIs(_msg->Int(2), _msg->Sym(3)))
-    HANDLE_ACTION(enter, OnEnter())
+    HANDLE_ACTION(get_current_sort_name, GetCurrentSortName())
+    HANDLE_ACTION(get_current_sort, GetCurrentSort())
+    HANDLE_EXPR(are_headers_selectable, mHeadersSelectable)
+    HANDLE_EXPR(selection_is, _msg->Sym(2))
+    HANDLE_EXPR(data_is, _msg->Sym(3))
+    HANDLE_ACTION(enter, _msg->Sym(2))
     HANDLE_ACTION(exit, OnExit())
     HANDLE_ACTION(unload, OnUnload())
     HANDLE_ACTION(start_preview, StartPreview(_msg->Int(2), _msg->Obj<TexMovie>(3)))
@@ -39,24 +38,24 @@ BEGIN_HANDLERS(NavListSortMgr)
     HANDLE_EXPR(get_header_mode, mHeaderMode)
     HANDLE_EXPR(entering_header_mode, mEnteringHeaderMode)
     HANDLE_EXPR(exiting_header_mode, mExitingHeaderMode)
-    HANDLE_EXPR(sort_with_headers, mHeadersSelectable = _msg->Int(2))
-    HANDLE_EXPR(is_data_header, IsHeader(_msg->Int(2)))
-    HANDLE_EXPR(
+    HANDLE_EXPR(sort_with_headers, _msg->Int(2))
+    HANDLE_EXPR(is_data_header, mHeadersB[_msg->Int(2)])
+    HANDLE_ACTION(
         get_header_symbol_from_child_symbol, GetHeaderSymbolFromChildSymbol(_msg->Sym(2))
     )
-    HANDLE_EXPR(get_header_count, (int)mHeadersB.size())
-    HANDLE_EXPR(
+    HANDLE_ACTION(get_header_count, mHeadersB.size())
+    HANDLE_ACTION(
         get_header_index_from_list_index, GetHeaderIndexFromListIndex(_msg->Int(2))
     )
-    HANDLE_EXPR(
+    HANDLE_ACTION(
         get_list_index_from_header_index, GetListIndexFromHeaderIndex(_msg->Int(2))
     )
-    HANDLE_EXPR(
+    HANDLE_ACTION(
         get_header_index_from_child_list_index,
         GetHeaderIndexFromChildListIndex(_msg->Int(2))
     )
     HANDLE_ACTION(do_uncollapse, DoUncollapse())
-    HANDLE_EXPR(get_first_child_symbol_from_header_symbol, GetFirstChildSymbolFromHeaderSymbol(_msg->Sym(2)))
+    HANDLE_ACTION(get_first_child_symbol_from_header_symbol, _msg->Sym(2))
     HANDLE_SUPERCLASS(UIListProvider)
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
