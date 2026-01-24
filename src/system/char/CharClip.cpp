@@ -498,11 +498,11 @@ BEGIN_LOADS(CharClip)
         String str;
         d >> str;
         if (!str.empty()) {
-            MILO_WARN("%s has old enter event %s, must port", PathName(this), str);
+            MILO_NOTIFY("%s has old enter event %s, must port", PathName(this), str);
         }
         d >> str;
         if (!str.empty()) {
-            MILO_WARN("%s has old exit event %s, must port", PathName(this), str);
+            MILO_NOTIFY("%s has old exit event %s, must port", PathName(this), str);
         }
         int count;
         d >> count;
