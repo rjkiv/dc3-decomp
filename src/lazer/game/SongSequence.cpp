@@ -2,13 +2,17 @@
 #include "flow/PropertyEventProvider.h"
 #include "game/Game.h"
 #include "game/GameMode.h"
+#include "game/GamePanel.h"
 #include "hamobj/HamDirector.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamMaster.h"
 #include "hamobj/HamPlayerData.h"
 #include "macros.h"
 #include "math/Easing.h"
+#include "meta_ham/CampaignPerformer.h"
 #include "meta_ham/HamSongMgr.h"
+#include "meta_ham/MetaPerformer.h"
+#include "midi/MidiParserMgr.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Msg.h"
@@ -155,7 +159,8 @@ bool SongSequence::DoNext(bool b1, bool b2) {
     unk28 = false;
     if (mEntries.size() == 0)
         return true;
-    if (!b1 && !TheGame->IsLoaded()) {
+    bool isLoaded = TheGame->IsLoaded();
+    if (!b1 && !isLoaded) {
         return mEntries.size() <= mCurrentIndex;
     }
     if (!b1) {
@@ -165,12 +170,113 @@ bool SongSequence::DoNext(bool b1, bool b2) {
             return mEntries.size() <= mCurrentIndex;
         }
     }
-    if (!b2 && mCurrentIndex > 0) {
+    if (!b2 && mCurrentIndex >= 0) {
         if (TheHamProvider->Property(holla_back_config)->Int()) {
             static Symbol num_stars("num_stars");
-            // need GamePanel
+            const DataNode *prop = TheGamePanel->Property(num_stars, false);
+            int stars;
+            if (prop) {
+                stars = prop->Float();
+            } else {
+                stars = 0;
+            }
+            mEntries[mCurrentIndex].unk38 = stars;
+            HamPlayerData *p0 = TheGameData->Player(0);
+            HamPlayerData *p1 = TheGameData->Player(1);
+            static Symbol score("score");
+            int p0Score = p0->Provider()->Property(score)->Int();
+            int p1Score = p1->Provider()->Property(score)->Int();
+            mEntries[mCurrentIndex].unk34 = p0Score + p1Score;
+            CampaignPerformer *cp = static_cast<CampaignPerformer *>(MetaPerformer::Current());
+            Entry &entry = mEntries[mCurrentIndex];
+            cp->UpdateEraSong(cp->GetDifficulty(), entry.unk4, entry.unk4, stars);
+            cp->TriggerSongCompletion(entry.unk34, (float)entry.unk38);
         }
     }
+    if (!b2 && mEntries[mCurrentIndex].unk8 == mind_control) {
+        CampaignPerformer *cp = static_cast<CampaignPerformer *>(MetaPerformer::Current());
+        cp->SetCampaignMindControlComplete(true);
+    }
+    mCurrentIndex++;
+    if (mCurrentIndex >= mEntries.size()) {
+        goto end_sequence;
+    }
+    if (!b2) {
+        Entry &nextEntry = mEntries[mCurrentIndex];
+        bool loadCrew = false;
+        if (*nextEntry.unk2c.Str() != '\0') {
+            loadCrew = true;
+            HamPlayerData *hpd = TheGameData->Player(0);
+            hpd->SetOutfit(Symbol(""));
+            hpd->SetCrew(nextEntry.unk2c);
+            if (nextEntry.unk8 == mind_control) {
+                hpd->SetOutfit(Symbol("lima06"));
+            }
+        }
+        if (*nextEntry.unk30.Str() != '\0') {
+            loadCrew = true;
+            HamPlayerData *hpd = TheGameData->Player(1);
+            hpd->SetOutfit(Symbol(""));
+            hpd->SetCrew(nextEntry.unk30);
+            if (nextEntry.unk8 == mind_control) {
+                hpd->SetOutfit(Symbol("rasa06"));
+            }
+        }
+        if (loadCrew && isLoaded) {
+            TheHamDirector->LoadCrew(
+                TheGameData->Player(0)->Crew(), TheGameData->Player(1)->Crew()
+            );
+        }
+        static Symbol hud_panel("hud_panel");
+        static Symbol clear_flash_cards("clear_flash_cards");
+        static Symbol clear_all_flashcard_campaign_states(
+            "clear_all_flashcard_campaign_states"
+        );
+        TheMidiParserMgr->GetParser(midi_player)->SetProperty(active, nextEntry.unk14);
+        TheHamProvider->SetProperty(holla_back_config, nextEntry.unk14);
+        if (isLoaded) {
+            ObjectDir *hudPanel = DataVariable(hud_panel).Obj<ObjectDir>();
+            if (hudPanel) {
+                hudPanel->Handle(Message(clear_flash_cards, 0), true);
+                hudPanel->Handle(Message(clear_flash_cards, 1), true);
+                hudPanel->Handle(Message(clear_all_flashcard_campaign_states), true);
+            }
+        }
+        if (nextEntry.unk8 == "holla_back") {
+            TheHamDirector->StartStopVisualizer(true, 0);
+        }
+        TheGameMode->SetGameplayMode(nextEntry.unk8, nextEntry.unk8 == perform);
+        TheGame->LoadNewSong(nextEntry.unk4, nextEntry.unk0);
+        unk24 = TheTaskMgr.UISeconds();
+        if (isLoaded) {
+            static Symbol deinit("deinit");
+            UIPanel *gamePanel = ObjectDir::Main()->Find<UIPanel>("game_panel", true);
+            gamePanel->Handle(Message(deinit), true);
+        }
+        if (nextEntry.unk8 == "holla_back") {
+            static Symbol hide_venue("hide_venue");
+            TheHamProvider->SetProperty(hide_venue, true);
+        }
+        return false;
+    }
+end_sequence:
+    MILO_LOG("SongSequence::DoNext: terminating (skipped=%s)\n", b2 ? "T" : "F");
+    Symbol mode = TheGameMode->Property(gameplay_mode)->Sym();
+    if (mode == holla_back) {
+        RndGroup *grp = TheHamDirector->GetVenueWorld()->Find<RndGroup>("bid.grp", true);
+        if (grp) {
+            grp->SetShowing(false);
+        }
+        RndPropAnim *anim =
+            TheHamDirector->GetVenueWorld()->Find<RndPropAnim>("set_performance.anim", true);
+        if (anim) {
+            anim->Animate(0, false, 0, nullptr, kEaseLinear, 0, false);
+        }
+    }
+    TheGameMode->SetGameplayMode(perform, true);
+    Clear();
+    mCurrentIndex = -1;
+    return true;
 }
 
 void SongSequence::OnSongLoaded() {
@@ -250,14 +356,14 @@ void SongSequence::OnSongLoaded() {
             }
         }
         unk1c = 0;
-        if (curEntry.unk21) {
-            TheHamDirector->StartStopVisualizer(false, 2);
-        } else {
+        if (!curEntry.unk21) {
             TheHamDirector->StartStopVisualizer(false, 1);
             RndGroup *grp = TheHamDirector->GetVenueWorld()->Find<RndGroup>("bid.grp");
             if (grp) {
                 grp->SetShowing(false);
             }
+        } else {
+            TheHamDirector->StartStopVisualizer(false, 2);
         }
         if (inHollaback) {
             RndGroup *grp = TheHamDirector->GetVenueWorld()->Find<RndGroup>("bid.grp");
