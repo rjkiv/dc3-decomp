@@ -166,10 +166,11 @@ float UIList::Speed() const { return mListState.Speed(); }
 
 void UIList::SetParent(UIList *uilist) { mParent = uilist; }
 
+// noinline: Prevents inlining of this stub implementation. Remove once fully implemented.
+// TODO: implement properly - 524 bytes in target
+// See RB3: box.Set(WorldXfm().v, WorldXfm().v);
+//          mListDir->DrawWidgets(mListState, mWidgets, WorldXfm(), DrawState(this), &box, ...);
 __declspec(noinline) void UIList::CalcBoundingBox(Box &box) {
-    // TODO: implement properly - 524 bytes in target
-    // See RB3: box.Set(WorldXfm().v, WorldXfm().v);
-    //          mListDir->DrawWidgets(mListState, mWidgets, WorldXfm(), DrawState(this), &box, ...);
     volatile int stub = 0;
     (void)stub;
 }
