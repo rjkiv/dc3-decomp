@@ -6,6 +6,8 @@
 #include "utl/MemMgr.h"
 
 struct BeatCollisionData {
+    void Set(float, float, const Transform &, const Transform &);
+
     float mMinX;
     float mMaxX;
     Vector3 mOffset;
@@ -32,6 +34,7 @@ public:
 
 private:
     static float sCollisionTolerance;
+    const BeatCollisionData *BeatData(int, Difficulty) const;
 
 protected:
     SongCollision();

@@ -6,6 +6,8 @@
 #include "obj/Object.h"
 #include "utl/Std.h"
 
+using namespace Hmx; // need Matrix3 funcs without Hmx namespace tag for asserts
+
 std::vector<const char *> sCollisionUsefulBoneNames;
 
 SongCollision::SongCollision() {}
@@ -62,4 +64,29 @@ void SongCollision::Init() {
             sCollisionUsefulBoneNames.push_back(bones->Str(i));
         }
     }
+}
+
+const BeatCollisionData *SongCollision::BeatData(int beat, Difficulty diff) const {
+    MILO_ASSERT((0) <= (diff) && (diff) < (kNumDifficulties), 0xe8);
+    MILO_ASSERT(beat >= 0, 0xeb);
+    if (beat < mData[diff].size()) {
+        return &mData[diff][beat];
+    }
+    return nullptr;
+}
+
+void BeatCollisionData::Set(float minX, float minY, const Transform &start_xfm, const Transform &end_xfm) {
+    MILO_ASSERT(start_xfm.m == Matrix3::GetIdentity(), 0x62);
+    MILO_ASSERT(end_xfm.m == Matrix3::GetIdentity(), 0x63);
+    mMinX = minX;
+    mMaxX = minY;
+    float startXX = start_xfm.m.x.x;
+    float endXX = end_xfm.m.x.x;
+    float startXY = start_xfm.m.x.y;
+    float endXY = end_xfm.m.x.y;
+    float startXZ = start_xfm.m.x.z;
+    float endXZ = end_xfm.m.x.z;
+    mOffset.x = startXX - endXX;
+    mOffset.y = startXY - endXY;
+    mOffset.z = startXZ - endXZ;
 }

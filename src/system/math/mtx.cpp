@@ -6,7 +6,7 @@ Hmx::Matrix4 Hmx::Matrix4::sID(
     Vector4(1, 0, 0, 0), Vector4(0, 1, 0, 0), Vector4(0, 0, 1, 0), Vector4(0, 0, 0, 1)
 );
 
-Transform Transform::sID(Hmx::Matrix3::ID(), Vector3(0, 0, 0));
+Transform Transform::sID(Hmx::Matrix3::GetIdentity(), Vector3(0, 0, 0));
 
 float Det(const Hmx::Matrix3 &m) {
     Vector3 cross;

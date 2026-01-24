@@ -100,7 +100,7 @@ namespace Hmx {
             return x != mtx.x || y != mtx.y || z != mtx.z;
         }
 
-        static const Hmx::Matrix3 &ID() { return sID; }
+        static const Hmx::Matrix3 &GetIdentity() { return sID; }
     };
 
     class Matrix4 {
