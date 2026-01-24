@@ -7,7 +7,10 @@
 #include "obj/Data.h"
 #include "obj/Object.h"
 
+class ChallengeResultPanel;
+
 class Challenges : public Hmx::Object {
+    friend class ChallengeResultPanel;
 public:
     Challenges();
     virtual ~Challenges();

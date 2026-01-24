@@ -280,7 +280,9 @@ bool MetaPanel::Exiting() const {
             TheTaskMgr.SetAutoSecondsBeats(true);
             return UIPanel::Exiting();
         }
+        return true;
     }
+    return false;
 }
 
 void MetaPanel::UnlockClassicOutfit(Symbol s) {
