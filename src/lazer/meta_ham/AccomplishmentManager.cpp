@@ -976,7 +976,7 @@ void AccomplishmentManager::HandleSongCompleted(Symbol song) {
             HamProfile *pProfile = TheProfileMgr.GetProfileFromPad(padNum);
             if (pProfile && pProfile->HasValidSaveData() && pPlayer->IsPlaying()) {
                 static Symbol practice("practice");
-                if (!unk30[i]) {
+                if (!unk30[padNum]) {
                     HandleSongCompletedForProfile(song, pPlayer, pProfile);
                 }
                 if (TheGameMode->InMode(practice, true)) {

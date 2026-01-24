@@ -626,7 +626,7 @@ BEGIN_LOADS(CamShot)
     }
     float f19 = 0;
     float f3f4 = 0;
-    if (d.rev != 0) {
+    if (d.rev > 0) {
         Hmx::Object::Load(bs);
         RndAnimatable::Load(bs);
     }
@@ -740,7 +740,7 @@ BEGIN_LOADS(CamShot)
     }
 
     d >> mPath;
-    if (d.rev >= 2 && d.rev <= 44) {
+    if (d.rev > 1 && d.rev < 0x2D) {
         float f2b;
         d >> f2b;
     }
@@ -769,11 +769,11 @@ BEGIN_LOADS(CamShot)
     }
     CamShotCrowd csc(this);
 
-    if (d.rev >= 5 && d.rev <= 41) {
+    if (d.rev > 4 && d.rev < 42) {
         d >> csc.unk18;
     }
     int loc240 = -1;
-    if (d.rev >= 8 && d.rev <= 41)
+    if (d.rev >= 8 && d.rev < 42)
         d >> loc240;
     if (d.rev > 5) {
         mGenHideVector.clear();
@@ -802,19 +802,15 @@ BEGIN_LOADS(CamShot)
             }
         }
     }
-    if (d.rev >= 33 && d.rev <= 41)
+    if (d.rev > 32 && d.rev < 42)
         d >> (int &)csc.mCrowdRotate;
-    if (d.rev >= 8 && d.rev <= 41) {
+    if (d.rev >= 8 && d.rev < 42) {
         if (csc.mCrowd) {
-            if (loc240 != csc.mCrowd->GetModifyStamp()) {
+            if (loc240 != csc.mCrowd->GetModifyStamp())
                 csc.unk18.clear();
-                goto next;
-            }
-        }
-        if (!csc.mCrowd && loc240 != -1)
+        } else if (loc240 != -1)
             csc.unk18.clear();
     }
-next:
     if (d.rev == 0xE) {
         float f244, f248, f24c;
         d >> f244;
@@ -822,7 +818,7 @@ next:
         d >> f24c;
     }
 
-    if (d.rev == 16 || d.rev == 17) {
+    if (d.rev > 15 && d.rev < 18) {
         float f250, f254;
         bs >> f250;
         bs >> f254;
@@ -850,7 +846,7 @@ next:
     if (d.rev > 0x24)
         d >> mFlags;
     Symbol s258;
-    if (d.rev >= 40 && d.rev <= 42)
+    if (d.rev > 39 && d.rev < 43)
         d >> s258;
     if (d.rev < 0x2A) {
         if (csc.mCrowd)
@@ -859,7 +855,7 @@ next:
         d >> mCrowds;
     if (d.rev > 0x2A)
         d >> mAnims;
-    if (d.rev >= 0x34) {
+    if (d.rev > 0x33) {
         d >> mCrowdStateOverride;
     } else {
         static Symbol none("none");

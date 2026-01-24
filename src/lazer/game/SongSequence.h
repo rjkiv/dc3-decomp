@@ -42,6 +42,8 @@ public:
     void Init();
     void Add(const DataArray *);
     int CurrentIndex() const { return mCurrentIndex; }
+    bool GetUnk28() const { return unk28; }
+    void SetUnk28(bool val) { unk28 = val; } // 0x28 - venueEntered flag
 
 protected:
     std::vector<Entry> mEntries; // 0x8

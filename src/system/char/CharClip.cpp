@@ -463,7 +463,109 @@ BEGIN_LOADS(CharClip)
         mRelative = b117 ? this : nullptr;
     } else
         mRelative = nullptr;
-    // there's more, the usage of both BinStream and BinStreamRev is weird
+    if (oldRev - 9U <= 1) {
+        bool b118;
+        d >> b118;
+    }
+    if (oldRev > 9) {
+        int oldVer;
+        d >> oldVer;
+        MILO_ASSERT(oldVer < 0x7FFF, 0x557);
+        mOldVer = oldVer;
+    }
+    if (oldRev > 0xB) {
+        d >> mDoNotCompress;
+        if (mDoNotCompress)
+            MILO_NOTIFY("mDoNotCompress %s\n", PathName(this));
+    }
+    mTransitions.Load(d, oldRev);
+    if (oldRev < 3) {
+        int count;
+        d >> count;
+        String str;
+        for (int i = 0; i < count; i++) {
+            d >> str;
+        }
+    }
+    if (oldRev > 6) {
+        int count;
+        d >> count;
+        mBeatEvents.resize(count);
+        for (int i = 0; i < mBeatEvents.size(); i++) {
+            mBeatEvents[i].Load(d.stream);
+        }
+    } else {
+        String str;
+        d >> str;
+        if (!str.empty()) {
+            MILO_NOTIFY("%s has old enter event %s, must port", PathName(this), str);
+        }
+        d >> str;
+        if (!str.empty()) {
+            MILO_NOTIFY("%s has old exit event %s, must port", PathName(this), str);
+        }
+        int count;
+        d >> count;
+        float f1 = -kHugeFloat;
+        for (int i = 0; i < count; i++) {
+            float x;
+            d >> x;
+            d >> str;
+            if (!str.empty()) {
+                MILO_NOTIFY(
+                    "%s has old frame %.2f event %s, must port", PathName(this), x, str
+                );
+            }
+            if (x < f1) {
+                MILO_NOTIFY("Keyframes in %s are out of order.", Name());
+            }
+            f1 = x;
+        }
+    }
+    mDirty = false;
+    int tv = TransitionVersion();
+    if (tv != mOldVer) {
+        mDirty = true;
+        MILO_ASSERT(tv < 0x7FFF, 0x5A3);
+        mOldVer = tv;
+    }
+    mFull.Load(d.stream);
+    mOne.Load(d.stream);
+    if (d.rev > 0xE)
+        d >> mZeros;
+    mFacing.Set(mFull);
+    if (d.rev > 0x11)
+        d >> mBeatTrack;
+    else {
+        if (NumFrames() > 1) {
+            mBeatTrack.resize(2);
+            Key<float> &key0 = mBeatTrack[0];
+            key0 = Key<float>(key0.value, 0);
+            Key<float> &key1 = mBeatTrack[1];
+            key1 = Key<float>(key1.value, NumFrames() - 1);
+        } else {
+            mBeatTrack.resize(1);
+            Key<float> &key0 = mBeatTrack[0];
+            key0 = Key<float>(key0.value, 0);
+        }
+        if (d.rev < 0x11) {
+            float oldFPS = mFramesPerSec;
+            if (LengthBeats() > 0) {
+                mFramesPerSec = (NumFrames() - 1) * (oldFPS / LengthBeats());
+            } else
+                mFramesPerSec = 30.0f;
+        }
+    }
+    if (d.rev > 0x12)
+        d >> mSyncAnim;
+    if (EndBeat() == StartBeat() && mFull.NumSamples() > 1) {
+        MILO_NOTIFY(
+            "%s has endframe == startframe == %.3f but %d samples!\n",
+            Name(),
+            StartBeat(),
+            mFull.NumSamples()
+        );
+    }
 END_LOADS
 
 void CharClip::PreSave(BinStream &) {
@@ -709,7 +811,7 @@ int CharClip::BeatToSample(float f, float *fp) const {
     float frame = BeatToFrame(f);
     float f1 = 0;
     if (mBeatTrack.back().frame != 0) {
-        *fp = frame / mBeatTrack.back().frame;
+        f1 = frame / mBeatTrack.back().frame;
     }
     *fp = f1;
     return mFull.FracToSample(fp);

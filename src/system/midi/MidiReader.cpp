@@ -79,6 +79,20 @@ void MidiReader::ReadTrackHeader(BinStream &bs) {
     }
 }
 
+void MidiReader::SkipCurrentTrack() {
+    if (mState == kInTrack) {
+        if (mCurTrackIndex == mNumTracks) {
+            mState = kEnd;
+            mRcvr.OnEndOfTrack();
+            mRcvr.OnAllTracksRead();
+        } else {
+            mState = kNewTrack;
+            mStream->Seek(mTrackEndPos, BinStream::kSeekBegin);
+            mRcvr.OnEndOfTrack();
+        }
+    }
+}
+
 MidiReader::MidiReader(BinStream &bs, MidiReceiver &rec, const char *name)
     : mStream(&bs), mStreamCreatedHere(0), mStreamName(name), mRcvr(rec), mState(kStart),
       mNumTracks(0), mTicksPerQuarter(0), mDesiredTPQ(480), mCurTrackIndex(0),
@@ -462,6 +476,14 @@ void MidiReader::ReadNextEventImpl() {
     }
 }
 
+void MidiReader::ReadAllTracks() {
+    if (mStream->Tell() != 0) {
+        mStream->Seek(0, BinStream::kSeekBegin);
+    }
+    while (ReadTrack())
+        ;
+}
+
 bool MidiReader::ReadSomeEvents(int num_events) {
     for (int i2 = 0; i2 < num_events; i2++) {
         ReadNextEvent();
@@ -469,4 +491,13 @@ bool MidiReader::ReadSomeEvents(int num_events) {
             return true;
     }
     return false;
+}
+
+bool MidiReader::ReadTrack() {
+    do {
+        ReadNextEvent();
+        if (mState == kEnd || mState == kNewTrack)
+            break;
+    } while (!mFail);
+    return mState == kNewTrack;
 }

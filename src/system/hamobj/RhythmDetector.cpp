@@ -201,7 +201,6 @@ void RhythmDetector::Poll() {
             if (mDebugGraphC) mDebugGraphC->Draw();
             if (mDebugGraphD) mDebugGraphD->Draw();
             if (mDebugGraphE) mDebugGraphE->Draw();
-
         }
     }
 }

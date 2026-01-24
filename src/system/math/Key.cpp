@@ -11,14 +11,19 @@ void InterpTangent(
     float f,
     Vector3 &vout
 ) {
-    float scale = f * f;
-    Scale(v1, (scale * 6.0f) - (f * 6.0f), vout);
+    float ftimes6;
+    float scale3;
+    float scale;
+    ftimes6 = f * 6.0f;
+    scale = f * f;
+    Scale(v1, (scale * 6.0f) - ftimes6, vout);
     Vector3 vtmp;
-    Scale(v2, 1.0f + ((scale * 3.0f) - (f * 4.0f)), vtmp);
+    scale3 = scale * 3.0f;
+    Scale(v2, 1.0f + (scale3 - (f * 4.0f)), vtmp);
     Add(vout, vtmp, vout);
-    Scale(v3, (scale * -6.0f) + (f * 6.0f), vtmp);
+    Scale(v3, (scale * -6.0f) + ftimes6, vtmp);
     Add(vout, vtmp, vout);
-    Scale(v4, ((scale * 3.0f) - (f * 2.0f)), vtmp);
+    Scale(v4, (scale3 - (f * 2.0f)), vtmp);
     Add(vout, vtmp, vout);
 }
 
@@ -128,18 +133,26 @@ void QuatSpline(
         Hmx::Quat prevQuat = prev->value;
         Hmx::Quat nextQuat = next->value;
         Hmx::Quat q88 = idx == 0 ? prevQuat : keys[idx - 1].value;
-        Hmx::Quat q58 = idx + 1 == keys.size() - 1 ? nextQuat : keys[idx + 1].value;
+        Hmx::Quat q58 = idx + 1 == keys.size() - 1 ? nextQuat : keys[idx + 2].value;
         NormalizeTo(prevQuat, q88);
         NormalizeTo(prevQuat, nextQuat);
         NormalizeTo(prevQuat, q58);
         for (int i = 0; i < 4; i++) {
-            qout[i] = ref * ref * ref
-                    * (q58[i] + -(nextQuat[i] * 3.0f - (nextQuat[i] * 3.0f - q88[i])))
-                + ref * ref
-                    * ((nextQuat[i] * 4.0f + (q88[i] * 2.0f - prevQuat[i] * 5.0f))
-                       - q58[i])
-                + prevQuat[i] * 2.0f + ref * (nextQuat[i] - q88[i]) * 0.5f;
-            ;
+            // Match base computation order exactly
+            float pq = prevQuat[i];
+            float p2 = pq * 2.0f;
+            float nq = nextQuat[i];
+            float q8 = q88[i];
+            float n3mq8 = nq * 3.0f - q8;
+            float q5 = q58[i];
+            float diff = nq - q8;
+            float n4p2 = nq * 4.0f + p2;
+            float coef3part = q5 - n3mq8;
+            float coef1 = diff * 0.5f;
+            float tmp = n4p2 - pq * 5.0f;
+            float coef3 = coef3part - diff;
+            float coef2 = tmp - q5;
+            qout[i] = ((coef3 * ref + coef2) * ref + coef1) * ref + p2;
         }
         Normalize(qout, qout);
     }

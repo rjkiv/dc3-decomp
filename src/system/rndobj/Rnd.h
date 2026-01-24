@@ -127,6 +127,7 @@ public:
     virtual RndTex *GetShadowMap() { return nullptr; }
     virtual RndCam *GetShadowCam() { return nullptr; }
     virtual void SetShrinkToSafeArea(bool shrink) { mShrinkToSafe = shrink; }
+    bool ShrinkToSafeArea() const { return mShrinkToSafe; }
     virtual void SetInGame(bool game) { mInGame = game; }
     virtual int BeginQuery(RndDrawable *) { return -1; }
     virtual bool EndQuery(int) { return false; }

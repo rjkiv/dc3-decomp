@@ -64,7 +64,7 @@ BEGIN_HANDLERS(RndTransformable)
     HANDLE_ACTION(
         set_trans_parent,
         SetTransParent(
-            _msg->Obj<RndTransformable>(2), _msg->Size() > 3 ? _msg->Int(3) != 0 : false
+            _msg->Obj<RndTransformable>(2), _msg->Size() > 3 ? (bool)(_msg->Int(3) != 0) : false
         )
     )
     HANDLE_EXPR(trans_parent, mParent.Ptr())
@@ -72,7 +72,7 @@ BEGIN_HANDLERS(RndTransformable)
     HANDLE_ACTION(
         distribute_children, DistributeChildren(_msg->Int(2) != 0, _msg->Float(3))
     )
-    HANDLE(get_children, OnGetChildren)
+    HANDLE(get_trans_children, OnGetChildren)
     HANDLE_VIRTUAL_SUPERCLASS(Hmx::Object)
 END_HANDLERS
 

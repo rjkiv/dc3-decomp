@@ -66,6 +66,11 @@ private:
     void SetRoundFailure();
     void ShowGetReadyCard(Symbol, SkeletonSide);
     void SetUpMoveNames();
+    void PollCaptureFlashcard();
+    void AnimateFlashcard(int);
+    void AdvanceFlashcards();
+    int RepsToNextPhrase();
+    void SetFlashcardImage(int, int, int);
 
     BAMState mState; // 0x3c
     FreestyleMoveRecorder *unk40;

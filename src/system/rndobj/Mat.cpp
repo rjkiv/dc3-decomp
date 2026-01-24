@@ -114,7 +114,7 @@ BEGIN_PROPSYNCS(RndMat)
     SYNC_MAT_PROP(alpha_cut, mAlphaCut, 2)
     SYNC_PROP(alpha_threshold, mAlphaThreshold)
     SYNC_MAT_PROP(alpha_write, mAlphaWrite, 2)
-    SYNC_PROP(force_alpha_write, mAlphaWrite)
+    SYNC_PROP(force_alpha_write, mForceAlphaWrite)
     SYNC_MAT_PROP(next_pass, mNextPass, 2)
     SYNC_MAT_PROP(cull, (int &)mCull, 2)
     SYNC_MAT_PROP(per_pixel_lit, mPerPixelLit, 2)
@@ -152,7 +152,28 @@ BEGIN_PROPSYNCS(RndMat)
     SYNC_MAT_PROP(fade_out, mFadeout, 2)
     SYNC_MAT_PROP(color_adjust, mColorAdjust, 2)
     SYNC_MAT_PROP(fur, mFur, 2)
-    // more...
+    // clang-format off
+    SYNC_PROP_SET(recv_proj_lights, mPerfSettings.mRecvProjLights,
+        if (IsEditable("recv_proj_lights_edit_action"))
+            mPerfSettings.mRecvProjLights = _val.Int() > 0;
+    )
+    SYNC_PROP_SET(recv_point_cube_tex, mPerfSettings.mRecvPointCubeTex,
+        if (IsEditable("recv_point_cube_tex_edit_action"))
+            mPerfSettings.mRecvPointCubeTex = _val.Int() > 0;
+    )
+    SYNC_PROP_SET(ps3_force_trilinear, mPerfSettings.mPS3ForceTrilinear,
+        if (IsEditable("ps3_force_trilinear_edit_action"))
+            mPerfSettings.mPS3ForceTrilinear = _val.Int() > 0;
+    )
+    // clang-format on
+    SYNC_MAT_PROP(bloom_multiplier, mBloomMultiplier, 2)
+    SYNC_MAT_PROP(never_fit_to_spline, mNeverFitToSpline, 2)
+    SYNC_MAT_PROP(allow_distortion_effects, mAllowDistortionEffects, 2)
+    SYNC_MAT_PROP(shockwave_mult, mShockwaveMult, 2)
+    SYNC_MAT_PROP(world_projection_tiling, mWorldProjectionTiling, 2)
+    SYNC_MAT_PROP(world_projection_start_blend, mWorldProjectionStartBlend, 2)
+    SYNC_MAT_PROP(world_projection_end_blend, mWorldProjectionEndBlend, 2)
+    SYNC_SUPERCLASS(BaseMaterial)
 END_PROPSYNCS
 
 BEGIN_SAVES(RndMat)
@@ -215,14 +236,15 @@ void RndMat::Terminate() { RELEASE(sMetaMaterials); }
 
 void RndMat::ReloadMetaMaterials() {
     ObjectDir *metaDir = LoadMetaMaterials();
-    if (metaDir && sMetaMaterials) {
+    if (metaDir != nullptr && sMetaMaterials != nullptr) {
         MergeMetaMaterials(sMetaMaterials, metaDir);
-        for (ObjDirItr<MetaMaterial> it(sMetaMaterials, true); it != nullptr; ++it) {
+        for (ObjDirItr<MetaMaterial> it(sMetaMaterials, true); it != 0; ++it) {
             MetaMaterial *mat = metaDir->Find<MetaMaterial>(it->Name(), false);
-            if (!mat) {
-                delete it;
+            if (mat == 0) {
+                delete &*it;
+                ObjDirItr<MetaMaterial> tmp(0, true);
+                it = tmp;
             }
-            it = ObjDirItr<MetaMaterial>(nullptr, true);
         }
     }
 }
@@ -233,11 +255,13 @@ RndTex *RndMat::GetRefractNormalMap() {
 }
 
 bool RndMat::GetRefractEnabled(bool b1) {
-    if (mRefractEnabled == true && mRefractStrength > 0) {
-        if (GetRefractNormalMap() && (b1 || TheRnd.GetCurrentFrameTex(false)))
+    if (mRefractEnabled == 1 && mRefractStrength > 0.0f) {
+        RndTex *tex = mRefractNormalMap ? mRefractNormalMap : mNormalMap;
+        if (tex && (b1 || TheRnd.GetCurrentFrameTex(false))) {
             return true;
-    } else
-        return false;
+        }
+    }
+    return false;
 }
 
 MatPropEditAction RndMat::GetMetaMatPropAction(Symbol s) {
@@ -486,7 +510,7 @@ void RndMat::LoadOld(BinStreamRev &bs) {
     bs >> mTexXfm;
     bs >> mDiffuseTex;
     bs >> mNextPass;
-    bs >> mIntensify;
+    bs.stream >> mIntensify;
     bool bCull;
     bs >> bCull;
     mCull = (Cull)bCull;
@@ -580,12 +604,12 @@ void RndMat::LoadOld(BinStreamRev &bs) {
         }
     }
     if (bs.rev > 0x2A) {
-        if (bs.rev >= 0x2D) {
+        if (bs.rev > 0x2C) {
             bs >> mPointLights;
         } else {
             int x;
             bs >> x;
-            mPointLights = x == true;
+            mPointLights = x == 1;
         }
         if (bs.rev < 0x3F) {
             bool b150;
@@ -608,14 +632,12 @@ void RndMat::LoadOld(BinStreamRev &bs) {
         } else {
             bool b150;
             bs >> b150;
-            Hmx::Color newRim(
-                mRimRGB.red * 2.857143f,
-                mRimRGB.blue * 2.857143f,
-                mRimRGB.green * 2.857143f
-            );
-            mRimRGB.red = Max(newRim.red, 1.0f);
-            mRimRGB.green = Max(newRim.green, 1.0f);
-            mRimRGB.blue = Max(newRim.blue, 1.0f);
+            float red = mRimRGB.red * 2.857143f;
+            float green = mRimRGB.green * 2.857143f;
+            float blue = mRimRGB.blue * 2.857143f;
+            mRimRGB.red = Min(red, 1.0f);
+            mRimRGB.green = Min(green, 1.0f);
+            mRimRGB.blue = Min(blue, 1.0f);
         }
         if (bs.rev < 0x3B) {
             mRimRGB.Set(0, 0, 0);

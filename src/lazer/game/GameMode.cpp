@@ -1,4 +1,7 @@
 #include "lazer/game/GameMode.h"
+
+bool (*g_LoaderModeCallback)(const Symbol &);
+
 #include "char/FileMerger.h"
 #include "flow/PropertyEventProvider.h"
 #include "hamobj/HamDirector.h"
@@ -142,7 +145,10 @@ void GameMode::SetMode(Symbol mode, Symbol s2) {
         mInfinite = Property("infinite")->Int();
         mMinPlayers = Property("min_players")->Int();
         mMaxPlayers = Property("max_players")->Int();
-        TheGameData->SetInTimeyWimey(Property("is_in_timeywimey")->Int());
+        {
+            int val = Property("is_in_timeywimey")->Int();
+            TheGameData->SetInTimeyWimey(val);
+        }
         if (mode == Symbol("campaign_outro")) {
             MetaPerformer::Current()->OnLoadSong();
         }
@@ -186,9 +192,9 @@ void GameMode::FillModeArrayWithParentData(Symbol sym, DataArray *a1, DataArray 
         a2 = SystemConfig("modes");
     }
     static Symbol parent_mode("parent_mode");
-    while (a2->FindArray(sym)->FindArray(parent_mode, false)) {
-        sym = a2->FindArray(sym)->FindArray(parent_mode)->Sym(1);
-        DataMergeTags(a1, a2->FindArray(sym));
+    for (Symbol s = sym; a2->FindArray(s)->FindArray(parent_mode, false);) {
+        s = a2->FindArray(s)->FindArray(parent_mode)->Sym(1);
+        DataMergeTags(a1, a2->FindArray(s));
     }
     DataMergeTags(a1, a2->FindArray("defaults"));
 }
@@ -217,10 +223,15 @@ bool IsInLoaderMode(const Symbol &sym) {
 void GameModeInit() {
     MILO_ASSERT(TheGameMode == NULL, 0x35);
     TheGameMode = new GameMode();
-    //   g_LoaderModeCallback = IsInLoaderMode;
+    g_LoaderModeCallback = IsInLoaderMode;
 }
 
 void GameModeTerminate() {
     RELEASE(TheGameMode);
     TheGameMode = nullptr;
+}
+
+bool GameMode::IsGameplayModePerform() const {
+    static Symbol perform("perform");
+    return mGameplayMode == perform;
 }

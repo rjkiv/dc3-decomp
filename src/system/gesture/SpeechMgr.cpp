@@ -197,9 +197,7 @@ void SpeechMgr::Enable(bool english) {
             } else if (enableRes == E_NUI_DATABASE_VERSION_MISMATCH) {
                 MILO_FAIL("NuiSpeechEnable failed E_NUI_DATABASE_VERSION_MISMATCH");
             } else {
-                MILO_LOG(
-                    "NuiSpeechEnable failed with error 0x%x (no Kinect?)\n", enableRes
-                );
+                MILO_LOG("NuiSpeechEnable failed with error 0x%x (no Kinect?)\n", enableRes);
             }
         } else {
             mEnabled = true;

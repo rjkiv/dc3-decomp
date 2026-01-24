@@ -52,17 +52,19 @@ void *FixedSizeAlloc::Alloc() {
     if (!mFreeList) {
         Refill();
     }
-    int *old = mFreeList;
-    mNumAllocs++;
-    mFreeList = old;
-    if (mMaxAllocs < mNumAllocs) {
-        mMaxAllocs = mNumAllocs;
+    int *ret = mFreeList;
+    int numAllocs = mNumAllocs + 1;
+    int *next = (int *)*ret;
+    mNumAllocs = numAllocs;
+    mFreeList = next;
+    if (numAllocs > mMaxAllocs) {
+        mMaxAllocs = numAllocs;
     }
-    return old;
+    return ret;
 }
 
 void FixedSizeAlloc::Free(void *v) {
-    v = mFreeList;
+    *(int **)v = mFreeList;
     mFreeList = (int *)v;
     MILO_ASSERT_FMT(mNumAllocs > 0, "mNumAllocs is %d", mNumAllocs);
     mNumAllocs--;
@@ -127,7 +129,7 @@ void ChunkAllocator::Print(TextStream &ts) {
 }
 
 ReclaimableAlloc::ReclaimableAlloc(int x, const char *name)
-    : FixedSizeAlloc((x + 15) / 4, 0x2800 / x), mName(name) {}
+    : FixedSizeAlloc(((x + 15) >> 2) & ~3, 0x2800 / x), mName(name) {}
 
 int *ReclaimableAlloc::RawAlloc(int num) {
     void *alloced = MemAlloc(num, __FILE__, 0x196, mName);

@@ -527,6 +527,8 @@ void ProfileMgr::SaveGlobalOptions(FixedSizeSaveableStream &fs) {
     mGlobalOptionsDirty = false;
 }
 
+int ProfileMgr::GlobalOptionsSaveSize() { return 0x38; }
+
 void ProfileMgr::EnableFitnessForActiveProfiles() {
     for (int i = 0; i < 2; i++) {
         HamPlayerData *pPlayer = TheGameData->Player(i);

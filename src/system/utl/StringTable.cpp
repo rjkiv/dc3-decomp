@@ -89,7 +89,7 @@ const char *StringTable::Add(const char *str) {
         }
     }
     memcpy(mCurChar, str, len);
-    const char *oldChar = mCurChar;
+    str = mCurChar;
     mCurChar += len;
-    return oldChar;
+    return str;
 }

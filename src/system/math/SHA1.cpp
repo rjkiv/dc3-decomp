@@ -12,8 +12,8 @@ Licenses sLicense("system/src/math/SHA1.h", Licenses::kRequirementNotification);
 #define blk0(i) m_block->l[i]
 #define blk(i)                                                                           \
     (m_block->l[i & 15] =                                                                \
-         rol(m_block->l[(i + 13) & 15] ^ m_block->l[(i + 8) & 15]                        \
-                 ^ m_block->l[(i + 2) & 15] ^ m_block->l[i & 15],                        \
+         rol(m_block->l[i & 15] ^ m_block->l[(i + 2) & 15]                               \
+                 ^ m_block->l[(i + 8) & 15] ^ m_block->l[(i + 13) & 15],                 \
              1))
 
 /* (R0+R1), R2, R3, R4 are the different operations used in SHA1 */
@@ -34,7 +34,7 @@ Licenses sLicense("system/src/math/SHA1.h", Licenses::kRequirementNotification);
     w = rol(w, 30);
 
 void CSHA1::Transform(unsigned int *pState, const unsigned char *pBuffer) {
-    unsigned long a, b, c, d, e;
+    unsigned int a, b, c, d, e;
 
     a = pState[0];
     b = pState[1];
@@ -219,7 +219,7 @@ BinStream &operator>>(BinStream &bs, CSHA1::Digest &digest) {
 }
 
 CSHA1::CSHA1() {
-    // &m_block->c = &m_workspace;
+    m_block = (SHA1_WORKSPACE_BLOCK *)m_workspace;
     Reset();
 }
 

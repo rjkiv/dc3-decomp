@@ -54,7 +54,7 @@ public:
     void Clear();
     bool QueueLight(RndLight *, float);
     bool CacheData(LightParams_Spot &);
-    void ApplyQueuedLights(unsigned int *, Hmx::Color &, const Vector3 *) const;
+    void ApplyQueuedLights(Hmx::Color *, const Vector3 *) const;
 
     unsigned int NumQueuedLights() const {
         return mQueued_Directional.NumElements() + mQueued_Point.NumElements()
@@ -84,11 +84,9 @@ public:
     }
 
 private:
-    void ApplyLight(const LightParams_Directional &) const;
-    void ApplyLight(const LightParams_Point &, const Vector3 &) const;
-    void
-    ApplyLight(const BoxLightArray<BoxMapLighting::LightParams_Spot, 50> &, const Vector3 &)
-        const;
+    void ApplyLight(const BoxLightArray<LightParams_Directional, 50> &) const;
+    void ApplyLight(const BoxLightArray<LightParams_Point, 50> &, const Vector3 &) const;
+    void ApplyLight(const BoxLightArray<LightParams_Spot, 50> &, const Vector3 &) const;
 
     // static Vector3 sAxisDir[6];
 

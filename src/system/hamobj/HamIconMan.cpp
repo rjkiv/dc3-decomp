@@ -84,8 +84,7 @@ void HamIconMan::DrawShowing() {
         if (mCharClip) {
             float beat;
             if (mBPMOverride > 0) {
-                float uiSeconds = TheTaskMgr.UISeconds() * 0.016666668f;
-                beat = uiSeconds * mBPMOverride;
+                beat = TheTaskMgr.UISeconds() * (mBPMOverride * 0.016666668f);
             } else {
                 beat = FrameToBeat(TheHamDirector->SongAnim(0)->GetFrame());
             }

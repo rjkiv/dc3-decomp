@@ -3,6 +3,8 @@
 #include "obj/DataFunc.h"
 
 bool CharTaskMgr::sShowGraph = false;
+int CharTaskMgr::sNumInstances;
+float CharTaskMgr::sGraphPosY;
 
 namespace {
     static DataNode OnToggleCharTaskGraph(DataArray *arr) {

@@ -6,7 +6,9 @@
 #include "utl/BinStream.h"
 #include "math/Rot.h"
 #include "utl/FilePath.h"
+#include "utl/MakeString.h"
 #include "utl/UTF8.h"
+#include <cmath>
 
 KerningTable::KerningTable() : mNumEntries(0), mEntries(0) { memset(mTable, 0, 0x80); }
 KerningTable::~KerningTable() { delete mEntries; }
@@ -47,7 +49,8 @@ void KerningTable::SetKerning(
     const std::vector<RndFont::KernInfo> &info, RndFontBase *font
 ) {
     int validcount = 0;
-    for (int i = 0; i < info.size(); i++) {
+    int i = 0;
+    for (i = 0; i < info.size(); i++) {
         if (Valid(info[i], font)) {
             validcount++;
         }
@@ -58,10 +61,11 @@ void KerningTable::SetKerning(
         mEntries = new Entry[mNumEntries];
     }
     memset(mTable, 0, 0x80);
-    for (int i = 0; i < info.size(); i++) {
+    int entryIdx = 0;
+    for (i = 0; i < info.size(); i++) {
         const RndFont::KernInfo &curInfo = info[i];
         if (Valid(curInfo, font)) {
-            Entry &curEntry = mEntries[i];
+            Entry &curEntry = mEntries[entryIdx++];
             curEntry.key = Key(curInfo.unk0, curInfo.unk2);
             curEntry.kerning = curInfo.kerning;
             int index = TableIndex(curInfo.unk0, curInfo.unk2);
@@ -232,6 +236,22 @@ BEGIN_COPYS(RndFont)
     }
 END_COPYS
 
+static const char theChars[96] =
+    " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+
+struct MatChar {
+    float width;
+    float height;
+};
+
+BinStream &operator>>(BinStream &bs, MatChar &mc) {
+    char x[0x80];
+    bs.ReadString(x, 0x80);
+    bs >> mc.width;
+    bs >> mc.height;
+    return bs;
+}
+
 BEGIN_LOADS(RndFont)
     LOAD_REVS(bs)
     ASSERT_REVS(0x11, 2)
@@ -240,7 +260,171 @@ BEGIN_LOADS(RndFont)
     } else if (d.rev > 7) {
         Hmx::Object::Load(d.stream);
     }
-    bs >> mMats;
+    if (d.rev < 3) {
+        String str;
+        int a, b, c, e;
+        bool dd;
+        bs >> a >> b >> c >> dd >> e >> str;
+    }
+    if (d.rev < 1) {
+        std::map<char, MatChar> charMap;
+        bs >> charMap;
+        charMap.clear();
+    } else {
+        if (d.altRev < 1) {
+            ObjPtr<RndMat> mat(this, NULL);
+            mat.Load(bs, true, NULL);
+            if (d.rev > 9 && d.rev < 0xc) {
+                char buf[0x80];
+                bs.ReadString(buf, 0x80);
+                if (!mat && buf[0] != '\0') {
+                    mat = LookupOrCreateMat(buf, Dir());
+                }
+            }
+            if (mMats.begin() != mMats.end()) {
+                mMats.clear();
+            }
+            mMats.push_back(mat);
+        } else {
+            mMats.Load(bs, true, NULL);
+        }
+        if (d.rev < 4) {
+            if (d.rev < 2) {
+                int w, h;
+                bs >> w >> h;
+                mCellSize.x = h;
+                mCellSize.y = w;
+            } else {
+                bs >> mCellSize.y >> mCellSize.x;
+            }
+            RndTex *validTex = ValidTexture(0);
+            if (validTex) {
+                RndBitmap bmap;
+                bmap.Reset();
+                validTex->LockBitmap(bmap, 3);
+                mCellSize.x = std::floor((float)bmap.Width() / mCellSize.x + 0.5f);
+                mCellSize.y = std::floor((float)bmap.Height() / mCellSize.y + 0.5f);
+                validTex->UnlockBitmap();
+                bmap.Reset();
+            }
+        } else {
+            bs >> mCellSize;
+        }
+        bs >> mDeprecatedSize;
+        if (d.altRev < 2) {
+            bs >> mBaseKerning;
+        }
+        if (d.rev < 4) {
+            mBaseKerning /= mDeprecatedSize;
+        }
+    }
+    if (d.rev > 1) {
+        if (d.rev < 0x11) {
+            String str;
+            bs >> str;
+            ASCIItoWideVector(mChars, str.c_str());
+        } else if (d.altRev < 2) {
+            d >> mChars;
+        }
+    } else {
+        for (const char *ptr = theChars; *ptr != '\0'; ptr++) {
+            mChars.push_back(*ptr);
+        }
+    }
+    if (d.rev > 4 && d.altRev < 2) {
+        bool hasKerning;
+        d >> hasKerning;
+        if (hasKerning) {
+            mKerningTable = new KerningTable();
+            mKerningTable->Load(d, this);
+        }
+    }
+    if (d.rev > 8) {
+        mTextureOwner.Load(bs, true, NULL);
+    }
+    if (!mTextureOwner) {
+        mTextureOwner = this;
+    }
+    if (d.rev > 0xa && d.altRev < 2) {
+        d >> mMonospace;
+    }
+    if (d.rev > 0xe) {
+        d >> mPacked;
+    }
+    if (d.rev > 0xc) {
+        int bw, bh;
+        bs >> bw >> bh;
+        RndTex *validTex = ValidTexture(0);
+        if (validTex) {
+            if (bw && validTex->Width()) {
+                mCellSize.x *= (float)validTex->Width() / (float)bw;
+            }
+            if (bh && validTex->Height()) {
+                mCellSize.y *= (float)validTex->Height() / (float)bh;
+            }
+        }
+    }
+    unk98.resize(mMats.size());
+    if (d.rev > 0xd) {
+        if (d.altRev < 1) {
+            bs >> unk98[0];
+        } else {
+            d >> unk98;
+        }
+        if (d.rev < 0x11) {
+            for (int i = 0; i < 0x100; i++) {
+                CharInfo &info = mCharInfoMap[i];
+                info.unk0 = 0;
+                bs >> info.unk4;
+                bs >> info.unk8;
+                bs >> info.charWidth;
+                if (info.charWidth < 0) {
+                    info.charWidth = 0;
+                }
+                if (d.rev > 0xe) {
+                    bs >> info.unk10;
+                } else {
+                    info.unk10 = info.charWidth;
+                }
+                if (info.unk10 < 0) {
+                    info.unk10 = 0;
+                }
+            }
+        } else {
+            unsigned int count;
+            bs >> count;
+            for (unsigned int i = 0; i < count; i++) {
+                unsigned short keyChar;
+                bs >> keyChar;
+                CharInfo &info = mCharInfoMap[keyChar];
+                if (d.altRev > 0) {
+                    bs >> info.unk0;
+                } else {
+                    info.unk0 = 0;
+                }
+                bs >> info.unk4;
+                bs >> info.unk8;
+                bs >> info.charWidth;
+                bs >> info.unk10;
+            }
+        }
+    } else {
+        MILO_LOG("NOTIFY: %s is old version, please resave\n", PathName(this));
+        UpdateChars();
+    }
+    mCharInfoMap[0x20];
+    mCharInfoMap[0xa0];
+    mCharInfoMap[0xa0] = mCharInfoMap[0x20];
+    if (d.rev < 0x10) {
+        std::vector<KernInfo> kernInfos;
+        GetKerning(kernInfos);
+        SetKerning(kernInfos);
+        MILO_LOG("NOTIFY: %s is old version, resave file\n", PathName(this));
+    }
+    if (d.rev > 0x10 && d.altRev < 1) {
+        ObjPtr<RndFont> nextFont(this, NULL);
+        nextFont.Load(bs, true, NULL);
+    }
 END_LOADS
 
 float RndFont::CharWidth(unsigned short c) const {

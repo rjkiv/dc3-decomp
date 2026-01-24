@@ -428,11 +428,9 @@ bool RndPostProc::ColorXfmEnabled() const {
 
 void RndPostProc::UpdateTimeDelta() {
     float secs = TheTaskMgr.Seconds(TaskMgr::kRealTime);
-    float f1 = secs - mLastRender;
+    float delta = secs - mLastRender;
     mLastRender = secs;
-    secs = Max(0.0f, f1);
-    f1 = Min(1.0f, secs);
-    mDeltaSecs = f1;
+    mDeltaSecs = Clamp(0.0f, 1.0f, delta);
 }
 
 void RndPostProc::UpdateBlendPrevious() {

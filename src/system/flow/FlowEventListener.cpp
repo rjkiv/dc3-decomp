@@ -61,10 +61,10 @@ void FlowEventListener::Deactivate(bool b1) {
 
 void FlowEventListener::ChildFinished(FlowNode *node) {
     FLOW_LOG("Child Finished of class:%s\n", node->ClassName());
-    if (unkb4) {
-        FlowQueueable::ChildFinished(node);
-    } else {
+    if (!unkb4) {
         FlowNode::ChildFinished(node);
+    } else {
+        FlowQueueable::ChildFinished(node);
     }
 }
 

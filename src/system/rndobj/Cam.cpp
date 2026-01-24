@@ -91,15 +91,15 @@ BEGIN_LOADS(RndCam)
         RndDrawable::DumpLoad(bs);
     }
     if (d.rev == 8) {
+        ObjPtrList<Hmx::Object> objList(this, kObjListNoNull);
         int x;
-        ObjPtrList<Hmx::Object> objList(this);
         bs >> x >> objList;
     }
     bs >> mNearPlane;
     bs >> mFarPlane;
     bs >> mYFov;
     if (d.rev < 0xC) {
-        mYFov = ConvertFov(mYFov, 0.75);
+        mYFov = ConvertFov(mYFov, 0.75f);
     }
     if (d.rev < 2) {
         int x;
