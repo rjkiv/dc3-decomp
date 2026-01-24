@@ -144,3 +144,19 @@ void StorePanel::ValidateOffers(std::vector<StoreOffer *> &) {}
 
 BEGIN_HANDLERS(StorePanel)
 END_HANDLERS
+
+StoreEnumJob::StoreEnumJob(StorePanel *panel, int i, stlpmtx_std::vector<UINT64> *vec) {
+    mEnumeration = new XboxEnumeration(i, vec);
+    mStorePanel = panel;
+}
+
+StoreEnumJob::~StoreEnumJob() {
+    delete mEnumeration;
+}
+
+bool StoreEnumJob::IsFinished() {
+    if (mEnumeration->IsEnumerating()) {
+        mEnumeration->Poll();
+    }
+    return mEnumeration->IsEnumerating() == false;
+}

@@ -75,3 +75,15 @@ protected:
     // DataNode __cdecl OnMsg(SingleItemEnumCompleteMsg const &);
     // DataNode __cdecl OnMsg(MultipleItemsEnumCompleteMsg const &);
 };
+
+class StoreEnumJob : public Job {
+public:
+    StoreEnumJob(StorePanel *, int, std::vector<UINT64> *);
+    virtual ~StoreEnumJob();
+    virtual bool IsFinished();
+    virtual void OnCompletion(Hmx::Object *);
+
+protected:
+    XboxEnumeration *mEnumeration; // 0x8
+    StorePanel *mStorePanel; // 0xc
+};
