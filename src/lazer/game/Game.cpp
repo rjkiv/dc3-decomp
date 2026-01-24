@@ -60,12 +60,13 @@ Game::Game()
     : mSongDB(new SongDB()), mSongInfo(0), mGameInput(0), unk58(0), unk5c(false),
       unk5d(false), unk5e(true), unk5f(false), unk60(false), unk64(0), unk68(false),
       unk6c(1), unk70(false), unk71(false), mOvershell(0), mMoveDir(this), unk90(0),
-      mShuttle(new Shuttle()), unka0(gNullStr), unka4(0), unka8(0), unkac(0) {
+      mShuttle(new Shuttle()), unka4(0), unka8(0), unkac(0) {
     if (TheSongDB) {
         RELEASE(TheSongDB);
     }
     TheSongDB = mSongDB;
     TheGame = this;
+    unka0 = 0;
     SetName("game", ObjectDir::Main());
     MidiParserMgr *lol = new MidiParserMgr(nullptr, "biteme");
     TheMaster = new HamMaster(mSongDB->SongData(), TheMidiParserMgr);
@@ -433,8 +434,8 @@ void Game::PostWaitJump() {
     if (unk60) {
         mGameInput->SetPostWaitJumpOffset(unk9c);
     }
-    if (TheSongSequence.CurrentIndex() > 0 && !TheSongSequence.GetUnk28()) {
-        TheSongSequence.SetUnk28(true);
+    if (TheSongSequence.CurrentIndex() > 0 && !TheSongSequence.unk28) {
+        TheSongSequence.unk28 = true;
         TheHamDirector->VenueEnter(TheHamDirector->GetVenueWorld());
     }
     if (!mHasIntro) {
