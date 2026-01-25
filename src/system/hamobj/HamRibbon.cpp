@@ -121,5 +121,63 @@ void HamRibbon::ConstructMesh() {
         }
         mMesh->Verts().resize(mNumSides * mNumSegments * 2);
         mMesh->Faces().resize(mNumSides * mNumSegments * 2);
+
+        // Generate faces
+        for (int seg = 0; seg < mNumSegments; seg++) {
+            for (int side = 0; side < mNumSides; side++) {
+                int baseIdx = (seg * mNumSides + side) * 2;
+                int nextSide = (side + 1) % mNumSides;
+                int nextIdx = (seg * mNumSides + nextSide) * 2;
+
+                int faceIdx = (seg * mNumSides + side) * 2;
+                mMesh->Faces()[faceIdx].v1 = baseIdx;
+                mMesh->Faces()[faceIdx].v2 = nextIdx;
+                mMesh->Faces()[faceIdx].v3 = baseIdx + 1;
+
+                mMesh->Faces()[faceIdx + 1].v1 = baseIdx + 1;
+                mMesh->Faces()[faceIdx + 1].v2 = nextIdx;
+                mMesh->Faces()[faceIdx + 1].v3 = nextIdx + 1;
+            }
+        }
+
+        // Generate vertices
+        float angleStep = 6.2831855f / mNumSides;
+        float radius = mWidth * 0.5f;
+        float uStep = 1.0f / mNumSides;
+        Vector3 zeroVec(0, 0, 0);
+
+        for (int seg = 0; seg < mNumSegments; seg++) {
+            for (int side = 0; side < mNumSides; side++) {
+                float angle = side * angleStep;
+                float u = side * uStep;
+                float cosA = std::cos(angle);
+                float sinA = std::sin(angle);
+
+                for (int v = 0; v < 2; v++) {
+                    int vertIdx = (seg * mNumSides + side) * 2 + v;
+
+                    Transform xfm;
+                    xfm = Transform::IDXfm();
+
+                    float scale = (v == 0) ? 1.0f : (0.5f - u);
+                    Vector3 pos(sinA * radius * scale, 0, cosA * radius * scale);
+                    Multiply(pos, xfm, pos);
+
+                    mMesh->Verts()[vertIdx].pos = pos;
+
+                    if (v == 0) {
+                        Vector3 norm;
+                        Subtract(pos, zeroVec, norm);
+                        Normalize(norm, norm);
+                        mMesh->Verts()[vertIdx].norm = norm;
+                    }
+
+                    mMesh->Verts()[vertIdx].boneWeights.x = (float)side / mNumSegments;
+                    mMesh->Verts()[vertIdx].boneWeights.y = u;
+                }
+            }
+        }
+
+        mMesh->Sync(0x3f);
     }
 }

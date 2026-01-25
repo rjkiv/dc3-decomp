@@ -1,5 +1,4 @@
 #include "meta/StorePreviewMgr.h"
-#include "StorePreviewMgr.h"
 
 #include "meta/StreamPlayer.h"
 #include "movie/TexMovie.h"
@@ -84,6 +83,25 @@ bool StorePreviewMgr::AllowPreviewDownload(String const &str) {
 void StorePreviewMgr::PlayCurrentPreview() {
     MILO_ASSERT(mStreamPlayer, 0xd8);
     if (unk34.empty()) {
+        return;
+    }
+    String temp_str(unk34.c_str());
+    if (unk4c) {
+        mStreamPlayer->StopPlaying();
+        FilePath filepath(temp_str.c_str());
+        unk4c->SetFile(filepath);
+        mStreamPlayer->SetVolume(-unk2c);
+    } else {
+        // Find and remove ".mogg" extension
+        unsigned int pos = temp_str.find(".mogg");
+        if (pos != String::npos) {
+            temp_str.erase(pos);
+        }
+        if (TheNetCacheMgr->IsLocalFile(unk34.c_str())) {
+            mStreamPlayer->PlayFile(temp_str.c_str(), -unk2c, 0.0f, unk30);
+        } else {
+            mStreamPlayer->StopPlaying();
+        }
     }
 }
 
