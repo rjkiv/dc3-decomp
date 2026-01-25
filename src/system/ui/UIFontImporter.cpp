@@ -337,7 +337,7 @@ RndText *UIFontImporter::FindTextForFont(RndFontBase *font) const {
     return nullptr;
 }
 
-BEGIN_CUSTOM_HANDLERS(UIFontImporter)
+BEGIN_HANDLERS(UIFontImporter)
     HANDLE(show_font_picker, OnShowFontPicker)
     HANDLE(generate, OnGenerate)
     HANDLE(generate_og, OnGenerateOG)
@@ -349,12 +349,6 @@ BEGIN_CUSTOM_HANDLERS(UIFontImporter)
     HANDLE(sync_with_resource, OnSyncWithResourceFile)
     HANDLE_EXPR(get_resources_file_list, ResourceDirBase::GetFileList(Symbol("UILabel"), Symbol("UILabelDir")))
     HANDLE(get_bitmap_path, OnGetGennedBitmapPath)
-    {
-        _NEW_STATIC_SYMBOL(set_charset_utf8)
-        if (sym == _s) {
-            OnSetCharsetUTF8(_msg->Str(2));
-            return DataNode(0);
-        }
-    }
+    HANDLE_ACTION(set_charset_utf8, OnSetCharsetUTF8(_msg->Str(2)))
     HANDLE_SUPERCLASS(Hmx::Object)
-END_CUSTOM_HANDLERS
+END_HANDLERS

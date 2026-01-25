@@ -403,13 +403,7 @@ String &String::insert(unsigned int pos, unsigned int count, char c) {
     for (unsigned int i = 0; i < count; i++) {
         tmp.mStr[pos + i] = c;
     }
-    char *src = mStr + pos - 1;
-    char *dst = tmp.mStr + pos + count - 1;
-    char ch;
-    do {
-        ch = *++src;
-        *++dst = ch;
-    } while (ch != '\0');
+    strcpy(tmp.mStr + pos + count, mStr + pos);
     char *temp_mStr = mStr;
     mStr = tmp.mStr;
     tmp.mStr = temp_mStr;
