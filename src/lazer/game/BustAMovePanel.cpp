@@ -120,22 +120,18 @@ bool BustAMovePanel::InBustAMove() {
 
 Symbol BustAMovePanel::GetPlayerColor(int i1) {
     static Symbol is_in_party_mode("is_in_party_mode");
-    bool pink;
     if (TheHamProvider->Property(is_in_party_mode)->Int()) {
         if (TheGameData->Player(i1)->Side() == kSkeletonRight) {
-            pink = true;
+            return "pink";
         } else {
-            pink = false;
+            return "blue";
         }
-    } else {
-        pink = i1 == 0;
     }
-    if (pink) {
+    if (i1 == 0) {
         return "pink";
     } else {
         return "blue";
     }
-    return 0;
 }
 
 MoveRating BustAMovePanel::GetMoveRating(float f1) {
@@ -414,7 +410,55 @@ void BustAMovePanel::PollCaptureFlashcard() {
 void BustAMovePanel::AnimateFlashcard(int) {}
 void BustAMovePanel::AdvanceFlashcards() {}
 int BustAMovePanel::RepsToNextPhrase() { return 0; }
-void BustAMovePanel::SetFlashcardImage(int, int, int) {}
+
+void BustAMovePanel::SetFlashcardImage(int side, int index, int i3) {
+    RndMat *flashcardMat =
+        mBAMColumns[side]->Find<RndMat>(MakeString("flashcard%d.mat", index));
+    RndMat *flashcardBgMat =
+        mBAMColumns[side]->Find<RndMat>(MakeString("flashcard_background%d.mat", index));
+    RndTex *blankTex = DataDir()->Find<RndTex>("blank.tex");
+
+    RndTex *flashcardTex;
+    RndTex *bgTex;
+    if (i3 >= 0) {
+        flashcardTex = DataDir()->Find<RndTex>(MakeString("flashcard%i.tex", i3));
+    } else if (i3 == -2) {
+        flashcardTex = blankTex;
+        bgTex = mBAMColumns[side]->Find<RndTex>("blank_bustamove.tex");
+    } else {
+        flashcardTex = DataDir()->Find<RndTex>("blank.tex");
+        bgTex = flashcardTex;
+    }
+
+    Hmx::Color color(1.0f, 1.0f, 1.0f);
+    if (i3 >= 0) {
+        String bgName(MakeString("flashcard_slot_background%i.mat", i3));
+        RndMat *slotBgMat = DataDir()->Find<RndMat>(bgName.c_str());
+        color = slotBgMat->GetColor();
+    } else if (i3 == -2) {
+        UIColor *grayColor = DataDir()->Find<UIColor>("gray.color");
+        color = grayColor->GetColor();
+    }
+
+    flashcardMat->SetDiffuseTex(flashcardTex);
+    flashcardBgMat->SetColor(color.red, color.green, color.blue);
+    flashcardBgMat->SetDiffuseTex(bgTex);
+
+    // Handle the other side
+    RndMat *otherFlashcardMat =
+        mBAMColumns[side == 0]->Find<RndMat>(MakeString("flashcard%d.mat", index));
+    RndMat *otherBgMat =
+        mBAMColumns[side == 0]->Find<RndMat>(MakeString("flashcard_background%d.mat", index));
+
+    if (mState == kBAMState_ShowMoveSequence || mState == kBAMState_ShowMoveSequenceSetup) {
+        otherFlashcardMat->SetDiffuseTex(flashcardTex);
+        otherBgMat->SetColor(color.red, color.green, color.blue);
+        otherBgMat->SetDiffuseTex(bgTex);
+    } else {
+        otherFlashcardMat->SetDiffuseTex(blankTex);
+        otherBgMat->SetDiffuseTex(blankTex);
+    }
+}
 
 void BustAMovePanel::OnBeat() {
     if (!InBustAMove())

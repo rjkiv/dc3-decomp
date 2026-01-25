@@ -104,6 +104,7 @@ public:
     void FinalizeTeam(int);
     void ClearTeam(int);
     void FinalizeParty();
+    void FinalizePlaytestParty();
     void StorePlayerFramePos(int, float, float);
     void StorePlayerFrameScale(int, float);
     const char *GetPlayerARTexPath(int);

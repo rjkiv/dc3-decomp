@@ -1330,3 +1330,47 @@ DataNode PartyModeMgr::OnMsg(const SmartGlassMsg &msg) {
     BroadcastSyncMsg("update_party_from_rc");
     return 1;
 }
+
+void PartyModeMgr::FinalizePlaytestParty() {
+    int numEvents = mPartyModePlaytestEvents->Size() - 1;
+    std::vector<Symbol> modeVec(numEvents, gNullStr);
+    std::vector<Symbol> subModeVec(numEvents, gNullStr);
+    std::vector<Symbol> songVec(numEvents, gNullStr);
+    std::vector<int> team1Players;
+    std::vector<int> team2Players;
+
+    for (int i = 1; i <= numEvents; i++) {
+        DataArray *eventArr = mPartyModePlaytestEvents->Array(i);
+        Symbol mode = eventArr->Sym(0);
+        Symbol subMode = eventArr->Sym(1);
+        Symbol song = eventArr->Sym(2);
+        if (eventArr->Size() > 4) {
+            int team = eventArr->Int(3);
+            int playerIdx = eventArr->Int(4) + mPlayers.size();
+            team1Players.push_back(team);
+            team2Players.push_back(playerIdx);
+        }
+        modeVec[i - 1] = mode;
+        subModeVec[i - 1] = subMode;
+        songVec[i - 1] = song;
+    }
+
+    mModePicker.Clear();
+    unkf8.Clear();
+    mModePicker.AddItems(modeVec);
+    mSubModePicker.Clear();
+    mSubModePicker.AddItems(subModeVec);
+    unkf8.Clear();
+    unkf8.AddItems(songVec);
+    unkd0.Clear();
+    unkd0.AddItems(team1Players);
+    unke4.Clear();
+    unke4.AddItems(team2Players);
+
+    mRoundsTotal = numEvents - 1;
+    mRoundsUntilShowdown = numEvents - 1;
+    unk2ec = (float)(numEvents - 1) + 1.0f;
+    static Symbol six_star_bonus("six_star_bonus");
+    mSixStarBonus = mEventScoring->FindArray(six_star_bonus)->Float(1);
+    SetCurrEvent();
+}
