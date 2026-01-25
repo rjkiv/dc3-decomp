@@ -161,7 +161,7 @@ int ClipDistMap::CalcWidth() {
         mAEnd = clipASamplesMod;
     }
 
-    f1 = std::floor((mAEnd - mAStart) * mSamplesPerBeat + 0.5);
+    f1 = floor(mAEnd - mAStart * mSamplesPerBeat + 0.5);
 
     uint val = f1;
 
