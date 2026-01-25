@@ -189,7 +189,7 @@ void Flow::PostLoad(BinStream &bs) {
     ObjectDir::PostLoad(bs);
     if (IsProxy()) {
         int numDynProps = 0;
-        bs.ReadEndian(&numDynProps, 4);
+        bs >> numDynProps;
         if (d.rev < 5) {
             for (int i = 0; i < numDynProps; i++) {
                 Symbol propName;
@@ -204,9 +204,6 @@ void Flow::PostLoad(BinStream &bs) {
                         SetProperty(propName, node);
                     }
                 }
-                if (node.Type() == kDataArray) {
-                    node.Array()->Release();
-                }
             }
         } else {
             for (int i = 0; i < numDynProps; i++) {
@@ -215,7 +212,7 @@ void Flow::PostLoad(BinStream &bs) {
 
                 DataNode node;
                 int nodeType = 0;
-                bs.ReadEndian(&nodeType, 4);
+                bs >> nodeType;
                 if (nodeType == kDataObject) {
                     ObjectDir *dir = Dir();
                     if (dir) {
@@ -240,9 +237,6 @@ void Flow::PostLoad(BinStream &bs) {
                     if (propName != "") {
                         SetProperty(propName, node);
                     }
-                }
-                if (node.Type() == kDataArray) {
-                    node.Array()->Release();
                 }
             }
         }

@@ -54,7 +54,7 @@ void FlowManager::AddEventTime(Symbol s, float f1) {
 }
 
 void FlowManager::Poll() {
-    float ms = 0;
+
     unk18c = 0;
     Timer timer;
     timer.Reset();
@@ -73,8 +73,7 @@ void FlowManager::Poll() {
         (*it)->Execute(FlowNode::kWhenAble);
     }
     unk2d = false;
-    ms = timer.Ms();
-    unk18c = ms;
+    unk18c = timer.Ms();
     timer.Stop();
     unk2c = false;
 }
