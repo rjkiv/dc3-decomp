@@ -73,7 +73,7 @@ void FlowManager::Poll() {
         (*it)->Execute(FlowNode::kWhenAble);
     }
     unk2d = false;
-    unk18c = timer.Ms();
     timer.Stop();
+    unk18c = timer.Ms();
     unk2c = false;
 }

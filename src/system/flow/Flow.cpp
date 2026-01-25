@@ -196,13 +196,16 @@ void Flow::PostLoad(BinStream &bs) {
                 bs >> propName;
 
                 DataNode node;
-                node.Load(bs);
+                bs >> node;
 
                 const DataNode *existingProp = Property(propName, false);
                 if (!existingProp) {
                     if (propName != "") {
                         SetProperty(propName, node);
                     }
+                }
+                if (node.Type() == kDataArray) {
+                    node.Array()->Release();
                 }
             }
         } else {
@@ -225,7 +228,7 @@ void Flow::PostLoad(BinStream &bs) {
                     node = FlowNode::LoadObjectFromMainOrDir(bs, dir);
                 } else {
                     DataNode tmpNode;
-                    tmpNode.Load(bs);
+                    bs >> tmpNode;
                     node = tmpNode;
                     if (tmpNode.Type() == kDataArray) {
                         tmpNode.Array()->Release();

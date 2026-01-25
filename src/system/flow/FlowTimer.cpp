@@ -85,14 +85,6 @@ void FlowTimer::RequestStopCancel() {
 
 void FlowTimer::Execute(FlowNode::QueueState state) {
     FLOW_LOG("Execute: state = %i\n", state);
-
-    if (mDebugOutput) {
-        MILO_LOG("%s: Execute state = %i\n", ClassName(), state);
-        if (!mDebugComment.empty()) {
-            MILO_LOG("Debug comment: %s\n", mDebugComment.c_str());
-        }
-    }
-
     OnTimerEnd();
 }
 
