@@ -8,11 +8,6 @@
 #include "obj/Task.h"
 #include "utl/BinStream.h"
 
-float EaseInExp(float t) {
-    MILO_ASSERT(t >= 0 && t <= 1, 0x39);
-    return std::pow(t, 3.03);
-}
-
 CharEyes::CharEyes()
     : mEyes(this), mInterests(this), mFaceServo(this), mCamWeight(this), unk78(0, 0, 0),
       mDefaultFilterFlags(0), mViewDirection(this), mHeadLookAt(this),
