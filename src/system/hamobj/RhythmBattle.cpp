@@ -327,29 +327,12 @@ void RhythmBattle::QueueFinaleVO(Symbol s) {
 }
 
 void RhythmBattle::UpdateMindControl() {
-    static u32 init_flags = 0;
     static Symbol mind_control("mind_control");
     static Symbol gameplay_mode("gameplay_mode");
     static Symbol game_stage("game_stage");
     static Symbol playing("playing");
-
-    // Initialize static symbols with caching
-    if (!(init_flags & 0x1)) {
-        init_flags |= 0x1;
-        mind_control = Symbol("mind_control");
-    }
-    if (!(init_flags & 0x2)) {
-        init_flags |= 0x2;
-        gameplay_mode = Symbol("gameplay_mode");
-    }
-    if (!(init_flags & 0x4)) {
-        init_flags |= 0x4;
-        game_stage = Symbol("game_stage");
-    }
-    if (!(init_flags & 0x8)) {
-        init_flags |= 0x8;
-        playing = Symbol("playing");
-    }
+    static Symbol grooving("grooving");
+    static Symbol not_grooving("not_grooving");
 
     // Get gameplay mode and game stage
     const DataNode *gameplayNode = TheHamProvider->Property(gameplay_mode, true);
@@ -393,17 +376,9 @@ void RhythmBattle::UpdateMindControl() {
         // Check grooving status
         float beatMC = unk10c;
         if (beatMC > 0.5f && beatMC <= 0.9333f) {
-            if (!(init_flags & 0x20)) {
-                init_flags |= 0x20;
-                Symbol grooving("grooving");
-                PlayMindControlVO(grooving);
-            }
+            PlayMindControlVO(grooving);
         } else if (beatMC <= 0.2f && beatMC > 0.0f) {
-            if (!(init_flags & 0x40)) {
-                init_flags |= 0x40;
-                Symbol notGrooving("not_grooving");
-                PlayMindControlVO(notGrooving);
-            }
+            PlayMindControlVO(not_grooving);
         }
 
         // Update beat counter
