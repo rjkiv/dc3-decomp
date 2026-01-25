@@ -26,12 +26,16 @@
 #include "flow/PropertyEventProvider.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
+#include "obj/DirLoader.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
+#include "obj/ObjPtr_p.h"
 #include "os/Debug.h"
 #include "os/File.h"
 #include "utl/BinStream.h"
+#include "utl/MakeString.h"
 #include "utl/Symbol.h"
+#include <list>
 
 bool Flow::sReflectingProperty;
 
@@ -96,6 +100,7 @@ BEGIN_PROPSYNCS(Flow)
 END_PROPSYNCS
 
 BinStream &operator<<(BinStream &bs, const Flow::DynamicPropertyEntry &entry);
+BinStream &operator>>(BinStream &bs, Flow::DynamicPropertyEntry &entry);
 
 BEGIN_SAVES(Flow)
     SAVE_REVS(7, 2)
@@ -183,8 +188,155 @@ void Flow::PostLoad(BinStream &bs) {
     BinStreamRev d(bs, bs.PopRev(this));
     ObjectDir::PostLoad(bs);
     if (IsProxy()) {
-        int unkf0 = 0;
-        bs >> unkf0;
+        int numDynProps = 0;
+        bs.ReadEndian(&numDynProps, 4);
+        if (d.rev < 5) {
+            for (int i = 0; i < numDynProps; i++) {
+                Symbol propName;
+                bs >> propName;
+
+                DataNode node;
+                node.Load(bs);
+
+                const DataNode *existingProp = Property(propName, false);
+                if (!existingProp) {
+                    if (propName != "") {
+                        SetProperty(propName, node);
+                    }
+                }
+                if (node.Type() == kDataArray) {
+                    node.Array()->Release();
+                }
+            }
+        } else {
+            for (int i = 0; i < numDynProps; i++) {
+                Symbol propName;
+                bs >> propName;
+
+                DataNode node;
+                int nodeType = 0;
+                bs.ReadEndian(&nodeType, 4);
+                if (nodeType == kDataObject) {
+                    ObjectDir *dir = Dir();
+                    if (dir) {
+                        if (dir->Loader()) {
+                            dir = dir->Loader()->GetDir();
+                        } else {
+                            dir = dir->Dir();
+                        }
+                    }
+                    node = FlowNode::LoadObjectFromMainOrDir(bs, dir);
+                } else {
+                    DataNode tmpNode;
+                    tmpNode.Load(bs);
+                    node = tmpNode;
+                    if (tmpNode.Type() == kDataArray) {
+                        tmpNode.Array()->Release();
+                    }
+                }
+
+                const DataNode *existingProp = Property(propName, false);
+                if (!existingProp) {
+                    if (propName != "") {
+                        SetProperty(propName, node);
+                    }
+                }
+                if (node.Type() == kDataArray) {
+                    node.Array()->Release();
+                }
+            }
+        }
+    } else {
+        if (d.rev >= 3) {
+            FlowQueueable::Load(bs);
+            d >> mHardStop;
+        } else {
+            int oldRev = 0;
+            bs.ReadEndian(&oldRev, 4);
+            FlowQueueable::Load(bs);
+            if (oldRev < 1) {
+                bool loadEventProvider;
+                d >> loadEventProvider;
+                if (loadEventProvider) {
+                    ObjectDir *dir = Dir();
+                    if (dir) {
+                        if (dir->Loader()) {
+                            dir = dir->Loader()->GetDir();
+                        } else {
+                            dir = dir->Dir();
+                        }
+                    }
+                    ObjPtr<Hmx::Object> eventProvider(this, 0);
+                    eventProvider = FlowNode::LoadObjectFromMainOrDir(bs, dir);
+                }
+            } else {
+                ObjectDir *dir = Dir();
+                if (dir) {
+                    if (dir->Loader()) {
+                        dir = dir->Loader()->GetDir();
+                    } else {
+                        dir = dir->Dir();
+                    }
+                }
+                ObjPtr<Hmx::Object> eventProvider(this, 0);
+                eventProvider.Load(bs, true, dir);
+            }
+            std::list<Symbol> triggerEvents;
+            std::list<Symbol> stopEvents;
+            d >> triggerEvents;
+            d >> stopEvents;
+            if (triggerEvents.size() != 0 || stopEvents.size() != 0) {
+                MILO_NOTIFY("Flow with trigger events found, %s", PathName(this));
+            }
+            d >> mHardStop;
+            if (oldRev > 0) {
+                ObjectDir *dir = Dir();
+                if (dir) {
+                    if (dir->Loader()) {
+                        dir = dir->Loader()->GetDir();
+                    } else {
+                        dir = dir->Dir();
+                    }
+                }
+                ObjList<FlowTrigger::PropTriggerDefn> triggerProperties(this);
+                ObjList<FlowTrigger::PropTriggerDefn> stopProperties(this);
+                d >> triggerProperties;
+                d >> stopProperties;
+                if (triggerProperties.size() != 0 || stopProperties.size() != 0) {
+                    MILO_NOTIFY("Flow with trigger events found, %s", PathName(this));
+                }
+                stopProperties.clear();
+                triggerProperties.clear();
+            }
+            stopEvents.clear();
+            triggerEvents.clear();
+        }
+        d >> mDynamicProperties;
+        if (d.rev < 7) {
+            bool startOnEnter;
+            d >> startOnEnter;
+            if (startOnEnter) {
+                unk170 = 2;
+            } else {
+                unk170 = 0;
+            }
+        } else {
+            bs.ReadEndian(&unk170, 4);
+        }
+        if (d.rev > 0) {
+            d >> mPrivate;
+        } else {
+            mPrivate = false;
+        }
+    }
+    if (unk170 != 0) {
+        mPrivate = true;
+    }
+    RefreshPortLabelLists();
+    if (Loader() && Loader()->ProxyDir()) {
+        if (Loader()->ProxyDir()->InlineProxyType() == kInlineAlways) {
+            unk170 = 5;
+        }
     }
 }
 
@@ -351,6 +503,18 @@ DataNode Flow::DynamicPropertyEntry::GetSymbolList() {
         ptr->Node(0) = Symbol();
         return ptr;
     }
+}
+
+BinStream &operator>>(BinStream &bs, Flow::DynamicPropertyEntry &entry) {
+    bs >> entry.mName;
+    bs >> (int &)entry.mType;
+    entry.mDefaultVal.Load(bs);
+    bs >> entry.mHelp;
+    bs >> entry.mExposed;
+    bs >> entry.mObjectClass;
+    entry.unk24.Load(bs);
+    bs >> entry.mObjectType;
+    return bs;
 }
 
 void Flow::ToggleRunning(int type) {
