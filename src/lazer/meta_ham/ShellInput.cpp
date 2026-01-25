@@ -150,7 +150,7 @@ void ShellInput::Poll() {
             TheGameMode->Property(gameplay_mode, true)->Sym(nullptr);
         if (gameplayModeValue == practice) {
             HandInvokeGestureFilter *filter = mHandInvokeGestureFilter;
-            if (filter && filter->unk140) {
+            if (filter && filter->GetUnk140()) {
                 if (!unk_practice_flag) {
                     int suppress =
                         TheHamProvider->Property(suppress_practice_options, true)->Int();
@@ -181,7 +181,7 @@ void ShellInput::Poll() {
                     TheHamProvider->Property(suppress_practice_options, true)->Int();
                 if (!noPartyOptions) {
                     HandInvokeGestureFilter *filter = mHandInvokeGestureFilter;
-                    if (filter && filter->unk140) {
+                    if (filter && filter->GetUnk140()) {
                         if (!unk_party_flag) {
                             static Symbol invoke_practice_options("invoke_practice_options"
                             );
