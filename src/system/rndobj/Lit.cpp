@@ -1,4 +1,5 @@
 #include "rndobj/Lit.h"
+#include "Lit.h"
 #include "obj/Object.h"
 #include "rndobj/Trans.h"
 #include "utl/BinStream.h"
@@ -84,76 +85,72 @@ END_PROPSYNCS
 
 BEGIN_LOADS(RndLight)
     LOAD_REVS(bs)
-    int gRev = d.rev;
     ASSERT_REVS(0x10, 0)
-    if (gRev > 3)
+    if (d.rev > 3)
         LOAD_SUPERCLASS(Hmx::Object)
     LOAD_SUPERCLASS(RndTransformable)
     bs >> mColor;
-    if (gRev < 2) {
+    if (d.rev < 2) {
         Hmx::Color col1, col2;
         bs >> col1 >> col2;
     }
-    if (gRev < 3) {
+    if (d.rev < 3) {
         int i, j;
         bs >> i >> j;
     }
     bs >> mRange;
-    if (gRev < 3) {
+    if (d.rev < 3) {
         int i, j, k;
         bs >> i >> j >> k;
     }
-    if (gRev > 0) {
+    if (d.rev > 0) {
         int count;
         bs >> count;
-        if (gRev < 0xE) {
+        if (d.rev < 0xE) {
             if (count > 1)
                 count--;
         }
         mType = (Type)count;
     }
-    if (gRev > 0xB) {
+    if (d.rev > 0xB) {
         bs >> mFalloffStart;
     }
-    if (gRev > 5) {
+    if (d.rev > 4) {
         bs >> mAnimateColorFromPreset >> mAnimatePositionFromPreset;
     }
-    if (gRev > 6) {
+    if (d.rev > 6) {
         bs >> mTopRadius >> mBotRadius;
-        if (gRev < 0xE) {
+        if (d.rev < 0xE) {
             int i, j;
             bs >> i >> j;
         }
     }
-    if (gRev > 7) {
+    if (d.rev > 7) {
         bs >> mTexture;
-        if (gRev == 9) {
+        if (d.rev == 9) {
             ObjPtrList<RndDrawable> drawList(this);
             bs >> drawList;
-        } else if (gRev == 8) {
+        } else if (d.rev == 8) {
             ObjPtr<RndDrawable> drawPtr(this);
             bs >> drawPtr;
         }
     }
-    if (gRev > 0xA) {
+    if (d.rev > 10) {
         bs >> mColorOwner;
         if (!mColorOwner)
             mColorOwner = this;
     }
-    if (gRev > 0xC)
+    if (d.rev > 0xC)
         bs >> mTextureXfm;
-    if (gRev > 0xD) {
-        ObjPtr<RndTex> texPtr(this);
-        bs >> texPtr;
+    if (d.rev > 0xD) {
+        bs >> mCubeTexture;
     }
-    if (gRev > 0xE) {
+    if (d.rev > 0xE) {
         bs >> mShadowObjects;
         bs >> mProjectedBlend;
     }
-    if (gRev > 0xF) {
+    if (d.rev > 0xF)
         bs >> mAnimateRangeFromPreset;
-        bs >> mCubeTexture;
-    } else {
+    else
         mAnimateRangeFromPreset = mAnimateColorFromPreset;
-    }
 END_LOADS

@@ -36,6 +36,11 @@ public:
     void SetVisible(bool v) { mVisible = v; }
     void SetSteps(int steps);
     void SetPointTest(bool);
+    bool GetPointTest() const { return mPointTest; }
+    bool GetAreaTest() const { return mAreaTest; }
+    Hmx::Rect &GetArea() { return mArea; }
+    void SetOcclusionResult(float f) { unk144 = f; }
+    void SetOcclusionReady(bool b) { unk148 = b; }
 
 protected:
     RndFlare();

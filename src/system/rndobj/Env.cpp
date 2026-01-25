@@ -41,13 +41,34 @@ void RndEnviron::Save(BinStream &bs) {
     SAVE_SUPERCLASS(RndDrawable);
     SAVE_SUPERCLASS(RndTransformable);
     bs << mLightsReal << mLightsApprox;
+    bs << mAmbientColor;
+    bs << mFogEnable;
+    bs << mFogStart;
+    bs << mFogEnd;
+    bs << mFogColor;
+    bs << mAnimateFromPreset;
+    bs << mAmbientFogOwner;
+    bs << mFadeOut;
+    bs << mFadeStart;
+    bs << mFadeEnd;
+    bs << mFadeMax;
+    bs << mFadeRef;
+    bs << mLRFade;
+    bs << mUseColorAdjust;
+    mColorXfm.Save(bs);
+    bs << mAOEnabled;
+    bs << mAOStrength;
+    bs << mIntensityRate;
+    bs << mExposure;
+    bs << mWhitePoint;
+    bs << mUseToneMapping;
 }
 
 bool RndEnviron::IsLightInList(const RndLight *light, const ObjPtrList<RndLight> &pList)
     const {
     if (light == nullptr)
-        return 0;
-    return pList.find(light) != pList.end();
+        return false;
+    return pList.find((const Hmx::Object *)light) != pList.end();
 }
 
 bool RndEnviron::IsFake(RndLight *l) const { return IsLightInList(l, mLightsApprox); }

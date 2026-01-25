@@ -66,6 +66,7 @@ public:
     static RndCam *Current() { return sCurrent; }
     static float DefaultNearPlane() { return sDefaultNearPlane; }
     static float MaxFarNearPlaneRatio() { return sMaxFarNearPlaneRatio; }
+    const Hmx::Matrix4 &GetMatrix300() const { return unk300; }
 
 protected:
     RndCam();

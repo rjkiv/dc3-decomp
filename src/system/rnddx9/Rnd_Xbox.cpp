@@ -18,14 +18,20 @@
 #include "rnddx9/CubeTex.h"
 #include "rnddx9/OcclusionQueryMgr.h"
 #include "rnddx9/Rnd.h"
+#include "rndobj/Cam.h"
 #include "rndobj/DOFProc_NG.h"
+#include "rndobj/Flare.h"
+#include "rndobj/HiResScreen.h"
+#include "rndobj/Mat_NG.h"
 #include "rndobj/Overlay.h"
 #include "rndobj/PostProc.h"
 #include "rndobj/PostProc_NG.h"
 #include "rndobj/Rnd.h"
 #include "rndobj/Rnd_NG.h"
+#include "rndobj/Shader.h"
 #include "rndobj/ShaderMgr.h"
 #include "rndobj/ShadowMap.h"
+#include "rndobj/Stats_NG.h"
 #include "rndobj/Tex.h"
 #include "utl/MemTrack.h"
 #include "utl/Option.h"
@@ -634,20 +640,169 @@ void DxRnd::CreatePostTextures() {
     mPostProcessTex->SetDeviceTex(mPostProcessBuffer);
 }
 
+static DWORD sPointTestFence = -1;
+
 void DxRnd::DoPointTests() {
-    FOREACH (it, unk20c) {
-        unsigned int ui1c0;
-        if (mOcclusionQueryMgr->GetQueryResults(it->unk4, ui1c0)) {
-            // it->unk0->unk148 = 1;
-            it->unk0->SetVisible(ui1c0 == 0);
+    // Block on previous fence if set
+    if (sPointTestFence != (DWORD)-1) {
+        D3DDevice_BlockOnFence(sPointTestFence);
+        sPointTestFence = -1;
+    }
+
+    // Early out if no occlusion query manager or hi-res screen is active
+    if (!mOcclusionQueryMgr)
+        return;
+    if (TheHiResScreen.IsActive())
+        return;
+
+    // Process query results from previous frame
+    for (std::vector<RndPointTest>::iterator it = unk20c.begin(); it != unk20c.end(); ++it) {
+        unsigned int result;
+        if (mOcclusionQueryMgr->GetQueryResults(it->unk4, result)) {
+            it->unk0->SetOcclusionReady(true);
+            it->unk0->SetVisible(result != 0);
         }
-        if (mOcclusionQueryMgr->GetQueryResults(it->unk8, ui1c0)) {
-            // it->unk0->unk144 = u1c0;
-            // it->unk0->unk148 = 1;
+        if (mOcclusionQueryMgr->GetQueryResults(it->unk8, result)) {
+            it->unk0->SetOcclusionResult((float)(int)result);
+            it->unk0->SetOcclusionReady(true);
         }
-        // these don't belong here, i just put them here to spawn the funcs
-        mOcclusionQueryMgr->CreateQuery(ui1c0);
-        mOcclusionQueryMgr->BeginQuery(0);
-        mOcclusionQueryMgr->EndQuery(0);
+    }
+
+    // Update frame index - both direct manipulation and virtual call
+    mOcclusionQueryMgr->ToggleFrameIndex();
+    mOcclusionQueryMgr->OnBeginFrame();
+    mOcclusionQueryMgr->IncrementFrameCounter();
+    mOcclusionQueryMgr->OnEndFrame();
+
+    // Count point tests needed
+    int numTests = 0;
+    for (std::list<PointTest>::iterator it = mPointTests.begin(); it != mPointTests.end(); ++it) {
+        numTests++;
+    }
+
+    // Resize unk20c to match
+    unk20c.resize(numTests);
+
+    // Early out if no point tests
+    if (mPointTests.empty())
+        return;
+
+    // Setup identity transform
+    Transform xfm;
+    xfm.Reset();
+    TheShaderMgr.SetTransform(xfm);
+
+    // Setup view matrix
+    Hmx::Matrix4 viewMtx(xfm);
+    TheShaderMgr.SetVConstant((VShaderConstant)4, viewMtx);
+
+    // Setup shader state
+    RndShader::SelectConfig(nullptr, kStandardShader, false);
+    D3DDevice_SetPixelShader(mD3DDevice, nullptr);
+    D3DDevice_SetFVF(mD3DDevice, 0x4042);
+
+    // Disable color writes and blending for occlusion testing
+    D3DDevice_SetRenderState_ColorWriteEnable(TheDxRnd.Device(), 0);
+    D3DDevice_SetRenderState_AlphaBlendEnable(TheDxRnd.Device(), 0);
+    D3DDevice_SetRenderState_AlphaTestEnable(TheDxRnd.Device(), 0);
+    D3DDevice_SetRenderState_ZWriteEnable(TheDxRnd.Device(), 0);
+    D3DDevice_SetRenderState_ZEnable(TheDxRnd.Device(), 1);
+
+    // Set z-compare function based on unk_0x301
+    D3DDevice_SetRenderState_ZFunc(TheDxRnd.Device(), (D3DCMPFUNC)(unk_0x301 ? 3 : 1));
+
+    // Set point size
+    float pointSize = 1.0f;
+    D3DDevice_SetRenderState_PointSize(TheDxRnd.Device(), *(DWORD*)&pointSize);
+    D3DDevice_SetRenderState_ViewportEnable(TheDxRnd.Device(), 0);
+    D3DDevice_SetRenderState_HalfPixelOffset(TheDxRnd.Device(), 1);
+
+    // Process each point test
+    int idx = 0;
+    for (std::list<PointTest>::iterator it = mPointTests.begin(); it != mPointTests.end(); ++it, ++idx) {
+        TheNgStats->mFlares++;
+
+        RndFlare *flare = it->unkc;
+        RndPointTest &test = unk20c[idx];
+        test.unk4 = -1;
+        test.unk8 = -1;
+        test.unk0 = flare;
+
+        // Point test
+        if (flare->GetPointTest()) {
+            struct PointVertex {
+                float x, y, z;
+                float w;
+                DWORD color;
+            };
+            PointVertex vtx;
+            vtx.x = (float)it->unk4;
+            vtx.y = (float)it->unk8;
+            vtx.z = (float)it->unk0 * 5.9604651881e-08f;
+            vtx.w = 1.0f;
+            vtx.color = 0;
+
+            unsigned int queryIdx;
+            if (mOcclusionQueryMgr->CreateQuery(queryIdx)) {
+                test.unk4 = queryIdx;
+                mOcclusionQueryMgr->BeginQuery(test.unk4);
+                D3DDevice_DrawVerticesUP(mD3DDevice, D3DPT_POINTLIST, 1, &vtx, sizeof(PointVertex));
+                mOcclusionQueryMgr->EndQuery(test.unk4);
+            }
+        }
+
+        // Area test
+        if (flare->GetAreaTest()) {
+            struct QuadVertex {
+                float x, y, z;
+                float w;
+                DWORD color;
+            };
+            float z = (float)it->unk0 * 5.9604651881e-08f;
+            QuadVertex verts[4];
+
+            // Initialize vertices
+            verts[0].x = flare->GetArea().x;
+            verts[0].y = flare->GetArea().y;
+            verts[0].z = z;
+            verts[0].w = 1.0f;
+            verts[0].color = 0;
+
+            verts[1] = verts[0];
+            verts[1].y += flare->GetArea().h;
+
+            verts[2] = verts[0];
+            verts[2].x += flare->GetArea().w;
+
+            verts[3] = verts[1];
+            verts[3].x += flare->GetArea().w;
+
+            unsigned int queryIdx;
+            if (mOcclusionQueryMgr->CreateQuery(queryIdx)) {
+                test.unk8 = queryIdx;
+                mOcclusionQueryMgr->BeginQuery(test.unk8);
+                D3DDevice_DrawVerticesUP(mD3DDevice, D3DPT_TRIANGLESTRIP, 4, verts, sizeof(QuadVertex));
+                mOcclusionQueryMgr->EndQuery(test.unk8);
+            }
+        } else {
+            flare->SetOcclusionReady(true);
+            flare->SetVisible(true);
+        }
+    }
+
+    // Insert fence for next frame
+    sPointTestFence = D3DDevice_InsertFence(mD3DDevice);
+
+    // Clear current material
+    NgMat::SetCurrent(nullptr);
+
+    // Restore render states
+    D3DDevice_SetRenderState_ColorWriteEnable(TheDxRnd.Device(), 0xF);
+    D3DDevice_SetRenderState_ViewportEnable(TheDxRnd.Device(), 1);
+    D3DDevice_SetRenderState_HalfPixelOffset(TheDxRnd.Device(), 0);
+
+    // Restore camera if set
+    if (RndCam::Current()) {
+        TheShaderMgr.SetVConstant((VShaderConstant)4, RndCam::Current()->GetMatrix300());
     }
 }

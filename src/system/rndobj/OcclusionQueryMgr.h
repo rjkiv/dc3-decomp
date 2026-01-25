@@ -109,6 +109,11 @@ protected:
     }
     unsigned int GetCurrentFrameIndex() const { return mCurrentFrameIndex; }
 
+public:
+    void ToggleFrameIndex() { mCurrentFrameIndex = (mCurrentFrameIndex - 1) & 1; }
+    void IncrementFrameCounter() { unk1808++; }
+
+protected:
     QueryState mQueryStates[kMaxQueries][2]; // 0x4
     unsigned int mQueryFrameIDs[kMaxQueries][2]; // 0x804
     unsigned int unk1004[kMaxQueries][2]; // 0x1004
