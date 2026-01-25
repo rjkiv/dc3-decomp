@@ -6,6 +6,7 @@ public:
     void Seed(int);
     int Int();
     int Int(int, int);
+    int FastInt(int, int);
     float Float();
     float Float(float, float);
     float Gaussian();
