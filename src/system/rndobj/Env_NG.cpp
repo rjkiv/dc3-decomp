@@ -18,7 +18,8 @@ void NgEnviron::Select(const Vector3 *pos) {
     mProjectedBlend = (RndLight::ProjectedBlend)0;
 
     Rnd::DrawMode mode = TheRnd.GetDrawMode();
-    if (mode == 4 || mode == 2 || mode == 6 || mode == 3) {
+    if (mode == Rnd::kDrawOcclusion || mode == Rnd::kDrawExtrude || mode == Rnd::kDrawVelocity
+        || mode == Rnd::kDrawShadowColor) {
         RndEnviron::Select(pos);
         NgMat::SetCurrent(0);
         TheNgStats->mLightsReal += mNumLightsReal;
