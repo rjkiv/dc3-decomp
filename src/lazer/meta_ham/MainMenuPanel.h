@@ -52,7 +52,7 @@ public:
     MainMenuProvider GetMainMenuProvider() const { return unk44; }
 
 protected:
-    int unk40;
+    HamLabel *mMsgLabel; // 0x40
     MainMenuProvider unk44;
     bool unk80;
     bool unk81;

@@ -988,3 +988,48 @@ void AccomplishmentManager::HandleSongCompleted(Symbol song) {
         }
     }
 }
+
+void AccomplishmentManager::CheckForCrewsAccomplishments(HamProfile *profile) {
+    static Symbol selectable_crews("selectable_crews");
+    DataArray *pCrewsArray = SystemConfig()->FindArray(selectable_crews, false);
+    MILO_ASSERT(pCrewsArray, 0x545);
+    for (int i = 1; i < pCrewsArray->Size(); i++) {
+        Symbol crew = pCrewsArray->Sym(i);
+        int curStars;
+        int totalStars;
+        TheHamSongMgr.GetCrewStars(profile, crew, curStars, totalStars);
+        if (totalStars == curStars) {
+            static Symbol crew01("crew01");
+            static Symbol crew02("crew02");
+            static Symbol crew03("crew03");
+            static Symbol crew04("crew04");
+            static Symbol crew10("crew10");
+            if (crew == crew01) {
+                static Symbol acc_all_riptide_songs("acc_all_riptide_songs");
+                TheAccomplishmentMgr->EarnAccomplishmentForProfile(
+                    profile, acc_all_riptide_songs, false
+                );
+            } else if (crew == crew02) {
+                static Symbol acc_all_hidef_songs("acc_all_hidef_songs");
+                TheAccomplishmentMgr->EarnAccomplishmentForProfile(
+                    profile, acc_all_hidef_songs, false
+                );
+            } else if (crew == crew03) {
+                static Symbol acc_all_flashforward_songs("acc_all_flashforward_songs");
+                TheAccomplishmentMgr->EarnAccomplishmentForProfile(
+                    profile, acc_all_flashforward_songs, false
+                );
+            } else if (crew == crew04) {
+                static Symbol acc_all_lush_songs("acc_all_lush_songs");
+                TheAccomplishmentMgr->EarnAccomplishmentForProfile(
+                    profile, acc_all_lush_songs, false
+                );
+            } else if (crew == crew10) {
+                static Symbol acc_all_dci_songs("acc_all_dci_songs");
+                TheAccomplishmentMgr->EarnAccomplishmentForProfile(
+                    profile, acc_all_dci_songs, false
+                );
+            }
+        }
+    }
+}

@@ -781,6 +781,12 @@ void D3DDevice_SetRenderState_SeparateAlphaBlendEnable(D3DDevice *pDevice, DWORD
 void D3DDevice_SetRenderState_BlendOpAlpha(D3DDevice *pDevice, DWORD Value);
 void D3DDevice_SetRenderState_PresentInterval(D3DDevice *pDevice, DWORD Value);
 void D3DDevice_SetRenderState_PresentImmediateThreshold(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_PointSize(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_ViewportEnable(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_HalfPixelOffset(D3DDevice *pDevice, DWORD Value);
+
+DWORD D3DDevice_InsertFence(D3DDevice *pDevice);
+void D3DDevice_BlockOnFence(DWORD fence);
 
 #pragma endregion
 #pragma region Misc

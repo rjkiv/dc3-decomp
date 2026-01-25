@@ -1,5 +1,7 @@
 #include "ShellInput.h"
 #include "flow/PropertyEventProvider.h"
+#include "game/GameMode.h"
+#include "game/GamePanel.h"
 #include "gesture/GestureMgr.h"
 #include "gesture/HandInvokeGestureFilter.h"
 #include "gesture/HandsUpGestureFilter.h"
@@ -118,7 +120,89 @@ void ShellInput::Poll() {
     static Symbol is_in_shell_pause("is_in_shell_pause");
     static Symbol is_in_party_mode("is_in_party_mode");
     static Symbol is_in_infinite_party_mode("is_in_infinite_party_mode");
-    // if (TheUI->FocusPanel() == TheGamePanel) {}
+    static Symbol practice("practice");
+    static Symbol gameplay_mode("gameplay_mode");
+    static Symbol suppress_practice_options("suppress_practice_options");
+    static bool unk_practice_flag = false;
+    static bool unk_party_flag = false;
+
+    if (TheUI->FocusPanel() == TheGamePanel) {
+        if (mInputPanel && mInputPanel->GetState() == UIPanel::kUp) {
+            SetCursorAlpha(0.0f);
+            unk_0xA4 = false;
+        }
+    }
+
+    if (TheGestureMgr->InControllerMode()) {
+        if (TheUIEventMgr->HasActiveDialogEvent()) {
+            ExitControllerMode(true);
+        }
+        if (!TheHamUI.GetOverlayPanel()) {
+            TheGestureMgr->SetIdentificationEnabled(false);
+        }
+
+        static int init_state = 0;
+        if ((init_state & 8) == 0) {
+            init_state |= 8;
+        }
+
+        Symbol gameplayModeValue =
+            TheGameMode->Property(gameplay_mode, true)->Sym(nullptr);
+        if (gameplayModeValue == practice) {
+            HandInvokeGestureFilter *filter = mHandInvokeGestureFilter;
+            if (filter && filter->unk140) {
+                if (!unk_practice_flag) {
+                    int suppress =
+                        TheHamProvider->Property(suppress_practice_options, true)->Int();
+                    if (!suppress) {
+                        static Symbol invoke_practice_options("invoke_practice_options");
+                        static Message invoke_msg(invoke_practice_options);
+                        TheHamProvider->Handle(invoke_msg, true);
+                        unk_practice_flag = true;
+                    }
+                }
+            } else {
+                if (unk_practice_flag) {
+                    static Symbol deinvoke_practice_options("deinvoke_practice_options");
+                    static Message deinvoke_msg(deinvoke_practice_options);
+                    TheHamProvider->Handle(deinvoke_msg, true);
+                    unk_practice_flag = false;
+                }
+            }
+        }
+    } else {
+        int partyMode =
+            TheHamProvider->Property(is_in_infinite_party_mode, true)->Int();
+        if (partyMode) {
+            int shellPause = TheHamProvider->Property(is_in_shell_pause, true)->Int();
+            if (shellPause) {
+                TheGestureMgr->SetIdentificationEnabled(false);
+                int noPartyOptions =
+                    TheHamProvider->Property(suppress_practice_options, true)->Int();
+                if (!noPartyOptions) {
+                    HandInvokeGestureFilter *filter = mHandInvokeGestureFilter;
+                    if (filter && filter->unk140) {
+                        if (!unk_party_flag) {
+                            static Symbol invoke_practice_options("invoke_practice_options"
+                            );
+                            static Message invoke_msg(invoke_practice_options);
+                            TheHamProvider->Handle(invoke_msg, true);
+                            unk_party_flag = true;
+                        }
+                    } else {
+                        if (unk_party_flag) {
+                            static Symbol deinvoke_practice_options(
+                                "deinvoke_practice_options"
+                            );
+                            static Message deinvoke_msg(deinvoke_practice_options);
+                            TheHamProvider->Handle(deinvoke_msg, true);
+                            unk_party_flag = false;
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     if (TheUI->InTransition()) {
         SetCursorAlpha(0);
