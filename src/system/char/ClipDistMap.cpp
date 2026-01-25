@@ -188,7 +188,7 @@ int ClipDistMap::CalcHeight() {
         f1 = clipBStartBeat;
     }
 
-    f1 = std::floor((f1 - mBStart) * mSamplesPerBeat + 0.5f);
+    f1 = floor(((f1 - mBStart) * (float)mSamplesPerBeat) + 0.5f);
     uint val = f1;
 
     return (((val != 0) - (val >> 0x1f) & val)) + 1;
