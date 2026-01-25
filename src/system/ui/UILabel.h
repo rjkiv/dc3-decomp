@@ -6,6 +6,7 @@
 #include "rndobj/Text.h"
 #include "ui/UIColor.h"
 #include "ui/UIComponent.h"
+#include "ui/UILabelDir.h"
 #include "utl/BinStream.h"
 #include "utl/MemMgr.h"
 #include "utl/Symbol.h"
@@ -17,11 +18,7 @@ public:
         ~LabelStyle();
 
         ObjPtr<UIColor> mColorOverride; // 0x0
-        int unk14;
-        int unk18;
-        int unk1c;
-        int unk20;
-        int unk24;
+        ObjPtr<UILabelDir> unk14; // 0x14
         int unk28;
     };
     // Hmx::Object

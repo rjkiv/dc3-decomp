@@ -3,6 +3,12 @@
 #include "os/UserMgr.h"
 #include "os/JoypadMsgs.h"
 #include "os/Joypad.h"
+#include "os/System.h"
+#include "obj/DataFunc.h"
+
+void InitQuickJoyCheats(DataArray *a, CheatsManager::ShiftMode);
+void InitKeyCheats(const DataArray *);
+void InitLongJoyCheats(const DataArray *);
 
 
 bool CheatsInitialized() {
@@ -17,18 +23,27 @@ HANDLE_MESSAGE(KeyboardKeyReleaseMsg)
 END_HANDLERS
 
 void CheatsInit() {
-    Symbol disableCheats("disable_cheats");
-    Symbol cheats("cheats");
-    DataArray *da;
-    if (da->FindData(cheats, gDisable, true)) {
+    SystemConfig()->FindData("disable_cheats", gDisable, true);
+    if (!gDisable) {
         if (gCheatsManager != 0) {
             MILO_ASSERT(gCheatsManager == null, 0x2d8);
         }
+        gCheatsManager = new CheatsManager();
         JoypadSubscribe(gCheatsManager);
         KeyboardSubscribe(gCheatsManager);
 
-    }
+        DataArray *quickCheats = SystemConfig("quick_cheats");
+        InitQuickJoyCheats(quickCheats->FindArray("left", true), CheatsManager::kLeftShift);
+        InitQuickJoyCheats(quickCheats->FindArray("right", true), CheatsManager::kRightShift);
 
+        InitKeyCheats(quickCheats->FindArray("keyboard", true));
+
+        InitLongJoyCheats(SystemConfig("long_cheats"));
+
+        DataRegisterFunc("set_key_cheats_enabled", SetKeyCheatsEnabled);
+        DataRegisterFunc("set_cheat_mode", OnSetCheatMode);
+        DataRegisterFunc("get_cheat_mode", OnGetCheatMode);
+    }
 }
 
 DataNode OnGetCheatMode(DataArray *da) {
@@ -115,13 +130,12 @@ void CheatsManager::CallCheatScript(bool b1, DataArray *da, LocalUser *lu, bool 
         if (TheUserMgr) {
             std::vector<LocalUser *> users;
             TheUserMgr->GetLocalUsers(users);
-            if (!users.empty()) {
-                for (int i = 0; i < users.size(); i++) {
-                    JoypadData *jpd = JoypadGetPadData(users[i]->GetPadNum());
-
-                }
+            for (int i = 0; i < (int)users.size(); i++) {
+                CallCheatScript(b1, da, users[i], b2);
             }
         }
+    } else {
+        Log(lu->GetPadNum(), b1, da);
     }
 
 }

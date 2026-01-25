@@ -30,8 +30,13 @@ UILabel::UILabel() : unk122(1), unk124(this) {
 }
 
 BEGIN_PROPSYNCS(UILabel)
-SYNC_PROP_SET(text_token, mTextToken, SetTextToken(_val.ForceSym()))
-SYNC_PROP_SET(icon, unk118, SetIcon(unk120))
+    SYNC_PROP_SET(text_token, mTextToken, SetTextToken(_val.ForceSym()))
+    SYNC_PROP_SET(icon, unk118, SetIcon(_val.Str(0)[0]))
+    SYNC_PROP(edit_text, unk118)
+    SYNC_PROP(draw_width, unkb4)
+    SYNC_PROP(styles, unk124)
+    SYNC_SUPERCLASS(RndText)
+    SYNC_SUPERCLASS(UIComponent)
 END_PROPSYNCS
 
 BEGIN_COPYS(UILabel)
@@ -145,6 +150,10 @@ void UILabel::SetTokenFmtImp(
     Symbol s, const DataArray *da1, const DataArray *da2, int i, bool b
 ) {}
 
+DataNode UILabel::OnSetPrelocalizedString(DataArray const *da) {
+    return NULL_OBJ;
+}
+
 DataNode UILabel::OnSetTokenFmt(DataArray const *da) { return NULL_OBJ; }
 
 DataNode UILabel::OnSetInt(DataArray const *da) { return DataNode(1); }
@@ -174,7 +183,18 @@ void UILabel::RefreshFontMat(int i) {
 }
 
 BEGIN_HANDLERS(UILabel)
-
+    HANDLE_ACTION(set_token_fmt, OnSetTokenFmt(_msg))
+    HANDLE_ACTION(set_prelocalized_string, OnSetPrelocalizedString(_msg))
+    HANDLE_ACTION(set_int, OnSetInt(_msg))
+    HANDLE_ACTION(set_float, SetFloat(_msg->Str(2), _msg->Float(3)))
+    HANDLE_ACTION(set_time_hms, OnSetTimeHMS(_msg))
+    HANDLE_ACTION(center_with_label, CenterWithLabel(_msg->Obj<UILabel>(2), _msg->Int(3), _msg->Float(4)))
+    HANDLE_EXPR(get_font_mats, UILabelDir::GetMatVariations(LStyle(_msg->Int(2)).unk14))
+    HANDLE_ACTION(set_height_from_text, OnSetHeightFromText(_msg))
+    HANDLE_EXPR(draw_rect_width, unkbc)
+    HANDLE_ACTION(reload_string, UIComponent::Poll())
+    HANDLE_SUPERCLASS(UIComponent)
+    HANDLE_SUPERCLASS(RndText)
 END_HANDLERS
 
 bool PropSync(UILabel::LabelStyle &, DataNode &, DataArray *, int, PropOp) {

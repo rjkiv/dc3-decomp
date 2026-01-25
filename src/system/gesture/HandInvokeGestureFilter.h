@@ -11,6 +11,9 @@ public:
     void Update(const Skeleton &, int ms);
     bool GetUnk140() const { return unk140; }
 
+private:
+    float GetBend(const Vector3 &, const Vector3 &, const Vector3 &) const;
+
     Vector3DESmoother unk4; // 0x4
     Vector3 unk40; // 0x40
     Vector3DESmoother unk50; // 0x50
@@ -19,7 +22,4 @@ public:
     Vector3DESmoother unk104; // 0x104
     bool unk140;
     int unk144;
-
-private:
-    float GetBend(const Vector3 &, const Vector3 &, const Vector3 &) const;
 };

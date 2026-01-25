@@ -8,11 +8,6 @@
 
 char gEmpty[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-FixedString::FixedString() : mStr((char *)(gEmpty + 4)) {
-    *(int *)(mStr - 4) = 0;
-    mStr[0] = '\0';
-}
-
 FixedString::FixedString(char *str, int bufferSize) {
     mStr = str + 4;
     MILO_ASSERT(bufferSize >= 5, 0x1C);
@@ -215,6 +210,29 @@ void RemoveSpaces(char *out, int len, const char *in) {
     MILO_ASSERT(out, 0x2C0);
     MILO_ASSERT(in, 0x2C1);
     MILO_ASSERT(len > 0, 0x2C2);
+
+    char *dst = out;
+    char *max = out + len - 1;
+    char *orig = out;
+    bool wasSpace = true;
+    char c = *in;
+
+    while (c != '\0') {
+        if (dst < max) {
+            bool isSpace = (c == ' ');
+            if (!isSpace || !wasSpace) {
+                *dst++ = c;
+            }
+            wasSpace = isSpace;
+        }
+        c = *++in;
+    }
+
+    if (dst > orig && *(dst - 1) == ' ') {
+        dst--;
+    }
+
+    *dst = '\0';
 }
 
 // sorta like strncpy, except for the return value
@@ -275,9 +293,7 @@ String &String::operator=(const FixedString &str) {
 }
 
 String &String::operator=(const String &str) {
-    reserve(str.capacity());
-    strcpy(mStr, str.c_str());
-    return *this;
+    return *this = static_cast<const FixedString &>(str);
 }
 
 void String::resize(unsigned int arg) {
@@ -377,4 +393,29 @@ String String::substr(unsigned int pos, unsigned int len) const {
         buf[len] = '\0';
         return String(buf);
     }
+}
+
+String &String::insert(unsigned int pos, unsigned int count, char c) {
+    MILO_ASSERT(pos <= capacity(), 0x27B);
+    String tmp;
+    tmp.reserve(length() + count);
+    strncpy(tmp.mStr, mStr, pos);
+    for (unsigned int i = 0; i < count; i++) {
+        tmp.mStr[pos + i] = c;
+    }
+    char *src = mStr + pos - 1;
+    char *dst = tmp.mStr + pos + count - 1;
+    char ch;
+    do {
+        ch = *++src;
+        *++dst = ch;
+    } while (ch != '\0');
+    char *temp_mStr = mStr;
+    mStr = tmp.mStr;
+    tmp.mStr = temp_mStr;
+    return *this;
+}
+
+String &String::insert(unsigned int pos, const char *str) {
+    return replace(pos, 0, str);
 }

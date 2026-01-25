@@ -8,6 +8,8 @@
 // i can't think of a better place to put this
 inline bool IsAsciiNum(char c) { return c >= 0x30 && c <= 0x39; }
 
+extern char gEmpty[8];
+
 // ditto
 inline bool streq(const char *s1, const char *s2) { return strcmp(s1, s2) == 0; }
 
@@ -21,7 +23,10 @@ class FixedString {
 protected:
     char *mStr; // 0x0
 public:
-    FixedString();
+    FixedString() : mStr((char *)(gEmpty + 4)) {
+        *(int *)(mStr - 4) = 0;
+        mStr[0] = '\0';
+    }
     FixedString(char *, int);
     ~FixedString() {
         if (capacity() != 0) {

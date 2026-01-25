@@ -21,6 +21,39 @@ UILabelDir::UILabelDir()
 }
 
 BEGIN_PROPSYNCS(UILabelDir)
+    SYNC_PROP(allow_edit_text, mAllowEditText)
+    SYNC_PROP(focus_anim, mFocusAnim)
+    SYNC_PROP(pulse_anim, mPulseAnim)
+    SYNC_PROP(focused_background_group, mFocusedBackgroundGroup)
+    SYNC_PROP(unfocused_background_group, mUnfocusedBackgroundGroup)
+    SYNC_PROP(default_color, mDefaultColor)
+    SYNC_PROP_SET(
+        normal_color,
+        (Hmx::Object *)mColors[UIComponent::kNormal],
+        mColors[UIComponent::kNormal] = _val.Obj<UIColor>()
+    )
+    SYNC_PROP_SET(
+        focused_color,
+        (Hmx::Object *)mColors[UIComponent::kFocused],
+        mColors[UIComponent::kFocused] = _val.Obj<UIColor>()
+    )
+    SYNC_PROP_SET(
+        disabled_color,
+        (Hmx::Object *)mColors[UIComponent::kDisabled],
+        mColors[UIComponent::kDisabled] = _val.Obj<UIColor>()
+    )
+    SYNC_PROP_SET(
+        selecting_color,
+        (Hmx::Object *)mColors[UIComponent::kSelecting],
+        mColors[UIComponent::kSelecting] = _val.Obj<UIColor>()
+    )
+    SYNC_PROP_SET(
+        selected_color,
+        (Hmx::Object *)mColors[UIComponent::kSelected],
+        mColors[UIComponent::kSelected] = _val.Obj<UIColor>()
+    )
+    SYNC_SUPERCLASS(UIFontImporter)
+    SYNC_SUPERCLASS(RndDir)
 END_PROPSYNCS
 
 BEGIN_SAVES(UILabelDir)

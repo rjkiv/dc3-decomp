@@ -13,16 +13,30 @@ enum LocaleNumber {
     LocalePlural = 1,
 };
 
+class LocaleChunkSort {
+public:
+    struct OrderedLocaleChunk {
+        OrderedLocaleChunk() : node1(0), node2(0), node3(0) {}
+        DataNode node1;
+        DataNode node2;
+        DataNode node3;
+
+        MEM_ARRAY_OVERLOAD(OrderedLocaleChunk, 0x1d)
+    };
+
+    static void Sort(OrderedLocaleChunk *, int);
+};
+
 class Locale {
 private:
     int mSize; // 0x0
     Symbol *mSymTable; // 0x4
     const char **mStrTable; // 0x8
     StringTable *mStringData; // 0xc
-    int unk10;
+    bool *mUploadedFlags; // 0x10
     Symbol mFile; // 0x14
     int mNumFilesLoaded; // 0x18
-    bool *mUploadedFlags; // 0x1c
+    bool mInitialized; // 0x1c - checked in Init
     DataArray *mMagnuStrings; // 0x20
 public:
     Locale() {}

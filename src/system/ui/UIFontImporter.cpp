@@ -7,6 +7,7 @@
 #include "rndobj/Mat.h"
 #include "rndobj/Text.h"
 #include "stl/_vector.h"
+#include "ui/ResourceDirPtr.h"
 #include "utl/Std.h"
 #include "utl/Str.h"
 #include "utl/Symbol.h"
@@ -253,7 +254,40 @@ RndFontBase *UIFontImporter::FindFontForMat(RndMat *mat) const {
     return nullptr;
 }
 
-DataNode UIFontImporter::OnGetGennedBitmapPath(DataArray *da) { return DataNode(""); }
+DataNode UIFontImporter::OnShowFontPicker(DataArray *) {
+    return DataNode(0);
+}
+
+DataNode UIFontImporter::OnGenerate(DataArray *) {
+    return DataNode(0);
+}
+
+DataNode UIFontImporter::OnGenerateOG(DataArray *) {
+    return DataNode(0);
+}
+
+DataNode UIFontImporter::OnGenerate3D(DataArray *) {
+    return DataNode(0);
+}
+
+DataNode UIFontImporter::OnGetGennedBitmapPath(DataArray *da) {
+    RndFont *font;
+    const char *path = "";
+    if (!mGennedFonts.empty()) {
+        font = dynamic_cast<RndFont *>(mGennedFonts.front());
+        if (font) {
+            RndMat *mat = font->Mat(0);
+            if (mat) {
+                if (mat->GetDiffuseTex()) {
+                    if (mat->GetDiffuseTex()) {
+                        path = mat->GetDiffuseTex()->File().c_str();
+                    }
+                }
+            }
+        }
+    }
+    return DataNode(path);
+}
 
 DataNode UIFontImporter::OnImportSettings(DataArray *da) {
     ImportSettingsFromFont(mFontToImportFrom);
@@ -303,6 +337,24 @@ RndText *UIFontImporter::FindTextForFont(RndFontBase *font) const {
     return nullptr;
 }
 
-BEGIN_HANDLERS(UIFontImporter)
+BEGIN_CUSTOM_HANDLERS(UIFontImporter)
+    HANDLE(show_font_picker, OnShowFontPicker)
+    HANDLE(generate, OnGenerate)
+    HANDLE(generate_og, OnGenerateOG)
+    HANDLE(generate_og, OnGenerate3D)
+    HANDLE(generate_3d, OnGenerate3D)
+    HANDLE(forget_gened_fonts, OnForgetGened)
+    HANDLE(attach_to_importfont, OnAttachToImportFont)
+    HANDLE(import_from_importfont, OnImportSettings)
+    HANDLE(sync_with_resource, OnSyncWithResourceFile)
+    HANDLE_EXPR(get_resources_file_list, ResourceDirBase::GetFileList(Symbol("UILabel"), Symbol("UILabelDir")))
+    HANDLE(get_bitmap_path, OnGetGennedBitmapPath)
+    {
+        _NEW_STATIC_SYMBOL(set_charset_utf8)
+        if (sym == _s) {
+            OnSetCharsetUTF8(_msg->Str(2));
+            return DataNode(0);
+        }
+    }
     HANDLE_SUPERCLASS(Hmx::Object)
-END_HANDLERS
+END_CUSTOM_HANDLERS

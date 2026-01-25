@@ -166,13 +166,69 @@ END_LOADS
 
 const char *Sound::GetSoundDisplayName() { return MakeString("Sequence: %s", Name()); }
 
-void Sound::Play(float volume, float pan, float transpose, Hmx::Object *, float delayMs) {
+void Sound::Play(float volume, float pan, float transpose, Hmx::Object *obj, float delayMs) {
     if (Name() && strstr(Name(), "camp_gameplay_failure")) {
         MILO_LOG(
             "[EH] BZ-64344 Playing sound with camp_gameplay_failure in it: '%s'\n", Name()
         );
     }
     MILO_ASSERT(delayMs >= 0.f, 0x1B7);
+
+    if (delayMs > 0.0f) {
+        DelayArgs *args = new DelayArgs;
+        if (args) {
+            args->unk0 = volume;
+            args->unk4 = pan;
+            args->unk8 = transpose;
+            args->unkc = obj;
+            args->unk10 = delayMs;
+        }
+        mDelayArgs.push_back(args);
+        StartPolling();
+    } else {
+        PlayableSample *sample = nullptr;
+        if (mSynthSample) {
+            SampleInst *inst = mSynthSample->NewInst(mLoop, mLoopStart, mLoopEnd);
+            sample = inst;
+            if (sample) {
+                sample->SetEventReceiver(obj);
+            }
+        } else if (mMoggClip) {
+            sample = mMoggClip;
+            sample->SetEventReceiver(obj);
+            mMoggClip->SetLoop(mLoop, mLoopStart, mLoopEnd);
+            mSamples.clear();
+        }
+        if (sample) {
+            mDuckers.Duck();
+            mSamples.push_back(sample);
+            StartPolling();
+            float faderVol, faderPan, faderTranspose;
+            mFaders.GetVal(faderVol, faderPan, faderTranspose);
+            sample->Play(mVolume + faderVol + volume);
+            sample->SetPan(Clamp(-4.0f, 4.0f, mPan + faderPan + pan));
+            sample->SetSpeed(Clamp(0.00390625f, 4.0f, CalcSpeedFromTranspose(faderTranspose + transpose) * mSpeed));
+            sample->SetEventReceiver(obj ? obj : unkb8);
+            if (mEnvelope) {
+                sample->SetADSR(mEnvelope->Impl());
+            } else {
+                sample->SetADSR(*TheSynth->DefaultADSR());
+            }
+            sample->SetSend(mSend);
+            sample->SetReverbMixDb(mReverbMixDb);
+            sample->SetReverbEnable(mReverbEnable);
+            if (mMaxPolyphony != 0) {
+                auto it = mSamples.begin();
+                for (int i = 0; i < (int)mSamples.size() - mMaxPolyphony; i++) {
+                    (*it)->Pause(false);
+                    ++it;
+                }
+            }
+        } else {
+            MILO_LOG("Sound::Play : '%s' **** NOT FOUND\n", PathName(this));
+        }
+    }
+    TheSynth->SendToPlayHandlers(this);
 }
 
 void Sound::Stop(Hmx::Object *obj, bool b2) {
