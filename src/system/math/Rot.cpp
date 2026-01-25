@@ -208,6 +208,24 @@ void RotateAboutZ(const Hmx::Matrix3 &min, float f, Hmx::Matrix3 &mout) {
     );
 }
 
+void MakeRotMatrixX(float angle, Hmx::Matrix3 &m) {
+    float c = Cosine(angle);
+    float s = Sine(angle);
+    m.Set(1.0f, 0.0f, 0.0f, 0.0f, c, s, 0.0f, -s, c);
+}
+
+void MakeRotMatrixY(float angle, Hmx::Matrix3 &m) {
+    float c = Cosine(angle);
+    float s = Sine(angle);
+    m.Set(c, 0.0f, -s, 0.0f, 1.0f, 0.0f, s, 0.0f, c);
+}
+
+void MakeRotMatrixZ(float angle, Hmx::Matrix3 &m) {
+    float c = Cosine(angle);
+    float s = Sine(angle);
+    m.Set(c, -s, 0.0f, s, c, 0.0f, 0.0f, 0.0f, 1.0f);
+}
+
 void MakeRotQuat(const Vector3 &v1, const Vector3 &v2, Hmx::Quat &q) {
     Vector3 vec;
     Cross(v1, v2, vec);

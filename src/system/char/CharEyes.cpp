@@ -1,9 +1,17 @@
 #include "char/CharEyes.h"
 #include "char/CharInterest.h"
 #include "char/CharWeightable.h"
+#include "math/Easing.h"
+#include "math/Utl.h"
+#include "obj/Data.h"
 #include "obj/Object.h"
 #include "obj/Task.h"
 #include "utl/BinStream.h"
+
+float EaseInExp(float t) {
+    MILO_ASSERT(t >= 0 && t <= 1, 0x39);
+    return std::pow(t, 3.03);
+}
 
 CharEyes::CharEyes()
     : mEyes(this), mInterests(this), mFaceServo(this), mCamWeight(this), unk78(0, 0, 0),
@@ -169,3 +177,42 @@ bool CharEyes::IsHeadIKWeightIncreasing() {
 }
 
 void CharEyes::ClearAllInterestObjects() { mInterests.clear(); }
+
+void CharEyes::ProceduralBlinkUpdate() {
+    static DataNode &disableCheat = DataVariable("cheat.disable_procedural_blinks");
+
+    if (sDisableProceduralBlink)
+        return;
+    if (disableCheat.Int(0))
+        return;
+    if (!unk1b1 && !unk18c)
+        return;
+
+    unk198 = unk198 - TheTaskMgr.DeltaSeconds();
+    if (unk198 < 0.0f) {
+        unk194 = 0;
+        unk198 = 15.0f;
+    }
+
+    if (!mFaceServo)
+        return;
+    if (!unk18c)
+        return;
+
+    float elapsed = TheTaskMgr.Seconds(TaskMgr::kRealTime) - unk190;
+    if (elapsed < 0.115f) {
+        // Closing phase
+        float t = Clamp(0.0f, 1.0f, elapsed * 8.695652f);
+        mFaceServo->SetProceduralBlinkWeight(EaseInExp(t));
+    } else if (elapsed < 0.3f) {
+        // Opening phase
+        float t = Clamp(0.0f, 1.0f, 1.0f - (elapsed - 0.115f) * 5.405405f);
+        mFaceServo->SetProceduralBlinkWeight(EaseSigmoid(t, 0.0f, 0.0f));
+        unk78 = unk1a0;
+    } else {
+        // Blink complete
+        mFaceServo->SetProceduralBlinkWeight(0.0f);
+        unk18c = false;
+        unk78 = unk1a0;
+    }
+}

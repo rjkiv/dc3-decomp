@@ -277,6 +277,7 @@ BEGIN_SAVES(CharDriver)
     bs << mClipType;
     bs << mPlayMultipleClips;
     bs << unk5c;
+    bs << mDefaultClip;
     bs << unk98;
 
 END_SAVES

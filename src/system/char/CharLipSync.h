@@ -24,6 +24,9 @@ public:
         void NextFrame();
         void Finish();
 
+    protected:
+        void RemoveViseme(int);
+
         CharLipSync *mLipSync; // 0x0
         int mLastCount; // 0x4
         std::vector<Weight> mWeights; // 0x8
@@ -43,6 +46,7 @@ public:
         void Set(CharLipSync *, ObjPtr<ObjectDir>);
         void SetClips(ObjPtr<ObjectDir>);
         void Reset();
+        void Poll(float);
 
         MEM_OVERLOAD(PlayBack, 0x3F)
 

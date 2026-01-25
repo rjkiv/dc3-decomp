@@ -1,10 +1,12 @@
 #include "char/CharInterest.h"
 #include "CharInterest.h"
+#include "math/Rand.h"
 #include "math/Rot.h"
+#include "math/Utl.h"
 #include "obj/Object.h"
+#include "os/Debug.h"
 #include "rndobj/Graph.h"
 #include "rndobj/Trans.h"
-#include "math/Rand.h"
 
 CharInterest::CharInterest()
     : mMaxViewAngle(20), mPriority(1), mMinLookTime(1), mMaxLookTime(3),
@@ -135,4 +137,46 @@ bool CharInterest::IsWithinViewCone(const Vector3 &v1, const Vector3 &v2) {
         return true;
     else
         return false;
+}
+
+bool CharInterest::IsMatchingFilterFlags(int mask) {
+    return (mCategoryFlags & mask) == mCategoryFlags && mCategoryFlags != 0;
+}
+
+float CharInterest::ComputeScore(
+    const Vector3 &v1, const Vector3 &v2, const Vector3 &v3, float f, int filterFlags, bool b
+) {
+    bool b2 = false;
+    if (IsMatchingFilterFlags(filterFlags) || (b && mCategoryFlags == 0)) {
+        b2 = true;
+    }
+    if (!b2)
+        return -1.0f;
+
+    Vector3 v7c(WorldXfm().v);
+    Vector3 v88;
+    Subtract(v7c, v2, v88);
+    float lensq = LengthSquared(v88);
+    Normalize(v88, v88);
+
+    float dot = Dot(v1, v88);
+    float f1 = 0.0f;
+    if (dot >= mMaxViewAngleCos)
+        f1 = 1.0f;
+
+    float dot2 = Dot(v3, v88);
+    float f2 = 0.0f;
+    if (dot2 >= mMaxViewAngleCos)
+        f2 = 1.0f;
+
+    float f7 = -(lensq * f - 1.0f);
+    if (IsNaN(f7)) {
+        MILO_NOTIFY("error scoring interest object: bad normalize factor gave score %f", f7);
+    }
+
+    float f4 = f7 + f2 + f1 - 0.99f;
+    if (f4 >= 0.0f) {
+        f4 = f4 + RandomFloat(-0.25f, 0.25f);
+    }
+    return f4 * mPriority;
 }

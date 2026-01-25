@@ -980,4 +980,35 @@ CharBoneDir *CharClip::GetResource() const {
 
 void CharClip::LockAndDelete(CharClip **const clips, int i2, int remaining) {
     MILO_ASSERT(remaining >= 0, 0x42A);
+
+    if (i2 >= remaining) {
+        remaining = i2;
+    }
+
+    int i = 0;
+    if (i2 > 0) {
+        for (int j = 0; j < i2; j++) {
+            CharClip *clip = clips[j];
+            if ((clip->mPlayFlags & 0x8000) == 0) {
+                clips[i] = clips[j];
+                clips[i2 + i] = clip;
+                i++;
+            }
+        }
+    }
+
+    if (remaining > i2) {
+        for (int k = i; k < remaining - i2; k++) {
+            clips[i2 + k]->mPlayFlags |= 0x8000;
+        }
+    }
+
+    if (i2 > 0) {
+        for (int k = 0; k < i2; k++) {
+            CharClip *clip = clips[i2 + k];
+            if (clip != nullptr) {
+                clip->Release(nullptr);
+            }
+        }
+    }
 }

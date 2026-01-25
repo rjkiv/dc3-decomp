@@ -27,6 +27,7 @@ public:
 
 protected:
     CharClipGroup();
+    int QueueRandom(int pos, int end) const;
 
     /** "LRU list of clips belonging to this group" */
     ObjPtrVec<CharClip> mClips; // 0x4

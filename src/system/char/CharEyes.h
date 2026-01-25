@@ -91,6 +91,7 @@ public:
 protected:
     CharEyes();
     bool IsHeadIKWeightIncreasing();
+    void ProceduralBlinkUpdate();
 
     DataNode OnAddInterest(DataArray *);
     DataNode OnToggleForceFocus(DataArray *);

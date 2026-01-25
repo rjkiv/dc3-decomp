@@ -1,8 +1,14 @@
 #include "char/ClipDistMap.h"
 #include "char/CharClip.h"
-#include "macros.h"
 #include "math/Utl.h"
 #include "rndobj/Rnd.h"
+#include <cmath>
+
+struct DistMapNodeSort {
+    bool operator()(const ClipDistMap::Node &n1, const ClipDistMap::Node &n2) const {
+        return n1.unk0 < n2.unk0;
+    }
+};
 
 void FindWeights(
     std::vector<RndTransformable *> &transes,
@@ -95,20 +101,44 @@ bool ClipDistMap::FindBestNode(float f1, float f2, float f3, ClipDistMap::Node &
 }
 
 void ClipDistMap::FindNodes(float f1, float f2, float f3) {
-    std::vector<Node> nodes = mNodes;
+    mNodes = std::vector<ClipDistMap::Node>(mNodes);
     mLastMinErr = f1;
-    float f5 = f2;
-    float f6;
-    float f4 = f2 * 0.44999998807907104;
-    if (f5 == 0.0) {
+
+    float f4 = f2 * 0.45f;
+    if (f2 == 0.0f) {
         f4 = kHugeFloat;
-        f6 = f4;
-    } else if (f6 == 0.0) {
-        f6 = f4;
+        f3 = f4;
+    } else if (f3 == 0.0f) {
+        f3 = f4;
     }
 
-    FindBestNodeRecurse(f1, f4, (f4 * 2.0 - f5), mAStart, mAEnd);
-    // finish later
+    FindBestNodeRecurse(f1, f4, (f4 * 2.0f - f2), mAStart, mAEnd);
+
+    std::sort(mNodes.begin(), mNodes.end(), DistMapNodeSort());
+
+    if (!mNodes.empty() && f3 > 0.0f) {
+        float lastNodeDist = mAEnd - mNodes.back().unk0;
+        if (lastNodeDist > f3) {
+            ClipDistMap::Node node;
+            if (FindBestNode(f1, mAEnd - f3, mAEnd, node)) {
+                mNodes.push_back(node);
+                std::sort(mNodes.begin(), mNodes.end(), DistMapNodeSort());
+            }
+        }
+    }
+
+    int limit = mNodes.size() - 1;
+    if (limit > 1) {
+        for (int i = 1; i < limit;) {
+            float dist = mNodes[i + 1].unk0 - mNodes[i].unk0;
+            if (dist < f2) {
+                mNodes.erase(mNodes.begin() + (i + 1));
+                i--;
+            }
+            i++;
+            limit = mNodes.size() - 1;
+        }
+    }
 }
 
 int ClipDistMap::CalcWidth() {
@@ -131,7 +161,7 @@ int ClipDistMap::CalcWidth() {
         mAEnd = clipASamplesMod;
     }
 
-    f1 = floor(mAEnd - mAStart * mSamplesPerBeat + 0.5);
+    f1 = std::floor((mAEnd - mAStart) * mSamplesPerBeat + 0.5);
 
     uint val = f1;
 
@@ -158,7 +188,7 @@ int ClipDistMap::CalcHeight() {
         f1 = clipBStartBeat;
     }
 
-    f1 = floor(((f1 - mBStart) * (float)mSamplesPerBeat) + 0.5f);
+    f1 = std::floor((f1 - mBStart) * mSamplesPerBeat + 0.5f);
     uint val = f1;
 
     return (((val != 0) - (val >> 0x1f) & val)) + 1;

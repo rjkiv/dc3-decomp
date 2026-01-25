@@ -92,6 +92,8 @@ public:
     int TotalSize() const { return mTotalSize; }
     std::vector<Bone> GetBones() { return mBones; }
     Bone GetBonesAt(int index) { return mBones[index]; }
+    char *GetStart() const { return mStart; }
+    int GetOffset(Type type) const { return mOffsets[type]; }
 
     static Type TypeOf(Symbol);
     static const char *SuffixOf(Type);
@@ -129,6 +131,8 @@ public:
     virtual ~CharBonesAlloc();
 
     MEM_OVERLOAD(CharBonesAlloc, 0x172);
+
+    friend class CharMirror;
 
 protected:
     virtual void ReallocateInternal();

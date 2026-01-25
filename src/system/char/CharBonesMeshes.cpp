@@ -50,38 +50,40 @@ void CharBonesMeshes::AcquirePose() {
 
     // Copy positions
     char *pos = mStart;
-    char *scaleOff = mStart + mOffsets[TYPE_SCALE];
+    char *scaleOff = mOffsets[TYPE_SCALE] + mStart;
     for (; pos < scaleOff; pos += sizeof(Vector3), ++curMesh) {
         *(Vector3 *)pos = (*curMesh)->LocalXfm().v;
     }
 
     // Copy scales using MakeScale
-    char *quatOff = mStart + mOffsets[TYPE_QUAT];
+    pos = mOffsets[TYPE_SCALE] + mStart;
+    char *quatOff = mOffsets[TYPE_QUAT] + mStart;
     for (; pos < quatOff; pos += sizeof(Vector3), ++curMesh) {
         MakeScale((*curMesh)->LocalXfm().m, *(Vector3 *)pos);
     }
 
     // Copy quaternions using Quat::Set
-    char *rotxOff = mStart + mOffsets[TYPE_ROTX];
+    pos = mOffsets[TYPE_QUAT] + mStart;
+    char *rotxOff = mOffsets[TYPE_ROTX] + mStart;
     for (; pos < rotxOff; pos += sizeof(Hmx::Quat), ++curMesh) {
         ((Hmx::Quat *)pos)->Set((*curMesh)->LocalXfm().m);
     }
 
     // Copy X rotations
-    float *rotIt = (float *)pos;
-    float *rotyOff = (float *)(mStart + mOffsets[TYPE_ROTY]);
+    float *rotIt = (float *)(mOffsets[TYPE_ROTX] + mStart);
+    float *rotyOff = (float *)(mOffsets[TYPE_ROTY] + mStart);
     for (; rotIt < rotyOff; rotIt++, ++curMesh) {
         *rotIt = GetXAngle((*curMesh)->LocalXfm().m);
     }
 
     // Copy Y rotations
-    float *rotzOff = (float *)(mStart + mOffsets[TYPE_ROTZ]);
+    float *rotzOff = (float *)(mOffsets[TYPE_ROTZ] + mStart);
     for (; rotIt < rotzOff; rotIt++, ++curMesh) {
         *rotIt = GetYAngle((*curMesh)->LocalXfm().m);
     }
 
     // Copy Z rotations
-    float *endOff = (float *)(mStart + mOffsets[TYPE_END]);
+    float *endOff = (float *)(mOffsets[TYPE_END] + mStart);
     for (; rotIt < endOff; rotIt++, ++curMesh) {
         *rotIt = GetZAngle((*curMesh)->LocalXfm().m);
     }
@@ -114,19 +116,19 @@ void CharBonesMeshes::PoseMeshes() {
         float *rotIt = (float *)rotxOff;
         float *rotyOff = (float *)(mStart + mOffsets[TYPE_ROTY]);
         for (; rotIt < rotyOff; rotIt++, ++curMesh) {
-            (*curMesh)->DirtyLocalXfm().m.RotateAboutX(*rotIt);
+            MakeRotMatrixX(*rotIt, (*curMesh)->DirtyLocalXfm().m);
         }
 
         // Apply Y rotations
         float *rotzOff = (float *)(mStart + mOffsets[TYPE_ROTZ]);
         for (; rotIt < rotzOff; rotIt++, ++curMesh) {
-            (*curMesh)->DirtyLocalXfm().m.RotateAboutY(*rotIt);
+            MakeRotMatrixY(*rotIt, (*curMesh)->DirtyLocalXfm().m);
         }
 
         // Apply Z rotations
         float *endOff = (float *)(mStart + mOffsets[TYPE_END]);
         for (; rotIt < endOff; rotIt++, ++curMesh) {
-            (*curMesh)->DirtyLocalXfm().m.RotateAboutZ(*rotIt);
+            MakeRotMatrixZ(*rotIt, (*curMesh)->DirtyLocalXfm().m);
         }
     }
 
