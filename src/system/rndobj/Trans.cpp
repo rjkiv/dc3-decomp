@@ -218,7 +218,7 @@ BEGIN_LOADS(RndTransformable)
     case 0:
         break;
     }
-    if (gRev != 0 && gRev < 7) {
+    if (gRev > 0 && gRev < 7) {
         Vector3 v;
         bs >> v;
         if (!v.IsZero()) {

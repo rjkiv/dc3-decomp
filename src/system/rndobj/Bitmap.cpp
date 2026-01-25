@@ -40,7 +40,7 @@ BinStream &RndBitmap::LoadHeader(BinStream &bs, u8 &numMips) {
     if (rev > 1)
         bs >> mName;
     bs >> mBpp;
-    if (rev != 0)
+    if (rev > 0)
         bs >> mOrder;
     else {
         bs >> h;

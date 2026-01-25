@@ -72,7 +72,7 @@ BEGIN_LOADS(CharFaceServo)
             }
         }
     }
-    if (d.rev != 0)
+    if (d.rev > 0)
         bs >> mBlinkClipLeftName;
     if (d.rev > 1)
         bs >> mBlinkClipRightName;
