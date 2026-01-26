@@ -101,14 +101,14 @@ DataArray *LoadDtz(const char *c, int i) {
     char d[4] = {c[i - 1], c[i - 2], c[i - 3], c[i - 4]};
     int decompSize = reinterpret_cast<int>(d);
     MILO_ASSERT(decompSize > 0, 0x456);
-    auto pDecompBuf = MemAlloc(decompSize, "DataFile.cpp", 0x459, "LoadDtz", 0);
+    auto pDecompBuf = MemAlloc(decompSize, __FILE__, 0x459, "LoadDtz", 0);
     MILO_ASSERT(pDecompBuf, 0x45b);
     DecompressMem(c, i - 4, pDecompBuf, decompSize, 0);
     BufStream buf_stream = BufStream(pDecompBuf, decompSize, true);
-    DataArray *da = 0;
+    DataArray *da;
     buf_stream >> da;
     if (pDecompBuf) {
-        MemFree(pDecompBuf, "DataFile.cpp", 0x46a, "unknown");
+        MemFree(pDecompBuf, __FILE__, 0x46a, "unknown");
     }
     return da;
 }

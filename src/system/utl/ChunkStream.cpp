@@ -132,40 +132,39 @@ int ChunkStream::Tell() {
     }
 }
 
-// int ChunkStream::WriteChunk() {
-//     MILO_ASSERT(mCurBufOffset < kChunkSizeMask, 778);
-//     int size = mCurBufOffset;
-//     int flags = 0;
-//     int *firstbuf = (int *)mBuffers[0];
-//     if (mChunkInfo.mID == 0xCDBEDEAF) {
-//         int l38 = mBufSize - 4;
-//         int *secondbuf = (int *)mBuffers[1];
-//         *secondbuf = size;
-//         EndianSwapEq(*secondbuf);
-//         CompressMem(mBuffers[0], size, secondbuf + 1, l38, 0);
-//         if (((float)mCurBufOffset / (float)l38) > 1.1f && mChunkInfo.mNumChunks != 0) {
-//             size = l38 + 4;
-//             firstbuf = secondbuf;
-//         } else
-//             flags |= 0x1000000;
-//     }
-//     if (size != mFile->Write(firstbuf, size)) {
-//         mFail = true;
-//     }
-//     MILO_ASSERT((size & ~kChunkSizeMask) == 0, 820);
-//     MILO_ASSERT((flags & (kChunkSizeMask|kChunkUnusedMask)) == 0, 822);
-//     int result = size | flags;
-//     MILO_ASSERT((result & kChunkUnusedMask) == 0, 827);
-//     return result;
-// }
+int ChunkStream::WriteChunk() {
+    MILO_ASSERT(mCurBufOffset < kChunkSizeMask, 778);
+    int size = mCurBufOffset;
+    int flags = 0;
+    int firstbuf = *(int *)mBuffers[0];
+    if (mChunkInfo.mID == 0xCDBEDEAF) {
+        int l38 = mBufSize - 4;
+        unsigned int secondbuf = *(int *)mBuffers[1];
+        secondbuf = size;
+        secondbuf = EndianSwap(secondbuf);
+        CompressMem(mBuffers[0], size, (char *)secondbuf + 1, l38, 0);
+        if (((float)mCurBufOffset / (float)l38) > 1.1f && mChunkInfo.mNumChunks != 0) {
+            size = l38 + 4;
+            firstbuf = secondbuf;
+        } else
+            flags |= 0x1000000;
+    }
+    if (size != mFile->Write((const void *)firstbuf, size)) {
+        mFail = true;
+    }
+    MILO_ASSERT((size & ~kChunkSizeMask) == 0, 820);
+    MILO_ASSERT((flags & (kChunkSizeMask|kChunkUnusedMask)) == 0, 822);
+    int result = size | flags;
+    MILO_ASSERT((result & kChunkUnusedMask) == 0, 827);
+    return result;
+}
 
-// BinStream &MarkChunk(BinStream &bs) {
-//     ChunkStream *cs = dynamic_cast<ChunkStream *>(&bs);
-//     if (cs)
-//         cs->MaybeWriteChunk(false); // private lol, need a public method that just
-//         calls this under the hood
-//     return bs;
-// }
+BinStream &MarkChunk(BinStream &bs) {
+    ChunkStream *cs = dynamic_cast<ChunkStream *>(&bs);
+    if (cs)
+        cs->PotentiallyWriteChunk(false);
+    return bs;
+}
 
 void DecompressMemHelper(const void *compressedMem, int size, void *dst, int &dstLen, const char *c) {
     unsigned int rawSize = *(unsigned int *)compressedMem;
@@ -198,4 +197,19 @@ void ChunkStream::DecompressChunk(DecompressTask &task) {
 
 void ChunkStream::DecompressChunkAsync() {
 
+}
+
+BinStream &WriteChunks(BinStream &bs, const void *v, int i1, int i2) {
+    for (int i = 0; i != i1;) {
+        int temp = i1 - i;
+        if (i2 < temp) {
+            temp = i2;
+        }
+        bs.Write((void *)(i + (int)v), temp);
+        i += temp;
+        if (bs.GetPlatform() == kPlatformWii) {
+            MarkChunk(bs);
+        }
+    }
+    return bs;
 }
