@@ -103,7 +103,7 @@ DataArray *LoadDtz(const char *c, int i) {
     MILO_ASSERT(decompSize > 0, 0x456);
     auto pDecompBuf = MemAlloc(decompSize, "DataFile.cpp", 0x459, "LoadDtz", 0);
     MILO_ASSERT(pDecompBuf, 0x45b);
-    DecompressMem(c, i - 4, pDecompBuf, decompSize, 0, 0);
+    DecompressMem(c, i - 4, pDecompBuf, decompSize, 0);
     BufStream buf_stream = BufStream(pDecompBuf, decompSize, true);
     DataArray *da = 0;
     buf_stream >> da;

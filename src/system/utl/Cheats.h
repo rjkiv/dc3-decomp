@@ -50,6 +50,7 @@ public:
     bool KeyCheatsEnabled() { return mKeyCheatsEnabled; };
     void CallCheatScript(bool b1, DataArray *da, LocalUser *lu, bool b2);
     void RebuildKeyCheatsForMode();
+    void SetUnsafeCheatsUsed(bool b) { mUnsafeCheatsUsed = b; };
 
     Symbol GetSymMode() { return mSymMode; }
     void SetSymMode(Symbol sym) { mSymMode = sym; }
@@ -76,7 +77,7 @@ protected:
     bool mIsOverridingKeyboard;
     //MsgSinks *mPreviousOverride;
 
-    bool mUnsafeCheatsUsed;
+    bool mUnsafeCheatsUsed; // 0xd0
     bool mDisplayCheats;
     String mMessage;
     float mMessageTimer;
@@ -92,7 +93,7 @@ void CheatsInit();
 void LogCheat(int, bool, DataArray *);
 void AppendCheatsLog(FixedString &);
 void CallQuickCheat(DataArray *da, LocalUser *lu);
-void InitQuickJoyCheats(DataArray *a, CheatsManager::ShiftMode);
+void InitQuickJoyCheats(const DataArray *a, CheatsManager::ShiftMode);
 void CheatsTerminate();
 DataNode OnGetCheatMode(DataArray *da);
 DataNode SetKeyCheatsEnabled(DataArray *da);

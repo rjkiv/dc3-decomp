@@ -7,13 +7,25 @@
 #define kChunkSizeMask 0x00ffffff
 #define kChunkUnusedMask 0xfe000000
 #define CHUNKSTREAM_Z_ID 0xCBBEDEAF
+#define CHUNKSTREAM_Z_ID2 0xCCBEDEAF
+#define CHUNKSTREAM_Z_ID3 0xCDBEDEAF
 #define kChunkIDMask 0xC0BEDEAF
+
 
 enum BufferState {
     kInvalid,
     kReading,
     kDecompressing,
     kReady,
+};
+
+struct DecompressTask {
+    int *mChunk; // 0x0
+    void *unk4; // 0x4
+    BufferState *mState; // 0x8
+    int unkc; // 0xc
+    int mID; // 0x10
+    char *unk14; // 0x14
 };
 
 class ChunkStream : public BinStream {
@@ -52,6 +64,9 @@ private:
     virtual void WriteImpl(const void *, int);
     virtual void SeekImpl(int, SeekType);
 
+    static void DecompressChunk(DecompressTask &);
+    void DecompressChunkAsync();
+
     void SetPlatform(Platform);
     void ReadChunkAsync();
     void MaybeWriteChunk(bool);
@@ -82,3 +97,4 @@ private:
 BinStream &MarkChunk(BinStream &);
 void SetActiveChunkObject(Hmx::Object *obj);
 BinStream &WriteChunks(BinStream &, const void *, int, int);
+void DecompressMemHelper(const void *, int, void *, int &, const char *);

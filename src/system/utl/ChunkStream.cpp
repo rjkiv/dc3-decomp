@@ -1,5 +1,8 @@
 #include "utl/ChunkStream.h"
+
+#include "Compress.h"
 #include "obj/Object.h"
+#include "os/Endian.h"
 #include "os/File.h"
 #include "os/System.h"
 
@@ -163,3 +166,36 @@ int ChunkStream::Tell() {
 //         calls this under the hood
 //     return bs;
 // }
+
+void DecompressMemHelper(const void *compressedMem, int size, void *dst, int &dstLen, const char *c) {
+    unsigned int rawSize = *(unsigned int *)compressedMem;
+    DecompressMem((const char *)compressedMem + 4, size - 4, dst, dstLen, c);
+    int expectedDstLen = EndianSwap(rawSize);
+    MILO_ASSERT(dstLen == expectedDstLen, 0x3bb);
+}
+
+void ChunkStream::DecompressChunk(DecompressTask &task) {
+    MILO_ASSERT(*task.mState == kDecompressing, 0x3c1);
+    auto compressedSize = *task.mChunk & kChunkSizeMask;
+    MILO_ASSERT((compressedSize & ~kChunkSizeMask) == 0, 0x3c5);
+    if (task.mID == CHUNKSTREAM_Z_ID3) {
+        void *compressedData = (char *)task.unk4 + (task.unkc - compressedSize);
+        DecompressMemHelper(compressedData, compressedSize, task.unk4, task.unkc, task.unk14);
+    }
+    else if (task.mID == CHUNKSTREAM_Z_ID2) {
+        void *compressedData = (char *)task.unk4 + (task.unkc - compressedSize) + 10;
+        compressedSize -= 18;
+        DecompressMem(compressedData, compressedSize, task.unk4, task.unkc, task.unk14);
+    }
+    else {
+        MILO_ASSERT(task.mID == CHUNKSTREAM_Z_ID, 0x3d7);
+        void *compressedData = (char *)task.unk4 + (task.unkc - compressedSize);
+        DecompressMem(compressedData, compressedSize, task.unk4, task.unkc, task.unk14);
+    }
+    *task.mChunk = task.unkc;
+    *task.mState = kReady;
+}
+
+void ChunkStream::DecompressChunkAsync() {
+
+}

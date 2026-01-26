@@ -6,7 +6,7 @@
 #include "os/System.h"
 #include "obj/DataFunc.h"
 
-void InitQuickJoyCheats(DataArray *a, CheatsManager::ShiftMode);
+void InitQuickJoyCheats(const DataArray *a, CheatsManager::ShiftMode);
 void InitKeyCheats(const DataArray *);
 void InitLongJoyCheats(const DataArray *);
 
@@ -167,3 +167,9 @@ void CheatsManager::RebuildKeyCheatsForMode() {
 
 
 CheatLog::~CheatLog() {}
+
+DataNode CheatsManager::OnMsg(KeyboardKeyReleaseMsg const &msg) {
+    if (msg->Int(2) == 0x11 && mIsOverridingKeyboard)
+
+    return 0;
+}
