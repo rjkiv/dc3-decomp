@@ -58,7 +58,9 @@ public:
     virtual const char *Name() const;
     virtual bool Cached() const;
     virtual Platform GetPlatform() const;
+
     void PotentiallyWriteChunk(bool b) { MaybeWriteChunk(b); } // so dumb
+    static bool PollDecompressionWorker();
 
 private:
     virtual void ReadImpl(void *, int);

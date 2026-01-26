@@ -4,7 +4,42 @@
 #include "obj/Object.h"
 #include "os/Endian.h"
 #include "os/File.h"
+#include "os/SynchronizationEvent.h"
 #include "os/System.h"
+
+namespace {
+    std::list<DecompressTask> gDecompressionQueue;
+    CriticalSection *gDecompressionCritSec;
+    bool gDecompressionThread = false;
+    SynchronizationEvent gDataProcessedEvt;
+    SynchronizationEvent gDataReadyEvt;
+    void *mThreadHandle;
+
+    unsigned long DecompressionThread(void *v) {
+        for (; gDecompressionThread != false;) {
+            if (ChunkStream::PollDecompressionWorker()) {
+                gDataProcessedEvt.Set();
+            }
+            else {
+                gDataReadyEvt.Wait(-1);
+            }
+        }
+        return false;
+    }
+
+    void StartDecompressionThread() {
+        if (gDecompressionThread) {
+            gDataProcessedEvt.Set();
+        }
+        else {
+            gDecompressionThread = true;
+            mThreadHandle = CreateThread(nullptr, 0, DecompressionThread, nullptr, 4, nullptr);
+            //MILO_ASSERT(mThreadHandle[i], 0x82); // no idea where i comes from
+        }
+        XSetThreadProcessor(mThreadHandle, 3);
+        ResumeThread(mThreadHandle);
+    }
+}
 
 Hmx::Object *gActiveChunkObject;
 
@@ -197,6 +232,24 @@ void ChunkStream::DecompressChunk(DecompressTask &task) {
 
 void ChunkStream::DecompressChunkAsync() {
 
+}
+
+bool ChunkStream::PollDecompressionWorker() {
+    gDecompressionCritSec->Enter();
+    unsigned int counter = 0;
+    FOREACH(it, gDecompressionQueue) {
+        counter++;
+    }
+    if (counter != 0) {
+        DecompressTask task;
+        memcpy(&task, &gDecompressionQueue.front(), sizeof(task));
+        gDecompressionQueue.pop_front();
+        gDecompressionCritSec->Exit();
+        DecompressChunk(task);
+        return true;
+    }
+    gDecompressionCritSec->Exit();
+    return false;
 }
 
 BinStream &WriteChunks(BinStream &bs, const void *v, int i1, int i2) {
