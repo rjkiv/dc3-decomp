@@ -143,6 +143,19 @@ ChunkStream::ChunkStream(
     }
 }
 
+ChunkStream::~ChunkStream() {
+    if (mFail == false && mType == kWrite) {
+        MaybeWriteChunk(true);
+        if (mChunkInfo.mNumChunks == 512) {
+            MILO_FAIL("%s is %d compressed bytes too large", mFilename, sizeof(mChunkInfo.mChunks));
+        }
+        //memset()
+        for (int i = 0; i < sizeof(mChunkInfo.mChunks); i++) {
+            int maxChunk = mChunkInfo.mMaxChunkSize;
+        }
+    }
+}
+
 bool ChunkStream::Cached() const { return mIsCached; }
 Platform ChunkStream::GetPlatform() const { return mPlatform; }
 
