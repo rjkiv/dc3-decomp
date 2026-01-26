@@ -21,11 +21,11 @@ enum BufferState {
 
 struct DecompressTask {
     int *mChunk; // 0x0
-    void *unk4; // 0x4
+    void *mBuffer; // 0x4
     BufferState *mState; // 0x8
-    int unkc; // 0xc
+    int unkc; // 0xc i think this is the expected decompressed size
     int mID; // 0x10
-    char *unk14; // 0x14
+    char *mTempBuf; // 0x14
 };
 
 class ChunkStream : public BinStream {

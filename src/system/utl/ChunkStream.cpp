@@ -29,7 +29,7 @@ namespace {
 
     void StartDecompressionThread() {
         if (gDecompressionThread) {
-            gDataProcessedEvt.Set();
+            gDataReadyEvt.Set();
         }
         else {
             gDecompressionThread = true;
@@ -213,18 +213,18 @@ void ChunkStream::DecompressChunk(DecompressTask &task) {
     auto compressedSize = *task.mChunk & kChunkSizeMask;
     MILO_ASSERT((compressedSize & ~kChunkSizeMask) == 0, 0x3c5);
     if (task.mID == CHUNKSTREAM_Z_ID3) {
-        void *compressedData = (char *)task.unk4 + (task.unkc - compressedSize);
-        DecompressMemHelper(compressedData, compressedSize, task.unk4, task.unkc, task.unk14);
+        void *compressedData = (char *)task.mBuffer + (task.unkc - compressedSize);
+        DecompressMemHelper(compressedData, compressedSize, task.mBuffer, task.unkc, task.mTempBuf);
     }
     else if (task.mID == CHUNKSTREAM_Z_ID2) {
-        void *compressedData = (char *)task.unk4 + (task.unkc - compressedSize) + 10;
+        void *compressedData = (char *)task.mBuffer + (task.unkc - compressedSize) + 10;
         compressedSize -= 18;
-        DecompressMem(compressedData, compressedSize, task.unk4, task.unkc, task.unk14);
+        DecompressMem(compressedData, compressedSize, task.mBuffer, task.unkc, task.mTempBuf);
     }
     else {
         MILO_ASSERT(task.mID == CHUNKSTREAM_Z_ID, 0x3d7);
-        void *compressedData = (char *)task.unk4 + (task.unkc - compressedSize);
-        DecompressMem(compressedData, compressedSize, task.unk4, task.unkc, task.unk14);
+        void *compressedData = (char *)task.mBuffer + (task.unkc - compressedSize);
+        DecompressMem(compressedData, compressedSize, task.mBuffer, task.unkc, task.mTempBuf);
     }
     *task.mChunk = task.unkc;
     *task.mState = kReady;
@@ -265,4 +265,45 @@ BinStream &WriteChunks(BinStream &bs, const void *v, int i1, int i2) {
         }
     }
     return bs;
+}
+
+void ChunkStream::MaybeWriteChunk(bool b) {
+    if (mChunkInfo.mNumChunks < 2 && 0x2000 <= mCurBufOffset) {
+        b = true;
+    }
+    if (mCurBufOffset >= mRecommendedChunkSize || b != false) {
+        unsigned int temp = ((mChunkInfo.mNumChunks - 0x1ff) << 20) >> 25; // some leading zeroes thing
+        if (b == false && temp != 0) {
+            return;
+        }
+        if (mRecommendedChunkSize + 0x2000 >= mCurBufOffset && 0x1fff <= mLastWriteMarker && temp == 0) {
+            int size = mCurBufOffset - mLastWriteMarker;
+            void *dst = _MemAllocTemp(size, __FILE__, 0x2e6, "ChunkStreamBuf",  0);
+            memcpy(dst, mBuffers[mLastWriteMarker], size);
+            int writeMarker = mLastWriteMarker;
+            mLastWriteMarker = 0;
+            mCurBufOffset = writeMarker;
+            MaybeWriteChunk(true);
+            mCurBufOffset = size;
+            memcpy(mBuffers, dst, size);
+            MemFree(dst);
+            if (b == false) {
+                return;
+            }
+        }
+        if (512 <= mChunkInfo.mNumChunks) {
+            MILO_FAIL("%s has %d chunks, max is %d", mFilename, mChunkInfo.mNumChunks, 512);
+        }
+        int chunkWrite = WriteChunk();
+        mChunkInfo.mChunks[mChunkInfo.mNumChunks] = chunkWrite;
+        mChunkInfo.mNumChunks++;
+        if (mCurBufOffset >= mChunkInfo.mMaxChunkSize) {
+            mChunkInfo.mMaxChunkSize = mCurBufOffset;
+        }
+        if ((chunkWrite & kChunkSizeMask) >= mChunkInfo.mMaxChunkSize) {
+            mChunkInfo.mMaxChunkSize = chunkWrite & kChunkSizeMask;
+        }
+        mCurBufOffset = 0;
+    }
+    mLastWriteMarker = mCurBufOffset;
 }
