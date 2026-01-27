@@ -1,6 +1,7 @@
 #pragma once
 #include "math/Geo.h"
 #include "rndobj/Cam.h"
+#include "utl/MemMgr.h"
 #include "utl/Str.h"
 
 class RndBitmap;
@@ -12,12 +13,18 @@ public:
         BmpCache(unsigned int, unsigned int);
         virtual ~BmpCache();
 
+        MEM_OVERLOAD(BmpCache, 0x6b)
+
         void DeleteCache();
         void GetLoadedRange(uint &, uint &) const;
         void LoadCache(uint);
         void FlushCache();
-        void GetPixelColor(int, int, unsigned char &, unsigned char &, unsigned char &, unsigned char &) const;
-        void SetPixelColor(int, int, unsigned char, unsigned char, unsigned char, unsigned char);
+        void GetPixelColor(
+            int, int, unsigned char &, unsigned char &, unsigned char &, unsigned char &
+        ) const;
+        void SetPixelColor(
+            int, int, unsigned char, unsigned char, unsigned char, unsigned char
+        );
 
         String *mFileNames; // 0x4
         unsigned char *mBuffer; // 0x8

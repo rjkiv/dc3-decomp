@@ -49,6 +49,8 @@ public:
     virtual void Poll() { mList->Poll(); }
     virtual UIList *List() { return mList; }
 
+    MEM_OVERLOAD(UIListSlotElement, 0x1e)
+
     UIListSubList *mSlot;
     UIList *mList;
 };

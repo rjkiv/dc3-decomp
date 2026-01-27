@@ -41,6 +41,8 @@ public:
     }
     virtual void Draw(const Transform &, float, UIColor *, Box *);
 
+    MEM_OVERLOAD(UIListSlotElement, 0x1e) // thats what it says
+
     UIListLabel *mListLabel;
     UILabel *mLabel;
 };
