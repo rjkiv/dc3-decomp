@@ -42,7 +42,8 @@ namespace Hmx {
         std::vector<Vector2> points;
     };
 
-    struct Ray {
+    class Ray {
+    public:
         Vector2 base, dir;
     };
 }
@@ -141,8 +142,18 @@ inline void Multiply(const Sphere &s, const Transform &t, Sphere &out) {
     out.radius = s.radius * len;
 }
 
+void Intersect(const Hmx::Ray &, const Hmx::Ray &, Vector2 &);
+void Intersect(const Transform &, const Plane &, Hmx::Ray &);
+bool Intersect(const Transform &, const Hmx::Polygon &, const BSPNode *);
+bool Intersect(const Segment &, const Triangle &, bool, float &);
+bool Intersect(const Segment &, const BSPNode *, float &, Plane &);
 bool Intersect(const Segment &, const Sphere &);
 bool Intersect(const Vector3 &, const BSPNode *);
+bool Intersect(const Vector3 &, const Vector3 &, const Triangle &, float &);
+bool Intersect(const Vector3 &, const Vector3 &, const Box &, float &, float &);
+bool Intersect(const Plane &, const Box &);
+bool Intersect(const Triangle &, const Box &);
+
 
 DataNode SetBSPParams(DataArray *da);
 void GeoInit();
