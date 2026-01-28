@@ -117,11 +117,29 @@ void AllocInfoInit() {
         dst = MemAlloc(sizeof(Trie), __FILE__, 0x28, "Trie, 0");
         if (dst == nullptr) {
             s_pTrie = nullptr;
-        }
-        else {
+        } else {
             memset(dst, 0, sizeof(Trie));
             // some trie member bool being set to true here
             s_pTrie = (Trie *)dst;
         }
     }
+}
+
+int AllocInfo::StackCompare(const AllocInfo &other) const {
+    int result = Compare(other);
+    if (result != 0) {
+        return result;
+    }
+    for (int i = 0; i < 16; i++) {
+        if (mStackTrace[i] < other.mStackTrace[i]) {
+            return -1;
+        }
+        if (mStackTrace[i] > other.mStackTrace[i]) {
+            return 1;
+        }
+        if (mStackTrace[i] == 0 && other.mStackTrace[i] == 0) {
+            break;
+        }
+    }
+    return 0;
 }

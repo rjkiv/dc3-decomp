@@ -97,4 +97,7 @@ void JointScreenPos(const TrackedJoint &joint, Vector3 &v3) {
     vmx.y = joint.unk60.y;
     vmx.z = joint.unk60.z;
     NuiTransformSkeletonToDepthImage(vmx, &lDepthX, &lDepthY, &uDepth);
+    v3.x = (float)lDepthX / 240;
+    v3.y = (float)lDepthY / 320;
+    v3.z = uDepth >> 3;
 }
