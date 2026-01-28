@@ -154,7 +154,6 @@ bool Intersect(const Vector3 &, const Vector3 &, const Box &, float &, float &);
 bool Intersect(const Plane &, const Box &);
 bool Intersect(const Triangle &, const Box &);
 
-
 DataNode SetBSPParams(DataArray *da);
 void GeoInit();
 
@@ -162,5 +161,7 @@ inline void CalcBoxCenter(Vector3 &center, const Box &box) {
     Add(box.mMin, box.mMax, center);
     Scale(center, 0.5f, center);
 }
+
+void Clip(const Hmx::Polygon &, const Hmx::Ray &, Hmx::Polygon &);
 
 extern float gUnitsPerMeter;

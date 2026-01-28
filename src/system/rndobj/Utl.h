@@ -7,8 +7,18 @@
 #include "rndobj/Trans.h"
 #include "math/Vec.h"
 #include "math/Color.h"
+#include "math/Geo.h"
 #include "rndobj/TransAnim.h"
 #include <vector>
+#include "MultiMesh.h"
+
+struct BuildPoly {
+    BuildPoly();
+    ~BuildPoly();
+
+    Hmx::Polygon mPoly; // 0x0
+    Transform mTransform; // 0xc
+};
 
 void SetLocalScale(RndTransformable *, const Vector3 &);
 
@@ -31,6 +41,7 @@ void DistributeXfms(RndMultiMesh *, int, float);
 void MoveXfms(RndMultiMesh *, const Vector3 &);
 void ScaleXfms(RndMultiMesh *, const Vector3 &);
 void SortXfms(RndMultiMesh *, const Vector3 &);
+bool XfmSort(RndMultiMesh::Instance &, RndMultiMesh::Instance &);
 void RandomXfms(RndMultiMesh *);
 
 void CreateAndSetMetaMat(RndMat *);
@@ -75,3 +86,5 @@ const char *CacheResource(const char *, const Hmx::Object *);
 int GenerationCount(RndTransformable *, RndTransformable *);
 
 void EndianSwapBitmap(RndBitmap &bmap);
+
+void Clip(BuildPoly &, const Plane &, bool);
