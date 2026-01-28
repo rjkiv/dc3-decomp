@@ -1006,45 +1006,56 @@ void HamProfile::ResetOutfitPrefs() {
 }
 
 void HamProfile::UpdateBattleScore(
-    int i1, const HamPlayerData *playerdata, int i2, bool b
+    int songID, const HamPlayerData *playerdata, int stars, bool b
 ) {
     if (IsOkToUpdateProfile()) {
         if (playerdata) {
-            mRank->UpdateScore(i1, playerdata, mSongStatusMgr, i2, 0);
+            mRank->UpdateScore(songID, playerdata, mSongStatusMgr, stars, 0);
             mDirty = mDirty || mRank->UnkCA();
         }
-        bool updatedSong = mSongStatusMgr->UpdateBattleSong(i1, i2, b);
+        bool updatedSong = mSongStatusMgr->UpdateBattleSong(songID, stars, b);
         mDirty = mDirty || updatedSong;
     }
 }
 
 void HamProfile::UpdateScore(
-    int i1,
+    int songID,
     HamPlayerData const *playerdata,
     Difficulty diff,
-    int i2,
+    int score,
     int i3,
-    int i4,
-    int i5,
-    int i6,
-    int i7,
+    int stars,
+    int numNices,
+    int numPerfects,
+    int percentPassed,
     int i8,
     bool b1,
     bool b2
 ) {
     if (IsOkToUpdateProfile()) {
         if (playerdata) {
-            mRank->UpdateScore(i1, playerdata, mSongStatusMgr, i2, i4);
+            mRank->UpdateScore(songID, playerdata, mSongStatusMgr, score, stars);
             mDirty = mDirty || mRank->UnkCA();
         }
         bool updateSong = mSongStatusMgr->UpdateSong(
-            i1, i2, i3, diff, i8, i4, i5, i6, i7, b1, b2, false
-        ); // i hated this so much why didnt it go in numerical order
+            songID,
+            score,
+            i3,
+            diff,
+            i8,
+            stars,
+            numNices,
+            numPerfects,
+            percentPassed,
+            b1,
+            b2,
+            false
+        ); // i hated this so much why didnt it go in order
         mDirty = mDirty || updateSong;
 
         static Symbol challenge("challenge");
         if (TheGameMode->InMode(challenge)) {
-            bool updateFlaunt = mSongStatusMgr->UpdateFlaunt(i1, i2, diff, b1);
+            bool updateFlaunt = mSongStatusMgr->UpdateFlaunt(songID, score, diff, b1);
             mDirty = mDirty || updateFlaunt;
         }
 
