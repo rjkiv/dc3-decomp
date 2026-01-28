@@ -232,10 +232,10 @@ void HelpBarPanel::SyncToPanel(UIPanel *panel) {
     const DataNode *prop = nullptr;
     if (mLeftHandNavList) {
         if (!updatetert || updateback) {
-            updatetert = true;
-            updatetert = !updatetert;
+            mLeftHandNavList->SetHighButtonMode(false);
+        } else {
+            mLeftHandNavList->SetHighButtonMode(true);
         }
-        mLeftHandNavList->SetHighButtonMode(updatetert);
     }
     static Symbol helpbar_confirm_label("helpbar_confirm_label");
     static Symbol helpbar_allow_controller("helpbar_allow_controller");

@@ -23,7 +23,8 @@ public:
     bool HasNewRank() const;
     void AwardPoints(int, Symbol);
     void AwardPointsForTask(Symbol);
-    void UpdateScore(int, const class HamPlayerData *, const class SongStatusMgr *, int, int);
+    void
+    UpdateScore(int, const class HamPlayerData *, const class SongStatusMgr *, int, int);
     Symbol GetRankTitle() const;
 
     DataNode GetNextDeferredPoints(DataArray *);
@@ -33,6 +34,7 @@ public:
     static void Init();
 
     int RankNumber() { return mRankNumber; }
+    bool UnkCA() const { return unkca; }
 
 private:
     // FixedSizeSaveable

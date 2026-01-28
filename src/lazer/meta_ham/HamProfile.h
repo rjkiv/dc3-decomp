@@ -110,6 +110,9 @@ public:
     bool IsContentNew(Symbol) const;
     bool IsDifficultyUnlockedForProfile(Symbol, Symbol);
     void UpdateBattleScore(int, const HamPlayerData *, int, bool);
+    void UpdateScore(
+        int, HamPlayerData const *, Difficulty, int, int, int, int, int, int, int, bool, bool
+    );
 
     void IncrementSkippedSongCount() { mSkippedSongCount++; }
     void UpdateNag() { unk368++; }

@@ -27,6 +27,8 @@ public:
 
     static int SaveSize(int);
 
+    bool Unk20() const { return unk20; }
+
 private:
     std::map<Key, RatingHistory> unk8;
     bool unk20;

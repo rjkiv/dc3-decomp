@@ -113,6 +113,8 @@ public:
 
     static int SaveSize(int);
 
+    bool IsDirty() const { return mDirty; }
+
 private:
     // FixedSizeSaveable
     virtual void SaveFixed(FixedSizeSaveableStream &) const;
