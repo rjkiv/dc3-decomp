@@ -114,6 +114,8 @@ VOID XAudioGetSpeakerConfig();
 VOID XGetVideoMode(XVIDEO_MODE *pVideoMode);
 VOID *XMemSet(VOID *dest, INT c, SIZE_T count);
 VOID *XMemAlloc(SIZE_T dwSize, DWORD dwAllocAttributes);
+VOID *XMemFree(LPVOID lpHandle, DWORD dwFreeAttributes);
+INT XMemSize(LPVOID lpHandle, DWORD dwSizeAttributes);
 DWORD XPhysicalSize(LPVOID lpAddress);
 DWORD XUserAwardGamerPicture(
     DWORD dwUserIndex, DWORD dwPictureId, DWORD dwReserved, XOVERLAPPED *pXOverlapped
