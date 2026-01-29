@@ -14,11 +14,15 @@ void XTEABlockEncrypter::SetNonce(const unsigned long long *nonce, unsigned int 
 }
 
 void XTEABlockEncrypter::Encrypt(const XTEABlock *in, XTEABlock *out) {
+    unsigned int *key = mKey;
     unsigned long long *nonce = mNonce;
+    unsigned long offset = (char *)out - (char *)in;
     for (int i = 0; i < 2; i++) {
-        out->mData[i] = in->mData[i] ^ Encipher(*nonce, mKey);
+        *(unsigned long long *)(offset + (char *)in) =
+            *(unsigned long long *)in ^ Encipher(*nonce, key);
         *nonce += 1;
         nonce++;
+        in = (const XTEABlock *)((char *)in + 8);
     }
 }
 
@@ -32,5 +36,6 @@ XTEABlockEncrypter::Encipher(unsigned long long nonce, unsigned int *key) {
         sum += 0x9E3779B9;
         v2 += (v1 + (v1 << 4 ^ v1 >> 5)) ^ sum + key[(sum >> 11) & 3];
     }
-    return static_cast<unsigned long long>(v2) << 32 | static_cast<unsigned long long>(v1) & 0xFFFFFFFF;
+    return static_cast<unsigned long long>(v2) << 32
+        | static_cast<unsigned long long>(v1) & 0xFFFFFFFF;
 }
