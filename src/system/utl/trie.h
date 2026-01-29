@@ -16,7 +16,7 @@
 #define TRIE_GET_FREE_HEAD (unsigned int *)((char *)this + 0x220004)
 #define TRIE_GET_SIBLING(node) *(unsigned int *)(TRIE_GET_NODE(node) + 0x4)
 #define TRIE_SET_SIBLING(node, freehead)                                                 \
-    (unsigned int *)(TRIE_GET_NODE(node) + 0x4) = freehead
+    *(unsigned int *)(TRIE_GET_NODE(node) + 0x4) = freehead
 #define TRIE_INC_NODE_COUNT *TRIE_GET_NODE_COUNT = *TRIE_GET_NODE_COUNT + 1
 #define TRIE_CLEAR_NODE(node) *(unsigned int *)(char *)(this + node * NODE_SIZE) = 0
 #define TRIE_CLEAR_SIBLING(node)                                                         \
@@ -24,8 +24,13 @@
 #define TRIE_GET_PARENT(node) *(unsigned int *)(TRIE_GET_NODE(node) + 0x8)
 #define TRIE_CLEAR_PARENT(node)                                                          \
     *(unsigned int *)((char *)this + node * NODE_SIZE + 0x8) = 0
-#define TRIE_GET_CHAR(node) *((char *)this + node + 0x10)
-#define TRIE_SET_CHAR(node, chr) *((char *)this + node + 0x10) = chr
+#define TRIE_GET_CHAR(node) *((char *)this + node * NODE_SIZE + 0x10)
+#define TRIE_SET_CHAR(node, chr) *((char *)this + node * NODE_SIZE + 0x10) = chr
+#define TRIE_GET_CHILD(node) *(unsigned int *)(TRIE_GET_NODE(node))
+#define TRIE_SET_CHILD(node, set) *(unsigned int *)(TRIE_GET_NODE(node)) = set
+#define TRIE_SET_PARENT(node, set) *(unsigned int *)(TRIE_GET_NODE(node) + 0x8) = set
+#define TRIE_SET_COUNTS(node, set) *(unsigned int *)(TRIE_GET_NODE(node) + 0xC) = set
+#define TRIE_CLEAR_COUNTS(node) *(unsigned int *)(TRIE_GET_NODE(node) + 0xC) = 0
 
 // oh yeah this class is awful
 class Trie {
@@ -43,10 +48,10 @@ public:
 
 protected:
     // Counts is a 4 byte int thats used to store Duplicate count and total count
-    // DupCount = low 24 bits of the int(16mil max) & Count = high 8 bits(255 max)
+    // DupCount = upper 24 bits of the int(16mil max) & Count = low 8 bits(255 max)
     // int mNodeCount = 0x220000
     // int mHead = 0x220004
 };
-static Trie *pTrie = (Trie *)malloc(MAX_NODES * sizeof(Trie) + 8); // trie base & +8 for
-                                                                   // the total node count
-                                                                   // and freehead vars
+static Trie *pTrie = (Trie *)malloc(MAX_NODES * NODE_SIZE + 8); // trie base & +8 for
+                                                                // the total node count
+                                                                // and freehead vars
