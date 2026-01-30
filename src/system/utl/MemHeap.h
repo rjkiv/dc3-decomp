@@ -60,4 +60,6 @@ public:
     int mStack[16]; // 0x0
     int mSize; // 0x40
     int mTempRefs; // 0x44
+
+    static int sDefaultHeap;
 };

@@ -1,4 +1,5 @@
 #pragma once
+#include "MemHeap.h"
 
 extern const char *gStlAllocName;
 extern bool gStlAllocNameLookup;
@@ -40,6 +41,7 @@ void *MemResizeElem(
     const char *name
 );
 void MemFreeBlockStats(int, int &, int &, int &, int &, int &);
+MemHeapStack &ThreadMemStack(bool);
 
 #define kNoHeap -3
 #define kSystemHeap -1

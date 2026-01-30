@@ -28,6 +28,8 @@ int gSingleHeap;
 String gMemLogType;
 std::vector<String> gUseLowestMipExceptions;
 MemHeapStack gNullMemStack;
+int gNumThreads;
+unsigned long gThreadIds[MAX_BUF_THREADS];
 
 bool gInitted;
 
@@ -343,8 +345,7 @@ void MemInit() {
         if (OptionBool("memory_usage_test", false)) {
             gMemoryUsageTest = true;
             MILO_LOG("--- Executing Game in Memory Usage Test Mode ---\n");
-            MemTrackSetReportName(OptionStr("budget_log", "mem_usage_test_x360.0000.csv")
-            );
+            MemTrackSetReportName(OptionStr("budget_log", "mem_usage_test_x360.0000.csv"));
         }
         if (OptionBool("memory_alloc_test", false)) {
             MILO_LOG("--- Executing Game in Memory Alloc Test Mode ---\n");
@@ -437,4 +438,21 @@ void MemPushHeap(int iHeap) {
         s.mStack[s.mSize] = iHeap;
         s.mSize++;
     }
+}
+
+void MemPopHeap() {
+    if (gInitted == false || gNumHeaps < 1) {
+        return;
+    }
+    MemHeapStack s = ThreadMemStack(true);
+    MILO_ASSERT(s.mSize > 0, 0x1f6);
+    s.mSize--;
+}
+
+void MemFreeBlockStats(
+    int heapNum, int &i2, int &i3, int &numFreeBytes, int &i5, int &biggestFreeBlock
+) {
+    CritSecTracker tracker(gMemLock);
+    MILO_ASSERT(heapNum < MAX_HEAPS, 0x154);
+    gHeaps[heapNum].FreeBlockStats(i2, i3, numFreeBytes, i5, biggestFreeBlock);
 }
