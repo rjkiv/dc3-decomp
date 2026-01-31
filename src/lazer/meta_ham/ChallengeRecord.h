@@ -5,6 +5,16 @@ class ChallengeRecord {
 public:
     ChallengeRecord(ChallengeRow);
     virtual ~ChallengeRecord() {}
+    ChallengeRecord(const ChallengeRecord &);
+
+    ChallengeRecord &operator=(const ChallengeRecord &other);
+
+    ChallengeRow &GetChallengeRow() { return mRow; }
+    Symbol GetUnk40() { return unk40; }
+    Symbol GetUnk44() { return unk44; }
+    Symbol GetUnk48() { return unk48; }
+    Symbol GetUnk4c() { return unk4c; }
+    int GetUnk50() { return unk50; }
 
 private:
     ChallengeRow mRow; // 0x4

@@ -1,30 +1,8 @@
 #pragma once
 #include "NavListSortMgr.h"
-#include "lazer/net_ham/ChallengeSystemJobs.h"
+#include "meta_ham/ChallengeRecord.h"
+#include "net_ham/ChallengeSystemJobs.h"
 #include "utl/Symbol.h"
-
-class ChallengeRecord {
-public:
-    ChallengeRecord(const ChallengeRecord &);
-    virtual ~ChallengeRecord();
-
-    ChallengeRecord &operator=(const ChallengeRecord &other);
-
-    ChallengeRow &GetChallengeRow() { return mChallengeRow; }
-    Symbol GetUnk40() { return unk40; }
-    Symbol GetUnk44() { return unk44; }
-    Symbol GetUnk48() { return unk48; }
-    Symbol GetUnk4c() { return unk4c; }
-    Symbol GetUnk50() { return unk50; }
-
-protected:
-    ChallengeRow mChallengeRow; // 0x4
-    Symbol unk40; // 0x40
-    Symbol unk44; // 0x44
-    Symbol unk48; // 0x48
-    Symbol unk4c; // 0x4c
-    Symbol unk50; // 0x50
-};
 
 class ChallengeSortMgr : public NavListSortMgr {
 public:

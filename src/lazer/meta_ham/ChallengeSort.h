@@ -15,7 +15,7 @@ protected:
 class ChallengeSort : public NavListSort {
 public:
     ChallengeSort();
-    ~ChallengeSort();
+    virtual ~ChallengeSort() {}
 
     void Text(int, int, UIListLabel *, UILabel *) const;
     void BuildTree();

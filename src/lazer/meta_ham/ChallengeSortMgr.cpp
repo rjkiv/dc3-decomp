@@ -14,11 +14,11 @@
 #include "utl/Symbol.h"
 
 ChallengeRecord::ChallengeRecord(const ChallengeRecord &other)
-    : mChallengeRow(other.mChallengeRow), unk40(other.unk40), unk44(other.unk44),
-      unk48(other.unk48), unk4c(other.unk4c), unk50(other.unk50) {}
-ChallengeRecord::~ChallengeRecord() {}
+    : mRow(other.mRow), unk40(other.unk40), unk44(other.unk44), unk48(other.unk48),
+      unk4c(other.unk4c), unk50(other.unk50) {}
+
 ChallengeRecord &ChallengeRecord::operator=(const ChallengeRecord &other) {
-    this->mChallengeRow = other.mChallengeRow;
+    this->mRow = other.mRow;
     this->unk40 = other.unk40;
     this->unk44 = other.unk44;
     this->unk48 = other.unk48;
@@ -26,9 +26,6 @@ ChallengeRecord &ChallengeRecord::operator=(const ChallengeRecord &other) {
     this->unk50 = other.unk50;
     return *this;
 }
-
-NavListSort::NavListSort() {}
-ChallengeSort::~ChallengeSort() {}
 
 BEGIN_CUSTOM_HANDLERS(ChallengeSortMgr)
     HANDLE_EXPR(get_target_challenge_score, _msg->Int(2)) // li r11, 0x3e8 inst here?
