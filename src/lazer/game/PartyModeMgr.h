@@ -142,7 +142,7 @@ public:
     bool UseFullLengthSongs() const { return mUseFullLengthSongs; }
     void SetUseFullLengthSongs(bool b) { mUseFullLengthSongs = b; }
     Playlist *GetPlaylist() const { return mPlaylist; }
-    DateTime GetDateTime315() const { return unk315; }
+    const DateTime &GetDateTime315() const { return unk315; }
 
 private:
     void InitCharacters();
