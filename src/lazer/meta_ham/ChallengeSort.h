@@ -3,11 +3,9 @@
 #include "NavListSort.h"
 
 struct SortNodeFind {
-public:
     SortNodeFind(const NavListSortNode *);
     bool operator()(const NavListSortNode *) const;
 
-protected:
     Symbol mToken; // 0x0
     NavListNodeType mType; // 0x4
 };
@@ -16,15 +14,15 @@ class ChallengeSort : public NavListSort {
 public:
     ChallengeSort();
     virtual ~ChallengeSort() {}
-
-    void Text(int, int, UIListLabel *, UILabel *) const;
-    void BuildTree();
-    void DeleteItemList();
-    void BuildItemList();
-    void SetHighlightedIx(int);
-    void SetHighlightItem(const NavListSortNode *);
-    void UpdateHighlight();
-    void OnSelectShortcut(int);
+    virtual DataNode Handle(DataArray *, bool);
+    virtual void Text(int, int, UIListLabel *, UILabel *) const;
+    virtual void BuildTree();
+    virtual void DeleteItemList();
+    virtual void BuildItemList();
+    virtual void SetHighlightedIx(int);
+    virtual void SetHighlightItem(const NavListSortNode *);
+    virtual void UpdateHighlight();
+    virtual void OnSelectShortcut(int);
 
 protected:
 };

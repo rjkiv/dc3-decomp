@@ -1,25 +1,30 @@
 #include "ChallengeSort.h"
-
 #include "AppLabel.h"
 #include "ChallengeSortMgr.h"
+#include "meta_ham/NavListSort.h"
+#include "obj/Object.h"
 
-SortNodeFind::SortNodeFind(const NavListSortNode *node) : mToken(node->GetToken()), mType(node->GetType()) {}
+SortNodeFind::SortNodeFind(const NavListSortNode *node)
+    : mToken(node->GetToken()), mType(node->GetType()) {}
 
 bool SortNodeFind::operator()(const NavListSortNode *node) const {
-    Symbol token = node->GetToken();
-    if (token == mToken && node->GetType() == mType) return true;
-    else return false;
+    return node->GetToken() == mToken && node->GetType() == mType;
 }
 
-#pragma region(ChallengeSort)
+#pragma region ChallengeSort
 
 ChallengeSort::ChallengeSort() {}
+
+BEGIN_HANDLERS(ChallengeSort)
+    HANDLE_SUPERCLASS(NavListSort)
+END_HANDLERS
 
 void ChallengeSort::SetHighlightedIx(int idx) {
     unk54 = unk50;
     if (idx >= 0) {
         if (mList.size() >= idx) {
-            if (mList.empty()) return;
+            if (mList.empty())
+                return;
             unk50 = mList[idx];
             TheChallengeSortMgr->OnHighlightChanged();
             return;
@@ -74,13 +79,13 @@ void ChallengeSort::BuildItemList() {
         sym = sortNode->GetToken();
     }
     DeleteItemList();
-    FOREACH(it, unk3c) {
+    FOREACH (it, unk3c) {
         (*it)->Renumber(mList);
     }
-    FOREACH(it, unk30) {
+    FOREACH (it, unk30) {
         (*it)->Renumber(mList);
     }
-    FOREACH(it, unk30) {
+    FOREACH (it, unk30) {
         (*it)->FinishBuildList(this);
     }
     if (!sym.Null()) {

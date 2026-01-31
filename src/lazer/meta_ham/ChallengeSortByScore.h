@@ -10,12 +10,12 @@ public:
 
 class ChallengeSortByScore : public ChallengeSort {
 public:
+    ChallengeSortByScore() {
+        static Symbol by_score("by_score");
+        mSortName = by_score;
+    }
     virtual NavListItemNode *NewItemNode(void *) const;
     virtual NavListShortcutNode *NewShortcutNode(NavListItemNode *) const;
     virtual NavListHeaderNode *NewHeaderNode(NavListItemNode *) const;
     virtual NavListHeaderNode *NewHeaderNode(NavListItemNode *, NavListItemNode *) const;
-
-    ChallengeSortByScore();
-
-protected:
 };
