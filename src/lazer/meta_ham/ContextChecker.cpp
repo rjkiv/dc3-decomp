@@ -1,4 +1,5 @@
 #include "meta_ham/ContextChecker.h"
+#include "game/Game.h"
 #include "game/GameMode.h"
 #include "hamobj/Difficulty.h"
 #include "hamobj/HamGameData.h"
@@ -115,10 +116,29 @@ namespace {
         return false;
     }
 
-    // these all require TheGame
-    bool CheckContextNumRestarts(const DataArray *arr);
-    bool CheckContextNumRestartsGreater(const DataArray *);
-    bool CheckContextNumRestartsNot(const DataArray *);
+    bool CheckContextNumRestarts(const DataArray *arr) {
+        if (TheGame) {
+            int numRestarts = TheGame->GetNumRestarts();
+            MILO_ASSERT(arr->Size() >= 2, 0x98);
+            return numRestarts - arr->Int(1) == 0;
+        }
+    }
+
+    bool CheckContextNumRestartsGreater(const DataArray *arr) {
+        if (TheGame) {
+            int numRestarts = TheGame->GetNumRestarts();
+            MILO_ASSERT(arr->Size() >= 2, 0xa9);
+            return arr->Int(1) < numRestarts;
+        }
+    }
+
+    bool CheckContextNumRestartsNot(const DataArray *arr) {
+        if (TheGame) {
+            int numRestarts = TheGame->GetNumRestarts();
+            MILO_ASSERT(arr->Size() >= 2, 0xba);
+            return numRestarts != arr->Int(1);
+        }
+    }
 
     bool CheckContextNumPlayers(const DataArray *arr) {
         int numPlaying = 0;

@@ -6,6 +6,7 @@
 #include "meta/FixedSizeSaveableStream.h"
 #include "meta_ham/HamProfile.h"
 #include "meta_ham/HamSongMgr.h"
+#include "meta_ham/MetagameRank.h"
 #include "meta_ham/Utl.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
@@ -199,14 +200,12 @@ int MetagameStats::GetCount(CountStatID id) const {
 Symbol MetagameStats::SetTitleByThreshold(int i1, DataArray *a2) const {
     Symbol out(gNullStr);
     int i = 1;
-    if (a2) {
-        int aSize = a2->Size();
-        for (; i < aSize; i++) {
-            DataArray *curArr = a2->Array(i);
-            if (i1 >= curArr->Int(0)) {
-                out = curArr->Sym(1);
-            }
+    while (a2 && i < a2->Size()) {
+        DataArray *curArr = a2->Array(i);
+        if (i1 >= curArr->Int(0)) {
+            out = curArr->Sym(1);
         }
+        i++;
     }
     return out;
 }
@@ -293,24 +292,21 @@ void MetagameStats::IncrementCount(CountStatID id, int cnt) {
     mDirty = true;
 }
 
-Symbol MetagameStats::SetTitleForFavorite(int i1, int i2, DataArray *a3) const {
+Symbol MetagameStats::SetTitleForFavorite(int i1, int i2, DataArray *arr) const {
     Symbol ret(gNullStr);
-    if (a3) {
-        int aSize = a3->Size();
-        for (int i = 1; i < aSize; i++) {
-            DataArray *curArr = a3->Array(i);
-            int i0 = curArr->Int(0);
-            if (i1 == i0) {
-                if (curArr->Size() == 2) {
-                    ret = curArr->Sym(1);
-                } else {
-                    if (i2 < curArr->Int(1)) {
-                        continue;
-                    }
-                    ret = curArr->Sym(2);
+    int i = 1;
+    while (arr && i < arr->Size()) {
+        DataArray *titleArray = arr->Array(i);
+        if (i1 == titleArray->Int(0)) {
+            if (titleArray->Size() == 2) {
+                ret = titleArray->Sym(1);
+            } else {
+                if (i2 >= titleArray->Int(1)) {
+                    ret = titleArray->Sym(2);
                 }
             }
         }
+        i++;
     }
     return ret;
 }

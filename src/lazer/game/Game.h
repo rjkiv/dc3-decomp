@@ -62,6 +62,7 @@ public:
     void SetLoop(bool);
     void SetForegroundVolume(float);
     void SetBackgroundVolume(float);
+    int GetNumRestarts() const;
 
     MoveDir *GetMoveDir() const { return mMoveDir; }
     HamMaster *GetMaster() const { return mMaster; }

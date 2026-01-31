@@ -11,6 +11,7 @@ class ChallengeResultPanel;
 
 class Challenges : public Hmx::Object {
     friend class ChallengeResultPanel;
+
 public:
     Challenges();
     virtual ~Challenges();
@@ -64,6 +65,17 @@ private:
     void ReadOfficialChallengesComplete(bool);
     void StartUploadingNextProfile();
     void ReadBadgeInfo(bool);
+    void SetupInGameChallenges(
+        int,
+        int,
+        char const *,
+        HamProfile *,
+        bool,
+        std::vector<ChallengeRow> &,
+        PropertyEventProvider *
+    );
+    void AutoDownloadPlayerChallenges();
+    bool NotRunning();
 
     bool unk2c;
     GetPlayerChallengesJob *mGetPlayerChallengesJob; // 0x30

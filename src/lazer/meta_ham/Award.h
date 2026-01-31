@@ -18,6 +18,9 @@ public:
     Symbol GetName() const;
     bool IsSilent() const;
 
+    void SetArt(Symbol s) { mArt = s; }
+    Symbol GetArtName() const { return mArt; }
+
 private:
     Symbol mName; // 0x4
     int unk8; // 0x8

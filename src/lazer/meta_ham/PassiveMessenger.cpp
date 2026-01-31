@@ -49,7 +49,9 @@ void PassiveMessageQueue::AddMessage(PassiveMessage *msg) {
 
 bool PassiveMessageQueue::HasRecentlyDismissedMessage() const {
     float seconds = TheTaskMgr.UISeconds() - unkc;
-    return seconds > 0 && 10.0f > seconds;
+    if (seconds > 0)
+        return 10.0f > seconds;
+    return false;
 }
 
 void PassiveMessageQueue::Poll() {

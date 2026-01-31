@@ -2,8 +2,10 @@
 #include "flow/PropertyEventProvider.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
+#include "meta_ham/ChallengeSortMgr.h"
 #include "meta_ham/HamProfile.h"
 #include "meta_ham/HamSongMgr.h"
+#include "meta_ham/NavListNode.h"
 #include "meta_ham/ProfileMgr.h"
 #include "meta_ham/SongStatusMgr.h"
 #include "net_ham/ChallengeSystemJobs.h"
@@ -16,6 +18,7 @@
 #include "os/PlatformMgr.h"
 #include "os/System.h"
 #include "ui/UI.h"
+#include "ui/UIPanel.h"
 #include "utl/Symbol.h"
 
 Challenges *TheChallenges;
@@ -571,4 +574,53 @@ void Challenges::UploadFlauntForAll(bool b1) {
 void Challenges::Init() {
     MILO_ASSERT(!TheChallenges, 0x23);
     TheChallenges = new Challenges();
+}
+
+void Challenges::SetupInGameData() {
+    NavListSortNode *node = TheChallengeSortMgr->GetHighlightItem();
+    MILO_ASSERT(node, 0x2e5);
+
+    // stuff
+
+    HamProfile *primaryProfile = TheProfileMgr.GetActiveProfile(true);
+    MILO_ASSERT(primaryProfile, 0x2f0);
+    static Symbol has_valid_challenge_data("has_valid_challenge_data");
+    static Symbol primary_challenge_player("primary_challenge_player");
+    for (int i = 0; i < 2; i++) {
+        HamPlayerData *playerData = TheGameData->Player(i);
+        MILO_ASSERT(playerData, 0x2fb);
+        PropertyEventProvider *provider = playerData->Provider();
+        MILO_ASSERT(provider, 0x2fd);
+        provider->SetProperty(0, 0);
+        HamProfile *profileFromPad =
+            TheProfileMgr.GetProfileFromPad(playerData->PadNum());
+        if (profileFromPad) {
+            if (profileFromPad == primaryProfile) {
+                SetupInGameChallenges(
+                    0, 0, 0, primaryProfile, true, mPlayerChallenges[2], provider
+                );
+                TheHamProvider->SetProperty(primary_challenge_player, 0);
+            } else {
+                SetupInGameChallenges(
+                    0, 0, 0, profileFromPad, false, mPlayerChallenges[2], provider
+                );
+            }
+        }
+    }
+}
+
+bool Challenges::NotRunning() {
+    return !mGetPlayerChallengesJob && !mPlayerChallengeTimer.Running();
+}
+
+void Challenges::AutoDownloadPlayerChallenges() {
+    UIPanel *mainPanel = ObjectDir::Main()->Find<UIPanel>("main_panel");
+    UIPanel *challengeFeedPanel =
+        ObjectDir::Main()->Find<UIPanel>("challenge_feed_panel");
+    if (mainPanel->GetState() == UIPanel::kUp
+        || challengeFeedPanel->GetState() == UIPanel::kUp) {
+        if (NotRunning()) {
+            DownloadPlayerChallenges();
+        }
+    }
 }

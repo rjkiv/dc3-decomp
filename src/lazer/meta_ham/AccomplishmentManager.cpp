@@ -1,8 +1,10 @@
 #include "meta_ham/AccomplishmentManager.h"
 #include "AccomplishmentOneShot.h"
+#include "flow/PropertyEventProvider.h"
 #include "game/GameMode.h"
 #include "game/HamUser.h"
 #include "game/HamUserMgr.h"
+#include "game/PartyModeMgr.h"
 #include "hamobj/Difficulty.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
@@ -24,6 +26,7 @@
 #include "meta_ham/HamSongMgr.h"
 #include "meta_ham/MetaPerformer.h"
 #include "meta_ham/ProfileMgr.h"
+#include "meta_ham/SongStatusMgr.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
@@ -33,6 +36,7 @@
 #include "os/PlatformMgr.h"
 #include "ui/UILabel.h"
 #include "utl/Symbol.h"
+#include <cstring>
 
 AccomplishmentManager *TheAccomplishmentMgr;
 
@@ -664,7 +668,6 @@ String AccomplishmentManager::GetArtForFirstNewAward(HamProfile *i_pProfile) con
 
 bool AccomplishmentManager::HasArtForFirstNewAward(HamProfile *i_pProfile) const {
     MILO_ASSERT(i_pProfile, 0x773);
-
     const AccomplishmentProgress &progress = i_pProfile->GetAccomplishmentProgress();
     Symbol sym;
     if (progress.HasNewAwards()) {
@@ -674,7 +677,7 @@ bool AccomplishmentManager::HasArtForFirstNewAward(HamProfile *i_pProfile) const
     if (sym != "") {
         Award *pAward = GetAward(sym);
         MILO_ASSERT(pAward, 0x77F);
-        // ret = pAward->unk18 == gNullstr;
+        ret = pAward->GetArtName() == gNullStr;
     } else {
         MILO_ASSERT(false, 0x785);
     }
@@ -998,7 +1001,7 @@ void AccomplishmentManager::CheckForCrewsAccomplishments(HamProfile *profile) {
         int curStars;
         int totalStars;
         TheHamSongMgr.GetCrewStars(profile, crew, curStars, totalStars);
-        if (totalStars == curStars) {
+        if (curStars == totalStars) {
             static Symbol crew01("crew01");
             static Symbol crew02("crew02");
             static Symbol crew03("crew03");
@@ -1031,5 +1034,112 @@ void AccomplishmentManager::CheckForCrewsAccomplishments(HamProfile *profile) {
                 );
             }
         }
+    }
+}
+
+void AccomplishmentManager::CheckForSpecificModesAccomplishments(
+    Symbol s, HamPlayerData *playerData, HamProfile *profile
+) {
+    static Symbol is_in_campaign_master_quest_mode("is_in_campaign_master_quest_mode");
+    static Symbol is_in_infinite_party_mode("is_in_infinite_party_mode");
+
+    Hmx::Object *pPlayerProvider = playerData->Provider();
+    MILO_ASSERT(pPlayerProvider, 0x4d6);
+    static Symbol score("score");
+    const DataNode *pScoreNode = pPlayerProvider->Property(score, true);
+    MILO_ASSERT(pScoreNode, 0x4da);
+    const DataNode *pInfPartyNode =
+        TheHamProvider->Property(is_in_infinite_party_mode, true);
+    if (pInfPartyNode->Int() != 0) {
+        DateTime dt;
+        DateTime dt2;
+        GetDateAndTime(dt);
+        dt2 = ThePartyModeMgr->GetDateTime315();
+        if (dt2.ToDayNumber() != dt.ToDayNumber()) {
+            static Symbol acc_night_till_morning("acc_night_till_morning");
+            TheAccomplishmentMgr->EarnAccomplishmentForAll(acc_night_till_morning, false);
+        }
+    }
+
+    if (TheGameMode->IsGameplayModePerform()) {
+        if (profile) {
+            if (profile->GetUnk334() && profile->GetUnk388() == s
+                && pScoreNode->Int() > profile->GetUnk330()) {
+                static Symbol acc_broken_down("acc_broken_down");
+                TheAccomplishmentMgr->EarnAccomplishmentForProfile(
+                    profile, acc_broken_down, false
+                );
+            }
+            bool check = false;
+            int songID = TheHamSongMgr.GetSongIDFromShortName(s);
+            int bestScore = profile->GetSongStatusMgr()->GetBestScore(
+                songID, check, kDifficultyBeginner
+            );
+            profile->SetUnk330(bestScore);
+        }
+
+        const DataNode *pMasterQuestNode =
+            TheHamProvider->Property(is_in_campaign_master_quest_mode, true);
+        if (pMasterQuestNode->Int() == 0) {
+            return;
+        }
+
+        static Symbol stars_earned("stars_earned");
+        const DataNode *pStarsNode = TheHamProvider->Property(stars_earned, false);
+        MILO_ASSERT(pStarsNode, 0x506);
+        if (pStarsNode->Int() < 5) {
+            return;
+        }
+
+        static Symbol thehustle("thehustle");
+        static Symbol electricboogie("electricboogie");
+        static Symbol macarena("macarena");
+        static Symbol cupidshuffle("cupidshuffle");
+        static Symbol scream("scream");
+
+        if (s == thehustle) {
+            static Symbol acc_complete_70s("acc_complete_70s");
+            TheAccomplishmentMgr->EarnAccomplishmentForProfile(
+                profile, acc_complete_70s, false
+            );
+        } else if (s == electricboogie) {
+            static Symbol acc_complete_80s("acc_complete_80s");
+            TheAccomplishmentMgr->EarnAccomplishmentForProfile(
+                profile, acc_complete_80s, false
+            );
+        } else if (s == macarena) {
+            static Symbol acc_complete_90s("acc_complete_90s");
+            TheAccomplishmentMgr->EarnAccomplishmentForProfile(
+                profile, acc_complete_90s, false
+            );
+        } else if (s == cupidshuffle) {
+            static Symbol acc_complete_00s("acc_complete_00s");
+            TheAccomplishmentMgr->EarnAccomplishmentForProfile(
+                profile, acc_complete_00s, false
+            );
+        } else if (s == scream) {
+            static Symbol acc_complete_10s("acc_complete_10s");
+            TheAccomplishmentMgr->EarnAccomplishmentForProfile(
+                profile, acc_complete_10s, false
+            );
+        }
+    } else if (TheGameMode->IsGameplayModeRhythmBattle()) {
+        if (pScoreNode->Int() < 450000) {
+            return;
+        }
+        static Symbol acc_keep_the_beat_master("acc_keep_the_beat_master");
+        TheAccomplishmentMgr->EarnAccomplishmentForProfile(
+            profile, acc_keep_the_beat_master, false
+        );
+    } else {
+        if (!TheGameMode->IsGameplayModeBustamove())
+            return;
+        if (pScoreNode->Int() < 1500000) {
+            return;
+        }
+        static Symbol acc_make_your_move("acc_make_your_move");
+        TheAccomplishmentMgr->EarnAccomplishmentForProfile(
+            profile, acc_make_your_move, false
+        );
     }
 }

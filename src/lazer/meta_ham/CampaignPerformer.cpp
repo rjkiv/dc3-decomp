@@ -866,8 +866,8 @@ bool CampaignPerformer::IsDanceCrazeMove(Symbol s1, Symbol s2, HamMove *move) {
         MILO_ASSERT(pEra, 0x409);
         bool b3 = false;
         for (int i = 0; i < pEra->GetNumSongs(); i++) {
-            Symbol songname = pEra->GetSongName(i);
-            if (s2 == songname) {
+            Symbol songName = pEra->GetSongName(i);
+            if (s2 == songName) {
                 b3 = true;
                 break;
             }

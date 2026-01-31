@@ -8,6 +8,7 @@
 #include "meta_ham/HamProfile.h"
 #include "meta_ham/HamSongMetadata.h"
 #include "meta_ham/HamSongMgr.h"
+#include "meta_ham/HamStoreFilterProvider.h"
 #include "meta_ham/Instarank.h"
 #include "meta_ham/NavListNode.h"
 #include "meta_ham/Playlist.h"

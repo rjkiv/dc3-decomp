@@ -405,11 +405,11 @@ void Campaign::ConfigureCampaignData(DataArray *i_pConfig) {
         Symbol name = pCampaignEra->GetName();
         if (GetCampaignEra(name)) {
             MILO_NOTIFY("%s campaign era already exists, skipping", name.Str());
-            delete pCampaignEra;
+            RELEASE(pCampaignEra);
         } else {
             if (pCampaignEra->IsTanBattleEra()) {
                 MILO_ASSERT(m_vEras.size(), 0xE4);
-                GetCampaignEra(m_vEras.size() - 1); // ->unk50 = true;
+                GetCampaignEra(m_vEras.size() - 1)->SetUnk50(true);
             }
             mEraLookup[name] = m_vEras.size();
             m_vEras.push_back(pCampaignEra);

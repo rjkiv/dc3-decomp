@@ -65,6 +65,7 @@ public:
     void SetUnk12c(int i) { unk12c = i; }
     int GetUnk128() const { return unk128; }
     void SetUnk128(int i) { unk128 = i; }
+    bool GetUnk8c() const { return unk8c; }
 
 private:
     static const String kServerVer;

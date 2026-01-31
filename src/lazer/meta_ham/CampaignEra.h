@@ -1,6 +1,7 @@
 #pragma once
 #include "hamobj/Difficulty.h"
 #include "obj/Data.h"
+#include "stl/_vector.h"
 #include "utl/Str.h"
 #include "utl/Symbol.h"
 #include <vector>
@@ -66,6 +67,8 @@ public:
     Symbol OutfitAward() const { return mOutfitAward; }
     Symbol GetMasteryStars(Difficulty d) { return mMasteryStars[d]; }
     bool GetUnk50() const { return unk50; }
+    void SetUnk50(bool b) { unk50 = b; }
+    const std::vector<CampaignEraSongEntry *> &Songs() const { return m_vSongs; }
 
 protected:
     Symbol mEra; // 0x4

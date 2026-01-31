@@ -6,12 +6,14 @@
 #include "meta_ham/HamProfile.h"
 #include "meta_ham/HamSongMgr.h"
 #include "meta_ham/SongStatusMgr.h"
+#include "net_ham/RockCentral.h"
 #include "obj/Data.h"
 #include "obj/DataFunc.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/System.h"
 #include "math/Rand.h"
+#include "utl/Symbol.h"
 #include <algorithm>
 #include <cstdio>
 
@@ -321,7 +323,9 @@ void MetagameRank::UpdateScore(
     static Symbol completed_song_legit("completed_song_legit");
     static Symbol completed_song_hardcore("completed_song_hardcore");
     static Symbol completed_song_off_the_hook("completed_song_off_the_hook");
-    static Symbol random_bonus_occurs_1pct_of_the_time("random_bonus_occurs_1pct_of_the_time");
+    static Symbol random_bonus_occurs_1pct_of_the_time(
+        "random_bonus_occurs_1pct_of_the_time"
+    );
     static Symbol new_song_completed_on_beginner("new_song_completed_on_beginner");
     static Symbol new_song_completed_on_easy("new_song_completed_on_easy");
     static Symbol new_song_completed_on_medium("new_song_completed_on_medium");
@@ -384,49 +388,47 @@ void MetagameRank::UpdateScore(
 
     // Handle force award small
     if (xp_force_award_small.Int(0)) {
-        static Symbol smallTasks[] = {
-            new_song_completed_on_beginner,
-            new_song_completed_on_easy,
-            new_song_completed_on_medium,
-            new_song_completed_on_hard,
-            maccoy_birthday,
-            dare_birthday,
-            glitch_birthday,
-            completed_song_moderate,
-            completed_song_tough,
-            completed_song_legit,
-            completed_song_hardcore,
-            completed_song_off_the_hook,
-            random_bonus_occurs_1pct_of_the_time,
-            challenge_attempt,
-            nail_fatality,
-            perfect_performance_no_misses,
-            emilia_birthday,
-            completed_song_with_1_star,
-            completed_song_with_2_stars,
-            completed_song_with_3_stars,
-            completed_song_with_4_stars,
-            completed_song_with_5_stars,
-            completed_song_on_beginner,
-            completed_song_on_easy,
-            completed_song_on_medium,
-            completed_song_on_hard,
-            golden_performance,
-            completed_song_warmup,
-            completed_song_simple,
-            bodie_birthday,
-            taye_birthday,
-            lilt_birthday,
-            angel_birthday,
-            aubrey_birthday,
-            mo_birthday,
-            dlc_bonus,
-            challenge_met,
-            fitness_bonus,
-            playlist_bonus,
-            oblio_birthday,
-            kerith_birthday
-        };
+        static Symbol smallTasks[] = { new_song_completed_on_beginner,
+                                       new_song_completed_on_easy,
+                                       new_song_completed_on_medium,
+                                       new_song_completed_on_hard,
+                                       maccoy_birthday,
+                                       dare_birthday,
+                                       glitch_birthday,
+                                       completed_song_moderate,
+                                       completed_song_tough,
+                                       completed_song_legit,
+                                       completed_song_hardcore,
+                                       completed_song_off_the_hook,
+                                       random_bonus_occurs_1pct_of_the_time,
+                                       challenge_attempt,
+                                       nail_fatality,
+                                       perfect_performance_no_misses,
+                                       emilia_birthday,
+                                       completed_song_with_1_star,
+                                       completed_song_with_2_stars,
+                                       completed_song_with_3_stars,
+                                       completed_song_with_4_stars,
+                                       completed_song_with_5_stars,
+                                       completed_song_on_beginner,
+                                       completed_song_on_easy,
+                                       completed_song_on_medium,
+                                       completed_song_on_hard,
+                                       golden_performance,
+                                       completed_song_warmup,
+                                       completed_song_simple,
+                                       bodie_birthday,
+                                       taye_birthday,
+                                       lilt_birthday,
+                                       angel_birthday,
+                                       aubrey_birthday,
+                                       mo_birthday,
+                                       dlc_bonus,
+                                       challenge_met,
+                                       fitness_bonus,
+                                       playlist_bonus,
+                                       oblio_birthday,
+                                       kerith_birthday };
         int idx = RandomInt(0, 0x29);
         Symbol task = smallTasks[idx];
         TheDebug << MakeString("XP Forcing Small Task: %s\n", task);
@@ -436,16 +438,11 @@ void MetagameRank::UpdateScore(
     // Handle force award medium
     if (xp_force_award_medium.Int(0)) {
         static Symbol mediumTasks[] = {
-            completed_song_with_2_stars,
-            completed_song_on_hard,
-            completed_song_off_the_hook,
-            completed_song_with_3_stars,
-            completed_song_with_4_stars,
-            new_era_completed_campaign_70s,
-            new_era_completed_campaign_80s,
-            new_era_completed_campaign_90s,
-            new_era_completed_campaign_00s,
-            new_era_completed_campaign_10s,
+            completed_song_with_2_stars,    completed_song_on_hard,
+            completed_song_off_the_hook,    completed_song_with_3_stars,
+            completed_song_with_4_stars,    new_era_completed_campaign_70s,
+            new_era_completed_campaign_80s, new_era_completed_campaign_90s,
+            new_era_completed_campaign_00s, new_era_completed_campaign_10s,
             campaign_completed_on_easy_3
         };
         int idx = RandomInt(0, 0xb);
@@ -456,12 +453,10 @@ void MetagameRank::UpdateScore(
 
     // Handle force award large
     if (xp_force_award_large.Int(0)) {
-        static Symbol largeTasks[] = {
-            completed_song_with_5_stars,
-            campaign_completed_on_medium,
-            campaign_completed_on_hard,
-            five_star_a_characters_songlist
-        };
+        static Symbol largeTasks[] = { completed_song_with_5_stars,
+                                       campaign_completed_on_medium,
+                                       campaign_completed_on_hard,
+                                       five_star_a_characters_songlist };
         int idx = RandomInt(0, 0x4);
         Symbol task = largeTasks[idx];
         TheDebug << MakeString("XP Forcing Large Task: %s\n", task);
@@ -470,18 +465,16 @@ void MetagameRank::UpdateScore(
 
     // Handle force award one time
     if (xp_force_award_one_time.Int(0)) {
-        static Symbol oneTimeTasks[] = {
-            jaryn_birthday,
-            new_era_completed_campaign_70s,
-            new_era_completed_campaign_80s,
-            new_era_completed_campaign_90s,
-            new_era_completed_campaign_00s,
-            new_era_completed_campaign_10s,
-            campaign_completed_on_easy_3,
-            campaign_completed_on_medium,
-            campaign_completed_on_hard,
-            five_star_a_characters_songlist
-        };
+        static Symbol oneTimeTasks[] = { jaryn_birthday,
+                                         new_era_completed_campaign_70s,
+                                         new_era_completed_campaign_80s,
+                                         new_era_completed_campaign_90s,
+                                         new_era_completed_campaign_00s,
+                                         new_era_completed_campaign_10s,
+                                         campaign_completed_on_easy_3,
+                                         campaign_completed_on_medium,
+                                         campaign_completed_on_hard,
+                                         five_star_a_characters_songlist };
         int idx;
         for (int i = 0; i < 10; i++) {
             Symbol task = oneTimeTasks[i];
@@ -498,13 +491,24 @@ void MetagameRank::UpdateScore(
     }
 
     // Skip normal scoring if any force award is active
-    if (xp_force_award_small.Int(0) || xp_force_award_medium.Int(0) ||
-        xp_force_award_large.Int(0) || xp_force_award_one_time.Int(0) ||
-        xp_force_one_rank_up.Int(0)) {
+    if (xp_force_award_small.Int(0) || xp_force_award_medium.Int(0)
+        || xp_force_award_large.Int(0) || xp_force_award_one_time.Int(0)
+        || xp_force_one_rank_up.Int(0)) {
         mDeferredPoints.sort(compare_deferred_points);
         return;
     }
 
     // Sort deferred points at the end
     mDeferredPoints.sort(compare_deferred_points);
+}
+
+void MetagameRank::AwardPoints(int i, Symbol s) {
+    if (TheRockCentral.GetUnk8c()) {
+        i = i << 1;
+    }
+    DeferredPoints df;
+    df.unk0 = i;
+    df.unk4 = s;
+    mDeferredPoints.push_back(df);
+    unkca = true;
 }

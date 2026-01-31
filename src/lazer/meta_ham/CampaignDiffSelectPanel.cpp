@@ -4,6 +4,8 @@
 #include "HamSongMgr.h"
 #include "hamobj/Difficulty.h"
 #include "macros.h"
+#include "meta/SongMgr.h"
+#include "meta_ham/CampaignEra.h"
 #include "meta_ham/CampaignPerformer.h"
 #include "meta_ham/HamProfile.h"
 #include "meta_ham/MetaPerformer.h"
@@ -15,6 +17,7 @@
 #include "os/Debug.h"
 #include "ui/UIListLabel.h"
 #include "ui/UIPanel.h"
+#include "utl/Std.h"
 #include "utl/Symbol.h"
 
 #pragma region CampaignDiffProvider
@@ -168,14 +171,34 @@ void CampaignDiffSelectPanel::CheatWinDiff(int i) {
     MILO_ASSERT(pPerformer, 0xd7);
     SongStatusMgr *pSongStatusMgr = pProfile->GetSongStatusMgr();
     MILO_ASSERT(pSongStatusMgr, 0xd9);
-    const CampaignProgress &pProgress = pProfile->GetCampaignProgress(diff);
-    if (i < 1) {
+    CampaignProgress &pProgress = pProfile->AccessCampaignProgress(diff);
+    if (i > 0) {
         pPerformer->ResetAllCampaignProgress();
+        int count = 0;
+        FOREACH (it, TheCampaign->Eras()) {
+            count++;
+            if (i <= count) {
+                CampaignEra *pEra = *it;
+                MILO_ASSERT(pEra, 0xe6);
+                for (int j = 0; j < pEra->GetNumSongs(); j++) {
+                    Symbol songName = pEra->GetSongName(i);
+                    pPerformer->UpdateEraSong(diff, pEra->GetName(), songName, 5);
+                    int songID = TheSongMgr.GetSongIDFromShortName(songName);
+                    pSongStatusMgr->UpdateSong(
+                        songID, 0x29a, 0x457, diff, 1, 5, 6, 0, 0, 0, 0, 1
+                    ); // idk the values
+                    pPerformer->UnlockAllMoves(pEra->GetName(), songName, 5);
+                }
+            }
+        }
+        pProgress.SetCampaignIntroCompleted(true);
+        if (6 <= i) {
+            pProgress.SetCampaignTanBattleCompleted(true);
+        }
     } else {
         pPerformer->ResetAllCampaignProgress();
-        // stuff with m_vEras
     }
-
+    pProfile->MakeDirty();
     if (TheSaveLoadMgr)
         TheSaveLoadMgr->AutoSave();
     Refresh();
