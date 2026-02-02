@@ -512,3 +512,31 @@ void MetagameRank::AwardPoints(int i, Symbol s) {
     mDeferredPoints.push_back(df);
     unkca = true;
 }
+
+void MetagameRank::AwardPointsForTask(Symbol task) {
+    static Symbol score("score");
+    static Symbol display("display");
+    DataArray *taskArray = gRepeatableTasks->FindArray(task, false);
+    if (!taskArray) {
+        int task_index = -1;
+        bool oneTimeTask = GetOneTimeTask(task, &taskArray, &task_index);
+        if (!oneTimeTask) {
+            MILO_FAIL("Task %s not found in metagame_rank.dta", task_index);
+        }
+
+        MILO_ASSERT(task_index, 0x19b); // change later
+        if (!oneTimeTask) {
+            return;
+        }
+        if (unk39[0] != 0) {
+            return;
+        }
+        unk39[0] = 1;
+    }
+
+    int scoreNum = taskArray->FindArray(score)->Int(1);
+    Symbol disp = taskArray->FindArray(display)->Sym(1);
+    if (0 <= scoreNum) {
+        AwardPoints(scoreNum, disp);
+    }
+}

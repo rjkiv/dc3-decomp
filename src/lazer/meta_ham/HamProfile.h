@@ -128,6 +128,8 @@ public:
     bool GetUnk360() const { return unk360; }
     void SetUnk388(Symbol s) { unk338 = s; }
     Symbol GetUnk388() const { return unk338; }
+    void SetUnk324(int i) { unk324 = i; }
+    int GetUnk324() const { return unk324; }
     void SetUnk334(bool b) { unk334 = b; }
     bool GetUnk334() const { return unk334; }
     int GetUnk330() const { return unk330; }

@@ -3,6 +3,7 @@
 #include "obj/Data.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
+#include "os/OnlineID.h"
 #include "os/User.h"
 #include "stl/_vector.h"
 #include "utl/JobMgr.h"
@@ -35,6 +36,10 @@ enum QuitType {
     kQuitRestart,
     kQuitMenu,
     kQuitDataManager
+};
+
+enum ShowGamercardResult {
+    kGamercardResultPrivelegeError = -1
 };
 
 typedef bool XCallbackFunc(unsigned long &);
@@ -115,6 +120,7 @@ public:
     void SetPadPresence(int, int) const;
     void SetPadProperty(int, int, unsigned short const *) const;
     void EnumerateFriends(int, std::vector<Friend *> &, Hmx::Object *);
+    ShowGamercardResult ShowGamercardForPadNum(int, OnlineID const *);
 
     bool GuideShowing() { return mGuideShowing; }
     bool IsConnected() { return mConnected; }

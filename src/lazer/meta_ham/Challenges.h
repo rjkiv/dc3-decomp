@@ -19,6 +19,7 @@ public:
 
     static void Init();
 
+    void Poll();
     void DownloadPlayerChallenges();
     void UploadFlauntForOne();
     void UploadFlauntForAll(bool);
@@ -76,6 +77,7 @@ private:
     );
     void AutoDownloadPlayerChallenges();
     bool NotRunning();
+    bool ChallengesDirty();
 
     bool unk2c;
     GetPlayerChallengesJob *mGetPlayerChallengesJob; // 0x30

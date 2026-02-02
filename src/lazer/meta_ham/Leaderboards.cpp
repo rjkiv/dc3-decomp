@@ -4,15 +4,20 @@
 #include "meta_ham/HamSongMgr.h"
 #include "meta_ham/ProfileMgr.h"
 #include "meta_ham/SongStatusMgr.h"
+#include "net_ham/LeaderboardJobs.h"
 #include "net_ham/RCJobDingo.h"
 #include "net_ham/RockCentral.h"
 #include "net_ham/ScoreJobs.h"
+#include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "os/OnlineID.h"
 #include "os/PlatformMgr.h"
 #include "os/System.h"
+#include "stl/_pair.h"
+#include "stl/_vector.h"
 #include "ui/UI.h"
 #include "ui/UIListLabel.h"
 #include "ui/UIPanel.h"
@@ -263,6 +268,112 @@ void Leaderboards::UploadScores(HamProfile *profile) {
                 } else {
                     StartUploadingNextProfile();
                 }
+            }
+        }
+    }
+}
+
+Symbol Leaderboards::ShowGamercard(int i, HamProfile *profile) {
+    static Symbol display_gamercard_pad_error("display_gamercard_pad_error");
+    if ((0 <= i) && (i <= unk58.size())) {
+        if (ThePlatformMgr.IsSignedIntoLive(profile->GetPadNum())) {
+            if (unk58.size() != 0) {
+                const OnlineID id(unk58[i].unk20);
+                ShowGamercardResult result =
+                    ThePlatformMgr.ShowGamercardForPadNum(profile->GetPadNum(), &id);
+                if (result == (ShowGamercardResult)-2) {
+                    static Symbol display_gamercard_privilege_error(
+                        "display_gamercard_privilege_error"
+                    );
+                    return display_gamercard_privilege_error;
+                } else if (result == (ShowGamercardResult)-3) {
+                    return display_gamercard_pad_error;
+                } else {
+                    if (0 > result) {
+                        static Symbol on_select_gamertag_error("on_select_gamertag_error");
+                        return on_select_gamertag_error;
+                    }
+                }
+            }
+            return gNullStr;
+        }
+    }
+    return display_gamercard_pad_error;
+}
+
+DataNode Leaderboards::OnMsg(const RCJobCompleteMsg &msg) {
+    if (msg.Job() == unk98) {
+        ReadScoresComplete(false, msg.Success() != 0);
+    } else {
+        if (msg.Success() && !unk30.empty()) {
+            SongStatusData data = unk30.front();
+            if (unk54) {
+                unk54->GetSongStatusMgr()->ClearNeedUpload(data.mSongID, data.mDifficulty);
+            }
+            unk30.pop_front();
+            if (!unk30.empty()) {
+                UploadNextScore();
+            } else {
+                if (!mPendingProfiles.empty()) {
+                    StartUploadingNextProfile();
+                } else {
+                    unk54 = nullptr;
+                }
+            }
+        }
+    }
+    return 1;
+}
+
+void Leaderboards::ReadScoresComplete(bool b1, bool b2) {
+    unk94 = false;
+    if (!b1) {
+        GetLeaderboardByPlayerJob *job = unk98;
+        unk58.clear();
+        job->GetRows(&unk58);
+        unk98 = nullptr;
+        if (b2) {
+            auto it = std::make_pair((unsigned int)job->SongID(), unk58); // somethins up
+            unk64.insert(it);
+        }
+    }
+
+    unk80 = false;
+    PostProcScores();
+    static Message leaderboards_loaded("leaderboards_loaded");
+    static Message leaderboards_failed_rc("leaderboards_failed_rc");
+    static Message leaderboards_failed_live("leaderboards_failed_live");
+    if (b2) {
+        TheUI->Handle(leaderboards_loaded, b2);
+    } else if (ThePlatformMgr.IsConnected()) {
+        TheUI->Handle(leaderboards_failed_rc, b2);
+    } else {
+        TheUI->Handle(leaderboards_failed_live, b2);
+    }
+}
+
+void Leaderboards::GetScores(int i) {
+    if (!unk80 && !unk98) {
+        unk58.clear();
+        HamProfile *activeProfile = TheProfileMgr.GetActiveProfile(true);
+        if (!ThePlatformMgr.IsSignedIntoLive(activeProfile->GetPadNum())) {
+            static Message leaderboards_failed("leaderboards_failed");
+            TheUI->Handle(leaderboards_failed, false);
+        } else {
+            unk90 = i;
+            unk80 = true;
+            if (unk84 == 1 || unk84 == 5) {
+                i = 1000; // idk
+            }
+            auto it = unk64.find(unk88 + i); // idk about the param here
+            if (it->second.empty()) {
+                unk98 = new GetLeaderboardByPlayerJob(
+                    this, activeProfile, i, unk84, unk88, 10, 0
+                );
+                TheRockCentral.ManageJob(unk98);
+            } else {
+                unk58 = it->second;
+                ReadScoresComplete(true, true);
             }
         }
     }

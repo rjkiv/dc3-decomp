@@ -58,7 +58,7 @@ protected:
     int unk8c;
     int unk90; // 0x90 - song id?
     bool unk94;
-    int unk98;
+    GetLeaderboardByPlayerJob *unk98;
     bool unk9c;
 };
 

@@ -77,7 +77,13 @@ public:
     int GetFlawlessMoveCount() const;
     bool HasAward(Symbol s) const { return unk94.find(s) != unk94.end(); }
     int NumDays() const { return unk114; }
+    void SetNumDays(int i) { unk114 = i; }
     int NumWeekends() const { return unk11c; }
+    int GetUnk118() const { return unk118; }
+    void SetUnk118(int i) { unk118 = i; }
+    int GetUnk120() const { return unk120; }
+    void SetWeekends(int i) { unk11c = i; }
+    void SetUnk120(int i) { unk120 = i; }
 
 private:
     void GiveGamerpic(Accomplishment *);

@@ -1143,3 +1143,45 @@ void AccomplishmentManager::CheckForSpecificModesAccomplishments(
         );
     }
 }
+
+void AccomplishmentManager::UpdateConsecutiveDaysPlayed(HamProfile *profile) {
+    int i;
+    DateTime dt;
+    AccomplishmentProgress &progress = profile->AccessAccomplishmentProgress();
+    GetDateAndTime(dt);
+    int toDayNumber = dt.ToDayNumber();
+    if (progress.GetUnk118() <= 0 || toDayNumber - progress.GetUnk118() == 1) {
+        i = progress.NumDays() + 1;
+    } else {
+        if (toDayNumber - progress.GetUnk118() <= 1) {
+            progress.SetUnk118(toDayNumber);
+            return;
+        }
+        i = 1;
+    }
+    progress.SetNumDays(i);
+    progress.SetUnk118(toDayNumber);
+}
+
+void AccomplishmentManager::UpdateWeekendWarrior(HamProfile *profile) {
+    int i;
+    DateTime dt;
+    AccomplishmentProgress &progress = profile->AccessAccomplishmentProgress();
+    GetDateAndTime(dt);
+    int dayOfWeek = dt.DayOfWeek();
+    if (dayOfWeek != 0 && dayOfWeek != 6) {
+        return;
+    }
+    unsigned int toDayNumber = dt.ToDayNumber();
+    if (progress.GetUnk120() < 0 || toDayNumber - progress.GetUnk120() > 9) {
+        i = 1;
+    } else {
+        if (toDayNumber - progress.GetUnk120() <= 2) {
+            progress.SetUnk120(toDayNumber);
+            return;
+        }
+        i = progress.NumWeekends() + 1;
+    }
+    progress.SetWeekends(i);
+    progress.SetUnk120(toDayNumber);
+}

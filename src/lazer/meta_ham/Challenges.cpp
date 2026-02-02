@@ -2,26 +2,39 @@
 #include "flow/PropertyEventProvider.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
+#include "meta_ham/AccomplishmentManager.h"
+#include "meta_ham/ChallengeSortByScore.h"
 #include "meta_ham/ChallengeSortMgr.h"
 #include "meta_ham/HamProfile.h"
 #include "meta_ham/HamSongMgr.h"
 #include "meta_ham/NavListNode.h"
+#include "meta_ham/PassiveMessenger.h"
 #include "meta_ham/ProfileMgr.h"
+#include "meta_ham/SaveLoadManager.h"
 #include "meta_ham/SongStatusMgr.h"
 #include "net_ham/ChallengeSystemJobs.h"
+#include "net_ham/RCJobDingo.h"
 #include "net_ham/RockCentral.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
+#include "obj/Task.h"
 #include "os/Debug.h"
 #include "os/PlatformMgr.h"
 #include "os/System.h"
+#include "stl/_algo.h"
+#include "stl/_vector.h"
 #include "ui/UI.h"
 #include "ui/UIPanel.h"
+#include "utl/Std.h"
 #include "utl/Symbol.h"
 
 Challenges *TheChallenges;
+
+bool ChallengeScoreCmp(ChallengeRow cRow1, ChallengeRow cRow2) {
+    return (unsigned int)cRow1.mScore < (unsigned int)cRow2.mScore;
+}
 
 Challenges::Challenges() {
     mFlauntingProfile = nullptr;
@@ -373,11 +386,11 @@ void Challenges::UpdateChallengeTimeStamp() {
                 if (it->first == profile->GetName()) {
                     MILO_LOG(
                         ">>>> Update challenge time stamp from %i to %i\n",
-                        // profile->unk324
+                        profile->GetUnk324(),
                         it->second[0].mTimeStamp
                     );
                     profile->MakeDirty();
-                    // profile->unk324 = it->second[0].mTimeStamp
+                    profile->SetUnk324(it->second[0].mTimeStamp);
                     return;
                 }
             }
@@ -621,6 +634,269 @@ void Challenges::AutoDownloadPlayerChallenges() {
         || challengeFeedPanel->GetState() == UIPanel::kUp) {
         if (NotRunning()) {
             DownloadPlayerChallenges();
+        }
+    }
+}
+
+void Challenges::SetupInGameChallenges(
+    int i1,
+    int i2,
+    char const *c,
+    HamProfile *profile,
+    bool b,
+    std::vector<ChallengeRow> &challengeRows,
+    PropertyEventProvider *provider
+) {
+    MILO_ASSERT(profile, 0x31c);
+    static Symbol num_challenge_targets("num_challenge_targets");
+    static Symbol challenge_target_index("challenge_target_index");
+    static Symbol challenge_mission_index("challenge_mission_index");
+    static Symbol challenge_target_score("challenge_target_score");
+    static Symbol has_valid_challenge_data("has_valid_challenge_data");
+    static Symbol challenge_target_rival("challenge_target_rival");
+    static Symbol challenge_mission_score("challenge_mission_score");
+    static Symbol is_challenging_self("is_challenging_self");
+
+    int songID = 2;
+    if (i1 == GetGlobalChallengeSongID()) {
+        songID = 0;
+    } else if (i1 == GetDlcChallengeSongID()) {
+        songID = 1;
+    }
+
+    String profileName = profile->GetName();
+    auto it = mProfileChallenges.find(profileName);
+    if (it != mProfileChallenges.end()) {
+        const std::vector<ChallengeRow> &vec = it->second;
+        for (int i = 0; i < vec.size(); i++) {
+            if (vec[i].mSongID == i1) {
+                challengeRows.push_back(vec[i]);
+            }
+        }
+    } else {
+        if (songID == 2 && b) {
+            MILO_ASSERT(0, 0x343);
+        }
+    }
+
+    for (int i = 0; i < mOfficialChallenges.size(); i++) {
+        if (mOfficialChallenges[i].mSongID == i1) {
+            challengeRows.push_back(mOfficialChallenges[i]);
+        }
+    }
+
+    if (challengeRows.empty()) {
+        return;
+    }
+
+    std::sort(challengeRows.begin(), challengeRows.end(), ChallengeScoreCmp);
+    MILO_LOG(">>>>>>>>>> %s in game data\n", b ? "Primary" : "2nd");
+
+    for (int i = 0; i < challengeRows.size(); i++) {
+        int score = challengeRows[i].mScore;
+        MILO_LOG(
+            ">>>>>>>>>> score = %i, gamertag = %s\n", score, challengeRows[i].mGamertag
+        );
+    }
+    provider->SetProperty(num_challenge_targets, (int)challengeRows.size());
+    provider->SetProperty(challenge_target_index, 0);
+    provider->SetProperty(challenge_target_score, challengeRows.front().mScore);
+    provider->SetProperty(challenge_target_rival, challengeRows.front().mGamertag);
+    provider->SetProperty(has_valid_challenge_data, true);
+    provider->SetProperty(is_challenging_self, false);
+
+    for (int i = 0; i < challengeRows.size(); i++) {
+        if (challengeRows[i].mSongID == i1 && challengeRows[i].mScore == i2
+            && challengeRows[i].mGamertag == c) {
+            if (profileName == c) {
+                provider->SetProperty(is_challenging_self, true);
+            }
+            provider->SetProperty(challenge_mission_index, i);
+            provider->SetProperty(challenge_mission_score, challengeRows[i].mScore);
+            break;
+        }
+    }
+}
+
+DataNode Challenges::OnMsg(const RCJobCompleteMsg &msg) {
+    if (msg.Job() == mGetPlayerChallengesJob) {
+        ReadPlayerChallengesComplete(msg.Success() != 0);
+    } else if (msg.Job() == mGetOfficialChallengesJob) {
+        ReadOfficialChallengesComplete(msg.Success() != 0);
+    } else if (msg.Job() == mGetChallengeBadgeCountsJob) {
+        ReadBadgeInfo(msg.Success() != 0);
+    } else {
+        if (msg.Success()) {
+            if (mFlauntingProfile) {
+                static Symbol p1("p1");
+                static Symbol p2("p2");
+                static Symbol challenges_regular_flaunt_sent(
+                    "challenges_regular_flaunt_sent"
+                );
+                static Symbol side("side");
+                bool inGameData = false;
+                for (int i = 0; i < 2; i++) {
+                    HamPlayerData *playerData = TheGameData->Player(i);
+                    MILO_ASSERT(playerData, 0x1fe);
+                    PropertyEventProvider *provider = playerData->Provider();
+                    MILO_ASSERT(provider, 0x200);
+                    if (playerData->PadNum() == mFlauntingProfile->GetPadNum()) {
+                        const DataNode *sideNode = provider->Property(side, true);
+                        Symbol triggerMsg = sideNode->Int() == 0 ? p2 : p1;
+                        mFlauntingProfile->IncrementFlauntCount();
+                        if (5 <= mFlauntingProfile->GetFlauntCount()) {
+                            static Symbol acc_flaunt("acc_flaunt");
+                            TheAccomplishmentMgr->EarnAccomplishmentForProfile(
+                                mFlauntingProfile, acc_flaunt, false
+                            );
+                        }
+                        ThePassiveMessenger->TriggerGenericMsg(
+                            challenges_regular_flaunt_sent,
+                            triggerMsg,
+                            (PassiveMessageType)0,
+                            gNullStr,
+                            -1
+                        );
+                        inGameData = true;
+                        break;
+                    }
+                }
+                if (!inGameData) {
+                    MILO_LOG(
+                        "A score is flaunted but the associated profile is not in game data, what happened?\n"
+                    );
+                }
+            } else {
+                MILO_LOG(
+                    "A score is flaunted but the associated profile is NULL, wait what?\n"
+                );
+            }
+            if (!mFlauntList.empty()) {
+                FlauntStatusData data = mFlauntList.front();
+                if (mFlauntingProfile) {
+                    SongStatusMgr *mgr = mFlauntingProfile->GetSongStatusMgr();
+                    mgr->ClearFlauntsNeedUpload(data.mSongID);
+                    mFlauntingProfile->MakeDirty();
+                    if (TheSaveLoadMgr) {
+                        TheSaveLoadMgr->AutoSave();
+                    }
+                }
+                mFlauntList.pop_front();
+                if (!mFlauntList.empty()) {
+                    UploadNextFlaunt();
+
+                } else {
+                    if (!mPendingProfiles.empty()) {
+                        StartUploadingNextProfile();
+                    } else {
+                        mFlauntingProfile = nullptr;
+                        mHasFlaunted = false;
+                        DataNode score("score");
+                        DataNode updated("updated");
+                        ThePlatformMgr.SmartGlassSend(0, DataArrayPtr(updated, score));
+                    }
+                }
+            }
+
+        } else {
+            MILO_LOG(
+                "Failed to flaunt for %s\n",
+                mFlauntingProfile ? mFlauntingProfile->GetName() : "N/A"
+            );
+            mPendingProfiles.clear();
+            mFlauntingProfile = nullptr;
+            mHasFlaunted = false;
+        }
+    }
+    return 1;
+}
+
+bool Challenges::ChallengesDirty() {
+    return mPlayerChallengesDirty || mOfficialChallengesDirty;
+}
+
+void Challenges::DownloadPlayerChallenges() {
+    if (mPlayerChallengeTimer.Running()) {
+        mPlayerChallengeTimer.Stop();
+    }
+
+    if (mHasFlaunted) {
+        unk2c = true;
+    } else {
+        if (mGetPlayerChallengesJob) {
+            mGetPlayerChallengesJob->Cancel(false);
+            mGetPlayerChallengesJob = nullptr;
+        }
+        std::vector<HamProfile *> profiles;
+        for (int i = 0; i < 2; i++) {
+            HamPlayerData *playerData = TheGameData->Player(i);
+            MILO_ASSERT(playerData, 0xed);
+            HamProfile *profileFromPad =
+                TheProfileMgr.GetProfileFromPad(playerData->PadNum());
+            if (profileFromPad) {
+                profileFromPad->UpdateOnlineID();
+                if (profileFromPad->IsSignedIn()) {
+                    int padNum = profileFromPad->GetPadNum();
+                    if (ThePlatformMgr.IsSignedIntoLive(padNum)) {
+                        profiles.push_back(profileFromPad);
+                    }
+                }
+            }
+        }
+        if (profiles.size() != 0) {
+            mGetPlayerChallengesJob = new GetPlayerChallengesJob(this, profiles);
+            TheRockCentral.ManageJob(mGetPlayerChallengesJob);
+        } else {
+            mProfileChallenges.clear();
+            mGetPlayerChallengesJob = nullptr;
+            static Message all_challenges_updated("all_challenges_updated", 0);
+            if (!mGetOfficialChallengesJob) {
+                all_challenges_updated[0] = ChallengesDirty();
+                TheUI->Handle(all_challenges_updated, true);
+                mPlayerChallengesDirty = false;
+                mOfficialChallengesDirty = false;
+            }
+            mPlayerChallengeTimer.Restart();
+        }
+    }
+}
+
+void Challenges::Poll() {
+    if (mOfficialChallengeTimer.Running()) {
+        if (1.0f <= mOfficialChallengeTimer.SplitMs() / TheRockCentral.GetUnk84()) {
+            mOfficialChallengeTimer.Stop();
+            DownloadOfficialChallenges();
+        }
+    }
+
+    if (unk2c) {
+        if (!mHasFlaunted) {
+            unk2c = false;
+            DownloadPlayerChallenges();
+            goto jump;
+        }
+    }
+
+    if (mPlayerChallengeTimer.Running()) {
+        if (1.0f <= mPlayerChallengeTimer.SplitMs() / TheRockCentral.GetUnk84()) {
+            mPlayerChallengeTimer.Stop();
+            AutoDownloadPlayerChallenges();
+        }
+    }
+jump:
+    if (unkd8 != -1.0) {
+        unkd8 -= TheTaskMgr.DeltaUISeconds();
+        if (unkd8 < 0) {
+            unkd8 = 0;
+            UIPanel *challengeFeedPanel =
+                ObjectDir::Main()->Find<UIPanel>("challenge_feed_panel");
+            if (challengeFeedPanel->GetState() == 1) {
+                static Message challenges_expired("challenges_expired");
+                TheUI->Handle(challenges_expired, true);
+            } else {
+                DownloadOfficialChallenges();
+                DownloadPlayerChallenges();
+            }
         }
     }
 }

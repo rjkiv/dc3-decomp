@@ -18,11 +18,14 @@
 #include "ui/UIPanel.h"
 #include "utl/Locale.h"
 #include "utl/MemMgr.h"
+#include "utl/Symbol.h"
 #include "utl/UTF8.h"
 #include "xdk/XAPILIB.h"
+#include "xdk/win_types.h"
 #include "xdk/xapilibi/synchapi.h"
 #include "xdk/xapilibi/winerror.h"
 #include "xdk/xsocial/xsocial.h"
+#include <cstring>
 #include <cwchar>
 
 void SetLocalizedFBText(const Symbol &s, wchar_t *wStr) {
@@ -182,7 +185,7 @@ void KinectSharePanel::ConvertImagesForLinkPost() {
         if (mLinkPostParams.PreviewImage.Format == D3DFMT_A8R8G8B8) {
             mLinkPostParams.PreviewImage.Format = D3DFMT_LIN_A8R8G8B8;
         }
-        int mult = bitmap90.RowBytes() * bitmap90.Height();
+        int mult = bitmap90.Height() * bitmap90.RowBytes();
         mPreviewBuf = MemAlloc(mult, __FILE__, 0xA8, "FB_Preview");
         MILO_ASSERT(mPreviewBuf != NULL, 0xA9);
         if (mPreviewBuf) {
@@ -304,7 +307,7 @@ DataNode KinectSharePanel::OnPostLink(DataArray *a) {
             unk4c = 3;
         }
     }
-    return 0;
+    return DataNode(kDataInt, 0);
 }
 
 DataNode KinectSharePanel::OnCleanup(DataArray *a) {
@@ -319,4 +322,79 @@ DataNode KinectSharePanel::OnCleanup(DataArray *a) {
         mPreviewBuf = nullptr;
     }
     return 0;
+}
+
+DataNode KinectSharePanel::OnUpload(DataArray *arr) {
+    MILO_ASSERT(!mBuf && ! mPreviewBuf, 0x115);
+    MILO_LOG(
+        "KinectSharePanel::OnUpload() - mTex:[%d %d %d %d]\n",
+        mTex->Width(),
+        mTex->Height(),
+        mTex->Bpp(),
+        mTex->PowerOf2()
+    );
+    ConvertImages();
+    mOverlapped.InternalContext = (DWORD_PTR)this;
+    mOverlapped.InternalHigh = 0;
+    mOverlapped.InternalLow = 0;
+    mOverlapped.hEvent = CreateEventA(0, 1, 0, "SocialNetworkImagePost");
+    if (!mOverlapped.hEvent) {
+        MILO_LOG("KinectSharePanel: mOverlapped.hEvent is null");
+    } else {
+        mOverlapped.dwCompletionContext = 0;
+        mOverlapped.pCompletionRoutine = nullptr;
+        mOverlapped.dwExtendedError = 0;
+
+        WCHAR TitleText[256];
+        WCHAR PictureCaption[256];
+        WCHAR PictureDescription[256];
+
+        memcpy(TitleText, L"Title Text", 0x16);
+        memset(&TitleText, 0, 0x1ea);
+        memcpy(PictureCaption, L"Picture Caption", 0x20);
+        memset(&PictureCaption, 0, 0x1e0);
+        memcpy(PictureDescription, L"Picture Description", 0x28);
+        memset(&PictureDescription, 0, 0x1d8);
+
+        static Symbol fb_photo_title_text("fb_photo_title_text");
+        static Symbol fb_photo_picture_caption("fb_photo_picture_caption");
+        static Symbol fb_photo_picture_description("fb_photo_picture_description");
+
+        SetLocalizedFBText(fb_photo_title_text, TitleText);
+        SetLocalizedFBText(fb_photo_picture_caption, PictureCaption);
+        SetLocalizedFBText(fb_photo_picture_description, PictureDescription);
+
+        mImagePostParams.Size = 0x30;
+        mImagePostParams.TitleText = TitleText;
+        mImagePostParams.PictureCaption = PictureCaption;
+        mImagePostParams.PictureDescription = PictureDescription;
+        mImagePostParams.Flags = 6;
+
+        int padNum = 0;
+        HamProfile *pActiveProfile = TheProfileMgr.GetActiveProfile(true);
+        if (pActiveProfile) {
+            padNum = pActiveProfile->GetPadNum();
+        }
+        DWORD dw;
+        DWORD res;
+        if (PlatformMgr::sXShowCallback(dw)) {
+            res = XShowNuiSocialNetworkImagePostUI(
+                dw, padNum, &mImagePostParams, &mOverlapped
+            );
+            MILO_LOG(
+                "KinectSharePanel: XShowNuiSocialNetworkImagePostUI returns %x\n", res
+            );
+        } else {
+            res = XShowSocialNetworkImagePostUI(padNum, &mImagePostParams, &mOverlapped);
+        }
+
+        if (res == ERROR_IO_PENDING) {
+            unk4c = 1;
+        } else if (res == ERROR_SUCCESS) {
+            unk4c = 2;
+        } else {
+            unk4c = 3;
+        }
+    }
+    return DataNode(kDataInt, 0);
 }

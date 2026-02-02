@@ -53,6 +53,13 @@ DWORD XShowSocialNetworkLinkPostUI(
     DWORD UserIndex, const XSOCIAL_LINKPOSTPARAMS *pParams, XOVERLAPPED *pOverlapped
 );
 
+DWORD XShowNuiSocialNetworkImagePostUI(
+    DWORD TrackingID,
+    DWORD UserIndex,
+    const XSOCIAL_IMAGEPOSTPARAMS *pParams,
+    XOVERLAPPED *pOverlapped
+);
+
 DWORD XShowNuiSocialNetworkLinkPostUI(
     DWORD TrackingID,
     DWORD UserIndex,
