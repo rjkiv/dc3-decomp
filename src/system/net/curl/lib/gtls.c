@@ -660,7 +660,7 @@ gtls_connect_step3(struct connectdata *conn,
   /* Check for time-based validity */
   certclock = gnutls_x509_crt_get_expiration_time(x509_cert);
 
-  if(certclock == (time_t)-1) {
+  if(certclock == (__time64_t)-1) {
     failf(data, "server cert expiration date verify failed");
     return CURLE_SSL_CONNECT_ERROR;
   }
@@ -678,7 +678,7 @@ gtls_connect_step3(struct connectdata *conn,
 
   certclock = gnutls_x509_crt_get_activation_time(x509_cert);
 
-  if(certclock == (time_t)-1) {
+  if(certclock == (__time64_t)-1) {
     failf(data, "server cert activation date verify failed");
     return CURLE_SSL_CONNECT_ERROR;
   }

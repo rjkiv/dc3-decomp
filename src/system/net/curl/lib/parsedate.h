@@ -22,10 +22,9 @@
  *
  ***************************************************************************/
 
-#define gmtime _gmtime64
-extern const char *const Curl_wkday[7];
-extern const char *const Curl_month[12];
+extern const char * const Curl_wkday[7];
+extern const char * const Curl_month[12];
 
-CURLcode Curl_gmtime(time_t intime, struct tm *store);
+CURLcode Curl_gmtime(__time64_t intime, struct tm *store);
 
 #endif

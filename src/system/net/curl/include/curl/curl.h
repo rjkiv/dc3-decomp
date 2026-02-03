@@ -40,9 +40,9 @@
 
 #if (defined(_WIN32) || defined(__WIN32__)) && !defined(WIN32) && !defined(__SYMBIAN32__)
 #define WIN32
-
 #endif
 
+#include <stdio.h>
 #include <limits.h>
 
 #if defined(__FreeBSD__) && (__FreeBSD__ >= 2)
@@ -58,14 +58,11 @@
 #if !(defined(_WINSOCKAPI_) || defined(_WINSOCK_H) || defined(__LWIP_OPT_H__))
 /* The check above prevents the winsock2 inclusion if winsock.h already was
    included, since they can't co-exist without problems */
-#include <xdk/xapilibi/winbase.h>
-#include <xdk/xapilibi/winnt.h>
-#include <xdk/xnet/winsockx.h>
-// #include "xdk/win_types.h"
-//   #include <ws2tcpip.h>
-#endif
-#endif
 
+// #include <ws2tcpip.h>
+#endif
+#endif
+#include <xdk/xnet/winsockx.h>
 /* HP-UX systems version 9, 10 and 11 lack sys/select.h and so does oldish
    libc5-based Linux systems. Only include it on systems that are known to
    require it! */
@@ -75,12 +72,12 @@
 #include <sys/select.h>
 #endif
 
-#if !defined(WIN32) && !defined(_WIN32_WCE)
-#include <sys/socket.h>
-#endif
+// #if !defined(WIN32) && !defined(_WIN32_WCE)
+// #include <sys/socket.h>
+// #endif
 
 #if !defined(WIN32) && !defined(__WATCOMC__) && !defined(__VXWORKS__)
-#include <sys/time.h>
+#include <xdk/LIBCMT/time.h>
 #endif
 
 #ifdef __BEOS__
@@ -122,7 +119,7 @@ typedef void CURL;
 #ifndef curl_socket_typedef
 /* socket typedef */
 #if defined(WIN32) && !defined(__LWIP_OPT_H__)
-typedef int curl_socket_t;
+typedef SOCKET curl_socket_t;
 #define CURL_SOCKET_BAD INVALID_SOCKET
 #else
 typedef int curl_socket_t;
@@ -224,12 +221,10 @@ typedef enum {
    achievable (e.g. by FTP LIST parsing). Please see the url_easy_setopt(3) man
    page for callbacks returning this structure -- some fields are mandatory,
    some others are optional. The FLAG field has special meaning. */
-
-#undef time
 struct curl_fileinfo {
     char *filename;
     curlfiletype filetype;
-    time_t time;
+    __time64_t time;
     unsigned int perm;
     int uid;
     int gid;
@@ -1805,7 +1800,7 @@ CURL_EXTERN void curl_free(void *p);
  *
  * This function is not thread-safe!
  */
-// CURL_EXTERN CURLcode curl_global_init(long flags);
+CURL_EXTERN CURLcode curl_global_init(long flags);
 
 /*
  * NAME curl_global_init_mem()
@@ -1820,14 +1815,14 @@ CURL_EXTERN void curl_free(void *p);
  * callback routines with be invoked by this library instead of the system
  * memory management routines like malloc, free etc.
  */
-// CURL_EXTERN CURLcode curl_global_init_mem(
-//     long flags,
-//     curl_malloc_callback m,
-//     curl_free_callback f,
-//     curl_realloc_callback r,
-//     curl_strdup_callback s,
-//     curl_calloc_callback c
-//);
+CURL_EXTERN CURLcode curl_global_init_mem(
+    long flags,
+    curl_malloc_callback m,
+    curl_free_callback f,
+    curl_realloc_callback r,
+    curl_strdup_callback s,
+    curl_calloc_callback c
+);
 
 /*
  * NAME curl_global_cleanup()
@@ -1837,7 +1832,7 @@ CURL_EXTERN void curl_free(void *p);
  * curl_global_cleanup() should be invoked exactly once for each application
  * that uses libcurl
  */
-// CURL_EXTERN void curl_global_cleanup(void);
+CURL_EXTERN void curl_global_cleanup(void);
 
 /* linked-list structure for the CURLOPT_QUOTE option (and other) */
 struct curl_slist {
@@ -1873,7 +1868,7 @@ CURL_EXTERN void curl_slist_free_all(struct curl_slist *);
  * the first argument. The time argument in the second parameter is unused
  * and should be set to NULL.
  */
-CURL_EXTERN time_t curl_getdate(const char *p, const time_t *unused);
+CURL_EXTERN __time64_t curl_getdate(const char *p, const __time64_t *unused);
 
 /* info about the certificate chain, only for OpenSSL builds. Asked
    for with CURLOPT_CERTINFO / CURLINFO_CERTINFO */
@@ -2126,7 +2121,7 @@ CURL_EXTERN const char *curl_share_strerror(CURLSHcode);
  * state by setting the bitmask, use the convenience defines below.
  *
  */
-// CURL_EXTERN CURLcode curl_easy_pause(CURL *handle, int bitmask);
+CURL_EXTERN CURLcode curl_easy_pause(CURL *handle, int bitmask);
 
 #define CURLPAUSE_RECV (1 << 0)
 #define CURLPAUSE_RECV_CONT (0)

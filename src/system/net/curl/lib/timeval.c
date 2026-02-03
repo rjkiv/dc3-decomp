@@ -31,8 +31,9 @@ struct timeval curlx_tvnow(void) {
     ** increases monotonically and wraps once 49.7 days have elapsed.
     */
     struct timeval now;
-    now.tv_sec = (long)time(NULL);
-    now.tv_usec = 0;
+    DWORD milliseconds = GetTickCount();
+    now.tv_sec = milliseconds / 1000;
+    now.tv_usec = (milliseconds % 1000) * 1000;
     return now;
 }
 
@@ -62,7 +63,7 @@ struct timeval curlx_tvnow(void) {
         (void)gettimeofday(&now, NULL);
 #else
     else {
-        now.tv_sec = (long)time(NULL);
+        now.tv_sec = (long)_time64(NULL);
         now.tv_usec = 0;
     }
 #endif
@@ -89,7 +90,7 @@ struct timeval curlx_tvnow(void) {
     ** time() returns the value of time in seconds since the Epoch.
     */
     struct timeval now;
-    now.tv_sec = (long)time(NULL);
+    now.tv_sec = (long)_time64(NULL);
     now.tv_usec = 0;
     return now;
 }

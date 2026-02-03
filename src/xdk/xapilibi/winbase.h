@@ -1,4 +1,5 @@
 #pragma once
+#include "xdk/XBOXKRNL.h"
 #include "../win_types.h"
 #include "minwinbase.h"
 #include "wtypesbase.h"
@@ -31,6 +32,7 @@ HANDLE CreateSemaphoreA(
 );
 VOID GlobalMemoryStatus(LPMEMORYSTATUS lpBuffer);
 
+typedef RTL_CRITICAL_SECTION CRITICAL_SECTION;
 #ifdef __cplusplus
 }
 #endif

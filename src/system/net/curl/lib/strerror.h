@@ -23,12 +23,11 @@
  ***************************************************************************/
 
 #include "urldata.h"
-#include "xdk/win_types.h"
 
-const char *Curl_strerror(struct connectdata *conn, int err);
+const char *Curl_strerror (struct connectdata *conn, int err);
 
 #ifdef USE_LIBIDN
-const char *Curl_idn_strerror(struct connectdata *conn, int err);
+const char *Curl_idn_strerror (struct connectdata *conn, int err);
 #endif
 
 #endif

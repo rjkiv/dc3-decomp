@@ -92,6 +92,137 @@ void Curl_freeaddrinfo(Curl_addrinfo *cahead) {
     }
 }
 
+// #ifdef HAVE_GETADDRINFO
+///*
+// * Curl_getaddrinfo_ex()
+// *
+// * This is a wrapper function around system's getaddrinfo(), with
+// * the only difference that instead of returning a linked list of
+// * addrinfo structs this one returns a linked list of Curl_addrinfo
+// * ones. The memory allocated by this function *MUST* be free'd with
+// * Curl_freeaddrinfo().  For each successful call to this function
+// * there must be an associated call later to Curl_freeaddrinfo().
+// *
+// * There should be no single call to system's getaddrinfo() in the
+// * whole library, any such call should be 'routed' through this one.
+// */
+//
+// int
+// Curl_getaddrinfo_ex(const char *nodename,
+//                    const char *servname,
+//                    const struct addrinfo *hints,
+//                    Curl_addrinfo **result)
+//{
+//  const struct addrinfo *ai;
+//  struct addrinfo *aihead;
+//  Curl_addrinfo *cafirst = NULL;
+//  Curl_addrinfo *calast = NULL;
+//  Curl_addrinfo *ca;
+//  size_t ss_size;
+//  int error;
+//
+//  *result = NULL; /* assume failure */
+//
+//  error = getaddrinfo(nodename, servname, hints, &aihead);
+//  if(error)
+//    return error;
+//
+//  /* traverse the addrinfo list */
+//
+//  for(ai = aihead; ai != NULL; ai = ai->ai_next) {
+//
+//    /* ignore elements with unsupported address family, */
+//    /* settle family-specific sockaddr structure size.  */
+//    if(ai->ai_family == AF_INET)
+//      ss_size = sizeof(struct sockaddr_in);
+// #ifdef ENABLE_IPV6
+//    else if(ai->ai_family == AF_INET6)
+//      ss_size = sizeof(struct sockaddr_in6);
+// #endif
+//    else
+//      continue;
+//
+//    /* ignore elements without required address info */
+//    if((ai->ai_addr == NULL) || !(ai->ai_addrlen > 0))
+//      continue;
+//
+//    /* ignore elements with bogus address size */
+//    if((size_t)ai->ai_addrlen < ss_size)
+//      continue;
+//
+//    if((ca = malloc(sizeof(Curl_addrinfo))) == NULL) {
+//      error = EAI_MEMORY;
+//      break;
+//    }
+//
+//    /* copy each structure member individually, member ordering, */
+//    /* size, or padding might be different for each platform.    */
+//
+//    ca->ai_flags     = ai->ai_flags;
+//    ca->ai_family    = ai->ai_family;
+//    ca->ai_socktype  = ai->ai_socktype;
+//    ca->ai_protocol  = ai->ai_protocol;
+//    ca->ai_addrlen   = (curl_socklen_t)ss_size;
+//    ca->ai_addr      = NULL;
+//    ca->ai_canonname = NULL;
+//    ca->ai_next      = NULL;
+//
+//    if((ca->ai_addr = malloc(ss_size)) == NULL) {
+//      error = EAI_MEMORY;
+//      free(ca);
+//      break;
+//    }
+//    memcpy(ca->ai_addr, ai->ai_addr, ss_size);
+//
+//    if(ai->ai_canonname != NULL) {
+//      if((ca->ai_canonname = strdup(ai->ai_canonname)) == NULL) {
+//        error = EAI_MEMORY;
+//        free(ca->ai_addr);
+//        free(ca);
+//        break;
+//      }
+//    }
+//
+//    /* if the return list is empty, this becomes the first element */
+//    if(!cafirst)
+//      cafirst = ca;
+//
+//    /* add this element last in the return list */
+//    if(calast)
+//      calast->ai_next = ca;
+//    calast = ca;
+//
+//  }
+//
+//  /* destroy the addrinfo list */
+//  if(aihead)
+//    freeaddrinfo(aihead);
+//
+//  /* if we failed, also destroy the Curl_addrinfo list */
+//  if(error) {
+//    Curl_freeaddrinfo(cafirst);
+//    cafirst = NULL;
+//  }
+//  else if(!cafirst) {
+// #ifdef EAI_NONAME
+//    /* rfc3493 conformant */
+//    error = EAI_NONAME;
+// #else
+//    /* rfc3493 obsoleted */
+//    error = EAI_NODATA;
+// #endif
+// #ifdef USE_WINSOCK
+//    SET_SOCKERRNO(error);
+// #endif
+//  }
+//
+//  *result = cafirst;
+//
+//  /* This is not a CURLcode */
+//  return error;
+//}
+// #endif /* HAVE_GETADDRINFO */
+
 /*
  * Curl_he2ai()
  *
@@ -202,6 +333,16 @@ Curl_addrinfo *Curl_he2ai(const struct hostent *he, int port) {
             addr->sin_family = (unsigned short)(he->h_addrtype);
             addr->sin_port = htons((unsigned short)port);
             break;
+
+#ifdef ENABLE_IPV6
+        case AF_INET6:
+            addr6 = (void *)ai->ai_addr; /* storage area for this info */
+
+            memcpy(&addr6->sin6_addr, curr, sizeof(struct in6_addr));
+            addr6->sin6_family = (unsigned short)(he->h_addrtype);
+            addr6->sin6_port = htons((unsigned short)port);
+            break;
+#endif
         }
 
         prevai = ai;
@@ -302,3 +443,65 @@ Curl_addrinfo *Curl_ip2addr(int af, const void *inaddr, const char *hostname, in
 
     return ai;
 }
+
+/*
+ * Given an IPv4 or IPv6 dotted string address, this converts it to a proper
+ * allocated Curl_addrinfo struct and returns it.
+ */
+Curl_addrinfo *Curl_str2addr(char *address, int port) {
+    struct in_addr in;
+    if (Curl_inet_pton(AF_INET, address, &in) > 0)
+        /* This is a dotted IP address 123.123.123.123-style */
+        return Curl_ip2addr(AF_INET, &in, address, port);
+#ifdef ENABLE_IPV6
+    else {
+        struct in6_addr in6;
+        if (Curl_inet_pton(AF_INET6, address, &in6) > 0)
+            /* This is a dotted IPv6 address ::1-style */
+            return Curl_ip2addr(AF_INET6, &in6, address, port);
+    }
+#endif
+    return NULL; /* bad input format */
+}
+
+#if defined(CURLDEBUG) && defined(HAVE_FREEADDRINFO)
+/*
+ * curl_dofreeaddrinfo()
+ *
+ * This is strictly for memory tracing and are using the same style as the
+ * family otherwise present in memdebug.c. I put these ones here since they
+ * require a bunch of structs I didn't want to include in memdebug.c
+ */
+
+void curl_dofreeaddrinfo(struct addrinfo *freethis, int line, const char *source) {
+    (freeaddrinfo)(freethis);
+    curl_memlog("ADDR %s:%d freeaddrinfo(%p)\n", source, line, (void *)freethis);
+}
+#endif /* defined(CURLDEBUG) && defined(HAVE_FREEADDRINFO) */
+
+#if defined(CURLDEBUG) && defined(HAVE_GETADDRINFO)
+/*
+ * curl_dogetaddrinfo()
+ *
+ * This is strictly for memory tracing and are using the same style as the
+ * family otherwise present in memdebug.c. I put these ones here since they
+ * require a bunch of structs I didn't want to include in memdebug.c
+ */
+
+int curl_dogetaddrinfo(
+    const char *hostname,
+    const char *service,
+    const struct addrinfo *hints,
+    struct addrinfo **result,
+    int line,
+    const char *source
+) {
+    int res = (getaddrinfo)(hostname, service, hints, result);
+    if (0 == res)
+        /* success */
+        curl_memlog("ADDR %s:%d getaddrinfo() = %p\n", source, line, (void *)*result);
+    else
+        curl_memlog("ADDR %s:%d getaddrinfo() failed\n", source, line);
+    return res;
+}
+#endif /* defined(CURLDEBUG) && defined(HAVE_GETADDRINFO) */

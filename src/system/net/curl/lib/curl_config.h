@@ -1,950 +1,1062 @@
+/* lib/curl_config.h.  Generated from curl_config.h.in by configure.  */
 /* lib/curl_config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* when building libcurl itself */
-#cmakedefine BUILDING_LIBCURL ${BUILDING_LIBCURL}
+/* #undef BUILDING_LIBCURL */
 
 /* Location of default ca bundle */
-#cmakedefine CURL_CA_BUNDLE ${CURL_CA_BUNDLE}
+/* #undef CURL_CA_BUNDLE */
 
 /* Location of default ca path */
-#cmakedefine CURL_CA_PATH ${CURL_CA_PATH}
+/* #undef CURL_CA_PATH */
 
 /* to disable cookies support */
-#cmakedefine CURL_DISABLE_COOKIES ${CURL_DISABLE_COOKIES}
+/* #undef CURL_DISABLE_COOKIES */
 
 /* to disable cryptographic authentication */
-#cmakedefine CURL_DISABLE_CRYPTO_AUTH ${CURL_DISABLE_CRYPTO_AUTH}
+/* #undef CURL_DISABLE_CRYPTO_AUTH */
 
 /* to disable DICT */
-#cmakedefine CURL_DISABLE_DICT ${CURL_DISABLE_DICT}
+/* #undef CURL_DISABLE_DICT */
 
 /* to disable FILE */
-#cmakedefine CURL_DISABLE_FILE ${CURL_DISABLE_FILE}
+/* #undef CURL_DISABLE_FILE */
 
 /* to disable FTP */
-#cmakedefine CURL_DISABLE_FTP ${CURL_DISABLE_FTP}
+/* #undef CURL_DISABLE_FTP */
+
+/* to disable Gopher */
+/* #undef CURL_DISABLE_GOPHER */
 
 /* to disable HTTP */
-#cmakedefine CURL_DISABLE_HTTP ${CURL_DISABLE_HTTP}
+/* #undef CURL_DISABLE_HTTP */
+
+/* to disable IMAP */
+/* #undef CURL_DISABLE_IMAP */
 
 /* to disable LDAP */
-#cmakedefine CURL_DISABLE_LDAP ${CURL_DISABLE_LDAP}
+#define CURL_DISABLE_LDAP 1
 
 /* to disable LDAPS */
-#cmakedefine CURL_DISABLE_LDAPS ${CURL_DISABLE_LDAPS}
+#define CURL_DISABLE_LDAPS 1
+
+/* to disable POP3 */
+/* #undef CURL_DISABLE_POP3 */
 
 /* to disable proxies */
-#cmakedefine CURL_DISABLE_PROXY ${CURL_DISABLE_PROXY}
+/* #undef CURL_DISABLE_PROXY */
+
+/* to disable RTSP */
+/* #undef CURL_DISABLE_RTSP */
+
+/* to disable SMTP */
+/* #undef CURL_DISABLE_SMTP */
 
 /* to disable TELNET */
-#cmakedefine CURL_DISABLE_TELNET ${CURL_DISABLE_TELNET}
+/* #undef CURL_DISABLE_TELNET */
 
 /* to disable TFTP */
-#cmakedefine CURL_DISABLE_TFTP ${CURL_DISABLE_TFTP}
+/* #undef CURL_DISABLE_TFTP */
+
+/* to disable TLS-SRP authentication */
+/* #undef CURL_DISABLE_TLS_SRP */
 
 /* to disable verbose strings */
-#cmakedefine CURL_DISABLE_VERBOSE_STRINGS ${CURL_DISABLE_VERBOSE_STRINGS}
+/* #undef CURL_DISABLE_VERBOSE_STRINGS */
 
 /* to make a symbol visible */
-#cmakedefine CURL_EXTERN_SYMBOL ${CURL_EXTERN_SYMBOL}
-/* Ensure using CURL_EXTERN_SYMBOL is possible */
-#ifndef CURL_EXTERN_SYMBOL
-#define CURL_EXTERN_SYMBOL
-#endif
+/* #undef CURL_EXTERN_SYMBOL */
 
 /* to enable hidden symbols */
-#cmakedefine CURL_HIDDEN_SYMBOLS ${CURL_HIDDEN_SYMBOLS}
+/* #undef CURL_HIDDEN_SYMBOLS */
 
 /* Use Windows LDAP implementation */
-#cmakedefine CURL_LDAP_WIN ${CURL_LDAP_WIN}
+/* #undef CURL_LDAP_WIN */
 
 /* when not building a shared library */
-#cmakedefine CURL_STATICLIB ${CURL_STATICLIB}
-
-/* Set to explicitly specify we don't want to use thread-safe functions */
-#cmakedefine DISABLED_THREADSAFE ${DISABLED_THREADSAFE}
+/* #undef CURL_STATICLIB */
 
 /* your Entropy Gathering Daemon socket pathname */
-#cmakedefine EGD_SOCKET ${EGD_SOCKET}
+/* #undef EGD_SOCKET */
 
 /* Define if you want to enable IPv6 support */
-#cmakedefine ENABLE_IPV6 ${ENABLE_IPV6}
+/* #undef ENABLE_IPV6 */
 
 /* Define to the type qualifier of arg 1 for getnameinfo. */
-#cmakedefine GETNAMEINFO_QUAL_ARG1 ${GETNAMEINFO_QUAL_ARG1}
+#define GETNAMEINFO_QUAL_ARG1 const
 
 /* Define to the type of arg 1 for getnameinfo. */
-#cmakedefine GETNAMEINFO_TYPE_ARG1 ${GETNAMEINFO_TYPE_ARG1}
+#define GETNAMEINFO_TYPE_ARG1 struct sockaddr *
 
 /* Define to the type of arg 2 for getnameinfo. */
-#cmakedefine GETNAMEINFO_TYPE_ARG2 ${GETNAMEINFO_TYPE_ARG2}
+#define GETNAMEINFO_TYPE_ARG2 socklen_t
 
 /* Define to the type of args 4 and 6 for getnameinfo. */
-#cmakedefine GETNAMEINFO_TYPE_ARG46 ${GETNAMEINFO_TYPE_ARG46}
+#define GETNAMEINFO_TYPE_ARG46 socklen_t
 
 /* Define to the type of arg 7 for getnameinfo. */
-#cmakedefine GETNAMEINFO_TYPE_ARG7 ${GETNAMEINFO_TYPE_ARG7}
+#define GETNAMEINFO_TYPE_ARG7 int
 
 /* Specifies the number of arguments to getservbyport_r */
-#cmakedefine GETSERVBYPORT_R_ARGS ${GETSERVBYPORT_R_ARGS}
+/* #undef GETSERVBYPORT_R_ARGS */
 
 /* Specifies the size of the buffer to pass to getservbyport_r */
-#cmakedefine GETSERVBYPORT_R_BUFSIZE ${GETSERVBYPORT_R_BUFSIZE}
+/* #undef GETSERVBYPORT_R_BUFSIZE */
 
 /* Define to 1 if you have the alarm function. */
-#cmakedefine HAVE_ALARM ${HAVE_ALARM}
+#define HAVE_ALARM 1
 
 /* Define to 1 if you have the <alloca.h> header file. */
-#cmakedefine HAVE_ALLOCA_H ${HAVE_ALLOCA_H}
+#define HAVE_ALLOCA_H 1
 
 /* Define to 1 if you have the <arpa/inet.h> header file. */
-#cmakedefine HAVE_ARPA_INET_H ${HAVE_ARPA_INET_H}
+#define HAVE_ARPA_INET_H 1
 
 /* Define to 1 if you have the <arpa/tftp.h> header file. */
-#cmakedefine HAVE_ARPA_TFTP_H ${HAVE_ARPA_TFTP_H}
+/* #undef HAVE_ARPA_TFTP_H */
 
 /* Define to 1 if you have the <assert.h> header file. */
-#cmakedefine HAVE_ASSERT_H ${HAVE_ASSERT_H}
+#define HAVE_ASSERT_H 1
 
-/* Define to 1 if you have the `basename' function. */
-#cmakedefine HAVE_BASENAME ${HAVE_BASENAME}
+/* Define to 1 if you have the basename function. */
+#define HAVE_BASENAME 1
 
 /* Define to 1 if bool is an available type. */
-#cmakedefine HAVE_BOOL_T ${HAVE_BOOL_T}
+#define HAVE_BOOL_T 1
 
 /* Define to 1 if you have the clock_gettime function and monotonic timer. */
-#cmakedefine HAVE_CLOCK_GETTIME_MONOTONIC ${HAVE_CLOCK_GETTIME_MONOTONIC}
+/* #undef HAVE_CLOCK_GETTIME_MONOTONIC */
 
-/* Define to 1 if you have the `closesocket' function. */
-#cmakedefine HAVE_CLOSESOCKET ${HAVE_CLOSESOCKET}
+/* Define to 1 if you have the closesocket function. */
+/* #undef HAVE_CLOSESOCKET */
+
+/* Define to 1 if you have the CloseSocket camel case function. */
+/* #undef HAVE_CLOSESOCKET_CAMEL */
+
+/* Define to 1 if you have the connect function. */
+#define HAVE_CONNECT 1
 
 /* Define to 1 if you have the `CRYPTO_cleanup_all_ex_data' function. */
-#cmakedefine HAVE_CRYPTO_CLEANUP_ALL_EX_DATA ${HAVE_CRYPTO_CLEANUP_ALL_EX_DATA}
+/* #undef HAVE_CRYPTO_CLEANUP_ALL_EX_DATA */
 
 /* Define to 1 if you have the <crypto.h> header file. */
-#cmakedefine HAVE_CRYPTO_H ${HAVE_CRYPTO_H}
+/* #undef HAVE_CRYPTO_H */
 
 /* Define to 1 if you have the <des.h> header file. */
-#cmakedefine HAVE_DES_H ${HAVE_DES_H}
+/* #undef HAVE_DES_H */
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
-#cmakedefine HAVE_DLFCN_H ${HAVE_DLFCN_H}
+#define HAVE_DLFCN_H 1
+
+/* Define to 1 if you have the `ENGINE_cleanup' function. */
+/* #undef HAVE_ENGINE_CLEANUP */
 
 /* Define to 1 if you have the `ENGINE_load_builtin_engines' function. */
-#cmakedefine HAVE_ENGINE_LOAD_BUILTIN_ENGINES ${HAVE_ENGINE_LOAD_BUILTIN_ENGINES}
+/* #undef HAVE_ENGINE_LOAD_BUILTIN_ENGINES */
 
 /* Define to 1 if you have the <errno.h> header file. */
-#cmakedefine HAVE_ERRNO_H ${HAVE_ERRNO_H}
+#define HAVE_ERRNO_H 1
 
 /* Define to 1 if you have the <err.h> header file. */
-#cmakedefine HAVE_ERR_H ${HAVE_ERR_H}
+/* #undef HAVE_ERR_H */
 
 /* Define to 1 if you have the fcntl function. */
-#cmakedefine HAVE_FCNTL ${HAVE_FCNTL}
+#define HAVE_FCNTL 1
 
 /* Define to 1 if you have the <fcntl.h> header file. */
-#cmakedefine HAVE_FCNTL_H ${HAVE_FCNTL_H}
+#define HAVE_FCNTL_H 1
 
 /* Define to 1 if you have a working fcntl O_NONBLOCK function. */
-#cmakedefine HAVE_FCNTL_O_NONBLOCK ${HAVE_FCNTL_O_NONBLOCK}
+#define HAVE_FCNTL_O_NONBLOCK 1
 
 /* Define to 1 if you have the fdopen function. */
-#cmakedefine HAVE_FDOPEN ${HAVE_FDOPEN}
+#define HAVE_FDOPEN 1
 
 /* Define to 1 if you have the `fork' function. */
-#cmakedefine HAVE_FORK ${HAVE_FORK}
+#define HAVE_FORK 1
 
 /* Define to 1 if you have the freeaddrinfo function. */
-#cmakedefine HAVE_FREEADDRINFO ${HAVE_FREEADDRINFO}
+#define HAVE_FREEADDRINFO 1
 
 /* Define to 1 if you have the freeifaddrs function. */
-#cmakedefine HAVE_FREEIFADDRS ${HAVE_FREEIFADDRS}
+#define HAVE_FREEIFADDRS 1
+
+/* Define to 1 if you have the fsetxattr function. */
+#define HAVE_FSETXATTR 1
+
+/* fsetxattr() takes 5 args */
+/* #undef HAVE_FSETXATTR_5 */
+
+/* fsetxattr() takes 6 args */
+#define HAVE_FSETXATTR_6 1
 
 /* Define to 1 if you have the ftruncate function. */
-#cmakedefine HAVE_FTRUNCATE ${HAVE_FTRUNCATE}
+#define HAVE_FTRUNCATE 1
+
+/* Define to 1 if you have the gai_strerror function. */
+#define HAVE_GAI_STRERROR 1
 
 /* Define to 1 if you have a working getaddrinfo function. */
-#cmakedefine HAVE_GETADDRINFO ${HAVE_GETADDRINFO}
+#define HAVE_GETADDRINFO 1
+
+/* Define to 1 if the getaddrinfo function is threadsafe. */
+#define HAVE_GETADDRINFO_THREADSAFE 1
 
 /* Define to 1 if you have the `geteuid' function. */
-#cmakedefine HAVE_GETEUID ${HAVE_GETEUID}
+#define HAVE_GETEUID 1
 
 /* Define to 1 if you have the gethostbyaddr function. */
-#cmakedefine HAVE_GETHOSTBYADDR ${HAVE_GETHOSTBYADDR}
+#define HAVE_GETHOSTBYADDR 1
 
 /* Define to 1 if you have the gethostbyaddr_r function. */
-#cmakedefine HAVE_GETHOSTBYADDR_R ${HAVE_GETHOSTBYADDR_R}
+/* #undef HAVE_GETHOSTBYADDR_R */
 
 /* gethostbyaddr_r() takes 5 args */
-#cmakedefine HAVE_GETHOSTBYADDR_R_5 ${HAVE_GETHOSTBYADDR_R_5}
+/* #undef HAVE_GETHOSTBYADDR_R_5 */
 
 /* gethostbyaddr_r() takes 7 args */
-#cmakedefine HAVE_GETHOSTBYADDR_R_7 ${HAVE_GETHOSTBYADDR_R_7}
+/* #undef HAVE_GETHOSTBYADDR_R_7 */
 
 /* gethostbyaddr_r() takes 8 args */
-#cmakedefine HAVE_GETHOSTBYADDR_R_8 ${HAVE_GETHOSTBYADDR_R_8}
+/* #undef HAVE_GETHOSTBYADDR_R_8 */
 
 /* Define to 1 if you have the gethostbyname function. */
-#cmakedefine HAVE_GETHOSTBYNAME ${HAVE_GETHOSTBYNAME}
+#define HAVE_GETHOSTBYNAME 1
 
 /* Define to 1 if you have the gethostbyname_r function. */
-#cmakedefine HAVE_GETHOSTBYNAME_R ${HAVE_GETHOSTBYNAME_R}
+/* #undef HAVE_GETHOSTBYNAME_R */
 
 /* gethostbyname_r() takes 3 args */
-#cmakedefine HAVE_GETHOSTBYNAME_R_3 ${HAVE_GETHOSTBYNAME_R_3}
+/* #undef HAVE_GETHOSTBYNAME_R_3 */
 
 /* gethostbyname_r() takes 5 args */
-#cmakedefine HAVE_GETHOSTBYNAME_R_5 ${HAVE_GETHOSTBYNAME_R_5}
+/* #undef HAVE_GETHOSTBYNAME_R_5 */
 
 /* gethostbyname_r() takes 6 args */
-#cmakedefine HAVE_GETHOSTBYNAME_R_6 ${HAVE_GETHOSTBYNAME_R_6}
+/* #undef HAVE_GETHOSTBYNAME_R_6 */
 
 /* Define to 1 if you have the gethostname function. */
-#cmakedefine HAVE_GETHOSTNAME ${HAVE_GETHOSTNAME}
+#define HAVE_GETHOSTNAME 1
 
 /* Define to 1 if you have a working getifaddrs function. */
-#cmakedefine HAVE_GETIFADDRS ${HAVE_GETIFADDRS}
+#define HAVE_GETIFADDRS 1
 
 /* Define to 1 if you have the getnameinfo function. */
-#cmakedefine HAVE_GETNAMEINFO ${HAVE_GETNAMEINFO}
+#define HAVE_GETNAMEINFO 1
 
 /* Define to 1 if you have the `getpass_r' function. */
-#cmakedefine HAVE_GETPASS_R ${HAVE_GETPASS_R}
+/* #undef HAVE_GETPASS_R */
 
 /* Define to 1 if you have the `getppid' function. */
-#cmakedefine HAVE_GETPPID ${HAVE_GETPPID}
+#define HAVE_GETPPID 1
 
 /* Define to 1 if you have the `getprotobyname' function. */
-#cmakedefine HAVE_GETPROTOBYNAME ${HAVE_GETPROTOBYNAME}
+#define HAVE_GETPROTOBYNAME 1
 
 /* Define to 1 if you have the `getpwuid' function. */
-#cmakedefine HAVE_GETPWUID ${HAVE_GETPWUID}
+#define HAVE_GETPWUID 1
 
 /* Define to 1 if you have the `getrlimit' function. */
-#cmakedefine HAVE_GETRLIMIT ${HAVE_GETRLIMIT}
+#define HAVE_GETRLIMIT 1
 
 /* Define to 1 if you have the getservbyport_r function. */
-#cmakedefine HAVE_GETSERVBYPORT_R ${HAVE_GETSERVBYPORT_R}
+/* #undef HAVE_GETSERVBYPORT_R */
 
 /* Define to 1 if you have the `gettimeofday' function. */
-#cmakedefine HAVE_GETTIMEOFDAY ${HAVE_GETTIMEOFDAY}
+#define HAVE_GETTIMEOFDAY 1
 
 /* Define to 1 if you have a working glibc-style strerror_r function. */
-#cmakedefine HAVE_GLIBC_STRERROR_R ${HAVE_GLIBC_STRERROR_R}
+/* #undef HAVE_GLIBC_STRERROR_R */
 
 /* Define to 1 if you have a working gmtime_r function. */
-#cmakedefine HAVE_GMTIME_R ${HAVE_GMTIME_R}
+#define HAVE_GMTIME_R 1
+
+/* if you have the function gnutls_srp_verifier */
+/* #undef HAVE_GNUTLS_SRP */
 
 /* if you have the gssapi libraries */
-#cmakedefine HAVE_GSSAPI ${HAVE_GSSAPI}
+/* #undef HAVE_GSSAPI */
 
 /* Define to 1 if you have the <gssapi/gssapi_generic.h> header file. */
-#cmakedefine HAVE_GSSAPI_GSSAPI_GENERIC_H ${HAVE_GSSAPI_GSSAPI_GENERIC_H}
+/* #undef HAVE_GSSAPI_GSSAPI_GENERIC_H */
 
 /* Define to 1 if you have the <gssapi/gssapi.h> header file. */
-#cmakedefine HAVE_GSSAPI_GSSAPI_H ${HAVE_GSSAPI_GSSAPI_H}
+/* #undef HAVE_GSSAPI_GSSAPI_H */
 
 /* Define to 1 if you have the <gssapi/gssapi_krb5.h> header file. */
-#cmakedefine HAVE_GSSAPI_GSSAPI_KRB5_H ${HAVE_GSSAPI_GSSAPI_KRB5_H}
+/* #undef HAVE_GSSAPI_GSSAPI_KRB5_H */
 
 /* if you have the GNU gssapi libraries */
-#cmakedefine HAVE_GSSGNU ${HAVE_GSSGNU}
+/* #undef HAVE_GSSGNU */
 
 /* if you have the Heimdal gssapi libraries */
-#cmakedefine HAVE_GSSHEIMDAL ${HAVE_GSSHEIMDAL}
+/* #undef HAVE_GSSHEIMDAL */
 
 /* if you have the MIT gssapi libraries */
-#cmakedefine HAVE_GSSMIT ${HAVE_GSSMIT}
+/* #undef HAVE_GSSMIT */
 
 /* Define to 1 if you have the `idna_strerror' function. */
-#cmakedefine HAVE_IDNA_STRERROR ${HAVE_IDNA_STRERROR}
+/* #undef HAVE_IDNA_STRERROR */
 
 /* Define to 1 if you have the `idn_free' function. */
-#cmakedefine HAVE_IDN_FREE ${HAVE_IDN_FREE}
+/* #undef HAVE_IDN_FREE */
 
 /* Define to 1 if you have the <idn-free.h> header file. */
-#cmakedefine HAVE_IDN_FREE_H ${HAVE_IDN_FREE_H}
+/* #undef HAVE_IDN_FREE_H */
 
 /* Define to 1 if you have the <ifaddrs.h> header file. */
-#cmakedefine HAVE_IFADDRS_H ${HAVE_IFADDRS_H}
+#define HAVE_IFADDRS_H 1
 
 /* Define to 1 if you have the `inet_addr' function. */
-#cmakedefine HAVE_INET_ADDR ${HAVE_INET_ADDR}
+#define HAVE_INET_ADDR 1
 
 /* Define to 1 if you have the inet_ntoa_r function. */
-#cmakedefine HAVE_INET_NTOA_R ${HAVE_INET_NTOA_R}
+/* #undef HAVE_INET_NTOA_R */
 
 /* inet_ntoa_r() takes 2 args */
-#cmakedefine HAVE_INET_NTOA_R_2 ${HAVE_INET_NTOA_R_2}
+/* #undef HAVE_INET_NTOA_R_2 */
 
 /* inet_ntoa_r() takes 3 args */
-#cmakedefine HAVE_INET_NTOA_R_3 ${HAVE_INET_NTOA_R_3}
+/* #undef HAVE_INET_NTOA_R_3 */
 
 /* Define to 1 if you have a IPv6 capable working inet_ntop function. */
-#cmakedefine HAVE_INET_NTOP ${HAVE_INET_NTOP}
+#define HAVE_INET_NTOP 1
 
 /* Define to 1 if you have a IPv6 capable working inet_pton function. */
-#cmakedefine HAVE_INET_PTON ${HAVE_INET_PTON}
+#define HAVE_INET_PTON 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
-#cmakedefine HAVE_INTTYPES_H ${HAVE_INTTYPES_H}
+#define HAVE_INTTYPES_H 1
 
 /* Define to 1 if you have the ioctl function. */
-#cmakedefine HAVE_IOCTL ${HAVE_IOCTL}
+#define HAVE_IOCTL 1
 
 /* Define to 1 if you have the ioctlsocket function. */
-#cmakedefine HAVE_IOCTLSOCKET ${HAVE_IOCTLSOCKET}
+/* #undef HAVE_IOCTLSOCKET */
 
 /* Define to 1 if you have the IoctlSocket camel case function. */
-#cmakedefine HAVE_IOCTLSOCKET_CAMEL ${HAVE_IOCTLSOCKET_CAMEL}
+/* #undef HAVE_IOCTLSOCKET_CAMEL */
 
 /* Define to 1 if you have a working IoctlSocket camel case FIONBIO function.
    */
-#cmakedefine HAVE_IOCTLSOCKET_CAMEL_FIONBIO ${HAVE_IOCTLSOCKET_CAMEL_FIONBIO}
+/* #undef HAVE_IOCTLSOCKET_CAMEL_FIONBIO */
 
 /* Define to 1 if you have a working ioctlsocket FIONBIO function. */
-#cmakedefine HAVE_IOCTLSOCKET_FIONBIO ${HAVE_IOCTLSOCKET_FIONBIO}
+/* #undef HAVE_IOCTLSOCKET_FIONBIO */
 
 /* Define to 1 if you have a working ioctl FIONBIO function. */
-#cmakedefine HAVE_IOCTL_FIONBIO ${HAVE_IOCTL_FIONBIO}
+#define HAVE_IOCTL_FIONBIO 1
 
 /* Define to 1 if you have a working ioctl SIOCGIFADDR function. */
-#cmakedefine HAVE_IOCTL_SIOCGIFADDR ${HAVE_IOCTL_SIOCGIFADDR}
+#define HAVE_IOCTL_SIOCGIFADDR 1
 
 /* Define to 1 if you have the <io.h> header file. */
-#cmakedefine HAVE_IO_H ${HAVE_IO_H}
+/* #undef HAVE_IO_H */
 
 /* if you have the Kerberos4 libraries (including -ldes) */
-#cmakedefine HAVE_KRB4 ${HAVE_KRB4}
+/* #undef HAVE_KRB4 */
 
 /* Define to 1 if you have the `krb_get_our_ip_for_realm' function. */
-#cmakedefine HAVE_KRB_GET_OUR_IP_FOR_REALM ${HAVE_KRB_GET_OUR_IP_FOR_REALM}
+/* #undef HAVE_KRB_GET_OUR_IP_FOR_REALM */
 
 /* Define to 1 if you have the <krb.h> header file. */
-#cmakedefine HAVE_KRB_H ${HAVE_KRB_H}
+/* #undef HAVE_KRB_H */
 
 /* Define to 1 if you have the lber.h header file. */
-#cmakedefine HAVE_LBER_H ${HAVE_LBER_H}
+/* #undef HAVE_LBER_H */
 
 /* Define to 1 if you have the ldapssl.h header file. */
-#cmakedefine HAVE_LDAPSSL_H ${HAVE_LDAPSSL_H}
+/* #undef HAVE_LDAPSSL_H */
 
 /* Define to 1 if you have the ldap.h header file. */
-#cmakedefine HAVE_LDAP_H ${HAVE_LDAP_H}
+/* #undef HAVE_LDAP_H */
+
+/* Define to 1 if you have the `ldap_init_fd' function. */
+/* #undef HAVE_LDAP_INIT_FD */
 
 /* Use LDAPS implementation */
-#cmakedefine HAVE_LDAP_SSL ${HAVE_LDAP_SSL}
+/* #undef HAVE_LDAP_SSL */
 
 /* Define to 1 if you have the ldap_ssl.h header file. */
-#cmakedefine HAVE_LDAP_SSL_H ${HAVE_LDAP_SSL_H}
+/* #undef HAVE_LDAP_SSL_H */
 
 /* Define to 1 if you have the `ldap_url_parse' function. */
-#cmakedefine HAVE_LDAP_URL_PARSE ${HAVE_LDAP_URL_PARSE}
+/* #undef HAVE_LDAP_URL_PARSE */
+
+/* Define to 1 if you have the `gcrypt' library (-lgcrypt). */
+/* #undef HAVE_LIBGCRYPT */
 
 /* Define to 1 if you have the <libgen.h> header file. */
-#cmakedefine HAVE_LIBGEN_H ${HAVE_LIBGEN_H}
+#define HAVE_LIBGEN_H 1
 
 /* Define to 1 if you have the `idn' library (-lidn). */
-#cmakedefine HAVE_LIBIDN ${HAVE_LIBIDN}
+/* #undef HAVE_LIBIDN */
 
 /* Define to 1 if you have the `resolv' library (-lresolv). */
-#cmakedefine HAVE_LIBRESOLV ${HAVE_LIBRESOLV}
+/* #undef HAVE_LIBRESOLV */
 
 /* Define to 1 if you have the `resolve' library (-lresolve). */
-#cmakedefine HAVE_LIBRESOLVE ${HAVE_LIBRESOLVE}
+/* #undef HAVE_LIBRESOLVE */
 
-/* Define to 1 if you have the `socket' library (-lsocket). */
-#cmakedefine HAVE_LIBSOCKET ${HAVE_LIBSOCKET}
+/* Define to 1 if you have the <librtmp/rtmp.h> header file. */
+/* #undef HAVE_LIBRTMP_RTMP_H */
 
 /* Define to 1 if you have the `ssh2' library (-lssh2). */
-#cmakedefine HAVE_LIBSSH2 ${HAVE_LIBSSH2}
+/* #undef HAVE_LIBSSH2 */
+
+/* Define to 1 if you have the `libssh2_exit' function. */
+/* #undef HAVE_LIBSSH2_EXIT */
 
 /* Define to 1 if you have the <libssh2.h> header file. */
-#cmakedefine HAVE_LIBSSH2_H ${HAVE_LIBSSH2_H}
+/* #undef HAVE_LIBSSH2_H */
+
+/* Define to 1 if you have the `libssh2_init' function. */
+/* #undef HAVE_LIBSSH2_INIT */
+
+/* Define to 1 if you have the `libssh2_scp_send64' function. */
+/* #undef HAVE_LIBSSH2_SCP_SEND64 */
+
+/* Define to 1 if you have the `libssh2_session_handshake' function. */
+/* #undef HAVE_LIBSSH2_SESSION_HANDSHAKE */
+
+/* Define to 1 if you have the `libssh2_version' function. */
+/* #undef HAVE_LIBSSH2_VERSION */
 
 /* Define to 1 if you have the `ssl' library (-lssl). */
-#cmakedefine HAVE_LIBSSL ${HAVE_LIBSSL}
+/* #undef HAVE_LIBSSL */
 
 /* if zlib is available */
-#cmakedefine HAVE_LIBZ ${HAVE_LIBZ}
+#define HAVE_LIBZ 1
 
 /* Define to 1 if you have the <limits.h> header file. */
-#cmakedefine HAVE_LIMITS_H ${HAVE_LIMITS_H}
+#define HAVE_LIMITS_H 1
 
 /* if your compiler supports LL */
-#cmakedefine HAVE_LL ${HAVE_LL}
+#define HAVE_LL 1
 
 /* Define to 1 if you have the <locale.h> header file. */
-#cmakedefine HAVE_LOCALE_H ${HAVE_LOCALE_H}
+#define HAVE_LOCALE_H 1
 
 /* Define to 1 if you have a working localtime_r function. */
-#cmakedefine HAVE_LOCALTIME_R ${HAVE_LOCALTIME_R}
+#define HAVE_LOCALTIME_R 1
 
 /* Define to 1 if the compiler supports the 'long long' data type. */
-#cmakedefine HAVE_LONGLONG ${HAVE_LONGLONG}
+#define HAVE_LONGLONG 1
 
 /* Define to 1 if you have the malloc.h header file. */
-#cmakedefine HAVE_MALLOC_H ${HAVE_MALLOC_H}
+/* #undef HAVE_MALLOC_H */
 
-/* Define to 1 if you have the <memory.h> header file. */
-#cmakedefine HAVE_MEMORY_H ${HAVE_MEMORY_H}
+/* Define to 1 if you have the memory.h header file. */
+#define HAVE_MEMORY_H 1
+
+/* Define to 1 if you have the memrchr function or macro. */
+/* #undef HAVE_MEMRCHR */
 
 /* Define to 1 if you have the MSG_NOSIGNAL flag. */
-#cmakedefine HAVE_MSG_NOSIGNAL ${HAVE_MSG_NOSIGNAL}
+/* #undef HAVE_MSG_NOSIGNAL */
 
 /* Define to 1 if you have the <netdb.h> header file. */
-#cmakedefine HAVE_NETDB_H ${HAVE_NETDB_H}
+#define HAVE_NETDB_H 1
 
 /* Define to 1 if you have the <netinet/in.h> header file. */
-#cmakedefine HAVE_NETINET_IN_H ${HAVE_NETINET_IN_H}
+#define HAVE_NETINET_IN_H 1
 
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
-#cmakedefine HAVE_NETINET_TCP_H ${HAVE_NETINET_TCP_H}
+#define HAVE_NETINET_TCP_H 1
 
 /* Define to 1 if you have the <net/if.h> header file. */
-#cmakedefine HAVE_NET_IF_H ${HAVE_NET_IF_H}
+#define HAVE_NET_IF_H 1
 
 /* Define to 1 if NI_WITHSCOPEID exists and works. */
-#cmakedefine HAVE_NI_WITHSCOPEID ${HAVE_NI_WITHSCOPEID}
+/* #undef HAVE_NI_WITHSCOPEID */
 
 /* if you have an old MIT gssapi library, lacking GSS_C_NT_HOSTBASED_SERVICE
    */
-#cmakedefine HAVE_OLD_GSSMIT ${HAVE_OLD_GSSMIT}
+/* #undef HAVE_OLD_GSSMIT */
 
 /* Define to 1 if you have the <openssl/crypto.h> header file. */
-#cmakedefine HAVE_OPENSSL_CRYPTO_H ${HAVE_OPENSSL_CRYPTO_H}
+/* #undef HAVE_OPENSSL_CRYPTO_H */
 
 /* Define to 1 if you have the <openssl/engine.h> header file. */
-#cmakedefine HAVE_OPENSSL_ENGINE_H ${HAVE_OPENSSL_ENGINE_H}
+/* #undef HAVE_OPENSSL_ENGINE_H */
 
 /* Define to 1 if you have the <openssl/err.h> header file. */
-#cmakedefine HAVE_OPENSSL_ERR_H ${HAVE_OPENSSL_ERR_H}
+/* #undef HAVE_OPENSSL_ERR_H */
 
 /* Define to 1 if you have the <openssl/pem.h> header file. */
-#cmakedefine HAVE_OPENSSL_PEM_H ${HAVE_OPENSSL_PEM_H}
+/* #undef HAVE_OPENSSL_PEM_H */
 
 /* Define to 1 if you have the <openssl/pkcs12.h> header file. */
-#cmakedefine HAVE_OPENSSL_PKCS12_H ${HAVE_OPENSSL_PKCS12_H}
+/* #undef HAVE_OPENSSL_PKCS12_H */
 
 /* Define to 1 if you have the <openssl/rsa.h> header file. */
-#cmakedefine HAVE_OPENSSL_RSA_H ${HAVE_OPENSSL_RSA_H}
+/* #undef HAVE_OPENSSL_RSA_H */
 
 /* Define to 1 if you have the <openssl/ssl.h> header file. */
-#cmakedefine HAVE_OPENSSL_SSL_H ${HAVE_OPENSSL_SSL_H}
+/* #undef HAVE_OPENSSL_SSL_H */
 
 /* Define to 1 if you have the <openssl/x509.h> header file. */
-#cmakedefine HAVE_OPENSSL_X509_H ${HAVE_OPENSSL_X509_H}
+/* #undef HAVE_OPENSSL_X509_H */
 
 /* Define to 1 if you have the <pem.h> header file. */
-#cmakedefine HAVE_PEM_H ${HAVE_PEM_H}
+/* #undef HAVE_PEM_H */
 
 /* Define to 1 if you have the `perror' function. */
-#cmakedefine HAVE_PERROR ${HAVE_PERROR}
+#define HAVE_PERROR 1
 
 /* Define to 1 if you have the `pipe' function. */
-#cmakedefine HAVE_PIPE ${HAVE_PIPE}
+#define HAVE_PIPE 1
 
 /* if you have the function PK11_CreateGenericObject */
-#cmakedefine HAVE_PK11_CREATEGENERICOBJECT ${HAVE_PK11_CREATEGENERICOBJECT}
+/* #undef HAVE_PK11_CREATEGENERICOBJECT */
 
 /* Define to 1 if you have a working poll function. */
-#cmakedefine HAVE_POLL ${HAVE_POLL}
+/* #undef HAVE_POLL */
 
 /* If you have a fine poll */
-#cmakedefine HAVE_POLL_FINE ${HAVE_POLL_FINE}
+/* #undef HAVE_POLL_FINE */
 
 /* Define to 1 if you have the <poll.h> header file. */
-#cmakedefine HAVE_POLL_H ${HAVE_POLL_H}
+#define HAVE_POLL_H 1
 
 /* Define to 1 if you have a working POSIX-style strerror_r function. */
-#cmakedefine HAVE_POSIX_STRERROR_R ${HAVE_POSIX_STRERROR_R}
+#define HAVE_POSIX_STRERROR_R 1
+
+/* if you have <pthread.h> */
+/* #undef HAVE_PTHREAD_H */
 
 /* Define to 1 if you have the <pwd.h> header file. */
-#cmakedefine HAVE_PWD_H ${HAVE_PWD_H}
+#define HAVE_PWD_H 1
 
 /* Define to 1 if you have the `RAND_egd' function. */
-#cmakedefine HAVE_RAND_EGD ${HAVE_RAND_EGD}
+/* #undef HAVE_RAND_EGD */
 
 /* Define to 1 if you have the `RAND_screen' function. */
-#cmakedefine HAVE_RAND_SCREEN ${HAVE_RAND_SCREEN}
+/* #undef HAVE_RAND_SCREEN */
 
 /* Define to 1 if you have the `RAND_status' function. */
-#cmakedefine HAVE_RAND_STATUS ${HAVE_RAND_STATUS}
+/* #undef HAVE_RAND_STATUS */
 
 /* Define to 1 if you have the recv function. */
-#cmakedefine HAVE_RECV ${HAVE_RECV}
+#define HAVE_RECV 1
 
 /* Define to 1 if you have the recvfrom function. */
-#cmakedefine HAVE_RECVFROM ${HAVE_RECVFROM}
+#define HAVE_RECVFROM 1
 
 /* Define to 1 if you have the <rsa.h> header file. */
-#cmakedefine HAVE_RSA_H ${HAVE_RSA_H}
+/* #undef HAVE_RSA_H */
 
 /* Define to 1 if you have the select function. */
-#cmakedefine HAVE_SELECT ${HAVE_SELECT}
+#define HAVE_SELECT 1
 
 /* Define to 1 if you have the send function. */
-#cmakedefine HAVE_SEND ${HAVE_SEND}
+#define HAVE_SEND 1
 
 /* Define to 1 if you have the <setjmp.h> header file. */
-#cmakedefine HAVE_SETJMP_H ${HAVE_SETJMP_H}
+#define HAVE_SETJMP_H 1
 
 /* Define to 1 if you have the `setlocale' function. */
-#cmakedefine HAVE_SETLOCALE ${HAVE_SETLOCALE}
+#define HAVE_SETLOCALE 1
 
 /* Define to 1 if you have the `setmode' function. */
-#cmakedefine HAVE_SETMODE ${HAVE_SETMODE}
+#define HAVE_SETMODE 1
 
 /* Define to 1 if you have the `setrlimit' function. */
-#cmakedefine HAVE_SETRLIMIT ${HAVE_SETRLIMIT}
+#define HAVE_SETRLIMIT 1
 
 /* Define to 1 if you have the setsockopt function. */
-#cmakedefine HAVE_SETSOCKOPT ${HAVE_SETSOCKOPT}
+#define HAVE_SETSOCKOPT 1
 
 /* Define to 1 if you have a working setsockopt SO_NONBLOCK function. */
-#cmakedefine HAVE_SETSOCKOPT_SO_NONBLOCK ${HAVE_SETSOCKOPT_SO_NONBLOCK}
+/* #undef HAVE_SETSOCKOPT_SO_NONBLOCK */
 
 /* Define to 1 if you have the <sgtty.h> header file. */
-#cmakedefine HAVE_SGTTY_H ${HAVE_SGTTY_H}
+/* #undef HAVE_SGTTY_H */
 
 /* Define to 1 if you have the sigaction function. */
-#cmakedefine HAVE_SIGACTION ${HAVE_SIGACTION}
+#define HAVE_SIGACTION 1
 
 /* Define to 1 if you have the siginterrupt function. */
-#cmakedefine HAVE_SIGINTERRUPT ${HAVE_SIGINTERRUPT}
+#define HAVE_SIGINTERRUPT 1
 
 /* Define to 1 if you have the signal function. */
-#cmakedefine HAVE_SIGNAL ${HAVE_SIGNAL}
+#define HAVE_SIGNAL 1
 
 /* Define to 1 if you have the <signal.h> header file. */
-#cmakedefine HAVE_SIGNAL_H ${HAVE_SIGNAL_H}
+#define HAVE_SIGNAL_H 1
 
 /* Define to 1 if you have the sigsetjmp function or macro. */
-#cmakedefine HAVE_SIGSETJMP ${HAVE_SIGSETJMP}
+/* #undef HAVE_SIGSETJMP */
 
 /* Define to 1 if sig_atomic_t is an available typedef. */
-#cmakedefine HAVE_SIG_ATOMIC_T ${HAVE_SIG_ATOMIC_T}
+#define HAVE_SIG_ATOMIC_T 1
 
 /* Define to 1 if sig_atomic_t is already defined as volatile. */
-#cmakedefine HAVE_SIG_ATOMIC_T_VOLATILE ${HAVE_SIG_ATOMIC_T_VOLATILE}
+/* #undef HAVE_SIG_ATOMIC_T_VOLATILE */
 
 /* Define to 1 if struct sockaddr_in6 has the sin6_scope_id member */
-#cmakedefine HAVE_SOCKADDR_IN6_SIN6_SCOPE_ID ${HAVE_SOCKADDR_IN6_SIN6_SCOPE_ID}
+/* #undef HAVE_SOCKADDR_IN6_SIN6_SCOPE_ID */
 
-/* Define to 1 if you have the `socket' function. */
-#cmakedefine HAVE_SOCKET ${HAVE_SOCKET}
+/* Define to 1 if you have the socket function. */
+#define HAVE_SOCKET 1
+
+/* Define to 1 if you have the socketpair function. */
+#define HAVE_SOCKETPAIR 1
+
+/* Define to 1 if you have the <socket.h> header file. */
+/* #undef HAVE_SOCKET_H */
 
 /* Define this if you have the SPNEGO library fbopenssl */
-#cmakedefine HAVE_SPNEGO ${HAVE_SPNEGO}
+/* #undef HAVE_SPNEGO */
+
+/* if you have the function SRP_Calc_client_key */
+/* #undef HAVE_SSLEAY_SRP */
 
 /* Define to 1 if you have the `SSL_get_shutdown' function. */
-#cmakedefine HAVE_SSL_GET_SHUTDOWN ${HAVE_SSL_GET_SHUTDOWN}
+/* #undef HAVE_SSL_GET_SHUTDOWN */
 
 /* Define to 1 if you have the <ssl.h> header file. */
-#cmakedefine HAVE_SSL_H ${HAVE_SSL_H}
+/* #undef HAVE_SSL_H */
 
 /* Define to 1 if you have the <stdbool.h> header file. */
-#cmakedefine HAVE_STDBOOL_H ${HAVE_STDBOOL_H}
+#define HAVE_STDBOOL_H 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
-#cmakedefine HAVE_STDINT_H ${HAVE_STDINT_H}
+#define HAVE_STDINT_H 1
 
 /* Define to 1 if you have the <stdio.h> header file. */
-#cmakedefine HAVE_STDIO_H ${HAVE_STDIO_H}
+#define HAVE_STDIO_H 1
 
 /* Define to 1 if you have the <stdlib.h> header file. */
-#cmakedefine HAVE_STDLIB_H ${HAVE_STDLIB_H}
+#define HAVE_STDLIB_H 1
 
 /* Define to 1 if you have the strcasecmp function. */
-#cmakedefine HAVE_STRCASECMP ${HAVE_STRCASECMP}
+#define HAVE_STRCASECMP 1
 
 /* Define to 1 if you have the strcasestr function. */
-#cmakedefine HAVE_STRCASESTR ${HAVE_STRCASESTR}
+#define HAVE_STRCASESTR 1
 
 /* Define to 1 if you have the strcmpi function. */
-#cmakedefine HAVE_STRCMPI ${HAVE_STRCMPI}
+/* #undef HAVE_STRCMPI */
 
 /* Define to 1 if you have the strdup function. */
-#cmakedefine HAVE_STRDUP ${HAVE_STRDUP}
+#define HAVE_STRDUP 1
 
 /* Define to 1 if you have the strerror_r function. */
-#cmakedefine HAVE_STRERROR_R ${HAVE_STRERROR_R}
+#define HAVE_STRERROR_R 1
 
 /* Define to 1 if you have the stricmp function. */
-#cmakedefine HAVE_STRICMP ${HAVE_STRICMP}
+/* #undef HAVE_STRICMP */
 
 /* Define to 1 if you have the <strings.h> header file. */
-#cmakedefine HAVE_STRINGS_H ${HAVE_STRINGS_H}
+#define HAVE_STRINGS_H 1
 
 /* Define to 1 if you have the <string.h> header file. */
-#cmakedefine HAVE_STRING_H ${HAVE_STRING_H}
+#define HAVE_STRING_H 1
 
 /* Define to 1 if you have the strlcat function. */
-#cmakedefine HAVE_STRLCAT ${HAVE_STRLCAT}
+#define HAVE_STRLCAT 1
 
 /* Define to 1 if you have the `strlcpy' function. */
-#cmakedefine HAVE_STRLCPY ${HAVE_STRLCPY}
+/* #undef HAVE_STRLCPY */
 
 /* Define to 1 if you have the strncasecmp function. */
-#cmakedefine HAVE_STRNCASECMP ${HAVE_STRNCASECMP}
+#define HAVE_STRNCASECMP 1
 
 /* Define to 1 if you have the strncmpi function. */
-#cmakedefine HAVE_STRNCMPI ${HAVE_STRNCMPI}
+/* #undef HAVE_STRNCMPI */
 
 /* Define to 1 if you have the strnicmp function. */
-#cmakedefine HAVE_STRNICMP ${HAVE_STRNICMP}
+/* #undef HAVE_STRNICMP */
 
 /* Define to 1 if you have the <stropts.h> header file. */
-#cmakedefine HAVE_STROPTS_H ${HAVE_STROPTS_H}
+/* #undef HAVE_STROPTS_H */
 
 /* Define to 1 if you have the strstr function. */
-#cmakedefine HAVE_STRSTR ${HAVE_STRSTR}
+#define HAVE_STRSTR 1
 
 /* Define to 1 if you have the strtok_r function. */
-#cmakedefine HAVE_STRTOK_R ${HAVE_STRTOK_R}
+#define HAVE_STRTOK_R 1
 
 /* Define to 1 if you have the strtoll function. */
-#cmakedefine HAVE_STRTOLL ${HAVE_STRTOLL}
+#define HAVE_STRTOLL 1
 
 /* if struct sockaddr_storage is defined */
-#cmakedefine HAVE_STRUCT_SOCKADDR_STORAGE ${HAVE_STRUCT_SOCKADDR_STORAGE}
+#define HAVE_STRUCT_SOCKADDR_STORAGE 1
 
 /* Define to 1 if you have the timeval struct. */
-#cmakedefine HAVE_STRUCT_TIMEVAL ${HAVE_STRUCT_TIMEVAL}
+#define HAVE_STRUCT_TIMEVAL 1
 
 /* Define to 1 if you have the <sys/filio.h> header file. */
-#cmakedefine HAVE_SYS_FILIO_H ${HAVE_SYS_FILIO_H}
+#define HAVE_SYS_FILIO_H 1
 
 /* Define to 1 if you have the <sys/ioctl.h> header file. */
-#cmakedefine HAVE_SYS_IOCTL_H ${HAVE_SYS_IOCTL_H}
+#define HAVE_SYS_IOCTL_H 1
 
 /* Define to 1 if you have the <sys/param.h> header file. */
-#cmakedefine HAVE_SYS_PARAM_H ${HAVE_SYS_PARAM_H}
+#define HAVE_SYS_PARAM_H 1
 
 /* Define to 1 if you have the <sys/poll.h> header file. */
-#cmakedefine HAVE_SYS_POLL_H ${HAVE_SYS_POLL_H}
+#define HAVE_SYS_POLL_H 1
 
 /* Define to 1 if you have the <sys/resource.h> header file. */
-#cmakedefine HAVE_SYS_RESOURCE_H ${HAVE_SYS_RESOURCE_H}
+#define HAVE_SYS_RESOURCE_H 1
 
 /* Define to 1 if you have the <sys/select.h> header file. */
-#cmakedefine HAVE_SYS_SELECT_H ${HAVE_SYS_SELECT_H}
+#define HAVE_SYS_SELECT_H 1
 
 /* Define to 1 if you have the <sys/socket.h> header file. */
-#cmakedefine HAVE_SYS_SOCKET_H ${HAVE_SYS_SOCKET_H}
+#define HAVE_SYS_SOCKET_H 1
 
 /* Define to 1 if you have the <sys/sockio.h> header file. */
-#cmakedefine HAVE_SYS_SOCKIO_H ${HAVE_SYS_SOCKIO_H}
+#define HAVE_SYS_SOCKIO_H 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
-#cmakedefine HAVE_SYS_STAT_H ${HAVE_SYS_STAT_H}
+#define HAVE_SYS_STAT_H 1
 
 /* Define to 1 if you have the <sys/time.h> header file. */
-#cmakedefine HAVE_SYS_TIME_H ${HAVE_SYS_TIME_H}
+#define HAVE_SYS_TIME_H 1
 
 /* Define to 1 if you have the <sys/types.h> header file. */
-#cmakedefine HAVE_SYS_TYPES_H ${HAVE_SYS_TYPES_H}
+#define HAVE_SYS_TYPES_H 1
 
 /* Define to 1 if you have the <sys/uio.h> header file. */
-#cmakedefine HAVE_SYS_UIO_H ${HAVE_SYS_UIO_H}
+#define HAVE_SYS_UIO_H 1
 
 /* Define to 1 if you have the <sys/un.h> header file. */
-#cmakedefine HAVE_SYS_UN_H ${HAVE_SYS_UN_H}
+#define HAVE_SYS_UN_H 1
 
 /* Define to 1 if you have the <sys/utime.h> header file. */
-#cmakedefine HAVE_SYS_UTIME_H ${HAVE_SYS_UTIME_H}
+/* #undef HAVE_SYS_UTIME_H */
+
+/* Define to 1 if you have the <sys/wait.h> header file. */
+#define HAVE_SYS_WAIT_H 1
+
+/* Define to 1 if you have the <sys/xattr.h> header file. */
+#define HAVE_SYS_XATTR_H 1
 
 /* Define to 1 if you have the <termios.h> header file. */
-#cmakedefine HAVE_TERMIOS_H ${HAVE_TERMIOS_H}
+#define HAVE_TERMIOS_H 1
 
 /* Define to 1 if you have the <termio.h> header file. */
-#cmakedefine HAVE_TERMIO_H ${HAVE_TERMIO_H}
+/* #undef HAVE_TERMIO_H */
 
 /* Define to 1 if you have the <time.h> header file. */
-#cmakedefine HAVE_TIME_H ${HAVE_TIME_H}
+#define HAVE_TIME_H 1
 
 /* Define to 1 if you have the <tld.h> header file. */
-#cmakedefine HAVE_TLD_H ${HAVE_TLD_H}
+/* #undef HAVE_TLD_H */
 
 /* Define to 1 if you have the `tld_strerror' function. */
-#cmakedefine HAVE_TLD_STRERROR ${HAVE_TLD_STRERROR}
+/* #undef HAVE_TLD_STRERROR */
 
 /* Define to 1 if you have the `uname' function. */
-#cmakedefine HAVE_UNAME ${HAVE_UNAME}
+#define HAVE_UNAME 1
 
 /* Define to 1 if you have the <unistd.h> header file. */
-#cmakedefine HAVE_UNISTD_H ${HAVE_UNISTD_H}
+#define HAVE_UNISTD_H 1
 
 /* Define to 1 if you have the `utime' function. */
-#cmakedefine HAVE_UTIME ${HAVE_UTIME}
+#define HAVE_UTIME 1
 
 /* Define to 1 if you have the <utime.h> header file. */
-#cmakedefine HAVE_UTIME_H ${HAVE_UTIME_H}
+#define HAVE_UTIME_H 1
 
 /* Define to 1 if compiler supports C99 variadic macro style. */
-#cmakedefine HAVE_VARIADIC_MACROS_C99 ${HAVE_VARIADIC_MACROS_C99}
+#define HAVE_VARIADIC_MACROS_C99 1
 
 /* Define to 1 if compiler supports old gcc variadic macro style. */
-#cmakedefine HAVE_VARIADIC_MACROS_GCC ${HAVE_VARIADIC_MACROS_GCC}
+#define HAVE_VARIADIC_MACROS_GCC 1
 
 /* Define to 1 if you have the winber.h header file. */
-#cmakedefine HAVE_WINBER_H ${HAVE_WINBER_H}
+/* #undef HAVE_WINBER_H */
 
 /* Define to 1 if you have the windows.h header file. */
-#cmakedefine HAVE_WINDOWS_H ${HAVE_WINDOWS_H}
+/* #undef HAVE_WINDOWS_H */
 
 /* Define to 1 if you have the winldap.h header file. */
-#cmakedefine HAVE_WINLDAP_H ${HAVE_WINLDAP_H}
+/* #undef HAVE_WINLDAP_H */
 
 /* Define to 1 if you have the winsock2.h header file. */
-#cmakedefine HAVE_WINSOCK2_H ${HAVE_WINSOCK2_H}
+/* #undef HAVE_WINSOCK2_H */
 
 /* Define to 1 if you have the winsock.h header file. */
-#cmakedefine HAVE_WINSOCK_H ${HAVE_WINSOCK_H}
+/* #undef HAVE_WINSOCK_H */
 
 /* Define this symbol if your OS supports changing the contents of argv */
-#cmakedefine HAVE_WRITABLE_ARGV ${HAVE_WRITABLE_ARGV}
+/* #undef HAVE_WRITABLE_ARGV */
 
 /* Define to 1 if you have the writev function. */
-#cmakedefine HAVE_WRITEV ${HAVE_WRITEV}
+#define HAVE_WRITEV 1
 
 /* Define to 1 if you have the ws2tcpip.h header file. */
-#cmakedefine HAVE_WS2TCPIP_H ${HAVE_WS2TCPIP_H}
+/* #undef HAVE_WS2TCPIP_H */
 
 /* Define to 1 if you have the <x509.h> header file. */
-#cmakedefine HAVE_X509_H ${HAVE_X509_H}
-
-/* Define if you have the <process.h> header file. */
-#cmakedefine HAVE_PROCESS_H ${HAVE_PROCESS_H}
+/* #undef HAVE_X509_H */
 
 /* if you have the zlib.h header file */
-#cmakedefine HAVE_ZLIB_H ${HAVE_ZLIB_H}
+#define HAVE_ZLIB_H 1
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
-#cmakedefine LT_OBJDIR ${LT_OBJDIR}
+#define LT_OBJDIR ".libs/"
 
 /* Define to 1 if you are building a native Windows target. */
-#cmakedefine NATIVE_WINDOWS ${NATIVE_WINDOWS}
-
-/* If you lack a fine basename() prototype */
-#cmakedefine NEED_BASENAME_PROTO ${NEED_BASENAME_PROTO}
+/* #undef NATIVE_WINDOWS */
 
 /* Define to 1 if you need the lber.h header file even with ldap.h */
-#cmakedefine NEED_LBER_H ${NEED_LBER_H}
+/* #undef NEED_LBER_H */
 
 /* Define to 1 if you need the malloc.h header file even with stdlib.h */
-#cmakedefine NEED_MALLOC_H ${NEED_MALLOC_H}
+/* #undef NEED_MALLOC_H */
+
+/* Define to 1 if you need the memory.h header file even with stdlib.h */
+/* #undef NEED_MEMORY_H */
 
 /* Define to 1 if _REENTRANT preprocessor symbol must be defined. */
-#cmakedefine NEED_REENTRANT ${NEED_REENTRANT}
+/* #undef NEED_REENTRANT */
+
+/* Define to 1 if _THREAD_SAFE preprocessor symbol must be defined. */
+/* #undef NEED_THREAD_SAFE */
+
+/* Define to enable NTLM delegation to winbind's ntlm_auth helper. */
+/* #undef NTLM_WB_ENABLED */
+
+/* Define absolute filename for winbind's ntlm_auth helper. */
+/* #undef NTLM_WB_FILE */
 
 /* cpu-machine-OS */
-#cmakedefine OS ${OS}
+#define OS "arm-apple-darwin10"
 
 /* Name of package */
-#cmakedefine PACKAGE ${PACKAGE}
+#define PACKAGE "curl"
 
 /* Define to the address where bug reports for this package should be sent. */
-#cmakedefine PACKAGE_BUGREPORT ${PACKAGE_BUGREPORT}
+#define PACKAGE_BUGREPORT "a suitable curl mailing list: http://curl.haxx.se/mail/"
 
 /* Define to the full name of this package. */
-#cmakedefine PACKAGE_NAME ${PACKAGE_NAME}
+#define PACKAGE_NAME "curl"
 
 /* Define to the full name and version of this package. */
-#cmakedefine PACKAGE_STRING ${PACKAGE_STRING}
+#define PACKAGE_STRING "curl -"
 
 /* Define to the one symbol short name of this package. */
-#cmakedefine PACKAGE_TARNAME ${PACKAGE_TARNAME}
+#define PACKAGE_TARNAME "curl"
+
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#cmakedefine PACKAGE_VERSION ${PACKAGE_VERSION}
+#define PACKAGE_VERSION "-"
 
 /* a suitable file to read random data from */
-#cmakedefine RANDOM_FILE "${RANDOM_FILE}"
+/* #undef RANDOM_FILE */
+
+/* Define to the type qualifier pointed by arg 5 for recvfrom. */
+#define RECVFROM_QUAL_ARG5 
 
 /* Define to the type of arg 1 for recvfrom. */
-#cmakedefine RECVFROM_TYPE_ARG1 ${RECVFROM_TYPE_ARG1}
+#define RECVFROM_TYPE_ARG1 int
 
 /* Define to the type pointed by arg 2 for recvfrom. */
-#cmakedefine RECVFROM_TYPE_ARG2 ${RECVFROM_TYPE_ARG2}
+#define RECVFROM_TYPE_ARG2 void
 
 /* Define to 1 if the type pointed by arg 2 for recvfrom is void. */
-#cmakedefine RECVFROM_TYPE_ARG2_IS_VOID ${RECVFROM_TYPE_ARG2_IS_VOID}
+#define RECVFROM_TYPE_ARG2_IS_VOID 1
 
 /* Define to the type of arg 3 for recvfrom. */
-#cmakedefine RECVFROM_TYPE_ARG3 ${RECVFROM_TYPE_ARG3}
+#define RECVFROM_TYPE_ARG3 size_t
 
 /* Define to the type of arg 4 for recvfrom. */
-#cmakedefine RECVFROM_TYPE_ARG4 ${RECVFROM_TYPE_ARG4}
+#define RECVFROM_TYPE_ARG4 int
 
 /* Define to the type pointed by arg 5 for recvfrom. */
-#cmakedefine RECVFROM_TYPE_ARG5 ${RECVFROM_TYPE_ARG5}
+#define RECVFROM_TYPE_ARG5 struct sockaddr
 
 /* Define to 1 if the type pointed by arg 5 for recvfrom is void. */
-#cmakedefine RECVFROM_TYPE_ARG5_IS_VOID ${RECVFROM_TYPE_ARG5_IS_VOID}
+/* #undef RECVFROM_TYPE_ARG5_IS_VOID */
 
 /* Define to the type pointed by arg 6 for recvfrom. */
-#cmakedefine RECVFROM_TYPE_ARG6 ${RECVFROM_TYPE_ARG6}
+#define RECVFROM_TYPE_ARG6 socklen_t
 
 /* Define to 1 if the type pointed by arg 6 for recvfrom is void. */
-#cmakedefine RECVFROM_TYPE_ARG6_IS_VOID ${RECVFROM_TYPE_ARG6_IS_VOID}
+/* #undef RECVFROM_TYPE_ARG6_IS_VOID */
 
 /* Define to the function return type for recvfrom. */
-#cmakedefine RECVFROM_TYPE_RETV ${RECVFROM_TYPE_RETV}
+#define RECVFROM_TYPE_RETV ssize_t
 
 /* Define to the type of arg 1 for recv. */
-#cmakedefine RECV_TYPE_ARG1 ${RECV_TYPE_ARG1}
+#define RECV_TYPE_ARG1 int
 
 /* Define to the type of arg 2 for recv. */
-#cmakedefine RECV_TYPE_ARG2 ${RECV_TYPE_ARG2}
+#define RECV_TYPE_ARG2 void *
 
 /* Define to the type of arg 3 for recv. */
-#cmakedefine RECV_TYPE_ARG3 ${RECV_TYPE_ARG3}
+#define RECV_TYPE_ARG3 size_t
 
 /* Define to the type of arg 4 for recv. */
-#cmakedefine RECV_TYPE_ARG4 ${RECV_TYPE_ARG4}
+#define RECV_TYPE_ARG4 int
 
 /* Define to the function return type for recv. */
-#cmakedefine RECV_TYPE_RETV ${RECV_TYPE_RETV}
+#define RECV_TYPE_RETV ssize_t
 
 /* Define as the return type of signal handlers (`int' or `void'). */
-#cmakedefine RETSIGTYPE ${RETSIGTYPE}
+#define RETSIGTYPE void
 
 /* Define to the type qualifier of arg 5 for select. */
-#cmakedefine SELECT_QUAL_ARG5 ${SELECT_QUAL_ARG5}
+#define SELECT_QUAL_ARG5 
 
 /* Define to the type of arg 1 for select. */
-#cmakedefine SELECT_TYPE_ARG1 ${SELECT_TYPE_ARG1}
+#define SELECT_TYPE_ARG1 int
 
 /* Define to the type of args 2, 3 and 4 for select. */
-#cmakedefine SELECT_TYPE_ARG234 ${SELECT_TYPE_ARG234}
+#define SELECT_TYPE_ARG234 fd_set *
 
 /* Define to the type of arg 5 for select. */
-#cmakedefine SELECT_TYPE_ARG5 ${SELECT_TYPE_ARG5}
+#define SELECT_TYPE_ARG5 struct timeval *
 
 /* Define to the function return type for select. */
-#cmakedefine SELECT_TYPE_RETV ${SELECT_TYPE_RETV}
+#define SELECT_TYPE_RETV int
 
 /* Define to the type qualifier of arg 2 for send. */
-#cmakedefine SEND_QUAL_ARG2 ${SEND_QUAL_ARG2}
+#define SEND_QUAL_ARG2 const
 
 /* Define to the type of arg 1 for send. */
-#cmakedefine SEND_TYPE_ARG1 ${SEND_TYPE_ARG1}
+#define SEND_TYPE_ARG1 int
 
 /* Define to the type of arg 2 for send. */
-#cmakedefine SEND_TYPE_ARG2 ${SEND_TYPE_ARG2}
+#define SEND_TYPE_ARG2 void *
 
 /* Define to the type of arg 3 for send. */
-#cmakedefine SEND_TYPE_ARG3 ${SEND_TYPE_ARG3}
+#define SEND_TYPE_ARG3 size_t
 
 /* Define to the type of arg 4 for send. */
-#cmakedefine SEND_TYPE_ARG4 ${SEND_TYPE_ARG4}
+#define SEND_TYPE_ARG4 int
 
 /* Define to the function return type for send. */
-#cmakedefine SEND_TYPE_RETV ${SEND_TYPE_RETV}
+#define SEND_TYPE_RETV ssize_t
 
 /* The size of `int', as computed by sizeof. */
-#cmakedefine SIZEOF_INT ${SIZEOF_INT}
-
-/* The size of `short', as computed by sizeof. */
-#cmakedefine SIZEOF_SHORT ${SIZEOF_SHORT}
+#define SIZEOF_INT 4
 
 /* The size of `long', as computed by sizeof. */
-#cmakedefine SIZEOF_LONG ${SIZEOF_LONG}
+#define SIZEOF_LONG 4
 
 /* The size of `off_t', as computed by sizeof. */
-#cmakedefine SIZEOF_OFF_T ${SIZEOF_OFF_T}
+#define SIZEOF_OFF_T 8
+
+/* The size of `short', as computed by sizeof. */
+#define SIZEOF_SHORT 2
 
 /* The size of `size_t', as computed by sizeof. */
-#cmakedefine SIZEOF_SIZE_T ${SIZEOF_SIZE_T}
+#define SIZEOF_SIZE_T 4
 
 /* The size of `time_t', as computed by sizeof. */
-#cmakedefine SIZEOF_TIME_T ${SIZEOF_TIME_T}
+#define SIZEOF_TIME_T 8
 
 /* The size of `void*', as computed by sizeof. */
-#cmakedefine SIZEOF_VOIDP ${SIZEOF_VOIDP}
+#define SIZEOF_VOIDP 4
 
 /* Define to 1 if you have the ANSI C header files. */
-#cmakedefine STDC_HEADERS ${STDC_HEADERS}
+#define STDC_HEADERS 1
 
 /* Define to the type of arg 3 for strerror_r. */
-#cmakedefine STRERROR_R_TYPE_ARG3 ${STRERROR_R_TYPE_ARG3}
+#define STRERROR_R_TYPE_ARG3 size_t
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
-#cmakedefine TIME_WITH_SYS_TIME ${TIME_WITH_SYS_TIME}
+#define TIME_WITH_SYS_TIME 1
 
-/* Define if you want to enable c-ares support */
-#cmakedefine USE_ARES ${USE_ARES}
+/* Define to enable c-ares support */
+/* #undef USE_ARES */
+
+/* if axTLS is enabled */
+/* #undef USE_AXTLS */
 
 /* Define to disable non-blocking sockets. */
-#cmakedefine USE_BLOCKING_SOCKETS ${USE_BLOCKING_SOCKETS}
+/* #undef USE_BLOCKING_SOCKETS */
+
+/* if CyaSSL is enabled */
+/* #undef USE_CYASSL */
 
 /* if GnuTLS is enabled */
-#cmakedefine USE_GNUTLS ${USE_GNUTLS}
+/* #undef USE_GNUTLS */
 
-/* if PolarSSL is enabled */
-#cmakedefine USE_POLARSSL ${USE_POLARSSL}
+/* if librtmp is in use */
+/* #undef USE_LIBRTMP */
 
 /* if libSSH2 is in use */
-#cmakedefine USE_LIBSSH2 ${USE_LIBSSH2}
+/* #undef USE_LIBSSH2 */
 
 /* If you want to build curl with the built-in manual */
-#cmakedefine USE_MANUAL ${USE_MANUAL}
+#define USE_MANUAL 1
 
 /* if NSS is enabled */
-#cmakedefine USE_NSS ${USE_NSS}
+/* #undef USE_NSS */
+
+/* Use OpenLDAP-specific code */
+/* #undef USE_OPENLDAP */
 
 /* if OpenSSL is in use */
-#cmakedefine USE_OPENSSL ${USE_OPENSSL}
+/* #undef USE_OPENSSL */
+
+/* if PolarSSL is enabled */
+/* #undef USE_POLARSSL */
 
 /* if SSL is enabled */
-#cmakedefine USE_SSLEAY ${USE_SSLEAY}
+/* #undef USE_SSLEAY */
+
+/* if you want POSIX threaded DNS lookup */
+/* #undef USE_THREADS_POSIX */
+
+/* Use TLS-SRP authentication */
+/* #undef USE_TLS_SRP */
+
+/* Define to 1 if you are building a Windows target with large file support.
+   */
+/* #undef USE_WIN32_LARGE_FILES */
 
 /* Define to 1 if you are building a Windows target without large file
    support. */
-#cmakedefine USE_WIN32_LARGE_FILES ${USE_WIN32_LARGE_FILES}
+/* #undef USE_WIN32_SMALL_FILES */
 
 /* to enable SSPI support */
-#cmakedefine USE_WINDOWS_SSPI ${USE_WINDOWS_SSPI}
+/* #undef USE_WINDOWS_SSPI */
 
 /* Define to 1 if using yaSSL in OpenSSL compatibility mode. */
-#cmakedefine USE_YASSLEMUL ${USE_YASSLEMUL}
+/* #undef USE_YASSLEMUL */
 
 /* Version number of package */
-#cmakedefine VERSION ${VERSION}
+#define VERSION "-"
 
 /* Define to avoid automatic inclusion of winsock.h */
-#cmakedefine WIN32_LEAN_AND_MEAN ${WIN32_LEAN_AND_MEAN}
+/* #undef WIN32_LEAN_AND_MEAN */
 
 /* Define to 1 if OS is AIX. */
 #ifndef _ALL_SOURCE
-#  undef _ALL_SOURCE
+/* #  undef _ALL_SOURCE */
 #endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */
-#cmakedefine _FILE_OFFSET_BITS ${_FILE_OFFSET_BITS}
+/* #undef _FILE_OFFSET_BITS */
 
 /* Define for large files, on AIX-style hosts. */
-#cmakedefine _LARGE_FILES ${_LARGE_FILES}
-
-/* define this if you need it to compile thread-safe code */
-#cmakedefine _THREAD_SAFE ${_THREAD_SAFE}
+/* #undef _LARGE_FILES */
 
 /* Define to empty if `const' does not conform to ANSI C. */
-#cmakedefine const ${const}
+/* #undef const */
 
 /* Type to use in place of in_addr_t when system does not provide it. */
-#cmakedefine in_addr_t ${in_addr_t}
+/* #undef in_addr_t */
 
 /* Define to `__inline__' or `__inline' if that's what the C compiler
    calls it, or to nothing if 'inline' is not supported under any name.  */
 #ifndef __cplusplus
-#undef inline
+/* #undef inline */
 #endif
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
-#cmakedefine size_t ${size_t}
+/* #undef size_t */
 
 /* the signed version of size_t */
-#cmakedefine ssize_t ${ssize_t}
+/* #undef ssize_t */

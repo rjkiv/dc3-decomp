@@ -9,3 +9,4 @@ src/system/oggvorbis
 src/system/synth/tomcrypt
 src/lib
 src/xdk
+src/system/net/curl

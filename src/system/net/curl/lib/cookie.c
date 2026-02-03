@@ -190,7 +190,7 @@ Curl_cookie_add(struct SessionHandle *data,
   char name[MAX_NAME];
   struct Cookie *co;
   struct Cookie *lastc=NULL;
-  time_t now = time(NULL);
+  __time64_t now = _time64(NULL);
   bool replace_old = FALSE;
   bool badcookie = FALSE; /* cookies are good by default. mmmmm yummy */
 
@@ -518,7 +518,7 @@ Curl_cookie_add(struct SessionHandle *data,
         break;
       case 1:
         /* This field got its explanation on the 23rd of May 2001 by
-           Andrés García:
+           Andrï¿½s Garcï¿½a:
 
            flag: A TRUE/FALSE value indicating if all machines within a given
            domain can access the variable. This value is set automatically by
@@ -532,7 +532,7 @@ Curl_cookie_add(struct SessionHandle *data,
       case 2:
         /* It turns out, that sometimes the file format allows the path
            field to remain not filled in, we try to detect this and work
-           around it! Andrés García made us aware of this... */
+           around it! Andrï¿½s Garcï¿½a made us aware of this... */
         if(strcmp("TRUE", ptr) && strcmp("FALSE", ptr)) {
           /* only if the path doesn't look like a boolean option! */
           co->path = strdup(ptr);
@@ -802,7 +802,7 @@ struct Cookie *Curl_cookie_getlist(struct CookieInfo *c,
 {
   struct Cookie *newco;
   struct Cookie *co;
-  time_t now = time(NULL);
+  __time64_t now = _time64(NULL);
   struct Cookie *mainco=NULL;
   size_t matches = 0;
 

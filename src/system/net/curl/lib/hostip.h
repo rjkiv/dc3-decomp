@@ -26,7 +26,7 @@
 #include "hash.h"
 #include "curl_addrinfo.h"
 #include "asyn.h"
-#define time _time64
+
 #ifdef HAVE_SETJMP_H
 #include <setjmp.h>
 #endif
@@ -43,9 +43,8 @@
  */
 #define CURL_HOSTENT_SIZE 9000
 
-#define CURL_TIMEOUT_RESOLVE                                                             \
-    300 /* when using asynch methods, we allow this                                      \
-           many seconds for a name resolve */
+#define CURL_TIMEOUT_RESOLVE 300 /* when using asynch methods, we allow this
+                                    many seconds for a name resolve */
 
 #define CURL_ASYNC_SUCCESS CURLE_OK
 
@@ -65,12 +64,12 @@ struct curl_hash *Curl_global_host_cache_init(void);
 void Curl_global_host_cache_dtor(void);
 
 struct Curl_dns_entry {
-    Curl_addrinfo *addr;
-    /* timestamp == 0 -- entry not in hostcache
-       timestamp != 0 -- entry is in hostcache */
-    time_t timestamp;
-    long inuse; /* use-counter, make very sure you decrease this
-                   when you're done using the address you received */
+  Curl_addrinfo *addr;
+  /* timestamp == 0 -- entry not in hostcache
+     timestamp != 0 -- entry is in hostcache */
+  __time64_t timestamp;
+  long inuse;      /* use-counter, make very sure you decrease this
+                      when you're done using the address you received */
 };
 
 /*
@@ -82,22 +81,14 @@ struct Curl_dns_entry {
  */
 /* return codes */
 #define CURLRESOLV_TIMEDOUT -2
-#define CURLRESOLV_ERROR -1
-#define CURLRESOLV_RESOLVED 0
-#define CURLRESOLV_PENDING 1
-int Curl_resolv(
-    struct connectdata *conn,
-    const char *hostname,
-    int port,
-    struct Curl_dns_entry **dnsentry
-);
-int Curl_resolv_timeout(
-    struct connectdata *conn,
-    const char *hostname,
-    int port,
-    struct Curl_dns_entry **dnsentry,
-    long timeoutms
-);
+#define CURLRESOLV_ERROR    -1
+#define CURLRESOLV_RESOLVED  0
+#define CURLRESOLV_PENDING   1
+int Curl_resolv(struct connectdata *conn, const char *hostname,
+                int port, struct Curl_dns_entry **dnsentry);
+int Curl_resolv_timeout(struct connectdata *conn, const char *hostname,
+                        int port, struct Curl_dns_entry **dnsentry,
+                        long timeoutms);
 
 #ifdef CURLRES_IPV6
 /*
@@ -114,17 +105,22 @@ bool Curl_ipv6works(void);
  */
 bool Curl_ipvalid(struct connectdata *conn);
 
+
 /*
  * Curl_getaddrinfo() is the generic low-level name resolve API within this
  * source file. There are several versions of this function - for different
  * name resolve layers (selected at build-time). They all take this same set
  * of arguments
  */
-Curl_addrinfo *
-Curl_getaddrinfo(struct connectdata *conn, const char *hostname, int port, int *waitp);
+Curl_addrinfo *Curl_getaddrinfo(struct connectdata *conn,
+                                const char *hostname,
+                                int port,
+                                int *waitp);
+
 
 /* unlock a previously resolved dns entry */
-void Curl_resolv_unlock(struct SessionHandle *data, struct Curl_dns_entry *dns);
+void Curl_resolv_unlock(struct SessionHandle *data,
+                        struct Curl_dns_entry *dns);
 
 /* for debugging purposes only: */
 void Curl_scan_cache_used(void *user, void *ptr);
@@ -136,29 +132,25 @@ struct curl_hash *Curl_mk_dnscache(void);
 void Curl_hostcache_prune(struct SessionHandle *data);
 
 /* Return # of adresses in a Curl_addrinfo struct */
-int Curl_num_addresses(const Curl_addrinfo *addr);
+int Curl_num_addresses (const Curl_addrinfo *addr);
 
 #if defined(CURLDEBUG) && defined(HAVE_GETNAMEINFO)
-int curl_dogetnameinfo(
-    GETNAMEINFO_QUAL_ARG1 GETNAMEINFO_TYPE_ARG1 sa,
-    GETNAMEINFO_TYPE_ARG2 salen,
-    char *host,
-    GETNAMEINFO_TYPE_ARG46 hostlen,
-    char *serv,
-    GETNAMEINFO_TYPE_ARG46 servlen,
-    GETNAMEINFO_TYPE_ARG7 flags,
-    int line,
-    const char *source
-);
+int curl_dogetnameinfo(GETNAMEINFO_QUAL_ARG1 GETNAMEINFO_TYPE_ARG1 sa,
+                       GETNAMEINFO_TYPE_ARG2 salen,
+                       char *host, GETNAMEINFO_TYPE_ARG46 hostlen,
+                       char *serv, GETNAMEINFO_TYPE_ARG46 servlen,
+                       GETNAMEINFO_TYPE_ARG7 flags,
+                       int line, const char *source);
 #endif
 
 /* IPv4 threadsafe resolve function used for synch and asynch builds */
-Curl_addrinfo *Curl_ipv4_resolve_r(const char *hostname, int port);
+Curl_addrinfo *Curl_ipv4_resolve_r(const char * hostname, int port);
 
-CURLcode Curl_async_resolved(struct connectdata *conn, bool *protocol_connect);
+CURLcode Curl_async_resolved(struct connectdata *conn,
+                             bool *protocol_connect);
 
 #ifndef CURLRES_ASYNCH
-#define Curl_async_resolved(x, y) CURLE_OK
+#define Curl_async_resolved(x,y) CURLE_OK
 #endif
 
 /*
@@ -167,25 +159,27 @@ CURLcode Curl_async_resolved(struct connectdata *conn, bool *protocol_connect);
  * status is CURL_ASYNC_SUCCESS. Twiddles fields in conn to indicate async
  * request completed whether successful or failed.
  */
-CURLcode Curl_addrinfo_callback(struct connectdata *conn, int status, Curl_addrinfo *ai);
+CURLcode Curl_addrinfo_callback(struct connectdata *conn,
+                                int status,
+                                Curl_addrinfo *ai);
 
 /*
  * Curl_printable_address() returns a printable version of the 1st address
  * given in the 'ip' argument. The result will be stored in the buf that is
  * bufsize bytes big.
  */
-const char *Curl_printable_address(const Curl_addrinfo *ip, char *buf, size_t bufsize);
+const char *Curl_printable_address(const Curl_addrinfo *ip,
+                                   char *buf, size_t bufsize);
 
 /*
  * Curl_cache_addr() stores a 'Curl_addrinfo' struct in the DNS cache.
  *
  * Returns the Curl_dns_entry entry pointer or NULL if the storage failed.
  */
-struct Curl_dns_entry *Curl_cache_addr(
-    struct SessionHandle *data, Curl_addrinfo *addr, const char *hostname, int port
-);
+struct Curl_dns_entry *
+Curl_cache_addr(struct SessionHandle *data, Curl_addrinfo *addr,
+                const char *hostname, int port);
 
-#undef time
 #ifndef INADDR_NONE
 #define CURL_INADDR_NONE (in_addr_t) ~0
 #else

@@ -41,18 +41,21 @@ static unsigned int randseed;
 
 /* Pseudo-random number support. */
 
-unsigned int Curl_rand(void) {
-    unsigned int r;
-    /* Return an unsigned 32-bit pseudo-random number. */
-    r = randseed = randseed * 1103515245 + 12345;
-    return (r << 16) | ((r >> 16) & 0xFFFF);
+unsigned int Curl_rand(void)
+{
+  unsigned int r;
+  /* Return an unsigned 32-bit pseudo-random number. */
+  r = randseed = randseed * 1103515245 + 12345;
+  return (r << 16) | ((r >> 16) & 0xFFFF);
 }
 
-void Curl_srand(void) {
-    /* Randomize pseudo-random number sequence. */
+void Curl_srand(void)
+{
+  /* Randomize pseudo-random number sequence. */
 
-    randseed = (unsigned int)_time64(NULL);
-    Curl_rand();
-    Curl_rand();
-    Curl_rand();
+  randseed = (unsigned int) _time64(NULL);
+  Curl_rand();
+  Curl_rand();
+  Curl_rand();
 }
+

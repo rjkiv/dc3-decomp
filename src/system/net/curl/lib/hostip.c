@@ -213,7 +213,7 @@ create_hostcache_id(const char *server, int port)
 
 struct hostcache_prune_data {
   long cache_timeout;
-  time_t now;
+  __time64_t now;
 };
 
 /*
@@ -237,7 +237,7 @@ hostcache_timestamp_remove(void *datap, void *hc)
  * Prune the DNS cache. This assumes that a lock has already been taken.
  */
 static void
-hostcache_prune(struct curl_hash *hostcache, long cache_timeout, time_t now)
+hostcache_prune(struct curl_hash *hostcache, long cache_timeout, __time64_t now)
 {
   struct hostcache_prune_data user;
 
@@ -255,7 +255,7 @@ hostcache_prune(struct curl_hash *hostcache, long cache_timeout, time_t now)
  */
 void Curl_hostcache_prune(struct SessionHandle *data)
 {
-  time_t now;
+  __time64_t now;
 
   if((data->set.dns_cache_timeout == -1) || !data->dns.hostcache)
     /* cache forever means never prune, and NULL hostcache means
@@ -265,7 +265,7 @@ void Curl_hostcache_prune(struct SessionHandle *data)
   if(data->share)
     Curl_share_lock(data, CURL_LOCK_DATA_DNS, CURL_LOCK_ACCESS_SINGLE);
 
-  time(&now);
+  _time64(&now);
 
   /* Remove outdated and unused entries from the hostcache */
   hostcache_prune(data->dns.hostcache,
@@ -289,7 +289,7 @@ remove_entry_if_stale(struct SessionHandle *data, struct Curl_dns_entry *dns)
        we can't do it */
     return 0;
 
-  time(&user.now);
+  _time64(&user.now);
   user.cache_timeout = data->set.dns_cache_timeout;
 
   if(!hostcache_timestamp_remove(&user,dns) )
@@ -347,7 +347,7 @@ Curl_cache_addr(struct SessionHandle *data,
 
   dns->inuse = 0;   /* init to not used */
   dns->addr = addr; /* this is the address(es) */
-  time(&dns->timestamp);
+  _64time(&dns->timestamp);
   if(dns->timestamp == 0)
     dns->timestamp = 1;   /* zero indicates that entry isn't in hash table */
 

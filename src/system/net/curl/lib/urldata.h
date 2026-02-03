@@ -25,7 +25,6 @@
 /* This file is for lib internal stuff */
 
 #include "setup.h"
-#include "zlib/zlib.h"
 
 #define PORT_FTP 21
 #define PORT_FTPS 990
@@ -487,7 +486,7 @@ struct hostname {
 #define KEEP_RECVBITS (KEEP_RECV | KEEP_RECV_HOLD | KEEP_RECV_PAUSE)
 #define KEEP_SENDBITS (KEEP_SEND | KEEP_SEND_HOLD | KEEP_SEND_PAUSE)
 
-// #ifdef HAVE_LIBZ
+#ifdef HAVE_LIBZ
 typedef enum {
     ZLIB_UNINIT, /* uninitialized */
     ZLIB_INIT, /* initialized */
@@ -495,7 +494,7 @@ typedef enum {
     ZLIB_GZIP_INFLATING, /* inflating gzip stream */
     ZLIB_INIT_GZIP /* initialized in transparent gzip mode */
 } zlibInitState;
-// #endif
+#endif
 
 #ifdef CURLRES_ASYNCH
 struct Curl_async {
@@ -583,13 +582,13 @@ struct SingleRequest {
 #define GZIP 2 /* gzip algorithm [RFC 1952] */
 #define COMPRESS 3 /* Not handled, added for completeness */
 
-    // #ifdef HAVE_LIBZ
+#ifdef HAVE_LIBZ
     zlibInitState zlib_init; /* possible zlib init state;
                                 undefined if Content-Encoding header. */
     z_stream z; /* State structure for zlib. */
-    // #endif
+#endif
 
-    time_t timeofdoc;
+    __time64_t timeofdoc;
     long bodywrites;
 
     char *buf;
@@ -1428,7 +1427,7 @@ struct UserDefined {
     struct curl_slist *resolve; /* list of names to add/remove from
                                    DNS cache */
     curl_TimeCond timecondition; /* kind of time/date comparison */
-    time_t timevalue; /* what time to compare with */
+    __time64_t timevalue; /* what time to compare with */
     Curl_HttpReq httpreq; /* what kind of HTTP request (if any) is this */
     long httpversion; /* when non-zero, a specific HTTP version requested to
                          be used in the library's request(s) */

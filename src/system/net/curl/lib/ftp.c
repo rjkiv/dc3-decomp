@@ -1885,7 +1885,7 @@ static CURLcode ftp_state_mdtm_resp(struct connectdata *conn,
       if(6 == sscanf(buf+4, "%04d%02d%02d%02d%02d%02d",
                      &year, &month, &day, &hour, &minute, &second)) {
         /* we have a time, reformat it */
-        time_t secs=time(NULL);
+        __time64_t secs=_time64(NULL);
         /* using the good old yacc/bison yuck */
         snprintf(buf, sizeof(conn->data->state.buffer),
                  "%04d%02d%02d %02d:%02d:%02d GMT",
@@ -1902,7 +1902,7 @@ static CURLcode ftp_state_mdtm_resp(struct connectdata *conn,
          ftpc->file &&
          data->set.get_filetime &&
          (data->info.filetime>=0) ) {
-        time_t filetime = (time_t)data->info.filetime;
+        __time64_t filetime = (__time64_t)data->info.filetime;
         struct tm buffer;
         const struct tm *tm = &buffer;
 

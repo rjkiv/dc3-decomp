@@ -21,15 +21,16 @@
  ***************************************************************************/
 
 #include "setup.h"
+#include "xdk/xapilibi/winnt.h"
 
 #if defined(USE_THREADS_POSIX)
-#  ifdef HAVE_PTHREAD_H
-#    include <pthread.h>
-#  endif
+#ifdef HAVE_PTHREAD_H
+#include <pthread.h>
+#endif
 #elif defined(USE_THREADS_WIN32)
-#  ifdef HAVE_PROCESS_H
-#    include <process.h>
-#  endif
+#ifdef HAVE_PROCESS_H
+#include <process.h>
+#endif
 #endif
 
 #include "curl_threads.h"
@@ -44,86 +45,76 @@
 #if defined(USE_THREADS_POSIX)
 
 struct curl_actual_call {
-  unsigned int (*func)(void *);
-  void *arg;
+    unsigned int (*func)(void *);
+    void *arg;
 };
 
-static void *curl_thread_create_thunk(void *arg)
-{
-  struct curl_actual_call * ac = arg;
-  unsigned int (*func)(void *) = ac->func;
-  void *real_arg = ac->arg;
+static void *curl_thread_create_thunk(void *arg) {
+    struct curl_actual_call *ac = arg;
+    unsigned int (*func)(void *) = ac->func;
+    void *real_arg = ac->arg;
 
-  free(ac);
-
-  (*func)(real_arg);
-
-  return 0;
-}
-
-curl_thread_t Curl_thread_create(unsigned int (*func) (void*), void *arg)
-{
-  curl_thread_t t;
-  struct curl_actual_call *ac = malloc(sizeof(struct curl_actual_call));
-  if(!ac)
-    return curl_thread_t_null;
-
-  ac->func = func;
-  ac->arg = arg;
-
-  if(pthread_create(&t, NULL, curl_thread_create_thunk, ac) != 0) {
     free(ac);
-    return curl_thread_t_null;
-  }
 
-  return t;
+    (*func)(real_arg);
+
+    return 0;
 }
 
-void Curl_thread_destroy(curl_thread_t hnd)
-{
-  if(hnd != curl_thread_t_null)
-    pthread_detach(hnd);
+curl_thread_t Curl_thread_create(unsigned int (*func)(void *), void *arg) {
+    curl_thread_t t;
+    struct curl_actual_call *ac = malloc(sizeof(struct curl_actual_call));
+    if (!ac)
+        return curl_thread_t_null;
+
+    ac->func = func;
+    ac->arg = arg;
+
+    if (pthread_create(&t, NULL, curl_thread_create_thunk, ac) != 0) {
+        free(ac);
+        return curl_thread_t_null;
+    }
+
+    return t;
 }
 
-int Curl_thread_join(curl_thread_t *hnd)
-{
-  int ret = (pthread_join(*hnd, NULL) == 0);
+void Curl_thread_destroy(curl_thread_t hnd) {
+    if (hnd != curl_thread_t_null)
+        pthread_detach(hnd);
+}
 
-  *hnd = curl_thread_t_null;
+int Curl_thread_join(curl_thread_t *hnd) {
+    int ret = (pthread_join(*hnd, NULL) == 0);
 
-  return ret;
+    *hnd = curl_thread_t_null;
+
+    return ret;
 }
 
 #elif defined(USE_THREADS_WIN32)
 
-curl_thread_t Curl_thread_create(unsigned int (CURL_STDCALL *func) (void*),
-                                 void *arg)
-{
+curl_thread_t Curl_thread_create(unsigned int(CURL_STDCALL *func)(void *), void *arg) {
 #ifdef _WIN32_WCE
-  return CreateThread(NULL, 0, func, arg, 0, NULL);
+    return CreateThread(NULL, 0, func, arg, 0, NULL);
 #else
-  curl_thread_t t;
-  t = (curl_thread_t)_beginthreadex(NULL, 0, func, arg, 0, NULL);
-  if((t == 0) || (t == (curl_thread_t)-1L))
-    return curl_thread_t_null;
-  return t;
+    curl_thread_t t;
+    t = (curl_thread_t)_beginthreadex(NULL, 0, func, arg, 0, NULL);
+    if ((t == 0) || (t == (curl_thread_t)-1L))
+        return curl_thread_t_null;
+    return t;
 #endif
 }
 
-void Curl_thread_destroy(curl_thread_t hnd)
-{
-  CloseHandle(hnd);
-}
+void Curl_thread_destroy(curl_thread_t hnd) { CloseHandle(hnd); }
 
-int Curl_thread_join(curl_thread_t *hnd)
-{
-  int ret = (WaitForSingleObject(*hnd, INFINITE) == WAIT_OBJECT_0);
+int Curl_thread_join(curl_thread_t *hnd) {
+    int ret = (WaitForSingleObject(*hnd, INFINITE) == WAIT_OBJECT_0);
 
-  Curl_thread_destroy(*hnd);
+    Curl_thread_destroy(*hnd);
 
-  *hnd = curl_thread_t_null;
+    *hnd = curl_thread_t_null;
 
-  return ret;
+    return ret;
 }
 
 #endif /* USE_THREADS_* */

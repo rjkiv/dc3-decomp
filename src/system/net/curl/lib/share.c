@@ -31,78 +31,221 @@
 /* The last #include file should be: */
 #include "memdebug.h"
 
+CURLSH *
+curl_share_init(void)
+{
+  struct Curl_share *share = calloc(1, sizeof(struct Curl_share));
+  if(share)
+    share->specifier |= (1<<CURL_LOCK_DATA_SHARE);
+
+  return share;
+}
+
 #undef curl_share_setopt
+CURLSHcode
+curl_share_setopt(CURLSH *sh, CURLSHoption option, ...)
+{
+  struct Curl_share *share = (struct Curl_share *)sh;
+  va_list param;
+  int type;
+  curl_lock_function lockfunc;
+  curl_unlock_function unlockfunc;
+  void *ptr;
 
-CURLSHcode curl_share_cleanup(CURLSH *sh) {
-    struct Curl_share *share = (struct Curl_share *)sh;
+  if(share->dirty)
+    /* don't allow setting options while one or more handles are already
+       using this share */
+    return CURLSHE_IN_USE;
 
-    if (share == NULL)
-        return CURLSHE_INVALID;
+  va_start(param, option);
 
-    if (share->lockfunc)
-        share->lockfunc(
-            NULL, CURL_LOCK_DATA_SHARE, CURL_LOCK_ACCESS_SINGLE, share->clientdata
-        );
+  switch(option) {
+  case CURLSHOPT_SHARE:
+    /* this is a type this share will share */
+    type = va_arg(param, int);
+    share->specifier |= (1<<type);
+    switch( type ) {
+    case CURL_LOCK_DATA_DNS:
+      if(!share->hostcache) {
+        share->hostcache = Curl_mk_dnscache();
+        if(!share->hostcache)
+          return CURLSHE_NOMEM;
+      }
+      break;
 
-    if (share->dirty) {
-        if (share->unlockfunc)
-            share->unlockfunc(NULL, CURL_LOCK_DATA_SHARE, share->clientdata);
-        return CURLSHE_IN_USE;
+    case CURL_LOCK_DATA_COOKIE:
+#if !defined(CURL_DISABLE_HTTP) && !defined(CURL_DISABLE_COOKIES)
+      if(!share->cookies) {
+        share->cookies = Curl_cookie_init(NULL, NULL, NULL, TRUE );
+        if(!share->cookies)
+          return CURLSHE_NOMEM;
+      }
+      break;
+#else   /* CURL_DISABLE_HTTP */
+      return CURLSHE_NOT_BUILT_IN;
+#endif
+
+    case CURL_LOCK_DATA_SSL_SESSION:
+#ifdef USE_SSL
+      if(!share->sslsession) {
+        share->nsslsession = 8;
+        share->sslsession = calloc(share->nsslsession,
+                                   sizeof(struct curl_ssl_session));
+        if(!share->sslsession)
+          return CURLSHE_NOMEM;
+      }
+      break;
+#else
+      return CURLSHE_NOT_BUILT_IN;
+#endif
+
+    case CURL_LOCK_DATA_CONNECT:     /* not supported (yet) */
+
+    default:
+      return CURLSHE_BAD_OPTION;
     }
+    break;
 
-    if (share->hostcache) {
+  case CURLSHOPT_UNSHARE:
+    /* this is a type this share will no longer share */
+    type = va_arg(param, int);
+    share->specifier &= ~(1<<type);
+    switch( type ) {
+    case CURL_LOCK_DATA_DNS:
+      if(share->hostcache) {
         Curl_hash_destroy(share->hostcache);
         share->hostcache = NULL;
+      }
+      break;
+
+    case CURL_LOCK_DATA_COOKIE:
+#if !defined(CURL_DISABLE_HTTP) && !defined(CURL_DISABLE_COOKIES)
+      if(share->cookies) {
+        Curl_cookie_cleanup(share->cookies);
+        share->cookies = NULL;
+      }
+      break;
+#else   /* CURL_DISABLE_HTTP */
+      return CURLSHE_NOT_BUILT_IN;
+#endif
+
+    case CURL_LOCK_DATA_SSL_SESSION:
+#ifdef USE_SSL
+      if(share->sslsession) {
+        free(share->sslsession);
+        share->sslsession = NULL;
+        share->nsslsession = 0;
+      }
+      break;
+#else
+      return CURLSHE_NOT_BUILT_IN;
+#endif
+
+    case CURL_LOCK_DATA_CONNECT:
+      break;
+
+    default:
+      return CURLSHE_BAD_OPTION;
     }
+    break;
+
+  case CURLSHOPT_LOCKFUNC:
+    lockfunc = va_arg(param, curl_lock_function);
+    share->lockfunc = lockfunc;
+    break;
+
+  case CURLSHOPT_UNLOCKFUNC:
+    unlockfunc = va_arg(param, curl_unlock_function);
+    share->unlockfunc = unlockfunc;
+    break;
+
+  case CURLSHOPT_USERDATA:
+    ptr = va_arg(param, void *);
+    share->clientdata = ptr;
+    break;
+
+  default:
+    return CURLSHE_BAD_OPTION;
+  }
+
+  return CURLSHE_OK;
+}
+
+CURLSHcode
+curl_share_cleanup(CURLSH *sh)
+{
+  struct Curl_share *share = (struct Curl_share *)sh;
+
+  if(share == NULL)
+    return CURLSHE_INVALID;
+
+  if(share->lockfunc)
+    share->lockfunc(NULL, CURL_LOCK_DATA_SHARE, CURL_LOCK_ACCESS_SINGLE,
+                    share->clientdata);
+
+  if(share->dirty) {
+    if(share->unlockfunc)
+      share->unlockfunc(NULL, CURL_LOCK_DATA_SHARE, share->clientdata);
+    return CURLSHE_IN_USE;
+  }
+
+  if(share->hostcache) {
+    Curl_hash_destroy(share->hostcache);
+    share->hostcache = NULL;
+  }
 
 #if !defined(CURL_DISABLE_HTTP) && !defined(CURL_DISABLE_COOKIES)
-    if (share->cookies)
-        Curl_cookie_cleanup(share->cookies);
+  if(share->cookies)
+    Curl_cookie_cleanup(share->cookies);
 #endif
 
 #ifdef USE_SSL
-    if (share->sslsession) {
-        unsigned int i;
-        for (i = 0; i < share->nsslsession; ++i)
-            Curl_ssl_kill_session(&(share->sslsession[i]));
-        free(share->sslsession);
-    }
+  if(share->sslsession) {
+    unsigned int i;
+    for(i = 0; i < share->nsslsession; ++i)
+      Curl_ssl_kill_session(&(share->sslsession[i]));
+    free(share->sslsession);
+  }
 #endif
 
-    if (share->unlockfunc)
-        share->unlockfunc(NULL, CURL_LOCK_DATA_SHARE, share->clientdata);
-    free(share);
+  if(share->unlockfunc)
+    share->unlockfunc(NULL, CURL_LOCK_DATA_SHARE, share->clientdata);
+  free(share);
 
-    return CURLSHE_OK;
+  return CURLSHE_OK;
 }
 
-CURLSHcode Curl_share_lock(
-    struct SessionHandle *data, curl_lock_data type, curl_lock_access accesstype
-) {
-    struct Curl_share *share = data->share;
 
-    if (share == NULL)
-        return CURLSHE_INVALID;
+CURLSHcode
+Curl_share_lock(struct SessionHandle *data, curl_lock_data type,
+                curl_lock_access accesstype)
+{
+  struct Curl_share *share = data->share;
 
-    if (share->specifier & (1 << type)) {
-        if (share->lockfunc) /* only call this if set! */
-            share->lockfunc(data, type, accesstype, share->clientdata);
-    }
-    /* else if we don't share this, pretend successful lock */
+  if(share == NULL)
+    return CURLSHE_INVALID;
 
-    return CURLSHE_OK;
+  if(share->specifier & (1<<type)) {
+    if(share->lockfunc) /* only call this if set! */
+      share->lockfunc(data, type, accesstype, share->clientdata);
+  }
+  /* else if we don't share this, pretend successful lock */
+
+  return CURLSHE_OK;
 }
 
-CURLSHcode Curl_share_unlock(struct SessionHandle *data, curl_lock_data type) {
-    struct Curl_share *share = data->share;
+CURLSHcode
+Curl_share_unlock(struct SessionHandle *data, curl_lock_data type)
+{
+  struct Curl_share *share = data->share;
 
-    if (share == NULL)
-        return CURLSHE_INVALID;
+  if(share == NULL)
+    return CURLSHE_INVALID;
 
-    if (share->specifier & (1 << type)) {
-        if (share->unlockfunc) /* only call this if set! */
-            share->unlockfunc(data, type, share->clientdata);
-    }
+  if(share->specifier & (1<<type)) {
+    if(share->unlockfunc) /* only call this if set! */
+      share->unlockfunc (data, type, share->clientdata);
+  }
 
-    return CURLSHE_OK;
+  return CURLSHE_OK;
 }
