@@ -447,7 +447,7 @@ int fileno(FILE *stream);
  */
 
 #if defined(_MSC_VER) && !defined(__POCC__)
-#if !defined(HAVE_WS2TCPIP_H) || ((_MSC_VER < 1300) && !defined(INET6_ADDRSTRLEN))
+#if defined(HAVE_WS2TCPIP_H) || ((_MSC_VER < 1300) && !defined(INET6_ADDRSTRLEN))
 #undef HAVE_GETADDRINFO_THREADSAFE
 #undef HAVE_FREEADDRINFO
 #undef HAVE_GETADDRINFO

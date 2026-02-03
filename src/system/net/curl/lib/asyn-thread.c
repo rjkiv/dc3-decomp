@@ -48,7 +48,7 @@
 #endif
 #elif defined(USE_THREADS_WIN32)
 #ifdef HAVE_PROCESS_H
-#include <process.h>
+#include <xdk/LIBCMT/process.h>
 #endif
 #endif
 
@@ -57,11 +57,11 @@
 #define in_addr_t unsigned long
 #endif
 
-// #ifdef HAVE_GETADDRINFO
-//  #define RESOLVER_ENOMEM EAI_MEMORY
-// #else
+#ifdef HAVE_GETADDRINFO
+#define RESOLVER_ENOMEM EAI_MEMORY
+#else
 #define RESOLVER_ENOMEM ENOMEM
-// #endif
+#endif
 
 #include "urldata.h"
 #include "sendf.h"
@@ -154,9 +154,9 @@ struct thread_sync_data {
     int port;
     int sock_error;
     Curl_addrinfo *res;
-#ifdef HAVE_GETADDRINFO
-    struct addrinfo hints;
-#endif
+    // #ifdef HAVE_GETADDRINFO
+    //     struct addrinfo hints;
+    // #endif
 };
 
 struct thread_data {
@@ -242,38 +242,37 @@ static int getaddrinfo_complete(struct connectdata *conn) {
     return rc;
 }
 
-#ifdef HAVE_GETADDRINFO
-
-/*
- * getaddrinfo_thread() resolves a name and then exits.
- *
- * For builds without ARES, but with ENABLE_IPV6, create a resolver thread
- * and wait on it.
- */
-// static unsigned int CURL_STDCALL getaddrinfo_thread (void *arg)
-//{
-//   struct thread_sync_data *tsd = (struct thread_sync_data*)arg;
-//   char   service [NI_MAXSERV];
-//   int rc;
+// #ifdef HAVE_GETADDRINFO
 //
-//   snprintf(service, sizeof(service), "%d", tsd->port);
+///*
+// * getaddrinfo_thread() resolves a name and then exits.
+// *
+// * For builds without ARES, but with ENABLE_IPV6, create a resolver thread
+// * and wait on it.
+// */
+// static unsigned int CURL_STDCALL getaddrinfo_thread(void *arg) {
+//    struct thread_sync_data *tsd = (struct thread_sync_data *)arg;
+//    char service[NI_MAXSERV];
+//    int rc;
 //
-//   rc = Curl_getaddrinfo_ex(tsd->hostname, service, &tsd->hints, &tsd->res);
+//    snprintf(service, sizeof(service), "%d", tsd->port);
 //
-//   if(rc != 0) {
-//     tsd->sock_error = SOCKERRNO?SOCKERRNO:rc;
-//     if(tsd->sock_error == 0)
-//       tsd->sock_error = RESOLVER_ENOMEM;
-//   }
+//    rc = Curl_getaddrinfo_ex(tsd->hostname, service, &tsd->hints, &tsd->res);
 //
-//   Curl_mutex_acquire(tsd->mtx);
-//   tsd->done = 1;
-//   Curl_mutex_release(tsd->mtx);
+//    if (rc != 0) {
+//        tsd->sock_error = SOCKERRNO ? SOCKERRNO : rc;
+//        if (tsd->sock_error == 0)
+//            tsd->sock_error = RESOLVER_ENOMEM;
+//    }
 //
-//   return 0;
-// }
-
-#else /* HAVE_GETADDRINFO */
+//    Curl_mutex_acquire(tsd->mtx);
+//    tsd->done = 1;
+//    Curl_mutex_release(tsd->mtx);
+//
+//    return 0;
+//}
+//
+// #else /* HAVE_GETADDRINFO */
 
 /*
  * gethostbyname_thread() resolves a name and then exits.
@@ -296,7 +295,7 @@ static unsigned int CURL_STDCALL gethostbyname_thread(void *arg) {
     return 0;
 }
 
-#endif /* HAVE_GETADDRINFO */
+// #endif /* HAVE_GETADDRINFO */
 
 /*
  * destroy_async_data() cleans up async resolver data and thread handle.
@@ -363,11 +362,11 @@ static bool init_resolve_thread(
         goto err_exit;
 #endif
 
-#ifdef HAVE_GETADDRINFO
-    // td->thread_hnd = Curl_thread_create(getaddrinfo_thread, &td->tsd);
-#else
-    // td->thread_hnd = Curl_thread_create(gethostbyname_thread, &td->tsd);
-#endif
+    // #ifdef HAVE_GETADDRINFO
+    //     td->thread_hnd = Curl_thread_create(getaddrinfo_thread, &td->tsd);
+    // #else
+    td->thread_hnd = Curl_thread_create(gethostbyname_thread, &td->tsd);
+    // #endif
 
     if (!td->thread_hnd) {
 #ifndef _WIN32_WCE

@@ -41,6 +41,8 @@
 #define HAVE_ZLIB_H 1
 #define HAVE_ZLIB 1
 #define HAVE_LIBZ 1 // same thing? nodeia
+#define HAVE_GETADDRINFO 1
+// #undef HAVE_GETADDRINFO
 
 /* Define if you have the <crypto.h> header file. */
 /* #define HAVE_CRYPTO_H 1 */
@@ -191,7 +193,7 @@
 
 /* Define if you have the gettimeofday function. */
 /* #define HAVE_GETTIMEOFDAY 1 */
-
+// #undef HAVE_GETADDRINFO
 /* Define if you have the inet_addr function. */
 #define HAVE_INET_ADDR 1
 
@@ -573,9 +575,9 @@
 #error Compatibility names /Go compiler option is required
 #endif
 #endif
-// #ifdef HAVE_GETADDRINFO
+#ifdef HAVE_GETADDRINFO
 #undef HAVE_GETADDRINFO
-// #endif
+#endif
 
 // #define CURL_DISABLE_FILE 1
 #define CURL_DISABLE_TELNET 1
@@ -625,6 +627,7 @@
 
 /* Define to enable threaded asynchronous DNS lookups. */
 #define USE_THREADS_WIN32 1
+#define CURLRES_THREADED 1
 
 #if defined(USE_ARES) && defined(USE_THREADS_WIN32)
 #error "Only one DNS lookup specialty may be defined at most"
@@ -682,5 +685,5 @@
 #if defined(__POCC__) || (USE_IPV6)
 #define ENABLE_IPV6 1
 #endif
-
+#undef HAVE_GETADDRINFO
 #endif /* HEADER_CURL_CONFIG_WIN32_H */
