@@ -37,10 +37,10 @@
 #define curl_mutex_t CRITICAL_SECTION
 #define curl_thread_t HANDLE
 #define curl_thread_t_null (HANDLE)0
-#define Curl_mutex_init(m) InitializeCriticalSection(m)
-#define Curl_mutex_acquire(m) EnterCriticalSection(m)
-#define Curl_mutex_release(m) LeaveCriticalSection(m)
-#define Curl_mutex_destroy(m) DeleteCriticalSection(m)
+#define Curl_mutex_init(m) RtlInitializeCriticalSection(m)
+#define Curl_mutex_acquire(m) RtlEnterCriticalSection(m)
+#define Curl_mutex_release(m) RtlLeaveCriticalSection(m)
+#define Curl_mutex_destroy(m) /*RtlDeleteCriticalSection(m)*/
 #endif
 
 #if defined(USE_THREADS_POSIX) || defined(USE_THREADS_WIN32)
