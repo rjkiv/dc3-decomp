@@ -100,6 +100,9 @@ typedef struct fd_set {
     SOCKET fd_array[64];
 } fd_set;
 
+#define FD_ZERO(set) (((fd_set *)(set))->fd_count = 0)
+#define FD_ISSET(fd, set) __WSAFDIsSet((SOCKET)(fd), (fd_set *)(set))
+
 struct timeval {
     long tv_sec;
     long tv_usec;
