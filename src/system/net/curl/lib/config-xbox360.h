@@ -573,7 +573,7 @@
 #undef HAVE_GETADDRINFO
 // #endif
 
-#define CURL_DISABLE_FILE 1
+// #define CURL_DISABLE_FILE 1
 #define CURL_DISABLE_TELNET 1
 #define CURL_DISABLE_LDAP 1
 

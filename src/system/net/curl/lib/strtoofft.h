@@ -41,27 +41,27 @@
  */
 
 #if (CURL_SIZEOF_CURL_OFF_T > CURL_SIZEOF_LONG)
-#  ifdef HAVE_STRTOLL
-#    define curlx_strtoofft strtoll
-#  else
-#    if defined(_MSC_VER) && (_MSC_VER >= 1300) && (_INTEGRAL_MAX_BITS >= 64)
-       _CRTIMP __int64 __cdecl _strtoi64(const char *, char **, int);
-#      define curlx_strtoofft _strtoi64
-#    else
-       curl_off_t curlx_strtoll(const char *nptr, char **endptr, int base);
-#      define curlx_strtoofft curlx_strtoll
-#      define NEED_CURL_STRTOLL 1
-#    endif
-#  endif
+#ifdef HAVE_STRTOLL
+#define curlx_strtoofft strtoll
 #else
-#  define curlx_strtoofft strtol
+#if defined(_MSC_VER) && (_MSC_VER >= 1300) && (_INTEGRAL_MAX_BITS >= 64)
+_CRTIMP __int64 __cdecl _strtoi64(const char *, char **, int);
+#define curlx_strtoofft _strtoi64
+#else
+curl_off_t curlx_strtoll(const char *nptr, char **endptr, int base);
+#define curlx_strtoofft curlx_strtoll
+#define NEED_CURL_STRTOLL 1
+#endif
+#endif
+#else
+#define curlx_strtoofft _strtoi64
 #endif
 
 #if (CURL_SIZEOF_CURL_OFF_T == 4)
-#  define CURL_OFF_T_MAX CURL_OFF_T_C(0x7FFFFFFF)
+#define CURL_OFF_T_MAX CURL_OFF_T_C(0x7FFFFFFF)
 #else
-   /* assume CURL_SIZEOF_CURL_OFF_T == 8 */
-#  define CURL_OFF_T_MAX CURL_OFF_T_C(0x7FFFFFFFFFFFFFFF)
+/* assume CURL_SIZEOF_CURL_OFF_T == 8 */
+#define CURL_OFF_T_MAX CURL_OFF_T_C(0x7FFFFFFFFFFFFFFF)
 #endif
 #define CURL_OFF_T_MIN (-CURL_OFF_T_MAX - CURL_OFF_T_C(1))
 
