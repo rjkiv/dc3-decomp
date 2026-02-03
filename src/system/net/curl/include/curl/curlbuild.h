@@ -152,13 +152,13 @@ Error Compilation_aborted_CURL_SIZEOF_LONG_already_defined
 #endif
 
 #define CURL_SIZEOF_LONG 4
-#define CURL_TYPEOF_CURL_OFF_T long
-#define CURL_FORMAT_CURL_OFF_T "ld"
-#define CURL_FORMAT_CURL_OFF_TU "lu"
-#define CURL_FORMAT_OFF_T "%ld"
-#define CURL_SIZEOF_CURL_OFF_T 4
-#define CURL_SUFFIX_CURL_OFF_T L
-#define CURL_SUFFIX_CURL_OFF_TU UL
+#define CURL_TYPEOF_CURL_OFF_T __int64
+#define CURL_FORMAT_CURL_OFF_T "I64d"
+#define CURL_FORMAT_CURL_OFF_TU "I64u"
+#define CURL_FORMAT_OFF_T "%I64d"
+#define CURL_SIZEOF_CURL_OFF_T 8
+#define CURL_SUFFIX_CURL_OFF_T i64
+#define CURL_SUFFIX_CURL_OFF_TU ui64
 #define CURL_TYPEOF_CURL_SOCKLEN_T int
 #define CURL_SIZEOF_CURL_SOCKLEN_T 4
 

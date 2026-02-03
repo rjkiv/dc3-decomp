@@ -28,7 +28,6 @@
  */
 
 #include "setup.h"
-#define time _time64
 struct timeval curlx_tvnow(void);
 
 /*

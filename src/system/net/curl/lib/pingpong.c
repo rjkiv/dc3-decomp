@@ -90,21 +90,28 @@ CURLcode Curl_pp_multi_statemach(struct pingpong *pp)
   struct SessionHandle *data=conn->data;
   CURLcode result = CURLE_OK;
   long timeout_ms = Curl_pp_state_timeout(pp);
+  curl_socket_t writing;
+  curl_socket_t reading;
 
   if(timeout_ms <= 0) {
     failf(data, "server response timeout");
     return CURLE_OPERATION_TIMEDOUT;
   }
 
-  rc = Curl_socket_ready(pp->sendleft?CURL_SOCKET_BAD:sock, /* reading */
-                         pp->sendleft?sock:CURL_SOCKET_BAD, /* writing */
-                         0);
+  reading = CURL_SOCKET_BAD;
+  writing = sock;
+  if(!pp->sendleft) {
+    writing = CURL_SOCKET_BAD;
+    reading = sock;
+  }
+
+  rc = Curl_socket_ready(reading, writing, 0);
 
   if(rc == -1) {
     failf(data, "select/poll error");
     return CURLE_OUT_OF_MEMORY;
   }
-  else if(rc != 0)
+  else if(rc)
     result = pp->statemach_act(conn);
 
   /* if rc == 0, then select() timed out */

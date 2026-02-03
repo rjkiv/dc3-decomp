@@ -26,7 +26,6 @@
 #include "hash.h"
 #include "curl_addrinfo.h"
 #include "asyn.h"
-#define time _time64
 #ifdef HAVE_SETJMP_H
 #include <setjmp.h>
 #endif
@@ -66,11 +65,8 @@ void Curl_global_host_cache_dtor(void);
 
 struct Curl_dns_entry {
     Curl_addrinfo *addr;
-    /* timestamp == 0 -- entry not in hostcache
-       timestamp != 0 -- entry is in hostcache */
-    time_t timestamp;
-    long inuse; /* use-counter, make very sure you decrease this
-                   when you're done using the address you received */
+    long long timestamp;
+    long inuse;
 };
 
 /*
@@ -185,7 +181,6 @@ struct Curl_dns_entry *Curl_cache_addr(
     struct SessionHandle *data, Curl_addrinfo *addr, const char *hostname, int port
 );
 
-#undef time
 #ifndef INADDR_NONE
 #define CURL_INADDR_NONE (in_addr_t) ~0
 #else

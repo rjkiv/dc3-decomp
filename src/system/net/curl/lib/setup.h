@@ -159,6 +159,12 @@ Error Compilation_aborted_SIZEOF_CURL_OFF_T_shall_not_be_defined
 #endif
 
 /*
+ * Xbox 360: use 64-bit time functions to match the original binary.
+ * The define must come after time.h is included to avoid mangling
+ * the time() declaration. Moved to after system header includes below.
+ */
+
+/*
  * Disable other protocols when http is the only one desired.
  */
 
@@ -322,9 +328,9 @@ Error Compilation_aborted_SIZEOF_CURL_OFF_T_shall_not_be_defined
 #include <sys/stat.h>
 #undef lseek
 #define lseek(fdes, offset, whence) _lseeki64(fdes, offset, whence)
-#define fstat(fdes, stp) _fstati64(fdes, stp)
-#define stat(fname, stp) _stati64(fname, stp)
-#define struct_stat struct _stati64
+#define fstat(fdes, stp) _fstat64(fdes, stp)
+#define stat(fname, stp) _stat64(fname, stp)
+#define struct_stat struct __stat64
 #define LSEEK_ERROR (__int64)-1
 #endif
 
@@ -554,8 +560,8 @@ int fileno(FILE *stream);
 #endif
 
 #ifndef SIZEOF_TIME_T
-/* assume default size of time_t to be 32 bit */
-#define SIZEOF_TIME_T 4
+/* assume default size of time_t to be 64 bit */
+#define SIZEOF_TIME_T 8
 #endif
 
 #define LIBIDN_REQUIRED_VERSION "0.4.1"

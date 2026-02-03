@@ -330,21 +330,32 @@ const char *curl_easy_strerror(CURLcode error) {
 const char *Curl_strerror(struct connectdata *conn, int err) {
     char *buf, *p;
     size_t max;
-    int old_errno = ERRNO;
+    int old_errno;
+    const char *str;
 
     DEBUGASSERT(conn);
     DEBUGASSERT(err >= 0);
 
+    old_errno = ERRNO;
     buf = conn->syserr_buf;
     max = sizeof(conn->syserr_buf) - 1;
     *buf = '\0';
 
-    buf[max] = '\0'; /* make sure the string is zero terminated */
+    str = strerror(err);
+    if (str) {
+        strncpy(buf, str, max);
+    } else {
+        curl_msnprintf(buf, max, "Unknown error %d", err);
+    }
 
-    /* strip trailing '\r\n' or '\n'. */
-    if ((p = strrchr(buf, '\n')) != NULL && (p - buf) >= 2)
+    buf[max] = '\0';
+
+    p = strrchr(buf, '\n');
+    if (p != NULL && (p - buf) >= 2)
         *p = '\0';
-    if ((p = strrchr(buf, '\r')) != NULL && (p - buf) >= 1)
+
+    p = strrchr(buf, '\r');
+    if (p != NULL && (p - buf) >= 1)
         *p = '\0';
 
     if (old_errno != ERRNO)

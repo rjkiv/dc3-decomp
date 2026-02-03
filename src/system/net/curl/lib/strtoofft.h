@@ -45,7 +45,7 @@
 #define curlx_strtoofft strtoll
 #else
 #if defined(_MSC_VER) && (_MSC_VER >= 1300) && (_INTEGRAL_MAX_BITS >= 64)
-_CRTIMP __int64 __cdecl _strtoi64(const char *, char **, int);
+__int64 __cdecl _strtoi64(const char *, char **, int);
 #define curlx_strtoofft _strtoi64
 #else
 curl_off_t curlx_strtoll(const char *nptr, char **endptr, int base);

@@ -1379,10 +1379,10 @@ static CURLcode ftp_state_post_cwd(struct connectdata *conn)
 static CURLcode ftp_state_ul_setup(struct connectdata *conn,
                                    bool sizechecked)
 {
-  CURLcode result = CURLE_OK;
-  struct FTP *ftp = conn->data->state.proto.ftp;
   struct SessionHandle *data = conn->data;
   struct ftp_conn *ftpc = &conn->proto.ftpc;
+  CURLcode result = CURLE_OK;
+  struct FTP *ftp = data->state.proto.ftp;
   int seekerr = CURL_SEEKFUNC_OK;
 
   if((data->state.resume_from && !sizechecked) ||
@@ -1446,8 +1446,7 @@ static CURLcode ftp_state_ul_setup(struct connectdata *conn,
     /* now, decrease the size of the read */
     if(data->set.infilesize>0) {
       data->set.infilesize -= data->state.resume_from;
-
-      if(data->set.infilesize <= 0) {
+      if(data->set.infilesize < 1) {
         infof(data, "File already completely uploaded\n");
 
         /* no data to transfer */
@@ -1814,9 +1813,8 @@ static CURLcode ftp_state_pasv_resp(struct connectdata *conn,
      * Curl_proxyCONNECT we have to set back the member to the original struct
      * FTP pointer
      */
-    struct HTTP http_proxy;
     struct FTP *ftp_save = data->state.proto.ftp;
-    memset(&http_proxy, 0, sizeof(http_proxy));
+    struct HTTP http_proxy = {0};
     data->state.proto.http = &http_proxy;
 
     result = Curl_proxyCONNECT(conn, SECONDARYSOCKET, newhost, newport);
@@ -1885,23 +1883,21 @@ static CURLcode ftp_state_mdtm_resp(struct connectdata *conn,
       if(6 == sscanf(buf+4, "%04d%02d%02d%02d%02d%02d",
                      &year, &month, &day, &hour, &minute, &second)) {
         /* we have a time, reformat it */
-        time_t secs=time(NULL);
+        __time64_t secs=_time64(NULL);
         /* using the good old yacc/bison yuck */
         snprintf(buf, sizeof(conn->data->state.buffer),
                  "%04d%02d%02d %02d:%02d:%02d GMT",
                  year, month, day, hour, minute, second);
         /* now, convert this into a time() value: */
-        data->info.filetime = (long)curl_getdate(buf, &secs);
+        data->info.filetime = (long)curl_getdate(buf, (time_t*)&secs);
       }
 
 #ifdef CURL_FTP_HTTPSTYLE_HEAD
       /* If we asked for a time of the file and we actually got one as well,
          we "emulate" a HTTP-style header in our output. */
 
-      if(data->set.opt_no_body &&
-         ftpc->file &&
-         data->set.get_filetime &&
-         (data->info.filetime>=0) ) {
+      if(data->set.opt_no_body && ftpc->file && data->set.get_filetime &&
+         (data->info.filetime >= 0)) {
         time_t filetime = (time_t)data->info.filetime;
         struct tm buffer;
         const struct tm *tm = &buffer;
@@ -1937,7 +1933,7 @@ static CURLcode ftp_state_mdtm_resp(struct connectdata *conn,
   }
 
   if(data->set.timecondition) {
-    if((data->info.filetime > 0) && (data->set.timevalue > 0)) {
+    if(data->info.filetime > 0 && data->set.timevalue > 0) {
       switch(data->set.timecondition) {
       case CURL_TIMECOND_IFMODSINCE:
       default:
@@ -3014,7 +3010,7 @@ static CURLcode ftp_connect(struct connectdata *conn,
      * FTP pointer
      */
     ftp_save = data->state.proto.ftp;
-    memset(&http_proxy, 0, sizeof(http_proxy));
+    memset(&http_proxy, 0, 0x60);
     data->state.proto.http = &http_proxy;
 
     result = Curl_proxyCONNECT(conn, FIRSTSOCKET,

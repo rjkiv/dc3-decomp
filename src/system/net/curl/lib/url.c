@@ -5288,10 +5288,10 @@ static CURLcode do_init(struct connectdata *conn) {
  * We init chunking and trailer bits to their default values here immediately
  * before receiving any header data for the current request in the pipeline.
  */
-static void do_complete(struct connectdata *conn) {
+static __inline void do_complete(struct connectdata *conn) {
     conn->data->req.chunk = FALSE;
     conn->data->req.maxfd =
-        (conn->sockfd > conn->writesockfd ? conn->sockfd : conn->writesockfd) + 1;
+        ((unsigned)conn->sockfd > (unsigned)conn->writesockfd ? conn->sockfd : conn->writesockfd) + 1;
 }
 
 CURLcode Curl_do(struct connectdata **connp, bool *done) {

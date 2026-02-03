@@ -114,6 +114,53 @@ void WebSvcMgrCurl::InitCurl() {
     MILO_ASSERT(mCurlMultiHandle, 0x31);
 }
 
+void WebSvcMgrCurl::FindAndFinish(void *handle, bool success, unsigned int http_status) {
+    WebSvcRequest *req;
+    auto it = mRequests.begin();
+
+    while (it != mRequests.end()) {
+        req = *it;
+        if (req->GetRequest() == handle) {
+            goto found;
+        }
+        ++it;
+    }
+
+    TheDebug.Notify(MakeString("WSMC::FindAndFinish: Handle not found"));
+    return;
+
+found:
+    if (curl_easy_getinfo((CURL *)handle, (CURLINFO)0x40001C, nullptr) == 0) {
+        std::map<String, String> cookies;
+        char *response_headers = nullptr;
+
+        curl_easy_getinfo((CURL *)handle, (CURLINFO)0x40001C, &response_headers);
+
+        if (response_headers) {
+            String header_str(response_headers);
+            std::vector<String> header_vector;
+            header_str.split("/", header_vector);
+
+            if ((header_vector.size()) * 8 == 0x38) {
+                String k(header_str + 0x28);
+                String v(header_str + 0x30);
+                cookies.insert(std::make_pair(k, v));
+            }
+        }
+
+        req->SetCookies(cookies);
+    }
+
+    curl_multi_remove_handle(mCurlMultiHandle, (CURL *)handle);
+    req->SetStatusCode(http_status);
+
+    if (success) {
+        req->OnReqSucceeded();
+    } else {
+        req->OnReqFailed();
+    }
+}
+
 bool WebSvcMgrCurl::InitRequest(
     WebSvcRequest *req,
     ReqType req_type,

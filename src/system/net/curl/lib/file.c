@@ -137,15 +137,15 @@ static CURLcode file_range(struct connectdata *conn)
   struct SessionHandle *data = conn->data;
 
   if(data->state.use_range && data->state.range) {
-    from=curlx_strtoofft(data->state.range, &ptr, 0);
-    while(*ptr && (ISSPACE(*ptr) || (*ptr=='-')))
+    from = curlx_strtoofft(data->state.range, &ptr, 0);
+    while(*ptr && (ISSPACE(*ptr) || (*ptr == '-')))
       ptr++;
-    to=curlx_strtoofft(ptr, &ptr2, 0);
+    to = curlx_strtoofft(ptr, &ptr2, 0);
     if(ptr == ptr2) {
       /* we didn't get any digit */
-      to=-1;
+      to = -1;
     }
-    if((-1 == to) && (from>=0)) {
+    if((to == -1) && (from >= 0)) {
       /* X - */
       data->state.resume_from = from;
       DEBUGF(infof(data, "RANGE %" FORMAT_OFF_T " to end of file\n",
@@ -160,8 +160,8 @@ static CURLcode file_range(struct connectdata *conn)
     }
     else {
       /* X-Y */
-      totalsize = to-from;
-      data->req.maxdownload = totalsize+1; /* include last byte */
+      totalsize = to - from;
+      data->req.maxdownload = totalsize + 1; /* include last byte */
       data->state.resume_from = from;
       DEBUGF(infof(data, "RANGE from %" FORMAT_OFF_T
                    " getting %" FORMAT_OFF_T " bytes\n",
@@ -310,10 +310,10 @@ static CURLcode file_upload(struct connectdata *conn)
 {
   struct FILEPROTO *file = conn->data->state.proto.file;
   const char *dir = strchr(file->path, DIRSEP);
-  FILE *fp;
-  CURLcode res=CURLE_OK;
   struct SessionHandle *data = conn->data;
   char *buf = data->state.buffer;
+  FILE *fp;
+  CURLcode res=CURLE_OK;
   size_t nread;
   size_t nwrite;
   curl_off_t bytecount = 0;
@@ -360,7 +360,7 @@ static CURLcode file_upload(struct connectdata *conn)
     return CURLE_WRITE_ERROR;
   }
 
-  if(-1 != data->set.infilesize)
+  if(data->set.infilesize != -1)
     /* known size of data to "upload" */
     Curl_pgrsSetUploadSize(data, data->set.infilesize);
 
@@ -371,8 +371,7 @@ static CURLcode file_upload(struct connectdata *conn)
       failf(data, "Can't get the size of %s", file->path);
       return CURLE_WRITE_ERROR;
     }
-    else
-      data->state.resume_from = (curl_off_t)file_stat.st_size;
+    data->state.resume_from = (curl_off_t)file_stat.st_size;
   }
 
   while(res == CURLE_OK) {
@@ -388,13 +387,13 @@ static CURLcode file_upload(struct connectdata *conn)
 
     /*skip bytes before resume point*/
     if(data->state.resume_from) {
-      if((curl_off_t)nread <= data->state.resume_from ) {
+      if(nread <= (size_t)data->state.resume_from ) {
         data->state.resume_from -= nread;
         nread = 0;
         buf2 = buf;
       }
       else {
-        buf2 = buf + data->state.resume_from;
+        buf2 = buf + (size_t)data->state.resume_from;
         nread -= (size_t)data->state.resume_from;
         data->state.resume_from = 0;
       }
@@ -403,8 +402,8 @@ static CURLcode file_upload(struct connectdata *conn)
       buf2 = buf;
 
     /* write the data to the target */
-    nwrite = fwrite(buf2, 1, nread, fp);
-    if(nwrite != nread) {
+    nwrite = fwrite(buf2, 1, (size_t)nread, fp);
+    if((size_t)nwrite != nread) {
       res = CURLE_SEND_ERROR;
       break;
     }

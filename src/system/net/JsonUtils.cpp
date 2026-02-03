@@ -1,5 +1,5 @@
 #include "net/JsonUtils.h"
-#include "json-c/json_object_private.h"
+#include "net/json-c/json_object_private.h"
 #include "net/json-c/json_object.h"
 #include "net/json-c/json_tokener.h"
 #include "net/json-c/linkhash.h"
@@ -61,21 +61,20 @@ JsonObject *JsonConverter::LoadFromString(const String &str) {
     printbuf *buf = printbuf_new();
     if (!buf) {
         return nullptr;
-    } else {
-        printbuf_memappend(buf, str.c_str(), str.length());
-        json_object *obj = json_tokener_parse(buf->buf);
-        if ((int)obj > 0xfffff060) { // ???
-            printbuf_free(buf);
-            return nullptr;
-        } else {
-            JsonObject *jObj = new JsonObject();
-            jObj->Set(obj);
-            printbuf_free(buf);
-            jObj->AddRef();
-            mObjects.push_back(jObj);
-            return jObj;
-        }
     }
+    printbuf_memappend(buf, str.c_str(), str.length());
+    json_object *obj = json_tokener_parse(buf->buf);
+    if ((int)obj > 0xfffff060) { // ???
+        printbuf_free(buf);
+        return nullptr;
+    }
+    JsonObject *jObj = new JsonObject();
+    jObj->Set(obj);
+    printbuf_free(buf);
+    JsonObject *temp = jObj;
+    json_object_get(obj);
+    mObjects.push_back(temp);
+    return jObj;
 }
 
 JsonObject *JsonConverter::GetValue(JsonArray *inArray, int inIdx) {
@@ -92,21 +91,19 @@ const char *JsonConverter::Str(JsonArray *j, int i) { return GetValue(j, i)->Str
 JsonObject *JsonConverter::GetByName(JsonObject *j, const char *cc) {
     if (j->GetType() != JsonObject::kType_Object) {
         return nullptr;
-    } else {
-        lh_table *lh = j->Get();
-        const void *v = lh_table_lookup(lh, cc);
-        if (v) {
-            json_object *obj = (json_object *)v;
-            json_object_get(obj);
-            JsonObject *jObj = new JsonObject();
-            jObj->Set(obj);
-            jObj->AddRef();
-            mObjects.push_back(jObj);
-            return jObj;
-        } else {
-            return nullptr;
-        }
     }
+    lh_table *lh = j->Get();
+    const void *v = lh_table_lookup(lh, cc);
+    if (!v) {
+        return nullptr;
+    }
+    json_object *obj = (json_object *)v;
+    json_object_get(obj);
+    JsonObject *jObj = new JsonObject();
+    jObj->Set(obj);
+    jObj->AddRef();
+    mObjects.push_back(jObj);
+    return jObj;
 }
 
 void JsonConverter::PushObject(JsonObject *obj) {

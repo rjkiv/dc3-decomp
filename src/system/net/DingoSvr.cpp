@@ -46,34 +46,34 @@ void DingoServer::Logout() {
 
 void DingoServer::ManageJob(DingoJob *job) {
     MILO_ASSERT(job, 0xd0);
-    bool b5 = false;
+    bool isUrlDisabled = false;
     FOREACH (it, mDisabledUrls) {
         String cur(*it);
         if (strncmp(job->GetBaseURL(), cur.c_str(), cur.length()) == 0) {
-            b5 = true;
+            isUrlDisabled = true;
             break;
         }
     }
-    bool u7 = true;
-    bool c4 = true;
-    bool b8 = false;
-    if (!b5) {
+    bool shouldSendFailureCallback = true;
+    bool authSucceeded = true;
+    bool justAuthenticated = false;
+    if (!isUrlDisabled) {
         if (!IsAuthenticated()) {
             MILO_NOTIFY("ManageJob without authentication.");
             if (ThePlatformMgr.IsConnected()) {
-                c4 = TheServer.Authenticate(unk74);
-                b8 = true;
+                authSucceeded = TheServer.Authenticate(unk74);
+                justAuthenticated = true;
             } else {
-                c4 = false;
-            }
-            if (c4 && !job->GetHttpReq()) {
-                u7 = !InitAndAddJob(job, false, b8);
+                authSucceeded = false;
             }
         }
-        if (u7) {
-            job->SendCallback(false, false);
-            delete job;
+        if (authSucceeded && !job->GetHttpReq()) {
+            shouldSendFailureCallback = !InitAndAddJob(job, false, justAuthenticated);
         }
+    }
+    if (shouldSendFailureCallback) {
+        job->SendCallback(false, false);
+        delete job;
     }
 }
 

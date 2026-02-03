@@ -43,8 +43,8 @@
  * context initialisation.
  */
 
-static const unsigned char hmac_ipad = 0x36;
 static const unsigned char hmac_opad = 0x5C;
+static const unsigned char hmac_ipad = 0x36;
 
 HMAC_context *Curl_HMAC_init(
     const HMAC_params *hashparams, const unsigned char *key, unsigned int keylen
@@ -87,9 +87,15 @@ HMAC_context *Curl_HMAC_init(
         (*hashparams->hmac_hupdate)(ctxt->hmac_hashctxt2, &b, 1);
     }
 
-    for (; i < hashparams->hmac_maxkeylen; i++) {
-        (*hashparams->hmac_hupdate)(ctxt->hmac_hashctxt1, &hmac_ipad, 1);
-        (*hashparams->hmac_hupdate)(ctxt->hmac_hashctxt2, &hmac_opad, 1);
+    if (i < hashparams->hmac_maxkeylen) {
+        const unsigned char *ipad = &hmac_ipad;
+        const unsigned char *opad = &hmac_opad;
+
+        do {
+            (*hashparams->hmac_hupdate)(ctxt->hmac_hashctxt1, ipad, 1);
+            (*hashparams->hmac_hupdate)(ctxt->hmac_hashctxt2, opad, 1);
+            i++;
+        } while (i < hashparams->hmac_maxkeylen);
     }
 
     /* Done, return pointer to HMAC context. */

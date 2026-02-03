@@ -14,6 +14,7 @@ public:
     virtual void ThreadDone(int);
 
     State GetState() { return unk4; }
+    int GetUnk8() const { return unk8; }
     void Poll();
     unsigned int GetServiceIP();
     void Connect(const char *, unsigned int);

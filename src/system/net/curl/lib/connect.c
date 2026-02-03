@@ -243,7 +243,7 @@ static CURLcode bindlocal(struct connectdata *conn,
   struct sockaddr_in6 *si6 = (struct sockaddr_in6 *)&sa;
 #endif
 
-  struct Curl_dns_entry *h=NULL;
+  struct Curl_dns_entry *h = NULL;
   unsigned short port = data->set.localport; /* use this port number, 0 for
                                                 "random" */
   /* how many port numbers to try to bind to, increasing one at a time */
@@ -401,10 +401,10 @@ static CURLcode bindlocal(struct connectdata *conn,
       port++; /* try next port */
       /* We re-use/clobber the port variable here below */
       if(sock->sa_family == AF_INET)
-        si4->sin_port = ntohs(port);
+        si4->sin_port = htons(port);
 #ifdef ENABLE_IPV6
       else
-        si6->sin6_port = ntohs(port);
+        si6->sin6_port = htons(port);
 #endif
     }
     else
@@ -835,10 +835,10 @@ singleipconnect(struct connectdata *conn,
                 bool *connected)
 {
   struct Curl_sockaddr_ex addr;
+  struct SessionHandle *data = conn->data;
   int rc;
   int error = 0;
   bool isconnected = FALSE;
-  struct SessionHandle *data = conn->data;
   curl_socket_t sockfd;
   CURLcode res = CURLE_OK;
 #if defined(ENABLE_IPV6) && defined(HAVE_SOCKADDR_IN6_SIN6_SCOPE_ID)
@@ -951,30 +951,26 @@ singleipconnect(struct connectdata *conn,
     rc = 0;
 
   if(-1 == rc) {
-    switch (error) {
-    case EINPROGRESS:
-    case EWOULDBLOCK:
+    /* Check for retryable connection errors (would-block/in-progress).
+       EAGAIN may or may not be distinct from EWOULDBLOCK depending on platform. */
+    if(error == EWOULDBLOCK || error == EINPROGRESS
 #if defined(EAGAIN)
 #if (EAGAIN) != (EWOULDBLOCK)
-      /* On some platforms EAGAIN and EWOULDBLOCK are the
-       * same value, and on others they are different, hence
-       * the odd #if
-       */
-    case EAGAIN:
+       || error == EAGAIN
 #endif
 #endif
+       ) {
       rc = waitconnect(conn, sockfd, timeout_ms);
       if(WAITCONN_ABORTED == rc) {
         Curl_closesocket(conn, sockfd);
         return CURLE_ABORTED_BY_CALLBACK;
       }
-      break;
-    default:
+    }
+    else {
       /* unknown error, fallthrough and try another address! */
       failf(data, "Failed to connect to %s: %s",
             conn->ip_addr_str, Curl_strerror(conn,error));
       data->state.os_errno = error;
-      break;
     }
   }
 

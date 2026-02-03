@@ -28,7 +28,7 @@
 size_t Curl_ftp_parselist(char *buffer, size_t size, size_t nmemb,
                           void *connptr);
 
-struct ftp_parselist_data; /* defined inside ftplibparser.c */
+struct ftp_parselist_data; /* defined inside ftplistparser.c */
 
 CURLcode Curl_ftp_parselist_geterror(struct ftp_parselist_data *pl_data);
 

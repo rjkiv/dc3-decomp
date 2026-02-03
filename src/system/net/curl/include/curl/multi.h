@@ -114,7 +114,7 @@ CURL_EXTERN CURLMcode curl_multi_add_handle(CURLM *multi_handle, CURL *curl_hand
  *
  * Returns: CURLMcode type, general multi error code.
  */
-// CURL_EXTERN CURLMcode curl_multi_remove_handle(CURLM *multi_handle, CURL *curl_handle);
+CURL_EXTERN CURLMcode curl_multi_remove_handle(CURLM *multi_handle, CURL *curl_handle);
 
 /*
  * Name:    curl_multi_fdset()

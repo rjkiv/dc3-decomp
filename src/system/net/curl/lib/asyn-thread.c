@@ -22,6 +22,12 @@
 
 #include "setup.h"
 
+/* Xbox 360 doesn't have getaddrinfo */
+#undef HAVE_GETADDRINFO
+#ifndef ENOMEM
+#define ENOMEM 12
+#endif
+
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
@@ -56,10 +62,22 @@
 #undef in_addr_t
 #define in_addr_t unsigned long
 #endif
+
+/* Xbox 360 build does not have getaddrinfo */
+#undef HAVE_GETADDRINFO
+
+/* Xbox 360 uses errno, not GetLastError/SetLastError */
+int *_errno(void);
+#undef SET_ERRNO
+#define SET_ERRNO(x) do { int *p = _errno(); *p = (x); } while(0)
+
 #define EAI_MEMORY 6
 #ifdef HAVE_GETADDRINFO
 #define RESOLVER_ENOMEM EAI_MEMORY
 #else
+#ifndef ENOMEM
+#define ENOMEM 12
+#endif
 #define RESOLVER_ENOMEM ENOMEM
 #endif
 
@@ -193,18 +211,11 @@ static void destroy_thread_sync_data(struct thread_sync_data *tsd) {
 int init_thread_sync_data(
     struct thread_sync_data *tsd,
     const char *hostname,
-    int port,
-    const struct addrinfo *hints
+    int port
 ) {
     memset(tsd, 0, sizeof(*tsd));
 
     tsd->port = port;
-#ifdef CURLRES_IPV6
-    DEBUGASSERT(hints);
-    tsd->hints = *hints;
-#else
-    (void)hints;
-#endif
 
     tsd->mtx = malloc(sizeof(curl_mutex_t));
     if (tsd->mtx == NULL)
@@ -271,6 +282,9 @@ static unsigned int CURL_STDCALL getaddrinfo_thread(void *arg) {
 
     return 0;
 }
+
+#else /* HAVE_GETADDRINFO */
+
 /*
  * gethostbyname_thread() resolves a name and then exits.
  */
@@ -291,8 +305,6 @@ unsigned int CURL_STDCALL gethostbyname_thread(void *arg) {
 
     return 0;
 }
-
-#else /* HAVE_GETADDRINFO */
 
 #endif /* HAVE_GETADDRINFO */
 
@@ -330,9 +342,10 @@ static bool init_resolve_thread(
     struct connectdata *conn, const char *hostname, int port, const struct addrinfo *hints
 ) {
     struct thread_data *td = calloc(1, sizeof(struct thread_data));
-    int err = RESOLVER_ENOMEM;
+    int err;
 
     conn->async.os_specific = (void *)td;
+    err = RESOLVER_ENOMEM;
     if (!td)
         goto err_exit;
 
@@ -343,7 +356,7 @@ static bool init_resolve_thread(
     td->dummy_sock = CURL_SOCKET_BAD;
     td->thread_hnd = curl_thread_t_null;
 
-    if (!init_thread_sync_data(&td->tsd, hostname, port, hints))
+    if (!init_thread_sync_data(&td->tsd, hostname, port))
         goto err_exit;
 
     Curl_safefree(conn->async.hostname);
@@ -368,9 +381,7 @@ static bool init_resolve_thread(
 #endif
 
     if (!td->thread_hnd) {
-#ifndef _WIN32_WCE
-        err = errno;
-#endif
+        err = *_errno();
         goto err_exit;
     }
 

@@ -122,7 +122,7 @@ typedef void CURL;
 #ifndef curl_socket_typedef
 /* socket typedef */
 #if defined(WIN32) && !defined(__LWIP_OPT_H__)
-typedef int curl_socket_t;
+typedef SOCKET curl_socket_t;
 #define CURL_SOCKET_BAD INVALID_SOCKET
 #else
 typedef int curl_socket_t;

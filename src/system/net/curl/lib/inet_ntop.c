@@ -54,6 +54,7 @@
 static char *inet_ntop4(const unsigned char *src, char *dst, size_t size) {
     char tmp[sizeof "255.255.255.255"];
     size_t len;
+    int *errno_ptr;
 
     DEBUGASSERT(size >= 16);
 
@@ -70,7 +71,8 @@ static char *inet_ntop4(const unsigned char *src, char *dst, size_t size) {
 
     len = strlen(tmp);
     if (len == 0 || len >= size) {
-        SET_ERRNO(ENOSPC);
+        errno_ptr = (int*)_errno();
+        *errno_ptr = ENOSPC;
         return (NULL);
     }
     strcpy(dst, tmp);

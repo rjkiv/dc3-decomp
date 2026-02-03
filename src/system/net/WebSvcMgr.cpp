@@ -66,9 +66,9 @@ bool WebSvcMgr::AddRequest(
 bool WebSvcMgr::ResolveHostname(WebSvcRequest *req) {
     unsigned int ip = req->GetIPAddr();
     if (ip == 0) {
-        NetAddress addr = ResolveHostname(req->GetHostName(), kHMXDomain, 0x50);
+        NetAddress addr = ResolveHostname(req->GetHostName(), kHMXDomain, 80);
         if (addr.mIP == 0) {
-            addr = ResolveHostname(req->GetHostName(), nullptr, 0x50);
+            addr = ResolveHostname(req->GetHostName(), nullptr, 80);
             if (addr.mIP == 0) {
                 return false;
             }
@@ -81,6 +81,7 @@ bool WebSvcMgr::ResolveHostname(WebSvcRequest *req) {
 NetAddress
 WebSvcMgr::ResolveHostname(const char *hostname, const char *domain, unsigned short port) {
     NetAddress ret;
+    bool notInCache = false;
     String str(hostname);
     if (domain) {
         str += ".";
@@ -91,8 +92,9 @@ WebSvcMgr::ResolveHostname(const char *hostname, const char *domain, unsigned sh
         ret = it->second;
     } else {
         ret = NetworkSocket::SetIPPortFromHostPort(hostname, domain, port);
+        notInCache = true;
     }
-    if (ret.mIP != 0 && it == mHostCache.end()) {
+    if (ret.mIP != 0 && notInCache) {
         mHostCache.insert(std::make_pair(str, ret));
     }
     return ret;

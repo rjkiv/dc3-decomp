@@ -40,7 +40,7 @@ typedef enum {
 
 void Curl_pgrsDone(struct connectdata *);
 void Curl_pgrsStartNow(struct SessionHandle *data);
-void Curl_pgrsSetDownloadSize(struct SessionHandle *data, curl_off_t size);
+void Curl_pgrsSetDownloadSize(struct SessionHandle *data, long long size);
 void Curl_pgrsSetUploadSize(struct SessionHandle *data, curl_off_t size);
 void Curl_pgrsSetDownloadCounter(struct SessionHandle *data, curl_off_t size);
 void Curl_pgrsSetUploadCounter(struct SessionHandle *data, curl_off_t size);

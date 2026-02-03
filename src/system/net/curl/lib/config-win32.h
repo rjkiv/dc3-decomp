@@ -395,7 +395,8 @@
 /* ---------------------------------------------------------------- */
 
 /* Define if you have struct sockaddr_storage. */
-#if !defined(__SALFORDC__) && !defined(__BORLANDC__)
+/* Xbox 360 XDK: not defined - uses char buffer[256] fallback in sockaddr.h */
+#if 0
 #define HAVE_STRUCT_SOCKADDR_STORAGE 1
 #endif
 
@@ -500,6 +501,7 @@
 #  endif
 #endif
 
+
 /* Officially, Microsoft's Windows SDK versions 6.X do not support Windows
    2000 as a supported build target. VS2008 default installations provide
    an embedded Windows SDK v6.0A along with the claim that Windows 2000 is
@@ -576,7 +578,7 @@
 /*                        LARGE FILE SUPPORT                        */
 /* ---------------------------------------------------------------- */
 
-#if defined(_MSC_VER) && !defined(_WIN32_WCE)
+#if defined(_MSC_VER) && !defined(_WIN32_WCE) && !defined(_M_PPCBE)
 #  if (_MSC_VER >= 900) && (_INTEGRAL_MAX_BITS >= 64)
 #    define USE_WIN32_LARGE_FILES
 #  else
@@ -596,7 +598,8 @@
 #  undef USE_WIN32_LARGE_FILES
 #endif
 
-#if !defined(USE_WIN32_LARGE_FILES) && !defined(USE_WIN32_SMALL_FILES)
+#if !defined(USE_WIN32_LARGE_FILES) && !defined(USE_WIN32_SMALL_FILES) \
+    && !defined(_M_PPCBE)
 #  define USE_WIN32_SMALL_FILES
 #endif
 
@@ -666,6 +669,9 @@
 
 /* If you want to build curl with the built-in manual */
 #define USE_MANUAL 1
+
+/* Xbox 360: zlib support is linked, enabling libz-dependent code paths */
+#define HAVE_LIBZ 1
 
 #if defined(__POCC__) || (USE_IPV6)
 #  define ENABLE_IPV6 1

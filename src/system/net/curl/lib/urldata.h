@@ -817,7 +817,7 @@ struct connectdata {
 
     struct timeval now; /* "current" time */
     struct timeval created; /* creation time */
-    curl_socket_t sock[2]; /* two sockets, the second is used for the data
+    SOCKET sock[2]; /* two sockets, the second is used for the data
                               transfer when doing FTP */
 
     Curl_recv *recv[2];
@@ -844,8 +844,8 @@ struct connectdata {
 
     /**** curl_get() phase fields */
 
-    curl_socket_t sockfd; /* socket to read from or CURL_SOCKET_BAD */
-    curl_socket_t writesockfd; /* socket to write to, it may very
+    SOCKET sockfd; /* socket to read from or CURL_SOCKET_BAD */
+    SOCKET writesockfd; /* socket to write to, it may very
                                   well be the same we read from.
                                   CURL_SOCKET_BAD disables */
 
