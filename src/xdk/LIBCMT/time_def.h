@@ -1,6 +1,6 @@
 #pragma once
 
-typedef long time_t;
+typedef long long time_t;
 typedef long clock_t;
 
 /** Structure holding a calendar date and time broken down into its components. */

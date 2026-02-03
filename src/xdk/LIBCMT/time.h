@@ -13,6 +13,9 @@ typedef long long int __time64_t;
 time_t time(time_t *arg);
 __time64_t _time64(__time64_t *arg);
 
+/* Xbox 360: redirect time() to _time64() to match the original binary */
+#define time(x) _time64(x)
+
 double difftime(time_t time_end, time_t time_beg);
 clock_t clock(void);
 

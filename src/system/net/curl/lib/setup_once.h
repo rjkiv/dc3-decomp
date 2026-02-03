@@ -377,12 +377,13 @@ typedef int sig_atomic_t;
  * (or equivalent) on this platform to hide platform details to code using it.
  */
 
-#if defined(_M_PPCBE)
-#define ERRNO 0
-#define SET_ERRNO(x) ((void)(x))
-#elif defined(WIN32)
+#if defined(WIN32) && !defined(_M_PPCBE)
 #define ERRNO ((int)GetLastError())
 #define SET_ERRNO(x) (SetLastError((DWORD)(x)))
+#elif defined(_M_PPCBE)
+/* Xbox 360: errno is stubbed to 0 in XDK, use _errno() like the original */
+#define ERRNO (*_errno())
+#define SET_ERRNO(x) (*_errno() = (x))
 #else
 #define ERRNO (errno)
 #define SET_ERRNO(x) (errno = (x))

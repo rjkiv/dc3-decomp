@@ -612,6 +612,14 @@ int fileno(FILE *stream);
 #endif
 
 /*
+ * Xbox 360: redirect time() to _time64() to match the original binary.
+ * Uses function-like macro to avoid mangling time.h filename.
+ */
+#if defined(WIN32) && defined(_M_PPCBE)
+#define time(x) _time64(x)
+#endif
+
+/*
  * Definition of our NOP statement Object-like macro
  */
 

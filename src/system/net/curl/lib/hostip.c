@@ -279,7 +279,7 @@ void Curl_hostcache_prune(struct SessionHandle *data)
 /*
  * Check if the entry should be pruned. Assumes a locked cache.
  */
-static int
+static __declspec(noinline) int
 remove_entry_if_stale(struct SessionHandle *data, struct Curl_dns_entry *dns)
 {
   struct hostcache_prune_data user;

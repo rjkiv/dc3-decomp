@@ -230,6 +230,7 @@ struct curl_fileinfo {
     char *filename;
     curlfiletype filetype;
     time_t time;
+
     unsigned int perm;
     int uid;
     int gid;
@@ -252,6 +253,11 @@ struct curl_fileinfo {
     size_t b_size;
     size_t b_used;
 };
+
+/* Xbox 360: restore time->_time64 redirect after struct curl_fileinfo */
+#if defined(WIN32) && defined(_M_PPCBE)
+#define time(x) _time64(x)
+#endif
 
 /* return codes for CURLOPT_CHUNK_BGN_FUNCTION */
 #define CURL_CHUNK_BGN_FUNC_OK 0

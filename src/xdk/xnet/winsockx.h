@@ -5,6 +5,12 @@
 extern "C" {
 #endif
 
+/* Big-endian PowerPC: network byte order is native, so these are no-ops */
+#define ntohs(x) (x)
+#define htons(x) (x)
+#define ntohl(x) (x)
+#define htonl(x) (x)
+
 #define IOCPARAM_MASK 0x7f
 #define IOC_VOID 0x20000000
 #define IOC_OUT 0x40000000
@@ -95,10 +101,47 @@ struct sockaddr {
 
 typedef unsigned int *SOCKET;
 
+#define FD_SETSIZE 64
+
 typedef struct fd_set {
     unsigned int fd_count;
-    SOCKET fd_array[64];
+    SOCKET fd_array[FD_SETSIZE];
 } fd_set;
+
+int __WSAFDIsSet(SOCKET fd, fd_set *set);
+
+#define FD_ZERO(set) ((set)->fd_count = 0)
+
+#define FD_CLR(fd, set) do { \
+    unsigned int __i; \
+    for (__i = 0; __i < ((fd_set *)(set))->fd_count; __i++) { \
+        if (((fd_set *)(set))->fd_array[__i] == (fd)) { \
+            while (__i < ((fd_set *)(set))->fd_count - 1) { \
+                ((fd_set *)(set))->fd_array[__i] = \
+                    ((fd_set *)(set))->fd_array[__i + 1]; \
+                __i++; \
+            } \
+            ((fd_set *)(set))->fd_count--; \
+            break; \
+        } \
+    } \
+} while(0)
+
+#define FD_SET(fd, set) do { \
+    unsigned int __i; \
+    for (__i = 0; __i < ((fd_set *)(set))->fd_count; __i++) { \
+        if (((fd_set *)(set))->fd_array[__i] == (fd)) \
+            break; \
+    } \
+    if (__i == ((fd_set *)(set))->fd_count) { \
+        if (((fd_set *)(set))->fd_count < FD_SETSIZE) { \
+            ((fd_set *)(set))->fd_array[__i] = (fd); \
+            ((fd_set *)(set))->fd_count++; \
+        } \
+    } \
+} while(0)
+
+#define FD_ISSET(fd, set) __WSAFDIsSet((SOCKET)(fd), (fd_set *)(set))
 
 struct timeval {
     long tv_sec;
