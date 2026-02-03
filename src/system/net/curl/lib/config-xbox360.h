@@ -40,6 +40,7 @@
 
 #define HAVE_ZLIB_H 1
 #define HAVE_ZLIB 1
+#define HAVE_LIBZ 1 // same thing? nodeia
 
 /* Define if you have the <crypto.h> header file. */
 /* #define HAVE_CRYPTO_H 1 */
