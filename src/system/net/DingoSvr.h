@@ -69,10 +69,6 @@ public:
     void CancelDelayedCalls();
     void AddDelayedCalls();
 
-    OnlineID mOnlineId; // 0x80
-    AuthState mAuthState; // 0x2c
-    String mHostName; // 0x30
-
 private:
     bool SendAuthenticateMsg(const char *url, DataPoint &pt, Hmx::Object *callback);
 
@@ -89,6 +85,8 @@ protected:
     bool InitAndAddJob(DingoJob *job, bool immediate, bool delay);
     bool Authenticate(int padnum, const char *url);
 
+    AuthState mAuthState; // 0x2c
+    String mHostName; // 0x30
     unsigned int mIPAddr; // 0x38
     unsigned int mPort; // 0x3c
     String unk40;
@@ -100,6 +98,7 @@ protected:
     int unk70; // 0x70 - padnum?
     int unk74; // 0x74
     bool unk78[4]; // 0x78
+    OnlineID mOnlineId; // 0x80
     std::vector<String> mDisabledUrls; // 0x98
     std::vector<DingoJob *> mDelayedJobs; // 0xa4
 };

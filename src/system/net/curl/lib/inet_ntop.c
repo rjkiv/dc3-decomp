@@ -54,7 +54,6 @@
 static char *inet_ntop4(const unsigned char *src, char *dst, size_t size) {
     char tmp[sizeof "255.255.255.255"];
     size_t len;
-    int *errno_ptr;
 
     DEBUGASSERT(size >= 16);
 
@@ -71,8 +70,7 @@ static char *inet_ntop4(const unsigned char *src, char *dst, size_t size) {
 
     len = strlen(tmp);
     if (len == 0 || len >= size) {
-        errno_ptr = (int*)_errno();
-        *errno_ptr = ENOSPC;
+        *_errno() = ENOSPC;
         return (NULL);
     }
     strcpy(dst, tmp);
@@ -167,7 +165,7 @@ static char *inet_ntop6(const unsigned char *src, char *dst, size_t size) {
     /* Check for overflow, copy, and we're done.
      */
     if ((size_t)(tp - tmp) > size) {
-        SET_ERRNO(ENOSPC);
+        *_errno() = ENOSPC;
         return (NULL);
     }
     strcpy(dst, tmp);
@@ -196,7 +194,7 @@ char *Curl_inet_ntop(int af, const void *src, char *buf, size_t size) {
         return inet_ntop6((const unsigned char *)src, buf, size);
 #endif
     default:
-        SET_ERRNO(EAFNOSUPPORT);
+        *_errno() = EAFNOSUPPORT;
         return NULL;
     }
 }

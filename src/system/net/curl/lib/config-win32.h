@@ -395,8 +395,8 @@
 /* ---------------------------------------------------------------- */
 
 /* Define if you have struct sockaddr_storage. */
-/* Xbox 360 XDK: not defined - uses char buffer[256] fallback in sockaddr.h */
-#if 0
+/* Xbox 360: disabled to use 256-byte buffer fallback matching target binary */
+#if !defined(__SALFORDC__) && !defined(__BORLANDC__) && !defined(_M_PPCBE)
 #define HAVE_STRUCT_SOCKADDR_STORAGE 1
 #endif
 
@@ -578,7 +578,7 @@
 /*                        LARGE FILE SUPPORT                        */
 /* ---------------------------------------------------------------- */
 
-#if defined(_MSC_VER) && !defined(_WIN32_WCE) && !defined(_M_PPCBE)
+#if defined(_MSC_VER) && !defined(_WIN32_WCE)
 #  if (_MSC_VER >= 900) && (_INTEGRAL_MAX_BITS >= 64)
 #    define USE_WIN32_LARGE_FILES
 #  else
@@ -598,8 +598,7 @@
 #  undef USE_WIN32_LARGE_FILES
 #endif
 
-#if !defined(USE_WIN32_LARGE_FILES) && !defined(USE_WIN32_SMALL_FILES) \
-    && !defined(_M_PPCBE)
+#if !defined(USE_WIN32_LARGE_FILES) && !defined(USE_WIN32_SMALL_FILES)
 #  define USE_WIN32_SMALL_FILES
 #endif
 
@@ -646,14 +645,6 @@
 
 #if defined(__POCC__) && defined(CURL_LDAP_WIN)
 #  define CURL_DISABLE_LDAP 1
-#endif
-
-/* ---------------------------------------------------------------- */
-/*                     XBOX 360 PROTOCOL DISABLES                   */
-/* ---------------------------------------------------------------- */
-
-#ifdef _M_PPCBE
-#  define CURL_DISABLE_FILE 1
 #endif
 
 /* ---------------------------------------------------------------- */

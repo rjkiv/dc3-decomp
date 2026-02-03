@@ -24,6 +24,7 @@
 
 #if defined(WIN32) && !defined(MSDOS)
 
+#define time _time64
 struct timeval curlx_tvnow(void) {
     /*
     ** GetTickCount() is available on _all_ Windows versions from W95 up

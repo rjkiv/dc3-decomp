@@ -68,7 +68,7 @@ int Curl_inet_pton(int af, const char *src, void *dst) {
     case AF_INET:
         return (inet_pton4(src, (unsigned char *)dst));
     default:
-        SET_ERRNO(WSAEAFNOSUPPORT);
+        *_errno() = WSAEAFNOSUPPORT;
         return (-1);
     }
     /* NOTREACHED */
