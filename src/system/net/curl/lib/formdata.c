@@ -762,12 +762,14 @@ static CURLcode AddFormData(
         else {
             /* Since this is a file to be uploaded here, add the size of the actual
                file */
+#ifndef _M_PPCBE /* Xbox 360 XDK lacks struct stat */
             if (!strequal("-", newform->line)) {
                 struct_stat file;
                 if (!stat(newform->line, &file)) {
                     *size += file.st_size;
                 }
             }
+#endif
         }
     }
     return CURLE_OK;
