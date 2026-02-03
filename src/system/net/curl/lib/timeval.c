@@ -22,7 +22,7 @@
 
 #include "timeval.h"
 
-#if defined(WIN32) && !defined(MSDOS)
+#if defined(WIN32) && !defined(MSDOS) && !defined(_XBOX360)
 
 struct timeval curlx_tvnow(void) {
     /*
