@@ -38,6 +38,9 @@
 /* Define if you have the <assert.h> header file. */
 #define HAVE_ASSERT_H 1
 
+#define HAVE_ZLIB_H 1
+#define HAVE_ZLIB 1
+
 /* Define if you have the <crypto.h> header file. */
 /* #define HAVE_CRYPTO_H 1 */
 
