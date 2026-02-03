@@ -1,4 +1,6 @@
-/***************************************************************************
+// clang-format off
+/*
+ ***************************************************************************
  *                                  _   _ ____  _
  *  Project                     ___| | | |  _ \| |
  *                             / __| | | | |_) | |
@@ -614,8 +616,8 @@ const char *Curl_strerror(struct connectdata *conn, int err)
   max = sizeof(conn->syserr_buf)-1;
   *buf = '\0';
 
+#undef USE_WINSOCK // lol temporary hopefully
 #ifdef USE_WINSOCK
-
 #ifdef _WIN32_WCE
   {
     wchar_t wbuf[256];

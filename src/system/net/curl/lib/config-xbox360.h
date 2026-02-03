@@ -486,7 +486,6 @@
 // #if defined(__MINGW32__) || defined(__WATCOMC__)
 #define HAVE_LONGLONG 1
 // #endif
-
 /* Define to avoid VS2005 complaining about portable C functions. */
 #if defined(_MSC_VER) && (_MSC_VER >= 1400)
 #define _CRT_SECURE_NO_DEPRECATE 1
