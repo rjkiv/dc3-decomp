@@ -56,6 +56,8 @@ CharBone::CharBone()
       mRotationContext(0), mTarget(this), mWeights(), mTrans(this),
       mBakeOutAsTopLevel(0) {}
 
+INIT_REVS(10, 0)
+
 BEGIN_LOADS(CharBone)
     LOAD_REVS(bs)
     ASSERT_REVS(10, 0)

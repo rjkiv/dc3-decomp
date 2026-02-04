@@ -36,6 +36,8 @@ void FxSendDelay::Save(BinStream &bs) {
     bs << mPingPongPct;
 }
 
+INIT_REVS(3, 0)
+
 BEGIN_LOADS(FxSendDelay)
     LOAD_REVS(bs)
     ASSERT_REVS(3, 0)

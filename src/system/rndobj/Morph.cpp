@@ -71,6 +71,8 @@ BinStreamRev &operator>>(BinStreamRev &bs, RndMorph::Pose &pose) {
     return bs;
 }
 
+INIT_REVS(4, 0)
+
 BEGIN_LOADS(RndMorph)
     LOAD_REVS(bs)
     ASSERT_REVS(4, 0)

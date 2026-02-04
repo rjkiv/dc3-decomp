@@ -21,6 +21,8 @@ void FxSendDistortion::Save(BinStream &bs) {
     bs << mDrive;
 }
 
+INIT_REVS(1, 0)
+
 BEGIN_LOADS(FxSendDistortion)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)

@@ -50,6 +50,8 @@ BEGIN_COPYS(RndMeshAnim)
     }
 END_COPYS
 
+INIT_REVS(2, 0)
+
 BEGIN_LOADS(RndMeshAnim)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)

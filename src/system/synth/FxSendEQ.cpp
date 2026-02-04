@@ -51,6 +51,8 @@ void FxSendEQ::Save(BinStream &bs) {
     bs << mTransitionTime;
 }
 
+INIT_REVS(2, 0)
+
 BEGIN_LOADS(FxSendEQ)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)

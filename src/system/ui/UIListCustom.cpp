@@ -26,6 +26,8 @@ BEGIN_COPYS(UIListCustom)
     COPY_MEMBER(mObject)
 END_COPYS
 
+INIT_REVS(0, 0)
+
 BEGIN_LOADS(UIListCustom)
     LOAD_REVS(bs)
     ASSERT_REVS(0, 0)

@@ -837,6 +837,10 @@ extern DataArray *SystemConfig(Symbol, Symbol, Symbol);
 // END COPY MACROS -----------------------------------------------------------------------
 
 // BEGIN LOAD MACROS  --------------------------------------------------------------------
+#define INIT_REVS(rev, alt)                                                              \
+    static const __declspec(align(4)) unsigned short gRev = rev;                         \
+    static const __declspec(align(4)) unsigned short gAltRev = alt;
+
 #define BEGIN_LOADS(objType) void objType::Load(BinStream &bs) {
 #define LOAD_REVS(bs)                                                                    \
     int revs;                                                                            \
@@ -844,14 +848,13 @@ extern DataArray *SystemConfig(Symbol, Symbol, Symbol);
     BinStreamRev d(bs, revs);
 
 #define ASSERT_REVS(rev1, rev2)                                                          \
-    static const unsigned short gRevs[4] = { rev1, 0, rev2, 0 };                         \
     if (d.rev > rev1) {                                                                  \
         MILO_FAIL(                                                                       \
             "%s can't load new %s version %d > %d",                                      \
             PathName(this),                                                              \
             ClassName(),                                                                 \
             d.rev,                                                                       \
-            gRevs[0]                                                                     \
+            gRev                                                                         \
         );                                                                               \
     }                                                                                    \
     if (d.altRev > rev2) {                                                               \
@@ -860,7 +863,7 @@ extern DataArray *SystemConfig(Symbol, Symbol, Symbol);
             PathName(this),                                                              \
             ClassName(),                                                                 \
             d.altRev,                                                                    \
-            gRevs[2]                                                                     \
+            gAltRev                                                                      \
         );                                                                               \
     }
 

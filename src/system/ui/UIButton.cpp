@@ -21,6 +21,8 @@ void UIButton::Save(BinStream &bs) {
     SAVE_SUPERCLASS(UILabel)
 }
 
+INIT_REVS(0, 0)
+
 void UIButton::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(0, 0)

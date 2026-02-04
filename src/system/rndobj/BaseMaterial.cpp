@@ -217,6 +217,8 @@ CheckBlendMode(BaseMaterial::Blend b, BaseMaterial *) {
     return b;
 }
 
+INIT_REVS(8, 0)
+
 BEGIN_LOADS(BaseMaterial)
     LOAD_REVS(bs)
     ASSERT_REVS(8, 0)

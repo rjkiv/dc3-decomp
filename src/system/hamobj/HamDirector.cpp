@@ -279,6 +279,8 @@ BEGIN_COPYS(HamDirector)
     END_COPYING_MEMBERS
 END_COPYS
 
+INIT_REVS(9, 0)
+
 BEGIN_LOADS(HamDirector)
     LOAD_REVS(bs)
     ASSERT_REVS(9, 0)
@@ -692,8 +694,7 @@ RndPropAnim *HamDirector::SongAnimByDifficulty(Difficulty diff) {
 }
 
 RndPropAnim *HamDirector::DancerFaceAnimByPlayer(int player) {
-    return mDancerFaceAnims[LegacyDifficulty(TheGameData->Player(player)->GetDifficulty()
-    )];
+    return mDancerFaceAnims[LegacyDifficulty(TheGameData->Player(player)->GetDifficulty())];
 }
 
 void HamDirector::AddNumPlayers(

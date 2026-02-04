@@ -74,9 +74,11 @@ BEGIN_LOADS(UILabelDir)
     ObjectDir::Load(bs);
 END_LOADS
 
+INIT_REVS(11, 0)
+
 void UILabelDir::PreLoad(BinStream &bs) {
     LOAD_REVS(bs);
-    ASSERT_REVS(0xb, 0);
+    ASSERT_REVS(11, 0);
     RndDir::PreLoad(bs);
     bs.PushRev(packRevs(d.altRev, d.rev), this);
 }

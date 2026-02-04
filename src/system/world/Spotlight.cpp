@@ -325,6 +325,8 @@ BinStreamRev &operator>>(BinStreamRev &d, Spotlight::BeamDef &bd) {
     return d;
 }
 
+INIT_REVS(0x21, 0)
+
 BEGIN_LOADS(Spotlight)
     LOAD_REVS(bs)
     ASSERT_REVS(0x21, 0)

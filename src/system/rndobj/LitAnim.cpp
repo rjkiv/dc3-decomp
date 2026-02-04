@@ -60,6 +60,8 @@ BEGIN_COPYS(RndLightAnim)
     }
 END_COPYS
 
+INIT_REVS(2, 0)
+
 BEGIN_LOADS(RndLightAnim)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)

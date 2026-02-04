@@ -34,6 +34,8 @@ BEGIN_COPYS(CharMirror)
     END_COPYING_MEMBERS
 END_COPYS
 
+INIT_REVS(1, 0)
+
 BEGIN_LOADS(CharMirror)
     LOAD_REVS(bs);
     ASSERT_REVS(1, 0);
@@ -60,7 +62,8 @@ void CharMirror::Poll() {
             it->x = -it->x;
         }
     }
-    for (Hmx::Quat *it = (Hmx::Quat *)(mBones.mStart + mBones.mOffsets[CharBones::TYPE_QUAT]);
+    for (Hmx::Quat *it =
+             (Hmx::Quat *)(mBones.mStart + mBones.mOffsets[CharBones::TYPE_QUAT]);
          it < (Hmx::Quat *)(mBones.mStart + mBones.mOffsets[CharBones::TYPE_ROTX]);
          curMirrorOp++, it++) {
         *it = *(Hmx::Quat *)curMirrorOp->ptr;

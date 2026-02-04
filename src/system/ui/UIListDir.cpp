@@ -88,6 +88,8 @@ BEGIN_COPYS(UIListDir)
     END_COPYING_MEMBERS
 END_COPYS
 
+INIT_REVS(1, 0)
+
 void UIListDir::PreLoad(BinStream &bs) {
     LOAD_REVS(bs);
     ASSERT_REVS(1, 0);

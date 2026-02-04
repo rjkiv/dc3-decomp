@@ -38,6 +38,8 @@ BEGIN_COPYS(FlowSequence)
     END_COPYING_MEMBERS
 END_COPYS
 
+INIT_REVS(1, 0)
+
 BEGIN_LOADS(FlowSequence)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)

@@ -37,6 +37,8 @@ BEGIN_SAVES(ClipCollide)
     bs << mPosition;
 END_SAVES
 
+INIT_REVS(1, 0)
+
 BEGIN_LOADS(ClipCollide)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)

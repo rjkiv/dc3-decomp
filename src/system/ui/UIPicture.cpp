@@ -61,6 +61,8 @@ void UIPicture::SetTypeDef(DataArray *da) {
     }
 }
 
+INIT_REVS(2, 0)
+
 void UIPicture::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)

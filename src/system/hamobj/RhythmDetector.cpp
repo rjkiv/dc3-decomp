@@ -192,6 +192,8 @@ BEGIN_COPYS(RhythmDetector)
     END_COPYING_MEMBERS
 END_COPYS
 
+INIT_REVS(2, 0)
+
 BEGIN_LOADS(RhythmDetector)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)

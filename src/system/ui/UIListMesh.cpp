@@ -29,6 +29,8 @@ BEGIN_COPYS(UIListMesh)
     COPY_MEMBER_FROM(m, mDefaultMat)
 END_COPYS
 
+INIT_REVS(0, 0)
+
 BEGIN_LOADS(UIListMesh)
     LOAD_REVS(bs)
     ASSERT_REVS(0, 0)

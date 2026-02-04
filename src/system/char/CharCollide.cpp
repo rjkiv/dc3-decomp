@@ -61,6 +61,8 @@ BEGIN_SAVES(CharCollide)
     bs << mMeshYBias;
 END_SAVES
 
+INIT_REVS(7, 0)
+
 BEGIN_LOADS(CharCollide)
     LOAD_REVS(bs)
     ASSERT_REVS(7, 0)

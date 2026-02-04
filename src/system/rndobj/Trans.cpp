@@ -64,7 +64,8 @@ BEGIN_HANDLERS(RndTransformable)
     HANDLE_ACTION(
         set_trans_parent,
         SetTransParent(
-            _msg->Obj<RndTransformable>(2), _msg->Size() > 3 ? (bool)(_msg->Int(3) != 0) : false
+            _msg->Obj<RndTransformable>(2),
+            _msg->Size() > 3 ? (bool)(_msg->Int(3) != 0) : false
         )
     )
     HANDLE_EXPR(trans_parent, mParent.Ptr())
@@ -125,6 +126,8 @@ BEGIN_COPYS(RndTransformable)
         SetTransParent(c->mParent, false);
     END_COPYING_MEMBERS
 END_COPYS
+
+INIT_REVS(9, 0)
 
 BEGIN_LOADS(RndTransformable)
     LOAD_REVS(bs)

@@ -245,6 +245,8 @@ BinStream &operator>>(BinStream &bs, RndBone &bone) {
 template <class T1, class T2>
 BinStream &CachedRead(BinStream &, std::vector<T1, T2> &);
 
+INIT_REVS(0x26, 0)
+
 BEGIN_LOADS(RndMesh)
     LOAD_REVS(bs)
     ASSERT_REVS(0x26, 0)

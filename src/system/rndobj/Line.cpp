@@ -62,8 +62,10 @@ BEGIN_PROPSYNCS(RndLine)
     gLine = this;
     SYNC_PROP_SET(mat, mMat.Ptr(), SetMat(_val.Obj<RndMat>()))
     SYNC_PROP(width, mWidth)
-    SYNC_PROP_SET(fold_angle, mFoldAngle * RAD2DEG, mFoldAngle = _val.Float() * DEG2RAD;
-                  mFoldCos = cos(mFoldAngle))
+    SYNC_PROP_SET(
+        fold_angle, mFoldAngle * RAD2DEG, mFoldAngle = _val.Float() * DEG2RAD;
+        mFoldCos = cos(mFoldAngle)
+    )
     SYNC_PROP_MODIFY(has_caps, mHasCaps, SetNumPoints(NumPoints()))
     SYNC_PROP_MODIFY(line_pairs, mLinePairs, SetNumPoints(NumPoints()))
     SYNC_PROP_SET(num_points, NumPoints(), SetNumPoints(_val.Int()))
@@ -106,6 +108,8 @@ BinStreamRev &operator>>(BinStreamRev &d, RndLine::Point &pt) {
     d >> pt.point >> pt.color;
     return d;
 }
+
+INIT_REVS(4, 0)
 
 BEGIN_LOADS(RndLine)
     LOAD_REVS(bs)

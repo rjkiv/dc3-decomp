@@ -46,6 +46,8 @@ END_COPYS
 
 void HamPhotoDisplay::Init() { REGISTER_OBJ_FACTORY(HamPhotoDisplay); }
 
+INIT_REVS(1, 0)
+
 void HamPhotoDisplay::PreLoad(BinStream &bs) {
     LOAD_REVS(bs);
     ASSERT_REVS(1, 0);

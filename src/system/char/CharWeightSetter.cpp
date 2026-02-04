@@ -56,6 +56,8 @@ BEGIN_COPYS(CharWeightSetter)
     END_COPYING_MEMBERS
 END_COPYS
 
+INIT_REVS(9, 0)
+
 BEGIN_LOADS(CharWeightSetter)
     LOAD_REVS(bs)
     ASSERT_REVS(9, 0)

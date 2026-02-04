@@ -70,6 +70,8 @@ BinStreamRev &operator>>(BinStreamRev &d, BattleStep &step) {
     return d;
 }
 
+INIT_REVS(4, 0)
+
 BEGIN_LOADS(HamBattleData)
     LOAD_REVS(bs)
     ASSERT_REVS(4, 0)

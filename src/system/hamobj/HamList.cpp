@@ -31,6 +31,8 @@ END_LOADS
 
 void HamList::Init() { REGISTER_OBJ_FACTORY(HamList); }
 
+INIT_REVS(19, 0)
+
 void HamList::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(19, 0)

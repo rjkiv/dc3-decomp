@@ -23,6 +23,8 @@ BEGIN_COPYS(UIListHighlight)
     COPY_MEMBER_FROM(h, mMesh)
 END_COPYS
 
+INIT_REVS(0, 0)
+
 BEGIN_LOADS(UIListHighlight)
     LOAD_REVS(bs)
     ASSERT_REVS(0, 0)

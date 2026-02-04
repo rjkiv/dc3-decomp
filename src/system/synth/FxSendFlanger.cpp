@@ -40,6 +40,8 @@ void FxSendFlanger::Save(BinStream &bs) {
     bs << mTempo;
 }
 
+INIT_REVS(7, 0)
+
 BEGIN_LOADS(FxSendFlanger)
     LOAD_REVS(bs)
     ASSERT_REVS(7, 0)

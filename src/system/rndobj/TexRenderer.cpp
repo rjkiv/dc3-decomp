@@ -148,6 +148,8 @@ void RndTexRenderer::ListPollChildren(std::list<RndPollable *> &list) const {
     }
 }
 
+INIT_REVS(13, 0)
+
 BEGIN_LOADS(RndTexRenderer)
     LOAD_REVS(bs)
     ASSERT_REVS(13, 0)

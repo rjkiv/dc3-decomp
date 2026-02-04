@@ -162,6 +162,8 @@ void CharHair::FreezePose() {
     FreezePoseRaw();
 }
 
+INIT_REVS(11, 0)
+
 void CharHair::Load(BinStream &bs) {
     LOAD_REVS(bs);
     ASSERT_REVS(11, 0);

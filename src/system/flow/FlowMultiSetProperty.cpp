@@ -32,6 +32,8 @@ BEGIN_COPYS(FlowMultiSetProperty)
     END_COPYING_MEMBERS
 END_COPYS
 
+INIT_REVS(0, 0)
+
 BEGIN_LOADS(FlowMultiSetProperty)
     LOAD_REVS(bs)
     ASSERT_REVS(0, 0)

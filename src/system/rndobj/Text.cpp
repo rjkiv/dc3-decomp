@@ -160,6 +160,8 @@ BinStream &operator>>(BinStream &bs, RndText::Style &s) {
     return bs;
 }
 
+INIT_REVS(0x1C, 1)
+
 BEGIN_LOADS(RndText)
     LOAD_REVS(bs)
     ASSERT_REVS(0x1C, 1)
@@ -287,7 +289,9 @@ BEGIN_LOADS(RndText)
     }
     if (d.rev >= 0x16) {
         if (d.rev == 0x17) {
-            TheDebug.Notify(MakeString("%s was bad version 23, suggest resave", PathName(this)));
+            TheDebug.Notify(
+                MakeString("%s was bad version 23, suggest resave", PathName(this))
+            );
         }
         bs >> (int &)mFitType;
         if (d.rev < 0x18) {

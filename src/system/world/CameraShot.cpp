@@ -618,6 +618,8 @@ void LoadDrawables(BinStream &bs, std::vector<RndDrawable *> &draws, ObjectDir *
     }
 }
 
+INIT_REVS(0x34, 0)
+
 BEGIN_LOADS(CamShot)
     LOAD_REVS(bs)
     ASSERT_REVS(0x34, 0)

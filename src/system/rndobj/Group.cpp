@@ -89,6 +89,8 @@ BEGIN_COPYS(RndGroup)
     Update();
 END_COPYS
 
+INIT_REVS(0x10, 0)
+
 BEGIN_LOADS(RndGroup)
     LOAD_REVS(bs)
     ASSERT_REVS(0x10, 0)

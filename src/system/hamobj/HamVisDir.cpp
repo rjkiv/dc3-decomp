@@ -158,6 +158,8 @@ void HamVisDir::Load(BinStream &bs) {
     PostLoad(bs);
 }
 
+INIT_REVS(13, 0)
+
 void HamVisDir::PreLoad(BinStream &bs) {
     LOAD_REVS(bs);
     ASSERT_REVS(13, 0);

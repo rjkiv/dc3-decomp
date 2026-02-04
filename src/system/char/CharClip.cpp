@@ -429,6 +429,8 @@ BEGIN_COPYS(CharClip)
     END_COPYING_MEMBERS
 END_COPYS
 
+INIT_REVS(0x16, 0)
+
 BEGIN_LOADS(CharClip)
     static int _x = MemFindHeap("char");
     MemHeapTracker temp(_x);

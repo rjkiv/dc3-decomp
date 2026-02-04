@@ -62,6 +62,8 @@ BEGIN_LOADS(MeterDisplay)
     PostLoad(bs);
 END_LOADS
 
+INIT_REVS(4, 0)
+
 void MeterDisplay::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(4, 0)

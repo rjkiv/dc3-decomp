@@ -64,6 +64,8 @@ BEGIN_COPYS(RndFlare)
     unk148 = false;
 END_COPYS
 
+INIT_REVS(7, 0)
+
 BEGIN_LOADS(RndFlare)
     LOAD_REVS(bs)
     ASSERT_REVS(7, 0)

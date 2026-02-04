@@ -82,6 +82,8 @@ BEGIN_SAVES(Song)
     bs << mDirty;
 END_SAVES
 
+INIT_REVS(0, 0)
+
 BEGIN_LOADS(Song)
     LOAD_REVS(bs)
     ASSERT_REVS(0, 0)

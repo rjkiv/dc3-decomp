@@ -42,6 +42,8 @@ BEGIN_COPYS(FlowOutPort)
     UpdatePortMapping();
 END_COPYS
 
+INIT_REVS(2, 0)
+
 BEGIN_LOADS(FlowOutPort)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)

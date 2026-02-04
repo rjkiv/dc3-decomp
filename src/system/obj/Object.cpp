@@ -160,6 +160,8 @@ void Hmx::Object::Load(BinStream &bs) {
     LoadRest(bs);
 }
 
+INIT_REVS(2, 0)
+
 void Hmx::Object::LoadType(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)

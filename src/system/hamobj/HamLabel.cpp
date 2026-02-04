@@ -49,6 +49,8 @@ void HamLabel::Load(BinStream &bs) {
     PostLoad(bs);
 }
 
+INIT_REVS(17, 0)
+
 void HamLabel::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(17, 0)

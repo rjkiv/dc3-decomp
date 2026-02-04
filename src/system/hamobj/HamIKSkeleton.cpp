@@ -26,6 +26,8 @@ BEGIN_COPYS(HamIKSkeleton)
     CREATE_COPY(HamIKSkeleton)
 END_COPYS
 
+INIT_REVS(0, 0)
+
 BEGIN_LOADS(HamIKSkeleton)
     LOAD_REVS(bs)
     ASSERT_REVS(0, 0)

@@ -152,6 +152,8 @@ BEGIN_COPYS(HamListRibbon)
     END_COPYING_MEMBERS
 END_COPYS
 
+INIT_REVS(11, 0)
+
 void HamListRibbon::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(0xB, 0)

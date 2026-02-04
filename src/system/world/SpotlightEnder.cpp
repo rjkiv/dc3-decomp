@@ -27,6 +27,8 @@ BEGIN_COPYS(SpotlightEnder)
     COPY_SUPERCLASS(RndDrawable)
 END_COPYS
 
+INIT_REVS(0, 0)
+
 BEGIN_LOADS(SpotlightEnder)
     LOAD_REVS(bs)
     ASSERT_REVS(0, 0)

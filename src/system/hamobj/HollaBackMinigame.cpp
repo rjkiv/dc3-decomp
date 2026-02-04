@@ -68,6 +68,8 @@ BEGIN_COPYS(HollaBackMinigame)
     CREATE_COPY(HollaBackMinigame)
 END_COPYS
 
+INIT_REVS(5, 0)
+
 BEGIN_LOADS(HollaBackMinigame)
     LOAD_REVS(bs)
     ASSERT_REVS(5, 0)

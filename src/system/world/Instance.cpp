@@ -96,6 +96,8 @@ bool WorldInstance::MakeWorldSphere(Sphere &s, bool b) {
     }
 }
 
+INIT_REVS(3, 0)
+
 void WorldInstance::PreLoad(BinStream &bs) {
     if (IsProxy())
         DeleteObjects();

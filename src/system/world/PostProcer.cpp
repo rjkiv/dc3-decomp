@@ -27,6 +27,8 @@ BEGIN_COPYS(PostProcer)
     COPY_SUPERCLASS(RndDrawable)
 END_COPYS
 
+INIT_REVS(1, 0)
+
 BEGIN_LOADS(PostProcer)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)

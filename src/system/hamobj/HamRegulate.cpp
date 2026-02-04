@@ -29,6 +29,8 @@ BEGIN_SAVES(HamRegulate)
     bs << mRightFoot;
 END_SAVES
 
+INIT_REVS(2, 0)
+
 BEGIN_LOADS(HamRegulate)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)

@@ -54,6 +54,8 @@ BEGIN_COPYS(RndAnimatable)
     END_COPYING_MEMBERS
 END_COPYS
 
+INIT_REVS(4, 0)
+
 BEGIN_LOADS(RndAnimatable)
     LOAD_REVS(bs)
     ASSERT_REVS(4, 0)

@@ -234,6 +234,8 @@ void RemoveNullEvents(std::list<Symbol> &vec) {
     }
 }
 
+INIT_REVS(0x11, 0)
+
 BEGIN_LOADS(EventTrigger)
     LOAD_REVS(bs)
     ASSERT_REVS(0x11, 0)

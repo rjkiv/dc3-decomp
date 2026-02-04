@@ -61,6 +61,8 @@ BEGIN_COPYS(RndParticleSysAnim)
     }
 END_COPYS
 
+INIT_REVS(3, 0)
+
 BEGIN_LOADS(RndParticleSysAnim)
     LOAD_REVS(bs)
     ASSERT_REVS(3, 0)

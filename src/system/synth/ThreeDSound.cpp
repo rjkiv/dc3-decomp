@@ -91,6 +91,8 @@ BEGIN_COPYS(ThreeDSound)
     CalculateFaderVolume();
 END_COPYS
 
+INIT_REVS(6, 0)
+
 BEGIN_LOADS(ThreeDSound)
     LOAD_REVS(bs)
     ASSERT_REVS(6, 0)

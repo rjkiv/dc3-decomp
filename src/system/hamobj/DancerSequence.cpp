@@ -45,6 +45,8 @@ BEGIN_COPYS(DancerSequence)
     COPY_MEMBER_FROM(seq, mDancerFrames)
 END_COPYS
 
+INIT_REVS(8, 0)
+
 BEGIN_LOADS(DancerSequence)
     LOAD_REVS(bs)
     ASSERT_REVS(8, 0)

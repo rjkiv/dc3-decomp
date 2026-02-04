@@ -103,6 +103,8 @@ void RndAnimFilter::ListAnimChildren(std::list<RndAnimatable *> &theList) const 
         theList.push_back(mAnim);
 }
 
+INIT_REVS(2, 0)
+
 void RndAnimFilter::Load(BinStream &bs) {
     LOAD_REVS(bs);
     ASSERT_REVS(2, 0);

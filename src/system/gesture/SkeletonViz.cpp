@@ -83,6 +83,8 @@ BEGIN_LOADS(SkeletonViz)
     PostLoad(bs);
 END_LOADS
 
+INIT_REVS(6, 1)
+
 void SkeletonViz::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(6, 1)

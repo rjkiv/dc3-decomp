@@ -81,6 +81,8 @@ void RndDir::Export(DataArray *a, bool b2) {
     }
 }
 
+INIT_REVS(10, 0)
+
 void RndDir::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(10, 0)
@@ -162,7 +164,7 @@ void RndDir::SyncObjects() {
         int numTotalChildren = pollchildren.size();
         int numEnabled = 0;
         for (; (unsigned int)numEnabled < (unsigned int)numTotalChildren
-               && pollchildren[numEnabled]->PollEnabled();
+             && pollchildren[numEnabled]->PollEnabled();
              numEnabled++)
             ;
         int numRemaining = numTotalChildren - numEnabled;

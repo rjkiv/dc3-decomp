@@ -86,6 +86,8 @@ bool RndFur::LoadOld(BinStreamRev &bs) {
     return ret;
 }
 
+INIT_REVS(3, 0)
+
 BEGIN_LOADS(RndFur)
     LOAD_REVS(bs)
     ASSERT_REVS(3, 0)

@@ -39,6 +39,8 @@ BEGIN_LOADS(SongDifficultyDisplay)
     PostLoad(bs);
 END_LOADS
 
+INIT_REVS(2, 0)
+
 void SongDifficultyDisplay::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)

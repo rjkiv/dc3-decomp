@@ -75,6 +75,8 @@ BinStream &operator>>(BinStream &bs, CharBoneDir::Recenter &r) {
     return bs;
 }
 
+INIT_REVS(4, 0)
+
 void CharBoneDir::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(4, 0)

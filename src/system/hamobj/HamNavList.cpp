@@ -176,6 +176,8 @@ BEGIN_LOADS(HamNavList)
     PostLoad(bs);
 END_LOADS
 
+INIT_REVS(10, 0)
+
 void HamNavList::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(10, 0)

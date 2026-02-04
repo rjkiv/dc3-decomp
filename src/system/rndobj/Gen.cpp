@@ -70,9 +70,11 @@ BEGIN_COPYS(RndGenerator)
     COPY_MEMBER_FROM(d, mParticleSys)
 END_COPYS
 
+INIT_REVS(11, 0)
+
 BEGIN_LOADS(RndGenerator)
     LOAD_REVS(bs)
-    ASSERT_REVS(0xB, 0)
+    ASSERT_REVS(11, 0)
     if (d.rev > 9) {
         LOAD_SUPERCLASS(Hmx::Object)
     }

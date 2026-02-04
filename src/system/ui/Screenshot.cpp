@@ -36,6 +36,8 @@ BEGIN_COPYS(Screenshot)
     Sync();
 END_COPYS
 
+INIT_REVS(1, 0)
+
 BEGIN_LOADS(Screenshot)
     LOAD_REVS(bs);
     ASSERT_REVS(1, 0);

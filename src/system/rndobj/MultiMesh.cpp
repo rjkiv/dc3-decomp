@@ -65,6 +65,8 @@ BEGIN_COPYS(RndMultiMesh)
     UpdateMesh();
 END_COPYS
 
+INIT_REVS(5, 0)
+
 BEGIN_LOADS(RndMultiMesh)
     LOAD_REVS(bs)
     ASSERT_REVS(5, 0)

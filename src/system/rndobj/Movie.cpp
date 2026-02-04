@@ -57,6 +57,8 @@ BEGIN_LOADS(RndMovie)
     PostLoad(bs);
 END_LOADS
 
+INIT_REVS(8, 0)
+
 void RndMovie::PreLoad(BinStream &bs) {
     LOAD_REVS(bs);
     ASSERT_REVS(8, 0);

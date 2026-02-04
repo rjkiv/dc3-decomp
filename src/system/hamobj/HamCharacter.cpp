@@ -146,6 +146,8 @@ BEGIN_LOADS(HamCharacter)
     PostLoad(bs);
 END_LOADS
 
+INIT_REVS(0, 0)
+
 void HamCharacter::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(0, 0)
@@ -195,8 +197,8 @@ void HamCharacter::SyncObjects() {
         CharLipSyncDriver *lipDrv = Find<CharLipSyncDriver>("face.lipdrv", false);
         EnableFacialAnimation(lipDrv->LipSync(), 0);
         bool blinking = servo
-            && (!servo->BlinkClipLeftName().Null() && !servo->BlinkClipRightName().Null()
-            );
+            && (!servo->BlinkClipLeftName().Null()
+                && !servo->BlinkClipRightName().Null());
         SetBlinking(blinking);
     }
     mCrewCardMesh = Find<RndMesh>(kCrewCardMeshName, false);

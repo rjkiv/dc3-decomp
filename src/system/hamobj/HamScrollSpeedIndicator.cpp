@@ -84,6 +84,8 @@ void HamScrollSpeedIndicator::Draw(const Transform &xfm) {
     }
 }
 
+INIT_REVS(2, 0)
+
 void HamScrollSpeedIndicator::PreLoad(BinStream &bs) {
     LOAD_REVS(bs);
     ASSERT_REVS(2, 0)

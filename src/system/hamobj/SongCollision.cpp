@@ -106,6 +106,8 @@ BEGIN_COPYS(SongCollision)
     END_COPYING_MEMBERS
 END_COPYS
 
+INIT_REVS(2, 1)
+
 BEGIN_LOADS(SongCollision)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 1)

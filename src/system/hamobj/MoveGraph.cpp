@@ -25,6 +25,8 @@ BEGIN_COPYS(MoveGraph)
     END_COPYING_MEMBERS
 END_COPYS
 
+INIT_REVS(0, 0)
+
 BEGIN_LOADS(MoveGraph)
     while (bs.Eof() != NotEof) {
         Timer::Sleep(100);

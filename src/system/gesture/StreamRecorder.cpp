@@ -78,6 +78,8 @@ BEGIN_COPYS(StreamRecorder)
     END_COPYING_MEMBERS
 END_COPYS
 
+INIT_REVS(5, 0)
+
 BEGIN_LOADS(StreamRecorder)
     LOAD_REVS(bs)
     ASSERT_REVS(5, 0)

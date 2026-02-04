@@ -53,6 +53,8 @@ BEGIN_LOADS(StarsDisplay)
     PostLoad(bs);
 END_LOADS
 
+INIT_REVS(3, 0)
+
 void StarsDisplay::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(3, 0)

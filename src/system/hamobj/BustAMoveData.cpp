@@ -42,6 +42,8 @@ BinStreamRev &operator>>(BinStreamRev &bs, BAMPhrase &bp) {
     return bs;
 }
 
+INIT_REVS(1, 0)
+
 BEGIN_LOADS(BustAMoveData)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)

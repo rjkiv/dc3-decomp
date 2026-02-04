@@ -33,20 +33,26 @@ END_HANDLERS
 
 BEGIN_PROPSYNCS(Fader)
     SYNC_PROP_SET(level, mLevel, SetVolume(_val.Float()))
-    SYNC_PROP_SET(level_ease_type, mLevelEaseType, mLevelEaseType = (EaseType)_val.Int();
-                  mLevelEaseFunc = GetEaseFunction(mLevelEaseType))
+    SYNC_PROP_SET(
+        level_ease_type, mLevelEaseType, mLevelEaseType = (EaseType)_val.Int();
+        mLevelEaseFunc = GetEaseFunction(mLevelEaseType)
+    )
     SYNC_PROP_SET(level_ease_param, mLevelEaseParam, mLevelEaseParam = _val.Float())
     SYNC_PROP_SET(level_target, mLevelTarget, mLevelTarget = _val.Float())
     SYNC_PROP_SET(pan, mPan, SetPan(_val.Float()))
-    SYNC_PROP_SET(pan_ease_type, mPanEaseType, mPanEaseType = (EaseType)_val.Int();
-                  mPanEaseFunc = GetEaseFunction(mPanEaseType))
+    SYNC_PROP_SET(
+        pan_ease_type, mPanEaseType, mPanEaseType = (EaseType)_val.Int();
+        mPanEaseFunc = GetEaseFunction(mPanEaseType)
+    )
     SYNC_PROP_SET(pan_ease_param, mPanEaseParam, mPanEaseParam = _val.Float())
     SYNC_PROP_SET(pan_target, mPanTarget, mPanTarget = _val.Float())
     SYNC_PROP_SET(transpose, mTranspose, SetTranspose(_val.Float()))
-    SYNC_PROP_SET(transpose_ease_type,
-                  mTransposeEaseType,
-                  mTransposeEaseType = (EaseType)_val.Int();
-                  mTransposeEaseFunc = GetEaseFunction(mTransposeEaseType))
+    SYNC_PROP_SET(
+        transpose_ease_type,
+        mTransposeEaseType,
+        mTransposeEaseType = (EaseType)_val.Int();
+        mTransposeEaseFunc = GetEaseFunction(mTransposeEaseType)
+    )
     SYNC_PROP_SET(
         transpose_ease_param, mTransposeEaseParam, mTransposeEaseParam = _val.Float()
     )
@@ -97,6 +103,8 @@ BEGIN_COPYS(Fader)
         }
     END_COPYING_MEMBERS
 END_COPYS
+
+INIT_REVS(1, 0)
 
 BEGIN_LOADS(Fader)
     LOAD_REVS(bs)

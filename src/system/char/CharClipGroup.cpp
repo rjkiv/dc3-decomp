@@ -26,6 +26,8 @@ BEGIN_PROPSYNCS(CharClipGroup)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
+INIT_REVS(2, 0)
+
 BEGIN_LOADS(CharClipGroup)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)

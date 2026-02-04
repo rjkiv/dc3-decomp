@@ -110,6 +110,8 @@ void LabelNumberTicker::Enter() {
     UpdateDisplay();
 }
 
+INIT_REVS(2, 0)
+
 void LabelNumberTicker::PreLoad(BinStream &bs) {
     LOAD_REVS(bs);
     ASSERT_REVS(2, 0)

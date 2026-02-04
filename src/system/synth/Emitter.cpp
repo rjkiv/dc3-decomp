@@ -63,6 +63,8 @@ BEGIN_COPYS(SynthEmitter)
     END_COPYING_MEMBERS
 END_COPYS
 
+INIT_REVS(3, 0)
+
 BEGIN_LOADS(SynthEmitter)
     LOAD_REVS(bs)
     ASSERT_REVS(3, 0)

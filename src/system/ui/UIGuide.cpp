@@ -22,6 +22,8 @@ void UIGuide::Save(BinStream &bs) {
     bs << mPos;
 }
 
+INIT_REVS(1, 0)
+
 BEGIN_LOADS(UIGuide)
     LOAD_REVS(bs);
     ASSERT_REVS(1, 0);

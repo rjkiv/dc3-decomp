@@ -171,6 +171,8 @@ BinStreamRev &operator>>(BinStreamRev &d, FileMerger::Merger &fm) {
     return d;
 }
 
+INIT_REVS(5, 0)
+
 void FileMerger::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(5, 0)

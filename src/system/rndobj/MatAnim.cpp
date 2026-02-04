@@ -50,6 +50,8 @@ BEGIN_COPYS(RndMatAnim)
     }
 END_COPYS
 
+INIT_REVS(7, 0)
+
 BEGIN_LOADS(RndMatAnim)
     LOAD_REVS(bs)
     ASSERT_REVS(7, 0)

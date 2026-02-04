@@ -286,6 +286,8 @@ BinStream &operator>>(BinStream &bs, MatPropEditAction &a) {
     return bs;
 }
 
+INIT_REVS(2, 0)
+
 BEGIN_LOADS(MetaMaterial)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)

@@ -252,6 +252,8 @@ BinStream &operator>>(BinStream &bs, MatChar &mc) {
     return bs;
 }
 
+INIT_REVS(0x11, 0)
+
 BEGIN_LOADS(RndFont)
     LOAD_REVS(bs)
     ASSERT_REVS(0x11, 2)

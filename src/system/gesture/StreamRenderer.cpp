@@ -189,6 +189,8 @@ BEGIN_COPYS(StreamRenderer)
     END_COPYING_MEMBERS
 END_COPYS
 
+INIT_REVS(12, 1)
+
 BEGIN_LOADS(StreamRenderer)
     LOAD_REVS(bs)
     ASSERT_REVS(12, 1)

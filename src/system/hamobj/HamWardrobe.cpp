@@ -71,6 +71,8 @@ BEGIN_SAVES(HamWardrobe)
     bs << unk34;
 END_SAVES
 
+INIT_REVS(2, 0)
+
 BEGIN_LOADS(HamWardrobe)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)

@@ -26,6 +26,8 @@ BEGIN_COPYS(UIListSubList)
     COPY_MEMBER_FROM(sl, mList)
 END_COPYS
 
+INIT_REVS(0, 0)
+
 BEGIN_LOADS(UIListSubList)
     LOAD_REVS(bs)
     ASSERT_REVS(0, 0)

@@ -63,6 +63,8 @@ BEGIN_SAVES(TexMovie)
     mMovie.Save(&bs);
 END_SAVES
 
+INIT_REVS(5, 1)
+
 BEGIN_LOADS(TexMovie)
     LOAD_REVS(bs)
     ASSERT_REVS(5, 1)

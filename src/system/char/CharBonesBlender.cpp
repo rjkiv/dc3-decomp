@@ -52,6 +52,8 @@ void CharBonesBlender::PollDeps(
     change.push_back(mDest);
 }
 
+INIT_REVS(2, 0)
+
 BEGIN_LOADS(CharBonesBlender)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)

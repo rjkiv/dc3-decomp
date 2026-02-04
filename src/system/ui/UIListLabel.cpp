@@ -30,6 +30,8 @@ BEGIN_COPYS(UIListLabel)
     COPY_MEMBER_FROM(l, unk8c)
 END_COPYS
 
+INIT_REVS(1, 0)
+
 BEGIN_LOADS(UIListLabel)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)

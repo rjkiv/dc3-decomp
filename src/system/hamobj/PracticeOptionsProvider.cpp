@@ -35,6 +35,8 @@ BEGIN_COPYS(PracticeOptionsProvider)
     CREATE_COPY(PracticeOptionsProvider)
 END_COPYS
 
+INIT_REVS(1, 0)
+
 BEGIN_LOADS(PracticeOptionsProvider)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)

@@ -46,6 +46,8 @@ void CharPosConstraint::PollDeps(
     }
 }
 
+INIT_REVS(2, 0)
+
 void CharPosConstraint::Load(BinStream &bs) {
     LOAD_REVS(bs);
     ASSERT_REVS(2, 0);

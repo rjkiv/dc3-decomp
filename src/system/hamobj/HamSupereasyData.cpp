@@ -40,6 +40,8 @@ BEGIN_COPYS(HamSupereasyData)
     END_COPYING_MEMBERS
 END_COPYS
 
+INIT_REVS(0, 1)
+
 BEGIN_LOADS(HamSupereasyData)
     LOAD_REVS(bs)
     ASSERT_REVS(0, 1)

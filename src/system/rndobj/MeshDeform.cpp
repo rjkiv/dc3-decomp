@@ -58,6 +58,8 @@ void operator>>(BinStream &bs, RndMeshDeform::BoneDesc &desc) {
     bs >> desc.unk14 >> desc.unk54;
 }
 
+INIT_REVS(1, 0)
+
 BEGIN_LOADS(RndMeshDeform)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)

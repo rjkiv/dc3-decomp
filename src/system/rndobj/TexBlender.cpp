@@ -60,6 +60,8 @@ BEGIN_COPYS(RndTexBlender)
     unkbc = 0;
 END_COPYS
 
+INIT_REVS(2, 0)
+
 BEGIN_LOADS(RndTexBlender)
     LOAD_REVS(bs);
     ASSERT_REVS(2, 0);

@@ -45,6 +45,8 @@ BEGIN_SAVES(FlowSound)
     bs << mUseIntensity;
 END_SAVES
 
+INIT_REVS(3, 0)
+
 BEGIN_LOADS(FlowSound)
     LOAD_REVS(bs)
     ASSERT_REVS(3, 0)

@@ -89,6 +89,8 @@ BEGIN_LOADS(MoggClip)
     PostLoad(bs);
 END_LOADS
 
+INIT_REVS(3, 2)
+
 void MoggClip::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(3, 2)

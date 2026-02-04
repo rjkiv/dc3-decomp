@@ -101,6 +101,8 @@ void UIComponent::Poll() {
     FinishSelecting();
 }
 
+INIT_REVS(3, 0)
+
 void UIComponent::PreLoad(BinStream &bs) {
     LOAD_REVS(bs);
     ASSERT_REVS(3, 0);

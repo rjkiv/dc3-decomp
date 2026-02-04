@@ -73,6 +73,8 @@ void LightHue::TranslateColor(const Hmx::Color &col, Hmx::Color &res) {
         res = col;
 }
 
+INIT_REVS(0, 0)
+
 void LightHue::PreLoad(BinStream &bs) {
     LOAD_REVS(bs);
     ASSERT_REVS(0, 0);

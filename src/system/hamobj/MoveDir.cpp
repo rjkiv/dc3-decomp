@@ -304,6 +304,8 @@ BEGIN_LOADS(MoveDir)
     PostLoad(bs);
 END_LOADS
 
+INIT_REVS(0x23, 0)
+
 void MoveDir::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(0x23, 0)

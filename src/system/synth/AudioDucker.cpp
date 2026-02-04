@@ -68,6 +68,8 @@ END_PROPSYNCS
 
 void AudioDuckerGroup::Load(BinStream &bs) { bs >> mDuckers; }
 
+INIT_REVS(1, 0)
+
 BEGIN_LOADS(AudioDuckerTrigger)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)

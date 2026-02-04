@@ -13,6 +13,8 @@ void FxSendMeterEffect::Save(BinStream &bs) {
     SAVE_SUPERCLASS(FxSend)
 }
 
+INIT_REVS(1, 0)
+
 BEGIN_LOADS(FxSendMeterEffect)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)

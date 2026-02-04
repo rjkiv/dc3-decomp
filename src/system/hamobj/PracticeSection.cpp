@@ -94,6 +94,8 @@ BinStreamRev &operator>>(BinStreamRev &bs, PracticeStep &step) {
     return bs;
 }
 
+INIT_REVS(3, 0)
+
 BEGIN_LOADS(PracticeSection)
     LOAD_REVS(bs)
     ASSERT_REVS(3, 0)

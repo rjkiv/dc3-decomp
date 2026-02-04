@@ -164,6 +164,8 @@ void Flow::PreSave(BinStream &bs) {
     SetInlineProxyType(!ProxyFile().empty() && IsProxy() ? kInlineCached : kInlineAlways);
 }
 
+INIT_REVS(7, 2)
+
 void Flow::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(7, 2)

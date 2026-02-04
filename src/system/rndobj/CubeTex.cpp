@@ -79,6 +79,8 @@ void RndCubeTex::Save(BinStream &bs) {
     }
 }
 
+INIT_REVS(2, 0)
+
 void RndCubeTex::PreLoad(BinStream &bs) {
     LOAD_REVS(bs);
     ASSERT_REVS(2, 0);

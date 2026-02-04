@@ -36,6 +36,8 @@ void FxSendCompress::Save(BinStream &bs) {
     bs << mExpRatio << mExpAttack << mExpRelease << mGateThresholdDB;
 }
 
+INIT_REVS(4, 0)
+
 BEGIN_LOADS(FxSendCompress)
     LOAD_REVS(bs)
     ASSERT_REVS(4, 0)

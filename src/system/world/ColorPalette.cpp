@@ -38,6 +38,8 @@ BinStreamRev &operator>>(BinStreamRev &d, ColorSet &cs) {
     return d;
 }
 
+INIT_REVS(1, 0)
+
 BEGIN_LOADS(ColorPalette)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)

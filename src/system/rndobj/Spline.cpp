@@ -95,6 +95,8 @@ BinStreamRev &operator>>(BinStreamRev &d, RndSpline::CtrlPoint &pt) {
     return d;
 }
 
+INIT_REVS(1, 0)
+
 BEGIN_LOADS(RndSpline)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)

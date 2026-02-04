@@ -55,6 +55,8 @@ BEGIN_LOADS(SkeletonDir)
     PostLoad(bs);
 END_LOADS
 
+INIT_REVS(4, 0)
+
 void SkeletonDir::PreLoad(BinStream &bs) {
     LOAD_REVS(bs);
     ASSERT_REVS(4, 0);

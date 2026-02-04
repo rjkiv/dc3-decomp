@@ -51,6 +51,8 @@ BEGIN_COPYS(RndTexBlendController)
     END_COPYING_MEMBERS
 END_COPYS
 
+INIT_REVS(2, 0)
+
 BEGIN_LOADS(RndTexBlendController)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)

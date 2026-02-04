@@ -20,6 +20,8 @@ BEGIN_HANDLERS(CharInterest)
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
 
+INIT_REVS(6, 0)
+
 BEGIN_LOADS(CharInterest)
     LOAD_REVS(bs)
     ASSERT_REVS(6, 0)
@@ -144,7 +146,12 @@ bool CharInterest::IsMatchingFilterFlags(int mask) {
 }
 
 float CharInterest::ComputeScore(
-    const Vector3 &v1, const Vector3 &v2, const Vector3 &v3, float f, int filterFlags, bool b
+    const Vector3 &v1,
+    const Vector3 &v2,
+    const Vector3 &v3,
+    float f,
+    int filterFlags,
+    bool b
 ) {
     bool b2 = false;
     if (IsMatchingFilterFlags(filterFlags) || (b && mCategoryFlags == 0)) {
@@ -171,7 +178,9 @@ float CharInterest::ComputeScore(
 
     float f7 = -(lensq * f - 1.0f);
     if (IsNaN(f7)) {
-        MILO_NOTIFY("error scoring interest object: bad normalize factor gave score %f", f7);
+        MILO_NOTIFY(
+            "error scoring interest object: bad normalize factor gave score %f", f7
+        );
     }
 
     float f4 = f7 + f2 + f1 - 0.99f;

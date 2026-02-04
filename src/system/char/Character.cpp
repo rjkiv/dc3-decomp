@@ -164,6 +164,8 @@ BEGIN_COPYS(Character)
     END_COPYING_MEMBERS
 END_COPYS
 
+INIT_REVS(0x15, 0)
+
 void Character::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(0x15, 0)

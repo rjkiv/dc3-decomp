@@ -48,6 +48,8 @@ BEGIN_LOADS(HamDriver)
     PostLoad(bs);
 END_LOADS
 
+INIT_REVS(1, 0)
+
 void HamDriver::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)
@@ -87,7 +89,8 @@ float HamDriver::Display(float f1) {
     TheRnd.DrawString(stringDisplay, screenPos, color, true);
     CharClipDisplay::Init(this->Dir());
     float lineSpacing = CharClipDisplay::LineSpacing() + scaledHeight;
-    for (auto it = mLayers.unk2c.begin(); it != mLayers.unk2c.end() && mWeight != 0.0; ++it) {
+    for (auto it = mLayers.unk2c.begin(); it != mLayers.unk2c.end() && mWeight != 0.0;
+         ++it) {
         lineSpacing = DisplayRecurse(*it, 0, lineSpacing);
     }
     return lineSpacing / TheRnd.Height();
@@ -135,14 +138,14 @@ bool HamDriver::LayerClip::Replace(ObjRef *ref, Hmx::Object *obj) {
 #pragma region HamDriver::LayerArray
 
 void HamDriver::LayerArray::Clear() {
-    FOREACH(it, unk2c) {
+    FOREACH (it, unk2c) {
         delete *it;
     }
     unk2c.clear();
 }
 
 bool HamDriver::LayerArray::Replace(ObjRef *ref, Hmx::Object *obj) {
-    FOREACH(it, unk2c) {
+    FOREACH (it, unk2c) {
         if (it == unk2c.end()) {
             return false;
         }
@@ -157,7 +160,7 @@ bool HamDriver::LayerArray::Replace(ObjRef *ref, Hmx::Object *obj) {
 
 void HamDriver::LayerArray::Play(CharBones &bones) {
     if (unk8 > 0.0) {
-        FOREACH(it, unk2c) {
+        FOREACH (it, unk2c) {
             (*it)->Play(bones);
         }
     }
@@ -165,7 +168,7 @@ void HamDriver::LayerArray::Play(CharBones &bones) {
 
 CharClip *HamDriver::LayerArray::FirstClip() {
     CharClip *clip;
-    FOREACH(it, unk2c) {
+    FOREACH (it, unk2c) {
         clip = (*it)->FirstClip();
         if (clip != nullptr) {
             break;
@@ -176,10 +179,9 @@ CharClip *HamDriver::LayerArray::FirstClip() {
 
 void HamDriver::LayerArray::OffsetSec(float f1) {
     Layer::OffsetSec(f1);
-    FOREACH(it, unk2c) {
+    FOREACH (it, unk2c) {
         (*it)->OffsetSec(f1);
     }
 }
-
 
 #pragma endregion

@@ -21,6 +21,8 @@ void FxSendBitCrush::Save(BinStream &bs) {
     bs << mAmount;
 }
 
+INIT_REVS(1, 0)
+
 BEGIN_LOADS(FxSendBitCrush)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)

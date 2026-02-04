@@ -28,6 +28,8 @@ BEGIN_COPYS(UIListSlot)
     COPY_MEMBER_FROM(s, mSlotDrawType)
 END_COPYS
 
+INIT_REVS(0, 0)
+
 BEGIN_LOADS(UIListSlot)
     LOAD_REVS(bs)
     ASSERT_REVS(0, 0)

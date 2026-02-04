@@ -83,6 +83,8 @@ BinStreamRev &operator>>(BinStreamRev &bs, HamNavProvider::NavItem &item) {
     return bs;
 }
 
+INIT_REVS(2, 0)
+
 BEGIN_LOADS(HamNavProvider)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)

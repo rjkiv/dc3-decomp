@@ -98,6 +98,8 @@ BEGIN_COPYS(RndPartLauncher)
     END_COPYING_MEMBERS
 END_COPYS
 
+INIT_REVS(4, 0)
+
 BEGIN_LOADS(RndPartLauncher)
     LOAD_REVS(bs)
     ASSERT_REVS(4, 0)

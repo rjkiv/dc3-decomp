@@ -80,6 +80,8 @@ BEGIN_COPYS(RndCam)
     UpdateLocal();
 END_COPYS
 
+INIT_REVS(12, 0)
+
 BEGIN_LOADS(RndCam)
     LOAD_REVS(bs)
     ASSERT_REVS(12, 0)

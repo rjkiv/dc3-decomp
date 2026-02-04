@@ -212,6 +212,8 @@ BEGIN_COPYS(WorldDir)
     END_COPYING_MEMBERS
 END_COPYS
 
+INIT_REVS(0x1D, 1)
+
 void WorldDir::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(0x1D, 1)
@@ -545,9 +547,9 @@ void WorldDir::RestoreDeltas(float *f) {
 void WorldDir::SyncHUD() {
     RELEASE(mHUDDir);
     if (mShowHUD && !mHUDFilename.empty()) {
-        mHUDDir =
-            dynamic_cast<RndDir *>(DirLoader::LoadObjects(mHUDFilename, nullptr, nullptr)
-            );
+        mHUDDir = dynamic_cast<RndDir *>(
+            DirLoader::LoadObjects(mHUDFilename, nullptr, nullptr)
+        );
         if (mHUDDir)
             mHUDDir->Enter();
     }

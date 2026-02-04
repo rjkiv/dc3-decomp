@@ -103,6 +103,8 @@ BEGIN_COPYS(RhythmBattlePlayer)
     END_COPYING_MEMBERS
 END_COPYS
 
+INIT_REVS(1, 0)
+
 BEGIN_LOADS(RhythmBattlePlayer)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)

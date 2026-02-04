@@ -128,6 +128,8 @@ BinStreamRev &operator>>(BinStreamRev &d, SongSection &s) {
     return d;
 }
 
+INIT_REVS(2, 0)
+
 BEGIN_LOADS(SongLayout)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)
