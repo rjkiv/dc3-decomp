@@ -112,13 +112,14 @@ typedef struct _FILE FILE;
 #define SEEK_END (2)
 #endif
 
-#define stdin &(__files[0])
-#define stdout &(__files[1])
-#define stderr &(__files[2])
+#define stdin &(__iob_func()[0])
+#define stdout &(__iob_func()[1])
+#define stderr &(__iob_func()[2])
 
 #define _STATIC_FILES 4
 
-extern FILE __files[];
+// extern FILE __files[];
+extern FILE *__iob_func(void);
 
 #ifdef __cplusplus
 }

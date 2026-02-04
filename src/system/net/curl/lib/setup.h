@@ -28,6 +28,7 @@
 
 #if (defined(_WIN32) || defined(__WIN32__)) && !defined(WIN32) && !defined(__SYMBIAN32__)
 #define WIN32
+#define _XBOX360
 #endif
 
 /*
@@ -42,8 +43,8 @@
 #else /* HAVE_CONFIG_H */
 
 #define _XBOX360
-#include "xdk/xapilibi/winnt.h"
 #ifdef _XBOX360
+#include "xdk/xapilibi/winnt.h"
 #include "config-xbox360.h"
 #endif
 
@@ -51,7 +52,10 @@
 #include "config-win32ce.h"
 #else
 #ifdef WIN32
+#define _XBOX360
 #include "config-win32.h"
+#include "xdk/xapilibi/winnt.h"
+#include "config-xbox360.h"
 #endif
 #endif
 

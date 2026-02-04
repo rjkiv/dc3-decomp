@@ -126,8 +126,7 @@
 #define HAVE_TIME_H 1
 
 /* Define if you have the <unistd.h> header file. */
-#if defined(__MINGW32__) || defined(__WATCOMC__) || defined(__LCC__) || \
-    defined(__POCC__)
+#if defined(__MINGW32__) || defined(__WATCOMC__) || defined(__LCC__) || defined(__POCC__)
 #define HAVE_UNISTD_H 1
 #endif
 
@@ -355,16 +354,15 @@
 
 /* Define if ssize_t is not an available 'typedefed' type. */
 #ifndef _SSIZE_T_DEFINED
-#  if (defined(__WATCOMC__) && (__WATCOMC__ >= 1240)) || \
-      defined(__POCC__) || \
-      defined(__MINGW32__)
-#  elif defined(_WIN64)
-#    define _SSIZE_T_DEFINED
-#    define ssize_t __int64
-#  else
-#    define _SSIZE_T_DEFINED
-#    define ssize_t int
-#  endif
+#if (defined(__WATCOMC__) && (__WATCOMC__ >= 1240)) || defined(__POCC__)                 \
+    || defined(__MINGW32__)
+#elif defined(_WIN64)
+#define _SSIZE_T_DEFINED
+#define ssize_t __int64
+#else
+#define _SSIZE_T_DEFINED
+#define ssize_t int
+#endif
 #endif
 
 /* ---------------------------------------------------------------- */
@@ -385,9 +383,9 @@
 
 /* Define to the size of `size_t', as computed by sizeof. */
 #if defined(_WIN64)
-#  define SIZEOF_SIZE_T 8
+#define SIZEOF_SIZE_T 8
 #else
-#  define SIZEOF_SIZE_T 4
+#define SIZEOF_SIZE_T 4
 #endif
 
 /* ---------------------------------------------------------------- */
@@ -413,28 +411,28 @@
 /* #define USE_LWIPSOCK 1 */
 
 #ifdef USE_LWIPSOCK
-#  undef USE_WINSOCK
-#  undef HAVE_WINSOCK_H
-#  undef HAVE_WINSOCK2_H
-#  undef HAVE_WS2TCPIP_H
-#  undef HAVE_ERRNO_H
-#  undef HAVE_GETHOSTNAME
-#  undef HAVE_GETNAMEINFO
-#  undef LWIP_POSIX_SOCKETS_IO_NAMES
-#  undef RECV_TYPE_ARG1
-#  undef RECV_TYPE_ARG3
-#  undef SEND_TYPE_ARG1
-#  undef SEND_TYPE_ARG3
-#  define HAVE_FREEADDRINFO
-#  define HAVE_GETADDRINFO
-#  define HAVE_GETHOSTBYNAME
-#  define HAVE_GETHOSTBYNAME_R
-#  define HAVE_GETHOSTBYNAME_R_6
-#  define LWIP_POSIX_SOCKETS_IO_NAMES 0
-#  define RECV_TYPE_ARG1 int
-#  define RECV_TYPE_ARG3 size_t
-#  define SEND_TYPE_ARG1 int
-#  define SEND_TYPE_ARG3 size_t
+#undef USE_WINSOCK
+#undef HAVE_WINSOCK_H
+#undef HAVE_WINSOCK2_H
+#undef HAVE_WS2TCPIP_H
+#undef HAVE_ERRNO_H
+#undef HAVE_GETHOSTNAME
+#undef HAVE_GETNAMEINFO
+#undef LWIP_POSIX_SOCKETS_IO_NAMES
+#undef RECV_TYPE_ARG1
+#undef RECV_TYPE_ARG3
+#undef SEND_TYPE_ARG1
+#undef SEND_TYPE_ARG3
+#define HAVE_FREEADDRINFO
+#define HAVE_GETADDRINFO
+#define HAVE_GETHOSTBYNAME
+#define HAVE_GETHOSTBYNAME_R
+#define HAVE_GETHOSTBYNAME_R_6
+#define LWIP_POSIX_SOCKETS_IO_NAMES 0
+#define RECV_TYPE_ARG1 int
+#define RECV_TYPE_ARG3 size_t
+#define SEND_TYPE_ARG1 int
+#define SEND_TYPE_ARG3 size_t
 #endif
 
 /* ---------------------------------------------------------------- */
@@ -442,24 +440,23 @@
 /* ---------------------------------------------------------------- */
 
 #ifdef USE_WATT32
-  #include <tcp.h>
-  #undef byte
-  #undef word
-  #undef USE_WINSOCK
-  #undef HAVE_WINSOCK_H
-  #undef HAVE_WINSOCK2_H
-  #undef HAVE_WS2TCPIP_H
-  #define HAVE_GETADDRINFO
-  #define HAVE_GETNAMEINFO
-  #define HAVE_SYS_IOCTL_H
-  #define HAVE_SYS_SOCKET_H
-  #define HAVE_NETINET_IN_H
-  #define HAVE_NETDB_H
-  #define HAVE_ARPA_INET_H
-  #define HAVE_FREEADDRINFO
-  #define SOCKET int
+#include <tcp.h>
+#undef byte
+#undef word
+#undef USE_WINSOCK
+#undef HAVE_WINSOCK_H
+#undef HAVE_WINSOCK2_H
+#undef HAVE_WS2TCPIP_H
+#define HAVE_GETADDRINFO
+#define HAVE_GETNAMEINFO
+#define HAVE_SYS_IOCTL_H
+#define HAVE_SYS_SOCKET_H
+#define HAVE_NETINET_IN_H
+#define HAVE_NETDB_H
+#define HAVE_ARPA_INET_H
+#define HAVE_FREEADDRINFO
+#define SOCKET int
 #endif
-
 
 /* ---------------------------------------------------------------- */
 /*                        COMPILER SPECIFIC                         */
@@ -478,7 +475,7 @@
 #if defined(_MSC_VER) && (_MSC_VER >= 1400)
 #define HAVE_VARIADIC_MACROS_C99 1
 #endif
-
+#define HAVE_VARIADIC_MACROS_C99 1
 /* Define if the compiler supports the 'long long' data type. */
 #if defined(__MINGW32__) || defined(__WATCOMC__)
 #define HAVE_LONGLONG 1
@@ -493,11 +490,11 @@
 /* VS2005 and later dafault size for time_t is 64-bit, unless
    _USE_32BIT_TIME_T has been defined to get a 32-bit time_t. */
 #if defined(_MSC_VER) && (_MSC_VER >= 1400)
-#  ifndef _USE_32BIT_TIME_T
-#    define SIZEOF_TIME_T 8
-#  else
-#    define SIZEOF_TIME_T 4
-#  endif
+#ifndef _USE_32BIT_TIME_T
+#define SIZEOF_TIME_T 8
+#else
+#define SIZEOF_TIME_T 4
+#endif
 #endif
 
 /* Officially, Microsoft's Windows SDK versions 6.X do not support Windows
@@ -507,7 +504,7 @@
    with VS2008 using Windows SDK versions 6.X and Windows 2000 as a build
    target are functional. */
 #if defined(_MSC_VER) && (_MSC_VER >= 1500)
-#  define VS2008_MIN_TARGET 0x0500
+#define VS2008_MIN_TARGET 0x0500
 #endif
 
 /* When no build target is specified VS2008 default build target is Windows
@@ -515,61 +512,61 @@
    for VS2008 we will target the minimum Officially supported build target,
    which happens to be Windows XP. */
 #if defined(_MSC_VER) && (_MSC_VER >= 1500)
-#  define VS2008_DEF_TARGET  0x0501
+#define VS2008_DEF_TARGET 0x0501
 #endif
 
 /* VS2008 default target settings and minimum build target check. */
 #if defined(_MSC_VER) && (_MSC_VER >= 1500)
-#  ifndef _WIN32_WINNT
-#    define _WIN32_WINNT VS2008_DEF_TARGET
-#  endif
-#  ifndef WINVER
-#    define WINVER VS2008_DEF_TARGET
-#  endif
-#  if (_WIN32_WINNT < VS2008_MIN_TARGET) || (WINVER < VS2008_MIN_TARGET)
-#    error VS2008 does not support Windows build targets prior to Windows 2000
-#  endif
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT VS2008_DEF_TARGET
+#endif
+#ifndef WINVER
+#define WINVER VS2008_DEF_TARGET
+#endif
+#if (_WIN32_WINNT < VS2008_MIN_TARGET) || (WINVER < VS2008_MIN_TARGET)
+#error VS2008 does not support Windows build targets prior to Windows 2000
+#endif
 #endif
 
 /* When no build target is specified Pelles C 5.00 and later default build
    target is Windows Vista. We override default target to be Windows 2000. */
 #if defined(__POCC__) && (__POCC__ >= 500)
-#  ifndef _WIN32_WINNT
-#    define _WIN32_WINNT 0x0500
-#  endif
-#  ifndef WINVER
-#    define WINVER 0x0500
-#  endif
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0500
+#endif
+#ifndef WINVER
+#define WINVER 0x0500
+#endif
 #endif
 
 /* Availability of freeaddrinfo, getaddrinfo and getnameinfo functions is
    quite convoluted, compiler dependent and even build target dependent. */
 #if defined(HAVE_WS2TCPIP_H)
-#  if defined(__POCC__)
-#    define HAVE_FREEADDRINFO           1
-#    define HAVE_GETADDRINFO            1
-#    define HAVE_GETADDRINFO_THREADSAFE 1
-#    define HAVE_GETNAMEINFO            1
-#  elif defined(_WIN32_WINNT) && (_WIN32_WINNT >= 0x0501)
-#    define HAVE_FREEADDRINFO           1
-#    define HAVE_GETADDRINFO            1
-#    define HAVE_GETADDRINFO_THREADSAFE 1
-#    define HAVE_GETNAMEINFO            1
-#  elif defined(_MSC_VER) && (_MSC_VER >= 1200)
-#    define HAVE_FREEADDRINFO           1
-#    define HAVE_GETADDRINFO            1
-#    define HAVE_GETADDRINFO_THREADSAFE 1
-#    define HAVE_GETNAMEINFO            1
-#  endif
+#if defined(__POCC__)
+#define HAVE_FREEADDRINFO 1
+#define HAVE_GETADDRINFO 1
+#define HAVE_GETADDRINFO_THREADSAFE 1
+#define HAVE_GETNAMEINFO 1
+#elif defined(_WIN32_WINNT) && (_WIN32_WINNT >= 0x0501)
+#define HAVE_FREEADDRINFO 1
+#define HAVE_GETADDRINFO 1
+#define HAVE_GETADDRINFO_THREADSAFE 1
+#define HAVE_GETNAMEINFO 1
+#elif defined(_MSC_VER) && (_MSC_VER >= 1200)
+#define HAVE_FREEADDRINFO 1
+#define HAVE_GETADDRINFO 1
+#define HAVE_GETADDRINFO_THREADSAFE 1
+#define HAVE_GETNAMEINFO 1
+#endif
 #endif
 
 #if defined(__POCC__)
-#  ifndef _MSC_VER
-#    error Microsoft extensions /Ze compiler option is required
-#  endif
-#  ifndef __POCC__OLDNAMES
-#    error Compatibility names /Go compiler option is required
-#  endif
+#ifndef _MSC_VER
+#error Microsoft extensions /Ze compiler option is required
+#endif
+#ifndef __POCC__OLDNAMES
+#error Compatibility names /Go compiler option is required
+#endif
 #endif
 
 /* ---------------------------------------------------------------- */
@@ -577,27 +574,27 @@
 /* ---------------------------------------------------------------- */
 
 #if defined(_MSC_VER) && !defined(_WIN32_WCE)
-#  if (_MSC_VER >= 900) && (_INTEGRAL_MAX_BITS >= 64)
-#    define USE_WIN32_LARGE_FILES
-#  else
-#    define USE_WIN32_SMALL_FILES
-#  endif
+#if (_MSC_VER >= 900) && (_INTEGRAL_MAX_BITS >= 64)
+#define USE_WIN32_LARGE_FILES
+#else
+#define USE_WIN32_SMALL_FILES
+#endif
 #endif
 
 #if defined(__MINGW32__) && !defined(USE_WIN32_LARGE_FILES)
-#  define USE_WIN32_LARGE_FILES
+#define USE_WIN32_LARGE_FILES
 #endif
 
 #if defined(__WATCOMC__) && !defined(USE_WIN32_LARGE_FILES)
-#  define USE_WIN32_LARGE_FILES
+#define USE_WIN32_LARGE_FILES
 #endif
 
 #if defined(__POCC__)
-#  undef USE_WIN32_LARGE_FILES
+#undef USE_WIN32_LARGE_FILES
 #endif
 
 #if !defined(USE_WIN32_LARGE_FILES) && !defined(USE_WIN32_SMALL_FILES)
-#  define USE_WIN32_SMALL_FILES
+#define USE_WIN32_SMALL_FILES
 #endif
 
 /* ---------------------------------------------------------------- */
@@ -615,7 +612,7 @@
 #define USE_THREADS_WIN32 1
 
 #if defined(USE_ARES) && defined(USE_THREADS_WIN32)
-#  error "Only one DNS lookup specialty may be defined at most"
+#error "Only one DNS lookup specialty may be defined at most"
 #endif
 
 /* ---------------------------------------------------------------- */
@@ -636,13 +633,13 @@
 
 #if defined(__WATCOMC__) && defined(CURL_LDAP_WIN)
 #if __WATCOMC__ < 1280
-#define WINBERAPI  __declspec(cdecl)
+#define WINBERAPI __declspec(cdecl)
 #define WINLDAPAPI __declspec(cdecl)
 #endif
 #endif
 
 #if defined(__POCC__) && defined(CURL_LDAP_WIN)
-#  define CURL_DISABLE_LDAP 1
+#define CURL_DISABLE_LDAP 1
 #endif
 
 /* ---------------------------------------------------------------- */
@@ -668,7 +665,7 @@
 #define USE_MANUAL 1
 
 #if defined(__POCC__) || (USE_IPV6)
-#  define ENABLE_IPV6 1
+#define ENABLE_IPV6 1
 #endif
 
 #endif /* HEADER_CURL_CONFIG_WIN32_H */

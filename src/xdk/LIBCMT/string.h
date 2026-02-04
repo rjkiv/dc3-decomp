@@ -22,6 +22,7 @@ int stricmp(const char *string1, const char *string2);
 int strnicmp(const char *string1, const char *string2, int n);
 char *strchr(const char *str, int ch);
 char *strrchr(const char *str, int ch);
+char *_strdup(const char *src);
 int strcoll(const char *lhs, const char *rhs);
 
 size_t strspn(const char *dest, const char *src);

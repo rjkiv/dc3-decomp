@@ -32,6 +32,8 @@
 
 #include "xdk/xapilibi/winbase.h"
 
+#define gmtime(x) _gmtime64(x)
+
 /* Define if you have the <arpa/inet.h> header file. */
 /* #define HAVE_ARPA_INET_H 1 */
 
@@ -481,7 +483,6 @@
 #if defined(_MSC_VER) && (_MSC_VER >= 1400)
 #define HAVE_VARIADIC_MACROS_C99 1
 #endif
-
 /* Define if the compiler supports the 'long long' data type. */
 // #if defined(__MINGW32__) || defined(__WATCOMC__)
 #define HAVE_LONGLONG 1
@@ -494,14 +495,7 @@
 
 /* VS2005 and later dafault size for time_t is 64-bit, unless
    _USE_32BIT_TIME_T has been defined to get a 32-bit time_t. */
-#if defined(_MSC_VER) && (_MSC_VER >= 1400)
-#ifndef _USE_32BIT_TIME_T
 #define SIZEOF_TIME_T 8
-#else
-
-#endif
-#endif
-#define SIZEOF_TIME_T 4
 
 /* Officially, Microsoft's Windows SDK versions 6.X do not support Windows
    2000 as a supported build target. VS2008 default installations provide
@@ -583,7 +577,7 @@
 #define CURL_DISABLE_LDAP 1
 
 #define ENOSPC 1
-#define ENOMEM 2
+#define ENOMEM 12
 #define EAGAIN 3
 /* ---------------------------------------------------------------- */
 /*                        LARGE FILE SUPPORT                        */

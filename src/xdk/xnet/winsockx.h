@@ -192,6 +192,9 @@ typedef struct _XSESSION_INFO { /* Size=0x3c */
     /* 0x002c */ struct XNKEY keyExchangeKey;
 } XSESSION_INFO;
 
+int WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData);
+int WSACleanup(void);
+
 #ifdef __cplusplus
 }
 #endif
