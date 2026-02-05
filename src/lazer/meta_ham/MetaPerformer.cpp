@@ -1160,6 +1160,71 @@ void MetaPerformer::CalcCharacters(
     }
 }
 
+void MetaPerformer::HandleGameplayEnded(const EndGameResult &egr) {
+    for (int i = 0; i < 2; i++) {
+        HamPlayerData *pPlayer = TheGameData->Player(i);
+        MILO_ASSERT(pPlayer, 0x377);
+        HamProfile *pProfileFromPad = TheProfileMgr.GetProfileFromPad(pPlayer->PadNum());
+        Hmx::Object *pPlayerProvider = pPlayer->Provider();
+        MILO_ASSERT(pPlayerProvider, 0x37e);
+
+        static Symbol score("score");
+        const DataNode *scoreNode = pPlayerProvider->Property(score);
+        if (TheGameMode->Infinite() != 0 && 0 < scoreNode->Int()) {
+            static Symbol cumulative_score("cumulative_score");
+            const DataNode *cumulativeNode = pPlayerProvider->Property(cumulative_score);
+            pPlayerProvider->SetProperty(
+                cumulative_score, scoreNode->Int() + cumulativeNode->Int()
+            );
+        }
+
+        if (pProfileFromPad) {
+            if (pProfileFromPad->HasValidSaveData()) { // and something else
+                if (0 < scoreNode->Int()) {
+                    pProfileFromPad->GetMetagameStats()->HandleGameplayEnded(
+                        pProfileFromPad, pPlayer, egr
+                    );
+                }
+                if (TheGameMode->InMode("campaign") && egr == kEndGameResult_3) {
+                    pProfileFromPad->DiscardRecentCampaignProgress();
+                }
+            }
+        }
+    }
+    TheRockCentral.ManageJob(new GameEndedDataPointJob(this, egr));
+}
+
+void MetaPerformer::SaveAndUploadScores(Symbol s, int i1, int i2) {
+    static Symbol score("score");
+    int count = 0;
+    for (int i = 0; i < 2; i++) {
+        HamPlayerData *pPlayerData = TheGameData->Player(i);
+        MILO_ASSERT(pPlayerData, 0x189);
+        Hmx::Object *pPlayerProvider = pPlayerData->Provider();
+        MILO_ASSERT(pPlayerProvider, 0x18c);
+        const DataNode *pScoreNode = pPlayerProvider->Property(score);
+        MILO_ASSERT(pScoreNode, 0x18f);
+        if (0 < pScoreNode->Int()) {
+            count++;
+        }
+    }
+
+    if (0 < count) {
+        // something here with i1
+        static Symbol p1("p1");
+        static Symbol p2("p2");
+        static Symbol alert_highscore_solo("alert_highscore_solo");
+        static Symbol alert_highscore_coop("alert_highscore_coop");
+
+        for (int i = 0; i < 2; i++) {
+            HamPlayerData *pPlayerData = TheGameData->Player(i);
+            MILO_ASSERT(pPlayerData, 0x1ad);
+            Hmx::Object *pPlayerProvider = pPlayerData->Provider();
+            MILO_ASSERT(pPlayerProvider, 0x1af);
+        }
+    }
+}
+
 #pragma endregion
 #pragma region MetaPerformerHook
 

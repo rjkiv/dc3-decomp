@@ -27,6 +27,7 @@
 #include "os/System.h"
 #include "ui/UI.h"
 #include "utl/DataPointMgr.h"
+#include "utl/JobMgr.h"
 #include "utl/Locale.h"
 #include "utl/Symbol.h"
 #include <cstdlib>
@@ -1373,4 +1374,59 @@ void PartyModeMgr::FinalizePlaytestParty() {
     static Symbol six_star_bonus("six_star_bonus");
     mSixStarBonus = mEventScoring->FindArray(six_star_bonus)->Float(1);
     SetCurrEvent();
+}
+
+DataNode PartyModeMgr::OnMsg(const RCJobCompleteMsg &msg) {
+    bool b;
+    if (!msg.Success()) {
+        MILO_LOG("[PartyModeMgr::OnMsg] Party net API failed.\n");
+        for (int i = 0; i < 5; i++) {
+            if (mSetPartyOptionsJob == msg.Job()) {
+                mSetPartyOptionsJob->Cancel(false);
+                mSetPartyOptionsJob = nullptr;
+            }
+        }
+        BroadcastSyncMsg("skipped_sync");
+        return 1;
+    }
+    b = false;
+    if (msg.Job() == mSetPartyOptionsJob) {
+        BroadcastSyncMsg("options_sent");
+        mSetPartyOptionsJob = nullptr;
+        b = true;
+    } else {
+        if (msg.Job() == mGetPartyOptionsJob) {
+            ReadPartyOptions();
+        } else {
+            if (msg.Job() == mGetPartySongQueueJob) {
+                ReadPartySongQueue();
+            } else {
+                if (msg.Job() == mDeleteSongFromPartySongQueueJob) {
+                    mDeleteSongFromPartySongQueueJob = nullptr;
+                } else {
+                    if (msg.Job() != mAddSongToPartySongQueueJob) {
+                        goto leave;
+                    }
+                    mAddSongToPartySongQueueJob = nullptr;
+                    unk308.pop_front();
+                    if (!unk308.empty()) {
+                        AddNextSongToRCPartySongQueue();
+                        b = true;
+                    } else {
+                        mAddSongToPartySongQueueJob = nullptr;
+                        unk314 = false;
+                    }
+                }
+                BroadcastSyncMsg("song_queue_updated");
+                b = true;
+            }
+        }
+    }
+leave:
+    if (b) {
+        DataNode party("party");
+        DataNode updated("updated");
+        ThePlatformMgr.SmartGlassSend(0, DataArrayPtr(updated, party));
+    }
+    return 1;
 }

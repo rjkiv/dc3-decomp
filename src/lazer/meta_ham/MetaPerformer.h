@@ -19,6 +19,10 @@ enum PlayerFlag {
 };
 
 enum EndGameResult {
+    kEndGameResult_0,
+    kEndGameResult_1,
+    kEndGameResult_2,
+    kEndGameResult_3
 };
 
 DECLARE_MESSAGE(EndGameMsg, "end_game")

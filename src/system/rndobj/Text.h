@@ -286,6 +286,7 @@ public:
     int FontMapIndex(RndFontBase *, bool);
     float ComputeHeight(int, float, float &);
     int NumStyles() const { return mStyles.size(); }
+    int Width() const { return mWidth; }
 
 protected:
     RndText();

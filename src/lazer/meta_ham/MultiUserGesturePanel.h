@@ -8,6 +8,7 @@
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/JoypadMsgs.h"
+#include "ui/UIComponent.h"
 #include "ui/UIPicture.h"
 #include "utl/Symbol.h"
 
@@ -59,8 +60,8 @@ public:
     void SetCrew(Symbol, int);
 
 protected:
-    u32 unk54;
-    u32 unk58;
+    UIComponent *unk54;
+    UIComponent *unk58;
     u32 unk5c;
     u32 unk60;
     CharacterProvider mCharacterProviders[2]; // 0x64

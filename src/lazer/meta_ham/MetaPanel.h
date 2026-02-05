@@ -14,6 +14,7 @@
 
 DECLARE_MESSAGE(XMPStateChangedMsg, "xmp_state_changed")
 XMPStateChangedMsg(int i) : Message(Type(), i) {}
+bool Success() const { return mData->Int(2); }
 END_MESSAGE
 
 class MetaPanel : public UIPanel {
@@ -47,6 +48,7 @@ public:
 
     MetaPanel();
     void UnlockClassicOutfit(Symbol);
+    void UnlockAll();
 
 protected:
     int PickLoopIndex(int);

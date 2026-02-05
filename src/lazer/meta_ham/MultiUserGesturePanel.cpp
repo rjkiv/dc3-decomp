@@ -20,6 +20,7 @@
 #include "obj/Msg.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "os/Joypad.h"
 #include "os/JoypadMsgs.h"
 #include "rndobj/Mesh.h"
 #include "ui/UI.h"
@@ -328,6 +329,32 @@ void MultiUserGesturePanel::UpdateNavLists(int player) {
     MILO_ASSERT_RANGE(player, 0, 2, 0x9d);
     SkeletonChooser *skeletonChooser = TheHamUI.GetShellInput()->GetSkeletonChooser();
     MILO_ASSERT(skeletonChooser, 0xa0);
+}
+
+DataNode MultiUserGesturePanel::OnMsg(const ButtonDownMsg &msg) {
+    static Symbol side("side");
+    if (msg.GetButton() == kPad_LStickLeft || msg.GetButton() == kPad_DLeft) {
+        if (TheUI->FocusPanel() && TheUI->FocusComponent() == unk54) {
+            TheUI->FocusPanel()->SetFocusComponent(unk58);
+            PropertyEventProvider *multiUserProvider =
+                DataDir()->Find<PropertyEventProvider>("multiuser.ep", false);
+            if (multiUserProvider) {
+                multiUserProvider->SetProperty(side, true);
+            }
+        }
+    }
+
+    if (msg.GetButton() == kPad_LStickRight || msg.GetButton() == kPad_DRight) {
+        if (TheUI->FocusPanel() && TheUI->FocusComponent() == unk58) {
+            TheUI->FocusPanel()->SetFocusComponent(unk54);
+            PropertyEventProvider *multiUserProvider =
+                DataDir()->Find<PropertyEventProvider>("multiuser.ep", false);
+            if (multiUserProvider) {
+                multiUserProvider->SetProperty(side, false);
+            }
+        }
+    }
+    return DATA_UNHANDLED;
 }
 
 BEGIN_HANDLERS(MultiUserGesturePanel)

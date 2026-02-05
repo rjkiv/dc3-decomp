@@ -388,6 +388,41 @@ DataNode SaveLoadManager::OnMsg(const DeviceChosenMsg &msg) {
     return 0;
 }
 
+DataNode SaveLoadManager::OnMsg(const NoDeviceChosenMsg &msg) {
+    MILO_ASSERT(mWaiting, 0x8b9);
+    mWaiting = false;
+    switch (mState) {
+    case kS_SaveChooseDeviceInvalid:
+        SetState(kS_SaveDeviceInvalid);
+        break;
+    case kS_AutoloadSetDevice:
+        SetState(kS_AutoloadNoSaveFound_Msg);
+        break;
+    case kS_AutoloadSelectDevice2:
+        SetState(kS_AutoloadMultipleSavesFound);
+        break;
+    case kS_AutoloadSelectDevice3:
+        SetState(kS_AutoloadDeviceMissing);
+        break;
+    case kS_ManualSaveChooseDevice:
+        SetState(kS_ManualSaveNoDevice);
+        break;
+    case kS_ManualLoadChooseDevice:
+        SetState(kS_ManualLoadNoDevice);
+        break;
+    case kS_Abort:
+    case kS_Done:
+    case kS_Finish:
+        break;
+    default:
+        State state = mState;
+        SaveLoadMode mode = mMode;
+        MILO_FAIL("Unhandled NoDeviceChosenMsg in state %d and mode %d", state, mode);
+        break;
+    }
+    return 0;
+}
+
 DataNode SaveLoadManager::OnMsg(const EventDialogDismissMsg &msg) {
     static Symbol saveload_dialog_event("saveload_dialog_event");
     Symbol s2 = msg->ForceSym(2);
@@ -601,10 +636,9 @@ void SaveLoadManager::SetState(State newState) {
                 }
             }
         }
-    } else if (mState == kS_GlobalOptionsWrite ||
-               mState == kS_SongCacheWrite ||
-               mState == kS_SongCacheDone ||
-               (mState > kS_GlobalDoneRead && mState <= kS_GlobalDoneWrite)) {
+    } else if (mState == kS_GlobalOptionsWrite || mState == kS_SongCacheWrite
+               || mState == kS_SongCacheDone
+               || (mState > kS_GlobalDoneRead && mState <= kS_GlobalDoneWrite)) {
         // States 0x3E, 0x1F, 0x21, 0x32-0x33: free mData unless going to Finish
         if (newState != kS_Finish) {
             if (mData) {
@@ -735,8 +769,10 @@ void SaveLoadManager::SetState(State newState) {
             RELEASE(mCacheID);
         }
         if (!TheCacheMgr->SearchAsync(unk44.c_str(), &mCacheID)) {
-            MILO_FAIL("TheCacheMgr->SearchAsync() failed. CacheResult = %d",
-                      TheCacheMgr->GetLastResult());
+            MILO_FAIL(
+                "TheCacheMgr->SearchAsync() failed. CacheResult = %d",
+                TheCacheMgr->GetLastResult()
+            );
         }
         break;
     }
@@ -753,7 +789,9 @@ void SaveLoadManager::SetState(State newState) {
         }
         static Symbol song_info_cache_name("song_info_cache_name");
         const char *cacheName = Localize(song_info_cache_name, nullptr, TheLocale);
-        if (!TheCacheMgr->ShowUserSelectUIAsync(nullptr, 0x25800, unk44.c_str(), cacheName, &mCacheID)) {
+        if (!TheCacheMgr->ShowUserSelectUIAsync(
+                nullptr, 0x25800, unk44.c_str(), cacheName, &mCacheID
+            )) {
             int result = TheCacheMgr->GetLastResult();
             if (result != 0) {
                 SetState(kS_SongCacheMountStart);
@@ -767,8 +805,10 @@ void SaveLoadManager::SetState(State newState) {
         break;
     case kS_SongCacheMount: {
         if (!TheCacheMgr->MountAsync(mCacheID, &mCache, nullptr)) {
-            MILO_FAIL("TheCacheMgr->MountAsync failed with CacheResult %d",
-                      TheCacheMgr->GetLastResult());
+            MILO_FAIL(
+                "TheCacheMgr->MountAsync failed with CacheResult %d",
+                TheCacheMgr->GetLastResult()
+            );
         }
         break;
     }
@@ -777,16 +817,20 @@ void SaveLoadManager::SetState(State newState) {
         // Fall through to mount logic handled elsewhere
         {
             if (!TheCacheMgr->MountAsync(mCacheID, &mCache, nullptr)) {
-                MILO_FAIL("TheCacheMgr->MountAsync failed with CacheResult %d",
-                          TheCacheMgr->GetLastResult());
+                MILO_FAIL(
+                    "TheCacheMgr->MountAsync failed with CacheResult %d",
+                    TheCacheMgr->GetLastResult()
+                );
             }
         }
         break;
     case kS_SongCacheRead:
         UpdateStatus((SaveLoadMgrStatus)1);
         if (!TheCacheMgr->DeleteAsync(mCacheID)) {
-            MILO_FAIL("TheCacheMgr->DeleteAsync failed with CacheResult %d",
-                      TheCacheMgr->GetLastResult());
+            MILO_FAIL(
+                "TheCacheMgr->DeleteAsync failed with CacheResult %d",
+                TheCacheMgr->GetLastResult()
+            );
         }
         break;
     case kS_SongCacheCreateCorrupt:
@@ -794,15 +838,19 @@ void SaveLoadManager::SetState(State newState) {
         break;
     case kS_SongCacheGetSize:
         if (!mCache->GetFileSizeAsync(unk44.c_str(), (unsigned int *)&unk4c, nullptr)) {
-            MILO_FAIL("mCache->GetFileSizeAsync failed with CacheResult %d",
-                      TheCacheMgr->GetLastResult());
+            MILO_FAIL(
+                "mCache->GetFileSizeAsync failed with CacheResult %d",
+                TheCacheMgr->GetLastResult()
+            );
         }
         break;
     case kS_SongCacheAllocRead:
         mData = _MemAllocTemp(unk4c, "SaveLoadManager.cpp", 0x578, "SaveLoadManager", 0);
         if (!mCache->ReadAsync(unk44.c_str(), mData, unk4c, nullptr)) {
-            MILO_FAIL("mCache->ReadAsync failed with CacheResult %d",
-                      TheCacheMgr->GetLastResult());
+            MILO_FAIL(
+                "mCache->ReadAsync failed with CacheResult %d",
+                TheCacheMgr->GetLastResult()
+            );
         }
         break;
     case kS_SongCacheWrite: {
@@ -811,16 +859,20 @@ void SaveLoadManager::SetState(State newState) {
         BufStream bs(mData, size, true);
         if (TheSongMgr.SaveCachedSongInfo(bs)) {
             if (!mCache->WriteAsync(unk44.c_str(), mData, size, nullptr)) {
-                MILO_FAIL("mCache->WriteAsync failed with CacheResult %d",
-                          TheCacheMgr->GetLastResult());
+                MILO_FAIL(
+                    "mCache->WriteAsync failed with CacheResult %d",
+                    TheCacheMgr->GetLastResult()
+                );
             }
         }
         break;
     }
     case kS_SongCacheUnmount:
         if (!TheCacheMgr->UnmountAsync(&mCache, nullptr)) {
-            MILO_FAIL("TheCacheMgr->UnmountAsync failed with CacheResult %d",
-                      TheCacheMgr->GetLastResult());
+            MILO_FAIL(
+                "TheCacheMgr->UnmountAsync failed with CacheResult %d",
+                TheCacheMgr->GetLastResult()
+            );
         }
         break;
     case kS_SongCacheDone:
@@ -865,8 +917,10 @@ void SaveLoadManager::SetState(State newState) {
             RELEASE(mCacheID);
         }
         if (!TheCacheMgr->SearchAsync(kStrGlobalCacheName, &mCacheID)) {
-            MILO_FAIL("TheCacheMgr->SearchAsync failed with CacheResult %d",
-                      TheCacheMgr->GetLastResult());
+            MILO_FAIL(
+                "TheCacheMgr->SearchAsync failed with CacheResult %d",
+                TheCacheMgr->GetLastResult()
+            );
         }
         break;
     }
@@ -886,7 +940,9 @@ void SaveLoadManager::SetState(State newState) {
         static Symbol global_options_cache_name("global_options_cache_name");
         int saveSize = TheProfileMgr.GlobalOptionsSaveSize();
         const char *cacheName = Localize(global_options_cache_name, nullptr, TheLocale);
-        if (!TheCacheMgr->ShowUserSelectUIAsync(nullptr, saveSize, kStrGlobalCacheName, cacheName, &mCacheID)) {
+        if (!TheCacheMgr->ShowUserSelectUIAsync(
+                nullptr, saveSize, kStrGlobalCacheName, cacheName, &mCacheID
+            )) {
             int result = TheCacheMgr->GetLastResult();
             if (result != 0) {
                 SetState(kS_GlobalCreate2);
@@ -927,9 +983,11 @@ void SaveLoadManager::SetState(State newState) {
                 RELEASE(mCacheID);
             }
             static Symbol global_options_cache_name("global_options_cache_name");
-            const char *cacheName = Localize(global_options_cache_name, nullptr, TheLocale);
-            TheCacheMgr->CreateCacheIDFromDeviceID(mLastChosenDeviceID, kStrGlobalCacheName,
-                                                   cacheName, &mCacheID);
+            const char *cacheName =
+                Localize(global_options_cache_name, nullptr, TheLocale);
+            TheCacheMgr->CreateCacheIDFromDeviceID(
+                mLastChosenDeviceID, kStrGlobalCacheName, cacheName, &mCacheID
+            );
         }
         break;
     case kS_GlobalMount2:
@@ -939,10 +997,13 @@ void SaveLoadManager::SetState(State newState) {
         break;
     case kS_GlobalRead: {
         int saveSize = TheProfileMgr.GlobalOptionsSaveSize();
-        mData = _MemAllocTemp(saveSize, "SaveLoadManager.cpp", 0x69B, "SaveLoadManager", 0);
+        mData =
+            _MemAllocTemp(saveSize, "SaveLoadManager.cpp", 0x69B, "SaveLoadManager", 0);
         if (!mCache->ReadAsync(kStrGlobalCacheName, mData, saveSize, nullptr)) {
-            MILO_FAIL("TheCacheMgr->ReadAsync failed with CacheResult %d",
-                      TheCacheMgr->GetLastResult());
+            MILO_FAIL(
+                "TheCacheMgr->ReadAsync failed with CacheResult %d",
+                TheCacheMgr->GetLastResult()
+            );
         }
         break;
     }
@@ -952,12 +1013,15 @@ void SaveLoadManager::SetState(State newState) {
     case kS_GlobalWrite: {
         UpdateStatus((SaveLoadMgrStatus)1);
         int saveSize = TheProfileMgr.GlobalOptionsSaveSize();
-        mData = _MemAllocTemp(saveSize, "SaveLoadManager.cpp", 0x6AD, "SaveLoadManager", 0);
+        mData =
+            _MemAllocTemp(saveSize, "SaveLoadManager.cpp", 0x6AD, "SaveLoadManager", 0);
         FixedSizeSaveableStream fs(mData, saveSize, true);
         TheProfileMgr.SaveGlobalOptions(fs);
         if (!mCache->WriteAsync(kStrGlobalCacheName, mData, saveSize, nullptr)) {
-            MILO_FAIL("mCache->WriteAsync failed with CacheResult %d",
-                      TheCacheMgr->GetLastResult());
+            MILO_FAIL(
+                "mCache->WriteAsync failed with CacheResult %d",
+                TheCacheMgr->GetLastResult()
+            );
         }
         break;
     }
@@ -968,8 +1032,9 @@ void SaveLoadManager::SetState(State newState) {
         if (!TheCacheMgr->UnmountAsync(&mCache, nullptr)) {
             int result = TheCacheMgr->GetLastResult();
             if (result != kCache_ErrorStorageDeviceMissing) {
-                MILO_NOTIFY("UnmountAsync failed with error %d",
-                            TheCacheMgr->GetLastResult());
+                MILO_NOTIFY(
+                    "UnmountAsync failed with error %d", TheCacheMgr->GetLastResult()
+                );
             }
         }
         break;
@@ -1015,7 +1080,9 @@ void SaveLoadManager::SetState(State newState) {
         static Symbol global_options_cache_name("global_options_cache_name");
         int saveSize = TheProfileMgr.GlobalOptionsSaveSize();
         const char *cacheName = Localize(global_options_cache_name, nullptr, TheLocale);
-        if (!TheCacheMgr->ShowUserSelectUIAsync(nullptr, saveSize, kStrGlobalCacheName, cacheName, &mCacheID)) {
+        if (!TheCacheMgr->ShowUserSelectUIAsync(
+                nullptr, saveSize, kStrGlobalCacheName, cacheName, &mCacheID
+            )) {
             int result = TheCacheMgr->GetLastResult();
             if (result != 0) {
                 SetState(kS_GlobalOptionsRead);
@@ -1028,22 +1095,28 @@ void SaveLoadManager::SetState(State newState) {
         break;
     case kS_GlobalOptionsAllocRead: {
         int saveSize = TheProfileMgr.GlobalOptionsSaveSize();
-        mData = _MemAllocTemp(saveSize, "SaveLoadManager.cpp", 0x69B, "SaveLoadManager", 0);
+        mData =
+            _MemAllocTemp(saveSize, "SaveLoadManager.cpp", 0x69B, "SaveLoadManager", 0);
         if (!mCache->ReadAsync(kStrGlobalCacheName, mData, saveSize, nullptr)) {
-            MILO_FAIL("TheCacheMgr->ReadAsync failed with CacheResult %d",
-                      TheCacheMgr->GetLastResult());
+            MILO_FAIL(
+                "TheCacheMgr->ReadAsync failed with CacheResult %d",
+                TheCacheMgr->GetLastResult()
+            );
         }
         break;
     }
     case kS_GlobalOptionsWrite: {
         UpdateStatus((SaveLoadMgrStatus)1);
         int saveSize = TheProfileMgr.GlobalOptionsSaveSize();
-        mData = _MemAllocTemp(saveSize, "SaveLoadManager.cpp", 0x6AD, "SaveLoadManager", 0);
+        mData =
+            _MemAllocTemp(saveSize, "SaveLoadManager.cpp", 0x6AD, "SaveLoadManager", 0);
         FixedSizeSaveableStream fs(mData, saveSize, true);
         TheProfileMgr.SaveGlobalOptions(fs);
         if (!mCache->WriteAsync(kStrGlobalCacheName, mData, saveSize, nullptr)) {
-            MILO_FAIL("mCache->WriteAsync failed with CacheResult %d",
-                      TheCacheMgr->GetLastResult());
+            MILO_FAIL(
+                "mCache->WriteAsync failed with CacheResult %d",
+                TheCacheMgr->GetLastResult()
+            );
         }
         break;
     }
@@ -1051,8 +1124,9 @@ void SaveLoadManager::SetState(State newState) {
         if (!TheCacheMgr->UnmountAsync(&mCache, nullptr)) {
             int result = TheCacheMgr->GetLastResult();
             if (result != kCache_ErrorStorageDeviceMissing) {
-                MILO_NOTIFY("UnmountAsync failed with error %d",
-                            TheCacheMgr->GetLastResult());
+                MILO_NOTIFY(
+                    "UnmountAsync failed with error %d", TheCacheMgr->GetLastResult()
+                );
             }
         }
         break;

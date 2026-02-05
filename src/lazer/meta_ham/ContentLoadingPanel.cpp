@@ -51,6 +51,13 @@ void ContentLoadingPanel::ContentDone() {
     }
 }
 
+void ContentLoadingPanel::Poll() {
+    if (mShowing) {
+        UIPanel::Poll();
+        RndGroup *progressGroup = ObjectDir::Main()->Find<RndGroup>("progress.grp");
+    }
+}
+
 BEGIN_HANDLERS(ContentLoadingPanel)
     HANDLE_ACTION(allowed_to_show, AllowedToShow(_msg->Int(2)))
     HANDLE_SUPERCLASS(UIPanel)
