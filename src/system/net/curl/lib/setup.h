@@ -28,7 +28,6 @@
 
 #if (defined(_WIN32) || defined(__WIN32__)) && !defined(WIN32) && !defined(__SYMBIAN32__)
 #define WIN32
-#define _XBOX360
 #endif
 
 /*
@@ -42,7 +41,6 @@
 
 #else /* HAVE_CONFIG_H */
 
-#define _XBOX360
 #ifdef _XBOX360
 #include "xdk/xapilibi/winnt.h"
 #include "config-xbox360.h"
@@ -52,10 +50,10 @@
 #include "config-win32ce.h"
 #else
 #ifdef WIN32
-#define _XBOX360
-#include "config-win32.h"
-#include "xdk/xapilibi/winnt.h"
-#include "config-xbox360.h"
+// #define _XBOX360
+// #include "config-win32.h"
+// #include "xdk/xapilibi/winnt.h"
+// #include "config-xbox360.h"
 #endif
 #endif
 
@@ -535,7 +533,7 @@ int fileno(FILE *stream);
 #if defined(_MSC_VER) && !defined(__POCC__)
 #if !defined(HAVE_WINDOWS_H) || ((_MSC_VER < 1300) && !defined(_FILETIME_))
 #if !defined(ALLOW_MSVC6_WITHOUT_PSDK)
-#error MSVC 6.0 requires "February 2003 Platform SDK" a.k.a. \
+//#error MSVC 6.0 requires "February 2003 Platform SDK" a.k.a. \
              "Windows Server 2003 PSDK"
 #else
 #define CURL_DISABLE_LDAP 1

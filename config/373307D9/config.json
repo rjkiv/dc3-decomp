@@ -48,7 +48,8 @@
             "base": "base",
             "flags": [
                 "/TC",
-                "/GS"
+                "/GS",
+                "/D_XBOX360"
             ]
         },
         "net_xbox": {
