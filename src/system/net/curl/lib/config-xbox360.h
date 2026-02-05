@@ -576,9 +576,6 @@
 #define CURL_DISABLE_TELNET 1
 #define CURL_DISABLE_LDAP 1
 
-#define ENOSPC 1
-#define ENOMEM 12
-#define EAGAIN 3
 /* ---------------------------------------------------------------- */
 /*                        LARGE FILE SUPPORT                        */
 /* ---------------------------------------------------------------- */
