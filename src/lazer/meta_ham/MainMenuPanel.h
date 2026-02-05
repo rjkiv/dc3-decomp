@@ -25,6 +25,8 @@ public:
         Symbol unk0;
         String unk4;
         float unkc;
+        float unk10;
+        float unk14;
     };
 
     // Hmx::Object

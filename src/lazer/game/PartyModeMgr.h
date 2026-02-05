@@ -195,6 +195,7 @@ private:
     void SetSongAndDefaults(Symbol, Symbol, bool);
     SubMode *CreateEventA();
     void DetermineSubModePlayers(Symbol, int *, int *, std::vector<int> *);
+    void ReadPartySongQueue();
 
     Symbol GetCurrEventDisplayName() { return GetCurrEventName(); }
     bool IsUsingPlaylist() const { return mPlaylist; }

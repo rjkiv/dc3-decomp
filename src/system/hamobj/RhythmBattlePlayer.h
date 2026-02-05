@@ -58,6 +58,7 @@ public:
     void SetActive(bool);
     bool Unk2a8Check() const { return unk2a5 && unk2a8 > 12; }
     int Unk280() const { return unk280; }
+    int Unk260() const { return unk260; }
 
 protected:
     RhythmBattlePlayer();

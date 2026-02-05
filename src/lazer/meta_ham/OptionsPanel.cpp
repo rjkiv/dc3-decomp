@@ -51,6 +51,30 @@ DataNode OptionsPanel::OnMsg(SingleItemEnumCompleteMsg const &msg) {
     return 0;
 }
 
+DataNode OptionsPanel::OnMsg(RCJobCompleteMsg const &msg) {
+    int i;
+    if (msg.Job() == unk3c) {
+        MILO_LOG("Token: server response: %s\n", unk3c->GetResponseString());
+        String str;
+        static Symbol token_redemption_ready("token_redemption_ready");
+        static Symbol token_redemption_error("token_redemption_error");
+        static Symbol token_redemption_not_found("token_redemption_not_found");
+        static Symbol token_redemption_other_player("token_redemption_other_player");
+        static Symbol token_redemption_purchased("token_redemption_purchased");
+        static Symbol token_redemption_too_early("token_redemption_too_early");
+        static Symbol token_redemption_too_late("token_redemption_too_late");
+        static Symbol leaderboard_no_net("leaderboard_no_net");
+        unk3c->GetRedeemTokenData(i, str);
+    } else if (msg.Job() != unk58) {
+        return 1;
+    }
+    String temp1;
+    String temp2;
+    unk58->GetWebLinkCodeData(temp1);
+
+    return 1;
+}
+
 BEGIN_HANDLERS(OptionsPanel)
     HANDLE_EXPR(redeem_token, OnRedeemToken(_msg->Int(2), _msg->Str(3)))
     HANDLE_ACTION(

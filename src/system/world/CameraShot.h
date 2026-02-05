@@ -123,14 +123,12 @@ public:
     void AddCrowdChars();
     void SetCrowdChars();
     void ClearCrowdChars();
-    void
-    GetSelectedCrowd(std::list<
-                     std::pair<RndMultiMesh *, std::list<RndMultiMesh::Instance>::iterator> >
-                         &);
-    void
-    AddCrowdChars(std::list<
-                  std::pair<RndMultiMesh *, std::list<RndMultiMesh::Instance>::iterator> >
-                      &);
+    void GetSelectedCrowd(
+        std::list<std::pair<RndMultiMesh *, std::list<RndMultiMesh::Instance>::iterator> > &
+    );
+    void AddCrowdChars(
+        std::list<std::pair<RndMultiMesh *, std::list<RndMultiMesh::Instance>::iterator> > &
+    );
 
     /** "The crowd to show for this shot" */
     ObjPtr<WorldCrowd> mCrowd; // 0x0
@@ -187,6 +185,7 @@ public:
     bool SetPos(CamShotFrame &, RndCam *);
     RndCam *GetCam();
     void SetParent(RndDir *d) { unk1a4 = d; }
+    bool ShotOver() const { return mShotOver; }
     class WorldDir *GetCrowdDir() const;
     void AddAnim(RndAnimatable *);
     void ClearCrowds();

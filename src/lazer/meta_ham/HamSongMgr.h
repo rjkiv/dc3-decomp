@@ -55,13 +55,11 @@ public:
     Symbol RankTierToken(int) const;
     int RankTier(int) const;
     int RankTier(Symbol) const;
+    void GetCoreStarsForDifficulty(HamProfile const *, Difficulty, int &, int &) const;
+    void GetCharacterStars(HamProfile const *, Symbol, int &, int &) const;
+    void GetCrewStars(HamProfile const *, Symbol, int &, int &) const;
     void
-    GetCoreStarsForDifficulty(class HamProfile const *, Difficulty, int &, int &) const;
-    void GetCharacterStars(class HamProfile const *, Symbol, int &, int &) const;
-    void GetCrewStars(class HamProfile const *, Symbol, int &, int &) const;
-    void GetCrewStarsForDifficulty(
-        class HamProfile const *, Symbol, Difficulty, int &, int &
-    ) const;
+    GetCrewStarsForDifficulty(HamProfile const *, Symbol, Difficulty, int &, int &) const;
     int GetTotalNumLibrarySongs() const;
     void UploadSongLibraryToServer();
     void GetRankedSongs(std::vector<int> &) const;

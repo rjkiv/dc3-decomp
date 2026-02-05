@@ -1,6 +1,7 @@
 #pragma once
 #include "game/SongDB.h"
 #include "hamobj/HamMaster.h"
+#include "meta/DataArraySongInfo.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "stl/_vector.h"
@@ -26,7 +27,7 @@ public:
     static HamMaster *sLoadingMaster; // DAT_8311A440
     static SongDB *sSongDB; // DAT_8311A444 i think, def a SongDB
 
-    int unk38;
+    DataArraySongInfo *unk38;
     TempoMap *unk3c;
     BeatMap *unk40;
 

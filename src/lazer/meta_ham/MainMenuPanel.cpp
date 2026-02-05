@@ -28,9 +28,9 @@ MainMenuPanel::MotdData::MotdData(MotdData const &motdData)
 #pragma region MainMenuPanel
 
 MainMenuPanel::MainMenuPanel()
-    : mMsgLabel(), unk80(false), unk81(false), unk8c(), unk90(), unk94(false), unk95(false),
-      unk96(false), unkb0(false), unkbc(), unkc0(), unkc4(), unkc8(), unkcc(), unkd0(),
-      unkd8() {}
+    : mMsgLabel(), unk80(false), unk81(false), unk8c(), unk90(), unk94(false),
+      unk95(false), unk96(false), unkb0(false), unkbc(), unkc0(), unkc4(), unkc8(),
+      unkcc(), unkd0(), unkd8() {}
 
 MainMenuPanel::~MainMenuPanel() { DeleteDownloadedArts(); }
 

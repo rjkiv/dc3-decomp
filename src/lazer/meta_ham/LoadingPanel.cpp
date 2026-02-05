@@ -3,16 +3,20 @@
 #include "hamobj/HamAudio.h"
 #include "hamobj/HamMaster.h"
 #include "macros.h"
+#include "meta/DataArraySongInfo.h"
 #include "meta_ham/ContextChecker.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "obj/Task.h"
 #include "os/ContentMgr.h"
 #include "os/Debug.h"
+#include "os/File.h"
+#include "os/FileCache.h"
 #include "os/System.h"
 #include "ui/UI.h"
 #include "ui/UIPanel.h"
 #include "utl/BeatMap.h"
+#include "utl/MakeString.h"
 #include "utl/MemMgr.h"
 #include "utl/Symbol.h"
 #include "utl/TempoMap.h"
@@ -86,6 +90,27 @@ Symbol LoadingPanel::ChooseLoadingScreen() {
     Symbol randomItem =
         RandomContextSensitiveItem(SystemConfig("loading_screen_context"));
     return GetLoadingScreen(randomItem);
+}
+
+void LoadingPanel::PlayLoadingMusic() {
+    static DataNode &n = DataVariable("loading_music_mogg");
+    if (n.Equal(gNullStr, nullptr, true)) {
+        ResetLoadingMusic();
+    }
+    const char *fileBase = FileGetBase(n.Str());
+    {
+        String filePath = MakeString("sfx/samples/shell/%s.mid", fileBase);
+        File *f = FileCache::GetFileAll(filePath.c_str());
+        MILO_ASSERT(f != NULL, 0xb7);
+        delete f;
+    }
+    if (unk38)
+        RELEASE(unk38);
+    DataArray *sysConfig = SystemConfig("synth", fileBase);
+    static Symbol song("song");
+    DataArray *songArray = sysConfig->FindArray(song, false);
+    unk38 = new DataArraySongInfo(songArray, nullptr, "loadmusic");
+    sLoadingMaster->Load(unk38, false, 0, false, (HamSongDataValidate)0, nullptr);
 }
 
 BEGIN_HANDLERS(LoadingPanel)

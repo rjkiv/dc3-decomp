@@ -62,7 +62,7 @@ public:
     CharClipDriver *PlayGroup(CharClipGroup *, int, float, float, float);
     CharClipDriver *PlayGroup(const char *, int, float, float, float);
     void SetClipWeightMap();
-    CharClip *FindClip(DataNode const &, bool);
+    CharClip *FindClip(DataNode const &, bool notify = true);
 
 protected:
     CharDriver();

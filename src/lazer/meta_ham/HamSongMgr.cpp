@@ -1,18 +1,28 @@
 #include "lazer/meta_ham/HamSongMgr.h"
+#include "HamProfile.h"
 #include "HamSongMetadata.h"
+#include "SaveLoadManager.h"
+#include "hamobj/HamGameData.h"
+#include "hamobj/HamPlayerData.h"
 #include "lazer/meta_ham/Playlist.h"
 #include "macros.h"
+#include "math/Utl.h"
 #include "meta/DataArraySongInfo.h"
 #include "meta/Jukebox.h"
 #include "meta/SongMgr.h"
 #include "meta_ham/ProfileMgr.h"
+#include "meta_ham/SongStatusMgr.h"
+#include "net_ham/PartyModeJobs.h"
+#include "net_ham/RockCentral.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
 #include "os/ContentMgr.h"
 #include "os/Debug.h"
 #include "os/File.h"
+#include "os/PlatformMgr.h"
 #include "os/System.h"
+#include "stl/_vector.h"
 #include "utl/BinStream.h"
 #include "utl/FakeSongMgr.h"
 #include "utl/Locale.h"
@@ -80,6 +90,9 @@ void HamSongMgr::ContentDone() {
     }
     InitializePlaylists();
     UploadSongLibraryToServer();
+    if (TheSaveLoadMgr) {
+        TheSaveLoadMgr->AutoSave();
+    }
 }
 
 void HamSongMgr::Init() {
@@ -332,8 +345,7 @@ Playlist *HamSongMgr::GetPlaylistWithLocalizedName(String p) {
     FOREACH (it, mPlaylists) {
         Playlist *playlist = *it;
         MILO_ASSERT(playlist, 0xb5);
-        const char *l = Localize(playlist->GetName(), nullptr, TheLocale);
-        if (p == l) {
+        if (p == Localize(playlist->GetName(), nullptr, TheLocale)) {
             return playlist;
         }
     }
@@ -468,7 +480,7 @@ int HamSongMgr::GetTotalNumLibrarySongs() const {
     int num = 0;
     FOREACH (it, mAvailableSongs) {
         const HamSongMetadata *data = Data(*it);
-        if (data->IsVersionOK() && data->IsRanked()
+        if (data->IsVersionOK() && data->IsRanked() && !data->IsFake()
             && TheProfileMgr.IsContentUnlocked(data->ShortName())) {
             num++;
         }
@@ -505,4 +517,107 @@ Symbol HamSongMgr::GetRandomSong() {
     const HamSongMetadata *data = Data(songID);
     MILO_ASSERT(!data->IsPrivate(), 0x326);
     return ret;
+}
+
+void HamSongMgr::UploadSongLibraryToServer() {
+    String str = gNullStr;
+    FOREACH (it, mAvailableSongs) {
+        const HamSongMetadata *data = Data(*it);
+        if (data->IsVersionOK() && data->IsRanked() && !data->IsFake()
+            && TheProfileMgr.IsContentUnlocked(data->ShortName())) {
+            if (str == gNullStr) {
+                str = MakeString("%i", *it);
+            } else {
+                str += MakeString(",%i", *it);
+            }
+        }
+    }
+
+    if (str == gNullStr) {
+        return;
+    } else {
+        for (int i = 0; i < 2; i++) {
+            HamPlayerData *playerData = TheGameData->Player(i);
+            MILO_ASSERT(playerData, 0x41a);
+            int padNum = playerData->PadNum();
+            HamProfile *profileFromPad = TheProfileMgr.GetProfileFromPad(padNum);
+            if (profileFromPad) {
+                profileFromPad->UpdateOnlineID();
+                if (profileFromPad->IsSignedIn()
+                    && ThePlatformMgr.IsSignedIntoLive(padNum)) {
+                    TheRockCentral.ManageJob(new SyncPlayerSongsJob(
+                        nullptr, profileFromPad->GetOnlineID()->ToString(), str
+                    ));
+                }
+            }
+        }
+    }
+}
+
+void HamSongMgr::GetRandomlySelectableRankedSongs(std::vector<int> &songIDs) const {
+    songIDs.clear();
+    FOREACH (it, mAvailableSongs) {
+        const HamSongMetadata *data = Data(*it);
+        if (data->IsRanked() && data->IsComplete() && !data->IsFake()
+            && TheProfileMgr.IsContentUnlocked(data->ShortName())) {
+            songIDs.push_back(*it);
+        }
+    }
+}
+
+void HamSongMgr::GetCoreStarsForDifficulty(
+    HamProfile const *profile, Difficulty diff, int &i1, int &i2
+) const {
+    i1 = 0;
+    i2 = 0;
+    if (profile) {
+        const std::set<int> &songSet = GetAvailableSongSet();
+        SongStatusMgr *mgr = profile->GetSongStatusMgr();
+        FOREACH (it, songSet) {
+            int songID = *it;
+            const HamSongMetadata *data = TheHamSongMgr.Data(songID);
+            bool b = false;
+            static Symbol ham3("ham3");
+            if (!data->IsFake() && data->GameOrigin() == ham3
+                && TheProfileMgr.IsContentUnlocked(data->ShortName())) {
+                int starsForDiff = mgr->GetStarsForDifficulty(songID, diff, b);
+                if (starsForDiff > 5) {
+                    starsForDiff = 5;
+                } else {
+                    starsForDiff = Clamp(0, 5, starsForDiff);
+                }
+                i1 += starsForDiff;
+                i2 += 5;
+            }
+        }
+    }
+}
+
+void HamSongMgr::GetCharacterStars(
+    HamProfile const *profile, Symbol character, int &i1, int &i2
+) const {
+    i1 = 0;
+    i2 = 0;
+    if (profile) {
+        const std::set<int> &songSet = GetAvailableSongSet();
+        SongStatusMgr *mgr = profile->GetSongStatusMgr();
+        FOREACH (it, songSet) {
+            int songID = *it;
+            const HamSongMetadata *data = TheHamSongMgr.Data(songID);
+            bool b = false;
+            static Symbol ham3("ham3");
+            if (!data->IsFake() && data->GameOrigin() == ham3
+                && data->Character() == character
+                && TheProfileMgr.IsContentUnlocked(data->ShortName())) {
+                int starsForDiff = mgr->GetStars(songID, b);
+                if (starsForDiff > 5) {
+                    starsForDiff = 5;
+                } else {
+                    starsForDiff = Clamp(0, 5, starsForDiff);
+                }
+                i1 += starsForDiff;
+                i2 += 5;
+            }
+        }
+    }
 }

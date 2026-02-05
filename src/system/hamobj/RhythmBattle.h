@@ -59,19 +59,19 @@ private:
 
     /** "instruction display" */
     ObjPtr<HamLabel> mCommandLabel; // 0x8
-    ObjPtr<HamLabel> unk1c;
+    ObjPtr<HamLabel> mIntroLine2Label; // 0x1c
     /** "player 0 object" */
     ObjPtr<RhythmBattlePlayer> mPlayerOne; // 0x30
     /** "player 1 object" */
     ObjPtr<RhythmBattlePlayer> mPlayerTwo; // 0x44
-    ObjPtr<RndTransformable> unk58;
+    ObjPtr<RndTransformable> mBoxyLeadHeadTrans; // 0x58
     ObjPtr<RndAnimatable> unk6c;
     ObjPtr<RndAnimatable> unk80;
     ObjPtr<RndAnimatable> unk94;
-    ObjPtr<RndAnimatable> unka8;
-    ObjPtr<RndAnimatable> unkbc;
-    ObjPtr<RndAnimatable> unkd0;
-    ObjPtr<RndAnimatable> unke4;
+    ObjPtr<RndAnimatable> mSwagJack1BarP2ToP1Anim; // 0xa8
+    ObjPtr<RndAnimatable> mSwagJack1BarP1ToP2Anim; // 0xbc
+    ObjPtr<RndAnimatable> mSwagJack2BarP2ToP1Anim; // 0xd0
+    ObjPtr<RndAnimatable> mSwagJack2BarP1ToP2Anim; // 0xe4
     bool mGoofy; // 0xf8
     /** "is this keep the beat, or just groove tech experience" */
     bool mFullKTB; // 0xf9
@@ -84,8 +84,8 @@ private:
     bool unk100;
     bool unk101;
     bool unk102;
-    float unk104;
-    float unk108;
+    float mStartBeat; // 0x104
+    float mEndBeat; // 0x108
     float unk10c;
     float unk110;
     float unk114;

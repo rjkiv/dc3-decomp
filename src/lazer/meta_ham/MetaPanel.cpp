@@ -182,11 +182,20 @@ void MetaPanel::Load() {
     if (TheUI && TheUI->BottomScreen()) {
         if (strcmp(TheUI->BottomScreen()->Name(), "game_screen") == 0) {
             MILO_LOG("MetaPanel::Load suppressed, in game\n");
+            return;
         }
     }
     UIPanel::Load();
     DataArray *sysConfig = SystemConfig("synth", "metamusic", "music");
-    // something
+    int loopIndex = PickLoopIndex(sysConfig->Size());
+    DataArray *loopArray = sysConfig->Array(loopIndex);
+    if (!TheMetaMusic) {
+        TheMetaMusic = new MetaMusic(sHamMaster, "sfx/shell_fx.milo");
+        TheMetaMusic->Load(0.0f, true, true);
+        sHamMaster->Load(
+            TheMetaMusic->SongInfo(), true, 0, false, (HamSongDataValidate)0, nullptr
+        );
+    }
     unk4c.Init();
     SystemConfig("sound", "banks");
     if (TheMetaMusic) {
@@ -299,6 +308,63 @@ void MetaPanel::UnlockClassicOutfit(Symbol s) {
     }
 }
 
+DataNode MetaPanel::ToggleUnlockAll(DataArray *arr) {
+    sUnlockAll = !sUnlockAll;
+    return sUnlockAll;
+}
+
+DataNode MetaPanel::ToggleMotdCheat(DataArray *) {
+    sMotdCheat = !sMotdCheat;
+    return sMotdCheat;
+}
+
+DataNode MetaPanel::OnMsg(const XMPStateChangedMsg &msg) {
+    bool success = msg.Success();
+    unkdc = success;
+    if (TheMetaMusic) {
+        if (success) {
+            TheMetaMusic->Mute();
+        } else {
+            TheMetaMusic->UnMute();
+        }
+    }
+    return 0;
+}
+
+void MetaPanel::UnlockAll() {
+    sUnlockAll = true;
+    TheHamSongMgr.InitializePlaylists();
+}
+
+void MetaPanel::CycleVenuePreference() {
+    Symbol venuePref = TheProfileMgr.GetVenuePreference();
+    DataArray *pVenueArray = SystemConfig()->FindArray("venues", false);
+    MILO_ASSERT(pVenueArray, 0x6f);
+    static Symbol random_venue("random_venue");
+    if (venuePref == random_venue) {
+        DataArray *pVenueEntryArray = pVenueArray->Array(1);
+        MILO_ASSERT(pVenueEntryArray, 0x76);
+        venuePref = pVenueEntryArray->Sym(0);
+    } else {
+        for (int i = 1; i < pVenueArray->Size(); i++) {
+            DataArray *pVenueEntryArray = pVenueArray->Array(i);
+            MILO_ASSERT(pVenueEntryArray, 0x80);
+            if (pVenueEntryArray->Sym(0) == venuePref) {
+                venuePref = random_venue;
+                if (i + 1 < pVenueArray->Size()) {
+                    pVenueEntryArray = pVenueArray->Array(i + 1);
+                    if (!pVenueEntryArray) {
+                        MILO_ASSERT(pVenueEntryArray, 0x8f);
+                        venuePref = pVenueEntryArray->Sym(0);
+                    }
+                }
+                break;
+            }
+        }
+    }
+    TheProfileMgr.SetVenuePreference(venuePref);
+}
+
 BEGIN_HANDLERS(MetaPanel)
     HANDLE_EXPR(meta_music, TheMetaMusic)
     HANDLE_ACTION(
@@ -308,7 +374,7 @@ BEGIN_HANDLERS(MetaPanel)
         )
     )
     HANDLE_ACTION(init_songpreview, unk4c.Init())
-    HANDLE_ACTION(unlock_all, TheHamSongMgr.InitializePlaylists())
+    HANDLE_ACTION(unlock_all, UnlockAll())
     HANDLE_ACTION(unlock_classic, UnlockClassicOutfit(_msg->Sym(2)))
     HANDLE_ACTION(cycle_venue_preference, CycleVenuePreference())
     HANDLE_EXPR(get_venue_preference, TheProfileMgr.GetVenuePreference())

@@ -333,8 +333,7 @@ void Leaderboards::ReadScoresComplete(bool b1, bool b2) {
         job->GetRows(&unk58);
         unk98 = nullptr;
         if (b2) {
-            auto it = std::make_pair((unsigned int)job->SongID(), unk58); // somethins up
-            unk64.insert(it);
+            unk64.insert(std::make_pair((unsigned int)job->SongID(), unk58));
         }
     }
 
