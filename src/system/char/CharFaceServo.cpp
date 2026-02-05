@@ -56,7 +56,7 @@ END_COPYS
 
 INIT_REVS(4, 0)
 
-BEGIN_LOADS(CharFaceServo)
+BEGIN_LOADS(CharFaceServo) // has register issue
     LOAD_REVS(bs)
     ASSERT_REVS(4, 0)
     LOAD_SUPERCLASS(Hmx::Object)

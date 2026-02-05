@@ -40,6 +40,27 @@ BEGIN_SAVES(CharIKMidi)
     bs << mMaxAnimBlend;
 END_SAVES
 
+INIT_REVS(5, 0)
+
+BEGIN_LOADS(CharIKMidi)
+    LOAD_REVS(bs)
+    ASSERT_REVS(5, 0)
+    LOAD_SUPERCLASS(Hmx::Object)
+    d >> mBone;
+    if (d.rev < 3) {
+        ObjPtrVec<RndTransformable> vec(this);
+        d >> vec;
+    }
+    if (d.rev == 2 || d.rev == 3) {
+        String asdf;
+        d >> asdf;
+    }
+    if (d.rev > 4) {
+        d >> mAnimBlender;
+        d >> mMaxAnimBlend;
+    }
+END_LOADS
+
 BEGIN_COPYS(CharIKMidi)
     COPY_SUPERCLASS(Hmx::Object)
     CREATE_COPY(CharIKMidi)

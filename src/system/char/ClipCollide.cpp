@@ -100,7 +100,18 @@ void ClipCollide::SyncMode() {
     }
 }
 
-void ClipCollide::Demonstrate() {}
+void ClipCollide::Demonstrate() {
+    bool b1;
+    if (!mChar || !mWaypoint || !mClip) {
+        b1 = false;
+    } else {
+        b1 = true;
+    }
+    if (b1) {
+        SyncWaypoint();
+        mChar->Driver()->Play(mClip, 2, -1.0f, 1e+30f, 0.0f);
+    }
+}
 
 bool ClipCollide::ValidWaypoint(Waypoint *w) {
     static Message vw("valid_waypoint", 0);

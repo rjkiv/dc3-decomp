@@ -80,6 +80,6 @@ BEGIN_LOADS(CharEyeDartRuleset)
         >> mData.mMinDartsPerSequence >> mData.mMaxDartsPerSequence
         >> mData.mMinSecsBetweenDarts >> mData.mMaxSecsBetweenDarts
         >> mData.mMinSecsBetweenSequences >> mData.mMaxSecsBetweenSequences;
-    d.stream >> mData.mScaleWithDistance;
+    d >> mData.mScaleWithDistance;
     d >> mData.mReferenceDistance;
 END_LOADS

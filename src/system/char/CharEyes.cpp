@@ -7,6 +7,7 @@
 #include "obj/Object.h"
 #include "obj/Task.h"
 #include "utl/BinStream.h"
+#include "utl/Std.h"
 
 CharEyes::CharEyes()
     : mEyes(this), mInterests(this), mFaceServo(this), mCamWeight(this), unk78(0, 0, 0),

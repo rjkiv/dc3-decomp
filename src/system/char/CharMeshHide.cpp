@@ -62,7 +62,7 @@ BEGIN_LOADS(CharMeshHide)
     LOAD_REVS(bs);
     ASSERT_REVS(2, 0);
     LOAD_SUPERCLASS(Hmx::Object)
-    bs >> mFlags >> mHides;
+    d >> mFlags >> mHides;
 END_LOADS
 
 void CharMeshHide::Init() { REGISTER_OBJ_FACTORY(CharMeshHide) }

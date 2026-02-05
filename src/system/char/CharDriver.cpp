@@ -1,8 +1,10 @@
 #include "char/CharDriver.h"
 #include "char/Char.h"
 #include "char/CharClip.h"
+#include "char/CharWeightable.h"
 #include "macros.h"
 #include "obj/Object.h"
+#include "utl/FilePath.h"
 #include "utl/Symbol.h"
 #include "obj/Utl.h"
 
@@ -260,7 +262,7 @@ bool CharDriver::Replace(ObjRef *from, Hmx::Object *to) {
         mFirst = mFirst->DeleteRef(from, deleted);
     }
     if (deleted != false) {
-       return true;
+        return true;
     }
     return CharWeightable::Replace(from, to);
 }
@@ -279,5 +281,65 @@ BEGIN_SAVES(CharDriver)
     bs << unk5c;
     bs << mDefaultClip;
     bs << unk98;
-
 END_SAVES
+
+INIT_REVS(0xe, 0)
+
+BEGIN_LOADS(CharDriver)
+    LOAD_REVS(bs)
+    ASSERT_REVS(0xe, 0)
+    LOAD_SUPERCLASS(Hmx::Object)
+    LOAD_SUPERCLASS(CharWeightable)
+    if (d.rev < 3) {
+        int x;
+        d >> x;
+    }
+    d >> mBones;
+    if (d.rev < 8) {
+        FilePath fp;
+        d >> fp;
+        if (d.rev > 6 && fp.empty()) {
+            d >> mClips;
+        }
+    } else {
+        d >> mClips;
+    }
+    if (d.rev > 8) {
+        d >> mBlendWidth;
+    }
+    if (d.rev > 1) {
+        d >> mRealign;
+    } else {
+        mRealign = false;
+    }
+    if (d.rev > 5)
+        d >> (int &)mApply;
+    else if (d.rev > 4) {
+        bool b48;
+        d >> b48;
+        mApply = (ApplyMode)(b48 != false);
+    } else
+        mApply = kApplyBlend;
+    if (d.rev > 9)
+        d >> mClipType;
+    if (d.rev > 0xC)
+        d >> mPlayMultipleClips;
+    if (d.rev <= 9 && mClips) {
+        mClipType = mClips->Type();
+        if (mClipType.Null()) {
+            for (ObjDirItr<CharClip> it(mClips, true); it != nullptr; ++it) {
+                mClipType = it->Type();
+                break;
+            }
+        }
+    }
+    SyncInternalBones();
+    if (d.rev > 3) {
+        unk5c.Load(bs, false, mClips);
+    }
+    if (d.rev > 0xB) {
+        mDefaultClip.Load(bs, false, mClips);
+    }
+    if (d.rev > 0xD)
+        d >> unk98;
+END_LOADS

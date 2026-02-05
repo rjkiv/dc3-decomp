@@ -11,10 +11,24 @@ CharBonesSamples::CharBonesSamples()
 CharBonesSamples::~CharBonesSamples() { MemFree(mRawData); }
 
 BEGIN_LOADS(CharBonesSamples)
-LOAD_REVS(bs)
-MILO_FAIL("%s can\'t load new %s version %d > %d", "", "ChaBonesSample", bs.Tell(), (unsigned short)1);
-LoadHeader(d);
-LoadData(d);
+    LOAD_REVS(bs)
+    if (10 < d.rev) {
+        MILO_FAIL(
+            "%s can\'t load new %s version %d > %d",
+            "",
+            "CharBonesSample",
+            bs.Tell(),
+            (unsigned short)1
+        );
+    }
+    if (d.rev != 0) {
+        MILO_FAIL(
+            "%s can\'t load new %s alt version %d > %d", "", "CharBonesSample", d.altRev, 0
+        );
+    }
+    MILO_ASSERT(d.rev > 12, 0x29d);
+    LoadHeader(d);
+    LoadData(d);
 END_LOADS
 
 int CharBonesSamples::AllocateSize() { return mTotalSize * mNumSamples; }
@@ -83,7 +97,13 @@ void CharBonesSamples::Print() {
     auto size = mTotalSize * mNumSamples;
     auto address = mRawData;
     auto compression = mCompression;
-    MILO_LOG("samples: %d size: %d address: %x compression %d\n", samples, size, address, compression);
+    MILO_LOG(
+        "samples: %d size: %d address: %x compression %d\n",
+        samples,
+        size,
+        address,
+        compression
+    );
     if (mNumSamples == 0) {
         TheDebug << "Bones:\n";
         for (int i = 0; i < mBones.size(); i++) {
@@ -106,7 +126,7 @@ void CharBonesSamples::Relativize(CharClip *clip) {
         float startBeat = clip->StartBeat();
         int boneIdx = 0;
         if (mCompression < kCompressVects) {
-            //ShortVector3 *pos =
+            // ShortVector3 *pos =
         }
     }
 }
@@ -140,7 +160,10 @@ int CharBonesSamples::FracToSample(float *frac) const {
     if (ret < 0 || ret >= mNumSamples) {
         MILO_NOTIFY_ONCE(
             "FracToSample: sample is %d, clip only has %d samples, frac was %g, is %g",
-            ret, mNumSamples, inputFrac, *frac
+            ret,
+            mNumSamples,
+            inputFrac,
+            *frac
         );
         ret = 0;
     }

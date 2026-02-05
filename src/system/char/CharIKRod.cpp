@@ -54,13 +54,13 @@ BEGIN_LOADS(CharIKRod)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    bs >> mLeftEnd;
-    bs >> mRightEnd;
-    bs >> mDestPos;
-    bs >> mSideAxis;
-    bs >> mVertical;
-    bs >> mDest;
-    bs >> mXfm;
+    d >> mLeftEnd;
+    d >> mRightEnd;
+    d >> mDestPos;
+    d >> mSideAxis;
+    d >> mVertical;
+    d >> mDest;
+    d >> mXfm;
 END_LOADS
 
 void CharIKRod::Poll() {

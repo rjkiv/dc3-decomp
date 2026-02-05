@@ -61,6 +61,44 @@ BEGIN_SAVES(CharLipSyncDriver)
     bs << mAlternateDriver;
 END_SAVES
 
+INIT_REVS(7, 0)
+
+BEGIN_LOADS(CharLipSyncDriver) // register error
+    LOAD_REVS(bs)
+    ASSERT_REVS(7, 0)
+    LOAD_SUPERCLASS(Hmx::Object)
+    LOAD_SUPERCLASS(CharWeightable)
+    d >> mBones;
+    d >> mClips;
+    if (d.rev < 1) {
+        FilePath fp;
+        d >> fp;
+        MILO_NOTIFY("%s old version, won't load %s", PathName(this), fp);
+        String str;
+        d >> str;
+    } else
+        d >> mLipSync;
+    if (d.rev > 1) {
+        mTestClip.Load(bs, true, mClips);
+        d >> mTestWeight;
+    }
+    if (d.rev > 2) {
+        mOverrideClip.Load(bs, true, mClips);
+        if (d.rev < 5) {
+            int x;
+            d >> x;
+        }
+        d >> mOverrideOptions;
+    }
+    if (d.rev > 3)
+        d >> mApplyOverrideAdditively;
+    if (d.rev > 5)
+        d >> mOverrideWeight;
+    if (d.rev > 6)
+        d >> mAlternateDriver;
+    Sync();
+END_LOADS
+
 BEGIN_COPYS(CharLipSyncDriver)
     COPY_SUPERCLASS(Hmx::Object)
     COPY_SUPERCLASS(CharWeightable)

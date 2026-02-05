@@ -1,10 +1,17 @@
 #include "char/CharTransDraw.h"
 #include "obj/Object.h"
 #include "rndobj/Draw.h"
+#include "utl/Std.h"
 
 CharTransDraw::CharTransDraw() : mChars(this), unk54(false) {}
 
 CharTransDraw::~CharTransDraw() {}
+
+void CharTransDraw::SetDrawModes(Character::DrawMode mode) {
+    FOREACH (it, mChars) {
+        (*it)->SetDrawMode(mode);
+    }
+}
 
 BEGIN_PROPSYNCS(CharTransDraw)
     SYNC_PROP(chars, mChars)
@@ -38,9 +45,10 @@ BEGIN_LOADS(CharTransDraw)
     ASSERT_REVS(2, 1)
     LOAD_SUPERCLASS(Hmx::Object)
     LOAD_SUPERCLASS(RndDrawable)
-    bs >> mChars;
+    d >> mChars;
     if (d.altRev > 0)
-        bs >> unk54;
+        d >> unk54;
+    SetDrawModes(Character::kCharDrawOpaque);
 END_LOADS
 
 void CharTransDraw::DrawShowing() {}

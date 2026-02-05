@@ -21,6 +21,8 @@ public:
     // RndDrawable
     virtual void DrawShowing();
 
+    void SetDrawModes(Character::DrawMode);
+
     OBJ_MEM_OVERLOAD(0x14)
     NEW_OBJ(CharTransDraw);
 

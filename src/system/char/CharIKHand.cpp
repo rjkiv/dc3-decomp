@@ -99,7 +99,7 @@ INIT_REVS(0xC, 0)
 
 BEGIN_LOADS(CharIKHand)
     LOAD_REVS(bs)
-    ASSERT_REVS(0xC, 0)
+    ASSERT_REVS(0xD, 0)
     LOAD_SUPERCLASS(Hmx::Object)
     LOAD_SUPERCLASS(CharWeightable)
     bs >> mHand;

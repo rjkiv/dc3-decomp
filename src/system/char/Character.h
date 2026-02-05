@@ -126,6 +126,7 @@ public:
     static void Terminate();
     static Character *Current() { return sCurrent; }
     static void SetCurrent(Character *c) { sCurrent = c; }
+    void SetDrawMode(DrawMode m) { mDrawMode = m; }
 
 protected:
     virtual void AddedObject(Hmx::Object *);
@@ -168,7 +169,7 @@ protected:
     CharacterTest *mTest; // 0x28c
     /** "if true, is frozen in place, no polling happens" */
     bool mFrozen; // 0x290
-    int unk294;
+    DrawMode mDrawMode; // 0x294
     bool mTeleported; // 0x298
     /** "select an interest object here and select 'force_interest' below
         to force the character to look at it." */

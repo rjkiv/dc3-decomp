@@ -76,6 +76,80 @@ BEGIN_SAVES(CharacterTest)
     bs << mShowFootExtents;
 END_SAVES
 
+INIT_REVS(15, 0)
+
+BEGIN_LOADS(CharacterTest)
+    LOAD_REVS(bs)
+    if (d.rev > 15) {
+        MILO_FAIL(
+            "%s can't load new %s version %d > %d",
+            PathName(mMe),
+            "CharacterTesting",
+            d.rev,
+            gRev
+        );
+    }
+    if (d.altRev > 0) {
+        MILO_FAIL(
+            "%s can't load new %s alt version %d > %d",
+            PathName(mMe),
+            "CharacterTesting",
+            d.altRev,
+            gAltRev
+        );
+    }
+    if (d.rev != 0xD)
+        mDriver.Load(bs, false, mMe);
+
+    if (Clips()) {
+        mClip1.Load(bs, true, Clips());
+        mClip2.Load(bs, true, Clips());
+    } else {
+        Symbol s;
+        d >> s;
+        d >> s;
+        mClip1 = nullptr;
+        mClip2 = nullptr;
+    }
+    d >> mTeleportTo;
+    mWalkPath.Load(bs, false, nullptr, true);
+    d >> mShowDistMap;
+    d >> mTransition;
+    d >> mCycleTransition;
+    d >> unk94;
+    if (d.rev < 10) {
+        int i;
+        d >> i;
+    }
+    d >> mMetronome;
+    d >> mZeroTravel;
+    d >> mShowScreenSize;
+    if (d.rev < 0xC) {
+        Symbol ss;
+        d >> ss;
+    }
+    d >> mShowFootExtents;
+    if (d.rev < 0xF) {
+        bool b;
+        int i;
+        d >> b;
+        d >> i;
+    }
+    if (d.rev > 6 && d.rev < 11) {
+        Symbol ss;
+        int i;
+        d >> ss;
+        d >> i;
+    }
+    if (d.rev > 8 && d.rev < 11) {
+        Symbol ss;
+        d >> ss;
+    }
+    if (!mDriver) {
+        mDriver = mMe->Find<CharDriver>("main.drv", false);
+    }
+END_LOADS
+
 void CharacterTest::TeleportTo(Waypoint *wp) {
     if (wp)
         mMe->Teleport(wp);

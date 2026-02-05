@@ -6,6 +6,7 @@
 #include "obj/Object.h"
 #include "obj/PropSync.h"
 #include "os/Debug.h"
+#include "rndobj/PropAnim.h"
 #include "utl/TextStream.h"
 
 std::map<Symbol, CharLipSync *> *CharLipSync::sLipSyncMap;
@@ -42,6 +43,22 @@ BEGIN_SAVES(CharLipSync)
     bs << mFrames;
     bs << mData;
 END_SAVES
+
+INIT_REVS(2, 0)
+
+BEGIN_LOADS(CharLipSync)
+    LOAD_REVS(bs)
+    ASSERT_REVS(2, 0)
+    LOAD_SUPERCLASS(Hmx::Object)
+    d >> mVisemes;
+    d >> mFrames;
+    d >> mData;
+    if (d.rev == 1) {
+        ObjPtr<RndPropAnim> mPropAnim(this);
+        d >> mPropAnim;
+    }
+    RegisterLipSync(this);
+END_LOADS
 
 BEGIN_COPYS(CharLipSync)
     COPY_SUPERCLASS(Hmx::Object)

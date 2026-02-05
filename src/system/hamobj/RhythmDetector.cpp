@@ -14,7 +14,10 @@ namespace {
     float gAdjust = 1;
     int gLog = -1;
     bool gClamp = true;
-    const char **kConv;
+    const char *kConv[] = { "------00++++++00----",
+                            "---0+++0-----0+++0--",
+                            "-++0--++0--++0--++0-",
+                            "-0++--0++--0++--0++-" };
     int kConvCount = 4;
     int kConvLen;
 

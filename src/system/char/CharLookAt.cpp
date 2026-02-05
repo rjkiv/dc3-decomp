@@ -68,6 +68,44 @@ BEGIN_SAVES(CharLookAt)
     bs << mSourceRadius;
 END_SAVES
 
+INIT_REVS(5, 0)
+
+BEGIN_LOADS(CharLookAt)
+    LOAD_REVS(bs)
+    ASSERT_REVS(5, 0)
+    LOAD_SUPERCLASS(Hmx::Object)
+    LOAD_SUPERCLASS(CharWeightable)
+    d >> mSource;
+    d >> mPivot;
+    d >> mTarget;
+    d >> mHalfTime;
+    d >> mMinYaw;
+    d >> mMaxYaw;
+    d >> mMinPitch;
+    d >> mMaxPitch;
+    if (d.rev > 1) {
+        d >> mMinWeightYaw;
+        d >> mMaxWeightYaw;
+        d >> mWeightYawSpeed;
+    }
+    if (d.rev < 3)
+        mAllowRoll = true;
+    else
+        d >> mAllowRoll;
+    if (d.rev < 4) {
+        mEnableJitter = false;
+        mPitchJitterLimit = 0;
+        mYawJitterLimit = 0;
+    } else {
+        d >> mEnableJitter;
+        d >> mPitchJitterLimit;
+        d >> mYawJitterLimit;
+    }
+    if (d.rev > 4)
+        d >> mSourceRadius;
+    SyncLimits();
+END_LOADS
+
 BEGIN_COPYS(CharLookAt)
     COPY_SUPERCLASS(Hmx::Object)
     COPY_SUPERCLASS(CharWeightable)

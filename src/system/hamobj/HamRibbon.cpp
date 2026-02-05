@@ -59,6 +59,30 @@ BEGIN_SAVES(HamRibbon)
     bs << mDecay;
 END_SAVES
 
+INIT_REVS(1, 0)
+
+BEGIN_LOADS(HamRibbon)
+    LOAD_REVS(bs)
+    ASSERT_REVS(1, 0)
+    LOAD_SUPERCLASS(Hmx::Object)
+    LOAD_SUPERCLASS(RndDrawable)
+    d >> mNumSides;
+    d >> mMat;
+    d >> mActive;
+    d >> mWidth;
+    d >> mNumSegments;
+    d >> mFollowA;
+    d >> mFollowB;
+    d >> mFollowWeight;
+    d >> mTaper;
+    if (d.rev > 0) {
+        d >> mDecay;
+    }
+    mMesh->SetMat(mMat);
+    ConstructMesh();
+    unk70 = 0;
+END_LOADS
+
 BEGIN_COPYS(HamRibbon)
     COPY_SUPERCLASS(Hmx::Object)
     COPY_SUPERCLASS(RndDrawable)

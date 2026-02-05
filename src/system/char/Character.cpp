@@ -51,8 +51,8 @@ Character::Character()
     : mLods(this), mLastLod(0), mForceLod(kLOD0), mShadow(this), mTranslucent(this),
       mDriver(0), mSelfShadow(0), unk251(0), unk252(1), mSphereBase(this, this),
       mBounding(Vector3(0, 0, 0), 0), mPollState(kCharCreated),
-      mTest(new CharacterTest(this)), mFrozen(0), unk294(3), mTeleported(1), unk2a0(this),
-      mShowableProps(this), mDebugDrawInterestObjects(false) {}
+      mTest(new CharacterTest(this)), mFrozen(0), mDrawMode(kCharDrawAll), mTeleported(1),
+      unk2a0(this), mShowableProps(this), mDebugDrawInterestObjects(false) {}
 
 Character::~Character() {
     UnhookShadow();

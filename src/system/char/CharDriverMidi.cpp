@@ -39,19 +39,19 @@ INIT_REVS(7, 0)
 BEGIN_LOADS(CharDriverMidi)
     LOAD_REVS(bs)
     ASSERT_REVS(7, 0)
-    LOAD_SUPERCLASS(CharDriverMidi)
+    LOAD_SUPERCLASS(CharDriver)
     if (d.rev < 7) {
         mDefaultClip.Load(bs, false, mClips);
     }
     if (d.rev == 2) {
         String str;
-        bs >> str;
+        d >> str;
     } else if (d.rev > 3)
-        bs >> mParser;
+        d >> mParser;
     if (d.rev > 4)
-        bs >> mFlagParser;
+        d >> mFlagParser;
     if (d.rev > 5)
-        bs >> mBlendOverridePct;
+        d >> mBlendOverridePct;
 END_LOADS
 
 void CharDriverMidi::Poll() { CharDriver::Poll(); }

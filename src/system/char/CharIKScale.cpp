@@ -59,13 +59,13 @@ BEGIN_LOADS(CharIKScale)
     ASSERT_REVS(3, 0)
     LOAD_SUPERCLASS(Hmx::Object)
     LOAD_SUPERCLASS(CharWeightable)
-    bs >> mDest;
-    bs >> mScale;
+    d >> mDest;
+    d >> mScale;
     if (d.rev > 1)
-        bs >> mSecondaryTargets;
+        d >> mSecondaryTargets;
     if (d.rev > 2) {
-        bs >> mAutoWeight;
-        bs >> mBottomHeight >> mTopHeight;
+        d >> mAutoWeight;
+        d >> mBottomHeight >> mTopHeight;
     }
 END_LOADS
 
