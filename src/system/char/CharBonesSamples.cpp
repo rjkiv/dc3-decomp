@@ -10,20 +10,22 @@ CharBonesSamples::CharBonesSamples()
 
 CharBonesSamples::~CharBonesSamples() { MemFree(mRawData); }
 
+INIT_REVS(0x10, 0)
+
 BEGIN_LOADS(CharBonesSamples)
     LOAD_REVS(bs)
-    if (10 < d.rev) {
+    if (0x10 < d.rev) {
         MILO_FAIL(
-            "%s can\'t load new %s version %d > %d",
-            "",
-            "CharBonesSample",
-            bs.Tell(),
-            (unsigned short)1
+            "%s can\'t load new %s version %d > %d", "", "CharBonesSample", d.rev, gRev
         );
     }
-    if (d.rev != 0) {
+    if (d.rev > 0) {
         MILO_FAIL(
-            "%s can\'t load new %s alt version %d > %d", "", "CharBonesSample", d.altRev, 0
+            "%s can\'t load new %s alt version %d > %d",
+            "",
+            "CharBonesSample",
+            d.altRev,
+            gAltRev
         );
     }
     MILO_ASSERT(d.rev > 12, 0x29d);
