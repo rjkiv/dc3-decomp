@@ -65,7 +65,7 @@ void CampaignMqCrewProvider::UpdateList() {
             int y = 0;
             int x = 0;
             TheHamSongMgr.GetCrewStarsForDifficulty(pProfile, curSym, mqDiff, x, y);
-            // TheCampaign->unkc0[curSym] = y - x == 0
+            TheCampaign->SetUnkC0At(curSym, y - x == 0);
             if (y) {
                 mMQCrews.push_back(curSym);
             }
@@ -117,8 +117,8 @@ Symbol CampaignMasterQuestCrewSelectPanel::GetSelectedCrew() {
     int node = selectedCrewIndexNode.Int();
     if (m_pCampaignMqCrewProvider->NumData() > 0)
         return m_pCampaignMqCrewProvider->DataSymbol(node);
-    else
-        return "";
+
+    return "";
 }
 
 void CampaignMasterQuestCrewSelectPanel::UpdateCrewMesh(Symbol s) {

@@ -2,6 +2,7 @@
 #include "HamProfile.h"
 #include "HamSongMetadata.h"
 #include "SaveLoadManager.h"
+#include "hamobj/Difficulty.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
 #include "lazer/meta_ham/Playlist.h"
@@ -22,6 +23,7 @@
 #include "os/File.h"
 #include "os/PlatformMgr.h"
 #include "os/System.h"
+#include "stl/_tree.h"
 #include "stl/_vector.h"
 #include "utl/BinStream.h"
 #include "utl/FakeSongMgr.h"
@@ -30,6 +32,7 @@
 #include "utl/SongInfoCopy.h"
 #include "utl/Std.h"
 #include "utl/Symbol.h"
+#include <cstring>
 #include <vector>
 
 HamSongMgr TheHamSongMgr;
@@ -462,13 +465,12 @@ void HamSongMgr::AddSongs(DataArray *a) {
 }
 
 int HamSongMgr::RankTier(int i1) const {
-    int size = mRankTiers.size();
-    for (int i = 0; i < size; i++) {
+    for (int i = 0; i < mRankTiers.size(); i++) {
         if (i1 <= mRankTiers[i].second) {
             return i;
         }
     }
-    return size - 1;
+    return mRankTiers.size() - 1;
 }
 
 int HamSongMgr::RankTier(Symbol s1) const {
@@ -617,6 +619,84 @@ void HamSongMgr::GetCharacterStars(
                 }
                 i1 += starsForDiff;
                 i2 += 5;
+            }
+        }
+    }
+}
+
+void HamSongMgr::GetCrewStars(
+    HamProfile const *profile, Symbol crew, int &i1, int &i2
+) const {
+    i1 = 0;
+    i2 = 0;
+    if (profile) {
+        const std::set<int> &songSet = GetAvailableSongSet();
+        SongStatusMgr *mgr = profile->GetSongStatusMgr();
+        FOREACH (it, songSet) {
+            int songID = *it;
+            const HamSongMetadata *data = TheHamSongMgr.Data(songID);
+            bool b = false;
+            Symbol crewForChar = GetCrewForCharacter(GetOutfitCharacter(data->Outfit()));
+            static Symbol ham3("ham3");
+            if (!data->IsFake() && data->GameOrigin() == ham3 && crewForChar == crew
+                && TheProfileMgr.IsContentUnlocked(data->ShortName())) {
+                int bestStars = mgr->GetBestStars(songID, b, kDifficultyBeginner);
+                if (bestStars > 5) {
+                    bestStars = 5;
+                } else {
+                    bestStars = Clamp(0, 5, bestStars);
+                }
+                i1 += bestStars;
+                i2 += 5;
+            }
+        }
+    }
+}
+
+void HamSongMgr::GetCrewStarsForDifficulty(
+    HamProfile const *profile, Symbol crew, Difficulty diff, int &i1, int &i2
+) const {
+    i1 = 0;
+    i2 = 0;
+    if (profile) {
+        const std::set<int> &songSet = GetAvailableSongSet();
+        SongStatusMgr *mgr = profile->GetSongStatusMgr();
+        FOREACH (it, songSet) {
+            int songID = *it;
+            const HamSongMetadata *data = TheHamSongMgr.Data(songID);
+            bool b = false;
+            Symbol crewForChar = GetCrewForCharacter(GetOutfitCharacter(data->Outfit()));
+            static Symbol ham3("ham3");
+            if (!data->IsFake() && data->GameOrigin() == ham3 && crewForChar == crew
+                && TheProfileMgr.IsContentUnlocked(data->ShortName())) {
+                int starsForDiff = mgr->GetStarsForDifficulty(songID, diff, b);
+                if (starsForDiff > 5) {
+                    starsForDiff = 5;
+                } else {
+                    starsForDiff = Clamp(0, 5, starsForDiff);
+                }
+                i1 += starsForDiff;
+                i2 += 5;
+            }
+        }
+    }
+}
+
+void HamSongMgr::GetValidSongs(
+    MetaPerformer const &performer, std::vector<Symbol> &songs
+) const {
+    songs.clear();
+    std::vector<int> songIDs;
+    GetRankedSongs(songIDs);
+    static Symbol band("band");
+    FOREACH (it, songIDs) {
+        int songID = *it;
+        Symbol shortName = GetShortNameFromSongID(songID);
+        const HamSongMetadata *data = Data(songID);
+        if (data->IsVersionOK() && !performer.SongInSet(shortName)) {
+            char const *title = data->Title();
+            if (title[0] != 'x' && title[0] != '_' && strstr(title, "test") == nullptr) {
+                songs.push_back(shortName);
             }
         }
     }

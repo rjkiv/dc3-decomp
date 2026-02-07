@@ -25,8 +25,6 @@ public:
         Symbol unk0;
         String unk4;
         float unkc;
-        float unk10;
-        float unk14;
     };
 
     // Hmx::Object
@@ -66,7 +64,7 @@ protected:
     bool unk96;
     std::map<Symbol, std::list<String> > unk98;
     bool unkb0;
-    std::list<MotdData> unkb4;
+    std::list<MotdData> mMotdData; // 0xb4
     int unkbc;
     int unkc0;
     int unkc4;

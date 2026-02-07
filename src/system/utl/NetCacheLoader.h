@@ -2,6 +2,7 @@
 #include "os/FileCache.h"
 #include "utl/Loader.h"
 #include "utl/MemMgr.h"
+#include "utl/NetCacheMgr.h"
 #include "utl/NetLoader.h"
 #include "utl/Str.h"
 
@@ -21,6 +22,7 @@ public:
     int GetSize();
     char *GetBuffer();
     const char *GetRemotePath() const;
+    enum NetCacheMgrFailType GetFailType() const;
     void PollLoading() { Poll(); }
 
     MEM_OVERLOAD(NetCacheLoader, 0x1C);

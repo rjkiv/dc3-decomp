@@ -272,6 +272,7 @@ public:
     String TextASCII() const;
     void SetTextASCII(const char *);
     void SetFixedLength(int);
+    void ReFitTextScroll(String);
 
     static void Init();
     static void DrawBlacklight();
@@ -286,7 +287,7 @@ public:
     int FontMapIndex(RndFontBase *, bool);
     float ComputeHeight(int, float, float &);
     int NumStyles() const { return mStyles.size(); }
-    int Width() const { return mWidth; }
+    float Width() const { return mWidth; }
 
 protected:
     RndText();

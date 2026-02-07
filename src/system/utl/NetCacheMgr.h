@@ -9,11 +9,13 @@
 #include "utl/Symbol.h"
 #include <list>
 
+class NetCacheLoader;
+
 enum NetCacheMgrFailType {
     kNCMFT_Unknown,
     kNCMFT_StoreServer,
-    kNCMFT_NoSpace,
-    kNCMFT_StorageDeviceMissing,
+    kNCMFT_ClientError,
+    kNCMFT_NoEthernetCable,
     kNCMFT_Max
 };
 
@@ -95,6 +97,8 @@ public:
     void DeleteNetCacheLoader(NetCacheLoader *);
     NetLoader *AddNetLoader(const char *, NetLoaderPos);
     NetCacheLoader *AddNetCacheLoader(const char *, NetLoaderPos);
+
+    bool GetUnk30() const { return unk30; }
 
 private:
     void EnterLoadState();

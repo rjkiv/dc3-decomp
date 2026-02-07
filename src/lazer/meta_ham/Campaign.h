@@ -132,6 +132,7 @@ public:
     const std::vector<CampaignEra *> &Eras() const { return m_vEras; }
     Symbol GetMQCrew() { return mMasterQuestCrew; }
     bool InDCICutscene() const { return mCampaignState == kCampaignStateDciCutscene; }
+    void SetUnkC0At(Symbol key, bool b) { unkc0[key] = b; }
 
 protected:
     CampaignEra *GetCampaignEra(int index) const;
