@@ -919,16 +919,19 @@ def generate_build_ninja(
 
             # Add appropriate language flag if it doesn't exist already
             # Added directly to the source so it flows to other generation tasks
-            if not any(flag.startswith("-lang") for flag in cflags) and not any(
-                flag.startswith("-lang") for flag in extra_cflags
+            def is_lang_flag(flag):
+                return flag.startswith("-lang") or flag in ("/TP", "/TC", "/Tp", "/Tc")
+
+            if not any(is_lang_flag(flag) for flag in cflags) and not any(
+                is_lang_flag(flag) for flag in extra_cflags
             ):
                 # Ensure extra_cflags is a unique instance,
                 # and insert into there to avoid modifying shared sets of flags
                 extra_cflags = obj.options["extra_cflags"] = list(extra_cflags)
-                # if file_is_cpp(src_path):
-                #     extra_cflags.insert(0, "/Tp")
-                # else:
-                #     extra_cflags.insert(0, "/Tc")
+                if file_is_cpp(src_path):
+                    extra_cflags.insert(0, "/TP")
+                else:
+                    extra_cflags.insert(0, "/TC")
 
             all_cflags = cflags + extra_cflags
             cflags_str = make_flags_str(all_cflags)
@@ -976,6 +979,8 @@ def generate_build_ninja(
                         or flag.startswith("-I+")
                     ):
                         include_dirs.append(flag[3:])
+                    elif flag.startswith("/I"):
+                        include_dirs.append(flag[2:].lstrip())
                 includes = " ".join([f"-I {d}" for d in include_dirs])
                 n.build(
                     outputs=obj.ctx_path,
@@ -1520,6 +1525,15 @@ def generate_objdiff_config(
         "Wii/1.5": "mwcc_43_188",
         "Wii/1.6": "mwcc_43_202",
         "Wii/1.7": "mwcc_43_213",
+        "X360/14.00.2110": "msvc_ppc_14.00.2110",
+        "X360/16.00.11886.00": "msvc_ppc_16.00.11886.00",
+    }
+
+    # decomp.me platform mapping (by version prefix)
+    PLATFORM_MAP = {
+        "GC": "gc_wii",
+        "Wii": "gc_wii",
+        "X360": "xbox360",
     }
 
     def add_unit(
@@ -1566,6 +1580,7 @@ def generate_objdiff_config(
                 and not flag.startswith("-I ")
                 and not flag.startswith("-I+")
                 and not flag.startswith("-I-")
+                and not flag.startswith("/I")
             )
 
         all_cflags = list(
@@ -1583,13 +1598,13 @@ def generate_objdiff_config(
 
         compiler_version = COMPILER_MAP.get(obj.options["mw_version"])
         if compiler_version is None:
-            pass
-            # TODO: add this back in when we actually have a scratch config for Xbox
-            # print(f"Missing scratch compiler mapping for {obj.options['mw_version']}")
+            print(f"Missing scratch compiler mapping for {obj.options['mw_version']}")
         else:
+            platform_prefix = obj.options["mw_version"].split("/")[0]
+            platform = PLATFORM_MAP.get(platform_prefix, "gc_wii")
             cflags_str = make_flags_str(all_cflags)
             unit_config["scratch"] = {
-                "platform": "gc_wii",
+                "platform": platform,
                 "compiler": compiler_version,
                 "c_flags": cflags_str,
                 "preset_id": obj.options["scratch_preset_id"],
