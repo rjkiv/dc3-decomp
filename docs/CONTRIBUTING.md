@@ -9,7 +9,7 @@ I don’t blame you, it's a phenomenal game - arguably one of HMX’s best works
 - Your preferred text editor. We use [VSCode](https://code.visualstudio.com/) with the C++ and clang extensions, but anything should work as long as you have a good way of running `clang-format`.
 
 ## Helpful Resources
-- [Resym](https://ergrelet.github.io/resym/) - you can use this to view PDBs of other Xbox 360 games. While this won't help you with DC3 specific classes, these will provide helpful info for XDK functions and structs.
+- [Resym](https://resym.chimpsatsea.com/) - you can use this to view PDBs of other Xbox 360 games. While this won't help you with DC3 specific classes, these will provide helpful info for XDK functions and structs.
 - [The RB3 Decomp](https://github.com/DarkRTA/rb3) - RB3 and DC3 run under the same core engine - this means there is a TON of overlap between system-level classes. You can reference RB3's TUs against DC3's if they exist, and if you're lucky, the code you're working on may not have been changed at all, and you can integrate it into DC3 with minimal tweaks.
 - [RB2 Wii Dwarf Dump](https://raw.githubusercontent.com/DarkRTA/rb3/refs/heads/master/doc/rb2_dump.cpp) - like a PDB, but for Wii - and it's for RB2. While RB2 Milo is definitely a ways away from DC3 Milo, you can still look at classes and their encapsulated members for reference.
 - `docs/dc_symbols.txt` - contains demangled versions of all the MSVC symbols the map gave us. This will prove very helpful when resolving code merged entries, or filling out class headers.
