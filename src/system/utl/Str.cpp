@@ -8,6 +8,11 @@
 
 char gEmpty[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
+FixedString::FixedString() : mStr((char *)(gEmpty + 4)) {
+    *(int *)(mStr - 4) = 0;
+    mStr[0] = '\0';
+}
+
 FixedString::FixedString(char *str, int bufferSize) {
     mStr = str + 4;
     MILO_ASSERT(bufferSize >= 5, 0x1C);
@@ -147,7 +152,11 @@ String::String(unsigned int len, char c) {
 
 String::String(const String &str) { *this = str.c_str(); }
 
-String::~String() {}
+String::~String() {
+    if (capacity() != 0) {
+        MemOrPoolFree(capacity() + 5, mStr - 4);
+    }
+}
 
 bool String::operator!=(const char *str) const {
     if (str == 0)
@@ -410,6 +419,4 @@ String &String::insert(unsigned int pos, unsigned int count, char c) {
     return *this;
 }
 
-String &String::insert(unsigned int pos, const char *str) {
-    return replace(pos, 0, str);
-}
+String &String::insert(unsigned int pos, const char *str) { return replace(pos, 0, str); }

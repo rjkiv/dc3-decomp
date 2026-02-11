@@ -171,7 +171,7 @@ const char *PrintPropertyPath(DataArray *arr) {
     str << arr;
     str[0U] = '[';
     str[str.length() - 1] = ']';
-    return MakeString(str);
+    return MakeString(str.c_str());
 }
 
 int SubDirHashUsed(ObjectDir *dir) {
