@@ -53,7 +53,7 @@ def dtk_url(tag: str) -> str:
         arch = "x86_64"
 
     repo = "https://github.com/rjkiv/jeff" 
-    return f"{repo}/releases/download/{tag}/dtk-{system}-{arch}{suffix}"
+    return f"{repo}/releases/download/{tag}/jeff-{system}-{arch}{suffix}"
 
 
 def objdiff_cli_url(tag: str) -> str:
