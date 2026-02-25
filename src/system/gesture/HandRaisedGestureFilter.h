@@ -20,6 +20,8 @@ public:
     void Update(int, int);
     void Clear();
     bool HandRaised() const { return mHandRaised; }
+    void SetHandRaised(bool b) { mHandRaised = b; }
+    void SetRaisedMs(int i) { mRaisedMs = i; }
 
     NEW_OBJ(HandRaisedGestureFilter)
 

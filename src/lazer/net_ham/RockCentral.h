@@ -34,6 +34,7 @@ public:
     virtual unsigned int GetPrincipalID() const { return 0; }
 
     void Init();
+    void Poll();
     void Terminate();
     void GetCommunityMsg(int, String &) const;
     int GetCommunityMsgCount() const;
@@ -47,6 +48,7 @@ public:
     void CancelOutstandingCalls(Hmx::Object *);
     void SetMiscArtBitMap(RndBitmap &);
     void DeleteMiscArt();
+    int GetMotdFreq() const;
 
     DataNode OnMsg(const ServerStatusChangedMsg &);
     DataNode OnMsg(const ConnectionStatusChangedMsg &);
@@ -87,9 +89,9 @@ protected:
     int unk90;
     std::vector<String> mCommunityMsgs; // 0x94
     String mDLCMsg; // 0xa0
-    String mUtilityMsg; // 0xa8
+    String unka8; // 0xa8
     String unkb0;
-    String unkb8;
+    String mUtilityMsg; // 0xb8
     String unkc0;
     String unkc8;
     String unkd0;

@@ -531,3 +531,9 @@ void HamGameData::AutoAssignSkeletons(const SkeletonUpdateData *data) {
         }
     }
 }
+
+void HamGameData::SetPlayerSidesLocked(bool locked) {
+    if (mPlayerSidesLocked != locked) {
+        mPlayerSidesLocked = locked;
+    }
+}

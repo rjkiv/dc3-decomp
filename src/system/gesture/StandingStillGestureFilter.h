@@ -21,6 +21,7 @@ public:
     void SetRaisedMs(int ms) { mRaisedMs = ms; }
     void SetUnk4c(bool b) { unk4c = b; }
 
+    void SetStandingStill(bool b) { mStandingStill = b; }
     bool StandingStill() const { return mStandingStill; }
     int RaisedMs() const { return mRaisedMs; }
 

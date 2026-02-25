@@ -20,7 +20,9 @@
 #include "meta_ham/ShellInput.h"
 #include "meta_ham/SkeletonChooser.h"
 #include "meta_ham/UIEventMgr.h"
+#include "net/DingoSvr.h"
 #include "net_ham/FriendsListJobs.h"
+#include "net_ham/RockCentral.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Msg.h"
@@ -38,6 +40,7 @@
 #include "utl/Std.h"
 #include "utl/Symbol.h"
 #include "game/HamUser.h"
+#include "utl/TextStream.h"
 
 ProfileMgr TheProfileMgr;
 
@@ -904,6 +907,60 @@ void ProfileMgr::UpdateFriendsList() {
         if (profile->HasValidSaveData()) {
             UpdateFriendsListJob *job = new UpdateFriendsListJob(nullptr, profile);
             job->EnumerateFriends();
+        }
+    }
+}
+
+void ProfileMgr::Poll() {
+    const char *authStatus;
+    const char *onlineStatus;
+    if (unkb0 && unkb8.SplitMs() > 1000.0f) {
+        unkb0 = false;
+        TriggerSignoutEvent();
+    }
+    if (mProfilesOverlay && mProfilesOverlay->Showing()) {
+        mProfilesOverlay->Clear();
+        if (TheServer.IsAuthenticated()) {
+            authStatus = "auth";
+        } else {
+            authStatus = "not auth";
+        }
+
+        if (TheRockCentral.IsOnline()) {
+            onlineStatus = "online";
+        } else {
+            onlineStatus = "offline";
+        }
+
+        *mProfilesOverlay << "rock central " << onlineStatus << ", dingo " << authStatus
+                          << "\n";
+
+        int lines = 1;
+        HamProfile *pActiveProfile = GetActiveProfile(false);
+        HamProfile *critProfile = mCriticalProfile;
+        FOREACH (it, unk90) {
+            HamProfile *profile = *it;
+            if (profile) {
+                int padnum = profile->GetPadNum();
+                if (ThePlatformMgr.IsSignedIn(padnum)) {
+                    *mProfilesOverlay << "profile " << profile->GetName() << " pad"
+                                      << padnum;
+                    if (profile == pActiveProfile) {
+                        *mProfilesOverlay << " active";
+                    }
+                    if (profile == critProfile) {
+                        *mProfilesOverlay << " critical";
+                    }
+                    if (ThePlatformMgr.IsSignedIntoLive(padnum)) {
+                        *mProfilesOverlay << " live";
+                    }
+                    *mProfilesOverlay << "\n";
+                    lines++;
+                }
+            }
+        }
+        if (lines != 0) {
+            mProfilesOverlay->SetLines(lines);
         }
     }
 }

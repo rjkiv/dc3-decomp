@@ -94,6 +94,7 @@ public:
         mFavoriteStats[id].mCounts[key]++;
         mDirty = true;
     }
+
     void AddCount(CountStatID id, int count) {
         mCountStats[id] += count;
         mDirty = true;

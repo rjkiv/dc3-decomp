@@ -730,3 +730,81 @@ void SkeletonChooser::SwapPlayerDataForPractice() {
     pPlayer2 = TheGameData->Player(1);
     TheGameData->SetAssociatedPadNum(1, pPlayer1->PadNum());
 }
+
+void SkeletonChooser::UpdatePlayerSkeletonNavData() {
+    static Symbol ui_nav_mode("ui_nav_mode");
+    const DataNode *pNavPlayerNode = TheHamProvider->Property(ui_nav_mode, true);
+    MILO_ASSERT(pNavPlayerNode, 0x328);
+    Symbol nodeSym = pNavPlayerNode->Sym();
+    static Symbol game("game");
+    int trackingID = -1;
+    bool notGame = nodeSym != game;
+    if (0 <= mNextSkelIdxToTrack) {
+        trackingID = TheGestureMgr->GetSkeleton(mNextSkelIdxToTrack).TrackingID();
+    }
+
+    int player1ID = TheGestureMgr->GetPlayerFilteredSkeletonID(0, notGame);
+    if (player1ID == trackingID) {
+        player1ID = -1;
+    }
+    int player2ID = TheGestureMgr->GetPlayerFilteredSkeletonID(1, notGame);
+    if (player2ID == trackingID) {
+        player2ID = -1;
+    }
+
+    SetPlayerSkeletonNavData(player1ID, player2ID);
+    SetPlayerSkeletonWarningData(player1ID, player2ID);
+    TheGameData->SetPlayerSidesLocked(false);
+    if (TheGameData->GetPlayerSidesLocked() == false) {
+        ChoosePlayerSides();
+    }
+
+    for (int i = 0; i < 2; i++) {
+        int assignedID = GetAssignedPlayerSkeletonID(i);
+        mHandRaisedFilters[i]->Update(assignedID, TheTaskMgr.DeltaUISeconds() * 1000.0f);
+    }
+}
+
+void SkeletonChooser::ResolveMultiPlayerUpdate() {
+    MILO_ASSERT(TheGestureMgr->IsTrackingAllSkeletons(), 0x680);
+
+    for (int i = 0; i < 6; i++) {
+        unka4[i] = 0;
+        TheGestureMgr->SetUnk30AtPos(i, 0);
+    }
+
+    for (int i = 0; i < 6; i++) {
+        Skeleton &skel = TheGestureMgr->GetSkeleton(i);
+        if ((0 <= skel.SkeletonIndex()) && (0 < skel.TrackingID())) {
+            unk4c[i]->Update(skel, TheTaskMgr.DeltaUISeconds() * 1000.0f);
+            if (unk4c[i]->HandRaised()) {
+                unka4[i] = 1;
+            }
+        }
+    }
+}
+
+int SkeletonChooser::GetNumValidSkeletonChoices() {
+    int numValidSkeletonChoices = 0;
+    SkeletonRecoverer &recoverer = TheGestureMgr->Recoverer();
+    for (int i = 0; i < 6; i++) {
+        Skeleton &skel = TheGestureMgr->GetSkeleton(i);
+        int trackingID = skel.TrackingID();
+        bool b = false;
+        for (int j = 0; j < 2; j++) {
+            HamPlayerData *pPlayer = TheGameData->Player(j);
+            int playerSkeletonTrackingID = pPlayer->GetSkeletonTrackingID();
+            int trackingIDWithRecovery =
+                recoverer.GetTrackingIDWithRecovery(playerSkeletonTrackingID, -1);
+            if (trackingID == playerSkeletonTrackingID
+                || trackingID == trackingIDWithRecovery) {
+                b = true;
+                break;
+            }
+        }
+        if (!b) {
+            numValidSkeletonChoices++;
+        }
+    }
+    return numValidSkeletonChoices;
+}

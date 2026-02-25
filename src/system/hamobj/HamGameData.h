@@ -40,11 +40,8 @@ public:
     void HandlePoseFound(int);
     void UpdateAssociatedPads();
 
-    void SetPlayerSidesLocked(bool locked) {
-        if (mPlayerSidesLocked != locked) {
-            mPlayerSidesLocked = locked;
-        }
-    }
+    void SetPlayerSidesLocked(bool locked);
+    bool GetPlayerSidesLocked() { return mPlayerSidesLocked; }
     void SetSong(Symbol song) { mSong = song; }
     Symbol GetSong() const { return mSong; }
     void SetVenue(Symbol venue) { mVenue = venue; }

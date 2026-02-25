@@ -20,6 +20,7 @@
 #include "utl/MemMgr.h"
 #include "utl/Symbol.h"
 #include "utl/TempoMap.h"
+#include "utl/TimeConversion.h"
 
 LoadingPanel::LoadingPanel() : unk38(0), unk3c(), unk40(0) { sSongDB = new SongDB(); }
 

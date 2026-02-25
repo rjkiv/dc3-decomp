@@ -49,7 +49,7 @@ public:
     NEW_OBJ(MainMenuPanel)
 
     MainMenuPanel();
-    MainMenuProvider GetMainMenuProvider() const { return unk44; }
+    MainMenuProvider GetMainMenuProvider() const;
 
 protected:
     HamLabel *mMsgLabel; // 0x40

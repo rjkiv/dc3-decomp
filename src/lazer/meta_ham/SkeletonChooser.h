@@ -64,7 +64,9 @@ private:
     void ResolveMultiPlayerUpdate();
     void SetPlayerCloseWarnings(int, int);
     bool IsBehindPlayer(int, int);
+    void SetPlayerSkeletonNavData(int, int);
     void SetPlayerSkeletonWarningData(int, int);
+    void ChoosePlayerSides();
 
 protected:
     DirectionGestureFilterSingleUser *unk2c;

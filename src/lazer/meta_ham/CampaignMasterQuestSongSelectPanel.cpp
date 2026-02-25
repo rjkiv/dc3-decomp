@@ -1,5 +1,6 @@
 #include "meta_ham/CampaignMasterQuestSongSelectPanel.h"
 #include "TexLoadPanel.h"
+#include "hamobj/Difficulty.h"
 #include "hamobj/HamNavList.h"
 #include "macros.h"
 #include "meta_ham/Campaign.h"
@@ -10,6 +11,7 @@
 #include "meta_ham/MQSongSortMgr.h"
 #include "meta_ham/MetaPerformer.h"
 #include "meta_ham/ProfileMgr.h"
+#include "meta_ham/SongStatusMgr.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
@@ -19,6 +21,7 @@
 #include "rndobj/Tex.h"
 #include "ui/UILabel.h"
 #include "ui/UIPanel.h"
+#include "utl/Std.h"
 #include "utl/Symbol.h"
 #include <cstdio>
 
@@ -185,4 +188,24 @@ void CampaignMasterQuestSongSelectPanel::Refresh() {
             mNavList->PushBackBigElement(*it);
         }
     }
+}
+
+void CampaignMasterQuestSongSelectPanel::OnHighlightHeader() {
+    Symbol selectedSong = GetSelectedSong();
+    mImpl->mContextualTitleLabel->SetTextToken(selectedSong);
+    static DataNode &mq_difficulty = DataVariable("mq_difficulty");
+    FOREACH (it, m_pCampaignSongProvider->GetVecAt(selectedSong)) {
+        HamProfile *activeProfile = TheProfileMgr.GetActiveProfile(true);
+        SongStatusMgr *mgr = activeProfile->GetSongStatusMgr();
+        bool b;
+        int stars = mgr->GetStarsForDifficulty(
+            TheHamSongMgr.GetSongIDFromShortName(selectedSong),
+            (Difficulty)mq_difficulty.Int(),
+            b
+        );
+        if (stars >= 5) {
+            stars = 5;
+        }
+    }
+    // not done but getting there
 }

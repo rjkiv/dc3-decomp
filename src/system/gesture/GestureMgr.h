@@ -96,6 +96,7 @@ public:
     bool InControllerMode() const { return mInControllerMode; }
     SkeletonRecoverer &Recoverer() { return mRecoverer; }
     void SetActiveSkeletonTrackingID(int id) { mActiveSkelTrackingID = id; }
+    void SetUnk30AtPos(int idx, int val) { unk30[idx] = val; }
 
     static bool sIdentityOpInProgress;
     static void Init();

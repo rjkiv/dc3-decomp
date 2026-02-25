@@ -97,7 +97,7 @@ void RockCentral::SetLoginPassword(const char *password) {
 void RockCentral::Login() {
     mState = (State)1;
     unkdd = false;
-    if (!TheServer.Authenticate(0)) { // should be TheServer->unk74
+    if (!TheServer.Authenticate(TheServer.GetUnk74())) { // should be TheServer->unk74
         Export(ServerStatusChangedMsg((ServerStatusResult)4), false);
     }
 }
@@ -207,9 +207,9 @@ DataNode RockCentral::OnMsg(const RCJobCompleteMsg &msg) {
             unk90,
             mCommunityMsgs,
             mDLCMsg,
-            mUtilityMsg,
+            unka8,
             unkb0,
-            unkb8,
+            mUtilityMsg,
             unkc0,
             unkc8,
             unkd0

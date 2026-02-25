@@ -17,6 +17,7 @@
 #include "os/Debug.h"
 #include "rndobj/Bitmap.h"
 #include "rndobj/Tex.h"
+#include "rndobj/Text.h"
 #include "synth/Sound.h"
 #include "ui/UIListProvider.h"
 #include "ui/UIPanel.h"
@@ -362,11 +363,91 @@ void MainMenuPanel::UpdateArtLoaders() {
     }
 }
 
+void MainMenuPanel::MotdInitializeTexts() {
+    static Symbol dlc("dlc");
+    static Symbol utility("utility");
+    static Symbol community("community");
+    static Symbol stats("stats");
+    static Symbol no_profile("no_profile");
+    if (mMsgLabel->GetFitType() != RndText::FitType::kFitScrollMarqueeWrapAlways) {
+        MILO_LOG(
+            ">>>>>>>>>> Forcing the souce lable to use kFitScrollMarqueeWrapAlways as the text fit type.\n"
+        );
+        mMsgLabel->SetFitType(RndText::FitType::kFitScrollMarqueeWrapAlways);
+    }
+    // something here
+    unkb0 = false;
+    mMotdData.clear();
+    if (!unk98[no_profile].empty()) {
+        mMsgLabel->SetPrelocalizedString(unk98[no_profile].front());
+        return;
+    } else {
+        if (unk98[dlc].empty() && unk98[utility].empty()) {
+            if (unk98[community].size() + unk98[stats].size() == 1) {
+                mMsgLabel->SetPrelocalizedString(unk98[stats].front());
+                return;
+            }
+        }
+    }
+
+    unkb0 = true;
+    mMsgLabel->SetUnk78(this);
+    float width = mMsgLabel->Width() * 2.0f;
+    unkbc = TheRockCentral.GetMotdFreq();
+    int commSize = unk98[community].size();
+    int statSize = unk98[stats].size();
+    if (unk98[dlc].empty() && unk98[utility].empty()) {
+        unkbc = 0;
+    } else if (unkbc < 1) {
+        unkbc = 1;
+    } else if (statSize + commSize < unkbc - 1) {
+        unkbc = commSize + statSize + 1;
+    }
+    if (unk98[community].empty()) {
+        unkcc = 0;
+    } else {
+        if (commSize == 0) {
+            unkcc = 0;
+        }
+        if (1 < commSize) {
+            unkcc = 2;
+        }
+    }
+
+    if (unk98[stats].empty()) {
+        unkc4 = 1;
+    } else {
+        if (statSize > 1) {
+            unkc4 = 1;
+        } else {
+            unkc4 = 2;
+        }
+    }
+
+    unkc8 = 0;
+    unkd0 = 0;
+    unkc0 = 0;
+    float f = 0.0f;
+    unkd4 = utility;
+    MotdPickNextText();
+    while (f < width) {
+        f += MotdPickNextText();
+    }
+    MILO_ASSERT(mMotdData.size(), 600);
+    String text = mMotdData.front().unk4;
+    FOREACH (it, mMotdData) {
+        text += "\n";
+        text += (*it).unk4;
+    }
+    mMsgLabel->SetPrelocalizedString(text);
+}
+
 BEGIN_HANDLERS(MainMenuPanel)
     HANDLE_ACTION(
         update_main_menu_provider, unk44.UpdateList(_msg->Obj<UIListProvider>(2))
     )
-    HANDLE_EXPR(get_main_menu_provider, &unk44) // not a perfect match for some reason
+    HANDLE_EXPR(get_main_menu_provider, &unk44) // not a perfect match for
+                                                // some reason
     HANDLE_EXPR(dlc_image, unk8c)
     HANDLE_EXPR(utility_image, unk90)
     HANDLE_ACTION(update_icon_state, UpdateIconState(_msg->Sym(2)))

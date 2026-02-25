@@ -288,6 +288,9 @@ public:
     float ComputeHeight(int, float, float &);
     int NumStyles() const { return mStyles.size(); }
     float Width() const { return mWidth; }
+    FitType GetFitType() const { return mFitType; }
+    void SetFitType(FitType f) { mFitType = f; }
+    void SetUnk78(Hmx::Object *o) { unk78 = o; };
 
 protected:
     RndText();

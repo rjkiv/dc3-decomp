@@ -1225,6 +1225,19 @@ void MetaPerformer::SaveAndUploadScores(Symbol s, int i1, int i2) {
     }
 }
 
+void MetaPerformer::CalculatePracticeResults() {
+    mNumLearnMovesPassed = 0;
+    mNumLearnMovesFastLaned = 0;
+    mNumLearnMovesTotal = 0;
+    mPracticeLearnScore = 0;
+    mNumReviewMovesPassed = 0;
+    mNumReviewMovesTotal = 0;
+    mPracticeReviewScore = 0;
+    MoveDir *moves = TheHamDirector->GetWorld()->Find<MoveDir>("moves");
+    MILO_ASSERT(moves, 0x4a4);
+    ObjDirItr<PracticeSection> sections(moves, true);
+}
+
 #pragma endregion
 #pragma region MetaPerformerHook
 

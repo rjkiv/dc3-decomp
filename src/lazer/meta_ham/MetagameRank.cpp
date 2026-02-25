@@ -13,6 +13,7 @@
 #include "os/Debug.h"
 #include "os/System.h"
 #include "math/Rand.h"
+#include "utl/Std.h"
 #include "utl/Symbol.h"
 #include <algorithm>
 #include <cstdio>
@@ -21,6 +22,7 @@ namespace {
     DataArray *gRanksArray;
     DataArray *gRepeatableTasks;
     DataArray *gOneTimeTasks;
+    int kMaxTasksOneTime = 0x3f;
 
     // size 0x14
     struct DeferredAward {
@@ -524,7 +526,7 @@ void MetagameRank::AwardPointsForTask(Symbol task) {
             MILO_FAIL("Task %s not found in metagame_rank.dta", task_index);
         }
 
-        MILO_ASSERT(task_index, 0x19b); // change later
+        MILO_ASSERT(task_index < kMaxTasksOneTime, 0x19b);
         if (!oneTimeTask) {
             return;
         }
