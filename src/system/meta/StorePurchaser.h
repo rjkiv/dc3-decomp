@@ -26,14 +26,16 @@ public:
 class XboxPurchaser : public StorePurchaser, public Hmx::Object {
 public:
     // Hmx::Object
-    ~XboxPurchaser();
+    virtual ~XboxPurchaser();
     virtual DataNode Handle(DataArray *, bool);
 
     // StorePurchaser
-    virtual void Initiate();
-    virtual bool IsPurchasing() const;
-    virtual bool IsSuccess() const;
-    virtual bool PurchaseMade() const;
+    virtual void Initiate(); // 0x4
+    virtual bool IsPurchasing() const; // 0x8
+    virtual bool IsSuccess() const; // 0xc
+    virtual bool PurchaseMade() const; // 0x10
+    virtual bool NeedsEnum() const { return true; }; // 0x14
+    virtual void Poll() {}; // 0x18
 
     XboxPurchaser(
         int,

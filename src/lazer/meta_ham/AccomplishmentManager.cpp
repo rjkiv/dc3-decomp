@@ -226,6 +226,7 @@ void AccomplishmentManager::ConfigureAccomplishmentCategoryData(DataArray *cfg) 
         if (HasAccomplishmentCategory(name)) {
             MILO_NOTIFY("%s accomplishment category already exists, skipping", name.Str());
             delete pAccomplishmentCategory;
+            continue;
         } else {
             Symbol group = pAccomplishmentCategory->GetGroup();
             if (!HasAccomplishmentGroup(group)) {
@@ -235,6 +236,7 @@ void AccomplishmentManager::ConfigureAccomplishmentCategoryData(DataArray *cfg) 
                     group.Str()
                 );
                 delete pAccomplishmentCategory;
+                continue;
             } else {
                 mAccomplishmentCategories[name] = pAccomplishmentCategory;
                 if (pAccomplishmentCategory->HasAward()) {
@@ -276,6 +278,7 @@ void AccomplishmentManager::ConfigureAccomplishmentData(DataArray *cfg) {
         if (HasAccomplishment(name)) {
             MILO_NOTIFY("%s accomplishment already exists, skipping", name.Str());
             delete pAccomplishment;
+            continue;
         } else {
             Symbol cat = pAccomplishment->GetCategory();
             if (!HasAccomplishmentCategory(cat)) {
@@ -285,6 +288,7 @@ void AccomplishmentManager::ConfigureAccomplishmentData(DataArray *cfg) {
                     cat.Str()
                 );
                 delete pAccomplishment;
+                continue;
             } else {
                 mAccomplishments[name] = pAccomplishment;
                 if (pAccomplishment->HasAward()) {
@@ -892,13 +896,18 @@ void AccomplishmentManager::UpdateMiscellaneousSongDataForUser(
 }
 
 HardCoreStatus AccomplishmentManager::GetIconHardCoreStatus(int x) const {
-    int i;
-    for (i = 0; i < 4; i++) {
-        if (x < mIconThresholds[i]) {
-            return (HardCoreStatus)i;
+    HardCoreStatus result = (HardCoreStatus)0;
+    int i = 0;
+    const int *thresholds = mIconThresholds;
+    while (i < 4) {
+        if (x < *thresholds) {
+            return result;
         }
+        result = (HardCoreStatus)i;
+        i++;
+        thresholds++;
     }
-    return (HardCoreStatus)3;
+    return result;
 }
 
 bool AccomplishmentManager::HasCompletedAccomplishment(HamUser *user, Symbol s) const {

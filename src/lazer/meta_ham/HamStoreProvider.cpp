@@ -76,9 +76,7 @@ Symbol HamStoreProvider::DataSymbol(int idx) const {
     return (*mFilteredOffers)[idx]->StoreOfferData()->Sym(0);
 }
 
-void HamStoreProvider::Text(
-    int, int data, UIListLabel *slot, UILabel *label
-) const {
+void HamStoreProvider::Text(int, int data, UIListLabel *slot, UILabel *label) const {
     MILO_ASSERT_RANGE(data, 0, mFilteredOffers->size(), 0x118);
     StoreOffer *offer = (*mFilteredOffers)[data];
     if (!offer) {
@@ -114,7 +112,8 @@ void HamStoreProvider::Text(
             }
         } else if (slot->Matches("cost")) {
             String temp;
-            if (!ShowBrowserPurchased(offer) && !offer->InLibrary() && offer->IsAvailable()) {
+            if (!ShowBrowserPurchased(offer) && !offer->InLibrary()
+                && offer->IsAvailable()) {
                 static_cast<AppLabel *>(label)->SetStoreOfferCost(offer);
             }
             return;
@@ -220,6 +219,8 @@ void HamStoreProvider::ApplySort() {
         }
     }
 }
+
+std::list<StoreOffer *> *HamStoreProvider::GetOffersInCart() { return &unkb0; }
 
 BEGIN_HANDLERS(HamStoreProvider)
     HANDLE_ACTION(refresh, Refresh())

@@ -27,9 +27,18 @@ public:
     virtual void Enter();
     virtual void Exit();
     virtual bool Exiting() const;
+    virtual bool Unloading() const; //
     virtual void Poll();
     virtual bool IsLoaded() const;
     virtual void Unload();
+    virtual bool IsSongInLibrary(int const &) const = 0;
+    virtual void ExitStore(StoreError) const = 0;
+    virtual Profile *StoreProfile() const = 0;
+    virtual StoreOffer *MakeNewOffer(DataArray *) = 0;
+    virtual StoreOffer *FindOffer(Symbol) const = 0;
+    virtual bool EnumerateSubsetOfOfferIDs() const { return 0; };
+    virtual void
+    GetOfferIDsToEnumerate(std::vector<unsigned long long> &, bool) const = 0;
     virtual void LoadArt(char const *, UIPanel *);
 
     StorePanel();
@@ -67,6 +76,7 @@ protected:
     virtual void FinishEnum(std::list<EnumProduct> const &, bool);
     virtual StoreError UpdateOffers(std::list<EnumProduct> const &, bool);
     virtual void UpdateFromEnumProduct(StorePurchaseable *, EnumProduct const *);
+    virtual void StoreUserProfileSwappedToUser(LocalUser *) = 0;
 
     void StartReEnum();
     DataNode OnMsg(SigninChangedMsg const &);

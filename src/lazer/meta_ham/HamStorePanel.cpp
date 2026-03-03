@@ -1,12 +1,15 @@
 #include "meta_ham/HamStorePanel.h"
 #include "HamStoreOffer.h"
+#include "macros.h"
 #include "meta/SongMgr.h"
 #include "meta/StoreEnumeration.h"
 #include "meta/StoreOffer.h"
 #include "meta/StorePanel.h"
+#include "meta/StorePurchaser.h"
 #include "meta_ham/HamProfile.h"
 #include "meta_ham/HamStoreFilterProvider.h"
 #include "meta_ham/HamStoreProvider.h"
+#include "meta_ham/HamUI.h"
 #include "meta_ham/ProfileMgr.h"
 #include "meta_ham/UIEventMgr.h"
 #include "net_ham/HamStoreCartJobs.h"
@@ -21,22 +24,41 @@
 #include "os/PlatformMgr.h"
 #include "os/System.h"
 #include "os/User.h"
+#include "stl/_vector.h"
+#include "ui/UI.h"
 #include "utl/Loader.h"
 #include "utl/MakeString.h"
+#include "utl/NetCacheMgr.h"
+#include "utl/NetLoader.h"
 #include "utl/Std.h"
 #include "utl/Symbol.h"
 
 HamStorePanel::HamStorePanel()
-    : unka0(), unka4(), mOfferProvider(), unkb8(), unkc0(false), unk128(), unk154(false),
-      unk155(true), unk156(false), unk157(false), unk158(false), unk159(false), unk184(),
-      mXboxPurchaser() {
-    for (int i = 7; i != 0; i--) {
+    : unka0(), mMetadata(), mOfferProvider(), unkb8(), unkc0(false), unk128(),
+      unk154(false), unk155(true), unk156(false), unk157(false), unk158(false),
+      unk159(false), unk184(-1), mXboxPurchaser() {
+    for (int i = 0; i < 7; i++) {
         unk138[i] = 0;
     }
-    DataArray *sysConfig = SystemConfig("store");
-    DataArray *specialOfferArray = sysConfig->FindArray("special_offers", false);
+    DataArray *specialOfferArray =
+        SystemConfig("store")->FindArray("special_offers", false);
     if (specialOfferArray) {
+        int numOffers = specialOfferArray->Size() - 1;
+        HamSpecialOffer tempOffer;
+        unk16c.resize(numOffers, tempOffer);
+        unk178.resize(numOffers, 0);
+
+        for (int i = 0; i < numOffers; i++) {
+            DataArray *offerArray = specialOfferArray->Array(i + 1);
+            HamSpecialOffer &offer = unk16c[i];
+            offer.unk4 = offerArray->Sym(0);
+            offer.unk14 = false;
+            offer.unk8 = StorePurchaseable::OfferStringToID(offerArray->Str(1));
+            unk178[i] = offer.unk8;
+            offer.unk10 = offerArray->ForceSym(2);
+        }
     }
+
     TheContentMgr.RegisterCallback(this, false);
 }
 
@@ -246,7 +268,201 @@ void HamStorePanel::CreateCartUIs() {
     static Symbol description("description");
     static Symbol art("art");
     static Symbol store_filter_song_import_offers("store_filter_song_import_offers");
-    // something
+    unkac.insert(unkac.begin(), 1, new HamStoreFilter(store_filter_shopping_cart));
+    unkac.push_back(new HamStoreFilter(store_filter_song_import_offers));
+}
+
+bool HamStorePanel::IsSpecialOfferOwned(Symbol offer) const {
+    FOREACH (it, unk16c) {
+        if ((*it).unk4 == offer) {
+            return (*it).unk14;
+        }
+    }
+    Symbol s = offer; // bruh
+    MILO_NOTIFY("Unknown offer %s", s);
+    return false;
+}
+
+void HamStorePanel::ResetCancelTimer() {
+    unkc0 = false;
+    unkc4.Restart();
+}
+
+bool HamStorePanel::ContentTitleDiscovered(unsigned int ui, Symbol s) {
+    static Symbol dc2_gond("dc2_gond");
+    if (ui == 0x373307d2) {
+        FOREACH (it, unk16c) {
+            if (it->unk4 == dc2_gond) {
+                it->unk10 = s;
+                break;
+            }
+        }
+        return false;
+    }
+    return true;
+}
+
+void HamStorePanel::ContentMounted(char const *c1, char const *c2) {
+    FOREACH (it, unk16c) {
+        if (it->unk10 == c1) {
+            Symbol s = it->unk4;
+            MILO_LOG("Store: special offer %s on local drive.\n", s);
+            it->unk14 = true;
+            return;
+        }
+    }
+}
+
+bool HamStorePanel::ContentDiscovered(Symbol s) {
+    FOREACH (it, unk16c) {
+        if (it->unk10 == s) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool HamStorePanel::BuySpecialOffer(Symbol offer) {
+    if (mXboxPurchaser) {
+        MILO_FAIL("There is a purchase in progress.");
+    }
+    FOREACH (it, unk16c) {
+        if ((*it).unk4 == offer) {
+            Profile *profile = StoreProfile();
+            if (profile) {
+                mXboxPurchaser =
+                    new XboxPurchaser(profile->GetPadNum(), it->unk8, 0, 0, unk8c, 0);
+                mXboxPurchaser->Initiate();
+            }
+            return true;
+        }
+    }
+    Symbol s = offer;
+    MILO_NOTIFY("Unknown offer %s", s);
+    return false;
+}
+
+void HamStorePanel::Poll() {
+    StorePanel::Poll();
+    if (!unkc0 && unkc4.SplitMs() > 5000.0f) {
+        unkc0 = true;
+        if (TheHamUI.FocusPanel() == this) {
+            TheHamUI.GetHelpBarPanel()->SyncToPanel(this);
+        }
+    }
+    if (!mLoadOk) {
+        return;
+    }
+    if (!TheNetCacheMgr->IsReady()) {
+        return;
+    }
+    if (unk94 != 2) {
+        return;
+    }
+    if (unka0) {
+        unka0->PollLoading();
+        if (unka0->IsLoaded()) {
+            mMetadata = unka0->GetUnk4();
+            MILO_ASSERT(mMetadata, 0xfe);
+            mMetadata->AddRef();
+            static Symbol motd("motd");
+            mMetadata->FindData(motd, unkb8, false);
+            DataArray *filterArray = mMetadata->FindArray("filters", true);
+            DeleteAll(unkac);
+            for (int i = 1; i < filterArray->Size(); i++) {
+                unkac.push_back(new HamStoreFilter(filterArray->Array(i)));
+            }
+            DataArray *offerArray = mMetadata->FindArray("offers", true);
+            PopulateOffers(offerArray, false);
+            CreateCartUIs();
+            unk154 = true;
+        } else {
+            if (!unka0->HasFailed()) {
+                goto tag;
+            }
+            MILO_NOTIFY("Request for %s failed.", GetIndexFile());
+            ExitError((StoreError)3);
+        }
+        RELEASE(unka0);
+    } else {
+        if (mMetadata == 0) {
+            String indexFile = GetIndexFile();
+            unka0 = new DataNetLoader(indexFile);
+        } else if (unk154 && (unk157 || !unk155)) {
+            unk154 = false;
+            unk70 = true;
+        }
+    }
+tag:
+    if (unk156 && unk128 != 0) {
+        if (unkf8.SplitMs() >= unk128) {
+            RelockCart();
+        }
+    }
+    if (mXboxPurchaser) {
+        mXboxPurchaser->Poll();
+        if (!mXboxPurchaser->IsPurchasing()) {
+            bool purchaseMade = false;
+            bool needsEnum = false;
+            if (mXboxPurchaser->IsSuccess()) {
+                purchaseMade = mXboxPurchaser->PurchaseMade();
+                needsEnum = mXboxPurchaser->NeedsEnum();
+                if (purchaseMade && needsEnum) {
+                    RefreshSpecialOfferStatus();
+                }
+            }
+
+            static Message special_finished("special_finished", 0, 0);
+            special_finished[0] = purchaseMade;
+            special_finished[1] = needsEnum;
+            HandleType(special_finished);
+            TheUI->Handle(special_finished, false);
+            RELEASE(mXboxPurchaser);
+        }
+    }
+}
+
+void HamStorePanel::Unload() {
+    RELEASE(unka0);
+    RELEASE(mOfferProvider);
+    if (mMetadata) {
+        mMetadata->Release();
+        mMetadata = nullptr;
+    }
+    DeleteAll(unkac);
+    unkc4.Stop();
+    unkc0 = false;
+    unkf8.Stop();
+    unk128 = 0;
+    unk155 = true;
+    unk154 = false;
+    unk157 = false;
+    unk158 = false;
+    unk159 = false;
+    if (unk156) {
+        UnlockCart();
+    }
+    StorePanel::Unload();
+}
+
+void HamStorePanel::FinishSpecialOfferEnum(std::vector<bool> const &vec, bool b) {
+    unk184 = -1;
+    if (!b) {
+        MILO_LOG("Store: failed to enum our special offers.\n");
+    } else {
+        for (int i = 0; i < unk16c.size(); i++) {
+            if (!unk16c[i].unk14) {
+                unk16c[i].unk14 = vec[i];
+            }
+
+            if (unk16c[i].unk14) {
+                MILO_LOG("Store: special offer %s is owned\n", unk16c[i].unk4);
+            }
+        }
+    }
+    static Message refresh_complete("refresh_complete", 0);
+    refresh_complete[0] = b;
+    TheUI->Handle(refresh_complete, false);
 }
 
 BEGIN_HANDLERS(HamStorePanel)
@@ -257,14 +473,14 @@ BEGIN_HANDLERS(HamStorePanel)
     )
     HANDLE_EXPR(offer_provider, (Hmx::Object *)mOfferProvider)
     HANDLE_EXPR(filter_provider, (Hmx::Object *)mOfferProvider->GetFilterProvider())
-    HANDLE_ACTION(reset_cancel_timer, (unkc0 = false, unkc4.Restart()))
+    HANDLE_ACTION(reset_cancel_timer, ResetCancelTimer())
     HANDLE_EXPR(allow_cancel, unkc0)
     HANDLE_EXPR(is_cart_enabled, unk155)
     HANDLE_ACTION(disable_cart, DisableCart())
     HANDLE_ACTION(get_cart, GetCart())
     HANDLE_ACTION(add_offer_to_cart, AddOfferToCart(_msg->Obj<StoreOffer>(2)))
     HANDLE_ACTION(remove_offer_from_cart, RemoveOfferFromCart(_msg->Obj<StoreOffer>(2)))
-    HANDLE_ACTION(cart_checkout, MultipleItemsCheckout(mOfferProvider->GetCartOffers()))
+    HANDLE_ACTION(cart_checkout, MultipleItemsCheckout(mOfferProvider->GetOffersInCart()))
     HANDLE_ACTION(lock_cart, LockCart())
     HANDLE_ACTION(unlock_cart, UnlockCart())
     HANDLE_EXPR(is_curr_filter_cart, IsCurrFilterCart(_msg->Int(2)))
@@ -272,7 +488,7 @@ BEGIN_HANDLERS(HamStorePanel)
     HANDLE_EXPR(is_cart_full, mOfferProvider->NumOffersInCart() == 6)
     HANDLE_ACTION(empty_cart, EmptyCart())
     HANDLE_ACTION(set_filter_to_cart, SetFilterToCart())
-    HANDLE_ACTION(set_filter_to_songs, SetFilterToSongs())
+    HANDLE_EXPR(set_filter_to_songs, SetFilterToSongs())
     HANDLE_ACTION(refresh_special_offers, RefreshSpecialOfferStatus())
     HANDLE_EXPR(check_owned, IsSpecialOfferOwned(_msg->ForceSym(2)))
     HANDLE_EXPR(buy_special, BuySpecialOffer(_msg->ForceSym(2)))

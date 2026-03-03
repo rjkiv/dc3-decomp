@@ -15,9 +15,18 @@
 #include "os/User.h"
 #include "stl/_vector.h"
 #include "types.h"
+#include "utl/NetLoader.h"
 #include "utl/Str.h"
 #include "utl/Symbol.h"
 #include <list>
+
+struct HamSpecialOffer {
+public:
+    Symbol unk4;
+    unsigned long long unk8;
+    Symbol unk10;
+    bool unk14;
+};
 
 class HamStorePanel : public StorePanel, public ContentMgr::Callback {
 public:
@@ -39,7 +48,7 @@ public:
     virtual StoreOffer *MakeNewOffer(DataArray *);
     virtual StoreOffer *FindOffer(Symbol) const;
     virtual bool EnumerateSubsetOfOfferIDs() const { return 0; }
-    virtual void GetOfferIDsToEnumerate(std::vector<u64> &, bool) const;
+    virtual void GetOfferIDsToEnumerate(std::vector<unsigned long long> &, bool) const;
 
     // ContentMgr::Callback
     virtual bool ContentDiscovered(Symbol);
@@ -77,10 +86,11 @@ protected:
     void AddDLCToCart(int);
     void CreateCartUIs();
     void ReadCartData();
+    void ResetCancelTimer();
     DataNode OnMsg(RCJobCompleteMsg const &);
 
-    int unka0;
-    int unka4;
+    DataNetLoader *unka0;
+    DataArray *mMetadata; // 0xa4
     HamStoreProvider *mOfferProvider; // 0xa8
     std::vector<HamStoreFilter *> unkac;
     String unkb8;
@@ -98,7 +108,7 @@ protected:
     bool unk159;
     std::list<int> unk15c;
     std::list<int> unk164;
-    std::vector<CartRow> unk16c;
+    std::vector<HamSpecialOffer> unk16c;
     std::vector<unsigned long long> unk178;
     int unk184;
     XboxPurchaser *mXboxPurchaser; // 0x188

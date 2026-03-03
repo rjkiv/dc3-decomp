@@ -16,10 +16,11 @@ public:
     char const *CostStr() const;
     bool IsAvailable() { return isAvailable; }
     bool IsPurchased() { return isPurchased; }
+    unsigned long long SongID() const { return songID; }
 
     bool isAvailable; // 0x2c
     bool isPurchased; // 0x2d
-    u64 songID; // 0x30
+    unsigned long long songID; // 0x30
     int cost; // 0x38
 };
 
