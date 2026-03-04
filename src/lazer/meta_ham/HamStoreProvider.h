@@ -49,6 +49,7 @@ public:
     void OnNextSort();
     void Refresh();
     std::list<StoreOffer *> *GetOffersInCart();
+    bool IsOfferInCart(StoreOffer *);
     bool AllowSortToggle() { return mSorts.size() > 1; }
 
     PackSongListProvider GetPackProvider() { return unk78; }
@@ -58,8 +59,8 @@ protected:
     std::vector<StoreOffer *> *unk30;
     std::vector<HamStoreFilter *> *unk34;
     std::map<Symbol, std::vector<StoreOffer *> *> unk38;
-    std::vector<StoreOffer *> unk54;
-    int unk5c;
+    std::vector<StoreOffer *> unk50;
+    HamStoreFilter *unk5c;
     int mSortIndex; // 0x60
     std::vector<StoreOffer *> *mFilteredOffers; // 0x64
     std::vector<Symbol> mSorts; // 0x68

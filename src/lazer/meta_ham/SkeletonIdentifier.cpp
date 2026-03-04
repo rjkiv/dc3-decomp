@@ -150,8 +150,8 @@ void SkeletonIdentifier::NotifyOfRecognition(int i) const {
     bool check = true;
     Skeleton *skel = TheGestureMgr->GetSkeletonByEnrollmentIndex(i);
     if (skel) {
-        if (!IsAssociatedWithProfile(i)) {
-            check = !skel->ProfileMatched() == 0;
+        if (!IsAssociatedWithProfile(i) && !(skel->ProfileMatched() == false)) {
+            check = false;
         }
         if (check) {
             int playerID = TheGameData->GetPlayerFromSkeleton(*skel);
@@ -205,7 +205,11 @@ void SkeletonIdentifier::SetUpInitialProfiles() {
             int pad1 = -1;
             for (int i = 0; i < 4; i++) {
                 if (ThePlatformMgr.IsPadNumSignedIn(i)) {
-                    pad0 = i;
+                    if (pad0 == -1) {
+                        pad0 = i;
+                    } else if (pad1 == -1) {
+                        pad1 = i;
+                    }
                 }
             }
             if (pad0 != -1) {

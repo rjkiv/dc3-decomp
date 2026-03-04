@@ -29,6 +29,7 @@
 #include "utl/DataPointMgr.h"
 #include "utl/JobMgr.h"
 #include "utl/Locale.h"
+#include "utl/Std.h"
 #include "utl/Symbol.h"
 #include <cstdlib>
 
@@ -191,11 +192,9 @@ PartyModeMgr::PartyModeMgr() : mFrameSmoothers() {
     mPerSongDifficulty = false;
     mCustomParty = false;
     mUsingPerSongOptions = false;
-    mSetPartyOptionsJob = nullptr;
-    mGetPartyOptionsJob = nullptr;
-    mGetPartySongQueueJob = nullptr;
-    mAddSongToPartySongQueueJob = nullptr;
-    mDeleteSongFromPartySongQueueJob = nullptr;
+    for (int i = 0; i < 5; i++) {
+        mPartyJobs[i] = nullptr;
+    }
     unk314 = false;
     unk324 = 0;
 }
@@ -816,9 +815,8 @@ void PartyModeMgr::SendPartyOptionsToRC() {
     if (!profile) {
         BroadcastSyncMsg("skipped_sync");
     } else {
-        mSetPartyOptionsJob =
-            new SetPartyOptionsJob(this, profile->GetOnlineID()->ToString());
-        TheRockCentral.ManageJob(mSetPartyOptionsJob);
+        mPartyJobs[0] = new SetPartyOptionsJob(this, profile->GetOnlineID()->ToString());
+        TheRockCentral.ManageJob(mPartyJobs[0]);
     }
 }
 
@@ -827,15 +825,14 @@ void PartyModeMgr::GetPartyOptionsFromRC() {
     if (!profile) {
         BroadcastSyncMsg("skipped_sync");
     } else {
-        mGetPartyOptionsJob =
-            new GetPartyOptionsJob(this, profile->GetOnlineID()->ToString());
-        TheRockCentral.ManageJob(mGetPartyOptionsJob);
+        mPartyJobs[1] = new GetPartyOptionsJob(this, profile->GetOnlineID()->ToString());
+        TheRockCentral.ManageJob(mPartyJobs[1]);
     }
 }
 
 void PartyModeMgr::ReadPartyOptions() {
-    mGetPartyOptionsJob->GetOptions();
-    mGetPartyOptionsJob = nullptr;
+    ((GetPartyOptionsJob *)mPartyJobs[1])->GetOptions();
+    mPartyJobs[1] = nullptr;
     BroadcastSyncMsg("options_updated");
 }
 
@@ -844,9 +841,9 @@ void PartyModeMgr::GetPartySongQueueFromRC() {
     if (!profile) {
         BroadcastSyncMsg("skipped_sync");
     } else {
-        mGetPartySongQueueJob =
+        mPartyJobs[2] =
             new GetPartySongQueueJob(this, profile->GetOnlineID()->ToString());
-        TheRockCentral.ManageJob(mGetPartySongQueueJob);
+        TheRockCentral.ManageJob(mPartyJobs[2]);
     }
 }
 
@@ -855,10 +852,10 @@ void PartyModeMgr::DeleteSongFromRCPartySongQueue(int songID) {
     if (!profile) {
         BroadcastSyncMsg("skipped_sync");
     } else {
-        mDeleteSongFromPartySongQueueJob = new DeleteSongFromPartySongQueueJob(
+        mPartyJobs[4] = new DeleteSongFromPartySongQueueJob(
             this, profile->GetOnlineID()->ToString(), songID
         );
-        TheRockCentral.ManageJob(mDeleteSongFromPartySongQueueJob);
+        TheRockCentral.ManageJob(mPartyJobs[4]);
     }
 }
 
@@ -867,10 +864,10 @@ void PartyModeMgr::AddNextSongToRCPartySongQueue() {
     if (!profile) {
         BroadcastSyncMsg("skipped_sync");
     } else {
-        mAddSongToPartySongQueueJob = new AddSongToPartySongQueueJob(
+        mPartyJobs[3] = new AddSongToPartySongQueueJob(
             this, profile->GetOnlineID()->ToString(), unk308.front().mSongID
         );
-        TheRockCentral.ManageJob(mAddSongToPartySongQueueJob);
+        TheRockCentral.ManageJob(mPartyJobs[3]);
     }
 }
 
@@ -1381,52 +1378,41 @@ DataNode PartyModeMgr::OnMsg(const RCJobCompleteMsg &msg) {
     if (!msg.Success()) {
         MILO_LOG("[PartyModeMgr::OnMsg] Party net API failed.\n");
         for (int i = 0; i < 5; i++) {
-            if (mSetPartyOptionsJob == msg.Job()) {
-                mSetPartyOptionsJob->Cancel(false);
-                mSetPartyOptionsJob = nullptr;
+            if (mPartyJobs[i] == msg.Job()) {
+                mPartyJobs[i]->Cancel(false);
+                mPartyJobs[i] = nullptr;
             }
         }
         BroadcastSyncMsg("skipped_sync");
         return 1;
     }
     b = false;
-    if (msg.Job() == mSetPartyOptionsJob) {
+    if (msg.Job() == mPartyJobs[0]) {
         BroadcastSyncMsg("options_sent");
-        mSetPartyOptionsJob = nullptr;
+        mPartyJobs[0] = nullptr;
         b = true;
-    } else {
-        if (msg.Job() == mGetPartyOptionsJob) {
-            ReadPartyOptions();
+    } else if (msg.Job() == mPartyJobs[1]) {
+        ReadPartyOptions();
+    } else if (msg.Job() == mPartyJobs[2]) {
+        ReadPartySongQueue();
+    } else if (msg.Job() == mPartyJobs[4]) {
+        mPartyJobs[4] = nullptr;
+        BroadcastSyncMsg("song_queue_updated");
+        b = true;
+    } else if (msg.Job() == mPartyJobs[3]) {
+        mPartyJobs[3] = nullptr;
+        unk308.pop_front();
+        if (!unk308.empty()) {
+            AddNextSongToRCPartySongQueue();
         } else {
-            if (msg.Job() == mGetPartySongQueueJob) {
-                ReadPartySongQueue();
-            } else {
-                if (msg.Job() == mDeleteSongFromPartySongQueueJob) {
-                    mDeleteSongFromPartySongQueueJob = nullptr;
-                } else {
-                    if (msg.Job() != mAddSongToPartySongQueueJob) {
-                        goto leave;
-                    }
-                    mAddSongToPartySongQueueJob = nullptr;
-                    unk308.pop_front();
-                    if (!unk308.empty()) {
-                        AddNextSongToRCPartySongQueue();
-                        b = true;
-                    } else {
-                        mAddSongToPartySongQueueJob = nullptr;
-                        unk314 = false;
-                    }
-                }
-                BroadcastSyncMsg("song_queue_updated");
-                b = true;
-            }
+            mPartyJobs[3] = nullptr;
+            unk314 = false;
+            BroadcastSyncMsg("song_queue_updated");
         }
+        b = true;
     }
-leave:
     if (b) {
-        DataNode party("party");
-        DataNode updated("updated");
-        ThePlatformMgr.SmartGlassSend(0, DataArrayPtr(updated, party));
+        ThePlatformMgr.SmartGlassSend(0, DataArrayPtr("updated", "party"));
     }
     return 1;
 }

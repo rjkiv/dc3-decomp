@@ -548,7 +548,8 @@ int CampaignPerformer::GetNumSongCrazeMoves(Symbol s) {
 void CampaignPerformer::BookmarkCurrentProgress() {
     HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
     MILO_ASSERT(pProfile, 0x4e9);
-    for (int i = 0; i <= mDifficulty; i++) {
+    Difficulty diff = mDifficulty; // i hate it here
+    for (int i = 0; i <= diff; i++) {
         pProfile->AccessCampaignProgress((Difficulty)i).BookmarkCurrentProgress();
     }
 }

@@ -264,11 +264,12 @@ private:
     float unk2e8;
     float unk2ec;
     float mSixStarBonus; // 0x2f0
-    SetPartyOptionsJob *mSetPartyOptionsJob; // 0x2f4
-    GetPartyOptionsJob *mGetPartyOptionsJob; // 0x2f8
-    GetPartySongQueueJob *mGetPartySongQueueJob; // 0x2fc
-    AddSongToPartySongQueueJob *mAddSongToPartySongQueueJob; // 0x300
-    DeleteSongFromPartySongQueueJob *mDeleteSongFromPartySongQueueJob; // 0x304
+    RCJob *mPartyJobs[5]; // 0x2f4
+    // SetPartyOptionsJob [0] - 0x2f4
+    // GetPartyOptionsJob [1] - 0x2f8
+    // GetPartySongQueueJob [2] - 0x2fc
+    // AddSongToPartySongQueueJob [3]-  0x300
+    // DeleteSongFromPartySongQueueJob [4] - 0x304
     std::list<SongQueueRow> unk308;
     int mCurrSyncedSongID; // 0x310
     bool unk314;

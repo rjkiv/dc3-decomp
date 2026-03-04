@@ -21,6 +21,7 @@
 #include "ui/UI.h"
 #include "ui/UIListLabel.h"
 #include "ui/UIPanel.h"
+#include "utl/Std.h"
 #include "utl/Symbol.h"
 
 Leaderboards::Leaderboards() : unk7c(100), unk80(0), unk84(0), unk88(2) {
@@ -63,7 +64,10 @@ void Leaderboards::Text(int, int data, UIListLabel *slot, UILabel *label) const 
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("rank")) {
-            if (!unk94) {
+            if (unk94) {
+                label->SetTextToken(gNullStr);
+
+            } else {
                 if (unk58[data].unk1d && unk88 != 2) {
                     static char sBuffer[20];
                     Hx_snprintf(sBuffer, 20, "%d%% ", unk58[data].unk10);
@@ -73,8 +77,6 @@ void Leaderboards::Text(int, int data, UIListLabel *slot, UILabel *label) const 
                     static Symbol rank_fmt("rank_fmt");
                     label->SetInt(unk58[data].unk10, false);
                 }
-            } else {
-                label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("difficulty")) {
             static Symbol beginner_short("beginner_short");
@@ -241,7 +243,7 @@ void Leaderboards::AddPendingProfile(HamProfile *pProfile) {
 }
 
 void Leaderboards::StartUploadingNextProfile() {
-    for (auto it = mPendingProfiles.begin(); it != mPendingProfiles.end(); ++it) {
+    FOREACH (it, mPendingProfiles) {
         unk54 = mPendingProfiles.front();
         mPendingProfiles.pop_front();
         unk54->GetSongStatusMgr()->GetScoresToUpload(unk30);

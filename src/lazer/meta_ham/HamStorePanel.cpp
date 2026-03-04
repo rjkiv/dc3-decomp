@@ -26,6 +26,7 @@
 #include "os/User.h"
 #include "stl/_vector.h"
 #include "ui/UI.h"
+#include "utl/JobMgr.h"
 #include "utl/Loader.h"
 #include "utl/MakeString.h"
 #include "utl/NetCacheMgr.h"
@@ -268,8 +269,19 @@ void HamStorePanel::CreateCartUIs() {
     static Symbol description("description");
     static Symbol art("art");
     static Symbol store_filter_song_import_offers("store_filter_song_import_offers");
-    unkac.insert(unkac.begin(), 1, new HamStoreFilter(store_filter_shopping_cart));
+    auto it = unkac.begin();
+    unkac.insert(it, new HamStoreFilter(store_filter_shopping_cart));
     unkac.push_back(new HamStoreFilter(store_filter_song_import_offers));
+
+    DataArrayPtr ptr;
+    ptr->Insert(ptr->Size(), store_checkout);
+    ptr->Insert(ptr->Size(), DataArrayPtr(type, fake));
+    ptr->Insert(ptr->Size(), DataArrayPtr(name, ""));
+    ptr->Insert(ptr->Size(), DataArrayPtr(artist, ""));
+    ptr->Insert(ptr->Size(), DataArrayPtr(album_name, ""));
+    ptr->Insert(ptr->Size(), DataArrayPtr(description, ""));
+    ptr->Insert(ptr->Size(), DataArrayPtr(art, "avatar_theboombox_nomip_xbox.dxt"));
+    unk38.push_back(MakeNewOffer(ptr));
 }
 
 bool HamStorePanel::IsSpecialOfferOwned(Symbol offer) const {
@@ -378,7 +390,7 @@ void HamStorePanel::Poll() {
             unk154 = true;
         } else {
             if (!unka0->HasFailed()) {
-                goto tag;
+                goto exit;
             }
             MILO_NOTIFY("Request for %s failed.", GetIndexFile());
             ExitError((StoreError)3);
@@ -393,7 +405,7 @@ void HamStorePanel::Poll() {
             unk70 = true;
         }
     }
-tag:
+exit:
     if (unk156 && unk128 != 0) {
         if (unkf8.SplitMs() >= unk128) {
             RelockCart();

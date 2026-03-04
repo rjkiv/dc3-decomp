@@ -57,6 +57,40 @@ protected:
     XOVERLAPPED unk28;
 };
 
+// class MultipleItemsEnumJob : public Job {
+// public:
+//     virtual ~MultipleItemsEnumJob();
+//     virtual void Start();
+//     virtual bool IsFinished();
+//     virtual void Cancel(Hmx::Object *);
+//     virtual void OnCompletion(Hmx::Object *);
+
+//     MultipleItemsEnumJob(Hmx::Object *, int, std::vector<unsigned long long> &);
+
+// protected:
+//     Hmx::Object *unk8;
+//     int unkc;
+//     std::vector<unsigned long long> unk10;
+//     std::vector<int> unk1c;
+//     std::vector<int> unk28;
+//     bool unk34;
+//     int unk38;
+//     int unk3c;
+//     u32 filler[7];
+// };
+
+// class SpecialOfferEnumJob : public MultipleItemsEnumJob {
+// public:
+//     SpecialOfferEnumJob(Hmx::Object *, int, std::vector<unsigned long long> &);
+//     virtual void Start();
+//     virtual bool IsFinished();
+//     virtual void Cancel(Hmx::Object *);
+//     virtual void OnCompletion(Hmx::Object *);
+
+// protected:
+//     Hmx::Object *unk5c;
+// };
+
 #include "obj/Msg.h"
 
 DECLARE_MESSAGE(SingleItemEnumCompleteMsg, "single_item_enum_complete")

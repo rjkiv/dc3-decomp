@@ -14,8 +14,8 @@ public:
     bool Exists() const;
     static unsigned long long OfferStringToID(char const *);
     char const *CostStr() const;
-    bool IsAvailable() { return isAvailable; }
-    bool IsPurchased() { return isPurchased; }
+    bool IsAvailable() const { return isAvailable; }
+    bool IsPurchased() const { return isPurchased; }
     unsigned long long SongID() const { return songID; }
 
     bool isAvailable; // 0x2c
