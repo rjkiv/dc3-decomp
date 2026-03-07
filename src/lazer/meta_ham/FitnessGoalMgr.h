@@ -13,7 +13,7 @@
 
 struct QueueableCommand {
 public:
-    virtual void pure1() = 0;
+    virtual int GetType() = 0;
     ~QueueableCommand() {}
 
     union {
@@ -27,34 +27,34 @@ public:
 
 struct CmdGetFitnessGoalFromRC : public QueueableCommand {
 public:
-    virtual void pure1() {}
+    virtual int GetType() { return 1; } // fix
     CmdGetFitnessGoalFromRC() {}
 };
 
 struct CmdSendFitnessGoalToRC : public QueueableCommand {
 public:
-    virtual void pure1() {}
+    virtual int GetType() { return 1; } // fix
     CmdSendFitnessGoalToRC(HamProfile *p) : profile(p) {}
     HamProfile *profile;
 };
 
 struct CmdUpdateFitnessGoalToRC : public QueueableCommand {
 public:
-    virtual void pure1() {}
+    virtual int GetType() { return 1; } // fix
     CmdUpdateFitnessGoalToRC(HamProfile *p) : profile(p) {}
     HamProfile *profile;
 };
 
 struct CmdDeleteFitnessGoalFromRC : public QueueableCommand {
 public:
-    virtual void pure1() {}
+    virtual int GetType() { return 1; } // fix
     CmdDeleteFitnessGoalFromRC(HamProfile *p) : profile(p) {}
     HamProfile *profile;
 };
 
 struct CmdChangeProfileOnlineID : public QueueableCommand {
 public:
-    virtual void pure1() {}
+    virtual int GetType() { return 1; } // fix
     CmdChangeProfileOnlineID(String s) : str(s) {}
     String str;
 };

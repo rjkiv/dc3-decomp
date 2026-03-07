@@ -8,6 +8,7 @@
 #include "MQSongSortNode.h"
 #include "ProfileMgr.h"
 #include "obj/Dir.h"
+#include "utl/Std.h"
 
 MQSongSortMgr::MQSongSortMgr(SongPreview &sp) : NavListSortMgr(sp) {
     SetName("mq_song_provider", ObjectDir::Main());
@@ -71,17 +72,16 @@ bool MQSongSortMgr::IsCharacter(Symbol sym) const {
 
 void MQSongSortMgr::UpdateList() {
     MILO_ASSERT(TheCampaign, 0x6e);
-    if (!unk90.empty()) {
-        unk90.clear();
-    }
+    unk90.clear();
     Symbol mqCrew = TheCampaign->GetMQCrew();
     unk78.clear();
-    std::vector<int> rankedSongs = TheHamSongMgr.RankedSongs((SongType)1);
-    FOREACH (it, rankedSongs) {
+    const std::vector<int> &rankedSongs = TheHamSongMgr.RankedSongs((SongType)1);
+    FOREACH_CONST (it, rankedSongs) {
         const HamSongMetadata *metadata = TheHamSongMgr.Data(*it);
         Symbol character = GetOutfitCharacter(metadata->Outfit(), true);
         Symbol crew = GetCrewForCharacter(character, true);
-        Symbol mqHeader = MakeString<char>("mqheader_%s", character);
+        Symbol temp = character;
+        Symbol mqHeader = MakeString("mqheader_%s", temp);
         if (!metadata->IsFake() && crew == mqCrew
             && TheProfileMgr.IsContentUnlocked(metadata->ShortName())) {
             unk78[mqHeader].push_back(TheHamSongMgr.GetShortNameFromSongID(*it));

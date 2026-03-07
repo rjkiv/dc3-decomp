@@ -155,7 +155,7 @@ Symbol SongSortNode::Select() {
 }
 
 Symbol SongSortNode::OnSelect() {
-    if (UseQuickplayPerformer() && TheSongSortMgr) {
+    if (UseQuickplayPerformer() && TheSongSortMgr == 0) {
         MetaPerformer::Current()->ResetSongs();
     }
     Symbol sel = Select();
@@ -183,12 +183,39 @@ void SongSortNode::OnContentMounted(const char *contentName, const char *) {
 
 void SongSortNode::SetInPlaylist(bool b) { unk_0x4C = b; }
 
-void SongHeaderNode::Text(UIListLabel *, UILabel *ui_label) const {
+void SongHeaderNode::Text(UIListLabel *list_label, UILabel *ui_label) const {
     AppLabel *app_label = dynamic_cast<AppLabel *>(ui_label);
-    MILO_ASSERT(app_label, 182);
-    // if (unk44) {
-    //     static Symbol store_famous_by("store_famous_by");
-    // }
+    MILO_ASSERT(app_label, 0xb6);
+
+    if (unk44) {
+        if (list_label->Matches("famousby")) {
+            static Symbol store_famous_by("store_famous_by");
+            bool highlighted = (TheSongSortMgr->GetHighlightItem() == this);
+            return;
+        }
+        if (list_label->Matches("famousby_group")) {
+            app_label->SetFromSongSelectNode(this);
+            return;
+        }
+    } else {
+        if (list_label->Matches("group")) {
+            app_label->SetFromSongSelectNode(this);
+            return;
+        }
+    }
+
+    if (list_label->Matches("sort_header")) {
+        app_label->SetFromSongSelectNode(this);
+        return;
+    } else if (list_label->Matches("song_count")) {
+        TheSongSortMgr->GetHighlightItem();
+        return;
+    } else if (list_label->Matches("header_collapse")) {
+        bool highlighted = (TheSongSortMgr->GetHighlightItem() == this);
+        return;
+    }
+
+    ui_label->SetTextToken(gNullStr);
 }
 
 bool SongSortNode::IsCoverSong(Symbol shortname) const {

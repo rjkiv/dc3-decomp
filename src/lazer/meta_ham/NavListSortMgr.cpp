@@ -175,14 +175,15 @@ int NavListSortMgr::GetListIndexFromHeaderIndex(int idx) {
         if (0 < size) {
             return mHeadersB.front();
         }
-    }
-    if (idx < size) {
         return 0;
     }
-    if (size > 0) {
-        return mHeadersB[size - 1];
+    if (idx >= size) {
+        if (0 < size) {
+            return mHeadersB[size - 1];
+        }
+        return 0;
     }
-    return 0;
+    return mHeadersB[idx];
 }
 
 void NavListSortMgr::OnExit() {
@@ -210,7 +211,8 @@ RndMat *NavListSortMgr::Mat(int i1, int i2, UIListMesh *mesh) const {
 int NavListSortMgr::NumData() const { return mSorts[mCurrentSortIdx]->GetDataCount(); }
 
 void NavListSortMgr::ClearIconLabels() {
-    for (int i = NumData(); i != 0; i--) {
+    int numData = NumData();
+    for (int i = 0; i < numData; i++) {
         mSorts[mCurrentSortIdx]->GetListFromIdx(i)->SetCollapseIconLabel(nullptr);
     }
 }
@@ -288,11 +290,7 @@ Symbol NavListSortMgr::OnGetToken(int idx) {
 }
 
 int NavListSortMgr::DataIndex(Symbol s) const {
-    static std::list<String> strings;
-    // const char *str = "DataIndex is not necessarily unique\n";
-    bool added = AddToStrings("DataIndex is not necessarily unique\n", strings);
-    if (added)
-        MILO_NOTIFY("DataIndex is not necessarily unique\n");
+    MILO_NOTIFY_ONCE("DataIndex is not necessarily unique\n");
     auto node = mSorts[mCurrentSortIdx]->GetNode(s);
     if (!node) {
         return -1;
@@ -323,7 +321,8 @@ void NavListSortMgr::FinalizeHeaders() {
 
 int NavListSortMgr::GetHeaderIndexFromListIndex(int idx) {
     Symbol token = OnGetToken(idx);
-    for (int i = 0; i < mHeadersB.size(); i++) {
+    int size = mHeadersB.size();
+    for (int i = 0; i < size; i++) {
         if (token == mSorts[mCurrentSortIdx]->GetListFromIdx(mHeadersB[i])->GetToken()) {
             return i;
         }

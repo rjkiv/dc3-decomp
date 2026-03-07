@@ -3,6 +3,7 @@
 #include "utl/MakeString.h"
 #include "utl/Str.h"
 #include "utl/Symbol.h"
+#include <cstring>
 
 Symbol GetStarsToken(int i) {
     static Symbol stars_0("stars_0");
@@ -69,6 +70,52 @@ String GetDays(int i) {
     } else {
         return MakeString(Localize(stats_format_unit_days, 0, TheLocale), i);
     }
+}
+
+void GetTimeString(int seconds, char *buf) {
+    static Symbol stats_format_time_double("stats_format_time_double");
+    String primary;
+    String secondary;
+    Symbol empty(gNullStr);
+    if (seconds < 60) {
+        primary = GetSeconds(seconds);
+    } else if (seconds < 3600) {
+        int mins = seconds / 60;
+        int secs = seconds - mins * 60;
+        if (secs > 0) {
+            primary = GetMinutes(mins);
+            secondary = GetSeconds(secs);
+        } else {
+            primary = GetMinutes(mins);
+        }
+    } else if (seconds < 86400) {
+        int hours = seconds / 3600;
+        int mins = (seconds - hours * 3600) / 60;
+        if (mins > 0) {
+            primary = GetHours(hours);
+            secondary = GetMinutes(mins);
+        } else {
+            primary = GetHours(hours);
+        }
+    } else {
+        int days = seconds / 86400;
+        int hours = (seconds - days * 86400) / 3600;
+        if (hours > 0) {
+            primary = GetDays(days);
+            secondary = GetHours(hours);
+        } else {
+            primary = GetDays(days);
+        }
+    }
+    String result;
+    if (!secondary.empty()) {
+        result = MakeString(
+            Localize(stats_format_time_double, 0, TheLocale), primary, secondary
+        );
+    } else {
+        result = primary;
+    }
+    strcpy(buf, result.c_str());
 }
 
 char const *FormatTimeMS(int i) {

@@ -34,8 +34,8 @@ void OverlayPanel::Dismiss() {
     if (mState != kDown) {
         Exit();
         TheHamUI.GetShellInput()->SyncToCurrentScreen();
-        static Message overlay_panel_dismissed("overlay_panel_dismissed");
-        TheHamUI.Handle(overlay_panel_dismissed, false);
+        static Message overlayPanelDismissedMsg("overlay_panel_dismissed");
+        TheHamUI.Handle(overlayPanelDismissedMsg, false);
     }
 }
 

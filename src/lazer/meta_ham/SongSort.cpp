@@ -33,7 +33,7 @@ void SongSort::BuildItemList() {
     static Symbol dance_battle("dance_battle");
     bool inPerform = TheGameMode->InMode(perform, true);
     bool inDanceBattle = TheGameMode->InMode(dance_battle, true);
-    auto prop = TheGameMode->Property(song_select_mode, true)->Sym();
+    Symbol prop = TheGameMode->Property(song_select_mode, true)->Sym();
 }
 
 void SongSort::SetHighlightedIx(int i1) {

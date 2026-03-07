@@ -47,16 +47,14 @@ void OvershellSlot::SetState(OvershellSlotState state) {
 void OvershellSlot::Poll(const Skeleton *const (&skeletons)[6]) {
     int trackingID = mPlayerData.GetSkeletonTrackingID();
     Skeleton *skel = TheGestureMgr->GetSkeletonByTrackingID(trackingID);
-    if (mState == 3 && trackingID > 0 && skel) {
-        SetState((OvershellSlotState)0);
+    if (mState == 3 && trackingID > 0 && !skel) {
+        return;
     } else if (mState == 0 || (skel && skel->IsValid())) {
         if (mState == 0) {
             if (mPlayerData.Autoplay().Null()) {
                 SkeletonChooser *chooser = TheHamUI.GetShellInput()->mSkelChooser;
                 MILO_ASSERT(chooser, 0x99);
-
                 HamPlayerData *playerData = TheGameData->Player(mPlayerNum);
-
                 if (playerData->GetSkeletonTrackingID() <= 0)
                     return;
             }
@@ -101,22 +99,27 @@ void Overshell::Poll(const Skeleton *const (&skeletons)[6]) {
 }
 
 void Overshell::ResolveSkeletons() {
-    if (TheGestureMgr != nullptr) {
+    if (TheGestureMgr) {
         for (int i = 0; i < 2; i++) {
-            if (TheGameData->Player(i)->IsPlaying()) {
-                if (TheGestureMgr->GetSkeletonByTrackingID(
-                        TheGameData->Player(i)->GetSkeletonTrackingID()
-                    )
-                    || (TheGameData->Player(i)->IsAutoplaying())
-                    || (TheGestureMgr->Unk425C() == 1)) {
-                    mSlots[i]->SetState((OvershellSlotState)3);
-                }
+            HamPlayerData *playerData = TheGameData->Player(i);
+            if (!playerData->IsPlaying()) {
+                mSlots[i]->SetState((OvershellSlotState)0);
+                continue;
+            }
+            playerData = TheGameData->Player(i);
+            Skeleton *skel = TheGestureMgr->GetSkeletonByTrackingID(
+                playerData->GetSkeletonTrackingID()
+            );
 
-                if (TheGameData->Player(i)->GetSkeletonTrackingID() <= 0) {
+            playerData = TheGameData->Player(i);
+            Symbol autoplay = playerData->Autoplay();
+            if (skel || !autoplay.Null() || TheGestureMgr->Unk425C() == 1) {
+                mSlots[i]->SetState((OvershellSlotState)3);
+            } else {
+                playerData = TheGameData->Player(i);
+                if (playerData->GetSkeletonTrackingID() <= 0) {
                     mSlots[i]->SetState((OvershellSlotState)0);
                 }
-            } else {
-                mSlots[i]->SetState((OvershellSlotState)0);
             }
         }
     }

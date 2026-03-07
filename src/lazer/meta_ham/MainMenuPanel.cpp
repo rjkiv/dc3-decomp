@@ -375,7 +375,7 @@ void MainMenuPanel::MotdInitializeTexts() {
         );
         mMsgLabel->SetFitType(RndText::FitType::kFitScrollMarqueeWrapAlways);
     }
-    // something here
+
     unkb0 = false;
     mMotdData.clear();
     if (!unk98[no_profile].empty()) {

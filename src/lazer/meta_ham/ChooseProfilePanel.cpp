@@ -61,8 +61,8 @@ void ChooseProfilePanel::UpdateProfiles() {
         }
     }
     mPadNums.push_back(-1);
-    static Message refresh_ui("refresh_ui");
-    Handle(refresh_ui, true);
+    static Message cRefreshMsg("refresh_ui");
+    Handle(cRefreshMsg, true);
 }
 
 BEGIN_HANDLERS(ChooseProfilePanel)

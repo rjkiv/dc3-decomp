@@ -27,9 +27,11 @@ Symbol Award::GetDisplayName() const {
     static Symbol asset("asset");
     Symbol name = mName;
     if (!mAwardEntries.empty()) {
-        if (mAwardEntries.size() == 1
-            && mAwardEntries.front().m_symAwardCategory == asset) {
-            name = mAwardEntries.front().m_symAward;
+        if (mAwardEntries.size() == 1) {
+            const AwardEntry &entry = mAwardEntries.front();
+            if (entry.m_symAwardCategory == asset) {
+                name = entry.m_symAward;
+            }
         }
     }
     return name;
@@ -68,8 +70,9 @@ void Award::GrantAward(AwardEntry const &ae, HamProfile *i_pProfile) {
     MILO_ASSERT(i_pProfile, 0x74);
     static Symbol asset("asset");
     Symbol award = ae.m_symAwardCategory;
+    Symbol awardSym = ae.m_symAward;
     if (award == asset) {
-        i_pProfile->UnlockContent(ae.m_symAward);
+        i_pProfile->UnlockContent(awardSym);
     } else {
         MILO_NOTIFY("Award Category is not currently supported: %s ", award);
     }

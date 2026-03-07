@@ -20,12 +20,13 @@ public:
     String GetSongTitle(int);
     int GetOwnerChallengeScore(int);
     int GetOwnerChallengeTimeStamp(int);
-    const char *GetBestchallengeScoreGamertag(int);
+    const char *GetBestChallengeScoreGamertag(int);
     int GetBestChallengeScore(int);
     int GetChallengerXp(int);
     int GetChallengeRecordSongType(int);
     const char *GetChallengerGamertag(int);
     int GetChallengeScore(int);
+    int GetTargetChallengeScore(int);
 
     static void Init(SongPreview &);
     static void Terminate();

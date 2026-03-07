@@ -9,16 +9,20 @@
 #include "SongSortByLocation.h"
 #include "SongSortNode.h"
 #include "meta/SongPreview.h"
+#include "meta_ham/HamSongMgr.h"
+#include "meta_ham/MetaPerformer.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "stl/_vector.h"
 #include "ui/UI.h"
 #include "lazer/meta_ham/MetaPerformer.h"
 #include "ProfileMgr.h"
 #include "ui/UIListProvider.h"
 #include "ui/UIPanel.h"
+#include "utl/Std.h"
 #include "utl/Symbol.h"
 BEGIN_HANDLERS(SongSortMgr)
     HANDLE_ACTION(get_setlist_mode, 0)
@@ -163,16 +167,10 @@ void SongSortMgr::SetQuasiRandomSong() {
     int numIndices = unk94.size();
     MILO_ASSERT(numIndices > 0, 0x175);
 
-    int random = rand();
-    int uVar8 =
-        (unk94.end() - unk94.begin() >> 3) + (numIndices < 0 && (numIndices & 1) != 0);
-    int iVar2 = (random - (random / uVar8) * uVar8) * 4;
-    int iVar1 = unk94[iVar2];
-    unk94.push_back(iVar1);
-    auto piVar3 = mSorts[mCurrentSortIdx]->DataSymbol(iVar1 * 4);
-    auto ass = MetaPerformer::Current();
-    // auto puVar7 = ass->SelectSong(piVar3, iVar1);
-    ass->SetSong(piVar3);
+    int val = unk94[rand() % (numIndices / 2)];
+    unk94.clear();
+    unk94.push_back(val);
+    MetaPerformer::Current()->SetSong(mSorts[mCurrentSortIdx]->DataSymbol(val));
 }
 
 bool SongSortMgr::HeadersSelectable() {
@@ -194,22 +192,15 @@ bool SongSortMgr::DataIs(int i1, Symbol sym) {
     static Symbol song("song");
     static Symbol header("header");
     static Symbol function("function");
-
+    NavListSortNode *node = mSorts[mCurrentSortIdx]->GetListFromIdx(i1);
     if (sym == song) {
-        return dynamic_cast<SongSortNode *>(mSorts[mCurrentSortIdx]->GetListFromIdx(i1))
-            == 0;
+        return dynamic_cast<SongSortNode *>(node) != 0;
+    } else if (sym == header) {
+        return dynamic_cast<SongHeaderNode *>(node) != 0;
+    } else if (sym == function) {
+        return dynamic_cast<SongFunctionNode *>(node) != 0;
     }
-    if (sym == header) {
-        return dynamic_cast<SongHeaderNode *>(mSorts[mCurrentSortIdx]->GetListFromIdx(i1))
-            == 0;
-    } else {
-        if (sym == function) {
-            return false;
-        }
-        // return dynamic_cast<SongFunctionNode
-        // *>(mSorts[mCurrentSortIdx]->GetListFromIdx(i1)) == 0;
-    }
-    return mSorts[mCurrentSortIdx]->GetListFromIdx(i1) == 0;
+    return false;
 }
 
 int SongSortMgr::FirstArtistSongIndex(Symbol sym) {
@@ -233,14 +224,12 @@ void SongSortMgr::RebuildSongRecordMap() {
     std::vector<int> rankedSongs;
     TheHamSongMgr.GetRankedSongs(rankedSongs);
     unk90 = rankedSongs.size();
-    for (int i = 0; i < rankedSongs.size(); i++) {
-        const HamSongMetadata *metadata = TheHamSongMgr.Data(i);
-        if ((metadata && !metadata->IsFake())
+    FOREACH (it, rankedSongs) {
+        const HamSongMetadata *metadata = TheHamSongMgr.Data(*it);
+        if (metadata && !metadata->IsFake()
             && TheProfileMgr.IsContentUnlocked(metadata->ShortName())) {
-            // auto first = metadata->DefaultCharacter();
-            SongRecord second = SongRecord(metadata);
-            // std::pair<Symbol, SongRecord> p;
-            unk78.insert(std::pair<Symbol, SongRecord>(metadata->ShortName(), second));
+            SongRecord second(metadata);
+            unk78.insert(std::pair<Symbol, SongRecord>(second.ShortName(), second));
         }
     }
 }
@@ -259,16 +248,14 @@ Symbol SongSortMgr::MoveOn() {
         static Message move_on_quickplay_msg("move_on_quickplay");
         songSelectPanel->HandleType(move_on_quickplay_msg);
         return gNullStr;
+    } else if (song_select_story == mode || song_select_practice == mode
+               || mode == song_select_jukebox) {
+        const DataNode *prop = TheGameMode->Property("ready_screen");
+        return prop->Sym();
     } else {
-        if (song_select_story == mode || song_select_practice == mode
-            || mode == song_select_jukebox) {
-            Symbol ready_screen("ready_screen");
-            const DataNode *prop = TheGameMode->Property(ready_screen);
-            return prop->Sym();
-        }
         MILO_FAIL("Unknown song_select_mode\n");
+        return gNullStr;
     }
-    return gNullStr;
 }
 
 void SongSortMgr::OnEnter() {
@@ -287,4 +274,20 @@ void SongSortMgr::OnEnter() {
         unk48 = false;
     }
     current->UpdateHighlight();
+}
+
+void SongSortMgr::SetSetlistMode(bool b) {
+    static Symbol song_select_story("song_select_story");
+    MILO_ASSERT(TheGameMode->Property("song_select_mode")->Sym() != song_select_story, 0xa7);
+    if (b) {
+        std::vector<Symbol> songs;
+        TheHamSongMgr.GetValidSongs(*MetaPerformer::Current(), songs);
+        static Symbol any("any");
+        for (int i = 0; i < Min<int>(songs.size(), 100); i++) {
+            MetaPerformer::Current()->SetSong(any);
+        }
+    } else {
+        MetaPerformer::Current()->ResetSongs();
+    }
+    OnSetlistModeChanged();
 }

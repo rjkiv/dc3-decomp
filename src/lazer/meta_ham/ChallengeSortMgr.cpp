@@ -10,6 +10,7 @@
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Msg.h"
+#include "obj/Object.h"
 #include "ui/UIPanel.h"
 #include "utl/Symbol.h"
 
@@ -28,7 +29,7 @@ ChallengeRecord &ChallengeRecord::operator=(const ChallengeRecord &other) {
 }
 
 BEGIN_CUSTOM_HANDLERS(ChallengeSortMgr)
-    HANDLE_EXPR(get_target_challenge_score, _msg->Int(2)) // li r11, 0x3e8 inst here?
+    HANDLE_EXPR(get_target_challenge_score, GetTargetChallengeScore(_msg->Int(2)))
     HANDLE_EXPR(get_total_earned_xp, GetTotalXpEarned(_msg->Int(2)))
     HANDLE_EXPR(get_challenger_name, GetChallengerName())
     HANDLE_EXPR(get_song_id, GetSongID(_msg->Int(2)))
@@ -207,3 +208,5 @@ bool ChallengeSortMgr::SelectionIs(Symbol selection) {
     }
     return false;
 }
+
+int ChallengeSortMgr::GetTargetChallengeScore(int i) { return 1000; }

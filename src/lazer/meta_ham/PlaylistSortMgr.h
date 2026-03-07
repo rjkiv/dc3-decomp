@@ -13,19 +13,19 @@
 #include <list>
 
 struct CmdAddPlayListToRC : public QueueableCommand {
-    virtual void pure1() {}
+    virtual int GetType() { return 1; } // fix
     CmdAddPlayListToRC(Playlist *pl) : playlist(pl) {}
     Playlist *playlist;
 };
 
 struct CmdDeletePlaylistFromRC : public QueueableCommand {
-    virtual void pure1() {}
+    virtual int GetType() { return 6; }
     CmdDeletePlaylistFromRC(int i) : num(i) {}
     int num;
 };
 
 struct CmdEditPlaylist : public QueueableCommand {
-    virtual void pure1() {}
+    virtual int GetType() { return 1; } // fix
     CmdEditPlaylist(Playlist *pl) : playlist(pl) {}
     Playlist *playlist;
 };

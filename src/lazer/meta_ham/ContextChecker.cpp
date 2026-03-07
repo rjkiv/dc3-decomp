@@ -183,7 +183,7 @@ namespace {
     }
 
     bool CheckContextVoicePracticeEnabled(const DataArray *arr) {
-        MILO_ASSERT(arr->Size() >= 2, 0x103);
+        MILO_ASSERT(arr->Size() >= 2, 0x10f);
         bool myBool = arr->Int(1);
         bool enabled = !TheProfileMgr.GetDisableVoicePractice();
         return myBool == enabled;
@@ -273,7 +273,7 @@ void HandleContextUsed(Symbol ctx) { gUsedContexts.insert(ctx); }
 
 __declspec(noinline) int CheckContext(const DataArray *a) {
     gContextWeight = 10;
-    return gContextWeight & CheckContextAnd(a);
+    return CheckContextAnd(a) ? gContextWeight : 0;
 }
 
 bool IsSongSpecificEntry(const DataArray *a) {
