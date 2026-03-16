@@ -735,3 +735,15 @@ bool XfmSort(RndMultiMesh::Instance &mesh1, RndMultiMesh::Instance &mesh2) {
         + (mesh2.mXfm.v.y - gUtlXfms.y) * (mesh2.mXfm.v.y - gUtlXfms.y)
         + (mesh2.mXfm.v.x - gUtlXfms.x) * (mesh2.mXfm.v.x - gUtlXfms.x);
 }
+
+void DistributeXfms(RndMultiMesh *mesh, int i1, float f1) {
+    int index = 0;
+    FOREACH (it, mesh->Instances()) {
+        int row = index / i1;
+        int col = index % i1;
+        Vector3 &vec = it->mXfm.v;
+        Vector3 temp(col * f1, row * f1, 0.0f);
+        it->mXfm.v.Set(temp.x + vec.x, temp.y + vec.y, vec.z);
+        index++;
+    }
+}
