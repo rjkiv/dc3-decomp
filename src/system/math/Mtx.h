@@ -251,6 +251,8 @@ public:
     Hmx::Quat q;
 };
 
+/// An infinite plane, defined as its normal and distance from origin.
+// Defined as ax+by+cz=-d.
 class Plane {
 public:
     Plane() {}
@@ -260,13 +262,19 @@ public:
 
     //   public: void Set(const Vector3&, const Vector3&);
     void Set(const Vector3 &, const Vector3 &, const Vector3 &);
-    void Set(float f1, float f2, float f3, float f4) {
-        a = f1;
-        b = f2;
-        c = f3;
-        d = f4;
+
+    void Set(float nx, float ny, float nz, float dist) {
+        a = nx;
+        b = ny;
+        c = nz;
+        d = dist;
     }
+
+    /// Returns the dot product between `vec` and the plane normal.
     float Dot(const Vector3 &vec) const { return a * vec.x + b * vec.y + c * vec.z + d; }
+
+    /// Returns the point on the plane closest to the origin.
+    // (a,b,c) must be normalized.
     Vector3 On() const {
         Vector3 ret;
         float scalar = -d / (a * a + b * b + c * c);
