@@ -1,8 +1,11 @@
 #include "ChallengeSort.h"
 #include "AppLabel.h"
+#include "ChallengeRecord.h"
 #include "ChallengeSortMgr.h"
+#include "meta_ham/Challenges.h"
 #include "meta_ham/NavListSort.h"
 #include "obj/Object.h"
+#include "utl/Symbol.h"
 
 SortNodeFind::SortNodeFind(const NavListSortNode *node)
     : mToken(node->GetToken()), mType(node->GetType()) {}
@@ -92,6 +95,24 @@ void ChallengeSort::BuildItemList() {
         unk50 = GetNode(sym);
     }
     TheChallengeSortMgr->FinalizeHeaders();
+}
+
+void ChallengeSort::BuildTree() {
+    NavListSort::DeleteTree();
+    Init();
+    std::vector<NavListItemNode *> nodes;
+
+    std::vector<ChallengeRecord> &records = TheChallengeSortMgr->GetUnk78();
+    for (int i = 0; i < records.size(); i++) {
+        if (records[i].GetUnk50() != 1) {
+            nodes.push_back(NewItemNode(&records[i]));
+        }
+    }
+
+    static Symbol global_challenge("global_challenge");
+    static Symbol dlc_challenge("dlc_challenge");
+    String globalChallengeSongName = TheChallenges->GetGlobalChallengeSongName();
+    String dlcChallengeSongName = TheChallenges->GetDlcChallengeSongName();
 }
 
 #pragma endregion

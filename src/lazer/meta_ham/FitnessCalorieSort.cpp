@@ -6,8 +6,11 @@
 #include "meta_ham/NavListNode.h"
 #include "os/Debug.h"
 #include "rndobj/Mesh.h"
+#include "stl/_algo.h"
+#include "stl/_vector.h"
 #include "ui/UILabel.h"
 #include "ui/UIListLabel.h"
+#include "utl/Std.h"
 #include "utl/Symbol.h"
 
 FitnessCalorieSort::FitnessCalorieSort() {}
@@ -94,4 +97,36 @@ void FitnessCalorieSort::BuildTree() {
     NavListSort::DeleteTree();
     Init();
     std::vector<NavListItemNode *> nodes;
+
+    std::vector<int> &values = TheFitnessCalorieSortMgr->GetUnk78();
+    for (int i = 0; i < values.size(); i++) {
+        nodes.push_back(NewItemNode(&values[i]));
+    }
+
+    // int groupSize = TheFitnessCalorieSortMgr->GetGroupSize();
+    // auto begin = nodes.begin();
+    // auto end = nodes.end();
+    // while (begin != end) {
+    //     std::vector<NavListItemNode *>::iterator it;
+    //     if (end - begin <= groupSize) {
+    //         it = end;
+    //     } else {
+    //         it = begin + groupSize;
+    //     }
+    //     NavListShortcutNode *shortcutNode = NewShortcutNode(*begin);
+    //     unk30.push_back(shortcutNode);
+    //     shortcutNode->InsertHeaderRange(begin, it, this);
+    //     begin = it;
+    // }
+
+    FOREACH (it, nodes) {
+        auto range = std::equal_range(nodes.begin(), nodes.end(), *it);
+        NavListShortcutNode *shortcutNode = NewShortcutNode(*it);
+        unk30.push_back(shortcutNode);
+        shortcutNode->InsertHeaderRange(range.first, range.second, this);
+    }
+
+    FOREACH (it, unk30) {
+        (*it)->FinishSort(this);
+    }
 }

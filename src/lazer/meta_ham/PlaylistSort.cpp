@@ -35,7 +35,7 @@ void PlaylistSort::Text(int, int data, UIListLabel *uiListLabel, UILabel *uiLabe
 
 void PlaylistSort::SetHighlightedIx(int i) {
     unk54 = unk50;
-    if (i >= 0 && static_cast<unsigned int>(GetListSize()) >= i) { //lol
+    if (i >= 0 && static_cast<unsigned int>(GetListSize()) >= i) { // lol
         unk50 = mList[i];
         ThePlaylistSortMgr->OnHighlightChanged();
         return;
@@ -50,13 +50,13 @@ void PlaylistSort::BuildItemList() {
         sym = sortNode->GetToken();
     }
     DeleteItemList();
-    FOREACH(it, unk3c) {
+    FOREACH (it, unk3c) {
         (*it)->Renumber(mList);
     }
-    FOREACH(it, unk30) {
+    FOREACH (it, unk30) {
         (*it)->Renumber(mList);
     }
-    FOREACH(it, unk30) {
+    FOREACH (it, unk30) {
         (*it)->FinishBuildList(this);
     }
     if (!sym.Null()) {
@@ -69,17 +69,17 @@ void PlaylistSort::BuildTree() {
     DeleteTree();
     Init();
     std::vector<NavListItemNode *> nodes;
-    FOREACH(it, ThePlaylistSortMgr->unk78) {
-        auto newNode = NewItemNode(it);
-        nodes.push_back(newNode);
+    FOREACH (it, ThePlaylistSortMgr->unk78) {
+        nodes.push_back(NewItemNode(it));
     }
-    FOREACH(it, nodes) {
-        auto headerRange = std::equal_range(nodes.begin(), nodes.end(), *it,  CompareHeaders());
+    FOREACH (it, nodes) {
+        auto headerRange =
+            std::equal_range(nodes.begin(), nodes.end(), *it, CompareHeaders());
         NavListShortcutNode *node = NewShortcutNode(*it);
         unk30.push_back(node);
         node->InsertHeaderRange(headerRange.first, headerRange.second, this);
     }
-    FOREACH(it, unk30) {
+    FOREACH (it, unk30) {
         (*it)->FinishSort(this);
     }
 }

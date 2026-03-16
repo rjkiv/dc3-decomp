@@ -34,6 +34,8 @@ public:
     NEW_OBJ(StarsDisplay)
     static void Init();
 
+    void SetShowUnplayedSong(bool b) { mShowUnplayedSong = b; }
+
 protected:
     StarsDisplay();
 

@@ -261,8 +261,8 @@ Symbol CampaignSongSelectPanel::GetSelectedSong() {
     if (mState != 1)
         return gNullStr;
     else {
-        static Message get_selected_song_index("get_selected_song_index");
-        DataNode node = Handle(get_selected_song_index, true);
+        static Message cGetSelectedSongMsg("get_selected_song_index");
+        DataNode node = Handle(cGetSelectedSongMsg, true);
         int i = node.Int();
         if (m_pCampaignSongProvider->NumData() > 0)
             return m_pCampaignSongProvider->DataSymbol(i);
@@ -274,9 +274,9 @@ Symbol CampaignSongSelectPanel::GetSelectedSong() {
 void CampaignSongSelectPanel::Refresh() {
     MILO_ASSERT(m_pCampaignSongProvider, 0x1da);
     m_pCampaignSongProvider->UpdateList();
-    static Message update_song_provider("update_song_provider", 0);
-    update_song_provider[0] = m_pCampaignSongProvider;
-    Handle(update_song_provider, true);
+    static Message cUpdateProviderMsg("update_song_provider", 0);
+    cUpdateProviderMsg[0] = m_pCampaignSongProvider;
+    Handle(cUpdateProviderMsg, true);
 }
 
 Symbol CampaignSongSelectPanel::GetSong(int i_iData) {

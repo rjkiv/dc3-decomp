@@ -83,3 +83,9 @@ void MQSongSort::BuildItemList() {
     }
     TheMQSongSortMgr->FinalizeHeaders();
 }
+
+void MQSongSort::BuildTree() {
+    DeleteTree();
+    Init();
+    std::vector<NavListItemNode *> nodes;
+}

@@ -341,15 +341,15 @@ void Leaderboards::ReadScoresComplete(bool b1, bool b2) {
 
     unk80 = false;
     PostProcScores();
-    static Message leaderboards_loaded("leaderboards_loaded");
-    static Message leaderboards_failed_rc("leaderboards_failed_rc");
-    static Message leaderboards_failed_live("leaderboards_failed_live");
+    static Message leaderboardsLoadedMsg("leaderboards_loaded");
+    static Message leaderboardsFailedRcMsg("leaderboards_failed_rc");
+    static Message leaderboardsFailedLiveMsg("leaderboards_failed_live");
     if (b2) {
-        TheUI->Handle(leaderboards_loaded, b2);
+        TheUI->Handle(leaderboardsLoadedMsg, b2);
     } else if (ThePlatformMgr.IsConnected()) {
-        TheUI->Handle(leaderboards_failed_rc, b2);
+        TheUI->Handle(leaderboardsFailedRcMsg, b2);
     } else {
-        TheUI->Handle(leaderboards_failed_live, b2);
+        TheUI->Handle(leaderboardsFailedLiveMsg, b2);
     }
 }
 
@@ -358,8 +358,8 @@ void Leaderboards::GetScores(int i) {
         unk58.clear();
         HamProfile *activeProfile = TheProfileMgr.GetActiveProfile(true);
         if (!ThePlatformMgr.IsSignedIntoLive(activeProfile->GetPadNum())) {
-            static Message leaderboards_failed("leaderboards_failed");
-            TheUI->Handle(leaderboards_failed, false);
+            static Message leaderboardsFailedMsg("leaderboards_failed");
+            TheUI->Handle(leaderboardsFailedMsg, false);
         } else {
             unk90 = i;
             unk80 = true;

@@ -117,8 +117,8 @@ void LetterboxPanel::EnterBlacklightMode() {
     if (unk45 != true) // wont let me do !unk45
         unk45 = true;
     RndText::SetBlacklightModeEnabled(true);
-    static Message enter_blacklight_mode("enter_blacklight_mode");
-    Handle(enter_blacklight_mode, false);
+    static Message cEnterBlacklightModeMsg("enter_blacklight_mode");
+    Handle(cEnterBlacklightModeMsg, false);
 }
 
 void LetterboxPanel::ExitBlacklightMode(bool b) {

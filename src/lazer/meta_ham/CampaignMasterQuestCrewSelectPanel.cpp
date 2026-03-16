@@ -115,8 +115,10 @@ Symbol CampaignMasterQuestCrewSelectPanel::GetSelectedCrew() {
     static Message cGetSelectedCrewMsg("get_selected_crew_index");
     DataNode selectedCrewIndexNode = Handle(cGetSelectedCrewMsg, true);
     int node = selectedCrewIndexNode.Int();
-    if (m_pCampaignMqCrewProvider->NumData() > 0)
-        return m_pCampaignMqCrewProvider->DataSymbol(node);
+    if (m_pCampaignMqCrewProvider->NumData() > 0) {
+        Symbol sym = m_pCampaignMqCrewProvider->DataSymbol(node);
+        return sym;
+    }
 
     return "";
 }

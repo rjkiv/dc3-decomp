@@ -1,6 +1,8 @@
 #pragma once
 #include "HamPanel.h"
 #include "hamobj/Difficulty.h"
+#include "meta_ham/AppLabel.h"
+#include "meta_ham/HamStarsDisplay.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "synth/Sound.h"
@@ -34,7 +36,8 @@ protected:
 
     void TriggerTeaserText();
 
-    u32 filler[16]; // something to do with HamStarsDisplay, just not sure yet
+    AppLabel *unk3c[8];
+    HamStarsDisplay *unk5c[8]; // i think this is how it works?
     Sound *mSound; // 0x7c
     Timer *mTimer; // 0x80
     bool unk84;

@@ -13,6 +13,7 @@
 #include "meta_ham/AccomplishmentManager.h"
 #include "meta_ham/AppLabel.h"
 #include "meta_ham/Campaign.h"
+#include "meta_ham/HamStarsDisplay.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/Timer.h"
@@ -120,7 +121,9 @@ void LockedContentPanel::SetUpCampaignMasterQuestHeader(Symbol song) {
                 dynamic_cast<AccomplishmentCountConditional *>(pAccomplishment);
             Flow *pFlow = DataDir()->Find<Flow>("one_shot.flow");
             pFlow->Activate();
-            pTeaser->SetTextToken(MakeString("%s%s%s", "award_", song, "_instruction"));
+            pInstructions->SetTextToken(
+                MakeString("%s%s%s", "award_", song, "_instruction")
+            );
         } else {
             MILO_ASSERT(false, 0xbe);
         }
@@ -135,13 +138,13 @@ void LockedContentPanel::SetUp(Symbol song) {
     HamLabel *pTeaser = DataDir()->Find<HamLabel>("teaser.lbl");
     HamLabel *pInstructions = DataDir()->Find<HamLabel>("instructions.lbl");
     HamLabel *pProgress = DataDir()->Find<HamLabel>("progress.lbl");
-    int songID = TheHamSongMgr.GetSongIDFromShortName(song, false) != 0;
-    if (songID != 0) {
+    bool hasSong = TheHamSongMgr.GetSongIDFromShortName(song, false) != 0;
+    if (hasSong) {
         pContentName->SetSongName(song, -1, false);
     } else {
         pContentName->SetTextToken(song);
     }
-    pTeaser->SetTextToken(MakeString("%s%s", "teaser_award_", song.Str()));
+    pTeaser->SetTextToken(MakeString("%s%s", "teaser_award_", song));
     TriggerTeaserText();
     mSound = nullptr;
     if (!pAccomplishment) {
@@ -157,7 +160,7 @@ void LockedContentPanel::SetUp(Symbol song) {
                 MakeString("%s%s%s", "award_", song, "_instruction")
             );
         } else {
-            MILO_ASSERT(false, 0xbe);
+            MILO_ASSERT(false, 0xed);
         }
     }
 }
@@ -176,7 +179,14 @@ void LockedContentPanel::SetUpNoFlashcards(Symbol song, Difficulty diff) {
     Flow *pFlowSingle = DataDir()->Find<Flow>("song_list_single.flow");
     pFlowSingle->Activate();
     int songID = TheHamSongMgr.GetSongIDFromShortName(song);
-    // stuff
+    unk3c[0]->SetShowing(true);
+    unk5c[0]->SetShowing(true);
+    unk3c[0]->SetSongName(song, -1, false);
+    unk5c[0]->SetSongWithDifficulty(songID, diff, true);
+    for (int i = 1; i <= 7; i++) {
+        unk3c[i]->SetShowing(false);
+        unk5c[i]->SetShowing(false);
+    }
 }
 
 void LockedContentPanel::SetUpDifficultyLocked(Symbol s1, Symbol s2) {
@@ -200,12 +210,42 @@ void LockedContentPanel::SetUpDifficultyLocked(Symbol s1, Symbol s2) {
     static Symbol award_mediummedley_instruction("award_mediummedley_instruction");
     static Symbol award_hardmedley_instruction("award_hardmedley_instruction");
     if (TheGameMode->InMode("playlist_perform", true)) {
-        Symbol diffInstruction = award_hard_playlist_instruction;
         if (diff == kDifficultyMedium) {
-            diffInstruction = award_medium_playlist_instruction;
+            pInstructions->SetTokenFmt(award_medium_playlist_instruction, 3);
+        } else {
+            pInstructions->SetTokenFmt(award_hard_playlist_instruction, 3);
         }
-        pInstructions->SetTokenFmt(diffInstruction, 3);
+
+        for (int i = 0; i <= 7; i++) {
+            unk3c[i]->SetShowing(false);
+            unk5c[i]->SetShowing(false);
+        }
     } else {
+        if (diff == kDifficultyMedium) {
+            pInstructions->SetTokenFmt(award_medium_instruction, 3);
+        } else {
+            pInstructions->SetTokenFmt(award_expert_instruction, 3);
+        }
+        Flow *pPracticeFlow = DataDir()->Find<Flow>("song_list_perform_practice.flow");
+        pPracticeFlow->Activate();
+        int songID = TheHamSongMgr.GetSongIDFromShortName(s1);
+        unk3c[0]->SetShowing(true);
+        unk5c[0]->SetShowing(true);
+        unk3c[0]->SetSongName(s1, -1, false);
+        unk5c[0]->SetSongWithDifficulty(songID, (Difficulty)(diff - 1), true);
+        for (int i = 1; i <= 7; i++) {
+            unk3c[i]->SetShowing(false);
+            unk5c[i]->SetShowing(false);
+        }
+    }
+}
+
+void LockedContentPanel::FinishLoad() {
+    UIPanel::FinishLoad();
+    for (int i = 0; i < 8; i++) {
+        unk3c[i] = mDir->Find<AppLabel>(MakeString("song_name0%d.lbl", i + 1));
+        unk5c[i] = mDir->Find<HamStarsDisplay>(MakeString("stars0%d.std", i + 1));
+        unk5c[i]->SetShowUnplayedSong(true);
     }
 }
 

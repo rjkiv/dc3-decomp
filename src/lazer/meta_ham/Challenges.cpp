@@ -849,10 +849,10 @@ void Challenges::DownloadPlayerChallenges() {
         } else {
             mProfileChallenges.clear();
             mGetPlayerChallengesJob = nullptr;
-            static Message all_challenges_updated("all_challenges_updated", 0);
+            static Message allUpdatedMsg("all_challenges_updated", 0);
             if (!mGetOfficialChallengesJob) {
-                all_challenges_updated[0] = ChallengesDirty();
-                TheUI->Handle(all_challenges_updated, true);
+                allUpdatedMsg[0] = ChallengesDirty();
+                TheUI->Handle(allUpdatedMsg, true);
                 mPlayerChallengesDirty = false;
                 mOfficialChallengesDirty = false;
             }
@@ -891,8 +891,8 @@ jump:
             UIPanel *challengeFeedPanel =
                 ObjectDir::Main()->Find<UIPanel>("challenge_feed_panel");
             if (challengeFeedPanel->GetState() == 1) {
-                static Message challenges_expired("challenges_expired");
-                TheUI->Handle(challenges_expired, true);
+                static Message msg("challenges_expired");
+                TheUI->Handle(msg, true);
             } else {
                 DownloadOfficialChallenges();
                 DownloadPlayerChallenges();

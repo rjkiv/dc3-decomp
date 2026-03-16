@@ -136,9 +136,9 @@ void CampaignDiffSelectPanel::FinishLoad() {
 
 void CampaignDiffSelectPanel::Refresh() {
     MILO_ASSERT(m_pCampaignDiffProvider, 0xca);
-    static Message update_diff_provider("update_diff_provider", 0);
-    update_diff_provider[0] = m_pCampaignDiffProvider;
-    Handle(update_diff_provider, true);
+    static Message cUpdateProviderMsg("update_diff_provider", 0);
+    cUpdateProviderMsg[0] = m_pCampaignDiffProvider;
+    Handle(cUpdateProviderMsg, true);
 }
 
 void CampaignDiffSelectPanel::SelectDiff() {
@@ -175,18 +175,20 @@ void CampaignDiffSelectPanel::CheatWinDiff(int i) {
     if (i > 0) {
         pPerformer->ResetAllCampaignProgress();
         int count = 0;
-        FOREACH (it, TheCampaign->Eras()) {
+        const auto &eras = TheCampaign->Eras();
+        FOREACH (it, eras) {
             count++;
-            if (i <= count) {
+            if (count <= i) {
                 CampaignEra *pEra = *it;
                 MILO_ASSERT(pEra, 0xe6);
-                for (int j = 0; j < pEra->GetNumSongs(); j++) {
-                    Symbol songName = pEra->GetSongName(i);
+                int numSongs = pEra->GetNumSongs();
+                for (int j = 0; j < numSongs; j++) {
+                    Symbol songName = pEra->GetSongName(j);
                     pPerformer->UpdateEraSong(diff, pEra->GetName(), songName, 5);
                     int songID = TheSongMgr.GetSongIDFromShortName(songName);
                     pSongStatusMgr->UpdateSong(
-                        songID, 0x29a, 0x457, diff, 1, 5, 6, 0, 0, 0, 0, 1
-                    ); // idk the values
+                        songID, 0x29a, 0x457, diff, 1, 5, 6, 7, 66, 0, 0, 1
+                    );
                     pPerformer->UnlockAllMoves(pEra->GetName(), songName, 5);
                 }
             }

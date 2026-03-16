@@ -19,6 +19,9 @@ public:
     static void Terminate();
     static void Init(SongPreview &);
 
+    std::vector<int> &GetUnk78() { return unk78; }
+    int GetGroupSize() const { return mGroupSize; }
+
 protected:
     std::vector<int> unk78;
     int mGroupSize; // 0x84
