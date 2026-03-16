@@ -48,7 +48,7 @@ BEGIN_LOADS(Screenshot)
 END_LOADS
 
 void Screenshot::DrawShowing() {
-    if (!TheRnd.GetDrawMode() && TheLoadMgr.EditMode() && mMat) {
+    if (!TheRnd.DrawMode() && TheLoadMgr.EditMode() && mMat) {
         TheRnd.DrawRect(
             Hmx::Rect(0, 0, TheRnd.Width(), TheRnd.Height()),
             Hmx::Color(0, 0, 0),

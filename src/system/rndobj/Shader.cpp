@@ -125,9 +125,9 @@ void RndShader::Init() {
 
 void RndShader::SelectConfig(RndMat *mat, ShaderType shader_type, bool b3) {
     MILO_ASSERT(shader_type >= ShaderType(0) && shader_type < kMaxShaderTypes, 0x1BB);
-    if (TheRnd.GetDrawMode() == 2) {
+    if (TheRnd.DrawMode() == 2) {
         shader_type = kShadowmapShader;
-    } else if (TheRnd.GetDrawMode() == Rnd::kDrawVelocity) {
+    } else if (TheRnd.DrawMode() == Rnd::kDrawVelocity) {
         shader_type = kVelocityObjectShader;
     } else if (TheShaderMgr.Unk18()) {
         shader_type = kDepthVolumeShader;
@@ -153,9 +153,9 @@ void RndShader::SelectConfig(RndMat *mat, ShaderType shader_type, bool b3) {
 
 void RndShader::CheckForceCull(ShaderType s) {
     int shader20 = TheShaderMgr.Unk20();
-    if (TheRnd.GetDrawMode() == Rnd::kDrawShadowColor || shader20 == 1) {
+    if (TheRnd.DrawMode() == Rnd::kDrawShadowColor || shader20 == 1) {
         TheRenderState.SetCullMode((RndRenderState::CullMode)0);
-    } else if (s != kShadowmapShader && shader20 != 3 && TheRnd.GetDrawMode() != 8) {
+    } else if (s != kShadowmapShader && shader20 != 3 && TheRnd.DrawMode() != 8) {
         if (shader20 == 2) {
             TheRenderState.SetCullMode((RndRenderState::CullMode)2);
         }
@@ -209,7 +209,7 @@ void RndShader::WarnMatProp(const char *prop, NgMat *mat, NgEnviron *env, Shader
 
 bool RndShader::MatShaderFlagsOK(RndMat *mat, ShaderType s) {
     if (!mat || TheRnd.DefaultEnv() == RndEnviron::Current()
-        || TheRnd.GetDrawMode() == Rnd::kDrawOcclusion) {
+        || TheRnd.DrawMode() == Rnd::kDrawOcclusion) {
         return true;
     }
     NgEnviron *curEnv = (NgEnviron *)RndEnviron::Current();
@@ -255,7 +255,7 @@ void RndShader::Cache(ShaderType s, ShaderOptions opts, RndMat *mat) {
             MatShaderFlagsOK(mat, s);
         }
     }
-    bool select = s == kShadowmapShader || TheRnd.GetDrawMode() == Rnd::kDrawShadowColor;
+    bool select = s == kShadowmapShader || TheRnd.DrawMode() == Rnd::kDrawShadowColor;
     program.Select(select);
 }
 

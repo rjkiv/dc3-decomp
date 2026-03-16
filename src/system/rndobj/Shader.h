@@ -60,7 +60,7 @@ protected:
 class RndShaderParticles : public RndShader {
 public:
     virtual bool CheckError(MatFlagErrorType e) {
-        return (e == 0 || e == 2) && TheRnd.GetDrawMode() != 4;
+        return (e == 0 || e == 2) && TheRnd.DrawMode() != 4;
     }
 
 protected:

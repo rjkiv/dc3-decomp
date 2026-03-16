@@ -63,7 +63,7 @@ BEGIN_LOADS(RndScreenMask)
 END_LOADS
 
 void RndScreenMask::DrawShowing() {
-    if (TheRnd.GetDrawMode() == Rnd::kDrawNormal) {
+    if (TheRnd.DrawMode() == Rnd::kDrawNormal) {
         int h = TheRnd.Height();
         int w = TheRnd.Width();
         RndTex *targetTex = RndCam::Current()->TargetTex();
