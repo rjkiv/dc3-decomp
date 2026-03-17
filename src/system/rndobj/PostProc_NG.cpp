@@ -1,5 +1,6 @@
 #include "rndobj/PostProc_NG.h"
 #include "Memory.h"
+#include "ShaderMgr.h"
 #include "Tex.h"
 #include "math/Rand.h"
 #include "obj/Object.h"
@@ -40,6 +41,16 @@ void NgPostProc::Select() {
     unk230 = RandomFloat();
 }
 
+void NgPostProc::OnSelect() {
+    RndPostProc::OnSelect();
+    unk23c.clear();
+}
+
+void NgPostProc::OnUnselect() {
+    RndPostProc::OnUnselect();
+    unk23c.clear();
+}
+
 void NgPostProc::Init() {
     REGISTER_OBJ_FACTORY(NgPostProc);
     PhysMemTypeTracker tracker("D3D(phys):NgPostProc");
@@ -57,4 +68,42 @@ void NgPostProc::RebuildTex() {
     }
     RndVelocityBuffer::Singleton().AllocateData(w, h, TheRnd.Bpp());
     sBloom.AllocateTextures(w * 4, h * 4);
+}
+
+void NgPostProc::EndWorld() {
+    // scary
+    RndVelocityBuffer::Singleton().CacheCameraSettings(TheRnd.GetWorldCamCopy());
+}
+
+void NgPostProc::Terminate() { ReleaseTex(); }
+
+void NgPostProc::SetBloomColor() {
+    const float max = Max(1.0f, mBloomThreshold);
+    const float inverse = 1.0f / max;
+    const Vector4 bloom(0.3f * inverse, 0.59f * inverse, 0.11f * inverse, 1.0f / inverse);
+    TheShaderMgr.SetPConstant((PShaderConstant)7, bloom);
+}
+
+void NgPostProc::CheckGradientMap() {
+    if (DoGradientMap()) {
+        Vector4 vec(
+            mGradientMapStart, mGradientMapEnd, mGradientMapIndex, mGradientMapOpacity
+        );
+        TheShaderMgr.SetPConstant((PShaderConstant)3, mGradientMap.Ptr());
+        TheShaderMgr.SetPConstant((PShaderConstant)118, vec);
+        TheShaderMgr.SetUnk3a(mGradientMap.Ptr());
+    }
+}
+
+void NgPostProc::CheckVignette() {
+    if (DoVignette()) {
+        Vector4 vec(
+            mVignetteColor.red,
+            mVignetteColor.green,
+            mVignetteColor.blue,
+            mVignetteIntensity
+        );
+        TheShaderMgr.SetPConstant((PShaderConstant)123, vec);
+        TheShaderMgr.SetUnk3e(true);
+    }
 }

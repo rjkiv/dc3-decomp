@@ -45,8 +45,8 @@ public:
     virtual void Select();
     virtual void QueueMotionBlurObject(class RndDrawable *);
     virtual void SetBloomColor();
-    virtual void OnSelect();
-    virtual void OnUnselect();
+    // virtual void OnSelect();
+    // virtual void OnUnselect();
     virtual void EndWorld();
     virtual void DoPost();
 
@@ -56,12 +56,18 @@ public:
     static void Terminate();
 
 protected:
+    virtual void OnSelect();
+    virtual void OnUnselect();
+
     static Hmx::Color s_prevBloomColor;
     static float s_prevBloomIntensity;
     static NgPostProc *s_BloomSetter;
     static BloomTextures<3> sBloom;
 
     static void ReleaseTex();
+
+    void CheckGradientMap();
+    void CheckVignette();
 
     float unk22c; // 0x22c
     float unk230; // 0x230

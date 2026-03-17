@@ -145,6 +145,7 @@ public:
     Mode DrawMode() { return mDrawMode; }
     void SetDrawMode(Mode d) { mDrawMode = d; }
     RndCam *GetDefaultCam() const { return mDefaultCam; }
+    RndCam *GetWorldCamCopy() const { return mWorldCamCopy; }
     ProcessCmd ProcCmds() const { return mProcCmds; }
     bool DisablePP() const { return mDisablePostProc; }
     DataArray *Font() const { return mFont; }

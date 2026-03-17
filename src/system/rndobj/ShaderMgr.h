@@ -72,6 +72,9 @@ public:
     bool UseAO() const { return unkc; }
     bool Unk24() const { return unk24; }
     bool AllowPerPixel() const { return mAllowPerPixel; }
+    bool Unk3a() const { return unk3a; }
+    void SetUnk3a(bool b) { unk3a = b; }
+    void SetUnk3e(bool b) { unk3e = b; }
 
 protected:
     virtual void LoadShaders(const char *);
@@ -104,11 +107,11 @@ protected:
     int unk34;
     bool unk38;
     bool unk39;
-    bool unk3a;
+    bool unk3a; // mGradientMapChecked?
     bool unk3b;
     bool unk3c;
     bool unk3d;
-    bool unk3e;
+    bool unk3e; // mVignetteChecked?
     bool unk3f;
     bool mAllowPerPixel; // 0x40
     bool unk41;
