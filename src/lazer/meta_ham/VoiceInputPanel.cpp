@@ -3,11 +3,14 @@
 #include "meta_ham/HamPanel.h"
 #include "meta_ham/HamSongMgr.h"
 #include "meta_ham/HamUI.h"
+#include "meta_ham/MetaPerformer.h"
+#include "meta_ham/SongSortMgr.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/System.h"
 #include "rndobj/Overlay.h"
+#include "stl/_vector.h"
 #include "ui/UIPanel.h"
 #include "utl/Locale.h"
 #include "utl/Symbol.h"
@@ -212,5 +215,44 @@ void VoiceInputPanel::CreateSongSelectGrammar(Symbol s1) const {
         }
         TheSpeechMgr->CommitGrammar("song_select_grammar");
         TheSpeechMgr->SetRecognizing(recognizing);
+    }
+}
+
+void VoiceInputPanel::CreatePlaylistEditorGrammar() const {
+    if (!TheSpeechMgr->Enabled()) {
+        MILO_NOTIFY(
+            "----- VoiceInputPanel::CreatePlaylistEditorGrammar() - speechMgr not enabled\n"
+        );
+    } else {
+        if (TheSpeechMgr->HasGrammar("playlist_editor_grammar")) {
+            TheSpeechMgr->UnloadGrammar("playlist_editor_grammar");
+        }
+        TheSpeechMgr->CreateGrammar("playlist_editor_grammar");
+        void *v;
+        TheSpeechMgr->AddDynamicRule(
+            "playlist_editor_grammar", "select_playlist_song", &v
+        );
+
+        if (TheSongSortMgr->MapSize() == 0) {
+            TheSongSortMgr->OnEnter();
+        }
+
+        const std::map<Symbol, SongRecord> &songSortMembers = TheSongSortMgr->GetUnk78();
+        FOREACH (it, songSortMembers) {
+            const SongRecord &record = it->second;
+            const std::vector<String> &pronunciations =
+                record.Metadata()->Pronunciations();
+            for (int i = 0; i < pronunciations.size(); i++) {
+                String pronunciation = pronunciations[i];
+                TheSpeechMgr->AddDynamicRuleWord(
+                    "playlist_editor_grammar",
+                    pronunciation.c_str(),
+                    record.ShortName().Str(),
+                    &v,
+                    nullptr
+                );
+            }
+        }
+        TheSpeechMgr->CommitGrammar("playlist_editor_grammar");
     }
 }

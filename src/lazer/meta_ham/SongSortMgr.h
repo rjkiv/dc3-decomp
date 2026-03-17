@@ -2,6 +2,7 @@
 #include "NavListSortMgr.h"
 #include "SongRecord.h"
 #include "SongSort.h"
+#include "utl/Symbol.h"
 
 class SongSortMgr : public NavListSortMgr {
 public:
@@ -27,6 +28,9 @@ public:
 
     static void Init(SongPreview &);
     static void Terminate();
+
+    const std::map<Symbol, SongRecord> &GetUnk78() const { return unk78; }
+    unsigned int MapSize() { return unk78.size(); }
 
 private:
     SongSortMgr(SongPreview &);

@@ -11,13 +11,17 @@
 #include "meta_ham/CrewProvider.h"
 #include "meta_ham/MetaPerformer.h"
 #include "meta_ham/OutfitProvider.h"
+#include "meta_ham/ProfileMgr.h"
 #include "meta_ham/TexLoadPanel.h"
 #include "obj/Data.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "rndobj/Mat.h"
 #include "rndobj/Mesh.h"
+#include "rndobj/Tex.h"
 #include "ui/UI.h"
+#include "utl/MakeString.h"
 #include "utl/Symbol.h"
 
 SingleUserCrewSelectPanel::SingleUserCrewSelectPanel() {
@@ -67,6 +71,7 @@ void SingleUserCrewSelectPanel::UpdateProviders() {
 void SingleUserCrewSelectPanel::UpdateProviderPlayerIndices() {
     for (int i = 0; i < 2; i++) {
         int playerIndex = GetPlayerIndex(i);
+        mCrewProviders[i].SetPlayer(playerIndex);
         mCharProviders[i].SetPlayer(playerIndex);
         mOutfitProviders[i].SetPlayer(playerIndex);
     }
@@ -125,8 +130,8 @@ bool SingleUserCrewSelectPanel::IsCrewAvailable(Symbol crew, int i) {
 }
 
 void SingleUserCrewSelectPanel::RefreshUI() {
-    static Message refresh_ui("refresh_ui");
-    TheUI->Handle(refresh_ui, false);
+    static Message cRefreshUIMsg("refresh_ui");
+    TheUI->Handle(cRefreshUIMsg, false);
 }
 
 void SingleUserCrewSelectPanel::SetRandomCharacter(int idx) {
@@ -179,14 +184,37 @@ void SingleUserCrewSelectPanel::SetRandomCrew(int idx) {
 }
 
 int SingleUserCrewSelectPanel::GetPlayerIndex(int i) const {
-    SkeletonChooser *pSkeletonChooser = TheHamUI.GetShellInput()->mSkelChooser;
+    SkeletonChooser *pSkeletonChooser = TheHamUI.GetShellInput()->GetSkeletonChooser();
     MILO_ASSERT(pSkeletonChooser, 0x52);
     SkeletonSide skelSide = pSkeletonChooser->GetPlayerSide(0);
-    Symbol is_in_party_mode("is_in_party_mode");
-    const DataNode *node = TheHamProvider->Property(is_in_party_mode, true);
-    if (node->Int() == 0) {
+    if (TheHamProvider->Property("is_in_party_mode", true)->Int() != 0) {
+        return i == 0;
     }
-    return i == 0;
+    if (i == 0) {
+        return (skelSide - 1) != 0;
+    }
+    return (skelSide - 1) == 0;
+}
+
+void SingleUserCrewSelectPanel::UpdateCrewMesh(RndMesh *i_pMesh, int i_iSide, Symbol s) {
+    MILO_ASSERT(i_pMesh, 0xba);
+    MILO_ASSERT_RANGE(i_iSide, 0, 2, 0xbb);
+    const CrewProvider *pProvider = GetCrewProvider(i_iSide);
+    MILO_ASSERT(pProvider, 0xbe);
+    String texFile;
+    if (!TheProfileMgr.IsContentUnlocked(s)) {
+        texFile = MakeString("%s_locked.tex", s);
+    } else if (pProvider->IsCrewAvailable(s)) {
+        texFile = MakeString("%s.tex", s);
+    }
+
+    RndMat *pMat = mDir->Find<RndMat>("crew_p1.mat", false);
+    MILO_ASSERT(pMat, 0xd1);
+    RndTex *pTex = mDir->Find<RndTex>(texFile.c_str(), false);
+    if (pTex) {
+        pMat->SetDiffuseTex(pTex);
+        i_pMesh->SetMat(pMat);
+    }
 }
 
 BEGIN_HANDLERS(SingleUserCrewSelectPanel)

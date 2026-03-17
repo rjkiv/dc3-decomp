@@ -26,7 +26,11 @@ RecordScoreJob::RecordScoreJob(
     Hx_snprintf(buffer, 36, "pid%03d", 0);
     pt.AddPair(buffer, data.mProfile ? data.mProfile->GetOnlineID()->ToString() : "N/A");
     Hx_snprintf(buffer, 36, "xp%03d", 0);
-    pt.AddPair(buffer, data.mProfile ? data.mProfile->GetMetagameRank()->RankNumber() : 0);
+    if (data.mProfile) {
+        pt.AddPair(buffer, data.mProfile->GetMetagameRank()->RankNumber());
+    } else {
+        pt.AddPair(buffer, 0);
+    }
     Hx_snprintf(buffer, 36, "c_score%03d", 0);
     pt.AddPair(buffer, data.unkc);
     Hx_snprintf(buffer, 36, "cc_score%03d", 0);

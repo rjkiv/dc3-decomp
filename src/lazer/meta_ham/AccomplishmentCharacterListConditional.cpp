@@ -161,11 +161,15 @@ bool AccomplishmentCharacterListConditional::AreUnlockableOutfitListConditionsMe
     if (unk94.size() > 1) {
         for (int i = 0; i < unk94.size(); i++) {
             if (hpd->Outfit() == unk94[i] && hpd->IsPlaying()) {
-                if (unka0[i + 1] & unka0[i] == 0) {
-                    unka0[i] |= unka0[i + 1];
+                if (!unka0[i]) {
+                    unka0[i] = true;
+                    profile->SetUnk32C(profile->GetUnk32C() + 1);
                 }
                 break;
             }
+        }
+        if (profile->GetUnk32C() == unk94.size()) {
+            return true;
         }
     }
     return false;

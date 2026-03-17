@@ -1,5 +1,6 @@
 #include "meta_ham/VoiceControlPanel.h"
 #include "HamPanel.h"
+#include "HamSongMetadata.h"
 #include "MultiUserGesturePanel.h"
 #include "ProfileMgr.h"
 #include "flow/Flow.h"
@@ -19,6 +20,7 @@
 #include "meta_ham/MetaPerformer.h"
 #include "meta_ham/MultiUserGesturePanel.h"
 #include "meta_ham/OverlayPanel.h"
+#include "meta_ham/SongRecord.h"
 #include "meta_ham/SongSortMgr.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
@@ -31,11 +33,13 @@
 #include "os/System.h"
 #include "rndobj/Anim.h"
 #include "rndobj/Draw.h"
+#include "stl/_vector.h"
 #include "synth/MetaMusic.h"
 #include "ui/UI.h"
 #include "ui/UIColor.h"
 #include "ui/UIScreen.h"
 #include "utl/Locale.h"
+#include "utl/Std.h"
 #include "utl/Symbol.h"
 
 VoiceControlPanel::VoiceControlPanel()
@@ -218,7 +222,30 @@ void VoiceControlPanel::CreatePlaySongGrammar() const {
     if (TheUI->FocusPanel() != ObjectDir::Main()->Find<UIPanel>("song_select_panel")) {
         TheSongSortMgr->OnEnter();
     }
-    // SongSortMgr member iteration
+
+    const std::map<Symbol, SongRecord> &songSortMembers = TheSongSortMgr->GetUnk78();
+    FOREACH (it, songSortMembers) {
+        const SongRecord &record = it->second;
+        std::vector<String> pronunciations = record.Metadata()->Pronunciations();
+        const std::vector<PronunciationsLoc> &pronunciationsLoc =
+            record.Metadata()->PronunciationsLocalized();
+        for (int i = 0; i < pronunciationsLoc.size(); i++) {
+            if (pronunciationsLoc[i].mLanguage == GetSongTitlePronunciationLanguage()) {
+                pronunciations = pronunciationsLoc[i].mPronunciations;
+            }
+        }
+
+        for (int i = 0; i < pronunciations.size(); i++) {
+            String pronunciation = pronunciations[i];
+            TheSpeechMgr->AddDynamicRuleWord(
+                "play_song_grammar",
+                pronunciation.c_str(),
+                record.ShortName().Str(),
+                &v8c,
+                nullptr
+            );
+        }
+    }
     TheSpeechMgr->CommitGrammar("play_song_grammar");
     TheSpeechMgr->SetRecognizing(true);
 }

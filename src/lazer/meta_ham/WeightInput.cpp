@@ -121,10 +121,11 @@ float WeightInputPanel::GetWeight() {
 Symbol WeightInputPanel::GetPreferredUnits() {
     static Symbol pounds("pounds");
     static Symbol kilograms("kilograms");
+    Symbol units = pounds;
     if (TheProfileMgr.GetUnk4c() == 1) {
-        return kilograms;
+        units = kilograms;
     }
-    return pounds;
+    return units;
 }
 
 void WeightInputPanel::SetPreferredUnits(Symbol units) {

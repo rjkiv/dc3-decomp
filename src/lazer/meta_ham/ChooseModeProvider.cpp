@@ -71,7 +71,7 @@ void ChooseModeProvider::UpdateList(bool b) {
     }
 }
 
-RndMat *ChooseModeProvider::Mat(int, int i_iData, UIListMesh *) const {
+RndMat *ChooseModeProvider::Mat(int, int i_iData, UIListMesh *mesh) const {
     MILO_ASSERT_RANGE(i_iData, 0, NumData(), 0x5d);
     static Symbol perform("perform");
     static Symbol perform_legacy("perform_legacy");
@@ -85,7 +85,37 @@ RndMat *ChooseModeProvider::Mat(int, int i_iData, UIListMesh *) const {
     static Symbol concentration("concentration");
     static Symbol rhythm_battle("rhythm_battle");
     static Symbol holla_back("holla_back");
+    static Symbol holla_back_70s_craze("holla_back_70s_craze");
     static Symbol bustamove("bustamove");
     Symbol dataSym = DataSymbol(i_iData);
-    return nullptr;
+    if (mesh->Matches("icon_1p")) {
+        if (dataSym != practice) {
+            return nullptr;
+        }
+    } else if (mesh->Matches("icon_1p_plus")) {
+        if (dataSym == custom_party) {
+            return mesh->DefaultMat();
+        } else if (dataSym != start_the_party) {
+            return nullptr;
+        }
+    } else if (mesh->Matches("icon_2p")) {
+        if (dataSym == namethatdance || dataSym == dance_battle
+            || dataSym == concentration || dataSym == rhythm_battle) {
+            return mesh->DefaultMat();
+        } else if (dataSym != bustamove) {
+            return nullptr;
+        }
+    } else if (mesh->Matches("icon_1por2p")) {
+        if (dataSym == perform || dataSym == perform_legacy || dataSym == rtnbldrproto
+            || dataSym == holla_back) {
+            return mesh->DefaultMat();
+        } else if (dataSym != holla_back_70s_craze) {
+            return nullptr;
+        }
+    } else if (mesh->Matches("icon_2p_plus")) {
+        if (dataSym != crew_showdown) {
+            return nullptr;
+        }
+    }
+    return mesh->DefaultMat();
 }

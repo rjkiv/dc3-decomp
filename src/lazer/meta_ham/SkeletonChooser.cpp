@@ -12,6 +12,9 @@
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
 #include "math/Vec.h"
+#include "meta_ham/HamPanel.h"
+#include "meta_ham/HamUI.h"
+#include "meta_ham/PassiveMessenger.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Msg.h"
@@ -418,14 +421,12 @@ bool SkeletonChooser::IsPlayerInFreestyle(int player) const {
 
 void SkeletonChooser::SwapPlayerSides() {
     static Symbol is_in_party_mode("is_in_party_mode");
-    if (!IsFreestyleMode()) {
-        if (TheHamProvider->Property(is_in_party_mode)->Int() != 1) {
-            TheGameData->SwapPlayerSides();
-            static Message cSwapPlayersMsg("swap_players");
-            TheUI->Handle(cSwapPlayersMsg, false);
-            static Message post_sides_switched("post_sides_switched");
-            TheHamProvider->Export(post_sides_switched, true);
-        }
+    if (!IsFreestyleMode() && TheHamProvider->Property(is_in_party_mode)->Int() != 1) {
+        TheGameData->SwapPlayerSides();
+        static Message cSwapPlayersMsg("swap_players");
+        TheUI->Handle(cSwapPlayersMsg, false);
+        static Message post_sides_switched("post_sides_switched");
+        TheHamProvider->Export(post_sides_switched, true);
     } else {
         TheGameData->SwapPlayerSidesByIDOnly();
     }
@@ -493,28 +494,30 @@ bool SkeletonChooser::PotentiallyRecoverSkeletons() {
 }
 
 int SkeletonChooser::NextSkeletonIndexToTrack(int i1) {
-    int curSkelIdx = i1 + 1;
+    int curSkelIdx = (i1 + 1) % 6;
     int idxToTrack = -1;
     SkeletonRecoverer &recoverer = TheGestureMgr->Recoverer();
-    for (int i = 0; i < 6; i++, curSkelIdx = (curSkelIdx + 1) % 6) {
-        int ivar1 = TheGestureMgr->GetSkeleton(curSkelIdx).TrackingID();
+    for (int i = 0; i < 6; i++) {
+        int skelID = TheGestureMgr->GetSkeleton(curSkelIdx).TrackingID();
         if (idxToTrack >= 0) {
             return idxToTrack;
         }
-        if (ivar1 > 0) {
+        if (skelID > 0) {
+            idxToTrack = curSkelIdx;
             for (int j = 0; j < 2; j++) {
-                idxToTrack = TheGameData->Player(j)->GetSkeletonTrackingID();
-                int i4 = recoverer.GetTrackingIDWithRecovery(idxToTrack, -1);
-                if (ivar1 == idxToTrack || ivar1 == i4) {
+                int trackingID = TheGameData->Player(j)->GetSkeletonTrackingID();
+                int trackingIDRecovery =
+                    recoverer.GetTrackingIDWithRecovery(trackingID, -1);
+                if (skelID == trackingID || skelID == trackingIDRecovery) {
                     idxToTrack = -1;
                     break;
                 }
-                idxToTrack = curSkelIdx;
             }
         }
         if (idxToTrack >= 0) {
             return idxToTrack;
         }
+        curSkelIdx = (curSkelIdx + 1) % 6;
     }
     return idxToTrack;
 }
@@ -650,85 +653,53 @@ void SkeletonChooser::SetPlayerSkeletonWarningData(int p1ID, int p2ID) {
 
     if (0 < p2ID && p2ID == trackingID) {
         p1flags = p2flags;
-        p1flags = p1warnings;
         p2warnings = p2flags;
+        p1flags = p1warnings;
     }
     SetPlayerCloseWarnings(0, p1flags);
     SetPlayerCloseWarnings(1, p2warnings);
 }
 
 void SkeletonChooser::SwapPlayerDataForPractice() {
-    HamPlayerData *pPlayer1 = TheGameData->Player(0);
-    const DataNode *player1Prop = pPlayer1->Provider()->Property("using_fitness");
-    int player1PropVal = player1Prop->Int();
-    HamPlayerData *pPlayer2 = TheGameData->Player(0);
-    const DataNode *player2Prop = pPlayer2->Provider()->Property("using_fitness");
-    int player2PropVal = player2Prop->Int();
-    pPlayer1 = TheGameData->Player(0);
-    pPlayer1->SetUsingFitness(player2PropVal == 0);
-    pPlayer2 = TheGameData->Player(1);
-    pPlayer2->SetUsingFitness(player1PropVal == 0);
+    bool player1PropVal =
+        TheGameData->Player(0)->Provider()->Property("using_fitness")->Int();
+    bool player2PropVal =
+        TheGameData->Player(1)->Provider()->Property("using_fitness")->Int();
+    TheGameData->Player(0)->SetUsingFitness(player2PropVal);
+    TheGameData->Player(1)->SetUsingFitness(player1PropVal);
 
-    pPlayer1 = TheGameData->Player(0);
-    const DataNode *player1CrewProp = pPlayer1->Provider()->Property("crew");
-    Symbol player1Crew = player1CrewProp->Sym();
-    pPlayer2 = TheGameData->Player(1);
-    const DataNode *player2CrewProp = pPlayer2->Provider()->Property("crew");
-    Symbol player2Crew = player2CrewProp->Sym();
-    pPlayer1 = TheGameData->Player(0);
-    pPlayer1->SetCrew(player2Crew);
-    pPlayer2 = TheGameData->Player(1);
-    pPlayer2->SetCrew(player1Crew);
+    Symbol player1Crew = TheGameData->Player(0)->Provider()->Property("crew")->Sym();
+    TheGameData->Player(0)->SetCrew(
+        TheGameData->Player(1)->Provider()->Property("crew")->Sym()
+    );
+    TheGameData->Player(1)->SetCrew(player1Crew);
 
-    pPlayer1 = TheGameData->Player(0);
-    player1Crew = pPlayer1->Crew();
-    pPlayer2 = TheGameData->Player(1);
-    player2Crew = pPlayer2->Crew();
-    pPlayer1 = TheGameData->Player(0);
-    pPlayer1->SetCrew(player2Crew);
-    pPlayer2 = TheGameData->Player(1);
-    pPlayer2->SetCrew(player1Crew);
+    player1Crew = TheGameData->Player(0)->Crew();
+    TheGameData->Player(0)->SetCrew(TheGameData->Player(1)->Crew());
+    TheGameData->Player(1)->SetCrew(player1Crew);
 
-    pPlayer1 = TheGameData->Player(0);
-    Symbol player1Char = pPlayer1->Char();
-    pPlayer2 = TheGameData->Player(1);
-    Symbol player2Char = pPlayer2->Char();
-    pPlayer1 = TheGameData->Player(0);
-    pPlayer1->SetCharacter(player2Char);
-    pPlayer2 = TheGameData->Player(1);
-    pPlayer2->SetCharacter(player1Char);
+    Symbol player1Char = TheGameData->Player(0)->Char();
+    TheGameData->Player(0)->SetCharacter(TheGameData->Player(1)->Char());
+    TheGameData->Player(1)->SetCharacter(player1Char);
 
-    pPlayer1 = TheGameData->Player(0);
-    Symbol player1Symbol = pPlayer1->Unk48();
-    pPlayer2 = TheGameData->Player(1);
-    Symbol player2Symbol = pPlayer1->Unk48();
-    pPlayer1 = TheGameData->Player(0);
-    pPlayer1->SetUnk48(player2Symbol);
-    pPlayer2 = TheGameData->Player(1);
-    pPlayer2->SetUnk48(player1Symbol);
+    Symbol player1Symbol = TheGameData->Player(0)->Unk48();
+    Symbol player2Symbol = TheGameData->Player(1)->Unk48();
+    TheGameData->Player(0)->SetUnk48(player2Symbol);
+    TheGameData->Player(1)->SetUnk48(player1Symbol);
 
-    pPlayer1 = TheGameData->Player(0);
-    Symbol player1Outfit = pPlayer1->Outfit();
-    pPlayer2 = TheGameData->Player(1);
-    Symbol player2Outfit = pPlayer2->Outfit();
-    pPlayer1 = TheGameData->Player(0);
-    pPlayer1->SetOutfit(player2Outfit);
-    pPlayer2 = TheGameData->Player(1);
-    pPlayer2->SetOutfit(player1Outfit);
+    Symbol player1Outfit = TheGameData->Player(0)->Outfit();
+    TheGameData->Player(0)->SetOutfit(TheGameData->Player(1)->Outfit());
+    TheGameData->Player(1)->SetOutfit(player1Outfit);
 
-    pPlayer1 = TheGameData->Player(0);
-    Symbol player1PreferredOutfit = pPlayer1->GetPreferredOutfit();
-    pPlayer2 = TheGameData->Player(1);
-    Symbol player2PreferredOutfit = pPlayer2->GetPreferredOutfit();
-    pPlayer1 = TheGameData->Player(0);
-    pPlayer1->SetPreferredOutfit(player2PreferredOutfit);
-    pPlayer2 = TheGameData->Player(1);
-    pPlayer2->SetPreferredOutfit(player1PreferredOutfit);
+    Symbol player1PreferredOutfit = TheGameData->Player(0)->GetPreferredOutfit();
+    TheGameData->Player(0)->SetPreferredOutfit(
+        TheGameData->Player(1)->GetPreferredOutfit()
+    );
+    TheGameData->Player(1)->SetPreferredOutfit(player1PreferredOutfit);
 
-    pPlayer1 = TheGameData->Player(0);
-    TheGameData->SetAssociatedPadNum(0, pPlayer2->PadNum());
-    pPlayer2 = TheGameData->Player(1);
-    TheGameData->SetAssociatedPadNum(1, pPlayer1->PadNum());
+    int player1PadNum = TheGameData->Player(0)->PadNum();
+    TheGameData->SetAssociatedPadNum(0, TheGameData->Player(1)->PadNum());
+    TheGameData->SetAssociatedPadNum(1, player1PadNum);
 }
 
 void SkeletonChooser::UpdatePlayerSkeletonNavData() {
@@ -807,4 +778,131 @@ int SkeletonChooser::GetNumValidSkeletonChoices() {
         }
     }
     return numValidSkeletonChoices;
+}
+
+int SkeletonChooser::RoundRobinForStandingStill(int i) {
+    int id = -1;
+    if (mNextSkelIdxToTrack < 0 || unk80 <= 0.0f) {
+        mNextSkelIdxToTrack = NextSkeletonIndexToTrack(mNextSkelIdxToTrack);
+        unk80 = 0.08f;
+        unk64[0]->Clear();
+    }
+
+    if (mNextSkelIdxToTrack >= 0) {
+        Skeleton &skel = TheGestureMgr->GetSkeleton(mNextSkelIdxToTrack);
+        id = skel.TrackingID();
+        unk64[0]->Update(id, TheTaskMgr.DeltaUISeconds() * 1000.0f);
+        if (unk64[0]->StandingStill()) {
+            mNextSkelIdxToTrack = -1;
+        } else {
+            if (unk64[0]->RaisedMs() <= 0.0f) {
+                unk80 = 0.08f;
+            } else {
+                unk80 -= TheTaskMgr.DeltaUISeconds();
+            }
+        }
+    }
+    return id;
+}
+
+int SkeletonChooser::RoundRobinForHandRaised(int i) {
+    int id = -1;
+    int numValidSkeletonChoices = GetNumValidSkeletonChoices();
+    if (numValidSkeletonChoices > unk90) {
+        unk84 = 2.0f;
+        unk88 = 0.0f;
+        unk8c = 0;
+    }
+    unk90 = numValidSkeletonChoices;
+    if (mNextSkelIdxToTrack < 0 || unk80 <= 0.0f) {
+        mNextSkelIdxToTrack = NextSkeletonIndexToTrack(mNextSkelIdxToTrack);
+        unk80 = 0.08f;
+        unk4c[0]->Clear();
+    }
+
+    if (mNextSkelIdxToTrack >= 0) {
+        Skeleton &skel = TheGestureMgr->GetSkeleton(mNextSkelIdxToTrack);
+        id = skel.TrackingID();
+        unk4c[0]->Update(id, TheTaskMgr.DeltaUISeconds() * 1000.0f);
+        if (unk4c[0]->HandRaised()) {
+            static Symbol join_in_progress_complete("join_in_progress_complete");
+            static Symbol none("none");
+            ThePassiveMessenger->TriggerGenericMsg(
+                join_in_progress_complete, none, kPassiveMessageGeneral, gNullStr, -1
+            );
+            mNextSkelIdxToTrack = -1;
+        } else {
+            if (unk4c[0]->RaisedMs() <= 0.0f) {
+                unk80 = 0.08f;
+            } else {
+                unk80 -= TheTaskMgr.DeltaUISeconds();
+                if (0 <= id && unk8c < 2) {
+                    unk84 -= TheTaskMgr.DeltaUISeconds();
+                    unk88 -= TheTaskMgr.DeltaUISeconds();
+                    if (unk84 <= 0.0f && unk88 <= 0.0f
+                        && unk4c[0]->StandingStillFilter().StandingStill()) {
+                        unk80 = 0.08f;
+                        unk8c++;
+                        unk88 = 13.0f;
+                        static Symbol doing_stupid_kinect_trick(
+                            "doing_stupid_kinect_trick"
+                        );
+                        if (!IsAutoplaying()) {
+                            const DataNode *prop =
+                                TheHamProvider->Property(doing_stupid_kinect_trick, true);
+                            if (prop->Int() == 0) {
+                                static Symbol join_in_progress("join_in_progress");
+                                static Symbol none("none");
+                                ThePassiveMessenger->TriggerGenericMsg(
+                                    join_in_progress,
+                                    none,
+                                    kPassiveMessageGeneral,
+                                    gNullStr,
+                                    -1
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        unk84 = 2.0f;
+        unk88 = 0.0f;
+    }
+    return id;
+}
+
+void SkeletonChooser::CheckToSwitchActivePlayer() {
+    int altPlayerID = unk3c == 0;
+    int player1ID = GetAssignedPlayerSkeletonID(unk3c);
+    int player2ID = GetAssignedPlayerSkeletonID(altPlayerID);
+    if (0 <= player2ID) {
+        if (player1ID >= 0) {
+            Skeleton *skel1 = TheGestureMgr->GetSkeletonByTrackingID(player1ID);
+            if (skel1) {
+                Skeleton *skel2 = TheGestureMgr->GetSkeletonByTrackingID(player2ID);
+                if (skel2 && skel2->IsValid()) {
+                    HamPanel *pPanel = dynamic_cast<HamPanel *>(TheHamUI.FocusPanel());
+                    if (!pPanel || !pPanel->HasNavList()) {
+                        return;
+                    }
+                    bool p2HandUp = IsHandUp(player2ID);
+                    bool p1HandUp = IsHandUp(player1ID);
+                    if (!skel2->IsValid() && p2HandUp) {
+                        SwitchActiveToPlayerIndexImmediate(altPlayerID);
+                        return;
+                    }
+                    if (!p1HandUp && p2HandUp) {
+                        QueueActivePlayerSwitch(altPlayerID);
+                        return;
+                    }
+                }
+            }
+        } else {
+            SwitchActiveToPlayerIndexImmediate(altPlayerID);
+            return;
+        }
+    }
+    unk38 = -1;
 }

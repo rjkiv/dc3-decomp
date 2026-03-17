@@ -134,6 +134,8 @@ public:
     bool GetUnk334() const { return unk334; }
     int GetUnk330() const { return unk330; }
     void SetUnk330(int i) { unk330 = i; }
+    int GetUnk32C() const { return unk32c; }
+    void SetUnk32C(int i) { unk32c = i; }
 
 private:
     // FixedSizeSaveable

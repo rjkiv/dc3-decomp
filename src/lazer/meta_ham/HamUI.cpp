@@ -338,8 +338,8 @@ void HamUI::Draw() {
 bool HamUI::IsTimelineResetAllowed() const {
     if (!ThePassiveMessenger->HasMessages()
         && !ThePassiveMessenger->HasRecentlyDismissedMessage()
-        && TheSkeletonIdentifier->GetIDStatus() == 0 &&
-        (!mHelpBar || (!mHelpBar->IsWriteIconShowing() && !mHelpBar->IsAnimating()))) {
+        && TheSkeletonIdentifier->GetIDStatus() == 0
+        && (!mHelpBar || (!mHelpBar->IsWriteIconShowing() && !mHelpBar->IsAnimating()))) {
         return true;
     }
     return false;
@@ -568,10 +568,9 @@ void HamUI::DrawDebug() {
 
 Symbol HamUI::DisplayNextCameraOutput() {
     do {
-        do {
-            mBufferType = (LiveCameraInput::BufferType)(mBufferType + 1);
-        } while (mBufferType == 1);
-    } while (mBufferType == 2);
+        mBufferType = (LiveCameraInput::BufferType)(mBufferType + 1);
+    } while (mBufferType == 1 || mBufferType == 2);
+
     if (mBufferType >= NumSnapshots() + 4) {
         mBufferType = (LiveCameraInput::BufferType)-1;
     }
@@ -584,9 +583,10 @@ Symbol HamUI::DisplayNextCameraOutput() {
         return "player";
     case LiveCameraInput::kBufferPlayerColor:
         return "player color";
-    case LiveCameraInput::kBufferOff:
-        return "off";
     default:
+        if (mBufferType < 0) {
+            return "off";
+        }
         return MakeString("snapshot %d", mBufferType - 4);
     }
 }

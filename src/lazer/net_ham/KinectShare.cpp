@@ -77,7 +77,7 @@ bool KinectShare::CanRetry() {
 void KinectShare::Sending() {
     MILO_ASSERT(mSocket, 0x87);
     if (unk13c > 0) {
-        int ret = mSocket->Send(&unka0, (unk138 - unk13c) + unka0);
+        int ret = mSocket->Send(&unka0 + (unk138 - unk13c), unk13c);
         if (ret == -1) {
             mFailType = (HttpGetFailType)1;
             SetState((State)7);

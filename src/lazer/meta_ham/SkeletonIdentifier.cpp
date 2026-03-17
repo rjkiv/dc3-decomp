@@ -16,6 +16,7 @@
 #include "utl/MakeString.h"
 #include "utl/Symbol.h"
 #include "xdk/NUI.h"
+#include <cmath>
 
 String EnrollmentIndexString(int idx) {
     String str = MakeString("enrollment index %d", idx);
@@ -281,4 +282,34 @@ void SkeletonIdentifier::Poll() {
 DataNode SkeletonIdentifier::OnMsg(SkeletonEnrollmentChangedMsg const &msg) {
     UpdateEnrolledPlayers();
     return DATA_UNHANDLED;
+}
+
+DataNode SkeletonIdentifier::OnMsg(SigninChangedMsg const &msg) {
+    if ((unsigned int)msg.GetChangedMask() != 0) {
+        if ((unsigned int)msg.GetMask() != 0) {
+            if (mIdentityStatus == kIdentityStatus_WaitingForSignIn) {
+                mIdentityStatus = kIdentityStatus_None;
+            }
+            int signedInPad = -1;
+            for (int i = 0; i < 4; i++) {
+                if (msg.GetChangedMask() & (1 << i)) {
+                    signedInPad = i;
+                    break;
+                }
+            }
+            MILO_ASSERT(signedInPad != -1, 0x217);
+            if (TheGameData->Player(0)->PadNum() != signedInPad) {
+                if (TheGameData->Player(1)->PadNum() != signedInPad) {
+                    if (TheGameData->Player(0)->PadNum() < 0) {
+                        TheGameData->SetAssociatedPadNum(0, signedInPad);
+                    } else if (TheGameData->Player(1)->PadNum() < 0) {
+                        TheGameData->SetAssociatedPadNum(1, signedInPad);
+                    }
+                }
+            }
+        }
+    }
+    UpdateEnrolledPlayers();
+    TheGameData->UpdateAssociatedPads();
+    return 0;
 }
