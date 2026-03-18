@@ -26,6 +26,14 @@ void SongSelectPanel::Load() {
     c->AllowedToShow(true);
 }
 
+void SongSelectPanel::Enter() {
+    if (TheHamUI.GetLetterboxPanel()) {
+        TheHamUI.GetLetterboxPanel()->AddSink(this, "enter_blacklight_mode");
+        TheHamUI.GetLetterboxPanel()->AddSink(this, "exit_blacklight_mode");
+    }
+    HamPanel::Enter();
+}
+
 void SongSelectPanel::Exit() {
     if (TheHamUI.GetLetterboxPanel()) {
         TheHamUI.GetLetterboxPanel()->RemoveSink(this, "enter_blacklight_mode");

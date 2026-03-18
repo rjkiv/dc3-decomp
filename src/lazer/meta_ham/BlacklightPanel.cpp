@@ -1,6 +1,7 @@
 #include "meta_ham/BlacklightPanel.h"
 #include "flow/Flow.h"
 #include "meta_ham/HamPanel.h"
+#include "meta_ham/HamUI.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
@@ -14,7 +15,13 @@ BEGIN_PROPSYNCS(BlacklightPanel)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
-void BlacklightPanel::Enter() { HamPanel::Enter(); } // incomplete
+void BlacklightPanel::Enter() {
+    if (TheHamUI.GetLetterboxPanel()) {
+        TheHamUI.GetLetterboxPanel()->AddSink(this, "enter_blacklight_mode");
+        TheHamUI.GetLetterboxPanel()->AddSink(this, "exit_blacklight_mode");
+    }
+    HamPanel::Enter();
+}
 
 DataNode BlacklightPanel::OnEnterBlacklightMode(DataArray const *d) {
     Flow *f = DataDir()->Find<Flow>("activate_letterbox.flow", false);

@@ -43,8 +43,8 @@ DataNode SigninScreen::OnMsg(const SigninChangedMsg &msg) {
 
 DataNode SigninScreen::OnMsg(const UIChangedMsg &msg) {
     if (!msg.Showing() && ThePlatformMgr.SignInMask() == 0) {
-        static Message sign_in_dismissed("sign_in_dismissed", 0);
-        Handle(sign_in_dismissed, false);
+        static Message msg("sign_in_dismissed", 0);
+        Handle(msg, false);
     }
     return 0;
 }

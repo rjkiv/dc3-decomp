@@ -14,6 +14,7 @@ public:
 
     // UIPanel
     virtual void Load();
+    virtual void Enter();
     virtual void Exit();
     virtual void Poll();
     virtual bool IsLoaded() const;

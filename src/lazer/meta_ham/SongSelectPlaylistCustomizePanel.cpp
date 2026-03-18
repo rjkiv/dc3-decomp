@@ -58,8 +58,8 @@ void SongSelectPlaylistCustomizePanel::UpdateSongs() {
     MILO_ASSERT(m_pPlaylistSongProvider, 0x7b);
     MILO_ASSERT(m_pPlaylist, 0x7c);
     m_pPlaylistSongProvider->UpdateList(m_pPlaylist, true);
-    static Message update_song_list("update_song_list");
-    Handle(update_song_list, true);
+    static Message cUpdateSongListMsg("update_song_list");
+    Handle(cUpdateSongListMsg, true);
 }
 
 void SongSelectPlaylistCustomizePanel::InsertSong(Symbol s, int i) {
@@ -105,9 +105,9 @@ void SongSelectPlaylistCustomizePanel::Refresh() {
     MILO_ASSERT(m_pPlaylist, 0x6e);
     UpdateSongs();
     MILO_ASSERT(m_pPlaylistSongProvider, 0x72);
-    static Message update_playlist_song_provider("update_playlist_song_provider", 0);
-    update_playlist_song_provider[0] = m_pPlaylistSongProvider;
-    Handle(update_playlist_song_provider, true);
+    static Message cUpdateSongProviderMsg("update_playlist_song_provider", 0);
+    cUpdateSongProviderMsg[0] = m_pPlaylistSongProvider;
+    Handle(cUpdateSongProviderMsg, true);
 }
 
 BEGIN_HANDLERS(SongSelectPlaylistCustomizePanel)

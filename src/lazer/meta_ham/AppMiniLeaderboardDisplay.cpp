@@ -1,10 +1,12 @@
 #include "meta_ham/AppMiniLeaderboardDisplay.h"
 #include "flow/Flow.h"
+#include "hamobj/Difficulty.h"
 #include "hamobj/HamList.h"
 #include "hamobj/MiniLeaderboardDisplay.h"
 #include "meta/SongMgr.h"
 #include "meta_ham/HamProfile.h"
 #include "meta_ham/ProfileMgr.h"
+#include "meta_ham/SongStatusMgr.h"
 #include "net/DingoSvr.h"
 #include "net_ham/LeaderboardJobs.h"
 #include "net_ham/RCJobDingo.h"
@@ -17,8 +19,11 @@
 #include "rndobj/Dir.h"
 #include "ui/UIComponent.h"
 #include "ui/UIList.h"
+#include "ui/UIListLabel.h"
 #include "ui/UIListWidget.h"
+#include "utl/Std.h"
 #include "utl/Symbol.h"
+#include "xdk/xapilibi/xbase.h"
 
 AppMiniLeaderboardDisplay::AppMiniLeaderboardDisplay()
     : unk60(0), mLeaderboardList(0), mSongID(0), unk6c(0) {}
@@ -148,13 +153,17 @@ void AppMiniLeaderboardDisplay::UpdateLeaderboardOnline(int i1) {
             unk60 = 2;
             mResourceDir->Find<Flow>("pending.flow")->Activate();
         }
-    } else if (!ThePlatformMgr.IsConnected()) {
-        if (unk60 != 5) {
-            unk60 = 5;
-            mResourceDir->Find<Flow>("no_profile.flow")->Activate();
-        } else if (unk60 != 4) {
-            unk60 = 4;
-            mResourceDir->Find<Flow>("no_profile.flow")->Activate();
+    } else {
+        if (!ThePlatformMgr.IsConnected()) {
+            if (unk60 != 5) {
+                unk60 = 5;
+                mResourceDir->Find<Flow>("no_profile.flow")->Activate();
+            }
+        } else {
+            if (unk60 != 4) {
+                unk60 = 4;
+                mResourceDir->Find<Flow>("no_profile.flow")->Activate();
+            }
         }
     }
 }
@@ -171,29 +180,158 @@ bool AppMiniLeaderboardDisplay::UpdateLeaderboard(Symbol s) { // has one small d
         HamProfile *profile = TheProfileMgr.GetActiveProfile(true);
         MILO_ASSERT(profile, 0xb1);
         profile->UpdateOnlineID();
-        if (profile->IsSignedIn()) {
-            if (!ThePlatformMgr.IsConnected()) { // mismatch right here?
-                if (unk60 != 5) {
-                    unk60 = 5;
-                    Flow *f = mResourceDir->Find<Flow>("no_profile.flow", true);
-                    f->Activate();
-                    return true;
-                }
-            } else {
-                mSongID = TheSongMgr.GetSongIDFromShortName(s, false);
-                ClearData();
-                TheRockCentral.CancelOutstandingCalls(this);
-                if (mSongID == 0) {
-                    return true;
-                }
-                if (unk60 != 0) {
-                    unk60 = 0;
-                    Flow *f = mResourceDir->Find<Flow>("pending.flow", true);
-                    f->Activate();
-                }
-                unk6c = TheTaskMgr.UISeconds();
+        if (!profile->IsSignedIn()) {
+            if (unk60 != 4) {
+                unk60 = 4;
+                Flow *f = mResourceDir->Find<Flow>("no_profile.flow", true);
+                f->Activate();
+                return true;
             }
+        } else if (!ThePlatformMgr.IsConnected()) {
+            if (unk60 != 5) {
+                unk60 = 5;
+                Flow *f = mResourceDir->Find<Flow>("no_profile.flow", true);
+                f->Activate();
+                return true;
+            }
+        } else {
+            mSongID = TheSongMgr.GetSongIDFromShortName(s, false);
+            ClearData();
+            TheRockCentral.CancelOutstandingCalls(this);
+            if (mSongID == 0) {
+                return true;
+            }
+            if (unk60 != 0) {
+                unk60 = 0;
+                Flow *f = mResourceDir->Find<Flow>("pending.flow", true);
+                f->Activate();
+            }
+            unk6c = TheTaskMgr.UISeconds();
         }
     }
     return true;
+}
+
+void AppMiniLeaderboardDisplay::UpdateSelfInRows() {
+    HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
+    if (pProfile) {
+        pProfile->UpdateOnlineID();
+        bool bHasOnlineID = pProfile->IsSignedIn();
+        MILO_ASSERT(bHasOnlineID, 0x107);
+        XUID xuid = pProfile->GetOnlineID()->GetXUID();
+        SongStatusMgr *pSongStatusMgr = pProfile->GetSongStatusMgr();
+        MILO_ASSERT(pSongStatusMgr, 0x10b);
+        bool b = false;
+        int score = pSongStatusMgr->GetScore(mSongID, b);
+        Difficulty diff = pSongStatusMgr->GetDifficulty(mSongID);
+        if (0 < score) {
+            bool check = false;
+            FOREACH (it, mLBRows) {
+                if (it->unk20 == xuid && score > (unsigned int)it->unkc) {
+                    mLBRows.erase(it);
+                    check = true;
+                    break;
+                }
+            }
+
+            if (check) {
+                LeaderboardRow row;
+                row.unk20 = xuid;
+                row.unkc = score;
+                row.unk1d = false;
+                row.unk10 = 0;
+                row.unk1e = true;
+                row.unk0 = pProfile->GetName();
+                row.unk1c = b;
+                row.unk18 = diff;
+                bool b2 = false;
+                FOREACH (it, mLBRows) {
+                    if (score >= (unsigned int)it->unkc) {
+                        mLBRows.insert(it, 1, row);
+                        b2 = true;
+                        break;
+                    }
+                }
+                if (!b2) {
+                    row.unk14 = 1;
+                    mLBRows.push_back(row);
+                }
+                int count = 0;
+                FOREACH (it, mLBRows) {
+                    it->unk14 = count;
+                    count++;
+                }
+            }
+        }
+    }
+}
+
+void AppMiniLeaderboardDisplay::Text(
+    int i1, int data, UIListLabel *listLabel, UILabel *label
+) const {
+    if (data < NumData()) {
+        String name = gNullStr;
+        HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
+        if (pProfile) {
+            name = pProfile->GetName();
+        }
+
+        if (listLabel->Matches("gamertag")) {
+            static Symbol gamertag("gamertag");
+            if (name == mLBRows[data].unk0) {
+                label->SetTextToken(gNullStr);
+            } else {
+                label->SetTokenFmt(gamertag, mLBRows[data].unk0);
+            }
+        } else if (listLabel->Matches("score")) {
+            label->SetInt(mLBRows[data].unkc, false);
+        } else if (listLabel->Matches("no_flashcards")) {
+            static Symbol no_flashcards_icon("no_flashcards_icon");
+            if (mLBRows[data].unk1c) {
+                label->SetTextToken(no_flashcards_icon);
+            } else {
+                label->SetTextToken(gNullStr);
+            }
+        } else if (listLabel->Matches("rank")) {
+            static Symbol rank_fmt("rank_fmt");
+            label->SetInt(mLBRows[data].unk14, false);
+        } else if (listLabel->Matches("difficulty")) {
+            static Symbol beginner_short("beginner_short");
+            static Symbol easy_short("easy_short");
+            static Symbol medium_short("medium_short");
+            static Symbol expert_short("expert_short");
+            Difficulty diff = mLBRows[data].unk18;
+            switch (diff) {
+            case kDifficultyBeginner:
+                label->SetTextToken(beginner_short);
+                break;
+            case kDifficultyEasy:
+                label->SetTextToken(easy_short);
+                break;
+            case kDifficultyMedium:
+                label->SetTextToken(medium_short);
+                break;
+            case kDifficultyExpert:
+                label->SetTextToken(expert_short);
+                break;
+            default:
+                MILO_NOTIFY(
+                    "Bad difficulty %d retrieved from leaderboards for user                    %s at rank %d!", // yes this is what it should be
+                    diff,
+                    mLBRows[data].unk0,
+                    mLBRows[data].unk10
+                );
+                break;
+            }
+        } else if (listLabel->Matches("self")) {
+            static Symbol Gamertag("gamertag");
+            if (name == mLBRows[data].unk0) {
+                label->SetTokenFmt(Gamertag, mLBRows[data].unk0);
+            } else {
+                label->SetTextToken(gNullStr);
+            }
+        }
+    } else {
+        label->SetTextToken(gNullStr);
+    }
 }

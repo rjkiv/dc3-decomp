@@ -5,6 +5,8 @@
 #include "utl/MakeString.h"
 #include "utl/Symbol.h"
 
+static int sPriorities[2] = { 1, 1000 };
+
 Accomplishment::Accomplishment(DataArray *cfg, int idx)
     : mName(""), mAccomplishmentType(), mCategory(""), mAward(""), mUnitsToken(gNullStr),
       mDifficulty(kDifficultyEasy), mPassiveMsgChannel(gNullStr), mPassiveMsgPriority(-1),
@@ -103,7 +105,6 @@ void Accomplishment::Configure(DataArray *i_pConfig) {
     i_pConfig->FindData(passive_msg_priority, mPassiveMsgPriority, false);
 
     if (mPassiveMsgChannel != gNullStr) {
-        static int sPriorities[2] = { 1, 1000 };
         if (mPassiveMsgPriority < 1) {
             MILO_NOTIFY(
                 "Passive Message Priority for goal %s is less than the minimum: %i!",
