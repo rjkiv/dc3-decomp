@@ -38,7 +38,7 @@ DataNode SigninScreen::OnMsg(const SigninChangedMsg &msg) {
             break;
         }
     }
-    return 0;
+    return 12;
 }
 
 DataNode SigninScreen::OnMsg(const UIChangedMsg &msg) {
