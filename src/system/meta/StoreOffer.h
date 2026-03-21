@@ -29,8 +29,8 @@ public:
     // Hmx::Object
     virtual ~StoreOffer();
     virtual DataNode Handle(DataArray *, bool);
+    virtual bool Cmp(StoreOffer const &, Symbol) const = 0;
 
-    Symbol OfferType() const;
     bool HasData(Symbol) const;
     DateTime const &ReleaseDate() const;
     Symbol FirstChar(Symbol, bool) const;
@@ -53,6 +53,10 @@ public:
     StoreOffer(DataArray *, SongMgr *);
 
     DataArray *StoreOfferData() const { return mStoreOfferData; }
+    Symbol OfferType() const {
+        static Symbol type("type");
+        return mStoreOfferData->FindSym(type);
+    }
 
 protected:
     DataArray *mStoreOfferData; // 0x40
@@ -63,5 +67,10 @@ protected:
 
 class SortCmp {
 public:
-    bool operator()(const StoreOffer *, const StoreOffer *) const;
+    SortCmp(Symbol type) : mType(type) {}
+    bool operator()(const StoreOffer *offer1, const StoreOffer *offer2) const {
+        return offer1->Cmp(*offer2, mType);
+    }
+
+    Symbol mType;
 };

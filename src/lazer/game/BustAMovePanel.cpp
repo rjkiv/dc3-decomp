@@ -12,6 +12,7 @@
 #include "hamobj/ScoreUtl.h"
 #include "lazer/game/GameMode.h"
 #include "lazer/meta_ham/HamPanel.h"
+#include "math/Color.h"
 #include "math/Easing.h"
 #include "math/Rand.h"
 #include "meta_ham/MetaPerformer.h"
@@ -25,10 +26,12 @@
 #include "rndobj/Anim.h"
 #include "rndobj/Dir.h"
 #include "rndobj/Mat.h"
+#include "rndobj/PropAnim.h"
 #include "rndobj/Tex.h"
 #include "rndobj/TexRenderer.h"
 #include "ui/UIColor.h"
 #include "ui/UIPanel.h"
+#include "utl/MakeString.h"
 #include "utl/Symbol.h"
 #include "utl/TempoMap.h"
 #include <float.h>
@@ -407,8 +410,78 @@ void BustAMovePanel::PollCaptureFlashcard() {
     }
 }
 
-void BustAMovePanel::AnimateFlashcard(int) {}
-void BustAMovePanel::AdvanceFlashcards() {}
+void BustAMovePanel::AnimateFlashcard(int i) {
+    UIColor *pColor = DataDir()->Find<UIColor>(MakeString("color%d.color", i + 1));
+    const Hmx::Color color = pColor->GetColor();
+
+    RndMat *pFlashcardMat = DataDir()->Find<RndMat>("flashcard.mat");
+    String flashcardStrMakeString(MakeString("flashcard%i.tex", i));
+    RndTex *pFlashcardTex = DataDir()->Find<RndTex>(flashcardStrMakeString.c_str());
+    pFlashcardMat->SetDiffuseTex(pFlashcardTex);
+
+    RndMat *pFlashcardCapBgMat =
+        DataDir()->Find<RndMat>("flashcard_capture_background.mat");
+    pFlashcardCapBgMat->SetColor(color.red, color.green, color.blue);
+
+    HamLabel *pFlashcardCapLabel = DataDir()->Find<HamLabel>("flashcard_capture.lbl");
+    Symbol moveDataSym = GetMoveNameData(i)->Sym(1);
+    pFlashcardCapLabel->SetTextToken(moveDataSym);
+
+    String flashcardSlotStr(MakeString("flashcard_slot%i.mat", i));
+    RndMat *pFlashcardSlot = DataDir()->Find<RndMat>(flashcardSlotStr.c_str());
+    RndTex *pFlashcardSlotTex = DataDir()->Find<RndTex>(flashcardStrMakeString.c_str());
+    pFlashcardSlot->SetDiffuseTex(pFlashcardSlotTex);
+
+    String flashcardSlotBgStr = MakeString("flashcard_slot_background%i.mat", i);
+    RndMat *pFlashcardSlotBg = DataDir()->Find<RndMat>(flashcardSlotBgStr.c_str());
+    pFlashcardSlotBg->SetColor(color.red, color.green, color.blue);
+
+    String flashcardSlotLblStr = MakeString("flashcard_slot%i.lbl", i);
+    HamLabel *pFlashcardSlotLabel =
+        DataDir()->Find<HamLabel>(flashcardSlotLblStr.c_str());
+    Symbol moveData = GetMoveNameData(i)->Sym(1);
+    pFlashcardSlotLabel->SetTextToken(moveData);
+
+    DataDir()->Find<RndPropAnim>("capture_flashcard.anim")->Animate(0.0f, false, 0.0f);
+}
+
+void BustAMovePanel::AdvanceFlashcards() {
+    for (int i = 0; i < 2; i++) {
+        RndPropAnim *pAnim = mBAMColumns[i]->Find<RndPropAnim>("advance.anim");
+        pAnim->StopAnimation();
+        pAnim->SetFrame(0.0f, 1.0f);
+    }
+    int side = unka0;
+    if (!unk48.empty()) {
+        unk48.pop_front();
+    }
+
+    auto it = unk48.begin();
+    for (int i = 0; i < 4; i++) {
+        if (it != unk48.end()) {
+            SetFlashcardText(side, i, *it);
+            ++it;
+        } else {
+            SetFlashcardText(side, i, gNullStr);
+        }
+    }
+
+    if (!unk50.empty()) {
+        unk50.pop_front();
+    }
+
+    auto it2 = unk50.begin();
+    for (int i = 0; i < 4; i++) {
+        int x = -1;
+        if (it2 != unk50.end()) {
+            x = *it2;
+            ++it2;
+        }
+        SetFlashcardImage(side, i, x);
+        SetFlashcardName(side, i, x);
+    }
+}
+
 int BustAMovePanel::RepsToNextPhrase() { return 0; }
 
 void BustAMovePanel::SetFlashcardImage(int side, int index, int i3) {
@@ -447,10 +520,12 @@ void BustAMovePanel::SetFlashcardImage(int side, int index, int i3) {
     // Handle the other side
     RndMat *otherFlashcardMat =
         mBAMColumns[side == 0]->Find<RndMat>(MakeString("flashcard%d.mat", index));
-    RndMat *otherBgMat =
-        mBAMColumns[side == 0]->Find<RndMat>(MakeString("flashcard_background%d.mat", index));
+    RndMat *otherBgMat = mBAMColumns[side == 0]->Find<RndMat>(
+        MakeString("flashcard_background%d.mat", index)
+    );
 
-    if (mState == kBAMState_ShowMoveSequence || mState == kBAMState_ShowMoveSequenceSetup) {
+    if (mState == kBAMState_ShowMoveSequence
+        || mState == kBAMState_ShowMoveSequenceSetup) {
         otherFlashcardMat->SetDiffuseTex(flashcardTex);
         otherBgMat->SetColor(color.red, color.green, color.blue);
         otherBgMat->SetDiffuseTex(bgTex);

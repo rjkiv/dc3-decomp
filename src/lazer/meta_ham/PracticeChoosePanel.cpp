@@ -382,7 +382,7 @@ std::vector<HamMove *> PracticeChoosePanel::GetMovesInStep(PracticeStep step) {
             );
         }
         for (int i = 0; i < diff; i++) {
-            Symbol name = TheHamDirector->MoveNameFromBeat(i * 4, 0);
+            Symbol name = TheHamDirector->MoveNameFromBeat(4 * i, 0);
             out.push_back(moves->Find<HamMove>(name.Str()));
         }
     }

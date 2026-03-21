@@ -68,7 +68,7 @@ protected:
     PackSongListProvider unk78;
     std::vector<CartRow> *unkac;
     std::list<StoreOffer *> unkb0;
-    int unkb8;
+    StoreOffer *mCartCheckout; // 0xb8
 
 private:
     StoreOffer *OnGetOffer(int);

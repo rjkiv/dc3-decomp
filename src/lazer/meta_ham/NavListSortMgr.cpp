@@ -50,7 +50,8 @@ void NavListSortMgr::ClearHeaders() {
 
 Symbol NavListSortMgr::GetHeaderSymbolFromChildSymbol(Symbol sym) {
     NavListSort *sort = mSorts[mCurrentSortIdx];
-    if (!sort->GetNode(sym)) {
+    NavListSortNode *sortNode = sort->GetNode(sym);
+    if (!sortNode) {
         return gNullStr;
     } else {
         NavListHeaderNode *node =

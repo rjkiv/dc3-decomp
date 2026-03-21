@@ -57,11 +57,6 @@ StoreOffer::StoreOffer(DataArray *a, SongMgr *mgr) : mStoreOfferData(a), mSongMg
     mStoreOfferData->AddRef();
 }
 
-Symbol StoreOffer::OfferType() const {
-    static Symbol type("type");
-    return mStoreOfferData->FindArray(type)->Sym(1);
-}
-
 StoreOffer::~StoreOffer() { mStoreOfferData->Release(); }
 
 bool StoreOffer::HasData(Symbol s) const {

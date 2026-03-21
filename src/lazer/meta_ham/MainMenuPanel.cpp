@@ -442,6 +442,26 @@ void MainMenuPanel::MotdInitializeTexts() {
     mMsgLabel->SetPrelocalizedString(text);
 }
 
+void MainMenuPanel::LoadArt(String s) {
+    if (s == gNullStr) {
+        return;
+    }
+
+    auto it = unk84.begin();
+    for (; it != unk84.end(); ++it) {
+        if (s == (*it)->GetRemotePath()) {
+            return;
+        }
+    }
+    if (it == unk84.end()) {
+        NetCacheLoader *pLoader =
+            TheNetCacheMgr->AddNetCacheLoader(s.c_str(), (NetLoaderPos)0);
+        if (pLoader) {
+            unk84.push_back(pLoader);
+        }
+    }
+}
+
 BEGIN_HANDLERS(MainMenuPanel)
     HANDLE_ACTION(
         update_main_menu_provider, unk44.UpdateList(_msg->Obj<UIListProvider>(2))

@@ -61,6 +61,8 @@ public:
     String GetUtilityImage() { return unkc0; }
     String GetUtilitySound() { return unkc8; }
     String GetMiscImage() { return unkd0; }
+    RndTex *GetMiscArt() const { return mMiscArt; }
+    void SetMiscArt(RndTex *tex) { mMiscArt = tex; }
     int GetRockCentralTime() { return mRockCentralTime; }
     void SetRockCentralTime(int i) { mRockCentralTime = i; }
     unsigned int GetUnk84() const { return unk84; }

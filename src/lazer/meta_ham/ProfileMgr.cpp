@@ -42,6 +42,8 @@
 #include "game/HamUser.h"
 #include "utl/TextStream.h"
 
+static int sVersion = 28;
+
 ProfileMgr TheProfileMgr;
 
 ProfileMgr::ProfileMgr()
@@ -963,4 +965,52 @@ void ProfileMgr::Poll() {
             mProfilesOverlay->SetLines(lines);
         }
     }
+}
+
+void ProfileMgr::LoadGlobalOptions(FixedSizeSaveableStream &fs) {
+    int version;
+    fs >> version;
+    if (version > 28) {
+        MILO_NOTIFY(
+            "Found System Settings with version %d, while this build only recognizes up to %d.  Unable to load System Settings.\n",
+            version,
+            sVersion
+        );
+    } else if (version == 28) {
+        fs >> mMono;
+        fs >> mSyncOffset;
+        fs >> mSongToTaskMgrMs;
+        fs >> mMusicVolume;
+        fs >> mFxVolume;
+        fs >> mBassBoost;
+        fs >> mCrowdVolume;
+        fs >> mDolby;
+        fs >> mDisablePhotos;
+        fs >> mNoFlashcards;
+        fs >> mDisableVoice;
+        fs >> mDisableVoiceCommander;
+        fs >> mDisableVoicePause;
+        fs >> mDisableVoicePractice;
+        fs >> mShowVoiceTip;
+        fs >> mDisableFreestyle;
+        fs >> mSyncPresetIx;
+        fs >> mOverscan;
+        fs >> mTutorialsSeen;
+
+        int temp4c;
+        fs >> temp4c;
+        unk4c = temp4c;
+
+        fs >> unk78;
+
+        u64 temp80;
+        fs >> temp80;
+        unk80 = (int)temp80;
+
+        u64 temp84;
+        fs >> temp84;
+        unk45 = true;
+        unk84 = (int)temp84;
+    }
+    PushAllOptions();
 }

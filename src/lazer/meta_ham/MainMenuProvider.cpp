@@ -11,8 +11,6 @@
 
 MainMenuProvider::MainMenuProvider() {}
 
-MainMenuProvider::~MainMenuProvider() {}
-
 void MainMenuProvider::Text(
     int, int data, UIListLabel *uiListLabel, UILabel *uiLabel
 ) const {

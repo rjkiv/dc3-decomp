@@ -37,7 +37,6 @@ bool AccomplishmentCountConditional::IsFulfilled(HamProfile *profile) const {
         }
     }
     AccomplishmentProgress &progress = profile->AccessAccomplishmentProgress();
-    MetaPerformer *pPerformer = MetaPerformer::Current();
-    progress.IncrementCount(GetName(), pPerformer->GetUnk38());
-    return progress.GetCount(GetName()) >= numStars; // idk what this line is doin
+    progress.IncrementCount(GetName(), MetaPerformer::Current()->GetUnk38());
+    return numStars <= progress.GetCount(GetName()) ? true : false;
 }
