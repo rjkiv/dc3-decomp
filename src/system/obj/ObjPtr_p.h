@@ -199,11 +199,11 @@ template <class T1, class T2>
 void ObjPtrVec<T1, T2>::operator=(const ObjPtrVec &other) {
     if (this != &other) {
         mNodes.clear();
-    }
-    mNodes.reserve(other.mNodes.size());
-    for (const_iterator it = other.begin(); it != other.end(); ++it) {
-        mNodes.push_back(Node(this));
-        Set(end(), *it);
+        mNodes.reserve(other.mNodes.size());
+        for (const_iterator it = other.begin(); it != other.end(); ++it) {
+            mNodes.push_back(Node(this));
+            Set(--end(), *it);
+        }
     }
 }
 
@@ -215,12 +215,13 @@ void ObjPtrVec<T1, T2>::push_back(T1 *obj) {
 template <class T1, class T2>
 typename ObjPtrVec<T1, T2>::iterator
 ObjPtrVec<T1, T2>::insert(typename ObjPtrVec<T1, T2>::const_iterator it, T1 *obj) {
-    int idx = *it != nullptr ? size() : 0;
     if (obj || mListMode != kObjListNoNull) {
+        int idx = *it != nullptr ? size() : 0;
         // mNodes.insert(it, Node(obj));
-        Set(iterator(0), obj);
+        mNodes.insert(mNodes.begin() + idx, this);
+        Set(mNodes.begin() + idx, obj);
     }
-    return iterator(&Node(obj));
+    return iterator(&Node(*it));
 }
 
 template <class T1, class T2>

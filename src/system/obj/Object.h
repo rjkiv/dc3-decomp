@@ -264,6 +264,11 @@ public:
             return *this;
         }
 
+        iterator operator--() {
+            --it;
+            return *this;
+        }
+
         bool operator!=(const iterator &other) const { return it != other.it; }
     };
     // ditto
@@ -286,6 +291,11 @@ public:
 
         const_iterator operator++() {
             ++it;
+            return *this;
+        }
+
+        const_iterator operator--() {
+            --it;
             return *this;
         }
 
