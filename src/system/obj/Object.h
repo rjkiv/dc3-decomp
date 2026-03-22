@@ -222,6 +222,11 @@ private:
         virtual ObjRefOwner *Parent() const { return mOwner; }
 
         T1 *Obj() const { return mObject; }
+        Node &operator=(const Node &n) {
+            CopyRef(n);
+            mOwner = n.mOwner;
+            return *this;
+        }
 
         /** The ObjPtrVec this Node belongs to. */
         ObjRefOwner *mOwner; // 0x10
