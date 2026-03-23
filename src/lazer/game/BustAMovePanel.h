@@ -1,5 +1,6 @@
 #pragma once
 #include "gesture/BaseSkeleton.h"
+#include "gesture/Skeleton.h"
 #include "hamobj/BustAMoveData.h"
 #include "hamobj/DancerSkeleton.h"
 #include "hamobj/FreestyleMoveRecorder.h"
@@ -94,7 +95,7 @@ private:
     int unk90;
     int unk94;
     RndDir *mBAMColumns[kNumSkeletonSides]; // 0x98
-    int unka0;
+    SkeletonSide unka0;
     DancerSkeleton unka4[3]; // 0xa4
     int unk92c;
     float unk930;
@@ -118,7 +119,7 @@ private:
     std::vector<int> mShuffledMoveNames; // 0x990
     int unk99c;
     float unk9a0;
-    int unk9a4;
+    bool unk9a4[2];
     int unk9a8;
     int unk9ac;
     int unk9b0;

@@ -7,6 +7,7 @@
 #include "rndobj/Tex.h"
 #include "utl/MemMgr.h"
 #include "utl/Str.h"
+#include "utl/Symbol.h"
 
 #define MAX_FREESTYLE_MOVES 4
 
@@ -37,7 +38,8 @@ public:
     void StopPlayback();
     void ClearDancerTake();
     BaseSkeleton *GetLiveSkeleton();
-    float CompareSkeletonPositions(const BaseSkeleton *, const BaseSkeleton *, float) const;
+    float
+    CompareSkeletonPositions(const BaseSkeleton *, const BaseSkeleton *, float) const;
     void AssignStaticInstance();
     void DrawDebug();
     void PlaybackComplete();
@@ -47,6 +49,7 @@ public:
     float GetScore(int, int, float, bool);
 
     void SetVal44(int i) { unk44 = i; } // change once context found
+    void SetUnk3C(Symbol s) { unk3c = s; }
 
     void SetFreestyleMove(int index) {
         MILO_ASSERT(index >= 0 && index < MAX_FREESTYLE_MOVES, 0x50);

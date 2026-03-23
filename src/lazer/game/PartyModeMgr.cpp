@@ -1416,3 +1416,11 @@ DataNode PartyModeMgr::OnMsg(const RCJobCompleteMsg &msg) {
     }
     return 1;
 }
+
+void PartyModeMgr::OnSmartGlassListen(int i) {
+    if (i != 0) {
+        ThePlatformMgr.AddSink(this, "smart_glass_msg");
+    } else {
+        ThePlatformMgr.RemoveSink(this, "smart_glass_msg");
+    }
+}

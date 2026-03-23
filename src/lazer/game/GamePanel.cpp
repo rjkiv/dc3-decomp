@@ -20,6 +20,7 @@
 #include "meta_ham/MetaPerformer.h"
 #include "meta_ham/ProfileMgr.h"
 #include "meta_ham/UIEventMgr.h"
+#include "meta_ham/Utl.h"
 #include "movie/TexMovie.h"
 #include "obj/Data.h"
 #include "obj/DataFile.h"
@@ -45,6 +46,7 @@
 #include "ui/UIPanel.h"
 #include "ui/UIScreen.h"
 #include "utl/MBT.h"
+#include "utl/MakeString.h"
 #include "utl/TimeConversion.h"
 #include "world/Dir.h"
 
@@ -656,6 +658,40 @@ void GamePanel::ClearDrawGlitch() {
         TheRnd.BeginDrawing();
         TheRnd.EndDrawing();
     }
+}
+
+void GamePanel::UpdateNowBar() {
+    MILO_ASSERT(mGame, 0x23d);
+    float seconds = TheTaskMgr.Seconds(TaskMgr::kRealTime);
+    float songDuration = TheSongDB->GetSongDurationMs();
+    float durVal = songDuration * 0.001f - seconds;
+    char operation = '-';
+    if (durVal < 0.0f) {
+        durVal = -durVal;
+        operation = '+';
+    }
+    int totalTick = TheTaskMgr.TotalTick();
+    float val;
+    if (0.0f < songDuration) {
+        val = 100.0f;
+        float secondsval = seconds * 100.0f;
+        float eq = secondsval / songDuration * 0.001f;
+        if (eq <= 100.0f) {
+            val = eq;
+        }
+    }
+    *mTimeOverlay << MakeString(
+        "MBT %d:%d:%03d [%s %c%s %4.1f%%] (%.2fsec %dtk)\n",
+        TheTaskMgr.CurrentMeasure() + 1,
+        TheTaskMgr.CurrentBeat() + 1,
+        TheTaskMgr.CurrentTick(),
+        FormatTimeMSH(seconds * 1000.0f),
+        operation,
+        FormatTimeMSH(durVal * 1000.0f),
+        val,
+        seconds,
+        totalTick
+    );
 }
 
 #pragma endregion

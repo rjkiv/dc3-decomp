@@ -167,6 +167,7 @@ public:
     int CurrentBeat() const { return mSongPos.GetBeat(); }
     int CurrentTick() const { return mSongPos.GetTick(); }
     float TotalBeat() const { return mSongPos.GetTotalBeat(); }
+    float TotalTick() const { return mSongPos.GetTotalTick(); }
     void SetAutoSecondsBeats(bool b) { mAutoSecondsBeats = b; }
     void SetSongPos(const SongPos &pos) { mSongPos = pos; }
 

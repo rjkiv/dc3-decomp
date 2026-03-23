@@ -15,47 +15,39 @@ struct QueueableCommand {
 public:
     virtual int GetType() = 0;
     ~QueueableCommand() {}
-
-    union {
-        int i;
-        HamProfile *profile;
-        Playlist *playlist;
-        CustomPlaylist *customPlaylist;
-        const char *onlineID;
-    } unk4;
 };
 
 struct CmdGetFitnessGoalFromRC : public QueueableCommand {
 public:
-    virtual int GetType() { return 1; } // fix
+    virtual int GetType() { return 1; }
     CmdGetFitnessGoalFromRC() {}
 };
 
 struct CmdSendFitnessGoalToRC : public QueueableCommand {
 public:
-    virtual int GetType() { return 1; } // fix
+    virtual int GetType() { return 2; }
     CmdSendFitnessGoalToRC(HamProfile *p) : profile(p) {}
     HamProfile *profile;
 };
 
 struct CmdUpdateFitnessGoalToRC : public QueueableCommand {
 public:
-    virtual int GetType() { return 1; } // fix
+    virtual int GetType() { return 4; }
     CmdUpdateFitnessGoalToRC(HamProfile *p) : profile(p) {}
     HamProfile *profile;
 };
 
 struct CmdDeleteFitnessGoalFromRC : public QueueableCommand {
 public:
-    virtual int GetType() { return 1; } // fix
+    virtual int GetType() { return 3; }
     CmdDeleteFitnessGoalFromRC(HamProfile *p) : profile(p) {}
     HamProfile *profile;
 };
 
 struct CmdChangeProfileOnlineID : public QueueableCommand {
 public:
-    virtual int GetType() { return 1; } // fix
-    CmdChangeProfileOnlineID(String s) : str(s) {}
+    virtual int GetType() { return 0; }
+    CmdChangeProfileOnlineID(String s) { str = s; }
     String str;
 };
 
@@ -74,7 +66,7 @@ public:
 protected:
     String unk2c;
     String unk34;
-    std::list<QueueableCommand *> unk3c;
+    std::list<QueueableCommand *> mCommands; // 0x3c
     bool unk44;
     RCJob *unk48;
     HamProfile *unk4c;

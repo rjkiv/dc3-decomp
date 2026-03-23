@@ -12,10 +12,10 @@
 #include "utl/Symbol.h"
 #include <list>
 
-struct CmdAddPlayListToRC : public QueueableCommand {
-    virtual int GetType() { return 1; } // fix
-    CmdAddPlayListToRC(Playlist *pl) : playlist(pl) {}
-    Playlist *playlist;
+struct CmdAddPlaylistToRC : public QueueableCommand {
+    virtual int GetType() { return 4; }
+    CmdAddPlaylistToRC(CustomPlaylist *pl) : playlist(pl) {}
+    CustomPlaylist *playlist;
 };
 
 struct CmdDeletePlaylistFromRC : public QueueableCommand {
@@ -25,9 +25,25 @@ struct CmdDeletePlaylistFromRC : public QueueableCommand {
 };
 
 struct CmdEditPlaylist : public QueueableCommand {
-    virtual int GetType() { return 1; } // fix
-    CmdEditPlaylist(Playlist *pl) : playlist(pl) {}
-    Playlist *playlist;
+    virtual int GetType() { return 5; }
+    CmdEditPlaylist(CustomPlaylist *pl) : playlist(pl) {}
+    CustomPlaylist *playlist;
+};
+
+struct CmdGetPlaylistFromRC : public QueueableCommand {
+    virtual int GetType() { return 3; }
+    CmdGetPlaylistFromRC(int i) : num(i) {}
+    int num;
+};
+
+struct CmdGetPlaylistsFromRC : public QueueableCommand {
+    virtual int GetType() { return 1; }
+    CmdGetPlaylistsFromRC() {}
+};
+
+struct CmdResolvePlaylists : public QueueableCommand {
+    virtual int GetType() { return 2; }
+    CmdResolvePlaylists() {}
 };
 
 class PlaylistSortMgr : public NavListSortMgr {
@@ -75,6 +91,7 @@ private:
     void QueueCmdGetPlaylistsFromRC();
     void QueueCmdResolvePlaylists();
     void QueueCmdGetPlaylistFromRC(int);
+    void QueueCmdGetPlaylistsFromRC(int);
     void HandleCmdGetPlaylistFromRC();
     void QueueCmdAddPlaylistToRC(Playlist *);
     void HandleCmdAddPlaylistToRC();

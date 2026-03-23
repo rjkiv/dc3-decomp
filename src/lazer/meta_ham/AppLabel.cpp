@@ -104,7 +104,7 @@ void AppLabel::SetCreditsText(DataArray *arr, UIListSlot *slot) {
     static Symbol title_name("title_name");
     static Symbol centered("centered");
     Symbol sym = blank;
-    if (arr->Size() != 0) {
+    if (0 != arr->Size()) {
         sym = arr->Sym(0);
     }
     if (sym == blank) {
@@ -673,4 +673,8 @@ DataNode AppLabel::OnSetUserName(const DataArray *a) {
         }
     }
     return 1;
+}
+
+void AppLabel::SetStoreFilterName(const HamStoreFilter *filter) {
+    SetDisplayText(filter->unk4.c_str(), true);
 }

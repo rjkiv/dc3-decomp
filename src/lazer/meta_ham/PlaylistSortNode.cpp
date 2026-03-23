@@ -98,9 +98,9 @@ void PlaylistSortNode::OnContentMounted(const char *contentName, const char *) {
         int songID = TheHamSongMgr.GetSongIDFromShortName(GetToken());
         if (TheHamSongMgr.IsContentUsedForSong(contentName, songID)) {
             static Symbol song_data_mounted("song_data_mounted");
-            static Message song_data_mounted_message(song_data_mounted, gNullStr);
-            song_data_mounted_message[0] = GetToken();
-            TheUI->Export(song_data_mounted_message, false);
+            static Message msg(song_data_mounted, gNullStr);
+            msg[0] = GetToken();
+            TheUI->Export(msg, false);
         }
     }
 }

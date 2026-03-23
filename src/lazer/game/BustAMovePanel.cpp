@@ -1,14 +1,17 @@
 #include "BustAMovePanel.h"
 #include "flow/PropertyEventProvider.h"
+#include "game/Game.h"
 #include "game/GamePanel.h"
 #include "gesture/BaseSkeleton.h"
 #include "gesture/DepthBuffer3D.h"
+#include "hamobj/BustAMoveData.h"
 #include "hamobj/FreestyleMoveRecorder.h"
 #include "hamobj/HamDirector.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamLabel.h"
 #include "hamobj/HamMaster.h"
 #include "hamobj/HamPhraseMeter.h"
+#include "hamobj/HamPlayerData.h"
 #include "hamobj/ScoreUtl.h"
 #include "lazer/game/GameMode.h"
 #include "lazer/meta_ham/HamPanel.h"
@@ -31,6 +34,7 @@
 #include "rndobj/TexRenderer.h"
 #include "ui/UIColor.h"
 #include "ui/UIPanel.h"
+#include "utl/KnownIssues.h"
 #include "utl/MakeString.h"
 #include "utl/Symbol.h"
 #include "utl/TempoMap.h"
@@ -43,9 +47,9 @@ namespace {
 
 BustAMovePanel::BustAMovePanel()
     : unk40(0), unk44(0), unk58(-1), unk5c(0), mHUDPanel(0), unk64(0), unk68(4), unk6c(0),
-      unk70(10), unk80(0), unka0(1), unk92c(0), unk930(0), unk934(0), unk958(-1),
-      unk95c(-1), unk968(-1), unk970(0), unk988(0), unk98c(0), unk99c(0), unk9a0(FLT_MAX),
-      unk9b9(0), unk9bc(-1) {
+      unk70(10), unk80(0), unka0(kSkeletonRight), unk92c(0), unk930(0), unk934(0),
+      unk958(-1), unk95c(-1), unk968(-1), unk970(0), unk988(0), unk98c(0), unk99c(0),
+      unk9a0(FLT_MAX), unk9b9(0), unk9bc(-1) {
     unk40 = new FreestyleMoveRecorder();
     unk40->AssignStaticInstance();
 }
@@ -258,12 +262,12 @@ void BustAMovePanel::SetRoundFailure() {
 }
 
 void BustAMovePanel::PlayMovePromptVO() {
-    PlayVO(GetMoveNameData(unk84)->Sym(unka0 + 2));
+    PlayVO(GetMoveNameData(unk84)->Sym((int)unka0 + 2));
 }
 
 float BustAMovePanel::GetMovePromptVOLength() {
     float len = 0;
-    Symbol sym = GetMoveNameData(unk84)->Sym(unka0 + 2);
+    Symbol sym = GetMoveNameData(unk84)->Sym((int)unka0 + 2);
     static Message voLengthMsg("get_seq_length", 0);
     voLengthMsg[0] = sym;
     DataNode handled = mHUDPanel->Handle(voLengthMsg, true);
@@ -287,17 +291,8 @@ void BustAMovePanel::CacheObjects() {
         ->SetFrame(1, 1);
     for (ObjDirItr<DepthBuffer3D> it(mBAMVisualizerPanel->DataDir(), true); it != nullptr;
          ++it) {
-        //   while (local_6c != (DepthBuffer3D *)0x0) {
-        //     DepthBuffer3D::SetGrooviness(local_6c,(float)dVar23);
-        //     if (*(int *)(local_6c + 0x198) != 0) {
-        //       *(undefined4 *)(*(int *)(local_6c + 0x194) + 4) = *(undefined4
-        //       *)(local_6c + 400);
-        //       *(undefined4 *)(*(int *)(local_6c + 400) + 8) = *(undefined4 *)(local_6c
-        //       + 0x194);
-        //     }
-        //     *(undefined4 *)(local_6c + 0x198) = 0;
-        //     ObjDirItr<>::operator++(aOStack_70);
-        //   }
+        it->SetGrooviness(1.0f);
+        it->SetUnk18C(nullptr);
     }
     TheMaster->AddSink(this, "beat");
     mStatusLabel = DataDir()->Find<HamLabel>("status.lbl");
@@ -329,8 +324,8 @@ void BustAMovePanel::CacheObjects() {
     unk50.clear();
     ResetScores();
     unk954 = 1;
-    unk950 = 0;
     unk94c = 0;
+    unk950 = 0;
     mPhraseMeters[kSkeletonRight] = DataDir()->Find<HamPhraseMeter>("phrase_meter_right");
     mPhraseMeters[kSkeletonLeft] = DataDir()->Find<HamPhraseMeter>("phrase_meter_left");
     unk9a0 = FLT_MAX;
@@ -341,11 +336,13 @@ void BustAMovePanel::CacheObjects() {
         label->SetTextToken(gNullStr);
         String flashcardSlotBG = MakeString("flashcard_slot_background%i.mat", i);
         RndMat *mat = DataDir()->Find<RndMat>(flashcardSlotBG.c_str());
-        UIColor *gray = DataDir()->Find<UIColor>("gray.color");
-        const Hmx::Color &color = gray->GetColor();
+        const Hmx::Color &color = DataDir()->Find<UIColor>("gray.color")->GetColor();
         mat->SetColor(color.red, color.green, color.blue);
     }
-    Symbol song = MetaPerformer::Current()->GetSong();
+    unk40->SetUnk3C(MetaPerformer::Current()->GetSong());
+    for (int i = 0; i < 2; i++) {
+        unk9a4[i] = true;
+    }
     unk9bc = -1;
 }
 
@@ -451,7 +448,7 @@ void BustAMovePanel::AdvanceFlashcards() {
         pAnim->StopAnimation();
         pAnim->SetFrame(0.0f, 1.0f);
     }
-    int side = unka0;
+    SkeletonSide side = unka0;
     if (!unk48.empty()) {
         unk48.pop_front();
     }
@@ -483,6 +480,28 @@ void BustAMovePanel::AdvanceFlashcards() {
 }
 
 int BustAMovePanel::RepsToNextPhrase() { return 0; }
+
+void BustAMovePanel::PlayIntroVO() {
+    if (unk9b8) {
+        unk9b8 = false;
+        float f = 0.0f;
+        static Symbol nar_bam_intro("nar_bam_intro");
+        static Message voLengthMsg("get_seq_length", 0);
+        voLengthMsg[0] = nar_bam_intro;
+        DataNode handle = mHUDPanel->Handle(voLengthMsg, true);
+        if (handle != DATA_UNHANDLED) {
+            f = handle.Float();
+        }
+        TempoMap *pTempoMap = TheMaster->SongData()->GetTempoMap();
+        float tempoBPM = pTempoMap->GetTempoBPM(0.0f);
+        float seconds_per_beat = 60.0f / tempoBPM;
+        float songStructureVal = mSongStructure[0] * 4;
+        float v = (seconds_per_beat * songStructureVal);
+        float intro_s = (f - v);
+        TheGame->SetIntroRealTime(-intro_s);
+        PlayVO(nar_bam_intro);
+    }
+}
 
 void BustAMovePanel::SetFlashcardImage(int side, int index, int i3) {
     RndMat *flashcardMat =
@@ -532,6 +551,47 @@ void BustAMovePanel::SetFlashcardImage(int side, int index, int i3) {
     } else {
         otherFlashcardMat->SetDiffuseTex(blankTex);
         otherBgMat->SetDiffuseTex(blankTex);
+    }
+}
+
+void BustAMovePanel::Poll() {
+    if (!InBustAMove() || TheGamePanel->IsGameOver()) {
+        return;
+    }
+
+    HamPanel::Poll();
+    HamPlayerData *pPlayer1Data = TheGameData->Player(0);
+    HamPlayerData *pPlayer2Data = TheGameData->Player(1);
+    Message hide_hud_p1("hide_hud");
+    pPlayer1Data->Provider()->Handle(hide_hud_p1, true);
+    Message hide_hud_p2("hide_hud");
+    pPlayer2Data->Provider()->Handle(hide_hud_p2, true);
+
+    unk40->Poll();
+
+    if ((mState == kBAMState_PlayCountIn || mState == kBAMState_Playing)
+        || mState == kBAMState_ShowMove) {
+        unk64 = !unk64;
+    }
+    unka0 = TheGameData->Player(unk64)->Side();
+    const Skeleton *skel = TheGameData->Player(unk64)->GetSkeleton();
+    int id = skel ? skel->SkeletonIndex() : -1;
+    unk40->SetVal44(id);
+    if (mState == kBAMState_Recording || mState == kBAMState_CountIn) {
+        unk58 = id;
+    }
+    if (mState == kBAMState_Recording && 2 < unk44) {
+        unk974 = unk40->GetScore(id, 0, unk80, true);
+        unk978 = unk40->GetScore(id, 1, unk80, true);
+        unk80 += TheTaskMgr.DeltaUISeconds();
+    }
+    if (mState == kBAMState_Playing) {
+        unk5c = unk40->GetScore(id, 0, -1.0f, true);
+        mPhraseMeters[unka0]->SetShowing(true);
+        for (int i = 0; i < 2; i++) {
+        }
+    } else if (mState == kBAMState_ShowMoveSequence) {
+    } else {
     }
 }
 

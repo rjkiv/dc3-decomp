@@ -2,15 +2,18 @@
 #include "meta_ham/Playlist.h"
 #include "net_ham/RCJobDingo.h"
 #include "obj/Object.h"
+#include "stl/_vector.h"
 
 class GetPlaylistsJob : public RCJob {
 public:
     GetPlaylistsJob(Hmx::Object *, char const *);
+    void GetPlaylists(std::vector<CustomPlaylist> *);
 };
 
 class GetPlaylistJob : public RCJob {
 public:
     GetPlaylistJob(Hmx::Object *, char const *, int);
+    void GetPlaylist(CustomPlaylist *);
 };
 
 class AddPlaylistJob : public RCJob {

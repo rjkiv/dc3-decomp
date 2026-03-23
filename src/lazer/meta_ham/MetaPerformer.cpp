@@ -1238,6 +1238,78 @@ void MetaPerformer::CalculatePracticeResults() {
     ObjDirItr<PracticeSection> sections(moves, true);
 }
 
+void MetaPerformer::SetDefaultSongCharacter(int i) {
+    Symbol primaryCrew;
+    Symbol primaryChar;
+    Symbol primaryOutfit;
+    HamPlayerData *primaryPlayer;
+    Symbol secondaryCrew;
+    Symbol secondaryChar;
+    Symbol secondaryOutfit;
+    HamPlayerData *pSecondary;
+
+    const HamSongMetadata *pSongData =
+        TheHamSongMgr.Data(TheHamSongMgr.GetSongIDFromShortName(TheGameData->GetSong()));
+    MILO_ASSERT(pSongData, 0x592);
+    bool modeCheck =
+        TheGameMode->InMode("dance_battle") || TheGameMode->InMode("strike_a_pose");
+    CalcCharacters(
+        pSongData,
+        modeCheck,
+        (PlayerFlag)i,
+        primaryPlayer,
+        primaryCrew,
+        primaryChar,
+        primaryOutfit,
+        pSecondary,
+        secondaryCrew,
+        secondaryChar,
+        secondaryOutfit
+    );
+    HamPlayerData *pPlayerData = TheGameData->Player(i);
+    if (pPlayerData == primaryPlayer) {
+        primaryPlayer->SetCharacter(primaryChar);
+        primaryPlayer->SetOutfit(primaryOutfit);
+        primaryPlayer->SetCrew(primaryCrew);
+        if (primaryPlayer->Char() == pSecondary->Char()) {
+            pSecondary->SetCharacter(secondaryChar);
+            pSecondary->SetOutfit(secondaryOutfit);
+            pSecondary->SetCrew(secondaryCrew);
+        }
+    } else {
+        MILO_ASSERT(pPlayerData == pSecondary, 0x5a8);
+        pSecondary->SetCharacter(secondaryChar);
+        pSecondary->SetOutfit(secondaryOutfit);
+        pSecondary->SetCrew(secondaryCrew);
+        if (primaryPlayer->Char() == pSecondary->Char()) {
+            primaryPlayer->SetCharacter(primaryChar);
+            primaryPlayer->SetOutfit(primaryOutfit);
+            primaryPlayer->SetCrew(primaryCrew);
+        }
+    }
+}
+
+bool MetaPerformer::CheckRecommendedPracticeMove(String s, int player) const {
+    MILO_ASSERT(player>=0 && player < MULTIPLAYER_SLOTS, 0x4eb);
+    int val1 = 0;
+    int val2 = 0;
+    bool check = false;
+    for (int i = 0; i < mMoveScores[player].size(); i++) {
+        int rating = mMoveScores[player][i].unk4;
+        if (s == mMoveScores[player][i].unk0->DisplayName()) {
+            val1++;
+            check = false;
+            if (2 < rating) {
+                val2++;
+                check = true;
+            }
+        }
+    }
+    if (!check && (float)val2 / (float)val1 <= 0.49f) {
+        return false;
+    }
+}
+
 #pragma endregion
 #pragma region MetaPerformerHook
 
