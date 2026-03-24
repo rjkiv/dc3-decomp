@@ -75,6 +75,8 @@ public:
     bool Unk3a() const { return unk3a; }
     void SetUnk3a(bool b) { unk3a = b; }
     void SetUnk3e(bool b) { unk3e = b; }
+    void SetUnk38(bool b) { unk38 = b; }
+    void SetUnk39(bool b) { unk39 = b; }
 
 protected:
     virtual void LoadShaders(const char *);
@@ -105,7 +107,7 @@ protected:
     bool unk30;
     bool unk31;
     int unk34;
-    bool unk38;
+    bool unk38; // mMotionBlurChecked?
     bool unk39;
     bool unk3a; // mGradientMapChecked?
     bool unk3b;

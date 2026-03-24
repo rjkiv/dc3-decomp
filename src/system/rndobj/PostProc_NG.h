@@ -68,6 +68,10 @@ protected:
 
     void CheckGradientMap();
     void CheckVignette();
+    void CheckMotionBlur();
+    void CheckBlendPrevious();
+    void DoVelocity();
+    void CheckNoise();
 
     float unk22c; // 0x22c
     float unk230; // 0x230

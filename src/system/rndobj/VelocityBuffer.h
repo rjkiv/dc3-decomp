@@ -43,6 +43,8 @@ public:
 
     static RndVelocityBuffer &Singleton() { return sSingleton; }
 
+    float GetUnk36be8() { return unk36be8; };
+
 private:
     RndVelocityBuffer();
 
