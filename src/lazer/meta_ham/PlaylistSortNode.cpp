@@ -206,7 +206,7 @@ void PlaylistHeaderNode::UpdateItemCount(NavListItemNode *node) {
 
 void PlaylistHeaderNode::SetItemCountString(UILabel *label) const {
     char buffer[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-    stlpmtx_std::sprintf(buffer, "(%d)", mChallengeCount);
+    sprintf(buffer, "(%d)", mChallengeCount);
     Symbol sym = buffer;
     label->SetPrelocalizedString(String(sym));
 }

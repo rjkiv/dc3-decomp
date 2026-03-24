@@ -82,9 +82,9 @@ SongSortBySong::NewHeaderNode(NavListItemNode *node, NavListItemNode *node2) con
 
     char title[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
     if (*title1 == *title2) {
-        stlpmtx_std::sprintf(title, "%s", buf1);
+        sprintf(title, "%s", buf1);
     } else {
-        stlpmtx_std::sprintf(title, "%s - %s", buf1, buf2);
+        sprintf(title, "%s - %s", buf1, buf2);
     }
     Symbol s = title;
     return new SongHeaderNode(cmp, s, true);
