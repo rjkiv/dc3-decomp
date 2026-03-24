@@ -174,7 +174,7 @@ public:
     virtual ~NavListFunctionNode() {}
     virtual DataNode Handle(DataArray *, bool);
     virtual NavListNodeType GetType() const { return kNodeFunction; }
-    virtual Symbol GetToken() const { return unk4c; }
+    virtual Symbol GetToken() const;
     virtual Symbol Select();
     virtual bool IsEnabled() const { return IsEnabled(); } // lmao what
     virtual bool IsActive() const { return false; }

@@ -6,6 +6,7 @@
 #include "hamobj/HamPlayerData.h"
 #include "meta_ham/AppLabel.h"
 #include "meta_ham/Challenges.h"
+#include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "ui/UIComponent.h"
@@ -157,9 +158,10 @@ void ChallengeResultPanel::UpdateList(int player) {
                     mItems[i].mScore, mItems[i].mDiff
                 );
             } else if (i == (unsigned int)unk60) {
-                xpMission = xpBefore + TheChallenges->CalculateChallengeXp(
-                    mItems[i].mScore, mItems[i].mDiff
-                );
+                xpMission = xpBefore
+                    + TheChallenges->CalculateChallengeXp(
+                        mItems[i].mScore, mItems[i].mDiff
+                    );
                 beatRival = true;
             }
             beatenCount++;
@@ -203,4 +205,17 @@ void ChallengeResultPanel::UpdateList(int player) {
 
     unk4c = 0;
     DataDir()->Find<Flow>("result_init.flow")->Activate();
+}
+
+DataNode ChallengeResultPanel::OnMsg(const UIComponentScrollMsg &msg) {
+    if (msg.GetUIComponent() == mChallengeList) {
+        int firstShowing = mChallengeList->FirstShowing();
+        if (unk60 - firstShowing == unk64) {
+            mChallengeList->StopAutoScroll();
+            unk4c = 2;
+            Flow *f = DataDir()->Find<Flow>("rival_result.flow", true);
+            f->Activate();
+        }
+    }
+    return 1;
 }

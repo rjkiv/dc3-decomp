@@ -89,3 +89,7 @@ bool FitnessCalorieSortMgr::SelectionIs(Symbol selection) {
     }
     return false;
 }
+
+BEGIN_HANDLERS(FitnessCalorieSortMgr)
+    HANDLE_SUPERCLASS(NavListSortMgr)
+END_HANDLERS

@@ -60,7 +60,11 @@ public:
 
     static void Init(SongPreview &);
 
-    std::vector<Playlist> unk78;
+    const std::vector<Playlist *> &GetPlaylists() const { return unk78; }
+    void AddPlaylist(Playlist *p) { unk78.push_back(p); }
+
+protected:
+    std::vector<Playlist *> unk78;
     CustomPlaylist unk84;
     String unkb0;
     String unkb8;

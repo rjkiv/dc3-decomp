@@ -4,6 +4,7 @@
 #include "meta_ham/NavListNode.h"
 #include "meta_ham/SongSortNode.h"
 #include "ui/UIListWidget.h"
+#include <cstdio>
 
 int SongCmp::Compare(const NavListItemSortCmp *cmp, NavListNodeType type) const {
     switch (type) {
@@ -35,11 +36,8 @@ NavListHeaderNode *SongSortBySong::NewHeaderNode(NavListItemNode *p1) const {
     const char *title = node->Record()->Metadata()->Title();
     SongCmp *cmp = new SongCmp(title, nullptr);
 
-    char sortLetter[2];
-
-    sortLetter[1] = '\0';
+    char sortLetter[2] = { 0, 0 };
     sortLetter[0] = title[0];
-
     Symbol sortSym(sortLetter);
 
     return new SongHeaderNode(cmp, sortSym, true);
@@ -50,9 +48,7 @@ NavListShortcutNode *SongSortBySong::NewShortcutNode(NavListItemNode *p1) const 
     const char *title = node->Record()->Metadata()->Title();
     SongCmp *cmp = new SongCmp(title, nullptr);
 
-    char sortLetter[2];
-
-    sortLetter[1] = '\0';
+    char sortLetter[2] = { 0, 0 };
     sortLetter[0] = title[0];
 
     Symbol sortSym(sortLetter);
@@ -66,4 +62,30 @@ NavListItemNode *SongSortBySong::NewItemNode(void *p1) const {
     SongCmp *cmp = new SongCmp(title, nullptr);
 
     return new SongSortNode(cmp, record);
+}
+
+NavListHeaderNode *
+SongSortBySong::NewHeaderNode(NavListItemNode *node, NavListItemNode *node2) const {
+    SongSortNode *sortNode1 = dynamic_cast<SongSortNode *>(node);
+    SongSortNode *sortNode2 = dynamic_cast<SongSortNode *>(node2);
+
+    const char *title1 = sortNode1->Record()->Metadata()->Title();
+    const char *title2 = sortNode2->Record()->Metadata()->Title();
+
+    SongCmp *cmp = new SongCmp(title1, title2);
+
+    char buf1[2] = { 0, 0 };
+    buf1[0] = title1[0];
+
+    char buf2[2] = { 0, 0 };
+    buf2[0] = title2[0];
+
+    char title[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+    if (*title1 == *title2) {
+        stlpmtx_std::sprintf(title, "%s", buf1);
+    } else {
+        stlpmtx_std::sprintf(title, "%s - %s", buf1, buf2);
+    }
+    Symbol s = title;
+    return new SongHeaderNode(cmp, s, true);
 }

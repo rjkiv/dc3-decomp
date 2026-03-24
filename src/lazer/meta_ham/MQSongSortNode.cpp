@@ -68,16 +68,13 @@ void MQSongHeaderNode::Text(UIListLabel *listlabel, UILabel *label) const {
     if (listlabel->Matches("song")) {
         // const char *c = mCmp->GetMQSongCharCmp()->unk8;
         // label->SetTextToken(MakeString("mqheader_%s", c));
-    } else {
-        if (!listlabel->Matches("song_prefix")) {
-            if (!listlabel->Matches("header_collapse")) {
-                return;
-            }
-            SetCollapseStateIcon(unk5c);
-            return;
-        }
+    } else if (listlabel->Matches("song_prefix")) {
         label->SetTextToken(gNullStr);
+
+    } else if (listlabel->Matches("header_collapse")) {
+        SetCollapseStateIcon(unk5c);
     }
+    label->SetTextToken(gNullStr);
 }
 
 void MQSongHeaderNode::SetCollapseStateIcon(bool b) const {
@@ -109,12 +106,10 @@ NavListSortNode *MQSongHeaderNode::GetFirstActive() {
     FOREACH (it, Children()) {
         NavListSortNode *node = (*it)->GetFirstActive();
         if (node) {
-            return node;
+            return TheMQSongSortMgr->HeadersSelectable() ? this : node;
         }
     }
-    if (!TheMQSongSortMgr->HeadersSelectable()) {
-        return this;
-    }
+    return nullptr;
 }
 
 void MQSongHeaderNode::Renumber(std::vector<NavListSortNode *> &vec) {
@@ -137,16 +132,18 @@ void MQSongSortNode::Text(UIListLabel *listlabel, UILabel *label) const {
         AppLabel *pAppLabel = dynamic_cast<AppLabel *>(label);
         MILO_ASSERT(pAppLabel, 0x10f);
         pAppLabel->SetBlacklightSongName(unk48, -1, false);
-    } else if (listlabel->Matches("song_prefix")) {
-        AppLabel *pAppLabel = dynamic_cast<AppLabel *>(label);
-        MILO_ASSERT(pAppLabel, 0x116);
-        if (IsHeader() || !TheHamUI.IsBlacklightMode()) {
-            label->SetTextToken(gNullStr);
-        } else {
-            static Symbol song_select_song_prefix("song_select_song_prefix");
-            label->SetTextToken(song_select_song_prefix);
-        }
     } else {
+        if (listlabel->Matches("song_prefix")) {
+            AppLabel *pAppLabel = dynamic_cast<AppLabel *>(label);
+            MILO_ASSERT(pAppLabel, 0x116);
+            if (IsHeader() || !TheHamUI.IsBlacklightMode()) {
+                label->SetTextToken(gNullStr);
+            } else {
+                static Symbol song_select_song_prefix("song_select_song_prefix");
+                label->SetTextToken(song_select_song_prefix);
+                return;
+            }
+        }
         label->SetTextToken(listlabel->GetDefaultText());
     }
 }

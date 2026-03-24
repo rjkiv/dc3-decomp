@@ -9,6 +9,7 @@ public:
 
     const Symbol &ShortName() const { return mShortName; }
     const HamSongMetadata *Metadata() const { return mMetadata; }
+    int GetTier() const;
 
 protected:
     Symbol mShortName;

@@ -1,9 +1,13 @@
 #include "SongSortByDiff.h"
 
+#include "HamSongMetadata.h"
 #include "HamSongMgr.h"
+#include "SongSortNode.h"
 #include "meta/SongMgr.h"
 #include "SongRecord.h"
 #include "meta/Sorting.h"
+#include "meta_ham/HamSongMgr.h"
+#include "meta_ham/NavListNode.h"
 
 int DifficultyCmp::Compare(const NavListItemSortCmp *cmp, NavListNodeType type) const {
     switch (type) {
@@ -44,17 +48,12 @@ int DifficultyCmp::Compare(const NavListItemSortCmp *cmp, NavListNodeType type) 
     return 0;
 }
 
-SongSortByDiff::SongSortByDiff() { static Symbol by_difficulty = "by_difficulty"; }
-
 NavListShortcutNode *SongSortByDiff::NewShortcutNode(NavListItemNode *node) const {
-    auto cmp = node->GetCmp()->GetDifficultyCmp();
-    auto newCmp = new DifficultyCmp(cmp->mTier, 0, "");
+    int tier = node->GetCmp()->GetDifficultyCmp()->mTier;
+    DifficultyCmp *cmp = new DifficultyCmp(tier, 0, "");
     static Symbol no_part("no_part");
-    Symbol tierToken(no_part);
-    if (tierToken != -1) {
-        tierToken = TheHamSongMgr.RankTierToken(cmp->mTier);
-    }
-    return new NavListShortcutNode(newCmp, tierToken, true);
+    Symbol s = (tier != -1) ? TheHamSongMgr.RankTierToken(tier) : no_part;
+    return new NavListShortcutNode(cmp, s, true);
 }
 
 NavListHeaderNode *SongSortByDiff::NewHeaderNode(NavListItemNode *node) const {
@@ -63,4 +62,13 @@ NavListHeaderNode *SongSortByDiff::NewHeaderNode(NavListItemNode *node) const {
     static Symbol no_part("no_part");
     Symbol tierToken = tier != -1 ? TheHamSongMgr.RankTierToken(tier) : no_part;
     return new SongHeaderNode(newCmp, tierToken, true);
+}
+
+NavListItemNode *SongSortByDiff::NewItemNode(void *p1) const {
+    SongRecord *record = static_cast<SongRecord *>(p1);
+    int tier = record->GetTier();
+    float rank = record->Metadata()->Rank();
+    const char *title = record->Metadata()->Title();
+    DifficultyCmp *cmp = new DifficultyCmp(tier, rank, title);
+    return new SongSortNode(cmp, record);
 }

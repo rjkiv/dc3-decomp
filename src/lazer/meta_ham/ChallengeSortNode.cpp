@@ -32,7 +32,7 @@ int ChallengeHeaderNode::GetChallengeExp() {
     FOREACH (it, Children()) {
         auto node = *it;
         MILO_ASSERT(node, 0xd0);
-        // TheChallenges->CalculateChallengeXp()
+        // TheChallenges->CalculateChallengeXp();
     }
     return 0;
 }
@@ -122,6 +122,26 @@ Symbol ChallengeHeaderNode::OnSelectDone() {
     TheChallengeSortMgr->OnEnter();
     TheChallengeSortMgr->GetCurrentSort()->BuildItemList();
     return gNullStr;
+}
+
+bool ChallengeHeaderNode::IsActive() const {
+    return TheChallengeSortMgr->HeadersSelectable() != false;
+}
+
+int ChallengeHeaderNode::GetSongID() {
+    if (mChildren.size() == 0) {
+        return 0;
+    }
+    ChallengeSortNode *node = static_cast<ChallengeSortNode *>(mChildren.front());
+    MILO_ASSERT(node, 0x136);
+    return node->GetChallengeRecord()->GetChallengeRow().mSongID;
+}
+
+Symbol ChallengeHeaderNode::GetSongShortName() {
+    if (mChildren.size() == 0) {
+        return gNullStr;
+    }
+    return mChildren.front()->GetToken();
 }
 
 BEGIN_HANDLERS(ChallengeHeaderNode)

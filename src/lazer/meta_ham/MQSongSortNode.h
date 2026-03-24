@@ -6,6 +6,7 @@ public:
     MQSongHeaderNode(NavListItemSortCmp *, Symbol, bool);
 
     DataNode Handle(DataArray *, bool);
+    virtual ~MQSongHeaderNode() {}
     virtual Symbol OnSelect();
     virtual Symbol OnSelectDone();
     virtual void OnHighlight();

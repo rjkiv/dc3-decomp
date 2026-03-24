@@ -45,6 +45,8 @@ public:
     void UploadFlaunt(HamProfile *, bool);
     bool GetExpireTime(int &, int &, int &, int &);
 
+    int ConsolationXP() const { return mConsolationXP; }
+
 protected:
     void AddPendingProfile(HamProfile *);
 

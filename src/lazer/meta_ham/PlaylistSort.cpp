@@ -69,8 +69,8 @@ void PlaylistSort::BuildTree() {
     DeleteTree();
     Init();
     std::vector<NavListItemNode *> nodes;
-    FOREACH (it, ThePlaylistSortMgr->unk78) {
-        nodes.push_back(NewItemNode(it));
+    FOREACH (it, ThePlaylistSortMgr->GetPlaylists()) {
+        nodes.push_back(NewItemNode(*it));
     }
     FOREACH (it, nodes) {
         auto headerRange =

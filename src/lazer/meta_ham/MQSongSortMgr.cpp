@@ -15,11 +15,6 @@ MQSongSortMgr::MQSongSortMgr(SongPreview &sp) : NavListSortMgr(sp) {
     mSorts.push_back(new MQSongSortByCharacter());
 }
 
-MQSongSortByCharacter::MQSongSortByCharacter() {
-    static Symbol by_character("by_character");
-    mSortName = by_character;
-}
-
 MQSongSortMgr::~MQSongSortMgr() {};
 
 MQSongSort::MQSongSort() {};

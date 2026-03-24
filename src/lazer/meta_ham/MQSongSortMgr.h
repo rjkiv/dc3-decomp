@@ -20,7 +20,7 @@ public:
     const std::vector<Symbol> &GetVecAt(Symbol key) { return unk78[key]; }
 
 private:
-    MQSongSortMgr(SongPreview &);
+    MQSongSortMgr(SongPreview &sp);
     virtual ~MQSongSortMgr();
 
 protected:

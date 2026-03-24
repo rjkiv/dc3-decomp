@@ -12,12 +12,6 @@
 
 #pragma region FitnessCalorieSortNode
 
-FitnessCalorieSortNode::FitnessCalorieSortNode(NavListItemSortCmp *cmp, int i)
-    : NavListItemNode(cmp) {
-    mHeader = gNullStr;
-    unk48 = i;
-}
-
 Symbol FitnessCalorieSortNode::GetToken() const {
     return MakeString("calorie_node_%i", unk48);
 }
@@ -102,6 +96,23 @@ void FitnessCalorieHeaderNode::Text(UIListLabel *uiListLabel, UILabel *uiLabel) 
     AppLabel *app_label = dynamic_cast<AppLabel *>(uiLabel);
     MILO_ASSERT(app_label, 0x94);
     if (uiListLabel->Matches("sort_header")) {
+        FitnessCalorieSortNode *frontNode = ((FitnessCalorieSortNode *)mChildren.front());
+        FitnessCalorieSortNode *backNode = ((FitnessCalorieSortNode *)mChildren.back());
+        String s = MakeString(
+            "%i - %i %s",
+            frontNode->GetUnk48(),
+            backNode->GetUnk48(),
+            Localize("fitness_goal_calories_generic", false, TheLocale)
+        );
+        uiLabel->SetPrelocalizedString(s);
+    } else if (uiListLabel->Matches("header_collapse")) {
+        if (TheFitnessCalorieSortMgr->GetHighlightItem() == this) {
+            SetCollapseStateIcon(true);
+        } else {
+            SetCollapseStateIcon(false);
+        }
+    } else {
+        uiLabel->SetTextToken(gNullStr);
     }
 }
 
@@ -116,6 +127,21 @@ void FitnessCalorieHeaderNode::Renumber(std::vector<NavListSortNode *> &vec) {
             (*it)->Renumber(vec);
         }
     }
+}
+
+NavListSortNode *FitnessCalorieHeaderNode::GetFirstActive() {
+    FOREACH (it, Children()) {
+        auto firstActive = (*it)->GetFirstActive();
+        if (firstActive)
+            return TheFitnessCalorieSortMgr->HeadersSelectable() ? this : firstActive;
+    }
+    return nullptr;
+}
+
+void FitnessCalorieHeaderNode::OnUnHighlight() { SetCollapseStateIcon(false); }
+
+bool FitnessCalorieHeaderNode::IsActive() const {
+    return TheFitnessCalorieSortMgr->HeadersSelectable() != false;
 }
 
 #pragma endregion FitnessCalorieHeaderNode

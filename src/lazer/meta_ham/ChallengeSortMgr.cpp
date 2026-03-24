@@ -2,16 +2,21 @@
 
 #include "ChallengeSortByScore.h"
 #include "ChallengeSortNode.h"
+#include "NavListSort.h"
 #include "NavListSortMgr.h"
 #include "hamobj/HamGameData.h"
 #include "lazer/game/GameMode.h"
 #include "macros.h"
+#include "meta_ham/Challenges.h"
 #include "meta_ham/NavListNode.h"
+#include "net_ham/ChallengeSystemJobs.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
+#include "stl/_vector.h"
 #include "ui/UIPanel.h"
+#include "utl/Std.h"
 #include "utl/Symbol.h"
 
 ChallengeRecord::ChallengeRecord(const ChallengeRecord &other)
@@ -210,3 +215,38 @@ bool ChallengeSortMgr::SelectionIs(Symbol selection) {
 }
 
 int ChallengeSortMgr::GetTargetChallengeScore(int i) { return 1000; }
+
+const char *ChallengeSortMgr::GetChallengerGamertag(int i) {
+    if (IsIndexHeader(i)) {
+        return GetBestChallengeScoreGamertag(GetSongID(i));
+    } else {
+        ChallengeSortNode *node =
+            static_cast<ChallengeSortNode *>(mSorts[mCurrentSortIdx]->GetList()[i]);
+        return node->GetChallengerGamertag();
+    }
+    return 0;
+}
+
+void ChallengeSortMgr::OnEnter() {
+    mChallengeRecords.clear();
+    std::vector<ChallengeRow> officialChallenges;
+    std::vector<ChallengeRow> playerChallenges;
+    TheChallenges->GetOfficialChallenges(officialChallenges);
+    TheChallenges->GetPlayerChallenges(playerChallenges);
+    for (int i = 0; i < officialChallenges.size(); i++) {
+        mChallengeRecords.push_back(officialChallenges[i]);
+    }
+    for (int i = 0; i < playerChallenges.size(); i++) {
+        mChallengeRecords.push_back(playerChallenges[i]);
+    }
+    FOREACH (it, mSorts) {
+        (*it)->BuildTree();
+    }
+    NavListSort *pSort = mSorts[mCurrentSortIdx];
+    pSort->BuildItemList();
+    if (unk48) {
+        pSort->SetHighlightID(unk44);
+        unk48 = false;
+    }
+    pSort->UpdateHighlight();
+}

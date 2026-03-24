@@ -18,6 +18,7 @@
 #include "os/Debug.h"
 #include "ui/UIListCustom.h"
 #include "ui/UIListLabel.h"
+#include "utl/Std.h"
 #include "utl/Symbol.h"
 #include <cstdio>
 
@@ -216,6 +217,16 @@ void SongHeaderNode::Text(UIListLabel *list_label, UILabel *ui_label) const {
     }
 
     ui_label->SetTextToken(gNullStr);
+}
+
+NavListSortNode *SongHeaderNode::GetFirstActive() {
+    FOREACH (it, mChildren) {
+        auto firstActive = (*it)->GetFirstActive();
+        if (firstActive) {
+            return TheSongSortMgr->HeadersSelectable() ? this : firstActive;
+        }
+    }
+    return nullptr;
 }
 
 bool SongSortNode::IsCoverSong(Symbol shortname) const {

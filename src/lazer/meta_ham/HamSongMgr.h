@@ -72,6 +72,8 @@ public:
     const std::vector<int> &RankedSongs(SongType) const;
     void GetRandomlySelectableRankedSongs(std::vector<int> &) const;
 
+    int GetNumPlaylists() const { return mPlaylists.size(); }
+
 private:
     DataNode OnGetRandomSong(DataArray *);
 

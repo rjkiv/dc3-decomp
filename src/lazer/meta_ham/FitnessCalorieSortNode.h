@@ -11,7 +11,8 @@ public:
     virtual Symbol OnSelect();
     virtual void Text(UIListLabel *, UILabel *) const;
 
-    FitnessCalorieSortNode(NavListItemSortCmp *, int);
+    FitnessCalorieSortNode(NavListItemSortCmp *cmp, int i)
+        : NavListItemNode(cmp), unk48(i) {}
     int GetUnk48() const { return unk48; }
 
 protected:
@@ -20,9 +21,11 @@ protected:
 
 class FitnessCalorieHeaderNode : public NavListHeaderNode {
 public:
+    virtual ~FitnessCalorieHeaderNode() {}
     virtual Symbol OnSelect();
     virtual Symbol OnSelectDone();
     virtual void OnHighlight();
+    virtual void OnUnHighlight();
     virtual NavListSortNode *GetFirstActive();
     virtual void Text(UIListLabel *, UILabel *) const;
     virtual bool IsActive() const;

@@ -1,25 +1,29 @@
 #pragma once
-#include "meta_ham/FitnessCalorieSort.h"
-#include "meta_ham/NavListNode.h"
 
-class FitnessCalorieSortCmp : public NavListItemSortCmp {
+#include "meta_ham/NavListNode.h"
+#include "meta_ham/PlaylistSort.h"
+#include "utl/Symbol.h"
+
+class PlaylistTypeCmp : public NavListItemSortCmp {
 public:
-    virtual ~FitnessCalorieSortCmp();
+    virtual ~PlaylistTypeCmp();
     virtual int Compare(NavListItemSortCmp const *, NavListNodeType) const;
 
-    FitnessCalorieSortCmp() {}
+    PlaylistTypeCmp(int type, const char *name) : mType(type), mName(name) {}
+
+    int mType;
+    const char *mName;
 };
 
-class FitnessCalorieSortByCalorie : public FitnessCalorieSort {
+class PlaylistSortByType : public PlaylistSort {
 public:
-    virtual ~FitnessCalorieSortByCalorie();
     virtual NavListItemNode *NewItemNode(void *) const;
     virtual NavListShortcutNode *NewShortcutNode(NavListItemNode *) const;
     virtual NavListHeaderNode *NewHeaderNode(NavListItemNode *) const;
     virtual NavListHeaderNode *NewHeaderNode(NavListItemNode *, NavListItemNode *) const;
 
-    FitnessCalorieSortByCalorie() {
-        static Symbol by_calorie("by_calorie");
-        mSortName = by_calorie;
+    PlaylistSortByType() {
+        static Symbol by_type("by_type");
+        mSortName = by_type;
     }
 };
