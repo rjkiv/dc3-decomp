@@ -144,9 +144,8 @@ void NgPostProc::DoVelocity() {
             TheShaderMgr.SetPConstant((PShaderConstant)122, vec);
         }
     }
-    while (!unk23c.empty()) {
-        unk23c.pop_back();
-    }
+    if (!unk23c.empty())
+        unk23c.clear();
 }
 
 void NgPostProc::CheckNoise() {
