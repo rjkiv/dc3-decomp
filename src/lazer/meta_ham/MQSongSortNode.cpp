@@ -4,6 +4,7 @@
 #include "HamUI.h"
 #include "MQSongSortMgr.h"
 #include "HamStarsDisplay.h"
+#include "meta_ham/MQSongSortByCharacter.h"
 #include "meta_ham/NavListNode.h"
 #include "stl/_vector.h"
 #include "utl/MakeString.h"
@@ -56,25 +57,26 @@ const char *MQSongHeaderNode::GetAlbumArtPath() {
     static Symbol by_album("by_album");
     static Symbol singles("singles");
 
-    NavListSort *sort = TheMQSongSortMgr->GetCurrentSort();
-
-    if (sort->GetSortName() == by_album && GetToken() != singles && !mChildren.empty())
-        return mChildren.front()->GetAlbumArtPath();
-    else
-        return 0;
+    if (TheMQSongSortMgr->GetCurrentSort()->GetSortName() == by_album
+        && GetToken() != singles) {
+        auto node = mChildren.begin();
+        if (node != mChildren.end())
+            return (*node)->GetAlbumArtPath();
+    }
+    return 0;
 }
 
 void MQSongHeaderNode::Text(UIListLabel *listlabel, UILabel *label) const {
     if (listlabel->Matches("song")) {
-        // const char *c = mCmp->GetMQSongCharCmp()->unk8;
-        // label->SetTextToken(MakeString("mqheader_%s", c));
+        const MQSongCharCmp *cmp = mCmp->GetMQSongCharCmp();
+        const char *c = cmp->unk8;
+        Symbol s = MakeString("mqheader_%s", c);
+        label->SetTextToken(s);
     } else if (listlabel->Matches("song_prefix")) {
         label->SetTextToken(gNullStr);
-
     } else if (listlabel->Matches("header_collapse")) {
         SetCollapseStateIcon(unk5c);
     }
-    label->SetTextToken(gNullStr);
 }
 
 void MQSongHeaderNode::SetCollapseStateIcon(bool b) const {
@@ -132,20 +134,18 @@ void MQSongSortNode::Text(UIListLabel *listlabel, UILabel *label) const {
         AppLabel *pAppLabel = dynamic_cast<AppLabel *>(label);
         MILO_ASSERT(pAppLabel, 0x10f);
         pAppLabel->SetBlacklightSongName(unk48, -1, false);
-    } else {
-        if (listlabel->Matches("song_prefix")) {
-            AppLabel *pAppLabel = dynamic_cast<AppLabel *>(label);
-            MILO_ASSERT(pAppLabel, 0x116);
-            if (IsHeader() || !TheHamUI.IsBlacklightMode()) {
-                label->SetTextToken(gNullStr);
-            } else {
-                static Symbol song_select_song_prefix("song_select_song_prefix");
-                label->SetTextToken(song_select_song_prefix);
-                return;
-            }
+    } else if (listlabel->Matches("song_prefix")) {
+        AppLabel *pAppLabel = dynamic_cast<AppLabel *>(label);
+        MILO_ASSERT(pAppLabel, 0x116);
+        if (IsHeader() || !TheHamUI.IsBlacklightMode()) {
+            pAppLabel->SetTextToken(gNullStr);
+        } else {
+            static Symbol song_select_song_prefix("song_select_song_prefix");
+            pAppLabel->SetTextToken(song_select_song_prefix);
+            return;
         }
+    } else
         label->SetTextToken(listlabel->GetDefaultText());
-    }
 }
 
 void MQSongSortNode::Custom(UIListCustom *list, Hmx::Object *obj) const {

@@ -414,4 +414,17 @@ void ChallengeSortNode::Custom(UIListCustom *list, Hmx::Object *obj) const {
     }
 }
 
+char const *ChallengeHeaderNode::GetAlbumArtPath() {
+    static Symbol by_album("by_album");
+    static Symbol singles("singles");
+
+    if (TheChallengeSortMgr->GetCurrentSort()->GetSortName() == by_album
+        && GetToken() != singles) {
+        auto node = mChildren.begin();
+        if (node != mChildren.end())
+            return (*node)->GetAlbumArtPath();
+    }
+    return 0;
+}
+
 #pragma endregion

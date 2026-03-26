@@ -1,10 +1,14 @@
 #include "meta_ham/MultiUserGesturePanel.h"
 #include "HamPanel.h"
+#include "HamSongMetadata.h"
+#include "HamSongMgr.h"
 #include "MultiUserGesturePanel.h"
 #include "flow/PropertyEventProvider.h"
 #include "game/GameMode.h"
 #include "gesture/BaseSkeleton.h"
+#include "gesture/GestureMgr.h"
 #include "hamobj/HamGameData.h"
+#include "hamobj/HamNavList.h"
 #include "hamobj/HamPlayerData.h"
 #include "meta_ham/CharacterProvider.h"
 #include "meta_ham/CrewProvider.h"
@@ -22,17 +26,25 @@
 #include "os/Debug.h"
 #include "os/Joypad.h"
 #include "os/JoypadMsgs.h"
+#include "rndobj/Mat.h"
 #include "rndobj/Mesh.h"
+#include "rndobj/Tex.h"
 #include "ui/UI.h"
+#include "ui/UIComponent.h"
 #include "ui/UIPicture.h"
 #include "utl/FilePath.h"
 #include "utl/MakeString.h"
 #include "utl/Symbol.h"
+#include <cstring>
 
 MultiUserGesturePanel::MultiUserGesturePanel() {
     for (int i = 0; i < 2; i++) {
+        unk54[i] = nullptr;
+        unk5c[i] = nullptr;
         mCharacterProviders[i].SetPlayer(i);
+        mVenueProviders[i].SetPlayer(i);
         mCrewProviders[i].SetPlayer(i);
+        mOutfitProviders[i].SetPlayer(i);
         mDifficultyProviders[i].SetPlayer(i);
     }
 }
@@ -226,8 +238,8 @@ void MultiUserGesturePanel::SetCrew(Symbol crew, int idx) {
 }
 
 void MultiUserGesturePanel::RefreshUI() {
-    static Message refresh_ui("refresh_ui");
-    TheUI->Handle(refresh_ui, false);
+    static Message cRefreshUIMsg("refresh_ui");
+    TheUI->Handle(cRefreshUIMsg, false);
 }
 
 int MultiUserGesturePanel::GetPlayerIndex(int idx) const {
@@ -235,16 +247,13 @@ int MultiUserGesturePanel::GetPlayerIndex(int idx) const {
     MILO_ASSERT(pSkeletonChooser, 0x68);
     SkeletonSide playerSide = pSkeletonChooser->GetPlayerSide(0);
     const DataNode *prop = TheHamProvider->Property("is_in_party_mode", true);
-    int check = prop->Int();
-    if (check == 0) {
-        check = playerSide - 1;
-        if (idx == 0) {
-            idx = check - ((playerSide - 2) + (playerSide - 1 == 0));
-        } else {
-            idx = playerSide == 0;
-        }
+    if (prop->Int() != 0) {
+        return idx;
     }
-    return idx;
+    if (idx == 0) {
+        return playerSide != kSkeletonRight;
+    } else
+        return playerSide == kSkeletonRight;
 }
 
 void MultiUserGesturePanel::SetCharacter(Symbol s, int idx) {
@@ -329,13 +338,195 @@ void MultiUserGesturePanel::UpdateNavLists(int player) {
     MILO_ASSERT_RANGE(player, 0, 2, 0x9d);
     SkeletonChooser *skeletonChooser = TheHamUI.GetShellInput()->GetSkeletonChooser();
     MILO_ASSERT(skeletonChooser, 0xa0);
+    HamPlayerData *pPlayerData = TheGameData->Player(player);
+    int trackingID = pPlayerData->GetSkeletonTrackingID();
+    SkeletonSide side = skeletonChooser->GetPlayerSide(player);
+    int idx = side != kSkeletonRight;
+    if (unk54[idx]) {
+        unk54[idx]->SetTrackingID(trackingID);
+        if ((trackingID <= 0 && !TheGestureMgr->InControllerMode())
+            || TheHamUI.GetOverlayPanel()) {
+            unk54[idx]->SetTrackingID(0);
+            unk54[idx]->Disengage();
+        }
+    }
+    if (unk5c[idx]) {
+        unk5c[idx]->SetShowing(true);
+        unk5c[idx]->SetTrackingID(trackingID);
+        if ((trackingID <= 0 && !TheGestureMgr->InControllerMode())
+            || TheHamUI.GetOverlayPanel()) {
+            unk5c[idx]->SetTrackingID(0);
+            unk5c[idx]->Disengage();
+            if (TheHamUI.GetOverlayPanel()) {
+                unk5c[idx]->SetShowing(false);
+            }
+        }
+    }
+}
+
+bool MultiUserGesturePanel::HasNavList() const {
+    for (int i = 0; i < 2; i++) {
+        if (unk54[i]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void MultiUserGesturePanel::UpdateProviderPlayerIndices() {
+    for (int i = 0; i < 2; i++) {
+        int index = GetPlayerIndex(i);
+        mCharacterProviders[i].SetPlayer(index);
+        mVenueProviders[i].SetPlayer(index);
+        mDifficultyProviders[i].SetPlayer(index);
+        mCrewProviders[i].SetPlayer(index);
+        mOutfitProviders[i].SetPlayer(index);
+    }
+}
+
+Symbol MultiUserGesturePanel::GetVoiceCommandOutfitTag(int i, Symbol s) {
+    HamPlayerData *pPlayerData = TheGameData->Player(i);
+    Symbol charSym = pPlayerData->Char();
+    Symbol retval;
+    static Symbol screen_name("screen_name");
+    int charOutfits = GetNumCharacterOutfits(charSym, false);
+    for (int i = 0; i < charOutfits; i++) {
+        DataArray *pCharacterOutfitArray = GetCharacterOutfitEntry(charSym, i);
+        DataArray *pScreenArray = pCharacterOutfitArray->FindArray(screen_name, false);
+        if (pScreenArray) {
+            if (pScreenArray->Sym(1) == s) {
+                retval = pCharacterOutfitArray->Sym(0);
+                break;
+            }
+        }
+    }
+    return retval;
+}
+
+void MultiUserGesturePanel::Enter() {
+    UpdateProviderPlayerIndices();
+    HamPanel::Enter();
+    for (int i = 0; i < 2; i++) {
+        unk54[i] =
+            DataDir()->Find<HamNavList>(MakeString("right_hand_p%d.hnl", i + 1), false);
+        unk5c[i] =
+            DataDir()->Find<HamNavList>(MakeString("left_hand_p%d.hnl", i + 1), false);
+    }
+    UpdateProviders();
+}
+
+void MultiUserGesturePanel::UpdateVenueMesh(
+    RndMesh *i_pMesh, int i_iSide, int i_iPlayerIndex, Symbol s1, Symbol s2
+) {
+    MILO_ASSERT(i_pMesh, 0x208);
+    MILO_ASSERT_RANGE(i_iPlayerIndex, 0, 2, 0x209);
+    MILO_ASSERT_RANGE(i_iSide, 0, 2, 0x20a);
+    const CrewProvider *pProvider = GetCrewProvider(i_iSide);
+    MILO_ASSERT(pProvider, 0x20d);
+    String lockedVenueStr;
+    String venueStr = MakeString("venue_p%i.mat", i_iSide + 1);
+    RndMat *pMat = mDir->Find<RndMat>(venueStr.c_str(), false);
+    MILO_ASSERT(pMat, 0x212);
+
+    if (!TheProfileMgr.IsContentUnlocked(s1)) {
+        lockedVenueStr = MakeString("venue_%s_locked.tex", s2.Str());
+    } else {
+        lockedVenueStr = MakeString("venue_%s.tex", s2.Str());
+    }
+    RndTex *pTex = mDir->Find<RndTex>(lockedVenueStr.c_str(), false);
+    if (pTex) {
+        pMat->SetDiffuseTex(pTex);
+        i_pMesh->SetMat(pMat);
+    }
+}
+
+void MultiUserGesturePanel::UpdateCharPic(
+    UIPicture *i_pPic, int i_iSide, int i_iPlayerIndex, Symbol charSym, Symbol outfitSym
+) {
+    MILO_ASSERT(i_pPic, 0x18e);
+    MILO_ASSERT_RANGE(i_iPlayerIndex, 0, 2, 0x18f);
+    MILO_ASSERT_RANGE(i_iSide, 0, 2, 0x190);
+    static Symbol character_default("character_default");
+    HamPlayerData *pPlayerData = TheGameData->Player(i_iPlayerIndex);
+    if (charSym == character_default) {
+        MetaPerformer *pPerformer = MetaPerformer::Current();
+        Symbol primaryCrew;
+        Symbol primaryChar;
+        Symbol primaryOutfit;
+        Symbol secondaryCrew;
+        Symbol secondaryChar;
+        Symbol secondaryOutfit;
+        int songID = TheHamSongMgr.GetSongIDFromShortName(TheGameData->GetSong());
+        const HamSongMetadata *pSongData = TheHamSongMgr.Data(songID);
+        MILO_ASSERT(pSongData, 0x19d);
+
+        bool check = false;
+        if (TheGameMode->InMode("dance_battle") || TheGameMode->InMode("strike_a_pose")) {
+            check = true;
+        }
+        HamPlayerData *pPrimary;
+        HamPlayerData *pSecondary;
+        pPerformer->CalcCharacters(
+            pSongData,
+            check,
+            (PlayerFlag)i_iPlayerIndex,
+            pPrimary,
+            primaryCrew,
+            primaryChar,
+            primaryOutfit,
+            pSecondary,
+            secondaryCrew,
+            secondaryChar,
+            secondaryOutfit
+        );
+
+        if (pPlayerData == pPrimary) {
+            charSym = primaryChar;
+            outfitSym = primaryOutfit;
+        } else {
+            MILO_ASSERT(pPlayerData == pSecondary, 0x1a8);
+            charSym = secondaryChar;
+            outfitSym = secondaryOutfit;
+        }
+    } else if (charSym == "") {
+        MILO_ASSERT(pPlayerData, 0x1af);
+        charSym = pPlayerData->Char();
+        outfitSym = pPlayerData->Outfit();
+    }
+
+    if (charSym == "") {
+        return;
+    }
+
+    const CharacterProvider *pProvider = GetCharProvider(i_iSide);
+    MILO_ASSERT(pProvider, 0x1ba);
+
+    String str;
+    bool contentLocked = !TheProfileMgr.IsContentUnlocked(charSym)
+        || !TheProfileMgr.IsContentUnlocked(outfitSym);
+    if (contentLocked) {
+        static Symbol is_in_party_mode("is_in_party_mode");
+        int propInt = TheHamProvider->Property(is_in_party_mode)->Int();
+        if (propInt != 0) {
+            contentLocked = contentLocked & (strstr(outfitSym.Str(), "01") != 0);
+        }
+    }
+
+    if (contentLocked && !TheGameMode->InMode("campaign")) {
+        str = MakeString("%s_locked_keep.png", outfitSym);
+    } else if (pProvider->IsCharacterAvailable(charSym)) {
+        str = MakeString("%s_keep.png", outfitSym);
+    }
+    FilePath fp = FilePath("ui/image/char/", str.c_str());
+    i_pPic->SetTex(fp);
+    i_pPic->GetMesh()->SetShowing(true);
 }
 
 DataNode MultiUserGesturePanel::OnMsg(const ButtonDownMsg &msg) {
     static Symbol side("side");
     if (msg.GetButton() == kPad_LStickLeft || msg.GetButton() == kPad_DLeft) {
-        if (TheUI->FocusPanel() && TheUI->FocusComponent() == unk54) {
-            TheUI->FocusPanel()->SetFocusComponent(unk58);
+        if (TheUI->FocusPanel() && TheUI->FocusComponent() == unk54[0]) {
+            TheUI->FocusPanel()->SetFocusComponent(unk54[1]);
             PropertyEventProvider *multiUserProvider =
                 DataDir()->Find<PropertyEventProvider>("multiuser.ep", false);
             if (multiUserProvider) {
@@ -345,8 +536,8 @@ DataNode MultiUserGesturePanel::OnMsg(const ButtonDownMsg &msg) {
     }
 
     if (msg.GetButton() == kPad_LStickRight || msg.GetButton() == kPad_DRight) {
-        if (TheUI->FocusPanel() && TheUI->FocusComponent() == unk58) {
-            TheUI->FocusPanel()->SetFocusComponent(unk54);
+        if (TheUI->FocusPanel() && TheUI->FocusComponent() == unk54[1]) {
+            TheUI->FocusPanel()->SetFocusComponent(unk54[0]);
             PropertyEventProvider *multiUserProvider =
                 DataDir()->Find<PropertyEventProvider>("multiuser.ep", false);
             if (multiUserProvider) {

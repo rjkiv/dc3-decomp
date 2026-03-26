@@ -1,4 +1,5 @@
 #pragma once
+#include "hamobj/HamNavList.h"
 #include "meta_ham/CharacterProvider.h"
 #include "meta_ham/CrewProvider.h"
 #include "meta_ham/DifficultyProvider.h"
@@ -60,10 +61,8 @@ public:
     void SetCrew(Symbol, int);
 
 protected:
-    UIComponent *unk54;
-    UIComponent *unk58;
-    u32 unk5c;
-    u32 unk60;
+    HamNavList *unk54[2];
+    HamNavList *unk5c[2];
     CharacterProvider mCharacterProviders[2]; // 0x64
     CrewProvider mCrewProviders[2]; // 0xec
     DifficultyProvider mDifficultyProviders[2]; // 0x174

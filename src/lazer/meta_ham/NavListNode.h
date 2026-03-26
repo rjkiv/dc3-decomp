@@ -25,7 +25,7 @@ public:
     virtual int Compare(const NavListItemSortCmp *, NavListNodeType) const = 0;
     virtual bool HasSubheader() const { return false; }
     virtual const class DifficultyCmp *GetDifficultyCmp() const; // 0xc
-    virtual const class SongCmp *GetSongCmp() const;
+    virtual const class SongCmp *GetSongCmp() const; // 0x10
     virtual const class ArtistCmp *GetArtistCmp() const; // tentative
     virtual const class DecadeCmp *GetDecadeCmp() const; // tentative
     virtual const class VenueCmp *GetVenueCmp() const; // tentative
@@ -33,7 +33,7 @@ public:
     virtual const class LocationCmp *GetLocationCmp() const; // tentative - 0x24
     virtual const class AlbumCmp *GetAlbumCmp() const; // tentative
     virtual const class VocalPartsCmp *GetVocalPartsCmp() const; // tentative
-    virtual const class PlaylistTypeCmp *GetPlaylistTypeCmp() const;
+    virtual const class PlaylistTypeCmp *GetPlaylistTypeCmp() const; // 0x30
     virtual const class ChallengeScoreCmp *GetChallengeScoreCmp() const;
     virtual const class MQSongCharCmp *GetMQSongCharCmp() const; // tentative
     virtual const class FitnessCalorieSortCmp *GetFitnessCalorieSortCmp() const;
@@ -170,12 +170,19 @@ protected:
 
 class NavListFunctionNode : public NavListSortNode {
 public:
-    NavListFunctionNode(NavListItemSortCmp *, Symbol, const char *);
+    NavListFunctionNode(NavListItemSortCmp *cmp, Symbol s, const char *c)
+        : NavListSortNode(cmp), unk44(c), unk4c(s) {}
     virtual ~NavListFunctionNode() {}
     virtual DataNode Handle(DataArray *, bool);
     virtual NavListNodeType GetType() const { return kNodeFunction; }
     virtual Symbol GetToken() const;
+    virtual Symbol OnSelect();
     virtual Symbol Select();
+    virtual void OnHighlight();
+    virtual void OnUnHighlight();
+    virtual void SetCollapseIconLabel(UILabel *);
+    virtual int GetItemCount();
+    virtual NavListSortNode *GetFirstActive();
     virtual bool IsEnabled() const { return IsEnabled(); } // lmao what
     virtual bool IsActive() const { return false; }
     virtual const char *GetAlbumArtPath() { return unk44.c_str(); }

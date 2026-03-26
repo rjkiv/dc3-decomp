@@ -45,7 +45,7 @@ void SongSelectPlaylistProvider::Text(
             pHamLabel->SetPlaylistName(pPlaylist, true, true);
         } else {
             static Symbol playlist_create("playlist_create");
-            uiLabel->SetTextToken(playlist_create);
+            pHamLabel->SetTextToken(playlist_create);
         }
     } else {
         uiLabel->SetTextToken(uiListLabel->GetDefaultText());
@@ -83,8 +83,8 @@ int SongSelectPlaylistPanel::GetSelectedPlaylistIndex() {
     if (mState != kUp) {
         return 0;
     } else {
-        static Message get_selected_playlist_index("get_selected_playlist_index");
-        DataNode node = Handle(get_selected_playlist_index, true);
+        static Message cGetSelectedPlaylistMsg("get_selected_playlist_index");
+        DataNode node = Handle(cGetSelectedPlaylistMsg, true);
         return node.Int();
     }
 }
@@ -104,17 +104,17 @@ void SongSelectPlaylistPanel::UpdateSongs(int i) {
     MILO_ASSERT(m_pSongSelectPlaylistProvider, 0xf9);
     Playlist *pPlaylist = ThePlaylistSortMgr->GetPlaylist(i);
     m_pPlaylistSongProvider->UpdateList(pPlaylist, false);
-    static Message update_songcount("update_songcount", 0);
+    static Message cUpdateSongCountMsg("update_songcount", 0);
     int num = 0;
     if (pPlaylist) {
         num = pPlaylist->GetNumSongs();
     } else {
         num = 0;
     }
-    update_songcount[0] = num;
-    Handle(update_songcount, true);
-    static Message update_song_list("update_song_list");
-    Handle(update_song_list, true);
+    cUpdateSongCountMsg[0] = num;
+    Handle(cUpdateSongCountMsg, true);
+    static Message cUpdateSongListMsg("update_song_list");
+    Handle(cUpdateSongListMsg, true);
 }
 
 void SongSelectPlaylistPanel::DeletePlaylist() {
@@ -144,14 +144,14 @@ bool SongSelectPlaylistPanel::IsSelectingCustomPlaylist() {
 void SongSelectPlaylistPanel::Refresh() {
     MILO_ASSERT(m_pSongSelectPlaylistProvider, 0xe4);
     ThePlaylistSortMgr->UpdateList();
-    static Message update_playlist_provider("update_playlist_provider", 0);
-    update_playlist_provider[0] = ThePlaylistSortMgr;
-    Handle(update_playlist_provider, true);
+    static Message cUpdateProviderMsg("update_playlist_provider", 0);
+    cUpdateProviderMsg[0] = ThePlaylistSortMgr;
+    Handle(cUpdateProviderMsg, true);
     UpdateSongs(GetSelectedPlaylistIndex());
     MILO_ASSERT(m_pPlaylistSongProvider, 0xee);
-    static Message update_song_provider("update_song_provider", 0);
-    update_song_provider[0] = m_pPlaylistSongProvider;
-    Handle(update_song_provider, true);
+    static Message cUpdateSongProviderMsg("update_song_provider", 0);
+    cUpdateSongProviderMsg[0] = m_pPlaylistSongProvider;
+    Handle(cUpdateSongProviderMsg, true);
 }
 
 BEGIN_HANDLERS(SongSelectPlaylistPanel)

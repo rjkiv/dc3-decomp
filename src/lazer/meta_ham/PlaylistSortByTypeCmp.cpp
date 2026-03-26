@@ -6,20 +6,19 @@
 #include "utl/Symbol.h"
 
 int PlaylistTypeCmp::Compare(NavListItemSortCmp const *cmp, NavListNodeType type) const {
-    const PlaylistTypeCmp *pCmp;
     switch (type) {
     case kNodeShortcut:
         return 0;
         break;
     case kNodeHeader:
-        return pCmp->mType - cmp->GetPlaylistTypeCmp()->mType;
+        return mType - cmp->GetPlaylistTypeCmp()->mType;
         break;
     case kNodeItem:
+        cmp->GetPlaylistTypeCmp();
         return -1;
         break;
     default:
         MILO_FAIL("invalid type of node comparison.\n");
-        return 0;
         break;
     }
     return 0;
@@ -78,7 +77,7 @@ NavListHeaderNode *PlaylistSortByType::NewHeaderNode(NavListItemNode *node) cons
 }
 
 NavListItemNode *PlaylistSortByType::NewItemNode(void *p1) const {
-    Playlist *p = ((PlaylistSortNode *)p1)->GetPlaylist();
+    Playlist *p = static_cast<Playlist *>(p1);
     int type;
     if (p->IsCustom()) {
         type = 1;

@@ -33,24 +33,20 @@
 #include "utl/MakeString.h"
 #include "utl/Std.h"
 #include "utl/Symbol.h"
+#include <cstring>
 #include <list>
 
 bool CompareType(const Playlist *p1, const Playlist *p2) {
     int p1type = p1->GetType();
     int p2type = p2->GetType();
     if (p1type == p2type) {
-        bool p1custom = p1->IsCustom();
-        bool p2custom = p2->IsCustom();
-        for (int i = 0; i == 0; i = p1custom - p2custom) {
-            if (p1custom == 0)
-                break;
-            p1custom++;
-            p2custom++;
-        }
+        Symbol name1 = p1->GetName();
+        Symbol name2 = p2->GetName();
+        return strcmp(name1.Str(), name2.Str()) < 0;
     } else {
         int p1type = p1->GetType();
         int p2type = p2->GetType();
-        return p2type <= p1type ? false : true;
+        return (bool)!(p2type <= p1type);
     }
 }
 
@@ -270,8 +266,7 @@ void PlaylistSortMgr::QueueCmdGetPlaylistsFromRC() {
 }
 
 void PlaylistSortMgr::QueueCmdChangeProfileOnlineID(String str) {
-    CmdChangeProfileOnlineID *cmd = new CmdChangeProfileOnlineID(str);
-    unkc0.push_back(cmd);
+    unkc0.push_back(new CmdChangeProfileOnlineID(str));
     if (!unkc8) {
         ProcessNextCommand();
     }
@@ -314,14 +309,14 @@ void PlaylistSortMgr::ResolvePlaylists() {
     if (activeProfile) {
         if (!(unkb0 != activeProfile->GetName())) {
             int size = unkd0.size();
-            for (int i = 0; i < size + 5; i++) {
-                CustomPlaylist *cusPlaylist =
-                    dynamic_cast<CustomPlaylist *>(&activeProfile->GetPlaylist(i));
-                cusPlaylist->Copy(&unkd0[i]);
-                cusPlaylist->SetParentProfile(activeProfile);
+            int something = Max(5 - size, 0);
+            for (int i = 0; i < size; i++) {
+                CustomPlaylist &cusPlaylist =
+                    dynamic_cast<CustomPlaylist &>(activeProfile->GetPlaylist(i));
+                cusPlaylist.Copy(&unkd0[i]);
+                cusPlaylist.SetParentProfile(activeProfile);
             }
-
-            for (int i = 0; i < 5; i++) {
+            for (int i = 5 - something; i < 5; i++) {
                 Playlist *playlist = &activeProfile->GetPlaylist(i);
                 int numSongs = playlist->GetNumSongs();
                 while (numSongs != 0) {

@@ -247,7 +247,8 @@ Symbol SongSortMgr::MoveOn() {
         return gNullStr;
     } else if (song_select_story == mode || song_select_practice == mode
                || mode == song_select_jukebox) {
-        const DataNode *prop = TheGameMode->Property("ready_screen");
+        Symbol ready_screen("ready_screen");
+        const DataNode *prop = TheGameMode->Property(ready_screen);
         return prop->Sym();
     } else {
         MILO_FAIL("Unknown song_select_mode\n");

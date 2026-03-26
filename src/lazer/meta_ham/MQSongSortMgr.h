@@ -15,7 +15,7 @@ public:
     bool IsCharacter(Symbol) const;
     bool IsSong(Symbol) const;
 
-    std::map<Symbol, std::vector<Symbol> > GetUnk78() { return unk78; }
+    std::map<Symbol, std::vector<Symbol> > &GetUnk78() { return unk78; }
     std::vector<Symbol> &GetUnk90() { return unk90; }
     const std::vector<Symbol> &GetVecAt(Symbol key) { return unk78[key]; }
 

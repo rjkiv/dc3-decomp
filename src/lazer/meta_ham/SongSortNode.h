@@ -17,6 +17,7 @@ public:
     virtual NavListSortNode *GetFirstActive();
     virtual void Text(UIListLabel *, UILabel *) const;
     virtual bool IsActive() const;
+    virtual char const *GetAlbumArtPath();
     virtual void Renumber(std::vector<NavListSortNode *> &);
     virtual void UpdateItemCount(NavListItemNode *);
     virtual void SetItemCountString(UILabel *) const;
@@ -33,11 +34,12 @@ public:
         : NavListItemNode(cmp), unk_0x48(song), unk_0x4C(0) {}
 
     virtual DataNode Handle(DataArray *, bool);
+    virtual Symbol GetToken() const;
+    virtual Symbol OnSelect();
+    virtual Symbol Select();
+    virtual void OnContentMounted(const char *, const char *);
     virtual void Text(UIListLabel *, UILabel *) const;
     virtual void Custom(UIListCustom *, Hmx::Object *) const;
-    virtual Symbol Select();
-    virtual Symbol OnSelect();
-    virtual void OnContentMounted(const char *, const char *);
 
     void SetInPlaylist(bool);
     bool IsCoverSong(Symbol) const;
@@ -54,6 +56,9 @@ private:
 
 class SongFunctionNode : public NavListFunctionNode {
 public:
+    SongFunctionNode(NavListItemSortCmp *cmp, Symbol sym, const char *c)
+        : NavListFunctionNode(cmp, sym, c) {}
+    virtual ~SongFunctionNode() {}
     virtual Symbol OnSelect();
     virtual void OnHighlight();
     virtual void Text(UIListLabel *, UILabel *) const;

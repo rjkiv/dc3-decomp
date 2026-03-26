@@ -2,13 +2,17 @@
 
 #include "AppLabel.h"
 #include "ChallengeSort.h"
+#include "SongRecord.h"
 #include "SongSortMgr.h"
 #include "game/GameMode.h"
 #include "meta_ham/NavListNode.h"
 #include "meta_ham/SongSortMgr.h"
+#include "meta_ham/SongSortNode.h"
 #include "os/Debug.h"
 #include "ui/UILabel.h"
 #include "ui/UIListLabel.h"
+#include "utl/Std.h"
+#include "utl/Symbol.h"
 
 SongSort::SongSort() {};
 
@@ -20,7 +24,7 @@ void SongSort::DeleteItemList() {
 };
 
 void SongSort::BuildItemList() {
-    Symbol sym(gNullStr);
+    Symbol sym = gNullStr;
     if (unk50 && unk50->GetType() == kNodeFunction) {
         sym = unk50->GetToken();
     }
@@ -33,7 +37,57 @@ void SongSort::BuildItemList() {
     static Symbol dance_battle("dance_battle");
     bool inPerform = TheGameMode->InMode(perform, true);
     bool inDanceBattle = TheGameMode->InMode(dance_battle, true);
-    Symbol prop = TheGameMode->Property(song_select_mode, true)->Sym();
+    Symbol prop;
+    prop = TheGameMode->Property(song_select_mode, true)->Sym();
+    bool check = prop == song_select_playlist;
+
+    if (TheSongSortMgr->HeadersSelectable() && (inPerform || inDanceBattle) && !check) {
+        static Symbol random_song("random_song");
+        SongFunctionNode *node = new SongFunctionNode(
+            nullptr, random_song, "ui/image/song_select_setlist_keep.png"
+        );
+        node->SetShortcut(unk30.front());
+        unk3c.push_back(node);
+        if (inPerform) {
+            static Symbol playlists("playlists");
+            SongFunctionNode *functionNode = new SongFunctionNode(
+                nullptr, playlists, "ui/image/song_select_setlist_keep.png"
+            );
+            functionNode->SetShortcut(unk30.front());
+            unk3c.push_back(functionNode);
+        }
+    } else if (check) {
+        static Symbol finish_setlist("finish_setlist");
+        SongFunctionNode *node = new SongFunctionNode(
+            nullptr, finish_setlist, "ui/image/song_select_setlist_keep.png"
+        );
+        node->SetShortcut(unk30.front());
+        unk3c.push_back(node);
+    }
+
+    FOREACH (it, unk3c) {
+        (*it)->Renumber(mList);
+    }
+
+    FOREACH (it, unk30) {
+        (*it)->Renumber(mList);
+    }
+
+    if (check) {
+        FOREACH (it, unk3c) {
+            (*it)->Renumber(mList);
+        }
+    }
+
+    FOREACH (it, unk30) {
+        (*it)->FinishBuildList(this);
+    }
+
+    if (sym.Str() != gNullStr) {
+        unk50 = GetNode(sym);
+    }
+
+    TheSongSortMgr->FinalizeHeaders();
 }
 
 void SongSort::SetHighlightedIx(int i1) {
@@ -76,4 +130,4 @@ void SongSort::Text(int i1, int i2, UIListLabel *listlabel, UILabel *uilabel) co
     app_label->SetFromSongSelectNode(unk30[i2]);
 };
 
-Symbol SongSort::DetermineHeaderSymbolFromSong(Symbol sym) { return sym; };
+Symbol SongSort::DetermineHeaderSymbolFromSong(Symbol sym) { return gNullStr; };

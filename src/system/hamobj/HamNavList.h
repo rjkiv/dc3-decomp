@@ -88,11 +88,14 @@ public:
     void HideItem(int, bool);
     void SetProviderNavItemLabels(int, DataArray *);
     void DrawDebug() const;
+    void Disengage();
 
     void Enable() { mEnabled = true; }
     void Disable() { mEnabled = false; }
     bool Enabled() const { return mEnabled; }
     HamNavProvider *GetHelpbarProvider() { return mNavProvider; }
+    int TrackingID() const { return mSkeletonTrackingID; }
+    void SetTrackingID(int id) { mSkeletonTrackingID = id; }
 
     static void Init();
     static bool sLastSelectInControllerMode;

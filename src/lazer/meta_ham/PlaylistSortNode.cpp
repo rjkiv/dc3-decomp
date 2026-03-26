@@ -84,8 +84,8 @@ void PlaylistSortNode::Text(UIListLabel *uiListLabel, UILabel *uiLabel) const {
         HamLabel *pHamLabel = app_label;
         MILO_ASSERT(pHamLabel, 0x12d);
         int duration = unk48->GetDuration();
-        if (duration > 0) {
-            uiLabel->SetTimeHMS(duration, false);
+        if (0 < duration) {
+            pHamLabel->SetTimeHMS(duration, false);
             return;
         }
         pHamLabel->SetTextToken(gNullStr);
@@ -163,9 +163,12 @@ NavListSortNode *PlaylistHeaderNode::GetFirstActive() {
 char const *PlaylistHeaderNode::GetAlbumArtPath() {
     static Symbol by_album("by_album");
     static Symbol singles("singles");
-    auto curSort = ThePlaylistSortMgr->GetCurrentSort()->GetSortName();
-    if (curSort == by_album && GetToken() != singles && HasChildren()) {
-        return FirstChild()->GetAlbumArtPath();
+    if (ThePlaylistSortMgr->GetCurrentSort()->GetSortName() == by_album
+        && GetToken() != singles) {
+        auto node = mChildren.begin();
+        if (node != mChildren.end()) {
+            return FirstChild()->GetAlbumArtPath();
+        }
     }
     return 0;
 }

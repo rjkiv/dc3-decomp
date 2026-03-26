@@ -18,6 +18,7 @@
 #include "os/Debug.h"
 #include "ui/UIListCustom.h"
 #include "ui/UIListLabel.h"
+#include "ui/UIPanel.h"
 #include "utl/Std.h"
 #include "utl/Symbol.h"
 #include <cstdio>
@@ -130,6 +131,19 @@ void SongHeaderNode::Renumber(std::vector<NavListSortNode *> &vec) {
     }
 }
 
+char const *SongHeaderNode::GetAlbumArtPath() {
+    static Symbol by_album("by_album");
+    static Symbol singles("singles");
+
+    if (TheSongSortMgr->GetCurrentSort()->GetSortName() == by_album
+        && GetToken() != singles) {
+        auto node = mChildren.begin();
+        if (node != mChildren.end())
+            return (*node)->GetAlbumArtPath();
+    }
+    return 0;
+}
+
 Symbol SongSortNode::Select() {
     static Symbol invalid_version_screen("invalid_version_screen");
     if (!unk_0x48->Metadata()->IsVersionOK()) {
@@ -156,7 +170,7 @@ Symbol SongSortNode::Select() {
 }
 
 Symbol SongSortNode::OnSelect() {
-    if (UseQuickplayPerformer() && TheSongSortMgr == 0) {
+    if (UseQuickplayPerformer() && !TheSongSortMgr) {
         MetaPerformer::Current()->ResetSongs();
     }
     Symbol sel = Select();
@@ -191,7 +205,7 @@ void SongHeaderNode::Text(UIListLabel *list_label, UILabel *ui_label) const {
     if (unk44) {
         if (list_label->Matches("famousby")) {
             static Symbol store_famous_by("store_famous_by");
-            bool highlighted = (TheSongSortMgr->GetHighlightItem() == this);
+            ui_label->SetTextToken(store_famous_by);
             return;
         }
         if (list_label->Matches("famousby_group")) {
@@ -209,14 +223,15 @@ void SongHeaderNode::Text(UIListLabel *list_label, UILabel *ui_label) const {
         app_label->SetFromSongSelectNode(this);
         return;
     } else if (list_label->Matches("song_count")) {
-        TheSongSortMgr->GetHighlightItem();
+        SetItemCountString(ui_label);
         return;
     } else if (list_label->Matches("header_collapse")) {
-        bool highlighted = (TheSongSortMgr->GetHighlightItem() == this);
+        TheSongSortMgr->GetHighlightItem() == this ? SetCollapseStateIcon(true)
+                                                   : SetCollapseStateIcon(false);
         return;
+    } else {
+        ui_label->SetTextToken(gNullStr);
     }
-
-    ui_label->SetTextToken(gNullStr);
 }
 
 NavListSortNode *SongHeaderNode::GetFirstActive() {
@@ -273,6 +288,7 @@ void SongSortNode::Text(UIListLabel *ull, UILabel *ul) const {
         AppLabel *app_label = dynamic_cast<AppLabel *>(ul);
         MILO_ASSERT(app_label, 513);
         static Symbol by_artist("by_artist");
+        TheSongSortMgr->GetCurrentSortName();
         app_label->SetBlacklightSongName(shortname, -1, false);
     } else if (ull->Matches("lock")) {
         bool locked = !TheProfileMgr.IsContentUnlocked(shortname);
@@ -325,16 +341,14 @@ void SongSortNode::Text(UIListLabel *ull, UILabel *ul) const {
         }
     } else if (ull->Matches("artist")) {
         if (!TheAccomplishmentMgr->IsUnlockableAsset(unk_0x48->ShortName())) {
-            ul->SetTextToken(gNullStr);
+            AppLabel *app_label = dynamic_cast<AppLabel *>(ul);
+            MILO_ASSERT(app_label, 646);
+            static Symbol by_artist("by_artist");
+            TheSongSortMgr->GetCurrentSortName();
+            app_label->SetArtistName(shortname, true);
         }
-        AppLabel *app_label = dynamic_cast<AppLabel *>(ul);
-        MILO_ASSERT(app_label, 646);
-        static Symbol by_artist("by_artist");
-        app_label->SetArtistName(shortname, true);
     } else if (ull->Matches("in_playlist")) {
-        if (!unk_0x4C) {
-            ul->SetTextToken(gNullStr);
-        } else {
+        if (unk_0x4C) {
             ul->SetIcon('i');
         }
     } else if (ull->Matches("header_collapse")) {
@@ -369,6 +383,8 @@ const char *SongSortNode::GetArtist(void) const {
     return songData->Artist();
 }
 
+Symbol SongSortNode::GetToken() const { return unk_0x48->ShortName(); }
+
 BEGIN_HANDLERS(SongHeaderNode)
     HANDLE_EXPR(get_song_count, mDiscSongs + mDLCSongs)
     HANDLE_EXPR(get_download_count, mDLCSongs)
@@ -394,24 +410,20 @@ Symbol SongFunctionNode::OnSelect() {
     static Symbol play_setlist("play_setlist");
     static Symbol random_song("random_song");
     static Symbol career("career");
-    Symbol mode = GetToken();
-    if (mode == playlists) {
+    if (GetToken() == playlists) {
         static Symbol move_on_quickplay_playlist("move_on_quickplay_playlist");
-        auto pPanel = ObjectDir::Main()->Find<UIPanel>("song_select_panel", true);
+        UIPanel *pPanel = ObjectDir::Main()->Find<UIPanel>("song_select_panel");
         MILO_ASSERT(pPanel, 0x12d);
         static Message msg(move_on_quickplay_playlist);
-        HandleType(msg);
-    } else {
-        if (mode != random_song) {
-            return gNullStr;
-        }
-        auto song = TheHamSongMgr.GetRandomSong();
+        pPanel->HandleType(msg);
+    } else if (GetToken() == random_song) {
+        Symbol song = TheHamSongMgr.GetRandomSong();
         static Symbol special_select_song("special_select_song");
-        auto pPanel = ObjectDir::Main()->Find<UIPanel>("song_select_panel", true);
+        UIPanel *pPanel = ObjectDir::Main()->Find<UIPanel>("song_select_panel");
         MILO_ASSERT(pPanel, 0x139);
         static Message msg(special_select_song, gNullStr);
-        msg->Node(2).Sym() = song;
-        HandleType(msg);
+        msg[0] = song;
+        pPanel->HandleType(msg);
     }
     return gNullStr;
 }
