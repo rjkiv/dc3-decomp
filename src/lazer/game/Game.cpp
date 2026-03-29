@@ -16,6 +16,7 @@
 #include "gesture/SkeletonClip.h"
 #include "gesture/SkeletonUpdate.h"
 #include "hamobj/CharFeedback.h"
+#include "hamobj/Difficulty.h"
 #include "hamobj/HamDirector.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamMaster.h"
@@ -39,6 +40,7 @@
 #include "obj/Object.h"
 #include "obj/Task.h"
 #include "os/Debug.h"
+#include "stl/_vector.h"
 #include "synth/Faders.h"
 #include "synth/Sequence.h"
 #include "synth/Synth.h"
@@ -47,6 +49,7 @@
 #include "utl/MultiTempoTempoMap.h"
 #include "utl/SongInfoCopy.h"
 #include "utl/SongPos.h"
+#include "utl/Std.h"
 #include "utl/Symbol.h"
 #include "utl/TempoMap.h"
 #include "utl/TimeConversion.h"
@@ -742,7 +745,18 @@ DataNode OnToggleSongRecordDouble(DataArray *a) {
 }
 
 DataNode OnCycleTestDancer(DataArray *);
-DataNode OnDumpMoves(DataArray *);
+
+DataNode OnDumpMoves(DataArray *) {
+    std::vector<HamMoveKey> keys;
+    TheHamDirector->MoveKeys(kDifficultyExpert, TheHamDirector->GetMoveDir(), keys);
+    int num = 0;
+    TheDebug;
+    FOREACH (it, keys) {
+        char const *name = it->move ? it->move->Name() : "NULL";
+        MILO_LOG("move %d: beat %.2f: name:\'%s\'\n", num++, it->beat, name);
+    }
+    return 0;
+}
 
 void GameInit() {
     GameModeInit();

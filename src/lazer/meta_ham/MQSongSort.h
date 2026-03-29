@@ -5,6 +5,7 @@
 class MQSongSort : public NavListSort {
 public:
     MQSongSort();
+    virtual ~MQSongSort() {}
     virtual void Text(int, int, UIListLabel *, UILabel *) const;
     virtual void BuildTree();
     virtual void DeleteItemList(); // 0x74

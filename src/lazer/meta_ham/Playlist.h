@@ -53,6 +53,7 @@ public:
     void SetFitness(bool b) { mFitness = b; }
     bool IsFitness() const { return mFitness; }
     void SetUnk9(bool b) { unk9 = b; }
+    bool GetUnk9() const { return unk9; }
 
 protected:
     virtual void HandleChange() {}

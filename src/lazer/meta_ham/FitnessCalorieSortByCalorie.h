@@ -18,5 +18,8 @@ public:
     virtual NavListHeaderNode *NewHeaderNode(NavListItemNode *) const;
     virtual NavListHeaderNode *NewHeaderNode(NavListItemNode *, NavListItemNode *) const;
 
-    FitnessCalorieSortByCalorie();
+    FitnessCalorieSortByCalorie() {
+        static Symbol by_calorie("by_calorie");
+        mSortName = by_calorie;
+    }
 };

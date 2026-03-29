@@ -5,3 +5,5 @@ SongRecord::SongRecord(const HamSongMetadata *meta) : mShortName(), mMetadata(me
     mShortName = TheHamSongMgr.GetShortNameFromSongID(meta->ID(), 1);
     mRankTier = TheHamSongMgr.RankTier(meta->Rank());
 }
+
+int SongRecord::GetTier() const { return mRankTier; }

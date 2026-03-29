@@ -2434,7 +2434,7 @@ system/obj/DataFlex.c:
 	.pdata      start:0x822D00E8 end:0x822D0110
 	.text       start:0x825C87A8 end:0x825C9160
 	.data       start:0x82F10AB0 end:0x82F11D68
-	.data       start:0x82F652A0 end:0x82F652C8 rename:.bss
+	.data       start:0x82F652A0 end:0x82F652D8 rename:.bss
 
 system/obj/TextFile.cpp:
 	.rdata      start:0x82078E44 end:0x82078F88
@@ -2448,7 +2448,7 @@ system/os/System.cpp:
 	.text       start:0x82EDC020 end:0x82EDC098 rename:.text$yc
 	.text       start:0x82EE21D8 end:0x82EE2238 rename:.text$yd
 	.data       start:0x82F11D68 end:0x82F11D80
-	.data       start:0x82F652C8 end:0x82F655B0 rename:.bss
+	.data       start:0x82F652D8 end:0x82F655B0 rename:.bss
 
 system/os/Debug.cpp:
 	.rdata      start:0x820796BC end:0x8207A228

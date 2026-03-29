@@ -1,6 +1,7 @@
 #pragma once
 #include "NavListNode.h"
 #include "Playlist.h"
+#include "meta_ham/Playlist.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "stl/_vector.h"
@@ -17,20 +18,24 @@ public:
     virtual Symbol OnSelect();
     virtual void OnContentMounted(char const *, char const *);
 
-    PlaylistSortNode(NavListItemSortCmp *, Playlist *);
+    Playlist *GetPlaylist() { return unk48; }
+
+    PlaylistSortNode(NavListItemSortCmp *cmp, Playlist *p)
+        : NavListItemNode(cmp), unk48(p) {}
 
 protected:
-    Symbol unk44;
     Playlist *unk48;
 };
 
 class PlaylistHeaderNode : public NavListHeaderNode {
 public:
     // Hmx::Object
+    virtual ~PlaylistHeaderNode() {}
     virtual DataNode Handle(DataArray *, bool);
 
     // NavListSortNode
     virtual Symbol OnSelect();
+    virtual Symbol Select();
     virtual Symbol OnSelectDone();
     virtual void OnHighlight();
     NavListSortNode *GetFirstActive();
@@ -38,9 +43,11 @@ public:
     virtual bool IsActive() const;
     char const *GetAlbumArtPath();
     virtual void Renumber(std::vector<NavListSortNode *> &);
+    virtual void UpdateItemCount(NavListItemNode *);
+    virtual void SetItemCountString(UILabel *) const;
 
     PlaylistHeaderNode(NavListItemSortCmp *, Symbol, bool);
 
 protected:
-    int mChallengeCount;
+    int mChallengeCount; // 0x58
 };

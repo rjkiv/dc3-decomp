@@ -4,6 +4,7 @@
 #include "HamUI.h"
 #include "MQSongSortMgr.h"
 #include "HamStarsDisplay.h"
+#include "meta_ham/MQSongSortByCharacter.h"
 #include "meta_ham/NavListNode.h"
 #include "stl/_vector.h"
 #include "utl/MakeString.h"
@@ -56,27 +57,25 @@ const char *MQSongHeaderNode::GetAlbumArtPath() {
     static Symbol by_album("by_album");
     static Symbol singles("singles");
 
-    NavListSort *sort = TheMQSongSortMgr->GetCurrentSort();
-
-    if (sort->GetSortName() == by_album && GetToken() != singles && !mChildren.empty())
-        return mChildren.front()->GetAlbumArtPath();
-    else
-        return 0;
+    if (TheMQSongSortMgr->GetCurrentSort()->GetSortName() == by_album
+        && GetToken() != singles) {
+        auto node = mChildren.begin();
+        if (node != mChildren.end())
+            return (*node)->GetAlbumArtPath();
+    }
+    return 0;
 }
 
 void MQSongHeaderNode::Text(UIListLabel *listlabel, UILabel *label) const {
     if (listlabel->Matches("song")) {
-        // const char *c = mCmp->GetMQSongCharCmp()->unk8;
-        // label->SetTextToken(MakeString("mqheader_%s", c));
-    } else {
-        if (!listlabel->Matches("song_prefix")) {
-            if (!listlabel->Matches("header_collapse")) {
-                return;
-            }
-            SetCollapseStateIcon(unk5c);
-            return;
-        }
+        const MQSongCharCmp *cmp = mCmp->GetMQSongCharCmp();
+        const char *c = cmp->unk8;
+        Symbol s = MakeString("mqheader_%s", c);
+        label->SetTextToken(s);
+    } else if (listlabel->Matches("song_prefix")) {
         label->SetTextToken(gNullStr);
+    } else if (listlabel->Matches("header_collapse")) {
+        SetCollapseStateIcon(unk5c);
     }
 }
 
@@ -109,12 +108,10 @@ NavListSortNode *MQSongHeaderNode::GetFirstActive() {
     FOREACH (it, Children()) {
         NavListSortNode *node = (*it)->GetFirstActive();
         if (node) {
-            return node;
+            return TheMQSongSortMgr->HeadersSelectable() ? this : node;
         }
     }
-    if (!TheMQSongSortMgr->HeadersSelectable()) {
-        return this;
-    }
+    return nullptr;
 }
 
 void MQSongHeaderNode::Renumber(std::vector<NavListSortNode *> &vec) {
@@ -141,14 +138,14 @@ void MQSongSortNode::Text(UIListLabel *listlabel, UILabel *label) const {
         AppLabel *pAppLabel = dynamic_cast<AppLabel *>(label);
         MILO_ASSERT(pAppLabel, 0x116);
         if (IsHeader() || !TheHamUI.IsBlacklightMode()) {
-            label->SetTextToken(gNullStr);
+            pAppLabel->SetTextToken(gNullStr);
         } else {
             static Symbol song_select_song_prefix("song_select_song_prefix");
-            label->SetTextToken(song_select_song_prefix);
+            pAppLabel->SetTextToken(song_select_song_prefix);
+            return;
         }
-    } else {
+    } else
         label->SetTextToken(listlabel->GetDefaultText());
-    }
 }
 
 void MQSongSortNode::Custom(UIListCustom *list, Hmx::Object *obj) const {

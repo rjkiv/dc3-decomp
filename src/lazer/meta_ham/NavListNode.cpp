@@ -7,10 +7,12 @@
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "rndobj/Mat.h"
+#include "stl/_vector.h"
 #include "ui/UILabel.h"
 #include "ui/UIListCustom.h"
 #include "ui/UIListLabel.h"
 #include "ui/UIListMesh.h"
+#include "utl/Std.h"
 #include "utl/Symbol.h"
 #include <cstdio>
 
@@ -232,6 +234,8 @@ void NavListFunctionNode::Renumber(std::vector<NavListSortNode *> &nodes) {
     nodes.push_back(this);
 }
 
+Symbol NavListFunctionNode::GetToken() const { return unk4c; }
+
 #pragma endregion
 #pragma region NavListHeaderNode
 
@@ -277,4 +281,34 @@ void NavListHeaderNode::Insert(NavListItemNode *node, NavListSort *sort) {
     mChildren.insert(lower, node);
     UpdateItemCount(node);
 }
+
+Symbol NavListHeaderNode::SelectChildren(std::list<NavListSortNode *> &nodes, int i) {
+    static Symbol fail_add_header_too_big_screen("fail_add_header_too_big_screen");
+    if (i > 100) {
+        return fail_add_header_too_big_screen;
+    } else {
+        static Symbol fail_add_header_screen("fail_add_header_screen");
+        static Symbol incomplete_add_header_screen("incomplete_add_header_screen");
+
+        int num = 0;
+        FOREACH (it, nodes) {
+            Symbol select = (*it)->Select();
+            if (select == gNullStr) {
+                num += (*it)->GetItemCount();
+            } else if (incomplete_add_header_screen == select) {
+                num++;
+            }
+        }
+
+        if (0 == num) {
+            return fail_add_header_screen;
+        }
+
+        if (i != num) {
+            return incomplete_add_header_screen;
+        }
+        return gNullStr;
+    }
+}
+
 #pragma endregion

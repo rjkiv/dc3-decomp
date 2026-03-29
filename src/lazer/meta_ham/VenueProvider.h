@@ -14,6 +14,8 @@ public:
 
     void UpdateList();
 
+    void SetPlayer(int i) { mPlayer = i; }
+
 private:
     int mPlayer; // 0x30
     std::vector<Symbol> mVenues; // 0x34

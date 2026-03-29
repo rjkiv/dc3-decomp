@@ -103,27 +103,22 @@ void FitnessCalorieSort::BuildTree() {
         nodes.push_back(NewItemNode(&values[i]));
     }
 
-    // int groupSize = TheFitnessCalorieSortMgr->GetGroupSize();
-    // auto begin = nodes.begin();
-    // auto end = nodes.end();
-    // while (begin != end) {
-    //     std::vector<NavListItemNode *>::iterator it;
-    //     if (end - begin <= groupSize) {
-    //         it = end;
-    //     } else {
-    //         it = begin + groupSize;
-    //     }
-    //     NavListShortcutNode *shortcutNode = NewShortcutNode(*begin);
-    //     unk30.push_back(shortcutNode);
-    //     shortcutNode->InsertHeaderRange(begin, it, this);
-    //     begin = it;
-    // }
-
-    FOREACH (it, nodes) {
-        auto range = std::equal_range(nodes.begin(), nodes.end(), *it);
-        NavListShortcutNode *shortcutNode = NewShortcutNode(*it);
+    int groupSize = TheFitnessCalorieSortMgr->GetGroupSize();
+    auto begin = nodes.begin();
+    auto end = nodes.end();
+    while (begin != end) {
+        std::vector<NavListItemNode *>::iterator it;
+        // if not enough nodes to make a set of size "groupsize", go to end
+        if (end - begin <= groupSize) {
+            it = end;
+            // else move forward of size "groupsize" nodes
+        } else {
+            it = begin + groupSize;
+        }
+        NavListShortcutNode *shortcutNode = NewShortcutNode(*begin);
         unk30.push_back(shortcutNode);
-        shortcutNode->InsertHeaderRange(range.first, range.second, this);
+        shortcutNode->InsertHeaderRange(begin, it, this);
+        begin = it;
     }
 
     FOREACH (it, unk30) {

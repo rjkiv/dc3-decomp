@@ -68,6 +68,8 @@ File *FileCacheEntry::MakeFile() {
 #pragma endregion
 #pragma region FileCacheFile
 
+FileCacheFile::~FileCacheFile() { mParent->Release(); }
+
 bool FileCacheFile::ReadDone(int &iref) {
     if (!mParent->ReadDone(false)) {
         iref = 0;
@@ -132,8 +134,7 @@ int FileCacheFile::Seek(int i1, int i2) {
     default:
         return mPos;
     }
-    ClampEq(ret, 0, mParent->Size());
-    mPos = ret;
+    mPos = Clamp(0, mParent->Size(), ret);
     return mPos;
 }
 
@@ -150,7 +151,7 @@ FileCache::~FileCache() {
     for (int i = 0; i < mEntries.size(); i++) {
         delete mEntries[i];
     }
-    gCaches.remove(this);
+    gCaches.erase(std::remove(gCaches.begin(), gCaches.end(), this));
 }
 
 void FileCache::Init() {}

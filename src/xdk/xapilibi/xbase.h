@@ -147,6 +147,8 @@ typedef struct _XCONTENT_CROSS_TITLE_DATA { /* Size=0x138 */
     /* 0x0134 */ DWORD dwTitleId;
 } XCONTENT_CROSS_TITLE_DATA;
 
+#define XUSER_INFO_FLAG_GUEST 2
+
 typedef struct _XUSER_SIGNIN_INFO { /* Size=0x28 */
     XUID xuid; // 0x0
     DWORD dwInfoFlags; // 0x8

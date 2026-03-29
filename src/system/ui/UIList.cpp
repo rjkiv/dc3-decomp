@@ -480,6 +480,8 @@ int UIList::Selected() const { return mListState.Selected(); }
 int UIList::SelectedPos() const { return mListState.Selected(); }
 UIListState &UIList::GetListState() { return mListState; }
 
+int UIList::FirstShowing() const { return mListState.FirstShowing(); }
+
 bool UIList::IsScrolling() const { return mListState.IsScrolling(); }
 
 void UIList::SetSpeed(float speed) { mListState.SetSpeed(speed); }

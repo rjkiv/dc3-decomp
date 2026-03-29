@@ -218,8 +218,7 @@ void FitnessGoalMgr::QueueCmdDeleteFitnessGoalFromRC(HamProfile *profile) {
 }
 
 void FitnessGoalMgr::QueueCmdChangeProfileOnlineID(String str) {
-    CmdChangeProfileOnlineID *cmd = new CmdChangeProfileOnlineID(str);
-    mCommands.push_back(cmd);
+    mCommands.push_back(new CmdChangeProfileOnlineID(str));
     if (!unk44) {
         ProcessNextCommand();
     }

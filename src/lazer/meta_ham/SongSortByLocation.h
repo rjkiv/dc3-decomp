@@ -1,15 +1,17 @@
 #pragma once
 #include "NavListNode.h"
 #include "SongSort.h"
+#include "utl/Symbol.h"
 
 int ConvertGameOriginSymbolToEnum(Symbol);
 
 class LocationCmp : public NavListItemSortCmp {
 public:
-    LocationCmp();
     virtual ~LocationCmp();
 
     virtual int Compare(const NavListItemSortCmp *, NavListNodeType) const;
+
+    LocationCmp(const char *name, Symbol location) : mName(name), mLocation(location) {}
 
     const char *mName; // 0x4
     Symbol mLocation; // 0x8
@@ -17,7 +19,10 @@ public:
 
 class SongSortByLocation : public SongSort {
 public:
-    SongSortByLocation();
+    SongSortByLocation() {
+        static Symbol by_location("by_location");
+        SetSortName(by_location);
+    }
     virtual ~SongSortByLocation();
 
     virtual NavListItemNode *NewItemNode(void *) const;

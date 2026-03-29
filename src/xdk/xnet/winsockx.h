@@ -88,6 +88,9 @@ extern "C" {
 #define WSATRY_AGAIN WSABASEERR + 1002
 #define WSANO_RECOVERY WSABASEERR + 1003
 #define WSANO_DATA WSABASEERR + 1004
+
+typedef HANDLE WSAEVENT;
+
 struct sockaddr {
     unsigned short sa_family;
     char sa_data[14];
@@ -132,12 +135,12 @@ typedef struct in_addr {
     } s_un;
 } IN_ADDR;
 
-struct sockaddr_in {
+typedef struct sockaddr_in {
     short sin_family;
     unsigned short sin_port;
-    struct in_addr sin_addr;
-    char sin_zero[0];
-};
+    IN_ADDR sin_addr;
+    char sin_zero[8];
+} sockaddr_in;
 
 #define _SS_MAXSIZE 128
 #define _SS_ALIGNSIZE (sizeof(long long))
@@ -159,7 +162,8 @@ typedef struct hostent {
 } HOSTENT, *PHOSTEND, *LPHOSTENT;
 
 #define WSADESCRIPTION_LEN 256
-#define WSASYS_STATUS_LEN
+#define WSASYS_STATUS_LEN 128
+
 typedef struct WSADATA {
     WORD wVersion;
     WORD wHighVersion;
@@ -192,8 +196,63 @@ typedef struct _XSESSION_INFO { /* Size=0x3c */
     /* 0x002c */ struct XNKEY keyExchangeKey;
 } XSESSION_INFO;
 
+struct XNetStartupParams { /* Size=0xd */
+    /* 0x0000 */ unsigned char cfgSizeOfStruct;
+    /* 0x0001 */ unsigned char cfgFlags;
+    /* 0x0002 */ unsigned char cfgSockMaxDgramSockets;
+    /* 0x0003 */ unsigned char cfgSockMaxStreamSockets;
+    /* 0x0004 */ unsigned char cfgSockDefaultRecvBufsizeInK;
+    /* 0x0005 */ unsigned char cfgSockDefaultSendBufsizeInK;
+    /* 0x0006 */ unsigned char cfgKeyRegMax;
+    /* 0x0007 */ unsigned char cfgSecRegMax;
+    /* 0x0008 */ unsigned char cfgQosDataLimitDiv4;
+    /* 0x0009 */ unsigned char cfgQosProbeTimeoutInSeconds;
+    /* 0x000a */ unsigned char cfgQosProbeRetries;
+    /* 0x000b */ unsigned char cfgQosSrvMaxSimultaneousResponses;
+    /* 0x000c */ unsigned char cfgQosPairWaitTimeInSeconds;
+};
+
+typedef struct XNDNS { /* Size=0x28 */
+    /* 0x0000 */ INT iStatus;
+    /* 0x0004 */ UINT cina;
+    /* 0x0008 */ IN_ADDR aina[8];
+} XNDNS;
+
+INT XNetStartup(const struct XNetStartupParams *pxnsp);
+INT XNetInAddrToString(const IN_ADDR ina, char *pchBuf, INT cchBuf);
+INT XNetDnsLookup(const char *pszHost, WSAEVENT hEvent, XNDNS **ppxndns);
+INT XNetDnsRelease(XNDNS *pxndns);
+
 int WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData);
 int WSACleanup(void);
+WSAEVENT WSACreateEvent();
+
+SOCKET socket(int af, int type, int protocol);
+int ioctlsocket(SOCKET s, long cmd, unsigned long *argp);
+int connect(SOCKET s, const sockaddr_in *name, int namelen);
+int WSAGetLastError();
+int select(
+    int nfds,
+    struct fd_set *readfds,
+    struct fd_set *writefds,
+    struct fd_set *exceptfds,
+    const struct timeval *timeout
+);
+int shutdown(SOCKET s, int how);
+int closesocket(SOCKET s);
+int setsockopt(SOCKET s, int level, int optname, const char *optval, int optlen);
+int bind(SOCKET s, const sockaddr_in *addr, int namelen);
+int getsockname(SOCKET s, sockaddr_in *name, int *namelen);
+int listen(SOCKET s, int backlog);
+SOCKET accept(SOCKET s, sockaddr_in *addr, int *addrlen);
+int getpeername(SOCKET s, sockaddr_in *name, int *namelen);
+int send(SOCKET s, const char *buf, int len, int flags);
+int recv(SOCKET s, char *buf, int len, int flags);
+int sendto(
+    SOCKET s, const char *buf, int len, int flags, const sockaddr_in *to, int tolen
+);
+int recvfrom(SOCKET s, char *buf, int len, int flags, sockaddr_in *from, int *fromlen);
+unsigned long inet_addr(const char *cp);
 
 #ifdef __cplusplus
 }

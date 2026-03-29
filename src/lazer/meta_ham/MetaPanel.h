@@ -8,14 +8,10 @@
 #include "obj/Data.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
-#include "stl/_vector.h"
+#include "os/PlatformMgr.h"
 #include "ui/UIPanel.h"
 #include "utl/Symbol.h"
-
-DECLARE_MESSAGE(XMPStateChangedMsg, "xmp_state_changed")
-XMPStateChangedMsg(int i) : Message(Type(), i) {}
-bool Success() const { return mData->Int(2); }
-END_MESSAGE
+#include <vector>
 
 class MetaPanel : public UIPanel {
 public:

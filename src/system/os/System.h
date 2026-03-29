@@ -26,10 +26,12 @@ struct StackData {
 
 class GenericMapFile {
 public:
-    static bool ParseStack(const char *, struct StackData *, int, FixedString &);
+    static bool ParseStack(
+        const char *mapName, struct StackData *data, int stackIdx, FixedString &outputStr
+    );
 };
 
-void SetGfxMode(GfxMode);
+void SetGfxMode(GfxMode mode);
 GfxMode GetGfxMode();
 
 inline bool IsVertexCompressionSupported(Platform p) {
@@ -37,17 +39,17 @@ inline bool IsVertexCompressionSupported(Platform p) {
 }
 
 bool UsingCD();
-void SetUsingCD(bool);
+void SetUsingCD(bool usingCD);
 
 DataArray *SystemConfig();
-DataArray *SystemConfig(Symbol);
-DataArray *SystemConfig(Symbol, Symbol);
-DataArray *SystemConfig(Symbol, Symbol, Symbol);
-DataArray *SystemConfig(Symbol, Symbol, Symbol, Symbol);
-DataArray *SystemConfig(Symbol, Symbol, Symbol, Symbol, Symbol);
+DataArray *SystemConfig(Symbol tag);
+DataArray *SystemConfig(Symbol tag1, Symbol tag2);
+DataArray *SystemConfig(Symbol tag1, Symbol tag2, Symbol tag3);
+DataArray *SystemConfig(Symbol tag1, Symbol tag2, Symbol tag3, Symbol tag4);
+DataArray *SystemConfig(Symbol tag1, Symbol tag2, Symbol tag3, Symbol tag4, Symbol tag5);
 
-Symbol PlatformSymbol(Platform);
-bool PlatformLittleEndian(Platform);
+Symbol PlatformSymbol(Platform platform);
+bool PlatformLittleEndian(Platform platform);
 Platform ConsolePlatform();
 
 Symbol SystemLanguage();
@@ -55,34 +57,34 @@ Symbol SystemLocale();
 DataArray *SystemTitles();
 Symbol GetSongTitlePronunciationLanguage();
 
-int SystemExec(const char *);
+int SystemExec(const char *args);
 int SystemMs();
 void SystemPoll();
 
 bool HongKongExceptionMet();
-Symbol GetSystemLanguage(Symbol);
-Symbol GetSystemLocale(Symbol);
+Symbol GetSystemLanguage(Symbol langSym);
+Symbol GetSystemLocale(Symbol locSym);
 
-DataArray *ReadSystemConfig(const char *);
+DataArray *ReadSystemConfig(const char *cfg);
 void StripEditorData();
 
-DataArray *SupportedLanguages(bool);
-bool IsSupportedLanguage(Symbol, bool);
-void SetSystemLanguage(Symbol, bool);
+DataArray *SupportedLanguages(bool cheats);
+bool IsSupportedLanguage(Symbol language, bool cheats);
+void SetSystemLanguage(Symbol language, bool cheats);
 
 void AppendStackTrace(FixedString &, void *);
 void AppendThreadStackTrace(FixedString &, struct StackData *);
 
 void LanguageInit();
-void InitSystem(const char *);
+void InitSystem(const char *cfg);
 void NormalizeSystemArgs();
-void PreInitSystem(const char *);
-void SetSystemArgs(const char *);
-void SystemInit(const char *);
+void PreInitSystem(const char *cfg);
+void SetSystemArgs(const char *commandLine);
+void SystemInit(const char *cfg);
 void SystemTerminate();
-void SystemPreInit(const char *);
-void SystemPreInit(const char *, const char *);
-void SystemPreInit(int, char **const, const char *);
+void SystemPreInit(const char *cfg);
+void SystemPreInit(const char *commandLine, const char *cfg);
+void SystemPreInit(int, char **const, const char *cfg);
 
 unsigned long ULSystemLocale();
 unsigned long ULSystemLanguage();
@@ -94,6 +96,6 @@ DiscErrorCallbackFunc *GetDiskErrorCallback();
 
 bool PlatformDebugBreak();
 
-void GetMapFileName(String &);
+void GetMapFileName(String &filename);
 void ShowDirtyDiscError();
 void CaptureStackTrace(int, struct StackData *, void *);

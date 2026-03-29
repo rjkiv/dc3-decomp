@@ -4,6 +4,7 @@
 #include "SongRecord.h"
 #include "SongSortNode.h"
 #include "meta/Sorting.h"
+#include "meta_ham/NavListNode.h"
 
 int ConvertGameOriginSymbolToEnum(Symbol sym) {
     static Symbol ham1("ham1");
@@ -50,24 +51,28 @@ int LocationCmp::Compare(const NavListItemSortCmp *cmp, NavListNodeType type) co
 
 NavListShortcutNode *
 SongSortByLocation::NewShortcutNode(NavListItemNode *itemNode) const {
-    SongSortNode *ssNode;
-    Symbol location;
-    LocationCmp *newCmp;
-    ssNode = dynamic_cast<SongSortNode *>(itemNode);
-    location = ssNode->Record()->Metadata()->GameOrigin();
-    newCmp = new LocationCmp();
-    if (newCmp != 0) {
-        newCmp->mName = "";
-        newCmp->mLocation = location;
-    }
+    SongSortNode *sortNode = dynamic_cast<SongSortNode *>(itemNode);
+    Symbol location = sortNode->Record()->Metadata()->GameOrigin();
+    const char *name = sortNode->Record()->Metadata()->Title();
+    LocationCmp *newCmp = new LocationCmp(name, location.Str());
     return new NavListShortcutNode(newCmp, location, true);
 }
 
 NavListItemNode *SongSortByLocation::NewItemNode(void *v) const {
-    auto movie = static_cast<CampaignEra *>(v)->GetIntroMovie();
-    NavListItemSortCmp *cmp = 0;
-    SongSortNode *ssNode = 0;
+    SongRecord *record = static_cast<SongRecord *>(v);
+    Symbol origin = record->Metadata()->GameOrigin();
+    const char *name = record->Metadata()->Title();
+    LocationCmp *cmp = new LocationCmp(name, origin);
+    return new SongSortNode(cmp, record);
+}
 
-    NavListItemNode *ret;
-    return ret;
+NavListHeaderNode *SongSortByLocation::NewHeaderNode(NavListItemNode *node) const {
+    SongSortNode *sortNode = dynamic_cast<SongSortNode *>(node);
+    Symbol location = sortNode->Record()->Metadata()->GameOrigin();
+    if (ConvertGameOriginSymbolToEnum(location) == 3) {
+        location = Symbol("DLC");
+    }
+    const char *name = sortNode->Record()->Metadata()->Title();
+    LocationCmp *cmp = new LocationCmp(name, location.Str());
+    return new SongHeaderNode(cmp, location, true);
 }

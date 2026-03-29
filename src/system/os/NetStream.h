@@ -17,6 +17,13 @@ public:
     virtual int ReadAsync(void *, int);
 
     void ClientConnect(const NetAddress &);
+    NetworkSocket *Socket() const { return mSocket; }
+
+    static NetworkSocket *Create(bool);
+    static unsigned int IPStringToInt(const String &);
+    static String IPIntToString(unsigned int);
+    static String GetHostName();
+    static unsigned int ResolveHostName(String);
 
 private:
     virtual void ReadImpl(void *, int);

@@ -17,7 +17,7 @@ public:
     virtual bool Fail() const = 0;
     virtual void Disconnect() = 0;
     virtual void Bind(unsigned short port) = 0;
-    virtual int InqBoundPort(unsigned short &) const = 0;
+    virtual bool InqBoundPort(unsigned short &) const = 0;
     virtual void Listen() = 0;
     virtual NetworkSocket *Accept() = 0;
     virtual void GetRemoteIP(unsigned int &ip, unsigned short &port) = 0;

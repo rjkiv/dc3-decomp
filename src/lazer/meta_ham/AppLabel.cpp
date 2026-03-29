@@ -678,3 +678,39 @@ DataNode AppLabel::OnSetUserName(const DataArray *a) {
 void AppLabel::SetStoreFilterName(const HamStoreFilter *filter) {
     SetDisplayText(filter->unk4.c_str(), true);
 }
+
+void AppLabel::SetTimeElapsedSince(unsigned int i) {
+    static Symbol last_played_today("last_played_today");
+    static Symbol last_played_yesterday("last_played_yesterday");
+    static Symbol last_played_days("last_played_days");
+    static Symbol last_played_one_week("last_played_one_week");
+    static Symbol last_played_weeks("last_played_weeks");
+    static Symbol last_played_one_month("last_played_one_month");
+    static Symbol last_played_months("last_played_months");
+
+    if (i == 0) {
+        SetDisplayText(gNullStr, true);
+        return;
+    }
+
+    DateTime dt;
+    GetDateAndTime(dt);
+
+    unsigned int toCode = dt.ToCode();
+    int val = (toCode - toCode % 86400) - i;
+    if (val < 0) {
+        SetTextToken(last_played_today);
+    } else if (val < 86400) {
+        SetTextToken(last_played_yesterday);
+    } else if (val < 518400) {
+        SetTokenFmt(last_played_days, val / 86400 + 1);
+    } else if (val < 1123200) {
+        SetTextToken(last_played_one_week);
+    } else if (val < 2332800) {
+        SetTokenFmt(last_played_weeks, val / 604800);
+    } else if (val < 5097600) {
+        SetTextToken(last_played_one_month);
+    } else {
+        SetTokenFmt(last_played_months, val / 2592000);
+    }
+}

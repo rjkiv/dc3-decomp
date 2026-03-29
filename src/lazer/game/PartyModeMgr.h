@@ -10,11 +10,9 @@
 #include "obj/Object.h"
 #include "os/ContentMgr.h"
 #include "os/DateTime.h"
+#include "os/PlatformMgr.h"
 #include "utl/MemMgr.h"
 #include "utl/PseudoRandomPicker.h"
-
-DECLARE_MESSAGE(SmartGlassMsg, "smart_glass_msg")
-END_MESSAGE
 
 class PartyModeARObject {
 public:

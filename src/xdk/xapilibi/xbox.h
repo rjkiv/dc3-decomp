@@ -27,7 +27,10 @@ DWORD XShowPartyUI(DWORD dwUserIndex);
 DWORD XShowNuiFriendsUI(DWORD dwTrackingID, DWORD dwUserIndex);
 DWORD XShowNuiPartyUI(DWORD dwTrackingID, DWORD dwUserIndex);
 DWORD XShowNuiGuideUI(DWORD dwTrackingID);
+DWORD XShowNuiSigninUI(DWORD dwTrackingID, DWORD dwFlags);
 HRESULT XNuiDelayUI(ULONG ulMilliSeconds);
+DWORD XShowNuiGamerCardUI(DWORD dwTrackingID, DWORD dwUserIndex, XUID XuidPlayer);
+DWORD XShowNuiControllerRequiredUI(DWORD dwTrackingID, DWORD dwUserIndex);
 DWORD XUserCheckPrivilege(
     DWORD dwUserIndex, XPRIVILEGE_TYPE PrivilegeType, BOOL *pfResult
 );
@@ -161,8 +164,21 @@ DWORD XShowDeviceSelectorUI(
     XOVERLAPPED *pOverlapped
 );
 DWORD XGetGameRegion();
+DWORD XShowSigninUI(DWORD cPanes, DWORD dwFlags);
 __declspec(noreturn) DWORD XShowNuiDirtyDiscErrorUI(DWORD dwTrackingID, DWORD dwUserIndex);
 __declspec(noreturn) DWORD XShowDirtyDiscErrorUI(DWORD dwUserIndex);
+
+HANDLE XNotifyCreateListener(QWORD qwAreas);
+void XNotifyPositionUI(DWORD dwPosition);
+BOOL XNotifyGetNext(HANDLE hNotification, DWORD dwMsgFilter, DWORD *pdwId, ULONG *pParam);
+DWORD XUserSetPropertyEx(
+    DWORD dwUserIndex,
+    DWORD dwPropertyId,
+    DWORD cbValue,
+    const void *pvValue,
+    XOVERLAPPED *pOverlapped
+);
+DWORD XShowGamerCardUI(DWORD dwUserIndex, XUID XuidPlayer);
 
 #ifdef __cplusplus
 }

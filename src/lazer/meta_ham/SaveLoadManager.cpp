@@ -42,7 +42,147 @@ SaveLoadManager::~SaveLoadManager() {
     RELEASE(mAction);
 }
 
-bool SaveLoadManager::GetDialogFocusOption() { return mState == 0x5c; }
+bool SaveLoadManager::GetDialogFocusOption() { return mState == kS_ManualLoadConfirm; }
+
+void SaveLoadManager::HandleEventResponse(HamProfile *profile, int i) {
+    State s = mStateAtSelectStart;
+    mStateAtSelectStart = kS_Idle;
+    if (s != mState) {
+        MILO_NOTIFY(
+            "HandleEventResponse: expected state %d but am now in state %d\n", s, mState
+        );
+        return;
+    }
+
+    if (i < 1 || 3 < i) {
+        MILO_FAIL("Bad choice index %i", i);
+        return;
+    }
+
+    if (profile) {
+        unk3c = profile->GetPadNum();
+    } else {
+        unk3c = -1;
+    }
+
+    switch (mState) {
+    case kS_Idle:
+    case kS_Start:
+    case kS_AutoloadInit:
+    case kS_AutoloadSelectProfile:
+    case kS_AutoloadSearchDevice:
+    case kS_AutoloadDeviceFound:
+    case kS_AutoloadNoSaveFound_Msg:
+    case kS_AutoloadMultipleSavesFound:
+    case kS_AutoloadSetDevice:
+    case kS_AutoloadSelectDevice:
+    case kS_AutoloadSelectDevice2:
+    case kS_AutoloadStartLoad:
+    case kS_AutoloadDeviceMissing:
+    case kS_AutoloadSelectDevice3:
+    case kS_AutoloadCorrupt:
+    case kS_AutoloadNotOwner:
+    case kS_AutoloadObsolete:
+    case kS_AutoloadFuture:
+    case kS_AutoloadDone:
+    case kS_SongCacheInit:
+    case kS_SongCacheSearch:
+    case kS_SongCacheSearchResult:
+    case kS_SongCacheCreate:
+    case kS_SongCacheCreateNotFound_Msg:
+    case kS_SongCacheCreateMissing_Msg:
+    case kS_SongCacheMount:
+    case kS_SongCacheMountStart:
+    case kS_SongCacheRead:
+    case kS_SongCacheCreateCorrupt:
+    case kS_SongCacheGetSize:
+    case kS_SongCacheAllocRead:
+    case kS_SongCacheWrite:
+    case kS_SongCacheUnmount:
+    case kS_SongCacheDone:
+    case kS_SongCacheFailed:
+    case kS_SongCacheLookup:
+    case kS_GlobalOptionsInit:
+    case kS_GlobalOptionsSearch:
+    case kS_GlobalOptionsSearchResult:
+    case kS_GlobalOptionsCreate:
+    case kS_GlobalOptionsLookup:
+    case kS_GlobalCreateNotFound_Msg:
+    case kS_GlobalCreateMissing_Msg:
+    case kS_GlobalMount:
+    case kS_GlobalMountStart:
+    case kS_GlobalCreate2:
+    case kS_GlobalMount2:
+    case kS_GlobalCreateCorrupt:
+    case kS_GlobalRead:
+    case kS_GlobalDoneRead:
+    case kS_GlobalWrite:
+    case kS_GlobalDoneWrite:
+    case kS_GlobalUnmount:
+    case kS_GlobalDone:
+    case kS_GlobalFailed:
+    case kS_GlobalCacheLookup:
+    case kS_GlobalNewSignIns:
+    case kS_GlobalOptionsSearchResult2:
+    case kS_GlobalOptionsMissing_Msg:
+    case kS_GlobalOptionsCreate2:
+    case kS_GlobalOptionsRead:
+    case kS_GlobalOptionsAllocRead:
+    case kS_GlobalOptionsWrite:
+    case kS_GlobalOptionsUnmount:
+    case kS_GlobalOptionsFailed:
+    case kS_GlobalOptionsDone:
+    case kS_SaveLoadError:
+    case kS_SaveLoadError2:
+    case kS_SaveLoadCheckForFile:
+    case kS_SaveLookForFile:
+    case kS_SaveOverwrite:
+    case kS_SaveNoOverwrite:
+    case kS_SaveConfirmOverwrite:
+    case kS_SaveNotEnoughSpace:
+    case kS_SaveNotEnoughSpacePS3:
+    case kS_SaveDeleteSaves:
+    case kS_SaveDeviceInvalid:
+    case kS_SaveChooseDeviceInvalid:
+    case kS_SaveFailed:
+    case kS_SaveDisabledByCheat:
+    case kS_LoadFailed:
+    case kS_SaveDone:
+    case kS_SaveSongCache:
+    case kS_SaveGlobalOptions:
+    case kS_SaveCheckProfile:
+    case kS_SaveCheckAutosave:
+    case kS_ManualSaveInit:
+    case kS_ManualSaveChooseDevice:
+    case kS_ManualSaveNoDevice:
+    case kS_ManualSaveDone:
+    case kS_ManualLoadInit:
+    case kS_ManualLoadConfirmUnsaved:
+    case kS_ManualLoadConfirm:
+    case kS_ManualLoadChooseDevice:
+    case kS_ManualLoadNoDevice:
+    case kS_ManualLoadMissing:
+    case kS_ManualLoadStartLoad:
+    case kS_ManualLoadNoFile:
+    case kS_ManualLoadCorrupt:
+    case kS_ManualLoadNotOwner:
+    case kS_ManualLoadDone:
+    case kS_Abort:
+    case kS_Done:
+    case kS_Finish:
+        break;
+    default:
+        MILO_FAIL(
+            "Unhandled UIComponentSelectDoneMsg from choice index %i in state %d and mode %d",
+            i,
+            mState,
+            mMode
+        );
+        break;
+    }
+
+    SetState((State)i);
+}
 
 BEGIN_HANDLERS(SaveLoadManager)
     HANDLE_ACTION(autosave, AutoSave())
@@ -117,8 +257,8 @@ void SaveLoadManager::EnableAutosave(HamProfile *p) {
 }
 
 void SaveLoadManager::ManualSave(HamProfile *pProfile) {
-    State cur = mState;
-    if (cur != 0) {
+    if (mState != 0) {
+        State cur = mState;
         MILO_NOTIFY(
             "Attempted to perform a manual save, but saveloadmgr is not idle (state = %d).",
             cur
@@ -162,11 +302,12 @@ bool SaveLoadManager::SongCacheNeedsWrite() {
 void SaveLoadManager::DisableAutosave(HamProfile *pProfile) {
     if (!pProfile) {
         MILO_NOTIFY("Tried to disable autosave without a valid profile.");
+        return;
     } else if (!IsIdle()) {
         MILO_NOTIFY("Tried to disable autosave while saveloadmgr is not idle.");
-    } else {
+        return;
+    } else
         pProfile->SetSaveState(kMetaProfileError); // error?
-    }
 }
 
 bool SaveLoadManager::IsSafePlaceToSave() const {

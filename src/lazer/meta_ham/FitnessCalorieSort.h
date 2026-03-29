@@ -6,6 +6,7 @@
 
 class FitnessCalorieSort : public NavListSort {
 public:
+    virtual ~FitnessCalorieSort() {}
     // UIListProvider
     virtual void Text(int, int, UIListLabel *, UILabel *) const;
 

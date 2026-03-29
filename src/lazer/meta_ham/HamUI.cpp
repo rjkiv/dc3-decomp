@@ -43,6 +43,7 @@
 #include "ui/UILabel.h"
 #include "ui/UIPanel.h"
 #include "ui/UIScreen.h"
+#include "utl/Std.h"
 #include "utl/Symbol.h"
 #include "xdk/xapilibi/xbox.h"
 
@@ -599,31 +600,30 @@ void HamUI::UpdateUIOverlay() {
         if (PushDepth() > 0) {
             screens.push_back(BottomScreen());
         }
-        if (mCurrentScreen) {
-            screens.push_back(mCurrentScreen);
+        UIScreen *currScreen = mCurrentScreen;
+        if (currScreen) {
+            screens.push_back(currScreen);
         }
         FOREACH (it, screens) {
             *mUIOverlay << "screen " << (*it)->Name() << "\n";
             UIPanel *focusPanel = (*it)->FocusPanel();
-            for (auto panelIt = (*it)->PanelList().begin();
-                 panelIt != (*it)->PanelList().end();
-                 ++panelIt, ++lines) {
+            FOREACH (panelIt, (*it)->PanelList()) {
                 UIPanel *panel = panelIt->mPanel;
                 *mUIOverlay << "panel " << panel->IsLoaded()
                             << (focusPanel == panel ? "* " : "  ") << panel->Name()
                             << "\n";
+                ++lines;
             }
         }
         if (mTransitionScreen) {
             *mUIOverlay << "going to screen " << mTransitionScreen->Name() << "\n";
             UIPanel *focusPanel = mTransitionScreen->FocusPanel();
-            for (auto panelIt = mTransitionScreen->PanelList().begin();
-                 panelIt != mTransitionScreen->PanelList().end();
-                 ++panelIt, ++lines) {
+            FOREACH (panelIt, mTransitionScreen->PanelList()) {
                 UIPanel *panel = panelIt->mPanel;
                 *mUIOverlay << "panel " << panel->IsLoaded()
                             << (focusPanel == panel ? "* " : "  ") << panel->Name()
                             << "\n";
+                lines++;
             }
         }
         if (lines != 0) {

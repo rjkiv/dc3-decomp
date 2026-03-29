@@ -6,10 +6,8 @@
 #include "obj/Msg.h"
 #include "obj/Object.h"
 #include "os/Friend.h"
-#include "stl/_vector.h"
-
-DECLARE_MESSAGE(PlatformMgrOpCompleteMsg, "platform_mgr_op_complete_msg") // idk
-END_MESSAGE
+#include "os/PlatformMgr.h"
+#include <vector>
 
 enum FriendsListJobState {
     kFriendsListState_0,

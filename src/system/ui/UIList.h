@@ -96,7 +96,7 @@ public:
     bool Circular() const { return mListState.Circular(); }
     float Speed() const;
     int SelectedData() const { return mListState.SelectedData(); }
-    int FirstShowing() const { return mListState.FirstShowing(); }
+    int FirstShowing() const;
     bool IsScrolling() const;
 
     NEW_OBJ(UIList)

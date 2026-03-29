@@ -18,8 +18,10 @@
 #include "ui/UI.h"
 #include "meta_ham/NavListNode.h"
 #include "meta_ham/PlaylistSortMgr.h"
+#include "ui/UILabel.h"
 #include "ui/UIListLabel.h"
 #include "utl/Symbol.h"
+#include <cstdio>
 
 #pragma region PlaylistSortNode
 
@@ -82,8 +84,8 @@ void PlaylistSortNode::Text(UIListLabel *uiListLabel, UILabel *uiLabel) const {
         HamLabel *pHamLabel = app_label;
         MILO_ASSERT(pHamLabel, 0x12d);
         int duration = unk48->GetDuration();
-        if (duration > 0) {
-            uiLabel->SetTimeHMS(duration, false);
+        if (0 < duration) {
+            pHamLabel->SetTimeHMS(duration, false);
             return;
         }
         pHamLabel->SetTextToken(gNullStr);
@@ -144,22 +146,29 @@ Symbol PlaylistHeaderNode::OnSelectDone() {
 }
 
 bool PlaylistHeaderNode::IsActive() const {
-    return ThePlaylistSortMgr->HeadersSelectable() ? IsActive() : false;
+    if (!ThePlaylistSortMgr->HeadersSelectable())
+        return false;
+    return IsActive();
 }
 
 NavListSortNode *PlaylistHeaderNode::GetFirstActive() {
     FOREACH (it, Children()) {
-        if ((*it)->GetFirstActive())
-            return *it;
+        auto firstActive = (*it)->GetFirstActive();
+        if (firstActive)
+            return ThePlaylistSortMgr->HeadersSelectable() ? this : firstActive;
     }
+    return nullptr;
 }
 
 char const *PlaylistHeaderNode::GetAlbumArtPath() {
     static Symbol by_album("by_album");
     static Symbol singles("singles");
-    auto curSort = ThePlaylistSortMgr->GetCurrentSort()->GetSortName();
-    if (curSort == by_album && GetToken() != singles && HasChildren()) {
-        return FirstChild()->GetAlbumArtPath();
+    if (ThePlaylistSortMgr->GetCurrentSort()->GetSortName() == by_album
+        && GetToken() != singles) {
+        auto node = mChildren.begin();
+        if (node != mChildren.end()) {
+            return FirstChild()->GetAlbumArtPath();
+        }
     }
     return 0;
 }
@@ -187,6 +196,22 @@ void PlaylistHeaderNode::Text(UIListLabel *uiListLabel, UILabel *uiLabel) const 
     } else {
         app_label->SetTextToken(uiListLabel->GetDefaultText());
     }
+}
+
+Symbol PlaylistHeaderNode::Select() { return SelectChildren(mChildren, mChallengeCount); }
+
+void PlaylistHeaderNode::UpdateItemCount(NavListItemNode *node) {
+    if (!node) {
+        return;
+    }
+    mChallengeCount++;
+}
+
+void PlaylistHeaderNode::SetItemCountString(UILabel *label) const {
+    char buffer[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+    sprintf(buffer, "(%d)", mChallengeCount);
+    Symbol sym = buffer;
+    label->SetPrelocalizedString(String(sym));
 }
 
 #pragma endregion PlaylistHeaderNode

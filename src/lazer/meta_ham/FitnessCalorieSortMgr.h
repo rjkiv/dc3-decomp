@@ -8,9 +8,9 @@
 class FitnessCalorieSortMgr : public NavListSortMgr {
 private:
     FitnessCalorieSortMgr(SongPreview &);
+    virtual ~FitnessCalorieSortMgr();
 
 public:
-    virtual ~FitnessCalorieSortMgr();
     virtual DataNode Handle(DataArray *, bool);
     virtual bool SelectionIs(Symbol);
     virtual Symbol MoveOn();

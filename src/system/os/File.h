@@ -11,6 +11,7 @@
 
 extern bool gNullFiles;
 extern bool gFakeFileErrors;
+extern void *kNoHandle;
 
 class File {
 public:
@@ -147,6 +148,10 @@ void FileEnumerate(
     bool
 );
 void FileRecursePattern(const char *, void (*)(char const *, char const *), bool);
+
+const char *FileGetPathBuf(const char *iFilepath, char *oBuf);
+const char *FileGetDriveBuf(const char *iFilepath, char *oBuf);
+const char *FileGetBaseBuf(const char *iFilepath, char *oBuf);
 
 class BinStream &operator>>(class BinStream &, FileStat &);
 }

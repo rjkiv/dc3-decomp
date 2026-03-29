@@ -11,9 +11,13 @@
 #include "game/PartyModeMgr.h"
 #include "hamobj/HamPlayerData.h"
 #include "macros.h"
+#include "math/Utl.h"
 #include "meta/SongPreview.h"
 #include "meta_ham/FitnessGoalMgr.h"
+#include "meta_ham/HamSongMgr.h"
+#include "meta_ham/MetaPerformer.h"
 #include "meta_ham/Playlist.h"
+#include "meta_ham/PlaylistSortByTypeCmp.h"
 #include "net_ham/PlaylistJobs.h"
 #include "net_ham/RCJobDingo.h"
 #include "net_ham/RockCentral.h"
@@ -23,28 +27,26 @@
 #include "os/ContentMgr.h"
 #include "os/Debug.h"
 #include "os/PlatformMgr.h"
+#include "stl/_algo.h"
 #include "ui/UI.h"
 #include "utl/DataPointMgr.h"
+#include "utl/MakeString.h"
 #include "utl/Std.h"
 #include "utl/Symbol.h"
+#include <cstring>
 #include <list>
 
 bool CompareType(const Playlist *p1, const Playlist *p2) {
     int p1type = p1->GetType();
     int p2type = p2->GetType();
     if (p1type == p2type) {
-        bool p1custom = p1->IsCustom();
-        bool p2custom = p2->IsCustom();
-        for (int i = 0; i == 0; i = p1custom - p2custom) {
-            if (p1custom == 0)
-                break;
-            p1custom++;
-            p2custom++;
-        }
+        Symbol name1 = p1->GetName();
+        Symbol name2 = p2->GetName();
+        return strcmp(name1.Str(), name2.Str()) < 0;
     } else {
         int p1type = p1->GetType();
         int p2type = p2->GetType();
-        return p2type <= p1type ? false : true;
+        return (bool)!(p2type <= p1type);
     }
 }
 
@@ -264,8 +266,7 @@ void PlaylistSortMgr::QueueCmdGetPlaylistsFromRC() {
 }
 
 void PlaylistSortMgr::QueueCmdChangeProfileOnlineID(String str) {
-    CmdChangeProfileOnlineID *cmd = new CmdChangeProfileOnlineID(str);
-    unkc0.push_back(cmd);
+    unkc0.push_back(new CmdChangeProfileOnlineID(str));
     if (!unkc8) {
         ProcessNextCommand();
     }
@@ -304,35 +305,36 @@ void PlaylistSortMgr::ProcessNextCommand() {
 }
 
 void PlaylistSortMgr::ResolvePlaylists() {
-    auto activeProfile = TheProfileMgr.GetActiveProfile(true);
-    Playlist *playlist;
+    HamProfile *activeProfile = TheProfileMgr.GetActiveProfile(true);
     if (activeProfile) {
-        const char *profileName = activeProfile->GetName();
-        bool flag = unkb0 != profileName;
-        if (!flag) {
-            for (int i = 0; i < unkd0.size(); i++) {
-                *playlist = activeProfile->GetPlaylist(i);
-                auto cusPlaylist = dynamic_cast<CustomPlaylist *>(playlist);
-                cusPlaylist->Copy(&unkd0[i]);
-                cusPlaylist->SetParentProfile(activeProfile);
+        if (!(unkb0 != activeProfile->GetName())) {
+            int size = unkd0.size();
+            int something = Max(5 - size, 0);
+            for (int i = 0; i < size; i++) {
+                CustomPlaylist &cusPlaylist =
+                    dynamic_cast<CustomPlaylist &>(activeProfile->GetPlaylist(i));
+                cusPlaylist.Copy(&unkd0[i]);
+                cusPlaylist.SetParentProfile(activeProfile);
             }
-        }
-        for (int i = 0; i < 5; i++) {
-            *playlist = activeProfile->GetPlaylist(i);
-            int numSongs = playlist->GetNumSongs();
-            for (int i = 0; i < numSongs; i++) {
-                playlist->RemoveSong();
+            for (int i = 5 - something; i < 5; i++) {
+                Playlist *playlist = &activeProfile->GetPlaylist(i);
+                int numSongs = playlist->GetNumSongs();
+                while (numSongs != 0) {
+                    numSongs--;
+                    playlist->RemoveSong();
+                }
+                playlist->SetOnlineID(-1);
             }
-        }
-        if (TheSaveLoadMgr) {
-            TheSaveLoadMgr->AutoSave();
-        }
-        BroadcastSyncMsg("playlists_synced");
-        if (unkd0.size() == 0) {
+
+            if (TheSaveLoadMgr)
+                TheSaveLoadMgr->AutoSave();
+
+            BroadcastSyncMsg("playlists_synced");
+            if (unkd0.size() > 0) {
+                SendPassiveMsg("playlist_syned_with_rc");
+            }
             return;
         }
-        SendPassiveMsg("playlist_syned_with_rc");
-        return;
     }
     BroadcastSyncMsg("sync_failed");
 }
@@ -430,6 +432,92 @@ void PlaylistSortMgr::SendPassiveMsg(Symbol s) {
     ThePassiveMessenger->TriggerGenericMsg(
         s, player, kPassiveMessageGeneral, gNullStr, -1
     );
+}
+
+void PlaylistSortMgr::OnDeletePlaylistFromRC(Playlist *p) {
+    if (p->GetOnlineID() != -1) {
+        QueueCmdDeletePlaylistFromRC(p->GetOnlineID());
+        p->SetOnlineID(-1);
+    }
+}
+
+Playlist *PlaylistSortMgr::GetPlaylist(int i) {
+    if (!IsHeader(i)) {
+        int convertIndex = ConvertListIndexToPlaylistIndex(i);
+        if (convertIndex >= 0) {
+            return unk78[convertIndex];
+        }
+    }
+    return nullptr;
+}
+
+void PlaylistSortMgr::UpdateList() {
+    unk78.clear();
+    HamProfile *pActiveProfile = TheProfileMgr.GetActiveProfile(true);
+    if (pActiveProfile) {
+        for (int i = 0; i < 5; i++) {
+            Playlist *p = &pActiveProfile->GetPlaylist(i);
+            if (p->GetNumSongs() == 0) {
+                static Symbol playlist_create("playlist_create");
+                p->SetName(playlist_create);
+                ThePlaylistSortMgr->AddPlaylist(p);
+                break;
+            }
+        }
+
+        for (int i = 0; i < 5; i++) {
+            Playlist *p = &pActiveProfile->GetPlaylist(i);
+            if (p->GetNumSongs() != 0) {
+                ThePlaylistSortMgr->AddPlaylist(p);
+            }
+        }
+    }
+    for (int i = 0; i < TheHamSongMgr.GetNumPlaylists(); i++) {
+        ThePlaylistSortMgr->AddPlaylist(TheHamSongMgr.GetPlaylist(i));
+    }
+    std::sort(unk78.begin(), unk78.end(), CompareType);
+}
+
+void PlaylistSortMgr::UpdateCurrPlaylistWithRC() {
+    MetaPerformer *performer = MetaPerformer::Current();
+    MILO_ASSERT(performer, 0x296);
+    Playlist *pPlaylist = performer->GetPlaylist();
+    if (pPlaylist && pPlaylist->IsCustom() && pPlaylist->IsDirty()) {
+        if (pPlaylist->GetNumSongs() != 0) {
+            static Symbol playlist_create("playlist_create");
+            if (pPlaylist->GetName() == playlist_create) {
+                std::map<Symbol, bool> map;
+                for (int i = 1; i <= 5; i++) {
+                    Symbol sym = MakeString("playlist_custom_%02i", i);
+                    map[sym] = false;
+                }
+                HamProfile *pActiveProfile = TheProfileMgr.GetActiveProfile(true);
+                for (int i = 0; i < 5; i++) {
+                    Playlist *p = &pActiveProfile->GetPlaylist(i);
+                    auto it = map.find(p->GetName());
+                    if (it != map.end()) {
+                        it->second = true;
+                    }
+                }
+                FOREACH (it, map) {
+                    if (!it->second) {
+                        pPlaylist->SetName(it->first);
+                        break;
+                    }
+                }
+            }
+            if (pPlaylist->GetOnlineID() != -1) {
+                QueueCmdEditPlaylist(pPlaylist);
+            } else {
+                QueueCmdAddPlaylistToRC(pPlaylist);
+            }
+
+        } else {
+            if (pPlaylist->GetOnlineID() != -1) {
+                QueueCmdDeletePlaylistFromRC(pPlaylist->GetOnlineID());
+            }
+        }
+    }
 }
 
 DataNode PlaylistSortMgr::OnMsg(const RCJobCompleteMsg &msg) {

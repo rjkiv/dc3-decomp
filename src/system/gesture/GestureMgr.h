@@ -16,6 +16,11 @@ DECLARE_MESSAGE(KinectHardwareStatusMsg, "kinect_status_changed")
 KinectHardwareStatusMsg(int i) : Message(Type(), i) {}
 END_MESSAGE
 
+DECLARE_MESSAGE(KinectGuideGestureMsg, "kinect_guide_gesture")
+KinectGuideGestureMsg(int i1) : Message(Type(), i1) {}
+DWORD TrackingID() const { return mData->Int(2); }
+END_MESSAGE
+
 DECLARE_MESSAGE(KinectUserBindingChangedMsg, "kinect_user_binding_changed")
 KinectUserBindingChangedMsg(int i) : Message(Type(), i) {}
 END_MESSAGE

@@ -44,7 +44,7 @@ public:
     HamProfile *profile;
 };
 
-struct CmdChangeProfileOnlineID : public QueueableCommand {
+class CmdChangeProfileOnlineID : public QueueableCommand {
 public:
     virtual int GetType() { return 0; }
     CmdChangeProfileOnlineID(String s) { str = s; }

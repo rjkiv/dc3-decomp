@@ -24,6 +24,7 @@
 #include "ui/UIPanel.h"
 #include "utl/Std.h"
 #include "utl/Symbol.h"
+
 BEGIN_HANDLERS(SongSortMgr)
     HANDLE_ACTION(get_setlist_mode, 0)
     HANDLE_ACTION(set_setlist_mode, SetSetlistMode(_msg->Int(2) != 0))
@@ -53,16 +54,6 @@ SongSortMgr::SongSortMgr(SongPreview &sp) : NavListSortMgr(sp) {
 }
 
 SongSortMgr::~SongSortMgr() {}
-
-SongSortByDiff::SongSortByDiff() {
-    static Symbol by_difficulty("by_difficulty");
-    SetSortName(by_difficulty);
-}
-
-SongSortByLocation::SongSortByLocation() {
-    static Symbol by_location("by_location");
-    SetSortName(by_location);
-}
 
 void SongSortMgr::Init(SongPreview &preview) {
     MILO_ASSERT(!TheSongSortMgr, 0x21);
@@ -128,14 +119,20 @@ void SongSortMgr::MarkElementInPlaylist(Symbol sym, bool b) {
 
 int SongSortMgr::GetListIndexFromHeaderIndex(int i1) {
     int size = mHeadersB.size();
-    if (i1 < 0 && 0 < size) {
-        return mHeadersB.front();
+    if (i1 < 0) {
+        if (0 < size) {
+            return mHeadersB.front();
+        }
+        return 1;
     }
-    if (i1 < size) {
-        return mHeadersB[size - 1];
+    if (i1 >= size) {
+        if (0 < size) {
+            return mHeadersB[size - 1];
+        }
+        return 1;
     }
 
-    return 1;
+    return mHeadersB[i1];
 }
 
 void SongSortMgr::OnSetlistChanged() {
@@ -250,7 +247,8 @@ Symbol SongSortMgr::MoveOn() {
         return gNullStr;
     } else if (song_select_story == mode || song_select_practice == mode
                || mode == song_select_jukebox) {
-        const DataNode *prop = TheGameMode->Property("ready_screen");
+        Symbol ready_screen("ready_screen");
+        const DataNode *prop = TheGameMode->Property(ready_screen);
         return prop->Sym();
     } else {
         MILO_FAIL("Unknown song_select_mode\n");

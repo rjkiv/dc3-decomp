@@ -10,6 +10,7 @@
 #include "rndobj/Rnd_NG.h"
 #include "xdk/D3D9.h"
 #include "xdk/XGRAPHICS.h"
+#include "xdk/xapilibi/xbase.h"
 #include <types.h>
 
 struct LargeQuadRenderData {
@@ -130,6 +131,8 @@ public:
     void SetShaderRegisterAlloc(RegisterAlloc);
 
     static const char *Error(long);
+
+    XVIDEO_MODE *VideoMode() { return &mVideoMode; }
 
 protected:
     virtual void DoPostProcess();

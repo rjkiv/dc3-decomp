@@ -4,40 +4,27 @@
 #include "xdk/xbdm/xbdm.h"
 
 String HolmesXboxPath(const char *cc1, const char *cc2) {
-    String s;
+    String path;
     DmMapDevkitDrive();
-    FileQualifiedFilename(s, cc2);
-    s = MakeString("devkit:\\holmes\\%s\\%s", cc1, s);
-
-    // Convert path characters: ':' -> '_', validate '\' positions
-    char *startPos = (char *)s.c_str() + 7; // After "devkit:"
-    unsigned char c = ((unsigned char *)s.c_str())[7];
-    char *currentPos = startPos;
-
-    while (c != '\0') {
-        // Replace ':' with '_'
-        if (c == ':') {
-            *currentPos = '_';
+    FileQualifiedFilename(path, cc2);
+    path = MakeString("devkit:\\holmes\\%s\\%s", cc1, path);
+    char *start = (char *)&path.c_str()[7];
+    char *ptr = (char *)&path.c_str()[7];
+    for (; *ptr != '\0'; ptr++) {
+        if (*ptr == ':') {
+            *ptr = '_';
         }
-
-        // Reload character and check for backslash
-        c = *currentPos;
-        if (c == '\\') {
-            // Check segment length
-            if (currentPos - startPos - 1 > 42) {
-                return String();
+        if (*ptr == '\\') {
+            int diff = ptr - start - 1;
+            if (diff > 42) {
+                return 0;
             }
-            startPos = currentPos;
+            start = ptr;
         }
-
-        // Pre-increment (matches lbzu r9, 0x1(r11))
-        c = *++currentPos;
     }
-
-    // Check final segment length
-    if (currentPos - startPos - 1 > 42) {
-        return String();
+    if (ptr - start - 1 > 42) {
+        return 0;
+    } else {
+        return path;
     }
-
-    return s;
 }

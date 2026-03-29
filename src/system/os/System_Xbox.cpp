@@ -22,8 +22,6 @@ DiscErrorCallbackFunc *SetDiskErrorCallback(DiscErrorCallbackFunc *func) {
 
 DiscErrorCallbackFunc *GetDiskErrorCallback() { return gCallback; }
 
-#define SUCCEEDED(hr) hr >= 0
-
 namespace {
     void XDKCheck() {
         DM_SYSTEM_INFO info;

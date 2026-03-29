@@ -168,7 +168,7 @@ void AppMiniLeaderboardDisplay::UpdateLeaderboardOnline(int i1) {
     }
 }
 
-bool AppMiniLeaderboardDisplay::UpdateLeaderboard(Symbol s) { // has one small discrepancy
+bool AppMiniLeaderboardDisplay::UpdateLeaderboard(Symbol s) {
     if (!TheProfileMgr.HasActiveProfile(true)) {
         if (unk60 != 4) {
             unk60 = 4;

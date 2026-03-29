@@ -33,6 +33,7 @@
 #include "utl/NetLoader.h"
 #include "utl/Std.h"
 #include "utl/Symbol.h"
+#include <list>
 
 HamStorePanel::HamStorePanel()
     : unka0(), mMetadata(), mOfferProvider(), unkb8(), unkc0(false), unk128(),

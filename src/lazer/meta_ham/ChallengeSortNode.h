@@ -30,8 +30,8 @@ protected:
 
 class ChallengeSortNode : public NavListItemNode {
 public:
-    ChallengeSortNode(NavListItemSortCmp *, ChallengeRecord *); // impl in
-                                                                // ChallengeSortByScore
+    ChallengeSortNode(NavListItemSortCmp *cmp, ChallengeRecord *record)
+        : NavListItemNode(cmp), mChallengeRecord(record) {}
     virtual Symbol GetToken() const;
     virtual void Text(UIListLabel *, UILabel *) const;
     virtual void Custom(UIListCustom *, Hmx::Object *) const;

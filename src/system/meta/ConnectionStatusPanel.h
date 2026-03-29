@@ -6,7 +6,7 @@
 #include "utl/Symbol.h"
 
 DECLARE_MESSAGE(ConnectionStatusChangedMsg, "connection_status_changed")
-ConnectionStatusChangedMsg(int);
+ConnectionStatusChangedMsg(bool b1) : Message(Type(), b1) {}
 bool Connected() const { return mData->Int(2); }
 END_MESSAGE
 

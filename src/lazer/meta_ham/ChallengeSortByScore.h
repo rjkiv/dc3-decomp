@@ -6,6 +6,13 @@
 class ChallengeScoreCmp : public NavListItemSortCmp {
 public:
     int Compare(const NavListItemSortCmp *, NavListNodeType) const;
+
+    ChallengeScoreCmp(int type, int i, char const *name)
+        : mType(type), unk8(i), mName(name) {}
+
+    int mType;
+    int unk8;
+    char const *mName;
 };
 
 class ChallengeSortByScore : public ChallengeSort {

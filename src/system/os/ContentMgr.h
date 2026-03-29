@@ -180,4 +180,5 @@ const char *GetStr() const { return mData->Str(3); }
 END_MESSAGE
 
 DECLARE_MESSAGE(ContentInstalledMsg, "content_installed")
+ContentInstalledMsg() : Message(Type()) {}
 END_MESSAGE

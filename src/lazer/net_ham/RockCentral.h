@@ -7,6 +7,7 @@
 #include "obj/Data.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
+#include "os/ContentMgr.h"
 #include "os/Timer.h"
 #include "rndobj/Bitmap.h"
 #include "rndobj/Tex.h"
@@ -74,6 +75,7 @@ public:
 
 private:
     static const String kServerVer;
+    static bool sCheckSomething;
 
 protected:
     virtual void OnJobFinished(RCJob *);
@@ -104,7 +106,7 @@ protected:
     XNADDR mXNetAddr; // 0xf0
     ULONGLONG mMachineID; // 0x118
     KinectShareConnection *mKinectShareConnection; // 0x120
-    int unk124;
+    Hmx::Object *unk124; // unsure what class this should be
     int unk128;
     int unk12c;
 };

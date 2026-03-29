@@ -19,15 +19,19 @@
 #include "os/File.h"
 #include "os/FileCache.h"
 #include "os/Joypad.h"
+#include "os/JoypadClient.h"
 #include "os/Keyboard.h"
 #include "os/MapFile_Xbox.h"
+#include "os/Memcard_Xbox.h"
 #include "os/Platform.h"
 #include "os/PlatformMgr.h"
 #include "os/ThreadCall.h"
 #include "os/Timer.h"
 #include "os/VirtualKeyboard.h"
 #include "utl/CacheMgr.h"
+#include "utl/Cheats.h"
 #include "utl/DataPointMgr.h"
+#include "utl/GlitchFinder.h"
 #include "utl/Licenses.h"
 #include "utl/Loader.h"
 #include "utl/Locale.h"
@@ -46,38 +50,42 @@
 
 const char *gNullStr = "";
 
-Symbol gSystemLanguage;
-Symbol gSystemLocale;
-DataArray *gSystemConfig;
-DataArray *gSystemTitles;
+static GfxMode gGfxMode;
 
-int gUsingCD;
-GfxMode gGfxMode;
+namespace {
+    bool gPreconfigOverride = false;
+}
 
-int gSystemMs;
-float gSystemFrac;
-Timer gSystemTimer;
+bool gHostConfig = false;
+bool gHostLogging = false;
+bool gHostCached = false;
+
+static DataArray *gSystemConfig;
+static DataArray *gSystemTitles;
+static int gUsingCD;
+static int gSystemMs;
+static float gSystemFrac;
+const char *gHostFile;
+static Symbol gSystemLanguage;
+
+std::vector<char *> TheSystemArgs;
+
+static Symbol gSystemLocale;
+static std::vector<char *> gPristineSystemArgs;
+static Timer gSystemTimer;
+
 bool gNetUseTimedSleep;
-bool gHostConfig;
-bool gHostLogging;
 bool(__cdecl *ParseStack)(char const *, struct StackData *, int, class FixedString &) =
     XboxMapFile::ParseStack;
 
-std::vector<char *> TheSystemArgs;
-std::vector<char *> gPristineSystemArgs;
-const char *gHostFile;
-
 namespace {
-    bool gPreconfigOverride;
-    bool gHasPreconfig;
+    bool gHasPreconfig = true;
 
     void CheckForArchive() {
         gUsingCD = true;
         FileStat buffer;
-        int ret = FileGetStat(
-            MakeString("gen/main_%s.hdr", PlatformSymbol(TheLoadMgr.GetPlatform())),
-            &buffer
-        );
+        Symbol plat = PlatformSymbol(TheLoadMgr.GetPlatform());
+        int ret = FileGetStat(MakeString("gen/main_%s.hdr", plat), &buffer);
         gUsingCD &= ret;
     }
 }
@@ -137,7 +145,7 @@ Symbol SystemLocale() { return gSystemLocale; }
 DataArray *SystemTitles() { return gSystemTitles; }
 
 Symbol GetSongTitlePronunciationLanguage() {
-    Symbol lang = HongKongExceptionMet() ? "eng" : gSystemLanguage;
+    Symbol lang = HongKongExceptionMet() ? "eng" : SystemLanguage();
     static Symbol fre("fre");
     static Symbol frc("frc");
     static Symbol can("can");
@@ -160,8 +168,6 @@ bool PlatformLittleEndian(Platform p) {
 }
 
 Platform ConsolePlatform() { return kPlatformXBox; }
-
-bool gReadingSystemConfig;
 
 DataArray *ReadSystemConfig(const char *config) {
     Timer timer;
@@ -207,28 +213,28 @@ void SystemPoll(bool b1) {
     Timer::ClearSlowFrame();
     SystemMs();
     TheDebug.Poll();
-    //   MemcardXbox::Poll(&TheMC);
-    //   if (gUsingCD == 0) {
-    //     HolmesClientPoll();
-    //   }
-    //   JoypadPoll();
-    //   JoypadClientPoll();
-    //   KeyboardPoll();
-    //   ThreadCallPoll();
-    //   FileCache::PollAll();
-    //   LoadMgr::Poll(&TheLoadMgr);
-    //   (**(*TheCacheMgr + 4))();
-    //   (**(*TheNetCacheMgr + 0x58))();
-    //   (**(*TheWebSvcMgr + 0x5c))();
-    //   if (TheAppChild != 0x0) {
-    //     AppChild::Poll(TheAppChild);
-    //   }
-    //   if (param_1) {
-    //     TaskMgr::Poll(&TheTaskMgr);
-    //   }
-    //   PlatformMgr::Poll(&ThePlatformMgr);
-    //   VirtualKeyboard::Poll(&TheVirtualKeyboard);
-    //   (**(*TheContentMgr + 0x68))();
+    TheMC.Poll();
+    if (gUsingCD == 0) {
+        HolmesClientPoll();
+    }
+    JoypadPoll();
+    JoypadClientPoll();
+    KeyboardPoll();
+    ThreadCallPoll();
+    FileCache::PollAll();
+    TheLoadMgr.Poll();
+    TheCacheMgr->Poll();
+    TheNetCacheMgr->Poll();
+    TheWebSvcMgr.Poll();
+    if (TheAppChild) {
+        TheAppChild->Poll();
+    }
+    if (b1) {
+        TheTaskMgr.Poll();
+    }
+    ThePlatformMgr.Poll();
+    TheVirtualKeyboard.Poll();
+    TheContentMgr.PollRefresh();
 }
 
 DataArray *SupportedLanguages(bool cheats) {
@@ -253,11 +259,16 @@ void SetSystemLanguage(Symbol lang, bool cheats) {
         static Symbol system("system");
         static Symbol language("language");
         static Symbol defaultSym("default");
-        DataArray *arr = SystemConfig(system, language)->FindArray(defaultSym, false);
+        DataArray *cfg = SystemConfig(system, language);
+        DataArray *arr = cfg->FindArray(defaultSym, false);
         if (arr) {
-            Symbol arrLang = arr->Sym(0);
+            Symbol arrLang = arr->Sym(1);
             if (IsSupportedLanguage(arrLang, cheats)) {
-                lang = arrLang;
+                if (!gSystemLanguage.Null() && arrLang != gSystemLanguage) {
+                    TheLocale.Terminate();
+                    gSystemLanguage = arrLang;
+                    TheLocale.Init();
+                }
             } else {
                 MILO_NOTIFY(
                     "Both %s and the default language (%s) are not supported!\n",
@@ -271,8 +282,7 @@ void SetSystemLanguage(Symbol lang, bool cheats) {
                 lang
             );
         }
-    }
-    if (!gSystemLanguage.Null() && lang != gSystemLanguage) {
+    } else if (!gSystemLanguage.Null() && lang != gSystemLanguage) {
         TheLocale.Terminate();
         gSystemLanguage = lang;
         TheLocale.Init();
@@ -377,9 +387,9 @@ bool GenericMapFile::ParseStack(
 }
 
 void InitSystem(const char *config) {
-    Archive *oldArchive = TheArchive;
     if (!gPreconfigOverride && config) {
         bool oldCD = UsingCD();
+        Archive *oldArchive = TheArchive;
         if (gHostConfig) {
             gUsingCD = false;
             TheArchive = nullptr;
@@ -396,6 +406,20 @@ void InitSystem(const char *config) {
         StripEditorData();
     }
     FinishDataRead();
+}
+
+void NormalizeSystemArgs() {
+    for (int i = 0; i < TheSystemArgs.size(); i++) {
+        char *cur = TheSystemArgs[i];
+        for (char *p = cur; *p != '\0'; p++) {
+            if (*p == -0x6A) {
+                *p = '-';
+            }
+            if (*p == -0x6D || *p == -0x6C) {
+                *p = '\"';
+            }
+        }
+    }
 }
 
 void PreInitSystem(const char *config) {
@@ -455,9 +479,8 @@ void SystemInit(const char *config) {
     SpewInit();
     TheLocale.Terminate();
     TheLocale.Init();
-    //   CheatsInit();
-    //   this_00 = &TheMC;
-    //   MemcardXbox::Init(&TheMC);
+    CheatsInit();
+    TheMC.Init();
     FileCache::Init();
     CacheMgrInit();
     NetCacheMgrInit();
@@ -466,7 +489,7 @@ void SystemInit(const char *config) {
     ThePlatformMgr.Init();
     TheVirtualKeyboard.Init();
     TheContentMgr.Init();
-    //   GlitchFinder::Init();
+    GlitchFinder::Init();
     TheDebug.AddExitCallback(SystemTerminate);
     if (OptionBool("licenses", false)) {
         Licenses::PrintAll();
@@ -476,6 +499,37 @@ void SystemInit(const char *config) {
 
 void SetSystemArgs(const char *commandLine) {
     MILO_ASSERT(commandLine && strlen(commandLine) < kCommandLineSz, 0x39A);
+    static char buffer[512];
+    strncpy(buffer, commandLine, sizeof(buffer) - 1);
+    char *arg = buffer;
+    buffer[sizeof(buffer) - 1] = '\0';
+    bool b2 = true;
+    bool b4 = false;
+    for (char *p = buffer; *p != '\0'; p++) {
+        if (!b4 && *p == ' ') {
+            *p = '\0';
+            b4 = true;
+            arg = p + 1;
+        } else {
+            if (*p != '\"') {
+                if (b2) {
+                    TheSystemArgs.push_back(arg);
+                    b2 = false;
+                }
+                arg = p + 1;
+            } else {
+                *p = '\0';
+                arg = p + 1;
+                b4 = !b4;
+                if (!b4) {
+                    b2 = true;
+                } else {
+                    TheSystemArgs.push_back(arg);
+                    b2 = false;
+                }
+            }
+        }
+    }
     NormalizeSystemArgs();
     gPristineSystemArgs = TheSystemArgs;
 }
@@ -537,15 +591,14 @@ void SystemPreInit(const char *cmdLine, const char *cfg) {
 
 void SystemTerminate() {
     TheDebug.RemoveExitCallback(SystemTerminate);
-    // missing Terminate here
+    SpewTerminate(); // some other unknown stub Terminate func goes here
     TheVirtualKeyboard.Terminate();
     CacheMgrTerminate();
     NetCacheMgrTerminate();
     FileCache::Terminate();
     TheLocale.Terminate();
-    //   this_01 = &TheMC;
-    //   MemcardXbox::Terminate(&TheMC);
-    //   CheatsTerminate();
+    TheMC.Terminate();
+    CheatsTerminate();
     KeyboardTerminate();
     JoypadTerminate();
     SpewTerminate();
