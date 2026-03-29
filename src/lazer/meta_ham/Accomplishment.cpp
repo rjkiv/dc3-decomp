@@ -5,7 +5,7 @@
 #include "utl/MakeString.h"
 #include "utl/Symbol.h"
 
-static int sPriorities[2] = { 1, 1000 };
+static unsigned int sPriorities[2] = { 1, 1000 };
 
 Accomplishment::Accomplishment(DataArray *cfg, int idx)
     : mName(""), mAccomplishmentType(), mCategory(""), mAward(""), mUnitsToken(gNullStr),

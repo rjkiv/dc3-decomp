@@ -1,18 +1,35 @@
 #include "ChallengeSortByScore.h"
 #include "ChallengeRecord.h"
 #include "ChallengeSortNode.h"
+#include "meta/Sorting.h"
 #include "meta_ham/Challenges.h"
 #include "meta_ham/NavListNode.h"
 #include "utl/Symbol.h"
+#include <cstring>
 
 int ChallengeScoreCmp::Compare(NavListItemSortCmp const *cmp, NavListNodeType type) const {
+    const ChallengeScoreCmp *mCmp;
     switch (type) {
     case kNodeShortcut:
-        return 0;
         break;
     case kNodeHeader:
+        mCmp = cmp->GetChallengeScoreCmp();
+        if (mType == mCmp->mType) {
+            return AlphaKeyStrCmp(mName, mCmp->mName, false);
+        }
+        if (mType < mCmp->mType) {
+            return -1;
+        }
+        return 1;
         break;
     case kNodeItem:
+        mCmp = cmp->GetChallengeScoreCmp();
+        if (unk8 != mCmp->unk8) {
+            if (unk8 <= mCmp->unk8) {
+                return 1;
+            }
+            return -1;
+        }
         break;
     default:
         MILO_FAIL("invalid type of node comparison.\n");
@@ -20,7 +37,7 @@ int ChallengeScoreCmp::Compare(NavListItemSortCmp const *cmp, NavListNodeType ty
         break;
     }
 
-    return -1;
+    return 0;
 }
 
 NavListShortcutNode *ChallengeSortByScore::NewShortcutNode(NavListItemNode *node) const {
@@ -50,7 +67,8 @@ NavListHeaderNode *ChallengeSortByScore::NewHeaderNode(NavListItemNode *node) co
     } else if (type == 1) {
         name = dlc_challenge;
     } else {
-        name = node->GetToken();
+        name =
+            static_cast<ChallengeSortNode *>(node)->GetChallengeRecord()->GetUnk44().Str();
     }
     ChallengeScoreCmp *cmp =
         new ChallengeScoreCmp(type, 0, node->GetCmp()->GetChallengeScoreCmp()->mName);

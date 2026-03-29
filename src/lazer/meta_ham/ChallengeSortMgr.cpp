@@ -1,5 +1,6 @@
 #include "ChallengeSortMgr.h"
 
+#include "ChallengeRecord.h"
 #include "ChallengeSortByScore.h"
 #include "ChallengeSortNode.h"
 #include "NavListSort.h"
@@ -77,11 +78,11 @@ int ChallengeSortMgr::GetTotalXpEarned(int i1) {
 
 int ChallengeSortMgr::GetPotentialChallengeExp(int i1) {
     if (IsIndexHeader(i1)) {
-        return static_cast<ChallengeHeaderNode *>(mSorts[mCurrentSortIdx]->GetList()[i1])
-            ->GetChallengeExp();
+        auto node = mSorts[mCurrentSortIdx]->GetList()[i1];
+        return static_cast<ChallengeHeaderNode *>(node)->GetChallengeExp();
     } else {
         auto highlight = GetHighlightItem();
-        NavListNode *header = dynamic_cast<ChallengeHeaderNode *>(highlight);
+        NavListNode *header = dynamic_cast<ChallengeHeaderNode *>(highlight->Parent());
         MILO_ASSERT(header, 0xa5);
         return static_cast<ChallengeHeaderNode *>(header)->GetPotentialChallengeExp(
             highlight
@@ -101,20 +102,22 @@ int ChallengeSortMgr::GetOwnerChallengeScore(int songID) {
 
 int ChallengeSortMgr::GetChallengeExp(int i1) {
     if (IsIndexHeader(i1)) {
-        return static_cast<ChallengeHeaderNode *>(mSorts[mCurrentSortIdx]->GetList()[i1])
-            ->GetChallengeExp();
-    } else
-        return static_cast<ChallengeSortNode *>(mSorts[mCurrentSortIdx]->GetList()[i1])
-            ->GetChallengeExp();
+        auto node = mSorts[mCurrentSortIdx]->GetList()[i1];
+        return static_cast<ChallengeHeaderNode *>(node)->GetChallengeExp();
+    } else {
+        auto node = mSorts[mCurrentSortIdx]->GetList()[i1];
+        return static_cast<ChallengeSortNode *>(node)->GetChallengeExp();
+    }
 }
 
 int ChallengeSortMgr::GetSongID(int i1) {
     if (IsIndexHeader(i1)) {
-        return static_cast<ChallengeHeaderNode *>(mSorts[mCurrentSortIdx]->GetList()[i1])
-            ->GetSongID();
-    } else
-        return static_cast<ChallengeSortNode *>(mSorts[mCurrentSortIdx]->GetList()[i1])
-            ->GetSongID();
+        auto node = mSorts[mCurrentSortIdx]->GetList()[i1];
+        return static_cast<ChallengeHeaderNode *>(node)->GetSongID();
+    } else {
+        auto node = mSorts[mCurrentSortIdx]->GetList()[i1];
+        return static_cast<ChallengeSortNode *>(node)->GetSongID();
+    }
 }
 
 Symbol ChallengeSortMgr::GetSongShortName(int songID) {
@@ -142,8 +145,8 @@ int ChallengeSortMgr::GetChallengeScore(int i1) {
     if (IsIndexHeader(i1)) {
         return GetBestChallengeScore(GetSongID(i1));
     } else {
-        return static_cast<ChallengeSortNode *>(mSorts[mCurrentSortIdx]->GetList()[i1])
-            ->GetChallengeScore();
+        auto node = mSorts[mCurrentSortIdx]->GetList()[i1];
+        return static_cast<ChallengeSortNode *>(node)->GetChallengeScore();
     }
 }
 
@@ -185,8 +188,7 @@ int ChallengeSortMgr::GetChallengeRecordSongType(int i1) {
     } else {
         return static_cast<ChallengeSortNode *>(mSorts[mCurrentSortIdx]->GetList()[i1])
             ->GetChallengeRecord()
-            ->GetChallengeRow()
-            .mChallengerXp; // needs to grab something at 0x50 - possible wrong cast?
+            ->GetUnk50();
     }
 }
 
@@ -249,4 +251,51 @@ void ChallengeSortMgr::OnEnter() {
         unk48 = false;
     }
     pSort->UpdateHighlight();
+}
+
+int ChallengeSortMgr::GetChallengerXp(int val) {
+    if (IsIndexHeader(val)) {
+        int songID = GetSongID(val);
+        int highScore = 0;
+        int xp = 0;
+        for (int i = 0; i < mChallengeRecords.size(); i++) {
+            int score = mChallengeRecords[i].GetChallengeRow().mScore;
+            if (songID == mChallengeRecords[i].GetChallengeRow().mSongID
+                && highScore < score) {
+                xp = mChallengeRecords[i].GetChallengeRow().mChallengerXp;
+                highScore = score;
+            }
+        }
+        return xp;
+    } else {
+        ChallengeSortNode *node =
+            static_cast<ChallengeSortNode *>(mSorts[mCurrentSortIdx]->GetList()[val]);
+        return node->GetChallengerXp();
+    }
+}
+
+char const *ChallengeSortMgr::GetBestChallengeScoreGamertag(int id) {
+    int highScore = -1;
+    int idx = -1;
+    for (int i = 0; i < mChallengeRecords.size(); i++) {
+        int score = mChallengeRecords[i].GetChallengeRow().mScore;
+        if (id == mChallengeRecords[i].GetChallengeRow().mSongID && highScore < score) {
+            highScore = score;
+            idx = i;
+        }
+    }
+    if (idx == -1) {
+        return gNullStr;
+    }
+
+    int type = mChallengeRecords[idx].GetChallengeRow().mType;
+    bool b = (type >= 0 && type <= 2);
+    if (!b) {
+        b = (type >= 3 && type <= 5);
+        if (!b) {
+            return mChallengeRecords[idx].GetUnk48().Str();
+        }
+    }
+
+    return "HARMONIX";
 }

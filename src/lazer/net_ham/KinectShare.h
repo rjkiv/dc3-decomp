@@ -58,6 +58,8 @@ public:
     ~KinectShareConnection();
     void Poll();
 
+    int GetUnk78() const { return unk78; }
+
 private:
     XLSPConnection mConnection; // 0x0
     int unk78; // 0x78 - state?

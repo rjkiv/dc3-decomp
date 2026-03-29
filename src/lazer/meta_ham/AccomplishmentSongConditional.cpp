@@ -92,6 +92,7 @@ bool AccomplishmentSongConditional::CheckConditionsForSong(
     static Symbol score("score");
     static Symbol practice_percentage("practice_percentage");
     static Symbol played("played");
+
     FOREACH (it, m_lConditions) {
         const AccomplishmentCondition &curCond = *it;
         Symbol curSym = curCond.unk0;

@@ -12,6 +12,7 @@ public:
 
     void SetMode(int mode) { mMode = mode; }
     void AddItem(const T item) { mItems.push_back(item); }
+    void SetNumGets(int i) { mNumGets = i; }
 
     void AddItems(const std::vector<T> &itemVec) {
         for (int i = 0; i < itemVec.size(); i++) {

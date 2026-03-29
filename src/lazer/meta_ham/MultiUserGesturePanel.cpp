@@ -327,7 +327,9 @@ void MultiUserGesturePanel::UpdateCrewPic(
     String str;
     if (!TheProfileMgr.IsContentUnlocked(s)) {
         str = MakeString("%s_char_locked_keep.png", s.Str());
-    } else if (pProvider->IsCrewAvailable(s)) {
+    } else if (!pProvider->IsCrewAvailable(s)) {
+        str = MakeString("%s_char_locked_keep.png", s.Str());
+    } else {
         str = MakeString("%s_char_keep.png", s.Str());
     }
     FilePath fp = FilePath("ui/image/crew/", str.c_str());
@@ -460,10 +462,8 @@ void MultiUserGesturePanel::UpdateCharPic(
         const HamSongMetadata *pSongData = TheHamSongMgr.Data(songID);
         MILO_ASSERT(pSongData, 0x19d);
 
-        bool check = false;
-        if (TheGameMode->InMode("dance_battle") || TheGameMode->InMode("strike_a_pose")) {
-            check = true;
-        }
+        bool check =
+            TheGameMode->InMode("dance_battle") || TheGameMode->InMode("strike_a_pose");
         HamPlayerData *pPrimary;
         HamPlayerData *pSecondary;
         pPerformer->CalcCharacters(
@@ -508,13 +508,15 @@ void MultiUserGesturePanel::UpdateCharPic(
         static Symbol is_in_party_mode("is_in_party_mode");
         int propInt = TheHamProvider->Property(is_in_party_mode)->Int();
         if (propInt != 0) {
-            contentLocked = contentLocked & (strstr(outfitSym.Str(), "01") != 0);
+            contentLocked = !strstr(outfitSym.Str(), "01");
         }
     }
 
     if (contentLocked && !TheGameMode->InMode("campaign")) {
         str = MakeString("%s_locked_keep.png", outfitSym);
-    } else if (pProvider->IsCharacterAvailable(charSym)) {
+    } else if (!pProvider->IsCharacterAvailable(charSym)) {
+        str = MakeString("%s_locked_keep.png", outfitSym);
+    } else {
         str = MakeString("%s_keep.png", outfitSym);
     }
     FilePath fp = FilePath("ui/image/char/", str.c_str());

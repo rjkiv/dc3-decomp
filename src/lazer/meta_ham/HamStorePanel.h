@@ -18,6 +18,7 @@
 #include "utl/NetLoader.h"
 #include "utl/Str.h"
 #include "utl/Symbol.h"
+#include "xdk/win_types.h"
 #include <list>
 
 struct HamSpecialOffer {

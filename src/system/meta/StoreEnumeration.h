@@ -19,10 +19,8 @@ enum StoreError {
 };
 
 struct EnumProduct {
-    u32 unk0;
-    u32 unk4;
-    u32 unk8;
-    u32 unkc;
+    String unk0;
+    u64 unk4;
     int unk10;
     int unk14;
 };

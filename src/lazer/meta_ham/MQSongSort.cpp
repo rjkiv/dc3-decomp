@@ -91,7 +91,36 @@ void MQSongSort::BuildItemList() {
 }
 
 void MQSongSort::BuildTree() {
-    DeleteTree();
+    NavListSort::DeleteTree();
     Init();
     std::vector<NavListItemNode *> nodes;
+    auto &map = TheMQSongSortMgr->GetUnk78(); // maybe regswap from here?
+    FOREACH (it, map) {
+        FOREACH (it2, it->second) {
+            NavListItemNode *node = NewItemNode(it2);
+            static_cast<MQSongSortNode *>(node)->SetUnk4C(it->first);
+            nodes.push_back(node);
+        }
+    }
+
+    auto begin = nodes.begin();
+    auto end = nodes.end();
+    while (begin != end) { // or maybe here, idk ill fix it later
+        std::vector<NavListItemNode *>::iterator it = begin;
+        while (it != end) {
+            if (static_cast<MQSongSortNode *>(*it)->GetUnk4C()
+                != static_cast<MQSongSortNode *>(*begin)->GetUnk4C()) {
+                break;
+            }
+            it++;
+        }
+        NavListShortcutNode *shortcutNode = NewShortcutNode(*begin);
+        unk30.push_back(shortcutNode);
+        shortcutNode->InsertHeaderRange(begin, it, this);
+        begin = it;
+    }
+
+    FOREACH (it, unk30) {
+        (*it)->FinishSort(this);
+    }
 }

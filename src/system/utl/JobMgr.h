@@ -4,6 +4,7 @@
 #include "stdlib.h"
 #include "utl/MemMgr.h"
 #include "utl/Str.h"
+#include "xdk/win_types.h"
 #include "xdk/xapilibi/xbase.h"
 
 class Job {
@@ -110,7 +111,7 @@ private:
 
 // class SpecialOfferEnumJob : public MultipleItemsEnumJob {
 // public:
-//     SpecialOfferEnumJob(Hmx::Object *, int, std::vector<unsigned long long> &);
+//     SpecialOfferEnumJob(Hmx::Object *panel, int i, std::vector<QWORD> &vec);
 //     virtual void Start();
 //     virtual bool IsFinished();
 //     virtual void Cancel(Hmx::Object *);
