@@ -156,7 +156,7 @@ int NavListSort::GetCurrentShortcut() {
     }
 }
 
-void NavListSort::ChangeHighlightHeader(int dir) {
-    if (dir != 1 && dir != -1)
-        MILO_ASSERT(dir == 1 || dir == -1, 0xa0);
-}
+// void NavListSort::ChangeHighlightHeader(int dir) {
+//     if (dir != 1 && dir != -1)
+//         MILO_ASSERT(dir == 1 || dir == -1, 0xa0);
+// }
