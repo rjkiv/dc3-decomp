@@ -254,8 +254,8 @@ bool SongStatusMgr::IsSongPlayed(int songID) const { return HasSongStatus(songID
 void SongStatusMgr::GetScoresToUpload(std::list<SongStatusData> &data) {
     FOREACH (it, mSongStatusMap) {
         SongStatus cur = it->second;
-        for (int i = 0; i < kNumDifficulties; i++) {
-            if (cur.mStatusData[i].unk10) {
+        for (int i = 0; i < 4; i++) {
+            if (cur.mStatusData[i].unk10 != false) {
                 data.push_back(cur.mStatusData[i]);
             }
         }
@@ -347,12 +347,13 @@ int SongStatusMgr::GetScoreForDifficulty(int songID, Difficulty d, bool &bref) c
 int SongStatusMgr::GetBestScore(int songID, bool &bref, Difficulty d) const {
     int bestScore = 0;
     bref = false;
-    if (HasSongStatus(songID) && d != kNumDifficulties) {
-        for (; d != kNumDifficulties; d = DifficultyOneHarder(d)) {
+    if (HasSongStatus(songID)) {
+        for (Difficulty loopdiff = d; loopdiff != kNumDifficulties;
+             loopdiff = DifficultyOneHarder(loopdiff)) {
             const SongStatus &status = GetSongStatus(songID);
-            int score = status.mStatusData[d].mScore;
+            int score = status.mStatusData[loopdiff].mScore;
             if (score > bestScore) {
-                bref = status.mStatusData[d].mNoFlashcards;
+                bref = status.mStatusData[loopdiff].mNoFlashcards;
                 bestScore = score;
             }
         }
@@ -387,10 +388,11 @@ int SongStatusMgr::GetBestStars(int songID, bool &bref, Difficulty d) const {
     bref = false;
     if (HasSongStatus(songID)) {
         const SongStatus &status = GetSongStatus(songID);
-        for (; d != kNumDifficulties; d = DifficultyOneHarder(d)) {
-            int curStars = status.mStatusData[d].mStars;
+        for (Difficulty loopDiff = d; loopDiff != kNumDifficulties;
+             loopDiff = DifficultyOneHarder(loopDiff)) {
+            int curStars = status.mStatusData[loopDiff].mStars;
             if (curStars >= bestStars) {
-                bref = status.mStatusData[d].unk10;
+                bref = status.mStatusData[loopDiff].unk10;
                 bestStars = curStars;
             }
         }

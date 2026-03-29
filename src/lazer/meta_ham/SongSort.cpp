@@ -2,6 +2,7 @@
 
 #include "AppLabel.h"
 #include "ChallengeSort.h"
+#include "NavListSort.h"
 #include "SongRecord.h"
 #include "SongSortMgr.h"
 #include "game/GameMode.h"
@@ -9,6 +10,7 @@
 #include "meta_ham/SongSortMgr.h"
 #include "meta_ham/SongSortNode.h"
 #include "os/Debug.h"
+#include "stl/_algo.h"
 #include "ui/UILabel.h"
 #include "ui/UIListLabel.h"
 #include "utl/Std.h"
@@ -16,7 +18,33 @@
 
 SongSort::SongSort() {};
 
-void SongSort::BuildTree() {};
+void SongSort::BuildTree() {
+    NavListSort::DeleteTree();
+    Init();
+    std::vector<NavListItemNode *> nodes;
+
+    auto &map = TheSongSortMgr->GetUnk78();
+    FOREACH (it, map) {
+        NavListItemNode *node = NewItemNode(&it->second);
+        auto bound = std::lower_bound(nodes.begin(), nodes.end(), node, CompareHeaders());
+        nodes.insert(bound, node);
+    }
+    bool b = false;
+    int count = 0;
+    auto begin = nodes.begin();
+    auto end = nodes.end();
+    while (begin != end) {
+        auto range =
+            std::equal_range(nodes.begin(), nodes.end(), *begin, CompareHeaders());
+        count += range.second - range.first;
+        static Symbol by_song("by_song");
+        static Symbol by_artist("by_artist");
+    }
+
+    FOREACH (it, unk30) {
+        (*it)->FinishSort(this);
+    }
+};
 
 void SongSort::DeleteItemList() {
     NavListSort::DeleteItemList();

@@ -11,13 +11,34 @@
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "os/PlatformMgr.h"
+#include "ui/UIPanel.h"
 #include "utl/JobMgr.h"
 #include "utl/Symbol.h"
 #include "xdk/xapilibi/xbox.h"
 
-OptionsPanel::OptionsPanel() : unk3c(), unk40(), unk50(), unk58() {}
+OptionsPanel::OptionsPanel() : unk48(0), unk50(), unk58() {
+    unk3c = nullptr;
+    unk40 = nullptr;
+}
 
 OptionsPanel::~OptionsPanel() {}
+
+void OptionsPanel::Poll() {
+    UIPanel::Poll();
+    if (unk40) {
+        unk40->Poll();
+        if (!unk40->IsPurchasing()) {
+            if (unk40->IsSuccess() && !unk40->PurchaseMade() && unk40->NeedsEnum()
+                && unk50) {
+                ThePlatformMgr.QueueEnumJob(new PostPurchaseEnumJob(
+                    this, unk50->GetPadNum(), unk48, unk40->unk4, unk40->unk8
+                ));
+            }
+            RELEASE(unk40);
+        }
+    }
+}
 
 bool OptionsPanel::OnRedeemToken(int i, char const *str) {
     unk3c = new RedeemTokenJob(this, i, str);

@@ -236,6 +236,8 @@ void NavListFunctionNode::Renumber(std::vector<NavListSortNode *> &nodes) {
 
 Symbol NavListFunctionNode::GetToken() const { return unk4c; }
 
+bool NavListFunctionNode::IsEnabled() const { return IsEnabled(); }
+
 #pragma endregion
 #pragma region NavListHeaderNode
 

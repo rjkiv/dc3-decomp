@@ -122,6 +122,7 @@ public:
     void Renumber(std::vector<NavListSortNode *> &);
     const std::list<NavListSortNode *> &Children() const { return mChildren; }
     NavListSortNode *FirstChild() const { return mChildren.front(); }
+    void InsertNode(NavListSortNode *node) { mChildren.push_back(node); }
 
 protected:
     Symbol mToken; // 0x34
@@ -183,7 +184,7 @@ public:
     virtual void SetCollapseIconLabel(UILabel *);
     virtual int GetItemCount();
     virtual NavListSortNode *GetFirstActive();
-    virtual bool IsEnabled() const { return IsEnabled(); } // lmao what
+    virtual bool IsEnabled() const;
     virtual bool IsActive() const { return false; }
     virtual const char *GetAlbumArtPath() { return unk44.c_str(); }
     virtual void Renumber(std::vector<NavListSortNode *> &);

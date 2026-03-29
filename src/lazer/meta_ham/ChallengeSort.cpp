@@ -1,10 +1,17 @@
 #include "ChallengeSort.h"
 #include "AppLabel.h"
 #include "ChallengeRecord.h"
+#include "ChallengeSortByScore.h"
 #include "ChallengeSortMgr.h"
+#include "ChallengeSortNode.h"
+#include "meta_ham/ChallengeSortByScore.h"
 #include "meta_ham/Challenges.h"
+#include "meta_ham/NavListNode.h"
 #include "meta_ham/NavListSort.h"
 #include "obj/Object.h"
+#include "stl/_algo.h"
+#include "stl/_algobase.h"
+#include "utl/Std.h"
 #include "utl/Symbol.h"
 
 SortNodeFind::SortNodeFind(const NavListSortNode *node)
@@ -104,8 +111,12 @@ void ChallengeSort::BuildTree() {
 
     std::vector<ChallengeRecord> &records = TheChallengeSortMgr->GetUnk78();
     for (int i = 0; i < records.size(); i++) {
-        if (records[i].GetUnk50() != 1) {
-            nodes.push_back(NewItemNode(&records[i]));
+        ChallengeRecord *record = &records[i];
+        if (record->GetUnk50() != 1) {
+            NavListItemNode *node = NewItemNode(record);
+            auto bound =
+                std::lower_bound(nodes.begin(), nodes.end(), node, CompareHeaders());
+            nodes.insert(bound, 1, node);
         }
     }
 
@@ -113,6 +124,48 @@ void ChallengeSort::BuildTree() {
     static Symbol dlc_challenge("dlc_challenge");
     String globalChallengeSongName = TheChallenges->GetGlobalChallengeSongName();
     String dlcChallengeSongName = TheChallenges->GetDlcChallengeSongName();
+
+    NavListShortcutNode *globalShortcutNode = new NavListShortcutNode(
+        new ChallengeScoreCmp(0, 0, globalChallengeSongName.c_str()),
+        global_challenge,
+        true
+    );
+
+    NavListShortcutNode *dlcShortcutNode = new NavListShortcutNode(
+        new ChallengeScoreCmp(1, 0, dlcChallengeSongName.c_str()), dlc_challenge, true
+    );
+
+    ChallengeHeaderNode *globalHeaderNode = new ChallengeHeaderNode(
+        new ChallengeScoreCmp(0, 0, globalChallengeSongName.c_str()),
+        global_challenge,
+        true
+    );
+
+    ChallengeHeaderNode *dlcHeaderNode = new ChallengeHeaderNode(
+        new ChallengeScoreCmp(1, 0, dlcChallengeSongName.c_str()), dlc_challenge, true
+    );
+
+    globalShortcutNode->InsertNode(globalHeaderNode);
+    dlcShortcutNode->InsertNode(dlcHeaderNode);
+    unk30.push_back(globalShortcutNode);
+    unk30.push_back(dlcShortcutNode);
+
+    FOREACH (it, nodes) {
+        NavListShortcutNode *shortcutNode = NewShortcutNode(*it);
+        auto findIf =
+            std::find_if(unk30.begin(), unk30.end(), NodeFind(shortcutNode->GetToken()));
+        if (findIf == unk30.end()) {
+            unk30.push_back(shortcutNode);
+        } else {
+            delete shortcutNode;
+            shortcutNode = *findIf;
+        }
+        shortcutNode->Insert(*it, this);
+    }
+
+    FOREACH (it, unk30) {
+        (*it)->FinishSort(this);
+    }
 }
 
 #pragma endregion

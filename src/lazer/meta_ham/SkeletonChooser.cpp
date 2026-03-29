@@ -494,10 +494,11 @@ bool SkeletonChooser::PotentiallyRecoverSkeletons() {
 }
 
 int SkeletonChooser::NextSkeletonIndexToTrack(int i1) {
+    int i = 0; // moving this here made it almost match so idk
     int curSkelIdx = (i1 + 1) % 6;
     int idxToTrack = -1;
     SkeletonRecoverer &recoverer = TheGestureMgr->Recoverer();
-    for (int i = 0; i < 6; i++) {
+    for (; i < 6; i++) {
         int skelID = TheGestureMgr->GetSkeleton(curSkelIdx).TrackingID();
         if (idxToTrack >= 0) {
             return idxToTrack;

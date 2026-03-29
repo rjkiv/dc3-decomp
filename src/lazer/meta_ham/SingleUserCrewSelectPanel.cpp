@@ -203,9 +203,11 @@ void SingleUserCrewSelectPanel::UpdateCrewMesh(RndMesh *i_pMesh, int i_iSide, Sy
     MILO_ASSERT(pProvider, 0xbe);
     String texFile;
     if (!TheProfileMgr.IsContentUnlocked(s)) {
-        texFile = MakeString("%s_locked.tex", s);
-    } else if (pProvider->IsCrewAvailable(s)) {
-        texFile = MakeString("%s.tex", s);
+        texFile = MakeString("%s_locked.tex", s.Str());
+    } else if (!pProvider->IsCrewAvailable(s)) {
+        texFile = MakeString("%s_locked.tex", s.Str());
+    } else {
+        texFile = MakeString("%s.tex", s.Str());
     }
 
     RndMat *pMat = mDir->Find<RndMat>("crew_p1.mat", false);
