@@ -508,7 +508,7 @@
             "system/os/HDCache.cpp": "NonMatching",
             "system/os/HolmesClient.cpp": "NonMatching",
             "system/os/HolmesClient_NetSocket.cpp": "NonMatching",
-            "system/os/HolmesKeyboard.cpp": "MISSING",
+            "system/os/HolmesKeyboard.cpp": "NonMatching",
             "system/os/HolmesUtl.cpp": "NonMatching",
             "system/os/Joypad.cpp": "NonMatching",
             "system/os/JoypadClient.cpp": "NonMatching",

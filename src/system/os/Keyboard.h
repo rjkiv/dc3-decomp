@@ -11,7 +11,7 @@ void KeyboardPoll();
 void KeyboardSubscribe(Hmx::Object *);
 void KeyboardUnsubscribe(Hmx::Object *);
 Hmx::Object *KeyboardOverride(Hmx::Object *);
-void KeyboardSendMsg(int, bool, bool, bool);
+void KeyboardSendMsg(int key, bool shift, bool ctrl, bool alt);
 
 #include "obj/Msg.h"
 
