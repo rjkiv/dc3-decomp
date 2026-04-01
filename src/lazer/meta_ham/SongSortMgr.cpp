@@ -24,6 +24,7 @@
 #include "ui/UIPanel.h"
 #include "utl/Std.h"
 #include "utl/Symbol.h"
+#include <cstring>
 
 BEGIN_HANDLERS(SongSortMgr)
     HANDLE_ACTION(get_setlist_mode, 0)
@@ -98,7 +99,8 @@ void SongSortMgr::OnHighlightChanged() {
 
 void SongSortMgr::MarkElementsProvided(UIListProvider *prov) {
     if (prov) {
-        for (int i = 0; i < prov->NumData(); i++) {
+        int numData = prov->NumData();
+        for (int i = 0; i < numData; i++) {
             Symbol sym = prov->DataSymbol(i);
             SongSortNode *ssn =
                 dynamic_cast<SongSortNode *>(GetCurrentSort()->GetNode(sym));
@@ -201,19 +203,20 @@ bool SongSortMgr::DataIs(int i1, Symbol sym) {
 }
 
 int SongSortMgr::FirstArtistSongIndex(Symbol sym) {
+    int retval = 0;
     int dataCount = mSorts[mCurrentSortIdx]->GetDataCount();
     for (int i = 0; i < dataCount; i++) {
         SongSortNode *ssNode =
             dynamic_cast<SongSortNode *>(mSorts[mCurrentSortIdx]->GetListFromIdx(i));
         if (ssNode) {
-            Symbol artist = ssNode->GetArtist();
-            if (sym == artist) {
-                int idx = GetHeaderIndexFromChildListIndex(i);
-                return idx;
+            const char *artist = ssNode->GetArtist();
+            if (0 == strcmp(artist, sym.Str())) {
+                retval = GetHeaderIndexFromChildListIndex(i);
+                break;
             }
         }
     }
-    return 0;
+    return retval;
 }
 
 void SongSortMgr::RebuildSongRecordMap() {
@@ -242,18 +245,20 @@ Symbol SongSortMgr::MoveOn() {
         static Symbol move_on_quickplay("move_on_quickplay");
         UIPanel *songSelectPanel =
             ObjectDir::Main()->Find<UIPanel>("song_select_panel", true);
-        static Message move_on_quickplay_msg("move_on_quickplay");
-        songSelectPanel->HandleType(move_on_quickplay_msg);
+        static Message msg("move_on_quickplay");
+        songSelectPanel->HandleType(msg);
         return gNullStr;
-    } else if (song_select_story == mode || song_select_practice == mode
-               || mode == song_select_jukebox) {
-        Symbol ready_screen("ready_screen");
-        const DataNode *prop = TheGameMode->Property(ready_screen);
-        return prop->Sym();
-    } else {
-        MILO_FAIL("Unknown song_select_mode\n");
-        return gNullStr;
+    } else if (song_select_story != mode && song_select_practice != mode) {
+        if (mode == song_select_jukebox) {
+            return TheGameMode->Property("ready_screen")->Sym();
+        } else {
+            MILO_FAIL("Unknown song_select_mode\n");
+            return gNullStr;
+        }
     }
+    // idk why its like this but it matches (i tried so many other ways to write this but
+    // this works)
+    return TheGameMode->Property("ready_screen")->Sym();
 }
 
 void SongSortMgr::OnEnter() {

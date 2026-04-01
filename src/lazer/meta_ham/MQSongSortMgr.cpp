@@ -9,6 +9,7 @@
 #include "ProfileMgr.h"
 #include "obj/Dir.h"
 #include "utl/Std.h"
+#include "utl/Symbol.h"
 
 MQSongSortMgr::MQSongSortMgr(SongPreview &sp) : NavListSortMgr(sp) {
     SetName("mq_song_provider", ObjectDir::Main());
@@ -83,8 +84,9 @@ void MQSongSortMgr::UpdateList() {
         }
     }
     FOREACH (it, unk78) {
+        auto &vec = it->second;
         unk90.push_back(it->first);
-        FOREACH (it2, it->second) {
+        FOREACH (it2, vec) {
             unk90.push_back(*it2);
         }
     }

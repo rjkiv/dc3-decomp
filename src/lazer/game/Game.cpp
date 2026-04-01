@@ -17,6 +17,7 @@
 #include "gesture/SkeletonUpdate.h"
 #include "hamobj/CharFeedback.h"
 #include "hamobj/Difficulty.h"
+#include "hamobj/HamAudio.h"
 #include "hamobj/HamDirector.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamMaster.h"
@@ -560,8 +561,9 @@ void Game::LoadNewSongMoves(Symbol s1, bool b2) {
     Symbol s50 = TheMaster->GetAudio()->Name();
     if (b2 || song != s1 || s50 != song) {
         TheGameData->SetSong(s1);
-        const char *milo = MakeString("%s.milo", TheHamSongMgr.SongPath(s1, 0));
-        if (b2) {
+        auto songPath = TheHamSongMgr.SongPath(s1, 0);
+        const char *milo = MakeString("%s.milo", songPath);
+        if (loaded) {
             static Symbol song("song");
             FileMerger *fm = TheHamDirector->GetWorld()->Find<FileMerger>("world.fm");
             FileMerger::Merger *merger = fm->FindMerger(song, true);
@@ -574,11 +576,13 @@ void Game::LoadNewSongMoves(Symbol s1, bool b2) {
 
 void Game::LoadNewSong(Symbol s1, Symbol s2) {
     bool loaded = TheGame->IsLoaded();
-    if (s2.Null()) {
+    bool isNull = s2.Null();
+    if (isNull) {
         s2 = s1;
     }
     unka4 = 5;
     if (loaded) {
+        TheHamDirector->SetUnk2AC(false);
     }
     unk5d = false;
     static Symbol cascade("cascade");
@@ -586,7 +590,8 @@ void Game::LoadNewSong(Symbol s1, Symbol s2) {
     unk5d = TheGameMode->Property("use_movegraph")->Int();
     if (s1 != s2) {
         RELEASE(mSongInfo);
-        mSongInfo = new SongInfoCopy(TheHamSongMgr.SongMgr::SongAudioData(s2));
+        auto songInfo = new SongInfoCopy(TheHamSongMgr.SongMgr::SongAudioData(s2));
+        mSongInfo = songInfo;
         mMaster->LoadOnlySongData(mSongInfo, true, (HamSongDataValidate)0);
         MultiTempoTempoMap *other =
             static_cast<MultiTempoTempoMap *>(HamSongData::sInstance->GetTempoMap());
@@ -607,9 +612,8 @@ void Game::LoadNewSong(Symbol s1, Symbol s2) {
 
 void Game::PauseForSkeletonLoss() {
     if (!mPaused) {
-        int gestureVal = TheGestureMgr->GetVal425C();
-        if (gestureVal != 0 && gestureVal != 1 && !TheSynth->HasPendingVoices()
-            && !TheUI->InTransition()) {
+        if (TheGestureMgr->GetVal425C() != 0 && TheGestureMgr->GetVal425C() != 1
+            && !TheSynth->HasPendingVoices() && !TheUI->InTransition()) {
             static Message pauseOnSkeletonLossMsg("pause_on_skeleton_loss");
             DataNode handled = TheGamePanel->HandleType(pauseOnSkeletonLossMsg);
             if (handled.Type() == kDataInt && handled.Int() <= 0) {
@@ -706,6 +710,83 @@ DataNode Game::OnResetDetection(DataArray *a) {
     return 0;
 }
 
+bool Game::HandleWait() {
+    if (unka4 != unka8) {
+        unka8 = unka4;
+    }
+    if (unka4 != 0) {
+        if (unka4 == 3 && unk60
+            && TheTaskMgr.Seconds(TaskMgr::TimeReference::kRealTime) < 0.0f) {
+            return true;
+        }
+        HamAudio *pAudio = mMaster->GetAudio();
+        if (pAudio->Fail()) {
+            return true;
+        }
+        if (!pAudio->IsReady()) {
+            TheSynth->Poll();
+            return false;
+        }
+        switch (unka4) {
+        case 0:
+            MILO_ASSERT(false, 0x555);
+            break;
+        case 1:
+            PostWaitStart();
+            break;
+        case 2:
+            PostWaitJump();
+            break;
+        case 3:
+            PostWaitRestart();
+            break;
+        case 4:
+            PostWaitRestart();
+            PostWaitStart();
+            break;
+        case 5:
+            if (!TheMaster->SongData()->GetTempoMap()) {
+                return false;
+            }
+            if (!TheMaster->GetAudio()->IsReady()) {
+                return false;
+            }
+            if (!TheHamDirector->IsWorldLoaded()) {
+                return false;
+            }
+            if (TheHamDirector->GetGameModeMerger()->HasPendingFiles()) {
+                return false;
+            }
+            FileMerger *pWorldMerger =
+                TheHamDirector->GetWorld()->Find<FileMerger>("world.fm");
+            if (pWorldMerger->HasPendingFiles()) {
+                return false;
+            }
+            MoveDir *pMoveDir = TheHamDirector->GetWorld()->Find<MoveDir>("moves", false);
+            if (!pMoveDir) {
+                return false;
+            }
+            mMoveDir = TheHamDirector->GetWorld()->Find<MoveDir>("moves");
+            mMoveDir->Enter();
+            mMoveDir->ResetDetection();
+            TheHamDirector->SetupAnims();
+            if (unkac) {
+                TheHamDirector->RemapSongAnimToTempoMap(unkac);
+                RELEASE(unkac);
+            }
+            TheSongSequence.OnSongLoaded();
+            TheHamDirector->SetUnk2AC(true);
+            if (unka4 == 5) {
+                unka4 = 0;
+            }
+            return false;
+            break;
+        }
+        unka4 = 0;
+    }
+    return true;
+}
+
 DataNode OnToggleMoveOverlay(DataArray *a) {
     sMoveOverlayToggle = !sMoveOverlayToggle;
     if (TheGame && TheGame->GetMoveDir()) {
@@ -717,15 +798,27 @@ DataNode OnToggleMoveOverlay(DataArray *a) {
 DataNode OnToggleAutoplay(DataArray *a) {
     HamPlayerData *player_data = TheGameData->Player(a->Int(1));
     MILO_ASSERT(player_data, 0x6F);
+    Symbol s;
     if (!player_data->IsAutoplaying()) {
-        player_data->SetAutoplay(sAutoplayStates[0]);
+        s = sAutoplayStates[0];
     } else {
-        player_data->SetAutoplay(gNullStr);
+        s = gNullStr;
     }
+    player_data->SetAutoplay(s);
     return player_data->IsAutoplaying();
 }
 
-DataNode OnCycleAutoplay(DataArray *);
+DataNode OnCycleAutoplay(DataArray *a) {
+    HamPlayerData *player_data = TheGameData->Player(a->Int(1));
+    MILO_ASSERT(player_data, 0x7e);
+    Symbol s;
+    if (!player_data->IsAutoplaying()) {
+        s = sAutoplayStates.back();
+    } else {
+    }
+    player_data->SetAutoplay(s);
+    return s;
+}
 
 DataNode OnToggleCharFeedback(DataArray *a) {
     ReserveFrames();

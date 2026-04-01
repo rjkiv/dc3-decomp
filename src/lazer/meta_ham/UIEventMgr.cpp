@@ -1,4 +1,5 @@
 #include "meta_ham/UIEventMgr.h"
+#include "macros.h"
 #include "meta_ham/EventDialogPanel.h"
 #include "meta_ham/HamUI.h"
 #include "obj/Data.h"
@@ -126,8 +127,8 @@ void UIEventMgr::DismissEvent(Symbol s1) {
     MILO_ASSERT(mEventQueue.front()->mActive, 0x2E);
     Symbol curEvent = CurrentEvent();
     EventType t = mEventQueue.front()->mType;
-    RELEASE(mEventQueue.front());
-    mEventQueue.clear();
+    delete mEventQueue.front();
+    mEventQueue.erase(mEventQueue.begin());
     if (t == 0) {
         static EventDialogDismissMsg dismiss_msg(gNullStr, gNullStr);
         dismiss_msg[0] = curEvent;
@@ -142,7 +143,7 @@ void UIEventMgr::DismissEvent(Symbol s1) {
 void UIEventMgr::TriggerEvent(Symbol s1, DataArray *a2) {
     if (!TheUI->InTransition()) {
         UIScreen *curScreen = TheUI->CurrentScreen();
-        if (curScreen) {
+        if (TheUI->CurrentScreen()) {
             static Message msg("allow_event", 0);
             msg[0] = s1;
             DataNode handled = curScreen->HandleType(msg);
@@ -152,17 +153,31 @@ void UIEventMgr::TriggerEvent(Symbol s1, DataArray *a2) {
         }
     }
 
-    // while loop here
+    while (!mEventQueue.empty()) {
+        BandEvent *event = mEventQueue.back();
+        if (event->mType) {
+            break;
+        }
+        if (mEventQueue.size() == 1 && event->mActive) {
+            DismissEvent(s1);
+        } else {
+            RELEASE(event);
+            mEventQueue.pop_back();
+        }
+    }
 
     static Symbol dialog_events("dialog_events");
     static Symbol transition_events("transition_events");
-    DataArray *eventArr =
-        TypeDef()->FindArray(dialog_events)->FindArray(dialog_events, false);
-    bool noDialogEvents = !eventArr;
-    if (!eventArr) {
+    DataArray *dialogArray = TypeDef()->FindArray(dialog_events);
+    DataArray *eventArr = dialogArray->FindArray(s1, false);
+    EventType eventType;
+    if (eventArr) {
+        eventType = (EventType)0;
+    } else {
         eventArr = TypeDef()->FindArray(transition_events, s1);
+        eventType = (EventType)1;
     }
-    mEventQueue.push_back(new BandEvent((EventType)noDialogEvents, eventArr, a2));
+    mEventQueue.push_back(new BandEvent(eventType, eventArr, a2));
     if (mEventQueue.size() == 1) {
         ActivateFirstEvent();
     }

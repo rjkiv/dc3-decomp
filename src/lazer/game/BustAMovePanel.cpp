@@ -128,17 +128,9 @@ bool BustAMovePanel::InBustAMove() {
 Symbol BustAMovePanel::GetPlayerColor(int i1) {
     static Symbol is_in_party_mode("is_in_party_mode");
     if (TheHamProvider->Property(is_in_party_mode)->Int()) {
-        if (TheGameData->Player(i1)->Side() == kSkeletonRight) {
-            return "pink";
-        } else {
-            return "blue";
-        }
+        return TheGameData->Player(i1)->Side() == kSkeletonRight ? "pink" : "blue";
     }
-    if (i1 == 0) {
-        return "pink";
-    } else {
-        return "blue";
-    }
+    return i1 == 0 ? "pink" : "blue";
 }
 
 MoveRating BustAMovePanel::GetMoveRating(float f1) {
@@ -157,12 +149,13 @@ void BustAMovePanel::SetFlashcardText(int side, int index, Symbol s3) {
     HamLabel *label =
         mBAMColumns[side]->Find<HamLabel>(MakeString("flashcard_%d.lbl", index));
     label->SetTextToken(s3);
-    label = mBAMColumns[side == 0]->Find<HamLabel>(MakeString("flashcard_%d.lbl", index));
+    HamLabel *label2 =
+        mBAMColumns[side == 0]->Find<HamLabel>(MakeString("flashcard_%d.lbl", index));
     if (mState == kBAMState_ShowMoveSequence
         || mState == kBAMState_ShowMoveSequenceSetup) {
-        label->SetTextToken(s3);
+        label2->SetTextToken(s3);
     } else {
-        label->SetTextToken(gNullStr);
+        label2->SetTextToken(gNullStr);
     }
 }
 
@@ -198,21 +191,23 @@ void BustAMovePanel::ResetScores() {
 }
 
 void BustAMovePanel::SetFlashcardName(int side, int index, int i3) {
-    Symbol s(gNullStr);
+    // int flashCardIdx = index;
+    Symbol s = gNullStr;
     if (i3 >= 0) {
-        s = GetMoveNameData(i3)->Sym(1);
+        Symbol moveName = GetMoveNameData(i3)->Sym(1);
+        s = moveName;
     }
     HamLabel *label =
         mBAMColumns[side]->Find<HamLabel>(MakeString("flashcard_name_%d.lbl", index));
     label->SetTextToken(s);
-    label = mBAMColumns[side == 0]->Find<HamLabel>(
+    HamLabel *label2 = mBAMColumns[side == 0]->Find<HamLabel>(
         MakeString("flashcard_name_%d.lbl", index)
     );
     if (mState == kBAMState_ShowMoveSequence
         || mState == kBAMState_ShowMoveSequenceSetup) {
-        label->SetTextToken(s);
+        label2->SetTextToken(s);
     } else {
-        label->SetTextToken(gNullStr);
+        label2->SetTextToken(gNullStr);
     }
 }
 
@@ -593,6 +588,35 @@ void BustAMovePanel::Poll() {
     } else if (mState == kBAMState_ShowMoveSequence) {
     } else {
     }
+}
+
+void BustAMovePanel::SetUpSongStructure(Symbol s) {
+    mSongStructure.clear();
+    BustAMoveData *pBAMData =
+        TheGame->GetMoveDir()->Find<BustAMoveData>("BustAMoveData.bam", false);
+    if (pBAMData) {
+        for (int i = 0; i < pBAMData->PhraseSize(); i++) {
+            for (int j = 0; j < pBAMData->PhraseAt(i)->count; j++) {
+                int bars = pBAMData->PhraseAt(i)->bars;
+                mSongStructure.push_back(bars);
+            }
+        }
+    } else {
+        for (int i = 0; i < 8; i++) {
+            mSongStructure.push_back(4);
+        }
+        TheKnownIssues.Display("bustamove_wrong_song", 5.0f);
+    }
+    MILO_ASSERT(mSongStructure.size() >= 2, 0x62c);
+    unk68 = mSongStructure[0];
+    unk988 = unk68 + 4;
+    float total = 0.0f;
+    for (int i = 1; i < mSongStructure.size(); i++) {
+        total += mSongStructure[i];
+    }
+    unk958 = unk68 * 4.0f;
+    unk95c = total * 4.0f + unk958;
+    TheMaster->GetAudio()->SetLoop(unk958, unk95c);
 }
 
 void BustAMovePanel::OnBeat() {

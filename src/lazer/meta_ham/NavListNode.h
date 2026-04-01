@@ -2,6 +2,7 @@
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/DateTime.h"
+#include "os/Debug.h"
 #include "ui/UILabel.h"
 #include "ui/UIListLabel.h"
 #include "utl/Symbol.h"
@@ -24,19 +25,58 @@ public:
     virtual ~NavListItemSortCmp() {}
     virtual int Compare(const NavListItemSortCmp *, NavListNodeType) const = 0;
     virtual bool HasSubheader() const { return false; }
-    virtual const class DifficultyCmp *GetDifficultyCmp() const; // 0xc
-    virtual const class SongCmp *GetSongCmp() const; // 0x10
-    virtual const class ArtistCmp *GetArtistCmp() const; // tentative
-    virtual const class DecadeCmp *GetDecadeCmp() const; // tentative
-    virtual const class VenueCmp *GetVenueCmp() const; // tentative
-    virtual const class DateCmp *GetDateCmp() const; // tentative
-    virtual const class LocationCmp *GetLocationCmp() const; // tentative - 0x24
-    virtual const class AlbumCmp *GetAlbumCmp() const; // tentative
-    virtual const class VocalPartsCmp *GetVocalPartsCmp() const; // tentative
-    virtual const class PlaylistTypeCmp *GetPlaylistTypeCmp() const; // 0x30
-    virtual const class ChallengeScoreCmp *GetChallengeScoreCmp() const;
-    virtual const class MQSongCharCmp *GetMQSongCharCmp() const; // tentative
-    virtual const class FitnessCalorieSortCmp *GetFitnessCalorieSortCmp() const;
+    virtual const class DifficultyCmp *GetDifficultyCmp() const {
+        MILO_FAIL("Conversion to the wrong type\n");
+        return nullptr;
+    } // 0xc
+    virtual const class SongCmp *GetSongCmp() const {
+        MILO_FAIL("Conversion to the wrong type\n");
+        return nullptr;
+    } // 0x10
+    virtual const class ArtistCmp *GetArtistCmp() const {
+        MILO_FAIL("Conversion to the wrong type\n");
+        return nullptr;
+    } // tentative
+    virtual const class DecadeCmp *GetDecadeCmp() const {
+        MILO_FAIL("Conversion to the wrong type\n");
+        return nullptr;
+    } // tentative
+    virtual const class VenueCmp *GetVenueCmp() const {
+        MILO_FAIL("Conversion to the wrong type\n");
+        return nullptr;
+    } // tentative
+    virtual const class DateCmp *GetDateCmp() const {
+        MILO_FAIL("Conversion to the wrong type\n");
+        return nullptr;
+    } // tentative
+    virtual const class LocationCmp *GetLocationCmp() const {
+        MILO_FAIL("Conversion to the wrong type\n");
+        return nullptr;
+    } // tentative - 0x24
+    virtual const class AlbumCmp *GetAlbumCmp() const {
+        MILO_FAIL("Conversion to the wrong type\n");
+        return nullptr;
+    } // tentative
+    virtual const class VocalPartsCmp *GetVocalPartsCmp() const {
+        MILO_FAIL("Conversion to the wrong type\n");
+        return nullptr;
+    } // tentative
+    virtual const class PlaylistTypeCmp *GetPlaylistTypeCmp() const {
+        MILO_FAIL("Conversion to the wrong type\n");
+        return nullptr;
+    } // 0x30
+    virtual const class ChallengeScoreCmp *GetChallengeScoreCmp() const {
+        MILO_FAIL("Conversion to the wrong type\n");
+        return nullptr;
+    } // 0x34
+    virtual const class MQSongCharCmp *GetMQSongCharCmp() const {
+        MILO_FAIL("Conversion to the wrong type\n");
+        return nullptr;
+    } // tentative
+    virtual const class FitnessCalorieSortCmp *GetFitnessCalorieSortCmp() const {
+        MILO_FAIL("Conversion to the wrong type\n");
+        return nullptr;
+    } // 0x3c
 };
 
 class NavListNode : public Hmx::Object {

@@ -33,7 +33,7 @@ void ChallengeSort::SetHighlightedIx(int idx) {
     unk54 = unk50;
     if (idx >= 0) {
         if (mList.size() >= idx) {
-            if (mList.empty())
+            if (mList.size() == 0)
                 return;
             unk50 = mList[idx];
             TheChallengeSortMgr->OnHighlightChanged();

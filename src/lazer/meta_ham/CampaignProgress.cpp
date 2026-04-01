@@ -386,8 +386,7 @@ void CampaignProgress::SetEraIntroMoviePlayed(Symbol era, bool played) {
 bool CampaignProgress::IsEraSongAvailable(Symbol era, Symbol song) const {
     CampaignEra *pEra = TheCampaign->GetCampaignEra(era);
     MILO_ASSERT(pEra, 810);
-    Symbol craze = pEra->GetDanceCrazeSong();
-    if (song == craze) {
+    if (song == pEra->GetDanceCrazeSong()) {
         CampaignEraProgress *pEraProgress = GetEraProgress(era);
         if (pEraProgress) {
             return pEraProgress->IsMastered();
@@ -464,7 +463,8 @@ Symbol CampaignProgress::GetFirstIncompleteEra() const {
     FOREACH (it, eras) {
         CampaignEra *pEra = *it;
         MILO_ASSERT(pEra, 0x3E6);
-        CampaignEraProgress *progress = GetEraProgress(era = pEra->GetName());
+        era = pEra->GetName();
+        CampaignEraProgress *progress = GetEraProgress(era);
         bool canContinue = progress ? progress->IsEraComplete() : false;
         if (!canContinue)
             break;

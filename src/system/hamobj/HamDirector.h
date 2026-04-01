@@ -26,6 +26,7 @@
 #include "utl/MemMgr.h"
 #include "utl/Song.h"
 #include "utl/Symbol.h"
+#include "utl/TempoMap.h"
 #include "world/CameraManager.h"
 #include "world/Dir.h"
 
@@ -131,6 +132,7 @@ public:
     void CleanOriginalMoveData();
     float BeatFromTag(Symbol);
     void UnloadMergers();
+    void RemapSongAnimToTempoMap(TempoMap *);
 
     void DrawIconMan(Symbol, Symbol, Symbol, float, float, RndTex *);
     void DrawIconMan(Difficulty, float, float, float, float, RndTex *);
@@ -144,6 +146,7 @@ public:
     FileMerger *GetGameModeMerger() const { return mGameModeMerger; }
     void SetPickingDisabled(bool disable) { mDisablePicking = disable; }
     bool Unk33d() const { return unk33d; }
+    void SetUnk2AC(bool b) { unk2ac = b; }
 
     DataNode OnGetDancerVisemes(DataArray *);
 

@@ -340,6 +340,7 @@ void Campaign::ConfigureCampaignData(DataArray *i_pConfig) {
     mIntroCrew = gNullStr;
 
     static Symbol campaign_intro("campaign_intro");
+
     DataArray *pIntroArray = i_pConfig->FindArray(campaign_intro);
     MILO_ASSERT(pIntroArray, 0x94);
     pIntroArray->FindData(venue, mIntroVenue, false);

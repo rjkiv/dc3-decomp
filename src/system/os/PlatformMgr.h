@@ -157,6 +157,7 @@ PlatformRegion SymbolToPlatformRegion(Symbol);
 
 DECLARE_MESSAGE(PlatformMgrOpCompleteMsg, "platform_mgr_op_complete_msg")
 PlatformMgrOpCompleteMsg(bool b1) : Message(Type(), b1) {}
+int Success() const { return mData->Int(2); }
 END_MESSAGE
 
 // arg here is a bool
