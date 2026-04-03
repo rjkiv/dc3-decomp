@@ -24,6 +24,7 @@
 #include "ui/UIPanel.h"
 #include "utl/Std.h"
 #include "utl/Symbol.h"
+#include <cstdlib>
 #include <cstring>
 
 BEGIN_HANDLERS(SongSortMgr)
@@ -141,8 +142,8 @@ void SongSortMgr::OnSetlistChanged() {
     mSorts[mCurrentSortIdx]->BuildItemList();
     mSorts[mCurrentSortIdx]->UpdateHighlight();
     static Symbol refresh_setlist("refresh_setlist");
-    static Message refresh_setlist_msg(refresh_setlist);
-    TheUI->Handle(refresh_setlist_msg, false);
+    static Message msg(refresh_setlist);
+    TheUI->Handle(msg, false);
 }
 
 void SongSortMgr::OnSetlistModeChanged() {
@@ -150,26 +151,16 @@ void SongSortMgr::OnSetlistModeChanged() {
     mSorts[mCurrentSortIdx]->UpdateHighlight();
 
     static Symbol on_change_setlist_mode("on_change_setlist_mode");
-    static Message on_change_setlist_mode_msg(on_change_setlist_mode);
-    TheUI->Handle(on_change_setlist_mode_msg, false);
+    static Message msg(on_change_setlist_mode);
+    TheUI->Handle(msg, false);
 
     static Symbol update_held_buttons("update_held_buttons");
-    static Message update_held_buttons_msg(update_held_buttons);
-    TheUI->Handle(update_held_buttons_msg, false);
+    static Message held_button_msg(update_held_buttons);
+    TheUI->Handle(held_button_msg, false);
 }
 
 Symbol SongSortMgr::DetermineHeaderSymbolForSong(Symbol sym) {
     return static_cast<SongSort *>(GetCurrentSort())->DetermineHeaderSymbolFromSong(sym);
-}
-
-void SongSortMgr::SetQuasiRandomSong() {
-    int numIndices = unk94.size();
-    MILO_ASSERT(numIndices > 0, 0x175);
-
-    int val = unk94[rand() % (numIndices / 2)];
-    unk94.clear();
-    unk94.push_back(val);
-    MetaPerformer::Current()->SetSong(mSorts[mCurrentSortIdx]->DataSymbol(val));
 }
 
 bool SongSortMgr::HeadersSelectable() {
@@ -293,4 +284,45 @@ void SongSortMgr::SetSetlistMode(bool b) {
         MetaPerformer::Current()->ResetSongs();
     }
     OnSetlistModeChanged();
+}
+
+void SongSortMgr::SetQuasiRandomSong() {
+    int numIndices = unk94.size();
+    MILO_ASSERT(numIndices > 0, 0x175);
+
+    int randVal = rand() % (numIndices / 2);
+    int val = unk94[randVal];
+    unk94.erase(unk94.begin() + randVal);
+    unk94.push_back(val);
+
+    NavListSortNode *node = mSorts[mCurrentSortIdx]->GetListFromIdx(val);
+    MetaPerformer *performer = MetaPerformer::Current();
+    performer->SetSong(node->GetToken());
+}
+
+void SongSortMgr::SetupQuasiRandomSongs() {
+    int datacount = mSorts[mCurrentSortIdx]->GetDataCount();
+    int *tempArr = new int[datacount];
+    unk94.clear();
+
+    for (int i = 0; i < datacount; i++) {
+        tempArr[i] = i;
+    }
+
+    for (int i = datacount; i > 0; i--) {
+        int random = rand() % i;
+        int val = tempArr[random];
+        SongSortNode *sortNode =
+            dynamic_cast<SongSortNode *>(mSorts[mCurrentSortIdx]->GetListFromIdx(val));
+        if (sortNode) {
+            if (!sortNode->IsMedley() && !sortNode->IsFake()
+                && TheProfileMgr.IsContentUnlocked(sortNode->Record()->ShortName())) {
+                unk94.push_back(val);
+            }
+        }
+        tempArr[random] = tempArr[i - 1];
+    }
+
+    delete tempArr;
+    SetQuasiRandomSong();
 }

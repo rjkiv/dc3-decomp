@@ -37,3 +37,6 @@ class SyncAvailableDynamicPlaylistsJob : public RCJob {
 public:
     SyncAvailableDynamicPlaylistsJob(Hmx::Object *, char const *, int);
 };
+
+void GetPlaylist(JsonConverter &, JsonObject const *, CustomPlaylist *);
+void GetPlaylists(JsonConverter &, JsonObject const *, std::vector<CustomPlaylist> *);

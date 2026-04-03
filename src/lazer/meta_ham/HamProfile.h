@@ -128,8 +128,8 @@ public:
     bool GetUnk360() const { return unk360; }
     void SetUnk388(Symbol s) { unk338 = s; }
     Symbol GetUnk388() const { return unk338; }
-    void SetUnk324(int i) { unk324 = i; }
-    int GetUnk324() const { return unk324; }
+    void SetChallengeTimestamp(int i) { mChallengeTimeStamp = i; }
+    int GetChallengeTimestamp() const { return mChallengeTimeStamp; }
     void SetUnk334(bool b) { unk334 = b; }
     bool GetUnk334() const { return unk334; }
     int GetUnk330() const { return unk330; }
@@ -168,7 +168,7 @@ private:
     OnlineID *mOnlineID; // 0x318
     bool mSignedIn; // 0x31c
     int unk320;
-    int unk324; // 0x324 - challenge timestamp?
+    int mChallengeTimeStamp; // 0x324 - challenge timestamp?
     int mSkippedSongCount; // 0x328
     int unk32c;
     int unk330;

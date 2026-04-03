@@ -120,6 +120,7 @@ public:
     bool NoFlashcards() const { return mNoFlashcards; }
     bool GetAllUnlocked() { return mAllUnlocked; }
     HamProfile *CriticalProfile() const { return mCriticalProfile; }
+    void SetCriticalProfile(HamProfile *profile) { mCriticalProfile = profile; }
     bool DisableVoice() const { return mDisableVoice; }
 
     int GetUnk4c() { return unk4c; }

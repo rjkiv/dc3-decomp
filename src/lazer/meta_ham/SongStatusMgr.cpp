@@ -255,7 +255,7 @@ void SongStatusMgr::GetScoresToUpload(std::list<SongStatusData> &data) {
     FOREACH (it, mSongStatusMap) {
         SongStatus cur = it->second;
         for (int i = 0; i < 4; i++) {
-            if (cur.mStatusData[i].unk10 != false) {
+            if (cur.mStatusData[i].unk10) {
                 data.push_back(cur.mStatusData[i]);
             }
         }

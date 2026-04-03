@@ -28,6 +28,7 @@
 #include "obj/Msg.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "os/Joypad.h"
 #include "os/PlatformMgr.h"
 #include "os/System.h"
 #include "os/User.h"
@@ -36,6 +37,9 @@
 #include "stl/_vector.h"
 #include "synth/FxSend.h"
 #include "synth/Synth.h"
+#include "ui/UI.h"
+#include "ui/UIPanel.h"
+#include "ui/UIScreen.h"
 #include "utl/MemMgr.h"
 #include "utl/Std.h"
 #include "utl/Symbol.h"
@@ -406,20 +410,20 @@ void ProfileMgr::SetOverscan(bool overscan) {
 }
 
 float ProfileMgr::GetSongToTaskMgrMs(LagContext lc) const {
+    int x;
     switch (lc) {
     case kPractice90:
-        return mSongToTaskMgrMs - unk34 - 0x46;
+        x = 70;
+        break;
     case kPractice80:
-    case kPractice70:
+        x = 55;
+        break;
     default:
+        x = (lc == kPractice70) ? 35 : 0;
         break;
     }
-    return 0;
+    return mSongToTaskMgrMs - unk34 - x;
 }
-
-// bool ProfileMgr::IsUnlockableContent(Symbol s) const {
-//   return TheAccomplishmentMgr.IsUnlockableAsset(s);
-// }
 
 HamProfile *ProfileMgr::GetProfileFromPad(int pad) const {
     HamProfile *ret = nullptr;
@@ -752,7 +756,7 @@ bool ProfileMgr::HasActiveProfileWithInvalidSaveData() const {
         MILO_ASSERT(pActivePlayer, 0x5c2);
         HamProfile *pProfileFromPad =
             TheProfileMgr.GetProfileFromPad(pActivePlayer->PadNum());
-        if (pProfileFromPad && !pProfile->HasValidSaveData())
+        if (pProfileFromPad && !pProfileFromPad->HasValidSaveData())
             return true;
     }
     return false;
@@ -832,15 +836,17 @@ bool ProfileMgr::IsDifficultyUnlocked(Symbol s1, Symbol s2) const {
 bool ProfileMgr::IsContentUnlocked(Symbol s) const {
     if (MetaPanel::sUnlockAll) {
         return true;
-    } else {
-        FOREACH (it, unk90) {
-            HamProfile *profile = *it;
-            MILO_ASSERT(profile, 0x680);
-            if (profile->IsContentUnlockedForProfile(s)) {
-                return true;
-            }
+    } else if (!TheAccomplishmentMgr->IsUnlockableAsset(s)) {
+        return true;
+    }
+    FOREACH (it, unk90) {
+        HamProfile *profile = *it;
+        MILO_ASSERT(profile, 0x680);
+        if (profile->IsContentUnlockedForProfile(s)) {
+            return true;
         }
     }
+
     return false;
 }
 
@@ -879,26 +885,31 @@ void ProfileMgr::TriggerSignoutEvent() {
 }
 
 HamProfile *ProfileMgr::GetActiveProfile(bool b) const {
-    ShellInput *pShellInput = TheHamUI.GetShellInput();
-    if (CriticalProfile()) {
-        MILO_ASSERT(pShellInput, 0x565);
-        SkeletonChooser *pSkeletonChooser = pShellInput->GetSkeletonChooser();
-        MILO_ASSERT(pSkeletonChooser, 0x568);
-        int index = pSkeletonChooser->Unk3C();
-        HamPlayerData *pActivePlayer = TheGameData->Player(index);
-        MILO_ASSERT(pActivePlayer, 0x56c);
-        HamProfile *pProfileFromPad =
-            TheProfileMgr.GetProfileFromPad(pActivePlayer->PadNum());
-        if (!pProfileFromPad || !pProfileFromPad->HasValidSaveData()) {
-            HamPlayerData *pOtherPlayer = TheGameData->Player(index == 0);
-            MILO_ASSERT(pOtherPlayer, 0x579);
-            HamProfile *pOtherPlayerFromPad =
-                TheProfileMgr.GetProfileFromPad(pOtherPlayer->PadNum());
-            if (!b || pOtherPlayerFromPad || !pOtherPlayerFromPad->HasValidSaveData()) {
-                return pOtherPlayerFromPad;
-            }
-        }
+    HamProfile *criticalProfile = TheProfileMgr.CriticalProfile();
+    if (criticalProfile) {
+        return criticalProfile;
     }
+
+    ShellInput *pShellInput = TheHamUI.GetShellInput();
+    MILO_ASSERT(pShellInput, 0x565);
+    SkeletonChooser *pSkeletonChooser = pShellInput->GetSkeletonChooser();
+    MILO_ASSERT(pSkeletonChooser, 0x568);
+    int index = pSkeletonChooser->Unk3C();
+    HamPlayerData *pActivePlayer = TheGameData->Player(index);
+    MILO_ASSERT(pActivePlayer, 0x56c);
+    int padNum = pActivePlayer->PadNum();
+    HamProfile *pProfileFromPad = TheProfileMgr.GetProfileFromPad(padNum);
+    if (pProfileFromPad && pProfileFromPad->HasValidSaveData()) {
+        return pProfileFromPad;
+    }
+    HamPlayerData *pOtherPlayer = TheGameData->Player(index == 0);
+    MILO_ASSERT(pOtherPlayer, 0x579);
+    HamProfile *pOtherPlayerFromPad =
+        TheProfileMgr.GetProfileFromPad(pOtherPlayer->PadNum());
+    if (b && pOtherPlayerFromPad && pOtherPlayerFromPad->HasValidSaveData()) {
+        return pOtherPlayerFromPad;
+    }
+
     return nullptr;
 }
 
@@ -1013,4 +1024,61 @@ void ProfileMgr::LoadGlobalOptions(FixedSizeSaveableStream &fs) {
         unk84 = (int)temp84;
     }
     PushAllOptions();
+}
+
+DataNode ProfileMgr::OnMsg(SigninChangedMsg const &msg) {
+    int mask = msg.GetMask();
+    int changedMask = msg.GetChangedMask();
+    static Symbol kick_out_on_sign_out("kick_out_on_sign_out");
+
+    bool b = false;
+
+    UIScreen *currentScreen = TheUI->CurrentScreen();
+    if (currentScreen && currentScreen->Property(kick_out_on_sign_out, false)) {
+        b = TheUI->CurrentScreen()->Property(kick_out_on_sign_out)->Int() != 0;
+    }
+
+    UIPanel *focusPanel = TheUI->FocusPanel();
+    if (focusPanel) {
+        UIPanel *focusP = TheUI->FocusPanel();
+        if (focusP->Property(kick_out_on_sign_out, false)) {
+            b = TheUI->FocusPanel()->Property(kick_out_on_sign_out)->Int() != 0;
+        }
+    }
+
+    if (unkb0) {
+        unkb0 = false;
+        unkb8.Stop();
+    }
+
+    for (int i = 0; i < changedMask; i++) {
+        if ((changedMask & 1) != 0) {
+            HamProfile *pProfile = GetProfileFromPad(i);
+            MILO_ASSERT(pProfile, 0x5fb);
+            pProfile->SetSaveState(kMetaProfileDelete);
+            if ((1 << (i & 0x3f) & mask) == 0) {
+                bool isCritProfile = pProfile == mCriticalProfile;
+                if (b) {
+                    for (int j = 0; j < 2; j++) {
+                        HamPlayerData *player = TheGameData->Player(j);
+                        if (player->PadNum() == i) {
+                            isCritProfile = true;
+                        }
+                    }
+                }
+                if (isCritProfile) {
+                    if (mask == 0) {
+                        unkb0 = true;
+                        unkb8.Restart();
+                    } else {
+                        TriggerSignoutEvent();
+                    }
+                }
+            }
+        }
+    }
+
+    TheGameData->UpdateAssociatedPads();
+    UpdateUsingFitnessState();
+    return 1;
 }

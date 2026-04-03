@@ -52,7 +52,8 @@ namespace {
     bool CheckContextModeProperty(const DataArray *arr) {
         MILO_ASSERT(arr->Size() == 3, 0x5B);
         DataNode &other = arr->Node(2);
-        return TheGameMode->Property(arr->Sym(1))->Equal(other, nullptr, true);
+        const DataNode *node = TheGameMode->Property(arr->Sym(1));
+        return node->Equal(other, nullptr, true);
     }
 
     bool CheckContextMode(const DataArray *a) {
@@ -146,7 +147,9 @@ namespace {
         MILO_ASSERT(player1, 0xCB);
         HamPlayerData *player2 = TheGameData->Player(1);
         MILO_ASSERT(player2, 0xCD);
-        numPlaying += (int)player1->IsPlaying();
+        if (player1->IsPlaying()) {
+            numPlaying++;
+        }
         if (player2->IsPlaying()) {
             numPlaying++;
         }
@@ -412,3 +415,7 @@ void ContextCheckerInit() {
     DataRegisterFunc("random_context_count", OnRandomContextCount);
     gContextRand.Seed(RandomInt());
 }
+
+// Only here to match in the TU
+template const char *
+MakeString<Symbol, Symbol, int>(const char *, const Symbol &, const Symbol &, const int &);

@@ -47,7 +47,7 @@ void PlaylistSongProvider::Text(
                 return;
             }
             static Symbol ellipsis("ellipsis");
-            uiLabel->SetTextToken(ellipsis);
+            pAppLabel->SetTextToken(ellipsis);
         }
     } else if (uiListLabel->Matches("song_length")) {
         static Symbol playlist_addsong("playlist_addsong");
