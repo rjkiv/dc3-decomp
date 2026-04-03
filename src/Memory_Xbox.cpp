@@ -1,212 +1,249 @@
 #include "Memory.h"
+#include "os/Debug.h"
 #include "os/System.h"
 #include "utl/MemMgr.h"
+#include "utl/MemTrack.h"
+#include "utl/MemTracker.h"
+#include "utl/Symbol.h"
+#include "utl/TextStream.h"
+#include "xdk/XAPILIB.h"
 #include "xdk/xapilibi/xbox.h"
+#include <cstdio>
+
+XALLOC_ATTRIBUTES Attr(DWORD dw) { return *reinterpret_cast<XALLOC_ATTRIBUTES *>(&dw); }
 
 namespace {
     int gPhysicalUsage;
-    char *gPhysicalType = (char *)gNullStr;
+    const char *gPhysicalType = gNullStr;
 
-    char *AllocType(unsigned long p1) {
-        bool notPhys = (p1 & 0x80000000) == 1;
-        uint type = p1 >> 0x10 & 0xff;
-
+    const char *AllocType(DWORD dwAllocAttributes) {
+        DWORD type = Attr(dwAllocAttributes).dwObjectType;
+        bool notPhys = Attr(dwAllocAttributes).dwMemoryType;
         switch (type) {
         case 0:
             if (notPhys) {
                 if (gPhysicalType != gNullStr) {
                     return gPhysicalType;
+                } else {
+                    return "XTL(phys):D3D";
                 }
-
+            } else {
                 return "XTL:D3D";
             }
-
-            return "XTL(phys):D3D";
         case 1:
-            if (notPhys) {
-                return "XTL:D3DX";
-            }
-            return "XTL(phys):D3DX";
+            return !notPhys ? "XTL:D3DX" : "XTL(phys):D3DX";
         case 2:
-            if (notPhys) {
-                return "XTL:XAUDIO";
-            }
-            return "XTL(phys):XAUDIO";
+            return !notPhys ? "XTL:XAUDIO" : "XTL(phys):XAUDIO";
         case 3:
-            if (notPhys) {
-                return "XTL:XAPI";
-            }
-            return "XTL(phys):XAPI";
+            return !notPhys ? "XTL:XAPI" : "XTL(phys):XAPI";
         case 4:
-            if (notPhys) {
-                return "XTL:XACT";
-            }
-            return "XTL(phys):XACT";
+            return !notPhys ? "XTL:XACT" : "XTL(phys):XACT";
         case 5:
-            if (notPhys) {
-                return "XTL:XBOXKERNEL";
-            }
-            return "XTL(phys):XBOXKERNEL";
+            return !notPhys ? "XTL:XBOXKERNEL" : "XTL(phys):XBOXKERNEL";
         case 6:
-            if (notPhys) {
-                return "XTL:XBDM";
-            }
-            return "XTL(phys):XBDM";
+            return !notPhys ? "XTL:XBDM" : "XTL(phys):XBDM";
         case 7:
-            if (notPhys) {
-                return "XTL:XGRAPHICS";
-            }
-            return "XTL(phys):XGRAPHICS";
+            return !notPhys ? "XTL:XGRAPHICS" : "XTL(phys):XGRAPHICS";
         case 8:
-            if (notPhys) {
-                return "XTL:XONLINE";
-            }
-            return "XTL(phys):XONLINE";
+            return !notPhys ? "XTL:XONLINE" : "XTL(phys):XONLINE";
         case 9:
-            if (notPhys) {
-                return "XTL:XVOICE";
-            }
-            return "XTL(phys):XVOICE";
+            return !notPhys ? "XTL:XVOICE" : "XTL(phys):XVOICE";
         case 10:
-            if (notPhys) {
-                return "XTL:XHV";
-            }
-            return "XTL(phys):XHV";
+            return !notPhys ? "XTL:XHV" : "XTL(phys):XHV";
         case 0xb:
-            if (notPhys) {
-                return "XTL:USB";
-            }
-            return "XTL(phys):USB";
+            return !notPhys ? "XTL:USB" : "XTL(phys):USB";
         case 0xc:
-            if (notPhys) {
-                return "XTL:XMV";
-            }
-            return "XTL(phys):XMV";
+            return !notPhys ? "XTL:XMV" : "XTL(phys):XMV";
         case 0xd:
-            if (notPhys) {
-                return "XTL:SHADERCOMPILER";
-            }
-            return "XTL(phys):SHADERCOMPILER";
+            return !notPhys ? "XTL:SHADERCOMPILER" : "XTL(phys):SHADERCOMPILER";
         case 0xe:
-            if (notPhys) {
-                return "XTL:XUI";
-            }
-            return "XTL(phys):XUI";
+            return !notPhys ? "XTL:XUI" : "XTL(phys):XUI";
         case 0xf:
-            if (notPhys) {
-                return "XTL:XASYNC";
-            }
-            return "XTL(phys):XASYNC";
+            return !notPhys ? "XTL:XASYNC" : "XTL(phys):XASYNC";
         case 0x10:
-            if (notPhys) {
-                return "XTL:XCAM";
-            }
-            return "XTL(phys):XCAM";
+            return !notPhys ? "XTL:XCAM" : "XTL(phys):XCAM";
         case 0x11:
-            if (notPhys) {
-                return "XTL:XVIS";
-            }
-            return "XTL(phys):XVIS";
+            return !notPhys ? "XTL:XVIS" : "XTL(phys):XVIS";
         case 0x12:
-            if (notPhys) {
-                return "XTL:XIME";
-            }
-            return "XTL(phys):XIME";
+            return !notPhys ? "XTL:XIME" : "XTL(phys):XIME";
         case 0x13:
-            if (notPhys) {
-                return "XTL:XFILECACHE";
-            }
-            return "XTL(phys):XFILECACHE";
+            return !notPhys ? "XTL:XFILECACHE" : "XTL(phys):XFILECACHE";
         case 0x14:
-            if (notPhys) {
-                return "XTL:XRN";
-            }
-            return "XTL(phys):XRN";
+            return !notPhys ? "XTL:XRN" : "XTL(phys):XRN";
         case 0x15:
-            if (notPhys) {
-                return "XTL:XMCORE";
-            }
-            return "XTL(phys):XMCORE";
+            return !notPhys ? "XTL:XMCORE" : "XTL(phys):XMCORE";
         case 0x16:
-            if (notPhys) {
-                return "XTL:XMASSIVE";
-            }
-            return "XTL(phys):XMASSIVE";
+            return !notPhys ? "XTL:XMASSIVE" : "XTL(phys):XMASSIVE";
         case 0x17:
-            if (notPhys) {
-                return "XTL:XAUDIO2";
-            }
-            return "XTL(phys):XAUDIO2";
+            return !notPhys ? "XTL:XAUDIO2" : "XTL(phys):XAUDIO2";
         case 0x18:
-            if (notPhys) {
-                return "XTL:XAVATAR";
-            }
-            return "XTL(phys):XAVATAR";
+            return !notPhys ? "XTL:XAVATAR" : "XTL(phys):XAVATAR";
         case 0x19:
-            if (notPhys) {
-                return "XTL:XLSP";
-            }
-            return "XTL(phys):XLSP";
+            return !notPhys ? "XTL:XLSP" : "XTL(phys):XLSP";
         case 0x1a:
-            if (notPhys) {
-                return "XTL:D3DAlloc";
-            }
-            return "XTL(phys):D3DAlloc";
+            return !notPhys ? "XTL:D3DAlloc" : "XTL(phys):D3DAlloc";
         case 0x1b:
-            if (notPhys) {
-                return "XTL:NUISPEECH";
-            }
-            return "XTL(phys):NUISPEECH";
+            return !notPhys ? "XTL:NUISPEECH" : "XTL(phys):NUISPEECH";
         case 0x1c:
-            if (notPhys) {
-                return "XTL:NuiApi";
-            }
-            return "XTL(phys):NuiApi";
+            return !notPhys ? "XTL:NuiApi" : "XTL(phys):NuiApi";
         case 0x1d:
-            if (notPhys) {
-                return "XTL:NuiIdentity";
-            }
-            return "XTL(phys):NuiIdentity";
-
+            return !notPhys ? "XTL:NuiIdentity" : "XTL(phys):NuiIdentity";
         case 0x3e:
-            if (notPhys) {
-                return "XTL:NuiApi_LargePageReadWrite";
-            }
-            return "XTL(phys):NuiApi_LargePageReadWrite";
+            return !notPhys ? "XTL:NuiApi_LargePageReadWrite"
+                            : "XTL(phys):NuiApi_LargePageReadWrite";
         default:
-            if (type < 0x80) {
-                if (notPhys) {
-                    return "XTL:Game";
-                }
-                return "XTL(phys):Game";
+            if (type <= 0x7F) {
+                return !notPhys ? "XTL:Game" : "XTL(phys):Game";
+            } else if (type >= 0xC0) {
+                return !notPhys ? "XTL:Middleware" : "XTL(phys):Middleware";
+            } else {
+                return "XTL:Unknown";
             }
-            if (0xbf < type) {
-                if (notPhys) {
-                    return "XTL:Middleware";
-                }
-                return "XTL(phys):Middleware";
-            }
-            return "XTL:Unknown";
         }
     }
 
+    int AllocAlign(DWORD);
+
+    void MemAllocFailed(unsigned long requestedBytes, bool physical) {
+        MEMORYSTATUS status;
+        char buffer[2048];
+        GlobalMemoryStatus(&status);
+        MemDeltaFullReport();
+        if (gMemTracker && !gMemTracker->GetHeapOnly()) {
+            FILE *file = fopen("devkit:\\out_of_mem_alloc_info.csv", "w");
+            if (file) {
+                MemTracker::SpitAllocInfo(file);
+                fclose(file);
+            }
+        }
+        Hx_snprintf(
+            buffer,
+            2048,
+            "Allocation failure, \"%s\", want %d bytes\n   Free (bytes) =  %8d\n   Usage (bytes) =%8d\n",
+            physical ? "physical" : "XMV",
+            requestedBytes,
+            status.dwAvailPhys,
+            gPhysicalUsage
+        );
+        MemPrintOverview(-3, &buffer[strlen(buffer)]);
+        MILO_FAIL(buffer);
+    }
+
+}
+
+PhysMemTypeTracker::PhysMemTypeTracker(Symbol type) {
+    if (gPhysicalType == gNullStr) {
+        gPhysicalType = type.Str();
+        unk0 = true;
+    } else {
+        unk0 = false;
+    }
+}
+
+PhysMemTypeTracker::~PhysMemTypeTracker() {
+    if (unk0) {
+        gPhysicalType = gNullStr;
+    }
+}
+
+void *PhysicalAlloc(int sizeBytes) {
+    void *alloc = XPhysicalAlloc(sizeBytes, -1, 0, 4);
+    if (alloc) {
+        gPhysicalUsage += XPhysicalSize(alloc);
+    } else if (sizeBytes != 0) {
+        MemAllocFailed(sizeBytes, true);
+    }
+    return alloc;
 }
 
 void PhysicalFree(void *address) {
     if (address != 0) {
         gPhysicalUsage -= XPhysicalSize(address);
     }
-
     XPhysicalFree(address);
 }
 
-void PhysicalFreeTracked(void *address, const char *p2, int p3, const char *p4) {
+void *PhysicalAllocTracked(
+    unsigned long requestedSize,
+    unsigned long u2,
+    const char *file,
+    int line,
+    const char *type
+) {
+    int actualSize = 0;
+    void *alloc = XPhysicalAlloc(requestedSize, -1, 0, u2);
+    if (alloc) {
+        actualSize = XPhysicalSize(alloc);
+        gPhysicalUsage += actualSize;
+    } else if (requestedSize != 0) {
+        MemAllocFailed(requestedSize, true);
+    }
+    MemTrackAlloc(requestedSize, actualSize, type, alloc, false, 0, file, line);
+    return alloc;
+}
+
+void PhysicalFreeTracked(void *address, const char *, int, const char *) {
     if (address != 0) {
         gPhysicalUsage -= XPhysicalSize(address);
     }
-
     XPhysicalFree(address);
     MemTrackFree(address);
 }
 
 int PhysicalUsage() { return gPhysicalUsage; }
+
+int ForceLinkXMemFuncs() { return 0x2A; }
+
+VOID *XMemAlloc(SIZE_T dwSize, DWORD dwAllocAttributes) {
+    VOID *ptr;
+    if ((dwAllocAttributes & 0x80000000) == 0
+        && (dwAllocAttributes & 0xFF0000) != 0x8C0000) {
+        MILO_ASSERT(Attr(dwAllocAttributes).dwMemoryProtect == XALLOC_MEMPROTECT_READWRITE, 0xF9);
+        ptr = _MemAllocTemp(
+            dwSize,
+            __FILE__,
+            0x107,
+            AllocType(dwAllocAttributes),
+            AllocAlign(dwAllocAttributes)
+        );
+        if (dwAllocAttributes & 0x4000) {
+            MILO_ASSERT(ptr, 0x10D);
+        }
+        if (dwAllocAttributes & 0x40000000 && ptr) {
+            memset(ptr, 0, dwSize);
+        }
+    } else {
+        ptr = XMemAllocDefault(dwSize, dwAllocAttributes);
+        if (!ptr) {
+            MemAllocFailed(dwSize, dwAllocAttributes & 0x80000000);
+        }
+        int sizeDefault = XMemSizeDefault(ptr, dwAllocAttributes);
+        gPhysicalUsage += sizeDefault;
+        MemTrackAlloc(
+            dwSize, sizeDefault, AllocType(dwAllocAttributes), ptr, false, 0, __FILE__, 0xF0
+        );
+    }
+    return ptr;
+}
+
+VOID XMemFree(LPVOID lpHandle, DWORD dwFreeAttributes) {
+    if ((dwFreeAttributes & 0x80000000) == 0
+        && (dwFreeAttributes & 0xFF0000) != 0x8C0000) {
+        MemFree(lpHandle);
+    } else {
+        if (lpHandle) {
+            gPhysicalUsage -= XMemSizeDefault(lpHandle, dwFreeAttributes);
+        }
+        MemTrackFree(lpHandle);
+        XMemFreeDefault(lpHandle, dwFreeAttributes);
+    }
+}
+
+INT XMemSize(LPVOID lpHandle, DWORD dwSizeAttributes) {
+    if ((dwSizeAttributes & 0x80000000) == 0
+        && (dwSizeAttributes & 0xFF0000) != 0x8C0000) {
+        return MemAllocSize(lpHandle);
+    } else {
+        return XMemSizeDefault(lpHandle, dwSizeAttributes);
+    }
+}

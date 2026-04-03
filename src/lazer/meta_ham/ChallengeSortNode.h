@@ -1,10 +1,12 @@
 #pragma once
 #include "ChallengeSortMgr.h"
 #include "NavListNode.h"
+#include "obj/Data.h"
 
 class ChallengeHeaderNode : public NavListHeaderNode {
 public:
     ChallengeHeaderNode(NavListItemSortCmp *, Symbol, bool);
+    virtual ~ChallengeHeaderNode() {}
     virtual void Text(UIListLabel *, UILabel *) const;
     virtual DataNode Handle(DataArray *, bool);
     virtual Symbol OnSelect();
@@ -32,6 +34,7 @@ class ChallengeSortNode : public NavListItemNode {
 public:
     ChallengeSortNode(NavListItemSortCmp *cmp, ChallengeRecord *record)
         : NavListItemNode(cmp), mChallengeRecord(record) {}
+    virtual DataNode Handle(DataArray *, bool);
     virtual Symbol GetToken() const;
     virtual void Text(UIListLabel *, UILabel *) const;
     virtual void Custom(UIListCustom *, Hmx::Object *) const;

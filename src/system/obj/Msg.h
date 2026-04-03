@@ -161,17 +161,15 @@ public:
 
     virtual ~Message() { mData->Release(); }
 
-    DataArray *mData; // 0x0
-
     operator DataArray *() const { return mData; }
     DataArray *operator->() const { return mData; }
     DataArray *Data() const { return mData; }
-
+    Symbol Type() const { return mData->Sym(1); }
+    DataNode &operator[](int idx) { return mData->Node(idx + 2); }
     void SetType(Symbol type) { mData->Node(1) = type; }
 
-    Symbol Type() const { return mData->Sym(1); }
-
-    DataNode &operator[](int idx) { return mData->Node(idx + 2); }
+protected:
+    DataArray *mData; // 0x0
 };
 
 #define DECLARE_MESSAGE(classname, type)                                                 \

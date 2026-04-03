@@ -40,7 +40,7 @@ void ButtonHolder::Poll() {
                     nullptr, kPad_L2, kAction_None, 0, false
                 );
                 PressRec &pressRec = it->GetPressRec(i);
-                if (curPadData->IsButtonInMask(pressRec.iRawButton)) {
+                if (curPadData->Pressed(pressRec.iRawButton)) {
                     if (pressRec.fPressTime > 0
                         && TheTaskMgr.UISeconds() - pressRec.fPressTime
                             >= it->mHoldTime) {

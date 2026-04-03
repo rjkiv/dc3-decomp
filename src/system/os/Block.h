@@ -11,32 +11,35 @@ public:
     bool CheckMetadata(int arknum, int blocknum) const {
         return mArkfileNum == arknum && mBlockNum == blocknum;
     }
-    const char *Buffer() const { return mBuffer; }
-    int ArkFileNum() const { return mArkfileNum; }
-    int BlockNum() const { return mBlockNum; }
-    int Timestamp() const { return mTimestamp; }
-    void SetWritten() { mWritten = true; }
-    bool Written() const { return mWritten; }
 
     MEM_OVERLOAD(Block, 0x16);
     static int CurrentTimestamp() { return sCurrTimestamp; }
 
-private:
-    static int sCurrTimestamp;
-
-    const char *mBuffer; // 0x0
+    // RB2 says it's all public
+    char *mBuffer; // 0x0
     int mArkfileNum; // 0x4
     int mBlockNum; // 0x8
     int mTimestamp; // 0xc
     bool mWritten; // 0x10
     const char *mDebugName; // 0x14
+
+private:
+    static int sCurrTimestamp;
 };
 
 class BlockRequest {
 public:
     BlockRequest(const AsyncTask &);
 
-private:
+    bool CheckMetadata(int arknum, int blocknum) const {
+        return mArkfileNum == arknum && mBlockNum == blocknum;
+    }
+
+    bool LessThan(int arknum, int blocknum) const {
+        return (arknum < mArkfileNum) || (mArkfileNum == arknum && mBlockNum > blocknum);
+    }
+
+    // same
     int mArkfileNum; // 0x0
     int mBlockNum; // 0x4
     const char *mStr; // 0x8

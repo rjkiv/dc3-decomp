@@ -1,4 +1,5 @@
 #include "meta_ham/NavListSort.h"
+#include "math/Utl.h"
 #include "meta_ham/NavListNode.h"
 #include "obj/Data.h"
 #include "obj/Msg.h"
@@ -101,10 +102,9 @@ bool NavListSort::SetHighlightID(DataArray *a) {
         auto it = std::find_if(unk3c.begin(), unk3c.end(), NodeFind(a->Sym(0)));
         if (it == unk3c.end())
             return false;
-        else {
-            unk50 = *it;
-            return true;
-        }
+        unk50 = *it;
+        return true;
+
     } else {
         auto si = std::find_if(unk30.begin(), unk30.end(), NodeFind(a->Sym(0)));
         if (si == unk30.end())
@@ -155,3 +155,8 @@ int NavListSort::GetCurrentShortcut() {
         return -1;
     }
 }
+
+// void NavListSort::ChangeHighlightHeader(int dir) {
+//     if (dir != 1 && dir != -1)
+//         MILO_ASSERT(dir == 1 || dir == -1, 0xa0);
+// }

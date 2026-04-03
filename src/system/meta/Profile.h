@@ -32,6 +32,8 @@ public:
     void SetSaveState(ProfileSaveState);
     void MakeDirty();
 
+    void SetDirty(bool b) { mDirty = b; }
+
     int GetPadNum() const;
     const char *GetName() const;
 

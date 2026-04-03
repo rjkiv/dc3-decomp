@@ -33,10 +33,10 @@ void DiffTblReport(const char *, BlockStatTable &, BlockStatTable &, TextStream 
 MemTracker::MemTracker(int x, int y)
     : mHashMem(nullptr), mHashTable(nullptr), mTimeSlice(0), mCurStatTable(0),
       mFreedInfos(y), mLog(0), mReport(0), mHeap(x) {
-    mHashMem = DebugHeapAlloc(y * 8);
+    mHashMem = (AllocInfo **)DebugHeapAlloc(y * 8);
     MILO_ASSERT(mHashMem, 0x4E);
     mHashTable = new KeylessHash<void *, AllocInfo *>(
-        x * 2, (AllocInfo *)0, (AllocInfo *)-1, (AllocInfo **)mHashMem
+        x * 2, (AllocInfo *)0, (AllocInfo *)-1, mHashMem
     );
     mFreeSysMem = _GetFreeSystemMemory();
     mFreePhysMem = _GetFreePhysicalMemory();
@@ -256,16 +256,16 @@ void MemTracker::HeapReport(TextStream &ts) {
 }
 
 void MemTracker::UpdateStats() {
-    mPoolTable[mCurStatTable].Clear();
-    mMemTable[mCurStatTable].Clear();
+    mPoolTypeStats[mCurStatTable].Clear();
+    mHeapTypeStats[mCurStatTable].Clear();
     for (auto it = mHashTable->Begin(); it != nullptr; it = mHashTable->Next(it)) {
         AllocInfo *info = *it;
         if (info->mPooled) {
-            mPoolTable[mCurStatTable].Update(
+            mPoolTypeStats[mCurStatTable].Update(
                 info->mType, info->mHeap, info->mReqSize, info->mActSize
             );
         } else {
-            mMemTable[mCurStatTable].Update(
+            mHeapTypeStats[mCurStatTable].Update(
                 info->mType, info->mHeap, info->mReqSize, info->mActSize
             );
         }

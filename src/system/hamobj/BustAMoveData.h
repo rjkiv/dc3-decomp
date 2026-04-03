@@ -25,7 +25,8 @@ public:
     NEW_OBJ(BustAMoveData)
 
     const std::vector<BAMPhrase> &Phrases() const { return mPhrases; }
-    BAMPhrase PhraseAt(int i) { return mPhrases[i]; }
+    int PhraseSize() const { return mPhrases.size(); }
+    BAMPhrase *PhraseAt(int i) { return &mPhrases[i]; }
 
 protected:
     BustAMoveData();

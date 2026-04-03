@@ -22,7 +22,16 @@ int MemFindHeap(const char *);
 void MemPushHeap(int heapNum);
 void MemPopHeap();
 void MemForceNewOperatorAlign(int align);
-void MemTrackAlloc(int, int, const char *, void *, bool, unsigned char, const char *, int);
+void MemTrackAlloc(
+    int req,
+    int act,
+    const char *type,
+    void *mem,
+    bool pooled,
+    unsigned char strat,
+    const char *file,
+    int line
+);
 void MemTrackFree(void *);
 void MemTrackRealloc(void *, int, int, void *);
 int MemHeapSize(int heapNum);
@@ -42,6 +51,7 @@ void *MemResizeElem(
 );
 void MemFreeBlockStats(int, int &, int &, int &, int &, int &);
 MemHeapStack &ThreadMemStack(bool);
+void MemPrintOverview(int, char *const);
 
 #define kNoHeap -3
 #define kSystemHeap -1

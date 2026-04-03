@@ -10,6 +10,7 @@
 #include "obj/Object.h"
 #include "utl/JobMgr.h"
 #include "utl/Symbol.h"
+#include "xdk/win_types.h"
 
 class OptionsPanel : public HamPanel {
 public:
@@ -33,7 +34,7 @@ protected:
     RedeemTokenJob *unk3c;
     XboxPurchaser *unk40;
     int unk44;
-    unsigned long long unk48;
+    QWORD unk48;
     HamProfile *unk50;
     int unk54;
     GetWebLinkCodeJob *unk58;

@@ -5,6 +5,9 @@ class PhysMemTypeTracker {
 public:
     PhysMemTypeTracker(Symbol);
     ~PhysMemTypeTracker();
+
+private:
+    bool unk0;
 };
 
 int PhysicalUsage();

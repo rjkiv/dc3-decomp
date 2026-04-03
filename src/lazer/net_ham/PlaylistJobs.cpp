@@ -1,7 +1,12 @@
 #include "net_ham/PlaylistJobs.h"
+#include "PlaylistJobs.h"
+#include "meta_ham/Playlist.h"
+#include "net/JsonUtils.h"
+#include "net/json-c/json_object.h"
 #include "net_ham/RCJobDingo.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "stl/_vector.h"
 #include "utl/DataPointMgr.h"
 #include "utl/MakeString.h"
 #include "utl/Symbol.h"
@@ -14,6 +19,13 @@ GetPlaylistsJob::GetPlaylistsJob(Hmx::Object *callback, char const *onlineID)
     SetDataPoint(dataP);
 }
 
+void GetPlaylistsJob::GetPlaylists(std::vector<CustomPlaylist> *playlists) {
+    if (mResult != 1 || !mJsonResponse) {
+        return;
+    }
+    ::GetPlaylists(mJsonReader, mJsonResponse, playlists);
+}
+
 GetPlaylistJob::GetPlaylistJob(Hmx::Object *callback, char const *onlineID, int playlistID)
     : RCJob("playlists/getplaylist/", callback) {
     DataPoint dataP;
@@ -22,6 +34,13 @@ GetPlaylistJob::GetPlaylistJob(Hmx::Object *callback, char const *onlineID, int 
     dataP.AddPair(pid, onlineID);
     dataP.AddPair(id, playlistID);
     SetDataPoint(dataP);
+}
+
+void GetPlaylistJob::GetPlaylist(CustomPlaylist *customP) {
+    if (mResult != 1 || !mJsonResponse) {
+        return;
+    }
+    ::GetPlaylist(mJsonReader, mJsonResponse, customP);
 }
 
 AddPlaylistJob::AddPlaylistJob(
@@ -58,6 +77,16 @@ AddPlaylistJob::AddPlaylistJob(
     dataP.AddPair(title, playlistTitle);
     dataP.AddPair(song_ids, songIDs);
     SetDataPoint(dataP);
+}
+
+void AddPlaylistJob::GetPlaylistID(CustomPlaylist *customP) {
+    if (mResult == 1 && mJsonResponse) {
+        JsonObject *obj = mJsonReader.GetByName(mJsonResponse, "id");
+        if (obj) {
+            MILO_LOG("===== Added playlistID %i\n", obj->Int());
+            customP->SetOnlineID(obj->Int());
+        }
+    }
 }
 
 DeletePlaylistJob::DeletePlaylistJob(
@@ -103,4 +132,33 @@ SyncAvailableDynamicPlaylistsJob::SyncAvailableDynamicPlaylistsJob(
     dataP.AddPair(pid, onlineID);
     dataP.AddPair(flags, flagAmount);
     SetDataPoint(dataP);
+}
+
+void GetPlaylist(
+    JsonConverter &converter, const JsonObject *obj, CustomPlaylist *cPlaylist
+) {
+    int size = ((JsonArray *)obj)->GetSize();
+    for (unsigned int i = 0; i < size; i++) {
+        JsonObject *val = converter.GetValue(((JsonArray *)obj), i);
+        JsonObject *val2 = converter.GetValue(((JsonArray *)val), 0);
+        cPlaylist->AddSong(val2->Int());
+    }
+}
+
+void GetPlaylists(
+    JsonConverter &converter,
+    const JsonObject *obj,
+    stlpmtx_std::vector<CustomPlaylist> *playlists
+) {
+    int size = ((JsonArray *)obj)->GetSize();
+    for (unsigned int i = 0; i < size; i++) {
+        JsonObject *val = converter.GetValue(((JsonArray *)obj), i);
+        {
+            playlists->push_back(CustomPlaylist());
+        }
+        CustomPlaylist &p = playlists->back();
+        p.SetOnlineID(converter.GetValue(((JsonArray *)val), 0)->Int());
+        CustomPlaylist &p2 = playlists->back();
+        p2.SetName(converter.GetValue(((JsonArray *)val), 1)->Str());
+    }
 }

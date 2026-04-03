@@ -151,6 +151,7 @@ public:
     void HandleEventResponseStart(int);
     bool IsIdle() const;
     bool GetDialogFocusOption();
+    void Poll();
     bool IsInitialLoadDone() const { return !unk2d; }
 
     DataNode GetDialogMsg();

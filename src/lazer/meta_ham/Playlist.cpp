@@ -28,8 +28,14 @@ void Playlist::SwapSongs(int index1, int index2) {
 
 void Playlist::MoveSong(int from_index, int to_index) {
     MILO_ASSERT_RANGE(from_index, 0, GetNumSongs(), 0xCF);
-    if (to_index - from_index < 1) {
+    int song = m_vSongs[from_index];
+    int direction = (to_index - from_index > 0) ? 1 : -1;
+
+    while (to_index != from_index) {
+        m_vSongs[from_index] = m_vSongs[from_index + direction];
+        from_index += direction;
     }
+    m_vSongs[to_index] = song;
     HandleChange();
 }
 
@@ -134,6 +140,7 @@ void CustomPlaylist::SaveFixed(FixedSizeSaveableStream &fs) const {
     if (unk24) {
         TheRockCentral.ManageJob(new PlaylistChangedJob(0, mName, GetNumSongs()));
     }
+    static_cast<bool>(unk24) = false;
 }
 
 void CustomPlaylist::LoadFixed(FixedSizeSaveableStream &fs, int) {

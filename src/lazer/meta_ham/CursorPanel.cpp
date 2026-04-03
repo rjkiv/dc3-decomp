@@ -13,7 +13,10 @@
 #include "rndobj/Mat.h"
 #include "rndobj/Tex.h"
 #include "utl/Symbol.h"
+#include <cmath>
 #include <cstring>
+
+static int sInt = -1;
 
 CursorPanel::CursorPanel() {}
 

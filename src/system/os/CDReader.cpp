@@ -121,3 +121,5 @@ bool CDReadExternal(void *&v, int i, u64 u) {
         return true;
     }
 }
+
+int CDGetError() { return 0; }

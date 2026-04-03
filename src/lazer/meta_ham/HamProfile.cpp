@@ -47,11 +47,11 @@ HamProfile::HamProfile(int i1)
     : Profile(i1), mAccProgress(this), unk2fc(0), mInFitnessMode(0), mFitnessPounds(130),
       mIsFitnessWeightEntered(0), mFitnessTime(0), mFitnessCalories(0), unk310(0),
       mUploadFriendsToken(0), mOnlineID(new OnlineID()), mSignedIn(0), unk320(0),
-      unk324(0), mSkippedSongCount(0), unk32c(0), unk330(0), unk334(0), unk338(gNullStr),
-      mIsFitnessGoalSet(0), mFitnessGoalStartDay(0), mFitnessGoalStartMonth(0),
-      mFitnessGoalStartYear(0), mFitnessGoalDaysActive(0), mFitnessGoalCalories(0),
-      mTrackedDaysActive(0), mTrackedCalories(0), unk35c(0), unk360(0), mProfileTime(0),
-      unk368(0), unk36c(1), unk370(0), unk374(3) {
+      mChallengeTimeStamp(0), mSkippedSongCount(0), unk32c(0), unk330(0), unk334(0),
+      unk338(gNullStr), mIsFitnessGoalSet(0), mFitnessGoalStartDay(0),
+      mFitnessGoalStartMonth(0), mFitnessGoalStartYear(0), mFitnessGoalDaysActive(0),
+      mFitnessGoalCalories(0), mTrackedDaysActive(0), mTrackedCalories(0), unk35c(0),
+      unk360(0), mProfileTime(0), unk368(0), unk36c(1), unk370(0), unk374(3) {
     mSaveSizeMethod = SaveSize;
     mSongStatusMgr = new SongStatusMgr(&TheHamSongMgr);
     mStats = new MetagameStats();
@@ -102,7 +102,7 @@ void HamProfile::SaveFixed(FixedSizeSaveableStream &fs) const {
     fs << mInFitnessMode;
     fs << mFitnessPounds;
     fs << mIsFitnessWeightEntered;
-    fs << unk324;
+    fs << mChallengeTimeStamp;
     fs << mFitnessGoalStartDay;
     fs << mFitnessGoalStartMonth;
     fs << mFitnessGoalStartYear;
@@ -155,7 +155,7 @@ void HamProfile::LoadFixed(FixedSizeSaveableStream &fs, int i2) {
     fs >> mInFitnessMode;
     fs >> mFitnessPounds;
     fs >> mIsFitnessWeightEntered;
-    fs >> unk324;
+    fs >> mChallengeTimeStamp;
     fs >> mFitnessGoalStartDay;
     fs >> mFitnessGoalStartMonth;
     fs >> mFitnessGoalStartYear;
@@ -303,7 +303,7 @@ void HamProfile::DeleteAll() {
     mInFitnessMode = false;
     unk320 = 0;
     mFitnessPounds = 130;
-    unk324 = 0;
+    mChallengeTimeStamp = 0;
     mFitnessTime = 0;
     mIsFitnessGoalSet = false;
     mFitnessCalories = 0;

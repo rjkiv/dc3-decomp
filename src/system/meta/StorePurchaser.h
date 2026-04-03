@@ -20,7 +20,7 @@ public:
     StorePurchaser(Symbol s, unsigned int i) : unk4(s), unk8(i) {}
 
     Symbol unk4;
-    int unk8;
+    unsigned int unk8;
 };
 
 class XboxPurchaser : public StorePurchaser, public Hmx::Object {
@@ -45,6 +45,8 @@ public:
         Symbol,
         unsigned int
     );
+
+    int GetUnk48() const { return unk48; }
 
     PurchaseState mState; // 0x38
     u32 unk3c;

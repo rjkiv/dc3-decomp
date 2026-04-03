@@ -246,7 +246,8 @@ void Leaderboards::StartUploadingNextProfile() {
     FOREACH (it, mPendingProfiles) {
         unk54 = mPendingProfiles.front();
         mPendingProfiles.pop_front();
-        unk54->GetSongStatusMgr()->GetScoresToUpload(unk30);
+        SongStatusMgr *mgr = unk54->GetSongStatusMgr();
+        mgr->GetScoresToUpload(unk30);
         if (!unk30.empty()) {
             UploadNextScore();
             return;

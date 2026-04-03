@@ -3,6 +3,7 @@
 #include "os/Debug.h"
 #include "ui/UIListLabel.h"
 #include "meta_ham/ProfileMgr.h"
+#include <cmath>
 
 #pragma region WeightInputProvider
 
@@ -82,6 +83,24 @@ float WeightInputProvider::GetPoundsForKgs(float kgs) const {
         result = 440.0;
     }
     return result;
+}
+
+float WeightInputProvider::GetKgForPounds(float lbs) const {
+    HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
+    MILO_ASSERT(pProfile, 0x89);
+    float kgs = pProfile->GetKgFromPounds(lbs);
+    if (kgs < 20.0f) {
+        return 20.0f;
+    }
+    float result;
+    for (int i = 0; i < 73; i++) {
+        result = 20.0f + (i * 2.5f);
+        if (fabs(kgs - result) <= 1.25f) {
+            return result;
+        }
+    }
+
+    return 200.0f;
 }
 
 #pragma endregion

@@ -401,12 +401,13 @@ bool CampaignPerformer::HasEraOutfits(Symbol era) const {
         pProfile->GetCampaignProgress(mDifficulty);
     CampaignEra *pEra = TheCampaign->GetCampaignEra(era);
     MILO_ASSERT(pEra, 0x395);
-    if (pEra->OutfitAward() == gNullStr
-        || pCampaignProgress.GetEraStarsEarned(era) >= pEra->StarsRequiredForOutfits()) {
-        return true;
-    } else {
-        return false;
+    if (pEra->OutfitAward() != gNullStr) {
+        int eraStarsEarned = pCampaignProgress.GetEraStarsEarned(era);
+        if (eraStarsEarned < pEra->StarsRequiredForOutfits()) {
+            return false;
+        }
     }
+    return true;
 }
 
 Symbol CampaignPerformer::GetDanceCrazeSong() const {
@@ -869,7 +870,8 @@ bool CampaignPerformer::IsDanceCrazeMove(Symbol s1, Symbol s2, HamMove *move) {
         bool b3 = false;
         for (int i = 0; i < pEra->GetNumSongs(); i++) {
             Symbol songName = pEra->GetSongName(i);
-            if (s2 == songName) {
+            Symbol s = songName;
+            if (s2 == s) {
                 b3 = true;
                 break;
             }
@@ -913,7 +915,7 @@ void CampaignPerformer::UpdateEraSong(Difficulty d, Symbol s2, Symbol s3, int i4
             const DataNode *pStarsNode = TheHamProvider->Property(stars_earned, false);
             MILO_ASSERT(pStarsNode, 0x167);
             if (pStarsNode->Int() >= 5) {
-                // curProgress.unk28++;
+                curProgress.SetNum5StarredMQSongs(curProgress.Num5StarredMQSongs() + 1);
             }
         }
     }

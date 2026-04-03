@@ -33,13 +33,15 @@ namespace {
 
 JoypadData::JoypadData()
     : mButtons(0), mNewPressed(0), mNewReleased(0), mUser(nullptr), mConnected(false),
-      mVibrateEnabled(true), unk4a(0), unk4b(0), unk4c(0), mNumAnalogSticks(0),
-      mTranslateSticks(false), mIgnoreButtonMask(0), mGreenCymbalMask(0),
-      mYellowCymbalMask(0), mBlueCymbalMask(0), mSecondaryPedalMask(0), mCymbalMask(0),
-      mIsDrum(false), mType(kJoypadNone), mControllerType(), mDistFromRest(0),
-      mHasGreenCymbal(false), mHasYellowCymbal(false), mHasBlueCymbal(false),
-      mHasSecondaryPedal(false), unk84(0), unk94(0), unk9c(0), unka0(0), unka4(0),
-      unka8(0), unkac(0), unkc0(0), unkd8(0) {
+      mForceFeedback(true), mCanForceFeedback(0), mWireless(0), mNeedsVelocityDecay(0),
+      mNumAnalogSticks(0), mTranslateSticks(false), mIgnoreButtonMask(0),
+      mGreenCymbalMask(0), mYellowCymbalMask(0), mBlueCymbalMask(0),
+      mSecondaryPedalMask(0), mCymbalMask(0), mIsDrum(false), mType(kJoypadNone),
+      mControllerType(), mDistFromRest(0), mHasGreenCymbal(false),
+      mHasYellowCymbal(false), mHasBlueCymbal(false), mHasSecondaryPedal(false),
+      mBreedCallbackHandler(0), mpCallbackBreedData(0), mEpwDataLeft(0), mEpwDataSize(0),
+      mEpwMaxPacketBytes(0), mEpwAckWait(0), mBreedDataThrottle(0), mEpwAcknowledged(0),
+      mKeepaliveMs(0) {
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 2; j++) {
             mSticks[i][j] = 0;
@@ -61,23 +63,23 @@ float JoypadData::GetAxis(Symbol axis) const {
     static Symbol sy("SY");
     static Symbol sz("SZ");
     if (axis == lx)
-        return GetLX();
+        return LX();
     else if (axis == ly)
-        return GetLY();
+        return LY();
     else if (axis == rx)
-        return GetRX();
+        return RX();
     else if (axis == ry)
-        return GetRY();
+        return RY();
     else if (axis == tl)
-        return GetLT();
+        return LT();
     else if (axis == tr)
-        return GetRT();
+        return RT();
     else if (axis == sx)
-        return GetSX();
+        return SX();
     else if (axis == sy)
-        return GetSY();
+        return SY();
     else if (axis == sz)
-        return GetSZ();
+        return SZ();
     else
         MILO_FAIL("Bad axis %s in JoypadData::GetAxis()\n");
     return 0.0f;
@@ -129,7 +131,7 @@ JoypadData *JoypadGetPadData(int pad_num) {
     return &gJoypadData[pad_num];
 }
 
-bool JoypadVibrate(int pad) { return JoypadGetPadData(pad)->mVibrateEnabled; }
+bool JoypadVibrate(int pad) { return JoypadGetPadData(pad)->mForceFeedback; }
 
 bool JoypadIsConnectedPadNum(int padNum) {
     if (padNum == -1)
@@ -152,7 +154,7 @@ namespace {
         if (sym == type) {
             return detect_cfg->Int(1) == (int)data.mType;
         } else if (sym == button) {
-            return data.IsButtonInMask(detect_cfg->Int(1));
+            return data.Pressed((JoypadButton)detect_cfg->Int(1));
         } else if (sym == stick) {
             int i4 = 0;
             Symbol axis_sym = detect_cfg->Sym(2);
@@ -208,14 +210,14 @@ namespace {
 
     DataNode OnJoypadIsButtonDownPadNum(DataArray *arr) {
         int pad = arr->Int(1);
-        MILO_ASSERT((0) <= (pad) && (pad) < (kNumJoypads), 0x7F);
-        int ret = gJoypadData[pad].mButtons & 1 << arr->Int(2);
-        return ret != 0;
+        MILO_ASSERT_RANGE(pad, 0, kNumJoypads, 0x7F);
+        return gJoypadData[pad].Pressed((JoypadButton)arr->Int(2));
     }
 
     DataNode OnJoypadStageKitRaw(DataArray *arr) {
         arr->Int(2);
         arr->Int(1);
+        // probably a stub
         return 1;
     }
 
@@ -233,8 +235,8 @@ void JoypadInitCommon(DataArray *joypad_config) {
     gJoypadMsgSource = Hmx::Object::New<Hmx::Object>();
 
     float thresh;
-    joypad_config->FindData("threshold", thresh, true);
-    joypad_config->FindData("keepalive_ms", gKeepaliveThresholdMs, true);
+    joypad_config->FindData("threshold", thresh);
+    joypad_config->FindData("keepalive_ms", gKeepaliveThresholdMs);
     for (int i = 0; i < 4; i++) {
         gJoypadData[i].mDistFromRest = thresh;
         gJoypadDisabled[i] = false;
@@ -360,7 +362,7 @@ int ButtonToVelocityBucket(JoypadData *data, JoypadButton btn) {
 
 void JoypadSetVibrate(int pad, bool vibrate) {
     JoypadSetActuatorsImp(pad, 0, 0);
-    JoypadGetPadData(pad)->mVibrateEnabled = vibrate;
+    JoypadGetPadData(pad)->mForceFeedback = vibrate;
 }
 
 void AssociateUserAndPad(LocalUser *iUser, int iPadNum) {
@@ -476,23 +478,23 @@ JoypadAction ButtonToAction(JoypadButton btn, Symbol sym) {
 void JoypadPushThroughMsg(const Message &msg) { Export(msg); }
 
 void JoypadHandleBreedDataResponse(int pad) {
-    if (gJoypadData[pad].unk94) {
-        memcpy(gJoypadData[pad].unk94, &gJoypadData[pad].unk88, sizeof(BreedData));
+    if (gJoypadData[pad].mpCallbackBreedData) {
+        *gJoypadData[pad].mpCallbackBreedData = gJoypadData[pad].mBreedData;
     }
-    JoypadBreedDataReadMsg msg(gJoypadData[pad].mUser, (JoypadBreedDataStatus)0);
-    if (gJoypadData[pad].unk84) {
-        gJoypadData[pad].unk84->Handle(msg, true);
-        gJoypadData[pad].unk84 = nullptr;
+    JoypadBreedDataReadMsg msg(gJoypadData[pad].mUser, kBreedSuccess);
+    if (gJoypadData[pad].mBreedCallbackHandler) {
+        gJoypadData[pad].mBreedCallbackHandler->Handle(msg, true);
+        gJoypadData[pad].mBreedCallbackHandler = nullptr;
     }
 }
 
 void JoypadHandleEepromWriteResponse(int pad, JoypadBreedDataStatus status) {
-    gJoypadData[pad].unkc0 = true;
-    if (!gJoypadData[pad].unk9c) {
+    gJoypadData[pad].mEpwAcknowledged = true;
+    if (!gJoypadData[pad].mEpwDataLeft) {
         JoypadBreedDataWriteMsg msg(gJoypadData[pad].mUser, status);
-        if (gJoypadData[pad].unk84) {
-            gJoypadData[pad].unk84->Handle(msg, true);
-            gJoypadData[pad].unk84 = nullptr;
+        if (gJoypadData[pad].mBreedCallbackHandler) {
+            gJoypadData[pad].mBreedCallbackHandler->Handle(msg, true);
+            gJoypadData[pad].mBreedCallbackHandler = nullptr;
         }
     }
 }

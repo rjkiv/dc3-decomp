@@ -126,11 +126,14 @@ int CampaignEraProgress::GetTotalStarsEarned() const {
         if (pEraSongProgress) {
             total = pEraSongProgress->GetStarsEarned();
         }
-        total = Max(total, 0);
-        if (total >= 5) {
-            total = 5;
+        int clamp = total;
+        if (clamp <= 0) {
+            clamp = 0;
         }
-        totalStars += total;
+        if (clamp >= 5) {
+            clamp = 5;
+        }
+        totalStars += clamp;
     }
     return totalStars;
 }
@@ -386,8 +389,7 @@ void CampaignProgress::SetEraIntroMoviePlayed(Symbol era, bool played) {
 bool CampaignProgress::IsEraSongAvailable(Symbol era, Symbol song) const {
     CampaignEra *pEra = TheCampaign->GetCampaignEra(era);
     MILO_ASSERT(pEra, 810);
-    Symbol craze = pEra->GetDanceCrazeSong();
-    if (song == craze) {
+    if (song == pEra->GetDanceCrazeSong()) {
         CampaignEraProgress *pEraProgress = GetEraProgress(era);
         if (pEraProgress) {
             return pEraProgress->IsMastered();
@@ -427,7 +429,11 @@ int CampaignProgress::GetSongStarsEarned(Symbol era, Symbol song) const {
         if (pEraSongProgress) {
             stars = pEraSongProgress->GetStarsEarned();
         }
-        stars = Max(stars, 0);
+        int clamp = stars;
+        if (clamp <= 0) {
+            clamp = 0;
+        }
+        stars = clamp;
     }
     return stars;
 }
@@ -464,7 +470,9 @@ Symbol CampaignProgress::GetFirstIncompleteEra() const {
     FOREACH (it, eras) {
         CampaignEra *pEra = *it;
         MILO_ASSERT(pEra, 0x3E6);
-        CampaignEraProgress *progress = GetEraProgress(era = pEra->GetName());
+        era = pEra->GetName();
+        Symbol s = era; // -_-
+        CampaignEraProgress *progress = GetEraProgress(s);
         bool canContinue = progress ? progress->IsEraComplete() : false;
         if (!canContinue)
             break;
@@ -493,8 +501,8 @@ int CampaignProgress::GetStars() const {
 }
 
 int CampaignProgress::GetNumCompletedEras() const {
-    auto &eras = TheCampaign->Eras();
     int numCompleted = 0;
+    auto &eras = TheCampaign->Eras();
     FOREACH (it, eras) {
         CampaignEra *pEra = *it;
         MILO_ASSERT(pEra, 0x423);

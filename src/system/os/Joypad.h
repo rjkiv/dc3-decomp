@@ -136,19 +136,29 @@ enum JoypadType {
 };
 
 enum JoypadBreedDataStatus {
+    kBreedSuccess = 0x0000,
+    kBreedFail = 0x0001,
+    kBreedUnknownError = 0x0002,
 };
 
-// size 0xC
-struct BreedData {
-    unsigned char mVendor; // 0x0
-    unsigned char mProject; // 0x1
-    unsigned char mPeripheralType; // 0x2
-    unsigned char mPlatform; // 0x3
-    unsigned char mFactory; // 0x4
-    unsigned char mDesignIter; // 0x5
-    unsigned short mManuDate; // 0x6
-    unsigned short mIdent; // 0x8
-    unsigned char unka; // 0xa
+struct BreedData { /* Size=0xc */
+    /* 0x0000 */ unsigned char bVendor;
+    /* 0x0001 */ unsigned char bProject;
+    /* 0x0002 */ unsigned char bPeriphType;
+    /* 0x0003 */ unsigned char bPlatform;
+    /* 0x0004 */ unsigned char bFactory;
+    /* 0x0005 */ unsigned char bDesignIter;
+    /* 0x0006 */ unsigned short uManuDate;
+    /* 0x0008 */ unsigned short uUnique;
+    /* 0x000a */ bool bUninitialized;
+};
+
+struct BreedWritePacket { /* Size=0x14 */
+    /* 0x0000 */ unsigned char offsetLow;
+    /* 0x0001 */ unsigned char offsetHi;
+    /* 0x0002 */ unsigned char dataLength;
+    /* 0x0003 */ unsigned char payloadLength;
+    /* 0x0004 */ unsigned char data[16];
 };
 
 // size 0xDC
@@ -161,12 +171,13 @@ public:
     float mTriggers[2]; // 0x1C = LT; 0x20 = RT
     float mSensors[3]; // 0x24 = SX; 0x28 = SY; 0x2C = SZ
     float mPressures[kNumPressureButtons]; // 0x30
-    // 0x34-0x44 seems to be the pro union we deduced in RB3
-    char propadding[16]; // 0x34
+    unsigned char mExtended[16]; // 0x34
     class LocalUser *mUser; // 0x44
     bool mConnected; // 0x48
-    bool mVibrateEnabled; // 0x49
-    bool unk4a, unk4b, unk4c;
+    bool mForceFeedback; // 0x49
+    bool mCanForceFeedback; // 0x4a
+    bool mWireless; // 0x4b
+    bool mNeedsVelocityDecay; // 0x4c
     int mNumAnalogSticks; // 0x50
     bool mTranslateSticks; // 0x54
     int mIgnoreButtonMask; // 0x58
@@ -183,42 +194,51 @@ public:
     bool mHasYellowCymbal; // 0x81
     bool mHasBlueCymbal; // 0x82
     bool mHasSecondaryPedal; // 0x83
-    Hmx::Object *unk84; // 0x84 - some sort of Hmx::Object*
-    BreedData unk88; // 0x88
-    BreedData *unk94; // 0x94
-    int unk98;
-    int unk9c;
-    int unka0;
-    int unka4;
-    int unka8;
-    int unkac;
-    int unkb0;
-    int unkb4;
-    int unkb8;
-    int unkbc;
-    bool unkc0;
-    int unkc4;
-    int unkc8;
-    int unkcc;
-    int unkd0;
-    int unkd4;
-    int unkd8;
+    Hmx::Object *mBreedCallbackHandler; // 0x84
+    BreedData mBreedData; // 0x88
+    BreedData *mpCallbackBreedData; // 0x94
+    enum {
+        epwNotEnabled = 0x0000,
+        epwWaitEnableAck = 0x0001,
+        epwReady = 0x0002,
+        epwWaitWriteAck = 0x0003,
+        epwAckFailed = 0x0004,
+    } mEpWriteState; // 0x98
+    int mEpwDataLeft; // 0x9c
+    int mEpwDataSize; // 0xa0
+    int mEpwMaxPacketBytes; // 0xa4
+    int mEpwAckWait; // 0xa8
+    int mBreedDataThrottle; // 0xac
+    unsigned char mEwpBuffer[16]; // 0xb0
+    bool mEpwAcknowledged; // 0xc0
+    BreedWritePacket mBreedWritePacket; // 0xc1
+    int mKeepaliveMs; // 0xd8
 
     JoypadData();
+
+    //   public: void SetButtons(uint32_t, bool);
+    void SetWireless(bool wireless) { mWireless = wireless; }
+    void SetCanForceFeedback(bool can) { mCanForceFeedback = can; }
+    void SetNeedsVelocityDecay(bool needs) { mNeedsVelocityDecay = needs; }
+
+    unsigned char *GetExtended() { return mExtended; }
     float GetAxis(Symbol) const;
     int GetVelocityBucket(Symbol) const;
     int GetPressureBucket(JoypadButton) const;
 
-    float GetLX() const { return mSticks[0][0]; }
-    float GetLY() const { return mSticks[0][1]; }
-    float GetRX() const { return mSticks[1][0]; }
-    float GetRY() const { return mSticks[1][1]; }
-    float GetLT() const { return mTriggers[0]; }
-    float GetRT() const { return mTriggers[1]; }
-    float GetSX() const { return mSensors[0]; }
-    float GetSY() const { return mSensors[1]; }
-    float GetSZ() const { return mSensors[2]; }
-    bool IsButtonInMask(int i) const { return (mButtons & 1 << i); }
+    float LX() const { return mSticks[0][0]; }
+    float LY() const { return mSticks[0][1]; }
+    float RX() const { return mSticks[1][0]; }
+    float RY() const { return mSticks[1][1]; }
+    float LT() const { return mTriggers[0]; }
+    float RT() const { return mTriggers[1]; }
+    float SX() const { return mSensors[0]; }
+    float SY() const { return mSensors[1]; }
+    float SZ() const { return mSensors[2]; }
+
+    bool Pressed(JoypadButton btn) const { return mButtons & 1 << btn; }
+    bool NewPressed(JoypadButton btn) const { return mNewPressed & 1 << btn; }
+    bool NewReleased(JoypadButton btn) const { return mNewReleased & 1 << btn; }
 
 private:
     int FloatToBucket(float) const;

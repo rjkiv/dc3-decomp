@@ -286,6 +286,20 @@ typedef struct _XSHOWDEVICESELECTORUI_PARAMS { /* Size=0x28 */
     /* 0x0020 */ BOOL fNuiEnabled;
 } XSHOWDEVICESELECTORUI_PARAMS;
 
+typedef struct _XALLOC_ATTRIBUTES { /* Size=0x4 */
+    /* 0x0000 */ DWORD dwObjectType : 13; /* BitPos=0 */
+    /* 0x0000 */ DWORD dwHeapTracksAttributes : 1; /* BitPos=13 */
+    /* 0x0000 */ DWORD dwMustSucceed : 1; /* BitPos=14 */
+    /* 0x0000 */ DWORD dwFixedSize : 1; /* BitPos=15 */
+    /* 0x0000 */ DWORD dwAllocatorId : 8; /* BitPos=16 */
+    /* 0x0000 */ DWORD dwAlignment : 4; /* BitPos=24 */
+    /* 0x0000 */ DWORD dwMemoryProtect : 2; /* BitPos=28 */
+    /* 0x0000 */ DWORD dwZeroInitialize : 1; /* BitPos=30 */
+    /* 0x0000 */ DWORD dwMemoryType : 1; /* BitPos=31 */
+} XALLOC_ATTRIBUTES;
+
+#define XALLOC_MEMPROTECT_READWRITE 0x20000000
+
 #ifdef __cplusplus
 }
 #endif

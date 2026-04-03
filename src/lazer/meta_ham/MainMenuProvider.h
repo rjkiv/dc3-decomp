@@ -7,7 +7,6 @@
 class MainMenuProvider : public UIListProvider, public Hmx::Object {
 public:
     // Hmx::Object
-    virtual ~MainMenuProvider() {}
 
     // UIListProvider
     virtual void Text(int, int, UIListLabel *, UILabel *) const;

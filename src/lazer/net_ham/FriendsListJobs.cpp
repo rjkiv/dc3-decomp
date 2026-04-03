@@ -3,8 +3,12 @@
 #include "net_ham/RCJobDingo.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
+#include "os/Debug.h"
 #include "os/PlatformMgr.h"
+#include "utl/DataPointMgr.h"
+#include "utl/Symbol.h"
 #include <cstddef>
+#include <cstring>
 
 UpdateFriendsListJob::UpdateFriendsListJob(Hmx::Object *callback, HamProfile *profile)
     : RCJob("friends/updatefriends/", callback) {

@@ -7,6 +7,8 @@
 #include "utl/PoolAlloc.h"
 #include "utl/TextFileStream.h"
 
+typedef bool PathEvalFunc(const char *);
+
 class DirLoader : public Loader, public ObjRefOwner {
     typedef void (DirLoader::*DirLoaderStateFunc)(void);
 
@@ -18,7 +20,15 @@ public:
         int ClassIndex(Hmx::Object *);
     };
 
-    DirLoader(const FilePath &, LoaderPos, Loader::Callback *, BinStream *, class ObjectDir *, bool, class ObjectDir *);
+    DirLoader(
+        const FilePath &,
+        LoaderPos,
+        Loader::Callback *,
+        BinStream *,
+        class ObjectDir *,
+        bool,
+        class ObjectDir *
+    );
     virtual ~DirLoader();
     virtual Hmx::Object *RefOwner() const { return nullptr; }
     virtual bool Replace(ObjRef *, Hmx::Object *);
@@ -48,6 +58,7 @@ public:
     static DirLoader *Find(const FilePath &);
     static DirLoader *FindLast(const FilePath &);
     static ObjectDir *LoadObjects(const FilePath &, Callback *, BinStream *);
+    static void SetPathEvalFunc(PathEvalFunc *func) { sPathEval = func; }
 
 private:
     virtual void PollLoading() { (this->*mState)(); }
@@ -88,7 +99,7 @@ private:
     ObjOwnerPtr<ObjectDir> mProxyDir; // 0xa0
 
     static bool sCacheMode;
-    static bool (*sPathEval)(const char *);
+    static PathEvalFunc *sPathEval;
     static ObjectDir *sTopSaveDir;
     static TextFileStream *sObjectMemDumpFile;
     static TextFileStream *sTypeMemDumpFile;

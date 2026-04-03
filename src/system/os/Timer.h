@@ -44,6 +44,8 @@ public:
 
     static Timer &SlowFrameTimer() { return sSlowFrameTimer; }
     static float SlowFrameWaiver() { return sSlowFrameWaiver; }
+    static void AddToSlowFrameWaiver(float val) { sSlowFrameWaiver += val; }
+    static void SetSlowFrameReason(const char *reason) { sSlowFrameReason = reason; }
 
     Timer();
     Timer(DataArray *);
@@ -150,10 +152,34 @@ typedef void (*AutoTimerCallback)(float elapsed, void *context);
 
 class AutoSlowFrame {
 public:
-    static int sDepth;
+    AutoSlowFrame(const char *reason, float waiver)
+        : mStartTime(0), mReason(reason), mWaiver(waiver) {
+        if (MainThread()) {
+            sDepth++;
+            mStartTime = Timer::SlowFrameTimer().Ms();
+            Timer::AddToSlowFrameWaiver(waiver);
+            Timer::SlowFrameTimer().Start();
+        } else {
+            mStartTime = 0;
+        }
+    }
 
-    AutoSlowFrame(const char *reason, float);
-    ~AutoSlowFrame();
+    ~AutoSlowFrame() {
+        if (MainThread()) {
+            sDepth--;
+            Timer::SlowFrameTimer().Stop();
+            if (Timer::SlowFrameTimer().Ms() - mStartTime > mWaiver) {
+                Timer::SetSlowFrameReason(mReason);
+            }
+        }
+    }
+
+private:
+    float mStartTime; // 0x0
+    const char *mReason; // 0x4
+    float mWaiver; // 0x8
+
+    static int sDepth;
 };
 
 class AutoGlitchReport {
@@ -186,7 +212,13 @@ public:
         }
     }
     static void EnableCallback();
-    static void EndExternal(float, float, const char *, AutoTimerCallback, void *);
+    static void
+    EndExternal(float f1, float f2, const char *c3, AutoTimerCallback cb, void *v) {
+        if (MainThread()) {
+            sDepth--;
+            SendCallback(f1, f2, c3, cb, v);
+        }
+    }
     static void SendCallback(float, float, const char *, AutoTimerCallback, void *);
     static int sDepth;
 
@@ -215,8 +247,9 @@ public:
 
     ~AutoTimer() {
         if (mTimer) {
+            unsigned long long cycles = mTimer->Stop();
             AutoGlitchReport::EndExternal(
-                Timer::CyclesToMs(mTimer->Stop()),
+                Timer::CyclesToMs(cycles),
                 mTimeLimit,
                 mTimer->Name().Str(),
                 mCallback,

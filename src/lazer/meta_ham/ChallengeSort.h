@@ -10,6 +10,13 @@ struct SortNodeFind {
     NavListNodeType mType; // 0x4
 };
 
+struct NodeFind {
+    NodeFind(Symbol s) : unk0(s) {}
+    bool operator()(const NavListNode *n) { return n->GetToken() == unk0; }
+
+    Symbol unk0;
+};
+
 class ChallengeSort : public NavListSort {
 public:
     ChallengeSort();

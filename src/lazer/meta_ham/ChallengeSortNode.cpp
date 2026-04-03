@@ -10,17 +10,22 @@
 #include "HamProfile.h"
 #include "HamSongMgr.h"
 #include "meta/SongPreview.h"
+#include "meta_ham/ChallengeRecord.h"
 #include "meta_ham/Challenges.h"
 #include "meta_ham/MetaPerformer.h"
 #include "meta_ham/NavListNode.h"
+#include "meta_ham/ProfileMgr.h"
+#include "obj/Dir.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "os/PlatformMgr.h"
 #include "stl/_vector.h"
 #include "ui/UI.h"
 #include "lazer/net_ham/RockCentral.h"
 #include "ui/UILabel.h"
 #include "ui/UIListCustom.h"
 #include "ui/UIListLabel.h"
+#include "ui/UIScreen.h"
 #include "utl/Std.h"
 #include "utl/Symbol.h"
 
@@ -68,8 +73,12 @@ void ChallengeHeaderNode::Text(UIListLabel *uiListLabel, UILabel *uiLabel) const
     if (uiListLabel->Matches("sort_header")) {
         app_label->SetFromGeneralSelectNode(this);
     } else if (uiListLabel->Matches("challenge_count")) {
-        // something
+        uiLabel->SetTextToken(gNullStr);
     } else if (uiListLabel->Matches("header_collapse")) {
+        bool highlight = TheChallengeSortMgr->GetHighlightItem() == this;
+        SetCollapseStateIcon(highlight);
+    } else {
+        app_label->SetTextToken(gNullStr);
     }
 }
 
@@ -86,6 +95,19 @@ Symbol ChallengeHeaderNode::OnSelect() {
         TheChallengeSortMgr->SetHeaderCollapsed(GetToken());
     }
     return gNullStr;
+}
+
+char const *ChallengeHeaderNode::GetAlbumArtPath() {
+    static Symbol by_album("by_album");
+    static Symbol singles("singles");
+
+    if (TheChallengeSortMgr->GetCurrentSort()->GetSortName() == by_album
+        && GetToken() != singles) {
+        auto node = mChildren.begin();
+        if (node != mChildren.end())
+            return (*node)->GetAlbumArtPath();
+    }
+    return 0;
 }
 
 void ChallengeHeaderNode::SetCollapseStateIcon(bool b) const {
@@ -144,6 +166,38 @@ Symbol ChallengeHeaderNode::GetSongShortName() {
     return mChildren.front()->GetToken();
 }
 
+String ChallengeHeaderNode::GetSongShortTitle() {
+    int size = mChildren.size();
+    const char *title = gNullStr;
+
+    if (size != 0) {
+        ChallengeSortNode *node = static_cast<ChallengeSortNode *>(mChildren.front());
+        MILO_ASSERT(node, 0x149);
+        title = node->GetChallengeRecord()->GetUnk44().Str();
+    }
+
+    return title;
+}
+
+int ChallengeHeaderNode::GetTotalEarnedExp(int score) {
+    int xp = 0;
+    FOREACH (it, mChildren) {
+        ChallengeSortNode *node = static_cast<ChallengeSortNode *>(*it);
+        MILO_ASSERT(node, 0xf5);
+        int recordScore = node->GetChallengeRecord()->GetChallengeRow().mScore;
+        if (score >= recordScore) {
+            xp += TheChallenges->CalculateChallengeXp(
+                node->GetChallengeRecord()->GetChallengeRow().mScore,
+                node->GetChallengeRecord()->GetChallengeRow().mDiff
+            );
+        }
+    }
+    if (xp == 0) {
+        xp = TheChallenges->ConsolationXP();
+    }
+    return xp;
+}
+
 BEGIN_HANDLERS(ChallengeHeaderNode)
     HANDLE_EXPR(get_challenge_count, mChallengeCount)
     HANDLE_SUPERCLASS(NavListHeaderNode)
@@ -154,9 +208,9 @@ END_HANDLERS
 #pragma region ChallengeSortNode
 
 int ChallengeSortNode::GetChallengeExp() {
+    ChallengeRecord *record = mChallengeRecord;
     return TheChallenges->CalculateChallengeXp(
-        mChallengeRecord->GetChallengeRow().mDiff,
-        mChallengeRecord->GetChallengeRow().mType
+        record->GetChallengeRow().mScore, record->GetChallengeRow().mDiff
     );
 }
 
@@ -365,18 +419,56 @@ Symbol ChallengeSortNode::Select() {
     static Symbol server_not_available_screen("server_not_available_screen");
     Symbol screen = show_offers_need_to_sign_in_screen;
     HamProfile *activeProfile = TheProfileMgr.GetActiveProfile(true);
-    activeProfile->UpdateOnlineID();
-    if (activeProfile && activeProfile->GetOnlineID()) {
-        if (ThePlatformMgr.IsSignedIntoLive(activeProfile->GetPadNum())
-            && TheRockCentral.IsOnline()) {
-            screen = store_loading_screen;
+
+    if (activeProfile) {
+        activeProfile->UpdateOnlineID();
+        if (activeProfile->IsSignedIn()
+            && ThePlatformMgr.IsSignedIntoLive(activeProfile->GetPadNum())) {
+            if (TheRockCentral.IsOnline()) {
+                screen = store_loading_screen;
+            } else {
+                screen = server_not_available_screen;
+            }
         }
     }
     static Symbol should_back_to_challenges("should_back_to_challenges");
-    if (mChallengeRecord->GetUnk50() == 1) {
-        MILO_ASSERT("false", 0x1a9);
+    switch (mChallengeRecord->GetUnk50()) {
+    case 1:
+        MILO_ASSERT(false, 0x1a9);
+    default: {
+        Symbol token = GetToken();
+        HamProfile *profile = TheProfileMgr.GetActiveProfile(true);
+        if (profile && profile->IsContentNew(token)) {
+            profile->MarkContentNotNew(token);
+        }
+        if (UseQuickplayPerformer()) {
+            MetaPerformer *pPerformer = MetaPerformer::Current();
+            pPerformer->SetSong(GetToken());
+        }
+        return gNullStr;
     }
-    return 0;
+    case 2:
+    case 3:
+        if (screen == store_loading_screen) {
+            static Symbol redirect_to_code_redemption("redirect_to_code_redemption");
+            UIScreen *storeLoadScreen =
+                ObjectDir::Main()->Find<UIScreen>("store_loading_screen");
+            storeLoadScreen->SetProperty(redirect_to_code_redemption, 1);
+            storeLoadScreen->SetProperty(should_back_to_challenges, 1);
+        }
+        return screen;
+    case 4:
+        if (screen == store_loading_screen) {
+            static Symbol advertised_songid("avertised_songid");
+            UIScreen *storeLoadScreen =
+                ObjectDir::Main()->Find<UIScreen>("store_loading_screen");
+            storeLoadScreen->SetProperty(
+                advertised_songid, mChallengeRecord->GetChallengeRow().mSongID
+            );
+            storeLoadScreen->SetProperty(should_back_to_challenges, 1);
+        }
+        return screen;
+    }
 }
 
 Symbol ChallengeSortNode::OnSelect() {
@@ -397,11 +489,11 @@ void ChallengeSortNode::OnContentMounted(const char *contentName, const char *c2
     MILO_ASSERT(contentName, 0x1c1);
     if (!TheContentMgr.RefreshInProgress()) {
         int songID = mChallengeRecord->GetChallengeRow().mSongID;
-        Symbol sContentName(contentName);
-        if (TheHamSongMgr.IsContentUsedForSong(sContentName, songID)) {
+        if (TheHamSongMgr.IsContentUsedForSong(Symbol(contentName), songID)) {
             static Symbol song_data_mounted("song_data_mounted");
-            static Message msg(song_data_mounted);
-            TheUI->Handle(msg, false);
+            static Message msg(song_data_mounted, gNullStr);
+            msg[0] = GetToken();
+            TheUI->Export(msg, false);
         }
     }
 }
@@ -414,17 +506,8 @@ void ChallengeSortNode::Custom(UIListCustom *list, Hmx::Object *obj) const {
     }
 }
 
-char const *ChallengeHeaderNode::GetAlbumArtPath() {
-    static Symbol by_album("by_album");
-    static Symbol singles("singles");
-
-    if (TheChallengeSortMgr->GetCurrentSort()->GetSortName() == by_album
-        && GetToken() != singles) {
-        auto node = mChildren.begin();
-        if (node != mChildren.end())
-            return (*node)->GetAlbumArtPath();
-    }
-    return 0;
-}
+BEGIN_HANDLERS(ChallengeSortNode)
+    HANDLE_SUPERCLASS(NavListItemNode)
+END_HANDLERS
 
 #pragma endregion

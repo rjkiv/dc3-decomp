@@ -21,8 +21,8 @@ void MemHeap::FreeBlockStats(int &lFrags, int &rFrags, int &freeBytes, int &i4, 
     int ivar5 = 0;
     int ivar3 = 0;
     int ivar6 = -1;
-    for (FreeBlock *it = mFreeBlockChain; it != nullptr; it = it->mNextBlock, i++) {
-        int size = it->mSizeWords * 4;
+    for (FreeBlock *it = mFreeBlockChain; it != nullptr; it = it->NextBlock(), i++) {
+        int size = it->SizeWords() * 4;
         if (ivar5 < size) {
             ivar5 = size;
             ivar6 = i;
@@ -61,11 +61,11 @@ void MemHeap::InsertFreeBlock(
     FreeBlock *iBlock, int size, FreeBlock *iPrevBlock, FreeBlock *iNextBlock, int time
 ) {
     MILO_ASSERT((iBlock != iPrevBlock) && (iBlock != iNextBlock), 0x68);
-    iBlock->mSizeWords = size;
-    iBlock->mNextBlock = iNextBlock;
-    iBlock->mTimeStamp = time;
+    iBlock->SetSizeWords(size);
+    iBlock->SetNextBlock(iNextBlock);
+    iBlock->SetTimestamp(time);
     if (iPrevBlock) {
-        iPrevBlock->mNextBlock = iBlock;
+        iPrevBlock->SetNextBlock(iBlock);
     } else {
         mFreeBlockChain = iBlock;
     }
@@ -101,12 +101,12 @@ void MemHeap::Init(
 
 void MemHeap::FirstFit(int size, int align, FreeBlockInfo &blockinfo) {
     FreeBlock *prev = nullptr;
-    for (auto block = mFreeBlockChain; block != nullptr; block = block->mNextBlock) {
+    for (auto block = mFreeBlockChain; block != nullptr; block = block->NextBlock()) {
         int start = ((int)block >> 2) + 1;
         int alignment = start + (1 << align) - 1 >> (1 << align);
         int pad = alignment - start;
-        if ((int)block->mSizeWords >= pad + size) {
-            blockinfo.mSizeWords = block->mSizeWords;
+        if ((int)block->SizeWords() >= pad + size) {
+            blockinfo.mSizeWords = block->SizeWords();
             blockinfo.mPadWords = pad;
             blockinfo.mBlock = block;
             blockinfo.mPrevBlock = prev;
@@ -114,36 +114,3 @@ void MemHeap::FirstFit(int size, int align, FreeBlockInfo &blockinfo) {
         }
     }
 }
-
-// void __thiscall
-// MemHeap::Init(MemHeap *this,char *param_1,int param_2,int *param_3,int param_4,bool
-// param_5,
-//              Strategy param_6,int param_7,bool param_8)
-
-// {
-
-//   piVar7 = (param_3 + -1 & 0xfffffff0) + 0x10;
-//   this->mIsHandleHeap = param_5;
-//   this->mStrategy = param_6;
-//   this->mStart = piVar7;
-//   this->mAllowTemp = in_stack_00000057;
-//   this->field11_0x24 = -1;
-//   this->mDebugLevel = param_7;
-//   this->mSizeWords = param_4 - (piVar7 - param_3 >> 2);
-//   iVar1 = _anon_AD41C9DD::gTimeStamp;
-//   _anon_AD41C9DD::gTimeStamp = _anon_AD41C9DD::gTimeStamp + 1;
-//   InsertFreeBlock(this,this->mStart,this->mSizeWords,0x0,0x0,iVar1);
-//   if (this->mDebugLevel > 0) {
-//     uVar4 = ZEXT48(this->mFreeBlockChain);
-//     uVar5 = (this->mFreeBlockChain->mSizeWords & 0x3fffffff) * 4 + uVar4;
-//     if ((uVar4 + 0xc & 0xffffffff) < (uVar5 & 0xffffffff)) {
-//       lVar3 = uVar4 + 8;
-//       for (lVar6 = (((uVar5 - (uVar4 + 0xc)) + -1 << 0x20) >> 0x22) + 1; lVar6 != 0;
-//           lVar6 = lVar6 + -1) {
-//         lVar3 = lVar3 + 4;
-//         *lVar3 = 0xdeaddead;
-//       }
-//     }
-//   }
-//   return;
-// }

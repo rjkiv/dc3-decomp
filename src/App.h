@@ -1,19 +1,17 @@
 #pragma once
 
-#include "types.h"
-
 class App {
 private:
     int _pad;
 
 protected:
-    void CDECL DrawRegular(void);
-    void CDECL CaptureHiRes(void);
+    void DrawRegular();
+    void CaptureHiRes();
 
 public:
-    CDECL App(int, char **);
-    CDECL ~App(void);
+    App(int argc, char **argv);
+    ~App(void);
 
-    void CDECL RunWithoutDebugging(void);
-    void CDECL Run(void);
+    void RunWithoutDebugging();
+    void Run();
 };

@@ -15,9 +15,9 @@ bool IsNavAction(JoypadAction act) {
 }
 
 int ScrollDirection(const ButtonDownMsg &msg, bool b1, bool b2, int i) {
-    int msgInt = msg.mData->Int(4);
+    int msgInt = msg.GetAction();
     if (!b2) {
-        int msgInt2 = msg.mData->Int(3);
+        int msgInt2 = msg.GetButton();
     }
     return i;
 }

@@ -139,6 +139,7 @@ public:
 
     void SetProfile(HamProfile *p) { mProfile = p; }
     int Num5StarredMQSongs() const { return mNum5StarredMQSongs; }
+    void SetNum5StarredMQSongs(int i) { mNum5StarredMQSongs = i; }
 
 private:
     CampaignEraProgress *GetEraProgress(Symbol era) const;

@@ -3,8 +3,10 @@
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
 #include "meta_ham/AccomplishmentManager.h"
+#include "meta_ham/ChallengeRecord.h"
 #include "meta_ham/ChallengeSortByScore.h"
 #include "meta_ham/ChallengeSortMgr.h"
+#include "meta_ham/ChallengeSortNode.h"
 #include "meta_ham/HamProfile.h"
 #include "meta_ham/HamSongMgr.h"
 #include "meta_ham/NavListNode.h"
@@ -297,19 +299,19 @@ int Challenges::GetTotalXpEarned(int player) {
     MILO_ASSERT(provider, 0x438);
     static Symbol score("score");
     int playerScore = provider->Property(score)->Int();
-    std::vector<ChallengeRow> &playerChallenges = mPlayerChallenges[player];
+    // std::vector<ChallengeRow> &playerChallenges = mPlayerChallenges[player];
     int xp = 0;
-    for (int i = 0; i < playerChallenges.size(); i++) {
-        if (playerScore > playerChallenges[i].mScore) {
+    for (int i = 0; i < mPlayerChallenges[player].size(); i++) {
+        if (playerScore > mPlayerChallenges[player][i].mScore) {
             xp += CalculateChallengeXp(
-                playerChallenges[i].mScore, playerChallenges[i].mDiff
+                mPlayerChallenges[player][i].mScore, mPlayerChallenges[player][i].mDiff
             );
         }
     }
-    if (xp != 0) {
-        return xp;
-    } else
-        return mConsolationXP;
+    if (xp == 0) {
+        xp = mConsolationXP;
+    }
+    return xp;
 }
 
 void Challenges::UploadNextFlaunt() {
@@ -384,13 +386,15 @@ void Challenges::UpdateChallengeTimeStamp() {
         if (profile) {
             FOREACH (it, mProfileChallenges) {
                 if (it->first == profile->GetName()) {
+                    int profileChallengeTimestamp = profile->GetChallengeTimestamp();
+                    int challengeTimeStamp = it->second[0].mTimeStamp;
                     MILO_LOG(
                         ">>>> Update challenge time stamp from %i to %i\n",
-                        profile->GetUnk324(),
-                        it->second[0].mTimeStamp
+                        profileChallengeTimestamp,
+                        challengeTimeStamp
                     );
-                    profile->MakeDirty();
-                    profile->SetUnk324(it->second[0].mTimeStamp);
+                    profile->SetChallengeTimestamp(it->second[0].mTimeStamp);
+                    profile->SetDirty(true);
                     return;
                 }
             }
@@ -462,13 +466,12 @@ bool Challenges::GetBeatenChallengeXPs(
     if (provider->Property(has_valid_challenge_data)->Int()) {
         for (int i = 0; i < 2; i++) {
             if (playerData == TheGameData->Player(i)) {
-                std::vector<ChallengeRow> &challenges = mPlayerChallenges[i];
-                if (challenges.size() == 0)
+                if (mPlayerChallenges[i].size() == 0)
                     return false;
-                for (int j = 0; j < challenges.size(); j++) {
-                    if (score > challenges[j].mScore) {
+                for (int j = 0; j < mPlayerChallenges[i].size(); j++) {
+                    if ((unsigned int)score > mPlayerChallenges[i][j].mScore) {
                         int xp = CalculateChallengeXp(
-                            challenges[j].mScore, challenges[j].mDiff
+                            mPlayerChallenges[i][j].mScore, mPlayerChallenges[i][j].mDiff
                         );
                         beatenXPs.push_back(xp);
                         MILO_LOG("XP = %i\n", xp);
@@ -592,11 +595,18 @@ void Challenges::Init() {
 void Challenges::SetupInGameData() {
     NavListSortNode *node = TheChallengeSortMgr->GetHighlightItem();
     MILO_ASSERT(node, 0x2e5);
+    ChallengeSortNode *challenge = static_cast<ChallengeSortNode *>(node);
+    MILO_ASSERT(challenge, 0x2e7);
+    ChallengeRecord *record = challenge->GetChallengeRecord();
+    MILO_ASSERT(record, 0x2e9);
 
-    // stuff
+    int songID = record->GetChallengeRow().mSongID;
+    int score = record->GetChallengeRow().mScore;
+    Symbol record48 = record->GetUnk48();
 
     HamProfile *primaryProfile = TheProfileMgr.GetActiveProfile(true);
     MILO_ASSERT(primaryProfile, 0x2f0);
+    TheProfileMgr.SetCriticalProfile(primaryProfile);
     static Symbol has_valid_challenge_data("has_valid_challenge_data");
     static Symbol primary_challenge_player("primary_challenge_player");
     for (int i = 0; i < 2; i++) {
@@ -604,18 +614,31 @@ void Challenges::SetupInGameData() {
         MILO_ASSERT(playerData, 0x2fb);
         PropertyEventProvider *provider = playerData->Provider();
         MILO_ASSERT(provider, 0x2fd);
-        provider->SetProperty(0, 0);
+        provider->SetProperty(has_valid_challenge_data, 0);
+        mPlayerChallenges[i].clear();
         HamProfile *profileFromPad =
             TheProfileMgr.GetProfileFromPad(playerData->PadNum());
         if (profileFromPad) {
             if (profileFromPad == primaryProfile) {
                 SetupInGameChallenges(
-                    0, 0, 0, primaryProfile, true, mPlayerChallenges[2], provider
+                    songID,
+                    score,
+                    record48.Str(),
+                    primaryProfile,
+                    true,
+                    mPlayerChallenges[i],
+                    provider
                 );
-                TheHamProvider->SetProperty(primary_challenge_player, 0);
+                TheHamProvider->SetProperty(primary_challenge_player, i);
             } else {
                 SetupInGameChallenges(
-                    0, 0, 0, profileFromPad, false, mPlayerChallenges[2], provider
+                    songID,
+                    score,
+                    record48.Str(),
+                    profileFromPad,
+                    false,
+                    mPlayerChallenges[i],
+                    provider
                 );
             }
         }
@@ -899,4 +922,53 @@ jump:
             }
         }
     }
+}
+
+bool Challenges::HasNewChallenges() {
+    if (!mProfileChallenges.empty()) {
+        HamProfile *profile = TheProfileMgr.GetActiveProfile(true);
+        if (profile) {
+            String name = profile->GetName();
+            auto it = mProfileChallenges.find(name);
+            if (it != mProfileChallenges.end()) {
+                std::map<int, int> scores;
+                std::vector<ChallengeRow> &rows = it->second;
+
+                for (int i = 0; i < rows.size(); i++) {
+                    if (rows[i].mGamertag == rows[i].unk2c) {
+                        int songID = rows[i].mSongID;
+                        scores[songID] = rows[i].mTimeStamp;
+                    }
+                }
+
+                for (int i = 0; i < rows.size(); i++) {
+                    Symbol shortname =
+                        TheHamSongMgr.GetShortNameFromSongID(rows[i].mSongID, false);
+                    if (shortname.Null() || TheProfileMgr.IsContentUnlocked(shortname)) {
+                        int songID = rows[i].mSongID;
+                        auto find = scores.find(songID);
+                        if (find == scores.end()) {
+                            return true;
+                        }
+                        if (find->second < (int)rows[i].mTimeStamp) {
+                            return true;
+                        }
+                    }
+                }
+
+                for (int i = 0; i < mOfficialChallenges.size(); i++) {
+                    int songID = mOfficialChallenges[i].mSongID;
+                    auto find = scores.find(songID);
+                    if (find == scores.end()) {
+                        return true;
+                    }
+                    if (find->second < (int)mOfficialChallenges[i].mTimeStamp) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    return mOfficialChallenges.size() > 0;
 }

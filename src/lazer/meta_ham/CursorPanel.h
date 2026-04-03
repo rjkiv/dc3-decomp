@@ -14,4 +14,6 @@ public:
     NEW_OBJ(CursorPanel)
 
     CursorPanel();
+
+    static int sInt;
 };

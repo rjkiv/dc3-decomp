@@ -644,14 +644,14 @@ void PoseFatalities::OnBeat(int beat) {
     bool p9 = unk1754 < mFatalStartBeats[0] ? false : mInFatality[0];
     if (p9) {
         JoypadData *jData = JoypadGetPadData(0);
-        if (jData->GetRX() > 0.5f) {
+        if (jData->RX() > 0.5f) {
             AddFatal(0);
         }
-        if (jData->GetRX() < -0.5f) {
+        if (jData->RX() < -0.5f) {
             unk44[0] -= 2;
             AddFatal(0);
         }
-        if (jData->GetLY() > 0.5f) {
+        if (jData->LY() > 0.5f) {
             OnFatalResult(0, false);
         }
     }

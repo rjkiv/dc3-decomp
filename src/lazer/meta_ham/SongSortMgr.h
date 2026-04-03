@@ -29,7 +29,7 @@ public:
     static void Init(SongPreview &);
     static void Terminate();
 
-    const std::map<Symbol, SongRecord> &GetUnk78() const { return unk78; }
+    std::map<Symbol, SongRecord> &GetUnk78() { return unk78; }
     unsigned int MapSize() { return unk78.size(); }
 
 private:

@@ -94,8 +94,9 @@ void MQSongSort::BuildTree() {
     NavListSort::DeleteTree();
     Init();
     std::vector<NavListItemNode *> nodes;
-    auto &map = TheMQSongSortMgr->GetUnk78(); // maybe regswap from here?
-    FOREACH (it, map) {
+
+    auto &map = TheMQSongSortMgr->GetUnk78();
+    for (auto it = map.begin(); it != map.end(); ++it) {
         FOREACH (it2, it->second) {
             NavListItemNode *node = NewItemNode(it2);
             static_cast<MQSongSortNode *>(node)->SetUnk4C(it->first);
@@ -105,7 +106,7 @@ void MQSongSort::BuildTree() {
 
     auto begin = nodes.begin();
     auto end = nodes.end();
-    while (begin != end) { // or maybe here, idk ill fix it later
+    while (begin != end) {
         std::vector<NavListItemNode *>::iterator it = begin;
         while (it != end) {
             if (static_cast<MQSongSortNode *>(*it)->GetUnk4C()
