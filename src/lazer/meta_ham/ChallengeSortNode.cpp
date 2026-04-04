@@ -46,11 +46,8 @@ NavListSortNode *ChallengeHeaderNode::GetFirstActive() {
     FOREACH (it, mChildren) {
         auto node = (*it)->GetFirstActive();
         if (node)
-            break;
+            return TheChallengeSortMgr->HeadersSelectable() ? this : node;
     }
-    auto something = TheChallengeSortMgr->NumData();
-    if (something)
-        return this;
     return nullptr;
 }
 

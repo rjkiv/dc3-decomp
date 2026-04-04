@@ -24,6 +24,7 @@
 #include "os/PlatformMgr.h"
 #include "os/System.h"
 #include "os/User.h"
+#include "stl/_algo.h"
 #include "stl/_vector.h"
 #include "ui/UI.h"
 #include "utl/JobMgr.h"
@@ -253,9 +254,9 @@ char const *HamStorePanel::GetIndexFile() const {
 void HamStorePanel::ExitStore(StoreError err) const {
     static Symbol store_load_failed("store_load_failed");
     if (TheUIEventMgr->CurrentEvent() != store_load_failed) {
-        static Message init("init", -1);
-        init[0] = err;
-        TheUIEventMgr->TriggerEvent(store_load_failed, init);
+        static Message msg("init", -1);
+        msg[0] = err;
+        TheUIEventMgr->TriggerEvent(store_load_failed, msg);
     }
 }
 
@@ -425,11 +426,11 @@ exit:
                 }
             }
 
-            static Message special_finished("special_finished", 0, 0);
-            special_finished[0] = purchaseMade;
-            special_finished[1] = needsEnum;
-            HandleType(special_finished);
-            TheUI->Handle(special_finished, false);
+            static Message msg("special_finished", 0, 0);
+            msg[0] = purchaseMade;
+            msg[1] = needsEnum;
+            HandleType(msg);
+            TheUI->Handle(msg, false);
             RELEASE(mXboxPurchaser);
         }
     }
@@ -473,9 +474,94 @@ void HamStorePanel::FinishSpecialOfferEnum(std::vector<bool> const &vec, bool b)
             }
         }
     }
-    static Message refresh_complete("refresh_complete", 0);
-    refresh_complete[0] = b;
-    TheUI->Handle(refresh_complete, false);
+    static Message self_msg("refresh_complete", 0);
+    self_msg[0] = b;
+    TheUI->Handle(self_msg, false);
+}
+
+void HamStorePanel::RefreshSpecialOfferStatus() {
+    Profile *pProfile = StoreProfile();
+    if (pProfile && unk184 == -1) {
+        SpecialOfferEnumJob *job =
+            new SpecialOfferEnumJob(this, pProfile->GetPadNum(), unk178);
+        ThePlatformMgr.QueueEnumJob(job);
+        unk184 = job->ID();
+    }
+}
+
+void HamStorePanel::GetOfferIDsToEnumerate(std::vector<QWORD> &offerIDs, bool b) const {
+    const std::vector<StoreOffer *> &offers = b ? unk44 : unk38;
+    for (int i = 0; i < offers.size(); i++) {
+        StorePurchaseable *purchaseable = offers[i];
+        if (purchaseable->Exists()) {
+            offerIDs.push_back(purchaseable->SongID());
+        }
+    }
+    std::sort(offerIDs.begin(), offerIDs.end());
+    auto it = std::unique(offerIDs.begin(), offerIDs.end());
+    offerIDs.resize(it - offerIDs.begin());
+}
+
+DataNode HamStorePanel::OnMsg(RCJobCompleteMsg const &msg) {
+    if (msg.Job() == unk138[4]) {
+        if (msg.Success()) {
+            ReadLockData();
+            GetCart();
+        } else {
+            MILO_LOG("[HamStorePanel::OnMsg] Cart failed to lock, disabling.\n");
+            DisableCart();
+        }
+    } else if (msg.Job() == unk138[5]) {
+        if (msg.Success()) {
+            MILO_LOG("[HamStorePanel::OnMsg] Cart unlocked successfully.\n");
+        } else {
+            MILO_LOG("[HamStorePanel::OnMsg] Cart failed to unlock.\n");
+        }
+    } else if (msg.Job() == unk138[6]) {
+        if (!msg.Success()) {
+            MILO_LOG("[HamStorePanel::OnMsg] Cart failed to re-lock.\n");
+        }
+    } else if (msg.Job() == unk138[3]) {
+        if (msg.Success()) {
+            ReadCartData();
+        } else {
+            MILO_LOG("[HamStorePanel::OnMsg] Failed to get cart, disabling.\n");
+            DisableCart();
+        }
+    } else if (msg.Job() == unk138[1]) {
+        if (!msg.Success()) {
+            MILO_LOG("[HamStorePanel::OnMsg] Cart failed to remove song.\n");
+            ExitError(kStoreErrorCacheRemoved);
+        } else {
+            unk15c.pop_front();
+            if (!unk15c.empty()) {
+                RemoveNextDLCFromCart();
+            } else {
+                unk138[1] = nullptr;
+                unk158 = false;
+            }
+        }
+    } else if (msg.Job() == unk138[0]) {
+        if (!msg.Success()) {
+            MILO_LOG("[HamStorePanel::OnMsg] Cart failed to add song.\n");
+            ExitError(kStoreErrorCacheRemoved);
+        } else {
+            unk164.pop_front();
+            if (!unk164.empty()) {
+                AddNextDLCToCart();
+            } else {
+                unk138[0] = nullptr;
+                unk159 = false;
+            }
+        }
+    } else if (msg.Job() == unk138[2]) {
+        if (!msg.Success()) {
+            MILO_LOG("[HamStorePanel::OnMsg] Cart failed to clear.\n");
+        } else {
+            MILO_LOG("[HamStorePanel::OnMsg] Cart emptied successfully.\n");
+        }
+    }
+    return 1;
 }
 
 BEGIN_HANDLERS(HamStorePanel)
@@ -512,3 +598,8 @@ BEGIN_HANDLERS(HamStorePanel)
     HANDLE_ACTION(buy_dc2_gond, BuySpecialOffer("dc2_gond"))
     HANDLE_SUPERCLASS(StorePanel)
 END_HANDLERS
+
+SpecialOfferEnumJob::SpecialOfferEnumJob(
+    HamStorePanel *panel, int i, std::vector<QWORD> &vec
+)
+    : MultipleItemsEnumJob(nullptr, i, vec), unk5c(panel) {}

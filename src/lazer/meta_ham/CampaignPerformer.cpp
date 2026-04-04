@@ -174,8 +174,9 @@ void CampaignPerformer::OnLoadSong() {
         static Symbol song_shortening_enabled("song_shortening_enabled");
         static Symbol deinit("deinit");
         Symbol mode = TheCampaign->GetOutroSongGameplayMode(idx);
+        bool isPerform = mode == perform;
         if (TheGameMode->GameplayMode() != mode) {
-            TheGameMode->SetGameplayMode(mode, mode == perform);
+            TheGameMode->SetGameplayMode(mode, isPerform);
             TheHamProvider->SetProperty(
                 song_shortening_enabled,
                 TheCampaign->GetOutroSongShortened(GetPlaylistIndex())
@@ -853,8 +854,9 @@ void CampaignPerformer::UnlockAllMoves(Symbol s1, Symbol s2, int i3) {
 }
 
 Symbol CampaignPerformer::GetLastEra() const {
-    for (int i = 0; i < TheCampaign->NumEras(); i++) {
-        CampaignEra *pEra = TheCampaign->GetEra(i);
+    auto &eras = TheCampaign->Eras();
+    for (int i = 0; i < eras.size() - 1; i++) {
+        CampaignEra *pEra = eras[i];
         MILO_ASSERT(pEra, 0x3B);
         if (pEra->GetUnk50()) {
             return pEra->GetName();
@@ -927,8 +929,9 @@ void CampaignPerformer::UpdateEraSong(Difficulty d, Symbol s2, Symbol s3, int i4
 }
 
 void CampaignPerformer::AwardCrazeAccomplishments() {
-    for (int i = 0; i < TheCampaign->NumEras() - 1; i++) {
-        CampaignEra *pEra = TheCampaign->GetEra(i);
+    auto &eras = TheCampaign->Eras();
+    for (int i = 0; i < eras.size() - 1; i++) {
+        CampaignEra *pEra = eras[i];
         Symbol acc = pEra->CompletionAccomplishment();
         if (acc != gNullStr) {
             int starsEarned =
