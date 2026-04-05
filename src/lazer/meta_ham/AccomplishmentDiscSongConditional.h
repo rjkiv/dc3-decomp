@@ -7,7 +7,9 @@ class AccomplishmentDiscSongConditional : public AccomplishmentSongConditional {
 public:
     AccomplishmentDiscSongConditional(DataArray *, int);
     virtual ~AccomplishmentDiscSongConditional();
-    virtual AccomplishmentType GetType() const { return (AccomplishmentType)5; }
+    virtual AccomplishmentType GetType() const {
+        return kAccomplishmentTypeDiscSongConditional;
+    }
     virtual bool IsFulfilled(HamProfile *) const;
     virtual bool IsRelevantForSong(Symbol) const;
     virtual bool InqIncrementalSymbols(HamProfile *, std::vector<Symbol> &) const;

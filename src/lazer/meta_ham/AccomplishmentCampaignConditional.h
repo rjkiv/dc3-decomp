@@ -7,7 +7,9 @@ class AccomplishmentCampaignConditional : public AccomplishmentConditional {
 public:
     AccomplishmentCampaignConditional(DataArray *, int);
     virtual ~AccomplishmentCampaignConditional();
-    virtual AccomplishmentType GetType() const { return (AccomplishmentType)6; }
+    virtual AccomplishmentType GetType() const {
+        return kAccomplishmentTypeCampaignConditional;
+    }
     virtual bool IsFulfilled(class HamProfile *) const;
     virtual bool IsRelevantForSong(Symbol) const { return true; }
 

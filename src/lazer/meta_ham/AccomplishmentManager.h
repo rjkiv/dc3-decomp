@@ -29,31 +29,31 @@ struct GoalProgressionInfo {
 
 class AccomplishmentManager : public Hmx::Object, public ContentMgr::Callback {
 public:
-    AccomplishmentManager(DataArray *);
+    AccomplishmentManager(DataArray *cfg);
     // Hmx::Object
     virtual ~AccomplishmentManager();
     virtual DataNode Handle(DataArray *, bool);
     // ContentMgr::Callback
     virtual void ContentDone();
 
-    void EarnAccomplishmentForProfile(HamProfile *, Symbol, bool);
-    void EarnAccomplishmentForPlayer(int, Symbol);
-    void EarnAccomplishmentForAll(Symbol, bool);
+    void EarnAccomplishmentForProfile(HamProfile *profile, Symbol accSym, bool);
+    void EarnAccomplishmentForPlayer(int i_iPlayerIndex, Symbol accSym);
+    void EarnAccomplishmentForAll(Symbol accSym, bool);
     int GetNumAccomplishments() const;
-    bool HasCompletedAccomplishment(HamUser *, Symbol) const;
+    bool HasCompletedAccomplishment(HamUser *user, Symbol) const;
     bool HasNewAwards() const;
-    Symbol GetNameForFirstNewAward(HamProfile *) const;
-    Symbol GetDescriptionForFirstNewAward(HamProfile *) const;
-    String GetArtForFirstNewAward(HamProfile *) const;
-    bool HasArtForFirstNewAward(HamProfile *) const;
+    Symbol GetNameForFirstNewAward(HamProfile *i_pProfile) const;
+    Symbol GetDescriptionForFirstNewAward(HamProfile *i_pProfile) const;
+    String GetArtForFirstNewAward(HamProfile *i_pProfile) const;
+    bool HasArtForFirstNewAward(HamProfile *i_pProfile) const;
     HamProfile *GetProfileForFirstNewAward() const;
-    void ClearFirstNewAward(HamProfile *);
-    void UpdateReasonLabelForFirstNewAward(HamProfile *, UILabel *);
+    void ClearFirstNewAward(HamProfile *i_pProfile);
+    void UpdateReasonLabelForFirstNewAward(HamProfile *i_pProfile, UILabel *i_pLabel);
     void ClearGoalProgressionAcquisitionInfo();
     bool IsUnlockableAsset(Symbol) const;
-    bool IsGroupComplete(HamProfile *, Symbol) const;
-    bool IsCategoryComplete(HamProfile *, Symbol) const;
-    int GetNumCompletedAccomplishments(HamUser *) const;
+    bool IsGroupComplete(HamProfile *i_pProfile, Symbol group) const;
+    bool IsCategoryComplete(HamProfile *i_pProfile, Symbol category) const;
+    int GetNumCompletedAccomplishments(HamUser *user) const;
     void AddGoalAcquisitionInfo(Symbol, const char *, Symbol);
     void AddAssetAward(Symbol, Symbol);
     Symbol GetAssetAward(Symbol) const;
@@ -64,27 +64,35 @@ public:
     bool HasAccomplishmentCategory(Symbol) const;
     bool HasAccomplishmentGroup(Symbol) const;
     bool HasAward(Symbol) const;
-    std::set<Symbol> *GetAccomplishmentSetForCategory(Symbol) const;
-    std::list<Symbol> *GetCategoryListForGroup(Symbol) const;
+    std::set<Symbol> *GetAccomplishmentSetForCategory(Symbol category) const;
+    std::list<Symbol> *GetCategoryListForGroup(Symbol group) const;
     Symbol GetAssetSource(Symbol) const;
     Award *GetAward(Symbol) const;
     void EarnAwardForAll(Symbol, bool);
     void EarnAwardForProfile(HamProfile *, Symbol);
-    Symbol GetReasonForFirstNewAward(HamProfile *) const;
+    Symbol GetReasonForFirstNewAward(HamProfile *i_pProfile) const;
     void Poll();
     AccomplishmentCategory *GetAccomplishmentCategory(Symbol) const;
     AccomplishmentGroup *GetAccomplishmentGroup(Symbol) const;
     bool IsAvailable(Symbol) const;
-    int GetNumAccomplishmentsInCategory(Symbol) const;
-    int GetNumAccomplishmentsInGroup(Symbol) const;
-    void CheckForCampaignAccomplishmentsForProfile(HamProfile *);
-    void CheckForOneShotAccomplishments(Symbol, HamPlayerData *, HamProfile *);
-    void CheckForCharacterListAccomplishments(Symbol, HamPlayerData *, HamProfile *);
-    void UpdateMiscellaneousSongDataForUser(Symbol, HamPlayerData *, HamProfile *);
-    void CheckForSpecificModesAccomplishments(Symbol, HamPlayerData *, HamProfile *);
-    void CheckForCrewsAccomplishments(HamProfile *);
+    int GetNumAccomplishmentsInCategory(Symbol category) const;
+    int GetNumAccomplishmentsInGroup(Symbol i_symGroup) const;
+    void CheckForCampaignAccomplishmentsForProfile(HamProfile *profile);
+    void CheckForOneShotAccomplishments(
+        Symbol song, HamPlayerData *i_pPlayerData, HamProfile *profile
+    );
+    void CheckForCharacterListAccomplishments(
+        Symbol song, HamPlayerData *i_pPlayerData, HamProfile *profile
+    );
+    void UpdateMiscellaneousSongDataForUser(
+        Symbol song, HamPlayerData *playerData, HamProfile *profile
+    );
+    void CheckForSpecificModesAccomplishments(
+        Symbol song, HamPlayerData *playerData, HamProfile *profile
+    );
+    void CheckForCrewsAccomplishments(HamProfile *profile);
     HardCoreStatus GetIconHardCoreStatus(int) const;
-    void HandleSongCompleted(Symbol);
+    void HandleSongCompleted(Symbol song);
     const std::vector<Symbol> &GetDiscSongs() const { return mDiscSongs; }
     bool Unk30(int i) const { return unk30[i]; }
     void SetUnk30(int i, bool b) { unk30[i] = b; }
@@ -106,18 +114,22 @@ protected:
     void ConfigureAccomplishmentGroupToCategoriesData();
     void ConfigureAccomplishmentRewardData(DataArray *);
     Accomplishment *FactoryCreateAccomplishment(DataArray *, int);
-    void HandleSongCompletedForProfile(Symbol, HamPlayerData *, HamProfile *);
+    void HandleSongCompletedForProfile(
+        Symbol song, HamPlayerData *playerData, HamProfile *profile
+    );
 
     DataNode OnMsg(const SigninChangedMsg &);
 
-    bool unk30[2]; // 0x30
+    bool unk30[2]; // 0x30 - players are not signed in?
     std::map<Symbol, Accomplishment *> mAccomplishments; // 0x34
     std::map<Symbol, AccomplishmentCategory *> mAccomplishmentCategories; // 0x4c
     std::map<Symbol, AccomplishmentGroup *> mAccomplishmentGroups; // 0x64
     std::map<Symbol, Award *> mAwards; // 0x7c
     std::map<Symbol, Symbol> mAssetToAward; // 0x94
     std::map<Symbol, Symbol> mAwardToSource; // 0xac
+    // key = group symbol, value = category list for group
     std::map<Symbol, std::list<Symbol> *> m_mapGroupToCategories; // 0xc4
+    // key = category symbol, value = accomplishment set for category
     std::map<Symbol, std::set<Symbol> *> m_mapCategoryToAccomplishmentSet; // 0xdc
     int mLeaderboardThresholds[4]; // 0xf4
     int mIconThresholds[4]; // 0x104

@@ -9,7 +9,7 @@ class AccomplishmentOneShot : public AccomplishmentConditional {
 public:
     AccomplishmentOneShot(DataArray *, int);
     virtual ~AccomplishmentOneShot();
-    virtual AccomplishmentType GetType() const { return (AccomplishmentType)3; }
+    virtual AccomplishmentType GetType() const { return kAccomplishmentTypeOneShot; }
 
     bool AreOneShotConditionsMet(HamPlayerData *, class HamProfile *, Symbol, Difficulty);
 

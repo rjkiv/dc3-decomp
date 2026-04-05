@@ -11,7 +11,9 @@ class AccomplishmentCharacterListConditional : public AccomplishmentConditional 
 public:
     AccomplishmentCharacterListConditional(DataArray *, int);
     virtual ~AccomplishmentCharacterListConditional();
-    virtual AccomplishmentType GetType() const { return (AccomplishmentType)4; }
+    virtual AccomplishmentType GetType() const {
+        return kAccomplishmentTypeCharacterListConditional;
+    }
     virtual bool IsRelevantForSong(Symbol) const { return true; }
 
     bool AreOldOutfitListConditionsMet();

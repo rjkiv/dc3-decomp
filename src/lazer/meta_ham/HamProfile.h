@@ -173,7 +173,7 @@ private:
     int unk32c;
     int unk330;
     bool unk334;
-    Symbol unk338;
+    Symbol unk338; // 0x338 - song? shortname?
     bool mIsFitnessGoalSet; // 0x33c
     /** The day/month/year from which this fitness goal started. */
     int mFitnessGoalStartDay; // 0x340
