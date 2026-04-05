@@ -561,6 +561,8 @@ bool compare_deferred_points(DeferredPoints a, DeferredPoints b) {
     return aIndex < bIndex;
 }
 
+// whoever solves this will gain us 0x2194 bytes for lazer:
+// https://decomp.me/scratch/m3yNS
 void MetagameRank::UpdateScore(
     int songID,
     const HamPlayerData *playerData,

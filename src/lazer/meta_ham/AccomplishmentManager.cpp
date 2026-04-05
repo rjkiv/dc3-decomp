@@ -548,7 +548,8 @@ void AccomplishmentManager::Poll() {
     FOREACH (it, profiles) {
         HamProfile *pProfile = *it;
         MILO_ASSERT(pProfile, 0x88);
-        pProfile->AccessAccomplishmentProgress().Poll();
+        AccomplishmentProgress &prog = pProfile->AccessAccomplishmentProgress();
+        prog.Poll();
     }
 }
 
@@ -643,7 +644,9 @@ void AccomplishmentManager::EarnAccomplishmentForAll(Symbol s1, bool b2) {
             HamProfile *pProfile = *it;
             MILO_ASSERT(pProfile, 0x310);
             if (pProfile && pProfile->HasValidSaveData()) {
-                if (!pProfile->GetAccomplishmentProgress().IsAccomplished(s1)) {
+                const AccomplishmentProgress &prog =
+                    pProfile->GetAccomplishmentProgress();
+                if (!prog.IsAccomplished(s1)) {
                     EarnAccomplishmentForProfile(pProfile, s1, false);
                 }
             }
@@ -681,7 +684,7 @@ bool AccomplishmentManager::HasArtForFirstNewAward(HamProfile *i_pProfile) const
     if (sym != "") {
         Award *pAward = GetAward(sym);
         MILO_ASSERT(pAward, 0x77F);
-        ret = pAward->GetArtName() == gNullStr;
+        ret = pAward->GetArtName() != gNullStr;
     } else {
         MILO_ASSERT(false, 0x785);
     }
@@ -703,7 +706,8 @@ bool AccomplishmentManager::IsAvailable(Symbol s) const {
         MILO_ASSERT(iNumSongs <= rSongs.size(), 0x7F3);
         int thresh = 0;
         for (int i = 0; i < iNumSongs; i++) {
-            if (TheHamSongMgr.HasSong(rSongs[i], false)) {
+            Symbol cur = rSongs[i];
+            if (TheHamSongMgr.HasSong(cur, false)) {
                 thresh++;
             }
             if (thresh >= prereqNum) {

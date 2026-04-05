@@ -19,7 +19,7 @@ public:
     bool IsSilent() const;
 
     void SetArt(Symbol s) { mArt = s; }
-    Symbol GetArtName() const { return mArt; }
+    const Symbol &GetArtName() const { return mArt; }
 
 private:
     Symbol mName; // 0x4
