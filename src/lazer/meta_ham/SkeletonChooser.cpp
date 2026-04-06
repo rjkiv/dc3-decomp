@@ -11,6 +11,8 @@
 #include "gesture/StandingStillGestureFilter.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
+#include "math/Color.h"
+#include "math/Geo.h"
 #include "math/Vec.h"
 #include "meta_ham/HamPanel.h"
 #include "meta_ham/HamUI.h"
@@ -21,8 +23,18 @@
 #include "obj/Object.h"
 #include "obj/Task.h"
 #include "os/Debug.h"
+#include "rndobj/Rnd.h"
 #include "ui/UI.h"
+#include "utl/MakeString.h"
 #include "utl/Symbol.h"
+#include <cstdio>
+
+static float sF1 = 0.03f;
+static float sF2 = 0.37f;
+static float sF3 = 0.2f;
+static float sF4 = 0.6f;
+static float sF5 = 0.1f;
+static float sF6 = 0.25f;
 
 SkeletonChooser::SkeletonChooser()
     : mDrawDebug(false), unk3c(0), unk44(1), unk48(true), unk80(0), unk84(0), unk88(0),
@@ -308,9 +320,10 @@ bool SkeletonChooser::IsSinglePlayerMode() const {
     if (TheGameMode->Property(gameplay_mode)->Sym() == practice
         && (navModeSym == game || navModeSym == results || navModeSym == loading
             || navModeSym == pause || navModeSym == practice_shell
-            || navModeSym == store)) {
+            || store == navModeSym)) {
         ret = true;
     }
+
     return ret;
 }
 
@@ -643,21 +656,24 @@ void SkeletonChooser::SetPlayerSkeletonWarningData(int p1ID, int p2ID) {
         MILO_ASSERT(pPlayer2Skeleton, 0x18a);
         p2flags = pPlayer2Skeleton->QualityFlags();
     }
-
-    int p2warnings = 0;
     int p1warnings = 0;
-    if (0 < p1ID && p1ID == trackingID) {
-        p1warnings = p1flags;
-        p1warnings = 0;
-        p2warnings = p1flags;
+    int p2warnings = 0;
+    if (p1ID > 0) {
+        if (p1ID == trackingID) {
+            p2warnings = p1flags;
+        } else {
+            p1warnings = p1flags;
+        }
     }
 
-    if (0 < p2ID && p2ID == trackingID) {
-        p1flags = p2flags;
-        p2warnings = p2flags;
-        p1flags = p1warnings;
+    if (p2ID > 0) {
+        if (p2ID == trackingID) {
+            p2warnings = p2flags;
+        } else {
+            p1warnings = p2flags;
+        }
     }
-    SetPlayerCloseWarnings(0, p1flags);
+    SetPlayerCloseWarnings(0, p1warnings);
     SetPlayerCloseWarnings(1, p2warnings);
 }
 

@@ -7,6 +7,8 @@
 #include "utl/Str.h"
 
 DECLARE_MESSAGE(SkeletonIdentifiedMsg, "skeleton_identified")
+int GetVal2() const { return mData->Int(2); }
+int GetIndex() const { return mData->Int(3); }
 END_MESSAGE
 
 enum IdentityStatus {

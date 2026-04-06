@@ -13,6 +13,7 @@
 #include "ui/UIList.h"
 #include "ui/UIListLabel.h"
 #include "ui/UIPanel.h"
+#include "utl/Locale.h"
 #include "utl/Symbol.h"
 
 ChallengeResultPanel::ChallengeResultPanel()
@@ -30,7 +31,9 @@ BEGIN_PROPSYNCS(ChallengeResultPanel)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
-void ChallengeResultPanel::Text(int, int data, UIListLabel *, UILabel *label) const {
+void ChallengeResultPanel::Text(
+    int, int data, UIListLabel *uiListLabel, UILabel *label
+) const {
     MILO_ASSERT_RANGE(data, 0, mItems.size(), 0x11a);
     static Symbol best_score("best_score");
     AppLabel *app_label = dynamic_cast<AppLabel *>(label);

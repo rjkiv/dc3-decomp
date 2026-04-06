@@ -38,11 +38,11 @@ namespace std {
     using ::puts;
     using ::ungetc;
 
+    using ::_snprintf;
     using ::fprintf;
     using ::printf;
     using ::snprintf;
     using ::sprintf;
-    using ::_snprintf;
 
     using ::vfprintf;
     using ::vprintf;
@@ -61,4 +61,8 @@ namespace std {
     using ::feof;
     using ::ferror;
     using ::perror;
+
 }
+
+template <size_t size>
+int sprintf_s(char (&buffer)[size], const char *format, ...);

@@ -37,8 +37,6 @@ public:
     static void CycleVenuePreference();
     static void Init();
 
-    static SongDB *sSongDB; // DAT_821189a0
-    static HamMaster *sHamMaster; // DAT_8311899c
     static bool sUnlockAll;
     static bool sMotdCheat;
 
