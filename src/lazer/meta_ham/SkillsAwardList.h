@@ -37,6 +37,7 @@ public:
     void SetAward(Symbol, DataArray *, SkillsAward);
     void Clear();
     int AwardCount(SkillsAward) const;
+    bool HasAward(const Key &key) { return mAwardList.count(key) > 0; }
 
     static int SaveSize(int);
 

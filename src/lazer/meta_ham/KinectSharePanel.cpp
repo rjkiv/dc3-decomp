@@ -92,7 +92,7 @@ void KinectSharePanel::Poll() {
             "KinectSharePanel asynch I/O completed 0x%08x\n", mOverlapped.dwExtendedError
         );
         if (mOverlapped.dwExtendedError != 0) {
-            unk4c = mOverlapped.dwExtendedError == 0x4C7 ? 4 : 3;
+            unk4c = mOverlapped.dwExtendedError == ERROR_CANCELLED ? 4 : 3;
         } else {
             unk4c = 2;
         }
@@ -185,7 +185,7 @@ void KinectSharePanel::ConvertImagesForLinkPost() {
         if (mLinkPostParams.PreviewImage.Format == D3DFMT_A8R8G8B8) {
             mLinkPostParams.PreviewImage.Format = D3DFMT_LIN_A8R8G8B8;
         }
-        int mult = bitmap90.Height() * bitmap90.RowBytes();
+        int mult = bitmap90.RowBytes() * bitmap90.Height();
         mPreviewBuf = MemAlloc(mult, __FILE__, 0xA8, "FB_Preview");
         MILO_ASSERT(mPreviewBuf != NULL, 0xA9);
         if (mPreviewBuf) {
@@ -243,28 +243,16 @@ DataNode KinectSharePanel::OnPostLink(DataArray *a) {
     if (!mOverlapped.hEvent) {
         MILO_LOG("KinectSharePanel: mOverlapped.hEvent is null");
     } else {
-        mOverlapped.dwCompletionContext = (DWORD_PTR)this;
         mOverlapped.pCompletionRoutine = nullptr;
+        mOverlapped.dwCompletionContext = (DWORD_PTR)this;
         mOverlapped.dwExtendedError = 0;
-        WCHAR caption[256];
-        WCHAR description[256];
-        WCHAR linkUrl[256];
-        WCHAR pictureUrl[256];
-        WCHAR title[256];
-        memcpy(title, L"Title Text", 0x16);
-        memset(&title[0x16 / 2], 0, sizeof(title) - 0x16);
-        memcpy(linkUrl, L"http://www.dancecentral.com/", 0x3A);
-        memset(&linkUrl[0x3A / 2], 0, sizeof(linkUrl) - 0x3A);
-        memcpy(caption, L"Picture Caption", 0x20);
-        memset(&caption[0x20 / 2], 0, sizeof(caption) - 0x20);
-        memcpy(description, L"Picture Description", 0x28);
-        memset(&description[0x28 / 2], 0, sizeof(description) - 0x28);
-        memcpy(
-            pictureUrl,
-            L"http://www.dancecentral.com/content-assets/2012/06/2012E3LogoBox_tn.jpg",
-            0x90
-        );
-        memset(&pictureUrl[0x90 / 2], 0, sizeof(pictureUrl) - 0x90);
+        WCHAR title[256] = { L"Title Text" };
+        WCHAR linkUrl[256] = { L"http://www.dancecentral.com/" };
+        WCHAR caption[256] = { L"Picture Caption" };
+        WCHAR description[256] = { L"Picture Description" };
+        WCHAR pictureUrl[256] = {
+            L"http://www.dancecentral.com/content-assets/2012/06/2012E3LogoBox_tn.jpg"
+        };
         static Symbol fb_link_title_text("fb_link_title_text");
         static Symbol fb_link_title_url("fb_link_title_url");
         static Symbol fb_link_picture_caption("fb_link_picture_caption");
@@ -337,7 +325,7 @@ DataNode KinectSharePanel::OnUpload(DataArray *arr) {
     mOverlapped.InternalContext = (DWORD_PTR)this;
     mOverlapped.InternalHigh = 0;
     mOverlapped.InternalLow = 0;
-    mOverlapped.hEvent = CreateEventA(0, 1, 0, "SocialNetworkImagePost");
+    mOverlapped.hEvent = CreateEventA(nullptr, true, false, "SocialNetworkImagePost");
     if (!mOverlapped.hEvent) {
         MILO_LOG("KinectSharePanel: mOverlapped.hEvent is null");
     } else {
@@ -345,16 +333,9 @@ DataNode KinectSharePanel::OnUpload(DataArray *arr) {
         mOverlapped.pCompletionRoutine = nullptr;
         mOverlapped.dwExtendedError = 0;
 
-        WCHAR TitleText[256];
-        WCHAR PictureCaption[256];
-        WCHAR PictureDescription[256];
-
-        memcpy(TitleText, L"Title Text", 0x16);
-        memset(&TitleText, 0, 0x1ea);
-        memcpy(PictureCaption, L"Picture Caption", 0x20);
-        memset(&PictureCaption, 0, 0x1e0);
-        memcpy(PictureDescription, L"Picture Description", 0x28);
-        memset(&PictureDescription, 0, 0x1d8);
+        WCHAR TitleText[256] = { L"Title Text" };
+        WCHAR PictureCaption[256] = { L"Picture Caption" };
+        WCHAR PictureDescription[256] = { L"Picture Description" };
 
         static Symbol fb_photo_title_text("fb_photo_title_text");
         static Symbol fb_photo_picture_caption("fb_photo_picture_caption");

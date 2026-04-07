@@ -139,7 +139,7 @@
             "lazer/meta_ham/SingleUserCrewSelectPanel.cpp": "Matching",
             "lazer/meta_ham/SkeletonChooser.cpp": "NonMatching",
             "lazer/meta_ham/SkeletonIdentifier.cpp": "NonMatching",
-            "lazer/meta_ham/SkillsAwardList.cpp": "NonMatching",
+            "lazer/meta_ham/SkillsAwardList.cpp": "Matching",
             "lazer/meta_ham/SongRecord.cpp": "Matching",
             "lazer/meta_ham/SongSelectPanel.cpp": "Matching",
             "lazer/meta_ham/SongSelectPlaylistCustomizePanel.cpp": "Matching",

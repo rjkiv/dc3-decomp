@@ -168,7 +168,7 @@
  *  compile with some other implementation )
  */
 
-#define _STLP_NO_EXTENSIONS 1
+// #define _STLP_NO_EXTENSIONS 1
 
 
 /* 

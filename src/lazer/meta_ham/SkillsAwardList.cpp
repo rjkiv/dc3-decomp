@@ -75,7 +75,7 @@ SkillsAward SkillsAwardList::GetAward(Symbol song, DataArray *da) {
     for (int i = 0; i < da->Size() && i < 4; i++) {
         key.unk4[i] = da->Obj<Hmx::Object>(i)->Name();
     }
-    if (mAwardList.find(key) != mAwardList.end()) {
+    if (HasAward(key)) {
         return mAwardList[key];
     } else {
         return (SkillsAward)0;
@@ -107,7 +107,7 @@ void SkillsAwardList::SetAward(Symbol song, DataArray *a, SkillsAward award) {
     for (int i = 0; i < a->Size() && i < 4; i++) {
         key.unk4[i] = a->Obj<Hmx::Object>(i)->Name();
     }
-    if (mAwardList.find(key) == mAwardList.end() || mAwardList[key] < award) {
+    if (!HasAward(key) || mAwardList[key] < award) {
         mAwardList[key] = award;
         mDirty = true;
     }

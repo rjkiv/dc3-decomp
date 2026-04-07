@@ -286,8 +286,7 @@ int AccomplishmentProgress::GetNumCompletedInCategory(Symbol s) const {
     std::set<Symbol> *set = TheAccomplishmentMgr->GetAccomplishmentSetForCategory(s);
     if (set) {
         FOREACH_PTR (it, set) {
-            Symbol key = *it;
-            if (unk58.find(key) != unk58.end()) {
+            if (IsAccomplished(*it)) {
                 num++;
             }
         }
@@ -323,8 +322,7 @@ bool AccomplishmentProgress::AddAward(Symbol award, Symbol reason) {
 }
 
 bool AccomplishmentProgress::AddAccomplishment(Symbol s) {
-    Symbol key = s;
-    if (unk58.find(key) == unk58.end()) {
+    if (!IsAccomplished(s)) {
         Accomplishment *pAcc = TheAccomplishmentMgr->GetAccomplishment(s);
         if (!pAcc) {
             MILO_NOTIFY("No Accomplishment for %s", s.Str());
