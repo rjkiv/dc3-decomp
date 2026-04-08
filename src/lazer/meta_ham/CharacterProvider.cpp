@@ -184,7 +184,7 @@ void CharacterProvider::UpdateList() {
         }
     }
     mCharacters.clear();
-    if (!TheGameMode->InMode("dance_battle", true)) {
+    if (!TheGameMode->InMode("dance_battle")) {
         static Symbol character_default("character_default");
         mCharacters.push_back(character_default);
     }
@@ -192,16 +192,22 @@ void CharacterProvider::UpdateList() {
     if (crewCfg) {
         for (int i = 1; i < crewCfg->Size(); i++) {
             Symbol curCrew = crewCfg->Sym(i);
-            if (TheGameMode->InMode("dance_battle", true)
-                || TheHamProvider->Property("is_in_party_mode")->Int() != 0) {
-                if (curCrew == crew) {
-                    int numCrewChars = GetNumCrewCharacters(curCrew);
-                    for (int j = 0; j < numCrewChars; j++) {
-                        Symbol curCrewChar = GetCrewCharacter(curCrew, j);
-                        if (TheProfileMgr.IsContentUnlocked(curCrewChar)
-                            || symSet.find(curCrewChar) == symSet.end()) {
-                            mCharacters.push_back(curCrewChar);
-                        }
+            if (TheGameMode->InMode("dance_battle")) {
+            crewCmp:
+                if (curCrew == crew)
+                    goto loop;
+            } else {
+                if (TheHamProvider->Property("is_in_party_mode")->Int()) {
+                    goto crewCmp;
+                }
+            loop:
+                int numCrewChars = GetNumCrewCharacters(curCrew);
+                for (int j = 0; j < numCrewChars; j++) {
+                    Symbol curCrewChar = GetCrewCharacter(curCrew, j);
+                    if (TheProfileMgr.IsContentUnlocked(curCrewChar)) {
+                        mCharacters.push_back(curCrewChar);
+                    } else if (symSet.find(curCrewChar) == symSet.end()) {
+                        mCharacters.push_back(curCrewChar);
                     }
                 }
             }

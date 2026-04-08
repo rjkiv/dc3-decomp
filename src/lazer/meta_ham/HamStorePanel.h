@@ -15,6 +15,7 @@
 #include "os/User.h"
 #include "stl/_vector.h"
 #include "types.h"
+#include "utl/JobMgr.h"
 #include "utl/NetLoader.h"
 #include "utl/Str.h"
 #include "utl/Symbol.h"
@@ -69,6 +70,8 @@ public:
     void RemoveOfferFromCart(StoreOffer *);
     void AddOfferToCart(StoreOffer *);
 
+    int GetUnk184() const { return unk184; }
+
 protected:
     virtual StoreError UpdateOffers(std::list<EnumProduct> const &, bool);
     virtual void StoreUserProfileSwappedToUser(LocalUser *);
@@ -101,6 +104,15 @@ protected:
     int unk128;
     std::vector<CartRow> unk12c;
     RCJob *unk138[7];
+    /*
+        0x138 - [0] - AddDLCToCartJob
+        0x13c - [1] - RemoveDLCFromCartJob
+        0x140 - [2] - EmptyCartJob
+        0x144 - [3] - GetCartJob
+        0x148 - [4] - LockCartJob
+        0x14c - [5] - UnlockCartJob
+        0x150 - [6] - LockCartJob (for Relocking?)
+    */
     bool unk154;
     bool unk155;
     bool unk156;
@@ -113,4 +125,17 @@ protected:
     std::vector<unsigned long long> unk178;
     int unk184;
     XboxPurchaser *mXboxPurchaser; // 0x188
+};
+
+class SpecialOfferEnumJob : public MultipleItemsEnumJob {
+public:
+    SpecialOfferEnumJob(HamStorePanel *panel, int i, std::vector<QWORD> &vec);
+    virtual ~SpecialOfferEnumJob() {}
+    virtual void Start();
+    virtual bool IsFinished();
+    virtual void Cancel(Hmx::Object *);
+    virtual void OnCompletion(Hmx::Object *);
+
+protected:
+    HamStorePanel *unk5c;
 };

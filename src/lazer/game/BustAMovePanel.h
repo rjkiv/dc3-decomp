@@ -92,7 +92,7 @@ private:
     int unk84;
     int unk88;
     int unk8c;
-    int unk90;
+    float unk90;
     int unk94;
     RndDir *mBAMColumns[kNumSkeletonSides]; // 0x98
     SkeletonSide unka0;
@@ -111,8 +111,8 @@ private:
     int unk968;
     int unk96c;
     bool unk970;
-    int unk974;
-    int unk978;
+    float unk974;
+    float unk978;
     std::vector<int> mSongStructure; // 0x97c
     int unk988; // 0x988 - num reps
     bool unk98c;

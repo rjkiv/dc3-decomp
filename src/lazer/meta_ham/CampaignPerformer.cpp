@@ -174,8 +174,9 @@ void CampaignPerformer::OnLoadSong() {
         static Symbol song_shortening_enabled("song_shortening_enabled");
         static Symbol deinit("deinit");
         Symbol mode = TheCampaign->GetOutroSongGameplayMode(idx);
+        bool isPerform = mode == perform;
         if (TheGameMode->GameplayMode() != mode) {
-            TheGameMode->SetGameplayMode(mode, mode == perform);
+            TheGameMode->SetGameplayMode(mode, isPerform);
             TheHamProvider->SetProperty(
                 song_shortening_enabled,
                 TheCampaign->GetOutroSongShortened(GetPlaylistIndex())
@@ -853,8 +854,9 @@ void CampaignPerformer::UnlockAllMoves(Symbol s1, Symbol s2, int i3) {
 }
 
 Symbol CampaignPerformer::GetLastEra() const {
-    for (int i = 0; i < TheCampaign->NumEras(); i++) {
-        CampaignEra *pEra = TheCampaign->GetEra(i);
+    auto &eras = TheCampaign->Eras();
+    for (int i = 0; i < eras.size() - 1; i++) {
+        CampaignEra *pEra = eras[i];
         MILO_ASSERT(pEra, 0x3B);
         if (pEra->GetUnk50()) {
             return pEra->GetName();
@@ -927,8 +929,9 @@ void CampaignPerformer::UpdateEraSong(Difficulty d, Symbol s2, Symbol s3, int i4
 }
 
 void CampaignPerformer::AwardCrazeAccomplishments() {
-    for (int i = 0; i < TheCampaign->NumEras() - 1; i++) {
-        CampaignEra *pEra = TheCampaign->GetEra(i);
+    auto &eras = TheCampaign->Eras();
+    for (int i = 0; i < eras.size() - 1; i++) {
+        CampaignEra *pEra = eras[i];
         Symbol acc = pEra->CompletionAccomplishment();
         if (acc != gNullStr) {
             int starsEarned =
@@ -982,25 +985,25 @@ int CampaignPerformer::GetSongAttemptedCount() {
     return numAttemptedSongs;
 }
 
-void CampaignPerformer::SetupCampaignCharacters(Symbol s1, Symbol s2) {
-    Symbol s50 = GetCrewCharacter(s1, 0);
-    Symbol s4c = GetCrewCharacter(s1, 1);
-    if (s2 == s4c) {
-        s4c = s50;
-        s50 = s2;
+void CampaignPerformer::SetupCampaignCharacters(Symbol crew, Symbol character) {
+    Symbol char0 = GetCrewCharacter(crew, 0);
+    Symbol char1 = GetCrewCharacter(crew, 1);
+    if (character == char1) {
+        char1 = char0;
+        char0 = character;
     }
-    Symbol s48 = MakeString("%s04", s50.Str());
-    if (!GetOutfitEntry(s48, false)) {
-        s48 = MakeString("%s01", s50.Str());
-        if (!GetOutfitEntry(s48, false)) {
-            s48 = MakeString("%s05", s50.Str());
+    Symbol outfit0 = MakeString("%s04", char0.Str());
+    if (!GetOutfitEntry(outfit0, false)) {
+        outfit0 = MakeString("%s01", char0.Str());
+        if (!GetOutfitEntry(outfit0, false)) {
+            outfit0 = MakeString("%s05", char0.Str());
         }
     }
-    Symbol s44 = MakeString("%s04", s4c.Str());
-    if (!GetOutfitEntry(s44, false)) {
-        s44 = MakeString("%s01", s4c.Str());
-        if (!GetOutfitEntry(s44, false)) {
-            s44 = MakeString("%s05", s4c.Str());
+    Symbol outfit1 = MakeString("%s04", char1.Str());
+    if (!GetOutfitEntry(outfit1, false)) {
+        outfit1 = MakeString("%s01", char1.Str());
+        if (!GetOutfitEntry(outfit1, false)) {
+            outfit1 = MakeString("%s05", char1.Str());
         }
     }
     if (GetSongAttemptedCount() == 0) {
@@ -1009,12 +1012,12 @@ void CampaignPerformer::SetupCampaignCharacters(Symbol s1, Symbol s2) {
             static Symbol era02("era02");
             static Symbol era03("era03");
             if (mEra == era01 || mEra == era02 || mEra == era03) {
-                Symbol s2 = s44;
-                Symbol s1 = s4c;
-                s4c = s50;
-                s50 = s1;
-                s44 = s48;
-                s48 = s2;
+                Symbol tmp = char0;
+                char0 = char1;
+                char1 = tmp;
+                tmp = outfit0;
+                outfit0 = outfit1;
+                outfit1 = tmp;
             }
         }
     }
@@ -1022,8 +1025,8 @@ void CampaignPerformer::SetupCampaignCharacters(Symbol s1, Symbol s2) {
     MILO_ASSERT(pPlayer1Data, 0xAD);
     HamPlayerData *pPlayer2Data = TheGameData->Player(1);
     MILO_ASSERT(pPlayer2Data, 0xAF);
-    pPlayer1Data->SetCharacter(s50);
-    pPlayer1Data->SetOutfit(s48);
-    pPlayer2Data->SetCharacter(s4c);
-    pPlayer2Data->SetOutfit(s44);
+    pPlayer1Data->SetCharacter(char0);
+    pPlayer1Data->SetOutfit(outfit0);
+    pPlayer2Data->SetCharacter(char1);
+    pPlayer2Data->SetOutfit(outfit1);
 }

@@ -264,7 +264,7 @@ bool HamProfile::IsUnsaved() const {
         return true;
     }
 
-    if (mRank->UnkCA()) {
+    if (mRank->Dirty()) {
         return true;
     }
 
@@ -1011,7 +1011,7 @@ void HamProfile::UpdateBattleScore(
     if (IsOkToUpdateProfile()) {
         if (playerdata) {
             mRank->UpdateScore(songID, playerdata, mSongStatusMgr, stars, 0);
-            mDirty = mDirty || mRank->UnkCA();
+            mDirty = mDirty || mRank->Dirty();
         }
         bool updatedSong = mSongStatusMgr->UpdateBattleSong(songID, stars, b);
         mDirty = mDirty || updatedSong;
@@ -1035,7 +1035,7 @@ void HamProfile::UpdateScore(
     if (IsOkToUpdateProfile()) {
         if (playerdata) {
             mRank->UpdateScore(songID, playerdata, mSongStatusMgr, score, stars);
-            mDirty = mDirty || mRank->UnkCA();
+            mDirty = mDirty || mRank->Dirty();
         }
         bool updateSong = mSongStatusMgr->UpdateSong(
             songID,

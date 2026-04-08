@@ -48,12 +48,12 @@ void MetagameStats::Text(int, int data, UIListLabel *slot, UILabel *label) const
             StatType statType = (StatType)statArr->Int(1); // stat type
             Symbol statSym = statArr->Sym(2); // the actual stat symbol
             DataArray *titleArr = statArr->FindArray("titles", false);
-            Symbol scc(gNullStr);
+            Symbol title = gNullStr;
             switch (statType) {
             case kStatType_Count: {
                 int count = GetCount((CountStatID)id);
                 if (slot->Matches("title")) {
-                    Symbol title = SetTitleByThreshold(count, titleArr);
+                    title = SetTitleByThreshold(count, titleArr);
                     label->SetTextToken(title);
                 } else {
                     const char *loc = LocalizeSeparatedInt(count, TheLocale);
@@ -64,7 +64,7 @@ void MetagameStats::Text(int, int data, UIListLabel *slot, UILabel *label) const
             case kStatType_Time: {
                 int count = GetCount((CountStatID)id);
                 if (slot->Matches("title")) {
-                    Symbol title = SetTitleByThreshold(count, titleArr);
+                    title = SetTitleByThreshold(count, titleArr);
                     label->SetTextToken(title);
                 } else {
                     char buf[32];
@@ -80,7 +80,7 @@ void MetagameStats::Text(int, int data, UIListLabel *slot, UILabel *label) const
                 static Symbol dancebattle("dancebattle");
                 int fave = GetFavorite((FavoriteStatID)id);
                 if (slot->Matches("title")) {
-                    Symbol title = SetTitleForFavorite(fave, 0, nullptr);
+                    title = SetTitleForFavorite(fave, 0, nullptr);
                     label->SetTextToken(title);
                 } else {
                     Symbol tag = stats_favorite_na;
@@ -105,7 +105,7 @@ void MetagameStats::Text(int, int data, UIListLabel *slot, UILabel *label) const
                     faveCount = GetFavoriteCount((FavoriteStatID)id, fave);
                 }
                 if (slot->Matches("title")) {
-                    Symbol title = SetTitleForFavorite(fave, faveCount, statArr);
+                    title = SetTitleForFavorite(fave, faveCount, statArr);
                     label->SetTextToken(title);
                 } else if (faveCount == 1) {
                     Symbol single = MakeString("%s_single", statSym.Str());
@@ -134,7 +134,7 @@ void MetagameStats::Text(int, int data, UIListLabel *slot, UILabel *label) const
                     }
                 }
                 if (slot->Matches("title")) {
-                    Symbol title = SetTitleForFavorite(fave, 0, statArr);
+                    title = SetTitleForFavorite(fave, 0, statArr);
                     label->SetTextToken(title);
                 } else {
                     label->SetTokenFmt(statSym, s15);
@@ -266,21 +266,21 @@ void MetagameStats::WriteTimePlayed(HamProfile *profile, int i2) {
     static Symbol dance_battle("dance_battle");
     static Symbol gameplay_mode("gameplay_mode");
     if (TheGameMode->Property(gameplay_mode)->Sym() == perform) {
-        mDirty = true;
         mCountStats[kCountStat_TotalTimePerforming] += i2;
+        mDirty = true;
         mFavoriteStats[kFavoriteStat_FavoriteMode].mCounts[0] += i2;
         mDirty = true;
     }
     if (TheGameMode->Property(gameplay_mode)->Sym() == practice) {
-        mDirty = true;
         mCountStats[kCountStat_TotalTimeRehearsing] += i2;
+        mDirty = true;
         mFavoriteStats[kFavoriteStat_FavoriteMode].mCounts[1] += i2;
         mDirty = true;
     }
     if (TheGameMode->Property(gameplay_mode)->Sym() == dance_battle) {
-        mDirty = true;
         mCountStats[kCountStat_TotalTimeMultiplayer] += i2;
-        mFavoriteStats[kFavoriteStat_FavoriteMode].mCounts[2] += i2;
+        mDirty = true;
+        IncFavoriteStat(kFavoriteStat_FavoriteMode, 2, i2); // well ok then
         mDirty = true;
     }
     unk140 += i2;

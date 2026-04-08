@@ -7,6 +7,7 @@
 #include "hamobj/HamMaster.h"
 #include "hamobj/HamSongData.h"
 #include "macros.h"
+#include "math/Rand.h"
 #include "meta/CreditsPanel.h"
 #include "meta/HAQManager.h"
 #include "meta/MemcardMgr.h"
@@ -86,6 +87,9 @@
 #include "utl/Symbol.h"
 #include "utl/TimeConversion.h"
 #include <cstring>
+
+static SongDB *sSongDB; // DAT_821189a0
+static HamMaster *sHamMaster; // DAT_8311899c
 
 MetaPanel::MetaPanel() : unk44(0), unk4c(TheHamSongMgr), unkdc(false) {
     unke0 = new MetaMusicManager(SystemConfig("synth", "metamusic"));
@@ -246,9 +250,9 @@ void MetaPanel::Poll() {
     unk4c.Poll();
     MILO_ASSERT(TheMetaMusic, 0x176);
     TheMetaMusic->Poll();
-    if (MsToBeat(sHamMaster->StreamMs()) > 0.0f) {
-        float f = sHamMaster->StreamMs();
-        TheTaskMgr.SetSecondsAndBeat(f * 0.001f, 0, false);
+    float mstobeat = MsToBeat(sHamMaster->StreamMs());
+    if (mstobeat > 0.0f) {
+        TheTaskMgr.SetSecondsAndBeat(sHamMaster->StreamMs() * 0.001f, mstobeat, false);
     }
 }
 
@@ -284,14 +288,12 @@ bool MetaPanel::Exiting() const {
     if (mState != 2) {
         return UIPanel::Exiting();
     }
-    if (unk4c.IsWaitingToDelete() || unk4c.IsFadingOut() || TheMetaMusic->IsActive()) {
-        if (!UIPanel::Exiting()) {
-            TheTaskMgr.SetAutoSecondsBeats(true);
-            return UIPanel::Exiting();
-        }
-        return true;
+    bool busy = unk4c.IsWaitingToDelete() || unk4c.IsFadingOut()
+        || TheMetaMusic->IsActive() || UIPanel::Exiting();
+    if (!busy) {
+        TheTaskMgr.SetAutoSecondsBeats(true);
     }
-    return false;
+    return busy;
 }
 
 void MetaPanel::UnlockClassicOutfit(Symbol s) {
@@ -346,23 +348,52 @@ void MetaPanel::CycleVenuePreference() {
         MILO_ASSERT(pVenueEntryArray, 0x76);
         venuePref = pVenueEntryArray->Sym(0);
     } else {
+        short size = pVenueArray->Size();
         for (int i = 1; i < pVenueArray->Size(); i++) {
             DataArray *pVenueEntryArray = pVenueArray->Array(i);
             MILO_ASSERT(pVenueEntryArray, 0x80);
-            if (pVenueEntryArray->Sym(0) == venuePref) {
-                venuePref = random_venue;
-                if (i + 1 < pVenueArray->Size()) {
+            Symbol entrySym = pVenueEntryArray->Sym(0);
+            if (entrySym == venuePref) {
+                if (i + 1 >= size) {
+                    venuePref = random_venue;
+                } else {
                     pVenueEntryArray = pVenueArray->Array(i + 1);
-                    if (!pVenueEntryArray) {
-                        MILO_ASSERT(pVenueEntryArray, 0x8f);
-                        venuePref = pVenueEntryArray->Sym(0);
-                    }
+                    MILO_ASSERT(pVenueEntryArray, 0x8f);
+                    venuePref = pVenueEntryArray->Sym(0);
                 }
                 break;
             }
         }
     }
     TheProfileMgr.SetVenuePreference(venuePref);
+}
+
+int MetaPanel::PickLoopIndex(int idx) {
+    int size = unk38.size();
+    int randomInt = RandomInt(1, idx);
+    if (idx < size + 2) {
+        return randomInt;
+    }
+
+    int i = 0;
+    do {
+        for (i = 0; i < size; i++) {
+            if (randomInt == unk38[i]) {
+                break;
+            }
+        }
+        if (i == size)
+            break;
+        randomInt = RandomInt(1, idx);
+    } while (true);
+
+    unk38[unk44++] = randomInt;
+
+    if (unk44 == size) {
+        unk44 = 0;
+    }
+
+    return randomInt;
 }
 
 BEGIN_HANDLERS(MetaPanel)

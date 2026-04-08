@@ -7,7 +7,9 @@
 class AccomplishmentCountConditional : public AccomplishmentConditional {
 public:
     virtual ~AccomplishmentCountConditional();
-    virtual AccomplishmentType GetType() const { return (AccomplishmentType)2; }
+    virtual AccomplishmentType GetType() const {
+        return kAccomplishmentTypeCountConditional;
+    }
     virtual bool IsFulfilled(HamProfile *) const;
     virtual bool IsRelevantForSong(Symbol) const { return true; }
 

@@ -24,9 +24,6 @@ public:
 
     LoadingPanel();
 
-    static HamMaster *sLoadingMaster; // DAT_8311A440
-    static SongDB *sSongDB; // DAT_8311A444 i think, def a SongDB
-
     DataArraySongInfo *unk38;
     TempoMap *unk3c;
     BeatMap *unk40;

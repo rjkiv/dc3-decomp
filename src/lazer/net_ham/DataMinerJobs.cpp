@@ -1,10 +1,16 @@
 #include "net_ham/DataMinerJobs.h"
 #include "hamobj/HamMaster.h"
+#include "hamobj/ScoreUtl.h"
+#include "meta_ham/HamProfile.h"
 #include "meta_ham/MetaPerformer.h"
 #include "net_ham/RCJobDingo.h"
 #include "obj/Object.h"
+#include "os/Debug.h"
 #include "utl/DataPointMgr.h"
+#include "utl/MakeString.h"
+#include "utl/Str.h"
 #include "utl/Symbol.h"
+#include "xdk/xapilibi/xbox.h"
 
 GameEndedDataPointJob::GameEndedDataPointJob(
     Hmx::Object *callback, EndGameResult const &result
@@ -33,6 +39,16 @@ GameEndedDataPointJob::GameEndedDataPointJob(
 
     if (TheMaster && TheMaster->IsLoaded()) {
     }
+}
+
+char const *GameEndedDataPointJob::GetXUIDStrFromProfile(HamProfile *profile) {
+    int padNum = profile->GetPadNum();
+    XUID xuid = 0;
+    DWORD result = XUserGetXUID(padNum, &xuid);
+    if (result != 0) {
+        MILO_NOTIFY("XUserGetXUID returned %u", result);
+    }
+    return MakeString("%016I64X", xuid);
 }
 
 OmgScoresJob::OmgScoresJob(Hmx::Object *callback, int p1Score, int p2Score)

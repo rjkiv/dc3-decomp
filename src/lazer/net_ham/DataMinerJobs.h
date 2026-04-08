@@ -1,11 +1,18 @@
 #pragma once
+#include "meta_ham/HamProfile.h"
 #include "meta_ham/MetaPerformer.h"
 #include "net_ham/RCJobDingo.h"
 #include "obj/Object.h"
 
+#define MAX_NUM_PLAYERS 2
+
 class GameEndedDataPointJob : public RCJob {
 public:
     GameEndedDataPointJob(Hmx::Object *, EndGameResult const &);
+
+private:
+    char const *GetXUIDStrFromProfile(HamProfile *);
+    bool CompileMoveRatings(String &, int, bool) const;
 };
 
 class OmgScoresJob : public RCJob {

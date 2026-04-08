@@ -13,18 +13,16 @@
 #include "utl/Symbol.h"
 
 BEGIN_HANDLERS(HamStarsDisplay)
-    HANDLE_ACTION(set_song, SetSongImpl(_msg->Int(2), kNumDifficulties, kStarDisplay_0))
+    HANDLE_ACTION(set_song, SetSong(_msg->Int(2)))
     HANDLE_ACTION(
         set_song_with_diff,
-        SetSongImpl(_msg->Int(2), (Difficulty)_msg->Int(3), kStarDisplay_1)
+        SetSongWithDifficulty(_msg->Int(2), (Difficulty)_msg->Int(3), false)
     )
     HANDLE_ACTION(
         set_song_with_diff_always,
-        SetSongImpl(_msg->Int(2), (Difficulty)_msg->Int(3), kStarDisplay_2)
+        SetSongWithDifficulty(_msg->Int(2), (Difficulty)_msg->Int(3), true)
     )
-    HANDLE_ACTION(
-        set_song_last_played, SetSongImpl(_msg->Int(2), kNumDifficulties, kStarDisplay_3)
-    )
+    HANDLE_ACTION(set_song_last_played, SetSongLastPlayed(_msg->Int(2)))
     HANDLE_SUPERCLASS(StarsDisplay)
 END_HANDLERS
 
@@ -37,19 +35,26 @@ void HamStarsDisplay::SetSongChallenge(Difficulty diff) {
     mNoFlashcardsLabel->SetShowing(false);
 }
 
-void HamStarsDisplay::SetSong(int i) { SetSongImpl(i, kNumDifficulties, kStarDisplay_0); }
-
-void HamStarsDisplay::SetSongCampaign(int i) {
-    SetSongImpl(i, kNumDifficulties, kStarDisplay_4);
+void HamStarsDisplay::SetSong(int i) {
+    SetSongImpl(i, kNumDifficulties, kStarDisplayStandard);
 }
 
-void HamStarsDisplay::SetSongWithDifficulty(int i, Difficulty d, bool b) {
-    SetSongImpl(i, d, b ? kStarDisplay_2 : kStarDisplay_1);
+void HamStarsDisplay::SetSongLastPlayed(int i) {
+    SetSongImpl(i, kNumDifficulties, kStarDisplayLastPlayed);
+}
+
+void HamStarsDisplay::SetSongCampaign(int i) {
+    SetSongImpl(i, kNumDifficulties, kStarDisplayCampaign);
+}
+
+void HamStarsDisplay::SetSongWithDifficulty(int i, Difficulty d, bool always) {
+    SetSongImpl(i, d, always ? kStarDisplayWithDiffAlways : kStarDisplayWithDiff);
 }
 
 void HamStarsDisplay::SetSongImpl(int songID, Difficulty diff, StarDisplayMode mode) {
     bool u11 = false;
-    bool c10 = 0;
+    int stars = 0;
+    bool c10 = false;
     HamProfile *profile = TheProfileMgr.GetActiveProfile(true);
     if (profile) {
         if (profile->GetSongStatusMgr()->HasSongStatus(songID)) {
@@ -60,8 +65,12 @@ void HamStarsDisplay::SetSongImpl(int songID, Difficulty diff, StarDisplayMode m
                 const SongStatusData &data = status.GetBestSongStatusData();
                 if (data.mScore > 0) {
                     u11 = true;
-                    for (int i = 0; i < 4; i++)
-                        ;
+                    for (int i = 0; i < kNumDifficulties; i++) {
+                        if (&data == &status.mStatusData[i]) {
+                            diff = (Difficulty)i;
+                        }
+                    }
+                    stars = data.mStars;
                     c10 = data.unk10;
                 }
                 break;
@@ -70,6 +79,7 @@ void HamStarsDisplay::SetSongImpl(int songID, Difficulty diff, StarDisplayMode m
             case 2: {
                 MILO_ASSERT(diff < kNumDifficulties, 0x5C);
                 if (status.mStatusData[diff].mScore > 0) {
+                    stars = status.mStatusData[diff].mStars;
                     u11 = true;
                     c10 = status.mStatusData[diff].unk10;
                 }
@@ -78,8 +88,10 @@ void HamStarsDisplay::SetSongImpl(int songID, Difficulty diff, StarDisplayMode m
             case 3: {
                 MILO_ASSERT(diff == kNumDifficulties, 0x67);
                 if (status.unk7c != kNumDifficulties) {
+                    stars = status.unk78;
                     u11 = true;
                     c10 = status.unk79;
+                    diff = status.unk7c;
                 }
                 break;
             }
@@ -92,9 +104,12 @@ void HamStarsDisplay::SetSongImpl(int songID, Difficulty diff, StarDisplayMode m
                 Symbol shortname = TheSongMgr.GetShortNameFromSongID(songID);
                 HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
                 MILO_ASSERT(pProfile, 0x7B);
-                u11 = pProfile->GetCampaignProgress(pPerformer->GetDifficulty())
-                          .GetSongStarsEarned(era, shortname)
-                    > 0;
+                const CampaignProgress &prog =
+                    pProfile->GetCampaignProgress(pPerformer->GetDifficulty());
+                stars = prog.GetSongStarsEarned(era, shortname);
+                u11 = stars > 0;
+                diff = pPerformer->GetDifficulty();
+                break;
             }
             }
         }
@@ -103,7 +118,7 @@ void HamStarsDisplay::SetSongImpl(int songID, Difficulty diff, StarDisplayMode m
         mDiffLabel->SetShowing(true);
         mDiffLabel->SetTextToken(MakeString("%s_short", DifficultyToSym(diff)));
         mStarsLabel->SetShowing(true);
-        mStarsLabel->SetTextToken(GetStarsToken(songID));
+        mStarsLabel->SetTextToken(GetStarsToken(stars));
         if (c10) {
             mNoFlashcardsLabel->SetShowing(true);
         } else {

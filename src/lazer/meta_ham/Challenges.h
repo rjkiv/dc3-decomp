@@ -46,6 +46,9 @@ public:
     bool GetExpireTime(int &, int &, int &, int &);
 
     int ConsolationXP() const { return mConsolationXP; }
+    const std::vector<ChallengeRow> &GetPlayerChallenges(int x) const {
+        return mPlayerChallenges[x];
+    }
 
 protected:
     void AddPendingProfile(HamProfile *);

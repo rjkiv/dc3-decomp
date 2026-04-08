@@ -109,18 +109,6 @@ private:
     unsigned int mPurchaser; // 0x60
 };
 
-// class SpecialOfferEnumJob : public MultipleItemsEnumJob {
-// public:
-//     SpecialOfferEnumJob(Hmx::Object *panel, int i, std::vector<QWORD> &vec);
-//     virtual void Start();
-//     virtual bool IsFinished();
-//     virtual void Cancel(Hmx::Object *);
-//     virtual void OnCompletion(Hmx::Object *);
-
-// protected:
-//     Hmx::Object *unk5c;
-// };
-
 #include "obj/Msg.h"
 
 DECLARE_MESSAGE(SingleItemEnumCompleteMsg, "single_item_enum_complete")

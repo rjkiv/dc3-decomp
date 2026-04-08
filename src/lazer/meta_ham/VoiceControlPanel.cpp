@@ -393,12 +393,12 @@ DataNode VoiceControlPanel::OnMsg(const SpeechRecoMessage &msg) {
                 CycleTip();
                 return 0;
             } else if (rulename == "mode" && unk48 && mSong != gNullStr) {
-                Symbol arrSym = tags->Sym(0);
+                mGameMode = tags->Sym(0);
                 float frame = 0;
-                if (arrSym == "practice") {
+                if (mGameMode == "practice") {
                     frame = 1;
                 }
-                if (arrSym == "dance_battle") {
+                if (mGameMode == "dance_battle") {
                     frame = 2;
                 }
                 DataDir()->Find<RndAnimatable>("selected_mode.anim")->SetFrame(frame, 1);

@@ -5,7 +5,8 @@
 #include "utl/MakeString.h"
 #include "utl/Symbol.h"
 
-static unsigned int sPriorities[2] = { 1, 1000 };
+static const unsigned int sMinPriority = 1;
+static const unsigned int sMaxPriority = 1000;
 
 Accomplishment::Accomplishment(DataArray *cfg, int idx)
     : mName(""), mAccomplishmentType(), mCategory(""), mAward(""), mUnitsToken(gNullStr),
@@ -109,14 +110,14 @@ void Accomplishment::Configure(DataArray *i_pConfig) {
             MILO_NOTIFY(
                 "Passive Message Priority for goal %s is less than the minimum: %i!",
                 mName.Str(),
-                sPriorities[0]
+                sMinPriority
             );
             mPassiveMsgPriority = 1;
         } else if (1000 < mPassiveMsgPriority) {
             MILO_NOTIFY(
                 "Passive Message Priority for goal %s is more than the minimum: %i!",
                 mName.Str(),
-                sPriorities[1]
+                sMaxPriority
             );
             mPassiveMsgPriority = 1000;
         }

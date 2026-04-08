@@ -147,6 +147,7 @@ public:
     void SetPickingDisabled(bool disable) { mDisablePicking = disable; }
     bool Unk33d() const { return unk33d; }
     void SetUnk2AC(bool b) { unk2ac = b; }
+    PoseFatalities *GetPoseFatalities() const { return mPoseFatalities; }
 
     DataNode OnGetDancerVisemes(DataArray *);
 

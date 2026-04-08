@@ -56,8 +56,16 @@ private:
     void DisableCurrentVoiceContext();
     void RestoreCurrentVoiceContext();
     void LoadVoiceContexts();
+    VoiceContext *GetContext(Symbol s1) const {
+        FOREACH (it, mVoiceContexts) {
+            if ((*it)->mName == s1) {
+                return *it;
+            }
+        }
+        return nullptr;
+    }
 
-    bool unk3c;
+    bool mBlacklight; // 0x3c
     std::vector<Symbol> unk40;
     std::vector<VoiceContext *> mVoiceContexts; // 0x4c
     VoiceContext *mActiveVoiceContext; // 0x58

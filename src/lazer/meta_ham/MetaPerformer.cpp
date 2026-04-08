@@ -13,6 +13,7 @@
 #include "hamobj/PracticeSection.h"
 #include "hamobj/ScoreUtl.h"
 #include "math/Rand.h"
+#include "math/Utl.h"
 #include "meta_ham/AccomplishmentManager.h"
 #include "meta_ham/CampaignPerformer.h"
 #include "meta_ham/HamProfile.h"
@@ -27,10 +28,12 @@
 #include "obj/DataUtl.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
+#include "obj/Task.h"
 #include "os/DateTime.h"
 #include "os/Debug.h"
 #include "os/PlatformMgr.h"
 #include "os/System.h"
+#include "stl/_vector.h"
 #include "utl/DataPointMgr.h"
 #include "utl/Locale.h"
 #include "utl/MakeString.h"
@@ -1308,6 +1311,29 @@ bool MetaPerformer::CheckRecommendedPracticeMove(String s, int player) const {
     if (!check && (float)val2 / (float)val1 <= 0.49f) {
         return false;
     }
+}
+
+void MetaPerformer::GetCurrentRecapMove(int &i1, int &i2) const {
+    int x = 0;
+    static Symbol review("review");
+    auto &steps = GetPracticeSteps();
+    FOREACH (it, steps) {
+        if (it->mType == review) {
+            std::vector<bool> vec;
+            int start = Round(TheHamDirector->BeatFromTag(it->mStart));
+            int end = Round(TheHamDirector->BeatFromTag(it->mEnd));
+            int beat = Round(TheTaskMgr.Beat());
+            if (start <= beat && end >= beat) {
+                i1 = x;
+                i2 = ((beat - start) / 4) - 1;
+                return;
+            }
+            x++;
+        }
+    }
+    MILO_NOTIFY("Couldn\'t find a recap move at beat %f", TheTaskMgr.Beat());
+    i1 = -1;
+    i2 = -1;
 }
 
 #pragma endregion

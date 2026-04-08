@@ -306,18 +306,16 @@ bool HelpBarPanel::UpdateBackButton(UIPanel *panel) {
         mLeftHandNavList->GetHelpbarProvider()->SetLabel(1, prop->Sym());
         if (backIcon) {
             static Symbol show_back_controller_icon("show_back_controller_icon");
-            bool show;
             if (panel) {
                 prop = panel->Property(show_back_controller_icon, false);
-                if (prop) {
-                    show = prop->Int() != 0;
+                if (!prop || prop->Int() != 0) {
+                    backIcon->SetShowing(true);
                 } else {
-                    show = true;
+                    backIcon->SetShowing(false);
                 }
             } else {
-                show = true;
+                backIcon->SetShowing(true);
             }
-            backIcon->SetShowing(show);
         }
         if (leftHandLabel) {
             leftHandLabel->SetShowing(true);

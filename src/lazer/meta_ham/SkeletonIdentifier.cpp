@@ -5,6 +5,8 @@
 #include "gesture/Skeleton.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
+#include "math/Geo.h"
+#include "math/Vec.h"
 #include "meta_ham/PassiveMessenger.h"
 #include "meta_ham/ProfileMgr.h"
 #include "obj/Data.h"
@@ -12,11 +14,17 @@
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/PlatformMgr.h"
+#include "rndobj/Rnd.h"
 #include "utl/Locale.h"
 #include "utl/MakeString.h"
 #include "utl/Symbol.h"
-#include "xdk/NUI.h"
-#include <cmath>
+#include <cstdio>
+
+static float sF1 = 0.03f;
+static float sF2 = 0.1f;
+static float sF3 = 0.8f;
+static float sF4 = 0.7f;
+static float sF5 = 0.25f;
 
 String EnrollmentIndexString(int idx) {
     String str = MakeString("enrollment index %d", idx);
@@ -277,6 +285,87 @@ void SkeletonIdentifier::Poll() {
         }
     }
     UpdateIdentityStatus();
+}
+
+void SkeletonIdentifier::DrawDebug() {
+    if (mDrawDebug) {
+        static Hmx::Color bgColor(0.2f, 0.2f, 0.2f, 0.7f);
+        static Hmx::Color textColor(1.0f, 1.0f, 1.0f, 1.0f);
+        Skeleton *activeSkel = TheGestureMgr->GetActiveSkeleton();
+        Hmx::Rect rect(sF2, sF4 - 0.05f, sF3, sF5 + 0.05f);
+        TheRnd.DrawRectScreen(rect, bgColor, 0, 0, 0);
+        char buf[200];
+        for (int i = 0; i < 7; i++) {
+            switch (i) {
+            case 0:
+                if (activeSkel) {
+                    if (activeSkel->IsTracked()) {
+                        int enrollmentIdx = activeSkel->GetEnrollmentIndex();
+                        sprintf_s<200>(
+                            buf,
+                            "Active skeleton tracked: %d %s",
+                            unk48[enrollmentIdx].mPadNum,
+                            EnrollmentIndexString(enrollmentIdx)
+                        );
+                    }
+                    break;
+                }
+                sprintf_s<200>(buf, "Skeleton not tracked");
+
+                break;
+            case 1: {
+                int secondaryIndex = TheGestureMgr->GetSecondarySkeletonIndex(false);
+                if (secondaryIndex < 0) {
+                    sprintf_s<200>(buf, "Skeleton not tracked");
+                } else {
+                    Skeleton &s = TheGestureMgr->GetSkeleton(secondaryIndex);
+                    int enrollmentIdx = s.GetEnrollmentIndex();
+                    sprintf_s<200>(
+                        buf,
+                        "Other skeleton tracked: %d %s",
+                        unk48[enrollmentIdx].mPadNum,
+                        EnrollmentIndexString(enrollmentIdx)
+                    );
+                }
+                break;
+            }
+            case 2:
+            case 5:
+                buf[0] = 0;
+                break;
+            case 3: {
+                PropertyEventProvider *provider = TheGameData->Player(0)->Provider();
+                int padnum = TheGameData->Player(0)->PadNum();
+                const DataNode *prop = provider->Property("player_name");
+                sprintf_s<200>(buf, "Player 1: %d %s", padnum, prop->Str());
+                break;
+            }
+            case 4: {
+                PropertyEventProvider *provider = TheGameData->Player(1)->Provider();
+                int padnum = TheGameData->Player(1)->PadNum();
+                const DataNode *prop = provider->Property("player_name");
+                sprintf_s<200>(buf, "Player 2: %d %s", padnum, prop->Str());
+                break;
+            }
+            case 6:
+                break;
+            default:
+                sprintf_s<200>(buf, "Identity Status: %i", mIdentityStatus);
+                break;
+            }
+            Vector2 vec(sF2, i * sF1 + sF4);
+            TheRnd.DrawStringScreen(buf, vec, textColor, true);
+        }
+        for (int i = 0; i < 8; i++) {
+            Vector2 vec(0.3f, i * sF1 + 0.1f);
+            TheRnd.DrawStringScreen(
+                MakeString("%d. %d %s", i, unk48[i].mPadNum, unk48[i].unk4),
+                vec,
+                textColor,
+                true
+            );
+        }
+    }
 }
 
 DataNode SkeletonIdentifier::OnMsg(SkeletonEnrollmentChangedMsg const &msg) {

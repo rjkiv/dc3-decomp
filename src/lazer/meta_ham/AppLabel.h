@@ -17,7 +17,6 @@
 class AppLabel : public HamLabel {
 public:
     // Hmx::Object
-    virtual ~AppLabel();
     // no, this is not an oversight
     // the StaticClassName for AppLabel is in fact, HamLabel
     OBJ_CLASSNAME(HamLabel);

@@ -23,7 +23,7 @@ public:
     void Clear();
     void AddHistory(Symbol, int);
     int GetRating(Symbol, int);
-    bool HasRatingHistory(const Key &key) const { return unk8.find(key) != unk8.end(); }
+    bool HasRatingHistory(const Key &key) const { return unk8.count(key) > 0; }
 
     static int SaveSize(int);
 

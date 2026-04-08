@@ -12,6 +12,7 @@
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/DateTime.h"
+#include "stl/_vector.h"
 
 #define MULTIPLAYER_SLOTS 2
 
@@ -127,6 +128,7 @@ public:
     Playlist *GetPlaylist() { return mPlaylist; }
     int GetPlaylistElapsedTime() const { return mPlaylistElapsedTime; }
     int GetUnk38() const { return unk38; }
+    const std::vector<HamMoveScore> &GetMoveScore(int i) const { return mMoveScores[i]; }
 
     void SetSkipPracticeWelcome(bool b) { mSkipPracticeWelcome = b; }
 

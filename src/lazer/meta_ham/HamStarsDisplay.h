@@ -8,11 +8,11 @@
 class HamStarsDisplay : public StarsDisplay {
 public:
     enum StarDisplayMode {
-        kStarDisplay_0,
-        kStarDisplay_1,
-        kStarDisplay_2,
-        kStarDisplay_3,
-        kStarDisplay_4
+        kStarDisplayStandard = 0,
+        kStarDisplayWithDiff = 1,
+        kStarDisplayWithDiffAlways = 2,
+        kStarDisplayLastPlayed = 3,
+        kStarDisplayCampaign = 4
     };
 
     OBJ_CLASSNAME(StarsDisplay) // bruh
@@ -23,6 +23,7 @@ public:
     void SetSong(int);
     void SetSongCampaign(int);
     void SetSongWithDifficulty(int, Difficulty, bool);
+    void SetSongLastPlayed(int);
 
     NEW_OBJ(HamStarsDisplay)
 

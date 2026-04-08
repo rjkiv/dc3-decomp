@@ -25,8 +25,9 @@ Symbol PlaylistSongProvider::DataSymbol(int i) const {
         int songID = m_pPlaylist->GetSong(i);
         Symbol shortName = TheHamSongMgr.GetShortNameFromSongID(songID);
         return shortName;
+    } else {
+        return gNullStr;
     }
-    return gNullStr;
 }
 
 void PlaylistSongProvider::Text(

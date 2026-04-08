@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <vector>
+#include <list>
 
 #define AUTO(name, val) auto name = val
 

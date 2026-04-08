@@ -268,7 +268,7 @@ public:
         int maxsize,
         int savesize
     ) {
-        if (map.size() != 0) {
+        if (map.size() > 0) {
             MILO_NOTIFY("hash_map is not empty!");
             map.clear();
         }

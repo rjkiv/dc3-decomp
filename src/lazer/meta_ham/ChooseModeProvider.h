@@ -14,6 +14,7 @@ public:
     // Hmx::Object
     virtual ~ChooseModeProvider();
     OBJ_CLASSNAME(ChooseModeProvider)
+    OBJ_SET_TYPE(ChooseModeProvider)
     virtual DataNode Handle(DataArray *, bool);
     // UIListProvider
     virtual void Text(int, int, UIListLabel *, UILabel *) const;

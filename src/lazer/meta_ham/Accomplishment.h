@@ -6,20 +6,14 @@
 
 class HamProfile;
 
-// stolen from RB3 lol
 enum AccomplishmentType {
     kAccomplishmentTypeUnique = 0,
     kAccomplishmentTypeSongListConditional = 1,
-    kAccomplishmentTypeSongFilterConditional = 2,
-    kAccomplishmentTypeLessonSongListConditional = 3,
-    kAccomplishmentTypeLessonDiscSongConditional = 4,
-    kAccomplishmentTypePlayerConditional = 5,
-    kAccomplishmentTypeTourConditional = 6,
-    kAccomplishmentTypeTrainerListConditional = 7,
-    kAccomplishmentTypeTrainerCategoryConditional = 8,
-    kAccomplishmentTypeOneShot = 9,
-    kAccomplishmentTypeSetlist = 10,
-    kAccomplishmentTypeDiscSongConditional = 11
+    kAccomplishmentTypeCountConditional = 2,
+    kAccomplishmentTypeOneShot = 3,
+    kAccomplishmentTypeCharacterListConditional = 4,
+    kAccomplishmentTypeDiscSongConditional = 5,
+    kAccomplishmentTypeCampaignConditional = 6,
 };
 
 class Accomplishment {

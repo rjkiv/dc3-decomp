@@ -36,6 +36,7 @@ public:
     float SpeechConfThresh() const { return mSpeechConfThresh; }
     RndOverlay *Overlay() const { return mOverlay; }
     bool Enabled() const { return mEnabled; }
+    int VoiceDirection() const { return mVoiceDirection; }
 
 private:
     struct Grammar {

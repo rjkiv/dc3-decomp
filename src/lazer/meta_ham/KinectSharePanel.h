@@ -9,6 +9,13 @@
 
 class KinectSharePanel : public UIPanel {
 public:
+    enum UploadState {
+        kUploadIdle = 0,
+        kUploadPending = 1,
+        kUploadSuccess = 2,
+        kUploadFailure = 3,
+        kUploadCancelled = 4
+    };
     KinectSharePanel();
     // Hmx::Object
     OBJ_CLASSNAME(KinectSharePanel);
