@@ -271,7 +271,7 @@ void SongStatusMgr::GetFlauntsToUpload(std::list<FlauntStatusData> &data) {
     }
 }
 
-Difficulty __cdecl SongStatusMgr::GetDifficulty(int songID) const {
+Difficulty SongStatusMgr::GetDifficulty(int songID) const {
     if (HasSongStatus(songID)) {
         return GetSongStatus(songID).GetBestSongStatusData().mDifficulty;
     } else {
@@ -314,11 +314,11 @@ Difficulty __cdecl SongStatusMgr::GetPracticeDifficulty(int songID) const {
     }
 }
 
-int SongStatusMgr::GetScore(int songID, bool &bref) const {
-    bref = false;
+int SongStatusMgr::GetScore(int songID, bool &noFlashcards) const {
+    noFlashcards = false;
     if (HasSongStatus(songID)) {
         const SongStatusData &data = GetSongStatus(songID).GetBestSongStatusData();
-        bref = data.mNoFlashcards;
+        noFlashcards = data.mNoFlashcards;
         return data.mScore;
     } else {
         return 0;
@@ -333,27 +333,29 @@ int SongStatusMgr::GetCoopScore(int songID) const {
     }
 }
 
-int SongStatusMgr::GetScoreForDifficulty(int songID, Difficulty d, bool &bref) const {
-    bref = false;
+int SongStatusMgr::GetScoreForDifficulty(
+    int songID, Difficulty d, bool &noFlashcards
+) const {
+    noFlashcards = false;
     if (HasSongStatus(songID)) {
         const SongStatus &status = GetSongStatus(songID);
-        bref = status.mStatusData[d].mNoFlashcards;
+        noFlashcards = status.mStatusData[d].mNoFlashcards;
         return status.mStatusData[d].mScore;
     } else {
         return 0;
     }
 }
 
-int SongStatusMgr::GetBestScore(int songID, bool &bref, Difficulty d) const {
+int SongStatusMgr::GetBestScore(int songID, bool &noFlashcards, Difficulty d) const {
     int bestScore = 0;
-    bref = false;
+    noFlashcards = false;
     if (HasSongStatus(songID)) {
         for (Difficulty loopdiff = d; loopdiff != kNumDifficulties;
              loopdiff = DifficultyOneHarder(loopdiff)) {
             const SongStatus &status = GetSongStatus(songID);
             int score = status.mStatusData[loopdiff].mScore;
             if (score > bestScore) {
-                bref = status.mStatusData[loopdiff].mNoFlashcards;
+                noFlashcards = status.mStatusData[loopdiff].mNoFlashcards;
                 bestScore = score;
             }
         }

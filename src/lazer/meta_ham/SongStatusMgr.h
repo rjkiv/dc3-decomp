@@ -89,39 +89,41 @@ public:
     virtual ~SongStatusMgr() {}
     virtual DataNode Handle(DataArray *, bool);
 
-    void GetScoresToUpload(std::list<SongStatusData> &);
-    void GetFlauntsToUpload(std::list<FlauntStatusData> &);
-    bool HasSongStatus(int) const;
-    const SongStatus &GetSongStatus(int) const;
-    Difficulty GetDifficulty(int) const;
-    int GetScore(int, bool &) const;
-    bool IsSongPlayed(int) const;
+    void GetScoresToUpload(std::list<SongStatusData> &songStatusData);
+    void GetFlauntsToUpload(std::list<FlauntStatusData> &flauntStatusData);
+    bool HasSongStatus(int songID) const;
+    const SongStatus &GetSongStatus(int songID) const;
+    Difficulty GetDifficulty(int songID) const;
+    int GetScore(int songID, bool &noFlashcards) const;
+    bool IsSongPlayed(int songID) const;
     int GetCoopScore(int) const;
-    int GetScoreForDifficulty(int, Difficulty, bool &) const;
-    int GetBestScore(int, bool &, Difficulty) const;
-    int GetStars(int, bool &) const;
-    int GetStarsForDifficulty(int, Difficulty, bool &) const;
-    int GetBestStars(int, bool &, Difficulty) const;
-    int GetPercentForDifficulty(int, Difficulty) const;
-    int GetNumPerfectForDifficulty(int, Difficulty) const;
-    int GetNumNiceForDifficulty(int, Difficulty) const;
-    int GetBestBattleScore(int) const;
-    int GetTotalBattleWins(int) const;
-    int GetTotalBattleLosses(int) const;
-    bool GetLastBattleResult(int) const;
-    unsigned int GetLastPlayed(int) const;
-    int GetLastScore(int, bool &) const;
-    unsigned int GetLastPlayedPractice(int) const;
-    int GetPracticeScore(int) const;
-    int GetPracticeScore(int, Difficulty) const;
-    Difficulty GetPracticeDifficulty(int) const;
+    int GetScoreForDifficulty(int songID, Difficulty diff, bool &noFlashcards) const;
+    int GetBestScore(int songID, bool &noFlashcards, Difficulty diff) const;
+    int GetStars(int songID, bool &) const;
+    int GetStarsForDifficulty(int songID, Difficulty diff, bool &noFlashcards) const;
+    int GetBestStars(int songID, bool &, Difficulty diff) const;
+    int GetPercentForDifficulty(int songID, Difficulty diff) const;
+    int GetNumPerfectForDifficulty(int songID, Difficulty diff) const;
+    int GetNumNiceForDifficulty(int songID, Difficulty diff) const;
+    int GetBestBattleScore(int songID) const;
+    int GetTotalBattleWins(int songID) const;
+    int GetTotalBattleLosses(int songID) const;
+    bool GetLastBattleResult(int songID) const;
+    unsigned int GetLastPlayed(int songID) const;
+    int GetLastScore(int songID, bool &) const;
+    unsigned int GetLastPlayedPractice(int songID) const;
+    int GetPracticeScore(int songID) const;
+    int GetPracticeScore(int songID, Difficulty diff) const;
+    Difficulty GetPracticeDifficulty(int songID) const;
     void Clear();
-    void ClearNeedUpload(int, Difficulty);
-    void ClearFlauntsNeedUpload(int);
-    int CalculateTotalScore(Symbol) const;
-    bool UpdateSong(int, int, int, Difficulty, int, int, int, int, int, bool, bool, bool);
-    bool UpdateBattleSong(int, int, bool);
-    bool UpdateFlaunt(int, int, Difficulty, bool);
+    void ClearNeedUpload(int songID, Difficulty diff);
+    void ClearFlauntsNeedUpload(int songID);
+    int CalculateTotalScore(Symbol game_origin) const;
+    bool UpdateSong(
+        int songID, int score, int, Difficulty diff, int, int, int, int, int, bool, bool, bool
+    );
+    bool UpdateBattleSong(int songID, int score, bool won);
+    bool UpdateFlaunt(int songID, int score, Difficulty diff, bool);
 
     static int SaveSize(int);
     static void Init();
@@ -136,7 +138,7 @@ private:
         LoadStd(fs, mSongStatusMap, 0xD48, 0x83);
     }
 
-    SongStatus &AccessSongStatus(int);
+    SongStatus &AccessSongStatus(int songID);
 
     HamSongMgr *mSongMgr; // 0x38
     // key = song ID, value = song status

@@ -26,11 +26,11 @@ bool AccomplishmentCountConditional::IsFulfilled(HamProfile *profile) const {
     static Symbol character_no_outfit("character_no_outfit");
     int numStars = 0;
     FOREACH (it, m_lConditions) {
-        Symbol condition = it->unk0;
+        Symbol condition = it->mCondition;
         if (condition == character) {
             MILO_NOTIFY("Character-based achievements aren't supported in turbo (yet)");
         } else if (condition == stars) {
-            numStars = it->unk4;
+            numStars = it->mValue;
         } else if (condition != character_no_outfit) {
             MILO_NOTIFY("Condition is not currently supported: %s ", condition);
             return false;

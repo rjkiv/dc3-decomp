@@ -20,22 +20,22 @@ bool AccomplishmentCampaignConditional::IsFulfilled(HamProfile *profile) const {
     FOREACH (it, m_lConditions) {
         const AccomplishmentCondition &curCond = *it;
         Difficulty curDiff = curCond.mDifficulty;
-        Symbol cur8 = curCond.unk8;
-        int cur4 = curCond.unk4;
-        Symbol curSym = curCond.unk0;
+        Symbol era = curCond.mEra;
+        int val = curCond.mValue;
+        Symbol condition = curCond.mCondition;
         const CampaignProgress &progress = profile->GetCampaignProgress(curDiff);
-        if (curSym == crewsong) {
-            if (progress.IsDanceCrazeSongAvailable(cur8))
+        if (condition == crewsong) {
+            if (progress.IsDanceCrazeSongAvailable(era))
                 return true;
-        } else if (curSym == crewcomplete) {
-            if (progress.IsEraComplete(cur8))
+        } else if (condition == crewcomplete) {
+            if (progress.IsEraComplete(era))
                 return true;
-        } else if (curSym == crewcomplete_count) {
-            if (progress.GetNumCompletedEras() >= cur4) {
+        } else if (condition == crewcomplete_count) {
+            if (progress.GetNumCompletedEras() >= val) {
                 return true;
             }
         } else {
-            MILO_NOTIFY("Condition is not currently supported: %s ", curSym);
+            MILO_NOTIFY("Condition is not currently supported: %s ", condition);
             return false;
         }
     }

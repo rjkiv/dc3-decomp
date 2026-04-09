@@ -54,9 +54,9 @@ public:
     void ClearPerfectStreak();
     bool HasNewAwards() const;
     void NotifyPlayerOfAccomplishment(Symbol, const char *);
-    void SetTotalSongsPlayed(int);
-    void SetTotalCampaignSongsPlayed(int);
-    void MovePassed(Symbol, int);
+    void SetTotalSongsPlayed(int songs);
+    void SetTotalCampaignSongsPlayed(int songs);
+    void MovePassed(Symbol gameplayMode, int ratingIndex);
     Symbol GetFirstNewAward() const;
     Symbol GetFirstNewAwardReason() const;
     void Poll();
@@ -66,7 +66,7 @@ public:
     int GetNumCompletedInGroup(Symbol) const;
     int GetCharacterUseCount(Symbol) const;
     int GetCount(Symbol) const;
-    bool AddAward(Symbol, Symbol);
+    bool AddAward(Symbol award, Symbol reason);
     bool AddAccomplishment(Symbol);
     void Clear();
     void IncrementCharacterUseCount(Symbol);
@@ -75,7 +75,7 @@ public:
     int GetTotalCampaignSongsPlayed() const;
     int GetNumCompleted() const;
     int GetFlawlessMoveCount() const;
-    bool HasAward(Symbol s) const { return unk94.find(s) != unk94.end(); }
+    bool HasAward(Symbol award) const { return unk94.find(award) != unk94.end(); }
     int NumDays() const { return unk114; }
     void SetNumDays(int i) { unk114 = i; }
     int NumWeekends() const { return unk11c; }
@@ -86,8 +86,8 @@ public:
     void SetUnk120(int i) { unk120 = i; }
 
 private:
-    void GiveGamerpic(Accomplishment *);
-    void GiveAvatarAsset(Accomplishment *);
+    void GiveGamerpic(Accomplishment *pAcc);
+    void GiveAvatarAsset(Accomplishment *pAcc);
 
     std::map<Symbol, int> unk34;
     HamProfile *mParentProfile; // 0x4c

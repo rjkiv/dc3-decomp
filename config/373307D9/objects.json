@@ -46,7 +46,7 @@
             "lazer/meta_ham/AccomplishmentProgress.cpp": "NonMatching",
             "lazer/meta_ham/AccomplishmentSongConditional.cpp": "NonMatching",
             "lazer/meta_ham/AccomplishmentSongListConditional.cpp": "Matching",
-            "lazer/meta_ham/AppLabel.cpp": "NonMatching",
+            "lazer/meta_ham/AppLabel.cpp": "Matching",
             "lazer/meta_ham/AppMiniLeaderboardDisplay.cpp": "NonMatching",
             "lazer/meta_ham/AppNavProvider.cpp": "Matching",
             "lazer/meta_ham/Award.cpp": "Matching",
