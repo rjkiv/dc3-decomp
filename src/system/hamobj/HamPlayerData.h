@@ -4,6 +4,7 @@
 #include "gesture/Skeleton.h"
 #include "hamobj/Difficulty.h"
 #include "obj/Object.h"
+#include "stl/_vector.h"
 #include "utl/Str.h"
 #include "utl/Symbol.h"
 
@@ -48,7 +49,9 @@ public:
     Symbol Unk48() const { return unk48; }
     void SetAutoplay(Symbol s) { mAutoplay = s; }
     const String &Unk2c() const { return unk2c; }
+    void SetUnk2C(String &s) { unk2c = s; }
     int Unk40() const { return unk40; }
+    std::vector<String> &GetUnk34() { return unk34; }
 
 private:
     void SetSkeletonTrackingID(int);

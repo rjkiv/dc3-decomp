@@ -27,6 +27,7 @@ public:
     void OnPurchaseOfferByOfferString(int, char const *);
     bool OnGetLinkingCode(int);
     void OnXboxTokenRedemption(int);
+    void Clear() {}
 
 protected:
     DataNode OnMsg(RCJobCompleteMsg const &);
@@ -45,7 +46,15 @@ private:
 };
 
 DECLARE_MESSAGE(TokenRedeemedMsg, "token_redeemed")
+TokenRedeemedMsg(bool b, const String &s1, const Symbol &s2)
+    : Message(Type(), b, s1, s2) {}
+void SetSuccess(bool success) { mData->Node(2) = success; }
+void SetOfferString(const String &s) { mData->Node(3) = s; }
+void SetError(const Symbol &error) { mData->Node(4) = error; }
 END_MESSAGE
 
 DECLARE_MESSAGE(LinkingCodeRetrievedMsg, "linking_code_retrieved")
+LinkingCodeRetrievedMsg(bool b, const String &s) : Message(Type(), b, s) {}
+void SetSuccess(bool success) { mData->Node(2) = success; }
+void SetOfferString(const String &s) { mData->Node(3) = s; }
 END_MESSAGE

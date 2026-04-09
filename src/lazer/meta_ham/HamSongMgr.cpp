@@ -519,12 +519,13 @@ void HamSongMgr::AddSongs(DataArray *a) {
 }
 
 int HamSongMgr::RankTier(int i1) const {
-    for (int i = 0; i < mRankTiers.size(); i++) {
+    int i = 0;
+    for (; i < mRankTiers.size(); i++) {
         if (i1 <= mRankTiers[i].second) {
             return i;
         }
     }
-    return mRankTiers.size() - 1;
+    return i - 1;
 }
 
 int HamSongMgr::RankTier(Symbol s1) const {

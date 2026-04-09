@@ -6,6 +6,7 @@
 #include "SongRecord.h"
 #include "SongSortMgr.h"
 #include "game/GameMode.h"
+#include "macros.h"
 #include "meta_ham/NavListNode.h"
 #include "meta_ham/SongSortMgr.h"
 #include "meta_ham/SongSortNode.h"
@@ -158,4 +159,24 @@ void SongSort::Text(int i1, int i2, UIListLabel *listlabel, UILabel *uilabel) co
     app_label->SetFromSongSelectNode(unk30[i2]);
 };
 
-Symbol SongSort::DetermineHeaderSymbolFromSong(Symbol sym) { return gNullStr; };
+Symbol SongSort::DetermineHeaderSymbolFromSong(Symbol sym) {
+    auto &map = TheSongSortMgr->GetUnk78();
+    auto find = map.find(sym);
+    if (find != map.end()) {
+        NavListItemNode *node = NewItemNode(&find->second);
+        FOREACH (it, unk30) {
+            NavListShortcutNode *shortcutNode = *it;
+            auto &children = shortcutNode->Children();
+            MILO_ASSERT(children.size() == 1, 0xea);
+            NavListHeaderNode *header =
+                dynamic_cast<NavListHeaderNode *>(shortcutNode->FirstChild());
+            MILO_ASSERT(header != NULL, 0xec);
+            if (header->Compare(node, kNodeHeader) == 0) {
+                delete node;
+                return header->GetToken();
+            }
+        }
+        delete node;
+    }
+    return gNullStr;
+};

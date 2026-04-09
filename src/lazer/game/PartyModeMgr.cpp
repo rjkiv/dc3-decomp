@@ -1,5 +1,6 @@
 #include "game/PartyModeMgr.h"
 #include "flow/PropertyEventProvider.h"
+#include "game/GameMode.h"
 #include "gesture/BaseSkeleton.h"
 #include "hamobj/Difficulty.h"
 #include "hamobj/HamGameData.h"
@@ -9,6 +10,7 @@
 #include "meta_ham/HamSongMetadata.h"
 #include "meta_ham/HamSongMgr.h"
 #include "meta_ham/MetaPerformer.h"
+#include "meta_ham/MetagameStats.h"
 #include "meta_ham/ProfileMgr.h"
 #include "meta_ham/SongRecord.h"
 #include "meta_ham/Utl.h"
@@ -106,7 +108,11 @@ PartyModePlayer::PartyModePlayer(PartyModeARObject *obj) : unk0(obj), unk14(0) {
 }
 
 PartyModePlayer::~PartyModePlayer() {
-    RELEASE(unk0);
+    PartyModeARObject *obj = unk0;
+    if (obj) {
+        delete obj;
+    }
+    unk0 = nullptr;
     unk10->Release();
 }
 
@@ -768,8 +774,11 @@ void PartyModeMgr::EndPartyStats() {
         HamPlayerData *playerData = TheGameData->Player(i);
         MILO_ASSERT(playerData, 0x9DA);
         HamProfile *profile = TheProfileMgr.GetProfileFromPad(playerData->PadNum());
-        if (profile && profile->GetMetagameStats()) {
-            profile->GetMetagameStats()->UpdatePartyStats(diff);
+        if (profile) {
+            MetagameStats *stats = profile->GetMetagameStats();
+            if (stats) {
+                stats->UpdatePartyStats(diff);
+            }
         }
     }
 }
@@ -1051,7 +1060,8 @@ int PartyModeMgr::PickNextPlayer() {
             int idx = 1;
             if (mTeam2Players.size() < mTeam1Players.size())
                 idx = 0;
-            ret = mTeam1Players.size() + arr->Int(idx);
+            int x = arr->Int(idx);
+            ret = mTeam1Players.size() + x;
         }
     }
     return ret;
@@ -1060,10 +1070,10 @@ int PartyModeMgr::PickNextPlayer() {
 void PartyModeMgr::ShufflePlaylist(bool b1) {
     MILO_ASSERT(IsUsingPlaylist(), 0x731);
     if (b1) {
-        // unkf8.unk8 = 2;
-        // unkf8.unk10 = 0;
+        unkf8.SetMode(2);
+        unkf8.SetNumGets(0);
     } else if (mIsPlaylistShuffled) {
-        // unkf8.unk8 = 0;
+        unkf8.SetMode(0);
         SetSongsFromPlaylist();
     }
     mIsPlaylistShuffled = b1;
@@ -1118,7 +1128,7 @@ void PartyModeMgr::CrewShowdownRematch() {
     mIsShowdown = false;
     unk1c8 = 2;
     mLeftTeamScore = 0;
-    mRightTeamPrevScore = 0;
+    mRightTeamScore = 0;
     unk2e4 = 0;
     unk2e8 = 0;
     SetCurrEvent();
@@ -1131,14 +1141,18 @@ void PartyModeMgr::CrewShowdownRematch() {
 
 void PartyModeMgr::SetupInfinitePartyMode() {
     TheHamSongMgr.GetRandomlySelectableRankedSongs(unk1d4);
-    if (mPlaylist) {
-        unkf8.SetMode(0);
-    } else {
+    if (!mPlaylist) {
         ResetSongs();
+        unkf8.SetNumGets(0);
+        unkf8.SetMode(2);
+    } else {
+        unkf8.SetMode(0);
     }
     ResetModes(true);
     ResetMicrogames();
-    RELEASE(mCurrEvent);
+    if (mCurrEvent) {
+        RELEASE(mCurrEvent);
+    }
     mCurrEvent = new SubMode();
     GetDateAndTime(unk315);
 }
@@ -1751,5 +1765,98 @@ void PartyModeMgr::UpdateScores() {
         }
     } else {
         mWinningSide = 2;
+    }
+}
+
+void PartyModeMgr::ToggleIncludedModeOn(Symbol s, bool b) {
+    if (!b || IsModeIncluded(s)) {
+        if (b || !IsModeIncluded(s)) {
+            return;
+        }
+    }
+    ToggleIncludedMode(s);
+}
+
+void PartyModeMgr::ResetSongs() {
+    int size = unk1d4.size();
+    std::vector<Symbol> songs(size, Symbol());
+    unkf8.Clear();
+    for (int i = 0; i < size; i++) {
+        songs[i] = TheHamSongMgr.GetShortNameFromSongID(unk1d4[i]);
+    }
+    unkf8.AddItems(songs);
+    unkf8.Randomize();
+    for (int i = 0; i < 4; i++) {
+        mSubModeSongPickers[i].Clear();
+    }
+    for (int i = 0; i < size; i++) {
+        const HamSongMetadata *data = TheHamSongMgr.Data(unk1d4[i]);
+        mSubModeSongPickers[data->DJIntensityRank() - 1].AddItem(
+            TheHamSongMgr.GetShortNameFromSongID(unk1d4[i])
+        );
+    }
+    for (int i = 0; i < 4; i++) {
+        if (mSubModeSongPickers[i].Size() > 0) {
+            mSubModeSongPickers[i].Randomize();
+        }
+    }
+}
+
+void PartyModeMgr::SetSongsFromPlaylist() {
+    MILO_ASSERT(IsUsingPlaylist(), 0x70d);
+    unkf8.Clear();
+    int numSongs = mPlaylist->GetNumSongs();
+    std::vector<int> songs(numSongs);
+    bool b = true;
+    for (int i = 0; i < numSongs; i++) {
+        int songID = mPlaylist->GetSong(i);
+        Symbol shortname = TheHamSongMgr.GetShortNameFromSongID(songID, false);
+        if (!shortname.Null()) {
+            unkf8.AddItem(shortname);
+            b = b && mCurrEvent && mCurrEvent->mSongID != songID;
+        }
+    }
+    unkf8.SetMode(0);
+    if (b) {
+        Symbol s;
+        int songID;
+        DetermineSubModeSong(&s, &songID);
+        mCurrEvent->mSongName = s;
+        mCurrEvent->mSongID = songID;
+    }
+}
+
+void PartyModeMgr::DetermineSubModePlayers(
+    Symbol mode, int *pPlayerFlags, int *pNumPlayers, std::vector<int> *vec
+) {
+    static Symbol showdown("showdown");
+    if (mode != showdown) {
+        int totalplayers = mPlayers.size();
+        int minplayers = TheGameMode->MinPlayers(mode);
+        int maxplayers = TheGameMode->MaxPlayers(mode);
+        if (minplayers != 0) {
+            totalplayers -= minplayers;
+            maxplayers -= minplayers;
+            while (minplayers != 0) {
+                int player = PickNextPlayer();
+                *pPlayerFlags |= 1 << player;
+                vec->push_back(player);
+                minplayers--;
+                ++*pNumPlayers;
+            }
+        }
+        if (0 < totalplayers && maxplayers != 0) {
+            while (maxplayers != 0) {
+                if (totalplayers == 0) {
+                    return;
+                }
+                int player = PickNextPlayer();
+                *pPlayerFlags |= 1 << player;
+                vec->push_back(player);
+                maxplayers--;
+                totalplayers--;
+                ++*pNumPlayers;
+            }
+        }
     }
 }

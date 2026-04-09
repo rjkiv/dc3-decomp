@@ -319,18 +319,19 @@ void Game::StartIntro() {}
 void Game::SetHamMove(int i1, HamMove *move, bool b3) {
     if (mMoveDir) {
         HamMove *current = mMoveDir->CurrentMove(i1);
-        int i5 = TheTaskMgr.CurrentMeasure();
         if (current) {
-            if (TheTaskMgr.CurrentBeat() == 0) {
-                i5 = TheTaskMgr.CurrentMeasure() - 1;
-            } else if (TheTaskMgr.CurrentBeat() != 3) {
+            int currentBeat = TheTaskMgr.CurrentBeat();
+            int currentMeasure = TheTaskMgr.CurrentMeasure();
+            if (currentBeat == 0) {
+                currentMeasure--;
+            } else if (currentBeat != 3) {
                 current->IsRest();
             }
             MILO_ASSERT(TheGameData, 0x2C8);
             HamPlayerData *player_data = TheGameData->Player(i1);
             MILO_ASSERT(player_data, 0x2CA);
             if (player_data->IsPlaying()) {
-                float frac = mMoveDir->DetectFrac(i1, i5);
+                float frac = mMoveDir->DetectFrac(i1, currentMeasure);
                 static Message move_passed("move_passed", -1, 0, 0, 0);
                 move_passed[0] = i1;
                 move_passed[1] = current;

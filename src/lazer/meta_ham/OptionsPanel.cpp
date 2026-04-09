@@ -1,6 +1,7 @@
 #include "meta_ham/OptionsPanel.h"
 #include "OptionsPanel.h"
 #include "ProfileMgr.h"
+#include "macros.h"
 #include "meta/StoreOffer.h"
 #include "meta/StorePurchaser.h"
 #include "meta_ham/HamPanel.h"
@@ -9,17 +10,23 @@
 #include "net_ham/TokenJobs.h"
 #include "net_ham/WebLinkJobs.h"
 #include "obj/Data.h"
+#include "obj/Dir.h"
+#include "obj/Msg.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/PlatformMgr.h"
 #include "ui/UIPanel.h"
 #include "utl/JobMgr.h"
+#include "utl/Locale.h"
 #include "utl/Symbol.h"
 #include "xdk/xapilibi/xbox.h"
 
-OptionsPanel::OptionsPanel() : unk48(0), unk50(), unk58() {
-    unk3c = nullptr;
+OptionsPanel::OptionsPanel() {
     unk40 = nullptr;
+    unk48 = 0;
+    unk50 = nullptr;
+    unk3c = nullptr;
+    unk58 = nullptr;
 }
 
 OptionsPanel::~OptionsPanel() {}
@@ -73,10 +80,10 @@ DataNode OptionsPanel::OnMsg(SingleItemEnumCompleteMsg const &msg) {
 }
 
 DataNode OptionsPanel::OnMsg(RCJobCompleteMsg const &msg) {
-    int i;
     if (msg.Job() == unk3c) {
         MILO_LOG("Token: server response: %s\n", unk3c->GetResponseString());
-        String str;
+        String offer;
+        int i;
         static Symbol token_redemption_ready("token_redemption_ready");
         static Symbol token_redemption_error("token_redemption_error");
         static Symbol token_redemption_not_found("token_redemption_not_found");
@@ -85,13 +92,93 @@ DataNode OptionsPanel::OnMsg(RCJobCompleteMsg const &msg) {
         static Symbol token_redemption_too_early("token_redemption_too_early");
         static Symbol token_redemption_too_late("token_redemption_too_late");
         static Symbol leaderboard_no_net("leaderboard_no_net");
-        unk3c->GetRedeemTokenData(i, str);
-    } else if (msg.Job() != unk58) {
-        return 1;
+        unk3c->GetRedeemTokenData(i, offer);
+        Symbol error = token_redemption_ready;
+        bool success;
+        if (i <= 0xa0003) {
+            if (i == 0xa0002) {
+                success = true;
+            } else {
+                unsigned int val = i - 0xa0003;
+                switch (val) {
+                case 0:
+                    error = token_redemption_not_found;
+                    break;
+                case 2:
+                    error = token_redemption_other_player;
+                    break;
+                case 5:
+                    error = token_redemption_too_late;
+                    break;
+                case 6:
+                    error = token_redemption_too_early;
+                    break;
+                default:
+                    goto online;
+                    break;
+                }
+                success = false;
+            }
+        } else {
+            unsigned int val = i - 0xa0005;
+            switch (val) {
+            case 0:
+            case 2:
+                success = true;
+                break;
+            case 1:
+                error = token_redemption_purchased;
+                success = true;
+                break;
+            default:
+            online:
+                if (!TheRockCentral.IsOnline()) {
+                    error = leaderboard_no_net;
+                } else {
+                    error = token_redemption_error;
+                }
+                success = false;
+                break;
+            }
+        }
+
+        static TokenRedeemedMsg msg(true, "", token_redemption_ready);
+        msg.SetSuccess(success);
+        msg.SetOfferString(offer);
+        msg.SetError(error);
+        UIPanel *panel = ObjectDir::Main()->Find<UIPanel>("store_redeem_token_panel");
+        panel->HandleType(msg);
+        unk3c = nullptr;
+    } else if (msg.Job() == unk58) {
+        String wlcData;
+        String offer;
+        bool webData = unk58->GetWebLinkCodeData(wlcData);
+        static LinkingCodeRetrievedMsg msg(true, "");
+        bool success;
+        if (webData) {
+            if (!(wlcData != "N/A")) {
+                success = true;
+            }
+        } else {
+            success = false;
+        }
+        static Symbol linking_code_desc("linking_code_desc");
+        static Symbol linking_code_failure("linking_code_failure");
+        if (success) {
+            offer = Localize(linking_code_desc, false, TheLocale);
+            offer += "\n\n";
+            offer += wlcData;
+        } else {
+            offer = Localize(linking_code_failure, false, TheLocale);
+        }
+        msg.SetSuccess(success);
+        msg.SetOfferString(offer);
+        UIPanel *panel = ObjectDir::Main()->Find<UIPanel>("options_panel");
+        if (panel->GetState() == 1) {
+            panel->HandleType(msg);
+        }
+        unk58 = nullptr;
     }
-    String temp1;
-    String temp2;
-    unk58->GetWebLinkCodeData(temp1);
 
     return 1;
 }
