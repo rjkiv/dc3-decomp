@@ -17,67 +17,69 @@ AccomplishmentSongConditional::AccomplishmentSongConditional(DataArray *d, int i
 
 AccomplishmentSongConditional::~AccomplishmentSongConditional() {}
 
-void AccomplishmentSongConditional::UpdateIncrementalEntryName(UILabel *label, Symbol s) {
+void AccomplishmentSongConditional::UpdateIncrementalEntryName(
+    UILabel *label, Symbol shortname
+) {
     AppLabel *pAppLabel = dynamic_cast<AppLabel *>(label);
     MILO_ASSERT(pAppLabel, 0xa3);
-    pAppLabel->SetSongName(s, -1, false);
+    pAppLabel->SetSongName(shortname, -1, false);
 }
 
 bool AccomplishmentSongConditional::InqProgressValues(
-    HamProfile *profile, int &i2, int &i3
+    HamProfile *profile, int &completedSongs, int &totalSongs
 ) {
-    i3 = GetTotalNumSongs();
-    i2 = 0;
+    totalSongs = GetTotalNumSongs();
+    completedSongs = 0;
     if (profile) {
-        i2 = GetNumCompletedSongs(profile);
+        completedSongs = GetNumCompletedSongs(profile);
     }
     return true;
 }
 
 bool AccomplishmentSongConditional::IsSymbolEntryFulfilled(
-    HamProfile *hp, Symbol s
+    HamProfile *profile, Symbol shortname
 ) const {
-    if (!hp)
+    if (!profile)
         return false;
     else {
-        SongStatusMgr *pSongStatusMgr = hp->GetSongStatusMgr();
+        SongStatusMgr *pSongStatusMgr = profile->GetSongStatusMgr();
         MILO_ASSERT(pSongStatusMgr, 0xc0);
-        return CheckConditionsForSong(pSongStatusMgr, s);
+        return CheckConditionsForSong(pSongStatusMgr, shortname);
     }
 }
 
 bool AccomplishmentSongConditional::CheckStarsCondition(
-    SongStatusMgr *statusMgr, Symbol s, AccomplishmentCondition const &ac
+    SongStatusMgr *statusMgr, Symbol shortname, AccomplishmentCondition const &ac
 ) const {
     bool b;
-    int songID = TheHamSongMgr.GetSongIDFromShortName(s);
+    int songID = TheHamSongMgr.GetSongIDFromShortName(shortname);
     int bestStars = statusMgr->GetBestStars(songID, b, ac.mDifficulty);
-    return (bestStars >= ac.unk4);
+    return (bestStars >= ac.mValue);
 }
 
 bool AccomplishmentSongConditional::CheckScoreCondition(
-    SongStatusMgr *statusMgr, Symbol s, AccomplishmentCondition const &ac
+    SongStatusMgr *statusMgr, Symbol shortname, AccomplishmentCondition const &ac
 ) const {
     bool b;
-    int songID = TheHamSongMgr.GetSongIDFromShortName(s);
+    int songID = TheHamSongMgr.GetSongIDFromShortName(shortname);
     int bestScore = statusMgr->GetBestScore(songID, b, ac.mDifficulty);
-    return (bestScore >= ac.unk4);
+    return (bestScore >= ac.mValue);
 }
 
 bool AccomplishmentSongConditional::CheckPracticePercentageCondition(
-    SongStatusMgr *statusMgr, Symbol s, AccomplishmentCondition const &ac
+    SongStatusMgr *statusMgr, Symbol shortname, AccomplishmentCondition const &ac
 ) const {
-    int songID = TheHamSongMgr.GetSongIDFromShortName(s);
+    int songID = TheHamSongMgr.GetSongIDFromShortName(shortname);
     int pracScore = statusMgr->GetPracticeScore(songID);
-    return (pracScore >= ac.unk4);
+    return (pracScore >= ac.mValue);
 }
 
 bool AccomplishmentSongConditional::CheckNoFlashcardsCondition(
-    SongStatusMgr *statusMgr, Symbol s
+    SongStatusMgr *statusMgr, Symbol shortname
 ) const {
     bool b;
-    int songID = TheHamSongMgr.GetSongIDFromShortName(s);
-    for (int i = 0; i < 4; i++) {
+    int songID = TheHamSongMgr.GetSongIDFromShortName(shortname);
+    for (int i = 0; i < kNumDifficulties; i++) {
         int starsForDiff = statusMgr->GetStarsForDifficulty(songID, (Difficulty)i, b);
         if (b)
             return true;
@@ -86,7 +88,7 @@ bool AccomplishmentSongConditional::CheckNoFlashcardsCondition(
 }
 
 bool AccomplishmentSongConditional::CheckConditionsForSong(
-    SongStatusMgr *mgr, Symbol s
+    SongStatusMgr *mgr, Symbol shortname
 ) const {
     static Symbol stars("stars");
     static Symbol score("score");
@@ -95,30 +97,30 @@ bool AccomplishmentSongConditional::CheckConditionsForSong(
 
     FOREACH (it, m_lConditions) {
         const AccomplishmentCondition &curCond = *it;
-        Symbol curSym = curCond.unk0;
+        Symbol curSym = curCond.mCondition;
         MetaPerformer *pMetaPerformer = MetaPerformer::Current();
         MILO_ASSERT(pMetaPerformer, 0x60);
         if (curCond.mNoFlashcards) {
-            if (!CheckNoFlashcardsCondition(mgr, s)) {
+            if (!CheckNoFlashcardsCondition(mgr, shortname)) {
                 return false;
             }
         } else if (curCond.mMode != gNullStr && TheGameMode->Mode() != curCond.mMode) {
             return false;
         }
         if (curSym == stars) {
-            if (CheckStarsCondition(mgr, s, curCond)) {
+            if (CheckStarsCondition(mgr, shortname, curCond)) {
                 return true;
             }
         } else if (curSym == score) {
-            if (CheckScoreCondition(mgr, s, curCond)) {
+            if (CheckScoreCondition(mgr, shortname, curCond)) {
                 return true;
             }
         } else if (curSym == played) {
-            if (mgr->IsSongPlayed(TheHamSongMgr.GetSongIDFromShortName(s))) {
+            if (mgr->IsSongPlayed(TheHamSongMgr.GetSongIDFromShortName(shortname))) {
                 return true;
             }
         } else if (curSym == practice_percentage) {
-            if (CheckPracticePercentageCondition(mgr, s, curCond)) {
+            if (CheckPracticePercentageCondition(mgr, shortname, curCond)) {
                 return true;
             }
         } else {

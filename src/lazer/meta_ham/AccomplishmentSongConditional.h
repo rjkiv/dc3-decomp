@@ -10,21 +10,29 @@ public:
     AccomplishmentSongConditional(DataArray *, int);
     virtual ~AccomplishmentSongConditional();
     virtual bool ShowBestAfterEarn() const { return false; }
-    virtual void UpdateIncrementalEntryName(UILabel *, Symbol);
+    virtual void UpdateIncrementalEntryName(UILabel *label, Symbol shortname);
     virtual bool InqProgressValues(HamProfile *, int &, int &);
-    virtual bool IsSymbolEntryFulfilled(HamProfile *, Symbol) const;
+    virtual bool IsSymbolEntryFulfilled(HamProfile *profile, Symbol shortname) const;
 
 protected:
     virtual int GetNumCompletedSongs(HamProfile *) const = 0;
     virtual int GetTotalNumSongs() const = 0;
     virtual bool CheckConditionsForSong(SongStatusMgr *, Symbol) const;
 
-    bool
-    CheckStarsCondition(SongStatusMgr *, Symbol, AccomplishmentCondition const &) const;
-    bool
-    CheckScoreCondition(SongStatusMgr *, Symbol, AccomplishmentCondition const &) const;
-    bool CheckPracticePercentageCondition(
-        SongStatusMgr *, Symbol, AccomplishmentCondition const &
+    bool CheckStarsCondition(
+        SongStatusMgr *statusMgr,
+        Symbol shortname,
+        AccomplishmentCondition const &condition
     ) const;
-    bool CheckNoFlashcardsCondition(SongStatusMgr *, Symbol) const;
+    bool CheckScoreCondition(
+        SongStatusMgr *statusMgr,
+        Symbol shortname,
+        AccomplishmentCondition const &condition
+    ) const;
+    bool CheckPracticePercentageCondition(
+        SongStatusMgr *statusMgr,
+        Symbol shortname,
+        AccomplishmentCondition const &condition
+    ) const;
+    bool CheckNoFlashcardsCondition(SongStatusMgr *statusMgr, Symbol shortname) const;
 };

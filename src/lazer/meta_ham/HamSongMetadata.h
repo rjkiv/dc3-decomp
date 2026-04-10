@@ -46,6 +46,7 @@ public:
     const char *Album() const;
     const char *Title() const;
     int YearReleased() const { return mYearReleased; }
+    int DJIntensityRank() const { return mDJIntensityRank; }
 
 private:
     void InitHamSongMetadata();

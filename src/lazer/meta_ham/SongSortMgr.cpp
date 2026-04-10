@@ -196,6 +196,7 @@ bool SongSortMgr::DataIs(int i1, Symbol sym) {
 int SongSortMgr::FirstArtistSongIndex(Symbol sym) {
     int retval = 0;
     int dataCount = mSorts[mCurrentSortIdx]->GetDataCount();
+
     for (int i = 0; i < dataCount; i++) {
         SongSortNode *ssNode =
             dynamic_cast<SongSortNode *>(mSorts[mCurrentSortIdx]->GetListFromIdx(i));

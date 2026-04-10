@@ -129,6 +129,8 @@ public:
     int GetPlaylistElapsedTime() const { return mPlaylistElapsedTime; }
     int GetUnk38() const { return unk38; }
     const std::vector<HamMoveScore> &GetMoveScore(int i) const { return mMoveScores[i]; }
+    Symbol LastPlayedMode() const { return mLastPlayedMode; }
+    bool CompletedSongWithNoFlashcards() const { return mCompletedSongWithNoFlashcards; }
 
     void SetSkipPracticeWelcome(bool b) { mSkipPracticeWelcome = b; }
 

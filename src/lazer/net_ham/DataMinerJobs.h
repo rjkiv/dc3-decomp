@@ -4,8 +4,6 @@
 #include "net_ham/RCJobDingo.h"
 #include "obj/Object.h"
 
-#define MAX_NUM_PLAYERS 2
-
 class GameEndedDataPointJob : public RCJob {
 public:
     GameEndedDataPointJob(Hmx::Object *, EndGameResult const &);

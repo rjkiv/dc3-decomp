@@ -33,18 +33,18 @@ void AccomplishmentConditional::Configure(DataArray *i_pConfig) {
             MILO_ASSERT(pConditionEntryArray, 0x54);
 
             AccomplishmentCondition condition;
-            condition.unk4 = 0;
+            condition.mValue = 0;
             condition.mDifficulty = kDifficultyBeginner;
             condition.mCharacter = gNullStr;
             condition.mMode = gNullStr;
             condition.mNoFlashcards = false;
-            condition.unk0 = pConditionEntryArray->Node(0).Sym();
+            condition.mCondition = pConditionEntryArray->Node(0).Sym();
 
             if (pConditionEntryArray->Size() >= 2) {
                 if (pConditionEntryArray->Type(1) == kDataInt) {
-                    condition.unk4 = pConditionEntryArray->Node(1).Int();
+                    condition.mValue = pConditionEntryArray->Node(1).Int();
                 } else if (pConditionEntryArray->Type(1) == kDataSymbol) {
-                    condition.unk8 = pConditionEntryArray->Node(1).Sym();
+                    condition.mEra = pConditionEntryArray->Node(1).Sym();
                 } else {
                     MILO_ASSERT(false, 0x66);
                 }

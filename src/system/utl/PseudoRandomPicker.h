@@ -21,12 +21,48 @@ public:
         }
     }
 
-    void Randomize();
+    void Randomize() { // matches but i dont know why
+        MILO_ASSERT(Size() > 0, 0x83);
+        int size = Size();
+        for (int n = mItems.size(); n != 0; n--) {
+            typename std::list<T>::iterator first = mItems.begin();
+            T val = *first;
+            mItems.pop_front();
+            mItems.size();
+            int idx = rand() % size;
+            typename std::list<T>::iterator it = mItems.begin();
+            if (idx != 0) {
+                for (int i = idx; i != 0; i--) {
+                    ++it;
+                }
+            }
+            mItems.insert(it, val);
+            mItems.size();
+        }
+    }
 
     int Size() const { return mItems.size(); }
     void Clear() { mItems.resize(0); }
 
-    const T GetItem(int);
+    const T GetItem(int idx) {
+        if (idx >= 0) {
+            typename std::list<T>::iterator it;
+            if (idx <= (unsigned int)mItems.size()) {
+                it = mItems.begin();
+                if (idx != 0) {
+                    for (int i = idx; i != 0; i--) {
+                        ++it;
+                    }
+                }
+                T val = *it;
+                mItems.erase(it);
+                mItems.push_back(val);
+                return val;
+            }
+        }
+        return T(0);
+    }
+
     const T GetNext() {
         MILO_ASSERT(Size() > 0, 0x52);
         int idx;

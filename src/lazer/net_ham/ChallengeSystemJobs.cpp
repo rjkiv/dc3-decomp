@@ -59,7 +59,7 @@ void GetOfficialChallengesJob::GetRows(
             if (startName) {
                 startTime.ParseDate(startName->Str());
                 String dateStr;
-                startTime.ToDateString(dateStr);
+                startTime.ToString(dateStr);
                 MILO_LOG(
                     ">>>>>>>>>> official_challenge_start_time = %s\n", dateStr.c_str()
                 );
@@ -72,7 +72,7 @@ void GetOfficialChallengesJob::GetRows(
                     DateTime nextStartTime;
                     nextStartTime.ParseDate(nextStartName->Str());
                     String dateStr;
-                    nextStartTime.ToDateString(dateStr);
+                    nextStartTime.ToString(dateStr);
                     MILO_LOG(">>>>>>>>>> next_start_time = %s\n", dateStr.c_str());
                     DateTime systemDt;
                     GetSystemDateAndTime(systemDt);
@@ -191,7 +191,8 @@ void GetOfficialChallengesJob::GetRows(
             bref = false;
             if (rows.size() == calcedRows.size()) {
                 for (int i = 0; i < calcedRows.size(); i++) {
-                    if (rows[i] != calcedRows[i]) {
+                    const ChallengeRow &cur = calcedRows[i];
+                    if (rows[i] != cur) {
                         bref = true;
                         break;
                     }

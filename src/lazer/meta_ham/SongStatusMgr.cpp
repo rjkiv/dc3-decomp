@@ -255,7 +255,8 @@ void SongStatusMgr::GetScoresToUpload(std::list<SongStatusData> &data) {
     FOREACH (it, mSongStatusMap) {
         SongStatus cur = it->second;
         for (int i = 0; i < 4; i++) {
-            if (cur.mStatusData[i].unk10) {
+            if (cur.mStatusData[i].mNeedUpload) {
+                cur.mStatusData[i].mDifficulty = (Difficulty)i;
                 data.push_back(cur.mStatusData[i]);
             }
         }
@@ -265,13 +266,14 @@ void SongStatusMgr::GetScoresToUpload(std::list<SongStatusData> &data) {
 void SongStatusMgr::GetFlauntsToUpload(std::list<FlauntStatusData> &data) {
     FOREACH (it, mSongStatusMap) {
         SongStatus cur = it->second;
-        if (cur.unk78) {
+        if (cur.mFlauntData.mNeedUpload) {
+            cur.mFlauntData.mSongID = cur.mSongID;
             data.push_back(cur.mFlauntData);
         }
     }
 }
 
-Difficulty __cdecl SongStatusMgr::GetDifficulty(int songID) const {
+Difficulty SongStatusMgr::GetDifficulty(int songID) const {
     if (HasSongStatus(songID)) {
         return GetSongStatus(songID).GetBestSongStatusData().mDifficulty;
     } else {
@@ -314,11 +316,11 @@ Difficulty __cdecl SongStatusMgr::GetPracticeDifficulty(int songID) const {
     }
 }
 
-int SongStatusMgr::GetScore(int songID, bool &bref) const {
-    bref = false;
+int SongStatusMgr::GetScore(int songID, bool &noFlashcards) const {
+    noFlashcards = false;
     if (HasSongStatus(songID)) {
         const SongStatusData &data = GetSongStatus(songID).GetBestSongStatusData();
-        bref = data.mNoFlashcards;
+        noFlashcards = data.mNoFlashcards;
         return data.mScore;
     } else {
         return 0;
@@ -333,27 +335,29 @@ int SongStatusMgr::GetCoopScore(int songID) const {
     }
 }
 
-int SongStatusMgr::GetScoreForDifficulty(int songID, Difficulty d, bool &bref) const {
-    bref = false;
+int SongStatusMgr::GetScoreForDifficulty(
+    int songID, Difficulty d, bool &noFlashcards
+) const {
+    noFlashcards = false;
     if (HasSongStatus(songID)) {
         const SongStatus &status = GetSongStatus(songID);
-        bref = status.mStatusData[d].mNoFlashcards;
+        noFlashcards = status.mStatusData[d].mNoFlashcards;
         return status.mStatusData[d].mScore;
     } else {
         return 0;
     }
 }
 
-int SongStatusMgr::GetBestScore(int songID, bool &bref, Difficulty d) const {
+int SongStatusMgr::GetBestScore(int songID, bool &noFlashcards, Difficulty d) const {
     int bestScore = 0;
-    bref = false;
+    noFlashcards = false;
     if (HasSongStatus(songID)) {
         for (Difficulty loopdiff = d; loopdiff != kNumDifficulties;
              loopdiff = DifficultyOneHarder(loopdiff)) {
             const SongStatus &status = GetSongStatus(songID);
             int score = status.mStatusData[loopdiff].mScore;
             if (score > bestScore) {
-                bref = status.mStatusData[loopdiff].mNoFlashcards;
+                noFlashcards = status.mStatusData[loopdiff].mNoFlashcards;
                 bestScore = score;
             }
         }

@@ -506,10 +506,8 @@ void MultiUserGesturePanel::UpdateCharPic(
         || !TheProfileMgr.IsContentUnlocked(outfitSym);
     if (contentLocked) {
         static Symbol is_in_party_mode("is_in_party_mode");
-        int propInt = TheHamProvider->Property(is_in_party_mode)->Int();
-        if (propInt != 0) {
-            // has a register mismatch
-            contentLocked &= ((strstr(outfitSym.Str(), "01")) != 0);
+        if (TheHamProvider->Property(is_in_party_mode)->Int()) {
+            contentLocked = !strstr(outfitSym.Str(), "01") ? contentLocked : false;
         }
     }
 

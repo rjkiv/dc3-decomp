@@ -99,6 +99,7 @@ public:
 
     static void Init();
     static bool sLastSelectInControllerMode;
+    static bool sForceDisengage;
 
 private:
     void SetRibbonMode(HamListRibbon::RibbonMode);

@@ -119,7 +119,7 @@ void SetPurchaseMade(bool made) { mData->Node(3) = made; }
 void SetOfferID(const String &id) { mData->Node(4) = id; }
 bool Success() const { return mData->Int(2); }
 bool HasOfferID() const { return mData->Int(3); }
-QWORD OfferID() const { return _strtoui64(mData->Str(4), 0, 16); }
+QWORD OfferID() const;
 END_MESSAGE
 
 DECLARE_MESSAGE(MultipleItemsEnumCompleteMsg, "multiple_items_enum_complete")

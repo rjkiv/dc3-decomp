@@ -146,7 +146,9 @@ void AppLabel::SetLocked(bool locked) {
 }
 
 void AppLabel::SetChecked(bool checked) { SetIcon(checked ? 'b' : 'a'); }
-void AppLabel::SetUserName(int x) { SetDisplayText(ThePlatformMgr.GetName(x), true); }
+void AppLabel::SetUserName(int padnum) {
+    SetDisplayText(ThePlatformMgr.GetName(padnum), true);
+}
 void AppLabel::SetUserName(const User *user) { SetDisplayText(user->UserName(), true); }
 
 void AppLabel::SetAlbumName(Symbol shortname) {
@@ -186,12 +188,11 @@ void AppLabel::SetFromPlaylistSelectNode(const NavListNode *node) {
 
 void AppLabel::SetChallengerName(const char *name) { SetDisplayText(name, true); }
 
-void AppLabel::SetLastPlayedScore(int x) {
+void AppLabel::SetLastPlayedScore(int songID) {
     HamProfile *profile = TheProfileMgr.GetActiveProfile(true);
     if (profile) {
-        SongStatusMgr *mgr = profile->GetSongStatusMgr();
         bool bref;
-        int score = mgr->GetLastScore(x, bref);
+        int score = profile->GetSongStatusMgr()->GetLastScore(songID, bref);
         static Symbol no_flashcards_icon("no_flashcards_icon");
         String localized(LocalizeSeparatedInt(score, TheLocale));
         if (bref) {
@@ -199,13 +200,11 @@ void AppLabel::SetLastPlayedScore(int x) {
             localized += Localize(no_flashcards_icon, nullptr, TheLocale);
             localized += "</alt>";
         }
-        const char *text;
-        if (score) {
-            text = localized.c_str();
+        if ((unsigned int)score) {
+            SetDisplayText(localized.c_str(), true);
         } else {
-            text = gNullStr;
+            SetDisplayText(gNullStr, true);
         }
-        SetDisplayText(text, true);
     } else {
         SetDisplayText(gNullStr, true);
     }
@@ -296,22 +295,22 @@ void AppLabel::SetStoreOfferCost(const StoreOffer *offer) {
     SetDisplayText(offer->CostStr(), true);
 }
 
-void AppLabel::SetPlayerHighScore(int i1) {
+void AppLabel::SetPlayerHighScore(int songID) {
     HamProfile *profile = TheProfileMgr.GetActiveProfile(true);
     if (profile) {
         bool bref;
         int score =
-            profile->GetSongStatusMgr()->GetBestScore(i1, bref, kDifficultyBeginner);
+            profile->GetSongStatusMgr()->GetBestScore(songID, bref, kDifficultyBeginner);
         SetDisplayText(LocalizeSeparatedInt(score, TheLocale), true);
     } else {
         SetDisplayText(gNullStr, true);
     }
 }
 
-void AppLabel::SetPlayerChallengeScore(int i1) {
+void AppLabel::SetPlayerChallengeScore(int songID) {
     HamProfile *profile = TheProfileMgr.GetActiveProfile(true);
     if (profile) {
-        int score = TheChallengeSortMgr->GetOwnerChallengeScore(i1);
+        int score = TheChallengeSortMgr->GetOwnerChallengeScore(songID);
         SetDisplayText(LocalizeSeparatedInt(score, TheLocale), true);
     } else {
         SetDisplayText(gNullStr, true);
@@ -359,10 +358,13 @@ void AppLabel::SetBestPracticeDifficulty(int songID) {
         Difficulty d = profile->GetSongStatusMgr()->GetPracticeDifficulty(songID);
         if (profile->GetSongStatusMgr()->GetPracticeScore(songID) > 0) {
             SetTextToken(MakeString("%s_short", DifficultyToSym(d)));
-            return;
+
+        } else {
+            SetDisplayText(gNullStr, true);
         }
+    } else {
+        SetDisplayText(gNullStr, true);
     }
-    SetDisplayText(gNullStr, true);
 }
 
 void AppLabel::SetFitnessTimeNum(HamProfile *profile) {
@@ -411,14 +413,14 @@ void AppLabel::SetPackSongName(const DataArray *a1) {
     SetDisplayText(a1->FindStr(name), true);
 }
 
-void AppLabel::SetSongName(Symbol s1, int i2, bool b3) {
-    if (streq(s1.Str(), "blank")) {
+void AppLabel::SetSongName(Symbol shortname, int i2, bool b3) {
+    if (streq(shortname.Str(), "blank")) {
         SetDisplayText("", true);
         return;
     }
     String str;
-    if (TheHamSongMgr.HasSong(s1, false)) {
-        int songID = TheHamSongMgr.GetSongIDFromShortName(s1, false);
+    if (TheHamSongMgr.HasSong(shortname, false)) {
+        int songID = TheHamSongMgr.GetSongIDFromShortName(shortname, false);
         const HamSongMetadata *data = TheHamSongMgr.Data(songID);
         str = data->Title();
         if (b3) {
@@ -442,14 +444,14 @@ void AppLabel::SetSongName(Symbol s1, int i2, bool b3) {
     }
 }
 
-void AppLabel::SetBlacklightSongName(Symbol s1, int i2, bool b3) {
-    if (streq(s1.Str(), "blank")) {
+void AppLabel::SetBlacklightSongName(Symbol shortname, int i2, bool b3) {
+    if (streq(shortname.Str(), "blank")) {
         SetDisplayText("", true);
         return;
     }
     String str;
-    if (TheHamSongMgr.HasSong(s1, false)) {
-        int songID = TheHamSongMgr.GetSongIDFromShortName(s1, false);
+    if (TheHamSongMgr.HasSong(shortname, false)) {
+        int songID = TheHamSongMgr.GetSongIDFromShortName(shortname, false);
         const HamSongMetadata *data = TheHamSongMgr.Data(songID);
         str = MakeString("%s%s%s", "<altb>", data->Title(), "</altb>");
         if (b3) {
@@ -473,85 +475,91 @@ void AppLabel::SetBlacklightSongName(Symbol s1, int i2, bool b3) {
     }
 }
 
-void AppLabel::SetPlaylistSongName(Symbol s1, int i2, int i3) {
-    int songID = TheHamSongMgr.GetSongIDFromShortName(s1);
+void AppLabel::SetPlaylistSongName(Symbol shortname, int i2, int i3) {
+    int songID = TheHamSongMgr.GetSongIDFromShortName(shortname);
     static Symbol playlist_song_name("playlist_song_name");
     const HamSongMetadata *data = TheHamSongMgr.Data(songID);
     SetTokenFmt(playlist_song_name, data->Title(), i2, i3);
 }
 
-void AppLabel::SetDancer(Symbol s1) {
+void AppLabel::SetDancer(Symbol shortname) {
     static Symbol defaultcharacter_label("defaultcharacter_label");
-    int songID = TheHamSongMgr.GetSongIDFromShortName(s1);
+    int songID = TheHamSongMgr.GetSongIDFromShortName(shortname);
     const HamSongMetadata *data = TheHamSongMgr.Data(songID);
     Symbol charSym = data->Character();
     SetTokenFmt(defaultcharacter_label, Localize(charSym, nullptr, TheLocale));
 }
 
-void AppLabel::SetLastPracticeTime(int i1) {
+void AppLabel::SetLastPracticeTime(int songID) {
     HamProfile *profile = TheProfileMgr.GetActiveProfile(true);
     unsigned int time = 0;
     if (profile) {
-        time = profile->GetSongStatusMgr()->GetLastPlayedPractice(i1);
+        time = profile->GetSongStatusMgr()->GetLastPlayedPractice(songID);
     }
     SetTimeElapsedSince(time);
 }
 
-void AppLabel::SetBestScore(int i1) {
+void AppLabel::SetBestScore(int songID) {
     static Symbol best_score("best_score");
     HamProfile *profile = TheProfileMgr.GetActiveProfile(true);
     if (profile) {
         bool bref = false;
-        int score = profile->GetSongStatusMgr()->GetScore(i1, bref);
+        int score = profile->GetSongStatusMgr()->GetScore(songID, bref);
         if (score > 0) {
             SetTokenFmt(best_score, LocalizeSeparatedInt(score, TheLocale));
-            return;
+
+        } else {
+            SetDisplayText(gNullStr, true);
         }
+    } else {
+        SetDisplayText(gNullStr, true);
     }
-    SetDisplayText(gNullStr, true);
 }
 
-void AppLabel::SetBestCoopScore(int i1) {
+void AppLabel::SetBestCoopScore(int songID) {
     static Symbol best_score("best_score");
     HamProfile *profile = TheProfileMgr.GetActiveProfile(true);
     if (profile) {
-        int score = profile->GetSongStatusMgr()->GetCoopScore(i1);
+        int score = profile->GetSongStatusMgr()->GetCoopScore(songID);
         if (score > 0) {
             SetTokenFmt(best_score, LocalizeSeparatedInt(score, TheLocale));
-            return;
+
+        } else {
+            SetDisplayText(gNullStr, true);
         }
+    } else {
+        SetDisplayText(gNullStr, true);
     }
-    SetDisplayText(gNullStr, true);
 }
 
-void AppLabel::SetBestPerformPercent(int i1, Difficulty d) {
+void AppLabel::SetBestPerformPercent(int songID, Difficulty d) {
     int pct = 0;
     HamProfile *profile = TheProfileMgr.GetActiveProfile(true);
     if (profile) {
-        pct = profile->GetSongStatusMgr()->GetPercentForDifficulty(i1, d);
+        pct = profile->GetSongStatusMgr()->GetPercentForDifficulty(songID, d);
     }
     static Symbol percentage("percentage");
     SetTokenFmt(percentage, pct);
 }
 
-void AppLabel::SetBestBattleScore(HamProfile *profile, int i2) {
+void AppLabel::SetBestBattleScore(HamProfile *profile, int songID) {
     if (profile) {
         static Symbol best_score("best_score");
-        int score = profile->GetSongStatusMgr()->GetBestBattleScore(i2);
+        int score = profile->GetSongStatusMgr()->GetBestBattleScore(songID);
         SetTokenFmt(best_score, LocalizeSeparatedInt(score, TheLocale));
     } else {
         SetInt(0, false);
     }
 }
 
-bool AppLabel::SetPracticeScore(int i1, Difficulty d) {
+bool AppLabel::SetPracticeScore(int songID, Difficulty d) {
     HamProfile *profile = TheProfileMgr.GetActiveProfile(true);
     if (profile) {
         int score;
         if (d == kNumDifficulties) {
-            score = profile->GetSongStatusMgr()->GetPracticeScore(i1);
+            score = profile->GetSongStatusMgr()->GetPracticeScore(songID);
         } else {
-            score = profile->GetSongStatusMgr()->GetPracticeScore(i1, d);
+            score = profile->GetSongStatusMgr()->GetPracticeScore(songID, d);
         }
         static Symbol percentage("percentage");
         if (score > 0) {
@@ -563,19 +571,22 @@ bool AppLabel::SetPracticeScore(int i1, Difficulty d) {
     return false;
 }
 
-void AppLabel::SetDiffScore(int i1, Difficulty d) {
+void AppLabel::SetDiffScore(int songID, Difficulty d) {
     static Symbol best_score_diff("best_score_diff");
     HamProfile *profile = TheProfileMgr.GetActiveProfile(true);
     if (profile) {
         bool bref;
-        int score = profile->GetSongStatusMgr()->GetScoreForDifficulty(i1, d, bref);
+        int score = profile->GetSongStatusMgr()->GetScoreForDifficulty(songID, d, bref);
         if (score > 0) {
             const char *cc = bref ? "Q" : " ";
             SetTokenFmt(best_score_diff, LocalizeSeparatedInt(score, TheLocale), cc);
-            return;
+
+        } else {
+            SetDisplayText(gNullStr, true);
         }
+    } else {
+        SetDisplayText(gNullStr, true);
     }
-    SetDisplayText(gNullStr, true);
 }
 
 void AppLabel::SetFitnessTime(HamProfile *profile) {
@@ -604,11 +615,11 @@ void AppLabel::SetFitnessTotalCalories(HamProfile *profile) {
     SetTokenFmt(calories_total, (int)f2);
 }
 
-void AppLabel::SetLastPlayedTime(int x) {
+void AppLabel::SetLastPlayedTime(int songID) {
     HamProfile *profile = TheProfileMgr.GetActiveProfile(true);
     unsigned int last = 0;
     if (profile) {
-        last = profile->GetSongStatusMgr()->GetLastPlayed(x);
+        last = profile->GetSongStatusMgr()->GetLastPlayed(songID);
     }
     SetTimeElapsedSince(last);
 }
@@ -665,7 +676,8 @@ DataNode AppLabel::OnSetUserName(const DataArray *a) {
     if (n.Type() == kDataInt) {
         SetUserName(n.Int());
     } else {
-        User *user = n.Obj<User>();
+        Hmx::Object *obj = n.GetObj();
+        User *user = dynamic_cast<User *>(obj);
         if (user) {
             SetUserName(user);
         } else {

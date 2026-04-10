@@ -127,6 +127,8 @@ public:
     void SetUnk4c(int i) { unk4c = i; };
     void SetGlobalOptionsDirty(bool b) { mGlobalOptionsDirty = b; }
     bool Mono() const { return mMono; }
+    bool PhotosDisabled() const { return mDisablePhotos; }
+    bool FreestyleDisabled() const { return mDisableFreestyle; }
 
 private:
     void UpdateFriendsList();

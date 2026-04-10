@@ -130,6 +130,7 @@ void CampaignMasterQuestCrewSelectPanel::UpdateCrewMesh(Symbol s) {
     String meshName = MakeString("crew_portrait.mesh");
     RndMesh *pMesh = LoadedDir()->Find<RndMesh>(meshName.c_str(), false);
     MILO_ASSERT(pMesh, 0xed);
+
     String texName;
     texName = MakeString("%s.tex", s.Str());
     RndTex *tex = LoadedDir()->Find<RndTex>(texName.c_str(), false);

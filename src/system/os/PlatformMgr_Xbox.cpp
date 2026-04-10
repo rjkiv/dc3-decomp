@@ -10,6 +10,7 @@
 #include "os/OnlineID.h"
 #include "os/PlatformMgr.h"
 #include "os/ThreadCall.h"
+#include "stdlib.h"
 #include "ui/UI.h"
 #include "utl/DataPointMgr.h"
 #include "utl/GlitchFinder.h"
@@ -24,6 +25,7 @@
 #include "xdk/XPARTY.h"
 #include "xdk/NUI.h"
 #include "xdk/XBC.h"
+#include "xdk/win_types.h"
 #include <algorithm>
 #include <cstdlib>
 #include <cwchar>
@@ -548,6 +550,14 @@ void MultipleItemsPostPurchaseEnumJob::OnCompletion(Hmx::Object *o) {
         }
     }
     MultipleItemsEnumJob::OnCompletion(o);
+}
+
+QWORD SingleItemEnumCompleteMsg::OfferID() const {
+    return _strtoui64(mData->Str(4), 0, 16);
+}
+
+QWORD MultipleItemsEnumCompleteMsg::OfferID(int i) const {
+    return _strtoui64(mData->Array(5)->Str(i), 0, 16);
 }
 
 #pragma endregion

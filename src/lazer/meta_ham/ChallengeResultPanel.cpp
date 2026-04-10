@@ -34,13 +34,88 @@ BEGIN_PROPSYNCS(ChallengeResultPanel)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
-void ChallengeResultPanel::Text(
-    int, int data, UIListLabel *uiListLabel, UILabel *label
-) const {
+void ChallengeResultPanel::Text(int, int data, UIListLabel *slot, UILabel *label) const {
     MILO_ASSERT_RANGE(data, 0, mItems.size(), 0x11a);
     static Symbol best_score("best_score");
     AppLabel *app_label = dynamic_cast<AppLabel *>(label);
     MILO_ASSERT(app_label, 0x11E);
+    if (mItems[data].mGamertag == gNullStr) {
+        label->SetTextToken(gNullStr);
+        return;
+    } else {
+        String curGamerTag = mItems[data].mGamertag;
+        if (slot->Matches("white_small_gamertag")) {
+            if (unk5c <= mItems[data].mScore && data != unk60 && data != unk6c) {
+                label->SetPrelocalizedString(curGamerTag);
+            } else {
+                label->SetTextToken(gNullStr);
+            }
+        } else if (slot->Matches("grey_small_gamertag")) {
+            if (unk5c > mItems[data].mScore && data != unk60) {
+                label->SetPrelocalizedString(curGamerTag);
+            } else {
+                label->SetTextToken(gNullStr);
+            }
+        } else if (slot->Matches("white_large_gamertag")) {
+            if (unk5c <= mItems[data].mScore && data == unk60) {
+                label->SetPrelocalizedString(curGamerTag);
+            } else {
+                label->SetTextToken(gNullStr);
+            }
+        } else if (slot->Matches("grey_large_gamertag")) {
+            if (unk5c > mItems[data].mScore && data == unk60) {
+                label->SetPrelocalizedString(curGamerTag);
+            } else {
+                label->SetTextToken(gNullStr);
+            }
+        } else if (slot->Matches("gold_large_gamertag")) {
+            if (unk5c == mItems[data].mScore && data == unk6c) {
+                label->SetPrelocalizedString(curGamerTag);
+            } else {
+                label->SetTextToken(gNullStr);
+            }
+        } else if (slot->Matches("white_small_score")) {
+            if (unk5c <= mItems[data].mScore && data != unk60 && data != unk6c) {
+                app_label->SetTokenFmt(
+                    best_score, LocalizeSeparatedInt(mItems[data].mScore, TheLocale)
+                );
+            } else {
+                label->SetTextToken(gNullStr);
+            }
+        } else if (slot->Matches("grey_small_score")) {
+            if (unk5c > mItems[data].mScore && data != unk60) {
+                app_label->SetTokenFmt(
+                    best_score, LocalizeSeparatedInt(mItems[data].mScore, TheLocale)
+                );
+            } else {
+                label->SetTextToken(gNullStr);
+            }
+        } else if (slot->Matches("white_large_score")) {
+            if (unk5c <= mItems[data].mScore && data == unk60) {
+                app_label->SetTokenFmt(
+                    best_score, LocalizeSeparatedInt(mItems[data].mScore, TheLocale)
+                );
+            } else {
+                label->SetTextToken(gNullStr);
+            }
+        } else if (slot->Matches("grey_large_score")) {
+            if (unk5c > mItems[data].mScore && data == unk60) {
+                app_label->SetTokenFmt(
+                    best_score, LocalizeSeparatedInt(mItems[data].mScore, TheLocale)
+                );
+            } else {
+                label->SetTextToken(gNullStr);
+            }
+        } else if (slot->Matches("gold_large_score")) {
+            if (unk5c == mItems[data].mScore && data == unk6c) {
+                app_label->SetTokenFmt(
+                    best_score, LocalizeSeparatedInt(mItems[data].mScore, TheLocale)
+                );
+            } else {
+                label->SetTextToken(gNullStr);
+            }
+        }
+    }
 }
 
 int ChallengeResultPanel::NumData() const { return mItems.size(); }

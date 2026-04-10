@@ -19,7 +19,7 @@ AccomplishmentOneShot::AccomplishmentOneShot(DataArray *d, int i)
 AccomplishmentOneShot::~AccomplishmentOneShot() {}
 
 bool AccomplishmentOneShot::AreOneShotConditionsMet(
-    HamPlayerData *hpd, HamProfile *profile, Symbol s, Difficulty d
+    HamPlayerData *hpd, HamProfile *profile, Symbol shortname, Difficulty d
 ) {
     static Symbol stars("stars");
     static Symbol flawless_a("flawless_a");
@@ -31,49 +31,58 @@ bool AccomplishmentOneShot::AreOneShotConditionsMet(
     static Symbol hardest_stars("hardest_stars");
     const AccomplishmentProgress &progress = profile->GetAccomplishmentProgress();
     FOREACH (it, m_lConditions) {
-        Symbol sbc = it->unk0;
-        Difficulty d2 = it->mDifficulty;
-        int i3 = it->unk4;
-        bool b6;
-        if (d2 == kDifficultyBeginner) {
-            b6 = true;
+        Symbol condition = it->mCondition;
+        Difficulty diffForCondition = it->mDifficulty;
+        int targetValueForCondition = it->mValue;
+        bool eligible;
+        if (diffForCondition == kDifficultyBeginner) {
+            eligible = true;
         } else if (d == kDifficultyBeginner) {
-            b6 = false;
+            eligible = false;
+        } else if (diffForCondition <= d) {
+            eligible = true;
         } else {
-            b6 = d2 <= d;
+            eligible = false;
         }
-        if (b6) {
-            int i5;
-            if (sbc == stars) {
+        if (eligible) {
+            if (condition == stars) {
                 static Symbol stars_earned("stars_earned");
                 const DataNode *pStarsNode =
                     TheHamProvider->Property(stars_earned, false);
                 MILO_ASSERT(pStarsNode, 0x112);
-                i5 = pStarsNode->Int();
-            } else if (sbc == flawless_a || sbc == flawless_b) {
-                i5 = progress.GetFlawlessMoveCount();
-            } else if (sbc == nices_a || sbc == nices_b) {
-                i5 = progress.GetNiceMoveCount();
-            } else if (sbc == days) {
-                i5 = progress.NumDays();
-            } else if (sbc == weekends) {
-                i5 = progress.NumWeekends();
-            } else if (sbc == hardest_stars) {
+                if (pStarsNode->Int() >= targetValueForCondition) {
+                    return true;
+                }
+            } else if (condition == flawless_a || condition == flawless_b) {
+                if (progress.GetFlawlessMoveCount() >= targetValueForCondition) {
+                    return true;
+                }
+            } else if (condition == nices_a || condition == nices_b) {
+                if (progress.GetNiceMoveCount() >= targetValueForCondition) {
+                    return true;
+                }
+            } else if (condition == days) {
+                if (progress.NumDays() >= targetValueForCondition) {
+                    return true;
+                }
+            } else if (condition == weekends) {
+                if (progress.NumWeekends() >= targetValueForCondition) {
+                    return true;
+                }
+            } else if (condition == hardest_stars) {
                 static Symbol omg("omg");
-                if (s == omg) {
+                if (shortname == omg) {
                     static Symbol stars_earned("stars_earned");
                     const DataNode *pStarsNode =
                         TheHamProvider->Property(stars_earned, false);
                     MILO_ASSERT(pStarsNode, 0x14C);
-                    i5 = pStarsNode->Int();
-                } else
-                    continue;
+                    if (pStarsNode->Int() >= targetValueForCondition) {
+                        return true;
+                    }
+                }
             } else {
-                MILO_NOTIFY("Condition is not currently supported: %s ", sbc);
+                MILO_NOTIFY("Condition is not currently supported: %s ", condition);
                 return false;
-            }
-            if (i5 >= i3) {
-                return true;
             }
         }
     }

@@ -13,11 +13,11 @@ public:
     Symbol GetGroup() const;
     bool HasAward() const;
 
+protected:
+    void Configure(DataArray const *);
+
     int unk4;
     Symbol mName; // 0x8
     Symbol mGroup; // 0xc
     Symbol mAward; // 0x10
-
-protected:
-    void Configure(DataArray const *);
 };
