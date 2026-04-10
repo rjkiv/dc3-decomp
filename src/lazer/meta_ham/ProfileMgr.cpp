@@ -1027,10 +1027,11 @@ void ProfileMgr::LoadGlobalOptions(FixedSizeSaveableStream &fs) {
 }
 
 DataNode ProfileMgr::OnMsg(SigninChangedMsg const &msg) {
-    int mask = msg.GetMask();
-    int changedMask = msg.GetChangedMask();
+    unsigned int mask = msg.GetMask();
+    unsigned int changedMask = msg.GetChangedMask();
     static Symbol kick_out_on_sign_out("kick_out_on_sign_out");
 
+    int i = 0;
     bool b = false;
 
     UIScreen *currentScreen = TheUI->CurrentScreen();
@@ -1051,12 +1052,12 @@ DataNode ProfileMgr::OnMsg(SigninChangedMsg const &msg) {
         unkb8.Stop();
     }
 
-    for (int i = 0; i < changedMask; i++) {
-        if ((changedMask & 1) != 0) {
+    for (; changedMask; changedMask >>= 1) {
+        if (changedMask & 1) {
             HamProfile *pProfile = GetProfileFromPad(i);
             MILO_ASSERT(pProfile, 0x5fb);
             pProfile->SetSaveState(kMetaProfileDelete);
-            if ((1 << (i & 0x3f) & mask) == 0) {
+            if ((1 << i & mask) == 0) {
                 bool isCritProfile = pProfile == mCriticalProfile;
                 if (b) {
                     for (int j = 0; j < 2; j++) {
@@ -1076,6 +1077,7 @@ DataNode ProfileMgr::OnMsg(SigninChangedMsg const &msg) {
                 }
             }
         }
+        i++;
     }
 
     TheGameData->UpdateAssociatedPads();
