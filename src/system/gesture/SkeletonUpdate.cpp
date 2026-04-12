@@ -143,50 +143,50 @@ void *SkeletonUpdate::NewSkeletonEvent() { return sNewSkeletonEvent; }
 
 void SkeletonUpdateCallbackSlowdownCB(float, void *);
 
-// void SkeletonUpdate::PostUpdate() {
-//     MILO_ASSERT(MainThread(), 0x26F);
-//     MILO_ASSERT(mCameraInput, 0x273);
-//     mCameraInput->PollTracking();
-//     unk90 = mCameraInput->IsConnected();
-//     unk91 = mCameraInput->IsOverride();
-//     if (unk91) {
-//         const SkeletonFrame *newFrame = mCameraInput->NewFrame();
-//         if (newFrame) {
-//             mSkeletonFrame = *newFrame;
-//             unk78 = true;
-//         }
-//     }
-//     if (TheGameData) {
-//         for (int i = 0; i < 2; i++) {
-//             HamPlayerData *player_data = TheGameData->Player(i);
-//             MILO_ASSERT(player_data, 0x28B);
-//             unk5380[i] = player_data->GetSkeletonTrackingID();
-//         }
-//     }
-//     if (unk539c) {
-//         WaitForSingleObject(sSkeletonUpdatedEvent, 1);
-//         ResetEvent(sSkeletonUpdatedEvent);
-//     } else {
-//         Update();
-//     }
-//     if (unk78) {
-//         LiveCameraInput::sInstance->SetNewFrame(&mSkeletonFrame);
-//     }
-//     SkeletonUpdateData updateData;
-//     updateData.unk0 = &unk5360[0];
-//     updateData.unk4 = &unk5368[0];
-//     updateData.unk8 = &mSkeletonFrame;
-//     updateData.unkc = this;
-//     updateData.unk10 = mCameraInput;
-//     FOREACH (it, mCallbacks) {
-//         AutoGlitchReport report(4.0f, SkeletonUpdateCallbackSlowdownCB, *it);
-//         (*it)->PostUpdate(unk78 ? &updateData : nullptr);
-//     }
-//     unk78 = false;
-//     for (int i = 0; i < NUM_SKELETONS; i++) {
-//         mSkeletons[i].PostUpdate();
-//     }
-// }
+void SkeletonUpdate::PostUpdate() {
+    MILO_ASSERT(MainThread(), 0x26F);
+    MILO_ASSERT(mCameraInput, 0x273);
+    mCameraInput->PollTracking();
+    unk90 = mCameraInput->IsConnected();
+    unk91 = mCameraInput->IsOverride();
+    if (unk91) {
+        const SkeletonFrame *newFrame = mCameraInput->NewFrame();
+        if (newFrame) {
+            mSkeletonFrame = *newFrame;
+            unk78 = true;
+        }
+    }
+    if (TheGameData) {
+        for (int i = 0; i < 2; i++) {
+            HamPlayerData *player_data = TheGameData->Player(i);
+            MILO_ASSERT(player_data, 0x28B);
+            unk5380[i] = player_data->GetSkeletonTrackingID();
+        }
+    }
+    if (unk539c) {
+        WaitForSingleObject(sSkeletonUpdatedEvent, 1);
+        ResetEvent(sSkeletonUpdatedEvent);
+    } else {
+        Update();
+    }
+    if (unk78) {
+        LiveCameraInput::sInstance->SetNewFrame(&mSkeletonFrame);
+    }
+    // SkeletonUpdateData updateData;
+    // updateData.unk0 = &unk5360[0];
+    // updateData.unk4 = &unk5368[0];
+    // updateData.unk8 = &mSkeletonFrame;
+    // updateData.unkc = this;
+    // updateData.unk10 = mCameraInput;
+    // FOREACH (it, mCallbacks) {
+    //     AutoGlitchReport report(4.0f, SkeletonUpdateCallbackSlowdownCB, *it);
+    //     (*it)->PostUpdate(unk78 ? &updateData : nullptr);
+    // }
+    // unk78 = false;
+    // for (int i = 0; i < NUM_SKELETONS; i++) {
+    //     mSkeletons[i].PostUpdate();
+    // }
+}
 
 DataNode OnToggleSkeletalUpdateThread(DataArray *);
 DataNode OnCycleNumStubSkeletons(DataArray *);
