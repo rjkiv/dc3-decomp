@@ -118,8 +118,8 @@ struct SkeletonData {
 };
 
 struct SkeletonUpdateData {
-    Skeleton **unk0; // 0x0
-    Skeleton **unk4; // 0x4
+    Skeleton **unk0; // 0x0;
+    const Skeleton *(&unk4)[6];
     SkeletonFrame *unk8; // 0x8
     SkeletonHistory *unkc; // 0xc
     CameraInput *unk10; // 0x10
