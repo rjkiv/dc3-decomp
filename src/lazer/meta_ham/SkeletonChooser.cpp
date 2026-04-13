@@ -923,3 +923,148 @@ void SkeletonChooser::CheckToSwitchActivePlayer() {
     }
     unk38 = -1;
 }
+
+void SkeletonChooser::SetPlayerSkeletonNavData(int p1ID, int p2ID) {
+    bool inMode;
+    static Symbol player_present("player_present");
+    static Symbol ui_nav_player("ui_nav_player");
+
+    int p1TrackingID = TheGameData->Player(0)->GetSkeletonTrackingID();
+    int p2TrackingID = TheGameData->Player(1)->GetSkeletonTrackingID();
+    if (p1TrackingID != p1ID && p1TrackingID != p2ID) {
+        TheGameData->AssignSkeleton(0, -1);
+        p1TrackingID = -1;
+    }
+    if (p2TrackingID != p1ID && p2TrackingID != p2ID) {
+        TheGameData->AssignSkeleton(1, -1);
+        p2TrackingID = -1;
+    }
+
+    static Symbol sided_colors_locked("sided_colors_locked");
+    static Symbol bustamove("bustamove");
+    bool sideEqual = true;
+    const DataNode *sidedColorsProp = TheHamProvider->Property(sided_colors_locked);
+    if (sidedColorsProp->Int() != 0 && !TheGameMode->InMode(bustamove)) {
+        inMode = true;
+    } else {
+        inMode = false;
+    }
+
+    if (inMode) {
+        Skeleton *p1Skel = TheGestureMgr->GetSkeletonByTrackingID(p1ID);
+        Skeleton *p2Skel = TheGestureMgr->GetSkeletonByTrackingID(p2ID);
+
+        SkeletonSide p1side = GetPlayerSide(0);
+        int side1 = 2;
+        if (p1Skel) {
+            if (p1side == kSkeletonRight) {
+                if (p1Skel->GetUnkab0().x < 0.15f) {
+                    side1 = 0;
+                } else {
+                    side1 = 1;
+                }
+            } else {
+                if (p1Skel->GetUnkab0().x > -0.15f) {
+                    side1 = 1;
+                } else {
+                    side1 = 0;
+                }
+            }
+        }
+
+        SkeletonSide p2side = GetPlayerSide(1);
+        int side2 = 2;
+        if (p2Skel) {
+            if (p2side == kSkeletonRight) {
+                if (p2Skel->GetUnkab0().x < -0.15f) {
+                    side2 = 0;
+                } else {
+                    side2 = 1;
+                }
+            } else {
+                if (0.15f < p2Skel->GetUnkab0().x) {
+                    side2 = 1;
+                } else {
+                    side2 = 0;
+                }
+            }
+        }
+        sideEqual = (side1 != side2);
+    }
+
+    if (p1ID > 0 && p1ID != p1TrackingID && p1ID != p2TrackingID) {
+        if (p2ID <= 0 || p2ID != p1TrackingID) {
+            if (sideEqual) {
+                TheGameData->AssignSkeleton(0, p1ID);
+                p1TrackingID = p1ID;
+            } else {
+                TheGameData->AssignSkeleton(0, -1);
+                p1TrackingID = -1;
+            }
+        } else {
+            if (sideEqual) {
+                TheGameData->AssignSkeleton(1, p1ID);
+                p2TrackingID = p1ID;
+            } else {
+                TheGameData->AssignSkeleton(1, -1);
+                p2TrackingID = -1;
+            }
+        }
+    }
+
+    if (p2ID > 0 && p2ID != p1TrackingID && p2ID != p2TrackingID) {
+        if (p1ID <= 0 || p1ID != p2TrackingID) {
+            if (sideEqual) {
+                TheGameData->AssignSkeleton(1, p2ID);
+                p2TrackingID = p2ID;
+            } else {
+                TheGameData->AssignSkeleton(1, -1);
+                p2TrackingID = -1;
+            }
+        } else {
+            if (sideEqual) {
+                TheGameData->AssignSkeleton(0, p2ID);
+                p1TrackingID = p2ID;
+            } else {
+                TheGameData->AssignSkeleton(0, -1);
+                p1TrackingID = -1;
+            }
+        }
+    }
+
+    // probably should be written with an INT_MAX somewhere, like p1TrackingID == INT_MAX
+    bool presentP1 = (-p1TrackingID & ~p1TrackingID) < 0;
+    bool presentP2 = (-p2TrackingID & ~p2TrackingID) < 0;
+
+    if (TheGameData->Player(0)->IsAutoplaying()) {
+        presentP1 = true;
+    }
+    if (TheGameData->Player(1)->IsAutoplaying()) {
+        presentP2 = true;
+    }
+    SetPlayerPresent(0, presentP1);
+    SetPlayerPresent(1, presentP2);
+    int val = unk3c;
+    if (!TheGestureMgr->IsTrackingAllSkeletons()) {
+        TheHamProvider->SetProperty(ui_nav_player, val);
+    }
+
+    static float sFloat = 0.0f;
+    if (p1ID > 0 || p2ID > 0 || IsFreestyleMode() || TheGestureMgr->InControllerMode()) {
+        sFloat = 0.0f;
+    } else {
+        sFloat += TheTaskMgr.DeltaUISeconds();
+        if (sFloat > 5.0f) {
+            TheHamProvider->SetProperty(ui_nav_player, 0);
+            unk3c = 0;
+            HamPlayerData *pPlayer = TheGameData->Player(0);
+            TheGestureMgr->SetActiveSkeletonTrackingID(pPlayer->GetSkeletonTrackingID());
+            if (GetPlayerSide(0) != kSkeletonRight) {
+                SwapPlayerSides();
+            }
+        }
+    }
+
+    HamPlayerData *pPlayer = TheGameData->Player(unk3c);
+    TheGestureMgr->SetActiveSkeletonTrackingID(pPlayer->GetSkeletonTrackingID());
+}

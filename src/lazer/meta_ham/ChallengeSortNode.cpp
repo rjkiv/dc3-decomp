@@ -6,6 +6,7 @@
 #include "Challenges.h"
 #include "HamStarsDisplay.h"
 #include "ProfileMgr.h"
+#include "hamobj/Difficulty.h"
 #include "hamobj/HamGameData.h"
 #include "HamProfile.h"
 #include "HamSongMgr.h"
@@ -34,12 +35,16 @@ ChallengeHeaderNode::ChallengeHeaderNode(NavListItemSortCmp *cmp, Symbol sym, bo
     : NavListHeaderNode(cmp, sym, b), mChallengeCount(0) {}
 
 int ChallengeHeaderNode::GetChallengeExp() {
+    int xp = 0;
     FOREACH (it, Children()) {
-        auto node = *it;
+        ChallengeSortNode *node = static_cast<ChallengeSortNode *>(*it);
         MILO_ASSERT(node, 0xd0);
-        // TheChallenges->CalculateChallengeXp();
+        auto record = node->GetChallengeRecord();
+        xp += TheChallenges->CalculateChallengeXp(
+            record->GetChallengeRow().mScore, record->GetChallengeRow().mDiff
+        );
     }
-    return 0;
+    return xp;
 }
 
 NavListSortNode *ChallengeHeaderNode::GetFirstActive() {
@@ -164,16 +169,13 @@ Symbol ChallengeHeaderNode::GetSongShortName() {
 }
 
 String ChallengeHeaderNode::GetSongShortTitle() {
-    int size = mChildren.size();
-    const char *title = gNullStr;
-
-    if (size != 0) {
-        ChallengeSortNode *node = static_cast<ChallengeSortNode *>(mChildren.front());
-        MILO_ASSERT(node, 0x149);
-        title = node->GetChallengeRecord()->GetUnk44().Str();
+    if (mChildren.size() == 0) {
+        return gNullStr;
     }
 
-    return title;
+    ChallengeSortNode *node = static_cast<ChallengeSortNode *>(mChildren.front());
+    MILO_ASSERT(node, 0x149);
+    return node->GetChallengeRecord()->GetUnk44().Str();
 }
 
 int ChallengeHeaderNode::GetTotalEarnedExp(int score) {
@@ -223,14 +225,9 @@ int ChallengeSortNode::GetChallengerXp() {
 
 const char *ChallengeSortNode::GetChallengerGamertag() {
     int type = mChallengeRecord->GetChallengeRow().mType;
-    bool flag;
-    if (type < 0 || type > 2) {
-        flag = false;
-    }
+    bool flag = (type >= 0 && type <= 2);
     if (!flag) {
-        if (type < 3 || type > 5) {
-            flag = false;
-        }
+        flag = (type >= 3 && type <= 5);
         if (!flag) {
             return mChallengeRecord->GetUnk48().Str();
         }
@@ -274,10 +271,9 @@ void ChallengeSortNode::SetNewIcon(UILabel *label) const {
     MILO_ASSERT(label, 0x2da);
     AppLabel *appLabel = dynamic_cast<AppLabel *>(label);
     MILO_ASSERT(appLabel, 0x2dc);
-    int timestamp = TheChallengeSortMgr->GetOwnerChallengeTimeStamp(
-        mChallengeRecord->GetChallengeRow().mSongID
-    );
-    if (timestamp > mChallengeRecord->GetChallengeRow().mTimeStamp
+    int songID = mChallengeRecord->GetChallengeRow().mSongID;
+    int timestamp = TheChallengeSortMgr->GetOwnerChallengeTimeStamp(songID);
+    if (timestamp > (int)mChallengeRecord->GetChallengeRow().mTimeStamp
         || mChallengeRecord->GetUnk48() == mChallengeRecord->GetUnk4c()
         || mChallengeRecord->GetUnk50() == 4 || mChallengeRecord->GetUnk50() == 2
         || mChallengeRecord->GetUnk50() == 3) {
@@ -497,9 +493,18 @@ void ChallengeSortNode::OnContentMounted(const char *contentName, const char *c2
 
 void ChallengeSortNode::Custom(UIListCustom *list, Hmx::Object *obj) const {
     if (list->Matches("stars")) {
-        HamStarsDisplay *pStarsDisplay = dynamic_cast<HamStarsDisplay *>(obj);
-        MILO_ASSERT(pStarsDisplay, 0x294);
-        pStarsDisplay->SetShowing(true);
+        HamStarsDisplay *starsDisplay = dynamic_cast<HamStarsDisplay *>(obj);
+        MILO_ASSERT(starsDisplay, 0x294);
+        starsDisplay->SetShowing(true);
+        int type = mChallengeRecord->GetChallengeRow().mType;
+        bool check = (type >= 0 && type <= 2);
+        if (!check) {
+            check = (type >= 3 && type <= 5);
+            if (!check) {
+                int diff = mChallengeRecord->GetChallengeRow().mDiff;
+                starsDisplay->SetSongChallenge((Difficulty)diff);
+            }
+        }
     }
 }
 
