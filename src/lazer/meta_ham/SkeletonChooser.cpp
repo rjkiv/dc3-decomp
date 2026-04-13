@@ -895,25 +895,26 @@ void SkeletonChooser::CheckToSwitchActivePlayer() {
     int player1ID = GetAssignedPlayerSkeletonID(unk3c);
     int player2ID = GetAssignedPlayerSkeletonID(altPlayerID);
     if (0 <= player2ID) {
+        Skeleton *skel1 = nullptr;
         if (player1ID >= 0) {
-            Skeleton *skel1 = TheGestureMgr->GetSkeletonByTrackingID(player1ID);
-            if (skel1) {
-                Skeleton *skel2 = TheGestureMgr->GetSkeletonByTrackingID(player2ID);
-                if (skel2 && skel2->IsValid()) {
-                    HamPanel *pPanel = dynamic_cast<HamPanel *>(TheHamUI.FocusPanel());
-                    if (!pPanel || !pPanel->HasNavList()) {
-                        return;
-                    }
-                    bool p2HandUp = IsHandUp(player2ID);
-                    bool p1HandUp = IsHandUp(player1ID);
-                    if (!skel2->IsValid() && p2HandUp) {
-                        SwitchActiveToPlayerIndexImmediate(altPlayerID);
-                        return;
-                    }
-                    if (!p1HandUp && p2HandUp) {
-                        QueueActivePlayerSwitch(altPlayerID);
-                        return;
-                    }
+            skel1 = TheGestureMgr->GetSkeletonByTrackingID(player1ID);
+        }
+        if (skel1) {
+            Skeleton *skel2 = TheGestureMgr->GetSkeletonByTrackingID(player2ID);
+            if (skel2 && skel2->IsValid()) {
+                HamPanel *pPanel = dynamic_cast<HamPanel *>(TheHamUI.FocusPanel());
+                if (!pPanel || !pPanel->HasNavList()) {
+                    return;
+                }
+                bool p2HandUp = IsHandUp(player2ID);
+                bool p1HandUp = IsHandUp(player1ID);
+                if (!skel1->IsValid() && p2HandUp) {
+                    SwitchActiveToPlayerIndexImmediate(altPlayerID);
+                    return;
+                }
+                if (!p1HandUp && p2HandUp) {
+                    QueueActivePlayerSwitch(altPlayerID);
+                    return;
                 }
             }
         } else {
