@@ -118,6 +118,8 @@ struct SkeletonData {
 };
 
 struct SkeletonUpdateData {
+    SkeletonUpdateData(const Skeleton *(&s1)[6], const Skeleton *(&s2)[6])
+        : unk0(s1), unk4(s2) {}
     const Skeleton *(&unk0)[6]; // 0x0
     const Skeleton *(&unk4)[6]; // 0x4
     SkeletonFrame *unk8; // 0x8

@@ -172,20 +172,18 @@ void SkeletonUpdate::PostUpdate() {
     if (unk78) {
         LiveCameraInput::sInstance->SetNewFrame(&mSkeletonFrame);
     }
-    // SkeletonUpdateData updateData;
-    // updateData.unk0 = &unk5360[0];
-    // updateData.unk4 = &unk5368[0];
-    // updateData.unk8 = &mSkeletonFrame;
-    // updateData.unkc = this;
-    // updateData.unk10 = mCameraInput;
-    // FOREACH (it, mCallbacks) {
-    //     AutoGlitchReport report(4.0f, SkeletonUpdateCallbackSlowdownCB, *it);
-    //     (*it)->PostUpdate(unk78 ? &updateData : nullptr);
-    // }
-    // unk78 = false;
-    // for (int i = 0; i < NUM_SKELETONS; i++) {
-    //     mSkeletons[i].PostUpdate();
-    // }
+    SkeletonUpdateData updateData(*unk5360[0], *unk5368[0]);
+    updateData.unk8 = &mSkeletonFrame;
+    updateData.unkc = this;
+    updateData.unk10 = mCameraInput;
+    FOREACH (it, mCallbacks) {
+        AutoGlitchReport report(4.0f, SkeletonUpdateCallbackSlowdownCB, *it);
+        (*it)->PostUpdate(unk78 ? &updateData : nullptr);
+    }
+    unk78 = false;
+    for (int i = 0; i < NUM_SKELETONS; i++) {
+        mSkeletons[i].PostUpdate();
+    }
 }
 
 DataNode OnToggleSkeletalUpdateThread(DataArray *);
