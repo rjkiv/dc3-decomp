@@ -57,7 +57,7 @@ Symbol NavListSortMgr::GetHeaderSymbolFromChildSymbol(Symbol sym) {
         NavListHeaderNode *node =
             dynamic_cast<NavListHeaderNode *>(sort->GetNode(sym)->Parent());
         if (!node) {
-            return sort->GetSortName(); // unsure
+            return sortNode->GetToken();
         } else {
             return node->GetToken();
         }
