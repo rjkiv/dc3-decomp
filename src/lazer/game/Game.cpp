@@ -64,16 +64,17 @@ Game::Game()
     : mSongDB(new SongDB()), mSongInfo(0), mGameInput(0), unk58(0), unk5c(false),
       unk5d(false), mPaused(true), mTimePaused(false), unk60(false), unk64(0),
       unk68(false), unk6c(1), unk70(false), unk71(false), mOvershell(0), mMoveDir(this),
-      unk90(0), mShuttle(new Shuttle()), unka0(gNullStr), unka4(0), unka8(0), unkac(0) {
+      unk90(0), mShuttle(new Shuttle()), unka4(0), unka8(0), unkac(0) {
     if (TheSongDB) {
         RELEASE(TheSongDB);
     }
     TheSongDB = mSongDB;
     TheGame = this;
+    unka0 = 0;
     SetName("game", ObjectDir::Main());
     MidiParserMgr *lol = new MidiParserMgr(nullptr, "biteme");
-    TheMaster = new HamMaster(mSongDB->SongData(), TheMidiParserMgr);
-    mMaster = TheMaster;
+    mMaster = new HamMaster(mSongDB->SongData(), TheMidiParserMgr);
+    TheMaster = mMaster;
     TheMaster->SetName("master", ObjectDir::Main());
     TheMaster->GetAudio()->SetName("audio", ObjectDir::Main());
     SetBackgroundVolume(TheProfileMgr.GetMusicVolumeDb());
@@ -163,9 +164,9 @@ void Game::PostUpdate(const SkeletonUpdateData *data) {
                 static Symbol practice("practice");
                 static Symbol gameplay_mode("gameplay_mode");
                 if (TheGameMode->Property(gameplay_mode)->Sym() != practice) {
-                    mOvershell->Poll((const Skeleton *(&)[6])data->unk4);
+                    mOvershell->Poll(data->unk4);
                 }
-                CheckForSkeletonLoss((const Skeleton *(&)[6])data->unk4);
+                CheckForSkeletonLoss(data->unk4);
             }
         }
     }
@@ -452,12 +453,12 @@ bool Game::IsSongDefaultPlayerPlaying() {
     Symbol symSong = TheGameData->GetSong();
     Symbol symDefaultCharacter = TheHamSongMgr.GetCharacter(symSong);
     Symbol symPrimaryCharacter = TheGameData->Player(0)->Char();
-    bool ret = symPrimaryCharacter == symDefaultCharacter;
+    bool ret = symDefaultCharacter == symPrimaryCharacter;
     MILO_LOG(
         "Game::IsSongDefaultPlayerPlaying() : symSong = '%s' symDefaultCharacter = '%s' symPrimaryCharacter = '%s' ret = %d\n",
-        symSong,
-        symDefaultCharacter,
-        symPrimaryCharacter,
+        symSong.Str(),
+        symDefaultCharacter.Str(),
+        symPrimaryCharacter.Str(),
         ret
     );
     return ret;
@@ -591,8 +592,7 @@ void Game::LoadNewSong(Symbol s1, Symbol s2) {
     unk5d = TheGameMode->Property("use_movegraph")->Int();
     if (s1 != s2) {
         RELEASE(mSongInfo);
-        auto songInfo = new SongInfoCopy(TheHamSongMgr.SongMgr::SongAudioData(s2));
-        mSongInfo = songInfo;
+        mSongInfo = new SongInfoCopy(TheHamSongMgr.SongMgr::SongAudioData(s2));
         mMaster->LoadOnlySongData(mSongInfo, true, (HamSongDataValidate)0);
         MultiTempoTempoMap *other =
             static_cast<MultiTempoTempoMap *>(HamSongData::sInstance->GetTempoMap());
@@ -812,13 +812,29 @@ DataNode OnToggleAutoplay(DataArray *a) {
 DataNode OnCycleAutoplay(DataArray *a) {
     HamPlayerData *player_data = TheGameData->Player(a->Int(1));
     MILO_ASSERT(player_data, 0x7e);
-    Symbol s;
-    if (!player_data->IsAutoplaying()) {
-        s = sAutoplayStates.back();
+    Symbol autoplay = player_data->Autoplay();
+    if (autoplay.Null()) {
+        autoplay = sAutoplayStates.back();
     } else {
+        int idx = 0;
+        int size = sAutoplayStates.size();
+        for (; idx < size; idx++) {
+            if (sAutoplayStates[idx] == autoplay) {
+                break;
+            }
+        }
+        if (idx == 0) {
+            autoplay = sAutoplayStates[0];
+        } else {
+            int mod = (idx + 1) % size;
+            if (mod < 0) {
+                mod += size;
+            }
+            autoplay = sAutoplayStates[mod];
+        }
     }
-    player_data->SetAutoplay(s);
-    return s;
+    player_data->SetAutoplay(autoplay);
+    return autoplay;
 }
 
 DataNode OnToggleCharFeedback(DataArray *a) {

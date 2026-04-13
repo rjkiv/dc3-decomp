@@ -126,7 +126,7 @@ void HamSkeletonConverter::Highlight() {
 
 void HamSkeletonConverter::PostUpdate(const SkeletonUpdateData *data) {
     if (unk750 && data) {
-        BaseSkeleton *skeleton = nullptr;
+        const BaseSkeleton *skeleton = nullptr;
         for (int i = 0; i < 6; i++) {
             if (data->unk0[i] && data->unk0[i]->IsTracked()) {
                 skeleton = data->unk0[i];

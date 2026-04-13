@@ -67,8 +67,10 @@ private:
     std::vector<SkeletonCallback *> mCallbacks; // 0x94
     SkeletonFrame mSkeletonFrame; // 0xa0
     Skeleton mSkeletons[6]; // 0x1268
-    Skeleton *unk5360[2]; // 0x5360
-    Skeleton *unk5368[2]; // 0x5368
+    const Skeleton *(*unk5360[2])[6]; // 0x5360
+    const Skeleton *(*unk5368[2])[6]; // 0x5368
+    // Skeleton *unk5360[2]; // 0x5360
+    // Skeleton *unk5368[2]; // 0x5368
     int unk5370;
     int unk5374;
     int unk5378;

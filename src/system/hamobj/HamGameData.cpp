@@ -511,7 +511,7 @@ void HamGameData::AutoAssignSkeletons(const SkeletonUpdateData *data) {
     for (int i = 0; i < 2; i++) {
         if (!(int)data->unk0[i]) {
             for (int j = 0; j < 6; j++) {
-                Skeleton *cur = data->unk4[j];
+                const Skeleton *cur = data->unk4[j];
                 if (cur->IsValid()) {
                     int id = cur->TrackingID();
                     bool b1;
