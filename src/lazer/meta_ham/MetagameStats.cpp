@@ -80,7 +80,7 @@ void MetagameStats::Text(int, int data, UIListLabel *slot, UILabel *label) const
                 static Symbol dancebattle("dancebattle");
                 int fave = GetFavorite((FavoriteStatID)id);
                 if (slot->Matches("title")) {
-                    title = SetTitleForFavorite(fave, 0, nullptr);
+                    title = SetTitleForFavorite(fave, 0, titleArr);
                     label->SetTextToken(title);
                 } else {
                     Symbol tag = stats_favorite_na;
@@ -105,7 +105,7 @@ void MetagameStats::Text(int, int data, UIListLabel *slot, UILabel *label) const
                     faveCount = GetFavoriteCount((FavoriteStatID)id, fave);
                 }
                 if (slot->Matches("title")) {
-                    title = SetTitleForFavorite(fave, faveCount, statArr);
+                    title = SetTitleForFavorite(fave, faveCount, titleArr);
                     label->SetTextToken(title);
                 } else if (faveCount == 1) {
                     Symbol single = MakeString("%s_single", statSym.Str());
@@ -134,7 +134,7 @@ void MetagameStats::Text(int, int data, UIListLabel *slot, UILabel *label) const
                     }
                 }
                 if (slot->Matches("title")) {
-                    title = SetTitleForFavorite(fave, 0, statArr);
+                    title = SetTitleForFavorite(fave, 0, titleArr);
                     label->SetTextToken(title);
                 } else {
                     label->SetTokenFmt(statSym, s15);
