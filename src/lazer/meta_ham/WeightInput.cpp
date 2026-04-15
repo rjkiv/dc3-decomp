@@ -5,6 +5,14 @@
 #include "meta_ham/ProfileMgr.h"
 #include <cmath>
 
+// static const float sFloats[6] = { 45.0f, 440.0f, 5.0f, 20.0f, 200.0f, 2.5f };
+static const float sFloats0 = 45.0f;
+static const float sFloats1 = 440.0f;
+static const float sFloats2 = 5.0f;
+static const float sFloats3 = 20.0f;
+static const float sFloats4 = 200.0f;
+static const float sFloats5 = 2.5f;
+
 #pragma region WeightInputProvider
 
 WeightInputProvider::WeightInputProvider() {
@@ -61,9 +69,9 @@ int WeightInputProvider::GetIndexForWeight(float f1) const {
 float WeightInputProvider::GetWeight(int i_iIndex) const {
     MILO_ASSERT_RANGE(i_iIndex, 0, NumData(), 0x76);
     if (TheProfileMgr.GetUnk4c() == 0) {
-        return (float)i_iIndex * 2.5f + 20.0f;
+        return i_iIndex * sFloats2 + sFloats0;
     } else {
-        return (float)i_iIndex * 5.0f + 45.0f;
+        return i_iIndex * sFloats5 + sFloats3;
     }
 }
 
@@ -71,36 +79,38 @@ float WeightInputProvider::GetPoundsForKgs(float kgs) const {
     HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
     MILO_ASSERT(pProfile, 0xa7);
 
-    float result = 45.0f;
+    float result;
     float pounds = pProfile->GetPoundsFromKgs(kgs);
-    if (pounds > 45.0f) {
-        for (int i = 0; i < 80; i++) {
-            result = i * 5.0f + 45.0f;
-            if (fabs(pounds - result) <= 2.5f) {
-                return result;
-            }
-        }
-        result = 440.0;
+    if (pounds < sFloats0) {
+        return sFloats0;
     }
-    return result;
+    for (int i = 0; i < 80; i++) {
+        result = i * sFloats2 + sFloats0;
+        if (fabs(pounds - result) <= sFloats5) {
+            return result;
+        }
+    }
+    return sFloats1;
 }
 
 float WeightInputProvider::GetKgForPounds(float lbs) const {
     HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
     MILO_ASSERT(pProfile, 0x89);
-    float kgs = pProfile->GetKgFromPounds(lbs);
-    if (kgs < 20.0f) {
-        return 20.0f;
-    }
+
     float result;
+    float kgs = pProfile->GetKgFromPounds(lbs);
+    if (kgs < sFloats3) {
+        return sFloats3;
+    }
+
     for (int i = 0; i < 73; i++) {
-        result = 20.0f + (i * 2.5f);
+        result = sFloats3 + (i * sFloats5);
         if (fabs(kgs - result) <= 1.25f) {
             return result;
         }
     }
 
-    return 200.0f;
+    return sFloats4;
 }
 
 #pragma endregion

@@ -47,6 +47,20 @@ int ChallengeHeaderNode::GetChallengeExp() {
     return xp;
 }
 
+int ChallengeHeaderNode::GetPotentialChallengeExp(NavListSortNode *n) {
+    auto it = mChildren.begin();
+    auto end = mChildren.end();
+    for (; it != end && *it != n; ++it) {
+    }
+    int xp = 0;
+    for (; it != end; ++it) {
+        NavListSortNode *node = *it;
+        MILO_ASSERT(node, 0xe7);
+        xp += static_cast<ChallengeSortNode *>(node)->GetChallengeExp();
+    }
+    return xp;
+}
+
 NavListSortNode *ChallengeHeaderNode::GetFirstActive() {
     FOREACH (it, mChildren) {
         auto node = (*it)->GetFirstActive();
@@ -75,12 +89,15 @@ void ChallengeHeaderNode::Text(UIListLabel *uiListLabel, UILabel *uiLabel) const
     if (uiListLabel->Matches("sort_header")) {
         app_label->SetFromGeneralSelectNode(this);
     } else if (uiListLabel->Matches("challenge_count")) {
-        uiLabel->SetTextToken(gNullStr);
+        SetItemCountString(uiLabel);
     } else if (uiListLabel->Matches("header_collapse")) {
-        bool highlight = TheChallengeSortMgr->GetHighlightItem() == this;
-        SetCollapseStateIcon(highlight);
+        if (TheChallengeSortMgr->GetHighlightItem() == this) {
+            SetCollapseStateIcon(true);
+        } else {
+            SetCollapseStateIcon(false);
+        }
     } else {
-        app_label->SetTextToken(gNullStr);
+        uiLabel->SetTextToken(gNullStr);
     }
 }
 
@@ -183,8 +200,7 @@ int ChallengeHeaderNode::GetTotalEarnedExp(int score) {
     FOREACH (it, mChildren) {
         ChallengeSortNode *node = static_cast<ChallengeSortNode *>(*it);
         MILO_ASSERT(node, 0xf5);
-        int recordScore = node->GetChallengeRecord()->GetChallengeRow().mScore;
-        if (score >= recordScore) {
+        if (score >= node->GetChallengeRecord()->GetChallengeRow().mScore) {
             xp += TheChallenges->CalculateChallengeXp(
                 node->GetChallengeRecord()->GetChallengeRow().mScore,
                 node->GetChallengeRecord()->GetChallengeRow().mDiff
@@ -506,6 +522,10 @@ void ChallengeSortNode::Custom(UIListCustom *list, Hmx::Object *obj) const {
             }
         }
     }
+}
+
+char const *ChallengeSortNode::GetAlbumArtPath() {
+    return TheHamSongMgr.GetAlbumArtPath(GetToken());
 }
 
 BEGIN_HANDLERS(ChallengeSortNode)

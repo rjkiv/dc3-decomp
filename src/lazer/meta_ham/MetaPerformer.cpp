@@ -1123,7 +1123,7 @@ void MetaPerformer::SaveDanceBattleScores(Symbol s1) {
                 int scoreValue = pPlayerProvider->Property(score)->Int();
                 if (scoreValue > 0) {
                     profile->UpdateBattleScore(
-                        songID, pPlayerData, scoreValue, 0 == winner - i
+                        songID, pPlayerData, scoreValue, i == winner
                     );
                 }
             }

@@ -36,11 +36,12 @@ public:
         : NavListItemNode(cmp), mChallengeRecord(record) {}
     virtual DataNode Handle(DataArray *, bool);
     virtual Symbol GetToken() const;
-    virtual void Text(UIListLabel *, UILabel *) const;
-    virtual void Custom(UIListCustom *, Hmx::Object *) const;
     virtual Symbol OnSelect();
     virtual Symbol Select();
     virtual void OnContentMounted(const char *, const char *);
+    virtual void Text(UIListLabel *, UILabel *) const;
+    virtual void Custom(UIListCustom *, Hmx::Object *) const;
+    virtual char const *GetAlbumArtPath();
 
     int GetChallengeExp();
     const char *GetChallengerGamertag();

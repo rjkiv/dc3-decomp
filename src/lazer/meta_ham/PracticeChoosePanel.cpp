@@ -29,6 +29,7 @@
 #include "utl/Locale.h"
 #include "utl/Std.h"
 #include "utl/Symbol.h"
+#include <cmath>
 
 static int sIndex;
 
@@ -84,6 +85,30 @@ String StepMoves::GetDisplayName(bool b1) const {
         }
     }
     return out;
+}
+
+bool StepMoves::operator<(const StepMoves &moves) const {
+    if (MoveRecapCheck()) {
+        return true;
+    }
+    if (moves.MoveRecapCheck()) {
+        return false;
+    }
+    if (sIndex == 1) {
+        if (IsRecap()) {
+            if (!moves.IsRecap()) {
+                return false;
+            }
+        } else {
+            if (moves.IsRecap()) {
+                return true;
+            }
+            if (GetOverallRating() > moves.GetOverallRating()) {
+                return true;
+            }
+        }
+    }
+    return unk2c < moves.unk2c;
 }
 
 BEGIN_CUSTOM_PROPSYNC(StepMoves)
