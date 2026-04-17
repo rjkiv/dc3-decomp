@@ -19,7 +19,7 @@ AccomplishmentOneShot::AccomplishmentOneShot(DataArray *d, int i)
 AccomplishmentOneShot::~AccomplishmentOneShot() {}
 
 bool AccomplishmentOneShot::AreOneShotConditionsMet(
-    HamPlayerData *hpd, HamProfile *profile, Symbol shortname, Difficulty d
+    HamPlayerData *hpd, HamProfile *profile, Symbol s, Difficulty d
 ) {
     static Symbol stars("stars");
     static Symbol flawless_a("flawless_a");
@@ -31,54 +31,53 @@ bool AccomplishmentOneShot::AreOneShotConditionsMet(
     static Symbol hardest_stars("hardest_stars");
     const AccomplishmentProgress &progress = profile->GetAccomplishmentProgress();
     FOREACH (it, m_lConditions) {
-        Symbol condition = it->mCondition;
-        Difficulty diffForCondition = it->mDifficulty;
-        int targetValueForCondition = it->mValue;
-        bool eligible;
-        if (diffForCondition == kDifficultyBeginner) {
-            eligible = true;
+        const AccomplishmentCondition &cur = *it;
+        Symbol condition = cur.mCondition;
+        Difficulty d2 = cur.mDifficulty;
+        int val = cur.mValue;
+        unsigned char b6;
+        if (d2 == kDifficultyBeginner) {
+            b6 = 1;
         } else if (d == kDifficultyBeginner) {
-            eligible = false;
-        } else if (diffForCondition <= d) {
-            eligible = true;
+            b6 = 0;
         } else {
-            eligible = false;
+            b6 = d2 <= d;
         }
-        if (eligible) {
+        if (b6 != 0) {
             if (condition == stars) {
                 static Symbol stars_earned("stars_earned");
                 const DataNode *pStarsNode =
                     TheHamProvider->Property(stars_earned, false);
                 MILO_ASSERT(pStarsNode, 0x112);
-                if (pStarsNode->Int() >= targetValueForCondition) {
+                if (pStarsNode->Int() >= val)
                     return true;
-                }
-            } else if (condition == flawless_a || condition == flawless_b) {
-                if (progress.GetFlawlessMoveCount() >= targetValueForCondition) {
+            } else if (condition == flawless_a) {
+                if (progress.GetFlawlessMoveCount() >= val)
                     return true;
-                }
-            } else if (condition == nices_a || condition == nices_b) {
-                if (progress.GetNiceMoveCount() >= targetValueForCondition) {
+            } else if (condition == flawless_b) {
+                if (progress.GetFlawlessMoveCount() >= val)
                     return true;
-                }
+            } else if (condition == nices_a) {
+                if (progress.GetNiceMoveCount() >= val)
+                    return true;
+            } else if (condition == nices_b) {
+                if (progress.GetNiceMoveCount() >= val)
+                    return true;
             } else if (condition == days) {
-                if (progress.NumDays() >= targetValueForCondition) {
+                if (progress.NumDays() >= val)
                     return true;
-                }
             } else if (condition == weekends) {
-                if (progress.NumWeekends() >= targetValueForCondition) {
+                if (progress.NumWeekends() >= val)
                     return true;
-                }
             } else if (condition == hardest_stars) {
                 static Symbol omg("omg");
-                if (shortname == omg) {
+                if (s == omg) {
                     static Symbol stars_earned("stars_earned");
                     const DataNode *pStarsNode =
                         TheHamProvider->Property(stars_earned, false);
                     MILO_ASSERT(pStarsNode, 0x14C);
-                    if (pStarsNode->Int() >= targetValueForCondition) {
+                    if (pStarsNode->Int() >= val)
                         return true;
-                    }
                 }
             } else {
                 MILO_NOTIFY("Condition is not currently supported: %s ", condition);

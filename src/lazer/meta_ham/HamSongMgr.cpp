@@ -621,13 +621,16 @@ void HamSongMgr::GetRandomlySelectableRankedSongs(std::vector<int> &songIDs) con
     }
 }
 
+/*something with the loop isnt right here, the register at the bottom is the wrong
+ * color!*/
+
 void HamSongMgr::GetCoreStarsForDifficulty(
     HamProfile const *profile, Difficulty diff, int &i1, int &i2
 ) const {
     i1 = 0;
     i2 = 0;
     if (profile) {
-        const std::set<int> &songSet = GetAvailableSongSet();
+        const auto &songSet = GetAvailableSongSet();
         SongStatusMgr *mgr = profile->GetSongStatusMgr();
         FOREACH (it, songSet) {
             int songID = *it;
@@ -636,7 +639,8 @@ void HamSongMgr::GetCoreStarsForDifficulty(
             static Symbol ham3("ham3");
             if (!data->IsFake() && data->GameOrigin() == ham3
                 && TheProfileMgr.IsContentUnlocked(data->ShortName())) {
-                i1 += Clamp(0, 5, mgr->GetStarsForDifficulty(songID, diff, b));
+                int stars = mgr->GetStarsForDifficulty(songID, diff, b);
+                i1 += Clamp(0, 5, stars);
                 i2 += 5;
             }
         }

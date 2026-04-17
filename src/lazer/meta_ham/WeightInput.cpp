@@ -159,9 +159,11 @@ Symbol WeightInputPanel::GetPreferredUnits() {
 
 void WeightInputPanel::SetPreferredUnits(Symbol units) {
     static Symbol pounds("pounds");
-    TheProfileMgr.SetGlobalOptionsDirty(true);
-    int i = 0;
-    if (units != pounds)
-        i = 1;
-    TheProfileMgr.SetUnk4c(i);
+    if (units == pounds) {
+        TheProfileMgr.SetUnk4c(0);
+        TheProfileMgr.SetGlobalOptionsDirty(true);
+    } else {
+        TheProfileMgr.SetUnk4c(1);
+        TheProfileMgr.SetGlobalOptionsDirty(true);
+    }
 }

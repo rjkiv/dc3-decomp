@@ -49,7 +49,7 @@ public:
     NEW_OBJ(MainMenuPanel)
 
     MainMenuPanel();
-    MainMenuProvider GetMainMenuProvider() const;
+    MainMenuProvider *GetMainMenuProvider();
 
 protected:
     HamLabel *mMsgLabel; // 0x40

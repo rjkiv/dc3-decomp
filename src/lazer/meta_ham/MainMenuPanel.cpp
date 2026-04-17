@@ -18,6 +18,7 @@
 #include "rndobj/Bitmap.h"
 #include "rndobj/Tex.h"
 #include "rndobj/Text.h"
+#include "stl/_iterator_base.h"
 #include "synth/Sound.h"
 #include "ui/UIListProvider.h"
 #include "ui/UIPanel.h"
@@ -266,6 +267,32 @@ void MainMenuPanel::MotdSetup(HamLabel *label) {
     MotdInitializeTexts();
 }
 
+void MainMenuPanel::MotdHandleTextScrolledIn(int i) {
+    static Symbol dlc("dlc");
+    static Symbol utility("utility");
+    if (!unkb0) {
+        return;
+    }
+
+    auto begin = mMotdData.begin();
+    std::advance(begin, i);
+
+    if (begin->unk0 == dlc) {
+        Sound *s = DataDir()->Find<Sound>("motd_store_item_new.snd", false);
+        if (s) {
+            s->Play(0, 0, 0, nullptr, 0);
+        }
+        UpdateIconState(begin->unk0);
+    } else if (begin->unk0 == utility) {
+        Sound *s =
+            DataDir()->Find<Sound>(TheRockCentral.GetUtilitySound().c_str(), false);
+        if (s) {
+            s->Play(0, 0, 0, nullptr, 0);
+        }
+        UpdateIconState(begin->unk0);
+    }
+}
+
 void MainMenuPanel::MotdHandleTextScrolledOut(int i) {
     static Symbol dlc("dlc");
     static Symbol utility("utility");
@@ -462,12 +489,13 @@ void MainMenuPanel::LoadArt(String s) {
     }
 }
 
+MainMenuProvider *MainMenuPanel::GetMainMenuProvider() { return &unk44; }
+
 BEGIN_HANDLERS(MainMenuPanel)
     HANDLE_ACTION(
         update_main_menu_provider, unk44.UpdateList(_msg->Obj<UIListProvider>(2))
     )
-    HANDLE_EXPR(get_main_menu_provider, &unk44) // not a perfect match for
-                                                // some reason
+    HANDLE_EXPR(get_main_menu_provider, GetMainMenuProvider())
     HANDLE_EXPR(dlc_image, unk8c)
     HANDLE_EXPR(utility_image, unk90)
     HANDLE_ACTION(update_icon_state, UpdateIconState(_msg->Sym(2)))
