@@ -6,6 +6,7 @@
 #include "ProfileMgr.h"
 #include "hamobj/HamLabel.h"
 #include "macros.h"
+#include "math/Rand.h"
 #include "meta_ham/MainMenuProvider.h"
 #include "meta_ham/MetaPanel.h"
 #include "meta_ham/MetagameStats.h"

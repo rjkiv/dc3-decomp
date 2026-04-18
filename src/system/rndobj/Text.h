@@ -10,6 +10,7 @@
 #include "rndobj/Mesh.h"
 #include "rndobj/Trans.h"
 #include "utl/MemMgr.h"
+#include "utl/Str.h"
 #include "utl/Symbol.h"
 
 class TextHolder {
@@ -271,6 +272,7 @@ public:
     void SetFixedLength(int);
     void ReFitTextScroll(String);
     void GetWidthHeightBox(Box &) const;
+    float ComputeCharWidthsForText(String);
 
     static void Init();
     static void DrawBlacklight();

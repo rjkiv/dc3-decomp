@@ -96,7 +96,7 @@ void MQSongSort::BuildTree() {
     std::vector<NavListItemNode *> nodes;
 
     auto &map = TheMQSongSortMgr->GetUnk78();
-    for (auto it = map.begin(); it != map.end(); ++it) {
+    FOREACH (it, map) {
         FOREACH (it2, it->second) {
             NavListItemNode *node = NewItemNode(it2);
             static_cast<MQSongSortNode *>(node)->SetUnk4C(it->first);

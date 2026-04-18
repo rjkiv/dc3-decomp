@@ -243,7 +243,7 @@ void Leaderboards::AddPendingProfile(HamProfile *pProfile) {
 }
 
 void Leaderboards::StartUploadingNextProfile() {
-    FOREACH (it, mPendingProfiles) {
+    while (!mPendingProfiles.empty()) {
         unk54 = mPendingProfiles.front();
         mPendingProfiles.pop_front();
         SongStatusMgr *mgr = unk54->GetSongStatusMgr();
@@ -354,7 +354,7 @@ void Leaderboards::ReadScoresComplete(bool b1, bool b2) {
     }
 }
 
-void Leaderboards::GetScores(int i) {
+void Leaderboards::GetScores(int songID) {
     if (!unk80 && !unk98) {
         unk58.clear();
         HamProfile *activeProfile = TheProfileMgr.GetActiveProfile(true);
@@ -362,15 +362,29 @@ void Leaderboards::GetScores(int i) {
             static Message leaderboardsFailedMsg("leaderboards_failed");
             TheUI->Handle(leaderboardsFailedMsg, false);
         } else {
-            unk90 = i;
+            int temp = unk84;
+            unk90 = songID;
             unk80 = true;
-            if (unk84 == 1 || unk84 == 5) {
-                i = 1000; // idk
+            if (unk84 == 4 || unk84 == 5) {
+                if (unk84 == 4) {
+                    temp = 0;
+                }
+                if (unk84 == 5) {
+                    temp = 1;
+                }
+                songID = 0x989a6e;
             }
-            auto it = unk64.find(unk88 + i); // idk about the param here
-            if (it->second.empty()) {
+            int padnum = activeProfile->GetPadNum();
+            // genuinely no idea what this equates to
+            /*
+                index = ((((ZEXT48(padnum) & 0x3fffffff) * 4 + temp & 0x3fffffff) * 4 +
+               *(this + 0x88) & 0xffffffff) << 0x1a) + (songID & 0x3ffffffU)
+            */
+            int index = (((((padnum * 4) + temp) * 4) + unk88) << 26);
+            auto it = unk64.find(index + songID);
+            if (it == unk64.end()) {
                 unk98 = new GetLeaderboardByPlayerJob(
-                    this, activeProfile, i, unk84, unk88, 10, 0
+                    this, activeProfile, songID, temp, unk88, 10, index
                 );
                 TheRockCentral.ManageJob(unk98);
             } else {

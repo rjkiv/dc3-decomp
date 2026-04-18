@@ -1,6 +1,7 @@
 #include "SongSortNode.h"
 
 #include "HamProfile.h"
+#include "NavListSortMgr.h"
 #include "SongSortMgr.h"
 #include "meta/SongMgr.h"
 #include "meta_ham/AccomplishmentManager.h"
@@ -119,8 +120,7 @@ void SongHeaderNode::UpdateItemCount(NavListItemNode *itemnode) {
 
 void SongHeaderNode::Renumber(std::vector<NavListSortNode *> &vec) {
     SetStartIndex(vec.size());
-    if (TheSongSortMgr->HeadersSelectable()) { // this is adding in a bunch of other insts
-                                               // for some reason
+    if (TheSongSortMgr->GetHeadersSelectable()) {
         vec.push_back(this);
         TheSongSortMgr->AddHeaderIndex(StartIndex());
     }
@@ -170,7 +170,7 @@ Symbol SongSortNode::Select() {
 }
 
 Symbol SongSortNode::OnSelect() {
-    if (UseQuickplayPerformer() && !TheSongSortMgr) {
+    if (UseQuickplayPerformer() && !TheSongSortMgr->GetSetlistMode()) {
         MetaPerformer::Current()->ResetSongs();
     }
     Symbol sel = Select();
@@ -178,8 +178,11 @@ Symbol SongSortNode::OnSelect() {
         auto obj = ObjectDir::Main()->Find<UIScreen>(sel.Str(), true);
         TheUI->PushScreen(obj);
         return gNullStr;
-    } else {
+    } else if (!TheSongSortMgr->GetSetlistMode()) {
         return TheSongSortMgr->MoveOn();
+    } else {
+        TheSongSortMgr->OnSetlistChanged();
+        return gNullStr;
     }
 }
 
@@ -189,9 +192,9 @@ void SongSortNode::OnContentMounted(const char *contentName, const char *) {
         int songID = TheHamSongMgr.GetSongIDFromShortName(GetToken());
         if (TheHamSongMgr.IsContentUsedForSong(contentName, songID)) {
             static Symbol song_data_mounted("song_data_mounted");
-            static Message song_data_mounted_message(song_data_mounted, gNullStr);
-            song_data_mounted_message[0] = GetToken();
-            TheUI->Export(song_data_mounted_message, false);
+            static Message msg(song_data_mounted, gNullStr);
+            msg[0] = GetToken();
+            TheUI->Export(msg, false);
         }
     }
 }
@@ -288,8 +291,10 @@ void SongSortNode::Text(UIListLabel *ull, UILabel *ul) const {
         AppLabel *app_label = dynamic_cast<AppLabel *>(ul);
         MILO_ASSERT(app_label, 513);
         static Symbol by_artist("by_artist");
-        TheSongSortMgr->GetCurrentSortName();
-        app_label->SetBlacklightSongName(shortname, -1, false);
+        if (TheSongSortMgr->GetCurrentSortName() != by_artist) {
+            app_label->SetBlacklightSongName(shortname, -1, false);
+        } else
+            app_label->SetBlacklightSongName(shortname, -1, false);
     } else if (ull->Matches("lock")) {
         bool locked = !TheProfileMgr.IsContentUnlocked(shortname);
         AppLabel *app_label = dynamic_cast<AppLabel *>(ul);
@@ -333,23 +338,33 @@ void SongSortNode::Text(UIListLabel *ull, UILabel *ul) const {
         }
     } else if (ull->Matches("asmadefamous")) {
         static Symbol by_artist("by_artist");
-        // TheSongSortMgr->
-        if (!IsCoverSong(shortname)) {
+
+        if (TheSongSortMgr->GetCurrentSortName() != by_artist
+            || !IsCoverSong(shortname)) {
             ul->SetTextToken(gNullStr);
         } else {
             ul->SetTextToken(ull->GetDefaultText());
         }
     } else if (ull->Matches("artist")) {
-        if (!TheAccomplishmentMgr->IsUnlockableAsset(unk_0x48->ShortName())) {
-            AppLabel *app_label = dynamic_cast<AppLabel *>(ul);
-            MILO_ASSERT(app_label, 646);
-            static Symbol by_artist("by_artist");
-            TheSongSortMgr->GetCurrentSortName();
-            app_label->SetArtistName(shortname, true);
+        Symbol sName = unk_0x48->ShortName();
+        if (TheAccomplishmentMgr->IsUnlockableAsset(sName)) {
+            ul->SetTextToken(gNullStr);
+            return;
         }
+        AppLabel *app_label = dynamic_cast<AppLabel *>(ul);
+        MILO_ASSERT(app_label, 646);
+        static Symbol by_artist("by_artist");
+        if (TheSongSortMgr->GetCurrentSortName() != by_artist) {
+            app_label->SetArtistName(shortname, true);
+            return;
+        }
+        app_label->SetBlacklightSongName(shortname, -1, false);
+
     } else if (ull->Matches("in_playlist")) {
         if (unk_0x4C) {
             ul->SetIcon('i');
+        } else {
+            ul->SetTextToken(gNullStr);
         }
     } else if (ull->Matches("header_collapse")) {
         ul->SetTextToken(gNullStr);

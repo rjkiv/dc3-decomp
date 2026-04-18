@@ -36,6 +36,8 @@
 #include "utl/Symbol.h"
 #include <list>
 
+static const char *sIndexString = "s_store_index_%s_%s.dtz";
+
 HamStorePanel::HamStorePanel()
     : unka0(), mMetadata(), mOfferProvider(), unkb8(), unkc0(false), unk128(),
       unk154(false), unk155(true), unk156(false), unk157(false), unk158(false),
@@ -245,10 +247,9 @@ void HamStorePanel::AddOfferToCart(StoreOffer *offer) {
 }
 
 char const *HamStorePanel::GetIndexFile() const {
-    const char *str = "store_index_%s_%s.dtz";
     Symbol platSym = PlatformSymbol(TheLoadMgr.GetPlatform());
     Symbol sysLang = SystemLanguage();
-    return MakeString(str, sysLang, platSym);
+    return MakeString(sIndexString, platSym, sysLang);
 }
 
 void HamStorePanel::ExitStore(StoreError err) const {
@@ -465,12 +466,13 @@ void HamStorePanel::FinishSpecialOfferEnum(std::vector<bool> const &vec, bool b)
         MILO_LOG("Store: failed to enum our special offers.\n");
     } else {
         for (int i = 0; i < unk16c.size(); i++) {
-            if (!unk16c[i].unk14) {
-                unk16c[i].unk14 = vec[i];
+            HamSpecialOffer &offer = unk16c[i];
+            if (!offer.unk14) {
+                offer.unk14 = vec[i];
             }
 
-            if (unk16c[i].unk14) {
-                MILO_LOG("Store: special offer %s is owned\n", unk16c[i].unk4);
+            if (offer.unk14) {
+                MILO_LOG("Store: special offer %s is owned\n", offer.unk4);
             }
         }
     }
@@ -562,6 +564,30 @@ DataNode HamStorePanel::OnMsg(RCJobCompleteMsg const &msg) {
         }
     }
     return 1;
+}
+
+StoreError HamStorePanel::UpdateOffers(std::list<EnumProduct> const &list, bool b) {
+    FOREACH (it, unk16c) {
+        if (!it->unk14) {
+            bool check = false;
+            FOREACH (listIt, list) {
+                if (listIt->unk4 == it->unk8) {
+                    check = true;
+                    it->unk14 = (listIt->unk10 != 0);
+                    break;
+                }
+            }
+
+            if (check) {
+                MILO_LOG(
+                    "Store: special offer %s is %s\n",
+                    it->unk4.Str(),
+                    (it->unk14) ? "owned" : "not owned"
+                );
+            }
+        }
+    }
+    return StorePanel::UpdateOffers(list, b);
 }
 
 BEGIN_HANDLERS(HamStorePanel)

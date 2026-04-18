@@ -324,3 +324,5 @@ void SongSortMgr::SetupQuasiRandomSongs() {
     delete tempArr;
     SetQuasiRandomSong();
 }
+
+bool SongSortMgr::GetSetlistMode() { return 0; }
