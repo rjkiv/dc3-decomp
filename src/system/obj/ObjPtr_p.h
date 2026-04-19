@@ -47,7 +47,7 @@ template <class T1, class T2>
 Hmx::Object *ObjRefConcrete<T1, T2>::SetObj(Hmx::Object *root_obj) {
     T1 *obj = root_obj ? dynamic_cast<T1 *>(root_obj) : nullptr;
     SetObjConcrete(obj);
-    return mObject ? mObject : nullptr;
+    return mObject;
 }
 
 template <class T1>
@@ -299,7 +299,7 @@ template <class T1, class T2>
 void ObjPtrList<T1, T2>::ReplaceNode(struct ObjPtrList::Node *node, Hmx::Object *obj) {
     if (mListMode == kObjListOwnerControl) {
         mOwner->Replace(node, obj);
-    } else if (!(int)node->SetObj(obj) && mListMode == kObjListNoNull) {
+    } else if (!node->SetObj(obj) && mListMode == kObjListNoNull) {
         erase(node);
     }
 }
