@@ -291,11 +291,9 @@ Symbol Leaderboards::ShowGamercard(int i, HamProfile *profile) {
                     return display_gamercard_privilege_error;
                 } else if (result == (ShowGamercardResult)-3) {
                     return display_gamercard_pad_error;
-                } else {
-                    if (0 > result) {
-                        static Symbol on_select_gamertag_error("on_select_gamertag_error");
-                        return on_select_gamertag_error;
-                    }
+                } else if (0 > result) {
+                    static Symbol on_select_gamertag_error("on_select_gamertag_error");
+                    return on_select_gamertag_error;
                 }
             }
             return gNullStr;
@@ -366,22 +364,17 @@ void Leaderboards::GetScores(int songID) {
             unk90 = songID;
             unk80 = true;
             if (unk84 == 4 || unk84 == 5) {
-                if (unk84 == 4) {
-                    temp = 0;
-                }
+                temp = temp == 4 ? 0 : temp;
                 if (unk84 == 5) {
                     temp = 1;
                 }
                 songID = 0x989a6e;
             }
+
             int padnum = activeProfile->GetPadNum();
-            // genuinely no idea what this equates to
-            /*
-                index = ((((ZEXT48(padnum) & 0x3fffffff) * 4 + temp & 0x3fffffff) * 4 +
-               *(this + 0x88) & 0xffffffff) << 0x1a) + (songID & 0x3ffffffU)
-            */
-            int index = (((((padnum * 4) + temp) * 4) + unk88) << 26);
-            auto it = unk64.find(index + songID);
+            int index =
+                (songID & ~0xFC000000) + (((((padnum << 2) + temp) << 2) + unk88) << 26);
+            auto it = unk64.find(index);
             if (it == unk64.end()) {
                 unk98 = new GetLeaderboardByPlayerJob(
                     this, activeProfile, songID, temp, unk88, 10, index

@@ -621,9 +621,6 @@ void HamSongMgr::GetRandomlySelectableRankedSongs(std::vector<int> &songIDs) con
     }
 }
 
-/*something with the loop isnt right here, the register at the bottom is the wrong
- * color!*/
-
 void HamSongMgr::GetCoreStarsForDifficulty(
     HamProfile const *profile, Difficulty diff, int &i1, int &i2
 ) const {
@@ -632,16 +629,19 @@ void HamSongMgr::GetCoreStarsForDifficulty(
     if (profile) {
         const auto &songSet = GetAvailableSongSet();
         SongStatusMgr *mgr = profile->GetSongStatusMgr();
-        FOREACH (it, songSet) {
-            int songID = *it;
-            const HamSongMetadata *data = TheHamSongMgr.Data(songID);
-            bool b = false;
-            static Symbol ham3("ham3");
-            if (!data->IsFake() && data->GameOrigin() == ham3
-                && TheProfileMgr.IsContentUnlocked(data->ShortName())) {
-                int stars = mgr->GetStarsForDifficulty(songID, diff, b);
-                i1 += Clamp(0, 5, stars);
-                i2 += 5;
+        auto begin = songSet.begin();
+        auto it = begin;
+        if (begin != songSet.end()) {
+            for (it; it != (songSet).end(); (++it)) {
+                int songID = *it;
+                const HamSongMetadata *data = TheHamSongMgr.Data(songID);
+                bool b = false;
+                static Symbol ham3("ham3");
+                if (!data->IsFake() && data->GameOrigin() == ham3
+                    && TheProfileMgr.IsContentUnlocked(data->ShortName())) {
+                    i1 += Clamp(0, 5, mgr->GetStarsForDifficulty(songID, diff, b));
+                    i2 += 5;
+                }
             }
         }
     }
@@ -655,16 +655,20 @@ void HamSongMgr::GetCharacterStars(
     if (profile) {
         const std::set<int> &songSet = GetAvailableSongSet();
         SongStatusMgr *mgr = profile->GetSongStatusMgr();
-        FOREACH (it, songSet) {
-            int songID = *it;
-            const HamSongMetadata *data = TheHamSongMgr.Data(songID);
-            bool b = false;
-            static Symbol ham3("ham3");
-            if (!data->IsFake() && data->GameOrigin() == ham3
-                && data->Character() == character
-                && TheProfileMgr.IsContentUnlocked(data->ShortName())) {
-                i1 += Clamp(0, 5, mgr->GetStars(songID, b));
-                i2 += 5;
+        auto begin = songSet.begin();
+        auto it = begin;
+        if (begin != songSet.end()) {
+            for (it; it != (songSet).end(); (++it)) {
+                int songID = *it;
+                const HamSongMetadata *data = TheHamSongMgr.Data(songID);
+                bool b = false;
+                static Symbol ham3("ham3");
+                if (!data->IsFake() && data->GameOrigin() == ham3
+                    && data->Character() == character
+                    && TheProfileMgr.IsContentUnlocked(data->ShortName())) {
+                    i1 += Clamp(0, 5, mgr->GetStars(songID, b));
+                    i2 += 5;
+                }
             }
         }
     }
@@ -678,16 +682,21 @@ void HamSongMgr::GetCrewStars(
     if (profile) {
         const std::set<int> &songSet = GetAvailableSongSet();
         SongStatusMgr *mgr = profile->GetSongStatusMgr();
-        FOREACH (it, songSet) {
-            int songID = *it;
-            const HamSongMetadata *data = TheHamSongMgr.Data(songID);
-            bool b = false;
-            Symbol crewForChar = GetCrewForCharacter(GetOutfitCharacter(data->Outfit()));
-            static Symbol ham3("ham3");
-            if (!data->IsFake() && data->GameOrigin() == ham3 && crewForChar == crew
-                && TheProfileMgr.IsContentUnlocked(data->ShortName())) {
-                i1 += Clamp(0, 5, mgr->GetBestStars(songID, b, kDifficultyBeginner));
-                i2 += 5;
+        auto begin = songSet.begin();
+        auto it = begin;
+        if (begin != songSet.end()) {
+            for (it; it != (songSet).end(); (++it)) {
+                int songID = *it;
+                const HamSongMetadata *data = TheHamSongMgr.Data(songID);
+                bool b = false;
+                Symbol crewForChar =
+                    GetCrewForCharacter(GetOutfitCharacter(data->Outfit()));
+                static Symbol ham3("ham3");
+                if (!data->IsFake() && data->GameOrigin() == ham3 && crewForChar == crew
+                    && TheProfileMgr.IsContentUnlocked(data->ShortName())) {
+                    i1 += Clamp(0, 5, mgr->GetBestStars(songID, b, kDifficultyBeginner));
+                    i2 += 5;
+                }
             }
         }
     }
@@ -701,16 +710,21 @@ void HamSongMgr::GetCrewStarsForDifficulty(
     if (profile) {
         const std::set<int> &songSet = GetAvailableSongSet();
         SongStatusMgr *mgr = profile->GetSongStatusMgr();
-        FOREACH (it, songSet) {
-            int songID = *it;
-            const HamSongMetadata *data = TheHamSongMgr.Data(songID);
-            bool b = false;
-            Symbol crewForChar = GetCrewForCharacter(GetOutfitCharacter(data->Outfit()));
-            static Symbol ham3("ham3");
-            if (!data->IsFake() && data->GameOrigin() == ham3 && crewForChar == crew
-                && TheProfileMgr.IsContentUnlocked(data->ShortName())) {
-                i1 += Clamp(0, 5, mgr->GetStarsForDifficulty(songID, diff, b));
-                i2 += 5;
+        auto begin = songSet.begin();
+        auto it = begin;
+        if (begin != songSet.end()) {
+            for (it; it != (songSet).end(); (++it)) {
+                int songID = *it;
+                const HamSongMetadata *data = TheHamSongMgr.Data(songID);
+                bool b = false;
+                Symbol crewForChar =
+                    GetCrewForCharacter(GetOutfitCharacter(data->Outfit()));
+                static Symbol ham3("ham3");
+                if (!data->IsFake() && data->GameOrigin() == ham3 && crewForChar == crew
+                    && TheProfileMgr.IsContentUnlocked(data->ShortName())) {
+                    i1 += Clamp(0, 5, mgr->GetStarsForDifficulty(songID, diff, b));
+                    i2 += 5;
+                }
             }
         }
     }

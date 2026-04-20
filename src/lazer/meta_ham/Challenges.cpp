@@ -947,10 +947,12 @@ bool Challenges::HasNewChallenges() {
                     if (shortname.Null() || TheProfileMgr.IsContentUnlocked(shortname)) {
                         int songID = rows[i].mSongID;
                         auto find = scores.find(songID);
-                        if (find == scores.end()) {
-                            return true;
-                        }
-                        if (find->second < (int)rows[i].mTimeStamp) {
+
+                        if (find != scores.end()) {
+                            if (find->second < (int)rows[i].mTimeStamp) {
+                                return true;
+                            }
+                        } else {
                             return true;
                         }
                     }
@@ -959,12 +961,13 @@ bool Challenges::HasNewChallenges() {
                 for (int i = 0; i < mOfficialChallenges.size(); i++) {
                     int songID = mOfficialChallenges[i].mSongID;
                     auto find = scores.find(songID);
-                    if (find == scores.end()) {
+
+                    if (find != scores.end()) {
+                        if (find->second < (int)mOfficialChallenges[i].mTimeStamp) {
+                            return true;
+                        }
+                    } else
                         return true;
-                    }
-                    if (find->second < (int)mOfficialChallenges[i].mTimeStamp) {
-                        return true;
-                    }
                 }
             }
         }
