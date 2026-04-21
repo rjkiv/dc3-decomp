@@ -143,3 +143,18 @@ void DefaultPhysicsManager::RemoveAll() {
     mInactiveCollidables.clear();
     unk40.clear();
 }
+
+void DefaultPhysicsManager::AddCollidable(Hmx::Object *o, ObjectDir *dir, bool isActive) {
+    RndMesh *mesh = dynamic_cast<RndMesh *>(o);
+    if (mesh) {
+        if (unk54.find(mesh) == unk54.end()) {
+            unk54[mesh] = dir;
+            if (isActive) {
+                mActiveCollidables.push_front(mesh);
+            } else {
+                mInactiveCollidables.push_front(mesh);
+            }
+            unk40.insert(unk40.begin(), o);
+        }
+    }
+}

@@ -25,14 +25,16 @@ protected:
     virtual void RemoveCollidable(Hmx::Object *);
 
     ObjPtrList<Hmx::Object> unk40; // 0x40
-    std::map<Hmx::Object *, ObjectDir *> unk54; // 0x54
+    std::map<Hmx::Object *, ObjectDir *> unk54; // 0x54 - mCollidableMap?
     std::list<RndMesh *> mActiveCollidables; // 0x6c
     std::list<RndMesh *> mInactiveCollidables; // 0x74
 };
 
 class RayCastDefaultContainer : public RayCastContainer {
 public:
-    RayCastDefaultContainer(const Box &, std::list<RndMesh *>, std::map<Hmx::Object *, ObjectDir *> &);
+    RayCastDefaultContainer(
+        const Box &, std::list<RndMesh *>, std::map<Hmx::Object *, ObjectDir *> &
+    );
     virtual ~RayCastDefaultContainer() {}
     virtual Hmx::Object *FindNearest(const Segment &, float &, Vector3 &, Hmx::Object *&);
     virtual void SetFilter(int);
