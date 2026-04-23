@@ -29,12 +29,12 @@
 #include "utl/Symbol.h"
 #include <cstdio>
 
-static float sF1 = 0.03f;
-static float sF2 = 0.37f;
-static float sF3 = 0.2f;
-static float sF4 = 0.6f;
-static float sF5 = 0.1f;
-static float sF6 = 0.25f;
+static float sFloat0 = 0.03f;
+static float sFloat1 = 0.37f;
+static float sFloat2 = 0.2f;
+static float sFloat3 = 0.6f;
+static float sFloat4 = 0.1f;
+static float sFloat5 = 0.25f;
 
 SkeletonChooser::SkeletonChooser()
     : mDrawDebug(false), unk3c(0), unk44(1), unk48(true), unk80(0), unk84(0), unk88(0),
@@ -1068,4 +1068,107 @@ void SkeletonChooser::SetPlayerSkeletonNavData(int p1ID, int p2ID) {
 
     HamPlayerData *pPlayer = TheGameData->Player(unk3c);
     TheGestureMgr->SetActiveSkeletonTrackingID(pPlayer->GetSkeletonTrackingID());
+}
+
+void SkeletonChooser::DrawDebug() {
+    if (mDrawDebug) {
+        int skelIdx0 = -1;
+        int skelIdx1 = -1;
+        int trackingID0 = -1;
+        int trackingID1 = -1;
+
+        for (int i = 0; i < 6; i++) {
+            Skeleton &skel = TheGestureMgr->GetSkeleton(i);
+            if (skel.IsTracked()) {
+                if (skelIdx0 == -1) {
+                    trackingID0 = skel.TrackingID();
+                    skelIdx0 = i;
+                } else if (skelIdx1 == -1) {
+                    trackingID1 = skel.TrackingID();
+                    skelIdx1 = i;
+                } else {
+                    MILO_ASSERT(false, 0x5e3);
+                }
+            }
+        }
+
+        static Hmx::Color bgColor(0.2f, 0.2f, 0.2f, 0.7f);
+        static Hmx::Color textColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+        TheRnd.DrawRectScreen(
+            Hmx::Rect(sFloat5 + 0.05f, sFloat3, sFloat4 - 0.05f, sFloat2),
+            bgColor,
+            nullptr,
+            nullptr,
+            nullptr
+        );
+
+        for (int i = 0; i < 2; i++) {
+            int skelIdx = (i == 0) ? skelIdx0 : skelIdx1;
+            int trackingID = (i == 0) ? trackingID0 : trackingID1;
+            if (skelIdx >= 0) {
+                for (int j = 0; j < 7; j++) {
+                    char buf[50];
+                    sprintf_s<50>(buf, "");
+                    switch (j) {
+                    case 0: {
+                        int activeIdx = TheGestureMgr->GetActiveSkeletonIndex();
+                        const char *c = (activeIdx == skelIdx) ? "active" : "";
+                        sprintf_s<50>(buf, "Skeleton %d %s", skelIdx, c);
+                        break;
+                    }
+                    case 1: {
+                        Skeleton &skel = TheGestureMgr->GetSkeleton(skelIdx);
+                        sprintf_s<50>(buf, "Valid: %d", skel.IsValid());
+                        break;
+                    }
+                    case 2: {
+                        sprintf_s<50>(buf, "Arms crossed: %d", AreArmsCrossed(trackingID));
+                        break;
+                    }
+                    case 3: {
+                        sprintf_s<50>(buf, "Hand up: %d", IsHandUp(trackingID));
+                        break;
+                    }
+                    case 4: {
+                        if (skelIdx0 >= 0 && skelIdx1 >= 0) {
+                            sprintf_s<50>(
+                                buf,
+                                "Is behind: %d",
+                                IsBehindPlayer(
+                                    trackingID, (i != 0) ? trackingID0 : trackingID1
+                                )
+                            );
+                        }
+                        break;
+                    }
+                    case 5: {
+                        bool isCentered = IsCentered(trackingID);
+                        sprintf_s<50>(buf, "Centered: %d", isCentered);
+                        break;
+                    }
+                    case 6: {
+                        bool isAtEdge = IsAtEdge(trackingID);
+                        sprintf_s<50>(buf, "At edge: %d", isAtEdge);
+                        break;
+                    }
+                    }
+                    TheRnd.DrawStringScreen(
+                        buf,
+                        Vector2(i * sFloat1 + sFloat2, j * sFloat0 + sFloat4),
+                        textColor,
+                        true
+                    );
+                }
+            }
+        }
+
+        if (unk38 >= 0) {
+            char buf[50];
+            sprintf_s<50>(buf, "Switching to %d in %f seconds", unk38, unk44 - unk40);
+            TheRnd.DrawStringScreen(
+                buf, Vector2(sFloat2 + 0.1f, sFloat0 * 7.0f + sFloat4), textColor, true
+            );
+        }
+    }
 }

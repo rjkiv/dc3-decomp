@@ -66,7 +66,7 @@
             "lazer/meta_ham/ChallengeSortByScore.cpp": "Matching",
             "lazer/meta_ham/ChallengeSortMgr.cpp": "Matching",
             "lazer/meta_ham/ChallengeSortNode.cpp": "NonMatching",
-            "lazer/meta_ham/Challenges.cpp": "NonMatching",
+            "lazer/meta_ham/Challenges.cpp": "Matching",
             "lazer/meta_ham/CharacterProvider.cpp": "Matching",
             "lazer/meta_ham/ChooseModeProvider.cpp": "Matching",
             "lazer/meta_ham/ChooseProfilePanel.cpp": "Matching",

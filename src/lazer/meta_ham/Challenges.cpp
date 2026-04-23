@@ -45,7 +45,7 @@ Challenges::Challenges() {
     mGetPlayerChallengesJob = nullptr;
     mGetOfficialChallengesJob = nullptr;
     mGetChallengeBadgeCountsJob = nullptr;
-    unkd8 = -1;
+    mExpireTime = -1;
     mOfficialChallengesDirty = false;
     mPlayerChallengesDirty = false;
     SetName("challenges", ObjectDir::Main());
@@ -140,7 +140,9 @@ int Challenges::GetGlobalChallengeSongID() {
 
 int Challenges::GetDlcChallengeSongID() {
     for (int i = mOfficialChallenges.size() - 1; i >= 0; i--) {
-        if (mOfficialChallenges[i].IsDLCChallenge()) {
+        bool okay = mOfficialChallenges[i].mType >= ChallengeRow::kChallengeDlcGold
+            && mOfficialChallenges[i].mType <= ChallengeRow::kChallengeDlcBronze;
+        if (okay) {
             return mOfficialChallenges[i].mSongID;
         }
     }
@@ -149,7 +151,9 @@ int Challenges::GetDlcChallengeSongID() {
 
 String Challenges::GetGlobalChallengeSongName() {
     for (int i = 0; i < mOfficialChallenges.size(); i++) {
-        if (mOfficialChallenges[i].IsHMXChallenge()) {
+        bool okay = mOfficialChallenges[i].mType >= ChallengeRow::kChallengeHmxGold
+            && mOfficialChallenges[i].mType <= ChallengeRow::kChallengeHmxBronze;
+        if (okay) {
             return mOfficialChallenges[i].mSongTitle;
         }
     }
@@ -356,7 +360,7 @@ void Challenges::ReadPlayerChallengesComplete(bool b1) {
 void Challenges::ReadOfficialChallengesComplete(bool b1) {
     mOfficialChallengesDirty = false;
     mGetOfficialChallengesJob->GetRows(
-        mOfficialChallenges, unkd8, mOfficialChallengesDirty
+        mOfficialChallenges, mExpireTime, mOfficialChallengesDirty
     );
     mGetOfficialChallengesJob = nullptr;
     static Message allUpdatedMsg("all_challenges_updated", 0);
@@ -907,10 +911,10 @@ void Challenges::Poll() {
         }
     }
 jump:
-    if (unkd8 != -1.0) {
-        unkd8 -= TheTaskMgr.DeltaUISeconds();
-        if (unkd8 < 0) {
-            unkd8 = 0;
+    if (mExpireTime != -1.0) {
+        mExpireTime -= TheTaskMgr.DeltaUISeconds();
+        if (mExpireTime < 0) {
+            mExpireTime = 0;
             UIPanel *challengeFeedPanel =
                 ObjectDir::Main()->Find<UIPanel>("challenge_feed_panel");
             if (challengeFeedPanel->GetState() == 1) {
@@ -974,4 +978,28 @@ bool Challenges::HasNewChallenges() {
         return false;
     }
     return mOfficialChallenges.size() > 0;
+}
+
+bool Challenges::GetExpireTime(int &days, int &hours, int &minutes, int &seconds) {
+    static unsigned int sInt0 = 60;
+    static unsigned int sInt1 = 3600;
+    static unsigned int sInt2 = 86400;
+
+    if (mExpireTime == -1.0) {
+        return false;
+    }
+
+    unsigned int totalSeconds = mExpireTime;
+
+    days = totalSeconds / sInt2;
+    unsigned int remaining = totalSeconds - (days * sInt2);
+
+    hours = remaining / sInt1;
+    remaining = remaining - (hours * sInt1);
+
+    minutes = remaining / sInt0;
+
+    seconds = remaining - (minutes * sInt0);
+
+    return true;
 }
