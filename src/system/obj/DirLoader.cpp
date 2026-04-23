@@ -571,3 +571,19 @@ ObjectDir *DirLoader::LoadObjects(const FilePath &fp, Callback *cb, BinStream *b
     }
     return dirLoader.GetDir();
 }
+
+Symbol DirLoader::GetDirClass(const char *name) {
+    ChunkStream stream(name, ChunkStream::kRead, 0x10000, true, kPlatformNone, false);
+    if (stream.Fail()) {
+        return "";
+    }
+
+    while (EofType t = stream.Eof()) {
+        MILO_ASSERT(t == TempEof, 0xc3);
+    }
+    int rev;
+    stream.ReadEndian(&rev, 4);
+    Symbol dirClass;
+    stream >> dirClass;
+    return dirClass;
+}
