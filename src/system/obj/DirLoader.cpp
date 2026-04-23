@@ -317,15 +317,18 @@ void ReadDead(BinStream &bs) {
 
 void ReadEditorDirDead(BinStream &bs) {
     unsigned char buf;
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 20;) {
         while (true) {
             EofType t;
             while ((t = bs.Eof()) != NotEof) {
                 MILO_ASSERT(t == TempEof, 0x470);
             }
             bs >> buf;
-            if ("%#@EndOfEditorDir@#%"[i] == buf)
-                break;
+            if (((const unsigned char *)"%#@EndOfEditorDir@#%")[i] == buf) {
+                i++;
+            } else {
+                i = 0;
+            }
         }
     }
 }
