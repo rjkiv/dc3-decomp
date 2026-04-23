@@ -409,7 +409,9 @@ void DirLoader::WriteTypeMemDump(TextFileStream *file) {
          it != sMemPointMap.end();
          ++it) {
         MemPointDelta pt = it->second;
-        file->Print(it->first.c_str());
+        char *first = (char *)&it->first;
+        const char **ptr = first ? (const char **)(first + 4) : nullptr;
+        file->Print(*ptr);
         *file << "," << pt.ToString(1) << "\n";
     }
     file->File().Flush();
