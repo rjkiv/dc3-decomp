@@ -132,8 +132,9 @@ void DefaultPhysicsManager::CastRays(
 void DefaultPhysicsManager::ActivateCollidable(Hmx::Object *o) {
     auto it = std::find(mInactiveCollidables.begin(), mInactiveCollidables.end(), o);
     if (it != mInactiveCollidables.end()) {
+        RndMesh *mesh = *it;
         mInactiveCollidables.erase(it);
-        mActiveCollidables.push_back(*it);
+        mActiveCollidables.push_front(mesh);
     }
 }
 
