@@ -160,7 +160,11 @@ const char *DirLoader::CachedPath(const char *cc, bool b) {
 }
 
 bool DirLoader::ShouldBlockSubdirLoad(const FilePath &fp) {
-    return fp.c_str() && sPathEval ? sPathEval(fp.c_str()) : false;
+    if (!fp.c_str())
+        return false;
+    if (!sPathEval)
+        return false;
+    return sPathEval(fp.c_str());
 }
 
 // I am WELL aware that this is terrible
