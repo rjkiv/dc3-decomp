@@ -158,3 +158,23 @@ void DefaultPhysicsManager::AddCollidable(Hmx::Object *o, ObjectDir *dir, bool i
         }
     }
 }
+
+void DefaultPhysicsManager::RemoveCollidable(Hmx::Object *o) {
+    std::map<Hmx::Object *, ObjectDir *>::iterator mapIt = unk54.find(o);
+    if (mapIt != unk54.end()) {
+        std::list<RndMesh *>::iterator activeIt =
+            std::find(mActiveCollidables.begin(), mActiveCollidables.end(), o);
+
+        if (activeIt != mActiveCollidables.end()) {
+            mActiveCollidables.erase(activeIt);
+        } else {
+            std::list<RndMesh *>::iterator inactiveIt =
+                std::find(mInactiveCollidables.begin(), mInactiveCollidables.end(), o);
+            if (inactiveIt != mInactiveCollidables.end()) {
+                mInactiveCollidables.erase(inactiveIt);
+            }
+        }
+        unk54.erase(mapIt);
+        unk40.remove(o);
+    }
+}
