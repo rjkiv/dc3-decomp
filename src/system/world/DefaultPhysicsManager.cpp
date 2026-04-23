@@ -83,9 +83,11 @@ void DefaultPhysicsManager::Poll() {
     for (auto it = mActiveCollidables.begin(); it != mActiveCollidables.end();) {
         RndMesh *d = *it;
         if (!IsShowing(d)) {
-            mActiveCollidables.erase(it);
+            auto cur = it;
+            ++it;
+            mActiveCollidables.erase(cur);
             MILO_ASSERT(std::find( mInactiveCollidables.begin(), mInactiveCollidables.end(), d) == mInactiveCollidables.end(), 0x41);
-            mInactiveCollidables.push_back(d);
+            mInactiveCollidables.push_front(d);
         } else {
             ++it;
         }
@@ -93,9 +95,11 @@ void DefaultPhysicsManager::Poll() {
     for (auto it = mInactiveCollidables.begin(); it != mInactiveCollidables.end();) {
         RndMesh *d = *it;
         if (IsShowing(d)) {
-            mActiveCollidables.erase(it);
+            auto cur = it;
+            ++it;
+            mInactiveCollidables.erase(cur);
             MILO_ASSERT(std::find( mActiveCollidables.begin(), mActiveCollidables.end(), d) == mActiveCollidables.end(), 0x55);
-            mInactiveCollidables.push_back(d);
+            mActiveCollidables.push_front(d);
         } else {
             ++it;
         }
@@ -170,15 +174,15 @@ void DefaultPhysicsManager::AddCollidable(Hmx::Object *o, ObjectDir *dir, bool i
 }
 
 void DefaultPhysicsManager::RemoveCollidable(Hmx::Object *o) {
-    std::map<Hmx::Object *, ObjectDir *>::iterator mapIt = unk54.find(o);
+    auto mapIt = unk54.find(o);
     if (mapIt != unk54.end()) {
-        std::list<RndMesh *>::iterator activeIt =
+        auto activeIt =
             std::find(mActiveCollidables.begin(), mActiveCollidables.end(), o);
 
         if (activeIt != mActiveCollidables.end()) {
             mActiveCollidables.erase(activeIt);
         } else {
-            std::list<RndMesh *>::iterator inactiveIt =
+            auto inactiveIt =
                 std::find(mInactiveCollidables.begin(), mInactiveCollidables.end(), o);
             if (inactiveIt != mInactiveCollidables.end()) {
                 mInactiveCollidables.erase(inactiveIt);
