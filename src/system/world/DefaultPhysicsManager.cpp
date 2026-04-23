@@ -138,6 +138,15 @@ void DefaultPhysicsManager::ActivateCollidable(Hmx::Object *o) {
     }
 }
 
+void DefaultPhysicsManager::DeactivateCollidable(Hmx::Object *o) {
+    auto it = std::find(mInactiveCollidables.begin(), mInactiveCollidables.end(), o);
+    if (it != mInactiveCollidables.end()) {
+        RndMesh *mesh = *it;
+        mActiveCollidables.erase(it);
+        mInactiveCollidables.push_front(mesh);
+    }
+}
+
 void DefaultPhysicsManager::RemoveAll() {
     unk54.clear();
     mActiveCollidables.clear();
