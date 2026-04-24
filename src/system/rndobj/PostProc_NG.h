@@ -72,6 +72,8 @@ protected:
     void CheckBlendPrevious();
     void DoVelocity();
     void CheckNoise();
+    void CheckHueConverge();
+    void CheckHallOfTime();
 
     float unk22c; // 0x22c
     float unk230; // 0x230

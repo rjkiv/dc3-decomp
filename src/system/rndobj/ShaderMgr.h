@@ -77,6 +77,7 @@ public:
     void SetUnk3e(bool b) { unk3e = b; }
     void SetUnk38(bool b) { unk38 = b; }
     void SetUnk39(bool b) { unk39 = b; }
+    void SetUnk34(int i) { unk34 = i; }
 
 protected:
     virtual void LoadShaders(const char *);

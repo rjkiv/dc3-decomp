@@ -177,3 +177,17 @@ void NgPostProc::CheckNoise() {
         TheRenderState.SetTextureClamp(13, (RndRenderState::ClampMode)0);
     }
 }
+
+void NgPostProc::CheckHallOfTime() {
+    if (HallOfTime() && !unk250) {
+        Vector4 c1(mHallOfTimeRate, mHallOfTimeMix, 0.0f, 0.0f);
+        TheShaderMgr.SetPConstant((PShaderConstant)0x73, c1);
+
+        Vector4 c2(
+            mHallOfTimeColor.red, mHallOfTimeColor.green, mHallOfTimeColor.blue, 1.0f
+        );
+        TheShaderMgr.SetPConstant((PShaderConstant)0x74, c2);
+
+        TheShaderMgr.SetUnk34(mHallOfTimeType + 1);
+    }
+}
