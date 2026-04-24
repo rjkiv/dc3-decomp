@@ -19,7 +19,11 @@ Hmx::Color NgPostProc::s_prevBloomColor(-1, -1, -1, -1);
 float NgPostProc::s_prevBloomIntensity = -1;
 NgPostProc::BloomTextures<3> NgPostProc::sBloom;
 
-NgPostProc::BloomTextureSet::BloomTextureSet() : mBloomTexture() {}
+NgPostProc::BloomTextureSet::BloomTextureSet() {
+    for (int i = 0; i < 2; i++) {
+        mBloomTexture[i] = nullptr;
+    }
+}
 
 NgPostProc::BloomTextureSet::~BloomTextureSet() { FreeTextures(); }
 
