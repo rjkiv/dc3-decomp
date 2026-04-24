@@ -38,20 +38,6 @@ protected:
     ObjRef *next; // 0x4
     ObjRef *prev; // 0x8
 
-    // i *think* this is good?
-    void AddRef(ObjRef *ref) {
-        next = ref;
-        prev = ref->prev;
-        ref->prev = this;
-        prev->next = this;
-    }
-
-    void Release(ObjRef *ref) {
-        prev->next = next;
-        next->prev = prev;
-        // do something with ref here
-    }
-
 public:
     ObjRef() {}
     // ObjRef(const ObjRef &other) : next(other.next), prev(other.prev) {
@@ -108,6 +94,20 @@ public:
                 MILO_FAIL("ReplaceList stuck in infinite loop");
             }
         }
+    }
+
+    // i *think* this is good?
+    void AddRef(ObjRef *ref) {
+        next = ref;
+        prev = ref->prev;
+        ref->prev = this;
+        prev->next = this;
+    }
+
+    void Release(ObjRef *ref) {
+        prev->next = next;
+        next->prev = prev;
+        // do something with ref here
     }
 
     // per ObjectDir::HasDirPtrs, this is the way to iterate across refs

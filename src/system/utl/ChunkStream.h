@@ -49,7 +49,14 @@ public:
         kWrite = 1,
     };
 
-    ChunkStream(const char *, FileType, int, bool, Platform, bool);
+    ChunkStream(
+        const char *file,
+        FileType type,
+        int chunkSize,
+        bool compress,
+        Platform plat,
+        bool cached
+    );
     virtual ~ChunkStream();
     virtual void Flush() {}
     virtual int Tell();
@@ -59,7 +66,7 @@ public:
     virtual bool Cached() const;
     virtual Platform GetPlatform() const;
 
-    MEM_OVERLOAD(ChunkStream, 0x31)
+    MEM_TEMP_OVERLOAD(ChunkStream, 0x31)
 
     void PotentiallyWriteChunk(bool b) { MaybeWriteChunk(b); } // so dumb
     static bool PollDecompressionWorker();

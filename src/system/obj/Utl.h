@@ -14,7 +14,7 @@ void InitObject(Hmx::Object *);
  * @param [in] obj The Object.
  * @returns The Object's name, or "NULL" if the object doesn't exist.
  */
-const char *SafeName(Hmx::Object *obj) {
+inline const char *SafeName(Hmx::Object *obj) {
     if (obj)
         return obj->Name();
     else

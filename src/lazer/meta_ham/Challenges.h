@@ -96,7 +96,7 @@ private:
     int mScoreFactorDenom; // 0xc0
     std::vector<int> mSongTierFactor; // 0xc4
     int mConsolationXP; // 0xd0
-    double unkd8; // 0xd8
+    double mExpireTime; // 0xd8
     /** Do our official challenges need updating/resyncing? */
     bool mOfficialChallengesDirty; // 0xe0
     /** Do our player challenges need updating/resyncing? */

@@ -126,6 +126,13 @@ void operator delete[](void *mem);
         MemFree(v, __FILE__, line_num, #class_name);                                     \
     }
 
+#define MEM_TEMP_OVERLOAD(class_name, line_num)                                          \
+    static void *operator new(unsigned int s) {                                          \
+        return _MemAllocTemp(s, __FILE__, line_num, #class_name, 0);                     \
+    }                                                                                    \
+    static void *operator new(unsigned int s, void *place) { return place; }             \
+    static void operator delete(void *v) { MemFree(v, __FILE__, line_num, #class_name); }
+
 // #define NEW_ARRAY_OVERLOAD \
 //     void *operator new[](size_t t) { return _MemAlloc(t, 0); } \ void *operator
 //     new[](size_t, void *place) { return place; }
