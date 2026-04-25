@@ -191,3 +191,29 @@ void NgPostProc::CheckHallOfTime() {
         TheShaderMgr.SetUnk34(mHallOfTimeType + 1);
     }
 }
+
+void NgPostProc::DoPost() {
+    RndPostProc::DoPost();
+    DoVelocity();
+    DoBloom();
+    ModulateColorXfm();
+    CheckNoise();
+    CheckBlendPrevious();
+    CheckHallOfTime();
+    CheckMotionBlur();
+    CheckGradientMap();
+    CheckHueConverge();
+    CheckRefract();
+    CheckChromaticAberration();
+    CheckPosterizeAndKaleidoscope();
+    CheckVignette();
+    TheShaderMgr.SetUnk29(ColorXfmEnabled());
+    TheShaderMgr.SetUnk2f(BlendPrevious());
+    mBlendAmount = 0.0f;
+}
+
+void NgPostProc::QueueMotionBlurObject(RndDrawable *drawable) {
+    if (FindInList(unk23c, drawable) == unk23c.end()) {
+        unk23c.push_back(drawable);
+    }
+}
