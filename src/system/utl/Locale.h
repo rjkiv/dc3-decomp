@@ -47,17 +47,22 @@ public:
     void Init();
     void Terminate();
 
-    // static const char *sIgnoreMissingText;
+    static const char *sIgnoreMissingText;
 
     void SetMagnuStrings(DataArray *);
     // bool FindDataIndex(Symbol, int &, bool) const;
-    // const char *Localize(Symbol, bool) const;
+    const char *Localize(Symbol, bool) const;
 
     static void SetLocaleVerboseNotify(bool set) { Locale::sVerboseNotify = set; }
+    static bool GetLocaleVerboseNotify() { return sVerboseNotify; }
 
 protected:
+    bool FindDataIndex(Symbol sym, int &index, bool b) const;
+
     static bool sVerboseNotify;
 };
+
+bool gShowTokensCheat;
 
 extern Locale TheLocale;
 
