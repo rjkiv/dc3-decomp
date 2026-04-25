@@ -28,9 +28,10 @@ public:
         RndDir *unk0;
         int unk4;
     };
-    virtual ~Splash();
 
     Splash();
+    virtual ~Splash();
+
     void SetWaitForSplash(bool);
     void Suspend();
     void Resume();
@@ -40,10 +41,10 @@ public:
     void EndSplasher();
     void Poll();
     void BeginSplasher();
-    DWORD SplashThreadId() const { return unk68; }
+    DWORD SplashThreadId() const { return mSplashThreadID; }
 
-    float unk8;
-    bool unkc;
+    int mSplashTime; // 0x8
+    bool mWaitForSplash; // 0xc
     std::list<ScreenParams> mScreens; // 0x10
     Timer unk18;
     RndDir *unk48;
@@ -51,10 +52,10 @@ public:
     TexMovie *unk50;
     EventTrigger *unk54;
     int unk58;
-    u32 unk5c;
-    int unk60;
+    bool unk5c;
+    int mSuspendCount; // 0x60
     bool unk64;
-    DWORD unk68;
+    DWORD mSplashThreadID; // 0x68
     CriticalSection unk6c;
     SynchronizationEvent unk8c;
     SynchronizationEvent unk90;

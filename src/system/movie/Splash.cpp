@@ -3,6 +3,7 @@
 #include "obj/Object.h"
 #include "os/CritSec.h"
 #include "os/Debug.h"
+#include "os/OSFuncs.h"
 #include "os/System.h"
 #include "rndobj/EventTrigger.h"
 #include "rndobj/Movie.h"
@@ -12,35 +13,75 @@ bool gSplashing = false;
 Splash *TheSplasher;
 
 Splash::Splash()
-    : unk8(SystemConfig("ui")->FindArray("splash_time")->Float(1) * 1000),
-      unkc(SystemConfig("ui")->FindArray("wait_for_splash")->Int(1)), unk48(0), unk4c(0),
-      unk50(0), unk54(0), unk58(-1), unk60(0), unk64(1), unk68(-1), mState(0) {}
+    : mSplashTime(SystemConfig("ui")->FindFloat("splash_time") * 1000),
+      mWaitForSplash(SystemConfig("ui")->FindInt("wait_for_splash")), unk48(0), unk4c(0),
+      unk50(0), unk54(0), unk58(-1), mSuspendCount(0), unk64(1), mSplashThreadID(-1),
+      mState(0) {}
 
 Splash::~Splash() { MILO_ASSERT(!gSplashing, 0x57); }
 
-void Splash::SetWaitForSplash(bool b) {
+void Splash::SetWaitForSplash(bool wait) {
     MILO_ASSERT(!gSplashing, 0x16e);
-    unkc = b;
+    mWaitForSplash = wait;
 }
 
 void Splash::Suspend() {
     MILO_ASSERT(MainThread(), 0xcf);
-    unk60 += 1;
-    if (unk60 < 2) {
-        if (!unk64) {
-            SetMutableState(SplashState::s2);
-        }
-        else {
-            bool b = SetMutableState(SplashState::s1);
-            if (b) {
+    mSuspendCount++;
+    if (mSuspendCount <= 1) {
+        if (unk64) {
+            if (SetMutableState(SplashState::s1)) {
                 WaitForState(SplashState::s2);
                 TheNgRnd.Suspend();
+                if (unk50) {
+                    unk50->SetShowing(true);
+                    unk50->GetMovie().LockThread();
+                }
+                unk5c = false;
+                Draw();
+            } else {
+                MILO_ASSERT(mState == kWaitingForTerminating, 0xEB);
+                TheNgRnd.Suspend();
+                if (unk50) {
+                    unk50->SetShowing(true);
+                    unk50->GetMovie().LockThread();
+                }
             }
+        } else {
+            WaitForState(SplashState::s2);
         }
+        unk200.Reset();
     }
 }
 
-void Splash::Resume() {}
+void Splash::Resume() {
+    MILO_ASSERT(MainThread(), 0x106);
+    mSuspendCount--;
+    if (mSuspendCount <= 0) {
+        MILO_ASSERT(mSuspendCount == 0, 0x10D);
+        if (unk64) {
+            if (SetMutableState(s3)) {
+                if (unk50) {
+                    unk50->SetShowing(false);
+                    unk50->GetMovie().UnlockThread();
+                }
+                TheNgRnd.Resume();
+                MILO_ASSERT(SetMutableState(kResuming), 0x11C);
+                WaitForState(kResumed);
+            } else {
+                MILO_ASSERT(mState == kWaitingForTerminating, 0x122);
+                if (unk50) {
+                    unk50->SetShowing(false);
+                    unk50->GetMovie().UnlockThread();
+                }
+                TheNgRnd.Resume();
+            }
+        } else if (SetMutableState(kResumed)) {
+            unk5c = false;
+            Draw();
+        }
+    }
+}
 
 void Splash::AddScreen(char const *c, int i) {
     MILO_ASSERT(!gSplashing, 0x175);
@@ -52,12 +93,11 @@ void Splash::AddScreen(char const *c, int i) {
 }
 
 bool Splash::PrepareNext() {
-    //CriticalSection *cs = &unk98;
+    // CriticalSection *cs = &unk98;
     CritSecTracker tracker(&unk98);
     if (mScreens.empty()) {
         return false;
-    }
-    else {
+    } else {
         auto local58 = mScreens.back().fname;
         FilePath fp = local58;
         auto loadedObj = DirLoader::LoadObjects(fp, 0, 0);
@@ -70,21 +110,22 @@ bool Splash::PrepareNext() {
             splashMovie->GetMovie().CheckOpen(false);
         }
         CritSecTracker tracker2(&unk98);
-        PreparedScreenParams psp = {rndDir};
+        PreparedScreenParams psp = { rndDir };
         mPreparedScreens.push_back(psp);
         mScreens.clear();
         return true;
     }
 }
 
-void Splash::PrepareRemaining() {
-    for (bool b = PrepareNext(); b; b = PrepareNext()) {}
-}
+// void Splash::PrepareRemaining() {
+//     for (bool b = PrepareNext(); b; b = PrepareNext()) {
+//     }
+// }
 
-void Splash::EndSplasher() {}
+// void Splash::EndSplasher() {}
 
 void Splash::Poll() {
-    if (!unk64 || unk60 && !gSplashing) {
+    if (!unk64 || mSuspendCount && !gSplashing) {
         if (!UpdateThreadLoop()) {
             gSplashing = true;
             for (int i = 0; i < 2; i++) {
@@ -95,9 +136,9 @@ void Splash::Poll() {
     }
 }
 
-void Splash::BeginSplasher() {}
+// void Splash::BeginSplasher() {}
 
-void Splash::Draw() {}
+// void Splash::Draw() {}
 
 bool Splash::SetMutableState(Splash::SplashState state) {
     MILO_ASSERT(state <= kResumed, 0x13b);
@@ -106,8 +147,7 @@ bool Splash::SetMutableState(Splash::SplashState state) {
         mState = state;
         MainThread() ? unk90.Set() : unk8c.Set();
         return true;
-    }
-    else {
+    } else {
         return false;
     }
 }
@@ -119,8 +159,7 @@ bool Splash::SetImmutableState(Splash::SplashState state) {
         if (state != kWaitingForTerminating || mState != kTerminating) {
             return false;
         }
-    }
-    else {
+    } else {
         mState = state;
         MainThread() ? unk90.Set() : unk8c.Set();
         return true;
@@ -137,7 +176,7 @@ void Splash::WaitForState(Splash::SplashState state) {
     }
 }
 
-void Splash::CheckWorkerSuspend(bool) {}
+// void Splash::CheckWorkerSuspend(bool) {}
 
 bool Splash::ShowNext() {
     if (unk50) {
@@ -153,7 +192,7 @@ bool Splash::ShowNext() {
     unk4c = 0;
     unk54 = 0;
     CritSecTracker tracker(&unk98);
-    FOREACH(it, mPreparedScreens) {
+    FOREACH (it, mPreparedScreens) {
         // not really sure whats going on here
     }
     mPreparedScreens.clear();
@@ -169,15 +208,15 @@ bool Splash::Show() {
     unk4c = unk48->Find<RndCam>(kSplashCam, true);
     unk50 = unk48->Find<TexMovie>(kSplashMovie, true);
     if (!unk50) {
-        unk8 = mPreparedScreens.end()->unk4;
-    }
-    else {
+        mSplashTime = mPreparedScreens.end()->unk4;
+    } else {
         if (!unk64) {
             return ShowNext();
         }
         unk50->SetShowing(true);
         unk50->GetMovie().SetPaused(false);
-        unk8 = ceil(unk50->GetMovie().MsPerFrame() * unk50->GetMovie().NumFrames());
+        mSplashTime =
+            ceil(unk50->GetMovie().MsPerFrame() * unk50->GetMovie().NumFrames());
     }
     unk54 = unk48->Find<EventTrigger>("splash.trig", false);
     if (unk54) {
@@ -189,12 +228,13 @@ bool Splash::Show() {
 }
 
 bool Splash::UpdateThreadLoop() {
-    if (unk18.SplitMs() <= unk8 || ShowNext()) {
+    if (unk18.SplitMs() <= mSplashTime || ShowNext()) {
         Draw();
-        if (mState != kTerminating || unkc) {
+        if (mState != kTerminating || mWaitForSplash) {
             return true;
         }
-        for (bool b = ShowNext(); b; b = ShowNext()) {}
+        for (bool b = ShowNext(); b; b = ShowNext()) {
+        }
     }
     return false;
 }
@@ -219,10 +259,8 @@ unsigned long Splash::ThreadStart(void *v) {
     return 0;
 }
 
-void SuspendFunc() {
-    TheSplasher->Suspend();
-}
+void SuspendFunc() { TheSplasher->Suspend(); }
 
-void ResumeFunc() {}
+// void ResumeFunc() {}
 
 void PollFunc() { TheSplasher->Poll(); }
