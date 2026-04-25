@@ -265,9 +265,10 @@ const char *Hmx::Object::FindPathName() {
 #pragma region Ref Methods
 
 void Hmx::Object::ReplaceRefs(Hmx::Object *obj) {
-    if (mRefs.begin() != mRefs.end()) {
+    if (!mRefs.empty()) {
         ObjRef other(mRefs);
-        other.AddRef(&other);
+        other.AddSelf();
+        mRefs.Clear();
         other.ReplaceList(obj);
     }
 }
@@ -278,8 +279,7 @@ void Hmx::Object::ReplaceRefsFrom(Hmx::Object *from, Hmx::Object *to) {
     other.Clear();
     FOREACH (it, mRefs) {
         if (it->RefOwner() == from) {
-            it->Release(&other);
-            other.AddRef(it);
+            it = it->MoveBefore(&other);
         }
     }
     other.ReplaceList(to);
@@ -601,7 +601,7 @@ DataNode Hmx::Object::OnIterateRefs(const DataArray *da) {
     for (ObjRef::iterator it = mRefs.begin(); it != mRefs.end(); ++it) {
         *var = it->RefOwner();
         for (int i = 3; i < da->Size(); i++) {
-            da->Command(i)->Execute(true);
+            da->Command(i)->Execute();
         }
     }
     *var = node;

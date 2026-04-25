@@ -2,6 +2,7 @@
 #include "obj/Data.h" /* IWYU pragma: keep */
 #include "obj/DataUtl.h"
 #include "obj/MessageTimer.h" /* IWYU pragma: keep */
+#include "os/Debug.h"
 #include "utl/BinStream.h" /* IWYU pragma: keep */
 #include "utl/MemMgr.h" /* IWYU pragma: keep */
 #include "utl/Symbol.h" /* IWYU pragma: keep */
@@ -39,7 +40,7 @@ protected:
     ObjRef *prev; // 0x8
 
 public:
-    ObjRef() {}
+    // ObjRef() {}
     // ObjRef(const ObjRef &other) : next(other.next), prev(other.prev) {
     //     prev->next = this;
     //     next->prev = this;
@@ -88,11 +89,10 @@ public:
 
     void Clear() { next = prev = this; }
     void ReplaceList(Hmx::Object *obj) {
-        while (next != this) {
+        while (!empty()) {
+            ObjRef *oldNext = next;
             next->Replace(obj);
-            if (this == next) {
-                MILO_FAIL("ReplaceList stuck in infinite loop");
-            }
+            MILO_ASSERT_FMT(oldNext != next, "ReplaceList stuck in infinite loop");
         }
     }
 
@@ -104,10 +104,21 @@ public:
         prev->next = this;
     }
 
-    void Release(ObjRef *ref) {
+    void Release() {
         prev->next = next;
         next->prev = prev;
-        // do something with ref here
+    }
+
+    void AddSelf() {
+        prev->next = this;
+        next->prev = this;
+    }
+
+    ObjRef *MoveBefore(ObjRef *ref) {
+        ObjRef *oldPrev = prev;
+        Release();
+        AddRef(ref);
+        return oldPrev;
     }
 
     // per ObjectDir::HasDirPtrs, this is the way to iterate across refs
@@ -1139,7 +1150,6 @@ namespace Hmx {
             else
                 return Symbol();
         }
-        // ObjRef *Refs() const { return (ObjRef *)&mRefs; }
         const ObjRef &Refs() const { return mRefs; }
         void SetNote(const char *note);
         DataArray *TypeDef() const { return mTypeDef; }
@@ -1148,7 +1158,7 @@ namespace Hmx {
         const String &Note() const { return mNote; }
         const char *AllocHeapName() { return MemHeapName(MemFindAddrHeap(this)); }
         void AddRef(ObjRef *ref) { ref->AddRef(&mRefs); }
-        void Release(ObjRef *ref) { ref->Release(0); }
+        void Release(ObjRef *ref) { ref->Release(); }
         MsgSinks *Sinks() const { return mSinks; }
 
         void ReplaceRefs(Hmx::Object *);

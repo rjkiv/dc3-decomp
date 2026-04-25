@@ -79,7 +79,7 @@ bool ObjRefConcrete<T1, T2>::Load(BinStream &bs, bool print, ObjectDir *dir) {
         }
     } else {
         if (mObject) {
-            Release(this);
+            Release();
         }
         mObject = nullptr;
         if (buf[0] != '\0') {
