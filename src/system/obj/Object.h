@@ -31,11 +31,11 @@ public:
 };
 
 // ObjRef size: 0xc
+/** A circular doubly linked list to track an Object's refs. */
 class ObjRef {
     friend class Hmx::Object;
 
 protected:
-    // seems to be a linked list of an Object's refs
     ObjRef *next; // 0x4
     ObjRef *prev; // 0x8
 
@@ -87,7 +87,9 @@ public:
     iterator end() const { return iterator((ObjRef *)this); }
     bool empty() const { return next == this; }
 
-    void Clear() { next = prev = this; }
+    /** Make `this` its own standalone single list node. */
+    void DetachSelf() { next = prev = this; }
+
     void ReplaceList(Hmx::Object *obj) {
         while (!empty()) {
             ObjRef *oldNext = next;
@@ -96,7 +98,10 @@ public:
         }
     }
 
-    // i *think* this is good?
+    /** Add `this` to the list, just before `ref`.
+     *  e.g. A <-> `ref` <-> B will then become
+     *  A <-> `this` <-> `ref` <-> B
+     */
     void AddRef(ObjRef *ref) {
         next = ref;
         prev = ref->prev;
@@ -104,6 +109,7 @@ public:
         prev->next = this;
     }
 
+    /** Remove `this` from the list. */
     void Release() {
         prev->next = next;
         next->prev = prev;
@@ -114,6 +120,7 @@ public:
         next->prev = this;
     }
 
+    /** Reposition `this` so it's just before `ref`. */
     ObjRef *MoveBefore(ObjRef *ref) {
         ObjRef *oldPrev = prev;
         Release();

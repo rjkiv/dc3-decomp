@@ -29,7 +29,7 @@ MsgSinks gSinks(nullptr);
 Hmx::Object::Object()
     : mTypeProps(nullptr), mTypeDef(nullptr), mName(gNullStr), mDir(nullptr),
       mSinks(nullptr) {
-    mRefs.Clear();
+    mRefs.DetachSelf();
 }
 
 Hmx::Object::~Object() {
@@ -268,7 +268,7 @@ void Hmx::Object::ReplaceRefs(Hmx::Object *obj) {
     if (!mRefs.empty()) {
         ObjRef other(mRefs);
         other.AddSelf();
-        mRefs.Clear();
+        mRefs.DetachSelf();
         other.ReplaceList(obj);
     }
 }
@@ -276,7 +276,7 @@ void Hmx::Object::ReplaceRefs(Hmx::Object *obj) {
 void Hmx::Object::ReplaceRefsFrom(Hmx::Object *from, Hmx::Object *to) {
     MILO_ASSERT(from, 0xA6);
     ObjRef other;
-    other.Clear();
+    other.DetachSelf();
     FOREACH (it, mRefs) {
         if (it->RefOwner() == from) {
             it = it->MoveBefore(&other);
