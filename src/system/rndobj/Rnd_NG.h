@@ -60,8 +60,8 @@ public:
     virtual RndTex *PreProcessTexture() { return nullptr; } // 0x12c
     virtual RndTex *PostProcessTexture() { return nullptr; }
     virtual RndTex *PreDepthTexture() { return nullptr; }
-    virtual void Resume() {} // 0x138
-    virtual void Suspend() {} // 0x13c
+    virtual void Suspend() {} // 0x138
+    virtual void Resume() {} // 0x13c
     virtual RndSoftParticleBuffer *ParticleBuffer() { return unk208; }
     virtual void CreateLargeQuad(int, int, LargeQuadRenderData &);
     virtual void

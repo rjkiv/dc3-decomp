@@ -32,7 +32,7 @@ void Splash::Suspend() {
         if (unk64) {
             if (SetMutableState(SplashState::s1)) {
                 WaitForState(SplashState::s2);
-                TheNgRnd.Suspend();
+                TheNgRnd.Resume();
                 if (unk50) {
                     unk50->SetShowing(true);
                     unk50->GetMovie().LockThread();
@@ -41,7 +41,7 @@ void Splash::Suspend() {
                 Draw();
             } else {
                 MILO_ASSERT(mState == kWaitingForTerminating, 0xEB);
-                TheNgRnd.Suspend();
+                TheNgRnd.Resume();
                 if (unk50) {
                     unk50->SetShowing(true);
                     unk50->GetMovie().LockThread();
@@ -65,7 +65,7 @@ void Splash::Resume() {
                     unk50->SetShowing(false);
                     unk50->GetMovie().UnlockThread();
                 }
-                TheNgRnd.Resume();
+                TheNgRnd.Suspend();
                 MILO_ASSERT(SetMutableState(kResuming), 0x11C);
                 WaitForState(kResumed);
             } else {
@@ -74,7 +74,7 @@ void Splash::Resume() {
                     unk50->SetShowing(false);
                     unk50->GetMovie().UnlockThread();
                 }
-                TheNgRnd.Resume();
+                TheNgRnd.Suspend();
             }
         } else if (SetMutableState(kResumed)) {
             unk5c = false;
