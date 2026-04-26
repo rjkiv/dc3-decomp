@@ -18,7 +18,10 @@ DataNode DataSetLocaleVerboseNotify(DataArray *arr) {
     return DataNode(0);
 }
 
-DataNode DataToggleShowTokensCheat(DataArray *arr) { return DataNode(0); }
+DataNode DataToggleShowTokensCheat(DataArray *arr) {
+    gShowTokensCheat = !gShowTokensCheat;
+    return DataNode(0);
+}
 
 static int LocaleChunkSortFunc(const void *a, const void *b) {
     const LocaleChunkSort::OrderedLocaleChunk *chunkA =
@@ -271,4 +274,29 @@ const char *Locale::Localize(Symbol sym, bool param_2) const {
     }
 
     return nullptr;
+}
+
+bool Locale::FindDataIndex(Symbol sym, int &index, bool fail) const {
+    int low = 0;
+    int high = mSize - 1;
+
+    while (high - low >= 0) {
+        int mid = (low + high) >> 1;
+        Symbol midSym = mSymTable[mid];
+
+        if (sym > midSym) {
+            low = mid + 1;
+        } else if ((int)sym < (int)midSym) {
+            high = mid - 1;
+        } else {
+            index = mid;
+            return true;
+        }
+    }
+
+    if (fail) {
+        MILO_FAIL("Couldn't find '%s' in array (file %s)", sym.Str(), mFile.Str());
+    }
+
+    return false;
 }
