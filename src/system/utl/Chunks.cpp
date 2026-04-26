@@ -79,12 +79,10 @@ const ChunkHeader *IListChunk::Next() {
         mBaseBinStream.Seek(mSubChunkMarker, BinStream::kSeekBegin);
         mSubHeader.Read(mBaseBinStream);
 
-        unsigned int newlen = mSubHeader.GetNewLength();
+        int newlen = mSubHeader.TotalLength();
         ChunkID theID = mSubHeader.ID();
         if (theID != kMidiTrackChunkID) {
-            // probably a branchless comparison
-            unsigned int tmp = newlen >> 0x1FU;
-            newlen += ((newlen & 1) ^ tmp) - tmp;
+            newlen += newlen % 2;
         }
 
         mSubChunkMarker += newlen;

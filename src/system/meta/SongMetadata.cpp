@@ -62,7 +62,7 @@ SongMetadata::SongMetadata(DataArray *main_arr, DataArray *backup_arr, bool onDi
     else if (backup_song_array)
         mSongInfo = new DataArraySongInfo(backup_song_array, 0, mShortName);
     else
-        MILO_FAIL("song data for song '%s' has no 'song' block", main_arr->Sym(0).Str());
+        MILO_FAIL(main_arr->Sym(0).Str());
 }
 
 void SongMetadata::Save(BinStream &d) {

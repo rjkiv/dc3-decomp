@@ -2,6 +2,7 @@
 #include "obj/Data.h"
 #include "os/Debug.h"
 #include "os/Keyboard.h"
+#include "os/User.h"
 #include "os/UserMgr.h"
 #include "os/JoypadMsgs.h"
 #include "os/Joypad.h"
@@ -9,8 +10,8 @@
 #include "obj/DataFunc.h"
 
 static bool sKeyCheatsEnabled = true;
-CheatsManager *gCheatsManager = nullptr;
-bool gDisable = false;
+static CheatsManager *gCheatsManager = nullptr;
+static bool gDisable = false;
 
 void InitQuickJoyCheats(const DataArray *cheats, CheatsManager::ShiftMode mode) {
     for (int i = 1; i < cheats->Size(); i++) {
@@ -197,20 +198,6 @@ void CheatsManager::Log(int padNum, bool quickCheat, DataArray *script) {
     }
 }
 
-// void CheatsManager::CallCheatScript(bool b1, DataArray *da, LocalUser *lu, bool b2) {
-//     if (!lu) {
-//         if (TheUserMgr) {
-//             std::vector<LocalUser *> users;
-//             TheUserMgr->GetLocalUsers(users);
-//             for (int i = 0; i < (int)users.size(); i++) {
-//                 CallCheatScript(b1, da, users[i], b2);
-//             }
-//         }
-//     } else {
-//         Log(lu->GetPadNum(), b1, da);
-//     }
-// }
-
 void CheatsManager::RebuildKeyCheatsForMode() {
     static Symbol modes("modes");
     mKeyCheatPtrsMode.clear();
@@ -231,6 +218,52 @@ void CheatsManager::RebuildKeyCheatsForMode() {
             }
         }
     }
+}
+
+int CheatsManager::OnMsg(const ButtonDownMsg &msg) {
+    User *user = msg.GetUser();
+    LocalUser *lUser = nullptr;
+    if (user) {
+        lUser = user->GetLocalUser();
+    }
+    JoypadData *data = JoypadGetPadData(msg.GetPadNum());
+    // for whatever reason, using data->Pressed generates extrwi's instead of rlwinm's
+    // so screw it, we'll just write out the underlying inline code
+    bool i6 = data->mButtons & 1 << kPad_Xbox_LB && data->mButtons & 1 << kPad_Xbox_LT;
+    bool b9 = data->mButtons & 1 << kPad_Xbox_RB && data->mButtons & 1 << kPad_Xbox_RT;
+    JoypadButton button = msg.GetButton();
+    if (i6 || b9) {
+        std::vector<QuickJoyCheat *> quickCheats = mJoyCheatPtrsMode[i6 == 0];
+        FOREACH (it, quickCheats) {
+            if (button == (*it)->mButton) {
+                CallCheatScript(true, (*it)->mScript, lUser, true);
+            }
+        }
+    }
+    mLastButtonTime.Stop();
+    if (mLastButtonTime.Ms() > 2000) {
+        FOREACH (it, mLongJoyCheats) {
+            it->ixProgress = 0;
+        }
+    }
+    mLastButtonTime.Restart();
+    if (!JoypadIsShiftButton(msg.GetPadNum(), button)) {
+        FOREACH (it, mLongJoyCheats) {
+            if (button == it->mSequence[it->ixProgress]) {
+                it->ixProgress++;
+                if (it->ixProgress >= it->mSequence.size()) {
+                    CallCheatScript(false, it->mScript, lUser, true);
+                    FOREACH (cheat, mLongJoyCheats) {
+                        cheat->ixProgress = 0;
+                    }
+                    return 1;
+                }
+            } else {
+                it->ixProgress = 0;
+            }
+        }
+    }
+    return 1;
 }
 
 DataNode CheatsManager::OnMsg(const KeyboardKeyReleaseMsg &msg) {

@@ -8,7 +8,13 @@ public:
     virtual ~BufStream();
     virtual void Flush() {}
     virtual int Tell() { return mTell; }
-    virtual EofType Eof() { return (EofType)(mSize - mTell == 0); }
+    virtual EofType Eof() {
+        if (mTell == mSize) {
+            return RealEof;
+        } else {
+            return NotEof;
+        }
+    }
     virtual bool Fail() { return mFail; }
     virtual const char *Name() const;
     virtual int Size();

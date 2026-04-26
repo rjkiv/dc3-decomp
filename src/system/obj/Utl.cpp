@@ -116,12 +116,11 @@ void MergeObjectsRecurse(
             return;
         default: {
             ObjRef refs;
-            refs.Clear();
+            refs.DetachSelf();
             FOREACH (it, fromDir->Refs()) {
                 Hmx::Object *owner = it->RefOwner();
                 if (owner && owner->Dir() == fromDir) {
-                    it->Release(nullptr);
-                    it->AddRef(&refs);
+                    it = it->MoveBefore(&refs);
                 }
             }
             refs.ReplaceList(toDir);

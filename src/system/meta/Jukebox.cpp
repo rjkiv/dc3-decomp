@@ -1,6 +1,7 @@
 #include "meta/Jukebox.h"
 #include "math/Rand.h"
 #include "os/Debug.h"
+#include "utl/Std.h"
 #include <algorithm>
 
 Jukebox::Jukebox(int numItems) : unkc(0) { mJukeboxItems.reserve(numItems); }
@@ -16,11 +17,8 @@ void Jukebox::AddItem(int i1, int i2) {
 int Jukebox::Pick(const std::vector<int> &valid_names) {
     MILO_ASSERT(!valid_names.empty(), 0x26);
     std::vector<JukeboxItem> items;
-    for (std::vector<int>::const_iterator it = valid_names.begin();
-         it != valid_names.end();
-         ++it) {
-        std::vector<JukeboxItem>::iterator jit =
-            std::find(mJukeboxItems.begin(), mJukeboxItems.end(), *it);
+    FOREACH (it, valid_names) {
+        auto jit = std::find(mJukeboxItems.begin(), mJukeboxItems.end(), *it);
         if (jit == mJukeboxItems.end()) {
             AddItem(*it, -1);
             jit = &mJukeboxItems.back();
@@ -32,8 +30,7 @@ int Jukebox::Pick(const std::vector<int> &valid_names) {
 }
 
 void Jukebox::Play(int x) {
-    std::vector<JukeboxItem>::iterator jit =
-        std::find(mJukeboxItems.begin(), mJukeboxItems.end(), x);
+    auto jit = std::find(mJukeboxItems.begin(), mJukeboxItems.end(), x);
     if (jit == mJukeboxItems.end()) {
         AddItem(x, unkc);
     } else {

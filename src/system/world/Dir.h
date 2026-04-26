@@ -84,6 +84,7 @@ public:
     void ClearDeltas();
     CameraManager *GetCameraManager() const { return mCameraMgr; }
     PhysicsManager *GetPhysicsManager() const { return mPhysicsMgr; }
+    LightPresetManager *GetLightPresetManager() { return &mLightPresetMgr; }
 
     DataNode OnGetPhysicsManager(const DataArray *);
 

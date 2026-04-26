@@ -40,9 +40,7 @@ void MetaMusicManager::ConfigureMetaMusicSceneData(DataArray *da) {
         } else {
             m_mapScenes[scene_name] = pScene;
             const std::list<Symbol> &screenlist = pScene->GetScreenList();
-            for (std::list<Symbol>::const_iterator it = screenlist.begin();
-                 it != screenlist.end();
-                 it++) {
+            FOREACH (it, screenlist) {
                 Symbol theSymbol = *it;
                 if (IsScreenInSceneMap(theSymbol)) {
                     MILO_NOTIFY(

@@ -59,17 +59,17 @@ char *NextBuf() {
         gNumThreads = 1;
     } else {
         int tID;
-        int curThread = GetCurrentThreadId();
-        int *tptr = &gThreadIds[0];
+        DWORD curThread = GetCurrentThreadId();
         if (gThreadIds[gCurThread] != curThread) {
             for (tID = 0; tID < gNumThreads; tID++) {
-                if (gThreadIds[tID] == GetCurrentThreadId()) {
+                DWORD curID = GetCurrentThreadId();
+                if (gThreadIds[tID] == curID) {
                     break;
                 }
             }
             if (tID == gNumThreads) {
                 for (tID = 0; tID < gNumThreads; tID++) {
-                    if (!ValidateThreadId(tID)) {
+                    if (!ValidateThreadId(gThreadIds[tID])) {
                         gThreadIds[tID] = GetCurrentThreadId();
                         break;
                     }
@@ -83,7 +83,7 @@ char *NextBuf() {
                             "Too many threads using MakeString; maybe increase MAX_BUF_THREADS in %s?",
                             __FILE__
                         );
-                        TheDebug.Fail(msg, nullptr);
+                        TheDebugFailer << msg;
                         return nullptr;
                     }
                     gThreadIds[tID] = GetCurrentThreadId();
@@ -106,10 +106,12 @@ FormatString::FormatString()
     : mBuf(NextBuf()), mBufSize(MAX_BUF_SIZE), mFmtEnd(nullptr), mType(kNone) {}
 
 FormatString &FormatString::operator<<(int i) {
-    if (mType != kInt)
-        MILO_NOTIFY(
-            "FormatString: '%s' doesn't start with kInt.  Format: '%s'", mFmt, mFmtBuf
-        );
+    if (mType != kInt) {
+        // for whatever reason, this has the FormatString expanded out
+        FormatString str("FormatString: '%s' doesn't start with kInt.  Format: '%s'");
+        str << mFmt << mFmtBuf;
+        TheDebugNotifier << str.Str();
+    }
     char tmp = *mFmtEnd;
     *mFmtEnd = '\0';
     int n = Hx_snprintf(mBuf + MAX_BUF_SIZE - mBufSize, mBufSize, mFmt, i);
@@ -124,10 +126,12 @@ FormatString &FormatString::operator<<(int i) {
 }
 
 const char *FormatString::Str() {
-    if (mType != kNone)
-        MILO_NOTIFY(
-            "FormatString: '%s' doesn't start with kNone.  Format: '%s'", mFmt, mFmtBuf
-        );
+    if (mType != kNone) {
+        // for whatever reason, this has the FormatString expanded out
+        FormatString str("FormatString: '%s' doesn't start with kNone.  Format: '%s'");
+        str << mFmt << mFmtBuf;
+        TheDebugNotifier << str.Str();
+    }
     if (*mFmt != '\0') {
         MILO_ASSERT(mFmtEnd - mFmt < mBufSize, 0x16F);
         strcpy(mBuf + MAX_BUF_SIZE - mBufSize, mFmt);
@@ -140,9 +144,10 @@ FormatString &FormatString::operator<<(const char *cc) {
         MILO_NOTIFY(
             "FormatString: '%s' doesn't start with kStr.  Format: '%s'", mFmt, mFmtBuf
         );
-    MILO_ASSERT_FMT(
-        cc < mBuf || cc >= mBuf + sizeof(mFmtBuf), "FormatString: arg in buffer"
-    );
+    if (cc >= mBuf && cc < mBuf + sizeof(mFmtBuf)) {
+        FormatString str("FormatString: arg in buffer");
+        TheDebugFailer << str.Str();
+    }
     char tmp = *mFmtEnd;
     *mFmtEnd = '\0';
     int n = Hx_snprintf(mBuf + sizeof(mFmtBuf) - mBufSize, mBufSize, mFmt, cc);
@@ -411,13 +416,12 @@ FormatString &FormatString::operator<<(const DataNode &node) {
     *mFmtEnd = '\0';
 
     int n;
-    if (mType == kInt) {
+    if (mType == kInt && node.Type() == kDataFloat) {
         n = Hx_snprintf(
-            mBuf + MAX_BUF_SIZE - mBufSize,
-            mBufSize,
-            mFmt,
-            node.Type() == kDataFloat ? (int)node.LiteralFloat() : node.LiteralInt()
+            mBuf + MAX_BUF_SIZE - mBufSize, mBufSize, mFmt, (int)node.LiteralFloat()
         );
+    } else if (mType == kInt) {
+        n = Hx_snprintf(mBuf + MAX_BUF_SIZE - mBufSize, mBufSize, mFmt, node.LiteralInt());
     } else if (mType == kFloat) {
         n = Hx_snprintf(
             mBuf + MAX_BUF_SIZE - mBufSize, mBufSize, mFmt, node.LiteralFloat()

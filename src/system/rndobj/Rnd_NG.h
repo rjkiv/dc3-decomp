@@ -45,9 +45,14 @@ public:
 
     virtual void SetViewport(const Viewport &v) { unk1e0 = v; }
     virtual const Viewport &GetViewport() const { return unk1e0; }
-    virtual void
-    DrawRect(const Hmx::Rect &, RndMat *, ShaderType, const Hmx::Color &, const Hmx::Color *, const Hmx::Color *) {
-    }
+    virtual void DrawRect(
+        const Hmx::Rect &,
+        RndMat *,
+        ShaderType,
+        const Hmx::Color &,
+        const Hmx::Color *,
+        const Hmx::Color *
+    ) {}
     virtual void DrawRectDepth(
         const Vector3 &, const Vector3 (&)[4], const Vector4 &, RndMat *, ShaderType
     ) {}
@@ -55,8 +60,8 @@ public:
     virtual RndTex *PreProcessTexture() { return nullptr; } // 0x12c
     virtual RndTex *PostProcessTexture() { return nullptr; }
     virtual RndTex *PreDepthTexture() { return nullptr; }
-    virtual void Suspend() {}
-    virtual void Resume() {}
+    virtual void Suspend() {} // 0x138
+    virtual void Resume() {} // 0x13c
     virtual RndSoftParticleBuffer *ParticleBuffer() { return unk208; }
     virtual void CreateLargeQuad(int, int, LargeQuadRenderData &);
     virtual void

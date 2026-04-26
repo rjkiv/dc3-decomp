@@ -26,8 +26,6 @@
 
 #include "math/Rand.h"
 
-typedef void (*SplashFunc)(void);
-
 FileCacheHelper gResourceFileCacheHelper;
 float gLimitUVRange;
 int gDxtCacher;
@@ -100,10 +98,12 @@ bool GroupedUnder(RndGroup *grp, Hmx::Object *o) {
     return false;
 }
 
-void SetRndSplasherCallback(SplashFunc func1, SplashFunc func2, SplashFunc func3) {
-    gSplashPoll = func1;
-    gSplashSuspend = func2;
-    gSplashResume = func3;
+void SetRndSplasherCallback(
+    SplashFunc pollFunc, SplashFunc suspendFunc, SplashFunc resumeFunc
+) {
+    gSplashPoll = pollFunc;
+    gSplashSuspend = suspendFunc;
+    gSplashResume = resumeFunc;
 }
 
 void RndSplasherPoll() {

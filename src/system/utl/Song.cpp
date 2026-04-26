@@ -1,12 +1,14 @@
 #include "utl/Song.h"
 #include "beatmatch/HxAudio.h"
 #include "beatmatch/HxMaster.h"
+#include "math/Utl.h"
 #include "midi/MidiParser.h"
 #include "midi/MidiParserMgr.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
+#include "obj/Task.h"
 #include "os/Debug.h"
 #include "os/System.h"
 #include "rndobj/Anim.h"
@@ -15,6 +17,10 @@
 #include "synth/Synth.h"
 #include "utl/BeatMap.h"
 #include "utl/FakeSongMgr.h"
+#include "utl/TempoMap.h"
+#include "world/CameraManager.h"
+#include "world/Dir.h"
+#include "world/LightPresetManager.h"
 
 SongCallback *Song::sCallback;
 bool Song::mFastSync;
@@ -413,5 +419,76 @@ float Song::GetFrameFromMBT(int m, int b, int t) {
         return GetTempoMap()->TickToTime(tick) / 1000.0f;
     } else {
         return 0;
+    }
+}
+
+void Song::SyncState() {
+    if (mHxMaster) {
+        bool paused = mHxMaster->GetHxAudio()->Paused();
+        float vol = TheSynth->GetMasterVolume();
+        TheSynth->SetMasterVolume(kDbSilence);
+        LightPresetManager *lightMgr = nullptr;
+        CameraManager *camMgr = nullptr;
+        WorldDir *worldDir = dynamic_cast<WorldDir *>(MainDir());
+        if (worldDir) {
+            camMgr = worldDir->GetCameraManager();
+            lightMgr = worldDir->GetLightPresetManager();
+            if (GetFrame() == 0) {
+                worldDir->Enter();
+            } else {
+                lightMgr->Enter();
+            }
+        }
+        if (mHxMaster) {
+            mHxMaster->Reset();
+        }
+        std::vector<MidiParser *> midiParsers;
+        std::list<MidiParser *> globalParsers = MidiParser::Parsers();
+        FOREACH (it, globalParsers) {
+            MsgSinks *curSinks = (*it)->Sinks();
+            if (curSinks) {
+                if (curSinks->HasSink(MainDir())) {
+                    midiParsers.push_back(*it);
+                }
+            }
+        }
+        int tick = GetTempoMap()->TimeToTick(GetFrame() * 1000);
+        float seconds = TheTaskMgr.Seconds(TaskMgr::kRealTime);
+        float deltaSecs = TheTaskMgr.DeltaSeconds();
+        float deltaBeat = TheTaskMgr.DeltaBeat();
+        for (int i = -1920; i <= tick; i += 1920) {
+            if (tick - i < 1920) {
+                i = tick;
+            }
+            float time = GetTempoMap()->TickToTime(i);
+            TheTaskMgr.SetSeconds(time / 1000, false);
+            for (int j = 0; j < midiParsers.size(); j++) {
+                midiParsers[j]->Poll();
+            }
+            if (lightMgr) {
+                lightMgr->Poll();
+            }
+            if (camMgr) {
+                camMgr->Poll();
+            }
+        }
+        TheTaskMgr.SetSeconds(seconds, false);
+        TheTaskMgr.SetDeltaTime(kTaskSeconds, deltaSecs);
+        TheTaskMgr.SetDeltaTime(kTaskBeats, deltaBeat);
+        if (mHxMaster) {
+            mHxMaster->GetHxAudio()->SetPaused(true);
+            mHxMaster->Jump(GetFrame() * 1000);
+            if (!mFastSync) {
+                while (!mHxMaster->GetHxAudio()->IsReady()) {
+                    TheSynth->Poll();
+                    mHxMaster->GetHxAudio()->Poll();
+                }
+            }
+            SetSpeed();
+            mHxMaster->GetHxAudio()->SetPaused(paused);
+        }
+        TheSynth->StopAllSfx(false);
+        TheSynth->SetMasterVolume(vol);
+        SetStateDirty(false);
     }
 }

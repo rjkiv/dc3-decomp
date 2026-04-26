@@ -284,6 +284,7 @@ unsigned int JoypadPollForButton(int);
 
 bool JoypadIsConnectedPadNum(int);
 bool JoypadTypeHasLeftyFlip(Symbol type);
+bool JoypadIsShiftButton(int padNum, JoypadButton btn);
 
 inline bool MovedLeftStick(JoypadButton btn) {
     return btn == kPad_LStickUp || btn == kPad_LStickRight || btn == kPad_LStickDown

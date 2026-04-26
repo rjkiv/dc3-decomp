@@ -79,7 +79,7 @@ bool ObjRefConcrete<T1, T2>::Load(BinStream &bs, bool print, ObjectDir *dir) {
         }
     } else {
         if (mObject) {
-            Release(this);
+            Release();
         }
         mObject = nullptr;
         if (buf[0] != '\0') {
@@ -363,11 +363,14 @@ ObjPtrList<T1, T2>::find(const Hmx::Object *target) const {
     return end();
 }
 
+// TODO: not 100%, work on this
+// addr: 0x825C6868
 template <class T1, class T2>
 bool ObjPtrList<T1, T2>::remove(T1 *target) {
-    for (iterator it = begin(); it != end(); ++it) {
-        if (*it == target) {
-            erase(it);
+    for (iterator it = begin(); it != end();) {
+        auto old = it++;
+        if (*old == target) {
+            erase(old);
             return true;
         }
     }

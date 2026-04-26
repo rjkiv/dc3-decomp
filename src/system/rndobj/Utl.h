@@ -89,3 +89,8 @@ int GenerationCount(RndTransformable *, RndTransformable *);
 void EndianSwapBitmap(RndBitmap &bmap);
 
 void Clip(BuildPoly &, const Plane &, bool);
+
+typedef void (*SplashFunc)(void);
+void SetRndSplasherCallback(
+    SplashFunc pollFunc, SplashFunc suspendFunc, SplashFunc resumeFunc
+);

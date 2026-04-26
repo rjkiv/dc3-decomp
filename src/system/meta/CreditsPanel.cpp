@@ -52,11 +52,11 @@ RndMat *CreditsPanel::Mat(int i, int j, UIListMesh *mesh) const {
     static Symbol blank("blank");
     DataArray *array = mNames->Array(j);
     Symbol imgSym = blank;
-    if (array->Size() != 0) {
+    if (array->Size()) {
         imgSym = array->Sym(0);
     }
     if (imgSym == image) {
-        return mDir->Find<RndMat>(array->Str(1), true);
+        return mDir->Find<RndMat>(array->Str(1));
     } else {
         return nullptr;
     }

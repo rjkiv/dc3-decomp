@@ -12,7 +12,7 @@ public:
     Symbol GetSceneForScreen(Symbol) const;
     MetaMusicScene *GetScene(Symbol) const;
 
-    bool SceneExists(Symbol s) const { return GetScene(s) != 0; }
+    bool SceneExists(Symbol s) const { return GetScene(s); }
     bool SceneForScreenExists(Symbol s) const { return GetSceneForScreen(s) != gNullStr; }
 
 private:

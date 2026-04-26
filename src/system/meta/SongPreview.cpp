@@ -181,8 +181,9 @@ void SongPreview::PreparePreview() {
         previewstart = mStartPreviewMs;
         previewend = mEndPreviewMs;
     } else {
-        int songid = mSongMgr.GetSongIDFromShortName(mSong, true);
-        mSongMgr.Data(songid)->PreviewTimes(previewstart, previewend);
+        int songid = mSongMgr.GetSongIDFromShortName(mSong);
+        const SongMetadata *data = mSongMgr.Data(songid);
+        data->PreviewTimes(previewstart, previewend);
     }
     mStartMs = previewstart;
     mEndMs = previewend;
@@ -196,7 +197,10 @@ DataNode SongPreview::OnStart(DataArray *arr) {
     if (arr->Size() == 3) {
         mStartPreviewMs = 0;
         mEndPreviewMs = 0;
-        MILO_LOG("start called in upper OnStart here : sym='%s'\n", arr->ForceSym(2));
+        MILO_LOG(
+            "start called in upper OnStart here : sym='%s'\n", arr->ForceSym(2).Str()
+        );
+        Start(arr->ForceSym(2), nullptr);
     } else {
         mStartPreviewMs = arr->Float(3);
         mEndPreviewMs = arr->Float(4);
@@ -204,9 +208,11 @@ DataNode SongPreview::OnStart(DataArray *arr) {
             mSecurePreview = arr->Int(5);
         }
         mSong = gNullStr;
-        MILO_LOG("start called in lower OnStart here : sym='%s'\n", arr->ForceSym(2));
+        MILO_LOG(
+            "start called in lower OnStart here : sym='%s'\n", arr->ForceSym(2).Str()
+        );
+        Start(arr->ForceSym(2), nullptr);
     }
-    Start(arr->ForceSym(2), nullptr);
     return 1;
 }
 
@@ -266,10 +272,10 @@ void SongPreview::Poll() {
     switch (mState) {
     case kIdle: {
         if (!mSong.Null() && mRestart) {
-            const char *name = mSongMgr.ContentName(mSong, true);
+            const char *name = mSongMgr.ContentName(mSong);
             if (name) {
                 mSongContent = name;
-                if (TheContentMgr.MountContent(name)) {
+                if (TheContentMgr.MountContent(mSongContent.Str())) {
                     mSongContent = 0;
                 }
                 mState = kMountingSong;

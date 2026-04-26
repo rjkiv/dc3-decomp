@@ -27,12 +27,12 @@ protected:
 public:
     FormatString(const char *);
     FormatString &operator<<(void *);
+    FormatString &operator<<(int);
     FormatString &operator<<(unsigned int);
-    FormatString &operator<<(unsigned long);
     FormatString &operator<<(long);
+    FormatString &operator<<(unsigned long);
     FormatString &operator<<(long long);
     FormatString &operator<<(unsigned long long);
-    FormatString &operator<<(int);
     FormatString &operator<<(const class DataNode &);
     FormatString &operator<<(const char *);
     FormatString &operator<<(float);
