@@ -141,6 +141,7 @@ public:
     int Bpp() const { return mScreenBpp; }
     bool WorldEnded() const { return mWorldEnded; }
     bool GetUnk1b4() { return unk1b4; } // When named, can replace
+    void SetUnk1b4(bool b1) { unk1b4 = b1; }
     Aspect GetAspect() const { return mAspect; }
     Mode DrawMode() { return mDrawMode; }
     void SetDrawMode(Mode d) { mDrawMode = d; }

@@ -9,24 +9,24 @@ class Splash {
 public:
     enum SplashState {
         s0,
-        s1,
-        s2,
+        kSuspending = 1,
+        kSuspended = 2,
         s3,
-        kResuming,
-        kResumed,
-        kWaitingForTerminating,
-        kTerminating,
-        kTerminated
+        kResuming = 4,
+        kResumed = 5,
+        kWaitingForTerminating = 6,
+        kTerminating = 7,
+        kTerminated = 8
     };
 
     struct ScreenParams {
-        const char *fname;
+        const char *fname; // 0x0 - file name
         int msecs;
     };
 
     struct PreparedScreenParams {
-        RndDir *unk0;
-        int unk4;
+        RndDir *unk0; // 0x0 - object dir
+        int unk4; // 0x4
     };
 
     Splash();
@@ -57,11 +57,11 @@ public:
     bool unk64;
     DWORD mSplashThreadID; // 0x68
     CriticalSection unk6c;
-    SynchronizationEvent unk8c;
-    SynchronizationEvent unk90;
-    int mState; // 0x94
+    SynchronizationEvent unk8c; // 0x8c
+    SynchronizationEvent unk90; // 0x90
+    SplashState mState; // 0x94
     CriticalSection unk98;
-    std::list<PreparedScreenParams> mPreparedScreens;
+    std::list<PreparedScreenParams> mPreparedScreens; // 0xb8
     std::list<RndDir *> unkc0;
     Timer unk200;
     void *mThreadStack;
@@ -77,7 +77,8 @@ protected:
     bool Show();
     bool UpdateThreadLoop();
     void UpdateThread();
-    static unsigned long ThreadStart(void *);
+
+    static DWORD ThreadStart(void *);
 };
 
 extern Splash *TheSplasher;

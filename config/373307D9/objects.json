@@ -446,7 +446,7 @@
             "system/movie/MovieImpl.cpp": "Matching",
             "system/movie/MovieSys.cpp": "Matching",
             "system/movie/Splash.cpp": "NonMatching",
-            "system/movie/TexMovie.cpp": "NonMatching",
+            "system/movie/TexMovie.cpp": "Matching",
             "system/moviebink/BinkMovieImpl.cpp": "MISSING",
             "system/moviebink/BinkMovieImpl_Xbox.cpp": "MISSING",
             "system/moviebink/BinkMovieSys.cpp": "MISSING",
