@@ -1,11 +1,14 @@
 #include "flow/FlowNode.h"
 #include "flow/DrivenPropertyEntry.h"
 #include "flow/FlowLabel.h"
+#include "math/Utl.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
+#include "obj/Utl.h"
 #include "os/Debug.h"
 #include "flow/Flow.h"
+#include "utl/Str.h"
 
 float FlowNode::sIntensity = 1.0f;
 bool FlowNode::sPushDrivenProperties = false;
@@ -82,9 +85,13 @@ INIT_REVS(2, 0)
 BEGIN_LOADS(FlowNode)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)
-    LOAD_SUPERCLASS(Hmx::Object)
+    if (!dynamic_cast<Flow *>(this)) {
+        LOAD_SUPERCLASS(Hmx::Object)
+    }
     d >> mChildNodes;
-
+    FOREACH (it, mChildNodes) {
+        (*it)->SetParent(this, false);
+    }
     int numEntries;
     d >> numEntries;
     mDrivenPropEntries.clear();
@@ -93,6 +100,16 @@ BEGIN_LOADS(FlowNode)
         DrivenPropertyEntry entry(this);
         entry.Load(d.stream, this);
         mDrivenPropEntries.push_back(entry);
+    }
+    if (d.rev > 0) {
+        bool output;
+        d >> output;
+        mDebugOutput = output;
+    }
+    if (d.rev > 1) {
+        String comment;
+        d >> comment;
+        mDebugComment = comment;
     }
 END_LOADS
 
@@ -167,10 +184,8 @@ void FlowNode::RequestStopCancel() {
 }
 
 Flow *FlowNode::GetOwnerFlow() {
-    if (Dir()) {
-        return static_cast<Flow *>(Dir());
-    } else
-        return nullptr;
+    ObjectDir *dir = Dir();
+    return dir ? static_cast<Flow *>(dir) : nullptr;
 }
 
 void FlowNode::MiloPreRun() {
@@ -179,7 +194,31 @@ void FlowNode::MiloPreRun() {
     }
 }
 
-// void FlowNode::MoveIntoDir(ObjectDir *, ObjectDir *) {}
+void FlowNode::MoveIntoDir(ObjectDir *o1, ObjectDir *o2) {
+    if (!Dir() || Dir() == o2) {
+        String str("a");
+        str[0] = (rand() % 25) + 'a';
+        const char *name = NextName(MakeString("%s", str.c_str()), o1);
+        if (o2) {
+            while (streq(o2->Name(), name) || streq(o1->Name(), name)) {
+                str[0] = (rand() % 25) + 'a';
+                name = MakeString("%s%s", name, str.c_str());
+            }
+        }
+        SetName(NextName(name, o1), o1);
+        FOREACH (it, mChildNodes) {
+            (*it)->MoveIntoDir(o1, o2);
+        }
+        FOREACH (it, mDrivenPropEntries) {
+            FOREACH (op, it->MathOps()) {
+                FlowPtr<Hmx::Object> &ptr = op->GetUnk18();
+                if (ptr == o2) {
+                    ptr = o1;
+                }
+            }
+        }
+    }
+}
 
 void FlowNode::UpdateIntensity() {
     FOREACH (it, mRunningNodes) {
@@ -189,7 +228,46 @@ void FlowNode::UpdateIntensity() {
 
 // FlowNode *FlowNode::DuplicateChild(FlowNode *) { return nullptr; }
 
-// void FlowNode::PushDrivenProperties() { sPushDrivenProperties = true; }
+void FlowNode::PushDrivenProperties() {
+    sPushDrivenProperties = true;
+    FOREACH (it, mDrivenPropEntries) {
+        DataNode n;
+        auto op = it->MathOps().begin();
+        Hmx::Object *obj = op->GetUnk18();
+        if (obj) {
+            const DataNode *prop = obj->Property(op->RHS().Array(), false);
+            if (prop) {
+                n = *prop;
+            } else {
+                n = op->GetUnk0();
+            }
+        } else {
+            n = op->GetUnk0();
+        }
+        if (op != it->MathOps().end()) {
+            if (n.CompatibleType(kDataFloat)) {
+                float sum = n.LiteralFloat();
+                while (op != it->MathOps().end()) {
+                    sum += op->Apply(sum);
+                }
+                n = sum;
+            }
+            const DataNode *prop = Property(it->Node().Array());
+            if (prop->Type() == n.Type()) {
+                SetProperty(it->Node().Array(), n);
+            } else if (n.Type() == kDataFloat || n.Type() == kDataInt) {
+                if (prop->Type() == kDataFloat) {
+                    SetProperty(it->Node().Array(), n);
+                } else {
+                    SetProperty(it->Node().Array(), Round(n.LiteralFloat()));
+                }
+            }
+        } else {
+            SetProperty(it->Node().Array(), n);
+        }
+    }
+    sPushDrivenProperties = false;
+}
 
 void FlowNode::ActivateChild(FlowNode *child) {
     mRunningNodes.push_back(child);

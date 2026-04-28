@@ -5058,7 +5058,7 @@ system/zlib/trees.c:
 	.pdata      start:0x822F1CF8 end:0x822F1D28
 	.text       start:0x82863130 end:0x828649C8
 
-system/zlib/ZlibLicense.c:
+system/zlib/ZlibLicense.cpp:
 	.rdata      start:0x820F2C68 end:0x820F2C78
 	.text       start:0x82EDDA80 end:0x82EDDA98 rename:.text$yc
 

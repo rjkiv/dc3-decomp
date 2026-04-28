@@ -15,6 +15,7 @@ public:
 
     bool Empty() { return mMathOps.empty(); }
     const DataNode &Node() const { return unk0; }
+    ObjVector<FlowMathOp> &MathOps() { return mMathOps; }
     const ObjVector<FlowMathOp> &MathOps() const { return mMathOps; }
 
 protected:

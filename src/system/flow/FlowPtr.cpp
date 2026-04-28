@@ -3,6 +3,7 @@
 #include "flow/FlowNode.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
+#include "obj/DirLoader.h"
 #include "obj/Object.h"
 
 bool FlowPtrBase::RefreshParamObject() {
@@ -51,7 +52,8 @@ Hmx::Object *FlowPtrBase::GetObject() {
 ObjectDir *FlowPtrGetLoadingDir(ObjectDir *dir) {
     Flow *flow = dynamic_cast<Flow *>(dir);
     if (flow) {
-        return flow->Loader() ? flow->Loader()->ProxyDir() : flow->Dir();
+        DirLoader *dl = flow->Loader();
+        return dl ? dl->ProxyDir() : flow->Dir();
     } else
         return nullptr;
 }

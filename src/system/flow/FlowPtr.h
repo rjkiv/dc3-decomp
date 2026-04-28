@@ -50,14 +50,16 @@ public:
     ~FlowPtr() {}
 
     void operator=(T *obj) {
-        mObjName = obj ? obj->Name() : 0;
-        mState = GetInitialState(obj);
+        const char *name = obj ? obj->Name() : 0;
+        int state = GetInitialState(obj);
+        mObjName = name;
         mObjPtr = obj;
+        mState = state;
     }
 
     FlowPtr &operator=(const FlowPtr &ptr) {
-        mObjPtr = ptr.mObjPtr;
-        FlowPtrBase::operator=(ptr);
+        mObjPtr = ptr.mObjPtr.Ptr();
+        // FlowPtrBase::operator=(ptr);
         return *this;
     }
 

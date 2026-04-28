@@ -17,8 +17,14 @@ public:
     FlowMathOp(const FlowMathOp &other)
         : unk_0x0(other.unk_0x0), unk_0x4(other.unk_0x4), lhs(other.lhs), rhs(other.rhs),
           unk_0x18(other.unk_0x18) {}
-    FlowMathOp &operator=(const FlowMathOp &);
     ~FlowMathOp();
     void Save(BinStream &);
     void Load(BinStream &, ObjectDir *);
+
+    float Apply(float);
+
+    float GetUnk0() const { return unk_0x0; }
+    const DataNode &LHS() const { return lhs; }
+    const DataNode &RHS() const { return rhs; }
+    FlowPtr<Hmx::Object> &GetUnk18() { return unk_0x18; }
 };

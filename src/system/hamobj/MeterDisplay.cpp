@@ -123,7 +123,7 @@ void MeterDisplay::Update() {
             label->SetShowing(false);
         }
         static Symbol meter_anim("meter_anim");
-        mMeterAnim = mResourceDir->Find<RndAnimatable>("meter_anim", true);
+        mMeterAnim = mResourceDir->Find<RndAnimatable>("meter.anim");
     }
 }
 

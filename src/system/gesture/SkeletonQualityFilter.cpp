@@ -1,7 +1,9 @@
 #include "gesture/SkeletonQualityFilter.h"
 #include "BaseSkeleton.h"
 #include "gesture/BaseSkeleton.h"
+#include "gesture/GestureMgr.h"
 #include "gesture/Skeleton.h"
+#include "hamobj/HamGameData.h"
 #include "math/Vec.h"
 
 SkeletonQualityFilter::SkeletonQualityFilter()
@@ -71,5 +73,47 @@ void SkeletonQualityFilter::UpdateIsSitting(const TrackedJoint *joint) {
         }
     } else if (vDiff.y < -0.8f && vDiff2.y < -0.8f) {
         mSitting = false;
+    }
+}
+
+void SkeletonQualityFilter::Update(const Skeleton &skeleton, bool b2) {
+    if (skeleton.SkeletonIndex() >= 0 && skeleton.SkeletonIndex() < 6) {
+        if (!skeleton.IsTracked() && !TheGestureMgr->IsTrackingAllSkeletons()) {
+            mValid = false;
+            mSitting = false;
+            mSideways = false;
+            mIsConfident = false;
+            return;
+        } else if (skeleton.GetUnkab0() == Vector3::GetZero()) {
+            mValid = false;
+            mSitting = false;
+            mSideways = false;
+            mIsConfident = false;
+            return;
+        } else {
+            bool b3 = false;
+            for (int i = 0; i < 2; i++) {
+                if (TheGameData->Player(i)->GetSkeletonTrackingID()
+                    == skeleton.TrackingID()) {
+                    b3 = TheGameData->Player(i)->IsPlaying();
+                    break;
+                }
+            }
+            const TrackedJoint *joints = skeleton.TrackedJoints();
+            UpdateIsConfident(joints);
+            UpdateIsSideways(joints);
+            UpdateIsSitting(joints);
+            if (b2 || !b3) {
+                if (mIsConfident && !mSideways && !mSitting) {
+                    b3 = true;
+                } else {
+                    b3 = false;
+                }
+            } else {
+                b3 = true;
+            }
+            mValid = b3;
+            return;
+        }
     }
 }

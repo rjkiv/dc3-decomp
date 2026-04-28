@@ -17,12 +17,14 @@ BEGIN_PROPSYNCS(HamPhotoDisplay)
     SYNC_PROP(mesh1, mMesh1)
     SYNC_PROP(mesh2, mMesh2)
     SYNC_PROP_SET(
-        index1, mIndex1, if (_val.Type() == kDataInt) mIndex1 = _val.Int();
-        else mIndex1 = _val.Float();
+        index1,
+        mIndex1,
+        mIndex1 = _val.Type() == kDataInt ? _val.Int() : (int)_val.Float();
     )
     SYNC_PROP_SET(
-        index2, mIndex2, if (_val.Type() == kDataInt) mIndex2 = _val.Int();
-        else mIndex2 = _val.Float();
+        index2,
+        mIndex2,
+        mIndex2 = _val.Type() == kDataInt ? _val.Int() : (int)_val.Float();
     )
     SYNC_SUPERCLASS(RndDir)
 END_PROPSYNCS
