@@ -37,6 +37,7 @@ protected:
     void GetRoutineCrossoverClips(float, const char *, CharClip **, CharClip **);
     bool PushRoutineBuilderClip(int, HamDriver::LayerArray *);
     void PushClip(int, HamDriver::LayerArray *);
+    bool GetClipRange(const char *, const char *, float, float &, float &, float &);
 
     Keys<Symbol, Symbol> *mClipKeys; // 0x0
     Keys<Symbol, Symbol> *mClipCrossoverKeys; // 0x4

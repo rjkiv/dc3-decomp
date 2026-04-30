@@ -92,7 +92,22 @@ void ClipPlayer::PlayAnims(HamCharacter *c, float f1, float f2, int x) {
 }
 
 namespace {
-    float ClipStart(CharClip *, float, float &, float &);
+    float ClipStart(CharClip *clip, float beat, float &start, float &end) {
+        if (fmodf(beat, 1.0) != 0.0f && ceilf(beat) - beat < 0.0001f) {
+            beat = ceil(beat);
+        }
+        float offset = 0.0f;
+        float period = (clip->PlayFlags() >> 12) & 0xF;
+
+        if (period != 0.0f) {
+            offset = Mod(beat - clip->StartBeat(), period);
+        }
+
+        start = beat - offset;
+        end = clip->EndBeat() - clip->StartBeat() + start;
+        
+        return clip->StartBeat() + offset;
+    }
 }
 
 void ClipPlayer::PlayClip(CharClip *clip, float f1, float f2, HamDriver::LayerArray *arr) {
@@ -214,4 +229,29 @@ void ClipPlayer::PlayNormal(float f1, HamDriver::LayerArray *arr, const char *cc
             PushClip(mClipKeys->KeyGreaterEq(BeatToFrame(beat)), newArr);
         }
     }
+}
+
+float ClipPlayer::ClipLength(CharClip *clip) {
+    float end = floor(clip->EndBeat());
+    float start = ceil(clip->StartBeat());
+    return end - start;
+}
+
+bool ClipPlayer::GetClipRange(
+    const char *c1, const char *c2, float f1, float &f2, float &f3, float &f4
+) {
+    auto clip = mClipDir->Find<CharClip>(c1, false);
+    if (clip) {
+        float clipStart = ClipStart(clip, f1, f2, f3);
+        f4 = 1e+30;
+        auto clip2 = mClipDir->Find<CharClip>(c2, false);
+        if (clip2 != nullptr) {
+            auto node = clip->FindLastNode(clip2, clipStart);
+            if (node != nullptr) {
+                f4 = (node->curBeat - clip->StartBeat()) + f2;
+            }
+        }
+        return true;
+    }
+    return false;
 }

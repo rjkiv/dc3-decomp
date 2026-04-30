@@ -206,7 +206,7 @@ const char *Localize(Symbol sym, bool *found, Locale &loc) {
             Locale::sIgnoreMissingText = sym.Str();
 
             if (Locale::GetLocaleVerboseNotify()) {
-                TheDebug.Notify(MakeString<Symbol>("\"%s\" needs localization", sym));
+                MILO_NOTIFY("\"%s\" needs localization", sym);
             }
         }
         if (found) {
@@ -246,9 +246,7 @@ const char *Locale::Localize(Symbol sym, bool param_2) const {
     if (sym.Str() == gNullStr) {
         return "";
     }
-    if (!mSymTable) {
-        TheDebug.Fail(MakeString(kAssertStr, "Locale.cpp", 0x1d8, "mSymTable"), nullptr);
-    }
+    MILO_ASSERT(!mSymTable, 0x1d8);
 
     static Symbol eng("eng");
 
