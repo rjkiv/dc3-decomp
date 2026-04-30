@@ -62,8 +62,6 @@ protected:
     static bool sVerboseNotify;
 };
 
-bool gShowTokensCheat;
-
 extern Locale TheLocale;
 
 const char *Localize(Symbol token, bool *success, Locale &locale);

@@ -13,6 +13,8 @@
 char gLocaleBuffers[4][50]; // not sure if these 2 should be globals but i currently have
 int gLocalBufIdx = 0; // no other ideas
 
+bool gShowTokensCheat;
+
 DataNode DataSetLocaleVerboseNotify(DataArray *arr) {
     Locale::SetLocaleVerboseNotify(arr->Int(1));
     return DataNode(0);
