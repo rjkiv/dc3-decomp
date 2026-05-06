@@ -237,6 +237,8 @@ inline void Normalize(const Vector3 &in, Vector3 &out) {
     Scale(in, inv, out);
 }
 
+void NormalizeScale(const Vector3 &, float, Vector3 &);
+
 inline void Negate(const Vector3 &v, Vector3 &vres) { vres.Set(-v.x, -v.y, -v.z); }
 
 inline void Interp(const Vector2 &v1, const Vector2 &v2, float f, Vector2 &res) {
@@ -246,8 +248,10 @@ inline void Interp(const Vector2 &v1, const Vector2 &v2, float f, Vector2 &res) 
 inline void Interp(const Vector3 &v1, const Vector3 &v2, float f, Vector3 &dst) {
     if (f == 0) {
         dst = v1;
+        return;
     } else if (f == 1) {
         dst = v2;
+        return;
     } else {
         dst.Set(Interp(v1.x, v2.x, f), Interp(v1.y, v2.y, f), Interp(v1.z, v2.z, f));
     }

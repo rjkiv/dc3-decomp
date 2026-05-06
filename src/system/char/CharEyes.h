@@ -7,6 +7,7 @@
 #include "char/CharPollable.h"
 #include "char/CharWeightSetter.h"
 #include "char/CharWeightable.h"
+#include "math/Vec.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "rndobj/Highlight.h"
@@ -22,7 +23,7 @@ public:
             : mEye(owner), mUpperLid(owner), mLowerLid(owner), mLowerLidBlink(owner),
               mUpperLidBlink(owner) {}
         EyeDesc &operator=(const EyeDesc &desc) {
-            mEye = desc.mEye;
+            mEye = desc.mEye.Ptr();
             mUpperLid = desc.mUpperLid;
             mLowerLid = desc.mLowerLid;
             mUpperLidBlink = desc.mUpperLidBlink;
@@ -45,6 +46,15 @@ public:
     };
     struct CharInterestState {
         CharInterestState(Hmx::Object *owner) : mInterest(owner), unk14(-1) {}
+        CharInterestState(const CharInterestState &s)
+            : mInterest(s.mInterest), unk14(-1) {}
+        CharInterestState &operator=(const CharInterestState &s) {
+            mInterest = s.mInterest.Ptr();
+            return *this;
+        }
+
+        bool IsInRefractoryPeriod();
+        float RefractoryTimeRemaining();
 
         ObjOwnerPtr<CharInterest> mInterest; // 0x0
         float unk14; // 0x14
@@ -92,6 +102,13 @@ protected:
     CharEyes();
     bool IsHeadIKWeightIncreasing();
     void ProceduralBlinkUpdate();
+    RndTransformable *GetHead();
+    RndTransformable *GetTarget();
+    void EnforceMinimumTargetDistance(const Vector3 &, const Vector3 &, Vector3 &);
+    void DartUpdate();
+    bool EyesOnTarget(float);
+    Vector3 GenerateDartOffset();
+    void UpdateOverlay();
 
     DataNode OnAddInterest(DataArray *);
     DataNode OnToggleForceFocus(DataArray *);
@@ -146,15 +163,15 @@ protected:
     RndOverlay *mEyeStatusOverlay; // 0xd0
     int mInterestFilterFlags; // 0xd4
     Vector3 unkd8; // 0xd8
-    int unke8;
+    float unke8;
     float unkec;
     float unkf0;
-    int unkf4;
+    float unkf4;
     float unkf8;
     bool unkfc;
     bool unkfd;
     ObjPtr<CharInterest> unk100; // 0x100
-    ObjPtr<CharInterest> unk114; // 0x114
+    ObjPtr<CharInterest> unk114; // 0x114 - focus interest
     int unk128;
     bool unk12c;
     Vector3 unk130;
@@ -163,10 +180,7 @@ protected:
     bool unk170;
     float unk174;
     int unk178;
-    int unk17c;
-    int unk180;
-    int unk184;
-    int unk188;
+    Vector3 unk17c;
     bool unk18c;
     float unk190;
     int unk194;

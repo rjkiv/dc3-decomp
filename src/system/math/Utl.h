@@ -193,8 +193,6 @@ inline void Interp(float a, float b, float t, float &fres) { fres = t * (b - a) 
 
 inline void Interp(bool a, bool b, float t, bool &bres) { bres = t < 1.0f ? a : b; }
 
-inline float InterpAng(float, float, float) {}
-
 inline float InverseLerp(float min, float max, float value) {
     // Prevent divide-by-zero from zero-sized range
     if (max != min) {
@@ -218,11 +216,4 @@ inline float Limit(float f1, float f2, float f3, int &i) {
     float floored = floor((f3 - f1) / fsub);
     i = floored;
     return -(i * fsub - f3);
-}
-
-inline float Sigmoid(float t) {
-    // MILO_ASSERT(t >= 0 && t <= 1, 0x1DB); FIXME: uncommenting this line results in a
-    // ton of circular dependencies surrounding Color.h and here, Utl.h
-    float tsq = t * t;
-    return Clamp<float>(0, 1, tsq * 3.0f - tsq * 2.0f * t);
 }

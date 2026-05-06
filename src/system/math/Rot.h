@@ -2,10 +2,6 @@
 #include "math/Mtx.h"
 #include "math/Vec.h"
 
-#define PI 3.1415927f
-#define RAD2DEG 57.29578f
-#define DEG2RAD 0.01745329238474369049f
-
 TextStream &operator<<(TextStream &ts, const Hmx::Quat &v);
 TextStream &operator<<(TextStream &ts, const Vector3 &v);
 TextStream &operator<<(TextStream &ts, const Vector2 &v);

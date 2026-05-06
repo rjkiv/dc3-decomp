@@ -33,6 +33,8 @@ public:
     void SetMaxYaw(float);
     void SetMinPitch(float);
     void SetMaxPitch(float);
+    RndTransformable *GetSource() const { return mSource ? mSource : mPivot; }
+    RndTransformable *Target() const { return mTarget; }
 
 protected:
     CharLookAt();
