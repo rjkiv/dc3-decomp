@@ -39,9 +39,8 @@ int ChallengeHeaderNode::GetChallengeExp() {
     FOREACH (it, Children()) {
         ChallengeSortNode *node = static_cast<ChallengeSortNode *>(*it);
         MILO_ASSERT(node, 0xd0);
-        auto record = node->GetChallengeRecord();
         xp += TheChallenges->CalculateChallengeXp(
-            record->GetChallengeRow().mScore, record->GetChallengeRow().mDiff
+            node->GetChallengeScore(), node->GetDifficulty()
         );
     }
     return xp;
@@ -55,7 +54,9 @@ int ChallengeHeaderNode::GetPotentialChallengeExp(NavListSortNode *n) {
     for (; it != mChildren.end(); ++it) {
         ChallengeSortNode *node = static_cast<ChallengeSortNode *>(*it);
         MILO_ASSERT(node, 0xe7);
-        xp += node->GetChallengeExp();
+        xp += TheChallenges->CalculateChallengeXp(
+            node->GetChallengeScore(), node->GetDifficulty()
+        );
     }
     return xp;
 }
@@ -201,8 +202,7 @@ int ChallengeHeaderNode::GetTotalEarnedExp(int score) {
         MILO_ASSERT(node, 0xf5);
         if (score >= node->GetChallengeRecord()->GetChallengeRow().mScore) {
             xp += TheChallenges->CalculateChallengeXp(
-                node->GetChallengeRecord()->GetChallengeRow().mScore,
-                node->GetChallengeRecord()->GetChallengeRow().mDiff
+                node->GetChallengeScore(), node->GetDifficulty()
             );
         }
     }
@@ -236,6 +236,10 @@ int ChallengeSortNode::GetChallengeScore() {
 
 int ChallengeSortNode::GetChallengerXp() {
     return mChallengeRecord->GetChallengeRow().mChallengerXp;
+}
+
+int ChallengeSortNode::GetDifficulty() {
+    return mChallengeRecord->GetChallengeRow().mDiff;
 }
 
 const char *ChallengeSortNode::GetChallengerGamertag() {
@@ -498,12 +502,10 @@ Symbol ChallengeSortNode::Select() {
         return screen;
     case 4:
         if (screen == store_loading_screen) {
-            static Symbol advertised_songid("avertised_songid");
+            static Symbol advertised_songid("advertised_songid");
             UIScreen *storeLoadScreen =
                 ObjectDir::Main()->Find<UIScreen>("store_loading_screen");
-            storeLoadScreen->SetProperty(
-                advertised_songid, mChallengeRecord->GetChallengeRow().mSongID
-            );
+            storeLoadScreen->SetProperty(advertised_songid, GetSongID());
             storeLoadScreen->SetProperty(should_back_to_challenges, 1);
         }
         return screen;

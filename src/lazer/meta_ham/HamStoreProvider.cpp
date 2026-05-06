@@ -277,6 +277,8 @@ void HamStoreProvider::SetFilter(StoreOffer const *pack) {
     mSortIndex = 0;
 }
 
+bool HamStoreProvider::IsDebug() { return TheNetCacheMgr->IsDebug(); }
+
 void HamStoreProvider::PopulateOffersInCart() {
     HamStorePanel *storePanel = dynamic_cast<HamStorePanel *>(TheHamUI.FocusPanel());
     MILO_ASSERT(storePanel, 0x206);
@@ -285,13 +287,13 @@ void HamStoreProvider::PopulateOffersInCart() {
         CartRow &row = *it_cartRow;
         FOREACH_PTR (it_storeOffer, unk30) {
             StoreOffer *offer = *it_storeOffer;
-            if (offer->IsAvailable() || TheNetCacheMgr->IsDebug()) {
+            if ((offer->IsAvailable() || IsDebug())) {
                 static Symbol song("song");
                 if (offer->OfferType() == song && offer->GetSingleSongID() == row.unk0) {
                     if (offer->IsPurchased()) {
                         storePanel->RemoveDLCFromCart(offer->GetSingleSongID());
                     } else {
-                        unkb0.push_back(offer);
+                        unkb0.push_back((StoreOffer *)offer);
                     }
                     break;
                 }

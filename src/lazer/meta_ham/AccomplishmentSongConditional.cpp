@@ -87,6 +87,12 @@ bool AccomplishmentSongConditional::CheckNoFlashcardsCondition(
     return false;
 }
 
+bool AccomplishmentSongConditional::CheckPlayedCondition(
+    SongStatusMgr *statusMgr, Symbol shortName
+) const {
+    return statusMgr->IsSongPlayed(TheHamSongMgr.GetSongIDFromShortName(shortName));
+}
+
 bool AccomplishmentSongConditional::CheckConditionsForSong(
     SongStatusMgr *mgr, Symbol shortname
 ) const {
@@ -116,7 +122,7 @@ bool AccomplishmentSongConditional::CheckConditionsForSong(
                 return true;
             }
         } else if (curSym == played) {
-            if (mgr->IsSongPlayed(TheHamSongMgr.GetSongIDFromShortName(shortname))) {
+            if (CheckPlayedCondition(mgr, shortname)) {
                 return true;
             }
         } else if (curSym == practice_percentage) {

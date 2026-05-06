@@ -68,6 +68,7 @@ public:
     bool IsMastered() const;
     bool IsEraComplete() const;
     bool IsPlayed() const;
+    bool IsSongPlayed(Symbol song) const;
     void BookmarkCurrentProgress();
     void ResetProgressToBookmark();
     void SetSongPlayed(Symbol song, bool played);

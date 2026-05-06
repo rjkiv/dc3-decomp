@@ -174,18 +174,20 @@ bool CampaignEraProgress::IsMastered() const {
     return totalStars >= starsRequired && totalMasteredMoves >= movesRequired;
 }
 
+bool CampaignEraProgress::IsSongPlayed(Symbol song) const {
+    CampaignEraSongProgress *progress = GetEraSongProgress(song);
+    if (progress) {
+        return progress->IsSongPlayed();
+    } else {
+        return false;
+    }
+}
+
 bool CampaignEraProgress::IsEraComplete() const {
     CampaignEra *pEra = TheCampaign->GetCampaignEra(mEra);
     MILO_ASSERT(pEra, 0x163);
     Symbol song = pEra->GetDanceCrazeSong();
-    if (IsMastered()) {
-        CampaignEraSongProgress *progress = GetEraSongProgress(song);
-        bool ret = progress ? progress->IsSongPlayed() : false;
-        if (ret) {
-            return true;
-        }
-    }
-    return false;
+    return IsMastered() && IsSongPlayed(song);
 }
 
 bool CampaignEraProgress::IsPlayed() const {
@@ -490,25 +492,18 @@ int CampaignProgress::GetStars() const {
     FOREACH (it, eras) {
         CampaignEra *pEra = *it;
         MILO_ASSERT(pEra, 0x412);
-        int i4 = 0;
-        CampaignEraProgress *progress = GetEraProgress(pEra->GetName());
-        if (progress) {
-            i4 = progress->GetTotalStarsEarned();
-        }
-        stars += i4;
+        stars += GetEraStarsEarned(pEra->GetName());
     }
     return stars;
 }
 
 int CampaignProgress::GetNumCompletedEras() const {
-    int numCompleted = 0;
     auto &eras = TheCampaign->Eras();
+    int numCompleted = 0;
     FOREACH (it, eras) {
         CampaignEra *pEra = *it;
         MILO_ASSERT(pEra, 0x423);
-        CampaignEraProgress *progress = GetEraProgress(pEra->GetName());
-        bool b4 = progress ? progress->IsEraComplete() : false;
-        if (b4) {
+        if (IsEraComplete(pEra->GetName())) {
             numCompleted++;
         }
     }

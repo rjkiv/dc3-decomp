@@ -469,7 +469,8 @@ DataNode SkeletonIdentifier::OnMsg(const SkeletonIdentifiedMsg &msg) {
                     -1
                 );
             }
-        } else if (mIdentityStatus == 2 || mIdentityStatus == 3) {
+        } else if (mIdentityStatus == kIdentityStatus_Enrolling
+                   || mIdentityStatus == kIdentityStatus_Correcting) {
             mEnrollmentIdx = enrollmentIdx;
             UpdateEnrolledPlayers();
             TheGameData->SetAssociatedPadNum(
@@ -485,5 +486,5 @@ DataNode SkeletonIdentifier::OnMsg(const SkeletonIdentifiedMsg &msg) {
             }
         }
     }
-    return 0;
+    return DataNode(kDataInt, 0);
 }

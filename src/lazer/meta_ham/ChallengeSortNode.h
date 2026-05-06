@@ -1,6 +1,7 @@
 #pragma once
 #include "ChallengeSortMgr.h"
 #include "NavListNode.h"
+#include "hamobj/Difficulty.h"
 #include "obj/Data.h"
 
 class ChallengeHeaderNode : public NavListHeaderNode {
@@ -48,6 +49,7 @@ public:
     int GetChallengeScore();
     int GetSongID();
     int GetChallengerXp();
+    int GetDifficulty();
     void SetMedalIcon(UILabel *) const;
     void SetNewIcon(UILabel *) const;
     void SetBuyIcon(UILabel *) const;

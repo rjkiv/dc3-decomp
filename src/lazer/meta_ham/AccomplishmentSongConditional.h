@@ -35,4 +35,5 @@ protected:
         AccomplishmentCondition const &condition
     ) const;
     bool CheckNoFlashcardsCondition(SongStatusMgr *statusMgr, Symbol shortname) const;
+    bool CheckPlayedCondition(SongStatusMgr *statusMgr, Symbol shortname) const;
 };

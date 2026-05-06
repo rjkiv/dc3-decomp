@@ -7,6 +7,7 @@
 #include "stl/_map.h"
 #include "stl/_vector.h"
 #include "ui/UIListProvider.h"
+#include "utl/NetCacheMgr.h"
 #include "utl/Str.h"
 #include "utl/Symbol.h"
 #include <list>
@@ -51,6 +52,7 @@ public:
     std::list<StoreOffer *> *GetOffersInCart();
     bool IsOfferInCart(StoreOffer *);
     bool AllowSortToggle() { return mSorts.size() > 1; }
+    bool IsDebug();
 
     PackSongListProvider GetPackProvider() { return unk78; }
     HamStoreFilterProvider *GetFilterProvider() { return unk74; }
