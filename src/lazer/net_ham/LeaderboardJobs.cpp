@@ -56,10 +56,12 @@ void GetRows(JsonConverter &c, const JsonObject *o, std::vector<LeaderboardRow> 
         row.unk1e = c.GetValue(cur, 6)->Bool();
         const char *str = c.GetValue(cur, 8)->Str();
         if (strcmp(str, gNullStr) != 0) {
-            row.unk20 = 0;
-            while (*str != '\0') {
-                row.unk20 = row.unk20 * 10 + (*str++ - 0x30);
+            u64 total = 0;
+            for (; *str != '\0'; str++) {
+                int val = *str - 0x30;
+                total = total * 10 + val;
             }
+            row.unk20 = total;
         }
         rows->push_back(row);
     }

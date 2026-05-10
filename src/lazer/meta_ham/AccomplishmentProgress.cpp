@@ -327,45 +327,41 @@ bool AccomplishmentProgress::AddAccomplishment(Symbol s) {
         if (!pAcc) {
             MILO_NOTIFY("No Accomplishment for %s", s.Str());
             return false;
-        } else {
-            NotifyPlayerOfAccomplishment(s, pAcc->GetIconArt());
-            TheAccomplishmentMgr->AddGoalAcquisitionInfo(
-                s,
-                ThePlatformMgr.GetName(mParentProfile->GetPadNum()),
-                TheGameData->GetSong()
-            );
-            if (pAcc->HasAward()) {
-                Symbol award = pAcc->GetAward();
-                AddAward(award, s);
-            }
-            unk58.insert(s);
-            unk70.insert(s);
-            Symbol category = pAcc->GetCategory();
-            AccomplishmentCategory *pCategory =
-                TheAccomplishmentMgr->GetAccomplishmentCategory(category);
-            MILO_ASSERT(pCategory, 0xBB);
-            if (TheAccomplishmentMgr->IsCategoryComplete(mParentProfile, category)
-                && pCategory->HasAward()) {
-                AddAward(pCategory->GetAward(), category);
-            }
-            Symbol group = pCategory->GetGroup();
-            AccomplishmentGroup *pGroup =
-                TheAccomplishmentMgr->GetAccomplishmentGroup(group);
-            MILO_ASSERT(pGroup, 0xCA);
-            if (TheAccomplishmentMgr->IsGroupComplete(mParentProfile, group)
-                && pGroup->HasAward()) {
-                AddAward(pGroup->GetAward(), group);
-            }
-            if (pAcc->HasGamerpicReward()) {
-                GiveGamerpic(pAcc);
-            }
-            if (pAcc->HasAvatarAssetReward()) {
-                GiveAvatarAsset(pAcc);
-            }
-            MILO_ASSERT(mParentProfile, 0xE4);
-            mParentProfile->MakeDirty();
-            return true;
         }
+        NotifyPlayerOfAccomplishment(s, pAcc->GetIconArt());
+        TheAccomplishmentMgr->AddGoalAcquisitionInfo(
+            s, ThePlatformMgr.GetName(mParentProfile->GetPadNum()), TheGameData->GetSong()
+        );
+        if (pAcc->HasAward()) {
+            Symbol award = pAcc->GetAward();
+            AddAward(award, s);
+        }
+        unk58.insert(s);
+        unk70.insert(s);
+        Symbol category = pAcc->GetCategory();
+        AccomplishmentCategory *pCategory =
+            TheAccomplishmentMgr->GetAccomplishmentCategory(category);
+        MILO_ASSERT(pCategory, 0xBB);
+        if (TheAccomplishmentMgr->IsCategoryComplete(mParentProfile, category)
+            && pCategory->HasAward()) {
+            AddAward(pCategory->GetAward(), category);
+        }
+        Symbol group = pCategory->GetGroup();
+        AccomplishmentGroup *pGroup = TheAccomplishmentMgr->GetAccomplishmentGroup(group);
+        MILO_ASSERT(pGroup, 0xCA);
+        if (TheAccomplishmentMgr->IsGroupComplete(mParentProfile, group)
+            && pGroup->HasAward()) {
+            AddAward(pGroup->GetAward(), group);
+        }
+        if (pAcc->HasGamerpicReward()) {
+            GiveGamerpic(pAcc);
+        }
+        if (pAcc->HasAvatarAssetReward()) {
+            GiveAvatarAsset(pAcc);
+        }
+        MILO_ASSERT(mParentProfile, 0xE4);
+        mParentProfile->MakeDirty();
+        return true;
     } else {
         return false;
     }

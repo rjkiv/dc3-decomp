@@ -22,9 +22,9 @@
 #include "xdk/xapilibi/xbox.h"
 
 OptionsPanel::OptionsPanel() {
-    unk40 = nullptr;
     unk48 = 0;
     unk50 = nullptr;
+    unk40 = nullptr;
     unk3c = nullptr;
     unk58 = nullptr;
 }

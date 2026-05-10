@@ -213,27 +213,26 @@ bool AppMiniLeaderboardDisplay::UpdateLeaderboard(Symbol s) {
 }
 
 void AppMiniLeaderboardDisplay::UpdateSelfInRows() {
-    HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
-    if (pProfile) {
-        pProfile->UpdateOnlineID();
-        bool bHasOnlineID = pProfile->IsSignedIn();
+    HamProfile *pActiveProfile = TheProfileMgr.GetActiveProfile(true);
+    if (pActiveProfile) {
+        pActiveProfile->UpdateOnlineID();
+        bool bHasOnlineID = pActiveProfile->IsSignedIn();
         MILO_ASSERT(bHasOnlineID, 0x107);
-        XUID xuid = pProfile->GetOnlineID()->GetXUID();
-        SongStatusMgr *pSongStatusMgr = pProfile->GetSongStatusMgr();
+        XUID xuid = pActiveProfile->GetOnlineID()->GetXUID();
+        SongStatusMgr *pSongStatusMgr = pActiveProfile->GetSongStatusMgr();
         MILO_ASSERT(pSongStatusMgr, 0x10b);
-        bool b = false;
-        int score = pSongStatusMgr->GetScore(mSongID, b);
+        bool noFlashcards = false;
+        int score = pSongStatusMgr->GetScore(mSongID, noFlashcards);
         Difficulty diff = pSongStatusMgr->GetDifficulty(mSongID);
         if (0 < score) {
             bool check = false;
-            FOREACH (it, mLBRows) {
+            for (auto it = (mLBRows).begin(); it != (mLBRows).end(); (++it)) {
                 if (it->unk20 == xuid && score > (unsigned int)it->unkc) {
                     mLBRows.erase(it);
                     check = true;
                     break;
                 }
             }
-
             if (check) {
                 LeaderboardRow row;
                 row.unk20 = xuid;
@@ -241,25 +240,29 @@ void AppMiniLeaderboardDisplay::UpdateSelfInRows() {
                 row.unk1d = false;
                 row.unk10 = 0;
                 row.unk1e = true;
-                row.unk0 = pProfile->GetName();
-                row.unk1c = b;
+                row.unk0 = pActiveProfile->GetName();
+                row.unk1c = noFlashcards;
                 row.unk18 = diff;
-                bool b2 = false;
-                FOREACH (it, mLBRows) {
-                    if (score >= (unsigned int)it->unkc) {
-                        mLBRows.insert(it, 1, row);
-                        b2 = true;
+
+                check = false;
+                int idx = 0;
+                for (auto it = (mLBRows).begin(); it != (mLBRows).end(); (++it)) {
+                    if (score >= (unsigned int)mLBRows[idx].unkc) {
+                        mLBRows.insert(it, row);
+                        check = true;
                         break;
                     }
+                    idx++;
                 }
-                if (!b2) {
+                if (!check) {
                     row.unk14 = 1;
                     mLBRows.push_back(row);
                 }
-                int count = 0;
-                FOREACH (it, mLBRows) {
-                    it->unk14 = count;
-                    count++;
+                idx = 0;
+                int val = 1;
+                for (auto it = (mLBRows).begin(); it != (mLBRows).end(); (++it)) {
+                    mLBRows[idx].unk14 = val++;
+                    idx++;
                 }
             }
         }

@@ -808,11 +808,11 @@ int SkeletonChooser::RoundRobinForStandingStill(int i) {
     if (mNextSkelIdxToTrack >= 0) {
         Skeleton &skel = TheGestureMgr->GetSkeleton(mNextSkelIdxToTrack);
         id = skel.TrackingID();
-        unk64[0]->Update(id, TheTaskMgr.DeltaUISeconds() * 1000.0f);
+        unk64[0]->Update(skel.TrackingID(), TheTaskMgr.DeltaUISeconds() * 1000.0f);
         if (unk64[0]->StandingStill()) {
             mNextSkelIdxToTrack = -1;
         } else {
-            if (unk64[0]->RaisedMs() <= 0.0f) {
+            if (StandingStillRaisedEnough()) {
                 unk80 = 0.08f;
             } else {
                 unk80 -= TheTaskMgr.DeltaUISeconds();
@@ -840,7 +840,7 @@ int SkeletonChooser::RoundRobinForHandRaised(int i) {
     if (mNextSkelIdxToTrack >= 0) {
         Skeleton &skel = TheGestureMgr->GetSkeleton(mNextSkelIdxToTrack);
         id = skel.TrackingID();
-        unk4c[0]->Update(id, TheTaskMgr.DeltaUISeconds() * 1000.0f);
+        unk4c[0]->Update(skel.TrackingID(), TheTaskMgr.DeltaUISeconds() * 1000.0f);
         if (unk4c[0]->HandRaised()) {
             static Symbol join_in_progress_complete("join_in_progress_complete");
             static Symbol none("none");
@@ -849,7 +849,7 @@ int SkeletonChooser::RoundRobinForHandRaised(int i) {
             );
             mNextSkelIdxToTrack = -1;
         } else {
-            if (unk4c[0]->RaisedMs() <= 0.0f) {
+            if (HandRaisedRaisedEnough()) {
                 unk80 = 0.08f;
             } else {
                 unk80 -= TheTaskMgr.DeltaUISeconds();
