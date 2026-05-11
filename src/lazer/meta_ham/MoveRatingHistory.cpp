@@ -67,9 +67,9 @@ void MoveRatingHistory::AddHistory(Symbol s1, int i2) {
     Key key;
     key.unk0 = s1;
     RatingHistory &history = unk8[key];
-    history.unk0[1] = history.unk0[0];
-    history.unk0[2] = history.unk0[0];
-    history.unk0[3] = history.unk0[0];
+    for (int i = 1; i < 4; i++) {
+        history.unk0[i] = history.unk0[i - 1];
+    }
     history.unk0[0] = (MoveRating)i2;
     unk20 = true;
 }
