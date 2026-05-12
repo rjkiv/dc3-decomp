@@ -14,6 +14,11 @@ public:
     void AddItem(const T item) { mItems.push_back(item); }
     void SetNumGets(int i) { mNumGets = i; }
 
+    void ResetModes() {
+        mNumGets = 0;
+        mMode = 2;
+    }
+
     void AddItems(const std::vector<T> &itemVec) {
         for (int i = 0; i < itemVec.size(); i++) {
             T cur = itemVec[i];

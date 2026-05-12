@@ -943,18 +943,20 @@ void PartyModeMgr::DetermineSubModeSong(Symbol *pShortName, int *pSongID) {
             MILO_ASSERT_FMT(
                 rank >= 1 && rank <= 4, "%d is an invalid DJ logic intensity rank\n", rank
             );
-            *pShortName = mSubModeSongPickers[rank].GetNext();
+            *pShortName = mSubModeSongPickers[rank - 1].GetNext();
             *pSongID = TheHamSongMgr.GetSongIDFromShortName(*pShortName);
-            return;
         } else {
             MILO_NOTIFY(
                 "DJ logic data doesn't contain enough information for %d rounds, picking random song instead",
                 mRoundsPlayed
             );
+            *pShortName = unkf8.GetNext();
+            *pSongID = TheHamSongMgr.GetSongIDFromShortName(*pShortName);
         }
+    } else {
+        *pShortName = unkf8.GetNext();
+        *pSongID = TheHamSongMgr.GetSongIDFromShortName(*pShortName);
     }
-    *pShortName = unkf8.GetNext();
-    *pSongID = TheHamSongMgr.GetSongIDFromShortName(*pShortName);
 }
 
 bool PartyModeMgr::IsTeamSignedIn(int i1) {
@@ -994,18 +996,26 @@ void PartyModeMgr::AddPlayerToTeam(int team) {
 
 void PartyModeMgr::ClearTeam(int team) {
     switch (team) {
-    case 1:
-        for (int i = 0; i != mTeam1Players.size(); i++) {
-            delete mTeam1Players[i];
+    case 1: {
+        int i = mTeam1Players.size();
+        while (i != 0) {
+            i--;
+            RELEASE(mPlayers.back());
+            mPlayers.pop_back();
         }
         mTeam1Players.clear();
         break;
-    case 2:
-        for (int i = 0; i != mTeam2Players.size(); i++) {
-            delete mTeam2Players[i];
+    }
+    case 2: {
+        int i = mTeam2Players.size();
+        while (i != 0) {
+            i--;
+            RELEASE(mPlayers.back());
+            mPlayers.pop_back();
         }
         mTeam2Players.clear();
         break;
+    }
     default:
         MILO_ASSERT(team == 1 || team == 2, 0x20F);
         break;
@@ -1057,9 +1067,9 @@ int PartyModeMgr::PickNextPlayer() {
         unk1c8 = 2;
         if (unk32c) {
             DataArray *arr = unk32c->Array(mRoundsPlayed + 1);
-            int idx = 1;
-            if (mTeam2Players.size() < mTeam1Players.size())
-                idx = 0;
+            int idx = 0;
+            if (mTeam1Players.size() > mTeam2Players.size())
+                idx = 1;
             int x = arr->Int(idx);
             ret = mTeam1Players.size() + x;
         }
@@ -1193,9 +1203,10 @@ void PartyModeMgr::SetSongAndDefaults(Symbol song, Symbol mode, bool force_crew_
     Symbol altCrew;
     Symbol altChar;
     Symbol altOutfit;
+    bool checkMode = mode == dance_battle || mode == strike_a_pose;
     MetaPerformer::Current()->CalcCharacters(
         data,
-        mode == dance_battle || mode == strike_a_pose,
+        checkMode,
         (PlayerFlag)2,
         songPlayerData,
         songCrew,
@@ -1468,6 +1479,7 @@ void PartyModeMgr::FinalizeTeam(int team) {
         players = &mTeam2Players;
         picker = &unke4;
         break;
+
     default:
         MILO_ASSERT(team == 1 || team == 2, 0x1ee);
         break;
@@ -1625,6 +1637,7 @@ void PartyModeMgr::FinalizeParty() {
     static Symbol team_1_crew("team_1_crew");
     static Symbol team_2_crew("team_2_crew");
     static Symbol difficulty("difficulty");
+
     SendDataPoint(
         "crew_throwdown/finalize",
         team_1_size,
@@ -1632,9 +1645,9 @@ void PartyModeMgr::FinalizeParty() {
         team_2_size,
         team2size,
         team_1_crew,
-        mLeftTeamCrew,
+        Symbol(mLeftTeamCrew),
         team_2_crew,
-        mRightTeamCrew,
+        Symbol(mRightTeamCrew),
         difficulty,
         (int)mDifficulty
     );
@@ -1671,8 +1684,7 @@ void PartyModeMgr::ResetModes(bool b) {
             }
         }
     }
-    mModePicker.SetNumGets(0);
-    mModePicker.SetMode(2);
+    mModePicker.ResetModes();
     unk40 = false;
 }
 
