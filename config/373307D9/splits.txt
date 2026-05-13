@@ -12,6 +12,8 @@ Sections:
 	BINKDATA    type:data align:65536
 	RADDATA     type:data align:65536
 	.idata      type:data align:65536
+	.XBLD       type:data align:65536
+	.reloc      type:data align:65536
 
 xdk/xapilibi/xam.cpp:
 	.rdata      start:0x82000600 end:0x82000880 rename:.idata$5
