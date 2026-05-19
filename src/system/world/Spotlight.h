@@ -120,7 +120,14 @@ public:
     RndTransformable *GetFloorSpotTarget() const {
         return mSpotTarget ? mSpotTarget : mTarget;
     }
+    RndTransformable *GetTarget() const { return mTarget; }
+    bool GetCastShadow() const { return mTargetShadow; }
     void SetFlareEnabled(bool);
+    Hmx::Color IntensifiedColor() const {
+        const Hmx::Color &c = Color();
+        float intensity = Intensity();
+        return Hmx::Color(c.red * intensity, c.green * intensity, c.blue * intensity, 1);
+    }
 
     static void RemoveFromLists(Spotlight *);
 
