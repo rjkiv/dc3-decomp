@@ -109,9 +109,11 @@ public:
 
     const Hmx::Color &Color() const { return mColorOwner->mColor; }
     float Intensity() const { return mColorOwner->mIntensity; }
-    BeamDef GetBeam() const { return mBeam; }
+    BeamDef &GetBeam() { return mBeam; }
     RndFlare *GetFlare() const { return mFlare; }
-    ObjPtrList<RndDrawable> GetAdditionalObjects() const { return mAdditionalObjects; }
+    const ObjPtrList<RndDrawable> &GetAdditionalObjects() const {
+        return mAdditionalObjects;
+    }
     void SetFlareIsBillboard(bool);
     void SetIntensity(float);
     void SetColorIntensity(const Hmx::Color &c, float f);
@@ -121,6 +123,7 @@ public:
         return mSpotTarget ? mSpotTarget : mTarget;
     }
     RndTransformable *GetTarget() const { return mTarget; }
+    RndMat *LensMesh() const { return mLensMaterial; }
     bool GetCastShadow() const { return mTargetShadow; }
     void SetFlareEnabled(bool);
     Hmx::Color IntensifiedColor() const {
@@ -130,6 +133,7 @@ public:
     }
 
     static void RemoveFromLists(Spotlight *);
+    static RndMesh *GetDiskMesh() { return sDiskMesh; }
 
 protected:
     Spotlight();

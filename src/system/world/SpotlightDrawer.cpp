@@ -1,13 +1,17 @@
 #include "world/SpotlightDrawer.h"
 #include "math/Color.h"
+#include "math/Mtx.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/System.h"
+#include "rndobj/BoxMap.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Env.h"
+#include "rndobj/MultiMesh.h"
 #include "rndobj/Rnd.h"
 #include "rndobj/Stats_NG.h"
 #include "utl/BinStream.h"
+#include "utl/Loader.h"
 #include "world/Spotlight.h"
 
 RndEnviron *SpotlightDrawer::sEnviron;
@@ -255,7 +259,34 @@ void SpotlightDrawer::DrawShadow() {
     }
 }
 
-// DrawMeshVec
+void SpotlightDrawer::DrawMeshVec(std::vector<SpotMeshEntry> &entries) {
+    if (entries.size() != 0) {
+        SpotMeshEntry *meshIter = entries.begin();
+        RndMesh *currMesh = meshIter->mMesh;
+        RndMultiMesh *multiMesh = currMesh->CreateMultiMesh();
+        multiMesh->Instances().push_back(meshIter->mXfm);
+        RndEnviron *currEnv = meshIter->mEnv;
+        currEnv->Select(nullptr);
+        SpotMeshEntry *const meshEnd = entries.end();
+        for (; meshIter != meshEnd; ++meshIter) {
+            bool changeEnv = meshIter->mEnv != currEnv;
+            bool changeMesh = meshIter->mMesh != currMesh;
+            if (changeEnv || changeMesh) {
+                multiMesh->DrawShowing();
+                if (changeEnv) {
+                    currEnv = meshIter->mEnv;
+                    currEnv->Select(nullptr);
+                }
+                if (changeMesh) {
+                    currMesh = meshIter->mMesh;
+                    multiMesh = meshIter->mMesh->CreateMultiMesh();
+                }
+            }
+            multiMesh->Instances().push_back(meshIter->mXfm);
+        }
+        multiMesh->DrawShowing();
+    }
+}
 
 void SpotlightDrawer::DrawAdditional(
     SpotlightDrawer::SpotlightEntry *spotIter,
@@ -273,7 +304,22 @@ void SpotlightDrawer::DrawAdditional(
     }
 }
 
-// DrawLenses
+void SpotlightDrawer::DrawLenses(
+    SpotlightDrawer::SpotlightEntry *spotIter,
+    SpotlightDrawer::SpotlightEntry *const &spotEnd
+) {
+    MILO_ASSERT(spotIter != spotEnd, 0x2B1);
+    for (; spotIter != spotEnd; ++spotIter) {
+        Spotlight *sl = spotIter->mLight;
+        // if (sl->LensMesh()) {
+        if (Spotlight::GetDiskMesh()) {
+            MILO_ASSERT(sl->LensMesh(), 0x2B9);
+            Spotlight::GetDiskMesh()->SetMat(sl->LensMesh());
+            Spotlight::GetDiskMesh()->Draw();
+        }
+        // }
+    }
+}
 
 void SpotlightDrawer::DrawBeams(
     SpotlightDrawer::SpotlightEntry *spotIter,
@@ -283,8 +329,10 @@ void SpotlightDrawer::DrawBeams(
     for (; spotIter != spotEnd; ++spotIter) {
         Spotlight *sl = spotIter->mLight;
         Spotlight::BeamDef &def = sl->GetBeam();
-        MILO_ASSERT(def.mBeam->Showing(), 0x2e4);
-        def.mBeam->DrawShowing();
+        if (def.mBeam) {
+            MILO_ASSERT(def.mBeam->Showing(), 0x2e4);
+            def.mBeam->DrawShowing();
+        }
     }
 }
 
@@ -344,6 +392,68 @@ void SpotlightDrawer::ClearLights() {
     sHaveAdditionals = false;
     sHaveLenses = false;
     sHaveFlares = false;
+}
+
+void SpotlightDrawer::UpdateBoxMap() {
+    if (sNeedBoxMap != TheRnd.GetFrameID()) {
+        RndEnviron::GetGlobalLighting().Clear();
+        if (mParams.mLightingInfluence > 0) {
+            ApplyLightingApprox(
+                RndEnviron::GetGlobalLighting(), mParams.mLightingInfluence
+            );
+        }
+        sNeedBoxMap = TheRnd.GetFrameID();
+    }
+}
+
+void SpotlightDrawer::ApplyLightingApprox(BoxMapLighting &boxMap, float f2) const {
+    MILO_ASSERT(boxMap.NumQueuedLights() == 0, 0x20B);
+    auto it = sLights.begin();
+    auto itEnd = sLights.end();
+    for (; it != itEnd; ++it) {
+        Spotlight *sl = it->mLight;
+        const Transform &xfm = sl->WorldXfm();
+        Hmx::Color color(sl->Color());
+        Multiply(color, f2, color);
+        Multiply(color, sl->Intensity(), color);
+        BoxMapLighting::LightParams_Spot *params;
+        if (!boxMap.ParamsAt(params)) {
+            break;
+        }
+        params->unk40 = xfm.v;
+        params->unk0 = xfm.m.y;
+        params->mColor = color;
+        auto &beam = sl->GetBeam();
+        params->unk54 = beam.mTopRadius;
+        params->unk58 = beam.mBottomRadius * 2;
+        params->unk50 = beam.mLength * 2;
+        boxMap.CacheData(*params);
+    }
+}
+
+bool SpotlightDrawer::DrawNGSpotlights() {
+    return GetGfxMode() == kNewGfx && TheLoadMgr.GetPlatform() != kPlatformPC;
+}
+
+void SpotlightDrawer::RemoveFromLists(Spotlight *spot) {
+    for (auto it = sLights.begin(); it != sLights.end();) {
+        if (it->mLight == spot) {
+            it = sLights.erase(it);
+        } else
+            ++it;
+    }
+    for (auto it = sCans.begin(); it != sCans.end();) {
+        if (it->mLight == spot) {
+            it = sCans.erase(it);
+        } else
+            ++it;
+    }
+    for (auto it = sShadowSpots.begin(); it != sShadowSpots.end();) {
+        if (*it == spot) {
+            it = sShadowSpots.erase(it);
+        } else
+            ++it;
+    }
 }
 
 #pragma endregion

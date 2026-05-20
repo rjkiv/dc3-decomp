@@ -65,6 +65,7 @@ public:
     bool UseColorAdjust() const { return mUseColorAdjust; }
     float FadeStart() const { return mFadeStart; }
     float FadeEnd() const { return mFadeEnd; }
+    static BoxMapLighting &GetGlobalLighting() { return sGlobalLighting; }
 
 protected:
     RndEnviron();

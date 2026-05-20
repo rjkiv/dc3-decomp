@@ -34,10 +34,14 @@ public:
     // size 0x50
     class SpotMeshEntry { // from RB2 DWARF
     public:
-        SpotMeshEntry() : unk0(0), unk4(0), unk8(0) {}
-        RndMesh *unk0; // 0x0 - mMesh
-        RndMesh *unk4; // 0x4 - mEnv
-        Spotlight *unk8; // 0x8 - mLight
+        SpotMeshEntry() : mMesh(0), mEnv(0), mLight(0) {}
+        SpotMeshEntry &operator=(const SpotMeshEntry &e) {
+            memcpy(this, &e, sizeof(SpotMeshEntry));
+            return *this;
+        }
+        RndMesh *mMesh; // 0x0
+        RndEnviron *mEnv; // 0x4
+        Spotlight *mLight; // 0x8
         unsigned int mPACKING; // 0xc
         Transform mXfm; // 0x10
     };
@@ -80,6 +84,7 @@ public:
 
     static SpotlightDrawer *Current() { return sCurrent; }
     static bool DrawNGSpotlights();
+    static void RemoveFromLists(Spotlight *);
 
 protected:
     // RndDrawable
@@ -130,11 +135,11 @@ public:
     bool operator()(
         const SpotlightDrawer::SpotMeshEntry &e1, const SpotlightDrawer::SpotMeshEntry &e2
     ) const {
-        if (e1.unk4 < e2.unk4)
+        if (e1.mEnv < e2.mEnv)
             return true;
-        else if (e1.unk4 > e2.unk4)
+        else if (e1.mEnv > e2.mEnv)
             return false;
         else
-            return e1.unk0 < e2.unk0;
+            return e1.mMesh < e2.mMesh;
     }
 };
