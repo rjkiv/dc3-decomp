@@ -623,83 +623,76 @@ INIT_REVS(0x34, 0)
 BEGIN_LOADS(CamShot)
     LOAD_REVS(bs)
     ASSERT_REVS(0x34, 0)
-    if (mShotOver) {
+    bool hidden = mHidden;
+    if (hidden) {
         UnHide();
     }
     float f19 = 0;
     float f3f4 = 0;
-    if (d.rev > 0) {
+    if (dRev > 0) {
         Hmx::Object::Load(bs);
         RndAnimatable::Load(bs);
     }
-    if (d.rev > 0x32) {
+    if (dRev > 0x32) {
         RndTransformable::Load(bs);
     }
-    if (d.rev > 0xC) {
+    if (dRev > 0xC) {
         d >> mKeyframes;
         d >> mLooping;
-        if (d.rev > 0x1E) {
-            d >> mLoopKeyframe;
+        if (dRev > 0x1E) {
+            bs >> mLoopKeyframe;
         } else {
             mLoopKeyframe = false;
         }
-        if (d.rev < 0x28) {
-            d >> f3f4;
+        if (dRev < 0x28) {
+            bs >> f3f4;
         }
-        d >> mNearPlane;
-        d >> mFarPlane;
+        bs >> mNearPlane >> mFarPlane;
         d >> mUseDepthOfField;
-        d >> mFilter;
-        d >> mClampHeight;
+        bs >> mFilter >> mClampHeight;
     } else {
-        mLoopKeyframe = false;
-        mNearPlane = 0;
+        mLooping = false;
+        mLoopKeyframe = 0;
 
         float fov1, fov2;
-        d >> fov1;
-        d >> fov2;
-        if (d.rev < 9) {
+        bs >> fov1 >> fov2;
+        if (dRev < 9) {
             fov1 = ConvertFov(fov1, 0.75f);
             fov2 = ConvertFov(fov2, 0.75f);
         }
         Transform tf1;
         Transform tf2;
-        d >> tf1;
-        d >> tf2;
+        bs >> tf1 >> tf2;
         Vector2 vec1;
         Vector2 vec2;
-        d >> vec1;
-        d >> vec2;
-        if (d.rev < 0x28)
-            d >> f3f4;
+        bs >> vec1;
+        bs >> vec2;
+        if (dRev < 0x28)
+            bs >> f3f4;
 
         float fdummy1;
-        d >> fdummy1;
-        d >> mNearPlane;
-        d >> mFarPlane;
+        bs >> fdummy1 >> mNearPlane >> mFarPlane;
         d >> mUseDepthOfField;
         float someotherfloat = 1.0f;
-        if (d.rev > 9) {
+        if (dRev > 9) {
             float newblurdepth;
             float ff, ff2;
-            d >> newblurdepth;
-            d >> ff;
-            d >> ff2;
+            bs >> newblurdepth >> ff >> ff2;
             someotherfloat = 1.0f - newblurdepth;
         }
-        if (d.rev < 4) {
+        if (dRev < 4) {
             bool ratebool;
             d >> ratebool;
             SetRate((Rate)!ratebool);
         }
-        d >> mFilter;
-        if (d.rev < 7)
+        bs >> mFilter;
+        if (dRev < 7)
             mFilter = 0.9f;
-        d >> mClampHeight;
+        bs >> mClampHeight;
         ObjPtrList<RndTransformable> pList(this);
         ObjPtr<RndTransformable> ptr(this);
         int listsize;
-        d >> listsize;
+        bs >> listsize;
         for (int i = 0; i < listsize; i++) {
             RndTransformable *subpart = LoadSubPart(d, this);
             if (subpart)
@@ -707,7 +700,7 @@ BEGIN_LOADS(CamShot)
         }
         ptr = LoadSubPart(d, this);
         bool somebool = false;
-        if (d.rev > 10)
+        if (dRev > 10)
             d >> somebool;
         CamShotFrame csf1(this);
         CamShotFrame csf2(this);
@@ -741,23 +734,23 @@ BEGIN_LOADS(CamShot)
         mKeyframes.push_back(csf2);
     }
 
-    d >> mPath;
-    if (d.rev > 1 && d.rev < 0x2D) {
+    bs >> mPath;
+    if (dRev > 1 && dRev < 0x2D) {
         float f2b;
-        d >> f2b;
+        bs >> f2b;
     }
-    if (d.rev > 2) {
-        d >> mCategory;
-        if (d.rev < 0x26) {
+    if (dRev > 2) {
+        bs >> mCategory;
+        if (dRev < 0x26) {
             float f26;
-            d >> f26;
+            bs >> f26;
         }
     }
-    if (d.rev > 0x22) {
-        d >> (int &)mPlatform;
-    } else if (d.rev > 0x21) {
+    if (dRev > 0x22) {
+        bs >> (int &)mPlatform;
+    } else if (dRev > 0x21) {
         int state;
-        d >> state;
+        bs >> state;
         if (state == 1) {
             mPlatform = kPlatformXBox;
         } else if (state == 2) {
@@ -766,35 +759,36 @@ BEGIN_LOADS(CamShot)
             mPlatform = kPlatformNone;
         }
     }
-    if (d.rev < 1) {
+    if (dRev < 1) {
         RndAnimatable::Load(bs);
     }
     CamShotCrowd csc(this);
 
-    if (d.rev > 4 && d.rev < 42) {
+    if (dRev > 4 && dRev < 42) {
         d >> csc.unk18;
     }
     int loc240 = -1;
-    if (d.rev >= 8 && d.rev < 42)
-        d >> loc240;
-    if (d.rev > 5) {
+    if (dRev >= 8 && dRev < 42)
+        bs >> loc240;
+    if (dRev > 5) {
         mGenHideVector.clear();
-        mShowList.clear();
+        mGenHideList.clear();
         mHideList.clear();
-        if (d.rev <= 0x2F || (bs.Cached() && d.rev < 0x32)) {
-            d >> mHideList;
+        if (dRev <= 0x2F || (bs.Cached() && dRev < 0x32)) {
+            mHideList.Load(bs, false, nullptr, true);
         } else {
-            d >> mHideList;
-            d >> mShowList;
+            mHideList.Load(bs, false, nullptr, true);
+            std::vector<RndDrawable *> draws;
+            LoadDrawables(bs, draws, Dir());
         }
     }
-    if (d.rev > 0x1B) {
-        d >> mGenHideList;
+    if (dRev > 0x1B) {
+        mShowList.Load(bs, false, nullptr, true);
     }
 
-    if (d.rev > 0xB) {
-        if (d.rev < 0x2A)
-            d >> csc.mCrowd;
+    if (dRev > 0xB) {
+        if (dRev < 0x2A)
+            bs >> csc.mCrowd;
     } else {
         const DataNode *prop = Property("hide_crowd", false);
         if (!prop || prop->Int() == 0) {
@@ -804,23 +798,21 @@ BEGIN_LOADS(CamShot)
             }
         }
     }
-    if (d.rev > 32 && d.rev < 42)
-        d >> (int &)csc.mCrowdRotate;
-    if (d.rev >= 8 && d.rev < 42) {
+    if (dRev > 32 && dRev < 42)
+        bs >> (int &)csc.mCrowdRotate;
+    if (dRev >= 8 && dRev < 42) {
         if (csc.mCrowd) {
             if (loc240 != csc.mCrowd->GetModifyStamp())
                 csc.unk18.clear();
         } else if (loc240 != -1)
             csc.unk18.clear();
     }
-    if (d.rev == 0xE) {
+    if (dRev == 0xE) {
         float f244, f248, f24c;
-        d >> f244;
-        d >> f248;
-        d >> f24c;
+        bs >> f244 >> f248 >> f24c;
     }
 
-    if (d.rev > 15 && d.rev < 18) {
+    if (dRev > 15 && dRev < 18) {
         float f250, f254;
         bs >> f250;
         bs >> f254;
@@ -829,49 +821,47 @@ BEGIN_LOADS(CamShot)
             mKeyframes[i].mShakeNoiseFreq = f250;
         }
     }
-    if (d.rev > 0x10 && d.rev < 0x12) {
+    if (dRev > 0x10 && dRev < 0x12) {
         Vector2 v210;
         bs >> v210;
         for (int i = 0; i != mKeyframes.size(); i++) {
             mKeyframes[i].mShakeMaxAngle = v210;
         }
     }
-    if (d.rev > 0x13)
-        d >> mGlowSpot;
-    if (d.rev > 0x1D)
-        d >> mDrawOverrides;
-    if (d.rev > 0x1F)
-        d >> mPostProcOverrides;
-    if (d.rev > 0x23 && !(d.rev >= 47 && d.rev <= 48)) {
+    if (dRev > 0x13)
+        bs >> mGlowSpot;
+    if (dRev > 0x1D)
+        bs >> mDrawOverrides;
+    if (dRev > 0x1F)
+        bs >> mPostProcOverrides;
+    if (dRev > 0x23 && !(dRev >= 47 && dRev <= 48)) {
         d >> mPS3PerPixel;
     }
-    if (d.rev > 0x24)
-        d >> mFlags;
+    if (dRev > 0x24)
+        bs >> mFlags;
     Symbol s258;
-    if (d.rev > 39 && d.rev < 43)
-        d >> s258;
-    if (d.rev < 0x2A) {
+    if (dRev > 39 && dRev < 43)
+        bs >> s258;
+    if (dRev < 0x2A) {
         if (csc.mCrowd)
             mCrowds.push_back(csc);
     } else
         d >> mCrowds;
-    if (d.rev > 0x2A)
-        d >> mAnims;
-    if (d.rev > 0x33) {
-        d >> mCrowdStateOverride;
+    if (dRev > 0x33) {
+        bs >> mCrowdStateOverride;
     } else {
         static Symbol none("none");
         mCrowdStateOverride = none;
     }
-    if (d.rev > 0x2A) {
-        d >> mAnims;
+    if (dRev > 0x2A) {
+        bs >> mAnims;
     }
 
     if (!s258.Null()) {
         mAnims.push_back(Dir()->Find<RndAnimatable>(s258.Str(), false));
     }
     CacheFrames();
-    if (mShotOver)
+    if (hidden)
         DoHide();
 END_LOADS
 
@@ -882,9 +872,8 @@ void CamShot::StartAnim() {
     Export(msg, true);
     WorldDir *crowdDir = GetCrowdDir();
     if (crowdDir) {
-        CameraManager *camMgr = crowdDir->GetCameraManager();
-        if (camMgr) {
-            camMgr->SetCrowds(mCrowds);
+        if (crowdDir->GetCameraManager()) {
+            crowdDir->GetCameraManager()->SetCrowds(mCrowds);
         }
         if (TheHamWardrobe) {
             TheHamWardrobe->ForceCrowdAnimationStart(mCrowdStateOverride);
@@ -1180,9 +1169,7 @@ RndCam *CamShot::GetCam() {
     RndCam *ret = nullptr;
     WorldDir *crowdDir = GetCrowdDir();
     if (crowdDir) {
-        if (crowdDir->Cam()) {
-            ret = crowdDir->Cam();
-        }
+        ret = crowdDir->Cam();
         if (!ret) {
             MILO_NOTIFY_ONCE("%s: paneldir but no cam", PathName(crowdDir));
         }
@@ -1195,7 +1182,7 @@ RndCam *CamShot::GetCam() {
 void CamShot::ClearCrowds() {
     for (auto it = mCrowds.begin(); it != mCrowds.end(); it) {
         if (!it->mCrowd) {
-            it = mCrowds.erase(it);
+            mCrowds.erase(it);
         } else {
             ++it;
         }
