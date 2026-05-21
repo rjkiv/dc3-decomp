@@ -186,6 +186,8 @@ public:
     BinStreamRev(BinStream &bs, int revs)
         : rev(getHmxRev(revs)), altRev(getAltRev(revs)), stream(bs) {}
 
+    BinStreamRev(BinStream &bs, int main, int alt) : rev(main), altRev(alt), stream(bs) {}
+
     BinStreamRev &operator>>(bool &b) {
         unsigned char uc;
         *this >> uc;
