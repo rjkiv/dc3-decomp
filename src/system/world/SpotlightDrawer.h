@@ -84,6 +84,7 @@ public:
 
     static SpotlightDrawer *Current() { return sCurrent; }
     static bool DrawNGSpotlights();
+    static void DrawLight(Spotlight *);
     static void RemoveFromLists(Spotlight *);
 
 protected:

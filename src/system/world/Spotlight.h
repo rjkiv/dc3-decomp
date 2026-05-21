@@ -125,6 +125,7 @@ public:
     RndTransformable *GetTarget() const { return mTarget; }
     RndMat *LensMesh() const { return mLensMaterial; }
     bool GetCastShadow() const { return mTargetShadow; }
+    RndTransformable *ResolveTarget();
     void SetFlareEnabled(bool);
     Hmx::Color IntensifiedColor() const {
         const Hmx::Color &c = Color();
@@ -173,7 +174,7 @@ protected:
     /** "Height offset of the floor disc" */
     float mSpotHeight; // 0x12c
     Transform mFloorSpotXfm; // 0x130
-    Transform unk170; // 0x170
+    Transform mLensXfm; // 0x170
     /** "Color of the spotlight" */
     Hmx::Color mColor; // 0x1b0
     /** "Intensity of the spotlight" */

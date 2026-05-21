@@ -41,6 +41,10 @@ public:
     Hmx::Rect &GetArea() { return mArea; }
     void SetOcclusionResult(float f) { unk144 = f; }
     void SetOcclusionReady(bool b) { unk148 = b; }
+    void SetUnks(bool b1, bool b2) {
+        unk148 = b1;
+        mVisible = b2;
+    }
 
 protected:
     RndFlare();

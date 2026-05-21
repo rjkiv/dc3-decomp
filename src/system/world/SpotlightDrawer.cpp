@@ -216,28 +216,30 @@ void SpotlightDrawer::DrawWorld() {
             if (GetGfxMode() == kOldGfx) {
                 DrawShadow();
             }
-            auto it = sLights.begin();
-            auto itEnd = sLights.end();
-            while (it != itEnd) {
-                Hmx::Color c = it->mLight->IntensifiedColor();
-                SpotlightEntry *e1 = it;
-                SpotlightEntry *e2 = it;
-                for (; e2 != itEnd && e2->mPackedColor == e1->mPackedColor; ++e2)
+            SpotlightEntry *spotIter = sLights.begin();
+            SpotlightEntry *const spotEnd = sLights.end();
+            while (spotIter != spotEnd) {
+                Hmx::Color envColor = spotIter->mLight->IntensifiedColor();
+                SpotlightEntry *const colorBegin = spotIter;
+                SpotlightEntry *colorEnd = spotIter;
+                for (; colorEnd != spotEnd
+                     && colorEnd->mPackedColor == colorBegin->mPackedColor;
+                     ++colorEnd)
                     ;
-                SetAmbientColor(c);
+                SetAmbientColor(envColor);
                 if (sHaveAdditionals) {
-                    DrawAdditional(it, e2);
+                    DrawAdditional(spotIter, colorEnd);
                 }
                 if (sHaveLenses) {
-                    DrawAccessories<LensExtract>(e1, e2);
+                    DrawAccessories<LensExtract>(colorBegin, colorEnd);
                 }
                 if (!DrawNGSpotlights() && !sNoBeams && TheRnd.DrawMode() != 5) {
-                    DrawBeams(it, e2);
+                    DrawBeams(spotIter, colorEnd);
                 }
                 if (sHaveFlares) {
-                    DrawFlares(it, e2);
+                    DrawFlares(spotIter, colorEnd);
                 }
-                it = e2;
+                spotIter = colorEnd;
             }
             if (env) {
                 env->Select(curPosSet);

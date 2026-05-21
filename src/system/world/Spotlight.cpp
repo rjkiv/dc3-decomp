@@ -9,12 +9,15 @@
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "rnddx9/Mesh.h"
+#include "rndobj/Cam.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Env.h"
 #include "rndobj/Flare.h"
 #include "rndobj/Group.h"
 #include "rndobj/Mat.h"
+#include "rndobj/Mesh.h"
 #include "rndobj/Poll.h"
+#include "rndobj/Rnd.h"
 #include "rndobj/Trans.h"
 #include "utl/BinStream.h"
 #include "utl/Loader.h"
@@ -137,7 +140,7 @@ Spotlight::Spotlight()
       mAnimateColorFromPreset(true), mAnimateOrientationFromPreset(true), unk36e(false) {
     mFlare->SetTransParent(this, false);
     mFloorSpotXfm.Reset();
-    unk170.Reset();
+    mLensXfm.Reset();
     mLightCanXfm.Reset();
     unk310.Identity();
     unk35c.Zero();
@@ -496,6 +499,106 @@ bool Spotlight::MakeWorldSphere(Sphere &s, bool b) {
         return false;
 }
 
+void Spotlight::Mats(std::list<class RndMat *> &mats, bool b2) {
+    if (mLensMaterial && b2) {
+        mats.push_back(mLensMaterial);
+        for (int i = 0; i < 2U; i++) {
+            MatShaderOptions opts;
+            opts.SetLast5(0xC);
+            opts.mTempMat = true;
+            opts.SetHasAOCalc(i);
+            RndMat *mat = Hmx::Object::New<RndMat>();
+            mat->Copy(mLensMaterial, kCopyDeep);
+            mat->SetShaderOpts(opts);
+            mats.push_back(mat);
+        }
+    }
+    if (mSpotMaterial) {
+        mats.push_back(mSpotMaterial);
+    }
+    if (mLightCanMesh && mLightCanMesh->Mat()) {
+        MatShaderOptions opts;
+        opts.SetLast5(0xC);
+        RndMat *lightMat = mLightCanMesh->Mat();
+        lightMat->SetShaderOpts(opts);
+        mats.push_back(lightMat);
+        if (b2) {
+            for (int i = 0; i < 2U; i++) {
+                MatShaderOptions opts;
+                opts.SetLast5(0xC);
+                opts.mTempMat = true;
+                opts.SetHasAOCalc(i);
+                RndMat *mat = Hmx::Object::New<RndMat>();
+                mat->Copy(mLightCanMesh->Mat(), kCopyDeep);
+                mat->SetShaderOpts(opts);
+                mats.push_back(mat);
+            }
+        }
+    }
+    if (mBeam.mMat) {
+        mats.push_back(mBeam.mMat);
+    }
+}
+
+void Spotlight::DrawShowing() {
+    START_AUTO_TIMER("spotlight");
+    if (mLightCanSort && mLightCanMesh) {
+        mLightCanMesh->SetWorldXfm(mLightCanXfm);
+        Sphere s(mLightCanMesh->GetSphere());
+        if (s.radius > 0) {
+            Multiply(s, mLightCanXfm, s);
+            if (!(s > RndCam::Current()->WorldFrustum())) {
+                mLightCanMesh->DrawShowing();
+            }
+        }
+    }
+    if (TheRnd.DrawMode() == 0) {
+        SpotlightDrawer::DrawLight(this);
+        return;
+    } else if (!unk2f0) {
+        return;
+    } else {
+        UpdateTransforms();
+        Hmx::Color c48(Color());
+        Multiply(c48, Intensity(), c48);
+        sEnviron->SetAmbientColor(c48);
+        RndEnvironTracker tracker(sEnviron, nullptr);
+        FOREACH (it, mAdditionalObjects) {
+            MILO_ASSERT(*it != this, 0x3E3);
+            if (*it != this)
+                (*it)->DrawShowing();
+        }
+        if (mLensMaterial) {
+            MILO_ASSERT(sDiskMesh, 0x3ED);
+            sDiskMesh->SetWorldXfm(mLensXfm);
+            sDiskMesh->SetMat(mLensMaterial);
+            sDiskMesh->DrawShowing();
+        }
+        RndMesh *beam = mBeam.mBeam;
+        if (beam && TheRnd.DrawMode() != 5) {
+            beam->DrawShowing();
+        }
+        if (mFlare && mFlare->GetMat()) {
+            mFlare->Draw();
+        }
+        if (mTarget) {
+            if (mTargetShadow) {
+                RndDrawable *draw = dynamic_cast<RndDrawable *>(mTarget.Ptr());
+                if (draw) {
+                    draw->DrawShadow(WorldXfm(), 3);
+                }
+            }
+            if (DoFloorSpot()) {
+                MILO_ASSERT(sDiskMesh, 0x40F);
+                sDiskMesh->SetWorldXfm(mFloorSpotXfm);
+                sDiskMesh->SetMat(mSpotMaterial);
+                sDiskMesh->DrawShowing();
+            }
+        }
+        return;
+    }
+}
+
 void Spotlight::ListDrawChildren(std::list<RndDrawable *> &draws) {
     if (mLightCanMesh)
         draws.push_back(mLightCanMesh);
@@ -536,12 +639,61 @@ void Spotlight::UpdateBounds() {
     UpdateSphere();
 }
 
+RndTransformable *Spotlight::ResolveTarget() {
+    if (!unk2f0)
+        return nullptr;
+    if (mTarget)
+        return mTarget;
+    return nullptr;
+}
+
+void Spotlight::Poll() {
+    if (!TheLoadMgr.EditMode()) {
+        if (!Showing() || mIntensity == 0) {
+            return;
+        }
+    }
+    Hmx::Matrix3 m38;
+    if (!unk36e) {
+        RndTransformable *target = ResolveTarget();
+        if (!target
+            || (!TheLoadMgr.EditMode() && !unk340 && target->WorldXfm().v == unk35c)) {
+            if (!target && !mAnimateOrientationFromPreset && !DoFloorSpot()) {
+                UpdateTransforms();
+                return;
+            }
+            CheckFloorSpotTransform();
+            unk310 = WorldXfm().m;
+            UpdateSlaves();
+            return;
+        }
+        unk35c = target->WorldXfm().v;
+        CalculateDirection(target, m38);
+        if (!unk340 && mDampingConstant != 1) {
+            Interp(unk310, m38, mDampingConstant * TheTaskMgr.DeltaSeconds(), m38);
+        } else {
+            unk340 = false;
+        }
+    } else {
+        MakeRotMatrix(unk370, m38);
+    }
+    SetLocalRot(m38);
+    unk310 = m38;
+    UpdateTransforms();
+    unk36e = false;
+}
+
 void Spotlight::SetFlareIsBillboard(bool b) {
     mFlareVisibilityTest = b;
     UpdateFlare();
 }
 
-void Spotlight::SetColor(int packed) { SetColorIntensity(packed, Intensity()); }
+void Spotlight::SetColor(int packed) {
+    Hmx::Color c;
+    c.Unpack(packed);
+    c.alpha = 1;
+    SetColorIntensity(c, Intensity());
+}
 void Spotlight::SetIntensity(float f) { SetColorIntensity(Color(), f); }
 
 void Spotlight::SetColorIntensity(const Hmx::Color &c, float f) {
@@ -589,13 +741,14 @@ void Spotlight::BuildBoard() {
 
 void Spotlight::UpdateFlare() {
     if (!mFlareEnabled) {
-        mFlare->SetVisible(false);
+        mFlare->SetUnks(true, false);
         mFlare->SetPointTest(false);
     } else if (mFlareVisibilityTest) {
-        mFlare->SetVisible(true);
+        mFlare->SetUnks(true, true);
         mFlare->SetPointTest(false);
-    } else
+    } else {
         mFlare->SetPointTest(true);
+    }
 }
 
 bool Spotlight::DoFloorSpot() const {
@@ -620,8 +773,9 @@ void Spotlight::SetFlareEnabled(bool b) {
 
 void Spotlight::CloseSlaves() {
     FOREACH (it, mSlaves) {
-        if (*it)
-            (*it)->SetShadowOverride(nullptr);
+        RndLight *cur = *it;
+        if (cur)
+            cur->SetShadowOverride(nullptr);
     }
 }
 
@@ -696,6 +850,17 @@ void Spotlight::Generate() {
         UpdateBounds();
         UpdateSphere();
     }
+}
+
+void Spotlight::BuildCone(Spotlight::BeamDef &def) {
+    MILO_ASSERT(!SpotlightDrawer::DrawNGSpotlights(), 0x5B6);
+    def.mIsCone = true;
+    def.mBeam = Hmx::Object::New<RndMesh>();
+    RndMesh::VertVector &verts = def.mBeam->Verts();
+    std::vector<RndMesh::Face> &faces = def.mBeam->Faces();
+    verts.resize(0x30);
+    faces.resize(0x3c);
+    // more
 }
 
 void Spotlight::BuildNGShaft(Spotlight::BeamDef &def) {
