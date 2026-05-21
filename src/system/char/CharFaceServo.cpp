@@ -3,7 +3,10 @@
 #include "char/CharBonesMeshes.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
+#include "os/Debug.h"
 #include "rndobj/Poll.h"
+
+void charfaceservounusedlmao() { MILO_NOTIFY_ONCE("this isn't used lol "); }
 
 CharFaceServo::CharFaceServo()
     : mClips(this), mBaseClip(this), mBlinkClipLeft(this), mBlinkClipLeft2(this),

@@ -3,6 +3,7 @@
 #include "utl/TextFileStream.h"
 #include <list>
 #include <string.h>
+#include "utl/Std.h"
 
 typedef void ExitCallbackFunc(void);
 typedef void FixedStringFunc(FixedString &);
@@ -172,7 +173,20 @@ extern DebugNotifyOncePrinter TheDebugNotifyOncePrinter;
 #define MILO_PRINT_ONCE(...) TheDebugNotifyOncePrinter << MakeString(__VA_ARGS__)
 
 namespace {
-    bool AddToStrings(const char *name, std::list<String> &strings);
+    bool AddToStrings(const char *name, std::list<String> &strings) {
+        if (strings.size() > 16) {
+            return false;
+        }
+
+        FOREACH (it, strings) {
+            if (streq(it->c_str(), name)) {
+                return false;
+            }
+        }
+
+        strings.push_back(name);
+        return true;
+    }
 }
 
 class DebugNotifyOncer {
