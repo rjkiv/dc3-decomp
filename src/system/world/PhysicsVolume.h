@@ -90,6 +90,7 @@ public:
 
     void SetActiveState(bool);
     void CreatePhysicsVolume(class PhysicsManager *);
+    void SetCollisionFilter(CollisionFilter);
 
     static bool sShowing;
 
