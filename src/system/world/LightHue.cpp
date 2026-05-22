@@ -121,14 +121,10 @@ void LightHue::Sync() {
                         s,
                         l
                     );
-                    Key<Vector3> &curKey = mKeys[i];
-                    curKey.frame = (float)i / (float)bmap.Width();
-                    float &x = mKeys[i].value.x;
-                    x = h;
-                    float &y = mKeys[i].value.y;
-                    y = s;
-                    float &z = mKeys[i].value.z;
-                    z = l;
+                    mKeys[i].frame = (float)i / (float)bmap.Width();
+                    mKeys[i].value.x = h;
+                    mKeys[i].value.y = s;
+                    mKeys[i].value.z = l;
                 }
             }
             MemFree(buffer);

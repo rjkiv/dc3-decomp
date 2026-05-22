@@ -4,6 +4,8 @@
 #include "os/Debug.h"
 #include <cmath>
 
+Interpolator::~Interpolator() {}
+
 void ATanInterpolator::Sync() {
     float run = mP1.x - mP0.x;
     float slope;

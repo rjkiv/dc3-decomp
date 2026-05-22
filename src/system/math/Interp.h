@@ -8,7 +8,7 @@ public:
     virtual float Eval(float) const = 0;
     virtual float ClampEval(float f) const { return Eval(f); }
     virtual void Reset(const DataArray *) = 0;
-    virtual ~Interpolator() {} // generic dtor
+    virtual ~Interpolator(); // generic dtor
 
     MEM_OVERLOAD(Interpolator, 0x28);
 
@@ -18,7 +18,6 @@ protected:
 class ATanInterpolator : public Interpolator {
 public:
     ATanInterpolator(const char *, const char *);
-    virtual ~ATanInterpolator() {}
     virtual float Eval(float) const;
     virtual void Reset(const DataArray *);
 

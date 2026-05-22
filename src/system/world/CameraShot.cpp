@@ -1,5 +1,6 @@
 #include "world/CameraShot.h"
 #include "hamobj/HamWardrobe.h"
+#include "math/Interp.h"
 #include "math/Mtx.h"
 #include "math/Rot.h"
 #include "math/Utl.h"
@@ -412,6 +413,31 @@ void CamShotFrame::BuildTransform(
         this->ApplyScreenOffset(position, camera);
     }
     mCamShot->ApplyDynamicOffsetPostLookAt(position);
+}
+
+void CamShotFrame::Interp(const CamShotFrame &frame, float f1, float f2, RndCam *cam) {
+    float f13 = f1;
+    if (mBlendEase != 0) {
+        float f19 = 1;
+        float f14 = 0;
+        switch (mBlendEaseMode) {
+        case 0:
+            break;
+        case 1:
+            f19 = 2;
+            break;
+        case 2:
+            f14 = -1;
+            break;
+        default:
+            MILO_NOTIFY("Invalid mBlendEaseMode: %d", mBlendEaseMode);
+            break;
+        }
+        ATanInterpolator aint("", "");
+        aint.Reset(Vector2(f14, f14), Vector2(f19, f19), mBlendEase);
+        f13 = aint.Eval(f13);
+    }
+    // there's more lol
 }
 
 Symbol FOV_to_LensSym(float fov) {
