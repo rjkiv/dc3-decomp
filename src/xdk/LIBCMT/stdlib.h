@@ -11,7 +11,6 @@ void *calloc(size_t nitems, size_t size);
 void *realloc(void *ptr, size_t size);
 void free(void *);
 
-#pragma intrinsic(_alloca)
 void *_alloca(size_t size);
 
 typedef struct {
