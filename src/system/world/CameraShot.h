@@ -118,7 +118,8 @@ public:
         std::list<std::pair<RndMultiMesh *, std::list<RndMultiMesh::Instance>::iterator> > &
     );
     void AddCrowdChars(
-        std::list<std::pair<RndMultiMesh *, std::list<RndMultiMesh::Instance>::iterator> > &
+        const std::list<
+            std::pair<RndMultiMesh *, std::list<RndMultiMesh::Instance>::iterator> > *
     );
 
     /** "The crowd to show for this shot" */
@@ -204,6 +205,7 @@ protected:
     void DoHide();
     void SetShotOver();
     void GetKey(float, CamShotFrame *&, CamShotFrame *&, float &);
+    void Shake(float, float, const Vector2 &, Vector3 &, Vector3 &);
 
     DataNode OnHasTargets(DataArray *);
     DataNode OnSetPos(DataArray *);
@@ -268,12 +270,12 @@ protected:
     int mFlags; // 0x1e4
     ObjPtrList<RndDrawable> mEndHideList; // 0x1e8
     ObjPtrList<RndDrawable> mEndShowList; // 0x1fc
-    Vector3 unk210;
-    Vector3 unk220;
-    Vector3 unk230;
-    Vector3 unk240;
-    Vector3 unk250;
-    Vector3 unk260;
+    Vector3 mLastShakeOffset; // 0x210
+    Vector3 mLastShakeAngOffset; // 0x220
+    Vector3 mLastDesiredShakeOffset; // 0x230
+    Vector3 mLastDesiredShakeAngOffset; // 0x240
+    Vector3 mShakeVelocity; // 0x250
+    Vector3 mShakeAngVelocity; // 0x260
     CamShotFrame *mLastNext; // 0x270
     CamShotFrame *mLastPrev; // 0x274
     /** "duration of the camshot" */

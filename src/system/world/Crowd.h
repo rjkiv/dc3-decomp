@@ -100,6 +100,10 @@ public:
     void Apply3DCharXfm(const std::list<CharData>::iterator &, int, RndCam *);
     int GetModifyStamp() const { return mModifyStamp; }
     void SetRotate(CrowdRotate r) { mRotate = r; }
+    bool IsForced3DCrowd() const { return mForce3DCrowd; }
+    float CharFullness() const { return mCharFullness; }
+    float FlatFullness() const { return mFlatFullness; }
+    const ObjList<CharData> &Characters() const { return mCharacters; }
 
 protected:
     WorldCrowd();

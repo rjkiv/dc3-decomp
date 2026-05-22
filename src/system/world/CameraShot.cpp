@@ -382,7 +382,7 @@ void CamShotCrowd::AddCrowdChars() {
     if (selectedCrowd.empty()) {
         MILO_NOTIFY("No selected crowd members in this crowd");
     } else {
-        AddCrowdChars(selectedCrowd);
+        AddCrowdChars(&selectedCrowd);
     }
 }
 
@@ -394,7 +394,7 @@ void CamShotCrowd::SetCrowdChars() {
         MILO_NOTIFY("No selected crowd members in this crowd");
     } else {
         ClearCrowdChars();
-        AddCrowdChars(selectedCrowd);
+        AddCrowdChars(&selectedCrowd);
     }
 }
 
@@ -421,6 +421,56 @@ void CamShotCrowd::GetSelectedCrowd(
     }
 }
 
+void CamShotCrowd::AddCrowdChars(
+    const std::list<
+        std::pair<RndMultiMesh *, std::list<RndMultiMesh::Instance>::iterator> > *listPtr
+) {
+    if (!mCrowd) {
+        MILO_NOTIFY("No crowd selected");
+    } else if (!mCrowd->IsForced3DCrowd()) {
+        float fullness = mCrowd->FlatFullness();
+        mCrowd->Set3DCharList(std::vector<std::pair<int, int> >(), unk24);
+        mCrowd->SetFullness(1, mCrowd->CharFullness());
+        if (!listPtr) {
+            int i64 = 0;
+            FOREACH (it, mCrowd->Characters()) {
+                int i68 = 0;
+                auto &insts = it->mMMesh->Instances();
+                for (auto instIt = insts.begin(); instIt != insts.end();
+                     ++instIt, ++i68) {
+                    unk18.push_back(std::make_pair(i64, i68));
+                }
+                ++i64;
+            }
+            mCrowd->Set3DCharAll();
+        } else {
+            FOREACH_PTR (it, listPtr) {
+                RndMultiMesh *mmesh = it->first;
+                int i5 = 0;
+                for (auto it2 = mCrowd->Characters().begin();
+                     it2 != mCrowd->Characters().end() && it2->mMMesh != mmesh;
+                     it2++) {
+                    i5++;
+                }
+                if (i5 != mCrowd->Characters().size()) {
+                    int ki = 0;
+                    for (auto mmit = mmesh->Instances().begin();
+                         mmit != mmesh->Instances().end() && mmit != it->second;
+                         ++mmit, ++ki)
+                        ;
+                    MILO_ASSERT(ki != mmesh->Instances().size(), 0xA58);
+                    std::pair<int, int> iPair = std::make_pair(i5, ki);
+                    if (std::find(unk18.begin(), unk18.end(), iPair) == unk18.end()) {
+                        unk18.push_back(iPair);
+                    }
+                }
+            }
+            mCrowd->Set3DCharList(unk18, unk24);
+        }
+        mCrowd->SetFullness(fullness, mCrowd->CharFullness());
+    }
+}
+
 BEGIN_CUSTOM_PROPSYNC(CamShotCrowd)
     SYNC_PROP_MODIFY(crowd, o.mCrowd, o.unk18.clear())
     SYNC_PROP(crowd_rotate, (int &)o.mCrowdRotate)
@@ -442,10 +492,11 @@ CamShot::CamShot()
       mPlatform(kPlatformNone), mHideList(this), mShowList(this), mGenHideList(this),
       mDrawOverrides(this), mPostProcOverrides(this), unk1a4(this), mCrowds(this),
       mCrowdStateOverride(gNullStr), mPS3PerPixel(true), mGlowSpot(this), mFlags(0),
-      mEndHideList(this), mEndShowList(this), unk210(0, 0, 0), unk220(0, 0, 0),
-      unk230(0, 0, 0), unk240(0, 0, 0), unk250(0, 0, 0), unk260(0, 0, 0), mLastNext(0),
-      mLastPrev(0), mDuration(0), mDisabled(0), mShotStarted(1), mShotOver(0), mHidden(0),
-      unk283(0) {}
+      mEndHideList(this), mEndShowList(this), mLastShakeOffset(0, 0, 0),
+      mLastShakeAngOffset(0, 0, 0), mLastDesiredShakeOffset(0, 0, 0),
+      mLastDesiredShakeAngOffset(0, 0, 0), mShakeVelocity(0, 0, 0),
+      mShakeAngVelocity(0, 0, 0), mLastNext(0), mLastPrev(0), mDuration(0), mDisabled(0),
+      mShotStarted(1), mShotOver(0), mHidden(0), unk283(0) {}
 
 CamShot::~CamShot() {}
 
@@ -883,12 +934,12 @@ void CamShot::StartAnim() {
     mLastNext = 0;
     mLastPrev = 0;
     mShotStarted = true;
-    unk210.Zero();
-    unk230.Zero();
-    unk250.Zero();
-    unk220.Zero();
-    unk240.Zero();
-    unk260.Zero();
+    mLastShakeOffset.Zero();
+    mLastDesiredShakeOffset.Zero();
+    mShakeVelocity.Zero();
+    mLastShakeAngOffset.Zero();
+    mLastDesiredShakeAngOffset.Zero();
+    mShakeAngVelocity.Zero();
     StartAnims(mAnims);
     for (int i = 0; i != mCrowds.size(); i++) {
         CamShotCrowd &cur = mCrowds[i];
@@ -915,54 +966,62 @@ void CamShot::EndAnim() {
 
 void CamShot::SetFrame(float frame, float blend) {
     START_AUTO_TIMER("camera");
-    if (unk283)
+    if (unk283) {
         return;
-    RndAnimatable::SetFrame(frame, blend);
-    RndCam *cam = GetCam();
-    if (!cam)
-        return;
-    SetFrames(mAnims, frame);
-    if (mKeyframes.empty())
-        return;
-    unk283 = true;
-    mPathFrame = -1;
-    EndFrame();
-    static CamShotFrame nullFrame(nullptr);
-    nullFrame.mCamShot = this;
-    float f48 = 1.0f;
-    CamShotFrame *frame4c = nullptr;
-    CamShotFrame *frame50 = nullptr;
-    GetKey(frame, frame4c, frame50, f48);
-    if (mDisabled != 0) {
-        frame50->UpdateTarget();
-        if (frame4c)
-            frame4c->UpdateTarget();
-        unk283 = false;
     } else {
-        if (frame50 != mLastNext) {
-            frame50->UpdateTarget();
-        }
-        if (!frame4c) {
-            nullFrame.Interp(*frame50, 1.0f, blend, cam);
+        RndAnimatable::SetFrame(frame, blend);
+        RndCam *cam = GetCam();
+        if (!cam) {
+            return;
         } else {
-            if (frame4c != mLastPrev) {
-                if (frame4c != mLastNext) {
-                    frame4c->UpdateTarget();
+            SetFrames(mAnims, frame);
+            if (mKeyframes.empty()) {
+                return;
+            } else {
+                unk283 = true;
+                mPathFrame = -1;
+                EndFrame();
+                static CamShotFrame nullFrame(nullptr);
+                nullFrame.mCamShot = this;
+                float f48 = 1.0f;
+                CamShotFrame *frame50 = nullptr;
+                CamShotFrame *frame54 = nullptr;
+                GetKey(frame, frame50, frame54, f48);
+                if (mDisabled != 0) {
+                    frame54->UpdateTarget();
+                    if (frame50) {
+                        frame50->UpdateTarget();
+                    }
+                    unk283 = false;
+                    return;
+                } else {
+                    if (frame54 != mLastNext) {
+                        frame54->UpdateTarget();
+                    }
+                    if (!frame50) {
+                        nullFrame.Interp(*frame54, 1.0f, blend, cam);
+                    } else {
+                        if (frame50 != mLastPrev) {
+                            if (frame50 != mLastNext) {
+                                frame50->UpdateTarget();
+                            }
+                            mLastPrev = frame50;
+                        }
+                        frame50->Interp(*frame54, f48, blend, cam);
+                    }
+                    mLastNext = frame54;
+                    if (CheckShotStarted()) {
+                        static Message msg("shot_started");
+                        HandleType(msg);
+                        mShotStarted = false;
+                    }
+                    if (CheckShotOver(frame)) {
+                        SetShotOver();
+                    }
+                    unk283 = false;
                 }
-                mLastPrev = frame4c;
             }
-            frame4c->Interp(*frame50, f48, blend, cam);
         }
-        mLastNext = frame50;
-        if (CheckShotStarted()) {
-            static Message msg("shot_started");
-            HandleType(msg);
-            mShotStarted = false;
-        }
-        if (CheckShotOver(frame)) {
-            SetShotOver();
-        }
-        unk283 = false;
     }
 }
 
@@ -1201,4 +1260,205 @@ bool CamShot::AddCrowd(CamShotCrowd &crowd) {
         mCrowds.push_back(crowd);
     }
     return ret;
+}
+
+bool CamShot::SetPos(CamShotFrame &frame, RndCam *cam) {
+    if (!cam) {
+        cam = GetCam();
+    }
+    if (!cam) {
+        return false;
+    } else {
+        frame.mWorldOffset = cam->WorldXfm();
+        if (frame.HasTargets()) {
+            Vector3 ve0;
+            frame.GetCurrentTargetPosition(ve0);
+            cam->WorldToScreen(ve0, frame.mScreenOffset);
+            frame.mScreenOffset += Vector2(-0.5f, -0.5f);
+            frame.mScreenOffset.x *= 2.0f;
+            frame.mScreenOffset.y *= -2.0f;
+            Vector3 vec;
+            Subtract(ve0, frame.mWorldOffset.v, vec);
+            Vector3 vf8(cam->WorldXfm().m.y);
+            vf8 *= Dot(vec, cam->WorldXfm().m.y);
+            Vector3 v104;
+            Add(cam->WorldXfm().v, vf8, v104);
+            Vector3 v110;
+            Subtract(ve0, v104, v110);
+            Add(frame.mWorldOffset.v, v110, frame.mWorldOffset.v);
+        } else {
+            frame.mScreenOffset.Zero();
+        }
+        frame.mFOV = cam->YFov();
+        RndTransformable *frameParent = frame.mParent;
+        if (frameParent) {
+            Transform tf70(frameParent->WorldXfm());
+            if (!frame.mUseParentRotation) {
+                tf70.m.Identity();
+            }
+            Transform tfa0;
+            FastInvert(tf70, tfa0);
+            Multiply(frame.mWorldOffset, tfa0, frame.mWorldOffset);
+        }
+        Transform lol;
+        FastInvert(WorldXfm(), lol);
+        Multiply(frame.mWorldOffset, lol, frame.mWorldOffset);
+
+        if (mPath && &mKeyframes[0] == &frame) {
+            Transform tfd0;
+            mPath->MakeTransform(0, tfd0, true, 1.0f);
+            frame.mWorldOffset.v -= tfd0.v;
+            if (!frame.HasTargets()) {
+                frame.mWorldOffset.m.Identity();
+            }
+        }
+        return true;
+    }
+}
+
+void CamShot::GetKey(
+    float frame, CamShotFrame *&prev, CamShotFrame *&next, float &keyBlend
+) {
+    MILO_ASSERT(!mKeyframes.empty(), 0x256);
+    if (frame <= 0 || mDuration <= 0) {
+        prev = nullptr;
+        next = mKeyframes.begin();
+        keyBlend = 1.0f;
+        return;
+    }
+    if (frame >= mKeyframes.back().mFrame) {
+        if (mLooping && (mLoopKeyframe < mKeyframes.size() && mLoopKeyframe >= 0)) {
+            if (frame >= mDuration) {
+                float duration = mDuration - mKeyframes[mLoopKeyframe].mFrame;
+                frame -= mDuration;
+                MILO_ASSERT(duration > 0, 0x26A);
+                float f9 = std::fmod(frame, duration);
+                frame = f9 + mKeyframes[mLoopKeyframe].mFrame;
+            }
+            if (frame >= mKeyframes.back().mFrame) {
+                if (mKeyframes.back().mBlend <= 0) {
+                    prev = nullptr;
+                    next = &mKeyframes.back();
+                    keyBlend = 1.0f;
+                    return;
+                }
+                float fvar1 = mKeyframes.back().mFrame + mKeyframes.back().mDuration;
+                if (frame > fvar1) {
+                    MILO_ASSERT(mKeyframes.back().mBlend > 0, 0x27F);
+                    prev = &mKeyframes.back();
+                    next = &mKeyframes[mLoopKeyframe];
+                    keyBlend = (frame - fvar1) / mKeyframes.back().mBlend;
+                    return;
+                }
+                prev = nullptr;
+                next = &mKeyframes.back();
+                keyBlend = 1.0f;
+                return;
+            }
+        } else {
+            prev = nullptr;
+            next = &mKeyframes.back();
+            keyBlend = 1.0f;
+            return;
+        }
+    }
+    int before = 0;
+    int after = mKeyframes.size() - 1;
+    while (after > before + 1) {
+        int avg = (before + after) >> 1;
+        float curFrame = mKeyframes[avg].mFrame;
+        if (frame == curFrame) {
+            prev = nullptr;
+            next = &mKeyframes[avg];
+            keyBlend = 1.0f;
+            return;
+        }
+        if (frame > curFrame) {
+            before = avg;
+        }
+        if (!(frame > curFrame)) {
+            after = avg;
+        }
+    }
+    MILO_ASSERT(frame >= mKeyframes[before].mFrame && frame < mKeyframes[after].mFrame, 0x2AF);
+    float fvar1 = mKeyframes[before].mFrame + mKeyframes[before].mDuration;
+    if (frame > fvar1) {
+        MILO_ASSERT(mKeyframes[before].mBlend > 0, 0x2B4);
+        prev = &mKeyframes[before];
+        next = &mKeyframes[after];
+        keyBlend = (frame - fvar1) / mKeyframes[before].mBlend;
+    } else {
+        prev = nullptr;
+        next = &mKeyframes[before];
+        keyBlend = 1.0f;
+    }
+}
+
+void CamShot::Shake(
+    float freq, float amp, const Vector2 &ang, Vector3 &output, Vector3 &eulerOutput
+) {
+    if (TheTaskMgr.DeltaSeconds() > 0 && !AutoPrepTarget::sChanging) {
+        Vector2 localAng = ang;
+        localAng *= DEG2RAD;
+        if (RandomFloat() < freq) {
+            float f5 = RandomFloat(0.0f, 6.2831855f);
+            float f6 = amp * RandomFloat();
+            float f1 = f6 * Cosine(f5);
+            mLastDesiredShakeOffset.x += f1;
+            mLastDesiredShakeOffset.y += f1 * 0.333f;
+            mLastDesiredShakeOffset.z += f6 * Sine(f5);
+            mLastDesiredShakeAngOffset.x += RandomFloat(-localAng.x, localAng.x);
+            mLastDesiredShakeAngOffset.y = 0;
+            mLastDesiredShakeAngOffset.z += RandomFloat(-localAng.y, localAng.y);
+        }
+        float lenamp = Length(mLastDesiredShakeOffset) - amp;
+        if (lenamp > 0) {
+            Normalize(mLastDesiredShakeOffset, mLastDesiredShakeOffset);
+            mLastDesiredShakeOffset *= amp - lenamp;
+        }
+        float fabs1 = fabsf(mLastDesiredShakeAngOffset.x) - localAng.x;
+        if (fabs1 > 0) {
+            if (mLastDesiredShakeAngOffset.x > 0) {
+                fabs1 *= -1.0f;
+            }
+            mLastDesiredShakeAngOffset.x += fabs1;
+        }
+
+        float fabs2 = fabsf(mLastDesiredShakeAngOffset.z) - localAng.y;
+        if (fabs2 > 0) {
+            if (mLastDesiredShakeAngOffset.z > 0) {
+                fabs2 *= -1.0f;
+            }
+            mLastDesiredShakeAngOffset.z += fabs2;
+        }
+
+        Vector3 v58;
+        Subtract(mLastDesiredShakeOffset, mLastShakeOffset, v58);
+        float emulateFPS;
+        if (RndPostProc::Current() && RndPostProc::Current()->EmulateFPS() > 0) {
+            emulateFPS = RndPostProc::Current()->EmulateFPS();
+        } else {
+            emulateFPS = 60;
+        }
+        float fps = 60.0f / emulateFPS;
+        v58 *= 0.02f;
+        Vector3 v64 = mShakeVelocity;
+        v64 *= fps;
+        Add(mLastShakeOffset, v64, mLastShakeOffset);
+        Add(mShakeVelocity, v58, mShakeVelocity);
+        Add(mLastShakeOffset, v58, mLastShakeOffset);
+        float powed = powf(0.9f, fps);
+        mShakeVelocity *= powed;
+        Vector3 vlol;
+        Subtract(mLastDesiredShakeAngOffset, mLastShakeAngOffset, vlol);
+        vlol *= 0.02f;
+        Vector3 v70 = mShakeAngVelocity;
+        v70 *= fps;
+        Add(mLastShakeAngOffset, v70, mLastShakeAngOffset);
+        Add(mShakeAngVelocity, vlol, mShakeAngVelocity);
+        Add(mLastShakeAngOffset, vlol, mLastShakeAngOffset);
+        mShakeAngVelocity *= powed;
+    }
+    output = mLastShakeOffset;
+    eulerOutput = mLastShakeAngOffset;
 }

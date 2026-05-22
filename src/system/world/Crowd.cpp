@@ -14,11 +14,11 @@
 #include "world/Crowd.h"
 #include "world/Crowd3DCharHandle.h"
 
-RndCam *gImpostorCamera;
-RndMat *gImpostorMat;
-int gNumCrowd;
-WorldCrowd *gParent;
-RndTex *gImpostorTex[kNumLods];
+static RndTex *gImpostorTex[kNumLods] = { nullptr };
+static RndCam *gImpostorCamera = nullptr;
+static RndMat *gImpostorMat = nullptr;
+static int gNumCrowd = 0;
+static WorldCrowd *gParent = nullptr;
 
 #pragma region CharDef
 
