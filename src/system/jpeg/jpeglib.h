@@ -703,6 +703,10 @@ struct jpeg_destination_mgr {
     JMETHOD(void, init_destination, (j_compress_ptr cinfo));
     JMETHOD(boolean, empty_output_buffer, (j_compress_ptr cinfo));
     JMETHOD(void, term_destination, (j_compress_ptr cinfo));
+    // added for DC3? possibly?
+    void *buffer;
+    int in_bytes;
+    int out_bytes;
 };
 
 /* Data source object for decompression */

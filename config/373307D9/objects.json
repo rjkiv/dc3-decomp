@@ -1003,7 +1003,7 @@
         "mw_version": "X360/16.00.11886.00",
         "cflags": "jpeg",
         "objects": {
-            "system/jpeg/Jpeg.cpp": "NonMatching",
+            "system/jpeg/Jpeg.cpp": "Matching",
             "system/jpeg/jcapimin.c": "Matching",
             "system/jpeg/jcapistd.c": "Matching",
             "system/jpeg/jccoefct.c": "Matching",
