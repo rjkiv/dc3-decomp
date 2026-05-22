@@ -9,6 +9,7 @@
 #include "obj/Msg.h"
 #include "obj/Object.h"
 #include "obj/PropSync.h"
+#include "obj/Task.h"
 #include "os/Debug.h"
 #include "os/Platform.h"
 #include "os/Timer.h"
@@ -18,6 +19,7 @@
 #include "rndobj/MultiMesh.h"
 #include "rndobj/MultiMeshProxy.h"
 #include "rndobj/Trans.h"
+#include "rndobj/TransProxy.h"
 #include "rndobj/Utl.h"
 #include "rndobj/VelocityBuffer.h"
 #include "utl/BinStream.h"
@@ -37,6 +39,37 @@ inline float ScaleToFOV(float scale) {
     return float(std::atan(24.0f / (scale * 2.0f))) * 2.0f;
 }
 
+#pragma region AutoPrepTarget
+
+AutoPrepTarget::AutoPrepTarget(CamShotFrame &frame)
+    : mFrame(&frame), mShot(frame.mCamShot) {
+    mShot->StartAnim();
+    mOldFilter = mShot->Filter();
+    mOldCamHeight = mShot->ClampHeight();
+    mOldZoomFov = mFrame->mZoomFOV;
+    mFrame->mZoomFOV = 0;
+    mShot->mFilter = 0;
+    mShot->mClampHeight = -1.0f;
+    mShot->mLastDesiredShakeOffset.Set(0, 0, 0);
+    mShot->mLastDesiredShakeAngOffset.Set(0, 0, 0);
+    mShot->mLastShakeOffset.Set(0, 0, 0);
+    mShot->mLastShakeAngOffset.Set(0, 0, 0);
+    sChanging = true;
+    mFrame->UpdateTarget();
+    mShot->SetFrame(mFrame->mFrame, 1.0f);
+}
+
+AutoPrepTarget::~AutoPrepTarget() {
+    mShot->SetPos(*mFrame, nullptr);
+    mFrame->UpdateTarget();
+    mShot->mFilter = mOldFilter;
+    mShot->mClampHeight = mOldCamHeight;
+    mFrame->mZoomFOV = mOldZoomFov;
+    sChanging = false;
+    mShot->EndAnim();
+}
+
+#pragma endregion
 #pragma region CamShotFrame
 
 CamShotFrame::CamShotFrame(Hmx::Object *owner)
@@ -87,7 +120,49 @@ void CamShotFrame::Save(BinStream &bs) const {
     bs << mParentFirstFrame;
 }
 
-RndTransformable *LoadSubPart(BinStreamRev &, CamShot *);
+RndTransformable *LoadSubPart(BinStreamRev &d, CamShot *shot) {
+    if (d.rev < 0x2B) {
+        int dummy;
+        d >> dummy;
+    }
+    String str;
+    d >> str;
+    Symbol sym;
+    d >> sym;
+    if (str.empty()) {
+        return nullptr;
+    } else {
+        RndTransformable *foundTrans =
+            shot->Dir()->Find<RndTransformable>(str.c_str(), false);
+        if (sym.Null()) {
+            if (foundTrans) {
+                return foundTrans;
+            }
+            MILO_LOG(
+                "%s could not find %s, assuming character, attaching to base\n",
+                PathName(shot),
+                str
+            );
+        }
+        char buf[256];
+        strcpy(buf, sym.Str());
+        char *buf_ptr = strchr(buf, '.');
+        if (buf_ptr)
+            *buf_ptr = '\0';
+        else if (buf[0] == '\0') {
+            strcpy(buf, "base");
+        }
+        const char *search = MakeString("%s_%s.tp", str, buf);
+        RndTransProxy *proxy = shot->Dir()->Find<RndTransProxy>(search, false);
+        if (!proxy) {
+            proxy = Hmx::Object::New<RndTransProxy>();
+            proxy->SetName(search, shot->Dir());
+            proxy->SetProxy(dynamic_cast<ObjectDir *>(foundTrans));
+            proxy->SetPart(sym);
+        }
+        return proxy;
+    }
+}
 
 void CamShotFrame::Load(BinStreamRev &d) {
     d >> mDuration;
@@ -259,6 +334,84 @@ bool CamShotFrame::HasTargets() const {
             return true;
     }
     return false;
+}
+
+void CamShotFrame::BuildTransform(
+    RndCam *camera, Transform &position, bool applyScreenOffset
+) const {
+    Vector3 va0;
+    GetCurrentTargetPosition(va0);
+    Vector2 v2;
+    camera->WorldToScreen(va0, v2);
+    v2.x -= (mScreenOffset.x + 1) / 2;
+    v2.y -= (1 - mScreenOffset.y) / 2;
+    float len = Min(1.0f, Length(v2));
+    float f9 = len * mCamShot->Filter();
+    if (mLastTargetPos.x == kHugeFloat) {
+        f9 = 0;
+    } else {
+        if (TheTaskMgr.DeltaSeconds() == 0) {
+            f9 = 1.0E-11f;
+        }
+        if (f9 != 0) {
+            ::Interp(mLastTargetPos, va0, f9, va0);
+        }
+    }
+    const_cast<CamShotFrame *>(this)->mLastTargetPos = va0;
+    MILO_ASSERT(mLastTargetPos.x != kHugeFloat, 0x7CE);
+
+    if (mCamShot->Path()) {
+        float f12 = mCamShot->PathFrame();
+        if (f12 < 0) {
+            if (0 < mCamShot->Duration()) {
+                f12 = mCamShot->GetFrame() / mCamShot->Duration();
+            } else {
+                f12 = 0;
+            }
+        }
+        mCamShot->Path()->MakeTransform(
+            mCamShot->Path()->EndFrame() * f12, position, true, 1
+        );
+        Multiply(mCamShot->FrameAt(0).mWorldOffset, position, position);
+    } else {
+        position = mWorldOffset;
+    }
+
+    if (mParent) {
+        bool b2 = !mParentFirstFrame || mCamShot->ShotStarted();
+        Transform locXfm = b2 ? mParent->WorldXfm() : mTargetXfm;
+        if (b2) {
+            if (mCamShot->Filter() != 0) {
+                ::Interp(mTargetXfm.m, locXfm.m, f9, locXfm.m);
+                ::Interp(mTargetXfm.v, locXfm.v, f9, locXfm.v);
+            }
+            const_cast<CamShotFrame *>(this)->mTargetXfm = locXfm;
+        }
+        if (mUseParentRotation) {
+            Multiply(position, locXfm, position);
+        } else {
+            position.v += locXfm.v;
+        }
+
+        if (mCamShot->ClampHeight() > 0 && mTargets.size() == 1) {
+            RndTransformable *firstTarget = mTargets.front();
+            if (firstTarget) {
+                const Transform &firstXfm = firstTarget->WorldXfm();
+                float f14 = mCamShot->ClampHeight() + firstXfm.v.z;
+                if (f14 > position.v.z) {
+                    position.v.z = f14;
+                }
+            }
+        }
+    }
+    Multiply(position, mCamShot->WorldXfm(), position);
+
+    // this should probably be in an inline public wrapper belonging to CamShot
+    mCamShot->ApplyDynamicOffsetPreLookAt(position, HasTargets());
+    if (applyScreenOffset) {
+        this->ApplyScreenOffset(position, camera);
+    }
+    mCamShot->ApplyDynamicOffsetPostLookAt(position);
 }
 
 Symbol FOV_to_LensSym(float fov) {
@@ -1070,8 +1223,8 @@ void CamShot::CacheFrames() {
     float frames = 0.0f;
     for (int i = 0; i != mKeyframes.size(); i++) {
         CamShotFrame &curframe = mKeyframes[i];
-        curframe.SetFrame(frames);
-        frames += curframe.GetDuration() + curframe.GetBlend();
+        curframe.mFrame = frames;
+        frames += curframe.mDuration + curframe.mBlend;
     }
     mDuration = frames;
 }
@@ -1262,7 +1415,8 @@ bool CamShot::AddCrowd(CamShotCrowd &crowd) {
     return ret;
 }
 
-bool CamShot::SetPos(CamShotFrame &frame, RndCam *cam) {
+// why does ~AutoPrepTarget even inline this?
+__declspec(noinline) bool CamShot::SetPos(CamShotFrame &frame, RndCam *cam) {
     if (!cam) {
         cam = GetCam();
     }
