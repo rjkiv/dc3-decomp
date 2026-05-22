@@ -26,6 +26,7 @@ int fflush(FILE *file);
 int printf(const char *format, ...);
 int fprintf(FILE *stream, const char *format, ...);
 int sprintf(char *buffer, const char *format, ...);
+int sprintf_s(char *buffer, size_t sizeOfBuffer, const char *format, ...);
 int snprintf(char *buffer, size_t bufsz, const char *format, ...);
 int _snprintf(char *buffer, size_t bufsz, const char *format, ...);
 

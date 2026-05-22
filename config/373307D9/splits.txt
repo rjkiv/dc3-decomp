@@ -8977,6 +8977,7 @@ system/jpeg/Jpeg.cpp:
 	.rdata      start:0x821FD4E4 end:0x821FD89C
 	.pdata      start:0x8230F950 end:0x8230F970
 	.text       start:0x82B8ED40 end:0x82B8EFA8
+	.text       start:0x82EDF4B8 end:0x82EDF4D0 rename:.text$yc
 
 system/jpeg/jcapimin.c:
 	.pdata      start:0x8230F970 end:0x8230F980
@@ -9056,7 +9057,6 @@ system/jpeg/jcmaster.c:
 	.rdata      start:0x821FEF44 end:0x821FF058
 	.pdata      start:0x8230FCA8 end:0x8230FCE8
 	.text       start:0x82B96C80 end:0x82B97B98
-	.text       start:0x82EDF4B8 end:0x82EDF4D0 rename:.text$yc
 
 system/jpeg/jfdctint.c:
 	.pdata      start:0x8230FCE8 end:0x8230FCF0
