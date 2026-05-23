@@ -6,7 +6,7 @@ class WorldDir;
 
 class FreeCamera : public Hmx::Object {
 public:
-    FreeCamera(WorldDir *, float, float, int);
+    FreeCamera(WorldDir *world, float rotateRate, float slewRate, int padNum);
     virtual ~FreeCamera() {}
     virtual DataNode Handle(DataArray *, bool);
 
