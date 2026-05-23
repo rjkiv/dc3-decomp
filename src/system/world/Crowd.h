@@ -47,14 +47,15 @@ public:
 
     struct CharData {
         struct Char3D {
-            Char3D(const Char3D &o) : unk0(o.unk0), unk40(o.unk40), unk50(0) {
-                unk44 = o.unk44;
+            Char3D(const Transform &tf, int i) : mXfm(tf), mIndex(i), m3DCrowdHandle(0) {}
+            Char3D(const Char3D &o) : mXfm(o.mXfm), mIndex(o.mIndex), m3DCrowdHandle(0) {
+                mRandColors = o.mRandColors;
             }
 
-            Transform unk0;
-            int unk40;
-            std::vector<Hmx::Color> unk44;
-            class WorldCrowd3DCharHandle *unk50;
+            Transform mXfm; // 0x0
+            int mIndex; // 0x40
+            std::vector<Hmx::Color> mRandColors; // 0x44
+            class WorldCrowd3DCharHandle *m3DCrowdHandle; // 0x50
         };
         CharData(Hmx::Object *owner) : mDef(owner), mMMesh(nullptr) {}
         void Save(BinStream &) const;
