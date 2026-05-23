@@ -82,11 +82,11 @@ public:
         void Animate(Spotlight *, const SpotlightEntry &, float);
 
         float mIntensity; // 0x0
-        int mColor; // 0x4 - packed
-        unsigned char unk8; // 0x8
+        unsigned int mColor; // 0x4 - packed
+        unsigned char mFlags; // 0x8
         ObjPtr<RndTransformable> mTarget; // 0xc
-        Hmx::Quat unk20; // 0x20
-        Hmx::Matrix3 unk30; // 0x30
+        Hmx::Quat mOrientation; // 0x20
+        Hmx::Matrix3 unk30; // 0x30 - rotation?
     };
 
     struct SpotlightDrawerEntry {
@@ -200,6 +200,9 @@ protected:
     void FillSpotPresetData(Spotlight *, SpotlightEntry &, int);
     void Animate(float);
     void SyncNewSpotlights();
+    void SyncKeyframeTargets();
+    void
+    AnimateState(const LightPreset::Keyframe &, const LightPreset::Keyframe &, float);
 
     DataNode OnSetKeyframe(DataArray *);
     DataNode OnViewKeyframe(DataArray *);

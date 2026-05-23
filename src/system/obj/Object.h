@@ -326,6 +326,7 @@ public:
             return *this;
         }
 
+        bool operator==(const const_iterator &other) const { return it == other.it; }
         bool operator!=(const const_iterator &other) const { return it != other.it; }
     };
 

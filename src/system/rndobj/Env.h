@@ -66,6 +66,10 @@ public:
     float FadeStart() const { return mFadeStart; }
     float FadeEnd() const { return mFadeEnd; }
     static BoxMapLighting &GetGlobalLighting() { return sGlobalLighting; }
+    bool GetAnimateFromPreset() const { return mAnimateFromPreset; }
+    const Hmx::Color &FogColor() const { return mAmbientFogOwner->mFogColor; }
+    float GetFogStart() const { return mAmbientFogOwner->mFogStart; }
+    float GetFogEnd() const { return mAmbientFogOwner->mFogEnd; }
 
 protected:
     RndEnviron();

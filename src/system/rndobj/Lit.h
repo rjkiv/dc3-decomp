@@ -41,10 +41,10 @@ public:
     void SetShowing(bool b) { mShowing = b; }
     float Intensity() const;
     void SetProjectedBlend(int i) { mProjectedBlend = i; }
-    // bool GetAnimateFromPreset() const {
-    //     return mAnimateColorFromPreset || mAnimatePositionFromPreset
-    //         || mAnimateRangeFromPreset;
-    // }
+    bool GetAnimateFromPreset() const {
+        return mAnimateColorFromPreset || mAnimatePositionFromPreset
+            || mAnimateRangeFromPreset;
+    }
     bool Showing() const { return mShowing; }
     // bool AnimatePosFromPreset() const { return mAnimatePositionFromPreset; }
     // bool AnimateRangeFromPreset() const { return mAnimateRangeFromPreset; }

@@ -132,6 +132,9 @@ public:
         float intensity = Intensity();
         return Hmx::Color(c.red * intensity, c.green * intensity, c.blue * intensity, 1);
     }
+    bool GetAnimateFromPreset() const {
+        return mAnimateColorFromPreset || mAnimateOrientationFromPreset;
+    }
 
     static void RemoveFromLists(Spotlight *);
     static RndMesh *GetDiskMesh() { return sDiskMesh; }
