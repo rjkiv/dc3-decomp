@@ -106,6 +106,8 @@ public:
     void EnableBlinks(bool, bool);
     void SetInterestObjects(const ObjPtrList<CharInterest> &, ObjectDir *);
     void SetSelfShadow(bool selfshadow) { mSelfShadow = selfshadow; }
+    void SetSpotCutout(bool cutout) { mSpotCutout = cutout; }
+    void SetFloorShadow(bool shadow) { mFloorShadow = shadow; }
     void SetLodType(LODType lod) { mForceLod = lod; }
     void SetDebugDrawInterestObjects(bool);
     void ForceBlink();
@@ -122,6 +124,9 @@ public:
     bool LODCheck() const { return mForceLod > 0; }
     PollState GetPollState() const { return mPollState; }
     int LastLod() const { return mLastLod; }
+    bool SelfShadow() const { return mSelfShadow; }
+    bool SpotCutout() const { return mSpotCutout; }
+    bool FloorShadow() const { return mFloorShadow; }
 
     static void Init();
     static void Terminate();

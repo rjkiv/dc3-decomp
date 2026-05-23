@@ -156,6 +156,7 @@ public:
     bool VerboseTimers() const { return mVerboseTimers; }
     RndMat *OverlayMat() const { return mOverlayMat; }
     const Hmx::Color &GetClearColor() const { return mClearColor; }
+    bool InGame() const { return mInGame; }
     bool Drawing() const { return mDrawing; }
     void ShowConsole(bool);
     bool ConsoleShowing();

@@ -8,6 +8,7 @@
 #include "rndobj/BaseMaterial.h"
 #include "rndobj/Cam.h"
 #include "rndobj/Draw.h"
+#include "rndobj/Env.h"
 #include "rndobj/Mat.h"
 #include "rndobj/MultiMesh.h"
 #include "rndobj/Poll.h"
@@ -654,5 +655,53 @@ void WorldCrowd::Reset3DCrowd() {
         }
         it->m3DCharsCreated.clear();
         it->m3DChars.clear();
+    }
+}
+
+void WorldCrowd::Draw3DChars() {
+    if (Crowd3DExists()) {
+        RndEnviron *env = mEnviron3D ? mEnviron3D : mEnviron;
+        bool global = true;
+        if (env) {
+            global = env->UsesApproxGlobal();
+            env->SetUseApproxGlobal(false);
+        }
+        RndEnvironTracker tracker(env, nullptr);
+        FOREACH (it, mCharacters) {
+            Character *curChar = it->mDef.mChar;
+            RndMultiMesh *curMMesh = it->mMMesh;
+            if (curChar && curMMesh) {
+                auto &chars = it->m3DChars;
+                for (int i = 0; i != chars.size(); i++) {
+                    Apply3DCharXfm(it, i, RndCam::Current());
+                    if (it->mDef.mUseRandomColor) {
+                        SetMatColorFlags(
+                            it->mDef.mMats, RndMat::kColorModModulate, &chars[i].unk44
+                        );
+                    }
+                    bool selfShadow = curChar->SelfShadow();
+                    bool floorShadow = curChar->FloorShadow();
+                    bool spotCutout = curChar->SpotCutout();
+                    if (TheRnd.InGame()) {
+                        curChar->SetSelfShadow(false);
+                        curChar->SetFloorShadow(false);
+                        curChar->SetSpotCutout(false);
+                    }
+                    if (mCharForceLod != -1) {
+                        curChar->SetLodType(mCharForceLod);
+                    }
+                    curChar->Draw();
+                    if (mCharForceLod != -1) {
+                        curChar->SetLodType(kLODPerFrame);
+                    }
+                    curChar->SetSelfShadow(selfShadow);
+                    curChar->SetFloorShadow(floorShadow);
+                    curChar->SetSpotCutout(spotCutout);
+                }
+            }
+        }
+        if (env) {
+            env->SetUseApproxGlobal(global);
+        }
     }
 }
