@@ -37,6 +37,9 @@ class StreamReader;
 class TranscodableMixerOutput;
 
 class Synth : public Hmx::Object, public RndOverlay::Callback {
+    friend void SynthPreInit(); // idc anymore lmao
+    friend void SynthTerminate();
+
 public:
     Synth();
     // Hmx::Object
@@ -83,11 +86,11 @@ public:
     virtual StreamReader *NewStreamDecoder(File *, StandardStream *, Symbol) {
         return nullptr;
     }
-    virtual void NewStreamFile(const char *, File *&, Symbol &);
+    virtual void NewStreamFile(const char *fileBase, File *&fileOut, Symbol &extOut);
     virtual void EnableLevels(bool) {}
     virtual void RequirePushToTalk(bool, int) {}
     virtual void SetIncomingVoiceChatVolume(float) {}
-    virtual FxSendPitchShift *CreatePitchShift(int, SendChannels);
+    virtual FxSendPitchShift *CreatePitchShift(int stage, SendChannels channels);
     virtual void DestroyPitchShift(FxSendPitchShift *);
 
     // RndOverlay::Callback
@@ -98,29 +101,29 @@ public:
     Fader *InstFader() const { return mMidiInstrumentFader; }
     void SetDir(ObjectDir *dir) { unk64 = dir; }
     ByteGrinder &Grinder() { return mByteGrinder; }
-    bool CheckCommonBank(bool);
+    bool CheckCommonBank(bool warn);
     void SetMasterVolume(float);
     float GetMasterVolume();
     void ToggleHud();
     const ADSRImpl *DefaultADSR();
-    void SetFX(const DataArray *);
-    void SetMic(const DataArray *);
+    void SetFX(const DataArray *data);
+    void SetMic(const DataArray *data);
     int GetFXOverhead();
     int GetSPUOverhead();
     void RunFlow(const char *);
     void StopPlaybackAllMics();
     void StopAllSfx(bool);
     void PauseAllSfx(bool);
-    int GetSampleMem(ObjectDir *, Platform);
+    int GetSampleMem(ObjectDir *, Platform plat);
     void StopAllSounds();
-    void AddPlayHandler(Hmx::Object *);
-    void RemovePlayHandler(Hmx::Object *);
+    void AddPlayHandler(Hmx::Object *handler);
+    void RemovePlayHandler(Hmx::Object *handler);
     void SendToPlayHandlers(Sound *);
-    void PlaySound(const char *, float, float, float);
+    void PlaySound(const char *name, float volume, float pan, float transpose);
     void AddZombie(SampleInst *);
     int GetNumMics() const;
-    void DrawMeterScale(float &);
-    void DrawMeter(float &, float, float, const char *);
+    void DrawMeterScale(float &y0);
+    void DrawMeter(float &y0, float lvl, float pkLvl, const char *);
 
     template <class T>
     T *Find(const char *name, bool fail = true) {
@@ -143,13 +146,13 @@ public:
 private:
     void CullZombies();
 
-    DataNode OnPassthrough(DataArray *);
-    DataNode OnStartMic(const DataArray *);
-    DataNode OnStopMic(const DataArray *);
-    DataNode OnNumConnectedMics(const DataArray *);
-    DataNode OnSetMicVolume(const DataArray *);
-    DataNode OnSetFX(const DataArray *);
-    DataNode OnSetFXVol(const DataArray *);
+    DataNode OnPassthrough(DataArray *msg);
+    DataNode OnStartMic(const DataArray *data);
+    DataNode OnStopMic(const DataArray *data);
+    DataNode OnNumConnectedMics(const DataArray *data);
+    DataNode OnSetMicVolume(const DataArray *data);
+    DataNode OnSetFX(const DataArray *data);
+    DataNode OnSetFXVol(const DataArray *data);
 
     static Synth *New();
 
@@ -157,6 +160,7 @@ protected:
     virtual ~Synth() {}
 
     std::vector<LevelData> mLevelData; // 0x30
+private: // a la RB2
     bool mTrackLevels; // 0x3c
     ByteGrinder mByteGrinder; // 0x40
     int mNumMics; // 0x44

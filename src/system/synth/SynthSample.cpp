@@ -88,7 +88,7 @@ void SynthSample::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(6, 0)
     if (d.rev > 1) {
-        LOAD_SUPERCLASS(Hmx::Object)
+        Hmx::Object::Load(bs);
     }
     d >> mFile;
     if (d.rev <= 5) {

@@ -692,7 +692,7 @@
             "system/synth/StreamReceiver.cpp": "NonMatching",
             "system/synth/StreamReceiverFile.cpp": "NonMatching",
             "system/synth/Synth.cpp": "NonMatching",
-            "system/synth/SynthSample.cpp": "NonMatching",
+            "system/synth/SynthSample.cpp": "Matching",
             "system/synth/ThreeDSound.cpp": "NonMatching",
             "system/synth/Utl.cpp": "NonMatching",
             "system/synth/VorbisReader.cpp": "NonMatching",
