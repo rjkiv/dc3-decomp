@@ -116,7 +116,7 @@ void DxRnd::DrawLargeQuad(
     const LargeQuadRenderData &data, const Transform &tf, RndMat *mat, ShaderType s
 ) {
     RndMat *it = mat;
-    RndMat *next = mat ? dynamic_cast<RndMat *>(mat->NextPass()) : nullptr;
+    RndMat *next = mat ? mat->NextPass() : nullptr;
     while (true) {
         RndShader::SelectConfig(it, s, false);
         D3DDevice_SetIndices(mD3DDevice, data.unk0);
@@ -132,7 +132,7 @@ void DxRnd::DrawLargeQuad(
         if (!next)
             break;
         it = next;
-        next = dynamic_cast<RndMat *>(next->NextPass());
+        next = mat->NextPass();
     }
     D3DDevice_SetIndices(mD3DDevice, nullptr);
     D3DDevice_SetStreamSource(mD3DDevice, 0, nullptr, 0, 0, 1);

@@ -117,6 +117,7 @@ protected:
     bool Crowd3DExists();
     void Sort3DCharList();
     RndMesh *BuildBillboard(Character *, float);
+    void Draw3DChars();
 
     DataNode OnRebuild(DataArray *);
     DataNode OnIterateFrac(DataArray *);

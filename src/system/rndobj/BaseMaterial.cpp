@@ -283,7 +283,7 @@ CheckBlendMode(BaseMaterial::Blend b, BaseMaterial *) {
 }
 
 bool BaseMaterial::IsNextPass(BaseMaterial *m) {
-    for (BaseMaterial *it = this; it != nullptr; it = it->NextPass()) {
+    for (BaseMaterial *it = this; it != nullptr; it = it->mNextPass) {
         if (it == m) {
             return true;
         }

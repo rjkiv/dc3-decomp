@@ -1,15 +1,22 @@
 #include "char/Character.h"
+#include "math/Color.h"
+#include "math/Geo.h"
 #include "obj/Object.h"
+#include "os/Debug.h"
 #include "os/System.h"
+#include "os/Timer.h"
+#include "rndobj/BaseMaterial.h"
 #include "rndobj/Cam.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Mat.h"
 #include "rndobj/MultiMesh.h"
 #include "rndobj/Poll.h"
+#include "rndobj/Rnd.h"
 #include "rndobj/Tex.h"
 #include "rndobj/Utl.h"
 #include "utl/BinStream.h"
 #include "utl/Loader.h"
+#include "utl/Std.h"
 #include "world/ColorPalette.h"
 #include "world/Crowd.h"
 #include "world/Crowd3DCharHandle.h"
@@ -19,6 +26,38 @@ static RndCam *gImpostorCamera = nullptr;
 static RndMat *gImpostorMat = nullptr;
 static int gNumCrowd = 0;
 static WorldCrowd *gParent = nullptr;
+
+namespace {
+    void GetMeshShaderFlags(RndMat *mat, std::list<unsigned int> &flags) {
+        FOREACH (it, mat->Refs()) {
+            RndMesh *cur = dynamic_cast<RndMesh *>(it->RefOwner());
+            if (cur) {
+                // bit 1 = skinned
+                // bit 2 = ao calc
+                unsigned int mask = cur->IsSkinned() | (cur->HasAOCalc() ? 2 : 0);
+                flags.push_back(mask);
+            }
+        }
+        flags.sort();
+        flags.unique();
+    }
+}
+
+void SetMatColorFlags(
+    ObjPtrList<RndMat> &mats,
+    BaseMaterial::ColorModFlags flags,
+    std::vector<Hmx::Color> *modulate
+) {
+    FOREACH (it, mats) {
+        (*it)->SetColorModFlags(flags);
+        if (modulate) {
+            MILO_ASSERT(RndMat::kColorModNum == modulate->size(), 0x33B);
+            for (int i = 0; i < modulate->size(); i++) {
+                (*it)->SetColorMod(modulate->at(i), i);
+            }
+        }
+    }
+}
 
 #pragma region CharDef
 
@@ -63,7 +102,7 @@ BinStreamRev &operator>>(BinStreamRev &d, WorldCrowd::CharData &cd) {
 WorldCrowd::WorldCrowd()
     : mPlacementMesh(this), mCharacters(this), mNum(0), mRotate(), mForce3DCrowd(0),
       mShow3DOnly(0), mCharFullness(1), mFlatFullness(1), mLod(0), mEnviron(this),
-      mEnviron3D(this), mFocus(this), mCharForceLod(kLODPerFrame), unkd0(0),
+      mEnviron3D(this), mFocus(this), mCharForceLod(kLODPerFrame), unkd0(1),
       mModifyStamp(0) {
     if (gNumCrowd++ == 0) {
         int w, h, bpp;
@@ -76,15 +115,16 @@ WorldCrowd::WorldCrowd()
             h = 256;
             bpp = 16;
         }
-        for (int i = 0; i < kNumLods; i++) {
-            gImpostorTex[i] = Hmx::Object::New<RndTex>();
-            gImpostorTex[i]->SetBitmap(w, h, bpp, RndTex::kRendered, true, nullptr);
+        for (int i = 0; i < kNumLods; i++, w >>= 1, h >>= 1) {
+            RndTex *tex = Hmx::Object::New<RndTex>();
+            tex->SetBitmap(w, h, bpp, RndTex::kRendered, true, nullptr);
+            gImpostorTex[i] = tex;
         }
         RELEASE(gImpostorMat);
         RndMat *mat = Hmx::Object::New<RndMat>();
         gImpostorMat = mat;
-        mat->SetUseEnv(true);
         mat->SetPreLit(false);
+        mat->SetUseEnv(true);
         mat->SetBlend(RndMat::kBlendSrc);
         mat->SetZMode(kZModeNormal);
         mat->SetAlphaCut(true);
@@ -100,15 +140,13 @@ WorldCrowd::WorldCrowd()
 
 WorldCrowd::~WorldCrowd() {
     Delete3DCrowdHandles();
-    for (ObjList<CharData>::iterator it = mCharacters.begin(); it != mCharacters.end();
-         ++it) {
+    FOREACH (it, mCharacters) {
         if (it->mMMesh) {
             delete it->mMMesh->Mesh();
             RELEASE(it->mMMesh);
         }
     }
-    gNumCrowd--;
-    if (gNumCrowd == 0) {
+    if (--gNumCrowd == 0) {
         for (int i = 0; i < kNumLods; i++) {
             RELEASE(gImpostorTex[i]);
         }
@@ -377,6 +415,74 @@ bool WorldCrowd::MakeWorldSphere(Sphere &s, bool b) {
         return false;
 }
 
+void WorldCrowd::Mats(std::list<RndMat *> &mats, bool b2) {
+    if (b2) {
+        MatShaderOptions opts;
+        opts.pack |= 0x20;
+        int masks[2] = { 0xD, 0x13 };
+        for (int i = 0; i < 2; i++) {
+            opts.SetLast5(masks[i]);
+            for (int j = 0; j < 2; j++) {
+                for (int k = 0; k < 2; k++) {
+                    RndMat *mat = Hmx::Object::New<RndMat>();
+                    mat->Copy(gImpostorMat, kCopyDeep);
+                    mat->SetUseEnv(j);
+                    opts.mTempMat = true;
+                    opts.SetHasAOCalc(k);
+                    mat->SetShaderOpts(opts);
+                    mats.push_back(mat);
+                }
+            }
+        }
+        std::vector<Hmx::Color> colors;
+        for (int i = 0; i < 3; i++) {
+            colors.push_back(Hmx::Color(1, 1, 1));
+        }
+        for (int i = 0; i <= 3; i++) {
+            if (i != 2) {
+                FOREACH (it, mCharacters) {
+                    if (it->mDef.mUseRandomColor) {
+                        SetMatColorFlags(
+                            it->mDef.mMats, (BaseMaterial::ColorModFlags)i, &colors
+                        );
+                        FOREACH (mat, it->mDef.mMats) {
+                            std::list<unsigned int> flags;
+                            GetMeshShaderFlags(*mat, flags);
+                            FOREACH (flag, flags) {
+                                unsigned int curFlag = *flag;
+                                opts.SetLast5(0x12);
+                                opts.SetHasBones(curFlag & 1);
+                                opts.SetHasAOCalc(curFlag >> 1 & 1);
+                                RndMat *curMat = Hmx::Object::New<RndMat>();
+                                curMat->Copy(*mat, kCopyDeep);
+                                opts.mTempMat = true;
+                                curMat->SetShaderOpts(opts);
+                                mats.push_back(curMat);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void WorldCrowd::DrawShowing() {
+    START_AUTO_TIMER("crowd_draw");
+    if (!mPlacementMesh) {
+        return;
+    }
+    Draw3DChars();
+    if (TheRnd.DrawMode() == 5) {
+        return;
+    }
+    MILO_ASSERT(!gImpostorMat->NextPass(), 0x3A0);
+    std::vector<Hmx::Rect> rects;
+    rects.reserve(12);
+    FOREACH (it, mCharacters) {
+    }
+}
+
 void WorldCrowd::ListDrawChildren(std::list<RndDrawable *> &draws) {
     FOREACH (it, mCharacters) {
         Character *curChar = it->mDef.mChar;
@@ -391,6 +497,22 @@ void WorldCrowd::CollideList(const Segment &seg, std::list<Collision> &colls) {
             RndMultiMesh *curMM = it->mMMesh;
             if (curMM) {
                 curMM->CollideList(seg, colls);
+            }
+            Character *curChar = it->mDef.mChar;
+            for (int i = 0; i != it->m3DChars.size(); i++) {
+                Apply3DCharXfm(it, i, nullptr);
+                float fl;
+                Plane pl;
+                if (curChar->CollideShowing(seg, fl, pl)) {
+                    if (!it->m3DChars[i].unk50) {
+                        it->m3DChars[i].unk50 =
+                            Hmx::Object::New<WorldCrowd3DCharHandle>();
+                        it->m3DChars[i].unk50->Set3DChar(
+                            this, it, i, it->m3DChars[i].unk0
+                        );
+                    }
+                    colls.push_back(Collision(it->m3DChars[i].unk50, fl, pl));
+                }
             }
         }
     }
@@ -502,11 +624,35 @@ void WorldCrowd::Sort3DCharList() {
 
 void WorldCrowd::Force3DCrowd(bool force) {
     mForce3DCrowd = force;
-    if (mForce3DCrowd)
+    if (mForce3DCrowd) {
         Set3DCharAll();
-    else {
+    } else {
         SetFullness(1, 1);
         std::vector<std::pair<int, int> > vec;
         Set3DCharList(vec, this);
+    }
+}
+
+void WorldCrowd::Reset3DCrowd() {
+    SetFullness(1, mCharFullness);
+    FOREACH (it, mCharacters) {
+        if (it->mMMesh) {
+            auto &insts = it->mMMesh->Instances();
+            int i6 = 0;
+            auto inst = insts.begin();
+            for (int i = 0; i != it->m3DCharsCreated.size(); i++) {
+                int i3 = it->m3DCharsCreated[i].unk40;
+                if (i6 != i3) {
+                    int i5 = i3 - i6;
+                    i6 = i5 + i6;
+                    while (i5--) {
+                        ++inst;
+                    }
+                }
+                inst = insts.insert(inst, it->m3DCharsCreated[i].unk0);
+            }
+        }
+        it->m3DCharsCreated.clear();
+        it->m3DChars.clear();
     }
 }

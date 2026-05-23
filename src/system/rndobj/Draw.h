@@ -45,9 +45,9 @@ public:
     /** "Calculates the bounding sphere for the object." */
     virtual void UpdateSphere() { mSphere.Zero(); }
     virtual float GetDistanceToPlane(const Plane &, Vector3 &) { return 0; }
-    virtual bool MakeWorldSphere(Sphere &s, bool) { return false; }
+    virtual bool MakeWorldSphere(Sphere &s, bool zero) { return false; }
     /** Get the current camera to use. */
-    virtual RndCam *CamOverride() { return 0; }
+    virtual RndCam *CamOverride() { return nullptr; }
     virtual void Mats(std::list<class RndMat *> &, bool) {}
     virtual void Draw();
     virtual void DrawShowing() {}

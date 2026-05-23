@@ -124,6 +124,14 @@ public:
         kDarken = 10
     };
 
+    enum ColorModFlags {
+        kColorModNone = 0,
+        kColorModAlphaPack = 1,
+        kColorModAlphaUnpackModulate = 2,
+        kColorModModulate = 3,
+        kColorModNum = 3
+    };
+
     virtual ~BaseMaterial() {}
     OBJ_CLASSNAME(BaseMaterial);
     OBJ_SET_TYPE(BaseMaterial);
@@ -138,7 +146,6 @@ public:
     static void Init() { REGISTER_OBJ_FACTORY(BaseMaterial) }
 
     const DataNode *GetDefaultPropVal(Symbol);
-    BaseMaterial *NextPass() const { return mNextPass; }
     RndTex *GetDiffuseTex() const { return mDiffuseTex; }
     RndTex *NormalMap() const { return mNormalMap; }
     ZMode GetZMode() const { return mZMode; }

@@ -26,8 +26,12 @@ public:
     OBJ_MEM_OVERLOAD(0x1B)
     NEW_OBJ(WorldCrowd3DCharHandle)
 
-    void
-    Set3DChar(WorldCrowd *, const std::list<WorldCrowd::CharData>::iterator &, int, const Transform &);
+    void Set3DChar(
+        WorldCrowd *,
+        const std::list<WorldCrowd::CharData>::iterator &,
+        int,
+        const Transform &
+    );
 
 protected:
     WorldCrowd3DCharHandle();

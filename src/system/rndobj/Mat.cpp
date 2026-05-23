@@ -47,8 +47,8 @@ namespace {
 }
 
 RndMat::RndMat()
-    : mMetaMaterial(this), unk20c(0), mToggleDisplayAllProps(0), unk225(0), unk226(0),
-      mDirty(3) {
+    : mMetaMaterial(this), mFlags(kColorModNone), mToggleDisplayAllProps(0), unk225(0),
+      unk226(0), mDirty(3) {
     ResetColors(mColorMod, 3);
 }
 
@@ -261,7 +261,7 @@ BEGIN_COPYS(RndMat)
     BEGIN_COPYING_MEMBERS
         if (ty != kCopyFromMax) {
             COPY_MEMBER(mShaderOptions)
-            COPY_MEMBER(unk20c)
+            COPY_MEMBER(mFlags)
             COPY_MEMBER(mColorMod)
             COPY_MEMBER(mMetaMaterial)
         }
