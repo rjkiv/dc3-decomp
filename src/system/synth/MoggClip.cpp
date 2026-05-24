@@ -95,22 +95,22 @@ void MoggClip::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(3, 2)
     LOAD_SUPERCLASS(Hmx::Object)
-    bs >> mMoggFile;
-    bs >> mVolume;
+    d >> mMoggFile;
+    d >> mVolume;
     if (d.rev <= 2) {
         bool b60;
         d >> b60;
         if (d.rev > 1) {
             int x, y;
-            bs >> x >> y;
+            d >> x >> y;
         }
     }
     if (d.altRev > 1) {
-        bs >> mBufSecs;
+        d >> mBufSecs;
     }
-    LoadFile(d.rev > 0 ? &bs : 0);
+    LoadFile(d.rev > 0 ? &d.stream : 0);
     if (d.altRev == 1) {
-        bs >> mBufSecs;
+        d >> mBufSecs;
     }
 }
 
@@ -196,7 +196,7 @@ void MoggClip::Pause(bool pause) {
 bool MoggClip::DonePlaying() { return !mStream; }
 
 void MoggClip::SetVolume(float vol) {
-    unk44 = vol;
+    mVolume = vol;
     if (mStream) {
         mStream->Stream::SetVolume(mVolume + unk44);
     }
@@ -293,9 +293,7 @@ void MoggClip::UpdatePanInfo() {
 }
 
 void MoggClip::LoadNumChannels() {
-    if (mMoggFile.empty()) {
-        unk58 = -1;
-    } else {
+    if (!mMoggFile.empty()) {
         if (mLoader && !mLoader->IsLoaded()) {
             TheLoadMgr.PollUntilLoaded(mLoader, nullptr);
         }
@@ -320,6 +318,8 @@ void MoggClip::LoadNumChannels() {
         } else {
             unk58 = -1;
         }
+    } else {
+        unk58 = -1;
     }
 }
 
@@ -401,8 +401,8 @@ void MoggClip::SetPan(int i1, float f2) {
 
 void MoggClip::SetupPanInfo(float f1, float f2, bool stereo) {
     if (stereo) {
-        SetPan(0, -f2 / 2.0f + f1);
-        SetPan(1, f2 / 2.0f + f1);
+        SetPan(0, f2 / -2 + f1);
+        SetPan(1, f2 / 2 + f1);
     } else {
         SetPan(0, f1);
     }
