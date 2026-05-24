@@ -6,22 +6,12 @@
 #include "utl/BinStream.h"
 
 class SampleZone {
-    friend bool __cdecl PropSync(SampleZone &, DataNode &, DataArray *, int, PropOp);
-
-public:
+public: // this isn't in RB2, making everything public based RB3 retail and overall vibes
     SampleZone(Hmx::Object *);
     void Save(BinStream &) const;
     void Load(BinStreamRev &);
     bool Includes(unsigned char, unsigned char);
 
-    int CenterNote() const { return mCenterNote; }
-    float Volume() const { return mVolume; }
-    float Pan() const { return mPan; }
-    FXCore GetFXCore() const { return mFXCore; }
-    const ADSRImpl &ADSR() const { return mADSR; }
-    SynthSample *Sample() const { return mSample; }
-
-private:
     /** "Which sample to play" */
     ObjPtr<SynthSample> mSample; // 0x0
     /** "Volume in dB (0 is full volume, -96 is silence)" */

@@ -19,18 +19,16 @@ NoteVoiceInst::NoteVoiceInst(
     float fineTune
 )
     : mSample(nullptr), mVolume(0), mStartProgress(0), mTriggerNote(trigger),
-      mCenterNote(zone->CenterNote()), mStarted(false), mStopped(false),
-      mGlideID(glideID), mGlideFrames(0), mGlideToNote(0), mGlideFromNote(0),
-      mGlideFramesLeft(-1), mFineTune(fineTune), mDurationFramesLeft(durFramesLeft),
-      mOwner(owner) {
-    if (zone->Sample()) {
-        mSample = zone->Sample()->NewInst(false, 0, -1);
-        float db = RatioToDb(ratio / 127.0f);
-        mSample->SetBankVolume(zone->Volume() + db);
-        mSample->SetBankPan(zone->Pan());
+      mCenterNote(zone->mCenterNote), mStarted(false), mStopped(false), mGlideID(glideID),
+      mGlideFrames(0), mGlideToNote(0), mGlideFromNote(0), mGlideFramesLeft(-1),
+      mFineTune(fineTune), mDurationFramesLeft(durFramesLeft), mOwner(owner) {
+    if (zone->mSample) {
+        mSample = zone->mSample->NewInst(false, 0, -1);
+        mSample->SetBankVolume(zone->mVolume + RatioToDb(ratio / 127.0f));
+        mSample->SetBankPan(zone->mPan);
         mSample->SetBankSpeed(getCalculatedSpeed(mTriggerNote));
-        mSample->SetFXCore(zone->GetFXCore());
-        mSample->SetADSR(zone->ADSR());
+        mSample->SetFXCore(zone->mFXCore);
+        mSample->SetADSR(zone->mADSR);
         mSample->SetSend(owner->GetSend());
     }
 }
@@ -110,9 +108,13 @@ MidiInstrument::MidiInstrument()
 
 MidiInstrument::~MidiInstrument() { mActiveVoices.DeleteAll(); }
 
+void MidiInstrument::PlayNote(unsigned char note, unsigned char vel, int durFramesLeft) {
+    StartSample(note, vel, durFramesLeft, -1);
+}
+
 BEGIN_HANDLERS(MidiInstrument)
     HANDLE_ACTION(add_map, mMultiSampleMap.push_back())
-    HANDLE_ACTION(play_note, StartSample(_msg->Int(2), _msg->Int(3), _msg->Int(4), -1))
+    HANDLE_ACTION(play_note, PlayNote(_msg->Int(2), _msg->Int(3), _msg->Int(4)))
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
 

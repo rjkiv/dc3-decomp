@@ -83,11 +83,13 @@ public:
     void SetReverbEnable(bool);
     void SetSend(FxSend *);
     NoteVoiceInst *MakeNoteInst(SampleZone *, unsigned char, unsigned char, int, int);
+    void PlayNote(unsigned char note, unsigned char vel, int durFramesLeft);
 
     OBJ_MEM_OVERLOAD(0x71);
     NEW_OBJ(MidiInstrument)
 private:
-    void StartSample(unsigned char, unsigned char, int, int);
+    void
+    StartSample(unsigned char note, unsigned char vel, int durFramesLeft, int glideID);
 
 protected:
     MidiInstrument();
