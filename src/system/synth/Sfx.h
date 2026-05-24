@@ -11,20 +11,11 @@
 #include "utl/PoolAlloc.h"
 
 class SfxMap {
-    friend bool PropSync(SfxMap &, DataNode &, DataArray *, int, PropOp);
-
-public:
+public: // RB2 said so
     SfxMap(Hmx::Object *);
     void Save(BinStream &) const;
     void Load(BinStreamRev &);
-    SynthSample *Sample() const { return mSample; }
-    float Volume() const { return mVolume; }
-    float Pan() const { return mPan; }
-    float Transpose() const { return mTranspose; }
-    FXCore GetFXCore() const { return mFXCore; }
-    const ADSRImpl &ADSR() const { return mADSR; }
 
-private:
     /** "Which sample to play" */
     ObjPtr<SynthSample> mSample; // 0x0
     /** "Volume in dB (0 is full volume, -96 is silence)" */

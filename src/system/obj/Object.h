@@ -396,7 +396,14 @@ private:
     struct Node : public ObjRefConcrete<T1, T2> {
         Node() : ObjRefConcrete(nullptr) {}
         virtual ~Node() {}
-        virtual Hmx::Object *RefOwner() const;
+        virtual Hmx::Object *RefOwner() const {
+            ObjPtrList<T1, T2> *list = static_cast<ObjPtrList<T1, T2> *>(mOwner);
+            if (list->mOwner) {
+                return list->mOwner->RefOwner();
+            } else {
+                return nullptr;
+            }
+        }
         virtual void Replace(Hmx::Object *obj) {
             ObjPtrList<T1, T2> *list = static_cast<ObjPtrList<T1, T2> *>(mOwner);
             list->ReplaceNode(this, obj);

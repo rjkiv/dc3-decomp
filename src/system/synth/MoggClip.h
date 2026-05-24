@@ -62,6 +62,7 @@ public:
     void SetupPanInfo(float, float, bool);
     const FilePath Path() const { return mMoggFile; }
     StandardStream *GetStream() const { return mStream; }
+    bool HasStream() const { return mStream; }
     int NumChannels() const { return unk58; }
 
 private:

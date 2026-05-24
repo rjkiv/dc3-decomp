@@ -15,15 +15,15 @@
 SfxInst::SfxInst(Sfx *sfx) : SeqInst(sfx), mSfx(sfx), mStartProgress(0) {
     FOREACH (it, sfx->SfxMaps()) {
         SampleInst *inst = nullptr;
-        if (it->Sample()) {
-            inst = it->Sample()->NewInst(false, 0, -1);
+        if (it->mSample) {
+            inst = it->mSample->NewInst(false, 0, -1);
         }
         if (inst) {
-            inst->SetBankVolume(it->Volume() + mRandVol);
-            inst->SetBankPan(it->Pan() + mRandPan);
-            inst->SetBankSpeed(CalcSpeedFromTranspose(it->Transpose() + mRandTp));
-            inst->SetFXCore(it->GetFXCore());
-            inst->SetADSR(it->ADSR());
+            inst->SetBankVolume(it->mVolume + mRandVol);
+            inst->SetBankPan(it->mPan + mRandPan);
+            inst->SetBankSpeed(CalcSpeedFromTranspose(it->mTranspose + mRandTp));
+            inst->SetFXCore(it->mFXCore);
+            inst->SetADSR(it->mADSR);
             inst->SetSend(sfx->GetSend());
             inst->SetReverbMixDb(sfx->GetReverbMixDb());
             inst->SetReverbEnable(sfx->GetReverbEnable());
@@ -58,7 +58,7 @@ bool SfxInst::IsRunning() {
     }
     FOREACH (it, mSfx->MoggClipMaps()) {
         MoggClip *clip = it->GetMoggClip();
-        if (clip && clip->GetStream()) {
+        if (clip && clip->HasStream()) {
             return true;
         }
     }
