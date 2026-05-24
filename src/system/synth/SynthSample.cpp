@@ -165,4 +165,6 @@ void SynthSample::Init() {
     SampleData::SetAllocator(SampleAlloc, MemFree);
 }
 
+int SynthSample::GetSampleRate() const { return mSampleData.GetSampleRate(); }
+
 #pragma endregion

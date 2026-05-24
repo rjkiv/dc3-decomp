@@ -50,7 +50,7 @@ protected:
 
     void UpdateVolume();
 
-    ObjPtr<SynthSample> unk38; // 0x38
+    ObjPtr<SynthSample> mSample; // 0x38
     float mVolume; // 0x4c
     float mBankVolume; // 0x50
     float mPan; // 0x54

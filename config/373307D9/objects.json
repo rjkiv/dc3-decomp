@@ -680,7 +680,7 @@
             "system/synth/OggMap.cpp": "Matching",
             "system/synth/Pollable.cpp": "Matching",
             "system/synth/SampleData.cpp": "NonMatching",
-            "system/synth/SampleInst.cpp": "NonMatching",
+            "system/synth/SampleInst.cpp": "Matching",
             "system/synth/SampleZone.cpp": "Matching",
             "system/synth/Sequence.cpp": "NonMatching",
             "system/synth/Sfx.cpp": "Matching",

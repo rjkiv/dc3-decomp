@@ -37,6 +37,7 @@ public:
     std::vector<SampleMarker> &AccessMarkers();
     void RegisterChild(SampleInst *);
     void UnregisterChild(SampleInst *);
+    int GetSampleRate() const;
 
     static void Init();
     static void Disable();
