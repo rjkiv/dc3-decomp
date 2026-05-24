@@ -25,6 +25,8 @@ MoggClipMap &MoggClipMap::operator=(const MoggClipMap &mogg) {
     return *this;
 }
 
+MoggClipMap::~MoggClipMap() {}
+
 BinStream &operator<<(BinStream &bs, const MoggClipMap &mogg) {
     mogg.mySave(bs);
     return bs;

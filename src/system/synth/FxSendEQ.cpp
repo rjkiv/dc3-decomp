@@ -33,8 +33,8 @@ BEGIN_COPYS(FxSendEQ)
     END_COPYING_MEMBERS
 END_COPYS
 
-void FxSendEQ::Save(BinStream &bs) {
-    bs << 3;
+BEGIN_SAVES(FxSendEQ)
+    SAVE_REVS(3, 0)
     SAVE_SUPERCLASS(FxSend)
     bs << mHighFreqCutoff;
     bs << mHighFreqGain;
@@ -49,22 +49,22 @@ void FxSendEQ::Save(BinStream &bs) {
     bs << mHighPassReso;
     bs << mLRMode;
     bs << mTransitionTime;
-}
+END_SAVES
 
-INIT_REVS(2, 0)
+INIT_REVS(3, 0)
 
 BEGIN_LOADS(FxSendEQ)
     LOAD_REVS(bs)
-    ASSERT_REVS(2, 0)
+    ASSERT_REVS(3, 0)
     LOAD_SUPERCLASS(FxSend)
-    bs >> mHighFreqCutoff >> mHighFreqGain >> mMidFreqCutoff >> mMidFreqBandwidth
+    d >> mHighFreqCutoff >> mHighFreqGain >> mMidFreqCutoff >> mMidFreqBandwidth
         >> mMidFreqGain >> mLowFreqCutoff >> mLowFreqGain;
     if (d.rev >= 2) {
-        bs >> mLowPassCutoff >> mLowPassReso >> mHighPassCutoff >> mHighPassReso;
+        d >> mLowPassCutoff >> mLowPassReso >> mHighPassCutoff >> mHighPassReso;
     }
     if (d.rev >= 3) {
         d >> mLRMode;
-        bs >> mTransitionTime;
+        d >> mTransitionTime;
     }
     OnParametersChanged();
 END_LOADS

@@ -9,7 +9,7 @@ class MoggClipMap {
 public:
     MoggClipMap(Hmx::Object *);
     MoggClipMap(const MoggClipMap &);
-    virtual ~MoggClipMap() {}
+    virtual ~MoggClipMap();
 
     void mySave(BinStream &) const;
     void myLoad(BinStreamRev &);

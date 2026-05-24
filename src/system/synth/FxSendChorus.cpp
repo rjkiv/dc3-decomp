@@ -27,8 +27,8 @@ FxSendChorus::FxSendChorus()
     mWetGain = -3.0f;
 }
 
-void FxSendChorus::Save(BinStream &bs) {
-    bs << 4;
+BEGIN_SAVES(FxSendChorus)
+    SAVE_REVS(4, 0)
     SAVE_SUPERCLASS(FxSend)
     bs << mDelayMs;
     bs << mRate;
@@ -38,34 +38,33 @@ void FxSendChorus::Save(BinStream &bs) {
     bs << mTempoSync;
     bs << mSyncType;
     bs << mTempo;
-}
+END_SAVES
 
-INIT_REVS(3, 0)
+INIT_REVS(4, 0)
 
 BEGIN_LOADS(FxSendChorus)
     LOAD_REVS(bs)
-    ASSERT_REVS(3, 0)
+    ASSERT_REVS(4, 0)
     LOAD_SUPERCLASS(FxSend)
     if (d.rev == 1) {
         mDryGain = -3.0f;
         mWetGain = -3.0f;
         UpdateMix();
     }
-    bs >> mDelayMs >> mRate >> mDepth;
+    d >> mDelayMs >> mRate >> mDepth;
     if (d.rev < 4) {
-        int feedbackInt;
-        bs >> feedbackInt;
-        mFeedbackPct = feedbackInt;
-        int offsetInt;
-        bs >> offsetInt;
-        mOffsetPct = offsetInt;
+        int pct;
+        d >> pct;
+        mFeedbackPct = pct;
+        d >> pct;
+        mOffsetPct = pct;
     } else {
-        bs >> mFeedbackPct >> mOffsetPct;
+        d >> mFeedbackPct >> mOffsetPct;
     }
     if (d.rev >= 3) {
         d >> mTempoSync;
-        bs >> mSyncType;
-        bs >> mTempo;
+        d >> mSyncType;
+        d >> mTempo;
     }
     OnParametersChanged();
 END_LOADS

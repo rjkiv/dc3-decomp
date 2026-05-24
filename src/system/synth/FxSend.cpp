@@ -41,7 +41,7 @@ BEGIN_PROPSYNCS(FxSend)
 END_PROPSYNCS
 
 BEGIN_SAVES(FxSend)
-    SAVE_REVS(8, 7)
+    SAVE_REVS(7, 8)
     SAVE_SUPERCLASS(Hmx::Object)
     bs << mNextSend;
     bs << mStage;
@@ -70,14 +70,14 @@ BEGIN_COPYS(FxSend)
     END_COPYING_MEMBERS
 END_COPYS
 
-INIT_REVS(7, 0)
+INIT_REVS(7, 8)
 
 BEGIN_LOADS(FxSend)
     LOAD_REVS(bs)
-    ASSERT_REVS(7, 0)
-    Hmx::Object::Load(bs);
-    bs >> mNextSend;
-    bs >> mStage;
+    ASSERT_REVS(7, 8)
+    LOAD_SUPERCLASS(Hmx::Object)
+    d >> mNextSend;
+    d >> mStage;
     if (d.rev < 5) {
         if (d.rev >= 2) {
             float x;
