@@ -13,11 +13,10 @@ WavReader::WavReader(File *file, StandardStream *stream)
     mSamplesLeft = mInWaveFile->NumSamples();
     for (int i = 0; i < mInWaveFile->NumMarkers(); i++) {
         WaveFileMarker &curWaveFileMarker = mInWaveFile->Markers()[i];
+        float pos =
+            (curWaveFileMarker.GetFrame() * 1000.0f) / mInWaveFile->SamplesPerSec();
         Marker marker(
-            curWaveFileMarker.GetName(),
-            curWaveFileMarker.GetFrame(),
-            ((float)curWaveFileMarker.GetFrame() * 1000.0f)
-                / (float)mInWaveFile->SamplesPerSec()
+            curWaveFileMarker.GetName(), curWaveFileMarker.GetFrame(), pos
 
         );
         stream->AddMarker(marker);

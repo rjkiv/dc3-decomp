@@ -1,11 +1,13 @@
 #include "synth/SampleData.h"
 #include "obj/Object.h"
+#include "os/Debug.h"
 #include "os/File.h"
 #include "synth/WavMgr.h"
 #include "utl/BinStream.h"
 #include "utl/CRC.h"
 #include "utl/ChunkStream.h"
 #include "utl/FilePath.h"
+#include "utl/WaveFile.h"
 
 SampleDataAllocFunc SampleData::sAlloc = nullptr;
 SampleDataFreeFunc SampleData::sFree = nullptr;
@@ -98,6 +100,44 @@ void SampleData::Load(BinStream &bs, const FilePath &fp) {
     }
     if (d.rev >= 0x10) {
         d >> mNumChannels;
+    }
+}
+
+void SampleData::LoadWAV(BinStream &bs, const FilePath &fp, bool b3) {
+    Reset();
+    WaveFile waveFile(bs);
+    if (waveFile.BitsPerSample() != 16) {
+        MILO_NOTIFY("Wave file %s is not 16-bit", fp);
+        return;
+    } else if (waveFile.Format() != 1) {
+        MILO_NOTIFY("Wave file %s is compressed", fp);
+        return;
+    } else {
+        if (!b3) {
+            mCRC = FileRelativePath(FileExecRoot(), fp.c_str());
+        } else {
+            mCRC = Hmx::CRC();
+        }
+        mFormat = kPCM;
+        mNumChannels = waveFile.NumChannels();
+        mNumSamples = waveFile.NumSamples();
+        mSampleRate = waveFile.SamplesPerSec();
+        mSizeBytes = SizeAs(kPCM);
+        if (mCRC) {
+            if (!TheWavMgr->CreateSample(mCRC, mData, mSizeBytes)) {
+                WaveFileData data(waveFile);
+                data.Read(mData, mSizeBytes);
+            }
+        } else {
+            mData = sAlloc(mSizeBytes, __FILE__, 0xA5, "SampleData", 0);
+            WaveFileData data(waveFile);
+            data.Read(mData, mSizeBytes);
+        }
+        for (int i = 0; i < waveFile.NumMarkers(); i++) {
+            mMarkers.push_back(SampleMarker(
+                waveFile.Markers()[i].GetName(), waveFile.Markers()[i].GetFrame()
+            ));
+        }
     }
 }
 

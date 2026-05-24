@@ -7,6 +7,7 @@
 #include "os/CritSec.h"
 #include "os/Debug.h"
 #include "os/Endian.h"
+#include "os/Timer.h"
 #include "synth/Synth.h"
 #include "utl/BufStream.h"
 #include "xdk/win_types.h"
@@ -33,11 +34,12 @@ namespace {
     MILO_NOTIFY("Ogg Vorbis failure: %s, error code %i", name, err);
 
 VorbisReader::VorbisReader(File *file, bool expectMap, StandardStream *stream, bool b2)
-    : unk28(-1), unk2c(-1), mFile(file), mHeadersRead(0), mReadBuffer(0),
-      mEnableReads(true), unk40(0), unk44(0), mDone(0), mStream(stream), mOggSync(0),
-      mOggStream(0), mVorbisInfo(0), mVorbisComment(0), mVorbisDsp(0), mVorbisBlock(0),
-      unka0(0), mSeekTarget(-1), mSamplesToSkip(0), mHdrSize(0), mHdrBuf(0), mCtrState(0),
-      unkec(b2), unked(0), unkee(0), mFail(0), unk100(-1), unk108(0) {
+    : mNumChannels(-1), mSampleRate(-1), mFile(file), mHeadersRead(0), mReadBuffer(0),
+      mEnableReads(true), mDecryptBytes(0), mNeedInitDecoder(0), mDone(0),
+      mStream(stream), mOggSync(0), mOggStream(0), mVorbisInfo(0), mVorbisComment(0),
+      mVorbisDsp(0), mVorbisBlock(0), mDecodePending(0), mSeekTarget(-1),
+      mSamplesToSkip(0), mHdrSize(0), mHdrBuf(0), mCtrState(0), unkec(b2), unked(0),
+      mEof(0), mFail(0), unk100(-1), unk108(0) {
     MILO_ASSERT(mFile, 0xEC);
     if (expectMap) {
         mHdrBuf = new char[60000];
@@ -94,6 +96,73 @@ VorbisReader::~VorbisReader() {
     RELEASE(mCtrState);
 }
 
+void VorbisReader::Poll(float until) {
+    START_AUTO_TIMER("vorbis_reader_poll");
+    if (!TryEnter()) {
+        return;
+    }
+    CritSecTracker tracker(this);
+    Exit();
+    if (mFail) {
+        return;
+    }
+    if (mNeedInitDecoder) {
+        return;
+    }
+    if (!CheckHmxHeader()) {
+        return;
+    }
+    if (mDone) {
+        return;
+    }
+    if (mSeekTarget >= 0 && !DoSeek()) {
+        return;
+    }
+
+    DoFileRead();
+    mEof = mFile->Eof();
+    if (mHeadersRead < 3) {
+        while (TryReadHeader())
+            ;
+        if (mHeadersRead < 3) {
+            return;
+        } else {
+            mNumChannels = mVorbisInfo->channels;
+            mSampleRate = mVorbisInfo->rate;
+            unkf4.resize(mNumChannels);
+            for (int i = 0; i < mNumChannels; i++) {
+                unkf4[i].reserve(0x1000);
+            }
+            Init();
+            mNeedInitDecoder = true;
+            return;
+        }
+    } else {
+        Timer timer;
+        timer.Start();
+        std::vector<short *> shorts;
+        shorts.resize(mNumChannels);
+        int i12 = 0;
+        while (unk108 < unkf4[0].size() && i12 < 0x800) {
+            for (int c = 0; c < mNumChannels; c++) {
+                shorts[c] = &unkf4[c][unk108]; // something up here
+            }
+            int i8;
+            if (unk100 == -1) {
+                i8 = -1;
+            } else {
+                i8 = unk100 + unk108;
+            }
+            int ret = ConsumeData((void **)&shorts, unkf4[0].size() - unk108, i8);
+            i12 += ret;
+            unk108 += ret;
+            if (ret == 0)
+                break;
+        }
+        unked = true;
+    }
+}
+
 void VorbisReader::Seek(int sample) {
     CritSecTracker tracker(this);
     MILO_ASSERT(mHeadersRead == 3, 0x1BD);
@@ -106,18 +175,18 @@ void VorbisReader::Seek(int sample) {
 
 void VorbisReader::Init() {
     MILO_ASSERT(mStream, 0x41F);
-    mStream->InitInfo(unk28, unk2c, false, mOggMap.GetSongLengthSamples());
+    mStream->InitInfo(mNumChannels, mSampleRate, false, mOggMap.GetSongLengthSamples());
 }
 
-int VorbisReader::ConsumeData(void **v, int i1, int i2) {
+int VorbisReader::ConsumeData(void **pcm, int samples, int startSamp) {
     MILO_ASSERT(mSeekTarget == -1, 0x436);
     if (mSamplesToSkip > 0) {
-        int ret = Min(i1, mSamplesToSkip);
-        mSamplesToSkip -= ret;
-        return ret;
+        int consumed = Min(samples, mSamplesToSkip);
+        mSamplesToSkip -= consumed;
+        return consumed;
     } else {
         MILO_ASSERT(mStream, 0x43F);
-        return mStream->ConsumeData(v, i1, i2);
+        return mStream->ConsumeData(pcm, samples, startSamp);
     }
 }
 
@@ -168,8 +237,9 @@ bool VorbisReader::TryReadHeader() {
             vorbis_info_init(mVorbisInfo);
             mVorbisComment = new vorbis_comment;
             vorbis_comment_init(mVorbisComment);
-        } else
+        } else {
             return false;
+        }
     }
     if (mHeadersRead == 3)
         return false;
@@ -182,8 +252,9 @@ bool VorbisReader::TryReadHeader() {
                 VORBIS_FAIL("HeaderIn", vorbisErr);
             mHeadersRead++;
             return true;
-        } else
+        } else {
             return false;
+        }
     }
 }
 
@@ -243,10 +314,10 @@ bool VorbisReader::TryDecode() {
         return false;
     if (QueuedOutputSamples() > 0)
         return false;
-    if (!unka0 && TryReadPacket(mPendingPacket)) {
-        unka0 = true;
+    if (!mDecodePending && TryReadPacket(mPendingPacket)) {
+        mDecodePending = true;
     }
-    if (unka0) {
+    if (mDecodePending) {
         START_AUTO_TIMER("vorbis_synthesis_poll_cpu");
         if (mVorbisBlock->synthesis_state == vorbis_block::vss_init) {
             START_AUTO_TIMER("vorbis_synthesis_vssinit_cpu");
@@ -257,14 +328,14 @@ bool VorbisReader::TryDecode() {
         }
         int pollErr = vorbis_synthesis_poll(mVorbisBlock, &mPendingPacket);
         if (pollErr == OV_ENOTAUDIO) {
-            unka0 = false;
+            mDecodePending = false;
         } else {
             if (pollErr == -0x32)
                 return true;
             if (pollErr < 0) {
                 VORBIS_FAIL("Synthesis", pollErr);
             }
-            unka0 = false;
+            mDecodePending = false;
             if (pollErr == 0) {
                 START_AUTO_TIMER("vorbis_synthesis_blockin_cpu");
                 int blockErr = vorbis_synthesis_blockin(mVorbisDsp, mVorbisBlock);
@@ -274,7 +345,7 @@ bool VorbisReader::TryDecode() {
                 return true;
             }
         }
-    } else if (unkee && !mReadBuffer && QueuedOutputSamples() == 0 && !mDone) {
+    } else if (mEof && !mReadBuffer && QueuedOutputSamples() == 0 && !mDone) {
         EndData();
         mDone = true;
     }
@@ -294,7 +365,7 @@ void VorbisReader::DoRawSeek(int byte) {
             DoFileRead();
         mEnableReads = true;
     }
-    for (int i = 0; i < unk28; i++) {
+    for (int i = 0; i < mNumChannels; i++) {
         unkf4[i].clear();
     }
     unk108 = 0;
@@ -310,19 +381,18 @@ void VorbisReader::DoRawSeek(int byte) {
     if (restartErr < 0)
         VORBIS_FAIL("DspReset", restartErr);
     vorbis_block_init(mVorbisDsp, mVorbisBlock);
-    unka0 = false;
+    mDecodePending = false;
     mFile->Seek(byte + mHdrSize, 0);
     if (mCtrState) {
         MILO_ASSERT(byte%16 == 0, 0x3F4);
         // this is the part where the word that makes up byte,
         // gets assigned to the word that makes up mNonce
-        int *nonceWord = (int *)mNonce;
-        *nonceWord = EndianSwap((unsigned int)byte);
+        *(int *)mNonce = EndianSwap((unsigned int)(byte / 16));
         int ret = ctr_reinit(gCipher, mNonce, mCtrState);
         MILO_ASSERT(ret == 0, 0x3F7);
     }
     mDone = false;
-    unkee = false;
+    mEof = false;
 }
 
 #define kMaxHeader 60000
