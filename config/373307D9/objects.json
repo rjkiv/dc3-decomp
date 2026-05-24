@@ -652,7 +652,7 @@
             "system/synth/DistortionEffect.cpp": "NonMatching",
             "system/synth/EQEffect.cpp": "NonMatching",
             "system/synth/Emitter.cpp": "NonMatching",
-            "system/synth/Faders.cpp": "NonMatching",
+            "system/synth/Faders.cpp": "Matching",
             "system/synth/FlangerEffect.cpp": "NonMatching",
             "system/synth/FxSend.cpp": "Matching",
             "system/synth/FxSendBitCrush.cpp": "Matching",

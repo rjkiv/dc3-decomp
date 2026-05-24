@@ -50,6 +50,7 @@ public:
 private:
     void UpdateValue(float, float, float);
     float GetDuckedVolume() const;
+    void CancelFade();
 
 protected:
     Fader();
@@ -77,7 +78,7 @@ protected:
     std::set<FaderGroup *> mClients; // 0x84
     Timer mTimer; // 0xa0
     float unkd0; // 0xd0
-    std::list<float> unkd4; // 0xd4
+    std::list<float> unkd4; // 0xd4 - ducked volumes?
 };
 
 class FaderGroup {

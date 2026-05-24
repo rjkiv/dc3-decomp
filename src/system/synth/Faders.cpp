@@ -19,7 +19,9 @@ Fader::Fader()
     mTransposeEaseFunc = gEaseFuncs[mTransposeEaseType];
 }
 
-Fader::~Fader() {
+Fader::~Fader() { CancelFade(); }
+
+void Fader::CancelFade() {
     mTimer.Stop();
     CancelPolling();
 }
@@ -61,9 +63,7 @@ BEGIN_PROPSYNCS(Fader)
 END_PROPSYNCS
 
 BEGIN_SAVES(Fader)
-    if (!mLocalName.Null()) {
-        MILO_FAIL("can't save local fader");
-    }
+    MILO_ASSERT_FMT(mLocalName.Null(), "can't save local fader");
     SAVE_REVS(1, 0)
     SAVE_SUPERCLASS(Hmx::Object);
     bs << mLevel;
@@ -109,45 +109,46 @@ INIT_REVS(1, 0)
 BEGIN_LOADS(Fader)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)
-    Hmx::Object::Load(bs);
+    LOAD_SUPERCLASS(Hmx::Object)
     float volume;
-    bs >> volume;
+    d >> volume;
     SetVolume(volume);
     if (d.rev >= 1) {
-        bs >> (int &)mLevelEaseType;
+        d >> (int &)mLevelEaseType;
         mLevelEaseFunc = GetEaseFunction(mLevelEaseType);
-        bs >> mLevelEaseParam;
-        bs >> mLevelTarget;
-        bs >> mPan;
-        bs >> (int &)mPanEaseType;
+        d >> mLevelEaseParam;
+        d >> mLevelTarget;
+        d >> mPan;
+        d >> (int &)mPanEaseType;
         mPanEaseFunc = GetEaseFunction(mPanEaseType);
-        bs >> mPanEaseParam;
-        bs >> mPanTarget;
-        bs >> mTranspose;
-        bs >> (int &)mTransposeEaseType;
+        d >> mPanEaseParam;
+        d >> mPanTarget;
+        d >> mTranspose;
+        d >> (int &)mTransposeEaseType;
         mTransposeEaseFunc = GetEaseFunction(mTransposeEaseType);
-        bs >> mTransposeEaseParam;
-        bs >> mTransposeTarget;
+        d >> mTransposeEaseParam;
+        d >> mTransposeTarget;
     }
 END_LOADS
 
 void Fader::SynthPoll() {
     float div = mTimer.SplitMs() / unkd0;
-    if (div >= 1.0f) {
-        mTimer.Stop();
-        CancelPolling();
-        div = 1.0f;
+    if (div >= 1) {
+        CancelFade();
+        div = 1;
     }
-    float f5 = (mLevelTarget - unk48)
+
+    // all of these are actually Interps, but using Interp causes regswaps, so...lol
+    float volume = (mLevelTarget - unk48)
             * Clamp(0.0f, 1.0f, mLevelEaseFunc(div, mLevelEaseParam, 0))
         + unk48;
-    float f7 =
+    float pan =
         (mPanTarget - unk60) * Clamp(0.0f, 1.0f, mPanEaseFunc(div, mPanEaseParam, 0))
         + unk60;
-    float f3 = (mTransposeTarget - unk78)
+    float transpose = (mTransposeTarget - unk78)
             * Clamp(0.0f, 1.0f, mTransposeEaseFunc(div, mTransposeEaseParam, 0))
         + unk78;
-    UpdateValue(f5, f7, f3);
+    UpdateValue(volume, pan, transpose);
 }
 
 void Fader::DoFade(float durationMs) {
@@ -156,8 +157,7 @@ void Fader::DoFade(float durationMs) {
     unk48 = mLevel;
     unk60 = mPan;
     unk78 = mTranspose;
-    mTimer.Stop();
-    CancelPolling();
+    CancelFade();
     StartPolling();
     mTimer.Restart();
     MILO_ASSERT(mTimer.Running(), 0x65);
@@ -201,20 +201,17 @@ void Fader::RemoveDuckedVolume(float f1) {
 }
 
 void Fader::SetVolume(float vol) {
-    mTimer.Stop();
-    CancelPolling();
+    CancelFade();
     UpdateValue(vol, mPan, mTranspose);
 }
 
 void Fader::SetPan(float pan) {
-    mTimer.Stop();
-    CancelPolling();
+    CancelFade();
     UpdateValue(mLevel, pan, mTranspose);
 }
 
 void Fader::SetTranspose(float transpose) {
-    mTimer.Stop();
-    CancelPolling();
+    CancelFade();
     UpdateValue(mLevel, mPan, transpose);
 }
 
