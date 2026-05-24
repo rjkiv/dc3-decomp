@@ -20,6 +20,9 @@ public:
 
     static void SignalDecodeThread();
 
+    bool DecodeThreadPoll();
+    bool Unk24() const { return unk24; }
+
 private:
     bool TryReadHeader();
     bool TryReadPacket(ogg_packet &);
@@ -29,6 +32,7 @@ private:
     int QueuedOutputSamples();
     bool TryDecode();
     bool CheckHmxHeader();
+    void Decrypt(unsigned char *, int);
 
 protected:
     virtual void Init();
