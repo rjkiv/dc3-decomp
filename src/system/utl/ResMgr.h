@@ -29,7 +29,7 @@ public:
         FOREACH (it, mResources) {
             RefRes<T> &data = it->second;
             if (data.NumRefs()) {
-                MILO_LOG("%d: %d\n", it->first.mCRC, data.NumRefs());
+                MILO_LOG("%d: %d\n", it->first, data.NumRefs());
             }
         }
         MILO_LOG("\n\n");
@@ -51,6 +51,8 @@ public:
         res.SetData(data);
         res.AddRef();
     }
+
+    bool ReleaseRes(Hmx::CRC);
 
 protected:
     std::map<Hmx::CRC, RefRes<T> > mResources; // 0x4

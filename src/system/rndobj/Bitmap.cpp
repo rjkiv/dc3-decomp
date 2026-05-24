@@ -105,7 +105,7 @@ BinStream &operator<<(BinStream &bs, const tagBITMAPINFOHEADER &bmih) {
 }
 
 void RndBitmap::Reset() {
-    mName.Reset();
+    (int &)mName = 0;
     mRowBytes = 0;
     mHeight = 0;
     mWidth = 0;

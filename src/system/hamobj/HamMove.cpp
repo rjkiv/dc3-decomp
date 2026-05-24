@@ -375,7 +375,7 @@ BEGIN_PROPSYNCS(HamMove)
     SYNC_PROP(awesome_override, mOverrides[kMoveRatingAwesome])
     SYNC_PROP(ok_override, mOverrides[kMoveRatingOk])
     SYNC_PROP(shoulder_displacements, mShoulderDisplacements)
-    SYNC_PROP(confusability_id, mConfusabilityID.mCRC)
+    SYNC_PROP(confusability_id, (int &)mConfusabilityID)
     SYNC_PROP_SET(confusability_count, (int)mConfusabilities.size(), )
     SYNC_SUPERCLASS(RndPropAnim)
 END_PROPSYNCS
