@@ -2,7 +2,6 @@
 #include "math/Mtx.h"
 #include "math/Vec.h"
 #include "obj/Object.h"
-#include "stl/_vector.h"
 #include "utl/MemMgr.h"
 #include "utl/Symbol.h"
 #include <vector>

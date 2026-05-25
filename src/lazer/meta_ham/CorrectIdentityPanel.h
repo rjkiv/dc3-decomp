@@ -2,7 +2,6 @@
 #include "meta_ham/OverlayPanel.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
-#include "stl/_vector.h"
 #include "ui/UIListProvider.h"
 #include "utl/Symbol.h"
 

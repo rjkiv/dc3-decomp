@@ -15,7 +15,6 @@
 #include "obj/Dir.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
-#include "stl/_vector.h"
 #include "ui/UIPanel.h"
 #include "utl/Std.h"
 #include "utl/Symbol.h"

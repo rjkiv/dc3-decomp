@@ -24,8 +24,6 @@
 #include "os/PlatformMgr.h"
 #include "os/System.h"
 #include "os/User.h"
-#include "stl/_algo.h"
-#include "stl/_vector.h"
 #include "ui/UI.h"
 #include "utl/JobMgr.h"
 #include "utl/Loader.h"

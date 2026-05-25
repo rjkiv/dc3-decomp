@@ -1,7 +1,6 @@
 #pragma once
 #include "MQSongSort.h"
 #include "NavListSortMgr.h"
-#include "stl/_vector.h"
 #include "ui/UIListProvider.h"
 
 class MQSongSortMgr : public NavListSortMgr {

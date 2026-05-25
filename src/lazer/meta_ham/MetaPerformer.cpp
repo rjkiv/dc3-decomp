@@ -35,7 +35,6 @@
 #include "os/Debug.h"
 #include "os/PlatformMgr.h"
 #include "os/System.h"
-#include "stl/_vector.h"
 #include "utl/DataPointMgr.h"
 #include "utl/Locale.h"
 #include "utl/MakeString.h"

@@ -7,7 +7,6 @@
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "rndobj/Mat.h"
-#include "stl/_vector.h"
 #include "ui/UILabel.h"
 #include "ui/UIListCustom.h"
 #include "ui/UIListLabel.h"

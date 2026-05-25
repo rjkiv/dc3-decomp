@@ -25,8 +25,6 @@
 #include "os/Debug.h"
 #include "os/PlatformMgr.h"
 #include "os/System.h"
-#include "stl/_algo.h"
-#include "stl/_vector.h"
 #include "ui/UI.h"
 #include "ui/UIPanel.h"
 #include "utl/Std.h"

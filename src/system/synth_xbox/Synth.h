@@ -3,7 +3,6 @@
 #include "obj/Data.h"
 #include "os/CritSec.h"
 #include "os/Timer.h"
-#include "stl/_vector.h"
 #include "synth/FxSend.h"
 #include "synth/Mic.h"
 #include "synth/Synth.h"

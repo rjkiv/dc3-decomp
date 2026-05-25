@@ -41,7 +41,6 @@
 #include "obj/Object.h"
 #include "obj/Task.h"
 #include "os/Debug.h"
-#include "stl/_vector.h"
 #include "synth/Faders.h"
 #include "synth/Sequence.h"
 #include "synth/Synth.h"

@@ -1,7 +1,6 @@
 #pragma once
 #include "obj/Object.h"
 #include "rndobj/Dir.h"
-#include "stl/_vector.h"
 #include "ui/UIListProvider.h"
 #include "ui/UIListState.h"
 #include "ui/UIListWidget.h"

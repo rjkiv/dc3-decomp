@@ -28,7 +28,6 @@
 #include "os/Debug.h"
 #include "os/PlatformMgr.h"
 #include "os/System.h"
-#include "stl/_vector.h"
 #include "ui/UI.h"
 #include "utl/DataPointMgr.h"
 #include "utl/JobMgr.h"

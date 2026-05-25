@@ -6,7 +6,6 @@
 #include "HamStarsDisplay.h"
 #include "meta_ham/MQSongSortByCharacter.h"
 #include "meta_ham/NavListNode.h"
-#include "stl/_vector.h"
 #include "utl/MakeString.h"
 #include "utl/Std.h"
 #include "utl/Symbol.h"

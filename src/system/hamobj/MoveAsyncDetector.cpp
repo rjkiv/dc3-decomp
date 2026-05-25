@@ -7,7 +7,6 @@
 #include "hamobj/HamMove.h"
 #include "hamobj/MoveDetector.h"
 #include "os/Debug.h"
-#include "stl/_pair.h"
 
 MoveDetector::MoveDetector(
     const FilterVersion *fv, const HamMove *move, const DancerFrame *&dancer_frame

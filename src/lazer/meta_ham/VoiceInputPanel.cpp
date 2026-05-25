@@ -12,7 +12,6 @@
 #include "os/Debug.h"
 #include "os/System.h"
 #include "rndobj/Overlay.h"
-#include "stl/_vector.h"
 #include "ui/UIPanel.h"
 #include "utl/Locale.h"
 #include "utl/Symbol.h"

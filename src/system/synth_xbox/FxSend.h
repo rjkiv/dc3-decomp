@@ -1,6 +1,5 @@
 #pragma once
 #include "Synth.h"
-#include "stl/_vector.h"
 #include "synth/FxSend.h"
 #include "synth_xbox/Voice.h"
 #include "xdk/xapilibi/xbase.h"

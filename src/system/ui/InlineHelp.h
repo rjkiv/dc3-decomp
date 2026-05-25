@@ -3,7 +3,6 @@
 #include "obj/Dir.h"
 #include "obj/Object.h"
 #include "os/Joypad.h"
-#include "stl/_vector.h"
 #include "ui/ResourceDirPtr.h"
 #include "ui/UIColor.h"
 #include "ui/UIComponent.h"

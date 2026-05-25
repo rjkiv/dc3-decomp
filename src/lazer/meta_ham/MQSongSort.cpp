@@ -5,8 +5,6 @@
 #include "MQSongSortMgr.h"
 #include "MQSongSortNode.h"
 #include "meta_ham/NavListNode.h"
-#include "stl/_algo.h"
-#include "stl/_vector.h"
 #include "utl/Std.h"
 #include "utl/Symbol.h"
 

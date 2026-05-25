@@ -6,8 +6,6 @@
 #include "meta_ham/NavListNode.h"
 #include "os/Debug.h"
 #include "rndobj/Mesh.h"
-#include "stl/_algo.h"
-#include "stl/_vector.h"
 #include "ui/UILabel.h"
 #include "ui/UIListLabel.h"
 #include "utl/Std.h"

@@ -11,7 +11,6 @@
 #include "meta_ham/SongSortMgr.h"
 #include "meta_ham/SongSortNode.h"
 #include "os/Debug.h"
-#include "stl/_algo.h"
 #include "ui/UILabel.h"
 #include "ui/UIListLabel.h"
 #include "utl/Std.h"

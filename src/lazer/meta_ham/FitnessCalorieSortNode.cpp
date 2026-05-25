@@ -3,7 +3,6 @@
 #include "NavListNode.h"
 #include "meta_ham/AppLabel.h"
 #include "os/Debug.h"
-#include "stl/_vector.h"
 #include "ui/UILabel.h"
 #include "ui/UIListLabel.h"
 #include "utl/Locale.h"

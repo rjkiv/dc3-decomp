@@ -5,7 +5,6 @@
 #include "obj/Dir.h"
 #include "obj/Object.h"
 #include "os/PlatformMgr.h"
-#include "stl/_vector.h"
 #include "ui/PanelDir.h"
 #include "ui/UIListProvider.h"
 

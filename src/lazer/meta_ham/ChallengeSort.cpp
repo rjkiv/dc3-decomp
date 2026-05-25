@@ -9,8 +9,6 @@
 #include "meta_ham/NavListNode.h"
 #include "meta_ham/NavListSort.h"
 #include "obj/Object.h"
-#include "stl/_algo.h"
-#include "stl/_algobase.h"
 #include "utl/Std.h"
 #include "utl/Symbol.h"
 

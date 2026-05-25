@@ -3,7 +3,6 @@
 #include "CacheMgr_Xbox.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
-#include "stl/_vector.h"
 #include "utl/Cache.h"
 #include "utl/MemMgr.h"
 #include "utl/Std.h"
@@ -20,22 +19,25 @@ bool CacheMgr::SearchAsync(char const *, CacheID **) {
     return false;
 }
 
-bool CacheMgr::
-    ShowUserSelectUIAsync(LocalUser *, u64, char const *, char const *, CacheID **) {
+bool CacheMgr::ShowUserSelectUIAsync(
+    LocalUser *, u64, char const *, char const *, CacheID **
+) {
     MILO_FAIL("CacheMgr::ShowUserSelectUIAsync() not supported by this platform.\n");
     mLastResult = kCache_ErrorUnknown;
     return false;
 }
 
-bool CacheMgr::
-    CreateCacheIDFromDeviceID(unsigned int, const char *, const char *, CacheID **) {
+bool CacheMgr::CreateCacheIDFromDeviceID(
+    unsigned int, const char *, const char *, CacheID **
+) {
     MILO_FAIL("CacheMgr::SetDeviceID() not supported by this platform.\n");
     mLastResult = kCache_ErrorUnknown;
     return false;
 }
 
-bool CacheMgr::
-    CreateCacheID(const char *, const char *, const char *, const char *, const char *, int, CacheID **) {
+bool CacheMgr::CreateCacheID(
+    const char *, const char *, const char *, const char *, const char *, int, CacheID **
+) {
     MILO_FAIL("CacheMgr::CreateCacheID() not supported by this platform.\n");
     mLastResult = kCache_ErrorUnknown;
     return false;

@@ -19,7 +19,6 @@
 #include "rndobj/Bitmap.h"
 #include "rndobj/Tex.h"
 #include "rndobj/Text.h"
-#include "stl/_iterator_base.h"
 #include "synth/Sound.h"
 #include "ui/UIListProvider.h"
 #include "ui/UIPanel.h"
