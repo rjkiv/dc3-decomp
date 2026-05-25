@@ -16,6 +16,23 @@ NetLoaderXbox::NetLoaderXbox(const String &str) : NetLoader(str), unk24(0) {
 
 NetLoaderXbox::~NetLoaderXbox() { RELEASE(mHttpGet); }
 
+void NetLoaderXbox::PollLoading() {
+    MILO_ASSERT(mHttpGet, 0x2A);
+    mHttpGet->Poll();
+    if (!unk24 && mHttpGet->IsDownloaded()) {
+        unk24 = true;
+        SetSize(mHttpGet->GetBufferSize());
+        AttachBuffer(mHttpGet->DetachBuffer());
+        PostDownload();
+    } else if (mHttpGet->HasFailed()) {
+        if (mHttpGet->FailType() != 3) {
+            SetFailType((NetLoaderFailType)0);
+        } else {
+            SetFailType((NetLoaderFailType)1);
+        }
+    }
+}
+
 bool NetLoaderXbox::HasFailed() {
     MILO_ASSERT(mHttpGet, 0x4C);
     return mHttpGet->HasFailed();
