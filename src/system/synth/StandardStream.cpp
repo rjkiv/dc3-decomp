@@ -356,9 +356,9 @@ void StandardStream::Init(float f1, float f2, Symbol s, bool b4) {
     mRdr = TheSynth->NewStreamDecoder(mFile, this, s);
 }
 
-void StandardStream::InitInfo(int i1, int sampleRate, bool floatSamples, int i4) {
+void StandardStream::InitInfo(int numChannels, int sampleRate, bool floatSamples, int i4) {
     unk154 = i4;
-    int numChannels = mVirtualChans + i1;
+    numChannels = mVirtualChans + numChannels;
     mInfoChannels = numChannels;
     unkec = (mInfoChannels / sampleRate);
     if (!mGetInfoOnly) {
