@@ -13,9 +13,10 @@ public:
     RefRes() : mRefs(0), mRes(0) {}
 
     T *Data() { return mRes; }
+    u32 Data_() { return reinterpret_cast<u32>(mRes); } // hack
     void AddRef() { mRefs++; }
     void SetData(T *data) { mRes = data; }
-    int NumRefs() const { return mRefs; }
+    uint NumRefs() const { return mRefs; }
 };
 
 template <class T>
@@ -47,7 +48,16 @@ public:
 
     void ReserveRes(Hmx::CRC key, T *data) {
         RefRes<T> &res = mResources[key];
-        MILO_ASSERT(res.Data() == NULL, 0x50);
+        do {
+            if (!(res.Data_() == NULL)) {
+                TheDebugFailer << MakeString(
+                    kAssertStr,
+                    "/drvs/sda1/projects_2/dc3-decomp/src/system/utl/ResMgr.h",
+                    0x50,
+                    "res.Data() == NULL"
+                );
+            }
+        } while (0);
         res.SetData(data);
         res.AddRef();
     }

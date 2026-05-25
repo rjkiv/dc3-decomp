@@ -791,6 +791,12 @@ void D3DDevice_BlockOnFence(DWORD fence);
 #pragma endregion
 #pragma region Misc
 
+inline void
+D3DDevice_SetSamplerState_BorderColor(D3DDevice *pDevice, DWORD Sampler, DWORD Value) {
+    u64 upd_value = Value;
+    pDevice->m_Constants.TextureFetch[Sampler + 5].BorderSize = upd_value;
+    pDevice->m_Pending.m_Mask[3] |= (0x8000000000000000) >> (Sampler + 0x20);
+}
 void D3DDevice_SetSamplerState_MinFilter(D3DDevice *pDevice, DWORD Sampler, DWORD Value);
 void D3DDevice_SetSamplerState_MagFilter(D3DDevice *pDevice, DWORD Sampler, DWORD Value);
 
