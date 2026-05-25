@@ -1,28 +1,27 @@
 #include "movie/MovieSys.h"
-#include "MovieImpl.h"
 #include "MovieSys.h"
 #include "TexMovie.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "utl/MemMgr.h"
 
-MovieSys::MovieSys() : isInitalized(false) {}
+MovieSys::MovieSys() : mInitialized(false) {}
 
 MovieSys::~MovieSys() {}
 
 void MovieSys::Init() {
-    if (isInitalized == false) {
-        isInitalized = true;
+    if (mInitialized == false) {
+        mInitialized = true;
         TexMovie::Init();
         TheDebug.AddExitCallback(Movie::Terminate);
     }
 }
 
 void MovieSys::Terminate() {
-    if (isInitalized == false) {
+    if (mInitialized == false) {
         return;
     }
-    isInitalized = false;
+    mInitialized = false;
 }
 
 MovieImpl *MovieSys::CreateMovieImpl() { return new MovieImpl(); }

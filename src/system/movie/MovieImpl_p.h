@@ -5,7 +5,7 @@
 
 class MovieImpl {
 public:
-    virtual ~MovieImpl(); // 0x0
+    virtual ~MovieImpl() {} // 0x0
     virtual void SetWidthHeight(int, int) {} // 0x4 ?
     virtual bool Ready() const { return 0; } // 0x8
     virtual bool BeginFromFile(
