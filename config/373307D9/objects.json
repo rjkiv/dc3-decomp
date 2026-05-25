@@ -798,7 +798,7 @@
             "system/utl/DeJitter.cpp": "NonMatching",
             "system/utl/DebugGraph.cpp": "Matching",
             "system/utl/DebugMeter.cpp": "Matching",
-            "system/utl/EncryptXTEA.cpp": "NonMatching",
+            "system/utl/EncryptXTEA.cpp": "Matching",
             "system/utl/FakeSongMgr.cpp": "Matching",
             "system/utl/FilePath.cpp": "Matching",
             "system/utl/FileStream.cpp": "Matching",
