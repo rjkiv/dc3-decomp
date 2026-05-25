@@ -550,3 +550,38 @@ bool VorbisReader::DoFileRead() {
     mFail = mFile->Fail();
     return ret;
 }
+
+bool VorbisReader::DecodeThreadPoll() {
+    if (!TryEnter()) {
+        return true;
+    }
+    CritSecTracker tracker(this);
+    Exit();
+    if (mDecryptBytes > 0) {
+        MILO_ASSERT(mReadBuffer, 0x2EF);
+        Decrypt(mReadBuffer, mDecryptBytes);
+        ogg_sync_wrote(mOggSync, mDecryptBytes);
+        mReadBuffer = nullptr;
+        mDecryptBytes = 0;
+    }
+    if (mNeedInitDecoder) {
+        InitDecoder();
+        mNeedInitDecoder = false;
+    }
+    if (!unked) {
+        return false;
+    }
+    for (int i = 0; i < mNumChannels; i++) {
+        unkf4[i].clear(); // ???
+    }
+    if (unk100 != -1) {
+        unk100 += unk108;
+    }
+    unk108 = 0;
+    bool ret = TryDecode();
+    if (QueuedOutputSamples() > 0) {
+        float **pcmPtr;
+        vorbis_synthesis_pcmout(mVorbisDsp, &pcmPtr);
+        // more
+    }
+}

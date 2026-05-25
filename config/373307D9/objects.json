@@ -704,7 +704,7 @@
             "system/synth/tomcrypt/aes.c": "NonMatching",
             "system/synth/tomcrypt/crypt.c": "Matching",
             "system/synth/tomcrypt/ctr.c": "NonMatching",
-            "system/synth/tomcrypt/TomCryptLicense.cpp": "NonMatching",
+            "system/synth/tomcrypt/TomCryptLicense.cpp": "Matching",
             "system/synth_xbox/Biquad.cpp": "NonMatching",
             "system/synth_xbox/EnvelopeGenerator.cpp": "MISSING",
             "system/synth_xbox/ExternalMic.cpp": "NonMatching",
