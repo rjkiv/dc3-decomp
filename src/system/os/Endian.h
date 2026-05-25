@@ -1,4 +1,14 @@
 #pragma once
+#include "os/Debug.h"
+
+template <class T>
+void EndianSwapBlock(T *block, int count) {
+    MILO_ASSERT(block != NULL, 0x53);
+    MILO_ASSERT(count >= 0, 0x54);
+    for (T *it = block; it != block + count; it++) {
+        *it = EndianSwap(*it);
+    }
+}
 
 // template <>
 inline void EndianSwapEq(unsigned int &i) {
