@@ -1,7 +1,18 @@
 #include "RenderState.h"
 #include "rnddx9/Rnd.h"
+#include "xdk/d3d9i/d3d9.h"
 
 RndRenderState TheRenderState;
+
+void RndRenderState::SetTextureFilter(uint, FilterMode, bool) {}
+
+void RndRenderState::SetTextureClamp(uint, ClampMode) {}
+
+void RndRenderState::SetBorderColor(uint sampler, bool black_or_white) {
+    D3DDevice_SetSamplerState_BorderColor(
+        TheDxRnd.Device(), (DWORD)sampler, black_or_white
+    );
+}
 
 void RndRenderState::SetBlendEnable(bool b) {
     D3DDevice_SetRenderState_AlphaBlendEnable(TheDxRnd.Device(), (u8)b);
@@ -23,10 +34,6 @@ void RndRenderState::SetBlend(
 void RndRenderState::SetColorWriteMask(uint mask) {
     D3DDevice_SetRenderState_ColorWriteEnable(TheDxRnd.Device(), mask);
 }
-
-// void RndRenderState::SetTextureFilter(unsigned int, FilterMode, bool) {}
-// void RndRenderState::SetTextureClamp(unsigned int, ClampMode) {}
-// void RndRenderState::SetBorderColor(unsigned int, bool) {}
 
 void RndRenderState::SetFillMode(FillMode mode) {
     D3DDevice_SetRenderState_FillMode(TheDxRnd.Device(), (int)mode);
