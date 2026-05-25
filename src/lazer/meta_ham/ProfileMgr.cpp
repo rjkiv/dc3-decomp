@@ -34,7 +34,6 @@
 #include "os/User.h"
 #include "rndobj/Overlay.h"
 #include "rndobj/Rnd.h"
-#include "stl/_vector.h"
 #include "synth/FxSend.h"
 #include "synth/Synth.h"
 #include "ui/UI.h"

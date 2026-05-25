@@ -13,7 +13,6 @@
 #include "os/ContentMgr.h"
 #include "os/Timer.h"
 #include "os/User.h"
-#include "stl/_vector.h"
 #include "types.h"
 #include "utl/JobMgr.h"
 #include "utl/NetLoader.h"

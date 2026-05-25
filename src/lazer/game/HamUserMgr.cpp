@@ -7,7 +7,6 @@
 #include "os/Debug.h"
 #include "os/User.h"
 #include "os/UserMgr.h"
-#include "stl/_vector.h"
 #include "utl/HxGuid.h"
 #include "utl/Std.h"
 #include "meta_ham/ProfileMgr.h"

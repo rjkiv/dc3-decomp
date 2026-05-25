@@ -6,7 +6,6 @@
 #include "flow/Flow.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
-#include "stl/_algobase.h"
 
 FlowSwitchCase::FlowSwitchCase()
     : mToValue(0), mFromValue(0), mOperator(kEqual), mUseLastValue(0),

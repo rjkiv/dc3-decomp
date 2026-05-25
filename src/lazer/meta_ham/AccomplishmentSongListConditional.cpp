@@ -5,7 +5,6 @@
 #include "meta_ham/SongStatusMgr.h"
 #include "obj/Data.h"
 #include "os/Debug.h"
-#include "stl/_vector.h"
 #include "utl/Std.h"
 #include "utl/Symbol.h"
 

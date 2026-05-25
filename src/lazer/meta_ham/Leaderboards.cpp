@@ -16,8 +16,6 @@
 #include "os/OnlineID.h"
 #include "os/PlatformMgr.h"
 #include "os/System.h"
-#include "stl/_pair.h"
-#include "stl/_vector.h"
 #include "ui/UI.h"
 #include "ui/UIListLabel.h"
 #include "ui/UIPanel.h"

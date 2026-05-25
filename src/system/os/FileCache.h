@@ -1,7 +1,6 @@
 #pragma once
 #include "obj/Object.h"
 #include "os/File.h"
-#include "stl/_vector.h"
 #include "utl/FilePath.h"
 #include "utl/Loader.h"
 #include "utl/MemMgr.h"

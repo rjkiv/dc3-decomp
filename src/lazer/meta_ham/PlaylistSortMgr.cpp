@@ -27,7 +27,6 @@
 #include "os/ContentMgr.h"
 #include "os/Debug.h"
 #include "os/PlatformMgr.h"
-#include "stl/_algo.h"
 #include "ui/UI.h"
 #include "utl/DataPointMgr.h"
 #include "utl/MakeString.h"

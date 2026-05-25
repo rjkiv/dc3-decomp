@@ -8,7 +8,6 @@
 #include "obj/Object.h"
 #include "os/PlatformMgr.h"
 #include "rndobj/Tex.h"
-#include "stl/_vector.h"
 #include "types.h"
 #include "ui/UIPanel.h"
 #include "utl/NetCacheLoader.h"

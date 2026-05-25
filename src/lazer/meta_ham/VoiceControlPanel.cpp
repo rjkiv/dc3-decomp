@@ -33,7 +33,6 @@
 #include "os/System.h"
 #include "rndobj/Anim.h"
 #include "rndobj/Draw.h"
-#include "stl/_vector.h"
 #include "synth/MetaMusic.h"
 #include "ui/UI.h"
 #include "ui/UIColor.h"

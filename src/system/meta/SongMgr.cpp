@@ -9,7 +9,6 @@
 #include "os/Debug.h"
 #include "os/File.h"
 #include "os/System.h"
-#include "stl/_vector.h"
 #include "utl/BufStream.h"
 #include "utl/Cache.h"
 #include "utl/CacheMgr.h"

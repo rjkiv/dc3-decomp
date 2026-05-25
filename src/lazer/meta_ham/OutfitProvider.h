@@ -1,6 +1,5 @@
 #pragma once
 #include "obj/Object.h"
-#include "stl/_vector.h"
 #include "ui/UIListLabel.h"
 #include "ui/UIListProvider.h"
 #include "utl/Symbol.h"

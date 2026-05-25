@@ -5,7 +5,6 @@
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
-#include "stl/_vector.h"
 #include "utl/DataPointMgr.h"
 #include "utl/Symbol.h"
 

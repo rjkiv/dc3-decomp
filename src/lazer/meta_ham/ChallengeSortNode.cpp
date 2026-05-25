@@ -20,7 +20,6 @@
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/PlatformMgr.h"
-#include "stl/_vector.h"
 #include "ui/UI.h"
 #include "lazer/net_ham/RockCentral.h"
 #include "ui/UILabel.h"

@@ -4,7 +4,6 @@
 #include "meta_ham/AccomplishmentConditional.h"
 #include "meta_ham/HamProfile.h"
 #include "obj/Data.h"
-#include "stl/_vector.h"
 #include "utl/Symbol.h"
 
 class AccomplishmentCharacterListConditional : public AccomplishmentConditional {

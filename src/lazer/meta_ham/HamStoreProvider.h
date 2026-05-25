@@ -4,8 +4,6 @@
 #include "net_ham/HamStoreCartJobs.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
-#include "stl/_map.h"
-#include "stl/_vector.h"
 #include "ui/UIListProvider.h"
 #include "utl/NetCacheMgr.h"
 #include "utl/Str.h"

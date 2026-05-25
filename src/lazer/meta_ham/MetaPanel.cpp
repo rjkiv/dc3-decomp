@@ -72,7 +72,6 @@
 #include "obj/Task.h"
 #include "os/Debug.h"
 #include "rndobj/PostProc.h"
-#include "stl/_vector.h"
 #include "synth/Faders.h"
 #include "synth/MetaMusic.h"
 #include "meta_ham/Campaign.h"

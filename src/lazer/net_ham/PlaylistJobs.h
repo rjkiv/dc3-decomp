@@ -2,7 +2,6 @@
 #include "meta_ham/Playlist.h"
 #include "net_ham/RCJobDingo.h"
 #include "obj/Object.h"
-#include "stl/_vector.h"
 
 class GetPlaylistsJob : public RCJob {
 public:

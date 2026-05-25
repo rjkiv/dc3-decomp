@@ -12,7 +12,6 @@
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/DateTime.h"
-#include "stl/_vector.h"
 
 #define MULTIPLAYER_SLOTS 2
 

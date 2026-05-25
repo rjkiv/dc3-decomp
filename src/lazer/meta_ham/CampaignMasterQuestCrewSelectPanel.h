@@ -4,7 +4,6 @@
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/DateTime.h"
-#include "stl/_vector.h"
 #include "ui/PanelDir.h"
 #include "utl/Symbol.h"
 

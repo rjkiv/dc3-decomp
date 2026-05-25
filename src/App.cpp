@@ -49,7 +49,6 @@
 #include "os/Timer.h"
 #include "rndobj/HiResScreen.h"
 #include "rndobj/Rnd.h"
-#include "stl/_algobase.h"
 #include "synth/Synth.h"
 #include "synth/SynthSample.h"
 #include "ui/PanelDir.h"

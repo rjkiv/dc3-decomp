@@ -4,7 +4,6 @@
 #include "meta/DataArraySongInfo.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
-#include "stl/_vector.h"
 #include "ui/UIPanel.h"
 #include "utl/BeatMap.h"
 #include "utl/MemMgr.h"

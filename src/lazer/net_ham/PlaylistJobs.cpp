@@ -6,7 +6,6 @@
 #include "net_ham/RCJobDingo.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
-#include "stl/_vector.h"
 #include "utl/DataPointMgr.h"
 #include "utl/MakeString.h"
 #include "utl/Symbol.h"

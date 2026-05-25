@@ -4,7 +4,6 @@
 #include "char/CharServoBone.h"
 #include "char/CharWeightable.h"
 #include "obj/Object.h"
-#include "stl/_vector.h"
 #include "utl/BinStream.h"
 #include "utl/MemMgr.h"
 #include "utl/Symbol.h"

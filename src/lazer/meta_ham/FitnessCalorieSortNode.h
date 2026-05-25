@@ -1,6 +1,5 @@
 #pragma once
 #include "meta_ham/NavListNode.h"
-#include "stl/_vector.h"
 #include "ui/UILabel.h"
 #include "ui/UIListLabel.h"
 #include "utl/Symbol.h"
