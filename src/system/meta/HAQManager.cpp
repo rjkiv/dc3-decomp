@@ -208,7 +208,9 @@ END_HANDLERS
 void HAQManager::ToggleEnabled() { m_bEnabled = !m_bEnabled; }
 
 void HAQManager::DisplayAll() {
-    ToggleEnabled();
+    if (!Enabled()) {
+        ToggleEnabled();
+    }
     Print(kHAQType_Screen);
     Print(kHAQType_Focus);
 }

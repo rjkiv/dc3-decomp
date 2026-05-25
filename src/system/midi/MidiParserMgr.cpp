@@ -43,7 +43,7 @@ void MidiParserMgr::OnNewTrack(int) {
     MemDoTempAllocations tmp;
     MILO_ASSERT(!mSongName.Null(), 0x7C);
     FreeAllData();
-    mNoteOns.resize(128);
+    mNoteOns.resize(128, -1);
     mText.reserve(2000);
     unk6c = true;
 }
