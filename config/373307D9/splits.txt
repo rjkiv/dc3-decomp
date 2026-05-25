@@ -11993,18 +11993,18 @@ xdk/xmic/fft4rf6i.cpp:
 	.pdata      start:0x82320E40 end:0x82320E50
 	.text       start:0x82ECB1C8 end:0x82ECB708
 
-lib/binkxenon/xenon_rrAtomics.cpp:
+binkxenon/xenon_rrAtomics.cpp:
 	.text       start:0x82ECB708 end:0x82ECB7C8
 
-lib/binkxenon/radmem.cpp:
+binkxenon/radmem.cpp:
 	.rdata      start:0x82288F14 end:0x82288F50
 	.pdata      start:0x82320E50 end:0x82320E60
 	.text       start:0x82ECB7C8 end:0x82ECB9C0
 
-lib/binkxenon/xenon_rrcpu.cpp:
+binkxenon/xenon_rrcpu.cpp:
 	.text       start:0x82ECB9C0 end:0x82ECB9F8
 
-lib/binkxenon/rrstring.cpp:
+binkxenon/rrstring.cpp:
 	.text       start:0x82ECB9F8 end:0x82ECBA58
 
 system/oggvorbis/framing.c:
@@ -12122,40 +12122,40 @@ xdk/xapilibi/switchtothread.cpp:
 	.pdata      start:0x82321250 end:0x82321258
 	.text       start:0x82EDAB48 end:0x82EDAB90
 
-lib/binkxenon/binkasyncthread.cpp:
+binkxenon/binkasyncthread.cpp:
 	.rdata      start:0x82288850 end:0x822888E4
 	.pdata      start:0x823218C8 end:0x823218E0
 	BINK        start:0x82EE6C00 end:0x82EE7018
 	BINKBSS     start:0x82F00000 end:0x82F0000C
 
-lib/binkxenon/binkread.cpp:
+binkxenon/binkread.cpp:
 	.rdata      start:0x822888E4 end:0x82288D68
 	.pdata      start:0x823218E0 end:0x82321A48
 	BINK        start:0x82EE7018 end:0x82EED000
 	BINKDATA    start:0x8318D2D8 end:0x8318D304
 
-lib/binkxenon/binkxa2.cpp:
+binkxenon/binkxa2.cpp:
 	.rdata      start:0x82288D68 end:0x82288DA0
 	.pdata      start:0x82321A48 end:0x82321A98
 	BINK        start:0x82EED000 end:0x82EED998
 
-lib/binkxenon/binkasyncRR.cpp:
+binkxenon/binkasyncRR.cpp:
 	.rdata      start:0x82288DA0 end:0x82288E74
 	.pdata      start:0x82321AA0 end:0x82321AE8
 	BINK        start:0x82EED9F8 end:0x82EEE1B0
 	BINKDATA    start:0x8318D304 end:0x8318D570
 
-lib/binkxenon/popmal.cpp:
+binkxenon/popmal.cpp:
 	.rdata      start:0x82288E74 end:0x82288EA0
 	.pdata      start:0x82321AE8 end:0x82321AF0
 	BINK        start:0x82EEE1B0 end:0x82EEE338
 
-lib/binkxenon/binkacd.cpp:
+binkxenon/binkacd.cpp:
 	.rdata      start:0x82288EA0 end:0x82288F14
 	.pdata      start:0x82321AF0 end:0x82321B10
 	BINK        start:0x82EEE338 end:0x82EEEF40
 
-lib/binkxenon/binkfile.cpp:
+binkxenon/binkfile.cpp:
 	.rdata      start:0x82288F50 end:0x82289030
 	.pdata      start:0x82321B68 end:0x82321BA8
 	BINK        start:0x82EF2F60 end:0x82EF3FF8
@@ -12165,27 +12165,27 @@ xdk/xaudio2/volumemeter.cpp:
 	.text       start:0x82EE0950 end:0x82EE09E0 rename:.text$yc
 	.data       start:0x82F4B158 end:0x82F4B588
 
-lib/binkxenon/wintimer.cpp:
+binkxenon/wintimer.cpp:
 	.pdata      start:0x82321A98 end:0x82321AA0
 	BINK        start:0x82EED998 end:0x82EED9F8
 
-lib/binkxenon/expand.cpp:
+binkxenon/expand.cpp:
 	.pdata      start:0x82321B10 end:0x82321B68
 	BINK        start:0x82EEEF40 end:0x82EF2F60
 
-lib/binkxenon/fft.cpp:
+binkxenon/fft.cpp:
 	.pdata      start:0x82321BA8 end:0x82321C28
 	BINK        start:0x82EF3FF8 end:0x82EF7008
 
-lib/binkxenon/dct.cpp:
+binkxenon/dct.cpp:
 	.pdata      start:0x82321C28 end:0x82321C40
 	BINK        start:0x82EF7008 end:0x82EF7A68
 
-lib/binkxenon/bitplane.cpp:
+binkxenon/bitplane.cpp:
 	.pdata      start:0x82321C40 end:0x82321C58
 	BINK        start:0x82EF7A68 end:0x82EF9200
 
-lib/binkxenon/win32_rrthreads.cpp:
+binkxenon/win32_rrthreads.cpp:
 	.pdata      start:0x82321C58 end:0x82321CD0
 	RADCODE     start:0x82EF9200 end:0x82EF9CF4
 
@@ -12547,5 +12547,5 @@ xdk/xaudio2/msaudioenc.cpp:
 xdk/xmic/xmicpch.cpp:
 	.data       start:0x8318C794 end:0x8318C798 rename:.bss
 
-lib/binkxenon/binktm.cpp:
+binkxenon/binktm.cpp:
 	.data       start:0x8318C798 end:0x8318C7C4 rename:.bss
