@@ -4,11 +4,17 @@
 #include "math/Utl.h"
 #include "moviebink/BinkMovieSys.h"
 #include "moviebink/BinkMovieLoader.h"
+#include "obj/Data.h"
+#include "obj/Dir.h"
+#include "obj/DirUnloader.h"
+#include "obj/Msg.h"
 #include "obj/Object.h"
+#include "os/Block.h"
 #include "os/Debug.h"
 #include "os/File.h"
 #include "os/OSFuncs.h"
 #include "os/Platform.h"
+#include "os/System.h"
 #include "os/ThreadCall.h"
 #include "rndobj/BaseMaterial.h"
 #include "rndobj/Mat.h"
@@ -211,7 +217,7 @@ void BinkMovieLoader::DoneLoading() {}
 BinkMovieImpl::BinkMovieImpl()
     : mLoader(0), mMovieLoader(0), mBink(0), unk18(0), mPreloadBuf(0), unk20(0), unk24(0),
       unk40(0), mWidth(0), mHeight(0), mPaused(0), unkb8(kNoHandle), unkd4(0), unkd5(0),
-      mThreadId(gMainThreadID), unke0(0x8000), unke4(0) {
+      mThreadId(gMainThreadID), unke0(0x8000), mInternalBufs(0) {
     CHECK_THREAD;
 }
 
@@ -252,7 +258,7 @@ bool BinkMovieImpl::BeginFromFile(
     if (TheLoadMgr.GetPlatform() == kPlatformNone) {
         return false;
     } else {
-        unkc = c1;
+        mName = c1;
         unk18 = b3;
         if (!PlatformCacheFile(c1)) {
             return false;
@@ -271,19 +277,19 @@ bool BinkMovieImpl::BeginFromFile(
             if (b3) {
                 static int _x(MemFindHeap("physical"));
                 MemHeapTracker tmp(_x);
-                const char *str = unkc.c_str();
+                const char *str = mName.c_str();
                 BinStream *bs6 = nullptr;
                 if (bs && bs->Cached()) {
                     bs6 = bs;
                 }
                 mLoader = new FileLoader(str, str, pos, 0, true, true, bs6, "misc");
             } else {
-                mMovieLoader = new BinkMovieLoader(unkc.c_str(), kLoadStayBack, this);
+                mMovieLoader = new BinkMovieLoader(mName.c_str(), kLoadStayBack, this);
             }
             sActiveMovies.push_back(this);
             sActivePending++;
             if (sActivePending > 1 && !b3) {
-                MILO_NOTIFY("%s, multiple movies must be preloaded", unkc);
+                MILO_NOTIFY("%s, multiple movies must be preloaded", mName);
             }
             unkd4 = true;
             return true;
@@ -300,7 +306,7 @@ bool BinkMovieImpl::BeginFromBuffer(
     if (TheLoadMgr.GetPlatform() == kPlatformNone) {
         return false;
     } else {
-        unkc = "";
+        mName = "";
         unk26 = b3;
         unk27 = b2;
         mLocalizationTrack = i1;
@@ -323,6 +329,50 @@ bool BinkMovieImpl::BeginFromBuffer(
     }
 }
 
+bool BinkMovieImpl::Poll() {
+    CHECK_THREAD;
+    if (CheckOpen(true)) {
+        return true;
+    } else if (mBink && mInternalBufs) {
+        if (!mPreloadBuf) {
+            float ms = unk50.SplitMs();
+            unk50.Restart();
+            if (ms > 49.0f) {
+                const char *msg = MakeString(
+                    "GLITCH: %g ms (%g ms bink), %s\n", ms, unk80.SplitMs(), mName
+                );
+                static DataNode &n = DataVariable("notify_level");
+                if (n.Int() == 0) {
+                    MILO_LOG("%s\n", msg);
+                } else {
+                    static Hmx::Object *sCheatDisplay =
+                        ObjectDir::Main()->Find<Hmx::Object>("cheat_display");
+                    static Message show("show", 0);
+                    show[0] = msg;
+                    sCheatDisplay->Handle(show, false);
+                }
+            }
+            DiscContentionCheck(nullptr);
+        }
+        unk80.Restart();
+        if (BinkWait(mBink) == 0) {
+            DoFrame();
+            while (BinkShouldSkip(mBink)) {
+                MILO_LOG("skipped bink frame!\n");
+                DoFrame();
+            }
+        }
+        unk80.Stop();
+        if (mBink->ReadError == 0 && (unk26 || mBink->FrameNum != mBink->Frames)) {
+            return true;
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
+}
+
 void BinkMovieImpl::Save(BinStream *stream) {
     MILO_ASSERT(stream, 0x1C7);
     if (stream->Cached()) {
@@ -333,6 +383,52 @@ void BinkMovieImpl::Save(BinStream *stream) {
     }
 }
 
+void BinkMovieImpl::End() {
+    CHECK_THREAD;
+    if (unkd4) {
+        unkd4 = false;
+        SharedFinishOpen(false);
+    }
+    FOREACH (it, sActiveMovies) {
+        if (*it == this) {
+            sActiveMovies.erase(it);
+            break;
+        }
+    }
+    if (!mPreloadBuf) {
+        DataArray *videoArr = SystemConfig()->FindArray("videos", false);
+        if (videoArr) {
+            DataArray *streamArr = videoArr->FindArray("stream_end", false);
+            if (streamArr) {
+                streamArr->ExecuteScript(1, nullptr, nullptr, 1);
+            }
+        }
+        DiscContentionPublish();
+    }
+    if (mBink) {
+        MovieClose();
+    }
+    RELEASE(mLoader);
+    RELEASE(mMovieLoader);
+    if (unk24) {
+        if (mPreloadBuf) {
+            MemFree(mPreloadBuf, __FILE__, 0x212);
+            mPreloadBuf = nullptr;
+        }
+    } else {
+        mPreloadBuf = nullptr;
+    }
+    unk24 = false;
+    if (mInternalBufs) {
+        mInternalBufs->unkbc--;
+        if (mInternalBufs->unkbc == 0) {
+            delete mInternalBufs;
+        }
+        mInternalBufs = nullptr;
+    }
+    mThreadId = gMainThreadID;
+}
+
 bool BinkMovieImpl::IsOpen() const {
     CHECK_THREAD;
     return mBink;
@@ -341,6 +437,27 @@ bool BinkMovieImpl::IsOpen() const {
 bool BinkMovieImpl::IsLoading() const {
     CHECK_THREAD;
     return mLoader || mMovieLoader;
+}
+
+void BinkMovieImpl::SetPaused(bool paused) {
+    if (mPaused != paused && mBink) {
+        if (!paused) {
+            LockThread();
+        }
+        if (unkd6 && paused && unkd5) {
+            BinkDoFrameAsyncWait(mBink, -1);
+            EndFrame();
+        }
+        BinkPause(mBink, paused);
+        if (unkd6 && !paused && !unkd5) {
+            BeginFrame();
+            BinkDoFrameAsync(mBink, TheBinkMovieSys.Core0(), TheBinkMovieSys.Core1());
+        }
+        mPaused = paused;
+        if (paused) {
+            UnlockThread();
+        }
+    }
 }
 
 void BinkMovieImpl::UnlockThread() {
@@ -397,6 +514,97 @@ void BinkMovieImpl::Terminate() {
     CHECK_THREAD;
     if (mBink) {
         MovieClose();
+    }
+}
+
+void BinkMovieImpl::NextFrame() {
+    CHECK_THREAD;
+    unk40++;
+    if (unk40 >= mInternalBufs->mBuffers.TotalFrames * TheBinkMovieSys.GetUnk10()) {
+        unk40 = 0;
+    }
+    BinkNextFrame(mBink);
+}
+
+void BinkMovieImpl::DoFrame() {
+    CHECK_THREAD;
+    TheBlockMgr.MarkDiscRead();
+    if (unkd6) {
+        BinkDoFrameAsyncWait(mBink, -1);
+        EndFrame();
+        bool b3 = mBink->ReadError != 0 || !unk26 && mBink->FrameNum == mBink->Frames;
+        if (!b3) {
+            NextFrame();
+            BeginFrame();
+            BinkDoFrameAsync(mBink, TheBinkMovieSys.Core0(), TheBinkMovieSys.Core1());
+        }
+    } else {
+        BeginFrame();
+        BinkDoFrame(mBink);
+        EndFrame();
+        bool b3 = mBink->ReadError != 0 || !unk26 && mBink->FrameNum == mBink->Frames;
+        if (!b3) {
+            NextFrame();
+        }
+    }
+}
+
+void BinkMovieImpl::DiscContentionCheck(Loader *l) {
+    CHECK_THREAD;
+    FOREACH (it, TheLoadMgr.Loading()) {
+        if (*it != l && !dynamic_cast<DirUnloader *>(*it)) {
+            unkbc[*it] = (*it)->LoaderFile();
+        }
+    }
+}
+
+void BinkMovieImpl::DiscContentionPublish() {
+    CHECK_THREAD;
+    bool first = true;
+    int count = 0;
+    String str;
+    FOREACH (it, unkbc) {
+        if (!first) {
+            str += ", ";
+        }
+        first = false;
+        str += it->second;
+        count++;
+    }
+    if (count != 0) {
+        if (str.length() > 500) {
+            str = str.substr(0, 500);
+        }
+        MILO_NOTIFY("Streaming Bink Thrashed with %d files: (%s)", count, str);
+        unkbc.clear();
+    }
+}
+
+void BinkMovieImpl::SharedFinishOpen(bool b1) {
+    sActivePending--;
+    MILO_ASSERT(sActivePending >= 0, 0x54B);
+    if (sActivePending <= 0) {
+        std::vector<BinkMovieImpl *> movies;
+        std::vector<BINK *> binks;
+        for (int i = 0; i < sActiveMovies.size(); i++) {
+            BinkMovieImpl *impl = sActiveMovies[i];
+            if (!impl->mInternalBufs) {
+                movies.push_back(impl);
+                binks.push_back(impl->mBink);
+            }
+        }
+        MovieInternalBuffers *mibs = MovieInternalBuffers::New(binks);
+        if (mibs) {
+            for (int i = 0; i < movies.size(); i++) {
+                BinkMovieImpl *impl = movies[i];
+                impl->mInternalBufs = mibs;
+                mibs->unkbc++;
+                impl->FinishOpen();
+            }
+        }
+        if (b1 && movies.size() == 1) {
+            movies[0]->SetPaused(false);
+        }
     }
 }
 

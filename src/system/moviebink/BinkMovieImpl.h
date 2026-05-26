@@ -10,12 +10,12 @@
 
 // size 0xC0
 struct MovieInternalBuffers {
+private:
+    MovieInternalBuffers();
+
 public:
     ~MovieInternalBuffers();
     static MovieInternalBuffers *New(std::vector<BINK *>);
-
-private:
-    MovieInternalBuffers();
 
     RndTex *YTex[2][2]; // 0x0
     RndTex *CrTex[2][2]; // 0x10
@@ -23,7 +23,7 @@ private:
     RndTex *ATex[2][2]; // 0x30
     RndMat *unk40; // 0x40
     BINKFRAMEBUFFERS mBuffers; // 0x44
-    int unkbc; // 0xbc
+    int unkbc; // 0xbc - ref count?
 };
 
 class BinkMovieImpl : public MovieImpl {
@@ -43,7 +43,7 @@ public:
     virtual bool IsOpen() const; // 0x24
     virtual bool IsLoading() const; // 0x28
     virtual bool CheckOpen(bool); // 0x2c
-    virtual bool SetPaused(bool); // 0x30
+    virtual void SetPaused(bool); // 0x30
     virtual bool Paused() const { return mPaused; } // 0x34
     virtual void UnlockThread(); // 0x38
     virtual void LockThread(); // 0x3c
@@ -75,7 +75,8 @@ private:
 
     FileLoader *mLoader; // 0x4
     class BinkMovieLoader *mMovieLoader; // 0x8
-    String unkc;
+    /** The movie's name. */
+    String mName; // 0xc
     BINK *mBink; // 0x14
     bool unk18;
     void *mPreloadBuf; // 0x1c
@@ -86,6 +87,7 @@ private:
     bool unk27;
     bool unk28;
     float mAspect; // 0x2c
+    // Rect at 0x30?
     float unk30;
     float unk34;
     float unk38;
@@ -99,12 +101,12 @@ private:
     int unkb0;
     int unkb4;
     void *unkb8;
-    std::map<void *, String> unkbc;
+    std::map<void *, String> unkbc; // 0xbc - key = loader ptr, val = loader file?
     bool unkd4;
-    bool unkd5;
+    bool unkd5; // 0xd5 - mMidFrame?
     bool unkd6;
     DWORD mThreadId; // 0xd8
     int mLocalizationTrack; // 0xdc
     int unke0; // 0xe0 - volume?
-    MovieInternalBuffers *unke4; // 0xe4
+    MovieInternalBuffers *mInternalBufs; // 0xe4
 };

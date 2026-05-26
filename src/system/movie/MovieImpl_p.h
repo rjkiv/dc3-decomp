@@ -21,7 +21,7 @@ public:
     virtual bool IsOpen() const { return 0; } // 0x24
     virtual bool IsLoading() const { return 0; } // 0x28
     virtual bool CheckOpen(bool) { return 0; } // 0x2c
-    virtual bool SetPaused(bool) { return 0; } // 0x30
+    virtual void SetPaused(bool) {} // 0x30
     virtual bool Paused() const { return 0; } // 0x34 ?
     virtual void UnlockThread() {} // 0x38
     virtual void LockThread() {} // 0x3c
