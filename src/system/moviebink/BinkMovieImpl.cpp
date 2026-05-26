@@ -1,5 +1,7 @@
 #include "moviebink/BinkMovieImpl.h"
 #include "bink.h"
+#include "math/Decibels.h"
+#include "math/Utl.h"
 #include "moviebink/BinkMovieSys.h"
 #include "moviebink/BinkMovieLoader.h"
 #include "obj/Object.h"
@@ -21,8 +23,17 @@
 std::vector<BinkMovieImpl *> BinkMovieImpl::sActiveMovies;
 
 namespace {
-    void StoreCache(RndTex *t);
-    void EndianSwapBuffer(void *, int);
+    void StoreCache(RndTex *t) {
+        MILO_ASSERT(t, 0x3C);
+        unsigned int pitch = t->TexelsPitch() * t->Height();
+        void *buf;
+        if (t->TexelsLock(buf)) {
+            TheBinkMovieSys.PlatformStoreCache(buf, pitch);
+            t->TexelsUnlock();
+        }
+    }
+
+    void EndianSwapBuffer(void *buffer, int size);
 }
 
 #pragma region MovieInternalBuffers
@@ -45,7 +56,7 @@ MovieInternalBuffers::MovieInternalBuffers() {
     ATex[0][1] = nullptr;
     ATex[1][0] = nullptr;
     ATex[1][1] = nullptr;
-    unk40 = 0;
+    unk40 = nullptr;
     unkbc = 0;
 }
 
@@ -88,6 +99,7 @@ MovieInternalBuffers *MovieInternalBuffers::New(std::vector<BINK *> binks) {
         return nullptr;
     } else {
         for (int i = 0; i < ret->mBuffers.TotalFrames; i++) {
+            BINKFRAMEPLANESET &curFrame = ret->mBuffers.Frames[i];
             for (int j = 0; j < TheBinkMovieSys.GetUnk10(); j++) {
                 MILO_ASSERT(!ret->YTex[i][j], 0x5A2);
                 MILO_ASSERT(!ret->CrTex[i][j], 0x5A3);
@@ -129,25 +141,21 @@ MovieInternalBuffers *MovieInternalBuffers::New(std::vector<BINK *> binks) {
                     false,
                     nullptr
                 );
-                ret->mBuffers.Frames[i].YPlane.BufferPitch =
-                    ret->YTex[i][j]->TexelsPitch();
-                ret->mBuffers.Frames[i].cRPlane.BufferPitch =
-                    ret->CrTex[i][j]->TexelsPitch();
-                ret->mBuffers.Frames[i].cBPlane.BufferPitch =
-                    ret->CbTex[i][j]->TexelsPitch();
-                ret->mBuffers.Frames[i].APlane.BufferPitch =
-                    ret->ATex[i][j]->TexelsPitch();
+                curFrame.YPlane.BufferPitch = ret->YTex[i][j]->TexelsPitch();
+                curFrame.cRPlane.BufferPitch = ret->CrTex[i][j]->TexelsPitch();
+                curFrame.cBPlane.BufferPitch = ret->CbTex[i][j]->TexelsPitch();
+                curFrame.APlane.BufferPitch = ret->ATex[i][j]->TexelsPitch();
 
-                if (ret->YTex[i][j]->TexelsLock(ret->mBuffers.Frames[i].YPlane.Buffer)) {
+                if (ret->YTex[i][j]->TexelsLock(curFrame.YPlane.Buffer)) {
                     ret->YTex[i][j]->TexelsUnlock();
                 }
-                if (ret->CrTex[i][j]->TexelsLock(ret->mBuffers.Frames[i].cRPlane.Buffer)) {
+                if (ret->CrTex[i][j]->TexelsLock(curFrame.cRPlane.Buffer)) {
                     ret->CrTex[i][j]->TexelsUnlock();
                 }
-                if (ret->CbTex[i][j]->TexelsLock(ret->mBuffers.Frames[i].cBPlane.Buffer)) {
+                if (ret->CbTex[i][j]->TexelsLock(curFrame.cBPlane.Buffer)) {
                     ret->CbTex[i][j]->TexelsUnlock();
                 }
-                if (ret->ATex[i][j]->TexelsLock(ret->mBuffers.Frames[i].APlane.Buffer)) {
+                if (ret->ATex[i][j]->TexelsLock(curFrame.APlane.Buffer)) {
                     ret->ATex[i][j]->TexelsUnlock();
                 }
             }
@@ -191,13 +199,12 @@ void BinkMovieLoader::DoneLoading() {}
 
 #define CHECK_THREAD                                                                     \
     {                                                                                    \
-        DWORD cur = GetCurrentThreadId();                                                \
         MILO_ASSERT_FMT(                                                                 \
-            mThreadId == cur || (mThreadId == -1 && MainThread()),                       \
+            mThreadId == CurrentThreadId() || (mThreadId == -1 && MainThread()),         \
             "%s called in the wrong thread (expected %d, cur thread is %d)",             \
             __FUNCTION__,                                                                \
             mThreadId,                                                                   \
-            GetCurrentThreadId()                                                         \
+            CurrentThreadId()                                                            \
         );                                                                               \
     }
 
@@ -252,7 +259,7 @@ bool BinkMovieImpl::BeginFromFile(
         } else {
             unk26 = b2;
             unk27 = b1;
-            unkdc = i5;
+            mLocalizationTrack = i5;
             unk28 = b4;
             unkb8 = kNoHandle;
             mAspect = 0;
@@ -296,7 +303,7 @@ bool BinkMovieImpl::BeginFromBuffer(
         unkc = "";
         unk26 = b3;
         unk27 = b2;
-        unkdc = i1;
+        mLocalizationTrack = i1;
         unk28 = b4;
         unk18 = true;
         unkb8 = kNoHandle;
@@ -323,6 +330,73 @@ void BinkMovieImpl::Save(BinStream *stream) {
             TheLoadMgr.Poll();
         }
         FileLoader::SaveData(*stream, mPreloadBuf, unk20);
+    }
+}
+
+bool BinkMovieImpl::IsOpen() const {
+    CHECK_THREAD;
+    return mBink;
+}
+
+bool BinkMovieImpl::IsLoading() const {
+    CHECK_THREAD;
+    return mLoader || mMovieLoader;
+}
+
+void BinkMovieImpl::UnlockThread() {
+    MILO_ASSERT(mThreadId == CurrentThreadId(), 0x321);
+    mThreadId = kNoThread;
+}
+
+void BinkMovieImpl::LockThread() {
+    MILO_ASSERT(mThreadId == kNoThread, 0x32C);
+    mThreadId = CurrentThreadId();
+}
+
+int BinkMovieImpl::GetFrame() const {
+    CHECK_THREAD;
+    if (mBink) {
+        if (mBink->FrameNum == 1) {
+            return mBink->Frames;
+        } else {
+            return mBink->FrameNum - 1;
+        }
+    } else {
+        return 0;
+    }
+}
+
+float BinkMovieImpl::MsPerFrame() const {
+    CHECK_THREAD;
+    if (mBink) {
+        return (mBink->FrameRateDiv * 1000.0f) / (float)mBink->FrameRate;
+    } else {
+        return 0;
+    }
+}
+
+int BinkMovieImpl::NumFrames() const {
+    CHECK_THREAD;
+    if (mBink) {
+        return mBink->Frames;
+    } else {
+        return 0;
+    }
+}
+
+void BinkMovieImpl::SetVolume(float db) {
+    CHECK_THREAD;
+    int ratio = DbToRatio(db) * 32768.0f;
+    unke0 = ratio <= 0x8000 ? Max(ratio, 0) : 0x8000;
+    if (mBink) {
+        BinkSetVolume(mBink, 0, unke0);
+    }
+}
+
+void BinkMovieImpl::Terminate() {
+    CHECK_THREAD;
+    if (mBink) {
+        MovieClose();
     }
 }
 

@@ -9,6 +9,8 @@
 #define FILE_SEEK_SET 0
 #define FILE_SEEK_CUR 1
 
+#define kNoThread -1
+
 extern bool gNullFiles;
 extern bool gFakeFileErrors;
 extern void *kNoHandle;

@@ -18,8 +18,8 @@ public:
     virtual bool Poll() { return 0; } // 0x18
     virtual void Save(BinStream *); // 0x1c
     virtual void End() {} // 0x20
-    virtual bool IsOpen() { return 0; } // 0x24
-    virtual bool IsLoading() { return 0; } // 0x28
+    virtual bool IsOpen() const { return 0; } // 0x24
+    virtual bool IsLoading() const { return 0; } // 0x28
     virtual bool CheckOpen(bool) { return 0; } // 0x2c
     virtual bool SetPaused(bool) { return 0; } // 0x30
     virtual bool Paused() const { return 0; } // 0x34 ?

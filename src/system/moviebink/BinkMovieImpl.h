@@ -40,8 +40,8 @@ public:
     virtual bool Poll(); // 0x18
     virtual void Save(BinStream *); // 0x1c
     virtual void End(); // 0x20
-    virtual bool IsOpen(); // 0x24
-    virtual bool IsLoading(); // 0x28
+    virtual bool IsOpen() const; // 0x24
+    virtual bool IsLoading() const; // 0x28
     virtual bool CheckOpen(bool); // 0x2c
     virtual bool SetPaused(bool); // 0x30
     virtual bool Paused() const { return mPaused; } // 0x34
@@ -54,10 +54,21 @@ public:
 
     void Terminate();
     void DiscContentionCheck(Loader *);
+    void DiscContentionPublish();
 
 private:
     bool PlatformCacheFile(const char *);
 
+    void SetRect();
+    void BeginFrame();
+    void EndFrame();
+    void NextFrame();
+    void FinishOpen();
+    void DoFrame();
+    void MovieOpen(const char *, unsigned int);
+    void MovieClose();
+
+    static void SharedFinishOpen(bool);
     static int sActivePending;
     static BinkMovieImpl *sAsyncMovie;
     static std::vector<BinkMovieImpl *> sActiveMovies;
@@ -93,7 +104,7 @@ private:
     bool unkd5;
     bool unkd6;
     DWORD mThreadId; // 0xd8
-    int unkdc;
-    int unke0;
-    int unke4; // 0xe4 - MovieInternalBuffers*
+    int mLocalizationTrack; // 0xdc
+    int unke0; // 0xe0 - volume?
+    MovieInternalBuffers *unke4; // 0xe4
 };
