@@ -1,11 +1,17 @@
 #include "moviebink/BinkMovieImpl.h"
+#include "bink.h"
 #include "moviebink/BinkMovieSys.h"
 #include "moviebink/BinkMovieLoader.h"
+#include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/File.h"
 #include "os/OSFuncs.h"
 #include "os/Platform.h"
 #include "os/ThreadCall.h"
+#include "rndobj/BaseMaterial.h"
+#include "rndobj/Mat.h"
+#include "rndobj/Tex.h"
+#include "rndobj/Utl.h"
 #include "utl/BinStream.h"
 #include "utl/FilePath.h"
 #include "utl/Loader.h"
@@ -14,6 +20,152 @@
 
 std::vector<BinkMovieImpl *> BinkMovieImpl::sActiveMovies;
 
+namespace {
+    void StoreCache(RndTex *t);
+    void EndianSwapBuffer(void *, int);
+}
+
+#pragma region MovieInternalBuffers
+
+MovieInternalBuffers::MovieInternalBuffers() {
+    memset(&mBuffers, 0, sizeof(BINKFRAMEBUFFERS));
+    YTex[0][0] = nullptr;
+    YTex[0][1] = nullptr;
+    YTex[1][0] = nullptr;
+    YTex[1][1] = nullptr;
+    CrTex[0][0] = nullptr;
+    CrTex[0][1] = nullptr;
+    CrTex[1][0] = nullptr;
+    CrTex[1][1] = nullptr;
+    CbTex[0][0] = nullptr;
+    CbTex[0][1] = nullptr;
+    CbTex[1][0] = nullptr;
+    CbTex[1][1] = nullptr;
+    ATex[0][0] = nullptr;
+    ATex[0][1] = nullptr;
+    ATex[1][0] = nullptr;
+    ATex[1][1] = nullptr;
+    unk40 = 0;
+    unkbc = 0;
+}
+
+MovieInternalBuffers::~MovieInternalBuffers() {
+    RELEASE(unk40);
+    for (uint i = 0; i < 2; i++) {
+        for (uint j = 0; j < 2; j++) {
+            RELEASE(YTex[i][j]);
+            RELEASE(CrTex[i][j]);
+            RELEASE(CbTex[i][j]);
+            RELEASE(ATex[i][j]);
+        }
+    }
+}
+
+MovieInternalBuffers *MovieInternalBuffers::New(std::vector<BINK *> binks) {
+    MovieInternalBuffers *ret = new MovieInternalBuffers();
+
+    for (int i = 0; i < binks.size(); i++) {
+        BINK *cur = binks[i];
+        if (cur) {
+            BINKFRAMEBUFFERS curBuffers;
+            memset(&curBuffers, 0, sizeof(BINKFRAMEBUFFERS));
+            BinkGetFrameBuffersInfo(cur, &curBuffers);
+            ret->mBuffers.TotalFrames =
+                Max(curBuffers.TotalFrames, ret->mBuffers.TotalFrames);
+            ret->mBuffers.YABufferWidth =
+                Max(curBuffers.YABufferWidth, ret->mBuffers.YABufferWidth);
+            ret->mBuffers.YABufferHeight =
+                Max(curBuffers.YABufferHeight, ret->mBuffers.YABufferHeight);
+            ret->mBuffers.cRcBBufferWidth =
+                Max(curBuffers.cRcBBufferWidth, ret->mBuffers.cRcBBufferWidth);
+            ret->mBuffers.cRcBBufferHeight =
+                Max(curBuffers.cRcBBufferHeight, ret->mBuffers.cRcBBufferHeight);
+            BinkRegisterFrameBuffers(cur, &ret->mBuffers);
+        }
+    }
+    if (ret->mBuffers.TotalFrames == 0) {
+        delete ret;
+        return nullptr;
+    } else {
+        for (int i = 0; i < ret->mBuffers.TotalFrames; i++) {
+            for (int j = 0; j < TheBinkMovieSys.GetUnk10(); j++) {
+                MILO_ASSERT(!ret->YTex[i][j], 0x5A2);
+                MILO_ASSERT(!ret->CrTex[i][j], 0x5A3);
+                MILO_ASSERT(!ret->CbTex[i][j], 0x5A4);
+                MILO_ASSERT(!ret->ATex[i][j], 0x5A5);
+                ret->YTex[i][j] = Hmx::Object::New<RndTex>();
+                ret->CrTex[i][j] = Hmx::Object::New<RndTex>();
+                ret->CbTex[i][j] = Hmx::Object::New<RndTex>();
+                ret->ATex[i][j] = Hmx::Object::New<RndTex>();
+                ret->YTex[i][j]->SetBitmap(
+                    ret->mBuffers.YABufferWidth,
+                    ret->mBuffers.YABufferHeight,
+                    8,
+                    (RndTex::Type)0x24,
+                    false,
+                    nullptr
+                );
+                ret->CrTex[i][j]->SetBitmap(
+                    ret->mBuffers.cRcBBufferWidth,
+                    ret->mBuffers.cRcBBufferHeight,
+                    8,
+                    (RndTex::Type)0x24,
+                    false,
+                    nullptr
+                );
+                ret->CbTex[i][j]->SetBitmap(
+                    ret->mBuffers.cRcBBufferWidth,
+                    ret->mBuffers.cRcBBufferHeight,
+                    8,
+                    (RndTex::Type)0x24,
+                    false,
+                    nullptr
+                );
+                ret->ATex[i][j]->SetBitmap(
+                    ret->mBuffers.YABufferWidth,
+                    ret->mBuffers.YABufferHeight,
+                    8,
+                    (RndTex::Type)0x24,
+                    false,
+                    nullptr
+                );
+                ret->mBuffers.Frames[i].YPlane.BufferPitch =
+                    ret->YTex[i][j]->TexelsPitch();
+                ret->mBuffers.Frames[i].cRPlane.BufferPitch =
+                    ret->CrTex[i][j]->TexelsPitch();
+                ret->mBuffers.Frames[i].cBPlane.BufferPitch =
+                    ret->CbTex[i][j]->TexelsPitch();
+                ret->mBuffers.Frames[i].APlane.BufferPitch =
+                    ret->ATex[i][j]->TexelsPitch();
+
+                if (ret->YTex[i][j]->TexelsLock(ret->mBuffers.Frames[i].YPlane.Buffer)) {
+                    ret->YTex[i][j]->TexelsUnlock();
+                }
+                if (ret->CrTex[i][j]->TexelsLock(ret->mBuffers.Frames[i].cRPlane.Buffer)) {
+                    ret->CrTex[i][j]->TexelsUnlock();
+                }
+                if (ret->CbTex[i][j]->TexelsLock(ret->mBuffers.Frames[i].cBPlane.Buffer)) {
+                    ret->CbTex[i][j]->TexelsUnlock();
+                }
+                if (ret->ATex[i][j]->TexelsLock(ret->mBuffers.Frames[i].APlane.Buffer)) {
+                    ret->ATex[i][j]->TexelsUnlock();
+                }
+            }
+        }
+
+        ret->unk40 = Hmx::Object::New<RndMat>();
+        ret->unk40->SetPreLit(true);
+        ret->unk40->SetUseEnv(false);
+        ret->unk40->SetBlend(RndMat::kBlendSrc);
+        ret->unk40->SetAlphaWrite(false);
+        ret->unk40->SetZMode(kZModeDisable);
+        ret->unk40->SetTexWrap(kTexWrapClamp);
+        CreateAndSetMetaMat(ret->unk40);
+        return ret;
+    }
+}
+
+#pragma endregion
 #pragma region BinkMovieLoader
 
 BinkMovieLoader::BinkMovieLoader(const FilePath &fp, LoaderPos pos, BinkMovieImpl *impl)

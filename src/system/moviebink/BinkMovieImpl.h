@@ -1,10 +1,30 @@
 #pragma once
 #include "bink.h"
 #include "movie/MovieImpl_p.h"
+#include "rndobj/Mat.h"
+#include "rndobj/Tex.h"
 #include "utl/BinStream.h"
 #include "utl/Loader.h"
 #include "utl/Str.h"
 #include "xdk/win_types.h"
+
+// size 0xC0
+struct MovieInternalBuffers {
+public:
+    ~MovieInternalBuffers();
+    static MovieInternalBuffers *New(std::vector<BINK *>);
+
+private:
+    MovieInternalBuffers();
+
+    RndTex *YTex[2][2]; // 0x0
+    RndTex *CrTex[2][2]; // 0x10
+    RndTex *CbTex[2][2]; // 0x20
+    RndTex *ATex[2][2]; // 0x30
+    RndMat *unk40; // 0x40
+    BINKFRAMEBUFFERS mBuffers; // 0x44
+    int unkbc; // 0xbc
+};
 
 class BinkMovieImpl : public MovieImpl {
 public:

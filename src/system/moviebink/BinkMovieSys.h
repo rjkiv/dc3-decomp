@@ -16,6 +16,7 @@ public:
     void PlatformInit();
     void PlatformStoreCache(void *, unsigned int);
     bool GetUnkC() const { return unkc; }
+    int GetUnk10() const { return unk10; }
 
 private:
     static DataNode OnMovieSetTrack(DataArray *);
