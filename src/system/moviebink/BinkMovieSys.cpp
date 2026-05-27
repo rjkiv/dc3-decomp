@@ -54,8 +54,8 @@ void BinkMovieSys::Terminate() {
     {
         CritSecTracker tracker(mCritSec);
         // do you not pop from the list after you terminate?
-        while (unk20.size()) {
-            unk20.back()->Terminate();
+        while (mMovies.size()) {
+            mMovies.back()->Terminate();
         }
     }
     RELEASE(mCritSec);

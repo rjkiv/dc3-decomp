@@ -2,6 +2,7 @@
 #include "bink.h"
 #include "math/Decibels.h"
 #include "math/Utl.h"
+#include "movie/MovieSys.h"
 #include "moviebink/BinkMovieSys.h"
 #include "moviebink/BinkMovieLoader.h"
 #include "obj/Data.h"
@@ -16,8 +17,11 @@
 #include "os/Platform.h"
 #include "os/System.h"
 #include "os/ThreadCall.h"
+#include "os/Timer.h"
 #include "rndobj/BaseMaterial.h"
 #include "rndobj/Mat.h"
+#include "rndobj/Rnd_NG.h"
+#include "rndobj/ShaderMgr.h"
 #include "rndobj/Tex.h"
 #include "rndobj/Utl.h"
 #include "utl/BinStream.h"
@@ -215,9 +219,9 @@ void BinkMovieLoader::DoneLoading() {}
     }
 
 BinkMovieImpl::BinkMovieImpl()
-    : mLoader(0), mMovieLoader(0), mBink(0), unk18(0), mPreloadBuf(0), unk20(0), unk24(0),
-      unk40(0), mWidth(0), mHeight(0), mPaused(0), unkb8(kNoHandle), unkd4(0), unkd5(0),
-      mThreadId(gMainThreadID), unke0(0x8000), mInternalBufs(0) {
+    : mLoader(0), mMovieLoader(0), mBink(0), unk18(0), mPreloadBuf(0), mBufferSize(0),
+      unk24(0), unk40(0), mWidth(0), mHeight(0), mPaused(0), unkb8(kNoHandle), unkd4(0),
+      unkd5(0), mThreadId(gMainThreadID), mVolume(0x8000), mInternalBufs(0) {
     CHECK_THREAD;
 }
 
@@ -320,12 +324,35 @@ bool BinkMovieImpl::BeginFromBuffer(
         MILO_ASSERT(!mBink, 0x128);
         MILO_ASSERT(!mPreloadBuf, 0x129);
         mPreloadBuf = iBuffer;
-        unk20 = iBufSizeBytes;
+        mBufferSize = iBufSizeBytes;
         unk24 = b1;
         unkd4 = true;
         sActiveMovies.push_back(this);
         sActivePending++;
         return true;
+    }
+}
+
+void BinkMovieImpl::Draw() {
+    CHECK_THREAD;
+    if (!mBink) {
+        TheNgRnd.Clear(1, Hmx::Color(0, 0, 0, 0));
+    } else {
+        unsigned int flags = mBink->OpenFlags;
+        // mInternalBufs->unk40->SetNormalMap()
+        SetRect();
+        TheNgRnd.DrawRect(
+            unk30,
+            mInternalBufs->unk40,
+            kMovieShader,
+            Hmx::Color(0, 0, 0, 0),
+            nullptr,
+            nullptr
+        );
+        TheShaderMgr.SetPConstant((PShaderConstant)0, (RndTex *)nullptr);
+        TheShaderMgr.SetPConstant((PShaderConstant)2, (RndTex *)nullptr);
+        TheShaderMgr.SetPConstant((PShaderConstant)3, (RndTex *)nullptr);
+        TheShaderMgr.SetPConstant((PShaderConstant)1, (RndTex *)nullptr);
     }
 }
 
@@ -379,7 +406,7 @@ void BinkMovieImpl::Save(BinStream *stream) {
         while (CheckOpen(false)) {
             TheLoadMgr.Poll();
         }
-        FileLoader::SaveData(*stream, mPreloadBuf, unk20);
+        FileLoader::SaveData(*stream, mPreloadBuf, mBufferSize);
     }
 }
 
@@ -437,6 +464,63 @@ bool BinkMovieImpl::IsOpen() const {
 bool BinkMovieImpl::IsLoading() const {
     CHECK_THREAD;
     return mLoader || mMovieLoader;
+}
+
+bool BinkMovieImpl::CheckOpen(bool b1) {
+    if (!unkd4) {
+        return false;
+    }
+    if (mLoader) {
+        MILO_ASSERT(!mPreloadBuf, 0x24E);
+        if (!mLoader->IsLoaded()) {
+            return true;
+        }
+        unkd4 = false;
+        mPreloadBuf = mLoader->GetBuffer(nullptr);
+        mBufferSize = mLoader->GetSize();
+        unk24 = true;
+        RELEASE(mLoader);
+        if (!mPreloadBuf) {
+            SharedFinishOpen(b1);
+            End();
+            return false;
+        }
+        if (strneq((const char *)mPreloadBuf, "BIKi", 4)) {
+            EndianSwapBuffer(mPreloadBuf, mBufferSize);
+        }
+        MovieOpen((const char *)mPreloadBuf, 0x4000400);
+    } else if (mPreloadBuf) {
+        unkd4 = false;
+        if (strneq((const char *)mPreloadBuf, "BIKi", 4)) {
+            EndianSwapBuffer(mPreloadBuf, mBufferSize);
+        }
+        MovieOpen((const char *)mPreloadBuf, 0x4000400);
+    } else if (mMovieLoader && !mBink) {
+        if (mMovieLoader->IsLoaded()) {
+            unkd4 = false;
+            DataArray *videoArr = SystemConfig()->FindArray("videos", false);
+            if (videoArr) {
+                DataArray *streamArr = videoArr->FindArray("stream_begin", false);
+                if (streamArr) {
+                    streamArr->ExecuteScript(1, nullptr, nullptr, 1);
+                }
+            }
+            if (!UsingCD()) {
+                MovieOpen(mName.c_str(), 0x400);
+            } else {
+                File *file = NewFile(mName.c_str(), FILE_OPEN_READ);
+                if (file && file->GetFileHandle(unkb8)) {
+                    MovieOpen((const char *)unkb8, 0x800400);
+                }
+            }
+        } else {
+            return true;
+        }
+    } else {
+        return false;
+    }
+    SharedFinishOpen(b1);
+    return false;
 }
 
 void BinkMovieImpl::SetPaused(bool paused) {
@@ -504,9 +588,9 @@ int BinkMovieImpl::NumFrames() const {
 void BinkMovieImpl::SetVolume(float db) {
     CHECK_THREAD;
     int ratio = DbToRatio(db) * 32768.0f;
-    unke0 = ratio <= 0x8000 ? Max(ratio, 0) : 0x8000;
+    mVolume = ratio <= 0x8000 ? Max(ratio, 0) : 0x8000;
     if (mBink) {
-        BinkSetVolume(mBink, 0, unke0);
+        BinkSetVolume(mBink, 0, mVolume);
     }
 }
 
@@ -606,6 +690,47 @@ void BinkMovieImpl::SharedFinishOpen(bool b1) {
             movies[0]->SetPaused(false);
         }
     }
+}
+
+void BinkMovieImpl::MovieOpen(const char *name, unsigned int flags) {
+    CHECK_THREAD;
+    MILO_ASSERT(!mBink, 0x408);
+    mPaused = false;
+    if (TheMovieSys.IsInitialized()) {
+        if (mLocalizationTrack != 0) {
+            if (TheBinkMovieSys.Track()) {
+                mLocalizationTrack = TheBinkMovieSys.Track();
+            }
+            unsigned int tracks = mLocalizationTrack - 1;
+            BinkSetSoundTrack(1, &tracks);
+            flags |= 0x4000;
+        }
+        flags |= 0x100000;
+        if ((flags >> 26) & 1) {
+            AutoSlowFrame frame("BinkOpen", 200);
+            mBink = BinkOpen(name, flags);
+        } else {
+            mBink = BinkOpen(name, flags);
+        }
+        if (mBink) {
+            if (mLocalizationTrack != 0 && mBink->NumTracks != 0) {
+                MILO_ASSERT(mLocalizationTrack - 1 < mBink->NumTracks, 0x42D);
+            }
+            BinkSetVolume(mBink, 0, mVolume);
+            TheBinkMovieSys.AddMovie(this);
+        }
+    }
+}
+
+void BinkMovieImpl::MovieClose() {
+    CHECK_THREAD;
+    if (unkd6 && unkd5) {
+        BinkDoFrameAsyncWait(mBink, -1);
+        EndFrame();
+    }
+    TheBinkMovieSys.RemoveMovie(this);
+    BinkClose(mBink);
+    mBink = nullptr;
 }
 
 #pragma endregion

@@ -19,6 +19,9 @@ public:
     int GetUnk10() const { return unk10; }
     int Core0() const { return mBinkCore0; }
     int Core1() const { return mBinkCore1; }
+    int Track() const { return mTrack; }
+    void AddMovie(BinkMovieImpl *movie) { mMovies.push_back(movie); }
+    void RemoveMovie(BinkMovieImpl *movie) { mMovies.remove(movie); }
 
 private:
     static DataNode OnMovieSetTrack(DataArray *);
@@ -29,7 +32,7 @@ private:
     int mBinkCore0; // 0x14
     int mBinkCore1; // 0x18
     int mTrack; // 0x1c
-    std::list<BinkMovieImpl *> unk20; // 0x20
+    std::list<BinkMovieImpl *> mMovies; // 0x20
 };
 
 extern BinkMovieSys &TheBinkMovieSys;

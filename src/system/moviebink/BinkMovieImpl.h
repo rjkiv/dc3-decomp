@@ -1,5 +1,6 @@
 #pragma once
 #include "bink.h"
+#include "math/Geo.h"
 #include "movie/MovieImpl_p.h"
 #include "rndobj/Mat.h"
 #include "rndobj/Tex.h"
@@ -80,18 +81,14 @@ private:
     BINK *mBink; // 0x14
     bool unk18;
     void *mPreloadBuf; // 0x1c
-    int unk20;
+    int mBufferSize; // 0x20
     bool unk24;
     bool unk25;
     bool unk26;
     bool unk27;
     bool unk28;
     float mAspect; // 0x2c
-    // Rect at 0x30?
-    float unk30;
-    float unk34;
-    float unk38;
-    float unk3c;
+    Hmx::Rect unk30; // 0x30
     int unk40;
     int mWidth; // 0x44
     int mHeight; // 0x48
@@ -100,13 +97,13 @@ private:
     Timer unk80;
     int unkb0;
     int unkb4;
-    void *unkb8;
+    void *unkb8; // 0xb8 - file handle, retrieved from mName
     std::map<void *, String> unkbc; // 0xbc - key = loader ptr, val = loader file?
     bool unkd4;
     bool unkd5; // 0xd5 - mMidFrame?
     bool unkd6;
     DWORD mThreadId; // 0xd8
     int mLocalizationTrack; // 0xdc
-    int unke0; // 0xe0 - volume?
+    int mVolume; // 0xe0
     MovieInternalBuffers *mInternalBufs; // 0xe4
 };
