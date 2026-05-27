@@ -51,7 +51,7 @@ int ctr_reinit(int cipher, unsigned char *r4, symmetric_CTR *ctr) {
     }
 }
 
-int ctr_encrypt_fast(
+static int ctr_encrypt_fast(
     const unsigned char *src, unsigned char *dst, unsigned long len, symmetric_CTR *ctr
 ) {
     int x0, x1, x2, x3;

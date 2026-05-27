@@ -701,10 +701,6 @@
             "system/synth/WavReader.cpp": "MISSING",
             "system/synth/complex.cpp": "MISSING",
             "system/synth/filterdesign.cpp": "MISSING",
-            "system/synth/tomcrypt/aes.c": "NonMatching",
-            "system/synth/tomcrypt/crypt.c": "Matching",
-            "system/synth/tomcrypt/ctr.c": "NonMatching",
-            "system/synth/tomcrypt/TomCryptLicense.cpp": "Matching",
             "system/synth_xbox/Biquad.cpp": "NonMatching",
             "system/synth_xbox/EnvelopeGenerator.cpp": "MISSING",
             "system/synth_xbox/ExternalMic.cpp": "NonMatching",
@@ -886,6 +882,17 @@
             "system/synth_xbox/soundtouch/source/SoundTouch/RateTransposer.cpp": "NonMatching",
             "system/synth_xbox/soundtouch/source/SoundTouch/SoundTouch.cpp": "NonMatching",
             "system/synth_xbox/soundtouch/source/SoundTouch/TDStretch.cpp": "NonMatching"
+        }
+    },
+    "tomcrypt": {
+        "progress_category": "engine",
+        "mw_version": "X360/16.00.11886.00",
+        "cflags": "tomcrypt",
+        "objects": {
+            "system/synth/tomcrypt/aes.c": "Matching",
+            "system/synth/tomcrypt/crypt.c": "Matching",
+            "system/synth/tomcrypt/ctr.c": "NonMatching",
+            "system/synth/tomcrypt/TomCryptLicense.cpp": "Matching"
         }
     },
     "zlib": {

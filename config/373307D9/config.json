@@ -38,6 +38,12 @@
                 "/TP"
             ]
         },
+        "tomcrypt":{
+            "base": "base",
+            "flags": [ 
+                "/TP"
+            ]
+        },
         "soundtouch":{
             "base": "base",
             "flags":[
