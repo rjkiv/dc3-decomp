@@ -25,7 +25,7 @@ void CompressionEffect::Reset() {
     unk3c = 1.0f;
 }
 
-void CompressionEffect::SetParameters(CompressionEffect::Params const &params) {
+void CompressionEffect::SetParameters(const CompressionEffect::Params &params) {
     unk4 = params.unk4;
     unk0 = DbToRatio(unk4);
     unk8 = DbToRatio(unk4 / unkc - unk4);

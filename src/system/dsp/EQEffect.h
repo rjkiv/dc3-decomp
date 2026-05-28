@@ -1,16 +1,20 @@
 #pragma once
+#include "xdk/XAUDIO2.h"
 
-#include "xdk/xaudio2/xaudio2.h"
+// size 0x34C
 class EQEffect {
 public:
-    struct Params {};
+    struct Params {
+        bool unk0;
+    };
 
     EQEffect(IXAudioBatchAllocator *);
     void Reset();
     void Process(float *, int, int);
     void SetParameter(int, float);
-    void SetParameters(EQEffect::Params const &);
+    void SetParameters(const EQEffect::Params &);
 
+private:
     float unk0;
     float unk4;
     float unk8;

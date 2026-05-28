@@ -1,6 +1,7 @@
 #pragma once
-#include "xdk/xaudio2/xaudio2.h"
+#include "xdk/XAUDIO2.h"
 
+// size 0x40
 class CompressionEffect {
 public:
     struct Params {
@@ -19,8 +20,9 @@ public:
     CompressionEffect(IXAudioBatchAllocator *);
     void Reset();
     void Process(float *, int, int);
-    void SetParameters(CompressionEffect::Params const &);
+    void SetParameters(const CompressionEffect::Params &);
 
+private:
     float unk0;
     float unk4;
     float unk8;

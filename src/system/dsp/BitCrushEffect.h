@@ -1,17 +1,21 @@
 #pragma once
-#include "xdk/xaudio2/xaudio2.h"
+#include "xdk/XAUDIO2.h"
 
+// size 0x10
 class BitCrushEffect {
 public:
     struct Params {
-        u32 unk0;
+        Params() : unk0(false) {}
+        bool unk0;
         float unk4;
     };
 
     BitCrushEffect(IXAudioBatchAllocator *);
     void Process(float *, int, int);
-    void SetParameters(BitCrushEffect::Params const &);
+    void SetParameters(const BitCrushEffect::Params &);
+    void Reset();
 
+private:
     float unk0;
     int unk4;
     float unk8;

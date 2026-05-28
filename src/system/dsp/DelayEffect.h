@@ -1,22 +1,24 @@
 #pragma once
-#include "xdk/xaudio2/xaudio2.h"
+#include "xdk/XAUDIO2.h"
 
+// size 0x14
 class DelayEffect {
 public:
     struct Params {
-        u32 unk0;
+        bool unk0;
         float unk4;
         float unk8;
         float unkc;
     };
 
-    ~DelayEffect();
     DelayEffect(IXAudioBatchAllocator *);
+    ~DelayEffect();
     void Reset();
     void Process(float *, int, int);
     void SetParameter(int, float);
-    void SetParameters(DelayEffect::Params const &);
+    void SetParameters(const DelayEffect::Params &);
 
+private:
     int unk0;
     int unk4;
     float unk8;

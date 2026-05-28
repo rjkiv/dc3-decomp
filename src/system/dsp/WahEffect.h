@@ -1,10 +1,11 @@
 #pragma once
-#include "xdk/xaudio2/xaudio2.h"
+#include "xdk/XAUDIO2.h"
 
+// size 0x50
 class WahEffect {
 public:
     struct Params {
-        u32 unk0;
+        bool unk0;
         float unk4;
         float unk8;
         float unkc;
@@ -19,8 +20,9 @@ public:
     WahEffect(IXAudioBatchAllocator *);
     void Reset();
     void Process(float *, int, int);
-    void SetParameters(WahEffect::Params const &);
+    void SetParameters(const WahEffect::Params &);
 
+private:
     float unk0;
     float unk4;
     float unk8;

@@ -1,6 +1,5 @@
 #include "dsp/DistortionEffect.h"
 #include "os/Debug.h"
-#include "xdk/xaudio2/xaudio2.h"
 
 DistortionEffect::DistortionEffect(IXAudioBatchAllocator *) : unk0(0) {}
 

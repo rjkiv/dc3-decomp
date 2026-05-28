@@ -1,10 +1,11 @@
 #pragma once
-#include "xdk/xaudio2/xaudio2.h"
+#include "xdk/XAUDIO2.h"
 
+// size 0x34
 class FlangerEffect {
 public:
     struct Params {
-        u32 unk0;
+        bool unk0;
         float unk4;
         float unk8;
         float unkc;
@@ -16,8 +17,9 @@ public:
     FlangerEffect(IXAudioBatchAllocator *);
     void Reset();
     void Process(float *, int, int);
-    void SetParameters(FlangerEffect::Params const &);
+    void SetParameters(const FlangerEffect::Params &);
 
+private:
     float *unk0[4];
     int unk10;
     int unk14;

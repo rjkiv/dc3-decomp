@@ -10,9 +10,9 @@ struct IUnknown { /* Size=0x4 */
     virtual ULONG AddRef();
     virtual ULONG Release();
 
-    //   public: IUnknown(const IUnknown&);
-    //   public: IUnknown();
-    //   public: IUnknown& operator=(const IUnknown&);
+    IUnknown(const IUnknown &);
+    IUnknown();
+    IUnknown &operator=(const IUnknown &);
 };
 
 #ifdef __cplusplus

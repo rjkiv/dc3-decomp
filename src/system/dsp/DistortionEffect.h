@@ -1,16 +1,18 @@
 #pragma once
+#include "xdk/XAUDIO2.h"
 
-#include "xdk/xaudio2/xaudio2.h"
+// size 0x4
 class DistortionEffect {
 public:
     struct Params {
-        u32 unk0;
+        bool unk0;
         float unk4;
     };
 
     DistortionEffect(IXAudioBatchAllocator *);
     void Process(float *, int, int);
-    void SetParameters(DistortionEffect::Params const &);
+    void SetParameters(const DistortionEffect::Params &);
 
+private:
     float unk0;
 };
