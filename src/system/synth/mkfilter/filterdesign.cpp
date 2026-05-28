@@ -5,6 +5,7 @@
 
 #include "filterdesign.h"
 #include "complex.h"
+#include "os/Debug.h"
 
 #define opt_be 0x00001 /* -Be Bessel characteristic          */
 #define opt_bu 0x00002 /* -Bu Butterworth characteristic     */
@@ -504,14 +505,14 @@ static void compute_bpres() {
                 cvg = true;
             thm = 0.5 * (th1 + th2);
         }
-        unless(cvg) fprintf(stderr, "mkfilter: warning: failed to converge\n");
+        unless(cvg) MILO_NOTIFY("Warning: failed to converge");
     }
 }
 
 static void add_extra_zero() {
     if (zplane.numzeros + 2 > MAXPZ) {
-        fprintf(stderr, "mkfilter: too many zeros; can't do -Z\n");
-        exit(1);
+        MILO_NOTIFY("Too many zeros; can't do -Z");
+        return;
     }
     double theta = TWOPI * raw_alphaz;
     complex zz = expj(theta);
@@ -551,13 +552,9 @@ static void expand(complex pz[], int npz, complex coeffs[]) {
         multin(pz[i], npz, coeffs);
     /* check computed coeffs of z^k are all real */
     for (i = 0; i < npz + 1; i++) {
-        if (fabs(coeffs[i].im) > EPS) {
-            fprintf(
-                stderr,
-                "mkfilter: coeff of z^%d is not real; poles/zeros are not complex conjugates\n",
-                i
-            );
-            exit(1);
+        if (fabs(coeffs[i].im) > 0.001) {
+            MILO_NOTIFY("Filter coefficients are not real");
+            return;
         }
     }
 }
