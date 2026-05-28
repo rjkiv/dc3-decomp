@@ -106,17 +106,17 @@ inline BinStream &operator>>(BinStream &bs, Box &box) {
 
 class BSPNode {
 public:
-    BSPNode() : left(nullptr), right(nullptr) {}
+    BSPNode() : front(nullptr), back(nullptr) {}
     ~BSPNode() {
-        delete left;
-        delete right;
+        delete front;
+        delete back;
     }
 
     POOL_OVERLOAD(BSPNode, 0x216);
 
     Plane plane; // 0x0
-    BSPNode *left; // 0x10 yes they're called front/back but BSP works L/R, not F/B
-    BSPNode *right; // 0x14
+    BSPNode *front; // 0x10
+    BSPNode *back; // 0x14
 };
 
 class BSPFace {

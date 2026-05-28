@@ -25,8 +25,8 @@ void NumNodes(const BSPNode *node, int &num, int &maxDepth) {
         } else if (depth > maxDepth) {
             maxDepth = depth;
         }
-        NumNodes(node->left, num, maxDepth);
-        NumNodes(node->right, num, maxDepth);
+        NumNodes(node->front, num, maxDepth);
+        NumNodes(node->back, num, maxDepth);
         num++;
         depth--;
     }
@@ -35,7 +35,7 @@ void NumNodes(const BSPNode *node, int &num, int &maxDepth) {
 BinStream &operator<<(BinStream &bs, const BSPNode *node) {
     if (node) {
         bs << true;
-        bs << node->plane << node->left << node->right;
+        bs << node->plane << node->front << node->back;
     } else {
         bs << false;
     }
@@ -47,7 +47,7 @@ BinStream &operator>>(BinStream &bs, BSPNode *&node) {
     bs >> nodeExists;
     if (nodeExists) {
         node = new BSPNode();
-        bs >> node->plane >> node->left >> node->right;
+        bs >> node->plane >> node->front >> node->back;
     } else {
         node = nullptr;
     }
@@ -130,13 +130,16 @@ void ClosestPoint(const Vector3 &v1, const Vector3 &v2, const Vector3 &v3, Vecto
     float f5 = Dot(diff31, diff21);
     if (f5 <= 0) {
         *vout = v1;
+        return;
     } else {
         float dot21 = Dot(diff21, diff21);
         if (f5 > dot21) {
             *vout = v2;
+            return;
         } else {
             Scale(diff21, f5 / dot21, diff21);
             Add(v1, diff21, *vout);
+            return;
         }
     }
 }
@@ -259,28 +262,29 @@ bool CheckBSPTree(const BSPNode *node, const Box &box) {
 }
 
 void MultiplyEq(BSPNode *n, const Transform &t) {
-    for (; n != nullptr; n = n->right) {
+    for (; n != nullptr; n = n->back) {
         Multiply(n->plane, t, n->plane);
         Normalize(n->plane, n->plane);
-        MultiplyEq(n->left, t);
+        MultiplyEq(n->front, t);
     }
 }
 
 void Intersect(const Hmx::Ray &ray1, const Hmx::Ray &ray2, Vector2 &vec) {
     float dot = ray1.dir.y * ray2.dir.x - ray1.dir.x * ray2.dir.y;
     if (dot != 0.0f) {
-        float s = ((ray2.base.y - ray1.base.y) * ray1.dir.x + (ray1.base.x - ray2.base.x)
-                    * ray1.dir.y) / dot;
+        float s = ((ray2.base.y - ray1.base.y) * ray1.dir.x
+                   + (ray1.base.x - ray2.base.x) * ray1.dir.y)
+            / dot;
         vec.Set(s * ray2.dir.x + ray2.base.x, s * ray2.dir.y + ray2.base.y);
-    }
-    else {
+    } else {
         vec = ray1.base;
     }
 }
 
 void Intersect(const Transform &trans, const Plane &plane, Hmx::Ray &ray) {
     Vector3 planeVec(plane.a, plane.b, plane.c);
-    float planeVecSquared = planeVec.x * planeVec.x + planeVec.y * planeVec.y + planeVec.z * planeVec.z;
+    float planeVecSquared =
+        planeVec.x * planeVec.x + planeVec.y * planeVec.y + planeVec.z * planeVec.z;
     float scale = -(plane.d / planeVecSquared);
     Vector3 scaledVec(planeVec.x * scale, planeVec.y * scale, planeVec.z * scale);
     Vector3 point;
@@ -291,21 +295,25 @@ void Intersect(const Transform &trans, const Plane &plane, Hmx::Ray &ray) {
     ray.dir.Set(dotX, dotY);
     if (std::fabs(dotY) > std::fabs(dotX)) {
         ray.base.Set(point.x + (dotZ / dotX) * point.z, point.y);
-    }
-    else {
+    } else {
         ray.base.Set(point.x, point.y + (dotZ / dotY) * point.z);
     }
 }
 
 bool Intersect(const Segment &seg, const Triangle &tri, bool b, float &out) {
-    Vector3 segDirection(seg.end.x - seg.start.x, seg.end.y - seg.start.y, seg.end.z - seg.start.z);
+    Vector3 segDirection(
+        seg.end.x - seg.start.x, seg.end.y - seg.start.y, seg.end.z - seg.start.z
+    );
     const Vector3 &triFrameZ = tri.frame.z;
-    float segDirDot = triFrameZ.x * segDirection.x + triFrameZ.y * segDirection.y + triFrameZ.z * segDirection.z;
+    float segDirDot = triFrameZ.x * segDirection.x + triFrameZ.y * segDirection.y
+        + triFrameZ.z * segDirection.z;
     if (fabs(segDirDot) < 0.0001f || b && segDirDot > 0.0f) {
         return false;
     }
 
-    Vector3 vec3A(seg.start.x - tri.origin.x, seg.start.y - tri.origin.y, seg.start.z - tri.origin.z);
+    Vector3 vec3A(
+        seg.start.x - tri.origin.x, seg.start.y - tri.origin.y, seg.start.z - tri.origin.z
+    );
     float tempDot = triFrameZ.x * vec3A.x + triFrameZ.y * vec3A.y + triFrameZ.z * vec3A.z;
     float t = -(tempDot / segDirDot);
     out = t;
@@ -313,16 +321,21 @@ bool Intersect(const Segment &seg, const Triangle &tri, bool b, float &out) {
         return false;
     }
 
-    Vector3 vec3B((seg.start.x + segDirection.x * t) - tri.origin.x,
-                  (seg.start.y + segDirection.y * t) - tri.origin.y,
-                  (seg.start.z + segDirection.z * t) - tri.origin.z);
+    Vector3 vec3B(
+        (seg.start.x + segDirection.x * t) - tri.origin.x,
+        (seg.start.y + segDirection.y * t) - tri.origin.y,
+        (seg.start.z + segDirection.z * t) - tri.origin.z
+    );
 
     const Vector3 &triFrameX = tri.frame.x;
     const Vector3 &triFrameY = tri.frame.y;
 
-    float dotXX = triFrameX.x * triFrameX.x + triFrameX.y * triFrameX.y + triFrameX.z * triFrameX.z;
-    float dotYY = triFrameY.x * triFrameY.x + triFrameY.y * triFrameY.y + triFrameY.z * triFrameY.z;
-    float dotXY = triFrameX.x * triFrameY.x + triFrameX.y * triFrameY.y + triFrameX.z * triFrameY.z;
+    float dotXX =
+        triFrameX.x * triFrameX.x + triFrameX.y * triFrameX.y + triFrameX.z * triFrameX.z;
+    float dotYY =
+        triFrameY.x * triFrameY.x + triFrameY.y * triFrameY.y + triFrameY.z * triFrameY.z;
+    float dotXY =
+        triFrameX.x * triFrameY.x + triFrameX.y * triFrameY.y + triFrameX.z * triFrameY.z;
     float dotX3B = triFrameX.x * vec3B.x + triFrameX.y * vec3B.y + triFrameX.z * vec3B.z;
     float dotY3B = triFrameY.x * vec3B.x + triFrameY.y * vec3B.y + triFrameY.z * vec3B.z;
 

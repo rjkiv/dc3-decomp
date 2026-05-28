@@ -4,24 +4,25 @@
 #include "obj/DataFunc.h"
 #include <cmath>
 
-float gBigSinTable[0x200];
+float gBigSinTable[512];
 
 void TrigTableInit() {
-    float *temp_r30 = gBigSinTable;
     int i;
-    for (i = 0; i < 256; i++, temp_r30 += 2) {
-        *temp_r30 = std::sin(0.024543693f * i);
+    for (i = 0; i < 256; i++) {
+        float *ptr = &gBigSinTable[i * 2];
+        *ptr = sinf(0.024543693f * i);
         if (i != 0) {
-            *(temp_r30 - 1) = *temp_r30 - *(temp_r30 - 2);
+            ptr[-1] = ptr[0] - ptr[-2];
         }
     }
-    int tmp = (i - 1) * 2;
-    *(gBigSinTable + tmp + 1) = std::sin(0.024543693f * i) - *(gBigSinTable + tmp);
+    float val = sinf(0.024543693f * i);
+    float *ptr = &gBigSinTable[(i - 1) * 2];
+    ptr[1] = val - ptr[0];
 }
 
 void TrigTableTerminate() {}
 
-inline float Lookup(float arg8) {
+float Lookup(float arg8) {
     float x = arg8 * 40.743664f;
     int temp_r5 = (int)x;
     int idx = (temp_r5 & 0xFF) * 2;

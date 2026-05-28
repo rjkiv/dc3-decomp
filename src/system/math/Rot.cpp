@@ -149,12 +149,12 @@ void MakeRotMatrix(const Vector3 &v, Hmx::Matrix3 &mtx, bool lookup) {
         xsin = Sine(v.x);
         xcos = Cosine(v.x);
     } else {
-        zsin = sin(v.z);
-        zcos = cos(v.z);
-        ysin = sin(v.y);
-        ycos = cos(v.y);
-        xsin = sin(v.x);
-        xcos = cos(v.x);
+        zsin = sinf(v.z);
+        zcos = cosf(v.z);
+        ysin = sinf(v.y);
+        ycos = cosf(v.y);
+        xsin = sinf(v.x);
+        xcos = cosf(v.x);
     }
 
     mtx.y.z = xsin;
