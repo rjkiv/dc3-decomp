@@ -1,4 +1,4 @@
-#include "synth/BitCrushEffect.h"
+#include "dsp/BitCrushEffect.h"
 #include "os/Debug.h"
 #include "xdk/xaudio2/xaudio2.h"
 

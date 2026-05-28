@@ -1,4 +1,4 @@
-#include "synth/WahEffect.h"
+#include "dsp/WahEffect.h"
 #include "os/Debug.h"
 #include "math/Utl.h"
 #include <cmath>
@@ -58,13 +58,13 @@ void WahEffect::Process(float *buf, int numSamples, int numChans) {
     // Constants
     float f26 = 2.0f;
     float f31 = 1.0f;
-    float f7 = f0_unk18 * f26;        // sweepRange * 2
-    float f6 = f31 - f0_unk18;        // 1 - sweepRange
-    float f0_norm = 4.1666666e-5f;    // 1/24000
-    float f12_twopi = 6.2831853f;     // 2*PI
-    float f25 = f10 * f0_norm;        // freqLo normalized
-    float f24 = f9 * f0_norm;         // freqHi normalized
-    float f23 = f8 * f12_twopi;       // resonance * 2*PI
+    float f7 = f0_unk18 * f26; // sweepRange * 2
+    float f6 = f31 - f0_unk18; // 1 - sweepRange
+    float f0_norm = 4.1666666e-5f; // 1/24000
+    float f12_twopi = 6.2831853f; // 2*PI
+    float f25 = f10 * f0_norm; // freqLo normalized
+    float f24 = f9 * f0_norm; // freqHi normalized
+    float f23 = f8 * f12_twopi; // resonance * 2*PI
 
     // Load state variables BEFORE the comparison
     float f10_state = unk34;
@@ -92,7 +92,7 @@ void WahEffect::Process(float *buf, int numSamples, int numChans) {
         sweepVal = f31;
     } else {
         // Phase modulation with Mod
-        float f0_invtwopi = 0.15915494f;  // 1/(2*PI)
+        float f0_invtwopi = 0.15915494f; // 1/(2*PI)
         float f2 = f31;
         float f0_neghalf = -0.5f;
         float tmp = f27 * f0_invtwopi - f13_unk14;
@@ -109,7 +109,7 @@ void WahEffect::Process(float *buf, int numSamples, int numChans) {
     // Apply resonance scaling
     float f13_scaled = unkc * sweepVal;
     float f0_unk0 = unk0;
-    float f0_scale = 1.3089970e-4f;   // 0x3909421f
+    float f0_scale = 1.3089970e-4f; // 0x3909421f
     float f18 = f13_scaled * f0_scale;
 
     // Clamp unk0 to >= 1.0
@@ -119,9 +119,9 @@ void WahEffect::Process(float *buf, int numSamples, int numChans) {
 
     // Process samples
     if (numSamples > 0) {
-        float f19 = 0.99999f;         // 0x3f7fff58
-        float f20 = -4.2704245e-9f;   // 0xb192bb0d (negative)
-        float f22 = 0.99958f;         // 0x3f7fe47a
+        float f19 = 0.99999f; // 0x3f7fff58
+        float f20 = -4.2704245e-9f; // 0xb192bb0d (negative)
+        float f22 = 0.99958f; // 0x3f7fe47a
 
         int sampleOffset = 0;
 
@@ -234,8 +234,8 @@ void WahEffect::Process(float *buf, int numSamples, int numChans) {
     for (int i = 0; i < 2; i++) {
         float s1 = stack50[i];
         float s2 = stack58[i];
-        dest[-1] = s1;  // Write to unk34/unk38
-        *dest = s2;     // Write to unk3c/unk40
+        dest[-1] = s1; // Write to unk34/unk38
+        *dest = s2; // Write to unk3c/unk40
         dest++;
     }
 }

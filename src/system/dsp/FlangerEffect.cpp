@@ -1,4 +1,4 @@
-#include "synth/FlangerEffect.h"
+#include "dsp/FlangerEffect.h"
 #include "Common_Xbox.h"
 #include "math/Rot.h"
 #include "xdk/xaudio2/xaudio2.h"

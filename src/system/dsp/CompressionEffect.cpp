@@ -1,4 +1,4 @@
-#include "synth/CompressionEffect.h"
+#include "dsp/CompressionEffect.h"
 #include "math/Decibels.h"
 #include "xdk/xaudio2/xaudio2.h"
 #include <cmath>

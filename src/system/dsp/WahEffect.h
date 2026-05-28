@@ -1,6 +1,6 @@
 #pragma once
-
 #include "xdk/xaudio2/xaudio2.h"
+
 class WahEffect {
 public:
     struct Params {

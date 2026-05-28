@@ -1,4 +1,4 @@
-#include "synth/EQEffect.h"
+#include "dsp/EQEffect.h"
 #include "xdk/xaudio2/xaudio2.h"
 
 EQEffect::EQEffect(IXAudioBatchAllocator *) {

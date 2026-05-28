@@ -1,4 +1,4 @@
-#include "synth/DelayEffect.h"
+#include "dsp/DelayEffect.h"
 #include "Common_Xbox.h"
 #include "math/Decibels.h"
 #include "os/Debug.h"

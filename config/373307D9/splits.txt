@@ -11197,37 +11197,37 @@ system/synth/BinkReader.cpp:
 	.data       start:0x82F49990 end:0x82F499B4
 	.data       start:0x8316CB2C end:0x83176BF8 rename:.bss
 
-system/synth/CompressionEffect.cpp:
+system/dsp/CompressionEffect.cpp:
 	.rdata      start:0x82264D20 end:0x82264D24
 	.pdata      start:0x8231EC50 end:0x8231EC68
 	.text       start:0x82E57C08 end:0x82E58128
 
-system/synth/BitCrushEffect.cpp:
+system/dsp/BitCrushEffect.cpp:
 	.rdata      start:0x82264D24 end:0x82264D60
 	.pdata      start:0x8231EC68 end:0x8231EC70
 	.text       start:0x82E58128 end:0x82E58240
 
-system/synth/DistortionEffect.cpp:
+system/dsp/DistortionEffect.cpp:
 	.rdata      start:0x82264D60 end:0x82264D7C
 	.pdata      start:0x8231EC70 end:0x8231EC78
 	.text       start:0x82E58240 end:0x82E58378
 
-system/synth/DelayEffect.cpp:
+system/dsp/DelayEffect.cpp:
 	.rdata      start:0x82264D7C end:0x82264DFC
 	.pdata      start:0x8231EC78 end:0x8231EC98
 	.text       start:0x82E58378 end:0x82E58798
 
-system/synth/FlangerEffect.cpp:
+system/dsp/FlangerEffect.cpp:
 	.rdata      start:0x82264DFC end:0x82264E18
 	.pdata      start:0x8231EC98 end:0x8231ECB8
 	.text       start:0x82E58798 end:0x82E58CA0
 
-system/synth/EQEffect.cpp:
+system/dsp/EQEffect.cpp:
 	.rdata      start:0x82264E18 end:0x82264E80
 	.pdata      start:0x8231ECB8 end:0x8231ECE0
 	.text       start:0x82E58CA0 end:0x82E59ED8
 
-system/synth/WahEffect.cpp:
+system/dsp/WahEffect.cpp:
 	.rdata      start:0x82264E80 end:0x82264EA4
 	.pdata      start:0x8231ECE0 end:0x8231ECE8
 	.text       start:0x82E59ED8 end:0x82E5A348
@@ -11243,17 +11243,17 @@ system/synth/tomcrypt/ctr.c:
 	.pdata      start:0x8231ED10 end:0x8231ED30
 	.text       start:0x82E5A5F0 end:0x82E5A998
 
-system/synth/Common_Xbox.cpp:
+system/dsp/Common_Xbox.cpp:
 	.rdata      start:0x82264EFC end:0x82264F30
 	.pdata      start:0x8231ED30 end:0x8231ED40
 	.text       start:0x82E5A998 end:0x82E5AAC8
 
-system/synth/mkfilter/filterdesign.cpp:
+system/dsp/mkfilter/filterdesign.cpp:
 	.rdata      start:0x82264F30 end:0x82265008
 	.pdata      start:0x8231ED40 end:0x8231EDB0
 	.text       start:0x82E5AAC8 end:0x82E5C400
 
-system/synth/mkfilter/complex.cpp:
+system/dsp/mkfilter/complex.cpp:
 	.pdata      start:0x8231EDB0 end:0x8231EDD8
 	.text       start:0x82E5C400 end:0x82E5C7D8
 

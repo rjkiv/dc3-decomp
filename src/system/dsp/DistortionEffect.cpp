@@ -1,4 +1,4 @@
-#include "synth/DistortionEffect.h"
+#include "dsp/DistortionEffect.h"
 #include "os/Debug.h"
 #include "xdk/xaudio2/xaudio2.h"
 
