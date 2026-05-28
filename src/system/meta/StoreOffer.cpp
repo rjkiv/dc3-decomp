@@ -30,13 +30,16 @@ StoreOffer::StoreOffer(DataArray *a, SongMgr *mgr) : mStoreOfferData(a), mSongMg
     static Symbol id("id");
     static Symbol release_date("release_date");
 
-    if (mStoreOfferData->FindData(id, id, false)) {
-        songID = _strtoui64(id.Str(), nullptr, 16);
+    char const *c;
+    if (mStoreOfferData->FindData(id, c, false)) {
+        songID = _strtoui64(c, nullptr, 16);
     }
 
     DataArray *dateArray = mStoreOfferData->FindArray(release_date, false);
     if (dateArray) {
-        date = DateTime(dateArray->Int(1), dateArray->Int(2), dateArray->Int(3), 0, 0, 0);
+        DateTime date =
+            DateTime(dateArray->Int(1), dateArray->Int(2), dateArray->Int(3), 0, 0, 0);
+        mReleaseDate = date;
     }
 
     static Symbol song_ids("song_ids");
@@ -60,7 +63,7 @@ bool StoreOffer::HasData(Symbol s) const {
     return (mStoreOfferData->FindArray(s, false) != nullptr);
 }
 
-DateTime const &StoreOffer::ReleaseDate() const { return date; }
+DateTime const &StoreOffer::ReleaseDate() const { return mReleaseDate; }
 
 Symbol StoreOffer::FirstChar(Symbol s, bool b) const {
     return FirstSortChar(mStoreOfferData->FindStr(s), b);
@@ -177,11 +180,11 @@ DataNode StoreOffer::GetData(DataArray const *data, bool b) const {
     return b ? storeData : storeData->Node(1);
 }
 
-bool StoreOffer::HasSong(StoreOffer const *c) const {
+bool StoreOffer::HasSong(StoreOffer const *o) const {
     MILO_ASSERT(OfferType() == "pack" || OfferType() == "album",0x10c);
-    MILO_ASSERT(OfferType() == "song", 0x10d);
+    MILO_ASSERT(o->OfferType() == "song", 0x10d);
     for (int i = 0; i < NumSongs(); i++) {
-        if (Song(i) == c->GetSingleSongID()) {
+        if (Song(i) == o->GetSingleSongID()) {
             return true;
         }
     }
@@ -201,7 +204,7 @@ DataNode StoreOffer::OnGetData(DataArray *d) {
 }
 
 BEGIN_HANDLERS(StoreOffer)
-    HANDLE_EXPR(short_name, mStoreOfferData->Sym(0))
+    HANDLE_EXPR(short_name, ShortName())
     HANDLE_EXPR(offer_type, OfferType())
     HANDLE_EXPR(offer_name, OfferName())
     HANDLE_EXPR(artist, ArtistName())
@@ -215,8 +218,8 @@ BEGIN_HANDLERS(StoreOffer)
     HANDLE_EXPR(is_purchased, isPurchased)
     HANDLE_EXPR(is_test, IsTest())
     HANDLE(get_data, OnGetData)
-    HANDLE_EXPR(has_data, mStoreOfferData->FindArray(_msg->Sym(2), false) != nullptr)
-    HANDLE_EXPR(first_char, FirstChar(_msg->Sym(2), false))
+    HANDLE_EXPR(has_data, HasData(_msg->Sym(2)))
+    HANDLE_EXPR(first_char, FirstChar(_msg->Sym(2), _msg->Int(3)))
     HANDLE_EXPR(pack_first_letter, PackFirstLetter())
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS

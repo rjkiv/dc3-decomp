@@ -7,6 +7,7 @@
 #include "MQSongSortByCharacter.h"
 #include "MQSongSortNode.h"
 #include "ProfileMgr.h"
+#include "meta_ham/ProfileMgr.h"
 #include "obj/Dir.h"
 #include "utl/Std.h"
 #include "utl/Symbol.h"

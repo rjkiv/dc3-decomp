@@ -289,7 +289,7 @@ Symbol Leaderboards::ShowGamercard(int i, HamProfile *profile) {
                     return display_gamercard_privilege_error;
                 } else if (result == (ShowGamercardResult)-3) {
                     return display_gamercard_pad_error;
-                } else if (0 > result) {
+                } else if (result < 0) {
                     static Symbol on_select_gamertag_error("on_select_gamertag_error");
                     return on_select_gamertag_error;
                 }

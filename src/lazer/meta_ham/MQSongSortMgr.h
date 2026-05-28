@@ -2,6 +2,7 @@
 #include "MQSongSort.h"
 #include "NavListSortMgr.h"
 #include "ui/UIListProvider.h"
+#include "utl/Symbol.h"
 
 class MQSongSortMgr : public NavListSortMgr {
 public:

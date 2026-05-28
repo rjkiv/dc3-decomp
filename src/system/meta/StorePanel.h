@@ -46,6 +46,21 @@ public:
     void HandleNetCacheMgrFailure();
     void HandleNetCacheLoaderFailure(int);
     void MultipleItemsCheckout(std::list<StoreOffer *> *);
+    bool ToggleTestOffers() {
+        unk52 = !unk52;
+        return unk52;
+    }
+    void CancelArt() {
+        unk5c = 0;
+        mPendingArtCallback = nullptr;
+    }
+    void SetSource(Symbol s, bool b) {
+        unk8c = s;
+        if (b) {
+            unk90 = s;
+        }
+    }
+    void SetSourceToBackup() { unk8c = unk90; }
 
     std::vector<StoreOffer *> unk38;
     std::vector<StoreOffer *> unk44;
@@ -61,8 +76,8 @@ public:
     bool unk70;
     StorePurchaser *mPurchaser; // 0x74
     StorePurchaseable *unk78;
-    int unk7c;
-    std::vector<StoreOffer *> unk80;
+    Profile *unk7c;
+    std::vector<std::pair<StorePurchaseable *, const Profile *> > unk80;
     Symbol unk8c;
     Symbol unk90;
     int unk94;
@@ -81,15 +96,17 @@ protected:
     DataNode OnMsg(SigninChangedMsg const &);
     DataNode OnMsg(ProfileSwappedMsg const &);
     void ValidateOffers(std::vector<StoreOffer *> &);
-    // DataNode __cdecl OnMsg(SingleItemEnumCompleteMsg const &);
-    // DataNode __cdecl OnMsg(MultipleItemsEnumCompleteMsg const &);
+    DataNode OnMsg(SingleItemEnumCompleteMsg const &);
+    DataNode OnMsg(MultipleItemsEnumCompleteMsg const &);
 };
 
 class StoreEnumJob : public Job {
 public:
     StoreEnumJob(StorePanel *, int, std::vector<UINT64> *);
     virtual ~StoreEnumJob();
+    virtual void Start();
     virtual bool IsFinished();
+    virtual void Cancel(Hmx::Object *);
     virtual void OnCompletion(Hmx::Object *);
 
 protected:

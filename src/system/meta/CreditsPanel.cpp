@@ -52,7 +52,8 @@ RndMat *CreditsPanel::Mat(int i, int j, UIListMesh *mesh) const {
     static Symbol blank("blank");
     DataArray *array = mNames->Array(j);
     Symbol imgSym = blank;
-    if (array->Size()) {
+
+    if (0 != array->Size()) {
         imgSym = array->Sym(0);
     }
     if (imgSym == image) {

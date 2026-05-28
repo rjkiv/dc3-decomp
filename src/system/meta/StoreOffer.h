@@ -56,10 +56,11 @@ public:
         static Symbol type("type");
         return mStoreOfferData->FindSym(type);
     }
+    Symbol ShortName() const { return mStoreOfferData->Sym(0); }
 
 protected:
     DataArray *mStoreOfferData; // 0x40
-    DateTime date; // 0x44
+    DateTime mReleaseDate; // 0x44
     SongMgr *mSongMgr; // 0x4c
     std::vector<int> mSongsInOffer; // 0x50
 };
