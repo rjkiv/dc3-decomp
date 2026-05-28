@@ -50,7 +50,7 @@
 #undef HAVE_STRING_H
 
 /* Define to 1 if you have the `strncasecmp' function. */
-#define HAVE_STRNCASECMP 1
+#define HAVE_STRNCASECMP 0
 
 /* Define to 1 if you have the `strndup' function. */
 #undef HAVE_STRNDUP
@@ -83,7 +83,7 @@
 #undef HAVE_VSYSLOG
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+ */
 #undef LT_OBJDIR
 
 #define NULL 0
