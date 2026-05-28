@@ -1007,7 +1007,7 @@ PlatformMgr::ShowGamercardForPadNum(int padNum, const OnlineID *onlineID) {
     AutoGlitchPoker poker(__FUNCTION__, 1, 0, &glAvg);
     MILO_ASSERT(onlineID, 0x7C6);
     if (!onlineID->GetIsValid()) {
-        return kGamercardResultPrivelegeError;
+        return (ShowGamercardResult)-1;
     }
     if (!IsSignedIntoLive(padNum)) {
         return (ShowGamercardResult)-3;
@@ -1026,12 +1026,12 @@ PlatformMgr::ShowGamercardForPadNum(int padNum, const OnlineID *onlineID) {
             i4 = XShowGamerCardUI(padNum, xuid);
         }
         if (i4 != 0) {
-            return kGamercardResultPrivelegeError;
+            return (ShowGamercardResult)-1;
         } else {
             return (ShowGamercardResult)0;
         }
     }
-    return kGamercardResultPrivelegeError;
+    return (ShowGamercardResult)-1;
 }
 
 void PlatformMgr::ShowControllerRequiredUI(Hmx::Object *o1) {

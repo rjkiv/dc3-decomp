@@ -135,4 +135,7 @@ void SetNumOfferIDs(int num) {
 void SetOfferID(int i1, const String &str) { mData->Array(5)->Node(i1) = str; }
 void SetPurchased(int i1, bool b1) { mData->Array(6)->Node(i1) = b1; }
 QWORD OfferID(int) const;
+bool Purchased(int i) const { return mData->Array(6)->Int(i); }
+bool Success() const { return mData->Int(2); }
+int NumOffers() const { return mData->Int(4); }
 END_MESSAGE

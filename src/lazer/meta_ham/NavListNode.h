@@ -1,4 +1,5 @@
 #pragma once
+#include "macros.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/DateTime.h"
@@ -136,6 +137,7 @@ public:
     bool HasChildren() const { return !mChildren.empty(); }
     int GetStartIx() { return mStartIx; }
     void ClearList() { mChildren.clear(); }
+    bool IsFunctionType() { return GetType() == kNodeFunction; }
 
 protected:
     std::list<NavListSortNode *> mChildren; // 0x34

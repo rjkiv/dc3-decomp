@@ -15,6 +15,12 @@ enum PurchaseState { // just know the val of kSuccess
 class StorePurchaser {
 public:
     virtual ~StorePurchaser() {}
+    virtual void Initiate() = 0; // 0x4
+    virtual bool IsPurchasing() const = 0; // 0x8
+    virtual bool IsSuccess() const = 0; // 0xc
+    virtual bool PurchaseMade() const = 0; // 0x10
+    virtual bool NeedsEnum() const { return false; } // 0x14
+    virtual void Poll() = 0; // 0x18
 
     StorePurchaser(Symbol s, unsigned int i) : unk4(s), unk8(i) {}
 
@@ -67,6 +73,8 @@ public:
     virtual bool IsPurchasing() const;
     virtual bool IsSuccess() const;
     virtual bool PurchaseMade() const;
+    virtual bool NeedsEnum() const { return true; }
+    virtual void Poll() {}
 
     XboxMultipleItemsPurchaser(
         int, std::vector<unsigned long long> &, Symbol, unsigned int
@@ -75,6 +83,7 @@ public:
     PurchaseState mState; // 0x38
     std::vector<unsigned long long> unk3c;
     int unk48;
+    int unk4c;
 
 private:
     DataNode OnMsg(UIChangedMsg const &);

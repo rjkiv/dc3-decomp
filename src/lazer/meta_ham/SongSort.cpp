@@ -8,6 +8,7 @@
 #include "game/GameMode.h"
 #include "macros.h"
 #include "meta_ham/NavListNode.h"
+#include "meta_ham/SongRecord.h"
 #include "meta_ham/SongSortMgr.h"
 #include "meta_ham/SongSortNode.h"
 #include "os/Debug.h"
@@ -25,26 +26,52 @@ void SongSort::BuildTree() {
 
     auto &map = TheSongSortMgr->GetUnk78();
     FOREACH (it, map) {
-        NavListItemNode *node = NewItemNode(&it->second);
+        SongRecord *record = &it->second;
+        NavListItemNode *node = NewItemNode(record);
         auto bound = std::lower_bound(nodes.begin(), nodes.end(), node, CompareHeaders());
         nodes.insert(bound, node);
     }
     bool b = false;
     int count = 0;
     auto begin = nodes.begin();
-    auto end = nodes.end();
-    while (begin != end) {
+    auto rangeStart = nodes.begin();
+
+    while (begin != nodes.end()) {
         auto range =
-            std::equal_range(nodes.begin(), nodes.end(), *begin, CompareHeaders());
-        count += range.second - range.first;
+            std::equal_range(nodes.begin(), nodes.end(), *rangeStart, CompareHeaders());
+        int rangeSize = range.second - range.first;
+        int remaining = nodes.end() - rangeStart;
+        count += rangeSize;
+        int leftover = remaining - rangeSize;
+
         static Symbol by_song("by_song");
         static Symbol by_artist("by_artist");
+        if (leftover <= 0 || count >= 4
+            || (mSortName != by_song
+                && (mSortName != by_artist || TheSongSortMgr->IsInHeaderMode()))) {
+            auto it = rangeStart;
+            if ((b && count <= 12) || !b) {
+                it = range.second;
+            }
+
+            NavListShortcutNode *shortcut = NewShortcutNode(*begin);
+            unk30.push_back(shortcut);
+            shortcut->InsertHeaderRange(begin, it, this);
+
+            count = 0;
+            b = false;
+            begin = it;
+            rangeStart = it;
+        } else {
+            b = true;
+            rangeStart = range.second;
+        }
     }
 
     FOREACH (it, unk30) {
         (*it)->FinishSort(this);
     }
-};
+}
 
 void SongSort::DeleteItemList() {
     NavListSort::DeleteItemList();
@@ -53,8 +80,12 @@ void SongSort::DeleteItemList() {
 
 void SongSort::BuildItemList() {
     Symbol sym = gNullStr;
-    if (unk50 && unk50->GetType() == kNodeFunction) {
-        sym = unk50->GetToken();
+    NavListSortNode *sortNode = unk50;
+    if (sortNode) {
+        NavListNodeType type = sortNode->GetType();
+        if (type == kNodeFunction) {
+            sym = sortNode->GetToken();
+        }
     }
     DeleteItemList();
     static Symbol song_select_mode("song_select_mode");
@@ -71,26 +102,26 @@ void SongSort::BuildItemList() {
 
     if (TheSongSortMgr->HeadersSelectable() && (inPerform || inDanceBattle) && !check) {
         static Symbol random_song("random_song");
-        SongFunctionNode *node = new SongFunctionNode(
+        SongFunctionNode *randomSongNode = new SongFunctionNode(
             nullptr, random_song, "ui/image/song_select_setlist_keep.png"
         );
-        node->SetShortcut(unk30.front());
-        unk3c.push_back(node);
+        randomSongNode->SetShortcut(unk30.front());
+        unk3c.insert(unk3c.begin(), randomSongNode);
         if (inPerform) {
             static Symbol playlists("playlists");
-            SongFunctionNode *functionNode = new SongFunctionNode(
+            SongFunctionNode *playlistNode = new SongFunctionNode(
                 nullptr, playlists, "ui/image/song_select_setlist_keep.png"
             );
-            functionNode->SetShortcut(unk30.front());
-            unk3c.push_back(functionNode);
+            playlistNode->SetShortcut(unk30.front());
+            unk3c.insert(unk3c.begin(), playlistNode);
         }
     } else if (check) {
         static Symbol finish_setlist("finish_setlist");
-        SongFunctionNode *node = new SongFunctionNode(
+        SongFunctionNode *finishSetlistNode = new SongFunctionNode(
             nullptr, finish_setlist, "ui/image/song_select_setlist_keep.png"
         );
-        node->SetShortcut(unk30.front());
-        unk3c.push_back(node);
+        finishSetlistNode->SetShortcut(unk30.front());
+        unk3c.insert(unk3c.begin(), finishSetlistNode);
     }
 
     FOREACH (it, unk3c) {
@@ -111,7 +142,7 @@ void SongSort::BuildItemList() {
         (*it)->FinishBuildList(this);
     }
 
-    if (sym.Str() != gNullStr) {
+    if (!sym.Null()) {
         unk50 = GetNode(sym);
     }
 

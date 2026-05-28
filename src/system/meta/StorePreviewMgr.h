@@ -21,6 +21,7 @@ public:
     void ClearCurrentPreview();
     void SetCurrentPreviewFile(String const &, TexMovie *);
     bool IsDownloadingFile(String const &);
+    void DownloadPreviewFile(String const &s) { AddToDownloadQueue(s); }
     bool AllowPreviewDownload(String const &);
     void Poll();
 
@@ -32,7 +33,7 @@ public:
     NetCacheMgrFailType unk44;
     bool unk48;
     TexMovie *unk4c;
-    std::list<String> unk50;
+    std::list<String> mDownloadQueue; // 0x50
 
 protected:
     void PlayCurrentPreview();
@@ -40,5 +41,5 @@ protected:
 };
 
 DECLARE_MESSAGE(PreviewDownloadCompleteMsg, "preview_download_complete_msg")
-PreviewDownloadCompleteMsg(bool b1, bool b2) : Message(Type(), b1, b2){};
+PreviewDownloadCompleteMsg(bool b1, bool b2) : Message(Type(), b1, b2) {};
 END_MESSAGE

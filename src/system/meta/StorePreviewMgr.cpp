@@ -9,10 +9,13 @@
 #include "os/System.h"
 #include "rndobj/MetaMaterial.h"
 #include "synth/MoggClip.h"
+#include "utl/FilePath.h"
 #include "utl/NetCacheLoader.h"
 #include "utl/NetCacheMgr.h"
+#include "utl/Std.h"
 #include "utl/Str.h"
 #include "utl/Symbol.h"
+#include <cstring>
 
 StorePreviewMgr::StorePreviewMgr()
     : unk2c(0.0f), unk30(1), mStreamPlayer(nullptr), unk40(0), unk48(0) {
@@ -66,7 +69,8 @@ bool StorePreviewMgr::IsDownloadingFile(String const &str) {
             return true;
         }
     }
-    return unk50.end() != std::find(unk50.begin(), unk50.end(), str);
+    return mDownloadQueue.end()
+        != std::find(mDownloadQueue.begin(), mDownloadQueue.end(), str);
 }
 
 bool StorePreviewMgr::AllowPreviewDownload(String const &str) {
@@ -77,30 +81,33 @@ bool StorePreviewMgr::AllowPreviewDownload(String const &str) {
     if (TheNetCacheMgr->IsLocalFile(str.c_str()))
         return false;
     else
-        return std::find(unk50.begin(), unk50.end(), str) == unk50.end();
+        return std::find(mDownloadQueue.begin(), mDownloadQueue.end(), str)
+            == mDownloadQueue.end();
 }
 
 void StorePreviewMgr::PlayCurrentPreview() {
     MILO_ASSERT(mStreamPlayer, 0xd8);
-    if (unk34.empty()) {
-        return;
-    }
-    String temp_str(unk34.c_str());
-    if (unk4c) {
+    if (unk34.empty() || !TheNetCacheMgr->IsLocalFile(unk34.c_str())) {
         mStreamPlayer->StopPlaying();
-        FilePath filepath(temp_str.c_str());
-        unk4c->SetFile(filepath);
-        mStreamPlayer->SetVolume(-unk2c);
-    } else {
-        // Find and remove ".mogg" extension
-        unsigned int pos = temp_str.find(".mogg");
-        if (pos != String::npos) {
-            temp_str.erase(pos);
+        if (unk4c) {
+            unk4c->SetFile(gNullStr);
         }
-        if (TheNetCacheMgr->IsLocalFile(unk34.c_str())) {
-            mStreamPlayer->PlayFile(temp_str.c_str(), -unk2c, 0.0f, unk30);
-        } else {
+    } else {
+        String temp_str(unk34.c_str());
+        if (unk4c) {
             mStreamPlayer->StopPlaying();
+            {
+                FilePath filepath(unk34.c_str());
+                unk4c->SetFile(filepath);
+            }
+            unk4c->SetVolume(-unk2c);
+        } else {
+            // Find and remove ".mogg" extension
+            int length = strlen(temp_str.c_str()) - 5;
+            if (temp_str.find(".mogg", length) != String::npos) {
+                temp_str.erase(length);
+            }
+            mStreamPlayer->PlayFile(temp_str.c_str(), -unk2c, 0.0f, unk30);
         }
     }
 }
@@ -112,18 +119,63 @@ void StorePreviewMgr::AddToDownloadQueue(String const &str) {
         }
     }
     if (!TheNetCacheMgr->IsLocalFile(str.c_str())) {
-        if (std::find(unk50.begin(), unk50.end(), str) == unk50.end())
-            unk50.push_back(str);
+        if (std::find(mDownloadQueue.begin(), mDownloadQueue.end(), str)
+            == mDownloadQueue.end())
+            mDownloadQueue.push_back(str);
+    }
+}
+
+void StorePreviewMgr::Poll() {
+    MILO_ASSERT(mStreamPlayer, 0x6f);
+    mStreamPlayer->Poll();
+    if (unk40) {
+        bool rightPath = unk34 == unk40->GetRemotePath();
+        if (unk40->IsLoaded()) {
+            TheNetCacheMgr->IsLocalFile(unk40->GetRemotePath());
+            TheNetCacheMgr->DeleteNetCacheLoader(unk40);
+            unk40 = nullptr;
+            if (rightPath) {
+                PlayCurrentPreview();
+            }
+            static PreviewDownloadCompleteMsg msg(true, false);
+            msg[1] = rightPath;
+            Hmx::Object::Handle(msg, false);
+        } else if (unk40->HasFailed()) {
+            unk48 = true;
+            unk44 = unk40->GetFailType();
+            TheNetCacheMgr->DeleteNetCacheLoader(unk40);
+            unk40 = nullptr;
+            static PreviewDownloadCompleteMsg msg(false, false);
+            msg[1] = rightPath;
+            Hmx::Object::Handle(msg, false);
+        }
+    }
+
+    for (auto it = mDownloadQueue.begin(); it != mDownloadQueue.end()
+         && TheNetCacheMgr->IsLocalFile(mDownloadQueue.front().c_str());
+         it = ++mDownloadQueue.end()) {
+        mDownloadQueue.pop_front();
+    }
+
+    if (!unk40 && !mDownloadQueue.empty()) {
+        MILO_ASSERT(!TheNetCacheMgr->IsLocalFile(mDownloadQueue.front().c_str()), 0xa5);
+        unk40 = TheNetCacheMgr->AddNetCacheLoader(
+            mDownloadQueue.front().c_str(), (NetLoaderPos)1
+        );
+        mDownloadQueue.pop_front();
     }
 }
 
 BEGIN_HANDLERS(StorePreviewMgr)
-HANDLE_ACTION(clear_current_preview, ClearCurrentPreview())
-HANDLE_ACTION(set_current_preview_file, SetCurrentPreviewFile(_msg->Str(2), nullptr))
-HANDLE_ACTION(set_current_preview_movie, SetCurrentPreviewFile(_msg->Str(2), _msg->Obj<TexMovie>(3)))
-HANDLE_ACTION(download_preview_file, AddToDownloadQueue(_msg->Str(2)))
-HANDLE_EXPR(is_downloading_file, IsDownloadingFile(_msg->Str(2)))
-HANDLE_EXPR(allow_preview_download, AllowPreviewDownload(_msg->Str(2)))
-HANDLE_EXPR(is_playing, IsPlaying())
-HANDLE_SUPERCLASS(Hmx::Object)
+    HANDLE_ACTION(clear_current_preview, ClearCurrentPreview())
+    HANDLE_ACTION(set_current_preview_file, SetCurrentPreviewFile(_msg->Str(2), nullptr))
+    HANDLE_ACTION(
+        set_current_preview_movie,
+        SetCurrentPreviewFile(_msg->Str(2), _msg->Obj<TexMovie>(3))
+    )
+    HANDLE_ACTION(download_preview_file, DownloadPreviewFile(_msg->Str(2)))
+    HANDLE_EXPR(is_downloading_file, IsDownloadingFile(_msg->Str(2)))
+    HANDLE_EXPR(allow_preview_download, AllowPreviewDownload(_msg->Str(2)))
+    HANDLE_EXPR(is_playing, IsPlaying())
+    HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
