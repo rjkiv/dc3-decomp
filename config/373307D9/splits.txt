@@ -11248,12 +11248,12 @@ system/synth/Common_Xbox.cpp:
 	.pdata      start:0x8231ED30 end:0x8231ED40
 	.text       start:0x82E5A998 end:0x82E5AAC8
 
-system/synth/filterdesign.cpp:
+system/synth/mkfilter/filterdesign.cpp:
 	.rdata      start:0x82264F30 end:0x82265008
 	.pdata      start:0x8231ED40 end:0x8231EDB0
 	.text       start:0x82E5AAC8 end:0x82E5C400
 
-system/synth/complex.cpp:
+system/synth/mkfilter/complex.cpp:
 	.pdata      start:0x8231EDB0 end:0x8231EDD8
 	.text       start:0x82E5C400 end:0x82E5C7D8
 

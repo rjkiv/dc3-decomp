@@ -1,0 +1,71 @@
+#pragma once
+#include <cmath>
+
+struct c_complex {
+    double re, im;
+};
+
+struct complex {
+    double re, im;
+    complex(double r, double i = 0.0) {
+        re = r;
+        im = i;
+    }
+    complex() // uninitialized complex
+    {}
+    complex(c_complex z) // init from denotation
+    {
+        re = z.re;
+        im = z.im;
+    }
+};
+
+// in complex.cpp
+extern complex csqrt(complex), cexp(complex), expj(double);
+// in complex.cpp
+extern complex evaluate(complex[], int, complex[], int, complex);
+
+inline double hypot(complex z) { return ::hypot(z.im, z.re); }
+inline double atan2(complex z) { return ::atan2(z.im, z.re); }
+
+inline complex cconj(complex z) {
+    z.im = -z.im;
+    return z;
+}
+
+inline complex operator*(double a, complex z) {
+    z.re *= a;
+    z.im *= a;
+    return z;
+}
+
+inline complex operator/(complex z, double a) {
+    z.re /= a;
+    z.im /= a;
+    return z;
+}
+
+inline void operator/=(complex &z, double a) { z = z / a; }
+
+extern complex operator*(complex, complex);
+extern complex operator/(complex, complex);
+
+inline complex operator+(complex z1, complex z2) {
+    z1.re += z2.re;
+    z1.im += z2.im;
+    return z1;
+}
+
+inline complex operator-(complex z1, complex z2) {
+    z1.re -= z2.re;
+    z1.im -= z2.im;
+    return z1;
+}
+
+inline complex operator-(complex z) { return 0.0 - z; }
+
+inline bool operator==(complex z1, complex z2) {
+    return (z1.re == z2.re) && (z1.im == z2.im);
+}
+
+inline complex sqr(complex z) { return z * z; }
