@@ -138,7 +138,7 @@ SAMPLETYPE *FIFOSampleBuffer::ptrEnd(uint slackCapacity) {
 // When using this function to output samples, also remember to 'remove' the
 // outputted samples from the buffer by calling the
 // 'receiveSamples(numSamples)' function
-SAMPLETYPE *FIFOSampleBuffer::ptrBegin() {
+SAMPLETYPE *FIFOSampleBuffer::ptrBegin() const {
     assert(buffer);
     return buffer + bufferPos * channels;
 }

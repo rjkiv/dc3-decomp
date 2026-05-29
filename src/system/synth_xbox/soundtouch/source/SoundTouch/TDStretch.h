@@ -67,8 +67,7 @@ namespace soundtouch {
 /// and vice versa.
 ///
 /// Increasing this value reduces computational burden & vice versa.
-// #define DEFAULT_SEQUENCE_MS         40
-#define DEFAULT_SEQUENCE_MS USE_AUTO_SEQUENCE_LEN
+#define DEFAULT_SEQUENCE_MS 82
 
 /// Giving this value for the sequence length sets automatic parameter value
 /// according to tempo setting (recommended)
@@ -86,8 +85,7 @@ namespace soundtouch {
 /// around, try reducing this setting.
 ///
 /// Increasing this value increases computational burden & vice versa.
-// #define DEFAULT_SEEKWINDOW_MS       15
-#define DEFAULT_SEEKWINDOW_MS USE_AUTO_SEEKWINDOW_LEN
+#define DEFAULT_SEEKWINDOW_MS 14
 
 /// Giving this value for the seek window length sets automatic parameter value
 /// according to tempo setting (recommended)
@@ -101,7 +99,7 @@ namespace soundtouch {
 /// setting by a large amount, you might wish to try a smaller value on this.
 ///
 /// Increasing this value increases computational burden & vice versa.
-#define DEFAULT_OVERLAP_MS 8
+#define DEFAULT_OVERLAP_MS 12
 
     /// Class that does the time-stretch (tempo change) effect for the processed
     /// sound.

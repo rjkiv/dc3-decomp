@@ -68,7 +68,7 @@ namespace soundtouch {
         /// When using this function to output samples, also remember to 'remove' the
         /// output samples from the buffer by calling the
         /// 'receiveSamples(numSamples)' function
-        virtual SAMPLETYPE *ptrBegin() = 0;
+        virtual SAMPLETYPE *ptrBegin() const = 0;
 
         /// Adds 'numSamples' pcs of samples from the 'samples' memory position to
         /// the sample buffer.
@@ -158,7 +158,7 @@ namespace soundtouch {
         /// When using this function to output samples, also remember to 'remove' the
         /// output samples from the buffer by calling the
         /// 'receiveSamples(numSamples)' function
-        virtual SAMPLETYPE *ptrBegin() { return output->ptrBegin(); }
+        virtual SAMPLETYPE *ptrBegin() const { return output->ptrBegin(); }
 
     public:
         /// Output samples from beginning of the sample buffer. Copies requested samples

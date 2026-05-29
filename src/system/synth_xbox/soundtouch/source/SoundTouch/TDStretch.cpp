@@ -120,7 +120,7 @@ TDStretch::~TDStretch() {
 //      position (default = 28 ms)
 // 'overlapMS' = overlapping length (default = 12 ms)
 
-void TDStretch::setParameters(
+__declspec(noinline) void TDStretch::setParameters(
     int aSampleRate, int aSequenceMS, int aSeekWindowMS, int aOverlapMS
 ) {
     // accept only positive parameter values - if zero or negative, use old values instead

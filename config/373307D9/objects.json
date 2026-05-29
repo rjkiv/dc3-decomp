@@ -876,12 +876,12 @@
         "mw_version": "X360/16.00.11886.00",
         "cflags": "base",
         "objects": {
-            "system/synth_xbox/soundtouch/source/SoundTouch/AAFilter.cpp": "NonMatching",
-            "system/synth_xbox/soundtouch/source/SoundTouch/FIFOSampleBuffer.cpp": "NonMatching",
+            "system/synth_xbox/soundtouch/source/SoundTouch/AAFilter.cpp": "Matching",
+            "system/synth_xbox/soundtouch/source/SoundTouch/FIFOSampleBuffer.cpp": "Matching",
             "system/synth_xbox/soundtouch/source/SoundTouch/FIRFilter.cpp": "NonMatching",
-            "system/synth_xbox/soundtouch/source/SoundTouch/RateTransposer.cpp": "NonMatching",
-            "system/synth_xbox/soundtouch/source/SoundTouch/SoundTouch.cpp": "NonMatching",
-            "system/synth_xbox/soundtouch/source/SoundTouch/TDStretch.cpp": "NonMatching"
+            "system/synth_xbox/soundtouch/source/SoundTouch/RateTransposer.cpp": "Matching",
+            "system/synth_xbox/soundtouch/source/SoundTouch/SoundTouch.cpp": "Matching",
+            "system/synth_xbox/soundtouch/source/SoundTouch/TDStretch.cpp": "Matching"
         }
     },
     "tomcrypt": {
@@ -998,8 +998,8 @@
             "system/net/WebSvcMgrCurl.cpp": "NonMatching",
             "system/net/WebSvcReq.cpp": "NonMatching",
             "system/net/XLSPConnection.cpp": "NonMatching",
-            "system/net/json-c/arraylist.c": "NonMatching",
-            "system/net/json-c/json_object.c": "NonMatching",
+            "system/net/json-c/arraylist.c": "Matching",
+            "system/net/json-c/json_object.c": "Matching",
             "system/net/json-c/json_tokener.c": "NonMatching",
             "system/net/json-c/linkhash.c": "NonMatching",
             "system/net/json-c/printbuf.c": "NonMatching"
