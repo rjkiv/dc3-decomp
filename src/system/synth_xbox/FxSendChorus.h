@@ -13,4 +13,5 @@ public:
     NEW_OBJ(FxSendChorus360)
 
     FxSendChorus360();
+    virtual IUnknown *CreateFx();
 };

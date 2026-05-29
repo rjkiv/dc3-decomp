@@ -13,6 +13,7 @@ public:
     NEW_OBJ(FxSendBitCrush360)
 
     FxSendBitCrush360();
+    virtual void SyncEffectParams(IXAudio2SubmixVoice *) const;
 
 protected:
     virtual IUnknown *CreateFx();

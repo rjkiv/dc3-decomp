@@ -17,6 +17,7 @@ public:
     NEW_OBJ(FxSendFlanger360)
 
     FxSendFlanger360();
+    virtual IUnknown *CreateFx();
 
 protected:
     virtual void OnParametersChanged(void);

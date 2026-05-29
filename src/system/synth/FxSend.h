@@ -47,6 +47,8 @@ public:
     /** "Attach microphone to this send, for testing" */
     void TestWithMic();
     void SetStage(int);
+    bool UpdatesEnabled() const { return mEnableUpdates; }
+    SendChannels GetChannels() const { return mChannels; }
 
 protected:
     FxSend();

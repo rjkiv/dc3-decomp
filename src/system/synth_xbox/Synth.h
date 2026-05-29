@@ -13,36 +13,48 @@ class FxSend360;
 
 class Synth360 : public Synth {
 public:
+    Synth360();
     virtual DataNode Handle(DataArray *, bool);
-    virtual bool IsUsingDolby() const;
-    virtual bool HasPendingVoices();
-    virtual void EnableLevels(bool);
-    virtual int GetNumConnectedMics();
+    virtual void PreInit();
+    virtual void Init();
     virtual void SetDolby(bool, bool);
+    virtual bool IsUsingDolby() const;
+    virtual void Terminate();
+    virtual void Poll();
+    virtual bool HasPendingVoices();
+    virtual Mic *GetMic(int);
+    virtual int GetNumConnectedMics();
+    virtual int GetNextAvailableMicID() const;
+    virtual bool IsMicConnected(int) const;
+    virtual void CaptureMic(int);
+    virtual void ReleaseMic(int);
+    virtual void ReleaseAllMics();
     virtual bool DidMicsChange() const;
     virtual void ResetMicsChanged();
     virtual Stream *NewStream(char const *, float, float, bool);
     virtual Stream *NewBufStream(void const *, int, Symbol, float, bool);
     virtual StreamReader *NewStreamDecoder(File *, StandardStream *, Symbol);
     virtual void NewStreamFile(char const *, File *&, Symbol &);
-    virtual void CaptureMic(int);
-    virtual void ReleaseAllMics();
+    virtual void EnableLevels(bool);
     virtual void RequirePushToTalk(bool, int);
-    virtual void Poll();
-    virtual int GetNextAvailableMicID() const;
-    virtual bool IsMicConnected(int) const;
-    virtual void Terminate();
-    virtual Mic *GetMic(int);
-    virtual void ReleaseMic(int);
-    virtual void PreInit();
-    virtual void Init();
+
+    IXAudio2Voice *OutputVoice() const { return unkf0; }
+
+    void SetGlobalReverbPreset(const char *);
+    IXAudio2SubmixVoice *GetHeadsetSubmix(int);
+    void RemoveFxSend(FxSend360 *);
+    void AddFxSend(FxSend360 *);
+
+private:
+    void UpdateDolby();
+    void SetupHeadsetSubmixes();
 
     CriticalSection unkb0;
     std::vector<Mic *> mMics; // 0xd0
     std::vector<IXAudio2SubmixVoice *> unkdc;
     int unke8;
     int unkec;
-    int unkf0;
+    IXAudio2Voice *unkf0;
     int unkf4;
     int unkf8;
     int unkfc;
@@ -54,16 +66,6 @@ public:
     int unk13c;
     std::vector<FxSend360 *> unk140;
     bool unk14c;
-
-    Synth360();
-    void SetGlobalReverbPreset(char const *);
-    IXAudio2SubmixVoice *GetHeadsetSubmix(int);
-    void RemoveFxSend(FxSend360 *);
-    void AddFxSend(FxSend360 *);
-
-private:
-    void UpdateDolby();
-    void SetupHeadsetSubmixes();
 };
 
 extern Synth360 *TheXboxSynth;

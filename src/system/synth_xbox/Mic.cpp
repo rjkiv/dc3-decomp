@@ -6,11 +6,45 @@
 #include "os/CritSec.h"
 #include "os/Debug.h"
 #include "os/System.h"
+#include "rnddx9/Rnd.h"
+#include "utl/MemStream.h"
 #include "utl/Symbol.h"
+#include "xdk/win_types.h"
 #include <cstring>
 
 MicManagerXbox *sInstance;
 
+#pragma region ChatReceiver
+
+ChatReceiver::ChatReceiver(IXHV2Engine *engine, int i2)
+    : mXHV(engine), unk4(i2), unk8(0), unk9(0), unkc(0), unk10(0), unk14(0), unk18(0),
+      unk50(new MemStream(true)) {
+    MILO_ASSERT(mXHV, 0x3F2);
+}
+
+ChatReceiver::~ChatReceiver() {
+    ActivateProcessing(false);
+    RELEASE(unk50);
+}
+
+void ChatReceiver::ActivateProcessing(bool b1) {
+    if (b1 != unk9) {
+        unk9 = b1;
+        if (b1) {
+            HRESULT hr = mXHV->RegisterLocalTalker(unk4);
+            DX_ASSERT_CODE(hr, 0x40D);
+            hr = mXHV->StartLocalProcessingModes(unk4, 0, 1);
+            DX_ASSERT_CODE(hr, 0x40E);
+        } else {
+            HRESULT hr = mXHV->StopLocalProcessingModes(unk4, 0, 1);
+            DX_ASSERT_CODE(hr, 0x412);
+            hr = mXHV->UnregisterLocalTalker(unk4);
+            DX_ASSERT_CODE(hr, 0x413);
+        }
+    }
+}
+
+#pragma endregion
 #pragma region MicXbox
 
 MicXbox::MicXbox(int, float volume)

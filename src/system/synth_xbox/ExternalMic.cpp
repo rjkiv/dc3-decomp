@@ -1,12 +1,14 @@
 #include "synth_xbox/ExternalMic.h"
 #include "os/Debug.h"
-#include "xdk/xapilibi/handleapi.h"
-#include "xdk/xapilibi/processthreadsapi.h"
-#include "xdk/xapilibi/synchapi.h"
-#include "xdk/xapilibi/xbox.h"
+#include "xdk/XAPILIB.h"
 
 namespace {
-    unsigned long ExternalMicThreadEntry(void *v) { return 1; }
+    DWORD ExternalMicThreadEntry(void *v) {
+        ExternalMic *mic = (ExternalMic *)v;
+        return mic->sampleProcessThread();
+    }
+
+    std::vector<ExternalMic *> gMics;
 }
 
 ExternalMic::ExternalMic(unsigned long ul)

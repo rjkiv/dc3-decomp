@@ -27,6 +27,7 @@ Synth360::Synth360()
       unk105(false), unk138(false), unk13c(0), unk14c(false) {}
 
 BEGIN_HANDLERS(Synth360)
+    HANDLE_ACTION(set_headset_target, Voice::sHeadsetTarget = _msg->Int(2))
     HANDLE_SUPERCLASS(Synth)
 END_HANDLERS
 

@@ -7,18 +7,29 @@
 #include "synth_xbox/Mic.h"
 #include "synth_xbox/Voice.h"
 #include "types.h"
+#include "utl/MemStream.h"
 #include "utl/Symbol.h"
-#include "xdk/xapilibi/xbase.h"
-#include "xdk/xvh2/xvh2.h"
+#include "xdk/XVH2.h"
 
 class ChatReceiver {
 public:
-    ~ChatReceiver();
     ChatReceiver(IXHV2Engine *, int);
-    bool ActivateProcessing(bool);
+    ~ChatReceiver();
+    void ActivateProcessing(bool);
 
 private:
     void ProcessChatData(void *, unsigned int, int *);
+
+    IXHV2Engine *mXHV; // 0x0
+    DWORD unk4; // 0x4
+    bool unk8; // 0x8
+    bool unk9; // 0x9
+    float unkc;
+    float unk10;
+    int unk14;
+    int unk18;
+    Timer unk20;
+    MemStream *unk50;
 };
 
 class MicXbox : public Mic {
@@ -52,6 +63,10 @@ public:
     void AddData(void *, int);
     void OnMicConnected(unsigned long, bool, Symbol const &);
     void OnMicDisconnected();
+
+private:
+    void ReadChatBuffer(void *, unsigned int);
+    static bool AddToBuffer(std::vector<short> &, void *, int, int *);
 
     u8 unkc;
     bool unkd;
@@ -88,10 +103,6 @@ public:
     int mDroppedSamples; // 0x90c0
     Symbol unk90c4;
     bool mClipping; // 0x90c8
-
-private:
-    void ReadChatBuffer(void *, unsigned int);
-    static bool AddToBuffer(std::vector<short> &, void *, int, int *);
 };
 
 class MicManagerXbox {

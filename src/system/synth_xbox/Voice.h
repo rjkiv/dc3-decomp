@@ -23,12 +23,14 @@ public:
     void SetVolume(float);
     void SetPan(float);
     void SetReverbEnable(bool);
-    // void SetSend(FxSend360 *);
+    void SetSend(class FxSend360 *);
     static bool HasPendingVoices();
     void SetSpeed(float);
     void Init(bool);
     void blockingStart(bool);
     void Start();
+
+    static int sHeadsetTarget;
 
     u32 unk0;
     int unk4;

@@ -13,6 +13,7 @@ public:
     NEW_OBJ(FxSendDistortion360)
 
     FxSendDistortion360();
+    virtual void SyncEffectParams(IXAudio2SubmixVoice *) const;
 
 protected:
     virtual IUnknown *CreateFx();
