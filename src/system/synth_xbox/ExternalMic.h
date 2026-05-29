@@ -1,5 +1,6 @@
 #pragma once
 #include "xdk/XAPILIB.h"
+#include "synth_xbox/Mic.h"
 
 // size 0x18
 class ExternalMic {
@@ -25,5 +26,8 @@ private:
     float unk14;
 };
 
-class ExternalMicClientMgr;
+class ExternalMicClientMgr {
+public:
+    static bool ConnectedForClient(const MicXbox *);
+};
 class ExternalMicClientProxy;

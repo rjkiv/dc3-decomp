@@ -2,6 +2,10 @@
 #include "xdk/win_types.h"
 #include "xdk/XAUDIO2.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct IXHV2Engine { /* Size=0x4 */
 
     virtual UINT32 AddRef();
@@ -46,3 +50,29 @@ struct IXHV2Engine { /* Size=0x4 */
     IXHV2Engine();
     IXHV2Engine &operator=(const IXHV2Engine &);
 };
+
+struct XHV_INIT_PARAMS { /* Size=0x34 */
+    /* 0x0000 */ DWORD dwMaxRemoteTalkers;
+    /* 0x0004 */ DWORD dwMaxLocalTalkers;
+    /* 0x0008 */ void **localTalkerEnabledModes;
+    /* 0x000c */ DWORD dwNumLocalTalkerEnabledModes;
+    /* 0x0010 */ void **remoteTalkerEnabledModes;
+    /* 0x0014 */ DWORD dwNumRemoteTalkerEnabledModes;
+    /* 0x0018 */ BOOL bCustomVADProvided;
+    /* 0x001c */ BOOL bRelaxPrivileges;
+    /* 0x0020 */ void (*pfnMicrophoneRawDataReady)(DWORD, void *, DWORD, INT *);
+    /* 0x0024 */ XAUDIO2_EFFECT_CHAIN **ppfxDefaultRemoteTalkerFX;
+    /* 0x0028 */ XAUDIO2_EFFECT_CHAIN **ppfxDefaultTalkerPairFX;
+    /* 0x002c */ XAUDIO2_EFFECT_CHAIN *pfxOutputFX;
+    /* 0x0030 */ IXAudio2 *pXAudio2;
+};
+
+HRESULT
+XHV2CreateEngine(XHV_INIT_PARAMS *Params, HANDLE *WorkerThread, IXHV2Engine **Engine);
+
+extern void *_xhv_voicechat_mode;
+extern void *_xhv_loopback_mode;
+
+#ifdef __cplusplus
+}
+#endif

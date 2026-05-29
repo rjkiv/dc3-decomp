@@ -10,7 +10,9 @@
 #include "utl/MemStream.h"
 #include "utl/Symbol.h"
 #include "xdk/XVH2.h"
+#include "xdk/xvh2/xvh2.h"
 
+// size 0x58
 class ChatReceiver {
 public:
     ChatReceiver(IXHV2Engine *, int);
@@ -30,35 +32,47 @@ private:
     int unk18;
     Timer unk20;
     MemStream *unk50;
+    int unk54;
 };
 
+// size 0x90d0
 class MicXbox : public Mic {
 public:
+    MicXbox(int, float);
     virtual ~MicXbox();
-    virtual float GetGain() const;
-    virtual void ClearBuffers();
-    virtual int GetDroppedSamples();
-    virtual bool GetClipping() const;
-    virtual void SetGain(float);
-    virtual Mic::Type GetType() const;
-    virtual void SetOutputGain(float);
-    virtual void SetSensitivity(float);
-    virtual float GetOutputGain() const;
-    virtual float GetSensitivity() const;
-    virtual Symbol &GetName() const;
-    virtual void SetVolume(float);
-    virtual void SetChangeNotify(bool);
-    virtual void SetMute(bool);
-    virtual bool IsPlaying();
     virtual void Start();
+    virtual void Stop();
+    virtual bool IsRunning() const { return mRunning; }
+    virtual Type GetType() const;
+    virtual void SetDMA(bool) {}
+    virtual bool GetDMA() const { return false; }
+    virtual void SetGain(float);
+    virtual float GetGain() const;
+    virtual void SetEarpieceVolume(float) {}
+    virtual float GetEarpieceVolume() const { return 0; }
+    virtual void SetMute(bool);
+    virtual bool GetClipping() const;
+    virtual void SetOutputGain(float);
+    virtual float GetOutputGain() const;
+    virtual void SetSensitivity(float);
+    virtual float GetSensitivity() const;
+    virtual void SetVolume(float);
+    virtual void SetFxSend(FxSend *);
+    virtual void SetChangeNotify(bool);
     virtual void StartPlayback();
     virtual void StopPlayback();
-    virtual void Stop();
+    virtual bool IsPlaying();
+    virtual void SetCompressor(bool) {}
+    virtual bool GetCompressor() const { return false; }
+    virtual void SetCompressorParam(float) {}
+    virtual float GetCompressorParam() const { return 0; }
+    virtual void ClearBuffers();
     virtual short *GetRecentBuf(int &);
     virtual short *GetContinuousBuf(int &);
-    virtual void SetFxSend(FxSend *);
+    virtual int GetDroppedSamples();
+    virtual int GetSampleRate() const { return 48000; }
+    virtual const Symbol &GetName() const { return mName; }
 
-    MicXbox(int, float);
     void Poll();
     void AddData(void *, int);
     void OnMicConnected(unsigned long, bool, Symbol const &);
@@ -68,47 +82,43 @@ private:
     void ReadChatBuffer(void *, unsigned int);
     static bool AddToBuffer(std::vector<short> &, void *, int, int *);
 
-    u8 unkc;
-    bool unkd;
+    bool unkc;
+    bool mRunning; // 0xd
     int unk10;
     bool mChangeNotify; // 0x14
-    Voice *unk18;
-    short unk1c[6144];
-    short *unk301c;
+    Voice *mVoice; // 0x18
+    short mVoiceBuffer[0x1800]; // 0x1c
+    short *unk301c; // 0x301c
     std::vector<short> unk3020;
-    RingBuffer *unk302c;
-    u32 unk3030;
-    int unk3034;
-    u32 unk3038;
-    u32 unk303c;
-    RingBuffer *unk3040;
-    u32 unk3044;
-    int unk3048;
-    u32 unk304c[6146];
-    float unk9054;
+    RingBuffer mRingBufferRecent; // 0x302c
+    RingBuffer mRingBufferContinuous; // 0x3040
+    short unk3054[0x3000];
+    float unk9054; // 0x9054 - speed
     float unk9058;
     float unk905c;
-    int unk9060;
+    FxSend *mSend; // 0x9060
     float mVolume; // 0x9064
     bool mMute; // 0x9068
     float unk906c;
     float mGain; // 0x9070
     float mOutputGain; // 0x9074
     float mSensitivity; // 0x9078
-    int unk907c;
+    short unk907c;
     u32 unk9080;
     u32 unk9084;
     u32 unk9088;
     Timer unk9090;
     int mDroppedSamples; // 0x90c0
-    Symbol unk90c4;
+    Symbol mName; // 0x90c4
     bool mClipping; // 0x90c8
+    int unk90cc;
 };
 
+// size 0x90
 class MicManagerXbox {
 public:
+    // size 0x3f8
     struct ChatBuffer {
-    public:
         int unk0;
         int unk4;
         int unk8[252];
@@ -121,32 +131,30 @@ public:
     void Shutdown();
     void AddRemoteMic(unsigned long long const &, XAUDIO2_EFFECT_CHAIN *);
     void Init();
+    CriticalSection *CritSec() { return &mMicArrayLock; }
+    void SetMicsChanged() { mMicsChanged = true; }
+    void ClearMicsChanged() { mMicsChanged = false; }
+    bool MicsChanged() const { return mMicsChanged; }
 
     static MicManagerXbox *GetInstance();
 
-    std::vector<MicXbox *> unk0;
-    std::vector<ChatReceiver *> unkc;
-    int unk18;
-    int unk1c;
-    std::vector<MicManagerXbox::ChatBuffer> unk20;
-    int unk2c;
-    bool unk30;
-    u32 unk34;
-    Timer unk38;
-    CriticalSection unk68;
-    int unk88;
-
 private:
-    ~MicManagerXbox();
     MicManagerXbox();
+    ~MicManagerXbox();
+
     void OnDataReady(unsigned long, void *, unsigned long, int *);
 
     static void DataReadyCallback(unsigned long, void *, unsigned long, int *);
-
     static MicManagerXbox *sInstance;
-};
 
-DataNode SetNoiseGate(DataArray *);
-DataNode SetLowCut(DataArray *);
-DataNode SetLocalGain(DataArray *);
-DataNode SetRemoteGain(DataArray *);
+    std::vector<MicXbox *> mMics; // 0x0
+    std::vector<ChatReceiver *> mChatReceivers; // 0xc
+    int unk18; // 0x18 - DWORD user index?
+    IXHV2Engine *mXHVEngine; // 0x1c
+    std::vector<ChatBuffer> mChatBuffers; // 0x20
+    HANDLE mXHVWorkerThread; // 0x2c
+    bool mMicsChanged; // 0x30
+    Timer unk38;
+    CriticalSection mMicArrayLock; // 0x68
+    int mPad; // 0x88
+};

@@ -53,15 +53,13 @@ bool Synth360::DidMicsChange() const {
     if (mMics.empty())
         return false;
     else {
-        MicManagerXbox *x = MicManagerXbox::GetInstance();
-        return x->unk30;
+        MicManagerXbox::GetInstance()->MicsChanged();
     }
 }
 
 void Synth360::ResetMicsChanged() {
     if (!mMics.empty()) {
-        MicManagerXbox *x = MicManagerXbox::GetInstance();
-        x->unk30 = false;
+        MicManagerXbox::GetInstance()->ClearMicsChanged();
     }
 }
 

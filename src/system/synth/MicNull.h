@@ -10,7 +10,7 @@ public:
     virtual void Start() {}
     virtual void Stop() {}
     virtual bool IsRunning() const { return true; }
-    virtual Type GetType() const { return kMicNull; }
+    virtual Type GetType() const { return kUSBMic; }
     virtual void SetDMA(bool) {}
     virtual bool GetDMA() const { return false; }
     virtual void SetGain(float) {}

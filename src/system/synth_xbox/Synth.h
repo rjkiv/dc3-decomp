@@ -54,7 +54,7 @@ private:
     std::vector<Mic *> mMics; // 0xd0
     std::vector<IXAudio2SubmixVoice *> unkdc;
     int unke8;
-    int unkec;
+    int unkec; // 0xec - IXAudio2*
     IXAudio2Voice *unkf0;
     int unkf4;
     IXAudio2Voice *unkf8;

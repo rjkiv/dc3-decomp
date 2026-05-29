@@ -214,6 +214,134 @@ public:
     IXAudio2MasteringVoice &operator=(const IXAudio2MasteringVoice &);
 };
 
+struct IXAudio2EngineCallback { /* Size=0x4 */
+    virtual void OnProcessingPassStart();
+    virtual void OnProcessingPassEnd();
+    virtual void OnCriticalError(INT);
+    IXAudio2EngineCallback(const IXAudio2EngineCallback &);
+    IXAudio2EngineCallback();
+    IXAudio2EngineCallback &operator=(const IXAudio2EngineCallback &);
+};
+
+struct IXAudio2VoiceCallback { /* Size=0x4 */
+    virtual void OnVoiceProcessingPassStart(UINT);
+    virtual void OnVoiceProcessingPassEnd();
+    virtual void OnStreamEnd();
+    virtual void OnBufferStart(void *);
+    virtual void OnBufferEnd(void *);
+    virtual void OnLoopEnd(void *);
+    virtual void OnVoiceError(void *, INT);
+    IXAudio2VoiceCallback(const IXAudio2VoiceCallback &);
+    IXAudio2VoiceCallback();
+    IXAudio2VoiceCallback &operator=(const IXAudio2VoiceCallback &);
+};
+
+enum XAUDIO2_XBOX_HWTHREAD_SPECIFIER {
+    XboxThread0 = 0x0001,
+    XboxThread1 = 0x0002,
+    XboxThread2 = 0x0004,
+    XboxThread3 = 0x0008,
+    XboxThread4 = 0x0010,
+    XboxThread5 = 0x0020,
+    XAUDIO2_ANY_PROCESSOR = 0x0010,
+    XAUDIO2_DEFAULT_PROCESSOR = 0x0010,
+};
+
+struct WAVEFORMATEXTENSIBLE { /* Size=0x28 */
+    /* 0x0000 */ tWAVEFORMATEX Format;
+    /* 0x0012 */ union {
+        WORD wValidBitsPerSample;
+        WORD wSamplesPerBlock;
+        WORD wReserved;
+    } Samples;
+    /* 0x0014 */ DWORD dwChannelMask;
+    /* 0x0018 */ _GUID SubFormat;
+};
+
+enum XAUDIO2_DEVICE_ROLE {
+    NotDefaultDevice = 0x0000,
+    DefaultConsoleDevice = 0x0001,
+    DefaultMultimediaDevice = 0x0002,
+    DefaultCommunicationsDevice = 0x0004,
+    DefaultGameDevice = 0x0008,
+    GlobalDefaultDevice = 0x000f,
+    InvalidDeviceRole = 0xf0,
+};
+
+struct XAUDIO2_DEVICE_DETAILS { /* Size=0x42c */
+    /* 0x0000 */ WCHAR DeviceID[256];
+    /* 0x0200 */ WCHAR DisplayName[256];
+    /* 0x0400 */ XAUDIO2_DEVICE_ROLE Role;
+    /* 0x0404 */ WAVEFORMATEXTENSIBLE OutputFormat;
+};
+
+struct XAUDIO2_DEBUG_CONFIGURATION { /* Size=0x18 */
+    /* 0x0000 */ UINT TraceMask;
+    /* 0x0004 */ UINT BreakMask;
+    /* 0x0008 */ INT LogThreadID;
+    /* 0x000c */ INT LogFileline;
+    /* 0x0010 */ INT LogFunctionName;
+    /* 0x0014 */ INT LogTiming;
+};
+
+struct XAUDIO2_PERFORMANCE_DATA { /* Size=0x40 */
+    /* 0x0000 */ UINT64 AudioCyclesSinceLastQuery;
+    /* 0x0008 */ UINT64 TotalCyclesSinceLastQuery;
+    /* 0x0010 */ UINT32 MinimumCyclesPerQuantum;
+    /* 0x0014 */ UINT32 MaximumCyclesPerQuantum;
+    /* 0x0018 */ UINT32 MemoryUsageInBytes;
+    /* 0x001c */ UINT32 CurrentLatencyInSamples;
+    /* 0x0020 */ UINT32 GlitchesSinceEngineStarted;
+    /* 0x0024 */ UINT32 ActiveSourceVoiceCount;
+    /* 0x0028 */ UINT32 TotalSourceVoiceCount;
+    /* 0x002c */ UINT32 ActiveSubmixVoiceCount;
+    /* 0x0030 */ UINT32 ActiveResamplerCount;
+    /* 0x0034 */ UINT32 ActiveMatrixMixCount;
+    /* 0x0038 */ UINT32 ActiveXmaSourceVoices;
+    /* 0x003c */ UINT32 ActiveXmaStreams;
+};
+
+struct IXAudio2 : public IUnknown { /* Size=0x4 */
+    /* 0x0000: fields for IUnknown */
+    virtual HRESULT QueryInterface(const _GUID &riid, void **ppvObject) = 0;
+    virtual ULONG AddRef() = 0;
+    virtual ULONG Release() = 0;
+    virtual HRESULT GetDeviceCount(UINT *);
+    virtual HRESULT GetDeviceDetails(UINT, XAUDIO2_DEVICE_DETAILS *);
+    virtual HRESULT Initialize(UINT, XAUDIO2_XBOX_HWTHREAD_SPECIFIER);
+    virtual HRESULT RegisterForCallbacks(IXAudio2EngineCallback *);
+    virtual void UnregisterForCallbacks(IXAudio2EngineCallback *);
+    virtual HRESULT CreateSourceVoice(
+        IXAudio2SourceVoice **,
+        const tWAVEFORMATEX *,
+        UINT,
+        float,
+        IXAudio2VoiceCallback *,
+        const XAUDIO2_VOICE_SENDS *,
+        const XAUDIO2_EFFECT_CHAIN *
+    );
+    virtual HRESULT CreateSubmixVoice(
+        IXAudio2SubmixVoice **,
+        UINT,
+        UINT,
+        UINT,
+        UINT,
+        const XAUDIO2_VOICE_SENDS *,
+        const XAUDIO2_EFFECT_CHAIN *
+    );
+    virtual HRESULT CreateMasteringVoice(
+        IXAudio2MasteringVoice **, UINT, UINT, UINT, UINT, const XAUDIO2_EFFECT_CHAIN *
+    );
+    virtual HRESULT StartEngine();
+    virtual void StopEngine();
+    virtual HRESULT CommitChanges(UINT);
+    virtual void GetPerformanceData(XAUDIO2_PERFORMANCE_DATA *);
+    virtual void SetDebugConfiguration(const XAUDIO2_DEBUG_CONFIGURATION *, void *);
+    IXAudio2(const IXAudio2 &);
+    IXAudio2();
+    IXAudio2 &operator=(const IXAudio2 &);
+};
+
 struct IXAudioRefCount { /* Size=0x4 */
     virtual UINT32 AddRef();
     virtual UINT32 Release();
