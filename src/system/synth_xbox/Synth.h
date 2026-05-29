@@ -39,6 +39,7 @@ public:
     virtual void RequirePushToTalk(bool, int);
 
     IXAudio2Voice *OutputVoice() const { return unkf0; }
+    IXAudio2Voice *UnkF8() const { return unkf8; }
 
     void SetGlobalReverbPreset(const char *);
     IXAudio2SubmixVoice *GetHeadsetSubmix(int);
@@ -56,7 +57,7 @@ private:
     int unkec;
     IXAudio2Voice *unkf0;
     int unkf4;
-    int unkf8;
+    IXAudio2Voice *unkf8;
     int unkfc;
     u32 unk100;
     bool unk104;

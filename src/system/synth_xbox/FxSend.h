@@ -20,6 +20,9 @@ public:
     void CleanChain();
     void Refresh(std::vector<FxSend *> &);
 
+    bool HasVoices() const { return !mVoices.empty(); }
+    IXAudio2Voice *GetOutputVoice() const { return mOutputVoice; }
+
 protected:
     virtual void InitParams(IXAudio2SubmixVoice *, int) {}
 
