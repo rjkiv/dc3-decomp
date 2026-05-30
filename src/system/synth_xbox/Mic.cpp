@@ -15,7 +15,7 @@
 #include "utl/MemStream.h"
 #include "utl/Symbol.h"
 #include "xdk/win_types.h"
-#include "xdk/xvh2/xvh2.h"
+#include "xdk/XHV2.h"
 #include <cstring>
 
 MicManagerXbox *sInstance;

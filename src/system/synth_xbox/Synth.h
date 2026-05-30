@@ -7,7 +7,7 @@
 #include "synth/Mic.h"
 #include "synth/Synth.h"
 #include "xdk/xaudio2/xaudio2.h"
-#include "xdk/xvh2/xvh2.h"
+#include "xdk/XHV2.h"
 
 class FxSend360;
 
