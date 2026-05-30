@@ -40,17 +40,16 @@ struct IXHV2Engine { /* Size=0x4 */
     );
     virtual DWORD GetDataReadyFlags();
     virtual HRESULT
-    GetLocalChatData(UINT32 Port, unsigned char *Buffer, UINT32 *Size, UINT32 *Packets);
+    GetLocalChatData(UINT32 Port, BYTE *Buffer, UINT32 *Size, UINT32 *Packets);
     virtual HRESULT NuiGetLocalChatData(
-        unsigned char *Buffer,
+        BYTE *Buffer,
         UINT32 *Size,
         UINT32 *Packets,
         NUI_TALKER_POSITION *Positions,
         UINT32 *NumPositons
     );
     virtual HRESULT SetPlaybackPriority(XUID Xuid, UINT32 Port, UINT32 Priority);
-    virtual HRESULT
-    SubmitIncomingChatData(XUID Xuid, const unsigned char *Data, UINT32 *Size);
+    virtual HRESULT SubmitIncomingChatData(XUID Xuid, const BYTE *Data, UINT32 *Size);
     virtual BOOL IsSharedMicPresent(UINT32 Port);
     virtual HRESULT GetVoiceVolume(UINT32 Port, float *pfVoiceVolume);
     virtual HRESULT GetGameVolume(float *pfGameVolume);
