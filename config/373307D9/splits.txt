@@ -11071,7 +11071,7 @@ system/synth360/SampleInst.cpp:
 	.text       start:0x82E443D0 end:0x82E448D8
 	.data       start:0x82F49614 end:0x82F49630
 
-system/synth360/soundtouch/source/SoundTouch/SoundTouch.cpp:
+system/synth360/soundtouch/SoundTouch.cpp:
 	.rdata      start:0x822626A4 end:0x82262C70
 	.rdata      start:0x822AE8F0 end:0x822AE9C0 rename:.rdata$r
 	.pdata      start:0x8231E038 end:0x8231E0A8
@@ -11084,21 +11084,21 @@ system/synth360/Synapse_dsp.cpp:
 	.text       start:0x82E452A8 end:0x82E47950
 	.data       start:0x82F496A8 end:0x82F4971C
 
-system/synth360/soundtouch/source/SoundTouch/TDStretch.cpp:
+system/synth360/soundtouch/TDStretch.cpp:
 	.rdata      start:0x82262EAC end:0x822630D4
 	.rdata      start:0x822AE9C0 end:0x822AEA10 rename:.rdata$r
 	.pdata      start:0x8231E2E8 end:0x8231E3A8
 	.text       start:0x82E47950 end:0x82E48CF0
 	.data       start:0x82F4971C end:0x82F49740
 
-system/synth360/soundtouch/source/SoundTouch/RateTransposer.cpp:
+system/synth360/soundtouch/RateTransposer.cpp:
 	.rdata      start:0x822630D4 end:0x82263310
 	.rdata      start:0x822AEA10 end:0x822AEAB4 rename:.rdata$r
 	.pdata      start:0x8231E3A8 end:0x8231E460
 	.text       start:0x82E48CF0 end:0x82E499D0
 	.data       start:0x82F49740 end:0x82F4978C
 
-system/synth360/soundtouch/source/SoundTouch/AAFilter.cpp:
+system/synth360/soundtouch/AAFilter.cpp:
 	.rdata      start:0x82263310 end:0x822635C0
 	.pdata      start:0x8231E460 end:0x8231E470
 	.text       start:0x82E499D0 end:0x82E49EB8
@@ -11134,14 +11134,14 @@ system/synth360/Biquad.cpp:
 	.pdata      start:0x8231E5F8 end:0x8231E600
 	.text       start:0x82E4C740 end:0x82E4C7F8
 
-system/synth360/soundtouch/source/SoundTouch/FIFOSampleBuffer.cpp:
+system/synth360/soundtouch/FIFOSampleBuffer.cpp:
 	.rdata      start:0x8226373C end:0x822637B4
 	.rdata      start:0x822AEAB4 end:0x822AEB00 rename:.rdata$r
 	.pdata      start:0x8231E600 end:0x8231E648
 	.text       start:0x82E4C7F8 end:0x82E4CCF0
 	.data       start:0x82F497EC end:0x82F49818
 
-system/synth360/soundtouch/source/SoundTouch/FIRFilter.cpp:
+system/synth360/soundtouch/FIRFilter.cpp:
 	.rdata      start:0x822637B4 end:0x822638A8
 	.rdata      start:0x822AEB00 end:0x822AEB48 rename:.rdata$r
 	.pdata      start:0x8231E648 end:0x8231E678

@@ -19,52 +19,28 @@
 ## this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 ## Place - Suite 330, Boston, MA  02111-1307, USA
 
-## I used config/am_include.mk for common definitions
+
 include $(top_srcdir)/config/am_include.mk
 
-## Descend into SUBDIRS and run make. Look at the Makefile.am files in the
-## subdirectories Start at frontend_fox/Makefile.am to see how everything works.
-SUBDIRS=include source
+
+# set to something if you want other stuff to be included in the distribution tarball
+EXTRA_DIST=3dnow_win.cpp cpu_detect_x86_win.cpp SoundTouch.dsp SoundTouch.dsw SoundTouch.sln SoundTouch.vcproj
+
+noinst_HEADERS=AAFilter.h cpu_detect.h cpu_detect_x86_gcc.cpp FIRFilter.h RateTransposer.h TDStretch.h PeakFinder.h
+
+lib_LTLIBRARIES=libSoundTouch.la
+#
+libSoundTouch_la_SOURCES=AAFilter.cpp FIRFilter.cpp FIFOSampleBuffer.cpp mmx_optimized.cpp sse_optimized.cpp RateTransposer.cpp SoundTouch.cpp TDStretch.cpp cpu_detect_x86_gcc.cpp BPMDetect.cpp PeakFinder.cpp
 
 
-# list files that are documentation to be packaged in a release tarball and installed
-pkgdoc_DATA=COPYING.TXT README.html
-
-# extra data files that are to be pacakged in a release tarball and installed into the data directory
-#pkgdata_DATA=
-
-# sets up for soundtouch.m4 to be installed
-m4datadir=$(datadir)/aclocal
-m4data_DATA=soundtouch.m4
-
-## These extra files and directories will be included in the distribution. by
-## using make-dist by default many common filenames are automatically included
-## such as AUTHORS, COPYING, etc the bootstrap script really shouldn't be a part
-## of a final package, but it is useful for developers who might want to make
-## changes to the configure scripts or makefiles.
-# NOTE: wouldn't have to list the .TXT file if it were named without the .TXT
-EXTRA_DIST=                  \
-       soundtouch.m4        \
-       config/m4            \
-       bootstrap            \
-       make-win.bat         \
-       COPYING.TXT          \
-       README.html
-
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = soundtouch-1.4.pc
-
-## This removes stuff from the distribution which may be present
-## from a cvs checkout or other build reasons
-dist-hook:
-	rm -rf `find $(distdir) -type d -name CVS`	# remove all CVS directories
-	echo rm -rf `find $(distdir) -type f -name \.\#\*`	# CVS revision files left around for some reason
-
-## This happens at 'make distclean'
-#distcleancheck:
-#	rm -rf files-that-may-also-need-to-be-deleted-on-'make distclean'
+# Note by authore: '-msse2' might not work in non-X86 compilations. If someone can
+# fix this script to automatically check for CPU architecture, please submit a patch 
+# to me.
+AM_CXXFLAGS=-O3 -msse2 -fcheck-new -I../../include
 
 
-# flag to aclocal where to find m4 macros for tests
-ACLOCAL_AMFLAGS = -I config/m4
-AUTOMAKE_OPTIONS = foreign
+# other linking flags to add
+# noinst_LTLIBRARIES = libSoundTouchOpt.la
+# libSoundTouch_la_LIBADD = libSoundTouchOpt.la
+# libSoundTouchOpt_la_SOURCES = mmx_optimized.cpp sse_optimized.cpp 
+# libSoundTouchOpt_la_CXXFLAGS = -O3 -msse2 -fcheck-new -I../../include

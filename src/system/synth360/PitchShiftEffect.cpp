@@ -1,5 +1,5 @@
 #include "synth360/PitchShiftEffect.h"
-#include "synth360/soundtouch/source/SoundTouch/SoundTouch.h"
+#include "synth360/soundtouch/SoundTouch.h"
 
 PitchShiftEffect::PitchShiftEffect() : unk68(1), unk6c(2) {
     mSoundTouch = new soundtouch::SoundTouch();

@@ -876,12 +876,12 @@
         "mw_version": "X360/16.00.11886.00",
         "cflags": "base",
         "objects": {
-            "system/synth360/soundtouch/source/SoundTouch/AAFilter.cpp": "Matching",
-            "system/synth360/soundtouch/source/SoundTouch/FIFOSampleBuffer.cpp": "Matching",
-            "system/synth360/soundtouch/source/SoundTouch/FIRFilter.cpp": "NonMatching",
-            "system/synth360/soundtouch/source/SoundTouch/RateTransposer.cpp": "Matching",
-            "system/synth360/soundtouch/source/SoundTouch/SoundTouch.cpp": "Matching",
-            "system/synth360/soundtouch/source/SoundTouch/TDStretch.cpp": "Matching"
+            "system/synth360/soundtouch/AAFilter.cpp": "Matching",
+            "system/synth360/soundtouch/FIFOSampleBuffer.cpp": "Matching",
+            "system/synth360/soundtouch/FIRFilter.cpp": "NonMatching",
+            "system/synth360/soundtouch/RateTransposer.cpp": "Matching",
+            "system/synth360/soundtouch/SoundTouch.cpp": "Matching",
+            "system/synth360/soundtouch/TDStretch.cpp": "Matching"
         }
     },
     "tomcrypt": {
