@@ -15,6 +15,7 @@
 #include "os/Debug.h"
 #include "synth/Synth.h"
 #include "synth_xbox/FxSend.h"
+#include "synth_xbox/FxSendPitchShift.h"
 #include "synth_xbox/Mic.h"
 #include "utl/Std.h"
 #include "xdk/xapilibi/xbox.h"
@@ -43,6 +44,7 @@ void Synth360::Init() {
     REGISTER_OBJ_FACTORY(FxSendBitCrush360)
     REGISTER_OBJ_FACTORY(FxSendDistortion360)
     REGISTER_OBJ_FACTORY(FxSendChorus360)
+    REGISTER_OBJ_FACTORY(FxSendPitchShift360)
 }
 
 Mic *Synth360::GetMic(int index) { return mMics[index]; }
@@ -53,7 +55,7 @@ bool Synth360::DidMicsChange() const {
     if (mMics.empty())
         return false;
     else {
-        MicManagerXbox::GetInstance()->MicsChanged();
+        return MicManagerXbox::GetInstance()->MicsChanged();
     }
 }
 

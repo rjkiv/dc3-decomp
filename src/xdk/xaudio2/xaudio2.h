@@ -4,6 +4,8 @@
 #include "xdk/xapilibi/xbase.h"
 #include "xapobase.h"
 
+// https://learn.microsoft.com/en-us/windows/win32/api/xaudio2/
+
 struct XAUDIO2_BUFFER { /* Size=0x24 */
     /* 0x0000 */ UINT32 Flags;
     /* 0x0004 */ UINT32 AudioBytes;
@@ -71,28 +73,51 @@ struct NUI_TALKER_POSITION { /* Size=0x8 */
     /* 0x0004 */ float fConfidence;
 };
 
+// https://learn.microsoft.com/en-us/windows/win32/api/xaudio2/nn-xaudio2-ixaudio2voice
 struct IXAudio2Voice { /* Size=0x4 */
-
-    virtual void GetVoiceDetails(XAUDIO2_VOICE_DETAILS *);
-    virtual HRESULT SetOutputVoices(const XAUDIO2_VOICE_SENDS *);
-    virtual HRESULT SetEffectChain(const XAUDIO2_EFFECT_CHAIN *);
-    virtual HRESULT EnableEffect(UINT32, UINT32);
-    virtual HRESULT DisableEffect(UINT32, UINT32);
-    virtual void GetEffectState(INT, BOOL *);
-    virtual HRESULT SetEffectParameters(UINT32, const void *, UINT32, UINT32);
-    virtual HRESULT GetEffectParameters(UINT32, void *, UINT32);
-    virtual HRESULT SetFilterParameters(const XAUDIO2_FILTER_PARAMETERS *, UINT32);
-    virtual void GetFilterParameters(XAUDIO2_FILTER_PARAMETERS *);
+    virtual void GetVoiceDetails(XAUDIO2_VOICE_DETAILS *pVoiceDetails);
+    virtual HRESULT SetOutputVoices(const XAUDIO2_VOICE_SENDS *pSendList);
+    virtual HRESULT SetEffectChain(const XAUDIO2_EFFECT_CHAIN *pEffectChain);
+    virtual HRESULT EnableEffect(UINT32 EffectIndex, UINT32 OperationSet);
+    virtual HRESULT DisableEffect(UINT32 EffectIndex, UINT32 OperationSet);
+    virtual void GetEffectState(UINT32 EffectIndex, BOOL *pfEnabled);
+    virtual HRESULT SetEffectParameters(
+        UINT32 EffectIndex,
+        const void *pParameters,
+        UINT32 ParametersByteSize,
+        UINT32 OperationSet
+    );
     virtual HRESULT
-    SetOutputFilterParameters(IXAudio2Voice *, const XAUDIO2_FILTER_PARAMETERS *, UINT32);
-    virtual void GetOutputFilterParameters(IXAudio2Voice *, XAUDIO2_FILTER_PARAMETERS *);
-    virtual HRESULT SetVolume(float, UINT32);
-    virtual void GetVolume(float *);
-    virtual HRESULT SetChannelVolumes(UINT32, const float *, UINT32);
-    virtual void GetChannelVolumes(UINT32, float *);
+    GetEffectParameters(UINT32 EffectIndex, void *pParameters, UINT32 ParametersByteSize);
     virtual HRESULT
-    SetOutputMatrix(IXAudio2Voice *, UINT32, UINT32, const float *, UINT32);
-    virtual void GetOutputMatrix(IXAudio2Voice *, UINT32, UINT32, float *);
+    SetFilterParameters(const XAUDIO2_FILTER_PARAMETERS *pParameters, UINT32 OperationSet);
+    virtual void GetFilterParameters(XAUDIO2_FILTER_PARAMETERS *pParameters);
+    virtual HRESULT SetOutputFilterParameters(
+        IXAudio2Voice *pDestinationVoice,
+        const XAUDIO2_FILTER_PARAMETERS *pParameters,
+        UINT32 OperationSet
+    );
+    virtual void GetOutputFilterParameters(
+        IXAudio2Voice *pDestinationVoice, XAUDIO2_FILTER_PARAMETERS *pParameters
+    );
+    virtual HRESULT SetVolume(float Volume, UINT32 OperationSet);
+    virtual void GetVolume(float *pVolume);
+    virtual HRESULT
+    SetChannelVolumes(UINT32 Channels, const float *pVolumes, UINT32 OperationSet);
+    virtual void GetChannelVolumes(UINT32 Channels, float *pVolumes);
+    virtual HRESULT SetOutputMatrix(
+        IXAudio2Voice *pDestinationVoice,
+        UINT32 SourceChannels,
+        UINT32 DestinationChannels,
+        const float *pLevelMatrix,
+        UINT32 OperationSet
+    );
+    virtual void GetOutputMatrix(
+        IXAudio2Voice *pDestinationVoice,
+        UINT32 SourceChannels,
+        UINT32 DestinationChannels,
+        float *pLevelMatrix
+    );
     virtual void DestroyVoice();
     IXAudio2Voice(const IXAudio2Voice &);
     IXAudio2Voice();
@@ -107,7 +132,7 @@ struct IXAudio2SubmixVoice : public IXAudio2Voice { /* Size=0x4 */
     virtual HRESULT SetEffectChain(const XAUDIO2_EFFECT_CHAIN *) = 0;
     virtual HRESULT EnableEffect(UINT32, UINT32) = 0;
     virtual HRESULT DisableEffect(UINT32, UINT32) = 0;
-    virtual void GetEffectState(INT, BOOL *) = 0;
+    virtual void GetEffectState(UINT32, BOOL *) = 0;
     virtual HRESULT SetEffectParameters(UINT32, const void *, UINT32, UINT32) = 0;
     virtual HRESULT GetEffectParameters(UINT32, void *, UINT32) = 0;
     virtual HRESULT SetFilterParameters(const XAUDIO2_FILTER_PARAMETERS *, UINT32) = 0;
@@ -149,7 +174,7 @@ public:
     virtual HRESULT SetEffectChain(const XAUDIO2_EFFECT_CHAIN *) = 0;
     virtual HRESULT EnableEffect(UINT32, UINT32) = 0;
     virtual HRESULT DisableEffect(UINT32, UINT32) = 0;
-    virtual void GetEffectState(INT, BOOL *) = 0;
+    virtual void GetEffectState(UINT32, BOOL *) = 0;
     virtual HRESULT SetEffectParameters(UINT32, const void *, UINT32, UINT32) = 0;
     virtual HRESULT GetEffectParameters(UINT32, void *, UINT32) = 0;
     virtual HRESULT SetFilterParameters(const XAUDIO2_FILTER_PARAMETERS *, UINT32) = 0;
@@ -191,7 +216,7 @@ public:
     virtual HRESULT SetEffectChain(const XAUDIO2_EFFECT_CHAIN *) = 0;
     virtual HRESULT EnableEffect(UINT32, UINT32) = 0;
     virtual HRESULT DisableEffect(UINT32, UINT32) = 0;
-    virtual void GetEffectState(INT, BOOL *) = 0;
+    virtual void GetEffectState(UINT32, BOOL *) = 0;
     virtual HRESULT SetEffectParameters(UINT32, const void *, UINT32, UINT32) = 0;
     virtual HRESULT GetEffectParameters(UINT32, void *, UINT32) = 0;
     virtual HRESULT SetFilterParameters(const XAUDIO2_FILTER_PARAMETERS *, UINT32) = 0;
@@ -217,20 +242,20 @@ public:
 struct IXAudio2EngineCallback { /* Size=0x4 */
     virtual void OnProcessingPassStart();
     virtual void OnProcessingPassEnd();
-    virtual void OnCriticalError(INT);
+    virtual void OnCriticalError(HRESULT Error);
     IXAudio2EngineCallback(const IXAudio2EngineCallback &);
     IXAudio2EngineCallback();
     IXAudio2EngineCallback &operator=(const IXAudio2EngineCallback &);
 };
 
 struct IXAudio2VoiceCallback { /* Size=0x4 */
-    virtual void OnVoiceProcessingPassStart(UINT);
+    virtual void OnVoiceProcessingPassStart(UINT32 BytesRequired);
     virtual void OnVoiceProcessingPassEnd();
     virtual void OnStreamEnd();
-    virtual void OnBufferStart(void *);
-    virtual void OnBufferEnd(void *);
-    virtual void OnLoopEnd(void *);
-    virtual void OnVoiceError(void *, INT);
+    virtual void OnBufferStart(void *pBufferContext);
+    virtual void OnBufferEnd(void *pBufferContext);
+    virtual void OnLoopEnd(void *pBufferContext);
+    virtual void OnVoiceError(void *pBufferContext, HRESULT Error);
     IXAudio2VoiceCallback(const IXAudio2VoiceCallback &);
     IXAudio2VoiceCallback();
     IXAudio2VoiceCallback &operator=(const IXAudio2VoiceCallback &);
@@ -276,12 +301,12 @@ struct XAUDIO2_DEVICE_DETAILS { /* Size=0x42c */
 };
 
 struct XAUDIO2_DEBUG_CONFIGURATION { /* Size=0x18 */
-    /* 0x0000 */ UINT TraceMask;
-    /* 0x0004 */ UINT BreakMask;
-    /* 0x0008 */ INT LogThreadID;
-    /* 0x000c */ INT LogFileline;
-    /* 0x0010 */ INT LogFunctionName;
-    /* 0x0014 */ INT LogTiming;
+    /* 0x0000 */ UINT32 TraceMask;
+    /* 0x0004 */ UINT32 BreakMask;
+    /* 0x0008 */ BOOL LogThreadID;
+    /* 0x000c */ BOOL LogFileline;
+    /* 0x0010 */ BOOL LogFunctionName;
+    /* 0x0014 */ BOOL LogTiming;
 };
 
 struct XAUDIO2_PERFORMANCE_DATA { /* Size=0x40 */
@@ -306,45 +331,52 @@ struct IXAudio2 : public IUnknown { /* Size=0x4 */
     virtual HRESULT QueryInterface(const _GUID &riid, void **ppvObject) = 0;
     virtual ULONG AddRef() = 0;
     virtual ULONG Release() = 0;
-    virtual HRESULT GetDeviceCount(UINT *);
-    virtual HRESULT GetDeviceDetails(UINT, XAUDIO2_DEVICE_DETAILS *);
-    virtual HRESULT Initialize(UINT, XAUDIO2_XBOX_HWTHREAD_SPECIFIER);
-    virtual HRESULT RegisterForCallbacks(IXAudio2EngineCallback *);
-    virtual void UnregisterForCallbacks(IXAudio2EngineCallback *);
+    virtual HRESULT GetDeviceCount(UINT32 *);
+    virtual HRESULT GetDeviceDetails(UINT32, XAUDIO2_DEVICE_DETAILS *);
+    virtual HRESULT Initialize(UINT32, XAUDIO2_XBOX_HWTHREAD_SPECIFIER);
+    virtual HRESULT RegisterForCallbacks(IXAudio2EngineCallback *pCallback);
+    virtual void UnregisterForCallbacks(IXAudio2EngineCallback *pCallback);
     virtual HRESULT CreateSourceVoice(
-        IXAudio2SourceVoice **,
-        const tWAVEFORMATEX *,
-        UINT,
-        float,
-        IXAudio2VoiceCallback *,
-        const XAUDIO2_VOICE_SENDS *,
-        const XAUDIO2_EFFECT_CHAIN *
+        IXAudio2SourceVoice **ppSourceVoice,
+        const tWAVEFORMATEX *pSourceFormat,
+        UINT32 Flags,
+        float MaxFrequencyRatio,
+        IXAudio2VoiceCallback *pCallback,
+        const XAUDIO2_VOICE_SENDS *pSendList,
+        const XAUDIO2_EFFECT_CHAIN *pEffectChain
     );
     virtual HRESULT CreateSubmixVoice(
-        IXAudio2SubmixVoice **,
-        UINT,
-        UINT,
-        UINT,
-        UINT,
-        const XAUDIO2_VOICE_SENDS *,
-        const XAUDIO2_EFFECT_CHAIN *
+        IXAudio2SubmixVoice **ppSubmixVoice,
+        UINT32 InputChannels,
+        UINT32 InputSampleRate,
+        UINT32 Flags,
+        UINT32 ProcessingStage,
+        const XAUDIO2_VOICE_SENDS *pSendList,
+        const XAUDIO2_EFFECT_CHAIN *pEffectChain
     );
     virtual HRESULT CreateMasteringVoice(
-        IXAudio2MasteringVoice **, UINT, UINT, UINT, UINT, const XAUDIO2_EFFECT_CHAIN *
+        IXAudio2MasteringVoice **ppMasteringVoice,
+        UINT32 InputChannels,
+        UINT32 InputSampleRate,
+        UINT32 Flags,
+        UINT32 DeviceIndex,
+        const XAUDIO2_EFFECT_CHAIN *pEffectChain
     );
     virtual HRESULT StartEngine();
     virtual void StopEngine();
-    virtual HRESULT CommitChanges(UINT);
-    virtual void GetPerformanceData(XAUDIO2_PERFORMANCE_DATA *);
-    virtual void SetDebugConfiguration(const XAUDIO2_DEBUG_CONFIGURATION *, void *);
+    virtual HRESULT CommitChanges(UINT32 OperationSet);
+    virtual void GetPerformanceData(XAUDIO2_PERFORMANCE_DATA *pPerfData);
+    virtual void SetDebugConfiguration(
+        const XAUDIO2_DEBUG_CONFIGURATION *pDebugConfiguration, void *pReserved
+    );
     IXAudio2(const IXAudio2 &);
     IXAudio2();
     IXAudio2 &operator=(const IXAudio2 &);
 };
 
 struct IXAudioRefCount { /* Size=0x4 */
-    virtual UINT32 AddRef();
-    virtual UINT32 Release();
+    virtual ULONG AddRef();
+    virtual ULONG Release();
     IXAudioRefCount(const IXAudioRefCount &);
     IXAudioRefCount();
     IXAudioRefCount &operator=(const IXAudioRefCount &);
@@ -352,8 +384,8 @@ struct IXAudioRefCount { /* Size=0x4 */
 
 struct IXAudioBatchAllocator : public IXAudioRefCount { /* Size=0x4 */
     /* 0x0000: fields for IXAudioRefCount */
-    virtual UINT32 AddRef() = 0;
-    virtual UINT32 Release() = 0;
+    virtual ULONG AddRef() = 0;
+    virtual ULONG Release() = 0;
     virtual void GrowHeap(UINT32);
     virtual DWORD CreateHeap(UINT32);
     virtual UINT32 GetFreeHeapSize();

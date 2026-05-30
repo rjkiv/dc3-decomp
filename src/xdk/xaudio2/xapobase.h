@@ -2,6 +2,7 @@
 #include "xdk/win_types.h"
 #include "xdk/unknwn.h"
 #include "xdk/XAPILIB.h"
+#include <string.h>
 
 struct XAPO_REGISTRATION_PROPERTIES { /* Size=0x42c */
     /* 0x0000 */ _GUID clsid;
@@ -17,7 +18,7 @@ struct XAPO_REGISTRATION_PROPERTIES { /* Size=0x42c */
 };
 
 // https://learn.microsoft.com/en-us/windows/win32/api/mmeapi/ns-mmeapi-waveformatex
-struct tWAVEFORMATEX { /* Size=0x12 */
+typedef struct tWAVEFORMATEX { /* Size=0x12 */
     /* 0x0000 */ WORD wFormatTag;
     /* 0x0002 */ WORD nChannels;
     /* 0x0004 */ DWORD nSamplesPerSec;
@@ -25,7 +26,7 @@ struct tWAVEFORMATEX { /* Size=0x12 */
     /* 0x000c */ WORD nBlockAlign;
     /* 0x000e */ WORD wBitsPerSample;
     /* 0x0010 */ WORD cbSize;
-};
+} WAVEFORMATEX, *PWAVEFORMATEX, *NPWAVEFORMATEX, *LPWAVEFORMATEX;
 
 enum XAPO_BUFFER_FLAGS {
     XAPO_BUFFER_SILENT = 0x0000,

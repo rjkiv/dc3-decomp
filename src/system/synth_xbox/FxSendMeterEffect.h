@@ -3,10 +3,12 @@
 #include "obj/Object.h"
 #include "synth/FxSend.h"
 #include "synth/FxSendMeterEffect.h"
+#include "synth_xbox/MeterEffect.h"
 #include "xdk/xapilibi/xbase.h"
 
 class FxSendMeterEffect360 : public FxSendMeterEffect, public FxSend360 {
 public:
+    FxSendMeterEffect360();
     virtual ~FxSendMeterEffect360();
     OBJ_CLASSNAME(FxSendMeterEffect360)
     OBJ_SET_TYPE(FxSendMeterEffect360)
@@ -17,11 +19,9 @@ public:
 
     NEW_OBJ(FxSendMeterEffect360)
 
-    FxSendMeterEffect360();
-
-    int *unkb0;
-
 protected:
     virtual IUnknown *CreateFx();
     virtual void InitParams(IXAudio2SubmixVoice *, int);
+
+    MeterEffectParams *mParams; // 0xb0
 };

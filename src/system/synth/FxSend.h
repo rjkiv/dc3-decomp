@@ -4,6 +4,8 @@
 
 // courtesy of RB2
 struct LevelData {
+    LevelData(const char *name)
+        : mRMS(0), mPeak(0), mPeakHold(0), mPeakAge(0), mName(name) {}
     float mRMS; // offset 0x0, size 0x4
     float mPeak; // offset 0x4, size 0x4
     float mPeakHold; // offset 0x8, size 0x4
