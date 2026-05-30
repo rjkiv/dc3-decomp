@@ -5,7 +5,7 @@ BitCrushEffect::BitCrushEffect(IXAudioBatchAllocator *)
     : unk0(0), unk4(0), unk8(0), unkc(0) {}
 
 void BitCrushEffect::SetParameters(const BitCrushEffect::Params &params) {
-    unk0 = params.unk4;
+    unk0 = params.amount;
 }
 
 void BitCrushEffect::Process(float *fptr, int i1, int numChans) {

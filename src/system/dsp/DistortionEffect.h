@@ -5,9 +5,11 @@
 class DistortionEffect {
 public:
     struct Params {
-        Params() : unk0(0) {}
-        bool unk0; // 0x0 - bypass
-        float unk4; // 0x4 - amt of distortion drive
+        Params() : bypass(false) {}
+        /** "Bypass the effect and stop it from processing" */
+        bool bypass; // 0x0
+        /** "amount of drive". Ranges from 0 to 100. */
+        float drive; // 0x4
     };
 
     DistortionEffect(IXAudioBatchAllocator *);

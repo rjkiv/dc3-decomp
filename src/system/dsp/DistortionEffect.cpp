@@ -8,7 +8,7 @@ void DistortionEffect::Process(float *f, int i1, int numChans) {
 }
 
 void DistortionEffect::SetParameters(DistortionEffect::Params const &params) {
-    unk0 = params.unk4 * 0.01f;
+    unk0 = params.drive * 0.01f;
 }
 
 void DistortionEffect::Reset() {}

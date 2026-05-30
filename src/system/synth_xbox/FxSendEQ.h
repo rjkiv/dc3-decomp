@@ -8,6 +8,7 @@
 
 class FxSendEQ360 : public FxSendEQ, public FxSend360 {
 public:
+    FxSendEQ360();
     virtual ~FxSendEQ360();
     OBJ_CLASSNAME(FxSendEQ360)
     OBJ_SET_TYPE(FxSendEQ360)
@@ -17,8 +18,6 @@ public:
     virtual void SyncEffectParams(IXAudio2SubmixVoice *) const;
 
     NEW_OBJ(FxSendEQ360)
-
-    FxSendEQ360();
 
 protected:
     virtual IUnknown *CreateFx();

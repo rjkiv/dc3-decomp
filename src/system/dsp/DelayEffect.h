@@ -5,11 +5,13 @@
 class DelayEffect {
 public:
     struct Params {
-        Params() : unk0(0) {}
-        bool unk0;
-        float unk4;
-        float unk8;
-        float unkc;
+        Params() : bypass(false) {}
+        /** "Bypass the effect and stop it from processing" */
+        bool bypass; // 0x0
+        float delayTime; // 0x4
+        float gain; // 0x8
+        /** "Depth of ping pong effect (percent)". Ranges from 0 to 100. */
+        float pingPongPct; // 0xc
     };
 
     DelayEffect(IXAudioBatchAllocator *);

@@ -4,8 +4,37 @@
 // size 0x34C
 class EQEffect {
 public:
+    // size 0x38
     struct Params {
-        bool unk0;
+        Params() : bypass(false) {}
+        /** "Bypass the effect and stop it from processing" */
+        bool bypass; // 0x0
+        /** "High frequency cutoff, in Hz". Ranges from 0 to 24000. */
+        float highFreqCutoff; // 0x4
+        /** "High frequency gain, in dB". Ranges from -42 to 42. */
+        float highFreqGain; // 0x8
+        /** "Mid frequency cutoff, in Hz". Ranges from 0 to 24000. */
+        float midFreqCutoff; // 0xc
+        /** "Mid frequency bandwidth, in Hz". Ranges from 0 to 24000. */
+        float midFreqBandwidth; // 0x10
+        /** "Mid frequency gain, in dB". Ranges from -42 to 42. */
+        float midFreqGain; // 0x14
+        /** "Low frequency cutoff, in Hz". Ranges from 0 to 24000. */
+        float lowFreqCutoff; // 0x18
+        /** "Low frequency gain, in dB". Ranges from -42 to 42. */
+        float lowFreqGain; // 0x1c
+        /** "Low pass filter cutoff, in Hz". Ranges from 20 to 20000. */
+        float lowPassCutoff; // 0x20
+        /** "Low pass filter resonance, in dB". Ranges from -25 to 25. */
+        float lowPassReso; // 0x24
+        /** "High pass filter cutoff, in Hz". Ranges from 20 to 20000. */
+        float highPassCutoff; // 0x28
+        /** "High pass filter resonance, in dB". Ranges from -25 to 25. */
+        float highPassReso; // 0x2c
+        /** "Enable or disable Linkwitz-Riley mode" */
+        float lrMode; // 0x30
+        /** "Transition time for gain changes, in ms". Ranges from 25 to 5000. */
+        float transitionTime; // 0x34
     };
 
     EQEffect(IXAudioBatchAllocator *);

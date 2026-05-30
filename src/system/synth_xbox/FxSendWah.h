@@ -5,6 +5,7 @@
 
 class FxSendWah360 : public FxSendWah, public FxSend360 {
 public:
+    FxSendWah360();
     OBJ_CLASSNAME(FxSendWah360)
     OBJ_SET_TYPE(FxSendWah360)
     virtual void Recreate(std::vector<FxSend *> &);
@@ -13,8 +14,6 @@ public:
     virtual void SyncEffectParams(IXAudio2SubmixVoice *) const;
 
     NEW_OBJ(FxSendWah360)
-
-    FxSendWah360();
 
 protected:
     virtual IUnknown *CreateFx();

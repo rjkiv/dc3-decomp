@@ -714,7 +714,7 @@
             "system/synth_xbox/FxSendDelay.cpp": "NonMatching",
             "system/synth_xbox/FxSendDistortion.cpp": "NonMatching",
             "system/synth_xbox/FxSendEQ.cpp": "NonMatching",
-            "system/synth_xbox/FxSendFlanger.cpp": "NonMatching",
+            "system/synth_xbox/FxSendFlanger.cpp": "Matching",
             "system/synth_xbox/FxSendMeterEffect.cpp": "NonMatching",
             "system/synth_xbox/FxSendPitchShift.cpp": "MISSING",
             "system/synth_xbox/FxSendReverb.cpp": "NonMatching",

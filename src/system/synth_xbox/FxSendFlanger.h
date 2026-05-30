@@ -6,19 +6,20 @@
 
 class FxSendFlanger360 : public FxSendFlanger, public FxSend360 {
 public:
+    FxSendFlanger360();
     // Hmx::Object
     virtual ~FxSendFlanger360();
     OBJ_CLASSNAME(FxSendFlanger360)
     OBJ_SET_TYPE(FxSendFlanger360)
+    virtual void Recreate(std::vector<FxSend *> &);
+    virtual void UpdateMix();
+    virtual void OnParametersChanged();
 
     // FxSendFlanger
     virtual void SyncEffectParams(IXAudio2SubmixVoice *) const;
 
     NEW_OBJ(FxSendFlanger360)
 
-    FxSendFlanger360();
-    virtual IUnknown *CreateFx();
-
 protected:
-    virtual void OnParametersChanged(void);
+    virtual IUnknown *CreateFx();
 };

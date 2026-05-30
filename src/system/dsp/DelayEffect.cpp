@@ -13,7 +13,7 @@ DelayEffect::~DelayEffect() { DspFree(unk10); }
 void DelayEffect::Reset() { DspClearBuffer(unk10, 192000); }
 
 void DelayEffect::SetParameters(const DelayEffect::Params &params) {
-    SetParameter(0, params.unk4);
-    unk8 = DbToRatio(params.unk8);
-    unkc = params.unkc / 100.0f;
+    SetParameter(0, params.delayTime);
+    unk8 = DbToRatio(params.gain);
+    unkc = params.pingPongPct / 100.0f;
 }

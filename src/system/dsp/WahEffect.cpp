@@ -34,15 +34,15 @@ void WahEffect::Reset() {
 }
 
 void WahEffect::SetParameters(WahEffect::Params const &params) {
-    unk0 = params.unk4;
-    unk8 = params.unk8;
-    unk4 = params.unkc;
-    unkc = params.unk10;
-    unk10 = params.unk14;
-    unk14 = params.unk18;
-    unk18 = params.unk1c;
-    unk1c = params.unk20;
-    unk20 = params.unk24;
+    unk0 = params.resonance;
+    unk8 = params.upperFreq;
+    unk4 = params.lowerFreq;
+    unkc = params.lfoFreq;
+    unk10 = params.magic;
+    unk14 = params.beatFrac;
+    unk18 = params.distAmount;
+    unk1c = params.autoWah;
+    unk20 = params.frequency;
 }
 
 void WahEffect::Process(float *buf, int numSamples, int numChans) {

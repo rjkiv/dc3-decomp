@@ -16,8 +16,8 @@ void FxSendDistortion360::OnParametersChanged() { FxSend360::SyncEffectParams();
 
 void FxSendDistortion360::SyncEffectParams(IXAudio2SubmixVoice *voice) const {
     DistortionEffect::Params p;
-    p.unk0 = mBypass;
-    p.unk4 = mDrive;
+    p.bypass = mBypass;
+    p.drive = mDrive;
     voice->SetEffectParameters(0, &p, sizeof(p), 0);
 }
 

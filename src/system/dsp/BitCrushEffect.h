@@ -5,10 +5,10 @@
 class BitCrushEffect {
 public:
     struct Params {
-        Params() : unk0(false) {}
+        Params() : bypass(false) {}
         /** "Bypass the effect and stop it from processing" */
-        bool unk0; // 0x0 - bypass
-        float unk4;
+        bool bypass; // 0x0
+        float amount; // 0x4
     };
 
     BitCrushEffect(IXAudioBatchAllocator *);

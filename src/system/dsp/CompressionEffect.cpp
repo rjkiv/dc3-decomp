@@ -5,18 +5,18 @@
 
 CompressionEffect::CompressionEffect(IXAudioBatchAllocator *) {
     Params params;
-    params.unk0 = false;
+    params.bypass = false;
     unk34 = 1.0f;
     Reset();
-    params.unk4 = -6.0f;
-    params.unk8 = 1.0f;
-    params.unkc = 1.0f;
-    params.unk10 = 0.005f;
-    params.unk14 = 0.2f;
-    params.unk18 = 1.0f;
-    params.unk1c = 0.99f;
-    params.unk20 = 1.01f;
-    params.unk24 = -40.0f;
+    params.thresholdDB = -6.0f;
+    params.ratio = 1.0f;
+    params.outputLevel = 1.0f;
+    params.attack = 0.005f;
+    params.release = 0.2f;
+    params.expRatio = 1.0f;
+    params.expAttack = 0.99f;
+    params.expRelease = 1.01f;
+    params.gateThresholdDB = -40.0f;
     SetParameters(params);
 }
 
@@ -26,24 +26,24 @@ void CompressionEffect::Reset() {
 }
 
 void CompressionEffect::SetParameters(const CompressionEffect::Params &params) {
-    unk4 = params.unk4;
+    unk4 = params.thresholdDB;
     unk0 = DbToRatio(unk4);
     unk8 = DbToRatio(unk4 / unkc - unk4);
-    unkc = params.unk8;
+    unkc = params.ratio;
     unk8 = DbToRatio(unk4 / unkc - unk4);
-    unk10 = DbToRatio(params.unkc);
+    unk10 = DbToRatio(params.outputLevel);
     unk8 = DbToRatio(unk4 / unkc - unk4);
-    unk14 = 1.0f - (float)exp(-1.0f / (params.unk10 * 48000.0f));
+    unk14 = 1.0f - (float)exp(-1.0f / (params.attack * 48000.0f));
     unk8 = DbToRatio(unk4 / unkc - unk4);
-    unk18 = 1.0f - (float)exp(-1.0f / (params.unk14 * 48000.0f));
+    unk18 = 1.0f - (float)exp(-1.0f / (params.release * 48000.0f));
     unk8 = DbToRatio(unk4 / unkc - unk4);
-    unk1c = params.unk18;
+    unk1c = params.expRatio;
     unk8 = DbToRatio(unk4 / unkc - unk4);
-    unk20 = 1.0f - (float)exp(-1.0f / (params.unk1c * 48000.0f));
+    unk20 = 1.0f - (float)exp(-1.0f / (params.expAttack * 48000.0f));
     unk8 = DbToRatio(unk4 / unkc - unk4);
-    unk24 = 1.0f - (float)exp(-1.0f / (params.unk20 * 48000.0f));
+    unk24 = 1.0f - (float)exp(-1.0f / (params.expRelease * 48000.0f));
     unk8 = DbToRatio(unk4 / unkc - unk4);
-    unk28 = params.unk24;
+    unk28 = params.gateThresholdDB;
     float ratio = DbToRatio(unk28);
     unk30 = ratio;
     unk2c = ratio;

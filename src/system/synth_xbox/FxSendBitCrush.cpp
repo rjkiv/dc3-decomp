@@ -18,8 +18,8 @@ void FxSendBitCrush360::OnParametersChanged() { FxSend360::SyncEffectParams(); }
 
 void FxSendBitCrush360::SyncEffectParams(IXAudio2SubmixVoice *voice) const {
     BitCrushEffect::Params p;
-    p.unk0 = mBypass;
-    p.unk4 = mAmount;
+    p.bypass = mBypass;
+    p.amount = mAmount;
     voice->SetEffectParameters(0, &p, sizeof(p), 0);
 }
 

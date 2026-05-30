@@ -17,16 +17,16 @@ void FxSendCompress360::OnParametersChanged() { FxSend360::SyncEffectParams(); }
 
 void FxSendCompress360::SyncEffectParams(IXAudio2SubmixVoice *voice) const {
     CompressionEffect::Params p;
-    p.unk0 = mBypass;
-    p.unk4 = mThresholdDB;
-    p.unk8 = mRatio;
-    p.unkc = mOutputLevel;
-    p.unk10 = mAttack;
-    p.unk14 = mRelease;
-    p.unk18 = mExpRatio;
-    p.unk1c = mExpAttack;
-    p.unk20 = mExpRelease;
-    p.unk24 = mGateThresholdDB;
+    p.bypass = mBypass;
+    p.thresholdDB = mThresholdDB;
+    p.ratio = mRatio;
+    p.outputLevel = mOutputLevel;
+    p.attack = mAttack;
+    p.release = mRelease;
+    p.expRatio = mExpRatio;
+    p.expAttack = mExpAttack;
+    p.expRelease = mExpRelease;
+    p.gateThresholdDB = mGateThresholdDB;
     voice->SetEffectParameters(0, &p, sizeof(p), 0);
 }
 
