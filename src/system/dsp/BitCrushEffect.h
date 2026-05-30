@@ -6,7 +6,8 @@ class BitCrushEffect {
 public:
     struct Params {
         Params() : unk0(false) {}
-        bool unk0;
+        /** "Bypass the effect and stop it from processing" */
+        bool unk0; // 0x0 - bypass
         float unk4;
     };
 

@@ -5,6 +5,7 @@
 class DelayEffect {
 public:
     struct Params {
+        Params() : unk0(0) {}
         bool unk0;
         float unk4;
         float unk8;

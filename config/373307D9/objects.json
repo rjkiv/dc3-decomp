@@ -710,7 +710,7 @@
             "system/synth_xbox/FxSend.cpp": "NonMatching",
             "system/synth_xbox/FxSendBitCrush.cpp": "NonMatching",
             "system/synth_xbox/FxSendChorus.cpp": "NonMatching",
-            "system/synth_xbox/FxSendCompress.cpp": "NonMatching",
+            "system/synth_xbox/FxSendCompress.cpp": "Matching",
             "system/synth_xbox/FxSendDelay.cpp": "NonMatching",
             "system/synth_xbox/FxSendDistortion.cpp": "NonMatching",
             "system/synth_xbox/FxSendEQ.cpp": "NonMatching",
