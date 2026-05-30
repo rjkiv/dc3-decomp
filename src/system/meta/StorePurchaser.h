@@ -4,6 +4,10 @@
 #include "obj/Object.h"
 #include "ui/UI.h"
 #include "utl/Symbol.h"
+#include "xdk/win_types.h"
+#include "xdk/xapilibi/xbase.h"
+
+const int XMARKETPLACE_MAX_OFFERIDS = 6;
 
 enum PurchaseState { // just know the val of kSuccess
     purchasestate0 = 0,
@@ -56,7 +60,7 @@ public:
     PurchaseState mState; // 0x38
     u32 unk3c;
     unsigned long long unk40;
-    int unk48;
+    DWORD unk48;
 
 private:
     DataNode OnMsg(UIChangedMsg const &);
@@ -82,9 +86,11 @@ public:
 
     PurchaseState mState; // 0x38
     std::vector<unsigned long long> unk3c;
-    int unk48;
-    int unk4c;
+    DWORD unk48;
+    HRESULT unk4c;
 
 private:
+    static _XOVERLAPPED sOverlapped;
+
     DataNode OnMsg(UIChangedMsg const &);
 };

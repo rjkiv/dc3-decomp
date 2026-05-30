@@ -9,6 +9,20 @@
 class DirectionGestureFilter : public RndOverlay::Callback {
 public:
     virtual ~DirectionGestureFilter() {}
+    virtual void Clear() = 0;
+    virtual JointConfidence Confidence() const = 0;
+    virtual void Update(const Skeleton &, int) = 0;
+    virtual void Draw(const Skeleton &, SkeletonViz &) = 0;
+    virtual bool HasDirection() const = 0;
+    virtual float GetPercentPulled() const = 0;
+    virtual bool IsHandValid(const Skeleton &) const = 0;
+    virtual bool IsValidScrollPos(const Skeleton &) const = 0;
+    virtual void ClearSwipe() = 0;
+    virtual bool IsLockedIn() const = 0;
+    virtual void SetEngaged(bool engaged) = 0;
+    virtual void ResetHoverTimer() = 0;
+    virtual void SetAllowAboveShoulder(bool allow) = 0;
+    virtual void SetHighButtonMode(bool set) = 0;
 
 protected:
     static float sLastSwipeTime[6];

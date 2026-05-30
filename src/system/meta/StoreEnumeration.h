@@ -2,6 +2,7 @@
 #include "meta/StoreEnumeration.h"
 #include "types.h"
 #include "utl/Str.h"
+#include "xdk/xapilibi/xbase.h"
 #include <list>
 
 enum StoreError {
@@ -55,7 +56,6 @@ public:
 
     XboxEnumeration(int, std::vector<unsigned long long> *);
 
-    std::list<int> unk4;
     std::vector<unsigned long long> unkc;
     int unk18;
     bool unk1c;

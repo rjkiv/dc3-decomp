@@ -19,6 +19,8 @@ public:
     void PlayScrollSound();
 
     float GetFirstVal() { return unk0; } // change once context found
+    int GetUnk30() { return unk30; }
+    void SetUnk30(int i) { unk30 = i; }
 
     static void Init();
     static float mNeutralToSlowDownDelay;

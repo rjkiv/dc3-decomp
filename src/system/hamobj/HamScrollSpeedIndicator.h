@@ -37,6 +37,9 @@ public:
     void HandleEnter();
     void HandleExit();
     void Draw(const Transform &);
+    void Update(float, float, float);
+
+    bool GetUnk1FC() const { return unk1fc; }
 
 protected:
     bool unk1fc; // 0x1fc
