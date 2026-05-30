@@ -472,7 +472,7 @@ uint RateTransposerFloat::transposeMono(
     }
     fSlopeCount -= 1.0f;
 
-    if (nSamples > 1) {
+    if (nSamples != 1) {
         while (1) {
             while (fSlopeCount > 1.0f) {
                 fSlopeCount -= 1.0f;
