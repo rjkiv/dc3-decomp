@@ -11,6 +11,7 @@
 #include "synth/FxSend.h"
 #include "synth_xbox/ExternalMic.h"
 #include "synth_xbox/FxSend.h"
+#include "synth_xbox/GainEffect.h"
 #include "synth_xbox/Voice.h"
 #include "utl/MemStream.h"
 #include "utl/Symbol.h"
@@ -231,7 +232,7 @@ MicManagerXbox::MicManagerXbox()
     synthConfig->FindData("low_cut", gLowCut);
     synthConfig->FindData("local_gain", gLocalGain);
     synthConfig->FindData("remote_gain", gRemoteGain);
-    //  GainEffect::sGain = DbToRatio(gRemoteGain);
+    GainEffect::SetGain(DbToRatio(gRemoteGain));
 }
 
 MicManagerXbox::~MicManagerXbox() {}

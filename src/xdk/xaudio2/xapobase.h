@@ -155,12 +155,15 @@ namespace ATG {
             XMemSet((VOID *)mParams, 0, sizeof(mParams));
         }
         virtual ~CSampleXAPOBase() {}
-        virtual void OnSetParameters(const void *, unsigned int);
+        virtual void OnSetParameters(const void *pParameters, UINT32 ParameterByteSize) {
+            const Params *p = (const Params *)pParameters;
+            OnSetParameters(*p);
+        }
         virtual void OnSetParameters(const Params &) {}
         virtual void
         DoProcess(const Params &, float *__restrict, unsigned int, unsigned int) = 0;
 
-        Params mParams[3]; // 0x40
-        WAVEFORMATEX mWav; // 0x58
+        Params mParams[3];
+        WAVEFORMATEX mWav;
     };
 }

@@ -17,6 +17,7 @@ struct XAPO_REGISTRATION_PROPERTIES { /* Size=0x42c */
     /* 0x0428 */ UINT MaxOutputBufferCount;
 };
 
+#pragma pack(push, 1)
 // https://learn.microsoft.com/en-us/windows/win32/api/mmeapi/ns-mmeapi-waveformatex
 typedef struct tWAVEFORMATEX { /* Size=0x12 */
     /* 0x0000 */ WORD wFormatTag;
@@ -27,6 +28,7 @@ typedef struct tWAVEFORMATEX { /* Size=0x12 */
     /* 0x000e */ WORD wBitsPerSample;
     /* 0x0010 */ WORD cbSize;
 } WAVEFORMATEX, *PWAVEFORMATEX, *NPWAVEFORMATEX, *LPWAVEFORMATEX;
+#pragma pack(pop)
 
 enum XAPO_BUFFER_FLAGS {
     XAPO_BUFFER_SILENT = 0x0000,
