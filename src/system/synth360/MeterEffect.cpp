@@ -1,4 +1,4 @@
-#include "synth_xbox/MeterEffect.h"
+#include "synth360/MeterEffect.h"
 
 MeterEffect::MeterEffect() : unk90(0) {
     for (int i = 0; i < 6; i++) {

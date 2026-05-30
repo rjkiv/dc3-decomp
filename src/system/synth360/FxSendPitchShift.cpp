@@ -1,5 +1,5 @@
-#include "synth_xbox/FxSendPitchShift.h"
-#include "synth_xbox/PitchShiftEffect.h"
+#include "synth360/FxSendPitchShift.h"
+#include "synth360/PitchShiftEffect.h"
 
 void FxSendPitchShift360::SyncEffectParams(IXAudio2SubmixVoice *voice) const {
     PitchShiftEffectParams p;

@@ -1,6 +1,6 @@
 #pragma once
 #include "synth/FxSendPitchShift.h"
-#include "synth_xbox/FxSend.h"
+#include "synth360/FxSend.h"
 
 class FxSendPitchShift360 : public FxSendPitchShift, public FxSend360 {
 public:

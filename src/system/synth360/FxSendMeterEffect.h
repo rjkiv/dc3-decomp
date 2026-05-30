@@ -3,7 +3,7 @@
 #include "obj/Object.h"
 #include "synth/FxSend.h"
 #include "synth/FxSendMeterEffect.h"
-#include "synth_xbox/MeterEffect.h"
+#include "synth360/MeterEffect.h"
 #include "xdk/xapilibi/xbase.h"
 
 class FxSendMeterEffect360 : public FxSendMeterEffect, public FxSend360 {

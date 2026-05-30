@@ -1,4 +1,4 @@
-#include "synth_xbox/Biquad.h"
+#include "synth360/Biquad.h"
 #include "Biquad.h"
 
 namespace DSP {

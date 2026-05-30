@@ -1,4 +1,4 @@
-#include "synth_xbox/HeadsetXferEffect.h"
+#include "synth360/HeadsetXferEffect.h"
 #include <cstring>
 
 HeadsetXferEffect::HeadsetXferEffect() : unk60(0) {

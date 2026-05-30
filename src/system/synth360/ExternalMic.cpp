@@ -1,4 +1,4 @@
-#include "synth_xbox/ExternalMic.h"
+#include "synth360/ExternalMic.h"
 #include "os/Debug.h"
 #include "xdk/XAPILIB.h"
 

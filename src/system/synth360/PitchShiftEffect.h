@@ -1,5 +1,5 @@
 #pragma once
-#include "synth_xbox/soundtouch/source/SoundTouch/SoundTouch.h"
+#include "synth360/soundtouch/source/SoundTouch/SoundTouch.h"
 #include "xdk/XAUDIO2.h"
 
 struct PitchShiftEffectParams {

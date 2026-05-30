@@ -1,6 +1,6 @@
 #pragma once
 #include "synth/FxSendSynapse.h"
-#include "synth_xbox/FxSend.h"
+#include "synth360/FxSend.h"
 
 class FxSendSynapse360 : public FxSendSynapse, public FxSend360 {
 public:

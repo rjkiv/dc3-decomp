@@ -1,5 +1,5 @@
-#include "synth_xbox/HeadsetPlaybackEffect.h"
-#include "synth_xbox/HeadsetXferEffect.h"
+#include "synth360/HeadsetPlaybackEffect.h"
+#include "synth360/HeadsetXferEffect.h"
 
 HeadsetPlaybackEffect::HeadsetPlaybackEffect(HeadsetXferEffect **fx) : unk68(0) {
     for (int i = 0; i < 4; i++) {

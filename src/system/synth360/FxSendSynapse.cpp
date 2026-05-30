@@ -1,5 +1,5 @@
-#include "synth_xbox/FxSendSynapse.h"
-#include "synth_xbox/SynapseAPO.h"
+#include "synth360/FxSendSynapse.h"
+#include "synth360/SynapseAPO.h"
 #include "xdk/xaudio2/xaudio2.h"
 
 void FxSendSynapse360::SyncEffectParams(IXAudio2SubmixVoice *voice) const {

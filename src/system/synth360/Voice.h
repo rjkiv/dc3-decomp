@@ -1,5 +1,5 @@
 #pragma once
-#include "synth_xbox/EnvelopeGenerator.h"
+#include "synth360/EnvelopeGenerator.h"
 #include "types.h"
 #include "utl/PoolAlloc.h"
 #include "xdk/win_types.h"

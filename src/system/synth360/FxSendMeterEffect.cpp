@@ -3,7 +3,7 @@
 #include "macros.h"
 #include "synth/FxSend.h"
 #include "os/Debug.h"
-#include "synth_xbox/MeterEffect.h"
+#include "synth360/MeterEffect.h"
 #include "xdk/unknwn.h"
 
 FxSendMeterEffect360::FxSendMeterEffect360() : FxSend360(this), mParams(0) {}

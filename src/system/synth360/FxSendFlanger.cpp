@@ -1,4 +1,4 @@
-#include "synth_xbox/FxSendFlanger.h"
+#include "synth360/FxSendFlanger.h"
 #include "FxSend.h"
 #include "dsp/FlangerEffect.h"
 #include "dsp/StandardEffect.h"

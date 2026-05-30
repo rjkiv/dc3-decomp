@@ -1,5 +1,5 @@
 #pragma once
-#include "synth_xbox/Synapse_dsp.h"
+#include "synth360/Synapse_dsp.h"
 #include "xdk/XAUDIO2.h"
 
 namespace DSP {

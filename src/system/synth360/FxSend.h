@@ -1,7 +1,7 @@
 #pragma once
 #include "Synth.h"
 #include "synth/FxSend.h"
-#include "synth_xbox/Voice.h"
+#include "synth360/Voice.h"
 #include "xdk/XAUDIO2.h"
 
 class FxSend360 {

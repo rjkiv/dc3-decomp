@@ -1,5 +1,5 @@
 #pragma once
-#include "synth_xbox/HeadsetXferEffect.h"
+#include "synth360/HeadsetXferEffect.h"
 #include "xdk/XAUDIO2.h"
 
 // size 0x1

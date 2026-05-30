@@ -1,4 +1,4 @@
-#include "synth_xbox/EnvelopeGenerator.h"
+#include "synth360/EnvelopeGenerator.h"
 
 EnvelopeGenerator::EnvelopeGenerator() : unk8c(0) {
     EnvelopeGeneratorParams p;

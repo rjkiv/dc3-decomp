@@ -10840,7 +10840,7 @@ system/os/User.cpp:
 	.pdata      start:0x8231CA18 end:0x8231CAE0
 	.text       start:0x82E2AAF0 end:0x82E2B648
 
-system/synth_xbox/Synth.cpp:
+system/synth360/Synth.cpp:
 	.rdata      start:0x8225DC20 end:0x8225ECCC
 	.rdata      start:0x822AD27C end:0x822AD64C rename:.rdata$r
 	.pdata      start:0x8231CAE0 end:0x8231D040
@@ -10851,7 +10851,7 @@ system/synth_xbox/Synth.cpp:
 	.data       start:0x82F44FE4 end:0x82F455F4
 	.data       start:0x8316B800 end:0x8316C048 rename:.bss
 
-system/synth_xbox/FxSendReverb.cpp:
+system/synth360/FxSendReverb.cpp:
 	.rdata      start:0x8225ECCC end:0x8225EE6C
 	.rdata      start:0x822AD64C end:0x822AD6D8 rename:.rdata$r
 	.pdata      start:0x8231D040 end:0x8231D098
@@ -10859,7 +10859,7 @@ system/synth_xbox/FxSendReverb.cpp:
 	.data       start:0x82F455F4 end:0x82F45614
 	.data       start:0x8316C048 end:0x8316C6E4 rename:.bss
 
-system/synth_xbox/FxSendBitCrush.cpp:
+system/synth360/FxSendBitCrush.cpp:
 	.rdata      start:0x8225EE6C end:0x8225F11C
 	.rdata      start:0x822AD6D8 end:0x822AD834 rename:.rdata$r
 	.pdata      start:0x8231D098 end:0x8231D138
@@ -10869,7 +10869,7 @@ system/synth_xbox/FxSendBitCrush.cpp:
 	.data       start:0x82F45614 end:0x82F45ADC
 	.data       start:0x8316C6E4 end:0x8316C6EC rename:.bss
 
-system/synth_xbox/FxSendDistortion.cpp:
+system/synth360/FxSendDistortion.cpp:
 	.rdata      start:0x8225F11C end:0x8225F3CC
 	.rdata      start:0x822AD834 end:0x822AD990 rename:.rdata$r
 	.pdata      start:0x8231D138 end:0x8231D1D0
@@ -10879,7 +10879,7 @@ system/synth_xbox/FxSendDistortion.cpp:
 	.data       start:0x82F45ADC end:0x82F45FA4
 	.data       start:0x8316C6EC end:0x8316C6F4 rename:.bss
 
-system/synth_xbox/FxSendDelay.cpp:
+system/synth360/FxSendDelay.cpp:
 	.rdata      start:0x8225F3CC end:0x8225F6C4
 	.rdata      start:0x822AD990 end:0x822ADB08 rename:.rdata$r
 	.pdata      start:0x8231D1D0 end:0x8231D280
@@ -10889,7 +10889,7 @@ system/synth_xbox/FxSendDelay.cpp:
 	.data       start:0x82F45FA4 end:0x82F46464
 	.data       start:0x8316C6F4 end:0x8316C6FC rename:.bss
 
-system/synth_xbox/FxSendChorus.cpp:
+system/synth360/FxSendChorus.cpp:
 	.rdata      start:0x8225F6C4 end:0x8225F9C4
 	.rdata      start:0x822ADB08 end:0x822ADC64 rename:.rdata$r
 	.pdata      start:0x8231D280 end:0x8231D330
@@ -10899,7 +10899,7 @@ system/synth_xbox/FxSendChorus.cpp:
 	.data       start:0x82F46464 end:0x82F46924
 	.data       start:0x8316C6FC end:0x8316C704 rename:.bss
 
-system/synth_xbox/FxSendCompress.cpp:
+system/synth360/FxSendCompress.cpp:
 	.rdata      start:0x8225F9C4 end:0x8225FB54
 	.rdata      start:0x822ADC64 end:0x822ADCD4 rename:.rdata$r
 	.pdata      start:0x8231D330 end:0x8231D388
@@ -10907,7 +10907,7 @@ system/synth_xbox/FxSendCompress.cpp:
 	.data       start:0x82F46924 end:0x82F46944
 	.data       start:0x8316C704 end:0x8316C70C rename:.bss
 
-system/synth_xbox/FxSendEQ.cpp:
+system/synth360/FxSendEQ.cpp:
 	.rdata      start:0x8225FB54 end:0x8225FE04
 	.rdata      start:0x822ADCD4 end:0x822ADE4C rename:.rdata$r
 	.pdata      start:0x8231D388 end:0x8231D430
@@ -10917,7 +10917,7 @@ system/synth_xbox/FxSendEQ.cpp:
 	.data       start:0x82F46944 end:0x82F46DF4
 	.data       start:0x8316C70C end:0x8316C714 rename:.bss
 
-system/synth_xbox/FxSendFlanger.cpp:
+system/synth360/FxSendFlanger.cpp:
 	.rdata      start:0x8225FE04 end:0x8225FF94
 	.rdata      start:0x822ADE4C end:0x822ADEBC rename:.rdata$r
 	.pdata      start:0x8231D430 end:0x8231D478
@@ -10925,7 +10925,7 @@ system/synth_xbox/FxSendFlanger.cpp:
 	.data       start:0x82F46DF4 end:0x82F46E14
 	.data       start:0x8316C714 end:0x8316C71C rename:.bss
 
-system/synth_xbox/FxSendMeterEffect.cpp:
+system/synth360/FxSendMeterEffect.cpp:
 	.rdata      start:0x8225FF94 end:0x8226019C
 	.rdata      start:0x822ADEBC end:0x822ADF48 rename:.rdata$r
 	.pdata      start:0x8231D478 end:0x8231D500
@@ -10933,7 +10933,7 @@ system/synth_xbox/FxSendMeterEffect.cpp:
 	.data       start:0x82F46E14 end:0x82F46E38
 	.data       start:0x8316C71C end:0x8316C724 rename:.bss
 
-system/synth_xbox/FxSendWah.cpp:
+system/synth360/FxSendWah.cpp:
 	.rdata      start:0x8226019C end:0x82260448
 	.rdata      start:0x822ADF48 end:0x822AE0C0 rename:.rdata$r
 	.pdata      start:0x8231D500 end:0x8231D598
@@ -10943,7 +10943,7 @@ system/synth_xbox/FxSendWah.cpp:
 	.data       start:0x82F46E38 end:0x82F472EC
 	.data       start:0x8316C724 end:0x8316C72C rename:.bss
 
-system/synth_xbox/Voice.cpp:
+system/synth360/Voice.cpp:
 	.rdata      start:0x82260448 end:0x82260A94
 	.pdata      start:0x8231D598 end:0x8231D798
 	.pdata      start:0x823217D8 end:0x82321818
@@ -10953,7 +10953,7 @@ system/synth_xbox/Voice.cpp:
 	.data       start:0x82F472EC end:0x82F47368
 	.data       start:0x8316C72C end:0x8316C810 rename:.bss
 
-system/synth_xbox/ExternalMic.cpp:
+system/synth360/ExternalMic.cpp:
 	.rdata      start:0x82260A94 end:0x82260BF8
 	.pdata      start:0x8231D798 end:0x8231D8D0
 	.text       start:0x82E39970 end:0x82E3B590
@@ -10962,23 +10962,23 @@ system/synth_xbox/ExternalMic.cpp:
 	.data       start:0x82F47368 end:0x82F47494
 	.data       start:0x8316C810 end:0x8316C854 rename:.bss
 
-system/synth_xbox/FxSend.cpp:
+system/synth360/FxSend.cpp:
 	.rdata      start:0x82260BF8 end:0x82260EE0
 	.rdata      start:0x822AE0C0 end:0x822AE0D4 rename:.rdata$r
 	.pdata      start:0x8231D8D0 end:0x8231DA00
 	.text       start:0x82E3B590 end:0x82E3D7C8
 	.data       start:0x82F47494 end:0x82F474E4
 
-system/synth_xbox/FxSendPitchShift.cpp:
+system/synth360/FxSendPitchShift.cpp:
 	.pdata      start:0x8231DA00 end:0x8231DA18
 	.text       start:0x82E3D7C8 end:0x82E3D898
 
-system/synth_xbox/FxSendSynapse.cpp:
+system/synth360/FxSendSynapse.cpp:
 	.rdata      start:0x82260EE0 end:0x82260F4C
 	.pdata      start:0x8231DA18 end:0x8231DA30
 	.text       start:0x82E3D898 end:0x82E3DAC0
 
-system/synth_xbox/Mic.cpp:
+system/synth360/Mic.cpp:
 	.rdata      start:0x82260F4C end:0x822618DC
 	.rdata      start:0x822AE0D4 end:0x822AE16C rename:.rdata$r
 	.pdata      start:0x8231DA30 end:0x8231DD40
@@ -10986,7 +10986,7 @@ system/synth_xbox/Mic.cpp:
 	.data       start:0x82F474E4 end:0x82F47560
 	.data       start:0x8316C854 end:0x8316C868 rename:.bss
 
-system/synth_xbox/MeterEffect.cpp:
+system/synth360/MeterEffect.cpp:
 	.rdata      start:0x822618DC end:0x822619E4
 	.rdata      start:0x822AE16C end:0x822AE258 rename:.rdata$r
 	.pdata      start:0x8231DD40 end:0x8231DD70
@@ -10995,7 +10995,7 @@ system/synth_xbox/MeterEffect.cpp:
 	.text       start:0x82EE0170 end:0x82EE0200 rename:.text$yc
 	.data       start:0x82F47560 end:0x82F479F8
 
-system/synth_xbox/HeadsetXferEffect.cpp:
+system/synth360/HeadsetXferEffect.cpp:
 	.rdata      start:0x822619E4 end:0x82261AE8
 	.rdata      start:0x822AE258 end:0x822AE344 rename:.rdata$r
 	.pdata      start:0x8231DD70 end:0x8231DDA0
@@ -11004,14 +11004,14 @@ system/synth_xbox/HeadsetXferEffect.cpp:
 	.text       start:0x82EE0200 end:0x82EE0290 rename:.text$yc
 	.data       start:0x82F479F8 end:0x82F47E9C
 
-system/synth_xbox/StreamReceiver.cpp:
+system/synth360/StreamReceiver.cpp:
 	.rdata      start:0x82261AE8 end:0x82261D5C
 	.rdata      start:0x822AE344 end:0x822AE390 rename:.rdata$r
 	.pdata      start:0x8231DDA0 end:0x8231DE50
 	.text       start:0x82E41BA8 end:0x82E429A0
 	.data       start:0x82F47E9C end:0x82F47EBC
 
-system/synth_xbox/SynthSample.cpp:
+system/synth360/SynthSample.cpp:
 	.rdata      start:0x82261D5C end:0x82261ED8
 	.rdata      start:0x822AE390 end:0x822AE3E4 rename:.rdata$r
 	.pdata      start:0x8231DE50 end:0x8231DEB8
@@ -11019,7 +11019,7 @@ system/synth_xbox/SynthSample.cpp:
 	.data       start:0x82F47EBC end:0x82F47EE0
 	.data       start:0x8316C868 end:0x8316C980 rename:.bss
 
-system/synth_xbox/EnvelopeGenerator.cpp:
+system/synth360/EnvelopeGenerator.cpp:
 	.rdata      start:0x82261ED8 end:0x8226203C
 	.rdata      start:0x822AE3E4 end:0x822AE4D0 rename:.rdata$r
 	.pdata      start:0x8231DEB8 end:0x8231DEE8
@@ -11028,7 +11028,7 @@ system/synth_xbox/EnvelopeGenerator.cpp:
 	.text       start:0x82EE0290 end:0x82EE0320 rename:.text$yc
 	.data       start:0x82F47EE0 end:0x82F48388
 
-system/synth_xbox/PitchShiftEffect.cpp:
+system/synth360/PitchShiftEffect.cpp:
 	.rdata      start:0x8226203C end:0x8226219C
 	.rdata      start:0x822AE4D0 end:0x822AE5BC rename:.rdata$r
 	.pdata      start:0x8231DEE8 end:0x8231DF30
@@ -11037,7 +11037,7 @@ system/synth_xbox/PitchShiftEffect.cpp:
 	.text       start:0x82EE0320 end:0x82EE03B0 rename:.text$yc
 	.data       start:0x82F48388 end:0x82F48830
 
-system/synth_xbox/SynapseAPO.cpp:
+system/synth360/SynapseAPO.cpp:
 	.rdata      start:0x8226219C end:0x82262324
 	.rdata      start:0x822AE5BC end:0x822AE6A8 rename:.rdata$r
 	.pdata      start:0x8231DF30 end:0x8231DF90
@@ -11046,7 +11046,7 @@ system/synth_xbox/SynapseAPO.cpp:
 	.text       start:0x82EE03B0 end:0x82EE0440 rename:.text$yc
 	.data       start:0x82F48830 end:0x82F48CCC
 
-system/synth_xbox/GainEffect.cpp:
+system/synth360/GainEffect.cpp:
 	.rdata      start:0x82262324 end:0x8226242C
 	.rdata      start:0x822AE6A8 end:0x822AE794 rename:.rdata$r
 	.pdata      start:0x8231DF90 end:0x8231DFB8
@@ -11055,7 +11055,7 @@ system/synth_xbox/GainEffect.cpp:
 	.text       start:0x82EE0440 end:0x82EE04D0 rename:.text$yc
 	.data       start:0x82F48CCC end:0x82F49168
 
-system/synth_xbox/HeadsetPlaybackEffect.cpp:
+system/synth360/HeadsetPlaybackEffect.cpp:
 	.rdata      start:0x8226242C end:0x82262534
 	.rdata      start:0x822AE794 end:0x822AE880 rename:.rdata$r
 	.pdata      start:0x8231DFB8 end:0x8231DFE8
@@ -11064,101 +11064,101 @@ system/synth_xbox/HeadsetPlaybackEffect.cpp:
 	.text       start:0x82EE04D0 end:0x82EE0560 rename:.text$yc
 	.data       start:0x82F49168 end:0x82F49614
 
-system/synth_xbox/SampleInst.cpp:
+system/synth360/SampleInst.cpp:
 	.rdata      start:0x82262534 end:0x822626A4
 	.rdata      start:0x822AE880 end:0x822AE8F0 rename:.rdata$r
 	.pdata      start:0x8231DFE8 end:0x8231E038
 	.text       start:0x82E443D0 end:0x82E448D8
 	.data       start:0x82F49614 end:0x82F49630
 
-system/synth_xbox/soundtouch/source/SoundTouch/SoundTouch.cpp:
+system/synth360/soundtouch/source/SoundTouch/SoundTouch.cpp:
 	.rdata      start:0x822626A4 end:0x82262C70
 	.rdata      start:0x822AE8F0 end:0x822AE9C0 rename:.rdata$r
 	.pdata      start:0x8231E038 end:0x8231E0A8
 	.text       start:0x82E448D8 end:0x82E452A8
 	.data       start:0x82F49630 end:0x82F496A8
 
-system/synth_xbox/Synapse_dsp.cpp:
+system/synth360/Synapse_dsp.cpp:
 	.rdata      start:0x82262C70 end:0x82262EAC
 	.pdata      start:0x8231E0A8 end:0x8231E2E8
 	.text       start:0x82E452A8 end:0x82E47950
 	.data       start:0x82F496A8 end:0x82F4971C
 
-system/synth_xbox/soundtouch/source/SoundTouch/TDStretch.cpp:
+system/synth360/soundtouch/source/SoundTouch/TDStretch.cpp:
 	.rdata      start:0x82262EAC end:0x822630D4
 	.rdata      start:0x822AE9C0 end:0x822AEA10 rename:.rdata$r
 	.pdata      start:0x8231E2E8 end:0x8231E3A8
 	.text       start:0x82E47950 end:0x82E48CF0
 	.data       start:0x82F4971C end:0x82F49740
 
-system/synth_xbox/soundtouch/source/SoundTouch/RateTransposer.cpp:
+system/synth360/soundtouch/source/SoundTouch/RateTransposer.cpp:
 	.rdata      start:0x822630D4 end:0x82263310
 	.rdata      start:0x822AEA10 end:0x822AEAB4 rename:.rdata$r
 	.pdata      start:0x8231E3A8 end:0x8231E460
 	.text       start:0x82E48CF0 end:0x82E499D0
 	.data       start:0x82F49740 end:0x82F4978C
 
-system/synth_xbox/soundtouch/source/SoundTouch/AAFilter.cpp:
+system/synth360/soundtouch/source/SoundTouch/AAFilter.cpp:
 	.rdata      start:0x82263310 end:0x822635C0
 	.pdata      start:0x8231E460 end:0x8231E470
 	.text       start:0x82E499D0 end:0x82E49EB8
 
-system/synth_xbox/PitchDetector.cpp:
+system/synth360/PitchDetector.cpp:
 	.pdata      start:0x8231E470 end:0x8231E510
 	.text       start:0x82E49EB8 end:0x82E4AA70
 
-system/synth_xbox/PeakDetector.cpp:
+system/synth360/PeakDetector.cpp:
 	.rdata      start:0x822635C0 end:0x822635D8
 	.pdata      start:0x8231E510 end:0x8231E520
 	.text       start:0x82E4AA70 end:0x82E4AF80
 
-system/synth_xbox/GranularSynth.cpp:
+system/synth360/GranularSynth.cpp:
 	.rdata      start:0x822635D8 end:0x82263718
 	.pdata      start:0x8231E520 end:0x8231E5D8
 	.text       start:0x82E4AF80 end:0x82E4C0D0
 	.data       start:0x82F4978C end:0x82F497EC
 
-system/synth_xbox/PitchCorrectedVoice.cpp:
+system/synth360/PitchCorrectedVoice.cpp:
 	.rdata      start:0x82263718 end:0x8226373C
 	.pdata      start:0x8231E5D8 end:0x8231E5E8
 	.text       start:0x82E4C0D0 end:0x82E4C3C8
 
-system/synth_xbox/IPP_basicmath_xbox.cpp:
+system/synth360/IPP_basicmath_xbox.cpp:
 	.text       start:0x82E4C3C8 end:0x82E4C488
 
-system/synth_xbox/FilterCoeffs.cpp:
+system/synth360/FilterCoeffs.cpp:
 	.pdata      start:0x8231E5E8 end:0x8231E5F8
 	.text       start:0x82E4C488 end:0x82E4C740
 
-system/synth_xbox/Biquad.cpp:
+system/synth360/Biquad.cpp:
 	.pdata      start:0x8231E5F8 end:0x8231E600
 	.text       start:0x82E4C740 end:0x82E4C7F8
 
-system/synth_xbox/soundtouch/source/SoundTouch/FIFOSampleBuffer.cpp:
+system/synth360/soundtouch/source/SoundTouch/FIFOSampleBuffer.cpp:
 	.rdata      start:0x8226373C end:0x822637B4
 	.rdata      start:0x822AEAB4 end:0x822AEB00 rename:.rdata$r
 	.pdata      start:0x8231E600 end:0x8231E648
 	.text       start:0x82E4C7F8 end:0x82E4CCF0
 	.data       start:0x82F497EC end:0x82F49818
 
-system/synth_xbox/soundtouch/source/SoundTouch/FIRFilter.cpp:
+system/synth360/soundtouch/source/SoundTouch/FIRFilter.cpp:
 	.rdata      start:0x822637B4 end:0x822638A8
 	.rdata      start:0x822AEB00 end:0x822AEB48 rename:.rdata$r
 	.pdata      start:0x8231E648 end:0x8231E678
 	.text       start:0x82E4CCF0 end:0x82E4D398
 	.data       start:0x82F49818 end:0x82F4983C
 
-system/synth_xbox/SpectralAnalysis.cpp:
+system/synth360/SpectralAnalysis.cpp:
 	.rdata      start:0x822638A8 end:0x82263900
 	.pdata      start:0x8231E678 end:0x8231E6A8
 	.text       start:0x82E4D398 end:0x82E4DBA0
 
-system/synth_xbox/FftIpp.cpp:
+system/synth360/FftIpp.cpp:
 	.rdata      start:0x82263900 end:0x822639A0
 	.pdata      start:0x8231E6A8 end:0x8231E6E8
 	.text       start:0x82E4DBA0 end:0x82E4E0E0
 
-system/synth_xbox/FFT.cpp:
+system/synth360/FFT.cpp:
 	.rdata      start:0x822639A0 end:0x822639D4
 	.pdata      start:0x8231E6E8 end:0x8231E740
 	.text       start:0x82E4E0E0 end:0x82E50AE8

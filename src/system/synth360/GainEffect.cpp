@@ -1,4 +1,4 @@
-#include "synth_xbox/GainEffect.h"
+#include "synth360/GainEffect.h"
 
 float GainEffect::sGain = 1;
 
