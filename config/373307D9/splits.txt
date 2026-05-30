@@ -61,7 +61,7 @@ Main.cpp:
 	.pdata      start:0x822AFB58 end:0x822AFB68
 	.text       start:0x82334268 end:0x823342E0
 
-Memory_Xbox.cpp:
+system/os/Memory_Xbox.cpp:
 	.rdata      start:0x82005138 end:0x82006130
 	.pdata      start:0x822AFB68 end:0x822AFBA8
 	.text       start:0x823342E0 end:0x82334E38

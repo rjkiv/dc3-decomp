@@ -1,5 +1,5 @@
 #include "rndobj/ShadowMap.h"
-#include "Memory.h"
+#include "os/Memory.h"
 #include "macros.h"
 #include "obj/Object.h"
 #include "rndobj/Cam.h"

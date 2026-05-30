@@ -2,7 +2,7 @@
 #include "Env.h"
 #include "Lit.h"
 #include "Mat.h"
-#include "Memory.h"
+#include "os/Memory.h"
 #include "Mesh.h"
 #include "Movie.h"
 #include "MultiMesh.h"
@@ -44,7 +44,15 @@
 #include "xdk/xapilibi/xbase.h"
 #include "xdk/xapilibi/xbox.h"
 
-void CreateBackBuffers(int, int, D3DMULTISAMPLE_TYPE, unsigned int &, unsigned int &, D3DSurface *&, D3DSurface *&);
+void CreateBackBuffers(
+    int,
+    int,
+    D3DMULTISAMPLE_TYPE,
+    unsigned int &,
+    unsigned int &,
+    D3DSurface *&,
+    D3DSurface *&
+);
 
 DxRnd::DxRnd()
     : unk220(0), mD3DDevice(nullptr), unk22c(0), mDeviceType(D3DDEVTYPE_HAL),
@@ -656,7 +664,8 @@ void DxRnd::DoPointTests() {
         return;
 
     // Process query results from previous frame
-    for (std::vector<RndPointTest>::iterator it = unk20c.begin(); it != unk20c.end(); ++it) {
+    for (std::vector<RndPointTest>::iterator it = unk20c.begin(); it != unk20c.end();
+         ++it) {
         unsigned int result;
         if (mOcclusionQueryMgr->GetQueryResults(it->unk4, result)) {
             it->unk0->SetOcclusionReady(true);
@@ -676,7 +685,8 @@ void DxRnd::DoPointTests() {
 
     // Count point tests needed
     int numTests = 0;
-    for (std::list<PointTest>::iterator it = mPointTests.begin(); it != mPointTests.end(); ++it) {
+    for (std::list<PointTest>::iterator it = mPointTests.begin(); it != mPointTests.end();
+         ++it) {
         numTests++;
     }
 
@@ -713,13 +723,14 @@ void DxRnd::DoPointTests() {
 
     // Set point size
     float pointSize = 1.0f;
-    D3DDevice_SetRenderState_PointSize(TheDxRnd.Device(), *(DWORD*)&pointSize);
+    D3DDevice_SetRenderState_PointSize(TheDxRnd.Device(), *(DWORD *)&pointSize);
     D3DDevice_SetRenderState_ViewportEnable(TheDxRnd.Device(), 0);
     D3DDevice_SetRenderState_HalfPixelOffset(TheDxRnd.Device(), 1);
 
     // Process each point test
     int idx = 0;
-    for (std::list<PointTest>::iterator it = mPointTests.begin(); it != mPointTests.end(); ++it, ++idx) {
+    for (std::list<PointTest>::iterator it = mPointTests.begin(); it != mPointTests.end();
+         ++it, ++idx) {
         TheNgStats->mFlares++;
 
         RndFlare *flare = it->unkc;
@@ -746,7 +757,9 @@ void DxRnd::DoPointTests() {
             if (mOcclusionQueryMgr->CreateQuery(queryIdx)) {
                 test.unk4 = queryIdx;
                 mOcclusionQueryMgr->BeginQuery(test.unk4);
-                D3DDevice_DrawVerticesUP(mD3DDevice, D3DPT_POINTLIST, 1, &vtx, sizeof(PointVertex));
+                D3DDevice_DrawVerticesUP(
+                    mD3DDevice, D3DPT_POINTLIST, 1, &vtx, sizeof(PointVertex)
+                );
                 mOcclusionQueryMgr->EndQuery(test.unk4);
             }
         }
@@ -781,7 +794,9 @@ void DxRnd::DoPointTests() {
             if (mOcclusionQueryMgr->CreateQuery(queryIdx)) {
                 test.unk8 = queryIdx;
                 mOcclusionQueryMgr->BeginQuery(test.unk8);
-                D3DDevice_DrawVerticesUP(mD3DDevice, D3DPT_TRIANGLESTRIP, 4, verts, sizeof(QuadVertex));
+                D3DDevice_DrawVerticesUP(
+                    mD3DDevice, D3DPT_TRIANGLESTRIP, 4, verts, sizeof(QuadVertex)
+                );
                 mOcclusionQueryMgr->EndQuery(test.unk8);
             }
         } else {

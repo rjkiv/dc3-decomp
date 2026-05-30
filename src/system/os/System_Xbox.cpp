@@ -5,7 +5,7 @@
 #include "os/System.h"
 #include "xdk/XAPILIB.h"
 #include "xdk/XBDM.h"
-#include "Memory.h"
+#include "os/Memory.h"
 
 namespace {
     DiscErrorCallbackFunc *gCallback;

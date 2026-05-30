@@ -1,5 +1,5 @@
 #include "rnddx9/CubeTex.h"
-#include "Memory.h"
+#include "os/Memory.h"
 #include "Rnd.h"
 #include "rnddx9/Rnd.h"
 #include "rndobj/Bitmap.h"

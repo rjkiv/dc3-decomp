@@ -1,6 +1,6 @@
 
 #include "ShaderMgr.h"
-#include "Memory.h"
+#include "os/Memory.h"
 #include "math/Utl.h"
 #include "obj/Object.h"
 #include "os/Debug.h"

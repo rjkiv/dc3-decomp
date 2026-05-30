@@ -12,8 +12,7 @@
                     "/Od"
                 ]
             },
-            "Main.cpp": "Matching",
-            "Memory_Xbox.cpp": "NonMatching"
+            "Main.cpp": "Matching"
         }
     },
     "lazer": {
@@ -531,6 +530,7 @@
             "system/os/MapFile_Xbox.cpp": "NonMatching",
             "system/os/Memcard.cpp": "Matching",
             "system/os/Memcard_Xbox.cpp": "NonMatching",
+            "system/os/Memory_Xbox.cpp": "NonMatching",
             "system/os/NetStream.cpp": "NonMatching",
             "system/os/NetworkSocket.cpp": "Matching",
             "system/os/NetworkSocket_Win.cpp": "NonMatching",

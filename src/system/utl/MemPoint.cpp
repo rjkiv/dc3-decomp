@@ -1,5 +1,5 @@
 #include "MemPoint.h"
-#include "Memory.h"
+#include "os/Memory.h"
 #include "os/Debug.h"
 #include "utl/MakeString.h"
 #include "utl/MemMgr.h"

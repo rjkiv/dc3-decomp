@@ -1,5 +1,5 @@
 #include "synth/SynthSample.h"
-#include "Memory.h"
+#include "os/Memory.h"
 #include "SampleData.h"
 #include "obj/Object.h"
 #include "os/Debug.h"

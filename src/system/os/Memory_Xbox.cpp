@@ -1,4 +1,4 @@
-#include "Memory.h"
+#include "os/Memory.h"
 #include "os/Debug.h"
 #include "os/System.h"
 #include "utl/MemMgr.h"
@@ -7,7 +7,6 @@
 #include "utl/Symbol.h"
 #include "utl/TextStream.h"
 #include "xdk/XAPILIB.h"
-#include "xdk/xapilibi/xbox.h"
 #include <cstdio>
 
 XALLOC_ATTRIBUTES Attr(DWORD dw) { return *reinterpret_cast<XALLOC_ATTRIBUTES *>(&dw); }

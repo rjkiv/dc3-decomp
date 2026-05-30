@@ -1,7 +1,7 @@
 #include "rndobj/PostProc_NG.h"
 
 #include "HiResScreen.h"
-#include "Memory.h"
+#include "os/Memory.h"
 #include "ShaderMgr.h"
 #include "Tex.h"
 #include "math/Rand.h"

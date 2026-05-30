@@ -1,7 +1,7 @@
 #include "utl/MemMgr.h"
 #include "MemHeap.h"
 #include "MemTracker.h"
-#include "Memory.h"
+#include "os/Memory.h"
 #include "obj/Data.h"
 #include "os/CritSec.h"
 #include "os/Debug.h"

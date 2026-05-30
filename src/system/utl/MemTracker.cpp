@@ -2,7 +2,7 @@
 #include "AllocInfo.h"
 #include "MemMgr.h"
 #include "MemTrack.h"
-#include "Memory.h"
+#include "os/Memory.h"
 #include "obj/Data.h"
 #include "obj/DataFunc.h"
 #include "os/Debug.h"

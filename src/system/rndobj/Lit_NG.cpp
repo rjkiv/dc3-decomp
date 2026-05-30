@@ -4,7 +4,7 @@
 #include "os/Debug.h"
 #include "os/System.h"
 #include "rndobj/Draw.h"
-#include "Memory.h"
+#include "os/Memory.h"
 #include "rndobj/Lit.h"
 
 bool NgLight::WantShadows() const {
