@@ -11037,7 +11037,7 @@ system/synth360/PitchShiftEffect.cpp:
 	.text       start:0x82EE0320 end:0x82EE03B0 rename:.text$yc
 	.data       start:0x82F48388 end:0x82F48830
 
-system/synth360/SynapseAPO.cpp:
+system/synth360/synapse_apo/SynapseAPO.cpp:
 	.rdata      start:0x8226219C end:0x82262324
 	.rdata      start:0x822AE5BC end:0x822AE6A8 rename:.rdata$r
 	.pdata      start:0x8231DF30 end:0x8231DF90
@@ -11078,7 +11078,7 @@ system/synth360/soundtouch/SoundTouch.cpp:
 	.text       start:0x82E448D8 end:0x82E452A8
 	.data       start:0x82F49630 end:0x82F496A8
 
-system/synth360/Synapse_dsp.cpp:
+system/synth360/synapse_apo/Synapse_dsp.cpp:
 	.rdata      start:0x82262C70 end:0x82262EAC
 	.pdata      start:0x8231E0A8 end:0x8231E2E8
 	.text       start:0x82E452A8 end:0x82E47950
@@ -11130,7 +11130,7 @@ system/synth360/FilterCoeffs.cpp:
 	.pdata      start:0x8231E5E8 end:0x8231E5F8
 	.text       start:0x82E4C488 end:0x82E4C740
 
-system/synth360/Biquad.cpp:
+system/synth360/synapse_apo/Biquad.cpp:
 	.pdata      start:0x8231E5F8 end:0x8231E600
 	.text       start:0x82E4C740 end:0x82E4C7F8
 

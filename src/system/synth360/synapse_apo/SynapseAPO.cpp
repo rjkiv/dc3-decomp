@@ -1,5 +1,5 @@
-#include "synth360/SynapseAPO.h"
-#include "synth360/Synapse_dsp.h"
+#include "synth360/synapse_apo/SynapseAPO.h"
+#include "synth360/synapse_apo/Synapse_dsp.h"
 
 DSP::SynapseAPO::SynapseAPO() : mSynapse(0) { SetSamplingRate(48000); }
 DSP::SynapseAPO::~SynapseAPO() { delete mSynapse; }

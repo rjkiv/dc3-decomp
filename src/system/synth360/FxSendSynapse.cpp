@@ -1,6 +1,6 @@
 #include "synth360/FxSendSynapse.h"
-#include "synth360/SynapseAPO.h"
-#include "xdk/xaudio2/xaudio2.h"
+#include "synth360/synapse_apo/SynapseAPO.h"
+#include "xdk/XAUDIO2.h"
 
 void FxSendSynapse360::SyncEffectParams(IXAudio2SubmixVoice *voice) const {
     DSP::SynapseAPOParams params;

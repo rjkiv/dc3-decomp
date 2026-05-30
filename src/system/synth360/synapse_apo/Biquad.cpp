@@ -1,5 +1,4 @@
-#include "synth360/Biquad.h"
-#include "Biquad.h"
+#include "synth360/synapse_apo/Biquad.h"
 
 namespace DSP {
     void Biquad::SetCoefficients(float *flts) {
