@@ -2,13 +2,19 @@
 #include "HamListRibbon.h"
 #include "HamNavList.h"
 #include "HamScrollBehavior.h"
+#include "flow/PropertyEventProvider.h"
 #include "gesture/BaseSkeleton.h"
+#include "gesture/DirectionGestureFilter.h"
 #include "gesture/GestureMgr.h"
+#include "gesture/HandHeightGestureFilter.h"
 #include "gesture/HandsUpGestureFilter.h"
 #include "gesture/Skeleton.h"
 #include "gesture/SkeletonUpdate.h"
 #include "gesture/SkeletonViz.h"
 #include "hamobj/HamNavProvider.h"
+#include "macros.h"
+#include "meta/MetaMusicManager.h"
+#include "meta_ham/ShellInput.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "obj/Task.h"
@@ -16,6 +22,8 @@
 #include "os/JoypadMsgs.h"
 #include "os/System.h"
 #include "rndobj/Anim.h"
+#include "rndobj/Overlay.h"
+#include "rndobj/Rnd.h"
 #include "rndobj/Trans.h"
 #include "synth/Sound.h"
 #include "ui/UI.h"
@@ -24,8 +32,11 @@
 #include "ui/UIListProvider.h"
 #include "ui/UIListState.h"
 #include "utl/BinStream.h"
+#include "utl/Loader.h"
 #include "utl/Std.h"
 #include "utl/Symbol.h"
+
+static float sFloat = 0.1f;
 
 HamNavList::HamNavList()
     : mNavInputType(kNavInput_RightHand), mListState(this, this),
@@ -48,8 +59,8 @@ HamNavList::~HamNavList() {
     if (handle.HasCallback(this)) {
         handle.RemoveCallback(this);
     }
-    // delete unk184;
-    // delete unk188;
+    delete unk184;
+    delete unk188;
     if (mListRibbonResource) {
         Sound *slideSound = mListRibbonResource->SlideSound();
         if (slideSound)
@@ -64,13 +75,13 @@ bool HamNavList::Replace(ObjRef *ref, Hmx::Object *obj) {
 BEGIN_HANDLERS(HamNavList)
     HANDLE_ACTION(set_provider, SetProvider(_msg->Obj<UIListProvider>(2)))
     HANDLE_ACTION(set_highlight, SetHighlight(_msg->Int(2)))
-    HANDLE_ACTION(set_selected, mListState.SetSelected(_msg->Int(2), -1, true))
+    HANDLE_ACTION(set_selected, SetSelected(_msg->Int(2)))
     HANDLE_ACTION(set_swelling, SetSwelling())
     HANDLE_ACTION(set_sliding, SetSliding(_msg->Float(2)))
     HANDLE_ACTION(set_selecting, SetSelecting(false))
     HANDLE_EXPR(get_selected, mListState.Selected())
     HANDLE_EXPR(get_selected_sym, GetSelectedSym())
-    HANDLE_EXPR(is_scrolling_settled, unk1ec <= 0)
+    HANDLE_EXPR(is_scrolling_settled, IsScrollingSettled())
     HANDLE_ACTION(scroll_to_index, ScrollToIndex(_msg->Int(2), _msg->Int(3)))
     HANDLE_EXPR(get_top_index, mListState.FirstShowing())
     HANDLE_ACTION(refresh, unk1f0 = true)
@@ -237,7 +248,7 @@ void HamNavList::PostLoad(BinStream &bs) {
 }
 
 void HamNavList::SetControllerFocus(int i1) {
-    if (TheGestureMgr && TheGestureMgr->InControllerMode()) {
+    if (InControllerMode()) {
         SetHighlight(i1);
     }
 }
@@ -269,9 +280,10 @@ bool HamNavList::SkipPoll() const {
 void HamNavList::Refresh() { unk1f0 = true; }
 
 void HamNavList::SetHighButtonMode(bool b) {
-    if (unk184 == 0)
-        return;
     unk1fe = b;
+    if (!unk184)
+        return;
+    unk184->SetHighButtonMode(b);
 }
 
 int HamNavList::NumData() const { return 18; }
@@ -347,7 +359,8 @@ void HamNavList::DoSelectFor(int i) {
 void HamNavList::HandleHighlightChanged(int i) {
     if (0 <= i && i < mListState.NumShowing()) {
         SendHighlightMsg(i);
-        if (unk190.GetFirstVal() > 0.0f) {
+        bool sendMsg = unk190.GetFirstVal() <= 0.0f;
+        if (sendMsg) {
             SendHighlightSettledMsg(i);
         }
         if (TheGestureMgr->GetBool4271() && mListRibbonResource) {
@@ -528,8 +541,411 @@ void HamNavList::SetHighlight(int i) {
         RealRefresh();
     UIListProvider *provider = mListState.Provider();
     if (provider && (0 <= i) && (i < mListState.NumShowing())) {
-        // object at 0x184 calls vfunc here
+        unk184->ResetHoverTimer();
         mListState.SetSelected(i, mListState.FirstShowing(), true);
         HandleHighlightChanged(i);
     }
+}
+
+void HamNavList::Update() {
+    delete unk184;
+    delete unk188;
+    if (mNavInputType == kNavInput_RightHand) {
+        if (!TheGestureMgr->InDoubleUserMode()) {
+            unk184 = new DirectionGestureFilterSingleUser(
+                kSkeletonRight, kSkeletonLeft, sFloat, -0.2f
+            );
+        } else {
+            unk184 = new DirectionGestureFilterDoubleUser(
+                kSkeletonRight, kSkeletonLeft, sFloat, -0.2f
+            );
+        }
+        unk188 = new HandHeightGestureFilter(kSkeletonRight);
+    } else {
+        if (!TheGestureMgr->InDoubleUserMode()) {
+            unk184 = new DirectionGestureFilterSingleUser(
+                kSkeletonLeft, kSkeletonRight, sFloat, -0.1f
+            );
+        } else {
+            unk184 = new DirectionGestureFilterDoubleUser(
+                kSkeletonLeft, kSkeletonRight, sFloat, -0.1f
+            );
+        }
+        unk188 = new HandHeightGestureFilter(kSkeletonLeft);
+    }
+
+    unk1fd = TheGestureMgr->InDoubleUserMode();
+    if (unk184) {
+        unk184->SetHighButtonMode(unk1fe);
+    }
+
+    if (mNavInputType == kNavInput_RightHand) {
+        mListState.SetNumDisplay(10, true);
+    } else {
+        mListState.SetNumDisplay(2, true);
+    }
+
+    int numDisplay = mListState.NumDisplay();
+    mRibbonDrawStates.resize(numDisplay);
+
+    if (mListDirResource) {
+        int numShowing = mListState.NumDisplay();
+        mListDirResource->CreateElements(nullptr, unk64, numShowing);
+    }
+    unk1f0 = true;
+}
+
+void HamNavList::Clear() {
+    unk184->Clear();
+    unk188->Clear();
+}
+
+void HamNavList::SetNavProvider(HamNavProvider *provider) {
+    mNavProvider = provider;
+    if (provider) {
+        provider->SetNavList(this);
+        SetProvider(provider);
+    } else {
+        SetProvider(this);
+    }
+}
+
+void HamNavList::SetRibbonMode(HamListRibbon::RibbonMode mode) {
+    if (mRibbonMode != mode) {
+        if ((mNavInputType != kNavInput_RightHand || !TheMetaMusicManager)
+            && mNavInputType == kNavInput_LeftHand) {
+            if (!InControllerMode()) {
+                if (mode == HamListRibbon::kRibbonDisengaged) {
+                    static LeftHandListEngagementMsg leftHandListDisengaged(false);
+                    TheUI->Handle(leftHandListDisengaged, false);
+                }
+                if (mRibbonMode == HamListRibbon::kRibbonDisengaged) {
+                    static LeftHandListEngagementMsg leftHandListEngaged(true);
+                    TheUI->Handle(leftHandListEngaged, false);
+                }
+            }
+        }
+        mRibbonMode = mode;
+        if (mListRibbonResource) {
+            mListRibbonResource->SetMode(mode);
+        }
+        if (mHeaderRibbonResource) {
+            mHeaderRibbonResource->SetMode(mode);
+        }
+    }
+}
+
+void HamNavList::ClearBigElements() {
+    mBigElements.clear();
+    unk20c.clear();
+}
+
+void HamNavList::Exit() {
+    UIComponent::Exit();
+    SkeletonUpdateHandle updateHandle = SkeletonUpdate::InstanceHandle();
+    if (updateHandle.HasCallback(this)) {
+        updateHandle.RemoveCallback(this);
+    }
+    if (mListRibbonResource) {
+        Sound *slideSound = mListRibbonResource->SlideSound();
+        if (slideSound) {
+            slideSound->Stop(0, false);
+        }
+    }
+    if (mScrollSpeedIndicatorResource) {
+        mScrollSpeedIndicatorResource->HandleExit();
+    }
+    unk190.Exit();
+    unk1f4 = gNullStr;
+    unk1f8 = -1;
+}
+
+void HamNavList::Enter() {
+    UIComponent::Enter();
+    SkeletonUpdateHandle updateHandle = SkeletonUpdate::InstanceHandle();
+    if (!updateHandle.HasCallback(this)) {
+        updateHandle.AddCallback(this);
+    }
+
+    if (!mDisableSlideSound && mListRibbonResource) {
+        Sound *slideSound = mListRibbonResource->SlideSound();
+        if (slideSound) {
+            slideSound->Play(0, 0, 0, nullptr, 0);
+        }
+    }
+    unkc8 = false;
+    if (mSuppressAutomaticEnter) {
+        unk157 = true;
+    } else {
+        unk154 = true;
+    }
+
+    if (mListRibbonResource) {
+        mListRibbonResource->HandleEnter();
+    }
+    if (mHeaderRibbonResource) {
+        mHeaderRibbonResource->HandleEnter();
+    }
+    if (mScrollSpeedIndicatorResource) {
+        mScrollSpeedIndicatorResource->HandleEnter();
+    }
+    unk1ec = TheTaskMgr.UISeconds();
+    RealRefresh();
+
+    static Symbol cheat_focus_restart("cheat_focus_restart");
+    static Symbol pausecommand_restart("pausecommand_restart");
+
+    if (mNavProvider && &DataVariable(cheat_focus_restart)) {
+        int index = mNavProvider->DataIndex(pausecommand_restart);
+        if (index != -1) {
+            SetHighlight(index);
+        }
+    }
+}
+
+void HamNavList::Disengage() {
+    unk184->ClearSwipe();
+    if ((!InControllerMode() || !CanHaveFocus())
+        && mRibbonMode != HamListRibbon::kRibbonSelect) {
+        SetRibbonMode(HamListRibbon::kRibbonDisengaged);
+    }
+}
+
+void HamNavList::CompleteScroll(const UIListState &state) {
+    if (mListDirResource) {
+        mListDirResource->CompleteScroll(state, unk64);
+    }
+}
+
+void HamNavList::ScrollToIndex(int i, int j) {
+    if (GesturingWithVoice() && mListState.IsScrolling()) {
+        unk190.Exit();
+    }
+    mListState.SetSelected(i, j, true);
+    unk1f0 = true;
+    SetHighlight(i);
+}
+
+void HamNavList::PlayEnterAnim() {
+    unk157 = false;
+    if (mListRibbonResource) {
+        if (mListRibbonResource->EnterAnim()) {
+            mListRibbonResource->SetTestEntering(true);
+            if (mSkipEnterAnim) {
+                mListRibbonResource->SetFrame(mListRibbonResource->EndFrame(), 1.0f);
+                mListRibbonResource->SetTestEntering(false);
+            }
+        }
+    }
+    if (mHeaderRibbonResource) {
+        if (mHeaderRibbonResource->EnterAnim()) {
+            mHeaderRibbonResource->SetTestEntering(true);
+            if (mSkipEnterAnim) {
+                mHeaderRibbonResource->SetFrame(mHeaderRibbonResource->EndFrame(), 1.0f);
+                mHeaderRibbonResource->SetTestEntering(false);
+            }
+        }
+    }
+    if ((mListRibbonResource && mListRibbonResource->TestEntering())
+        || (mHeaderRibbonResource && mHeaderRibbonResource->TestEntering())) {
+        Animate(0, false, 0);
+    }
+}
+
+void HamNavList::Poll() {
+    UIComponent::Poll();
+    if (unk1f0) {
+        RealRefresh();
+    }
+
+    if (mListDirResource) {
+        mListDirResource->PollWidgets(unk64);
+    }
+
+    if (SkipPoll()) {
+        if (mListRibbonResource) {
+            RndAnimatable *slideSoundAnim = mListRibbonResource->SlideSoundAnim();
+            if (slideSoundAnim) {
+                slideSoundAnim->SetFrame(0, 1.0f);
+            }
+        }
+        unk184->ClearSwipe();
+        return;
+    }
+
+    if (TheGestureMgr && !TheLoadMgr.EditMode()) {
+        if (TheGestureMgr->InDoubleUserMode() != unk1fd) {
+            Update();
+        }
+        if (mAlwaysUseActiveSkeleton) {
+            mSkeletonTrackingID = TheGestureMgr->ActiveSkeletonTrackingId();
+        }
+
+        const Skeleton *skel =
+            TheGestureMgr->GetSkeletonByTrackingID(mSkeletonTrackingID);
+        if (skel && skel->IsValid() && !skel->IsSideways() && !sForceDisengage) {
+            UpdateGestures(skel);
+            if (mScrollSpeedIndicatorResource) {
+                if (mRibbonMode != HamListRibbon::kRibbonDisengaged) {
+                    if (!mListState.ScrollPastMinDisplay()
+                        && mScrollSpeedIndicatorResource->GetUnk1FC()) {
+                        mScrollSpeedIndicatorResource->Show(false);
+                    } else if (mRibbonMode == HamListRibbon::kRibbonSwell
+                               && !mScrollSpeedIndicatorResource->GetUnk1FC()
+                               && mListState.ScrollPastMinDisplay()) {
+                        mScrollSpeedIndicatorResource->Show(true);
+                    } else {
+                        mScrollSpeedIndicatorResource->Update(
+                            unk188->GetUnk10(),
+                            HamScrollBehavior::mScrollUpCap,
+                            HamScrollBehavior::mScrollDownCap
+                        );
+                    }
+                }
+            }
+        } else {
+            if (!InVoiceMode()) {
+                Disengage();
+
+                if (mScrollSpeedIndicatorResource) {
+                    if (mScrollSpeedIndicatorResource->GetUnk1FC()) {
+                        mScrollSpeedIndicatorResource->Show(false);
+                    }
+                }
+            }
+        }
+    }
+
+    if (mRibbonMode != HamListRibbon::RibbonMode::kRibbonDisengaged) {
+        RndOverlay *swipeDirectionOverlay = RndOverlay::Find("swipe_direction", true);
+        swipeDirectionOverlay->SetCallback(unk184);
+    }
+
+    if (unk154) {
+        unk154 = false;
+        PlayEnterAnim();
+    }
+
+    if (mRibbonMode == HamListRibbon::RibbonMode::kRibbonSwell) {
+        if (!InControllerMode() && !InVoiceMode() && !TheLoadMgr.EditMode()) {
+            DetermineHighlightedItem();
+        }
+    }
+
+    if (mRibbonMode == HamListRibbon::kRibbonDisengaged) {
+        if (!InControllerMode() && !InVoiceMode()) {
+            unk190.SetUnk30(0);
+        }
+    }
+
+    if (mRibbonMode == HamListRibbon::kRibbonDisengaged) {
+        if (InControllerMode()) {
+            SetRibbonMode(HamListRibbon::kRibbonSwell);
+        }
+    }
+
+    if (mListRibbonResource && mListState.Provider()
+        && mListRibbonResource->IsScrollable(mListState.NumShowing())
+        && !sForceDisengage) {
+        unk190.Update(unk188->GetUnk10());
+    }
+
+    if (mListRibbonResource) {
+        if (mRibbonMode == HamListRibbon::kRibbonSlide
+            && !mListRibbonResource->TestEntering()) {
+            RndAnimatable *slideSoundAnim = mListRibbonResource->SlideSoundAnim();
+            if (slideSoundAnim) {
+                slideSoundAnim->SetFrame(unk15c.Level(), 1.0f);
+            }
+        } else {
+            RndAnimatable *slideSoundAnim = mListRibbonResource->SlideSoundAnim();
+            if (slideSoundAnim) {
+                slideSoundAnim->SetFrame(0, 1.0f);
+            }
+        }
+    }
+
+    for (int i = 0; i < mRibbonDrawStates.size(); i++) {
+        float uiSeconds = TheTaskMgr.DeltaUISeconds();
+        float targetSwell = GetTargetSwellAmount(i);
+        mRibbonDrawStates[i].unk0.Smooth(targetSwell, uiSeconds);
+    }
+
+    if (mRibbonMode == HamListRibbon::kRibbonDisengaged) {
+        unk170.Smooth(1.0f, TheTaskMgr.DeltaUISeconds());
+    } else {
+        unk170.Smooth(0, TheTaskMgr.DeltaUISeconds());
+    }
+
+    if (mRibbonMode == HamListRibbon::kRibbonSelect) {
+        if (!RndAnimatable::IsAnimating() && !TheUI->InTransition()
+            && !TheLoadMgr.EditMode()) {
+            SetRibbonMode(HamListRibbon::kRibbonSwell);
+        }
+
+        for (int i = 0; i < mRibbonDrawStates.size(); i++) {
+            mRibbonDrawStates[i].unk0.SetParams(0, 0, 0);
+        }
+
+        if (unk1f8 != -1) {
+            UIListProvider *provider = mListState.Provider();
+            MILO_ASSERT(provider, 0x185);
+
+            static Message navSelectDoneMsg("nav_select_done", 0, 0, 0, 0);
+            navSelectDoneMsg[0] = unk1f4;
+            navSelectDoneMsg[1] = unk1f8;
+            navSelectDoneMsg[2] = this;
+            navSelectDoneMsg[3] = unk1fc;
+
+            TheUI->Handle(navSelectDoneMsg, false);
+            TheHamProvider->Handle(navSelectDoneMsg, false);
+
+            unk1f8 = -1;
+        }
+
+        if (mListRibbonResource) {
+            mListRibbonResource->OnSelectDone();
+        }
+
+        if (mHeaderRibbonResource) {
+            mHeaderRibbonResource->OnSelectDone();
+        }
+    }
+
+    if (mListRibbonResource) {
+        if (unk157) {
+            mListRibbonResource->SetTestEntering(true);
+            SetFrame(0, 1.0f);
+        } else {
+            if (mListRibbonResource->TestEntering()) {
+                if (!RndAnimatable::IsAnimating()) {
+                    mListRibbonResource->SetTestEntering(false);
+                    SetFrame(0, 1.0f);
+                }
+            }
+        }
+    }
+
+    if (mHeaderRibbonResource) {
+        if (unk157) {
+            mHeaderRibbonResource->SetTestEntering(true);
+            SetFrame(0, 1.0f);
+        } else {
+            if (mHeaderRibbonResource->TestEntering()) {
+                if (!RndAnimatable::IsAnimating()) {
+                    mHeaderRibbonResource->SetTestEntering(false);
+                    SetFrame(0, 1.0f);
+                }
+            }
+        }
+    }
+}
+
+void HamNavListGlitchCB(float ms, void *refresh) {
+    MILO_LOG(
+        "HamNavList::Refresh %s took %f ms on frame %d\n",
+        PathName(static_cast<HamNavList *>(refresh)),
+        ms,
+        TheRnd.GetFrameID()
+    );
 }

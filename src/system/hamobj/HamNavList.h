@@ -2,6 +2,9 @@
 #include "HamListRibbon.h"
 #include "HamNavProvider.h"
 #include "HamScrollBehavior.h"
+#include "gesture/DirectionGestureFilter.h"
+#include "gesture/GestureMgr.h"
+#include "gesture/HandHeightGestureFilter.h"
 #include "gesture/Skeleton.h"
 #include "hamobj/HamScrollSpeedIndicator.h"
 #include "math/DoubleExponentialSmoother.h"
@@ -89,6 +92,7 @@ public:
     void SetProviderNavItemLabels(int, DataArray *);
     void DrawDebug() const;
     void Disengage();
+    void UpdateGestures(Skeleton const *);
 
     void Enable() { mEnabled = true; }
     void Disable() { mEnabled = false; }
@@ -96,6 +100,16 @@ public:
     HamNavProvider *GetHelpbarProvider() { return mNavProvider; }
     int TrackingID() const { return mSkeletonTrackingID; }
     void SetTrackingID(int id) { mSkeletonTrackingID = id; }
+    void SetSelected(int i) { mListState.SetSelected(i, -1, true); }
+    bool IsScrollingSettled() { return unk190.GetFirstVal() <= 0.0f; }
+
+    bool InControllerMode() const {
+        return TheGestureMgr && TheGestureMgr->InControllerMode();
+    }
+    bool GesturingWithVoice() const {
+        return TheGestureMgr && TheGestureMgr->GesturingWithVoice();
+    }
+    bool InVoiceMode() const { return TheGestureMgr && TheGestureMgr->InVoiceMode(); }
 
     static void Init();
     static bool sLastSelectInControllerMode;
@@ -115,9 +129,11 @@ private:
     int GetDisabledCount(int) const;
     int GetHighlightItem(void) const;
     void DetermineHighlightedItem();
+    float GetTargetSwellAmount(int);
 
     static float sSlideSmoothAmount;
     static float sSlideTrendAmount;
+    static int sListStateMaxDisplay;
 
     DataNode OnMsg(const ButtonDownMsg &);
 
@@ -155,8 +171,8 @@ protected:
     float unk158; // 0x158
     DoubleExponentialSmoother unk15c; // 0x15c
     DoubleExponentialSmoother unk170; // 0x170
-    int unk184;
-    int unk188;
+    DirectionGestureFilter *unk184;
+    HandHeightGestureFilter *unk188;
     int mSkeletonTrackingID; // 0x18c
     HamScrollBehavior unk190;
     bool mDisableSlideSound; // 0x1e4
@@ -178,3 +194,5 @@ protected:
     std::vector<Symbol> mBigElements; // 0x200
     std::vector<int> unk20c; // 0x20c
 };
+
+void HamNavListGlitchCB(float, void *);

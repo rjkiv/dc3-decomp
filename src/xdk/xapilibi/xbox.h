@@ -149,6 +149,14 @@ DWORD XShowNuiMarketplaceUI(
 DWORD XShowMarketplaceUI(
     DWORD dwUserIndex, DWORD dwEntryPoint, QWORD qwOfferID, DWORD dwContentCategories
 );
+DWORD XShowMarketplaceDownloadItemsUI(
+    DWORD dwUserIndex,
+    DWORD dwEntryPoint,
+    const XUID *pOfferIDs,
+    DWORD dwOfferIdCount,
+    HRESULT *phrResult,
+    _XOVERLAPPED *pOverlapped
+);
 DWORD XShowNuiDeviceSelectorUI(
     DWORD dwTrackingID,
     DWORD dwUserIndex,

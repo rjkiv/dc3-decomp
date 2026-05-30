@@ -100,9 +100,13 @@ public:
         return mat ? mat->GetDiffuseTex() : nullptr;
     }
     bool InControllerMode() const { return mInControllerMode; }
+    bool InDoubleUserMode() const { return mInDoubleUserMode; }
+    bool InVoiceMode() const { return mInVoiceMode; }
+    bool GesturingWithVoice() const { return mGesturingWithVoice; }
     SkeletonRecoverer &Recoverer() { return mRecoverer; }
     void SetActiveSkeletonTrackingID(int id) { mActiveSkelTrackingID = id; }
     void SetUnk30AtPos(int idx, int val) { unk30[idx] = val; }
+    int ActiveSkeletonTrackingId() const { return mActiveSkelTrackingID; }
 
     static bool sIdentityOpInProgress;
     static void Init();

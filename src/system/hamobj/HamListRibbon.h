@@ -1,5 +1,6 @@
 #pragma once
 #include "flow/Flow.h"
+#include "gesture/GestureMgr.h"
 #include "hamobj/HamLabel.h"
 #include "math/DoubleExponentialSmoother.h"
 #include "obj/Data.h"
@@ -83,8 +84,11 @@ public:
     Sound *SlideSound() const { return mSlideSound; }
     Sound *ScrollSound() const { return mScrollSound; }
     RndAnimatable *ScrollSoundAnim() const { return mScrollSoundAnim; }
+    RndAnimatable *SlideSoundAnim() const { return mSlideSoundAnim; }
     RndAnimatable *EnterAnim() const { return mEnterAnim; }
     void SetTestEntering(bool b) { mTestEntering = b; }
+    bool TestEntering() const { return mTestEntering; }
+    void SetMode(RibbonMode mode) { mMode = mode; }
 
 private:
     void ResetAnims(bool);

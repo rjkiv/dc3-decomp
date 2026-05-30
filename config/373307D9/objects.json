@@ -442,7 +442,7 @@
             "system/meta/StoreOffer.cpp": "Matching",
             "system/meta/StorePanel.cpp": "NonMatching",
             "system/meta/StorePreviewMgr.cpp": "NonMatching",
-            "system/meta/StorePurchaser.cpp": "NonMatching",
+            "system/meta/StorePurchaser.cpp": "Matching",
             "system/meta/StreamPlayer.cpp": "Matching",
             "system/midi/DataEventList.cpp": "NonMatching",
             "system/midi/DisplayEvents.cpp": "NonMatching",
