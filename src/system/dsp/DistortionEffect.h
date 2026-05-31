@@ -2,7 +2,7 @@
 #include "xdk/XAUDIO2.h"
 
 // size 0x4
-class DistortionEffect {
+class __declspec(uuid("A46688F1-A161-452F-AF1C-3E6380456BDA")) DistortionEffect {
 public:
     struct Params {
         Params() : bypass(false) {}

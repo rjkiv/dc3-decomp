@@ -4,6 +4,7 @@
 #include "xapilibi/debugapi.h"
 #include "xapilibi/errhandlingapi.h"
 #include "xapilibi/fileapi.h"
+#include "xapilibi/guiddef.h"
 #include "xapilibi/handleapi.h"
 #include "xapilibi/ioapiset.h"
 #include "xapilibi/pix3.h"

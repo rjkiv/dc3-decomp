@@ -7,7 +7,7 @@ struct HeadsetPlaybackEffectParams {
     bool unk0;
 };
 
-class HeadsetPlaybackEffect
+class __declspec(uuid("B4D4C8AA-A20D-40A1-84A7-64193551A9BF")) HeadsetPlaybackEffect
     : public ATG::CSampleXAPOBase<HeadsetPlaybackEffect, HeadsetPlaybackEffectParams> {
 public:
     HeadsetPlaybackEffect(HeadsetXferEffect **);

@@ -6,7 +6,8 @@ struct GainEffectParams {
     bool unk0;
 };
 
-class GainEffect : public ATG::CSampleXAPOBase<GainEffect, GainEffectParams> {
+class __declspec(uuid("B4D4C8AA-A20D-40A1-84A7-64193551A9BC")) GainEffect
+    : public ATG::CSampleXAPOBase<GainEffect, GainEffectParams> {
 public:
     GainEffect();
 

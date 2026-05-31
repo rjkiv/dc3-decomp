@@ -2,7 +2,7 @@
 #include "xdk/XAUDIO2.h"
 
 // size 0x40
-class CompressionEffect {
+class __declspec(uuid("443A5BB5-2BD8-45FE-ACE8-3B512D6CBE68")) CompressionEffect {
 public:
     struct Params {
         Params() : bypass(false) {}

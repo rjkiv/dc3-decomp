@@ -2,7 +2,7 @@
 #include "xdk/XAUDIO2.h"
 
 // size 0x34
-class FlangerEffect {
+class __declspec(uuid("443A5BB5-2BD8-45FE-ACE8-3B512D6CBE68")) FlangerEffect {
 public:
     struct Params {
         Params() : bypass(false) {}

@@ -2,7 +2,7 @@
 #include "xdk/XAUDIO2.h"
 
 // size 0x14
-class DelayEffect {
+class __declspec(uuid("24BE678A-C537-4C1C-A82F-164CFB06E7A6")) DelayEffect {
 public:
     struct Params {
         Params() : bypass(false) {}

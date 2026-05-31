@@ -118,13 +118,6 @@ typedef DWORD FOURCC;
     ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) | ((DWORD)(BYTE)(ch2) << 16)         \
      | ((DWORD)(BYTE)(ch3) << 24))
 
-typedef struct _GUID { /* Size=0x10 */
-    /* 0x0000 */ DWORD Data1;
-    /* 0x0004 */ WORD Data2;
-    /* 0x0006 */ WORD Data3;
-    /* 0x0008 */ BYTE Data4[8];
-} GUID;
-
 #ifdef __cplusplus
 }
 #endif

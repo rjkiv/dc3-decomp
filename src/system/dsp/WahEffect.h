@@ -2,7 +2,7 @@
 #include "xdk/XAUDIO2.h"
 
 // size 0x50
-class WahEffect {
+class __declspec(uuid("20F3EB49-FF6B-41A0-8A09-3531A3501AE1")) WahEffect {
 public:
     struct Params {
         Params()

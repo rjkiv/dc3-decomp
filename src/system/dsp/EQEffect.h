@@ -2,7 +2,7 @@
 #include "xdk/XAUDIO2.h"
 
 // size 0x34C
-class EQEffect {
+class __declspec(uuid("0E0F3600-B28E-4434-810D-21B8BE740619")) EQEffect {
 public:
     // size 0x38
     struct Params {
@@ -92,4 +92,5 @@ private:
     float unkb4;
     float unkb8;
     float unkbc;
+    char buffer[0x28c];
 };

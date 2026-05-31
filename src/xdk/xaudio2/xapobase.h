@@ -100,8 +100,6 @@ namespace ATG {
     template <class Effect, typename Params>
     class CSampleXAPOBase : public CXAPOParametersBase {
     private:
-        // TODO: how am i supposed to instantiate this
-        // if every Effect has a different guid?
         static XAPO_REGISTRATION_PROPERTIES m_regProps;
 
     public:
@@ -165,5 +163,19 @@ namespace ATG {
 
         Params mParams[3];
         WAVEFORMATEX mWav;
+    };
+
+    template <class Effect, typename Params>
+    XAPO_REGISTRATION_PROPERTIES ATG::CSampleXAPOBase<Effect, Params>::m_regProps = {
+        __uuidof(Effect),
+        L"SampleAPO",
+        L"Copyright (C)2008 Microsoft Corporation",
+        1,
+        0,
+        0x3F,
+        1,
+        1,
+        1,
+        1
     };
 }

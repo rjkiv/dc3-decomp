@@ -7,7 +7,7 @@ struct PitchShiftEffectParams {
 };
 
 // size 0x70
-class PitchShiftEffect
+class __declspec(uuid("B4D4C8AA-A20D-40A1-84A7-64193551A9BD")) PitchShiftEffect
     : public ATG::CSampleXAPOBase<PitchShiftEffect, PitchShiftEffectParams> {
 public:
     PitchShiftEffect();

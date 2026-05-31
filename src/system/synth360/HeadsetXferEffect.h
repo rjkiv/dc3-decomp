@@ -6,7 +6,7 @@ struct HeadsetXferEffectParams {
     void *unk0;
 };
 
-class HeadsetXferEffect
+class __declspec(uuid("B4D4C8AA-A20D-40A1-84A7-64193551A9BE")) HeadsetXferEffect
     : public ATG::CSampleXAPOBase<HeadsetXferEffect, HeadsetXferEffectParams> {
 public:
     HeadsetXferEffect();

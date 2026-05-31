@@ -1,5 +1,6 @@
 #pragma once
 #include "minwinbase.h"
+#include "guiddef.h"
 #include "../win_types.h"
 
 #ifdef __cplusplus
