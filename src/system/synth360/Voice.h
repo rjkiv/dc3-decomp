@@ -44,6 +44,7 @@ public:
     IXAudio2SourceVoice *GetVoice() { return mPoolVoice.voice; }
     void SetAttackRate(float r) { unk30 = r; }
     void SetReleaseRate(float r) { unk34 = r; }
+    void SetUnk50(int i) { unk50 = i; }
 
     static bool HasPendingVoices();
     static int sHeadsetTarget;

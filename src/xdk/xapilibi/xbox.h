@@ -116,6 +116,7 @@ DWORD XContentFlush(LPCSTR szRootName, XOVERLAPPED *pOverlapped);
 ULONGLONG XContentCalculateSize(ULONGLONG cbData, DWORD cDirectories);
 VOID XAudioGetSpeakerConfig();
 VOID XGetVideoMode(XVIDEO_MODE *pVideoMode);
+VOID *XMemCpy(VOID *__restrict dest, const VOID *__restrict src, SIZE_T count);
 VOID *XMemSet(VOID *dest, INT c, SIZE_T count);
 VOID *XMemAlloc(SIZE_T dwSize, DWORD dwAllocAttributes);
 VOID *XMemAllocDefault(SIZE_T dwSize, DWORD dwAllocAttributes);

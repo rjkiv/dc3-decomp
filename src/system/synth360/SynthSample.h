@@ -18,6 +18,4 @@ public:
     bool IsXMA() const;
     const void *GetData() const;
     int GetNumBytes() const;
-
-private:
 };
