@@ -57,7 +57,7 @@ private:
     float unk28;
     float unk2c;
     float unk30;
-    u32 unk34;
+    float unk34;
     bool unk38;
     float unk3c;
     float unk40;
@@ -92,5 +92,10 @@ private:
     float unkb4;
     float unkb8;
     float unkbc;
-    char buffer[0x28c];
+    char pad[0x70];
+    float unk_0x130;
+    float unk_0x134;
+    float unk_0x138;
+    char pad2[0x20];
+    float unk_0x15c[124];
 };

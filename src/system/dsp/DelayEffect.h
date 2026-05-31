@@ -22,9 +22,9 @@ public:
     void SetParameters(const DelayEffect::Params &);
 
 private:
-    int unk0;
-    int unk4;
-    float unk8;
-    float unkc;
-    float *unk10;
+    int delaytime;
+    int saved_writepos;
+    float gain;
+    float pongpct;
+    float *delaybuf;
 };
