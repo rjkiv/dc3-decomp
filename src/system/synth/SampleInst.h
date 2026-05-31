@@ -9,7 +9,7 @@ class SampleInst : public Hmx::Object, public PlayableSample {
 public:
     SampleInst(SynthSample *);
     virtual ~SampleInst();
-    virtual bool IsPlaying() const = 0;
+    virtual bool IsPlaying() = 0;
     virtual void SetFXCore(FXCore) = 0;
     virtual float GetProgress() { return 0; }
     virtual void SetStartProgress(float) {}
