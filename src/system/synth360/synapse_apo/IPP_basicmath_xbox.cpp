@@ -1,4 +1,4 @@
-#include "synth360/IPP_basicmath_xbox.h"
+#include "synth360/synapse_apo/IPP_basicmath_xbox.h"
 
 namespace IPP {
     void Add_InPlace(unsigned int size, const float *src, float *dst) {

@@ -11103,30 +11103,30 @@ system/synth360/soundtouch/AAFilter.cpp:
 	.pdata      start:0x8231E460 end:0x8231E470
 	.text       start:0x82E499D0 end:0x82E49EB8
 
-system/synth360/PitchDetector.cpp:
+system/synth360/synapse_apo/PitchDetector.cpp:
 	.pdata      start:0x8231E470 end:0x8231E510
 	.text       start:0x82E49EB8 end:0x82E4AA70
 
-system/synth360/PeakDetector.cpp:
+system/synth360/synapse_apo/PeakDetector.cpp:
 	.rdata      start:0x822635C0 end:0x822635D8
 	.pdata      start:0x8231E510 end:0x8231E520
 	.text       start:0x82E4AA70 end:0x82E4AF80
 
-system/synth360/GranularSynth.cpp:
+system/synth360/synapse_apo/GranularSynth.cpp:
 	.rdata      start:0x822635D8 end:0x82263718
 	.pdata      start:0x8231E520 end:0x8231E5D8
 	.text       start:0x82E4AF80 end:0x82E4C0D0
 	.data       start:0x82F4978C end:0x82F497EC
 
-system/synth360/PitchCorrectedVoice.cpp:
+system/synth360/synapse_apo/PitchCorrectedVoice.cpp:
 	.rdata      start:0x82263718 end:0x8226373C
 	.pdata      start:0x8231E5D8 end:0x8231E5E8
 	.text       start:0x82E4C0D0 end:0x82E4C3C8
 
-system/synth360/IPP_basicmath_xbox.cpp:
+system/synth360/synapse_apo/IPP_basicmath_xbox.cpp:
 	.text       start:0x82E4C3C8 end:0x82E4C488
 
-system/synth360/FilterCoeffs.cpp:
+system/synth360/synapse_apo/FilterCoeffs.cpp:
 	.pdata      start:0x8231E5E8 end:0x8231E5F8
 	.text       start:0x82E4C488 end:0x82E4C740
 
