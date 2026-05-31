@@ -3,7 +3,25 @@
 #include <cstddef>
 #include <vector>
 
-// scoped_ptr<T>: T* at 0x0
+// basically unique_ptr before unique_ptr
+template <class T>
+class scoped_ptr {
+public:
+    scoped_ptr() : mPtr(nullptr) {}
+    ~scoped_ptr() { delete mPtr; }
+    T *operator->() const { return mPtr; }
+    operator T *() const { return mPtr; }
+
+    void operator=(T *ptr) {
+        if (mPtr != ptr) {
+            delete mPtr;
+            mPtr = ptr;
+        }
+    }
+
+private:
+    T *mPtr; // 0x0
+};
 
 template <class T>
 class XboxAllocator {

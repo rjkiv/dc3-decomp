@@ -3,9 +3,11 @@
 
 namespace DSP {
     namespace Synapse {
+        // size 0x34
         class PeakDetector {
         public:
             PeakDetector(const std::vector<float> &, unsigned int, unsigned int);
+            ~PeakDetector();
             void Detect(unsigned int);
 
         private:

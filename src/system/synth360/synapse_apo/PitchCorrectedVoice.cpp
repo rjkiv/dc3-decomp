@@ -6,6 +6,8 @@ DSP::Synapse::PitchCorrectedVoice::PitchCorrectedVoice()
       mTransposition(0), mAmount(1), mProximityEffect(0), mProximityFocus(0.5f), unk28(0),
       unk2c(0), unk30(0), unk34(0) {}
 
+DSP::Synapse::PitchCorrectedVoice::~PitchCorrectedVoice() {}
+
 void DSP::Synapse::PitchCorrectedVoice::SetAmount(float amt) { mAmount = amt; }
 void DSP::Synapse::PitchCorrectedVoice::SetProximityEffect(float eff) {
     mProximityEffect = eff;

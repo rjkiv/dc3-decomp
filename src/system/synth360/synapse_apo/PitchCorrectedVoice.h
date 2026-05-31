@@ -5,6 +5,7 @@ namespace DSP {
         class PitchCorrectedVoice {
         public:
             PitchCorrectedVoice();
+            ~PitchCorrectedVoice();
             void SetAmount(float);
             void SetProximityEffect(float);
             void SetProximityFocus(float);
@@ -12,6 +13,8 @@ namespace DSP {
             void SetTransposition(float);
             float GetCorrection();
             void SetAttackSmoothing(float);
+
+            void SetTargetNote(float note) { unk4 = note; }
 
         private:
             float unk0;
