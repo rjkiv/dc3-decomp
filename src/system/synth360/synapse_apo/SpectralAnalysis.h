@@ -5,11 +5,10 @@
 namespace DSP {
     class SpectralAnalysis {
     public:
-        SpectralAnalysis();
-        ~SpectralAnalysis();
-
         void Analyze(const float *, float *);
         void SetMode(unsigned int, unsigned int);
+
+        unsigned int GetUnk0() const { return unk0; }
 
     private:
         unsigned int unk0;
