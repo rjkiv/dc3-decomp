@@ -32,7 +32,7 @@ void FlangerEffect::Reset() {
 
 void FlangerEffect::SetParameters(FlangerEffect::Params const &params) {
     unk14 = params.delayMs * 48.0f;
-    unk28 = (params.rate * 48000.0f) * (2 * PI);
+    unk28 = (params.rate / 48000.0f) * (2 * PI);
     unk18 = params.depthPct / 100.0f;
     unk20 = params.feedbackPct / 100.0f;
     unk30 = params.offsetPct / 100.0f;

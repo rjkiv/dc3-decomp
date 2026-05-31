@@ -42,6 +42,8 @@ void *memcpy(void *dest, const void *src, size_t count);
 void *memmove(void *dest, const void *src, size_t count);
 void *memset(void *dest, int data, size_t count);
 
+void _blkmov(void *d, const void *s, size_t c);
+
 #ifdef __cplusplus
 }
 #endif

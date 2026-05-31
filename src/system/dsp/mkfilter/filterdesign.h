@@ -42,3 +42,17 @@ inline double asinh(double x) { // Microsoft C++ does not define
 inline double fix(double x) { // nearest integer
     return (x >= 0.0) ? floor(0.5 + x) : -floor(0.5 - x);
 }
+
+// HMX !!
+typedef enum FilterType {
+} FilterType;
+typedef enum FilterBand {
+} FilterBand;
+typedef struct FILTER {
+    char pad[0x1000];
+    float unk_0x1000;
+    float unk_0x1004;
+    float unk_0x1008;
+    int unk_0x100C;
+} FILTER;
+void createFilter(FilterType, FilterBand, uint, float, float, FILTER *, int);
