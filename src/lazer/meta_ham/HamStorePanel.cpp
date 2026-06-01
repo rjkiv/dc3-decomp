@@ -569,7 +569,7 @@ StoreError HamStorePanel::UpdateOffers(std::list<EnumProduct> const &list, bool 
         if (!it->unk14) {
             bool check = false;
             FOREACH (listIt, list) {
-                if (listIt->unk4 == it->unk8) {
+                if (listIt->unk8 == it->unk8) {
                     check = true;
                     it->unk14 = (listIt->unk10 != 0);
                     break;

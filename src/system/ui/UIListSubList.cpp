@@ -42,7 +42,8 @@ BEGIN_LOADS(UIListSubList)
 END_LOADS
 
 UIList *UIListSubList::SubList(int index) {
-    UIListSubListElement *sle = dynamic_cast<UIListSubListElement *>(mElements[index]);
+    auto element = mElements[index];
+    UIListSubListElement *sle = dynamic_cast<UIListSubListElement *>(element);
     MILO_ASSERT(sle, 0x62);
     return sle->List();
 }
@@ -82,7 +83,8 @@ void UIListSubList::Draw(
 
 UIListSlotElement *UIListSubList::CreateElement(UIList *parent) {
     MILO_ASSERT(mList, 0x8d);
-    UIList *l = dynamic_cast<UIList *>(Hmx::Object::NewObject(mList->ClassName()));
+    auto obj = Hmx::Object::NewObject(mList->ClassName());
+    UIList *l = dynamic_cast<UIList *>(obj);
     MILO_ASSERT(l, 0x90);
     l->SetParent(parent);
     l->SetType(mList->Type());

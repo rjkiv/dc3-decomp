@@ -168,10 +168,7 @@ UIColor *UILabelDir::GetStateColor(UIComponent::State state) const {
     MILO_ASSERT(state < UIComponent::kNumStates, 0x39);
     UIColor *color = mColors[state];
     if (!color) {
-        color = mDefaultColor;
-        if (!mDefaultColor) {
-            color = gColor;
-        }
+        color = (!mDefaultColor) ? gColor : mDefaultColor;
     }
     return color;
 }

@@ -22,6 +22,7 @@
 #include "utl/Std.h"
 #include "utl/Symbol.h"
 #include "xdk/xapilibi/xbox.h"
+#include <list>
 
 StorePanel::StorePanel()
     : unk50(false), mLoadOk(false), unk52(false), unk5c(0),
@@ -182,7 +183,31 @@ void StorePanel::MultipleItemsCheckout(std::list<StoreOffer *> *offers) {
     mPurchaser->Initiate();
 }
 
-void StorePanel::PopulateOffers(DataArray *, bool) {}
+void StorePanel::PopulateOffers(DataArray *d, bool b) {
+    if (mLoadOk) {
+        DeleteAll(unk44);
+        if (!b) {
+            DeleteAll(unk38);
+        }
+        std::vector<StoreOffer *> *offers = &unk44;
+        if (!b) {
+            offers = &unk38;
+        }
+        if (d) {
+            d->AddRef();
+            for (int i = 1; i < d->Size(); i++) {
+                StoreOffer *offer = MakeNewOffer(d->Array(i));
+                if (!unk52 && offer->IsTest() && !offer->ValidTitle()) {
+                    delete offer;
+                } else if (offer->ValidTitle()) {
+                    offers->push_back(offer);
+                }
+            }
+            ValidateOffers(*offers);
+            d->Release();
+        }
+    }
+}
 
 void StorePanel::EnumerateOffers(bool b) {
     Profile *profile = StoreProfile();
@@ -296,8 +321,6 @@ DataNode StorePanel::OnMsg(MultipleItemsEnumCompleteMsg const &msg) {
     TheUI->Handle(doneMsg, false);
     return 0;
 }
-
-void StorePanel::ValidateOffers(std::vector<StoreOffer *> &) {}
 
 BEGIN_HANDLERS(StorePanel)
     HANDLE_EXPR(toggle_test_offers, ToggleTestOffers())

@@ -62,6 +62,8 @@ public:
     }
     void SetSourceToBackup() { unk8c = unk90; }
 
+    int GetUnk68() const { return unk68; }
+
     std::vector<StoreOffer *> unk38;
     std::vector<StoreOffer *> unk44;
     bool unk50;

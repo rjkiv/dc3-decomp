@@ -130,3 +130,19 @@ void HamNavList::SetScrollSoundFrame(float f) {
         }
     }
 }
+
+void HamScrollBehavior::Reset() {
+    unk30 = 0;
+    unk2c = 0;
+    unk28 = 0;
+    unk0 = 0;
+    unk24 = 0;
+    unk34.Reset();
+    unk50->SetScrollSoundFrame(unk34.Level());
+    unkc = 0;
+    unk4 = false;
+    unk20 = 0;
+    unk5 = false;
+    unk18 = 0;
+    unk48 = 2;
+}

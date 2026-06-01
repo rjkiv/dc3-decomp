@@ -69,6 +69,7 @@ private:
     void WriteRecordedMoveAttempt();
     void WriteFreestyleMoveClip(String, int, FreestyleMoveFrame *);
     void ClearFreestyleMoveClip();
+    void UpdateFakeSkeleton();
 
     static DataNode OnRecordAttempt(DataArray *);
     static DataNode OnWriteCreated(DataArray *);

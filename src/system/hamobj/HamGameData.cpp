@@ -155,7 +155,7 @@ Symbol GetCrewForCharacter(Symbol theChar, bool fail) {
         for (int j = 0; j < num; j++) {
             Symbol crewChar = GetCrewCharacter(crew, j);
             if (crewChar == theChar) {
-                return crewChar;
+                return crew;
             }
         }
     }
@@ -245,8 +245,7 @@ int GetOutfitGender(Symbol outfit, bool fail) {
 }
 
 const char *GetOutfitModel(Symbol outfit, bool fail) {
-    DataArray *entry;
-    GetEntriesForOutfit(outfit, nullptr, &entry, fail);
+    DataArray *entry = GetOutfitEntry(outfit, fail);
     if (entry) {
         static Symbol model("model");
         DataArray *modelArr = entry->FindArray(model, false);
@@ -472,7 +471,7 @@ bool HamGameData::SetAssociatedPadNum(int player, int padnum) {
         if (playerData->PadNum() == padnum) {
             playerData->SetAssociatedPadNum(-1, gNullStr);
         }
-        return playerData->SetAssociatedPadNum(padnum, ThePlatformMgr.GetName(padnum));
+        return pPlayer->SetAssociatedPadNum(padnum, ThePlatformMgr.GetName(padnum));
     } else {
         return pPlayer->SetAssociatedPadNum(-1, gNullStr);
     }

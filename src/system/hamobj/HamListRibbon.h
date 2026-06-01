@@ -89,6 +89,7 @@ public:
     void SetTestEntering(bool b) { mTestEntering = b; }
     bool TestEntering() const { return mTestEntering; }
     void SetMode(RibbonMode mode) { mMode = mode; }
+    void SetUnk26C(bool b) { unk26c = b; }
 
 private:
     void ResetAnims(bool);
