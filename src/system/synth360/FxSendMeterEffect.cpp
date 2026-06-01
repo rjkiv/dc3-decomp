@@ -10,12 +10,6 @@ FxSendMeterEffect360::FxSendMeterEffect360() : FxSend360(this), mParams(0) {}
 
 FxSendMeterEffect360::~FxSendMeterEffect360() { RELEASE(mParams); }
 
-void FxSendMeterEffect360::Recreate(std::vector<FxSend *> &sends) { Refresh(sends); }
-
-void FxSendMeterEffect360::UpdateMix() { UpdateVolumes(); }
-
-void FxSendMeterEffect360::OnParametersChanged() { FxSend360::SyncEffectParams(); }
-
 void FxSendMeterEffect360::SyncEffectParams(IXAudio2SubmixVoice *voice) const {
     MeterEffectParams p;
     if (mParams) {

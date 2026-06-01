@@ -8,12 +8,6 @@ FxSendDelay360::FxSendDelay360() : FxSend360(this) {}
 
 FxSendDelay360::~FxSendDelay360() {}
 
-void FxSendDelay360::Recreate(std::vector<FxSend *> &sends) { Refresh(sends); }
-
-void FxSendDelay360::UpdateMix() { UpdateVolumes(); }
-
-void FxSendDelay360::OnParametersChanged() { FxSend360::SyncEffectParams(); }
-
 void FxSendDelay360::SyncEffectParams(IXAudio2SubmixVoice *voice) const {
     DelayEffect::Params p;
     if (mTempoSync) {

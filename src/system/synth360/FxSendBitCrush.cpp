@@ -10,12 +10,6 @@ FxSendBitCrush360::FxSendBitCrush360() : FxSend360(this) {}
 
 FxSendBitCrush360::~FxSendBitCrush360() {}
 
-void FxSendBitCrush360::Recreate(std::vector<FxSend *> &sends) { Refresh(sends); }
-
-void FxSendBitCrush360::UpdateMix() { UpdateVolumes(); }
-
-void FxSendBitCrush360::OnParametersChanged() { FxSend360::SyncEffectParams(); }
-
 void FxSendBitCrush360::SyncEffectParams(IXAudio2SubmixVoice *voice) const {
     BitCrushEffect::Params p;
     p.bypass = mBypass;

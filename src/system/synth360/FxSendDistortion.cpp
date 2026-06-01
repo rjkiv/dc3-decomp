@@ -8,12 +8,6 @@ FxSendDistortion360::FxSendDistortion360() : FxSend360(this) {}
 
 FxSendDistortion360::~FxSendDistortion360() {}
 
-void FxSendDistortion360::Recreate(std::vector<FxSend *> &sends) { Refresh(sends); }
-
-void FxSendDistortion360::UpdateMix() { UpdateVolumes(); }
-
-void FxSendDistortion360::OnParametersChanged() { FxSend360::SyncEffectParams(); }
-
 void FxSendDistortion360::SyncEffectParams(IXAudio2SubmixVoice *voice) const {
     DistortionEffect::Params p;
     p.bypass = mBypass;

@@ -12,9 +12,9 @@ public:
     virtual ~FxSendEQ360();
     OBJ_CLASSNAME(FxSendEQ360)
     OBJ_SET_TYPE(FxSendEQ360)
-    virtual void Recreate(std::vector<FxSend *> &);
-    virtual void UpdateMix();
-    virtual void OnParametersChanged();
+    virtual void Recreate(std::vector<FxSend *> &sends) { Refresh(sends); }
+    virtual void UpdateMix() { UpdateVolumes(); }
+    virtual void OnParametersChanged() { FxSend360::SyncEffectParams(); }
     virtual void SyncEffectParams(IXAudio2SubmixVoice *) const;
 
     NEW_OBJ(FxSendEQ360)

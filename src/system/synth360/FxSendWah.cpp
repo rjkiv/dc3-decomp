@@ -7,12 +7,6 @@
 
 FxSendWah360::FxSendWah360() : FxSend360(this) {}
 
-void FxSendWah360::Recreate(std::vector<FxSend *> &sends) { Refresh(sends); }
-
-void FxSendWah360::UpdateMix() { UpdateVolumes(); }
-
-void FxSendWah360::OnParametersChanged() { FxSend360::SyncEffectParams(); }
-
 void FxSendWah360::SyncEffectParams(IXAudio2SubmixVoice *voice) const {
     WahEffect::Params p;
     p.resonance = mResonance;

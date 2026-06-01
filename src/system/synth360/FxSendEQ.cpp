@@ -8,12 +8,6 @@ FxSendEQ360::FxSendEQ360() : FxSend360(this) {}
 
 FxSendEQ360::~FxSendEQ360() {}
 
-void FxSendEQ360::Recreate(std::vector<FxSend *> &sends) { Refresh(sends); }
-
-void FxSendEQ360::UpdateMix() { UpdateVolumes(); }
-
-void FxSendEQ360::OnParametersChanged() { FxSend360::SyncEffectParams(); }
-
 void FxSendEQ360::SyncEffectParams(IXAudio2SubmixVoice *voice) const {
     EQEffect::Params p;
     p.bypass = mBypass;
