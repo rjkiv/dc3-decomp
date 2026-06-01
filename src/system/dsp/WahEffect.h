@@ -1,8 +1,10 @@
 #pragma once
 #include "xdk/XAUDIO2.h"
 
+DEFINE_CLSID(WahEffect, 20F3EB49, FF6B, 41A0, 8A, 09, 35, 31, A3, 50, 1A, E1);
+
 // size 0x50
-class __declspec(uuid("20F3EB49-FF6B-41A0-8A09-3531A3501AE1")) WahEffect {
+class WahEffect {
 public:
     struct Params {
         Params()

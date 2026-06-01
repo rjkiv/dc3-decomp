@@ -1,8 +1,10 @@
 #pragma once
 #include "xdk/XAUDIO2.h"
 
+DEFINE_CLSID(DistortionEffect, A46688F1, A161, 452F, AF, 1C, 3E, 63, 80, 45, 6B, DA);
+
 // size 0x4
-class __declspec(uuid("A46688F1-A161-452F-AF1C-3E6380456BDA")) DistortionEffect {
+class DistortionEffect {
 public:
     struct Params {
         Params() : bypass(false) {}

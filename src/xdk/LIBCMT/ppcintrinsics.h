@@ -8,6 +8,9 @@ extern "C" {
 unsigned long long __mftb();
 double __frsqrte(double);
 
+long _InterlockedIncrement(long *lpAddend);
+long _InterlockedDecrement(long *lpAddend);
+
 #ifdef __cplusplus
 }
 #endif

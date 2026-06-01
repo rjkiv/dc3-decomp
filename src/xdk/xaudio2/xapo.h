@@ -47,6 +47,8 @@ struct XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS { /* Size=0x8 */
     /* 0x0004 */ UINT MaxFrameCount;
 };
 
+DEFINE_IID(IXAPO, A90BC001, E897, E897, 55, E4, 9E, 47, 00, 00, 00, 00);
+
 struct IXAPO : public IUnknown { /* Size=0x4 */
     /* 0x0000: fields for IUnknown */
 
@@ -84,6 +86,8 @@ struct IXAPO : public IUnknown { /* Size=0x4 */
     IXAPO();
     IXAPO &operator=(const IXAPO &);
 };
+
+DEFINE_IID(IXAPOParameters, A90BC001, E897, E897, 55, E4, 9E, 47, 00, 00, 00, 01);
 
 struct IXAPOParameters : public IUnknown { /* Size=0x4 */
     /* 0x0000: fields for IUnknown */

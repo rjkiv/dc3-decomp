@@ -1,8 +1,10 @@
 #pragma once
 #include "xdk/XAUDIO2.h"
 
+DEFINE_CLSID(EQEffect, 0E0F3600, B28E, 4434, 81, 0D, 21, B8, BE, 74, 06, 19);
+
 // size 0x34C
-class __declspec(uuid("0E0F3600-B28E-4434-810D-21B8BE740619")) EQEffect {
+class EQEffect {
 public:
     // size 0x38
     struct Params {

@@ -34,8 +34,9 @@ namespace DSP {
         float releaseSmoothing; // 0x58
     };
 
-    class __declspec(uuid("03004D97-D165-4CC0-ABDD-6A98F04E6EB7")) SynapseAPO
-        : public ATG::CSampleXAPOBase<SynapseAPO, SynapseAPOParams> {
+    DEFINE_CLSID(SynapseAPO, 03004D97, D165, 4CC0, AB, DD, 6A, 98, F0, 4E, 6E, B7);
+
+    class SynapseAPO : public ATG::CSampleXAPOBase<SynapseAPO, SynapseAPOParams> {
     public:
         SynapseAPO();
         virtual ~SynapseAPO();

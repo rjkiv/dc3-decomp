@@ -1,8 +1,10 @@
 #pragma once
 #include "xdk/XAUDIO2.h"
 
+DEFINE_CLSID(CompressionEffect, 443A5BB5, 2BD8, 45FE, AC, E8, 3B, 51, 2D, 6C, BE, 68);
+
 // size 0x40
-class __declspec(uuid("443A5BB5-2BD8-45FE-ACE8-3B512D6CBE68")) CompressionEffect {
+class CompressionEffect {
 public:
     struct Params {
         Params() : bypass(false) {}

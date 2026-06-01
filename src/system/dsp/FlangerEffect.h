@@ -1,8 +1,10 @@
 #pragma once
 #include "xdk/XAUDIO2.h"
 
+DEFINE_CLSID(FlangerEffect, 443A5BB5, 2BD8, 45FE, AC, E8, 3B, 51, 2D, 6C, BE, 68);
+
 // size 0x34
-class __declspec(uuid("443A5BB5-2BD8-45FE-ACE8-3B512D6CBE68")) FlangerEffect {
+class FlangerEffect {
 public:
     struct Params {
         Params() : bypass(false) {}

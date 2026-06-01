@@ -5,8 +5,9 @@ struct MeterEffectParams {
     void *unk0;
 };
 
-class __declspec(uuid("B4D4C8AA-A20D-40A1-84A7-64193551A9CC")) MeterEffect
-    : public ATG::CSampleXAPOBase<MeterEffect, MeterEffectParams> {
+DEFINE_CLSID(MeterEffect, B4D4C8AA, A20D, 40A1, 84, A7, 64, 19, 35, 51, A9, CC);
+
+class MeterEffect : public ATG::CSampleXAPOBase<MeterEffect, MeterEffectParams> {
 public:
     MeterEffect();
 

@@ -1,8 +1,10 @@
 #pragma once
 #include "xdk/XAUDIO2.h"
 
+DEFINE_CLSID(BitCrushEffect, D794C77C, D14D, 470C, 93, 46, B9, BE, 9A, C4, 86, 0B);
+
 // size 0x10
-class __declspec(uuid("D794C77C-D14D-470C-9346-B9BE9AC4860B")) BitCrushEffect {
+class BitCrushEffect {
 public:
     struct Params {
         Params() : bypass(false) {}

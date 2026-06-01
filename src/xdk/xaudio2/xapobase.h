@@ -2,6 +2,8 @@
 #include "xapo.h"
 #include "xdk/win_types.h"
 #include "xdk/XAPILIB.h"
+#include "ppcintrinsics.h"
+#include "xdk/xapilibi/guiddef.h"
 #include <string.h>
 
 // https://learn.microsoft.com/en-us/windows/win32/api/xapobase/
@@ -17,7 +19,7 @@ private:
     /* 0x0018 */ BOOL m_fIsLocked;
 
 protected:
-    /* 0x001c */ INT m_lReferenceCount;
+    /* 0x001c */ LONG m_lReferenceCount;
 
     virtual HRESULT ValidateFormatDefault(WAVEFORMATEX *pFormat, BOOL fOverwrite);
 
@@ -42,9 +44,28 @@ public:
     CXAPOBase(const XAPO_REGISTRATION_PROPERTIES *pRegistrationProperties);
     CXAPOBase &operator=(const CXAPOBase &);
     virtual ~CXAPOBase();
-    virtual HRESULT QueryInterface(const _GUID &, void **);
-    virtual ULONG AddRef();
-    virtual ULONG Release();
+    virtual HRESULT QueryInterface(const _GUID &riid, void **ppInterface) {
+        HRESULT hr = S_OK;
+        if (IsEqualGUID(riid, __uuidof(IXAPO))) {
+            *ppInterface = static_cast<IXAPO *>(this);
+            AddRef();
+        } else if (IsEqualGUID(riid, __uuidof(IUnknown))) {
+            *ppInterface = static_cast<IUnknown *>(this);
+            AddRef();
+        } else {
+            *ppInterface = nullptr;
+            hr = E_NOINTERFACE;
+        }
+        return hr;
+    }
+    virtual ULONG AddRef() { return (ULONG)_InterlockedIncrement(&m_lReferenceCount); }
+    virtual ULONG Release() {
+        ULONG uTmpReferenceCount = (ULONG)_InterlockedDecrement(&m_lReferenceCount);
+        if (uTmpReferenceCount == 0) {
+            delete this;
+        }
+        return uTmpReferenceCount;
+    }
     virtual HRESULT GetRegistrationProperties(XAPO_REGISTRATION_PROPERTIES **);
     virtual HRESULT
     IsInputFormatSupported(const WAVEFORMATEX *, const WAVEFORMATEX *, WAVEFORMATEX **);
@@ -85,9 +106,18 @@ public:
     );
     CXAPOParametersBase &operator=(const CXAPOParametersBase &);
     virtual ~CXAPOParametersBase();
-    virtual HRESULT QueryInterface(const _GUID &, void **);
-    virtual ULONG AddRef();
-    virtual ULONG Release();
+    virtual HRESULT QueryInterface(const _GUID &riid, void **ppInterface) {
+        HRESULT hr = S_OK;
+        if (IsEqualGUID(riid, __uuidof(IXAPOParameters))) {
+            *ppInterface = static_cast<IXAPOParameters *>(this);
+            CXAPOBase::AddRef();
+        } else {
+            hr = CXAPOBase::QueryInterface(riid, ppInterface);
+        }
+        return hr;
+    }
+    virtual ULONG AddRef() { return CXAPOBase::AddRef(); }
+    virtual ULONG Release() { return CXAPOBase::Release(); }
     virtual void SetParameters(const void *pParameters, UINT32 ParameterByteSize);
     virtual void GetParameters(void *pParameters, UINT32 ParameterByteSize);
     virtual void OnSetParameters(const void *pParameters, UINT32 ParameterByteSize);

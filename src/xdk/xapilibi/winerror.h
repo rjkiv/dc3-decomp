@@ -27,6 +27,9 @@
 #define ERROR_DISK_CORRUPT              0x0571
 #define ERROR_DEVICE_REMOVED            0x0651
 
+#define S_OK                            (long)0
+
+#define E_NOINTERFACE                   (long)0x80004002
 #define E_SPEECH_UNINITIALIZED          (long)0x80045001
 
 #define E_OUTOFMEMORY                   (long)0x8007000E
