@@ -5,6 +5,7 @@
 #include "obj/Data.h"
 #include "obj/DataFunc.h"
 #include "obj/Object.h"
+#include "obj/Task.h"
 #include "os/DateTime.h"
 #include "rndobj/Tex.h"
 #include "utl/FileStream.h"
@@ -254,3 +255,5 @@ DataNode FreestyleMoveRecorder::OnClearAttempt(DataArray *a) {
     sInstance->ClearFreestyleMoveClip();
     return 0;
 }
+
+void FreestyleMoveRecorder::StopRecording() { unk34 = unk48[unkb8].mNumFrames + 2; }

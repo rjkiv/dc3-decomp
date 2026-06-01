@@ -816,7 +816,7 @@ void HamNavList::Poll() {
         }
     }
 
-    if (mRibbonMode != HamListRibbon::RibbonMode::kRibbonDisengaged) {
+    if (mRibbonMode != HamListRibbon::kRibbonDisengaged) {
         RndOverlay *swipeDirectionOverlay = RndOverlay::Find("swipe_direction", true);
         swipeDirectionOverlay->SetCallback(unk184);
     }
@@ -826,7 +826,7 @@ void HamNavList::Poll() {
         PlayEnterAnim();
     }
 
-    if (mRibbonMode == HamListRibbon::RibbonMode::kRibbonSwell) {
+    if (mRibbonMode == HamListRibbon::kRibbonSwell) {
         if (!InControllerMode() && !InVoiceMode() && !TheLoadMgr.EditMode()) {
             DetermineHighlightedItem();
         }
@@ -938,6 +938,63 @@ void HamNavList::Poll() {
                 }
             }
         }
+    }
+}
+
+void HamNavList::SetSelecting(bool b) {
+    if (unk1e7) {
+        sLastSelectInControllerMode = b;
+        UIListProvider *provider = mListState.Provider();
+        MILO_ASSERT(provider, 0x491);
+        int selected = mListState.Selected();
+        UIList *sublist = mListDirResource->SubList(selected, unk64);
+        Symbol s;
+        if (sublist) {
+            HamNavProvider *navProvider = mNavProvider; // -_-
+            int selectedPos = sublist->SelectedPos() + 1;
+            int wrapShowing = sublist->GetListState().WrapShowing(selectedPos);
+            s = navProvider->DataSymbol(selected, wrapShowing);
+        } else {
+            s = provider->DataSymbol(selected);
+        }
+        SetRibbonMode(HamListRibbon::kRibbonSelect);
+        if (TheGestureMgr && TheGestureMgr->GesturingWithVoice()) {
+            TheGestureMgr->SetGesturingWithVoice(false);
+            if (mListState.IsScrolling()) {
+                unk190.Enter();
+            }
+        }
+        UIComponent::SendSelect(nullptr);
+        bool canSelect = provider->CanSelect(selected);
+        unk1fc = canSelect;
+        unk1f4 = s;
+        unk1f8 = selected;
+
+        NavSelectMsg msg(s, selected, this, canSelect);
+        TheHamProvider->Handle(msg, false);
+        DataNode handle = TheUI->Handle(msg, false);
+
+        if (!mDisableSelectSound) {
+            if (!ShouldSkipSelectSound(handle) && mListRibbonResource) {
+                mListRibbonResource->PlaySelectSound(selected);
+            }
+        }
+
+        if (mListRibbonResource) {
+            RndAnimatable *slideSoundAnim = mListRibbonResource->SlideSoundAnim();
+            if (slideSoundAnim) {
+                slideSoundAnim->SetFrame(1.0f, 1.0f);
+            }
+            mListRibbonResource->SetUnk26C(ShouldSkipSelectAnim(handle));
+        }
+        if (mHeaderRibbonResource) {
+            RndAnimatable *slideSoundAnim = mHeaderRibbonResource->SlideSoundAnim();
+            if (slideSoundAnim) {
+                slideSoundAnim->SetFrame(1.0f, 1.0f);
+            }
+            mHeaderRibbonResource->SetUnk26C(ShouldSkipSelectAnim(handle));
+        }
+        RndAnimatable::Animate(0, 0, 0);
     }
 }
 

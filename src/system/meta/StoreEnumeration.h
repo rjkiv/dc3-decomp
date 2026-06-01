@@ -2,6 +2,7 @@
 #include "meta/StoreEnumeration.h"
 #include "types.h"
 #include "utl/Str.h"
+#include "xdk/win_types.h"
 #include "xdk/xapilibi/xbase.h"
 #include <list>
 
@@ -19,8 +20,10 @@ enum StoreError {
 };
 
 struct EnumProduct {
+public:
+    EnumProduct(EnumProduct const &);
     String unk0;
-    u64 unk4;
+    u64 unk8;
     int unk10;
     int unk14;
 };
@@ -56,7 +59,13 @@ public:
 
     XboxEnumeration(int, std::vector<unsigned long long> *);
 
-    std::vector<unsigned long long> unkc;
+    int mOfferIDCount; // 0xc
+    int *unk10;
+    int *unk14;
     int unk18;
     bool unk1c;
+    XOVERLAPPED unk20;
+    HANDLE mHandle; // 0x3c
+    DWORD unk40;
+    HANDLE mCurOffers; // 0x44
 };

@@ -106,8 +106,8 @@ void UIScreen::LoadPanels() {
             it->mLoaded = false;
         }
     }
-    static Message load_panels("load_panels");
-    HandleType(load_panels);
+    static Message msg("load_panels");
+    HandleType(msg);
 }
 
 void UIScreen::UnloadPanels() {
@@ -136,8 +136,8 @@ bool UIScreen::IsLoaded() const {
     }
 
     // please don't tell me const_cast is what they did lol
-    static Message is_loaded("is_loaded");
-    DataNode result = const_cast<UIScreen *>(this)->HandleType(is_loaded);
+    static Message msg("is_loaded");
+    DataNode result = const_cast<UIScreen *>(this)->HandleType(msg);
     if (result.Type() != kDataUnhandled) {
         return result.Int();
     }
@@ -146,8 +146,8 @@ bool UIScreen::IsLoaded() const {
 }
 
 void UIScreen::Poll() {
-    static Message poll_msg("poll_msg");
-    HandleType(poll_msg);
+    static Message msg("poll_msg");
+    HandleType(msg);
 
     FOREACH (it, mPanelList) {
         if (it->Active() && !it->mPanel->Paused()) {

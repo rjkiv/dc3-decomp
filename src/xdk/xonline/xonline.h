@@ -82,6 +82,14 @@ DWORD XSessionLeaveLocal(
 );
 DWORD XOnlineStartup();
 DWORD XOnlineCleanup();
+DWORD XMarketplaceCreateOfferEnumerator(
+    DWORD dwUserIndex,
+    DWORD dwOfferType,
+    DWORD dwContentCategories,
+    WORD cItem,
+    DWORD *pcbBuffer,
+    HANDLE *phEnum
+);
 DWORD XMarketplaceCreateOfferEnumeratorByOffering(
     DWORD dwUserIndex,
     DWORD cItem,
