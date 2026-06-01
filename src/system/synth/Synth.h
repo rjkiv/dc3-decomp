@@ -124,6 +124,7 @@ public:
     int GetNumMics() const;
     void DrawMeterScale(float &y0);
     void DrawMeter(float &y0, float lvl, float pkLvl, const char *);
+    bool TrackLevels() const { return mTrackLevels; }
 
     template <class T>
     T *Find(const char *name, bool fail = true) {

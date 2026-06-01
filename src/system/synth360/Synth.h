@@ -6,11 +6,12 @@
 #include "synth/FxSend.h"
 #include "synth/Mic.h"
 #include "synth/Synth.h"
-#include "xdk/xaudio2/xaudio2.h"
+#include "xdk/XAUDIO2.h"
 #include "xdk/XHV2.h"
 
 class FxSend360;
 
+// size 0x150
 class Synth360 : public Synth {
 public:
     Synth360();
@@ -50,21 +51,21 @@ private:
     void UpdateDolby();
     void SetupHeadsetSubmixes();
 
-    CriticalSection unkb0;
+    CriticalSection mCritSec; // 0xb0
     std::vector<Mic *> mMics; // 0xd0
     std::vector<IXAudio2SubmixVoice *> unkdc;
-    int unke8;
-    int unkec; // 0xec - IXAudio2*
-    IXAudio2Voice *unkf0;
-    int unkf4;
-    IXAudio2Voice *unkf8;
-    int unkfc;
-    u32 unk100;
+    IXAudio2SourceVoice *unke8; // 0xe8
+    IXAudio2 *unkec; // 0xec
+    IXAudio2MasteringVoice *unkf0; // 0xf0
+    IXAudio2SubmixVoice *unkf4; // 0xf4
+    IXAudio2SubmixVoice *unkf8; // 0xf8
+    IXAudio2Voice *unkfc; // 0xfc - some ixaudiovoice type
+    IUnknown *unk100; // 0x100 - audio reverb*?
     bool unk104;
     bool unk105;
     Timer unk108;
     bool unk138;
-    int unk13c;
+    LevelData **unk13c; // 0x13c
     std::vector<FxSend360 *> unk140;
     bool unk14c;
 };

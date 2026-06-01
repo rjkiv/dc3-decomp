@@ -29,5 +29,6 @@ private:
 class ExternalMicClientMgr {
 public:
     static bool ConnectedForClient(const MicXbox *);
+    static void Associate(int, MicXbox *);
 };
 class ExternalMicClientProxy;

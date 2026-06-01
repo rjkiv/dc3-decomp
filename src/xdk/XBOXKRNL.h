@@ -1,4 +1,5 @@
 #pragma once
+#include "xdk/win_types.h"
 
 // size 0x8
 struct _LIST_ENTRY {
@@ -38,6 +39,23 @@ void RtlInitializeCriticalSection(RTL_CRITICAL_SECTION *);
 void RtlEnterCriticalSection(RTL_CRITICAL_SECTION *);
 void RtlLeaveCriticalSection(RTL_CRITICAL_SECTION *);
 int RtlTryEnterCriticalSection(RTL_CRITICAL_SECTION *);
+
+// huuuuuge shoutout to xenia canary
+enum XCONFIG_USER_AUDIO_FLAGS {
+    // Audio Mode Analog
+    DolbyProLogic = 0x00000001,
+    AnalogMono = 0x00000002,
+    // Audio Mode Digital
+    DigitalStereo = 0x00000000,
+    DolbyDigital = 0x00010000,
+    DolbyDigitalWithWMAPRO = 0x00030000,
+    // Special Flags
+    StereoBypass = 0x00000003,
+    LowLatency = 0x80000000,
+};
+
+VOID XAudioGetSpeakerConfig(LPDWORD pConfig);
+VOID XAudioOverrideSpeakerConfig(DWORD dwConfig);
 
 #ifdef __cplusplus
 }

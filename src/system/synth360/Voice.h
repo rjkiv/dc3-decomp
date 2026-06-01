@@ -85,3 +85,5 @@ private:
     bool unk54;
     PoolVoice mPoolVoice; // 0x58
 };
+
+void TerminateVoiceThread();

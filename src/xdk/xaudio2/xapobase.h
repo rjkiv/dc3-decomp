@@ -59,8 +59,8 @@ public:
         const XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS *pOutputLockedParameters
     );
     virtual void UnlockForProcess();
-    virtual UINT32 CalcInputFrames(UINT32);
-    virtual UINT32 CalcOutputFrames(UINT32);
+    virtual UINT32 CalcInputFrames(UINT32 OutputFrameCount) { return OutputFrameCount; }
+    virtual UINT32 CalcOutputFrames(UINT32 InputFrameCount) { return InputFrameCount; }
 };
 
 class CXAPOParametersBase : public CXAPOBase, public IXAPOParameters { /* Size=0x40 */
