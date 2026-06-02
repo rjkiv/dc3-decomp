@@ -7,7 +7,10 @@ DEFINE_CLSID(CompressionEffect, 443A5BB5, 2BD8, 45FE, AC, E8, 3B, 51, 2D, 6C, BE
 class CompressionEffect {
 public:
     struct Params {
-        Params() : bypass(false) {}
+        Params()
+            : bypass(false), thresholdDB(-6), ratio(1), outputLevel(1), attack(0.005f),
+              release(0.2f), expRatio(1), expAttack(0.99f), expRelease(1.01f),
+              gateThresholdDB(-40) {}
         /** "Bypass the effect and stop it from processing" */
         bool bypass; // 0x0
         /** "threshold (in dB) at which compression is applied". Ranges from -96 to 0 */
