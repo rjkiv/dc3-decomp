@@ -6,6 +6,9 @@
 
 // https://learn.microsoft.com/en-us/windows/win32/api/xaudio2/
 
+// All structures defined in this file use tight field packing
+#pragma pack(push, 1)
+
 struct XAUDIO2_BUFFER { /* Size=0x24 */
     /* 0x0000 */ UINT32 Flags;
     /* 0x0004 */ UINT32 AudioBytes;
@@ -462,3 +465,6 @@ struct IXAudioBatchAllocator : public IXAudioRefCount { /* Size=0x4 */
     IXAudioBatchAllocator();
     IXAudioBatchAllocator &operator=(const IXAudioBatchAllocator &);
 };
+
+// Undo the #pragma pack(push, 1) directive at the top of this file
+#pragma pack(pop)

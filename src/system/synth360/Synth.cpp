@@ -32,6 +32,7 @@
 #include "synth360/FxSend.h"
 #include "synth360/FxSendPitchShift.h"
 #include "synth360/FxSendSynapse.h"
+#include "synth360/HeadsetXferEffect.h"
 #include "synth360/MeterEffect.h"
 #include "synth360/Mic.h"
 #include "synth360/StreamReceiver.h"
@@ -42,6 +43,9 @@
 #include "xdk/XAPILIB.h"
 #include "xdk/XAUDIO2.h"
 #include "xdk/XBOXKRNL.h"
+#include "xdk/win_types.h"
+#include "xdk/xaudio2/xapo.h"
+#include "xdk/xaudio2/xaudio2.h"
 #include "xdk/xaudio2/xaudio2fx.h"
 
 Synth360 *TheXboxSynth;
@@ -437,6 +441,51 @@ void Synth360::UpdateDolby() {
     if ((cfg & flag) != flag) {
         XAudioOverrideSpeakerConfig(flag);
     }
+}
+
+void Synth360::SetupHeadsetSubmixes() {
+    unkdc.resize(4);
+    for (int i = 0; i < 4; i++) {
+        XAUDIO2_EFFECT_DESCRIPTOR desc;
+        desc.pEffect = static_cast<CXAPOBase *>(new HeadsetXferEffect());
+        desc.InitialState = false;
+        desc.OutputChannels = 1;
+        XAUDIO2_EFFECT_CHAIN chain;
+        chain.EffectCount = 1;
+        chain.pEffectDescriptors = &desc;
+        unkec->CreateSubmixVoice(&unkdc[i], 1, 48000, 0, 0, 0, &chain);
+    }
+    // clang-format off
+    std::vector<XAUDIO2_SEND_DESCRIPTOR> audioDescs;
+    XAUDIO2_SEND_DESCRIPTOR audioDesc;
+    audioDesc.Flags = 0;
+    for(int i = 0; i < 4; i++){
+        audioDesc.pOutputVoice = unkdc[i];
+        audioDescs.push_back(audioDesc);
+    }
+    // clang-format on 
+    IXAudio2SourceVoice* v;
+    WAVEFORMATEX wav = { 1, 1, 48000, 96000, 2, 16, 0 };
+    XAUDIO2_VOICE_SENDS sends = { audioDescs.size(), &audioDescs[0] };
+    HRESULT hr = unkec->CreateSourceVoice(&v,&wav,2,2,nullptr,&sends,nullptr);
+    MILO_ASSERT(SUCCEEDED(hr), 0x30A);
+
+    static BYTE sAudioData[0x100];
+    XAUDIO2_BUFFER buffer;
+    buffer.Flags = 0;
+    memset(&buffer.AudioBytes, 0, sizeof(buffer) - sizeof(buffer.Flags)); // terrible
+    buffer.AudioBytes = sizeof(sAudioData);
+    buffer.pAudioData = sAudioData;
+    buffer.PlayBegin = 0;
+    buffer.PlayLength = 0;
+    buffer.LoopBegin = 0;
+    buffer.LoopLength = 0;
+    buffer.LoopCount = 255;
+    buffer.pContext = nullptr;
+    hr = unke8->SubmitSourceBuffer(&buffer, nullptr);
+    MILO_ASSERT(SUCCEEDED(hr), 0x319);
+    hr = unke8->Start(0, 0);
+    MILO_ASSERT(SUCCEEDED(hr), 0x31C);
 }
 
 // defined in Synth360's Synth.cpp
