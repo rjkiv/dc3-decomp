@@ -26,7 +26,7 @@ public:
 protected:
     virtual void InitParams(IXAudio2SubmixVoice *, int) {}
 
-    IXAudio2Voice *mOutputVoice; // 0x4
+    IXAudio2SubmixVoice *mOutputVoice; // 0x4
     std::vector<IXAudio2SubmixVoice *> mVoices; // 0x8
     std::vector<int> unk14; // 0x14
     std::vector<IUnknown *> mFx; // 0x20

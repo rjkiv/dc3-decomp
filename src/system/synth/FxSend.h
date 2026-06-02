@@ -51,6 +51,7 @@ public:
     void SetStage(int);
     bool UpdatesEnabled() const { return mEnableUpdates; }
     SendChannels GetChannels() const { return mChannels; }
+    bool ReverbEnabled() const { return mReverbEnable; }
 
 protected:
     FxSend();
