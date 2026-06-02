@@ -39,8 +39,9 @@ public:
     virtual void EnableLevels(bool);
     virtual void RequirePushToTalk(bool, int);
 
-    IXAudio2Voice *OutputVoice() const { return unkf0; }
-    IXAudio2Voice *UnkF8() const { return unkf8; }
+    IXAudio2Voice *OutputVoice() const { return mOutputVoice; }
+    IXAudio2Voice *ReverbSendVoice() const { return mReverbSendVoice; }
+    IXAudio2 *GetXAudio() const { return mXAudio; }
 
     void SetGlobalReverbPreset(const char *);
     IXAudio2SubmixVoice *GetHeadsetSubmix(int);
@@ -53,20 +54,20 @@ private:
 
     CriticalSection mCritSec; // 0xb0
     std::vector<Mic *> mMics; // 0xd0
-    std::vector<IXAudio2SubmixVoice *> unkdc;
+    std::vector<IXAudio2SubmixVoice *> mHeadsetSubmixes; // 0xdc
     IXAudio2SourceVoice *unke8; // 0xe8
-    IXAudio2 *unkec; // 0xec
-    IXAudio2MasteringVoice *unkf0; // 0xf0
-    IXAudio2SubmixVoice *unkf4; // 0xf4
-    IXAudio2SubmixVoice *unkf8; // 0xf8
+    IXAudio2 *mXAudio; // 0xec
+    IXAudio2MasteringVoice *mOutputVoice; // 0xf0
+    IXAudio2SubmixVoice *mReverbVoice; // 0xf4
+    IXAudio2SubmixVoice *mReverbSendVoice; // 0xf8
     IXAudio2Voice *unkfc; // 0xfc - some ixaudiovoice type
-    IUnknown *unk100; // 0x100 - audio reverb*?
+    IUnknown *mReverbAPO; // 0x100
     bool unk104;
     bool unk105;
-    Timer unk108;
+    Timer unk108; // 0x108
     bool unk138;
     LevelData **unk13c; // 0x13c
-    std::vector<FxSend360 *> unk140;
+    std::vector<FxSend360 *> mFxSends; // 0x140
     bool unk14c;
 };
 

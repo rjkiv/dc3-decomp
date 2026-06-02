@@ -51,8 +51,8 @@
 Synth360 *TheXboxSynth;
 
 Synth360::Synth360()
-    : unke8(0), unkec(0), unkf0(0), unkf4(0), unkf8(0), unkfc(0), unk104(true),
-      unk105(false), unk138(false), unk13c(0), unk14c(false) {}
+    : unke8(0), mXAudio(0), mOutputVoice(0), mReverbVoice(0), mReverbSendVoice(0),
+      unkfc(0), unk104(true), unk105(false), unk138(false), unk13c(0), unk14c(false) {}
 
 BEGIN_HANDLERS(Synth360)
     HANDLE_ACTION(set_headset_target, Voice::sHeadsetTarget = _msg->Int(2))
@@ -67,8 +67,8 @@ void Synth360::PreInit() {
         mLevelData.push_back(LevelData(levelNames[i]));
     }
     // using processors 3, 4, 5 and 6 for xaudio2
-    XAudio2Create(&unkec, 0, 0x3C);
-    unkec->CreateMasteringVoice(&unkf0, 0, 0, 0, 0, nullptr);
+    XAudio2Create(&mXAudio, 0, 0x3C);
+    mXAudio->CreateMasteringVoice(&mOutputVoice, 0, 0, 0, 0, nullptr);
 
     XAUDIO2_EFFECT_DESCRIPTOR effectDescs[2];
     effectDescs[0].pEffect =
@@ -84,8 +84,8 @@ void Synth360::PreInit() {
 
     XAUDIO2_EFFECT_CHAIN effectChain = { 2, effectDescs };
 
-    if (unkf0) {
-        unkf0->SetEffectChain(&effectChain);
+    if (mOutputVoice) {
+        mOutputVoice->SetEffectChain(&effectChain);
     }
 
     DataArray *limiterCfg = SystemConfig("synth", "limiter");
@@ -105,8 +105,8 @@ void Synth360::PreInit() {
     p.expAttack = 0.99f;
     p.expRelease = 1.01f;
     p.gateThresholdDB = -40;
-    if (unkf0) {
-        unkf0->GetEffectParameters(0, &p, sizeof(p));
+    if (mOutputVoice) {
+        mOutputVoice->GetEffectParameters(0, &p, sizeof(p));
     }
     p.thresholdDB = threshold;
     p.ratio = ratio;
@@ -114,23 +114,25 @@ void Synth360::PreInit() {
     p.release = releaseMs;
     p.gateThresholdDB = -140;
     p.outputLevel = (1 - (1 / ratio)) * threshold + outputDb;
-    if (unkf0) {
-        unkf0->SetEffectParameters(0, &p, sizeof(p), 0);
+    if (mOutputVoice) {
+        mOutputVoice->SetEffectParameters(0, &p, sizeof(p), 0);
     }
-    if (unkec && unkf0) {
-        XAudio2CreateReverb(&unk100);
+    if (mXAudio && mOutputVoice) {
+        XAudio2CreateReverb(&mReverbAPO);
         effectChain.pEffectDescriptors = effectDescs;
-        effectDescs[0].pEffect = unk100;
+        effectDescs[0].pEffect = mReverbAPO;
         effectDescs[0].InitialState = true;
         effectDescs[0].OutputChannels = 2;
         effectChain.EffectCount = 1;
-        unkec->CreateSubmixVoice(&unkf4, 2, 48000, 0, 0x8000, nullptr, &effectChain);
+        mXAudio->CreateSubmixVoice(
+            &mReverbVoice, 2, 48000, 0, 0x8000, nullptr, &effectChain
+        );
         // clang-format off
         {
-            XAUDIO2_SEND_DESCRIPTOR desc = { 0, unkf4 };
+            XAUDIO2_SEND_DESCRIPTOR desc = { 0, mReverbVoice };
             XAUDIO2_VOICE_SENDS sends = { 1, &desc };
-            unkec->CreateSubmixVoice(&unkf8, 6, 48000, 0, 0x7FFF, &sends, nullptr);
-            unkf4->SetVolume(4, 0);
+            mXAudio->CreateSubmixVoice(&mReverbSendVoice, 6, 48000, 0, 0x7FFF, &sends, nullptr);
+            mReverbVoice->SetVolume(4, 0);
         }
         String env;
         DataArray *cfg = SystemConfig("synth");
@@ -191,8 +193,8 @@ bool Synth360::IsUsingDolby() const {
 }
 
 void Synth360::Terminate() {
-    for (int i = 0; i < unk140.size(); i++) {
-        unk140[i]->CleanChain();
+    for (int i = 0; i < mFxSends.size(); i++) {
+        mFxSends[i]->CleanChain();
     }
     TerminateVoiceThread();
     TheXboxSynth = nullptr;
@@ -202,33 +204,33 @@ void Synth360::Terminate() {
     if (!mMics.empty()) {
         MicManagerXbox::GetInstance()->Shutdown();
     }
-    if (!unkdc.empty()) {
+    if (!mHeadsetSubmixes.empty()) {
         unke8->Stop(0, 0);
         unke8->DestroyVoice();
         unke8 = nullptr;
-        for (int i = 0; i < unkdc.size(); i++) {
-            unkdc[i]->DestroyVoice();
+        for (int i = 0; i < mHeadsetSubmixes.size(); i++) {
+            mHeadsetSubmixes[i]->DestroyVoice();
         }
-        unkdc.clear();
+        mHeadsetSubmixes.clear();
     }
-    if (unkf8) {
-        unkf8->DestroyVoice();
-        unkf8 = nullptr;
+    if (mReverbSendVoice) {
+        mReverbSendVoice->DestroyVoice();
+        mReverbSendVoice = nullptr;
     }
-    if (unkf4) {
-        unkf4->DestroyVoice();
-        unkf4 = nullptr;
+    if (mReverbVoice) {
+        mReverbVoice->DestroyVoice();
+        mReverbVoice = nullptr;
     }
     if (unkfc) {
         unkfc->DestroyVoice();
         unkfc = nullptr;
     }
-    if (unkf0) {
-        unkf0->DestroyVoice();
-        unkf0 = nullptr;
+    if (mOutputVoice) {
+        mOutputVoice->DestroyVoice();
+        mOutputVoice = nullptr;
     }
-    if (unkec) {
-        unkec->Release();
+    if (mXAudio) {
+        mXAudio->Release();
     }
     RELEASE(unk13c);
 }
@@ -343,11 +345,11 @@ void Synth360::NewStreamFile(const char *cc, File *&file, Symbol &type) {
 }
 
 void Synth360::EnableLevels(bool enable) {
-    if (unkf0) {
+    if (mOutputVoice) {
         if (enable) {
-            unkf0->EnableEffect(0, 0);
+            mOutputVoice->EnableEffect(0, 0);
         } else {
-            unkf0->DisableEffect(0, 0);
+            mOutputVoice->DisableEffect(0, 0);
         }
     }
 }
@@ -358,18 +360,18 @@ void Synth360::RequirePushToTalk(bool b, int i) {
     }
 }
 
-void Synth360::AddFxSend(FxSend360 *fx) { unk140.push_back(fx); }
+void Synth360::AddFxSend(FxSend360 *fx) { mFxSends.push_back(fx); }
 
 void Synth360::RemoveFxSend(FxSend360 *fx) {
-    auto *findFx = std::find(unk140.begin(), unk140.end(), fx);
-    if (findFx != unk140.end()) {
-        unk140.erase(findFx);
+    auto *findFx = std::find(mFxSends.begin(), mFxSends.end(), fx);
+    if (findFx != mFxSends.end()) {
+        mFxSends.erase(findFx);
     }
 }
 
 IXAudio2SubmixVoice *Synth360::GetHeadsetSubmix(int i) {
-    if (!unkdc.empty() && i != -1) {
-        return unkdc[i];
+    if (!mHeadsetSubmixes.empty() && i != -1) {
+        return mHeadsetSubmixes[i];
     }
     return nullptr;
 }
@@ -425,10 +427,10 @@ void Synth360::SetGlobalReverbPreset(const char *name) {
         }
         ReverbConvertI3DL2ToNative(&sConfigs[idx].preset, &native);
     } else {
-        unkf4->GetEffectParameters(0, &native, sizeof(native));
+        mReverbVoice->GetEffectParameters(0, &native, sizeof(native));
         native.DecayTime = 1.6f;
     }
-    unkf4->SetEffectParameters(0, &native, sizeof(native), 0);
+    mReverbVoice->SetEffectParameters(0, &native, sizeof(native), 0);
 }
 
 void Synth360::UpdateDolby() {
@@ -444,7 +446,7 @@ void Synth360::UpdateDolby() {
 }
 
 void Synth360::SetupHeadsetSubmixes() {
-    unkdc.resize(4);
+    mHeadsetSubmixes.resize(4);
     for (int i = 0; i < 4; i++) {
         XAUDIO2_EFFECT_DESCRIPTOR desc;
         desc.pEffect = static_cast<CXAPOBase *>(new HeadsetXferEffect());
@@ -453,21 +455,21 @@ void Synth360::SetupHeadsetSubmixes() {
         XAUDIO2_EFFECT_CHAIN chain;
         chain.EffectCount = 1;
         chain.pEffectDescriptors = &desc;
-        unkec->CreateSubmixVoice(&unkdc[i], 1, 48000, 0, 0, 0, &chain);
+        mXAudio->CreateSubmixVoice(&mHeadsetSubmixes[i], 1, 48000, 0, 0, 0, &chain);
     }
     // clang-format off
     std::vector<XAUDIO2_SEND_DESCRIPTOR> audioDescs;
     XAUDIO2_SEND_DESCRIPTOR audioDesc;
     audioDesc.Flags = 0;
     for(int i = 0; i < 4; i++){
-        audioDesc.pOutputVoice = unkdc[i];
+        audioDesc.pOutputVoice = mHeadsetSubmixes[i];
         audioDescs.push_back(audioDesc);
     }
     // clang-format on 
     IXAudio2SourceVoice* v;
     WAVEFORMATEX wav = { 1, 1, 48000, 96000, 2, 16, 0 };
     XAUDIO2_VOICE_SENDS sends = { audioDescs.size(), &audioDescs[0] };
-    HRESULT hr = unkec->CreateSourceVoice(&v,&wav,2,2,nullptr,&sends,nullptr);
+    HRESULT hr = mXAudio->CreateSourceVoice(&v,&wav,2,2,nullptr,&sends,nullptr);
     MILO_ASSERT(SUCCEEDED(hr), 0x30A);
 
     static BYTE sAudioData[0x100];

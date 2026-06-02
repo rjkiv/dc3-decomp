@@ -137,7 +137,7 @@ void Voice::Init(bool b1) {
         if (mReverb) {
             XAUDIO2_SEND_DESCRIPTOR desc2;
             desc2.Flags = 0;
-            desc2.pOutputVoice = TheXboxSynth->UnkF8();
+            desc2.pOutputVoice = TheXboxSynth->ReverbSendVoice();
             descs.push_back(desc2);
             unk48 = true;
         }
