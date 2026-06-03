@@ -215,3 +215,51 @@ void SendDebugDataPoint(
     point.AddPair(name3, value3);
     TheDataPointMgr.RecordDebugDataPoint(point);
 }
+
+template <class N1, class V1, class N2, class V2, class N3, class V3, class N4, class V4>
+void SendDebugDataPoint(
+    const char *type,
+    // clang-format off: looks nicer this way
+    N1 name1, V1 value1,
+    N2 name2, V2 value2,
+    N3 name3, V3 value3,
+    N4 name4, V4 value4
+    // clang-format on
+) {
+    DataPoint point(type);
+    point.AddPair(name1, value1);
+    point.AddPair(name2, value2);
+    point.AddPair(name3, value3);
+    point.AddPair(name4, value4);
+    TheDataPointMgr.RecordDebugDataPoint(point);
+}
+
+template <
+    class N1,
+    class V1,
+    class N2,
+    class V2,
+    class N3,
+    class V3,
+    class N4,
+    class V4,
+    class N5,
+    class V5>
+void SendDebugDataPoint(
+    const char *type,
+    // clang-format off: looks nicer this way
+    N1 name1, V1 value1,
+    N2 name2, V2 value2,
+    N3 name3, V3 value3,
+    N4 name4, V4 value4,
+    N5 name5, V5 value5
+    // clang-format on
+) {
+    DataPoint point(type);
+    point.AddPair(name1, value1);
+    point.AddPair(name2, value2);
+    point.AddPair(name3, value3);
+    point.AddPair(name4, value4);
+    point.AddPair(name5, value5);
+    TheDataPointMgr.RecordDebugDataPoint(point);
+}
