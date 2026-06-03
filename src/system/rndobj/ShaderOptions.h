@@ -67,9 +67,9 @@ struct ShaderOptions {
 };
 
 void InitShaderOptions();
-const char *ShaderTypeName(ShaderType);
-ShaderType ShaderTypeFromName(const char *);
-const char *ShaderSourcePath(const char *);
-const char *ShaderCachedPath(const char *, u64, bool);
-bool IsPostProcShaderType(ShaderType);
-void ShaderMakeOptionsString(ShaderType, const ShaderOptions &, String &);
+const char *ShaderTypeName(ShaderType shader);
+ShaderType ShaderTypeFromName(const char *name);
+const char *ShaderSourcePath(const char *file);
+const char *ShaderCachedPath(const char *file, u64 flags, bool pixelShader);
+bool IsPostProcShaderType(ShaderType shader);
+void ShaderMakeOptionsString(ShaderType shader, const ShaderOptions &options, String &str);

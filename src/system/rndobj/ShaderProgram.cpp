@@ -87,16 +87,20 @@ void RndShaderProgram::CopyErrorShader(ShaderType shader, const ShaderOptions &o
 }
 
 bool RndShaderProgram::Cache(
-    ShaderType t, const ShaderOptions &opts, RndShaderBuffer *buf1, RndShaderBuffer *buf2
+    ShaderType t,
+    const ShaderOptions &opts,
+    RndShaderBuffer *bufVertex,
+    RndShaderBuffer *bufPixel
 ) {
     if (!mCached) {
         mCached = true;
         Platform p = TheLoadMgr.GetPlatform();
         if (p != kPlatformNone && p != kPlatformWii && GetGfxMode() != kOldGfx) {
             PhysMemTypeTracker tracker("D3D(phys):Shader");
-            if (buf1 && buf1->Size() != 0 && buf2 && buf2->Size() != 0) {
-                CreateVertexShader(*buf1);
-                CreatePixelShader(*buf2, t);
+            if (bufVertex && bufVertex->Size() != 0 && bufPixel
+                && bufPixel->Size() != 0) {
+                CreateVertexShader(*bufVertex);
+                CreatePixelShader(*bufPixel, t);
                 return true;
             } else if (!TheShaderMgr.CacheShaders()) {
                 CopyErrorShader(t, opts);
@@ -173,20 +177,20 @@ bool RndShaderProgram::Cache(
                             PlatformSymbol(p)
                         );
                     }
-                    if (!MainThread() || !Compile(t, opts, buf1, buf2)) {
+                    if (!MainThread() || !Compile(t, opts, bufVertex, bufPixel)) {
                         CopyErrorShader(t, opts);
                         return false;
                     }
-                    SaveShaderBuffer(vertex, *buf1);
-                    SaveShaderBuffer(pixel, *buf2);
+                    SaveShaderBuffer(vertex, *bufVertex);
+                    SaveShaderBuffer(pixel, *bufPixel);
                 } else {
-                    LoadShaderBuffer(vertex, buf1);
-                    LoadShaderBuffer(pixel, buf2);
+                    LoadShaderBuffer(vertex, bufVertex);
+                    LoadShaderBuffer(pixel, bufPixel);
                 }
-                CreateVertexShader(*buf1);
-                CreatePixelShader(*buf2, t);
-                delete buf1;
-                delete buf2;
+                CreateVertexShader(*bufVertex);
+                CreatePixelShader(*bufPixel, t);
+                delete bufVertex;
+                delete bufPixel;
             }
         }
     }

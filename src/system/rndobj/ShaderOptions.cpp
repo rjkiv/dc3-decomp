@@ -81,14 +81,14 @@ const char *ShaderSourcePath(const char *file) {
     }
 }
 
-const char *ShaderCachedPath(const char *file, u64 i2, bool b3) {
+const char *ShaderCachedPath(const char *file, u64 flags, bool pixelShader) {
     Platform plat = TheLoadMgr.GetPlatform();
     return MakeString(
         "%s/gen/%s_%llx_%s.%s_%s",
         FileGetPath(file),
         FileGetBase(file),
-        i2,
-        b3 ? "ps" : "vs",
+        flags,
+        pixelShader ? "ps" : "vs",
         FileGetExt(file),
         PlatformSymbol(plat)
     );

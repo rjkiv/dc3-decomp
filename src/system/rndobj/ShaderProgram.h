@@ -30,7 +30,12 @@ public:
     virtual void CreatePixelShader(RndShaderBuffer &, ShaderType) = 0;
 
     void LoadShaderBuffer(BinStream &, int, RndShaderBuffer *&);
-    bool Cache(ShaderType, const ShaderOptions &, RndShaderBuffer *, RndShaderBuffer *);
+    bool Cache(
+        ShaderType type,
+        const ShaderOptions &options,
+        RndShaderBuffer *bufVertex,
+        RndShaderBuffer *bufPixel
+    );
     bool Cached() const { return mCached; }
 
     static unsigned long InitModTime();
