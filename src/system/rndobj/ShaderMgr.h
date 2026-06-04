@@ -23,9 +23,10 @@ enum PShaderConstant {
 
 class RndShaderMgr {
 public:
+    // A binary search tree for a particular shader type.
     struct ShaderTree {
-        ShaderType shaderType;
-        RndShaderProgram *obj; // fix type
+        ShaderType shaderType; // the shader type
+        RndShaderProgram *tree; // the entrypoint for the BST
     };
     RndShaderMgr();
     virtual ~RndShaderMgr() {}
@@ -68,8 +69,8 @@ public:
     bool ShowShaderErrors() const { return mShowShaderErrors; }
     bool Unk18() const { return unk18; }
     bool ShowMetaMatErrors() const { return mShowMetaMatErrors; }
-    int Unk10() const { return unk10; }
-    bool UseAO() const { return unkc; }
+    int Unk10() const { return mNumBones; }
+    bool UseAO() const { return mHasAOCalc; }
     bool Unk24() const { return unk24; }
     bool AllowPerPixel() const { return mAllowPerPixel; }
     bool Unk3a() const { return unk3a; }
@@ -82,15 +83,16 @@ public:
     void SetUnk2f(bool b) { unk2f = b; }
 
 protected:
-    virtual void LoadShaders(const char *);
+    virtual void LoadShaders(const char *filename);
     virtual void LoadShaderFile(FileStream &);
     virtual RndShaderProgram *NewShaderProgram() = 0;
 
     void ShaderPoolAlloc(int);
 
+    // The collection of ShaderTrees; 1 ShaderTree per ShaderType.
     std::list<ShaderTree> mShaderTrees; // 0x4
-    bool unkc;
-    int unk10;
+    bool mHasAOCalc; // 0xc
+    int mNumBones; // 0x10
     int unk14;
     bool unk18;
     int unk1c;

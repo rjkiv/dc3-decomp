@@ -21,9 +21,9 @@ RndShaderMgr::RndShaderMgr()
 
 void RndShaderMgr::PreInit() {
     if (!unk6d) {
-        unkc = 0;
+        mHasAOCalc = 0;
         unk6d = true;
-        unk10 = 0;
+        mNumBones = 0;
         unk14 = 1;
         unk18 = 0;
         unk1c = 0;
@@ -88,26 +88,48 @@ void RndShaderMgr::Terminate() {
 }
 
 void RndShaderMgr::UpdateCache(const Transform &xfm, int idx) {
-    float *cacheIdx = &mConstantCache[idx];
-    cacheIdx[0] = xfm.m.x.x;
-    cacheIdx[1] = xfm.m.y.x;
-    cacheIdx[2] = xfm.m.z.x;
-    cacheIdx[3] = xfm.v.x;
-    cacheIdx[4] = xfm.m.x.y;
-    cacheIdx[5] = xfm.m.y.y;
-    cacheIdx[6] = xfm.m.z.y;
-    cacheIdx[7] = xfm.v.y;
-    cacheIdx[8] = xfm.m.x.z;
-    cacheIdx[9] = xfm.m.y.z;
-    cacheIdx[10] = xfm.m.z.z;
-    cacheIdx[11] = xfm.v.z;
+    // i put this here because the asm indexes by increments of 0x30
+    struct ShaderCache {
+        float xx, yx, zx, vx;
+        float xy, yy, zy, vy;
+        float xz, yz, zz, vz;
+    };
+    ShaderCache *cacheArr = (ShaderCache *)mConstantCache;
+    ShaderCache *cacheIdx = &cacheArr[idx];
+
+    // yeah i hate this too don't you worry
+    float vx = xfm.v.x;
+    float xx = xfm.m.x.x;
+    float yx = xfm.m.y.x;
+    float zx = xfm.m.z.x;
+    float vy = xfm.v.y;
+    float xy = xfm.m.x.y;
+    float yy = xfm.m.y.y;
+    float zy = xfm.m.z.y;
+    float vz = xfm.v.z;
+    float xz = xfm.m.x.z;
+    float yz = xfm.m.y.z;
+    float zz = xfm.m.z.z;
+
+    cacheIdx->xx = xx;
+    cacheIdx->yx = yx;
+    cacheIdx->zx = zx;
+    cacheIdx->vx = vx;
+    cacheIdx->xy = xy;
+    cacheIdx->yy = yy;
+    cacheIdx->zy = zy;
+    cacheIdx->vy = vy;
+    cacheIdx->xz = xz;
+    cacheIdx->yz = yz;
+    cacheIdx->zz = zz;
+    cacheIdx->vz = vz;
 }
 
 void RndShaderMgr::ShaderPoolAlloc(int i) { unk5c = i; }
 
 void RndShaderMgr::SetMeshInfo(int i, bool b) {
-    unk10 = i;
-    unkc = b;
+    mNumBones = i;
+    mHasAOCalc = b;
 }
 
 void RndShaderMgr::SetShaderErrorDisplay(bool disp) { mDisplayShaderError = disp; }
@@ -149,17 +171,18 @@ void RndShaderMgr::LoadShaders(const char *filename) {
 }
 
 void RndShaderMgr::SetTransform(const Transform &xfm) {
-    unk10 = 0;
+    mNumBones = 0;
     SetVConstant4x3((VShaderConstant)0x5c, Hmx::Matrix4(xfm));
 }
 
 void RndShaderMgr::Invalidate(ShaderType t) {
+    bool invalid = t == kMaxShaderTypes;
     for (std::list<ShaderTree>::iterator it = mShaderTrees.begin();
          it != mShaderTrees.end();) {
-        if (it == mShaderTrees.begin() && it->shaderType != t) {
+        if (!invalid && it->shaderType != t) {
             ++it;
         } else {
-            delete it->obj;
+            delete it->tree;
             it = mShaderTrees.erase(it);
         }
     }
@@ -182,23 +205,26 @@ void RndShaderMgr::LoadShaderFile(FileStream &fs) {
         Symbol name;
         fs >> name;
         ShaderType shaderType = ShaderTypeFromName(name.Str());
-        int alloc;
+        int alloc; // prolly not the best var name
         fs >> alloc;
         unk5c = alloc;
         while (alloc--) {
-            u64 u50;
-            fs >> u50;
-            RndShaderProgram &program = FindShader(shaderType, ShaderOptions(u50));
-            int i6c;
-            fs >> i6c;
-            RndShaderBuffer *buf1;
-            program.LoadShaderBuffer(fs, i6c, buf1);
-            fs >> i6c;
-            RndShaderBuffer *buf2;
-            program.LoadShaderBuffer(fs, i6c, buf2);
-            program.Cache(shaderType, ShaderOptions(u50), buf1, buf2);
-            delete buf1;
-            delete buf2;
+            u64 shaderFlags;
+            fs >> shaderFlags;
+            RndShaderProgram &program =
+                FindShader(shaderType, ShaderOptions(shaderFlags));
+            int bufferSize;
+            fs >> bufferSize;
+            RndShaderBuffer *vertexBuffer;
+            program.LoadShaderBuffer(fs, bufferSize, vertexBuffer);
+            fs >> bufferSize;
+            RndShaderBuffer *pixelBuffer;
+            program.LoadShaderBuffer(fs, bufferSize, pixelBuffer);
+            program.Cache(
+                shaderType, ShaderOptions(shaderFlags), vertexBuffer, pixelBuffer
+            );
+            delete vertexBuffer;
+            delete pixelBuffer;
             RndSplasherPoll();
         }
     }
@@ -229,16 +255,40 @@ void *RndShaderMgr::AllocShader() {
 }
 
 RndShaderProgram &RndShaderMgr::FindShader(ShaderType t, const ShaderOptions &opts) {
-    for (std::list<ShaderTree>::iterator it = mShaderTrees.begin();
-         it != mShaderTrees.end() && it->shaderType != t;
-         ++it) {
-        // more stuff here
+    u64 flags = opts.flags;
+    FOREACH (it, mShaderTrees) {
+        if (it->shaderType == t) {
+            RndShaderProgram *p = it->tree;
+            while (true) {
+                if (flags < p->mFlags) {
+                    if (p->mLeft) {
+                        p = p->mLeft;
+                    } else {
+                        RndShaderProgram *ret = NewShaderProgram();
+                        p->mLeft = ret;
+                        ret->mFlags = flags;
+                        return *ret;
+                    }
+                } else if (flags > p->mFlags) {
+                    if (p->mRight) {
+                        p = p->mRight;
+                    } else {
+                        RndShaderProgram *ret = NewShaderProgram();
+                        p->mRight = ret;
+                        ret->mFlags = flags;
+                        return *ret;
+                    }
+                } else {
+                    return *p;
+                }
+            }
+        }
     }
     ShaderTree tree;
     tree.shaderType = t;
     RndShaderProgram *p = NewShaderProgram();
-    p->unk8 = opts.flags;
-    tree.obj = p;
+    p->mFlags = flags;
+    tree.tree = p;
     if (t == kStandardShader) {
         mShaderTrees.push_front(tree);
     } else {
