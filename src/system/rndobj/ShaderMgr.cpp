@@ -257,6 +257,7 @@ void *RndShaderMgr::AllocShader() {
 RndShaderProgram &RndShaderMgr::FindShader(ShaderType t, const ShaderOptions &opts) {
     u64 flags = opts.flags;
     FOREACH (it, mShaderTrees) {
+        // we found the shader, traverse through its tree
         if (it->shaderType == t) {
             RndShaderProgram *p = it->tree;
             while (true) {
@@ -284,11 +285,13 @@ RndShaderProgram &RndShaderMgr::FindShader(ShaderType t, const ShaderOptions &op
             }
         }
     }
+    // we did not find the shader, create a tree entry for it
     ShaderTree tree;
     tree.shaderType = t;
     RndShaderProgram *p = NewShaderProgram();
     p->mFlags = flags;
     tree.tree = p;
+    // we wanna prioritize standard shaders
     if (t == kStandardShader) {
         mShaderTrees.push_front(tree);
     } else {

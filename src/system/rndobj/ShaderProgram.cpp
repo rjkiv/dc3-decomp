@@ -33,8 +33,8 @@ void RndShaderProgram::LoadShaderBuffer(
     bs.Read(buffer->Storage(), size);
 }
 
-void RndShaderProgram::LoadShaderBuffer(const char *cc, RndShaderBuffer *&buffer) {
-    FileStream stream(cc, FileStream::kReadNoArk, true);
+void RndShaderProgram::LoadShaderBuffer(const char *file, RndShaderBuffer *&buffer) {
+    FileStream stream(file, FileStream::kReadNoArk, true);
     LoadShaderBuffer(stream, stream.Size(), buffer);
 }
 

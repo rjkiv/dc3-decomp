@@ -8,6 +8,8 @@
 #include "xdk/XAPILIB.h"
 #include "xdk/d3dx9/d3dx9mesh.h"
 
+// Basically a wrapper around an ID3DXBuffer.
+// https://learn.microsoft.com/en-us/windows/win32/direct3d9/id3dxbuffer
 class DxShaderBuffer : public RndShaderBuffer {
 public:
     DxShaderBuffer() : mBuffer(0) {}
@@ -44,6 +46,7 @@ private:
     ID3DXBuffer *mBuffer; // 0x4
 };
 
+// https://learn.microsoft.com/en-us/windows/win32/direct3d9/id3dxinclude
 class DxShaderInclude : public ID3DXInclude {
 public:
     virtual HRESULT Open(

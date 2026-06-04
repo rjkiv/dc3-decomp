@@ -42,9 +42,9 @@ DxShader::~DxShader() {
     }
 }
 
-void DxShader::Select(bool b1) {
+void DxShader::Select(bool vertexOnly) {
     D3DDevice_SetVertexShader(TheDxRnd.Device(), mVShader);
-    D3DDevice_SetPixelShader(TheDxRnd.Device(), b1 ? nullptr : mPShader);
+    D3DDevice_SetPixelShader(TheDxRnd.Device(), vertexOnly ? nullptr : mPShader);
     if (TheRnd.Unk140()) {
         float min, max;
         EstimatedCost(min, max);
@@ -98,10 +98,15 @@ void DxShader::EstimatedCost(float &min, float &max) {
     max = mMaxOverall;
 }
 
-RndShaderBuffer *DxShader::NewBuffer(unsigned int ui) { return new DxShaderBuffer(ui); }
+RndShaderBuffer *DxShader::NewBuffer(unsigned int numBytes) {
+    return new DxShaderBuffer(numBytes);
+}
 
 bool DxShader::Compile(
-    ShaderType s, const ShaderOptions &opts, RndShaderBuffer *&buf1, RndShaderBuffer *&buf2
+    ShaderType s,
+    const ShaderOptions &opts,
+    RndShaderBuffer *&bufVertex,
+    RndShaderBuffer *&bufPixel
 ) {
     std::vector<ShaderMacro> defines;
     opts.GenerateMacros(s, defines);
@@ -117,7 +122,7 @@ bool DxShader::Compile(
         < 0) {
         return false;
     } else {
-        buf1 = new DxShaderBuffer();
+        bufVertex = new DxShaderBuffer();
         defines[0].Value = "0";
         HRESULT vRes = D3DXCompileShaderExA(
             data,
