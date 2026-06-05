@@ -1,6 +1,7 @@
 #pragma once
 #include "d3d9types.h"
 #include "d3d9caps.h"
+#include "xdk/xapilibi/winerror.h"
 
 // Larger struct definitions and functions go here.
 
@@ -473,7 +474,10 @@ struct D3DDevice { /* Size=0x2b00 */
         UINT Pool,
         D3DVertexBuffer **ppVertexBuffer,
         HANDLE *pSharedHandle
-    );
+    ) {
+        *ppVertexBuffer = D3DDevice_CreateVertexBuffer(Length, Usage, Pool);
+        return *ppVertexBuffer ? ERROR_SUCCESS : E_OUTOFMEMORY;
+    }
     HRESULT CreateIndexBuffer(
         UINT Length,
         DWORD Usage,
@@ -481,7 +485,10 @@ struct D3DDevice { /* Size=0x2b00 */
         UINT Pool,
         D3DIndexBuffer **ppIndexBuffer,
         HANDLE *pSharedHandle
-    );
+    ) {
+        *ppIndexBuffer = D3DDevice_CreateIndexBuffer(Length, Usage, Format, Pool);
+        return *ppIndexBuffer ? ERROR_SUCCESS : E_OUTOFMEMORY;
+    }
     HRESULT CreateRenderTarget(
         UINT Width,
         UINT Height,
@@ -603,7 +610,12 @@ struct D3DDevice { /* Size=0x2b00 */
     );
     HRESULT SetStreamSource(
         UINT StreamNumber, D3DVertexBuffer *pStreamData, UINT OffsetInBytes, UINT Stride
-    );
+    ) {
+        D3DDevice_SetStreamSource(
+            this, StreamNumber, pStreamData, OffsetInBytes, Stride, 1
+        );
+        return ERROR_SUCCESS;
+    }
     HRESULT GetStreamSource(
         UINT StreamNumber,
         D3DVertexBuffer **ppStreamData,
@@ -1323,11 +1335,11 @@ struct D3DVertexBuffer : public D3DResource { /* Size=0x20 */
 
     HRESULT Lock(UINT OffsetToLock, UINT SizeToLock, void **ppbData, DWORD Flags) {
         *ppbData = D3DVertexBuffer_Lock(this, OffsetToLock, SizeToLock, Flags);
-        return 0;
+        return ERROR_SUCCESS;
     }
     HRESULT Unlock() {
         D3DVertexBuffer_Unlock(this);
-        return 0;
+        return ERROR_SUCCESS;
     }
     // needs a definition
     HRESULT AsyncLock(
@@ -1335,7 +1347,7 @@ struct D3DVertexBuffer : public D3DResource { /* Size=0x20 */
     );
     HRESULT GetDesc(D3DVERTEXBUFFER_DESC *pDesc) {
         D3DVertexBuffer_GetDesc(this, pDesc);
-        return 0;
+        return ERROR_SUCCESS;
     }
 };
 
