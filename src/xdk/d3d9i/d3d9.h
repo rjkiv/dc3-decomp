@@ -636,15 +636,26 @@ struct D3DDevice { /* Size=0x2b00 */
         return S_OK;
     }
     HRESULT GetFVF(DWORD *pFVF);
-    HRESULT CreateVertexShader(const DWORD *pFunction, D3DVertexShader **ppShader);
-    HRESULT SetVertexShader(D3DVertexShader *pShader);
+    HRESULT CreateVertexShader(const DWORD *pFunction, D3DVertexShader **ppShader) {
+        *ppShader = D3DDevice_CreateVertexShader(pFunction);
+        return *ppShader ? S_OK : E_OUTOFMEMORY;
+    }
+    HRESULT SetVertexShader(D3DVertexShader *pShader) {
+        D3DDevice_SetVertexShader(this, pShader);
+        return S_OK;
+    }
     HRESULT GetVertexShader(D3DVertexShader **ppShader);
     HRESULT SetVertexShaderConstantB(
         UINT StartRegister, const BOOL *pConstantData, UINT BoolCount
     );
     HRESULT SetVertexShaderConstantF(
         UINT StartRegister, const float *pConstantData, UINT Vector4fCount
-    );
+    ) {
+        D3DDevice_SetVertexShaderConstantF(
+            this, StartRegister, pConstantData, Vector4fCount
+        );
+        return S_OK;
+    }
     HRESULT SetVertexShaderConstantI(
         UINT StartRegister, const int *pConstantData, UINT Vector4iCount
     );
@@ -676,8 +687,14 @@ struct D3DDevice { /* Size=0x2b00 */
         return S_OK;
     }
     HRESULT GetIndices(D3DIndexBuffer **ppIndexData);
-    HRESULT CreatePixelShader(const DWORD *pFunction, D3DPixelShader **ppShader);
-    HRESULT SetPixelShader(D3DPixelShader *pShader);
+    HRESULT CreatePixelShader(const DWORD *pFunction, D3DPixelShader **ppShader) {
+        *ppShader = D3DDevice_CreatePixelShader(pFunction);
+        return *ppShader ? S_OK : E_OUTOFMEMORY;
+    }
+    HRESULT SetPixelShader(D3DPixelShader *pShader) {
+        D3DDevice_SetPixelShader(this, pShader);
+        return S_OK;
+    }
     HRESULT GetPixelShader(D3DPixelShader **ppShader);
     HRESULT
     SetPixelShaderConstantB(UINT StartRegister, const BOOL *pConstantData, UINT BoolCount);

@@ -45,8 +45,8 @@ DxShader::~DxShader() {
 }
 
 void DxShader::Select(bool vertexOnly) {
-    D3DDevice_SetVertexShader(TheDxRnd.Device(), mVShader);
-    D3DDevice_SetPixelShader(TheDxRnd.Device(), vertexOnly ? nullptr : mPShader);
+    TheDxRnd.Device()->SetVertexShader(mVShader);
+    TheDxRnd.Device()->SetPixelShader(vertexOnly ? nullptr : mPShader);
     if (TheRnd.ShowShaderCost()) {
         float min, max;
         EstimatedCost(min, max);
@@ -70,9 +70,9 @@ void DxShader::Copy(const RndShaderProgram &src) {
     DX_RELEASE(mPShader);
     const DxShader &dxSrc = static_cast<const DxShader &>(src);
     mVShader = dxSrc.mVShader;
-    D3DResource_AddRef(mVShader);
+    mVShader->AddRef();
     mPShader = dxSrc.mPShader;
-    D3DResource_AddRef(mPShader);
+    mPShader->AddRef();
     mMinOverall = dxSrc.mMinOverall;
     mMaxOverall = dxSrc.mMaxOverall;
 }
@@ -83,11 +83,11 @@ void DxShader::EstimatedCost(float &min, float &max) {
         mMaxOverall = 0;
         if (mPShader) {
             UINT sizeOfData;
-            D3DPixelShader_GetFunction(mPShader, nullptr, &sizeOfData);
+            mPShader->GetFunction(nullptr, &sizeOfData);
             if (sizeOfData != 0) {
                 std::vector<char> chars(sizeOfData);
                 auto it = chars.begin();
-                D3DPixelShader_GetFunction(mPShader, it, &sizeOfData);
+                mPShader->GetFunction(it, &sizeOfData);
                 XGIDEALSHADERCOST shaderCost;
                 if (XGEstimateIdealShaderCost(it, 0, &shaderCost) == 0) {
                     mMinOverall = shaderCost.MinOverall;
@@ -192,14 +192,16 @@ bool DxShader::Compile(
 
 void DxShader::CreateVertexShader(RndShaderBuffer &buffer) {
     MILO_ASSERT(mVShader == NULL, 0x80);
-    mVShader = D3DDevice_CreateVertexShader((const DWORD *)buffer.Storage());
-    DX_ASSERT(mVShader, 0x82);
+    HRESULT hr =
+        TheDxRnd.Device()->CreateVertexShader((const DWORD *)buffer.Storage(), &mVShader);
+    DX_ASSERT_CODE(hr, 0x82);
 }
 
 void DxShader::CreatePixelShader(RndShaderBuffer &buffer, ShaderType) {
     MILO_ASSERT(mPShader == NULL, 0x86);
-    mPShader = D3DDevice_CreatePixelShader((const DWORD *)buffer.Storage());
-    DX_ASSERT(mPShader, 0x88);
+    HRESULT hr =
+        TheDxRnd.Device()->CreatePixelShader((const DWORD *)buffer.Storage(), &mPShader);
+    DX_ASSERT_CODE(hr, 0x88);
 }
 
 void DxShader::SetShaders(D3DVertexShader *v, D3DPixelShader *p) {
@@ -259,14 +261,12 @@ void DxShaderMgr::SetVConstant(VShaderConstant vsc, RndTex *tex) {
     if (tex) {
         tex->Select(vsc);
     } else {
-        D3DDevice_SetTexture(
-            TheDxRnd.Device(), vsc, nullptr, 0x8000000000000000 >> (vsc + 0x20U)
-        );
+        TheDxRnd.Device()->SetTexture(vsc, nullptr);
     }
 }
 
 void DxShaderMgr::SetVConstant(VShaderConstant vsc, const Vector4 &v4) {
-    D3DDevice_SetVertexShaderConstantF(TheDxRnd.Device(), vsc, (float *)&v4, 1);
+    TheDxRnd.Device()->SetVertexShaderConstantF(vsc, (const float *)&v4, 1);
 }
 
 void DxShaderMgr::LoadShaderFile(FileStream &fs) {
