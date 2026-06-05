@@ -31,13 +31,8 @@ void DxMultiMesh::Init() {
         { 1, 0, D3DDECLTYPE_UINT1, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 1 },
         D3DDECL_END()
     };
-    sVertexDecl = D3DDevice_CreateVertexDeclaration(sVertexElement);
-    {
-        HRESULT hr = sVertexDecl != nullptr ? 0 : 0x8007000E;
-        if (hr) {
-            MILO_FAIL("File: %s Line: %d Error: %s\n", __FILE__, 0x97, DxRnd::Error(hr));
-        }
-    }
+    HRESULT hr = TheDxRnd.Device()->CreateVertexDeclaration(sVertexElement, &sVertexDecl);
+    DX_ASSERT_CODE(hr, 0x97);
     static D3DVERTEXELEMENT9 sMutableVertexElement[] = {
         { 0, 0, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 },
         { 0, 16, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0 },
@@ -49,22 +44,19 @@ void DxMultiMesh::Init() {
         { 1, 0, D3DDECLTYPE_UINT1, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 1 },
         D3DDECL_END()
     };
-    sMutableVertexDecl = D3DDevice_CreateVertexDeclaration(sMutableVertexElement);
-    {
-        HRESULT hr = sMutableVertexDecl != nullptr ? 0 : 0x8007000E;
-        if (hr) {
-            MILO_FAIL("File: %s Line: %d Error: %s\n", __FILE__, 0x9A, DxRnd::Error(hr));
-        }
-    }
+    hr = TheDxRnd.Device()->CreateVertexDeclaration(
+        sMutableVertexElement, &sMutableVertexDecl
+    );
+    DX_ASSERT_CODE(hr, 0x9A);
 }
 
 void DxMultiMesh::Shutdown() {
     if (sVertexDecl) {
-        D3DResource_Release(sVertexDecl);
+        sVertexDecl->Release();
         sVertexDecl = nullptr;
     }
     if (sMutableVertexDecl) {
-        D3DResource_Release(sMutableVertexDecl);
+        sMutableVertexDecl->Release();
         sMutableVertexDecl = nullptr;
     }
 }

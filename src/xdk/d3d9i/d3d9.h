@@ -286,12 +286,12 @@ void D3DDevice_DrawIndexedVertices(
 HRESULT D3DDevice_Reset(D3DDevice *pDevice, D3DPRESENT_PARAMETERS *);
 void D3DDevice_Clear(
     D3DDevice *pDevice,
-    UINT Count,
+    DWORD Count,
     const D3DRECT *pRects,
-    UINT Flags,
-    UINT Color,
+    DWORD Flags,
+    DWORD Color,
     float Z,
-    UINT Stencil,
+    DWORD Stencil,
     BOOL EDRamClear
 );
 
@@ -405,7 +405,9 @@ struct D3DDevice { /* Size=0x2b00 */
     HRESULT GetDeviceCaps(D3DCAPS9 *pCaps);
     HRESULT GetDisplayMode(UINT iSwapChain, D3DDISPLAYMODE *pMode);
     HRESULT GetCreationParameters(D3DDEVICE_CREATION_PARAMETERS *pParameters);
-    HRESULT Reset(D3DPRESENT_PARAMETERS *pPresentationParameters);
+    HRESULT Reset(D3DPRESENT_PARAMETERS *pPresentationParameters) {
+        return D3DDevice_Reset(this, pPresentationParameters);
+    }
     HRESULT Present(
         const RECT *pSourceRect,
         const RECT *pDestRect,
@@ -519,9 +521,18 @@ struct D3DDevice { /* Size=0x2b00 */
         D3DSurface **ppSurface,
         const D3DSURFACE_PARAMETERS *
     );
-    HRESULT SetRenderTarget(DWORD RenderTargetIndex, D3DSurface *pRenderTarget);
-    HRESULT GetRenderTarget(DWORD RenderTargetIndex, D3DSurface **ppRenderTarget);
-    HRESULT SetDepthStencilSurface(D3DSurface *pNewZStencil);
+    HRESULT SetRenderTarget(DWORD RenderTargetIndex, D3DSurface *pRenderTarget) {
+        D3DDevice_SetRenderTarget_External(this, RenderTargetIndex, pRenderTarget);
+        return S_OK;
+    }
+    HRESULT GetRenderTarget(DWORD RenderTargetIndex, D3DSurface **ppRenderTarget) {
+        *ppRenderTarget = D3DDevice_GetRenderTarget(this, RenderTargetIndex);
+        return *ppRenderTarget ? S_OK : E_OUTOFMEMORY;
+    }
+    HRESULT SetDepthStencilSurface(D3DSurface *pNewZStencil) {
+        D3DDevice_SetDepthStencilSurface(this, pNewZStencil);
+        return S_OK;
+    }
     HRESULT GetDepthStencilSurface(D3DSurface **ppZStencilSurface);
     HRESULT
     GetBackBuffer(
@@ -532,9 +543,15 @@ struct D3DDevice { /* Size=0x2b00 */
     HRESULT EndScene();
     HRESULT Clear(
         DWORD Count, const D3DRECT *pRects, DWORD Flags, DWORD Color, float Z, DWORD Stencil
-    );
+    ) {
+        D3DDevice_Clear(this, Count, pRects, Flags, Color, Z, Stencil, false);
+        return S_OK;
+    }
     HRESULT ClearF(DWORD, const D3DRECT *, const XMVECTOR *, float, DWORD);
-    HRESULT SetViewport(const D3DVIEWPORT9 *pViewport);
+    HRESULT SetViewport(const D3DVIEWPORT9 *pViewport) {
+        D3DDevice_SetViewport(this, pViewport);
+        return S_OK;
+    }
     HRESULT GetViewport(D3DVIEWPORT9 *pViewport);
     HRESULT SetRenderState(D3DRENDERSTATETYPE State, DWORD Value);
     HRESULT SetRenderState_Inline(D3DRENDERSTATETYPE State, DWORD Value);
@@ -560,8 +577,24 @@ struct D3DDevice { /* Size=0x2b00 */
         INT BaseVertexIndex,
         UINT StartIndex,
         UINT IndexCount
-    );
-    HRESULT DrawVerticesUP(D3DPRIMITIVETYPE PrimitiveType, UINT, const void *, UINT);
+    ) {
+        D3DDevice_DrawIndexedVertices(
+            this, PrimitiveType, BaseVertexIndex, StartIndex, IndexCount
+        );
+        return S_OK;
+    }
+    HRESULT
+    DrawVerticesUP(
+        D3DPRIMITIVETYPE PrimitiveType,
+        UINT VertexCount,
+        const void *pVertexStreamZeroData,
+        UINT VertexStreamZeroStride
+    ) {
+        D3DDevice_DrawVerticesUP(
+            this, PrimitiveType, VertexCount, pVertexStreamZeroData, VertexStreamZeroStride
+        );
+        return S_OK;
+    }
     HRESULT DrawIndexedVerticesUP(
         D3DPRIMITIVETYPE PrimitiveType,
         UINT MinVertexIndex,
@@ -598,7 +631,10 @@ struct D3DDevice { /* Size=0x2b00 */
         const void *pVertexStreamZeroData,
         UINT VertexStreamZeroStride
     );
-    HRESULT SetFVF(DWORD FVF);
+    HRESULT SetFVF(DWORD FVF) {
+        D3DDevice_SetFVF(this, FVF);
+        return S_OK;
+    }
     HRESULT GetFVF(DWORD *pFVF);
     HRESULT CreateVertexShader(const DWORD *pFunction, D3DVertexShader **ppShader);
     HRESULT SetVertexShader(D3DVertexShader *pShader);
@@ -635,7 +671,10 @@ struct D3DDevice { /* Size=0x2b00 */
         UINT *OffsetInBytes,
         UINT *pStride
     );
-    HRESULT SetIndices(D3DIndexBuffer *pIndexData);
+    HRESULT SetIndices(D3DIndexBuffer *pIndexData) {
+        D3DDevice_SetIndices(this, pIndexData);
+        return S_OK;
+    }
     HRESULT GetIndices(D3DIndexBuffer **ppIndexData);
     HRESULT CreatePixelShader(const DWORD *pFunction, D3DPixelShader **ppShader);
     HRESULT SetPixelShader(D3DPixelShader *pShader);
@@ -670,7 +709,10 @@ struct D3DDevice { /* Size=0x2b00 */
     HRESULT SetClipPlane(DWORD Index, const float *pPlane);
     HRESULT GetClipPlane(DWORD Index, float *pPlane);
     HRESULT CreateQuery(D3DQUERYTYPE Type, D3DQuery **ppQuery);
-    HRESULT CreateQueryTiled(D3DQUERYTYPE Type, UINT TileCapacity, D3DQuery **ppQuery);
+    HRESULT CreateQueryTiled(D3DQUERYTYPE Type, UINT TileCapacity, D3DQuery **ppQuery) {
+        *ppQuery = D3DDevice_CreateQueryTiled(this, Type, TileCapacity);
+        return *ppQuery ? S_OK : E_OUTOFMEMORY;
+    }
     HRESULT Resolve(
         DWORD Flags,
         const D3DRECT *pSourceRect,

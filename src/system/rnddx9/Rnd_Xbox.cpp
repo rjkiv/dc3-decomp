@@ -249,7 +249,7 @@ D3DSurface *DxRnd::BackBuffer() const {
 D3DTexture *DxRnd::FrontBuffer() { return mFrontBuffers[unk35c - 1 & 1]; }
 D3DTexture *DxRnd::NotFrontBuffer() { return mFrontBuffers[unk35c]; }
 
-const char *DxRnd::Error(long code) { return MakeString("code %d", code); }
+const char *DxRnd::Error(HRESULT code) { return MakeString("code %d", code); }
 
 void DxRnd::Present() {
     unk35c = (unk35c - 1) & 1;
