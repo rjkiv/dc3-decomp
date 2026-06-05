@@ -184,8 +184,10 @@ void FlowWhile::ReActivate() {
             if (first->Op() != kTransition) {
                 FlowSwitchCase *cur = nullptr;
                 FOREACH (it, mChildNodes) {
-                    cur = static_cast<FlowSwitchCase *>((FlowNode *)*it);
-                    if (cur->IsValidCase(this, &mValue, &mValue, true)) {
+                    FlowSwitchCase *switchCase =
+                        static_cast<FlowSwitchCase *>((FlowNode *)*it);
+                    if (switchCase->IsValidCase(this, &mValue, &mValue, true)) {
+                        cur = switchCase;
                         break;
                     }
                 }

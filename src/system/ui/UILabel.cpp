@@ -2,6 +2,7 @@
 
 #include "macros.h"
 #include "math/Color.h"
+#include "math/Vec.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "obj/PropSync.h"
@@ -24,6 +25,7 @@
 #include "utl/Str.h"
 #include "utl/Symbol.h"
 #include "utl/UTF8.h"
+#include <cmath>
 #include <cstring>
 
 bool UILabel::sDeferUpdate = false;
@@ -457,7 +459,7 @@ void UILabel::Highlight() {
     Hmx::Color c(1.0f, 1.0f, 0.5f);
     if (!CheckValid(false)) {
         int secs = TheTaskMgr.UISeconds() * 2.0f;
-        if (secs < 0) {
+        if (secs % 2 == 0) {
             c.Set(1.0f, 0.2f, 0.2f, 1.0f);
         }
     }
@@ -828,4 +830,48 @@ DataNode UILabel::OnSetHeightFromText(DataArray *a) {
         );
     }
     return 0;
+}
+
+void UILabel::SetTokenFmtImp(
+    Symbol s, DataArray const *d1, DataArray const *d2, int i, bool b
+) {
+    mTextToken = s;
+    if (s.Null()) {
+        SetDisplayText(gNullStr, true);
+    } else {
+        bool found;
+        const char *localize = Localize(mTextToken, &found, TheLocale);
+        if (found) {
+            // well SuperFormatString is called here but that doesnt exist yet
+        } else {
+            SetDisplayText(localize, false);
+        }
+    }
+}
+
+float GetPctHeightFromTextSize(float f) {
+    if (TheLoadMgr.EditMode()) {
+        Vector3 vec3a(0, 0, 0);
+        Vector2 vec2a;
+        TheUI->GetCam()->WorldToScreen(vec3a, vec2a);
+        Vector3 vec3b(0, 0, -f);
+        Vector2 vec2b;
+        TheUI->GetCam()->WorldToScreen(vec3b, vec2b);
+        return fabs(vec2a.y - vec2b.y);
+    }
+    return f;
+}
+
+float GetTextSizeFromPctHeight(float f) {
+    if (TheLoadMgr.EditMode()) {
+        float val = -TheUI->GetCam()->LocalXfm().v.y;
+        Vector2 vec2a(0, 0);
+        Vector3 vec3a;
+        TheUI->GetCam()->ScreenToWorld(vec2a, val, vec3a);
+        Vector2 vec2b(0, f);
+        Vector3 vec3b;
+        TheUI->GetCam()->ScreenToWorld(vec2b, val, vec3b);
+        return fabs(vec3a.z - vec3b.z);
+    }
+    return f;
 }

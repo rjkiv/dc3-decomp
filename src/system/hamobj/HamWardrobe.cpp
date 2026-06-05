@@ -11,9 +11,14 @@
 #include "obj/Msg.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "os/System.h"
 #include "rndobj/Overlay.h"
 #include "rndobj/Wind.h"
+#include "utl/MakeString.h"
+#include "utl/Std.h"
 #include "utl/Symbol.h"
+#include "world/Crowd.h"
+#include "world/Dir.h"
 
 HamWardrobe *TheHamWardrobe;
 
@@ -295,4 +300,114 @@ void HamWardrobe::SetDir(ObjectDir *dir) {
         }
     }
     SyncInterestObjects(dir);
+}
+
+void HamWardrobe::LoadCharacters(
+    Symbol outfit1,
+    Symbol outfit2,
+    Symbol s3,
+    Symbol s4,
+    HamBackupDancers dancers,
+    Symbol s5,
+    Symbol s6,
+    bool b
+) {
+    if (!unk48.Null()) {
+        outfit1 = unk48;
+    }
+    outfit1 = HandleRobot(outfit1);
+    outfit2 = HandleRobot(outfit2);
+    mMainCharacters.clear();
+    for (int i = 0; i < 2; i++) {
+        HamCharacter *character =
+            Dir()->Find<HamCharacter>(MakeString("player%d", i), true);
+        mMainCharacters.push_back(character);
+    }
+
+    unk34 = s5;
+
+    if (!(outfit1 == "")) {
+        LoadMainCharacter(0, outfit1, b);
+    }
+    if (!(outfit2 == "")) {
+        LoadMainCharacter(1, outfit2, b);
+    }
+
+    for (int i = 0; i < 2; i++) {
+        Symbol outfit = (i == 0) ? outfit1 : outfit2;
+        Symbol crew = (i == 0) ? s3 : s4;
+        Symbol finalOutfit = gNullStr;
+
+        if (dancers == (HamBackupDancers)0) {
+            if (!outfit.Null()) {
+                Symbol dancer = GetOutfitBackupDancer(outfit);
+                finalOutfit = MakeString("%s_bd0%d", dancer, i + 1);
+            }
+        } else if (dancers == (HamBackupDancers)2) {
+            if (i == 0) {
+                static Symbol tan01("tan01");
+                finalOutfit = tan01;
+            }
+        } else if (dancers == (HamBackupDancers)3) {
+            finalOutfit = GetBackupOutfitOverride(i);
+        } else {
+            MILO_ASSERT(dancers == kBackupDancersDanceBattle, 0x1ac);
+            finalOutfit = GetDanceBattleBackupOutfit(outfit, crew);
+        }
+
+        HamCharacter *backup = GetBackup(i);
+        backup->SetOutfit(finalOutfit);
+        backup->SetOutfitDir(
+            (dancers == (HamBackupDancers)0) ? "char/main/backup" : "char/main/dancer"
+        );
+        backup->StartLoad(b);
+    }
+    LoadCrowdClips(unk34, s6, b);
+}
+
+DataNode HamWardrobe::OnSetVenue(DataArray *arr) {
+    SetDir(arr->Obj<ObjectDir>(2));
+    Symbol venue = TheGameData->Venue();
+
+    if (venue.Null() && TheWorld) {
+        String worldPath = TheWorld->GetPathName();
+        worldPath = worldPath.substr(worldPath.find_last_of('/') + 1);
+        DataArray *venueArr = SystemConfig()->FindArray("venues", false);
+        if (venueArr) {
+            for (int i = 1; i < venueArr->Size(); i++) {
+                DataArray *venueEntryArray = venueArr->Array(i);
+                MILO_ASSERT(venueEntryArray, 0x27d);
+                Symbol venueSym = venueEntryArray->Sym(0);
+                if (worldPath.contains(venueSym.Str())) {
+                    venue = venueSym;
+                    break;
+                }
+            }
+        }
+    }
+
+    LoadCharacters(
+        "mo01", "emilia01", "crew02", "crew01", (HamBackupDancers)0, unk34, venue, false
+    );
+    return 0;
+}
+
+DataNode HamWardrobe::OnLoadCharacters(DataArray *arr) {
+    int size = arr->Size();
+    Symbol crew1 = 4 < size ? arr->Sym(4) : gNullStr;
+    Symbol crew2 = size > 5 ? arr->Sym(5) : gNullStr;
+    int dancer = size > 6 ? arr->Int(6) : 0;
+    Symbol s = size > 6 ? arr->Sym(7) : "medium";
+    int i = size > 7 ? arr->Int(8) : 1;
+    LoadCharacters(
+        arr->Sym(2),
+        arr->Sym(3),
+        crew1,
+        crew2,
+        (HamBackupDancers)dancer,
+        s,
+        TheGameData->Venue().Str(),
+        i
+    );
+    return 0;
 }

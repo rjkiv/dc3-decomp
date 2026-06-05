@@ -1,7 +1,9 @@
 #pragma once
+#include "hamobj/HamGameData.h"
 #include "hamobj/MoveGraph.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
+#include "utl/Symbol.h"
 #include <vector>
 #include <set>
 

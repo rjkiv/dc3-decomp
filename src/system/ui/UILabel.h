@@ -126,3 +126,5 @@ protected:
 };
 
 bool PropSync(UILabel::LabelStyle &, DataNode &, DataArray *, int, PropOp);
+float GetPctHeightFromTextSize(float);
+float GetTextSizeFromPctHeight(float);

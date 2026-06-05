@@ -2,6 +2,7 @@
 #include "HamCamShot.h"
 #include "char/Character.h"
 #include "flow/PropertyEventProvider.h"
+#include "hamobj/HamDirector.h"
 #include "math/Mtx.h"
 #include "math/Vec.h"
 #include "obj/Data.h"
@@ -9,11 +10,15 @@
 #include "obj/Object.h"
 #include "obj/Utl.h"
 #include "os/Debug.h"
+#include "rndobj/Draw.h"
 #include "rndobj/Trans.h"
 #include "utl/BinStream.h"
 #include "utl/Loader.h"
+#include "utl/Std.h"
 #include "utl/Symbol.h"
 #include "world/CameraShot.h"
+#include "world/Dir.h"
+#include <list>
 
 HamCamShot *gHamCamShot;
 std::list<HamCamShot::TargetCache> HamCamShot::sCache;
@@ -87,6 +92,9 @@ BEGIN_PROPSYNCS(HamCamShot)
 END_PROPSYNCS
 
 BinStream &operator<<(BinStream &, const HamCamShot::Target &);
+BinStream &operator>>(BinStream &, const HamCamShot::Target &);
+
+INIT_REVS(3, 0)
 
 BEGIN_SAVES(HamCamShot)
     SAVE_REVS(3, 0)
@@ -99,6 +107,28 @@ BEGIN_SAVES(HamCamShot)
     bs << mPlayerFlag;
     bs << mMasterAnims;
 END_SAVES
+
+BEGIN_LOADS(HamCamShot)
+    LOAD_REVS(bs)
+    ASSERT_REVS(3, 0)
+    LOAD_SUPERCLASS(CamShot)
+    d >> mTargets;
+    d >> mZeroTime;
+    d >> mMinTime;
+    d >> mMaxTime;
+    bs >> mNextShots;
+    unk2f4 = mNextShots.size();
+    int x;
+    if (d.rev > 1) {
+        bs.ReadEndian(&x, 4);
+        mPlayerFlag = (HamPlayerFlags)x;
+    }
+    if (d.rev > 2) {
+        bs >> mMasterAnims;
+    }
+
+    ResetNextShot();
+END_LOADS
 
 BEGIN_COPYS(HamCamShot)
     COPY_SUPERCLASS(CamShot)
@@ -123,22 +153,24 @@ void HamCamShot::StartAnim() {
     ResetNextShot();
     CamShot::StartAnim();
     StartAnims(mMasterAnims);
-    for (ObjList<Target>::iterator it = mTargets.begin(); it != mTargets.end(); ++it) {
-        if (!it->mTarget.Null()) {
-            std::list<TargetCache>::iterator cache = CreateTargetCache(it->mTarget);
+    FOREACH (it, mTargets) {
+        Target &target = *it;
+        if (!target.mTarget.Null()) {
+            auto cache = CreateTargetCache(target.mTarget);
             Character *theChar = dynamic_cast<Character *>(cache->unk4);
             if (theChar) {
-                theChar->SetSelfShadow(it->mSelfShadow);
-                theChar->SetLodType((LODType)it->mForceLOD);
+                theChar->SetSelfShadow(target.mSelfShadow);
+                theChar->SetLodType((LODType)target.mForceLOD);
                 static Message msg("play_group", 0, 0, 0, 0, 0);
                 msg[0] = theChar;
-                msg[1] = it->mAnimGroup;
-                msg[2] = it->mFastForward / FramesPerUnit();
+                msg[1] = target.mAnimGroup;
+                msg[2] = target.mFastForward / FramesPerUnit();
                 msg[3] = Units();
-                msg[4] = it->mForwardEvent;
+                msg[4] = target.mForwardEvent;
                 HandleType(msg);
-                if (it->mEnvOverride) {
-                    theChar->SetEnv(it->mEnvOverride);
+                if (target.mEnvOverride) {
+                    cache->unk8 = theChar->GetEnv();
+                    theChar->SetEnv(target.mEnvOverride);
                 }
             }
         }
@@ -171,14 +203,19 @@ bool HamCamShot::TargetTeleportTransform(Symbol s, Transform &xfm) {
 }
 
 bool HamCamShot::IterateNextShot() {
+    bool retval = true;
     MILO_ASSERT(!mNextShots.empty(), 0x166);
-    if (unk2b4 == 0) {
+    auto it = unk2b4;
+    if (it == 0) {
         unk2b4 = mNextShots.begin();
-        return true;
-    } else if (unk2b4 != mNextShots.end())
-        return true;
-    else
-        return false;
+    } else {
+        ++unk2b4;
+        if (unk2b4 == 0) {
+            retval = false;
+            unk2b4 = it;
+        }
+    }
+    return retval;
 }
 
 void HamCamShot::Target::Store(HamCamShot *shot) {
@@ -205,6 +242,24 @@ std::list<HamCamShot::TargetCache>::iterator HamCamShot::CreateTargetCache(Symbo
     cache.unksym = s;
     cache.unk4 = FindTarget(s);
     return sCache.begin();
+}
+
+std::list<HamCamShot::TargetCache>::iterator HamCamShot::GetTargetCache(Symbol s) {
+    FOREACH (it, sCache) {
+        if (s == it->unksym) {
+            return it;
+        }
+    }
+
+    if (!TheLoadMgr.EditMode()) {
+        MILO_NOTIFY(
+            "%s creating target cache for %s, targets changed while playing camera",
+            PathName(this),
+            s
+        );
+    }
+
+    return CreateTargetCache(s);
 }
 
 void HamCamShot::Store() {
@@ -261,6 +316,7 @@ void HamCamShot::TeleportTarget(RndTransformable *trans, const Transform &xfm, b
     trans->SetLocalXfm(xfm);
     Character *theChar = dynamic_cast<Character *>(trans);
     if (theChar) {
+        theChar->SetTeleport(true);
         static Message msg("teleport_char", 0, 0);
         msg[0] = trans;
         msg[1] = b3;
@@ -326,4 +382,142 @@ void HamCamShot::SetFrameEx(float frame, float blend) {
     unk2d4 = true;
     SetFrame(frame, blend);
     unk2d4 = false;
+}
+
+HamCamShot *HamCamShot::InitialShot() {
+    HamCamShot *shot = this;
+    auto it = shot->Refs().begin();
+    while (it != shot->Refs().end()) {
+        HamCamShot *cur = dynamic_cast<HamCamShot *>((*it).RefOwner());
+        if (cur) {
+            FOREACH (it2, cur->mNextShots) {
+                if ((*it2) == shot) {
+                    shot = cur;
+                    MILO_ASSERT(cur != this, 0x268);
+                    it = shot->Refs().begin();
+                    break;
+                }
+            }
+        } else {
+            it++;
+        }
+    }
+    return shot;
+}
+
+bool HamCamShot::AreTargetsFlipped() const {
+    static Symbol flip_camshot_targets("flip_camshot_targets");
+    auto prop = TheHamProvider->Property(flip_camshot_targets);
+    if (prop) {
+        return prop->Int() != 0;
+    } else {
+        return false;
+    }
+}
+
+Symbol HamCamShot::GetFlipTarget(Symbol s) const {
+    static Symbol player0("player0");
+    static Symbol player1("player1");
+    static Symbol backup0("backup0");
+    static Symbol backup1("backup1");
+    if (s == player0) {
+        return player1;
+    } else if (s == player1) {
+        return player0;
+    } else if (s == backup0) {
+        return backup1;
+    } else if (s == backup1) {
+        return backup0;
+    }
+    return s;
+}
+
+RndDrawable *HamCamShot::GetFlipCharacter(RndDrawable *drawable) {
+    static Symbol player0("player0");
+    static Symbol player1("player1");
+    static Symbol backup0("backup0");
+    static Symbol backup1("backup1");
+
+    Symbol name = drawable->Name();
+    if (!TheHamDirector) {
+        return drawable;
+    }
+
+    if (name == player0) {
+        return TheHamDirector->GetCharacter(1);
+    } else if (name == player1) {
+        return TheHamDirector->GetCharacter(0);
+    } else if (name == backup0) {
+        return TheHamDirector->GetBackup(1);
+    } else if (name == backup1) {
+        return TheHamDirector->GetBackup(0);
+    }
+    return drawable;
+}
+
+void HamCamShot::EndAnim() {
+    if (mCurrentShot && mCurrentShot != this) {
+        mCurrentShot->EndAnim();
+        ResetNextShot();
+    } else {
+        FOREACH (it, mTargets) {
+            Target &target = *it;
+            if (!target.mTarget.Null()) {
+                auto cacheIt = GetTargetCache(target.mTarget);
+                if (target.mTeleport && target.mReturn && cacheIt->unk4) {
+                    TeleportTarget(cacheIt->unk4, cacheIt->unkxfm, true);
+                }
+                Character *c = dynamic_cast<Character *>(cacheIt->unk4);
+                if (c) {
+                    c->SetLodType(kLODPerFrame);
+                    if (target.mEnvOverride) {
+                        c->SetEnv(cacheIt->unk8);
+                    }
+                }
+                sCache.erase(cacheIt);
+            }
+        }
+        EndAnims(mMasterAnims);
+        CamShot::EndAnim();
+    }
+}
+
+float HamCamShot::GetTotalDuration() {
+    float f = mDuration;
+    std::list<HamCamShot *> shots;
+    ListNextShots(shots);
+    FOREACH (it, shots) {
+        f += (*it)->mDuration;
+    }
+    return f;
+}
+
+void HamCamShot::CreateFlippedShowHideList() {
+    if (unk2f8.size() <= 0 && unk30c.size() <= 0 && unk320.size() <= 0
+        && unk334.size() <= 0 && unk340.size() <= 0 && unk354.size() <= 0
+        && unk368.size() <= 0 && unk37c.size() <= 0) {
+        FOREACH (it, mHideList) {
+            RndDrawable *drawable = *it;
+            unk2f8.push_back(drawable);
+            unk340.push_back(GetFlipCharacter(drawable));
+        }
+
+        FOREACH (it, mShowList) {
+            RndDrawable *drawable = *it;
+            unk30c.push_back(drawable);
+            unk354.push_back(GetFlipCharacter(drawable));
+        }
+
+        FOREACH (it, mGenHideList) {
+            RndDrawable *drawable = *it;
+            unk320.push_back(drawable);
+            unk368.push_back(GetFlipCharacter(drawable));
+        }
+
+        FOREACH (it, mGenHideVector) {
+            RndDrawable *drawable = *it;
+            unk334.push_back(drawable);
+            unk37c.push_back(GetFlipCharacter(drawable));
+        }
+    }
 }

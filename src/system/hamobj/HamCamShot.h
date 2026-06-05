@@ -9,6 +9,7 @@
 #include "rndobj/Env.h"
 #include "rndobj/Trans.h"
 #include "utl/MemMgr.h"
+#include "utl/Symbol.h"
 #include "world/CameraShot.h"
 
 enum HamPlayerFlags {
@@ -32,7 +33,7 @@ public:
     struct Target {
         Target(Hmx::Object *owner)
             : mFastForward(0), mEnvOverride(owner), mForceLOD(kLODPerFrame),
-              mTeleport(false), mReturn(true), mSelfShadow(false), unk68p4(true),
+              mTeleport(true), mReturn(true), mSelfShadow(true), unk68p4(false),
               unk68p3(true) {
             mTo.Reset();
         }
@@ -67,11 +68,11 @@ public:
 
     // size 0x4c
     struct TargetCache {
-        TargetCache() : unk0(0), unk4(0) { unkxfm.Reset(); }
+        TargetCache() : unk4(), unk8() { unkxfm.Reset(); }
 
-        Symbol unksym; // 0x8
-        int unk0; // 0x0
+        Symbol unksym; // 0x0
         RndTransformable *unk4; // 0x4
+        RndEnviron *unk8;
         Transform unkxfm; // 0xc
     };
 
@@ -128,8 +129,14 @@ protected:
     void UpdateTargetsFlipped();
     bool IterateNextShot();
     bool ListNextShots(std::list<HamCamShot *> &);
+    bool AreTargetsFlipped() const;
+    void CreateFlippedShowHideList();
+    Symbol GetFlipTarget(Symbol) const;
+    HamCamShot::Target *GetFlipTarget(HamCamShot::Target *);
+    RndDrawable *GetFlipCharacter(RndDrawable *);
 
     std::list<TargetCache>::iterator CreateTargetCache(Symbol);
+    std::list<TargetCache>::iterator GetTargetCache(Symbol);
 
     static std::list<TargetCache> sCache;
 
