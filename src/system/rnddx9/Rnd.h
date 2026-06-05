@@ -125,12 +125,12 @@ public:
     void InitRenderState();
     D3DFORMAT D3DFormatForBitmap(const RndBitmap &);
     int BitmapOrderForD3DFormat(D3DFORMAT);
-    long GetDeviceCaps(D3DCAPS9 *);
+    HRESULT GetDeviceCaps(D3DCAPS9 *);
     void Present();
     void SetDefaultRenderStates();
     void SetShaderRegisterAlloc(RegisterAlloc);
 
-    static const char *Error(long);
+    static const char *Error(HRESULT);
 
     XVIDEO_MODE *VideoMode() { return &mVideoMode; }
 

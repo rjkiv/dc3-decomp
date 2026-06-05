@@ -88,7 +88,7 @@ struct D3DPerfCounters { /* Size=0x1 */
     BOOL IsBusy() { return D3DPerfCounters_IsBusy(this); }
     VOID BlockUntilNotBusy() { D3DPerfCounters_BlockUntilNotBusy(this); }
     UINT GetNumPasses() { return D3DPerfCounters_GetNumPasses(this); }
-    INT GetValues(D3DPERFCOUNTER_VALUES *pValues, UINT PassIndex, UINT *pPassType) {
+    HRESULT GetValues(D3DPERFCOUNTER_VALUES *pValues, UINT PassIndex, UINT *pPassType) {
         return D3DPerfCounters_GetValues(this, pValues, PassIndex, pPassType);
     }
 };
@@ -415,7 +415,9 @@ struct D3DDevice { /* Size=0x2b00 */
         void *pDirtyRegion
     );
     HRESULT GetRasterStatus(UINT iSwapChain, D3DRASTER_STATUS *pRasterStatus);
-    void SetGammaRamp(UINT iSwapChain, DWORD Flags, const D3DGAMMARAMP *pRamp);
+    void SetGammaRamp(UINT iSwapChain, DWORD Flags, const D3DGAMMARAMP *pRamp) {
+        D3DDevice_SetGammaRamp(this, Flags, pRamp);
+    }
     void GetGammaRamp(UINT iSwapChain, D3DGAMMARAMP *pRamp);
     void SetPWLGamma(UINT, const D3DPWLGAMMA *);
     void GetPWLGamma(D3DPWLGAMMA *);
@@ -533,7 +535,10 @@ struct D3DDevice { /* Size=0x2b00 */
         D3DDevice_SetDepthStencilSurface(this, pNewZStencil);
         return S_OK;
     }
-    HRESULT GetDepthStencilSurface(D3DSurface **ppZStencilSurface);
+    HRESULT GetDepthStencilSurface(D3DSurface **ppZStencilSurface) {
+        *ppZStencilSurface = D3DDevice_GetDepthStencilSurface(this);
+        return *ppZStencilSurface ? S_OK : E_OUTOFMEMORY;
+    }
     HRESULT
     GetBackBuffer(
         UINT iSwapChain, UINT iBackBuffer, UINT BackBufferType, D3DSurface **ppBackBuffer
@@ -741,19 +746,43 @@ struct D3DDevice { /* Size=0x2b00 */
         float ClearZ,
         UINT ClearStencil,
         const D3DRESOLVE_PARAMETERS *pParameters
-    );
+    ) {
+        D3DDevice_Resolve(
+            this,
+            Flags,
+            pSourceRect,
+            pDestTexture,
+            pDestPoint,
+            DestLevel,
+            DestSliceOrFace,
+            pClearColor,
+            ClearZ,
+            ClearStencil,
+            pParameters
+        );
+        return S_OK;
+    }
     HRESULT AcquireThreadOwnership();
     HRESULT ReleaseThreadOwnership();
     HRESULT SetThreadOwnership(DWORD);
     DWORD QueryThreadOwnership();
     BOOL IsBusy();
-    HRESULT BlockUntilIdle();
+    HRESULT BlockUntilIdle() {
+        D3DDevice_BlockUntilIdle(this);
+        return S_OK;
+    }
     HRESULT InsertCallback(UINT Type, D3DCALLBACK pCallback, UINT Context);
     HRESULT SetVerticalBlankCallback(D3DVBLANKCALLBACK pCallback);
     HRESULT SetSwapCallback(D3DSWAPCALLBACK pCallback);
-    HRESULT SynchronizeToPresentationInterval();
+    HRESULT SynchronizeToPresentationInterval() {
+        D3DDevice_SynchronizeToPresentationInterval(this);
+        return S_OK;
+    }
     HRESULT
-    Swap(D3DBaseTexture *pFrontBuffer, const D3DVIDEO_SCALER_PARAMETERS *pParameters);
+    Swap(D3DBaseTexture *pFrontBuffer, const D3DVIDEO_SCALER_PARAMETERS *pParameters) {
+        D3DDevice_Swap(this, pFrontBuffer, pParameters);
+        return S_OK;
+    }
     HRESULT RenderSystemUI();
     HRESULT QueryBufferSpace(UINT *, UINT *);
     HRESULT SetPredication(UINT);
@@ -765,7 +794,12 @@ struct D3DDevice { /* Size=0x2b00 */
         const XMVECTOR *pClearColor,
         float ClearZ,
         DWORD ClearStencil
-    );
+    ) {
+        D3DDevice_BeginTiling(
+            this, Flags, Count, pTileRects, pClearColor, ClearZ, ClearStencil
+        );
+        return S_OK;
+    }
     HRESULT EndTiling(
         UINT ResolveFlags,
         const D3DRECT *pResolveRects,
@@ -774,7 +808,18 @@ struct D3DDevice { /* Size=0x2b00 */
         float ClearZ,
         UINT ClearStencil,
         const D3DRESOLVE_PARAMETERS *pParameters
-    );
+    ) {
+        return D3DDevice_EndTiling(
+            this,
+            ResolveFlags,
+            pResolveRects,
+            pDestTexture,
+            pClearColor,
+            ClearZ,
+            ClearStencil,
+            pParameters
+        );
+    }
     HRESULT BeginZPass(UINT);
     HRESULT EndZPass();
     HRESULT InvokeRenderPass();
@@ -829,64 +874,105 @@ struct D3DDevice { /* Size=0x2b00 */
     //   int32_t EndConditionalRendering();
     //   int32_t PersistDisplay(D3DTexture*, const _D3DVIDEO_SCALER_PARAMETERS*);
     //   int32_t GetPersistedTexture(D3DTexture**);
-    //   int32_t Suspend();
-    //   int32_t Resume();
-    HRESULT CreatePerfCounters(D3DPerfCounters **ppPerfCounters, UINT NumPasses);
-    HRESULT EnablePerfCounters(BOOL Enable);
-    HRESULT SetPerfCounterEvents(const D3DPERFCOUNTER_EVENTS *pEvents, DWORD Flags);
-    HRESULT QueryPerfCounters(D3DPerfCounters *pCounters, DWORD Flags);
+
+    HRESULT Suspend() {
+        D3DDevice_Suspend(this);
+        return S_OK;
+    }
+    HRESULT Resume() {
+        D3DDevice_Resume(this);
+        return S_OK;
+    }
+    HRESULT CreatePerfCounters(D3DPerfCounters **ppPerfCounters, UINT NumPasses) {
+        *ppPerfCounters = D3DDevice_CreatePerfCounters(this, NumPasses);
+        return *ppPerfCounters ? S_OK : E_OUTOFMEMORY;
+    }
+    HRESULT EnablePerfCounters(BOOL Enable) {
+        D3DDevice_EnablePerfCounters(this, Enable);
+        return S_OK;
+    }
+    HRESULT SetPerfCounterEvents(const D3DPERFCOUNTER_EVENTS *pEvents, DWORD Flags) {
+        D3DDevice_SetPerfCounterEvents(this, pEvents, Flags);
+        return S_OK;
+    }
+    HRESULT QueryPerfCounters(D3DPerfCounters *pCounters, DWORD Flags) {
+        D3DDevice_QueryPerfCounters(this, pCounters, Flags);
+        return S_OK;
+    }
     UINT GetNumPasses();
+    HRESULT SetShaderInstructionAllocation(DWORD, DWORD, DWORD);
+    HRESULT
+    SetShaderGPRAllocation(DWORD Flags, DWORD VertexShaderCount, DWORD PixelShaderCount) {
+        D3DDevice_SetShaderGPRAllocation(this, Flags, VertexShaderCount, PixelShaderCount);
+        return S_OK;
+    }
+    HRESULT GetShaderGPRAllocation(DWORD *, DWORD *, DWORD *);
+
+    //   int32_t SetScreenExtentQueryMode(_D3DSCREENEXTENTQUERYMODE);
+    //   int32_t GetScreenExtentQueryMode(_D3DSCREENEXTENTQUERYMODE*);
+    //   int32_t BeginPixelShaderConstantF1(uint32_t, __vector4**, uint32_t);
+    //   int32_t EndPixelShaderConstantF1();
+    //   int32_t BeginVertexShaderConstantF1(uint32_t, __vector4**, uint32_t);
+    //   int32_t EndVertexShaderConstantF1();
+    //   int32_t BeginPixelShaderConstantF4(uint32_t, __vector4**, __vector4**, uint32_t);
+    //   int32_t EndPixelShaderConstantF4();
+    //   int32_t BeginVertexShaderConstantF4(uint32_t,
+    //      __vector4**, __vector4**, uint32_t);
+    //   int32_t EndVertexShaderConstantF4();
+    //   uint32_t GetCurrentFence();
+    //   int32_t InvalidateGpuCache(void*, uint32_t, uint32_t);
+    //   int32_t InvalidateResourceGpuCache(D3DResource*, uint32_t);
+    //   int32_t FlushHiZStencil(_D3DFHZS_FLUSHTYPE);
+    //   int32_t UnsetAll();
+    //   uint32_t GetDeviceState();
+    //   int32_t SetBlockCallback(uint32_t,
+    //      void (*)(uint32_t, _D3DBLOCKTYPE, float, uint32_t));
+    //   int32_t SetSurfaces(const _D3DSURFACES*, uint32_t);
+    //   int32_t CreateConstantBuffer(uint32_t, uint32_t, D3DConstantBuffer**);
+    //   int32_t CreateCommandBuffer(uint32_t, uint32_t, D3DCommandBuffer**);
+    //   int32_t CreateGrowableCommandBuffer(uint32_t,
+    //      void* (*)(uint32_t, uint32_t, uint32_t*, uint32_t),
+    //      void (*)(uint32_t), void (*)(uint32_t, uint32_t*, uint32_t*),
+    //      uint32_t, uint32_t, D3DCommandBuffer**);
+    //   int32_t BeginCommandBuffer(D3DCommandBuffer*, uint32_t,
+    //      const _D3DTAGCOLLECTION*, const _D3DTAGCOLLECTION*,
+    //      const _D3DRECT*, uint32_t);
+    //   int32_t EndCommandBuffer();
+    //   int32_t RunCommandBuffer(D3DCommandBuffer*, uint32_t);
+    //   int32_t InsertAsyncCommandBufferCall(D3DAsyncCommandBufferCall*,
+    //      uint32_t, uint32_t);
+    //   int32_t SetCommandBufferPredication(uint32_t, uint32_t);
+    //   uint32_t InsertMarker();
+    //   int32_t Nop(uint32_t);
+
+    HRESULT QuerySwapStatus(D3DSWAP_STATUS *pSwapStatus) {
+        D3DDevice_QuerySwapStatus(this, pSwapStatus);
+        return S_OK;
+    }
+
+    //   uint32_t PixBeginNamedEvent(uint32_t, const char*, ...);
+    //   uint32_t PixEndNamedEvent();
+    //   void PixSetMarker(uint32_t, const char*, ...);
+    //   void PixIgnoreTexture(D3DBaseTexture*);
+    //   void PixStopIgnoringTexture(D3DBaseTexture*);
+    //   void PixIgnoreMemoryRange(const void*, uint32_t);
+    //   void PixStopIgnoringMemoryRange(const void*, uint32_t);
+    //   int32_t PixSetTextureName(D3DBaseTexture*, const char*);
+    //   void PixReportNewTexture(D3DBaseTexture*);
+    //   void PixReportDeletedTexture(D3DBaseTexture*, int32_t, int32_t);
+    //   void PixReportMovedMemoryRange(const void*, const void*, uint32_t);
+    //   void PixReportFreedMemoryRange(const void*, uint32_t);
+    //   int32_t SetViewportF(const _D3DVIEWPORTF9*);
+    //   int32_t GetViewportF(_D3DVIEWPORTF9*);
+    //   void* BeginVisibilitySurvey(uint32_t);
+    //   int32_t EndVisibilitySurvey(void*);
+
+    HRESULT SetSwapMode(BOOL Asynchronous) {
+        D3DDevice_SetSwapMode(this, Asynchronous);
+        return S_OK;
+    }
 
     // clang-format off
-//   int32_t SetShaderInstructionAllocation(uint32_t, uint32_t, uint32_t);
-//   int32_t SetShaderGPRAllocation(uint32_t, uint32_t, uint32_t);
-//   int32_t GetShaderGPRAllocation(uint32_t*, uint32_t*, uint32_t*);
-//   int32_t SetScreenExtentQueryMode(_D3DSCREENEXTENTQUERYMODE);
-//   int32_t GetScreenExtentQueryMode(_D3DSCREENEXTENTQUERYMODE*);
-//   int32_t BeginPixelShaderConstantF1(uint32_t, __vector4**, uint32_t);
-//   int32_t EndPixelShaderConstantF1();
-//   int32_t BeginVertexShaderConstantF1(uint32_t, __vector4**, uint32_t);
-//   int32_t EndVertexShaderConstantF1();
-//   int32_t BeginPixelShaderConstantF4(uint32_t, __vector4**, __vector4**, uint32_t);
-//   int32_t EndPixelShaderConstantF4();
-//   int32_t BeginVertexShaderConstantF4(uint32_t, __vector4**, __vector4**, uint32_t);
-//   int32_t EndVertexShaderConstantF4();
-//   uint32_t GetCurrentFence();
-//   int32_t InvalidateGpuCache(void*, uint32_t, uint32_t);
-//   int32_t InvalidateResourceGpuCache(D3DResource*, uint32_t);
-//   int32_t FlushHiZStencil(_D3DFHZS_FLUSHTYPE);
-//   int32_t UnsetAll();
-//   uint32_t GetDeviceState();
-//   int32_t SetBlockCallback(uint32_t, void (*)(uint32_t, _D3DBLOCKTYPE, float, uint32_t));
-//   int32_t SetSurfaces(const _D3DSURFACES*, uint32_t);
-//   int32_t CreateConstantBuffer(uint32_t, uint32_t, D3DConstantBuffer**);
-//   int32_t CreateCommandBuffer(uint32_t, uint32_t, D3DCommandBuffer**);
-//   int32_t CreateGrowableCommandBuffer(uint32_t, void* (*)(uint32_t, uint32_t, uint32_t*, uint32_t), void (*)(uint32_t), void (*)(uint32_t, uint32_t*, uint32_t*), uint32_t, uint32_t, D3DCommandBuffer**);
-//   int32_t BeginCommandBuffer(D3DCommandBuffer*, uint32_t, const _D3DTAGCOLLECTION*, const _D3DTAGCOLLECTION*, const _D3DRECT*, uint32_t);
-//   int32_t EndCommandBuffer();
-//   int32_t RunCommandBuffer(D3DCommandBuffer*, uint32_t);
-//   int32_t InsertAsyncCommandBufferCall(D3DAsyncCommandBufferCall*, uint32_t, uint32_t);
-//   int32_t SetCommandBufferPredication(uint32_t, uint32_t);
-//   uint32_t InsertMarker();
-//   int32_t Nop(uint32_t);
-//   int32_t QuerySwapStatus(_D3DSWAP_STATUS*);
-//   uint32_t PixBeginNamedEvent(uint32_t, const char*, ...);
-//   uint32_t PixEndNamedEvent();
-//   void PixSetMarker(uint32_t, const char*, ...);
-//   void PixIgnoreTexture(D3DBaseTexture*);
-//   void PixStopIgnoringTexture(D3DBaseTexture*);
-//   void PixIgnoreMemoryRange(const void*, uint32_t);
-//   void PixStopIgnoringMemoryRange(const void*, uint32_t);
-//   int32_t PixSetTextureName(D3DBaseTexture*, const char*);
-//   void PixReportNewTexture(D3DBaseTexture*);
-//   void PixReportDeletedTexture(D3DBaseTexture*, int32_t, int32_t);
-//   void PixReportMovedMemoryRange(const void*, const void*, uint32_t);
-//   void PixReportFreedMemoryRange(const void*, uint32_t);
-//   int32_t SetViewportF(const _D3DVIEWPORTF9*);
-//   int32_t GetViewportF(_D3DVIEWPORTF9*);
-//   void* BeginVisibilitySurvey(uint32_t);
-//   int32_t EndVisibilitySurvey(void*);
-//   int32_t SetSwapMode(int32_t);
 //   uint64_t InsertBlockOnAsyncResources(uint32_t, D3DResource**, uint32_t, D3DResource**, uint32_t);
 //   int32_t SignalAsyncResources(uint64_t);
 //   int32_t CreateAsyncCommandBufferCall(_D3DTAGCOLLECTION*, _D3DTAGCOLLECTION*, uint32_t, uint32_t, D3DAsyncCommandBufferCall**);
