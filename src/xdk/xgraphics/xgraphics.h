@@ -70,7 +70,7 @@ VOID XGTileTextureLevel(
     const tagPOINT *pPoint,
     const VOID *pSource,
     UINT RowPitch,
-    const tagRECT *pRect
+    const RECT *pRect
 );
 
 void XGGetTextureLayout(

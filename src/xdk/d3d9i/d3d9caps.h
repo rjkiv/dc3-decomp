@@ -15,12 +15,6 @@ typedef struct _D3DVSHADERCAPS2_0 { /* Size=0x10 */
     /* 0x000c */ INT StaticFlowControlDepth;
 } D3DVSHADERCAPS2_0;
 
-typedef enum _D3DDEVTYPE {
-    D3DDEVTYPE_HAL = 0x0001,
-    D3DDEVTYPE_COMMAND_BUFFER = 0x0002,
-    D3DDEVTYPE_FORCE_DWORD = 0x7fffffff,
-} D3DDEVTYPE;
-
 typedef struct _D3DPSHADERCAPS2_0 { /* Size=0x14 */
     /* 0x0000 */ UINT Caps;
     /* 0x0004 */ INT DynamicFlowControlDepth;

@@ -37,627 +37,42 @@ typedef struct _D3DConstants { /* Size=0x23a0 */
     };
 } D3DConstants;
 
-#pragma region D3DDevice
+// Forward declarations
+typedef struct Direct3D Direct3D;
+typedef struct D3DDevice D3DDevice;
+typedef struct D3DVertexDeclaration D3DVertexDeclaration;
+typedef struct D3DVertexShader D3DVertexShader;
+typedef struct D3DPixelShader D3DPixelShader;
+typedef struct D3DResource D3DResource;
+typedef struct D3DBaseTexture D3DBaseTexture;
+typedef struct D3DTexture D3DTexture;
+typedef struct D3DVolumeTexture D3DVolumeTexture;
+typedef struct D3DCubeTexture D3DCubeTexture;
+typedef struct D3DArrayTexture D3DArrayTexture;
+typedef struct D3DLineTexture D3DLineTexture;
+typedef struct D3DVertexBuffer D3DVertexBuffer;
+typedef struct D3DIndexBuffer D3DIndexBuffer;
+typedef struct D3DSurface D3DSurface;
+typedef struct D3DVolume D3DVolume;
+typedef struct D3DQuery D3DQuery;
+typedef struct D3DPerfCounters D3DPerfCounters;
+typedef struct D3DStateBlock D3DStateBlock;
 
-typedef struct D3DDevice { /* Size=0x2b00 */
-    /* 0x0000 */ _D3DTAGCOLLECTION m_Pending;
-    /* 0x0028 */ UINT64 m_Predicated_PendingMask2;
-    /* 0x0030 */ UINT *m_pRing;
-    /* 0x0034 */ UINT *m_pRingLimit;
-    /* 0x0038 */ UINT *m_pRingGuarantee;
-    /* 0x003c */ UINT m_ReferenceCount;
-    /* 0x0040 */ VOID (*m_SetRenderStateCall[101])(D3DDevice *, UINT);
-    /* 0x01d4 */ VOID (*m_SetSamplerStateCall[20])(D3DDevice *, UINT, UINT);
-    /* 0x0224 */ UINT (*m_GetRenderStateCall[101])(D3DDevice *);
-    /* 0x03b8 */ UINT (*m_GetSamplerStateCall[20])(D3DDevice *, UINT);
-    int filler[30]; // not part of the struct but i needed it to align
-    /* 0x0480 */ D3DConstants m_Constants;
-    /* 0x2820 */ float m_ClipPlanes[6][4];
-    /* 0x2880 */ GPU_DESTINATIONPACKET m_DestinationPacket;
-    /* 0x28c0 */ GPU_WINDOWPACKET m_WindowPacket;
-    /* 0x28cc */ GPU_VALUESPACKET m_ValuesPacket;
-    /* 0x2920 */ GPU_PROGRAMPACKET m_ProgramPacket;
-    /* 0x2934 */ GPU_CONTROLPACKET m_ControlPacket;
-    /* 0x2964 */ GPU_TESSELLATORPACKET m_TessellatorPacket;
-    /* 0x29b8 */ GPU_MISCPACKET m_MiscPacket;
-    /* 0x2a50 */ GPU_POINTPACKET m_PointPacket;
-    /* 0x2a70 */ BYTE m_MaxAnisotropy[26];
-    /* 0x2a8a */ BYTE m_ZFilter[26];
-} D3DDevice;
-
-#pragma endregion
-#pragma region D3DResource
-
-// D3DResource methods
-ULONG D3DResource_AddRef(struct D3DResource *pResource);
-ULONG D3DResource_Release(struct D3DResource *pResource);
-VOID D3DResource_BlockUntilNotBusy(struct D3DResource *pResource);
-VOID D3DResource_GetDevice(struct D3DResource *pThis, D3DDevice **ppDevice);
-D3DRESOURCETYPE D3DResource_GetType(struct D3DResource *pResource);
-BOOL D3DResource_IsBusy(struct D3DResource *pResource);
-BOOL D3DResource_IsSet(struct D3DResource *pResource, D3DDevice *pDevice);
-
-typedef struct D3DResource { /* Size=0x18 */
-    /* 0x0000 */ UINT Common;
-    /* 0x0004 */ ULONG ReferenceCount;
-    /* 0x0008 */ UINT Fence;
-    /* 0x000c */ UINT ReadFence;
-    /* 0x0010 */ DWORD Identifier;
-    /* 0x0014 */ UINT BaseFlush;
-
-    ULONG AddRef() { return D3DResource_AddRef(this); }
-    ULONG Release() { return D3DResource_Release(this); }
-    HRESULT GetDevice(D3DDevice **ppDevice) {
-        D3DResource_GetDevice(this, ppDevice);
-        return 0;
-    }
-    D3DRESOURCETYPE GetType() { return D3DResource_GetType(this); }
-    BOOL IsBusy() { return D3DResource_IsBusy(this); }
-    BOOL IsSet(D3DDevice *pDevice) { return D3DResource_IsSet(this, pDevice); }
-    VOID BlockUntilNotBusy() { D3DResource_BlockUntilNotBusy(this); }
-    VOID SetIdentifier(DWORD Identifier); // ??? i assume just sets the Identifier field
-    DWORD GetIdentifier(); // ??? ditto but gets it
-} D3DResource;
-
-#pragma endregion
-#pragma region D3DIndexBuffer
-
-VOID D3DIndexBuffer_GetDesc(
-    struct D3DIndexBuffer *pIndexBuffer, D3DINDEXBUFFER_DESC *pDesc
-);
-HANDLE
-D3DIndexBuffer_Lock(
-    struct D3DIndexBuffer *pIndexBuffer, UINT OffsetToLock, UINT SizeToLock, DWORD Flags
-);
-HANDLE D3DIndexBuffer_AsyncLock(
-    struct D3DIndexBuffer *pIndexBuffer,
-    UINT64 AsyncBlock,
-    UINT OffsetToLock,
-    UINT SizeToLock,
-    DWORD Flags
-);
-VOID D3DIndexBuffer_Unlock(struct D3DIndexBuffer *pIndexBuffer);
-
-typedef struct D3DIndexBuffer : public D3DResource { /* Size=0x20 */
-    /* 0x0018 */ UINT Address;
-    /* 0x001c */ UINT Size;
-
-    HRESULT Lock(UINT OffsetToLock, UINT SizeToLock, void **ppbData, DWORD Flags) {
-        *ppbData = D3DIndexBuffer_Lock(this, OffsetToLock, SizeToLock, Flags);
-        return 0;
-    }
-    HRESULT Unlock() {
-        D3DIndexBuffer_Unlock(this);
-        return 0;
-    }
-    HRESULT AsyncLock(
-        UINT64 AsyncBlock, UINT OffsetToLock, UINT SizeToLock, HANDLE *ppbData, DWORD Flags
-    ) {
-        *ppbData =
-            D3DIndexBuffer_AsyncLock(this, AsyncBlock, OffsetToLock, SizeToLock, Flags);
-        return 0;
-    }
-    HRESULT GetDesc(D3DINDEXBUFFER_DESC *pDesc) {
-        D3DIndexBuffer_GetDesc(this, pDesc);
-        return 0;
-    }
-} D3DIndexBuffer;
-
-#pragma endregion
-#pragma region D3DVertexBuffer
-
-VOID D3DVertexBuffer_GetDesc(
-    struct D3DVertexBuffer *pVertexBuffer, D3DVERTEXBUFFER_DESC *pDesc
-);
-HANDLE D3DVertexBuffer_Lock(
-    struct D3DVertexBuffer *pVertexBuffer, UINT OffsetToLock, UINT SizeToLock, DWORD Flags
-);
-VOID D3DVertexBuffer_Unlock(struct D3DVertexBuffer *pVertexBuffer);
-
-typedef struct D3DVertexBuffer : public D3DResource { /* Size=0x20 */
-    /* 0x0018 */ GPUVERTEX_FETCH_CONSTANT Format;
-
-    HRESULT Lock(UINT OffsetToLock, UINT SizeToLock, void **ppbData, DWORD Flags) {
-        *ppbData = D3DVertexBuffer_Lock(this, OffsetToLock, SizeToLock, Flags);
-        return 0;
-    }
-    HRESULT Unlock() {
-        D3DVertexBuffer_Unlock(this);
-        return 0;
-    }
-    // needs a definition
-    HRESULT AsyncLock(
-        UINT64 AsyncBlock, UINT OffsetToLock, UINT SizeToLock, HANDLE *ppbData, DWORD Flags
-    );
-    HRESULT GetDesc(D3DVERTEXBUFFER_DESC *pDesc) {
-        D3DVertexBuffer_GetDesc(this, pDesc);
-        return 0;
-    }
-} D3DVertexBuffer;
-
-#pragma endregion
-#pragma region D3DSurface
-
-VOID D3DSurface_AsyncLockRect(
-    struct D3DSurface *pSurface,
-    UINT64 AsyncBlock,
-    D3DLOCKED_RECT *pLockedRect,
-    const tagRECT *pRect,
-    DWORD Flags
-);
-VOID D3DSurface_GetContainer(struct D3DSurface *pSurface, const _GUID &UnusedRiid);
-VOID D3DSurface_GetDesc(struct D3DSurface *pSurface, D3DSURFACE_DESC *pDesc);
-VOID D3DSurface_LockRect(
-    struct D3DSurface *pSurface,
-    D3DLOCKED_RECT *pLockedRect,
-    const tagRECT *pRect,
-    DWORD Flags
-);
-VOID D3DSurface_UnlockRect(struct D3DSurface *pSurface);
-
-struct D3DSurface : public D3DResource { /* Size=0x30 */
-    union {
-        struct {
-            /* 0x0018 */ GPU_SURFACEINFO SurfaceInfo;
-            union {
-                /* 0x001c */ GPU_DEPTHINFO DepthInfo;
-                /* 0x001c */ GPU_COLORINFO ColorInfo;
-            };
-            /* 0x0020 */ GPU_HICONTROL HiControl;
-            /* 0x0024 */ UINT Height : 15; /* BitPos=3 */
-            /* 0x0024 */ UINT Width : 14; /* BitPos=18 */
-            /* 0x0028 */ D3DFORMAT Format;
-            /* 0x002c */ UINT Size;
-        };
-        struct {
-            /* 0x0018 */ struct D3DBaseTexture *Parent;
-            /* 0x001c */ UINT MipLevel : 4; /* BitPos=28 */
-        };
-    };
-    // needs definition
-    HRESULT GetContainer(const _GUID &, VOID **);
-    HRESULT GetDesc(D3DSURFACE_DESC *pDesc) {
-        D3DSurface_GetDesc(this, pDesc);
-        return 0;
-    }
-    HRESULT LockRect(D3DLOCKED_RECT *pLockedRect, const tagRECT *pRect, DWORD Flags) {
-        D3DSurface_LockRect(this, pLockedRect, pRect, Flags);
-        return 0;
-    }
-    HRESULT AsyncLockRect(
-        UINT64 AsyncBlock, D3DLOCKED_RECT *pLockedRect, const tagRECT *pRect, DWORD Flags
-    ) {
-        D3DSurface_AsyncLockRect(this, AsyncBlock, pLockedRect, pRect, Flags);
-        return 0;
-    }
-    HRESULT UnlockRect() {
-        D3DSurface_UnlockRect(this);
-        return 0;
-    }
-};
-
-#pragma endregion
-#pragma region D3DTexture
-
-VOID D3DBaseTexture_AsyncLockTail(
-    struct D3DBaseTexture *pTexture,
-    UINT64 AsyncBlock,
-    UINT ArrayIndex,
-    D3DLOCKED_TAIL *pLockedTail,
-    DWORD Flags
-);
-UINT D3DBaseTexture_GetLevelCount(struct D3DBaseTexture *pTexture);
-VOID D3DBaseTexture_GetTailDesc(struct D3DBaseTexture *pTexture, D3DMIPTAIL_DESC *pDesc);
-VOID D3DBaseTexture_LockTail(
-    struct D3DBaseTexture *pTexture,
-    UINT ArrayIndex,
-    D3DLOCKED_TAIL *pLockedTail,
-    DWORD Flags
-);
-VOID D3DBaseTexture_UnlockTail(struct D3DBaseTexture *pTexture, UINT ArrayIndex);
-
-struct D3DBaseTexture : public D3DResource { /* Size=0x34 */
-    /* 0x0018 */ DWORD MipFlush;
-    /* 0x001c */ GPUTEXTURE_FETCH_CONSTANT Format;
-
-    UINT GetLevelCount() { return D3DBaseTexture_GetLevelCount(this); }
-    HRESULT GetTailDesc(D3DMIPTAIL_DESC *pDesc) {
-        D3DBaseTexture_GetTailDesc(this, pDesc);
-        return 0;
-    }
-    HRESULT LockTail(UINT ArrayIndex, D3DLOCKED_TAIL *pLockedTail, DWORD Flags) {
-        D3DBaseTexture_LockTail(this, ArrayIndex, pLockedTail, Flags);
-        return 0;
-    }
-    HRESULT AsyncLockTail(
-        UINT64 AsyncBlock, UINT ArrayIndex, D3DLOCKED_TAIL *pLockedTail, DWORD Flags
-    ) {
-        D3DBaseTexture_AsyncLockTail(this, AsyncBlock, ArrayIndex, pLockedTail, Flags);
-        return 0;
-    }
-    HRESULT UnlockTail(UINT ArrayIndex) {
-        D3DBaseTexture_UnlockTail(this, ArrayIndex);
-        return 0;
-    }
-};
-
-VOID D3DTexture_AsyncLockRect(
-    struct D3DTexture *pTexture,
-    UINT64 AsyncBlock,
-    UINT Level,
-    D3DLOCKED_RECT *pLockedRect,
-    const tagRECT *pRect,
-    DWORD Flags
-);
-VOID D3DTexture_GetLevelDesc(
-    struct D3DTexture *pTexture, UINT Level, D3DSURFACE_DESC *pDesc
-);
-D3DSurface *D3DTexture_GetSurfaceLevel(struct D3DTexture *pTexture, UINT Level);
-VOID D3DTexture_LockRect(
-    struct D3DTexture *pTexture,
-    UINT Level,
-    D3DLOCKED_RECT *pLockedRect,
-    const tagRECT *pRect,
-    DWORD Flags
-);
-VOID D3DTexture_UnlockRect(struct D3DTexture *pTexture, UINT Level);
-
-struct D3DTexture : public D3DBaseTexture { /* Size=0x34 */
-    /* 0x0000: fields for D3DBaseTexture */
-    HRESULT GetLevelDesc(UINT Level, D3DSURFACE_DESC *pDesc) {
-        D3DTexture_GetLevelDesc(this, Level, pDesc);
-        return 0;
-    }
-    HRESULT GetSurfaceLevel(UINT Level, D3DSurface **ppSurfaceLevel) {
-        *ppSurfaceLevel = D3DTexture_GetSurfaceLevel(this, Level);
-        return 0;
-    }
-    HRESULT
-    LockRect(UINT Level, D3DLOCKED_RECT *pLockedRect, const tagRECT *pRect, DWORD Flags) {
-        D3DTexture_LockRect(this, Level, pLockedRect, pRect, Flags);
-        return 0;
-    }
-    HRESULT AsyncLockRect(
-        UINT64 AsyncBlock,
-        UINT Level,
-        D3DLOCKED_RECT *pLockedRect,
-        const tagRECT *pRect,
-        DWORD Flags
-    ) {
-        D3DTexture_AsyncLockRect(this, AsyncBlock, Level, pLockedRect, pRect, Flags);
-        return 0;
-    }
-    HRESULT UnlockRect(UINT Level) {
-        D3DTexture_UnlockRect(this, Level);
-        return 0;
-    }
-    // need definitions
-    HRESULT LockTail(D3DLOCKED_TAIL *, UINT);
-    HRESULT AsyncLockTail(UINT64, D3DLOCKED_TAIL *, UINT);
-    HRESULT UnlockTail();
-};
-
-VOID D3DArrayTexture_AsyncLockRect(
-    struct D3DArrayTexture *pTexture,
-    UINT64 AsyncBlock,
-    UINT ArrayIndex,
-    UINT Level,
-    D3DLOCKED_RECT *pLockedRect,
-    const tagRECT *pRect,
-    DWORD Flags
-);
-UINT D3DArrayTexture_GetArraySize(struct D3DArrayTexture *pTexture);
-D3DSurface *D3DArrayTexture_GetArraySurface(
-    struct D3DArrayTexture *pTexture, UINT ArrayIndex, UINT Level
-);
-VOID D3DArrayTexture_GetLevelDesc(
-    struct D3DArrayTexture *pTexture, UINT Level, D3DSURFACE_DESC *pDesc
-);
-VOID D3DArrayTexture_LockRect(
-    struct D3DArrayTexture *pTexture,
-    UINT ArrayIndex,
-    UINT Level,
-    D3DLOCKED_RECT *pLockedRect,
-    const tagRECT *pRect,
-    DWORD Flags
-);
-VOID D3DArrayTexture_UnlockRect(
-    struct D3DArrayTexture *pTexture, UINT ArrayIndex, UINT Level
-);
-
-struct D3DArrayTexture : public D3DBaseTexture { /* Size=0x34 */
-    /* 0x0000: fields for D3DBaseTexture */
-    UINT GetArraySize() { return D3DArrayTexture_GetArraySize(this); }
-    HRESULT GetLevelDesc(UINT Level, D3DSURFACE_DESC *pDesc) {
-        D3DArrayTexture_GetLevelDesc(this, Level, pDesc);
-        return 0;
-    }
-    HRESULT GetArraySurface(UINT ArrayIndex, UINT Level, D3DSurface **ppArraySurface) {
-        *ppArraySurface = D3DArrayTexture_GetArraySurface(this, ArrayIndex, Level);
-        return 0;
-    }
-    HRESULT LockRect(
-        UINT ArrayIndex,
-        UINT Level,
-        D3DLOCKED_RECT *pLockedRect,
-        const tagRECT *pRect,
-        DWORD Flags
-    ) {
-        D3DArrayTexture_LockRect(this, ArrayIndex, Level, pLockedRect, pRect, Flags);
-        return 0;
-    }
-    HRESULT AsyncLockRect(
-        UINT64 AsyncBlock,
-        UINT ArrayIndex,
-        UINT Level,
-        D3DLOCKED_RECT *pLockedRect,
-        const tagRECT *pRect,
-        DWORD Flags
-    ) {
-        D3DArrayTexture_AsyncLockRect(
-            this, AsyncBlock, ArrayIndex, Level, pLockedRect, pRect, Flags
-        );
-        return 0;
-    }
-    HRESULT UnlockRect(UINT ArrayIndex, UINT Level) {
-        D3DArrayTexture_UnlockRect(this, ArrayIndex, Level);
-        return 0;
-    }
-    // need definitions
-    HRESULT GetSurfaceLevel(UINT, D3DSurface **);
-    HRESULT LockTail(UINT, D3DLOCKED_TAIL *, UINT);
-    HRESULT AsyncLockTail(UINT64, UINT, D3DLOCKED_TAIL *, UINT);
-    HRESULT UnlockTail(UINT);
-};
-
-VOID D3DCubeTexture_AsyncLockRect(
-    struct D3DCubeTexture *pTexture,
-    UINT64 AsyncBlock,
-    D3DCUBEMAP_FACES FaceType,
-    UINT Level,
-    D3DLOCKED_RECT *pLockedRect,
-    const tagRECT *pRect,
-    DWORD Flags
-);
-D3DSurface *D3DCubeTexture_GetCubeMapSurface(
-    struct D3DCubeTexture *pTexture, D3DCUBEMAP_FACES FaceType, UINT Level
-);
-VOID D3DCubeTexture_GetLevelDesc(
-    struct D3DCubeTexture *pTexture, UINT Level, D3DSURFACE_DESC *pDesc
-);
-VOID D3DCubeTexture_LockRect(
-    struct D3DCubeTexture *pTexture,
-    D3DCUBEMAP_FACES FaceType,
-    UINT Level,
-    D3DLOCKED_RECT *pLockedRect,
-    const tagRECT *pRect,
-    DWORD Flags
-);
-VOID D3DCubeTexture_UnlockRect(
-    struct D3DCubeTexture *pTexture, D3DCUBEMAP_FACES FaceType, UINT Level
-);
-
-struct D3DCubeTexture : public D3DBaseTexture { /* Size=0x34 */
-    /* 0x0000: fields for D3DBaseTexture */
-    HRESULT GetLevelDesc(UINT Level, D3DSURFACE_DESC *pDesc) {
-        D3DCubeTexture_GetLevelDesc(this, Level, pDesc);
-        return 0;
-    }
-    HRESULT GetCubeMapSurface(
-        D3DCUBEMAP_FACES FaceType, UINT Level, D3DSurface **ppCubeMapSurface
-    ) {
-        *ppCubeMapSurface = D3DCubeTexture_GetCubeMapSurface(this, FaceType, Level);
-        return 0;
-    }
-    HRESULT LockRect(
-        D3DCUBEMAP_FACES FaceType,
-        UINT Level,
-        D3DLOCKED_RECT *pLockedRect,
-        const tagRECT *pRect,
-        DWORD Flags
-    ) {
-        D3DCubeTexture_LockRect(this, FaceType, Level, pLockedRect, pRect, Flags);
-        return 0;
-    }
-    HRESULT AsyncLockRect(
-        UINT64 AsyncBlock,
-        D3DCUBEMAP_FACES FaceType,
-        UINT Level,
-        D3DLOCKED_RECT *pLockedRect,
-        const tagRECT *pRect,
-        DWORD Flags
-    ) {
-        D3DCubeTexture_AsyncLockRect(
-            this, AsyncBlock, FaceType, Level, pLockedRect, pRect, Flags
-        );
-        return 0;
-    }
-    HRESULT UnlockRect(D3DCUBEMAP_FACES FaceType, UINT Level) {
-        D3DCubeTexture_UnlockRect(this, FaceType, Level);
-        return 0;
-    }
-    // need definitions
-    HRESULT LockTail(D3DCUBEMAP_FACES, D3DLOCKED_TAIL *, UINT);
-    HRESULT AsyncLockTail(UINT64, D3DCUBEMAP_FACES, D3DLOCKED_TAIL *, UINT);
-    HRESULT UnlockTail(D3DCUBEMAP_FACES);
-};
-
-VOID D3DLineTexture_AsyncLockRect(
-    struct D3DLineTexture *pTexture,
-    UINT64 AsyncBlock,
-    UINT Level,
-    D3DLOCKED_RECT *pLockedRect,
-    const tagRECT *pRect,
-    DWORD Flags
-);
-VOID D3DLineTexture_GetLevelDesc(
-    struct D3DLineTexture *pTexture, UINT Level, D3DSURFACE_DESC *pDesc
-);
-D3DSurface *D3DLineTexture_GetSurfaceLevel(struct D3DLineTexture *pTexture, UINT Level);
-VOID D3DLineTexture_LockRect(
-    struct D3DLineTexture *pTexture,
-    UINT Level,
-    D3DLOCKED_RECT *pLockedRect,
-    const tagRECT *pRect,
-    DWORD Flags
-);
-VOID D3DLineTexture_UnlockRect(struct D3DLineTexture *pTexture, UINT Level);
-
-struct D3DLineTexture : public D3DBaseTexture { /* Size=0x34 */
-    /* 0x0000: fields for D3DBaseTexture */
-
-    HRESULT GetLevelDesc(UINT Level, D3DSURFACE_DESC *pDesc) {
-        D3DLineTexture_GetLevelDesc(this, Level, pDesc);
-        return 0;
-    }
-    HRESULT GetSurfaceLevel(UINT Level, D3DSurface **ppSurfaceLevel) {
-        *ppSurfaceLevel = D3DLineTexture_GetSurfaceLevel(this, Level);
-        return 0;
-    }
-    HRESULT
-    LockRect(UINT Level, D3DLOCKED_RECT *pLockedRect, const tagRECT *pRect, DWORD Flags) {
-        D3DLineTexture_LockRect(this, Level, pLockedRect, pRect, Flags);
-        return 0;
-    }
-    HRESULT AsyncLockRect(
-        UINT64 AsyncBlock,
-        UINT Level,
-        D3DLOCKED_RECT *pLockedRect,
-        const tagRECT *pRect,
-        DWORD Flags
-    ) {
-        D3DLineTexture_AsyncLockRect(this, AsyncBlock, Level, pLockedRect, pRect, Flags);
-        return 0;
-    }
-    HRESULT UnlockRect(UINT Level) {
-        D3DLineTexture_UnlockRect(this, Level);
-        return 0;
-    }
-    // need definitions
-    HRESULT LockTail(D3DLOCKED_TAIL *, UINT);
-    HRESULT AsyncLockTail(UINT64, D3DLOCKED_TAIL *, UINT);
-    HRESULT UnlockTail();
-};
-
-VOID D3DVolumeTexture_GetLevelDesc(
-    struct D3DVolumeTexture *pTexture, UINT Level, D3DVOLUME_DESC *pDesc
-);
-struct D3DVolume *
-D3DVolumeTexture_GetVolumeLevel(struct D3DVolumeTexture *pTexture, UINT Level);
-VOID D3DVolumeTexture_LockBox(
-    struct D3DVolumeTexture *pTexture,
-    UINT Level,
-    D3DLOCKED_BOX *pLockedVolume,
-    const D3DBOX *pBox,
-    DWORD Flags
-);
-VOID D3DVolumeTexture_UnlockBox(struct D3DVolumeTexture *pTexture, UINT Level);
-
-struct D3DVolumeTexture : public D3DBaseTexture { /* Size=0x34 */
-    /* 0x0000: fields for D3DBaseTexture */
-    HRESULT GetLevelDesc(UINT Level, D3DVOLUME_DESC *pDesc) {
-        D3DVolumeTexture_GetLevelDesc(this, Level, pDesc);
-        return 0;
-    }
-    HRESULT GetVolumeLevel(UINT Level, struct D3DVolume **ppVolumeLevel) {
-        *ppVolumeLevel = D3DVolumeTexture_GetVolumeLevel(this, Level);
-        return 0;
-    }
-    HRESULT
-    LockBox(UINT Level, D3DLOCKED_BOX *pLockedVolume, const D3DBOX *pBox, DWORD Flags) {
-        D3DVolumeTexture_LockBox(this, Level, pLockedVolume, pBox, Flags);
-        return 0;
-    }
-    HRESULT UnlockBox(UINT Level) {
-        D3DVolumeTexture_UnlockBox(this, Level);
-        return 0;
-    }
-    // need definitions
-    HRESULT AsyncLockBox(UINT64, UINT, D3DLOCKED_BOX *, const D3DBOX *, UINT);
-    HRESULT LockTail(D3DLOCKED_TAIL *, UINT);
-    HRESULT AsyncLockTail(UINT64, D3DLOCKED_TAIL *, UINT);
-    HRESULT UnlockTail();
-};
-
-#pragma endregion
-#pragma region D3DVolume
-
-void *D3DVolume_GetContainer(struct D3DVolume *pVolume, const _GUID &UnusedRiid);
-void D3DVolume_GetDesc(struct D3DVolume *pVolume, D3DVOLUME_DESC *pDesc);
-void D3DVolume_LockBox(
-    struct D3DVolume *pVolume,
-    D3DLOCKED_BOX *pLockedVolume,
-    const D3DBOX *pBox,
-    DWORD Flags
-);
-void D3DVolume_UnlockBox(struct D3DVolume *pVolume);
-
-struct D3DVolume : public D3DResource { /* Size=0x20 */
-    /* 0x0018 */ D3DBaseTexture *Parent;
-    /* 0x001c */ UINT ArrayIndex : 6; /* BitPos=22 */
-    /* 0x001c */ UINT MipLevel : 4; /* BitPos=28 */
-
-    HRESULT GetDesc(D3DVOLUME_DESC *pDesc) {
-        D3DVolume_GetDesc(this, pDesc);
-        return 0;
-    }
-    HRESULT LockBox(D3DLOCKED_BOX *pLockedVolume, const D3DBOX *pBox, DWORD Flags) {
-        D3DVolume_LockBox(this, pLockedVolume, pBox, Flags);
-        return 0;
-    }
-    // need definitions
-    HRESULT GetContainer(const _GUID &, VOID **);
-    HRESULT AsyncLockBox(UINT64, D3DLOCKED_BOX *, const D3DBOX *, UINT);
-    HRESULT UnlockBox();
-};
-
-#pragma endregion
-#pragma region D3DQuery
-
-ULONG D3DQuery_AddRef(struct D3DQuery *pThis);
-ULONG D3DQuery_Release(struct D3DQuery *pThis);
-DWORD D3DQuery_GetDataSize(struct D3DQuery *pThis);
-VOID D3DQuery_GetDevice(struct D3DQuery *pThis, D3DDevice **ppDevice);
-D3DQUERYTYPE D3DQuery_GetType(struct D3DQuery *pThis);
-HRESULT
-D3DQuery_GetData(struct D3DQuery *pThis, VOID *pData, DWORD Size, DWORD GetDataFlags);
-VOID D3DQuery_Issue(struct D3DQuery *pThis, DWORD IssueFlags);
-
-struct D3DQuery { /* Size=0x1 */
-    ULONG AddRef() { return D3DQuery_AddRef(this); }
-    ULONG Release() { return D3DQuery_Release(this); }
-    HRESULT GetDevice(D3DDevice **ppDevice) {
-        D3DQuery_GetDevice(this, ppDevice);
-        return 0;
-    }
-    D3DQUERYTYPE GetType() { return D3DQuery_GetType(this); }
-    DWORD GetDataSize() { return D3DQuery_GetDataSize(this); }
-    HRESULT Issue(DWORD IssueFlags) {
-        D3DQuery_Issue(this, IssueFlags);
-        return 0;
-    }
-    HRESULT GetData(VOID *pData, DWORD Size, DWORD GetDataFlags) {
-        return D3DQuery_GetData(this, pData, Size, GetDataFlags);
-    }
-};
-
-#pragma endregion
 #pragma region D3DPerfCounters
 
-ULONG D3DPerfCounters_AddRef(struct D3DPerfCounters *pThis);
-ULONG D3DPerfCounters_Release(struct D3DPerfCounters *pThis);
-VOID D3DPerfCounters_GetDevice(struct D3DPerfCounters *pThis, D3DDevice **ppDevice);
-VOID D3DPerfCounters_BlockUntilNotBusy(struct D3DPerfCounters *pThis);
-UINT D3DPerfCounters_GetNumPasses(struct D3DPerfCounters *pThis);
-BOOL D3DPerfCounters_IsBusy(struct D3DPerfCounters *pThis);
+// C
+ULONG D3DPerfCounters_AddRef(D3DPerfCounters *pThis);
+ULONG D3DPerfCounters_Release(D3DPerfCounters *pThis);
+VOID D3DPerfCounters_GetDevice(D3DPerfCounters *pThis, D3DDevice **ppDevice);
+VOID D3DPerfCounters_BlockUntilNotBusy(D3DPerfCounters *pThis);
+UINT D3DPerfCounters_GetNumPasses(D3DPerfCounters *pThis);
+BOOL D3DPerfCounters_IsBusy(D3DPerfCounters *pThis);
 HRESULT
 D3DPerfCounters_GetValues(
-    struct D3DPerfCounters *pThis,
-    D3DPERFCOUNTER_VALUES *pValues,
-    UINT PassIndex,
-    UINT *pPassType
+    D3DPerfCounters *pThis, D3DPERFCOUNTER_VALUES *pValues, UINT PassIndex, UINT *pPassType
 );
 
+// C++
 struct D3DPerfCounters { /* Size=0x1 */
     ULONG AddRef() { return D3DPerfCounters_AddRef(this); }
     ULONG Release() { return D3DPerfCounters_Release(this); }
@@ -673,45 +88,90 @@ struct D3DPerfCounters { /* Size=0x1 */
     }
 };
 
-VOID D3DVertexDeclaration_GetDeclaration(
-    struct D3DVertexDeclaration *pThis, D3DVERTEXELEMENT9 *pDecl, UINT *pNumElements
+#pragma endregion
+#pragma region Direct3D
+
+// https://learn.microsoft.com/en-us/windows/win32/api/d3d9helper/nn-d3d9helper-idirect3d9
+
+HRESULT Direct3D_GetDeviceCaps(UINT Adapter, D3DDEVTYPE DeviceType, D3DCAPS9 *pCaps);
+HRESULT
+Direct3D_CreateDevice(
+    UINT Adapter,
+    D3DDEVTYPE DeviceType,
+    void *pUnused,
+    DWORD BehaviorFlags,
+    D3DPRESENT_PARAMETERS *pPresentationParameters,
+    D3DDevice **ppReturnedDeviceInterface
 );
 
-struct D3DVertexDeclaration : public D3DResource { /* Size=0x18 */
-    /* 0x0000: fields for D3DResource */
-    HRESULT GetDeclaration(D3DVERTEXELEMENT9 *pDecl, UINT *pNumElements) {
-        D3DVertexDeclaration_GetDeclaration(this, pDecl, pNumElements);
-        return 0;
+struct Direct3D { /* Size=0x1 */
+    static ULONG AddRef();
+    static ULONG Release();
+    static UINT GetAdapterCount();
+    static HRESULT
+    GetAdapterIdentifier(UINT Adapter, DWORD Flags, D3DADAPTER_IDENTIFIER9 *pIdentifier);
+    static HRESULT CheckDeviceType(
+        UINT iAdapter,
+        D3DDEVTYPE DevType,
+        D3DFORMAT DisplayFormat,
+        D3DFORMAT BackBufferFormat,
+        BOOL bWindowed
+    );
+    static HRESULT CheckDeviceFormat(
+        UINT Adapter,
+        D3DDEVTYPE DeviceType,
+        D3DFORMAT AdapterFormat,
+        DWORD Usage,
+        D3DRESOURCETYPE RType,
+        D3DFORMAT CheckFormat
+    );
+    static HRESULT CheckDeviceMultiSampleType(
+        UINT Adapter,
+        D3DDEVTYPE DeviceType,
+        D3DFORMAT SurfaceFormat,
+        BOOL Windowed,
+        D3DMULTISAMPLE_TYPE MultiSampleType,
+        DWORD *pQualityLevels
+    );
+    static HRESULT CheckDepthStencilMatch(
+        UINT Adapter,
+        D3DDEVTYPE DeviceType,
+        D3DFORMAT AdapterFormat,
+        D3DFORMAT RenderTargetFormat,
+        D3DFORMAT DepthStencilFormat
+    );
+    static HRESULT CheckDeviceFormatConversion(
+        UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SourceFormat, D3DFORMAT TargetFormat
+    );
+    static HRESULT GetDeviceCaps(UINT Adapter, D3DDEVTYPE DeviceType, D3DCAPS9 *pCaps) {
+        return Direct3D_GetDeviceCaps(Adapter, DeviceType, pCaps);
     }
+    static HRESULT CreateDevice(
+        UINT Adapter,
+        D3DDEVTYPE DeviceType,
+        void *hFocusWindow,
+        DWORD BehaviorFlags,
+        D3DPRESENT_PARAMETERS *pPresentationParameters,
+        D3DDevice **ppReturnedDeviceInterface
+    ) {
+        return Direct3D_CreateDevice(
+            Adapter,
+            DeviceType,
+            hFocusWindow,
+            BehaviorFlags,
+            pPresentationParameters,
+            ppReturnedDeviceInterface
+        );
+    }
+    static void QueryGpuVersion(D3DGPUVERSION *pVersion);
 };
 
 #pragma endregion
-#pragma region PerfCounters
+#pragma region D3DDevice
 
-typedef struct _D3DPERFCOUNTER_EVENTS { /* Size=0xf0 */
-    /* 0x0000 */ GPUPERFEVENT_CP CP[1];
-    /* 0x0004 */ GPUPERFEVENT_RBBM RBBM[2];
-    /* 0x000c */ GPUPERFEVENT_SQ SQ[4];
-    /* 0x001c */ GPUPERFEVENT_VGT VGT[4];
-    /* 0x002c */ GPUPERFEVENT_VC VC[4];
-    /* 0x003c */ GPUPERFEVENT_PA_SU PA_SU[4];
-    /* 0x004c */ GPUPERFEVENT_PA_SC PA_SC[4];
-    /* 0x005c */ GPUPERFEVENT_HZ HZ[2];
-    /* 0x0064 */ GPUPERFEVENT_TCR TCR[2];
-    /* 0x006c */ GPUPERFEVENT_TCM TCM[2];
-    /* 0x0074 */ GPUPERFEVENT_TCF TCF[12];
-    /* 0x00a4 */ GPUPERFEVENT_TP TP0[2];
-    /* 0x00ac */ GPUPERFEVENT_TP TP1[2];
-    /* 0x00b4 */ GPUPERFEVENT_TP TP2[2];
-    /* 0x00bc */ GPUPERFEVENT_TP TP3[2];
-    /* 0x00c4 */ GPUPERFEVENT_SX SX[1];
-    /* 0x00c8 */ GPUPERFEVENT_BC BC[4];
-    /* 0x00d8 */ GPUPERFEVENT_MC MC0[1];
-    /* 0x00dc */ GPUPERFEVENT_MC MC1[1];
-    /* 0x00e0 */ GPUPERFEVENT_MH MH[3];
-    /* 0x00ec */ GPUPERFEVENT_BIF BIF[1];
-} D3DPERFCOUNTER_EVENTS;
+// https://learn.microsoft.com/en-us/windows/win32/api/d3d9helper/nn-d3d9helper-idirect3ddevice9
 
+// C
 void D3DDevice_EnablePerfCounters(D3DDevice *pDevice, BOOL Enable);
 void D3DDevice_SetPerfCounterEvents(
     D3DDevice *pDevice, const D3DPERFCOUNTER_EVENTS *pEvents, DWORD Flags
@@ -720,38 +180,8 @@ void D3DDevice_QueryPerfCounters(
     D3DDevice *pDevice, D3DPerfCounters *pCounters, DWORD Flags
 );
 
-#pragma endregion
-#pragma region D3DPixelShader
-
-void D3DPixelShader_GetFunction(
-    struct D3DPixelShader *pThis, void *pData, UINT *pSizeOfData
-);
-
-struct D3DPixelShader : public D3DResource { /* Size=0x18 */
-    /* 0x0000: fields for D3DResource */
-    HRESULT GetFunction(void *pData, UINT *pSizeOfData) {
-        D3DPixelShader_GetFunction(this, pData, pSizeOfData);
-        return 0;
-    }
-};
-
 D3DPixelShader *D3DDevice_CreatePixelShader(const DWORD *pFunction);
-
-#pragma endregion
-#pragma region D3DVertexShader
-
-struct D3DVertexShader : public D3DResource { /* Size=0x18 */
-    /* 0x0000: fields for D3DResource */
-
-    //   int32_t GetFunction(void*, uint32_t*);
-    //   int32_t Bind(uint32_t, D3DVertexDeclaration*, const uint32_t*, D3DPixelShader*);
-    //   int32_t IsBound();
-};
-
 D3DVertexShader *D3DDevice_CreateVertexShader(const DWORD *pFunction);
-
-#pragma endregion
-#pragma region RenderState
 
 DWORD D3DDevice_GetRenderState_BlendOp(D3DDevice *pDevice);
 DWORD D3DDevice_GetRenderState_SrcBlend(D3DDevice *pDevice);
@@ -791,16 +221,7 @@ void D3DDevice_SetRenderState_HalfPixelOffset(D3DDevice *pDevice, DWORD Value);
 
 DWORD D3DDevice_InsertFence(D3DDevice *pDevice);
 void D3DDevice_BlockOnFence(DWORD fence);
-
-#pragma endregion
-#pragma region Misc
-
-inline void
-D3DDevice_SetSamplerState_BorderColor(D3DDevice *pDevice, DWORD Sampler, DWORD Value) {
-    u64 upd_value = Value;
-    pDevice->m_Constants.TextureFetch[Sampler + 5].BorderSize = upd_value;
-    pDevice->m_Pending.m_Mask[3] |= (0x8000000000000000) >> (Sampler + 0x20);
-}
+void D3DDevice_SetSamplerState_BorderColor(D3DDevice *pDevice, DWORD Sampler, DWORD Value);
 void D3DDevice_SetSamplerState_MinFilter(D3DDevice *pDevice, DWORD Sampler, DWORD Value);
 void D3DDevice_SetSamplerState_MagFilter(D3DDevice *pDevice, DWORD Sampler, DWORD Value);
 
@@ -926,33 +347,14 @@ void D3DDevice_SetShaderGPRAllocation(
 );
 D3DSurface *D3DDevice_GetDepthStencilSurface(D3DDevice *pDevice);
 
-HRESULT Direct3D_GetDeviceCaps(UINT Adapter, D3DDEVTYPE DeviceType, D3DCAPS9 *pCaps);
-HRESULT
-Direct3D_CreateDevice(
-    UINT Adapter,
-    D3DDEVTYPE DeviceType,
-    void *pUnused,
-    DWORD BehaviorFlags,
-    D3DPRESENT_PARAMETERS *pPresentationParameters,
-    D3DDevice **ppReturnedDeviceInterface
-);
-
 D3DQuery *
 D3DDevice_CreateQueryTiled(D3DDevice *pDevice, D3DQUERYTYPE Type, UINT TileCapacity);
 
 void D3DDevice_SetVertexShader(D3DDevice *pDevice, D3DVertexShader *pShader);
 void D3DDevice_SetPixelShader(D3DDevice *pDevice, D3DPixelShader *pShader);
-
-inline void D3DDevice_SetVertexShaderConstantF(
+void D3DDevice_SetVertexShaderConstantF(
     D3DDevice *pDevice, UINT StartRegister, const float *pConstantData, UINT Vector4fCount
-) {
-    pDevice->m_Pending.m_Mask[0] |= (0x8000000000000000U >> (StartRegister >> 2));
-    XMVECTOR &vec = pDevice->m_Constants.VertexShaderF[StartRegister];
-    vec.x = pConstantData[0];
-    vec.y = pConstantData[1];
-    vec.z = pConstantData[2];
-    vec.w = pConstantData[3];
-}
+);
 
 void D3DDevice_SetVertexShaderConstantFN(
     D3DDevice *pDevice,
@@ -965,6 +367,1083 @@ void D3DDevice_SetVertexShaderConstantFN(
 void D3DDevice_GetVertexShaderConstantF(
     D3DDevice *pDevice, UINT StartRegister, float *pConstantData, UINT Vector4fCount
 );
+
+// C++
+struct D3DDevice { /* Size=0x2b00 */
+    /* 0x0000 */ _D3DTAGCOLLECTION m_Pending;
+    /* 0x0028 */ UINT64 m_Predicated_PendingMask2;
+    /* 0x0030 */ UINT *m_pRing;
+    /* 0x0034 */ UINT *m_pRingLimit;
+    /* 0x0038 */ UINT *m_pRingGuarantee;
+    /* 0x003c */ UINT m_ReferenceCount;
+    /* 0x0040 */ VOID (*m_SetRenderStateCall[101])(D3DDevice *, UINT);
+    /* 0x01d4 */ VOID (*m_SetSamplerStateCall[20])(D3DDevice *, UINT, UINT);
+    /* 0x0224 */ UINT (*m_GetRenderStateCall[101])(D3DDevice *);
+    /* 0x03b8 */ UINT (*m_GetSamplerStateCall[20])(D3DDevice *, UINT);
+    int filler[30]; // not part of the struct but i needed it to align
+    /* 0x0480 */ D3DConstants m_Constants;
+    /* 0x2820 */ float m_ClipPlanes[6][4];
+    /* 0x2880 */ GPU_DESTINATIONPACKET m_DestinationPacket;
+    /* 0x28c0 */ GPU_WINDOWPACKET m_WindowPacket;
+    /* 0x28cc */ GPU_VALUESPACKET m_ValuesPacket;
+    /* 0x2920 */ GPU_PROGRAMPACKET m_ProgramPacket;
+    /* 0x2934 */ GPU_CONTROLPACKET m_ControlPacket;
+    /* 0x2964 */ GPU_TESSELLATORPACKET m_TessellatorPacket;
+    /* 0x29b8 */ GPU_MISCPACKET m_MiscPacket;
+    /* 0x2a50 */ GPU_POINTPACKET m_PointPacket;
+    /* 0x2a70 */ BYTE m_MaxAnisotropy[26];
+    /* 0x2a8a */ BYTE m_ZFilter[26];
+
+    ULONG AddRef();
+    ULONG Release();
+
+    HRESULT GetDirect3D(Direct3D **ppD3D9);
+    HRESULT GetDeviceCaps(D3DCAPS9 *pCaps);
+    HRESULT GetDisplayMode(UINT iSwapChain, D3DDISPLAYMODE *pMode);
+    HRESULT GetCreationParameters(D3DDEVICE_CREATION_PARAMETERS *pParameters);
+    HRESULT Reset(D3DPRESENT_PARAMETERS *pPresentationParameters);
+    HRESULT Present(
+        const RECT *pSourceRect,
+        const RECT *pDestRect,
+        void *hDestWindowOverride,
+        void *pDirtyRegion
+    );
+    HRESULT GetRasterStatus(UINT iSwapChain, D3DRASTER_STATUS *pRasterStatus);
+    void SetGammaRamp(UINT iSwapChain, DWORD Flags, const D3DGAMMARAMP *pRamp);
+    void GetGammaRamp(UINT iSwapChain, D3DGAMMARAMP *pRamp);
+    //   void SetPWLGamma(uint32_t, const _D3DPWLGAMMA*);
+    //   void GetPWLGamma(_D3DPWLGAMMA*);
+    HRESULT CreateTexture(
+        UINT Width,
+        UINT Height,
+        UINT Levels,
+        DWORD Usage,
+        D3DFORMAT Format,
+        UINT Pool,
+        D3DTexture **ppTexture,
+        HANDLE *pSharedHandle
+    );
+    HRESULT CreateVolumeTexture(
+        UINT Width,
+        UINT Height,
+        UINT Depth,
+        UINT Levels,
+        DWORD Usage,
+        D3DFORMAT Format,
+        UINT Pool,
+        D3DVolumeTexture **ppVolumeTexture,
+        HANDLE *pSharedHandle
+    );
+    HRESULT CreateCubeTexture(
+        UINT EdgeLength,
+        UINT Levels,
+        DWORD Usage,
+        D3DFORMAT Format,
+        UINT Pool,
+        D3DCubeTexture **ppCubeTexture,
+        HANDLE *pSharedHandle
+    );
+    HRESULT CreateArrayTexture(
+        UINT,
+        UINT,
+        UINT,
+        UINT,
+        DWORD Usage,
+        D3DFORMAT Format,
+        UINT Pool,
+        D3DArrayTexture **ppArrayTexture,
+        HANDLE *pSharedHandle
+    );
+    HRESULT CreateLineTexture(
+        UINT,
+        UINT,
+        DWORD Usage,
+        D3DFORMAT Format,
+        UINT Pool,
+        D3DLineTexture **ppLineTexture,
+        HANDLE *pSharedHandle
+    );
+    HRESULT CreateVertexBuffer(
+        UINT Length,
+        DWORD Usage,
+        DWORD FVF,
+        UINT Pool,
+        D3DVertexBuffer **ppVertexBuffer,
+        HANDLE *pSharedHandle
+    );
+    HRESULT CreateIndexBuffer(
+        UINT Length,
+        DWORD Usage,
+        D3DFORMAT Format,
+        UINT Pool,
+        D3DIndexBuffer **ppIndexBuffer,
+        HANDLE *pSharedHandle
+    );
+    HRESULT CreateRenderTarget(
+        UINT Width,
+        UINT Height,
+        D3DFORMAT Format,
+        D3DMULTISAMPLE_TYPE MultiSample,
+        DWORD MultisampleQuality,
+        BOOL Lockable,
+        D3DSurface **ppSurface,
+        const D3DSURFACE_PARAMETERS *
+    );
+    HRESULT CreateDepthStencilSurface(
+        UINT Width,
+        UINT Height,
+        D3DFORMAT Format,
+        D3DMULTISAMPLE_TYPE MultiSample,
+        DWORD MultisampleQuality,
+        BOOL Lockable,
+        D3DSurface **ppSurface,
+        const D3DSURFACE_PARAMETERS *
+    );
+    HRESULT SetRenderTarget(DWORD RenderTargetIndex, D3DSurface *pRenderTarget);
+    HRESULT GetRenderTarget(DWORD RenderTargetIndex, D3DSurface **ppRenderTarget);
+    HRESULT SetDepthStencilSurface(D3DSurface *pNewZStencil);
+    HRESULT GetDepthStencilSurface(D3DSurface **ppZStencilSurface);
+    HRESULT
+    GetBackBuffer(
+        UINT iSwapChain, UINT iBackBuffer, UINT BackBufferType, D3DSurface **ppBackBuffer
+    );
+    //   HRESULT GetFrontBuffer(D3DTexture**);
+    HRESULT BeginScene();
+    HRESULT EndScene();
+    HRESULT Clear(
+        DWORD Count, const D3DRECT *pRects, DWORD Flags, DWORD Color, float Z, DWORD Stencil
+    );
+    //   HRESULT ClearF(uint32_t, const _D3DRECT*, const __vector4*, float, uint32_t);
+    HRESULT SetViewport(const D3DVIEWPORT9 *pViewport);
+    HRESULT GetViewport(D3DVIEWPORT9 *pViewport);
+    HRESULT SetRenderState(D3DRENDERSTATETYPE State, DWORD Value);
+    HRESULT SetRenderState_Inline(D3DRENDERSTATETYPE State, DWORD Value);
+    HRESULT GetRenderState(D3DRENDERSTATETYPE State, DWORD *pValue);
+    HRESULT CreateStateBlock(D3DSTATEBLOCKTYPE Type, D3DStateBlock **ppSB);
+    HRESULT GetTexture(DWORD Stage, D3DBaseTexture **ppTexture);
+    HRESULT SetTexture(DWORD Stage, D3DBaseTexture *pTexture);
+    HRESULT GetSamplerState(DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD *pValue);
+    HRESULT SetSamplerState(DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD Value);
+    HRESULT SetSamplerState_Inline(DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD Value);
+    //   HRESULT SetSamplerAddressStates(uint32_t, uint32_t, uint32_t, uint32_t);
+    //   HRESULT SetSamplerBorderStates(uint32_t, uint32_t, uint32_t, uint32_t);
+    //   HRESULT SetSamplerSeparateZFilterStates(uint32_t, uint32_t, uint32_t,
+    //          uint32_t, uint32_t, uint32_t, uint32_t);
+    //   HRESULT SetSamplerFilterStates(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
+    //   HRESULT DrawVertices(_D3DPRIMITIVETYPE, uint32_t, uint32_t);
+    //   HRESULT DrawIndexedVertices(_D3DPRIMITIVETYPE, int32_t, uint32_t, uint32_t);
+    //   HRESULT DrawVerticesUP(_D3DPRIMITIVETYPE, uint32_t, const void*, uint32_t);
+    //   HRESULT DrawIndexedVerticesUP(_D3DPRIMITIVETYPE, uint32_t, uint32_t, uint32_t,
+    //          const void*, D3DFORMAT, const void*, uint32_t);
+    HRESULT
+    DrawPrimitive(D3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, UINT PrimitiveCount);
+    HRESULT DrawIndexedPrimitive(
+        D3DPRIMITIVETYPE PrimitiveType,
+        INT BaseVertexIndex,
+        UINT MinVertexIndex,
+        UINT NumVertices,
+        UINT startIndex,
+        UINT primCount
+    );
+    HRESULT DrawPrimitiveUP(
+        D3DPRIMITIVETYPE PrimitiveType,
+        UINT PrimitiveCount,
+        const void *pVertexStreamZeroData,
+        UINT VertexStreamZeroStride
+    );
+    HRESULT DrawIndexedPrimitiveUP(
+        D3DPRIMITIVETYPE PrimitiveType,
+        UINT MinVertexIndex,
+        UINT NumVertices,
+        UINT PrimitiveCount,
+        const void *pIndexData,
+        D3DFORMAT IndexDataFormat,
+        const void *pVertexStreamZeroData,
+        UINT VertexStreamZeroStride
+    );
+    HRESULT SetFVF(DWORD FVF);
+    HRESULT GetFVF(DWORD *pFVF);
+    HRESULT CreateVertexShader(const DWORD *pFunction, D3DVertexShader **ppShader);
+    HRESULT SetVertexShader(D3DVertexShader *pShader);
+    HRESULT GetVertexShader(D3DVertexShader **ppShader);
+    HRESULT SetVertexShaderConstantB(
+        UINT StartRegister, const BOOL *pConstantData, UINT BoolCount
+    );
+    HRESULT SetVertexShaderConstantF(
+        UINT StartRegister, const float *pConstantData, UINT Vector4fCount
+    );
+    HRESULT SetVertexShaderConstantI(
+        UINT StartRegister, const int *pConstantData, UINT Vector4iCount
+    );
+    HRESULT
+    GetVertexShaderConstantB(UINT StartRegister, BOOL *pConstantData, UINT BoolCount);
+    HRESULT
+    GetVertexShaderConstantF(UINT StartRegister, float *pConstantData, UINT Vector4fCount);
+    HRESULT
+    GetVertexShaderConstantI(UINT StartRegister, int *pConstantData, UINT Vector4iCount);
+    HRESULT SetVertexShaderConstantF_NotInline(
+        UINT StartRegister, const float *pConstantData, UINT Vector4fCount
+    );
+    HRESULT SetStreamSource(
+        UINT StreamNumber, D3DVertexBuffer *pStreamData, UINT OffsetInBytes, UINT Stride
+    );
+    HRESULT GetStreamSource(
+        UINT StreamNumber,
+        D3DVertexBuffer **ppStreamData,
+        UINT *OffsetInBytes,
+        UINT *pStride
+    );
+    HRESULT SetIndices(D3DIndexBuffer *pIndexData);
+    HRESULT GetIndices(D3DIndexBuffer **ppIndexData);
+
+    // clang-format off
+     
+//   int32_t CreatePixelShader(const uint32_t*, D3DPixelShader**);
+//   int32_t SetPixelShader(D3DPixelShader*);
+//   int32_t GetPixelShader(D3DPixelShader**);
+//   int32_t SetPixelShaderConstantB(uint32_t, const int32_t*, uint32_t);
+//   int32_t SetPixelShaderConstantF(uint32_t, const float*, uint32_t);
+//   int32_t SetPixelShaderConstantI(uint32_t, const int32_t*, uint32_t);
+//   int32_t GetPixelShaderConstantB(uint32_t, int32_t*, uint32_t);
+//   int32_t GetPixelShaderConstantF(uint32_t, float*, uint32_t);
+//   int32_t GetPixelShaderConstantI(uint32_t, int32_t*, uint32_t);
+//   int32_t SetPixelShaderConstantF_NotInline(uint32_t, const float*, uint32_t);
+//   int32_t CreateVertexDeclaration(const _D3DVERTEXELEMENT9*, D3DVertexDeclaration**);
+//   int32_t SetVertexDeclaration(D3DVertexDeclaration*);
+//   int32_t GetVertexDeclaration(D3DVertexDeclaration**);
+//   int32_t SetScissorRect(const RECT*);
+//   int32_t GetScissorRect(tagRECT*);
+//   int32_t SetClipPlane(uint32_t, const float*);
+//   int32_t GetClipPlane(uint32_t, float*);
+//   int32_t CreateQuery(_D3DQUERYTYPE, D3DQuery**);
+//   int32_t CreateQueryTiled(_D3DQUERYTYPE, uint32_t, D3DQuery**);
+//   int32_t Resolve(uint32_t, const _D3DRECT*, D3DBaseTexture*, const _D3DPOINT*, uint32_t, uint32_t, const __vector4*, float, uint32_t, const _D3DRESOLVE_PARAMETERS*);
+//   int32_t AcquireThreadOwnership();
+//   int32_t ReleaseThreadOwnership();
+//   int32_t SetThreadOwnership(uint32_t);
+//   uint32_t QueryThreadOwnership();
+//   int32_t IsBusy();
+//   int32_t BlockUntilIdle();
+//   int32_t InsertCallback(uint32_t, void (*)(uint32_t), uint32_t);
+//   int32_t SetVerticalBlankCallback(void (*)(_D3DVBLANKDATA*));
+//   int32_t SetSwapCallback(void (*)(_D3DSWAPDATA*));
+//   int32_t SynchronizeToPresentationInterval();
+//   int32_t Swap(D3DBaseTexture*, const _D3DVIDEO_SCALER_PARAMETERS*);
+//   int32_t RenderSystemUI();
+//   int32_t QueryBufferSpace(uint32_t*, uint32_t*);
+//   int32_t SetPredication(uint32_t);
+//   int32_t SetPatchablePredication(uint32_t, uint32_t);
+//   int32_t BeginTiling(uint32_t, uint32_t, const _D3DRECT*, const __vector4*, float, uint32_t);
+//   int32_t EndTiling(uint32_t, const _D3DRECT*, D3DBaseTexture*, const __vector4*, float, uint32_t, const _D3DRESOLVE_PARAMETERS*);
+//   int32_t BeginZPass(uint32_t);
+//   int32_t EndZPass();
+//   int32_t InvokeRenderPass();
+//   int32_t BeginExport(uint32_t, D3DResource*, uint32_t);
+//   int32_t EndExport(uint32_t, D3DResource*, uint32_t);
+//   int32_t DrawTessellatedPrimitive(_D3DTESSPRIMITIVETYPE, uint32_t, uint32_t);
+//   int32_t DrawIndexedTessellatedPrimitive(_D3DTESSPRIMITIVETYPE, int32_t, uint32_t, uint32_t);
+//   int32_t SetRingBufferParameters(const _D3DRING_BUFFER_PARAMETERS*);
+//   int32_t XpsBegin(uint32_t);
+//   int32_t XpsEnd();
+//   int32_t XpsSetCallback(void (*)(D3DXpsThread*, void*, const void*, uint32_t), void*, uint32_t);
+//   int32_t XpsSubmit(uint32_t, const void*, uint32_t);
+//   int32_t XpsSetPredication(uint32_t);
+//   int32_t XpsSetPredicationFromVisibility(void*);
+//   int32_t XpsSetPredicationFromQuery(D3DQuery*);
+//   int32_t BeginVertices(_D3DPRIMITIVETYPE, uint32_t, uint32_t, void**);
+//   int32_t EndVertices();
+//   int32_t BeginIndexedVertices(_D3DPRIMITIVETYPE, int32_t, uint32_t, uint32_t, D3DFORMAT, uint32_t, void**, void**);
+//   int32_t EndIndexedVertices();
+//   uint32_t InsertFence();
+//   int32_t BlockOnFence(uint32_t);
+//   int32_t IsFencePending(uint32_t);
+//   int32_t SetBlendState(uint32_t, _D3DBLENDSTATE);
+//   int32_t GetBlendState(uint32_t, _D3DBLENDSTATE*);
+//   int32_t SetVertexFetchConstant(uint32_t, D3DVertexBuffer*, uint32_t);
+//   int32_t SetTextureFetchConstant(uint32_t, D3DBaseTexture*);
+//   float GetCounter(_D3DCOUNTER);
+//   int32_t SetSafeLevel(uint32_t, uint32_t);
+//   int32_t GetSafeLevel(uint32_t*, uint32_t*);
+//   int32_t SetHangCallback(void (*)(const char*));
+//   int32_t BeginConditionalSurvey(uint32_t, uint32_t);
+//   int32_t EndConditionalSurvey(uint32_t);
+//   int32_t BeginConditionalRendering(uint32_t);
+//   int32_t EndConditionalRendering();
+//   int32_t PersistDisplay(D3DTexture*, const _D3DVIDEO_SCALER_PARAMETERS*);
+//   int32_t GetPersistedTexture(D3DTexture**);
+//   int32_t Suspend();
+//   int32_t Resume();
+    HRESULT CreatePerfCounters(D3DPerfCounters** ppPerfCounters, UINT NumPasses);
+    HRESULT EnablePerfCounters(BOOL Enable);
+    HRESULT SetPerfCounterEvents(const D3DPERFCOUNTER_EVENTS* pEvents, DWORD Flags);
+    HRESULT QueryPerfCounters(D3DPerfCounters *pCounters, DWORD Flags);
+//   uint32_t GetNumPasses();
+//   int32_t SetShaderInstructionAllocation(uint32_t, uint32_t, uint32_t);
+//   int32_t SetShaderGPRAllocation(uint32_t, uint32_t, uint32_t);
+//   int32_t GetShaderGPRAllocation(uint32_t*, uint32_t*, uint32_t*);
+//   int32_t SetScreenExtentQueryMode(_D3DSCREENEXTENTQUERYMODE);
+//   int32_t GetScreenExtentQueryMode(_D3DSCREENEXTENTQUERYMODE*);
+//   int32_t BeginPixelShaderConstantF1(uint32_t, __vector4**, uint32_t);
+//   int32_t EndPixelShaderConstantF1();
+//   int32_t BeginVertexShaderConstantF1(uint32_t, __vector4**, uint32_t);
+//   int32_t EndVertexShaderConstantF1();
+//   int32_t BeginPixelShaderConstantF4(uint32_t, __vector4**, __vector4**, uint32_t);
+//   int32_t EndPixelShaderConstantF4();
+//   int32_t BeginVertexShaderConstantF4(uint32_t, __vector4**, __vector4**, uint32_t);
+//   int32_t EndVertexShaderConstantF4();
+//   uint32_t GetCurrentFence();
+//   int32_t InvalidateGpuCache(void*, uint32_t, uint32_t);
+//   int32_t InvalidateResourceGpuCache(D3DResource*, uint32_t);
+//   int32_t FlushHiZStencil(_D3DFHZS_FLUSHTYPE);
+//   int32_t UnsetAll();
+//   uint32_t GetDeviceState();
+//   int32_t SetBlockCallback(uint32_t, void (*)(uint32_t, _D3DBLOCKTYPE, float, uint32_t));
+//   int32_t SetSurfaces(const _D3DSURFACES*, uint32_t);
+//   int32_t CreateConstantBuffer(uint32_t, uint32_t, D3DConstantBuffer**);
+//   int32_t CreateCommandBuffer(uint32_t, uint32_t, D3DCommandBuffer**);
+//   int32_t CreateGrowableCommandBuffer(uint32_t, void* (*)(uint32_t, uint32_t, uint32_t*, uint32_t), void (*)(uint32_t), void (*)(uint32_t, uint32_t*, uint32_t*), uint32_t, uint32_t, D3DCommandBuffer**);
+//   int32_t BeginCommandBuffer(D3DCommandBuffer*, uint32_t, const _D3DTAGCOLLECTION*, const _D3DTAGCOLLECTION*, const _D3DRECT*, uint32_t);
+//   int32_t EndCommandBuffer();
+//   int32_t RunCommandBuffer(D3DCommandBuffer*, uint32_t);
+//   int32_t InsertAsyncCommandBufferCall(D3DAsyncCommandBufferCall*, uint32_t, uint32_t);
+//   int32_t SetCommandBufferPredication(uint32_t, uint32_t);
+//   uint32_t InsertMarker();
+//   int32_t Nop(uint32_t);
+//   int32_t QuerySwapStatus(_D3DSWAP_STATUS*);
+//   uint32_t PixBeginNamedEvent(uint32_t, const char*, ...);
+//   uint32_t PixEndNamedEvent();
+//   void PixSetMarker(uint32_t, const char*, ...);
+//   void PixIgnoreTexture(D3DBaseTexture*);
+//   void PixStopIgnoringTexture(D3DBaseTexture*);
+//   void PixIgnoreMemoryRange(const void*, uint32_t);
+//   void PixStopIgnoringMemoryRange(const void*, uint32_t);
+//   int32_t PixSetTextureName(D3DBaseTexture*, const char*);
+//   void PixReportNewTexture(D3DBaseTexture*);
+//   void PixReportDeletedTexture(D3DBaseTexture*, int32_t, int32_t);
+//   void PixReportMovedMemoryRange(const void*, const void*, uint32_t);
+//   void PixReportFreedMemoryRange(const void*, uint32_t);
+//   int32_t SetViewportF(const _D3DVIEWPORTF9*);
+//   int32_t GetViewportF(_D3DVIEWPORTF9*);
+//   void* BeginVisibilitySurvey(uint32_t);
+//   int32_t EndVisibilitySurvey(void*);
+//   int32_t SetSwapMode(int32_t);
+//   uint64_t InsertBlockOnAsyncResources(uint32_t, D3DResource**, uint32_t, D3DResource**, uint32_t);
+//   int32_t SignalAsyncResources(uint64_t);
+//   int32_t CreateAsyncCommandBufferCall(_D3DTAGCOLLECTION*, _D3DTAGCOLLECTION*, uint32_t, uint32_t, D3DAsyncCommandBufferCall**);
+//   int32_t CreatePerfCounterBatch(uint32_t, uint32_t, uint32_t, D3DPerfCounterBatch**);
+//   int32_t CreateOcclusionQueryBatch(uint32_t, uint32_t, D3DOcclusionQueryBatch**);
+//   void GpuOwn(_D3DTAG);
+//   void GpuOwnSubset(_D3DTAG, uint32_t, uint32_t);
+//   void GpuOwnVertexShaderConstantF(uint32_t, uint32_t);
+//   void GpuOwnPixelShaderConstantF(uint32_t, uint32_t);
+//   void GpuOwnShaders();
+//   void GpuDisown(_D3DTAG);
+//   void GpuDisownSubset(_D3DTAG, uint32_t, uint32_t);
+//   void GpuDisownVertexShaderConstantF(uint32_t, uint32_t);
+//   void GpuDisownPixelShaderConstantF(uint32_t, uint32_t);
+//   void GpuDisownShaders();
+//   void GpuDisownAll();
+//   void GpuLoadPixelShaderConstantF4(uint32_t, uint32_t, D3DConstantBuffer*, uint32_t);
+//   void GpuLoadVertexShaderConstantF4(uint32_t, uint32_t, D3DConstantBuffer*, uint32_t);
+//   void GpuLoadPixelShaderConstantF4Pointer(uint32_t, const void*, uint32_t);
+//   void GpuLoadVertexShaderConstantF4Pointer(uint32_t, const void*, uint32_t);
+//   int32_t GpuBeginVertexShaderConstantF4(uint32_t, __vector4**, uint32_t);
+//   void GpuEndVertexShaderConstantF4();
+//   int32_t GpuBeginPixelShaderConstantF4(uint32_t, __vector4**, uint32_t);
+//   void GpuEndPixelShaderConstantF4();
+//   void GpuLoadShaders(D3DVertexShader*, D3DPixelShader*, const GPUFLOW_CONSTANTS*);
+//   void GpuLoadShadersFast(D3DVertexShader*, D3DPixelShader*, const GPUFLOW_CONSTANTS*, uint32_t);
+//   void GpuSetVertexFetchConstant(uint32_t, D3DVertexBuffer*, uint32_t, D3DVertexBuffer*, uint32_t, D3DVertexBuffer*, uint32_t);
+//   void GpuSetTextureFetchConstant(uint32_t, D3DBaseTexture*);
+//   void GpuSetColorMask(const GPU_COLORMASK*);
+//   void GpuSetBlendFactor(const _D3DCOLORVALUE*);
+//   void GpuSetAlphaRef(float);
+//   void GpuSetBlendControl(uint32_t, const GPU_BLENDCONTROL*);
+//   void GpuSetColorControl(const GPU_COLORCONTROL*);
+    // clang-format on
+};
+
+inline void D3DDevice_SetVertexShaderConstantF(
+    D3DDevice *pDevice, UINT StartRegister, const float *pConstantData, UINT Vector4fCount
+) {
+    pDevice->m_Pending.m_Mask[0] |= (0x8000000000000000U >> (StartRegister >> 2));
+    XMVECTOR &vec = pDevice->m_Constants.VertexShaderF[StartRegister];
+    vec.x = pConstantData[0];
+    vec.y = pConstantData[1];
+    vec.z = pConstantData[2];
+    vec.w = pConstantData[3];
+}
+
+inline void
+D3DDevice_SetSamplerState_BorderColor(D3DDevice *pDevice, DWORD Sampler, DWORD Value) {
+    u64 upd_value = Value;
+    pDevice->m_Constants.TextureFetch[Sampler + 5].BorderSize = upd_value;
+    pDevice->m_Pending.m_Mask[3] |= (0x8000000000000000) >> (Sampler + 0x20);
+}
+
+#pragma endregion
+#pragma region D3DResource
+
+// https://learn.microsoft.com/en-us/windows/win32/api/d3d9helper/nn-d3d9helper-idirect3dresource9
+
+// C
+ULONG D3DResource_AddRef(struct D3DResource *pResource);
+ULONG D3DResource_Release(struct D3DResource *pResource);
+VOID D3DResource_BlockUntilNotBusy(struct D3DResource *pResource);
+VOID D3DResource_GetDevice(struct D3DResource *pThis, D3DDevice **ppDevice);
+D3DRESOURCETYPE D3DResource_GetType(struct D3DResource *pResource);
+BOOL D3DResource_IsBusy(struct D3DResource *pResource);
+BOOL D3DResource_IsSet(struct D3DResource *pResource, D3DDevice *pDevice);
+
+// C++
+struct D3DResource { /* Size=0x18 */
+    /* 0x0000 */ UINT Common;
+    /* 0x0004 */ ULONG ReferenceCount;
+    /* 0x0008 */ UINT Fence;
+    /* 0x000c */ UINT ReadFence;
+    /* 0x0010 */ DWORD Identifier;
+    /* 0x0014 */ UINT BaseFlush;
+
+    ULONG AddRef() { return D3DResource_AddRef(this); }
+    ULONG Release() { return D3DResource_Release(this); }
+    HRESULT GetDevice(D3DDevice **ppDevice) {
+        D3DResource_GetDevice(this, ppDevice);
+        return 0;
+    }
+    D3DRESOURCETYPE GetType() { return D3DResource_GetType(this); }
+    BOOL IsBusy() { return D3DResource_IsBusy(this); }
+    BOOL IsSet(D3DDevice *pDevice) { return D3DResource_IsSet(this, pDevice); }
+    VOID BlockUntilNotBusy() { D3DResource_BlockUntilNotBusy(this); }
+    VOID SetIdentifier(DWORD Identifier); // ??? i assume just sets the Identifier field
+    DWORD GetIdentifier(); // ??? ditto but gets it
+};
+
+#pragma endregion
+#pragma region D3DVertexDeclaration
+
+// https://learn.microsoft.com/en-us/windows/win32/api/d3d9helper/nn-d3d9helper-idirect3dvertexdeclaration9
+
+VOID D3DVertexDeclaration_GetDeclaration(
+    D3DVertexDeclaration *pThis, D3DVERTEXELEMENT9 *pDecl, UINT *pNumElements
+);
+
+struct D3DVertexDeclaration : public D3DResource { /* Size=0x18 */
+    /* 0x0000: fields for D3DResource */
+    HRESULT GetDeclaration(D3DVERTEXELEMENT9 *pDecl, UINT *pNumElements) {
+        D3DVertexDeclaration_GetDeclaration(this, pDecl, pNumElements);
+        return 0;
+    }
+};
+
+#pragma endregion
+#pragma region D3DVertexShader
+
+// https://learn.microsoft.com/en-us/windows/win32/api/d3d9helper/nn-d3d9helper-idirect3dvertexshader9
+
+void D3DVertexShader_Bind(
+    D3DVertexShader *pThis,
+    UINT pD3dVertexDeclaration,
+    D3DVertexDeclaration *pStreamStrides,
+    const UINT *pD3dPixelShader,
+    D3DPixelShader *
+);
+
+struct D3DVertexShader : public D3DResource { /* Size=0x18 */
+    /* 0x0000: fields for D3DResource */
+
+    HRESULT GetFunction(void *unnamedParam1, UINT *pSizeOfData);
+
+    HRESULT Bind(
+        UINT pD3dVertexDeclaration,
+        D3DVertexDeclaration *pStreamStrides,
+        const UINT *pD3dPixelShader,
+        D3DPixelShader *
+    );
+    BOOL IsBound();
+};
+
+#pragma endregion
+#pragma region D3DPixelShader
+
+// https://learn.microsoft.com/en-us/windows/win32/api/d3d9helper/nn-d3d9helper-idirect3dpixelshader9
+
+void D3DPixelShader_GetFunction(D3DPixelShader *pThis, void *pData, UINT *pSizeOfData);
+
+struct D3DPixelShader : public D3DResource { /* Size=0x18 */
+    /* 0x0000: fields for D3DResource */
+    HRESULT GetFunction(void *pData, UINT *pSizeOfData) {
+        D3DPixelShader_GetFunction(this, pData, pSizeOfData);
+        return 0;
+    }
+};
+
+#pragma endregion
+#pragma region D3DBaseTexture
+
+// https://learn.microsoft.com/en-us/windows/win32/api/d3d9helper/nn-d3d9helper-idirect3dbasetexture9
+
+VOID D3DBaseTexture_AsyncLockTail(
+    D3DBaseTexture *pTexture,
+    UINT64 AsyncBlock,
+    UINT ArrayIndex,
+    D3DLOCKED_TAIL *pLockedTail,
+    DWORD Flags
+);
+UINT D3DBaseTexture_GetLevelCount(D3DBaseTexture *pTexture);
+VOID D3DBaseTexture_GetTailDesc(D3DBaseTexture *pTexture, D3DMIPTAIL_DESC *pDesc);
+VOID D3DBaseTexture_LockTail(
+    D3DBaseTexture *pTexture, UINT ArrayIndex, D3DLOCKED_TAIL *pLockedTail, DWORD Flags
+);
+VOID D3DBaseTexture_UnlockTail(D3DBaseTexture *pTexture, UINT ArrayIndex);
+
+struct D3DBaseTexture : public D3DResource { /* Size=0x34 */
+    /* 0x0018 */ DWORD MipFlush;
+    /* 0x001c */ GPUTEXTURE_FETCH_CONSTANT Format;
+
+    UINT GetLevelCount() { return D3DBaseTexture_GetLevelCount(this); }
+    HRESULT GetTailDesc(D3DMIPTAIL_DESC *pDesc) {
+        D3DBaseTexture_GetTailDesc(this, pDesc);
+        return 0;
+    }
+    HRESULT LockTail(UINT ArrayIndex, D3DLOCKED_TAIL *pLockedTail, DWORD Flags) {
+        D3DBaseTexture_LockTail(this, ArrayIndex, pLockedTail, Flags);
+        return 0;
+    }
+    HRESULT AsyncLockTail(
+        UINT64 AsyncBlock, UINT ArrayIndex, D3DLOCKED_TAIL *pLockedTail, DWORD Flags
+    ) {
+        D3DBaseTexture_AsyncLockTail(this, AsyncBlock, ArrayIndex, pLockedTail, Flags);
+        return 0;
+    }
+    HRESULT UnlockTail(UINT ArrayIndex) {
+        D3DBaseTexture_UnlockTail(this, ArrayIndex);
+        return 0;
+    }
+};
+
+#pragma endregion
+#pragma region D3DTexture
+
+// https://learn.microsoft.com/en-us/windows/win32/api/d3d9helper/nn-d3d9helper-idirect3dtexture9
+
+VOID D3DTexture_AsyncLockRect(
+    D3DTexture *pTexture,
+    UINT64 AsyncBlock,
+    UINT Level,
+    D3DLOCKED_RECT *pLockedRect,
+    const RECT *pRect,
+    DWORD Flags
+);
+VOID D3DTexture_GetLevelDesc(D3DTexture *pTexture, UINT Level, D3DSURFACE_DESC *pDesc);
+D3DSurface *D3DTexture_GetSurfaceLevel(D3DTexture *pTexture, UINT Level);
+VOID D3DTexture_LockRect(
+    D3DTexture *pTexture,
+    UINT Level,
+    D3DLOCKED_RECT *pLockedRect,
+    const RECT *pRect,
+    DWORD Flags
+);
+VOID D3DTexture_UnlockRect(D3DTexture *pTexture, UINT Level);
+
+struct D3DTexture : public D3DBaseTexture { /* Size=0x34 */
+    /* 0x0000: fields for D3DBaseTexture */
+    HRESULT GetLevelDesc(UINT Level, D3DSURFACE_DESC *pDesc) {
+        D3DTexture_GetLevelDesc(this, Level, pDesc);
+        return 0;
+    }
+    HRESULT GetSurfaceLevel(UINT Level, D3DSurface **ppSurfaceLevel) {
+        *ppSurfaceLevel = D3DTexture_GetSurfaceLevel(this, Level);
+        return 0;
+    }
+    HRESULT
+    LockRect(UINT Level, D3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags) {
+        D3DTexture_LockRect(this, Level, pLockedRect, pRect, Flags);
+        return 0;
+    }
+    HRESULT AsyncLockRect(
+        UINT64 AsyncBlock,
+        UINT Level,
+        D3DLOCKED_RECT *pLockedRect,
+        const RECT *pRect,
+        DWORD Flags
+    ) {
+        D3DTexture_AsyncLockRect(this, AsyncBlock, Level, pLockedRect, pRect, Flags);
+        return 0;
+    }
+    HRESULT UnlockRect(UINT Level) {
+        D3DTexture_UnlockRect(this, Level);
+        return 0;
+    }
+    // need definitions
+    HRESULT LockTail(D3DLOCKED_TAIL *, UINT);
+    HRESULT AsyncLockTail(UINT64, D3DLOCKED_TAIL *, UINT);
+    HRESULT UnlockTail();
+};
+
+#pragma endregion
+#pragma region D3DVolumeTexture
+
+// https://learn.microsoft.com/en-us/windows/win32/api/d3d9helper/nn-d3d9helper-idirect3dvolumetexture9
+
+VOID D3DVolumeTexture_GetLevelDesc(
+    D3DVolumeTexture *pTexture, UINT Level, D3DVOLUME_DESC *pDesc
+);
+D3DVolume *D3DVolumeTexture_GetVolumeLevel(D3DVolumeTexture *pTexture, UINT Level);
+VOID D3DVolumeTexture_LockBox(
+    D3DVolumeTexture *pTexture,
+    UINT Level,
+    D3DLOCKED_BOX *pLockedVolume,
+    const D3DBOX *pBox,
+    DWORD Flags
+);
+VOID D3DVolumeTexture_UnlockBox(D3DVolumeTexture *pTexture, UINT Level);
+
+struct D3DVolumeTexture : public D3DBaseTexture { /* Size=0x34 */
+    /* 0x0000: fields for D3DBaseTexture */
+    HRESULT GetLevelDesc(UINT Level, D3DVOLUME_DESC *pDesc) {
+        D3DVolumeTexture_GetLevelDesc(this, Level, pDesc);
+        return 0;
+    }
+    HRESULT GetVolumeLevel(UINT Level, D3DVolume **ppVolumeLevel) {
+        *ppVolumeLevel = D3DVolumeTexture_GetVolumeLevel(this, Level);
+        return 0;
+    }
+    HRESULT
+    LockBox(UINT Level, D3DLOCKED_BOX *pLockedVolume, const D3DBOX *pBox, DWORD Flags) {
+        D3DVolumeTexture_LockBox(this, Level, pLockedVolume, pBox, Flags);
+        return 0;
+    }
+    HRESULT UnlockBox(UINT Level) {
+        D3DVolumeTexture_UnlockBox(this, Level);
+        return 0;
+    }
+    // need definitions
+    HRESULT AsyncLockBox(UINT64, UINT, D3DLOCKED_BOX *, const D3DBOX *, UINT);
+    HRESULT LockTail(D3DLOCKED_TAIL *, UINT);
+    HRESULT AsyncLockTail(UINT64, D3DLOCKED_TAIL *, UINT);
+    HRESULT UnlockTail();
+};
+
+#pragma endregion
+#pragma region D3DCubeTexture
+
+// https://learn.microsoft.com/en-us/windows/win32/api/d3d9helper/nn-d3d9helper-idirect3dcubetexture9
+
+VOID D3DCubeTexture_AsyncLockRect(
+    D3DCubeTexture *pTexture,
+    UINT64 AsyncBlock,
+    D3DCUBEMAP_FACES FaceType,
+    UINT Level,
+    D3DLOCKED_RECT *pLockedRect,
+    const RECT *pRect,
+    DWORD Flags
+);
+D3DSurface *D3DCubeTexture_GetCubeMapSurface(
+    D3DCubeTexture *pTexture, D3DCUBEMAP_FACES FaceType, UINT Level
+);
+VOID D3DCubeTexture_GetLevelDesc(
+    D3DCubeTexture *pTexture, UINT Level, D3DSURFACE_DESC *pDesc
+);
+VOID D3DCubeTexture_LockRect(
+    D3DCubeTexture *pTexture,
+    D3DCUBEMAP_FACES FaceType,
+    UINT Level,
+    D3DLOCKED_RECT *pLockedRect,
+    const RECT *pRect,
+    DWORD Flags
+);
+VOID D3DCubeTexture_UnlockRect(
+    D3DCubeTexture *pTexture, D3DCUBEMAP_FACES FaceType, UINT Level
+);
+
+struct D3DCubeTexture : public D3DBaseTexture { /* Size=0x34 */
+    /* 0x0000: fields for D3DBaseTexture */
+    HRESULT GetLevelDesc(UINT Level, D3DSURFACE_DESC *pDesc) {
+        D3DCubeTexture_GetLevelDesc(this, Level, pDesc);
+        return 0;
+    }
+    HRESULT GetCubeMapSurface(
+        D3DCUBEMAP_FACES FaceType, UINT Level, D3DSurface **ppCubeMapSurface
+    ) {
+        *ppCubeMapSurface = D3DCubeTexture_GetCubeMapSurface(this, FaceType, Level);
+        return 0;
+    }
+    HRESULT LockRect(
+        D3DCUBEMAP_FACES FaceType,
+        UINT Level,
+        D3DLOCKED_RECT *pLockedRect,
+        const RECT *pRect,
+        DWORD Flags
+    ) {
+        D3DCubeTexture_LockRect(this, FaceType, Level, pLockedRect, pRect, Flags);
+        return 0;
+    }
+    HRESULT AsyncLockRect(
+        UINT64 AsyncBlock,
+        D3DCUBEMAP_FACES FaceType,
+        UINT Level,
+        D3DLOCKED_RECT *pLockedRect,
+        const RECT *pRect,
+        DWORD Flags
+    ) {
+        D3DCubeTexture_AsyncLockRect(
+            this, AsyncBlock, FaceType, Level, pLockedRect, pRect, Flags
+        );
+        return 0;
+    }
+    HRESULT UnlockRect(D3DCUBEMAP_FACES FaceType, UINT Level) {
+        D3DCubeTexture_UnlockRect(this, FaceType, Level);
+        return 0;
+    }
+    // need definitions
+    HRESULT LockTail(D3DCUBEMAP_FACES, D3DLOCKED_TAIL *, UINT);
+    HRESULT AsyncLockTail(UINT64, D3DCUBEMAP_FACES, D3DLOCKED_TAIL *, UINT);
+    HRESULT UnlockTail(D3DCUBEMAP_FACES);
+};
+
+#pragma endregion
+#pragma region D3DArrayTexture
+
+VOID D3DArrayTexture_AsyncLockRect(
+    D3DArrayTexture *pTexture,
+    UINT64 AsyncBlock,
+    UINT ArrayIndex,
+    UINT Level,
+    D3DLOCKED_RECT *pLockedRect,
+    const RECT *pRect,
+    DWORD Flags
+);
+UINT D3DArrayTexture_GetArraySize(D3DArrayTexture *pTexture);
+D3DSurface *
+D3DArrayTexture_GetArraySurface(D3DArrayTexture *pTexture, UINT ArrayIndex, UINT Level);
+VOID D3DArrayTexture_GetLevelDesc(
+    D3DArrayTexture *pTexture, UINT Level, D3DSURFACE_DESC *pDesc
+);
+VOID D3DArrayTexture_LockRect(
+    D3DArrayTexture *pTexture,
+    UINT ArrayIndex,
+    UINT Level,
+    D3DLOCKED_RECT *pLockedRect,
+    const RECT *pRect,
+    DWORD Flags
+);
+VOID D3DArrayTexture_UnlockRect(D3DArrayTexture *pTexture, UINT ArrayIndex, UINT Level);
+
+struct D3DArrayTexture : public D3DBaseTexture { /* Size=0x34 */
+    /* 0x0000: fields for D3DBaseTexture */
+    UINT GetArraySize() { return D3DArrayTexture_GetArraySize(this); }
+    HRESULT GetLevelDesc(UINT Level, D3DSURFACE_DESC *pDesc) {
+        D3DArrayTexture_GetLevelDesc(this, Level, pDesc);
+        return 0;
+    }
+    HRESULT GetArraySurface(UINT ArrayIndex, UINT Level, D3DSurface **ppArraySurface) {
+        *ppArraySurface = D3DArrayTexture_GetArraySurface(this, ArrayIndex, Level);
+        return 0;
+    }
+    HRESULT LockRect(
+        UINT ArrayIndex,
+        UINT Level,
+        D3DLOCKED_RECT *pLockedRect,
+        const RECT *pRect,
+        DWORD Flags
+    ) {
+        D3DArrayTexture_LockRect(this, ArrayIndex, Level, pLockedRect, pRect, Flags);
+        return 0;
+    }
+    HRESULT AsyncLockRect(
+        UINT64 AsyncBlock,
+        UINT ArrayIndex,
+        UINT Level,
+        D3DLOCKED_RECT *pLockedRect,
+        const RECT *pRect,
+        DWORD Flags
+    ) {
+        D3DArrayTexture_AsyncLockRect(
+            this, AsyncBlock, ArrayIndex, Level, pLockedRect, pRect, Flags
+        );
+        return 0;
+    }
+    HRESULT UnlockRect(UINT ArrayIndex, UINT Level) {
+        D3DArrayTexture_UnlockRect(this, ArrayIndex, Level);
+        return 0;
+    }
+    // need definitions
+    HRESULT GetSurfaceLevel(UINT, D3DSurface **);
+    HRESULT LockTail(UINT, D3DLOCKED_TAIL *, UINT);
+    HRESULT AsyncLockTail(UINT64, UINT, D3DLOCKED_TAIL *, UINT);
+    HRESULT UnlockTail(UINT);
+};
+
+#pragma endregion
+#pragma region D3DLineTexture
+
+VOID D3DLineTexture_AsyncLockRect(
+    D3DLineTexture *pTexture,
+    UINT64 AsyncBlock,
+    UINT Level,
+    D3DLOCKED_RECT *pLockedRect,
+    const RECT *pRect,
+    DWORD Flags
+);
+VOID D3DLineTexture_GetLevelDesc(
+    D3DLineTexture *pTexture, UINT Level, D3DSURFACE_DESC *pDesc
+);
+D3DSurface *D3DLineTexture_GetSurfaceLevel(D3DLineTexture *pTexture, UINT Level);
+VOID D3DLineTexture_LockRect(
+    D3DLineTexture *pTexture,
+    UINT Level,
+    D3DLOCKED_RECT *pLockedRect,
+    const RECT *pRect,
+    DWORD Flags
+);
+VOID D3DLineTexture_UnlockRect(D3DLineTexture *pTexture, UINT Level);
+
+struct D3DLineTexture : public D3DBaseTexture { /* Size=0x34 */
+    /* 0x0000: fields for D3DBaseTexture */
+
+    HRESULT GetLevelDesc(UINT Level, D3DSURFACE_DESC *pDesc) {
+        D3DLineTexture_GetLevelDesc(this, Level, pDesc);
+        return 0;
+    }
+    HRESULT GetSurfaceLevel(UINT Level, D3DSurface **ppSurfaceLevel) {
+        *ppSurfaceLevel = D3DLineTexture_GetSurfaceLevel(this, Level);
+        return 0;
+    }
+    HRESULT
+    LockRect(UINT Level, D3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags) {
+        D3DLineTexture_LockRect(this, Level, pLockedRect, pRect, Flags);
+        return 0;
+    }
+    HRESULT AsyncLockRect(
+        UINT64 AsyncBlock,
+        UINT Level,
+        D3DLOCKED_RECT *pLockedRect,
+        const RECT *pRect,
+        DWORD Flags
+    ) {
+        D3DLineTexture_AsyncLockRect(this, AsyncBlock, Level, pLockedRect, pRect, Flags);
+        return 0;
+    }
+    HRESULT UnlockRect(UINT Level) {
+        D3DLineTexture_UnlockRect(this, Level);
+        return 0;
+    }
+    // need definitions
+    HRESULT LockTail(D3DLOCKED_TAIL *, UINT);
+    HRESULT AsyncLockTail(UINT64, D3DLOCKED_TAIL *, UINT);
+    HRESULT UnlockTail();
+};
+
+#pragma endregion
+#pragma region D3DVertexBuffer
+
+// https://learn.microsoft.com/en-us/windows/win32/api/d3d9helper/nn-d3d9helper-idirect3dvertexbuffer9
+
+VOID D3DVertexBuffer_GetDesc(D3DVertexBuffer *pVertexBuffer, D3DVERTEXBUFFER_DESC *pDesc);
+HANDLE D3DVertexBuffer_Lock(
+    D3DVertexBuffer *pVertexBuffer, UINT OffsetToLock, UINT SizeToLock, DWORD Flags
+);
+VOID D3DVertexBuffer_Unlock(D3DVertexBuffer *pVertexBuffer);
+
+struct D3DVertexBuffer : public D3DResource { /* Size=0x20 */
+    /* 0x0018 */ GPUVERTEX_FETCH_CONSTANT Format;
+
+    HRESULT Lock(UINT OffsetToLock, UINT SizeToLock, void **ppbData, DWORD Flags) {
+        *ppbData = D3DVertexBuffer_Lock(this, OffsetToLock, SizeToLock, Flags);
+        return 0;
+    }
+    HRESULT Unlock() {
+        D3DVertexBuffer_Unlock(this);
+        return 0;
+    }
+    // needs a definition
+    HRESULT AsyncLock(
+        UINT64 AsyncBlock, UINT OffsetToLock, UINT SizeToLock, HANDLE *ppbData, DWORD Flags
+    );
+    HRESULT GetDesc(D3DVERTEXBUFFER_DESC *pDesc) {
+        D3DVertexBuffer_GetDesc(this, pDesc);
+        return 0;
+    }
+};
+
+#pragma endregion
+#pragma region D3DIndexBuffer
+
+// https://learn.microsoft.com/en-us/windows/win32/api/d3d9helper/nn-d3d9helper-idirect3dindexbuffer9
+
+VOID D3DIndexBuffer_GetDesc(D3DIndexBuffer *pIndexBuffer, D3DINDEXBUFFER_DESC *pDesc);
+HANDLE
+D3DIndexBuffer_Lock(
+    D3DIndexBuffer *pIndexBuffer, UINT OffsetToLock, UINT SizeToLock, DWORD Flags
+);
+HANDLE D3DIndexBuffer_AsyncLock(
+    D3DIndexBuffer *pIndexBuffer,
+    UINT64 AsyncBlock,
+    UINT OffsetToLock,
+    UINT SizeToLock,
+    DWORD Flags
+);
+VOID D3DIndexBuffer_Unlock(D3DIndexBuffer *pIndexBuffer);
+
+struct D3DIndexBuffer : public D3DResource { /* Size=0x20 */
+    /* 0x0018 */ UINT Address;
+    /* 0x001c */ UINT Size;
+
+    HRESULT Lock(UINT OffsetToLock, UINT SizeToLock, void **ppbData, DWORD Flags) {
+        *ppbData = D3DIndexBuffer_Lock(this, OffsetToLock, SizeToLock, Flags);
+        return 0;
+    }
+    HRESULT Unlock() {
+        D3DIndexBuffer_Unlock(this);
+        return 0;
+    }
+    HRESULT AsyncLock(
+        UINT64 AsyncBlock, UINT OffsetToLock, UINT SizeToLock, HANDLE *ppbData, DWORD Flags
+    ) {
+        *ppbData =
+            D3DIndexBuffer_AsyncLock(this, AsyncBlock, OffsetToLock, SizeToLock, Flags);
+        return 0;
+    }
+    HRESULT GetDesc(D3DINDEXBUFFER_DESC *pDesc) {
+        D3DIndexBuffer_GetDesc(this, pDesc);
+        return 0;
+    }
+};
+
+#pragma endregion
+#pragma region D3DSurface
+
+// https://learn.microsoft.com/en-us/windows/win32/api/d3d9helper/nn-d3d9helper-idirect3dsurface9
+
+VOID D3DSurface_AsyncLockRect(
+    D3DSurface *pSurface,
+    UINT64 AsyncBlock,
+    D3DLOCKED_RECT *pLockedRect,
+    const RECT *pRect,
+    DWORD Flags
+);
+VOID D3DSurface_GetContainer(D3DSurface *pSurface, const _GUID &UnusedRiid);
+VOID D3DSurface_GetDesc(D3DSurface *pSurface, D3DSURFACE_DESC *pDesc);
+VOID D3DSurface_LockRect(
+    D3DSurface *pSurface, D3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags
+);
+VOID D3DSurface_UnlockRect(D3DSurface *pSurface);
+
+struct D3DSurface : public D3DResource { /* Size=0x30 */
+    union {
+        struct {
+            /* 0x0018 */ GPU_SURFACEINFO SurfaceInfo;
+            union {
+                /* 0x001c */ GPU_DEPTHINFO DepthInfo;
+                /* 0x001c */ GPU_COLORINFO ColorInfo;
+            };
+            /* 0x0020 */ GPU_HICONTROL HiControl;
+            /* 0x0024 */ UINT Height : 15; /* BitPos=3 */
+            /* 0x0024 */ UINT Width : 14; /* BitPos=18 */
+            /* 0x0028 */ D3DFORMAT Format;
+            /* 0x002c */ UINT Size;
+        };
+        struct {
+            /* 0x0018 */ struct D3DBaseTexture *Parent;
+            /* 0x001c */ UINT MipLevel : 4; /* BitPos=28 */
+        };
+    };
+    // needs definition
+    HRESULT GetContainer(const _GUID &, VOID **);
+    HRESULT GetDesc(D3DSURFACE_DESC *pDesc) {
+        D3DSurface_GetDesc(this, pDesc);
+        return 0;
+    }
+    HRESULT LockRect(D3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags) {
+        D3DSurface_LockRect(this, pLockedRect, pRect, Flags);
+        return 0;
+    }
+    HRESULT AsyncLockRect(
+        UINT64 AsyncBlock, D3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags
+    ) {
+        D3DSurface_AsyncLockRect(this, AsyncBlock, pLockedRect, pRect, Flags);
+        return 0;
+    }
+    HRESULT UnlockRect() {
+        D3DSurface_UnlockRect(this);
+        return 0;
+    }
+};
+
+#pragma endregion
+#pragma region D3DVolume
+
+// https://learn.microsoft.com/en-us/windows/win32/api/d3d9helper/nn-d3d9helper-idirect3dvolume9
+
+void *D3DVolume_GetContainer(D3DVolume *pVolume, const _GUID &UnusedRiid);
+void D3DVolume_GetDesc(D3DVolume *pVolume, D3DVOLUME_DESC *pDesc);
+void D3DVolume_LockBox(
+    D3DVolume *pVolume, D3DLOCKED_BOX *pLockedVolume, const D3DBOX *pBox, DWORD Flags
+);
+void D3DVolume_UnlockBox(D3DVolume *pVolume);
+
+struct D3DVolume : public D3DResource { /* Size=0x20 */
+    /* 0x0018 */ D3DBaseTexture *Parent;
+    /* 0x001c */ UINT ArrayIndex : 6; /* BitPos=22 */
+    /* 0x001c */ UINT MipLevel : 4; /* BitPos=28 */
+
+    HRESULT GetDesc(D3DVOLUME_DESC *pDesc) {
+        D3DVolume_GetDesc(this, pDesc);
+        return 0;
+    }
+    HRESULT LockBox(D3DLOCKED_BOX *pLockedVolume, const D3DBOX *pBox, DWORD Flags) {
+        D3DVolume_LockBox(this, pLockedVolume, pBox, Flags);
+        return 0;
+    }
+    // need definitions
+    HRESULT GetContainer(const _GUID &, VOID **);
+    HRESULT AsyncLockBox(UINT64, D3DLOCKED_BOX *, const D3DBOX *, UINT);
+    HRESULT UnlockBox();
+};
+
+#pragma endregion
+#pragma region D3DQuery
+
+// https://learn.microsoft.com/en-us/windows/win32/api/d3d9helper/nn-d3d9helper-idirect3dquery9
+
+ULONG D3DQuery_AddRef(D3DQuery *pThis);
+ULONG D3DQuery_Release(D3DQuery *pThis);
+DWORD D3DQuery_GetDataSize(D3DQuery *pThis);
+VOID D3DQuery_GetDevice(D3DQuery *pThis, D3DDevice **ppDevice);
+D3DQUERYTYPE D3DQuery_GetType(D3DQuery *pThis);
+HRESULT
+D3DQuery_GetData(D3DQuery *pThis, VOID *pData, DWORD Size, DWORD GetDataFlags);
+VOID D3DQuery_Issue(D3DQuery *pThis, DWORD IssueFlags);
+
+struct D3DQuery { /* Size=0x1 */
+    ULONG AddRef() { return D3DQuery_AddRef(this); }
+    ULONG Release() { return D3DQuery_Release(this); }
+    HRESULT GetDevice(D3DDevice **ppDevice) {
+        D3DQuery_GetDevice(this, ppDevice);
+        return 0;
+    }
+    D3DQUERYTYPE GetType() { return D3DQuery_GetType(this); }
+    DWORD GetDataSize() { return D3DQuery_GetDataSize(this); }
+    HRESULT Issue(DWORD IssueFlags) {
+        D3DQuery_Issue(this, IssueFlags);
+        return 0;
+    }
+    HRESULT GetData(VOID *pData, DWORD Size, DWORD GetDataFlags) {
+        return D3DQuery_GetData(this, pData, Size, GetDataFlags);
+    }
+};
+
+#pragma endregion
+
+// https://learn.microsoft.com/en-us/windows/win32/api/d3d9helper/nn-d3d9helper-idirect3dstateblock9
+
+struct D3DStateBlock { /* Size=0x1 */
+    ULONG AddRef();
+    ULONG Release();
+    HRESULT GetDevice(D3DDevice **ppDevice);
+    HRESULT Capture();
+    HRESULT Apply();
+};
 
 #ifdef __cplusplus
 }
