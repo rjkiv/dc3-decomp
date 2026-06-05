@@ -11,6 +11,10 @@ extern "C" {
 // source for most if not all of this: the kinect joyride pdb
 // using black ops 2 pdb as well since its xdk version is closer to ours
 
+typedef void (*D3DCALLBACK)(UINT);
+typedef void (*D3DVBLANKCALLBACK)(D3DVBLANKDATA *);
+typedef void (*D3DSWAPCALLBACK)(D3DSWAPDATA *);
+
 typedef struct _D3DConstants { /* Size=0x23a0 */
     union {
         /* 0x0000 */ GPUFETCH_CONSTANT Fetch[32];
@@ -225,10 +229,10 @@ void D3DDevice_SetSamplerState_BorderColor(D3DDevice *pDevice, DWORD Sampler, DW
 void D3DDevice_SetSamplerState_MinFilter(D3DDevice *pDevice, DWORD Sampler, DWORD Value);
 void D3DDevice_SetSamplerState_MagFilter(D3DDevice *pDevice, DWORD Sampler, DWORD Value);
 
-D3DVertexBuffer *D3DDevice_CreateVertexBuffer(UINT Length, DWORD Usage, D3DPOOL Pool);
+D3DVertexBuffer *D3DDevice_CreateVertexBuffer(UINT Length, DWORD Usage, UINT Pool);
 
 D3DIndexBuffer *
-D3DDevice_CreateIndexBuffer(UINT Length, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool);
+D3DDevice_CreateIndexBuffer(UINT Length, DWORD Usage, D3DFORMAT Format, UINT Pool);
 
 HRESULT D3DDevice_SetStreamSource(
     D3DDevice *pDevice,
@@ -396,7 +400,6 @@ struct D3DDevice { /* Size=0x2b00 */
 
     ULONG AddRef();
     ULONG Release();
-
     HRESULT GetDirect3D(Direct3D **ppD3D9);
     HRESULT GetDeviceCaps(D3DCAPS9 *pCaps);
     HRESULT GetDisplayMode(UINT iSwapChain, D3DDISPLAYMODE *pMode);
@@ -411,8 +414,8 @@ struct D3DDevice { /* Size=0x2b00 */
     HRESULT GetRasterStatus(UINT iSwapChain, D3DRASTER_STATUS *pRasterStatus);
     void SetGammaRamp(UINT iSwapChain, DWORD Flags, const D3DGAMMARAMP *pRamp);
     void GetGammaRamp(UINT iSwapChain, D3DGAMMARAMP *pRamp);
-    //   void SetPWLGamma(uint32_t, const _D3DPWLGAMMA*);
-    //   void GetPWLGamma(_D3DPWLGAMMA*);
+    void SetPWLGamma(UINT, const D3DPWLGAMMA *);
+    void GetPWLGamma(D3DPWLGAMMA *);
     HRESULT CreateTexture(
         UINT Width,
         UINT Height,
@@ -507,13 +510,13 @@ struct D3DDevice { /* Size=0x2b00 */
     GetBackBuffer(
         UINT iSwapChain, UINT iBackBuffer, UINT BackBufferType, D3DSurface **ppBackBuffer
     );
-    //   HRESULT GetFrontBuffer(D3DTexture**);
+    HRESULT GetFrontBuffer(D3DTexture **);
     HRESULT BeginScene();
     HRESULT EndScene();
     HRESULT Clear(
         DWORD Count, const D3DRECT *pRects, DWORD Flags, DWORD Color, float Z, DWORD Stencil
     );
-    //   HRESULT ClearF(uint32_t, const _D3DRECT*, const __vector4*, float, uint32_t);
+    HRESULT ClearF(DWORD, const D3DRECT *, const XMVECTOR *, float, DWORD);
     HRESULT SetViewport(const D3DVIEWPORT9 *pViewport);
     HRESULT GetViewport(D3DVIEWPORT9 *pViewport);
     HRESULT SetRenderState(D3DRENDERSTATETYPE State, DWORD Value);
@@ -525,16 +528,30 @@ struct D3DDevice { /* Size=0x2b00 */
     HRESULT GetSamplerState(DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD *pValue);
     HRESULT SetSamplerState(DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD Value);
     HRESULT SetSamplerState_Inline(DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD Value);
-    //   HRESULT SetSamplerAddressStates(uint32_t, uint32_t, uint32_t, uint32_t);
-    //   HRESULT SetSamplerBorderStates(uint32_t, uint32_t, uint32_t, uint32_t);
-    //   HRESULT SetSamplerSeparateZFilterStates(uint32_t, uint32_t, uint32_t,
-    //          uint32_t, uint32_t, uint32_t, uint32_t);
-    //   HRESULT SetSamplerFilterStates(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
-    //   HRESULT DrawVertices(_D3DPRIMITIVETYPE, uint32_t, uint32_t);
-    //   HRESULT DrawIndexedVertices(_D3DPRIMITIVETYPE, int32_t, uint32_t, uint32_t);
-    //   HRESULT DrawVerticesUP(_D3DPRIMITIVETYPE, uint32_t, const void*, uint32_t);
-    //   HRESULT DrawIndexedVerticesUP(_D3DPRIMITIVETYPE, uint32_t, uint32_t, uint32_t,
-    //          const void*, D3DFORMAT, const void*, uint32_t);
+    HRESULT SetSamplerAddressStates(DWORD, DWORD, DWORD, DWORD);
+    HRESULT SetSamplerBorderStates(DWORD, DWORD, DWORD, DWORD);
+    HRESULT
+    SetSamplerSeparateZFilterStates(DWORD, DWORD, DWORD, DWORD, DWORD, DWORD, DWORD);
+    HRESULT SetSamplerFilterStates(DWORD, DWORD, DWORD, DWORD, DWORD);
+    HRESULT
+    DrawVertices(D3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, UINT VertexCount);
+    HRESULT DrawIndexedVertices(
+        D3DPRIMITIVETYPE PrimitiveType,
+        INT BaseVertexIndex,
+        UINT StartIndex,
+        UINT IndexCount
+    );
+    HRESULT DrawVerticesUP(D3DPRIMITIVETYPE PrimitiveType, UINT, const void *, UINT);
+    HRESULT DrawIndexedVerticesUP(
+        D3DPRIMITIVETYPE PrimitiveType,
+        UINT MinVertexIndex,
+        UINT NumVertices,
+        UINT PrimitiveCount,
+        const void *pIndexData,
+        D3DFORMAT IndexDataFormat,
+        const void *pVertexData,
+        UINT VertexStride
+    );
     HRESULT
     DrawPrimitive(D3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, UINT PrimitiveCount);
     HRESULT DrawIndexedPrimitive(
@@ -595,89 +612,145 @@ struct D3DDevice { /* Size=0x2b00 */
     );
     HRESULT SetIndices(D3DIndexBuffer *pIndexData);
     HRESULT GetIndices(D3DIndexBuffer **ppIndexData);
+    HRESULT CreatePixelShader(const DWORD *pFunction, D3DPixelShader **ppShader);
+    HRESULT SetPixelShader(D3DPixelShader *pShader);
+    HRESULT GetPixelShader(D3DPixelShader **ppShader);
+    HRESULT
+    SetPixelShaderConstantB(UINT StartRegister, const BOOL *pConstantData, UINT BoolCount);
+    HRESULT SetPixelShaderConstantF(
+        UINT StartRegister, const float *pConstantData, UINT Vector4fCount
+    );
+    HRESULT SetPixelShaderConstantI(
+        UINT StartRegister, const int *pConstantData, UINT Vector4iCount
+    );
+    HRESULT
+    GetPixelShaderConstantB(UINT StartRegister, BOOL *pConstantData, UINT BoolCount);
+    HRESULT
+    GetPixelShaderConstantF(UINT StartRegister, float *pConstantData, UINT Vector4fCount);
+    HRESULT
+    GetPixelShaderConstantI(UINT StartRegister, int *pConstantData, UINT Vector4iCount);
+    HRESULT SetPixelShaderConstantF_NotInline(
+        UINT StartRegister, const float *pConstantData, UINT Vector4fCount
+    );
+    HRESULT CreateVertexDeclaration(
+        const D3DVERTEXELEMENT9 *pVertexElements, D3DVertexDeclaration **ppDecl
+    );
+    HRESULT SetVertexDeclaration(D3DVertexDeclaration *pDecl);
+    HRESULT GetVertexDeclaration(D3DVertexDeclaration **ppDecl);
+    HRESULT SetScissorRect(const RECT *pRect);
+    HRESULT GetScissorRect(RECT *pRect);
+    HRESULT SetClipPlane(DWORD Index, const float *pPlane);
+    HRESULT GetClipPlane(DWORD Index, float *pPlane);
+    HRESULT CreateQuery(D3DQUERYTYPE Type, D3DQuery **ppQuery);
+    HRESULT CreateQueryTiled(D3DQUERYTYPE Type, UINT TileCapacity, D3DQuery **ppQuery);
+    HRESULT Resolve(
+        DWORD Flags,
+        const D3DRECT *pSourceRect,
+        D3DBaseTexture *pDestTexture,
+        const D3DPOINT *pDestPoint,
+        UINT DestLevel,
+        UINT DestSliceOrFace,
+        const XMVECTOR *pClearColor,
+        float ClearZ,
+        UINT ClearStencil,
+        const D3DRESOLVE_PARAMETERS *pParameters
+    );
+    HRESULT AcquireThreadOwnership();
+    HRESULT ReleaseThreadOwnership();
+    HRESULT SetThreadOwnership(DWORD);
+    DWORD QueryThreadOwnership();
+    BOOL IsBusy();
+    HRESULT BlockUntilIdle();
+    HRESULT InsertCallback(UINT Type, D3DCALLBACK pCallback, UINT Context);
+    HRESULT SetVerticalBlankCallback(D3DVBLANKCALLBACK pCallback);
+    HRESULT SetSwapCallback(D3DSWAPCALLBACK pCallback);
+    HRESULT SynchronizeToPresentationInterval();
+    HRESULT
+    Swap(D3DBaseTexture *pFrontBuffer, const D3DVIDEO_SCALER_PARAMETERS *pParameters);
+    HRESULT RenderSystemUI();
+    HRESULT QueryBufferSpace(UINT *, UINT *);
+    HRESULT SetPredication(UINT);
+    HRESULT SetPatchablePredication(UINT, UINT);
+    HRESULT BeginTiling(
+        DWORD Flags,
+        DWORD Count,
+        const D3DRECT *pTileRects,
+        const XMVECTOR *pClearColor,
+        float ClearZ,
+        DWORD ClearStencil
+    );
+    HRESULT EndTiling(
+        UINT ResolveFlags,
+        const D3DRECT *pResolveRects,
+        D3DBaseTexture *pDestTexture,
+        const XMVECTOR *pClearColor,
+        float ClearZ,
+        UINT ClearStencil,
+        const D3DRESOLVE_PARAMETERS *pParameters
+    );
+    HRESULT BeginZPass(UINT);
+    HRESULT EndZPass();
+    HRESULT InvokeRenderPass();
+    HRESULT BeginExport(UINT, D3DResource *, UINT);
+    HRESULT EndExport(UINT, D3DResource *, UINT);
+    HRESULT DrawTessellatedPrimitive(D3DTESSPRIMITIVETYPE, UINT, UINT);
+    HRESULT DrawIndexedTessellatedPrimitive(D3DTESSPRIMITIVETYPE, INT, UINT, UINT);
+    HRESULT SetRingBufferParameters(const D3DRING_BUFFER_PARAMETERS *);
+
+    //   HRESULT XpsBegin(uint32_t);
+    //   HRESULT XpsEnd();
+    //   HRESULT XpsSetCallback(void (*)(D3DXpsThread*, void*, const void*, uint32_t),
+    //      void*, uint32_t);
+    //   HRESULT XpsSubmit(uint32_t, const void*, uint32_t);
+    //   HRESULT XpsSetPredication(uint32_t);
+    //   HRESULT XpsSetPredicationFromVisibility(void*);
+    //   HRESULT XpsSetPredicationFromQuery(D3DQuery*);
+
+    HRESULT BeginVertices(
+        D3DPRIMITIVETYPE PrimitiveType,
+        UINT VertexCount,
+        UINT VertexStreamZeroStride,
+        void **
+    );
+    HRESULT EndVertices();
+    HRESULT BeginIndexedVertices(
+        D3DPRIMITIVETYPE PrimitiveType,
+        INT BaseVertexIndex,
+        UINT NumVertices,
+        UINT IndexCount,
+        D3DFORMAT IndexDataFormat,
+        UINT VertexStreamZeroStride,
+        void **ppIndexData,
+        void **
+    );
+    HRESULT EndIndexedVertices();
+
+    //   uint32_t InsertFence();
+    //   int32_t BlockOnFence(uint32_t);
+    //   int32_t IsFencePending(uint32_t);
+    //   int32_t SetBlendState(uint32_t, _D3DBLENDSTATE);
+    //   int32_t GetBlendState(uint32_t, _D3DBLENDSTATE*);
+    //   int32_t SetVertexFetchConstant(uint32_t, D3DVertexBuffer*, uint32_t);
+    //   int32_t SetTextureFetchConstant(uint32_t, D3DBaseTexture*);
+    //   float GetCounter(_D3DCOUNTER);
+    //   int32_t SetSafeLevel(uint32_t, uint32_t);
+    //   int32_t GetSafeLevel(uint32_t*, uint32_t*);
+    //   int32_t SetHangCallback(void (*)(const char*));
+    //   int32_t BeginConditionalSurvey(uint32_t, uint32_t);
+    //   int32_t EndConditionalSurvey(uint32_t);
+    //   int32_t BeginConditionalRendering(uint32_t);
+    //   int32_t EndConditionalRendering();
+    //   int32_t PersistDisplay(D3DTexture*, const _D3DVIDEO_SCALER_PARAMETERS*);
+    //   int32_t GetPersistedTexture(D3DTexture**);
+    //   int32_t Suspend();
+    //   int32_t Resume();
+    HRESULT CreatePerfCounters(D3DPerfCounters **ppPerfCounters, UINT NumPasses);
+    HRESULT EnablePerfCounters(BOOL Enable);
+    HRESULT SetPerfCounterEvents(const D3DPERFCOUNTER_EVENTS *pEvents, DWORD Flags);
+    HRESULT QueryPerfCounters(D3DPerfCounters *pCounters, DWORD Flags);
+    UINT GetNumPasses();
 
     // clang-format off
-     
-//   int32_t CreatePixelShader(const uint32_t*, D3DPixelShader**);
-//   int32_t SetPixelShader(D3DPixelShader*);
-//   int32_t GetPixelShader(D3DPixelShader**);
-//   int32_t SetPixelShaderConstantB(uint32_t, const int32_t*, uint32_t);
-//   int32_t SetPixelShaderConstantF(uint32_t, const float*, uint32_t);
-//   int32_t SetPixelShaderConstantI(uint32_t, const int32_t*, uint32_t);
-//   int32_t GetPixelShaderConstantB(uint32_t, int32_t*, uint32_t);
-//   int32_t GetPixelShaderConstantF(uint32_t, float*, uint32_t);
-//   int32_t GetPixelShaderConstantI(uint32_t, int32_t*, uint32_t);
-//   int32_t SetPixelShaderConstantF_NotInline(uint32_t, const float*, uint32_t);
-//   int32_t CreateVertexDeclaration(const _D3DVERTEXELEMENT9*, D3DVertexDeclaration**);
-//   int32_t SetVertexDeclaration(D3DVertexDeclaration*);
-//   int32_t GetVertexDeclaration(D3DVertexDeclaration**);
-//   int32_t SetScissorRect(const RECT*);
-//   int32_t GetScissorRect(tagRECT*);
-//   int32_t SetClipPlane(uint32_t, const float*);
-//   int32_t GetClipPlane(uint32_t, float*);
-//   int32_t CreateQuery(_D3DQUERYTYPE, D3DQuery**);
-//   int32_t CreateQueryTiled(_D3DQUERYTYPE, uint32_t, D3DQuery**);
-//   int32_t Resolve(uint32_t, const _D3DRECT*, D3DBaseTexture*, const _D3DPOINT*, uint32_t, uint32_t, const __vector4*, float, uint32_t, const _D3DRESOLVE_PARAMETERS*);
-//   int32_t AcquireThreadOwnership();
-//   int32_t ReleaseThreadOwnership();
-//   int32_t SetThreadOwnership(uint32_t);
-//   uint32_t QueryThreadOwnership();
-//   int32_t IsBusy();
-//   int32_t BlockUntilIdle();
-//   int32_t InsertCallback(uint32_t, void (*)(uint32_t), uint32_t);
-//   int32_t SetVerticalBlankCallback(void (*)(_D3DVBLANKDATA*));
-//   int32_t SetSwapCallback(void (*)(_D3DSWAPDATA*));
-//   int32_t SynchronizeToPresentationInterval();
-//   int32_t Swap(D3DBaseTexture*, const _D3DVIDEO_SCALER_PARAMETERS*);
-//   int32_t RenderSystemUI();
-//   int32_t QueryBufferSpace(uint32_t*, uint32_t*);
-//   int32_t SetPredication(uint32_t);
-//   int32_t SetPatchablePredication(uint32_t, uint32_t);
-//   int32_t BeginTiling(uint32_t, uint32_t, const _D3DRECT*, const __vector4*, float, uint32_t);
-//   int32_t EndTiling(uint32_t, const _D3DRECT*, D3DBaseTexture*, const __vector4*, float, uint32_t, const _D3DRESOLVE_PARAMETERS*);
-//   int32_t BeginZPass(uint32_t);
-//   int32_t EndZPass();
-//   int32_t InvokeRenderPass();
-//   int32_t BeginExport(uint32_t, D3DResource*, uint32_t);
-//   int32_t EndExport(uint32_t, D3DResource*, uint32_t);
-//   int32_t DrawTessellatedPrimitive(_D3DTESSPRIMITIVETYPE, uint32_t, uint32_t);
-//   int32_t DrawIndexedTessellatedPrimitive(_D3DTESSPRIMITIVETYPE, int32_t, uint32_t, uint32_t);
-//   int32_t SetRingBufferParameters(const _D3DRING_BUFFER_PARAMETERS*);
-//   int32_t XpsBegin(uint32_t);
-//   int32_t XpsEnd();
-//   int32_t XpsSetCallback(void (*)(D3DXpsThread*, void*, const void*, uint32_t), void*, uint32_t);
-//   int32_t XpsSubmit(uint32_t, const void*, uint32_t);
-//   int32_t XpsSetPredication(uint32_t);
-//   int32_t XpsSetPredicationFromVisibility(void*);
-//   int32_t XpsSetPredicationFromQuery(D3DQuery*);
-//   int32_t BeginVertices(_D3DPRIMITIVETYPE, uint32_t, uint32_t, void**);
-//   int32_t EndVertices();
-//   int32_t BeginIndexedVertices(_D3DPRIMITIVETYPE, int32_t, uint32_t, uint32_t, D3DFORMAT, uint32_t, void**, void**);
-//   int32_t EndIndexedVertices();
-//   uint32_t InsertFence();
-//   int32_t BlockOnFence(uint32_t);
-//   int32_t IsFencePending(uint32_t);
-//   int32_t SetBlendState(uint32_t, _D3DBLENDSTATE);
-//   int32_t GetBlendState(uint32_t, _D3DBLENDSTATE*);
-//   int32_t SetVertexFetchConstant(uint32_t, D3DVertexBuffer*, uint32_t);
-//   int32_t SetTextureFetchConstant(uint32_t, D3DBaseTexture*);
-//   float GetCounter(_D3DCOUNTER);
-//   int32_t SetSafeLevel(uint32_t, uint32_t);
-//   int32_t GetSafeLevel(uint32_t*, uint32_t*);
-//   int32_t SetHangCallback(void (*)(const char*));
-//   int32_t BeginConditionalSurvey(uint32_t, uint32_t);
-//   int32_t EndConditionalSurvey(uint32_t);
-//   int32_t BeginConditionalRendering(uint32_t);
-//   int32_t EndConditionalRendering();
-//   int32_t PersistDisplay(D3DTexture*, const _D3DVIDEO_SCALER_PARAMETERS*);
-//   int32_t GetPersistedTexture(D3DTexture**);
-//   int32_t Suspend();
-//   int32_t Resume();
-    HRESULT CreatePerfCounters(D3DPerfCounters** ppPerfCounters, UINT NumPasses);
-    HRESULT EnablePerfCounters(BOOL Enable);
-    HRESULT SetPerfCounterEvents(const D3DPERFCOUNTER_EVENTS* pEvents, DWORD Flags);
-    HRESULT QueryPerfCounters(D3DPerfCounters *pCounters, DWORD Flags);
-//   uint32_t GetNumPasses();
 //   int32_t SetShaderInstructionAllocation(uint32_t, uint32_t, uint32_t);
 //   int32_t SetShaderGPRAllocation(uint32_t, uint32_t, uint32_t);
 //   int32_t GetShaderGPRAllocation(uint32_t*, uint32_t*, uint32_t*);
