@@ -17,5 +17,5 @@ private:
     virtual void Reset();
     virtual void Sync();
 
-    D3DBaseTexture *mTex; // 0x1ac
+    D3DCubeTexture *mTex; // 0x1ac
 };

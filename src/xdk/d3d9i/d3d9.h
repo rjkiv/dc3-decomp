@@ -83,7 +83,7 @@ struct D3DPerfCounters { /* Size=0x1 */
     ULONG Release() { return D3DPerfCounters_Release(this); }
     HRESULT GetDevice(D3DDevice **ppDevice) {
         D3DPerfCounters_GetDevice(this, ppDevice);
-        return 0;
+        return S_OK;
     }
     BOOL IsBusy() { return D3DPerfCounters_IsBusy(this); }
     VOID BlockUntilNotBusy() { D3DPerfCounters_BlockUntilNotBusy(this); }
@@ -426,7 +426,12 @@ struct D3DDevice { /* Size=0x2b00 */
         UINT Pool,
         D3DTexture **ppTexture,
         HANDLE *pSharedHandle
-    );
+    ) {
+        *ppTexture = (D3DTexture *)D3DDevice_CreateTexture(
+            Width, Height, 1, Levels, Usage, Format, Pool, D3DRTYPE_TEXTURE
+        );
+        return *ppTexture ? S_OK : E_OUTOFMEMORY;
+    }
     HRESULT CreateVolumeTexture(
         UINT Width,
         UINT Height,
@@ -446,7 +451,12 @@ struct D3DDevice { /* Size=0x2b00 */
         UINT Pool,
         D3DCubeTexture **ppCubeTexture,
         HANDLE *pSharedHandle
-    );
+    ) {
+        *ppCubeTexture = (D3DCubeTexture *)D3DDevice_CreateTexture(
+            EdgeLength, EdgeLength, 6, Levels, Usage, Format, Pool, D3DRTYPE_CUBETEXTURE
+        );
+        return *ppCubeTexture ? S_OK : E_OUTOFMEMORY;
+    }
     HRESULT CreateArrayTexture(
         UINT,
         UINT,
@@ -476,7 +486,7 @@ struct D3DDevice { /* Size=0x2b00 */
         HANDLE *pSharedHandle
     ) {
         *ppVertexBuffer = D3DDevice_CreateVertexBuffer(Length, Usage, Pool);
-        return *ppVertexBuffer ? ERROR_SUCCESS : E_OUTOFMEMORY;
+        return *ppVertexBuffer ? S_OK : E_OUTOFMEMORY;
     }
     HRESULT CreateIndexBuffer(
         UINT Length,
@@ -487,7 +497,7 @@ struct D3DDevice { /* Size=0x2b00 */
         HANDLE *pSharedHandle
     ) {
         *ppIndexBuffer = D3DDevice_CreateIndexBuffer(Length, Usage, Format, Pool);
-        return *ppIndexBuffer ? ERROR_SUCCESS : E_OUTOFMEMORY;
+        return *ppIndexBuffer ? S_OK : E_OUTOFMEMORY;
     }
     HRESULT CreateRenderTarget(
         UINT Width,
@@ -531,7 +541,10 @@ struct D3DDevice { /* Size=0x2b00 */
     HRESULT GetRenderState(D3DRENDERSTATETYPE State, DWORD *pValue);
     HRESULT CreateStateBlock(D3DSTATEBLOCKTYPE Type, D3DStateBlock **ppSB);
     HRESULT GetTexture(DWORD Stage, D3DBaseTexture **ppTexture);
-    HRESULT SetTexture(DWORD Stage, D3DBaseTexture *pTexture);
+    HRESULT SetTexture(DWORD Stage, D3DBaseTexture *pTexture) {
+        D3DDevice_SetTexture(this, Stage, pTexture, 0x8000000000000000 >> (Stage + 0x20U));
+        return S_OK;
+    }
     HRESULT GetSamplerState(DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD *pValue);
     HRESULT SetSamplerState(DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD Value);
     HRESULT SetSamplerState_Inline(DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD Value);
@@ -614,7 +627,7 @@ struct D3DDevice { /* Size=0x2b00 */
         D3DDevice_SetStreamSource(
             this, StreamNumber, pStreamData, OffsetInBytes, Stride, 1
         );
-        return ERROR_SUCCESS;
+        return S_OK;
     }
     HRESULT GetStreamSource(
         UINT StreamNumber,
@@ -646,7 +659,10 @@ struct D3DDevice { /* Size=0x2b00 */
     );
     HRESULT CreateVertexDeclaration(
         const D3DVERTEXELEMENT9 *pVertexElements, D3DVertexDeclaration **ppDecl
-    );
+    ) {
+        *ppDecl = D3DDevice_CreateVertexDeclaration(pVertexElements);
+        return *ppDecl ? S_OK : E_OUTOFMEMORY;
+    }
     HRESULT SetVertexDeclaration(D3DVertexDeclaration *pDecl);
     HRESULT GetVertexDeclaration(D3DVertexDeclaration **ppDecl);
     HRESULT SetScissorRect(const RECT *pRect);
@@ -872,13 +888,13 @@ D3DDevice_SetSamplerState_BorderColor(D3DDevice *pDevice, DWORD Sampler, DWORD V
 // https://learn.microsoft.com/en-us/windows/win32/api/d3d9helper/nn-d3d9helper-idirect3dresource9
 
 // C
-ULONG D3DResource_AddRef(struct D3DResource *pResource);
-ULONG D3DResource_Release(struct D3DResource *pResource);
-VOID D3DResource_BlockUntilNotBusy(struct D3DResource *pResource);
-VOID D3DResource_GetDevice(struct D3DResource *pThis, D3DDevice **ppDevice);
-D3DRESOURCETYPE D3DResource_GetType(struct D3DResource *pResource);
-BOOL D3DResource_IsBusy(struct D3DResource *pResource);
-BOOL D3DResource_IsSet(struct D3DResource *pResource, D3DDevice *pDevice);
+ULONG D3DResource_AddRef(D3DResource *pResource);
+ULONG D3DResource_Release(D3DResource *pResource);
+VOID D3DResource_BlockUntilNotBusy(D3DResource *pResource);
+VOID D3DResource_GetDevice(D3DResource *pThis, D3DDevice **ppDevice);
+D3DRESOURCETYPE D3DResource_GetType(D3DResource *pResource);
+BOOL D3DResource_IsBusy(D3DResource *pResource);
+BOOL D3DResource_IsSet(D3DResource *pResource, D3DDevice *pDevice);
 
 // C++
 struct D3DResource { /* Size=0x18 */
@@ -893,7 +909,7 @@ struct D3DResource { /* Size=0x18 */
     ULONG Release() { return D3DResource_Release(this); }
     HRESULT GetDevice(D3DDevice **ppDevice) {
         D3DResource_GetDevice(this, ppDevice);
-        return 0;
+        return S_OK;
     }
     D3DRESOURCETYPE GetType() { return D3DResource_GetType(this); }
     BOOL IsBusy() { return D3DResource_IsBusy(this); }
@@ -916,7 +932,7 @@ struct D3DVertexDeclaration : public D3DResource { /* Size=0x18 */
     /* 0x0000: fields for D3DResource */
     HRESULT GetDeclaration(D3DVERTEXELEMENT9 *pDecl, UINT *pNumElements) {
         D3DVertexDeclaration_GetDeclaration(this, pDecl, pNumElements);
-        return 0;
+        return S_OK;
     }
 };
 
@@ -958,7 +974,7 @@ struct D3DPixelShader : public D3DResource { /* Size=0x18 */
     /* 0x0000: fields for D3DResource */
     HRESULT GetFunction(void *pData, UINT *pSizeOfData) {
         D3DPixelShader_GetFunction(this, pData, pSizeOfData);
-        return 0;
+        return S_OK;
     }
 };
 
@@ -988,21 +1004,21 @@ struct D3DBaseTexture : public D3DResource { /* Size=0x34 */
     UINT GetLevelCount() { return D3DBaseTexture_GetLevelCount(this); }
     HRESULT GetTailDesc(D3DMIPTAIL_DESC *pDesc) {
         D3DBaseTexture_GetTailDesc(this, pDesc);
-        return 0;
+        return S_OK;
     }
     HRESULT LockTail(UINT ArrayIndex, D3DLOCKED_TAIL *pLockedTail, DWORD Flags) {
         D3DBaseTexture_LockTail(this, ArrayIndex, pLockedTail, Flags);
-        return 0;
+        return S_OK;
     }
     HRESULT AsyncLockTail(
         UINT64 AsyncBlock, UINT ArrayIndex, D3DLOCKED_TAIL *pLockedTail, DWORD Flags
     ) {
         D3DBaseTexture_AsyncLockTail(this, AsyncBlock, ArrayIndex, pLockedTail, Flags);
-        return 0;
+        return S_OK;
     }
     HRESULT UnlockTail(UINT ArrayIndex) {
         D3DBaseTexture_UnlockTail(this, ArrayIndex);
-        return 0;
+        return S_OK;
     }
 };
 
@@ -1034,16 +1050,16 @@ struct D3DTexture : public D3DBaseTexture { /* Size=0x34 */
     /* 0x0000: fields for D3DBaseTexture */
     HRESULT GetLevelDesc(UINT Level, D3DSURFACE_DESC *pDesc) {
         D3DTexture_GetLevelDesc(this, Level, pDesc);
-        return 0;
+        return S_OK;
     }
     HRESULT GetSurfaceLevel(UINT Level, D3DSurface **ppSurfaceLevel) {
         *ppSurfaceLevel = D3DTexture_GetSurfaceLevel(this, Level);
-        return 0;
+        return *ppSurfaceLevel ? S_OK : E_OUTOFMEMORY;
     }
     HRESULT
     LockRect(UINT Level, D3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags) {
         D3DTexture_LockRect(this, Level, pLockedRect, pRect, Flags);
-        return 0;
+        return S_OK;
     }
     HRESULT AsyncLockRect(
         UINT64 AsyncBlock,
@@ -1053,11 +1069,11 @@ struct D3DTexture : public D3DBaseTexture { /* Size=0x34 */
         DWORD Flags
     ) {
         D3DTexture_AsyncLockRect(this, AsyncBlock, Level, pLockedRect, pRect, Flags);
-        return 0;
+        return S_OK;
     }
     HRESULT UnlockRect(UINT Level) {
         D3DTexture_UnlockRect(this, Level);
-        return 0;
+        return S_OK;
     }
     // need definitions
     HRESULT LockTail(D3DLOCKED_TAIL *, UINT);
@@ -1087,20 +1103,20 @@ struct D3DVolumeTexture : public D3DBaseTexture { /* Size=0x34 */
     /* 0x0000: fields for D3DBaseTexture */
     HRESULT GetLevelDesc(UINT Level, D3DVOLUME_DESC *pDesc) {
         D3DVolumeTexture_GetLevelDesc(this, Level, pDesc);
-        return 0;
+        return S_OK;
     }
     HRESULT GetVolumeLevel(UINT Level, D3DVolume **ppVolumeLevel) {
         *ppVolumeLevel = D3DVolumeTexture_GetVolumeLevel(this, Level);
-        return 0;
+        return S_OK;
     }
     HRESULT
     LockBox(UINT Level, D3DLOCKED_BOX *pLockedVolume, const D3DBOX *pBox, DWORD Flags) {
         D3DVolumeTexture_LockBox(this, Level, pLockedVolume, pBox, Flags);
-        return 0;
+        return S_OK;
     }
     HRESULT UnlockBox(UINT Level) {
         D3DVolumeTexture_UnlockBox(this, Level);
-        return 0;
+        return S_OK;
     }
     // need definitions
     HRESULT AsyncLockBox(UINT64, UINT, D3DLOCKED_BOX *, const D3DBOX *, UINT);
@@ -1145,13 +1161,13 @@ struct D3DCubeTexture : public D3DBaseTexture { /* Size=0x34 */
     /* 0x0000: fields for D3DBaseTexture */
     HRESULT GetLevelDesc(UINT Level, D3DSURFACE_DESC *pDesc) {
         D3DCubeTexture_GetLevelDesc(this, Level, pDesc);
-        return 0;
+        return S_OK;
     }
     HRESULT GetCubeMapSurface(
         D3DCUBEMAP_FACES FaceType, UINT Level, D3DSurface **ppCubeMapSurface
     ) {
         *ppCubeMapSurface = D3DCubeTexture_GetCubeMapSurface(this, FaceType, Level);
-        return 0;
+        return S_OK;
     }
     HRESULT LockRect(
         D3DCUBEMAP_FACES FaceType,
@@ -1161,7 +1177,7 @@ struct D3DCubeTexture : public D3DBaseTexture { /* Size=0x34 */
         DWORD Flags
     ) {
         D3DCubeTexture_LockRect(this, FaceType, Level, pLockedRect, pRect, Flags);
-        return 0;
+        return S_OK;
     }
     HRESULT AsyncLockRect(
         UINT64 AsyncBlock,
@@ -1174,11 +1190,11 @@ struct D3DCubeTexture : public D3DBaseTexture { /* Size=0x34 */
         D3DCubeTexture_AsyncLockRect(
             this, AsyncBlock, FaceType, Level, pLockedRect, pRect, Flags
         );
-        return 0;
+        return S_OK;
     }
     HRESULT UnlockRect(D3DCUBEMAP_FACES FaceType, UINT Level) {
         D3DCubeTexture_UnlockRect(this, FaceType, Level);
-        return 0;
+        return S_OK;
     }
     // need definitions
     HRESULT LockTail(D3DCUBEMAP_FACES, D3DLOCKED_TAIL *, UINT);
@@ -1219,11 +1235,11 @@ struct D3DArrayTexture : public D3DBaseTexture { /* Size=0x34 */
     UINT GetArraySize() { return D3DArrayTexture_GetArraySize(this); }
     HRESULT GetLevelDesc(UINT Level, D3DSURFACE_DESC *pDesc) {
         D3DArrayTexture_GetLevelDesc(this, Level, pDesc);
-        return 0;
+        return S_OK;
     }
     HRESULT GetArraySurface(UINT ArrayIndex, UINT Level, D3DSurface **ppArraySurface) {
         *ppArraySurface = D3DArrayTexture_GetArraySurface(this, ArrayIndex, Level);
-        return 0;
+        return S_OK;
     }
     HRESULT LockRect(
         UINT ArrayIndex,
@@ -1233,7 +1249,7 @@ struct D3DArrayTexture : public D3DBaseTexture { /* Size=0x34 */
         DWORD Flags
     ) {
         D3DArrayTexture_LockRect(this, ArrayIndex, Level, pLockedRect, pRect, Flags);
-        return 0;
+        return S_OK;
     }
     HRESULT AsyncLockRect(
         UINT64 AsyncBlock,
@@ -1246,11 +1262,11 @@ struct D3DArrayTexture : public D3DBaseTexture { /* Size=0x34 */
         D3DArrayTexture_AsyncLockRect(
             this, AsyncBlock, ArrayIndex, Level, pLockedRect, pRect, Flags
         );
-        return 0;
+        return S_OK;
     }
     HRESULT UnlockRect(UINT ArrayIndex, UINT Level) {
         D3DArrayTexture_UnlockRect(this, ArrayIndex, Level);
-        return 0;
+        return S_OK;
     }
     // need definitions
     HRESULT GetSurfaceLevel(UINT, D3DSurface **);
@@ -1288,16 +1304,16 @@ struct D3DLineTexture : public D3DBaseTexture { /* Size=0x34 */
 
     HRESULT GetLevelDesc(UINT Level, D3DSURFACE_DESC *pDesc) {
         D3DLineTexture_GetLevelDesc(this, Level, pDesc);
-        return 0;
+        return S_OK;
     }
     HRESULT GetSurfaceLevel(UINT Level, D3DSurface **ppSurfaceLevel) {
         *ppSurfaceLevel = D3DLineTexture_GetSurfaceLevel(this, Level);
-        return 0;
+        return S_OK;
     }
     HRESULT
     LockRect(UINT Level, D3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags) {
         D3DLineTexture_LockRect(this, Level, pLockedRect, pRect, Flags);
-        return 0;
+        return S_OK;
     }
     HRESULT AsyncLockRect(
         UINT64 AsyncBlock,
@@ -1307,11 +1323,11 @@ struct D3DLineTexture : public D3DBaseTexture { /* Size=0x34 */
         DWORD Flags
     ) {
         D3DLineTexture_AsyncLockRect(this, AsyncBlock, Level, pLockedRect, pRect, Flags);
-        return 0;
+        return S_OK;
     }
     HRESULT UnlockRect(UINT Level) {
         D3DLineTexture_UnlockRect(this, Level);
-        return 0;
+        return S_OK;
     }
     // need definitions
     HRESULT LockTail(D3DLOCKED_TAIL *, UINT);
@@ -1335,11 +1351,11 @@ struct D3DVertexBuffer : public D3DResource { /* Size=0x20 */
 
     HRESULT Lock(UINT OffsetToLock, UINT SizeToLock, void **ppbData, DWORD Flags) {
         *ppbData = D3DVertexBuffer_Lock(this, OffsetToLock, SizeToLock, Flags);
-        return ERROR_SUCCESS;
+        return S_OK;
     }
     HRESULT Unlock() {
         D3DVertexBuffer_Unlock(this);
-        return ERROR_SUCCESS;
+        return S_OK;
     }
     // needs a definition
     HRESULT AsyncLock(
@@ -1347,7 +1363,7 @@ struct D3DVertexBuffer : public D3DResource { /* Size=0x20 */
     );
     HRESULT GetDesc(D3DVERTEXBUFFER_DESC *pDesc) {
         D3DVertexBuffer_GetDesc(this, pDesc);
-        return ERROR_SUCCESS;
+        return S_OK;
     }
 };
 
@@ -1376,22 +1392,22 @@ struct D3DIndexBuffer : public D3DResource { /* Size=0x20 */
 
     HRESULT Lock(UINT OffsetToLock, UINT SizeToLock, void **ppbData, DWORD Flags) {
         *ppbData = D3DIndexBuffer_Lock(this, OffsetToLock, SizeToLock, Flags);
-        return 0;
+        return S_OK;
     }
     HRESULT Unlock() {
         D3DIndexBuffer_Unlock(this);
-        return 0;
+        return S_OK;
     }
     HRESULT AsyncLock(
         UINT64 AsyncBlock, UINT OffsetToLock, UINT SizeToLock, HANDLE *ppbData, DWORD Flags
     ) {
         *ppbData =
             D3DIndexBuffer_AsyncLock(this, AsyncBlock, OffsetToLock, SizeToLock, Flags);
-        return 0;
+        return S_OK;
     }
     HRESULT GetDesc(D3DINDEXBUFFER_DESC *pDesc) {
         D3DIndexBuffer_GetDesc(this, pDesc);
-        return 0;
+        return S_OK;
     }
 };
 
@@ -1437,21 +1453,21 @@ struct D3DSurface : public D3DResource { /* Size=0x30 */
     HRESULT GetContainer(const _GUID &, VOID **);
     HRESULT GetDesc(D3DSURFACE_DESC *pDesc) {
         D3DSurface_GetDesc(this, pDesc);
-        return 0;
+        return S_OK;
     }
     HRESULT LockRect(D3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags) {
         D3DSurface_LockRect(this, pLockedRect, pRect, Flags);
-        return 0;
+        return S_OK;
     }
     HRESULT AsyncLockRect(
         UINT64 AsyncBlock, D3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags
     ) {
         D3DSurface_AsyncLockRect(this, AsyncBlock, pLockedRect, pRect, Flags);
-        return 0;
+        return S_OK;
     }
     HRESULT UnlockRect() {
         D3DSurface_UnlockRect(this);
-        return 0;
+        return S_OK;
     }
 };
 
@@ -1474,11 +1490,11 @@ struct D3DVolume : public D3DResource { /* Size=0x20 */
 
     HRESULT GetDesc(D3DVOLUME_DESC *pDesc) {
         D3DVolume_GetDesc(this, pDesc);
-        return 0;
+        return S_OK;
     }
     HRESULT LockBox(D3DLOCKED_BOX *pLockedVolume, const D3DBOX *pBox, DWORD Flags) {
         D3DVolume_LockBox(this, pLockedVolume, pBox, Flags);
-        return 0;
+        return S_OK;
     }
     // need definitions
     HRESULT GetContainer(const _GUID &, VOID **);
@@ -1505,13 +1521,13 @@ struct D3DQuery { /* Size=0x1 */
     ULONG Release() { return D3DQuery_Release(this); }
     HRESULT GetDevice(D3DDevice **ppDevice) {
         D3DQuery_GetDevice(this, ppDevice);
-        return 0;
+        return S_OK;
     }
     D3DQUERYTYPE GetType() { return D3DQuery_GetType(this); }
     DWORD GetDataSize() { return D3DQuery_GetDataSize(this); }
     HRESULT Issue(DWORD IssueFlags) {
         D3DQuery_Issue(this, IssueFlags);
-        return 0;
+        return S_OK;
     }
     HRESULT GetData(VOID *pData, DWORD Size, DWORD GetDataFlags) {
         return D3DQuery_GetData(this, pData, Size, GetDataFlags);

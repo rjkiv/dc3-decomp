@@ -96,7 +96,7 @@ void DxMovie::Update() {
     if (surface) {
         D3DLOCKED_RECT lock;
         int srcPitch = mVideo.Bpp() * mVideo.Width() * 4;
-        D3DSurface_LockRect(surface, &lock, nullptr, 0);
+        surface->LockRect(&lock, nullptr, 0);
         if (srcPitch == lock.Pitch) {
             memcpy(lock.pBits, unk58, mVideo.FrameSize());
         } else {
@@ -109,8 +109,8 @@ void DxMovie::Update() {
                 curBits += lock.Pitch;
             }
         }
-        D3DSurface_UnlockRect(surface);
-        D3DResource_Release(surface);
+        surface->UnlockRect();
+        surface->Release();
     }
 }
 
