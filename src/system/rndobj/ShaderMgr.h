@@ -13,11 +13,13 @@ class RndShaderProgram;
 #define XBOX_SHADERS_VERSION 1
 
 // vertex shader constant
+// it looks like there's up to 256 of these
 enum VShaderConstant {
     kVShader_SplineMaxCtrlPoints = 0xC
 };
 
 // pixel shader constant
+// it looks like there's up to 256 of these
 enum PShaderConstant {
 };
 

@@ -178,9 +178,9 @@ HRESULT D3DXCompileShaderExA(
     LPCSTR pFunctionName,
     LPCSTR pProfile,
     DWORD Flags,
-    ID3DXBuffer *ppShader,
-    ID3DXBuffer *ppErrorMsgs,
-    ID3DXConstantTable *ppConstantTable,
+    ID3DXBuffer **ppShader,
+    ID3DXBuffer **ppErrorMsgs,
+    ID3DXConstantTable **ppConstantTable,
     D3DXSHADER_COMPILE_PARAMETERS *pParameters
 );
 

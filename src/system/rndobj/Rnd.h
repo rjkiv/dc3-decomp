@@ -152,7 +152,7 @@ public:
     DataArray *Font() const { return mFont; }
     RndEnviron *DefaultEnv() const { return mDefaultEnv; }
     RndMat *DefaultMat() const { return mDefaultMat; }
-    bool Unk140() const { return unk140; }
+    bool ShowShaderCost() const { return mShowShaderCost; }
     bool VerboseTimers() const { return mVerboseTimers; }
     RndMat *OverlayMat() const { return mOverlayMat; }
     const Hmx::Color &GetClearColor() const { return mClearColor; }
@@ -280,8 +280,8 @@ protected:
     bool mWorldEnded; // 0x137
     Aspect mAspect; // 0x138
     Mode mDrawMode; // 0x13c
-    bool unk140; // 0x140 - mResourceCached
-    bool unk141; // 0x141 - mShowShaderCost
+    bool mShowShaderCost; // 0x140
+    bool mShowOverdraw; // 0x141
     bool mShrinkToSafe; // 0x142
     bool mInGame; // 0x143
     bool mVerboseTimers; // 0x144
@@ -289,8 +289,8 @@ protected:
     bool unk146;
     bool unk147;
     bool unk148;
-    void (*unk14c)(); // 0x14c - funcptr
-    void (*unk150)(); // 0x150 - another funcptr
+    void (*mWorldEndCallback)(); // 0x14c
+    void (*unk150)(); // 0x150 - draw pre clear callback?
     std::list<PointTest> mPointTests; // 0x154
     std::list<PostProcessor *> mPostProcessors; // 0x15c
     ObjPtr<RndPostProc> mPostProcOverride; // 0x164

@@ -126,11 +126,12 @@ Rnd::Rnd()
       mDefaultCam(0), mWorldCamCopy(0), mDefaultEnv(0), mDefaultLit(0), unk110(nullptr),
       unk114(nullptr), unk118(0), unk120(5), mFrameID(0), mRateGate("    "),
       mFont(nullptr), mSync(1), mGsTiming(0), mShowSafeArea(0), mDrawing(0),
-      mWorldEnded(1), mAspect(kWidescreen), mDrawMode(kDrawNormal), unk140(0), unk141(0),
-      mShrinkToSafe(1), mInGame(0), mVerboseTimers(0), mDisablePostProc(0), unk146(0),
-      unk147(0), unk148(0), unk14c(0), unk150(0), mPostProcOverride(this),
-      mPostProcBlackLightOverride(nullptr), unk18c(this), mDraws(this), unk1b4(0),
-      mProcCmds(kProcessAll), mLastProcCmds(kProcessAll) {
+      mWorldEnded(1), mAspect(kWidescreen), mDrawMode(kDrawNormal), mShowShaderCost(0),
+      mShowOverdraw(0), mShrinkToSafe(1), mInGame(0), mVerboseTimers(0),
+      mDisablePostProc(0), unk146(0), unk147(0), unk148(0), mWorldEndCallback(0),
+      unk150(0), mPostProcOverride(this), mPostProcBlackLightOverride(nullptr),
+      unk18c(this), mDraws(this), unk1b4(0), mProcCmds(kProcessAll),
+      mLastProcCmds(kProcessAll) {
     for (int i = 0; i < kDefaultTex_Max; i++) {
         mDefaultTex[i] = nullptr;
     }
@@ -509,8 +510,8 @@ bool Rnd::ConsoleShowing() { return mConsole->Showing(); }
 
 void Rnd::EndWorld() {
     if (!mWorldEnded) {
-        if (unk14c) {
-            unk14c();
+        if (mWorldEndCallback) {
+            mWorldEndCallback();
         }
         DoWorldEnd();
         DoPostProcess();

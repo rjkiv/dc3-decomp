@@ -9,6 +9,7 @@ extern "C" {
 #endif
 
 // source for most if not all of this: the kinect joyride pdb
+// using black ops 2 pdb as well since its xdk version is closer to ours
 
 typedef struct _D3DConstants { /* Size=0x23a0 */
     union {
@@ -38,7 +39,7 @@ typedef struct _D3DConstants { /* Size=0x23a0 */
 
 #pragma region D3DDevice
 
-typedef struct D3DDevice { /* Size=0x2a80 */
+typedef struct D3DDevice { /* Size=0x2b00 */
     /* 0x0000 */ _D3DTAGCOLLECTION m_Pending;
     /* 0x0028 */ UINT64 m_Predicated_PendingMask2;
     /* 0x0030 */ UINT *m_pRing;
@@ -49,6 +50,7 @@ typedef struct D3DDevice { /* Size=0x2a80 */
     /* 0x01d4 */ VOID (*m_SetSamplerStateCall[20])(D3DDevice *, UINT, UINT);
     /* 0x0224 */ UINT (*m_GetRenderStateCall[101])(D3DDevice *);
     /* 0x03b8 */ UINT (*m_GetSamplerStateCall[20])(D3DDevice *, UINT);
+    int filler[30]; // not part of the struct but i needed it to align
     /* 0x0480 */ D3DConstants m_Constants;
     /* 0x2820 */ float m_ClipPlanes[6][4];
     /* 0x2880 */ GPU_DESTINATIONPACKET m_DestinationPacket;
@@ -59,6 +61,8 @@ typedef struct D3DDevice { /* Size=0x2a80 */
     /* 0x2964 */ GPU_TESSELLATORPACKET m_TessellatorPacket;
     /* 0x29b8 */ GPU_MISCPACKET m_MiscPacket;
     /* 0x2a50 */ GPU_POINTPACKET m_PointPacket;
+    /* 0x2a70 */ BYTE m_MaxAnisotropy[26];
+    /* 0x2a8a */ BYTE m_ZFilter[26];
 } D3DDevice;
 
 #pragma endregion
@@ -938,6 +942,29 @@ D3DDevice_CreateQueryTiled(D3DDevice *pDevice, D3DQUERYTYPE Type, UINT TileCapac
 
 void D3DDevice_SetVertexShader(D3DDevice *pDevice, D3DVertexShader *pShader);
 void D3DDevice_SetPixelShader(D3DDevice *pDevice, D3DPixelShader *pShader);
+
+inline void D3DDevice_SetVertexShaderConstantF(
+    D3DDevice *pDevice, UINT StartRegister, const float *pConstantData, UINT Vector4fCount
+) {
+    pDevice->m_Pending.m_Mask[0] |= (0x8000000000000000U >> (StartRegister >> 2));
+    XMVECTOR &vec = pDevice->m_Constants.VertexShaderF[StartRegister];
+    vec.x = pConstantData[0];
+    vec.y = pConstantData[1];
+    vec.z = pConstantData[2];
+    vec.w = pConstantData[3];
+}
+
+void D3DDevice_SetVertexShaderConstantFN(
+    D3DDevice *pDevice,
+    UINT StartRegister,
+    const float *pConstantData,
+    UINT Vector4fCount,
+    UINT64 PendingMask0
+);
+
+void D3DDevice_GetVertexShaderConstantF(
+    D3DDevice *pDevice, UINT StartRegister, float *pConstantData, UINT Vector4fCount
+);
 
 #ifdef __cplusplus
 }

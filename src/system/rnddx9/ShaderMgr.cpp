@@ -1,5 +1,6 @@
 
 #include "ShaderMgr.h"
+#include "math/Vec.h"
 #include "os/Memory.h"
 #include "math/Utl.h"
 #include "obj/Object.h"
@@ -22,6 +23,7 @@
 #include "xdk/XGRAPHICS.h"
 #include "xdk/d3dx9/d3dx9mesh.h"
 #include "xdk/d3dx9/d3dx9shader.h"
+#include "xdk/win_types.h"
 #include "xdk/xgraphics/xgraphics.h"
 
 DxShaderMgr TheDxShaderMgr;
@@ -45,7 +47,7 @@ DxShader::~DxShader() {
 void DxShader::Select(bool vertexOnly) {
     D3DDevice_SetVertexShader(TheDxRnd.Device(), mVShader);
     D3DDevice_SetPixelShader(TheDxRnd.Device(), vertexOnly ? nullptr : mPShader);
-    if (TheRnd.Unk140()) {
+    if (TheRnd.ShowShaderCost()) {
         float min, max;
         EstimatedCost(min, max);
         static float div = SystemConfig("rnd", "estimated_cost_divisor")->Float(1);
@@ -116,14 +118,18 @@ bool DxShader::Compile(
     MILO_ASSERT(!mPShader, 0xBE);
     LPCSTR data = nullptr;
     UINT bytes = 0;
-    if (TheDxShaderInclude.Open(
+    if (!SUCCEEDED(TheDxShaderInclude.Open(
             D3DXINC_LOCAL, shaderName, nullptr, (LPCVOID *)&data, &bytes, nullptr, 0
-        )
-        < 0) {
+        ))) {
         return false;
     } else {
+        for (int i = 0; i < 8; i++) {
+            defines[i].Value = 0;
+        }
         bufVertex = new DxShaderBuffer();
         defines[0].Value = "0";
+        ID3DXBuffer *vertexShader;
+        ID3DXBuffer *vertexErrorMsgs;
         HRESULT vRes = D3DXCompileShaderExA(
             data,
             bytes,
@@ -132,14 +138,56 @@ bool DxShader::Compile(
             "vshader",
             "vs_3_0",
             0,
-            0,
-            0,
-            0,
-            0
+            &vertexShader,
+            &vertexErrorMsgs,
+            nullptr,
+            nullptr
         );
+        bufPixel = new DxShaderBuffer();
+        defines[0].Value = "1";
+        ID3DXBuffer *pixelShader;
+        ID3DXBuffer *pixelErrorMsgs;
+        HRESULT pRes = D3DXCompileShaderExA(
+            data,
+            bytes,
+            reinterpret_cast<const D3DXMACRO *>(defines.begin()),
+            &TheDxShaderInclude,
+            "pshader",
+            "ps_3_0",
+            0,
+            &pixelShader,
+            &pixelErrorMsgs,
+            nullptr,
+            nullptr
+        );
+        bool failed = !(SUCCEEDED(vRes)) || !(SUCCEEDED(pRes));
+        if (failed) {
+            if (!SUCCEEDED(vRes)) {
+                if (vertexErrorMsgs) {
+                    MILO_NOTIFY((const char *)vertexErrorMsgs->GetBufferPointer());
+                } else {
+                    MILO_NOTIFY("VShader '%s' compile failure: %d", shaderName, vRes);
+                }
+            }
+            if (!SUCCEEDED(pRes)) {
+                if (pixelErrorMsgs) {
+                    MILO_NOTIFY((const char *)pixelErrorMsgs->GetBufferPointer());
+                } else {
+                    MILO_NOTIFY("PShader '%s' compile failure: %d", shaderName, pRes);
+                }
+            }
+        }
+        if (vertexErrorMsgs) {
+            vertexErrorMsgs->Release();
+            vertexErrorMsgs = nullptr;
+        }
+        if (pixelErrorMsgs) {
+            pixelErrorMsgs->Release();
+            pixelErrorMsgs = nullptr;
+        }
+        TheDxShaderInclude.DxShaderInclude::Close((LPCVOID)data);
+        return !failed;
     }
-
-    return true;
 }
 
 void DxShader::CreateVertexShader(RndShaderBuffer &buffer) {
@@ -217,6 +265,10 @@ void DxShaderMgr::SetVConstant(VShaderConstant vsc, RndTex *tex) {
     }
 }
 
+void DxShaderMgr::SetVConstant(VShaderConstant vsc, const Vector4 &v4) {
+    D3DDevice_SetVertexShaderConstantF(TheDxRnd.Device(), vsc, (float *)&v4, 1);
+}
+
 void DxShaderMgr::LoadShaderFile(FileStream &fs) {
     RndSplasherResume();
     PhysMemTypeTracker tracker("D3D(phys):ShaderCache");
@@ -224,47 +276,53 @@ void DxShaderMgr::LoadShaderFile(FileStream &fs) {
     fs >> fileType;
     fs >> fileVersion;
     if (fileType == XBOX_SHADERS_TYPE && fileVersion == XBOX_SHADERS_VERSION) {
-        int num;
-        fs >> num;
-        for (int i = 0; i < num; i++) {
+        int numShaders;
+        fs >> numShaders;
+        // for each shader
+        for (unsigned int i = 0; i < numShaders; i++) {
             Symbol name;
             fs >> name;
             ShaderType shaderType = ShaderTypeFromName(name.Str());
             int alloc;
-            fs >> alloc;
-            D3DPixelShader *pixelShaders[2];
-            D3DVertexShader *vertexShaders[2];
-            pixelShaders[0] = nullptr;
-            pixelShaders[1] = nullptr;
-            vertexShaders[0] = nullptr;
-            vertexShaders[1] = nullptr;
-            for (int j = 0; j < 2; j++) {
-                SIZE_T size1, size2;
-                fs >> size1;
-                fs >> size2;
+            fs >> alloc; // not sure of this var name
+            void *shaders[2];
+            void *physParts[2];
+            shaders[0] = nullptr;
+            shaders[1] = nullptr;
+            physParts[0] = nullptr;
+            physParts[1] = nullptr;
+            for (unsigned int j = 0; j < 2; j++) {
+                SIZE_T shaderSize, physPartSize;
+                fs >> shaderSize;
+                fs >> physPartSize;
                 BeginMemTrackFileName(fs.Name());
-                pixelShaders[j] = (D3DPixelShader *)XMemAlloc(size1, 0x20800000);
-                vertexShaders[j] = (D3DVertexShader *)XMemAlloc(size2, 0xB5800000);
+                shaders[j] = XMemAlloc(shaderSize, 0x20800000);
+                physParts[j] = XMemAlloc(physPartSize, 0xB5800000);
                 EndMemTrackFileName();
-                fs.Read(pixelShaders[j], size1);
-                fs.Read(vertexShaders[j], size2);
+                fs.Read(shaders[j], shaderSize);
+                fs.Read(physParts[j], physPartSize);
             }
             ShaderPoolAlloc(alloc);
             RndSplasherSuspend();
-            for (int j = 0; j < alloc; j++) {
+            for (unsigned int j = 0; j < alloc; j++) {
                 u64 shaderOptsMask;
                 fs >> shaderOptsMask;
-                D3DVertexShader *pVS = nullptr;
                 D3DPixelShader *pPS = nullptr;
-                // fix this loop
-                for (int k = 0; k < 2; k++) {
-                    int ic0;
-                    int ibc;
-                    fs >> ic0;
-                    fs >> ibc;
-                    pPS = pixelShaders[ic0];
-                    if (k != -1) {
-                        XGRegisterVertexShader(pVS, 0);
+                D3DVertexShader *pVS = nullptr;
+                for (unsigned int k = 0; k < 2; k++) {
+                    int shaderOffset;
+                    int physPartOffset;
+                    fs >> shaderOffset;
+                    fs >> physPartOffset;
+                    void *curShader = (char *)shaders[k] + shaderOffset;
+                    void *curPhysPart = (char *)physParts[k] + physPartOffset;
+                    bool isVertex = k == 1;
+                    if (isVertex) {
+                        pVS = (D3DVertexShader *)curShader;
+                        XGRegisterVertexShader(pVS, curPhysPart);
+                    } else {
+                        pPS = (D3DPixelShader *)curShader;
+                        XGRegisterPixelShader(pPS, curPhysPart);
                     }
                 }
                 MILO_ASSERT(pPS != NULL, 0x1FA);

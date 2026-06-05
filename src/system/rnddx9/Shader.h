@@ -3,6 +3,8 @@
 #include "rndobj/ShaderProgram.h"
 #include "xdk/D3D9.h"
 
+// An DX9 node in a RndShaderMgr::ShaderTree.
+// Contains vertex and pixel shaders.
 class DxShader : public RndShaderProgram {
 public:
     DxShader()
