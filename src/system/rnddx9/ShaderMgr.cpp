@@ -1,5 +1,6 @@
 
 #include "ShaderMgr.h"
+#include "math/Mtx.h"
 #include "math/Vec.h"
 #include "os/Memory.h"
 #include "math/Utl.h"
@@ -10,6 +11,7 @@
 #include "rnddx9/Shader.h"
 #include "rnddx9/ShaderInclude.h"
 #include "rndobj/BaseMaterial.h"
+#include "rndobj/CubeTex.h"
 #include "rndobj/Mat.h"
 #include "rndobj/Rnd.h"
 #include "rndobj/ShaderMgr.h"
@@ -267,6 +269,53 @@ void DxShaderMgr::SetVConstant(VShaderConstant vsc, RndTex *tex) {
 
 void DxShaderMgr::SetVConstant(VShaderConstant vsc, const Vector4 &v4) {
     TheDxRnd.Device()->SetVertexShaderConstantF(vsc, (const float *)&v4, 1);
+}
+
+void DxShaderMgr::SetVConstant(
+    VShaderConstant vsc, const float *__restrict fs, unsigned int num
+) {
+    TheDxRnd.Device()->SetVertexShaderConstantF(vsc, fs, num);
+}
+
+void DxShaderMgr::SetVConstant(VShaderConstant vsc, int i) {
+    TheDxRnd.Device()->SetVertexShaderConstantI(vsc, &i, 1);
+}
+
+void DxShaderMgr::SetVConstant(VShaderConstant vsc, bool b) {
+    BOOL msB = b;
+    TheDxRnd.Device()->SetVertexShaderConstantB(vsc, &msB, 1);
+}
+
+void DxShaderMgr::SetPConstant(PShaderConstant psc, RndCubeTex *tex) {
+    if (tex) {
+        tex->Select(psc);
+    } else {
+        TheRnd.GetNullTexture()->Select(psc);
+    }
+}
+
+void DxShaderMgr::SetPConstant(PShaderConstant psc, const Vector4 &v4) {
+    TheDxRnd.Device()->SetPixelShaderConstantF(psc, (const float *)&v4, 1);
+}
+
+void DxShaderMgr::SetPConstant(PShaderConstant psc, RndTex *tex) {
+    if (!tex) {
+        tex = TheRnd.GetNullTexture();
+    }
+    if (tex) {
+        tex->Select(psc);
+    } else {
+        TheDxRnd.Device()->SetTexture(psc, nullptr);
+    }
+}
+
+void DxShaderMgr::SetPConstant(PShaderConstant psc, int i) {
+    TheDxRnd.Device()->SetPixelShaderConstantI(psc, &i, 1);
+}
+
+void DxShaderMgr::SetPConstant(PShaderConstant psc, bool b) {
+    BOOL msB = b;
+    TheDxRnd.Device()->SetPixelShaderConstantB(psc, &msB, 1);
 }
 
 void DxShaderMgr::LoadShaderFile(FileStream &fs) {

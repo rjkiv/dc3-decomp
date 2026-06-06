@@ -14,12 +14,14 @@ class RndShaderProgram;
 
 // vertex shader constant
 // it looks like there's up to 256 of these
+// each VShaderConstant directly corresponds to a D3DConstants' VertexShaderF
 enum VShaderConstant {
     kVShader_SplineMaxCtrlPoints = 0xC
 };
 
 // pixel shader constant
 // it looks like there's up to 256 of these
+// each VShaderConstant directly corresponds to a D3DConstants' PixelShaderF
 enum PShaderConstant {
 };
 
@@ -38,7 +40,7 @@ public:
     virtual RndMat *GetWork() { return mWorkMat; }
     virtual RndMat *GetPostProcMat() { return mPostProcMat; }
     virtual void SetVConstant(VShaderConstant, RndTex *) = 0;
-    virtual void SetVConstant(VShaderConstant, const float *, unsigned int) = 0;
+    virtual void SetVConstant(VShaderConstant, const float *__restrict, unsigned int) = 0;
     virtual void SetVConstant(VShaderConstant, const Vector4 &) = 0; // 0x24
     virtual void SetVConstant(VShaderConstant, int) = 0;
     virtual void SetVConstant(VShaderConstant, bool) = 0;

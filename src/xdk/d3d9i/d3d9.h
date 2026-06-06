@@ -466,7 +466,7 @@ D3DDevice_CreateQueryTiled(D3DDevice *pDevice, D3DQUERYTYPE Type, UINT TileCapac
 
 void D3DDevice_SetVertexShader(D3DDevice *pDevice, D3DVertexShader *pShader);
 void D3DDevice_SetPixelShader(D3DDevice *pDevice, D3DPixelShader *pShader);
-void D3DDevice_SetVertexShaderConstantF(
+static void D3DDevice_SetVertexShaderConstantF(
     D3DDevice *pDevice, UINT StartRegister, const float *pConstantData, UINT Vector4fCount
 );
 
@@ -480,6 +480,36 @@ void D3DDevice_SetVertexShaderConstantFN(
 
 void D3DDevice_GetVertexShaderConstantF(
     D3DDevice *pDevice, UINT StartRegister, float *pConstantData, UINT Vector4fCount
+);
+
+void D3DDevice_SetVertexShaderConstantI(
+    D3DDevice *pDevice, UINT StartRegister, const int *pConstantData, UINT Vector4iCount
+);
+
+void D3DDevice_SetVertexShaderConstantB(
+    D3DDevice *pDevice, UINT StartRegister, const BOOL *pConstantData, UINT BoolCount
+);
+
+static void D3DDevice_SetPixelShaderConstantF(
+    D3DDevice *pDevice, UINT StartRegister, const float *pConstantData, UINT Vector4fCount
+);
+static void D3DDevice_SetPixelShaderConstantF1(
+    D3DDevice *__restrict pDevice,
+    UINT StartRegister,
+    const float *__restrict pConstantData
+);
+void D3DDevice_SetPixelShaderConstantFN(
+    D3DDevice *pDevice,
+    UINT StartRegister,
+    const float *pConstantData,
+    UINT Vector4fCount,
+    UINT64 PendingMask1
+);
+void D3DDevice_SetPixelShaderConstantI(
+    D3DDevice *pDevice, UINT StartRegister, const int *pConstantData, UINT Vector4iCount
+);
+void D3DDevice_SetPixelShaderConstantB(
+    D3DDevice *pDevice, UINT StartRegister, const BOOL *pConstantData, UINT BoolCount
 );
 
 // C++
@@ -768,8 +798,11 @@ struct D3DDevice { /* Size=0x2b00 */
     HRESULT GetVertexShader(D3DVertexShader **ppShader);
     HRESULT SetVertexShaderConstantB(
         UINT StartRegister, const BOOL *pConstantData, UINT BoolCount
-    );
-    HRESULT SetVertexShaderConstantF(
+    ) {
+        D3DDevice_SetVertexShaderConstantB(this, StartRegister, pConstantData, BoolCount);
+        return S_OK;
+    }
+    __forceinline HRESULT SetVertexShaderConstantF(
         UINT StartRegister, const float *pConstantData, UINT Vector4fCount
     ) {
         D3DDevice_SetVertexShaderConstantF(
@@ -779,7 +812,12 @@ struct D3DDevice { /* Size=0x2b00 */
     }
     HRESULT SetVertexShaderConstantI(
         UINT StartRegister, const int *pConstantData, UINT Vector4iCount
-    );
+    ) {
+        D3DDevice_SetVertexShaderConstantI(
+            this, StartRegister, pConstantData, Vector4iCount
+        );
+        return S_OK;
+    }
     HRESULT
     GetVertexShaderConstantB(UINT StartRegister, BOOL *pConstantData, UINT BoolCount);
     HRESULT
@@ -818,13 +856,28 @@ struct D3DDevice { /* Size=0x2b00 */
     }
     HRESULT GetPixelShader(D3DPixelShader **ppShader);
     HRESULT
-    SetPixelShaderConstantB(UINT StartRegister, const BOOL *pConstantData, UINT BoolCount);
-    HRESULT SetPixelShaderConstantF(
+    SetPixelShaderConstantB(
+        UINT StartRegister, const BOOL *pConstantData, UINT BoolCount
+    ) {
+        D3DDevice_SetPixelShaderConstantB(this, StartRegister, pConstantData, BoolCount);
+        return S_OK;
+    }
+    __forceinline HRESULT SetPixelShaderConstantF(
         UINT StartRegister, const float *pConstantData, UINT Vector4fCount
-    );
+    ) {
+        D3DDevice_SetPixelShaderConstantF(
+            this, StartRegister, pConstantData, Vector4fCount
+        );
+        return S_OK;
+    }
     HRESULT SetPixelShaderConstantI(
         UINT StartRegister, const int *pConstantData, UINT Vector4iCount
-    );
+    ) {
+        D3DDevice_SetPixelShaderConstantI(
+            this, StartRegister, pConstantData, Vector4iCount
+        );
+        return S_OK;
+    }
     HRESULT
     GetPixelShaderConstantB(UINT StartRegister, BOOL *pConstantData, UINT BoolCount);
     HRESULT
@@ -1128,15 +1181,61 @@ struct D3DDevice { /* Size=0x2b00 */
     // clang-format on
 };
 
-inline void D3DDevice_SetVertexShaderConstantF(
-    D3DDevice *pDevice, UINT StartRegister, const float *pConstantData, UINT Vector4fCount
+static inline void D3DDevice_SetVertexShaderConstantF1(
+    D3DDevice *pDevice, UINT StartRegister, const float *__restrict pConstantData
 ) {
-    pDevice->m_Pending.m_Mask[0] |= (0x8000000000000000U >> (StartRegister >> 2));
     XMVECTOR &vec = pDevice->m_Constants.VertexShaderF[StartRegister];
     vec.x = pConstantData[0];
     vec.y = pConstantData[1];
     vec.z = pConstantData[2];
     vec.w = pConstantData[3];
+    pDevice->m_Pending.m_Mask[0] |= (0x8000000000000000U >> (StartRegister >> 2));
+}
+
+// i dunno man
+__forceinline void D3DDevice_SetVertexShaderConstantF(
+    D3DDevice *pDevice, UINT StartRegister, const float *pConstantData, UINT Vector4fCount
+) {
+    if (Vector4fCount == 1) {
+        D3DDevice_SetVertexShaderConstantF1(pDevice, StartRegister, pConstantData);
+    } else {
+        D3DDevice_SetVertexShaderConstantFN(
+            pDevice,
+            StartRegister,
+            pConstantData,
+            Vector4fCount,
+            (0x8000000000000000U >> (StartRegister >> 2))
+        );
+    }
+}
+
+static inline void D3DDevice_SetPixelShaderConstantF1(
+    D3DDevice *__restrict pDevice,
+    UINT StartRegister,
+    const float *__restrict pConstantData
+) {
+    XMVECTOR &vec = pDevice->m_Constants.PixelShaderF[StartRegister];
+    vec.x = pConstantData[0];
+    vec.y = pConstantData[1];
+    vec.z = pConstantData[2];
+    vec.w = pConstantData[3];
+    pDevice->m_Pending.m_Mask[0] |= (0x8000000000000000U >> (StartRegister >> 2));
+}
+
+__forceinline void D3DDevice_SetPixelShaderConstantF(
+    D3DDevice *pDevice, UINT StartRegister, const float *pConstantData, UINT Vector4fCount
+) {
+    if (Vector4fCount == 1) {
+        D3DDevice_SetPixelShaderConstantF1(pDevice, StartRegister, pConstantData);
+    } else {
+        D3DDevice_SetPixelShaderConstantFN(
+            pDevice,
+            StartRegister,
+            pConstantData,
+            Vector4fCount,
+            (0x8000000000000000U >> (StartRegister >> 2))
+        );
+    }
 }
 
 __forceinline void
