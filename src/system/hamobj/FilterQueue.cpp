@@ -66,6 +66,6 @@ void FilterQueue::StartJob() {
     int numQFrames = mQueuedJob.frames.size();
     mOutput.frames.resize(numQFrames);
     for (int i = 0; i < numQFrames; i++) {
-        mOutput.frames[i].unk0 = mQueuedJob.frames[i].unk0;
+        mOutput.frames[i].unk0 = reinterpret_cast<int>(&mQueuedJob.frames[i].unk0);
     }
 }
