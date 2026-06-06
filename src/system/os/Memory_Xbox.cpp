@@ -16,9 +16,9 @@ namespace {
     const char *gPhysicalType = gNullStr;
 
     const char *AllocType(DWORD dwAllocAttributes) {
-        DWORD type = Attr(dwAllocAttributes).dwObjectType;
-        bool notPhys = Attr(dwAllocAttributes).dwMemoryType;
-        switch (type) {
+        DWORD type = Attr(dwAllocAttributes).dwAllocatorId;
+        bool notPhys = Attr(dwAllocAttributes).dwMemoryType > 0;
+        switch (type - 0x80) {
         case 0:
             if (notPhys) {
                 if (gPhysicalType != gNullStr) {
@@ -195,8 +195,8 @@ int ForceLinkXMemFuncs() { return 0x2A; }
 
 VOID *XMemAlloc(SIZE_T dwSize, DWORD dwAllocAttributes) {
     VOID *ptr;
-    if ((dwAllocAttributes & 0x80000000) == 0
-        && (dwAllocAttributes & 0xFF0000) != 0x8C0000) {
+    BOOL memType = Attr(dwAllocAttributes).dwMemoryType;
+    if (!memType && (dwAllocAttributes & 0xFF0000) != 0x8C0000) {
         MILO_ASSERT(Attr(dwAllocAttributes).dwMemoryProtect == XALLOC_MEMPROTECT_READWRITE, 0xF9);
         ptr = _MemAllocTemp(
             dwSize,
@@ -208,13 +208,13 @@ VOID *XMemAlloc(SIZE_T dwSize, DWORD dwAllocAttributes) {
         if (dwAllocAttributes & 0x4000) {
             MILO_ASSERT(ptr, 0x10D);
         }
-        if (dwAllocAttributes & 0x40000000 && ptr) {
+        if (Attr(dwAllocAttributes).dwZeroInitialize && ptr) {
             memset(ptr, 0, dwSize);
         }
     } else {
         ptr = XMemAllocDefault(dwSize, dwAllocAttributes);
         if (!ptr) {
-            MemAllocFailed(dwSize, dwAllocAttributes & 0x80000000);
+            MemAllocFailed(dwSize, memType);
         }
         int sizeDefault = XMemSizeDefault(ptr, dwAllocAttributes);
         gPhysicalUsage += sizeDefault;
@@ -226,7 +226,7 @@ VOID *XMemAlloc(SIZE_T dwSize, DWORD dwAllocAttributes) {
 }
 
 VOID XMemFree(LPVOID lpHandle, DWORD dwFreeAttributes) {
-    if ((dwFreeAttributes & 0x80000000) == 0
+    if (Attr(dwFreeAttributes).dwMemoryType == 0
         && (dwFreeAttributes & 0xFF0000) != 0x8C0000) {
         MemFree(lpHandle);
     } else {
@@ -239,7 +239,7 @@ VOID XMemFree(LPVOID lpHandle, DWORD dwFreeAttributes) {
 }
 
 INT XMemSize(LPVOID lpHandle, DWORD dwSizeAttributes) {
-    if ((dwSizeAttributes & 0x80000000) == 0
+    if (Attr(dwSizeAttributes).dwMemoryType == 0
         && (dwSizeAttributes & 0xFF0000) != 0x8C0000) {
         return MemAllocSize(lpHandle);
     } else {
