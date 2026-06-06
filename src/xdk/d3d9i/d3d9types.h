@@ -531,6 +531,87 @@ typedef enum _D3DSCREENEXTENTQUERYMODE {
     D3DSEQM_PRECLIP = 0x0002,
 } D3DSCREENEXTENTQUERYMODE;
 
+// https://learn.microsoft.com/en-us/windows/win32/direct3d9/d3dblend
+typedef enum _D3DBLEND {
+    D3DBLEND_ZERO = 0x0000,
+    D3DBLEND_ONE = 0x0001,
+    D3DBLEND_SRCCOLOR = 0x0004,
+    D3DBLEND_INVSRCCOLOR = 0x0005,
+    D3DBLEND_SRCALPHA = 0x0006,
+    D3DBLEND_INVSRCALPHA = 0x0007,
+    D3DBLEND_DESTCOLOR = 0x0008,
+    D3DBLEND_INVDESTCOLOR = 0x0009,
+    D3DBLEND_DESTALPHA = 0x000a,
+    D3DBLEND_INVDESTALPHA = 0x000b,
+    D3DBLEND_BLENDFACTOR = 0x000c,
+    D3DBLEND_INVBLENDFACTOR = 0x000d,
+    D3DBLEND_CONSTANTALPHA = 0x000e,
+    D3DBLEND_INVCONSTANTALPHA = 0x000f,
+    D3DBLEND_SRCALPHASAT = 0x0010,
+    D3DBLEND_FORCE_DWORD = 0x7fffffff,
+} D3DBLEND;
+
+// https://learn.microsoft.com/en-us/windows/win32/direct3d9/d3dblendop
+typedef enum _D3DBLENDOP {
+    D3DBLENDOP_ADD = 0x0000,
+    D3DBLENDOP_SUBTRACT = 0x0001,
+    D3DBLENDOP_MIN = 0x0002,
+    D3DBLENDOP_MAX = 0x0003,
+    D3DBLENDOP_REVSUBTRACT = 0x0004,
+    D3DBLENDOP_FORCE_DWORD = 0x7fffffff,
+} D3DBLENDOP;
+
+// https://learn.microsoft.com/en-us/windows/win32/direct3d9/d3dfillmode
+typedef enum _D3DFILLMODE {
+    D3DFILL_POINT = 0x0001,
+    D3DFILL_WIREFRAME = 0x0025,
+    D3DFILL_SOLID = 0x0000,
+    D3DFILL_FORCE_DWORD = 0x7fffffff,
+} D3DFILLMODE;
+
+// https://learn.microsoft.com/en-us/windows/win32/direct3d9/d3dcull
+typedef enum _D3DCULL {
+    D3DCULL_NONE = 0x0000,
+    D3DCULL_CW = 0x0002,
+    D3DCULL_CCW = 0x0006,
+    D3DCULL_FORCE_DWORD = 0x7fffffff,
+} D3DCULL;
+
+// https://learn.microsoft.com/en-us/windows/win32/direct3d9/d3dtexturefiltertype
+typedef enum _D3DTEXTUREFILTERTYPE {
+    D3DTEXF_NONE = 0x0002,
+    D3DTEXF_POINT = 0x0000,
+    D3DTEXF_LINEAR = 0x0001,
+    D3DTEXF_ANISOTROPIC = 0x0004,
+    D3DTEXF_FORCE_DWORD = 0x7fffffff,
+} D3DTEXTUREFILTERTYPE;
+
+// https://learn.microsoft.com/en-us/windows/win32/direct3d9/d3dtextureaddress
+typedef enum _D3DTEXTUREADDRESS {
+    D3DTADDRESS_WRAP = 0x0000,
+    D3DTADDRESS_MIRROR = 0x0001,
+    D3DTADDRESS_CLAMP = 0x0002,
+    D3DTADDRESS_MIRRORONCE = 0x0003,
+    D3DTADDRESS_BORDER_HALF = 0x0004,
+    D3DTADDRESS_MIRRORONCE_BORDER_HALF = 0x0005,
+    D3DTADDRESS_BORDER = 0x0006,
+    D3DTADDRESS_MIRRORONCE_BORDER = 0x0007,
+    D3DTADDRESS_FORCE_DWORD = 0x7fffffff,
+} D3DTEXTUREADDRESS;
+
+// https://learn.microsoft.com/en-us/windows/win32/direct3d9/d3dstencilop
+typedef enum _D3DSTENCILOP {
+    D3DSTENCILOP_KEEP = 0x0000,
+    D3DSTENCILOP_ZERO = 0x0001,
+    D3DSTENCILOP_REPLACE = 0x0002,
+    D3DSTENCILOP_INCRSAT = 0x0003,
+    D3DSTENCILOP_DECRSAT = 0x0004,
+    D3DSTENCILOP_INVERT = 0x0005,
+    D3DSTENCILOP_INCR = 0x0006,
+    D3DSTENCILOP_DECR = 0x0007,
+    D3DSTENCILOP_FORCE_DWORD = 0x7fffffff,
+} D3DSTENCILOP;
+
 #pragma endregion
 #pragma region D3D Structs
 
