@@ -329,9 +329,9 @@ void DxRnd::PerfCountersInit() {
     if (!mCreatedPerfCounters) {
         mCreatedPerfCounters = true;
         HRESULT hr = mD3DDevice->CreatePerfCounters(&mPerfCounterStart, 1);
-        DX_ASSERT_CODE(hr, 0x230);
+        DX_ASSERT(hr, 0x230);
         hr = mD3DDevice->CreatePerfCounters(&mPerfCounterEnd, 1);
-        DX_ASSERT_CODE(hr, 0x231);
+        DX_ASSERT(hr, 0x231);
         D3DPERFCOUNTER_EVENTS perfEvents;
         memset(&perfEvents, 0, sizeof(D3DPERFCOUNTER_EVENTS));
         perfEvents.RBBM[0] = GPUPE_RBBM_NRT_BUSY;
@@ -362,10 +362,10 @@ void DxRnd::PerfCountersStop() {
     mD3DDevice->QueryPerfCounters(mPerfCounterEnd, 1);
     D3DPERFCOUNTER_VALUES startValues;
     HRESULT hr = mPerfCounterStart->GetValues(&startValues, 0, nullptr);
-    DX_ASSERT_CODE(hr, 0x269);
+    DX_ASSERT(hr, 0x269);
     D3DPERFCOUNTER_VALUES endValues;
     hr = mPerfCounterEnd->GetValues(&endValues, 0, nullptr);
-    DX_ASSERT_CODE(hr, 0x26A);
+    DX_ASSERT(hr, 0x26A);
     ULARGE_INTEGER *startLargeIntegers = (ULARGE_INTEGER *)&startValues;
     ULARGE_INTEGER *endLargeIntegers = (ULARGE_INTEGER *)&endValues;
     for (int i = 0; i < (sizeof(D3DPERFCOUNTER_VALUES) / sizeof(ULARGE_INTEGER)); i++) {
@@ -384,7 +384,7 @@ void DxRnd::EndTiling(D3DBaseTexture *tex, int i2) {
     if (unk34c) {
         MILO_ASSERT(mNumTiles > 0, 0x480);
         HRESULT hr = mD3DDevice->EndTiling(l2, nullptr, tex, nullptr, 0, 0, nullptr);
-        DX_ASSERT_CODE(hr, 0x481);
+        DX_ASSERT(hr, 0x481);
         unk34c = false;
     } else {
         MILO_ASSERT(mNumTiles == 0, 0x486);
@@ -553,7 +553,7 @@ void DxRnd::InitBuffers() {
         HRESULT hr = Direct3D::CreateDevice(
             0, mDeviceType, &unk22c, 1, &mPresentParams, &mD3DDevice
         );
-        DX_ASSERT_CODE(hr, 0x367);
+        DX_ASSERT(hr, 0x367);
         EndMemTrackObjectName();
     }
     if (!(unk37c & 1)) {
@@ -582,7 +582,7 @@ void DxRnd::InitBuffers() {
         HRESULT hr = TheDxRnd.Device()->CreateTexture(
             mWidth, mHeight, 1, 0, D3DFMT_A8R8G8B8, 0, &mPreProcessBuffer, nullptr
         );
-        DX_ASSERT_CODE(hr, 0x390);
+        DX_ASSERT(hr, 0x390);
         EndMemTrackObjectName();
     }
     {
@@ -590,7 +590,7 @@ void DxRnd::InitBuffers() {
         HRESULT hr = TheDxRnd.Device()->CreateTexture(
             mWidth, mHeight, 1, 0, D3DFMT_A8R8G8B8, 0, &mPostProcessBuffer, nullptr
         );
-        DX_ASSERT_CODE(hr, 0x394);
+        DX_ASSERT(hr, 0x394);
         EndMemTrackObjectName();
     }
     for (int i = 0; i < 2; i++) {
@@ -598,7 +598,7 @@ void DxRnd::InitBuffers() {
         HRESULT hr = TheDxRnd.Device()->CreateTexture(
             mWidth, mHeight, 1, 0, D3DFMT_LE_A8R8G8B8, 0, &mFrontBuffers[i], nullptr
         );
-        DX_ASSERT_CODE(hr, 0x39C);
+        DX_ASSERT(hr, 0x39C);
         EndMemTrackObjectName();
     }
 
@@ -606,7 +606,7 @@ void DxRnd::InitBuffers() {
     HRESULT hr = TheDxRnd.Device()->CreateTexture(
         mWidth, mHeight, 1, 0, D3DFMT_D24FS8, 0, &mFrontBufferDepth, nullptr
     );
-    DX_ASSERT_CODE(hr, 0x3A2);
+    DX_ASSERT(hr, 0x3A2);
     EndMemTrackObjectName();
     PostDeviceReset();
     for (int i = 0; i < 2; i++) {

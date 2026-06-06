@@ -20,7 +20,7 @@ DxMesh::DxMesh() : mNumVerts(0), mNumFaces(0), unk1ac(0), unk1b0(0) {
         // clang-format on
         HRESULT hr =
             TheDxRnd.Device()->CreateVertexDeclaration(sVertexElements, &sVertexDecl);
-        DX_ASSERT_CODE(hr, 0xA8);
+        DX_ASSERT(hr, 0xA8);
     }
     if (!sMutableVertexDecl) {
         // clang-format off
@@ -37,7 +37,7 @@ DxMesh::DxMesh() : mNumVerts(0), mNumFaces(0), unk1ac(0), unk1b0(0) {
         HRESULT hr = TheDxRnd.Device()->CreateVertexDeclaration(
             sMutableVertexElements, &sMutableVertexDecl
         );
-        DX_ASSERT_CODE(hr, 0xAF);
+        DX_ASSERT(hr, 0xAF);
     }
     if (!sMutableSkinnedVertexDecl) {
         // clang-format off
@@ -54,7 +54,7 @@ DxMesh::DxMesh() : mNumVerts(0), mNumFaces(0), unk1ac(0), unk1b0(0) {
         HRESULT hr = TheDxRnd.Device()->CreateVertexDeclaration(
             sMutableSkinnedVertexElements, &sMutableSkinnedVertexDecl
         );
-        DX_ASSERT_CODE(hr, 0xB5);
+        DX_ASSERT(hr, 0xB5);
     }
 }
 

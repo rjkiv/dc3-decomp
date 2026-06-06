@@ -5,8 +5,9 @@
 #include "rnddx9/Rnd.h"
 #include "rndobj/Rnd.h"
 #include "rndobj/Tex.h"
-#include "xdk/d3d9i/d3d9.h"
-#include "xdk/d3d9i/d3d9types.h"
+#include "xdk/D3D9.h"
+#include "xdk/D3DX9.h"
+#include "xdk/d3dx9/d3dx9tex.h"
 
 std::vector<DxTex *> gAllTextures;
 
@@ -24,6 +25,25 @@ DxTex::~DxTex() {
     auto it = std::find(gAllTextures.begin(), gAllTextures.end(), this);
     MILO_ASSERT(it != gAllTextures.end(), 0x2D7);
     gAllTextures.erase(it);
+}
+
+void DxTex::UnlockBitmap() {
+    if (mTexture) {
+        if (unka4) {
+            unka4->UnlockRect();
+            if (unka4) {
+                unka4->Release();
+                unka4 = nullptr;
+            }
+            if ((unka8 & 4) > 0) {
+                HRESULT hr = D3DXFilterTexture(mTexture, nullptr, -1, -1);
+                DX_ASSERT(hr, 0x618);
+            }
+        }
+        memset(&unk9c, 0, sizeof(D3DLOCKED_RECT));
+        unka4 = nullptr;
+        unka8 = 0;
+    }
 }
 
 void DxTex::Compress(AlphaCompress a) {
@@ -75,7 +95,7 @@ void DxTex::PostDeviceReset() {
 D3DSurface *DxTex::GetSurfaceLevel(int level) {
     D3DSurface *ret;
     HRESULT hr = mTexture->GetSurfaceLevel(level, &ret);
-    DX_ASSERT_CODE(hr, 0xE6);
+    DX_ASSERT(hr, 0xE6);
     return ret;
 }
 

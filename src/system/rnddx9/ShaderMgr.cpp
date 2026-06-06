@@ -196,14 +196,14 @@ void DxShader::CreateVertexShader(RndShaderBuffer &buffer) {
     MILO_ASSERT(mVShader == NULL, 0x80);
     HRESULT hr =
         TheDxRnd.Device()->CreateVertexShader((const DWORD *)buffer.Storage(), &mVShader);
-    DX_ASSERT_CODE(hr, 0x82);
+    DX_ASSERT(hr, 0x82);
 }
 
 void DxShader::CreatePixelShader(RndShaderBuffer &buffer, ShaderType) {
     MILO_ASSERT(mPShader == NULL, 0x86);
     HRESULT hr =
         TheDxRnd.Device()->CreatePixelShader((const DWORD *)buffer.Storage(), &mPShader);
-    DX_ASSERT_CODE(hr, 0x88);
+    DX_ASSERT(hr, 0x88);
 }
 
 void DxShader::SetShaders(D3DVertexShader *v, D3DPixelShader *p) {

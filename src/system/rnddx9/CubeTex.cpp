@@ -28,7 +28,7 @@ void DxCubeTex::Sync() {
         &mTex,
         nullptr
     );
-    DX_ASSERT_CODE(hr, 0x38);
+    DX_ASSERT(hr, 0x38);
     XGTEXTURE_DESC desc;
     XGGetTextureDesc(mTex, 0, &desc);
     for (int i = 0; i < kNumCubeFaces; i++) {

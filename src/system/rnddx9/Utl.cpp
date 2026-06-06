@@ -14,7 +14,7 @@ D3DVertexBuffer *MakeVertexBuffer(int num, uint size, uint, bool) {
     HRESULT hr = TheDxRnd.Device()->CreateVertexBuffer(
         num * size, 0, 0, D3DPOOL_DEFAULT, &vb, nullptr
     );
-    DX_ASSERT_CODE(hr, 0x22);
+    DX_ASSERT(hr, 0x22);
     return vb;
 }
 
@@ -27,7 +27,7 @@ D3DIndexBuffer *MakeIndexBuffer(int num, uint size, D3DFORMAT fmt) {
     HRESULT hr = TheDxRnd.Device()->CreateIndexBuffer(
         num * size, 8, fmt, D3DPOOL_MANAGED, &ib, nullptr
     );
-    DX_ASSERT_CODE(hr, 0x47);
+    DX_ASSERT(hr, 0x47);
     return ib;
 }
 
@@ -41,7 +41,7 @@ D3DVertexBuffer *CloneVertexBuffer(D3DVertexBuffer *in) {
     HRESULT hr = TheDxRnd.Device()->CreateVertexBuffer(
         desc.Size, desc.Usage, 0, desc.Pool, &out, nullptr
     );
-    DX_ASSERT_CODE(hr, 49);
+    DX_ASSERT(hr, 49);
     VBLock<> lock_in(in, 0);
     VBLock<> lock_out(out, 0);
     memcpy(lock_out.mDataAddr, lock_in.mDataAddr, desc.Size);
@@ -58,7 +58,7 @@ D3DIndexBuffer *CloneIndexBuffer(D3DIndexBuffer *in) {
     HRESULT hr = TheDxRnd.Device()->CreateIndexBuffer(
         desc.Size, desc.Usage, desc.Format, desc.Pool, &out, nullptr
     );
-    DX_ASSERT_CODE(hr, 86);
+    DX_ASSERT(hr, 86);
     IBLock<> lock_in(in, 0);
     IBLock<> lock_out(out, 0);
     memcpy(lock_out.mDataAddr, lock_in.mDataAddr, desc.Size);

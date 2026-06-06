@@ -46,14 +46,14 @@ void ChatReceiver::ActivateProcessing(bool b1) {
         void *mode = _xhv_voicechat_mode;
         if (b1) {
             HRESULT hr = mXHV->RegisterLocalTalker(unk4);
-            DX_ASSERT_CODE(hr, 0x40D);
+            DX_ASSERT(hr, 0x40D);
             hr = mXHV->StartLocalProcessingModes(unk4, &mode, 1);
-            DX_ASSERT_CODE(hr, 0x40E);
+            DX_ASSERT(hr, 0x40E);
         } else {
             HRESULT hr = mXHV->StopLocalProcessingModes(unk4, &mode, 1);
-            DX_ASSERT_CODE(hr, 0x412);
+            DX_ASSERT(hr, 0x412);
             hr = mXHV->UnregisterLocalTalker(unk4);
-            DX_ASSERT_CODE(hr, 0x413);
+            DX_ASSERT(hr, 0x413);
         }
     }
 }
@@ -251,7 +251,7 @@ void MicManagerXbox::Init() {
     params.bCustomVADProvided = true;
     params.bRelaxPrivileges = true;
     HRESULT hr = XHV2CreateEngine(&params, &mXHVWorkerThread, &mXHVEngine);
-    DX_ASSERT_CODE(hr, 0xCD);
+    DX_ASSERT(hr, 0xCD);
 }
 
 void MicManagerXbox::RequirePushToTalk(bool req, int pad) {

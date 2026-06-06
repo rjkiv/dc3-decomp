@@ -222,7 +222,7 @@ int DxRnd::BitmapOrderForD3DFormat(D3DFORMAT fmt) {
 void DxRnd::ResetDevice() {
     PreDeviceReset();
     HRESULT res = mD3DDevice->Reset(&mPresentParams);
-    DX_ASSERT_CODE(res, 0xD6);
+    DX_ASSERT(res, 0xD6);
     PostDeviceReset();
 }
 

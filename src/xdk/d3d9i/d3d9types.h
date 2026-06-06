@@ -1060,6 +1060,13 @@ typedef struct _D3DSWAPDATA { /* Size=0x18 */
     /* 0x0014 */ DWORD SwapVBlank;
 } D3DSWAPDATA;
 
+typedef struct tagPALETTEENTRY { /* Size=0x4 */
+    /* 0x0000 */ BYTE peRed;
+    /* 0x0001 */ BYTE peGreen;
+    /* 0x0002 */ BYTE peBlue;
+    /* 0x0003 */ BYTE peFlags;
+} PALETTEENTRY, *PPALETTEENTRY, *LPPALETTEENTRY;
+
 #pragma endregion
 #pragma region GPU Structs
 

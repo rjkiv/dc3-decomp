@@ -240,31 +240,17 @@ extern DxRnd TheDxRnd;
 
 int D3DFORMAT_BitsPerPixel(D3DFORMAT);
 
-inline unsigned long MakeColor(const Hmx::Color &c) {
-    return ((unsigned long)(c.alpha * 255.0f) & 0xFF) << 24
-        | ((unsigned long)(c.red * 255.0f) & 0xFF) << 16
-        | ((unsigned long)(c.green * 255.0f) & 0xFF) << 8
-        | ((unsigned long)(c.blue * 255.0f) & 0xFF);
+inline DWORD MakeColor(const Hmx::Color &c) {
+    return ((DWORD)(c.alpha * 255.0f) & 0xFF) << 24
+        | ((DWORD)(c.red * 255.0f) & 0xFF) << 16 | ((DWORD)(c.green * 255.0f) & 0xFF) << 8
+        | ((DWORD)(c.blue * 255.0f) & 0xFF);
 }
 
 #define DX_RELEASE(x) (TheDxRnd.AutoRelease(x), x = nullptr)
 #define DX_DELETE(x) (TheDxRnd.AutoDelete(x), x = nullptr)
 
-inline HRESULT DxCheck(void *v) { return v ? ERROR_SUCCESS : E_OUTOFMEMORY; }
-
 // check that the thing allocated successfully (e.g. no E_OUTOFMEMORY)
-#define DX_ASSERT(cond, line)                                                            \
-    {                                                                                    \
-        HRESULT code = DxCheck(cond);                                                    \
-        ((code)                                                                          \
-         && (TheDebugFailer << MakeString(                                               \
-                 "File: %s Line: %d Error: %s\n", __FILE__, line, DxRnd::Error(code)     \
-             ),                                                                          \
-             0));                                                                        \
-    }
-
-// check that the thing allocated successfully (e.g. no E_OUTOFMEMORY)
-#define DX_ASSERT_CODE(code, line)                                                       \
+#define DX_ASSERT(code, line)                                                            \
     {                                                                                    \
         ((code)                                                                          \
          && (TheDebugFailer << MakeString(                                               \

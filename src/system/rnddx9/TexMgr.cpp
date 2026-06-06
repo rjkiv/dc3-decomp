@@ -34,7 +34,7 @@ bool DxRndTexMgr::CreateSurface(
         BeginMemTrackFileName(filename);
         HRESULT hr =
             TheDxRnd.Device()->CreateTexture(w, h, levels, 0, fmt, pool, pTex, nullptr);
-        DX_ASSERT_CODE(hr, 0x23);
+        DX_ASSERT(hr, 0x23);
         EndMemTrackFileName();
         ReserveRes(key, *pTex);
         return false;

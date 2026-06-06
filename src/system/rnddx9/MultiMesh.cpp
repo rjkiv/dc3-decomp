@@ -32,7 +32,7 @@ void DxMultiMesh::Init() {
         D3DDECL_END()
     };
     HRESULT hr = TheDxRnd.Device()->CreateVertexDeclaration(sVertexElement, &sVertexDecl);
-    DX_ASSERT_CODE(hr, 0x97);
+    DX_ASSERT(hr, 0x97);
     static D3DVERTEXELEMENT9 sMutableVertexElement[] = {
         { 0, 0, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 },
         { 0, 16, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0 },
@@ -47,7 +47,7 @@ void DxMultiMesh::Init() {
     hr = TheDxRnd.Device()->CreateVertexDeclaration(
         sMutableVertexElement, &sMutableVertexDecl
     );
-    DX_ASSERT_CODE(hr, 0x9A);
+    DX_ASSERT(hr, 0x9A);
 }
 
 void DxMultiMesh::Shutdown() {
