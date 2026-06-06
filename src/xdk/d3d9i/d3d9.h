@@ -512,6 +512,8 @@ void D3DDevice_SetPixelShaderConstantB(
     D3DDevice *pDevice, UINT StartRegister, const BOOL *pConstantData, UINT BoolCount
 );
 
+void D3DDevice_SetPredication(D3DDevice *pDevice, UINT TilePredication);
+
 // C++
 struct D3DDevice { /* Size=0x2b00 */
     /* 0x0000 */ _D3DTAGCOLLECTION m_Pending;
@@ -954,7 +956,10 @@ struct D3DDevice { /* Size=0x2b00 */
     }
     HRESULT RenderSystemUI();
     HRESULT QueryBufferSpace(UINT *, UINT *);
-    HRESULT SetPredication(UINT);
+    HRESULT SetPredication(UINT TilePredication) {
+        D3DDevice_SetPredication(this, TilePredication);
+        return S_OK;
+    }
     HRESULT SetPatchablePredication(UINT, UINT);
     HRESULT BeginTiling(
         DWORD Flags,

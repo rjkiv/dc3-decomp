@@ -116,6 +116,7 @@ public:
     }
 
     bool Unk301() const { return unk_0x301; }
+    void SetUnk301(bool b) { unk_0x301 = b; }
     D3DSurface *BackBuffer() const;
     void PreInit(HWND__ *);
     void Init(HWND__ *);

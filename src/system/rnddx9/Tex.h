@@ -18,7 +18,6 @@ public:
     virtual bool TexelsLock(void *&);
     virtual unsigned int TexelsPitch() const;
     virtual void Select(int);
-    virtual void SyncBitmap();
     virtual void PreDeviceReset();
     virtual void PostDeviceReset();
 
@@ -40,12 +39,14 @@ private:
     static bool sEDRamChecksEnabled;
 
     void ResetSurfaces();
+    void ResolveMipChain();
     D3DSurface *GetSurfaceLevel(int);
 
 protected:
     DxTex();
 
     virtual void PresyncBitmap() { ResetSurfaces(); }
+    virtual void SyncBitmap();
 
     D3DFORMAT mFormat; // 0x7c
     D3DTexture *mTexture; // 0x80
