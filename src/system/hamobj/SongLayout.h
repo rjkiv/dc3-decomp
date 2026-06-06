@@ -44,6 +44,13 @@ public:
 };
 
 struct MoveReplacer {
+    MoveReplacer() : unk0(Symbol()), unk4(Symbol()), unk8(nullptr) {}
+    MoveReplacer(Symbol from, Symbol to = Symbol())
+        : unk0(from), unk4(to), unk8(nullptr) {}
+    void SetToFrom(Symbol to, Symbol from) {
+        unk4 = to;
+        unk0 = from;
+    }
     Symbol unk0; // 0x0 - from
     Symbol unk4; // 0x4 - to
     const MoveParent *unk8; // 0x8

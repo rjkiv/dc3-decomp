@@ -467,7 +467,7 @@ bool HamGameData::SetAssociatedPadNum(int player, int padnum) {
     HamPlayerData *pPlayer = mPlayers[player];
     MILO_ASSERT(pPlayer, 0x2D0);
     if (padnum >= 0 && ThePlatformMgr.IsSignedIn(padnum)) {
-        HamPlayerData *playerData = mPlayers[player];
+        HamPlayerData *playerData = mPlayers[1 - player];
         if (playerData->PadNum() == padnum) {
             playerData->SetAssociatedPadNum(-1, gNullStr);
         }
