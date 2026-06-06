@@ -58,8 +58,11 @@ public:
     }
 
     FlowPtr &operator=(const FlowPtr &ptr) {
+        auto state = ptr.mState;
+        auto objname = ptr.mObjName;
         mObjPtr = ptr.mObjPtr.Ptr();
-        // FlowPtrBase::operator=(ptr);
+        mObjName = objname;
+        mState = state;
         return *this;
     }
 

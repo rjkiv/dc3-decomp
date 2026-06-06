@@ -30,6 +30,7 @@
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/File.h"
+#include "rndobj/Poll.h"
 #include "utl/BinStream.h"
 #include "utl/Symbol.h"
 
@@ -249,6 +250,28 @@ bool Flow::Activate() {
 }
 
 void Flow::Deactivate(bool b1) { FlowQueueable::Deactivate(b1); }
+
+void Flow::Enter() {
+    Flow *f = this; // this actually affects codegen. :)
+    if (f->ProxyFile().empty() && unk170 != 0) {
+        if (unk170 == 1) {
+            Execute(kQueue);
+        } else {
+            TheFlowMgr->QueueCommand(this, kQueue);
+        }
+    }
+}
+
+void Flow::Exit() {
+    Flow *f = this;
+    if (IsRunning() && f->ProxyFile().empty()) {
+        if (mHardStop) {
+            Deactivate(false);
+        } else {
+            RequestStop();
+        }
+    }
+}
 
 void Flow::RequestStop() {
     FLOW_LOG("RequestStop\n");

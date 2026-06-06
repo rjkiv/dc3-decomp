@@ -170,8 +170,9 @@ void FlowAnimate::Deactivate(bool b1) {
     FLOW_LOG("Deactivate\n");
     if (unk5c) {
         unk5c->SetListener(nullptr);
+        AnimTask *task = unk5c;
         unk5c = nullptr;
-        delete unk5c;
+        delete task;
     }
     TheFlowMgr->CancelCommand(this);
     FlowNode::Deactivate(b1);
@@ -194,10 +195,6 @@ void FlowAnimate::RequestStop() {
         case kStopLastFrame:
             unkc4 = true;
             break;
-        case kStopOnMarker:
-            unk98 = 2;
-            unkc4 = true;
-            break;
         case kStopBetweenMarkers:
             if (unk94) {
                 TheFlowMgr->QueueCommand(this, kIgnore);
@@ -205,6 +202,10 @@ void FlowAnimate::RequestStop() {
                 unk98 = 3;
                 unkc4 = true;
             }
+            break;
+        case kStopOnMarker:
+            unk98 = 2;
+            unkc4 = true;
             break;
         case kReleaseAndContinue:
             TheFlowMgr->QueueCommand(this, kIgnore);
