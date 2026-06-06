@@ -4,7 +4,7 @@
 
 bool NgFur::Prep(RndMesh *, RndMat *) const {
     TheShaderMgr.SetPConstant((PShaderConstant)12, mFurDetail);
-    TheRenderState.SetTextureFilter(12, (RndRenderState::FilterMode)1, false);
+    TheRenderState.SetTextureFilter(12, RndRenderState::kFilterModeLinear, false);
     return true;
 }
 bool NgFur::Shell(int, RndMesh *, RndMat *) const { return true; }

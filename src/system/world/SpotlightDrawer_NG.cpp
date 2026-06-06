@@ -104,8 +104,8 @@ void NgSpotlightDrawer::SetXSectionTexture(const Spotlight::BeamDef &def) {
         tex = SR().unk14;
     }
     TheShaderMgr.SetPConstant((PShaderConstant)0xB, tex);
-    TheRenderState.SetTextureClamp(0xB, (RndRenderState::ClampMode)2);
-    TheRenderState.SetTextureFilter(0xB, (RndRenderState::FilterMode)1, false);
+    TheRenderState.SetTextureClamp(0xB, RndRenderState::kClampModeClamp);
+    TheRenderState.SetTextureFilter(0xB, RndRenderState::kFilterModeLinear, false);
 }
 
 bool NgSpotlightDrawer::RestoreCam() {

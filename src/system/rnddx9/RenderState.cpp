@@ -88,7 +88,7 @@ void RndRenderState::SetStencilOp(StencilOp fail, StencilOp zfail, StencilOp pas
 }
 
 void RndRenderState::Init() {
-    SetTextureClamp(4, (ClampMode)2);
-    SetTextureClamp(5, (ClampMode)2);
-    SetTextureFilter(5, (FilterMode)1, false);
+    SetTextureClamp(4, kClampModeClamp);
+    SetTextureClamp(5, kClampModeClamp);
+    SetTextureFilter(5, kFilterModeLinear, false);
 }

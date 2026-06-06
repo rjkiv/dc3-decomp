@@ -173,8 +173,8 @@ void NgPostProc::CheckNoise() {
         }
         TheShaderMgr.SetPConstant((PShaderConstant)113, notSure);
         TheShaderMgr.SetPConstant((PShaderConstant)13, mNoiseMap.Ptr());
-        TheRenderState.SetTextureFilter(13, (RndRenderState::FilterMode)1, false);
-        TheRenderState.SetTextureClamp(13, (RndRenderState::ClampMode)0);
+        TheRenderState.SetTextureFilter(13, RndRenderState::kFilterModeLinear, false);
+        TheRenderState.SetTextureClamp(13, RndRenderState::kClampModeWrap);
     }
 }
 
