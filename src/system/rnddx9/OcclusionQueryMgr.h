@@ -5,6 +5,7 @@
 #include "xdk/D3D9.h"
 #include "xdk/XAPILIB.h"
 #include "xdk/d3d9i/d3d9.h"
+#include "xdk/d3d9i/d3d9types.h"
 
 // size 0x2010
 class DxRndOcclusionQueryMgr : public RndOcclusionQueryMgr {
@@ -36,7 +37,7 @@ protected:
     }
     virtual void OnReleaseQuery(unsigned int queryIndex, unsigned int frameIndex) {
         if (mDXQueryArray[queryIndex][frameIndex]) {
-            D3DQuery_Release(mDXQueryArray[queryIndex][frameIndex]);
+            mDXQueryArray[queryIndex][frameIndex]->Release();
             mDXQueryArray[queryIndex][frameIndex] = nullptr;
         }
     }
@@ -49,10 +50,11 @@ private:
         if (!mDXQueryArray[queryIndex][mCurrentFrameIndex]) {
             MILO_ASSERT(GetQueryState(queryIndex) == kQueryStateInvalid, 0x5D);
             if (mDXQueryArray[queryIndex][mCurrentFrameIndex]) {
-                mDXQueryArray[queryIndex][mCurrentFrameIndex] =
-                    D3DDevice_CreateQueryTiled(
-                        TheDxRnd.Device(), D3DQUERYTYPE_OCCLUSION, 1
-                    );
+                TheDxRnd.Device()->CreateQueryTiled(
+                    D3DQUERYTYPE_OCCLUSION,
+                    1,
+                    &mDXQueryArray[queryIndex][mCurrentFrameIndex]
+                );
             }
             SetQueryState(queryIndex, kQueryStateReady);
         }

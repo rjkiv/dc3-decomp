@@ -38,7 +38,7 @@ void DxRnd::Clear(unsigned int ui, const Hmx::Color &c) {
     if (ui & 2) {
         mask |= 0x30;
     }
-    D3DDevice_Clear(mD3DDevice, 0, nullptr, mask, MakeColor(c), f1, 0, 0);
+    mD3DDevice->Clear(0, nullptr, mask, MakeColor(c), f1, 0);
 }
 
 void DxRnd::DrawRect(
@@ -65,17 +65,17 @@ void DxRnd::DrawLine(const Vector3 &v1, const Vector3 &v2, const Hmx::Color &c, 
     xfm.Reset();
     TheShaderMgr.SetTransform(xfm);
     RndShader::SelectConfig(nullptr, b4 ? kLineShader : kLineNozShader, false);
-    D3DDevice_SetFVF(mD3DDevice, 0x42);
-    D3DDevice_DrawVerticesUP(mD3DDevice, D3DPT_LINELIST, 2, vertices, 0x10);
+    mD3DDevice->SetFVF(0x42);
+    mD3DDevice->DrawVerticesUP(D3DPT_LINELIST, 2, vertices, 16);
 }
 
 void DxRnd::MakeDrawTarget() {
     if (mWorldEnded) {
-        D3DDevice_SetRenderTarget_External(mD3DDevice, 0, unk384);
-        D3DDevice_SetDepthStencilSurface(mD3DDevice, unk38c);
+        mD3DDevice->SetRenderTarget(0, unk384);
+        mD3DDevice->SetDepthStencilSurface(unk38c);
     } else {
-        D3DDevice_SetRenderTarget_External(mD3DDevice, 0, mBackBuffer);
-        D3DDevice_SetDepthStencilSurface(mD3DDevice, unk388);
+        mD3DDevice->SetRenderTarget(0, mBackBuffer);
+        mD3DDevice->SetDepthStencilSurface(unk388);
     }
     NgMat::SetCurrent(nullptr);
 }
@@ -96,18 +96,19 @@ void DxRnd::SetViewport(const Viewport &v) {
         dxViewport.MinZ = v.unk10;
         dxViewport.MaxZ = v.unk14;
     }
-    D3DDevice_SetViewport(mD3DDevice, &dxViewport);
+    mD3DDevice->SetViewport(&dxViewport);
 }
 
 bool DxRnd::Offscreen() const {
     D3DSurface *back = BackBuffer();
-    D3DSurface *target = D3DDevice_GetRenderTarget(mD3DDevice, 0);
-    bool ret = back != target;
+    D3DSurface *target;
+    mD3DDevice->GetRenderTarget(0, &target);
+    bool ret = target != back;
     if (target) {
-        D3DResource_Release(target);
+        target->Release();
     }
     if (back) {
-        D3DResource_Release(back);
+        back->Release();
     }
     return ret;
 }
@@ -119,34 +120,29 @@ void DxRnd::DrawLargeQuad(
     RndMat *next = mat ? mat->NextPass() : nullptr;
     while (true) {
         RndShader::SelectConfig(it, s, false);
-        D3DDevice_SetIndices(mD3DDevice, data.unk0);
-        D3DDevice_SetStreamSource(mD3DDevice, 0, data.unk4, 0, 20, 1);
-        D3DDevice_SetFVF(mD3DDevice, 0x102);
+        mD3DDevice->SetIndices(data.unk0);
+        mD3DDevice->SetStreamSource(0, data.unk4, 0, 20);
+        mD3DDevice->SetFVF(0x102);
         TheShaderMgr.SetVConstant((VShaderConstant)0x5c, Hmx::Matrix4(tf));
         DxTex *tex = static_cast<DxTex *>(mat->GetDiffuseTex());
-        D3DDevice_SetTexture(mD3DDevice, 0x10, tex->Tex(), 0x8000);
-        D3DDevice_SetTexture(mD3DDevice, 0, tex->Tex(), 0x80000000);
-        D3DDevice_DrawIndexedVertices(
-            mD3DDevice, D3DPT_QUADLIST, 0, 0, (data.unkc - 1) * (data.unk8 - 1) * 4
+        mD3DDevice->SetTexture(16, tex->Tex());
+        mD3DDevice->SetTexture(0, tex->Tex());
+        mD3DDevice->DrawIndexedVertices(
+            D3DPT_QUADLIST, 0, 0, (data.unkc - 1) * (data.unk8 - 1) * 4
         );
         if (!next)
             break;
         it = next;
         next = mat->NextPass();
     }
-    D3DDevice_SetIndices(mD3DDevice, nullptr);
-    D3DDevice_SetStreamSource(mD3DDevice, 0, nullptr, 0, 0, 1);
-    D3DDevice_SetTexture(mD3DDevice, 0x10, nullptr, 0x8000);
+    mD3DDevice->SetIndices(nullptr);
+    mD3DDevice->SetStreamSource(0, nullptr, 0, 0);
+    mD3DDevice->SetTexture(16, nullptr);
 }
 
 void DxRnd::SetVertShaderTex(RndTex *tex, int i2) {
     DxTex *dxTex = static_cast<DxTex *>(tex);
-    D3DDevice_SetTexture(
-        mD3DDevice,
-        i2 + 0x10,
-        dxTex ? dxTex->Tex() : nullptr,
-        0x8000000000000000 >> (i2 + 0x30U & 0x7F)
-    );
+    mD3DDevice->SetTexture(i2 + 0x10, dxTex ? dxTex->Tex() : nullptr);
 }
 
 void DxRnd::PreDeviceReset() {
@@ -225,13 +221,13 @@ int DxRnd::BitmapOrderForD3DFormat(D3DFORMAT fmt) {
 
 void DxRnd::ResetDevice() {
     PreDeviceReset();
-    HRESULT res = D3DDevice_Reset(mD3DDevice, &mPresentParams);
+    HRESULT res = mD3DDevice->Reset(&mPresentParams);
     DX_ASSERT_CODE(res, 0xD6);
     PostDeviceReset();
 }
 
-long DxRnd::GetDeviceCaps(D3DCAPS9 *cap) {
-    return Direct3D_GetDeviceCaps(0, mDeviceType, cap);
+HRESULT DxRnd::GetDeviceCaps(D3DCAPS9 *cap) {
+    return Direct3D::GetDeviceCaps(0, mDeviceType, cap);
 }
 
 void DxRnd::DrawSafeArea(float percent, bool widescreen, const Hmx::Color &color) {

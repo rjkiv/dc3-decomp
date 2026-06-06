@@ -14,18 +14,27 @@ void DxRndTexMgr::OnReleaseResource(void *v) {
     TheDxRnd.AutoRelease(resource);
 }
 
-bool DxRndTexMgr::
-    CreateSurface(const char *filename, Hmx::CRC key, UINT w, UINT h, UINT levels, DWORD, D3DFORMAT fmt, DWORD pool, D3DTexture **pTex, void **) {
+bool DxRndTexMgr::CreateSurface(
+    const char *filename,
+    Hmx::CRC key,
+    UINT w,
+    UINT h,
+    UINT levels,
+    DWORD,
+    D3DFORMAT fmt,
+    DWORD pool,
+    D3DTexture **pTex,
+    void **
+) {
     void *data = Get(key);
     if (data) {
         *pTex = (D3DTexture *)data;
         return true;
     } else {
         BeginMemTrackFileName(filename);
-        *pTex = (D3DTexture *)D3DDevice_CreateTexture(
-            w, h, 1, levels, 0, fmt, pool, D3DRTYPE_TEXTURE
-        );
-        DX_ASSERT(*pTex, 0x23);
+        HRESULT hr =
+            TheDxRnd.Device()->CreateTexture(w, h, levels, 0, fmt, pool, pTex, nullptr);
+        DX_ASSERT_CODE(hr, 0x23);
         EndMemTrackFileName();
         ReserveRes(key, *pTex);
         return false;

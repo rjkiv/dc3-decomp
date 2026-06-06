@@ -1,88 +1,105 @@
-#include "RenderState.h"
+#include "rndobj/RenderState.h"
 #include "rnddx9/Rnd.h"
-#include "xdk/d3d9i/d3d9.h"
+#include "xdk/D3D9.h"
 
 RndRenderState TheRenderState;
 
-void RndRenderState::SetTextureFilter(uint, FilterMode, bool) {}
+static const D3DCMPFUNC sFuncs[] = {
+    D3DCMP_ALWAYS,   D3DCMP_LESS,    D3DCMP_LESSEQUAL,    D3DCMP_EQUAL,
+    D3DCMP_NOTEQUAL, D3DCMP_GREATER, D3DCMP_GREATEREQUAL, D3DCMP_NEVER,
+    D3DCMP_ALWAYS,   D3DCMP_GREATER, D3DCMP_GREATEREQUAL, D3DCMP_EQUAL,
+    D3DCMP_NOTEQUAL, D3DCMP_LESS,    D3DCMP_LESSEQUAL,    D3DCMP_NEVER
+};
 
-void RndRenderState::SetTextureClamp(uint, ClampMode) {}
+static const D3DCMPFUNC sAlphaFuncs[] = {
+    D3DCMP_ALWAYS,   D3DCMP_LESS,    D3DCMP_LESSEQUAL,    D3DCMP_EQUAL,
+    D3DCMP_NOTEQUAL, D3DCMP_GREATER, D3DCMP_GREATEREQUAL, D3DCMP_NEVER,
+};
 
-void RndRenderState::SetBorderColor(uint sampler, bool black_or_white) {
-    D3DDevice_SetSamplerState_BorderColor(
-        TheDxRnd.Device(), (DWORD)sampler, black_or_white
-    );
+void RndRenderState::SetTextureFilter(unsigned int sampler, FilterMode filter, bool b3) {
+    TheDxRnd.Device()->SetSamplerState(sampler, D3DSAMP_MINFILTER, filter);
+    TheDxRnd.Device()->SetSamplerState(sampler, D3DSAMP_MAGFILTER, filter);
+    TheDxRnd.Device()->SetSamplerState(sampler, D3DSAMP_MIPFILTER, filter);
+}
+
+void RndRenderState::SetTextureClamp(unsigned int sampler, ClampMode clamp) {
+    TheDxRnd.Device()->SetSamplerState(sampler, D3DSAMP_ADDRESSU, clamp);
+    TheDxRnd.Device()->SetSamplerState(sampler, D3DSAMP_ADDRESSV, clamp);
+    TheDxRnd.Device()->SetSamplerState(sampler, D3DSAMP_ADDRESSW, clamp);
+}
+
+void RndRenderState::SetBorderColor(unsigned int sampler, bool black_or_white) {
+    TheDxRnd.Device()->SetSamplerState(sampler, D3DSAMP_BORDERCOLOR, black_or_white);
 }
 
 void RndRenderState::SetBlendEnable(bool b) {
-    D3DDevice_SetRenderState_AlphaBlendEnable(TheDxRnd.Device(), (u8)b);
+    TheDxRnd.Device()->SetRenderState(D3DRS_ALPHABLENDENABLE, b);
 }
 
 void RndRenderState::SetBlendOp(BlendOp op) {
-    D3DDevice_SetRenderState_BlendOp(TheDxRnd.Device(), (int)op);
+    TheDxRnd.Device()->SetRenderState(D3DRS_BLENDOP, op);
 }
 
 void RndRenderState::SetBlend(
     Blend srcblend, Blend dstblend, Blend srcblenda, Blend dstblenda
 ) {
-    D3DDevice_SetRenderState_SrcBlend(TheDxRnd.Device(), (int)srcblend);
-    D3DDevice_SetRenderState_DestBlend(TheDxRnd.Device(), (int)dstblend);
-    D3DDevice_SetRenderState_SrcBlendAlpha(TheDxRnd.Device(), (int)srcblenda);
-    D3DDevice_SetRenderState_DestBlendAlpha(TheDxRnd.Device(), (int)dstblenda);
+    TheDxRnd.Device()->SetRenderState(D3DRS_SRCBLEND, srcblend);
+    TheDxRnd.Device()->SetRenderState(D3DRS_DESTBLEND, dstblend);
+    TheDxRnd.Device()->SetRenderState(D3DRS_SRCBLENDALPHA, srcblenda);
+    TheDxRnd.Device()->SetRenderState(D3DRS_DESTBLENDALPHA, dstblenda);
 }
 
-void RndRenderState::SetColorWriteMask(uint mask) {
-    D3DDevice_SetRenderState_ColorWriteEnable(TheDxRnd.Device(), mask);
+void RndRenderState::SetColorWriteMask(unsigned int mask) {
+    TheDxRnd.Device()->SetRenderState(D3DRS_COLORWRITEENABLE, mask);
 }
 
 void RndRenderState::SetFillMode(FillMode mode) {
-    D3DDevice_SetRenderState_FillMode(TheDxRnd.Device(), (int)mode);
+    TheDxRnd.Device()->SetRenderState(D3DRS_FILLMODE, mode);
 }
 
 void RndRenderState::SetCullMode(CullMode mode) {
-    D3DDevice_SetRenderState_CullMode(TheDxRnd.Device(), (int)mode);
+    TheDxRnd.Device()->SetRenderState(D3DRS_CULLMODE, mode);
 }
 
 void RndRenderState::SetAlphaTestEnable(bool b) {
-    D3DDevice_SetRenderState_AlphaTestEnable(TheDxRnd.Device(), b);
+    TheDxRnd.Device()->SetRenderState(D3DRS_ALPHATESTENABLE, b);
 }
 
 void RndRenderState::SetAlphaFunc(TestFunc tf, unsigned int ref) {
-    D3DDevice_SetRenderState_AlphaRef(TheDxRnd.Device(), ref);
-    D3DDevice_SetRenderState_AlphaFunc(TheDxRnd.Device(), tf2cf[tf]);
+    TheDxRnd.Device()->SetRenderState(D3DRS_ALPHAREF, ref);
+    TheDxRnd.Device()->SetRenderState(D3DRS_ALPHAFUNC, sAlphaFuncs[tf]);
 }
 
 void RndRenderState::SetDepthTestEnable(bool b) {
-    D3DDevice_SetRenderState_ZEnable(TheDxRnd.Device(), b);
+    TheDxRnd.Device()->SetRenderState(D3DRS_ZENABLE, b);
 }
 void RndRenderState::SetDepthWriteEnable(bool b) {
-    D3DDevice_SetRenderState_ZWriteEnable(TheDxRnd.Device(), b);
+    TheDxRnd.Device()->SetRenderState(D3DRS_ZWRITEENABLE, b);
 }
 
 void RndRenderState::SetDepthFunc(TestFunc tf) {
-    D3DDevice_SetRenderState_ZFunc(TheDxRnd.Device(), tf2cf[TheDxRnd.Unk301() * 8 + tf]);
+    TheDxRnd.Device()->SetRenderState(D3DRS_ZFUNC, sFuncs[TheDxRnd.Unk301() * 8 + tf]);
 }
 
 void RndRenderState::SetStencilTestEnable(bool b) {
-    D3DDevice_SetRenderState_StencilEnable(TheDxRnd.Device(), (u8)b);
+    TheDxRnd.Device()->SetRenderState(D3DRS_STENCILENABLE, b);
 }
 
-void RndRenderState::SetStencilFunc(TestFunc tf, u8 ref) {
-    D3DDevice_SetRenderState_StencilRef(TheDxRnd.Device(), ref);
-    D3DDevice_SetRenderState_StencilFunc(
-        TheDxRnd.Device(), tf2cf[TheDxRnd.Unk301() * 8 + tf]
+void RndRenderState::SetStencilFunc(TestFunc tf, unsigned char ref) {
+    TheDxRnd.Device()->SetRenderState(D3DRS_STENCILREF, ref);
+    TheDxRnd.Device()->SetRenderState(
+        D3DRS_STENCILFUNC, sFuncs[TheDxRnd.Unk301() * 8 + tf]
     );
 }
 
 void RndRenderState::SetStencilOp(StencilOp fail, StencilOp zfail, StencilOp pass) {
-    D3DDevice_SetRenderState_StencilFail(TheDxRnd.Device(), (int)fail);
-    D3DDevice_SetRenderState_StencilZFail(TheDxRnd.Device(), (int)zfail);
-    D3DDevice_SetRenderState_StencilPass(TheDxRnd.Device(), (int)pass);
+    TheDxRnd.Device()->SetRenderState(D3DRS_STENCILFAIL, fail);
+    TheDxRnd.Device()->SetRenderState(D3DRS_STENCILZFAIL, zfail);
+    TheDxRnd.Device()->SetRenderState(D3DRS_STENCILPASS, pass);
 }
 
-void RndRenderState::Init(void) {
-    SetTextureClamp(4, (ClampMode)2);
-    SetTextureClamp(5, (ClampMode)2);
-
-    SetTextureFilter(5, (FilterMode)1, false);
+void RndRenderState::Init() {
+    SetTextureClamp(4, kClampModeClamp);
+    SetTextureClamp(5, kClampModeClamp);
+    SetTextureFilter(5, kFilterModeLinear, false);
 }

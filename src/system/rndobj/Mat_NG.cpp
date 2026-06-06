@@ -2,7 +2,7 @@
 #include "BaseMaterial.h"
 #include "ShaderMgr.h"
 #include "math/Color.h"
-#include "rnddx9/RenderState.h"
+#include "rndobj/RenderState.h"
 #include "rndobj/BaseMaterial.h"
 #include "rndobj/Env.h"
 #include "rndobj/ShaderMgr.h"
@@ -53,16 +53,16 @@ void NgMat::SetBasicState() {
     RndRenderState::CullMode cm;
     switch (mCull) {
     case kCullNone:
-        cm = (RndRenderState::CullMode)0;
+        cm = RndRenderState::kCullModeNone;
         break;
     case kCullRegular:
-        cm = (RndRenderState::CullMode)2;
+        cm = RndRenderState::kCullModeCW;
         break;
     case kCullBackwards:
-        cm = (RndRenderState::CullMode)6;
+        cm = RndRenderState::kCullModeCCW;
         break;
     default:
-        cm = (RndRenderState::CullMode)2;
+        cm = RndRenderState::kCullModeCW;
         break;
     }
     TheRenderState.SetCullMode(cm);
@@ -71,7 +71,7 @@ void NgMat::SetBasicState() {
     TheRenderState.SetBlend(unk23c, unk240, unk23c, unk240);
     TheRenderState.SetAlphaTestEnable(mAlphaCut);
     if (mAlphaCut) {
-        TheRenderState.SetAlphaFunc((RndRenderState::TestFunc)5, mAlphaThreshold);
+        TheRenderState.SetAlphaFunc(RndRenderState::kTestFuncGreater, mAlphaThreshold);
     }
     TheRenderState.SetDepthTestEnable(mDepthTestEnable);
     TheRenderState.SetDepthWriteEnable(mDepthWriteEnable);
@@ -82,7 +82,7 @@ void NgMat::SetBasicState() {
         TheRenderState.SetStencilTestEnable(true);
         TheRenderState.SetStencilFunc(mStencilFunc, 0);
         TheRenderState.SetStencilOp(
-            (RndRenderState::StencilOp)0, (RndRenderState::StencilOp)0, unk250
+            RndRenderState::kStencilOpKeep, RndRenderState::kStencilOpKeep, unk250
         );
     }
     RndRenderState::ClampMode cur = sTexWrapClampModes[mTexWrap];

@@ -10,29 +10,25 @@
 DxCubeTex::DxCubeTex() : mTex(0) {}
 DxCubeTex::~DxCubeTex() { Reset(); }
 
-void DxCubeTex::Select(int x) {
-    D3DDevice_SetTexture(TheDxRnd.Device(), x, mTex, x + 0x20U);
-}
+void DxCubeTex::Select(int stage) { TheDxRnd.Device()->SetTexture(stage, mTex); }
 
 void DxCubeTex::Reset() {
-    TheDxRnd.AutoRelease(mTex);
-    mTex = nullptr;
+    DX_RELEASE(mTex);
     NgMat::SetCurrent(nullptr);
 }
 
 void DxCubeTex::Sync() {
     PhysMemTypeTracker tracker("D3D(phys):CubeTex");
-    mTex = D3DDevice_CreateTexture(
+    HRESULT hr = TheDxRnd.Device()->CreateCubeTexture(
         props.mWidth,
-        props.mWidth,
-        6,
         props.mNumMips + 1,
         0,
         TheDxRnd.D3DFormatForBitmap(mBitmap[kCubeFaceRight]),
         0,
-        D3DRTYPE_CUBETEXTURE
+        &mTex,
+        nullptr
     );
-    DX_ASSERT(mTex, 0x38);
+    DX_ASSERT_CODE(hr, 0x38);
     XGTEXTURE_DESC desc;
     XGGetTextureDesc(mTex, 0, &desc);
     for (int i = 0; i < kNumCubeFaces; i++) {

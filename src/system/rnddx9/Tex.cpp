@@ -37,7 +37,7 @@ void DxTex::SetDeviceTex(D3DTexture *tex) {
     mType = kDeviceTexture;
     if (tex) {
         D3DSURFACE_DESC desc;
-        D3DTexture_GetLevelDesc(tex, 0, &desc);
+        tex->GetLevelDesc(0, &desc);
         mNumMips = 0;
         mFormat = desc.Format;
         mWidth = desc.Width;
@@ -50,7 +50,7 @@ D3DSurface *DxTex::GetRT() {
     if (!IsRenderTarget()) {
         return nullptr;
     } else {
-        D3DResource_AddRef(mRenderTarget);
+        mRenderTarget->AddRef();
         return mRenderTarget;
     }
 }
@@ -72,16 +72,17 @@ void DxTex::PostDeviceReset() {
     }
 }
 
-D3DSurface *DxTex::GetSurfaceLevel(int x) {
-    D3DSurface *ret = D3DTexture_GetSurfaceLevel(mTexture, x);
-    DX_ASSERT(ret, 0xE6);
+D3DSurface *DxTex::GetSurfaceLevel(int level) {
+    D3DSurface *ret;
+    HRESULT hr = mTexture->GetSurfaceLevel(level, &ret);
+    DX_ASSERT_CODE(hr, 0xE6);
     return ret;
 }
 
 unsigned int DxTex::TexelsPitch() const {
     D3DLOCKED_RECT rect;
-    D3DTexture_LockRect(mTexture, 0, &rect, nullptr, 0);
-    D3DTexture_UnlockRect(mTexture, 0);
+    mTexture->LockRect(0, &rect, nullptr, 0);
+    mTexture->UnlockRect(0);
     return rect.Pitch;
 }
 

@@ -3,7 +3,7 @@
 #include "math/Color.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
-#include "rnddx9/RenderState.h"
+#include "rndobj/RenderState.h"
 #include "rndobj/Cam.h"
 #include "rndobj/Rnd.h"
 #include "rndobj/Rnd_NG.h"
@@ -104,8 +104,8 @@ void NgSpotlightDrawer::SetXSectionTexture(const Spotlight::BeamDef &def) {
         tex = SR().unk14;
     }
     TheShaderMgr.SetPConstant((PShaderConstant)0xB, tex);
-    TheRenderState.SetTextureClamp(0xB, (RndRenderState::ClampMode)2);
-    TheRenderState.SetTextureFilter(0xB, (RndRenderState::FilterMode)1, false);
+    TheRenderState.SetTextureClamp(0xB, RndRenderState::kClampModeClamp);
+    TheRenderState.SetTextureFilter(0xB, RndRenderState::kFilterModeLinear, false);
 }
 
 bool NgSpotlightDrawer::RestoreCam() {

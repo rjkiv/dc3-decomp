@@ -2,7 +2,7 @@
 #include "Rnd.h"
 #include "math/Utl.h"
 #include "os/System.h"
-#include "rnddx9/RenderState.h"
+#include "rndobj/RenderState.h"
 #include "rndobj/Env.h"
 #include "rndobj/Mat_NG.h"
 #include "rndobj/Env_NG.h"
@@ -154,13 +154,13 @@ void RndShader::SelectConfig(RndMat *mat, ShaderType shader_type, bool b3) {
 void RndShader::CheckForceCull(ShaderType s) {
     int shader20 = TheShaderMgr.Unk20();
     if (TheRnd.DrawMode() == Rnd::kDrawShadowColor || shader20 == 1) {
-        TheRenderState.SetCullMode((RndRenderState::CullMode)0);
+        TheRenderState.SetCullMode(RndRenderState::kCullModeNone);
     } else if (s != kShadowmapShader && shader20 != 3 && TheRnd.DrawMode() != 8) {
         if (shader20 == 2) {
-            TheRenderState.SetCullMode((RndRenderState::CullMode)2);
+            TheRenderState.SetCullMode(RndRenderState::kCullModeCW);
         }
     } else {
-        TheRenderState.SetCullMode((RndRenderState::CullMode)6);
+        TheRenderState.SetCullMode(RndRenderState::kCullModeCCW);
     }
 }
 
@@ -269,7 +269,7 @@ void RndShaderSimple::Select(RndMat *mat, ShaderType s, bool b) {
             mat = TheRnd.DefaultMat();
         }
     }
-    TheRenderState.SetFillMode((RndRenderState::FillMode)0);
+    TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
     bool isSkinned = TheShaderMgr.Unk10() && (s == kErrorShader || s == kShadowmapShader);
     if (!RedundantState(mat, s, isSkinned, TheShaderMgr.UseAO(), b)) {
         TheNgStats->mMats++;
@@ -286,7 +286,7 @@ void RndShaderParticles::Select(RndMat *mat, ShaderType s, bool b) {
     if (!mat) {
         mat = TheRnd.DefaultMat();
     }
-    TheRenderState.SetFillMode((RndRenderState::FillMode)0);
+    TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
     if (!RedundantState(mat, s, false, false, b)) {
         TheNgStats->mMats++;
         NgMat *ngMat = static_cast<NgMat *>(mat);
@@ -301,7 +301,7 @@ void RndShaderMultimesh::Select(RndMat *mat, ShaderType s, bool b) {
     if (!mat) {
         mat = TheRnd.DefaultMat();
     }
-    TheRenderState.SetFillMode((RndRenderState::FillMode)0);
+    TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
     if (!RedundantState(mat, s, false, TheShaderMgr.UseAO(), b)) {
         TheNgStats->mMats++;
         NgMat *ngMat = static_cast<NgMat *>(mat);
@@ -318,7 +318,7 @@ void RndShaderStandard::Select(RndMat *mat, ShaderType shader_type, bool b) {
     if (!mat) {
         mat = TheRnd.DefaultMat();
     }
-    TheRenderState.SetFillMode((RndRenderState::FillMode)0);
+    TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
     if (!RedundantState(
             mat, shader_type, TheShaderMgr.Unk10() != 0, TheShaderMgr.UseAO(), b
         )) {
@@ -343,7 +343,7 @@ void RndShaderPostProc::Select(RndMat *mat, ShaderType s, bool b) {
     if (!mat) {
         mat = TheRnd.DefaultMat();
     }
-    TheRenderState.SetFillMode((RndRenderState::FillMode)0);
+    TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
     if (!RedundantState(mat, s, false, false, b)) {
         TheNgStats->mMats++;
         NgMat *ngMat = static_cast<NgMat *>(mat);
@@ -358,7 +358,7 @@ void RndShaderDrawRect::Select(RndMat *mat, ShaderType s, bool b) {
     if (!mat) {
         mat = TheShaderMgr.DrawRectMat();
     }
-    TheRenderState.SetFillMode((RndRenderState::FillMode)0);
+    TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
     if (!RedundantState(mat, s, false, false, b)) {
         TheNgStats->mMats++;
         NgMat *ngMat = static_cast<NgMat *>(mat);
@@ -376,7 +376,7 @@ void RndShaderUnwrapUV::Select(RndMat *mat, ShaderType s, bool b) {
     if (!mat) {
         mat = TheRnd.DefaultMat();
     }
-    TheRenderState.SetFillMode((RndRenderState::FillMode)0);
+    TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
     if (!RedundantState(mat, s, false, false, b)) {
         TheNgStats->mMats++;
         NgMat *ngMat = static_cast<NgMat *>(mat);
@@ -399,7 +399,7 @@ void RndShaderVelocity::Select(RndMat *mat, ShaderType s, bool b) {
     if (!mat) {
         mat = TheRnd.DefaultMat();
     }
-    TheRenderState.SetFillMode((RndRenderState::FillMode)0);
+    TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
     if (!RedundantState(mat, s, TheShaderMgr.Unk10() != 0, false, b)) {
         TheNgStats->mMats++;
         NgMat *ngMat = static_cast<NgMat *>(mat);
@@ -415,7 +415,7 @@ void RndShaderVelocityCamera::Select(RndMat *mat, ShaderType s, bool b) {
     if (!mat) {
         mat = TheRnd.DefaultMat();
     }
-    TheRenderState.SetFillMode((RndRenderState::FillMode)0);
+    TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
     if (!RedundantState(mat, s, false, false, b)) {
         TheNgStats->mMats++;
         NgMat *ngMat = static_cast<NgMat *>(mat);
@@ -431,7 +431,7 @@ void RndShaderDepthVolume::Select(RndMat *mat, ShaderType s, bool b) {
     if (!mat) {
         mat = TheRnd.DefaultMat();
     }
-    TheRenderState.SetFillMode((RndRenderState::FillMode)0);
+    TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
     if (!RedundantState(mat, s, TheShaderMgr.Unk10() != 0, false, b)) {
         TheNgStats->mMats++;
         NgMat *ngMat = static_cast<NgMat *>(mat);
@@ -440,16 +440,16 @@ void RndShaderDepthVolume::Select(RndMat *mat, ShaderType s, bool b) {
         SetColorWriteMask(opts, mat);
         if (TheShaderMgr.Unk18()) {
             if (TheShaderMgr.Unk24()) {
-                TheRenderState.SetBlendOp((RndRenderState::BlendOp)4);
+                TheRenderState.SetBlendOp(RndRenderState::kBlendOpRevSubtract);
             } else {
-                TheRenderState.SetBlendOp((RndRenderState::BlendOp)0);
+                TheRenderState.SetBlendOp(RndRenderState::kBlendOpAdd);
             }
             TheRenderState.SetBlendEnable(true);
             TheRenderState.SetBlend(
-                (RndRenderState::Blend)1,
-                (RndRenderState::Blend)1,
-                (RndRenderState::Blend)1,
-                (RndRenderState::Blend)1
+                RndRenderState::kBlendOne,
+                RndRenderState::kBlendOne,
+                RndRenderState::kBlendOne,
+                RndRenderState::kBlendOne
             );
             TheRenderState.SetDepthTestEnable(false);
             TheRenderState.SetDepthWriteEnable(false);
@@ -466,7 +466,7 @@ void RndShaderFur::Select(RndMat *mat, ShaderType s, bool b) {
     if (!mat) {
         mat = TheRnd.DefaultMat();
     }
-    TheRenderState.SetFillMode((RndRenderState::FillMode)0);
+    TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
     if (!RedundantState(mat, s, TheShaderMgr.Unk10() != 0, false, b)) {
         TheNgStats->mMats++;
         NgMat *ngMat = static_cast<NgMat *>(mat);
@@ -483,7 +483,7 @@ void RndShaderSyncTrack::Select(RndMat *mat, ShaderType shader_type, bool b) {
     if (!mat) {
         mat = TheRnd.DefaultMat();
     }
-    TheRenderState.SetFillMode((RndRenderState::FillMode)0);
+    TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
     if (!RedundantState(
             mat, shader_type, TheShaderMgr.Unk10() != 0, TheShaderMgr.UseAO(), b
         )) {
