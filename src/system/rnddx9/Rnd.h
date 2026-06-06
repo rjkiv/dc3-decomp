@@ -115,7 +115,7 @@ public:
         }
     }
 
-    u8 Unk301() const { return unk_0x301; }
+    bool Unk301() const { return unk_0x301; }
     D3DSurface *BackBuffer() const;
     void PreInit(HWND__ *);
     void Init(HWND__ *);
@@ -179,7 +179,7 @@ private:
     int unk2cc;
     Timer unk2d0;
     bool unk300;
-    u8 unk_0x301;
+    bool unk_0x301; // 0x301 - invert the TestFunc greater/less than check for renderstate
     std::vector<D3DResource *> unk304; // 0x304 - released resources?
     std::vector<D3DBaseTexture *> unk310; // 0x310 - deleted textures?
     XVIDEO_MODE mVideoMode; // 0x31c

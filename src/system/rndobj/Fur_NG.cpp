@@ -1,5 +1,5 @@
 #include "Fur_NG.h"
-#include "rnddx9/RenderState.h"
+#include "rndobj/RenderState.h"
 #include "rndobj/ShaderMgr.h"
 
 bool NgFur::Prep(RndMesh *, RndMat *) const {

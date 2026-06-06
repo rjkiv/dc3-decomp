@@ -7,7 +7,7 @@
 #include "Movie.h"
 #include "MultiMesh.h"
 #include "Part.h"
-#include "RenderState.h"
+#include "rndobj/RenderState.h"
 #include "Tex.h"
 #include "TexRenderer.h"
 #include "obj/Data.h"

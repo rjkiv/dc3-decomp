@@ -2,7 +2,7 @@
 #include "Rnd.h"
 #include "math/Utl.h"
 #include "os/System.h"
-#include "rnddx9/RenderState.h"
+#include "rndobj/RenderState.h"
 #include "rndobj/Env.h"
 #include "rndobj/Mat_NG.h"
 #include "rndobj/Env_NG.h"

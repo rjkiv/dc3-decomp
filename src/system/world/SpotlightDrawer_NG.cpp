@@ -3,7 +3,7 @@
 #include "math/Color.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
-#include "rnddx9/RenderState.h"
+#include "rndobj/RenderState.h"
 #include "rndobj/Cam.h"
 #include "rndobj/Rnd.h"
 #include "rndobj/Rnd_NG.h"

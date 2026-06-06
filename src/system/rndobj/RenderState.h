@@ -1,6 +1,4 @@
 #pragma once
-#include <xdk/D3D9.h>
-#include <types.h>
 
 class RndRenderState {
 public:
@@ -71,26 +69,34 @@ public:
         kStencilOpIncr = 0x0006,
         kStencilOpDecr = 0x0007,
     };
+    // basically D3DCMPFUNC
     enum TestFunc {
+        kTestFuncAlways = 0x0000,
+        kTestFuncLess = 0x0001,
+        kTestFuncLessEqual = 0x0002,
+        kTestFuncEqual = 0x0003,
+        kTestFuncNotEqual = 0x0004,
+        kTestFuncGreater = 0x0005,
+        kTestFuncGreaterEqual = 0x0006,
+        kTestFuncNever = 0x0007,
     };
-    static D3DCMPFUNC tf2cf[];
 
     void SetBlendEnable(bool);
     void SetBlendOp(BlendOp);
     void SetBlend(Blend, Blend, Blend, Blend);
-    void SetColorWriteMask(uint);
-    void SetTextureFilter(uint, FilterMode, bool);
-    void SetTextureClamp(uint, ClampMode);
-    void SetBorderColor(uint, bool);
+    void SetColorWriteMask(unsigned int);
+    void SetTextureFilter(unsigned int, FilterMode, bool);
+    void SetTextureClamp(unsigned int, ClampMode);
+    void SetBorderColor(unsigned int, bool);
     void SetFillMode(FillMode);
     void SetCullMode(CullMode);
     void SetAlphaTestEnable(bool);
-    void SetAlphaFunc(TestFunc, uint);
+    void SetAlphaFunc(TestFunc, unsigned int);
     void SetDepthTestEnable(bool);
     void SetDepthWriteEnable(bool);
     void SetDepthFunc(TestFunc);
     void SetStencilTestEnable(bool);
-    void SetStencilFunc(TestFunc, u8);
+    void SetStencilFunc(TestFunc, unsigned char);
     void SetStencilOp(StencilOp fail, StencilOp zfail, StencilOp pass);
     void Init(void);
 };

@@ -1,7 +1,7 @@
 #pragma once
 #include "obj/Object.h"
 #include "rndobj/Mat.h"
-#include "rnddx9/RenderState.h"
+#include "rndobj/RenderState.h"
 
 class NgMat : public RndMat {
 public:
