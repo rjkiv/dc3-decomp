@@ -155,11 +155,11 @@ void DxRnd::SetSync(int sync) {
     Rnd::SetSync(sync);
     Resume();
     if (mSync == 0) {
-        D3DDevice_SetRenderState_PresentInterval(TheDxRnd.Device(), 0x80000000);
+        TheDxRnd.Device()->SetRenderState(D3DRS_PRESENTINTERVAL, 0x80000000);
     } else if (mSync == 1) {
-        D3DDevice_SetRenderState_PresentInterval(TheDxRnd.Device(), 1);
+        TheDxRnd.Device()->SetRenderState(D3DRS_PRESENTINTERVAL, 1);
     } else if (mSync == 2) {
-        D3DDevice_SetRenderState_PresentInterval(TheDxRnd.Device(), 2);
+        TheDxRnd.Device()->SetRenderState(D3DRS_PRESENTINTERVAL, 2);
     } else {
         MILO_FAIL("Not allowed to sync %d\n", mSync);
     }
@@ -297,20 +297,18 @@ void DxRnd::SetDefaultRenderStates() {
     D3DCAPS9 caps;
     memset(&caps, 0, sizeof(D3DCAPS9));
     GetDeviceCaps(&caps);
-    D3DDevice_SetRenderState_AlphaRef(TheDxRnd.Device(), 0);
-    D3DDevice_SetRenderState_AlphaFunc(TheDxRnd.Device(), D3DCMP_GREATER);
-    D3DDevice_SetRenderState_PointSizeMax(
-        TheDxRnd.Device(), reinterpret_cast<UINT &>(caps.MaxPointSize) // ???
-    );
-    D3DDevice_SetRenderState_SeparateAlphaBlendEnable(TheDxRnd.Device(), 1);
-    D3DDevice_SetRenderState_SrcBlendAlpha(TheDxRnd.Device(), 1);
-    D3DDevice_SetRenderState_DestBlendAlpha(TheDxRnd.Device(), 1);
-    D3DDevice_SetRenderState_BlendOpAlpha(TheDxRnd.Device(), 3);
+    TheDxRnd.Device()->SetRenderState(D3DRS_ALPHAREF, 0);
+    TheDxRnd.Device()->SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER);
+    TheDxRnd.Device()->SetRenderState(D3DRS_POINTSIZE_MAX, *(UINT *)(&caps.MaxPointSize));
+    TheDxRnd.Device()->SetRenderState(D3DRS_SEPARATEALPHABLENDENABLE, 1);
+    TheDxRnd.Device()->SetRenderState(D3DRS_SRCBLENDALPHA, 1);
+    TheDxRnd.Device()->SetRenderState(D3DRS_DESTBLENDALPHA, 1);
+    TheDxRnd.Device()->SetRenderState(D3DRS_BLENDOPALPHA, 3);
     for (int i = 0; i < caps.MaxTextureBlendStages; i++) {
         D3DDevice_SetSamplerState_MinFilter(TheDxRnd.Device(), i, 1);
         D3DDevice_SetSamplerState_MagFilter(TheDxRnd.Device(), i, 1);
     }
-    D3DDevice_SetRenderState_PresentImmediateThreshold(TheDxRnd.Device(), 100);
+    TheDxRnd.Device()->SetRenderState(D3DRS_PRESENTIMMEDIATETHRESHOLD, 100);
 }
 
 void DxRnd::BeginTiling(const Hmx::Color &c, float f, unsigned int ui) {

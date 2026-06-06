@@ -199,6 +199,7 @@ void D3DDevice_SetRenderState_AlphaFunc(D3DDevice *pDevice, D3DCMPFUNC Value);
 void D3DDevice_SetRenderState_AlphaRef(D3DDevice *pDevice, DWORD Value);
 void D3DDevice_SetRenderState_AlphaTestEnable(D3DDevice *pDevice, DWORD Value);
 void D3DDevice_SetRenderState_BlendOp(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_BlendFactor(D3DDevice *pDevice, DWORD Value);
 void D3DDevice_SetRenderState_SrcBlend(D3DDevice *pDevice, DWORD Value);
 void D3DDevice_SetRenderState_DestBlend(D3DDevice *pDevice, DWORD Value);
 void D3DDevice_SetRenderState_SrcBlendAlpha(D3DDevice *pDevice, DWORD Value);
@@ -212,6 +213,7 @@ void D3DDevice_SetRenderState_StencilZFail(D3DDevice *pDevice, DWORD Value);
 void D3DDevice_SetRenderState_StencilPass(D3DDevice *pDevice, DWORD Value);
 void D3DDevice_SetRenderState_StencilFunc(D3DDevice *pDevice, D3DCMPFUNC Value);
 void D3DDevice_SetRenderState_StencilRef(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_TwoSidedStencilMode(D3DDevice *pDevice, DWORD Value);
 void D3DDevice_SetRenderState_ZEnable(D3DDevice *pDevice, DWORD Value);
 void D3DDevice_SetRenderState_ZFunc(D3DDevice *pDevice, D3DCMPFUNC Value);
 void D3DDevice_SetRenderState_ZWriteEnable(D3DDevice *pDevice, DWORD Value);
@@ -223,6 +225,73 @@ void D3DDevice_SetRenderState_PresentImmediateThreshold(D3DDevice *pDevice, DWOR
 void D3DDevice_SetRenderState_PointSize(D3DDevice *pDevice, DWORD Value);
 void D3DDevice_SetRenderState_ViewportEnable(D3DDevice *pDevice, DWORD Value);
 void D3DDevice_SetRenderState_HalfPixelOffset(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_StencilMask(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_StencilWriteMask(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_CCWStencilFail(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_CCWStencilFunc(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_CCWStencilMask(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_CCWStencilPass(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_CCWStencilRef(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_CCWStencilWriteMask(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_CCWStencilZFail(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_ClipPlaneEnable(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_PointSize(D3DDevice *pDevice, DWORD FloatAsDword);
+void D3DDevice_SetRenderState_PointSizeMin(D3DDevice *pDevice, DWORD FloatAsDword);
+void D3DDevice_SetRenderState_PointSizeMax(D3DDevice *pDevice, DWORD FloatAsDword);
+void D3DDevice_SetRenderState_PointSpriteEnable(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_MultiSampleAntiAlias(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_MultiSampleMask(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_ScissorTestEnable(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_SlopeScaleDepthBias(D3DDevice *pDevice, DWORD FloatAsDword);
+void D3DDevice_SetRenderState_DepthBias(D3DDevice *pDevice, DWORD FloatAsDword);
+void D3DDevice_SetRenderState_ColorWriteEnable(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_ColorWriteEnable1(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_ColorWriteEnable2(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_ColorWriteEnable3(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_TessellationMode(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_MinTessellationLevel(D3DDevice *pDevice, DWORD FloatAsDword);
+void D3DDevice_SetRenderState_MaxTessellationLevel(D3DDevice *pDevice, DWORD FloatAsDword);
+void D3DDevice_SetRenderState_Wrap0(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_Wrap1(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_Wrap2(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_Wrap3(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_Wrap4(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_Wrap5(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_Wrap6(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_Wrap7(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_Wrap8(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_Wrap9(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_Wrap10(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_Wrap11(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_Wrap12(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_Wrap13(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_Wrap14(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_Wrap15(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_HighPrecisionBlendEnable(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_HighPrecisionBlendEnable1(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_HighPrecisionBlendEnable2(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_HighPrecisionBlendEnable3(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_PrimitiveResetEnable(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_PrimitiveResetIndex(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_AlphaToMaskEnable(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_AlphaToMaskOffsets(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_GuardBand_X(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_GuardBand_Y(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_DiscardBand_X(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_DiscardBand_Y(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_HiStencilEnable(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_HiStencilWriteEnable(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_HiStencilFunc(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_HiStencilRef(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_PresentInterval(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_PresentImmediateThreshold(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_HiZEnable(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_HiZWriteEnable(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_LastPixel(D3DDevice *pDevice, DWORD Value);
+void D3DDevice_SetRenderState_LineWidth(D3DDevice *pDevice, DWORD FloatAsDword);
+void D3DDevice_SetRenderState_Buffer2Frames(D3DDevice *pDevice, DWORD Value);
+
+void D3DDevice_SetRenderState(D3DDevice *pDevice, D3DRENDERSTATETYPE State, DWORD Value);
 
 DWORD D3DDevice_InsertFence(D3DDevice *pDevice);
 void D3DDevice_BlockOnFence(DWORD fence);
@@ -558,7 +627,10 @@ struct D3DDevice { /* Size=0x2b00 */
         return S_OK;
     }
     HRESULT GetViewport(D3DVIEWPORT9 *pViewport);
-    HRESULT SetRenderState(D3DRENDERSTATETYPE State, DWORD Value);
+    __forceinline HRESULT SetRenderState(D3DRENDERSTATETYPE State, DWORD Value) {
+        D3DDevice_SetRenderState(this, State, Value);
+        return S_OK;
+    }
     HRESULT SetRenderState_Inline(D3DRENDERSTATETYPE State, DWORD Value);
     HRESULT GetRenderState(D3DRENDERSTATETYPE State, DWORD *pValue);
     HRESULT CreateStateBlock(D3DSTATEBLOCKTYPE Type, D3DStateBlock **ppSB);
@@ -907,9 +979,9 @@ struct D3DDevice { /* Size=0x2b00 */
         return S_OK;
     }
     HRESULT GetShaderGPRAllocation(DWORD *, DWORD *, DWORD *);
+    HRESULT SetScreenExtentQueryMode(D3DSCREENEXTENTQUERYMODE);
+    HRESULT GetScreenExtentQueryMode(D3DSCREENEXTENTQUERYMODE *);
 
-    //   int32_t SetScreenExtentQueryMode(_D3DSCREENEXTENTQUERYMODE);
-    //   int32_t GetScreenExtentQueryMode(_D3DSCREENEXTENTQUERYMODE*);
     //   int32_t BeginPixelShaderConstantF1(uint32_t, __vector4**, uint32_t);
     //   int32_t EndPixelShaderConstantF1();
     //   int32_t BeginVertexShaderConstantF1(uint32_t, __vector4**, uint32_t);
@@ -1025,6 +1097,287 @@ D3DDevice_SetSamplerState_BorderColor(D3DDevice *pDevice, DWORD Sampler, DWORD V
     u64 upd_value = Value;
     pDevice->m_Constants.TextureFetch[Sampler + 5].BorderSize = upd_value;
     pDevice->m_Pending.m_Mask[3] |= (0x8000000000000000) >> (Sampler + 0x20);
+}
+
+__forceinline void
+D3DDevice_SetRenderState(D3DDevice *pDevice, D3DRENDERSTATETYPE State, DWORD Value) {
+    switch (State) {
+    case D3DRS_ZENABLE:
+        D3DDevice_SetRenderState_ZEnable(pDevice, Value);
+        break;
+    case D3DRS_ZFUNC:
+        D3DDevice_SetRenderState_ZFunc(pDevice, (D3DCMPFUNC)Value);
+        break;
+    case D3DRS_ZWRITEENABLE:
+        D3DDevice_SetRenderState_ZWriteEnable(pDevice, Value);
+        break;
+    case D3DRS_FILLMODE:
+        D3DDevice_SetRenderState_FillMode(pDevice, Value);
+        break;
+    case D3DRS_CULLMODE:
+        D3DDevice_SetRenderState_CullMode(pDevice, Value);
+        break;
+    case D3DRS_ALPHABLENDENABLE:
+        D3DDevice_SetRenderState_AlphaBlendEnable(pDevice, Value);
+        break;
+    case D3DRS_SEPARATEALPHABLENDENABLE:
+        D3DDevice_SetRenderState_SeparateAlphaBlendEnable(pDevice, Value);
+        break;
+    case D3DRS_BLENDFACTOR:
+        D3DDevice_SetRenderState_BlendFactor(pDevice, Value);
+        break;
+    case D3DRS_SRCBLEND:
+        D3DDevice_SetRenderState_SrcBlend(pDevice, Value);
+        break;
+    case D3DRS_DESTBLEND:
+        D3DDevice_SetRenderState_DestBlend(pDevice, Value);
+        break;
+    case D3DRS_BLENDOP:
+        D3DDevice_SetRenderState_BlendOp(pDevice, Value);
+        break;
+    case D3DRS_SRCBLENDALPHA:
+        D3DDevice_SetRenderState_SrcBlendAlpha(pDevice, Value);
+        break;
+    case D3DRS_DESTBLENDALPHA:
+        D3DDevice_SetRenderState_DestBlendAlpha(pDevice, Value);
+        break;
+    case D3DRS_BLENDOPALPHA:
+        D3DDevice_SetRenderState_BlendOpAlpha(pDevice, Value);
+        break;
+    case D3DRS_ALPHATESTENABLE:
+        D3DDevice_SetRenderState_AlphaTestEnable(pDevice, Value);
+        break;
+    case D3DRS_ALPHAREF:
+        D3DDevice_SetRenderState_AlphaRef(pDevice, Value);
+        break;
+    case D3DRS_ALPHAFUNC:
+        D3DDevice_SetRenderState_AlphaFunc(pDevice, (D3DCMPFUNC)Value);
+        break;
+    case D3DRS_STENCILENABLE:
+        D3DDevice_SetRenderState_StencilEnable(pDevice, Value);
+        break;
+    case D3DRS_TWOSIDEDSTENCILMODE:
+        D3DDevice_SetRenderState_TwoSidedStencilMode(pDevice, Value);
+        break;
+    case D3DRS_STENCILFAIL:
+        D3DDevice_SetRenderState_StencilFail(pDevice, Value);
+        break;
+    case D3DRS_STENCILZFAIL:
+        D3DDevice_SetRenderState_StencilZFail(pDevice, Value);
+        break;
+    case D3DRS_STENCILPASS:
+        D3DDevice_SetRenderState_StencilPass(pDevice, Value);
+        break;
+    case D3DRS_STENCILFUNC:
+        D3DDevice_SetRenderState_StencilFunc(pDevice, (D3DCMPFUNC)Value);
+        break;
+    case D3DRS_STENCILREF:
+        D3DDevice_SetRenderState_StencilRef(pDevice, Value);
+        break;
+    case D3DRS_STENCILMASK:
+        D3DDevice_SetRenderState_StencilMask(pDevice, Value);
+        break;
+    case D3DRS_STENCILWRITEMASK:
+        D3DDevice_SetRenderState_StencilWriteMask(pDevice, Value);
+        break;
+    case D3DRS_CCW_STENCILFAIL:
+        D3DDevice_SetRenderState_CCWStencilFail(pDevice, Value);
+        break;
+    case D3DRS_CCW_STENCILZFAIL:
+        D3DDevice_SetRenderState_CCWStencilZFail(pDevice, Value);
+        break;
+    case D3DRS_CCW_STENCILPASS:
+        D3DDevice_SetRenderState_CCWStencilPass(pDevice, Value);
+        break;
+    case D3DRS_CCW_STENCILFUNC:
+        D3DDevice_SetRenderState_CCWStencilFunc(pDevice, Value);
+        break;
+    case D3DRS_CCW_STENCILREF:
+        D3DDevice_SetRenderState_CCWStencilRef(pDevice, Value);
+        break;
+    case D3DRS_CCW_STENCILMASK:
+        D3DDevice_SetRenderState_CCWStencilMask(pDevice, Value);
+        break;
+    case D3DRS_CCW_STENCILWRITEMASK:
+        D3DDevice_SetRenderState_CCWStencilWriteMask(pDevice, Value);
+        break;
+    case D3DRS_CLIPPLANEENABLE:
+        D3DDevice_SetRenderState_ClipPlaneEnable(pDevice, Value);
+        break;
+    case D3DRS_POINTSIZE:
+        D3DDevice_SetRenderState_PointSize(pDevice, Value);
+        break;
+    case D3DRS_POINTSIZE_MIN:
+        D3DDevice_SetRenderState_PointSizeMin(pDevice, Value);
+        break;
+    case D3DRS_POINTSPRITEENABLE:
+        D3DDevice_SetRenderState_PointSpriteEnable(pDevice, Value);
+        break;
+    case D3DRS_POINTSIZE_MAX:
+        D3DDevice_SetRenderState_PointSizeMax(pDevice, Value);
+        break;
+    case D3DRS_MULTISAMPLEANTIALIAS:
+        D3DDevice_SetRenderState_MultiSampleAntiAlias(pDevice, Value);
+        break;
+    case D3DRS_MULTISAMPLEMASK:
+        D3DDevice_SetRenderState_MultiSampleMask(pDevice, Value);
+        break;
+    case D3DRS_SCISSORTESTENABLE:
+        D3DDevice_SetRenderState_ScissorTestEnable(pDevice, Value);
+        break;
+    case D3DRS_SLOPESCALEDEPTHBIAS:
+        D3DDevice_SetRenderState_SlopeScaleDepthBias(pDevice, Value);
+        break;
+    case D3DRS_DEPTHBIAS:
+        D3DDevice_SetRenderState_DepthBias(pDevice, Value);
+        break;
+    case D3DRS_COLORWRITEENABLE:
+        D3DDevice_SetRenderState_ColorWriteEnable(pDevice, Value);
+        break;
+    case D3DRS_COLORWRITEENABLE1:
+        D3DDevice_SetRenderState_ColorWriteEnable1(pDevice, Value);
+        break;
+    case D3DRS_COLORWRITEENABLE2:
+        D3DDevice_SetRenderState_ColorWriteEnable2(pDevice, Value);
+        break;
+    case D3DRS_COLORWRITEENABLE3:
+        D3DDevice_SetRenderState_ColorWriteEnable3(pDevice, Value);
+        break;
+    case D3DRS_TESSELLATIONMODE:
+        D3DDevice_SetRenderState_TessellationMode(pDevice, Value);
+        break;
+    case D3DRS_MINTESSELLATIONLEVEL:
+        D3DDevice_SetRenderState_MinTessellationLevel(pDevice, Value);
+        break;
+    case D3DRS_MAXTESSELLATIONLEVEL:
+        D3DDevice_SetRenderState_MaxTessellationLevel(pDevice, Value);
+        break;
+    case D3DRS_WRAP0:
+        D3DDevice_SetRenderState_Wrap0(pDevice, Value);
+        break;
+    case D3DRS_WRAP1:
+        D3DDevice_SetRenderState_Wrap1(pDevice, Value);
+        break;
+    case D3DRS_WRAP2:
+        D3DDevice_SetRenderState_Wrap2(pDevice, Value);
+        break;
+    case D3DRS_WRAP3:
+        D3DDevice_SetRenderState_Wrap3(pDevice, Value);
+        break;
+    case D3DRS_WRAP4:
+        D3DDevice_SetRenderState_Wrap4(pDevice, Value);
+        break;
+    case D3DRS_WRAP5:
+        D3DDevice_SetRenderState_Wrap5(pDevice, Value);
+        break;
+    case D3DRS_WRAP6:
+        D3DDevice_SetRenderState_Wrap6(pDevice, Value);
+        break;
+    case D3DRS_WRAP7:
+        D3DDevice_SetRenderState_Wrap7(pDevice, Value);
+        break;
+    case D3DRS_WRAP8:
+        D3DDevice_SetRenderState_Wrap8(pDevice, Value);
+        break;
+    case D3DRS_WRAP9:
+        D3DDevice_SetRenderState_Wrap9(pDevice, Value);
+        break;
+    case D3DRS_WRAP10:
+        D3DDevice_SetRenderState_Wrap10(pDevice, Value);
+        break;
+    case D3DRS_WRAP11:
+        D3DDevice_SetRenderState_Wrap11(pDevice, Value);
+        break;
+    case D3DRS_WRAP12:
+        D3DDevice_SetRenderState_Wrap12(pDevice, Value);
+        break;
+    case D3DRS_WRAP13:
+        D3DDevice_SetRenderState_Wrap13(pDevice, Value);
+        break;
+    case D3DRS_WRAP14:
+        D3DDevice_SetRenderState_Wrap14(pDevice, Value);
+        break;
+    case D3DRS_WRAP15:
+        D3DDevice_SetRenderState_Wrap15(pDevice, Value);
+        break;
+    case D3DRS_VIEWPORTENABLE:
+        D3DDevice_SetRenderState_ViewportEnable(pDevice, Value);
+        break;
+    case D3DRS_HIGHPRECISIONBLENDENABLE:
+        D3DDevice_SetRenderState_HighPrecisionBlendEnable(pDevice, Value);
+        break;
+    case D3DRS_HIGHPRECISIONBLENDENABLE1:
+        D3DDevice_SetRenderState_HighPrecisionBlendEnable1(pDevice, Value);
+        break;
+    case D3DRS_HIGHPRECISIONBLENDENABLE2:
+        D3DDevice_SetRenderState_HighPrecisionBlendEnable2(pDevice, Value);
+        break;
+    case D3DRS_HIGHPRECISIONBLENDENABLE3:
+        D3DDevice_SetRenderState_HighPrecisionBlendEnable3(pDevice, Value);
+        break;
+    case D3DRS_HALFPIXELOFFSET:
+        D3DDevice_SetRenderState_HalfPixelOffset(pDevice, Value);
+        break;
+    case D3DRS_PRIMITIVERESETENABLE:
+        D3DDevice_SetRenderState_PrimitiveResetEnable(pDevice, Value);
+        break;
+    case D3DRS_PRIMITIVERESETINDEX:
+        D3DDevice_SetRenderState_PrimitiveResetIndex(pDevice, Value);
+        break;
+    case D3DRS_ALPHATOMASKENABLE:
+        D3DDevice_SetRenderState_AlphaToMaskEnable(pDevice, Value);
+        break;
+    case D3DRS_ALPHATOMASKOFFSETS:
+        D3DDevice_SetRenderState_AlphaToMaskOffsets(pDevice, Value);
+        break;
+    case D3DRS_GUARDBAND_X:
+        D3DDevice_SetRenderState_GuardBand_X(pDevice, Value);
+        break;
+    case D3DRS_GUARDBAND_Y:
+        D3DDevice_SetRenderState_GuardBand_Y(pDevice, Value);
+        break;
+    case D3DRS_DISCARDBAND_X:
+        D3DDevice_SetRenderState_DiscardBand_X(pDevice, Value);
+        break;
+    case D3DRS_DISCARDBAND_Y:
+        D3DDevice_SetRenderState_DiscardBand_Y(pDevice, Value);
+        break;
+    case D3DRS_HISTENCILENABLE:
+        D3DDevice_SetRenderState_HiStencilEnable(pDevice, Value);
+        break;
+    case D3DRS_HISTENCILWRITEENABLE:
+        D3DDevice_SetRenderState_HiStencilWriteEnable(pDevice, Value);
+        break;
+    case D3DRS_HISTENCILFUNC:
+        D3DDevice_SetRenderState_HiStencilFunc(pDevice, Value);
+        break;
+    case D3DRS_HISTENCILREF:
+        D3DDevice_SetRenderState_HiStencilRef(pDevice, Value);
+        break;
+    case D3DRS_PRESENTINTERVAL:
+        D3DDevice_SetRenderState_PresentInterval(pDevice, Value);
+        break;
+    case D3DRS_PRESENTIMMEDIATETHRESHOLD:
+        D3DDevice_SetRenderState_PresentImmediateThreshold(pDevice, Value);
+        break;
+    case D3DRS_HIZENABLE:
+        D3DDevice_SetRenderState_HiZEnable(pDevice, Value);
+        break;
+    case D3DRS_HIZWRITEENABLE:
+        D3DDevice_SetRenderState_HiZWriteEnable(pDevice, Value);
+        break;
+    case D3DRS_LASTPIXEL:
+        D3DDevice_SetRenderState_LastPixel(pDevice, Value);
+        break;
+    case D3DRS_LINEWIDTH:
+        D3DDevice_SetRenderState_LineWidth(pDevice, Value);
+        break;
+    case D3DRS_BUFFER2FRAMES:
+        D3DDevice_SetRenderState_Buffer2Frames(pDevice, Value);
+        break;
+    default:
+        break;
+    }
 }
 
 #pragma endregion
