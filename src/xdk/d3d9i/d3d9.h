@@ -1495,6 +1495,30 @@ D3DDevice_SetSamplerState_BorderColor(D3DDevice *pDevice, DWORD Sampler, DWORD V
     pDevice->m_Pending.m_Mask[3] |= 0x8000000000000000 >> (Sampler + 0x20U);
 }
 
+inline void
+D3DDevice_SetSamplerState_MipFilter(D3DDevice *pDevice, DWORD Sampler, DWORD Value) {
+    pDevice->m_Constants.TextureFetch[Sampler].MipFilter = Value;
+    pDevice->m_Pending.m_Mask[3] |= 0x8000000000000000 >> (Sampler + 0x20U);
+}
+
+inline void
+D3DDevice_SetSamplerState_AddressU(D3DDevice *pDevice, DWORD Sampler, DWORD Value) {
+    pDevice->m_Constants.TextureFetch[Sampler].ClampX = Value;
+    pDevice->m_Pending.m_Mask[3] |= 0x8000000000000000 >> (Sampler + 0x20U);
+}
+
+inline void
+D3DDevice_SetSamplerState_AddressV(D3DDevice *pDevice, DWORD Sampler, DWORD Value) {
+    pDevice->m_Constants.TextureFetch[Sampler].ClampY = Value;
+    pDevice->m_Pending.m_Mask[3] |= 0x8000000000000000 >> (Sampler + 0x20U);
+}
+
+inline void
+D3DDevice_SetSamplerState_AddressW(D3DDevice *pDevice, DWORD Sampler, DWORD Value) {
+    pDevice->m_Constants.TextureFetch[Sampler].ClampZ = Value;
+    pDevice->m_Pending.m_Mask[3] |= 0x8000000000000000 >> (Sampler + 0x20U);
+}
+
 #pragma endregion
 #pragma region D3DResource
 

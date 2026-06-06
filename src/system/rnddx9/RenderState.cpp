@@ -5,9 +5,17 @@
 
 RndRenderState TheRenderState;
 
-// void RndRenderState::SetTextureFilter(uint, FilterMode, bool) {}
+void RndRenderState::SetTextureFilter(uint sampler, FilterMode filter, bool b3) {
+    TheDxRnd.Device()->SetSamplerState(sampler, D3DSAMP_MINFILTER, filter);
+    TheDxRnd.Device()->SetSamplerState(sampler, D3DSAMP_MAGFILTER, filter);
+    TheDxRnd.Device()->SetSamplerState(sampler, D3DSAMP_MIPFILTER, filter);
+}
 
-// void RndRenderState::SetTextureClamp(uint, ClampMode) {}
+void RndRenderState::SetTextureClamp(uint sampler, ClampMode clamp) {
+    TheDxRnd.Device()->SetSamplerState(sampler, D3DSAMP_ADDRESSU, clamp);
+    TheDxRnd.Device()->SetSamplerState(sampler, D3DSAMP_ADDRESSV, clamp);
+    TheDxRnd.Device()->SetSamplerState(sampler, D3DSAMP_ADDRESSW, clamp);
+}
 
 void RndRenderState::SetBorderColor(uint sampler, bool black_or_white) {
     TheDxRnd.Device()->SetSamplerState(sampler, D3DSAMP_BORDERCOLOR, black_or_white);
