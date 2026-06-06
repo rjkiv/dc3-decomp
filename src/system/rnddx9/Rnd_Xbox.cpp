@@ -307,6 +307,7 @@ void DxRnd::SetDefaultRenderStates() {
     for (int i = 0; i < caps.MaxTextureBlendStages; i++) {
         TheDxRnd.Device()->SetSamplerState(i, D3DSAMP_MINFILTER, 1);
         TheDxRnd.Device()->SetSamplerState(i, D3DSAMP_MAGFILTER, 1);
+        TheDxRnd.Device()->SetSamplerState(i, D3DSAMP_MIPFILTER, 1);
     }
     TheDxRnd.Device()->SetRenderState(D3DRS_PRESENTIMMEDIATETHRESHOLD, 100);
 }
@@ -627,6 +628,26 @@ void DxRnd::CreatePostTextures() {
     RELEASE(mPostProcessTex);
     mPostProcessTex = Hmx::Object::New<DxTex>();
     mPostProcessTex->SetDeviceTex(mPostProcessBuffer);
+}
+
+void DxRnd::SetFrameBuffersAsSource() {
+    mD3DDevice->SetTexture(6, mPreProcessBuffer);
+    TheDxRnd.Device()->SetSamplerState(6, D3DSAMP_MINFILTER, 1);
+    TheDxRnd.Device()->SetSamplerState(6, D3DSAMP_MAGFILTER, 1);
+    TheDxRnd.Device()->SetSamplerState(6, D3DSAMP_ADDRESSU, 2);
+    TheDxRnd.Device()->SetSamplerState(6, D3DSAMP_ADDRESSV, 2);
+
+    mD3DDevice->SetTexture(9, mFrontBufferDepth);
+    TheDxRnd.Device()->SetSamplerState(9, D3DSAMP_MINFILTER, 0);
+    TheDxRnd.Device()->SetSamplerState(9, D3DSAMP_MAGFILTER, 0);
+    TheDxRnd.Device()->SetSamplerState(9, D3DSAMP_ADDRESSU, 2);
+    TheDxRnd.Device()->SetSamplerState(9, D3DSAMP_ADDRESSV, 2);
+
+    mD3DDevice->SetTexture(14, mPostProcessBuffer);
+    TheDxRnd.Device()->SetSamplerState(14, D3DSAMP_MINFILTER, 1);
+    TheDxRnd.Device()->SetSamplerState(14, D3DSAMP_MAGFILTER, 1);
+    TheDxRnd.Device()->SetSamplerState(14, D3DSAMP_ADDRESSU, 2);
+    TheDxRnd.Device()->SetSamplerState(14, D3DSAMP_ADDRESSV, 2);
 }
 
 static DWORD sPointTestFence = -1;

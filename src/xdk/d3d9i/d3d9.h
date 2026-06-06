@@ -1593,6 +1593,8 @@ __forceinline void D3DDevice_SetSamplerState(
     }
 }
 
+// seeing as these regswap/instruction order swap sometimes, these need some more work
+
 inline void
 D3DDevice_SetSamplerState_BorderColor(D3DDevice *pDevice, DWORD Sampler, DWORD Value) {
     pDevice->m_Constants.TextureFetch[Sampler].BorderColor = Value ? 1 : 0;

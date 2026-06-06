@@ -615,9 +615,9 @@ typedef enum _D3DSTENCILOP {
 #pragma endregion
 #pragma region D3D Structs
 
-struct _D3DTAGCOLLECTION { /* Size=0x28 */
+typedef struct _D3DTAGCOLLECTION { /* Size=0x28 */
     /* 0x0000 */ UINT64 m_Mask[5];
-};
+} D3DTAGCOLLECTION;
 
 /// https://learn.microsoft.com/en-us/windows/win32/direct3d9/d3dindexbuffer-desc
 typedef struct _D3DINDEXBUFFER_DESC {
