@@ -52,14 +52,18 @@ namespace {
 
 void SetJump(int x, int y) {
     ClearJump();
-    if (x - 1 == y - 1) {
-        TheMaster->GetAudio()->SetLoop(y - 1, x - 1);
+    int x_adj = x - 1;
+    int y_adj = y - 1;
+    if (x_adj == y_adj) {
+        x_adj *= 4;
+        TheMaster->GetAudio()->SetLoop(y_adj * 4, x_adj);
     } else {
-        float f4 = BeatToMs(x - 1);
-        float f5 = BeatToMs(y - 1);
+        x_adj *= 4;
+        float f4 = BeatToMs(x_adj);
+        float f5 = BeatToMs(y_adj * 4);
         float crossfade_beats = SystemConfig("synth", "crossfade_beats")->Float(1);
-        crossfade_beats = BeatToMs((x - 1) + crossfade_beats);
-        TheMaster->GetAudio()->SetCrossfadeJump(f4, f5, f5 - f4);
+        crossfade_beats = BeatToMs(x_adj + crossfade_beats);
+        TheMaster->GetAudio()->SetCrossfadeJump(f4, f5, crossfade_beats - f4);
     }
 }
 

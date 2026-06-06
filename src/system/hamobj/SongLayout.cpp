@@ -1,11 +1,12 @@
 #include "hamobj/SongLayout.h"
+#include "hamobj/Difficulty.h"
+#include "hamobj/HamDirector.h"
 #include "hamobj/MoveMgr.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "utl/BinStream.h"
 #include "utl/Std.h"
-#include <cstring>
 
 SongLayout::SongLayout() {
     if (TheMoveMgr) {
@@ -148,7 +149,10 @@ END_LOADS
 
 void SongLayout::ClearChosenPatterns() {
     FOREACH (it, mSongPatterns) {
-        memset(&it->mMoveParents, 0, it->mMoveParents.size());
+        // auto &moveparents = it->mMoveParents;
+        memset(
+            &it->mMoveParents.front(), 0, it->mMoveParents.size() * sizeof(MoveParent *)
+        );
         it->mNumMoves = 0;
     }
 }
@@ -234,6 +238,72 @@ int SongLayout::FirstUnfilledReplacer() const {
         }
     }
     return -1;
+}
+
+void SongLayout::SetDefaultReplacer() {
+    SongPattern sp;
+    sp.mName = Symbol("Verse");
+    auto anim = TheHamDirector->SongAnimByDifficulty(kDifficultyEasy);
+    if (anim == nullptr) {
+        MILO_FAIL("song not loaded?");
+    }
+    static Symbol move("move");
+    PropKeys *keys = anim->GetKeys(TheHamDirector, DataArrayPtr(move));
+    Symbol Rest_move("Rest.move");
+    Symbol rest_move("rest.move");
+    Symbol Finishing_move("Finishing_Move.move");
+    for (int i = 0; i < keys->NumKeys(); i++) {
+        Keys<Symbol, Symbol> *symkeys = keys->AsSymbolKeys();
+        Symbol this_key = (*symkeys)[i].value;
+        if (this_key == Rest_move || this_key == rest_move
+            || this_key == Finishing_move) {
+            continue;
+        }
+        std::vector<MoveReplacer>::iterator mover = mMoveReplacers.begin();
+        for (; mover != (mMoveReplacers).end(); (++mover)) {
+            if (mover->unk0 == this_key) {
+                mover->mMeasures.push_back(i);
+                break;
+            }
+        }
+        if (mover == mMoveReplacers.end()) {
+            MoveReplacer mr;
+            mr.unk0 = this_key;
+            mr.mMeasures.push_back(i);
+            mMoveReplacers.push_back(mr);
+        }
+    }
+}
+
+// https://decomp.me/scratch/XJBPY
+void SongLayout::SetDefaultPattern(int patnum) {
+    ClearChosenPatterns();
+    MoveParent *mp = nullptr;
+    u32 unk_r29 = 5;
+    for (int i = 0; i < 2; i++) {
+        SongPattern sp;
+        sp.mName = Symbol(MakeString("%s%d", "Verse", i));
+        for (int j = 0; j < 4; j++) {
+            sp.mElements.push_back(Symbol("Rest.move"));
+            sp.mMoveParents.push_back(mp);
+        }
+        sp.mInitialMeasureRange.start = unk_r29;
+        sp.mInitialMeasureRange.end = unk_r29 + 4;
+        unk_r29 += 5;
+        mSongPatterns.push_back(sp);
+    }
+    for (int i = 5; i < patnum;) {
+        SongSection ss;
+        ss.mPatternRange.start = 0;
+        ss.mPatternRange.end = 0;
+        SongPattern sp2 = mSongPatterns[(i - 5) % 2];
+        ss.mPattern = sp2.mName;
+        ss.unk14 = &sp2;
+        ss.mMeasureRange.start = i + 1;
+        i += (patnum - i <= 4) ? patnum - i : 4;
+        ss.mMeasureRange.end = i;
+        mSongSections.push_back(ss);
+    }
 }
 
 DataNode SongLayout::AddPattern(DataArray *a) {
