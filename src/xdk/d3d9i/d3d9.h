@@ -293,12 +293,52 @@ void D3DDevice_SetRenderState_Buffer2Frames(D3DDevice *pDevice, DWORD Value);
 
 void D3DDevice_SetRenderState(D3DDevice *pDevice, D3DRENDERSTATETYPE State, DWORD Value);
 
-DWORD D3DDevice_InsertFence(D3DDevice *pDevice);
-void D3DDevice_BlockOnFence(DWORD fence);
+void D3DDevice_SetSamplerState_AddressU(D3DDevice *pDevice, DWORD Sampler, DWORD Value);
+void D3DDevice_SetSamplerState_AddressV(D3DDevice *pDevice, DWORD Sampler, DWORD Value);
+void D3DDevice_SetSamplerState_AddressW(D3DDevice *pDevice, DWORD Sampler, DWORD Value);
 void D3DDevice_SetSamplerState_BorderColor(D3DDevice *pDevice, DWORD Sampler, DWORD Value);
 void D3DDevice_SetSamplerState_MinFilter(D3DDevice *pDevice, DWORD Sampler, DWORD Value);
 void D3DDevice_SetSamplerState_MagFilter(D3DDevice *pDevice, DWORD Sampler, DWORD Value);
+void D3DDevice_SetSamplerState_MipFilter(D3DDevice *pDevice, DWORD Sampler, DWORD Value);
+void D3DDevice_SetSamplerState_MipMapLodBias(
+    D3DDevice *pDevice, DWORD Sampler, DWORD FloatAsDword
+);
+void D3DDevice_SetSamplerState_MaxMipLevel(D3DDevice *pDevice, DWORD Sampler, DWORD Value);
 
+void D3DDevice_SetSamplerState_MaxAnisotropy(
+    D3DDevice *pDevice, DWORD Sampler, DWORD Value
+);
+void D3DDevice_SetSamplerState_MagFilterZ(D3DDevice *pDevice, DWORD Sampler, DWORD Value);
+void D3DDevice_SetSamplerState_MinFilterZ(D3DDevice *pDevice, DWORD Sampler, DWORD Value);
+void D3DDevice_SetSamplerState_SeparateZFilterEnable(
+    D3DDevice *pDevice, DWORD Sampler, DWORD Value
+);
+void D3DDevice_SetSamplerState_MinMipLevel(D3DDevice *pDevice, DWORD Sampler, DWORD Value);
+void D3DDevice_SetSamplerState_TrilinearThreshold(
+    D3DDevice *pDevice, DWORD Sampler, DWORD Value
+);
+void D3DDevice_SetSamplerState_AnisotropyBias(
+    D3DDevice *pDevice, DWORD Sampler, DWORD FloatAsDword
+);
+void D3DDevice_SetSamplerState_HGradientExpBias(
+    D3DDevice *pDevice, DWORD Sampler, DWORD Value
+);
+void D3DDevice_SetSamplerState_VGradientExpBias(
+    D3DDevice *pDevice, DWORD Sampler, DWORD Value
+);
+void D3DDevice_SetSamplerState_WhiteBorderColorW(
+    D3DDevice *pDevice, DWORD Sampler, DWORD Value
+);
+void D3DDevice_SetSamplerState_PointBorderEnable(
+    D3DDevice *pDevice, DWORD Sampler, DWORD Value
+);
+
+void D3DDevice_SetSamplerState(
+    D3DDevice *pDevice, DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD Value
+);
+
+DWORD D3DDevice_InsertFence(D3DDevice *pDevice);
+void D3DDevice_BlockOnFence(DWORD fence);
 D3DVertexBuffer *D3DDevice_CreateVertexBuffer(UINT Length, DWORD Usage, UINT Pool);
 
 D3DIndexBuffer *
@@ -640,7 +680,11 @@ struct D3DDevice { /* Size=0x2b00 */
         return S_OK;
     }
     HRESULT GetSamplerState(DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD *pValue);
-    HRESULT SetSamplerState(DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD Value);
+    __forceinline HRESULT
+    SetSamplerState(DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD Value) {
+        D3DDevice_SetSamplerState(this, Sampler, Type, Value);
+        return S_OK;
+    }
     HRESULT SetSamplerState_Inline(DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD Value);
     HRESULT SetSamplerAddressStates(DWORD, DWORD, DWORD, DWORD);
     HRESULT SetSamplerBorderStates(DWORD, DWORD, DWORD, DWORD);
@@ -928,9 +972,12 @@ struct D3DDevice { /* Size=0x2b00 */
         void **
     );
     HRESULT EndIndexedVertices();
+    DWORD InsertFence() { return D3DDevice_InsertFence(this); }
+    HRESULT BlockOnFence(DWORD fence) {
+        D3DDevice_BlockOnFence(fence);
+        return S_OK;
+    }
 
-    //   uint32_t InsertFence();
-    //   int32_t BlockOnFence(uint32_t);
     //   int32_t IsFencePending(uint32_t);
     //   int32_t SetBlendState(uint32_t, _D3DBLENDSTATE);
     //   int32_t GetBlendState(uint32_t, _D3DBLENDSTATE*);
@@ -1090,13 +1137,6 @@ inline void D3DDevice_SetVertexShaderConstantF(
     vec.y = pConstantData[1];
     vec.z = pConstantData[2];
     vec.w = pConstantData[3];
-}
-
-inline void
-D3DDevice_SetSamplerState_BorderColor(D3DDevice *pDevice, DWORD Sampler, DWORD Value) {
-    u64 upd_value = Value;
-    pDevice->m_Constants.TextureFetch[Sampler + 5].BorderSize = upd_value;
-    pDevice->m_Pending.m_Mask[3] |= (0x8000000000000000) >> (Sampler + 0x20);
 }
 
 __forceinline void
@@ -1378,6 +1418,81 @@ D3DDevice_SetRenderState(D3DDevice *pDevice, D3DRENDERSTATETYPE State, DWORD Val
     default:
         break;
     }
+}
+
+__forceinline void D3DDevice_SetSamplerState(
+    D3DDevice *pDevice, DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD Value
+) {
+    switch (Type) {
+    case D3DSAMP_ADDRESSU:
+        D3DDevice_SetSamplerState_AddressU(pDevice, Sampler, Value);
+        break;
+    case D3DSAMP_ADDRESSV:
+        D3DDevice_SetSamplerState_AddressV(pDevice, Sampler, Value);
+        break;
+    case D3DSAMP_ADDRESSW:
+        D3DDevice_SetSamplerState_AddressW(pDevice, Sampler, Value);
+        break;
+    case D3DSAMP_BORDERCOLOR:
+        D3DDevice_SetSamplerState_BorderColor(pDevice, Sampler, Value);
+        break;
+    case D3DSAMP_MAGFILTER:
+        D3DDevice_SetSamplerState_MagFilter(pDevice, Sampler, Value);
+        break;
+    case D3DSAMP_MINFILTER:
+        D3DDevice_SetSamplerState_MinFilter(pDevice, Sampler, Value);
+        break;
+    case D3DSAMP_MIPFILTER:
+        D3DDevice_SetSamplerState_MipFilter(pDevice, Sampler, Value);
+        break;
+    case D3DSAMP_MIPMAPLODBIAS:
+        D3DDevice_SetSamplerState_MipMapLodBias(pDevice, Sampler, Value);
+        break;
+    case D3DSAMP_MAXMIPLEVEL:
+        D3DDevice_SetSamplerState_MaxMipLevel(pDevice, Sampler, Value);
+        break;
+    case D3DSAMP_MAXANISOTROPY:
+        D3DDevice_SetSamplerState_MaxAnisotropy(pDevice, Sampler, Value);
+        break;
+    case D3DSAMP_MAGFILTERZ:
+        D3DDevice_SetSamplerState_MagFilterZ(pDevice, Sampler, Value);
+        break;
+    case D3DSAMP_MINFILTERZ:
+        D3DDevice_SetSamplerState_MinFilterZ(pDevice, Sampler, Value);
+        break;
+    case D3DSAMP_SEPARATEZFILTERENABLE:
+        D3DDevice_SetSamplerState_SeparateZFilterEnable(pDevice, Sampler, Value);
+        break;
+    case D3DSAMP_MINMIPLEVEL:
+        D3DDevice_SetSamplerState_MinMipLevel(pDevice, Sampler, Value);
+        break;
+    case D3DSAMP_TRILINEARTHRESHOLD:
+        D3DDevice_SetSamplerState_TrilinearThreshold(pDevice, Sampler, Value);
+        break;
+    case D3DSAMP_ANISOTROPYBIAS:
+        D3DDevice_SetSamplerState_AnisotropyBias(pDevice, Sampler, Value);
+        break;
+    case D3DSAMP_HGRADIENTEXPBIAS:
+        D3DDevice_SetSamplerState_HGradientExpBias(pDevice, Sampler, Value);
+        break;
+    case D3DSAMP_VGRADIENTEXPBIAS:
+        D3DDevice_SetSamplerState_VGradientExpBias(pDevice, Sampler, Value);
+        break;
+    case D3DSAMP_WHITEBORDERCOLORW:
+        D3DDevice_SetSamplerState_WhiteBorderColorW(pDevice, Sampler, Value);
+        break;
+    case D3DSAMP_POINTBORDERENABLE:
+        D3DDevice_SetSamplerState_PointBorderEnable(pDevice, Sampler, Value);
+        break;
+    default:
+        break;
+    }
+}
+
+inline void
+D3DDevice_SetSamplerState_BorderColor(D3DDevice *pDevice, DWORD Sampler, DWORD Value) {
+    pDevice->m_Constants.TextureFetch[Sampler].BorderColor = Value ? 1 : 0;
+    pDevice->m_Pending.m_Mask[3] |= 0x8000000000000000 >> (Sampler + 0x20U);
 }
 
 #pragma endregion

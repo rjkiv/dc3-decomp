@@ -1056,7 +1056,6 @@ union GPUTEXTURE_FETCH_CONSTANT { /* Size=0x18 */
         /* 0x000c */ DWORD AnisoFilter : 3; /* BitPos=25 */
         /* 0x000c */ UINT : 3; /* BitPos=28 */
         /* 0x000c */ DWORD BorderSize : 1; /* BitPos=31 */
-        /* 0x000c */ UINT : 0; /* BitPos=32 */
         /* 0x0010 */ DWORD VolMagFilter : 1; /* BitPos=0 */
         /* 0x0010 */ DWORD VolMinFilter : 1; /* BitPos=1 */
         /* 0x0010 */ DWORD MinMipLevel : 4; /* BitPos=2 */
@@ -1066,14 +1065,16 @@ union GPUTEXTURE_FETCH_CONSTANT { /* Size=0x18 */
         /* 0x0010 */ INT LODBias : 10; /* BitPos=12 */
         /* 0x0010 */ INT GradExpAdjustH : 5; /* BitPos=22 */
         /* 0x0010 */ INT GradExpAdjustV : 5; /* BitPos=27 */
-        /* 0x0010 */ INT : 0; /* BitPos=32 */
-        /* 0x0014 */ DWORD BorderColor : 2; /* BitPos=0 */
-        /* 0x0014 */ DWORD ForceBCWToMax : 1; /* BitPos=2 */
-        /* 0x0014 */ DWORD TriClamp : 2; /* BitPos=3 */
-        /* 0x0014 */ INT AnisoBias : 4; /* BitPos=5 */
-        /* 0x0014 */ DWORD Dimension : 2; /* BitPos=9 */
-        /* 0x0014 */ DWORD PackedMips : 1; /* BitPos=11 */
+
+        // i had to flip the endianness for DC3 i hate this
+        // i only did it for 0x14 tho, flip the rest if needed
         /* 0x0014 */ DWORD MipAddress : 20; /* BitPos=12 */
+        /* 0x0014 */ DWORD PackedMips : 1; /* BitPos=11 */
+        /* 0x0014 */ DWORD Dimension : 2; /* BitPos=9 */
+        /* 0x0014 */ INT AnisoBias : 4; /* BitPos=5 */
+        /* 0x0014 */ DWORD TriClamp : 2; /* BitPos=3 */
+        /* 0x0014 */ DWORD ForceBCWToMax : 1; /* BitPos=2 */
+        /* 0x0014 */ DWORD BorderColor : 2; /* BitPos=0 */
     };
     /* 0x0000 */ DWORD dword[6];
 };

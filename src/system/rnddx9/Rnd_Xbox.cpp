@@ -305,8 +305,8 @@ void DxRnd::SetDefaultRenderStates() {
     TheDxRnd.Device()->SetRenderState(D3DRS_DESTBLENDALPHA, 1);
     TheDxRnd.Device()->SetRenderState(D3DRS_BLENDOPALPHA, 3);
     for (int i = 0; i < caps.MaxTextureBlendStages; i++) {
-        D3DDevice_SetSamplerState_MinFilter(TheDxRnd.Device(), i, 1);
-        D3DDevice_SetSamplerState_MagFilter(TheDxRnd.Device(), i, 1);
+        TheDxRnd.Device()->SetSamplerState(i, D3DSAMP_MINFILTER, 1);
+        TheDxRnd.Device()->SetSamplerState(i, D3DSAMP_MAGFILTER, 1);
     }
     TheDxRnd.Device()->SetRenderState(D3DRS_PRESENTIMMEDIATETHRESHOLD, 100);
 }

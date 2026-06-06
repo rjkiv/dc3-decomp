@@ -10,9 +10,7 @@ RndRenderState TheRenderState;
 // void RndRenderState::SetTextureClamp(uint, ClampMode) {}
 
 void RndRenderState::SetBorderColor(uint sampler, bool black_or_white) {
-    D3DDevice_SetSamplerState_BorderColor(
-        TheDxRnd.Device(), (DWORD)sampler, black_or_white
-    );
+    TheDxRnd.Device()->SetSamplerState(sampler, D3DSAMP_BORDERCOLOR, black_or_white);
 }
 
 void RndRenderState::SetBlendEnable(bool b) {
