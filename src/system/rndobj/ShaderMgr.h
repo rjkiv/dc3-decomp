@@ -13,16 +13,25 @@ class RndShaderProgram;
 #define XBOX_SHADERS_VERSION 1
 
 // vertex shader constant
-// it looks like there's up to 256 of these
-// each VShaderConstant directly corresponds to a D3DConstants' VertexShaderF
+// each VShaderConstant directly corresponds to a D3DConstants' VertexShaderX
+// 256 possible float values (VertexShaderF)
+// 4 possible bool values (VertexShaderB)
+// 16 possible int values (VertexShaderI)
 enum VShaderConstant {
-    kVShader_SplineMaxCtrlPoints = 0xC
+    // floats
+    kVShader_EnvAmbientColor = 1,
+    // ints
+    kVShader_SplineMaxCtrlPoints = 12,
 };
 
 // pixel shader constant
-// it looks like there's up to 256 of these
-// each VShaderConstant directly corresponds to a D3DConstants' PixelShaderF
+// each PShaderConstant directly corresponds to a D3DConstants' PixelShaderX
+// 256 possible float values (PixelShaderF)
+// 4 possible bool values (PixelShaderB)
+// 16 possible int values (PixelShaderI)
 enum PShaderConstant {
+    // floats
+    kPShader_EnvAmbientColor = 1,
 };
 
 class RndShaderMgr {

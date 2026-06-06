@@ -365,8 +365,8 @@ void RndShaderDrawRect::Select(RndMat *mat, ShaderType s, bool b) {
         ngMat->SetupShader(TheShaderMgr.AllowPerPixel(), true);
         ShaderOptions opts(CalcShaderOpts(ngMat, s, b));
         SetColorWriteMask(opts, mat);
-        TheShaderMgr.SetVConstant((VShaderConstant)1, Vector4(1, 1, 1, 1));
-        TheShaderMgr.SetPConstant((PShaderConstant)1, Vector4(1, 1, 1, 1));
+        TheShaderMgr.SetVConstant(kVShader_EnvAmbientColor, Vector4(1, 1, 1, 1));
+        TheShaderMgr.SetPConstant(kPShader_EnvAmbientColor, Vector4(1, 1, 1, 1));
         CheckForceCull(kStandardShader);
         Cache(kStandardShader, opts, mat);
     }
@@ -385,10 +385,12 @@ void RndShaderUnwrapUV::Select(RndMat *mat, ShaderType s, bool b) {
         TheRenderState.SetColorWriteMask(7);
         const Hmx::Color &color = mat->GetColor();
         TheShaderMgr.SetVConstant(
-            (VShaderConstant)1, Vector4(color.red, color.green, color.blue, color.alpha)
+            kVShader_EnvAmbientColor,
+            Vector4(color.red, color.green, color.blue, color.alpha)
         );
         TheShaderMgr.SetPConstant(
-            (PShaderConstant)1, Vector4(color.red, color.green, color.blue, color.alpha)
+            kPShader_EnvAmbientColor,
+            Vector4(color.red, color.green, color.blue, color.alpha)
         );
         CheckForceCull(s);
         Cache(s, opts, mat);
@@ -455,8 +457,8 @@ void RndShaderDepthVolume::Select(RndMat *mat, ShaderType s, bool b) {
             TheRenderState.SetDepthWriteEnable(false);
         }
         CheckExtrude();
-        TheShaderMgr.SetVConstant((VShaderConstant)1, Vector4(1, 1, 1, 1));
-        TheShaderMgr.SetPConstant((PShaderConstant)1, Vector4(1, 1, 1, 1));
+        TheShaderMgr.SetVConstant(kVShader_EnvAmbientColor, Vector4(1, 1, 1, 1));
+        TheShaderMgr.SetPConstant(kPShader_EnvAmbientColor, Vector4(1, 1, 1, 1));
         CheckForceCull(s);
         Cache(s, opts, mat);
     }
