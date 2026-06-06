@@ -389,7 +389,7 @@
             "system/hamobj/RhythmDetectorGroup.cpp": "NonMatching",
             "system/hamobj/ScoreUtl.cpp": "NonMatching",
             "system/hamobj/SongCollision.cpp": "NonMatching",
-            "system/hamobj/SongDifficultyDisplay.cpp": "NonMatching",
+            "system/hamobj/SongDifficultyDisplay.cpp": "Matching",
             "system/hamobj/SongLayout.cpp": "NonMatching",
             "system/hamobj/SongUtl.cpp": "Matching",
             "system/hamobj/StarsDisplay.cpp": "NonMatching",

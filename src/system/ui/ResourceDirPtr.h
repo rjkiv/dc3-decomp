@@ -19,6 +19,10 @@ public:
 protected:
     ResourceDirBase(Hmx::Object *owner) : mOwner(owner) {}
 
+    bool MakeResourcePath(FilePath &path, Symbol className, const char *name) {
+        return MakeResourcePath(path, mOwner->ClassName(), className, name);
+    }
+
     static const char *GetResourcesPath(Symbol, Symbol);
 
     Hmx::Object *mOwner; // 0x0
@@ -38,7 +42,7 @@ public:
         // from xenia: fuck this shit. why is it putting &mOwner in the RVO????
         // hours spent grinding against this bastard func: +1
         // scratch https://decomp.me/scratch/0aEWK
-        if (MakeResourcePath(path, mOwner->ClassName(), T::StaticClassName(), name)) {
+        if (MakeResourcePath(path, T::StaticClassName(), name)) {
             LoadFile(path, b2, true, kLoadFront, false);
         } else {
             ObjDirPtr<T>::operator=(nullptr);
