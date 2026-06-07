@@ -111,6 +111,13 @@ long long strtoll(const char *str, char **str_end, int base);
 unsigned long strtoul(const char *str, char **str_end, int base);
 unsigned long long strtoull(const char *str, char **str_end, int base);
 
+unsigned long long _rotr64(unsigned long long value, int shift);
+unsigned int _rotr(unsigned int value, int shift);
+unsigned long long _rotl64(unsigned long long value, int shift);
+unsigned int _rotl(unsigned int value, int shift);
+unsigned long _lrotr(unsigned long value, int shift);
+unsigned long _lrotl(unsigned long value, int shift);
+
 int system(const char *command);
 char *getenv(const char *name);
 

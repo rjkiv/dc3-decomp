@@ -8,15 +8,12 @@ extern "C" {
 unsigned long long __mftb();
 double __frsqrte(double);
 
-// yeah idk about these man
-// __VMXSetReg
-// __VMXGetReg
 void __SetHWThreadPriorityLow();
 void __SetHWThreadPriorityMed();
 void __SetHWThreadPriorityHigh();
 int __IsIntConst(int);
 // i have no idea what the params are, i just know there's 2 of them
-void __GPRSetReg(long, long);
+void __GPRSetReg(long, unsigned long long);
 // i have no idea what the params are, i just know there's 1 of them
 unsigned long long __GPRGetReg(long);
 void _WriteBarrier();
