@@ -12,10 +12,12 @@
 #include "os/ContentMgr.h"
 #include "os/Debug.h"
 #include "os/PlatformMgr.h"
+#include "rndobj/Bitmap.h"
 #include "rndobj/Tex.h"
 #include "stl/_vector.h"
 #include "ui/UI.h"
 #include "ui/UIPanel.h"
+#include "utl/BufStream.h"
 #include "utl/JobMgr.h"
 #include "utl/NetCacheLoader.h"
 #include "utl/NetCacheMgr.h"
@@ -26,7 +28,7 @@
 
 StorePanel::StorePanel()
     : unk50(false), mLoadOk(false), unk52(false), unk5c(0),
-      unk60(Hmx::Object::New<RndTex>()), mPendingArtCallback(0), unk68(-1),
+      unk60(Hmx::Object::New<RndTex>()), mPendingArtCallback(), mJobId(-1),
       mStorePreviewMgr(0), unk70(false), mPurchaser(0), unk78(nullptr), unk7c(nullptr),
       unk8c(gNullStr), unk90(gNullStr), unk94(0), unk98(0) {}
 
@@ -96,9 +98,9 @@ void StorePanel::Enter() {
 void StorePanel::Exit() {
     XBackgroundDownloadSetMode(XBACKGROUND_DOWNLOAD_MODE_AUTO);
     ThePlatformMgr.RemoveSink(this);
-    if (0 <= unk68)
-        ThePlatformMgr.CancelEnumJob(unk68);
-    unk68 = -1;
+    if (0 <= mJobId)
+        ThePlatformMgr.CancelEnumJob(mJobId);
+    mJobId = -1;
     UIPanel::Exit();
 }
 
@@ -110,17 +112,15 @@ bool StorePanel::Exiting() const {
     return UIPanel::Exiting();
 }
 
-void StorePanel::Poll() {}
-
 bool StorePanel::IsLoaded() const {
     return (UIPanel::IsLoaded() && TheContentMgr.RefreshDone());
 }
 
 void StorePanel::Unload() {
-    if (0 <= unk68) {
-        ThePlatformMgr.CancelEnumJob(unk68);
+    if (0 <= mJobId) {
+        ThePlatformMgr.CancelEnumJob(mJobId);
     }
-    unk68 = -1;
+    mJobId = -1;
     RELEASE(mPurchaser);
     unk78 = nullptr;
     unk7c = nullptr;
@@ -136,8 +136,6 @@ void StorePanel::Unload() {
     TheNetCacheMgr->Unload();
     UIPanel::Unload();
 }
-
-void StorePanel::LoadArt(char const *c, UIPanel *panel) {}
 
 void StorePanel::CheckOut(StorePurchaseable *p) {
     MILO_ASSERT(p->IsAvailable(), 0x2c0);
@@ -157,8 +155,6 @@ void StorePanel::ExitError(StoreError e) {
         ExitStore(e);
     }
 }
-
-void StorePanel::HandleNetCacheMgrFailure() {}
 
 void StorePanel::HandleNetCacheLoaderFailure(int failType) {
     MILO_ASSERT((0) <= (failType) && (failType) < (kNCMS_Max), 0xe5);
@@ -228,16 +224,45 @@ void StorePanel::EnumerateOffers(bool b) {
         job = new StoreEnumJob(this, profile->GetPadNum(), nullptr);
     }
     ThePlatformMgr.QueueEnumJob(job);
-    unk68 = job->ID();
+    mJobId = job->ID();
     static Message msg("enum_start");
     HandleType(msg);
     TheUI->Handle(msg, false);
 }
 
-void StorePanel::FinishEnum(std::list<EnumProduct> const &, bool) {}
-
-StoreError StorePanel::UpdateOffers(std::list<EnumProduct> const &, bool) {
-    return kStoreErrorNoMetadata;
+void StorePanel::FinishEnum(std::list<EnumProduct> const &enumProducts, bool b) {
+    mJobId = -1;
+    if (b) {
+        StoreError error = UpdateOffers(enumProducts, false);
+        if (error == kStoreErrorSuccess || error == kStoreErrorNoContent) {
+            if (!unk44.empty()) {
+                error = UpdateOffers(enumProducts, true);
+            }
+        }
+        if (error != kStoreErrorSuccess) {
+            if (error == kStoreErrorNoContent) {
+                if (!TheNetCacheMgr->IsDebug()) {
+                    MILO_NOTIFY(
+                        "No offers in this metadata were found in the enumeration!"
+                    );
+                } else {
+                    goto lmao;
+                }
+            }
+            ExitError(error);
+        } else {
+        lmao:
+            static Message msg("enum_finished");
+            HandleType(msg);
+            TheUI->Handle(msg, false);
+        }
+    } else {
+        MILO_NOTIFY("An enumeration failed!");
+        if (mLoadOk) {
+            mLoadOk = false;
+            ExitStore(kStoreErrorCacheNoSpace);
+        }
+    }
 }
 
 void StorePanel::UpdateFromEnumProduct(StorePurchaseable *sp, EnumProduct const *ep) {
@@ -252,6 +277,116 @@ void StorePanel::StartReEnum() {
     if (unk98 != 0) {
         ThePlatformMgr.QueueEnumJob(unk98);
         unk98 = nullptr;
+    }
+}
+
+void StorePanel::Poll() {
+    UIPanel::Poll();
+    if (mLoadOk) {
+        if (TheNetCacheMgr->GetUnk30()) {
+            HandleNetCacheMgrFailure();
+            return;
+        }
+        if (TheNetCacheMgr->IsReady()) {
+            mStorePreviewMgr->Poll();
+            NetCacheMgrFailType fail;
+            if (mStorePreviewMgr->GetLastFailure(fail)) {
+                HandleNetCacheLoaderFailure(fail);
+            }
+            auto it = unk54.begin();
+            while (it != unk54.end()) {
+                NetCacheLoader *loader = *it;
+                if (loader->IsLoaded()) {
+                    if (loader == unk5c) {
+                        MILO_ASSERT(mPendingArtCallback, 0x167);
+                        int size = loader->GetSize();
+                        char *pBuffer = loader->GetBuffer();
+                        MILO_ASSERT(pBuffer, 0x16d);
+                        RndBitmap bitmap;
+                        BufStream stream(pBuffer, size, true);
+                        bitmap.Load(stream);
+                        bitmap.SetMip(nullptr);
+                        TheNetCacheMgr->DeleteNetCacheLoader(loader);
+                        unk60->SetBitmap(bitmap, 0, false, RndTex::kRegular);
+                        if (mPendingArtCallback->GetState() == kUp) {
+                            static Message msg("art_loaded");
+                            mPendingArtCallback->Handle(msg, false);
+                        }
+                        unk5c = nullptr;
+                        mPendingArtCallback = nullptr;
+                    } else {
+                        TheNetCacheMgr->DeleteNetCacheLoader(loader);
+                    }
+                    it = unk54.erase(it);
+                } else if (loader->HasFailed()) {
+                    NetCacheMgrFailType f = loader->GetFailType();
+                    TheNetCacheMgr->DeleteNetCacheLoader(loader);
+                    it = unk54.erase(it);
+                    HandleNetCacheLoaderFailure(f);
+                } else {
+                    ++it;
+                }
+            }
+            if (!mPurchaser && unk70 && mJobId == -1) {
+                unk70 = false;
+                EnumerateOffers(unk44.empty() == 0);
+            }
+            if (mPurchaser) {
+                mPurchaser->Poll();
+                if (!mPurchaser->IsPurchasing()) {
+                    bool b1 = false;
+                    bool b2 = false;
+                    if (mPurchaser->IsSuccess()) {
+                        if (unk80.size() != 0) {
+                            if (mPurchaser->NeedsEnum()) {
+                                std::vector<unsigned long long> ids;
+                                for (int i = 0; i < unk80.size(); i++) {
+                                    ids.push_back(unk80[i].first->SongID());
+                                }
+                                unk98 = new MultipleItemsPostPurchaseEnumJob(
+                                    this,
+                                    unk80.front().second->GetPadNum(),
+                                    ids,
+                                    mPurchaser->unk4,
+                                    mPurchaser->unk8
+                                );
+                                b2 = true;
+                            }
+                        } else {
+                            if (unk78 && !unk78->IsPurchased()) {
+                                if (mPurchaser->PurchaseMade()) {
+                                    b1 = true;
+                                    unk78->isPurchased = true;
+                                    static Message msg("enum_finished");
+                                    HandleType(msg);
+                                    TheUI->Handle(msg, false);
+                                } else {
+                                    if (mPurchaser->NeedsEnum() && unk7c) {
+                                        unk98 = new PostPurchaseEnumJob(
+                                            this,
+                                            unk7c->GetPadNum(),
+                                            unk78->songID,
+                                            mPurchaser->unk4,
+                                            mPurchaser->unk8
+                                        );
+                                        b2 = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    static Message msg("checkout_finished", 0, 0);
+                    msg[0] = b1;
+                    msg[1] = b2;
+                    HandleType(msg);
+                    TheUI->Handle(msg, false);
+                    RELEASE(mPurchaser);
+                    unk78 = nullptr;
+                    unk7c = nullptr;
+                    unk80.clear();
+                }
+            }
+        }
     }
 }
 
