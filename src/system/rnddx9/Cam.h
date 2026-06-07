@@ -13,6 +13,8 @@ public:
 
     NEW_OBJ(DxCam)
 
+    void SetViewport();
+
 protected:
     DxCam();
 };

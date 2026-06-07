@@ -119,6 +119,8 @@ namespace Hmx {
             memcpy(this, &mtx, sizeof(*this));
             return *this;
         }
+        Vector3 Col3(int idx) const { return Vector3(x[idx], y[idx], z[idx]); }
+
         static const Hmx::Matrix4 &ID() { return sID; }
 
         Vector4 x;
