@@ -8,8 +8,43 @@ extern "C" {
 unsigned long long __mftb();
 double __frsqrte(double);
 
-long _InterlockedIncrement(long *lpAddend);
-long _InterlockedDecrement(long *lpAddend);
+// yeah idk about these man
+// __VMXSetReg
+// __VMXGetReg
+void __SetHWThreadPriorityLow();
+void __SetHWThreadPriorityMed();
+void __SetHWThreadPriorityHigh();
+int __IsIntConst(int);
+// i have no idea what the params are, i just know there's 2 of them
+void __GPRSetReg(long, long);
+// i have no idea what the params are, i just know there's 1 of them
+unsigned long long __GPRGetReg(long);
+void _WriteBarrier();
+void *_ReturnAddress();
+void _ReadWriteBarrier();
+void _ReadBarrier();
+long long _InterlockedXor64(long long volatile *Value, long long Mask);
+long _InterlockedXor(long volatile *Value, long Mask);
+long long _InterlockedOr64(long long volatile *Value, long long Mask);
+long _InterlockedOr(long volatile *Value, long Mask);
+long long _InterlockedIncrement64(long long volatile *lpAddend);
+long _InterlockedIncrement(long volatile *lpAddend);
+long long _InterlockedExchangeAdd64(long long volatile *Addend, long long Value);
+long _InterlockedExchangeAdd(long volatile *Addend, long Value);
+long long _InterlockedExchange64(long long volatile *Target, long long Value);
+long _InterlockedExchange(long volatile *Target, long Value);
+long long _InterlockedDecrement64(long long volatile *lpAddend);
+long _InterlockedDecrement(long volatile *lpAddend);
+long long _InterlockedCompareExchange64(
+    long long volatile *Destination, long long Exchange, long long Comparand
+);
+long _InterlockedCompareExchange(
+    long volatile *Destination, long Exchange, long Comparand
+);
+long long _InterlockedAnd64(long long volatile *value, long long mask);
+long _InterlockedAnd(long volatile *value, long mask);
+unsigned int _CountLeadingZeros64(long long value);
+unsigned int _CountLeadingZeros(long value);
 
 #ifdef __cplusplus
 }
