@@ -15,9 +15,6 @@
 #include "MultiMesh.h"
 
 struct BuildPoly {
-    BuildPoly();
-    ~BuildPoly();
-
     Hmx::Polygon mPoly; // 0x0
     Transform mTransform; // 0xc
 };
@@ -30,7 +27,7 @@ DataNode GetRenderTexturesNoZ(ObjectDir *);
 DataNode OnTestDrawGroups(DataArray *);
 
 void ResetColors(std::vector<Hmx::Color> &colors, int newNumColors);
-void RndScaleObject(Hmx::Object *, float, float);
+void RndScaleObject(Hmx::Object *o, float posScale, float frameScale);
 bool AnimContains(const RndAnimatable *anim1, const RndAnimatable *anim2);
 float ConvertFov(float, float);
 void PreMultiplyAlpha(Hmx::Color &);
@@ -62,10 +59,13 @@ void UtilDrawPlane(const Plane &, const Vector3 &, const Hmx::Color &, int, floa
 void UtilDrawCigar(
     const Transform &, float const *const, float const *const, const Hmx::Color &, int
 );
+void UtilDrawCircle2D(const Vector2 &, float, const Hmx::Color &, int);
 
-void TransformKeys(RndTransAnim *, const Transform &);
-void SpliceKeys(RndTransAnim *, RndTransAnim *, float, float);
-void LinearizeKeys(RndTransAnim *, float, float, float, float, float);
+void TransformKeys(RndTransAnim *ta, const Transform &xfm);
+void SpliceKeys(RndTransAnim *in, RndTransAnim *exist, float offset, float length);
+void LinearizeKeys(
+    RndTransAnim *anim, float transTol, float rotTol, float scaleTol, float start, float end
+);
 
 void TestTextureSize(ObjectDir *, int, int, int, int, int);
 void TestTexturePaths(ObjectDir *);

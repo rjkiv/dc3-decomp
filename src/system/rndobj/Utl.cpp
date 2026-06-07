@@ -2,6 +2,7 @@
 #include "math/Color.h"
 #include "math/Mtx.h"
 #include "math/Utl.h"
+#include "math/Trig.h"
 #include "math/Vec.h"
 #include "obj/DataFunc.h"
 #include "obj/Object.h"
@@ -457,6 +458,62 @@ void UtilDrawRect2D(const Vector2 &v1, const Vector2 &v2, const Hmx::Color &colo
     UtilDrawLine(cross2, v1, color);
 }
 
+void UtilDrawCircle2D(const Vector2 &v2, float f2, const Hmx::Color &c, int i4) {
+    std::vector<Vector2> vec(i4 + 1);
+    float y = TheRnd.YRatio();
+    for (int i = 0; i <= i4; i++) {
+        Vector2 &cur = vec[i];
+        float fi = (float)i * (2 * PI) / (float)i4;
+        float cos = FastCos(fi);
+        float sin = FastSin(fi);
+        cur.x = (cos * y) * f2 + v2.x;
+        cur.y = sin * f2 + v2.y;
+    }
+    for (int i = 0; i < i4; i++) {
+        UtilDrawLine(vec[i], vec[i + 1], c);
+    }
+}
+
+void UtilDrawSphere(const Vector3 &v1, float f2, const Hmx::Color &c, RndMat *mat) {
+    if (!sSphereMesh) {
+        MILO_NOTIFY_ONCE("Sphere mesh is not loaded");
+    } else {
+        RndMat *oldMat = sSphereMesh->Mat();
+        Transform tf;
+        tf.Reset();
+        tf.v = v1;
+        Scale(Vector3(f2, f2, f2), tf.m, tf.m);
+        if (mat) {
+            sSphereMesh->SetMat(mat);
+        } else {
+            sSphereMesh->Mat()->SetColor(c.red, c.green, c.blue);
+            sSphereMesh->Mat()->SetAlpha(0.2f);
+            sSphereMesh->Mat()->SetCull(kCullNone);
+        }
+        sSphereMesh->SetLocalXfm(tf);
+        sSphereMesh->SetSphere(Sphere(Vector3(0, 0, 0), f2));
+        sSphereMesh->Draw();
+        if (mat) {
+            sSphereMesh->SetMat(oldMat);
+        }
+    }
+}
+
+void UtilDrawCylinder(const Transform &xfm, float f2, float f3, const Hmx::Color &c, int) {
+    if (!sCylinderMesh) {
+        MILO_NOTIFY_ONCE("Sphere mesh is not loaded");
+    } else {
+        Transform tfb0 = xfm;
+        sCylinderMesh->Mat()->SetColor(c.red, c.green, c.blue);
+        sCylinderMesh->Mat()->SetAlpha(0.2f);
+        Scale(Vector3(f3, f2, f2), tfb0.m, tfb0.m);
+        sCylinderMesh->Mat()->SetCull(kCullNone);
+        sCylinderMesh->SetLocalXfm(tfb0);
+        sCylinderMesh->SetSphere(Sphere(Vector3(0, 0, 0), f2));
+        sCylinderMesh->Draw();
+    }
+}
+
 void CalcSphere(RndTransAnim *a, Sphere &s) {
     s.Zero();
     if (!a->TransKeys().empty()) {
@@ -480,112 +537,108 @@ void CalcSphere(RndTransAnim *a, Sphere &s) {
     }
 }
 
-void SpliceKeys(
-    RndTransAnim *anim1, RndTransAnim *anim2, float firstFrame, float lastFrame
-) {
-    float start = anim1->StartFrame();
-    float end = anim1->EndFrame();
-    if (start < 0.0f || end > lastFrame)
-        MILO_NOTIFY("%s has keyframes outside (0, %f)", anim1->Name(), lastFrame);
+void SpliceKeys(RndTransAnim *in, RndTransAnim *exist, float offset, float length) {
+    float start = in->StartFrame();
+    float end = in->EndFrame();
+    if (start < 0.0f || end > length)
+        MILO_NOTIFY("%s has keyframes outside (0, %f)", in->Name(), length);
     else {
-        RndTransformable *trans = anim1->Trans();
-        if (!anim1->TransKeys().empty()) {
-            if (anim1->TransKeys().front().frame != 0.0f) {
-                anim1->TransKeys().Add(anim1->TransKeys().front().value, 0.0f, false);
+        RndTransformable *trans = in->Trans();
+        if (!in->TransKeys().empty()) {
+            if (in->TransKeys().front().frame != 0.0f) {
+                in->TransKeys().Add(in->TransKeys().front().value, 0.0f, false);
             }
-            if (anim1->TransKeys().back().frame != lastFrame) {
-                anim1->TransKeys().Add(anim1->TransKeys().back().value, lastFrame, false);
+            if (in->TransKeys().back().frame != length) {
+                in->TransKeys().Add(in->TransKeys().back().value, length, false);
             }
         } else if (trans) {
-            anim1->TransKeys().Add(trans->LocalXfm().v, 0.0f, false);
-            anim1->TransKeys().Add(trans->LocalXfm().v, lastFrame, false);
+            in->TransKeys().Add(trans->LocalXfm().v, 0.0f, false);
+            in->TransKeys().Add(trans->LocalXfm().v, length, false);
         } else {
-            anim1->TransKeys().Add(Vector3(0.0f, 0.0f, 0.0f), 0.0f, false);
-            anim1->TransKeys().Add(Vector3(0.0f, 0.0f, 0.0f), lastFrame, false);
+            in->TransKeys().Add(Vector3(0.0f, 0.0f, 0.0f), 0.0f, false);
+            in->TransKeys().Add(Vector3(0.0f, 0.0f, 0.0f), length, false);
         }
 
-        if (!anim1->RotKeys().empty()) {
-            if (anim1->RotKeys().front().frame != 0.0f) {
-                anim1->RotKeys().Add(anim1->RotKeys().front().value, 0.0f, false);
+        if (!in->RotKeys().empty()) {
+            if (in->RotKeys().front().frame != 0.0f) {
+                in->RotKeys().Add(in->RotKeys().front().value, 0.0f, false);
             }
-            if (anim1->RotKeys().back().frame != lastFrame) {
-                anim1->RotKeys().Add(anim1->RotKeys().back().value, lastFrame, false);
+            if (in->RotKeys().back().frame != length) {
+                in->RotKeys().Add(in->RotKeys().back().value, length, false);
             }
         } else if (trans) {
             Hmx::Quat q(trans->LocalXfm().m);
-            anim1->RotKeys().Add(q, 0.0f, false);
-            anim1->RotKeys().Add(q, lastFrame, false);
+            in->RotKeys().Add(q, 0.0f, false);
+            in->RotKeys().Add(q, length, false);
         } else {
-            anim1->RotKeys().Add(Hmx::Quat(0.0f, 0.0f, 0.0f, 1.0f), 0.0f, false);
-            anim1->RotKeys().Add(Hmx::Quat(0.0f, 0.0f, 0.0f, 1.0f), lastFrame, false);
+            in->RotKeys().Add(Hmx::Quat(0.0f, 0.0f, 0.0f, 1.0f), 0.0f, false);
+            in->RotKeys().Add(Hmx::Quat(0.0f, 0.0f, 0.0f, 1.0f), length, false);
         }
 
-        if (!anim1->ScaleKeys().empty()) {
-            if (anim1->ScaleKeys().front().frame != 0.0f) {
-                anim1->ScaleKeys().Add(anim1->ScaleKeys().front().value, 0.0f, false);
+        if (!in->ScaleKeys().empty()) {
+            if (in->ScaleKeys().front().frame != 0.0f) {
+                in->ScaleKeys().Add(in->ScaleKeys().front().value, 0.0f, false);
             }
-            if (anim1->ScaleKeys().back().frame != lastFrame) {
-                anim1->ScaleKeys().Add(anim1->ScaleKeys().back().value, lastFrame, false);
+            if (in->ScaleKeys().back().frame != length) {
+                in->ScaleKeys().Add(in->ScaleKeys().back().value, length, false);
             }
         } else if (trans) {
             Vector3 v;
             MakeScale(trans->LocalXfm().m, v);
-            anim1->ScaleKeys().Add(v, 0.0f, false);
-            anim1->ScaleKeys().Add(v, lastFrame, false);
+            in->ScaleKeys().Add(v, 0.0f, false);
+            in->ScaleKeys().Add(v, length, false);
         } else {
-            anim1->ScaleKeys().Add(Vector3(1.0f, 1.0f, 1.0f), 0.0f, false);
-            anim1->ScaleKeys().Add(Vector3(1.0f, 1.0f, 1.0f), lastFrame, false);
+            in->ScaleKeys().Add(Vector3(1.0f, 1.0f, 1.0f), 0.0f, false);
+            in->ScaleKeys().Add(Vector3(1.0f, 1.0f, 1.0f), length, false);
         }
 
-        for (Keys<Vector3, Vector3>::iterator it = anim1->TransKeys().begin();
-             it != anim1->TransKeys().end();
+        for (Keys<Vector3, Vector3>::iterator it = in->TransKeys().begin();
+             it != in->TransKeys().end();
              it++) {
-            (*it).frame += firstFrame;
+            (*it).frame += offset;
         }
-        for (Keys<Hmx::Quat, Hmx::Quat>::iterator it = anim1->RotKeys().begin();
-             it != anim1->RotKeys().end();
+        for (Keys<Hmx::Quat, Hmx::Quat>::iterator it = in->RotKeys().begin();
+             it != in->RotKeys().end();
              it++) {
-            (*it).frame += firstFrame;
+            (*it).frame += offset;
         }
-        for (Keys<Vector3, Vector3>::iterator it = anim1->ScaleKeys().begin();
-             it != anim1->ScaleKeys().end();
+        for (Keys<Vector3, Vector3>::iterator it = in->ScaleKeys().begin();
+             it != in->ScaleKeys().end();
              it++) {
-            (*it).frame += firstFrame;
+            (*it).frame += offset;
         }
 
-        float fsum = firstFrame + lastFrame;
-        int transRemoved = anim2->TransKeys().Remove(firstFrame, fsum);
-        int rotRemoved = anim2->RotKeys().Remove(firstFrame, fsum);
-        int scaleRemoved = anim2->ScaleKeys().Remove(firstFrame, fsum);
+        float fsum = offset + length;
+        int transRemoved = exist->TransKeys().Remove(offset, fsum);
+        int rotRemoved = exist->RotKeys().Remove(offset, fsum);
+        int scaleRemoved = exist->ScaleKeys().Remove(offset, fsum);
 
-        anim2->TransKeys().insert(
-            anim2->TransKeys().begin() + transRemoved,
-            anim1->TransKeys().begin(),
-            anim1->TransKeys().end()
+        exist->TransKeys().insert(
+            exist->TransKeys().begin() + transRemoved,
+            in->TransKeys().begin(),
+            in->TransKeys().end()
         );
-        anim2->RotKeys().insert(
-            anim2->RotKeys().begin() + rotRemoved,
-            anim1->RotKeys().begin(),
-            anim1->RotKeys().end()
+        exist->RotKeys().insert(
+            exist->RotKeys().begin() + rotRemoved,
+            in->RotKeys().begin(),
+            in->RotKeys().end()
         );
-        anim2->ScaleKeys().insert(
-            anim2->ScaleKeys().begin() + scaleRemoved,
-            anim1->ScaleKeys().begin(),
-            anim1->ScaleKeys().end()
+        exist->ScaleKeys().insert(
+            exist->ScaleKeys().begin() + scaleRemoved,
+            in->ScaleKeys().begin(),
+            in->ScaleKeys().end()
         );
     }
 }
 
 void LinearizeKeys(
-    RndTransAnim *anim, float f2, float f3, float f4, float firstFrame, float lastFrame
+    RndTransAnim *anim, float transTol, float rotTol, float scaleTol, float start, float end
 ) {
     int firstFrameIdx, lastFrameIdx;
-    if (f2) {
+    if (transTol) {
         if (anim->TransKeys().size() > 2) {
             Keys<Vector3, Vector3> vecKeys;
-            anim->TransKeys().FindBounds(
-                firstFrame, lastFrame, firstFrameIdx, lastFrameIdx
-            );
+            anim->TransKeys().FindBounds(start, end, firstFrameIdx, lastFrameIdx);
             for (int i = firstFrameIdx + 1; i < lastFrameIdx - vecKeys.size();) {
                 vecKeys.push_back(anim->TransKeys()[i]);
                 anim->TransKeys().Remove(i);
@@ -595,7 +648,7 @@ void LinearizeKeys(
                         anim->TransKeys(), anim->TransSpline(), vecKeys[j].frame, vec, 0
                     );
                     Subtract(vec, vecKeys[j].value, vec);
-                    if (Length(vec) > f2) {
+                    if (Length(vec) > transTol) {
                         anim->TransKeys().insert(
                             anim->TransKeys().begin() + i, vecKeys.back()
                         );
@@ -607,17 +660,17 @@ void LinearizeKeys(
             }
         }
     }
-    if (f3) {
+    if (rotTol) {
         if (anim->RotKeys().size() > 2) {
             Keys<Hmx::Quat, Hmx::Quat> quatKeys;
-            anim->RotKeys().FindBounds(firstFrame, lastFrame, firstFrameIdx, lastFrameIdx);
+            anim->RotKeys().FindBounds(start, end, firstFrameIdx, lastFrameIdx);
             for (int i = firstFrameIdx + 1; i < lastFrameIdx - quatKeys.size();) {
                 quatKeys.push_back(anim->RotKeys()[i]);
                 anim->RotKeys().Remove(i);
                 for (int j = 0; j < quatKeys.size(); j++) {
                     Hmx::Quat q;
                     anim->RotKeys().AtFrame(quatKeys[j].frame, q);
-                    if (AngleBetween(q, quatKeys[j].value) > f3) {
+                    if (AngleBetween(q, quatKeys[j].value) > rotTol) {
                         anim->RotKeys().insert(
                             anim->RotKeys().begin() + i, quatKeys.back()
                         );
@@ -629,12 +682,10 @@ void LinearizeKeys(
             }
         }
     }
-    if (f4) {
+    if (scaleTol) {
         if (anim->ScaleKeys().size() > 2) {
             Keys<Vector3, Vector3> vecKeys;
-            anim->ScaleKeys().FindBounds(
-                firstFrame, lastFrame, firstFrameIdx, lastFrameIdx
-            );
+            anim->ScaleKeys().FindBounds(start, end, firstFrameIdx, lastFrameIdx);
             for (int i = firstFrameIdx + 1; i < lastFrameIdx - vecKeys.size();) {
                 vecKeys.push_back(anim->ScaleKeys()[i]);
                 anim->ScaleKeys().Remove(i);
@@ -644,7 +695,7 @@ void LinearizeKeys(
                         anim->ScaleKeys(), anim->ScaleSpline(), vecKeys[j].frame, vec, 0
                     );
                     Subtract(vec, vecKeys[j].value, vec);
-                    if (Length(vec) > f4) {
+                    if (Length(vec) > scaleTol) {
                         anim->ScaleKeys().insert(
                             anim->ScaleKeys().begin() + i, vecKeys.back()
                         );
