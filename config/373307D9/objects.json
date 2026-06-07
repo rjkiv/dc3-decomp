@@ -592,7 +592,7 @@
             "system/rndobj/Fur.cpp": "Matching",
             "system/rndobj/Fur_NG.cpp": "NonMatching",
             "system/rndobj/Gen.cpp": "NonMatching",
-            "system/rndobj/Graph.cpp": "NonMatching",
+            "system/rndobj/Graph.cpp": "Matching",
             "system/rndobj/Group.cpp": "NonMatching",
             "system/rndobj/HiResScreen.cpp": "NonMatching",
             "system/rndobj/Line.cpp": "NonMatching",

@@ -114,6 +114,8 @@ public:
 private:
     static Plane sShadowPlane;
 
+    void SyncWorldXfm() { ComputeLocalXfm(mWorldXfm); }
+
     void SetDirty() {
         if (!mDirty)
             SetDirty_Force();
