@@ -66,6 +66,8 @@ public:
     virtual void StartUploadCareerScore(u64 career_score) {}
 
     int GetUnk74() const { return unk74; }
+    const char *GetUnk40() const { return unk40.c_str(); }
+    OnlineID &GetOnlineID() { return mOnlineId; }
 
     void DelayJob(DingoJob *job);
     void CancelDelayedCalls();

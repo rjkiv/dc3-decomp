@@ -45,7 +45,7 @@ protected:
     String mUserName; // 0xc0
     XLSPConnection unkc8;
     String mXLSPFilter; // 0x140
-    int unk148;
+    unsigned int unk148;
     JobMgr mJobMgr; // 0x14c
     int unk15c; // 0x15c - state? last job type queued?
     u64 unk160;

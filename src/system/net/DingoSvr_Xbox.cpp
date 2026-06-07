@@ -3,6 +3,7 @@
 #include "net/DingoJob.h"
 #include "net/DingoSvr.h"
 #include "net/SessionJobs_Xbox.h"
+#include "net/XLSPConnection.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
@@ -233,4 +234,45 @@ int DingoSvrXbox::GetValidLoginCandidate(char *name, u64 &xuid) const {
         }
     }
     return -1;
+}
+
+void DingoSvrXbox::Poll() {
+    if (!ThePlatformMgr.IsConnected()) {
+        return;
+    }
+    mJobMgr.Poll();
+
+    switch (unkb0) {
+    case 0: {
+        bool getID = ThePlatformMgr.GetServiceID("dingo", unk148);
+        if (getID) {
+            if (mXLSPFilter.empty()) {
+                MILO_NOTIFY("DingoSvrXbox: Empty XLSP filter string.");
+            } else if (unk148 == 0) {
+                MILO_NOTIFY("DingoSvrXbox: Invalid Dingo service ID.");
+            } else {
+                unkc8.Connect(mXLSPFilter.c_str(), unk148);
+                unkb0 = 1;
+            }
+        }
+        break;
+    }
+    case 1:
+        if (unkc8.GetState() == 3) {
+            unkb0 = 2;
+            mIPAddr = unkc8.GetServiceIP();
+            mHostName.erase();
+        }
+        break;
+    case 2:
+        break;
+    default:
+        MILO_FAIL("DingoSvrXbox: State %d unhandled.", unkb0);
+        break;
+    }
+
+    unkc8.Poll();
+    if (unkc8.GetState() == 4 && unkc8.GetTimerSplitMs() >= mMsBetweenReconnDingo) {
+        Disconnect();
+    }
 }

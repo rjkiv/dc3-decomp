@@ -1,6 +1,8 @@
 #include "meta/StoreEnumeration.h"
 #include "macros.h"
 #include "os/Debug.h"
+#include "utl/MemMgr.h"
+#include "xdk/win_types.h"
 #include "xdk/xapilibi/handleapi.h"
 #include "xdk/xapilibi/xbox.h"
 #include "xdk/xonline/xonline.h"
@@ -57,9 +59,35 @@ void XboxEnumeration::Start() {
                 unk18, 0x100002, -1, 99, &unk40, &mCurOffers
             );
         } else {
+            int val = mOfferIDCount - (unk14 - unk10);
+            if (0x63 <= val) {
+                val = 99;
+            }
+            result = XMarketplaceCreateOfferEnumeratorByOffering(
+                unk18, val, 0, 99, &unk40, &mHandle
+            );
         }
         MILO_ASSERT(!mCurOffers, 0x1ea);
+        mCurOffers = operator new[](unk40);
+        if (result != 0) {
+            goto thing;
+        }
     }
+    memset(&mCurOffers, 0, unk40);
+    memset(&unk20, 0, unk1c);
+
+    DWORD enumerate = XEnumerate(mHandle, &mCurOffers, unk40, 0, &unk20);
+    if (enumerate == 0x3e5) {
+        return;
+    }
+thing:
+    if (mHandle) {
+        CloseHandle(mHandle);
+        mHandle = 0;
+    }
+    delete mCurOffers;
+    unk1c = false;
+    mCurOffers = 0;
 }
 
 void XboxEnumeration::Poll() {}

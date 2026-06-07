@@ -4,6 +4,7 @@
 #include "xdk/win_types.h"
 #include "xdk/XAPILIB.h"
 #include "xdk/XNET.h"
+#include "xdk/xapilibi/winerror.h"
 
 XboxSessionJob::XboxSessionJob(void *v) : mSession(v), mSuccess(true) {
     memset(&mXOverlapped, 0, sizeof(XOVERLAPPED));
@@ -18,10 +19,11 @@ XboxSessionJob::~XboxSessionJob() {
 bool XboxSessionJob::IsFinished() {
     DWORD dw;
     DWORD res = XGetOverlappedResult(&mXOverlapped, &dw, false);
-    if (res == ERROR_IO_PENDING) {
+    bool result = res != ERROR_IO_INCOMPLETE;
+    if (!result == false) {
         CheckError(res, &mXOverlapped);
     }
-    return res;
+    return result;
 }
 
 void XboxSessionJob::Cancel(Hmx::Object *) { XCancelOverlapped(&mXOverlapped); }

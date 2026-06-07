@@ -186,7 +186,7 @@ void WebSvcRequest::SetURL(char const *url) {
 }
 
 void WebSvcRequest::MarkSuccess() {
-    MILO_ASSERT(mHttpReq, 0x15d);
+    MILO_ASSERT(mHttpReq, 0x156);
     mHttpReq->MarkSuccess();
 }
 

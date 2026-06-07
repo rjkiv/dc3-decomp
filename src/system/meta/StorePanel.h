@@ -62,7 +62,7 @@ public:
     }
     void SetSourceToBackup() { unk8c = unk90; }
 
-    int GetUnk68() const { return unk68; }
+    int GetUnk68() const { return mJobId; }
 
     std::vector<StoreOffer *> unk38;
     std::vector<StoreOffer *> unk44;
@@ -70,10 +70,10 @@ public:
     bool mLoadOk; // 0x51
     bool unk52;
     std::list<NetCacheLoader *> unk54;
-    int unk5c;
+    NetCacheLoader *unk5c;
     RndTex *unk60;
     UIPanel *mPendingArtCallback; // 0x64
-    int unk68;
+    int mJobId; // 0x68
     StorePreviewMgr *mStorePreviewMgr; // 0x6c
     bool unk70;
     StorePurchaser *mPurchaser; // 0x74

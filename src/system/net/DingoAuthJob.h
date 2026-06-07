@@ -12,6 +12,9 @@ public:
     virtual void Start();
 
     bool ParseResponse();
+    void SetSessionID(String id) { mSessionID = id; }
+
+    const char *SessionID() { return mSessionID.c_str(); }
 
 private:
     String mSessionID; // 0xb0
