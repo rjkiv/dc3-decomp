@@ -26,18 +26,17 @@
 
 #include "math/Rand.h"
 
-FileCacheHelper gResourceFileCacheHelper;
-float gLimitUVRange;
-int gDxtCacher;
-ObjectDir *sSphereDir;
-RndMesh *sSphereMesh;
-ObjectDir *sCylinderDir;
-RndMesh *sCylinderMesh;
-// std::list<BuildPoly> gChildPolys;
-// std::list<BuildPoly> gParentPolys;
+static FileCacheHelper gResourceFileCacheHelper;
+static float gLimitUVRange = 0;
+static ObjectDir *sSphereDir = nullptr;
+static RndMesh *sSphereMesh = nullptr;
+static ObjectDir *sCylinderDir = nullptr;
+static RndMesh *sCylinderMesh = nullptr;
 SplashFunc gSplashPoll;
 SplashFunc gSplashSuspend;
 SplashFunc gSplashResume;
+std::list<BuildPoly> gChildPolys;
+std::list<BuildPoly> gParentPolys;
 Vector3 gUtlXfms;
 
 RndGroup *GroupOwner(Hmx::Object *o) {
@@ -157,7 +156,7 @@ void RndUtlInit() {
         sSphereMesh = sSphereDir->Find<RndMesh>("sphere.mesh", true);
     }
     if (sCylinderDir) {
-        sCylinderMesh = sSphereDir->Find<RndMesh>("Cylinder.mesh", true);
+        sCylinderMesh = sCylinderDir->Find<RndMesh>("Cylinder.mesh", true);
     }
 }
 
@@ -333,7 +332,7 @@ float AngleBetween(const Hmx::Quat &q1, const Hmx::Quat &q2) {
 }
 
 bool BadUV(Vector2 &v) {
-    if (fabsf(v.x) > 1000.0f || fabsf(v.y) > 1000.0f) {
+    if (IsNaN(v.x) || IsNaN(v.y) || fabsf(v.x) > 1000.0f || fabsf(v.y) > 1000.0f) {
         return true;
     } else {
         if (NearlyZero(v.x)) {
@@ -741,9 +740,20 @@ void DistributeXfms(RndMultiMesh *mesh, int i1, float f1) {
     FOREACH (it, mesh->Instances()) {
         int row = index / i1;
         int col = index % i1;
-        Vector3 &vec = it->mXfm.v;
         Vector3 temp(col * f1, row * f1, 0.0f);
-        it->mXfm.v.Set(temp.x + vec.x, temp.y + vec.y, vec.z);
+        Add(it->mXfm.v, temp, it->mXfm.v);
         index++;
+    }
+}
+
+void MoveXfms(RndMultiMesh *mesh, const Vector3 &v3) {
+    FOREACH (it, mesh->Instances()) {
+        Add(it->mXfm.v, v3, it->mXfm.v);
+    }
+}
+
+void ScaleXfms(RndMultiMesh *mesh, const Vector3 &v3) {
+    FOREACH (it, mesh->Instances()) {
+        Scale(v3, it->mXfm.m, it->mXfm.m);
     }
 }

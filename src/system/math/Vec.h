@@ -189,6 +189,10 @@ inline BinStream &operator>>(BinStream &bs, Vector4 &vec) {
     return bs;
 }
 
+inline bool NearlyEqual(const Vector2 &v1, const Vector2 &v2, float max_diff) {
+    return std::fabs(v1.x - v2.x) < max_diff && std::fabs(v1.y - v2.y) < max_diff;
+}
+
 inline bool NearlyEqual(const Vector3 &v1, const Vector3 &v2, float max_diff) {
     return std::fabs(v1.x - v2.x) < max_diff && std::fabs(v1.y - v2.y) < max_diff
         && std::fabs(v1.z - v2.z) < max_diff;
