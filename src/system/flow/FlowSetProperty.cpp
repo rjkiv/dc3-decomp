@@ -21,7 +21,7 @@
 #pragma region PropertyTask
 
 PropertyTask::PropertyTask(
-    Hmx::Object *o1,
+    Hmx::Object *target,
     DataNode &n1,
     DataNode &n2,
     TaskUnits u,
@@ -31,9 +31,10 @@ PropertyTask::PropertyTask(
     bool b,
     Hmx::Object *o2
 )
-    : unk2c(this), unk40(n1), unk48(n2), unk58(f1), unk5c(f2), unk60(b), unk64(this),
-      mEaseFunc(GetEaseFunction(t)) {
-    FOREACH (it, o1->Refs()) {
+    : unk2c(this), unk40(n1), unk48(n2), unk58(f1), unk5c(f2), unk60(b), unk64(this) {
+    MILO_ASSERT(target, 0x4D);
+    mEaseFunc = GetEaseFunctionForcedInline(t);
+    FOREACH (it, target->Refs()) {
         Hmx::Object *owner = it->RefOwner();
         if (owner) {
             if (owner->ClassName() == StaticClassName()) {
@@ -55,7 +56,7 @@ PropertyTask::PropertyTask(
         }
     }
     unk64 = o2;
-    unk2c = o1;
+    unk2c = target;
     unk50 = *unk2c->Property(unk40.Array());
     unk78 = unk50.Type();
     if (unk78 == kDataString) {

@@ -269,7 +269,6 @@ Task *RndAnimatable::Animate(
 #pragma endregion
 #pragma region AnimTask
 
-// this matches, GetEaseFunction just needs to be inlined here
 AnimTask::AnimTask(
     RndAnimatable *anim,
     float start,
@@ -288,7 +287,7 @@ AnimTask::AnimTask(
     mBlendTime = 0;
     unka8 = wait;
     unkb0 = true;
-    mEaseFunc = GetEaseFunction(easeType);
+    mEaseFunc = GetEaseFunctionForcedInline(easeType);
     mListener = listener;
     MILO_ASSERT(anim, 0x213);
     mMin = Min(start, end);
