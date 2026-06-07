@@ -1106,22 +1106,21 @@ struct GPUTEXTURESIZE_3D { /* Size=0x4 */
     /* 0x0000 */ DWORD Depth : 10; /* BitPos=22 */
 };
 
+#pragma reverse_bitfield(on)
 union GPUTEXTURE_FETCH_CONSTANT { /* Size=0x18 */
     struct {
-        // i had to flip the endianness for DC3 i hate this
-        /* 0x0000 */ DWORD Tiled : 1; /* BitPos=31 */
-        /* 0x0000 */ DWORD Pitch : 9; /* BitPos=22 */
-        /* 0x0000 */ UINT : 3; /* BitPos=19 */
-        /* 0x0000 */ DWORD ClampZ : 3; /* BitPos=16 */
-        /* 0x0000 */ DWORD ClampY : 3; /* BitPos=13 */
-        /* 0x0000 */ DWORD ClampX : 3; /* BitPos=10 */
-        /* 0x0000 */ DWORD SignW : 2; /* BitPos=8 */
-        /* 0x0000 */ DWORD SignZ : 2; /* BitPos=6 */
-        /* 0x0000 */ DWORD SignY : 2; /* BitPos=4 */
-        /* 0x0000 */ DWORD SignX : 2; /* BitPos=2 */
         /* 0x0000 */ DWORD Type : 2; /* BitPos=0 */
+        /* 0x0000 */ DWORD SignX : 2; /* BitPos=2 */
+        /* 0x0000 */ DWORD SignY : 2; /* BitPos=4 */
+        /* 0x0000 */ DWORD SignZ : 2; /* BitPos=6 */
+        /* 0x0000 */ DWORD SignW : 2; /* BitPos=8 */
+        /* 0x0000 */ DWORD ClampX : 3; /* BitPos=10 */
+        /* 0x0000 */ DWORD ClampY : 3; /* BitPos=13 */
+        /* 0x0000 */ DWORD ClampZ : 3; /* BitPos=16 */
+        /* 0x0000 */ UINT : 3; /* BitPos=19 */
+        /* 0x0000 */ DWORD Pitch : 9; /* BitPos=22 */
+        /* 0x0000 */ DWORD Tiled : 1; /* BitPos=31 */
 
-        // not currently flipped (yet?)
         /* 0x0004 */ DWORD DataFormat : 6; /* BitPos=0 */
         /* 0x0004 */ DWORD Endian : 2; /* BitPos=6 */
         /* 0x0004 */ DWORD RequestSize : 2; /* BitPos=8 */
@@ -1135,21 +1134,19 @@ union GPUTEXTURE_FETCH_CONSTANT { /* Size=0x18 */
             /* 0x0000 */ GPUTEXTURESIZE_STACK Stack;
         } Size;
 
-        // i had to flip the endianness for DC3 i hate this
-        /* 0x000c */ DWORD BorderSize : 1; /* BitPos=31 */
-        /* 0x000c */ UINT : 3; /* BitPos=28 */
-        /* 0x000c */ DWORD AnisoFilter : 3; /* BitPos=25 */
-        /* 0x000c */ DWORD MipFilter : 2; /* BitPos=23 */
-        /* 0x000c */ DWORD MinFilter : 2; /* BitPos=21 */
-        /* 0x000c */ DWORD MagFilter : 2; /* BitPos=19 */
-        /* 0x000c */ INT ExpAdjust : 6; /* BitPos=13 */
-        /* 0x000c */ DWORD SwizzleW : 3; /* BitPos=10 */
-        /* 0x000c */ DWORD SwizzleZ : 3; /* BitPos=7 */
-        /* 0x000c */ DWORD SwizzleY : 3; /* BitPos=4 */
-        /* 0x000c */ DWORD SwizzleX : 3; /* BitPos=1 */
         /* 0x000c */ DWORD NumFormat : 1; /* BitPos=0 */
+        /* 0x000c */ DWORD SwizzleX : 3; /* BitPos=1 */
+        /* 0x000c */ DWORD SwizzleY : 3; /* BitPos=4 */
+        /* 0x000c */ DWORD SwizzleZ : 3; /* BitPos=7 */
+        /* 0x000c */ DWORD SwizzleW : 3; /* BitPos=10 */
+        /* 0x000c */ INT ExpAdjust : 6; /* BitPos=13 */
+        /* 0x000c */ DWORD MagFilter : 2; /* BitPos=19 */
+        /* 0x000c */ DWORD MinFilter : 2; /* BitPos=21 */
+        /* 0x000c */ DWORD MipFilter : 2; /* BitPos=23 */
+        /* 0x000c */ DWORD AnisoFilter : 3; /* BitPos=25 */
+        /* 0x000c */ UINT : 3; /* BitPos=28 */
+        /* 0x000c */ DWORD BorderSize : 1; /* BitPos=31 */
 
-        // not currently flipped (yet?)
         /* 0x0010 */ DWORD VolMagFilter : 1; /* BitPos=0 */
         /* 0x0010 */ DWORD VolMinFilter : 1; /* BitPos=1 */
         /* 0x0010 */ DWORD MinMipLevel : 4; /* BitPos=2 */
@@ -1160,17 +1157,17 @@ union GPUTEXTURE_FETCH_CONSTANT { /* Size=0x18 */
         /* 0x0010 */ INT GradExpAdjustH : 5; /* BitPos=22 */
         /* 0x0010 */ INT GradExpAdjustV : 5; /* BitPos=27 */
 
-        // i had to flip the endianness for DC3 i hate this
-        /* 0x0014 */ DWORD MipAddress : 20; /* BitPos=12 */
-        /* 0x0014 */ DWORD PackedMips : 1; /* BitPos=11 */
-        /* 0x0014 */ DWORD Dimension : 2; /* BitPos=9 */
-        /* 0x0014 */ INT AnisoBias : 4; /* BitPos=5 */
-        /* 0x0014 */ DWORD TriClamp : 2; /* BitPos=3 */
-        /* 0x0014 */ DWORD ForceBCWToMax : 1; /* BitPos=2 */
         /* 0x0014 */ DWORD BorderColor : 2; /* BitPos=0 */
+        /* 0x0014 */ DWORD ForceBCWToMax : 1; /* BitPos=2 */
+        /* 0x0014 */ DWORD TriClamp : 2; /* BitPos=3 */
+        /* 0x0014 */ INT AnisoBias : 4; /* BitPos=5 */
+        /* 0x0014 */ DWORD Dimension : 2; /* BitPos=9 */
+        /* 0x0014 */ DWORD PackedMips : 1; /* BitPos=11 */
+        /* 0x0014 */ DWORD MipAddress : 20; /* BitPos=12 */
     };
     /* 0x0000 */ DWORD dword[6];
 };
+#pragma reverse_bitfield(off)
 
 union GPUFETCH_CONSTANT { /* Size=0x18 */
     /* 0x0000 */ GPUTEXTURE_FETCH_CONSTANT Texture;
