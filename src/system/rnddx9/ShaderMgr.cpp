@@ -286,6 +286,13 @@ void DxShaderMgr::SetVConstant(VShaderConstant vsc, bool b) {
     TheDxRnd.Device()->SetVertexShaderConstantB(vsc, &msB, 1);
 }
 
+void DxShaderMgr::SetVConstant(VShaderConstant vsc, const Hmx::Matrix4 &mtx) {
+    TheDxRnd.Device()->SetVertexShaderConstantF(vsc, (const float *)&mtx.x, 1);
+    TheDxRnd.Device()->SetVertexShaderConstantF(vsc, (const float *)&mtx.y, 1);
+    TheDxRnd.Device()->SetVertexShaderConstantF(vsc, (const float *)&mtx.z, 1);
+    TheDxRnd.Device()->SetVertexShaderConstantF(vsc, (const float *)&mtx.w, 1);
+}
+
 void DxShaderMgr::SetPConstant(PShaderConstant psc, RndCubeTex *tex) {
     if (tex) {
         tex->Select(psc);

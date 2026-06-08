@@ -1,7 +1,9 @@
 #pragma once
 #include "d3d9types.h"
 #include "d3d9caps.h"
+#include "ppcintrinsics.h"
 #include "xdk/xapilibi/winerror.h"
+#include "limits.h"
 
 // Larger struct definitions and functions go here.
 
@@ -1189,27 +1191,38 @@ struct D3DDevice { /* Size=0x2b00 */
 static inline void D3DDevice_SetVertexShaderConstantF1(
     D3DDevice *pDevice, UINT StartRegister, const float *__restrict pConstantData
 ) {
-    XMVECTOR &vec = pDevice->m_Constants.VertexShaderF[StartRegister];
-    vec.x = pConstantData[0];
-    vec.y = pConstantData[1];
-    vec.z = pConstantData[2];
-    vec.w = pConstantData[3];
+    float f1 = pConstantData[0];
+    float f2 = pConstantData[1];
+    float f3 = pConstantData[2];
+    float f4 = pConstantData[3];
     pDevice->m_Pending.m_Mask[0] |= (0x8000000000000000U >> (StartRegister >> 2));
+    float *fDest = (float *)&pDevice->m_Constants.VertexShaderF[StartRegister];
+    fDest[0] = f1;
+    fDest[1] = f2;
+    fDest[2] = f3;
+    fDest[3] = f4;
+    // XMVECTOR &vec = pDevice->m_Constants.VertexShaderF[StartRegister];
+    // vec.x = pConstantData[0];
+    // vec.y = pConstantData[1];
+    // vec.z = pConstantData[2];
+    // vec.w = pConstantData[3];
 }
 
 // i dunno man
 __forceinline void D3DDevice_SetVertexShaderConstantF(
     D3DDevice *pDevice, UINT StartRegister, const float *pConstantData, UINT Vector4fCount
 ) {
-    if (Vector4fCount == 1) {
+    if (__IsIntConst(Vector4fCount) && Vector4fCount == 1) {
         D3DDevice_SetVertexShaderConstantF1(pDevice, StartRegister, pConstantData);
     } else {
+        UINT sum = (StartRegister + Vector4fCount - 1) >> 2;
+        UINT startShifted = StartRegister >> 2;
         D3DDevice_SetVertexShaderConstantFN(
             pDevice,
             StartRegister,
             pConstantData,
             Vector4fCount,
-            (0x8000000000000000U >> (StartRegister >> 2))
+            (UINT64)(LLONG_MIN >> (sum - startShifted)) >> startShifted
         );
     }
 }
@@ -1219,18 +1232,28 @@ static inline void D3DDevice_SetPixelShaderConstantF1(
     UINT StartRegister,
     const float *__restrict pConstantData
 ) {
-    XMVECTOR &vec = pDevice->m_Constants.PixelShaderF[StartRegister];
-    vec.x = pConstantData[0];
-    vec.y = pConstantData[1];
-    vec.z = pConstantData[2];
-    vec.w = pConstantData[3];
-    pDevice->m_Pending.m_Mask[0] |= (0x8000000000000000U >> (StartRegister >> 2));
+    float f1 = pConstantData[0];
+    float f2 = pConstantData[1];
+    float f3 = pConstantData[2];
+    float f4 = pConstantData[3];
+    pDevice->m_Pending.m_Mask[1] |= (0x8000000000000000U >> (StartRegister >> 2));
+    float *fDest = (float *)&pDevice->m_Constants.PixelShaderF[StartRegister];
+    fDest[0] = f1;
+    fDest[1] = f2;
+    fDest[2] = f3;
+    fDest[3] = f4;
+    // XMVECTOR &vec = pDevice->m_Constants.PixelShaderF[StartRegister];
+    // vec.x = pConstantData[0];
+    // vec.y = pConstantData[1];
+    // vec.z = pConstantData[2];
+    // vec.w = pConstantData[3];
+    // pDevice->m_Pending.m_Mask[1] |= (0x8000000000000000U >> (StartRegister >> 2));
 }
 
 __forceinline void D3DDevice_SetPixelShaderConstantF(
     D3DDevice *pDevice, UINT StartRegister, const float *pConstantData, UINT Vector4fCount
 ) {
-    if (Vector4fCount == 1) {
+    if (__IsIntConst(Vector4fCount) && Vector4fCount == 1) {
         D3DDevice_SetPixelShaderConstantF1(pDevice, StartRegister, pConstantData);
     } else {
         D3DDevice_SetPixelShaderConstantFN(

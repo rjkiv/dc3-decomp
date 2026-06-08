@@ -11,15 +11,22 @@ double __frsqrte(double);
 void __SetHWThreadPriorityLow();
 void __SetHWThreadPriorityMed();
 void __SetHWThreadPriorityHigh();
+
+// __builtin_constant_p at home
+// basically constexpr before constexpr
 int __IsIntConst(int);
 // i have no idea what the params are, i just know there's 2 of them
-void __GPRSetReg(long, unsigned long long);
+void __GPRSetReg(long reg, unsigned long long value);
 // i have no idea what the params are, i just know there's 1 of them
-unsigned long long __GPRGetReg(long);
+unsigned long long __GPRGetReg(long reg);
+// atomic fences before atomic fences
 void _WriteBarrier();
-void *_ReturnAddress();
 void _ReadWriteBarrier();
 void _ReadBarrier();
+// __builtin_return_address at home
+void *_ReturnAddress();
+
+// atomics before atomics
 long long _InterlockedXor64(long long volatile *Value, long long Mask);
 long _InterlockedXor(long volatile *Value, long Mask);
 long long _InterlockedOr64(long long volatile *Value, long long Mask);

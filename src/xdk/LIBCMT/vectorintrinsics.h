@@ -86,8 +86,8 @@ extern "C" {
 
 // VMX128 Intrinsics let's goooooooo
 
-void __VMXSetReg(long, XMVECTOR);
-XMVECTOR __VMXGetReg(long);
+void __VMXSetReg(long reg, XMVECTOR value);
+XMVECTOR __VMXGetReg(long reg);
 
 // Based on what I found from pdbs,
 // lvx and stvx are the only two VMX128 intrinsics
