@@ -5,10 +5,23 @@
 #include "os/Memory.h"
 #include "rnddx9/Utl.h"
 #include "rndobj/Mesh.h"
+#include "rndobj/MeshVertCompress.h"
 #include "rndobj/Stats_NG.h"
 #include "xdk/D3D9.h"
 #include "xdk/d3d9i/d3d9.h"
 #include "xdk/d3d9i/d3d9types.h"
+
+void DxMesh::VertexBufferData::SetData(D3DVertexBuffer *buffer, unsigned int size) {
+    MILO_ASSERT(buffer != NULL, 0x1E);
+    MILO_ASSERT(size > 0, 0x1F);
+    mBuffer = buffer;
+    mSize = size;
+}
+
+void DxMesh::VertexBufferData::Release() {
+    DX_RELEASE(mBuffer);
+    mSize = 0;
+}
 
 DxMesh::DxMesh() : mNumVerts(0), mNumFaces(0), unk1ac(0), unk1b0(0) {
     // clang-format off
@@ -67,11 +80,11 @@ BEGIN_COPYS(DxMesh)
     CREATE_COPY(DxMesh)
     if (c && this == mGeomOwner && mMutable == 0) {
         PhysMemTypeTracker t("D3D(phys):Mesh");
-        unk1a4.Release();
+        mVertexBufferData.Release();
         COPY_MEMBER(mNumVerts)
         if (mNumVerts != 0) {
-            D3DVertexBuffer *buffer = CloneVertexBuffer(c->unk1a4.buffer);
-            unk1a4.SetData(buffer, c->unk1a4.size);
+            D3DVertexBuffer *buffer = CloneVertexBuffer(c->mVertexBufferData.mBuffer);
+            mVertexBufferData.SetData(buffer, c->mVertexBufferData.mSize);
         }
         DX_RELEASE(unk1ac);
         COPY_MEMBER(mNumFaces)
@@ -116,7 +129,7 @@ void DxMesh::DrawFacesInRange(int x, int y) {
             y = mNumFaces;
         }
         device->SetIndices(unk1ac);
-        D3DVertexBuffer *buffer = unk1a4.buffer;
+        D3DVertexBuffer *buffer = mVertexBufferData.mBuffer;
         device->SetStreamSource(0, buffer, 0, VertSize());
         device->SetVertexDeclaration(sVertexDecl);
         TheNgStats->mRegMeshes++;
@@ -130,6 +143,23 @@ void DxMesh::DrawFacesInRange(int x, int y) {
         }
         device->SetIndices(nullptr);
     }
+}
+
+void DxMesh::Fill(RndMesh::Vert *v1, RndMesh::Vert *v2) {
+    VBLock<CompressedVertex_Xbox> lock(mVertexBufferData.mBuffer, 0);
+    if (v1 != v2) {
+        CompressedVertex_Xbox *xboxIt = lock.Data();
+        for (; v1 != v2; ++v1, ++xboxIt) {
+            FillCompressedVertex(*xboxIt, *v1, false);
+        }
+    }
+}
+
+void DxMesh::FillCompressedVerts() {
+    MILO_ASSERT(mNumCompressedVerts > 0, 0x115);
+    MILO_ASSERT(mCompressedVerts != NULL, 0x116);
+    VBLock<CompressedVertex_Xbox> lock(mVertexBufferData.mBuffer, 0);
+    memcpy(lock.Data(), mCompressedVerts, mNumCompressedVerts * VertSize());
 }
 
 void _fake(void) {

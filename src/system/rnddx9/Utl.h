@@ -17,6 +17,7 @@ public:
     }
     virtual ~BufLock() { mBuf->Unlock(); }
 
+protected:
     T *mBuf;
     void *mDataAddr;
 };
@@ -26,6 +27,8 @@ class VBLock : public BufLock<D3DVertexBuffer> {
 public:
     VBLock(D3DVertexBuffer *buf, uint flags) : BufLock(buf, flags) {}
     virtual ~VBLock() {}
+
+    T *Data() const { return (T *)mDataAddr; }
 };
 
 template <typename T = void>
@@ -33,6 +36,8 @@ class IBLock : public BufLock<D3DIndexBuffer> {
 public:
     IBLock(D3DIndexBuffer *buf, uint flags) : BufLock(buf, flags) {}
     virtual ~IBLock() {}
+
+    T *Data() const { return (T *)mDataAddr; }
 };
 
 struct D3DVertexBuffer *MakeVertexBuffer(int, uint, uint, bool);

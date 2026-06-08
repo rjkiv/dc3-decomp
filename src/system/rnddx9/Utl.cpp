@@ -44,7 +44,7 @@ D3DVertexBuffer *CloneVertexBuffer(D3DVertexBuffer *in) {
     DX_ASSERT(hr, 49);
     VBLock<> lock_in(in, 0);
     VBLock<> lock_out(out, 0);
-    memcpy(lock_out.mDataAddr, lock_in.mDataAddr, desc.Size);
+    memcpy(lock_out.Data(), lock_in.Data(), desc.Size);
     return out;
 }
 
@@ -61,6 +61,6 @@ D3DIndexBuffer *CloneIndexBuffer(D3DIndexBuffer *in) {
     DX_ASSERT(hr, 86);
     IBLock<> lock_in(in, 0);
     IBLock<> lock_out(out, 0);
-    memcpy(lock_out.mDataAddr, lock_in.mDataAddr, desc.Size);
+    memcpy(lock_out.Data(), lock_in.Data(), desc.Size);
     return out;
 }

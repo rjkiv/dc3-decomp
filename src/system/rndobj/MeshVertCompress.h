@@ -14,6 +14,7 @@ struct CompressedVertex_Xbox {
     unsigned int unk20; // packed boneIndices
 };
 
+// defined twice in rndobj and rnddx9, guess they forgot to inline it
 void PackVector(
     unsigned int &,
     const Vector4 &,
@@ -24,8 +25,10 @@ void PackVector(
     bool
 );
 
-inline void
-FillCompressedVertex(CompressedVertex_Xbox &vertXbox, const RndMesh::Vert &vert, bool b3) {
+// defined twice in rndobj and rnddx9, guess they forgot to inline it
+void FillCompressedVertex(
+    CompressedVertex_Xbox &vertXbox, const RndMesh::Vert &vert, bool b3
+) {
     vertXbox.unkc = vert.color.PackAlpha();
     PackVector(vertXbox.unk1c, vert.boneWeights, 10, 10, 10, 2, false);
     vertXbox.unk0 = vert.pos.x;

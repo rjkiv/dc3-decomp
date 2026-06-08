@@ -10,13 +10,13 @@
 class DxMesh : public RndMesh, public DxObject {
 public:
     struct VertexBufferData {
-        VertexBufferData() : buffer(0), size(0) {}
+        VertexBufferData() : mBuffer(0), mSize(0) {}
         ~VertexBufferData() { Release(); }
         void Release();
         void SetData(D3DVertexBuffer *, unsigned int);
 
-        D3DVertexBuffer *buffer;
-        unsigned int size;
+        D3DVertexBuffer *mBuffer;
+        unsigned int mSize;
     };
     // Hmx::Object
     virtual ~DxMesh();
@@ -44,11 +44,13 @@ protected:
     static D3DVertexDeclaration *sMutableSkinnedVertexDecl;
 
     unsigned int VertSize() const;
+    void Fill(Vert *, Vert *);
+    void FillCompressedVerts();
 
-    std::vector<Transform> unk190;
+    std::vector<Transform> unk190; // 0x190
     int mNumVerts; // 0x19c
     int mNumFaces; // 0x1a0
-    VertexBufferData unk1a4;
-    D3DIndexBuffer *unk1ac;
-    D3DResource *unk1b0;
+    VertexBufferData mVertexBufferData; // 0x1a4
+    D3DIndexBuffer *unk1ac; // 0x1ac
+    D3DResource *unk1b0; // 0x1b0
 };
