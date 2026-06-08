@@ -516,6 +516,24 @@ void D3DDevice_SetPixelShaderConstantB(
 
 void D3DDevice_SetPredication(D3DDevice *pDevice, UINT TilePredication);
 
+HRESULT D3DDevice_BeginIndexedVertices(
+    D3DDevice *pDevice,
+    D3DPRIMITIVETYPE PrimitiveType,
+    INT BaseVertexIndex,
+    UINT NumVertices,
+    UINT IndexCount,
+    D3DFORMAT IndexDataFormat,
+    UINT VertexStreamZeroStride,
+    void **ppIndexData,
+    void **
+);
+
+void D3DDevice_EndIndexedVertices(D3DDevice *pDevice);
+
+void D3DDevice_SetVertexDeclaration(
+    D3DDevice *pDevice, D3DVertexDeclaration *pDeclaration
+);
+
 // C++
 struct D3DDevice { /* Size=0x2b00 */
     /* 0x0000 */ _D3DTAGCOLLECTION m_Pending;
@@ -897,7 +915,10 @@ struct D3DDevice { /* Size=0x2b00 */
         *ppDecl = D3DDevice_CreateVertexDeclaration(pVertexElements);
         return *ppDecl ? S_OK : E_OUTOFMEMORY;
     }
-    HRESULT SetVertexDeclaration(D3DVertexDeclaration *pDecl);
+    HRESULT SetVertexDeclaration(D3DVertexDeclaration *pDecl) {
+        D3DDevice_SetVertexDeclaration(this, pDecl);
+        return S_OK;
+    }
     HRESULT GetVertexDeclaration(D3DVertexDeclaration **ppDecl);
     HRESULT SetScissorRect(const RECT *pRect);
     HRESULT GetScissorRect(RECT *pRect);
@@ -1029,9 +1050,24 @@ struct D3DDevice { /* Size=0x2b00 */
         D3DFORMAT IndexDataFormat,
         UINT VertexStreamZeroStride,
         void **ppIndexData,
-        void **
-    );
-    HRESULT EndIndexedVertices();
+        void **v
+    ) {
+        return D3DDevice_BeginIndexedVertices(
+            this,
+            PrimitiveType,
+            BaseVertexIndex,
+            NumVertices,
+            IndexCount,
+            IndexDataFormat,
+            VertexStreamZeroStride,
+            ppIndexData,
+            v
+        );
+    }
+    HRESULT EndIndexedVertices() {
+        D3DDevice_EndIndexedVertices(this);
+        return S_OK;
+    }
     DWORD InsertFence() { return D3DDevice_InsertFence(this); }
     HRESULT BlockOnFence(DWORD fence) {
         D3DDevice_BlockOnFence(fence);

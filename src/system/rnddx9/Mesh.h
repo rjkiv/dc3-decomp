@@ -5,6 +5,7 @@
 #include "rndobj/Mesh.h"
 #include "utl/PoolAlloc.h"
 #include "xdk/D3D9.h"
+#include "xdk/d3d9i/d3d9.h"
 
 class DxMesh : public RndMesh, public DxObject {
 public:
@@ -12,6 +13,7 @@ public:
         VertexBufferData() : buffer(0), size(0) {}
         ~VertexBufferData() { Release(); }
         void Release();
+        void SetData(D3DVertexBuffer *, unsigned int);
 
         D3DVertexBuffer *buffer;
         unsigned int size;
@@ -41,10 +43,12 @@ protected:
     static D3DVertexDeclaration *sMutableVertexDecl;
     static D3DVertexDeclaration *sMutableSkinnedVertexDecl;
 
+    unsigned int VertSize() const;
+
     std::vector<Transform> unk190;
     int mNumVerts; // 0x19c
     int mNumFaces; // 0x1a0
     VertexBufferData unk1a4;
-    D3DResource *unk1ac;
+    D3DIndexBuffer *unk1ac;
     D3DResource *unk1b0;
 };

@@ -3013,7 +3013,7 @@ system/rnddx9/Movie.cpp:
 	.rdata      start:0x822980E8 end:0x82298194 rename:.rdata$r
 	.pdata      start:0x822D49A8 end:0x822D4A70
 	.text       start:0x8261F340 end:0x82620178
-	.data       start:0x82F134C8 end:0x82F13624
+	.data       start:0x82F134C8 end:0x82F13518
 	.data       start:0x830A17F8 end:0x830A1800 rename:.bss
 
 system/rnddx9/Env.cpp:
@@ -3026,7 +3026,7 @@ system/rnddx9/Mesh.cpp:
 	.pdata      start:0x822D4A70 end:0x822D4BC8
 	.text       start:0x82620180 end:0x82622AF0
 	.text       start:0x82EE2750 end:0x82EE2770 rename:.text$yd
-	.data       start:0x82F13624 end:0x82F137A4
+	.data       start:0x82F13518 end:0x82F137A4
 	.data       start:0x830A1800 end:0x830A182C rename:.bss
 
 system/rnddx9/MultiMesh.cpp:
@@ -3042,7 +3042,7 @@ system/rnddx9/Lit.cpp:
 	.rdata      start:0x822984A4 end:0x822985EC rename:.rdata$r
 	.pdata      start:0x822D4CD8 end:0x822D4D60
 	.text       start:0x82624050 end:0x82624888
-	.data       start:0x82F137DC end:0x82F13860
+	.data       start:0x82F137DC end:0x82F13824
 	.data       start:0x830A1854 end:0x830A186C rename:.bss
 
 system/rnddx9/Part.cpp:
@@ -3050,7 +3050,7 @@ system/rnddx9/Part.cpp:
 	.rdata      start:0x822985EC end:0x822987C8 rename:.rdata$r
 	.pdata      start:0x822D4D60 end:0x822D4DF8
 	.text       start:0x82624888 end:0x826257F0
-	.data       start:0x82F13860 end:0x82F1387C
+	.data       start:0x82F13824 end:0x82F1387C
 	.data       start:0x830A186C end:0x830A1888 rename:.bss
 
 system/rnddx9/Mat.cpp:
