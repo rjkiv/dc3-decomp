@@ -3,6 +3,7 @@
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/Memory.h"
+#include "os/System.h"
 #include "rnddx9/Utl.h"
 #include "rndobj/Mesh.h"
 #include "rndobj/MeshVertCompress.h"
@@ -160,6 +161,28 @@ void DxMesh::FillCompressedVerts() {
     MILO_ASSERT(mCompressedVerts != NULL, 0x116);
     VBLock<CompressedVertex_Xbox> lock(mVertexBufferData.mBuffer, 0);
     memcpy(lock.Data(), mCompressedVerts, mNumCompressedVerts * VertSize());
+}
+
+unsigned int DxMesh::VertSize() const {
+    if (GetGfxMode() == kNewGfx) {
+        return 0x24;
+    } else {
+        return IsSkinned() ? 0x30 : 0x24;
+    }
+}
+
+unsigned int DxMesh::VertFVF() const {
+    if (GetGfxMode() == kNewGfx) {
+        return 0;
+    } else {
+        return IsSkinned() ? 0x61 : 0x152;
+    }
+}
+
+bool DxMesh::CanDraw() const {
+    D3DVertexBuffer *buf = mVertexBufferData.mBuffer;
+    bool lmao = buf && unk1ac;
+    return lmao || mMutable;
 }
 
 void _fake(void) {

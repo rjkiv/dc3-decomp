@@ -228,3 +228,22 @@ inline float Limit(float f1, float f2, float f3, int &i) {
     i = floored;
     return -(i * fsub - f3);
 }
+
+__forceinline unsigned short FloatToHalfFloat(float x) {
+    unsigned int fInt = *(unsigned int *)&x;
+    unsigned int abs = fInt & 0x7FFFFFFF;
+    unsigned int sign = (fInt >> 16) & 0x8000;
+
+    if (abs > 0x47FFEFFF) {
+        return sign | 0x7FFF;
+    }
+
+    unsigned int mant;
+
+    if (abs < 0x38800000) {
+        mant = ((abs & 0x7FFFFF) | 0x800000) >> ((113 - (abs >> 23)));
+    } else {
+        mant = abs - 0x38000000;
+    }
+    return sign | (unsigned short)(((((mant >> 13) & 1) + mant + 0xFFF) >> 13) & 0xFFFF);
+}

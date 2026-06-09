@@ -44,10 +44,12 @@ protected:
     static D3DVertexDeclaration *sMutableSkinnedVertexDecl;
 
     unsigned int VertSize() const;
+    unsigned int VertFVF() const;
+    bool CanDraw() const;
     void Fill(Vert *, Vert *);
     void FillCompressedVerts();
 
-    std::vector<Transform> unk190; // 0x190
+    std::vector<Transform> mTransformCache; // 0x190
     int mNumVerts; // 0x19c
     int mNumFaces; // 0x1a0
     VertexBufferData mVertexBufferData; // 0x1a4
