@@ -27,6 +27,96 @@ int RndMesh::sLastCollide = -1;
 int MESH_REV_SEP_COLOR = 0x25;
 CompressedVertex_Xbox gCompressedVertexXbox;
 
+void PatchVerts::Add(int i1, RndMesh::VertVector &vertVec, Vector3 &vec) {
+    mPatchVerts.insert(mPatchVerts.begin() + GreaterEq(i1), i1);
+    mCentroid += vertVec[i1].pos;
+    vec = mCentroid;
+    vec *= (1.0f / mPatchVerts.size());
+}
+
+#pragma region VertVector
+
+void RndMesh::VertVector::resize(int n) {
+    if (mCapacity > 0) {
+        MILO_ASSERT(n <= mCapacity, 0x227);
+        mNumVerts = n;
+    } else if (n == 0) {
+        delete[] mVerts;
+        mVerts = nullptr;
+        mNumVerts = 0;
+    } else if (n != mNumVerts) {
+        Vert *oldverts = mVerts;
+        Vert *oldit = oldverts;
+        Vert *end = oldverts + Min(n, size());
+        mVerts = new Vert[n];
+        mNumVerts = n;
+
+        Vert *newit = mVerts;
+        while (oldit != end) {
+            *newit++ = *oldit++;
+        }
+
+        delete[] oldverts;
+    }
+}
+
+void RndMesh::VertVector::operator=(const RndMesh::VertVector &c) {
+    MILO_ASSERT(mCapacity == 0, 0x26D);
+    MILO_ASSERT(c.mCapacity == 0, 0x26E);
+    if (c.mNumVerts != mNumVerts) {
+        delete mVerts;
+        mNumVerts = c.mNumVerts;
+        mVerts = new Vert[mNumVerts];
+    }
+    Vert *otherVerts = c.mVerts;
+    Vert *otherEnd = &otherVerts[mNumVerts];
+    Vert *myVerts = mVerts;
+    while (otherVerts != otherEnd) {
+        *myVerts++ = *otherVerts++;
+    }
+}
+
+BEGIN_CUSTOM_PROPSYNC(RndMesh::Vert)
+    SYNC_PROP(pos, o.pos)
+    SYNC_PROP(norm, o.norm)
+    SYNC_PROP(color, o.color)
+    SYNC_PROP(alpha, o.color.alpha)
+    SYNC_PROP(tex, o.tex)
+END_CUSTOM_PROPSYNC
+
+bool PropSync(
+    RndMesh ::VertVector &vec, DataNode &node, DataArray *prop, int i, PropOp op
+) {
+    if (op == kPropUnknown0x40)
+        return false;
+    else if (i == prop->Size()) {
+        MILO_ASSERT(op == kPropSize, 0xA7D);
+        node = (int)vec.size();
+        return true;
+    } else {
+        RndMesh::Vert &vert = vec[prop->Int(i++)];
+        if (i < prop->Size() || op & (kPropGet | kPropSet | kPropSize)) {
+            if (vec.size() > 0) {
+                if (op & kPropSet) {
+                    vec.unkc = true;
+                }
+                return PropSync(vert, node, prop, i, op);
+            } else {
+                MILO_NOTIFY_ONCE(
+                    "Cannot modify verts (check if keep_mesh_data is set on the mesh)"
+                );
+            }
+            return true;
+        } else {
+            MILO_NOTIFY("Cannot add or remove verts of a mesh via property system");
+        }
+        return true;
+    }
+}
+
+#pragma endregion
+#pragma region RndMesh
+
 RndMesh::RndMesh()
     : mMat(this), mGeomOwner(this, this), mBones(this), mMutable(0),
       mVolume(kVolumeTriangles), mBSPTree(nullptr), mMultiMesh(nullptr), mHasAOCalc(0),
@@ -91,48 +181,10 @@ bool RndMesh::HasInstancedBones() {
     return mGeomOwner && !mBones.empty() && mGeomOwner->mBones.Owner() == mBones.Owner();
 }
 
-BEGIN_CUSTOM_PROPSYNC(RndMesh::Vert)
-    SYNC_PROP(pos, o.pos)
-    SYNC_PROP(norm, o.norm)
-    SYNC_PROP(color, o.color)
-    SYNC_PROP(alpha, o.color.alpha)
-    SYNC_PROP(tex, o.tex)
-END_CUSTOM_PROPSYNC
-
 BEGIN_CUSTOM_PROPSYNC(RndBone)
     SYNC_PROP(bone, o.mBone)
     SYNC_PROP(offset, o.mOffset)
 END_CUSTOM_PROPSYNC
-
-bool PropSync(
-    RndMesh ::VertVector &vec, DataNode &node, DataArray *prop, int i, PropOp op
-) {
-    if (op == kPropUnknown0x40)
-        return false;
-    else if (i == prop->Size()) {
-        MILO_ASSERT(op == kPropSize, 0xA7D);
-        node = (int)vec.size();
-        return true;
-    } else {
-        RndMesh::Vert &vert = vec[prop->Int(i++)];
-        if (i < prop->Size() || op & (kPropGet | kPropSet | kPropSize)) {
-            if (vec.size() > 0) {
-                if (op & kPropSet) {
-                    vec.unkc = true;
-                }
-                return PropSync(vert, node, prop, i, op);
-            } else {
-                MILO_NOTIFY_ONCE(
-                    "Cannot modify verts (check if keep_mesh_data is set on the mesh)"
-                );
-            }
-            return true;
-        } else {
-            MILO_NOTIFY("Cannot add or remove verts of a mesh via property system");
-        }
-        return true;
-    }
-}
 
 BEGIN_PROPSYNCS(RndMesh)
     SYNC_PROP(mat, mMat)
@@ -794,46 +846,6 @@ void RndMesh::SaveVertices(BinStream &bs) {
     }
 }
 
-void RndMesh::VertVector::operator=(const RndMesh::VertVector &c) {
-    MILO_ASSERT(mCapacity == 0, 0x26D);
-    MILO_ASSERT(c.mCapacity == 0, 0x26E);
-    if (c.mNumVerts != mNumVerts) {
-        delete mVerts;
-        mNumVerts = c.mNumVerts;
-        mVerts = new Vert[mNumVerts];
-    }
-    Vert *otherVerts = c.mVerts;
-    Vert *otherEnd = &otherVerts[mNumVerts];
-    Vert *myVerts = mVerts;
-    while (otherVerts != otherEnd) {
-        *myVerts++ = *otherVerts++;
-    }
-}
-
-void RndMesh::VertVector::resize(int n) {
-    if (mCapacity > 0) {
-        MILO_ASSERT(n <= mCapacity, 0x227);
-        mNumVerts = n;
-    } else if (n == 0) {
-        delete[] mVerts;
-        mVerts = nullptr;
-        mNumVerts = 0;
-    } else if (n != mNumVerts) {
-        Vert *oldverts = mVerts;
-        Vert *oldit = oldverts;
-        Vert *end = oldverts + Min(n, size());
-        mVerts = new Vert[n];
-        mNumVerts = n;
-
-        Vert *newit = mVerts;
-        while (oldit != end) {
-            *newit++ = *oldit++;
-        }
-
-        delete[] oldverts;
-    }
-}
-
 int RndMesh::EstimatedSizeKb() const {
     // sizeof(Vert) is 0x50 here
     // but the actual struct is size 0x60
@@ -1155,3 +1167,5 @@ DataNode RndMesh::OnConfigureMesh(const DataArray *da) {
     }
     return 0;
 }
+
+#pragma endregion

@@ -269,20 +269,20 @@ public:
             return false;
     }
 
+protected:
     int GreaterEq(int iii) const {
-        if (!mPatchVerts.empty() && mPatchVerts.front() < iii) {
-            if (mPatchVerts.back() < iii) {
+        if (!mPatchVerts.empty() && iii > mPatchVerts.front()) {
+            if (iii > mPatchVerts.back()) {
                 return mPatchVerts.size();
             } else {
                 int u5 = 0;
                 int u2 = mPatchVerts.size() - 1;
-                if (u5 + 1 < u2) {
+                while (u2 > u5 + 1) {
                     int u4 = (u5 + u2) >> 1;
                     int curVert = mPatchVerts[u4];
-                    if (curVert < iii) {
+                    if (iii > curVert) {
                         u5 = u4;
-                    }
-                    if (iii <= curVert) {
+                    } else {
                         u2 = u4;
                     }
                 }
@@ -292,7 +292,6 @@ public:
             return 0;
     }
 
-protected:
     Vector3 mCentroid; // 0x0
-    std::vector<int> mPatchVerts; // 0xc
+    std::vector<int> mPatchVerts; // 0x10
 };
