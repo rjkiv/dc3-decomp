@@ -145,7 +145,7 @@ public:
     virtual int NumFaces() const { return mFaces.size(); }
     /** "Number of verts in the mesh" */
     virtual int NumVerts() const { return mVerts.size(); }
-    virtual void OnSync(int);
+    virtual void OnSync(int flags);
 
     OBJ_MEM_OVERLOAD(0x2E);
     NEW_OBJ(RndMesh)
@@ -254,7 +254,7 @@ public:
 
     int NumVerts() const { return mPatchVerts.size(); }
 
-    void Add(int, RndMesh::VertVector &, Vector3 &);
+    void Add(int vert, RndMesh::VertVector &verts, Vector3 &centroid);
 
     void Clear() {
         mPatchVerts.clear();

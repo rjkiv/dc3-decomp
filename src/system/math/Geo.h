@@ -65,7 +65,12 @@ inline BinStream &operator>>(BinStream &bs, Hmx::Rect &rect) {
 
 class Triangle {
 public:
-    void Set(const Vector3 &, const Vector3 &, const Vector3 &);
+    void Set(const Vector3 &v1, const Vector3 &v2, const Vector3 &v3) {
+        origin = v1;
+        Subtract(v2, v1, frame.x);
+        Subtract(v3, v1, frame.y);
+        Cross(frame.x, frame.y, frame.z);
+    }
 
     Vector3 origin;
     Hmx::Matrix3 frame;

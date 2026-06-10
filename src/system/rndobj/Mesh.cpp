@@ -27,11 +27,11 @@ int RndMesh::sLastCollide = -1;
 int MESH_REV_SEP_COLOR = 0x25;
 CompressedVertex_Xbox gCompressedVertexXbox;
 
-void PatchVerts::Add(int i1, RndMesh::VertVector &vertVec, Vector3 &vec) {
-    mPatchVerts.insert(mPatchVerts.begin() + GreaterEq(i1), i1);
-    mCentroid += vertVec[i1].pos;
-    vec = mCentroid;
-    vec *= (1.0f / mPatchVerts.size());
+void PatchVerts::Add(int vert, RndMesh::VertVector &verts, Vector3 &centroid) {
+    mPatchVerts.insert(mPatchVerts.begin() + GreaterEq(vert), vert);
+    mCentroid += verts[vert].pos;
+    centroid = mCentroid;
+    centroid *= (1.0f / mPatchVerts.size());
 }
 
 #pragma region VertVector
@@ -178,7 +178,7 @@ BEGIN_HANDLERS(RndMesh)
 END_HANDLERS
 
 bool RndMesh::HasInstancedBones() {
-    return mGeomOwner && !mBones.empty() && mGeomOwner->mBones.Owner() == mBones.Owner();
+    return mGeomOwner && !mBones.empty() && mGeomOwner->mBones.Owner() != mBones.Owner();
 }
 
 BEGIN_CUSTOM_PROPSYNC(RndBone)
@@ -247,12 +247,14 @@ BEGIN_COPYS(RndMesh)
     CREATE_COPY(RndMesh)
     BEGIN_COPYING_MEMBERS
         COPY_MEMBER(mMat)
-        if (ty != kCopyFromMax)
+        if (ty != kCopyFromMax) {
             COPY_MEMBER(mKeepMeshData)
-        if (ty == kCopyFromMax)
+        }
+        if (ty == kCopyFromMax) {
             mMutable |= c->mMutable;
-        else
+        } else {
             COPY_MEMBER(mMutable)
+        }
         mHasAOCalc = false;
         if (ty == kCopyShallow || (ty == kCopyFromMax && c->mGeomOwner != c)) {
             mGeomOwner = c->mGeomOwner.Ptr();
@@ -600,7 +602,7 @@ float RndMesh::GetDistanceToPlane(const Plane &p, Vector3 &v) {
         Multiply(Verts()[0].pos, world, v58);
         v = v58;
         float dot = p.Dot(v);
-        for (Vert *it = Verts().begin(); it != Verts().end(); ++it) {
+        FOREACH (it, Verts()) {
             Multiply(it->pos, world, v58);
             float dotted = p.Dot(v58);
             if (std::fabs(dotted) < std::fabs(dot)) {
@@ -612,8 +614,8 @@ float RndMesh::GetDistanceToPlane(const Plane &p, Vector3 &v) {
     }
 }
 
-bool RndMesh::MakeWorldSphere(Sphere &s, bool b) {
-    if (b) {
+bool RndMesh::MakeWorldSphere(Sphere &s, bool zero) {
+    if (zero) {
         if (Showing()) {
             Box box;
             CalcBox(this, box);
@@ -621,7 +623,7 @@ bool RndMesh::MakeWorldSphere(Sphere &s, bool b) {
             CalcBoxCenter(v68, box);
             s.Set(v68, 0);
             const Transform &worldXfm = WorldXfm();
-            for (Vert *it = Verts().begin(); it != Verts().end(); ++it) {
+            FOREACH (it, Verts()) {
                 Vector3 v50;
                 Multiply(it->pos, worldXfm, v50);
                 Vector3 v5c;
@@ -646,57 +648,58 @@ void RndMesh::Mats(std::list<RndMat *> &mats, bool) {
     }
 }
 
-// RndDrawable *RndMesh::CollideShowing(const Segment &seg, float &f, Plane &pl) {
-//     Segment sega0;
-//     Transform tf58;
-//     sLastCollide = -1;
-//     if (IsSkinned() || sRawCollide)
-//         sega0 = seg;
-//     else {
-//         FastInvert(WorldXfm(), tf58);
-//         Multiply(seg.start, tf58, sega0.start);
-//         Multiply(seg.end, tf58, sega0.end);
-//     }
-//     if (mGeomOwner->mBSPTree) {
-//         if (Intersect(sega0, mGeomOwner->mBSPTree, f, pl) && f) {
-//             Multiply(pl, WorldXfm(), pl);
-//             return this;
-//         }
-//     } else {
-//         if (GetVolume() == kVolumeTriangles) {
-//             bool b1 = false;
-//             f = 1.0f;
-//             FOREACH (it, Faces()) {
-//                 const Vert &vert0 = Verts(it->v1);
-//                 const Vert &vert1 = Verts(it->v2);
-//                 const Vert &vert2 = Verts(it->v3);
-//                 Triangle tri;
-//                 if (IsSkinned() && !sRawCollide) {
-//                     tri.Set(
-//                         SkinVertex(vert0, nullptr),
-//                         SkinVertex(vert1, nullptr),
-//                         SkinVertex(vert2, nullptr)
-//                     );
-//                 } else
-//                     tri.Set(vert0.pos, vert1.pos, vert2.pos);
-//                 float fintersect;
-//                 if (Intersect(sega0, tri, false, fintersect)) {
-//                     Interp(sega0.start, sega0.end, fintersect, sega0.end);
-//                     f *= fintersect;
-//                     pl.Set(tri.origin, tri.frame.z);
-//                     b1 = true;
-//                     sLastCollide = (it - Faces().begin());
-//                 }
-//             }
-//             if (b1) {
-//                 if (!sRawCollide)
-//                     Multiply(pl, WorldXfm(), pl);
-//                 return this;
-//             }
-//         }
-//     }
-//     return 0;
-// }
+RndDrawable *RndMesh::CollideShowing(const Segment &seg, float &f, Plane &pl) {
+    Segment sega0;
+    Transform tf58;
+    sLastCollide = -1;
+    if (IsSkinned() || sRawCollide)
+        sega0 = seg;
+    else {
+        FastInvert(WorldXfm(), tf58);
+        Multiply(seg.start, tf58, sega0.start);
+        Multiply(seg.end, tf58, sega0.end);
+    }
+    if (mGeomOwner->mBSPTree) {
+        if (Intersect(sega0, mGeomOwner->mBSPTree, f, pl) && f) {
+            Multiply(pl, WorldXfm(), pl);
+            return this;
+        }
+    } else {
+        if (GetVolume() == kVolumeTriangles) {
+            f = 1.0f;
+            bool b1 = false;
+            bool bbb = mMat && mMat->GetCull() != kCullNone;
+            FOREACH (it, Faces()) {
+                const Vert &vert0 = Verts(it->v1);
+                const Vert &vert1 = Verts(it->v2);
+                const Vert &vert2 = Verts(it->v3);
+                Triangle tri;
+                if (IsSkinned() && !sRawCollide) {
+                    tri.Set(
+                        SkinVertex(vert0, nullptr),
+                        SkinVertex(vert1, nullptr),
+                        SkinVertex(vert2, nullptr)
+                    );
+                } else
+                    tri.Set(vert0.pos, vert1.pos, vert2.pos);
+                float fintersect;
+                if (Intersect(sega0, tri, bbb, fintersect)) {
+                    Interp(sega0.start, sega0.end, fintersect, sega0.end);
+                    f *= fintersect;
+                    pl.Set(tri.origin, tri.frame.z);
+                    b1 = true;
+                    sLastCollide = (it - Faces().begin());
+                }
+            }
+            if (b1) {
+                if (!sRawCollide)
+                    Multiply(pl, WorldXfm(), pl);
+                return this;
+            }
+        }
+    }
+    return 0;
+}
 
 int RndMesh::CollidePlane(const Plane &plane) {
     int super = RndDrawable::CollidePlane(plane);
@@ -707,16 +710,18 @@ int RndMesh::CollidePlane(const Plane &plane) {
     Plane pl58;
     Multiply(plane, tf48, pl58);
     if (GetVolume() == kVolumeTriangles) {
-        if (Faces().empty())
+        auto &faces = Faces();
+        if (faces.empty())
             return -1;
         else {
-            std::vector<Face>::iterator faceIt = Faces().begin();
+            auto faceIt = faces.begin();
             int faceColl = CollidePlane(*faceIt, pl58);
             if (faceColl == 0)
                 return 0;
             else {
+                auto facesEnd = faces.end();
                 ++faceIt;
-                for (; faceIt != Faces().end(); ++faceIt) {
+                for (; faceIt != facesEnd; ++faceIt) {
                     if (faceColl != CollidePlane(*faceIt, pl58)) {
                         return 0;
                     }

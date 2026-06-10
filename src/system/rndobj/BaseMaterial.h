@@ -162,6 +162,7 @@ public:
     bool AllowDistortionEffects() const { return mAllowDistortionEffects; }
     bool AlphaWrite() const { return mAlphaWrite; }
     bool ForceAlphaWrite() const { return mForceAlphaWrite; }
+    Cull GetCull() const { return mCull; }
 
 protected:
     BaseMaterial();
