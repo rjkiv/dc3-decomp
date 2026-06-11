@@ -1033,6 +1033,57 @@ void RndMesh::CopyGeometry(const RndMesh *mesh, bool b2) {
     mBones = mesh->mBones;
 }
 
+int RndMesh::CollidePlane(const RndMesh::Face &face, const Plane &plane) {
+    bool first = Verts(face.v1).pos <= plane;
+    bool second = Verts(face.v2).pos <= plane;
+    bool third = Verts(face.v3).pos <= plane;
+    if (first == second && second == third) {
+        return first ? 1 : -1;
+    } else
+        return 0;
+}
+
+Vector3 TransformNormal(const Vector3 &v, const Hmx::Matrix3 &m) {
+    Hmx::Matrix3 inv;
+    FastInvert(m, inv);
+    Transpose(inv, inv);
+    Vector3 out;
+    Multiply(v, inv, out);
+    return out;
+}
+
+Vector3 RndMesh::SkinVertex(const RndMesh::Vert &vert, Vector3 *vptr) {
+    Vector3 ret(0, 0, 0);
+    if (NumBones() > 0) {
+        Transform xfm;
+        xfm.Zero();
+        short *boneItr = (short *)&vert.boneIndices;
+        float *weightItr = (float *)&vert.boneWeights;
+        for (int i = 0; i < 4; i++) {
+            short boneIdx = boneItr[i];
+            if (boneIdx < NumBones()) {
+                RndTransformable *curBoneTrans = BoneTransAt(boneIdx);
+                if (weightItr[i] && curBoneTrans) {
+                    Transform tf90;
+                    Multiply(BoneOffsetAt(boneIdx), curBoneTrans->WorldXfm(), tf90);
+                    ScaleAddEq(xfm, tf90, weightItr[i]);
+                }
+            }
+        }
+        Multiply(vert.pos, xfm, ret);
+        if (vptr) {
+            *vptr = TransformNormal(vert.norm, xfm.m);
+        }
+    } else {
+        const Transform &xfm = WorldXfm();
+        Multiply(vert.pos, xfm, ret);
+        if (vptr) {
+            *vptr = TransformNormal(vert.norm, xfm.m);
+        }
+    }
+    return ret;
+}
+
 DataNode RndMesh::OnPointCollide(const DataArray *da) {
     BSPNode *tree = GetBSPTree();
     Vector3 v(da->Float(2), da->Float(3), da->Float(4));

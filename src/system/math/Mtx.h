@@ -326,6 +326,8 @@ public:
     float a, b, c, d;
 };
 
+inline bool operator<=(const Vector3 &v, const Plane &p) { return 0 <= p.Dot(v); }
+
 void Normalize(const Plane &, Plane &);
 
 inline BinStream &operator<<(BinStream &bs, const Plane &p) {
@@ -442,18 +444,12 @@ inline void Multiply(const Frustum &fin, const Transform &tf, Frustum &fout) {
     Multiply(fin.bottom, tf, fout.bottom);
 }
 
+inline void Transpose(const Hmx::Matrix3 &in, Hmx::Matrix3 &out) {
+    out.Set(in.x.x, in.y.x, in.z.x, in.x.y, in.y.y, in.z.y, in.x.z, in.y.z, in.z.z);
+}
+
 inline void Transpose(const Transform &in, Transform &out) {
-    out.m.Set(
-        in.m.x.x,
-        in.m.y.x,
-        in.m.z.x,
-        in.m.x.y,
-        in.m.y.y,
-        in.m.z.y,
-        in.m.x.z,
-        in.m.y.z,
-        in.m.z.z
-    );
+    Transpose(in.m, out.m);
     Vector3 inV;
     Negate(in.v, inV);
     out.v.Set(

@@ -175,6 +175,7 @@ public:
     RndMesh *GetGeomOwner() const { return mGeomOwner; }
     MotionBlurCache &GetBlurCache() { return mMotionCache; }
     RndTransformable *BoneTransAt(int idx) { return mBones[idx].mBone; }
+    Transform &BoneOffsetAt(int idx) { return mBones[idx].mOffset; }
     void InstanceGeomOwnerBones();
     void DeleteBones(bool);
     void BurnXfm();
