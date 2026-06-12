@@ -4,10 +4,17 @@
 #include "os/Debug.h"
 #include "os/Memory.h"
 #include "os/System.h"
+#include "rnddx9/Mat.h"
 #include "rnddx9/Utl.h"
+#include "rndobj/Mat.h"
 #include "rndobj/Mesh.h"
 #include "rndobj/MeshVertCompress.h"
+#include "rndobj/Rnd.h"
+#include "rndobj/Shader.h"
+#include "rndobj/ShaderOptions.h"
 #include "rndobj/Stats_NG.h"
+#include "rndobj/VelocityBuffer.h"
+#include "utl/Std.h"
 #include "xdk/D3D9.h"
 #include "xdk/d3d9i/d3d9.h"
 #include "xdk/d3d9i/d3d9types.h"
@@ -95,6 +102,37 @@ BEGIN_COPYS(DxMesh)
     }
 END_COPYS
 
+void DxMesh::DrawShowing() {
+    DxMesh *owner = static_cast<DxMesh *>(mGeomOwner.Ptr());
+    if (owner->CanDraw()) {
+        if (owner->Verts().unkc) {
+            Sync(0x1F);
+        }
+        if (TheRnd.DrawMode() == 6) {
+            RndVelocityBuffer::Singleton().DrawMesh(this);
+        } else {
+            SetTransforms();
+            for (RndMat *it = mMat; it != nullptr;) {
+                if (it->Fur()) {
+                    it = DrawFur(static_cast<DxMat *>(it));
+                } else {
+                    RndMat *next = it->NextPass();
+                    ShaderType t = kStandardShader;
+                    if (unk180 != kMaxShaderTypes) {
+                        t = (ShaderType)unk180;
+                    }
+                    if (TheRnd.DrawMode() == 9) {
+                        t = kAllWhiteShader;
+                    }
+                    RndShader::SelectConfig(it, t, false);
+                    owner->DrawFacesInRange(0, -1);
+                    it = next;
+                }
+            }
+        }
+    }
+}
+
 void DxMesh::DrawFacesInRange(int x, int y) {
     D3DDevice *device = TheDxRnd.Device();
     if (mMutable) {
@@ -146,6 +184,83 @@ void DxMesh::DrawFacesInRange(int x, int y) {
     }
 }
 
+void DxMesh::OnSync(int flags) {
+    PhysMemTypeTracker t("D3D(phys):Mesh");
+    if (this != mGeomOwner) {
+        if (Mutable() & 0x1F) {
+            mGeomOwner->Sync(flags);
+        }
+        return;
+    } else {
+        RndMesh::OnSync(flags);
+        if (mMutable) {
+            return;
+        } else {
+            auto &verts = Verts();
+            auto &faces = Faces();
+
+            if (flags & 0x1FU) {
+                unsigned int num = 0;
+                unsigned int size = 0;
+                bool b4 = false;
+                mNumVerts = verts.size();
+                if (mNumVerts != 0) {
+                    num = mNumVerts;
+                    size = VertSize();
+                } else {
+                    if (mNumCompressedVerts != 0) {
+                        mNumVerts = mNumCompressedVerts;
+                        num = mNumVerts;
+                        size = VertSize();
+                        b4 = true;
+                    } else {
+                        mVertexBufferData.Release();
+                    }
+                }
+                if (!mVertexBufferData.mBuffer || mVertexBufferData.mSize != size * num) {
+                    mVertexBufferData.Release();
+                    if (num) {
+                        D3DVertexBuffer *buffer =
+                            MakeVertexBuffer(num, size, VertFVF(), false);
+                        mVertexBufferData.SetData(buffer, size * num);
+                    }
+                }
+                if (mVertexBufferData.mBuffer) {
+                    if (b4) {
+                        FillCompressedVerts();
+                    } else {
+                        Fill(verts.begin(), verts.end());
+                    }
+                }
+            }
+
+            if (flags & 0x20) {
+                DX_RELEASE(unk1ac);
+                mNumFaces = faces.size();
+                if (mNumFaces) {
+                    MILO_ASSERT(mNumFaces <= 0xFFFF, 0x17E);
+                    unk1ac = MakeIndexBuffer(mNumFaces, 6, D3DFMT_INDEX16);
+                    IBLock<RndMesh::Face> bLock(unk1ac, 0);
+                    RndMesh::Face *faceItr = bLock.Data();
+                    for (int i = 0; i < mNumFaces; i++) {
+                        faceItr[i] = faces[i];
+                    }
+                }
+            }
+
+            if (!(flags & 0x200U)) {
+                if (!(mMutable & 0x1F)) {
+                    mVerts.resize(0);
+                    ClearCompressedVerts();
+                }
+                if (!(mMutable & 0x20)) {
+                    mFaces.swap(std::vector<Face>());
+                }
+            }
+        }
+    }
+}
+
 void DxMesh::Fill(RndMesh::Vert *v1, RndMesh::Vert *v2) {
     VBLock<CompressedVertex_Xbox> lock(mVertexBufferData.mBuffer, 0);
     if (v1 != v2) {
@@ -185,7 +300,50 @@ bool DxMesh::CanDraw() const {
     return lmao || mMutable;
 }
 
-void _fake(void) {
-    BufLock<struct D3DVertexBuffer> buf(nullptr, 0);
-    BufLock<struct D3DIndexBuffer> buf2(nullptr, 0);
+D3DVertexBuffer *DxMesh::GetMultimeshFaces() {
+    MILO_ASSERT(!Mutable(), 0x1A7);
+    if (unk1b0) {
+        return unk1b0;
+    } else {
+        unsigned int faces = mNumFaces * 3;
+        TheDxRnd.Device()->CreateVertexBuffer(faces * 4, 0, 0, 0, &unk1b0, nullptr);
+        int *vertexData;
+        unk1b0->Lock(0, 0, (void **)&vertexData, 0);
+        unsigned short *indexData;
+        unk1ac->Lock(0, 0, (void **)&indexData, 0x10);
+        while (faces-- != 0) {
+            *vertexData++ = *indexData++;
+        }
+        unk1ac->Unlock();
+        unk1b0->Unlock();
+        return unk1b0;
+    }
+}
+
+bool DxMesh::CheckFurTransformCache() {
+    int i4 = NumBones();
+    if (i4 == 0) {
+        i4 = 1;
+    }
+    if (i4 != mTransformCache.size()) {
+        mTransformCache.resize(i4);
+        for (int i = 0; i < i4; i++) {
+            mTransformCache[i].Reset();
+        }
+        return true;
+    } else {
+        return false;
+    }
+}
+
+float DxMesh::FurWeight(RndMat *mat) {
+    for (RndMat *it = mat; it != nullptr; it = it->NextPass()) {
+        if (it->Fur()) {
+            if (CheckFurTransformCache()) {
+                return 1;
+            }
+            return 1.0f / (it->Fur()->Fluidity() * 6.5f + 1.0f);
+        }
+    }
+    return -1;
 }

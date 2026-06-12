@@ -956,8 +956,8 @@ void RndMesh::SetKeepMeshData(bool keep) {
         mKeepMeshData = keep;
         if (!mKeepMeshData) {
             mVerts.resize(0);
-            ClearAndShrink(mFaces);
-            ClearAndShrink(mPatches);
+            mFaces.swap(std::vector<Face>());
+            mPatches.swap(std::vector<unsigned char>());
         }
     }
 }

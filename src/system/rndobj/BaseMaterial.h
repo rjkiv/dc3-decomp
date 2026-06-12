@@ -163,6 +163,7 @@ public:
     bool AlphaWrite() const { return mAlphaWrite; }
     bool ForceAlphaWrite() const { return mForceAlphaWrite; }
     Cull GetCull() const { return mCull; }
+    RndFur *Fur() const { return mFur; }
 
 protected:
     BaseMaterial();

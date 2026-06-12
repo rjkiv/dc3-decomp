@@ -1,6 +1,7 @@
 #pragma once
 #include "math/Mtx.h"
 #include "obj/Object.h"
+#include "rnddx9/Mat.h"
 #include "rnddx9/Object.h"
 #include "rndobj/Mesh.h"
 #include "utl/PoolAlloc.h"
@@ -28,7 +29,6 @@ public:
     virtual void DrawFacesInRange(int, int);
     virtual int NumFaces() const { return mNumFaces; }
     virtual int NumVerts() const { return mNumVerts; }
-    virtual void OnSync(int);
 
     D3DVertexBuffer *GetMultimeshFaces();
 
@@ -39,6 +39,8 @@ public:
 protected:
     DxMesh();
 
+    virtual void OnSync(int);
+
     static D3DVertexDeclaration *sVertexDecl;
     static D3DVertexDeclaration *sMutableVertexDecl;
     static D3DVertexDeclaration *sMutableSkinnedVertexDecl;
@@ -48,11 +50,15 @@ protected:
     bool CanDraw() const;
     void Fill(Vert *, Vert *);
     void FillCompressedVerts();
+    void SetTransforms();
+    DxMat *DrawFur(DxMat *);
+    bool CheckFurTransformCache();
+    float FurWeight(RndMat *);
 
     std::vector<Transform> mTransformCache; // 0x190
     int mNumVerts; // 0x19c
     int mNumFaces; // 0x1a0
     VertexBufferData mVertexBufferData; // 0x1a4
     D3DIndexBuffer *unk1ac; // 0x1ac
-    D3DResource *unk1b0; // 0x1b0
+    D3DVertexBuffer *unk1b0; // 0x1b0
 };

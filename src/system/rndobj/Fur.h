@@ -25,6 +25,8 @@ public:
     NEW_OBJ(RndFur)
     static void Init() { REGISTER_OBJ_FACTORY(RndFur); }
 
+    float Fluidity() const { return mFluidity; }
+
 protected:
     RndFur();
 
