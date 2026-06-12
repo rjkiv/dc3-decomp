@@ -506,6 +506,15 @@ inline bool operator<(const Sphere &s, const Plane &p) {
     return p.Dot(s.center) < -s.radius;
 }
 
-void ScaleAddEq(Hmx::Matrix3 &, const Hmx::Matrix3 &, float);
-void ScaleAddEq(Transform &, const Transform &, float);
+inline void ScaleAddEq(Hmx::Matrix3 &dst, const Hmx::Matrix3 &src, float scalar) {
+    ScaleAddEq(dst.x, src.x, scalar);
+    ScaleAddEq(dst.y, src.y, scalar);
+    ScaleAddEq(dst.z, src.z, scalar);
+}
+
+inline void ScaleAddEq(Transform &dst, const Transform &src, float scalar) {
+    ScaleAddEq(dst.m, src.m, scalar);
+    ScaleAddEq(dst.v, src.v, scalar);
+}
+
 void ScaleAddEq(Hmx::Quat &, const Hmx::Quat &, float);

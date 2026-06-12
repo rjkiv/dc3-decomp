@@ -1,19 +1,25 @@
 #include "Mesh.h"
 #include "Rnd.h"
+#include "math/Mtx.h"
+#include "math/Vec.h"
 #include "obj/Object.h"
+#include "obj/Task.h"
 #include "os/Debug.h"
 #include "os/Memory.h"
 #include "os/System.h"
 #include "rnddx9/Mat.h"
 #include "rnddx9/Utl.h"
+#include "rndobj/Fur.h"
 #include "rndobj/Mat.h"
 #include "rndobj/Mesh.h"
 #include "rndobj/MeshVertCompress.h"
 #include "rndobj/Rnd.h"
 #include "rndobj/Shader.h"
+#include "rndobj/ShaderMgr.h"
 #include "rndobj/ShaderOptions.h"
 #include "rndobj/Stats_NG.h"
 #include "rndobj/VelocityBuffer.h"
+#include "rndobj/Wind.h"
 #include "utl/Std.h"
 #include "xdk/D3D9.h"
 #include "xdk/d3d9i/d3d9.h"
@@ -346,4 +352,64 @@ float DxMesh::FurWeight(RndMat *mat) {
         }
     }
     return -1;
+}
+
+void DxMesh::CacheFurTransform(const Transform &xfm, int i, float f3) {
+    MILO_ASSERT(mTransformCache.size() > i, 0x1EE);
+    Transform &cur = mTransformCache[i];
+    Vector3 diff;
+    Subtract(cur.v, xfm.v, diff);
+    if (Dot(cur.m.y, xfm.m.y) >= 0.8660254f && LengthSquared(diff) < 2500.0f) {
+        cur.m.x *= 1.0f - f3;
+        cur.m.y *= 1.0f - f3;
+        cur.m.z *= 1.0f - f3;
+        cur.v *= 1.0f - f3;
+        ScaleAddEq(cur, xfm, f3);
+    } else {
+        cur.Set(xfm.m, xfm.v);
+    }
+
+    RndFur *fur = mMat->Fur();
+    if (fur->Wind()) {
+        Vector3 v2;
+        fur->Wind()->GetWind(xfm.v, TheTaskMgr.Seconds(TaskMgr::kRealTime), v2);
+        ScaleAddEq(cur.v, v2, 0.05f);
+    }
+}
+
+void DxMesh::SetTransforms() {
+    bool oldShouldCache = mMotionCache.mShouldCache;
+    mMotionCache.mShouldCache = false;
+    unsigned int i4 = NumBones();
+    TheShaderMgr.SetMeshInfo(i4, HasAOCalc());
+    float weight = FurWeight(mMat);
+    bool hasWeight = weight > 0;
+    if (i4 == 0) {
+        TheShaderMgr.UpdateCache(WorldXfm(), 0);
+        if (hasWeight) {
+            CacheFurTransform(WorldXfm(), 0, weight);
+        }
+        i4 = 1;
+    } else {
+        int idx = 0;
+        FOREACH (it, mBones) {
+            Transform tf90;
+            Multiply(it->mOffset, it->mBone->WorldXfm(), tf90);
+            TheShaderMgr.UpdateCache(tf90, idx);
+            if (hasWeight) {
+                CacheFurTransform(tf90, idx, weight);
+            }
+            ++idx;
+        }
+        TheNgStats->mBones += idx - 1;
+        if (i4 < 1) {
+            i4 = 1;
+        }
+    }
+    TheShaderMgr.SetVConstant((VShaderConstant)0x5C, TheShaderMgr.ConstantCache(), i4 * 3);
+    if (oldShouldCache) {
+        RndVelocityBuffer::Singleton().CacheTransform(
+            this, TheShaderMgr.ConstantCache(), i4
+        );
+    }
 }

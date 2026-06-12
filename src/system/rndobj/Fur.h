@@ -26,6 +26,7 @@ public:
     static void Init() { REGISTER_OBJ_FACTORY(RndFur); }
 
     float Fluidity() const { return mFluidity; }
+    RndWind *Wind() const { return mWind; }
 
 protected:
     RndFur();

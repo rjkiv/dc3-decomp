@@ -54,6 +54,7 @@ protected:
     DxMat *DrawFur(DxMat *);
     bool CheckFurTransformCache();
     float FurWeight(RndMat *);
+    void CacheFurTransform(const Transform &, int, float);
 
     std::vector<Transform> mTransformCache; // 0x190
     int mNumVerts; // 0x19c
