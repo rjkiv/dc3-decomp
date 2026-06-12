@@ -413,3 +413,56 @@ void DxMesh::SetTransforms() {
         );
     }
 }
+
+DxMat *DxMesh::DrawFur(DxMat *mat) {
+    if (TheRnd.DrawMode() != 0) {
+        return static_cast<DxMat *>(mat->NextPass());
+    } else {
+        DxMesh *owner = static_cast<DxMesh *>(mGeomOwner.Ptr());
+        MILO_ASSERT(owner && owner->CanDraw(), 0x21B);
+        MILO_ASSERT(mat, 0x21D);
+        if (NumBones() * 2 >= 0x2B) {
+            MILO_NOTIFY_ONCE(
+                "%s: Too many bones for fur (%d > %d)", PathName(this), NumBones(), 0x15
+            );
+            return static_cast<DxMat *>(mat->NextPass());
+        } else {
+            RndFur *fur = mat->Fur();
+            MILO_ASSERT(fur, 0x227);
+            unsigned int numBones = NumBones();
+            if (numBones == 0) {
+                numBones = 1;
+            }
+            MILO_ASSERT(mTransformCache.size() == numBones, 0x22A);
+            int vsc = 0x5C;
+            for (int i = 0; i < numBones; i++, vsc += 3) {
+                TheShaderMgr.SetVConstant4x3(
+                    (VShaderConstant)vsc, Hmx::Matrix4(mTransformCache[i])
+                );
+            }
+            fur->Prep(this, mat);
+
+            static float sDefaultBias = -1;
+            DWORD mipmapBias12, mipmapBias0;
+            TheDxRnd.Device()->GetSamplerState(12, D3DSAMP_MIPMAPLODBIAS, &mipmapBias12);
+            TheDxRnd.Device()->GetSamplerState(0, D3DSAMP_MIPMAPLODBIAS, &mipmapBias0);
+            TheDxRnd.Device()->SetSamplerState(
+                12, D3DSAMP_MIPMAPLODBIAS, *reinterpret_cast<DWORD *>(&sDefaultBias)
+            );
+            TheDxRnd.Device()->SetSamplerState(
+                0, D3DSAMP_MIPMAPLODBIAS, *reinterpret_cast<DWORD *>(&sDefaultBias)
+            );
+            int numPasses = fur->NumPasses();
+            MILO_ASSERT(numPasses > 0, 0x243);
+            DxMat *ret = static_cast<DxMat *>(mat->NextPass());
+            for (int i = 0; i < numPasses; i++) {
+                fur->Shell(i, this, mat);
+                DrawFacesInRange(0, -1);
+            }
+            TheDxRnd.Device()->SetSamplerState(12, D3DSAMP_MIPMAPLODBIAS, mipmapBias12);
+            TheDxRnd.Device()->SetSamplerState(0, D3DSAMP_MIPMAPLODBIAS, mipmapBias0);
+            TheDxRnd.Device()->SetSamplerState(6, D3DSAMP_MIPMAPLODBIAS, mipmapBias0);
+            return ret;
+        }
+    }
+}

@@ -339,6 +339,31 @@ void D3DDevice_SetSamplerState(
     D3DDevice *pDevice, DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD Value
 );
 
+DWORD D3DDevice_GetSamplerState_MinFilter(D3DDevice *pDevice, DWORD Sampler);
+DWORD D3DDevice_GetSamplerState_MinFilterZ(D3DDevice *pDevice, DWORD Sampler);
+DWORD D3DDevice_GetSamplerState_MagFilter(D3DDevice *pDevice, DWORD Sampler);
+DWORD D3DDevice_GetSamplerState_MagFilterZ(D3DDevice *pDevice, DWORD Sampler);
+DWORD D3DDevice_GetSamplerState_MipFilter(D3DDevice *pDevice, DWORD Sampler);
+DWORD D3DDevice_GetSamplerState_SeparateZFilterEnable(D3DDevice *pDevice, DWORD Sampler);
+DWORD D3DDevice_GetSamplerState_MaxAnisotropy(D3DDevice *pDevice, DWORD Sampler);
+DWORD D3DDevice_GetSamplerState_AnisotropyBias(D3DDevice *pDevice, DWORD Sampler);
+DWORD D3DDevice_GetSamplerState_MipMapLodBias(D3DDevice *pDevice, DWORD Sampler);
+DWORD D3DDevice_GetSamplerState_MaxMipLevel(D3DDevice *pDevice, DWORD Sampler);
+DWORD D3DDevice_GetSamplerState_MinMipLevel(D3DDevice *pDevice, DWORD Sampler);
+DWORD D3DDevice_GetSamplerState_BorderColor(D3DDevice *pDevice, DWORD Sampler);
+DWORD D3DDevice_GetSamplerState_AddressU(D3DDevice *pDevice, DWORD Sampler);
+DWORD D3DDevice_GetSamplerState_AddressV(D3DDevice *pDevice, DWORD Sampler);
+DWORD D3DDevice_GetSamplerState_AddressW(D3DDevice *pDevice, DWORD Sampler);
+DWORD D3DDevice_GetSamplerState_TrilinearThreshold(D3DDevice *pDevice, DWORD Sampler);
+DWORD D3DDevice_GetSamplerState_HGradientExpBias(D3DDevice *pDevice, DWORD Sampler);
+DWORD D3DDevice_GetSamplerState_VGradientExpBias(D3DDevice *pDevice, DWORD Sampler);
+DWORD D3DDevice_GetSamplerState_WhiteBorderColorW(D3DDevice *pDevice, DWORD Sampler);
+DWORD D3DDevice_GetSamplerState_PointBorderEnable(D3DDevice *pDevice, DWORD Sampler);
+
+DWORD D3DDevice_GetSamplerState(
+    D3DDevice *pDevice, DWORD Sampler, D3DSAMPLERSTATETYPE Type
+);
+
 DWORD D3DDevice_InsertFence(D3DDevice *pDevice);
 void D3DDevice_BlockOnFence(DWORD fence);
 D3DVertexBuffer *D3DDevice_CreateVertexBuffer(UINT Length, DWORD Usage, UINT Pool);
@@ -731,7 +756,11 @@ struct D3DDevice { /* Size=0x2b00 */
         D3DDevice_SetTexture(this, Stage, pTexture, 0x8000000000000000 >> (Stage + 0x20U));
         return S_OK;
     }
-    HRESULT GetSamplerState(DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD *pValue);
+    __forceinline HRESULT
+    GetSamplerState(DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD *pValue) {
+        *pValue = D3DDevice_GetSamplerState(this, Sampler, Type);
+        return *pValue ? S_OK : E_OUTOFMEMORY;
+    }
     __forceinline HRESULT
     SetSamplerState(DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD Value) {
         D3DDevice_SetSamplerState(this, Sampler, Type, Value);
@@ -1647,6 +1676,54 @@ __forceinline void D3DDevice_SetSamplerState(
     case D3DSAMP_POINTBORDERENABLE:
         D3DDevice_SetSamplerState_PointBorderEnable(pDevice, Sampler, Value);
         break;
+    default:
+        break;
+    }
+}
+
+__forceinline DWORD
+D3DDevice_GetSamplerState(D3DDevice *pDevice, DWORD Sampler, D3DSAMPLERSTATETYPE Type) {
+    switch (Type) {
+    case D3DSAMP_ADDRESSU:
+        return D3DDevice_GetSamplerState_AddressU(pDevice, Sampler);
+    case D3DSAMP_ADDRESSV:
+        return D3DDevice_GetSamplerState_AddressV(pDevice, Sampler);
+    case D3DSAMP_ADDRESSW:
+        return D3DDevice_GetSamplerState_AddressW(pDevice, Sampler);
+    case D3DSAMP_BORDERCOLOR:
+        return D3DDevice_GetSamplerState_BorderColor(pDevice, Sampler);
+    case D3DSAMP_MAGFILTER:
+        return D3DDevice_GetSamplerState_MagFilter(pDevice, Sampler);
+    case D3DSAMP_MINFILTER:
+        return D3DDevice_GetSamplerState_MinFilter(pDevice, Sampler);
+    case D3DSAMP_MIPFILTER:
+        return D3DDevice_GetSamplerState_MipFilter(pDevice, Sampler);
+    case D3DSAMP_MIPMAPLODBIAS:
+        return D3DDevice_GetSamplerState_MipMapLodBias(pDevice, Sampler);
+    case D3DSAMP_MAXMIPLEVEL:
+        return D3DDevice_GetSamplerState_MaxMipLevel(pDevice, Sampler);
+    case D3DSAMP_MAXANISOTROPY:
+        return D3DDevice_GetSamplerState_MaxAnisotropy(pDevice, Sampler);
+    case D3DSAMP_MAGFILTERZ:
+        return D3DDevice_GetSamplerState_MagFilterZ(pDevice, Sampler);
+    case D3DSAMP_MINFILTERZ:
+        return D3DDevice_GetSamplerState_MinFilterZ(pDevice, Sampler);
+    case D3DSAMP_SEPARATEZFILTERENABLE:
+        return D3DDevice_GetSamplerState_SeparateZFilterEnable(pDevice, Sampler);
+    case D3DSAMP_MINMIPLEVEL:
+        return D3DDevice_GetSamplerState_MinMipLevel(pDevice, Sampler);
+    case D3DSAMP_TRILINEARTHRESHOLD:
+        return D3DDevice_GetSamplerState_TrilinearThreshold(pDevice, Sampler);
+    case D3DSAMP_ANISOTROPYBIAS:
+        return D3DDevice_GetSamplerState_AnisotropyBias(pDevice, Sampler);
+    case D3DSAMP_HGRADIENTEXPBIAS:
+        return D3DDevice_GetSamplerState_HGradientExpBias(pDevice, Sampler);
+    case D3DSAMP_VGRADIENTEXPBIAS:
+        return D3DDevice_GetSamplerState_VGradientExpBias(pDevice, Sampler);
+    case D3DSAMP_WHITEBORDERCOLORW:
+        return D3DDevice_GetSamplerState_WhiteBorderColorW(pDevice, Sampler);
+    case D3DSAMP_POINTBORDERENABLE:
+        return D3DDevice_GetSamplerState_PointBorderEnable(pDevice, Sampler);
     default:
         break;
     }

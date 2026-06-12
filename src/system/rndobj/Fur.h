@@ -7,6 +7,9 @@
 #include "utl/BinStream.h"
 #include "utl/MemMgr.h"
 
+class RndMat;
+class RndMesh;
+
 // size 0x9c
 /** "Parameters for fur shading, to be set on a material" */
 class RndFur : public Hmx::Object {
@@ -18,6 +21,8 @@ public:
     virtual void Save(BinStream &);
     virtual void Copy(const Hmx::Object *, Hmx::Object::CopyType);
     virtual void Load(BinStream &);
+    virtual bool Prep(RndMesh *, RndMat *) const { return false; }
+    virtual bool Shell(int, RndMesh *, RndMat *) const { return false; }
 
     bool LoadOld(BinStreamRev &);
 
@@ -27,6 +32,7 @@ public:
 
     float Fluidity() const { return mFluidity; }
     RndWind *Wind() const { return mWind; }
+    int NumPasses() const { return mLayers; }
 
 protected:
     RndFur();

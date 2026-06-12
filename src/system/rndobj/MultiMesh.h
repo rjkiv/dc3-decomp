@@ -53,8 +53,7 @@ namespace STLPORT {
         ~TransformListAlloc() {}
 
         pointer allocate(const size_type count, const void *hint = nullptr) const {
-            return reinterpret_cast<pointer>(gTransListAlloc.CustAlloc(count * sizeof(T))
-            );
+            return reinterpret_cast<pointer>(gTransListAlloc.CustAlloc(count * sizeof(T)));
         }
 
         void deallocate(pointer ptr, size_type count) const {
