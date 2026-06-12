@@ -50,8 +50,8 @@ public:
     virtual RndMat *GetPostProcMat() { return mPostProcMat; }
     // genuinely i do not understand the vtable offset ordering going on here
     virtual void SetVConstant(VShaderConstant, RndTex *) = 0;
-    virtual void SetVConstant(VShaderConstant, const Vector4 &) = 0; // 0x24
     virtual void SetVConstant(VShaderConstant, int) = 0;
+    virtual void SetVConstant(VShaderConstant, const Vector4 &) = 0; // 0x24
     virtual void
     SetVConstant(VShaderConstant, const float *__restrict, unsigned int) = 0; // 0x20
     virtual void SetVConstant(VShaderConstant, bool) = 0;
