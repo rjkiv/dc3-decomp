@@ -48,10 +48,12 @@ public:
     virtual void Terminate();
     virtual RndMat *GetWork() { return mWorkMat; }
     virtual RndMat *GetPostProcMat() { return mPostProcMat; }
+    // genuinely i do not understand the vtable offset ordering going on here
     virtual void SetVConstant(VShaderConstant, RndTex *) = 0;
-    virtual void SetVConstant(VShaderConstant, const float *__restrict, unsigned int) = 0;
     virtual void SetVConstant(VShaderConstant, const Vector4 &) = 0; // 0x24
     virtual void SetVConstant(VShaderConstant, int) = 0;
+    virtual void
+    SetVConstant(VShaderConstant, const float *__restrict, unsigned int) = 0; // 0x20
     virtual void SetVConstant(VShaderConstant, bool) = 0;
     virtual void SetVConstant(VShaderConstant, const Hmx::Matrix4 &) = 0; // 0x18
     virtual void SetVConstant4x3(VShaderConstant, const Hmx::Matrix4 &) = 0;
@@ -65,6 +67,7 @@ public:
     virtual RndMat *DrawHighlightMat() { return mDrawHighlightMat; }
     virtual RndMat *DrawRectMat() { return mDrawRectMat; }
 
+    float *ConstantCache() const { return mConstantCache; }
     bool CacheShaders() const { return mCacheShaders; }
     void UpdateCache(const Transform &, int);
     void SetMeshInfo(int, bool);
