@@ -145,7 +145,6 @@ public:
     virtual int NumFaces() const { return mFaces.size(); }
     /** "Number of verts in the mesh" */
     virtual int NumVerts() const { return mVerts.size(); }
-    virtual void OnSync(int flags);
 
     OBJ_MEM_OVERLOAD(0x2E);
     NEW_OBJ(RndMesh)
@@ -196,6 +195,8 @@ public:
 
 protected:
     RndMesh();
+
+    virtual void OnSync(int flags);
 
     void ClearCompressedVerts();
     bool PatchOkay(int i, int j) { return i * 4.31 + j * 0.25 < 329.0; }

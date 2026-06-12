@@ -1,16 +1,20 @@
 #include "rndobj/Mesh.h"
 #include "Utl.h"
 #include "math/Color.h"
+#include "math/Geo.h"
 #include "math/Mtx.h"
+#include "math/Utl.h"
 #include "math/Vec.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "obj/PropSync.h"
+#include "obj/Utl.h"
 #include "os/Debug.h"
 #include "os/Platform.h"
 #include "os/System.h"
 #include "os/Timer.h"
 #include "rndobj/BaseMaterial.h"
+#include "rndobj/Dir.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Mat.h"
 #include "rndobj/MeshVertCompress.h"
@@ -177,8 +181,8 @@ BEGIN_HANDLERS(RndMesh)
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
 
-bool RndMesh::HasInstancedBones() {
-    return mGeomOwner && !mBones.empty() && mGeomOwner->mBones.Owner() != mBones.Owner();
+__forceinline bool RndMesh::HasInstancedBones() {
+    return mGeomOwner && !mBones.empty() && mGeomOwner->BoneTransAt(0) != BoneTransAt(0);
 }
 
 BEGIN_CUSTOM_PROPSYNC(RndBone)
@@ -851,6 +855,84 @@ void RndMesh::SaveVertices(BinStream &bs) {
     }
 }
 
+void FaceCenter(RndMesh *mesh, RndMesh::Face *face, Vector3 &v) {
+    v.Set(0, 0, 0);
+    for (int i = 0; i < 3; i++) {
+        v += mesh->Verts((*face)[i]).pos;
+    }
+    v /= 3;
+}
+
+void RndMesh::OnSync(int flags) {
+    if (mGeomOwner == this && !(flags & 0x80) && flags & 0x20) {
+        mPatches.clear();
+        if (PatchOkay(mVerts.size(), mFaces.size())) {
+            mPatches.push_back(mFaces.size());
+        } else if (flags & 0x100) {
+            int patch = 0;
+            unsigned short globalMax = 0;
+            unsigned short globalMin = -1;
+            FOREACH (it, mFaces) {
+                globalMax = Max(Max(globalMax, it->v1, it->v2), it->v3);
+                globalMin = Min(Min(globalMin, it->v1, it->v2), it->v3);
+                if (!PatchOkay((globalMax - globalMin) + 1, patch + 1)) {
+                    mPatches.push_back(patch);
+                    globalMax = Max(it->v1, it->v2, it->v3);
+                    globalMin = Min(it->v1, it->v2, it->v3);
+                    patch = 1;
+                } else {
+                    patch++;
+                }
+            }
+            mPatches.push_back(patch);
+        } else {
+            gPatchVerts.Clear();
+            std::vector<Face> faces;
+            Vector3 ve0(0, 0, 0);
+            int patch = 0;
+            while (!mFaces.empty()) {
+                int i17 = 4;
+                float distsq = 0;
+                Face *theFace = mFaces.begin();
+                FOREACH (it, mFaces) {
+                    int sum = !gPatchVerts.HasVert(it->v1) + !gPatchVerts.HasVert(it->v2)
+                        + !gPatchVerts.HasVert(it->v3);
+                    if (sum < i17) {
+                        theFace = it;
+                        i17 = sum;
+                        Vector3 vcenter;
+                        FaceCenter(this, it, vcenter);
+                        distsq = DistanceSquared(vcenter, ve0);
+                    } else if (sum == i17) {
+                        Vector3 vcenter;
+                        FaceCenter(this, it, vcenter);
+                        float dist = DistanceSquared(vcenter, ve0);
+                        if (MinEq(distsq, dist)) {
+                            theFace = it;
+                            i17 = sum;
+                        }
+                    }
+                }
+                if (!PatchOkay(i17 + gPatchVerts.NumVerts(), patch + 1)) {
+                    gPatchVerts.Clear();
+                    mPatches.push_back(patch);
+                    patch = 0;
+                }
+                for (int i = 0; i < 3; i++) {
+                    if (!gPatchVerts.HasVert((*theFace)[i])) {
+                        gPatchVerts.Add((*theFace)[i], mVerts, ve0);
+                    }
+                }
+                faces.push_back(*theFace);
+                mFaces.erase(theFace);
+                patch++;
+            }
+            mPatches.push_back(patch);
+            std::swap(mFaces, faces);
+        }
+    }
+}
+
 int RndMesh::EstimatedSizeKb() const {
     // sizeof(Vert) is 0x50 here
     // but the actual struct is size 0x60
@@ -1084,6 +1166,153 @@ Vector3 RndMesh::SkinVertex(const RndMesh::Vert &vert, Vector3 *vptr) {
     return ret;
 }
 
+void RndMesh::DeleteBones(bool b1) {
+    if (!mBones.empty()) {
+        std::vector<RndTransformable *> transes;
+        transes.resize(mBones.size());
+        for (int i = 0; i < transes.size(); i++) {
+            transes[i] = BoneTransAt(i);
+        }
+        RndTransformable *t = nullptr;
+        if (b1) {
+            for (RndTransformable *parent = BoneTransAt(0); parent != nullptr;
+                 parent = parent->TransParent()) {
+                if (dynamic_cast<RndDir *>(parent->TransParent())) {
+                    t = parent;
+                    break;
+                }
+                MILO_ASSERT(parent != parent->TransParent(), 0x5A1);
+            }
+        }
+        mBones.clear();
+        for (int i = 0; i < transes.size(); i++) {
+            delete transes[i];
+        }
+        if (t) {
+            delete t;
+        }
+    }
+}
+
+void RndMesh::InstanceGeomOwnerBones() {
+    if (!mGeomOwner) {
+        MILO_NOTIFY("Cannot duplicate bones if mesh is not a Geom Owner!");
+        return;
+    } else if (!dynamic_cast<RndDir *>(Dir())) {
+        MILO_NOTIFY("Cannot duplicate bones if parent Dir is not a RndDir.");
+        return;
+    } else if (!mBones.empty()) {
+        if (HasInstancedBones()) {
+            DeleteBones(true);
+            if (mGeomOwner) {
+                mBones = mGeomOwner->mBones;
+            } else {
+                mBones.clear();
+            }
+        }
+
+        RndTransformable *oldRoot = nullptr;
+        RndTransformable *parent;
+        for (parent = mGeomOwner->BoneTransAt(0); parent != nullptr;
+             parent = parent->TransParent()) {
+            if (dynamic_cast<RndDir *>(parent->TransParent())) {
+                oldRoot = parent;
+                break;
+            }
+        }
+        MILO_ASSERT(oldRoot, 0x5E9);
+
+        RndTransformable *newTrans = Hmx::Object::New<RndTransformable>();
+        newTrans->SetName(NextName(parent->Name(), Dir()), Dir());
+        newTrans->Copy(oldRoot, kCopyShallow);
+        newTrans->SetTransParent(dynamic_cast<RndDir *>(Dir()), false);
+
+        for (int i = 0; i < mBones.size(); i++) {
+            RndTransformable *curNewTrans = Hmx::Object::New<RndTransformable>();
+            curNewTrans->SetName(
+                NextName(mGeomOwner->BoneTransAt(i)->Name(), Dir()), Dir()
+            );
+            curNewTrans->Copy(mGeomOwner->BoneTransAt(i), kCopyShallow);
+            mBones[i].mBone = curNewTrans;
+            int boneIdx =
+                mGeomOwner->GetBoneIndex(mGeomOwner->BoneTransAt(i)->TransParent());
+            RndTransformable *parentToSet =
+                boneIdx == -1 ? newTrans : mGeomOwner->BoneTransAt(boneIdx);
+            mBones[i].mBone->SetTransParent(parentToSet, false);
+        }
+    }
+}
+
+void RndMesh::SetVolume(Volume v) {
+    if (mGeomOwner != this) {
+        mGeomOwner->SetVolume(v);
+    } else {
+        mVolume = v;
+        RELEASE(mBSPTree);
+        if (!mVerts.empty() && !mFaces.empty()) {
+            if (mVolume == kVolumeBox) {
+                Box box;
+                FOREACH (it, mVerts) {
+                    box.GrowToContain(it->pos, it == mVerts.begin());
+                }
+                BSPNode *n = new BSPNode();
+                mBSPTree = n;
+                for (int i = 0; i < 6; i++) {
+                    Vector3 v3;
+                    v3.Zero();
+                    v3[i % 3] = i > 2 ? -1.0f : 1.0f;
+                    n->plane.Set(i > 2 ? box.mMin : box.mMax, v3);
+                    n->front = nullptr;
+                    if (i == 5) {
+                        n->back = nullptr;
+                    } else {
+                        n->back = new BSPNode();
+                        n = n->back;
+                    }
+                }
+            } else if (mVolume == kVolumeBSP) {
+                std::list<BSPFace> bspFaces;
+                for (int i = mFaces.size() - 1; i >= 0; i--) {
+                    Face &curFace = mFaces[i];
+                    const Vector3 &v1 = mVerts[curFace.v1].pos;
+                    const Vector3 &v2 = mVerts[curFace.v2].pos;
+                    const Vector3 &v3 = mVerts[curFace.v3].pos;
+                    BSPFace curBSPFace;
+                    curBSPFace.Set(v1, v2, v3);
+                    bspFaces.push_back(curBSPFace);
+                }
+                if (!MakeBSPTree(mBSPTree, bspFaces, 0)) {
+                    RELEASE(mBSPTree);
+                }
+                if (mBSPTree) {
+                    Box box;
+                    FOREACH (it, mVerts) {
+                        box.GrowToContain(it->pos, it == mVerts.begin());
+                    }
+                    if (!CheckBSPTree(mBSPTree, box)) {
+                        MILO_NOTIFY("BSP tree outside bounding box");
+                        RELEASE(mBSPTree);
+                    }
+                }
+                if (mBSPTree) {
+                    int numNodes = 0;
+                    int maxDepth = 0;
+                    NumNodes(mBSPTree, numNodes, maxDepth);
+                    MILO_LOG(
+                        "Made BSP tree for \"%s\" (nodes:%d depth:%d)\n",
+                        Name(),
+                        numNodes,
+                        maxDepth
+                    );
+                } else {
+                    MILO_NOTIFY("Couldn't make BSP tree for \"%s\"", Name());
+                    mVolume = kVolumeEmpty;
+                }
+            }
+        }
+    }
+}
+
 DataNode RndMesh::OnPointCollide(const DataArray *da) {
     BSPNode *tree = GetBSPTree();
     Vector3 v(da->Float(2), da->Float(3), da->Float(4));
@@ -1220,6 +1449,75 @@ DataNode RndMesh::OnConfigureMesh(const DataArray *da) {
         mVerts[2].pos = v6c;
         mVerts[3].pos = v78;
         Sync(0x3F);
+    }
+    return 0;
+}
+
+DataNode RndMesh::OnCompareEdgeVerts(const DataArray *da) {
+    std::vector<int> vec20(Verts().size(), -1);
+    std::list<int> vec28;
+    std::vector<std::list<int> > vec30(Verts().size());
+    for (int i = 0; i < Verts().size(); i++) {
+        if (vec20[i] == -1) {
+            vec20[i] = i;
+            for (int j = i + 1; j < Verts().size(); j++) {
+                if (Verts(j).pos == Verts(i).pos) {
+                    vec20[j] = i;
+                }
+            }
+        }
+    }
+    FOREACH (it, Faces()) {
+        int i40 = vec20[it->v1];
+        int i44 = vec20[it->v2];
+        int i48 = vec20[it->v3];
+        vec30[i40].push_back(i44);
+        vec30[i40].push_back(i48);
+        vec30[i44].push_back(i40);
+        vec30[i44].push_back(i48);
+        vec30[i48].push_back(i40);
+        vec30[i48].push_back(i44);
+    }
+    for (int i = 0; i < Verts().size(); i++) {
+        vec30[i].sort();
+        vec30[i].unique();
+    }
+    for (int i = 0; i < Verts().size(); i++) {
+        FOREACH (it, vec30[i]) {
+            int i10 = 0;
+            FOREACH (it2, vec30[*it]) {
+                FOREACH (it3, vec30[i]) {
+                    if (*it3 != *it) {
+                        if (*it3 == *it2) {
+                            i10++;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (i10 < 2) {
+                vec28.push_back(i);
+                break;
+            }
+        }
+    }
+    DataArray *array = da->Array(2);
+    for (int i = 0; i < array->Size(); i++) {
+        RndMesh *curMesh = array->Obj<RndMesh>(i);
+        MILO_LOG("testing %s\n", curMesh->Name());
+        FOREACH (it, vec28) {
+            if (Verts(*it).pos == curMesh->Verts(*it).pos)
+                continue;
+            else
+                MILO_LOG("   %d doesn't match position\n", *it);
+        }
+    }
+    if (mGeomOwner != this && (mVerts.size() != 0 || mFaces.size() != 0)) {
+        MILO_NOTIFY(
+            "%s has geomowner %s but still has its own verts and faces, which wastes RAM",
+            PathName(this),
+            mGeomOwner ? mGeomOwner->Name() : "NULL"
+        );
     }
     return 0;
 }
