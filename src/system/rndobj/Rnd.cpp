@@ -842,7 +842,7 @@ void Rnd::CopyWorldCam(RndCam *cam) {
     }
 }
 
-RndTex *Rnd::GetNullTexture() { return mDefaultTex[kDefaultTex_Null]; }
+RndTex *Rnd::GetNullTexture() { return mDefaultTex[kDefaultTex_Error]; }
 
 void Rnd::SetupFont() {
     mFont = SystemConfig("rnd", "font");
@@ -1141,4 +1141,89 @@ void Rnd::TestPoint(const Vector3 &v, RndFlare *flare) {
             flare->SetUnks(true, false);
         }
     }
+}
+
+RndTex *Rnd::CreateDefaultTexture(DefaultTextureType textureType) {
+    MILO_ASSERT(textureType < kDefaultTex_Max, 0x5E4);
+    // clang-format off
+    static const int sDefSize[kDefaultTex_Max][2] = { 
+        8, 8, 
+        8, 8,   
+        8, 8,
+        8, 8, 
+        8, 8,   
+        0x40, 0x40,
+        0x100, 8, 
+        0x80, 0x80
+    };
+    static const unsigned char sDefColor[kDefaultTex_Max][4] = {
+        0, 0, 0, 0xFF, 
+        0, 0, 0, 0,
+        0xff, 0xff, 0xff, 0xff,
+        0xff, 0xff, 0xff, 0,
+        0x7f, 0x7f, 0xff, 0xff,
+        0xff, 0xff, 0xff, 0xff,
+        0xff, 0xff, 0xff, 0xff,
+        0,    0,    0,    0xff
+    };
+    // clang-format on
+    int width = sDefSize[textureType][0];
+    int height = sDefSize[textureType][1];
+    unsigned char red = sDefColor[textureType][0];
+    unsigned char green = sDefColor[textureType][1];
+    unsigned char blue = sDefColor[textureType][2];
+    unsigned char alpha = sDefColor[textureType][3];
+    unsigned int order = GetDefaultTexBitmapOrder();
+    RndBitmap bmap;
+    bmap.Create(width, height, 0, 0x20, order, 0, 0, 0);
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            bmap.SetPixelColor(j, i, red, green, blue, alpha);
+        }
+    }
+    switch (textureType) {
+    case kDefaultTex_Gradient: {
+        for (int i = 0; i < width; i++) {
+            unsigned char u10 = 0xFF - (i * 255) / (width - 1);
+            for (int j = 0; j < height; j++) {
+                bmap.SetPixelColor(i, j, u10, u10, u10, alpha);
+            }
+        }
+        break;
+    }
+    case kDefaultTex_Hue: {
+        Hmx::Color color;
+        for (int i = 0; i < width; i++) {
+            MakeColor((float)i / 255.0f, 1, 0.5f, color);
+            unsigned char thisRed = color.red * 255.0f;
+            unsigned char thisGreen = color.green * 255.0f;
+            unsigned char thisBlue = color.blue * 255.0f;
+            for (int j = 0; j < height; j++) {
+                bmap.SetPixelColor(i, j, thisRed, thisGreen, thisBlue, alpha);
+            }
+        }
+        break;
+    }
+    case kDefaultTex_Error: {
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                int blk_y = i >> 2;
+                int blk_x = j >> 2;
+
+                if (((blk_y ^ blk_x)) & 1) {
+                    bmap.SetPixelColor(j, i, 0xff, 0x80, 0x40, alpha);
+                } else {
+                    bmap.SetPixelColor(j, i, 0, 0, 0, alpha);
+                }
+            }
+        }
+        break;
+    }
+    default:
+        break;
+    }
+    EndianSwapBitmap(bmap);
+    RndTex *tex = Hmx::Object::New<RndTex>();
+    tex->SetBitmap(bmap, nullptr, true, RndTex::kRegular);
+    return tex;
 }
