@@ -24,7 +24,7 @@ NgStats gNgStats[3];
 NgStats *TheNgStats = &gNgStats[0];
 
 NgRnd::NgRnd()
-    : unk1e0(), unk1f8(0), mShadowMap(0), mShadowCam(0), mOcclusionQueryMgr(0), unk208(0),
+    : unk1f8(0), mShadowMap(0), mShadowCam(0), mOcclusionQueryMgr(0), unk208(0),
       unk218(0) {}
 
 NgRnd::~NgRnd() {}

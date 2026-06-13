@@ -296,7 +296,9 @@ unsigned int DxMesh::VertFVF() const {
     if (GetGfxMode() == kNewGfx) {
         return 0;
     } else {
-        return IsSkinned() ? 0x61 : 0x152;
+        return IsSkinned()
+            ? D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_NORMAL | D3DFVF_XYZ | D3DFVF_XYZB2
+            : D3DFVF_TEX1 | D3DFVF_DIFFUSE | D3DFVF_NORMAL | D3DFVF_XYZ;
     }
 }
 

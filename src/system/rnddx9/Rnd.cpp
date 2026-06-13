@@ -1,6 +1,7 @@
 #include "rnddx9/Rnd.h"
 #include "Tex.h"
 #include "math/Mtx.h"
+#include "math/Vec.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/System.h"
@@ -25,11 +26,11 @@ BEGIN_HANDLERS(DxRnd)
 END_HANDLERS
 
 void DxRnd::Clear(unsigned int ui, const Hmx::Color &c) {
-    float f1;
+    float z;
     if (unk_0x301) {
-        f1 = 0;
+        z = 0;
     } else {
-        f1 = 1;
+        z = 1;
     }
     int mask = 0;
     if (ui & 1) {
@@ -38,7 +39,7 @@ void DxRnd::Clear(unsigned int ui, const Hmx::Color &c) {
     if (ui & 2) {
         mask |= 0x30;
     }
-    mD3DDevice->Clear(0, nullptr, mask, MakeColor(c), f1, 0);
+    mD3DDevice->Clear(0, nullptr, mask, MakeColor(c), z, 0);
 }
 
 void DxRnd::DrawRect(
@@ -52,21 +53,23 @@ void DxRnd::DrawRect(
 }
 
 void DxRnd::DrawLine(const Vector3 &v1, const Vector3 &v2, const Hmx::Color &c, bool b4) {
-    float vertices[24];
-    vertices[0] = v1.x;
-    vertices[1] = v1.y;
-    vertices[2] = v1.z;
-    vertices[3] = MakeColor(c);
-    vertices[4] = v2.x;
-    vertices[5] = v2.y;
-    vertices[6] = v2.z;
-    vertices[7] = vertices[3];
-    Transform &xfm = reinterpret_cast<Transform &>(vertices[8]);
+    DxLineVertex vertices[2];
+    vertices[0].x = v1.x;
+    vertices[0].y = v1.y;
+    vertices[0].z = v1.z;
+    vertices[0].diffuse = MakeColor(c);
+    vertices[1].x = v2.x;
+    vertices[1].y = v2.y;
+    vertices[1].z = v2.z;
+    vertices[1].diffuse = vertices[0].diffuse;
+    Transform xfm;
     xfm.Reset();
     TheShaderMgr.SetTransform(xfm);
     RndShader::SelectConfig(nullptr, b4 ? kLineShader : kLineNozShader, false);
-    mD3DDevice->SetFVF(0x42);
-    mD3DDevice->DrawVerticesUP(D3DPT_LINELIST, 2, vertices, 16);
+    mD3DDevice->SetFVF(D3DFVF_DIFFUSE | D3DFVF_XYZ);
+    mD3DDevice->DrawVerticesUP(
+        D3DPT_LINELIST, DIM(vertices), vertices, sizeof(DxLineVertex)
+    );
 }
 
 void DxRnd::MakeDrawTarget() {
@@ -85,16 +88,16 @@ void DxRnd::SetViewport(const Viewport &v) {
         NgRnd::SetViewport(v);
     }
     D3DVIEWPORT9 dxViewport;
-    dxViewport.X = v.unk0;
-    dxViewport.Y = v.unk4;
-    dxViewport.Width = v.unk8;
-    dxViewport.Height = v.unkc;
+    dxViewport.X = v.mX;
+    dxViewport.Y = v.mY;
+    dxViewport.Width = v.mWidth;
+    dxViewport.Height = v.mHeight;
     if (unk_0x301) {
-        dxViewport.MinZ = 1.0f - v.unk10;
-        dxViewport.MaxZ = 1.0f - v.unk14;
+        dxViewport.MinZ = 1.0f - v.mMinZ;
+        dxViewport.MaxZ = 1.0f - v.mMaxZ;
     } else {
-        dxViewport.MinZ = v.unk10;
-        dxViewport.MaxZ = v.unk14;
+        dxViewport.MinZ = v.mMinZ;
+        dxViewport.MaxZ = v.mMaxZ;
     }
     mD3DDevice->SetViewport(&dxViewport);
 }
@@ -122,7 +125,7 @@ void DxRnd::DrawLargeQuad(
         RndShader::SelectConfig(it, s, false);
         mD3DDevice->SetIndices(data.unk0);
         mD3DDevice->SetStreamSource(0, data.unk4, 0, 20);
-        mD3DDevice->SetFVF(0x102);
+        mD3DDevice->SetFVF(D3DFVF_TEX1 | D3DFVF_XYZ);
         TheShaderMgr.SetVConstant((VShaderConstant)0x5c, Hmx::Matrix4(tf));
         DxTex *tex = static_cast<DxTex *>(mat->GetDiffuseTex());
         mD3DDevice->SetTexture(16, tex->Tex());
@@ -231,20 +234,16 @@ HRESULT DxRnd::GetDeviceCaps(D3DCAPS9 *cap) {
 }
 
 void DxRnd::DrawSafeArea(float percent, bool widescreen, const Hmx::Color &color) {
-    if (mShrinkToSafe)
-        percent = percent * 1.0526316f;
+    if (mShrinkToSafe) {
+        percent *= 1.0526316f;
+    }
 
-    Vector2 vec1;
-    Vector2 vec2;
+    float realAspect = (float)mHeight / (float)mWidth;
+    float targetAspect = widescreen ? 16.0f / 9.0f : 4.0f / 3.0f;
+    float mult = targetAspect * realAspect;
+    float set = (1.0f - percent) / 2.0f;
 
-    float targetAspect = widescreen ? 16.f / 9.f : 4.f / 3.f;
-    float realAspect = (float)mHeight / mWidth;
-
-    vec1.y = (1.0f - percent) * 0.5f;
-    vec1.x = -(targetAspect * realAspect - 1.0f) * 0.5f + vec1.y;
-
-    vec2.x = 1.0f - vec1.x;
-    vec2.y = 1.0f - vec1.y;
-
+    Vector2 vec1(set + (mult - 1.0f) / 2.0f, set);
+    Vector2 vec2(1.0f - vec1.x, 1.0f - vec1.y);
     UtilDrawRect2D(vec1, vec2, color);
 }

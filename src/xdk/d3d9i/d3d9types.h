@@ -3,6 +3,68 @@
 #include "vectorintrinsics.h"
 #include "xdk/xapilibi/guiddef.h"
 
+// D3DCOLOR is equivalent to D3DFMT_A8R8G8B8
+#ifndef D3DCOLOR_DEFINED
+typedef DWORD D3DCOLOR;
+#define D3DCOLOR_DEFINED
+#endif
+
+// maps unsigned 8 bits/channel to D3DCOLOR
+#define D3DCOLOR_ARGB(a, r, g, b)                                                        \
+    ((D3DCOLOR)((((a) & 0xff) << 24) | (((r) & 0xff) << 16) | (((g) & 0xff) << 8)        \
+                | ((b) & 0xff)))
+#define D3DCOLOR_RGBA(r, g, b, a) D3DCOLOR_ARGB(a, r, g, b)
+#define D3DCOLOR_XRGB(r, g, b) D3DCOLOR_ARGB(0xff, r, g, b)
+
+#define D3DCOLOR_XYUV(y, u, v) D3DCOLOR_ARGB(0xff, y, u, v)
+#define D3DCOLOR_AYUV(a, y, u, v) D3DCOLOR_ARGB(a, y, u, v)
+
+// maps floating point channels (0.f to 1.f range) to D3DCOLOR
+#define D3DCOLOR_COLORVALUE(r, g, b, a)                                                  \
+    D3DCOLOR_RGBA(                                                                       \
+        (DWORD)((r) * 255.f),                                                            \
+        (DWORD)((g) * 255.f),                                                            \
+        (DWORD)((b) * 255.f),                                                            \
+        (DWORD)((a) * 255.f)                                                             \
+    )
+
+// https://learn.microsoft.com/en-us/windows/win32/direct3d9/d3dfvf
+// FVF = Flexible Vertex Format
+// clang-format off
+#define D3DFVF_RESERVED0        0x001
+#define D3DFVF_POSITION_MASK    0x400E
+#define D3DFVF_XYZ              0x002
+#define D3DFVF_XYZRHW           0x004
+#define D3DFVF_XYZB1            0x006
+#define D3DFVF_XYZB2            0x008
+#define D3DFVF_XYZB3            0x00a
+#define D3DFVF_XYZB4            0x00c
+#define D3DFVF_XYZB5            0x00e
+#define D3DFVF_XYZW             0x4002
+
+#define D3DFVF_NORMAL           0x010
+#define D3DFVF_PSIZE            0x020
+#define D3DFVF_DIFFUSE          0x040
+#define D3DFVF_SPECULAR         0x080
+
+#define D3DFVF_TEXCOUNT_MASK    0xf00
+#define D3DFVF_TEXCOUNT_SHIFT   8
+#define D3DFVF_TEX0             0x000
+#define D3DFVF_TEX1             0x100
+#define D3DFVF_TEX2             0x200
+#define D3DFVF_TEX3             0x300
+#define D3DFVF_TEX4             0x400
+#define D3DFVF_TEX5             0x500
+#define D3DFVF_TEX6             0x600
+#define D3DFVF_TEX7             0x700
+#define D3DFVF_TEX8             0x800
+
+#define D3DFVF_LASTBETA_UBYTE4   0x1000
+#define D3DFVF_LASTBETA_D3DCOLOR 0x8000
+
+#define D3DFVF_RESERVED2         0x6000  // 2 reserved bits
+// clang-format on
+
 // Enums and very small struct definitions go here.
 
 #pragma region Enums

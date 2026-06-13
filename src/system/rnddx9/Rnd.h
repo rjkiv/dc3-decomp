@@ -235,16 +235,19 @@ private:
     int unk408;
 };
 
+extern DxRnd TheDxRnd;
+
 #define GPU_GPRS 0x80
 
-extern DxRnd TheDxRnd;
+struct DxLineVertex {
+    float x, y, z; // D3DFVF_XYZ
+    DWORD diffuse; // D3DFVF_DIFFUSE
+};
 
 int D3DFORMAT_BitsPerPixel(D3DFORMAT);
 
 inline DWORD MakeColor(const Hmx::Color &c) {
-    return ((DWORD)(c.alpha * 255.0f) & 0xFF) << 24
-        | ((DWORD)(c.red * 255.0f) & 0xFF) << 16 | ((DWORD)(c.green * 255.0f) & 0xFF) << 8
-        | ((DWORD)(c.blue * 255.0f) & 0xFF);
+    return D3DCOLOR_COLORVALUE(c.red, c.green, c.blue, c.alpha);
 }
 
 #define DX_RELEASE(x) (TheDxRnd.AutoRelease(x), x = nullptr)
