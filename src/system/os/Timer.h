@@ -126,7 +126,7 @@ public:
 #define MAX_TOP_VALS 128
 
 class TimerStats {
-private:
+public:
     int mCount; // 0x0
     float mAvgMs; // 0x4
     float mStdDevMs; // 0x8
@@ -137,10 +137,8 @@ private:
     int mNumCritOverBudget; // 0x1c
     float mAvgMsInCrit; // 0x20
     float mTopValues[MAX_TOP_VALS]; // 0x24
-public:
-    TimerStats(DataArray *);
 
-    bool Critical() const { return mCritical; }
+    TimerStats(DataArray *);
 
     void CollectStats(float, bool, int);
     void PrintPctile(float);
@@ -271,6 +269,7 @@ public:
             it->first.Reset();
         }
     }
+    static std::list<std::pair<Timer, TimerStats> > &Timers() { return sTimers; }
 
 private:
     Timer *mTimer; // 0x0

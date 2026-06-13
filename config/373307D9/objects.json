@@ -623,7 +623,7 @@
             "system/rndobj/PropAnim.cpp": "NonMatching",
             "system/rndobj/PropKeys.cpp": "NonMatching",
             "system/rndobj/Ribbon.cpp": "NonMatching",
-            "system/rndobj/Rnd.cpp": "NonMatching",
+            "system/rndobj/Rnd.cpp": "Matching",
             "system/rndobj/Rnd_NG.cpp": "NonMatching",
             "system/rndobj/SIVideo.cpp": "Matching",
             "system/rndobj/ScreenMask.cpp": "NonMatching",

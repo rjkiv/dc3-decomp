@@ -249,7 +249,7 @@ bool AutoTimer::CollectingStats() { return sCollectingStats; }
 void AutoTimer::ComputeCriticalFrame() {
     sCriticalFrame = false;
     FOREACH (it, sTimers) {
-        if (it->second.Critical() && it->first.GetLastMs() > it->first.Budget()) {
+        if (it->second.mCritical && it->first.GetLastMs() > it->first.Budget()) {
             sCriticalFrame = true;
             sCritFrameCount++;
             break;

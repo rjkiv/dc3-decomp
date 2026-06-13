@@ -16,6 +16,7 @@
 #include "TexBlendController.h"
 #include "TexBlender.h"
 #include "math/Color.h"
+#include "math/Geo.h"
 #include "math/Vec.h"
 #include "obj/DataFunc.h"
 #include "obj/Dir.h"
@@ -1226,4 +1227,103 @@ RndTex *Rnd::CreateDefaultTexture(DefaultTextureType textureType) {
     RndTex *tex = Hmx::Object::New<RndTex>();
     tex->SetBitmap(bmap, nullptr, true, RndTex::kRegular);
     return tex;
+}
+
+float Rnd::DrawTimers(float y) {
+    static DataArray *timerScriptArr =
+        SystemConfig("rnd")->FindArray("timer_script", false);
+    if (timerScriptArr) {
+        timerScriptArr->ExecuteScript(1, nullptr, nullptr, 1);
+    }
+    if (mVerboseTimers) {
+        AutoTimer::CollectTimerStats();
+    }
+    int numDrawnTimers = 0;
+    FOREACH (it, AutoTimer::Timers()) {
+        if (it->first.Draw()) {
+            numDrawnTimers++;
+        }
+    }
+    float numTimersFloat = numDrawnTimers * 0.045f;
+    Hmx::Rect r(0.025f, y, 0.95f, numTimersFloat);
+    DrawRectScreen(r, Hmx::Color(0, 0, 0, 0.5f), mOverlayMat, nullptr, nullptr);
+    Hmx::Color half(0.5f, 0.5f, 0.5f);
+    Hmx::Color red(0.5f, 0, 0);
+    Hmx::Color gb(0, 0.5f, 0.5f);
+    r.h = 0.0268f;
+    FOREACH (it, AutoTimer::Timers()) {
+        Timer &curTimer = it->first;
+        if (curTimer.Draw()) {
+            float budget = curTimer.Budget();
+            bool check = budget != 0 && curTimer.GetLastMs() > budget;
+            if (check) {
+                r.w = budget * 0.019f;
+                DrawRectScreen(r, half, nullptr, nullptr, nullptr);
+                r.x = r.w + 0.025f;
+                r.w = (curTimer.GetLastMs() - curTimer.Budget()) * 0.019f;
+                DrawRectScreen(r, red, nullptr, nullptr, nullptr);
+            } else {
+                r.w = curTimer.GetLastMs() * 0.019f;
+                DrawRectScreen(r, half, nullptr, nullptr, nullptr);
+            }
+            if (curTimer.GetWorstMs() > curTimer.GetLastMs()) {
+                r.x += r.w;
+                r.w = (curTimer.GetWorstMs() - curTimer.GetLastMs()) * 0.019f;
+                DrawRectScreen(r, gb, nullptr, nullptr, nullptr);
+            }
+            r.x = 0.025f;
+            r.y += 0.045f;
+        }
+    }
+    r.y = y;
+    r.h = numTimersFloat;
+    half.Set(0.25f, 0.25f, 0.25f);
+    r.w = 0.001f;
+    for (int i = 0; i < 10; i++) {
+        DrawRectScreen(r, half, nullptr, nullptr, nullptr);
+        r.x += 0.095f;
+    }
+
+    half.Set(1, 1, 1);
+    Vector2 v2(0.02891f, y + 0.00446f);
+    FOREACH (it, AutoTimer::Timers()) {
+        Timer &curTimer = it->first;
+        if (curTimer.Draw()) {
+            float lastMs = curTimer.GetLastMs();
+            if (lastMs >= 0.05f) {
+                if (mVerboseTimers && AutoTimer::CollectingStats()) {
+                    TimerStats &curStats = it->second;
+                    DrawStringScreen(
+                        MakeString(
+                            "%s %2.1f (%.2f, %.2f) %.2f",
+                            curTimer.Name(),
+                            lastMs,
+                            curStats.mAvgMs,
+                            curStats.mStdDevMs,
+                            curStats.mMaxMs
+                        ),
+                        v2,
+                        half,
+                        true
+                    );
+                } else {
+                    DrawStringScreen(
+                        MakeString(
+                            "%s %.2f (%.2f)",
+                            curTimer.Name(),
+                            lastMs,
+                            curTimer.GetWorstMs()
+                        ),
+                        v2,
+                        half,
+                        true
+                    );
+                }
+            } else {
+                DrawStringScreen(curTimer.Name().Str(), v2, half, true);
+            }
+            v2.y += 0.045f;
+        }
+    }
+    return v2.y;
 }
