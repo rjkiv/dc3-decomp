@@ -24,8 +24,6 @@ class UIPanel;
 
 class ModalKeyListener : public Hmx::Object {
 public:
-    // ModalKeyListener() {}
-    // virtual ~ModalKeyListener() {}
     virtual DataNode Handle(DataArray *, bool);
 
     DataNode OnMsg(const KeyboardKeyMsg &);
@@ -62,10 +60,10 @@ public:
     struct PointTest {
         PointTest() : unk0(0), unk4(0), unk8(0), unkc(0) {}
 
-        int unk0; // 0x0
-        int unk4; // 0x4
-        unsigned int unk8; // 0x8
-        RndFlare *unkc; // 0xc
+        int unk0; // 0x0 - width
+        int unk4; // 0x4 - height
+        unsigned int unk8; // 0x8 - z projection?
+        RndFlare *unkc; // 0xc - flare
     };
 
     struct CompressTextureCallback {
@@ -78,16 +76,15 @@ public:
             : tex(nullptr, tex), alpha(a), callback(cb) {}
         ~CompressTexDesc() {
             if (callback) {
-                // ain't no way this is right
                 callback->TextureCompressed((int)this);
             }
         }
 
         MEM_OVERLOAD(CompressTexDesc, 0x1E4)
 
-        ObjPtr<RndTex> tex;
-        RndTex::AlphaCompress alpha;
-        CompressTextureCallback *callback;
+        ObjPtr<RndTex> tex; // 0x0
+        RndTex::AlphaCompress alpha; // 0x14
+        CompressTextureCallback *callback; // 0x18
     };
 
     Rnd();
@@ -99,8 +96,8 @@ public:
     virtual void SetClearColor(const Hmx::Color &c) { mClearColor = c; }
     virtual void Clear(unsigned int, const Hmx::Color &) = 0;
     virtual void ForceColorClear() {}
-    virtual void ScreenDump(const char *);
-    virtual void ScreenDumpUnique(const char *);
+    virtual void ScreenDump(const char *file);
+    virtual void ScreenDumpUnique(const char *file);
     virtual void DrawRect(
         const Hmx::Rect &,
         const Hmx::Color &,
@@ -128,7 +125,7 @@ public:
     virtual void SetShadowMap(RndTex *, RndCam *, const Hmx::Color *) {}
     virtual void SetGSTiming(bool b) { mGsTiming = b; }
     virtual void CaptureNextGpuFrame() {}
-    virtual void RemovePointTest(RndFlare *);
+    virtual void RemovePointTest(RndFlare *flare);
     virtual bool HasDeviceReset() const { return false; }
     virtual void SetAspect(Aspect a) { mAspect = a; }
     virtual float YRatio();
@@ -148,8 +145,8 @@ public:
     int Height() const { return mHeight; }
     int Bpp() const { return mScreenBpp; }
     bool WorldEnded() const { return mWorldEnded; }
-    bool GetUnk1b4() { return unk1b4; } // When named, can replace
-    void SetUnk1b4(bool b1) { unk1b4 = b1; }
+    bool Splashing() const { return mSplashing; }
+    void SetSplashing(bool splashing) { mSplashing = splashing; }
     Aspect GetAspect() const { return mAspect; }
     Mode DrawMode() { return mDrawMode; }
     void SetDrawMode(Mode d) { mDrawMode = d; }
@@ -187,15 +184,15 @@ public:
     RndPostProc *GetPostProcOverride();
     RndPostProc *GetSelectedPostProc();
     void CopyWorldCam(RndCam *);
-    void RegisterPostProcessor(PostProcessor *);
-    void UnregisterPostProcessor(PostProcessor *);
-    void SetPostProcOverride(RndPostProc *);
-    void SetPostProcBlacklightOverride(RndPostProc *);
+    void RegisterPostProcessor(PostProcessor *pp);
+    void UnregisterPostProcessor(PostProcessor *pp);
+    void SetPostProcOverride(RndPostProc *pp);
+    void SetPostProcBlacklightOverride(RndPostProc *pp);
     void PreClearDrawAddOrRemove(RndDrawable *, bool, bool);
     RndTex *GetNullTexture();
     int CompressTexture(RndTex *, RndTex::AlphaCompress, CompressTextureCallback *);
-    void Modal(Debug::ModalType &, FixedString &, bool);
-    void TestPoint(const Vector3 &, RndFlare *);
+    void Modal(Debug::ModalType &modalType, FixedString &msg, bool wait);
+    void TestPoint(const Vector3 &, RndFlare *flare);
     void PushClipPlanes(ObjPtrVec<RndTransformable> &planes) {
         if (planes.size() > 0) {
             PushClipPlanesInternal(planes);
@@ -224,7 +221,7 @@ protected:
 
     void UpdateRate();
     void UpdateHeap();
-    float DrawTimers(float);
+    float DrawTimers(float topY);
     void CreateDefaults();
     void SetupFont();
     void CreateCubeTextures();
@@ -274,11 +271,11 @@ protected:
     RndEnviron *mDefaultEnv; // 0xe8
     RndLight *mDefaultLit; // 0xec
     RndTex *mDefaultTex[kDefaultTex_Max]; // 0xf0 - 0x10c, inclusive
-    RndCubeTex *unk110;
-    RndCubeTex *unk114;
-    float unk118;
-    int unk11c;
-    int unk120;
+    RndCubeTex *mCubeTex_Black; // 0x110
+    RndCubeTex *mCubeTex_White; // 0x114
+    float mRateTotal; // 0x118
+    int mRate; // 0x11c
+    int mRateCount; // 0x120
     unsigned int mFrameID; // 0x124
     const char *mRateGate; // 0x128
     DataArray *mFont; // 0x12c
@@ -299,18 +296,18 @@ protected:
     bool unk147;
     bool unk148;
     void (*mWorldEndCallback)(); // 0x14c
-    void (*unk150)(); // 0x150 - draw pre clear callback?
+    void (*mDrawPreClearCallback)(); // 0x150
     std::list<PointTest> mPointTests; // 0x154
     std::list<PostProcessor *> mPostProcessors; // 0x15c
     ObjPtr<RndPostProc> mPostProcOverride; // 0x164
     ObjPtr<RndPostProc> mPostProcBlackLightOverride; // 0x178
-    ObjPtrList<RndDrawable> unk18c; // 0x18c
-    ObjPtrList<RndDrawable> mDraws; // 0x1a0
-    bool unk1b4; // 0x1b4
+    ObjPtrList<RndDrawable> mPreClearList; // 0x18c
+    ObjPtrList<RndDrawable> mSplashPreClearList; // 0x1a0
+    bool mSplashing; // 0x1b4
     ProcCounter mProcCounter; // 0x1b8
     ProcessCmd mProcCmds; // 0x1d0
     ProcessCmd mLastProcCmds; // 0x1d4
-    std::list<CompressTexDesc *> unk1d8; // 0x1d8
+    std::list<CompressTexDesc *> mCompressTexDescs; // 0x1d8
 };
 
 extern Rnd &TheRnd;

@@ -117,7 +117,7 @@ void TexMovie::DrawPreClear() {
 
 void TexMovie::UpdatePreClearState() {
     if (unk5d) {
-        TheRnd.PreClearDrawAddOrRemove(this, true, TheRnd.GetUnk1b4());
+        TheRnd.PreClearDrawAddOrRemove(this, true, TheRnd.Splashing());
     }
 }
 

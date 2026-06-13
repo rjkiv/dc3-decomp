@@ -1,20 +1,4 @@
 #include "rndobj/Rnd.h"
-#include "AmbientOcclusion.h"
-#include "CamAnim.h"
-#include "Enter.h"
-#include "Group.h"
-#include "Morph.h"
-#include "MotionBlur.h"
-#include "MultiMeshProxy.h"
-#include "PollAnim.h"
-#include "PostProcMgr.h"
-#include "PropAnim.h"
-#include "ScreenMask.h"
-#include "Shockwave.h"
-#include "SoftParticles.h"
-#include "Spline.h"
-#include "TexBlendController.h"
-#include "TexBlender.h"
 #include "math/Color.h"
 #include "math/Geo.h"
 #include "math/Vec.h"
@@ -29,14 +13,17 @@
 #include "os/System.h"
 #include "os/Timer.h"
 #include "rnddx9/Tex.h"
+#include "rndobj/AmbientOcclusion.h"
 #include "rndobj/AnimFilter.h"
 #include "rndobj/BaseMaterial.h"
 #include "rndobj/Cam.h"
+#include "rndobj/CamAnim.h"
 #include "rndobj/Console.h"
 #include "rndobj/CubeTex.h"
 #include "rndobj/DOFProc.h"
 #include "rndobj/Dir.h"
 #include "rndobj/Draw.h"
+#include "rndobj/Enter.h"
 #include "rndobj/Env.h"
 #include "rndobj/EventTrigger.h"
 #include "rndobj/Flare.h"
@@ -45,6 +32,7 @@
 #include "rndobj/Fur.h"
 #include "rndobj/Gen.h"
 #include "rndobj/Graph.h"
+#include "rndobj/Group.h"
 #include "rndobj/HiResScreen.h"
 #include "rndobj/Line.h"
 #include "rndobj/Lit.h"
@@ -55,17 +43,28 @@
 #include "rndobj/MeshAnim.h"
 #include "rndobj/MeshDeform.h"
 #include "rndobj/MetaMaterial.h"
+#include "rndobj/Morph.h"
+#include "rndobj/MotionBlur.h"
 #include "rndobj/Movie.h"
 #include "rndobj/MultiMesh.h"
 #include "rndobj/MultiMeshProxy.h"
 #include "rndobj/Part.h"
 #include "rndobj/PartAnim.h"
 #include "rndobj/PartLauncher.h"
+#include "rndobj/PollAnim.h"
+#include "rndobj/PostProcMgr.h"
+#include "rndobj/PropAnim.h"
 #include "rndobj/Ribbon.h"
+#include "rndobj/ScreenMask.h"
 #include "rndobj/Set.h"
 #include "rndobj/ShaderMgr.h"
 #include "rndobj/ShaderOptions.h"
+#include "rndobj/Shockwave.h"
+#include "rndobj/SoftParticles.h"
+#include "rndobj/Spline.h"
 #include "rndobj/Tex.h"
+#include "rndobj/TexBlendController.h"
+#include "rndobj/TexBlender.h"
 #include "rndobj/TexProc.h"
 #include "rndobj/TexRenderer.h"
 #include "rndobj/Text.h"
@@ -133,14 +132,15 @@ Rnd::Rnd()
     : mClearColor(0.3f, 0.3f, 0.3f), mWidth(640), mHeight(480), mScreenBpp(16),
       mDrawCount(0), mDrawTimer(), mTimersOverlay(0), mRateOverlay(0), mHeapOverlay(0),
       mWatchOverlay(0), mStatsOverlay(0), mDefaultMat(0), mOverlayMat(0), mOverdrawMat(0),
-      mDefaultCam(0), mWorldCamCopy(0), mDefaultEnv(0), mDefaultLit(0), unk110(nullptr),
-      unk114(nullptr), unk118(0), unk120(5), mFrameID(0), mRateGate("    "),
-      mFont(nullptr), mSync(1), mGsTiming(0), mShowSafeArea(0), mDrawing(0),
-      mWorldEnded(1), mAspect(kWidescreen), mDrawMode(kDrawNormal), mShowShaderCost(0),
-      mShowOverdraw(0), mShrinkToSafe(1), mInGame(0), mVerboseTimers(0),
-      mDisablePostProc(0), unk146(0), unk147(0), unk148(0), mWorldEndCallback(0),
-      unk150(0), mPostProcOverride(this), mPostProcBlackLightOverride(nullptr),
-      unk18c(this), mDraws(this), unk1b4(0), mProcCmds(kProcessAll),
+      mDefaultCam(0), mWorldCamCopy(0), mDefaultEnv(0), mDefaultLit(0),
+      mCubeTex_Black(nullptr), mCubeTex_White(nullptr), mRateTotal(0), mRateCount(5),
+      mFrameID(0), mRateGate("    "), mFont(nullptr), mSync(1), mGsTiming(0),
+      mShowSafeArea(0), mDrawing(0), mWorldEnded(1), mAspect(kWidescreen),
+      mDrawMode(kDrawNormal), mShowShaderCost(0), mShowOverdraw(0), mShrinkToSafe(1),
+      mInGame(0), mVerboseTimers(0), mDisablePostProc(0), unk146(0), unk147(0), unk148(0),
+      mWorldEndCallback(0), mDrawPreClearCallback(0), mPostProcOverride(this),
+      mPostProcBlackLightOverride(nullptr), mPreClearList(this),
+      mSplashPreClearList(this), mSplashing(0), mProcCmds(kProcessAll),
       mLastProcCmds(kProcessAll) {
     for (int i = 0; i < kDefaultTex_Max; i++) {
         mDefaultTex[i] = nullptr;
@@ -629,36 +629,36 @@ void Rnd::DoPostProcess() {
 }
 
 void Rnd::DrawPreClear() {
-    if (unk150) {
-        unk150();
+    if (mDrawPreClearCallback) {
+        mDrawPreClearCallback();
     }
     if (sCompressDone) {
         sTexture->FinishCompress(sCompressDesc);
         sCompressDesc = nullptr;
         MILO_ASSERT(sTexture, 0x481);
-        CompressTexDesc *cur = unk1d8.front();
+        CompressTexDesc *cur = mCompressTexDescs.front();
         if (cur->tex) {
             RndTex *cTex = cur->tex;
             ReplaceObject(cTex, sTexture, false, false, false);
             sTexture = static_cast<DxTex *>(cTex);
         }
-        unk1d8.pop_front();
+        mCompressTexDescs.pop_front();
         delete cur;
         RELEASE(sTexture);
         sCompressDone = false;
     }
-    if (!sTexture && !unk1d8.empty()) {
-        for (auto it = unk1d8.begin(); it != unk1d8.end();) {
+    if (!sTexture && !mCompressTexDescs.empty()) {
+        for (auto it = mCompressTexDescs.begin(); it != mCompressTexDescs.end();) {
             CompressTexDesc *cur = *it;
             if (cur->tex && cur->callback) {
                 ++it;
             } else {
-                it = unk1d8.erase(it);
+                it = mCompressTexDescs.erase(it);
                 delete cur;
             }
         }
-        if (unk1d8.size() != 0) {
-            CompressTexDesc *desc = unk1d8.front();
+        if (mCompressTexDescs.size() != 0) {
+            CompressTexDesc *desc = mCompressTexDescs.front();
             sTexture = static_cast<DxTex *>(desc->tex.Ptr());
             RndTex *rTex;
             {
@@ -671,7 +671,7 @@ void Rnd::DrawPreClear() {
             SetEvent(gRndTextureEvent);
         }
     }
-    auto &drawList = unk1b4 ? unk18c : mDraws;
+    auto &drawList = mSplashing ? mPreClearList : mSplashPreClearList;
     if (!drawList.empty()) {
         unk148 = true;
         RndCam *cam = RndCam::Current();
@@ -861,12 +861,12 @@ void Rnd::SetupFont() {
 }
 
 void Rnd::CreateCubeTextures() {
-    unk110 = Hmx::Object::New<RndCubeTex>();
-    unk114 = Hmx::Object::New<RndCubeTex>();
+    mCubeTex_Black = Hmx::Object::New<RndCubeTex>();
+    mCubeTex_White = Hmx::Object::New<RndCubeTex>();
     for (unsigned int i = 0; i < RndCubeTex::kNumCubeFaces; i++) {
         RndCubeTex::CubeFace cf = (RndCubeTex::CubeFace)i;
-        RndBitmap &bm110 = unk110->GetBitmap(cf);
-        RndBitmap &bm114 = unk114->GetBitmap(cf);
+        RndBitmap &bm110 = mCubeTex_Black->GetBitmap(cf);
+        RndBitmap &bm114 = mCubeTex_White->GetBitmap(cf);
         bm110.Create(32, 32, 0, 32, 0, nullptr, nullptr, nullptr);
         bm114.Create(32, 32, 0, 32, 0, nullptr, nullptr, nullptr);
         for (int j = 0; j < 32; j++) {
@@ -875,8 +875,8 @@ void Rnd::CreateCubeTextures() {
                 bm114.SetPixelColor(k, j, 255, 255, 255, 255);
             }
         }
-        unk110->UpdateFace(cf);
-        unk114->UpdateFace(cf);
+        mCubeTex_Black->UpdateFace(cf);
+        mCubeTex_White->UpdateFace(cf);
     }
 }
 
@@ -959,26 +959,26 @@ void Rnd::CreateDefaults() {
         RELEASE(mDefaultTex[i]);
         mDefaultTex[i] = CreateDefaultTexture((DefaultTextureType)i);
     }
-    RELEASE(unk110);
-    RELEASE(unk114);
+    RELEASE(mCubeTex_Black);
+    RELEASE(mCubeTex_White);
     CreateCubeTextures();
 }
 
 int Rnd::CompressTexture(
     RndTex *tex, RndTex::AlphaCompress a, CompressTextureCallback *cb
 ) {
-    FOREACH (it, unk1d8) {
+    FOREACH (it, mCompressTexDescs) {
         if (tex == (*it)->tex) {
             MILO_NOTIFY("%s: texture added to compression twice", PathName(tex));
         }
     }
     CompressTexDesc *desc = new CompressTexDesc(tex, a, cb);
-    unk1d8.push_back(desc);
+    mCompressTexDescs.push_back(desc);
     return (int)desc;
 }
 
 void Rnd::PreClearDrawAddOrRemove(RndDrawable *d, bool b2, bool b3) {
-    ObjPtrList<RndDrawable> &list = b3 ? unk18c : mDraws;
+    ObjPtrList<RndDrawable> &list = b3 ? mPreClearList : mSplashPreClearList;
     if (!b2) {
         list.remove(d);
     } else {
@@ -1006,7 +1006,7 @@ void Rnd::UpdateHeap() {
 }
 
 void Rnd::UpdateRate() {
-    unk118 += mDrawTimer.GetLastMs();
+    mRateTotal += mDrawTimer.GetLastMs();
     static Timer *cpuTimer = AutoTimer::GetTimer("cpu");
     static Timer *gsTimer = AutoTimer::GetTimer("gs");
     if (gsTimer && cpuTimer && gsTimer->GetLastMs() > 16.7f) {
@@ -1016,13 +1016,12 @@ void Rnd::UpdateRate() {
             mRateGate = " cpu";
         }
     }
-    unk120--;
-    if (unk120 == 0) {
-        *mRateOverlay << "rate:" << (unk118 ? (int)(5000.0f / unk118 + 0.5f) : 0)
+    if (--mRateCount == 0) {
+        *mRateOverlay << "rate:" << (mRateTotal ? (int)(5000.0f / mRateTotal + 0.5f) : 0)
                       << mRateGate;
         *mRateOverlay << "\n";
-        unk118 = 0;
-        unk120 = 5;
+        mRateTotal = 0;
+        mRateCount = 5;
         mRateGate = "    ";
     }
 }
@@ -1063,15 +1062,15 @@ void WordWrap(const char *src, int wrap, char *dst, int dstSize) {
     *dst = '\0';
 }
 
-void Rnd::Modal(Debug::ModalType &t, FixedString &str, bool b3) {
-    if (b3) {
-        MILO_LOG("%s\n", str.c_str());
+void Rnd::Modal(Debug::ModalType &t, FixedString &msg, bool wait) {
+    if (wait) {
+        MILO_LOG("%s\n", msg.c_str());
     }
     if (CanModal(t)) {
-        AutoSlowFrame frame("Rnd::Modal", 6e+06f);
+        AutoSlowFrame frame(__FUNCTION__, 6e+06f);
         char buffer[4096];
-        WordWrap(str.c_str(), 90, buffer, sizeof(buffer));
-        if (!b3) {
+        WordWrap(msg.c_str(), 90, buffer, sizeof(buffer));
+        if (!wait) {
             strcat(buffer, "\n\n-- Waiting on Stack Trace --\n");
         } else if (t == Debug::kModalFail) {
             strcat(buffer, "\n\n-- Program ended --\n");
@@ -1080,11 +1079,11 @@ void Rnd::Modal(Debug::ModalType &t, FixedString &str, bool b3) {
         }
         bool showing = mConsole->Showing();
         mConsole->SetShowing(false);
-        if (t != Debug::kModalFail || !b3) {
+        if (t != Debug::kModalFail || !wait) {
             RndSplasherSuspend();
         }
         ModalDraw(t, buffer);
-        if (b3) {
+        if (wait) {
             bool screensaver = ThePlatformMgr.ScreenSaver();
             ThePlatformMgr.SetScreenSaver(false);
             ThePlatformMgr.SetScreenSaver(screensaver);

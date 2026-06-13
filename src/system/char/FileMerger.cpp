@@ -67,7 +67,7 @@ void FileMerger::Merger::Clear(bool b1) {
     } else {
         mLoadedSubdirs.clear();
     }
-    if (b1 && !TheRnd.GetUnk1b4()) {
+    if (b1 && !TheRnd.Splashing()) {
         TheRnd.BeginDrawing();
         TheRnd.EndDrawing();
     }

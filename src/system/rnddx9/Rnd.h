@@ -81,7 +81,7 @@ public:
     D3DDevice *Device() { return mD3DDevice; }
     void AutoRelease(D3DResource *r) {
         if (r) {
-            if (unk1b4) {
+            if (mSplashing) {
                 MILO_ASSERT(CurrentThreadId() != TheSplasher->SplashThreadId(), 0xF4);
                 D3DResource_Release(r);
             } else {
@@ -91,7 +91,7 @@ public:
     }
     void AutoDelete(D3DBaseTexture *t) {
         if (t) {
-            if (unk1b4) {
+            if (mSplashing) {
                 MILO_ASSERT(CurrentThreadId() != TheSplasher->SplashThreadId(), 0x105);
                 UINT data;
                 XGGetTextureLayout(

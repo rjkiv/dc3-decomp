@@ -163,7 +163,7 @@ void Splash::BeginSplasher() {
     }
     TheSplasher = this;
     SetRndSplasherCallback(PollFunc, SuspendFunc, ResumeFunc);
-    TheRnd.SetUnk1b4(true);
+    TheRnd.SetSplashing(true);
 }
 
 void Splash::EndSplasher() {
@@ -182,7 +182,7 @@ void Splash::EndSplasher() {
         }
         TheSplasher = nullptr;
         SetRndSplasherCallback(nullptr, nullptr, nullptr);
-        TheRnd.SetUnk1b4(false);
+        TheRnd.SetSplashing(false);
         FOREACH (it, unkc0) {
             delete *it;
         }
