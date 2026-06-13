@@ -64,22 +64,26 @@ public:
         RndFlare *unkc;
     };
 
-    struct CompressTextureCallback;
+    struct CompressTextureCallback {
+        virtual ~CompressTextureCallback() {}
+        virtual void TextureCompressed(int) = 0;
+    };
 
     struct CompressTexDesc {
         CompressTexDesc(RndTex *tex, RndTex::AlphaCompress a, CompressTextureCallback *cb)
             : tex(nullptr, tex), alpha(a), callback(cb) {}
+        ~CompressTexDesc() {
+            if (callback) {
+                // ain't no way this is right
+                callback->TextureCompressed((int)this);
+            }
+        }
 
         MEM_OVERLOAD(CompressTexDesc, 0x1E4)
 
         ObjPtr<RndTex> tex;
         RndTex::AlphaCompress alpha;
         CompressTextureCallback *callback;
-    };
-
-    struct CompressTextureCallback {
-        virtual ~CompressTextureCallback() {}
-        virtual void TextureCompressed(int) = 0;
     };
 
     Rnd();
@@ -127,7 +131,6 @@ public:
     virtual RndTex *GetShadowMap() { return nullptr; }
     virtual RndCam *GetShadowCam() { return nullptr; }
     virtual void SetShrinkToSafeArea(bool shrink) { mShrinkToSafe = shrink; }
-    bool ShrinkToSafeArea() const { return mShrinkToSafe; }
     virtual void SetInGame(bool game) { mInGame = game; }
     virtual int BeginQuery(RndDrawable *) { return -1; }
     virtual bool EndQuery(int) { return false; }
@@ -135,6 +138,7 @@ public:
         return false;
     }
 
+    bool ShrinkToSafeArea() const { return mShrinkToSafe; }
     bool TimersShowing() { return mTimersOverlay->Showing(); }
     int Width() const { return mWidth; }
     int Height() const { return mHeight; }

@@ -18,8 +18,12 @@
 #include "math/Color.h"
 #include "obj/DataFunc.h"
 #include "obj/Dir.h"
+#include "obj/Utl.h"
 #include "os/Debug.h"
+#include "os/Joypad.h"
+#include "os/Keyboard.h"
 #include "os/OSFuncs.h"
+#include "os/PlatformMgr.h"
 #include "os/System.h"
 #include "os/Timer.h"
 #include "rnddx9/Tex.h"
@@ -75,9 +79,12 @@
 #include "rndobj/Wind.h"
 #include "utl/Cheats.h"
 #include "utl/FileStream.h"
+#include "utl/MemMgr.h"
 #include "utl/Option.h"
 #include "utl/TextStream.h"
 #include "xdk/XAPILIB.h"
+#include "xdk/xapilibi/synchapi.h"
+#include "xdk/xapilibi/xbox.h"
 
 int Rnd::sPostProcPanelCount = 0;
 static DxTex *sTexture = nullptr;
@@ -596,7 +603,9 @@ void Rnd::DoWorldEnd() {
     } else if (mPostProcOverride) {
         mPostProcOverride->EndWorld();
     } else {
-        FOREACH (it, mPostProcessors) {
+        auto it = mPostProcessors.begin();
+        auto itEnd = mPostProcessors.end();
+        for (; it != itEnd; ++it) {
             (*it)->EndWorld();
         }
     }
@@ -620,100 +629,60 @@ void Rnd::DrawPreClear() {
     if (unk150) {
         unk150();
     }
-    // if (sCompressDone) {
-    // }
-
-    // clang-format off
-    //       if ((code *)this->field49_0x150 != (code *)0x0) {
-    //     (*(code *)this->field49_0x150)();
-    //   }
-    //   if (sCompressDone != '\0') {
-    //     DxTex::FinishCompress((DxTex *)sTexture,DAT_830a3fb4);
-    //     DAT_830a3fb4 = (void *)0x0;
-    //     if (sTexture == (Object *)0x0) {
-    //       local_60 = (Object *)0x481;
-    //       pcVar3 = MakeString<>(kAssertStr,"Rnd.cpp",(int *)&local_60,"sTexture");
-    //       Debug::Fail(&TheDebug,pcVar3,(void *)0x0);
-    //     }
-    //     this_00 = *(CompressTexDesc **)((this->field61_0x1d8).field0_0x0 + 8);
-    //     pOVar9 = *(Object **)(this_00 + 0xc);
-    //     if (pOVar9 != (Object *)0x0) {
-    //       local_60 = pOVar9;
-    //       ReplaceObject(pOVar9,sTexture,false,false,false);
-    //       sTexture = pOVar9;
-    //     }
-    //     local_60 = (Object *)(this->field61_0x1d8).field0_0x0;
-    //     stlpmtx_std::list<>::erase(&lStack_5c,&this->field61_0x1d8,&local_60);
-    //     CompressTexDesc::`scalar_deleting_destructor'(this_00,1);
-    //     if (sTexture != (Object *)0x0) {
-    //                     /* WARNING: Load size is inaccurate */
-    //       (**(sTexture->super_ObjRefOwner).vptr)(sTexture,1);
-    //     }
-    //     sTexture = (Object *)0x0;
-    //     sCompressDone = '\0';
-    //   }
-    //   if ((sTexture == (Object *)0x0) &&
-    //      (plVar10 = &this->field61_0x1d8,
-    //      (list<> *)(this->field61_0x1d8).field0_0x0 != &this->field61_0x1d8)) {
-    //     pOVar9 = (Object *)plVar10->field0_0x0;
-    //     while (pOVar9 != (Object *)&this->field61_0x1d8) {
-    //       this_01 = (pOVar9->mRefs).next;
-    //       if ((this_01[1].vptr == (void *)0x0) || (this_01[2].vptr == (void *)0x0)) {
-    //         local_60 = pOVar9;
-    //         puVar4 = (undefined4
-    //         *)stlpmtx_std::list<>::erase(&lStack_5c,plVar10,&local_60); pOVar9 =
-    //         (Object *)*puVar4;
-    //         CompressTexDesc::`scalar_deleting_destructor'((CompressTexDesc
-    //         *)this_01,1);
-    //       }
-    //       else {
-    //         pOVar9 = (Object *)(pOVar9->super_ObjRefOwner).vptr;
-    //       }
-    //     }
-    //     piVar7 = (int *)plVar10->field0_0x0;
-    //     iVar6 = 0;
-    //     if ((list<> *)piVar7 != &this->field61_0x1d8) {
-    //       do {
-    //         piVar7 = (int *)*piVar7;
-    //         iVar6 = iVar6 + 1;
-    //       } while ((list<> *)piVar7 != &this->field61_0x1d8);
-    //       if (iVar6 != 0) {
-    //         iVar6 = *(int *)(plVar10->field0_0x0 + 8);
-    //         sTexture = *(Object **)(iVar6 + 0xc);
-    //         MemPushTemp();
-    //         pRVar5 = Hmx::Object::New<>();
-    //         MemPopTemp();
-    //         ReplaceObject(sTexture,&pRVar5->super_Object,false,false,false);
-    //         DAT_830a3fb4 = DxTex::StartCompress((DxTex *)sTexture,*(AlphaCompress
-    //         *)(iVar6 + 0x14)); if (sCompressDone != '\0') {
-    //           local_60 = (Object *)0x4c3;
-    //           pcVar3 = MakeString<>(kAssertStr,"Rnd.cpp",(int
-    //           *)&local_60,"!sCompressDone"); Debug::Fail(&TheDebug,pcVar3,(void *)0x0);
-    //         }
-    //         SetEvent(gRndTextureEvent);
-    //       }
-    //     }
-    //   }
-    //   pOVar8 = &this->field54_0x18c;
-    //   if (this->field56_0x1b4 == false) {
-    //     pOVar8 = &this->mDraws;
-    //   }
-    //   if (pOVar8->mSize != 0) {
-    //     this->field46_0x148 = true;
-    //     pRVar2 = RndCam::sCurrent;
-    //     for (pvVar1 = pOVar8->mNodes; pvVar1 != (void *)0x0; pvVar1 = *(void
-    //     **)((int)pvVar1 + 0x14)) {
-    //       if (*(int **)((int)pvVar1 + 0xc) != (int *)0x0) {
-    //         (**(code **)(**(int **)((int)pvVar1 + 0xc) + 0x30))();
-    //       }
-    //     }
-    //     if ((pRVar2 != (RndCam *)0x0) && (pRVar2 != RndCam::sCurrent)) {
-    //       (**(code **)(*(int *)pRVar2 + 4))(pRVar2);
-    //     }
-    //     this->field46_0x148 = false;
-    //   }
-    //   return;
-    // clang-format on
+    if (sCompressDone) {
+        sTexture->FinishCompress(sCompressDesc);
+        sCompressDesc = nullptr;
+        MILO_ASSERT(sTexture, 0x481);
+        CompressTexDesc *cur = unk1d8.front();
+        if (cur->tex) {
+            RndTex *cTex = cur->tex;
+            ReplaceObject(cTex, sTexture, false, false, false);
+            sTexture = static_cast<DxTex *>(cTex);
+        }
+        unk1d8.pop_front();
+        delete cur;
+        RELEASE(sTexture);
+        sCompressDone = false;
+    }
+    if (!sTexture && !unk1d8.empty()) {
+        for (auto it = unk1d8.begin(); it != unk1d8.end();) {
+            CompressTexDesc *cur = *it;
+            if (cur->tex && cur->callback) {
+                ++it;
+            } else {
+                it = unk1d8.erase(it);
+                delete cur;
+            }
+        }
+        if (unk1d8.size() != 0) {
+            CompressTexDesc *desc = unk1d8.front();
+            sTexture = static_cast<DxTex *>(desc->tex.Ptr());
+            RndTex *rTex;
+            {
+                MemDoTempAllocations t;
+                rTex = Hmx::Object::New<RndTex>();
+            }
+            ReplaceObject(sTexture, rTex, false, false, false);
+            sCompressDesc = sTexture->StartCompress(desc->alpha);
+            MILO_ASSERT(!sCompressDone, 0x4C3);
+            SetEvent(gRndTextureEvent);
+        }
+    }
+    auto &drawList = unk1b4 ? unk18c : mDraws;
+    if (!drawList.empty()) {
+        unk148 = true;
+        RndCam *cam = RndCam::Current();
+        FOREACH (it, drawList) {
+            RndDrawable *cur = *it;
+            if (cur) {
+                cur->DrawPreClear();
+            }
+        }
+        if (cam && cam != RndCam::Current()) {
+            cam->Select();
+        }
+        unk148 = false;
+    }
 }
 
 float Rnd::UpdateOverlay(RndOverlay *o, float f) {
@@ -995,5 +964,106 @@ void Rnd::PreClearDrawAddOrRemove(RndDrawable *d, bool b2, bool b3) {
         list.remove(d);
     } else {
         PreClearCompilerHelper(list, d);
+    }
+}
+
+void Rnd::UpdateHeap() {
+    static int gCurHeap = -1;
+    int lines;
+    if (gCurHeap == -1) {
+        lines = MemNumHeaps() + 1;
+    } else {
+        lines = 1;
+    }
+    mHeapOverlay->SetLines(lines);
+    int i1;
+    if (gCurHeap == -1) {
+        i1 = -3;
+    } else {
+        i1 = gCurHeap == MemNumHeaps() ? -2 : gCurHeap;
+    }
+    char buf[2048];
+    MemPrintOverview(i1, buf);
+    *mHeapOverlay << buf;
+}
+
+void Rnd::UpdateRate() {
+    unk118 += mDrawTimer.GetLastMs();
+    static Timer *cpuTimer = AutoTimer::GetTimer("cpu");
+    static Timer *gsTimer = AutoTimer::GetTimer("gs");
+    if (gsTimer && cpuTimer && gsTimer->GetLastMs() > 16.7f) {
+        if (gsTimer->GetLastMs() > cpuTimer->GetLastMs() + 0.1f) {
+            mRateGate = " gs ";
+        } else {
+            mRateGate = " cpu";
+        }
+    }
+    unk120--;
+    if (unk120 == 0) {
+        *mRateOverlay << "rate:" << (unk118 ? (int)(5000.0f / unk118 + 0.5f) : 0)
+                      << mRateGate;
+        *mRateOverlay << "\n";
+        unk118 = 0;
+        unk120 = 5;
+        mRateGate = "    ";
+    }
+}
+
+void WordWrap(const char *, int, char *, int);
+
+void Rnd::Modal(Debug::ModalType &t, FixedString &str, bool b3) {
+    if (b3) {
+        MILO_LOG("%s\n", str.c_str());
+    }
+    if (CanModal(t)) {
+        AutoSlowFrame frame("Rnd::Modal", 6e+06f);
+        char buffer[4096];
+        WordWrap(str.c_str(), 0x5A, buffer, 0x1000);
+        if (!b3) {
+            strcat(buffer, "\n\n-- Waiting on Stack Trace --\n");
+        } else if (t == Debug::kModalFail) {
+            strcat(buffer, "\n\n-- Program ended --\n");
+        } else {
+            strcat(buffer, "\n\n-- Press any button to continue --\n");
+        }
+        bool showing = mConsole->Showing();
+        mConsole->SetShowing(false);
+        if (t != Debug::kModalFail || !b3) {
+            RndSplasherSuspend();
+        }
+        ModalDraw(t, buffer);
+        if (b3) {
+            bool screensaver = ThePlatformMgr.ScreenSaver();
+            ThePlatformMgr.SetScreenSaver(false);
+            ThePlatformMgr.SetScreenSaver(screensaver);
+            gFailKeepGoing = false;
+            gNotifyKeepGoing = false;
+            gFailRestartConsole = false;
+            ModalKeyListener listener;
+            KeyboardSubscribe(&listener);
+            int i10 = 0x800;
+            if (t != Debug::kModalFail) {
+                i10 = -1;
+            }
+            while (!(JoypadPollForButton(-1) & i10)) {
+                KeyboardPoll();
+                ModalDraw(t, buffer);
+                if (t == Debug::kModalFail && gFailKeepGoing) {
+                    t = Debug::kModalNotify;
+                    break;
+                }
+                if (t != Debug::kModalFail && gNotifyKeepGoing) {
+                    break;
+                }
+                if (t == Debug::kModalFail && gFailRestartConsole) {
+                    XLaunchNewImage(TheSystemArgs[0], 0);
+                }
+            }
+            KeyboardUnsubscribe(&listener);
+            mConsole->SetShowing(false);
+            ModalDraw(t, "");
+            RndSplasherResume();
+        }
+        mConsole->SetShowing(showing);
     }
 }

@@ -46,3 +46,5 @@ void NgLight::Init() {
     REGISTER_OBJ_FACTORY(NgLight);
     PhysMemTypeTracker tracker("D3D(phys):NgLight");
 }
+
+void NgLight::Terminate() {}

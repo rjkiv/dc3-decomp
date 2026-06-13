@@ -17,7 +17,7 @@ DWORD XBackgroundDownloadSetMode(XBACKGROUND_DOWNLOAD_MODE Mode);
 DWORD XEnableScreenSaver(BOOL fEnable);
 DWORD XGetLocale();
 DWORD XTLGetLanguage();
-VOID XLaunchNewImage(LPCSTR szImagePath, DWORD dwFlags);
+__declspec(noreturn) VOID XLaunchNewImage(LPCSTR szImagePath, DWORD dwFlags);
 LPVOID XPhysicalAlloc(
     SIZE_T dwSize, ULONG_PTR ulPhysicalAddress, ULONG_PTR ulAlignment, DWORD flProtect
 );

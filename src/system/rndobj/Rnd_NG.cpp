@@ -6,11 +6,13 @@
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "rndobj/Cam.h"
+#include "rndobj/DOFProc_NG.h"
 #include "rndobj/Flare.h"
 #include "rndobj/Fur_NG.h"
 #include "rndobj/Lit_NG.h"
 #include "rndobj/Mat_NG.h"
 #include "rndobj/Overlay.h"
+#include "rndobj/PostProc_NG.h"
 #include "rndobj/ShaderMgr.h"
 #include "rndobj/ShadowMap.h"
 #include "rndobj/SoftParticleBuffer.h"
@@ -55,7 +57,10 @@ void NgRnd::Terminate() {
     RELEASE(mOcclusionQueryMgr);
     RELEASE(unk208);
     TheShaderMgr.Terminate();
+    NgPostProc::Terminate();
+    NgDOFProc::Terminate();
     RndShadowMap::Terminate();
+    NgLight::Terminate();
     Rnd::Terminate();
 }
 
@@ -116,7 +121,14 @@ void NgRnd::ResetStats() {
     TheNgStats->mCams++;
 }
 
-float EstimateDraw(int);
+float EstimateDraw(int idx) {
+    return gNgStats[idx].mMotionBlurs * 0.003f + gNgStats[idx].mFlares * 0.017f
+        + gNgStats[idx].mMultiMeshInsts * 0.001f + gNgStats[idx].mLightsApprox * 0.01f
+        + gNgStats[idx].mLightsReal * 0.001f + gNgStats[idx].mCams * 0.0068f
+        + gNgStats[idx].mMats * 0.0097f + gNgStats[idx].mBones * 0.00126f
+        + gNgStats[idx].mMutMeshes * 0.0112f + gNgStats[idx].mRegMeshes * 0.0028f
+        + gNgStats[idx].mParts * 0.00023333334f + gNgStats[idx].mPartSys * 0.005f;
+}
 
 float NgRnd::UpdateOverlay(RndOverlay *overlay, float y) {
     if (overlay == mStatsOverlay) {

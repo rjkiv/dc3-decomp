@@ -18,6 +18,7 @@ public:
     void CheckShadowMap();
 
     static void Init();
+    static void Terminate();
 
 protected:
     NgLight();
