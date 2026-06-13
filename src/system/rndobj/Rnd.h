@@ -60,8 +60,12 @@ public:
     };
 
     struct PointTest {
-        int unk0, unk4, unk8;
-        RndFlare *unkc;
+        PointTest() : unk0(0), unk4(0), unk8(0), unkc(0) {}
+
+        int unk0; // 0x0
+        int unk4; // 0x4
+        unsigned int unk8; // 0x8
+        RndFlare *unkc; // 0xc
     };
 
     struct CompressTextureCallback {
@@ -191,6 +195,7 @@ public:
     RndTex *GetNullTexture();
     int CompressTexture(RndTex *, RndTex::AlphaCompress, CompressTextureCallback *);
     void Modal(Debug::ModalType &, FixedString &, bool);
+    void TestPoint(const Vector3 &, RndFlare *);
     void PushClipPlanes(ObjPtrVec<RndTransformable> &planes) {
         if (planes.size() > 0) {
             PushClipPlanesInternal(planes);

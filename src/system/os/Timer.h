@@ -266,7 +266,11 @@ public:
     static void CollectTimerStats();
     static void PrintTimers(bool);
     static void Init();
-    static void ResetTimers();
+    static void ResetTimers() {
+        FOREACH (it, sTimers) {
+            it->first.Reset();
+        }
+    }
 
 private:
     Timer *mTimer; // 0x0

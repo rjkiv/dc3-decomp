@@ -16,6 +16,7 @@
 #include "TexBlendController.h"
 #include "TexBlender.h"
 #include "math/Color.h"
+#include "math/Vec.h"
 #include "obj/DataFunc.h"
 #include "obj/Dir.h"
 #include "obj/Utl.h"
@@ -95,6 +96,7 @@ static bool gFailRestartConsole = false;
 static void *sCompressDesc = nullptr;
 static HANDLE gRndThread = nullptr;
 static HANDLE gRndTextureEvent = nullptr;
+static int gCurHeap = -1;
 
 DataNode ModalKeyListener::OnMsg(const KeyboardKeyMsg &k) {
     if (k.GetKey() == 0x12e) {
@@ -796,6 +798,22 @@ DataNode Rnd::OnScaleObject(const DataArray *da) {
     return 0;
 }
 
+DataNode Rnd::OnToggleHeap(const DataArray *) {
+    int num = MemNumHeaps() + 1;
+    if (!mHeapOverlay->Showing()) {
+        mHeapOverlay->SetShowing(true);
+    } else {
+        gCurHeap++;
+        if (gCurHeap >= num) {
+            gCurHeap = -1;
+            mHeapOverlay->SetShowing(false);
+        } else {
+            mHeapOverlay->SetShowing(true);
+        }
+    }
+    return 0;
+}
+
 void Rnd::UnregisterPostProcessor(PostProcessor *proc) { mPostProcessors.remove(proc); }
 
 void PreClearCompilerHelper(ObjPtrList<RndDrawable> &list, RndDrawable *draw) {
@@ -968,7 +986,6 @@ void Rnd::PreClearDrawAddOrRemove(RndDrawable *d, bool b2, bool b3) {
 }
 
 void Rnd::UpdateHeap() {
-    static int gCurHeap = -1;
     int lines;
     if (gCurHeap == -1) {
         lines = MemNumHeaps() + 1;
@@ -1009,7 +1026,41 @@ void Rnd::UpdateRate() {
     }
 }
 
-void WordWrap(const char *, int, char *, int);
+void WordWrap(const char *src, int wrap, char *dst, int dstSize) {
+    char *dstEnd = dst + dstSize - 2;
+    const char *srcEnd = src + strlen(src);
+    while (true) {
+        const char *srcSpace = nullptr;
+        char *dstSpace = nullptr;
+        for (int i = 0; i < wrap && src < srcEnd && dst < dstEnd && *src != '\n';
+             src++, i++, dst++) {
+            if (*src == ' ') {
+                srcSpace = src;
+                dstSpace = dst;
+            }
+            *dst = *src;
+        }
+        if (dst == dstEnd || src == srcEnd) {
+            break;
+        }
+
+        if (*src != '\n') {
+            if (srcSpace) {
+                if (10 >= (int)src - (int)srcSpace) {
+                    src = srcSpace;
+                    dst = dstSpace;
+                } else {
+                    src--;
+                }
+            } else {
+                src--;
+            }
+        }
+        *dst++ = '\n';
+        src++;
+    }
+    *dst = '\0';
+}
 
 void Rnd::Modal(Debug::ModalType &t, FixedString &str, bool b3) {
     if (b3) {
@@ -1018,7 +1069,7 @@ void Rnd::Modal(Debug::ModalType &t, FixedString &str, bool b3) {
     if (CanModal(t)) {
         AutoSlowFrame frame("Rnd::Modal", 6e+06f);
         char buffer[4096];
-        WordWrap(str.c_str(), 0x5A, buffer, 0x1000);
+        WordWrap(str.c_str(), 90, buffer, sizeof(buffer));
         if (!b3) {
             strcat(buffer, "\n\n-- Waiting on Stack Trace --\n");
         } else if (t == Debug::kModalFail) {
@@ -1065,5 +1116,29 @@ void Rnd::Modal(Debug::ModalType &t, FixedString &str, bool b3) {
             RndSplasherResume();
         }
         mConsole->SetShowing(showing);
+    }
+}
+
+void Rnd::TestPoint(const Vector3 &v, RndFlare *flare) {
+    if (!TheHiResScreen.IsActive()) {
+        if (RndCam::Current()->TargetTex()) {
+            MILO_NOTIFY_ONCE("Flare %s can't be drawn in rendered texture", flare->Name());
+            flare->SetUnks(true, false);
+        } else {
+            RndCam *cur = RndCam::Current();
+            Vector2 v2;
+            float f7 = cur->WorldToScreen(v, v2);
+            if (f7 >= cur->NearPlane() && f7 <= cur->FarPlane() && v2.x >= 0 && v2.y >= 0
+                && v2.x < 1 && v2.y < 1) {
+                mPointTests.push_back(PointTest());
+                PointTest &back = mPointTests.back();
+                back.unkc = flare;
+                back.unk0 = mWidth * v2.x;
+                back.unk4 = mHeight * v2.y;
+                back.unk8 = cur->ProjectZ(f7);
+                return;
+            }
+            flare->SetUnks(true, false);
+        }
     }
 }
