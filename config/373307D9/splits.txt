@@ -3026,7 +3026,7 @@ system/rnddx9/Mesh.cpp:
 	.pdata      start:0x822D4A70 end:0x822D4BC8
 	.text       start:0x82620180 end:0x82622AF0
 	.text       start:0x82EE2750 end:0x82EE2770 rename:.text$yd
-	.data       start:0x82F13518 end:0x82F137A4
+	.data       start:0x82F13518 end:0x82F136C8
 	.data       start:0x830A1800 end:0x830A182C rename:.bss
 
 system/rnddx9/MultiMesh.cpp:
@@ -3034,7 +3034,7 @@ system/rnddx9/MultiMesh.cpp:
 	.rdata      start:0x822983A0 end:0x822984A4 rename:.rdata$r
 	.pdata      start:0x822D4BC8 end:0x822D4CD8
 	.text       start:0x82622AF0 end:0x82624050
-	.data       start:0x82F137A4 end:0x82F137DC
+	.data       start:0x82F136C8 end:0x82F137DC
 	.data       start:0x830A182C end:0x830A1854 rename:.bss
 
 system/rnddx9/Lit.cpp:

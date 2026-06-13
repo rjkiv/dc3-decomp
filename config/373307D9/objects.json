@@ -610,7 +610,7 @@
             "system/rndobj/MotionBlur.cpp": "Matching",
             "system/rndobj/Movie.cpp": "Matching",
             "system/rndobj/MultiMesh.cpp": "NonMatching",
-            "system/rndobj/MultiMeshProxy.cpp": "NonMatching",
+            "system/rndobj/MultiMeshProxy.cpp": "Matching",
             "system/rndobj/Overlay.cpp": "NonMatching",
             "system/rndobj/Part.cpp": "NonMatching",
             "system/rndobj/PartAnim.cpp": "NonMatching",

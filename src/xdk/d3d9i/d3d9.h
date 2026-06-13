@@ -1725,7 +1725,7 @@ D3DDevice_GetSamplerState(D3DDevice *pDevice, DWORD Sampler, D3DSAMPLERSTATETYPE
     case D3DSAMP_POINTBORDERENABLE:
         return D3DDevice_GetSamplerState_PointBorderEnable(pDevice, Sampler);
     default:
-        break;
+        return 0;
     }
 }
 

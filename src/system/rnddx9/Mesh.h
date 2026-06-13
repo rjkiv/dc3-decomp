@@ -2,6 +2,7 @@
 #include "math/Mtx.h"
 #include "obj/Object.h"
 #include "rnddx9/Mat.h"
+#include "rnddx9/MultiMesh.h"
 #include "rnddx9/Object.h"
 #include "rndobj/Mesh.h"
 #include "utl/PoolAlloc.h"
@@ -9,6 +10,8 @@
 #include "xdk/d3d9i/d3d9.h"
 
 class DxMesh : public RndMesh, public DxObject {
+    friend class DxMultiMesh;
+
 public:
     struct VertexBufferData {
         VertexBufferData() : mBuffer(0), mSize(0) {}
@@ -31,6 +34,10 @@ public:
     virtual int NumVerts() const { return mNumVerts; }
 
     D3DVertexBuffer *GetMultimeshFaces();
+    bool OwnerCanDraw() const {
+        DxMesh *owner = static_cast<DxMesh *>(mGeomOwner.Ptr());
+        return owner->CanDraw();
+    }
 
     NEW_OBJ(DxMesh)
 

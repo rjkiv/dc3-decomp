@@ -24,9 +24,8 @@ END_LOADS
 
 void RndMultiMeshProxy::DrawShowing() {
     if (mMultiMesh) {
-        RndMesh *mesh = mMultiMesh->Mesh();
-        if (mesh) {
-            mesh->SetWorldXfm(mIndex->mXfm);
+        if (mMultiMesh->Mesh()) {
+            mMultiMesh->Mesh()->SetWorldXfm(mIndex->mXfm);
             mMultiMesh->Mesh()->DrawShowing();
         }
     }
@@ -34,8 +33,8 @@ void RndMultiMeshProxy::DrawShowing() {
 
 void RndMultiMeshProxy::UpdatedWorldXfm() {
     if (mMultiMesh) {
-        RndMultiMesh::Instance &inst = *mIndex;
-        inst.mXfm = WorldXfm();
+        Transform &instXfm = mIndex->mXfm;
+        instXfm = WorldXfm();
     }
 }
 
