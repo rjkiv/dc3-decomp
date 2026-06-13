@@ -17,7 +17,7 @@ typedef int ptrdiff_t;
 #define _PTRDIFF_T_DEFINED
 #endif
 
-#define offsetof(T, mem) ((int)&((T *)0->mem))
+#define offsetof(T, mem) ((int)&(((T *)0)->mem))
 
 #ifdef __cplusplus
 }

@@ -541,6 +541,15 @@ void D3DDevice_SetPixelShaderConstantB(
 
 void D3DDevice_SetPredication(D3DDevice *pDevice, UINT TilePredication);
 
+void *D3DDevice_BeginVertices(
+    D3DDevice *pDevice,
+    D3DPRIMITIVETYPE PrimitiveType,
+    UINT NumVertices,
+    UINT VertexStreamZeroStride
+);
+
+void D3DDevice_EndVertices(D3DDevice *pDevice);
+
 HRESULT D3DDevice_BeginIndexedVertices(
     D3DDevice *pDevice,
     D3DPRIMITIVETYPE PrimitiveType,
@@ -1068,9 +1077,17 @@ struct D3DDevice { /* Size=0x2b00 */
         D3DPRIMITIVETYPE PrimitiveType,
         UINT VertexCount,
         UINT VertexStreamZeroStride,
-        void **
-    );
-    HRESULT EndVertices();
+        void **out
+    ) {
+        *out = D3DDevice_BeginVertices(
+            this, PrimitiveType, VertexCount, VertexStreamZeroStride
+        );
+        return *out ? S_OK : E_OUTOFMEMORY;
+    }
+    HRESULT EndVertices() {
+        D3DDevice_EndVertices(this);
+        return S_OK;
+    }
     HRESULT BeginIndexedVertices(
         D3DPRIMITIVETYPE PrimitiveType,
         INT BaseVertexIndex,
