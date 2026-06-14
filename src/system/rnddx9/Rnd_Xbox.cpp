@@ -4,6 +4,7 @@
 #include "Mat.h"
 #include "math/Color.h"
 #include "math/Geo.h"
+#include "math/Mtx.h"
 #include "os/Memory.h"
 #include "Mesh.h"
 #include "Movie.h"
@@ -34,6 +35,7 @@
 #include "rndobj/Rnd_NG.h"
 #include "rndobj/Shader.h"
 #include "rndobj/ShaderMgr.h"
+#include "rndobj/ShaderOptions.h"
 #include "rndobj/ShadowMap.h"
 #include "rndobj/Stats_NG.h"
 #include "rndobj/Tex.h"
@@ -797,5 +799,74 @@ void DxRnd::CopyPostProcess() {
     if (mRegAlloc != 1) {
         mRegAlloc = (RegisterAlloc)1;
         mD3DDevice->SetShaderGPRAllocation(0, mDefaultVSRegAlloc, mDefaultPSRegAlloc);
+    }
+}
+
+static DWORD sPointTestFence = -1;
+
+void DxRnd::DoPointTests() {
+    if (sPointTestFence != -1) {
+        mD3DDevice->BlockOnFence(sPointTestFence);
+        sPointTestFence = -1;
+    }
+    if (mOcclusionQueryMgr && !TheHiResScreen.IsActive()) {
+        FOREACH (it, unk20c) {
+            unsigned int uiRef;
+            if (mOcclusionQueryMgr->GetQueryResults(it->unk4, uiRef)) {
+                it->unk0->SetUnks(true, uiRef);
+            }
+            if (mOcclusionQueryMgr->GetQueryResults(it->unk4, uiRef)) {
+                RndFlare *flare = it->unk0;
+                flare->SetOcclusionResult(uiRef);
+                flare->SetOcclusionReady(true);
+            }
+        }
+        mOcclusionQueryMgr->ToggleFrameIndex();
+        mOcclusionQueryMgr->OnEndFrame();
+        mOcclusionQueryMgr->IncrementFrameCounter();
+        mOcclusionQueryMgr->OnBeginFrame();
+
+        unk20c.resize(mPointTests.size());
+
+        if (!mPointTests.empty()) {
+            Transform xfm;
+            xfm.Reset();
+            TheShaderMgr.SetTransform(xfm);
+            TheShaderMgr.SetVConstant((VShaderConstant)4, Hmx::Matrix4(xfm));
+            RndShader::SelectConfig(nullptr, kStandardShader, false);
+            mD3DDevice->SetPixelShader(nullptr);
+            mD3DDevice->SetFVF(D3DFVF_XYZW | D3DFVF_DIFFUSE);
+            TheDxRnd.Device()->SetRenderState(D3DRS_COLORWRITEENABLE, 0);
+            TheDxRnd.Device()->SetRenderState(D3DRS_ALPHABLENDENABLE, 0);
+            TheDxRnd.Device()->SetRenderState(D3DRS_ALPHATESTENABLE, 0);
+            TheDxRnd.Device()->SetRenderState(D3DRS_ZWRITEENABLE, 0);
+            TheDxRnd.Device()->SetRenderState(D3DRS_ZENABLE, 1);
+            TheDxRnd.Device()->SetRenderState(
+                D3DRS_ZFUNC, unk_0x301 ? D3DCMP_GREATER : D3DCMP_LESS
+            );
+            float ptSize = 1;
+            TheDxRnd.Device()->SetRenderState(D3DRS_POINTSIZE, *(DWORD *)&ptSize);
+            TheDxRnd.Device()->SetRenderState(D3DRS_VIEWPORTENABLE, 0);
+            TheDxRnd.Device()->SetRenderState(D3DRS_HALFPIXELOFFSET, 1);
+            FOREACH (it, mPointTests) {
+                TheNgStats->mFlares++;
+
+                unsigned int uiRef;
+                if (mOcclusionQueryMgr->CreateQuery(uiRef)) {
+                    mOcclusionQueryMgr->BeginQuery(uiRef);
+                    mOcclusionQueryMgr->EndQuery(uiRef);
+                }
+            }
+            sPointTestFence = mD3DDevice->InsertFence();
+            NgMat::SetCurrent(nullptr);
+            TheDxRnd.Device()->SetRenderState(D3DRS_COLORWRITEENABLE, 0xF);
+            TheDxRnd.Device()->SetRenderState(D3DRS_VIEWPORTENABLE, 1);
+            TheDxRnd.Device()->SetRenderState(D3DRS_HALFPIXELOFFSET, 0);
+            if (RndCam::Current()) {
+                TheShaderMgr.SetVConstant(
+                    (VShaderConstant)4, RndCam::Current()->GetMatrix300()
+                );
+            }
+        }
     }
 }
