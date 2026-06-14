@@ -24,6 +24,7 @@
 #include "xdk/D3D9.h"
 #include "xdk/d3d9i/d3d9.h"
 #include "xdk/d3d9i/d3d9types.h"
+#include <cstddef>
 
 void DxMesh::VertexBufferData::SetData(D3DVertexBuffer *buffer, unsigned int size) {
     MILO_ASSERT(buffer != NULL, 0x1E);
@@ -37,34 +38,98 @@ void DxMesh::VertexBufferData::Release() {
     mSize = 0;
 }
 
+static D3DVERTEXELEMENT9 sVertexElements[] = {
+    { 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 },
+    { 0, 0xC, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0 },
+    { 0, 0x10, D3DDECLTYPE_FLOAT16_2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0 },
+    { 0, 0x14, D3DDECLTYPE_DEC4N, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0 },
+    { 0, 0x18, D3DDECLTYPE_DEC4N, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TANGENT, 0 },
+    { 0, 0x1C, D3DDECLTYPE_UDEC4N, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDWEIGHT, 0 },
+    { 0, 0x20, D3DDECLTYPE_UBYTE4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDINDICES, 0 },
+    D3DDECL_END()
+};
+
+static D3DVERTEXELEMENT9 sMutableVertexElements[] = {
+    { 0,
+      offsetof(RndMesh::Vert, pos),
+      D3DDECLTYPE_FLOAT4,
+      D3DDECLMETHOD_DEFAULT,
+      D3DDECLUSAGE_POSITION,
+      0 },
+    { 0,
+      offsetof(RndMesh::Vert, norm),
+      D3DDECLTYPE_FLOAT4,
+      D3DDECLMETHOD_DEFAULT,
+      D3DDECLUSAGE_NORMAL,
+      0 },
+    { 0,
+      offsetof(RndMesh::Vert, color),
+      D3DDECLTYPE_FLOAT4,
+      D3DDECLMETHOD_DEFAULT,
+      D3DDECLUSAGE_COLOR,
+      0 },
+    { 0,
+      offsetof(RndMesh::Vert, tex),
+      D3DDECLTYPE_FLOAT2,
+      D3DDECLMETHOD_DEFAULT,
+      D3DDECLUSAGE_TEXCOORD,
+      0 },
+    { 0,
+      offsetof(RndMesh::Vert, boneIndices),
+      D3DDECLTYPE_SHORT4,
+      D3DDECLMETHOD_DEFAULT,
+      D3DDECLUSAGE_BLENDINDICES,
+      0 },
+    { 0,
+      offsetof(RndMesh::Vert, tangent),
+      D3DDECLTYPE_FLOAT4,
+      D3DDECLMETHOD_DEFAULT,
+      D3DDECLUSAGE_TANGENT,
+      0 },
+    D3DDECL_END(),
+};
+
+static D3DVERTEXELEMENT9 sMutableSkinnedVertexElements[] = {
+    { 0,
+      offsetof(RndMesh::Vert, pos),
+      D3DDECLTYPE_FLOAT4,
+      D3DDECLMETHOD_DEFAULT,
+      D3DDECLUSAGE_POSITION,
+      0 },
+    { 0,
+      offsetof(RndMesh::Vert, norm),
+      D3DDECLTYPE_FLOAT4,
+      D3DDECLMETHOD_DEFAULT,
+      D3DDECLUSAGE_NORMAL,
+      0 },
+    { 0,
+      offsetof(RndMesh::Vert, boneWeights),
+      D3DDECLTYPE_FLOAT4,
+      D3DDECLMETHOD_DEFAULT,
+      D3DDECLUSAGE_BLENDWEIGHT,
+      0 },
+    { 0,
+      offsetof(RndMesh::Vert, tex),
+      D3DDECLTYPE_FLOAT2,
+      D3DDECLMETHOD_DEFAULT,
+      D3DDECLUSAGE_TEXCOORD,
+      0 },
+    { 0,
+      offsetof(RndMesh::Vert, boneIndices),
+      D3DDECLTYPE_SHORT4,
+      D3DDECLMETHOD_DEFAULT,
+      D3DDECLUSAGE_BLENDINDICES,
+      0 },
+    { 0,
+      offsetof(RndMesh::Vert, tangent),
+      D3DDECLTYPE_FLOAT4,
+      D3DDECLMETHOD_DEFAULT,
+      D3DDECLUSAGE_TANGENT,
+      0 },
+    D3DDECL_END()
+};
+
 DxMesh::DxMesh() : mNumVerts(0), mNumFaces(0), unk1ac(0), unk1b0(0) {
-    // clang-format off
-    static const D3DVERTEXELEMENT9 sVertexElements[] = {
-        { 0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 },
-        { 0, 12, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0 },
-        { 0, 16, D3DDECLTYPE_FLOAT16_2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0 },
-        { 0, 20, D3DDECLTYPE_DEC4N, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0 },
-        { 0, 24, D3DDECLTYPE_DEC4N, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TANGENT, 0 },
-        { 0, 28, D3DDECLTYPE_UDEC4N, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDWEIGHT, 0 },
-        { 0, 32, D3DDECLTYPE_UBYTE4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDINDICES, 0 },
-        D3DDECL_END(),
-        { 0, 0, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 },
-        { 0, 16, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0 },
-        { 0, 48, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0 },
-        { 0, 64, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0 },
-        { 0, 72, D3DDECLTYPE_SHORT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDINDICES, 0 },
-        { 0, 80, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TANGENT, 0 },
-        D3DDECL_END(),
-        // why is there a random 4 byte gap here. whyyyyyyyy
-        { 0, 0, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 },
-        { 0, 16, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0 },
-        { 0, 32, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDWEIGHT, 0 },
-        { 0, 64, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0 },
-        { 0, 72, D3DDECLTYPE_SHORT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_BLENDINDICES, 0 },
-        { 0, 80, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TANGENT, 0 },
-        D3DDECL_END()
-    };
-    // clang-format on
     if (!sVertexDecl) {
         HRESULT hr =
             TheDxRnd.Device()->CreateVertexDeclaration(sVertexElements, &sVertexDecl);
@@ -72,13 +137,13 @@ DxMesh::DxMesh() : mNumVerts(0), mNumFaces(0), unk1ac(0), unk1b0(0) {
     }
     if (!sMutableVertexDecl) {
         HRESULT hr = TheDxRnd.Device()->CreateVertexDeclaration(
-            &sVertexElements[8], &sMutableVertexDecl
+            sMutableVertexElements, &sMutableVertexDecl
         );
         DX_ASSERT(hr, 0xAF);
     }
     if (!sMutableSkinnedVertexDecl) {
         HRESULT hr = TheDxRnd.Device()->CreateVertexDeclaration(
-            &sVertexElements[15], &sMutableSkinnedVertexDecl
+            sMutableSkinnedVertexElements, &sMutableSkinnedVertexDecl
         );
         DX_ASSERT(hr, 0xB5);
     }

@@ -239,11 +239,6 @@ extern DxRnd TheDxRnd;
 
 #define GPU_GPRS 0x80
 
-struct DxLineVertex {
-    float x, y, z; // D3DFVF_XYZ
-    DWORD diffuse; // D3DFVF_DIFFUSE
-};
-
 int D3DFORMAT_BitsPerPixel(D3DFORMAT);
 
 inline DWORD MakeColor(const Hmx::Color &c) {

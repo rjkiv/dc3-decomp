@@ -215,7 +215,8 @@ BinStream &operator<<(BinStream &bs, const RndMesh::Face &face) {
 BinStream &operator<<(BinStream &bs, const RndMesh::Vert &vert) {
     bs << vert.pos << vert.norm;
     bs << vert.color << vert.tex << vert.boneWeights << vert.boneIndices[0]
-       << vert.boneIndices[1] << vert.boneIndices[2] << vert.boneIndices[3] << vert.unk50;
+       << vert.boneIndices[1] << vert.boneIndices[2] << vert.boneIndices[3]
+       << vert.tangent;
     return bs;
 }
 
@@ -302,7 +303,7 @@ BinStreamRev &operator>>(BinStreamRev &d, RndMesh::Vert &vert) {
         d.stream >> vert.boneIndices[3];
     }
     if (d.rev > 0x1D) {
-        d.stream >> vert.unk50;
+        d.stream >> vert.tangent;
     }
     return d;
 }

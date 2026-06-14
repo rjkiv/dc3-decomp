@@ -1,5 +1,4 @@
 #pragma once
-
 #include "os/Debug.h"
 #include "rnddx9/Rnd.h"
 #include <xdk/D3D9.h>

@@ -5,6 +5,7 @@
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/System.h"
+#include "rnddx9/Object.h"
 #include "rndobj/Bitmap.h"
 #include "rndobj/Mat.h"
 #include "rndobj/Mat_NG.h"
@@ -14,9 +15,6 @@
 #include "rndobj/Tex.h"
 #include "rndobj/Utl.h"
 #include "xdk/D3D9.h"
-#include "xdk/d3d9i/d3d9.h"
-#include "xdk/d3d9i/d3d9caps.h"
-#include "xdk/d3d9i/d3d9types.h"
 
 DxRnd TheDxRnd;
 

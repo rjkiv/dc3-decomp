@@ -48,7 +48,7 @@ void FillCompressedVertex(
         (FloatToHalfFloat(vert.tex.x) << 0x10) | FloatToHalfFloat(vert.tex.y);
     Vector4 norm(vert.norm.x, vert.norm.y, vert.norm.z, 0);
     PackVector(vertXbox.unk14, norm, 10, 10, 10, 2, true);
-    PackVector(vertXbox.unk18, vert.unk50, 10, 10, 10, 2, true);
+    PackVector(vertXbox.unk18, vert.tangent, 10, 10, 10, 2, true);
     vertXbox.unk20 =
         ((((vert.boneIndices[3] & 0xffffffU) * 0x100 + vert.boneIndices[2] & 0xffffff)
                   * 0x100

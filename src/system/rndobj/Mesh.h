@@ -55,7 +55,7 @@ public:
             for (int i = 0; i < 4; i++) {
                 boneIndices[i] = i;
             }
-            unk50.Set(1, 0, 0, 1);
+            tangent.Set(1, 0, 0, 1);
         }
 
         static void *operator new(unsigned int s) {
@@ -74,7 +74,7 @@ public:
         Hmx::Color color; // 0x30
         Vector2 tex; // 0x40
         short boneIndices[4]; // 0x48
-        Vector4 unk50; // 0x50
+        Vector4 tangent; // 0x50
     };
 
     /** A triangle mesh face. */
