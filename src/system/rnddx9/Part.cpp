@@ -1,8 +1,10 @@
 #include "rnddx9/Part.h"
+#include "math/Color.h"
 #include "math/Mtx.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "rnddx9/Rnd.h"
+#include "rndobj/Part.h"
 #include "rndobj/Shader.h"
 #include "rndobj/ShaderMgr.h"
 #include "rndobj/ShaderOptions.h"
@@ -59,9 +61,8 @@ void DxParticleSys::Init() {
 void DxParticleSys::DrawShowing() {
     RndParticleSys::DrawShowing();
     if (mActiveParticles != nullptr) {
-        Hmx::Color particle_color;
         Hmx::Matrix3 inv_rel_mtx;
-        particle_color.ResetFake();
+        Hmx::Color particle_color(1, 1, 1);
         Invert(mRelativeXfm.m, inv_rel_mtx);
         Multiply(RndCam::Current()->WorldXfm().m, inv_rel_mtx, inv_rel_mtx);
         bool is_fancy = mType == kFancy;
@@ -120,45 +121,48 @@ void DxParticleSys::DrawParticles(const Hmx::Color &col) {
     MILO_ASSERT(mActiveParticles, 551);
     int num_drawn = mNumActive;
     TheDxRnd.Device()->SetVertexDeclaration(sVertexDecl);
+    DxParticleVertex *upload;
     HRESULT hr = TheDxRnd.Device()->BeginVertices(
-        D3DPT_QUADLIST, num_drawn * 4, sizeof(DxParticleVertex), nullptr
+        D3DPT_QUADLIST, num_drawn * 4, sizeof(DxParticleVertex), (void **)&upload
     );
     DX_ASSERT(hr, 559);
-
-    bool align = mAlignWithVelocity;
-    if (mActiveParticles != nullptr) {
-        DxParticleVertex *upload = (DxParticleVertex *)hr;
-        RndParticle *particle = mActiveParticles;
-        if (align) {
-            int c = col.PackAlpha();
-            upload->posx = particle->pos.x;
-            upload->posy = particle->pos.y;
-            upload->posz = particle->pos.z;
-            upload->color = c;
-            upload->uv0.x = particle->vel.x * 2;
-            upload->uv0.y = particle->vel.y * 2;
-            upload->uv0.z = particle->vel.z * 2;
-            upload->uv1 = particle->tileIdx;
-            particle = particle->next;
-            upload++;
-        } else {
-            while (particle != nullptr) {
-                int c = col.PackAlpha();
-                upload->posx = particle->pos.x;
-                upload->posy = particle->pos.y;
-                upload->posz = particle->pos.z;
-                upload->color = c;
-                upload->uv0.x = particle->size;
-                upload->uv0.y = particle->angle;
-                upload->uv0.z = particle->swingArm;
-                upload->uv1 = particle->tileIdx;
-                particle = particle->next;
-                upload++;
-            }
+    if (mAlignWithVelocity) {
+        for (RndParticle *p = mActiveParticles; p != nullptr; p = p->next, upload++) {
+            Hmx::Color mult(
+                p->col.red * col.red,
+                p->col.green * col.green,
+                p->col.blue * col.blue,
+                p->col.alpha * col.alpha
+            );
+            upload->posx = p->pos.x;
+            upload->posy = p->pos.y;
+            upload->posz = p->pos.z;
+            upload->color = MakeColor(mult);
+            upload->uv0.x = p->size;
+            upload->uv0.y = p->vel.x * 2;
+            upload->uv0.z = p->vel.y * 2;
+            upload->uv0.w = p->vel.z * 2;
+            upload->uv1 = p->tileIdx;
+        }
+    } else {
+        for (RndParticle *p = mActiveParticles; p != nullptr; p = p->next, upload++) {
+            Hmx::Color mult(
+                p->col.red * col.red,
+                p->col.green * col.green,
+                p->col.blue * col.blue,
+                p->col.alpha * col.alpha
+            );
+            upload->posx = p->pos.x;
+            upload->posy = p->pos.y;
+            upload->posz = p->pos.z;
+            upload->color = MakeColor(mult);
+            upload->uv0.x = p->size;
+            upload->uv0.y = p->angle;
+            upload->uv0.z = p->swingArm;
+            upload->uv1 = p->tileIdx;
         }
     }
-    DxParticleVertex *verts = (DxParticleVertex *)hr;
     TheDxRnd.Device()->EndVertices();
     TheNgStats->mParts += num_drawn;
-    TheNgStats->mPartSys += (num_drawn != 0);
+    TheNgStats->mPartSys += num_drawn ? 1 : 0;
 }
