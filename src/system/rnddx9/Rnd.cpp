@@ -117,10 +117,9 @@ bool DxRnd::Offscreen() const {
 void DxRnd::DrawLargeQuad(
     const LargeQuadRenderData &data, const Transform &tf, RndMat *mat, ShaderType s
 ) {
-    RndMat *it = mat;
     RndMat *next = mat ? mat->NextPass() : nullptr;
-    while (true) {
-        RndShader::SelectConfig(it, s, false);
+    while (mat != nullptr) {
+        RndShader::SelectConfig(mat, s, false);
         mD3DDevice->SetIndices(data.unk0);
         mD3DDevice->SetStreamSource(0, data.unk4, 0, 20);
         mD3DDevice->SetFVF(D3DFVF_TEX1 | D3DFVF_XYZ);
@@ -131,10 +130,12 @@ void DxRnd::DrawLargeQuad(
         mD3DDevice->DrawIndexedVertices(
             D3DPT_QUADLIST, 0, 0, (data.unkc - 1) * (data.unk8 - 1) * 4
         );
-        if (!next)
+        if (next) {
+            mat = next;
+            next = next->NextPass();
+        } else {
             break;
-        it = next;
-        next = mat->NextPass();
+        }
     }
     mD3DDevice->SetIndices(nullptr);
     mD3DDevice->SetStreamSource(0, nullptr, 0, 0);
@@ -241,7 +242,7 @@ void DxRnd::DrawSafeArea(float percent, bool widescreen, const Hmx::Color &color
     float mult = targetAspect * realAspect;
     float set = (1.0f - percent) / 2.0f;
 
-    Vector2 vec1(set + (mult - 1.0f) / 2.0f, set);
+    Vector2 vec1(set + (1.0f - mult) / 2.0f, set);
     Vector2 vec2(1.0f - vec1.x, 1.0f - vec1.y);
     UtilDrawRect2D(vec1, vec2, color);
 }
