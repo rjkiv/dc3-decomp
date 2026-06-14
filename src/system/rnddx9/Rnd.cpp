@@ -16,10 +16,14 @@
 #include "rndobj/Tex.h"
 #include "rndobj/Trans.h"
 #include "rndobj/Utl.h"
+#include "utl/MemTrack.h"
 #include "xdk/D3D9.h"
+#include "xdk/d3d9i/d3d9.h"
 #include "xdk/d3d9i/d3d9types.h"
 
 DxRnd TheDxRnd;
+Rnd &TheRnd = TheDxRnd;
+NgRnd &TheNgRnd = TheDxRnd;
 
 BEGIN_HANDLERS(DxRnd)
     HANDLE_ACTION(suspend, Suspend())
@@ -139,7 +143,79 @@ void DxRnd::SetViewport(const Viewport &v) {
 }
 
 // DrawRect
-// DrawRectDepth
+
+// size 0x30
+struct DxRectVertex {
+    float posX, posY, posZ;
+    float tex1X, tex1Y, tex1Z;
+    float tex2X, tex2Y, tex2Z;
+    float tex3X, tex3Y, tex3Z;
+};
+
+static D3DVertexDeclaration *sRectDecl;
+
+static D3DVERTEXELEMENT9 sRectElements[] = { { 0,
+                                               offsetof(DxRectVertex, posX),
+                                               D3DDECLTYPE_FLOAT3,
+                                               D3DDECLMETHOD_DEFAULT,
+                                               D3DDECLUSAGE_POSITION,
+                                               0 },
+                                             { 0,
+                                               offsetof(DxRectVertex, tex1X),
+                                               D3DDECLTYPE_FLOAT3,
+                                               D3DDECLMETHOD_DEFAULT,
+                                               D3DDECLUSAGE_TEXCOORD,
+                                               0 },
+                                             { 0,
+                                               offsetof(DxRectVertex, tex2X),
+                                               D3DDECLTYPE_FLOAT3,
+                                               D3DDECLMETHOD_DEFAULT,
+                                               D3DDECLUSAGE_TEXCOORD,
+                                               1 },
+                                             { 0,
+                                               offsetof(DxRectVertex, tex3X),
+                                               D3DDECLTYPE_FLOAT3,
+                                               D3DDECLMETHOD_DEFAULT,
+                                               D3DDECLUSAGE_TEXCOORD,
+                                               2 },
+                                             D3DDECL_END() };
+
+void DxRnd::DrawRectDepth(
+    const Vector3 &v3,
+    const Vector3 (&varr)[4],
+    const Vector4 &v4,
+    RndMat *mat,
+    ShaderType shaderType
+) {
+    TheShaderMgr.SetPConstant((PShaderConstant)0x59, v4);
+
+    static DxRectVertex sRectVertices[] = {
+        { -1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { -1, -1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0 },
+        { 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0 },
+        { 1, -1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0 },
+    };
+
+    for (int i = 0; i < DIM(sRectVertices); i++) {
+        sRectVertices[i].tex2X = v3.x;
+        sRectVertices[i].tex2Y = v3.y;
+        sRectVertices[i].tex2Z = v3.z;
+        sRectVertices[i].tex3X = varr[i].x;
+        sRectVertices[i].tex3Y = varr[i].y;
+        sRectVertices[i].tex3Z = varr[i].z;
+    }
+    RndShader::SelectConfig(mat, shaderType, false);
+    if (!sRectDecl) {
+        HRESULT hr = mD3DDevice->CreateVertexDeclaration(sRectElements, &sRectDecl);
+        DX_ASSERT(hr, 0x2C3);
+    }
+    TheDxRnd.Device()->SetRenderState(D3DRS_HALFPIXELOFFSET, 1);
+    mD3DDevice->SetVertexDeclaration(sRectDecl);
+    mD3DDevice->DrawVerticesUP(
+        D3DPT_TRIANGLESTRIP, DIM(sRectVertices), sRectVertices, sizeof(DxRectVertex)
+    );
+    TheDxRnd.Device()->SetRenderState(D3DRS_HALFPIXELOFFSET, 0);
+}
 
 bool DxRnd::Offscreen() const {
     D3DSurface *back = BackBuffer();
@@ -155,7 +231,39 @@ bool DxRnd::Offscreen() const {
     return ret;
 }
 
-// CreateLargeQuad
+void DxRnd::CreateLargeQuad(int i1, int i2, LargeQuadRenderData &quadData) {
+    int i1sub = i1 - 1;
+    int i2sub = i2 - 1;
+    D3DIndexBuffer *indexBuffer;
+    BeginMemTrackObjectName(__FUNCTION__);
+    HRESULT hr = mD3DDevice->CreateIndexBuffer(
+        i2sub * i1sub * 0x10, 0, D3DFMT_INDEX32, 0, &indexBuffer, nullptr
+    );
+    DX_ASSERT(hr, 0x2E3);
+    EndMemTrackObjectName();
+    void *data;
+    indexBuffer->Lock(0, 0, &data, 0);
+    for (int i = 0; i < i2sub; i++) {
+        for (int j = 0; j < i1sub; j++) {
+        }
+    }
+    D3DVertexBuffer *vertexBuffer;
+    BeginMemTrackObjectName(__FUNCTION__);
+    UINT vLen = i2 * i1 * 0x14;
+    hr = mD3DDevice->CreateVertexBuffer(vLen, 0, 0, 0, &vertexBuffer, nullptr);
+    DX_ASSERT(hr, 0x2FB);
+    EndMemTrackObjectName();
+    vertexBuffer->Lock(0, vLen, &data, 0);
+    for (int i = 0; i < i2; i++) {
+        for (int j = 0; j < i1; j++) {
+        }
+    }
+    vertexBuffer->Unlock();
+    quadData.unk0 = indexBuffer;
+    quadData.unk4 = vertexBuffer;
+    quadData.unk8 = i1;
+    quadData.unkc = i2;
+}
 
 void DxRnd::DrawLargeQuad(
     const LargeQuadRenderData &data, const Transform &tf, RndMat *mat, ShaderType s

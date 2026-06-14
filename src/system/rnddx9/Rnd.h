@@ -9,6 +9,7 @@
 #include "rndobj/Bitmap.h"
 #include "rndobj/Rnd_NG.h"
 #include "xdk/D3D9.h"
+#include "xdk/D3DX9.h"
 #include "xdk/XGRAPHICS.h"
 #include "xdk/xapilibi/xbase.h"
 #include <types.h>
@@ -163,7 +164,7 @@ private:
     void DoPointTests();
     void DrawSafeArea(float, bool, const Hmx::Color &);
 
-    // static D3DXMATRIX sIdentityMtx;
+    static D3DXMATRIX sIdentityMtx;
 
     int unk220;
     D3DDevice *mD3DDevice; // 0x224
