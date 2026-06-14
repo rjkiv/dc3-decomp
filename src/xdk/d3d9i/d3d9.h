@@ -570,6 +570,8 @@ void D3DDevice_SetVertexDeclaration(
 
 void D3DDevice_SetClipPlane(D3DDevice *pDevice, DWORD Index, const float *pPlane);
 
+HRESULT PIXCaptureGpuFrame(char *pFilename);
+
 // C++
 struct D3DDevice { /* Size=0x2b00 */
     /* 0x0000 */ _D3DTAGCOLLECTION m_Pending;
