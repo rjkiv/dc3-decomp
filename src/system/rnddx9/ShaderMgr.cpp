@@ -287,10 +287,10 @@ void DxShaderMgr::SetVConstant(VShaderConstant vsc, bool b) {
 }
 
 void DxShaderMgr::SetVConstant(VShaderConstant vsc, const Hmx::Matrix4 &mtx) {
-    TheDxRnd.Device()->SetVertexShaderConstantF(vsc, (const float *)&mtx.x, 1);
-    TheDxRnd.Device()->SetVertexShaderConstantF(vsc, (const float *)&mtx.y, 1);
-    TheDxRnd.Device()->SetVertexShaderConstantF(vsc, (const float *)&mtx.z, 1);
-    TheDxRnd.Device()->SetVertexShaderConstantF(vsc, (const float *)&mtx.w, 1);
+    TheDxRnd.Device()->SetVertexShaderConstantF(vsc, (const float *)&mtx.m[0], 1);
+    TheDxRnd.Device()->SetVertexShaderConstantF(vsc, (const float *)&mtx.m[1], 1);
+    TheDxRnd.Device()->SetVertexShaderConstantF(vsc, (const float *)&mtx.m[2], 1);
+    TheDxRnd.Device()->SetVertexShaderConstantF(vsc, (const float *)&mtx.m[3], 1);
 }
 
 void DxShaderMgr::SetPConstant(PShaderConstant psc, RndCubeTex *tex) {

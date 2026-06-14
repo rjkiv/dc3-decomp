@@ -568,6 +568,8 @@ void D3DDevice_SetVertexDeclaration(
     D3DDevice *pDevice, D3DVertexDeclaration *pDeclaration
 );
 
+void D3DDevice_SetClipPlane(D3DDevice *pDevice, DWORD Index, const float *pPlane);
+
 // C++
 struct D3DDevice { /* Size=0x2b00 */
     /* 0x0000 */ _D3DTAGCOLLECTION m_Pending;
@@ -960,7 +962,10 @@ struct D3DDevice { /* Size=0x2b00 */
     HRESULT GetVertexDeclaration(D3DVertexDeclaration **ppDecl);
     HRESULT SetScissorRect(const RECT *pRect);
     HRESULT GetScissorRect(RECT *pRect);
-    HRESULT SetClipPlane(DWORD Index, const float *pPlane);
+    HRESULT SetClipPlane(DWORD Index, const float *pPlane) {
+        D3DDevice_SetClipPlane(this, Index, pPlane);
+        return S_OK;
+    }
     HRESULT GetClipPlane(DWORD Index, float *pPlane);
     HRESULT CreateQuery(D3DQUERYTYPE Type, D3DQuery **ppQuery);
     HRESULT CreateQueryTiled(D3DQUERYTYPE Type, UINT TileCapacity, D3DQuery **ppQuery) {

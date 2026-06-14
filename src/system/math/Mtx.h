@@ -110,23 +110,28 @@ namespace Hmx {
 
     public:
         Matrix4() {}
-        Matrix4(const Transform &);
-        Matrix4(const Vector4 &v1, const Vector4 &v2, const Vector4 &v3, const Vector4 &v4)
-            : x(v1), y(v2), z(v3), w(v4) {}
+        Matrix4(const Transform &xfm);
+
+        Matrix4(
+            const Vector4 &v1, const Vector4 &v2, const Vector4 &v3, const Vector4 &v4
+        ) {
+            m[0] = v1;
+            m[1] = v2;
+            m[2] = v3;
+            m[3] = v4;
+        }
 
         Matrix4 &Zero();
         Matrix4 &operator=(const Matrix4 &mtx) {
             memcpy(this, &mtx, sizeof(*this));
             return *this;
         }
-        Vector3 Col3(int idx) const { return Vector3(x[idx], y[idx], z[idx]); }
+        Vector3 Col3(int idx) const { return Vector3(m[0][idx], m[1][idx], m[2][idx]); }
 
         static const Hmx::Matrix4 &ID() { return sID; }
 
-        Vector4 x;
-        Vector4 y;
-        Vector4 z;
-        Vector4 w;
+        // RBVR says this is an array
+        Vector4 m[4];
     };
 
     Hmx::Matrix4 operator*(const Transform &, const Hmx::Matrix4 &);
@@ -214,6 +219,7 @@ inline void NormalizeAboutY(Hmx::Matrix3 &mtx) {
 class Transform {
 private:
     static Transform sID;
+    //   private: static Transform sZero;
 
 public:
     class Hmx::Matrix3 m;
@@ -254,8 +260,41 @@ public:
     bool operator==(const Transform &tf) const { return m == tf.m && v == tf.v; }
     bool operator!=(const Transform &tf) const { return m != tf.m || v != tf.v; }
 
-    static const Transform &IDXfm() { return sID; }
+    //   public: Vector3& operator[](int32_t);
+    //   public: const Vector3& operator[](int32_t) const;
+    //   public: const float*AsArray()[3] const;
+    //   public: float*AsArray()[3];
+
+    //   public: Transform operator*(const Hmx::Matrix3&) const;
+    //   public: Transform operator*(const Transform&) const;
+    //   public: Transform& operator*=(const Hmx::Matrix3&);
+    //   public: Transform& operator*=(const Transform&);
+    //   public: String Token(bool) const;
+    //   public: bool SetFromToken(const char*);
+    //   public: Transform& operator=(Transform&&);
+
+    //   public: static const Transform& GetZero();
+    static const Transform &GetIdentity() { return sID; }
 };
+
+inline Hmx::Matrix4::Matrix4(const Transform &xfm) {
+    m[0].x = xfm.m.x.x;
+    m[0].y = xfm.m.x.y;
+    m[0].z = xfm.m.x.z;
+    m[0].w = 0;
+    m[1].x = xfm.m.y.x;
+    m[1].y = xfm.m.y.y;
+    m[1].z = xfm.m.y.z;
+    m[1].w = 0;
+    m[2].x = xfm.m.z.x;
+    m[2].y = xfm.m.z.y;
+    m[2].z = xfm.m.z.z;
+    m[2].w = 0;
+    m[3].x = xfm.v.x;
+    m[3].y = xfm.v.y;
+    m[3].z = xfm.v.z;
+    m[3].w = 1;
+}
 
 inline BinStream &operator<<(BinStream &bs, const Transform &tf) {
     bs << tf.m << tf.v;
@@ -319,8 +358,10 @@ public:
     //   public: Vector3& Normal();
     //   public: bool operator==(const Plane&) const;
     //   public: bool operator!=(const Plane&) const;
-    //   public: Vector4& AsVector4();
-    //   public: const Vector4& AsVector4() const;
+
+    Vector4 &AsVector4() { return reinterpret_cast<Vector4 &>(*this); }
+    const Vector4 &AsVector4() const { return reinterpret_cast<const Vector4 &>(*this); }
+
     //   public: void Project(const Vector3&, Vector3&) const;
 
     float a, b, c, d;
@@ -375,6 +416,7 @@ FasterInterp(const Hmx::Quat &q1, const Hmx::Quat &q2, float f, Hmx::Quat &qres)
 
 void Multiply(const Hmx::Matrix3 &, const Hmx::Matrix3 &, Hmx::Matrix3 &);
 void Multiply(const Transform &, const Hmx::Matrix3 &, Transform &);
+void Multiply(const Vector4 &, const Hmx::Matrix4 &, Vector4 &);
 
 inline void MultiplyTranspose(const Vector3 &v, const Transform &t, Vector3 &out) {
     Subtract(v, t.v, out);

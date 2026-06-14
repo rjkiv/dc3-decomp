@@ -83,7 +83,7 @@ public:
         if (r) {
             if (mSplashing) {
                 MILO_ASSERT(CurrentThreadId() != TheSplasher->SplashThreadId(), 0xF4);
-                D3DResource_Release(r);
+                r->Release();
             } else {
                 unk304.push_back(r);
             }
@@ -232,7 +232,7 @@ private:
     int mDefaultVSRegAlloc; // 0x3fc
     int mDefaultPSRegAlloc; // 0x400
     bool unk404;
-    int unk408;
+    int unk408; // 0x408 - clipping plane index
 };
 
 extern DxRnd TheDxRnd;

@@ -7,14 +7,17 @@
 #include "os/System.h"
 #include "rnddx9/Object.h"
 #include "rndobj/Bitmap.h"
+#include "rndobj/Cam.h"
 #include "rndobj/Mat.h"
 #include "rndobj/Mat_NG.h"
 #include "rndobj/Rnd_NG.h"
 #include "rndobj/Shader.h"
 #include "rndobj/ShaderMgr.h"
 #include "rndobj/Tex.h"
+#include "rndobj/Trans.h"
 #include "rndobj/Utl.h"
 #include "xdk/D3D9.h"
+#include "xdk/d3d9i/d3d9types.h"
 
 DxRnd TheDxRnd;
 
@@ -81,6 +84,41 @@ void DxRnd::MakeDrawTarget() {
     NgMat::SetCurrent(nullptr);
 }
 
+void DxRnd::PushClipPlanesInternal(ObjPtrVec<RndTransformable> &planes) {
+    int mask = 0;
+    for (int i = 0; i < unk408; i++) {
+        mask |= (1 << i);
+    }
+    for (int i = 0; i < planes.size() && i < 6; i++) {
+        RndTransformable *cur = planes[i];
+        if (cur) {
+            const Transform &worldXfm = cur->WorldXfm();
+
+            Vector3 tmp;
+            Scale(worldXfm.m.z, -1, tmp);
+            Plane p70(worldXfm.v, tmp);
+            Multiply(p70.AsVector4(), RndCam::Current()->GetMatrix340(), p70.AsVector4());
+            float plane[4] = { p70.a, p70.b, p70.c, p70.d };
+            mD3DDevice->SetClipPlane(unk408, plane);
+            mask |= (1 << unk408++);
+        }
+    }
+    TheDxRnd.Device()->SetRenderState(D3DRS_CLIPPLANEENABLE, mask);
+}
+
+void DxRnd::PopClipPlanesInternal(ObjPtrVec<RndTransformable> &planes) {
+    for (int i = 0; i < planes.size() && i < 6; i++) {
+        if (planes[i]) {
+            unk408--;
+        }
+    }
+    int mask = 0;
+    for (int i = 0; i < unk408; i++) {
+        mask |= (1 << i);
+    }
+    TheDxRnd.Device()->SetRenderState(D3DRS_CLIPPLANEENABLE, mask);
+}
+
 void DxRnd::SetViewport(const Viewport &v) {
     if (GetGfxMode() == kNewGfx) {
         NgRnd::SetViewport(v);
@@ -100,6 +138,9 @@ void DxRnd::SetViewport(const Viewport &v) {
     mD3DDevice->SetViewport(&dxViewport);
 }
 
+// DrawRect
+// DrawRectDepth
+
 bool DxRnd::Offscreen() const {
     D3DSurface *back = BackBuffer();
     D3DSurface *target;
@@ -113,6 +154,8 @@ bool DxRnd::Offscreen() const {
     }
     return ret;
 }
+
+// CreateLargeQuad
 
 void DxRnd::DrawLargeQuad(
     const LargeQuadRenderData &data, const Transform &tf, RndMat *mat, ShaderType s
@@ -180,8 +223,7 @@ D3DFORMAT DxRnd::D3DFormatForBitmap(const RndBitmap &bitmap) {
             return D3DFMT_DXN;
         default:
             MILO_FAIL("Invalid dxt format: %d", fmt);
-            MILO_ASSERT(fmt != D3DFMT_UNKNOWN, 999);
-            return (D3DFORMAT)0xffffffff;
+            break;
         }
     } else {
         switch (bpp) {
@@ -196,10 +238,11 @@ D3DFORMAT DxRnd::D3DFormatForBitmap(const RndBitmap &bitmap) {
             return D3DFMT_A8R8G8B8;
         default:
             MILO_FAIL("Invalid bpp: %d", bpp);
-            MILO_ASSERT(fmt != D3DFMT_UNKNOWN, 999);
-            return (D3DFORMAT)0xffffffff;
+            break;
         }
     }
+    MILO_ASSERT(fmt != D3DFMT_UNKNOWN, 999);
+    return D3DFMT_UNKNOWN;
 }
 
 int DxRnd::BitmapOrderForD3DFormat(D3DFORMAT fmt) {

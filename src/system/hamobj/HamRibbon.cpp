@@ -135,11 +135,11 @@ void HamRibbon::SetActive(bool active) {
 void HamRibbon::ConstructMesh() {
     unk78.DeleteAll();
     if (mNumSegments > 0) {
-        mMesh->SetLocalXfm(Transform::IDXfm());
+        mMesh->SetLocalXfm(Transform::GetIdentity());
         mMesh->SetNumBones(mNumSegments);
         for (int i = 0; i < mNumSegments; i++) {
             RndTransformable *t = Hmx::Object::New<RndTransformable>();
-            t->SetLocalXfm(Transform::IDXfm());
+            t->SetLocalXfm(Transform::GetIdentity());
             mMesh->SetBone(i, t, true);
             unk78.push_back(t);
         }
@@ -181,7 +181,7 @@ void HamRibbon::ConstructMesh() {
                     int vertIdx = (seg * mNumSides + side) * 2 + v;
 
                     Transform xfm;
-                    xfm = Transform::IDXfm();
+                    xfm = Transform::GetIdentity();
 
                     float scale = (v == 0) ? 1.0f : (0.5f - u);
                     Vector3 pos(sinA * radius * scale, 0, cosA * radius * scale);

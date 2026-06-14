@@ -550,16 +550,16 @@ void HamDirector::VenueEnter(WorldDir *dir) {
     }
 
     if (p0) {
-        p0->SetLocalXfm(Transform::IDXfm());
+        p0->SetLocalXfm(Transform::GetIdentity());
     }
     if (p1) {
-        p1->SetLocalXfm(Transform::IDXfm());
+        p1->SetLocalXfm(Transform::GetIdentity());
     }
     if (b0) {
-        b0->SetLocalXfm(Transform::IDXfm());
+        b0->SetLocalXfm(Transform::GetIdentity());
     }
     if (b1) {
-        b1->SetLocalXfm(Transform::IDXfm());
+        b1->SetLocalXfm(Transform::GetIdentity());
     }
     unk254 = false;
     for (int i = 0; i < 4; i++) {

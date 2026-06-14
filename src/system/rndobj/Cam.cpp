@@ -259,8 +259,8 @@ void RndCam::GetInfiniteViewProj(Hmx::Matrix4 &m4) const {
     Transform tfa0;
     Hmx::Matrix4 me0;
     GetViewProjectXfms(tfa0, me0);
-    me0.z.z = 1;
-    me0.w.z = -mNearPlane;
+    me0.m[2].z = 1;
+    me0.m[3].z = -mNearPlane;
     m4 = tfa0 * me0;
 }
 
