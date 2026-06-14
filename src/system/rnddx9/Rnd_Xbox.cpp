@@ -2,11 +2,15 @@
 #include "Env.h"
 #include "Lit.h"
 #include "Mat.h"
+#include "math/Color.h"
+#include "math/Geo.h"
 #include "os/Memory.h"
 #include "Mesh.h"
 #include "Movie.h"
 #include "MultiMesh.h"
 #include "Part.h"
+#include "os/OSFuncs.h"
+#include "rndobj/Mat.h"
 #include "rndobj/RenderState.h"
 #include "Tex.h"
 #include "TexRenderer.h"
@@ -35,6 +39,7 @@
 #include "rndobj/Tex.h"
 #include "utl/MemTrack.h"
 #include "utl/Option.h"
+#include "vectorintrinsics.h"
 #include "xdk/D3D9.h"
 #include "xdk/d3d9i/d3d9.h"
 #include "xdk/d3d9i/d3d9caps.h"
@@ -151,6 +156,105 @@ void DxRnd::Terminate() {
     TerminateBuffers();
 }
 
+// DrawString
+
+void DxRnd::BeginDrawing() {
+    {
+        static Timer *t = AutoTimer::GetTimer("cpu");
+        if (t) {
+            t->Stop();
+        }
+    }
+    {
+        static Timer *t = AutoTimer::GetTimer("cpu");
+        if (unk3f4) {
+            Resume();
+        } else if (unk3f5) {
+            if (t->Ms() > 66.0f) {
+                MILO_LOG("GLITCH: %i ms\n", (int)t->Ms());
+            }
+        }
+    }
+    if (unk3f6) {
+        PIXCaptureGpuFrame("capture.pix2");
+        unk3f6 = false;
+    }
+    Present();
+    if (MainThread()) {
+        ReleaseAutoRelease();
+    }
+    Rnd::BeginDrawing();
+    if (mGsTiming) {
+        PerfCountersInit();
+        PerfCountersStart();
+    }
+    DrawPreClear();
+    Hmx::Color c = mClearColor;
+    mD3DDevice->Clear(0, nullptr, 0x31, MakeColor(c), 0, 0);
+    if (mRegAlloc != 1) {
+        mRegAlloc = (RegisterAlloc)1;
+        mD3DDevice->SetShaderGPRAllocation(0, mDefaultVSRegAlloc, mDefaultPSRegAlloc);
+    }
+    ResetStats();
+    {
+        static Timer *t = AutoTimer::GetTimer("cpu");
+        if (t) {
+            t->Start();
+        }
+    }
+    {
+        static Timer *t = AutoTimer::GetTimer("draw");
+        if (t) {
+            t->Start();
+        }
+    }
+    NgMat::SetCurrent(nullptr);
+}
+
+void DxRnd::EndDrawing() {
+    EndWorld();
+    if (mShowSafeArea) {
+        Hmx::Color red(1, 0, 0);
+        Hmx::Color green(0, 1, 0);
+        if (mAspect == 2) {
+            DrawSafeArea(0.9f, true, red);
+        }
+        DrawSafeArea(0.9f, false, red);
+        if (mAspect == 2) {
+            DrawSafeArea(0.95f, true, green);
+        }
+        DrawSafeArea(0.95f, false, green);
+    }
+    Rnd::EndDrawing();
+    unk3a4 = false;
+    EndTiling(mFrontBuffers[unk35c - 1 & 1], 0);
+    mD3DDevice->SetRenderTarget(0, mBackBuffer);
+    mD3DDevice->SetDepthStencilSurface(unk388);
+    if (mRegAlloc != 0) {
+        mRegAlloc = (RegisterAlloc)0;
+        mD3DDevice->SetShaderGPRAllocation(0, 0, 0);
+    }
+    static Timer *drawTimer = AutoTimer::GetTimer("draw");
+    if (drawTimer) {
+        drawTimer->Stop();
+    }
+    if (mGsTiming) {
+        {
+            static Timer *cpuTimer = AutoTimer::GetTimer("cpu");
+            if (cpuTimer) {
+                cpuTimer->Stop();
+            }
+        }
+        PerfCountersStop();
+        {
+            static Timer *cpuTimer = AutoTimer::GetTimer("cpu");
+            if (cpuTimer) {
+                cpuTimer->Start();
+            }
+        }
+    }
+}
+
 void DxRnd::SetSync(int sync) {
     Rnd::SetSync(sync);
     Resume();
@@ -239,6 +343,24 @@ void DxRnd::Resume() {
     }
 }
 
+void DxRnd::UpdateScalerParams() {
+    float w = mVideoMode.dwDisplayWidth;
+    float h = mVideoMode.dwDisplayHeight;
+    bool b3 = mAspect == 3 && !unk1f8;
+    if (b3 && w * 0.5625f < h) {
+        h = w * 0.5625f;
+    }
+    if (mShrinkToSafe) {
+        w *= 0.95f;
+        if (!b3) {
+            h *= 0.95f;
+        }
+    }
+    D3DVIDEO_SCALER_PARAMETERS &vsp = mPresentParams.VideoScalerParameters;
+    vsp.ScaledOutputWidth = w;
+    vsp.ScaledOutputHeight = h;
+}
+
 D3DSurface *DxRnd::BackBuffer() const {
     mBackBuffer->AddRef();
     return mBackBuffer;
@@ -267,7 +389,7 @@ void DxRnd::Present() {
         mD3DDevice->BlockUntilIdle();
         mD3DDevice->SetSwapMode(mAsyncSwapCurrent);
     }
-    unk3f7 = (PIXGetCaptureState() & 2);
+    unk3f7 = (PIXGetCaptureState() & 2) > 0;
 }
 
 void DxRnd::TerminateBuffers() {
@@ -394,16 +516,21 @@ void DxRnd::EndTiling(D3DBaseTexture *tex, int i2) {
 }
 
 void DxRnd::SavePreBuffer() {
-    XMVECTOR vector;
-    vector.v[0] = mClearColor.red;
-    vector.v[1] = mClearColor.green;
-    vector.v[2] = mClearColor.blue;
-    vector.v[3] = 0;
+    Hmx::Color clearColor = mClearColor;
     mD3DDevice->Resolve(
         0x14, nullptr, mFrontBufferDepth, nullptr, 0, 0, nullptr, 1, 0, nullptr
     );
     mD3DDevice->Resolve(
-        0x300, nullptr, mPreProcessBuffer, nullptr, 0, 0, &vector, 0, 0, nullptr
+        0x300,
+        nullptr,
+        mPreProcessBuffer,
+        nullptr,
+        0,
+        0,
+        (XMVECTOR *)&clearColor,
+        0,
+        0,
+        nullptr
     );
 }
 
@@ -650,176 +777,25 @@ void DxRnd::SetFrameBuffersAsSource() {
     TheDxRnd.Device()->SetSamplerState(14, D3DSAMP_ADDRESSV, 2);
 }
 
-static DWORD sPointTestFence = -1;
-
-void DxRnd::DoPointTests() {
-    // Block on previous fence if set
-    if (sPointTestFence != (DWORD)-1) {
-        D3DDevice_BlockOnFence(sPointTestFence);
-        sPointTestFence = -1;
+void DxRnd::CopyPostProcess() {
+    if (mRegAlloc != 2) {
+        mRegAlloc = (RegisterAlloc)2;
+        mD3DDevice->SetShaderGPRAllocation(0, 0x10, 0x70);
     }
-
-    // Early out if no occlusion query manager or hi-res screen is active
-    if (!mOcclusionQueryMgr)
-        return;
-    if (TheHiResScreen.IsActive())
-        return;
-
-    // Process query results from previous frame
-    for (std::vector<RndPointTest>::iterator it = unk20c.begin(); it != unk20c.end();
-         ++it) {
-        unsigned int result;
-        if (mOcclusionQueryMgr->GetQueryResults(it->unk4, result)) {
-            it->unk0->SetOcclusionReady(true);
-            it->unk0->SetVisible(result != 0);
-        }
-        if (mOcclusionQueryMgr->GetQueryResults(it->unk8, result)) {
-            it->unk0->SetOcclusionResult((float)(int)result);
-            it->unk0->SetOcclusionReady(true);
-        }
+    Hmx::Rect r(0, 0, mWidth, mHeight);
+    RndMat *mat = TheShaderMgr.GetPostProcMat();
+    mat->SetBlend(RndMat::kBlendSrc);
+    mat->SetZMode(kZModeDisable);
+    TheShaderMgr.SetUnk30(true);
+    static bool sInitted = true;
+    if (sInitted) {
+        sInitted = true;
+        TheDxRnd.Device()->SetSamplerState(0xE, D3DSAMP_MINFILTER, 1);
+        TheDxRnd.Device()->SetSamplerState(0xE, D3DSAMP_MAGFILTER, 1);
     }
-
-    // Update frame index - both direct manipulation and virtual call
-    mOcclusionQueryMgr->ToggleFrameIndex();
-    mOcclusionQueryMgr->OnBeginFrame();
-    mOcclusionQueryMgr->IncrementFrameCounter();
-    mOcclusionQueryMgr->OnEndFrame();
-
-    // Count point tests needed
-    int numTests = 0;
-    for (std::list<PointTest>::iterator it = mPointTests.begin(); it != mPointTests.end();
-         ++it) {
-        numTests++;
-    }
-
-    // Resize unk20c to match
-    unk20c.resize(numTests);
-
-    // Early out if no point tests
-    if (mPointTests.empty())
-        return;
-
-    // Setup identity transform
-    Transform xfm;
-    xfm.Reset();
-    TheShaderMgr.SetTransform(xfm);
-
-    // Setup view matrix
-    Hmx::Matrix4 viewMtx(xfm);
-    TheShaderMgr.SetVConstant((VShaderConstant)4, viewMtx);
-
-    // Setup shader state
-    RndShader::SelectConfig(nullptr, kStandardShader, false);
-    D3DDevice_SetPixelShader(mD3DDevice, nullptr);
-    D3DDevice_SetFVF(mD3DDevice, 0x4042);
-
-    // Disable color writes and blending for occlusion testing
-    D3DDevice_SetRenderState_ColorWriteEnable(TheDxRnd.Device(), 0);
-    D3DDevice_SetRenderState_AlphaBlendEnable(TheDxRnd.Device(), 0);
-    D3DDevice_SetRenderState_AlphaTestEnable(TheDxRnd.Device(), 0);
-    D3DDevice_SetRenderState_ZWriteEnable(TheDxRnd.Device(), 0);
-    D3DDevice_SetRenderState_ZEnable(TheDxRnd.Device(), 1);
-
-    // Set z-compare function based on unk_0x301
-    D3DDevice_SetRenderState_ZFunc(TheDxRnd.Device(), (D3DCMPFUNC)(unk_0x301 ? 3 : 1));
-
-    // Set point size
-    float pointSize = 1.0f;
-    D3DDevice_SetRenderState_PointSize(TheDxRnd.Device(), *(DWORD *)&pointSize);
-    D3DDevice_SetRenderState_ViewportEnable(TheDxRnd.Device(), 0);
-    D3DDevice_SetRenderState_HalfPixelOffset(TheDxRnd.Device(), 1);
-
-    // Process each point test
-    int idx = 0;
-    for (std::list<PointTest>::iterator it = mPointTests.begin(); it != mPointTests.end();
-         ++it, ++idx) {
-        TheNgStats->mFlares++;
-
-        RndFlare *flare = it->unkc;
-        RndPointTest &test = unk20c[idx];
-        test.unk4 = -1;
-        test.unk8 = -1;
-        test.unk0 = flare;
-
-        // Point test
-        if (flare->GetPointTest()) {
-            struct PointVertex {
-                float x, y, z;
-                float w;
-                DWORD color;
-            };
-            PointVertex vtx;
-            vtx.x = (float)it->unk4;
-            vtx.y = (float)it->unk8;
-            vtx.z = (float)it->unk0 * 5.9604651881e-08f;
-            vtx.w = 1.0f;
-            vtx.color = 0;
-
-            unsigned int queryIdx;
-            if (mOcclusionQueryMgr->CreateQuery(queryIdx)) {
-                test.unk4 = queryIdx;
-                mOcclusionQueryMgr->BeginQuery(test.unk4);
-                D3DDevice_DrawVerticesUP(
-                    mD3DDevice, D3DPT_POINTLIST, 1, &vtx, sizeof(PointVertex)
-                );
-                mOcclusionQueryMgr->EndQuery(test.unk4);
-            }
-        }
-
-        // Area test
-        if (flare->GetAreaTest()) {
-            struct QuadVertex {
-                float x, y, z;
-                float w;
-                DWORD color;
-            };
-            float z = (float)it->unk0 * 5.9604651881e-08f;
-            QuadVertex verts[4];
-
-            // Initialize vertices
-            verts[0].x = flare->GetArea().x;
-            verts[0].y = flare->GetArea().y;
-            verts[0].z = z;
-            verts[0].w = 1.0f;
-            verts[0].color = 0;
-
-            verts[1] = verts[0];
-            verts[1].y += flare->GetArea().h;
-
-            verts[2] = verts[0];
-            verts[2].x += flare->GetArea().w;
-
-            verts[3] = verts[1];
-            verts[3].x += flare->GetArea().w;
-
-            unsigned int queryIdx;
-            if (mOcclusionQueryMgr->CreateQuery(queryIdx)) {
-                test.unk8 = queryIdx;
-                mOcclusionQueryMgr->BeginQuery(test.unk8);
-                D3DDevice_DrawVerticesUP(
-                    mD3DDevice, D3DPT_TRIANGLESTRIP, 4, verts, sizeof(QuadVertex)
-                );
-                mOcclusionQueryMgr->EndQuery(test.unk8);
-            }
-        } else {
-            flare->SetOcclusionReady(true);
-            flare->SetVisible(true);
-        }
-    }
-
-    // Insert fence for next frame
-    sPointTestFence = D3DDevice_InsertFence(mD3DDevice);
-
-    // Clear current material
-    NgMat::SetCurrent(nullptr);
-
-    // Restore render states
-    D3DDevice_SetRenderState_ColorWriteEnable(TheDxRnd.Device(), 0xF);
-    D3DDevice_SetRenderState_ViewportEnable(TheDxRnd.Device(), 1);
-    D3DDevice_SetRenderState_HalfPixelOffset(TheDxRnd.Device(), 0);
-
-    // Restore camera if set
-    if (RndCam::Current()) {
-        TheShaderMgr.SetVConstant((VShaderConstant)4, RndCam::Current()->GetMatrix300());
+    DrawRect(r, mat, kPostprocessShader, Hmx::Color(), nullptr, nullptr);
+    if (mRegAlloc != 1) {
+        mRegAlloc = (RegisterAlloc)1;
+        mD3DDevice->SetShaderGPRAllocation(0, mDefaultVSRegAlloc, mDefaultPSRegAlloc);
     }
 }

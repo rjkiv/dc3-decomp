@@ -97,6 +97,7 @@ public:
     void SetUnk34(int i) { unk34 = i; }
     void SetUnk29(bool b) { unk29 = b; }
     void SetUnk2f(bool b) { unk2f = b; }
+    void SetUnk30(bool b) { unk30 = b; }
 
 protected:
     virtual void LoadShaders(const char *filename);
