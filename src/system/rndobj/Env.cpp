@@ -12,78 +12,55 @@ RndEnviron *RndEnviron::sCurrent;
 Vector3 RndEnviron::sCurrentPos;
 bool RndEnviron::sCurrentPosSet;
 
-bool RndEnviron::FogEnable() const { return mAmbientFogOwner->mFogEnable; }
+RndEnviron::RndEnviron()
+    : mLightsReal(this), mLightsApprox(this), mLightsOld(this), mAmbientColor(0, 0, 0, 1),
+      mAmbientFogOwner(this, this), mFogEnable(0), mFogStart(0), mFogEnd(1),
+      mFogColor(1, 1, 1), mFadeOut(0), mFadeStart(0), mFadeEnd(1000), mFadeMax(1),
+      mFadeRef(this), mLRFade(0, 0, 0, 0), mColorXfm(), mUseColorAdjust(0),
+      mAnimateFromPreset(1), mAOEnabled(1), mAOStrength(1), mUpdateTimer(),
+      mIntensityAverage(0), mIntensityRate(0.1f), mExposure(1), mWhitePoint(1),
+      mUseToneMapping(0), mUseApprox_Local(1), mUseApprox_Global(1) {
+    mUpdateTimer.Restart();
+}
 
-Transform RndEnviron::LRFadeRef() const {
-    Transform ret;
-    if (mFadeRef) {
-        ret = mFadeRef->WorldXfm();
-    } else {
-        ret.Reset();
+RndEnviron::~RndEnviron() {
+    if (sCurrent == this) {
+        sCurrent = nullptr;
+        sCurrentPosSet = nullptr;
+        sCurrentPos.Zero();
     }
-    return ret;
 }
 
-const Transform &RndEnviron::ColorXfm() const {
-    static Vector3 x(1, 0, 0);
-    static Vector3 y(0, 1, 0);
-    static Vector3 z(0, 0, 1);
-    static Transform ident(Hmx::Matrix3(x, y, z), Vector3(0, 0, 0));
-    if (mUseColorAdjust)
-        return mColorXfm.mColorXfm;
-    else
-        return ident;
+bool RndEnviron::Replace(ObjRef *from, Hmx::Object *to) {
+    if (&mAmbientFogOwner == from) {
+        // if this, make this, ok then
+        if (mAmbientFogOwner == this) {
+            mAmbientFogOwner = this;
+        } else {
+            RndEnviron *env = dynamic_cast<RndEnviron *>(to);
+            if (env) {
+                mAmbientFogOwner = env->mAmbientFogOwner.Ptr();
+            } else {
+                mAmbientFogOwner = this;
+            }
+        }
+        return true;
+    } else {
+        return RndTransformable::Replace(from, to);
+    }
 }
 
-void RndEnviron::Save(BinStream &bs) {
-    bs << 0x10;
-    SAVE_SUPERCLASS(Hmx::Object);
-    SAVE_SUPERCLASS(RndDrawable);
-    SAVE_SUPERCLASS(RndTransformable);
-    bs << mLightsReal << mLightsApprox;
-    bs << mAmbientColor;
-    bs << mFogEnable;
-    bs << mFogStart;
-    bs << mFogEnd;
-    bs << mFogColor;
-    bs << mAnimateFromPreset;
-    bs << mAmbientFogOwner;
-    bs << mFadeOut;
-    bs << mFadeStart;
-    bs << mFadeEnd;
-    bs << mFadeMax;
-    bs << mFadeRef;
-    bs << mLRFade;
-    bs << mUseColorAdjust;
-    mColorXfm.Save(bs);
-    bs << mAOEnabled;
-    bs << mAOStrength;
-    bs << mIntensityRate;
-    bs << mExposure;
-    bs << mWhitePoint;
-    bs << mUseToneMapping;
-}
-
-bool RndEnviron::IsLightInList(const RndLight *light, const ObjPtrList<RndLight> &pList)
-    const {
-    if (light == nullptr)
-        return false;
-    return pList.find((const Hmx::Object *)light) != pList.end();
-}
-
-bool RndEnviron::IsFake(RndLight *l) const { return IsLightInList(l, mLightsApprox); }
-bool RndEnviron::IsReal(RndLight *l) const { return IsLightInList(l, mLightsReal); }
-
-void RndEnviron::RemoveLight(RndLight *l) {
-    mLightsReal.remove(l);
-    mLightsApprox.remove(l);
-}
-
-void RndEnviron::OnRemoveAllLights() {
-    mLightsReal.clear();
-    mLightsApprox.clear();
-    mLightsOld.clear();
-}
+BEGIN_HANDLERS(RndEnviron)
+    HANDLE_ACTION(remove_all_lights, OnRemoveAllLights())
+    HANDLE_ACTION(toggle_ao, mAOEnabled = !mAOEnabled)
+    HANDLE_ACTION(remove_light, RemoveLight(_msg->Obj<RndLight>(2)))
+    HANDLE(allowable_lights_real, OnAllowableLights_Real)
+    HANDLE(allowable_lights_approx, OnAllowableLights_Approx)
+    HANDLE_ACTION(select, Select(nullptr))
+    HANDLE_SUPERCLASS(RndDrawable)
+    HANDLE_SUPERCLASS(RndTransformable)
+    HANDLE_SUPERCLASS(Hmx::Object)
+END_HANDLERS
 
 BEGIN_PROPSYNCS(RndEnviron)
     SYNC_PROP(lights_real, mLightsReal)
@@ -125,6 +102,26 @@ BEGIN_PROPSYNCS(RndEnviron)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
+BEGIN_SAVES(RndEnviron)
+    SAVE_REVS(0x10, 0)
+    SAVE_SUPERCLASS(Hmx::Object);
+    SAVE_SUPERCLASS(RndDrawable);
+    SAVE_SUPERCLASS(RndTransformable);
+    bs << mLightsReal << mLightsApprox;
+    bs << mAmbientColor << mFogStart << mFogEnd << mFogColor;
+    bs << mFogEnable;
+    bs << mAnimateFromPreset;
+    bs << mFadeOut << mFadeStart << mFadeEnd << mFadeMax << mFadeRef << mLRFade;
+    bs << mAmbientFogOwner;
+    bs << mUseColorAdjust;
+    mColorXfm.Save(bs);
+    bs << mAOStrength;
+    bs << mIntensityRate;
+    bs << mExposure;
+    bs << mWhitePoint;
+    bs << mUseToneMapping;
+END_SAVES
+
 BEGIN_COPYS(RndEnviron)
     COPY_SUPERCLASS(Hmx::Object)
     COPY_SUPERCLASS(RndDrawable)
@@ -158,11 +155,159 @@ BEGIN_COPYS(RndEnviron)
                 mFogEnd = c->mAmbientFogOwner->mFogEnd;
                 mFogEnable = c->mAmbientFogOwner->mFogEnable;
             } else {
-                COPY_MEMBER(mAmbientFogOwner)
+                mAmbientFogOwner = c->mAmbientFogOwner.Ptr();
             }
         END_COPYING_MEMBERS
     }
 END_COPYS
+
+INIT_REVS(0x10, 0)
+
+BEGIN_LOADS(RndEnviron)
+    LOAD_REVS(bs)
+    ASSERT_REVS(0x10, 0)
+    if (d.rev > 1) {
+        LOAD_SUPERCLASS(Hmx::Object)
+    }
+    if (d.rev < 3) {
+        RndDrawable::DumpLoad(d.stream);
+    }
+    if (d.rev > 0xF) {
+        LOAD_SUPERCLASS(RndDrawable)
+        LOAD_SUPERCLASS(RndTransformable)
+    }
+    if (d.rev < 0xF)
+        d >> mLightsOld;
+    else {
+        d >> mLightsReal;
+        d >> mLightsApprox;
+    }
+    d.stream >> mAmbientColor >> mFogStart >> mFogEnd;
+    if (d.rev < 1) {
+        int dummy;
+        d >> dummy;
+    }
+    d >> mFogColor;
+    if (d.rev < 1) {
+        int enabled;
+        d >> enabled;
+        mFogEnable = enabled;
+    } else {
+        d >> mFogEnable;
+    }
+    if (d.rev > 3) {
+        d >> mAnimateFromPreset;
+    }
+    if (d.rev > 4) {
+        d >> mFadeOut >> mFadeStart >> mFadeEnd;
+        if (d.rev > 5) {
+            d >> mFadeMax;
+        }
+    }
+    if (d.rev > 8) {
+        d.stream >> mFadeRef >> mLRFade;
+    }
+    if (d.rev > 6) {
+        d >> mAmbientFogOwner;
+        if (!mAmbientFogOwner) {
+            mAmbientFogOwner = this;
+        }
+    }
+    if (d.rev > 7) {
+        d >> mUseColorAdjust;
+        mColorXfm.Load(d.stream);
+    }
+    if (d.rev > 9) {
+        if (d.rev < 0xD) {
+            int dummy;
+            d >> dummy;
+        }
+        d >> mAOStrength;
+    }
+    if (d.rev > 10) {
+        d >> mIntensityRate >> mExposure >> mWhitePoint >> mUseToneMapping;
+    }
+
+    if (d.rev == 0xB) {
+        int dummy;
+        d >> dummy;
+    } else if (d.rev > 0xB && d.rev < 0xE) {
+        int dummy;
+        d >> dummy;
+    }
+END_LOADS
+
+void RndEnviron::Select(const Vector3 *v) {
+    sCurrent = this;
+    sCurrentPosSet = v;
+    if (v) {
+        sCurrentPos = *v;
+    } else {
+        sCurrentPos.Zero();
+    }
+    ReclassifyLights();
+}
+
+bool RndEnviron::IsFake(RndLight *l) const { return IsLightInList(l, mLightsApprox); }
+bool RndEnviron::IsReal(RndLight *l) const { return IsLightInList(l, mLightsReal); }
+
+void RndEnviron::Draw() {
+    if (Showing()) {
+        const Vector3 &v = WorldXfm().v;
+        if (sCurrent == this && sCurrentPosSet) {
+            if (sCurrentPos != v) {
+                // do nothing
+            } else {
+                return;
+            }
+        }
+        Select(&v);
+    }
+}
+
+bool RndEnviron::FogEnable() const { return mAmbientFogOwner->mFogEnable; }
+
+Transform RndEnviron::LRFadeRef() const {
+    Transform ret;
+    if (mFadeRef) {
+        ret = mFadeRef->WorldXfm();
+    } else {
+        ret.Reset();
+    }
+    return ret;
+}
+
+const Transform &RndEnviron::ColorXfm() const {
+    static Vector3 x(1, 0, 0);
+    static Vector3 y(0, 1, 0);
+    static Vector3 z(0, 0, 1);
+    static Transform ident(Hmx::Matrix3(x, y, z), Vector3(0, 0, 0));
+    if (mUseColorAdjust)
+        return mColorXfm.mColorXfm;
+    else
+        return ident;
+}
+
+bool RndEnviron::IsLightInList(
+    const RndLight *light, const ObjPtrList<RndLight> &pList
+) const {
+    if (light == nullptr) {
+        return false;
+    } else {
+        return pList.find(light) != pList.end();
+    }
+}
+
+void RndEnviron::RemoveLight(RndLight *l) {
+    mLightsReal.remove(l);
+    mLightsApprox.remove(l);
+}
+
+void RndEnviron::OnRemoveAllLights() {
+    mLightsReal.clear();
+    mLightsApprox.clear();
+    mLightsOld.clear();
+}
 
 bool RndEnviron::IsValidRealLight(const RndLight *l) const {
     bool ret = false;
@@ -192,17 +337,6 @@ void RndEnviron::ReclassifyLights() {
         }
         mLightsOld.clear();
     }
-}
-
-void RndEnviron::Select(const Vector3 *v) {
-    sCurrent = this;
-    sCurrentPosSet = v;
-    if (v) {
-        sCurrentPos = *v;
-    } else {
-        sCurrentPos.Zero();
-    }
-    ReclassifyLights();
 }
 
 DataNode RndEnviron::OnAllowableLights_Real(const DataArray *da) {
@@ -241,35 +375,4 @@ DataNode RndEnviron::OnAllowableLights_Approx(const DataArray *da) {
         }
     }
     return ptr;
-}
-
-BEGIN_HANDLERS(RndEnviron)
-    HANDLE_ACTION(remove_all_lights, OnRemoveAllLights())
-    HANDLE_ACTION(toggle_ao, mAOEnabled = !mAOEnabled)
-    HANDLE_ACTION(remove_light, RemoveLight(_msg->Obj<RndLight>(2)))
-    HANDLE(allowable_lights_real, OnAllowableLights_Real)
-    HANDLE(allowable_lights_approx, OnAllowableLights_Approx)
-    HANDLE_ACTION(select, Select(nullptr))
-    HANDLE_SUPERCLASS(RndDrawable)
-    HANDLE_SUPERCLASS(RndTransformable)
-    HANDLE_SUPERCLASS(Hmx::Object)
-END_HANDLERS
-
-RndEnviron::~RndEnviron() {
-    if (sCurrent == this) {
-        sCurrent = nullptr;
-        sCurrentPosSet = nullptr;
-        sCurrentPos.Zero();
-    }
-}
-
-RndEnviron::RndEnviron()
-    : mLightsReal(this), mLightsApprox(this), mLightsOld(this), mAmbientColor(0, 0, 0, 1),
-      mAmbientFogOwner(this, this), mFogEnable(0), mFogStart(0), mFogEnd(1),
-      mFogColor(1, 1, 1), mFadeOut(0), mFadeStart(0), mFadeEnd(1000), mFadeMax(1),
-      mFadeRef(this), mLRFade(0, 0, 0, 0), mColorXfm(), mUseColorAdjust(0),
-      mAnimateFromPreset(1), mAOEnabled(1), mAOStrength(1), mUpdateTimer(),
-      mIntensityAverage(0), mIntensityRate(0.1f), mExposure(1), mWhitePoint(1),
-      mUseToneMapping(0), mUseApprox_Local(1), mUseApprox_Global(1) {
-    mUpdateTimer.Restart();
 }

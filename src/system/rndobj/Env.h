@@ -29,6 +29,7 @@ public:
     virtual int NumLights_Approx() const { return mLightsApprox.size(); }
     virtual bool IsFake(RndLight *) const;
     virtual bool IsReal(RndLight *) const;
+    virtual void Draw();
 
     OBJ_MEM_OVERLOAD(0x1B);
     NEW_OBJ(RndEnviron)
