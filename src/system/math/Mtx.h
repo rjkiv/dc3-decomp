@@ -88,10 +88,8 @@ namespace Hmx {
             y.Set(0.0f, 1.0f, 0.0f);
             z.Set(0.0f, 0.0f, 1.0f);
         }
-        Matrix3 &operator=(const Matrix3 &mtx) {
-            memcpy(this, &mtx, sizeof(*this));
-            return *this;
-        }
+
+        COPY_OPERATOR(Matrix3)
         Vector3 &operator[](int i) { return *(&x + i); }
 
         bool operator==(const Matrix3 &mtx) const {
