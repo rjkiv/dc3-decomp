@@ -1123,7 +1123,7 @@ void Rnd::TestPoint(const Vector3 &v, RndFlare *flare) {
     if (!TheHiResScreen.IsActive()) {
         if (RndCam::Current()->TargetTex()) {
             MILO_NOTIFY_ONCE("Flare %s can't be drawn in rendered texture", flare->Name());
-            flare->SetUnks(true, false);
+            flare->SetVisible(false);
         } else {
             RndCam *cur = RndCam::Current();
             Vector2 v2;
@@ -1138,7 +1138,7 @@ void Rnd::TestPoint(const Vector3 &v, RndFlare *flare) {
                 back.unk8 = cur->ProjectZ(f7);
                 return;
             }
-            flare->SetUnks(true, false);
+            flare->SetVisible(false);
         }
     }
 }

@@ -741,10 +741,10 @@ void Spotlight::BuildBoard() {
 
 void Spotlight::UpdateFlare() {
     if (!mFlareEnabled) {
-        mFlare->SetUnks(true, false);
+        mFlare->SetVisible(false);
         mFlare->SetPointTest(false);
     } else if (mFlareVisibilityTest) {
-        mFlare->SetUnks(true, true);
+        mFlare->SetVisible(true);
         mFlare->SetPointTest(false);
     } else {
         mFlare->SetPointTest(true);

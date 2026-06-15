@@ -813,12 +813,11 @@ void DxRnd::DoPointTests() {
         FOREACH (it, unk20c) {
             unsigned int uiRef;
             if (mOcclusionQueryMgr->GetQueryResults(it->unk4, uiRef)) {
-                it->unk0->SetUnks(true, uiRef);
+                it->unk0->SetVisible(uiRef);
             }
             if (mOcclusionQueryMgr->GetQueryResults(it->unk4, uiRef)) {
                 RndFlare *flare = it->unk0;
-                flare->SetOcclusionResult(uiRef);
-                flare->SetOcclusionReady(true);
+                flare->SetVisibleArea(uiRef);
             }
         }
         mOcclusionQueryMgr->ToggleFrameIndex();

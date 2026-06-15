@@ -33,21 +33,24 @@ public:
     Vector2 &Sizes() { return mSizes; }
     Vector2 &Range() { return mRange; }
     int GetSteps() const { return mSteps; }
-    void SetVisible(bool v) { mVisible = v; }
     void SetSteps(int steps);
     void SetPointTest(bool);
     bool GetPointTest() const { return mPointTest; }
     bool GetAreaTest() const { return mAreaTest; }
     Hmx::Rect &GetArea() { return mArea; }
-    void SetOcclusionResult(float f) { unk144 = f; }
-    void SetOcclusionReady(bool b) { unk148 = b; }
-    void SetUnks(bool b1, bool b2) {
-        unk148 = b1;
-        mVisible = b2;
+    void SetVisible(bool v) {
+        SetTestDone();
+        mVisible = v;
+    }
+    void SetVisibleArea(float area) {
+        unk144 = area;
+        mVisible = true;
     }
 
 protected:
     RndFlare();
+
+    void SetTestDone() { mTestDone = true; }
 
     void CalcScale();
     Hmx::Rect &CalcRect(Vector2 &, float &);
@@ -67,9 +70,9 @@ protected:
     int mSteps; // 0x12c
     int mStep; // 0x130
     Hmx::Rect mArea; // 0x134
-    float unk144; // 0x144
-    bool unk148; // 0x148
-    bool unk149; // 0x149
+    float unk144; // 0x144 - mAreaVisible
+    bool mTestDone; // 0x148
+    bool mLastDone; // 0x149
     Hmx::Matrix3 mMatrix; // 0x14c
     Vector2 unk17c; // 0x17c
 };

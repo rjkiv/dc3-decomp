@@ -12,8 +12,8 @@
 
 RndFlare::RndFlare()
     : mPointTest(true), mAreaTest(true), mVisible(false), mSizes(0.1, 0.1), mMat(this),
-      mRange(0, 0), mOffset(0), mSteps(1), mStep(0), unk144(0), unk148(false),
-      unk149(false), unk17c(1, 1) {
+      mRange(0, 0), mOffset(0), mSteps(1), mStep(0), unk144(0), mTestDone(false),
+      mLastDone(false), unk17c(1, 1) {
     mMatrix.Identity();
 }
 
@@ -62,8 +62,8 @@ BEGIN_COPYS(RndFlare)
     COPY_MEMBER_FROM(f, mOffset)
     COPY_MEMBER_FROM(f, mSteps)
     COPY_MEMBER_FROM(f, mPointTest)
-    unk149 = false;
-    unk148 = false;
+    mLastDone = false;
+    mTestDone = false;
 END_COPYS
 
 INIT_REVS(7, 0)
@@ -94,8 +94,8 @@ BEGIN_LOADS(RndFlare)
     if (d.rev > 6) {
         d >> mOffset;
     }
-    unk149 = false;
-    unk148 = false;
+    mLastDone = false;
+    mTestDone = false;
     CalcScale();
 END_LOADS
 
