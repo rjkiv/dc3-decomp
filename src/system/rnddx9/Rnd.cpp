@@ -317,40 +317,49 @@ void DxRnd::PostDeviceReset() {
 }
 
 D3DFORMAT DxRnd::D3DFormatForBitmap(const RndBitmap &bitmap) {
+    D3DFORMAT ret = D3DFMT_UNKNOWN;
     int fmt = bitmap.Order() & 0x38;
     int bpp = bitmap.Bpp();
-    if (fmt != 0) {
-        switch (fmt) {
-        case 8:
-            return D3DFMT_DXT1;
-        case 0x10:
-            return D3DFMT_DXT3;
-        case 0x18:
-            return D3DFMT_DXT5;
-        case 0x20:
-            return D3DFMT_DXN;
-        default:
-            MILO_FAIL("Invalid dxt format: %d", fmt);
-            break;
-        }
-    } else {
+
+    switch (fmt) {
+    case 0: {
         switch (bpp) {
         case 4:
         case 8:
-            return D3DFMT_A8R8G8B8;
+            ret = D3DFMT_A8R8G8B8;
+            break;
         case 0x10:
-            return D3DFMT_A1R5G5B5;
+            ret = D3DFMT_A1R5G5B5;
+            break;
         case 0x18:
-            return D3DFMT_X8R8G8B8;
+            ret = D3DFMT_X8R8G8B8;
+            break;
         case 0x20:
-            return D3DFMT_A8R8G8B8;
+            ret = D3DFMT_A8R8G8B8;
+            break;
         default:
             MILO_FAIL("Invalid bpp: %d", bpp);
             break;
         }
+    } break;
+    case 8:
+        ret = D3DFMT_DXT1;
+        break;
+    case 0x10:
+        ret = D3DFMT_DXT3;
+        break;
+    case 0x18:
+        ret = D3DFMT_DXT5;
+        break;
+    case 0x20:
+        ret = D3DFMT_DXN;
+        break;
+    default:
+        MILO_FAIL("Invalid dxt format: %d", fmt);
+        break;
     }
-    MILO_ASSERT(fmt != D3DFMT_UNKNOWN, 999);
-    return D3DFMT_UNKNOWN;
+    MILO_ASSERT(ret != D3DFMT_UNKNOWN, 999);
+    return ret;
 }
 
 int DxRnd::BitmapOrderForD3DFormat(D3DFORMAT fmt) {
