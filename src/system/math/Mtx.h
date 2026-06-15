@@ -4,6 +4,7 @@
 #include "math/Vec.h"
 #include "math/Trig.h"
 #include "utl/BinStream.h"
+#include "utl/MemMgr.h"
 
 class Transform;
 
@@ -122,10 +123,8 @@ namespace Hmx {
         }
 
         Matrix4 &Zero();
-        Matrix4 &operator=(const Matrix4 &mtx) {
-            memcpy(this, &mtx, sizeof(*this));
-            return *this;
-        }
+
+        COPY_OPERATOR(Matrix4)
         Vector3 Col3(int idx) const { return Vector3(m[0][idx], m[1][idx], m[2][idx]); }
 
         static const Hmx::Matrix4 &ID() { return sID; }
@@ -231,10 +230,7 @@ public:
     Transform(const Hmx::Matrix3 &mtx, const Vector3 &vec) : m(mtx), v(vec) {}
 
     // Transform(const Transform &tf);
-    Transform &operator=(const Transform &tf) {
-        memcpy(this, &tf, sizeof(*this));
-        return *this;
-    }
+    COPY_OPERATOR(Transform)
 
     void Reset() {
         m.Identity();

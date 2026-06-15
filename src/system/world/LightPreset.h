@@ -50,10 +50,7 @@ public:
         void Animate(const EnvLightEntry &, float);
         bool operator!=(const EnvLightEntry &) const;
 
-        EnvLightEntry &operator=(const EnvLightEntry &e) {
-            memcpy(this, &e, sizeof(*this));
-            return *this;
-        }
+        COPY_OPERATOR(EnvLightEntry)
 
         Hmx::Quat unk0;
         /** "Light's position" */
