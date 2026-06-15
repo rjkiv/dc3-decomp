@@ -582,7 +582,7 @@
             "system/rndobj/Dir.cpp": "NonMatching",
             "system/rndobj/Draw.cpp": "NonMatching",
             "system/rndobj/Enter.cpp": "Matching",
-            "system/rndobj/Env.cpp": "NonMatching",
+            "system/rndobj/Env.cpp": "Matching",
             "system/rndobj/Env_NG.cpp": "NonMatching",
             "system/rndobj/EventTrigger.cpp": "NonMatching",
             "system/rndobj/Flare.cpp": "NonMatching",

@@ -12,10 +12,7 @@ class Segment {
 public:
     Segment() {}
 
-    Segment &operator=(const Segment &s) {
-        memcpy(this, &s, sizeof(*this));
-        return *this;
-    }
+    COPY_OPERATOR(Segment)
 
     Vector3 start;
     Vector3 end;

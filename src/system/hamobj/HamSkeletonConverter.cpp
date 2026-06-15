@@ -142,12 +142,10 @@ void HamSkeletonConverter::GetParentWorldXfm(
 ) {
     RndTransformable *meshParent = t->TransParent();
     if (streq(meshParent->Name(), "bone_pelvis.mesh")) {
-        xfm.m = unk6d0.m;
-        xfm.v = unk6d0.v;
+        xfm.Set(unk6d0.m, unk6d0.v);
     } else if (IsSkeletonBone(meshParent->Name())) {
         MILO_ASSERT(streq(meshParent->Name(), CharBoneName(parent)), 0x2B2);
-        xfm.m = unk1c0[parent].m;
-        xfm.v = unk1c0[parent].v;
+        xfm.Set(unk1c0[parent].m, unk1c0[parent].v);
     } else {
         GetParentWorldXfm(meshParent, xfm, parent);
         Multiply(meshParent->LocalXfm(), xfm, xfm);
