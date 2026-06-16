@@ -217,12 +217,12 @@ template <class T1, class T2>
 typename ObjPtrVec<T1, T2>::iterator
 ObjPtrVec<T1, T2>::insert(typename ObjPtrVec<T1, T2>::const_iterator it, T1 *obj) {
     if (obj || mListMode != kObjListNoNull) {
-        int idx = *it != nullptr ? size() : 0;
-        // mNodes.insert(it, Node(obj));
-        mNodes.insert(mNodes.begin() + idx, this);
-        Set(mNodes.begin() + idx, obj);
+        int idx = it != nullptr ? (&*it - &*mNodes.begin()) : 0;
+        Node n(this);
+        mNodes.insert(mNodes.begin() + idx, n);
+        Set(begin() + idx, obj);
     }
-    return iterator(&Node(*it));
+    return reinterpret_cast<iterator &>(it);
 }
 
 template <class T1, class T2>

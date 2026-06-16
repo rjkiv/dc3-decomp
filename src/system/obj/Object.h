@@ -366,10 +366,8 @@ public:
     void unique();
     void Set(iterator it, T1 *obj);
     void merge(const ObjPtrVec &);
-    Hmx::Object *Owner() const { return mOwner; }
-
-    // see Draw.cpp for this
     void operator=(const ObjPtrVec &other);
+    Hmx::Object *Owner() const { return mOwner; }
 
 private:
     std::vector<Node> mNodes; // 0x4
