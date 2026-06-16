@@ -245,7 +245,6 @@ private:
         }
         virtual ObjRefOwner *Parent() const { return mOwner; }
 
-        T1 *Obj() const { return mObject; }
         Node &operator=(const Node &n) {
             CopyRef(n);
             mOwner = n.mOwner;
@@ -352,8 +351,8 @@ public:
     int size() const { return mNodes.size(); }
     bool empty() const { return mNodes.empty(); }
     T1 *front() const { return *begin(); }
-    T1 *operator[](int idx) { return mNodes[idx].Obj(); }
-    const T1 *operator[](int idx) const { return mNodes[idx].Obj(); }
+    T1 *operator[](int idx) { return mNodes[idx]; }
+    const T1 *operator[](int idx) const { return mNodes[idx]; }
 
     template <class S>
     void sort(const S &);

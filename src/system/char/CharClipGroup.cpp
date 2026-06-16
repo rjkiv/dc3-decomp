@@ -76,7 +76,8 @@ void CharClipGroup::AddClip(CharClip *clip) {
 }
 
 bool CharClipGroup::HasClip(CharClip *clip) const {
-    return mClips.find(clip) != mClips.end();
+    auto &end = mClips.end();
+    return mClips.find(clip) != end;
 }
 
 void CharClipGroup::DeleteRemaining(int i1) {

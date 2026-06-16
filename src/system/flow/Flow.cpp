@@ -313,7 +313,7 @@ Flow *Flow::GetOwnerFlow() {
 bool Flow::ActivateTrigger() {
     unk58 = false;
     FOREACH (it, mChildNodes) {
-        if (it->Obj()->ClassName() != FlowLabel::StaticClassName()) {
+        if ((*it)->ClassName() != FlowLabel::StaticClassName()) {
             ActivateChild(*it);
         }
         if (unk58)
@@ -401,7 +401,7 @@ void Flow::ToggleRunning(int type) {
 
 FlowLabel *Flow::GetLabelForSym(Symbol sym) {
     FOREACH (it, mFlowLabels) {
-        FlowLabel *cur = it->Obj();
+        FlowLabel *cur = *it;
         if (cur->Label() == sym) {
             return cur;
         }
@@ -416,8 +416,9 @@ void Flow::RefreshPortLabelLists() {
     mFlowLabels.clear();
     ScanForOutPorts(mFlowOutPorts, this, this);
     FOREACH (it, mChildNodes) {
-        if (it->Obj()->ClassName() == "FlowLabel") {
-            mFlowLabels.push_back(static_cast<FlowLabel *>(it->Obj()));
+        if ((*it)->ClassName() == "FlowLabel") {
+            FlowNode *cur = *it;
+            mFlowLabels.push_back(static_cast<FlowLabel *>(cur));
         }
     }
 }

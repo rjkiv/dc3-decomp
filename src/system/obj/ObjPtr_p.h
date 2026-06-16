@@ -209,7 +209,8 @@ void ObjPtrVec<T1, T2>::operator=(const ObjPtrVec &other) {
 
 template <class T1, class T2>
 void ObjPtrVec<T1, T2>::push_back(T1 *obj) {
-    insert(static_cast<const ObjPtrVec<T1, T2> &>(*this).end(), obj);
+    const auto &end = static_cast<const ObjPtrVec<T1, T2> &>(*this).end();
+    insert(end, obj);
 }
 
 template <class T1, class T2>
@@ -222,6 +223,18 @@ ObjPtrVec<T1, T2>::insert(typename ObjPtrVec<T1, T2>::const_iterator it, T1 *obj
         Set(mNodes.begin() + idx, obj);
     }
     return iterator(&Node(*it));
+}
+
+template <class T1, class T2>
+typename ObjPtrVec<T1, T2>::const_iterator
+ObjPtrVec<T1, T2>::find(const Hmx::Object *target) const {
+    auto it = begin();
+    for (; it != end(); ++it) {
+        if (*it == target) {
+            break;
+        }
+    }
+    return it;
 }
 
 template <class T1, class T2>
