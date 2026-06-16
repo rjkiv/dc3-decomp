@@ -966,7 +966,7 @@ void LightPreset::FillEnvPresetData(RndEnviron *env, LightPreset::EnvironmentEnt
 void LightPreset::SyncNewSpotlights() {
     for (ObjDirItr<Spotlight> it(Dir(), true); it != nullptr; ++it) {
         Spotlight *cur = it;
-        if (mSpotlights.find(cur) == mSpotlights.end()) {
+        if (mSpotlights.find(cur) == mSpotlights.end_const()) {
             AddSpotlight(cur, true);
         }
     }
