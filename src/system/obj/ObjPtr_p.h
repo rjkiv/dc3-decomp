@@ -209,7 +209,7 @@ void ObjPtrVec<T1, T2>::operator=(const ObjPtrVec &other) {
 
 template <class T1, class T2>
 void ObjPtrVec<T1, T2>::push_back(T1 *obj) {
-    insert(end_const(), obj);
+    insert(static_cast<const ObjPtrVec<T1, T2> &>(*this).end(), obj);
 }
 
 template <class T1, class T2>

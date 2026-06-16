@@ -757,8 +757,8 @@ void LightPreset::FillLightPresetData(RndLight *light, LightPreset::EnvLightEntr
 
 void LightPreset::RemoveLight(int idx) {
     for (uint i = 0; i != mKeyframes.size(); i++) {
-        Keyframe &cur = mKeyframes[i];
-        cur.mLightEntries.erase(cur.mLightEntries.begin() + idx);
+        auto &entries = mKeyframes[i].mLightEntries;
+        entries.erase(entries.begin() + idx);
     }
     mLightState.erase(mLightState.begin() + idx);
     mLights.erase(mLights.begin() + idx);
@@ -766,8 +766,8 @@ void LightPreset::RemoveLight(int idx) {
 
 void LightPreset::RemoveSpotlightDrawer(int idx) {
     for (uint i = 0; i != mKeyframes.size(); i++) {
-        Keyframe &cur = mKeyframes[i];
-        cur.mSpotlightDrawerEntries.erase(cur.mSpotlightDrawerEntries.begin() + idx);
+        auto &entries = mKeyframes[i].mSpotlightDrawerEntries;
+        entries.erase(entries.begin() + idx);
     }
     mSpotlightDrawerState.erase(mSpotlightDrawerState.begin() + idx);
     mSpotlightDrawers.erase(mSpotlightDrawers.begin() + idx);
@@ -791,8 +791,8 @@ void LightPreset::RemoveSpotlight(int idx) {
 
 void LightPreset::RemoveEnvironment(int idx) {
     for (uint i = 0; i != mKeyframes.size(); i++) {
-        Keyframe &cur = mKeyframes[i];
-        cur.mEnvironmentEntries.erase(cur.mEnvironmentEntries.begin() + idx);
+        auto &entries = mKeyframes[i].mEnvironmentEntries;
+        entries.erase(entries.begin() + idx);
     }
     mEnvironmentState.erase(mEnvironmentState.begin() + idx);
     mEnvironments.erase(mEnvironments.begin() + idx);
