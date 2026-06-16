@@ -139,6 +139,9 @@ public:
 template <class T1, class T2 = class ObjectDir>
 class ObjRefConcrete : public ObjRef {
 protected:
+    // hack because passing in nullptr to the T1* ctor doesn't omit the AddRef asm
+    ObjRefConcrete() : mObject(nullptr) {}
+
     T1 *mObject; // 0xc
 public:
     ObjRefConcrete(T1 *obj);
@@ -229,7 +232,7 @@ class ObjPtrVec : public ObjRefOwner {
 private:
     // Node size: 0x14
     struct Node : public ObjRefConcrete<T1, T2> {
-        Node(ObjRefOwner *owner) : ObjRefConcrete<T1>(nullptr), mOwner(owner) {}
+        Node(ObjRefOwner *owner) : ObjRefConcrete<T1>(), mOwner(owner) {}
         Node(const Node &n);
         virtual ~Node() {}
         virtual Hmx::Object *RefOwner() const {
