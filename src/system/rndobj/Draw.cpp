@@ -69,11 +69,11 @@ BEGIN_LOADS(RndDrawable)
     }
     if (d.rev < 2) {
         unsigned int count;
-        bs >> count;
+        d >> count;
         RndGroup *grp = dynamic_cast<RndGroup *>(this);
         for (; count != 0; count--) {
             char buf[0x80];
-            bs.ReadString(buf, 0x80);
+            d.stream.ReadString(buf, 0x80);
             if (grp) {
                 Hmx::Object *found = Dir()->Find<Hmx::Object>(buf, true);
                 RndCam *cam = dynamic_cast<RndCam *>(found);
@@ -86,16 +86,16 @@ BEGIN_LOADS(RndDrawable)
         }
     }
     if (d.rev > 0)
-        bs >> mSphere;
+        d >> mSphere;
     if (d.rev > 2) {
         if (gLoadingProxyFromDisk) {
             float dummy;
-            bs >> dummy;
+            d >> dummy;
         } else
-            bs >> mOrder;
+            d >> mOrder;
     }
     if (d.rev > 3)
-        bs >> mClipPlanes;
+        d >> mClipPlanes;
 END_LOADS
 
 void RndDrawable::Draw() {
@@ -110,13 +110,13 @@ void RndDrawable::Draw() {
     }
 }
 
-int RndDrawable::CollidePlane(const Plane &pl) {
+int RndDrawable::CollidePlane(const Plane &p) {
     if (mShowing) {
         Sphere s;
         if (MakeWorldSphere(s, false)) {
-            if (s >= pl)
+            if (s >= p)
                 return 1;
-            else if (s < pl)
+            else if (s < p)
                 return -1;
             else
                 return 0;
