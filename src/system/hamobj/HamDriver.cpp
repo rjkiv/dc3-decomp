@@ -1,6 +1,11 @@
 #include "hamobj/HamDriver.h"
 
 #include "char/CharClipDisplay.h"
+#include "math/Easing.h"
+#include "obj/Task.h"
+#include "stl/_pair.h"
+#include "utl/MakeString.h"
+#include "utl/Std.h"
 #include "utl/TimeConversion.h"
 #include "char/Char.h"
 #include "char/CharBones.h"
@@ -83,17 +88,85 @@ bool HamDriver::Replace(ObjRef *ref, Hmx::Object *obj) {
 float HamDriver::Display(float f1) {
     float scaledHeight = TheRnd.Height() * f1;
     auto pathName = PathName(this);
-    Hmx::Color color(1.0, 1.0, 1.0, 1.0);
+    Hmx::Color color(1.0f, 1.0f, 1.0f, 1.0f);
     Vector2 screenPos(CharClipDisplay::GetSEm(), scaledHeight);
-    auto stringDisplay = MakeString("%s beat: %.2f", pathName, unk78);
-    TheRnd.DrawString(stringDisplay, screenPos, color, true);
+    TheRnd.DrawString(
+        MakeString("%s beat: %.2f", pathName, unk78), screenPos, color, true
+    );
     CharClipDisplay::Init(this->Dir());
     float lineSpacing = CharClipDisplay::LineSpacing() + scaledHeight;
-    for (auto it = mLayers.unk2c.begin(); it != mLayers.unk2c.end() && mWeight != 0.0;
-         ++it) {
-        lineSpacing = DisplayRecurse(*it, 0, lineSpacing);
+    if (mBones && Weight() != 0) {
+        FOREACH (it, mLayers.unk2c) {
+            lineSpacing = DisplayRecurse(*it, 0, lineSpacing);
+        }
     }
     return lineSpacing / TheRnd.Height();
+}
+
+void HamDriver::Poll() {
+    if (mBones && Weight() > 0) {
+        mLayers.Eval(Weight());
+        mBones->ScaleDown(*mBones, 1.0f - mLayers.unk8);
+        mLayers.Play(*mBones);
+        unk78 = TheTaskMgr.Beat();
+    }
+}
+
+void HamDriver::SetClipWeightMap() {
+    unk7c.clear();
+    SetClipMapRecurse(&mLayers);
+    float total = 0;
+    FOREACH (it, unk7c) {
+        total += it->second;
+    }
+
+    if (total > 0) {
+        FOREACH (it, unk7c) {
+            it->second *= (1.0f / total);
+        }
+    }
+}
+
+float HamDriver::DisplayRecurse(Layer *layer, int i, float f) {
+    LayerArray *array = dynamic_cast<LayerArray *>(layer);
+    if (array) {
+        if (array->unk8 != 0) {
+            float sem = i * CharClipDisplay::GetSEm();
+            CharClipDisplay display;
+            display.unk10 = f;
+            display.unk1c = unk78;
+            display.unk64 = sem;
+            display.SetText(MakeString("(%s)", array->unkc));
+            display.SetStartEnd(unk78 - 4.0f, unk78 + 4.0f, true);
+            display.unk20 = array->unk8;
+            display.DrawTrack();
+            display.DrawBlend(array->unk4, 1.0f);
+            display.DrawCursor();
+            f += CharClipDisplay::LineSpacing();
+            int x = i + 1;
+            FOREACH (it, array->unk2c) {
+                f = DisplayRecurse(*it, x, f);
+            }
+        }
+    } else {
+        LayerClip *clip = dynamic_cast<LayerClip *>(layer);
+        if (clip && clip->unk8 != 0) {
+            float sem = i * CharClipDisplay::GetSEm();
+            CharClipDisplay display;
+            float beat = (unk78 - clip->unkc) + clip->unk10->StartBeat();
+            display.unk64 = sem;
+            display.unk1c = beat;
+            display.unk20 = clip->unk8;
+            display.SetClip(clip->unk10, true);
+            display.unk18 = f;
+            display.DrawTrack();
+            float beat2 = (clip->unk10->StartBeat() + clip->unk4) - clip->unkc;
+            display.DrawBlend(beat2, 1.0f);
+            display.DrawCursor();
+            f += CharClipDisplay::LineSpacing();
+        }
+    }
+    return f;
 }
 
 void HamDriver::Clear() { mLayers.Clear(); }
@@ -107,13 +180,33 @@ void HamDriver::Layer::OffsetSec(float f1) {
     unk4 = SecondsToBeat(BeatToSeconds(unk4) + f1);
 }
 
+void HamDriver::SetClipMapRecurse(HamDriver::Layer *layer) {
+    LayerArray *array = dynamic_cast<LayerArray *>(layer);
+    if (array) {
+        if (array->unk8 != 0) {
+            FOREACH (it, array->unk2c) {
+                SetClipMapRecurse(*it);
+            }
+        }
+    } else {
+        LayerClip *clip = dynamic_cast<LayerClip *>(layer);
+        if (clip && clip->unk8 != 0) {
+            CharClip *c = clip->unk10;
+            auto it = unk7c.find(c);
+            if (it != unk7c.end()) {
+                it->second += clip->unk8;
+            } else {
+                unk7c.insert(std::pair<CharClip *, float>(c, clip->unk8));
+            }
+        }
+    }
+}
+
 #pragma endregion
 
 #pragma region HamDriver::LayerClip
 
 HamDriver::LayerClip::LayerClip(Hmx::Object *obj) : unk10(obj) {}
-
-HamDriver::LayerClip::~LayerClip() {}
 
 void HamDriver::LayerClip::OffsetSec(float f1) {
     Layer::OffsetSec(f1);
@@ -127,12 +220,23 @@ void HamDriver::LayerClip::Eval(float f1) {
 }
 
 bool HamDriver::LayerClip::Replace(ObjRef *ref, Hmx::Object *obj) {
-    if ((ObjRef *)unk10.Ptr() == ref && unk10.SetObj(obj) == nullptr) {
-        delete unk10;
+    if (&unk10 == ref && !unk10.SetObj(obj)) {
+        if (this) {
+            delete this;
+        }
         return true;
     }
     return false;
 }
+
+void HamDriver::LayerClip::Play(CharBones &bones) {
+    if (unk8 > 0) {
+        float startbeat = unk10->StartBeat();
+        float val = (TheTaskMgr.Beat() - unkc) + startbeat;
+        bones.ScaleAdd(unk10, unk8, val, TheTaskMgr.DeltaBeat());
+    }
+}
+
 #pragma endregion
 
 #pragma region HamDriver::LayerArray
@@ -171,16 +275,34 @@ CharClip *HamDriver::LayerArray::FirstClip() {
     FOREACH (it, unk2c) {
         clip = (*it)->FirstClip();
         if (clip != nullptr) {
-            break;
+            return clip;
         }
     }
-    return clip;
+    return nullptr;
 }
 
 void HamDriver::LayerArray::OffsetSec(float f1) {
     Layer::OffsetSec(f1);
     FOREACH (it, unk2c) {
         (*it)->OffsetSec(f1);
+    }
+}
+
+void HamDriver::LayerArray::Eval(float f) {
+    unk8 = 0;
+    if (f > 0) {
+        float elapsed = TheTaskMgr.Beat() - unk4;
+        if (elapsed > 0) {
+            float val = (elapsed - 1.0f < 0) ? elapsed : 1.0f;
+            float sigmoid = EaseSigmoid(val, 0, 0) * f;
+            FOREACH (it, unk2c) {
+                (*it)->Eval(sigmoid);
+                float val8 = (*it)->unk8;
+                float val2 = (val8 - sigmoid < 0) ? val8 : sigmoid;
+                unk8 += val2;
+                sigmoid -= val2;
+            }
+        }
     }
 }
 

@@ -20,6 +20,8 @@ public:
     void Connect(const char *, unsigned int);
     void Disconnect();
 
+    int GetUnk8() const { return unk8; }
+
     static std::map<unsigned long, int> mXLSPRefCountMap;
     static bool SecureDisconnect(IN_ADDR);
     static int StartGatewayConnection(IN_ADDR);

@@ -1,6 +1,7 @@
 #include "hamobj/PoseFatalities.h"
 #include "PoseFatalities.h"
 #include "char/CharClip.h"
+#include "char/CharClipDriver.h"
 #include "char/CharDriver.h"
 #include "flow/PropertyEventProvider.h"
 #include "gesture/BaseSkeleton.h"
@@ -27,6 +28,7 @@
 #include "synth/FxSendDelay.h"
 #include "synth/Synth.h"
 #include "utl/BeatMap.h"
+#include "utl/MakeString.h"
 #include "utl/OSCMessenger.h"
 #include "utl/Symbol.h"
 
@@ -274,7 +276,10 @@ void PoseFatalities::BeginFatal(int player) {
 }
 
 bool PoseFatalities::CheckMatchingPose(int player) {
-    return InFatality(player) && unk15f4[player] >= unk15fc;
+    if (InFatality(player) && unk15f4[player] >= unk15fc) {
+        return true;
+    }
+    return false;
 }
 
 void PoseFatalities::LoadFatalityClips() {
@@ -653,6 +658,29 @@ void PoseFatalities::OnBeat(int beat) {
         }
         if (jData->LY() > 0.5f) {
             OnFatalResult(0, false);
+        }
+    }
+}
+
+void PoseFatalities::UpdateClipDriver(int i) {
+    HamCharacter *character = TheHamDirector->GetCharacter(i);
+    CharClipDriver *clipDriver = character->Driver()->First();
+    if (clipDriver) {
+        while (clipDriver != 0) {
+            if (strstr(clipDriver->GetClip()->Name(), "pose_fatalities_")) {
+                break;
+            }
+            clipDriver = clipDriver->Next();
+        }
+        if (clipDriver && clipDriver->GetClip()) {
+            MILO_ASSERT(NUM_FATALITIES == clipDriver->NumBeatEvents(), 0x123);
+            int num = unk44[i];
+            clipDriver->SetBeatOffset(
+                unk1718[i], kTaskBeats, MakeString("pose_fatality_%i", num - 1)
+            );
+            if (unk1718[i] < 0) {
+                unk1718[i] += TheTaskMgr.DeltaUISeconds();
+            }
         }
     }
 }

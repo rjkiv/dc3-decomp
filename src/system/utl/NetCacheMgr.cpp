@@ -1,4 +1,5 @@
 #include "utl/NetCacheMgr.h"
+#include "NetCacheMgr_Xbox.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
@@ -178,8 +179,7 @@ void NetCacheMgr::Load(NetCacheMgr::CacheSize cs) {
 void NetCacheMgr::Unload() {
     mLoadCount--;
     if (mLoadCount < 0) {
-        MILO_NOTIFY("NetCacheMgr::Unload() called more times than NetCacheMgr::Load()!\n"
-        );
+        MILO_NOTIFY("NetCacheMgr::Unload() called more times than NetCacheMgr::Load()!\n");
         mLoadCount = 0;
     } else {
         SetState((NetCacheMgrState)2);
@@ -288,6 +288,28 @@ void NetCacheMgr::OnInit(DataArray *pData) {
     }
 }
 
+void NetCacheMgr::PollLoaders() {
+    bool b = true;
+    auto it = mNetLoaderRefs.begin();
+    while (it != mNetLoaderRefs.end()) {
+        NetLoaderRef &netLoaderRef = *it;
+        MILO_ASSERT(netLoaderRef.IsValid(), 0xe9);
+        if (!netLoaderRef.NeedsToDownload() || netLoaderRef.IsLoadedOrFailed()) {
+            netLoaderRef.Poll();
+        } else if (b) {
+            netLoaderRef.Poll();
+            b = false;
+        }
+
+        if (netLoaderRef.unk8 < 1 && netLoaderRef.IsSafeToDelete()) {
+            netLoaderRef.DeleteLoader();
+            it = mNetLoaderRefs.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
 void NetLoaderRef::Poll() {
     MILO_ASSERT(IsValid(), 0x315);
     if (mCacheLoader) {
@@ -312,6 +334,11 @@ void NetLoaderRef::DeleteLoader() {
     RELEASE(mNetLoader);
 }
 
+bool NetLoaderRef::IsDownloading() {
+    MILO_ASSERT(IsValid(), 0x321);
+    return !mCacheLoader || mCacheLoader->GetState() == 2;
+}
+
 bool NetLoaderRef::IsValid() const {
     // mCacheLoader XOR mNetLoader
     return (!mCacheLoader || !mNetLoader) && (mCacheLoader || mNetLoader);
@@ -319,7 +346,7 @@ bool NetLoaderRef::IsValid() const {
 
 void NetCacheMgrInit() {
     MILO_ASSERT(TheNetCacheMgr == NULL, 0x1f);
-    // TheNetCacheMgr = new NetCacheMgr(); // needs to be new NetCacheXbox() later
+    TheNetCacheMgr = new NetCacheMgrXbox();
 }
 
 void NetCacheMgrTerminate() { RELEASE(TheNetCacheMgr); }

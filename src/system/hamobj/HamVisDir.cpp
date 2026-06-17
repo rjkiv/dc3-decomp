@@ -13,6 +13,7 @@
 #include "rndobj/Anim.h"
 #include "rndobj/Cam.h"
 #include "rndobj/Draw.h"
+#include "stl/_vector.h"
 #include "ui/PanelDir.h"
 #include "utl/BinStream.h"
 #include "utl/Loader.h"
@@ -307,3 +308,47 @@ void HamVisDir::CheckPose(int i1, PoseOwner &po) {
 }
 
 void HamVisDir::Run(bool run) { mRunning = run; }
+
+void HamVisDir::CalcArmLengths(std::vector<float> &vec, const Skeleton &skel) {
+    struct {
+        SkeletonBone upper;
+        SkeletonBone lower;
+    } arms[2] = { { kBoneArmUpperLeft, kBoneArmLowerLeft },
+                  { kBoneArmUpperRight, kBoneArmLowerRight } };
+    for (unsigned int i = 0; i < 2; i++) { // it actually is unsigned here.... what
+        MILO_ASSERT_RANGE(arms[i].upper, 0, kNumJoints, 0x12d);
+        MILO_ASSERT_RANGE(arms[i].lower, 0, kNumJoints, 0x12e);
+        vec[i] = skel.BoneLength(arms[i].upper, kCoordCamera)
+            + skel.BoneLength(arms[i].lower, kCoordCamera);
+    }
+}
+
+void HamVisDir::UpdateGestureFilter(Skeleton const &skeleton, int i) {
+    RndAnimatable *leftPlayer;
+    RndAnimatable *rightPlayer;
+    if (i == 0) {
+        leftPlayer = mPlayer1Left;
+        rightPlayer = mPlayer1Right;
+    } else {
+        leftPlayer = mPlayer2Left;
+        rightPlayer = mPlayer2Right;
+    }
+
+    if ((leftPlayer || rightPlayer) && (!TheLoadMgr.EditMode() || !mMiloManualFrame)) {
+        std::vector<float> armLengths(2, 0.0f);
+        CalcArmLengths(armLengths, skeleton);
+        std::vector<float> shoulders(2, 0.0f);
+        shoulders[0] = skeleton.TrackedJoints()[kJointShoulderLeft].mJointPos[0].y;
+        shoulders[1] = skeleton.TrackedJoints()[kJointShoulderRight].mJointPos[0].y;
+        std::vector<float> wrists(2, 0.0f);
+        wrists[0] = skeleton.TrackedJoints()[kJointWristLeft].mJointPos[0].y;
+        wrists[1] = skeleton.TrackedJoints()[kJointWristRight].mJointPos[0].y;
+        for (int i = 0; i < 2; i++) {
+            RndAnimatable *animatable = (i == 0) ? leftPlayer : rightPlayer;
+            float val = unk334 * 100.0f;
+            if (animatable) {
+                animatable->SetFrame(val, 1.0f);
+            }
+        }
+    }
+}

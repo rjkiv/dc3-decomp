@@ -224,6 +224,7 @@ DataNode DingoServer::OnMsg(const DingoJobCompleteMsg &msg) {
                 ServerStatusChangedMsg msg(kServerStatusConnected);
                 Export(msg, false);
                 DoAdditionalLogin();
+
             } else {
                 DataPoint dataP("svr_sent_non_success_on_auth");
                 dataP.AddPair("location", "DingoSvr::OnMsg1");

@@ -9,6 +9,7 @@
 #include "rndobj/Poll.h"
 #include "utl/BinStream.h"
 #include "utl/MemMgr.h"
+#include <list>
 
 /** "Class to play back clips, has a tree view of layers" */
 class HamDriver : public RndHighlightable, public CharWeightable, public CharPollable {
@@ -25,6 +26,7 @@ public:
         MEM_OVERLOAD(Layer, 0x27)
 
         float unk4; // 0x4 - beat?
+        float unk8;
     };
 
     struct LayerArray : public Layer {
@@ -38,21 +40,18 @@ public:
 
         void Clear();
 
-        float unk8;
         char unkc[0x20];
         std::list<Layer *> unk2c;
     };
 
     struct LayerClip : public Layer {
         LayerClip(Hmx::Object *);
-        virtual ~LayerClip();
         virtual void Eval(float);
         virtual void Play(CharBones &);
         virtual bool Replace(ObjRef *, Hmx::Object *);
         virtual CharClip *FirstClip();
         virtual void OffsetSec(float);
 
-        float unk8;
         float unkc;
         ObjOwnerPtr<CharClip> unk10; // 0x10
     };
@@ -81,6 +80,7 @@ public:
     NEW_OBJ(HamDriver)
 
     void Clear();
+    void SetClipWeightMap();
     LayerClip *NewLayerClip();
     void OffsetSec(float);
     CharClip *FirstClip();
@@ -91,6 +91,7 @@ protected:
 
     float Display(float);
     float DisplayRecurse(Layer *, int, float);
+    void SetClipMapRecurse(HamDriver::Layer *);
 
     /** "The CharBones object to add into." */
     ObjPtr<CharBonesObject> mBones; // 0x30

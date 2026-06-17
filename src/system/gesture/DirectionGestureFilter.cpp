@@ -207,3 +207,34 @@ void DirectionGestureFilterDoubleUser::SetHighButtonMode(bool set) {
     unk4->SetHighButtonMode(set);
     unk8->SetHighButtonMode(set);
 }
+
+bool DirectionGestureFilterDoubleUser::IsValidScrollPos(const Skeleton &skel) const {
+    int p1, p2;
+    GetValidSkeletons(p1, p2);
+    return p1 >= 0 && unk4->IsValidScrollPos(TheGestureMgr->GetSkeleton(p1))
+        || p2 >= 0 && unk8->IsValidScrollPos(TheGestureMgr->GetSkeleton(p2));
+}
+
+bool DirectionGestureFilterDoubleUser::IsHandValid(const Skeleton &skel) const {
+    int p1, p2;
+    GetValidSkeletons(p1, p2);
+    return (p1 >= 0 && unk4->IsHandValid(TheGestureMgr->GetSkeleton(p1))
+            && unkc[0]->StandingStill())
+        || (p2 >= 0 && unk8->IsHandValid(TheGestureMgr->GetSkeleton(p2))
+            && unkc[1]->StandingStill());
+}
+
+void DirectionGestureFilterDoubleUser::GetValidSkeletons(int &p1, int &p2) const {
+    int id1 = TheGestureMgr->GetPlayerSkeletonID(0);
+    int id2 = TheGestureMgr->GetPlayerSkeletonID(1);
+
+    p1 = (id1 != -1) ? TheGestureMgr->GetSkeletonIndexByTrackingID(id1) : -1;
+    p2 = (id2 != -1) ? TheGestureMgr->GetSkeletonIndexByTrackingID(id2) : -1;
+
+    if (p1 != -1 && !TheGestureMgr->IsSkeletonValid(p1)) {
+        p1 = -1;
+    }
+    if (p2 != -1 && !TheGestureMgr->IsSkeletonValid(p2)) {
+        p2 = -1;
+    }
+}

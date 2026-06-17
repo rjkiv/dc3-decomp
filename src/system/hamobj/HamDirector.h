@@ -198,6 +198,7 @@ protected:
     ObjectDir *GetDifficultyProxy(Difficulty);
     CharClip *
     GetClipStartAndEndBeats(Symbol, float &, float &, std::pair<float, float> *);
+    void ChangeNextShotIfCharacterCollisionLikely();
 
     DataNode OnShotOver(DataArray *);
     DataNode OnPostProcInterp(DataArray *);

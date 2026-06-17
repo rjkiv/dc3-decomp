@@ -1,5 +1,6 @@
 #include "meta/MetaMusicManager.h"
 #include "obj/Dir.h"
+#include "utl/Symbol.h"
 
 MetaMusicManager *TheMetaMusicManager;
 
@@ -34,8 +35,10 @@ void MetaMusicManager::ConfigureMetaMusicSceneData(DataArray *da) {
         MetaMusicScene *pScene = new MetaMusicScene(pSceneArray);
         MILO_ASSERT(pScene, 0x42);
         Symbol scene_name = pScene->GetName();
-        if (SceneExists(scene_name)) {
-            MILO_NOTIFY("%s scene already exists, skipping", scene_name.Str());
+        Symbol scene = scene_name;
+        if (SceneExists(scene)) {
+            Symbol s = scene;
+            MILO_NOTIFY("%s scene already exists, skipping", s.Str());
             delete pScene;
         } else {
             m_mapScenes[scene_name] = pScene;

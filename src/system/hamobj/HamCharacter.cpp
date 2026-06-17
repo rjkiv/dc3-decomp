@@ -20,6 +20,7 @@
 #include "obj/DirLoader.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
+#include "obj/Task.h"
 #include "obj/Utl.h"
 #include "os/Debug.h"
 #include "os/File.h"
@@ -32,6 +33,7 @@
 #include "utl/BinStream.h"
 #include "utl/FilePath.h"
 #include "utl/Loader.h"
+#include "utl/Std.h"
 #include "utl/Symbol.h"
 
 namespace {
@@ -474,7 +476,12 @@ void HamCharacter::ResetFaceOverrideBlending() {
 
 void HamCharacter::SetCampaignVo(const char *cc) {
     mCampaignVO = cc;
-    RELEASE(mCampaignVOBank);
+    Hmx::Object *o;
+    if (mCampaignVOBank) {
+        o = mCampaignVOBank; // maybe a leftover var?
+        delete mCampaignVOBank;
+        mCampaignVOBank = 0;
+    }
     if (!mCampaignVO.empty()) {
         String milo = GetCampaignVoMilo();
         mCampaignVODir = DirLoader::LoadObjects(milo.c_str(), nullptr, nullptr);
@@ -597,6 +604,43 @@ DataNode HamCharacter::OnCamTeleport(DataArray *a) {
     mWaypoint->SetLocalXfm(LocalXfm());
     if (Regulator()) {
         Regulator()->SetWaypoint(nullptr);
+    }
+    return 0;
+}
+
+DataNode HamCharacter::OnSoundPlay(DataArray const *a) {
+    auto &val = a->Node(2).Evaluate();
+    if (val.Type() == kDataObject) {
+        auto obj = val.UncheckedObj();
+        if (!obj) {
+            return 0;
+        }
+
+        Sound *sound = dynamic_cast<Sound *>(obj);
+        if (sound) {
+            if (mOutfit.Str()[0] == '\0') {
+                MILO_NOTIFY(
+                    "HamCharacter::OnSoundPlay: No outfit specified for character %s. Not going to play lipsync\n",
+                    Name()
+                );
+                return 0;
+            }
+            Symbol outfitCharacter = GetOutfitCharacter(mOutfit);
+            StackString<128> soundname = sound->Name();
+            if (soundname.find(outfitCharacter.Str()) != -1) {
+                CharLipSync *lipSync = CharLipSync::FindLipSyncForSound(sound);
+                if (lipSync) {
+                    MILO_LOG(
+                        "HamCharacter: found lipsync [%s] to play for sound [%s]\n",
+                        lipSync->Name(),
+                        sound->Name()
+                    );
+                    EnableFacialAnimation(
+                        lipSync, -TheTaskMgr.Seconds(TaskMgr::kRealTime)
+                    );
+                }
+            }
+        }
     }
     return 0;
 }

@@ -182,6 +182,7 @@ public:
     float Range() const { return mRange; }
     const std::vector<BeatEvent> &BeatEvents() const { return mBeatEvents; }
     int NumBeatEvents() { return mBeatEvents.size(); }
+    int Unk18CSize() { return unk18c.size(); }
     RndAnimatable *SyncAnim() const { return mSyncAnim; }
     float FramesPerSec() { return mFramesPerSec; }
 

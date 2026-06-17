@@ -16,11 +16,14 @@
 #include "meta/MetaMusicManager.h"
 #include "meta_ham/ShellInput.h"
 #include "obj/Data.h"
+#include "obj/Msg.h"
 #include "obj/Object.h"
 #include "obj/Task.h"
 #include "os/Debug.h"
+#include "os/Joypad.h"
 #include "os/JoypadMsgs.h"
 #include "os/System.h"
+#include "os/Timer.h"
 #include "rndobj/Anim.h"
 #include "rndobj/Overlay.h"
 #include "rndobj/Rnd.h"
@@ -31,6 +34,7 @@
 #include "ui/UIList.h"
 #include "ui/UIListProvider.h"
 #include "ui/UIListState.h"
+#include "ui/Utl.h"
 #include "utl/BinStream.h"
 #include "utl/Loader.h"
 #include "utl/Std.h"
@@ -1005,4 +1009,94 @@ void HamNavListGlitchCB(float ms, void *refresh) {
         ms,
         TheRnd.GetFrameID()
     );
+}
+
+void HamNavList::RealRefresh() {
+    AutoGlitchReport report(15.0f, HamNavListGlitchCB, this);
+    unk1f0 = false;
+    if (mListRibbonResource) {
+        UIListProvider *provider = mListState.Provider();
+        if (provider) {
+            int numShowing = mListState.NumShowing();
+            bool isScrollable = mListRibbonResource->IsScrollable(numShowing);
+            if (isScrollable) {
+                int maxDisplay = sListStateMaxDisplay - 4;
+                int minDisplay = 3;
+                if (numShowing <= maxDisplay) {
+                    minDisplay = (numShowing - maxDisplay) + 2;
+                }
+                mListState.SetMinDisplay(minDisplay);
+                mListState.SetScrollPastMinDisplay(true);
+                mListState.SetMaxDisplay(maxDisplay);
+                mListState.SetScrollPastMaxDisplay(maxDisplay < numShowing);
+            } else {
+                mListState.SetScrollPastMinDisplay(false);
+                mListState.SetSelected(mListState.Selected(), -1, true);
+            }
+        }
+    }
+
+    if (mListDirResource) {
+        mListState.Provider()->UnHighlightCurrent();
+        mListState.Provider()->ClearIconLabels();
+        mListDirResource->FillElements(mListState, unk64);
+    }
+
+    if (mNavInputType == kNavInput_RightHand) {
+        UIListProvider *provider = mListState.Provider();
+        if (provider) {
+            static Message eqShiftEvenMsg("eq_shift_even");
+            static Message eqShiftOddMsg("eq_shift_odd");
+            int numShowing = mListState.NumShowing();
+            if (numShowing % 2 == 0 || mListState.ScrollPastMinDisplay()) {
+                TheHamProvider->Handle(eqShiftEvenMsg, false);
+            } else {
+                TheHamProvider->Handle(eqShiftOddMsg, false);
+            }
+        }
+    }
+}
+
+DataNode HamNavList::OnMsg(const ButtonDownMsg &msg) {
+    if (unk1f0) {
+        RealRefresh();
+    }
+
+    if ((InControllerMode() || TheLoadMgr.EditMode()) && (!RndAnimatable::IsAnimating())
+        && mEnabled) {
+        if (!GesturingWithVoice() && TheUI->FocusComponent() == this) {
+            int direction = ScrollDirection(msg, false, true, 1);
+            if (direction != 0) {
+                int selected = mListState.Selected();
+                do { // actual do while loop??
+                    selected += direction;
+                    if (selected < 0 || selected >= mListState.NumShowing()) {
+                        return 0;
+                    }
+                } while (!mListState.Provider()->IsActive(selected));
+
+                if (mListState.ScrollPastMinDisplay()) {
+                    int firstShowing = mListState.FirstShowing();
+                    if (selected < firstShowing) {
+                        unk190.ScrollUp(false);
+                    } else if (selected
+                               >= HamListRibbon::sNumListSelectable + firstShowing) {
+                        unk190.ScrollDown(false);
+                    } else {
+                        SetHighlight(selected);
+                    }
+                } else
+                    SetHighlight(selected);
+                return 0;
+            }
+
+            if (msg.GetAction() == kAction_Confirm) {
+                if (unk1e7) {
+                    SetSelecting(true);
+                }
+                return 0;
+            }
+        }
+    }
+    return DATA_UNHANDLED;
 }

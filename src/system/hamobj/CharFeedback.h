@@ -40,6 +40,8 @@ public:
     // RndPollable
     virtual void Poll();
     virtual void Enter();
+    // RndDrawable
+    virtual void DrawShowing();
 
     OBJ_MEM_OVERLOAD(0x12)
     NEW_OBJ(CharFeedback)

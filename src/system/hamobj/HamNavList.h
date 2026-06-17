@@ -12,6 +12,7 @@
 #include "obj/Object.h"
 #include "os/JoypadMsgs.h"
 #include "rndobj/Anim.h"
+#include "stl/_vector.h"
 #include "ui/ResourceDirPtr.h"
 #include "ui/UIComponent.h"
 #include "ui/UIListDir.h"
@@ -123,6 +124,7 @@ private:
     void SetSliding(float);
     void SetSelecting(bool);
     bool SkipPoll() const;
+    bool IsElementBig(int) const;
     void RealRefresh();
     void SetSwelling();
     bool ShouldSkipSelectAnim(DataNode &) const;
@@ -132,10 +134,12 @@ private:
     int GetHighlightItem(void) const;
     void DetermineHighlightedItem();
     float GetTargetSwellAmount(int);
+    void
+    LinkRibbonDrawState(std::vector<HamListRibbonDrawState> &, UIListWidgetDrawState &);
 
     static float sSlideSmoothAmount;
     static float sSlideTrendAmount;
-    static int sListStateMaxDisplay;
+    static int const sListStateMaxDisplay;
 
     DataNode OnMsg(const ButtonDownMsg &);
 
