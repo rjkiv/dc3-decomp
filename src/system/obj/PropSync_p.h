@@ -332,8 +332,63 @@ bool PropSync(
     }
 }
 
+// hack lol
+// if you can find a way to call the regular PropSync<T>(T*&)
+// that'll be inlined in the ObjPtrVec PropSync, i'm all ears
 template <class T>
-bool PropSync(ObjPtrVec<T, ObjectDir> &, DataNode &, DataArray *, int, PropOp);
+__forceinline bool
+PropSyncInline(T *&obj, DataNode &node, DataArray *prop, int i, PropOp op) {
+    if (op == kPropUnknown0x40)
+        return false;
+    else {
+        MILO_ASSERT(i == prop->Size() && op <= kPropInsert, 0x66);
+        if (op == kPropGet)
+            node = obj;
+        else
+            obj = node.Obj<T>();
+        return true;
+    }
+}
+
+template <class T>
+bool PropSync(
+    ObjPtrVec<T, ObjectDir> &objPtrVec, DataNode &node, DataArray *prop, int i, PropOp op
+) {
+    if (op == kPropUnknown0x40)
+        return false;
+    else if (i == prop->Size()) {
+        MILO_ASSERT(op == kPropSize || op == kPropInsert, 0x1D9);
+        node = (int)objPtrVec.size();
+        return true;
+    } else {
+        typename ObjPtrVec<T, ObjectDir>::iterator it =
+            objPtrVec.begin() + prop->Int(i++);
+        if (i < prop->Size() || op & (kPropGet | kPropSet | kPropSize)) {
+            if (op == kPropGet) {
+                T *cur = *it;
+                node = cur;
+                return true;
+            } else if (op == kPropSet) {
+                T *objToSet = nullptr;
+                if (PropSyncInline(objToSet, node, prop, i, op)) {
+                    objPtrVec.Set(it, objToSet);
+                    return true;
+                }
+            }
+        } else if (op == kPropRemove) {
+            objPtrVec.erase(it);
+            return true;
+        } else if (op == kPropInsert) {
+            T *objToInsert = nullptr;
+            if (PropSyncInline(objToInsert, node, prop, i, op)) {
+                auto &n = *it;
+                objPtrVec.insert(&n, objToInsert);
+                return true;
+            }
+        }
+        return false;
+    }
+}
 
 template <class T>
 bool PropSync(ObjVector<T> &objVec, DataNode &node, DataArray *prop, int i, PropOp op) {
