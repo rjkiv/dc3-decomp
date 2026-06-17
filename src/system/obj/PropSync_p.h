@@ -381,8 +381,7 @@ bool PropSync(
         } else if (op == kPropInsert) {
             T *objToInsert = nullptr;
             if (PropSyncInline(objToInsert, node, prop, i, op)) {
-                auto &n = *it;
-                objPtrVec.insert(&n, objToInsert);
+                objPtrVec.insert(it, objToInsert);
                 return true;
             }
         }

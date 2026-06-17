@@ -273,6 +273,8 @@ public:
     // they don't use an ObjPtrVec but they did make their own BufVector
     // and it's got both iterator and const_iterator
     class iterator {
+        friend class const_iterator;
+
     private:
         Node *mData; // 0x0
     public:
@@ -308,6 +310,7 @@ public:
     public:
         const_iterator(const Node *n) : mData(n) {}
         const_iterator() : mData(nullptr) {}
+        const_iterator(const iterator &other) : mData(other.mData) {}
 
         const_iterator operator++(int);
         const_iterator &operator++() {
