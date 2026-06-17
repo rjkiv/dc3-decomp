@@ -245,7 +245,6 @@ private:
         }
         virtual ObjRefOwner *Parent() const { return mOwner; }
 
-        T1 *Obj() const { return mObject; }
         Node &operator=(const Node &n) {
             CopyRef(n);
             mOwner = n.mOwner;
@@ -269,79 +268,81 @@ protected:
     void ReplaceNode(Node *, Hmx::Object *);
 
 public:
-    // this derives off of std::vector<Node>::iterator in some way
+    // from RBVR
+    // they don't use an ObjPtrVec but they did make their own BufVector
+    // and it's got both iterator and const_iterator
     class iterator {
-        friend class const_iterator;
-
     private:
-        typedef typename std::vector<Node>::iterator Base;
-        Base it;
-
+        Node *mData; // 0x0
     public:
-        iterator(Base base) : it(base) {}
-
-        Node &operator*() const { return *it; }
-        Node *operator->() const { return &(*it); }
-
-        iterator operator+(int idx) {
-            it += idx;
+        iterator(Node *n) : mData(n) {}
+        iterator() : mData(nullptr) {}
+        iterator operator++(int);
+        iterator &operator++() {
+            mData++;
             return *this;
         }
-
-        iterator operator++() {
-            ++it;
+        iterator operator--(int);
+        iterator &operator--() {
+            mData--;
             return *this;
         }
+        iterator operator+(int n) const { return mData + n; }
+        int operator-(iterator &) const;
+        iterator operator-(int) const;
 
-        iterator operator--() {
-            --it;
-            return *this;
-        }
+        Node &operator*() { return *mData; }
+        Node *operator->() { return mData; }
 
-        bool operator!=(const iterator &other) const { return it != other.it; }
-        bool operator==(const iterator &other) const { return it == other.it; }
+        bool operator==(const iterator &it) const { return mData == it.mData; }
+        bool operator!=(const iterator &it) const { return mData != it.mData; }
+        // bool operator<(const iterator &) const;
+        // bool operator>=(const iterator &) const;
     };
+
     // ditto
     class const_iterator {
     private:
-        typedef typename std::vector<Node>::const_iterator Base;
-        Base it;
-
+        const Node *mData; // 0x0
     public:
-        const_iterator(Base base) : it(base) {}
-        const_iterator(iterator non_const) : it(non_const.it) {}
+        const_iterator(const Node *n) : mData(n) {}
+        const_iterator() : mData(nullptr) {}
 
-        const Node &operator*() const { return *it; }
-        const Node *operator->() const { return &(*it); }
-
-        const_iterator operator+(int idx) {
-            it += idx;
+        const_iterator operator++(int);
+        const_iterator &operator++() {
+            mData++;
             return *this;
         }
-
-        const_iterator operator++() {
-            ++it;
+        const_iterator operator--(int);
+        const_iterator &operator--() {
+            mData--;
             return *this;
         }
+        const_iterator operator+(int n) const { return mData + n; }
+        int operator-(const_iterator &) const;
+        const_iterator operator-(int) const;
 
-        const_iterator operator--() {
-            --it;
-            return *this;
-        }
+        const Node &operator*() const { return *mData; }
+        const Node *operator->() const { return mData; }
 
-        bool operator==(const const_iterator &other) const { return it == other.it; }
-        bool operator!=(const const_iterator &other) const { return it != other.it; }
+        bool operator==(const const_iterator &it) const { return mData == it.mData; }
+        bool operator!=(const const_iterator &it) const { return mData != it.mData; }
+        // bool operator<(const const_iterator &) const;
+        // bool operator>=(const const_iterator &) const;
     };
 
     ObjPtrVec(Hmx::Object *owner, EraseMode = (EraseMode)0, ObjListMode = kObjListNoNull);
     ObjPtrVec(const ObjPtrVec &);
     virtual ~ObjPtrVec();
 
-    iterator begin() { return empty() ? nullptr : mNodes.begin(); }
-    // regswapped and i have no idea why
+    iterator begin() { return empty() ? nullptr : &mNodes[0]; }
+    const_iterator begin() const { return empty() ? nullptr : &mNodes[0]; }
     iterator end() { return begin() + size(); }
-    const_iterator begin() const { return empty() ? nullptr : mNodes.begin(); }
     const_iterator end() const { return begin() + size(); }
+
+    // this stupid hack exists because when just calling end(),
+    // the compiler thinks we want the non-const version
+    const_iterator end_const() const { return end(); }
     iterator FindRef(ObjRef *);
 
     iterator erase(iterator);
@@ -350,8 +351,8 @@ public:
     int size() const { return mNodes.size(); }
     bool empty() const { return mNodes.empty(); }
     T1 *front() const { return *begin(); }
-    T1 *operator[](int idx) { return mNodes[idx].Obj(); }
-    const T1 *operator[](int idx) const { return mNodes[idx].Obj(); }
+    T1 *operator[](int idx) { return mNodes[idx]; }
+    const T1 *operator[](int idx) const { return mNodes[idx]; }
 
     template <class S>
     void sort(const S &);
@@ -365,10 +366,8 @@ public:
     void unique();
     void Set(iterator it, T1 *obj);
     void merge(const ObjPtrVec &);
-    Hmx::Object *Owner() const { return mOwner; }
-
-    // see Draw.cpp for this
     void operator=(const ObjPtrVec &other);
+    Hmx::Object *Owner() const { return mOwner; }
 
 private:
     std::vector<Node> mNodes; // 0x4

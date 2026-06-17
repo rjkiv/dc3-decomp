@@ -187,7 +187,7 @@ void ObjPtrVec<T1, T2>::ReplaceNode(Node *n, Hmx::Object *obj) {
 }
 
 template <class T1, class T2>
-void ObjPtrVec<T1, T2>::Set(iterator it, T1 *obj) {
+__declspec(noinline) void ObjPtrVec<T1, T2>::Set(iterator it, T1 *obj) {
     if (!obj && mListMode == 0) {
         erase(it);
     } else
@@ -209,19 +209,57 @@ void ObjPtrVec<T1, T2>::operator=(const ObjPtrVec &other) {
 
 template <class T1, class T2>
 void ObjPtrVec<T1, T2>::push_back(T1 *obj) {
-    insert(end(), obj);
+    const auto &end = end_const();
+    insert(end, obj);
 }
 
 template <class T1, class T2>
 typename ObjPtrVec<T1, T2>::iterator
 ObjPtrVec<T1, T2>::insert(typename ObjPtrVec<T1, T2>::const_iterator it, T1 *obj) {
     if (obj || mListMode != kObjListNoNull) {
-        int idx = *it != nullptr ? size() : 0;
-        // mNodes.insert(it, Node(obj));
-        mNodes.insert(mNodes.begin() + idx, this);
-        Set(mNodes.begin() + idx, obj);
+        int idx = it != nullptr ? (&*it - &*mNodes.begin()) : 0;
+        Node n(this);
+        mNodes.insert(mNodes.begin() + idx, n);
+        Set(begin() + idx, obj);
     }
-    return iterator(&Node(*it));
+    return reinterpret_cast<iterator &>(it);
+}
+
+template <class T1, class T2>
+typename ObjPtrVec<T1, T2>::iterator
+ObjPtrVec<T1, T2>::erase(typename ObjPtrVec<T1, T2>::iterator it) {
+    unsigned int idx = it != nullptr ? (&*it - &*mNodes.begin()) : 0;
+    if (mEraseMode == 1 && idx != size() - 1) {
+        T1 *n = mNodes.back();
+        mNodes.pop_back();
+        Set(begin() + idx, n);
+    } else {
+        mNodes.erase(mNodes.begin() + idx);
+    }
+    return it;
+}
+
+template <class T1, class T2>
+typename ObjPtrVec<T1, T2>::const_iterator
+ObjPtrVec<T1, T2>::find(const Hmx::Object *target) const {
+    auto it = begin();
+    for (; it != end(); ++it) {
+        if (*it == target) {
+            break;
+        }
+    }
+    return it;
+}
+
+template <class T1, class T2>
+bool ObjPtrVec<T1, T2>::remove(T1 *obj) {
+    const_iterator found = find(obj);
+    if (found != end_const()) {
+        erase(reinterpret_cast<iterator &>(found));
+        return true;
+    } else {
+        return false;
+    }
 }
 
 template <class T1, class T2>
