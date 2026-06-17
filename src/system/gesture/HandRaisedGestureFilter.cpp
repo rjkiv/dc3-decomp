@@ -1,7 +1,14 @@
 #include "gesture/HandRaisedGestureFilter.h"
+#include "BaseSkeleton.h"
+#include "Skeleton.h"
 #include "StandingStillGestureFilter.h"
 #include "gesture/GestureMgr.h"
+#include "math/Vec.h"
 #include "obj/Object.h"
+
+static const float sFloat1 = 0.05f;
+static const float sFloat2 = 0.1f;
+static const float sFloat3 = 0.3f;
 
 HandRaisedGestureFilter::HandRaisedGestureFilter()
     : mHandRaised(false), mRaisedMs(0), mRequiredMs(500) {

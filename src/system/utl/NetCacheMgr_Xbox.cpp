@@ -17,13 +17,11 @@ void NetCacheMgrXbox::Poll() {
                 mDoneLoading = true;
             }
             if (!unk30 && mConnection.GetState() == 4) {
-                NetCacheMgrFailType ft;
-                if (ThePlatformMgr.IsEthernetCableConnected()) {
-                    ft = (NetCacheMgrFailType)1;
+                if (!ThePlatformMgr.IsEthernetCableConnected()) {
+                    SetFail(kNCMFT_NoEthernetCable);
                 } else {
-                    ft = (NetCacheMgrFailType)3;
+                    SetFail(kNCMFT_StoreServer);
                 }
-                SetFail(ft);
             }
         }
     }
@@ -53,3 +51,5 @@ unsigned int NetCacheMgrXbox::GetIP() {
         return mConnection.GetServiceIP();
     }
 }
+
+bool NetCacheMgrXbox::IsDoneUnloading() const { return mConnection.GetUnk8() == 0; }

@@ -1,5 +1,6 @@
 #pragma once
 #include "HamRegulate.h"
+#include "char/CharClip.h"
 #include "char/CharEyes.h"
 #include "char/CharLipSync.h"
 #include "char/CharServoBone.h"
@@ -107,6 +108,7 @@ protected:
     virtual void RemovingObject(Hmx::Object *);
 
     bool GetPropShowing(int);
+    void ApplyBlendedSkeletons(HamDriver *, CharClip *, float);
 
     DataNode OnConfigureFileMerger(DataArray *);
     DataNode OnCamTeleport(DataArray *);

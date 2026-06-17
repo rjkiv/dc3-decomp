@@ -26,6 +26,7 @@
 #include "xdk/NUI.h"
 #include "xdk/XBC.h"
 #include "xdk/win_types.h"
+#include "xdk/xapilibi/xbox.h"
 #include <algorithm>
 #include <cstdlib>
 #include <cwchar>
@@ -802,7 +803,7 @@ bool PlatformMgr::IsPadAGuest(int padNum) const {
     if (ret == ERROR_NO_SUCH_USER) {
         return IsSignedIn(padNum);
     } else {
-        MILO_ASSERT(ret != ERROR_SUCCESS, 0x929);
+        MILO_ASSERT(ret == ERROR_SUCCESS, 0x929);
 
         return signinInfo.dwInfoFlags >> 1 & 1;
     }

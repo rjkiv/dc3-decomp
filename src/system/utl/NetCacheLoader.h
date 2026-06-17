@@ -25,6 +25,8 @@ public:
     enum NetCacheMgrFailType GetFailType() const;
     void PollLoading() { Poll(); }
 
+    State GetState() const { return mState; }
+
     MEM_OVERLOAD(NetCacheLoader, 0x1C);
 
     State mState; // 0x0
@@ -41,3 +43,7 @@ protected:
     void WriteToCache();
     void Poll();
 };
+
+bool operator==(NetCacheLoader *loader, const String &str) {
+    return str == loader->GetRemotePath();
+}

@@ -5,9 +5,10 @@
 SynchronizationEvent::~SynchronizationEvent() { CloseHandle(mEvent); }
 
 bool SynchronizationEvent::Wait(int i1) {
+    int temp = i1;
     if (i1 == -1)
-        ;
-    return WaitForSingleObject(mEvent, i1) != 0x102;
+        temp = -1;
+    return WaitForSingleObject(mEvent, temp) != 0x102;
 }
 
 SynchronizationEvent::SynchronizationEvent()

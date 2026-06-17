@@ -8,6 +8,7 @@
 #include "rndobj/Mesh.h"
 #include "rndobj/Poll.h"
 #include "ui/UIColor.h"
+#include "utl/Loader.h"
 
 bool CharFeedback::sEnabled = true;
 
@@ -168,6 +169,20 @@ void CharFeedback::Sync() {
             if (mesh) {
                 mesh->SetShowing(false);
                 mesh->SetMat(mFailMat);
+            }
+        }
+    }
+}
+
+void CharFeedback::DrawShowing() {
+    if (TheLoadMgr.EditMode() || sEnabled) {
+        if (mTarget && mFailMat) {
+            for (int i = 0; i < kNumLimbFeedbacks; i++) {
+                LimbState &state = mLimbStates[i];
+                if (state.unk8 > 0 && state.unkc) {
+                    mFailMat->SetAlpha(state.unk8);
+                    state.unkc->DrawShowing();
+                }
             }
         }
     }

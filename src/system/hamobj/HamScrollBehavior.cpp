@@ -3,10 +3,14 @@
 #include "HamNavProvider.h"
 #include "hamobj/HamNavList.h"
 #include "obj/Data.h"
+#include "obj/Msg.h"
+#include "obj/Task.h"
 #include "os/System.h"
 #include "rndobj/Anim.h"
+#include "ui/UI.h"
 #include "ui/UIListProvider.h"
 #include "ui/UIListState.h"
+#include "ui/UIScreen.h"
 
 float HamScrollBehavior::sScrollSettleTime = 0.1;
 

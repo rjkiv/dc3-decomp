@@ -1,4 +1,5 @@
 #include "net/HttpGet.h"
+#include "macros.h"
 #include "os/Debug.h"
 #include "os/NetworkSocket.h"
 #include "utl/MemMgr.h"
@@ -74,7 +75,7 @@ void HttpGet::StartSending() {
 void HttpGet::SafeShutdown() {
     SafeDisconnect();
     if (mFileBuf != 0) {
-        MemFree(mFileBuf);
+        MemFree(mFileBuf, __FILE__, 0x359);
         mFileBuf = 0;
     }
     mFileBufSize = 0;

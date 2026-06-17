@@ -14,6 +14,7 @@
 #include "os/PlatformMgr.h"
 #include "rndobj/Bitmap.h"
 #include "rndobj/Tex.h"
+#include "stl/_algobase.h"
 #include "stl/_vector.h"
 #include "ui/UI.h"
 #include "ui/UIPanel.h"
@@ -278,6 +279,21 @@ void StorePanel::StartReEnum() {
         ThePlatformMgr.QueueEnumJob(unk98);
         unk98 = nullptr;
     }
+}
+
+void StorePanel::LoadArt(const char *c, UIPanel *panel) {
+    String str(c);
+    auto it = std::find(unk54.begin(), unk54.end(), str);
+    if (it == unk54.end()) {
+        NetCacheLoader *loader = TheNetCacheMgr->AddNetCacheLoader(c, (NetLoaderPos)0);
+        unk5c = loader;
+        if (loader) {
+            unk54.push_back(unk5c);
+        }
+    } else {
+        unk5c = *it;
+    }
+    mPendingArtCallback = panel;
 }
 
 void StorePanel::Poll() {
