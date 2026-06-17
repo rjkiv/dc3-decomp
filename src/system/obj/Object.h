@@ -59,16 +59,17 @@ public:
 
     class iterator {
     private:
-        ObjRef *curRef;
+        ObjRef *mData;
 
     public:
-        iterator() : curRef(nullptr) {}
-        iterator(ObjRef *ref) : curRef(ref) {}
-        operator ObjRef *() const { return curRef; }
-        ObjRef *operator->() const { return curRef; }
+        iterator() : mData(nullptr) {}
+        iterator(ObjRef *ref) : mData(ref) {}
 
-        iterator operator++() {
-            curRef = curRef->next;
+        operator ObjRef *() const { return mData; }
+        ObjRef *operator->() const { return mData; }
+
+        iterator &operator++() {
+            mData = mData->next;
             return *this;
         }
 
@@ -78,13 +79,13 @@ public:
             return tmp;
         }
 
-        bool operator!=(iterator it) { return curRef != it.curRef; }
-        bool operator==(iterator it) { return curRef == it.curRef; }
-        bool operator!() { return curRef == nullptr; }
+        bool operator==(const iterator &it) const { return mData == it.mData; }
+        bool operator!=(const iterator &it) const { return mData != it.mData; }
+        bool operator!() { return mData == nullptr; }
     };
 
-    iterator begin() const { return iterator(next); }
-    iterator end() const { return iterator((ObjRef *)this); }
+    iterator begin() const { return next; }
+    iterator end() const { return (ObjRef *)this; }
     bool empty() const { return next == this; }
 
     /** Make `this` its own standalone single list node. */

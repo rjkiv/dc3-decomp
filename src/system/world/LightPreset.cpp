@@ -10,6 +10,7 @@
 #include "rndobj/Cam.h"
 #include "rndobj/Env.h"
 #include "rndobj/EventTrigger.h"
+#include "rndobj/Lit.h"
 #include "rndobj/PostProc.h"
 #include "utl/BinStream.h"
 #include "utl/Loader.h"
@@ -390,6 +391,48 @@ LightPreset::LightPreset()
       mEndFrame(0), mLocked(0), mHue(0) {}
 
 LightPreset::~LightPreset() { Clear(); }
+
+bool LightPreset::Replace(ObjRef *from, Hmx::Object *to) {
+    auto spotIt = mSpotlights.FindRef(from);
+    if (spotIt != mSpotlights.end()) {
+        mSpotlights.Set(spotIt, to ? dynamic_cast<Spotlight *>(to) : nullptr);
+        if (!*spotIt) {
+            RemoveSpotlight(&*spotIt - &*mSpotlights.begin());
+        }
+        CacheFrames();
+        return true;
+    }
+    auto envIt = mEnvironments.FindRef(from);
+    if (envIt != mEnvironments.end()) {
+        mEnvironments.Set(envIt, to ? dynamic_cast<RndEnviron *>(to) : nullptr);
+        if (!*envIt) {
+            RemoveEnvironment(&*envIt - &*mEnvironments.begin());
+        }
+        CacheFrames();
+        return true;
+    }
+    auto lightIt = mLights.FindRef(from);
+    if (lightIt != mLights.end()) {
+        mLights.Set(lightIt, to ? dynamic_cast<RndLight *>(to) : nullptr);
+        if (!*lightIt) {
+            RemoveLight(&*lightIt - &*mLights.begin());
+        }
+        CacheFrames();
+        return true;
+    }
+    auto spotDrawIt = mSpotlightDrawers.FindRef(from);
+    if (spotDrawIt != mSpotlightDrawers.end()) {
+        mSpotlightDrawers.Set(
+            spotDrawIt, to ? dynamic_cast<SpotlightDrawer *>(to) : nullptr
+        );
+        if (!*spotDrawIt) {
+            RemoveSpotlightDrawer(&*spotDrawIt - &*mSpotlightDrawers.begin());
+        }
+        CacheFrames();
+        return true;
+    }
+    return Hmx::Object::Replace(from, to);
+}
 
 BEGIN_HANDLERS(LightPreset)
     HANDLE(set_keyframe, OnSetKeyframe)

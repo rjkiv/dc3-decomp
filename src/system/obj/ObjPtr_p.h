@@ -263,6 +263,16 @@ bool ObjPtrVec<T1, T2>::remove(T1 *obj) {
 }
 
 template <class T1, class T2>
+typename ObjPtrVec<T1, T2>::iterator ObjPtrVec<T1, T2>::FindRef(ObjRef *ref) {
+    ObjRefOwner *parent = ref->Parent();
+    if (parent == this) {
+        return static_cast<Node *>(ref);
+    } else {
+        return end();
+    }
+}
+
+template <class T1, class T2>
 bool ObjPtrVec<T1, T2>::Load(BinStream &bs, bool print, ObjectDir *dir) {
     bool ret = true;
     mNodes.clear();
