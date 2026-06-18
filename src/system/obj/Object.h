@@ -455,6 +455,11 @@ public:
             return tmp;
         }
 
+        iterator &operator--() {
+            mNode = mNode->prev;
+            return *this;
+        }
+
         bool operator==(const iterator &it) const { return mNode == it.mNode; }
         bool operator!=(const iterator &it) const { return mNode != it.mNode; }
         bool operator!() { return mNode == 0; }

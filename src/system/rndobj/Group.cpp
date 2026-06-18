@@ -355,6 +355,27 @@ void RndGroup::Merge(const RndGroup *group) {
     }
 }
 
+int RndGroup::MoveObject(Hmx::Object *obj, int idx) {
+    auto found = mObjects.find(obj);
+    if (found == mObjects.end()) {
+        return 0;
+    } else {
+        auto otherIt = found;
+        int newIdx = idx;
+        if (idx > 0) {
+            ++otherIt;
+            for (; newIdx != 0 && otherIt != mObjects.end(); ++otherIt, --newIdx) {
+            }
+        } else if (idx != 0) {
+            for (; newIdx != 0 && otherIt != mObjects.begin(); --otherIt, ++newIdx) {
+            }
+        }
+        mObjects.MoveItem(otherIt, mObjects, found);
+        Update();
+        return idx - newIdx;
+    }
+}
+
 void RndGroup::SortDraws() {
     FOREACH (it, mDraws) {
         mObjects.remove(*it);
