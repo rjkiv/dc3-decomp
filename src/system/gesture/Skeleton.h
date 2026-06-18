@@ -93,7 +93,7 @@ protected:
     Vector3 unkab0;
     int mSkeletonIdx; // 0xac0
     float unkac4;
-    std::vector<CameraDisplacement> mCamDisplacements; // 0xac8
+    mutable std::vector<CameraDisplacement> mCamDisplacements; // 0xac8
 };
 
 class SkeletonCallback {

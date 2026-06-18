@@ -1,23 +1,32 @@
 #include "gesture/SkeletonUpdate.h"
+#include "BaseSkeleton.h"
 #include "SkeletonUpdate.h"
+#include "StubCameraInput.h"
 #include "gesture/CameraInput.h"
 #include "gesture/GestureMgr.h"
 #include "gesture/LiveCameraInput.h"
 #include "gesture/Skeleton.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
+#include "math/Vec.h"
 #include "obj/DataFunc.h"
 #include "obj/Object.h"
+#include "obj/Task.h"
 #include "os/CritSec.h"
 #include "os/Debug.h"
+#include "os/Joypad.h"
 #include "os/OSFuncs.h"
 #include "os/Timer.h"
 #include "utl/MemMgr.h"
 #include "utl/Std.h"
 #include "xdk/NUI.h"
 #include "xdk/XAPILIB.h"
+#include "xdk/nui/nuiskeleton.h"
+#include "xdk/win_types.h"
+#include "xdk/xapilibi/synchapi.h"
 
 CriticalSection SkeletonUpdateHandle::sCritSec;
+static const float sFloat = 2.0f;
 
 #pragma region SkeletonUpdateHandle
 
@@ -186,12 +195,51 @@ void SkeletonUpdate::PostUpdate() {
     }
 }
 
-DataNode OnToggleSkeletalUpdateThread(DataArray *);
-DataNode OnCycleNumStubSkeletons(DataArray *);
-DataNode OnCycleFakeShellSkeletons(DataArray *);
-DataNode OnCycleActiveFakeShellSkeleton(DataArray *);
-DataNode OnSetFakeSkeletonSidesSwapped(DataArray *);
-DataNode OnGetFakeSkeletonSidesSwapped(DataArray *);
+DataNode OnToggleSkeletalUpdateThread(DataArray *) {
+    SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
+    handle.Inst()->SetUnk539C(!handle.Inst()->GetUnk539C());
+    ResetEvent(SkeletonUpdate::SkeletonUpdatedEvent());
+    return handle.Inst()->GetUnk539C();
+}
+
+DataNode OnCycleNumStubSkeletons(DataArray *) {
+    SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
+    int i = (handle.Inst()->GetUnk5388() + 1) % 3;
+    if (i < 0) {
+        i += 3;
+    }
+    handle.Inst()->SetUnk5388(i);
+    return i;
+}
+
+DataNode OnCycleFakeShellSkeletons(DataArray *arr) {
+    SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
+    int i = (1 << arr->Int(1)) ^ handle.Inst()->GetUnk538C();
+    handle.Inst()->SetUnk538C(i);
+    return i;
+}
+
+DataNode OnCycleActiveFakeShellSkeleton(DataArray *) {
+    SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
+    int i = (handle.Inst()->GetUnk5394() + 1) % 2;
+    if (i < 0) {
+        i += 2;
+    }
+    handle.Inst()->SetUnk5394(i);
+    return i;
+}
+
+DataNode OnSetFakeSkeletonSidesSwapped(DataArray *arr) {
+    SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
+    bool b = arr->Int(1) != 0;
+    handle.Inst()->SetUnk5390(b);
+    return 0;
+}
+
+DataNode OnGetFakeSkeletonSidesSwapped(DataArray *) {
+    SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
+    return handle.Inst()->GetUnk5390();
+}
 
 void SkeletonUpdate::Init() {
     sNewSkeletonEvent = CreateEventA(nullptr, true, false, nullptr);
@@ -202,4 +250,50 @@ void SkeletonUpdate::Init() {
     DataRegisterFunc("cycle_active_fake_shell_skeleton", OnCycleActiveFakeShellSkeleton);
     DataRegisterFunc("set_fake_skeleton_sides_swapped", OnSetFakeSkeletonSidesSwapped);
     DataRegisterFunc("get_fake_skeleton_sides_swapped", OnGetFakeSkeletonSidesSwapped);
+}
+
+void SkeletonUpdate::UpdateFakeArmPos() {
+    JoypadData *data = JoypadGetPadData(0);
+    float sticks = data->mSticks[1][1];
+    float uiSeconds = TheTaskMgr.DeltaUISeconds();
+    uiSeconds *= sFloat;
+    unk5398 = -(uiSeconds * sticks - unk5398);
+
+    float val = -0.25f;
+    val = (-0.25f - unk5398 >= 0) ? -0.25f : unk5398;
+    unk5398 = (val - 0.6f >= 0) ? 0.6f : val;
+}
+
+void SkeletonUpdate::Update() {
+    LONGLONG l = mNUISkeletonFrame->liTimeStamp.QuadPart;
+    if (NuiSkeletonGetNextFrame(0, mNUISkeletonFrame) == 0) {
+        unk78 = true;
+        if (!unk91) {
+            mSkeletonFrame.Create(
+                *mNUISkeletonFrame, mNUISkeletonFrame->liTimeStamp.QuadPart - l
+            );
+        }
+    } else {
+        if (unk90) {
+            return;
+        }
+
+        if (!unk91) {
+            unk78 = true;
+            StubCameraInput::StubSkeletonFrame(mSkeletonFrame);
+            for (int i = 0; i < NUM_SKELETONS; i++) {
+                SkeletonData &data = mSkeletonFrame.mSkeletonDatas[i];
+                data.mTracking = kSkeletonNotTracked;
+                data.mQualityFlags = 0;
+                for (int j = 0; j < kNumJoints; j++) {
+                    data.unk144[j].Zero();
+                    data.unk284[j] = 0;
+                }
+                data.mTrackingID = -1;
+                data.unk2dc = -1;
+                data.unk2e0 = Vector3::GetZero();
+            }
+        }
+    }
+    UpdateCallbacks();
 }

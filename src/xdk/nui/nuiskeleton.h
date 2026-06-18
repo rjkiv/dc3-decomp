@@ -40,6 +40,8 @@ typedef struct _NUI_SKELETON_FRAME { /* Size=0xab0 */
 
 HRESULT NuiSkeletonTrackingEnable(HANDLE hNextFrameEvent, DWORD dwFlags);
 HRESULT NuiSkeletonTrackingDisable();
+HRESULT
+NuiSkeletonGetNextFrame(DWORD dwMillisecondsToWait, NUI_SKELETON_FRAME *pSkeletonFrame);
 
 #ifdef __cplusplus
 }
