@@ -13,6 +13,8 @@ public:
 
 private:
     float GetBend(const Vector3 &, const Vector3 &, const Vector3 &) const;
+    bool UpdateBodyPlane(const Skeleton &, float);
+    bool CalcInPose(const Skeleton &, float);
 
     Vector3DESmoother unk4; // 0x4
     Vector3 unk40; // 0x40

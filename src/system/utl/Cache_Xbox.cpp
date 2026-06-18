@@ -10,6 +10,11 @@
 #include "utl/Str.h"
 #include "utl/Symbol.h"
 #include "xdk/win_types.h"
+#include "xdk/xapilibi/errhandlingapi.h"
+#include "xdk/xapilibi/fileapi.h"
+#include "xdk/xapilibi/handleapi.h"
+#include "xdk/xapilibi/minwinbase.h"
+#include "xdk/xapilibi/xbox.h"
 #include <cstring>
 #include "xdk/XAPILIB.h"
 
@@ -46,7 +51,7 @@ CacheXbox::CacheXbox(const CacheIDXbox &c)
     : mCacheID(c), mData(0), mSize(0), mCacheDirList(0), mCallbackObj(0) {}
 
 bool CacheXbox::IsConnectedSync() {
-    return XContentGetDeviceState(0, nullptr) == ERROR_SUCCESS;
+    return XContentGetDeviceState(mCacheID.DeviceID(), nullptr) == ERROR_SUCCESS;
 }
 
 int CacheXbox::ThreadStart() {
@@ -343,6 +348,24 @@ int CacheXbox::ThreadGetFileSize() {
 
 // bool CacheXbox::DeleteParentDirs(String) { return 1; }
 
-// int CacheXbox::ThreadDelete() { return 1; }
+int CacheXbox::ThreadDelete() {
+    mThreadStr.ReplaceAll('/', '\\');
+    bool delFile = DeleteFileA(mThreadStr.c_str());
+    if (delFile) {
+        delFile = DeleteParentDirs(mThreadStr.erase(mThreadStr.find_last_of('\\')));
+    }
+    if (!delFile) {
+        DWORD lastError = GetLastError();
+        if (!IsDeviceConnected(mCacheID.ContentData()->DeviceID)) {
+            return 8;
+        }
+        MILO_NOTIFY(
+            "CacheXbox::DeleteAsync() - Unhandled error from DeleteFile(): %d\n",
+            lastError
+        );
+        return -1;
+    }
+    return 0;
+}
 
 // int CacheXbox::ThreadGetDir(String, String) { return 1; }

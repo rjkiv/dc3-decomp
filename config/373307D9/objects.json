@@ -297,7 +297,7 @@
             "system/gesture/HandRaisedGestureFilter.cpp": "NonMatching",
             "system/gesture/HandsUpGestureFilter.cpp": "NonMatching",
             "system/gesture/HighFiveGestureFilter.cpp": "NonMatching",
-            "system/gesture/IdentityInfo.cpp": "MISSING",
+            "system/gesture/IdentityInfo.cpp": "Matching",
             "system/gesture/JointUtl.cpp": "NonMatching",
             "system/gesture/LiveCameraInput.cpp": "NonMatching",
             "system/gesture/NavigationSkeletonDir.cpp": "Matching",

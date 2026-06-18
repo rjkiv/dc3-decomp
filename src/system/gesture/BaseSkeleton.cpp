@@ -1,4 +1,5 @@
 #include "gesture/BaseSkeleton.h"
+#include "math/Vec.h"
 #include "os/Debug.h"
 
 const BoneJoints BaseSkeleton::sBones[] = {

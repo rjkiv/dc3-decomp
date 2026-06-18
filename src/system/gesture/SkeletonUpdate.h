@@ -22,6 +22,8 @@ public:
     void PostUpdate();
     const SkeletonHistory *History() const;
 
+    SkeletonUpdate *Inst() const { return mInst; }
+
 private:
     SkeletonUpdate *mInst; // 0x0
 
@@ -47,6 +49,19 @@ public:
     static HANDLE SkeletonUpdatedEvent() { return sSkeletonUpdatedEvent; }
     static SkeletonUpdateHandle InstanceHandle();
 
+    void PublicUpdate() { Update(); }
+
+    int GetUnk5388() const { return unk5388; }
+    void SetUnk5388(int i) { unk5388 = i; }
+    int GetUnk538C() const { return unk538c; }
+    void SetUnk538C(int i) { unk538c = i; }
+    bool GetUnk5390() const { return unk5390; }
+    void SetUnk5390(bool b) { unk5390 = b; }
+    int GetUnk5394() const { return unk5394; }
+    void SetUnk5394(int i) { unk5394 = i; }
+    bool GetUnk539C() const { return unk539c; }
+    void SetUnk539C(bool b) { unk539c = b; }
+
 private:
     SkeletonUpdate();
 
@@ -55,6 +70,8 @@ private:
     void SetCameraInput(CameraInput *);
     void PostUpdate();
     void Update();
+    void UpdateFakeArmPos();
+    void UpdateCallbacks();
 
     static SkeletonUpdate *sInstance;
     static HANDLE sNewSkeletonEvent;

@@ -1,5 +1,6 @@
 #include "gesture/SkeletonClip.h"
 #include "SkeletonClip.h"
+#include "gesture/ArchiveSkeleton.h"
 #include "gesture/BaseSkeleton.h"
 #include "gesture/GestureMgr.h"
 #include "gesture/Skeleton.h"
@@ -8,6 +9,10 @@
 #include "hamobj/Difficulty.h"
 #include "hamobj/HamDirector.h"
 #include "hamobj/HamGameData.h"
+#include "hamobj/HamMove.h"
+#include "hamobj/HamPlayerData.h"
+#include "hamobj/MoveDir.h"
+#include "hamobj/ScoreUtl.h"
 #include "obj/Data.h"
 #include "obj/DataFunc.h"
 #include "obj/Object.h"
@@ -17,12 +22,14 @@
 #include "os/System.h"
 #include "rndobj/Anim.h"
 #include "rndobj/Poll.h"
+#include "stl/_vector.h"
 #include "utl/BinStream.h"
 #include "utl/FileStream.h"
 #include "utl/Loader.h"
 #include "utl/MakeString.h"
 #include "utl/Str.h"
 #include "utl/Symbol.h"
+#include <cstring>
 
 // do these correspond to kNumDifficulties?
 std::vector<RecordedFrame> sFrames[4];
@@ -36,6 +43,22 @@ void ReserveFrames() {
     sFrames[0].reserve(18000);
     sFrames[1].reserve(18000);
     sFrames[2].reserve(800);
+}
+
+void RecordedFrame::MakeSkeletonFrame(SkeletonFrame &frame, int skel_idx) const {
+    MILO_ASSERT_RANGE(skel_idx, 0, 6, 0x2e);
+    memset(&frame, 0, sizeof(SkeletonFrame));
+    frame.unk0 = unk0;
+    frame.mElapsedMs = unk4;
+    frame.unk8 = unk8;
+    frame.unk18 = unk18;
+    SkeletonData &data = frame.mSkeletonDatas[skel_idx];
+    data.mTracking = unk28 ? kSkeletonTracked : kSkeletonNotTracked;
+    memcpy(data.unk144, unk2c, 0x140);
+    memcpy(data.unk284, unk16c, 0x50);
+    data.mQualityFlags = unk1bc;
+    data.mTrackingID = unk1c0;
+    data.unk2e0 = data.unk144[0];
 }
 
 SkeletonClip::SkeletonClip()
@@ -518,11 +541,13 @@ void SkeletonClip::LoadClip(bool tool_sync) {
 void SkeletonClip::SetAutoplay(bool b1) {
     if (mFile.empty()) {
         MILO_NOTIFY("Recording hasn't been made yet, can't autoplay");
-    } else if (!TheHamDirector) {
-        MILO_NOTIFY("Autoplay not supported in song playback mode");
-    } else {
-        mAutoplay = b1;
+        return;
     }
+    if (TheHamDirector) {
+        MILO_NOTIFY("Autoplay not supported in song playback mode");
+        return;
+    }
+    mAutoplay = b1;
 }
 
 void SkeletonClip::StartXboxRecording(const char *cc) {
@@ -541,5 +566,142 @@ void SkeletonClip::StartXboxRecording(const char *cc) {
     } else {
         mSong = gNullStr;
         mDifficulty = kNumDifficulties;
+    }
+}
+
+float SkeletonClip::SongStartSeconds() const {
+    if (!mFile.empty() && !mRecordedFrames->empty() && !mSong.Null()) {
+        return mRecordedFrames->front().unk1c4;
+    }
+    return 0;
+}
+
+float SkeletonClip::SongEndSeconds() const {
+    if (!mFile.empty() && !mRecordedFrames->empty() && !mSong.Null()) {
+        float f = mRecordedFrames->back().unk1c4;
+        if (IsFailClip()) {
+            f *= 1000.0f;
+        }
+        return f;
+    }
+    return 0;
+}
+
+void SkeletonClip::FillMoveRatings() {
+    if (mDifficulty == kNumDifficulties) {
+        MILO_NOTIFY("Can\'t fill move ratings, this is not a song recording");
+        return;
+    }
+
+    if (TheHamDirector) {
+        MoveDir *moveDir = dynamic_cast<MoveDir *>(Dir());
+        if (moveDir) {
+            std::vector<HamMoveKey> keys;
+            TheHamDirector->MoveKeys(mDifficulty, moveDir, keys);
+            static Symbol Default("default");
+            MoveRating rating;
+            auto &ratings = mMoveRatings;
+            if (keys.size() < ratings.size()) {
+                ratings.erase(ratings.begin() + keys.size(), ratings.end());
+            } else {
+                ratings.insert(ratings.end(), keys.size() - ratings.size(), rating);
+            }
+
+            for (int i = 0; i < keys.size(); i++) {
+                ratings[i].mName = keys[i].move->Name();
+                ratings[i].mExpected = Default;
+                ratings[i].unkc = 2;
+            }
+        }
+    }
+}
+
+void SkeletonClip::LoadFrame(BinStream &bs, RecordedFrame &frame, int i) {
+    if (i > 6) {
+        bs >> frame.unk0;
+    } else {
+        frame.unk0 = 0;
+    }
+
+    if (i > 1) {
+        bs >> frame.unk4;
+        bs >> frame.unk8;
+        bs >> frame.unk18;
+    } else {
+        frame.unk4 = 0x21;
+        frame.unk8.Set(0, 1.0f, 0);
+        frame.unk18.Set(0, 0, 0, 0);
+    }
+
+    bs >> frame.unk28;
+    if (frame.unk28 || i < 2) {
+        for (int i = 0; i < kNumJoints; i++) {
+            bs >> frame.unk2c[i];
+            bs >> frame.unk16c[i];
+        }
+        bs >> frame.unk1bc;
+        bs >> frame.unk1c0;
+    }
+
+    if (i == 1) {
+        String s = "";
+        bs >> s;
+    } else if (i > 2) {
+        bs >> frame.unk1c4;
+    }
+}
+
+void SkeletonClip::SwapMoveRecord() {
+    int size = mRecordedFrames->size() - 400;
+    if (size > 0) {
+        mRecordedFrames->erase(mRecordedFrames->begin(), mRecordedFrames->begin() + size);
+    }
+}
+
+void SkeletonClip::PollRecording(const SkeletonFrame &frame) {
+    if (IsRecording()) {
+        float songSeconds = 0;
+        if (TheHamDirector) {
+            songSeconds = MoveDir::SongSeconds();
+        }
+        if (TheHamDirector && !mRecordedFrames->empty()
+            && mRecordedFrames->back().unk1c4 >= songSeconds) {
+            return;
+        }
+
+        RecordedFrame recordedFrame;
+        recordedFrame.unk0 = frame.unk0;
+        recordedFrame.unk4 = frame.mElapsedMs;
+        recordedFrame.unk8 = frame.unk8;
+        recordedFrame.unk18 = frame.unk18;
+
+        int active_skel_idx = -1;
+        if (unk11fc == -1) {
+            active_skel_idx = TheGestureMgr->GetActiveSkeletonIndex();
+        } else {
+            HamPlayerData *player = TheGameData->Player(unk11fc);
+            active_skel_idx = TheGestureMgr->GetSkeletonIndexByTrackingID(
+                player->GetSkeletonTrackingID()
+            );
+        }
+
+        if (active_skel_idx != -1) {
+            MILO_ASSERT_RANGE(active_skel_idx, 0, 6, 0x2a9);
+            const SkeletonData &data = frame.mSkeletonDatas[active_skel_idx];
+            recordedFrame.unk28 = data.mTracking == kSkeletonTracked;
+            memcpy(recordedFrame.unk2c, data.unk144, 0x140);
+            memcpy(recordedFrame.unk16c, data.unk284, 0x50);
+            recordedFrame.unk1bc = data.mQualityFlags;
+            recordedFrame.unk1c0 = data.mTrackingID;
+            recordedFrame.unk1c4 = songSeconds;
+
+            // why is this off right here
+            if (mRecordedFrames->size() == mRecordedFrames->capacity()) {
+                auto c = mRecordedFrames->capacity();
+                MILO_LOG("Can\'t record any more frames, reached capacity (%i)\n", c);
+            } else {
+                mRecordedFrames->push_back(recordedFrame);
+            }
+        }
     }
 }
