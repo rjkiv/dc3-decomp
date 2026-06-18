@@ -419,7 +419,6 @@ private:
         static void *operator new(unsigned int);
         static void operator delete(void *);
 
-        T1 *Obj() const { return mObject; }
         void operator=(const Node &n) { SetObjConcrete(n.mObject); }
 
         ObjRefOwner *mOwner; // 0x10
@@ -443,9 +442,9 @@ public:
     public:
         iterator() : mNode(0) {}
         iterator(Node *node) : mNode(node) {}
-        T1 *operator*() { return mNode->Obj(); }
+        T1 *operator*() { return *mNode; }
 
-        iterator operator++() {
+        iterator &operator++() {
             mNode = mNode->next;
             return *this;
         }
@@ -456,13 +455,8 @@ public:
             return tmp;
         }
 
-        // iterator &operator=(T1 *obj) {
-        //     mNode->SetObjConcrete(obj);
-        //     return *this;
-        // }
-
-        bool operator!=(iterator it) { return mNode != it.mNode; }
-        bool operator==(iterator it) { return mNode == it.mNode; }
+        bool operator==(const iterator &it) const { return mNode == it.mNode; }
+        bool operator!=(const iterator &it) const { return mNode != it.mNode; }
         bool operator!() { return mNode == 0; }
 
         struct Node *mNode; // 0x0

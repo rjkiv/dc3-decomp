@@ -456,9 +456,9 @@ void ObjPtrList<T1, T2>::sort(const Cmp &cmp) {
         for (Node *n = last->prev; n != last; n = n->prev) {
             for (Node *x = n; x != last; x = x->next) {
                 Node *nextX = x->next;
-                if (cmp(nextX->Obj(), x->Obj())) {
-                    T1 *tmp = x->Obj();
-                    x->SetObjConcrete(nextX->Obj());
+                if (cmp(*nextX, *x)) {
+                    T1 *tmp = *x;
+                    x->SetObjConcrete(*nextX);
                     nextX->SetObjConcrete(tmp);
                 } else {
                     break;
@@ -468,12 +468,11 @@ void ObjPtrList<T1, T2>::sort(const Cmp &cmp) {
     }
 }
 
-// TODO: not 100%, work on this
-// addr: 0x825C6868
 template <class T1, class T2>
 bool ObjPtrList<T1, T2>::remove(T1 *target) {
-    for (iterator it = begin(); it != end();) {
-        auto old = it++;
+    for (Node *it = mNodes; it != nullptr;) {
+        Node *old = it;
+        it = it->next;
         if (*old == target) {
             erase(old);
             return true;
