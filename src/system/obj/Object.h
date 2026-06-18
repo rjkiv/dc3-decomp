@@ -485,6 +485,7 @@ public:
     void pop_front();
     void pop_back();
     void push_back(T1 *obj);
+    void push_front(T1 *obj);
     iterator find(const Hmx::Object *target) const;
     iterator begin() const { return iterator(mNodes); }
     iterator end() const { return iterator(0); }

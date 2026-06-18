@@ -1,8 +1,10 @@
 #include "rndobj/Group.h"
 #include "Rnd.h"
+#include "math/Vec.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "rndobj/Anim.h"
+#include "rndobj/Cam.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Env.h"
 #include "rndobj/Trans.h"
@@ -11,25 +13,38 @@
 
 bool gInReplace;
 
+struct GroupDrawDist {
+    RndDrawable *draw; // 0x0
+    float lensq; // 0x4
+};
+
+bool SortInWorld(const GroupDrawDist &g1, const GroupDrawDist &g2) {
+    return g1.lensq < g2.lensq;
+}
+
 RndGroup::RndGroup()
     : mObjects(this, kObjListOwnerControl), mDrawOnly(this), mSortInWorld(false) {}
 
-bool RndGroup::Replace(ObjRef *ref, Hmx::Object *obj) {
-    if (ref->Parent() != &mObjects) {
-        if (!obj) {
-            Hmx::Object *theObj = ref->GetObj();
-            mObjects.remove(theObj);
+bool RndGroup::Replace(ObjRef *from, Hmx::Object *to) {
+    // theRef is potentially a Node inside of mObjects, inside an iterator
+    ObjRef *theRef = from->Parent() == &mObjects ? from : nullptr;
+    if (theRef) {
+        if (!to) {
+            Hmx::Object *theObj = from->GetObj();
+            ObjPtrList<Hmx::Object>::iterator it =
+                *reinterpret_cast<ObjPtrList<Hmx::Object>::iterator *>(&theRef);
+            mObjects.erase(it);
             VectorRemove(mAnims, theObj);
             VectorRemove(mDraws, theObj);
         } else {
-            AddObject(obj, ref->GetObj());
+            AddObject(to, from->GetObj());
             gInReplace = true;
-            RemoveObject(ref->GetObj());
+            RemoveObject(from->GetObj());
             gInReplace = false;
         }
         return true;
     } else {
-        return RndTransformable::Replace(ref, obj);
+        return RndTransformable::Replace(from, to);
     }
 }
 
@@ -101,16 +116,16 @@ BEGIN_LOADS(RndGroup)
     LOAD_SUPERCLASS(RndTransformable)
     LOAD_SUPERCLASS(RndDrawable)
     if (d.rev > 10) {
-        bs >> mObjects;
+        d >> mObjects;
         if (d.rev < 0x10) {
             ObjPtr<RndEnviron> env(this);
-            bs >> env;
+            d >> env;
             if (env) {
-                mObjects.push_back(env);
+                mObjects.push_front(env);
             }
         }
         if (d.rev > 0xC) {
-            bs >> mDrawOnly;
+            d >> mDrawOnly;
         } else {
             mDrawOnly = nullptr;
         }
@@ -119,8 +134,8 @@ BEGIN_LOADS(RndGroup)
     if (d.rev > 0xB && d.rev < 0xF) {
         String str;
         float x;
-        bs >> str;
-        bs >> x;
+        d >> str;
+        d >> x;
     }
     if (d.rev > 0xD) {
         d >> mSortInWorld;
@@ -128,15 +143,13 @@ BEGIN_LOADS(RndGroup)
 END_LOADS
 
 void RndGroup::StartAnim() {
-    for (std::vector<RndAnimatable *>::iterator it = mAnims.begin(); it != mAnims.end();
-         ++it) {
+    FOREACH (it, mAnims) {
         (*it)->StartAnim();
     }
 }
 
 void RndGroup::EndAnim() {
-    for (std::vector<RndAnimatable *>::iterator it = mAnims.begin(); it != mAnims.end();
-         ++it) {
+    FOREACH (it, mAnims) {
         (*it)->EndAnim();
     }
 }
@@ -144,9 +157,7 @@ void RndGroup::EndAnim() {
 void RndGroup::SetFrame(float frame, float blend) {
     if (Showing()) {
         RndAnimatable::SetFrame(frame, blend);
-        for (std::vector<RndAnimatable *>::iterator it = mAnims.begin();
-             it != mAnims.end();
-             ++it) {
+        FOREACH (it, mAnims) {
             (*it)->SetFrame(frame, blend);
         }
     }
@@ -154,8 +165,7 @@ void RndGroup::SetFrame(float frame, float blend) {
 
 float RndGroup::EndFrame() {
     float end = 0;
-    for (std::vector<RndAnimatable *>::iterator it = mAnims.begin(); it != mAnims.end();
-         ++it) {
+    FOREACH (it, mAnims) {
         end = Max(end, (*it)->EndFrame());
     }
     return end;
@@ -171,8 +181,7 @@ float RndGroup::GetDistanceToPlane(const Plane &p, Vector3 &v) {
     else {
         float ret = 0;
         bool first = true;
-        for (std::vector<RndDrawable *>::iterator it = mDraws.begin(); it != mDraws.end();
-             ++it) {
+        FOREACH (it, mDraws) {
             Vector3 locvec;
             float dist = (*it)->GetDistanceToPlane(p, locvec);
             if (first || (std::fabs(dist) < std::fabs(ret))) {
@@ -188,8 +197,7 @@ float RndGroup::GetDistanceToPlane(const Plane &p, Vector3 &v) {
 bool RndGroup::MakeWorldSphere(Sphere &s, bool b) {
     if (b) {
         s.Zero();
-        for (std::vector<RndDrawable *>::iterator it = mDraws.begin(); it != mDraws.end();
-             ++it) {
+        FOREACH (it, mDraws) {
             Sphere local_s;
             (*it)->MakeWorldSphere(local_s, true);
             s.GrowToContain(local_s);
@@ -208,6 +216,35 @@ void RndGroup::Draw() {
     }
 }
 
+void RndGroup::DrawShowing() {
+    RndEnvironTracker tracker(nullptr, nullptr);
+    if (!mSortInWorld) {
+        FOREACH (it, mDraws) {
+            (*it)->Draw();
+        }
+    } else if (mDrawOnly) {
+        mDrawOnly->Draw();
+    } else {
+        std::vector<GroupDrawDist> dists;
+        dists.reserve(mDraws.size());
+        const Vector3 &worldVector = RndCam::Current()->WorldXfm().v;
+        FOREACH (it, mDraws) {
+            RndTransformable *t = dynamic_cast<RndTransformable *>(*it);
+            Vector3 v = t ? t->WorldXfm().v : Vector3(0, 0, 0);
+            GroupDrawDist curDist;
+            curDist.draw = *it;
+            Vector3 diff;
+            Subtract(worldVector, v, diff);
+            curDist.lensq = LengthSquared(diff);
+            dists.push_back(curDist);
+        }
+        std::sort(dists.begin(), dists.end(), SortInWorld);
+        FOREACH (it, dists) {
+            it->draw->Draw();
+        }
+    }
+}
+
 void RndGroup::ListDrawChildren(std::list<RndDrawable *> &children) {
     children.insert(children.end(), mDraws.begin(), mDraws.end());
 }
@@ -216,8 +253,7 @@ RndDrawable *RndGroup::CollideShowing(const Segment &seg, float &f, Plane &p) {
     RndDrawable *ret = nullptr;
     Segment localseg(seg);
     f = 1.0f;
-    for (std::vector<RndDrawable *>::iterator it = mDraws.begin(); it != mDraws.end();
-         ++it) {
+    FOREACH (it, mDraws) {
         float locf;
         RndDrawable *collided = (*it)->Collide(localseg, locf, p);
         if (collided) {
@@ -229,10 +265,27 @@ RndDrawable *RndGroup::CollideShowing(const Segment &seg, float &f, Plane &p) {
     return ret;
 }
 
+int RndGroup::CollidePlane(const Plane &p) {
+    int ret = -1;
+    bool b2 = false;
+    FOREACH (it, mDraws) {
+        Sphere s;
+        if ((*it)->Showing() && (*it)->MakeWorldSphere(s, false)) {
+            if (!b2) {
+                ret = (*it)->CollidePlane(p);
+                b2 = true;
+
+            } else if (ret != (*it)->CollidePlane(p)) {
+                return 0;
+            }
+        }
+    }
+    return ret;
+}
+
 void RndGroup::CollideList(const Segment &seg, std::list<Collision> &colls) {
     if (Showing()) {
-        for (std::vector<RndDrawable *>::iterator it = mDraws.begin(); it != mDraws.end();
-             ++it) {
+        FOREACH (it, mDraws) {
             (*it)->CollideList(seg, colls);
         }
     }
@@ -241,14 +294,15 @@ void RndGroup::CollideList(const Segment &seg, std::list<Collision> &colls) {
 void RndGroup::Update() {
     mAnims.clear();
     mDraws.clear();
-    for (ObjPtrList<Hmx::Object>::iterator it = mObjects.begin(); it != mObjects.end();
-         ++it) {
+    FOREACH (it, mObjects) {
         RndAnimatable *anim = dynamic_cast<RndAnimatable *>(*it);
-        if (anim)
+        if (anim) {
             mAnims.push_back(anim);
+        }
         RndDrawable *draw = dynamic_cast<RndDrawable *>(*it);
-        if (draw)
+        if (draw) {
             mDraws.push_back(draw);
+        }
     }
     if (mDrawOnly && !VectorFind(mDraws, mDrawOnly.Ptr())) {
         mDrawOnly = nullptr;
@@ -268,11 +322,13 @@ void RndGroup::AddObject(Hmx::Object *o1, Hmx::Object *o2) {
         } else {
             mObjects.push_back(o1);
             RndAnimatable *anim = dynamic_cast<RndAnimatable *>(o1);
-            if (anim)
+            if (anim) {
                 mAnims.push_back(anim);
+            }
             RndDrawable *draw = dynamic_cast<RndDrawable *>(o1);
-            if (draw)
+            if (draw) {
                 mDraws.push_back(draw);
+            }
         }
     }
 }
@@ -293,27 +349,22 @@ void RndGroup::ClearObjects() {
 
 void RndGroup::Merge(const RndGroup *group) {
     if (group) {
-        for (ObjPtrList<Hmx::Object>::iterator it = group->mObjects.begin();
-             it != group->mObjects.end();
-             ++it) {
+        FOREACH (it, group->mObjects) {
             AddObject(*it);
         }
     }
 }
 
 void RndGroup::SortDraws() {
-    for (std::vector<RndDrawable *>::iterator it = mDraws.begin(); it != mDraws.end();
-         ++it) {
+    FOREACH (it, mDraws) {
         mObjects.remove(*it);
     }
     std::sort(mDraws.begin(), mDraws.end(), ::SortDraws);
-    for (std::vector<RndDrawable *>::iterator it = mDraws.begin(); it != mDraws.end();
-         ++it) {
+    FOREACH (it, mDraws) {
         mObjects.push_back(*it);
     }
     mAnims.clear();
-    for (ObjPtrList<Hmx::Object>::iterator it = mObjects.begin(); it != mObjects.end();
-         ++it) {
+    FOREACH (it, mObjects) {
         RndAnimatable *anim = dynamic_cast<RndAnimatable *>(*it);
         if (anim)
             mAnims.push_back(anim);
@@ -323,9 +374,9 @@ void RndGroup::SortDraws() {
 DataNode RndGroup::GetGroupChildren() {
     DataArrayPtr ptr(new DataArray(mObjects.size()));
     int idx = 0;
-    for (ObjPtrList<Hmx::Object>::iterator it = mObjects.begin(); it != mObjects.end();
-         ++it, ++idx) {
+    FOREACH (it, mObjects) {
         ptr->Node(idx) = *it;
+        idx++;
     }
     return ptr;
 }

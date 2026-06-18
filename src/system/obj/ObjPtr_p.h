@@ -422,6 +422,11 @@ void ObjPtrList<T1, T2>::push_back(T1 *obj) {
 }
 
 template <class T1, class T2>
+void ObjPtrList<T1, T2>::push_front(T1 *obj) {
+    insert(begin(), obj);
+}
+
+template <class T1, class T2>
 typename ObjPtrList<T1, T2>::iterator
 ObjPtrList<T1, T2>::insert(typename ObjPtrList<T1, T2>::iterator it, T1 *obj) {
     if (mListMode == kObjListNoNull) {
