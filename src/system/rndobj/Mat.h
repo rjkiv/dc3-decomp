@@ -180,7 +180,7 @@ protected:
     MatShaderOptions mShaderOptions; // 0x21c
     bool mToggleDisplayAllProps; // 0x224
     bool unk225;
-    bool unk226;
+    bool unk226; // 0x226 - currently updating properties?
     int mDirty; // 0x228
 };
 

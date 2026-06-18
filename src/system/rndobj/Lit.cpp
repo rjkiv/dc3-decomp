@@ -1,5 +1,6 @@
 #include "rndobj/Lit.h"
 #include "Lit.h"
+#include "math/Mtx.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "rndobj/Trans.h"
@@ -212,4 +213,44 @@ int RndLight::PackedColor() const {
 float RndLight::Intensity() const {
     Hmx::Color col(GetColor());
     return Max(1.0f, Max(col.red, col.green, col.blue));
+}
+
+Transform RndLight::Projection() {
+    if (mRange == 0) {
+        Transform out;
+        out.Reset();
+        return out;
+    } else {
+        Transform out;
+        Vector3 mx = WorldXfm().m.x;
+        Vector3 mz;
+        Negate(WorldXfm().m.z, mz);
+        Vector3 my = WorldXfm().m.y;
+        Vector3 v = WorldXfm().v;
+        float radSlope = (mBotRadius - mTopRadius) / mRange;
+        Scale(my, radSlope, my);
+
+        out.m.x.x = mx.x;
+        out.m.x.y = mz.x;
+        out.m.x.z = my.x;
+
+        out.m.y.x = mx.y;
+        out.m.y.y = mz.y;
+        out.m.y.z = my.y;
+
+        out.m.z.x = mx.z;
+        out.m.z.y = mz.z;
+        out.m.z.z = my.z;
+
+        out.v.x = -Dot(mx, v);
+        out.v.y = -Dot(mz, v);
+        out.v.z = mTopRadius - Dot(my, v);
+
+        Multiply(out, mTextureXfm, out);
+        static Transform sXfm(
+            Hmx::Matrix3(0.5f, 0, 0, 0, 0.5f, 0, 0.5f, 0.5f, 1), Vector3(0, 0, 0)
+        );
+        Multiply(out, sXfm, out);
+        return out;
+    }
 }

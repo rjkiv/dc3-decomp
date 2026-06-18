@@ -136,12 +136,14 @@ RndMesh::~RndMesh() {
 
 bool RndMesh::Replace(ObjRef *from, Hmx::Object *to) {
     if (&mGeomOwner == from) {
-        if (mGeomOwner != this) {
+        if (mGeomOwner == this) {
             mGeomOwner = this;
         } else {
             RndMesh *mesh = dynamic_cast<RndMesh *>(to);
             if (mesh) {
-                mGeomOwner = mesh;
+                mGeomOwner = mesh->mGeomOwner.Ptr();
+            } else {
+                mGeomOwner = this;
             }
         }
         return true;
