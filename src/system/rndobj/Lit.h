@@ -77,7 +77,7 @@ protected:
     ObjPtrList<RndDrawable> *mShadowOverride; // 0x11c
     ObjPtrList<RndDrawable> mShadowObjects; // 0x120
     Transform mTextureXfm; // 0x134
-    float mTopRadius; // 0x10C
-    float mBotRadius; // 0x110
-    int mProjectedBlend; // 0x114
+    float mTopRadius; // 0x174
+    float mBotRadius; // 0x178
+    int mProjectedBlend; // 0x17c
 };
