@@ -25,11 +25,12 @@ void Watcher::Update() {
         mOverlay->SetLines(mWatches.size() * 2);
         int idx = 0;
         for (auto it = mWatches.begin(); it != mWatches.end(); ++it, ++idx) {
+            DataArray *arr = it->first;
             *mOverlay << idx;
             *mOverlay << ": ";
-            it->first->Print(*mOverlay, kDataArray, true, 0);
+            arr->Print(*mOverlay, kDataArray, true, 0);
             *mOverlay << "\n";
-            MILO_TRY { it->second = it->first->Execute(false); }
+            MILO_TRY { it->second = arr->Execute(false); }
             MILO_CATCH(msg) { it->second = msg; }
             it->second.Print(*mOverlay, false, 0);
             *mOverlay << "\n";

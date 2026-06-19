@@ -648,7 +648,7 @@
             "system/rndobj/TransProxy.cpp": "Matching",
             "system/rndobj/Utl.cpp": "NonMatching",
             "system/rndobj/VelocityBuffer.cpp": "NonMatching",
-            "system/rndobj/Watcher.cpp": "NonMatching",
+            "system/rndobj/Watcher.cpp": "Matching",
             "system/rndobj/Wind.cpp": "NonMatching",
             "system/rndobj/wordwrap.cpp": "NonMatching",
             "system/synth/ADSR.cpp": "Matching",

@@ -326,11 +326,10 @@ void RndLine::SetNumPoints(int num) {
                 num += 2;
             }
         }
-        mMesh->Verts().resize(num * 2);
+        mMesh->Verts().resize(num << 1);
         for (int i = 0; i < mPoints.size(); i++) {
             VertsMap vmap;
             MapVerts(i, vmap);
-
             if (vmap.t == 1) {
                 vmap.v->tex.Set(0, 1);
                 vmap.v++->color = mPoints[i].color;
@@ -344,17 +343,16 @@ void RndLine::SetNumPoints(int num) {
             if (vmap.t == 2) {
                 vmap.v->tex.Set(1, 1);
                 vmap.v++->color = mPoints[i].color;
-                vmap.v->tex.Set(0, 1);
+                vmap.v->tex.Set(1, 0);
                 vmap.v++->color = mPoints[i].color;
             }
         }
-
         if (mLinePairs) {
             if (mHasCaps) {
                 num = num * 3 >> 1;
             }
         } else {
-            num = (num * 2) - 2;
+            num = (num << 1) - 2;
         }
         mMesh->Faces().resize(num);
         for (int i = num - 2; i >= 0; i -= 2) {

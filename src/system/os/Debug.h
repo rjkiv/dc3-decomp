@@ -116,8 +116,8 @@ extern const char *kAssertStr;
 //     MILO_NOTIFY("An unexpected thing happened: %s", errMsg);
 // }
 #define MILO_TRY                                                                         \
+    TheDebug.SetTry(true);                                                               \
     try {                                                                                \
-        TheDebug.SetTry(true);                                                           \
         do
 
 #define MILO_CATCH(name)                                                                 \
