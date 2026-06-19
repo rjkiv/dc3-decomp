@@ -14,6 +14,7 @@
  */
 class RndLine : public RndDrawable, public RndTransformable {
 public:
+    // size 0x48
     class Point {
     public:
         Point() : point(0, 0, 0), color(1, 1, 1) {}
@@ -26,8 +27,8 @@ public:
 
     class VertsMap {
     public:
-        int t; // Type
-        RndMesh::Vert *v;
+        int t; // 0x0 - Type
+        RndMesh::Vert *v; // 0x4
     };
 
     // Hmx::Object
