@@ -19,20 +19,22 @@ public:
         void Clear() { SetSize(0); }
         void *FindVert(int);
         void CopyVert(int, int, VertArray &);
-        int AppendWeights(int, int *const, float *const);
+        int AppendWeights(int num, int *const bones, float *const weights);
         void Copy(const VertArray &);
         void Save(BinStream &);
         void Load(BinStream &);
         int NumVerts() {
-            u8 *buf = (u8 *)mData;
-            void *end = (void *)((int)mData + mSize);
-            int i = 0;
-            for (; buf < end;) {
-                i++;
-                buf += (*buf * 2) + 1;
+            int num = 0;
+            auto itEnd = end();
+            for (auto it = begin(); it < itEnd; ++it) {
+                num++;
             }
-            return i;
+            return num;
         }
+
+        // found in RB3's dwarf:
+        // struct WeightPair: uchar bone, uchar weight
+        // struct Vert: uchar num, WeightPair[64] weights
 
         // probably overkill but idk we already had this so why not
         class iterator {
@@ -43,11 +45,10 @@ public:
             iterator() : data(nullptr) {}
             iterator(void *d) : data(d) {}
             operator void *() const { return data; }
-            void *Data() const { return data; }
-            // void *operator->() const { return data; }
+            void *&operator*() { return data; }
 
             iterator operator++() {
-                char *cData = (char *)data;
+                unsigned char *cData = (unsigned char *)data;
                 cData += (*cData * 2) + 1;
                 data = cData;
                 return *this;
@@ -81,6 +82,7 @@ public:
             unk14.Reset();
             unk54.Reset();
         }
+
         ObjPtr<RndTransformable> unk0;
         Transform unk14;
         Transform unk54;

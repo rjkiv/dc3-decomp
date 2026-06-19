@@ -63,47 +63,44 @@ INIT_REVS(1, 0)
 BEGIN_LOADS(RndMeshDeform)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)
-    Hmx::Object::Load(bs);
-    bs >> mMesh;
+    LOAD_SUPERCLASS(Hmx::Object)
+    d >> mMesh;
     int num = 0;
     if (d.rev < 1) {
-        bs >> num;
+        d >> num;
     }
-    int bones;
-    bs >> bones;
+    int numBones;
+    d >> numBones;
     if (d.rev < 1) {
         mVerts.Clear();
-        int i150[64];
-        float f250[64];
+        int bones[RndMeshDeform::VertArray::kMaxWeights];
+        float weights[RndMeshDeform::VertArray::kMaxWeights];
         for (int i = 0; i < num; i++) {
             int weightIdx = 0;
-            for (int j = 0; j < bones; j++) {
-                float f74;
-                bs >> f74;
-                if (f74 != 0) {
+            for (int j = 0; j < numBones; j++) {
+                float curWt;
+                d >> curWt;
+                if (curWt != 0) {
+                    bones[weightIdx] = j;
+                    weights[weightIdx] = curWt;
                     weightIdx++;
-                    i150[j] = j;
-                    f250[j] = f74;
                 }
             }
-            mVerts.AppendWeights(weightIdx, i150, f250);
+            mVerts.AppendWeights(weightIdx, bones, weights);
         }
     }
-    mBones.resize(bones);
-    for (int i = 0; i < bones; i++) {
-        bs >> mBones[i];
+    mBones.resize(numBones);
+    for (int i = 0; i < numBones; i++) {
+        d >> mBones[i];
     }
     if (d.rev > 0) {
-        mVerts.Load(bs);
+        mVerts.Load(d.stream);
     }
-    bs >> mMeshInverse;
-    // how NOT to check against the identity matrix
-    mSkipInverse =
-        (0 == mMeshInverse.v.x && 0 == mMeshInverse.v.y && 0 == mMeshInverse.v.z
-         && 1 == mMeshInverse.m.x.x && 0 == mMeshInverse.m.x.y && 0 == mMeshInverse.m.x.z
-         && 0 == mMeshInverse.m.y.x && 1 == mMeshInverse.m.y.y && 0 == mMeshInverse.m.y.z
-         && 0 == mMeshInverse.m.z.x && 0 == mMeshInverse.m.z.y
-         && 1 == mMeshInverse.m.z.z);
+    d >> mMeshInverse;
+    mSkipInverse = mMeshInverse.v == Vector3(0, 0, 0)
+        && mMeshInverse.m.x == Vector3(1, 0, 0) && mMeshInverse.m.y == Vector3(0, 1, 0)
+        && mMeshInverse.m.z == Vector3(0, 0, 1);
+
 END_LOADS
 
 void RndMeshDeform::PreSave(BinStream &bs) {
@@ -127,12 +124,14 @@ void RndMeshDeform::Print() {
     int i = 0;
     for (auto it = mVerts.begin(); it < mVerts.end(); ++it, ++i) {
         TheDebug << "weights" << i << ": ";
-        unsigned char *cData = (unsigned char *)it.Data();
-        int num = *cData;
-        for (int j = 0; j < num; j++) {
-            TheDebug << "(" << *cData++ << " " << *cData++ * 0.003921568859368563f
-                     << ") ";
+
+        unsigned char *cData = (unsigned char *)*it;
+        for (int j = 0; j < *cData++; j++) {
+            unsigned char first = *cData++;
+            float second = *cData++ * 0.003921568859368563f;
+            TheDebug << "(" << first << " " << second << ") ";
         }
+        TheDebug << "\n";
     }
 }
 
