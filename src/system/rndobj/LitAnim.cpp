@@ -10,16 +10,18 @@
 RndLightAnim::RndLightAnim() : mLight(this), mKeysOwner(this, this) {}
 
 bool RndLightAnim::Replace(ObjRef *from, Hmx::Object *to) {
-    if (&mLight == from) {
-        if (mKeysOwner != this) {
+    if (&mKeysOwner == from) {
+        if (mKeysOwner == this) {
             mKeysOwner = this;
         } else {
             RndLightAnim *litTo = dynamic_cast<RndLightAnim *>(to);
             if (litTo) {
-                mKeysOwner = litTo;
-            } else
+                mKeysOwner = litTo->KeysOwner();
+            } else {
                 mKeysOwner = this;
+            }
         }
+        return true;
     } else {
         return Hmx::Object::Replace(from, to);
     }
@@ -53,7 +55,7 @@ BEGIN_COPYS(RndLightAnim)
     COPY_SUPERCLASS(RndAnimatable)
     COPY_MEMBER_FROM(l, mLight)
     if (ty == kCopyShallow || ty == kCopyFromMax && l->mKeysOwner != l) {
-        mKeysOwner = l->mKeysOwner;
+        mKeysOwner = l->mKeysOwner.Ptr();
     } else {
         mKeysOwner = this;
         mColorKeys = l->mKeysOwner->mColorKeys;
