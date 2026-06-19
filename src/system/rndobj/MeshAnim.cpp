@@ -1,10 +1,29 @@
 #include "rndobj/MeshAnim.h"
 #include "obj/Object.h"
+#include "os/Debug.h"
 #include "rndobj/Anim.h"
 
 #pragma region Hmx::Object
 
 RndMeshAnim::RndMeshAnim() : mMesh(this), mKeysOwner(this, this) {}
+
+bool RndMeshAnim::Replace(ObjRef *from, Hmx::Object *to) {
+    if (&mKeysOwner == from) {
+        if (mKeysOwner == this) {
+            mKeysOwner = this;
+        } else {
+            RndMeshAnim *meshTo = dynamic_cast<RndMeshAnim *>(to);
+            if (meshTo) {
+                mKeysOwner = meshTo->KeysOwner();
+            } else {
+                mKeysOwner = this;
+            }
+        }
+        return true;
+    } else {
+        return Hmx::Object::Replace(from, to);
+    }
+}
 
 BEGIN_HANDLERS(RndMeshAnim)
     HANDLE_SUPERCLASS(RndAnimatable)
@@ -39,7 +58,7 @@ BEGIN_COPYS(RndMeshAnim)
     COPY_SUPERCLASS(RndAnimatable)
     COPY_MEMBER_FROM(m, mMesh)
     if (ty == kCopyShallow || (ty == kCopyFromMax && m->mKeysOwner != m)) {
-        COPY_MEMBER_FROM(m, mKeysOwner)
+        mKeysOwner = m->mKeysOwner.Ptr();
     } else {
         MILO_ASSERT(m->mKeysOwner != this, 0xE5);
         mKeysOwner = this;
@@ -80,6 +99,134 @@ void RndMeshAnim::Print() {
 
 #pragma endregion
 #pragma region RndAnimatable
+
+struct GetVertPoint {
+    Vector3 &get(RndMesh::Vert *v) { return v->pos; }
+};
+struct GetVertNormal {
+    Vector3 &get(RndMesh::Vert *v) { return v->norm; }
+};
+struct GetVertTex {
+    Vector2 &get(RndMesh::Vert *v) { return v->tex; }
+};
+struct GetVertColor {
+    Hmx::Color &get(RndMesh::Vert *v) { return v->color; }
+};
+
+template <class T1, class T2>
+void InterpVertData(
+    const std::vector<T1> &a,
+    const std::vector<T1> &b,
+    float ref,
+    RndMesh::VertVector &v,
+    float blend
+) {
+    MILO_ASSERT(a.size() == b.size(), 0x135);
+    auto aIt = a.begin();
+    auto bIt = b.begin();
+    auto vIt = v.begin();
+    auto itEnd = a.end();
+    T2 getter;
+    if (a.size() > v.size()) {
+        itEnd = itEnd - (a.size() - v.size());
+    }
+
+    if (ref == 0) {
+        if (blend != 1) {
+            for (; aIt != itEnd; ++aIt) {
+                Interp(getter.get(vIt), *aIt, blend, getter.get(vIt));
+                ++vIt;
+            }
+        } else {
+            for (; aIt != itEnd; ++aIt) {
+                getter.get(vIt) = *aIt;
+                ++vIt;
+            }
+        }
+    } else if (ref == 1) {
+        if (blend != 1) {
+            for (; aIt != itEnd; ++aIt) {
+                Interp(getter.get(vIt), *bIt, blend, getter.get(vIt));
+                ++bIt;
+                ++vIt;
+            }
+        } else {
+            for (; aIt != itEnd; ++aIt) {
+                getter.get(vIt) = *bIt;
+                ++bIt;
+                ++vIt;
+            }
+        }
+    } else if (blend != 1) {
+        for (; aIt != itEnd; ++aIt) {
+            T1 tmp;
+            Interp(*aIt, *bIt, ref, tmp);
+            Interp(getter.get(vIt), tmp, blend, getter.get(vIt));
+            ++bIt;
+            ++vIt;
+        }
+    } else {
+        for (; aIt != itEnd; ++aIt) {
+            Interp(*aIt, *bIt, ref, getter.get(vIt));
+            ++bIt;
+            ++vIt;
+        }
+    }
+}
+
+void RndMeshAnim::SetFrame(float frame, float blend) {
+    RndAnimatable::SetFrame(frame, blend);
+    if (mMesh) {
+        if (!(mMesh->Mutable() & 0x1F)) {
+            MILO_NOTIFY_ONCE("Mesh %s is animated but not mutable.\n", mMesh->Name());
+        } else {
+            int flags = 0;
+            if (!VertPointsKeys().empty()) {
+                const Key<std::vector<Vector3> > *prev;
+                const Key<std::vector<Vector3> > *next;
+                float ref = 0;
+                VertPointsKeys().AtFrame(frame, prev, next, ref);
+                InterpVertData<Vector3, GetVertPoint>(
+                    prev->value, next->value, ref, mMesh->Verts(), blend
+                );
+                flags |= 0x1F;
+            }
+            if (!VertNormalsKeys().empty()) {
+                const Key<std::vector<Vector3> > *prev;
+                const Key<std::vector<Vector3> > *next;
+                float ref = 0;
+                VertNormalsKeys().AtFrame(frame, prev, next, ref);
+                InterpVertData<Vector3, GetVertNormal>(
+                    prev->value, next->value, ref, mMesh->Verts(), blend
+                );
+                flags |= 0x1F;
+            }
+            if (!VertTexsKeys().empty()) {
+                const Key<std::vector<Vector2> > *prev;
+                const Key<std::vector<Vector2> > *next;
+                float ref = 0;
+                VertTexsKeys().AtFrame(frame, prev, next, ref);
+                InterpVertData<Vector2, GetVertTex>(
+                    prev->value, next->value, ref, mMesh->Verts(), blend
+                );
+                flags |= 0x1F;
+            }
+            if (!VertColorsKeys().empty()) {
+                const Key<std::vector<Hmx::Color> > *prev;
+                const Key<std::vector<Hmx::Color> > *next;
+                float ref = 0;
+                VertColorsKeys().AtFrame(frame, prev, next, ref);
+                InterpVertData<Hmx::Color, GetVertColor>(
+                    prev->value, next->value, ref, mMesh->Verts(), blend
+                );
+                flags |= 0x1F;
+            }
+            if (flags) {
+                mMesh->Sync(flags);
+            }
+        }
+    }
+}
 
 float RndMeshAnim::EndFrame() {
     float end = VertPointsKeys().LastFrame();
