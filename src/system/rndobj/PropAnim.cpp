@@ -1,4 +1,5 @@
 #include "rndobj/PropAnim.h"
+#include "math/Utl.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "obj/Utl.h"
@@ -180,6 +181,7 @@ BEGIN_LOADS(RndPropAnim)
         if (d.rev > 0xE) {
             d >> mIntensity;
         }
+        return;
     }
 END_LOADS
 
@@ -231,7 +233,7 @@ void RndPropAnim::SetFrame(float frame, float blend) {
 float RndPropAnim::StartFrame() {
     float frame = 0.0f;
     FOREACH (it, mPropKeys) {
-        frame = Min((*it)->StartFrame(), frame);
+        MinEq(frame, (*it)->StartFrame());
     }
     return frame;
 }
