@@ -160,3 +160,58 @@ void RndMeshDeform::VertArray::Copy(const RndMeshDeform::VertArray &a) {
     SetSize(a.mSize);
     memcpy(mData, a.mData, mSize);
 }
+
+int RndMeshDeform::VertArray::AppendWeights(
+    int num, int *const bones, float *const weights
+) {
+    MILO_ASSERT(num < VertArray::kMaxWeights, 0x5F);
+    int numVerts = NumVerts();
+    float weightSum = 0;
+    for (int i = 0; i < num; i++) {
+        for (int j = i; j < num; j++) {
+            if (bones[j] == bones[i]) {
+                num--;
+                weights[i] += weights[j];
+                j--;
+                bones[j] = bones[num];
+                weights[j] = weights[num];
+            }
+        }
+        if (weights[i] <= 0) {
+            MILO_NOTIFY(
+                "%s vert %d has negative weight %g on bone, won't export",
+                PathName(mParent),
+                numVerts,
+                weights[i]
+            );
+            weights[i] = 0;
+        }
+        weightSum += weights[i];
+    }
+    if (fabs(weightSum - 1.0f) > 0.05f) {
+        MILO_NOTIFY(
+            "%s vert %d weights sum to %g, not close enough to 1, check the skinning",
+            PathName(mParent),
+            numVerts,
+            weightSum
+        );
+    }
+    float div = 1 / weightSum;
+    unsigned char *mem = (unsigned char *)MemResizeElem(
+        (void *&)mData,
+        mSize,
+        end(),
+        0,
+        num * sizeof(WeightPair) + 1,
+        __FILE__,
+        0x85,
+        "RndMeshDeform"
+    );
+    Vert *vert = (Vert *)mem;
+    vert->num = num;
+    for (int i = 0; i < num; i++) {
+        vert->weights[i].bone = bones[i];
+        vert->weights[i].weight = Clamp(0.0f, 1.0f, weights[i] * div) * 255.0f + 0.5f;
+    }
+    return numVerts;
+}
