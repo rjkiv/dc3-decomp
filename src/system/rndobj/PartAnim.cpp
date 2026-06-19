@@ -9,15 +9,18 @@
 RndParticleSysAnim::RndParticleSysAnim() : mParticleSys(this), mKeysOwner(this, this) {}
 
 bool RndParticleSysAnim::Replace(ObjRef *from, Hmx::Object *to) {
-    if (&mParticleSys == from) {
-        if (mKeysOwner != this) {
+    if (&mKeysOwner == from) {
+        if (mKeysOwner == this) {
             mKeysOwner = this;
         } else {
-            RndParticleSysAnim *sysTo = dynamic_cast<RndParticleSysAnim *>(to);
-            if (sysTo) {
-                mKeysOwner = sysTo->mKeysOwner;
+            RndParticleSysAnim *psTo = dynamic_cast<RndParticleSysAnim *>(to);
+            if (psTo) {
+                mKeysOwner = psTo->KeysOwner();
+            } else {
+                mKeysOwner = this;
             }
         }
+        return true;
     } else {
         return Hmx::Object::Replace(from, to);
     }
@@ -49,7 +52,7 @@ BEGIN_COPYS(RndParticleSysAnim)
     COPY_SUPERCLASS(RndAnimatable)
     COPY_MEMBER_FROM(l, mParticleSys)
     if (ty == kCopyShallow || ty == kCopyFromMax && l->mKeysOwner != l) {
-        COPY_MEMBER_FROM(l, mKeysOwner)
+        mKeysOwner = l->mKeysOwner.Ptr();
     } else {
         mKeysOwner = this;
         mStartColorKeys = l->mKeysOwner->mStartColorKeys;
@@ -70,19 +73,20 @@ BEGIN_LOADS(RndParticleSysAnim)
         LOAD_SUPERCLASS(Hmx::Object)
     }
     LOAD_SUPERCLASS(RndAnimatable)
-    d >> mParticleSys >> mStartColorKeys >> mEndColorKeys;
+    d.stream >> mParticleSys >> mStartColorKeys >> mEndColorKeys;
     if (d.rev < 2) {
-        float scale = 1;
         Keys<float, float> floatKeys;
+        float scale = 1;
         d >> floatKeys >> mKeysOwner;
         if (d.rev == 1) {
             d >> scale;
         }
         mEmitRateKeys.clear();
-        mEmitRateKeys.resize(floatKeys.size());
+        mEmitRateKeys.reserve(floatKeys.size());
         FOREACH (it, floatKeys) {
             Key<Vector2> vecKey;
             vecKey.value = Vector2(it->value, it->value * scale);
+            vecKey.frame = it->frame;
             mEmitRateKeys.push_back(vecKey);
         }
     } else {

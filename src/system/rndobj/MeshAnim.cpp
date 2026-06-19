@@ -270,3 +270,20 @@ void RndMeshAnim::ShrinkKeys(int num) {
         VertColorsKeys().resize(num);
     }
 }
+
+void RndMeshAnim::ShrinkVerts(int num) {
+    FOREACH (it, VertPointsKeys()) {
+        it->value.resize(num);
+    }
+    FOREACH (it, VertNormalsKeys()) {
+        it->value.resize(num);
+    }
+    FOREACH (it, VertTexsKeys()) {
+        it->value.resize(num);
+    }
+    FOREACH (it, VertColorsKeys()) {
+        it->value.resize(num);
+    }
+}
+
+void fakemeshanimlmao(std::vector<Hmx::Color> &c) { c.push_back(Hmx::Color(1, 1, 1)); }
