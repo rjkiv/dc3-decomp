@@ -13,12 +13,14 @@ RndCamAnim::~RndCamAnim() {}
 bool RndCamAnim::Replace(ObjRef *from, Hmx::Object *to) {
     if (&mKeysOwner == from) {
         if (mKeysOwner == this) {
+            mKeysOwner = this;
+        } else {
             RndCamAnim *camTo = dynamic_cast<RndCamAnim *>(to);
             if (camTo) {
                 mKeysOwner = camTo->KeysOwner();
+            } else {
+                mKeysOwner = this;
             }
-        } else {
-            mKeysOwner = this;
         }
         return true;
     } else
@@ -52,7 +54,7 @@ BEGIN_COPYS(RndCamAnim)
     BEGIN_COPYING_MEMBERS
         COPY_MEMBER(mCam)
         if (ty == kCopyShallow || ty == kCopyFromMax && c->mKeysOwner != c) {
-            mKeysOwner = c->mKeysOwner;
+            mKeysOwner = c->mKeysOwner.Ptr();
         } else {
             mKeysOwner = this;
             mFovKeys = c->mKeysOwner->mFovKeys;
@@ -66,11 +68,11 @@ BEGIN_LOADS(RndCamAnim)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)
     if (d.rev > 0) {
-        Hmx::Object::Load(bs);
+        LOAD_SUPERCLASS(Hmx::Object)
     }
-    RndAnimatable::Load(bs);
-    bs >> mCam;
-    d >> mFovKeys >> mKeysOwner;
+    LOAD_SUPERCLASS(RndAnimatable)
+    d >> mCam;
+    d.stream >> mFovKeys >> mKeysOwner;
     if (d.rev < 2) {
         FOREACH (it, mFovKeys) {
             it->value = ConvertFov(it->value, 0.75);

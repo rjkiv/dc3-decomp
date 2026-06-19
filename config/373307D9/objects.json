@@ -573,7 +573,7 @@
             "system/rndobj/Bitmap.cpp": "NonMatching",
             "system/rndobj/BoxMap.cpp": "NonMatching",
             "system/rndobj/Cam.cpp": "NonMatching",
-            "system/rndobj/CamAnim.cpp": "NonMatching",
+            "system/rndobj/CamAnim.cpp": "Matching",
             "system/rndobj/ColorXfm.cpp": "NonMatching",
             "system/rndobj/Console.cpp": "NonMatching",
             "system/rndobj/CubeTex.cpp": "Matching",
