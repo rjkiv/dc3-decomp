@@ -32,48 +32,52 @@ public:
             return num;
         }
 
-        // found in RB3's dwarf:
-        // struct WeightPair: uchar bone, uchar weight
-        // struct Vert: uchar num, WeightPair[64] weights
+        struct WeightPair {
+            unsigned char bone; // 0x0
+            unsigned char weight; // 0x1
+        };
 
-        // probably overkill but idk we already had this so why not
+        struct Vert {
+            unsigned char num; // 0x0
+            WeightPair weights[kMaxWeights]; // 0x1
+        };
+
         class iterator {
         private:
-            void *data;
+            unsigned char *data;
 
         public:
             iterator() : data(nullptr) {}
-            iterator(void *d) : data(d) {}
-            operator void *() const { return data; }
-            void *&operator*() { return data; }
+            iterator(unsigned char *d) : data(d) {}
+            operator unsigned char *() const { return data; }
+            unsigned char *&operator*() { return data; }
 
-            iterator operator++() {
-                unsigned char *cData = (unsigned char *)data;
-                cData += (*cData * 2) + 1;
-                data = cData;
+            iterator &operator++() {
+                // skips to the next Vert over,
+                // based on the number of WeightPairs in this current Vert
+                Vert *cur = (Vert *)data;
+                data += (cur->num * sizeof(WeightPair)) + 1;
                 return *this;
             }
 
-            iterator operator++(int) {
-                iterator tmp = *this;
-                ++*this;
-                return tmp;
-            }
-
-            bool operator!=(iterator it) { return data != it.data; }
-            bool operator==(iterator it) { return data == it.data; }
-            bool operator!() { return data == nullptr; }
+            bool operator!=(const iterator &it) { return data != it.data; }
+            bool operator==(const iterator &it) { return data == it.data; }
         };
 
-        iterator begin() const { return iterator(mData); }
-        iterator end() const { return iterator((void *)((int)mData + mSize)); }
+        iterator begin() const { return mData; }
+        iterator end() const { return mData + mSize; }
 
     protected:
         void SetSize(int);
 
-        int mSize;
-        void *mData;
-        RndMeshDeform *mParent;
+        int mSize; // 0x0
+        // mData is a tightly packed series of Verts
+        // the reason this is unsigned char* and not Vert* is
+        // so it doesn't take up the full kMaxWeights sized array in memory.
+        // it only takes up however many weights the Vert has,
+        // and you access it via a reinterpret_cast to a Vert
+        unsigned char *mData; // 0x4
+        RndMeshDeform *mParent; // 0x8
     };
 
     // size 0x6c

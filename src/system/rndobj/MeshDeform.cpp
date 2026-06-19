@@ -124,12 +124,10 @@ void RndMeshDeform::Print() {
     int i = 0;
     for (auto it = mVerts.begin(); it < mVerts.end(); ++it, ++i) {
         TheDebug << "weights" << i << ": ";
-
-        unsigned char *cData = (unsigned char *)*it;
-        for (int j = 0; j < *cData++; j++) {
-            unsigned char first = *cData++;
-            float second = *cData++ * 0.003921568859368563f;
-            TheDebug << "(" << first << " " << second << ") ";
+        VertArray::Vert *vert = reinterpret_cast<VertArray::Vert *>(*it);
+        for (int j = 0; j < vert->num; j++) {
+            float wt = vert->weights[j].weight * 0.003921568859368563f;
+            TheDebug << "(" << vert->weights[j].bone << " " << wt << ") ";
         }
         TheDebug << "\n";
     }
@@ -154,7 +152,7 @@ void RndMeshDeform::VertArray::SetSize(int size) {
     if (mSize != size) {
         mSize = size;
         MemFree(mData);
-        mData = MemAlloc(mSize, __FILE__, 0x99, "RndMeshDeform");
+        mData = (unsigned char *)MemAlloc(mSize, __FILE__, 0x99, "RndMeshDeform");
     }
 }
 
