@@ -11,6 +11,24 @@ RndTransAnim::RndTransAnim()
       mRotSpline(false), mRotKeys(), mTransKeys(), mScaleKeys(), mKeysOwner(this, this),
       mRepeatTrans(false), mFollowPath(false) {}
 
+bool RndTransAnim::Replace(ObjRef *from, Hmx::Object *to) {
+    if (&mKeysOwner == from) {
+        if (mKeysOwner == this) {
+            mKeysOwner = this;
+        } else {
+            RndTransAnim *transTo = dynamic_cast<RndTransAnim *>(to);
+            if (transTo) {
+                mKeysOwner = transTo->KeysOwner();
+            } else {
+                mKeysOwner = this;
+            }
+        }
+        return true;
+    } else {
+        return Hmx::Object::Replace(from, to);
+    }
+}
+
 BEGIN_HANDLERS(RndTransAnim)
     HANDLE(trans, OnTrans)
     HANDLE(splice, OnSplice)

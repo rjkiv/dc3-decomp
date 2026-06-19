@@ -11,6 +11,24 @@ Hmx::Object *RndMatAnim::sOwner;
 
 RndMatAnim::RndMatAnim() : mMat(this), mKeysOwner(this, this), mTexKeys(this) {}
 
+bool RndMatAnim::Replace(ObjRef *from, Hmx::Object *to) {
+    if (&mKeysOwner == from) {
+        if (mKeysOwner == this) {
+            mKeysOwner = this;
+        } else {
+            RndMatAnim *matTo = dynamic_cast<RndMatAnim *>(to);
+            if (matTo) {
+                mKeysOwner = matTo->KeysOwner();
+            } else {
+                mKeysOwner = this;
+            }
+        }
+        return true;
+    } else {
+        return Hmx::Object::Replace(from, to);
+    }
+}
+
 BEGIN_HANDLERS(RndMatAnim)
     HANDLE_SUPERCLASS(RndAnimatable)
     HANDLE_SUPERCLASS(Hmx::Object)
@@ -37,7 +55,7 @@ BEGIN_COPYS(RndMatAnim)
     COPY_SUPERCLASS(RndAnimatable)
     COPY_MEMBER_FROM(m, mMat)
     if (ty == kCopyShallow || (ty == kCopyFromMax && m->mKeysOwner != m))
-        COPY_MEMBER_FROM(m, mKeysOwner)
+        mKeysOwner = m->mKeysOwner.Ptr();
     else {
         sOwner = this;
         mKeysOwner = this;
@@ -89,8 +107,7 @@ BEGIN_LOADS(RndMatAnim)
         }
     }
     if (d.rev > 6) {
-        d >> mTransKeys >> mScaleKeys >> mRotKeys;
-        // d >> mTexKeys;
+        d >> mTransKeys >> mScaleKeys >> mRotKeys >> mTexKeys;
     }
 END_LOADS
 
@@ -197,9 +214,9 @@ void RndMatAnim::LoadStage(BinStreamRev &d) {
     if (d.rev > 0) {
         d >> mTransKeys >> mScaleKeys >> mRotKeys;
     }
-    // if (d.rev > 1) {
-    //     d >> mTexKeys;
-    // }
+    if (d.rev > 1) {
+        d >> mTexKeys;
+    }
 }
 
 int RndMatAnim::TexKeys::Add(RndTex *tex, float frame, bool b) {
