@@ -446,7 +446,7 @@
             "system/meta/StreamPlayer.cpp": "Matching",
             "system/midi/DataEventList.cpp": "NonMatching",
             "system/midi/DisplayEvents.cpp": "NonMatching",
-            "system/midi/MidiParser.cpp": "NonMatching",
+            "system/midi/MidiParser.cpp": "Matching",
             "system/midi/MidiParserMgr.cpp": "NonMatching",
             "system/midi/MidiReader.cpp": "NonMatching",
             "system/midi/MidiReceiver.cpp": "Matching",

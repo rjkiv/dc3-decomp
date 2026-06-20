@@ -417,7 +417,8 @@ void MidiParser::FixGap(float *lastEnd) {
 }
 
 float MidiParser::ConvertToBeats(float seconds, float startingAtBeat) {
-    return SecondsToBeat(BeatToSeconds(startingAtBeat) + seconds) - startingAtBeat;
+    float beat = SecondsToBeat(BeatToSeconds(startingAtBeat) + seconds);
+    return beat - startingAtBeat;
 }
 
 bool MidiParser::InsertIdle(float f, int i) {
@@ -525,22 +526,26 @@ void MidiParser::InsertDataEvent(float start, float end, const DataNode &ev) {
 }
 
 bool MidiParser::AddMessage(float start, float end, DataArray *msg, int firstArg) {
+    DataArray *msgToUse;
+    int firstArgToUse;
     DataNode node(msg->Evaluate(firstArg));
     if (node.Type() == kDataUnhandled)
         return false;
     if (!mCompressed) {
         int arr_size;
         if (node.Type() == kDataArray) {
-            msg = node.Array();
-            firstArg = 0;
-            arr_size = msg->Size() + 1;
+            msgToUse = node.Array();
+            firstArgToUse = 0;
+            arr_size = msgToUse->Size() + 1;
             if (arr_size == 1)
                 return false;
-            node = msg->Evaluate(0);
+            node = msgToUse->Evaluate(0);
             if (node.Type() == kDataUnhandled)
                 return false;
         } else {
             arr_size = (msg->Size() - firstArg) + 1;
+            firstArgToUse = firstArg;
+            msgToUse = msg;
         }
         int i4 = 1;
         if (!mMessageType.Null()) {
@@ -555,7 +560,7 @@ bool MidiParser::AddMessage(float start, float end, DataArray *msg, int firstArg
         new_arr->Node(i4) = node;
         int i3;
         for (i3 = 1; i3 < arr_size - i4; i3++) {
-            new_arr->Node(i3 + i4) = msg->Evaluate(i3 + firstArg);
+            new_arr->Node(i3 + i4) = msgToUse->Evaluate(i3 + firstArgToUse);
         }
         if (mAppendLength) {
             new_arr->Node(i3 + i4) = 0.0f;
