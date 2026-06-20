@@ -106,8 +106,6 @@ namespace Hmx {
         static Matrix4 sID;
     };
 
-    Hmx::Matrix4 operator*(const Transform &, const Hmx::Matrix4 &);
-
     class Quat {
     public:
         Quat() {}
@@ -200,6 +198,9 @@ public:
     static const Transform &GetIdentity() { return sID; }
 };
 
+TextStream &operator<<(TextStream &ts, const Hmx::Matrix3 &m);
+TextStream &operator<<(TextStream &ts, const Transform &t);
+
 class QuatXfm {
 public:
     QuatXfm() {}
@@ -209,83 +210,6 @@ public:
     Hmx::Quat q;
 };
 
-/// An infinite plane, defined as its normal and distance from origin.
-// Defined as ax+by+cz=-d.
-class Plane {
-public:
-    Plane() {}
-    //   public: Plane(float, float, float, float);
-    Plane(const Vector3 &v1, const Vector3 &v2) { Set(v1, v2); }
-    //   public: Plane(const Vector3&, const Vector3&, const Vector3&);
-
-    void Set(const Vector3 &v1, const Vector3 &v2) {
-        a = v2.x;
-        b = v2.y;
-        c = v2.z;
-        d = -::Dot(v2, v1);
-    }
-
-    void Set(const Vector3 &, const Vector3 &, const Vector3 &);
-
-    void Set(float nx, float ny, float nz, float dist) {
-        a = nx;
-        b = ny;
-        c = nz;
-        d = dist;
-    }
-
-    /// Returns the dot product between `vec` and the plane normal.
-    float Dot(const Vector3 &vec) const { return a * vec.x + b * vec.y + c * vec.z + d; }
-
-    /// Returns the point on the plane closest to the origin.
-    // (a,b,c) must be normalized.
-    Vector3 On() const {
-        Vector3 ret;
-        float scalar = -d / (a * a + b * b + c * c);
-        ret.Set(a * scalar, b * scalar, c * scalar);
-        return ret;
-    }
-
-    //   public: const Vector3& Normal() const;
-    //   public: Vector3& Normal();
-    //   public: bool operator==(const Plane&) const;
-    //   public: bool operator!=(const Plane&) const;
-
-    Vector4 &AsVector4() { return reinterpret_cast<Vector4 &>(*this); }
-    const Vector4 &AsVector4() const { return reinterpret_cast<const Vector4 &>(*this); }
-
-    //   public: void Project(const Vector3&, Vector3&) const;
-
-    float a, b, c, d;
-};
-
-inline bool operator<=(const Vector3 &v, const Plane &p) { return 0 <= p.Dot(v); }
-
-void Normalize(const Plane &, Plane &);
-
-inline BinStream &operator<<(BinStream &bs, const Plane &p) {
-    bs << p.a << p.b << p.c << p.d;
-    return bs;
-}
-
-inline BinStream &operator>>(BinStream &bs, Plane &p) {
-    bs >> p.a >> p.b >> p.c >> p.d;
-    return bs;
-}
-
-class Frustum {
-    // total size: 0x60
-public:
-    void Set(float, float, float, float);
-
-    class Plane front; // offset 0x0, size 0x10
-    class Plane back; // offset 0x10, size 0x10
-    class Plane left; // offset 0x20, size 0x10
-    class Plane right; // offset 0x30, size 0x10
-    class Plane top; // offset 0x40, size 0x10
-    class Plane bottom; // offset 0x50, size 0x10
-};
-
 // defined in mtx.cpp
 float Det(const Hmx::Matrix3 &m);
 void Invert(const Hmx::Matrix3 &, Hmx::Matrix3 &);
@@ -293,28 +217,5 @@ void FastInvert(const Hmx::Matrix3 &, Hmx::Matrix3 &);
 void Multiply(const Transform &, const Transform &, Transform &);
 float Det(const Hmx::Matrix4 &);
 void Invert(const Hmx::Matrix4 &, Hmx::Matrix4 &);
-
-bool operator>(const Sphere &, const Frustum &);
-
-void Multiply(const Plane &, const Transform &, Plane &);
-
-inline void Multiply(const Frustum &fin, const Transform &tf, Frustum &fout) {
-    Multiply(fin.front, tf, fout.front);
-    Multiply(fin.back, tf, fout.back);
-    Multiply(fin.left, tf, fout.left);
-    Multiply(fin.right, tf, fout.right);
-    Multiply(fin.top, tf, fout.top);
-    Multiply(fin.bottom, tf, fout.bottom);
-}
-
-// is the sphere in front of or on the plane?
-inline bool operator>=(const Sphere &s, const Plane &p) {
-    return p.Dot(s.center) >= s.radius;
-}
-
-// is the sphere behind the plane?
-inline bool operator<(const Sphere &s, const Plane &p) {
-    return p.Dot(s.center) < -s.radius;
-}
 
 #include "Mtx.inl"

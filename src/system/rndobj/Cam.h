@@ -1,4 +1,5 @@
 #pragma once
+#include "math/Frustum.h"
 #include "math/Mtx.h"
 #include "math/Sphere.h"
 #include "math/Utl.h"

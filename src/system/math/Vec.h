@@ -43,6 +43,8 @@ public:
     float y; // 0x4
 };
 
+TextStream &operator<<(TextStream &ts, const Vector2 &v);
+
 class Vector3 {
 public:
     Vector3() {}

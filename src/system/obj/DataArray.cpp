@@ -1,4 +1,5 @@
 #include "math/Color.h"
+#include "math/Plane.h"
 #include "math/Rand.h"
 #include "obj/Data.h"
 #include "obj/DataFile.h"

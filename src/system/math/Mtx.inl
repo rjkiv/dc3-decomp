@@ -179,6 +179,7 @@ inline Hmx::Matrix4::Matrix4(const Transform &xfm) {
 
 void Multiply(const Vector4 &, const Hmx::Matrix4 &, Vector4 &);
 void Transpose(const Hmx::Matrix4 &, Hmx::Matrix4 &);
+Hmx::Matrix4 operator*(const Transform &, const Hmx::Matrix4 &);
 
 #pragma endregion
 #pragma region Hmx::Quat

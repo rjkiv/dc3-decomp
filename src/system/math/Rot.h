@@ -4,10 +4,6 @@
 #include "math/Vec.h"
 
 TextStream &operator<<(TextStream &ts, const Hmx::Quat &v);
-TextStream &operator<<(TextStream &ts, const Vector3 &v);
-TextStream &operator<<(TextStream &ts, const Vector2 &v);
-TextStream &operator<<(TextStream &ts, const Hmx::Matrix3 &m);
-TextStream &operator<<(TextStream &ts, const Transform &t);
 
 float GetXAngle(const Hmx::Matrix3 &);
 float GetYAngle(const Hmx::Matrix3 &);
