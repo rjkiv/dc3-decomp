@@ -579,7 +579,7 @@
             "system/rndobj/CubeTex.cpp": "Matching",
             "system/rndobj/DOFProc.cpp": "Matching",
             "system/rndobj/DOFProc_NG.cpp": "NonMatching",
-            "system/rndobj/Dir.cpp": "NonMatching",
+            "system/rndobj/Dir.cpp": "Matching",
             "system/rndobj/Draw.cpp": "NonMatching",
             "system/rndobj/Enter.cpp": "Matching",
             "system/rndobj/Env.cpp": "Matching",
