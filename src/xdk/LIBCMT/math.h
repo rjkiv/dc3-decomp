@@ -199,3 +199,28 @@ _DECL_MATH2(copysign);
 #ifdef __cplusplus
 }
 #endif
+
+// there's a C++ float pow(float, int) symbol in the XDK somewhere
+// but i have absolutely zero idea how to get it in here
+// without also causing ambiguity between this and double pow(double,double)
+
+// inline float pow(float x, int y) {
+//     unsigned int yIt = y;
+//     if (y < 0) {
+//         yIt = -yIt;
+//     }
+//     float total = 1;
+//     while (true) {
+//         if (yIt & 1) {
+//             total *= x;
+//         }
+//         yIt >>= 1;
+//         if (yIt == 0)
+//             break;
+//         x *= x;
+//     }
+//     if (y < 0) {
+//         total = 1 / total;
+//     }
+//     return total;
+// }
