@@ -131,32 +131,33 @@ INIT_REVS(9, 0)
 
 BEGIN_LOADS(RndTransformable)
     LOAD_REVS(bs)
-    int gRev = d.rev;
     ASSERT_REVS(9, 0)
-    if (ClassName() == StaticClassName()) {
-        Hmx::Object::Load(bs);
-    }
+    LOAD_VIRTUAL_SUPERCLASS(Hmx::Object)
     if (gLoadingProxyFromDisk) {
         Transform t;
-        bs >> t >> t;
+        d >> t >> t;
     } else {
-        bs >> mLocalXfm >> mWorldXfm;
+        d >> mLocalXfm >> mWorldXfm;
     }
-    if (gRev < 9) {
+    if (d.rev < 9) {
         ObjPtrList<RndTransformable> l(this);
-        bs >> l;
+        d >> l;
         FOREACH (it, l) {
             (*it)->SetTransParent(this, false);
         }
     }
 
-    switch (gRev) {
+    // if (d.rev > 8) {
+    //     d >> (int &)mConstraint;
+    // }
+
+    switch (d.rev) {
     default:
-        bs >> (int &)mConstraint;
+        d >> (int &)mConstraint;
         break;
     case 7:
     case 8:
-        bs >> (int &)mConstraint;
+        d >> (int &)mConstraint;
         if (mConstraint == 4) {
             mConstraint = kConstraintNone;
         } else if (mConstraint == 2 || mConstraint == 3 || mConstraint == 4) {
@@ -164,7 +165,7 @@ BEGIN_LOADS(RndTransformable)
         }
         break;
     case 6:
-        bs >> (int &)mConstraint;
+        d >> (int &)mConstraint;
         mPreserveScale = mConstraint > kConstraintTargetWorld;
         if (mConstraint > 9) {
             mConstraint = (Constraint)(mConstraint - kConstraintBillboardZ);
@@ -178,7 +179,7 @@ BEGIN_LOADS(RndTransformable)
     case 4:
     case 5:
         int unkb0;
-        bs >> unkb0;
+        d >> unkb0;
         mPreserveScale = unkb0;
 
         switch (unkb0) {
@@ -209,7 +210,7 @@ BEGIN_LOADS(RndTransformable)
     case 1:
     case 2: {
         int numb4;
-        bs >> numb4;
+        d >> numb4;
         int sp80[6] = { 0, 0, 0, 5, 6, 7 };
         if (numb4 >= 0x18) {
             mConstraint = kConstraintNone;
@@ -221,49 +222,51 @@ BEGIN_LOADS(RndTransformable)
     case 0:
         break;
     }
-    if (gRev > 0 && gRev < 7) {
+
+    if (d.rev > 0 && d.rev < 7) {
         Vector3 v;
-        bs >> v;
+        d >> v;
         bool isZero = v == Vector3(0, 0, 0);
         if (!isZero) {
             MILO_LOG("Transform origin no longer supported\n");
         }
     }
-    if (gRev > 1 && gRev < 5) {
+    if (d.rev > 1 && d.rev < 5) {
         bool b3u;
         d >> b3u;
     }
-    if (gRev > 5 && gRev < 8) {
+    if (d.rev > 5 && d.rev < 8) {
         Sphere s;
-        bs >> s;
+        d >> s;
         RndDrawable *draw = dynamic_cast<RndDrawable *>(this);
         if (draw)
             draw->SetSphere(s);
     }
-    if (gRev > 5) {
+    if (d.rev > 5) {
         if (gLoadingProxyFromDisk) {
             ObjPtr<RndTransformable> tPtr(this);
-            tPtr.Load(bs, false, 0);
+            tPtr.Load(d.stream, false, nullptr);
         } else
-            bs >> mTarget;
+            d >> mTarget;
     }
-    if (gRev > 6)
+    if (d.rev > 6)
         d >> mPreserveScale;
-    if (gRev > 8) {
+    if (d.rev > 8) {
         ObjPtr<RndTransformable> tPtr(this);
         if (!gLoadingProxyFromDisk) {
-            bs >> tPtr;
+            d >> tPtr;
             SetTransParent(tPtr, false);
-        } else
-            tPtr.Load(bs, false, 0);
-    } else if (gRev > 6) {
+        } else {
+            tPtr.Load(d.stream, false, nullptr);
+        }
+    } else if (d.rev > 6) {
         ObjPtr<RndTransformable> tPtr(this);
-        bs >> tPtr;
+        d >> tPtr;
         if (tPtr != this) {
             SetTransParent(tPtr, false);
             mConstraint = kConstraintParentWorld;
         }
-    } else if (gRev == 6 && mConstraint == kConstraintParentWorld) {
+    } else if (d.rev == 6 && mConstraint == kConstraintParentWorld) {
         SetTransParent(mTarget, false);
     }
 END_LOADS

@@ -447,7 +447,7 @@
             "system/midi/DataEventList.cpp": "NonMatching",
             "system/midi/DisplayEvents.cpp": "NonMatching",
             "system/midi/MidiParser.cpp": "Matching",
-            "system/midi/MidiParserMgr.cpp": "NonMatching",
+            "system/midi/MidiParserMgr.cpp": "Matching",
             "system/midi/MidiReader.cpp": "NonMatching",
             "system/midi/MidiReceiver.cpp": "Matching",
             "system/midi/MidiVarLen.cpp": "Matching",

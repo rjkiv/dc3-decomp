@@ -151,14 +151,24 @@ const char *MidiParserMgr::StripEndBracket(char *c1, const char *cc2) {
     return c1;
 }
 
+// this is 100% a fakematch lmao
+// we gotta find a way to not use that struct
 DataArray *MidiParserMgr::ParseText(const char *str, int tick) {
+    struct {
+        DataArray *unused;
+        DataArray *parsed;
+    } s;
     MILO_ASSERT(strlen(str) < 256, 0xF3);
     char buf[256];
     StripEndBracket(buf, str + 1);
-    DataArray *parsed = nullptr;
-    MILO_TRY { parsed = DataReadString(buf); }
-    MILO_CATCH(errMsg) {
-        parsed = nullptr;
+
+    s.parsed = nullptr;
+    TheDebug.SetTry(true);
+    try {
+        s.parsed = DataReadString(buf);
+        TheDebug.SetTry(false);
+    } catch (const char *errMsg) {
+        s.parsed = nullptr;
         MILO_NOTIFY(MakeString(
             "MidiParser: %s, track %s, tick %d, event \"%s\" has bad format: %s",
             TheMidiParserMgr->mFilename,
@@ -168,7 +178,7 @@ DataArray *MidiParserMgr::ParseText(const char *str, int tick) {
             errMsg
         ));
     }
-    return parsed;
+    return s.parsed;
 }
 
 void MidiParserMgr::FinishLoad() {
