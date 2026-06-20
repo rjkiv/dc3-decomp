@@ -258,6 +258,7 @@ public:
     const Hmx::Color &MidColorLow() const { return mMidColorLow; }
     const Hmx::Color &MidColorHigh() const { return mMidColorHigh; }
     RndMesh *GetMesh() const { return mMeshEmitter; }
+    RndParticle *ActiveParticles() const { return mActiveParticles; }
 
 protected:
     RndParticleSys();

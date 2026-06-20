@@ -14,7 +14,12 @@
 /** "A Generator object flies out object instances along a path." */
 class RndGenerator : public RndAnimatable, public RndTransformable, public RndDrawable {
 public:
-    class Instance {};
+    class Instance {
+    public:
+        float frameOrg; // 0x0
+        Transform xfmMod; // 0x4
+        Vector3 scale; // 0x44
+    };
     // Hmx::Object
     virtual ~RndGenerator();
     OBJ_CLASSNAME(Mesh);

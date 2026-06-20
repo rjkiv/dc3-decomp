@@ -32,6 +32,7 @@ bool AnimContains(const RndAnimatable *anim1, const RndAnimatable *anim2);
 float ConvertFov(float, float);
 void PreMultiplyAlpha(Hmx::Color &);
 void RandomPointOnMesh(RndMesh *, Vector3 &, Vector3 &);
+void CalcSphere(RndTransAnim *a, Sphere &s);
 
 bool SortDraws(RndDrawable *, RndDrawable *);
 bool SortPolls(const RndPollable *, const RndPollable *);
