@@ -1544,7 +1544,7 @@ DataNode RndParticleSys::OnAddEmitRate(const DataArray *da) {
     float add = da->Float(2);
     mEmitRate.x = Max(0.0f, mEmitRate.x + add);
     mEmitRate.y = Max(0.0f, mEmitRate.y + add);
-    return !mEmitRate;
+    return mEmitRate == Vector2(0, 0);
 }
 
 DataNode RndParticleSys::OnSetBurstInterval(const DataArray *da) {
