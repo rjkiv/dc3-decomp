@@ -88,11 +88,7 @@ namespace Hmx {
             y.Set(0.0f, 1.0f, 0.0f);
             z.Set(0.0f, 0.0f, 1.0f);
         }
-        // maybe this one isn't macro-ified
-        Matrix3 &operator=(const Matrix3 &mtx) {
-            memcpy(this, &mtx, sizeof(*this));
-            return *this;
-        }
+
         Vector3 &operator[](int i) { return *(&x + i); }
 
         bool operator==(const Matrix3 &mtx) const {
@@ -125,7 +121,6 @@ namespace Hmx {
 
         Matrix4 &Zero();
 
-        COPY_OPERATOR(Matrix4)
         Vector3 Col3(int idx) const { return Vector3(m[0][idx], m[1][idx], m[2][idx]); }
 
         static const Hmx::Matrix4 &ID() { return sID; }
@@ -229,9 +224,6 @@ public:
     Transform() {}
 
     Transform(const Hmx::Matrix3 &mtx, const Vector3 &vec) : m(mtx), v(vec) {}
-
-    // Transform(const Transform &tf);
-    COPY_OPERATOR(Transform)
 
     void Reset() {
         m.Identity();

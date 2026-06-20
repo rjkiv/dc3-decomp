@@ -12,8 +12,6 @@ class Segment {
 public:
     Segment() {}
 
-    COPY_OPERATOR(Segment)
-
     Vector3 start;
     Vector3 end;
 };

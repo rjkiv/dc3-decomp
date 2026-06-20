@@ -35,7 +35,6 @@ public:
     class SpotMeshEntry { // from RB2 DWARF
     public:
         SpotMeshEntry() : mMesh(0), mEnv(0), mLight(0) {}
-        COPY_OPERATOR(SpotMeshEntry)
 
         RndMesh *mMesh; // 0x0
         RndEnviron *mEnv; // 0x4
