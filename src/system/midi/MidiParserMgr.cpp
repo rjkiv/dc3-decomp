@@ -61,7 +61,7 @@ void MidiParserMgr::OnEndOfTrack() {
         }
         if (mGems)
             mGems->SetTrack(mTrackName);
-        std::list<MidiParser *> &parsers = MidiParser::Parsers();
+        std::list<MidiParser *> &parsers = MidiParser::GetParsers();
         for (std::list<MidiParser *>::iterator it = parsers.begin(); it != parsers.end();
              ++it) {
             MidiParser *cur = *it;
@@ -89,7 +89,7 @@ void MidiParserMgr::OnMidiMessage(
     int i28;
     bool created = CreateNote(tick, status, data1, i28);
     if (created) {
-        std::list<MidiParser *> &parsers = MidiParser::Parsers();
+        std::list<MidiParser *> &parsers = MidiParser::GetParsers();
         for (std::list<MidiParser *>::iterator it = parsers.begin(); it != parsers.end();
              ++it) {
             MidiParser *cur = *it;
@@ -106,15 +106,15 @@ void MidiParserMgr::OnText(int tick, const char *text, unsigned char type) {
     else if (type == kLyricEvent || type == kTextEvent) {
         MemDoTempAllocations tmp;
         MidiParser::VocalEvent vocEv;
-        vocEv.mTick = tick;
+        vocEv.startTick = tick;
         if (*text == '[') {
             DataArray *parsed = ParseText(text, tick);
             if (!parsed)
                 return;
-            vocEv.mTextContent = parsed;
+            vocEv.data = parsed;
             parsed->Release();
         } else
-            vocEv.mTextContent = text;
+            vocEv.data = text;
         mText.push_back(vocEv);
     }
 }
@@ -223,7 +223,7 @@ bool MidiParserMgr::CreateNote(
 void MidiParserMgr::Reset(int i) {
     if (mLoaded && unk6d) {
         float beat = TickToBeat(i);
-        std::list<MidiParser *> &parsers = MidiParser::Parsers();
+        std::list<MidiParser *> &parsers = MidiParser::GetParsers();
         for (std::list<MidiParser *>::iterator it = parsers.begin(); it != parsers.end();
              ++it) {
             (*it)->Reset(beat);
@@ -233,7 +233,7 @@ void MidiParserMgr::Reset(int i) {
 
 void MidiParserMgr::Reset() {
     if (mLoaded) {
-        std::list<MidiParser *> &parsers = MidiParser::Parsers();
+        std::list<MidiParser *> &parsers = MidiParser::GetParsers();
         for (std::list<MidiParser *>::iterator it = parsers.begin(); it != parsers.end();
              ++it) {
             (*it)->Reset(-2 * kHugeFloat);
@@ -243,7 +243,7 @@ void MidiParserMgr::Reset() {
 
 void MidiParserMgr::Poll() {
     if (unk6d) {
-        std::list<MidiParser *> &parsers = MidiParser::Parsers();
+        std::list<MidiParser *> &parsers = MidiParser::GetParsers();
         for (std::list<MidiParser *>::iterator it = parsers.begin(); it != parsers.end();
              ++it) {
             (*it)->Poll();
@@ -252,7 +252,7 @@ void MidiParserMgr::Poll() {
 }
 
 MidiParser *MidiParserMgr::GetParser(Symbol s) {
-    std::list<MidiParser *> &parsers = MidiParser::Parsers();
+    std::list<MidiParser *> &parsers = MidiParser::GetParsers();
     for (std::list<MidiParser *>::iterator it = parsers.begin(); it != parsers.end();
          ++it) {
         if (s == (*it)->Name())
@@ -274,7 +274,7 @@ void MidiParserMgr::FreeAllData() {
 
 void MidiParserMgr::OnTrackName(Symbol s) {
     if (std::find(mTrackNames.begin(), mTrackNames.end(), s) != mTrackNames.end()) {
-        std::list<MidiParser *> &parsers = MidiParser::Parsers();
+        std::list<MidiParser *> &parsers = MidiParser::GetParsers();
         for (std::list<MidiParser *>::iterator it = parsers.begin(); it != parsers.end();
              ++it) {
             MidiParser *cur = *it;

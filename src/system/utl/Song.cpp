@@ -247,7 +247,7 @@ MBT Song::GetMBTFromTick(int tick, int *bpm) {
 DataNode Song::GetMidiParsers() {
     DataArrayPtr ptr(new DataArray(0));
     if (TheMidiParserMgr) {
-        FOREACH (it, MidiParser::Parsers()) {
+        FOREACH (it, MidiParser::GetParsers()) {
             String str((*it)->Name());
             if (str != "events_parser") {
                 ptr->Insert(ptr->Size(), *it);
@@ -443,7 +443,7 @@ void Song::SyncState() {
             mHxMaster->Reset();
         }
         std::vector<MidiParser *> midiParsers;
-        std::list<MidiParser *> globalParsers = MidiParser::Parsers();
+        std::list<MidiParser *> globalParsers = MidiParser::GetParsers();
         FOREACH (it, globalParsers) {
             MsgSinks *curSinks = (*it)->Sinks();
             if (curSinks) {

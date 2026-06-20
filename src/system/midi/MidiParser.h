@@ -35,16 +35,16 @@ public:
 
     struct VocalEvent {
         // because midis can store text as either Text or Lyric types
-        enum TextType {
-            kText,
-            kLyric
+        enum VocalEventType {
+            kTextEvent = 0,
+            kLyricEvent,
         };
 
-        DataNode mTextContent; // 0x0
-        int mTick; // 0x8
+        DataNode data; // 0x0
+        int startTick; // 0x8
 
-        TextType GetTextType() const {
-            return mTextContent.Type() == kDataString ? kLyric : kText;
+        VocalEventType GetType() const {
+            return data.Type() == kDataString ? kLyricEvent : kTextEvent;
         }
     };
 
@@ -77,7 +77,7 @@ private:
     float mLastStart; // 0x8c
     float mLastEnd; // 0x90
     float mFirstEnd; // 0x94
-    DataEvent *mEvent; // 0x98
+    const DataEvent *mEvent; // 0x98
     Symbol mMessageType; // 0x9c
     bool mAppendLength; // 0xa0
     bool mUseVariableBlending; // 0xa1
@@ -117,9 +117,9 @@ private:
     float GetStart(int idx);
     /** Given an gem or note's index, get the corresponding end beat. */
     float GetEnd(int idx);
-    void FixGap(float *);
+    void FixGap(float *lastEnd);
     void SetIndex(int idx);
-    float ConvertToBeats(float f1, float f2);
+    float ConvertToBeats(float seconds, float startingAtBeat);
     bool InsertIdle(float start, int before);
     void PushIdle(float start, float end, int at, Symbol idleMessage);
     void SetGlobalVars(int startTick, int endTick, const DataNode &data);
@@ -153,7 +153,7 @@ public:
     DataEventList *Events() const { return mEvents; }
     Symbol TrackName() const { return mTrackName; }
     void Clear();
-    void Reset(float frame);
+    void Reset(float beat);
     void Poll();
     void ParseNote(int startTick, int endTick, unsigned char data1);
     void PrintEvents();
@@ -161,7 +161,7 @@ public:
 
     static void Init();
     static void ClearManagedParsers();
-    static std::list<MidiParser *> &Parsers() { return sParsers; }
+    static std::list<MidiParser *> &GetParsers() { return sParsers; }
 
     NEW_OBJ(MidiParser);
 };

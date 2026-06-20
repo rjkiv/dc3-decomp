@@ -117,12 +117,8 @@ extern const char *kAssertStr;
 // }
 #define MILO_TRY                                                                         \
     TheDebug.SetTry(true);                                                               \
-    try {                                                                                \
-        do
-
+    try {
 #define MILO_CATCH(name)                                                                 \
-    while (false)                                                                        \
-        ;                                                                                \
     TheDebug.SetTry(false);                                                              \
     }                                                                                    \
     catch (const char *name)

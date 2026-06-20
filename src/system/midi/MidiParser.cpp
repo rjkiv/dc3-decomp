@@ -6,7 +6,6 @@
 #include "midi/MidiParserMgr.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
-
 #include "obj/Object.h"
 #include "obj/Task.h"
 #include "os/Debug.h"
@@ -187,7 +186,7 @@ void MidiParser::Clear() {
     mBefore = 0;
 }
 
-void MidiParser::Reset(float f) { mEvents->Reset(f); }
+void MidiParser::Reset(float beat) { mEvents->Reset(beat); }
 
 void MidiParser::Poll() {
     float beat = TheTaskMgr.Beat();
@@ -246,7 +245,7 @@ int MidiParser::ParseAll(GemListInterface *gems, std::vector<VocalEvent> &text) 
         int loc48, loc4c, loc50;
         if (mVocalEvents) {
             if (mVocalIndex < mVocalEvents->size()) {
-                int vocalTick = (*mVocalEvents)[mVocalIndex].mTick;
+                int vocalTick = (*mVocalEvents)[mVocalIndex].startTick;
                 if (vocalTick < startTick) {
                     startTick = vocalTick;
                     which = 0;
@@ -268,11 +267,11 @@ int MidiParser::ParseAll(GemListInterface *gems, std::vector<VocalEvent> &text) 
         }
         if (which == 0) {
             VocalEvent &vocEv = (*mVocalEvents)[mVocalIndex];
-            if ((vocEv.GetTextType() == VocalEvent::kLyric && mLyricParser)
-                || (vocEv.GetTextType() == VocalEvent::kText && mTextParser)) {
-                mCurParser = vocEv.GetTextType() == VocalEvent::kLyric ? mLyricParser
-                                                                       : mTextParser;
-                HandleEvent(vocEv.mTick, vocEv.mTick, vocEv.mTextContent);
+            if ((vocEv.GetType() == VocalEvent::kLyricEvent && mLyricParser)
+                || (vocEv.GetType() == VocalEvent::kTextEvent && mTextParser)) {
+                mCurParser = vocEv.GetType() == VocalEvent::kLyricEvent ? mLyricParser
+                                                                        : mTextParser;
+                HandleEvent(vocEv.startTick, vocEv.startTick, vocEv.data);
             }
             mVocalIndex++;
         } else if (which == 1) {
@@ -334,7 +333,7 @@ void MidiParser::SetIndex(int idx) {
             if (idx < mVocalEvents->size()) {
                 mVocalIndex = idx;
                 VocalEvent &ev = (*mVocalEvents)[idx];
-                SetGlobalVars(ev.mTick, ev.mTick, ev.mTextContent);
+                SetGlobalVars(ev.startTick, ev.startTick, ev.data);
                 return;
             }
         } else
@@ -397,30 +396,28 @@ float MidiParser::GetEnd(int i) {
     }
 }
 
-void MidiParser::FixGap(float *fp) {
+void MidiParser::FixGap(float *lastEnd) {
     if (mUseVariableBlending) {
         float f4 = -kHugeFloat;
         if (mBefore >= 0) {
             f4 = mEvents->Event(mBefore).start;
         }
-        *fp = mStart - mProcess.variableBlendPct * (mStart - f4);
+        *lastEnd = mStart - mProcess.variableBlendPct * (mStart - f4);
     } else {
-        float f4;
         if (mProcess.useRealtimeGaps) {
-            f4 = Clamp(
-                ConvertToBeats(mProcess.minGap, mStart),
-                ConvertToBeats(mProcess.maxGap, mStart),
-                mStart - *fp
-            );
-        } else
-            f4 = Clamp(mProcess.minGap, mProcess.maxGap, mStart - *fp);
-        *fp = mStart - f4;
+            *lastEnd = mStart
+                - Clamp(ConvertToBeats(mProcess.minGap, mStart),
+                        ConvertToBeats(mProcess.maxGap, mStart),
+                        mStart - *lastEnd);
+        } else {
+            *lastEnd =
+                mStart - Clamp(mProcess.minGap, mProcess.maxGap, mStart - *lastEnd);
+        }
     }
 }
 
-float MidiParser::ConvertToBeats(float f1, float f2) {
-    float secs = BeatToSeconds(f2);
-    return SecondsToBeat(secs + f1) - f2;
+float MidiParser::ConvertToBeats(float seconds, float startingAtBeat) {
+    return SecondsToBeat(BeatToSeconds(startingAtBeat) + seconds) - startingAtBeat;
 }
 
 bool MidiParser::InsertIdle(float f, int i) {
