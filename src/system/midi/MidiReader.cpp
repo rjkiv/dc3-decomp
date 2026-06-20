@@ -135,10 +135,9 @@ void MidiReader::ProcessMidiList() {
 void MidiReader::ReadMidiEvent(
     int tick, unsigned char status, unsigned char data1, BinStream &bs
 ) {
-    int statusType = status & 0xF0;
     unsigned char data2;
     bool queue = false;
-    switch (statusType) {
+    switch (status & 0xF0) {
     case kNoteOn:
         bs >> data2;
         queue = true;
@@ -166,7 +165,7 @@ void MidiReader::ReadMidiEvent(
             "%s (%s): Cannot parse event %i",
             mStreamName.c_str(),
             mCurTrackName.c_str(),
-            statusType
+            (int)(status & 0xF0)
         );
         break;
     }
@@ -451,9 +450,11 @@ void MidiReader::ReadEvent(BinStream &bs) {
 
 void MidiReader::ReadNextEvent() {
     if (sVerify) {
-        TheDebug.SetTry(true);
-        ReadNextEventImpl();
-        TheDebug.SetTry(false);
+        MILO_TRY { ReadNextEventImpl(); }
+        MILO_CATCH(msg) {
+            mRcvr.Error(msg, mCurTick);
+            mFail = true;
+        }
     } else
         ReadNextEventImpl();
 }
