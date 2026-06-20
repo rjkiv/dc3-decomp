@@ -9,6 +9,10 @@ class GemListInterface; // forward dec
 /** Manager for all midi parsers. */
 class MidiParserMgr : public MidiReceiver, public Hmx::Object {
 public:
+    enum {
+        kMaxNoteSize = 20000,
+        kMaxTextSize = 2000,
+    };
     MidiParserMgr(GemListInterface *, Symbol);
     virtual ~MidiParserMgr();
     virtual void OnNewTrack(int);
@@ -39,10 +43,10 @@ private:
     const char *StripEndBracket(char *new_str, const char *old_str);
     /** Parse the text at the supplied tick.
      * @param [in] str The text.
-     * @param [in] tick The tick at which this occurs.
+     * @param [in] startTick The tick at which this occurs.
      * @returns The DataArray corresponding to the text.
      */
-    DataArray *ParseText(const char *str, int tick);
+    DataArray *ParseText(const char *str, int startTick);
     bool CreateNote(int tick, unsigned char status, unsigned char data1, int &start_tick);
     /** Routine to run when parsing a track name event.
      * @param [in] trackname The track name.
@@ -58,9 +62,9 @@ private:
     const char *mFilename; // 0x54
     Symbol mTrackName; // 0x58
     Symbol mSongName; // 0x5c
-    std::vector<Symbol> mTrackNames; // 0x60
-    bool unk6c; // 0x6c
-    bool unk6d; // 0x6d
+    std::vector<Symbol> mTrackNamesSeen; // 0x60
+    bool mNotifyNoteOns; // 0x6c
+    bool mEnablePoll; // 0x6d
 };
 
 extern MidiParserMgr *TheMidiParserMgr;

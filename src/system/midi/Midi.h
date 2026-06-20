@@ -34,7 +34,7 @@ class MidiReceiver {
 public:
     MidiReceiver();
     virtual ~MidiReceiver() {}
-    virtual void OnNewTrack(int) = 0;
+    virtual void OnNewTrack(int newTrackIndex) = 0;
     /** Routine to run when the end of a track is reached. */
     virtual void OnEndOfTrack() = 0;
     /** Routine to run when all tracks in the midi have been read. */

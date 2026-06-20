@@ -3,6 +3,7 @@
 #include "math/Utl.h"
 #include "midi/Midi.h"
 #include "midi/MidiConstants.h"
+#include "midi/MidiParser.h"
 #include "obj/DataFile.h"
 #include "obj/Dir.h"
 #include "os/Debug.h"
@@ -14,13 +15,12 @@ MidiParserMgr *TheMidiParserMgr;
 
 #pragma region MidiReceiver
 
-MidiParserMgr::MidiParserMgr(GemListInterface *gListInt, Symbol sym)
-    : mGems(gListInt), mLoaded(0), mFilename(0), mTrackName(), mSongName(), mTrackNames(),
-      unk6c(true), unk6d(true) {
+MidiParserMgr::MidiParserMgr(GemListInterface *gems, Symbol songName)
+    : mGems(gems), mLoaded(0), mFilename(0), mNotifyNoteOns(true), mEnablePoll(true) {
     MILO_ASSERT(!TheMidiParserMgr, 0x27);
     TheMidiParserMgr = this;
     SetName("midiparsermgr", ObjectDir::Main());
-    mSongName = sym;
+    mSongName = songName;
     MidiParser::Init();
     DataArray *arr = SystemConfig("beatmatcher")->FindArray("midi_parsers", false);
     if (arr) {
@@ -44,36 +44,35 @@ void MidiParserMgr::OnNewTrack(int) {
     MILO_ASSERT(!mSongName.Null(), 0x7C);
     FreeAllData();
     mNoteOns.resize(128, -1);
-    mText.reserve(2000);
-    unk6c = true;
+    mText.reserve(kMaxTextSize);
+    mNotifyNoteOns = true;
 }
 
 void MidiParserMgr::OnEndOfTrack() {
     if (!mTrackName.Null()) {
-        if (mText.size() > 2000) {
+        if (mText.size() > kMaxTextSize) {
             MILO_NOTIFY(
                 "%s track %s has %d text events which is over the limit of %d, if that is correct contact James to increase kMaxTextSize",
                 mFilename,
                 mTrackName,
                 mText.size(),
-                2000
+                (int)kMaxTextSize
             );
         }
-        if (mGems)
+        if (mGems) {
             mGems->SetTrack(mTrackName);
-        std::list<MidiParser *> &parsers = MidiParser::GetParsers();
-        for (std::list<MidiParser *>::iterator it = parsers.begin(); it != parsers.end();
-             ++it) {
+        }
+        FOREACH (it, MidiParser::GetParsers()) {
             MidiParser *cur = *it;
             if (cur->TrackName() == mTrackName) {
                 int numnotes = cur->ParseAll(mGems, mText);
-                if (numnotes > 20000) {
+                if (numnotes > kMaxNoteSize) {
                     MILO_NOTIFY(
                         "%s track %s has %d notes which is over the limit of %d, if that is correct contact James to increase kMaxNoteSize",
                         mFilename,
                         mTrackName,
                         numnotes,
-                        20000
+                        (int)kMaxNoteSize
                     );
                 }
             }
@@ -89,9 +88,7 @@ void MidiParserMgr::OnMidiMessage(
     int i28;
     bool created = CreateNote(tick, status, data1, i28);
     if (created) {
-        std::list<MidiParser *> &parsers = MidiParser::GetParsers();
-        for (std::list<MidiParser *>::iterator it = parsers.begin(); it != parsers.end();
-             ++it) {
+        FOREACH (it, MidiParser::GetParsers()) {
             MidiParser *cur = *it;
             if (cur->TrackName() == mTrackName) {
                 cur->ParseNote(i28, tick, data1);
@@ -189,9 +186,9 @@ bool MidiParserMgr::CreateNote(
     int tick, unsigned char status, unsigned char data1, int &start_tick
 ) {
     if (mNoteOns.empty()) {
-        if (unk6c) {
+        if (mNotifyNoteOns) {
             MILO_NOTIFY("%s has a track that was not named.", mFilename);
-            unk6c = false;
+            mNotifyNoteOns = false;
         }
         return true;
     } else {
@@ -221,11 +218,9 @@ bool MidiParserMgr::CreateNote(
 }
 
 void MidiParserMgr::Reset(int i) {
-    if (mLoaded && unk6d) {
+    if (mLoaded && mEnablePoll) {
         float beat = TickToBeat(i);
-        std::list<MidiParser *> &parsers = MidiParser::GetParsers();
-        for (std::list<MidiParser *>::iterator it = parsers.begin(); it != parsers.end();
-             ++it) {
+        FOREACH (it, MidiParser::GetParsers()) {
             (*it)->Reset(beat);
         }
     }
@@ -234,27 +229,22 @@ void MidiParserMgr::Reset(int i) {
 void MidiParserMgr::Reset() {
     if (mLoaded) {
         std::list<MidiParser *> &parsers = MidiParser::GetParsers();
-        for (std::list<MidiParser *>::iterator it = parsers.begin(); it != parsers.end();
-             ++it) {
+        FOREACH (it, MidiParser::GetParsers()) {
             (*it)->Reset(-2 * kHugeFloat);
         }
     }
 }
 
 void MidiParserMgr::Poll() {
-    if (unk6d) {
-        std::list<MidiParser *> &parsers = MidiParser::GetParsers();
-        for (std::list<MidiParser *>::iterator it = parsers.begin(); it != parsers.end();
-             ++it) {
+    if (mEnablePoll) {
+        FOREACH (it, MidiParser::GetParsers()) {
             (*it)->Poll();
         }
     }
 }
 
 MidiParser *MidiParserMgr::GetParser(Symbol s) {
-    std::list<MidiParser *> &parsers = MidiParser::GetParsers();
-    for (std::list<MidiParser *>::iterator it = parsers.begin(); it != parsers.end();
-         ++it) {
+    FOREACH (it, MidiParser::GetParsers()) {
         if (s == (*it)->Name())
             return *it;
     }
@@ -273,16 +263,15 @@ void MidiParserMgr::FreeAllData() {
 }
 
 void MidiParserMgr::OnTrackName(Symbol s) {
-    if (std::find(mTrackNames.begin(), mTrackNames.end(), s) != mTrackNames.end()) {
-        std::list<MidiParser *> &parsers = MidiParser::GetParsers();
-        for (std::list<MidiParser *>::iterator it = parsers.begin(); it != parsers.end();
-             ++it) {
+    if (std::find(mTrackNamesSeen.begin(), mTrackNamesSeen.end(), s)
+        != mTrackNamesSeen.end()) {
+        FOREACH (it, MidiParser::GetParsers()) {
             MidiParser *cur = *it;
             if (cur->TrackName() == s) {
                 cur->Clear();
             }
         }
     } else
-        mTrackNames.push_back(s);
+        mTrackNamesSeen.push_back(s);
     mTrackName = s;
 }
