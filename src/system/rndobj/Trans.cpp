@@ -224,7 +224,8 @@ BEGIN_LOADS(RndTransformable)
     if (gRev > 0 && gRev < 7) {
         Vector3 v;
         bs >> v;
-        if (!v.IsZero()) {
+        bool isZero = v == Vector3(0, 0, 0);
+        if (!isZero) {
             MILO_LOG("Transform origin no longer supported\n");
         }
     }

@@ -171,7 +171,7 @@ void CharIKHead::Poll() {
             }
             if (mOffset) {
                 Transform tfe0(mOffset->WorldXfm());
-                v104 *= mOffsetScale;
+                Scale(v104, mOffsetScale, v104);
                 tfe0.v += v104;
                 mOffset->SetWorldXfm(tfe0);
             }

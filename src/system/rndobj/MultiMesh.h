@@ -77,7 +77,6 @@ public:
     struct Instance {
         Instance();
         Instance(const Transform &t) : unk0(1), mXfm(t) {}
-        COPY_OPERATOR(Instance)
 
         void Save(BinStream &) const;
         void Load(BinStreamRev &);

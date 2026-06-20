@@ -49,10 +49,10 @@ inline int LowestBit(int num) {
 }
 
 inline int Round(float f) {
-    if (f > (float)0.0) {
-        return (int)((float)0.5 + f);
+    if (f > 0) {
+        return f + 0.5f;
     } else {
-        return (int)(f - (float)0.5);
+        return f - 0.5f;
     }
 }
 

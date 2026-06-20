@@ -139,10 +139,3 @@ void operator delete[](void *mem);
 
 // #define DELETE_ARRAY_OVERLOAD \
 //     void operator delete[](void *v) { _MemFree(v); }
-
-#define COPY_OPERATOR(className)                                                         \
-    className &operator=(const className &rhs) {                                         \
-        const className *p = &rhs;                                                       \
-        memcpy(this, p, sizeof(*this));                                                  \
-        return *this;                                                                    \
-    }

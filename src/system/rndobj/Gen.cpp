@@ -283,9 +283,7 @@ void RndGenerator::DrawMesh(Transform &t, float) {
     mMesh->Draw();
 }
 
-void RndGenerator::DrawMultiMesh(Transform &t, float f) {
-    *mCurMultiMesh++ = RndMultiMesh::Instance(t);
-}
+void RndGenerator::DrawMultiMesh(Transform &t, float f) { *mCurMultiMesh++ = t; }
 
 void RndGenerator::SetPath(RndTransAnim *path, float start, float end) {
     mPath = path;

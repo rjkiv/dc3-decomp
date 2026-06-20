@@ -1,5 +1,6 @@
 #pragma once
 #include "math/Mtx.h"
+#include "math/Plane.h"
 #include "math/Sphere.h"
 #include "math/Utl.h"
 #include "math/Vec.h"
@@ -11,8 +12,6 @@
 class Segment {
 public:
     Segment() {}
-
-    COPY_OPERATOR(Segment)
 
     Vector3 start;
     Vector3 end;

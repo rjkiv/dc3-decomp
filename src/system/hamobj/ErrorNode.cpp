@@ -173,7 +173,7 @@ void Ham1EuclideanNode::CalcError(
     op.mPerfectDist = node_input.mNodeWeight->unk4;
     op.mType = kErrorScaleDistSq;
     op.mRate = node_input.mNodeWeight->unk8;
-    vToProcess *= diff;
+    Scale(vToProcess, diff, vToProcess);
     vout.x = ScaleDistToError(op, Length(vToProcess));
 }
 

@@ -1125,8 +1125,7 @@ void RndParticleSys::UpdateRelativeXfm() {
         Invert(mLastWorldXfm.m, mLastWorldXfm.m);
         Multiply(mLastWorldXfm.m, parentWorld.m, mLastWorldXfm.m);
         Hmx::Quat q60(0, 0, 0, 1);
-        Hmx::Quat q50;
-        q50.Set(mLastWorldXfm.m);
+        Hmx::Quat q50(mLastWorldXfm.m);
         FastInterp(q60, q50, mRelativeMotion, q60);
         MakeRotMatrix(q60, mLastWorldXfm.m);
         Subtract(mRelativeXfm.v, mLastWorldXfm.v, mRelativeXfm.v);
@@ -1545,7 +1544,7 @@ DataNode RndParticleSys::OnAddEmitRate(const DataArray *da) {
     float add = da->Float(2);
     mEmitRate.x = Max(0.0f, mEmitRate.x + add);
     mEmitRate.y = Max(0.0f, mEmitRate.y + add);
-    return !mEmitRate;
+    return mEmitRate == Vector2(0, 0);
 }
 
 DataNode RndParticleSys::OnSetBurstInterval(const DataArray *da) {

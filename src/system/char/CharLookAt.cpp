@@ -171,7 +171,7 @@ void CharLookAt::Poll() {
                 Vector3 vfc(ve4);
                 vfc.z = 0;
                 vf0.z = 0;
-                float times = (vf0 * vfc);
+                float times = Dot(vf0, vfc);
                 float clamped = Clamp(-1.0f, 1.0f, times / (Length(vf0) * Length(vfc)));
                 float clamped2 = Clamp<float>(
                     0.0f,

@@ -9,6 +9,8 @@
 #include "char/Waypoint.h"
 #include "math/Geo.h"
 #include "math/Mtx.h"
+#include "math/Plane.h"
+#include "math/Sphere.h"
 #include "math/Utl.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"

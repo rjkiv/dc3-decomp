@@ -1,5 +1,6 @@
 #pragma once
 #include "math/Mtx.h"
+#include "math/Rot.h"
 #include "math/Vec.h"
 #include "obj/Object.h"
 #include "utl/MemMgr.h"
@@ -8,57 +9,6 @@
 #include <list>
 
 class CharClip;
-
-class ByteQuat {
-public:
-    void Set(const Hmx::Quat &);
-    void ToQuat(Hmx::Quat &q) const {
-        q.Set(x * 0.007874016f, y * 0.007874016f, z * 0.007874016f, w * 0.007874016f);
-    }
-
-    char x;
-    char y;
-    char z;
-    char w;
-};
-
-class ShortQuat {
-public:
-    void Set(const Hmx::Quat &);
-    void ToQuat(Hmx::Quat &q) const {
-        q.Set(
-            x * 0.000030518509f,
-            y * 0.000030518509f,
-            z * 0.000030518509f,
-            w * 0.000030518509f
-        );
-    }
-
-    short x;
-    short y;
-    short z;
-    short w;
-};
-
-class ShortVector3 {
-public:
-    void Set(const Vector3 &);
-
-    void ToVector3(Vector3 &v) const {
-        v.Set(x * 0.039674062f, y * 0.039674062f, z * 0.039674062f);
-    }
-
-    static short ToShort(float f) {
-        float value = f * 0.00076923077f;
-        value *= 32767.0f;
-        value += 0.5f;
-        return floor(Clamp(-32767.0f, 32767.0f, value));
-    }
-
-    short x;
-    short y;
-    short z;
-};
 
 inline short MakeShortAng(float f) {
     f = f * 1638.4f + 0.5f;
