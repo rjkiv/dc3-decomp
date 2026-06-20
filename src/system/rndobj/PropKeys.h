@@ -2,6 +2,7 @@
 #include "math/Key.h"
 #include "math/Color.h"
 #include "math/Mtx.h"
+#include "math/Rot.h"
 #include "math/Vec.h"
 #include "obj/Data.h"
 #include "obj/Msg.h"

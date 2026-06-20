@@ -1,6 +1,7 @@
 #pragma once
 #include "os/Debug.h"
 #include "utl/TextStream.h"
+#include "math/Utl.h"
 #include <cmath>
 
 class Vector2 {
@@ -107,6 +108,26 @@ protected:
 };
 
 TextStream &operator<<(TextStream &, const Vector3 &);
+
+class ShortVector3 {
+public:
+    void Set(const Vector3 &);
+
+    void ToVector3(Vector3 &v) const {
+        v.Set(x * 0.039674062f, y * 0.039674062f, z * 0.039674062f);
+    }
+
+    static short ToShort(float f) {
+        float value = f * 0.00076923077f;
+        value *= 32767.0f;
+        value += 0.5f;
+        return floor(Clamp(-32767.0f, 32767.0f, value));
+    }
+
+    short x;
+    short y;
+    short z;
+};
 
 class Vector4 {
 public:

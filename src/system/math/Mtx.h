@@ -105,46 +105,6 @@ namespace Hmx {
     private:
         static Matrix4 sID;
     };
-
-    class Quat {
-    public:
-        Quat() {}
-        Quat(float f1, float f2, float f3, float f4) : x(f1), y(f2), z(f3), w(f4) {}
-        Quat(const Matrix3 &m) { Set(m); }
-        Quat(const Vector3 &v) { Set(v); }
-        Quat(const Vector3 &, float);
-
-        void Reset() {
-            x = y = z = 0.0f;
-            w = 1.0f;
-        }
-        void Zero() { w = x = y = z = 0.0f; }
-        void Set(const Matrix3 &);
-        void Set(const Vector3 &);
-        void Set(const Vector3 &, float);
-        void Set(float f1, float f2, float f3, float f4) {
-            x = f1;
-            y = f2;
-            z = f3;
-            w = f4;
-        }
-
-        float operator*(const Quat &q) const {
-            return x * q.x + y * q.y + z * q.z + w * q.w;
-        }
-
-        bool operator!=(const Quat &q) const {
-            return x != q.x || y != q.y || z != q.z || w != q.w;
-        }
-
-        const float &operator[](int i) const { return *(&x + i); }
-        float &operator[](int i) { return *(&x + i); }
-
-        float x;
-        float y;
-        float z;
-        float w;
-    };
 }
 
 class Transform {
@@ -200,15 +160,6 @@ public:
 
 TextStream &operator<<(TextStream &ts, const Hmx::Matrix3 &m);
 TextStream &operator<<(TextStream &ts, const Transform &t);
-
-class QuatXfm {
-public:
-    QuatXfm() {}
-    QuatXfm(const Transform &);
-
-    Vector3 v;
-    Hmx::Quat q;
-};
 
 // defined in mtx.cpp
 float Det(const Hmx::Matrix3 &m);
