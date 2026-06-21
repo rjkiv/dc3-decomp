@@ -70,9 +70,9 @@ void DataMergeTags(DataArray *dest, DataArray *src) {
         for (int i = 0; i < src->Size(); i++) {
             DataNode &node = src->Node(i);
             if (node.Type() == kDataArray) {
-                DataArray *arr = node.UncheckedArray();
+                DataArray *arr = node.ArrayValue();
                 if (arr->Size() != 0) {
-                    DataArray *found = dest->FindArray(arr->UncheckedInt(0), false);
+                    DataArray *found = dest->FindArray(arr->Node(0).IntValue(), false);
                     if (!found) {
                         dest->Resize(dest->Size() + 1);
                         const DataNode &destNode = arr;
@@ -90,9 +90,9 @@ void DataReplaceTags(DataArray *dest, DataArray *src) {
         for (int i = 0; i < dest->Size(); i++) {
             DataNode &node = dest->Node(i);
             if (node.Type() == kDataArray) {
-                DataArray *arr = node.UncheckedArray();
+                DataArray *arr = node.ArrayValue();
                 if (arr->Size() != 0) {
-                    DataArray *found = src->FindArray(arr->UncheckedInt(0), false);
+                    DataArray *found = src->FindArray(arr->Node(0).IntValue(), false);
                     if (found) {
                         DataReplaceTags(arr, found);
                         int inner_cnt = arr->Size();

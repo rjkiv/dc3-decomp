@@ -707,10 +707,10 @@ void ObjectDir::Iterate(DataArray *arr, bool b) {
     Symbol s2;
     Symbol s8;
     if (n.Type() == kDataSymbol) {
-        const char *str = n.UncheckedStr();
+        const char *str = n.StringValue();
         s2 = STR_TO_SYM(str);
     } else {
-        DataArray *a2 = n.UncheckedArray();
+        DataArray *a2 = n.ArrayValue();
         s2 = a2->Sym(0);
         s8 = a2->Sym(1);
     }

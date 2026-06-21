@@ -396,7 +396,7 @@ const DataNode *Hmx::Object::Property(DataArray *prop, bool fail) const {
             return propValue;
         else if (cnt == 2) {
             if (propValue->Type() == kDataArray) {
-                DataArray *ret = propValue->UncheckedArray();
+                DataArray *ret = propValue->ArrayValue();
                 return &ret->Node(prop->Int(1));
             }
         }
@@ -462,7 +462,7 @@ int Hmx::Object::PropertySize(DataArray *prop) {
             }
         }
         MILO_ASSERT(a->Type() == kDataArray, 0x21B);
-        return a->UncheckedArray()->Size();
+        return a->ArrayValue()->Size();
     }
     return 0;
 }
@@ -693,7 +693,7 @@ DataNode Hmx::Object::OnRemoveSink(DataArray *a) {
 DataNode Hmx::Object::OnGet(const DataArray *a) {
     const DataNode &node = a->Evaluate(2);
     if (node.Type() == kDataSymbol) {
-        const char *sym = node.UncheckedStr();
+        const char *sym = node.StringValue();
         const DataNode *prop = Property(STR_TO_SYM(sym), a->Size() < 4);
         if (prop)
             return *prop;
@@ -708,7 +708,7 @@ DataNode Hmx::Object::OnGet(const DataArray *a) {
                 a->Line()
             );
         }
-        const DataNode *prop = Property(node.UncheckedArray(), a->Size() < 4);
+        const DataNode *prop = Property(node.ArrayValue(), a->Size() < 4);
         if (prop)
             return *prop;
     }
@@ -726,7 +726,7 @@ DataNode Hmx::Object::OnSet(const DataArray *a) {
         const DataNode &n = a->Evaluate(i);
         if (n.Type() == kDataSymbol) {
             const DataNode &eval = a->Evaluate(i + 1);
-            const char *str = n.UncheckedStr();
+            const char *str = n.StringValue();
             SetProperty(STR_TO_SYM(str), eval);
         } else {
             if (n.Type() != kDataArray) {
@@ -739,7 +739,7 @@ DataNode Hmx::Object::OnSet(const DataArray *a) {
                     a->Line()
                 );
             }
-            SetProperty(n.UncheckedArray(), a->Evaluate(i + 1));
+            SetProperty(n.ArrayValue(), a->Evaluate(i + 1));
         }
     }
     return 0;

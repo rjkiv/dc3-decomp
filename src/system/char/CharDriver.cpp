@@ -26,7 +26,7 @@ CharClip *MyFindClip(const DataNode &n, ObjectDir *dir) {
     const DataNode &node = n.Evaluate();
     Hmx::Object *obj;
     if (node.Type() == kDataObject) {
-        obj = node.UncheckedObj();
+        obj = node.ObjectValue();
     } else {
         MILO_ASSERT(node.Type() == kDataSymbol || node.Type() == kDataString, 0x12C);
         obj = dir->FindObject(node.LiteralStr(), false, true);

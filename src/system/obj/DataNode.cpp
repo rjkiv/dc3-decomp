@@ -611,29 +611,29 @@ bool DataNode::Equal(const DataNode &n, DataArray *a, bool warn) const {
     if (firstType == secondType) {
         bool res;
         if (firstType == kDataString) {
-            res = streq(first.UncheckedStr(), second.UncheckedStr());
+            res = streq(first.StringValue(), second.StringValue());
         } else {
-            res = first.UncheckedInt() == second.UncheckedInt();
+            res = first.IntValue() == second.IntValue();
         }
         return res;
     } else {
         const char *objName = "";
         if (firstType == kDataInt && secondType == kDataFloat) {
-            return (float)first.UncheckedInt() == second.UncheckedFloat();
+            return (float)first.IntValue() == second.FloatValue();
         } else {
             if (firstType == kDataObject) {
-                Hmx::Object *obj = first.UncheckedObj();
+                Hmx::Object *obj = first.ObjectValue();
                 if (obj)
                     objName = obj->Name();
                 if (secondType == kDataSymbol) {
-                    return streq(objName, second.UncheckedStr());
+                    return streq(objName, second.StringValue());
                 } else if (secondType == kDataString) {
-                    return streq(objName, second.UncheckedStr());
+                    return streq(objName, second.StringValue());
                 }
             }
             if (firstType == kDataSymbol) {
                 if (secondType == kDataString) {
-                    return streq(first.UncheckedStr(), second.UncheckedStr());
+                    return streq(first.StringValue(), second.StringValue());
                 }
             } else if (secondType != kDataString && secondType != kDataSymbol) {
                 warn &= secondType != kDataObject; // i dunno lol

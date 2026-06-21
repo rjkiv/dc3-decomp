@@ -244,9 +244,9 @@ void DataArray::Remove(int index) {
 }
 
 void DataArray::Remove(const DataNode &dn) {
-    int searchType = dn.UncheckedInt();
+    int searchType = dn.IntValue();
     for (int lol = mSize - 1; lol >= 0; lol--) {
-        if (mNodes[lol].UncheckedInt() == searchType) {
+        if (mNodes[lol].IntValue() == searchType) {
             Remove(lol);
             return;
         }
@@ -254,9 +254,9 @@ void DataArray::Remove(const DataNode &dn) {
 }
 
 bool DataArray::Contains(const DataNode &dn) const {
-    int searchType = dn.UncheckedInt();
+    int searchType = dn.IntValue();
     for (int lol = mSize - 1; lol >= 0; lol--) {
-        if (mNodes[lol].UncheckedInt() == searchType) {
+        if (mNodes[lol].IntValue() == searchType) {
             return true;
         }
     }
@@ -419,8 +419,8 @@ DataArray *DataArray::FindArray(int tag, bool fail) const {
     DataNode *dn_end = &mNodes[mSize];
     for (dn = mNodes; dn < dn_end; dn++) {
         if (dn->Type() == kDataArray) {
-            const DataArray *arr = dn->UncheckedArray();
-            if (arr->UncheckedInt(0) == tag) {
+            const DataArray *arr = dn->ArrayValue();
+            if (arr->Node(0).IntValue() == tag) {
                 return (DataArray *)arr;
             }
         }
@@ -574,16 +574,16 @@ DataNode DataArray::Execute(bool fail) {
     DataNode &node = (DataNode &)Evaluate(0);
     switch (node.Type()) {
     case kDataFunc: {
-        return node.UncheckedFunc()(this);
+        return node.FuncValue()(this);
     }
     case kDataObject: {
-        if (node.UncheckedObj()) {
-            return node.UncheckedObj()->Handle(this, true);
+        if (node.ObjectValue()) {
+            return node.ObjectValue()->Handle(this, true);
         }
         break;
     }
     case kDataSymbol: {
-        const char *str = node.UncheckedStr();
+        const char *str = node.StringValue();
         Hmx::Object *obj = gDataDir->FindObject(str, true, true);
         if (obj) {
             return obj->Handle(this, true);
@@ -597,7 +597,7 @@ DataNode DataArray::Execute(bool fail) {
         break;
     }
     case kDataString: {
-        Hmx::Object *object = gDataDir->FindObject(node.UncheckedStr(), true, true);
+        Hmx::Object *object = gDataDir->FindObject(node.StringValue(), true, true);
         if (object) {
             return object->Handle(this, true);
         }
@@ -650,7 +650,7 @@ DataNode DataArray::ExecuteScript(
     int size = mSize;
 
     if (index < (size - 1) && mNodes[index].Type() == kDataArray) {
-        DataArray *arr = mNodes[index].UncheckedArray();
+        DataArray *arr = mNodes[index].ArrayValue();
         numVars = arr->Size();
         MILO_ASSERT(_args != NULL || numVars == 0, 0x4E3);
 
@@ -717,7 +717,7 @@ void DataArray::Load(BinStream &d) {
         } else {
             DataArray *array = nullptr;
             if (node.Type() == kDataSymbol
-                && (array = DataGetMacro(node.UncheckedSym()))) {
+                && (array = DataGetMacro(node.SymbolValue()))) {
                 size += array->Size() - 1;
                 {
                     MemDoTempAllocations tmp;
@@ -735,16 +735,16 @@ void DataArray::Load(BinStream &d) {
             } else if (node.Type() == kDataDefine) {
                 DataNode macro;
                 d >> macro;
-                DataSetMacro(node.UncheckedSym(), macro.Array(this));
+                DataSetMacro(node.SymbolValue(), macro.Array(this));
                 size -= 2;
             } else if (node.Type() == kDataUndef) {
-                DataSetMacro(node.UncheckedSym(), nullptr);
+                DataSetMacro(node.SymbolValue(), nullptr);
                 size -= 1;
             } else if (node.Type() == kDataIfdef) {
-                gConditional.push_back(DataGetMacro(node.UncheckedSym()) != nullptr);
+                gConditional.push_back(DataGetMacro(node.SymbolValue()) != nullptr);
                 size -= 1;
             } else if (node.Type() == kDataIfndef) {
-                gConditional.push_back(DataGetMacro(node.UncheckedSym()) == nullptr);
+                gConditional.push_back(DataGetMacro(node.SymbolValue()) == nullptr);
                 size -= 1;
             } else if (node.Type() == kDataElse) {
                 gConditional.back() = !gConditional.back();
@@ -753,7 +753,7 @@ void DataArray::Load(BinStream &d) {
                 gConditional.pop_back();
                 size -= 1;
             } else if (node.Type() == kDataInclude || node.Type() == kDataMerge) {
-                const char *path = node.UncheckedStr();
+                const char *path = node.StringValue();
                 bool readFile = false;
                 DataArray *macro = DataGetMacro(path);
                 if (!macro) {

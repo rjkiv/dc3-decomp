@@ -133,7 +133,7 @@ int DirLoader::ClassAndNameSort::ClassIndex(Hmx::Object *obj) {
     Symbol name = obj->ClassName();
     for (int i = cfg->Size() - 1; i != 0; i--) {
         DataNode &n = cfg->Node(i);
-        if ((unsigned int)n.UncheckedInt() == name) {
+        if ((unsigned int)n.IntValue() == name) {
             return i;
         }
     }

@@ -113,13 +113,13 @@ void ScriptTask::UpdateVarsObjects(DataArray *d) {
         DataType curType = d->Type(i);
         Hmx::Object *obj = nullptr;
         if (curType == kDataObject) {
-            obj = d->UncheckedObj(i);
+            obj = d->Node(i).ObjectValue();
         } else if (curType == kDataSymbol || curType == kDataString) {
             const char *name = d->LiteralStr(i);
             ObjectDir *search = mThis ? mThis->DataDir() : ObjectDir::Main();
             obj = search->FindObject(name, true, true);
         } else if (curType == kDataVar) {
-            DataNode *var = d->UncheckedVar(i);
+            DataNode *var = d->Node(i).VarValue();
             FOREACH (it, mVars) {
                 if (it->var == var) {
                     var = nullptr;
@@ -130,7 +130,7 @@ void ScriptTask::UpdateVarsObjects(DataArray *d) {
                 mVars.push_back(Var(var));
             }
         } else if (curType == kDataArray || curType == kDataCommand) {
-            UpdateVarsObjects(d->UncheckedArray(i));
+            UpdateVarsObjects(d->Node(i).ArrayValue());
         }
 
         if (obj && obj != mThis && mObjects.find(obj) == mObjects.end()) {

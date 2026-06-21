@@ -159,7 +159,7 @@ void DataEventList::InsertEvent(float start, float end, const DataNode &node, in
         CompEv event;
         event.start = start;
         event.end = end;
-        event.value = node.UncheckedInt();
+        event.value = node.IntValue();
         if (mSize == 0) {
             mComps.reserve(32);
             mCompType = node.Type();

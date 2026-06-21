@@ -300,7 +300,7 @@ void RndConsole::Clear(int iii) {
         }
     } else if (iii == 0) {
         FOREACH (it, mBreakpoints) {
-            if (it->parent->UncheckedArray(it->index) == mDebugging) {
+            if (it->parent->Node(it->index).ArrayValue() == mDebugging) {
                 mBreakpoints.erase(it);
                 return;
             }
@@ -353,7 +353,7 @@ void RndConsole::SetBreak(DataArray *arr) {
         DataArray *arr9 = gCallStackPtr[-3];
         DataArray *arr7 = gCallStackPtr[-2];
         for (int i = 0; i < arr9->Size(); i++) {
-            if (arr9->Type(i) == kDataCommand && arr9->UncheckedArray(i) == arr7) {
+            if (arr9->Type(i) == kDataCommand && arr9->Node(i).ArrayValue() == arr7) {
                 InsertBreak(arr9, i);
                 return;
             }
@@ -365,7 +365,7 @@ void RndConsole::SetBreak(DataArray *arr) {
 void RndConsole::Break(DataArray *arr) {
     if (mDebugging)
         MILO_FAIL("Can't break while debugging, did you mean set_break?");
-    if (arr->UncheckedFunc(0) != DataNop) {
+    if (arr->Node(0).FuncValue() != DataNop) {
         bool drawing = TheRnd.Drawing();
         bool showing = mShowing;
         Hmx::Color oldClear = TheRnd.GetClearColor();
@@ -380,7 +380,7 @@ void RndConsole::Break(DataArray *arr) {
         mLevel = 0;
         gPreExecuteFunc = nullptr;
         mInput->Clear();
-        if (arr->UncheckedFunc(0) == DataBreak) {
+        if (arr->Node(0).FuncValue() == DataBreak) {
             *mInput << "Break at ";
         } else
             *mInput << "Step to ";

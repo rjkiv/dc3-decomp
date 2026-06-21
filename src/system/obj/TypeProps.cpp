@@ -10,7 +10,7 @@
 DataNode *TypeProps::KeyValue(Symbol key, bool fail) const {
     if (mMap) {
         for (int i = mMap->Size() - 2; i >= 0; i -= 2) {
-            if ((int)mMap->Node(i).UncheckedStr() == (int)key.Str()) {
+            if ((int)mMap->Node(i).StringValue() == (int)key.Str()) {
                 return &mMap->Node(i + 1);
             }
         }
@@ -46,10 +46,10 @@ int TypeProps::Size() const {
 void TypeProps::ClearKeyValue(Symbol key) {
     if (mMap) {
         for (int i = mMap->Size() - 2; i >= 0; i -= 2) {
-            if (mMap->UncheckedInt(i) == key) {
+            if (mMap->Node(i).IntValue() == key) {
                 DataNode &val = mMap->Node(i + 1);
                 if (val.Type() == kDataObject) {
-                    Hmx::Object *obj = val.UncheckedObj();
+                    Hmx::Object *obj = val.ObjectValue();
                     if (obj) {
                         mObjects.remove(obj);
                     }
@@ -68,7 +68,7 @@ void TypeProps::ClearKeyValue(Symbol key) {
 
 void TypeProps::SetKeyValue(Symbol key, const DataNode &value, bool b) {
     if (b && value.Type() == kDataObject) {
-        Hmx::Object *obj = value.UncheckedObj();
+        Hmx::Object *obj = value.ObjectValue();
         if (obj) {
             mObjects.push_back(obj);
         }
@@ -80,10 +80,10 @@ void TypeProps::SetKeyValue(Symbol key, const DataNode &value, bool b) {
     } else {
         int size = mMap->Size();
         for (int i = size - 2; i >= 0; i -= 2) {
-            if (mMap->UncheckedInt(i) == key) {
+            if (mMap->Node(i).IntValue() == key) {
                 DataNode &n = mMap->Node(i + 1);
                 if (n.Type() == kDataObject) {
-                    Hmx::Object *obj = n.UncheckedObj();
+                    Hmx::Object *obj = n.ObjectValue();
                     if (obj) {
                         mObjects.remove(obj);
                     }
@@ -99,7 +99,7 @@ void TypeProps::SetKeyValue(Symbol key, const DataNode &value, bool b) {
 }
 
 void TypeProps::ReplaceObject(DataNode &n, Hmx::Object *from, Hmx::Object *to) {
-    Hmx::Object *fromObj = n.UncheckedObj();
+    Hmx::Object *fromObj = n.ObjectValue();
     if (fromObj == from) {
         mObjects.remove(fromObj);
         n = to;
@@ -118,7 +118,7 @@ bool TypeProps::Replace(ObjRef *from, Hmx::Object *to) {
         if (node.Type() == kDataObject) {
             ReplaceObject(node, fromObj, to);
         } else if (node.Type() == kDataArray) {
-            DataArray *inner = node.UncheckedArray();
+            DataArray *inner = node.ArrayValue();
             for (int j = inner->Size() - 1; j >= 0; j--) {
                 DataNode &node2 = inner->Node(j);
                 if (node2.Type() == kDataObject) {
@@ -140,16 +140,16 @@ void TypeProps::AddRefObjects() {
         for (int i = mMap->Size() - 1; i > 0; i -= 2) {
             DataNode &node = mMap->Node(i);
             if (node.Type() == kDataObject) {
-                Hmx::Object *obj = node.UncheckedObj();
+                Hmx::Object *obj = node.ObjectValue();
                 if (obj) {
                     mObjects.push_back(obj);
                 }
             } else if (node.Type() == kDataArray) {
-                DataArray *inner = node.UncheckedArray();
+                DataArray *inner = node.ArrayValue();
                 for (int j = inner->Size() - 1; j >= 0; j--) {
                     DataNode &node2 = inner->Node(j);
                     if (node2.Type() == kDataObject) {
-                        Hmx::Object *obj = node2.UncheckedObj();
+                        Hmx::Object *obj = node2.ObjectValue();
                         if (obj)
                             mObjects.push_back(obj);
                     }
@@ -180,7 +180,7 @@ DataArray *TypeProps::GetArray(Symbol prop) {
         cloned->Release();
     } else {
         MILO_ASSERT(n->Type() == kDataArray, 0x1F);
-        ret = n->UncheckedArray();
+        ret = n->ArrayValue();
     }
     return ret;
 }
@@ -188,14 +188,14 @@ DataArray *TypeProps::GetArray(Symbol prop) {
 void TypeProps::SetArrayValue(Symbol prop, int i, const DataNode &value) {
     DataNode &n = GetArray(prop)->Node(i);
     if (n.Type() == kDataObject) {
-        Hmx::Object *obj = n.UncheckedObj();
+        Hmx::Object *obj = n.ObjectValue();
         if (obj) {
             mObjects.remove(obj);
         }
     }
     n = value;
     if (n.Type() == kDataObject) {
-        Hmx::Object *obj = n.UncheckedObj();
+        Hmx::Object *obj = n.ObjectValue();
         if (obj) {
             mObjects.push_back(obj);
         }
@@ -206,7 +206,7 @@ void TypeProps::RemoveArrayValue(Symbol prop, int i) {
     DataArray *a = GetArray(prop);
     DataNode &n = a->Node(i);
     if (n.Type() == kDataObject) {
-        Hmx::Object *obj = n.UncheckedObj();
+        Hmx::Object *obj = n.ObjectValue();
         if (obj) {
             mObjects.remove(obj);
         }
@@ -218,7 +218,7 @@ void TypeProps::InsertArrayValue(Symbol prop, int i, const DataNode &value) {
     DataArray *array = GetArray(prop);
     array->Insert(i, value);
     if (value.Type() == kDataObject) {
-        Hmx::Object *obj = value.UncheckedObj();
+        Hmx::Object *obj = value.ObjectValue();
         if (obj) {
             mObjects.push_back(obj);
         }

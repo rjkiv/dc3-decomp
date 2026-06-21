@@ -142,16 +142,17 @@ public:
      */
     const DataNode &Evaluate() const;
 
-    // these were implemented to match up in retail
-    // please do not use these in regular code
-    int UncheckedInt() const { return mValue.integer; }
-    float UncheckedFloat() const { return mValue.real; }
-    const char *UncheckedStr() const { return mValue.symbol; }
-    Symbol UncheckedSym() const { return STR_TO_SYM(mValue.symbol); }
-    Hmx::Object *UncheckedObj() const { return mValue.object; }
-    DataArray *UncheckedArray() const { return mValue.array; }
-    DataNode *UncheckedVar() const { return mValue.var; }
-    DataFunc *UncheckedFunc() const { return mValue.func; }
+    // turns out, these were actual functions HMX implemented (a la RBVR)
+    // only use these if you know for sure about the underlying data type
+    // DataNode methods only too, nothing for DataArray
+    int IntValue() const { return mValue.integer; }
+    float FloatValue() const { return mValue.real; }
+    const char *StringValue() const { return mValue.symbol; }
+    Symbol SymbolValue() const { return STR_TO_SYM(mValue.symbol); }
+    Hmx::Object *ObjectValue() const { return mValue.object; }
+    DataArray *ArrayValue() const { return mValue.array; }
+    DataNode *VarValue() const { return mValue.var; }
+    DataFunc *FuncValue() const { return mValue.func; }
 
     /** Evalute this DataNode, and return the resulting int.
      * @param [in] source The DataArray this DataNode comes from.
@@ -299,13 +300,6 @@ public:
     int Size() const { return mSize; }
     int Line() const { return mLine; }
     int RefCount() const { return mRefs; }
-
-    int UncheckedInt(int i) const { return Node(i).UncheckedInt(); }
-    Hmx::Object *UncheckedObj(int i) const { return Node(i).UncheckedObj(); }
-    DataNode *UncheckedVar(int i) const { return Node(i).UncheckedVar(); }
-    DataArray *UncheckedArray(int i) const { return Node(i).UncheckedArray(); }
-    DataFunc *UncheckedFunc(int i) const { return Node(i).UncheckedFunc(); }
-    const char *UncheckedStr(int i) const { return Node(i).UncheckedStr(); }
 
     /** Get the DataType at the given node index.
      * @param [in] i The node index.

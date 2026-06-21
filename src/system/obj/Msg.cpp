@@ -130,7 +130,7 @@ Symbol MsgSinks::GetPropSyncHandler(DataArray *arr) {
             bool ret;
             if (array->Size() != arr->Size()) {
                 for (int j = 0; j < array->Size(); j++) {
-                    if (array->UncheckedInt(j) != arr->UncheckedInt(j)) {
+                    if (array->Node(j).IntValue() != arr->Node(j).IntValue()) {
                         goto lol;
                     }
                 }

@@ -611,7 +611,7 @@ DataNode HamCharacter::OnCamTeleport(DataArray *a) {
 DataNode HamCharacter::OnSoundPlay(DataArray const *a) {
     auto &val = a->Node(2).Evaluate();
     if (val.Type() == kDataObject) {
-        auto obj = val.UncheckedObj();
+        auto obj = val.ObjectValue();
         if (!obj) {
             return 0;
         }
