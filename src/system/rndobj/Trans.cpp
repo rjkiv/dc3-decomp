@@ -4,6 +4,7 @@
 #include "math/Mtx.h"
 #include "obj/Object.h"
 #include "os/System.h"
+#include "rndobj/Cam.h"
 #include "rndobj/TransAnim.h"
 #include "rndobj/Utl.h"
 #include "obj/Data.h"
@@ -147,24 +148,16 @@ BEGIN_LOADS(RndTransformable)
         }
     }
 
-    // if (d.rev > 8) {
-    //     d >> (int &)mConstraint;
-    // }
-
-    switch (d.rev) {
-    default:
+    if (d.rev > 8) {
         d >> (int &)mConstraint;
-        break;
-    case 7:
-    case 8:
+    } else if (d.rev > 6) {
         d >> (int &)mConstraint;
         if (mConstraint == 4) {
             mConstraint = kConstraintNone;
-        } else if (mConstraint == 2 || mConstraint == 3 || mConstraint == 4) {
+        } else if (mConstraint > 1 && mConstraint < 5) {
             mConstraint = (Constraint)(mConstraint + kConstraintLocalRotate);
         }
-        break;
-    case 6:
+    } else if (d.rev == 6) {
         d >> (int &)mConstraint;
         mPreserveScale = mConstraint > kConstraintTargetWorld;
         if (mConstraint > 9) {
@@ -174,14 +167,10 @@ BEGIN_LOADS(RndTransformable)
         } else if (mConstraint == 2) {
             mConstraint = kConstraintParentWorld;
         }
-        break;
-    case 3:
-    case 4:
-    case 5:
+    } else if (d.rev >= 3) {
         int unkb0;
         d >> unkb0;
-        mPreserveScale = unkb0;
-
+        mPreserveScale = unkb0 & 0x80;
         switch (unkb0) {
         case 0x4:
         case 0x84:
@@ -206,10 +195,8 @@ BEGIN_LOADS(RndTransformable)
             mConstraint = kConstraintNone;
             break;
         }
-        break;
-    case 1:
-    case 2: {
-        int numb4;
+    } else if (d.rev > 0) {
+        unsigned int numb4;
         d >> numb4;
         int sp80[6] = { 0, 0, 0, 5, 6, 7 };
         if (numb4 >= 0x18) {
@@ -217,12 +204,7 @@ BEGIN_LOADS(RndTransformable)
         } else {
             mConstraint = (Constraint)sp80[numb4];
         }
-        break;
     }
-    case 0:
-        break;
-    }
-
     if (d.rev > 0 && d.rev < 7) {
         Vector3 v;
         d >> v;
@@ -656,4 +638,84 @@ const Transform &RndTransformable::WorldXfm_Force() {
     else
         UpdatedWorldXfm();
     return mWorldXfm;
+}
+
+void RndTransformable::ApplyDynamicConstraint() {
+    if (mConstraint == kConstraintTargetWorld) {
+        if (mTarget) {
+            mWorldXfm = mTarget->WorldXfm();
+        }
+    } else if (mConstraint == kConstraintShadowTarget) {
+        Transform tf40;
+        if (mTarget) {
+            Transpose(mTarget->WorldXfm(), tf40);
+            Multiply(mWorldXfm, tf40, mWorldXfm);
+        } else {
+            tf40.Reset();
+        }
+        Plane pl50;
+        Multiply(sShadowPlane, tf40, pl50);
+        float planeB;
+        if (pl50.b != 0) {
+            planeB = 1 / pl50.b;
+        } else {
+            planeB = 0.001f;
+        }
+        tf40.m.Set(1, -pl50.a * planeB, 0, 0, 0, 0, 0, -pl50.c * planeB, 1);
+        tf40.v.Set(0, -pl50.d * planeB, 0);
+        Multiply(mWorldXfm, tf40, mWorldXfm);
+        Multiply(mWorldXfm, mTarget->WorldXfm(), mWorldXfm);
+    } else if (RndCam::Current()) {
+        Vector3 v60;
+        RndTransformable *cur = mTarget ? mTarget.Ptr() : RndCam::Current();
+        const Transform &curWorld = cur->WorldXfm();
+        if (mPreserveScale) {
+            MakeScale(mWorldXfm.m, v60);
+        }
+        switch (mConstraint) {
+        case kConstraintLookAtTarget:
+            if (mTarget) {
+                Subtract(mTarget->WorldXfm().v, mWorldXfm.v, mWorldXfm.m.y);
+                Normalize(mWorldXfm.m, mWorldXfm.m);
+            }
+            break;
+        case kConstraintBillboardZ:
+            Subtract(mWorldXfm.v, curWorld.v, mWorldXfm.m.y);
+            if (mPreserveScale) {
+                Normalize(mWorldXfm.m.z, mWorldXfm.m.z);
+            }
+            Cross(mWorldXfm.m.y, mWorldXfm.m.z, mWorldXfm.m.x);
+            Normalize(mWorldXfm.m.x, mWorldXfm.m.x);
+            Cross(mWorldXfm.m.z, mWorldXfm.m.x, mWorldXfm.m.y);
+            break;
+        case kConstraintBillboardXZ:
+            Subtract(mWorldXfm.v, curWorld.v, mWorldXfm.m.y);
+            Normalize(mWorldXfm.m.y, mWorldXfm.m.y);
+            Cross(mWorldXfm.m.y, mWorldXfm.m.z, mWorldXfm.m.x);
+            Normalize(mWorldXfm.m.x, mWorldXfm.m.x);
+            Cross(mWorldXfm.m.x, mWorldXfm.m.y, mWorldXfm.m.z);
+            break;
+        case kConstraintBillboardXYZ:
+            Subtract(mWorldXfm.v, curWorld.v, mWorldXfm.m.y);
+            mWorldXfm.m.z = curWorld.m.z;
+            Normalize(mWorldXfm.m, mWorldXfm.m);
+            break;
+        case kConstraintFastBillboardXYZ:
+            mWorldXfm.m = curWorld.m;
+            break;
+        case kConstraintSkyBox:
+            Add(mLocalXfm.v, curWorld.v, mWorldXfm.v);
+            mWorldXfm.m = mLocalXfm.m;
+            break;
+        case kConstraintSkyBoxXY:
+            Add(mLocalXfm.v, curWorld.v, mWorldXfm.v);
+            mWorldXfm.v.z = mLocalXfm.v.z;
+            mWorldXfm.m = mLocalXfm.m;
+            break;
+        }
+        if (mPreserveScale) {
+            Scale(v60, mWorldXfm.m, mWorldXfm.m);
+        }
+    }
+    SetDirty_Force();
 }
