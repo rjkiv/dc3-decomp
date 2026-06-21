@@ -235,9 +235,7 @@ BEGIN_LOADS(FlowSetProperty)
         d >> (int &)t;
         if (t == kDataObject) {
             Flow *flow = GetOwnerFlow();
-            DirLoader *dl = flow->Loader();
-            ObjectDir *dir = dl ? dl->ProxyDir() : flow->Dir();
-            mValue = FlowNode::LoadObjectFromMainOrDir(bs, dir);
+            mValue = FlowNode::LoadObjectFromMainOrDir(bs, flow->LoadingDir());
         } else {
             DataNode n;
             d >> n;
@@ -251,9 +249,7 @@ BEGIN_LOADS(FlowSetProperty)
             if (!flow) {
                 flow = dynamic_cast<Flow *>(this);
             }
-            DirLoader *dl = flow->Loader();
-            ObjectDir *dir = dl ? dl->ProxyDir() : flow->Dir();
-            mValue = FlowNode::LoadObjectFromMainOrDir(bs, dir);
+            mValue = FlowNode::LoadObjectFromMainOrDir(bs, flow->LoadingDir());
         } else {
             DataNode n;
             d >> n;

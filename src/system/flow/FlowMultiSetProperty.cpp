@@ -1,6 +1,7 @@
 #include "flow/FlowMultiSetProperty.h"
 #include "flow/DrivenPropertyEntry.h"
 #include "flow/FlowNode.h"
+#include "flow/Flow.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/DirLoader.h"
@@ -47,9 +48,7 @@ BEGIN_LOADS(FlowMultiSetProperty)
     LOAD_REVS(bs)
     ASSERT_REVS(0, 0)
     LOAD_SUPERCLASS(FlowNode)
-    DirLoader *dl = Dir()->Loader();
-    ObjectDir *dir = dl ? dl->ProxyDir() : Dir()->Dir();
-    unk5c.Load(d.stream, true, dir);
+    unk5c.Load(d.stream, true, static_cast<Flow *>(Dir())->LoadingDir());
     d >> unk70 >> unk78;
 END_LOADS
 

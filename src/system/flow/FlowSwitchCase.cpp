@@ -78,9 +78,7 @@ BEGIN_LOADS(FlowSwitchCase)
             if (!flow) {
                 flow = dynamic_cast<Flow *>(this);
             }
-            DirLoader *dl = flow->Loader();
-            ObjectDir *dir = dl ? dl->ProxyDir() : flow->Dir();
-            mToValue = FlowNode::LoadObjectFromMainOrDir(bs, dir);
+            mToValue = FlowNode::LoadObjectFromMainOrDir(bs, flow->LoadingDir());
         } else {
             DataNode n;
             d >> n;
@@ -100,9 +98,7 @@ BEGIN_LOADS(FlowSwitchCase)
             if (!flow) {
                 flow = dynamic_cast<Flow *>(this);
             }
-            DirLoader *dl = flow->Loader();
-            ObjectDir *dir = dl ? dl->ProxyDir() : flow->Dir();
-            mFromValue = FlowNode::LoadObjectFromMainOrDir(bs, dir);
+            mFromValue = FlowNode::LoadObjectFromMainOrDir(bs, flow->LoadingDir());
         } else {
             DataNode n;
             d >> n;

@@ -332,9 +332,7 @@ void Flow::PostLoad(BinStream &bs) {
                     if (!owner) {
                         owner = this;
                     }
-                    DirLoader *dl = owner->Loader();
-                    ObjectDir *loadingDir = dl ? dl->ProxyDir() : owner->Dir();
-                    n = FlowNode::LoadObjectFromMainOrDir(bs, loadingDir);
+                    n = FlowNode::LoadObjectFromMainOrDir(bs, owner->LoadingDir());
                 } else {
                     DataNode n2;
                     d >> n2;
@@ -423,8 +421,7 @@ void Flow::SyncObjects() {
     }
     ObjectDir *loadingDir = topFlow->Dir();
     if (dynamic_cast<Flow *>(loadingDir)) {
-        DirLoader *dl = topFlow->Loader();
-        loadingDir = dl ? dl->ProxyDir() : topFlow->Dir();
+        loadingDir = topFlow->LoadingDir();
     }
     if (loadingDir && loadingDir != this) {
         FOREACH (it, mDynamicProperties) {

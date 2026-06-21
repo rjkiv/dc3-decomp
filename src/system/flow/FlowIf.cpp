@@ -68,9 +68,7 @@ BEGIN_LOADS(FlowIf)
             if (!owner) {
                 owner = dynamic_cast<Flow *>(this);
             }
-            DirLoader *dl = owner->Loader();
-            ObjectDir *dir = dl ? dl->ProxyDir() : owner->Dir();
-            mValue1 = LoadObjectFromMainOrDir(d.stream, dir);
+            mValue1 = LoadObjectFromMainOrDir(d.stream, owner->LoadingDir());
         } else {
             DataNode val;
             val.Load(bs);
@@ -83,9 +81,7 @@ BEGIN_LOADS(FlowIf)
             if (!owner) {
                 owner = dynamic_cast<Flow *>(this);
             }
-            DirLoader *dl = owner->Loader();
-            ObjectDir *dir = dl ? dl->ProxyDir() : owner->Dir();
-            mValue2 = LoadObjectFromMainOrDir(d.stream, dir);
+            mValue2 = LoadObjectFromMainOrDir(d.stream, owner->LoadingDir());
         } else {
             DataNode val;
             val.Load(bs);

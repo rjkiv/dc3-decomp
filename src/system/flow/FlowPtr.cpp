@@ -52,8 +52,7 @@ Hmx::Object *FlowPtrBase::GetObject() {
 ObjectDir *FlowPtrGetLoadingDir(ObjectDir *dir) {
     Flow *flow = dynamic_cast<Flow *>(dir);
     if (flow) {
-        DirLoader *dl = flow->Loader();
-        return dl ? dl->ProxyDir() : flow->Dir();
+        return flow->LoadingDir();
     } else
         return nullptr;
 }

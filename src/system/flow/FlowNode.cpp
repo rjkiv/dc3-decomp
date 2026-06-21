@@ -8,6 +8,7 @@
 #include "obj/Utl.h"
 #include "os/Debug.h"
 #include "flow/Flow.h"
+#include "utl/BinStream.h"
 #include "utl/Str.h"
 
 float FlowNode::sIntensity = 1.0f;
@@ -330,4 +331,72 @@ void FlowNode::ActivateLabel(FlowLabel *label) {
     if (!label->Activate(this)) {
         mRunningNodes.remove(label);
     }
+}
+
+FlowNode *FlowNode::DuplicateChild(FlowNode *n) {
+    Flow *flow = dynamic_cast<Flow *>(n);
+    if (flow) {
+        Flow *newFlow =
+            dynamic_cast<Flow *>(Hmx::Object::NewObject(Flow::StaticClassName()));
+        newFlow->SetProxyFile(flow->ProxyFile(), false);
+        FOREACH (it, newFlow->DynamicPropEntries()) {
+            DataArrayPtr ptr(new DataArray(1));
+            ptr->Node(0) = Symbol(it->mName.c_str());
+            const DataNode *prop = flow->Property(it->mName.c_str(), false);
+            if (prop) {
+                newFlow->SetProperty(ptr, *prop);
+            }
+        }
+        FOREACH (it, flow->ChildNodes()) {
+            if ((*it)->ClassName() == FlowLabel::StaticClassName()
+                && (*it)->Dir() != newFlow) {
+                FlowLabel *newLabel = dynamic_cast<FlowLabel *>(
+                    Hmx::Object::NewObject(FlowLabel::StaticClassName())
+                );
+                newLabel->InitObject();
+                newLabel->Copy(*it, kCopyDeep);
+                newLabel->SetParent(newFlow, true);
+                newLabel->SetName(NextName("l", flow->Dir()), flow->Dir());
+            }
+        }
+        return newFlow;
+    } else {
+        Hmx::Object *obj = Hmx::Object::NewObject(n->ClassName());
+        obj->InitObject();
+        FlowNode *newNode = dynamic_cast<FlowNode *>(obj);
+        newNode->Copy(n, kCopyDeep);
+        newNode->SetName(NextName("n", n->Dir()), n->Dir());
+        return newNode;
+    }
+}
+
+Hmx::Object *FlowNode::LoadObjectFromMainOrDir(BinStream &bs, ObjectDir *dir) {
+    Symbol name;
+    bs >> name;
+    if (name == "") {
+        return nullptr;
+    }
+    Hmx::Object *found = ObjectDir::Main()->Find<Hmx::Object>(name.Str(), false);
+    if (found) {
+        return found;
+    }
+    found = dir->Find<Hmx::Object>(name.Str(), false);
+    if (found) {
+        return found;
+    }
+    Flow *flow = dynamic_cast<Flow *>(dir);
+    if (!flow) {
+        return nullptr;
+    }
+    if (flow->LoadingDir()) {
+        found = flow->LoadingDir()->Find<Hmx::Object>(name.Str(), false);
+    }
+    if (found) {
+        return found;
+    }
+    flow = dynamic_cast<Flow *>(flow->LoadingDir());
+    if (flow && flow->LoadingDir()) {
+        found = flow->LoadingDir()->Find<Hmx::Object>(name.Str(), false);
+    }
+    return found;
 }
