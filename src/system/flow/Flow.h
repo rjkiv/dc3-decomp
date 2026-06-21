@@ -98,6 +98,8 @@ public:
 protected:
     Flow();
 
+    bool NoProxyFile() { return ProxyFile().empty(); }
+
     void ToggleRunning(int);
     void OnReflectedPropertyChanged(DataArray *);
     void OnInternalPropertyChanged(DataArray *);

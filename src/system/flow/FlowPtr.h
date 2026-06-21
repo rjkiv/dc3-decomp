@@ -46,7 +46,6 @@ public:
     FlowPtr(Hmx::Object *owner, T *ptr = nullptr)
         : FlowPtrBase(ptr ? ptr->Name() : 0, dynamic_cast<FlowNode *>(owner)),
           mObjPtr(owner, ptr) {}
-    FlowPtr(const FlowPtr &);
     ~FlowPtr() {}
 
     // see: merged_82401EF0
@@ -94,6 +93,8 @@ public:
         }
     }
 
+    void Load(BinStream &bs) { mObjPtr = LoadObject(bs); }
+
 private:
     T *Get() {
         if (mState >= -1 && RefreshParamObject()) {
@@ -112,7 +113,10 @@ BinStream &operator<<(BinStream &bs, const FlowPtr<T> &ptr) {
 }
 
 template <typename T>
-BinStream &operator>>(BinStream &, FlowPtr<T> &);
+BinStream &operator>>(BinStream &bs, FlowPtr<T> &ptr) {
+    ptr.Load(bs);
+    return bs;
+}
 
 template <class T>
 bool PropSync(FlowPtr<T> &ptr, DataNode &node, DataArray *prop, int i, PropOp op) {

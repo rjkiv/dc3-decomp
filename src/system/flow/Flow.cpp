@@ -32,9 +32,24 @@
 #include "os/File.h"
 #include "rndobj/Poll.h"
 #include "utl/BinStream.h"
+#include "utl/Std.h"
 #include "utl/Symbol.h"
 
 bool Flow::sReflectingProperty;
+
+void fakepushbackflowlmao(std::vector<Hmx::Object *> objs) { objs.push_back(nullptr); }
+
+void ScanForOutPorts(ObjPtrVec<FlowOutPort> &ports, FlowNode *node, Flow *flow) {
+    FOREACH (it, node->ChildNodes()) {
+        FlowOutPort *curPort = dynamic_cast<FlowOutPort *>((FlowNode *)*it);
+        if (curPort) {
+            if (curPort->GetOwnerFlow() == flow) {
+                ports.push_back(curPort);
+            }
+        }
+        ScanForOutPorts(ports, *it, flow);
+    }
+}
 
 #pragma region DynamicPropertyEntry
 
@@ -69,7 +84,23 @@ BEGIN_CUSTOM_PROPSYNC(Flow::DynamicPropertyEntry)
     SYNC_PROP_SET(get_symbol_list, o.GetSymbolList(), )
 END_CUSTOM_PROPSYNC
 
-BinStream &operator<<(BinStream &bs, const Flow::DynamicPropertyEntry &entry);
+BinStream &operator<<(BinStream &bs, const Flow::DynamicPropertyEntry &entry) {
+    bs << entry.mName << entry.mType << entry.mDefaultVal << entry.mHelp
+       << entry.mObjectClass << entry.mExposed << entry.unk24 << entry.mObjectType;
+    return bs;
+}
+
+BinStreamRev &operator>>(BinStreamRev &d, Flow::DynamicPropertyEntry &entry) {
+    d >> entry.mName >> (int &)entry.mType;
+    d.stream >> entry.mDefaultVal >> entry.mHelp >> entry.mObjectClass;
+    if (d.rev > 1) {
+        d >> entry.mExposed >> entry.unk24;
+    }
+    if (d.rev > 5) {
+        d >> entry.mObjectType;
+    }
+    return d;
+}
 
 void Flow::DynamicPropertyEntry::SetClassFilter(DataNode &filter) {
     if (filter.Sym() != mObjectClass) {
@@ -118,8 +149,7 @@ Flow::Flow()
 
 Flow::~Flow() {
     if (!mRunningNodes.empty()) {
-        Flow *f = this;
-        if (f->ProxyFile().empty()) {
+        if (NoProxyFile()) {
             FlowQueueable::Deactivate(true);
         }
     }
@@ -240,8 +270,7 @@ BEGIN_COPYS(Flow)
         COPY_MEMBER(mPrivate)
         COPY_MEMBER(mHardStop)
         RefreshPortLabelLists();
-        Flow *f = this;
-        if (!f->ProxyFile().empty()) {
+        if (!NoProxyFile()) {
             mInterrupt = (QueueState)5;
         }
     END_COPYING_MEMBERS
@@ -253,10 +282,7 @@ BEGIN_LOADS(Flow)
 END_LOADS
 
 void Flow::PreSave(BinStream &bs) {
-    Flow *f = this;
-    SetInlineProxyType(
-        !f->ProxyFile().empty() && IsProxy() ? kInlineCached : kInlineAlways
-    );
+    SetInlineProxyType(!NoProxyFile() && IsProxy() ? kInlineCached : kInlineAlways);
 }
 
 INIT_REVS(7, 2)
@@ -280,10 +306,110 @@ void Flow::PreLoad(BinStream &bs) {
 
 void Flow::PostLoad(BinStream &bs) {
     BinStreamRev d(bs, bs.PopRev(this));
-    ObjectDir::PostLoad(bs);
+    ObjectDir::PostLoad(d.stream);
     if (IsProxy()) {
         int unkf0 = 0;
-        bs >> unkf0;
+        d >> unkf0;
+        if (d.rev < 5) {
+            for (int i = 0; i < unkf0; i++) {
+                Symbol s;
+                d >> s;
+                DataNode n;
+                d >> n;
+                if (!Property(s, false) && s != "") {
+                    SetProperty(s, n);
+                }
+            }
+        } else {
+            for (int i = 0; i < unkf0; i++) {
+                Symbol s;
+                d >> s;
+                DataNode n;
+                int nType;
+                d >> nType;
+                if (nType == kDataObject) {
+                    Flow *owner = GetOwnerFlow();
+                    if (!owner) {
+                        owner = this;
+                    }
+                    DirLoader *dl = owner->Loader();
+                    ObjectDir *loadingDir = dl ? dl->ProxyDir() : owner->Dir();
+                    n = FlowNode::LoadObjectFromMainOrDir(bs, loadingDir);
+                } else {
+                    DataNode n2;
+                    d >> n2;
+                    n = n2;
+                }
+                if (!Property(s, false) && s != "") {
+                    SetProperty(s, n);
+                }
+            }
+        }
+    } else {
+        if (d.rev < 3) {
+            int ia0;
+            d >> ia0;
+            LOAD_SUPERCLASS(FlowQueueable)
+            if (ia0 < 1) {
+                bool b110;
+                d >> b110;
+                if (b110) {
+                    ObjPtr<Hmx::Object> ptr(this);
+                    ptr = FlowNode::LoadObjectFromMainOrDir(d.stream, Dir());
+                }
+            } else {
+                ObjPtr<Hmx::Object> ptr(this);
+                d >> ptr;
+            }
+            std::list<Symbol> syms1;
+            std::list<Symbol> syms2;
+            d >> syms1;
+            d >> syms2;
+            if (syms1.size() != 0 || syms2.size() != 0) {
+                MILO_NOTIFY(
+                    "Flow with trigger events found, removing: %s", PathName(this)
+                );
+            }
+            d >> mHardStop;
+            if (ia0 > 0) {
+                ObjList<FlowTrigger::PropTriggerDefn> defs1(this);
+                ObjList<FlowTrigger::PropTriggerDefn> defs2(this);
+                d >> defs1;
+                d >> defs2;
+                if (defs1.size() != 0 || defs2.size() != 0) {
+                    MILO_NOTIFY(
+                        "Flow with trigger events found, removing: %s", PathName(this)
+                    );
+                }
+            }
+        } else {
+            LOAD_SUPERCLASS(FlowQueueable)
+            d >> mHardStop;
+        }
+        d >> mDynamicProperties;
+        if (d.rev < 7) {
+            bool b110;
+            d >> b110;
+            if (b110) {
+                unk170 = 2;
+            } else {
+                unk170 = 0;
+            }
+        } else {
+            d >> unk170;
+        }
+        if (d.rev > 0) {
+            d >> mPrivate;
+        } else {
+            mPrivate = false;
+        }
+    }
+    if (unk170 != 0) {
+        mPrivate = true;
+    }
+    RefreshPortLabelLists();
+    if (!NoProxyFile()) {
+        mInterrupt = (QueueState)5;
     }
 }
 
@@ -331,7 +457,7 @@ void Flow::SyncObjects() {
 bool Flow::Activate() {
     FLOW_LOG("Activate\n");
     unk58 = false;
-    if (ProxyFile().empty()) {
+    if (NoProxyFile()) {
         Timer timer;
         timer.Restart();
         PushDrivenProperties();
@@ -348,8 +474,7 @@ bool Flow::Activate() {
 void Flow::Deactivate(bool b1) { FlowQueueable::Deactivate(b1); }
 
 void Flow::Enter() {
-    Flow *f = this; // this actually affects codegen. :)
-    if (f->ProxyFile().empty() && unk170 != 0) {
+    if (NoProxyFile() && unk170 != 0) {
         if (unk170 == 1) {
             Execute(kQueue);
         } else {
@@ -359,8 +484,7 @@ void Flow::Enter() {
 }
 
 void Flow::Exit() {
-    Flow *f = this;
-    if (IsRunning() && f->ProxyFile().empty()) {
+    if (IsRunning() && NoProxyFile()) {
         if (mHardStop) {
             Deactivate(false);
         } else {
@@ -373,10 +497,12 @@ void Flow::RequestStop() {
     FLOW_LOG("RequestStop\n");
     if (!unk58) {
         unk58 = true;
-        FOREACH (it, mRunningNodes) {
+        for (auto it = mRunningNodes.begin(); it != mRunningNodes.end();) {
+            auto next = NextItr(it, 1);
             if ((*it)->ClassName() != FlowLabel::StaticClassName()) {
                 (*it)->RequestStop();
             }
+            it = next;
         }
         unk58 = false;
     }
@@ -460,8 +586,6 @@ FlowLabel *Flow::GetLabelForSym(Symbol sym) {
     }
     return nullptr;
 }
-
-void ScanForOutPorts(ObjPtrVec<FlowOutPort> &, FlowNode *, Flow *);
 
 void Flow::RefreshPortLabelLists() {
     mFlowOutPorts.clear();

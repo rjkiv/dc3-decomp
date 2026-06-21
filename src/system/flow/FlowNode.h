@@ -83,6 +83,7 @@ public:
         return mDrivenPropEntries;
     }
     bool HasChildNodes() const { return !mChildNodes.empty(); }
+    const ObjPtrVec<FlowNode> &ChildNodes() const { return mChildNodes; }
 
 protected:
     FlowNode();
@@ -100,7 +101,7 @@ protected:
     ObjPtrList<FlowNode> mRunningNodes; // 0x30
     FlowNode *mFlowParent; // 0x44
     ObjVector<DrivenPropertyEntry> mDrivenPropEntries; // 0x48
-    bool unk58; // 0x58
+    bool unk58; // 0x58 - requesting stop?
 };
 
 #define FLOW_LOG(...)                                                                    \

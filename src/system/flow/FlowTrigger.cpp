@@ -162,10 +162,6 @@ flow_event:
     return ret;
 }
 
-FlowTrigger::PropTriggerDefn::PropTriggerDefn(Hmx::Object *owner) : mProvider(owner) {
-    unk20 = 0;
-}
-
 DataNode FlowTrigger::PropTriggerDefn::GetPathDisplay(DataArray *a) {
     if (mProvider && unk20.Type() == kDataArray) {
         if (unk20.Array()->Size() != 0) {

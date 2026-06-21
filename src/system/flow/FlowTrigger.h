@@ -8,7 +8,7 @@
 class FlowTrigger : public FlowQueueable {
 public:
     struct PropTriggerDefn {
-        PropTriggerDefn(Hmx::Object *);
+        PropTriggerDefn(Hmx::Object *owner) : mProvider(owner) { unk20 = 0; }
 
         DataNode GetPathDisplay(DataArray *);
 
@@ -58,4 +58,7 @@ inline BinStream &operator<<(BinStream &bs, const FlowTrigger::PropTriggerDefn &
     return bs;
 }
 
-BinStream &operator>>(BinStream &, FlowTrigger::PropTriggerDefn &);
+inline BinStream &operator>>(BinStream &bs, FlowTrigger::PropTriggerDefn &defn) {
+    bs >> defn.mProvider >> defn.unk20;
+    return bs;
+}
