@@ -36,28 +36,13 @@
 
 bool Flow::sReflectingProperty;
 
-Flow::Flow()
-    : mDynamicProperties(this), mFlowLabels(this), mFlowOutPorts(this), mObjects(this),
-      unk170(0), mPrivate(1), mHardStop(0), unk178(0) {}
+#pragma region DynamicPropertyEntry
 
-Flow::~Flow() {
-    if (!mRunningNodes.empty()) {
-        if (ObjectDir::ProxyFile().empty()) {
-            FlowQueueable::Deactivate(true);
-        }
-    }
-    TheFlowMgr->CancelCommand(this);
+Flow::DynamicPropertyEntry::DynamicPropertyEntry(Hmx::Object *obj)
+    : mName(""), mType(kInt), mHelp(""), mExposed(false) {
+    mObjectClass = "Object";
+    mObjectType = Symbol();
 }
-
-BEGIN_HANDLERS(Flow)
-    HANDLE_ACTION(activate, Activate(false))
-    HANDLE_ACTION(on_reflected_property_changed, OnReflectedPropertyChanged(_msg))
-    HANDLE_ACTION(on_internal_property_changed, OnInternalPropertyChanged(_msg))
-    HANDLE_ACTION(request_stop, RequestStop())
-    HANDLE_EXPR(is_running, IsRunning())
-    HANDLE_SUPERCLASS(FlowQueueable)
-    HANDLE_SUPERCLASS(ObjectDir)
-END_HANDLERS
 
 BEGIN_CUSTOM_PROPSYNC(Flow::DynamicPropertyEntry)
     SYNC_PROP_SET(name, o.mName, o.SetName(_val))
@@ -84,6 +69,73 @@ BEGIN_CUSTOM_PROPSYNC(Flow::DynamicPropertyEntry)
     SYNC_PROP_SET(get_symbol_list, o.GetSymbolList(), )
 END_CUSTOM_PROPSYNC
 
+BinStream &operator<<(BinStream &bs, const Flow::DynamicPropertyEntry &entry);
+
+void Flow::DynamicPropertyEntry::SetClassFilter(DataNode &filter) {
+    if (filter.Sym() != mObjectClass) {
+        mObjectClass = filter.Sym();
+        mObjectType = Symbol();
+    }
+}
+
+void Flow::DynamicPropertyEntry::SetName(DataNode &name) {
+    String str(name.Str());
+    str.ReplaceAll(' ', '_');
+    str.ToLower();
+    if (str == "name" || str == "note" || str == "intensity" || str == "hard_stop"
+        || str == "private" || str == "interrupt") {
+        str.insert(0, "_");
+    }
+    mName = str;
+}
+
+void Flow::DynamicPropertyEntry::ResetDefaultValues() { mDefaultVal = 0; }
+
+Symbol Flow::DynamicPropertyEntry::GetDefaultValueSymbol() {
+    if (mDefaultVal.Type() == kDataSymbol) {
+        return mDefaultVal.Sym();
+    } else {
+        return Symbol();
+    }
+}
+
+DataNode Flow::DynamicPropertyEntry::GetSymbolList() {
+    if (unk24.Type() == kDataArray) {
+        return unk24.Array();
+    } else {
+        DataArrayPtr ptr(new DataArray(1));
+        ptr->Node(0) = Symbol();
+        return ptr;
+    }
+}
+
+#pragma endregion
+#pragma region Flow
+
+Flow::Flow()
+    : mDynamicProperties(this), mFlowLabels(this), mFlowOutPorts(this), mObjects(this),
+      unk170(0), mPrivate(1), mHardStop(0), unk178(0) {}
+
+Flow::~Flow() {
+    if (!mRunningNodes.empty()) {
+        Flow *f = this;
+        if (f->ProxyFile().empty()) {
+            FlowQueueable::Deactivate(true);
+        }
+    }
+    TheFlowMgr->CancelCommand(this);
+}
+
+BEGIN_HANDLERS(Flow)
+    HANDLE_ACTION(activate, Activate(false))
+    HANDLE_ACTION(on_reflected_property_changed, OnReflectedPropertyChanged(_msg))
+    HANDLE_ACTION(on_internal_property_changed, OnInternalPropertyChanged(_msg))
+    HANDLE_ACTION(request_stop, RequestStop())
+    HANDLE_EXPR(is_running, IsRunning())
+    HANDLE_SUPERCLASS(FlowQueueable)
+    HANDLE_SUPERCLASS(ObjectDir)
+END_HANDLERS
+
 BEGIN_PROPSYNCS(Flow)
     SYNC_PROP(dynamic_properties, mDynamicProperties)
     SYNC_PROP_SET(start_on_enter, unk170 != 0, StartOnEnter(_val.Int()))
@@ -95,8 +147,6 @@ BEGIN_PROPSYNCS(Flow)
     SYNC_SUPERCLASS(FlowQueueable)
     SYNC_SUPERCLASS(ObjectDir)
 END_PROPSYNCS
-
-BinStream &operator<<(BinStream &bs, const Flow::DynamicPropertyEntry &entry);
 
 BEGIN_SAVES(Flow)
     SAVE_REVS(7, 2)
@@ -137,10 +187,12 @@ BEGIN_SAVES(Flow)
             bs << Symbol(it->mName.c_str());
             const DataNode *prop = Property(it->mName.c_str(), false);
             if (prop) {
-                if (prop->Type() != kDataObject) {
+                if (prop->Type() == kDataObject) {
+                    bs << *prop;
+                } else {
                     bs << prop->Type();
+                    bs << *prop;
                 }
-                bs << *prop;
             } else {
                 bs << it->mDefaultVal.Type();
                 bs << it->mDefaultVal;
@@ -156,13 +208,55 @@ BEGIN_SAVES(Flow)
     }
 END_SAVES
 
+BEGIN_COPYS(Flow)
+    COPY_SUPERCLASS(ObjectDir)
+    COPY_SUPERCLASS(FlowQueueable)
+    CREATE_COPY(Flow)
+    BEGIN_COPYING_MEMBERS
+        COPY_MEMBER(mDynamicProperties)
+        FOREACH (it, mDynamicProperties) {
+            Symbol prop(it->mName.c_str());
+            SetProperty(prop, *c->Property(prop, false));
+        }
+        COPY_MEMBER(unk170)
+        while (!mChildNodes.empty()) {
+            delete mChildNodes[0];
+        }
+        FOREACH (it, c->mChildNodes) {
+            FlowNode *n;
+            Flow *cur = dynamic_cast<Flow *>((FlowNode *)*it);
+            if (cur) {
+                n = FlowNode::DuplicateChild(*it);
+            } else {
+                Hmx::Object *newObj = Hmx::Object::NewObject((*it)->ClassName());
+                newObj->InitObject();
+                n = dynamic_cast<FlowNode *>(newObj);
+                n->SetParent(this, true);
+                n->Copy(*it, kCopyDeep);
+            }
+            n->SetParent(this, true);
+            n->MoveIntoDir(this, (ObjectDir *)c);
+        }
+        COPY_MEMBER(mPrivate)
+        COPY_MEMBER(mHardStop)
+        RefreshPortLabelLists();
+        Flow *f = this;
+        if (!f->ProxyFile().empty()) {
+            mInterrupt = (QueueState)5;
+        }
+    END_COPYING_MEMBERS
+END_COPYS
+
 BEGIN_LOADS(Flow)
     PreLoad(bs);
     PostLoad(bs);
 END_LOADS
 
 void Flow::PreSave(BinStream &bs) {
-    SetInlineProxyType(!ProxyFile().empty() && IsProxy() ? kInlineCached : kInlineAlways);
+    Flow *f = this;
+    SetInlineProxyType(
+        !f->ProxyFile().empty() && IsProxy() ? kInlineCached : kInlineAlways
+    );
 }
 
 INIT_REVS(7, 2)
@@ -196,36 +290,38 @@ void Flow::PostLoad(BinStream &bs) {
 void Flow::SyncObjects() {
     ObjectDir::SyncObjects();
 
-    FlowNode *topLevelFlow;
-    for (topLevelFlow = GetTopFlow(); topLevelFlow->GetParent() != nullptr;
-         topLevelFlow = topLevelFlow->GetParent()->GetTopFlow()) {
+    FlowNode *n = this;
+    Flow *topFlow;
+    while ((topFlow = n->GetTopFlow()) && topFlow->GetParent()) {
+        n = topFlow->GetParent();
     }
-    Flow *flow = dynamic_cast<Flow *>(topLevelFlow->Dir());
-    if (flow) {
-        // something here
+    ObjectDir *loadingDir = topFlow->Dir();
+    if (dynamic_cast<Flow *>(loadingDir)) {
+        DirLoader *dl = topFlow->Loader();
+        loadingDir = dl ? dl->ProxyDir() : topFlow->Dir();
     }
-    if (flow && flow != this) {
+    if (loadingDir && loadingDir != this) {
         FOREACH (it, mDynamicProperties) {
             if (it->mExposed) {
                 Symbol name(it->mName.c_str());
                 DataArrayPtr ptr(new DataArray(1));
                 ptr->Node(0) = name;
-                if (flow->HasPropertySink(this, ptr)) {
-                    flow->RemovePropertySink(this, ptr);
+                if (topFlow->HasPropertySink(this, ptr)) {
+                    topFlow->RemovePropertySink(this, ptr);
                 }
                 if (HasPropertySink(this, ptr)) {
                     RemovePropertySink(this, ptr);
                 }
-                if (!flow->Property(ptr, false)) {
+                if (!topFlow->Property(ptr, false)) {
                     if (Property(ptr, false)) {
-                        flow->SetProperty(ptr, *Property(ptr, true));
+                        topFlow->SetProperty(ptr, *Property(ptr, true));
                     } else {
-                        flow->SetProperty(ptr, it->mDefaultVal);
+                        topFlow->SetProperty(ptr, it->mDefaultVal);
                     }
                 } else {
-                    SetProperty(ptr, *flow->Property(ptr, true));
+                    SetProperty(ptr, *topFlow->Property(ptr, true));
                 }
-                flow->AddPropertySink(this, ptr, "on_reflected_property_changed");
+                topFlow->AddPropertySink(this, ptr, "on_reflected_property_changed");
                 AddPropertySink(this, ptr, "on_internal_property_changed");
             }
         }
@@ -335,50 +431,6 @@ bool Flow::Activate(Hmx::Object *obj) {
 }
 
 bool Flow::Activate(Hmx::Object *obj, DataArray *) { return Activate(obj); }
-
-Flow::DynamicPropertyEntry::DynamicPropertyEntry(Hmx::Object *obj)
-    : mName(""), mType(kInt), mHelp(""), mExposed(false) {
-    mObjectClass = "Object";
-    mObjectType = Symbol();
-}
-
-void Flow::DynamicPropertyEntry::SetClassFilter(DataNode &filter) {
-    if (filter.Sym() != mObjectClass) {
-        mObjectClass = filter.Sym();
-        mObjectType = Symbol();
-    }
-}
-
-void Flow::DynamicPropertyEntry::SetName(DataNode &name) {
-    String str(name.Str());
-    str.ReplaceAll(' ', '_');
-    str.ToLower();
-    if (str == "name" || str == "note" || str == "intensity" || str == "hard_stop"
-        || str == "private" || str == "interrupt") {
-        str.insert(0, "_");
-    }
-    mName = str;
-}
-
-void Flow::DynamicPropertyEntry::ResetDefaultValues() { mDefaultVal = 0; }
-
-Symbol Flow::DynamicPropertyEntry::GetDefaultValueSymbol() {
-    if (mDefaultVal.Type() == kDataSymbol) {
-        return mDefaultVal.Sym();
-    } else {
-        return Symbol();
-    }
-}
-
-DataNode Flow::DynamicPropertyEntry::GetSymbolList() {
-    if (unk24.Type() == kDataArray) {
-        return unk24.Array();
-    } else {
-        DataArrayPtr ptr(new DataArray(1));
-        ptr->Node(0) = Symbol();
-        return ptr;
-    }
-}
 
 void Flow::ToggleRunning(int type) {
     switch (type) {
@@ -502,3 +554,5 @@ void FlowInit() {
         prov->SetName("exampleData", ObjectDir::Main());
     }
 }
+
+#pragma endregion
