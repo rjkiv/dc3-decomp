@@ -17,6 +17,8 @@ public:
     OBJ_MEM_OVERLOAD(0x1E)
     NEW_OBJ(FlowValueCase)
 
+    float Value() const { return mValue; }
+
 protected:
     FlowValueCase();
 

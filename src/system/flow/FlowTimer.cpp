@@ -2,6 +2,7 @@
 #include "flow/Flow.h"
 #include "flow/FlowManager.h"
 #include "flow/FlowNode.h"
+#include "flow/FlowValueCase.h"
 #include "obj/Object.h"
 #include "obj/Task.h"
 #include "os/Debug.h"
@@ -20,10 +21,12 @@ void EventTask::Poll(float f1) {
     if (!mOwner) {
         MILO_NOTIFY("EventTask::Poll NULL mOwner");
     } else {
-        for (mItr = unk40->begin(); mItr != unk40->end(); ++mItr) {
+        for (; mItr != unk40->end()
+             && f1 >= static_cast<FlowValueCase *>((FlowNode *)*mItr)->Value();
+             ++mItr) {
             mOwner->OnKeyframe(*mItr);
         }
-        if (unk48 <= f1) {
+        if (f1 >= unk48) {
             mOwner->OnTimerEnd();
         } else {
             return;
