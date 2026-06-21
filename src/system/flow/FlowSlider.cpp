@@ -71,7 +71,7 @@ END_LOADS
 
 bool FlowSlider::Activate() {
     FLOW_LOG("Activate\n");
-    unk58 = false;
+    mRequestingStop = false;
     if (IsRunning()) {
         MILO_NOTIFY(
             "FlowSlider re-entrance error, activated when already running, deactivating and aborting, check your logic"
@@ -104,10 +104,10 @@ void FlowSlider::ChildFinished(FlowNode *n) {
     FLOW_LOG("Child Finished of class:%s\n", n->ClassName());
     mRunningNodes.remove(n);
     if (mRunningNodes.empty()) {
-        if (mEventsRegistered && unk58) {
+        if (mEventsRegistered && mRequestingStop) {
             UnregisterEvents(this);
             mEventsRegistered = false;
-            unk58 = false;
+            mRequestingStop = false;
         } else if (mEventsRegistered) {
             return;
         }

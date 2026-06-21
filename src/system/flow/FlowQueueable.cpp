@@ -57,7 +57,7 @@ void FlowQueueable::ChildFinished(FlowNode *n) {
     } else {
         mRunningNodes.remove(n);
         if (mRunningNodes.empty()) {
-            if (unk58) {
+            if (mRequestingStop) {
                 std::list<Hmx::Object *> objects(unk60);
                 unk60.clear();
                 while (objects.size() != 0) {
@@ -71,14 +71,14 @@ void FlowQueueable::ChildFinished(FlowNode *n) {
                 }
             } else if (unk60.size() > 1) {
                 auto first = unk60.begin();
-                bool b4 = false;
-                FOREACH (it, unk60) {
+                bool found = false;
+                for (auto it = ++unk60.begin(); it != unk60.end(); ++it) {
                     if (*it == *first) {
-                        b4 = true;
+                        found = true;
                         break;
                     }
                 }
-                if (!b4) {
+                if (!found) {
                     ReleaseListener(*first);
                 }
                 unk60.pop_front();
@@ -94,14 +94,14 @@ void FlowQueueable::ChildFinished(FlowNode *n) {
 void FlowQueueable::RequestStop() { FlowNode::RequestStop(); }
 
 void FlowQueueable::RequestStopCancel() {
-    if (unk58) {
+    if (mRequestingStop) {
         FlowNode::RequestStopCancel();
     }
 }
 
 bool FlowQueueable::Activate(Hmx::Object *obj) {
     FLOW_LOG("Activate\n");
-    unk58 = false;
+    mRequestingStop = false;
     if (mRunningNodes.empty()) {
         if (obj) {
             unk60.push_back(obj);

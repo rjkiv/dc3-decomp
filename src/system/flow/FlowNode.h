@@ -101,7 +101,7 @@ protected:
     ObjPtrList<FlowNode> mRunningNodes; // 0x30
     FlowNode *mFlowParent; // 0x44
     ObjVector<DrivenPropertyEntry> mDrivenPropEntries; // 0x48
-    bool unk58; // 0x58 - requesting stop?
+    bool mRequestingStop; // 0x58
 };
 
 #define FLOW_LOG(...)                                                                    \

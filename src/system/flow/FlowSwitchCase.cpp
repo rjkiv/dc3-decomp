@@ -119,7 +119,7 @@ END_LOADS
 
 bool FlowSwitchCase::Activate() {
     FLOW_LOG("Activate\n");
-    unk58 = false;
+    mRequestingStop = false;
     if (mFlowParent->ClassName() == FlowWhile::StaticClassName()
         && mOperator != kTransition) {
         unk9a = true;

@@ -273,7 +273,7 @@ END_LOADS
 
 bool FlowSetProperty::Activate() {
     FLOW_LOG("Activate\n");
-    unk58 = false;
+    mRequestingStop = false;
     if (mTarget != nullptr) {
         if (mPropPath.Type() == kDataArray && mPropPath.Array()->Size() > 0) {
             if (mPersistent && !mEventsRegistered) {
@@ -325,7 +325,7 @@ void FlowSetProperty::ChildFinished(FlowNode *child) {
 
 void FlowSetProperty::RequestStop() {
     FLOW_LOG("RequestStop\n");
-    unk58 = true;
+    mRequestingStop = true;
     if (mStopMode == 0 || unk_0xCC == nullptr) {
         TheFlowMgr->QueueCommand(this, kIgnore);
     }
@@ -334,7 +334,7 @@ void FlowSetProperty::RequestStop() {
 
 void FlowSetProperty::RequestStopCancel() {
     FLOW_LOG("RequestStopCancel\n");
-    unk58 = false;
+    mRequestingStop = false;
     if (mStopMode != 0) {
         TheFlowMgr->QueueCommand(this, kQueue);
     }

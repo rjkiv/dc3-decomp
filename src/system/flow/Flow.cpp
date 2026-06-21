@@ -456,7 +456,7 @@ void Flow::SyncObjects() {
 
 bool Flow::Activate() {
     FLOW_LOG("Activate\n");
-    unk58 = false;
+    mRequestingStop = false;
     if (NoProxyFile()) {
         Timer timer;
         timer.Restart();
@@ -495,8 +495,8 @@ void Flow::Exit() {
 
 void Flow::RequestStop() {
     FLOW_LOG("RequestStop\n");
-    if (!unk58) {
-        unk58 = true;
+    if (!mRequestingStop) {
+        mRequestingStop = true;
         for (auto it = mRunningNodes.begin(); it != mRunningNodes.end();) {
             auto next = NextItr(it, 1);
             if ((*it)->ClassName() != FlowLabel::StaticClassName()) {
@@ -504,13 +504,13 @@ void Flow::RequestStop() {
             }
             it = next;
         }
-        unk58 = false;
+        mRequestingStop = false;
     }
 }
 
 void Flow::RequestStopCancel() {
-    if (unk58) {
-        unk58 = false;
+    if (mRequestingStop) {
+        mRequestingStop = false;
         FOREACH (it, mRunningNodes) {
             if ((*it)->ClassName() != FlowLabel::StaticClassName()) {
                 (*it)->RequestStopCancel();
@@ -533,12 +533,12 @@ Flow *Flow::GetOwnerFlow() {
 }
 
 bool Flow::ActivateTrigger() {
-    unk58 = false;
+    mRequestingStop = false;
     FOREACH (it, mChildNodes) {
         if ((*it)->ClassName() != FlowLabel::StaticClassName()) {
             ActivateChild(*it);
         }
-        if (unk58)
+        if (mRequestingStop)
             break;
     }
     return FlowNode::IsRunning();
@@ -546,7 +546,7 @@ bool Flow::ActivateTrigger() {
 
 bool Flow::Activate(Hmx::Object *obj) {
     FLOW_LOG("activate with listener");
-    unk58 = false;
+    mRequestingStop = false;
     Timer timer;
     timer.Restart();
     PushDrivenProperties();

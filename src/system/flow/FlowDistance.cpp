@@ -63,9 +63,9 @@ END_LOADS
 
 bool FlowDistance::Activate() {
     FLOW_LOG("Activated\n");
-    unk58 = false;
+    mRequestingStop = false;
     PushDrivenProperties();
-    unk58 = false;
+    mRequestingStop = false;
     if (mObj1 && mObj2) {
         if (mPersistent) {
             TheFlowMgr->AddPollable(this);
@@ -98,7 +98,7 @@ void FlowDistance::ChildFinished(FlowNode *n) {
         if (unka1) {
             TheFlowMgr->RemovePollable(this);
         }
-        if (!mPersistent || unk58) {
+        if (!mPersistent || mRequestingStop) {
             unka1 = false;
             mFlowParent->ChildFinished(this);
         }

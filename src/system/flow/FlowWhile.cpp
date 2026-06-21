@@ -49,7 +49,7 @@ END_LOADS
 
 bool FlowWhile::Activate() {
     FLOW_LOG("Activated \n");
-    unk58 = false;
+    mRequestingStop = false;
     if (IsRunning()) {
         MILO_NOTIFY(
             "FlowWhile re-entrance error, activated when already running, forcing stop, check your logic"
@@ -208,7 +208,7 @@ void FlowWhile::ReActivate() {
                         continue;
                     } else {
                         ActivateChild(cur);
-                        if (unk58)
+                        if (mRequestingStop)
                             break;
                     }
                 }

@@ -69,7 +69,7 @@ END_LOADS
 
 bool FlowRun::Activate() {
     FLOW_LOG("Activate\n");
-    unk58 = false;
+    mRequestingStop = false;
     PushDrivenProperties();
     ResolveTarget();
     if (mTarget) {
@@ -98,13 +98,13 @@ void FlowRun::ChildFinished(FlowNode *node) {
 
 void FlowRun::RequestStop() {
     FLOW_LOG("RequestStop\n");
-    unk58 = true;
+    mRequestingStop = true;
     mTarget->RequestStop();
 }
 
 void FlowRun::RequestStopCancel() {
     FLOW_LOG("RequestStopCancel\n");
-    unk58 = false;
+    mRequestingStop = false;
     mTarget->RequestStopCancel();
 }
 

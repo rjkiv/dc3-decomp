@@ -118,7 +118,7 @@ END_LOADS
 
 bool FlowCommand::Activate() {
     FLOW_LOG("Activate\n");
-    unk58 = false;
+    mRequestingStop = false;
     PushDrivenProperties();
     if (mObject && !mHandler.Null()) {
         int size = mTypeProps ? mTypeProps->Size() : 0;

@@ -53,7 +53,7 @@ END_LOADS
 
 bool FlowSequence::Activate() {
     FLOW_LOG("Activate\n");
-    unk58 = false;
+    mRequestingStop = false;
     if (IsRunning()) {
         MILO_NOTIFY(
             "FlowSequence re-entrance error, activated when already running, deactivating and aborting, check your logic"
@@ -69,7 +69,7 @@ bool FlowSequence::Activate() {
             for (mItr = mChildNodes.begin();; ++mItr) {
                 do {
                     if (mItr == mChildNodes.end() || !mRunningNodes.empty()
-                        || (ActivateChild(*mItr), unk58)) {
+                        || (ActivateChild(*mItr), mRequestingStop)) {
                         unk70 = false;
                         MILO_ASSERT(mRunningNodes.size() < 2, 0x50);
                         if (mItr == mChildNodes.end() && mRunningNodes.empty()) {
@@ -98,8 +98,8 @@ void FlowSequence::ChildFinished(FlowNode *node) {
     MILO_ASSERT(mRunningNodes.empty(), 0x74);
     if (unk70)
         return;
-    if (unk58) {
-        unk58 = false;
+    if (mRequestingStop) {
+        mRequestingStop = false;
         FLOW_LOG("Releasing\n");
         mFlowParent->ChildFinished(this);
         return;
@@ -111,11 +111,11 @@ void FlowSequence::ChildFinished(FlowNode *node) {
     unk70 = true;
     for (; mItr != mChildNodes.end(); ++mItr) {
         ActivateChild(*mItr);
-        if (unk58 || !mRunningNodes.empty())
+        if (mRequestingStop || !mRunningNodes.empty())
             break;
     }
     unk70 = false;
-    if (!unk58 || !mRunningNodes.empty()) {
+    if (!mRequestingStop || !mRunningNodes.empty()) {
         if (mItr != mChildNodes.end())
             goto ret;
         if (!mLooping && unk68 >= mRepeats - 1) {

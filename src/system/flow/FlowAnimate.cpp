@@ -116,7 +116,7 @@ END_LOADS
 
 bool FlowAnimate::Activate() {
     FLOW_LOG("Activate\n");
-    unk58 = false;
+    mRequestingStop = false;
     PushDrivenProperties();
     if (mAnim) {
         if (mImmediateRelease) {

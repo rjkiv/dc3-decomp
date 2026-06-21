@@ -129,7 +129,7 @@ bool FlowEventListener::IsRunning() { return unkb4 || !mRunningNodes.empty(); }
 
 bool FlowEventListener::ActivateTrigger() {
     FLOW_LOG("Reactivate\n");
-    unk58 = false;
+    mRequestingStop = false;
     unkbc++;
     if (mEventCount > 0 && unkbc >= mEventCount) {
         UnregisterEvents();

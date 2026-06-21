@@ -55,7 +55,7 @@ END_LOADS
 
 bool FlowMultiSetProperty::Activate() {
     FLOW_LOG("Activate\n");
-    unk58 = false;
+    mRequestingStop = false;
     if (!unk5c.empty()) {
         if (GetDrivenEntry("value")) {
             unk78 = unk5c[0]->Property(unk70.Array())->Evaluate();

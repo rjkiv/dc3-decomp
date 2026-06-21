@@ -41,7 +41,7 @@ END_LOADS
 
 bool FlowOnStop::Activate() {
     FLOW_LOG("Activate\n");
-    unk58 = false;
+    mRequestingStop = false;
     unk60 = true;
     return true;
 }
@@ -52,7 +52,7 @@ void FlowOnStop::Deactivate(bool b1) {
         if (mMode != kRequestStopOnly) {
             FOREACH (it, mChildNodes) {
                 ActivateChild(*it);
-                if (unk58)
+                if (mRequestingStop)
                     break;
             }
             FlowNode::Deactivate(b1);
@@ -74,7 +74,7 @@ void FlowOnStop::RequestStop() {
     FLOW_LOG("RequestStop\n");
     if (mRunningNodes.empty()) {
         if (mMode != kDeactivateOnly) {
-            unk58 = true;
+            mRequestingStop = true;
             TheFlowMgr->QueueCommand(this, kQueue);
         } else {
             unk60 = false;
@@ -91,8 +91,8 @@ void FlowOnStop::RequestStopCancel() {
 }
 
 void FlowOnStop::Execute(QueueState qs) {
-    if (qs == kQueue && unk58) {
-        unk58 = false;
+    if (qs == kQueue && mRequestingStop) {
+        mRequestingStop = false;
         unk60 = false;
         FlowNode::Activate();
         if (mRunningNodes.empty()) {
