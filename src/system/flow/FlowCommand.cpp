@@ -122,8 +122,8 @@ bool FlowCommand::Activate() {
         int size = mTypeProps ? mTypeProps->Size() : 0;
         Message msg(size);
         msg.SetType(mHandler);
-        for (int i = 0; i < size; i += 2) {
-            msg[i] = mTypeProps->Map()->Evaluate(i + 1);
+        for (int i = 0; i < size; i++) {
+            msg[i] = mTypeProps->Map()->Evaluate(i * 2 + 1);
         }
         mObject->Handle(msg, false);
     }
@@ -160,10 +160,10 @@ DataNode FlowCommand::GetHandlerDef() {
                 if (ret) {
                     return ret;
                 }
-                for (int i = 1; i < cmds->Size(); i++) {
-                    if (cmds->Type(i) == kDataArray) {
-                        if (cmds->Array(i)->Sym(0) == mHandler) {
-                            return cmds->Array(i);
+                for (int j = 1; j < cmds->Size(); j++) {
+                    if (cmds->Type(j) == kDataArray) {
+                        if (cmds->Array(j)->Sym(0) == mHandler) {
+                            return cmds->Array(j);
                         }
                     }
                 }

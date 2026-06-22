@@ -36,6 +36,7 @@ protected:
     FlowPickOne();
 
     void OnChoiceTypeChanged();
+    bool ValidIndex() const { return mIndex >= 0 && mIndex < mChildNodes.size(); }
 
     ObjPtrVec<FlowNode> unk5c; // 0x5c
     /** "Style of choice made" */
