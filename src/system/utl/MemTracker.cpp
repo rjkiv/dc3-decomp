@@ -30,13 +30,15 @@ int HashKey(void *ptr, int size) {
 
 void DiffTblReport(const char *, BlockStatTable &, BlockStatTable &, TextStream &);
 
-MemTracker::MemTracker(int x, int y)
+MemTracker::MemTracker(int heap, int numAllocs)
     : mHashMem(nullptr), mHashTable(nullptr), mTimeSlice(0), mCurStatTable(0),
-      mFreedInfos(y), mLog(0), mReport(0), mHeap(x) {
-    mHashMem = (AllocInfo **)DebugHeapAlloc(y * 8);
+      mFreedInfos(DebugHeapAlloc(numAllocs * 4), numAllocs), mLog(0), mReport(0),
+      mHeap(heap) {
+    int hashSize = heap * 2;
+    mHashMem = (AllocInfo **)DebugHeapAlloc(numAllocs * 8);
     MILO_ASSERT(mHashMem, 0x4E);
     mHashTable = new KeylessHash<void *, AllocInfo *>(
-        x * 2, (AllocInfo *)0, (AllocInfo *)-1, mHashMem
+        hashSize, (AllocInfo *)0, (AllocInfo *)-1, mHashMem
     );
     mFreeSysMem = _GetFreeSystemMemory();
     mFreePhysMem = _GetFreePhysicalMemory();
@@ -191,7 +193,7 @@ void MemTracker::StartLog(TextStream &ts) {
         StopLog();
     }
     MILO_ASSERT(!mLog, 0x113);
-    *mLog = ts;
+    mLog = &ts;
     *mLog << "(elf " << TheSystemArgs.front() << ")\n";
     *mLog << "(data\n";
 }
@@ -292,7 +294,7 @@ void MemTracker::DiffDump(TextStream &ts) {
                 count++;
             }
         }
-        AllocInfoVec vec(count);
+        AllocInfoVec vec(DebugHeapAlloc(count), count);
         for (auto it = mHashTable->Begin(); it != nullptr; it = mHashTable->Next(it)) {
             AllocInfo *info = *it;
             if (mTimeSlice == info->mTimeSlice) {

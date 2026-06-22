@@ -41,8 +41,13 @@ public:
     signed char Heap() const { return mHeap; }
     bool GetHeapOnly() const { return mHeapOnly; }
     void SetHeapOnly(bool heapOnly) { mHeapOnly = heapOnly; }
-    const String &StrUnk181b4() const { return unk181b4; }
-    void SetStrUnk181b4(const char *cc) { unk181b4 = cc; }
+    const String &GetTopLevelObjName() const { return mTopLevelObjectName; }
+    void SetTopLevelObjName(const char *name) { mTopLevelObjectName = name; }
+
+    __forceinline void SetTopLevelFileName(const char *name) {
+        mLastTopLevelFileName = mTopLevelFileName;
+        mTopLevelFileName = name;
+    }
 
     static void *operator new(unsigned int);
     static void operator delete(void *);
@@ -70,9 +75,12 @@ private:
     int mFreeSysMem; // 0x18198
     int mFreePhysMem; // 0x1819c
     bool mSpew; // 0x181a0
-    String unk181a4;
-    String unk181ac;
-    String unk181b4;
+    // the last top file name from the file name stack
+    String mLastTopLevelFileName; // 0x181a4
+    // the file name at the top of the file name stack
+    String mTopLevelFileName; // 0x181ac
+    // the object name at the top of the object name stack
+    String mTopLevelObjectName; // 0x181b4
     char mAllocInfoName[64]; // 0x181bc
     int unk182fc;
     int unk18200;

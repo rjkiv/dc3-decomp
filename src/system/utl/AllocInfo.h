@@ -58,10 +58,10 @@ TextStream &operator<<(TextStream &, const AllocInfo &);
 
 class AllocInfoVec {
 public:
-    AllocInfoVec() : mStart(0), mEnd(0), mEndOfStorage(0) {}
-    __forceinline AllocInfoVec(int size)
-        : mStart((AllocInfo **)DebugHeapAlloc(size * 4)), mEnd(mStart),
-          mEndOfStorage(mStart + size) {}
+    // AllocInfoVec() : mStart(0), mEnd(0), mEndOfStorage(0) {}
+    AllocInfoVec(void *mem, int size)
+        : mStart((AllocInfo **)mem), mEnd((AllocInfo **)mem),
+          mEndOfStorage((AllocInfo **)mem + size) {}
     ~AllocInfoVec() { DebugHeapFree(mStart); }
 
     AllocInfo **begin() { return mStart; }
