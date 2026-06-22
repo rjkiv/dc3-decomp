@@ -1,5 +1,7 @@
 #include "Cheats.h"
 #include "obj/Data.h"
+#include "obj/Dir.h"
+#include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/Keyboard.h"
 #include "os/User.h"
@@ -266,6 +268,75 @@ int CheatsManager::OnMsg(const ButtonDownMsg &msg) {
     return 1;
 }
 
+void CheatsManager::CallCheatScript(
+    bool quickCheat, DataArray *script, LocalUser *pLocalUser, bool require_joypad
+) {
+    if (!pLocalUser && TheUserMgr) {
+        std::vector<LocalUser *> localUsers;
+        TheUserMgr->GetLocalUsers(localUsers);
+        FOREACH (it, localUsers) {
+            if ((*it)->GetPadNum() == -1) {
+                break;
+            }
+            JoypadType type = JoypadGetPadData((*it)->GetPadNum())->mType;
+            if (!quickCheat || !require_joypad || type == kJoypadDigital
+                || type == kJoypadAnalog || type == kJoypadWiiCore || type == kJoypadWiiFS
+                || type == kJoypadWiiClassic || type == kJoypadDualShock) {
+                pLocalUser = *it;
+                break;
+            }
+        }
+    }
+    if (pLocalUser) {
+        JoypadType type = JoypadGetPadData(pLocalUser->GetPadNum())->mType;
+        if (quickCheat && require_joypad && type != kJoypadDigital
+            && type != kJoypadAnalog && type != kJoypadWiiCore && type != kJoypadWiiFS
+            && type != kJoypadWiiClassic && type != kJoypadDualShock && type != kJoypad3ds
+            && type != kJoypad3dsDebug) {
+            return;
+        }
+    }
+    DataVariable("cheat_pad") = pLocalUser ? pLocalUser->GetPadNum() : 0;
+    LogCheat(pLocalUser ? pLocalUser->GetPadNum() : -1, quickCheat, script);
+    bool safeCheck = false;
+    MILO_TRY {
+        if (quickCheat) {
+            static Symbol filters("filters");
+            static Symbol safe("safe");
+            int i = 2;
+            for (; script->Type(i) != kDataCommand && i < script->Size(); i++) {
+                if (script->Type(i) == kDataArray) {
+                    DataArray *subScript = script->Array(i);
+                    if (subScript->Size() > 1 && subScript->Type(0) == kDataSymbol) {
+                        if (subScript->Sym(0) == filters) {
+                            for (int j = 1; j < subScript->Size(); j++) {
+                                if (subScript->Sym(j) == safe) {
+                                    safeCheck = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (i < script->Size()) {
+                script->ExecuteScript(i, nullptr, nullptr, 1);
+            }
+        } else {
+            script->Execute();
+        }
+    }
+    MILO_CATCH(msg) { MILO_NOTIFY("Bad script in cheat: %s", msg); }
+    if (!safeCheck) {
+        mUnsafeCheatsUsed = true;
+    }
+    Hmx::Object *uiObj = ObjectDir::Main()->Find<Hmx::Object>("ui");
+    static Message msg("cheat_invoked", 0, 0);
+    msg[0] = quickCheat;
+    msg[1] = script;
+    uiObj->Handle(msg, false);
+}
+
 DataNode CheatsManager::OnMsg(const KeyboardKeyReleaseMsg &msg) {
     if (msg->Int(2) == 0x11 && mIsOverridingKeyboard) {
         KeyboardOverride(mPreviousOverride);
@@ -328,10 +399,7 @@ void CheatsTerminate() {
         MILO_ASSERT(gCheatsManager, 0x2fa);
         JoypadUnsubscribe(gCheatsManager);
         KeyboardUnsubscribe(gCheatsManager);
-        if (gCheatsManager) {
-            delete gCheatsManager;
-        }
-        gCheatsManager = 0;
+        RELEASE(gCheatsManager);
     }
 }
 

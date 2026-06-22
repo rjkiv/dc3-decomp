@@ -27,10 +27,10 @@ const char *OptionStr(const char *option, const char *def) {
     if (i == TheSystemArgs.end())
         return def;
     else {
-        char **erased = TheSystemArgs.erase(i);
+        i = TheSystemArgs.erase(i);
         MILO_ASSERT(i != TheSystemArgs.end(), 0x5C);
-        def = *erased;
-        TheSystemArgs.erase(erased);
+        def = *i;
+        TheSystemArgs.erase(i);
         return def;
     }
 }

@@ -40,13 +40,15 @@ public:
 
     CheatsManager();
     virtual DataNode Handle(DataArray *, bool);
-    void AppendLog(FixedString &);
+    void AppendLog(FixedString &msg);
 
     Symbol CheatMode() { return mSymMode; }
     void SetKeyCheatsEnabled(bool b) { mKeyCheatsEnabled = b; };
-    void Log(int, bool, DataArray *);
+    void Log(int padNum, bool quickCheat, DataArray *script);
     bool KeyCheatsEnabled() { return mKeyCheatsEnabled; };
-    void CallCheatScript(bool b1, DataArray *da, LocalUser *lu, bool b2);
+    void CallCheatScript(
+        bool quickCheat, DataArray *script, LocalUser *pLocalUser, bool require_joypad
+    );
     void RebuildKeyCheatsForMode();
     void SetUnsafeCheatsUsed(bool b) { mUnsafeCheatsUsed = b; };
     void AddQuickJoyCheat(const QuickJoyCheat &cheat, ShiftMode mode) {
@@ -96,9 +98,9 @@ void EnableKeyCheats(bool);
 bool GetEnabledKeyCheats();
 bool CheatsInitialized();
 void CheatsInit();
-void LogCheat(int, bool, DataArray *);
-void AppendCheatsLog(FixedString &);
-void CallQuickCheat(DataArray *da, LocalUser *lu);
+void LogCheat(int padNum, bool quickCheat, DataArray *script);
+void AppendCheatsLog(FixedString &msg);
+void CallQuickCheat(DataArray *script, LocalUser *user);
 void InitQuickJoyCheats(const DataArray *a, CheatsManager::ShiftMode);
 void CheatsTerminate();
 Symbol GetCheatMode();
