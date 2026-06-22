@@ -250,7 +250,7 @@
             "system/dsp/EQEffect.cpp": "NonMatching",
             "system/dsp/FlangerEffect.cpp": "NonMatching",
             "system/dsp/WahEffect.cpp": "NonMatching",
-            "system/flow/DrivenPropertyEntry.cpp": "NonMatching",
+            "system/flow/DrivenPropertyEntry.cpp": "Matching",
             "system/flow/DrivenPropertyMathOps.cpp": "NonMatching",
             "system/flow/Flow.cpp": "NonMatching",
             "system/flow/FlowAnimate.cpp": "Matching",

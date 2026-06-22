@@ -56,9 +56,12 @@ BEGIN_LOADS(FlowDistance)
     LOAD_REVS(bs)
     ASSERT_REVS(0, 0)
     LOAD_SUPERCLASS(FlowNode)
-    mObj1.LoadFromMainOrDir(bs);
-    mObj2.LoadFromMainOrDir(bs);
-    bs >> mDistance;
+    mObj1.LoadFromMainOrDir(d.stream);
+    mObj2.LoadFromMainOrDir(d.stream);
+    d >> mPersistent;
+    d >> mDistance;
+    d >> mRunInRange;
+    d >> mDriveIntensity;
 END_LOADS
 
 bool FlowDistance::Activate() {
