@@ -41,6 +41,8 @@ public:
     signed char Heap() const { return mHeap; }
     bool GetHeapOnly() const { return mHeapOnly; }
     void SetHeapOnly(bool heapOnly) { mHeapOnly = heapOnly; }
+    const String &StrUnk181b4() const { return unk181b4; }
+    void SetStrUnk181b4(const char *cc) { unk181b4 = cc; }
 
     static void *operator new(unsigned int);
     static void operator delete(void *);
@@ -72,6 +74,10 @@ private:
     String unk181ac;
     String unk181b4;
     char mAllocInfoName[64]; // 0x181bc
+    int unk182fc;
+    int unk18200;
+    int unk18204;
+    int unk18208;
 };
 
 extern MemTracker *gMemTracker;

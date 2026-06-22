@@ -4467,7 +4467,7 @@ system/utl/MemTrack.cpp:
 	.text       start:0x827D3BE0 end:0x827D4CA0
 	.text       start:0x82EDD508 end:0x82EDD578 rename:.text$yc
 	.text       start:0x82EE33B8 end:0x82EE33D8 rename:.text$yd
-	.data       start:0x830E57D8 end:0x830E5A1C rename:.bss
+	.data       start:0x830E57D8 end:0x830E5A14 rename:.bss
 
 system/utl/Magnu.cpp:
 	.rdata      start:0x820D77D0 end:0x820D78C4
@@ -4486,7 +4486,7 @@ system/utl/Cheats.cpp:
 	.text       start:0x827D5308 end:0x827D9210
 	.text       start:0x82EE33D8 end:0x82EE33F8 rename:.text$yd
 	.data       start:0x82F18AC8 end:0x82F18BA4
-	.data       start:0x830E5A1C end:0x830E5A50 rename:.bss
+	.data       start:0x830E5A14 end:0x830E5A50 rename:.bss
 
 system/utl/MemTracker.cpp:
 	.rdata      start:0x820D8730 end:0x820D95AC

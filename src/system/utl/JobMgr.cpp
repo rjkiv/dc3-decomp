@@ -27,18 +27,18 @@ void JobMgr::Poll() {
 
 void JobMgr::CancelJob(int id) {
     FOREACH (it, mJobQueue) {
-        Job *cur = *it;
-        if (cur->ID() == id) {
+        Job *toBeCancelled = *it;
+        if (toBeCancelled->ID() == id) {
             int firstID = mJobQueue.front()->ID();
             auto erased = mJobQueue.erase(it);
-            bool old = mPreventStart;
+            bool wasPreventingStart = mPreventStart;
             mPreventStart = true;
-            cur->Cancel(mCallback);
-            mPreventStart = old;
-            if (firstID == id && !mPreventStart && erased != mJobQueue.end()) {
+            toBeCancelled->Cancel(mCallback);
+            mPreventStart = wasPreventingStart;
+            if (firstID == id && !wasPreventingStart && erased != mJobQueue.end()) {
                 (*erased)->Start();
             }
-            delete cur;
+            delete toBeCancelled;
             return;
         }
     }
