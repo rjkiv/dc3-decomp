@@ -8,6 +8,22 @@
 #include "utl/TextStream.h"
 #include <cstdio>
 
+struct MemDiffEntry {
+    // total size: 0x48
+    char name[59]; // offset 0x0, size 0x3B
+    int alloc_diff; // offset 0x3C, size 0x4
+    int bytes_diff; // offset 0x40, size 0x4
+    int heap; // offset 0x44, size 0x4
+
+    bool operator<(const MemDiffEntry &e) const {
+        if (heap != e.heap) {
+            return heap < e.heap;
+        } else {
+            return e.bytes_diff <= bytes_diff;
+        }
+    }
+};
+
 // size 0x1820c
 class MemTracker {
 public:

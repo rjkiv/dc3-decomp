@@ -30,7 +30,79 @@ int HashKey(void *ptr, int size) {
     return (uint(ptr) / 8) % size;
 }
 
-void DiffTblReport(const char *, BlockStatTable &, BlockStatTable &, TextStream &);
+void DiffTblReport(
+    const char *caption, BlockStatTable &tbl0, BlockStatTable &tbl1, TextStream &stream
+) {
+    tbl0.SortByName();
+    tbl1.SortByName();
+    int idx0 = 0;
+    int idx1 = 0;
+    int stats0 = tbl0.GetNumStats();
+    int stats1 = tbl1.GetNumStats();
+    std::vector<MemDiffEntry> entries;
+    entries.reserve(stats0 + stats1);
+    while (idx0 < stats0 && idx1 < stats1) {
+        BlockStat &st0 = tbl0.GetBlockStat(idx0);
+        BlockStat &st1 = tbl1.GetBlockStat(idx1);
+        int name_cmp = strcmp(st0.mName, st1.mName);
+        int alloc0, alloc1;
+        int req0, req1;
+        int heap;
+        const char *name = st1.mName;
+        if (name_cmp < 0) {
+            alloc0 = st0.mNumAllocs;
+            alloc1 = 0;
+            req0 = st0.mSizeReq;
+            req1 = 0;
+            name = st0.mName;
+            heap = st0.mHeap;
+            idx0++;
+        } else if (name_cmp > 0) {
+            alloc0 = 0;
+            alloc1 = st1.mNumAllocs;
+            req0 = 0;
+            req1 = st1.mSizeReq;
+            heap = st1.mHeap;
+            idx1++;
+        } else {
+            alloc0 = st0.mNumAllocs;
+            alloc1 = st1.mNumAllocs;
+            req0 = st0.mSizeReq;
+            req1 = st1.mSizeReq;
+            heap = st1.mHeap;
+            idx0++;
+            idx1++;
+        }
+        int alloc_diff = alloc0 - alloc1;
+        int bytes_diff = req0 - req1;
+        if (alloc_diff != 0 || bytes_diff != 0) {
+            MemDiffEntry entry;
+            strncpy(entry.name, name, sizeof(entry.name) - 1);
+            entry.name[sizeof(entry.name) - 1] = '\0';
+            entry.alloc_diff = alloc_diff;
+            entry.bytes_diff = bytes_diff;
+            entry.heap = heap;
+            entries.push_back(entry);
+        }
+    }
+    int totalBytes = 0;
+    int totalAlloc = 0;
+    std::sort(entries.begin(), entries.end());
+    stream << MakeString("%-62s %8s %8s\n", caption, "Num", "Bytes");
+    int lastHeap = -2;
+    FOREACH (it, entries) {
+        MemDiffEntry &cur = *it;
+        if (cur.heap != lastHeap) {
+            stream << MakeString(" HEAP %d ------------------\n", cur.heap);
+            lastHeap = cur.heap;
+        }
+        totalBytes += cur.bytes_diff;
+        totalAlloc += cur.alloc_diff;
+        stream
+            << MakeString("  %-60s %8d %8d\n", cur.name, cur.alloc_diff, cur.bytes_diff);
+    }
+    stream << MakeString(" %-61s %8d %8d\n\n", "TOTAL ------", totalAlloc, totalBytes);
+}
 
 MemTracker::MemTracker(int heap, int numAllocs)
     : mHashMem(nullptr), mHashTable(nullptr), mTimeSlice(0), mCurStatTable(0),
