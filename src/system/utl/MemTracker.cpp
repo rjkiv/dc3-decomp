@@ -2,6 +2,8 @@
 #include "AllocInfo.h"
 #include "MemMgr.h"
 #include "MemTrack.h"
+#include "hamobj/HamGameData.h"
+#include "hamobj/HamPlayerData.h"
 #include "os/Memory.h"
 #include "obj/Data.h"
 #include "obj/DataFunc.h"
@@ -77,8 +79,6 @@ void MemTracker::Alloc(
     gMemTrackerTracking = false;
     AllocInfo::bPrintCsv = true;
     if (!mHeapOnly) {
-        String str1;
-        String str2;
         AllocInfo *info = new AllocInfo(
             requestedSize,
             actualSize,
@@ -89,8 +89,8 @@ void MemTracker::Alloc(
             strat,
             file,
             line,
-            str1,
-            str2
+            mTopLevelFileName,
+            mTopLevelObjectName
         );
         mHashTable->Insert(info);
         if (pooled || gMemLogType != gNullStr || gMemLogType == type) {
@@ -102,7 +102,8 @@ void MemTracker::Alloc(
                     TheDebug << "::Alloc::" << info->mType << " Allocated "
                              << info->mActSize << " Requested " << info->mReqSize
                              << " Address " << info->mMem << " Heap " << info->mHeap
-                             << str1.c_str() << ":" << str2.c_str() << "\n";
+                             << mTopLevelFileName.c_str() << ":"
+                             << mTopLevelObjectName.c_str() << "\n";
                 }
             }
         } else {
@@ -382,4 +383,130 @@ void MemTracker::Report(int minSize, TextStream &stream) {
         stream
     );
     mCurStatTable = 1 - mCurStatTable;
+}
+
+void MemTracker::ReportMemoryAlloc(const char *cc) {
+    const char *venue = TheGameData->Venue().Str();
+    const char *song = TheGameData->GetSong().Str();
+    const char *char1 = nullptr;
+    const char *char2 = nullptr;
+    HamPlayerData *p1 = TheGameData->Player(0);
+    if (p1) {
+        char1 = p1->Char().Str();
+    }
+    HamPlayerData *p2 = TheGameData->Player(1);
+    if (p2) {
+        char2 = p2->Char().Str();
+    }
+    char buffer[128];
+    Hx_snprintf(
+        buffer,
+        sizeof(buffer),
+        "%s_%s_%s_%s_%s_%s_alloc_info.csv",
+        mAllocInfoName,
+        cc,
+        venue,
+        char1,
+        char2,
+        song
+    );
+    TextFileStream stream(buffer, false);
+    SpitAllocInfo(&stream);
+    stream.File().Flush();
+}
+
+void MemTracker::ReportMemoryUsage(const char *cc) {
+    TextStream *stream = &TheDebug;
+    if (mReport) {
+        stream = mReport;
+    }
+    static bool sHeaderPrinted = false;
+    if (!sHeaderPrinted) {
+        *stream
+            << MakeString("Category,heap,free,biggest,lfrags,requested,allocated,peak\n");
+        sHeaderPrinted = true;
+    }
+    int numHeaps = MemNumHeaps() + 1;
+    for (int i = 0; i < numHeaps; i++) {
+        *stream << MakeString(cc);
+        if (i == MemNumHeaps()) {
+            int freePhys = _GetFreePhysicalMemory();
+            int used = mFreePhysMem - PhysicalUsage();
+            if (used < freePhys) {
+                used = freePhys;
+            }
+            *stream << MakeString(",physicalHeap");
+            *stream << MakeString(",%d", used);
+            *stream << MakeString(",%d", freePhys);
+            *stream << MakeString(",0");
+        } else {
+            int lFrags, rFrags, numFreeBytes, i5, biggestFreeBlock;
+            MemFreeBlockStats(i, lFrags, rFrags, numFreeBytes, i5, biggestFreeBlock);
+            *stream << MakeString(",%sHeap", MemHeapName(i));
+            *stream << MakeString(",%d", numFreeBytes);
+            *stream << MakeString(",%d", biggestFreeBlock);
+            *stream << MakeString(",%d", lFrags);
+        }
+        *stream << MakeString(",%d", mHeapStats[i].mTotalReqSize);
+        *stream << MakeString(",%d", mHeapStats[i].mTotalActSize);
+        *stream << MakeString(",%d\n", mHeapStats[i].mMaxActSize);
+    }
+}
+
+void MemTracker::ReportMemoryUsageOverview(const char *cc) {
+    TextStream *stream = &TheDebug;
+    if (mReport) {
+        stream = mReport;
+    }
+    *stream << MakeString(
+        "\nCategory,Mode,MainPeak,MainAlloc,MainLargest,CharPeak,CharAlloc,CharLargest,PhysPeak,PhysAlloc,PhysLargest\n"
+    );
+    int numHeaps = MemNumHeaps() + 1;
+    *stream << "overview," << cc;
+    for (int i = 0; i < numHeaps; i++) {
+        int used;
+        int i7c;
+        int w, y, z;
+        if (i == MemNumHeaps()) {
+            int freePhys = _GetFreePhysicalMemory();
+            used = mFreePhysMem - PhysicalUsage();
+            if (used < freePhys) {
+                used = freePhys;
+            }
+            i7c = 0;
+        } else {
+            MemFreeBlockStats(i, i7c, w, used, y, z);
+        }
+        *stream << MakeString(",%d", mHeapStats[i].mMaxActSize);
+        *stream << MakeString(",%d", mHeapStats[i].mTotalActSize);
+        *stream << MakeString(",%d", z);
+    }
+}
+
+int MemTracker::SpitAllocInfo(TextStream *stream) {
+    int ret = 1;
+    if (gMemTracker && gMemTracker->mHashTable) {
+        MILO_LOG("----------------BEGIN MemTracker::SpitAllocInfo\n");
+        for (auto it = gMemTracker->mHashTable->Begin(); it != nullptr;
+             it = gMemTracker->mHashTable->Next(it)) {
+            (*it)->Print(*stream);
+        }
+        MILO_LOG("----------------END MemTracker::SpitAllocInfo\n");
+        ret = 0;
+    }
+    return ret;
+}
+
+int MemTracker::SpitAllocInfo(FILE *file) {
+    int ret = 1;
+    if (gMemTracker && gMemTracker->mHashTable) {
+        MILO_LOG("----------------BEGIN MemTracker::SpitAllocInfo\n");
+        for (auto it = gMemTracker->mHashTable->Begin(); it != nullptr;
+             it = gMemTracker->mHashTable->Next(it)) {
+            (*it)->PrintForReport(file);
+        }
+        MILO_LOG("----------------END MemTracker::SpitAllocInfo\n");
+        ret = 0;
+    }
+    return ret;
 }

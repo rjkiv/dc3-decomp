@@ -157,6 +157,7 @@ T2 *KeylessHash<T1, T2>::Find(const T1 &key) {
     return 0;
 }
 
+// needs fixing because of the <void*, AllocInfo*> case
 template <class T1, class T2>
 T2 *KeylessHash<T1, T2>::Insert(const T2 &val) {
     MILO_ASSERT(val != mEmpty && val != mRemoved, 0x98);
@@ -165,9 +166,11 @@ T2 *KeylessHash<T1, T2>::Insert(const T2 &val) {
         Resize(0x19, 0);
     }
     const char *valStr = (const char *)val;
-    int i = HashString(valStr, mSize);
+    int i = Hash(val, mSize);
     MILO_ASSERT(i >= 0, 0xA2);
-    while (mEntries[i] != mEmpty && mEntries[i] != mRemoved
+    while (mEntries[i] != mEmpty
+           && mEntries[i] != mRemoved
+           // this part needs to be a general comparison
            && !streq((const char *)mEntries[i], valStr)) {
         Advance(i);
     }

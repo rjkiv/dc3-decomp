@@ -32,6 +32,7 @@ public:
     void PrintForReport(TextStream &) const;
     void Print(TextStream &) const;
     int StackCompare(const AllocInfo &) const;
+    void PrintForReport(FILE *) const;
 
     static bool bPrintCsv;
     static void SetPoolMemory(void *, int);
