@@ -177,7 +177,7 @@ void RndAmbientOcclusion::BuildTrees(Quality quality) {
         box.Extend(0.001f);
         mTree = new kdTree<Triangle>(box);
         FOREACH (it, mTriList) {
-            mTree->Add(&*it);
+            mTree->Insert(&*it);
         }
         // kdtree pack
         mTree->PackNodes((kdTree<Triangle>::SplitPlaneType)0, 0);

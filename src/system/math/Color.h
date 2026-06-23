@@ -3,6 +3,7 @@
 #include "utl/TextStream.h"
 #include "utl/BinStream.h"
 #include "math/Utl.h"
+#include "math/Vec.h"
 
 namespace Hmx {
     class Color {
@@ -68,6 +69,11 @@ namespace Hmx {
         }
 
         float &operator[](int i) { return *(&red + i); }
+
+        Vector4 &AsVector4() { return reinterpret_cast<Vector4 &>(*this); }
+        const Vector4 &AsVector4() const {
+            return reinterpret_cast<const Vector4 &>(*this);
+        }
     };
 }
 

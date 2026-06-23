@@ -12,6 +12,8 @@
 class RndAmbientOcclusion : public Hmx::Object {
 public:
     enum Quality {
+        kQuality_Accurate = 0,
+        kQuality_Fast = 1,
         kQuality_Max = 2
     };
     struct Edge {
