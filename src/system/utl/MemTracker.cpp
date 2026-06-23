@@ -289,22 +289,97 @@ void MemTracker::DiffDump(TextStream &ts) {
         ts << "(data\n";
         int count = 0;
         for (auto it = mHashTable->Begin(); it != nullptr; it = mHashTable->Next(it)) {
-            AllocInfo *info = *it;
-            if (mTimeSlice == info->mTimeSlice) {
+            if (mTimeSlice == (*it)->mTimeSlice) {
                 count++;
             }
         }
-        AllocInfoVec vec(DebugHeapAlloc(count), count);
-        for (auto it = mHashTable->Begin(); it != nullptr; it = mHashTable->Next(it)) {
-            AllocInfo *info = *it;
-            if (mTimeSlice == info->mTimeSlice) {
-                vec.push_back(info);
+        {
+            AllocInfoVec vec(DebugHeapAlloc(count * 4), count * 4);
+            for (auto it = mHashTable->Begin(); it != nullptr;
+                 it = mHashTable->Next(it)) {
+                if (mTimeSlice == (*it)->mTimeSlice) {
+                    vec.push_back(*it);
+                }
+            }
+            std::sort(vec.begin(), vec.end(), StackLess);
+            std::sort(mFreedInfos.begin(), mFreedInfos.end(), StackLess);
+            auto vecIt = vec.begin();
+            auto freedIt = mFreedInfos.begin();
+            while (vecIt != vec.end() || freedIt != mFreedInfos.end()) {
+                int cmp;
+                if (vecIt == vec.end()) {
+                    cmp = 1;
+                } else if (freedIt == mFreedInfos.end()) {
+                    cmp = -1;
+                } else {
+                    cmp = (*vecIt)->StackCompare(*(*freedIt));
+                }
+                if (cmp < 0) {
+                    ColatedPrint(ts, *vecIt++, "alloc");
+                } else if (cmp > 0) {
+                    ColatedPrint(ts, *freedIt++, "free");
+                } else {
+                    ++vecIt;
+                    ++freedIt;
+                }
             }
         }
-        std::sort(vec.begin(), vec.end(), StackLess);
-        std::sort(mFreedInfos.begin(), mFreedInfos.end(), StackLess);
-        // iterate across both AllocInfoVecs here
+        ts << ")\n";
     }
     mFreedInfos.delete_and_clear();
     mTimeSlice++;
+}
+
+void MemTracker::Report(int minSize, TextStream &stream) {
+    HeapReport(stream);
+    UpdateStats();
+    mHeapTypeStats[mCurStatTable].SortBySize();
+    int curNumStats = mHeapTypeStats[mCurStatTable].GetNumStats();
+    stream << MakeString(
+        "\n  %-30s %2s %5s %10s %10s\n", "TYPE", "Hp", "Num", "SzRequest", "SzActual"
+    );
+    for (int i = 0; i < curNumStats; i++) {
+        BlockStat &curStat = mHeapTypeStats[mCurStatTable].GetBlockStat(i);
+        if (curStat.mSizeAct >= minSize) {
+            stream << MakeString(
+                "  %-30s %2d %5d %10d %10d\n",
+                curStat.mName,
+                curStat.mHeap,
+                curStat.mNumAllocs,
+                curStat.mSizeReq,
+                curStat.mSizeAct
+            );
+        }
+    }
+    mPoolTypeStats[mCurStatTable].SortBySize();
+    curNumStats = mPoolTypeStats[mCurStatTable].GetNumStats();
+    stream << MakeString(
+        "\n  %-30s %5s %10s %10s\n", "POOL TYPE", "Num", "SzRequest", "SzActual"
+    );
+    for (int i = 0; i < curNumStats; i++) {
+        BlockStat &curStat = mPoolTypeStats[mCurStatTable].GetBlockStat(i);
+        if (curStat.mSizeAct >= minSize) {
+            stream << MakeString(
+                "  %-30s %5d %10d %10d\n",
+                curStat.mName,
+                curStat.mNumAllocs,
+                curStat.mSizeReq,
+                curStat.mSizeAct
+            );
+        }
+    }
+    stream << "Diff from last report:\n";
+    DiffTblReport(
+        "MALLOC DIFF TYPES",
+        mHeapTypeStats[mCurStatTable],
+        mHeapTypeStats[1 - mCurStatTable],
+        stream
+    );
+    DiffTblReport(
+        "POOL DIFF TYPES",
+        mPoolTypeStats[mCurStatTable],
+        mPoolTypeStats[1 - mCurStatTable],
+        stream
+    );
+    mCurStatTable = 1 - mCurStatTable;
 }

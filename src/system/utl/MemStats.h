@@ -41,4 +41,5 @@ public:
     void SortByName();
     void Update(const char *type, unsigned char heap, int reqSize, int actSize);
     BlockStat &GetBlockStat(int iStat);
+    int GetNumStats() const { return mNumStats; }
 };
