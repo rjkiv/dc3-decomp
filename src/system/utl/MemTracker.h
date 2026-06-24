@@ -60,6 +60,7 @@ public:
     const String &GetTopLevelObjName() const { return mTopLevelObjectName; }
     void SetTopLevelObjName(const char *name) { mTopLevelObjectName = name; }
     HeapStats &HeapStatsAt(int idx) { return mHeapStats[idx]; }
+    short GetTimeSlice() const { return mTimeSlice; }
 
     __forceinline void SetTopLevelFileName(const char *name) {
         mLastTopLevelFileName = mTopLevelFileName;

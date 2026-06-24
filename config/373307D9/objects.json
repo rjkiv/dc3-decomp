@@ -841,7 +841,7 @@
             "system/utl/TextStream.cpp": "Matching",
             "system/utl/TimeConversion.cpp": "Matching",
             "system/utl/UTF8.cpp": "NonMatching",
-            "system/utl/UrlEncode.cpp": "NonMatching",
+            "system/utl/UrlEncode.cpp": "Matching",
             "system/utl/VarTimer.cpp": "Matching",
             "system/utl/WaveFile.cpp": "NonMatching",
             "system/utl/trie.cpp": "NonMatching",

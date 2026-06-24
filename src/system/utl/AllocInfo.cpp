@@ -1,15 +1,16 @@
 #include "utl/AllocInfo.h"
+#include "utl/MemTracker.h"
 #include "utl/Pool.h"
 #include "os/Debug.h"
 #include "trie.h"
 #include "utl/TextStream.h"
 #include "xdk/XBDM.h"
 
-Trie *s_pTrie;
+static Trie *s_pTrie = nullptr;
 bool AllocInfo::bPrintCsv;
 
 Pool &GetPool() {
-    static void *sMem;
+    static void *sMem = nullptr;
     static Pool sPool(4, sMem, 4);
     return sPool;
 }
@@ -30,6 +31,7 @@ AllocInfo::AllocInfo(
     : mReqSize(requestedSize), mActSize(actualSize), mType(type), mMem(mem), mHeap(heap),
       mPooled(pooled), mStrat(strat), mFile(file), mLine(line),
       unk1d(s_pTrie->store(str1.c_str())), unk21(s_pTrie->store(str2.c_str())) {
+    mTimeSlice = gMemTracker->GetTimeSlice();
     FillStackTrace();
 }
 
@@ -95,8 +97,11 @@ int AllocInfo::Compare(const AllocInfo &info) const {
         return cmp;
     } else if (mReqSize < info.mReqSize) {
         return -1;
-    } else
-        return mReqSize <= info.mReqSize;
+    } else if (mReqSize > info.mReqSize) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 void AllocInfo::FillStackTrace() {
