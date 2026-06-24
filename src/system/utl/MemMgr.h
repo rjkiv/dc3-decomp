@@ -4,10 +4,10 @@
 extern const char *gStlAllocName;
 extern bool gStlAllocNameLookup;
 extern class CriticalSection *gMemLock;
-extern class CriticalSection *gMemStackLock;
 
 void PhysDelta(const char *);
 bool MemUseLowestMip();
+bool MemUseLowestMipException(const char *);
 
 /** Get the largest block of physical memory we can successfully allocate. */
 int _GetFreePhysicalMemory();

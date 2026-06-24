@@ -41,7 +41,16 @@ public:
     int Free(int *);
     int *Truncate(int *, int, int &);
     void Print(class TextStream &, bool);
-    void Init(const char *, int, int *, int, bool, Strategy, int, bool);
+    void Init(
+        const char *name,
+        int num,
+        int *start,
+        int size,
+        bool handle,
+        Strategy strat,
+        int debugLevel,
+        bool allowTemp
+    );
     int AllocSize(int *);
     void FreeBlockStats(int &, int &, int &, int &, int &);
     void FirstFit(int, int, FreeBlockInfo &);
