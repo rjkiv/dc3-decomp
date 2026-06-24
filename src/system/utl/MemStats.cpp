@@ -5,9 +5,12 @@
 int SizeLess(const void *v1, const void *v2) {
     const BlockStat *b1 = (const BlockStat *)v1;
     const BlockStat *b2 = (const BlockStat *)v2;
-    if (b1->mSizeAct < b2->mSizeAct)
+    if (b1->mSizeAct < b2->mSizeAct) {
         return 1;
-    // else...?
+    } else if (b2->mSizeAct < b1->mSizeAct) {
+        return -1;
+    } else
+        return 0;
 }
 
 int NameLess(const void *v1, const void *v2) {
@@ -41,14 +44,13 @@ void BlockStatTable::Update(
     for (; idx < mNumStats; idx++) {
         if (mStats[idx].mHeap == heap
             && (!mSizeMatters || mStats[idx].mSizeReq == reqSize)) {
-            if (strcmp(mStats[idx].mName, type) == 0) {
+            if (streq(mStats[idx].mName, type)) {
                 if (!mSizeMatters) {
                     mStats[idx].mSizeReq += reqSize;
                 }
                 mStats[idx].mSizeAct += actSize;
-                if (reqSize >= mStats[idx].mMaxSize) {
-                    mStats[idx].mMaxSize = reqSize;
-                }
+                mStats[idx].mMaxSize =
+                    reqSize >= mStats[idx].mMaxSize ? reqSize : mStats[idx].mMaxSize;
                 mStats[idx].mNumAllocs++;
                 return;
             }
