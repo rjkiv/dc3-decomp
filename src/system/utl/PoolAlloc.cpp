@@ -6,15 +6,17 @@
 #include "obj/Data.h"
 #include "utl/TextStream.h"
 #include "utl/Std.h"
+#include <cstdio>
 
-int gBigHunk = 0xC800;
-int gSmallHunk = 0xC800;
-int gPoolCapacity = 0;
-bool gPoolAllocInitted = 0;
+static int gHunkSize = 0xC800;
+static int gSmallHunkSize = 0xC800;
+
+static int gTotalChunksSize = 0;
+static bool gPoolAllocInitted = 0;
 ChunkAllocator *gChunkAlloc = nullptr;
 
 void PoolAllocInit(DataArray *a) {
-    a->FindData("big_hunk", gBigHunk);
+    a->FindData("big_hunk", gHunkSize);
     gPoolAllocInitted = true;
 }
 
@@ -74,6 +76,30 @@ void FixedSizeAlloc::Free(void *v) {
     mNumAllocs--;
 }
 
+int *FixedSizeAlloc::RawAlloc(int size) {
+    static int *gPoolEnd = nullptr;
+    static int *gPoolStart = nullptr;
+    gTotalChunksSize += size;
+    if (gPoolStart + (size >> 2) > gPoolEnd) {
+        if (MemNumHeaps() > 0) {
+            if (gHunkSize == gSmallHunkSize) {
+                printf("PoolAlloc warning: allocating small pool chunk\n");
+            }
+            MemPushHeap(0);
+        }
+        gPoolStart = (int *)_MemAllocTemp(gHunkSize, __FILE__, 0x71, "PoolChunk", 0);
+        if (MemNumHeaps() > 0) {
+            MemPopHeap();
+        }
+        gPoolEnd = gPoolStart + (gHunkSize >> 2);
+        gHunkSize = gSmallHunkSize;
+        gPoolStart += 0x10;
+    }
+    int *ret = gPoolStart;
+    gPoolStart += (size >> 2);
+    return ret;
+}
+
 void FixedSizeAlloc::Refill() {
     MILO_ASSERT(mFreeList == 0, 0xCA);
     int allocSize = mAllocSizeWords * mNodesPerChunk;
@@ -111,7 +137,7 @@ void ChunkAllocator::Free(void *v, int idx) {
 }
 
 void ChunkAllocator::Print(TextStream &ts) {
-    ts << MakeString("\n*** POOL REPORT (Total Capacity: %d)***\n", gPoolCapacity);
+    ts << MakeString("\n*** POOL REPORT (Total Capacity: %d)***\n", gTotalChunksSize);
     ts << MakeString("   NodeSize   NumAllocs  MaxAllocs  Capacity  Wasted\n");
     int wasted = 0;
     for (int i = 0; i < 64; i++) {

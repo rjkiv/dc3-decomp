@@ -5,11 +5,14 @@
 #include "obj/Data.h"
 #include "os/CritSec.h"
 #include "os/Debug.h"
+#include "os/OSFuncs.h"
 #include "os/System.h"
 #include "utl/Option.h"
 #include "utl/PoolAlloc.h"
 #include "utl/TextStream.h"
 #include "xdk/XAPILIB.h"
+#include "xdk/xapilibi/processthreadsapi.h"
+#include "xdk/xapilibi/winbase.h"
 #include <cstdlib>
 
 #define MAX_HEAPS 16
@@ -27,11 +30,11 @@ static bool sUnkB = false;
 static bool gInitted = false;
 bool gbUseLowestMip = false;
 bool gInsideMemFunc = false;
-static DWORD gCurThread = 0;
-static DWORD gNumThreads = 0;
-static int gNumHeaps = 0;
-static int gCheckConsistency = 0;
-static int gNewOperatorAlign = 0;
+static int gCurThread;
+static int gNumThreads;
+static int gNumHeaps;
+static int gCheckConsistency;
+static int gNewOperatorAlign;
 bool gStlAllocNameLookup = false;
 CriticalSection *gMemLock = nullptr;
 CriticalSection *gMemStackLock = nullptr;
@@ -39,7 +42,7 @@ std::vector<String> gUseLowestMipExceptions;
 
 bool gMemoryUsageTest = false;
 String gMemLogType;
-DWORD gThreadIds[MAX_BUF_THREADS];
+int gThreadIds[MAX_BUF_THREADS];
 
 void *operator new(unsigned int size) {
     return MemAlloc(size, __FILE__, 0x5CF, "new", gNewOperatorAlign);
@@ -461,7 +464,45 @@ MemRealloc(void *mem, int size, const char *file, int line, const char *name, in
     }
 }
 
-MemHeapStack &ThreadMemStack(bool);
+MemHeapStack &ThreadMemStack(bool b1) {
+    CritSecTracker t(gMemStackLock);
+    if (gNumThreads == 0) {
+        gThreadIds[0] = GetCurrentThreadId();
+        gNumThreads = 1;
+    } else {
+        if (gThreadIds[gCurThread] != GetCurrentThreadId()) {
+            int i;
+            for (i = 0; i < gNumThreads; i++) {
+                if (gThreadIds[i] == GetCurrentThreadId())
+                    break;
+            }
+            if (!b1) {
+                return gNullMemStack;
+            }
+            if (i == gNumThreads) {
+                int cur = 0;
+                for (; cur < gNumThreads; cur++) {
+                    if (!ValidateThreadId(gThreadIds[cur])) {
+                        MILO_ASSERT(gThreadBuf[cur].mSize == 0, 0x12E);
+                        MILO_ASSERT(gThreadBuf[cur].mTempRefs == 0, 0x12F);
+                        gThreadIds[cur] = GetCurrentThreadId();
+                        break;
+                    }
+                }
+                if (cur == gNumThreads) {
+                    MILO_ASSERT(gNumThreads < MAX_BUF_THREADS, 0x138);
+                    DWORD id = GetCurrentThreadId();
+                    gNumThreads++;
+                    gThreadIds[cur] = id;
+                }
+                gCurThread = cur;
+            } else {
+                gCurThread = i;
+            }
+        }
+    }
+    return gThreadBuf[gCurThread];
+}
 
 void MemPushHeap(int iHeap) {
     if (HeapInitted()) {
@@ -567,4 +608,53 @@ void MemDelta(const char *msg, int heapNum) {
              << " free:" << numFree << " fragmentation:" << numFree - largest
              << " delta:" << delta << "\n";
     sFreeHeaps[heapNum] = numFree;
+}
+
+void MemPrintOverview(int i1, char *const c) {
+    char *p = c;
+    if (i1 == -2 || i1 == -3) {
+        const char *str = "physical";
+        MEMORYSTATUS status;
+        GlobalMemoryStatus(&status);
+        static SIZE_T sAvailPhys;
+        if (sAvailPhys >= status.dwAvailPhys) {
+            sAvailPhys = status.dwAvailPhys;
+        }
+        strcpy(
+            p,
+            MakeString(
+                " [%5s] KB free:%7u(%7u) usage:%5i\n",
+                str,
+                status.dwAvailPhys >> 10,
+                sAvailPhys >> 10,
+                PhysicalUsage() / 1024
+            )
+        );
+        p += strlen(p);
+    }
+    for (int i = 0; i < gNumHeaps; i++) {
+        if (i1 == -3 || i1 == i) {
+            int i7c, i80, i88, i8c, i84;
+            MemFreeBlockStats(i, i7c, i80, i88, i8c, i84);
+            int waste = (i88 - i84) >> 10;
+            int big = i84 >> 10;
+            int free2 = i8c >> 10;
+            int freeAmt = i88 >> 10;
+            const char *str = "physical";
+            strcpy(
+                p,
+                MakeString(
+                    " [%5s] KB free:%7d(%7d) big:%7d lfrag:%5d rfrag:%5d waste:%5d\n",
+                    str,
+                    freeAmt,
+                    free2,
+                    big,
+                    i7c,
+                    i80,
+                    waste
+                )
+            );
+            p += strlen(p);
+        }
+    }
 }

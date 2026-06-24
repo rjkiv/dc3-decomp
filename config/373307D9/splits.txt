@@ -4409,7 +4409,7 @@ system/utl/MemMgr.cpp:
 	.text       start:0x827CAF68 end:0x827CD670
 	.text       start:0x82EDD3E0 end:0x82EDD3F0 rename:.text$yc
 	.text       start:0x82EE3348 end:0x82EE3358 rename:.text$yd
-	.data       start:0x82F189A0 end:0x82F189D8
+	.data       start:0x82F189A0 end:0x82F189D0
 	.data       start:0x830E4B08 end:0x830E5710 rename:.bss
 
 system/utl/Str.cpp:
@@ -4432,7 +4432,7 @@ system/utl/PoolAlloc.cpp:
 	.rdata      start:0x822A03B0 end:0x822A03FC rename:.rdata$r
 	.pdata      start:0x822EA7D8 end:0x822EA8A0
 	.text       start:0x827CF0A0 end:0x827CFE00
-	.data       start:0x82F189D8 end:0x82F189FC
+	.data       start:0x82F189D0 end:0x82F189FC
 	.data       start:0x830E5730 end:0x830E5740 rename:.bss
 
 system/utl/Loader.cpp:
