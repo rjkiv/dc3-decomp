@@ -2,7 +2,7 @@
 #include "utl/MemTracker.h"
 #include "utl/Pool.h"
 #include "os/Debug.h"
-#include "trie.h"
+#include "utl/trie.h"
 #include "utl/TextStream.h"
 #include "xdk/XBDM.h"
 
@@ -78,8 +78,9 @@ void AllocInfo::Print(TextStream &ts) const {
             ts << "(pooled) ";
         ts << "(actual " << mActSize << ") (heap_number " << mHeap << ") (location "
            << mFile << " " << mLine << ") ";
+        int i = 0;
         ts << "(stack ";
-        for (int i = 0; mStackTrace[i] != 0 && i < 16; i++) {
+        for (; mStackTrace[i] != 0 && i < 16; i++) {
             ts << mStackTrace[i] << " ";
         }
         ts << ") ";
@@ -116,17 +117,8 @@ void AllocInfo::FillStackTrace() {
 }
 
 void AllocInfoInit() {
-    void *dst;
-    if (s_pTrie == nullptr) {
-        // 0x220008
-        dst = MemAlloc(sizeof(Trie), __FILE__, 0x28, "Trie, 0");
-        if (dst == nullptr) {
-            s_pTrie = nullptr;
-        } else {
-            memset(dst, 0, sizeof(Trie));
-            // some trie member bool being set to true here
-            s_pTrie = (Trie *)dst;
-        }
+    if (!s_pTrie) {
+        s_pTrie = new Trie();
     }
 }
 

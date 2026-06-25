@@ -39,31 +39,24 @@ void Trie::dec_count(unsigned int n) {
 }
 
 unsigned int Trie::get_free_node() {
-    unsigned int n = *TRIE_GET_FREE_HEAD;
-
+    unsigned int n = mFreeHead;
     if (n != 0) {
-        check_index(n);
-        *TRIE_GET_FREE_HEAD = TRIE_GET_SIBLING(n);
+        mFreeHead = get_sibling(n);
+        return n;
     } else {
-        int _nodeCount = *TRIE_GET_NODE_COUNT;
         MILO_ASSERT(_nodeCount < MAX_NODES, 0x82);
-        n = _nodeCount;
-        TRIE_INC_NODE_COUNT;
+        return _nodeCount++;
     }
-    return n;
 }
 
 void Trie::delete_node(unsigned int n) {
-    check_index(n);
-    TRIE_CLEAR_NODE(n);
-    check_index(n);
-    TRIE_CLEAR_SIBLING(n);
-    check_index(n);
-    TRIE_CLEAR_PARENT(n);
-    *TRIE_GET_COUNTS(n) = *(unsigned int *)0;
-    check_index(n);
+    set_unk0(n, nullptr);
+    set_sibling(n, 0);
+    clear_parent(n);
+    set_char(n, 0xFF);
+
+    // this part is fake
     unsigned int *freeHead = TRIE_GET_FREE_HEAD;
-    TRIE_SET_CHAR(n, 0xFF);
     if (*freeHead != 0) {
         check_index(n);
         TRIE_SET_SIBLING(n, *freeHead);

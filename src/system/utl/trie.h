@@ -1,6 +1,7 @@
 #pragma once
 #include "MemTrack.h"
 #include "os/Debug.h"
+#include "utl/MemMgr.h"
 
 #define MAX_NODES 0x20000
 #define NODE_SIZE 0x11
@@ -33,11 +34,18 @@
 #define TRIE_CLEAR_COUNTS(node) *(unsigned int *)(TRIE_GET_NODE(node) + 0xC) = 0
 
 // oh yeah this class is awful
+#pragma pack(push, 1)
 class Trie {
 public:
+    Trie() {
+        memset(this, 0, sizeof(Trie));
+        _nodeCount = 1;
+    }
+
     int store(const char *);
     void remove(unsigned int);
-    char *get(int, char *, int);
+
+    char *get(int n, char *buf, int bufSize);
     void check_index(unsigned int n) { MILO_ASSERT(0<= n && n < MAX_NODES, 0x36); }
     void inc_count(unsigned int);
     void dec_count(unsigned int);
@@ -46,12 +54,53 @@ public:
     unsigned int get_free_node();
     void delete_node(unsigned int);
 
-protected:
+    void set_unk0(unsigned int idx, char *value) {
+        check_index(idx);
+        mNodes[idx].unk0 = value;
+    }
+
+    unsigned int get_sibling(unsigned int idx) {
+        check_index(idx);
+        return mNodes[idx].sibling;
+    }
+    void set_sibling(unsigned int idx, unsigned int sibling) {
+        check_index(idx);
+        mNodes[idx].sibling = sibling;
+    }
+
+    void clear_parent(unsigned int idx) {
+        check_index(idx);
+        mNodes[idx].unk8 = 0;
+        mNodes[idx].mCounts = 0;
+    }
+
+    void set_char(unsigned int idx, char c) {
+        check_index(idx);
+        mNodes[idx].mChar = c;
+    }
+
+    MEM_OVERLOAD(Trie, 0x28);
+
+private:
+    // size 0x11
+    struct Node {
+        char *unk0;
+        unsigned int sibling; // 0x4
+        unsigned int unk8; // 0x8 - parent?
+        union {
+            struct {
+                unsigned int mDupCount : 24; // 0xc
+                unsigned int mCount : 8; // 0xf
+            };
+            unsigned int mCounts; // 0xc
+        };
+        char mChar; // 0x10
+    };
+
+    Node mNodes[MAX_NODES]; // 0x0
+    int _nodeCount; // 0x220000
+    unsigned int mFreeHead; // 0x220004
     // Counts is a 4 byte int thats used to store Duplicate count and total count
     // DupCount = upper 24 bits of the int(16mil max) & Count = low 8 bits(255 max)
-    // int mNodeCount = 0x220000
-    // int mHead = 0x220004
 };
-static Trie *pTrie = (Trie *)malloc(MAX_NODES * NODE_SIZE + 8); // trie base & +8 for
-                                                                // the total node count
-                                                                // and freehead vars
+#pragma pack(pop)

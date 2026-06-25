@@ -2,7 +2,6 @@
 #include "MemTrack.h"
 #include "os/Debug.h"
 #include "utl/Str.h"
-#include "utl/trie.h"
 #include "utl/TextStream.h"
 
 // size 0x65
@@ -44,7 +43,7 @@ public:
     const char *mType; // 0x8
     void *mMem; // 0xc
     signed char mHeap; // 0x10
-    bool mPooled; // 0x11
+    unsigned char mPooled; // 0x11
     short mTimeSlice; // 0x12
     unsigned char mStrat; // 0x14
     const char *mFile; // 0x15
