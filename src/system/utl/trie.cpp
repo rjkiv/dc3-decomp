@@ -1,5 +1,23 @@
 #include "trie.h"
 
+void Trie::inc_count(unsigned int n) {
+    check_index(n);
+    char *node = TRIE_GET_NODE(n);
+    unsigned char count = TRIE_GET_COUNT(node);
+    check_index(n);
+    unsigned int *countsPtr = TRIE_GET_COUNTS(node);
+    *countsPtr = TRIE_INC_COUNT(countsPtr, count);
+}
+
+void Trie::dec_count(unsigned int n) {
+    check_index(n);
+    char *node = TRIE_GET_NODE(n);
+    unsigned char count = TRIE_GET_COUNT(node);
+    check_index(n);
+    unsigned int *countsPtr = TRIE_GET_COUNTS(node);
+    *countsPtr = TRIE_DEC_COUNT(countsPtr, count);
+}
+
 void Trie::inc_dup_count(unsigned int n) {
     check_index(n);
     char *node = TRIE_GET_NODE(n);
@@ -20,28 +38,10 @@ void Trie::dec_dup_count(unsigned int n) {
     *countsPtr = TRIE_DEC_DUP_COUNT(dupCount, count);
 }
 
-void Trie::inc_count(unsigned int n) {
-    check_index(n);
-    char *node = TRIE_GET_NODE(n);
-    unsigned char count = TRIE_GET_COUNT(node);
-    check_index(n);
-    unsigned int *countsPtr = TRIE_GET_COUNTS(node);
-    *countsPtr = TRIE_INC_COUNT(countsPtr, count);
-}
-
-void Trie::dec_count(unsigned int n) {
-    check_index(n);
-    char *node = TRIE_GET_NODE(n);
-    unsigned char count = TRIE_GET_COUNT(node);
-    check_index(n);
-    unsigned int *countsPtr = TRIE_GET_COUNTS(node);
-    *countsPtr = TRIE_DEC_COUNT(countsPtr, count);
-}
-
 unsigned int Trie::get_free_node() {
     unsigned int n = mFreeHead;
     if (n != 0) {
-        mFreeHead = get_sibling(n);
+        mFreeHead = get_next_sibling(n);
         return n;
     } else {
         MILO_ASSERT(_nodeCount < MAX_NODES, 0x82);
@@ -50,8 +50,8 @@ unsigned int Trie::get_free_node() {
 }
 
 void Trie::delete_node(unsigned int n) {
-    set_unk0(n, nullptr);
-    set_sibling(n, 0);
+    set_first_child(n, 0);
+    set_next_sibling(n, 0);
     clear_parent(n);
     set_char(n, 0xFF);
 
@@ -62,6 +62,68 @@ void Trie::delete_node(unsigned int n) {
         TRIE_SET_SIBLING(n, *freeHead);
     }
     *freeHead = n;
+}
+
+int Trie::store(const char *str) {
+    if (str && *str) {
+        int node_idx = 1;
+        int n_00 = 0;
+        int len = strlen(str);
+        for (int i = 0; i <= len; i++) {
+            char curChar = str[i];
+            int dupeCount = get_dup_count(node_idx);
+            for (int j = 0; j < dupeCount; j++) {
+                if (get_char(node_idx) != curChar) {
+                    if (j != dupeCount - 1) {
+                        node_idx = get_next_sibling(node_idx);
+                    }
+                } else {
+                    n_00 = node_idx;
+                    node_idx = get_first_child(node_idx);
+                    goto cnt;
+                }
+            }
+            unsigned int next_free = get_free_node();
+            if (dupeCount == 0) {
+                if (n_00 > 0) {
+                    set_first_child(n_00, next_free);
+                }
+            } else {
+                set_next_sibling(node_idx, next_free);
+            }
+            set_char(next_free, curChar);
+            set_parent(next_free, n_00);
+            if (n_00 > 0) {
+                inc_count(get_first_child(n_00));
+            } else {
+                inc_count(1);
+            }
+            n_00 = next_free;
+            node_idx = next_free;
+            if (str[i] != '\0') {
+                while (i++ < len) {
+                    n_00 = get_free_node();
+                    set_first_child(next_free, n_00);
+                    set_parent(n_00, next_free);
+                    set_char(n_00, str[i]);
+                    inc_count(n_00);
+                    node_idx = n_00;
+                    next_free = n_00;
+                }
+                break;
+            } else {
+            cnt:
+                continue;
+            }
+        }
+        if (node_idx == 0) {
+            node_idx = n_00;
+        }
+        inc_dup_count(node_idx);
+        return node_idx;
+    } else {
+        return 0;
+    }
 }
 
 void Trie::remove(unsigned int n) {

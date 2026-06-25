@@ -1,5 +1,4 @@
 #pragma once
-#include "MemTrack.h"
 #include "os/Debug.h"
 #include "utl/MemMgr.h"
 
@@ -42,10 +41,24 @@ public:
         _nodeCount = 1;
     }
 
-    int store(const char *);
+    int store(const char *str);
     void remove(unsigned int);
 
-    char *get(int n, char *buf, int bufSize);
+    char *get(int n, char *buf, int bufSize) {
+        if (n > 0 && n < MAX_NODES && get_char(n) == '\0') {
+            char *p = buf + bufSize - 1;
+            for (int i = 0; n != 0 && i < bufSize; i++, p--) {
+                *p = get_char(n);
+                n = get_parent(n);
+            }
+            char *end = buf + bufSize;
+            buf[bufSize - 1] = '\0';
+            return p == end - 1 ? p : p + 1;
+        } else {
+            *buf = '\0';
+            return buf;
+        }
+    }
     void check_index(unsigned int n) { MILO_ASSERT(0<= n && n < MAX_NODES, 0x36); }
     void inc_count(unsigned int);
     void dec_count(unsigned int);
@@ -54,23 +67,33 @@ public:
     unsigned int get_free_node();
     void delete_node(unsigned int);
 
-    void set_unk0(unsigned int idx, char *value) {
+    unsigned int get_first_child(unsigned int idx) {
         check_index(idx);
-        mNodes[idx].unk0 = value;
+        return mNodes[idx].firstChild;
     }
-
-    unsigned int get_sibling(unsigned int idx) {
+    void set_first_child(unsigned int idx, unsigned int value) {
         check_index(idx);
-        return mNodes[idx].sibling;
+        mNodes[idx].firstChild = value;
     }
-    void set_sibling(unsigned int idx, unsigned int sibling) {
+    unsigned int get_next_sibling(unsigned int idx) {
         check_index(idx);
-        mNodes[idx].sibling = sibling;
+        return mNodes[idx].nextSibling;
     }
-
+    void set_next_sibling(unsigned int idx, unsigned int sibling) {
+        check_index(idx);
+        mNodes[idx].nextSibling = sibling;
+    }
+    unsigned int get_parent(unsigned int idx) {
+        check_index(idx);
+        return mNodes[idx].parent;
+    }
+    void set_parent(unsigned int idx, unsigned int parent) {
+        check_index(idx);
+        mNodes[idx].parent = parent;
+    }
     void clear_parent(unsigned int idx) {
         check_index(idx);
-        mNodes[idx].unk8 = 0;
+        mNodes[idx].parent = 0;
         mNodes[idx].mCounts = 0;
     }
 
@@ -79,18 +102,31 @@ public:
         mNodes[idx].mChar = c;
     }
 
+    char get_char(unsigned int idx) {
+        check_index(idx);
+        return mNodes[idx].mChar;
+    }
+
+    unsigned int get_dup_count(unsigned int idx) {
+        check_index(idx);
+        return mNodes[idx].mDupCount;
+    }
+
     MEM_OVERLOAD(Trie, 0x28);
 
 private:
     // size 0x11
     struct Node {
-        char *unk0;
-        unsigned int sibling; // 0x4
-        unsigned int unk8; // 0x8 - parent?
+        unsigned int firstChild; // 0x0
+        unsigned int nextSibling; // 0x4
+        unsigned int parent; // 0x8
+        // this union is the only field i'm unsure about
         union {
             struct {
-                unsigned int mDupCount : 24; // 0xc
-                unsigned int mCount : 8; // 0xf
+                unsigned int mDupCount : 24; // 0xc - accessed via lwz 0xc,
+                                             // set via an or with lbz 0xf
+                unsigned int mCount : 8; // 0xf - accessed via lbz 0xf,
+                                         // but set via clrrwi?
             };
             unsigned int mCounts; // 0xc
         };
