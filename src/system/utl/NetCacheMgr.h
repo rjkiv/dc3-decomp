@@ -38,6 +38,8 @@ enum LoadState {
 };
 
 enum NetLoaderPos {
+    kNetLoaderPosNext = 0x0000,
+    kNetLoaderPosBack = 0x0001,
 };
 
 struct NetLoaderRef {

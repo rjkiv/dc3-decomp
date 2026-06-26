@@ -6,7 +6,8 @@
 #include "utl/Str.h"
 
 enum NetLoaderFailType {
-    // file not found = 1
+    kNetLoaderFail_Unknown = 0x0000,
+    kNetLoaderFail_ClientError = 0x0001,
 };
 
 class NetLoader {
@@ -19,7 +20,7 @@ public:
     char *DetachBuffer();
     int GetSize();
     bool IsLoaded();
-    char *GetBuffer();
+    char *GetBuffer() { return !mIsLoaded ? nullptr : mBuffer; }
     const char *GetRemotePath() const;
     NetLoaderFailType GetFailType() const { return mFailType; }
     MEM_OVERLOAD(NetLoader, 0x18);
@@ -64,9 +65,9 @@ public:
     bool HasFailed();
     void PollLoading();
 
-    DataArray *GetUnk4() const { return unk4; }
+    DataArray *GetData() const { return mData; }
 
 private:
-    NetLoader *unk0; // 0x0
-    DataArray *unk4; // 0x4
+    NetLoader *mNetLoader; // 0x0
+    DataArray *mData; // 0x4
 };

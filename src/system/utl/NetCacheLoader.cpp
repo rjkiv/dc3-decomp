@@ -4,6 +4,7 @@
 #include "os/FileCache.h"
 #include "utl/Loader.h"
 #include "utl/NetCacheMgr.h"
+#include "utl/NetLoader.h"
 #include "utl/Str.h"
 
 NetCacheLoader::NetCacheLoader(FileCache *f, const String &s)
@@ -48,7 +49,51 @@ char *NetCacheLoader::GetBuffer() {
         return nullptr;
 }
 
-// void NetCacheLoader::SetState(NetCacheLoader::State state);
+void NetCacheLoader::SetState(NetCacheLoader::State state) {
+    if (mState == state) {
+        return;
+    } else {
+        switch (mState) {
+        case 0:
+            if (state != 3) {
+                RELEASE(mFileLoader);
+                RELEASE(mFileLoaderBuffer);
+            }
+            break;
+        case 2:
+            if (state != 3) {
+                MILO_ASSERT(!mNetLoader || mNetLoader->IsSafeToDelete(), 0xC1);
+                RELEASE(mNetLoader);
+            }
+            break;
+        case 3:
+            MILO_ASSERT(!mNetLoader || mNetLoader->IsSafeToDelete(), 0xC7);
+            RELEASE(mNetLoader);
+            mNetLoaderBuffer = nullptr;
+            RELEASE(mFileLoader);
+            RELEASE(mFileLoaderBuffer);
+        default:
+            break;
+        }
+    }
+    mState = state;
+    switch (mState) {
+    case 0: {
+        MILO_ASSERT(!mFileLoader, 0xE3);
+        const char *strPath = GetRemotePath();
+        MILO_ASSERT(TheNetCacheMgr->IsLocalFile(strPath), 0xE6);
+        mFileLoader = new FileLoader(
+            strPath, strPath, kLoadFront, 0, false, true, nullptr, nullptr
+        );
+        break;
+    }
+    case 2: {
+        MILO_ASSERT(!mNetLoader, 0xEF);
+        mNetLoader = NetLoader::Create(mRemotePath);
+        break;
+    }
+    }
+}
 
 void NetCacheLoader::WriteToCache() {
     if (!TheNetCacheMgr->IsReady()) {

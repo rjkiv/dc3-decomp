@@ -64,7 +64,6 @@ void NetLoader::SetSize(int size) { mSize = size; }
 void NetLoader::PostDownload() { mIsLoaded = true; }
 const char *NetLoader::GetRemotePath() const { return mStrRemotePath.c_str(); }
 void NetLoader::SetFailType(NetLoaderFailType ft) { mFailType = ft; }
-char *NetLoader::GetBuffer() { return mBuffer; }
 
 NetLoaderStub::NetLoaderStub(const String &str) : NetLoader(str), mFileLoader(nullptr) {
     FilePath path(
@@ -94,59 +93,57 @@ void NetLoaderStub::PollLoading() {
     }
 }
 
-DataNetLoader::DataNetLoader(const String &str) : unk0(0), unk4(0) {
+DataNetLoader::DataNetLoader(const String &str) : mNetLoader(0), mData(0) {
     if (!TheNetCacheMgr) {
         MILO_FAIL("Tried to create a DataNetLoader, but TheNetCacheMgr is NULL.\n");
     } else {
-        unk0 = TheNetCacheMgr->AddNetLoader(str.c_str(), (NetLoaderPos)0);
+        mNetLoader = TheNetCacheMgr->AddNetLoader(str.c_str(), kNetLoaderPosNext);
     }
 }
 
 DataNetLoader::~DataNetLoader() {
-    if (unk0) {
-        TheNetCacheMgr->DeleteNetLoader(unk0);
-        unk0 = nullptr;
+    if (mNetLoader) {
+        TheNetCacheMgr->DeleteNetLoader(mNetLoader);
+        mNetLoader = nullptr;
     }
-    if (unk4) {
-        unk4->Release();
-        unk4 = nullptr;
+    if (mData) {
+        mData->Release();
+        mData = nullptr;
     }
 }
 
 void DataNetLoader::PollLoading() {
-    if (unk0) {
-        if (unk0->IsLoaded()) {
-            int size = unk0->GetSize();
-            char *buffer = nullptr;
-            if (unk0->IsLoaded()) {
-                buffer = unk0->GetBuffer();
-            }
-            const char *remotePath = unk0->GetRemotePath();
+    if (mNetLoader) {
+        if (mNetLoader->IsLoaded()) {
+            int size = mNetLoader->GetSize();
+            char *buffer = mNetLoader->GetBuffer();
+            const char *remotePath = mNetLoader->GetRemotePath();
             if (streq(FileGetExt(remotePath), "dtz")) {
                 DataArray::SetFile(remotePath);
-                unk4 = LoadDtz(buffer, size);
+                mData = LoadDtz(buffer, size);
             } else {
                 BufStream bs(buffer, size, true);
-                unk4 = DataReadStream(&bs);
+                mData = DataReadStream(&bs);
             }
-        } else if (!unk0->HasFailed()) {
-            return;
+            TheNetCacheMgr->DeleteNetLoader(mNetLoader);
+            mNetLoader = nullptr;
+        } else if (mNetLoader->HasFailed()) {
+            TheNetCacheMgr->DeleteNetLoader(mNetLoader);
+            mNetLoader = nullptr;
         }
-        TheNetCacheMgr->DeleteNetLoader(unk0);
-        unk0 = nullptr;
     }
 }
 
 bool DataNetLoader::HasFailed() {
-    if (unk0) {
-        return unk0->HasFailed();
+    if (mNetLoader) {
+        return mNetLoader->HasFailed();
     } else
-        return !unk4;
+        return !mData;
 }
 
 bool DataNetLoader::IsLoaded() {
     bool netLoaded = true;
-    if (unk0)
-        netLoaded = unk0->IsLoaded();
-    return netLoaded && unk4;
+    if (mNetLoader)
+        netLoaded = mNetLoader->IsLoaded();
+    return netLoaded && mData;
 }

@@ -375,7 +375,7 @@ void HamStorePanel::Poll() {
     if (unka0) {
         unka0->PollLoading();
         if (unka0->IsLoaded()) {
-            mMetadata = unka0->GetUnk4();
+            mMetadata = unka0->GetData();
             MILO_ASSERT(mMetadata, 0xfe);
             mMetadata->AddRef();
             static Symbol motd("motd");
