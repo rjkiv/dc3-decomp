@@ -115,113 +115,66 @@ int Trie::store(const char *str) {
 }
 
 void Trie::remove(unsigned int n) {
-    check_index(n);
-    char *node = TRIE_GET_NODE(n);
-    if (TRIE_GET_CHAR(n) != 0)
-        return;
-    check_index(n);
-    if (TRIE_GET_DUP_COUNT(node) == 0)
-        return;
-    if (TRIE_GET_DUP_COUNT(node) != 0x100) {
-        check_index(n);
-        return;
-    }
-    for (;;) {
-        if (n != 0) {
-            check_index(n);
-            unsigned int parent = TRIE_GET_PARENT(n);
-            if (parent != 0) {
-                check_index(n);
-                parent = TRIE_GET_PARENT(n);
-                check_index(parent);
-                unsigned int firstChild = TRIE_GET_CHILD(parent);
-                check_index(firstChild);
-
-                if (TRIE_GET_COUNT(TRIE_GET_NODE(firstChild)) == 1) {
-                    check_index(n);
-                    parent = TRIE_GET_PARENT(n);
+    if (get_char(n) == '\0' && get_dup_count(n) != 0) {
+        if (get_dup_count(n) == 1) {
+            do {
+                if (n != 0 && get_parent(n) != 0
+                    && get_count(get_first_child(get_parent(n))) == 1) {
+                    unsigned int parent = get_parent(n);
                     delete_node(n);
                     n = parent;
-                    check_index(n);
-                    node = TRIE_GET_NODE(n);
-                    if (TRIE_GET_CHAR(n) != 0)
-                        break;
-                }
-            }
-        }
-        check_index(n);
-        unsigned int firstChild;
-        if (TRIE_GET_PARENT(n) == 0) {
-            firstChild = 1;
-        } else {
-            check_index(n);
-            unsigned int parent = TRIE_GET_PARENT(n);
-            check_index(parent);
-            firstChild = TRIE_GET_CHILD(parent);
-        }
-        check_index(firstChild);
-        unsigned char count = TRIE_GET_COUNT(TRIE_GET_NODE(firstChild));
-        unsigned int currNode = firstChild;
-        unsigned int prevNode = 0;
-        for (unsigned int i = 0; i < count; i++) {
-            if (currNode != 0) {
-                check_index(n);
-                check_index(prevNode);
-                TRIE_SET_SIBLING(prevNode, TRIE_GET_SIBLING(n));
-                delete_node(n);
-                dec_count(firstChild);
-                return;
-            }
-            if (n == 1) {
-                unsigned int last = 1;
-                for (unsigned int j = 0; j < TRIE_GET_COUNT(TRIE_GET_NODE(1)) - 1; j++) {
-                    check_index(last);
-                    last = TRIE_GET_SIBLING(last);
-                }
-                if (last != 1) {
-                    check_index(last);
-                    *(unsigned int *)((char *)this + NODE_SIZE) = TRIE_GET_CHILD(last);
-                    check_index(last);
-                    *((char *)this + 0x21) = TRIE_GET_CHAR(last);
-                    delete_node(last);
-                    dec_count(firstChild);
-                    unsigned int child = *(unsigned int *)((char *)this + NODE_SIZE);
-                    unsigned int newChild = *(unsigned int *)((char *)this + NODE_SIZE);
-                    check_index(newChild);
-                    for (unsigned int j = 0; j < TRIE_GET_COUNT(TRIE_GET_NODE(newChild));
-                         j++) {
-                        check_index(child);
-                        *(unsigned int *)(TRIE_GET_NODE(child) + 0x8) = 1;
-                        check_index(child);
-                        child = TRIE_GET_SIBLING(child);
+                } else {
+                    unsigned int u3;
+                    if (get_parent(n) == 0) {
+                        u3 = 1;
+                    } else {
+                        u3 = get_first_child(get_parent(n));
                     }
-                    return;
+                    unsigned int u7 = u3;
+                    unsigned int count = get_count(u3);
+                    unsigned int u5 = 0;
+                    for (int i = 0; i < count; i++) {
+                        unsigned int n1 = u7;
+                        if (n1 == n) {
+                            if (u5 != 0) {
+                                set_next_sibling(u5, get_next_sibling(n));
+                                delete_node(n);
+                                dec_count(u3);
+                            } else if (n == 1) {
+                                u7 = 1;
+                                for (int j = 0; j < get_count(1) - 1; j++) {
+                                    u7 = get_next_sibling(u7);
+                                }
+                                if (u7 != 1) {
+                                    set_first_child(1, get_first_child(u7));
+                                    set_char(1, get_char(u7));
+                                    delete_node(u7);
+                                    dec_count(u3);
+                                    u3 = get_first_child(1);
+                                    for (int j = 0; j < get_count(get_first_child(1));
+                                         j++) {
+                                        set_parent(u3, 1);
+                                        u3 = get_next_sibling(u3);
+                                    }
+                                } else {
+                                    delete_node(1);
+                                }
+                            } else {
+                                set_first_child(get_parent(n), get_next_sibling(n));
+                                set_count(
+                                    get_first_child(get_parent(n)), get_count(n) - 1
+                                );
+                                delete_node(n);
+                            }
+                            return;
+                        }
+                        u5 = n1;
+                        u7 = get_next_sibling(n1);
+                    }
                 }
-                n = 1;
-            } else {
-                check_index(n);
-                check_index(n);
-                unsigned int parent = TRIE_GET_PARENT(n);
-                check_index(parent);
-                *(unsigned int *)TRIE_GET_NODE(parent) = *(unsigned int *)(node + 0x4);
-                check_index(n);
-                unsigned char oldCount = TRIE_GET_COUNT(node);
-                check_index(n);
-                parent = TRIE_GET_PARENT(n);
-                check_index(parent);
-                firstChild = TRIE_GET_CHILD(parent);
-                check_index(firstChild);
-                char *firstChildNode = TRIE_GET_NODE(firstChild);
-                *(unsigned int *)(firstChildNode + 0xC) =
-                    (*(unsigned int *)(firstChildNode + 0xC) & 0xFFFFFF00)
-                    | (unsigned int)(oldCount - 1);
-            }
-            delete_node(n);
+            } while (get_char(n));
+        } else {
             dec_dup_count(n);
-            return;
         }
-        check_index(currNode);
-        prevNode = currNode;
-        currNode = TRIE_GET_SIBLING(currNode);
     }
 }
