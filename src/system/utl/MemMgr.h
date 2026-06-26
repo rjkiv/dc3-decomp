@@ -4,6 +4,7 @@
 extern const char *gStlAllocName;
 extern bool gStlAllocNameLookup;
 extern class CriticalSection *gMemLock;
+extern bool gInsideMemFunc;
 
 void PhysDelta(const char *);
 bool MemUseLowestMip();

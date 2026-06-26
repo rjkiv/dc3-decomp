@@ -36,20 +36,7 @@ void Trie::delete_node(unsigned int n) {
     set_next_sibling(n, 0);
     clear_parent(n);
     set_char(n, 0xFF);
-
-    // if (mFreeHead) {
-    //     set_next_sibling(n, mFreeHead);
-    // }
-    // mFreeHead = n;
-    // return;
-
-    // this part is fake
-    unsigned int *freeHead = TRIE_GET_FREE_HEAD;
-    if (*freeHead != 0) {
-        check_index(n);
-        TRIE_SET_SIBLING(n, *freeHead);
-    }
-    *freeHead = n;
+    clear_next_sibling(n);
 }
 
 int Trie::store(const char *str) {

@@ -843,7 +843,7 @@
             "system/utl/UTF8.cpp": "NonMatching",
             "system/utl/UrlEncode.cpp": "Matching",
             "system/utl/VarTimer.cpp": "Matching",
-            "system/utl/WaveFile.cpp": "NonMatching",
+            "system/utl/WaveFile.cpp": "Matching",
             "system/utl/trie.cpp": "NonMatching",
             "system/world/BeatClock.cpp": "NonMatching",
             "system/world/CameraManager.cpp": "NonMatching",

@@ -8,19 +8,20 @@ public:
     void SetNextBlock(FreeBlock *block) { mNextBlock = block; }
     void SetTimestamp(unsigned int time) { mTimeStamp = time; }
     void SetSizeWords(unsigned int size) { mSizeWords = size; }
+    bool AttemptMerge(FreeBlock *, int);
 
     //   public: int32_t* StartAddr();
     //   public: int32_t* EndAddr();
     //   public: int32_t* SpaceAddr();
     //   public: uint64_t SpaceWords();
-    //   public: bool AttemptMerge(FreeBlock*, int32_t);
+
     //   public: uint64_t CalcPadWords(uint64_t, uint64_t);
     //   public: int64_t BackAllocPadWords(uint64_t, int32_t, uint64_t);
     //   public: void Set(uint64_t, FreeBlock*, uint32_t);
 private:
-    unsigned int mSizeWords;
-    unsigned int mTimeStamp;
-    FreeBlock *mNextBlock;
+    unsigned int mSizeWords; // 0x0
+    unsigned int mTimeStamp; // 0x4
+    FreeBlock *mNextBlock; // 0x8
 };
 
 class MemHeap {
@@ -38,8 +39,10 @@ public:
         int mPadWords;
     };
 
+    int *Alloc(int, int, int &);
     int Free(int *);
     int *Truncate(int *, int, int &);
+    int *TryAlloc(int, int, int &);
     void Print(class TextStream &, bool);
     void Init(
         const char *name,

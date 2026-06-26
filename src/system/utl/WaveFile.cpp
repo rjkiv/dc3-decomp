@@ -3,6 +3,7 @@
 #include "utl/BinStream.h"
 #include "utl/ChunkIDs.h"
 #include "utl/Chunks.h"
+#include "utl/Str.h"
 
 namespace {
     struct CuePoint {
@@ -73,15 +74,33 @@ void WaveFile::ReadMarkers() {
     if (mRiffList.Next(kWaveAdditionalChunkID)) {
         IListChunk iChunk(mRiffList);
         for (i = 0; i < cuesize; i++) {
-            iChunk.Next(kWaveLabelChunkID);
+            iChunk.Next();
             IDataChunk dataChunk(iChunk);
-            int len = dataChunk.Header()->Length() - 4;
-            int labelid;
-            dataChunk >> labelid;
-            String str;
-            str.resize(len);
-            dataChunk.Read((char *)str.c_str(), len);
-            labelvec.push_back(Label(str, labelid));
+            if (dataChunk.Header()->ID() == kWaveLabelChunkID) {
+                int len = dataChunk.Header()->Length() - 4;
+                int datalen;
+                dataChunk >> datalen;
+                String str;
+                str.resize(len);
+                dataChunk.Read((void *)str.c_str(), len);
+                labelvec.push_back(Label(str, datalen));
+            } else if (dataChunk.Header()->ID() == kWaveTextChunkID) {
+                int len = dataChunk.Header()->Length() - 20;
+                int datalen;
+                dataChunk >> datalen;
+                int j, k;
+                dataChunk >> j;
+                dataChunk >> k;
+                short w, x, y, z;
+                dataChunk >> w;
+                dataChunk >> x;
+                dataChunk >> y;
+                dataChunk >> z;
+                String str;
+                str.resize(len);
+                dataChunk.Read((void *)str.c_str(), len);
+                labelvec.push_back(Label(str, datalen));
+            }
         }
     }
 

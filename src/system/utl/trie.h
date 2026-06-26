@@ -3,34 +3,6 @@
 #include "utl/MemMgr.h"
 
 #define MAX_NODES 0x20000
-#define NODE_SIZE 0x11
-#define TRIE_GET_NODE(idx) ((char *)this + idx * NODE_SIZE)
-#define TRIE_GET_COUNTS(node) (unsigned int *)(node + 0xC)
-#define TRIE_GET_DUP_COUNT(countsPtr) *countsPtr >> 8
-#define TRIE_INC_DUP_COUNT(dupCount, count) (dupCount + 1) << 8 | count
-#define TRIE_DEC_DUP_COUNT(dupCount, count) (dupCount - 1) << 8 | count
-#define TRIE_GET_COUNT(node) *(node + 0xF)
-#define TRIE_INC_COUNT(countsPtr, count) (*countsPtr & 0xFFFFFF00) | (count + 1)
-#define TRIE_DEC_COUNT(countsPtr, count) (*countsPtr & 0xFFFFFF00) | (count - 1)
-#define TRIE_GET_NODE_COUNT (int *)(unsigned int *)((char *)this + 0x220000)
-#define TRIE_GET_FREE_HEAD (unsigned int *)((char *)this + 0x220004)
-#define TRIE_GET_SIBLING(node) *(unsigned int *)(TRIE_GET_NODE(node) + 0x4)
-#define TRIE_SET_SIBLING(node, freehead)                                                 \
-    *(unsigned int *)(TRIE_GET_NODE(node) + 0x4) = freehead
-#define TRIE_INC_NODE_COUNT *TRIE_GET_NODE_COUNT = *TRIE_GET_NODE_COUNT + 1
-#define TRIE_CLEAR_NODE(node) *(unsigned int *)(char *)(this + node * NODE_SIZE) = 0
-#define TRIE_CLEAR_SIBLING(node)                                                         \
-    *(unsigned int *)((char *)this + node * NODE_SIZE + 0x4) = 0
-#define TRIE_GET_PARENT(node) *(unsigned int *)(TRIE_GET_NODE(node) + 0x8)
-#define TRIE_CLEAR_PARENT(node)                                                          \
-    *(unsigned int *)((char *)this + node * NODE_SIZE + 0x8) = 0
-#define TRIE_GET_CHAR(node) *((char *)this + node * NODE_SIZE + 0x10)
-#define TRIE_SET_CHAR(node, chr) *((char *)this + node * NODE_SIZE + 0x10) = chr
-#define TRIE_GET_CHILD(node) *(unsigned int *)(TRIE_GET_NODE(node))
-#define TRIE_SET_CHILD(node, set) *(unsigned int *)(TRIE_GET_NODE(node)) = set
-#define TRIE_SET_PARENT(node, set) *(unsigned int *)(TRIE_GET_NODE(node) + 0x8) = set
-#define TRIE_SET_COUNTS(node, set) *(unsigned int *)(TRIE_GET_NODE(node) + 0xC) = set
-#define TRIE_CLEAR_COUNTS(node) *(unsigned int *)(TRIE_GET_NODE(node) + 0xC) = 0
 
 // oh yeah this class is awful
 #pragma pack(push, 1)
@@ -82,6 +54,13 @@ public:
     void set_next_sibling(unsigned int idx, unsigned int sibling) {
         check_index(idx);
         mNodes[idx].nextSibling = sibling;
+    }
+    void clear_next_sibling(unsigned int idx) {
+        if (mFreeHead) {
+            check_index(idx);
+            mNodes[idx].nextSibling = mFreeHead;
+        }
+        mFreeHead = idx;
     }
     unsigned int get_parent(unsigned int idx) {
         check_index(idx);
