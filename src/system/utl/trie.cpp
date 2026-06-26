@@ -1,41 +1,23 @@
 #include "trie.h"
 
 void Trie::inc_count(unsigned int n) {
-    check_index(n);
-    char *node = TRIE_GET_NODE(n);
-    unsigned char count = TRIE_GET_COUNT(node);
-    check_index(n);
-    unsigned int *countsPtr = TRIE_GET_COUNTS(node);
-    *countsPtr = TRIE_INC_COUNT(countsPtr, count);
+    unsigned int count = get_count(n);
+    set_count(n, count + 1);
 }
 
 void Trie::dec_count(unsigned int n) {
-    check_index(n);
-    char *node = TRIE_GET_NODE(n);
-    unsigned char count = TRIE_GET_COUNT(node);
-    check_index(n);
-    unsigned int *countsPtr = TRIE_GET_COUNTS(node);
-    *countsPtr = TRIE_DEC_COUNT(countsPtr, count);
+    unsigned int count = get_count(n);
+    set_count(n, count - 1);
 }
 
 void Trie::inc_dup_count(unsigned int n) {
-    check_index(n);
-    char *node = TRIE_GET_NODE(n);
-    unsigned int *countsPtr = TRIE_GET_COUNTS(node);
-    unsigned int dupCount = TRIE_GET_DUP_COUNT(countsPtr);
-    check_index(n);
-    unsigned char count = TRIE_GET_COUNT(node);
-    *countsPtr = TRIE_INC_DUP_COUNT(dupCount, count);
+    unsigned int count = get_dup_count(n);
+    set_dup_count(n, count + 1);
 }
 
 void Trie::dec_dup_count(unsigned int n) {
-    check_index(n);
-    char *node = TRIE_GET_NODE(n);
-    unsigned int *countsPtr = TRIE_GET_COUNTS(node);
-    unsigned int dupCount = TRIE_GET_DUP_COUNT(countsPtr);
-    check_index(n);
-    unsigned char count = TRIE_GET_COUNT(node);
-    *countsPtr = TRIE_DEC_DUP_COUNT(dupCount, count);
+    unsigned int count = get_dup_count(n);
+    set_dup_count(n, count - 1);
 }
 
 unsigned int Trie::get_free_node() {
@@ -54,6 +36,12 @@ void Trie::delete_node(unsigned int n) {
     set_next_sibling(n, 0);
     clear_parent(n);
     set_char(n, 0xFF);
+
+    // if (mFreeHead) {
+    //     set_next_sibling(n, mFreeHead);
+    // }
+    // mFreeHead = n;
+    // return;
 
     // this part is fake
     unsigned int *freeHead = TRIE_GET_FREE_HEAD;

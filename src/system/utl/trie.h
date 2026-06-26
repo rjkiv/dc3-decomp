@@ -109,7 +109,20 @@ public:
 
     unsigned int get_dup_count(unsigned int idx) {
         check_index(idx);
-        return mNodes[idx].mDupCount;
+        return mNodes[idx].mCounts >> 8;
+    }
+    void set_dup_count(unsigned int idx, unsigned int dup_count) {
+        check_index(idx);
+        mNodes[idx].mCounts = (dup_count << 8) | (mNodes[idx].mCounts & 0xFF);
+    }
+
+    unsigned int get_count(unsigned int idx) {
+        check_index(idx);
+        return mNodes[idx].mCounts & 0xFF;
+    }
+    void set_count(unsigned int idx, unsigned int count) {
+        check_index(idx);
+        mNodes[idx].mCounts = (mNodes[idx].mCounts & ~0xFF) | count;
     }
 
     MEM_OVERLOAD(Trie, 0x28);
@@ -120,16 +133,9 @@ private:
         unsigned int firstChild; // 0x0
         unsigned int nextSibling; // 0x4
         unsigned int parent; // 0x8
-        // this union is the only field i'm unsure about
-        union {
-            struct {
-                unsigned int mDupCount : 24; // 0xc - accessed via lwz 0xc,
-                                             // set via an or with lbz 0xf
-                unsigned int mCount : 8; // 0xf - accessed via lbz 0xf,
-                                         // but set via clrrwi?
-            };
-            unsigned int mCounts; // 0xc
-        };
+        // top 24 bits = dupe count
+        // bottom 8 bits = regular count
+        unsigned int mCounts; // 0xc
         char mChar; // 0x10
     };
 
