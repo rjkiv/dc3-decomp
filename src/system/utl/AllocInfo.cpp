@@ -1,10 +1,12 @@
 #include "utl/AllocInfo.h"
+#include "os/System.h"
 #include "utl/MemTracker.h"
 #include "utl/Pool.h"
 #include "os/Debug.h"
 #include "utl/trie.h"
 #include "utl/TextStream.h"
 #include "xdk/XBDM.h"
+#include <cstdio>
 
 static Trie *s_pTrie = nullptr;
 bool AllocInfo::bPrintCsv;
@@ -59,9 +61,10 @@ void AllocInfo::PrintCsv(TextStream &ts) const {
     MILO_ASSERT(s_pTrie, 0xC6);
     char buf1d[0x80];
     char buf21[0x80];
+    char *buf1 = s_pTrie->get(unk1d, buf1d, sizeof(buf1d));
+    char *buf2 = s_pTrie->get(unk21, buf21, sizeof(buf21));
     ts << ", actual, " << mActSize << ", heap, " << mHeap << ", " << mFile << ", "
-       << mLine << ", " << s_pTrie->get(unk1d, buf1d, 0x80) << ", "
-       << s_pTrie->get(unk21, buf21, 0x80);
+       << mLine << ", " << buf1 << ", " << buf2;
     if (mPooled) {
         ts << ", pooled";
     }
@@ -85,6 +88,53 @@ void AllocInfo::Print(TextStream &ts) const {
         }
         ts << ") ";
     }
+}
+
+void AllocInfo::PrintForReport(TextStream &ts) const {
+    MILO_ASSERT(s_pTrie, 0xD1);
+    char buf1d[0x80];
+    char buf21[0x80];
+    char *buf1 = s_pTrie->get(unk1d, buf1d, sizeof(buf1d));
+    char *buf2 = s_pTrie->get(unk21, buf21, sizeof(buf21));
+    char printbuf[0x140];
+    Hx_snprintf(
+        printbuf,
+        sizeof(printbuf),
+        "addr\t0x%lX\t%s\tbytes\t%d\tactual\t%d\theap\t%d\t%s\t%d\t%s\t%s\t%s\n",
+        mMem,
+        mType,
+        mReqSize,
+        mActSize,
+        mHeap,
+        mFile,
+        mLine,
+        buf1,
+        buf2,
+        mPooled ? "pooled" : ""
+    );
+    ts << printbuf;
+}
+
+void AllocInfo::PrintForReport(FILE *file) const {
+    MILO_ASSERT(s_pTrie, 0xDE);
+    char buf1d[0x80];
+    char buf21[0x80];
+    char *buf1 = s_pTrie->get(unk1d, buf1d, sizeof(buf1d));
+    char *buf2 = s_pTrie->get(unk21, buf21, sizeof(buf21));
+    fprintf(
+        file,
+        "addr\t0x%lX\t%s\tbytes\t%d\tactual\t%d\theap\t%d\t%s\t%d\t%s\t%s\t%s\n",
+        mMem,
+        mType,
+        mReqSize,
+        mActSize,
+        mHeap,
+        mFile,
+        mLine,
+        buf1,
+        buf2,
+        mPooled ? "pooled" : ""
+    );
 }
 
 TextStream &operator<<(TextStream &ts, const AllocInfo &info) {
