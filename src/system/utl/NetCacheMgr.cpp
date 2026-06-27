@@ -15,9 +15,11 @@
 
 NetCacheMgr *TheNetCacheMgr;
 
+#pragma region NetCacheMgr
+
 NetCacheMgr::NetCacheMgr()
-    : unk2c(-1), unk30(0), mFailType(kNCMFT_Unknown), mServiceId(0), unk44(0),
-      mLoadCacheSize(0), mCache(0), mLoadCount(0) {
+    : mState(kNCMS_Nil), mHasFailed(0), mFailType(kNCMFT_Unknown), mServiceId(0),
+      unk44(0), mLoadCacheSize(0), mCache(0), mLoadCount(0) {
     SetName("net_cache_mgr", ObjectDir::Main());
 }
 
@@ -36,15 +38,15 @@ void NetCacheMgr::Poll() {
         unk44 = ThePlatformMgr.GetServiceID("store", mServiceId);
     }
     PollLoaders();
-    switch (unk2c) {
-    case 0:
+    switch (mState) {
+    case kNCMS_Load:
         if (IsDoneLoading()) {
-            SetState((NetCacheMgrState)1);
+            SetState(kNCMS_Ready);
         }
         break;
-    case 2:
+    case kNCMS_Unload:
         if (IsUnloadStateDone()) {
-            SetState((NetCacheMgrState)-1);
+            SetState(kNCMS_Nil);
         }
         break;
     default:
@@ -62,8 +64,10 @@ void NetCacheMgr::DebugClearCache() {
     }
 }
 
-bool NetCacheMgr::IsUnloaded() const { return unk2c != 2; }
-bool NetCacheMgr::IsReady() const { return (unk2c == 1 && !unk30 && mLoadCount == 1); }
+bool NetCacheMgr::IsUnloaded() const { return mState != kNCMS_Unload; }
+bool NetCacheMgr::IsReady() const {
+    return (mState == kNCMS_Ready && !mHasFailed && mLoadCount == 1);
+}
 
 bool NetCacheMgr::IsLocalFile(const char *file) const {
     if (!IsReady()) {
@@ -73,14 +77,14 @@ bool NetCacheMgr::IsLocalFile(const char *file) const {
 }
 
 void NetCacheMgr::SetFail(NetCacheMgrFailType n) {
-    unk30 = true;
+    mHasFailed = true;
     mFailType = n;
 }
 
 void NetCacheMgr::EnterLoadState() {
-    unk30 = false;
+    mHasFailed = false;
     LoadInit();
-    if (!unk30) {
+    if (!mHasFailed) {
         MILO_ASSERT(!mCache, 0x2ab);
         MILO_ASSERT(mLoadCacheSize, 0x2ac);
         mCache = new FileCache(mLoadCacheSize, kLoadStayBack, true, false);
@@ -92,13 +96,13 @@ void NetCacheMgr::EnterUnloadState() {
     UnloadInit();
     FOREACH (it, mNetLoaderRefs) {
         NetLoaderRef &cur = *it;
-        if (cur.unk8 > 0) {
+        if (cur.mCount > 0) {
             MILO_NOTIFY(
                 "Loader for %s has %d reference(s) left unaccounted for!",
-                cur.unk0,
-                cur.unk8
+                cur.mName,
+                cur.mCount
             );
-            cur.unk8 = 0;
+            cur.mCount = 0;
         }
     }
     RELEASE(mCache);
@@ -112,7 +116,7 @@ void NetCacheMgr::DeleteNetLoader(NetLoader *nl) {
     if (nl) {
         FOREACH (it, mNetLoaderRefs) {
             if (it->mNetLoader == nl) {
-                it->unk8--;
+                it->mCount--;
                 return;
             }
         }
@@ -123,7 +127,7 @@ void NetCacheMgr::DeleteNetCacheLoader(NetCacheLoader *ncl) {
     if (ncl) {
         FOREACH (it, mNetLoaderRefs) {
             if (it->mCacheLoader == ncl) {
-                it->unk8--;
+                it->mCount--;
                 return;
             }
         }
@@ -161,18 +165,18 @@ Symbol NetCacheMgr::CheatNextServer() {
 
 void NetCacheMgr::Load(NetCacheMgr::CacheSize cs) {
     if (mLoadCount == 0) {
-        while (unk2c == 2) {
+        while (mState == 2) {
             NetCacheMgr::Poll();
         }
     }
     mLoadCount++;
     MILO_ASSERT(mLoadCount <= 2, 0x120);
-    if (unk2c == 0 && !unk30) {
+    if (mState == kNCMS_Load && !mHasFailed) {
         MILO_NOTIFY("NetCcaheMgr::Load() called before previous load had finished.");
     }
-    mLoadCacheSize = cs == 0 ? 0x100000 : 0x500000;
+    mLoadCacheSize = cs == kCacheSize_Small ? 0x100000 : 0x500000;
     if (mLoadCount == 1) {
-        SetState((NetCacheMgrState)0);
+        SetState(kNCMS_Load);
     }
 }
 
@@ -182,7 +186,7 @@ void NetCacheMgr::Unload() {
         MILO_NOTIFY("NetCacheMgr::Unload() called more times than NetCacheMgr::Load()!\n");
         mLoadCount = 0;
     } else {
-        SetState((NetCacheMgrState)2);
+        SetState(kNCMS_Unload);
     }
 }
 
@@ -207,24 +211,24 @@ NetCacheLoader *NetCacheMgr::AddNetCacheLoader(const char *cc, NetLoaderPos pos)
 }
 
 void NetCacheMgr::SetState(NetCacheMgrState state) {
-    if (unk2c != state) {
+    if (mState != state) {
         while (true) {
-            if (unk2c == 2) {
-                unk30 = false;
+            if (mState == 2) {
+                mHasFailed = false;
             }
-            if (unk2c == -1 && state == 2) {
+            if (mState == kNCMS_Nil && state == kNCMS_Unload) {
                 MILO_FAIL(
                     "NetCacheMgr attempted to move straight from kNCMS_Nil to kNCMS_Unload!\n"
                 );
             }
-            unk2c = state;
+            mState = state;
             if (state != -1)
                 break;
             MILO_ASSERT(mNetLoaderRefs.empty(), 0x28B);
             if (mLoadCount <= 0)
                 return;
-            state = (NetCacheMgrState)0;
-            if (unk2c == 0)
+            state = kNCMS_Load;
+            if (mState == 0)
                 return;
         }
         switch (state) {
@@ -301,7 +305,7 @@ void NetCacheMgr::PollLoaders() {
             b = false;
         }
 
-        if (netLoaderRef.unk8 < 1 && netLoaderRef.IsSafeToDelete()) {
+        if (netLoaderRef.mCount < 1 && netLoaderRef.IsSafeToDelete()) {
             netLoaderRef.DeleteLoader();
             it = mNetLoaderRefs.erase(it);
         } else {
@@ -309,6 +313,79 @@ void NetCacheMgr::PollLoaders() {
         }
     }
 }
+
+NetLoaderRef *NetCacheMgr::AddLoaderRef(const char *cc1, RefType rt, NetLoaderPos pos) {
+    if (*cc1 && IsReady()) {
+        NetLoaderRef *pNetLoaderRef = nullptr;
+        FOREACH (it, mNetLoaderRefs) {
+            NetLoaderRef &ref = *it;
+            if (stricmp(it->mName.c_str(), cc1) == 0) {
+                if (rt == 0 && ref.mCacheLoader) {
+                    MILO_ASSERT(ref.mNetLoader == NULL, 0x17A);
+                    pNetLoaderRef = &ref;
+                    break;
+                } else if (rt == 1 && ref.mNetLoader) {
+                    MILO_ASSERT(ref.mCacheLoader == NULL, 0x180);
+                    pNetLoaderRef = &ref;
+                    break;
+                } else {
+                    MILO_LOG(
+                        "Found loader for %s, but it was not type %d.\n",
+                        ref.mName.c_str(),
+                        rt
+                    );
+                }
+            }
+        }
+        NetLoaderRef ref;
+        if (!pNetLoaderRef) {
+            switch (rt) {
+            case 0: {
+                NetCacheLoader *ncl = new NetCacheLoader(mCache, cc1);
+                ref = NetLoaderRef(cc1, 0, nullptr, ncl);
+                break;
+            }
+            case 1: {
+                NetLoader *nl = NetLoader::Create(cc1);
+                ref = NetLoaderRef(cc1, 0, nl, nullptr);
+                break;
+            }
+            default:
+                MILO_FAIL("Unknown ref type %d.\n", rt);
+                break;
+            }
+            switch (pos) {
+            case kNetLoaderPosNext: {
+                auto it = mNetLoaderRefs.begin();
+                for (; it != mNetLoaderRefs.end(); ++it) {
+                    if (!it->IsDownloading() && !it->IsLoadedOrFailed()) {
+                        break;
+                    }
+                }
+                it = mNetLoaderRefs.insert(it, ref);
+                pNetLoaderRef = &*it;
+                break;
+            }
+            case kNetLoaderPosBack: {
+                mNetLoaderRefs.push_back(ref);
+                pNetLoaderRef = &mNetLoaderRefs.back();
+                break;
+            }
+            default:
+                MILO_FAIL("Unknown net loader pos %d.\n", pos);
+                break;
+            }
+        }
+        MILO_ASSERT(pNetLoaderRef, 0x1C2);
+        pNetLoaderRef->AddRef();
+        return pNetLoaderRef;
+    } else {
+        return nullptr;
+    }
+}
+
+#pragma endregion
+#pragma region NetLoaderRef
 
 void NetLoaderRef::Poll() {
     MILO_ASSERT(IsValid(), 0x315);
@@ -343,6 +420,28 @@ bool NetLoaderRef::IsValid() const {
     // mCacheLoader XOR mNetLoader
     return (!mCacheLoader || !mNetLoader) && (mCacheLoader || mNetLoader);
 }
+
+bool NetLoaderRef::NeedsToDownload() {
+    MILO_ASSERT(IsValid(), 0x31B);
+    if (mCacheLoader) {
+        bool stateCheck = mCacheLoader->GetState() == 1 || mCacheLoader->GetState() == 2;
+        if (!stateCheck) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool NetLoaderRef::IsLoadedOrFailed() {
+    MILO_ASSERT(IsValid(), 0x327);
+    if (mCacheLoader) {
+        return mCacheLoader->IsLoaded() || mCacheLoader->HasFailed();
+    } else {
+        return mNetLoader->IsLoaded() || mNetLoader->HasFailed();
+    }
+}
+
+#pragma endregion
 
 void NetCacheMgrInit() {
     MILO_ASSERT(TheNetCacheMgr == NULL, 0x1f);

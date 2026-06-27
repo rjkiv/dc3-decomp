@@ -299,7 +299,7 @@ void StorePanel::LoadArt(const char *c, UIPanel *panel) {
 void StorePanel::Poll() {
     UIPanel::Poll();
     if (mLoadOk) {
-        if (TheNetCacheMgr->GetUnk30()) {
+        if (TheNetCacheMgr->HasFailed()) {
             HandleNetCacheMgrFailure();
             return;
         }

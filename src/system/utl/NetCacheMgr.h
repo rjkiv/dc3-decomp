@@ -20,12 +20,10 @@ enum NetCacheMgrFailType {
 };
 
 enum NetCacheMgrState {
-    kNCMS_Load,
-    kNCMS_Ready,
-    kNCMS_UnloadWaitForWrite,
-    kNCMS_UnloadUnmount,
-    kNCMS_Failure,
-    kNCMS_Max,
+    kNCMS_Load = 0x0000,
+    kNCMS_Ready = 0x0001,
+    kNCMS_Unload = 0x0002,
+    kNCMS_Max = 0x0003,
     kNCMS_Nil = -1
 };
 
@@ -43,6 +41,11 @@ enum NetLoaderPos {
 };
 
 struct NetLoaderRef {
+    NetLoaderRef() : mCount(0), mNetLoader(nullptr), mCacheLoader(nullptr) {}
+    NetLoaderRef(
+        const String &name, int count, NetLoader *netLoader, NetCacheLoader *cacheLoader
+    )
+        : mName(name), mCount(count), mNetLoader(netLoader), mCacheLoader(cacheLoader) {}
     void Poll();
     bool NeedsToDownload();
     bool IsDownloading();
@@ -50,9 +53,11 @@ struct NetLoaderRef {
     bool IsSafeToDelete();
     void DeleteLoader();
     bool IsValid() const;
+    void AddRef() { mCount++; }
+    void ReleaseRef() { mCount--; }
 
-    String unk0; // 0x0 - name?
-    int unk8; // 0x8 - refs/ref count?
+    String mName; // 0x0
+    int mCount; // 0x8
     NetLoader *mNetLoader; // 0xc
     NetCacheLoader *mCacheLoader; // 0x10
 };
@@ -74,6 +79,9 @@ public:
     };
 
     enum CacheSize {
+        kCacheSize_Small = 0x0000,
+        kCacheSize_Large = 0x0001,
+        kCacheSize_Huge = 0x0002,
     };
 
     NetCacheMgr();
@@ -100,7 +108,7 @@ public:
     NetLoader *AddNetLoader(const char *, NetLoaderPos);
     NetCacheLoader *AddNetCacheLoader(const char *, NetLoaderPos);
 
-    bool GetUnk30() const { return unk30; }
+    bool HasFailed() const { return mHasFailed; }
 
 private:
     void EnterLoadState();
@@ -122,8 +130,8 @@ protected:
     void DebugClearCache();
     NetLoaderRef *AddLoaderRef(const char *, RefType, NetLoaderPos);
 
-    int unk2c;
-    bool unk30;
+    NetCacheMgrState mState; // 0x2c
+    bool mHasFailed; // 0x30
     NetCacheMgrFailType mFailType; // 0x34
     String mXLSPFilter; // 0x38
     unsigned int mServiceId; // 0x40

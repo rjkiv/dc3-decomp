@@ -9,14 +9,14 @@ NetCacheMgrXbox::~NetCacheMgrXbox() {}
 void NetCacheMgrXbox::Poll() {
     NetCacheMgr::Poll();
     mConnection.Poll();
-    if (unk2c < 2U) {
+    if (mState < 2U) {
         if (IsServerLocal()) {
             mDoneLoading = true;
         } else {
             if (!mDoneLoading && mConnection.GetState() == 3) {
                 mDoneLoading = true;
             }
-            if (!unk30 && mConnection.GetState() == 4) {
+            if (!mHasFailed && mConnection.GetState() == 4) {
                 if (!ThePlatformMgr.IsEthernetCableConnected()) {
                     SetFail(kNCMFT_NoEthernetCable);
                 } else {

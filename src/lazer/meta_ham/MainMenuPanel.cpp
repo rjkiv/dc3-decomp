@@ -336,7 +336,7 @@ void MainMenuPanel::MotdHandleTextScrolledOut(int) {
 }
 
 void MainMenuPanel::UpdateArtLoaders() {
-    if (TheNetCacheMgr->GetUnk30()) {
+    if (TheNetCacheMgr->HasFailed()) {
         HandleNetCacheMgrFailure();
         if (unk81) {
             CleanupNetCacheRelated();
