@@ -13,21 +13,6 @@ enum LocaleNumber {
     LocalePlural = 1,
 };
 
-class LocaleChunkSort {
-public:
-    struct OrderedLocaleChunk {
-        DataNode sym; // 0x0
-        DataNode pos; // 0x8
-        DataNode str; // 0x10
-
-        MEM_ARRAY_OVERLOAD(OrderedLocaleChunk, 0x1d)
-    };
-
-    void Sort(OrderedLocaleChunk *, int);
-    template <int N>
-    static int FastSort(const void *node0, const void *node1);
-};
-
 class Locale {
 private:
     int mSize; // 0x0
@@ -54,13 +39,13 @@ public:
     static const char *sIgnoreMissingText;
 
     void SetMagnuStrings(DataArray *);
-    const char *Localize(Symbol token, bool fail) const;
+    const char *Localize(Symbol token, bool fail = true) const;
 
     static void SetLocaleVerboseNotify(bool set) { Locale::sVerboseNotify = set; }
     static bool GetLocaleVerboseNotify() { return sVerboseNotify; }
 
 protected:
-    bool FindDataIndex(Symbol sym, int &index, bool b) const;
+    bool FindDataIndex(Symbol sym, int &index, bool fail = true) const;
 
     static bool sVerboseNotify;
 };

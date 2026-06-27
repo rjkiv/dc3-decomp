@@ -6,7 +6,9 @@
 #include "os/Debug.h"
 #include "os/File.h"
 #include "os/System.h"
+#include "utl/LocaleChunkSort.h"
 #include "utl/Str.h"
+#include "utl/StringTable.h"
 #include "xdk/xbdm/xbdm.h"
 #include <vector>
 
@@ -131,6 +133,115 @@ const char *LocalizeFloat(const char *fmt, float num) {
         return dest;
     }
     return str;
+}
+
+void Locale::Init() {
+    MILO_ASSERT(!mStrTable, 0x58);
+    MILO_ASSERT(!mSymTable, 0x59);
+    MILO_ASSERT(!mSize, 0x5A);
+    MILO_ASSERT(!mStringData, 0x5B);
+    MILO_ASSERT(!mNumFilesLoaded, 0x5C);
+    mSize = 0;
+    Symbol s21;
+    int strtablesize = 0;
+    int numNodesTotal = 0;
+    int numElements = 0;
+    LocaleChunkSort::OrderedLocaleChunk *chunks = nullptr;
+    DataArray *localeCfg = nullptr;
+    String stre4 = FileMakePath(
+        "devkit:\\locale", MakeString("%s\\locale_keep.dta", SystemLanguage())
+    );
+    const char *old;
+    FileQualifiedFilename(stre4, old);
+    static Symbol locale("locale");
+    DataArrayPtr ptr(locale, stre4);
+
+    if (SystemConfig()) {
+        localeCfg = SystemConfig("locale");
+        if (DmMapDevkitDrive() >= 0 && FileExists(old, 0, nullptr)) {
+            MILO_NOTIFY("Using alternate locale file from HDD: %s", stre4);
+            localeCfg = ptr;
+        }
+        {
+            MemDoTempAllocations t;
+            std::vector<DataArray *> arrays(localeCfg->Size() - 1);
+            mNumFilesLoaded = arrays.size();
+            if (mInitialized) {
+                for (int i = 1; i < localeCfg->Size(); i++) {
+                    const char *curStr = localeCfg->Str(i);
+                    const char *curPath =
+                        FileMakePath(FileGetPath(localeCfg->File()), curStr);
+                    arrays[i - 1] = DataReadFile(curPath, true);
+                    if (!arrays[i - 1]) {
+                        MILO_FAIL("could not load language file %s", curPath);
+                    }
+                    numNodesTotal += arrays[i - 1]->Size();
+                }
+                chunks = new LocaleChunkSort::OrderedLocaleChunk[numNodesTotal];
+                numElements = 0;
+                for (int i = localeCfg->Size() - 2; i >= 0; i--) {
+                    DataArray *arr = arrays[i];
+                    for (int j = arr->Size() - 1; j >= 0; j--) {
+                        DataArray *curArr = arr->LiteralArray(j);
+                        if (curArr->Size() < 2) {
+                            MILO_FAIL(
+                                "%s line %d should have 2 entries, has %d, mismatched quotes?",
+                                curArr->File(),
+                                curArr->Line(),
+                                curArr->Size()
+                            );
+                        }
+                        chunks[numElements].sym = curArr->LiteralSym(0);
+                        chunks[numElements].pos = numElements;
+                        chunks[numElements].str = curArr->LiteralStr(1);
+                        numElements++;
+                    }
+                    arr->Release();
+                }
+                if (localeCfg->Size() > 1) {
+                    LocaleChunkSort sort;
+                    sort.Sort(chunks, numElements);
+                }
+                mSize = 0;
+                for (int i = 0; i < numElements; i++) {
+                    Symbol sym = chunks[i].sym.LiteralSym();
+                    if (sym != s21) {
+                        int len = strlen(chunks[i].str.LiteralStr());
+                        mSize++;
+                        strtablesize += len + 1;
+                        s21 = sym;
+                    }
+                }
+            }
+        }
+    }
+    mSymTable = new Symbol[mSize];
+    mStringData = new StringTable(strtablesize);
+    mStrTable = new const char *[mSize];
+    mUploadedFlags = new bool[mSize];
+    if (chunks) {
+        int idx = 0;
+        auto *origChunks = chunks;
+        s21 = Symbol();
+        for (int i = 0; i < numElements; i++) {
+            Symbol sym = chunks[i].sym.LiteralSym();
+            if (sym != s21) {
+                mUploadedFlags[idx] = false;
+                mSymTable[idx] = sym;
+                mStrTable[idx] = mStringData->Add(chunks[i].str.LiteralStr());
+                idx++;
+                s21 = sym;
+            } else {
+                MILO_LOG("Locale symbol '%s' redefined\n", s21.Str());
+            }
+        }
+        delete[] origChunks;
+    }
+    if (localeCfg && localeCfg->Size() > 1) {
+        mFile = localeCfg->Str(1);
+    }
+    DataRegisterFunc("set_locale_verbose_notify", DataSetLocaleVerboseNotify);
+    DataRegisterFunc("toggle_show_tokens_cheat", DataToggleShowTokensCheat);
 }
 
 void Locale::Terminate() {

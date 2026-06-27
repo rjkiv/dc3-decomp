@@ -356,6 +356,8 @@ public:
      */
     DataArray *Array(int i) const { return Node(i).Array(this); }
 
+    DataArray *LiteralArray(int i) const { return Node(i).LiteralArray(this); }
+
     /** Get the command DataArray at the given node index.
      * @param [in] i The node index.
      * @returns The resulting command DataArray.
