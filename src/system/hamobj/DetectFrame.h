@@ -24,6 +24,7 @@ public:
     const DancerFrame *GetDancerFrame() const { return unk0; }
     const MoveFrame *GetMoveFrame() const { return unk4; }
     MoveMirrored Mirror() const { return unkc; }
+    float Seconds() const { return mSeconds; }
 
 protected:
     const DancerFrame *unk0; // 0x0

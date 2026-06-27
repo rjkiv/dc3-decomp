@@ -1,6 +1,13 @@
 #include "DrawUtl.h"
 
+#include "CameraInput.h"
 #include "SkeletonViz.h"
+#include "gesture/LiveCameraInput.h"
+#include "gesture/SkeletonUpdate.h"
+#include "math/Color.h"
+#include "math/Geo.h"
+#include "rndobj/Rnd.h"
+#include "rndobj/Tex.h"
 #include "rndobj/Utl.h"
 
 Vector3 DrawUtlVec3(0.5, 0.05, 0.4);
@@ -27,11 +34,12 @@ namespace {
     void PixelSpace(Hmx::Rect &rect) {
         int width = TheRnd.Width();
         int height = TheRnd.Height();
-        ScreenSpace(rect);
-        rect.x = width * rect.x;
-        rect.y = height * rect.y;
-        rect.w = width * rect.w;
-        rect.h = height * rect.h;
+        Hmx::Rect temp;
+        ScreenSpace(temp);
+        rect.x = width * temp.x;
+        rect.y = height * temp.y;
+        rect.w = width * temp.w;
+        rect.h = height * temp.h;
     }
 }
 
@@ -62,9 +70,7 @@ RndMat *CreateCameraBufferMat(int width, int height, RndTex::Type type) {
 }
 
 void DrawSnapshot(const GestureMgr &gm, int index) {
-    if (index > 0) {
-        MILO_ASSERT(index >= 0 && index < gm.GetLiveCameraInput()->NumSnapshots(), 0xfb);
-    }
+    MILO_ASSERT(index >= 0 && index < gm.GetLiveCameraInput()->NumSnapshots(), 0xfb);
     auto cam = gm.GetLiveCameraInput();
     auto snap = cam->GetSnapshot(index);
     DrawBufferMat(snap, DrawUtlRect);
@@ -78,14 +84,14 @@ void InitDrawUtl(const GestureMgr &gm) {
     TheSkeletonViz->SetShowing(false);
     Hmx::Rect temp;
     PixelSpace(temp);
-    DrawUtlRect.Set(temp.x, temp.y, temp.w, temp.h);
+    DrawUtlRect = temp;
 }
 
-void SetDrawSpace(float x, float y, float z) {
-    DrawUtlVec3.Set(x, y, z);
-}
+void SetDrawSpace(float x, float y, float z) { DrawUtlVec3.Set(x, y, z); }
 
-bool UpdateBufferTex(LiveCameraInput *cam, RndTex *tex, LiveCameraInput::BufferType bufType, GestureMgr *gm) {
+bool UpdateBufferTex(
+    LiveCameraInput *cam, RndTex *tex, LiveCameraInput::BufferType bufType, GestureMgr *gm
+) {
     START_AUTO_TIMER("draw_natal_buffer");
     MILO_ASSERT(bufType < LiveCameraInput::kBufferNum, 0x12b);
     if (cam == nullptr) {
@@ -94,12 +100,42 @@ bool UpdateBufferTex(LiveCameraInput *cam, RndTex *tex, LiveCameraInput::BufferT
     MILO_ASSERT(tex, 0x130);
     MILO_ASSERT(tex->Bpp() == 16, 0x131);
     MILO_ASSERT(tex->GetType() == RndTex::kScratch, 0x132);
-    //tex->TexelsLock(); seemingly pulls param out of nowehere
+    // tex->TexelsLock(); seemingly pulls param out of nowehere
     if (bufType == LiveCameraInput::kBufferColor) {
         auto bufStream = cam->StreamBufferData(LiveCameraInput::kBufferColor);
         if (bufStream != nullptr) {
-
         }
     }
     return false;
+}
+
+void DrawBufferMat(RndMat *mat, Hmx::Rect &rect) {
+    const Hmx::Color color(1, 1, 1, 1);
+    TheRnd.DrawRect(rect, color, mat, nullptr, nullptr);
+}
+
+void DrawGestureMgr(GestureMgr &gm, LiveCameraInput::BufferType type, float f) {
+    TheRnd.EndWorld();
+    if (type != LiveCameraInput::kBufferNum && type != LiveCameraInput::kBufferPlayer
+        && type != LiveCameraInput::kBufferDepth) {
+        LiveCameraInput *input = gm.GetLiveCameraInput();
+        if (UpdateBufferTex(input, input->DisplayTex(type), type, &gm)) {
+            DrawBufferMat(input->DisplayMat(type), DrawUtlRect);
+        }
+    }
+
+    if (TheSkeletonViz->Showing()) {
+        Hmx::Rect screen;
+        ScreenSpace(screen);
+        TheSkeletonViz->SetPhysicalCamScreenRect(screen);
+
+        SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
+        CameraInput *input = handle.GetCameraInput();
+        for (int i = 0; i < 6; i++) {
+            TheSkeletonViz->Visualize(
+                *input, gm.GetSkeleton(i), &handle.Callbacks(), false
+            );
+        }
+        gm.DrawSkeletonKinectData();
+    }
 }

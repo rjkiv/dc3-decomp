@@ -1,5 +1,6 @@
 #include "hamobj/HamDirector.h"
 #include "Difficulty.h"
+#include "MoveGraph.h"
 #include "MoveMgr.h"
 #include "PoseFatalities.h"
 #include "SongCollision.h"
@@ -33,6 +34,7 @@
 #include "hamobj/HamVisDir.h"
 #include "hamobj/HamWardrobe.h"
 #include "hamobj/TransConstraint.h"
+#include "math/Key.h"
 #include "math/Mtx.h"
 #include "math/Rand.h"
 #include "math/Rot.h"
@@ -59,6 +61,8 @@
 #include "rndobj/Tex.h"
 #include "rndobj/TexRenderer.h"
 #include "rndobj/Trans.h"
+#include "stl/_map.h"
+#include "stl/_vector.h"
 #include "utl/FakeSongMgr.h"
 #include "utl/FilePath.h"
 #include "utl/Loader.h"
@@ -69,9 +73,13 @@
 #include "world/CameraManager.h"
 #include "world/Dir.h"
 #include <cctype>
+#include <cstring>
 
 HamDirector *TheHamDirector;
 OfflineCallback gOfflineCallback;
+std::map<Symbol, int> gMoveMergeMap;
+
+static bool sBool;
 
 float FrameToBeat(float frame) { return SecondsToBeat(frame * 0.033333335f); }
 float BeatToFrame(float beat) { return BeatToSeconds(beat) * 30.0f; }
@@ -407,7 +415,7 @@ void HamDirector::ListDrawChildren(std::list<RndDrawable *> &draws) {
 
 void HamDirector::CollideList(const Segment &s, std::list<Collision> &colls) {
     if (mVenue) {
-        mVenue->CollideList(s, colls);
+        mVenue->CollideListSubParts(s, colls);
     }
     RndDrawable::CollideList(s, colls);
 }
@@ -638,15 +646,22 @@ Key<Symbol> *HamDirector::GetMasterPracticeFrame(Symbol s) {
 HamCamShot *HamDirector::FindNextDircut() {
     float secs = TheTaskMgr.Seconds(TaskMgr::kRealTime);
     const DircutEntry *entry = mDirCutKeys.Cross(secs, secs - TheTaskMgr.DeltaSeconds());
-    if (entry) {
+    if (!entry) {
+        return nullptr;
+    } else {
         HamCamShot *ret = nullptr;
-        if (mNumPlayersFailed != 0 || (entry->unk4 && mExcitement < 3)) {
-            ret = entry->unk0;
+        if (mNumPlayersFailed == 0) {
+            if (entry->unk4) {
+                if (mExcitement >= 3) {
+                    ret = entry->unk0;
+                }
+            }
+        }
+        if (!ret) {
             unk140 = true;
         }
         return ret;
     }
-    return nullptr;
 }
 
 void HamDirector::SetDircut(Symbol s, std::vector<CameraManager::PropertyFilter> filters) {
@@ -1934,7 +1949,7 @@ void HamDirector::OnPopulateMoveMgr() {
     TheMoveMgr->AutoFillParents();
     TheMoveMgr->FillRoutineFromParents(-1);
     TheMoveMgr->ComputeLoadedMoveSet();
-    // LoadRoutineBuilderData()
+    LoadRoutineBuilderData(TheMoveMgr->GetUnk104(), true);
     OnPopulateFromMoveMgr();
     DataArrayPtr variants;
     TheMoveMgr->SaveRoutineVariants(variants);
@@ -1942,6 +1957,35 @@ void HamDirector::OnPopulateMoveMgr() {
     DataArrayPtr parents;
     TheMoveMgr->SaveRoutine(parents);
     DataWriteFile("routine_test_parents.dta", parents, 0);
+}
+
+void HamDirector::OnPopulateFromMoveMgr() {
+    if (!mMasterClipAnim) {
+        MILO_NOTIFY("No MasterClipAnim in HamDirector.  Did you load a song?");
+    } else {
+        static Symbol move_parents("move_parents");
+        static Symbol clip_crossover("clip_crossover");
+        PropKeys *moveKeys =
+            mMasterClipAnim->AddKeys(this, DataArrayPtr(move_parents), PropKeys::kSymbol);
+        PropKeys *clipKeys = mMasterClipAnim->AddKeys(
+            this, DataArrayPtr(clip_crossover), PropKeys::kSymbol
+        );
+        Keys<Symbol, Symbol> *moveSymbolKeys = moveKeys->AsSymbolKeys();
+        Keys<Symbol, Symbol> *clipSymbolKeys = clipKeys->AsSymbolKeys();
+        int size = TheMoveMgr->CurParents(0).size();
+        for (int i = 0; i < size; i++) {
+            if (TheMoveMgr->CurParents(0)[i]) {
+                float beatSeconds = BeatToSeconds(i * 4.0f - 1.0f) * 30.0f;
+                int move = moveKeys->SetKey(beatSeconds);
+                int clip = clipKeys->SetKey(beatSeconds);
+                (*moveSymbolKeys)[move].value = TheMoveMgr->CurParents(0)[i]->Name();
+                const MoveVariant *variant = TheMoveMgr->Unk150(0)[i].second;
+                if (variant) {
+                    (*clipSymbolKeys)[clip].value = variant->Name();
+                }
+            }
+        }
+    }
 }
 
 void HamDirector::OnPopulateFromFile() {
@@ -1953,7 +1997,7 @@ void HamDirector::OnPopulateFromFile() {
         variants->Release();
     }
     TheMoveMgr->ComputeLoadedMoveSet();
-    // LoadRoutineBuilderData()
+    LoadRoutineBuilderData(TheMoveMgr->GetUnk104(), true);
     OnPopulateFromMoveMgr();
 }
 
@@ -2233,4 +2277,72 @@ void HamDirector::UnloadAll() {
     AutoGlitchReport report(50, "HamDirector::UnloadAll");
     TheMoveMgr->Clear();
     UnloadMergers();
+}
+
+bool HamDirector::AreCharactersColliding() {
+    HamCharacter *chars[2];
+    std::vector<RndTransformable *> usefulBones[2];
+    for (int i = 0; i < 2; i++) {
+        chars[i] = TheHamWardrobe ? TheHamWardrobe->GetCharacter(i) : nullptr;
+        if (!chars[i]) {
+            return false;
+        }
+        SongCollision::GatherUsefulBones(usefulBones[i], chars[i]);
+    }
+    auto &v1 = chars[0]->WorldXfm().v;
+    auto &v2 = chars[1]->WorldXfm().v;
+    return AreDancersColliding1D(usefulBones[0], usefulBones[1], v1, v2);
+}
+
+void HamDirector::ChangeNextShotIfCharacterCollisionLikely() {
+    static Symbol shot("shot");
+    PropKeys *shotKeys = GetPropKeysByPlayer(0, shot);
+    if (shotKeys) {
+        auto category = mNextShot->Category().Str();
+        auto cmp = strncmp(category, "Area", 4);
+        if (cmp == 0) {
+            float frame = BeatToSeconds(TheTaskMgr.Beat()) * 30.0f;
+            Symbol s;
+            int symAt = shotKeys->SymbolAt(frame, s);
+            int beat = TheTaskMgr.Beat();
+            symAt++;
+            if (symAt >= shotKeys->NumKeys()) {
+                RndPropAnim *anim = SongAnim(0);
+                frame = anim->EndFrame();
+            } else {
+                shotKeys->FrameFromIndex(symAt, frame);
+            }
+
+            int secondsToBeat = SecondsToBeat(frame / 30.0f);
+            secondsToBeat++;
+            Difficulty difficulties[2];
+            Transform transforms[2];
+
+            int index = 0;
+            int bound = 1;
+            while (-1 < bound) { // idk why a for loop didnt work here
+                int playerIdx = TheGameData->SidesSwapped() ? bound : index;
+                HamPlayerData *player = TheGameData->Player(index);
+                difficulties[playerIdx] = player->GetDifficulty();
+                static Symbol player0("player0");
+                static Symbol player1("player1");
+
+                Symbol targetSym = (playerIdx == 0) ? player0 : player1;
+                if (!mNextShot->TargetTeleportTransform(
+                        targetSym, transforms[playerIdx]
+                    )) {
+                    return;
+                }
+                bound--;
+                index++;
+            }
+
+            if (unk124->IsCollision(beat, secondsToBeat, difficulties, transforms, 0)) {
+                static Symbol Area1_WIDE("Area1_WIDE");
+                static Symbol Area2_WIDE("Area2_WIDE");
+                mShot = (strncmp(category, "Area1", 5) == 0) ? Area1_WIDE : Area2_WIDE;
+                FindNextShot();
+            }
+        }
+    }
 }

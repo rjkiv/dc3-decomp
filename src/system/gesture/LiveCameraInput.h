@@ -1,6 +1,7 @@
 #pragma once
 #include "gesture/CameraInput.h"
 #include "gesture/SpeechMgr.h"
+#include "obj/Data.h"
 #include "rnddx9/Tex.h"
 #include "rndobj/Mat.h"
 #include "rndobj/Tex.h"
@@ -25,7 +26,8 @@ public:
         kBufferNum = 4,
     };
     struct LockedRect {
-        // 0x0
+        int pitch;
+        VOID *bits;
     };
     // size 0x18
     struct Buffer {
@@ -87,15 +89,17 @@ public:
     void *StreamBufferData(BufferType) const;
     RndMat *DisplayMat(BufferType) const;
     RndTex *DisplayTex(BufferType) const;
+    RndTex *GetStreamTex(BufferType) const;
     void LockStream(const void *, LockedRect &);
     void UnlockStream(const void *);
-
 
     static void PreInit();
     static void Init();
     static void NuiAudioErrorCallback(HRESULT);
     static void NuiAudioDataCallback(NUIAUDIO_RESULTS *);
     static LiveCameraInput *sInstance;
+
+    bool Unk11EA() { return unk11ea; }
 
 protected:
     LiveCameraInput();
@@ -128,3 +132,8 @@ protected:
     DxTex *unk14ac;
     RndTex *unk14b0;
 };
+
+void CameraDump(const char *);
+void CameraDumpUnique(const char *);
+DataNode OnCameraDumpUnique(DataArray *);
+DataNode OnCameraDebugDepth(DataArray *);

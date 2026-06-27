@@ -19,6 +19,9 @@ typedef struct _NUI_TILT_OBJECTS { /* Size=0xd0 */
 } NUI_TILT_OBJECTS;
 #pragma pack(pop)
 
+#define NUI_CAMERA_AE_ROI_MINIMUM_WIDTH 0.15f
+#define NUI_CAMERA_AE_ROI_MINIMUM_HEIGHT 0.15f
+
 typedef unsigned int NUI_TILT_FLAGS;
 
 typedef enum _NUI_IMAGE_TYPE {
@@ -117,10 +120,17 @@ typedef struct _NUI_CAMERA_AE_ROI { /* Size=0x10 */
 HRESULT NuiCameraGetProperty(
     NUI_CAMERA_TYPE CameraType, NUI_CAMERA_PROPERTY eCameraProperty, LONG *lValue
 );
+HRESULT
+NuiCameraSetProperty(
+    NUI_CAMERA_TYPE CameraType, NUI_CAMERA_PROPERTY eCameraProperty, LONG lValue
+);
 HRESULT NuiCameraGetPropertyF(
     NUI_CAMERA_TYPE CameraType, NUI_CAMERA_PROPERTYF eCameraProperty, FLOAT *pfValue
 );
 HRESULT NuiCameraGetExposureRegionOfInterest(
+    NUI_CAMERA_TYPE CameraType, NUI_CAMERA_AE_ROI *pRegionOfInterest
+);
+HRESULT NuiCameraSetExposureRegionOfInterest(
     NUI_CAMERA_TYPE CameraType, NUI_CAMERA_AE_ROI *pRegionOfInterest
 );
 

@@ -456,13 +456,14 @@ void RhythmBattlePlayer::SwapObjs(RhythmBattlePlayer *player) {
 }
 
 void RhythmBattlePlayer::UpdateScore(int i1) {
-    unk280 += (InTheZone() + 1) * i1;
+    int inthezone = InTheZone() + 1;
+    unk280 += inthezone * i1;
     static Symbol rhythm_battle("rhythm_battle");
     static Symbol gameplay_mode("gameplay_mode");
     if (TheHamProvider->Property(gameplay_mode)->Sym() == rhythm_battle) {
         static Symbol score("score");
-        HamPlayerData *hpd = TheGameData->Player(mPlayer);
-        hpd->Provider()->SetProperty(score, unk280);
+        PropertyEventProvider *provider = TheGameData->Player(mPlayer)->Provider();
+        provider->SetProperty(score, unk280);
     }
 }
 
@@ -487,7 +488,7 @@ void RhythmBattlePlayer::OnReset(RhythmBattle *rb) {
     unk270 = 0;
     unk274 = 0;
     unk25c = 0;
-    unk2a0 = -1;
+    unk2a0 = -1.0f;
     if (mResetComboAnim) {
         mResetComboAnim->Animate(
             mResetComboAnim->StartFrame(),
@@ -733,3 +734,38 @@ void RhythmBattlePlayer::UpdateScore(Hmx::Object *handler) {
 }
 
 void RhythmBattlePlayer::AnimateOut() {}
+
+void RhythmBattlePlayer::UpdateComboProgress() {
+    float f;
+    if (!mRhythmBattle || !mRhythmBattle->InFullKTB()) {
+        f = 8.0f;
+    } else {
+        f = 4.0f;
+    }
+
+    if (unk260 == 0) {
+        unk284 = 0.0f;
+        int i = 0;
+        if (!unk240) {
+            i = -1;
+        }
+        if (mInTheZone != i) {
+            AnimateBoxyState(i, true, true);
+        }
+    } else if (mInTheZone < 1) {
+        unk284 += f;
+        if (unk284 >= 16.0f) {
+            int i = 1;
+            if (!unk240) {
+                i = -1;
+            }
+            if (mInTheZone != i) {
+                AnimateBoxyState(i, true, false);
+            }
+        }
+    } else if (mInTheZone != 1) {
+        return;
+    } else {
+        unk284 += f;
+    }
+}

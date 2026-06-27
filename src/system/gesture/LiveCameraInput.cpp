@@ -4,30 +4,110 @@
 #include "gesture/Skeleton.h"
 #include "gesture/SkeletonUpdate.h"
 #include "gesture/SpeechMgr.h"
+#include "math/Utl.h"
 #include "obj/Data.h"
 #include "obj/DataFunc.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "os/File.h"
 #include "os/System.h"
+#include "rnddx9/Rnd.h"
 #include "rnddx9/Tex.h"
 #include "rndobj/Bitmap.h"
 #include "rndobj/Mat.h"
 #include "rndobj/Tex.h"
+#include "utl/FilePath.h"
+#include "utl/FileStream.h"
+#include "utl/Loader.h"
+#include "utl/MemMgr.h"
 #include "utl/MemTrack.h"
 #include "utl/Std.h"
+#include "utl/Symbol.h"
+#include "xdk/d3d9i/d3d9.h"
+#include "xdk/d3d9i/d3d9types.h"
 #include "xdk/nui/nuiapi.h"
 #include "xdk/nui/nuiaudio.h"
 #include "xdk/nui/nuidetroit.h"
+#include "xdk/nui/nuiskeleton.h"
 #include "xdk/win_types.h"
 #include "xdk/xapilibi/handleapi.h"
 #include "xdk/xapilibi/winerror.h"
+#include <cstring>
+
+int g_colorBufferUpdate1;
+int g_colorBufferUpdate2;
 
 namespace {
-    // bool  GetExposureRegion(struct _NUI_CAMERA_AE_ROI &)
-    // long  GetColorCameraProperty(  _NUI_CAMERA_PROPERTY)
+    bool gDebugDepth;
 
-    void SetColorCameraProperty(NUI_CAMERA_PROPERTY, long);
-    void LoadDebugDepthBuffer(class RndTex *&);
+    bool GetExposureRegion(struct _NUI_CAMERA_AE_ROI &cam) {
+        static Symbol kinect("kinect");
+        static Symbol camera("camera");
+        static Symbol ae_region("ae_region");
+
+        DataArray *arr = SystemConfig(kinect, camera)->FindArray(ae_region, false);
+        if (arr) {
+            cam.Left = arr->Float(1);
+            cam.Top = arr->Float(2);
+            cam.Width = arr->Float(3);
+            cam.Height = arr->Float(4);
+        }
+        return arr != nullptr;
+    }
+
+    long GetColorCameraProperty(_NUI_CAMERA_PROPERTY p) {
+        LONG ret;
+        HRESULT hr = NuiCameraGetProperty(NUI_CAMERA_TYPE_COLOR, p, &ret);
+        if (!SUCCEEDED(hr)) {
+            MILO_LOG("NuiCameraGetProperty failed.  Property 0x%x, error (0x%x)\n", p, hr);
+        }
+
+        return ret;
+    }
+
+    void SetColorCameraProperty(NUI_CAMERA_PROPERTY p, long l) {
+        HRESULT hr = NuiCameraSetProperty(NUI_CAMERA_TYPE_COLOR, p, l);
+        if (!SUCCEEDED(hr)) {
+            MILO_LOG("NuiCameraSetProperty failed.  Property 0x%x, error (0x%x)\n", p, hr);
+        }
+    }
+
+    void LoadDebugDepthBuffer(class RndTex *&tex);
+}
+
+void CameraDump(const char *c) {
+    LiveCameraInput *input = LiveCameraInput::sInstance;
+    if (!input->Unk11EA()) {
+        input->PollNewStream(LiveCameraInput::kBufferDepth);
+    }
+    RndTex *tex = input->GetStreamTex(LiveCameraInput::kBufferDepth);
+    int size = tex->Width() * tex->Height() * tex->Bpp() / 8;
+    void *buf = MemAlloc(size, "unknown", 0, "unknown");
+    void *texels = nullptr;
+    tex->TexelsLock(texels);
+    memcpy(buf, texels, size);
+    tex->TexelsUnlock();
+    FileStream stream(c, FileStream::kWrite, true);
+    if (stream.Fail()) {
+        MILO_NOTIFY("Screenshot failed; could not open destination file (%s).", c);
+    } else {
+        stream.Write(buf, size);
+    }
+}
+
+void CameraDumpUnique(const char *c) {
+    String filename = UniqueFilename(c, "bmp");
+    CameraDump(filename.c_str());
+}
+
+DataNode OnCameraDumpUnique(DataArray *a) {
+    CameraDumpUnique("camera");
+    return 0;
+}
+
+DataNode OnCameraDebugDepth(DataArray *a) {
+    gDebugDepth = !gDebugDepth;
+    return 0;
 }
 
 LiveCameraInput *LiveCameraInput::sInstance;
@@ -66,6 +146,31 @@ update:
     UpdateFromColorBuffer(cam);
 }
 
+void LiveCameraInput::TextureStore::StoreColorBufferClip(
+    LiveCameraInput *cam, float left, float top, float width, float height
+) {
+    if (mTex) {
+        if (mTex->Width() == width && mTex->Height() == height)
+            goto update;
+        RELEASE(mTex);
+    }
+    unsigned int w = (1 - (int)(width * -640.0f)) & 0xfffe;
+    unsigned int h = (1 - (int)(height * -480.0f)) & 0xfffe;
+    if (640 < (int)w) {
+        w = 640;
+    }
+    if (480 < (int)h) {
+        h = 480;
+    }
+    mTex = Hmx::Object::New<RndTex>();
+    mTex->SetBitmap(w, h, 16, RndTex::kScratch, false, nullptr);
+    MILO_ASSERT(mTex, 0x595);
+    MILO_ASSERT(mTex->Bpp() == 16, 0x596);
+    MILO_ASSERT(mTex->GetType() == RndTex::kScratch, 0x597);
+update:
+    UpdateFromColorBufferClip(cam, left, top);
+}
+
 void LiveCameraInput::TextureStore::StoreDepthBuffer(LiveCameraInput *cam) {
     if (mTex) {
         if (mTex->Width() == 640 && mTex->Height() == 480)
@@ -81,6 +186,31 @@ update:
     UpdateFromDepthBuffer(cam);
 }
 
+void LiveCameraInput::TextureStore::StoreDepthBufferClip(
+    LiveCameraInput *cam, float left, float top, float width, float height
+) {
+    if (mTex) {
+        if (mTex->Width() == width && mTex->Height() == height)
+            goto update;
+        RELEASE(mTex);
+    }
+    unsigned int w = (1 - (int)(width * -640.0f)) & 0xfffe;
+    unsigned int h = (1 - (int)(height * -480.0f)) & 0xfffe;
+    if (640 < (int)w) {
+        w = 640;
+    }
+    if (480 < (int)h) {
+        h = 480;
+    }
+    mTex = Hmx::Object::New<RndTex>();
+    mTex->SetBitmap(w, h, 16, RndTex::kScratch, false, nullptr);
+    MILO_ASSERT(mTex, 0x660);
+    MILO_ASSERT(mTex->Bpp() == 16, 0x661);
+    MILO_ASSERT(mTex->GetType() == RndTex::kScratch, 0x662);
+update:
+    UpdateFromDepthBufferClip(cam, left, top);
+}
+
 #pragma endregion
 #pragma region LiveCameraInput
 
@@ -90,10 +220,10 @@ LiveCameraInput::LiveCameraInput()
         mTexClips[i].mTex = nullptr;
     }
     mSpeechMgr = nullptr;
-    mNumSnapshots = 0;
     unk14a8 = 0;
     unk14ac = 0;
     unk14b0 = 0;
+    mNumSnapshots = 0;
     mSnapshotBatches.clear();
     mNumSnapshots = 0;
     SkeletonUpdate::Init();
@@ -233,13 +363,15 @@ void LiveCameraInput::Init() {
     PreInit();
     if (sInstance) {
         DataArray *cfg = SystemConfig()->FindArray("kinect", false);
+        DataArray *a;
         if (cfg) {
             DataArray *speechArr = cfg->FindArray("speech");
             cfg = speechArr;
+            a = cfg;
             speechArr->FindInt("enabled");
         }
         if (sInstance->mSpeechMgr) {
-            sInstance->mSpeechMgr->InitGrammars(cfg);
+            sInstance->mSpeechMgr->InitGrammars(a);
         }
     }
 }
@@ -594,4 +726,106 @@ void LiveCameraInput::StoreDepthBufferClip(
             mTextureStore.size() - 1
         );
     }
+}
+
+void LiveCameraInput::LockStream(const void *v, LockedRect &rect) {
+    D3DLOCKED_RECT dRect;
+    if (v) {
+        D3DLineTexture_LockRect((D3DLineTexture *)v, 0, &dRect, nullptr, 0x10);
+        rect.bits = dRect.pBits;
+    } else {
+        dRect.Pitch = 0;
+        rect.bits = nullptr;
+    }
+    rect.pitch = dRect.Pitch;
+}
+
+void LiveCameraInput::UnlockStream(const void *v) {
+    if (v) {
+        D3DLineTexture_UnlockRect((D3DLineTexture *)v, 0);
+    }
+}
+
+bool LiveCameraInput::SetAutoexposure(bool b) {
+    SetColorCameraProperty(NUI_CAMERA_PROPERTY_AE_AWB_MODE, b != 0);
+    return b;
+}
+
+bool LiveCameraInput::GetAutoexposure() const {
+    return GetColorCameraProperty(NUI_CAMERA_PROPERTY_AE_AWB_MODE) == 1;
+}
+
+void LiveCameraInput::SetExposureRegion(float left, float top, float width, float height) {
+    MILO_ASSERT(width >= NUI_CAMERA_AE_ROI_MINIMUM_WIDTH, 0x41f);
+    MILO_ASSERT(height >= NUI_CAMERA_AE_ROI_MINIMUM_HEIGHT, 0x420);
+    MILO_ASSERT(left >= 0 && top >= 0 && width >= 0 && height >= 0, 0x421);
+    MILO_ASSERT(left + width <= 1.0f, 0x422);
+    MILO_ASSERT(top + height <= 1.0f, 0x423);
+    NUI_CAMERA_AE_ROI ae_region;
+    ae_region.Left = left;
+    ae_region.Top = top;
+    ae_region.Width = width;
+    ae_region.Height = height;
+    HRESULT hr = NuiCameraSetExposureRegionOfInterest(NUI_CAMERA_TYPE_COLOR, &ae_region);
+    if (!SUCCEEDED(hr)) {
+        MILO_NOTIFY(
+            "Autoexposure region not set. NuiCameraSetExposureRegionOfInterest failed (0x%x)",
+            hr
+        );
+    }
+}
+
+bool LiveCameraInput::SetTweakedAutoexposure(bool b) {
+    SetColorCameraProperty(NUI_CAMERA_PROPERTY_AE_FRAME_RATE_MIN, b ? 2 : 0);
+    NUI_CAMERA_AE_ROI ae_region;
+    ae_region.Left = 0;
+    ae_region.Top = 0;
+    ae_region.Width = 1.0f;
+    ae_region.Height = 1.0f;
+    if (b && !GetExposureRegion(ae_region)) {
+        MILO_NOTIFY("Could not find ae_region in SystemConfig");
+    }
+    HRESULT hr = NuiCameraSetExposureRegionOfInterest(NUI_CAMERA_TYPE_COLOR, &ae_region);
+    if (!SUCCEEDED(hr)) {
+        MILO_LOG(
+            "Autoexposure region not set. NuiCameraSetExposureRegionOfInterest failed (0x%x)\n",
+            hr
+        );
+    }
+    return b;
+}
+
+void LiveCameraInput::ClearSnapshots() {
+    for (int i = 0; i < mSnapshots.size(); i++) {
+        RndMat *snapshot = mSnapshots[i];
+        RndTex *diffTex = snapshot ? snapshot->GetDiffuseTex() : nullptr;
+        RELEASE(diffTex);
+        RELEASE(snapshot);
+    }
+    mSnapshots.clear();
+    mNumSnapshots = 0;
+    mSnapshotBatches.clear();
+    TheDxRnd.ReleaseAutoRelease();
+}
+
+void LiveCameraInput::SetTrackedSkeletons(int p1ID, int p2ID) const {
+    DWORD ids[2] = { p1ID, p2ID };
+    NuiSkeletonSetTrackedSkeletons(ids);
+}
+
+RndTex *LiveCameraInput::GetStreamTex(LiveCameraInput::BufferType type) const {
+    MILO_ASSERT(type == kBufferColor || type == kBufferDepth, 0x1ea);
+    void *buf = StreamBufferData(type);
+    DxTex *tex;
+    if (type == kBufferColor) {
+        tex = unk14a8;
+    } else {
+        tex = unk14ac;
+    }
+    tex->SetDeviceTex((D3DTexture *)buf);
+    RndTex *ret = tex;
+    if ((type == kBufferDepth && unk14b0) && (!buf || gDebugDepth)) {
+        ret = unk14b0;
+    }
+    return ret;
 }
