@@ -182,12 +182,11 @@ int UIListState::Display2Data(int i) const {
 }
 
 int UIListState::SnappedDataForDisplay(int i2) const {
-    bool b1 = false;
-    if ((!IsScrolling() && i2 == 0) || (mTargetShowing > mFirstShowing && i2 == 0)
-        || (mTargetShowing < mFirstShowing && i2 == -1))
-        b1 = true;
+    bool b1 = (!IsScrolling() && i2 == 0) || (mTargetShowing > mFirstShowing && i2 == 0)
+        || (mTargetShowing < mFirstShowing && i2 == -1);
     if (b1) {
-        return Provider()->SnappableAtOrBeforeData(Display2Data(i2));
+        int data = Display2Data(i2);
+        return Provider()->SnappableAtOrBeforeData(data);
     } else
         return -1;
 }

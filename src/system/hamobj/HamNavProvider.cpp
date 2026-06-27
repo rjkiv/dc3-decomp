@@ -330,3 +330,34 @@ DataNode HamNavProvider::OnSetHidden(const DataArray *a) {
     }
     return 0;
 }
+
+DataNode HamNavProvider::OnSetFormatArgs(const DataArray *a) {
+    int index = 0;
+    const DataNode &node = a->Evaluate(2);
+    if (node.Type() == kDataInt) {
+        index = node.Int();
+    } else {
+        index = FindLabel(node.ForceSym());
+    }
+
+    MILO_ASSERT(index >= 0 && index < mNavItems.size(), 0x16d);
+
+    if (mNavItems[index].unk14) {
+        mNavItems[index].unk14->Release();
+        mNavItems[index].unk14 = nullptr;
+    }
+
+    if (a->Size() > 3) {
+        mNavItems[index].unk14 = new DataArray(a->Size() - 2);
+        mNavItems[index].unk14->Node(0) = mNavItems[index].mLabel;
+
+        for (int i = 3; i < a->Size(); i++) {
+            mNavItems[index].unk14->Node(i - 2) = a->Node(i).Evaluate();
+        }
+    }
+
+    if (mNavList) {
+        mNavList->Refresh();
+    }
+    return 0;
+}

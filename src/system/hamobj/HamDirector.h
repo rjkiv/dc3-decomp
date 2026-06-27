@@ -12,6 +12,7 @@
 #include "hamobj/HamVisDir.h"
 #include "hamobj/MoveDir.h"
 #include "hamobj/MoveGraph.h"
+#include "math/Vec.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
@@ -23,6 +24,8 @@
 #include "rndobj/PropKeys.h"
 #include "rndobj/Tex.h"
 #include "rndobj/TexRenderer.h"
+#include "rndobj/Trans.h"
+#include "stl/_vector.h"
 #include "utl/MemMgr.h"
 #include "utl/Song.h"
 #include "utl/Symbol.h"
@@ -199,6 +202,7 @@ protected:
     CharClip *
     GetClipStartAndEndBeats(Symbol, float &, float &, std::pair<float, float> *);
     void ChangeNextShotIfCharacterCollisionLikely();
+    bool AreCharactersColliding();
 
     DataNode OnShotOver(DataArray *);
     DataNode OnPostProcInterp(DataArray *);
@@ -333,3 +337,10 @@ public:
     AnimPtr() : ObjPtr<RndPropAnim>(TheHamDirector) {}
     AnimPtr(RndPropAnim *anim) : ObjPtr<RndPropAnim>(TheHamDirector, anim) {}
 };
+
+bool AreDancersColliding1D(
+    std::vector<RndTransformable *> &,
+    std::vector<RndTransformable *> &,
+    const Vector3 &,
+    const Vector3 &
+);

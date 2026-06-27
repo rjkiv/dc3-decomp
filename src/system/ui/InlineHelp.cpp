@@ -349,8 +349,7 @@ void InlineHelp::SyncLabelsToConfig() {
         }
     } else {
         if (labels_size > cfg_size) {
-            int diff = labels_size - cfg_size;
-            for (int i = 0; i < diff; i++) {
+            for (int i = cfg_size; i < labels_size; i++) {
                 delete mTextLabels[i];
             }
             mTextLabels.resize(cfg_size);

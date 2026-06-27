@@ -42,6 +42,7 @@ HRESULT NuiSkeletonTrackingEnable(HANDLE hNextFrameEvent, DWORD dwFlags);
 HRESULT NuiSkeletonTrackingDisable();
 HRESULT
 NuiSkeletonGetNextFrame(DWORD dwMillisecondsToWait, NUI_SKELETON_FRAME *pSkeletonFrame);
+HRESULT NuiSkeletonSetTrackedSkeletons(DWORD TrackingIDs[2]);
 
 #ifdef __cplusplus
 }

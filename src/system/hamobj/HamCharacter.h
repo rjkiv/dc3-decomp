@@ -15,6 +15,7 @@
 #include "rndobj/Mesh.h"
 #include "utl/MemMgr.h"
 #include "utl/Std.h"
+#include "utl/Symbol.h"
 
 enum HamBackupDancers {
     kBackupDancersDanceBattle = 1,

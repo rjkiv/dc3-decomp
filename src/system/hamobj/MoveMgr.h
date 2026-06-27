@@ -83,12 +83,16 @@ public:
     Symbol GetGenreTokenName(Symbol);
 
     std::vector<const MoveParent *> &CurParents(int i) { return mMoveParents[i]; }
+    std::vector<std::pair<const MoveVariant *, const MoveVariant *> > &Unk150(int i) {
+        return unk150[i];
+    }
     bool HasVariantPair(const MoveParent *p1, const MoveParent *p2) const {
         return mMoveGraph.HasVariantPair(p1, p2);
     }
     MoveGraph &Graph() { return mMoveGraph; }
     ObjectDir *MoveDataDir() const { return mMoveDataDir; }
     void SetSong(Symbol song) { unk14c = song; }
+    std::set<const MoveVariant *> &GetUnk104() { return unk104; }
 
     static void Init(const char *);
 

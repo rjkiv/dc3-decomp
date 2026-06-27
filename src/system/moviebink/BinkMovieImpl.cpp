@@ -733,4 +733,18 @@ void BinkMovieImpl::MovieClose() {
     mBink = nullptr;
 }
 
+void BinkMovieImpl::FinishOpen() {
+    CHECK_THREAD;
+    if (!mBink) {
+        MILO_NOTIFY("BinkOpen \'%s\' error: %s", mName, BinkGetError());
+    } else {
+        BinkSetSoundOnOff(mBink, unk27 == 0);
+        BINKSUMMARY summary;
+        BinkGetSummary(mBink, &summary);
+
+        SetRect();
+        SetPaused(true);
+    }
+}
+
 #pragma endregion

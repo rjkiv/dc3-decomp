@@ -71,6 +71,7 @@ public:
     void SetPlayerSkeletonID(int, int);
     int GetPlayerFilteredSkeletonID(int, bool);
     int GetSecondarySkeletonIndex(bool) const;
+    void DrawSkeletonKinectData();
     bool IDEnabled() { return mIDEnabled; }
     bool GetBool4271() { return unk4271; } // change once context found
     void SetBool4271(bool b) { unk4271 = b; }
