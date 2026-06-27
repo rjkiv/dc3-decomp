@@ -4553,7 +4553,7 @@ system/utl/FakeSongMgr.cpp:
 	.rdata      start:0x820DB048 end:0x820DB1B8
 	.pdata      start:0x822EBB30 end:0x822EBB40
 	.text       start:0x827E6DD0 end:0x827E6ED0
-	.data       start:0x830E5C68 end:0x830E5E48 rename:.bss
+	.data       start:0x830E5C68 end:0x830E5CB8 rename:.bss
 
 system/utl/BeatMap.cpp:
 	.pdata      start:0x822EBB40 end:0x822EBB58
@@ -4598,7 +4598,7 @@ system/utl/Locale.cpp:
 	.text       start:0x82EDD750 end:0x82EDD770 rename:.text$yc
 	.text       start:0x82EE3510 end:0x82EE3558 rename:.text$yd
 	.data       start:0x82F18D04 end:0x82F18D44
-	.data       start:0x830E5E48 end:0x830E5ECC rename:.bss
+	.data       start:0x830E5CB8 end:0x830E5ECC rename:.bss
 
 system/utl/TempoMap.cpp:
 	.rdata      start:0x820DBBCC end:0x820DBC44

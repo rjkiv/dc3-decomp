@@ -27,16 +27,4 @@ public:
 BinStream &operator<<(BinStream &, const HxGuid &);
 BinStream &operator>>(BinStream &, HxGuid &);
 
-class UserGuid : public HxGuid {
-public:
-    UserGuid() {}
-    // UserGuid& operator=(const UserGuid& u){
-    //     mData[0] = u.mData[0];
-    //     mData[1] = u.mData[1];
-    //     mData[2] = u.mData[2];
-    //     mData[3] = u.mData[3];
-    //     return *this;
-    // }
-
-    bool Null() const;
-};
+class UserGuid : public HxGuid {};

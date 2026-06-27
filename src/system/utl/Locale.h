@@ -16,15 +16,16 @@ enum LocaleNumber {
 class LocaleChunkSort {
 public:
     struct OrderedLocaleChunk {
-        OrderedLocaleChunk() : node1(0), node2(0), node3(0) {}
-        DataNode node1;
-        DataNode node2;
-        DataNode node3;
+        DataNode sym; // 0x0
+        DataNode pos; // 0x8
+        DataNode str; // 0x10
 
         MEM_ARRAY_OVERLOAD(OrderedLocaleChunk, 0x1d)
     };
 
-    static void Sort(OrderedLocaleChunk *, int);
+    void Sort(OrderedLocaleChunk *, int);
+    template <int N>
+    static int FastSort(const void *node0, const void *node1);
 };
 
 class Locale {
@@ -40,9 +41,12 @@ private:
     DataArray *mMagnuStrings; // 0x20
 public:
     Locale() {}
-    // : mSize(0), mSymTable(0), mStrTable(0), mStringData(0), mUploadedFlags(0),
-    //   mFile(), mNumFilesLoaded(0), mMagnuStrings(0) {}
-    ~Locale();
+    ~Locale() {
+        if (mMagnuStrings) {
+            mMagnuStrings->Release();
+            mMagnuStrings = nullptr;
+        }
+    }
 
     void Init();
     void Terminate();
@@ -50,8 +54,7 @@ public:
     static const char *sIgnoreMissingText;
 
     void SetMagnuStrings(DataArray *);
-    // bool FindDataIndex(Symbol, int &, bool) const;
-    const char *Localize(Symbol, bool) const;
+    const char *Localize(Symbol token, bool fail) const;
 
     static void SetLocaleVerboseNotify(bool set) { Locale::sVerboseNotify = set; }
     static bool GetLocaleVerboseNotify() { return sVerboseNotify; }
