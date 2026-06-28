@@ -16,7 +16,6 @@ public:
     };
 
     MultiTempoTempoMap();
-    virtual ~MultiTempoTempoMap();
     virtual float TickToTime(float f) const;
     virtual float TimeToTick(float f) const;
     virtual float GetTempo(int) const;
@@ -43,6 +42,6 @@ private:
     std::vector<TempoInfoPoint> mTempoPoints; // 0x4
     float mStartLoopTick; // 0x10
     float mEndLoopTick; // 0x14
-    float mStartLoopTime; // 0x18
-    float mEndLoopTime; // 0x1c
+    float mStartLoopMs; // 0x18
+    float mEndLoopMs; // 0x1c
 };
