@@ -828,7 +828,7 @@
             "system/utl/Option.cpp": "Matching",
             "system/utl/Pool.cpp": "Matching",
             "system/utl/PoolAlloc.cpp": "NonMatching",
-            "system/utl/Profiler.cpp": "NonMatching",
+            "system/utl/Profiler.cpp": "Matching",
             "system/utl/Song.cpp": "Matching",
             "system/utl/SongInfoAudioType.cpp": "Matching",
             "system/utl/SongInfoCopy.cpp": "Matching",
