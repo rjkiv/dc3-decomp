@@ -806,7 +806,7 @@
             "system/utl/Licenses.cpp": "Matching",
             "system/utl/Loader.cpp": "NonMatching",
             "system/utl/Locale.cpp": "NonMatching",
-            "system/utl/LocaleOrdinal.cpp": "NonMatching",
+            "system/utl/LocaleOrdinal.cpp": "Matching",
             "system/utl/MBT.cpp": "NonMatching",
             "system/utl/Magnu.cpp": "Matching",
             "system/utl/MakeString.cpp": "Matching",
