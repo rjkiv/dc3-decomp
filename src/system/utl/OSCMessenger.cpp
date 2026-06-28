@@ -5,6 +5,8 @@
 #include "os/System.h"
 #include "utl/Std.h"
 
+OSCMessenger TheOSCMessenger;
+
 OSCMessenger::~OSCMessenger() {
     delete mSocket1;
     delete mSocket2;
@@ -12,7 +14,7 @@ OSCMessenger::~OSCMessenger() {
 
 void OSCMessenger::Connect() {
     if (!UsingCD()) {
-        unsigned int ip = HolmesResolveIP().mIP;
+        int ip = HolmesResolveIP().GetIP();
         if (ip != 0) {
             mSocket1 = NetworkSocket::Create(false);
             mSocket1->Bind(0x303A);
@@ -80,15 +82,55 @@ int OSCMessenger::GetInt(String str, int intValue) {
     OSCValue *val = GetValue(str);
     if (val) {
         MILO_ASSERT(val->mType == 'i', 0x131);
-        intValue = ((int *)val->buffer)[0];
         val->unk89 = 0;
-        return intValue;
+        return ((int *)val->buffer)[0];
     } else {
         OSCValue newValue;
         newValue.unk0 = str;
+        ((int *)newValue.buffer)[0] = intValue;
         newValue.unk89 = 0;
         newValue.mType = 'i';
-        mValues.push_back(newValue);
+        mValues.push_front(newValue);
         return intValue;
     }
+}
+
+float OSCMessenger::GetFloat(String str, float floatValue) {
+    OSCValue *val = GetValue(str);
+    if (val) {
+        MILO_ASSERT(val->mType == 'f', 0x149);
+        val->unk89 = 0;
+        return ((float *)val->buffer)[0];
+    } else {
+        OSCValue newValue;
+        newValue.unk0 = str;
+        ((float *)newValue.buffer)[0] = floatValue;
+        newValue.unk89 = 0;
+        newValue.mType = 'f';
+        mValues.push_front(newValue);
+        return floatValue;
+    }
+}
+
+void OSCMessenger::SendOSCFloat(String str, float floatValue) {
+    char buffer[256];
+    if (mSocket2) {
+        int addr = MakeOSCAddress(str, buffer);
+        char *bufPtr = &buffer[addr];
+        *bufPtr++ = ',';
+        *bufPtr++ = 'f';
+        *bufPtr++ = '\0';
+        *bufPtr++ = '\0';
+        memcpy(bufPtr, &floatValue, 4);
+        mSocket2->Send(buffer, addr + 8);
+    }
+}
+
+OSCMessenger::OSCValue *OSCMessenger::GetValue(String str) {
+    FOREACH (it, mValues) {
+        if (it->unk0 == str) {
+            return &*it;
+        }
+    }
+    return nullptr;
 }

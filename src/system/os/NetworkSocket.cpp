@@ -10,20 +10,20 @@ NetAddress NetworkSocket::SetIPPortFromHostPort(
     if (idx != FixedString::npos) {
         String str2 = str.substr(idx + 1);
         str = str.substr(0, idx);
-        addr.mPort = strtol(str2.c_str(), 0, 0);
+        addr.SetPort(strtol(str2.c_str(), 0, 0));
     } else {
-        addr.mPort = default_port;
+        addr.SetPort(default_port);
     }
     unsigned int ip = IPStringToInt(str);
     if (ip != -1) {
-        addr.mIP = ip;
+        addr.SetIP(ip);
     }
-    if (addr.mIP == 0) {
+    if (addr.GetIP() == 0) {
         if (domain) {
             str += ".";
             str += domain;
         }
-        addr.mIP = ResolveHostName(str);
+        addr.SetIP(ResolveHostName(str));
     }
     return addr;
 }

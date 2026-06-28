@@ -12,7 +12,7 @@ AppChild *TheAppChild;
 AppChild::~AppChild() { delete mStream; }
 
 AppChild::AppChild(const char *str) : mEnabled(1), mStream(0), mSync(0) {
-    NetAddress addr(HolmesResolveIP().mIP, 0x11BF);
+    NetAddress addr(HolmesResolveIP().GetIP(), 0x11BF);
     NetStream *stream = new NetStream();
     stream->ClientConnect(addr);
     mStream = stream;

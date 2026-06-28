@@ -12,7 +12,7 @@ NetAddress HolmesClient::PlatformResolveIP() {
     String name = HolmesFileHostName();
     NetAddress addr =
         NetworkSocket::SetIPPortFromHostPort(name.c_str(), "harmonixmusic.com", 4544);
-    if (addr.mIP == 0 && !gHostLogging) {
+    if (addr.GetIP() == 0 && !gHostLogging) {
         MILO_FAIL("Couldn't resolve holmes_host: %s", name);
     }
     return addr;
@@ -63,7 +63,7 @@ BinStream *HolmesClient::PlatformCreateServerStream(bool b1, const char *cc2) {
         }
         HolmesSetFileShare(names[i4].c_str(), cc2);
         NetAddress addr = HolmesResolveIP();
-        if (addr.mIP == 0) {
+        if (addr.GetIP() == 0) {
             if (!b1) {
                 printf(
                     "\n\nCOULD NOT RESOLVE HOST ADDRESS '%s'\n\n", HolmesFileHostName()

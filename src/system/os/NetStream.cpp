@@ -68,20 +68,17 @@ void NetStream::ClientConnect(const NetAddress &addr) {
     MILO_ASSERT(mSocket, 0x38);
     Timer timer;
     timer.Restart();
-    mSocket->Connect(addr.mIP, addr.mPort);
+    mSocket->Connect(addr.GetIP(), addr.GetPort());
     if (mSocket->Fail()) {
         mFail = true;
-    } else
+    } else {
         while (!mSocket->CanSend()) {
-            if (mSocket->Fail()) {
-                mFail = true;
-                break;
-            }
-            if (timer.SplitMs() > 1000) {
+            if (mSocket->Fail() || timer.SplitMs() > 1000) {
                 mFail = true;
                 break;
             }
         }
+    }
     if (mSocket->Fail()) {
         mFail = true;
     }
