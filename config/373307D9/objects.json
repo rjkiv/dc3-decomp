@@ -776,7 +776,7 @@
             "system/ui/UITrigger.cpp": "NonMatching",
             "system/ui/Utl.cpp": "NonMatching",
             "system/utl/AllocInfo.cpp": "NonMatching",
-            "system/utl/BeatMap.cpp": "NonMatching",
+            "system/utl/BeatMap.cpp": "Matching",
             "system/utl/BinStream.cpp": "NonMatching",
             "system/utl/BinkIntegration.cpp": "NonMatching",
             "system/utl/BufStream.cpp": "Matching",

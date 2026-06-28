@@ -44,8 +44,6 @@ int BeatMap::IsDownbeat(int i1) const {
         return mInfos[i1].mLevel > 0;
 }
 
-// https://decomp.me/scratch/h18a4
-// matches in retail with the right inline settings
 float BeatMap::Beat(int tick) const {
     if (mInfos.empty())
         return (float)tick / 480.0f;
@@ -67,7 +65,6 @@ float BeatMap::Beat(int tick) const {
     }
 }
 
-// also matches in retail with the right inline settings
 float BeatMap::Beat(float tick) const {
     if (mInfos.empty())
         return tick / 480.0f;
@@ -79,11 +76,10 @@ float BeatMap::Beat(float tick) const {
     else if (i2 >= mInfos[mInfos.size() - 1].mTick)
         i2 = mInfos.size() - 2;
     else {
-        const BeatInfo &frontInfo = mInfos.front();
         int sp08 = i2;
         const BeatInfo *lowerInfo =
             std::lower_bound(mInfos.begin(), mInfos.end(), sp08, BeatInfoCmp);
-        i2 = lowerInfo - &frontInfo - 1;
+        i2 = lowerInfo - mInfos.begin() - 1;
     }
     return Interpolate(tick, i2);
 }
