@@ -42,12 +42,23 @@ inline unsigned short SwapBytes(unsigned short bytes) { return EndianSwap(bytes)
 
 // example input:   0x12345678DEADBEEF
 // should yield:    0xEFBEADDE78563412
+
+// oh my god ghidra pseudocode managed to be spot on
+// what are the odds
 inline unsigned long long EndianSwap(unsigned long long ull) {
-    unsigned int hi = (ull >> 32) & 0xFFFFFFFF;
-    unsigned int lo = ull & 0xFFFFFFFF;
-    unsigned int hi_swapped = EndianSwap(hi);
-    unsigned long long lo_swapped = EndianSwap(lo);
-    return (lo_swapped << 32) | hi_swapped;
+    return (((ull & 0xff000000000000 | ull >> 0x10) >> 0x10 | ull & 0xff0000000000)
+                >> 0x10
+            | ull & 0xff00000000)
+        >> 8
+        | (((ull << 0x10 | ull & 0xff00) << 0x10 | ull & 0xff0000) << 0x10
+           | ull & 0xff000000)
+        << 8;
+
+    // unsigned int hi = (ull >> 32) & 0xFFFFFFFF;
+    // unsigned int lo = ull & 0xFFFFFFFF;
+    // unsigned int hi_swapped = EndianSwap(hi);
+    // unsigned long long lo_swapped = EndianSwap(lo);
+    // return (lo_swapped << 32) | hi_swapped;
 
     // unsigned int hi = (ull >> 56) | (ull >> 48 | 0xFF00) | (ull >> 40 | 0xFF0000)
     //     | (ull >> 32 | 0xFF000000);
