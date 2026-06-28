@@ -5,26 +5,6 @@
 /** The map of measures for the current song. */
 class MeasureMap {
 public:
-    /** An event denoting a time signature change. */
-    class TimeSigChange {
-        /** The measure this time sig change occurs at. */
-        int mMeasure; // offset 0x0, size 0x4
-        /** The new time sig's numerator. */
-        int mNum; // offset 0x4, size 0x4
-        /** The new time sig's denominator. */
-        int mDenom; // offset 0x8, size 0x4
-        /** The tick this time sig change occurs at. */
-        int mTick; // offset 0xC, size 0x4
-    public:
-        TimeSigChange() : mMeasure(0), mNum(4), mDenom(4), mTick(0) {}
-        TimeSigChange(int m, int n, int d, int t)
-            : mMeasure(m), mNum(n), mDenom(d), mTick(t) {}
-        int Measure() const { return mMeasure; }
-        int Num() const { return mNum; }
-        int Denom() const { return mDenom; }
-        int Tick() const { return mTick; }
-    };
-
     MeasureMap();
     ~MeasureMap() {}
 
@@ -54,7 +34,7 @@ public:
      * @param [in] fail If true, and this is a bad new time sig, fail the game out.
      * @returns True if the new time sig was successfully added, false if not.
      */
-    bool AddTimeSignature(int measure, int num, int denom, bool fail);
+    bool AddTimeSignature(int measure, int num, int denom, bool fail = true);
 
     /** Given the supplied measure/beat/tick values, get the total tick value.
      * @param [in] measure The supplied measure.
@@ -67,9 +47,25 @@ public:
     MEM_OVERLOAD(MeasureMap, 0x18);
 
 private:
+    /** An event denoting a time signature change. */
+    class TimeSigChange {
+    public:
+        TimeSigChange() : mMeasure(0), mNum(4), mDenom(4), mTick(0) {}
+        TimeSigChange(int m, int n, int d, int t)
+            : mMeasure(m), mNum(n), mDenom(d), mTick(t) {}
+        /** The measure this time sig change occurs at. */
+        int mMeasure; // offset 0x0, size 0x4
+        /** The new time sig's numerator. */
+        int mNum; // offset 0x4, size 0x4
+        /** The new time sig's denominator. */
+        int mDenom; // offset 0x8, size 0x4
+        /** The tick this time sig change occurs at. */
+        int mTick; // offset 0xC, size 0x4
+    };
+
     /** The collection of measure markers. */
     std::vector<TimeSigChange> mTimeSigChanges; // offset 0x0, size 0xC
 
-    static bool CompareTick(int, const TimeSigChange &);
-    static bool CompareMeasure(int, const TimeSigChange &);
+    static bool CompareTick(int tick, const TimeSigChange &tsc);
+    static bool CompareMeasure(int measure, const TimeSigChange &tsc);
 };

@@ -810,7 +810,7 @@
             "system/utl/MBT.cpp": "Matching",
             "system/utl/Magnu.cpp": "Matching",
             "system/utl/MakeString.cpp": "Matching",
-            "system/utl/MeasureMap.cpp": "NonMatching",
+            "system/utl/MeasureMap.cpp": "Matching",
             "system/utl/MemHeap.cpp": "NonMatching",
             "system/utl/MemMgr.cpp": "NonMatching",
             "system/utl/MemPoint.cpp": "Matching",
