@@ -807,7 +807,7 @@
             "system/utl/Loader.cpp": "NonMatching",
             "system/utl/Locale.cpp": "NonMatching",
             "system/utl/LocaleOrdinal.cpp": "Matching",
-            "system/utl/MBT.cpp": "NonMatching",
+            "system/utl/MBT.cpp": "Matching",
             "system/utl/Magnu.cpp": "Matching",
             "system/utl/MakeString.cpp": "Matching",
             "system/utl/MeasureMap.cpp": "NonMatching",
