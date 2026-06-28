@@ -68,12 +68,12 @@ public:
 
     MEM_TEMP_OVERLOAD(ChunkStream, 0x31)
 
-    void PotentiallyWriteChunk(bool b) { MaybeWriteChunk(b); } // so dumb
+    void PotentiallyWriteChunk() { MaybeWriteChunk(false); } // so dumb
     static bool PollDecompressionWorker();
 
 private:
-    virtual void ReadImpl(void *, int);
-    virtual void WriteImpl(const void *, int);
+    virtual void ReadImpl(void *data, int bytes);
+    virtual void WriteImpl(const void *data, int bytes);
     virtual void SeekImpl(int, SeekType);
 
     static void DecompressChunk(DecompressTask &);

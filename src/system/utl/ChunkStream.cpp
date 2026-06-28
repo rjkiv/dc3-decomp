@@ -1,22 +1,25 @@
 #include "utl/ChunkStream.h"
-
 #include "Compress.h"
 #include "obj/Object.h"
+#include "os/CritSec.h"
+#include "os/Debug.h"
 #include "os/Endian.h"
 #include "os/File.h"
 #include "os/SynchronizationEvent.h"
 #include "os/System.h"
+#include "xdk/XAPILIB.h"
 
 namespace {
-    std::list<DecompressTask> gDecompressionQueue;
-    CriticalSection *gDecompressionCritSec;
+    HANDLE *mThreadHandle;
     bool gDecompressionThread = false;
+    Hmx::Object *gActiveChunkObject;
+    std::list<DecompressTask> gDecompressionQueue;
+    CriticalSection gDecompressionCritSec;
     SynchronizationEvent gDataProcessedEvt;
     SynchronizationEvent gDataReadyEvt;
-    void *mThreadHandle;
 
-    unsigned long DecompressionThread(void *v) {
-        for (; gDecompressionThread != false;) {
+    DWORD DecompressionThread(void *) {
+        while (gDecompressionThread) {
             if (ChunkStream::PollDecompressionWorker()) {
                 gDataProcessedEvt.Set();
             } else {
@@ -27,20 +30,19 @@ namespace {
     }
 
     void StartDecompressionThread() {
-        if (gDecompressionThread) {
-            gDataReadyEvt.Set();
-        } else {
+        if (!gDecompressionThread) {
             gDecompressionThread = true;
-            mThreadHandle =
+            int i = 0;
+            mThreadHandle[i] =
                 CreateThread(nullptr, 0, DecompressionThread, nullptr, 4, nullptr);
-            // MILO_ASSERT(mThreadHandle[i], 0x82); // no idea where i comes from
+            MILO_ASSERT(mThreadHandle[i], 0x82);
+            XSetThreadProcessor(mThreadHandle[i], 3);
+            ResumeThread(mThreadHandle[i]);
+        } else {
+            gDataReadyEvt.Set();
         }
-        XSetThreadProcessor(mThreadHandle, 3);
-        ResumeThread(mThreadHandle);
     }
 }
-
-Hmx::Object *gActiveChunkObject;
 
 void ChunkStream::SetPlatform(Platform plat) {
     if (plat == kPlatformNone) {
@@ -143,19 +145,47 @@ ChunkStream::ChunkStream(
 }
 
 ChunkStream::~ChunkStream() {
-    if (mFail == false && mType == kWrite) {
+    if (!mFail && mType == kWrite) {
         MaybeWriteChunk(true);
         if (mChunkInfo.mNumChunks == 512) {
-            MILO_FAIL(
-                "%s is %d compressed bytes too large",
-                mFilename,
-                sizeof(mChunkInfo.mChunks)
+            MILO_NOTIFY(
+                "%s is %d compressed bytes too large", mFilename, mChunkInfo.mChunks[511]
             );
         }
-        // memset()
-        for (int i = 0; i < sizeof(mChunkInfo.mChunks); i++) {
-            int maxChunk = mChunkInfo.mMaxChunkSize;
+        memset(
+            &mChunkInfo.mChunks[mChunkInfo.mNumChunks],
+            0,
+            sizeof(mChunkInfo.mChunks) - mChunkInfo.mNumChunks * sizeof(int)
+        );
+        for (int i = 0; i < mChunkInfo.mNumChunks; i++) {
+            EndianSwapEq(mChunkInfo.mChunks[i]);
         }
+        EndianSwapEq(mChunkInfo.mID);
+        EndianSwapEq(mChunkInfo.mChunkInfoSize);
+        EndianSwapEq(mChunkInfo.mNumChunks);
+        EndianSwapEq(mChunkInfo.mMaxChunkSize);
+        mFile->Seek(0, 0);
+        mFile->Write(&mChunkInfo, sizeof(ChunkInfo));
+    }
+    delete mFile;
+    while (true) {
+        bool b3;
+        for (int i = 2; i >= 0; i--) {
+            if (mBuffersState[i] == kDecompressing) {
+                b3 = true;
+                goto check;
+            }
+        }
+        b3 = false;
+    check:
+        if (!b3) {
+            for (int i = 0; i < 3; i++) {
+                MILO_ASSERT(mBuffersState[i] != kDecompressing, 0x194);
+                MemFree(mBuffers[i]);
+            }
+            return;
+        }
+        gDataProcessedEvt.Wait(-1);
     }
 }
 
@@ -213,7 +243,7 @@ int ChunkStream::WriteChunk() {
 BinStream &MarkChunk(BinStream &bs) {
     ChunkStream *cs = dynamic_cast<ChunkStream *>(&bs);
     if (cs)
-        cs->PotentiallyWriteChunk(false);
+        cs->PotentiallyWriteChunk();
     return bs;
 }
 
@@ -255,20 +285,15 @@ void ChunkStream::DecompressChunk(DecompressTask &task) {
 void ChunkStream::DecompressChunkAsync() {}
 
 bool ChunkStream::PollDecompressionWorker() {
-    gDecompressionCritSec->Enter();
-    unsigned int counter = 0;
-    FOREACH (it, gDecompressionQueue) {
-        counter++;
-    }
-    if (counter != 0) {
-        DecompressTask task;
-        memcpy(&task, &gDecompressionQueue.front(), sizeof(task));
+    gDecompressionCritSec.Enter();
+    if (gDecompressionQueue.size() != 0) {
+        DecompressTask task = gDecompressionQueue.front();
         gDecompressionQueue.pop_front();
-        gDecompressionCritSec->Exit();
+        gDecompressionCritSec.Exit();
         DecompressChunk(task);
         return true;
     }
-    gDecompressionCritSec->Exit();
+    gDecompressionCritSec.Exit();
     return false;
 }
 

@@ -66,3 +66,5 @@ inline unsigned long long EndianSwap(unsigned long long ull) {
     //     | (ull >> 8 | 0xFF000000000000) | (ull | 0xFF00000000000000);
     // return hi | lo;
 }
+
+inline void EndianSwapEq(int &i) { i = EndianSwap((unsigned int)i); }
