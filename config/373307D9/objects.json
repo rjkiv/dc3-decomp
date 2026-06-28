@@ -799,7 +799,7 @@
             "system/utl/FilePath.cpp": "Matching",
             "system/utl/FileStream.cpp": "Matching",
             "system/utl/GlitchFinder.cpp": "NonMatching",
-            "system/utl/HxGuid.cpp": "NonMatching",
+            "system/utl/HxGuid.cpp": "Matching",
             "system/utl/JobMgr.cpp": "NonMatching",
             "system/utl/JsonEncode.cpp": "Matching",
             "system/utl/KnownIssues.cpp": "NonMatching",
