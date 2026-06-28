@@ -791,7 +791,7 @@
             "system/utl/Compress.cpp": "Matching",
             "system/utl/Crc.cpp": "Matching",
             "system/utl/DataPointMgr.cpp": "Matching",
-            "system/utl/DeJitter.cpp": "NonMatching",
+            "system/utl/DeJitter.cpp": "Matching",
             "system/utl/DebugGraph.cpp": "Matching",
             "system/utl/DebugMeter.cpp": "Matching",
             "system/utl/EncryptXTEA.cpp": "Matching",
