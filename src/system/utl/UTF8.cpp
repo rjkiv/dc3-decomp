@@ -3,41 +3,39 @@
 #include "os/Debug.h"
 #include <cstring>
 
-unsigned short WToLower(unsigned short us) {
-    if ((us >= 0x41 && us <= 0x5A) || (us >= 0xC0 && us <= 0xDE)) {
-        return us + 0x20;
-    } else if ((us >= 0x100 && us <= 0x137 && (us & 1) == 0)
-               || (us >= 0x139 && us <= 0x148 && (us & 1) == 1)
-               || (us >= 0x14A && us <= 0x177 && (us & 1) == 0)
-               || (us >= 0x179 && us <= 0x17E && (us & 1) == 1)) {
-        return us + 1;
+// shoutout to https://www.charset.org/utf-8
+
+unsigned short WToLower(unsigned short w) {
+    if ((w >= 0x41 && w <= 0x5A) || (w >= 0xC0 && w <= 0xDE)) {
+        w += 0x20;
+    } else if ((w >= 0x100 && w <= 0x137 && (w & 1) == 0)
+               || (w >= 0x139 && w <= 0x148 && (w & 1) == 1)
+               || (w >= 0x14A && w <= 0x177 && (w & 1) == 0)
+               || (w >= 0x179 && w <= 0x17E && (w & 1) == 1)) {
+        w += 1;
+    } else if (w == 0x178) {
+        return 0xFF;
     }
-    // else if (us != 0x178) {
-    //     return us;
-    // } else {
-    //     return 0xFF;
-    // }
+    return w;
 }
 
-unsigned short WToUpper(unsigned short us) {
-    if ((us >= 0x61 && us <= 0x7A) || (us >= 0xE0 && us <= 0xFE)) {
-        return us - 0x20;
-    } else if ((us >= 0x100 && us <= 0x137 && (us & 1) == 1)
-               || (us >= 0x139 && us <= 0x148 && (us & 1) == 0)
-               || (us >= 0x14A && us <= 0x177 && (us & 1) == 1)
-               || (us >= 0x179 && us <= 0x17E && (us & 1) == 0)) {
-        return us - 1;
+unsigned short WToUpper(unsigned short w) {
+    if ((w >= 0x61 && w <= 0x7A) || (w >= 0xE0 && w <= 0xFE)) {
+        w -= 0x20;
+    } else if ((w >= 0x100 && w <= 0x137 && (w & 1) == 1)
+               || (w >= 0x139 && w <= 0x148 && (w & 1) == 0)
+               || (w >= 0x14A && w <= 0x177 && (w & 1) == 1)
+               || (w >= 0x179 && w <= 0x17E && (w & 1) == 0)) {
+        w -= 1;
+    } else if (w == 0xFF) {
+        return 0x178;
     }
-    // else if (us != 0xFF) {
-    //     return us;
-    // } else {
-    //     return 0x178;
-    // }
+    return w;
 }
 
-int WStrniCmp(const unsigned short *str1, const unsigned short *str2, int n) {
-    const unsigned short *p1 = str1;
-    const unsigned short *p2 = str2;
+int WStrniCmp(const unsigned short *a, const unsigned short *b, int n) {
+    const unsigned short *p1 = a;
+    const unsigned short *p2 = b;
     for (; n != 0; n--) {
         unsigned short char1 = WToLower(*p1);
         unsigned short char2 = WToLower(*p2);
@@ -375,13 +373,11 @@ const unsigned short *CharToWideChar(const char *str) {
         int len = strlen(str);
         static std::vector<unsigned short> wstring;
         wstring.clear();
-        const char *p = str;
-        while (len > 0) {
-            wstring.push_back(*p++);
-            len--;
+        for (int i = 0; i < len; i++) {
+            wstring.push_back((unsigned char)*str++);
         }
         wstring.push_back(0);
         return &wstring[0];
-    } else
-        return nullptr;
+    }
+    // i guess they didn't return anything if str was null?
 }
