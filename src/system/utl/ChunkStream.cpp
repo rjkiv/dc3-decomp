@@ -10,7 +10,7 @@
 #include "xdk/XAPILIB.h"
 
 namespace {
-    HANDLE *mThreadHandle;
+    HANDLE mThreadHandle[1];
     bool gDecompressionThread = false;
     static Hmx::Object *gActiveChunkObject;
     std::list<DecompressTask> gDecompressionQueue;
@@ -32,12 +32,13 @@ namespace {
     void StartDecompressionThread() {
         if (!gDecompressionThread) {
             gDecompressionThread = true;
-            int i = 0;
-            mThreadHandle[i] =
-                CreateThread(nullptr, 0, DecompressionThread, nullptr, 4, nullptr);
-            MILO_ASSERT(mThreadHandle[i], 0x82);
-            XSetThreadProcessor(mThreadHandle[i], 3);
-            ResumeThread(mThreadHandle[i]);
+            for (int i = 0; i < DIM(mThreadHandle); i++) {
+                mThreadHandle[i] =
+                    CreateThread(nullptr, 0, DecompressionThread, nullptr, 4, nullptr);
+                MILO_ASSERT(mThreadHandle[i], 0x82);
+                XSetThreadProcessor(mThreadHandle[i], 3);
+                ResumeThread(mThreadHandle[i]);
+            }
         } else {
             gDataReadyEvt.Set();
         }
