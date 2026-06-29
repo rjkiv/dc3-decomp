@@ -4,11 +4,11 @@
 #include "zlib/zlib.h"
 #include "os/Debug.h"
 
-void *ZAlloc(void *mem, unsigned int len, unsigned int ct) {
-    return _MemAllocTemp(len * ct, __FILE__, 0x55, "zlib", 0);
+static void *ZAlloc(void *mem, unsigned int items, unsigned int size) {
+    return _MemAllocTemp(items * size, __FILE__, 0x55, "zlib", 0);
 }
 
-void ZFree(void *a, void *b) { MemFree(b); }
+static void ZFree(void *opaque, void *ptr) { MemFree(ptr); }
 
 void DecompressMem(
     const void *in, int in_len, void *out, int &out_len, const char *filename
@@ -25,9 +25,7 @@ void DecompressMem(
     MILO_ASSERT(inflateInit2(&s, -MAX_WBITS) == Z_OK, 0x6C);
 
     int ret = inflate(&s, 4);
-    if (ret != 1)
-        MILO_FAIL("Inflate error: %d in %s", ret, filename);
-
+    MILO_ASSERT_FMT(ret == Z_STREAM_END, "Inflate error: %d in %s", ret, filename);
     MILO_ASSERT(s.avail_in == 0, 0x70);
     MILO_ASSERT(inflateEnd(&s) == Z_OK, 0x71);
 

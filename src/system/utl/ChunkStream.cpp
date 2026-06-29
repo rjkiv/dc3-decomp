@@ -12,7 +12,7 @@
 namespace {
     HANDLE *mThreadHandle;
     bool gDecompressionThread = false;
-    Hmx::Object *gActiveChunkObject;
+    static Hmx::Object *gActiveChunkObject;
     std::list<DecompressTask> gDecompressionQueue;
     CriticalSection gDecompressionCritSec;
     SynchronizationEvent gDataProcessedEvt;
@@ -72,7 +72,7 @@ void ChunkStream::ReadChunkAsync() {
     int bufIdx = 1;
     int idx;
     for (; bufIdx < 4; bufIdx++) {
-        idx = (mCurBufferIdx + bufIdx) % 2;
+        idx = (mCurBufferIdx + bufIdx) % (int)DIM(mBuffers);
         if (mBuffersState[idx] == kInvalid)
             break;
     }
@@ -81,8 +81,7 @@ void ChunkStream::ReadChunkAsync() {
         if (thechunk != mChunkEnd) {
             int thechunkval = *thechunk;
             int sizemask = thechunkval & kChunkSizeMask;
-            bool maskexists = (thechunkval >> 24) & 1;
-            if (mChunkInfo.mID != 0xCABEDEAF && !maskexists) {
+            if (mChunkInfo.mID != 0xCABEDEAF && !((thechunkval >> 24) & 1)) {
                 mFile->ReadAsync(mBuffers[idx] + mBufSize - sizemask, sizemask);
             } else
                 mFile->ReadAsync(mBuffers[idx], sizemask);
@@ -214,29 +213,29 @@ int ChunkStream::Tell() {
 }
 
 int ChunkStream::WriteChunk() {
-    MILO_ASSERT(mCurBufOffset < kChunkSizeMask, 778);
+    MILO_ASSERT(mCurBufOffset < kChunkSizeMask, 0x310);
     int size = mCurBufOffset;
     int flags = 0;
-    int firstbuf = *(int *)mBuffers[0];
+    int *curBuf = (int *)mBuffers[0];
     if (mChunkInfo.mID == 0xCDBEDEAF) {
         int l38 = mBufSize - 4;
-        unsigned int secondbuf = *(int *)mBuffers[1];
-        secondbuf = size;
-        secondbuf = EndianSwap(secondbuf);
-        CompressMem(mBuffers[0], size, (char *)secondbuf + 1, l38, 0);
+        int *secondBuf = (int *)mBuffers[1];
+        *secondBuf = size;
+        EndianSwapEq(*secondBuf);
+        CompressMem(mBuffers[0], size, secondBuf + 1, l38, nullptr);
         if (((float)mCurBufOffset / (float)l38) > 1.1f && mChunkInfo.mNumChunks != 0) {
+            curBuf = secondBuf;
             size = l38 + 4;
-            firstbuf = secondbuf;
         } else
             flags |= 0x1000000;
     }
-    if (size != mFile->Write((const void *)firstbuf, size)) {
+    if (mFile->Write(curBuf, size) != size) {
         mFail = true;
     }
-    MILO_ASSERT((size & ~kChunkSizeMask) == 0, 820);
-    MILO_ASSERT((flags & (kChunkSizeMask|kChunkUnusedMask)) == 0, 822);
+    MILO_ASSERT((size & ~kChunkSizeMask) == 0, 0x33A);
+    MILO_ASSERT((flags & (kChunkSizeMask|kChunkUnusedMask)) == 0, 0x33C);
     int result = size | flags;
-    MILO_ASSERT((result & kChunkUnusedMask) == 0, 827);
+    MILO_ASSERT((result & kChunkUnusedMask) == 0, 0x341);
     return result;
 }
 
@@ -248,53 +247,93 @@ BinStream &MarkChunk(BinStream &bs) {
 }
 
 void DecompressMemHelper(
-    const void *compressedMem, int size, void *dst, int &dstLen, const char *c
+    const void *compressedMem, int size, void *dst, int &dstLen, const char *filename
 ) {
     unsigned int rawSize = *(unsigned int *)compressedMem;
-    DecompressMem((const char *)compressedMem + 4, size - 4, dst, dstLen, c);
+    DecompressMem((const char *)compressedMem + 4, size - 4, dst, dstLen, filename);
     int expectedDstLen = EndianSwap(rawSize);
     MILO_ASSERT(dstLen == expectedDstLen, 0x3bb);
 }
 
 void ChunkStream::DecompressChunk(DecompressTask &task) {
     MILO_ASSERT(*task.mState == kDecompressing, 0x3c1);
-    auto compressedSize = *task.mChunk & kChunkSizeMask;
-    MILO_ASSERT((compressedSize & ~kChunkSizeMask) == 0, 0x3c5);
+    int data = *task.mChunkSize;
+    int compressedSize = data & kChunkSizeMask;
+    MILO_ASSERT((data & ~kChunkSizeMask) == 0, 0x3c5);
+    int uncompressedSize = task.mUncompressedSize;
     if (task.mID == CHUNKSTREAM_Z_ID3) {
-        void *compressedData = (char *)task.mBuffer + (task.unkc - compressedSize);
         DecompressMemHelper(
-            compressedData, compressedSize, task.mBuffer, task.unkc, task.mTempBuf
+            (char *)task.mUncompressedData + (uncompressedSize - compressedSize),
+            compressedSize,
+            task.mUncompressedData,
+            uncompressedSize,
+            task.mFilename
         );
     } else if (task.mID == CHUNKSTREAM_Z_ID2) {
-        void *compressedData = (char *)task.mBuffer + (task.unkc - compressedSize) + 10;
-        compressedSize -= 18;
         DecompressMem(
-            compressedData, compressedSize, task.mBuffer, task.unkc, task.mTempBuf
+            (char *)task.mUncompressedData + (uncompressedSize - compressedSize) + 10,
+            compressedSize - 18,
+            task.mUncompressedData,
+            uncompressedSize,
+            task.mFilename
         );
     } else {
         MILO_ASSERT(task.mID == CHUNKSTREAM_Z_ID, 0x3d7);
-        void *compressedData = (char *)task.mBuffer + (task.unkc - compressedSize);
         DecompressMem(
-            compressedData, compressedSize, task.mBuffer, task.unkc, task.mTempBuf
+            (char *)task.mUncompressedData + (task.mUncompressedSize - compressedSize),
+            compressedSize,
+            task.mUncompressedData,
+            uncompressedSize,
+            task.mFilename
         );
     }
-    *task.mChunk = task.unkc;
+    *task.mChunkSize = uncompressedSize;
     *task.mState = kReady;
 }
 
-void ChunkStream::DecompressChunkAsync() {}
+void ChunkStream::DecompressChunkAsync() {
+    int idx = 1;
+    BufferState *cur;
+    for (; idx < 4; idx++) {
+        cur = &mBuffersState[(mCurBufferIdx + idx) % 3];
+        if (*cur == kReading) {
+            break;
+        }
+    }
+    if (*cur == kReading) {
+        int val = mCurChunk[idx];
+        if (mChunkInfo.mID == 0xCABEDEAF || (val >> 24) & 1) {
+            *cur = kReady;
+        } else {
+            *cur = kDecompressing;
+            {
+                DecompressTask task(
+                    &mCurChunk[idx],
+                    mBuffers[idx],
+                    cur,
+                    mBufSize,
+                    mChunkInfo.mID,
+                    mFilename.c_str()
+                );
+                CritSecTracker t(&gDecompressionCritSec);
+                gDecompressionQueue.push_back(task);
+            }
+            StartDecompressionThread();
+        }
+    }
+}
 
 bool ChunkStream::PollDecompressionWorker() {
-    gDecompressionCritSec.Enter();
+    CritSecTracker t(&gDecompressionCritSec);
     if (gDecompressionQueue.size() != 0) {
         DecompressTask task = gDecompressionQueue.front();
         gDecompressionQueue.pop_front();
-        gDecompressionCritSec.Exit();
+        gDecompressionCritSec.Exit(); // wat do here
         DecompressChunk(task);
         return true;
+    } else {
+        return false;
     }
-    gDecompressionCritSec.Exit();
-    return false;
 }
 
 BinStream &WriteChunks(BinStream &bs, const void *v, int i1, int i2) {

@@ -4,7 +4,9 @@
  */
 #pragma once
 
-void *ZAlloc(void *, unsigned int, unsigned int);
-void ZFree(void *, void *);
-void DecompressMem(const void *, int, void *, int &, const char *);
-void CompressMem(const void *, int, void *, int &, const char *);
+void DecompressMem(
+    const void *in, int in_len, void *out, int &out_len, const char *filename
+);
+void CompressMem(
+    const void *in, int in_len, void *out, int &out_len, const char *filename
+);
