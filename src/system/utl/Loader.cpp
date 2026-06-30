@@ -1,6 +1,7 @@
 #include "utl/Loader.h"
 #include "Loader.h"
 #include "MemTrack.h"
+#include "math/Utl.h"
 #include "obj/Data.h"
 #include "obj/DataFunc.h"
 #include "os/Archive.h"
@@ -8,27 +9,41 @@
 #include "os/File.h"
 #include "os/Platform.h"
 #include "os/System.h"
+#include "os/Timer.h"
 #include "utl/ChunkStream.h"
 #include "utl/FilePath.h"
 #include "utl/MemMgr.h"
 #include "utl/Option.h"
 #include "utl/Std.h"
 
-LoadMgr TheLoadMgr;
 int gLoadCount;
+LoadMgr TheLoadMgr;
+
+struct LoaderGlitchInfo {
+    String loaderFile; // 0x0
+    const char *loaderState; // 0x8
+    const char *frontLoaderState; // 0xc
+    LoaderPos loaderPos; // 0x10
+};
 
 void FrontLoaderGlitchCB(float f1, void *v) {
-    // the void* needs to be static_casted to some sort of struct
-    // const char* at 0x0, 0x8, 0xc, LoaderPos at 0x10
-    MILO_LOG("Loader %s %s took %f (%s to %s)\n");
+    LoaderGlitchInfo *info = static_cast<LoaderGlitchInfo *>(v);
+    MILO_LOG(
+        "Loader %s %s took %f (%s to %s)\n",
+        LoadMgr::LoaderPosString(info->loaderPos, true),
+        info->loaderFile,
+        f1,
+        info->loaderState,
+        info->frontLoaderState
+    );
 }
 
-const char *WhiteSpace(int count) {
-    int len = 0x80;
+__declspec(noinline) const char *WhiteSpace(int count) {
+    const int len = 0x80;
     MILO_ASSERT(count < len, 0x179);
     MILO_ASSERT(count >= 0, 0x17A);
     return &"                                                                                                                                "
-        [0x80 - count];
+        [len - count];
 }
 
 #pragma region Loader
@@ -42,10 +57,11 @@ Loader::Loader(const FilePath &fp, LoaderPos pos)
     } else if (mPos == kLoadStayBack) {
         TheLoadMgr.Loading().push_back(this);
     } else {
-        auto it = TheLoadMgr.Loading().begin();
-        for (; it != TheLoadMgr.Loading().end();) {
+        auto it = TheLoadMgr.Loading().end();
+        while (it != TheLoadMgr.Loading().begin()) {
+            it--;
             if ((*it)->GetPos() <= kLoadBack) {
-                ++it;
+                it++;
                 break;
             }
         }
@@ -329,6 +345,92 @@ Loader *LoadMgr::AddLoader(const FilePath &file, LoaderPos pos) {
         }
     }
     return new FileLoader(file, file.c_str(), pos, 0, false, true, nullptr, nullptr);
+}
+
+void LoadMgr::PollUntilLoaded(Loader *l1, Loader *l2) {
+    AutoGlitchReport r(50, __FUNCTION__);
+    static int sLoadCount = 1;
+    int count = ++sLoadCount;
+    l1->SetUnk4(count);
+    float old = unk1c;
+    while (!l1->IsLoaded()) {
+        unk1c = kHugeFloat;
+        if (l2 && l2 == mLoading.front()) {
+            MILO_FAIL(
+                "PollUntilLoaded circular dependency %s on %s",
+                l2->DebugText(),
+                l1->DebugText()
+            );
+        }
+        PollFrontLoader();
+        if (!ListFind(mLoading, l1) || l1->GetUnk4() != count)
+            break;
+        if (mLoading.front()->IsLoaded()) {
+            mLoading.pop_front();
+        }
+    }
+    unk1c = old;
+}
+
+void LoadMgr::PollFrontLoader() {
+    Loader *l = mLoading.front();
+    LoaderPos old = mLoaderPos;
+    mLoaderPos = l->GetPos();
+    LoaderGlitchInfo info;
+    info.loaderFile = l->LoaderFile().c_str();
+    info.loaderPos = l->GetPos();
+    info.loaderState = l->StateName();
+    if (TheArchive) {
+        if (Archive::DebugArkOrder() && l->GetUnk14() == -1) {
+            l->SetUnk14(SystemMs());
+            if (gLoadCount == 0) {
+                MILO_LOG("Loading%s Start '%s'\n", WhiteSpace(0), info.loaderFile);
+            }
+            gLoadCount++;
+        }
+    }
+    bool c7 = false;
+    bool b5 = false;
+    int idc = l->GetUnk14();
+    {
+        MemHeapTracker t(l->Heap());
+        if (UsingCD()) {
+            AutoGlitchReport r(mPeriod * 3, FrontLoaderGlitchCB, &info);
+            l->PollLoading();
+            if (!ListFind(mLoading, l)) {
+                c7 = true;
+                b5 = true;
+                info.frontLoaderState = "deleted";
+            } else {
+                info.frontLoaderState = l->StateName();
+                c7 = l->IsLoaded();
+            }
+        } else {
+            l->PollLoading();
+        }
+    }
+    if (TheArchive) {
+        if (Archive::DebugArkOrder() && c7) {
+            int ms = SystemMs();
+            if (!b5) {
+                gLoadCount--;
+                l->SetUnk14(-1);
+            }
+            int diff = ms - idc;
+            if (diff > 20 || gLoadCount == 0) {
+                int idk = diff;
+                MILO_LOG(
+                    "Loading%s End   %4d [%5d,%5d]  '%s'\n",
+                    WhiteSpace(gLoadCount),
+                    idk,
+                    idc,
+                    ms,
+                    info.loaderFile
+                );
+            }
+        }
+    }
+    mLoaderPos = old;
 }
 
 #pragma endregion
