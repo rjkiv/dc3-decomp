@@ -32,8 +32,8 @@ public:
     FilePath &LoaderFile() { return mFile; }
     void SetUnk4(int i) { unk4 = i; }
     int GetUnk4() const { return unk4; }
-    int GetUnk14() const { return unk14; }
-    void SetUnk14(int i) { unk14 = i; }
+    int GetLoadTimeStartMs() const { return mLoadTimeStartMs; }
+    void SetLoadTimeStartMs(int i) { mLoadTimeStartMs = i; }
     int Heap() const { return mHeap; }
 
     MEM_OVERLOAD(Loader, 0xA8);
@@ -42,7 +42,7 @@ protected:
     int unk4; // 0x4 - poll idx?
     LoaderPos mPos; // 0x8
     FilePath mFile; // 0xc
-    int unk14; // 0x14 - started load time?
+    int mLoadTimeStartMs; // 0x14
     int mHeap; // 0x18
 };
 

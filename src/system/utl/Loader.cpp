@@ -49,7 +49,7 @@ __declspec(noinline) const char *WhiteSpace(int count) {
 #pragma region Loader
 
 Loader::Loader(const FilePath &fp, LoaderPos pos)
-    : unk4(0), mPos(pos), mFile(fp), unk14(-1), mHeap(GetCurrentHeapNum()) {
+    : unk4(0), mPos(pos), mFile(fp), mLoadTimeStartMs(-1), mHeap(GetCurrentHeapNum()) {
     MILO_ASSERT(MemNumHeaps() == 0 || (mHeap != kNoHeap && mHeap != kSystemHeap), 0x1F0);
     TheLoadMgr.Loaders().push_front(this);
     if (mPos == kLoadFront) {
@@ -72,7 +72,7 @@ Loader::Loader(const FilePath &fp, LoaderPos pos)
 Loader::~Loader() {
     TheLoadMgr.Loading().remove(this);
     TheLoadMgr.Loaders().remove(this);
-    if (unk14 != -1) {
+    if (mLoadTimeStartMs != -1) {
         gLoadCount--;
     }
 }
@@ -381,8 +381,8 @@ void LoadMgr::PollFrontLoader() {
     info.loaderPos = l->GetPos();
     info.loaderState = l->StateName();
     if (TheArchive) {
-        if (Archive::DebugArkOrder() && l->GetUnk14() == -1) {
-            l->SetUnk14(SystemMs());
+        if (Archive::DebugArkOrder() && l->GetLoadTimeStartMs() == -1) {
+            l->SetLoadTimeStartMs(SystemMs());
             if (gLoadCount == 0) {
                 MILO_LOG("Loading%s Start '%s'\n", WhiteSpace(0), info.loaderFile);
             }
@@ -391,7 +391,7 @@ void LoadMgr::PollFrontLoader() {
     }
     bool c7 = false;
     bool b5 = false;
-    int idc = l->GetUnk14();
+    int loadStart = l->GetLoadTimeStartMs();
     {
         MemHeapTracker t(l->Heap());
         if (UsingCD()) {
@@ -411,20 +411,19 @@ void LoadMgr::PollFrontLoader() {
     }
     if (TheArchive) {
         if (Archive::DebugArkOrder() && c7) {
-            int ms = SystemMs();
+            int loadEnd = SystemMs();
             if (!b5) {
                 gLoadCount--;
-                l->SetUnk14(-1);
+                l->SetLoadTimeStartMs(-1);
             }
-            int diff = ms - idc;
-            if (diff > 20 || gLoadCount == 0) {
-                int idk = diff;
+            if (loadEnd - loadStart > 20 || gLoadCount == 0) {
+                int diff = loadEnd - loadStart;
                 MILO_LOG(
                     "Loading%s End   %4d [%5d,%5d]  '%s'\n",
                     WhiteSpace(gLoadCount),
-                    idk,
-                    idc,
-                    ms,
+                    diff,
+                    loadStart,
+                    loadEnd,
                     info.loaderFile
                 );
             }
