@@ -8,6 +8,7 @@
 #define ERROR_INVALID_FUNCTION          0x0001
 #define ERROR_FILE_NOT_FOUND            0x0002
 #define ERROR_PATH_NOT_FOUND            0x0003
+#define ERROR_ACCESS_DENIED             0x0005
 #define ERROR_OUTOFMEMORY               0x000e
 #define ERROR_NO_MORE_FILES             0x0012
 #define ERROR_NOT_READY                 0x0015

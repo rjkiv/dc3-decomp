@@ -84,16 +84,14 @@ static unsigned int BinkFileReadHeader(
     struct BINKIO *pBinkIO, int iOffset, void *pDest, unsigned int iReadSize
 ) {
     BINKFILE *binkFile = (BINKFILE *)pBinkIO->iodata;
+    File *pFile = binkFile->pFile;
     if (binkFile->mEncryptionHeader.mSignature == 0) {
-        int i4 = binkFile->pFile->Read(
-            &binkFile->mEncryptionHeader, sizeof(BINKENCRYPTIONHEADER)
-        );
-        EndianSwapBlock(&binkFile->mEncryptionHeader.mSignature, 5);
-        binkFile->mEncryptionHeader.mNonce[0] =
-            EndianSwap(binkFile->mEncryptionHeader.mNonce[0]);
-        binkFile->mEncryptionHeader.mNonce[1] =
-            EndianSwap(binkFile->mEncryptionHeader.mNonce[1]);
-        if (binkFile->mEncryptionHeader.mSignature == 'EBIK') {
+        BINKENCRYPTIONHEADER &encHeader = binkFile->mEncryptionHeader;
+        int i4 = pFile->Read(&encHeader, sizeof(BINKENCRYPTIONHEADER));
+        EndianSwapBlock(&encHeader.mSignature, 5);
+        encHeader.mNonce[0] = EndianSwap(encHeader.mNonce[0]);
+        encHeader.mNonce[1] = EndianSwap(encHeader.mNonce[1]);
+        if (encHeader.mSignature == 'EBIK') {
             binkFile->pXTEADecrypter = new XTEABlockEncrypter();
             DataArray *dataStr = DataReadString("{Na 42 'O32'}");
             unsigned int iEval = dataStr->Evaluate(0).Int();
@@ -108,24 +106,20 @@ static unsigned int BinkFileReadHeader(
             scriptArr->Evaluate(0);
             scriptArr->Release();
             unsigned char key[16];
-            KeyChain::getKey(binkFile->mEncryptionHeader.mKeyIndex, key, masterKey);
+            KeyChain::getKey(encHeader.mKeyIndex, key, masterKey);
             TheSynth->Grinder().GrindArray(
-                binkFile->mEncryptionHeader.mMagicA,
-                binkFile->mEncryptionHeader.mMagicB,
-                masterKey,
-                16,
-                12
+                encHeader.mMagicA, encHeader.mMagicB, masterKey, 16, 12
             );
             for (int i = 0; i < 16; i++) {
-                masterKey[i] ^= binkFile->mEncryptionHeader.mKeyMask[i];
+                masterKey[i] ^= encHeader.mKeyMask[i];
             }
             EndianSwapBlock((unsigned int *)masterKey, 4);
             binkFile->pXTEADecrypter->SetKey(masterKey);
             binkFile->pXTEADecrypter->SetNonce(binkFile->mEncryptionHeader.mNonce, 0);
             binkFile->iFileBufPos += i4;
         } else {
-            memset(&binkFile->mEncryptionHeader, 0, i4);
-            binkFile->pFile->Seek(-i4, FILE_SEEK_CUR);
+            memset(&encHeader, 0, i4);
+            pFile->Seek(-i4, FILE_SEEK_CUR);
             if (pBinkIO->bink && pBinkIO->bink->NumTracks > 2
                 && pBinkIO->bink->Width < 8) {
                 MILO_LOG("Attempting read of unsecure Bink song file!\n");
@@ -133,13 +127,13 @@ static unsigned int BinkFileReadHeader(
         }
     }
 
-    unsigned int bytes = binkFile->pFile->Read(pDest, iReadSize);
+    unsigned int bytes = pFile->Read(pDest, iReadSize);
     if (bytes != iReadSize) {
         pBinkIO->ReadError = 1;
     }
     binkFile->iHeaderSize += bytes;
     binkFile->iFileBufPos += bytes;
-    unsigned int size = binkFile->pFile->Size() - binkFile->iFileBufPos;
+    unsigned int size = pFile->Size() - binkFile->iFileBufPos;
     if (size >= pBinkIO->BufSize) {
         size = pBinkIO->BufSize;
     }

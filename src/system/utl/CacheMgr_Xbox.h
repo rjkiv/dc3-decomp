@@ -35,7 +35,7 @@ private:
     XOVERLAPPED mOverlapped; // 0x1c
     CacheID **mppCacheID; // 0x38
     Cache **mppCache; // 0x3c
-    Hmx::Object *unk40; // 0x40
+    Hmx::Object *mCallback; // 0x40
     CacheIDXbox *mCacheIDXbox; // 0x44
     XCONTENT_DATA mContentData; // 0x48
     String mStrCacheName; // 0x17c
