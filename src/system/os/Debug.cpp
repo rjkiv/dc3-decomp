@@ -69,8 +69,8 @@ void DebugModal(enum Debug::ModalType &ty, class FixedString &str, bool b3) {
 
 Debug::Debug()
     : mNoDebug(0), mFailing(0), mExiting(0), mNoTry(0), mNoModal(0), mTry(0), mLog(0),
-      mAlwaysFlush(0), mReflect(0), mModalCallback(DebugModal), unk38(0),
-      mFailThreadMsg(0), mNotifyThreadMsg(0), unk10c(0), unk110(0) {}
+      mAlwaysFlush(0), mReflect(0), mModalCallback(DebugModal), mDataPointCallback(0),
+      mFailThreadMsg(0), mNotifyThreadMsg(0), mHostname(0), mApp(0) {}
 
 void Debug::RemoveExitCallback(ExitCallbackFunc *func) {
     if (!mExiting) {
@@ -223,7 +223,51 @@ void Debug::StartLog(const char *log, bool flush) {
     }
 }
 
-LONG HmxGlobalHandler(EXCEPTION_POINTERS *);
+#define CHECK_CODE(code)                                                                 \
+    case code:                                                                           \
+        return #code;
+
+const char *GetExpCode(int code) {
+    switch (code) {
+        CHECK_CODE(EXCEPTION_GUARD_PAGE);
+        CHECK_CODE(EXCEPTION_DATATYPE_MISALIGNMENT);
+        CHECK_CODE(EXCEPTION_BREAKPOINT);
+        CHECK_CODE(EXCEPTION_SINGLE_STEP);
+        CHECK_CODE(EXCEPTION_ACCESS_VIOLATION);
+        CHECK_CODE(EXCEPTION_IN_PAGE_ERROR);
+        CHECK_CODE(EXCEPTION_INVALID_HANDLE);
+        CHECK_CODE(EXCEPTION_ILLEGAL_INSTRUCTION);
+        CHECK_CODE(EXCEPTION_NONCONTINUABLE_EXCEPTION);
+        CHECK_CODE(EXCEPTION_INVALID_DISPOSITION);
+        CHECK_CODE(EXCEPTION_ARRAY_BOUNDS_EXCEEDED);
+        CHECK_CODE(EXCEPTION_FLT_DENORMAL_OPERAND);
+        CHECK_CODE(EXCEPTION_FLT_DIVIDE_BY_ZERO);
+        CHECK_CODE(EXCEPTION_FLT_INEXACT_RESULT);
+        CHECK_CODE(EXCEPTION_FLT_INVALID_OPERATION);
+        CHECK_CODE(EXCEPTION_FLT_OVERFLOW);
+        CHECK_CODE(EXCEPTION_FLT_STACK_CHECK);
+        CHECK_CODE(EXCEPTION_FLT_UNDERFLOW);
+        CHECK_CODE(EXCEPTION_INT_DIVIDE_BY_ZERO);
+        CHECK_CODE(EXCEPTION_INT_OVERFLOW);
+        CHECK_CODE(EXCEPTION_PRIV_INSTRUCTION);
+        CHECK_CODE(EXCEPTION_STACK_OVERFLOW);
+        CHECK_CODE(CONTROL_C_EXIT);
+
+    default:
+        return MakeString("Unhandled Exception %d", code);
+    }
+}
+
+LONG HmxGlobalHandler(EXCEPTION_POINTERS *ptrs) {
+    if (DmIsDebuggerPresent()) {
+        return 1;
+    } else {
+        TheDebug.Fail(
+            GetExpCode(ptrs->ExceptionRecord->ExceptionCode), ptrs->ContextRecord
+        );
+        return 0;
+    }
+}
 
 void Debug::Init() {
     mNoTry = OptionBool("no_try", false);
@@ -246,9 +290,9 @@ void Debug::Init() {
     DM_SYSTEM_INFO sysInfo;
     sysInfo.SizeOfStruct = 0x20;
     if (SUCCEEDED(DmGetSystemInfo(&sysInfo))) {
-        unk11c = MakeString("%d.%d", sysInfo.XDKVersion.Build, sysInfo.XDKVersion.Qfe);
+        mSDK = MakeString("%d.%d", sysInfo.XDKVersion.Build, sysInfo.XDKVersion.Qfe);
     }
-    unk12c = NetworkSocket::GetHostName();
+    mSource = NetworkSocket::GetHostName();
 }
 
 void Debug::Modal(Debug::ModalType &t, const char *msg, void *v) {
@@ -287,9 +331,9 @@ void Debug::Modal(Debug::ModalType &t, const char *msg, void *v) {
                 "\nUptime: %.2f hrs   UsingCD: %s   SDK: %s",
                 SystemMs() * 2.7777777777777778E-7,
                 UsingCD() ? "true" : "false",
-                unk11c
+                mSDK
             );
-            FOREACH (it, unk30) {
+            FOREACH (it, mFailAppendCallbacks) {
                 (*it)(outputStr);
             }
             AppendCheatsLog(cheatsLog);
@@ -320,22 +364,22 @@ void Debug::Modal(Debug::ModalType &t, const char *msg, void *v) {
 }
 
 void Debug::DoCrucible(Debug::ModalType t, const char *msg, void *v) {
-    if (!unk10c) {
+    if (!mHostname) {
         if (SystemConfig()) {
             DataArray *cfg = SystemConfig()->FindArray("crucible", false);
             if (cfg) {
-                unk10c = cfg->FindStr("hostname");
-                unk110 = cfg->FindStr("app");
-                unk114 = cfg->FindStr("project");
+                mHostname = cfg->FindStr("hostname");
+                mApp = cfg->FindStr("app");
+                mProject = cfg->FindStr("project");
             }
         }
-        if (!unk10c) {
-            unk10c = DevHostname("crucible");
+        if (!mHostname) {
+            mHostname = DevHostname("crucible");
         }
     }
-    DataPoint pt40;
-    DataPoint pt20;
-    pt40.AddPair("message", msg);
+    DataPoint dataPt;
+    DataPoint dataPtJson;
+    dataPt.AddPair("message", msg);
     const char *severityMsg;
     if (t == kModalFail) {
         severityMsg = "crash";
@@ -344,10 +388,10 @@ void Debug::DoCrucible(Debug::ModalType t, const char *msg, void *v) {
     } else {
         severityMsg = "warn";
     }
-    pt40.AddPair("severity", severityMsg);
-    pt40.AddPair("project", unk114.c_str());
-    pt40.AddPair("platform", PlatformSymbol(TheLoadMgr.GetPlatform()));
-    pt40.AddPair("source", unk12c);
+    dataPt.AddPair("severity", severityMsg);
+    dataPt.AddPair("project", mProject.c_str());
+    dataPt.AddPair("platform", PlatformSymbol(TheLoadMgr.GetPlatform()));
+    dataPt.AddPair("source", mSource);
     {
         String sysCfgFile;
         String versionStr;
@@ -357,61 +401,61 @@ void Debug::DoCrucible(Debug::ModalType t, const char *msg, void *v) {
         } else {
             sysCfgFile = "<unknown>";
         }
-        pt20.AddPair("config_name", sysCfgFile);
-        pt40.AddPair("version", versionStr);
+        dataPtJson.AddPair("config_name", sysCfgFile);
+        dataPt.AddPair("version", versionStr);
     }
-    pt20.AddPair("uptime", SystemMs());
+    dataPtJson.AddPair("uptime", SystemMs());
     {
-        StackString<256> str1bf0(TheSystemArgs.empty() ? "" : TheSystemArgs.front());
-        StackString<256> str1d00(str1bf0.c_str());
-        str1d00 = FileGetBase(str1d00.c_str());
-        if (str1d00.length() > 3) {
-            if (str1d00[str1d00.length() - 2] == '_') {
-                str1d00[str1d00.length() - 2] = '\0';
+        StackString<256> pathStr(TheSystemArgs.empty() ? "" : TheSystemArgs.front());
+        StackString<256> appStr(pathStr.c_str());
+        appStr = FileGetBase(appStr.c_str());
+        if (appStr.length() > 3) {
+            if (appStr[appStr.length() - 2] == '_') {
+                appStr[appStr.length() - 2] = '\0';
             }
         }
-        str1bf0.ReplaceAll('\\', '/');
-        pt20.AddPair("path", str1bf0.c_str());
-        if (unk110) {
-            pt40.AddPair("application", unk110);
+        pathStr.ReplaceAll('\\', '/');
+        dataPtJson.AddPair("path", pathStr.c_str());
+        if (mApp) {
+            dataPt.AddPair("application", mApp);
         } else {
-            pt40.AddPair("application", str1d00.c_str());
+            dataPt.AddPair("application", appStr.c_str());
         }
     }
     {
-        StackString<256> str1ae0;
+        StackString<256> argsStr;
         for (int i = 0; i < TheSystemArgs.size(); i++) {
-            StackString<256> str19d0(TheSystemArgs[i]);
-            str19d0.ReplaceAll('\\', '/');
-            str1ae0 += str19d0.c_str();
-            str1ae0 += "\r\n";
+            StackString<256> curArg(TheSystemArgs[i]);
+            curArg.ReplaceAll('\\', '/');
+            argsStr += curArg.c_str();
+            argsStr += "\r\n";
         }
-        pt20.AddPair("args", str1ae0.c_str());
+        dataPtJson.AddPair("args", argsStr.c_str());
     }
-    pt20.AddPair("opsys", unk11c);
-    pt40.AddPair("extra", "");
+    dataPtJson.AddPair("opsys", mSDK);
+    dataPt.AddPair("extra", "");
     if (t == kModalFail) {
-        StackString<512> str16a0;
-        DataAppendStackTrace(str16a0);
-        StackString<2048> str1490;
-        AppendStackTrace(str1490, v);
-        StackString<3096> strc80;
-        strc80 += "\r\n";
-        strc80 += str1490.c_str();
-        strc80 += str16a0.c_str();
-        pt20.AddPair("stack", strc80.c_str());
+        StackString<512> dataStackTrace;
+        DataAppendStackTrace(dataStackTrace);
+        StackString<2048> cStackTrace;
+        AppendStackTrace(cStackTrace, v);
+        StackString<3096> stackOutput;
+        stackOutput += "\r\n";
+        stackOutput += cStackTrace.c_str();
+        stackOutput += dataStackTrace.c_str();
+        dataPtJson.AddPair("stack", stackOutput.c_str());
     }
     {
-        StackString<256> str18c0;
-        AppendCheatsLog(str18c0);
-        if (!str18c0.empty()) {
-            pt20.AddPair("history", str18c0.c_str());
+        StackString<256> cheatStr;
+        AppendCheatsLog(cheatStr);
+        if (!cheatStr.empty()) {
+            dataPtJson.AddPair("history", cheatStr.c_str());
         }
     }
-    if (unk38) {
-        unk38(t, pt20);
+    if (mDataPointCallback) {
+        mDataPointCallback(t, dataPtJson);
     }
     String json;
-    pt20.ToJSON(json);
-    pt40.AddPair("data", json);
+    dataPtJson.ToJSON(json);
+    dataPt.AddPair("data", json);
 }

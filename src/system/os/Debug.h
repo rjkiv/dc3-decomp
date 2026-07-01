@@ -40,17 +40,17 @@ private:
     ModalCallbackFunc *mModalCallback; // 0x1c
     std::list<ExitCallbackFunc *> mFailCallbacks; // 0x20
     std::list<ExitCallbackFunc *> mExitCallbacks; // 0x28
-    std::list<FixedStringFunc *> unk30; // 0x30 - print callbacks?
-    DataPointFunc *unk38; // 0x38
+    std::list<FixedStringFunc *> mFailAppendCallbacks; // 0x30
+    DataPointFunc *mDataPointCallback; // 0x38
     StackData mStackData; // 0x3c
     const char *mFailThreadMsg; // 0x104
     const char *mNotifyThreadMsg; // 0x108
-    const char *unk10c;
-    const char *unk110;
-    String unk114;
-    String unk11c;
-    String unk124;
-    String unk12c;
+    const char *mHostname; // 0x10c
+    const char *mApp; // 0x110
+    String mProject; // 0x114
+    String mSDK; // 0x11c
+    String unk124; // 0x124
+    String mSource; // 0x12c
 
 public:
     Debug();
@@ -63,7 +63,9 @@ public:
     void DoCrucible(ModalType, const char *, void *);
     void AddExitCallback(ExitCallbackFunc *func) { mExitCallbacks.push_front(func); }
     void RemoveExitCallback(ExitCallbackFunc *);
-    void AddFixedStrCallback(FixedStringFunc *func) { unk30.push_front(func); }
+    void AddFailAppendCallback(FixedStringFunc *func) {
+        mFailAppendCallbacks.push_front(func);
+    }
     bool CheckModalCallback(ModalCallbackFunc *func) { return mModalCallback == func; }
     ModalCallbackFunc *ModalCallback() const { return mModalCallback; }
     bool NoModal() const { return mNoModal; }
@@ -76,7 +78,7 @@ public:
     void Exit(int, bool);
     void Warn(const char *msg);
     void Notify(const char *msg);
-    void Fail(const char *msg, void *);
+    void Fail(const char *msg, void *context);
     TextStream *Reflect() const { return mReflect; }
     TextStream *SetReflect(TextStream *ts) {
         TextStream *ret = mReflect;

@@ -211,7 +211,7 @@ void UIManager::Init() {
     mOverlay = RndOverlay::Find("ui", true);
     mOverlay->SetShowing(false);
     TheOSCMessenger.Connect();
-    TheDebug.AddFixedStrCallback(FailAppendCallback);
+    TheDebug.AddFailAppendCallback(FailAppendCallback);
     PreloadSharedSubdirs("ui");
     UILabel::sRequireFixedLength = true;
     static Message init("init");
