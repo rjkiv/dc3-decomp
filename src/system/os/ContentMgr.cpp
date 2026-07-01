@@ -112,28 +112,18 @@ void ContentMgr::PollRefresh() {
                 }
                 it = mContents.erase(it);
             } else {
-                switch (newContentState) {
-                case 2:
-                case 3:
-                case 6:
+                if (newContentState == 2 || newContentState == 3
+                    || newContentState == 6) {
                     return;
-                case 4:
-                    if (oldContentState == 2) {
-                        NotifyMounted(*it);
-                    }
+                } else if (newContentState == 4 && oldContentState == 2) {
+                    NotifyMounted(*it);
                     return;
-                case 0:
-                    if (oldContentState == 3) {
-                        NotifyUnmounted(*it);
-                    }
+                } else if (newContentState == 0 && oldContentState == 3) {
+                    NotifyUnmounted(*it);
                     return;
-                case 7:
-                    if (oldContentState == 6) {
-                        NotifyDeleted(*it);
-                    }
+                } else if (newContentState == 7 && oldContentState == 6) {
+                    NotifyDeleted(*it);
                     return;
-                default:
-                    break;
                 }
                 ++it;
             }
@@ -156,33 +146,21 @@ void ContentMgr::PollRefresh() {
         } else if (mCallbackFiles.empty()) {
             FOREACH (it, mContents) {
                 auto curContentState = (*it)->GetState();
-                if ((curContentState == 5 && mRootLoaded > 0) || curContentState == 4) {
-                    FOREACH (cit, mCallbacks) {
-                        mCallback = *cit;
-                        mLocation = (*it)->Location();
-                        mName = (*it)->FileName();
-                        if ((*cit)->ContentDir()) {
-                            String str(FileMakePath((*it)->Root(), (*cit)->ContentDir()));
-                            String str2(MakeString("%s/%s", str, (*cit)->ContentPattern())
-                            );
-                            FileEnumerate(
-                                str.c_str(),
-                                ContentMgr::RecurseCallback,
-                                false,
-                                str2.c_str(),
-                                false
-                            );
-                        }
-                        if ((*cit)->HasContentAltDirs()) {
-                            std::vector<String> *altDirs = (*cit)->ContentAltDirs();
-                            const char *pattern = (*cit)->ContentPattern();
-                            static DataNode &n = DataVariable("extra_songs");
-                            int num = n.Int() ? altDirs->size() : 2;
-                            auto altDir = altDirs->begin();
-                            for (int i = 0; altDir != altDirs->end() && i < num;
-                                 i++, altDir++) {
-                                String str(FileMakePath((*it)->Root(), altDir->c_str()));
-                                String str2(MakeString("%s/%s", str, pattern));
+
+                if (curContentState == 5) {
+                    if (mRootLoaded > 0) {
+                    here:
+                        FOREACH (cit, mCallbacks) {
+                            mCallback = *cit;
+                            mLocation = (*it)->Location();
+                            mName = (*it)->FileName();
+                            if ((*cit)->ContentDir()) {
+                                String str(
+                                    FileMakePath((*it)->Root(), (*cit)->ContentDir())
+                                );
+                                String str2(
+                                    MakeString("%s/%s", str, (*cit)->ContentPattern())
+                                );
                                 FileEnumerate(
                                     str.c_str(),
                                     ContentMgr::RecurseCallback,
@@ -191,11 +169,34 @@ void ContentMgr::PollRefresh() {
                                     false
                                 );
                             }
+                            if ((*cit)->HasContentAltDirs()) {
+                                std::vector<String> *altDirs = (*cit)->ContentAltDirs();
+                                const char *pattern = (*cit)->ContentPattern();
+                                static DataNode &n = DataVariable("extra_songs");
+                                int num = n.Int() ? altDirs->size() : 2;
+                                auto altDir = altDirs->begin();
+                                for (int i = 0; altDir != altDirs->end() && i < num;
+                                     i++, altDir++) {
+                                    String str(
+                                        FileMakePath((*it)->Root(), altDir->c_str())
+                                    );
+                                    String str2(MakeString("%s/%s", str, pattern));
+                                    FileEnumerate(
+                                        str.c_str(),
+                                        ContentMgr::RecurseCallback,
+                                        false,
+                                        str2.c_str(),
+                                        false
+                                    );
+                                }
+                            }
+                        }
+                        if (curContentState == 5) {
+                            mRootLoaded--;
                         }
                     }
-                    if (curContentState == 5) {
-                        mRootLoaded--;
-                    }
+                } else if (curContentState == 4) {
+                    goto here;
                 }
             }
         }
