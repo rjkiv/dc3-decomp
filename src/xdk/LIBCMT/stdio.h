@@ -1,6 +1,6 @@
 #pragma once
 #include "file_def.h"
-#include "va_list_def.h"
+#include "stdarg.h"
 
 #ifdef __cplusplus
 extern "C" {
