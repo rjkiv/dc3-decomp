@@ -1,7 +1,7 @@
 #pragma once
 #include "types_compat.h"
 #include "file_def.h"
-#include "va_list_def.h"
+#include "stdarg.h"
 // #include <wchar.h>
 
 typedef unsigned short wint_t;

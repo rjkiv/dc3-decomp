@@ -86,18 +86,19 @@ namespace {
         FileStat buffer;
         Symbol plat = PlatformSymbol(TheLoadMgr.GetPlatform());
         int ret = FileGetStat(MakeString("gen/main_%s.hdr", plat), &buffer);
-        gUsingCD &= ret;
+        gUsingCD = ret == 0 ? ret : gUsingCD;
     }
 }
 
 Licenses sLicense("system/src/stlport", Licenses::kRequirementNotification);
 
-int Hx_snprintf(char *c, unsigned int ui, char const *cc, ...) {
-    std::va_list args;
-    // va_start(args, cc);
-    int ret = vsnprintf(c, ui, cc, args);
+int Hx_snprintf(char *buffer, unsigned int bufSize, const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    int ret = vsnprintf(buffer, bufSize, fmt, args);
+    va_end(args);
     if (ret < 0) {
-        c[ui - 1] = '\0';
+        buffer[bufSize - 1] = '\0';
         return -1;
     }
     return ret;
