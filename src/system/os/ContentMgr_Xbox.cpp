@@ -10,6 +10,8 @@
 #include "os/System.h"
 #include "xdk/XAPILIB.h"
 #include "xdk/win_types.h"
+#include "xdk/xapilibi/xbase.h"
+#include "xdk/xapilibi/xbox.h"
 
 std::vector<String> gIgnoredContent;
 XboxContentMgr gContentMgr;
@@ -71,9 +73,9 @@ void XboxContent::Poll() {
         if (pad == 4 || pad == 5) {
             pad = 0xFF;
         }
-        mOverlapped = new XOVERLAPPED();
-        ULARGE_INTEGER contentSize;
-        contentSize.QuadPart = 0;
+        mOverlapped = new XOVERLAPPED;
+        memset(mOverlapped, 0, sizeof(XOVERLAPPED));
+        ULARGE_INTEGER contentSize = { 0 };
         if (XContentCrossTitleCreate(
                 pad,
                 mRoot.c_str(),
@@ -113,7 +115,7 @@ void XboxContent::Poll() {
         DWORD res = XGetOverlappedResult(mOverlapped, nullptr, false);
         if (res != 0x3E4) {
             RELEASE(mOverlapped);
-            mState = (State)(res == 7);
+            mState = res == 0 ? (State)7 : (State)8;
         }
     }
 }
@@ -129,7 +131,8 @@ void XboxContent::Mount() {
 
 void XboxContent::Unmount() {
     if (mState == kMounted) {
-        mOverlapped = new XOVERLAPPED();
+        mOverlapped = new XOVERLAPPED;
+        memset(mOverlapped, 0, sizeof(XOVERLAPPED));
         if (XContentClose(mRoot.c_str(), mOverlapped) != 0x3E5) {
             RELEASE(mOverlapped);
             mState = kContentDeleting;
@@ -146,7 +149,8 @@ void XboxContent::Delete() {
     if (mState == 4 || mState == 1) {
         Unmount();
     } else if (mState == 0) {
-        mOverlapped = new XOVERLAPPED();
+        mOverlapped = new XOVERLAPPED;
+        memset(mOverlapped, 0, sizeof(XOVERLAPPED));
         if (XContentCrossTitleDelete(0xFF, &mXData, mOverlapped) != 0x3E5) {
             RELEASE(mOverlapped);
             mState = kContentDeleting;
@@ -222,9 +226,37 @@ void XboxContentMgr::StartRefresh() {
             (*it)->ContentStarted();
         }
         for (int i = 0; i < kNumberOfBuffers; i++) {
-            if (i >= 4
-                || ThePlatformMgr.IsSignedIn(i)
-                    && (i != 5 || mEnumerateSaveGameExports)) {
+            if ((i >= 4 || ThePlatformMgr.IsSignedIn(i))
+                && (i != 5 || mEnumerateSaveGameExports)) {
+                DWORD res;
+                if (i == 4) {
+                    res = XContentCreateCrossTitleEnumerator(
+                        0xFF, 0, 2, 0, 1, nullptr, &unk74[i]
+                    );
+                } else if (i == 5) {
+                    res = XContentCreateCrossTitleEnumerator(
+                        0xFF, 0, 1, 0, 1, nullptr, &unk74[i]
+                    );
+                } else if (i == 6) {
+                    res = XContentCreateCrossTitleEnumerator(
+                        0xFF, 0, 0x7000, 0, 1, nullptr, &unk74[i]
+                    );
+                } else {
+                    res = XContentCreateCrossTitleEnumerator(
+                        i, 0, 2, 0, 1, nullptr, &unk74[i]
+                    );
+                }
+                if (res == 0) {
+                    mOverlappeds[i] = new XOVERLAPPED;
+                    memset(mOverlappeds[i], 0, sizeof(XOVERLAPPED));
+                    if (XEnumerateCrossTitle(
+                            unk74[i], &mXDatas[i], 0x138, nullptr, mOverlappeds[i]
+                        )
+                        != 0x3E5) {
+                        RELEASE(mOverlappeds[i]);
+                        CloseHandle(unk74[i]);
+                    }
+                }
             }
         }
     }

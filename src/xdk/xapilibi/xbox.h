@@ -105,6 +105,17 @@ DWORD XContentCreateEnumerator(
     DWORD *pcbBuffer,
     HANDLE *phEnum
 );
+
+DWORD XContentCreateCrossTitleEnumerator(
+    DWORD dwUserIndex,
+    DWORD DeviceID,
+    DWORD dwContentType,
+    DWORD dwContentFlags,
+    DWORD cItem,
+    DWORD *pcbBuffer,
+    HANDLE *phEnum
+);
+
 DWORD XEnumerate(
     HANDLE hEnum,
     VOID *pvBuffer,
@@ -112,6 +123,15 @@ DWORD XEnumerate(
     DWORD *pcItemsReturned,
     XOVERLAPPED *pOverlapped
 );
+
+DWORD XEnumerateCrossTitle(
+    HANDLE hEnum,
+    VOID *pvBuffer,
+    DWORD cbBuffer,
+    DWORD *pcItemsReturned,
+    XOVERLAPPED *pOverlapped
+);
+
 DWORD XContentFlush(LPCSTR szRootName, XOVERLAPPED *pOverlapped);
 ULONGLONG XContentCalculateSize(ULONGLONG cbData, DWORD cDirectories);
 VOID XGetVideoMode(XVIDEO_MODE *pVideoMode);
