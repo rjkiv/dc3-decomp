@@ -95,12 +95,12 @@ extern "C" {
 
 typedef HANDLE WSAEVENT;
 
-struct sockaddr {
+typedef struct sockaddr {
     unsigned short sa_family;
     char sa_data[14];
-};
+} sockaddr;
 
-typedef unsigned int *SOCKET;
+typedef unsigned int SOCKET;
 
 typedef struct fd_set {
     unsigned int fd_count;
@@ -266,7 +266,7 @@ WSAEVENT WSACreateEvent();
 
 SOCKET socket(int af, int type, int protocol);
 int ioctlsocket(SOCKET s, long cmd, unsigned long *argp);
-int connect(SOCKET s, const sockaddr_in *name, int namelen);
+int connect(SOCKET s, const sockaddr *name, int namelen);
 int WSAGetLastError();
 int select(
     int nfds,
@@ -278,17 +278,15 @@ int select(
 int shutdown(SOCKET s, int how);
 int closesocket(SOCKET s);
 int setsockopt(SOCKET s, int level, int optname, const char *optval, int optlen);
-int bind(SOCKET s, const sockaddr_in *addr, int namelen);
-int getsockname(SOCKET s, sockaddr_in *name, int *namelen);
+int bind(SOCKET s, const sockaddr *name, int namelen);
+int getsockname(SOCKET s, sockaddr *name, int *namelen);
 int listen(SOCKET s, int backlog);
-SOCKET accept(SOCKET s, sockaddr_in *addr, int *addrlen);
-int getpeername(SOCKET s, sockaddr_in *name, int *namelen);
+SOCKET accept(SOCKET s, sockaddr *addr, int *addrlen);
+int getpeername(SOCKET s, sockaddr *name, int *namelen);
 int send(SOCKET s, const char *buf, int len, int flags);
 int recv(SOCKET s, char *buf, int len, int flags);
-int sendto(
-    SOCKET s, const char *buf, int len, int flags, const sockaddr_in *to, int tolen
-);
-int recvfrom(SOCKET s, char *buf, int len, int flags, sockaddr_in *from, int *fromlen);
+int sendto(SOCKET s, const char *buf, int len, int flags, const sockaddr *to, int tolen);
+int recvfrom(SOCKET s, char *buf, int len, int flags, sockaddr *from, int *fromlen);
 unsigned long inet_addr(const char *cp);
 
 unsigned short htons(unsigned short us) { return us; }
