@@ -8,6 +8,11 @@
 typedef void ExitCallbackFunc(void);
 typedef void FixedStringFunc(FixedString &);
 
+struct StackData {
+    /** Addresses in memory corresponding to called functions. */
+    unsigned int mFailThreadStack[50]; // 0x0
+};
+
 // size 0x134
 class Debug : public TextStream {
 public:
@@ -18,6 +23,7 @@ public:
     };
 
     typedef void ModalCallbackFunc(ModalType &, FixedString &, bool);
+    typedef void DataPointFunc(ModalType, class DataPoint &);
 
 private:
     void Modal(ModalType &, const char *, void *);
@@ -34,14 +40,13 @@ private:
     ModalCallbackFunc *mModalCallback; // 0x1c
     std::list<ExitCallbackFunc *> mFailCallbacks; // 0x20
     std::list<ExitCallbackFunc *> mExitCallbacks; // 0x28
-    std::list<FixedStringFunc *> unk30; // 0x30
-    int unk38; // 0x38
-    // 0x3c is a struct, StackData
-    unsigned int mFailThreadStack[50]; // starts at 0x3c
+    std::list<FixedStringFunc *> unk30; // 0x30 - print callbacks?
+    DataPointFunc *unk38; // 0x38
+    StackData mStackData; // 0x3c
     const char *mFailThreadMsg; // 0x104
     const char *mNotifyThreadMsg; // 0x108
-    int unk10c;
-    int unk110;
+    const char *unk10c;
+    const char *unk110;
     String unk114;
     String unk11c;
     String unk124;
@@ -55,6 +60,7 @@ public:
     void Poll();
     void SetDisabled(bool);
     void SetTry(bool);
+    void DoCrucible(ModalType, const char *, void *);
     void AddExitCallback(ExitCallbackFunc *func) { mExitCallbacks.push_front(func); }
     void RemoveExitCallback(ExitCallbackFunc *);
     void AddFixedStrCallback(FixedStringFunc *func) { unk30.push_front(func); }

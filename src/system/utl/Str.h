@@ -126,6 +126,15 @@ private:
 public:
     StackString() : FixedString(mStack, N + 5) {}
     StackString(const char *str) : FixedString(mStack, N + 5) { *this += str; }
-    // virtual ~StackString() {} // dtor is at 0x8269E480
     virtual void Print(const char *str) { *this += str; }
+
+    StackString &operator=(const StackString &str) {
+        const FixedString &fStr = str;
+        mStr[0] = '\0';
+        *this += fStr.c_str();
+        for (int i = 0; i < N + 5; i++) {
+            mStack[i] = str.mStack[i];
+        }
+        return *this;
+    }
 };

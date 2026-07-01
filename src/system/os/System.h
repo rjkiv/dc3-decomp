@@ -19,11 +19,6 @@ enum GfxMode {
     kNewGfx = 1,
 };
 
-struct StackData {
-    /** Addresses in memory corresponding to called functions. */
-    unsigned int mFailThreadStack[50]; // 0x0
-};
-
 class GenericMapFile {
 public:
     static bool ParseStack(
