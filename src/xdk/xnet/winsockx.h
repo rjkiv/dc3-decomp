@@ -12,7 +12,9 @@ extern "C" {
 
 #define _IOW(x, y, t)                                                                    \
     (IOC_IN | (((long)sizeof(t) & IOCPARAM_MASK) << 16) | ((x) << 8) | (y))
-#define FIONBIO _IOW('f', 126, unsigned long)
+// #define FIONBIO _IOW('f', 126, unsigned long)
+
+#define FIONBIO 0x8004667E
 
 #define AF_INET 2
 #define PF_INET AF_INET
@@ -105,8 +107,41 @@ typedef struct fd_set {
     SOCKET fd_array[64];
 } fd_set;
 
+#define FD_SETSIZE 64
 #define FD_ZERO(set) (((fd_set *)(set))->fd_count = 0)
 #define FD_ISSET(fd, set) __WSAFDIsSet((SOCKET)(fd), (fd_set *)(set))
+
+#define FD_CLR(fd, set)                                                                  \
+    do {                                                                                 \
+        unsigned int __i;                                                                \
+        for (__i = 0; __i < ((fd_set *)(set))->fd_count; __i++) {                        \
+            if (((fd_set *)(set))->fd_array[__i] == fd) {                                \
+                while (__i < ((fd_set *)(set))->fd_count - 1) {                          \
+                    ((fd_set *)(set))->fd_array[__i] =                                   \
+                        ((fd_set *)(set))->fd_array[__i + 1];                            \
+                    __i++;                                                               \
+                }                                                                        \
+                ((fd_set *)(set))->fd_count--;                                           \
+                break;                                                                   \
+            }                                                                            \
+        }                                                                                \
+    } while (0)
+
+#define FD_SET(fd, set)                                                                  \
+    do {                                                                                 \
+        unsigned int __i;                                                                \
+        for (__i = 0; __i < ((fd_set *)(set))->fd_count; __i++) {                        \
+            if (((fd_set *)(set))->fd_array[__i] == (fd)) {                              \
+                break;                                                                   \
+            }                                                                            \
+        }                                                                                \
+        if (__i == ((fd_set *)(set))->fd_count) {                                        \
+            if (((fd_set *)(set))->fd_count < FD_SETSIZE) {                              \
+                ((fd_set *)(set))->fd_array[__i] = (fd);                                 \
+                ((fd_set *)(set))->fd_count++;                                           \
+            }                                                                            \
+        }                                                                                \
+    } while (0)
 
 struct timeval {
     long tv_sec;
