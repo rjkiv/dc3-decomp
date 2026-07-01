@@ -91,7 +91,7 @@ static void win32_cleanup(void)
 
 /* win32_init() performs win32 socket initialization to properly setup the
    stack to allow networking */
-static CURLcode win32_init(void)
+static __forceinline CURLcode win32_init(void)
 {
 #ifdef USE_WINSOCK
   WORD wVersionRequested;

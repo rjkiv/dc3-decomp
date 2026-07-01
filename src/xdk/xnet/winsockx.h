@@ -20,6 +20,8 @@ extern "C" {
 #define SOCK_STREAM 1
 #define SOCK_DGRAM 2
 #define IPPROTO_UDP 17
+#define TCP_NODELAY 1
+#define IPPROTO_TCP 6
 
 #define SOL_SOCKET 0xffff
 #define SO_SNDBUF 0x1001
@@ -253,6 +255,12 @@ int sendto(
 );
 int recvfrom(SOCKET s, char *buf, int len, int flags, sockaddr_in *from, int *fromlen);
 unsigned long inet_addr(const char *cp);
+
+unsigned short htons(unsigned short us) { return us; }
+unsigned short ntohs(unsigned short us) { return us; }
+
+unsigned long htonl(unsigned long ul) { return ul; }
+unsigned long ntohl(unsigned long ul) { return ul; }
 
 #ifdef __cplusplus
 }

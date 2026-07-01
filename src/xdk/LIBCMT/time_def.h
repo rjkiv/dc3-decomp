@@ -4,7 +4,7 @@ typedef long time_t;
 typedef long clock_t;
 
 /** Structure holding a calendar date and time broken down into its components. */
-struct tm {
+typedef struct tm {
     /** seconds after the minute - [0, 60] including leap second */
     int tm_sec;
 
@@ -31,4 +31,4 @@ struct tm {
 
     /** daylight savings time flag */
     int tm_isdst;
-};
+} tm;

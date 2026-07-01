@@ -43,6 +43,7 @@
 
 #ifdef _XBOX360
 #include "xdk/xapilibi/winnt.h"
+#include "xdk/xapilibi/minwindef.h"
 #include "config-xbox360.h"
 #endif
 
