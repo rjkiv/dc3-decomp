@@ -607,7 +607,7 @@
 #endif
 
 #if !defined(USE_WIN32_LARGE_FILES) && !defined(USE_WIN32_SMALL_FILES)
-#define USE_WIN32_SMALL_FILES
+#define USE_WIN32_LARGE_FILES
 #endif
 
 /* ---------------------------------------------------------------- */
