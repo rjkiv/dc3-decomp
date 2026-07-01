@@ -11,14 +11,14 @@ enum DateFormat {
 };
 
 struct DateTime {
-    unsigned char mSec;
-    unsigned char mMin;
-    unsigned char mHour;
-    unsigned char mDay;
-    unsigned char mMonth;
-    unsigned char mYear;
+    unsigned char mSec; // 0x0
+    unsigned char mMin; // 0x1
+    unsigned char mHour; // 0x2
+    unsigned char mDay; // 0x3
+    unsigned char mMonth; // 0x4
+    unsigned char mYear; // 0x5
 
-    DateTime() { memset(&mSec, 0, 6); }
+    DateTime() { memset(&mSec, 0, sizeof(DateTime)); }
     DateTime(unsigned int);
     DateTime(
         unsigned short year,

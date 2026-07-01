@@ -35,10 +35,24 @@ void GetTimeZoneBias(long &bias) {
     }
 }
 
+#define SECS_PER_MIN 60
+#define SECS_PER_HOUR 3600
+#define SECS_PER_DAY 86400
+// approximate, secs in 32 days
+#define SECS_PER_MONTH 2764800
+// approximate, secs in 384 days
+#define SECS_PER_YEAR 33177600
+
 DateTime::DateTime(unsigned int code) {
-    mYear = (code / 0x1FA4000) + 100;
-    mMonth = (code % 0x1FA4000) / 0x2A3000;
-    // the rest
+    mYear = (code / SECS_PER_YEAR) + 100;
+    mMonth = (code % SECS_PER_YEAR) / SECS_PER_MONTH;
+    unsigned char u2 = (code % SECS_PER_YEAR) % SECS_PER_MONTH;
+    mDay = u2 / SECS_PER_DAY;
+    u2 = u2 % SECS_PER_DAY;
+    mHour = u2 / SECS_PER_HOUR;
+    u2 = u2 % SECS_PER_HOUR;
+    mMin = u2 / SECS_PER_MIN;
+    mSec = u2 - mMin * SECS_PER_MIN;
 }
 
 DateTime::DateTime(
@@ -68,6 +82,13 @@ int DateTime::Month() const { return mMonth + 1; }
 bool DateTime::IsLeapYear() const {
     int year = Year();
     return (!(year & 3) && year % 100) || !(year % 400);
+}
+
+int DateTime::DayOfYear() const {
+    static unsigned short sCumulativeDays[] = { 0,   31,  59,  90,  120, 151,
+                                                181, 212, 243, 273, 304, 334 };
+    int add = mMonth > 1 && IsLeapYear();
+    return sCumulativeDays[mMonth] + mDay + add;
 }
 
 unsigned int DateTime::DiffSeconds(DateTime &dt) { return ToSeconds() - dt.ToSeconds(); }
@@ -106,14 +127,16 @@ void DateTime::Format(class String &str) const {
     static Symbol esl("esl");
     Symbol lang = SystemLanguage();
     if (lang == fre || lang == ita || lang == esl) {
-        if (SearchReplace(str.c_str(), "%e", MakeString("%02d", mDay), buf)) {
+        if (SearchReplace(str.c_str(), "%e", MakeString("%d", str), buf)) {
             str = buf;
         }
     } else {
         if (SearchReplace(
                 str.c_str(),
                 "%e",
-                LocalizeOrdinal(mDay, LocaleGenderMasculine, LocaleSingular, false),
+                LocalizeOrdinal(
+                    mDay, LocaleGenderMasculine, LocaleSingular, false, gNullStr, TheLocale
+                ),
                 buf
             )) {
             str = buf;
