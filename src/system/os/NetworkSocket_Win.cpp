@@ -33,7 +33,7 @@ bool WinSockSocket::Connect(unsigned int ip, unsigned short port) {
     addr.sin_family = 2;
     addr.sin_port = port;
     addr.sin_addr.s_un.s_addr = ip;
-    int res = connect(mSocket, &addr, 0x10);
+    int res = connect(mSocket, (const sockaddr *)&addr, 0x10);
     if (res == -1 && WSAGetLastError() != 0x2733) {
         mFail = true;
     }
@@ -75,7 +75,7 @@ void WinSockSocket::Bind(unsigned short port) {
     addr.sin_family = 2;
     addr.sin_port = port;
     addr.sin_addr.s_un.s_addr = 0;
-    int ret = bind(mSocket, &addr, 0x10);
+    int ret = bind(mSocket, (sockaddr *)&addr, 0x10);
     if (ret == -1) {
         MILO_FAIL(
             "NetworkSocket::Bind(%d) could not bind (error = %d).\nTry rebooting your computer.",
@@ -88,7 +88,7 @@ void WinSockSocket::Bind(unsigned short port) {
 bool WinSockSocket::InqBoundPort(unsigned short &port) const {
     sockaddr_in addr;
     int namelen = 16;
-    if (getsockname(mSocket, &addr, &namelen) != 0) {
+    if (getsockname(mSocket, (sockaddr *)&addr, &namelen) != 0) {
         return false;
     } else {
         port = addr.sin_port;
@@ -101,7 +101,7 @@ void WinSockSocket::Listen() { listen(mSocket, 5); }
 NetworkSocket *WinSockSocket::Accept() {
     sockaddr_in addr;
     int addrlen = 16;
-    SOCKET s = accept(mSocket, &addr, &addrlen);
+    SOCKET s = accept(mSocket, (sockaddr *)&addr, &addrlen);
     if (s != INVALID_SOCKET) {
         return new WinSockSocket((unsigned int)s, mStreaming);
     } else {
@@ -112,7 +112,7 @@ NetworkSocket *WinSockSocket::Accept() {
 void WinSockSocket::GetRemoteIP(unsigned int &ip, unsigned short &port) {
     sockaddr_in addr;
     int namelen = 16;
-    getpeername(mSocket, &addr, &namelen);
+    getpeername(mSocket, (sockaddr *)&addr, &namelen);
     ip = addr.sin_addr.s_un.s_addr;
     port = addr.sin_port;
 }
@@ -178,7 +178,7 @@ int WinSockSocket::SendTo(
     addr.sin_family = 2;
     addr.sin_port = port;
     addr.sin_addr.s_un.s_addr = ip;
-    int res = sendto(mSocket, (const char *)data, len, 0, &addr, 16);
+    int res = sendto(mSocket, (const char *)data, len, 0, (sockaddr *)&addr, 16);
     if (res == -1) {
         int err = WSAGetLastError();
         if (err != 0x2733) {
@@ -207,7 +207,7 @@ int WinSockSocket::RecvFrom(
 ) {
     sockaddr_in addr;
     int fromlen = 16;
-    int ret = recvfrom(mSocket, (char *)data, maxLen, 0, &addr, &fromlen);
+    int ret = recvfrom(mSocket, (char *)data, maxLen, 0, (sockaddr *)&addr, &fromlen);
     if (ret == -1) {
         int err = WSAGetLastError();
         if (err == 0x2733) {

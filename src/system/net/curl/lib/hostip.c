@@ -347,7 +347,7 @@ Curl_cache_addr(struct SessionHandle *data,
 
   dns->inuse = 0;   /* init to not used */
   dns->addr = addr; /* this is the address(es) */
-  _64time(&dns->timestamp);
+  _time64(&dns->timestamp);
   if(dns->timestamp == 0)
     dns->timestamp = 1;   /* zero indicates that entry isn't in hash table */
 

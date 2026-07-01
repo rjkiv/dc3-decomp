@@ -169,6 +169,12 @@
 /*                             FUNCTIONS                            */
 /* ---------------------------------------------------------------- */
 
+/* when not building a shared library */
+// i did this so that CURL_EXTERN resolves to __declspec(dllexport)
+// without this, you'll get a ton of "inconsistent dll linkage" warnings
+#undef CURL_STATICLIB
+#define BUILDING_LIBCURL 1
+
 /* Define if you have the closesocket function. */
 #define HAVE_CLOSESOCKET 1 // should have this in winsockx.h
 
@@ -601,7 +607,7 @@
 #endif
 
 #if !defined(USE_WIN32_LARGE_FILES) && !defined(USE_WIN32_SMALL_FILES)
-#define USE_WIN32_SMALL_FILES
+#define USE_WIN32_LARGE_FILES
 #endif
 
 /* ---------------------------------------------------------------- */
@@ -617,7 +623,6 @@
 
 /* Define to enable threaded asynchronous DNS lookups. */
 #define USE_THREADS_WIN32 1
-#define CURLRES_THREADED 1
 
 #if defined(USE_ARES) && defined(USE_THREADS_WIN32)
 #error "Only one DNS lookup specialty may be defined at most"

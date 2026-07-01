@@ -12,7 +12,9 @@ extern "C" {
 
 #define _IOW(x, y, t)                                                                    \
     (IOC_IN | (((long)sizeof(t) & IOCPARAM_MASK) << 16) | ((x) << 8) | (y))
-#define FIONBIO _IOW('f', 126, unsigned long)
+// #define FIONBIO _IOW('f', 126, unsigned long)
+
+#define FIONBIO 0x8004667E
 
 #define AF_INET 2
 #define PF_INET AF_INET
@@ -20,6 +22,8 @@ extern "C" {
 #define SOCK_STREAM 1
 #define SOCK_DGRAM 2
 #define IPPROTO_UDP 17
+#define TCP_NODELAY 1
+#define IPPROTO_TCP 6
 
 #define SOL_SOCKET 0xffff
 #define SO_SNDBUF 0x1001
@@ -91,20 +95,53 @@ extern "C" {
 
 typedef HANDLE WSAEVENT;
 
-struct sockaddr {
+typedef struct sockaddr {
     unsigned short sa_family;
     char sa_data[14];
-};
+} sockaddr;
 
-typedef unsigned int *SOCKET;
+typedef unsigned int SOCKET;
 
 typedef struct fd_set {
     unsigned int fd_count;
     SOCKET fd_array[64];
 } fd_set;
 
+#define FD_SETSIZE 64
 #define FD_ZERO(set) (((fd_set *)(set))->fd_count = 0)
 #define FD_ISSET(fd, set) __WSAFDIsSet((SOCKET)(fd), (fd_set *)(set))
+
+#define FD_CLR(fd, set)                                                                  \
+    do {                                                                                 \
+        unsigned int __i;                                                                \
+        for (__i = 0; __i < ((fd_set *)(set))->fd_count; __i++) {                        \
+            if (((fd_set *)(set))->fd_array[__i] == fd) {                                \
+                while (__i < ((fd_set *)(set))->fd_count - 1) {                          \
+                    ((fd_set *)(set))->fd_array[__i] =                                   \
+                        ((fd_set *)(set))->fd_array[__i + 1];                            \
+                    __i++;                                                               \
+                }                                                                        \
+                ((fd_set *)(set))->fd_count--;                                           \
+                break;                                                                   \
+            }                                                                            \
+        }                                                                                \
+    } while (0)
+
+#define FD_SET(fd, set)                                                                  \
+    do {                                                                                 \
+        unsigned int __i;                                                                \
+        for (__i = 0; __i < ((fd_set *)(set))->fd_count; __i++) {                        \
+            if (((fd_set *)(set))->fd_array[__i] == (fd)) {                              \
+                break;                                                                   \
+            }                                                                            \
+        }                                                                                \
+        if (__i == ((fd_set *)(set))->fd_count) {                                        \
+            if (((fd_set *)(set))->fd_count < FD_SETSIZE) {                              \
+                ((fd_set *)(set))->fd_array[__i] = (fd);                                 \
+                ((fd_set *)(set))->fd_count++;                                           \
+            }                                                                            \
+        }                                                                                \
+    } while (0)
 
 struct timeval {
     long tv_sec;
@@ -229,7 +266,7 @@ WSAEVENT WSACreateEvent();
 
 SOCKET socket(int af, int type, int protocol);
 int ioctlsocket(SOCKET s, long cmd, unsigned long *argp);
-int connect(SOCKET s, const sockaddr_in *name, int namelen);
+int connect(SOCKET s, const sockaddr *name, int namelen);
 int WSAGetLastError();
 int select(
     int nfds,
@@ -241,18 +278,22 @@ int select(
 int shutdown(SOCKET s, int how);
 int closesocket(SOCKET s);
 int setsockopt(SOCKET s, int level, int optname, const char *optval, int optlen);
-int bind(SOCKET s, const sockaddr_in *addr, int namelen);
-int getsockname(SOCKET s, sockaddr_in *name, int *namelen);
+int bind(SOCKET s, const sockaddr *name, int namelen);
+int getsockname(SOCKET s, sockaddr *name, int *namelen);
 int listen(SOCKET s, int backlog);
-SOCKET accept(SOCKET s, sockaddr_in *addr, int *addrlen);
-int getpeername(SOCKET s, sockaddr_in *name, int *namelen);
+SOCKET accept(SOCKET s, sockaddr *addr, int *addrlen);
+int getpeername(SOCKET s, sockaddr *name, int *namelen);
 int send(SOCKET s, const char *buf, int len, int flags);
 int recv(SOCKET s, char *buf, int len, int flags);
-int sendto(
-    SOCKET s, const char *buf, int len, int flags, const sockaddr_in *to, int tolen
-);
-int recvfrom(SOCKET s, char *buf, int len, int flags, sockaddr_in *from, int *fromlen);
+int sendto(SOCKET s, const char *buf, int len, int flags, const sockaddr *to, int tolen);
+int recvfrom(SOCKET s, char *buf, int len, int flags, sockaddr *from, int *fromlen);
 unsigned long inet_addr(const char *cp);
+
+unsigned short htons(unsigned short us) { return us; }
+unsigned short ntohs(unsigned short us) { return us; }
+
+unsigned long htonl(unsigned long ul) { return ul; }
+unsigned long ntohl(unsigned long ul) { return ul; }
 
 #ifdef __cplusplus
 }

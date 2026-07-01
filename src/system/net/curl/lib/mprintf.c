@@ -851,49 +851,49 @@ static int dprintf_formatf(
             }
             break;
 
-            // case FORMAT_STRING:
-            //     /* String.  */
-            //     {
-            //         static const char null[] = "(nil)";
-            //         const char *str;
-            //         size_t len;
-            //
-            //        str = (char *)p->data.str;
-            //        if (str == NULL) {
-            //            /* Write null[] if there's space.  */
-            //            if (prec == -1 || prec >= (long)sizeof(null) - 1) {
-            //                str = null;
-            //                len = sizeof(null) - 1;
-            //                /* Disable quotes around (nil) */
-            //                p->flags &= (~FLAGS_ALT);
-            //            } else {
-            //                str = "";
-            //                len = 0;
-            //            }
-            //        } else
-            //            len = strlen(str);
-            //
-            //        if (prec != -1 && (size_t)prec < len)
-            //            len = (size_t)prec;
-            //        width -= (long)len;
-            //
-            //        if (p->flags & FLAGS_ALT)
-            //            OUTCHAR('"');
-            //
-            //        if (!(p->flags & FLAGS_LEFT))
-            //            while (width-- > 0)
-            //                OUTCHAR(' ');
-            //
-            //        while (len-- > 0)
-            //            OUTCHAR(*str++);
-            //        if (p->flags & FLAGS_LEFT)
-            //            while (width-- > 0)
-            //                OUTCHAR(' ');
-            //
-            //        if (p->flags & FLAGS_ALT)
-            //            OUTCHAR('"');
-            //    }
-            //    break;
+        case FORMAT_STRING:
+            /* String.  */
+            {
+                static const char nullStr[] = "(nil)";
+                const char *str;
+                size_t len;
+
+                str = (char *)p->data.str;
+                if (str == NULL) {
+                    /* Write null[] if there's space.  */
+                    if (prec == -1 || prec >= (long)sizeof(nullStr) - 1) {
+                        str = nullStr;
+                        len = sizeof(nullStr) - 1;
+                        /* Disable quotes around (nil) */
+                        p->flags &= (~FLAGS_ALT);
+                    } else {
+                        str = "";
+                        len = 0;
+                    }
+                } else
+                    len = strlen(str);
+
+                if (prec != -1 && (size_t)prec < len)
+                    len = (size_t)prec;
+                width -= (long)len;
+
+                if (p->flags & FLAGS_ALT)
+                    OUTCHAR('"');
+
+                if (!(p->flags & FLAGS_LEFT))
+                    while (width-- > 0)
+                        OUTCHAR(' ');
+
+                while (len-- > 0)
+                    OUTCHAR(*str++);
+                if (p->flags & FLAGS_LEFT)
+                    while (width-- > 0)
+                        OUTCHAR(' ');
+
+                if (p->flags & FLAGS_ALT)
+                    OUTCHAR('"');
+            }
+            break;
 
         case FORMAT_PTR:
             /* Generic pointer.  */
