@@ -265,28 +265,33 @@ void SetSystemLanguage(Symbol lang, bool cheats) {
         if (arr) {
             Symbol arrLang = arr->Sym(1);
             if (IsSupportedLanguage(arrLang, cheats)) {
-                if (!gSystemLanguage.Null() && arrLang != gSystemLanguage) {
-                    TheLocale.Terminate();
-                    gSystemLanguage = arrLang;
-                    TheLocale.Init();
-                }
+                lang = arrLang;
+                goto blah;
             } else {
                 MILO_NOTIFY(
                     "Both %s and the default language (%s) are not supported!\n",
                     lang,
                     arrLang
                 );
+                return;
             }
         } else {
             MILO_NOTIFY(
                 "Language %s is not supported, and there is no default language found!\n",
                 lang
             );
+            return;
         }
-    } else if (!gSystemLanguage.Null() && lang != gSystemLanguage) {
-        TheLocale.Terminate();
-        gSystemLanguage = lang;
-        TheLocale.Init();
+    } else {
+    blah:
+        Symbol old = lang;
+        if (!gSystemLanguage.Null() && lang != gSystemLanguage) {
+            TheLocale.Terminate();
+            gSystemLanguage = lang;
+            TheLocale.Init();
+        } else {
+            gSystemLanguage = old;
+        }
     }
 }
 
@@ -424,8 +429,8 @@ void NormalizeSystemArgs() {
 }
 
 void PreInitSystem(const char *config) {
-    Archive *oldArchive = TheArchive;
     bool oldCD = UsingCD();
+    Archive *oldArchive = TheArchive;
     if (gHostConfig) {
         gUsingCD = false;
         TheArchive = nullptr;
@@ -505,29 +510,29 @@ void SetSystemArgs(const char *commandLine) {
     char *arg = buffer;
     buffer[sizeof(buffer) - 1] = '\0';
     bool b2 = true;
-    bool b4 = false;
+    unsigned int b4 = false;
     for (char *p = buffer; *p != '\0'; p++) {
         if (!b4 && *p == ' ') {
             *p = '\0';
             b4 = true;
             arg = p + 1;
         } else {
-            if (*p != '\"') {
+            if (*p == '\"') {
+                *p = '\0';
+                arg = p + 1;
+                b4 = !b4;
+                if (b4) {
+                    TheSystemArgs.push_back(arg);
+                    b2 = false;
+                } else {
+                    b2 = true;
+                }
+            } else {
                 if (b2) {
                     TheSystemArgs.push_back(arg);
                     b2 = false;
                 }
                 arg = p + 1;
-            } else {
-                *p = '\0';
-                arg = p + 1;
-                b4 = !b4;
-                if (!b4) {
-                    b2 = true;
-                } else {
-                    TheSystemArgs.push_back(arg);
-                    b2 = false;
-                }
             }
         }
     }

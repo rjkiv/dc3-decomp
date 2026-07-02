@@ -37,7 +37,7 @@ namespace {
     }
 }
 
-u32 gMainThreadID = -1;
+DWORD gMainThreadID = -1;
 
 namespace JobQueue {
     struct Entry {
@@ -56,7 +56,7 @@ namespace JobQueue {
 }
 
 void ThreadCallInit() {
-    memset(gData, 0, 0xF0);
+    memset(gData, 0, sizeof(gData));
     gCurCall = 0;
     gFreeCall = 0;
     gThreadSema = CreateSemaphoreA(nullptr, 0, 1, nullptr);

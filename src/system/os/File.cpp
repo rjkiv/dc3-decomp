@@ -20,10 +20,10 @@
 #include <cstdio>
 #include <cstring>
 
-static char gSystemRoot[256]; // 0x0
-static char gExecRoot[256]; // 0x100
-static char gRoot[256]; // 0x200
-static File *gOpenCaptureFile; // 0x300
+static char gSystemRoot[256] = { 0 }; // 0x0
+static char gExecRoot[256] = { 0 }; // 0x100
+static char gRoot[256] = { 0 }; // 0x200
+static File *gOpenCaptureFile = nullptr; // 0x300
 static int gCaptureFileMode;
 
 bool gFakeFileErrors = false;
@@ -77,13 +77,11 @@ const char *FileGetExt(const char *root) {
 
 const char *FileGetName(const char *file) {
     const char *dir = strrchr(file, '/');
+    if (!dir) {
+        dir = strrchr(file, '\\');
+    }
     if (dir) {
         file = dir + 1;
-    } else {
-        dir = strrchr(file, '\\');
-        if (dir) {
-            file = dir + 1;
-        }
     }
     return file;
 }

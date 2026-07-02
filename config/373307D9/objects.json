@@ -541,7 +541,7 @@
             "system/os/System.cpp": "NonMatching",
             "system/os/System_Xbox.cpp": "NonMatching",
             "system/os/ThreadCall_Win.cpp": "NonMatching",
-            "system/os/Timer.cpp": "NonMatching",
+            "system/os/Timer.cpp": "Matching",
             "system/os/UsbMidiGuitar.cpp": "NonMatching",
             "system/os/UsbMidiGuitarMsgs.cpp": "Matching",
             "system/os/UsbMidiKeyboard.cpp": "NonMatching",

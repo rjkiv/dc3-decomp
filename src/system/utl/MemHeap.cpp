@@ -7,6 +7,7 @@
 #include "utl/MakeString.h"
 #include "utl/MemTracker.h"
 #include "utl/TextStream.h"
+#include "os/CritSec.h"
 #include <cstdio>
 
 namespace {

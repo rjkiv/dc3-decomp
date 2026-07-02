@@ -79,7 +79,7 @@ private:
 
     bool unk70; // 0x70
     bool unk71; // 0x71
-    void *unk74[kNumberOfBuffers]; // 0x74
+    HANDLE mEnumerators[kNumberOfBuffers]; // 0x74
     XCONTENT_CROSS_TITLE_DATA mXDatas[kNumberOfBuffers]; // 0x90
     XOVERLAPPED *mOverlappeds[kNumberOfBuffers]; // 0x918
     int unk934; // 0x934

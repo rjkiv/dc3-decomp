@@ -1,8 +1,7 @@
 #pragma once
-#include "os/CritSec.h"
-#include <types.h>
+#include "xdk/win_types.h"
 
-extern u32 gMainThreadID;
+extern DWORD gMainThreadID;
 
 void ThreadCallTerminate();
 void ThreadCallPreInit();

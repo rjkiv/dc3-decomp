@@ -4,6 +4,7 @@
 #include "os/Debug.h"
 #include "os/System.h"
 #include "ppcintrinsics.h"
+#include "utl/TextStream.h"
 #include "xdk/XAPILIB.h"
 #include "math/Utl.h"
 #include "utl/Std.h"
@@ -22,6 +23,18 @@ int AutoGlitchReport::sDepth;
 Timer Timer::sSlowFrameTimer;
 std::list<std::pair<Timer, TimerStats> > AutoTimer::sTimers;
 std::list<Symbol> sConditionalTimersEnabled;
+
+const char *FormatTime(float time) {
+    if (time < 0.001) {
+        return MakeString("%.2fns", time * 1e+06f);
+    } else if (time < 1) {
+        return MakeString("%.2fus", time * 1000);
+    } else if (time >= 1000) {
+        return MakeString("%.2fs", time / 1000);
+    } else {
+        return MakeString("%.2fms", time);
+    }
+}
 
 #pragma region Timer
 
@@ -129,7 +142,7 @@ void TimerStats::PrintPctile(float pctile) {
             break;
         }
     }
-    int a = std::floor(pctile * 100);
+    int a = floorf(pctile * 100);
     if (target > MAX_TOP_VALS) {
         MILO_LOG(
             "   %dth pctile:   <%.2f THIS IS AN OVERESTIMATE.  For accurate percentile, increase MAX_TOP_VALS in Timer.h\n",
@@ -215,17 +228,18 @@ void AutoGlitchReport::SendCallback(
 ) {
     if (gGlitchCallback) {
         float min = Min(Timer::SlowFrameTimer().SplitMs(), Timer::SlowFrameWaiver());
-        float diff = f1 - min;
-        if (diff >= f2) {
+        f1 = f1 - min;
+        if (f1 >= f2) {
             String str;
             for (int i = 0; i < sDepth; i++) {
                 str += ' ';
             }
-            TheDebug.Print(str.c_str());
+            TextStream &d = TheDebug;
+            d.Print(str.c_str());
             if (!cb) {
-                MILO_LOG("%s took %.2f ms\n", cc, diff);
+                MILO_LOG("%s took %.2f ms\n", cc, f1);
             } else {
-                cb(diff, v);
+                cb(f1, v);
             }
         }
     }
@@ -318,7 +332,7 @@ void AutoTimer::Init() {
         bool enabled = false;
         arr->FindData("enable", enabled, false);
         if (enabled) {
-            sTimers.push_back(std::pair<Timer, TimerStats>(Timer(arr), TimerStats(arr)));
+            sTimers.push_back(std::pair<Timer, TimerStats>(arr, arr));
         }
     }
 }

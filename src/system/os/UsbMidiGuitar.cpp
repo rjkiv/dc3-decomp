@@ -1,6 +1,7 @@
 #include "os/UsbMidiGuitar.h"
 #include "os/Joypad.h"
 #include "os/UsbMidiGuitarMsgs.h"
+#include "os/CritSec.h"
 
 CriticalSection gCritSection;
 Queue gQueue(0x32);
