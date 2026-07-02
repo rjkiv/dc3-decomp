@@ -262,6 +262,52 @@ void XboxContentMgr::StartRefresh() {
     }
 }
 
+bool XboxContentMgr::MountContent(Symbol name) {
+    bool ret = false;
+    bool found = false;
+    FOREACH (it, mContents) {
+        if (name == (*it)->FileName()) {
+            found = true;
+            (*it)->Mount();
+            mState = kContentMgrState7;
+            if ((*it)->GetState() == 4) {
+                ret = true;
+            }
+            break;
+        }
+    }
+    if (!found) {
+        MILO_NOTIFY("\"%s\" not found to mount.", name.Str());
+    }
+    int i11 = 0;
+    int i4 = 0;
+    bool cond = false;
+    while (!cond) {
+        Content *cnt = nullptr;
+        unsigned int i9 = -1;
+        FOREACH (it, mContents) {
+            Content::State cState = (*it)->GetState();
+            if (cState == 4 || cState == 2 || cState == 1) {
+                i11++;
+                if (name != (*it)->FileName() && (*it)->GetLRM() < i9
+                    && (*it)->GetState() != 2) {
+                    cnt = *it;
+                    i9 = cnt->GetLRM();
+                }
+            }
+        }
+        if (i11 == i4) {
+            cond = true;
+        } else if (i11 > 6 && cnt) {
+            cnt->Unmount();
+            mState = kContentMgrState7;
+        }
+        i4 = i11;
+        i11 = 0;
+    }
+    return ret;
+}
+
 bool XboxContentMgr::IsMounted(Symbol name) {
     bool ret = false;
     FOREACH (it, mContents) {

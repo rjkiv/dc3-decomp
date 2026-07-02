@@ -152,7 +152,8 @@ protected:
         kDiscoveryLoading = 3,
         kDiscoveryCheckIfDone = 4,
         kMounting = 5,
-        kContentMgrState6 = 6
+        kContentMgrState6 = 6,
+        kContentMgrState7 = 7
     } mState; // 0x2c
     std::list<Callback *> mCallbacks; // 0x30
     std::list<Content *> mContents; // 0x38
