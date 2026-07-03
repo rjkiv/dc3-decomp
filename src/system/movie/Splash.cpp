@@ -61,7 +61,7 @@ void Splash::Suspend() {
         } else {
             WaitForState(kSuspended);
         }
-        unk200.Reset();
+        unk_0xC8.Reset();
     }
 }
 
@@ -202,6 +202,60 @@ void Splash::Poll() {
     }
 }
 
+void Splash::Draw() {
+    if (unk18.SplitMs() <= mSplashTime) {
+        if (!unk5c || unk50 != nullptr || unk54 != nullptr) {
+            if (unk54 != nullptr) {
+                TheTaskMgr.Poll();
+                unk48->Poll();
+            }
+            if (unk50 != nullptr) {
+                if (MainThread()) {
+                    float allowance = unk50->GetMovie().MsPerFrame() - 1.0f;
+                    if (unk_0xC8.Running() != 0 && unk_0xC8.SplitMs() < allowance) {
+                        return;
+                    }
+                    unk_0xC8.Restart();
+                }
+                if (unk50->GetMovie().Poll() == false) {
+                    mSplashTime = 0;
+                    return;
+                }
+            }
+            for (int i = 0; i < 2; i++) {
+                TheRnd.BeginDrawing();
+                unk4c->Select();
+                unk48->DrawShowing();
+                TheRnd.EndDrawing();
+                if (unk50 != nullptr)
+                    break;
+                if (unk54 != nullptr)
+                    break;
+            }
+            if (unk50 == nullptr && unk54 == nullptr) {
+                TheNgRnd.Suspend();
+            }
+            unk5c = true;
+        }
+        int synctime = 0;
+        if (!MainThread()) {
+            synctime = mSplashTime - int(unk18.SplitMs());
+            if (unk50 != nullptr) {
+                float allowance = unk50->GetMovie().MsPerFrame() - 1.0f;
+                if (int(allowance) < synctime) {
+                    synctime = allowance;
+                }
+                if (synctime < 0) {
+                    synctime = 0;
+                }
+            } else if (unk54 != nullptr) {
+                synctime = 16;
+            }
+            unk90.Wait(synctime);
+        }
+    }
+}
+
 bool Splash::SetMutableState(Splash::SplashState state) {
     MILO_ASSERT(state <= kResumed, 0x13b);
     CritSecTracker tracker(&unk6c);
@@ -231,7 +285,8 @@ bool Splash::SetImmutableState(Splash::SplashState state) {
 
 void Splash::WaitForState(Splash::SplashState state) {
     MILO_ASSERT_FMT(unk64, "Can't WaitForState");
-    while (mState != state && (state != kResumed || mState <= kResumed)) {
+    while (mState != state
+           && (state != kResumed || (volatile SplashState)mState <= kResumed)) {
         MainThread() ? unk8c.Wait(-1) : unk90.Wait(-1);
     }
 }
