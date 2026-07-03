@@ -1,6 +1,7 @@
 #include "obj/Data.h"
 #include "os/Debug.h"
 #include "os/File.h"
+#include "os/MapFile_Xbox.h"
 #include "os/PlatformMgr.h"
 #include "os/System.h"
 #include "xdk/XAPILIB.h"
@@ -8,8 +9,11 @@
 #include "os/Memory.h"
 
 namespace {
-    DiscErrorCallbackFunc *gCallback;
+    DiscErrorCallbackFunc *gCallback = ShowDirtyDiscError;
 }
+
+bool (*ParseStack)(char const *, struct StackData *, int, class FixedString &) =
+    XboxMapFile::ParseStack;
 
 unsigned long ULSystemLocale() { return XGetLocale(); }
 unsigned long ULSystemLanguage() { return XTLGetLanguage(); }

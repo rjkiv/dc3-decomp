@@ -94,3 +94,5 @@ bool PlatformDebugBreak();
 void GetMapFileName(String &filename);
 void ShowDirtyDiscError();
 void CaptureStackTrace(int, struct StackData *, void *);
+
+extern bool (*ParseStack)(char const *, struct StackData *, int, class FixedString &);

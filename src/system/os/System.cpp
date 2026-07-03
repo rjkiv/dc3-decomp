@@ -75,8 +75,6 @@ static std::vector<char *> gPristineSystemArgs;
 static Timer gSystemTimer;
 
 bool gNetUseTimedSleep;
-bool(__cdecl *ParseStack)(char const *, struct StackData *, int, class FixedString &) =
-    XboxMapFile::ParseStack;
 
 namespace {
     bool gHasPreconfig = true;
