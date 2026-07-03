@@ -62,24 +62,30 @@ Symbol GetSystemLanguage(Symbol s) {
 
     switch (locale) {
     case XC_LOCALE_SWEDEN:
-        if (IsSupportedLanguage(swe, false))
-            s = swe;
+        if (IsSupportedLanguage(swe, false)) {
+            return swe;
+        }
         break;
     case XC_LOCALE_NORWAY:
-        if (IsSupportedLanguage(nor, false))
-            s = nor;
+        if (IsSupportedLanguage(nor, false)) {
+            return nor;
+        }
         break;
     case XC_LOCALE_NETHERLANDS:
-        if (IsSupportedLanguage(dut, false))
-            s = dut;
+        if (IsSupportedLanguage(dut, false)) {
+            return dut;
+        }
         break;
     case XC_LOCALE_FINLAND:
-        if (IsSupportedLanguage(fin, false))
-            s = fin;
+        if (IsSupportedLanguage(fin, false)) {
+            return fin;
+        }
         break;
     case XC_LOCALE_DENMARK:
-        if (IsSupportedLanguage(dan, false))
-            s = dan;
+        if (IsSupportedLanguage(dan, false)) {
+            return dan;
+        }
+        break;
     default:
         break;
     }
@@ -87,47 +93,35 @@ Symbol GetSystemLanguage(Symbol s) {
     switch (lang) {
     case XC_LANGUAGE_ENGLISH:
         if (locale == XC_LOCALE_BELGIUM && IsSupportedLanguage(dut, false)) {
-            s = dut;
+            return dut;
         }
-        break;
     case XC_LANGUAGE_SCHINESE:
-        s = eng;
-        break;
+        return eng;
     case XC_LANGUAGE_JAPANESE:
-        s = jpn;
-        break;
+        return jpn;
     case XC_LANGUAGE_GERMAN:
-        s = deu;
-        break;
+        return deu;
     case XC_LANGUAGE_FRENCH:
-        s = fre;
-        break;
+        return fre;
     case XC_LANGUAGE_SPANISH:
-        if (locale == XC_LOCALE_CHILE || locale == XC_LOCALE_COLOMBIA
-            || locale == XC_LOCALE_MEXICO) {
-            if (IsSupportedLanguage(mex, false))
-                s = mex;
-            else
-                s = esl;
+        if ((locale == XC_LOCALE_CHILE || locale == XC_LOCALE_COLOMBIA
+             || locale == XC_LOCALE_MEXICO)
+            && IsSupportedLanguage(mex, false)) {
+            return mex;
         }
-        break;
+        return esl;
     case XC_LANGUAGE_ITALIAN:
-        s = ita;
-        break;
+        return ita;
     case XC_LANGUAGE_KOREAN:
-        s = kor;
-        break;
+        return kor;
     case XC_LANGUAGE_TCHINESE:
-        s = cht;
-        break;
+        return cht;
     case XC_LANGUAGE_PORTUGUESE:
-        s = ptb;
-        break;
+        return ptb;
     case XC_LANGUAGE_POLISH:
-        s = pol;
-        break;
+        return pol;
     case XC_LANGUAGE_RUSSIAN:
-        s = rus;
+        return rus;
     default:
         break;
     }
