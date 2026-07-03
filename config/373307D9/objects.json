@@ -454,7 +454,7 @@
             "system/movie/Movie.cpp": "Matching",
             "system/movie/MovieImpl.cpp": "Matching",
             "system/movie/MovieSys.cpp": "Matching",
-            "system/movie/Splash.cpp": "NonMatching",
+            "system/movie/Splash.cpp": "Matching",
             "system/movie/TexMovie.cpp": "Matching",
             "system/moviebink/BinkMovieImpl.cpp": "NonMatching",
             "system/moviebink/BinkMovieImpl_Xbox.cpp": "MISSING",

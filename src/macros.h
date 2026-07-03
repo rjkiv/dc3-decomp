@@ -10,6 +10,9 @@
 #define SEH_TRY __try
 #define SEH_EXCEPT __except
 #define SEH_FINALLY __finally
+
+#define ALIGN(x) __declspec(align(x))
+#define INTRIN __declspec(intrin_type)
 #else
 #define CDECL
 #define STDCALL
@@ -18,6 +21,9 @@
 #define SEH_TRY try
 #define SEH_EXCEPT catch
 #define SEH_FINALLY ;
+
+#define ALIGN(x) alignas(x)
+#define INTRIN
 #endif
 
 // #define ROTATE_LEFT(x, i) (((x) << (i)) | ((x) >> ((sizeof((x)) * 8) - (i))))

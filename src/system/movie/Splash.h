@@ -63,7 +63,7 @@ public:
     CriticalSection unk98;
     std::list<PreparedScreenParams> mPreparedScreens; // 0xb8
     std::list<RndDir *> unkc0;
-    Timer unk200;
+    Timer unk_0xC8;
     void *mThreadStack;
 
 protected:

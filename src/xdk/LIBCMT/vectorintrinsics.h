@@ -1,7 +1,9 @@
 #pragma once
 
+#include "macros.h"
+
 // A C representation of a VMX register.
-typedef struct __declspec(intrin_type) __declspec(align(16)) __vector4 { /* Size=0x10 */
+typedef struct INTRIN ALIGN(16) __vector4 { /* Size=0x10 */
     union {
         /* 0x0000 */ float vector4_f32[4];
         /* 0x0000 */ unsigned int vector4_u32[4];
@@ -118,6 +120,9 @@ XMVECTOR __vmaddfp(XMVECTOR mul1, XMVECTOR mul2, XMVECTOR addend);
 
 // Vector128 Splat Word
 XMVECTOR __vspltw(XMVECTOR vSrcA, unsigned int uImmed);
+
+// Vector128 Multiply Floating-Point
+XMVECTOR __vmulfp(XMVECTOR vSrcA, XMVECTOR vSrcB);
 
 #ifdef __cplusplus
 }
