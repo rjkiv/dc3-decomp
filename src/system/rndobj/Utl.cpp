@@ -24,10 +24,18 @@
 #include "rndobj/Part.h"
 #include "utl/Std.h"
 #include "rndobj/Utl.h"
-
 #include "math/Rand.h"
 
-static FileCacheHelper gResourceFileCacheHelper;
+class ResourceFileCacheHelper : public FileCacheHelper {
+public:
+    virtual const char *CacheFile(const char *);
+};
+
+const char *ResourceFileCacheHelper::CacheFile(const char *c) {
+    return CacheResource(c, nullptr);
+}
+
+static ResourceFileCacheHelper gResourceFileCacheHelper;
 static float gLimitUVRange = 0;
 static ObjectDir *sSphereDir = nullptr;
 static RndMesh *sSphereMesh = nullptr;

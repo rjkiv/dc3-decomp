@@ -1,6 +1,12 @@
 #include "Utl.h"
+#include "os/FileCache.h"
 
-FileCacheHelper gWavFileCacheHelper;
+class WavFileCacheHelper : public FileCacheHelper {
+public:
+    virtual const char *CacheFile(const char *);
+};
+
+static WavFileCacheHelper gWavFileCacheHelper;
 
 float sMeasuresMs[7] = { 0.25f, 0.5f, 0.75f, 1.0f, 1.5f, 2.0f, 4.0f };
 
