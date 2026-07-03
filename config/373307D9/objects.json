@@ -513,7 +513,7 @@
             "system/os/Debug.cpp": "NonMatching",
             "system/os/File.cpp": "NonMatching",
             "system/os/FileCache.cpp": "NonMatching",
-            "system/os/File_Win.cpp": "NonMatching",
+            "system/os/File_Win.cpp": "Matching",
             "system/os/HDCache.cpp": "NonMatching",
             "system/os/HolmesClient.cpp": "NonMatching",
             "system/os/HolmesClient_NetSocket.cpp": "Matching",

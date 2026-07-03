@@ -352,6 +352,57 @@ const char *FileRelativePath(const char *root, const char *filepath) {
     return FileRelativePathBuf(root, filepath, relative);
 }
 
+const char *FileLocalize(const char *iFilename, char *buffer) {
+    static char sLocalBuf[256];
+    bool newGfx = GetGfxMode() == kNewGfx;
+    if (!SystemLanguage().Null() || newGfx) {
+        if (!SystemLanguage().Null()) {
+            const char *ptr = iFilename;
+        here:
+            if (ptr[0] != '\0') {
+                if (ptr[0] != '/' || ptr[1] != 'e' || ptr[2] != 'n' || ptr[3] != 'g'
+                    || ptr[4] != '/') {
+                    ptr++;
+                    goto here;
+                }
+                if (!buffer) {
+                    buffer = sLocalBuf;
+                }
+                strcpy(buffer, iFilename);
+                if (HongKongExceptionMet()
+                    && (strstr(iFilename, "sfx/loc/")
+                        || strstr(iFilename, "barks.milo"))) {
+                    memcpy(&buffer[ptr + 1 - iFilename], "eng", 3);
+                } else {
+                    memcpy(&buffer[ptr + 1 - iFilename], SystemLanguage().Str(), 3);
+                }
+                iFilename = buffer;
+            }
+        }
+        if (newGfx) {
+            const char *ptr = iFilename;
+            while (ptr[0] != '\0') {
+                if (ptr[0] == '/' && ptr[1] == 'o' && ptr[2] == 'g' && ptr[3] == '/') {
+                    if (buffer == iFilename) {
+                        char *lmao = (char *)ptr;
+                        lmao[1] = 'n';
+                        return iFilename;
+                    }
+                    if (!buffer) {
+                        buffer = sLocalBuf;
+                    }
+                    strcpy(buffer, iFilename);
+                    buffer[ptr + 1 - iFilename] = 'n';
+                    iFilename = buffer;
+                    break;
+                }
+                ptr++;
+            }
+        }
+    }
+    return iFilename;
+}
+
 // the weird __rs in the debug symbols here, is for a FileStat&
 // so BinStream >> FileStat
 BinStream &operator>>(BinStream &bs, FileStat &fs) {
