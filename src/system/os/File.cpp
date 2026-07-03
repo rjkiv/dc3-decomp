@@ -16,6 +16,7 @@
 #include "utl/BinStream.h"
 #include "utl/Loader.h"
 #include "utl/Option.h"
+#include "utl/Str.h"
 #include <cctype>
 #include <cstdio>
 #include <cstring>
@@ -130,27 +131,20 @@ const char *FileGetPathBuf(const char *iBuf, char *oBuf) {
     MILO_ASSERT(oBuf, 0x3F6);
     if (iBuf) {
         strcpy(oBuf, iBuf);
-        int len = strlen(oBuf) - 1;
-        if (len > 0) {
-            char *p = &oBuf[len];
-            do {
-                if (*p == '/' || *p == '\\')
-                    break;
-                p--;
-            } while (p >= oBuf);
-            if (p >= oBuf) {
-                if (p != oBuf && p[-1] != ':') {
-                    p[0] = '\0';
-                    return oBuf;
-                }
-                p[1] = '\0';
+        char *p = oBuf + strlen(oBuf) - 1;
+        for (; p >= oBuf && *p != '/' && *p != '\\'; p--)
+            ;
+        if (p >= oBuf) {
+            if (p != oBuf && p[-1] != ':') {
+                p[0] = '\0';
                 return oBuf;
             }
+            p[1] = '\0';
+            return oBuf;
         }
-    } else {
-        oBuf[0] = '.';
-        oBuf[1] = '\0';
     }
+    oBuf[0] = '.';
+    oBuf[1] = '\0';
     return oBuf;
 }
 
@@ -174,10 +168,10 @@ const char *FileGetBaseBuf(const char *iFilepath, char *oBuf) {
     if (!chr) {
         chr = strrchr(iFilepath, '\\');
     }
-    if (chr) {
-        strcpy(oBuf, chr);
-    } else {
+    if (!chr) {
         strcpy(oBuf, iFilepath);
+    } else {
+        strcpy(oBuf, chr + 1);
     }
     char *dot = strrchr(oBuf, '.');
     if (dot) {
@@ -450,16 +444,54 @@ DataNode OnToggleFakeFileErrors(DataArray *a) {
 void DirListCB(const char *, const char *c) { gDirList.push_back(c); }
 
 void RecursePatternInternal(
-    const char *, void (*)(char const *, char const *), bool, bool
-);
+    const char *pttn, void (*cb)(char const *, char const *), bool b3, bool b4
+) {
+    MILO_ASSERT(pttn && pttn[0], 0x5B8);
+    String patternStr = pttn;
+    int ui1 = patternStr.find_first_of("&", 0);
+    int ui2 = patternStr.find_first_of("?*", 0);
+    int ui3 = ui1 == FixedString::npos ? patternStr.length() - 1 : ui1;
+    if (ui2 != FixedString::npos) {
+        ui3 = Min<unsigned int>(ui3, ui2);
+    }
+    if (b3 && ui1 == FixedString::npos) {
+        int len = patternStr.length();
+        for (; ui3 < len && patternStr[ui3] != '/' && patternStr[ui3] != '\\'; ui3++)
+            ;
+        if (ui3 == len) {
+            b3 = false;
+            for (; ui3 >= 0 && patternStr[ui3] != '/' && patternStr[ui3] != '\\'; ui3--)
+                ;
+        } else {
+            String subStr1 = patternStr.substr(ui3, len - ui3);
+            patternStr = patternStr.substr(0, ui3);
+            RecursePatternInternal(patternStr.c_str(), DirListCB, false, true);
+            std::vector<String> dirLists(gDirList);
+            gDirList.clear();
+            patternStr = FileGetPath(patternStr.c_str());
+            for (int i = 0; i < dirLists.size(); i++) {
+                RecursePatternInternal(
+                    MakeString("%s/%s%s", patternStr, dirLists[i], subStr1), cb, b3, b4
+                );
+            }
+            return;
+        }
+    }
+    String str48;
+    str48 = ui3 <= 0 ? String(".") : patternStr.substr(0, ui3);
+    FileEnumerate(str48.c_str(), cb, b3, patternStr.c_str(), b4);
+}
+
+void FileRecursePattern(const char *c, void (*cb)(char const *, char const *), bool b3) {
+    RecursePatternInternal(c, cb, b3, false);
+}
 
 DataNode OnEnumerateFrameRateResults(DataArray *a) {
     DataNode n(new DataArray(0));
     gFrameRateArray = n.Array();
-    RecursePatternInternal(
+    FileRecursePattern(
         MakeString("ui/framerate/venue_test/*%s", FrameRateSuffix()),
         OnFrameRateRecurseCB,
-        false,
         false
     );
     gFrameRateArray = nullptr;
