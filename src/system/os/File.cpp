@@ -24,16 +24,16 @@ static char gSystemRoot[256] = { 0 }; // 0x0
 static char gExecRoot[256] = { 0 }; // 0x100
 static char gRoot[256] = { 0 }; // 0x200
 static File *gOpenCaptureFile = nullptr; // 0x300
-static int gCaptureFileMode;
+static int gCaptureFileMode = 0;
 
 bool gFakeFileErrors = false;
 bool gNullFiles = false;
 void *kNoHandle = nullptr;
-DataArray *gFrameRateArray;
+DataArray *gFrameRateArray = nullptr;
 
 std::vector<File *> gFiles(0x80); // 0x10...?
 std::vector<String> gDirList;
-// const int File::MaxFileNameLen = 0x100;
+const int File::MaxFileNameLen = 0x100;
 
 const char *FileRoot() { return gRoot; }
 const char *FileExecRoot() { return gExecRoot; }
@@ -186,6 +186,148 @@ const char *FileGetBaseBuf(const char *iFilepath, char *oBuf) {
     return oBuf;
 }
 
+const char *FileMakePathBuf(const char *iRoot, const char *iFilepath, char *oBuf) {
+    MILO_ASSERT(iRoot, 0x300);
+    MILO_ASSERT(iFilepath, 0x301);
+    MILO_ASSERT(oBuf, 0x302);
+    char buffer[256];
+    if (iFilepath < oBuf || iFilepath >= oBuf + sizeof(buffer)) {
+        if (iRoot >= oBuf && iRoot < oBuf + sizeof(buffer)) {
+            strcpy(buffer, iRoot);
+            iRoot = buffer;
+        }
+    } else {
+        strcpy(buffer, iFilepath);
+        iFilepath = buffer;
+    }
+    char driveBuf[256];
+    const char *drive = FileGetDriveBuf(iFilepath, driveBuf);
+    if (drive[0] != '\0') {
+        iFilepath += strlen(drive) + 1;
+    }
+    char *c;
+    if (iFilepath[0] != '/' && iFilepath[0] != '\\' && iFilepath[0] != '\0') {
+        sprintf(oBuf, "%s/%s", iRoot, iFilepath);
+        drive = FileGetDriveBuf(iRoot, driveBuf);
+        if (drive[0] != '\0') {
+            c = oBuf + strlen(drive) + 1;
+        } else {
+            c = oBuf;
+        }
+    } else if (drive[0] != '\0') {
+        sprintf(oBuf, "%s:%s", drive, iFilepath);
+        c = oBuf + strlen(drive) + 1;
+    } else {
+        drive = FileGetDriveBuf(iRoot, driveBuf);
+        if (drive[0] != '\0') {
+            sprintf(oBuf, "%s:%s", drive, iFilepath);
+            c = oBuf + strlen(drive) + 1;
+        } else {
+            strcpy(oBuf, iFilepath);
+            c = oBuf;
+        }
+    }
+    FileNormalizePath(oBuf);
+    bool slashFirst = oBuf[0] == '/';
+
+    char *dirs[32];
+    char **endDir = dirs;
+    char *tok = strtok(c, "/");
+    while (tok) {
+        if (tok[0] == '.') {
+            if (tok[1] == '.' && tok[2] == '\0') {
+                if (endDir == dirs || *(endDir[-1]) == '.') {
+                    *endDir++ = tok;
+                } else {
+                    endDir--;
+                }
+            }
+        } else {
+            *endDir++ = tok;
+        }
+        tok = strtok(nullptr, "/");
+    }
+    MILO_ASSERT(endDir - dirs <= 32, 0x35C);
+
+    if (endDir == dirs) {
+        if (slashFirst) {
+            *c++ = '/';
+        } else {
+            *c++ = '.';
+        }
+    } else {
+        for (char **it = dirs; it != endDir; ++it) {
+            if (it != dirs || slashFirst) {
+                *c++ = '/';
+            }
+            for (char *ptr = *it; *ptr != '\0'; ptr++) {
+                *c++ = *ptr;
+            }
+        }
+    }
+    MILO_ASSERT(c - oBuf < File::MaxFileNameLen, 0x372);
+    *c = '\0';
+    return oBuf;
+}
+
+const char *FileRelativePathBuf(const char *iRoot, const char *iFilepath, char *oBuf) {
+    MILO_ASSERT(iRoot, 0x38D);
+    MILO_ASSERT(iFilepath, 0x38E);
+    MILO_ASSERT(oBuf, 0x38F);
+    if (*iFilepath != '\0') {
+        char rootBuffer[256];
+        char filePathBuffer[256];
+        strcpy(rootBuffer, iRoot);
+        strcpy(filePathBuffer, iFilepath);
+        std::list<char *> tok218;
+        std::list<char *> tok220;
+        char *tok = strtok(rootBuffer, "/");
+        while (tok) {
+            tok218.push_back(tok);
+            tok = strtok(nullptr, "/");
+        }
+        tok = strtok(filePathBuffer, "/");
+        while (tok) {
+            tok220.push_back(tok);
+            tok = strtok(nullptr, "/");
+        }
+        if (!tok220.empty() && !tok218.empty()) {
+            if (streq(tok218.front(), tok220.front())) {
+                while (tok218.size() && tok220.size()
+                       && streq(tok218.front(), tok220.front())) {
+                    tok218.pop_front();
+                    tok220.pop_front();
+                }
+                char *p = oBuf;
+                while (tok218.size()) {
+                    if (p != oBuf) {
+                        *p++ = '/';
+                    }
+                    *p++ = '.';
+                    *p++ = '.';
+                    tok218.pop_front();
+                }
+                while (tok220.size()) {
+                    if (p != oBuf) {
+                        *p++ = '/';
+                    }
+                    for (char *ptr = tok220.front(); *ptr != '\0'; ptr++) {
+                        *p++ = *ptr;
+                    }
+                    tok220.pop_front();
+                }
+                MILO_ASSERT(p - oBuf < File::MaxFileNameLen, 0x3D9);
+                if (p == oBuf) {
+                    *p++ = '.';
+                }
+                *p++ = '\0';
+                return oBuf;
+            }
+        }
+    }
+    return iFilepath;
+}
+
 const char *FileGetPath(const char *file) {
     static char sBuf[0x100];
     MainThread();
@@ -202,6 +344,18 @@ const char *FileGetBase(const char *file) {
     static char sBuf[0x100];
     MainThread();
     return FileGetBaseBuf(file, sBuf);
+}
+
+const char *FileMakePath(const char *root, const char *file) {
+    static char sBuf[0x100];
+    MainThread();
+    return FileMakePathBuf(root, file, sBuf);
+}
+
+const char *FileRelativePath(const char *root, const char *filepath) {
+    MainThread();
+    static char relative[256];
+    return FileRelativePathBuf(root, filepath, relative);
 }
 
 // the weird __rs in the debug symbols here, is for a FileStat&
@@ -276,8 +430,11 @@ String UniqueFilename(const char *c1, const char *c2) {
 DataNode OnFileGetDrive(DataArray *a) { return FileGetDrive(a->Str(1)); }
 DataNode OnFileGetPath(DataArray *a) { return FileGetPath(a->Str(1)); }
 DataNode OnFileGetBase(DataArray *a) { return FileGetBase(a->Str(1)); }
-DataNode OnFileAbsolutePath(DataArray *);
-DataNode OnFileRelativePath(DataArray *);
+DataNode OnFileAbsolutePath(DataArray *a) { return FileMakePath(a->Str(1), a->Str(2)); }
+
+DataNode OnFileRelativePath(DataArray *a) {
+    return FileRelativePath(a->Str(1), a->Str(2));
+}
 
 DataNode OnToggleFakeFileErrors(DataArray *a) {
     gFakeFileErrors = !gFakeFileErrors;
@@ -336,12 +493,6 @@ void FileInit() {
     TheDebug.AddExitCallback(FileTerminate);
 }
 
-const char *FileRelativePath(const char *root, const char *filepath) {
-    MainThread();
-    static char relative[256];
-    return FileRelativePathBuf(root, filepath, relative);
-}
-
 bool FileReadOnly(const char *filepath) { return true; }
 
 File *NewFile(const char *iFilename, int iMode) {
@@ -366,7 +517,7 @@ File *NewFile(const char *iFilename, int iMode) {
                     return all;
                 }
             }
-            File *theFile;
+            File *theFile = nullptr;
             if (UsingCD() && (iMode & 2) && !(iMode & 0x10000)) {
                 theFile = new ArkFile(iFilename, iMode);
             } else {
@@ -377,7 +528,7 @@ File *NewFile(const char *iFilename, int iMode) {
                 delete theFile;
                 return nullptr;
             } else {
-                if (!gOpenCaptureFile || !(iMode & 2) || gCaptureFileMode >= 1) {
+                if (!gOpenCaptureFile || !(iMode & 2) || gCaptureFileMode >= 1U) {
                     return theFile;
                 }
                 sprintf(pathBuf, "'%s'\n", FileMakePath(".", iFilename));
