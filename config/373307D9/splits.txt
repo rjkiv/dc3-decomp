@@ -2569,7 +2569,7 @@ system/os/ContentMgr_Xbox.cpp:
 	.text       start:0x82EDC488 end:0x82EDC4E0 rename:.text$yc
 	.text       start:0x82EE2498 end:0x82EE24B8 rename:.text$yd
 	.data       start:0x82F123B8 end:0x82F12508
-	.data       start:0x82F68174 end:0x82F68B90 rename:.bss
+	.data       start:0x82F68174 end:0x82F68AC0 rename:.bss
 
 system/os/SynchronizationEvent.cpp:
 	.rdata      start:0x8207FC60 end:0x8207FCD0
@@ -2583,7 +2583,7 @@ system/os/Joypad_Xbox.cpp:
 	.text       start:0x825EC758 end:0x825EDBE8
 	.text       start:0x82EDC4E0 end:0x82EDC518 rename:.text$yc
 	.text       start:0x82EE24B8 end:0x82EE24C8 rename:.text$yd
-	.data       start:0x82F68B90 end:0x82F68C0C rename:.bss
+	.data       start:0x82F68AC0 end:0x82F68C0C rename:.bss
 
 system/os/OnlineID.cpp:
 	.rdata      start:0x82080438 end:0x820804F4

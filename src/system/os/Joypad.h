@@ -263,6 +263,23 @@ void JoypadSetActuatorsImp(int, int, int);
 void AssociateUserAndPad(LocalUser *iUser, int iPadNum);
 void ResetAllUsersPads();
 
+void JoypadSendKeepAlive(int padsToKeepAlive);
+int ReadSingleJoypad(
+    int iPadNum,
+    unsigned int *iButtons,
+    char *iLeftStickX,
+    char *iLeftStickY,
+    char *iRightStickX,
+    char *iRightStickY,
+    char *iLeftTrigger,
+    char *iRightTrigger,
+    float *iSensors,
+    float *iPressures,
+    unsigned char *iExtended,
+    float *latency,
+    bool *again
+);
+
 bool requestBreedWrite(int, unsigned char *);
 }
 

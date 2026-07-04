@@ -152,7 +152,7 @@ namespace {
         static Symbol AND("and");
         Symbol sym = detect_cfg->Sym(0);
         if (sym == type) {
-            return detect_cfg->Int(1) == (int)data.mType;
+            return data.mType == (JoypadType)detect_cfg->Int(1);
         } else if (sym == button) {
             return data.Pressed((JoypadButton)detect_cfg->Int(1));
         } else if (sym == stick) {
@@ -162,23 +162,24 @@ namespace {
                 i4 = 0;
             } else if (axis_sym == Y) {
                 i4 = 1;
-            } else
+            } else {
                 MILO_FAIL("bad axis %s in controller detect array\n", axis_sym);
-            int i3 = detect_cfg->Int(1);
-            float f7 = detect_cfg->Float(3);
-            return f7 == data.mSticks[i3][i4];
+            }
+            return data.mSticks[detect_cfg->Int(1)][i4] == detect_cfg->Float(3);
         } else if (sym == trigger) {
-            return detect_cfg->Float(2) == data.mTriggers[detect_cfg->Int(1)];
+            return data.mTriggers[detect_cfg->Int(1)] == detect_cfg->Float(2);
         } else if (sym == OR) {
             for (int i = 1; i < detect_cfg->Size(); i++) {
-                if (IsJoypadDetectMatch(detect_cfg->Array(i), data))
+                if (IsJoypadDetectMatch(detect_cfg->Array(i), data)) {
                     return true;
+                }
             }
             return false;
         } else if (sym == AND) {
             for (int i = 1; i < detect_cfg->Size(); i++) {
-                if (!IsJoypadDetectMatch(detect_cfg->Array(i), data))
+                if (!IsJoypadDetectMatch(detect_cfg->Array(i), data)) {
                     return false;
+                }
             }
             return true;
         } else {
@@ -530,5 +531,20 @@ unsigned int JoypadPollForButton(int pad) {
         }
         gExportMsgs = true;
         return pressedMask;
+    }
+}
+
+void JoypadPollCommon() {
+    if (!gJoypadLibInitialized) {
+        MILO_NOTIFY(" Can't call JoypadPoll before initialization...");
+    } else {
+        // some initted buffers and such here
+        char buffer[16] = { 0 };
+        memset(buffer, 0, sizeof(buffer));
+        for (int i = 0; i < 4; i++) {
+            if (!gJoypadDisabled[i]) {
+                // a lot happens in here
+            }
+        }
     }
 }

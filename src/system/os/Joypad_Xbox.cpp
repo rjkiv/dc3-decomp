@@ -8,18 +8,32 @@
 #include "xdk/XAPILIB.h"
 
 namespace {
+    static XINPUT_STATE tXInputStates[kNumJoypads] = { 0 };
     BreedData tBreed[kNumJoypads];
-    HANDLE tThread;
-    bool tNoHandle;
-    XINPUT_STATE tInputStates[kNumJoypads];
+    static HANDLE tThread = nullptr;
+    static bool tNoHandle = false;
+    static unsigned int unkc8[4] = { 0 };
+    static unsigned int unkd8[4] = { 0 };
     CriticalSection tCritSection;
+
+    void InitXinputJoypadThreadData();
+    void RunXinputJoypadLoop();
+
+    DWORD XinputJoypadThreadEntry(HANDLE) {
+        InitXinputJoypadThreadData();
+        RunXinputJoypadLoop();
+        return 0;
+    }
 }
 
 void GetXinputSinceLastFrame(int pad, XINPUT_STATE *state, unsigned int *ui3) {
     CritSecTracker tracker(&tCritSection);
-    *state = tInputStates[pad];
+    *state = tXInputStates[pad];
     unsigned int x;
-    TranslateButtons(&x, tInputStates[pad].Gamepad.wButtons);
+    TranslateButtons(&x, tXInputStates[pad].Gamepad.wButtons);
+    *ui3 = x | unkc8[pad];
+    unkd8[pad] = unkc8[pad];
+    unkc8[pad] = 0;
 }
 
 void XinputJoypadThreadDestruction() {
@@ -187,7 +201,7 @@ bool requestBreedWrite(int pad, unsigned char *pBreedWritePacket) {
 }
 
 JoypadType SetupHXRealGuitar(int pad, const XINPUT_CAPABILITIES &c) {
-    short us = c.Gamepad.sThumbLY;
+    unsigned short us = c.Gamepad.sThumbLY & 0xfffffff0;
     bool u1 = us == 0x1530;
     bool u2 = us == 0x1430;
     if (!u1 && !u2)
@@ -261,18 +275,6 @@ bool ReceiveUpstreamResponse(int pad, unsigned char *data) {
         return false;
     }
     return true;
-}
-
-namespace {
-    void InitXinputJoypadThreadData();
-
-    void RunXinputJoypadLoop();
-
-    DWORD XinputJoypadThreadEntry(HANDLE) {
-        InitXinputJoypadThreadData();
-        RunXinputJoypadLoop();
-        return 0;
-    }
 }
 
 void XinputJoypadThreadStart() {

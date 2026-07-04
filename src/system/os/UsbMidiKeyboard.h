@@ -23,7 +23,7 @@ public:
     void SetKeyPressed(int, int, bool);
     void SetKeyVelocity(int, int, int);
 
-    bool GetSustain(int i) { return mSustain[i]; }
+    bool GetSustain(int i);
     bool GetStompPedal(int i) { return mStompPedal[i]; }
     int GetModVal(int i) { return mModVal[i]; }
     int GetExpressionPedal(int i) { return mExpressionPedal[i]; }
@@ -48,3 +48,5 @@ private:
     int mHighHandPlacement[4]; // 0xa78
     int mPadNum; // 0xa88
 };
+
+extern UsbMidiKeyboard *TheKeyboard;

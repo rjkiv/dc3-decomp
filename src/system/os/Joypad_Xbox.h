@@ -6,3 +6,5 @@ JoypadType SetupHXKeytar(int, const XINPUT_CAPABILITIES &);
 JoypadType SetupHXRealGuitar(int, const XINPUT_CAPABILITIES &);
 JoypadType SetupHXGuitar(int, const XINPUT_CAPABILITIES &);
 JoypadType SetupHXDrums(int, const XINPUT_CAPABILITIES &);
+
+void GetXinputSinceLastFrame(int pad, XINPUT_STATE *state, unsigned int *ui3);

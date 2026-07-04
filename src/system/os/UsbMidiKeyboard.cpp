@@ -151,6 +151,7 @@ void UsbMidiKeyboard::SetAccelerometer(int pad, int a1, int a2, int a3) {
     mAccelerometer[pad][2] = a3;
 }
 
+bool UsbMidiKeyboard::GetSustain(int pad) { return mSustain[pad]; }
 void UsbMidiKeyboard::SetSustain(int pad, bool sus) { mSustain[pad] = sus; }
 
 void UsbMidiKeyboard::SetStompPedal(int pad, bool stomp) { mStompPedal[pad] = stomp; }
