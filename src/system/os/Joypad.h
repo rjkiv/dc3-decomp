@@ -4,9 +4,14 @@
 #include "utl/Symbol.h"
 
 enum {
-    kNumAnalogSticks = 2,
     kNumJoypads = 4,
     kNumPressureButtons = 1,
+};
+
+enum AnalogStickID {
+    kLeftAnalog = 0,
+    kRightAnalog = 1,
+    kNumAnalogSticks = 2,
 };
 
 enum JoypadAction {
