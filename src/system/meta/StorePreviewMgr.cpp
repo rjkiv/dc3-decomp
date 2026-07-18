@@ -93,17 +93,13 @@ void StorePreviewMgr::PlayCurrentPreview() {
             unk4c->SetFile(gNullStr);
         }
     } else {
-        String temp_str(unk34.c_str());
+        FilePath temp_str(unk34.c_str());
         if (unk4c) {
             mStreamPlayer->StopPlaying();
-            {
-                FilePath filepath(unk34.c_str());
-                unk4c->SetFile(filepath);
-            }
+            unk4c->SetFile(unk34.c_str());
             unk4c->SetVolume(-unk2c);
         } else {
-            // Find and remove ".mogg" extension
-            int length = strlen(temp_str.c_str()) - 5;
+            int length = temp_str.length() - 5;
             if (temp_str.find(".mogg", length) != String::npos) {
                 temp_str.erase(length);
             }

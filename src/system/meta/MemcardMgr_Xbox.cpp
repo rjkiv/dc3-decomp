@@ -235,14 +235,11 @@ MCResult MemcardMgr::PerformRead(MCContainer *container) {
                 MCResult readRes = file->Read(unk34, minSize);
                 MCResult closeRes = file->Close();
                 container->DestroyMCFile(file);
-                if (readRes == kMCNoError) {
-                    return closeRes;
-                } else {
-                    return readRes;
-                }
+                return readRes == kMCNoError ? closeRes : readRes;
             }
         }
     }
+    return res;
 }
 
 MCResult MemcardMgr::PerformWrite(MCContainer *container) {
@@ -255,10 +252,7 @@ MCResult MemcardMgr::PerformWrite(MCContainer *container) {
         MCResult writeRes = file->Write(unk34, unk38);
         MCResult closeRes = file->Close();
         container->DestroyMCFile(file);
-        if (writeRes != kMCNoError) {
-            closeRes = writeRes;
-        }
-        return closeRes;
+        return writeRes == kMCNoError ? closeRes : writeRes;
     }
 }
 
