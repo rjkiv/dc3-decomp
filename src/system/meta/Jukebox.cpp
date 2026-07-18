@@ -21,9 +21,10 @@ int Jukebox::Pick(const std::vector<int> &valid_names) {
         auto jit = std::find(mJukeboxItems.begin(), mJukeboxItems.end(), *it);
         if (jit == mJukeboxItems.end()) {
             AddItem(*it, -1);
-            jit = &mJukeboxItems.back();
+            items.push_back(mJukeboxItems.back());
+        } else {
+            items.push_back(*jit);
         }
-        items.push_back(*jit);
     }
     std::random_shuffle(items.begin(), items.end());
     return items[RandomInt(0, items.size())].unk0;
