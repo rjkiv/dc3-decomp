@@ -12,7 +12,6 @@
 #include "ui/UI.h"
 #include "utl/Locale.h"
 #include "xdk/XAPILIB.h"
-#include "xdk/xapilibi/xbase.h"
 
 namespace {
     const char *kSaveFilename = "save.dat";
@@ -113,6 +112,87 @@ void MemcardMgr::ThreadDone(int mcResult) {
     default:
         break;
     }
+}
+
+MCResult MemcardMgr::ThreadCall_SaveGame() {
+    MCContainer *c = mContainers[mPadNum];
+    ULONGLONG size = XContentCalculateSize(unk38 * sizeof(int), 0);
+    u64 i7 = 0;
+    MCResult res = c->Mount(kOsOpenExisting);
+
+    switch (res) {
+    case kMCNoError:
+        if (!unk40) {
+            c->Unmount();
+            res = kMCFileExists;
+        } else {
+            u64 num48 = 0;
+            MCResult mountRes = c->GetPathFreeSpace("", &num48);
+            if (mountRes != kMCNoError || (i7 = num48, unk40)) {
+                int newSize = -1;
+                c->GetSize(kSaveFilename, &newSize);
+                if (newSize > 0) {
+                    if (newSize < size) {
+                        size -= newSize;
+                    } else {
+                        size = 0;
+                    }
+                }
+                goto thing;
+            } else {
+                c->Unmount();
+                res = kMCFileExists;
+            }
+        }
+        break;
+    case kMCCorrupt: {
+        if (unk40) {
+            res = TheMC.DeleteContainer(c->Cid());
+            if (res != kMCNoError) {
+                return res;
+            } else {
+                goto thing;
+            }
+        }
+        break;
+    }
+    thing:
+    case kMCFileNotFound: {
+        u64 freeSpace = 0;
+        res = c->GetDeviceFreeSpace(&freeSpace);
+        if (res == kMCNoError) {
+            if (size > freeSpace + i7) {
+                if (c->IsMounted()) {
+                    c->Unmount();
+                }
+                res = kMCNotEnoughSpace;
+            } else if (c->IsMounted() || (res = c->Mount(kOsOpenAlways)), res == kMCNoError) {
+                MCResult writeRes = PerformWrite(c);
+                res = c->Unmount();
+                if (writeRes != kMCNoError) {
+                    res = writeRes;
+                }
+            }
+        }
+        break;
+    }
+    default:
+        break;
+    }
+    return res;
+}
+
+MCResult MemcardMgr::ThreadCall_LoadGame() {
+    MCContainer *c = mContainers[mPadNum];
+    MCResult res = c->Mount(kOsOpenExisting);
+    if (res == kMCNoError) {
+        MCResult readRes = PerformRead(c);
+        res = c->Unmount();
+        if (readRes != kMCNoError) {
+            res = readRes;
+        }
+    }
+    return res;
 }
 
 bool MemcardMgr::IsStorageDeviceValid(Profile *pProfile) {
@@ -226,12 +306,12 @@ MCResult MemcardMgr::PerformRead(MCContainer *container) {
                     unk38
                 );
             }
-            MCResult openRes = file->Open(kSaveFilename, kAccessRead, (CreateType)0);
+            MCResult openRes = file->Open(kSaveFilename, kAccessRead, kOsOpenExisting);
             if (openRes != kMCNoError) {
                 container->DestroyMCFile(file);
                 return openRes;
             } else {
-                int minSize = Min(size, unk38);
+                int minSize = Min<int>(size, unk38);
                 MCResult readRes = file->Read(unk34, minSize);
                 MCResult closeRes = file->Close();
                 container->DestroyMCFile(file);
@@ -244,7 +324,7 @@ MCResult MemcardMgr::PerformRead(MCContainer *container) {
 
 MCResult MemcardMgr::PerformWrite(MCContainer *container) {
     MCFile *file = container->CreateMCFile();
-    MCResult res = file->Open(kSaveFilename, kAccessWrite, (CreateType)1);
+    MCResult res = file->Open(kSaveFilename, kAccessWrite, kOsOpenAlways);
     if (res != kMCNoError) {
         container->DestroyMCFile(file);
         return res;
@@ -258,10 +338,10 @@ MCResult MemcardMgr::PerformWrite(MCContainer *container) {
 
 MCResult MemcardMgr::ThreadCall_CheckForSaveContainer() {
     MCContainer *container = mContainers[mPadNum];
-    MCResult res = container->Mount((CreateType)0);
+    MCResult res = container->Mount(kOsOpenExisting);
     if (res == kMCNoError) {
         MCFile *file = container->CreateMCFile();
-        MCResult openRes = file->Open(kSaveFilename, kAccessWrite, (CreateType)0);
+        MCResult openRes = file->Open(kSaveFilename, kAccessWrite, kOsOpenExisting);
         container->DestroyMCFile(file);
         res = container->Unmount();
         if (openRes != kMCNoError) {

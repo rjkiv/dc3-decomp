@@ -279,7 +279,7 @@ MCResult MCContainerXbox::MakeDir(const char *cc) {
 
 MCResult MCContainerXbox::GetSize(const char *cc, int *iptr) {
     MCFileXbox *file = new MCFileXbox(this);
-    MCResult res = file->Open(cc, kAccessRead, (CreateType)0);
+    MCResult res = file->Open(cc, kAccessRead, kOsOpenExisting);
     if (res == kMCNoError) {
         res = file->GetSize(iptr);
         file->Close();

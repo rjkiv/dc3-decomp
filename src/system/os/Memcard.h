@@ -10,9 +10,9 @@ enum AccessType {
     kAccessWrite = 1
 };
 enum CreateType {
-    // 0 - open existing
-    // 1 - open always
-    // 2 - create always
+    kOsOpenExisting = 0,
+    kOsOpenAlways = 1,
+    kOsCreateNew = 2,
 };
 enum SeekType {
     kSeekBegin,
