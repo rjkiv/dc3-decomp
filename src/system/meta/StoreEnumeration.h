@@ -20,10 +20,8 @@ enum StoreError {
 };
 
 struct EnumProduct {
-public:
-    EnumProduct(EnumProduct const &);
     String unk0;
-    u64 unk8;
+    QWORD unk8;
     int unk10;
     int unk14;
 };
@@ -45,7 +43,8 @@ public:
     virtual bool IsSuccess() const = 0;
     virtual void Poll() = 0;
 
-    std::list<EnumProduct> mContentList;
+protected:
+    std::list<EnumProduct> mContentList; // 0x4
 };
 
 class XboxEnumeration : public StoreEnumeration {
@@ -57,15 +56,16 @@ public:
     virtual bool IsSuccess() const;
     virtual void Poll();
 
-    XboxEnumeration(int, std::vector<unsigned long long> *);
+    XboxEnumeration(int, std::vector<QWORD> *);
 
+private:
     int mOfferIDCount; // 0xc
-    int *unk10;
-    int *unk14;
-    int unk18;
-    bool unk1c;
-    XOVERLAPPED unk20;
+    QWORD *unk10; // 0x10 - offer IDs
+    QWORD *unk14; // 0x14 - offer ID iterator?
+    int unk18; // 0x18 - padnum?
+    bool mSuccess; // 0x1c
+    XOVERLAPPED mOverlapped; // 0x20
     HANDLE mHandle; // 0x3c
-    DWORD unk40;
-    HANDLE mCurOffers; // 0x44
+    DWORD mBufferSizeBytes; // 0x40
+    HANDLE *mCurOffers; // 0x44 - array of structs of size 0x68 each
 };
