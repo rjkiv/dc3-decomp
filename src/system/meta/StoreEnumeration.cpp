@@ -105,35 +105,4 @@ void XboxEnumeration::Poll() {
 
         mContentList.push_back(product);
     }
-
-    // lVar1 = (longlong)(int)this;
-    // if (*(int *)(this + 0x3c) == 0) {
-    //   return;
-    // }
-    // lVar4 = lVar1 + 0x20;
-    // if (*(int *)(this + 0x20) == 0x3e5) {
-    //   return;
-    // }
-    // local_1198 = 0;
-    // pvVar2 = (void *)XGetOverlappedResult(lVar4,&local_1198,0);
-    // uVar5 = 0;
-    // local_1194 = pvVar2;
-    // if (local_1198 != 0) {
-    //   iVar6 = 0;
-    //   local_11a0 = (uint)(lVar1 + 4);
-    //   do {
-    //     String::String(&SStack_1190);
-    //     puVar7 = (undefined8 *)(iVar6 + *(int *)(this + 0x44));
-    //     WideCharToMultiByte(0,0,*(LPCWSTR *)((int)puVar7 + 0x14),*(int *)(puVar7 +
-    //     2),aCStack_1170,
-    //                         0xff,(LPCSTR)0x0,(LPBOOL)0x0);
-    //     String::operator=(&SStack_1190,aCStack_1170);
-    //     local_1188 = *puVar7;
-    //     local_1180 = *(undefined4 *)(puVar7 + 9);
-    //     local_117c = *(undefined4 *)((int)puVar7 + 100);
-    //     stlpmtx_std::list<>::insert((list<> *)&local_119c,lVar1 +
-    //     4,&local_11a0,&SStack_1190); String::~String(&SStack_1190); uVar5 = uVar5 + 1;
-    //     iVar6 = iVar6 + 0x68;
-    //   } while (uVar5 < local_1198);
-    // }
 }

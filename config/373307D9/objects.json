@@ -1001,8 +1001,8 @@
             "system/net/json-c/arraylist.c": "Matching",
             "system/net/json-c/json_object.c": "Matching",
             "system/net/json-c/json_tokener.c": "NonMatching",
-            "system/net/json-c/linkhash.c": "NonMatching",
-            "system/net/json-c/printbuf.c": "NonMatching"
+            "system/net/json-c/linkhash.c": "Matching",
+            "system/net/json-c/printbuf.c": "Matching"
         }
     },
     "jpeg": {

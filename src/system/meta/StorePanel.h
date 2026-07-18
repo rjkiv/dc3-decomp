@@ -26,7 +26,7 @@ public:
     virtual void Enter();
     virtual void Exit();
     virtual bool Exiting() const;
-    virtual bool Unloading() const; //
+    virtual bool Unloading() const;
     virtual void Poll();
     virtual bool IsLoaded() const;
     virtual void Unload();
@@ -35,7 +35,7 @@ public:
     virtual Profile *StoreProfile() const = 0;
     virtual StoreOffer *MakeNewOffer(DataArray *) = 0;
     virtual StoreOffer *FindOffer(Symbol) const = 0;
-    virtual bool EnumerateSubsetOfOfferIDs() const { return 0; };
+    virtual bool EnumerateSubsetOfOfferIDs() const { return false; };
     virtual void
     GetOfferIDsToEnumerate(std::vector<unsigned long long> &, bool) const = 0;
     virtual void LoadArt(char const *, UIPanel *);
