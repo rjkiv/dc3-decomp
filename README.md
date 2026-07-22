@@ -93,6 +93,12 @@ Questions?
 ==========
 Please see [the FAQ](docs/FAQ.md).
 
+Can I use AI?
+=============
+The short answer: If you intend to throw this decomp at a series of agents and let them run wild instead of learning the general decomp process, or at least trying a function or two manually by yourself first, this is not the project for you.
+
+The long answer: see [here](docs/CONTRIBUTING.md#using-ai)
+
 Want to contribute?
 ===================
 If you are interested in contributing, please see [the CONTRIBUTING walkthrough and guidelines](docs/CONTRIBUTING.md).

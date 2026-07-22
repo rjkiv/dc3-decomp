@@ -85,7 +85,7 @@ just try and follow what surrounding code does.
 ## Using AI
 Let's get this out of the way right now: I am not completely against the usage of AI. In fact, I'd argue one of its better uses is as a permuter for close-to-100% functions. But with that all being said, if you are going to use an LLM to decomp, there are some things to keep in mind:
 
-- First and foremost, **AI is NOT a substitute for familiarizing yourself with the workflow**. In our experience, while AI does have the potential to get things right, it also frequently generates code that a human would be unlikely to write (i.e. pointer offsets), and we spend more time having to review the poor quality AI code than we would an entirely human PR submission. If you intend to use an LLM instead of learning the general decomp process, or at least trying a function or two manually by yourself first, this is not the project for you.
+- First and foremost, **AI is NOT a substitute for familiarizing yourself with the workflow**. In our experience, while AI does have the potential to get things right, it also frequently generates code that a human would be unlikely to write (i.e. pointer offsets), and we spend more time having to review the poor quality AI code than we would an entirely human PR submission. If you intend to throw this decomp at a series of agents and let them run wild instead of learning the general decomp process, or at least trying a function or two manually by yourself first, this is not the project for you.
 - You must also keep in mind: the AI can NOT reference leaked material. We are trying to keep this decomp as clean room as possible. For this reason, it would be best to use an offline or local LLM.
 - You must disclose your usage of AI in your contribution.
 
