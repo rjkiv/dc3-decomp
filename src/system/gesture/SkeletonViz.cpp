@@ -216,3 +216,21 @@ void SkeletonViz::DrawLine3D(
     mUtlLine->DrawShowing();
     mUtlLine->SetMat(mat);
 }
+
+void SkeletonViz::Poll() {
+    if (mPhysicalCamRotation < unk110) {
+        mPhysicalCamRotation += TheTaskMgr.DeltaUISeconds() * 120.0f;
+        if (mPhysicalCamRotation <= unk110) {
+            return;
+        }
+    } else {
+        if (mPhysicalCamRotation <= unk110) {
+            return;
+        }
+        mPhysicalCamRotation -= TheTaskMgr.DeltaUISeconds() * 120.0f;
+        if (mPhysicalCamRotation >= unk110) {
+            return;
+        }
+    }
+    mPhysicalCamRotation = unk110;
+}

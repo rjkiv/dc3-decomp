@@ -284,7 +284,7 @@
             "system/gesture/ArchiveSkeleton.cpp": "Matching",
             "system/gesture/BaseSkeleton.cpp": "NonMatching",
             "system/gesture/CameraInput.cpp": "Matching",
-            "system/gesture/CameraTilt.cpp": "NonMatching",
+            "system/gesture/CameraTilt.cpp": "Matching",
             "system/gesture/DepthBuffer3D.cpp": "NonMatching",
             "system/gesture/DirectionGestureFilter.cpp": "NonMatching",
             "system/gesture/DrawUtl.cpp": "NonMatching",

@@ -34,6 +34,7 @@ protected:
     bool PushExpertClip(int, HamDriver::LayerArray *);
     CharClip *GetTransitionBefore(Key<Symbol> *);
     CharClip *GetRoutineTransition(const char *, Key<Symbol> *);
+    CharClip *GetPrevRoutineTransition(int);
     void GetRoutineCrossoverClips(float, const char *, CharClip **, CharClip **);
     bool PushRoutineBuilderClip(int, HamDriver::LayerArray *);
     void PushClip(int, HamDriver::LayerArray *);

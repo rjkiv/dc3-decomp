@@ -163,6 +163,7 @@ public:
     const Hmx::Color &GetClearColor() const { return mClearColor; }
     bool InGame() const { return mInGame; }
     bool Drawing() const { return mDrawing; }
+    RndTex *GetDefaultTex(int idx) { return mDefaultTex[idx]; }
     void ShowConsole(bool);
     bool ConsoleShowing();
     void EndWorld();

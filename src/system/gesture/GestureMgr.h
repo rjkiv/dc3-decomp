@@ -108,6 +108,9 @@ public:
     void SetActiveSkeletonTrackingID(int id) { mActiveSkelTrackingID = id; }
     void SetUnk30AtPos(int idx, int val) { unk30[idx] = val; }
     int ActiveSkeletonTrackingId() const { return mActiveSkelTrackingID; }
+    static float MaxRecoveryDistance() { return sMaxRecoveryDistance; }
+    static float MinRecoveryTime() { return sMinRecoveryTime; }
+    static float MaxRecoveryTime() { return sMaxRecoveryTime; }
 
     static bool sIdentityOpInProgress;
     static void Init();

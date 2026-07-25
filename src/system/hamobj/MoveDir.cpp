@@ -27,6 +27,8 @@
 #include "hamobj/MoveDetector.h"
 #include "hamobj/PracticeSection.h"
 #include "hamobj/ScoreUtl.h"
+#include "math/Geo.h"
+#include "math/Vec.h"
 #include "meta/SongMetadata.h"
 #include "meta/SongMgr.h"
 #include "obj/Data.h"
@@ -56,6 +58,7 @@
 #include "utl/BinStream.h"
 #include "utl/FilePath.h"
 #include "utl/Loader.h"
+#include "utl/MakeString.h"
 #include "utl/SongInfoCopy.h"
 #include "utl/Std.h"
 #include "utl/Symbol.h"
@@ -64,6 +67,7 @@
 #include "xdk/XAPILIB.h"
 
 std::vector<FilterVersion *> MoveDir::sFilterVersions;
+static float sFloat = 0.0f;
 
 namespace {
     static Hmx::Color sGray(0.5, 0.5, 0.5, 1);
@@ -83,7 +87,27 @@ namespace {
 
     float DrawDetectedBar(float, const char *, float, float, float, bool, bool);
     void DrawBeatLine(float, float, float, const Hmx::Color &);
-    float DrawPlayClip(float, SkeletonClip *, int);
+
+    float DrawPlayClip(float f, SkeletonClip *clip, int bar) {
+        MILO_ASSERT(clip, 0x762);
+        String clipName = clip->Name();
+        if (bar < clip->NumMoveRatings()) {
+            auto &rating = clip->GetMoveRating(bar);
+            clipName += MakeString(
+                " (bar %i: expected=%s)",
+                bar,
+                rating.mExpected.Null() ? "<none>" : rating.mExpected
+            );
+        } else {
+            clipName += " (no rating overrides)";
+        }
+        Hmx::Rect rect(0.01f, f, 0.9f, sFloat);
+        TheRnd.DrawRectScreen(rect, sDarkGray, nullptr, nullptr, nullptr);
+        const Vector2 &stringScreen = TheRnd.DrawStringScreen(
+            clipName.c_str(), Vector2(0.01f, f), sLightGray, true
+        );
+        return stringScreen.y;
+    }
 
 }
 

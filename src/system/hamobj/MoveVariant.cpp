@@ -219,10 +219,12 @@ bool MoveVariant::IsRest() const {
     static Symbol groove("groove");
     if (mHamMoveName == Rest || mHamMoveName == rest || mHamMoveName == groove)
         return true;
-    else {
-        String move = mHamMoveName.Str();
-        return move.contains("finish");
+
+    String move = mHamMoveName.Str();
+    if (move.contains("finish")) {
+        return true;
     }
+    return false;
 }
 
 void MoveVariant::CacheLinks(MoveGraph *graph) {
@@ -274,14 +276,16 @@ void MoveVariant::Load(BinStream &bs, MoveGraph *graph, MoveParent *parent) {
 
     unsigned int numCandidates;
     bs >> numCandidates;
-    mPrevCandidates.resize(numCandidates);
+    auto &prevCandidates = mPrevCandidates;
+    prevCandidates.resize(numCandidates);
     for (int i = 0; i < numCandidates; i++) {
         mPrevCandidates[i].Load(bs);
     }
     bs >> numCandidates;
-    mNextCandidates.resize(numCandidates);
+    auto &nextCandidates = mNextCandidates;
+    nextCandidates.resize(numCandidates);
     for (int i = 0; i < numCandidates; i++) {
-        mNextCandidates[i].Load(bs);
+        nextCandidates[i].Load(bs);
     }
     graph->mMoveVariants[mVariantName] = this;
 }

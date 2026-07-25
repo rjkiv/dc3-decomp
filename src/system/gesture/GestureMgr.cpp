@@ -299,6 +299,17 @@ int GestureMgr::GetPlayerFilteredSkeletonID(int playerIndex, bool b2) {
     return id;
 }
 
+int GestureMgr::GetSecondarySkeletonIndex(bool b) const {
+    for (int i = 0; i < 6; i++) {
+        if (i != GetActiveSkeletonIndex() && GetSkeleton(i).IsTracked()) {
+            if (!b || GetSkeleton(i).IsValid()) {
+                return i;
+            }
+        }
+    }
+    return -1;
+}
+
 DataNode GestureMgr::OnMsg(const KinectHardwareStatusMsg &msg) {
     if (msg->Int(2) == 1) {
         MILO_ASSERT(mLiveCamInput, 0x21B);

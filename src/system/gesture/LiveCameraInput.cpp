@@ -4,12 +4,14 @@
 #include "gesture/Skeleton.h"
 #include "gesture/SkeletonUpdate.h"
 #include "gesture/SpeechMgr.h"
+#include "macros.h"
 #include "math/Utl.h"
 #include "obj/Data.h"
 #include "obj/DataFunc.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/File.h"
+#include "os/Memory.h"
 #include "os/System.h"
 #include "rnddx9/Rnd.h"
 #include "rnddx9/Tex.h"
@@ -32,6 +34,7 @@
 #include "xdk/win_types.h"
 #include "xdk/xapilibi/handleapi.h"
 #include "xdk/xapilibi/winerror.h"
+#include "xdk/xapilibi/xbox.h"
 #include <cstring>
 
 int g_colorBufferUpdate1;
@@ -39,6 +42,9 @@ int g_colorBufferUpdate2;
 
 namespace {
     bool gDebugDepth;
+    const int mWidth = 320;
+    const int mHeight = 240;
+    const int mBpp = 16;
 
     bool GetExposureRegion(struct _NUI_CAMERA_AE_ROI &cam) {
         static Symbol kinect("kinect");
@@ -72,7 +78,41 @@ namespace {
         }
     }
 
-    void LoadDebugDepthBuffer(class RndTex *&tex);
+    void LoadDebugDepthBuffer(class RndTex *&tex) {
+        tex = nullptr;
+        FileLoader loader(
+            FilePath("../../system/run/gesture/dev_depth.data"),
+            "../../system/run/gesture/dev_depth.data",
+            kLoadFront,
+            0,
+            false,
+            true,
+            nullptr,
+            nullptr
+        );
+        TheLoadMgr.PollUntilLoaded(&loader, nullptr);
+        int sz;
+        char *buf = loader.GetBuffer(&sz);
+        if (sz) {
+            MILO_ASSERT(sz == mWidth * mHeight * mBpp / 8, 0x5a);
+            DxTex *dtex = Hmx::Object::New<DxTex>();
+            D3DTexture *d3Tex = new D3DTexture;
+            DWORD header = XGSetTextureHeader(
+                mWidth, mHeight, 1, 4, D3DFMT_LIN_D16, 0, 0, -1, 0, d3Tex, 0, 0
+            );
+            header = header + 0xfffU & 0xfffff000;
+            void *ptr = PhysicalAllocTracked(header, 4, __FILE__, 0x66, "Tex(phys)");
+            MILO_ASSERT(ptr, 0x67);
+            XGOffsetResourceAddress(d3Tex, ptr);
+            dtex->SetDeviceTex(d3Tex);
+            void *texels;
+            dtex->TexelsLock(texels);
+            memcpy(texels, buf, sz);
+            dtex->TexelsUnlock();
+            tex = dtex;
+        }
+        MemFree(buf);
+    }
 }
 
 void CameraDump(const char *c) {
@@ -429,8 +469,13 @@ void LiveCameraInput::InitTextureStore(int max) {
 
 void LiveCameraInput::ClearTextureStore() {
     for (int i = 0; i < mTextureStore.size(); i++) {
-        RELEASE(mTextureStore[i].mTex);
+        TextureStore &cur = mTextureStore[i];
+        if (cur.mTex) {
+            RELEASE(cur.mTex);
+        }
+        cur.mTex = nullptr;
     }
+
     mTextureStore.clear();
     mTextureStore.resize(mMaxTextures);
     mNumStoredTextures = 0;
