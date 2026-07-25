@@ -6,6 +6,7 @@
 #include "rndobj/Mat.h"
 #include "rndobj/Tex.h"
 #include "xdk/NUI.h"
+#include "xdk/nui/nuidetroit.h"
 
 struct CamTexClip {
     void StoreTextureClip(RndTex *, float, float, float, float);
@@ -39,6 +40,7 @@ public:
     };
     class TextureStore {
     public:
+        TextureStore() : mTex(0) {}
         ~TextureStore() { RELEASE(mTex); }
         void StoreTexture(RndTex *);
         void StoreColorBuffer(LiveCameraInput *);

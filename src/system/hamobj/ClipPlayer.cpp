@@ -105,7 +105,7 @@ namespace {
 
         start = beat - offset;
         end = clip->EndBeat() - clip->StartBeat() + start;
-        
+
         return clip->StartBeat() + offset;
     }
 }

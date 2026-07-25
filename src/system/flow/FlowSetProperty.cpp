@@ -71,9 +71,10 @@ PropertyTask::PropertyTask(
 PropertyTask::~PropertyTask() {}
 
 bool PropertyTask::Replace(ObjRef *from, Hmx::Object *to) {
-    if (from == &unk2c) {
-        unk2c = to;
-        if (!unk2c) {
+    auto &ref = unk2c;
+    if (from == static_cast<ObjRef *>(&ref)) {
+        ref = to;
+        if (!ref) {
             delete this;
         }
         return true;
@@ -451,21 +452,23 @@ void FlowSetProperty::OnTargetChanged(void) {
 }
 
 bool FlowSetProperty::IsBlendable(void) {
-    if (mTarget == nullptr)
-        return false;
-    if (!mPropPath.NotNull())
-        return false;
-    const DataNode *props = mTarget->Property(mPropPath.Array(), false);
-    if (props == nullptr)
-        return false;
-    if (props->Type() == kDataInt || props->Type() == kDataFloat)
-        return true;
-    DrivenPropertyEntry *dpe = GetDrivenEntry("value");
-    if (dpe == nullptr)
-        return false;
-    if (dpe->Empty())
-        return false;
-    return true;
+    if (mTarget) {
+        if (mPropPath.NotNull()) {
+            const DataNode *props = mTarget->Property(mPropPath.Array(), false);
+            if (props) {
+                if (props->Type() == kDataInt || props->Type() == kDataFloat) {
+                    return true;
+                }
+                DrivenPropertyEntry *dpe = GetDrivenEntry("value");
+                if (dpe) {
+                    if (!dpe->Empty()) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
 }
 
 void FlowSetProperty::ReActivate() {

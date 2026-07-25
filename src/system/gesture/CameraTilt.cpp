@@ -542,7 +542,7 @@ void CameraTilt::Poll() {
         break;
     case 12:
         if (unk60 > mDelayBetweenStates) {
-            unk70 = 12;
+            unk70 = 13;
             unk60 = 0;
         }
         break;
@@ -551,7 +551,7 @@ void CameraTilt::Poll() {
         break;
     case 14:
         if (unk60 > mDelayBetweenRetry) {
-            unk70 = 12;
+            unk70 = 13;
             unk60 = 0;
         }
         break;
@@ -569,11 +569,8 @@ void CameraTilt::Poll() {
             }
         }
         break;
-    default:
-        break;
     }
-    mTimer.Stop();
-    unk60 = mTimer.Ms();
+    unk60 += Timer::CyclesToMs(mTimer.Stop());
     mTimer.Start();
 }
 

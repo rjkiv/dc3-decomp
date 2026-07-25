@@ -1,20 +1,51 @@
 #include "gesture/StreamRenderer.h"
+#include "gesture/BaseSkeleton.h"
 #include "gesture/GestureMgr.h"
+#include "gesture/LiveCameraInput.h"
 #include "hamobj/HamGameData.h"
 #include "math/Color.h"
+#include "math/Vec.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
+#include "obj/Task.h"
 #include "os/Debug.h"
+#include "rnddx9/Rnd.h"
 #include "rndobj/Cam.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Rnd.h"
 #include "rndobj/ShaderOptions.h"
 #include "rndobj/Tex.h"
 #include "rndobj/Utl.h"
+#include <cstddef>
 
 RndCam *StreamRenderer::mCam;
 RndTex *StreamRenderer::mBlurRT[2];
+
+namespace {
+    bool CheckTexType(RndTex *tex) {
+        MILO_ASSERT(tex, 0x45);
+
+        if ((tex->GetType() & 2) == 0) {
+            MILO_NOTIFY_ONCE("%s not renderable", tex->Name());
+            return false;
+        }
+        return true;
+    }
+
+    RndTex *SetPaletteTexture(RndTex *tex, enum StreamDisplay display) {
+        if (tex) {
+            return tex;
+        }
+        if ((((display != kStreamPlayerDepthShell)
+              && (display != kStreamPlayerDepthShell2))
+             && (display != kStreamPlayerGreenscreen))
+            && (display != kStreamPlayerDepthGreenscreen)) {
+            return TheRnd.GetDefaultTex(1);
+        }
+        return TheRnd.GetDefaultTex(2);
+    }
+};
 
 StreamRenderer::StreamRenderer()
     : mOutputTex(this), mForceMips(false), mDisplay(kStreamColor), mNumBlurs(4),
@@ -137,7 +168,7 @@ BEGIN_SAVES(StreamRenderer)
     bs << mPlayerOtherDepthPalette << mPlayerOtherDepthPaletteOffset;
     bs << mDrawPreClear << mForceDraw;
     bs << mLagPrimaryTexture;
-    bs << mPlayer1DepthColor << mPlayer2DepthColor << mPlayer3DepthColor;
+    bs << mPlayer4DepthColor << mPlayer5DepthColor << mPlayer6DepthColor;
     bs << mStaticColorIndices;
     bs << mCrewPhotoEdgeIterations;
     bs << mCrewPhotoEdgeOffset;

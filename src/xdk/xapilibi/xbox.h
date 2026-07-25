@@ -2,6 +2,8 @@
 #include "../win_types.h"
 #include "minwinbase.h"
 #include "wtypesbase.h"
+#include "xdk/d3d9i/d3d9.h"
+#include "xdk/d3d9i/d3d9types.h"
 #include "xinput.h"
 #include "xbase.h"
 
@@ -213,6 +215,21 @@ DWORD XUserSetPropertyEx(
     XOVERLAPPED *pOverlapped
 );
 DWORD XShowGamerCardUI(DWORD dwUserIndex, XUID XuidPlayer);
+void XGOffsetResourceAddress(D3DResource *pResource, void *pBaseAddress);
+DWORD XGSetTextureHeader(
+    DWORD Width,
+    DWORD height,
+    DWORD Levels,
+    DWORD Usage,
+    D3DFORMAT Format,
+    DWORD Pool,
+    DWORD BaseOffset,
+    DWORD MipOffset,
+    DWORD Pitch,
+    D3DTexture *pTexture,
+    DWORD *pBaseSize,
+    DWORD *pMipSize
+);
 
 #ifdef __cplusplus
 }

@@ -71,7 +71,7 @@ BEGIN_COPYS(FlowSound)
     CREATE_COPY_AS(FlowSound, c)
     BEGIN_COPYING_MEMBERS_FROM(c)
         COPY_MEMBER(mImmediateRelease)
-        // something with mSound here
+        COPY_MEMBER(mSound)
         COPY_MEMBER(mVolume)
         COPY_MEMBER(mPan)
         COPY_MEMBER(mTranspose)

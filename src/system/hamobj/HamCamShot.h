@@ -1,5 +1,6 @@
 #pragma once
 #include "char/Character.h"
+#include "hamobj/HamCharacter.h"
 #include "math/Mtx.h"
 #include "math/Vec.h"
 #include "obj/Data.h"
@@ -174,3 +175,5 @@ protected:
     std::vector<RndDrawable *> unk37c; // 0x37c
     bool unk388; // 0x388
 };
+
+HamCharacter *CharacterNameToCharacter(Symbol);

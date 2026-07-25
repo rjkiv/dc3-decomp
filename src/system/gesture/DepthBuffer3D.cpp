@@ -1,9 +1,11 @@
 #include "gesture/DepthBuffer3D.h"
 #include "gesture/BaseSkeleton.h"
 #include "gesture/GestureMgr.h"
+#include "gesture/JointUtl.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/RhythmDetector.h"
 #include "math/Mtx.h"
+#include "math/Vec.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "rnddx9/Rnd.h"
@@ -11,6 +13,7 @@
 #include "rndobj/Rnd_NG.h"
 #include "rndobj/Tex.h"
 #include "rndobj/Trans.h"
+#include <list>
 
 LargeQuadRenderData DepthBuffer3D::mQuad;
 
@@ -68,6 +71,32 @@ BEGIN_PROPSYNCS(DepthBuffer3D)
     SYNC_SUPERCLASS(RndTransformable)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
+
+BEGIN_COPYS(DepthBuffer3D)
+    COPY_SUPERCLASS(Hmx::Object)
+    COPY_SUPERCLASS(RndDrawable)
+    COPY_SUPERCLASS(RndTransformable)
+    CREATE_COPY(DepthBuffer3D)
+    BEGIN_COPYING_MEMBERS
+        COPY_MEMBER(mNobodyColor)
+        COPY_MEMBER(mPlayerPalette)
+        COPY_MEMBER(mPlayerPaletteOffset)
+        COPY_MEMBER(mPlayerPaletteScale)
+        COPY_MEMBER(mMinimalMat)
+        COPY_MEMBER(mDrawSheet)
+        COPY_MEMBER(mMesh)
+        COPY_MEMBER(mStretchNearCamera)
+        COPY_MEMBER(mOpacity)
+        COPY_MEMBER(mDrawPlayer1)
+        COPY_MEMBER(mDrawPlayer2)
+        COPY_MEMBER(mDrawNonPlayers)
+        COPY_MEMBER(mTile)
+        COPY_MEMBER(mScaleVoxel)
+        COPY_MEMBER(mScaleVoxelGap)
+        COPY_MEMBER(mFishEyeX)
+        COPY_MEMBER(mFishEyeY)
+    END_COPYING_MEMBERS
+END_COPYS
 
 void DepthBuffer3D::Init() {
     REGISTER_OBJ_FACTORY(DepthBuffer3D);
@@ -144,4 +173,10 @@ void DepthBuffer3D::SetGrooviness(RhythmDetector *r1, RhythmDetector *r2) {
 void DepthBuffer3D::ForceDrawSkeletonIndex(int i1, bool b2) {
     unk184 = i1;
     unk188 = b2;
+}
+
+void DepthBuffer3D::ListDrawChildren(std::list<RndDrawable *> &list) {
+    if (mMesh) {
+        list.push_back(mMesh);
+    }
 }

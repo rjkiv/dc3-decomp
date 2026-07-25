@@ -58,7 +58,7 @@ float Rand::Gaussian() {
                 f5 = f2 * f2 + f3 * f3;
             } while (f5 >= 1.0f);
         } while (0 == f5);
-        f5 = sqrtf((-2.0f * logf(f5)) / f5);
+        f5 = sqrtf(-2.0f * logf(f5) / f5);
         mSpareGaussianValue = f2 * f5;
         mSpareGaussianAvailable = true;
         return f3 * f5;
