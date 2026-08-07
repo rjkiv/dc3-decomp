@@ -101,7 +101,8 @@ public:
     static void NuiAudioDataCallback(NUIAUDIO_RESULTS *);
     static LiveCameraInput *sInstance;
 
-    bool Unk11EA() { return unk11ea; }
+    bool Unk11E9() const { return unk11e9; }
+    bool Unk11EA() const { return unk11ea; }
 
 protected:
     LiveCameraInput();

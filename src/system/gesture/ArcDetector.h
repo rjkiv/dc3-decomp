@@ -27,6 +27,8 @@ private:
     float GetPathError() const;
     void SwipeFailed(const Skeleton &);
     void CullPath();
+    void DrawPath(std::list<Vector3>, SkeletonViz &, Hmx::Color, const Vector3 &) const;
+    bool IsPathAcceptable() const;
 
     static float _swipeRetentionFactor;
     static float _acceptablePathErrorRatio;
@@ -43,5 +45,5 @@ private:
     bool unk35;
     float unk38;
     int unk3c;
-    Vector3 unk40;
+    Vector3 unk40; // last frame hand pos?
 };

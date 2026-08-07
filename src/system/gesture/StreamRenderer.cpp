@@ -1,28 +1,28 @@
 #include "gesture/StreamRenderer.h"
-#include "gesture/BaseSkeleton.h"
 #include "gesture/GestureMgr.h"
 #include "gesture/LiveCameraInput.h"
 #include "hamobj/HamGameData.h"
 #include "math/Color.h"
-#include "math/Vec.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
-#include "obj/Task.h"
 #include "os/Debug.h"
 #include "rnddx9/Rnd.h"
 #include "rndobj/Cam.h"
 #include "rndobj/Draw.h"
+#include "rndobj/RenderState.h"
 #include "rndobj/Rnd.h"
+#include "rndobj/ShaderMgr.h"
 #include "rndobj/ShaderOptions.h"
 #include "rndobj/Tex.h"
 #include "rndobj/Utl.h"
-#include <cstddef>
 
 RndCam *StreamRenderer::mCam;
 RndTex *StreamRenderer::mBlurRT[2];
 
 namespace {
+    int *DisplayStreams;
+
     bool CheckTexType(RndTex *tex) {
         MILO_ASSERT(tex, 0x45);
 
@@ -415,4 +415,75 @@ void StreamRenderer::SetCrewPhotoPlayerDetected(int player, bool b2) {
     default:
         break;
     }
+}
+
+void StreamRenderer::DrawToTexture() {
+    if (TheRnd.DrawMode() != Rnd::kDrawNormal)
+        return;
+    if (!Showing())
+        return;
+    if (mLagPrimaryTexture && mLaggedPrimaryTexture[0] == NULL) {
+        MILO_ASSERT(mLaggedPrimaryTexture[1] == NULL, 245);
+        mLaggedPrimaryTexture[0] = New<RndTex>();
+        mLaggedPrimaryTexture[0]->SetBitmap(
+            320, 240, 16, RndTex::kRegularLinear, false, nullptr
+        );
+        mLaggedPrimaryTexture[1] = New<RndTex>();
+        mLaggedPrimaryTexture[1]->SetBitmap(
+            320, 240, 16, RndTex::kRegularLinear, false, nullptr
+        );
+    }
+    if (mOutputTex == nullptr)
+        return;
+    TheDxRnd.SetShaderRegisterAlloc(static_cast<DxRnd::RegisterAlloc>(3));
+    LiveCameraInput *cam = TheGestureMgr->GetLiveCameraInput();
+    int stream = DisplayStreams[mDisplay];
+    int stream_wat = (stream & 2) >> 1;
+    if (stream & 1 && !cam->Unk11EA()) {
+        cam->PollNewStream(LiveCameraInput::kBufferDepth);
+    } else if ((stream_wat & 0xff) != 0 && !cam->Unk11E9()) {
+        cam->PollNewStream(LiveCameraInput::kBufferColor);
+    }
+
+    // 0x254
+    const RndTex *cam_tex = RndCam::Current()->TargetTex();
+    if (cam_tex != nullptr) {
+        MILO_NOTIFY_ONCE(
+            "%s: Cannot render to texture (%s) while already rendering to texture (%s).",
+            PathName(cam_tex),
+            PathName(this),
+            PathName(cam_tex)
+        );
+    }
+    mCam->SetTargetTex(nullptr);
+
+    // 0x390
+    TheRenderState.SetTextureFilter(0, RndRenderState::kFilterModePoint, false);
+    TheRenderState.SetTextureClamp(0, RndRenderState::kClampModeClamp);
+    RndTex *pal = SetPaletteTexture(mPlayer1DepthPalette, mDisplay);
+    TheShaderMgr.SetPConstant(static_cast<PShaderConstant>(10), pal);
+
+    TheRenderState.SetTextureFilter(10, RndRenderState::kFilterModeLinear, false);
+    TheRenderState.SetTextureClamp(10, RndRenderState::kClampModeWrap);
+    pal = SetPaletteTexture(mPlayer2DepthPalette, mDisplay);
+    TheShaderMgr.SetPConstant(static_cast<PShaderConstant>(12), pal);
+
+    TheRenderState.SetTextureFilter(12, RndRenderState::kFilterModeLinear, false);
+    TheRenderState.SetTextureClamp(12, RndRenderState::kClampModeWrap);
+    pal = SetPaletteTexture(mPlayerOtherDepthPalette, mDisplay);
+    TheShaderMgr.SetPConstant(static_cast<PShaderConstant>(14), pal);
+
+    TheRenderState.SetTextureFilter(14, RndRenderState::kFilterModeLinear, false);
+    TheRenderState.SetTextureClamp(14, RndRenderState::kClampModeWrap);
+    pal = SetPaletteTexture(mPlayerOtherDepthPalette, mDisplay);
+    TheShaderMgr.SetPConstant(static_cast<PShaderConstant>(11), pal);
+
+    TheRenderState.SetTextureFilter(11, RndRenderState::kFilterModeLinear, false);
+    TheRenderState.SetTextureClamp(11, RndRenderState::kClampModeWrap);
+    Vector4 v4;
+    v4.x = mPlayerDepthNobody.red;
+    v4.y = mPlayerDepthNobody.green;
+    v4.z = mPlayerDepthNobody.blue;
+    v4.w = mPlayerDepthNobody.alpha;
+    TheShaderMgr.SetPConstant(static_cast<PShaderConstant>(64), v4);
 }
