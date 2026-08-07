@@ -42,9 +42,9 @@ public:
     };
     // basically D3DTEXTUREFILTERTYPE
     enum FilterMode {
-        kFilterModeNone = 0x0002,
         kFilterModePoint = 0x0000,
         kFilterModeLinear = 0x0001,
+        kFilterModeNone = 0x0002,
         kFilterModeAnisotropic = 0x0004,
     };
     // basically D3DTEXTUREADDRESS

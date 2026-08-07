@@ -895,8 +895,8 @@ extern DataArray *SystemConfig(Symbol, Symbol, Symbol);
 
 // BEGIN LOAD MACROS  --------------------------------------------------------------------
 #define INIT_REVS(rev, alt)                                                              \
-    static const __declspec(align(4)) unsigned short gRev = rev;                         \
-    static const __declspec(align(4)) unsigned short gAltRev = alt;
+    static const ALIGN(4) unsigned short gRev = rev;                                     \
+    static const ALIGN(4) unsigned short gAltRev = alt;
 
 #define BEGIN_LOADS(objType) void objType::Load(BinStream &bs) {
 #define LOAD_REVS(bs)                                                                    \

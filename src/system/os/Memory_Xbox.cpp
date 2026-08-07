@@ -101,7 +101,64 @@ namespace {
         }
     }
 
-    int AllocAlign(DWORD);
+    int AllocAlign(DWORD siz) {
+        DWORD siz_b8t12 = (siz >> 24) & 0xF;
+        if (siz & 0x80000000) {
+            switch (siz_b8t12) {
+            case 2:
+                return 4;
+            case 3:
+                return 8;
+            case 4:
+                return 0x10;
+            case 5:
+                return 0x20;
+            case 6:
+                return 0x40;
+            case 7:
+                return 0x80;
+            case 8:
+                return 0x100;
+            case 9:
+                return 0x200;
+            case 10:
+                return 0x400;
+            case 11:
+                return 0x800;
+            case 0:
+            case 12:
+                return 0x1000;
+            case 13:
+                return 0x2000;
+            case 14:
+                return 0x4000;
+            case 15:
+                return 0x8000;
+            default: {
+                MILO_FAIL("Invalid physical alignment (%d)", siz_b8t12);
+                return 0;
+            } break;
+            }
+        } else {
+            switch (siz_b8t12) {
+            case 0: {
+                return 0x10;
+            } break;
+            case 1:
+            case 2: {
+                return 8;
+            } break;
+            case 4: {
+                return 0x10;
+            } break;
+            default: {
+                MILO_FAIL("Invalid heap alignment (%d)", siz_b8t12);
+                return 0;
+            } break;
+            }
+        }
+        return 0;
+    }
 
     void MemAllocFailed(unsigned long requestedBytes, bool physical) {
         MEMORYSTATUS status;
@@ -195,18 +252,18 @@ int ForceLinkXMemFuncs() { return 0x2A; }
 
 VOID *XMemAlloc(SIZE_T dwSize, DWORD dwAllocAttributes) {
     VOID *ptr;
-    BOOL memType = Attr(dwAllocAttributes).dwMemoryType;
-    if (!memType && (dwAllocAttributes & 0xFF0000) != 0x8C0000) {
-        MILO_ASSERT(Attr(dwAllocAttributes).dwMemoryProtect == XALLOC_MEMPROTECT_READWRITE, 0xF9);
+    DWORD dwMemoryType = dwAllocAttributes & 0x80000000;
+    if (dwMemoryType == 0 && (dwAllocAttributes & 0xFF0000) != 0x8C0000) {
+        MILO_ASSERT(Attr(dwAllocAttributes).dwMemoryProtect == XALLOC_MEMPROTECT_READWRITE, 249);
         ptr = _MemAllocTemp(
             dwSize,
             __FILE__,
-            0x107,
+            263,
             AllocType(dwAllocAttributes),
             AllocAlign(dwAllocAttributes)
         );
         if (dwAllocAttributes & 0x4000) {
-            MILO_ASSERT(ptr, 0x10D);
+            MILO_ASSERT(ptr, 269);
         }
         if (Attr(dwAllocAttributes).dwZeroInitialize && ptr) {
             memset(ptr, 0, dwSize);
@@ -214,12 +271,12 @@ VOID *XMemAlloc(SIZE_T dwSize, DWORD dwAllocAttributes) {
     } else {
         ptr = XMemAllocDefault(dwSize, dwAllocAttributes);
         if (!ptr) {
-            MemAllocFailed(dwSize, memType);
+            MemAllocFailed(dwSize, dwMemoryType);
         }
         int sizeDefault = XMemSizeDefault(ptr, dwAllocAttributes);
         gPhysicalUsage += sizeDefault;
         MemTrackAlloc(
-            dwSize, sizeDefault, AllocType(dwAllocAttributes), ptr, false, 0, __FILE__, 0xF0
+            dwSize, sizeDefault, AllocType(dwAllocAttributes), ptr, false, 0, __FILE__, 240
         );
     }
     return ptr;

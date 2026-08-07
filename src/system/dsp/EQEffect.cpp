@@ -5,6 +5,23 @@
 #include "xdk/xaudio2/xaudio2.h"
 #include <cstring>
 
+void EQEffect::Process(float *samples, int sampct, int numChans) {
+    if (unk2c != 0.0f) {
+        MILO_ASSERT(numChans <= 2, 120);
+        if (numChans <= 0)
+            return;
+        for (int i = 0; i < sampct; i++) {
+        }
+        return;
+    } else {
+        MILO_ASSERT(numChans <= 2, 217);
+        if (numChans <= 0)
+            return;
+        for (int i = 0; i < numChans; i++) {
+        }
+    }
+}
+
 void EQEffect::SetParameter(int idx, float val) {
     bool dirty29 = false, dirty30 = false, dirty28 = false, dirty27 = false,
          dirty26 = false, dirty25 = false;
@@ -288,4 +305,21 @@ void EQEffect::SetParameters(const EQEffect::Params &params) {
     SetParameter(10, params.highPassReso);
     SetParameter(11, params.lrMode);
     SetParameter(12, params.transitionTime);
+}
+
+void EQEffect::Reset() {
+    unkc8 = unkc0 = 0.0f;
+    for (int i = 0; i < 2; i++) {
+    }
+    unk44 = unk40;
+    unk64 = unk60;
+    unk80 = unk7c;
+    unk4c = unk48;
+    unk6c = unk68;
+    unk88 = unk84;
+    if (unk30 != 0.0f) {
+        unk34 = powf(0.368, 1.0f / (unk30 * 48.0f));
+    } else {
+        unk34 = 1.0f;
+    }
 }
