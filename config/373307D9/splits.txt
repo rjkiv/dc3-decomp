@@ -37,6 +37,9 @@ xdk/XBOXKRNL/xboxkrnl.cpp:
 	.text       start:0x82EE6AD4 end:0x82EE6B14 rename:.xidata
 	.idata      start:0x83190014 end:0x83190028 rename:.idata$2
 
+xdk/XBOXKRNL/bldnum.cpp:
+	.XBLD       start:0x831A0080 end:0x831A0090 rename:.XBLD$V
+
 keygen_xbox.cpp:
 	.rdata      start:0x82000BE0 end:0x82000D60
 	.pdata      start:0x822AF800 end:0x822AF868
@@ -52,6 +55,7 @@ App.cpp:
 	.text       start:0x82EE0B18 end:0x82EE0B58 rename:.text$yd
 	.data       start:0x82F06294 end:0x82F08418
 	.data       start:0x82F5E184 end:0x82F5E218 rename:.bss
+	.XBLD       start:0x831A01D0 end:0x831A01F0 rename:.XBLD$W
 
 ChecksumData_xbox.cpp:
 	.rdata      start:0x82001E58 end:0x82005138
@@ -207,6 +211,12 @@ xdk/xapilibi/getlasterror.cpp:
 xdk/xapilibi/xapidebugheap.cpp:
 	.pdata      start:0x822AFE70 end:0x822AFE78
 	.text       start:0x8233A200 end:0x8233A2B8
+
+xdk/xapilibi/xrtlpch.cpp:
+	.XBLD       start:0x831A0000 end:0x831A0010 rename:.XBLD$V
+
+xdk/xapilibi/xapipch.cpp:
+	.XBLD       start:0x831A0010 end:0x831A0020 rename:.XBLD$V
 
 system/char/Char.cpp:
 	.rdata      start:0x820061C4 end:0x8200859C
@@ -1927,8 +1937,8 @@ system/net/WebSvcMgr.cpp:
 system/net/WebSvcReq.cpp:
 	.rdata      start:0x82065BF0 end:0x82066004
 	.rdata      start:0x822955E4 end:0x82295680 rename:.rdata$r
-	.pdata      start:0x822CBC00 end:0x822CBDB0
-	.text       start:0x8255BE80 end:0x8255D758
+	.pdata      start:0x822CBC00 end:0x822CBDB8
+	.text       start:0x8255BE80 end:0x8255D788
 	.text       start:0x82EE1DE8 end:0x82EE1E08 rename:.text$yd
 	.data       start:0x82F101C0 end:0x82F10250
 	.data       start:0x82F63A74 end:0x82F63B24 rename:.bss
@@ -1936,9 +1946,9 @@ system/net/WebSvcReq.cpp:
 system/net/WebSvcMgrCurl.cpp:
 	.rdata      start:0x82066004 end:0x82066438
 	.rdata      start:0x82295680 end:0x822956D4 rename:.rdata$r
-	.pdata      start:0x822CBDB0 end:0x822CBEA0
+	.pdata      start:0x822CBDB8 end:0x822CBEA0
 	.pdata      start:0x823212E0 end:0x823212E8
-	.text       start:0x8255D758 end:0x8255E7C0
+	.text       start:0x8255D788 end:0x8255E7C0
 	.text       start:0x82EDB3F0 end:0x82EDB450 rename:.text$yc
 	.text       start:0x82EE1E08 end:0x82EE1E18 rename:.text$yd
 	.data       start:0x82F10250 end:0x82F10270
@@ -2685,14 +2695,17 @@ system/os/ArkFile.cpp:
 
 xdk/xbc/xbcapi.cpp:
 	.text       start:0x825FAE38 end:0x825FAE50
+	.XBLD       start:0x831A0020 end:0x831A0030 rename:.XBLD$V
 
 xdk/xjson/xjson.cpp:
 	.pdata      start:0x822D2E18 end:0x822D2E30
 	.text       start:0x825FAE50 end:0x825FB038
+	.XBLD       start:0x831A0030 end:0x831A0040 rename:.XBLD$V
 
 xdk/xsocial/socialpostapi.cpp:
 	.pdata      start:0x822D2E30 end:0x822D2E48
 	.text       start:0x825FB038 end:0x825FB750
+	.XBLD       start:0x831A0040 end:0x831A0050 rename:.XBLD$V
 
 system/os/MapFile_Xbox.cpp:
 	.rdata      start:0x820831E0 end:0x820837F8
@@ -2875,6 +2888,7 @@ system/os/UsbMidiGuitarMsgs.cpp:
 
 xdk/xlrc/xlrcapi.cpp:
 	.text       start:0x8260A7C8 end:0x8260A868
+	.XBLD       start:0x831A0050 end:0x831A0060 rename:.XBLD$V
 
 xdk/xjson/jsonbuffer.cpp:
 	.text       start:0x8260A868 end:0x8260AB70
@@ -2942,6 +2956,7 @@ xdk/xsocial/xauth.cpp:
 	.rdata      start:0x82086984 end:0x820869A0
 	.pdata      start:0x822D3F98 end:0x822D3FA8
 	.text       start:0x8260F918 end:0x8260FBC0
+	.XBLD       start:0x831A0060 end:0x831A0070 rename:.XBLD$V
 
 system/rnddx9/Rnd.cpp:
 	.rdata      start:0x820869A0 end:0x82086AC8
@@ -6228,6 +6243,7 @@ xdk/LIBCMT/crtgpr.cpp:
 
 xdk/LIBCMT/strstr.cpp:
 	.text       start:0x8299D9A0 end:0x8299DA18
+	.XBLD       start:0x831A0070 end:0x831A0080 rename:.XBLD$V
 
 xdk/LIBCMT/fpinit.cpp:
 	.rdata      start:0x8213E8A8 end:0x8213E8AC
@@ -7059,6 +7075,7 @@ xdk/nuiapi/nuiruntime.cpp:
 	.text       start:0x829C9550 end:0x829D14F0
 	.data       start:0x82F1F6B4 end:0x82F1F8B0
 	.data       start:0x8311C880 end:0x8312B2A0 rename:.bss
+	.XBLD       start:0x831A0090 end:0x831A00A0 rename:.XBLD$V
 
 xdk/nuiapi/nuiwave.cpp:
 	.pdata      start:0x823050C0 end:0x823050E0
@@ -7552,6 +7569,7 @@ xdk/nuiaudio/nuiaudio.cpp:
 	.text       start:0x82EDE948 end:0x82EDE988 rename:.text$yc
 	.text       start:0x82EE4DC8 end:0x82EE4E00 rename:.text$yd
 	.data       start:0x82F1FE50 end:0x82F20050
+	.XBLD       start:0x831A00A0 end:0x831A00B0 rename:.XBLD$V
 
 xdk/nuiaudio/meclib.cpp:
 	.rdata      start:0x82166620 end:0x82166668
@@ -7654,6 +7672,7 @@ xdk/nuispeech/xspeechapi.cpp:
 	.text       start:0x82EE4E00 end:0x82EE4E10 rename:.text$yd
 	.data       start:0x82F20220 end:0x82F203A8
 	.data       start:0x8315AA30 end:0x8315B578 rename:.bss
+	.XBLD       start:0x831A00B0 end:0x831A00C0 rename:.XBLD$V
 
 xdk/nuispeech/xboxcom.cpp:
 	.pdata      start:0x82306E40 end:0x82306E98
@@ -8879,6 +8898,7 @@ xdk/ST/st.cpp:
 	.pdata      start:0x8230F240 end:0x8230F280
 	.text       start:0x82B571B8 end:0x82B57750
 	.data       start:0x8315B920 end:0x8315B92C rename:.bss
+	.XBLD       start:0x831A00C0 end:0x831A00D0 rename:.XBLD$V
 
 xdk/ST/cdrp.cpp:
 	.pdata      start:0x8230F280 end:0x8230F2A0
@@ -8966,6 +8986,7 @@ xdk/xnet/xnetapi.cpp:
 	.text       start:0x82B8E900 end:0x82B8EA98
 	.data       start:0x82F241D0 end:0x82F241E0
 	.data       start:0x8315C018 end:0x8315C028 rename:.bss
+	.XBLD       start:0x831A00D0 end:0x831A00E0 rename:.XBLD$V
 
 xdk/xnet/sockapi.cpp:
 	.pdata      start:0x8230F948 end:0x8230F950
@@ -9074,6 +9095,7 @@ system/jpeg/jfdctflt.c:
 xdk/xmcore/lf.cpp:
 	.pdata      start:0x8230FCF8 end:0x8230FD78
 	.text       start:0x82B981D0 end:0x82B99F10
+	.XBLD       start:0x831A00E0 end:0x831A00F0 rename:.XBLD$V
 
 xdk/xmcore/winhelper.cpp:
 	.pdata      start:0x8230FD78 end:0x8230FD88
@@ -9172,6 +9194,7 @@ xdk/d3d9i/precomp.cpp:
 	.rdata      start:0x82201560 end:0x822015BC
 	.data       start:0x82F248D0 end:0x82F24AA0
 	.data       start:0x8315C4C8 end:0x8315C4CC rename:.bss
+	.XBLD       start:0x831A00F0 end:0x831A0100 rename:.XBLD$V
 
 xdk/d3d9i/memory.cpp:
 	.pdata      start:0x823112A0 end:0x823112B0
@@ -10386,6 +10409,7 @@ xdk/xonline/xoncore.cpp:
 	.text       start:0x82DE4C60 end:0x82DE5058
 	.text       start:0x82EDF888 end:0x82EDF8A0 rename:.text$yc
 	.data       start:0x83162840 end:0x8316288C rename:.bss
+	.XBLD       start:0x831A0120 end:0x831A0130 rename:.XBLD$V
 
 xdk/xonline/xliveimp.cpp:
 	.pdata      start:0x82319198 end:0x823191B0
@@ -10424,6 +10448,7 @@ xdk/xmp/xmp.cpp:
 	.text       start:0x82EE4F40 end:0x82EE4F58 rename:.text$yd
 	.data       start:0x82F41C6C end:0x82F41C90
 	.data       start:0x83162890 end:0x83162898 rename:.bss
+	.XBLD       start:0x831A0130 end:0x831A0140 rename:.XBLD$V
 
 xdk/xmp/xmp_settings.cpp:
 	.pdata      start:0x82319268 end:0x82319278
@@ -10451,6 +10476,9 @@ xdk/xinput2/bytecode.cpp:
 xdk/xinput2/tables.cpp:
 	.pdata      start:0x82319328 end:0x82319338
 	.text       start:0x82DE9468 end:0x82DE9830
+
+xdk/xinput2/xinput2pch.cpp:
+	.XBLD       start:0x831A0150 end:0x831A0160 rename:.XBLD$V
 
 system/gesture/HandHeightGestureFilter.cpp:
 	.rdata      start:0x8225058C end:0x82250594
@@ -11443,10 +11471,12 @@ xdk/LIBCMT/rmtmp.cpp:
 xdk/nuifitnessapi/nuifitnessapi.cpp:
 	.pdata      start:0x8231EFA8 end:0x8231EFB0
 	.text       start:0x82E61690 end:0x82E61778
+	.XBLD       start:0x831A0160 end:0x831A0170 rename:.XBLD$V
 
 xdk/xbdm/debugheap.cpp:
 	.pdata      start:0x8231EFB0 end:0x8231EFC0
 	.text       start:0x82E61778 end:0x82E61808
+	.XBLD       start:0x831A0170 end:0x831A0180 rename:.XBLD$V
 
 xdk/xaudio2/leapfxlib.cpp:
 	.pdata      start:0x8231EFC0 end:0x8231F040
@@ -11457,6 +11487,7 @@ xdk/xaudio2/xapobase.cpp:
 	.rdata      start:0x82265480 end:0x8226549C
 	.pdata      start:0x8231F040 end:0x8231F0B0
 	.text       start:0x82E623C8 end:0x82E63F18
+	.XBLD       start:0x831A0180 end:0x831A0190 rename:.XBLD$V
 
 xdk/xaudio2/x2engine.cpp:
 	.rdata      start:0x8226549C end:0x82265538
@@ -11958,6 +11989,9 @@ xdk/xhv2/dct4.cpp:
 	.pdata      start:0x82320CF0 end:0x82320D08
 	.text       start:0x82EC7DA8 end:0x82EC86A8
 
+xdk/xhv2/deviceagc.cpp:
+	.XBLD       start:0x831A01A0 end:0x831A01B0 rename:.XBLD$V
+
 xdk/xmic/xmicapi.cpp:
 	.rdata      start:0x82286C50 end:0x82286C58
 	.pdata      start:0x82320D08 end:0x82320DE8
@@ -12426,6 +12460,7 @@ xdk/xmcore/stdafx.cpp:
 
 xdk/d3dx9/pchcore.cpp:
 	.data       start:0x83161624 end:0x83161628 rename:.bss
+	.XBLD       start:0x831A0100 end:0x831A0110 rename:.XBLD$V
 
 xdk/d3dx9/pchtex.cpp:
 	.data       start:0x83161628 end:0x83161630 rename:.bss
@@ -12462,6 +12497,7 @@ xdk/d3dx9/pchmid.cpp:
 
 xdk/xgraphics/pchmisc.cpp:
 	.data       start:0x83161E90 end:0x83161E94 rename:.bss
+	.XBLD       start:0x831A0110 end:0x831A0120 rename:.XBLD$V
 
 xdk/xgraphics/pchtile.cpp:
 	.data       start:0x83161E94 end:0x83161E98 rename:.bss
@@ -12525,6 +12561,7 @@ xdk/xonline/pch.cpp:
 
 xdk/xparty/precomp.cpp:
 	.data       start:0x831628B4 end:0x831667C8 rename:.bss
+	.XBLD       start:0x831A0140 end:0x831A0150 rename:.XBLD$V
 
 xdk/nuifitnessapi/NuiFitnessPreComp.cpp:
 	.data       start:0x83176C54 end:0x83176C58 rename:.bss
@@ -12535,6 +12572,7 @@ xdk/xaudio2/precomp.cpp:
 
 xdk/xaudio2/x2headers.cpp:
 	.data       start:0x83176CCC end:0x831771D8 rename:.bss
+	.XBLD       start:0x831A0190 end:0x831A01A0 rename:.XBLD$V
 
 xdk/xaudio2/leapcore.cpp:
 	.data       start:0x831771D8 end:0x831771DC rename:.bss
@@ -12547,6 +12585,7 @@ xdk/xaudio2/msaudioenc.cpp:
 
 xdk/xmic/xmicpch.cpp:
 	.data       start:0x8318C794 end:0x8318C798 rename:.bss
+	.XBLD       start:0x831A01B0 end:0x831A01C0 rename:.XBLD$V
 
 binkxenon/binktm.cpp:
 	.data       start:0x8318C798 end:0x8318C7C4 rename:.bss
