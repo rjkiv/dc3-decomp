@@ -104,9 +104,6 @@ template <class T>
 ObjPtr<T>::ObjPtr(const ObjPtr &p) : ObjRefConcrete(p), mOwner(p.mOwner) {}
 
 template <class T>
-ObjPtr<T>::~ObjPtr() {}
-
-template <class T>
 BinStream &operator>>(BinStream &bs, ObjPtr<T> &ptr) {
     ptr.Load(bs, true, nullptr);
     return bs;

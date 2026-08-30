@@ -176,7 +176,6 @@ private:
 public:
     ObjPtr(Hmx::Object *owner, T *ptr = nullptr);
     ObjPtr(const ObjPtr &p);
-    virtual ~ObjPtr();
     virtual Hmx::Object *RefOwner() const { return mOwner; }
 
     void operator=(T *obj) { SetObjConcrete(obj); }
@@ -1434,7 +1433,6 @@ class ObjectStage : public ObjPtr<Hmx::Object> {
 public:
     ObjectStage() : ObjPtr<Hmx::Object>(sOwner) {}
     ObjectStage(Hmx::Object *o) : ObjPtr<Hmx::Object>(sOwner, o) {}
-    virtual ~ObjectStage() {}
 
     static Hmx::Object *sOwner;
 };

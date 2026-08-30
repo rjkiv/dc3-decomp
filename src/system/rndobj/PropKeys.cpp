@@ -178,9 +178,12 @@ void PropKeys::Print() {
         case kBool:
             TheDebug << (*AsBoolKeys())[i].value;
             break;
-        case kQuat:
-            TheDebug << (*AsQuatKeys())[i].value;
+        case kQuat: {
+            // stupid but it matches
+            const Hmx::Quat &q = (*AsQuatKeys())[i].value;
+            TheDebug << q;
             break;
+        }
         case kVector3:
             TheDebug << (*AsVector3Keys())[i].value;
             break;
