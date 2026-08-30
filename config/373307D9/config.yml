@@ -28,10 +28,10 @@ splits: config/373307D9/splits.txt
 # for reading and usage with other tools, like decomp.me.
 # write_asm: false
 
-# add_relocations:
-# - source: .rdata:0x82089114
-#   type: abs
-#   target: merged_BufLockIdxSDVD
+add_relocations:
+- source: .rdata:0x82089114
+  type: abs
+  target: merged_BufLockIdxSDVD
 
 # These are Windows error codes, not relocations!
 block_relocations:
