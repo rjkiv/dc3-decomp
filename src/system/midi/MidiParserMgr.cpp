@@ -138,7 +138,6 @@ const char *MidiParserMgr::StripEndBracket(char *c1, const char *cc2) {
     for (ptr = cc2; *ptr != '\0' && *ptr != ']'; ptr++) {
         *ret++ = *ptr;
     }
-
     if (*ptr == '\0') {
         MILO_NOTIFY(
             "MidiParser: %s, track %s event \"%s\" is missing right bracket",
@@ -147,7 +146,6 @@ const char *MidiParserMgr::StripEndBracket(char *c1, const char *cc2) {
             cc2
         );
     }
-
     *ret = '\0';
     return c1;
 }
