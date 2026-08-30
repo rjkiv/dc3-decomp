@@ -53,8 +53,8 @@ namespace {
     BinStream *gHolmesStream;
     MemStream *gStreamBuffer;
     int gActivePrintCount;
-    char gMachineName[NETBIOS_NAME_MAX] = { 0 };
-    char gShareName[NETBIOS_NAME_MAX] = { 0 };
+    static char gMachineName[NETBIOS_NAME_MAX] = { 0 };
+    static char gShareName[NETBIOS_NAME_MAX] = { 0 };
     HolmesProfileData gProfile[20]; // to match protocol count
     CriticalSection gCrit;
     std::list<ReadRequest> gRequests;
