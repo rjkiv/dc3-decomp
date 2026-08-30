@@ -4,6 +4,7 @@
 #include "midi/Midi.h"
 #include "midi/MidiConstants.h"
 #include "midi/MidiParser.h"
+#include "obj/Data.h"
 #include "obj/DataFile.h"
 #include "obj/Dir.h"
 #include "os/Debug.h"
@@ -137,7 +138,6 @@ const char *MidiParserMgr::StripEndBracket(char *c1, const char *cc2) {
     for (ptr = cc2; *ptr != '\0' && *ptr != ']'; ptr++) {
         *ret++ = *ptr;
     }
-
     if (*ptr == '\0') {
         MILO_NOTIFY(
             "MidiParser: %s, track %s event \"%s\" is missing right bracket",
@@ -146,39 +146,30 @@ const char *MidiParserMgr::StripEndBracket(char *c1, const char *cc2) {
             cc2
         );
     }
-
     *ret = '\0';
     return c1;
 }
 
-// this is 100% a fakematch lmao
-// we gotta find a way to not use that struct
 DataArray *MidiParserMgr::ParseText(const char *str, int tick) {
-    struct {
-        DataArray *unused;
-        DataArray *parsed;
-    } s;
+    DataArray *parsed;
     MILO_ASSERT(strlen(str) < 256, 0xF3);
     char buf[256];
     StripEndBracket(buf, str + 1);
-
-    s.parsed = nullptr;
-    TheDebug.SetTry(true);
-    try {
-        s.parsed = DataReadString(buf);
-        TheDebug.SetTry(false);
-    } catch (const char *errMsg) {
-        s.parsed = nullptr;
+    parsed = nullptr;
+    MILO_TRY { parsed = DataReadString(buf); }
+    MILO_CATCH(errMsg) {
+        parsed = nullptr;
+        const char *filename = TheMidiParserMgr->mFilename;
         MILO_NOTIFY(MakeString(
             "MidiParser: %s, track %s, tick %d, event \"%s\" has bad format: %s",
-            TheMidiParserMgr->mFilename,
+            filename,
             mTrackName,
             tick,
             buf,
             errMsg
         ));
     }
-    return s.parsed;
+    return parsed;
 }
 
 void MidiParserMgr::FinishLoad() {
