@@ -39,7 +39,6 @@ public:
 #define DEF_DATA_FUNC(name) DataNode name(DataArray *array)
 
 extern std::map<Symbol, DataFunc *> gDataFuncs;
-extern DataThisPtr gDataThisPtr;
 
 void DataRegisterFunc(Symbol s, DataFunc *func);
 Symbol DataFuncName(DataFunc *);

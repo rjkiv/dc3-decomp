@@ -738,9 +738,9 @@ void TransformKeys(RndTransAnim *tanim, const Transform &tf) {
 
 void EndianSwapBitmap(RndBitmap &bmap) {
     for (int i = 0; i < bmap.Height(); i++) {
-        u8 *curRow = bmap.Pixels() + bmap.RowBytes() * i - 4;
+        unsigned int *curRow = (unsigned int *)(bmap.Pixels() + bmap.RowBytes() * i);
         for (int j = 0; j < bmap.Width(); j++) {
-            // EndianSwap()
+            EndianSwapEq(curRow[j]);
         }
     }
 }
@@ -786,12 +786,11 @@ void SortXfms(RndMultiMesh *mesh, const Vector3 &vec) {
 }
 
 bool XfmSort(RndMultiMesh::Instance &mesh1, RndMultiMesh::Instance &mesh2) {
-    return (mesh1.mXfm.v.z - gUtlXfms.z) * (mesh1.mXfm.v.z - gUtlXfms.z)
-        + (mesh1.mXfm.v.y - gUtlXfms.y) * (mesh1.mXfm.v.y - gUtlXfms.y)
-        + (mesh1.mXfm.v.x - gUtlXfms.x) * (mesh1.mXfm.v.x - gUtlXfms.x)
-        < (mesh2.mXfm.v.z - gUtlXfms.z) * (mesh2.mXfm.v.z - gUtlXfms.z)
-        + (mesh2.mXfm.v.y - gUtlXfms.y) * (mesh2.mXfm.v.y - gUtlXfms.y)
-        + (mesh2.mXfm.v.x - gUtlXfms.x) * (mesh2.mXfm.v.x - gUtlXfms.x);
+    Vector3 diff1;
+    Subtract(mesh1.mXfm.v, gUtlXfms, diff1);
+    Vector3 diff2;
+    Subtract(mesh2.mXfm.v, gUtlXfms, diff2);
+    return LengthSquared(diff1) < LengthSquared(diff2);
 }
 
 void DistributeXfms(RndMultiMesh *mesh, int i1, float f1) {

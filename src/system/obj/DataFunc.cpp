@@ -22,6 +22,7 @@ static DataArray *sNotifyMsg = nullptr;
 static bool sUnused = false;
 static bool sOldNoModal = false;
 std::map<Symbol, DataFunc *> gDataFuncs;
+DataThisPtr gDataThisPtr;
 
 bool SwitchMatch(const DataNode &n1, const DataNode &n2) {
     if (n1.Type() == kDataArray) {
