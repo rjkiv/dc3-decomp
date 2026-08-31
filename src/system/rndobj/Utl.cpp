@@ -515,6 +515,38 @@ void UtilDrawRect2D(const Vector2 &v1, const Vector2 &v2, const Hmx::Color &colo
     UtilDrawLine(cross2, v1, color);
 }
 
+void UtilDrawPlane(
+    const Plane &p, const Vector3 &v, const Hmx::Color &c, int i4, float f5, bool b6
+) {
+    Transform xfm;
+    ScaleAdd(v, reinterpret_cast<const Vector3 &>(p), -p.Dot(v), xfm.v);
+    xfm.m.y = reinterpret_cast<const Vector3 &>(p);
+    Hmx::Matrix3 mb0;
+    mb0.Identity();
+    int idx = 0;
+    float threshold = 10000;
+    for (int i = 0; i < 3; i++) {
+        if (MinEq(threshold, Dot(mb0[i], xfm.m.y))) {
+            idx = i;
+        }
+    }
+    Cross(xfm.m.y, mb0[idx], xfm.m.z);
+    Normalize(xfm.m.z, xfm.m.z);
+    Cross(xfm.m.y, xfm.m.z, xfm.m.x);
+    for (int i = 0; i < i4; i++) {
+        Vector3 v[4];
+        float scalar = (float)(i + 1) * f5;
+        ScaleAdd(xfm.v, xfm.m.x, scalar, v[0]);
+        ScaleAdd(xfm.v, xfm.m.z, scalar, v[1]);
+        ScaleAdd(xfm.v, xfm.m.x, -scalar, v[2]);
+        ScaleAdd(xfm.v, xfm.m.z, -scalar, v[3]);
+        TheRnd.DrawLine(v[0], v[1], c, b6);
+        TheRnd.DrawLine(v[1], v[2], c, b6);
+        TheRnd.DrawLine(v[2], v[3], c, b6);
+        TheRnd.DrawLine(v[3], v[0], c, b6);
+    }
+}
+
 void UtilDrawCircle2D(const Vector2 &v2, float f2, const Hmx::Color &c, int i4) {
     std::vector<Vector2> vec(i4 + 1);
     float y = TheRnd.YRatio();
