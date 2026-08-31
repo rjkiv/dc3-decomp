@@ -465,20 +465,20 @@ void UtilDrawBox(const Transform &tf, const Box &box, const Hmx::Color &col, boo
     for (int i = 0; i < 8; i++) {
         Multiply(vecs[i], tf, vecs[i]);
     }
-    TheRnd.DrawLine(vecs[0], vecs[1], col, b4);
-    TheRnd.DrawLine(vecs[1], vecs[2], col, b4);
-    TheRnd.DrawLine(vecs[2], vecs[3], col, b4);
-    TheRnd.DrawLine(vecs[3], vecs[0], col, b4);
+    TheRnd.DrawLine(vecs[0], vecs[1], col, no_z);
+    TheRnd.DrawLine(vecs[1], vecs[2], col, no_z);
+    TheRnd.DrawLine(vecs[2], vecs[3], col, no_z);
+    TheRnd.DrawLine(vecs[3], vecs[0], col, no_z);
 
-    TheRnd.DrawLine(vecs[0], vecs[4], col, b4);
-    TheRnd.DrawLine(vecs[1], vecs[5], col, b4);
-    TheRnd.DrawLine(vecs[2], vecs[6], col, b4);
-    TheRnd.DrawLine(vecs[3], vecs[7], col, b4);
+    TheRnd.DrawLine(vecs[0], vecs[4], col, no_z);
+    TheRnd.DrawLine(vecs[1], vecs[5], col, no_z);
+    TheRnd.DrawLine(vecs[2], vecs[6], col, no_z);
+    TheRnd.DrawLine(vecs[3], vecs[7], col, no_z);
 
-    TheRnd.DrawLine(vecs[4], vecs[5], col, b4);
-    TheRnd.DrawLine(vecs[5], vecs[6], col, b4);
-    TheRnd.DrawLine(vecs[6], vecs[7], col, b4);
-    TheRnd.DrawLine(vecs[7], vecs[4], col, b4);
+    TheRnd.DrawLine(vecs[4], vecs[5], col, no_z);
+    TheRnd.DrawLine(vecs[5], vecs[6], col, no_z);
+    TheRnd.DrawLine(vecs[6], vecs[7], col, no_z);
+    TheRnd.DrawLine(vecs[7], vecs[4], col, no_z);
 }
 
 void UtilDrawAxes(const Transform &tf, float scale, const Hmx::Color &c) {
