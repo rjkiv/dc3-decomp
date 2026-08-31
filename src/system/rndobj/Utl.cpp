@@ -453,7 +453,7 @@ void UtilDrawString(const char *c, const Vector3 &v, const Hmx::Color &col) {
     }
 }
 
-void UtilDrawBox(const Transform &tf, const Box &box, const Hmx::Color &col, bool b4) {
+void UtilDrawBox(const Transform &tf, const Box &box, const Hmx::Color &col, bool no_z) {
     Vector3 vecs[8] = { Vector3(box.mMin.x, box.mMin.y, box.mMin.z),
                         Vector3(box.mMin.x, box.mMax.y, box.mMin.z),
                         Vector3(box.mMax.x, box.mMax.y, box.mMin.z),
