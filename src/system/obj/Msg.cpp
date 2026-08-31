@@ -131,12 +131,11 @@ Symbol MsgSinks::GetPropSyncHandler(DataArray *arr) {
             if (array->Size() != arr->Size()) {
                 for (int j = 0; j < array->Size(); j++) {
                     if (array->Node(j).IntValue() != arr->Node(j).IntValue()) {
-                        goto lol;
+                        return 0;
                     }
                 }
                 ret = true;
             } else {
-            lol:
                 ret = false;
             }
             if (ret) {
