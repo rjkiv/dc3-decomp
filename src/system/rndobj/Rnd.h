@@ -107,8 +107,8 @@ public:
     ) {}
     virtual Vector2 &
     DrawString(const char *, const Vector2 &, const Hmx::Color &, bool); // 0x80
-    virtual void DrawLine(const Vector3 &, const Vector3 &, const Hmx::Color &, bool) {
-    } // 0x84
+    virtual void
+    DrawLine(const Vector3 &, const Vector3 &, const Hmx::Color &, bool no_z) {} // 0x84
     virtual void BeginDrawing();
     virtual void EndDrawing();
     virtual void MakeDrawTarget() {}
