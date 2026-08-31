@@ -397,30 +397,30 @@ void ResetColors(std::vector<Hmx::Color> &colors, int newNumColors) {
 
 void UtilDrawCigar(
     const Transform &t1,
-    const float *const f2,
-    const float *const f3,
+    const float *const scales,
+    const float *const lengths,
     const Hmx::Color &c,
     int
 ) {
     float lens[2];
     for (int i = 0; i < 2; i++) {
-        lens[i] = f3[i] * Length(t1.m.x);
+        lens[i] = lengths[i] * Length(t1.m.x);
     }
     Transform xfm(t1);
     Normalize(xfm.m, xfm.m);
     Vector3 mults[2];
-    Multiply(Vector3(lens[0] - f2[0], 0, 0), xfm, mults[0]);
-    Multiply(Vector3(lens[1] + f2[1], 0, 0), xfm, mults[1]);
+    Multiply(Vector3(lens[0] - scales[0], 0, 0), xfm, mults[0]);
+    Multiply(Vector3(lens[1] + scales[1], 0, 0), xfm, mults[1]);
 
     Vector3 f1c0[3][6];
     Vector3 f2e0[3][6];
 
     for (int i = 0; i < 3; i++) {
         float f15 = (float)i * (PI / 6);
-        float f18 = FastCos(f15) * f2[0];
-        float f13 = FastSin(f15) * f2[0];
-        float f16 = FastCos(f15) * f2[1];
-        float f19 = FastSin(f15) * f2[1];
+        float f18 = FastCos(f15) * scales[0];
+        float f13 = FastSin(f15) * scales[0];
+        float f16 = FastCos(f15) * scales[1];
+        float f19 = FastSin(f15) * scales[1];
         for (int j = 0; j < 6; j++) {
             float f10 = (float)j * (PI / 3);
             float s10 = FastSin(f10);
@@ -481,18 +481,18 @@ void UtilDrawBox(const Transform &tf, const Box &box, const Hmx::Color &col, boo
     TheRnd.DrawLine(vecs[7], vecs[4], col, b4);
 }
 
-void UtilDrawAxes(const Transform &tf, float f, const Hmx::Color &c) {
+void UtilDrawAxes(const Transform &tf, float scale, const Hmx::Color &c) {
     Vector3 vec38;
     Hmx::Color c48;
-    ScaleAdd(tf.v, tf.m.x, f, vec38);
+    ScaleAdd(tf.v, tf.m.x, scale, vec38);
     Interp(c, Hmx::Color(1, 0, 0), 0.8f, c48);
     TheRnd.DrawLine(tf.v, vec38, c48, false);
 
-    ScaleAdd(tf.v, tf.m.y, f, vec38);
+    ScaleAdd(tf.v, tf.m.y, scale, vec38);
     Interp(c, Hmx::Color(0, 1, 0), 0.8f, c48);
     TheRnd.DrawLine(tf.v, vec38, c48, false);
 
-    ScaleAdd(tf.v, tf.m.z, f, vec38);
+    ScaleAdd(tf.v, tf.m.z, scale, vec38);
     Interp(c, Hmx::Color(0, 0, 1), 0.8f, c48);
     TheRnd.DrawLine(tf.v, vec38, c48, false);
 }
@@ -516,9 +516,15 @@ void UtilDrawRect2D(const Vector2 &v1, const Vector2 &v2, const Hmx::Color &colo
 }
 
 void UtilDrawPlane(
-    const Plane &p, const Vector3 &v, const Hmx::Color &c, int i4, float f5, bool b6
+    const Plane &p,
+    const Vector3 &v,
+    const Hmx::Color &c,
+    int ringct,
+    float ringscl,
+    bool no_z
 ) {
     Transform xfm;
+    // hugh i'm gonna kill you with hammers
     ScaleAdd(v, reinterpret_cast<const Vector3 &>(p), -p.Dot(v), xfm.v);
     xfm.m.y = reinterpret_cast<const Vector3 &>(p);
     Hmx::Matrix3 mb0;
@@ -533,37 +539,37 @@ void UtilDrawPlane(
     Cross(xfm.m.y, mb0[idx], xfm.m.z);
     Normalize(xfm.m.z, xfm.m.z);
     Cross(xfm.m.y, xfm.m.z, xfm.m.x);
-    for (int i = 0; i < i4; i++) {
+    for (int i = 0; i < ringct; i++) {
         Vector3 v[4];
-        float scalar = (float)(i + 1) * f5;
+        float scalar = (float)(i + 1) * ringscl;
         ScaleAdd(xfm.v, xfm.m.x, scalar, v[0]);
         ScaleAdd(xfm.v, xfm.m.z, scalar, v[1]);
         ScaleAdd(xfm.v, xfm.m.x, -scalar, v[2]);
         ScaleAdd(xfm.v, xfm.m.z, -scalar, v[3]);
-        TheRnd.DrawLine(v[0], v[1], c, b6);
-        TheRnd.DrawLine(v[1], v[2], c, b6);
-        TheRnd.DrawLine(v[2], v[3], c, b6);
-        TheRnd.DrawLine(v[3], v[0], c, b6);
+        TheRnd.DrawLine(v[0], v[1], c, no_z);
+        TheRnd.DrawLine(v[1], v[2], c, no_z);
+        TheRnd.DrawLine(v[2], v[3], c, no_z);
+        TheRnd.DrawLine(v[3], v[0], c, no_z);
     }
 }
 
-void UtilDrawCircle2D(const Vector2 &v2, float f2, const Hmx::Color &c, int i4) {
-    std::vector<Vector2> vec(i4 + 1);
+void UtilDrawCircle2D(const Vector2 &v2, float scale, const Hmx::Color &c, int vertct) {
+    std::vector<Vector2> vec(vertct + 1);
     float y = TheRnd.YRatio();
-    for (int i = 0; i <= i4; i++) {
+    for (int i = 0; i <= vertct; i++) {
         Vector2 &cur = vec[i];
-        float fi = (float)i * (2 * PI) / (float)i4;
+        float fi = (float)i * (2 * PI) / (float)vertct;
         float cos = FastCos(fi);
         float sin = FastSin(fi);
-        cur.x = (cos * y) * f2 + v2.x;
-        cur.y = sin * f2 + v2.y;
+        cur.x = (cos * y) * scale + v2.x;
+        cur.y = sin * scale + v2.y;
     }
-    for (int i = 0; i < i4; i++) {
+    for (int i = 0; i < vertct; i++) {
         UtilDrawLine(vec[i], vec[i + 1], c);
     }
 }
 
-void UtilDrawSphere(const Vector3 &v1, float f2, const Hmx::Color &c, RndMat *mat) {
+void UtilDrawSphere(const Vector3 &v1, float scale, const Hmx::Color &c, RndMat *mat) {
     if (!sSphereMesh) {
         MILO_NOTIFY_ONCE("Sphere mesh is not loaded");
     } else {
@@ -571,7 +577,7 @@ void UtilDrawSphere(const Vector3 &v1, float f2, const Hmx::Color &c, RndMat *ma
         Transform tf;
         tf.Reset();
         tf.v = v1;
-        Scale(Vector3(f2, f2, f2), tf.m, tf.m);
+        Scale(Vector3(scale, scale, scale), tf.m, tf.m);
         if (mat) {
             sSphereMesh->SetMat(mat);
         } else {
@@ -580,7 +586,7 @@ void UtilDrawSphere(const Vector3 &v1, float f2, const Hmx::Color &c, RndMat *ma
             sSphereMesh->Mat()->SetCull(kCullNone);
         }
         sSphereMesh->SetLocalXfm(tf);
-        sSphereMesh->SetSphere(Sphere(Vector3(0, 0, 0), f2));
+        sSphereMesh->SetSphere(Sphere(Vector3(0, 0, 0), scale));
         sSphereMesh->Draw();
         if (mat) {
             sSphereMesh->SetMat(oldMat);
@@ -588,17 +594,19 @@ void UtilDrawSphere(const Vector3 &v1, float f2, const Hmx::Color &c, RndMat *ma
     }
 }
 
-void UtilDrawCylinder(const Transform &xfm, float f2, float f3, const Hmx::Color &c, int) {
+void UtilDrawCylinder(
+    const Transform &xfm, float base, float height, const Hmx::Color &c, int
+) {
     if (!sCylinderMesh) {
         MILO_NOTIFY_ONCE("Sphere mesh is not loaded");
     } else {
         Transform tfb0 = xfm;
         sCylinderMesh->Mat()->SetColor(c.red, c.green, c.blue);
         sCylinderMesh->Mat()->SetAlpha(0.2f);
-        Scale(Vector3(f3, f2, f2), tfb0.m, tfb0.m);
+        Scale(Vector3(height, base, base), tfb0.m, tfb0.m);
         sCylinderMesh->Mat()->SetCull(kCullNone);
         sCylinderMesh->SetLocalXfm(tfb0);
-        sCylinderMesh->SetSphere(Sphere(Vector3(0, 0, 0), f2));
+        sCylinderMesh->SetSphere(Sphere(Vector3(0, 0, 0), base));
         sCylinderMesh->Draw();
     }
 }
