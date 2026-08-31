@@ -221,7 +221,7 @@ MatShaderOptions GetDefaultMatShaderOpts(const Hmx::Object *obj, RndMat *mat) {
 
 const char *MovieExtension(const char *name, Platform p) {
     const char *ext;
-    if (stricmp(name, "xbv") == 0) {
+    if (strieq(name, "xbv")) {
         // xbox, pc, ps3, or wii only
         if (p >= kPlatformXBox && p <= kPlatformWii) {
             return "xbv";
@@ -392,6 +392,55 @@ void ResetColors(std::vector<Hmx::Color> &colors, int newNumColors) {
     colors.resize(newNumColors);
     for (int i = 0; i < newNumColors; i++) {
         colors[i] = reset;
+    }
+}
+
+void UtilDrawCigar(
+    const Transform &t1,
+    const float *const f2,
+    const float *const f3,
+    const Hmx::Color &c,
+    int
+) {
+    float lens[2];
+    for (int i = 0; i < 2; i++) {
+        lens[i] = f3[i] * Length(t1.m.x);
+    }
+    Transform xfm(t1);
+    Normalize(xfm.m, xfm.m);
+    Vector3 mults[2];
+    Multiply(Vector3(lens[0] - f2[0], 0, 0), xfm, mults[0]);
+    Multiply(Vector3(lens[1] + f2[1], 0, 0), xfm, mults[1]);
+
+    Vector3 f1c0[3][6];
+    Vector3 f2e0[3][6];
+
+    for (int i = 0; i < 3; i++) {
+        float f15 = (float)i * (PI / 6);
+        float f18 = FastCos(f15) * f2[0];
+        float f13 = FastSin(f15) * f2[0];
+        float f16 = FastCos(f15) * f2[1];
+        float f19 = FastSin(f15) * f2[1];
+        for (int j = 0; j < 6; j++) {
+            float f10 = (float)j * (PI / 3);
+            float s10 = FastSin(f10);
+            float c10 = FastCos(f10);
+            Multiply(Vector3(lens[0] - f13, c10 * f18, s10 * f18), xfm, f1c0[i][j]);
+            Multiply(Vector3(lens[1] + f19, c10 * f16, s10 * f16), xfm, f2e0[i][j]);
+        }
+    }
+    for (int i = 0; i < 6; i++) {
+        TheRnd.DrawLine(f2e0[0][i], f1c0[0][i], c, false);
+    }
+    for (int i = 0; i < 3; i++) {
+        int jOffset = 5;
+        for (int j = 0; j < 6; j++) {
+            TheRnd.DrawLine(f2e0[i][j], f2e0[i][jOffset], c, false);
+            TheRnd.DrawLine(f2e0[i][j], i == 2 ? mults[1] : f2e0[i + 1][j], c, false);
+            TheRnd.DrawLine(f1c0[i][j], f1c0[i][jOffset], c, false);
+            TheRnd.DrawLine(f1c0[i][j], i == 2 ? mults[0] : f1c0[i + 1][j], c, false);
+            jOffset = j;
+        }
     }
 }
 
