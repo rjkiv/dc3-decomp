@@ -26,6 +26,7 @@ ObjectDir *DirLoader::sTopSaveDir;
 TextFileStream *DirLoader::sObjectMemDumpFile;
 TextFileStream *DirLoader::sTypeMemDumpFile;
 std::map<String, MemPointDelta> DirLoader::sMemPointMap;
+PathEvalFunc *DirLoader::sPathEval;
 
 DirLoader::DirLoader(
     const FilePath &fp,
@@ -171,130 +172,160 @@ bool DirLoader::ShouldBlockSubdirLoad(const FilePath &fp) {
     }
 }
 
-// I am WELL aware that this is terrible
-// however, the alternate to this would be using gotos,
-// which I would argue is more terrible
-// so unless you can finnagle this in such a way
-// that the decomp % matches, and there aren't any gotos,
-// this will have to do.
+// This is less terrible than the previous impl,
+// but I still don't like the heavy use of gotos.
+// It's either this or the nesting hell from before
 Symbol DirLoader::FixClassName(Symbol orig) {
-    if (mRev < 0x1C) {
-        static Symbol CharClip("CharClip");
-        static Symbol CharClipSamples("CharClipSamples");
-        if (orig == CharClipSamples)
-            orig = CharClip;
-        if (mRev < 0x1B) {
-            static Symbol BandMeshLauncher("BandMeshLauncher");
-            static Symbol PartLauncher("PartLauncher");
-            if (orig == BandMeshLauncher) {
-                orig = PartLauncher;
-            }
-            if (mRev < 0x1A) {
-                static Symbol P9TransDraw("P9TransDraw");
-                static Symbol CharTransDraw("CharTransDraw");
-                if (orig == P9TransDraw)
-                    orig = CharTransDraw;
-                if (mRev < 0x19) {
-                    static Symbol CompositeTexture("CompositeTexture");
-                    static Symbol RenderedTex("RenderedTex");
-                    static Symbol TexRenderer("TexRenderer");
-                    static Symbol LayerDir("LayerDir");
-                    if (orig == RenderedTex)
-                        orig = TexRenderer;
-                    else if (orig == CompositeTexture)
-                        orig = LayerDir;
-                    if (mRev < 0x18) {
-                        static Symbol WorldFx("WorldFx");
-                        static Symbol BandFx("BandFx");
-                        if (orig == BandFx)
-                            return WorldFx;
-                        if (mRev < 0x16) {
-                            static Symbol Slider("Slider");
-                            static Symbol BandSlider("BandSlider");
-                            if (orig == Slider)
-                                return BandSlider;
-                            if (mRev < 0x15) {
-                                static Symbol TextEntry("TextEntry");
-                                static Symbol BandTextEntry("BandTextEntry");
-                                if (orig == TextEntry)
-                                    return BandTextEntry;
-                                if (mRev < 0x14) {
-                                    static Symbol Placer("Placer");
-                                    static Symbol BandPlacer("BandPlacer");
-                                    if (orig == Placer)
-                                        return BandPlacer;
-                                    if (mRev < 0x13) {
-                                        static Symbol ButtonEx("ButtonEx");
-                                        static Symbol BandButton("BandButton");
-                                        if (orig == ButtonEx)
-                                            return BandButton;
-
-                                        static Symbol LabelEx("LabelEx");
-                                        static Symbol BandLabel("BandLabel");
-                                        if (orig == LabelEx)
-                                            return BandLabel;
-
-                                        static Symbol PictureEx("PictureEx");
-                                        static Symbol BandPicture("BandPicture");
-                                        if (orig == PictureEx)
-                                            return BandPicture;
-                                        if (mRev < 0x12) {
-                                            static Symbol UIPanel("UIPanel");
-                                            static Symbol PanelDir("PanelDir");
-                                            if (orig == UIPanel)
-                                                return PanelDir;
-                                            if (mRev < 0x10) {
-                                                static Symbol WorldInstance(
-                                                    "WorldInstance"
-                                                );
-                                                static Symbol WorldObject("WorldObject");
-                                                if (orig == WorldInstance)
-                                                    return WorldObject;
-
-                                                if (mRev < 0xF) {
-                                                    static Symbol Group("Group");
-                                                    static Symbol View("View");
-                                                    if (orig == View)
-                                                        return Group;
-
-                                                    if (mRev < 7) {
-                                                        static Symbol String("String");
-                                                        static Symbol Line("Line");
-                                                        if (orig == String)
-                                                            return Line;
-                                                        if (mRev < 6) {
-                                                            static Symbol MeshGenerator(
-                                                                "MeshGenerator"
-                                                            );
-                                                            static Symbol Generator(
-                                                                "Generator"
-                                                            );
-                                                            if (orig == MeshGenerator)
-                                                                return Generator;
-                                                            if (mRev < 5) {
-                                                                static Symbol TexMovie(
-                                                                    "TexMovie"
-                                                                );
-                                                                static Symbol Movie(
-                                                                    "Movie"
-                                                                );
-                                                                if (orig == TexMovie)
-                                                                    return Movie;
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+    if (mRev >= 0x1C) {
+        goto end;
     }
+    static Symbol CharClip("CharClip");
+    static Symbol CharClipSamples("CharClipSamples");
+    if (orig == CharClipSamples) {
+        orig = CharClip;
+    }
+
+    if (mRev >= 0x1B) {
+        goto end;
+    }
+    static Symbol BandMeshLauncher("BandMeshLauncher");
+    static Symbol PartLauncher("PartLauncher");
+    if (orig == BandMeshLauncher) {
+        orig = PartLauncher;
+    }
+
+    if (mRev >= 0x1A) {
+        goto end;
+    }
+    static Symbol P9TransDraw("P9TransDraw");
+    static Symbol CharTransDraw("CharTransDraw");
+    if (orig == P9TransDraw) {
+        orig = CharTransDraw;
+    }
+
+    if (mRev >= 0x19) {
+        goto end;
+    }
+    static Symbol CompositeTexture("CompositeTexture");
+    static Symbol RenderedTex("RenderedTex");
+    static Symbol TexRenderer("TexRenderer");
+    static Symbol LayerDir("LayerDir");
+    if (orig == RenderedTex) {
+        orig = TexRenderer;
+    } else if (orig == CompositeTexture) {
+        orig = LayerDir;
+    }
+
+    if (mRev >= 0x18) {
+        goto end;
+    }
+    static Symbol WorldFx("WorldFx");
+    static Symbol BandFx("BandFx");
+    if (orig == BandFx) {
+        return WorldFx;
+    }
+
+    if (mRev >= 0x16) {
+        goto end;
+    }
+    static Symbol Slider("Slider");
+    static Symbol BandSlider("BandSlider");
+    if (orig == Slider) {
+        return BandSlider;
+    }
+
+    if (mRev >= 0x15) {
+        goto end;
+    }
+    static Symbol TextEntry("TextEntry");
+    static Symbol BandTextEntry("BandTextEntry");
+    if (orig == TextEntry) {
+        return BandTextEntry;
+    }
+
+    if (mRev >= 0x14) {
+        goto end;
+    }
+    static Symbol Placer("Placer");
+    static Symbol BandPlacer("BandPlacer");
+    if (orig == Placer) {
+        return BandPlacer;
+    }
+
+    if (mRev >= 0x13) {
+        goto end;
+    }
+    static Symbol ButtonEx("ButtonEx");
+    static Symbol BandButton("BandButton");
+    if (orig == ButtonEx) {
+        return BandButton;
+    }
+    static Symbol LabelEx("LabelEx");
+    static Symbol BandLabel("BandLabel");
+    if (orig == LabelEx) {
+        return BandLabel;
+    }
+    static Symbol PictureEx("PictureEx");
+    static Symbol BandPicture("BandPicture");
+    if (orig == PictureEx) {
+        return BandPicture;
+    }
+
+    if (mRev >= 0x12) {
+        goto end;
+    }
+    static Symbol UIPanel("UIPanel");
+    static Symbol PanelDir("PanelDir");
+    if (orig == UIPanel) {
+        return PanelDir;
+    }
+
+    if (mRev >= 0x10) {
+        goto end;
+    }
+    static Symbol WorldInstance("WorldInstance");
+    static Symbol WorldObject("WorldObject");
+    if (orig == WorldInstance) {
+        return WorldObject;
+    }
+
+    if (mRev >= 0xF) {
+        goto end;
+    }
+    static Symbol Group("Group");
+    static Symbol View("View");
+    if (orig == View) {
+        return Group;
+    }
+
+    if (mRev >= 7) {
+        goto end;
+    }
+    static Symbol String("String");
+    static Symbol Line("Line");
+    if (orig == String) {
+        return Line;
+    }
+
+    if (mRev >= 6) {
+        goto end;
+    }
+    static Symbol MeshGenerator("MeshGenerator");
+    static Symbol Generator("Generator");
+    if (orig == MeshGenerator) {
+        return Generator;
+    }
+
+    if (mRev >= 5) {
+        goto end;
+    }
+    static Symbol TexMovie("TexMovie");
+    static Symbol Movie("Movie");
+    if (orig == TexMovie) {
+        return Movie;
+    }
+
+end:
     return orig;
 }
 

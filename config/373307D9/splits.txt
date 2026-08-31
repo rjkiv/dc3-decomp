@@ -2348,7 +2348,7 @@ system/obj/DirLoader.cpp:
 	.text       start:0x82EDB720 end:0x82EDB7A8 rename:.text$yc
 	.text       start:0x82EE1F88 end:0x82EE1F98 rename:.text$yd
 	.data       start:0x82F10538 end:0x82F105C8
-	.data       start:0x82F648D8 end:0x82F64A58 rename:.bss
+	.data       start:0x82F648D8 end:0x82F649AC rename:.bss
 
 system/obj/Task.cpp:
 	.rdata      start:0x82072958 end:0x820737F0
@@ -2359,7 +2359,7 @@ system/obj/Task.cpp:
 	.text       start:0x82EDB7A8 end:0x82EDB7E0 rename:.text$yc
 	.text       start:0x82EE1F98 end:0x82EE1FB8 rename:.text$yd
 	.data       start:0x82F105C8 end:0x82F106D0
-	.data       start:0x82F64A58 end:0x82F64AE8 rename:.bss
+	.data       start:0x82F649AC end:0x82F64AE8 rename:.bss
 
 system/obj/Object.cpp:
 	.rdata      start:0x820737F0 end:0x82074BA8
