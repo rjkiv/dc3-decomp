@@ -1,6 +1,7 @@
 #include "hamobj/HamCharacter.h"
 #include "HamCharacter.h"
 #include "HamRegulate.h"
+#include "char/CharBones.h"
 #include "char/CharClip.h"
 #include "char/CharEyes.h"
 #include "char/CharFaceServo.h"
@@ -13,6 +14,7 @@
 #include "char/Waypoint.h"
 #include "hamobj/HamDriver.h"
 #include "hamobj/HamGameData.h"
+#include "macros.h"
 #include "math/Mtx.h"
 #include "obj/Data.h"
 #include "obj/DataUtl.h"
@@ -35,6 +37,7 @@
 #include "utl/Loader.h"
 #include "utl/Std.h"
 #include "utl/Symbol.h"
+#include <list>
 
 namespace {
     const char *kCrewCardMeshName = "crew_card.mesh";
@@ -328,8 +331,9 @@ bool HamCharacter::InClipTest() {
 
 void HamCharacter::SetIKEffectorWeights(float weight) {
     FOREACH (it, mIKEffectors) {
-        if (*it) {
-            (*it)->SetWeight(weight);
+        auto w = *it;
+        if (w) {
+            w->SetWeight(weight);
         }
     }
 }
@@ -461,10 +465,13 @@ void HamCharacter::SetUseCameraSkeleton(bool use) {
 
 Symbol HamCharacter::GetFaceOverrideClip() {
     CharLipSyncDriver *driver = Find<CharLipSyncDriver>("face.lipdrv", false);
-    if (driver && driver->OverrideClip()) {
-        return driver->OverrideClip()->Name();
-    } else
-        return Symbol();
+    if (driver) {
+        CharClip *clip = driver->OverrideClip();
+        if (clip) {
+            return clip->Name();
+        }
+    }
+    return Symbol();
 }
 
 void HamCharacter::ResetFaceOverrideBlending() {
@@ -476,15 +483,12 @@ void HamCharacter::ResetFaceOverrideBlending() {
 
 void HamCharacter::SetCampaignVo(const char *cc) {
     mCampaignVO = cc;
-    Hmx::Object *o;
     if (mCampaignVOBank) {
-        o = mCampaignVOBank; // maybe a leftover var?
-        delete mCampaignVOBank;
-        mCampaignVOBank = 0;
+        RELEASE(mCampaignVOBank);
     }
     if (!mCampaignVO.empty()) {
         String milo = GetCampaignVoMilo();
-        mCampaignVODir = DirLoader::LoadObjects(milo.c_str(), nullptr, nullptr);
+        mCampaignVODir = DirLoader::LoadObjects(FilePath(milo.c_str()), nullptr, nullptr);
         for (ObjDirItr<Hmx::Object> it(mCampaignVODir, false); it != nullptr; ++it) {
             if (it->Type() == "character_vo") {
                 mCampaignVOBank = it;
@@ -535,6 +539,104 @@ void HamCharacter::SetPropShowing(int prop, bool show) {
     if (mShowableProps.size() > prop) {
         if (mShowableProps[prop])
             mShowableProps[prop]->SetShowing(show);
+    }
+}
+
+void HamCharacter::ApplyBlendedSkeletons(HamDriver *driver, CharClip *clip, float f) {
+    if (clip->Unk18CSize() != 0) {
+        auto &layers = driver->Layers();
+        FOREACH (it, layers.unk2c) {
+            HamDriver::LayerClip *layerClip;
+            if ((*it)->FirstClip() == clip && (*it)->unk8 == f) {
+                layerClip = dynamic_cast<HamDriver::LayerClip *>(*it);
+                if (layerClip) {
+                    float val = TheTaskMgr.Beat() - layerClip->unkc + clip->StartBeat();
+                    clip->ApplyBlendedSkeletons(sSkeletonClips, *mSkeletonBones, val, f);
+                    return;
+                }
+            }
+        }
+    }
+
+    int skeletonIndex = clip->Property("clip_skeleton_index", false)->Int();
+    sSkeletonClips[skeletonIndex]->ScaleAdd(*mSkeletonBones, f, 0, 0);
+}
+
+void HamCharacter::BlendInFaceOverrideClip(Symbol s, float f1, float f2) {
+    CharLipSyncDriver *faceDriver = Find<CharLipSyncDriver>("face.lipdrv", false);
+    bool check = false;
+    if (faceDriver) {
+        if (s.Null()) {
+            check = true;
+            faceDriver->ClearOverrideClip();
+        } else {
+            for (ObjDirItr<CharClip> it(
+                     faceDriver->OverrideOptions() ? faceDriver->OverrideOptions()
+                                                   : faceDriver->Clips(),
+                     false
+                 );
+                 it != nullptr;
+                 ++it) {
+                if (s == it->Name()) {
+                    check = true;
+                    faceDriver->BlendInOverrideClip(it, f1, f2);
+                }
+            }
+
+            if (!check) {
+                MILO_NOTIFY(
+                    "HamCharacter::SetFaceOverrideClip couldn\'t find clip named %s for %s",
+                    s.Str(),
+                    Name()
+                );
+                return;
+            }
+        }
+    }
+    if (!check) {
+        // they really copied and pasted this from SetFaceOverrideClip
+        MILO_NOTIFY(
+            "HamCharacter::SetFaceOverrideClip couldn\'t find  lip sync driver for %s",
+            Name()
+        );
+    }
+}
+
+void HamCharacter::SetFaceOverrideClip(Symbol s, bool b) {
+    CharLipSyncDriver *faceDriver = Find<CharLipSyncDriver>("face.lipdrv", false);
+    bool check = false;
+    if (faceDriver) {
+        if (s.Null()) {
+            check = true;
+            faceDriver->ClearOverrideClip();
+        } else {
+            for (ObjDirItr<CharClip> it(
+                     faceDriver->OverrideOptions() ? faceDriver->OverrideOptions()
+                                                   : faceDriver->Clips(),
+                     false
+                 );
+                 it != nullptr;
+                 ++it) {
+                if (s == it->Name()) {
+                    check = true;
+                    // faceDriver->OverRideClip has to be it
+                }
+            }
+            if (!check) {
+                MILO_NOTIFY(
+                    "HamCharacter::SetFaceOverrideClip couldn\'t find clip named %s for %s",
+                    s.Str(),
+                    Name()
+                );
+                return;
+            }
+        }
+    }
+    if (!check || b) {
+        MILO_NOTIFY(
+            "HamCharacter::SetFaceOverrideClip couldn\'t find  lip sync driver for %s",
+            Name()
+        );
     }
 }
 
