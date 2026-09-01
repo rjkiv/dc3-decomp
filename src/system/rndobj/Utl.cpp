@@ -1,5 +1,6 @@
 #include "Rnd.h"
 #include "math/Color.h"
+#include "math/Geo.h"
 #include "math/Mtx.h"
 #include "math/Utl.h"
 #include "math/Trig.h"
@@ -8,6 +9,7 @@
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/Endian.h"
+#include "os/File.h"
 #include "os/FileCache.h"
 #include "os/Platform.h"
 #include "os/System.h"
@@ -23,6 +25,7 @@
 #include "rndobj/MetaMaterial.h"
 #include "rndobj/Part.h"
 #include "utl/Std.h"
+#include "utl/Cache.h"
 #include "rndobj/Utl.h"
 #include "math/Rand.h"
 
@@ -129,7 +132,50 @@ void RndSplasherResume() {
         gSplashResume();
 }
 
-const char *CacheResource(const char *, const Hmx::Object *);
+const char *CacheResource(const char *, CacheResourceResult &);
+
+const char *CacheResource(const char *file, const Hmx::Object *obj) {
+    if (file && *file) {
+        strstr(file, "icons_buttons_xbox_nomip");
+        CacheResourceResult res;
+        const char *ret = CacheResource(file, res);
+        if (res > kCacheUnnecessary) {
+            switch (res) {
+            case kCacheUnknownExtension:
+                if (obj) {
+                    MILO_NOTIFY(
+                        "%s: \"%s\" has unrecognized extension \"%s\"",
+                        PathName(obj),
+                        file,
+                        FileGetExt(file)
+                    );
+                } else {
+                    MILO_NOTIFY(
+                        "Unrecognized extension \"%s\" to \"%s\"", FileGetExt(file), file
+                    );
+                }
+                break;
+            case kCacheMissingFile:
+                if (obj) {
+                    MILO_NOTIFY("%s: couldn't find %s", PathName(obj), file);
+                } else {
+                    MILO_NOTIFY("Couldn't find %s", file);
+                }
+                break;
+            default:
+                if (obj) {
+                    MILO_NOTIFY("%s: unknown CacheResource error %s", PathName(obj), file);
+                } else {
+                    MILO_NOTIFY("Unknown CacheResource error %s", file);
+                }
+                break;
+            }
+        }
+        return ret;
+    } else {
+        return nullptr;
+    }
+}
 
 Loader *ResourceFactory(const FilePath &f, LoaderPos p) {
     return new FileLoader(
@@ -182,8 +228,8 @@ MatShaderOptions GetDefaultMatShaderOpts(const Hmx::Object *obj, RndMat *mat) {
     if (mesh) {
         if (mesh->Mat() == mat) {
             opts.SetLast5(0x12);
-            opts.SetHasBones(mesh->NumBones() != 0);
-            opts.SetHasAOCalc(mesh->HasAOCalc());
+            opts.shader_struct.mHasBones = mesh->NumBones() != 0;
+            opts.shader_struct.mHasAOCalc = mesh->HasAOCalc();
         }
     } else {
         const RndMultiMesh *multimesh = dynamic_cast<const RndMultiMesh *>(obj);
@@ -935,9 +981,7 @@ void ComputeFaceTangentBasis(RndMesh *m, int faceIdx, Hmx::Matrix3 &mtx) {
                 Hmx::Matrix3 mb0(
                     diff21tex.x, diff31tex.x, 0, diff21tex.y, diff31tex.y, 0, 0, 0, 1
                 );
-                std::swap(diffMtx.x.y, diffMtx.y.x);
-                std::swap(diffMtx.x.z, diffMtx.z.x);
-                std::swap(diffMtx.y.z, diffMtx.z.y);
+                Transpose(diffMtx, diffMtx);
                 Multiply(mb0, diffMtx, mtx);
             }
         } else {
@@ -1001,4 +1045,32 @@ void FixVertOrder(const RndMesh const *src, RndMesh *dst) {
     if (mismatches != 0) {
         MILO_LOG("%s has %d mismatched verts\n", dst->Name(), mismatches);
     }
+}
+
+void BurnXfm(RndMesh *mesh, bool zero) {
+    Transform xfm(mesh->LocalXfm());
+    if (zero) {
+        xfm.v.Zero();
+    }
+    Hmx::Matrix3 inv;
+    Invert(xfm.m, inv);
+    Transpose(inv, inv);
+    FOREACH (it, mesh->Verts()) {
+        Multiply(it->pos, xfm, it->pos);
+        Multiply(inv, it->norm, it->norm);
+        Normalize(it->norm, it->norm);
+        Vector3 &tangent = reinterpret_cast<Vector3 &>(it->tangent);
+        Multiply(inv, tangent, tangent);
+        Normalize(tangent, tangent);
+    }
+    mesh->Sync(0x1F);
+    MultiplyEq(mesh->GetBSPTree(), xfm);
+    Sphere s;
+    Multiply(mesh->GetSphere(), xfm, s);
+    mesh->SetSphere(s);
+    xfm.Reset();
+    if (zero) {
+        xfm.v = mesh->LocalXfm().v;
+    }
+    mesh->SetLocalXfm(xfm);
 }
