@@ -158,12 +158,61 @@ void StorePanel::ExitError(StoreError e) {
 }
 
 void StorePanel::HandleNetCacheLoaderFailure(int failType) {
-    MILO_ASSERT((0) <= (failType) && (failType) < (kNCMS_Max), 0xe5);
+    MILO_ASSERT_RANGE(failType, 0, kNCMFT_Max, 0xe5);
+    StoreError error;
+    if (failType == 0) {
+        failType = TheNetCacheMgr->GetFailType();
+    }
     switch (failType) {
-    case 0:
-
+    case 1: {
+        error = !ThePlatformMgr.IsSignedIntoLive(StoreProfile()->GetPadNum())
+            ? kStoreErrorCacheNoSpace
+            : kStoreErrorCacheRemoved;
         break;
     }
+    case 2:
+        return;
+    case 3:
+        error = kStoreErrorNoMetadata;
+        goto lol;
+        break;
+    default:
+        MILO_NOTIFY("Unknown failure %d in a net cache loader!", failType);
+        error = kStoreErrorCacheRemoved;
+        break;
+    }
+    if (!ThePlatformMgr.IsEthernetCableConnected()) {
+        error = kStoreErrorNoMetadata;
+    }
+lol:
+    ExitError(error);
+}
+
+void StorePanel::HandleNetCacheMgrFailure() {
+    StoreError error = kStoreErrorCacheRemoved;
+    NetCacheMgrFailType failType = TheNetCacheMgr->GetFailType();
+
+    switch (failType) {
+    case kNCMFT_StoreServer:
+    case kNCMFT_ClientError: {
+        error = !ThePlatformMgr.IsSignedIntoLive(StoreProfile()->GetPadNum())
+            ? kStoreErrorCacheNoSpace
+            : kStoreErrorCacheRemoved;
+        break;
+    }
+    case 3:
+        error = kStoreErrorNoMetadata;
+        goto lol;
+        break;
+    default:
+        MILO_NOTIFY("Unknown failure %d in NetCacheMgr.", failType);
+        break;
+    }
+    if (!ThePlatformMgr.IsEthernetCableConnected()) {
+        error = kStoreErrorNoMetadata;
+    }
+lol:
+    ExitError(error);
 }
 
 void StorePanel::MultipleItemsCheckout(std::list<StoreOffer *> *offers) {

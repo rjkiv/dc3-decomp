@@ -1,4 +1,5 @@
 #include "hamobj/HamWardrobe.h"
+#include "char/CharClipGroup.h"
 #include "char/CharDriver.h"
 #include "char/CharInterest.h"
 #include "char/Character.h"
@@ -267,9 +268,7 @@ void HamWardrobe::SyncInterestObjects(ObjectDir *dir) {
 
 void HamWardrobe::UpdateOverlay() {
     if (mOverlay && mOverlay->Showing()) {
-        for (ObjPtrList<Character>::iterator it = mCrowdMembers.begin();
-             it != mCrowdMembers.end();
-             ++it) {
+        FOREACH (it, mCrowdMembers) {
             Character *cur = *it;
             if (cur) {
                 *mOverlay << cur->Name() << ": ";

@@ -2,8 +2,11 @@
 #include "macros.h"
 #include "os/Debug.h"
 #include "os/NetworkSocket.h"
+#include "utl/MakeString.h"
 #include "utl/MemMgr.h"
+#include "utl/Std.h"
 #include "utl/Str.h"
+#include <cstring>
 
 const float HttpGet::kDefaultTimeoutMs = 5000.0f;
 const int HttpGet::kMaxRetries = 3;
@@ -12,9 +15,21 @@ const int HttpGet::kRecvBufSize = 0x1000;
 namespace {
     bool ValidateHeader(char *, int, int *, int *) { return false; }
     char *GetNextLine(char *, int *) { return 0; }
-    int LineLength(char *, int) { return 1; }
+    int LineLength(char *pBuf, int i) {
+        MILO_ASSERT(pBuf, 0x54);
+        char *original = pBuf;
+        for (; i > 0; i--) {
+            if (*pBuf == '\r' || *pBuf == '\n')
+                break;
+            pBuf++;
+        }
+        return pBuf - original;
+    }
     bool StrIStartsWith(String const &, const char *) { return false; }
-    char *ParseHeader(char *, int, std::vector<String> *) { return 0; }
+    char *ParseHeader(char *c, int val, std::vector<String> *pHeader) {
+        MILO_ASSERT(pHeader, 0x83);
+        return c;
+    }
     unsigned int ParseStatusCode(std::vector<String> const &) { return 1; }
     int GetContentLength(std::vector<String> const &) { return 1; }
 };
@@ -192,3 +207,44 @@ void HttpPost::StartSending() {
     mFailType = (HttpGetFailType)1;
     SetState((State)7);
 }
+
+void HttpPost::Sending() {
+    MILO_ASSERT(mSocket, 0x3ef);
+    String str;
+    for (int i = (int)mContentLength - unk90; i < (int)mContentLength; i++) {
+        str += MakeString("%c", mContent[i]);
+    }
+
+    int socketSend = mSocket->Send(mContent + mContentLength - unk90, unk90);
+    State s;
+    if (socketSend == -1) {
+        s = (State)7;
+        mFailType = (HttpGetFailType)1;
+    } else if (socketSend != unk90) {
+        unk90 -= socketSend;
+        return;
+    } else {
+        s = (State)3;
+        unk90 = 0;
+    }
+    SetState(s);
+}
+
+void HttpGet::AddRequiredHeaders() {
+    String newLine;
+    newLine = MakeString("\r\n");
+    String header("Host: ");
+    header += NetworkSocket::IPIntToString(mIP);
+    header += ":";
+    header += MakeString("%d", mPort);
+    header += newLine;
+    header += "Content-Type: application/octet-stream";
+    header += newLine;
+    header += "Connection: close";
+    header += newLine;
+    unk58 += header.c_str();
+}
+
+bool HttpGet::CanRetry() { return unk78 < 3; }
+
+unsigned int HttpGet::GetBufferSize() { return mFileBufSize; }
