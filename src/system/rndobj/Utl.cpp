@@ -945,3 +945,60 @@ void ComputeFaceTangentBasis(RndMesh *m, int faceIdx, Hmx::Matrix3 &mtx) {
         }
     }
 }
+
+void FixVertOrder(const RndMesh const *src, RndMesh *dst) {
+    int mismatches = 0;
+    auto &src_verts = const_cast<RndMesh *>(src)->Verts();
+    auto &dst_verts = dst->Verts();
+    auto &dst_faces = dst->Faces();
+    int num_verts = src_verts.size();
+    for (int i = 0; i < num_verts; i++) {
+        int idx = 0;
+        Vector2 tex = src_verts[i].tex;
+        for (int j = 0; j < dst_verts.size(); j++) {
+            const Vector2 &vertTex = dst_verts[j].tex;
+            if (std::fabs(tex.x - vertTex.x) < 1e-5f
+                && std::fabs(tex.y - vertTex.y) < 1e-5f) {
+                idx = j;
+                goto out;
+            }
+        }
+        idx = -1;
+    out:
+        if (idx != -1) {
+            unsigned short ui = i;
+            unsigned short uj = idx;
+            if (uj != ui) {
+                auto tmp = dst_verts[uj];
+                dst_verts[uj] = dst_verts[ui];
+                dst_verts[ui] = tmp;
+            }
+            if (uj != ui) {
+                int num_faces = dst_faces.size();
+                for (int k = 0; k < num_faces; k++) {
+                    auto &face = dst_faces[k];
+                    if (face.v1 == uj) {
+                        face.v1 = ui;
+                    } else if (face.v1 == ui) {
+                        face.v1 = uj;
+                    }
+                    if (face.v2 == uj) {
+                        face.v2 = ui;
+                    } else if (face.v2 == ui) {
+                        face.v2 = uj;
+                    }
+                    if (face.v3 == uj) {
+                        face.v3 = ui;
+                    } else if (face.v3 == ui) {
+                        face.v3 = uj;
+                    }
+                }
+            }
+        } else {
+            mismatches++;
+        }
+    }
+    if (mismatches != 0) {
+        MILO_LOG("%s has %d mismatched verts\n", dst->Name(), mismatches);
+    }
+}
