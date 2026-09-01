@@ -524,7 +524,6 @@ void UtilDrawPlane(
     bool no_z
 ) {
     Transform xfm;
-    // hugh i'm gonna kill you with hammers
     ScaleAdd(v, reinterpret_cast<const Vector3 &>(p), -p.Dot(v), xfm.v);
     xfm.m.y = reinterpret_cast<const Vector3 &>(p);
     Hmx::Matrix3 mb0;
@@ -818,10 +817,10 @@ void TransformKeys(RndTransAnim *tanim, const Transform &tf) {
         Multiply(it->value, tf, it->value);
     }
     FOREACH (it, tanim->ScaleKeys()) {
-        Scale(it->value, v48.x, it->value);
+        Scale(it->value, v48, it->value);
     }
     FOREACH (it, tanim->RotKeys()) {
-        Multiply(q58, it->value, it->value);
+        Multiply(it->value, q58, it->value);
     }
 }
 
@@ -902,5 +901,47 @@ void MoveXfms(RndMultiMesh *mesh, const Vector3 &v3) {
 void ScaleXfms(RndMultiMesh *mesh, const Vector3 &v3) {
     FOREACH (it, mesh->Instances()) {
         Scale(v3, it->mXfm.m, it->mXfm.m);
+    }
+}
+
+void ComputeFaceTangentBasis(RndMesh *m, int faceIdx, Hmx::Matrix3 &mtx) {
+    MILO_ASSERT(m, 592);
+    auto &face = m->Faces(faceIdx);
+    mtx.Identity();
+    unsigned short face1 = face.v1;
+    unsigned short face2 = face.v2;
+    unsigned short face3 = face.v3;
+    if (face1 != face2 && face2 != face3 && face3 != face1) {
+        auto &verts = m->Verts();
+        auto &vert1 = verts[face1];
+        auto &vert2 = verts[face2];
+        auto &vert3 = verts[face3];
+        Vector2 tex1 = vert1.tex;
+        Vector2 tex2 = vert2.tex;
+        Vector2 tex3 = vert3.tex;
+        if (!BadUV(tex1) && !BadUV(tex2) && !BadUV(tex3)) {
+            Vector3 diff21;
+            Subtract(vert2.pos, vert1.pos, diff21);
+            Vector3 diff31;
+            Subtract(vert3.pos, vert1.pos, diff31);
+            Vector2 diff21tex(tex2.x - tex1.x, tex2.y - tex1.y);
+            Vector2 diff31tex(tex3.x - tex1.x, tex3.y - tex1.y);
+            if (!(diff21 == Vector3(0, 0, 0)) && !(diff31 == Vector3(0, 0, 0))
+                && !(diff21tex == Vector2(0, 0)) && !(diff31tex == Vector2(0, 0))) {
+                Vector3 diffz;
+                Cross(diff21, diff31, diffz);
+                Hmx::Matrix3 diffMtx(diff21, diff31, diffz);
+                Invert(diffMtx, diffMtx);
+                Hmx::Matrix3 mb0(
+                    diff21tex.x, diff31tex.x, 0, diff21tex.y, diff31tex.y, 0, 0, 0, 1
+                );
+                std::swap(diffMtx.x.y, diffMtx.y.x);
+                std::swap(diffMtx.x.z, diffMtx.z.x);
+                std::swap(diffMtx.y.z, diffMtx.z.y);
+                Multiply(mb0, diffMtx, mtx);
+            }
+        } else {
+            MILO_LOG("NOTIFY: %s has bad UVs, should reexport from Max\n", PathName(m));
+        }
     }
 }
