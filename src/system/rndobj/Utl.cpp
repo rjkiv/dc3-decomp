@@ -1049,7 +1049,7 @@ void ComputeFaceTangentBasis(RndMesh *m, int faceIdx, Hmx::Matrix3 &mtx) {
     }
 }
 
-void FixVertOrder(const RndMesh const *src, RndMesh *dst) {
+void FixVertOrder(const RndMesh *src, RndMesh *dst) {
     int mismatches = 0;
     auto &src_verts = const_cast<RndMesh *>(src)->Verts();
     auto &dst_verts = dst->Verts();
@@ -1211,4 +1211,142 @@ void SetBloomBlurWeightsStreak(bool b1, float f2, float f3, float f4, int pass, 
             (PShaderConstant)(0x9A + i), Vector4(fc0[i], fc0[i], fc0[i], fc0[i])
         );
     }
+}
+
+void RandomXfms(RndMultiMesh *multiMesh) {
+    InstanceList randomized;
+    FOREACH (it, multiMesh->Instances()) {
+        int idx = RandomInt(0, multiMesh->Instances().size());
+        randomized.splice(
+            randomized.begin(),
+            multiMesh->Instances(),
+            NextItr(multiMesh->Instances().begin(), idx)
+        );
+    }
+    multiMesh->Instances().splice(multiMesh->Instances().begin(), randomized);
+    multiMesh->InvalidateProxies();
+}
+
+void TestTextureSize(ObjectDir *dir, int iType, int i3, int i4, int i5, int maxBpp) {
+    bool rendered = iType == RndTex::kRendered || iType == RndTex::kRenderedNoZ;
+    bool b2 = GetGfxMode() == kOldGfx || rendered;
+    int ivar4 = b2 ? i5 : 1;
+    int inputProduct = i3 * i4 * ivar4;
+    for (ObjDirItr<RndTex> it(dir, true); it != nullptr; ++it) {
+        if (it->GetType() == iType) {
+            int local_bpp = b2 ? it->Bpp() : 1;
+            if (rendered && GetGfxMode() == 1 && local_bpp == 0x10)
+                local_bpp = 0x20;
+            int product = it->Width() * it->Height() * local_bpp;
+            if (product > inputProduct) {
+                MILO_NOTIFY(
+                    "%s is too big w:%d h:%d bpp:%d",
+                    PathName(it),
+                    it->Width(),
+                    it->Height(),
+                    local_bpp
+                );
+            }
+            if (product != 0 && b2 && local_bpp > maxBpp) {
+                MILO_NOTIFY("%s is %d bpp > %d, too big", PathName(it), local_bpp, maxBpp);
+            }
+        }
+    }
+}
+
+void TestTexturePaths(ObjectDir *dir) {
+    String path(FileRoot());
+    FileNormalizePath(path.c_str());
+    for (ObjDirItr<RndTex> it(dir, true); it != nullptr; ++it) {
+        FilePath fp(it->File());
+        if (fp.empty()) {
+            continue;
+        }
+        String relative(FileRelativePath(FileRoot(), fp.c_str()));
+        FileNormalizePath(path.c_str());
+        if (strstr(relative.c_str(), "..") == relative.c_str()
+            && strstr(relative.c_str(), "../../system/run") != relative.c_str()) {
+            MILO_NOTIFY("%s: %s is outside project path", PathName(it), relative);
+        }
+        if (relative.length() > 2 && relative.c_str()[1] == ':') {
+            MILO_NOTIFY("%s: %s is outside project path", PathName(it), relative);
+        }
+    }
+    if (dir->Loader()) {
+        const char *dirFile = dir->Loader()->LoaderFile().c_str();
+        bool isNG = strstr(dirFile, "/ng/");
+        for (ObjDirItr<RndTex> it(dir, false); it != nullptr; ++it) {
+            const char *texFile = it->File().c_str();
+            if (!isNG && strstr(texFile, "/ng/")) {
+                MILO_NOTIFY("og %s has ng texture %s", dirFile, texFile);
+            } else if (isNG && strstr(texFile, "/og/")) {
+                MILO_NOTIFY("ng %s has og texture %s", dirFile, texFile);
+            }
+        }
+    }
+}
+
+void TestMaterialTextures(ObjectDir *dir) {
+    for (ObjDirItr<RndMat> it(dir, false); it != nullptr; ++it) {
+        RndTex *normal = it->NormalMap();
+        if (normal) {
+            FilePath file = normal->File();
+            if (!normal->IsRenderTarget() && !strstr(file.c_str(), "_norm")) {
+                MILO_NOTIFY(
+                    "normal map %s used by %s must have _norm in the filename",
+                    PathName(normal),
+                    PathName(it)
+                );
+            }
+        }
+    }
+}
+
+DataNode GetNormalMapTextures(ObjectDir *dir) {
+    DataArrayPtr ptr(new DataArray(0x100));
+    int idx = 0;
+    ptr->Node(idx++) = NULL_OBJ;
+    for (ObjDirItr<RndTex> it(dir, true); it != nullptr; ++it) {
+        bool b1 = false;
+        FilePath fp(it->File());
+        if (strstr(FileGetBase(fp.c_str()), "_norm")) {
+            b1 = true;
+        } else {
+            if (fp.empty()) {
+                if (it->IsRenderTarget())
+                    b1 = true;
+            }
+        }
+        if (b1) {
+            ptr->Node(idx++) = &*it;
+        }
+    }
+    ptr->Resize(idx);
+    return ptr;
+}
+
+DataNode GetTexturesOfType(ObjectDir *dir, RndTex::Type texType) {
+    int num = 0;
+    for (ObjDirItr<RndTex> it(dir, true); it != 0; ++it) {
+        if ((texType & it->GetType()) == texType) {
+            num++;
+        }
+    }
+    DataArrayPtr ptr(new DataArray(num + 1));
+    num = 0;
+    for (ObjDirItr<RndTex> it(dir, true); it != 0; ++it) {
+        if ((texType & it->GetType()) == texType) {
+            ptr->Node(num++) = &*it;
+        }
+    }
+    ptr->Node(num) = NULL_OBJ;
+    return ptr;
+}
+
+DataNode GetRenderTextures(ObjectDir *dir) {
+    return GetTexturesOfType(dir, RndTex::kRendered);
+}
+
+DataNode GetRenderTexturesNoZ(ObjectDir *dir) {
+    return GetTexturesOfType(dir, RndTex::kRenderedNoZ);
 }
