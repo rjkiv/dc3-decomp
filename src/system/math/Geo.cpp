@@ -5,8 +5,10 @@
 #include "math/Utl.h"
 #include "math/Vec.h"
 #include "obj/DataFunc.h"
+#include "os/Debug.h"
 #include "os/System.h"
 #include "utl/BinStream.h"
+#include "utl/Std.h"
 
 float gUnitsPerMeter = 39.370079f;
 float gBSPPosTol = 0.01f;
@@ -30,6 +32,15 @@ void NumNodes(const BSPNode *node, int &num, int &maxDepth) {
         num++;
         depth--;
     }
+}
+
+template <>
+TextStream &operator<<(TextStream &ts, const std::vector<Vector2> &vec) {
+    ts << "( size: " << vec.size() << ")";
+    FOREACH_CONST (v2, vec) {
+        ts << "\n" << vec.end() - v2 << "\t" << *v2;
+    }
+    return ts;
 }
 
 BinStream &operator<<(BinStream &bs, const BSPNode *node) {
@@ -97,6 +108,15 @@ float Box::SurfaceArea() const {
 
 float Box::Volume() const {
     return (mMax.z - mMin.z) * (mMax.y - mMin.y) * (mMax.x - mMin.x);
+}
+
+void Multiply(const Box &in, float scalar, Box &out) {
+    Vector3 midpoint;
+    Interp(in.mMin, in.mMax, 0.5, midpoint);
+    Subtract(in.mMax, midpoint, out.mMax);
+    Subtract(in.mMin, midpoint, out.mMin);
+    ScaleAdd(midpoint, out.mMax, scalar, out.mMax);
+    ScaleAdd(midpoint, out.mMin, scalar, out.mMin);
 }
 
 void Box::GrowToContain(const Vector3 &vec, bool b) {
@@ -259,6 +279,32 @@ bool CheckBSPTree(const BSPNode *node, const Box &box) {
         return false;
     return true;
     // sixth and final intersect check
+}
+
+void BSPFace::Update() {
+    MILO_ASSERT(p.points.size() > 2, 1730);
+    // recalculate area
+    area = 0.0f;
+    const auto &points = p.points;
+    for (auto p1 = points.begin(), p2 = p1 + 1, p3 = p1 + 2; p3 != points.end();
+         p2 = p3++) {
+        float x2y1 = p2->x * p1->y, y3x1 = p3->y * p1->x;
+        float x3y2 = p3->x * p2->y;
+        float f10 = p2->y * p1->x - x2y1;
+        float f11 = p3->x * p1->y - y3x1;
+        float f13 = p3->y * p2->x - x3y2;
+        f13 += f10 + f11;
+        area += f13 * 0.5f;
+    }
+    // recalculate planes
+    planes.clear();
+    Plane p;
+    p.Set(t.v, t.m.z);
+    planes.push_back(p);
+    Vector3 basis(points.rbegin()->x, points.rbegin()->y, 0);
+    Multiply(basis, t, basis);
+    FOREACH_CONST (p, points)
+        ;
 }
 
 void MultiplyEq(BSPNode *n, const Transform &t) {
