@@ -570,7 +570,7 @@ void HamCamShot::SetPreFrame(float frame, float blend) {
     } else {
         frame -= mDuration;
         while (frame < unk2cc && unk2b4 != mNextShots.begin()) {
-            unk2b4--;
+            --unk2b4;
             unk2d0 = (*unk2b4)->GetTotalDuration();
             unk2cc -= unk2d0;
             mCurrentShot = *unk2b4;
@@ -706,8 +706,7 @@ void HamCamShot::UpdateTargetsFlipped() {
                         if (strstr(name, "player0") && mPlayerFlag == kHamPlayer0) {
                             buf[6] = '1';
                             transform = worldDir->Find<RndTransformable>(buf);
-                        } else if (strstr(name, "player1")
-                                   && mPlayerFlag == kHamPlayer1) {
+                        } else if (strstr(name, "player1") && mPlayerFlag == kHamPlayer1) {
                             buf[6] = '0';
                             transform = worldDir->Find<RndTransformable>(buf);
                         }
@@ -715,8 +714,7 @@ void HamCamShot::UpdateTargetsFlipped() {
                         if (strstr(name, "player0") && mPlayerFlag == kHamPlayer1) {
                             buf[6] = '1';
                             transform = worldDir->Find<RndTransformable>(buf);
-                        } else if (strstr(name, "player1")
-                                   && mPlayerFlag == kHamPlayer0) {
+                        } else if (strstr(name, "player1") && mPlayerFlag == kHamPlayer0) {
                             buf[6] = '0';
                             transform = worldDir->Find<RndTransformable>(buf);
                         }
