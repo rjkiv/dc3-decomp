@@ -11,6 +11,7 @@
 #include "os/Endian.h"
 #include "os/File.h"
 #include "os/FileCache.h"
+#include "os/HolmesClient.h"
 #include "os/Platform.h"
 #include "os/System.h"
 #include "rndobj/Bitmap.h"
@@ -24,10 +25,13 @@
 #include "rndobj/Mesh.h"
 #include "rndobj/MetaMaterial.h"
 #include "rndobj/Part.h"
+#include "rndobj/ShaderMgr.h"
+#include "utl/Loader.h"
 #include "utl/Std.h"
 #include "utl/Cache.h"
 #include "rndobj/Utl.h"
 #include "math/Rand.h"
+#include "utl/Str.h"
 
 class ResourceFileCacheHelper : public FileCacheHelper {
 public:
@@ -132,7 +136,74 @@ void RndSplasherResume() {
         gSplashResume();
 }
 
-const char *CacheResource(const char *, CacheResourceResult &);
+const char *MovieExtension(const char *name, Platform p) {
+    const char *ext;
+    if (strieq(name, "xbv")) {
+        // xbox, pc, ps3, or wii only
+        if (p >= kPlatformXBox && p <= kPlatformWii) {
+            return "xbv";
+        }
+        return name;
+    } else
+        return nullptr;
+}
+
+const char *CacheResource(const char *file, CacheResourceResult &res) {
+    Platform thisPlatform = TheLoadMgr.GetPlatform();
+    res = kCacheUnnecessary;
+    char locBuffer[256];
+    const char *localized = FileLocalize(file, locBuffer);
+    bool islocal = FileIsLocal(localized);
+    const char *ext = FileGetExt(localized);
+
+    if (strieq(ext, "bmp") || strieq(ext, "png")) {
+        const char *finalFileName = localized;
+        char ps3File[256];
+        if (TheLoadMgr.GetPlatform() == kPlatformPS3) {
+            const char *xboxStr = &finalFileName[strlen(finalFileName) - 5];
+            if (xboxStr >= finalFileName && streq("_xbox", xboxStr)) {
+                strcpy(ps3File, finalFileName);
+                int ps3Idx = xboxStr - finalFileName;
+                strcpy(ps3File + ps3Idx, "_ps3");
+                strcpy(ps3File + ps3Idx + 4, xboxStr + 5);
+                finalFileName = ps3File;
+            }
+        }
+
+        static char finalFileBuffer[0x100];
+        strcpy(
+            finalFileBuffer,
+            MakeString(
+                "%s/gen/%s.%s_%s",
+                FileGetPath(finalFileName),
+                FileGetBase(finalFileName),
+                FileGetExt(finalFileName),
+                PlatformSymbol(thisPlatform)
+            )
+        );
+        if (!UsingCD() && !islocal) {
+            String str;
+            FileQualifiedFilename(str, finalFileName);
+            res = HolmesClientCacheResource(str.c_str(), finalFileBuffer);
+            if (res > 0) {
+                return nullptr;
+            } else {
+                return finalFileBuffer;
+            }
+        }
+        return finalFileBuffer;
+    } else {
+        const char *movieExt = MovieExtension(ext, thisPlatform);
+        if (movieExt) {
+            return MakeString(
+                "%s/%s.%s", FileGetPath(localized), FileGetBase(localized), movieExt
+            );
+        } else {
+            res = kCacheUnknownExtension;
+            return nullptr;
+        }
+    }
+}
 
 const char *CacheResource(const char *file, const Hmx::Object *obj) {
     if (file && *file) {
@@ -265,18 +336,6 @@ MatShaderOptions GetDefaultMatShaderOpts(const Hmx::Object *obj, RndMat *mat) {
     return opts;
 }
 
-const char *MovieExtension(const char *name, Platform p) {
-    const char *ext;
-    if (strieq(name, "xbv")) {
-        // xbox, pc, ps3, or wii only
-        if (p >= kPlatformXBox && p <= kPlatformWii) {
-            return "xbv";
-        }
-        return name;
-    } else
-        return nullptr;
-}
-
 float ConvertFov(float a, float b) {
     float x = tanf(0.5f * a);
     return atanf(b * x) * 2;
@@ -309,15 +368,15 @@ void CreateAndSetMetaMat(RndMat *mat) {
 }
 
 bool ShouldStrip(RndTransformable *trans) {
-    if (trans) {
-        const char *name = trans->Name();
-        if (name) {
-            return strnicmp("bone_", name, 5) == 0 || strnicmp("exo_", name, 4) == 0
-                || strncmp("spot_", name, 5) == 0;
-        } else
-            return false;
-    } else
+    if (!trans) {
         return false;
+    }
+    const char *name = trans->Name();
+    if (!name) {
+        return false;
+    }
+    return strnicmp("bone_", name, 5) == 0 || strnicmp("exo_", name, 4) == 0
+        || strncmp("spot_", name, 5) == 0;
 }
 
 bool AnimContains(const RndAnimatable *anim1, const RndAnimatable *anim2) {
@@ -1073,4 +1132,83 @@ void BurnXfm(RndMesh *mesh, bool zero) {
         xfm.v = mesh->LocalXfm().v;
     }
     mesh->SetLocalXfm(xfm);
+}
+
+void SetBloomBlurWeights(bool b1, float texWidth, float texHeight) {
+    static float sFloats1[] = { 0.015928393f, 0.027077837f, 0.042423189f, 0.061254792f,
+                                0.081512496f, 0.099966787f, 0.11298861f,  0.11769579f,
+                                0.11298861f,  0.099966787f, 0.081512496f, 0.061254792f,
+                                0.042423189f, 0.027077837f, 0.015928393f };
+    static float sFloats2[] = { -6.5f, -5.5f, -4.5f, -3.5f, -2.5f, -1.5f, -0.5f, 0.5f,
+                                1.5f,  2.5f,  3.5f,  4.5f,  5.5f,  6.5f,  7.5f };
+    float div2 = 1 / texWidth;
+    float div3 = 1 / texHeight;
+    TheShaderMgr.SetNumTaps(DIM(sFloats2));
+    for (int i = 0; i < DIM(sFloats2); i++) {
+        float x, y;
+        if (b1) {
+            x = sFloats2[i] * div2;
+            y = 0;
+        } else {
+            x = 0;
+            y = sFloats2[i] * div3;
+        }
+        TheShaderMgr.SetPConstant((PShaderConstant)(0x8A + i), Vector4(x, y, 1, 1));
+        TheShaderMgr.SetPConstant(
+            (PShaderConstant)(0x9A + i),
+            Vector4(sFloats1[i], sFloats1[i], sFloats1[i], sFloats1[i])
+        );
+    }
+}
+
+#define kNumBloomTaps 7U
+
+void SetBloomBlurWeightsStreak(bool b1, float f2, float f3, float f4, int pass, float f6) {
+    MILO_ASSERT(pass >= 0 && pass < 3, 0x11AA);
+
+    float f14 = powf(f4, powf(4, pass));
+    float f17 = powf(4, pass);
+
+    float fc0[kNumBloomTaps];
+    float fe0[kNumBloomTaps];
+
+    float f11 = f14;
+    float f10 = f17;
+
+    int middle = kNumBloomTaps / 2;
+    for (int i = 0; i <= 2; i++) {
+        MILO_ASSERT((middle - i) >= 0 && (middle + i) < kNumBloomTaps, 0x11C5);
+        fc0[middle - i] = f11 / 3;
+        fe0[middle - i] = 0.5f - f10;
+        fc0[middle + i] = f11 / 3;
+        fe0[middle + i] = f10 + 0.5f;
+        f11 *= f14;
+        f10 += f17;
+    }
+
+    TheShaderMgr.SetNumTaps(kNumBloomTaps);
+
+    float div2 = 1 / f2;
+    float div3 = 1 / f3;
+    float rnddiv = (float)TheRnd.Height() / (float)TheRnd.Width();
+
+    float sinRad = sin(f6 * DEG2RAD);
+    float cosRad = cos(f6 * DEG2RAD);
+
+    for (int i = 0; i < kNumBloomTaps; i++) {
+        float x, y;
+        if (b1) {
+            float cur = fe0[i] * div2;
+            x = cur * cosRad * rnddiv;
+            y = cur * sinRad;
+        } else {
+            float cur = fe0[i] * div3;
+            x = -cur * sinRad * rnddiv;
+            y = cur * cosRad;
+        }
+        TheShaderMgr.SetPConstant((PShaderConstant)(0x8A + i), Vector4(x, y, 1, 1));
+        TheShaderMgr.SetPConstant(
+            (PShaderConstant)(0x9A + i), Vector4(fc0[i], fc0[i], fc0[i], fc0[i])
+        );
+    }
 }

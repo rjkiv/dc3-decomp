@@ -24,7 +24,7 @@ void RndShaderMgr::PreInit() {
         mHasAOCalc = 0;
         unk6d = true;
         mNumBones = 0;
-        unk14 = 1;
+        mNumTaps = 1;
         unk18 = 0;
         unk1c = 0;
         unk20 = 0;

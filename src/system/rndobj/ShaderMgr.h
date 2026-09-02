@@ -98,6 +98,8 @@ public:
     void SetUnk29(bool b) { unk29 = b; }
     void SetUnk2f(bool b) { unk2f = b; }
     void SetUnk30(bool b) { unk30 = b; }
+    int NumTaps() const { return mNumTaps; }
+    void SetNumTaps(int i) { mNumTaps = i; }
 
 protected:
     virtual void LoadShaders(const char *filename);
@@ -110,7 +112,7 @@ protected:
     std::list<ShaderTree> mShaderTrees; // 0x4
     bool mHasAOCalc; // 0xc
     int mNumBones; // 0x10
-    int unk14;
+    int mNumTaps; // 0x14
     bool unk18;
     int unk1c;
     int unk20; // 0x20 - some sort of enum
