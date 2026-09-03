@@ -1452,3 +1452,35 @@ void BuildSphereStratified(unsigned int ui, std::vector<Vector3> &vectors) {
         f12 += f7;
     }
 }
+
+void AttachMesh(RndMesh *main, RndMesh *attach) {
+    MILO_ASSERT(main && attach, 0x525);
+    int numMainFaces = main->Faces().size();
+    int numAttachFaces = attach->Faces().size();
+    main->Faces().resize(numMainFaces + numAttachFaces);
+    int numMainVerts = main->Verts().size();
+    for (int i = 0; i < numAttachFaces; i++) {
+        auto &attachFace = attach->Faces(i);
+        auto &mainFace = main->Faces(i + numMainFaces);
+        mainFace.Set(
+            attachFace.v1 + numMainVerts,
+            attachFace.v2 + numMainVerts,
+            attachFace.v3 + numMainVerts
+        );
+    }
+    Transform tf80;
+    FastInvert(main->WorldXfm(), tf80);
+    Multiply(attach->WorldXfm(), tf80, tf80);
+    int numAttachVerts = attach->Verts().size();
+    main->Verts().resize(numMainVerts + numAttachVerts);
+    for (int i = 0; i < numAttachVerts; i++) {
+        RndMesh::Vert &mainVert = main->Verts(i + numMainVerts);
+        RndMesh::Vert &attachVert = attach->Verts(i);
+        Multiply(attachVert.pos, tf80, mainVert.pos);
+        mainVert.color = attachVert.color;
+        mainVert.boneWeights = attachVert.boneWeights;
+        mainVert.norm = attachVert.norm;
+        mainVert.tex = attachVert.tex;
+    }
+    main->Sync(0x3F);
+}
