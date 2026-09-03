@@ -36,5 +36,6 @@
 
 #define null 0
 
+#define ROUNDUP(x, n) ((x) + ((n) - 1) & ~((n) - 1))
 #define RELEASE(x) (delete x, x = null)
 #define RELEASEARRAY(x) (delete[] (ubyte *)x, x = null)

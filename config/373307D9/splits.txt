@@ -9319,7 +9319,7 @@ xdk/d3dx9/d3dx9tex.cpp:
 	.text       start:0x82BE5C10 end:0x82BE7140
 	.data       start:0x82F26030 end:0x82F26128
 
-xdk/d3dx9/cbuffer.cpp:
+xdk/d3dx9/CBuffer.cpp:
 	.rdata      start:0x82209DBC end:0x82209DD8
 	.pdata      start:0x823121C0 end:0x823121E8
 	.text       start:0x82BE7140 end:0x82BE73E8
@@ -9329,7 +9329,7 @@ xdk/d3dx9/d3dx9shader.cpp:
 	.pdata      start:0x823121E8 end:0x82312238
 	.text       start:0x82BE73E8 end:0x82BE8278
 
-xdk/d3dx9/cimage.cpp:
+xdk/d3dx9/CImage.cpp:
 	.rdata      start:0x8220A2F0 end:0x8220A34C
 	.data       start:0x82F26128 end:0x82F266D0
 
@@ -9338,20 +9338,20 @@ xdk/d3dx9/d3dx9dbg.cpp:
 	.pdata      start:0x82312238 end:0x82312240
 	.text       start:0x82BE8278 end:0x82BE8358
 
-xdk/d3dx9/cfile.cpp:
+xdk/d3dx9/CFile.cpp:
 	.pdata      start:0x82312240 end:0x82312250
 	.text       start:0x82BE8358 end:0x82BE84E8
 
-xdk/d3dx9/cblt.cpp:
+xdk/d3dx9/CBlt.cpp:
 	.pdata      start:0x82312250 end:0x82312308
 	.text       start:0x82BE84E8 end:0x82BEBAA8
 	.data       start:0x82F266D0 end:0x82F26820
 
-xdk/d3dx9/clock.cpp:
+xdk/d3dx9/CLock.cpp:
 	.pdata      start:0x82312308 end:0x82312330
 	.text       start:0x82BEBAA8 end:0x82BEC5B8
 
-xdk/d3dx9/ccodec.cpp:
+xdk/d3dx9/CCodec.cpp:
 	.rdata      start:0x8220AC90 end:0x8220AF5C
 	.pdata      start:0x82312330 end:0x823125D8
 	.text       start:0x82BEC5B8 end:0x82BF8160
@@ -9365,27 +9365,27 @@ xdk/d3dx9/d3dxmath.cpp:
 xdk/d3dx9/init.cpp:
 	.rdata      start:0x8220AF5C end:0x8220BD08
 
-xdk/d3dx9/cpreprocessor.cpp:
+xdk/d3dx9/CPreProcessor.cpp:
 	.rdata      start:0x8220BD08 end:0x8220C1C8
 	.pdata      start:0x823125D8 end:0x82312770
 	.text       start:0x82BF8408 end:0x82BFE030
 
-xdk/d3dx9/ctokenize.cpp:
+xdk/d3dx9/CTokenize.cpp:
 	.rdata      start:0x8220C1C8 end:0x8220C4F0
 	.pdata      start:0x82312770 end:0x82312868
 	.text       start:0x82BFE030 end:0x82C00968
 
-xdk/d3dx9/cassembler.cpp:
+xdk/d3dx9/CAssembler.cpp:
 	.rdata      start:0x8220C4F0 end:0x82210118
 	.pdata      start:0x82312868 end:0x82312968
 	.text       start:0x82C00968 end:0x82C06918
 
-xdk/d3dx9/ccompiler.cpp:
+xdk/d3dx9/CCompiler.cpp:
 	.rdata      start:0x82210118 end:0x82210ED0
 	.pdata      start:0x82312968 end:0x82312B20
 	.text       start:0x82C06918 end:0x82C1C348
 
-xdk/d3dx9/cconstanttable.cpp:
+xdk/d3dx9/CConstantTable.cpp:
 	.rdata      start:0x82210ED0 end:0x822111F8
 	.pdata      start:0x82312B20 end:0x82312D28
 	.text       start:0x82C1C348 end:0x82C21248
@@ -9398,16 +9398,16 @@ xdk/d3dx9/dxtn.cpp:
 	.pdata      start:0x82312D28 end:0x82312D88
 	.text       start:0x82C21248 end:0x82C231F8
 
-xdk/d3dx9/calloc.cpp:
+xdk/d3dx9/CAlloc.cpp:
 	.pdata      start:0x82312D88 end:0x82312D98
 	.text       start:0x82C231F8 end:0x82C23358
 
-xdk/d3dx9/cnode.cpp:
+xdk/d3dx9/CNode.cpp:
 	.rdata      start:0x82212C78 end:0x82212D90
 	.pdata      start:0x82312D98 end:0x82312F28
 	.text       start:0x82C23358 end:0x82C271E0
 
-xdk/d3dx9/threadlocaldata.cpp:
+xdk/d3dx9/ThreadLocalData.cpp:
 	.pdata      start:0x82312F28 end:0x82312F38
 	.text       start:0x82C271E0 end:0x82C27488
 
@@ -9416,80 +9416,80 @@ xdk/d3dx9/d3dx9fragment.cpp:
 	.pdata      start:0x82312F38 end:0x82312F60
 	.text       start:0x82C27488 end:0x82C27EB0
 
-xdk/d3dx9/cnodeasm.cpp:
+xdk/d3dx9/CNodeAsm.cpp:
 	.rdata      start:0x82212EF4 end:0x82212F0C
 	.pdata      start:0x82312F60 end:0x82312F90
 	.text       start:0x82C27EB0 end:0x82C28290
 
-xdk/d3dx9/ccommentblock.cpp:
+xdk/d3dx9/CCommentBlock.cpp:
 	.pdata      start:0x82312F90 end:0x82312FA8
 	.text       start:0x82C28290 end:0x82C28630
 
-xdk/d3dx9/cuassembler.cpp:
+xdk/d3dx9/CUAssembler.cpp:
 	.rdata      start:0x82212F0C end:0x82218374
 	.pdata      start:0x82312FA8 end:0x82313180
 	.text       start:0x82C28630 end:0x82C329D0
 	.data       start:0x82F26820 end:0x82F26DC8
 
-xdk/d3dx9/c30swprogram.cpp:
+xdk/d3dx9/C30SWProgram.cpp:
 	.rdata      start:0x82218374 end:0x8221B878
 	.pdata      start:0x82313180 end:0x82313698
 	.text       start:0x82C329D0 end:0x82C3D970
 	.data       start:0x82F26DC8 end:0x82F27308
 
-xdk/d3dx9/cshaderprogram.cpp:
+xdk/d3dx9/CShaderProgram.cpp:
 	.rdata      start:0x8221B878 end:0x8221C570
 	.pdata      start:0x82313698 end:0x82313A90
 	.text       start:0x82C3D970 end:0x82C53500
 
-xdk/d3dx9/c30program.cpp:
+xdk/d3dx9/C30Program.cpp:
 	.rdata      start:0x8221C570 end:0x8221C8BC
 	.pdata      start:0x82313A90 end:0x82313B08
 	.text       start:0x82C53500 end:0x82C55DD0
 	.data       start:0x82F27308 end:0x82F27878
 
-xdk/d3dx9/cinstruction.cpp:
+xdk/d3dx9/CInstruction.cpp:
 	.pdata      start:0x82313B08 end:0x82313B38
 	.text       start:0x82C55DD0 end:0x82C56A50
 
-xdk/d3dx9/cargument.cpp:
+xdk/d3dx9/CArgument.cpp:
 	.pdata      start:0x82313B38 end:0x82313B50
 	.text       start:0x82C56A50 end:0x82C56CF0
 
-xdk/d3dx9/cbaseprogram.cpp:
+xdk/d3dx9/CBaseProgram.cpp:
 	.rdata      start:0x8221C8BC end:0x8221C8D4
 	.pdata      start:0x82313B50 end:0x82313BB8
 	.text       start:0x82C56CF0 end:0x82C577E0
 
-xdk/d3dx9/cprogram.cpp:
+xdk/d3dx9/CProgram.cpp:
 	.rdata      start:0x8221C8D4 end:0x8221CBC4
 	.pdata      start:0x82313BB8 end:0x82313E90
 	.text       start:0x82C577E0 end:0x82C71DC0
 
-xdk/d3dx9/cparse.cpp:
+xdk/d3dx9/CParse.cpp:
 	.rdata      start:0x8221CBC4 end:0x82233BF0
 	.pdata      start:0x82313E90 end:0x82314150
 	.text       start:0x82C71DC0 end:0x82C85720
 
-xdk/d3dx9/cpsprogram.cpp:
+xdk/d3dx9/CPSProgram.cpp:
 	.rdata      start:0x82233BF0 end:0x82233E68
 	.pdata      start:0x82314150 end:0x82314218
 	.text       start:0x82C85720 end:0x82C896E8
 	.data       start:0x82F27878 end:0x82F27AD0
 
-xdk/d3dx9/cpslegacyprogram.cpp:
+xdk/d3dx9/CPSLegacyProgram.cpp:
 	.rdata      start:0x82233E68 end:0x82235D00
 	.pdata      start:0x82314218 end:0x82314480
 	.text       start:0x82C896E8 end:0x82C99098
 	.data       start:0x82F27AD0 end:0x82F27B88
 
-xdk/d3dx9/cvsprogram.cpp:
+xdk/d3dx9/CVSProgram.cpp:
 	.rdata      start:0x82235D00 end:0x82235F08
 	.pdata      start:0x82314480 end:0x82314520
 	.text       start:0x82C99098 end:0x82C9CA20
 	.data       start:0x82F27B88 end:0x82F27F00
 
-xdk/d3dx9/cfxlprogram.cpp:
+xdk/d3dx9/CFXLProgram.cpp:
 	.rdata      start:0x82235F08 end:0x82236528
 	.pdata      start:0x82314520 end:0x82314568
 	.text       start:0x82C9CA20 end:0x82C9DFE8
@@ -9501,15 +9501,15 @@ xdk/d3dx9/deflate.cpp:
 xdk/d3dx9/jutils.cpp:
 	.rdata      start:0x82236528 end:0x82236834
 
-xdk/d3dx9/cnodeuasm.cpp:
+xdk/d3dx9/CNodeUasm.cpp:
 	.rdata      start:0x82236834 end:0x82236864
 	.pdata      start:0x82314598 end:0x823145D8
 	.text       start:0x82C9EF80 end:0x82C9F570
 
-xdk/d3dx9/cpool.cpp:
+xdk/d3dx9/CPool.cpp:
 	.text       start:0x82C9F570 end:0x82C9F650
 
-xdk/d3dx9/ctransform.cpp:
+xdk/d3dx9/CTransform.cpp:
 	.pdata      start:0x823145D8 end:0x82314600
 	.text       start:0x82C9F650 end:0x82CA08A0
 

@@ -31,6 +31,7 @@
 #define S_OK                            (long)0
 
 #define E_NOINTERFACE                   (long)0x80004002
+#define E_FAIL 							(long)0x80004005
 #define E_SPEECH_UNINITIALIZED          (long)0x80045001
 
 #define E_OUTOFMEMORY                   (long)0x8007000E

@@ -22,33 +22,29 @@
         },
         "engine": {
             "base": "base",
-            "flags": [
-                
-            ]
+            "flags": []
         },
         "xdk": {
             "base": "base",
             "flags": [
-                
+                "/I src/xdk"
             ]
         },
-        "jpeg":{
+        "jpeg": {
             "base": "base",
-            "flags": [ 
+            "flags": [
                 "/TP"
             ]
         },
-        "tomcrypt":{
+        "tomcrypt": {
             "base": "base",
-            "flags": [ 
+            "flags": [
                 "/TP"
             ]
         },
-        "soundtouch":{
+        "soundtouch": {
             "base": "base",
-            "flags":[
-                
-            ]
+            "flags": []
         },
         "curl": {
             "base": "base",
