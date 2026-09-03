@@ -4,6 +4,7 @@
 #include "synth/FxSend.h"
 #include "synth/StreamReceiver.h"
 #include "synth360/FxSend.h"
+#include "synth360/Voice.h"
 #include "utl/MemMgr.h"
 #include "utl/Std.h"
 #include "xdk/xapilibi/xbox.h"
@@ -59,6 +60,25 @@ void StreamReceiver360::SetSpeed(float speed) {
 void StreamReceiver360::SetADSR(const ADSRImpl &impl) {
     mADSR = impl;
     UpdateADSR();
+}
+
+void StreamReceiver360::SetSlipOffset(float off) {
+    MILO_ASSERT(mSlipEnabled, 197);
+    SlipStop();
+    unk8038 = new Voice(0, 1, 0);
+    if (unk807c) {
+        Tag();
+    }
+    unk8038->SetData(unk8034, unk8044 * 16384, 0);
+    unk8038->SetLoopRegion(0, -1);
+    unk8038->SetSampleRate(unk8040);
+    unk8038->SetStartSamp(GetPlayCursor());
+    unk8038->SetVolume(mVolume);
+    unk8038->SetPan(mPan);
+    unk8038->SetSpeed(mSpeed);
+    UpdateADSR();
+    SetFXSend(mSend);
+    unk8038->Start();
 }
 
 void StreamReceiver360::Tag() {
