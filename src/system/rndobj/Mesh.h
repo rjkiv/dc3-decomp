@@ -52,9 +52,10 @@ public:
         Vert()
             : pos(0, 0, 0), norm(0, 1, 0), boneWeights(0, 0, 0, 0), color(1, 1, 1, 1),
               tex(0, 0) {
-            for (int i = 0; i < 4; i++) {
-                boneIndices[i] = i;
-            }
+            boneIndices[0] = 0;
+            boneIndices[1] = 1;
+            boneIndices[2] = 2;
+            boneIndices[3] = 3;
             tangent.Set(1, 0, 0, 1);
         }
 
@@ -80,7 +81,7 @@ public:
     /** A triangle mesh face. */
     class Face {
     public:
-        Face() : v1(0), v2(0), v3(0) {}
+        Face(int inv1 = 0, int inv2 = 0, int inv3 = 0) : v1(inv1), v2(inv2), v3(inv3) {}
         unsigned short &operator[](int i) { return *(&v1 + i); }
         void Set(int i0, int i1, int i2) {
             v1 = i0;

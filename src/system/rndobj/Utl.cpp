@@ -15,6 +15,7 @@
 #include "os/HolmesClient.h"
 #include "os/Platform.h"
 #include "os/System.h"
+#include "rndobj/AmbientOcclusion.h"
 #include "rndobj/Bitmap.h"
 #include "rndobj/Cam.h"
 #include "rndobj/Dir.h"
@@ -34,6 +35,7 @@
 #include "rndobj/Utl.h"
 #include "math/Rand.h"
 #include "utl/Str.h"
+#include <set>
 
 class ResourceFileCacheHelper : public FileCacheHelper {
 public:
@@ -1483,4 +1485,176 @@ void AttachMesh(RndMesh *main, RndMesh *attach) {
         mainVert.tex = attachVert.tex;
     }
     main->Sync(0x3F);
+}
+
+void TessellateMesh(RndMesh *mesh) {
+    std::set<RndAmbientOcclusion::Edge> edges;
+    std::vector<RndMesh::Face> faces;
+    std::vector<RndMesh::Vert> verts;
+    faces.reserve(mesh->Faces().size() * 4);
+    verts.reserve(mesh->Verts().size() * 3);
+    unsigned int originalNumVerts = mesh->Verts().size();
+    unsigned int newNumVerts = originalNumVerts;
+    for (int i = 0; i < mesh->Faces().size(); i++) {
+        auto &face = mesh->Faces(i);
+        RndAmbientOcclusion::Edge edge1(face.v1, face.v2);
+        RndAmbientOcclusion::Edge edge2(face.v2, face.v3);
+        RndAmbientOcclusion::Edge edge3(face.v3, face.v1);
+        auto &vert1 = mesh->Verts(face.v1);
+        auto &vert2 = mesh->Verts(face.v2);
+        auto &vert3 = mesh->Verts(face.v3);
+        RndMesh::Vert v190;
+        RndMesh::Vert v130;
+        RndMesh::Vert vd0;
+        RndAmbientOcclusion::BlendVert(vert1, vert2, v190);
+        RndAmbientOcclusion::BlendVert(vert2, vert3, v130);
+        RndAmbientOcclusion::BlendVert(vert3, vert1, vd0);
+        auto edge1it = edges.find(edge1);
+        if (edge1it == edges.end()) {
+            edge1.split = newNumVerts++;
+            edges.insert(edge1);
+            verts.push_back(v190);
+        } else {
+            edge1 = *edge1it;
+        }
+        auto edge2it = edges.find(edge2);
+        if (edge2it == edges.end()) {
+            edge2.split = newNumVerts++;
+            edges.insert(edge2);
+            verts.push_back(v130);
+        } else {
+            edge2 = *edge2it;
+        }
+        auto edge3it = edges.find(edge3);
+        if (edge3it == edges.end()) {
+            edge3.split = newNumVerts++;
+            edges.insert(edge3);
+            verts.push_back(vd0);
+        } else {
+            edge3 = *edge3it;
+        }
+
+        RndMesh::Face face1(face.v1, edge1.split, edge3.split);
+        RndMesh::Face face2(edge3.split, edge1.split, edge2.split);
+        RndMesh::Face face3(edge1.split, face.v2, edge2.split);
+        RndMesh::Face face4(edge2.split, face.v3, edge3.split);
+        faces.push_back(face1);
+        faces.push_back(face2);
+        faces.push_back(face3);
+        faces.push_back(face4);
+    }
+    mesh->Faces().assign(faces.begin(), faces.end());
+    mesh->Verts().resize(mesh->Verts().size() + verts.size());
+    for (int i = originalNumVerts; i < newNumVerts; i++) {
+        mesh->Verts(i) = verts[i - originalNumVerts];
+    }
+    mesh->Sync(0x3F);
+}
+
+void RandomPointOnMesh(RndMesh *m, Vector3 &v1, Vector3 &v2) {
+    RndMesh::Face &face = m->Faces()[RandomInt(0, m->Faces().size())];
+    int numverts = m->Verts().size();
+    if (face.v1 >= numverts || face.v2 >= numverts || face.v3 >= numverts) {
+        MILO_NOTIFY_ONCE(
+            "%s: %s random face contains unknown vert indices!", PathName(m), m->Name()
+        );
+        v1.Zero();
+        v2.Zero();
+    } else {
+        Vector3 v58, v64, v70;
+        Vector3 v7c, v88, v94;
+        if (m->NumBones() > 0) {
+            v58 = m->SkinVertex(m->Verts()[face.v1], &v7c);
+            v64 = m->SkinVertex(m->Verts()[face.v2], &v88);
+            v70 = m->SkinVertex(m->Verts()[face.v3], &v94);
+        } else {
+            v58 = m->Verts()[face.v1].pos;
+            v64 = m->Verts()[face.v2].pos;
+            v70 = m->Verts()[face.v3].pos;
+            v7c = m->Verts()[face.v1].norm;
+            v88 = m->Verts()[face.v2].norm;
+            v94 = m->Verts()[face.v3].norm;
+        }
+        float f8 = RandomFloat();
+        float f9 = RandomFloat();
+        if (f8 + f9 > 1.0f) {
+            f8 = 1.0f - f8;
+            f9 = 1.0f - f9;
+        }
+        float f1 = (1.0f - f8) - f9;
+        v58 *= f8;
+        v64 *= f9;
+        v70 *= f1;
+        Add(v58, v64, v1);
+        Add(v1, v70, v1);
+        v7c *= f8;
+        v88 *= f9;
+        v94 *= f1;
+        Add(v7c, v88, v2);
+        Add(v2, v94, v2);
+        Normalize(v2, v2);
+    }
+}
+
+void MakeTangentsLate(RndMesh *mesh) {
+    if (mesh && mesh->GetGeomOwner() == mesh && !mesh->Verts().empty()
+        && GetGfxMode() != kOldGfx) {
+        std::vector<Vector4> vectors(mesh->Faces().size());
+
+        for (int i = 0; i < mesh->Faces().size(); i++) {
+            Hmx::Matrix3 mtx;
+            ComputeFaceTangentBasis(mesh, i, mtx);
+            // determinant?
+            Vector3 tmp;
+            Cross(mtx.z, mtx.x, tmp);
+            float w = Dot(tmp, mtx.y) < 0 ? -1.0f : 1.0f;
+            Vector3 inv;
+            Normalize(mtx.x, inv);
+            // the asm said they did this don't get mad at me
+            vectors[i] = reinterpret_cast<Vector4 &>(inv);
+            vectors[i].w = w;
+        }
+
+        for (int i = 0; i < mesh->Verts().size(); i++) {
+            bool first = true;
+            auto &vert = mesh->Verts(i);
+            Vector4 &tangent = vert.tangent;
+            Vector3 &tangent3 = reinterpret_cast<Vector3 &>(tangent);
+            for (int j = 0; j < mesh->Faces().size(); j++) {
+                auto &curFace = mesh->Faces(j);
+                int faceIdx;
+                for (faceIdx = 0; faceIdx < 3; faceIdx++) {
+                    if (curFace[faceIdx] == i) {
+                        break;
+                    }
+                }
+                if (faceIdx != 3) {
+                    if (first) {
+                        first = false;
+                        vert.tangent = vectors[j];
+                    } else {
+                        if (vectors[j].w * tangent.w < 0) {
+                            MILO_LOG(
+                                "NOTIFY: %s has previously welded vertex tangents with opposite handedness; re-export from Max for more accurate normal mapping.\n",
+                                PathName(mesh)
+                            );
+                        } else {
+                            Add(tangent3,
+                                reinterpret_cast<Vector3 &>(vectors[j]),
+                                tangent3);
+                        }
+                    }
+                }
+            }
+            Normalize(tangent3, tangent3);
+            Vector3 &norm = vert.norm;
+            Vector3 tangentCopy = tangent3;
+            Vector3 vd0;
+            Scale(norm, Dot(tangentCopy, norm), vd0);
+            Subtract(tangentCopy, vd0, vd0);
+            Normalize(vd0, tangent3);
+        }
+
+        MILO_LOG("NOTIFY: %s MakingTangentsLate, resave this file!", PathName(mesh));
+    }
 }

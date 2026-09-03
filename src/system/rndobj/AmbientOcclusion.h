@@ -1,5 +1,6 @@
 #pragma once
 #include "math/Geo.h"
+#include "math/Utl.h"
 #include "math/kdTree.h"
 #include "math/Vec.h"
 #include "obj/Data.h"
@@ -17,7 +18,26 @@ public:
         kQuality_Max = 2
     };
     struct Edge {
-        bool operator<(const Edge &) const;
+        Edge(unsigned short inv0, unsigned short inv1) : v0(inv0), v1(inv1), split(-1) {}
+        bool operator<(const Edge &e) const {
+            unsigned int myWord;
+            if (v0 < v1) {
+                myWord = (v0 << 16) | v1;
+            } else {
+                myWord = (v1 << 16) | v0;
+            }
+            unsigned int otherWord;
+            if (e.v0 < e.v1) {
+                otherWord = (e.v0 << 16) | e.v1;
+            } else {
+                otherWord = (e.v1 << 16) | e.v0;
+            }
+            return myWord < otherWord;
+        }
+
+        unsigned short v0; // 0x0
+        unsigned short v1; // 0x2
+        unsigned short split; // 0x4
     };
 
     // Hmx::Object
@@ -40,6 +60,7 @@ public:
     OBJ_MEM_OVERLOAD(0x15);
     NEW_OBJ(RndAmbientOcclusion)
     static void Init() { REGISTER_OBJ_FACTORY(RndAmbientOcclusion) }
+    static void BlendVert(const RndMesh::Vert &, const RndMesh::Vert &, RndMesh::Vert &);
 
 protected:
     RndAmbientOcclusion();
