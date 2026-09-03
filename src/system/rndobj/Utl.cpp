@@ -7,6 +7,7 @@
 #include "math/Vec.h"
 #include "obj/DataFunc.h"
 #include "obj/Object.h"
+#include "obj/Utl.h"
 #include "os/Debug.h"
 #include "os/Endian.h"
 #include "os/File.h"
@@ -26,6 +27,7 @@
 #include "rndobj/MetaMaterial.h"
 #include "rndobj/Part.h"
 #include "rndobj/ShaderMgr.h"
+#include "rndobj/Trans.h"
 #include "utl/Loader.h"
 #include "utl/Std.h"
 #include "utl/Cache.h"
@@ -1349,4 +1351,104 @@ DataNode GetRenderTextures(ObjectDir *dir) {
 
 DataNode GetRenderTexturesNoZ(ObjectDir *dir) {
     return GetTexturesOfType(dir, RndTex::kRenderedNoZ);
+}
+
+DataNode OnTestDrawGroups(DataArray *da) {
+    DataArray *arr = nullptr;
+    ObjectDir *dir = da->Obj<class ObjectDir>(2);
+    if (da->Size() > 3)
+        arr = da->Array(3);
+    for (ObjDirItr<RndDrawable> it(dir, true); it; ++it) {
+        std::list<RndGroup *> gList;
+        ListDrawGroups(it, dir, gList);
+        if (arr) {
+            for (std::list<RndGroup *>::iterator gListIt = gList.begin();
+                 gListIt != gList.end();
+                 gListIt) {
+                bool canerase = false;
+                for (int i = 0; i < arr->Size(); i++) {
+                    if (streq((*gListIt)->Name(), arr->Str(i))) {
+                        canerase = true;
+                        break;
+                    }
+                }
+                if (canerase)
+                    gListIt = gList.erase(gListIt);
+                else
+                    ++gListIt;
+            }
+        }
+        if (gList.size() > 1) {
+            class String str(
+                MakeString("%s is in %d groups:", PathName(it), gList.size())
+            );
+            for (std::list<RndGroup *>::iterator gListIt = gList.begin();
+                 gListIt != gList.end();
+                 ++gListIt) {
+                str << " " << PathName(*gListIt);
+            }
+            MILO_NOTIFY(str.c_str());
+        }
+    }
+    return 0;
+}
+
+void ConvertBonesToTranses(ObjectDir *dir, bool b2) {
+    std::list<RndMesh *> meshes;
+    for (ObjDirItr<RndMesh> it(dir, false); it != nullptr; ++it) {
+        RndTransformable *t = it;
+        if (ShouldStrip(t)) {
+            meshes.push_back(it);
+        } else if (b2) {
+            bool b1 = false;
+            for (auto rit = it->Refs().begin(); !b1 && rit != it->Refs().end(); ++rit) {
+                RndMesh *curRefOwner = dynamic_cast<RndMesh *>(rit->RefOwner());
+                if (curRefOwner) {
+                    for (int i = 0; i < curRefOwner->NumBones(); i++) {
+                        if (curRefOwner->BoneTransAt(i) == t) {
+                            meshes.push_back(it);
+                            b1 = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    while (!meshes.empty()) {
+        ReplaceObject(
+            meshes.front(), Hmx::Object::New<RndTransformable>(), true, true, true
+        );
+        meshes.pop_front();
+    }
+    for (ObjDirItr<RndTransformable> it(dir, true); it != nullptr; ++it) {
+        if (strneq("spot_", it->Name(), 5)) {
+            Normalize(it->LocalXfm().m, it->DirtyLocalXfm().m);
+        }
+    }
+}
+
+void BuildSphereStratified(unsigned int ui, std::vector<Vector3> &vectors) {
+    Rand rand(0x29A);
+    unsigned int root = sqrtf((float)ui) + 0.5f;
+    vectors.clear();
+    vectors.reserve(root * root);
+    float f12 = -1;
+    float f11 = 0;
+    float f7 = (1.0f / (float)root) * 2.0f;
+    float f8 = (1.0f / (float)root) * (PI * 2);
+    for (int i = 0; i < root; i++) {
+        for (int j = 0; j < root; j++) {
+            float f6 = rand.Float() * f7 + f12;
+            float _x = rand.Float() * f8 + f11;
+            float f5 = sqrt(-(f6 * f6 - 1));
+            Vector3 v490;
+            float x = cosf(_x) * f5;
+            float y = sinf(_x) * f5;
+            Normalize(Vector3(x, y, f6), v490);
+            vectors.push_back(v490);
+            f11 += f8;
+        }
+        f12 += f7;
+    }
 }
