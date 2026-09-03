@@ -29,8 +29,10 @@
 #define ERROR_DEVICE_REMOVED            0x0651
 
 #define S_OK                            (long)0
+#define S_FALSE							(long)1
 
 #define E_NOINTERFACE                   (long)0x80004002
+#define E_FAIL 							(long)0x80004005
 #define E_SPEECH_UNINITIALIZED          (long)0x80045001
 
 #define E_OUTOFMEMORY                   (long)0x8007000E
