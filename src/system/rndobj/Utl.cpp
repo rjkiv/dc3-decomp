@@ -1875,7 +1875,63 @@ void RndScaleObject(Hmx::Object *obj, float scale, float frameScale) {
     }
 }
 
-void MakeNormals(RndMesh *);
+void MakeNormals(RndMesh *mesh) {
+    if (mesh && mesh->GetGeomOwner() == mesh && !mesh->Verts().empty()) {
+        bool lefty = LeftHanded(mesh->WorldXfm().m);
+        std::vector<int> ints(mesh->Verts().size());
+
+        for (int i = 0; i < mesh->Verts().size(); i++) {
+            int j = 0;
+            for (; j < i; j++) {
+                auto &jPos = mesh->Verts(j).pos;
+                auto &iPos = mesh->Verts(i).pos;
+                if (std::fabs(iPos.x - jPos.x) <= 0.001f
+                    && std::fabs(iPos.y - jPos.y) <= 0.001f
+                    && std::fabs(iPos.z - jPos.z) <= 0.001f) {
+                    break;
+                }
+            }
+            ints[i] = j;
+        }
+
+        for (int i = 0; i < mesh->Verts().size(); i++) {
+            mesh->Verts(i).norm.Zero();
+            for (int j = 0; j < mesh->Faces().size(); j++) {
+                auto &curFace = mesh->Faces(j);
+                int faceIdx;
+                for (faceIdx = 0; faceIdx < 3; faceIdx++) {
+                    if (ints[curFace[faceIdx]] == ints[i]) {
+                        break;
+                    }
+                }
+                if (faceIdx != 3) {
+                    const Vector3 &pos1 = mesh->Verts(curFace[faceIdx]).pos;
+                    const Vector3 &pos2 = mesh->Verts(curFace[(faceIdx + 1) % 3]).pos;
+                    const Vector3 &pos3 = mesh->Verts(curFace[(faceIdx + 2) % 3]).pos;
+                    Vector3 diff21; // 0x90
+                    Subtract(pos2, pos1, diff21);
+                    Vector3 diff31; // 0xa0
+                    Subtract(pos3, pos1, diff31);
+                    if (!(diff21 == Vector3(0, 0, 0)) && !(diff31 == Vector3(0, 0, 0))
+                        && !(diff21 == diff31)) {
+                        Vector3 tmp;
+                        Cross(diff21, diff31, tmp);
+                        Normalize(tmp, tmp);
+                        Normalize(diff21, diff21);
+                        Normalize(diff31, diff31);
+                        tmp *= acos(Dot(diff21, diff31));
+                        Add(mesh->Verts(i).norm, tmp, mesh->Verts(i).norm);
+                    }
+                }
+            }
+            Normalize(mesh->Verts(i).norm, mesh->Verts(i).norm);
+            if (lefty) {
+                Negate(mesh->Verts(i).norm, mesh->Verts(i).norm);
+            }
+        }
+        mesh->Sync(0x1F);
+    }
+}
 
 void BuildVisit(BSPNode *);
 
