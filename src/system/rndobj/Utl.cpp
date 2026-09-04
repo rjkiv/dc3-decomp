@@ -1933,6 +1933,87 @@ void MakeNormals(RndMesh *mesh) {
     }
 }
 
+void ResetNormals(RndMesh *mesh) {
+    if (mesh && mesh->GetGeomOwner() == mesh && !mesh->Verts().empty()) {
+        bool lefty = LeftHanded(mesh->WorldXfm().m);
+
+        std::vector<Vector4> vectors(mesh->Faces().size());
+        for (int i = 0; i < mesh->Faces().size(); i++) {
+            Hmx::Matrix3 mtx;
+            ComputeFaceTangentBasis(mesh, i, mtx);
+            // determinant?
+            Vector3 tmp;
+            Cross(mtx.z, mtx.x, tmp);
+            Normalize(mtx.x, reinterpret_cast<Vector3 &>(vectors[i]));
+            vectors[i].w = Dot(tmp, mtx.y) < 0 ? -1.0f : 1.0f;
+        }
+
+        std::vector<int> ints(mesh->Verts().size());
+        for (int i = 0; i < mesh->Verts().size(); i++) {
+            int j = 0;
+            for (; j < i; j++) {
+                auto &jPos = mesh->Verts(j).pos;
+                auto &iPos = mesh->Verts(i).pos;
+                if (std::fabs(iPos.x - jPos.x) <= 0.001f
+                    && std::fabs(iPos.y - jPos.y) <= 0.001f
+                    && std::fabs(iPos.z - jPos.z) <= 0.001f) {
+                    break;
+                }
+            }
+            ints[i] = j;
+        }
+
+        for (int i = 0; i < mesh->Verts().size(); i++) {
+            mesh->Verts(i).norm.Zero();
+            Vector3 &tangent3 = reinterpret_cast<Vector3 &>(mesh->Verts(i).tangent);
+            tangent3.Zero();
+            for (int j = 0; j < mesh->Faces().size(); j++) {
+                auto &curFace = mesh->Faces(j);
+                for (int faceIdx = 0; faceIdx < 3; faceIdx++) {
+                    if (ints[curFace[faceIdx]] == ints[i]) {
+                        const Vector3 &pos1 = mesh->Verts(curFace[faceIdx]).pos;
+                        const Vector3 &pos2 = mesh->Verts(curFace[(faceIdx + 1) % 3]).pos;
+                        const Vector3 &pos3 = mesh->Verts(curFace[(faceIdx + 2) % 3]).pos;
+                        Vector3 diff21; // 0x140
+                        Subtract(pos2, pos1, diff21);
+                        Vector3 diff31; // 0x150
+                        Subtract(pos3, pos1, diff31);
+                        if (!(diff21 == Vector3(0, 0, 0)) && !(diff31 == Vector3(0, 0, 0))
+                            && !(diff21 == diff31)) {
+                            Vector3 tmp;
+                            Cross(diff21, diff31, tmp);
+                            Normalize(tmp, tmp);
+                            Normalize(diff21, diff21);
+                            Normalize(diff31, diff31);
+                            float dot = acos(Dot(diff21, diff31));
+                            tmp *= dot;
+                            Add(mesh->Verts(i).norm, tmp, mesh->Verts(i).norm);
+
+                            Vector3 tmp2;
+                            Scale(reinterpret_cast<Vector3 &>(vectors[j]), dot, tmp2);
+                            Add(tangent3, tmp2, tangent3);
+                        }
+                    }
+                }
+            }
+            Normalize(mesh->Verts(i).norm, mesh->Verts(i).norm);
+            Normalize(tangent3, tangent3);
+            if (lefty) {
+                Negate(mesh->Verts(i).norm, mesh->Verts(i).norm);
+                Negate(tangent3, tangent3);
+            }
+
+            Vector3 tangent3Copy = tangent3;
+            float dot = Dot(mesh->Verts(i).norm, tangent3Copy);
+            Vector3 v100;
+            Scale(mesh->Verts(i).norm, dot, v100);
+            Subtract(tangent3Copy, v100, v100);
+            Normalize(v100, tangent3);
+        }
+        mesh->Sync(0x1F);
+    }
+}
+
 void BuildVisit(BSPNode *);
 
 void BuildFromBSP(RndMesh *mesh) {
