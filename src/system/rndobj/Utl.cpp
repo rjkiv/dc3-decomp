@@ -1874,3 +1874,41 @@ void RndScaleObject(Hmx::Object *obj, float scale, float frameScale) {
         return;
     }
 }
+
+void MakeNormals(RndMesh *);
+
+void BuildVisit(BSPNode *);
+
+void BuildFromBSP(RndMesh *mesh) {
+    BuildVisit(mesh->GetBSPTree());
+    int numVerts = 0;
+    int numFaces = 0;
+    for (auto it = gChildPolys.begin(); it != gChildPolys.end();) {
+        auto &pts = it->mPoly.points;
+        if (pts.size() < 3) {
+            it = gChildPolys.erase(it);
+        } else {
+            ++it;
+            numVerts += pts.size();
+            numFaces += pts.size() - 2;
+        }
+    }
+    mesh->Verts().resize(numVerts);
+    mesh->Faces().resize(numFaces);
+    int i13 = 0;
+    FOREACH (it, gChildPolys) {
+        FOREACH (pt, it->mPoly.points) {
+            Multiply(Vector3(pt->x, pt->y, 0), it->mTransform, mesh->Verts(i13).pos);
+            i13++;
+        }
+        int i8 = i13 - it->mPoly.points.size();
+        int i11 = i8 + 2;
+        for (int i = 0; i < i13 - i11; i++) {
+            mesh->Faces(i).Set(i8, i11 - 1, i11);
+            i11++;
+        }
+    }
+    gParentPolys.clear();
+    gChildPolys.clear();
+    MakeNormals(mesh);
+}
