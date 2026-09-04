@@ -71,6 +71,10 @@ public:
     const Hmx::Color &FogColor() const { return mAmbientFogOwner->mFogColor; }
     float GetFogStart() const { return mAmbientFogOwner->mFogStart; }
     float GetFogEnd() const { return mAmbientFogOwner->mFogEnd; }
+    void SetFogRange(float start, float end) {
+        mAmbientFogOwner->mFogStart = start;
+        mAmbientFogOwner->mFogEnd = end;
+    }
 
 protected:
     RndEnviron();

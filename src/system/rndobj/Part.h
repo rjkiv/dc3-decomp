@@ -216,6 +216,9 @@ public:
     const Vector2 &Yaw() const { return mYaw; }
     const Vector3 &BoxExtent1() const { return mBoxExtent1; }
     const Vector3 &BoxExtent2() const { return mBoxExtent2; }
+    const Vector2 &BubbleSize() const { return mBubbleSize; }
+    const Vector2 &BubblePeriod() const { return mBubblePeriod; }
+    const Vector3 &ForceDir() const { return mForceDir; }
 
     void SetBoxExtent(const Vector3 &v1, const Vector3 &v2) {
         mBoxExtent1 = v1;

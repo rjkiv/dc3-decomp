@@ -1,6 +1,7 @@
 #include "Rnd.h"
 #include "math/Color.h"
 #include "math/Geo.h"
+#include "math/Key.h"
 #include "math/Mtx.h"
 #include "math/Utl.h"
 #include "math/Trig.h"
@@ -18,17 +19,28 @@
 #include "rndobj/AmbientOcclusion.h"
 #include "rndobj/Bitmap.h"
 #include "rndobj/Cam.h"
+#include "rndobj/CamAnim.h"
 #include "rndobj/Dir.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Env.h"
 #include "rndobj/Flare.h"
+#include "rndobj/Gen.h"
 #include "rndobj/Group.h"
+#include "rndobj/Line.h"
+#include "rndobj/Lit.h"
+#include "rndobj/LitAnim.h"
 #include "rndobj/Mat.h"
+#include "rndobj/MatAnim.h"
 #include "rndobj/Mesh.h"
+#include "rndobj/MeshAnim.h"
 #include "rndobj/MetaMaterial.h"
+#include "rndobj/Morph.h"
+#include "rndobj/MultiMesh.h"
 #include "rndobj/Part.h"
+#include "rndobj/PartAnim.h"
 #include "rndobj/ShaderMgr.h"
 #include "rndobj/Trans.h"
+#include "rndobj/TransAnim.h"
 #include "utl/Loader.h"
 #include "utl/Std.h"
 #include "utl/Cache.h"
@@ -1656,5 +1668,209 @@ void MakeTangentsLate(RndMesh *mesh) {
         }
 
         MILO_LOG("NOTIFY: %s MakingTangentsLate, resave this file!", PathName(mesh));
+    }
+}
+
+void RndScaleObject(Hmx::Object *obj, float scale, float frameScale) {
+    RndDrawable *draw = dynamic_cast<RndDrawable *>(obj);
+    if (draw) {
+        Sphere s = draw->GetSphere();
+        s.center *= scale;
+        s.radius *= scale;
+        draw->SetSphere(s);
+    }
+    RndTransformable *trans = dynamic_cast<RndTransformable *>(obj);
+    if (trans) {
+        Vector3 pos;
+        Scale(trans->LocalXfm().v, scale, pos);
+        trans->SetLocalPos(pos);
+    }
+    RndCam *cam = dynamic_cast<RndCam *>(obj);
+    if (cam) {
+        cam->SetFrustum(cam->NearPlane() * scale, cam->FarPlane() * scale, cam->YFov(), 1);
+        return;
+    }
+    RndCamAnim *camAnim = dynamic_cast<RndCamAnim *>(obj);
+    if (camAnim) {
+        if (camAnim->KeysOwner() == camAnim) {
+            ScaleFrame(camAnim->FovKeys(), frameScale);
+        }
+        return;
+    }
+    RndEnviron *env = dynamic_cast<RndEnviron *>(obj);
+    if (env) {
+        env->SetFogRange(env->GetFogStart() * scale, env->GetFogEnd() * scale);
+        return;
+    }
+    RndGenerator *gen = dynamic_cast<RndGenerator *>(obj);
+    if (gen) {
+        float lo, hi;
+        gen->GetRateVar(lo, hi);
+        gen->SetRateVar(lo * frameScale, hi * frameScale);
+        return;
+    }
+    RndLight *lit = dynamic_cast<RndLight *>(obj);
+    if (lit) {
+        lit->SetRange(lit->Range() * scale);
+        return;
+    }
+    RndLightAnim *litAnim = dynamic_cast<RndLightAnim *>(obj);
+    if (litAnim) {
+        if (litAnim->KeysOwner() == litAnim) {
+            ScaleFrame(litAnim->ColorKeys(), frameScale);
+        }
+        return;
+    }
+    RndLine *line = dynamic_cast<RndLine *>(obj);
+    if (line) {
+        line->SetWidth(line->GetWidth() * scale);
+        for (int i = 0; i < line->NumPoints(); i++) {
+            Vector3 pos;
+            Scale(line->PointAt(i).point, scale, pos);
+            line->SetPointPos(i, pos);
+        }
+        return;
+    }
+    RndMatAnim *matAnim = dynamic_cast<RndMatAnim *>(obj);
+    if (matAnim) {
+        if (matAnim->KeysOwner() == matAnim) {
+            ScaleFrame(matAnim->ColorKeys(), frameScale);
+            ScaleFrame(matAnim->AlphaKeys(), frameScale);
+            ScaleFrame(matAnim->TransKeys(), frameScale);
+            ScaleFrame(matAnim->ScaleKeys(), frameScale);
+            ScaleFrame(matAnim->RotKeys(), frameScale);
+        }
+        return;
+    }
+    RndMesh *mesh = dynamic_cast<RndMesh *>(obj);
+    if (mesh) {
+        if (mesh->GetGeomOwner() == mesh) {
+            FOREACH (vert, mesh->Verts()) {
+                vert->pos *= scale;
+            }
+            mesh->Sync(0x1F);
+            Transform xfm;
+            xfm.m.Set(scale, 0, 0, 0, scale, 0, 0, 0, scale);
+            xfm.v.Zero();
+            MultiplyEq(mesh->GetBSPTree(), xfm);
+        }
+        mesh->ScaleBones(scale);
+        return;
+    }
+    RndMeshAnim *meshAnim = dynamic_cast<RndMeshAnim *>(obj);
+    if (meshAnim) {
+        if (meshAnim->KeysOwner() == meshAnim) {
+            FOREACH (it, meshAnim->VertPointsKeys()) {
+                FOREACH (vit, it->value) {
+                    *vit *= scale;
+                }
+            }
+            ScaleFrame(meshAnim->VertNormalsKeys(), frameScale);
+            ScaleFrame(meshAnim->VertPointsKeys(), frameScale);
+            ScaleFrame(meshAnim->VertTexsKeys(), frameScale);
+            ScaleFrame(meshAnim->VertColorsKeys(), frameScale);
+        }
+        return;
+    }
+    RndMorph *morph = dynamic_cast<RndMorph *>(obj);
+    if (morph) {
+        for (int i = 0; i < morph->NumPoses(); i++) {
+            ScaleFrame(morph->PoseAt(i).weights, frameScale);
+        }
+        return;
+    }
+    RndMultiMesh *multiMesh = dynamic_cast<RndMultiMesh *>(obj);
+    if (multiMesh) {
+        FOREACH (it, multiMesh->Instances()) {
+            it->mXfm.v *= scale;
+        }
+        return;
+    }
+    RndParticleSys *partSys = dynamic_cast<RndParticleSys *>(obj);
+    if (partSys) {
+        // this whole block needs fixing
+        Vector3 forceDir = partSys->ForceDir();
+        forceDir *= (scale / frameScale) / frameScale;
+        partSys->SetForceDir(forceDir);
+        partSys->SetBubbleSize(
+            partSys->BubbleSize().x * scale, partSys->BubbleSize().y * scale
+        );
+        partSys->SetBubblePeriod(
+            partSys->BubblePeriod().x * frameScale, partSys->BubblePeriod().y * frameScale
+        );
+        partSys->SetLife(partSys->Life().x * frameScale, partSys->Life().y * frameScale);
+        partSys->SetEmitRate(
+            partSys->EmitRate().x / frameScale, partSys->EmitRate().y / frameScale
+        );
+        Vector3 box1, box2;
+        Scale(partSys->BoxExtent1(), scale, box1);
+        Scale(partSys->BoxExtent2(), scale, box2);
+        partSys->SetStartSize(
+            partSys->StartSize().x * scale, partSys->StartSize().y * scale
+        );
+        partSys->SetSpeed(
+            (partSys->Speed().x * scale) / frameScale,
+            (partSys->Speed().y * scale) / frameScale
+        );
+        partSys->SetDeltaSize(
+            partSys->DeltaSize().x * scale, partSys->DeltaSize().y * scale
+        );
+        partSys->SetBoxExtent(box1, box2);
+        return;
+
+        // from ghidra
+        // uVar5 = mForceDir.w
+        // mBubbleSize.x = mBubbleSize.x * scale;
+        // fVar1 = (float)(1.0 / frameScale);
+        // mBubbleSize.y = mBubbleSize.y * scale;
+        // mLife.x = mLife.x * frameScale;
+        // mBubblePeriod.x = mBubblePeriod.x * frameScale;
+        // mBubblePeriod.y = mBubblePeriod.y * frameScale;
+        // mEmitRate.y = mEmitRate.y * fVar1;
+        // mLife.y = mLife.y * frameScale;
+        // mEmitRate.x = mEmitRate.x * fVar1;
+        // fVar2 = (float)((double)(fVar1 * fVar1) * scale);
+        // mForceDir.y = mForceDir.y * fVar2;
+        // mForceDir.z = mForceDir.z * fVar2;
+        // mForceDir.w = uVar5;
+        // mForceDir.x = mForceDir.x * fVar2;
+        // mStartSize.x = mStartSize.x * scale;
+        // mStartSize.y = mStartSize.y * scale;
+        // mSpeed.x = (mSpeed.x * fVar1) * scale;
+        // mSpeed.y = (mSpeed.y * fVar1) * scale;
+        // mDeltaSize.x = mDeltaSize.x * scale;
+        // mBoxExtent1.x = mBoxExtent1.x * scale;
+        // mDeltaSize.y = mDeltaSize.y * scale;
+        // mBoxExtent1.y = mBoxExtent1.y * scale;
+        // mBoxExtent1.z = mBoxExtent1.z * scale;
+        // mBoxExtent1.w = unknown - padding
+        // mBoxExtent2.x = mBoxExtent2.x * scale;
+        // mBoxExtent2.y = mBoxExtent2.y * scale;
+        // mBoxExtent2.z = mBoxExtent2.z * scale;
+        // mBoxExtent2.z = unknown - padding
+    }
+    RndParticleSysAnim *partSysAnim = dynamic_cast<RndParticleSysAnim *>(obj);
+    if (partSysAnim) {
+        if (partSysAnim->KeysOwner() == partSysAnim) {
+            ScaleFrame(partSysAnim->StartColorKeys(), frameScale);
+            ScaleFrame(partSysAnim->EndColorKeys(), frameScale);
+            ScaleFrame(partSysAnim->EmitRateKeys(), frameScale);
+            ScaleFrame(partSysAnim->SpeedKeys(), frameScale);
+            ScaleFrame(partSysAnim->LifeKeys(), frameScale);
+            ScaleFrame(partSysAnim->StartSizeKeys(), frameScale);
+        }
+        return;
+    }
+    RndTransAnim *transAnim = dynamic_cast<RndTransAnim *>(obj);
+    if (transAnim) {
+        if (transAnim->KeysOwner() == transAnim) {
+            FOREACH (it, transAnim->TransKeys()) {
+                it->value *= scale;
+            }
+            ScaleFrame(transAnim->TransKeys(), frameScale);
+            ScaleFrame(transAnim->RotKeys(), frameScale);
+            ScaleFrame(transAnim->ScaleKeys(), frameScale);
+        }
+        return;
     }
 }
