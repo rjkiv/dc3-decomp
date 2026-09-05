@@ -1184,7 +1184,8 @@ DEF_DATA_FUNC(DataStringFlags) {
             s += arr->Str(i);
         }
     }
-    return s;
+    DataNode ret(s);
+    return ret;
 }
 
 DEF_DATA_FUNC(DataStrToLower) {

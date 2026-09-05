@@ -3229,13 +3229,14 @@ system/rndobj/Wind.cpp:
 	.rdata      start:0x82299354 end:0x8229940C rename:.rdata$r
 	.pdata      start:0x822D8AB8 end:0x822D8C10
 	.text       start:0x8266F9B0 end:0x82671668
-	.data       start:0x82F142E0 end:0x82F144A0
+	.data       start:0x82F142E0 end:0x82F14318
 	.data       start:0x830A4384 end:0x830A63E8 rename:.bss
 
 system/rndobj/Bitmap.cpp:
 	.rdata      start:0x82096D34 end:0x82097228
 	.pdata      start:0x822D8C10 end:0x822D8DB8
 	.text       start:0x82671668 end:0x826750D8
+	.data       start:0x82F14318 end:0x82F144A0
 
 system/rndobj/Tex.cpp:
 	.rdata      start:0x82097228 end:0x82097B78

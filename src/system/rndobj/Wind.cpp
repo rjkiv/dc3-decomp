@@ -9,7 +9,21 @@ static Rand *sRand = nullptr;
 static float sWhiteField[0x400] = { 0 };
 static float sWindField[0x401] = { 0 };
 
-void SetWind(int, int, float, float, float);
+void SetWind(int ai, int bi, float av, float bv, float scale) {
+    sWindField[ai] = av;
+    while (bi - ai >= 2) {
+        int mi = (ai + bi) / 2;
+        float mv = (av + bv) / 2;
+
+        mv += sRand->Gaussian() * scale;
+        scale /= sqrtf(2.0);
+
+        SetWind(ai, mi, av, mv, scale);
+        sWindField[mi] = mv;
+        ai = mi;
+        av = mv;
+    }
+}
 
 RndWind::RndWind()
     : mPrevailing(0, 0, 0), mRandom(0, 0, 0), mTimeLoop(100),
@@ -22,14 +36,17 @@ RndWind::~RndWind() {}
 
 bool RndWind::Replace(ObjRef *from, Hmx::Object *to) {
     if (&mWindOwner == from) {
-        if (mWindOwner != this) {
-            RndWind *wind = dynamic_cast<RndWind *>(to);
-            if (wind) {
-                mWindOwner = wind;
-            }
-        } else {
+        if (mWindOwner == this) {
             mWindOwner = this;
+        } else {
+            RndWind *windTo = dynamic_cast<RndWind *>(to);
+            if (windTo) {
+                mWindOwner = windTo->mWindOwner.Ptr();
+            } else {
+                mWindOwner = this;
+            }
         }
+
         return true;
     } else {
         return Hmx::Object::Replace(from, to);

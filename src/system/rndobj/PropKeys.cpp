@@ -1,4 +1,5 @@
 #include "rndobj/PropKeys.h"
+#include "math/Key.h"
 #include "math/Rot.h"
 #include "math/Utl.h"
 #include "math/Vec.h"
@@ -10,7 +11,17 @@
 Hmx::Object *ObjectStage::sOwner;
 Message PropKeys::sInterpMessage(gNullStr, 0, 0, 0, 0, 0);
 
-float CalcSpline(float, float *const);
+float CalcSpline(float t, float *const pts) {
+    // from the dwarf dump
+    float t2 = t * t; // f9
+    float t3 = t2 * t; // f10
+
+    float paren1 = pts[2] - pts[0];
+    float paren2 = -(pts[2] * 3.0f - (pts[1] * 3.0f - pts[0]));
+    paren2 += pts[3];
+    float paren3 = (pts[2] * 4.0f + (pts[0] * 2.0f - pts[1] * 5.0f)) - pts[3];
+    return (pts[1] * 2.0f + paren1 * t + paren2 * t3 + paren3 * t2) / 2;
+}
 
 #pragma region PropKeys
 
@@ -278,9 +289,9 @@ PropKeys::ExceptionID PropKeys::PropExceptionID(Hmx::Object *o, DataArray *path)
 
 void FloatKeys::SetFrame(float frame, float f2, float f3) {
     if (mProp && mTarget && size()) {
+        float val;
         int idx;
         if (mPropExceptionID != kHandleInterp) {
-            float val;
             idx = FloatAt(frame, val);
             mTarget->SetProperty(mProp, val * f3);
         } else {
@@ -350,21 +361,14 @@ int FloatKeys::FloatAt(float frame, float &fl) {
             points[1] = prev->value;
             points[2] = next->value;
             int idx = (prev - begin());
-            if (idx == 0) {
-                points[0] = prev->value;
-            } else {
-                points[0] = this->at(idx - 1).value;
-            }
-            if (idx == size() - 1) {
-                points[3] = next->value;
-            } else {
-                points[3] = this->at(idx + 1).value;
-            }
+            int idx1 = idx + 1;
+            points[0] = idx == 0 ? prev->value : this->at(idx - 1).value;
+            points[3] = idx1 == size() - 1 ? next->value : this->at(idx1 + 1).value;
             fl = CalcSpline(ref, points);
         }
         break;
     case kHermite:
-        Interp(prev->value, next->value, ref * ref * (ref * -2.0f + 3.0f), fl);
+        Interp(prev->value, next->value, (ref * ref) * (ref * -2.0f + 3.0f), fl);
         break;
     case kEaseIn:
         Interp(prev->value, next->value, ref * ref * ref, fl);
@@ -681,6 +685,37 @@ void QuatKeys::Copy(const PropKeys *keys) {
         const QuatKeys *newKeys = dynamic_cast<const QuatKeys *>(keys);
         insert(begin(), newKeys->begin(), newKeys->end());
     }
+}
+
+int QuatKeys::QuatAt(float frame, Hmx::Quat &q) {
+    MILO_ASSERT(size(), 0x2AF);
+    float ref = 0.0f;
+    const Key<Hmx::Quat> *prev;
+    const Key<Hmx::Quat> *next;
+    int at = AtFrame(frame, prev, next, ref);
+    if (mInterpolation == kSpline) {
+        QuatSpline(*this, prev, next, ref, q);
+    } else
+        switch (mInterpolation) {
+        case kStep:
+            q = prev->value;
+            break;
+        case kLinear:
+            FastInterp(prev->value, next->value, ref, q);
+            break;
+        case kSlerp:
+            Interp(prev->value, next->value, ref, q);
+            break;
+        case kEaseIn:
+            FastInterp(prev->value, next->value, ref * ref * ref, q);
+            break;
+        case kEaseOut:
+            ref = 1 - ref;
+            FastInterp(prev->value, next->value, -(ref * ref * ref - 1), q);
+            break;
+        }
+
+    return at;
 }
 
 #pragma endregion

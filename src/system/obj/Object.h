@@ -1431,8 +1431,7 @@ BinStream &operator>>(BinStreamRev &bs, ObjList<T> &oList) {
 // ObjectStage
 class ObjectStage : public ObjPtr<Hmx::Object> {
 public:
-    ObjectStage() : ObjPtr<Hmx::Object>(sOwner) {}
-    ObjectStage(Hmx::Object *o) : ObjPtr<Hmx::Object>(sOwner, o) {}
+    ObjectStage(Hmx::Object *o = nullptr) : ObjPtr<Hmx::Object>(sOwner, o) {}
 
     static Hmx::Object *sOwner;
 };

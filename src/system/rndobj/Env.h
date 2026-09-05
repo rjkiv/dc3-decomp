@@ -75,6 +75,8 @@ public:
         mAmbientFogOwner->mFogStart = start;
         mAmbientFogOwner->mFogEnd = end;
     }
+    const ObjPtrList<RndLight> &LightsReal() const { return mLightsReal; }
+    const ObjPtrList<RndLight> &LightsApprox() const { return mLightsApprox; }
 
 protected:
     RndEnviron();

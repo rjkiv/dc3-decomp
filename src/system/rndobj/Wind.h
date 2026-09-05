@@ -24,6 +24,9 @@ public:
     static void Init();
     NEW_OBJ(RndWind)
 
+    static float GetWind(float);
+    static float GetWhiteNoise(float);
+
     void SetWindOwner(RndWind *wind);
     /** "zero out the wind" */
     void Zero();
