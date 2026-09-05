@@ -574,7 +574,7 @@
             "system/rndobj/BoxMap.cpp": "NonMatching",
             "system/rndobj/Cam.cpp": "NonMatching",
             "system/rndobj/CamAnim.cpp": "Matching",
-            "system/rndobj/ColorXfm.cpp": "NonMatching",
+            "system/rndobj/ColorXfm.cpp": "Matching",
             "system/rndobj/Console.cpp": "NonMatching",
             "system/rndobj/CubeTex.cpp": "Matching",
             "system/rndobj/DOFProc.cpp": "Matching",
