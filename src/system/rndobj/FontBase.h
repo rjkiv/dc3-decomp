@@ -43,6 +43,7 @@ public:
     void GetKerning(std::vector<KernInfo> &) const;
     const std::vector<unsigned short> &Chars() const { return mChars; }
     float BaseKerning() const { return mBaseKerning; }
+    bool Monospace() const { return mMonospace; }
 
 protected:
     RndFontBase();

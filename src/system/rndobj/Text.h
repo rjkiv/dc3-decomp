@@ -66,19 +66,10 @@ public:
         kFitScrollMarqueeWrapAlways = 7
     };
 
-    class Style {
-    public:
-        Style(Hmx::Object *owner);
-        Style &operator=(const Style &s) {
-            mFont = s.mFont;
-            mBlacklight = s.mBlacklight;
-            memcpy(this, &s, 0x34);
-            return *this;
-        }
-        float GetAlpha() const { return mFontColor.alpha; }
-        void SetAlpha(float alpha) { mFontColor.alpha = alpha; }
-
-        // perhaps the memory from 0x0 to 0x34 is another struct
+    struct StyleInfo {
+        StyleInfo()
+            : mSize(30), mTextColor(1, 1, 1), mFontColorOverride(false),
+              mFontColor(1, 1, 1), mItalics(0), mKerning(0), mZOffset(0) {}
         /** "Size of the text" */
         float mSize; // 0x0
         /** "Color of the text, put into mesh verts.
@@ -98,6 +89,19 @@ public:
         float mKerning; // 0x2c
         /** "vertical offset as fraction of size" */
         float mZOffset; // 0x30
+    };
+
+    class Style {
+    public:
+        Style(Hmx::Object *owner);
+        Style &operator=(const Style &s) {
+            mFont = s.mFont;
+            mBlacklight = s.mBlacklight;
+            mInfo = s.mInfo;
+            return *this;
+        }
+
+        StyleInfo mInfo; // 0x0
         /** "Font to use for this style" */
         ObjPtr<RndFontBase> mFont; // 0x34
         /** "draw in blacklight pass?" */
@@ -105,7 +109,10 @@ public:
     };
 
     class StyleState {
+        friend class RndText;
+
     public:
+        StyleInfo mInfo; // 0x0
     };
 
     class BlacklightPacket {
@@ -162,7 +169,7 @@ public:
 
             RndMesh *mesh; // 0x0
             int displayableChars; // 0x4
-            RndMesh::Vert *unk8; // 0x8
+            RndMesh::Vert *unk8; // 0x8 - vert iterator/pointer?
             int unkc; // 0xc - mesh sync flags?
         };
 

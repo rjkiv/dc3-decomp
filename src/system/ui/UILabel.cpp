@@ -70,23 +70,27 @@ BEGIN_CUSTOM_PROPSYNC(UILabel::LabelStyle)
     RndText::Style &textStyle = gMe->Style(idx);
     SYNC_PROP_SET(
         text_size,
-        GetPctHeightFromTextSize(textStyle.mSize),
-        textStyle.mSize = GetTextSizeFromPctHeight(_val.Float());
+        GetPctHeightFromTextSize(textStyle.mInfo.mSize),
+        textStyle.mInfo.mSize = GetTextSizeFromPctHeight(_val.Float());
         if (!UILabel::sDeferUpdate) { gMe->LabelUpdate(false); }
     )
-    SYNC_PROP_SET(font_alpha, textStyle.GetAlpha(), textStyle.SetAlpha(_val.Float()))
+    SYNC_PROP_SET(
+        font_alpha,
+        textStyle.mInfo.mFontColor.alpha,
+        textStyle.mInfo.mFontColor.alpha = _val.Float()
+    )
     SYNC_PROP_MODIFY(
-        italics, textStyle.mItalics, if (!UILabel::sDeferUpdate) {
+        italics, textStyle.mInfo.mItalics, if (!UILabel::sDeferUpdate) {
             gMe->LabelUpdate(false);
         }
     )
     SYNC_PROP_MODIFY(
-        kerning, textStyle.mKerning, if (!UILabel::sDeferUpdate) {
+        kerning, textStyle.mInfo.mKerning, if (!UILabel::sDeferUpdate) {
             gMe->LabelUpdate(false);
         }
     )
     SYNC_PROP_MODIFY(
-        z_offset, textStyle.mZOffset, if (!UILabel::sDeferUpdate) {
+        z_offset, textStyle.mInfo.mZOffset, if (!UILabel::sDeferUpdate) {
             gMe->LabelUpdate(false);
         }
     )
@@ -186,11 +190,11 @@ BEGIN_SAVES(UILabel)
         bs << curLabelStyle.mFontResource;
         bs << curLabelStyle.mColorOverride;
         RndText::Style &curStyle = Style(i);
-        bs << curStyle.mSize;
-        bs << curStyle.mKerning;
-        bs << curStyle.mZOffset;
-        bs << curStyle.mItalics;
-        bs << curStyle.GetAlpha();
+        bs << curStyle.mInfo.mSize;
+        bs << curStyle.mInfo.mKerning;
+        bs << curStyle.mInfo.mZOffset;
+        bs << curStyle.mInfo.mItalics;
+        bs << curStyle.mInfo.mFontColor.alpha;
         bs << curStyle.mBlacklight;
     }
     bs << mScrollDelay;
@@ -256,11 +260,11 @@ void UILabel::PreLoad(BinStream &bs) {
             d >> curLabelStyle.mFontResource;
             d >> curLabelStyle.mColorOverride;
             RndText::Style &curStyle = Style(i);
-            d >> curStyle.mSize;
-            d >> curStyle.mKerning;
-            d >> curStyle.mZOffset;
-            d >> curStyle.mItalics;
-            d >> curStyle.mFontColor.alpha;
+            d >> curStyle.mInfo.mSize;
+            d >> curStyle.mInfo.mKerning;
+            d >> curStyle.mInfo.mZOffset;
+            d >> curStyle.mInfo.mItalics;
+            d >> curStyle.mInfo.mFontColor.alpha;
             if (d.rev >= 0x1E) {
                 d >> curStyle.mBlacklight;
             }
@@ -295,17 +299,17 @@ void UILabel::PreLoad(BinStream &bs) {
             }
         }
         if (d.rev > 1) {
-            d >> Style(0).mSize;
+            d >> Style(0).mInfo.mSize;
             d >> (int &)mAlignment;
             d >> (int &)mCapsMode;
             if (d.rev > 7) {
                 d >> mMarkup;
             }
             d >> mLeading;
-            d >> Style(0).mKerning;
+            d >> Style(0).mInfo.mKerning;
         }
         if (d.rev > 4) {
-            d >> Style(0).mItalics;
+            d >> Style(0).mInfo.mItalics;
         }
         if (d.rev > 2) {
             d >> (int &)mFitType;
@@ -344,7 +348,7 @@ void UILabel::PreLoad(BinStream &bs) {
             d >> str;
         }
         if (d.rev > 10) {
-            d >> Style(0).mFontColor.alpha;
+            d >> Style(0).mInfo.mFontColor.alpha;
         }
         if (d.rev > 0xC) {
             d >> LStyle(0).mColorOverride;
@@ -367,18 +371,18 @@ void UILabel::PreLoad(BinStream &bs) {
                 mLabelStyles[0].mFontResource.LoadFile(fp, true, true, kLoadFront, false);
                 mStyles.resize(i9);
             }
-            Style(1).mSize = size;
+            Style(1).mInfo.mSize = size;
             LStyle(1).mColorOverride = color;
         }
         if (d.rev > 0x12) {
-            d >> Style(1).mKerning;
+            d >> Style(1).mInfo.mKerning;
         } else {
-            Style(1).mKerning = Style(0).mKerning;
+            Style(1).mInfo.mKerning = Style(0).mInfo.mKerning;
         }
         if (d.rev > 0x13) {
-            d >> Style(1).mZOffset;
+            d >> Style(1).mInfo.mZOffset;
             if (d.rev < 0x19) {
-                Style(1).mZOffset /= Style(1).mSize;
+                Style(1).mInfo.mZOffset /= Style(1).mInfo.mSize;
             }
         }
         if (d.rev > 0x14) {
@@ -402,8 +406,8 @@ void UILabel::PreLoad(BinStream &bs) {
             d.stream.PushRev((int)s, this);
         }
         if (d.rev > 0x17) {
-            d >> Style(1).mItalics;
-            d >> Style(1).mFontColor.alpha;
+            d >> Style(1).mInfo.mItalics;
+            d >> Style(1).mInfo.mFontColor.alpha;
         }
     }
     d.PushRev(this);
@@ -488,7 +492,7 @@ void UILabel::SetInt(int i, bool b) {
 }
 
 void UILabel::DrawShowing() {
-    if (Style(0).mFontColor.alpha > 0) {
+    if (Style(0).mInfo.mFontColor.alpha > 0) {
         if (unk122 && !sDeferUpdate) {
             LabelUpdate(false);
         }
@@ -499,15 +503,15 @@ void UILabel::DrawShowing() {
             for (int i = 0; i < mLabelStyles.size(); i++) {
                 LabelStyle &curLabelStyle = mLabelStyles[i];
                 RndText::Style &curStyle = Style(i);
-                curStyle.mFontColorOverride = true;
+                curStyle.mInfo.mFontColorOverride = true;
                 UIColor *curColor = curLabelStyle.mColorOverride;
                 if (!curColor) {
                     curColor = color;
                 }
                 const Hmx::Color &curColorColor = curColor->GetColor();
-                curStyle.mFontColor.red = curColorColor.red;
-                curStyle.mFontColor.green = curColorColor.green;
-                curStyle.mFontColor.blue = curColorColor.blue;
+                curStyle.mInfo.mFontColor.red = curColorColor.red;
+                curStyle.mInfo.mFontColor.green = curColorColor.green;
+                curStyle.mInfo.mFontColor.blue = curColorColor.blue;
             }
         }
         RndText::DrawShowing();
@@ -699,14 +703,14 @@ bool UILabel::AllowEditText() const {
 void UILabel::LabelUpdate(bool b) {
     unk122 = false;
     RndFontBase *font = Style(0).mFont;
-    Style(0).mTextColor.Set(1, 1, 1, 1);
+    Style(0).mInfo.mTextColor.Set(1, 1, 1, 1);
     for (int i = 1; i < mLabelStyles.size(); i++) {
         RndText::Style &curStyle = Style(i);
         LabelStyle &curLabelStyle = LStyle(i);
         if (curLabelStyle.mColorOverride && curStyle.mFont && curStyle.mFont != font) {
-            curStyle.mTextColor = curLabelStyle.mColorOverride->GetColor();
+            curStyle.mInfo.mTextColor = curLabelStyle.mColorOverride->GetColor();
         } else {
-            curStyle.mTextColor.Set(1, 1, 1, 1);
+            curStyle.mInfo.mTextColor.Set(1, 1, 1, 1);
         }
     }
     UpdateText();
