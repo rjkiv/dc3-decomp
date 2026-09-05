@@ -137,6 +137,10 @@ public:
     virtual float FontUnit() const { return mTextureOwner->unk6c.x; }
     virtual float FontUnitInverse() const { return mTextureOwner->unk7c.x; }
 
+    CharInfo *GetCharInfo(unsigned short) const;
+    bool CharWidthAdvanceMesh(unsigned short, float &, float &, RndMesh **) const;
+    Vector3 CharOriginOffset() const;
+
     OBJ_MEM_OVERLOAD(0x10A)
     NEW_OBJ(RndFont3d)
     static void Init() { REGISTER_OBJ_FACTORY(RndFont3d) }

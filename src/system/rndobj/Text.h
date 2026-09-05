@@ -248,7 +248,7 @@ public:
         RndFont3d *mFont; // 0x8
         int mDisplayableChars; // 0xc
         std::vector<RndMesh *> mMeshes; // 0x10
-        int unk1c;
+        std::vector<RndMesh *>::iterator mMeshItr; // 0x1c
     };
 
     // Hmx::Object

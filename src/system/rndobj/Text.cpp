@@ -1,5 +1,6 @@
 #include "rndobj/Text.h"
 #include "Text.h"
+#include "math/Mtx.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/System.h"
@@ -212,9 +213,8 @@ void RndText::FontMap::UpdateScrolling(float f1) {
 
 RndText::FontMap3d::~FontMap3d() {
     for (int i = 0; i < mMeshes.size(); i++) {
-        RndMesh *mesh = mMeshes[i];
-        if (mesh) {
-            delete mesh;
+        if (mMeshes[i]) {
+            delete mMeshes[i];
         }
     }
 }
@@ -222,6 +222,99 @@ RndText::FontMap3d::~FontMap3d() {
 void RndText::FontMap3d::SetFont(RndFontBase *f) {
     MILO_ASSERT(f->ClassName() == RndFont3d::StaticClassName(), 0x17D);
     mFont = static_cast<RndFont3d *>(f);
+}
+
+void RndText::FontMap3d::IncrementDisplayableChars(unsigned short us1) {
+    RndFont3d::CharInfo *info = mFont->GetCharInfo(us1);
+    if (info && info->unk24) {
+        mDisplayableChars++;
+    }
+}
+
+// virtual void AllocateMeshes(RndText *, int);
+
+void RndText::FontMap3d::AllocateMeshes(RndText *text, int i2) {
+    int i9 = 0;
+    if (mFont) {
+        i9 = i2 ? i2 : mDisplayableChars;
+    }
+    int numMeshes = mMeshes.size();
+    for (int i = i9; i < mMeshes.size(); i++) {
+        delete mMeshes[i];
+    }
+    mMeshes.resize(numMeshes);
+    for (int i = 0; i < mMeshes.size(); i++) {
+        if (i >= numMeshes) {
+            mMeshes[i] = Hmx::Object::New<RndMesh>();
+        }
+        RndMesh *cur = mMeshes[i];
+        cur->SetTransParent(text, false);
+        cur->SetTransConstraint(kConstraintNone, nullptr, false);
+        cur->SetMat(mFont->Mat());
+        cur->SetShowing(true);
+    }
+    mMeshItr = mMeshes.begin();
+}
+
+void RndText::FontMap3d::CleanupSyncMeshes() {
+    for (; mMeshItr != mMeshes.end(); ++mMeshItr) {
+        (*mMeshItr)->SetShowing(false);
+    }
+}
+
+void RndText::FontMap3d::SetupCharacter(
+    unsigned short us2,
+    float &f3,
+    float f4,
+    const StyleState &ss5,
+    unsigned short us6,
+    float f7,
+    FitType ft8,
+    float f9
+) {
+    float f100, ffc;
+    RndMesh *localf8;
+    if (mFont->CharWidthAdvanceMesh(us2, f100, ffc, &localf8)) {
+        float kerning = mFont->Kerning(us6, us2);
+        f3 += (kerning + ss5.mInfo.mKerning) * ss5.mInfo.mSize;
+        kerning = f100 > 0 ? f100 : ffc;
+        float f5 = 0;
+        if (mFont->Monospace()) {
+            f5 = Min((ffc - kerning) / 2, 0.0f);
+        }
+        float fvar6 = ss5.mInfo.mSize;
+        f100 = fvar6 * kerning;
+        kerning = fvar6 * f5;
+        if (f100 > 0) {
+            f4 += ss5.mInfo.mZOffset * fvar6;
+            if (localf8 && mMeshItr != mMeshes.end()) {
+                RndMesh *it = *mMeshItr++;
+                it->SetGeomOwner(localf8);
+                Transform tff0;
+                tff0.v = mFont->CharOriginOffset();
+                tff0.v *= ss5.mInfo.mSize;
+                tff0.v.x += kerning + f3;
+                tff0.v.z += f4;
+                tff0.m.x.x = mFont->FontUnitInverse() * ss5.mInfo.mSize;
+                tff0.m.x.y = tff0.m.x.x * 0;
+                tff0.m.x.z = tff0.m.x.y;
+                tff0.m.y.x = tff0.m.x.y;
+                tff0.m.y.y = tff0.m.x.x;
+                tff0.m.y.z = tff0.m.x.y;
+                tff0.m.z.x = tff0.m.x.y;
+                tff0.m.z.y = tff0.m.x.y;
+                tff0.m.z.z = tff0.m.x.x;
+                if (f7 != 0) {
+                    float fvar = f100 / 2 + tff0.v.x;
+                    Transform tfa0 = XfmOnCircleEdge(f7, fvar);
+                    tff0.v.x -= fvar;
+                    Multiply(tff0, tfa0, tff0);
+                }
+                it->SetLocalXfm(tff0);
+            }
+            f3 += ss5.mInfo.mSize * ffc;
+        }
+    }
 }
 
 #pragma endregion
