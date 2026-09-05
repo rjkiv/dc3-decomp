@@ -309,6 +309,11 @@ protected:
 
     void DoBasicMarkup();
     void BuildFontMaps(bool);
+    void ClearFixedLength() {
+        if (mFixedLength != 0) {
+            mFixedLength = 0;
+        }
+    }
 
     static void QueueBlacklightPacket(RndMesh *, float, int);
     static FontMapBase *AcquireFontMap(RndFontBase *);

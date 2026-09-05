@@ -4,6 +4,7 @@
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/System.h"
+#include "rndobj/BaseMaterial.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Font.h"
 #include "rndobj/FontBase.h"
@@ -475,53 +476,53 @@ INIT_REVS(0x1C, 1)
 BEGIN_LOADS(RndText)
     LOAD_REVS(bs)
     ASSERT_REVS(0x1C, 1)
-    Style style(this);
     TEXT_REV = d.rev;
+    StyleInfo info;
+    ObjPtr<RndFontBase> fontBase(this);
     if (d.rev > 0xF) {
-        Hmx::Object::Load(bs);
+        LOAD_SUPERCLASS(Hmx::Object)
     }
-    RndDrawable::Load(bs);
+    LOAD_SUPERCLASS(RndDrawable)
     if (d.rev < 7) {
         ObjPtrList<Hmx::Object> objects(this);
         int x;
-        bs >> x;
-        bs >> objects;
+        d >> x >> objects;
     }
     if (d.rev > 1) {
-        RndTransformable::Load(bs);
+        LOAD_SUPERCLASS(RndTransformable)
     }
     if (d.rev < 0x16) {
-        bs >> style.mFont;
+        d >> fontBase;
     }
     if (d.rev < 3) {
         int idx;
-        bs >> idx;
+        d >> idx;
         Alignment align_choices[6] = { kTopLeft,    kTopCenter,    kTopRight,
                                        kBottomLeft, kBottomCenter, kBottomRight };
         mAlignment = align_choices[idx];
     } else {
-        bs >> (int &)mAlignment;
+        d >> (int &)mAlignment;
     }
     if (d.rev < 2) {
         Vector2 v2;
-        bs >> v2;
+        d >> v2;
         SetLocalPos(Vector3(v2.x, 0, -v2.y * 0.75f));
     }
-    bs >> mText;
+    d >> mText;
     if (d.rev < 0x14) {
         std::vector<unsigned short> vec;
         ASCIItoWideVector(vec, mText.c_str());
         WideVectorToUTF8(vec, mText);
     }
     if (d.rev > 0 && d.rev < 0x16) {
-        bs >> style.mInfo.mTextColor;
+        d >> info.mTextColor;
     }
     if (d.rev > 0xC) {
-        bs >> mWidth;
+        d >> mWidth;
     } else if (d.rev > 3) {
         bool b;
         d >> b;
-        bs >> mWidth;
+        d >> mWidth;
         if (!b)
             mWidth = 0.0f;
         if (d.rev < 5 && (mWidth < 0.0f || mWidth > 1000.0f))
@@ -529,63 +530,58 @@ BEGIN_LOADS(RndText)
     }
     if (d.rev == 5) {
         String str;
-        bs >> str;
+        d >> str;
     }
     if (d.rev > 4 && d.rev < 11) {
         bool b;
         d >> b;
-        if (style.mFont) {
-            RndFont *oldfont2d = dynamic_cast<RndFont *>(style.mFont.Ptr());
+        if (fontBase) {
+            RndFont *oldfont2d = dynamic_cast<RndFont *>(fontBase.Ptr());
             MILO_ASSERT(oldfont2d, 0xBC1);
-            if (oldfont2d->NumMats() > 0 && oldfont2d->Mat(0)) {
-                int zMode = !mMarkup ? 2 : 0;
-                oldfont2d->Mat(0)->SetZMode((ZMode)zMode);
+            if (oldfont2d->NumMats() && oldfont2d->Mat(0)) {
+                fontBase->Mat()->SetZMode(b ? kZModeTransparent : kZModeDisable);
             }
         }
     }
     if (d.rev > 7) {
-        bs >> mLeading;
+        d >> mLeading;
     }
     if (d.rev > 0xB) {
         int len;
-        bs >> len;
+        d >> len;
         SetFixedLength(len);
     } else if (d.rev > 8) {
         bool b;
         d >> b;
         if (b) {
             SetFixedLength(mText.length());
-        } else if (mFixedLength != 0) {
-            mFixedLength = 0;
+        } else {
+            ClearFixedLength();
         }
     }
+
     if (d.rev > 9 && d.rev < 0x16) {
-        bs >> style.mInfo.mItalics;
+        d >> info.mItalics;
     }
     if (d.rev < 0x16) {
-        if (d.rev > 0xB) {
-            bs >> style.mInfo.mSize;
-        } else if (style.mFont) {
-            RndFont *oldfont2d = dynamic_cast<RndFont *>(style.mFont.Ptr());
+        if (d.rev > 0xC) {
+            d >> info.mSize;
+        } else if (fontBase) {
+            RndFont *oldfont2d = dynamic_cast<RndFont *>(fontBase.Ptr());
             MILO_ASSERT(oldfont2d, 0xBE9);
-            style.mInfo.mSize = oldfont2d->DeprecatedSize();
+            info.mSize = oldfont2d->DeprecatedSize();
         }
-        if (d.rev < 0xD) {
-            style.mInfo.mItalics /= style.mInfo.mSize;
-        }
+    }
+    if (d.rev < 0xD) {
+        info.mItalics /= info.mSize;
     }
     if (d.rev > 0xD) {
-        LOAD_BITFIELD(bool, mMarkup)
+        d >> mMarkup;
     }
     if (d.rev > 0xE) {
-        bs >> (int &)mCapsMode;
+        d >> (int &)mCapsMode;
     } else {
         mCapsMode = kCapsModeNone;
-    }
-    if (d.rev > 0xF) {
-        bs >> mHeight;
-        bs >> mCircle;
-        bs >> (int &)mFitType;
     }
     if (d.rev >= 0x12 && d.rev < 0x15) {
         bool b;
@@ -593,38 +589,41 @@ BEGIN_LOADS(RndText)
     }
     if (d.rev >= 0x13 && d.rev < 0x15) {
         int i, j, k;
-        bs >> i;
-        bs >> j;
-        bs >> k;
+        d >> i >> j >> k;
     }
     if (d.rev >= 0x16) {
-        if (d.rev == 0x17) {
-            TheDebug.Notify(
-                MakeString("%s was bad version 23, suggest resave", PathName(this))
-            );
-        }
-        bs >> (int &)mFitType;
-        if (d.rev < 0x18) {
-            String str;
-            bs >> str;
-        }
-        if (d.altRev > 0) {
-            bs >> unk90;
-            bs >> unk94;
+        if (d.rev > 0x16) {
+            if (d.rev == 0x17) {
+                MILO_NOTIFY(
+                    "%s was bad version 23, suggest reverting and resaving, lost [height] and [fit_type]",
+                    PathName(this)
+                );
+            } else {
+                d >> mHeight;
+                if (d.rev < 0x18) {
+                    String str;
+                    d >> str;
+                }
+                if (d.altRev > 0) {
+                    d >> mCircle;
+                }
+                d >> (int &)mFitType;
+            }
         }
         d >> mStyles;
-    } else {
+    } else if (d.rev < 0x16) {
         mStyles.resize(1);
-        memcpy(&mStyles[0], &style, 0x34);
-        mStyles[0].mFont = style.mFont;
+        info.mZOffset = 0;
+        mStyles[0].mInfo = info;
+        mStyles[0].mFont = fontBase;
     }
     if (d.rev >= 0x1A) {
-        bs >> mScrollDelay;
-        bs >> mScrollRate;
-        bs >> mScrollPause;
+        d >> mScrollDelay;
+        d >> mScrollRate;
+        d >> mScrollPause;
     }
     if (d.rev >= 0x1B) {
-        bs >> mIndentation;
+        d >> mIndentation;
     }
     if (d.rev >= 0x1C) {
         d >> mBasicMarkup;
