@@ -66,3 +66,38 @@ bool BoxMapLighting::CacheData(LightParams_Spot &spot) {
         return false;
     }
 }
+
+static int s278 = 0;
+static Vector3 sDirections[150];
+static Hmx::Color sColors[150];
+
+void BoxMapLighting::ApplyLight(
+    const BoxLightArray<BoxMapLighting::LightParams_Directional, 50> &boxArray
+) const {
+    for (int i = 0; i < boxArray.NumElements(); i++) {
+        sDirections[s278] = boxArray[i].mDirection;
+        sColors[s278++] = boxArray[i].mColor;
+    }
+}
+
+void BoxMapLighting::ApplyLight(
+    const BoxLightArray<BoxMapLighting::LightParams_Point, 50> &boxArray,
+    const Vector3 &vec
+) const {
+    for (int i = 0; i < boxArray.NumElements(); i++) {
+        if (boxArray[i].mRange > boxArray[i].mFalloffStart) {
+            Subtract(boxArray[i].unk0, vec, sDirections[s278]);
+            float lensq = LengthSquared(sDirections[s278]);
+            if (lensq > 0) {
+                float inv = __frsqrte(lensq);
+                float f3 = Min(0.0f, inv * lensq - boxArray[i].mFalloffStart);
+                float f4 =
+                    Min(0.0f, 1 - f3 / (boxArray[i].mRange - boxArray[i].mFalloffStart));
+                sColors[s278].red = boxArray[i].mColor.red * f4;
+                sColors[s278].green = boxArray[i].mColor.green * f4;
+                sColors[s278].blue = boxArray[i].mColor.blue * f4;
+                sDirections[s278++] *= inv;
+            }
+        }
+    }
+}

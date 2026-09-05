@@ -3517,7 +3517,7 @@ system/rndobj/CamAnim.cpp:
 	.pdata      start:0x822DE348 end:0x822DE498
 	.text       start:0x826EE538 end:0x826EFE90
 	.data       start:0x82F15B60 end:0x82F15BC8
-	.data       start:0x830E0254 end:0x830E1548 rename:.bss
+	.data       start:0x830E0254 end:0x830E0278 rename:.bss
 
 system/rndobj/ColorXfm.cpp:
 	.rdata      start:0x820A9318 end:0x820A932C
@@ -3528,6 +3528,7 @@ system/rndobj/BoxMap.cpp:
 	.rdata      start:0x820A9330 end:0x820A9428
 	.pdata      start:0x822DE4E0 end:0x822DE510
 	.text       start:0x826F0A08 end:0x826F13A8
+	.data       start:0x830E0278 end:0x830E1548 rename:.bss
 
 system/rndobj/Enter.cpp:
 	.pdata      start:0x822DE510 end:0x822DE538
