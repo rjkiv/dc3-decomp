@@ -64,16 +64,13 @@ END_LOADS
 
 void RndScreenMask::DrawShowing() {
     if (TheRnd.DrawMode() == Rnd::kDrawNormal) {
-        int h = TheRnd.Height();
-        int w = TheRnd.Width();
-        RndTex *targetTex = RndCam::Current()->TargetTex();
-        if (targetTex) {
-            h = targetTex->Height();
-            w = targetTex->Width();
+        float fw = TheRnd.Width();
+        float fh = TheRnd.Height();
+        if (RndCam::Current()->TargetTex()) {
+            fw = RndCam::Current()->TargetTex()->Width();
+            fh = RndCam::Current()->TargetTex()->Height();
         }
-        float fw = w;
-        float fh = h;
-        if (!mUseCamRect && targetTex) {
+        if (!mUseCamRect && RndCam::Current()->TargetTex()) {
             if (RndCam::Current()->GetScreenRect() != Hmx::Rect(0, 0, 1, 1)) {
                 MILO_NOTIFY_ONCE(
                     "%s: Overriding camera screen_rect not supported with render texture",

@@ -3636,7 +3636,7 @@ system/rndobj/MultiMeshProxy.cpp:
 	.rdata      start:0x8229BDB0 end:0x8229BE54 rename:.rdata$r
 	.pdata      start:0x822DFF10 end:0x822DFFB8
 	.text       start:0x82711728 end:0x82712120
-	.data       start:0x830E1938 end:0x830E1964 rename:.bss
+	.data       start:0x830E1938 end:0x830E1940 rename:.bss
 
 system/rndobj/ScreenMask.cpp:
 	.rdata      start:0x820AEE50 end:0x820AF1A4
@@ -3645,7 +3645,7 @@ system/rndobj/ScreenMask.cpp:
 	.text       start:0x82712120 end:0x827131F0
 	.text       start:0x82EE2CE0 end:0x82EE2CF0 rename:.text$yd
 	.data       start:0x82F16430 end:0x82F1644C
-	.data       start:0x830E1964 end:0x830E1974 rename:.bss
+	.data       start:0x830E1940 end:0x830E1974 rename:.bss
 
 system/rndobj/Set.cpp:
 	.rdata      start:0x820AF1A4 end:0x820AF5E4

@@ -123,3 +123,22 @@ void RndRibbon::ExposeMesh() {
         mMesh->SetName(MakeString("%s_mesh.mesh", base), Dir());
     }
 }
+
+void RndRibbon::ConstructMesh() {
+    if (mNumSegments > 0) {
+        mMesh->Verts().resize(mNumSegments * mNumSides * 2);
+        mMesh->Faces().resize(mNumSegments * mNumSides * 2);
+        for (int i = 0; i < mNumSegments; i++) {
+            int idx = mNumSides * i;
+            int i10 = idx * 2;
+            for (int j = 0; j < mNumSides; j++) {
+                int i6 = idx * -2 + 1 + i10;
+                int mod = i6 % mNumSides;
+                auto *face = &mMesh->Faces(idx);
+                face[0].Set(i10, mod, mod + mNumSides);
+                face[1].Set(mod + mNumSides, i10 + mNumSides, i10);
+            }
+        }
+        mMesh->Sync(0x3F);
+    }
+}
