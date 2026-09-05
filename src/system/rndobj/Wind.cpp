@@ -9,6 +9,8 @@ static Rand *sRand = nullptr;
 static float sWhiteField[0x400] = { 0 };
 static float sWindField[0x401] = { 0 };
 
+Vector3 sOffset(0, 0.3384f, 0.66843998f);
+
 void SetWind(int ai, int bi, float av, float bv, float scale) {
     sWindField[ai] = av;
     while (bi - ai >= 2) {
@@ -165,4 +167,51 @@ void RndWind::Init() {
         i++;
     } while (i < 0x400);
     RELEASE(sRand);
+}
+
+float RndWind::GetWind(float f1) {
+    float mod = Mod(f1, 1.0f);
+    int idx = mod * 1024;
+    return (sWindField[idx + 1] - sWindField[idx]) * (mod * 1024 - (float)idx)
+        + sWindField[idx];
+}
+
+float RndWind::GetWhiteNoise(float f1) {
+    float mod = Mod(f1, 1023.0f);
+    int idx = mod;
+    return (sWhiteField[idx + 1] - sWhiteField[idx]) * (mod - (float)idx)
+        + sWhiteField[idx];
+}
+
+void RndWind::SelfGetWind(const Vector3 &vin, float f2, Vector3 &vout) {
+    vout.x = GetWind(mTimeRate.x * f2 + mSpaceRate.x * vin.x + sOffset.x) * mRandom.x
+        + mPrevailing.x;
+    vout.y = GetWind(mTimeRate.y * f2 + mSpaceRate.y * vin.y + sOffset.y) * mRandom.y
+        + mPrevailing.y;
+    vout.z = GetWind(mTimeRate.z * f2 + mSpaceRate.z * vin.z + sOffset.z) * mRandom.z
+        + mPrevailing.z;
+    if (mTrans) {
+        const Transform &xfm = mTrans->WorldXfm();
+        if (mAboutZ) {
+            Vector3 worldV = xfm.v;
+            Vector3 diff;
+            Subtract(vin, xfm.v, diff);
+            ScaleAddEq(diff, worldV, -Dot(diff, worldV));
+            Vector3 v50;
+            Cross(worldV, diff, v50);
+            Normalize(v50, v50);
+            Vector3 tmp;
+            Cross(v50, worldV, tmp);
+            vout.x = vout.x * tmp.x + vout.y * v50.x + vout.z * worldV.x;
+            vout.y = vout.x * tmp.y + vout.y * v50.y + vout.z * worldV.y;
+            vout.z = vout.x * tmp.z + vout.y * v50.z + vout.z * worldV.z;
+        } else {
+            Multiply(xfm.m, vout, vout);
+        }
+    }
+    float len = Length(vout);
+    if (len > 0 && (len > mMaxSpeed || len < mMinSpeed)) {
+        float scale = mMinSpeed / len;
+        vout *= scale;
+    }
 }
