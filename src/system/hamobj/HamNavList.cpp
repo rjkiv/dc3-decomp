@@ -31,12 +31,14 @@
 #include "rndobj/Overlay.h"
 #include "rndobj/Rnd.h"
 #include "rndobj/Trans.h"
+#include "stl/_vector.h"
 #include "synth/Sound.h"
 #include "ui/UI.h"
 #include "ui/UIComponent.h"
 #include "ui/UIList.h"
 #include "ui/UIListProvider.h"
 #include "ui/UIListState.h"
+#include "ui/UIListWidget.h"
 #include "ui/Utl.h"
 #include "utl/BinStream.h"
 #include "utl/Loader.h"
@@ -423,8 +425,9 @@ int HamNavList::NumItems() const {
     if (mListState.ScrollPastMinDisplay()) {
         if (unk190.AtTop() || unk190.AtBottom()) {
             i = HamListRibbon::sNumListSelectable + 1;
-        } else
+        } else {
             i = HamListRibbon::sNumListSelectable + 2;
+        }
     } else {
         int count = GetDisabledCount(mListState.NumShowing());
         i = mListState.NumShowing();
@@ -452,6 +455,15 @@ float HamNavList::EndFrame() {
 void HamNavList::SendHighlightSettledMsg(int i) {
     UIListProvider *provider = mListState.Provider();
     MILO_ASSERT(provider, 0x327);
+    bool canSelect = provider->CanSelect(i);
+
+    if (provider->NumData() != 0) {
+        NavHighlightSettledMsg msg(provider->DataSymbol(i), i, this, canSelect);
+
+        TheUI->Handle(msg, false);
+        Export(msg, true);
+        TheHamProvider->Handle(msg, false);
+    }
 }
 
 void HamNavList::SetProvider(UIListProvider *p) {
@@ -499,8 +511,11 @@ void HamNavList::SendHighlightMsg(int i) {
     UIListProvider *provider = mListState.Provider();
     MILO_ASSERT(provider, 0x339);
     bool canSel = provider->CanSelect(i);
-    Symbol dataSym = provider->DataSymbol(i);
-    // continue once NavHighlightMsg is created
+
+    NavHighlightMsg msg(provider->DataSymbol(i), i, this, canSel);
+    TheUI->Handle(msg, false);
+    Export(msg, true);
+    TheHamProvider->Handle(msg, false);
 }
 
 int HamNavList::GetHighlightItem() const {
@@ -528,19 +543,19 @@ void HamNavList::SetSliding(float f) {
             unk15c.Reset();
             SetRibbonMode(HamListRibbon::kRibbonSlide);
         }
-        if (sSlideSmoothAmount == f) {
-            unk15c.SetParams(f1, f1, f);
+        if (sSlideSmoothAmount == 0) {
+            unk15c.SetParams(f, f, 0);
         } else {
             unk15c.Smooth(f, TheTaskMgr.DeltaUISeconds());
-            SetFrame(0, 0); // idk whats goin on here but I think SetFrame is involved
         }
+        SetFrame(unk15c.Level(), 1.0f);
     }
 }
 
 void HamNavList::Draw(const BaseSkeleton &baseSkeleton, SkeletonViz &skeletonViz) {
     const Skeleton *skeleton = dynamic_cast<const Skeleton *>(&baseSkeleton);
     MILO_ASSERT(skeleton, 0x5a3);
-    // call something idk i cant figure it out rn
+    unk184->Draw(*skeleton, skeletonViz);
 }
 
 void HamNavList::SetHighlight(int i) {
@@ -600,6 +615,23 @@ void HamNavList::Update() {
         mListDirResource->CreateElements(nullptr, unk64, numShowing);
     }
     unk1f0 = true;
+}
+
+void HamNavList::PostUpdate(SkeletonUpdateData const *data) {
+    if (data && !SkipPoll()) {
+        unkc8 = true;
+        for (int i = 0; i < 6; i++) {
+            const Skeleton *skeleton = data->unk4[i];
+            if (skeleton->TrackingID() == mSkeletonTrackingID) {
+                int elapsedMs = skeleton->ElapsedMs();
+                unk184->Update(*skeleton, 0 < elapsedMs ? elapsedMs : 0);
+                elapsedMs = skeleton->ElapsedMs(); // idk why i have to say this again but
+                                                   // it matches
+                unk188->Update(*skeleton, 0 < elapsedMs ? elapsedMs : 0);
+                return;
+            }
+        }
+    }
 }
 
 void HamNavList::Clear() {
@@ -980,6 +1012,7 @@ void HamNavList::SetSelecting(bool b) {
         NavSelectMsg msg(s, selected, this, canSelect);
         TheHamProvider->Handle(msg, false);
         DataNode handle = TheUI->Handle(msg, false);
+        Export(msg, true);
 
         if (!mDisableSelectSound) {
             if (!ShouldSkipSelectSound(handle) && mListRibbonResource) {
@@ -994,6 +1027,7 @@ void HamNavList::SetSelecting(bool b) {
             }
             mListRibbonResource->SetUnk26C(ShouldSkipSelectAnim(handle));
         }
+
         if (mHeaderRibbonResource) {
             RndAnimatable *slideSoundAnim = mHeaderRibbonResource->SlideSoundAnim();
             if (slideSoundAnim) {
@@ -1001,6 +1035,7 @@ void HamNavList::SetSelecting(bool b) {
             }
             mHeaderRibbonResource->SetUnk26C(ShouldSkipSelectAnim(handle));
         }
+
         RndAnimatable::Animate(0, 0, 0);
     }
 }
@@ -1058,6 +1093,86 @@ void HamNavList::RealRefresh() {
             }
         }
     }
+}
+
+int HamNavList::GetDisabledCount(int amount) const {
+    int count = 0;
+    for (int i = 0; i < amount; i++) {
+        UIListProvider *provider = mListState.Provider();
+        if (!provider->IsActive(i))
+            count++;
+    }
+    for (int i = amount; i < mListState.NumShowing(); i++) {
+        UIListProvider *provider = mListState.Provider();
+        if (provider->IsActive(i))
+            break;
+        count++;
+    }
+    MILO_ASSERT(!IsScrollable() || count == 0, 0x313);
+    return count;
+}
+
+float HamNavList::GetTargetSwellAmount(int i) {
+    if (TheLoadMgr.EditMode()) {
+        if (i == mListState.SelectedDisplay()) {
+            if (mRibbonMode == HamListRibbon::RibbonMode::kRibbonSwell) {
+                return GetFrame();
+            }
+            return 1.0f;
+        }
+    } else {
+        if (!mListRibbonResource->TestEntering()) {
+            if (!unk190.IsScrolling()) {
+                if (InControllerMode()) {
+                    if (i == mListState.SelectedDisplay()
+                        && TheUI->FocusComponent() == this) {
+                        return 1.0f;
+                    }
+                } else if (mRibbonMode != 3) {
+                    if (i == mListState.SelectedDisplay() && unk190.GetUnk30() == 0) {
+                        return 1.0f;
+                    }
+                    if (mRibbonMode == 0 && i < mListState.NumShowing()) {
+                        UIListProvider *provider = mListState.Provider();
+                        if (provider->IsActive(i) && mSkeletonTrackingID != -1) {
+                            int disabledCount = GetDisabledCount(i);
+                            disabledCount = i - disabledCount;
+                            if (mListState.ScrollPastMinDisplay()) {
+                                disabledCount -= mListState.MinDisplay();
+                                if (!unk190.AtTop()) {
+                                    disabledCount++;
+                                }
+                            }
+                            return CalculateSwell(disabledCount);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+bool HamNavList::IsElementBig(int element) const {
+    int numShowing = mListState.NumShowing();
+    if (mListRibbonResource->IsScrollable(numShowing)) {
+        element = (mListState.FirstShowing() + element) - mListState.MinDisplay();
+    } else {
+        element = numShowing;
+    }
+    if (element >= 0 && element < mListState.NumShowing()) {
+        for (int i = 0; i < mBigElements.size(); i++) {
+            if (mListState.Provider()->DataSymbol(element) == mBigElements[i]) {
+                return true;
+            }
+        }
+        for (int i = 0; i < unk20c.size(); i++) {
+            if (element == unk20c[i]) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 DataNode HamNavList::OnMsg(const ButtonDownMsg &msg) {

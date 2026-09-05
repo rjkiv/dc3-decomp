@@ -16,7 +16,7 @@
 #include "ui/UIPanel.h"
 
 DECLARE_MESSAGE(LeftHandListEngagementMsg, "left_hand_list_engagement")
-LeftHandListEngagementMsg(bool) : Message(Type()) {}
+LeftHandListEngagementMsg(bool b) : Message(Type(), b) {}
 bool Success() const { return mData->Int(2); }
 END_MESSAGE
 

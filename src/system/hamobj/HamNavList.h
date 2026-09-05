@@ -96,6 +96,7 @@ public:
     void DrawDebug() const;
     void Disengage();
     void UpdateGestures(Skeleton const *);
+    float CalculateSwell(int) const;
 
     void Enable() { mEnabled = true; }
     void Disable() { mEnabled = false; }
@@ -112,6 +113,7 @@ public:
     bool GesturingWithVoice() const {
         return TheGestureMgr && TheGestureMgr->GesturingWithVoice();
     }
+    bool IsScrollable() const { return mListState.ScrollPastMinDisplay(); }
     bool InVoiceMode() const { return TheGestureMgr && TheGestureMgr->InVoiceMode(); }
 
     static void Init();
@@ -204,5 +206,16 @@ protected:
 void HamNavListGlitchCB(float, void *);
 
 DECLARE_MESSAGE(NavSelectMsg, "nav_select")
-NavSelectMsg(Symbol, int, HamNavList *, bool);
+NavSelectMsg(Symbol s, int i, HamNavList *list, bool b)
+    : Message(Type(), s, i, list, b) {}
+END_MESSAGE
+
+DECLARE_MESSAGE(NavHighlightSettledMsg, "nav_highlight_settled")
+NavHighlightSettledMsg(Symbol s, int i, HamNavList *list, bool b)
+    : Message(Type(), s, i, list, b) {}
+END_MESSAGE
+
+DECLARE_MESSAGE(NavHighlightMsg, "nav_highlight")
+NavHighlightMsg(Symbol s, int i, HamNavList *list, bool b)
+    : Message(Type(), s, i, list, b) {}
 END_MESSAGE

@@ -8,6 +8,7 @@
 #include "rndobj/Anim.h"
 #include "rndobj/Dir.h"
 #include "synth/Sound.h"
+#include "ui/UIListWidget.h"
 #include "utl/BinStream.h"
 #include "utl/MemMgr.h"
 

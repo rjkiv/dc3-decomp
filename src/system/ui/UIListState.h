@@ -43,6 +43,7 @@ public:
     bool Circular() const { return mCircular; }
     int NumDisplay() const { return mNumDisplay; }
     int FirstShowing() const { return mFirstShowing; }
+    int TargetShowing() const { return mTargetShowing; }
     int GridSpan() const { return mGridSpan; }
     float Speed() const;
     int MinDisplay() const;
