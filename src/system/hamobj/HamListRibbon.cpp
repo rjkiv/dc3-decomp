@@ -378,7 +378,7 @@ void HamListRibbon::SetDisengageFrame(float f1) {
 float HamListRibbon::GetLabelTotalAlpha() const {
     float ret = 1;
     for (unsigned int i = 0; i < mLabelPlaceholder->NumStyles(); i++) {
-        ret *= mLabelPlaceholder->Style(i).GetAlpha();
+        ret *= mLabelPlaceholder->Style(i).mInfo.mFontColor.alpha;
     }
     return ret;
 }
