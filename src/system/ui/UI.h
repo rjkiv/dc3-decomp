@@ -43,6 +43,7 @@ public:
     UIScreen *TransitionScreen() { return mTransitionScreen; }
     bool InTransition() { return mTransitionState != kTransitionNone; }
     TransitionState GetTransitionState() const { return mTransitionState; }
+    bool BlacklightScreenEnabled() const { return !mDisableScreenBlacklight; }
     RndCam *GetCam() { return mCam; }
     RndEnviron *GetEnv() { return mEnv; }
     bool WentBack() { return mWentBack; }

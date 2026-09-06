@@ -356,6 +356,7 @@ protected:
     void FitTextJust();
     void FitTextEllipsis();
     void FitTextScroll();
+    void UpdateScrollOffsets();
 
     static void QueueBlacklightPacket(RndMesh *, float, int);
     static FontMapBase *AcquireFontMap(RndFontBase *);
@@ -402,7 +403,7 @@ protected:
     bool unk40;
     float unk44;
     float unk48;
-    int unk4c;
+    float unk4c;
     float unk50;
     float unk54;
     float unk58;
