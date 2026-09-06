@@ -1,15 +1,18 @@
 #include "rndobj/Text.h"
 #include "Text.h"
 #include "math/Mtx.h"
+#include "math/Trig.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/System.h"
 #include "rndobj/BaseMaterial.h"
+#include "rndobj/Cam.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Font.h"
 #include "rndobj/FontBase.h"
 #include "rndobj/Mat.h"
 #include "rndobj/Mesh.h"
+#include "rndobj/Rnd.h"
 #include "rndobj/Tex.h"
 #include "rndobj/Trans.h"
 #include "utl/BinStream.h"
@@ -24,9 +27,61 @@ static float gSuperscriptScale = 0.7f;
 static float gGuitarScale = 0.7f;
 static float gGuitarZOffset = 0.2f;
 
-void ResetFontMapPageMeshFaces(RndMesh *, int);
+float SegmentLength(int i1, int i2, const float *f3, const unsigned short *us4, float f5) {
+    for (const unsigned short *p = us4 + i1; *p == 0x20 && i1 < i2; i1++, p++)
+        ;
+    for (const unsigned short *p = us4 + i2 - 1; *p == 0x20 && i1 < i2; i2--, p--)
+        ;
+    return (f3[i2] - f3[i1]) * f5;
+}
 
-Transform XfmOnCircleEdge(float, float);
+void ResetFontMapPageMeshFaces(RndMesh *mesh, int i2) {
+    MILO_ASSERT(mesh, 0x96);
+    mesh->Faces().resize(i2);
+
+    auto it = mesh->Faces().begin();
+    auto itEnd = mesh->Faces().end();
+    int i7 = 0;
+    for (; it != itEnd; it += 2, i7 += 4) {
+        it[0].Set(i7, i7 + 1, i7 + 2);
+        it[1].Set(i7, i7 + 2, i7 + 3);
+    }
+}
+
+Transform XfmOnCircleEdge(float f1, float f2) {
+    Transform out;
+    float f10 = f1 < 0 ? -1.0f : 1.0f;
+    out.m.z.Set(0, 0, 1);
+    float f9 = (f2 / f1) * 2 * PI + (f10 * (-PI / 2));
+    out.v.Set(Cosine(f9), Sine(f9), 0);
+    Scale(out.v, -f10, out.m.y);
+    Cross(out.m.y, out.m.z, out.m.x);
+    out.v *= f10 * f1 * 0.15915494f;
+    return out;
+}
+
+bool CalcScreenHeight(float f1, RndMesh *mesh, float &fref) {
+    if (!mesh->Showing()) {
+        return false;
+    } else {
+        const Transform &xfm = mesh->WorldXfm();
+        RndCam *cur = RndCam::Current();
+        Vector2 v2[2];
+        Vector3 v3[2];
+        v3[0].Set(0, 0, -f1 / 2);
+        v3[1].Set(0, 0, f1 / 2);
+        for (int i = 0; i < 2; i++) {
+            Vector3 vtmp;
+            Multiply(v3[i], xfm, vtmp);
+            cur->WorldToScreen(vtmp, v2[i]);
+        }
+        Vector2 v2res(v2[0].x - v2[1].x, v2[0].y - v2[1].y);
+        v2res.x *= TheRnd.Width();
+        v2res.y *= TheRnd.Height();
+        fref = Length(v2res);
+        return true;
+    }
+}
 
 #pragma region FontMap
 
@@ -862,15 +917,92 @@ void RndText::SetTextASCII(const char *cstr) {
 }
 
 void RndText::QueueBlacklightPacket(RndMesh *mesh, float f2, int i3) {
-    int cursize = sBlacklightPacketPool.size();
+    unsigned int cursize = sBlacklightPacketPool.capacity();
     if (sBlacklightPacketCount >= cursize) {
-        int newsize = 8;
+        unsigned int newsize = 8;
         if (cursize != 0) {
             newsize = cursize * 2;
         }
         sBlacklightPacketPool.resize(newsize);
     }
-    sBlacklightPacketCount++;
+    BlacklightPacket &packet = sBlacklightPacketPool[sBlacklightPacketCount++];
+    packet.unk0 = mesh;
+    packet.unk4 = mesh->Mat()->GetColor();
+    packet.unk14 = f2;
+    packet.unk18 = i3;
+    packet.unk1c = RndCam::Current();
+}
+
+void RndText::ClearBlacklight() { sBlacklightPacketCount = 0; }
+
+void RndText::DrawBlacklight() {
+    RndCam *cur = RndCam::Current();
+    for (int i = 0; i < sBlacklightPacketCount; i++) {
+        BlacklightPacket &packet = sBlacklightPacketPool[i];
+        if (packet.unk1c && packet.unk1c != RndCam::Current()) {
+            packet.unk1c->Select();
+        }
+        packet.unk0->Mat()->SetColor(packet.unk4.red, packet.unk4.green, packet.unk4.blue);
+        DrawMesh(packet.unk0, packet.unk14, packet.unk18);
+    }
+    if (cur && cur != RndCam::Current()) {
+        cur->Select();
+    }
+}
+
+void RndText::DrawMesh(RndMesh *mesh, float f2, int i3) {
+    mesh->DrawShowing();
+    if (f2) {
+        float f7 = f2;
+        for (int i = 0; i < i3; i++) {
+            Vector3 pos = mesh->LocalXfm().v;
+            pos.x += f7;
+            mesh->SetLocalPos(pos);
+            mesh->DrawShowing();
+            pos.x -= f7;
+            mesh->SetLocalPos(pos);
+            f7 += f2;
+        }
+    }
+}
+
+RndText::FontMapBase *RndText::AcquireFontMap(RndFontBase *fontBase) {
+    Symbol classToUse;
+    if (fontBase->ClassName() == RndFont::StaticClassName()) {
+        classToUse = FontMap::StaticClassName();
+    } else if (fontBase->ClassName() == RndFont3d::StaticClassName()) {
+        classToUse = FontMap3d::StaticClassName();
+    } else {
+        MILO_FAIL("Unknown Font type: %s", fontBase->ClassName());
+        classToUse = FontMap::StaticClassName();
+    }
+
+    FOREACH (it, sFontMapCache) {
+        if ((*it)->ClassName() == classToUse) {
+            FontMapBase *found = *it;
+            sFontMapCache.erase(it);
+            if (found) {
+                found->SetFont(fontBase);
+                found->ResetDisplayableChars();
+                return found;
+            } else {
+                break;
+            }
+        }
+    }
+
+    FontMapBase *found;
+    if (classToUse == FontMap::StaticClassName()) {
+        found = new FontMap();
+    } else if (classToUse == FontMap3d::StaticClassName()) {
+        found = new FontMap3d();
+    } else {
+        MILO_FAIL("Unknown FontMap type: %s", classToUse);
+        found = new FontMap();
+    }
+    found->SetFont(fontBase);
+    found->ResetDisplayableChars();
+    return found;
 }
 
 #pragma endregion

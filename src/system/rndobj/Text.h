@@ -115,13 +115,19 @@ public:
         StyleInfo mInfo; // 0x0
     };
 
+    // size 0x20
     class BlacklightPacket {
     public:
-        int unk[8];
+        RndMesh *unk0; // 0x0
+        Hmx::Color unk4; // 0x4
+        float unk14; // 0x14
+        int unk18; // 0x18
+        RndCam *unk1c; // 0x1c
     };
 
     class FontMapBase {
     public:
+        FontMapBase() : mBlacklight(false) {}
         virtual ~FontMapBase() {}
         virtual Symbol ClassName() const = 0;
         virtual void SetFont(RndFontBase *) = 0;
@@ -173,6 +179,7 @@ public:
             int unkc; // 0xc - mesh sync flags?
         };
 
+        FontMap() : mFont(nullptr) {}
         virtual ~FontMap();
         virtual Symbol ClassName() const { return StaticClassName(); }
         virtual void SetFont(RndFontBase *);
@@ -211,6 +218,7 @@ public:
     // size 0x20
     class FontMap3d : public FontMapBase {
     public:
+        FontMap3d() : mFont(nullptr), mDisplayableChars(0) {}
         virtual ~FontMap3d();
         virtual Symbol ClassName() const { return StaticClassName(); }
         virtual void SetFont(RndFontBase *);
@@ -317,6 +325,7 @@ protected:
 
     static void QueueBlacklightPacket(RndMesh *, float, int);
     static FontMapBase *AcquireFontMap(RndFontBase *);
+    static void DrawMesh(RndMesh *, float, int);
     static bool sBlacklightModeEnabled;
     static int sBlacklightPacketCount;
     static std::vector<BlacklightPacket> sBlacklightPacketPool;
