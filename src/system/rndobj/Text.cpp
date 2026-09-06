@@ -1350,6 +1350,89 @@ void RndText::UpdateScrollOffsets() {
     }
 }
 
+const unsigned short *
+RndText::ParseMarkup(const unsigned short *us1, StyleState &state, unsigned short &usref) {
+    const unsigned short *p = us1 + 1;
+    bool is2f = *p == 0x2F;
+    if (is2f) {
+        p++;
+    }
+    usref = 0;
+    if (WStrniCmp(p, (const unsigned short *)L"sup", 3) == 0) {
+        if (is2f) {
+            state.mInfo.mSize = state.unk3c * state.unk34->mInfo.mSize;
+        } else {
+            state.mInfo.mSize =
+                state.unk3c * state.unk34->mInfo.mSize * gSuperscriptScale;
+        }
+        p += 3;
+    } else if (WStrniCmp(p, (const unsigned short *)L"gtr", 3) == 0) {
+        if (is2f) {
+            state.mInfo.mSize = state.unk3c * state.unk34->mInfo.mSize;
+        } else {
+            state.mInfo.mSize = state.unk3c * state.unk34->mInfo.mSize * gGuitarScale;
+        }
+        if (is2f) {
+            state.mInfo.mZOffset = state.mInfo.mZOffset;
+        } else {
+            state.mInfo.mZOffset = gGuitarZOffset;
+        }
+        p += 3;
+    } else if (WStrniCmp(p, (const unsigned short *)L"it", 2) == 0) {
+        if (is2f) {
+            state.mInfo.mItalics = state.unk34->mInfo.mItalics;
+        } else {
+            state.mInfo.mItalics = state.unk34->mInfo.mItalics + 0.1f;
+        }
+        p += 2;
+    } else if (WStrniCmp(p, (const unsigned short *)L"color", 5) == 0) {
+        if (is2f) {
+            state.mInfo.mTextColor = state.unk34->mInfo.mTextColor;
+            p += 5;
+        } else {
+            int r, g, b;
+            int a = state.mInfo.mTextColor.alpha * 256.0f;
+            swscanf((const wchar_t *)p, L"%d %d %d %d", r, g, b, a);
+            state.mInfo.mTextColor.red = (float)r * 0.003921569f;
+            state.mInfo.mTextColor.green = (float)g * 0.003921569f;
+            state.mInfo.mTextColor.blue = (float)b * 0.003921569f;
+            state.mInfo.mTextColor.alpha = (float)a * 0.003921569f;
+            p += 6;
+        }
+    } else if (WStrniCmp(p, (const unsigned short *)L"&#", 2) == 0) {
+        int x = 0x3F;
+        swscanf((const wchar_t *)p, L"%d", x);
+        usref = x;
+        p += 2;
+    } else if (WStrniCmp(p, (const unsigned short *)L"nobreak", 7) == 0) {
+        if (is2f) {
+            state.unk40 = true;
+        } else {
+            state.unk40 = false;
+        }
+        p += 7;
+    } else if (WStrniCmp(p, (const unsigned short *)L"alt", 3) == 0) {
+        p += 3;
+        if (is2f) {
+            for (; *p != L'>' && *p != L'\0'; p++)
+                ;
+        }
+        // more...
+    }
+
+    while (true) {
+        if (*p == L'>') {
+            return ++p;
+        }
+        if (*p == L'\0') {
+            break;
+        }
+        p++;
+    }
+
+    return p;
+}
+
 void RndText::QueueBlacklightPacket(RndMesh *mesh, float f2, int i3) {
     unsigned int cursize = sBlacklightPacketPool.capacity();
     if (sBlacklightPacketCount >= cursize) {
