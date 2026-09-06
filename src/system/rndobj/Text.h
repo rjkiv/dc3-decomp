@@ -113,7 +113,13 @@ public:
         friend class RndText;
 
     public:
+        StyleState(RndText *, float);
+
         StyleInfo mInfo; // 0x0
+        Style *unk34; // 0x34
+        int unk38; // 0x38
+        float unk3c; // 0x3c
+        bool unk40; // 0x40
     };
 
     // size 0x20
@@ -124,6 +130,14 @@ public:
         float unk14; // 0x14
         int unk18; // 0x18
         RndCam *unk1c; // 0x1c
+    };
+
+    // size 0x14
+    class Line {
+    public:
+        std::vector<unsigned short> unk0; // 0x0
+        float unkc;
+        float unk10;
     };
 
     class FontMapBase {
@@ -145,11 +159,11 @@ public:
             unsigned short,
             float &,
             float,
-            const StyleState &,
+            const StyleState &state,
             unsigned short,
-            float,
-            FitType,
-            float
+            float circle,
+            FitType fitType,
+            float indentation
         ) = 0;
         virtual bool SupportsScrolling() const = 0;
         virtual void SetupScrolling() = 0;
@@ -290,6 +304,7 @@ public:
     void ReFitTextScroll(String);
     void GetWidthHeightBox(Box &) const;
     float ComputeCharWidthsForText(String);
+    void ConstructMeshes(const std::vector<RndText::Line> &, const Hmx::Rect &, float);
 
     static void Init();
     static void DrawBlacklight();
@@ -323,6 +338,12 @@ protected:
             mFixedLength = 0;
         }
     }
+    const unsigned short *
+    ParseMarkup(const unsigned short *, StyleState &, unsigned short &);
+    void SizeCheck();
+    void FitTextScroll();
+    int ConvertTextToWide(const char *, std::vector<unsigned short> &);
+    int OnComputeCharWidths(const unsigned short *, float *, bool);
 
     static void QueueBlacklightPacket(RndMesh *, float, int);
     static FontMapBase *AcquireFontMap(RndFontBase *);
@@ -367,11 +388,11 @@ protected:
         When the fit type is kFitScrollMarqueeWrapAlways, this value will be ignored." */
     float mScrollPause; // 0x3c
     bool unk40;
-    int unk44;
-    int unk48;
+    float unk44;
+    float unk48;
     int unk4c;
-    int unk50;
-    int unk54;
+    float unk50;
+    float unk54;
     float unk58;
     int unk5c;
     int unk60;
@@ -389,6 +410,6 @@ protected:
     ObjVector<Style> mStyles; // 0x98
     std::vector<FontMapBase *> mFontMaps; // 0xa8
     Hmx::Rect mDrawRect; // 0xb4
-    int unkc4;
+    int unkc4; // 0xc4 - num lines?
     float unkc8;
 };

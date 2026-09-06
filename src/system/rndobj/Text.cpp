@@ -1,5 +1,6 @@
 #include "rndobj/Text.h"
 #include "Text.h"
+#include "math/Geo.h"
 #include "math/Mtx.h"
 #include "math/Trig.h"
 #include "obj/Object.h"
@@ -175,14 +176,14 @@ void RndText::FontMap::SetupCharacter(
     unsigned short us2,
     float &f3,
     float f4,
-    const StyleState &ss5,
+    const StyleState &state,
     unsigned short us6,
-    float f7,
-    FitType ft8,
-    float f9
+    float circle,
+    FitType fitType,
+    float indentation
 ) {
-    if (ft8 == 7 && us2 == 10) {
-        f3 += f9;
+    if (fitType == 7 && us2 == 10) {
+        f3 += indentation;
     } else {
         int i5 = mFont->CharPage(us2);
         if (i5 < 0) {
@@ -197,7 +198,7 @@ void RndText::FontMap::SetupCharacter(
         }
 
         float f11 = mFont->Kerning(us6, us2);
-        f3 += f11 + ss5.mInfo.mKerning * ss5.mInfo.mSize;
+        f3 += f11 + state.mInfo.mKerning * state.mInfo.mSize;
         if (fc0 > 0) {
             f11 = fc0;
         } else {
@@ -207,26 +208,26 @@ void RndText::FontMap::SetupCharacter(
         if (mFont->Monospace()) {
             f8 = Min((fbc - f11) / 2.0f, 0.0f);
         }
-        float fvar9 = ss5.mInfo.mSize;
+        float fvar9 = state.mInfo.mSize;
         fc0 = fvar9 * f11;
         f11 = fvar9 * f8;
         if (fc0 <= 0) {
             return;
         }
-        float f13 = ss5.mInfo.mZOffset * fvar9 + f4;
+        float f13 = state.mInfo.mZOffset * fvar9 + f4;
         float aspect8 = mFont->AspectRatio();
-        float f10 = ss5.mInfo.mItalics * fvar9;
+        float f10 = state.mInfo.mItalics * fvar9;
         page->unk8->pos.Set(f10 + f11 + f3, 0, f13);
-        float fvar1 = f13 - (aspect8 * f9);
+        float fvar1 = f13 - (aspect8 * indentation);
         reinterpret_cast<Vector3 &>(page->unk8->tangent).Set((f11 + f3) - f10, 0, fvar1);
         reinterpret_cast<Vector3 &>(page->unk8[1].tangent)
             .Set(((f11 + f3) - f10) + fc0, fvar1, 0);
         reinterpret_cast<Vector3 &>(page->unk8[2].tangent)
             .Set(((f11 + f3) + fc0) + fvar1, 0, f13);
-        if (f7 != 0) {
+        if (circle != 0) {
             float fvar10 = (page->unk8[2].tangent.x - page->unk8[0].tangent.x) / 2
                 + page->unk8[0].tangent.x;
-            Transform xfm = XfmOnCircleEdge(f7, fvar10);
+            Transform xfm = XfmOnCircleEdge(circle, fvar10);
             Vector3 tmp;
             Scale(xfm.m.x, fvar10, tmp);
             xfm.v -= tmp;
@@ -240,10 +241,10 @@ void RndText::FontMap::SetupCharacter(
         page->unk8[0].norm.Set(0, -1, 0);
         page->unk8[1].norm = page->unk8[2].norm = page->unk8[3].norm = page->unk8[0].norm;
         page->unk8[0].color = page->unk8[1].color = page->unk8[2].color =
-            page->unk8[3].color = ss5.mInfo.mTextColor;
+            page->unk8[3].color = state.mInfo.mTextColor;
         // advance to the next set of 4 verts
         page->unk8 = &page->unk8[4];
-        f3 += ss5.mInfo.mSize * fbc;
+        f3 += state.mInfo.mSize * fbc;
     }
 }
 
@@ -287,8 +288,6 @@ void RndText::FontMap3d::IncrementDisplayableChars(unsigned short us1) {
     }
 }
 
-// virtual void AllocateMeshes(RndText *, int);
-
 void RndText::FontMap3d::AllocateMeshes(RndText *text, int i2) {
     int i9 = 0;
     if (mFont) {
@@ -322,36 +321,36 @@ void RndText::FontMap3d::SetupCharacter(
     unsigned short us2,
     float &f3,
     float f4,
-    const StyleState &ss5,
+    const StyleState &state,
     unsigned short us6,
-    float f7,
-    FitType ft8,
-    float f9
+    float circle,
+    FitType fitType,
+    float indentation
 ) {
     float f100, ffc;
     RndMesh *localf8;
     if (mFont->CharWidthAdvanceMesh(us2, f100, ffc, &localf8)) {
         float kerning = mFont->Kerning(us6, us2);
-        f3 += (kerning + ss5.mInfo.mKerning) * ss5.mInfo.mSize;
+        f3 += (kerning + state.mInfo.mKerning) * state.mInfo.mSize;
         kerning = f100 > 0 ? f100 : ffc;
         float f5 = 0;
         if (mFont->Monospace()) {
             f5 = Min((ffc - kerning) / 2, 0.0f);
         }
-        float fvar6 = ss5.mInfo.mSize;
+        float fvar6 = state.mInfo.mSize;
         f100 = fvar6 * kerning;
         kerning = fvar6 * f5;
         if (f100 > 0) {
-            f4 += ss5.mInfo.mZOffset * fvar6;
+            f4 += state.mInfo.mZOffset * fvar6;
             if (localf8 && mMeshItr != mMeshes.end()) {
                 RndMesh *it = *mMeshItr++;
                 it->SetGeomOwner(localf8);
                 Transform tff0;
                 tff0.v = mFont->CharOriginOffset();
-                tff0.v *= ss5.mInfo.mSize;
+                tff0.v *= state.mInfo.mSize;
                 tff0.v.x += kerning + f3;
                 tff0.v.z += f4;
-                tff0.m.x.x = mFont->FontUnitInverse() * ss5.mInfo.mSize;
+                tff0.m.x.x = mFont->FontUnitInverse() * state.mInfo.mSize;
                 tff0.m.x.y = tff0.m.x.x * 0;
                 tff0.m.x.z = tff0.m.x.y;
                 tff0.m.y.x = tff0.m.x.y;
@@ -360,15 +359,15 @@ void RndText::FontMap3d::SetupCharacter(
                 tff0.m.z.x = tff0.m.x.y;
                 tff0.m.z.y = tff0.m.x.y;
                 tff0.m.z.z = tff0.m.x.x;
-                if (f7 != 0) {
+                if (circle != 0) {
                     float fvar = f100 / 2 + tff0.v.x;
-                    Transform tfa0 = XfmOnCircleEdge(f7, fvar);
+                    Transform tfa0 = XfmOnCircleEdge(circle, fvar);
                     tff0.v.x -= fvar;
                     Multiply(tff0, tfa0, tff0);
                 }
                 it->SetLocalXfm(tff0);
             }
-            f3 += ss5.mInfo.mSize * ffc;
+            f3 += state.mInfo.mSize * ffc;
         }
     }
 }
@@ -378,6 +377,14 @@ void RndText::FontMap3d::SetupCharacter(
 #pragma region RndText
 
 RndText::Style::Style(Hmx::Object *owner) : mFont(owner), mBlacklight(false) {}
+
+RndText::StyleState::StyleState(RndText *text, float f2)
+    : mInfo(text->mStyles[0].mInfo), unk34(&text->mStyles[0]) {
+    unk38 = text->FontMapIndex(unk34->mFont, unk34->mBlacklight);
+    unk3c = f2;
+    mInfo.mSize *= f2;
+    unk40 = true;
+}
 
 RndText::RndText()
     : mWidth(0), mHeight(0), mCircle(0), mAlignment(kMiddleCenter), mFitType(kFitWrap),
@@ -887,7 +894,8 @@ void RndText::BuildFontMaps(bool b1) {
     if (b1) {
         for (auto it = mFontMaps.begin(); it != mFontMaps.end();
              it = mFontMaps.erase(it)) {
-            sFontMapCache.push_back(*it);
+            FontMapBase *cur = *it;
+            sFontMapCache.push_back(cur);
         }
     }
     if (mFontMaps.empty()) {
@@ -913,6 +921,117 @@ void RndText::SetTextASCII(const char *cstr) {
         WideVectorToUTF8(vec, str);
     }
     SetText(str.c_str());
+}
+
+void RndText::ConstructMeshes(
+    const std::vector<RndText::Line> &lines, const Hmx::Rect &rect, float f3
+) {
+    unkc8 = f3;
+    unkc4 = lines.size();
+    mDrawRect = rect;
+    FOREACH (it, mFontMaps) {
+        (*it)->AllocateMeshes(this, mFixedLength);
+    }
+    if (mStyles[0].mFont) {
+        StyleState state(this, f3);
+        for (int i = 0; i < lines.size(); i++) {
+            const Line &curLine = lines[i];
+            unsigned short usIt = 0;
+            float f10 = curLine.unk10;
+            float fc = curLine.unkc;
+            for (auto it = curLine.unk0.begin(); it != curLine.unk0.end();) {
+                unsigned short cur = *it;
+                if (cur == 0x3C && mMarkup) {
+                    it = ParseMarkup(it, state, cur);
+                    if (cur != 0) {
+                        it--;
+                    }
+                }
+                if (cur != 0) {
+                    mFontMaps[state.unk38]->SetupCharacter(
+                        cur, fc, f10, state, usIt, mCircle, mFitType, mIndentation
+                    );
+                    usIt = cur;
+                    it++;
+                }
+            }
+        }
+    }
+    FOREACH (it, mFontMaps) {
+        (*it)->CleanupSyncMeshes();
+    }
+}
+
+void RndText::SizeCheck() {
+    static float s6590;
+    static RndText *s6594;
+    StyleState state(this, unkc8);
+    FOREACH (it, mFontMaps) {
+        RndFontBase *curFontBase = (*it)->Font();
+        if (curFontBase && curFontBase->BitmapFont()) {
+            for (int i = 0; i < (*it)->NumMeshes(); i++) {
+                RndMesh *curMesh = (*it)->Mesh(i);
+                if (curMesh) {
+                    float fref;
+                    if (CalcScreenHeight(
+                            curFontBase->AspectRatio() * state.mInfo.mSize, curMesh, fref
+                        )) {
+                        float f11 = curFontBase->FontUnit() * curFontBase->AspectRatio();
+                        float f10 = fref < 127.5f ? fref : 127.5f;
+                        if ((f11 * 1.25f < f10 && (s6594 != this || s6590 < fref))) {
+                            MILO_NOTIFY(
+                                "oversized: %s font: %s token:'%s' text:'%s' %d < %d",
+                                PathName(this),
+                                curFontBase->Name(),
+                                TextToken(),
+                                mText,
+                                (int)(f11),
+                                (int)fref
+                            );
+                            s6590 = fref;
+                            s6594 = this;
+                        }
+                    }
+
+                    return;
+                }
+            }
+        }
+    }
+}
+
+void RndText::ReFitTextScroll(String str) {
+    if (mFitType != kFitScrollMarqueeWrapAlways) {
+        return;
+    } else {
+        SetText(str.c_str());
+        FitTextScroll();
+        unk50 = 0;
+        unk8c = 0;
+        while (mWidth - unk8c >= unk68.front()) {
+            unk90++;
+            if (unk90 >= unk60) {
+                unk90 = 0;
+            }
+            if (unk68.front() == unk54) {
+                unk8c += mWidth;
+            }
+            if (unk60 == unk68.size()) {
+                unk68.push_back(unk68.front());
+            }
+            unk68.pop_front();
+        }
+        unk44 = unk48;
+    }
+}
+
+float RndText::ComputeCharWidthsForText(String str) {
+    BuildFontMaps(false);
+    std::vector<unsigned short> wide;
+    int ret = ConvertTextToWide(str.c_str(), wide);
+    float *floats = (float *)_alloca((ret + 2) * sizeof(float));
+    OnComputeCharWidths(wide.begin(), floats, true);
+    return floats[ret];
 }
 
 void RndText::QueueBlacklightPacket(RndMesh *mesh, float f2, int i3) {
