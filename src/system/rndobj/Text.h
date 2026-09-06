@@ -135,7 +135,9 @@ public:
     // size 0x14
     class Line {
     public:
-        std::vector<unsigned short> unk0; // 0x0
+        unsigned short *unk0;
+        unsigned short *unk4;
+        float unk8;
         float unkc;
         float unk10;
     };
@@ -305,6 +307,14 @@ public:
     void GetWidthHeightBox(Box &) const;
     float ComputeCharWidthsForText(String);
     void ConstructMeshes(const std::vector<RndText::Line> &, const Hmx::Rect &, float);
+    void WrapText(
+        const unsigned short *,
+        int,
+        float *,
+        std::vector<RndText::Line> &,
+        Hmx::Rect &,
+        float
+    );
 
     static void Init();
     static void DrawBlacklight();
@@ -341,9 +351,11 @@ protected:
     const unsigned short *
     ParseMarkup(const unsigned short *, StyleState &, unsigned short &);
     void SizeCheck();
-    void FitTextScroll();
     int ConvertTextToWide(const char *, std::vector<unsigned short> &);
     int OnComputeCharWidths(const unsigned short *, float *, bool);
+    void FitTextJust();
+    void FitTextEllipsis();
+    void FitTextScroll();
 
     static void QueueBlacklightPacket(RndMesh *, float, int);
     static FontMapBase *AcquireFontMap(RndFontBase *);

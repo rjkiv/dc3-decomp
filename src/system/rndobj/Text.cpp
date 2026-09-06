@@ -900,7 +900,7 @@ void RndText::BuildFontMaps(bool b1) {
     }
     if (mFontMaps.empty()) {
         for (int i = 0; i < mStyles.size(); i++) {
-            RndFontBase *font = mStyles[i].mFont;
+            RndFontBase *font = mStyles[i].mFont ? mStyles[i].mFont : mStyles[0].mFont;
             if (font) {
                 if (FontMapIndex(font, mStyles[i].mBlacklight) == -1) {
                     FontMapBase *map = AcquireFontMap(font);
@@ -939,7 +939,7 @@ void RndText::ConstructMeshes(
             unsigned short usIt = 0;
             float f10 = curLine.unk10;
             float fc = curLine.unkc;
-            for (auto it = curLine.unk0.begin(); it != curLine.unk0.end();) {
+            for (const unsigned short *it = curLine.unk0; it != curLine.unk4;) {
                 unsigned short cur = *it;
                 if (cur == 0x3C && mMarkup) {
                     it = ParseMarkup(it, state, cur);
@@ -1032,6 +1032,75 @@ float RndText::ComputeCharWidthsForText(String str) {
     float *floats = (float *)_alloca((ret + 2) * sizeof(float));
     OnComputeCharWidths(wide.begin(), floats, true);
     return floats[ret];
+}
+
+void RndText::GetWidthHeightBox(Box &box) const {
+    if (mAlignment & 1) {
+        box.mMin.x = 0;
+    } else if (mAlignment & 2) {
+        box.mMin.x = -mWidth / 2;
+    } else {
+        box.mMin.x = -mWidth;
+    }
+    if (mAlignment & 0x10) {
+        box.mMin.z = -mHeight;
+    } else if (mAlignment & 0x20) {
+        box.mMin.z = -mHeight / 2;
+    } else {
+        box.mMin.z = 0;
+    }
+    box.mMax.x = mWidth + box.mMin.x;
+    box.mMax.z = mHeight + box.mMin.z;
+    box.mMax.y = 0;
+    box.mMin.y = 0;
+}
+
+void RndText::UpdateText() {
+    if (mFitType == kFitJust) {
+        FitTextJust();
+        return;
+    }
+    if (mStyles[0].mInfo.mSize > 0 && mWidth > 0) {
+        if (mFitType == kFitEllipsis) {
+            FitTextEllipsis();
+            return;
+        }
+        if (mFitType == kFitScrollMarqueeReset || mFitType == kFitScrollMarqueeWrap
+            || mFitType == kFitScrollPingPong
+            || mFitType == kFitScrollMarqueeWrapAlways) {
+            for (int i = 0; i < mStyles.size(); i++) {
+                RndFontBase *font =
+                    mStyles[i].mFont ? mStyles[i].mFont : mStyles[0].mFont;
+
+                if (font && font->ClassName() == RndFont::StaticClassName()) {
+                    continue;
+                } else {
+                    const char *name = font ? font->Name() : "NULL";
+                    MILO_NOTIFY(
+                        "%s %s requests scrolling, but uses a font that does not support it (%s)",
+                        PathName(this),
+                        Name(),
+                        name
+                    );
+                    mFitType = kFitEllipsis;
+                    FitTextEllipsis();
+                    return;
+                }
+            }
+            FitTextScroll();
+            return;
+        }
+    }
+
+    std::vector<RndText::Line> lines;
+    BuildFontMaps(true);
+    std::vector<unsigned short> wide;
+    int ret = ConvertTextToWide(mText.c_str(), wide);
+    float *floats = (float *)_alloca((ret + 2) * sizeof(float));
+    OnComputeCharWidths(wide.begin(), floats, false);
+    Hmx::Rect rect;
+    WrapText(wide.begin(), ret, floats, lines, rect, 1);
+    ConstructMeshes(lines, rect, 1);
 }
 
 void RndText::QueueBlacklightPacket(RndMesh *mesh, float f2, int i3) {
