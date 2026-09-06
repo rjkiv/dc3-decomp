@@ -1,9 +1,11 @@
 #include "rndobj/Text.h"
 #include "Text.h"
+#include "math/Color.h"
 #include "math/Geo.h"
 #include "math/Mtx.h"
 #include "math/Trig.h"
 #include "obj/Object.h"
+#include "obj/Task.h"
 #include "os/Debug.h"
 #include "os/System.h"
 #include "rndobj/BaseMaterial.h"
@@ -16,6 +18,7 @@
 #include "rndobj/Rnd.h"
 #include "rndobj/Tex.h"
 #include "rndobj/Trans.h"
+#include "ui/UI.h"
 #include "utl/BinStream.h"
 #include "utl/MemMgr.h"
 #include "utl/UTF8.h"
@@ -761,7 +764,63 @@ void RndText::Mats(std::list<class RndMat *> &mats, bool) {
     }
 }
 
-// DrawShowing
+void RndText::DrawShowing() {
+    SizeCheck();
+    int i11 = 0;
+    FOREACH (it, mFontMaps) {
+        i11 += (*it)->NumMaterials();
+    }
+    // Hmx::Color *colors = (Hmx::Color *)_alloca(i11 * sizeof(Hmx::Color));
+    float *colors = (float *)_alloca(i11 * sizeof(Hmx::Color));
+    FOREACH (it, mFontMaps) {
+        for (int i = 0; i < (*it)->NumMaterials(); i++) {
+            RndMat *mat = (*it)->Material(i);
+            Hmx::Color *curColor = (Hmx::Color *)&colors[i * 4];
+            *curColor = mat->GetColor();
+        }
+    }
+    bool b3 = false;
+    FOREACH (it, mStyles) {
+        if (it->mFont && it->mInfo.mFontColorOverride) {
+            int idx = FontMapIndex(it->mFont, it->mBlacklight);
+            if (idx != -1) {
+                b3 = true;
+                FontMapBase *font = mFontMaps[idx];
+                for (int i = 0; i < font->NumMaterials(); i++) {
+                    RndMat *mat = font->Material(i);
+                    Hmx::Color *curColor = (Hmx::Color *)&colors[i * 4];
+                    mat->SetColor(*curColor);
+                }
+            }
+        }
+    }
+    if (unk40) {
+        UpdateScrollOffsets();
+    }
+
+    FOREACH (it, mFontMaps) {
+        for (int i = 0; i < (*it)->NumMeshes(); i++) {
+            RndMesh *curMesh = (*it)->Mesh(i);
+            if (curMesh) {
+                if (sBlacklightModeEnabled && (*it)->mBlacklight
+                    && TheUI->BlacklightScreenEnabled()) {
+                    QueueBlacklightPacket(curMesh, unk58, unk5c);
+                } else {
+                    DrawMesh(curMesh, unk58, unk5c);
+                }
+            }
+        }
+    }
+    if (b3) {
+        FOREACH (it, mFontMaps) {
+            for (int i = 0; i < (*it)->NumMaterials(); i++) {
+                RndMat *mat = (*it)->Material(i);
+                Hmx::Color *curColor = (Hmx::Color *)&colors[i * 4];
+                mat->SetColor(curColor->red, curColor->green, curColor->blue);
+            }
+        }
+    }
+}
 
 RndDrawable *RndText::CollideShowing(const Segment &s, float &f, Plane &p) {
     FOREACH (it, mFontMaps) {
@@ -1101,6 +1160,277 @@ void RndText::UpdateText() {
     Hmx::Rect rect;
     WrapText(wide.begin(), ret, floats, lines, rect, 1);
     ConstructMeshes(lines, rect, 1);
+}
+
+void RndText::FitTextJust() {
+    BuildFontMaps(true);
+    std::vector<RndText::Line> lines;
+    std::vector<unsigned short> wide;
+    float f9 = 1;
+    int ret = ConvertTextToWide(mText.c_str(), wide);
+    float *floats = (float *)_alloca((ret + 2) * sizeof(float));
+    OnComputeCharWidths(wide.begin(), floats, false);
+    Hmx::Rect rect;
+    WrapText(wide.begin(), ret, floats, lines, rect, 1);
+    float f10 = mStyles[0].mInfo.mSize;
+    float f7 = 0.2f;
+    if ((mWidth && rect.w > mWidth) || (mHeight && rect.h > mHeight)) {
+        float f11 = mStyles[0].mInfo.mSize;
+        float f6 = 0.2f;
+        while (f10 - f7 > 0.2f) {
+            f11 = (f6 + f10) / 2;
+            f9 = f11 / mStyles[0].mInfo.mSize;
+            WrapText(wide.begin(), ret, floats, lines, rect, f9);
+            if ((mWidth && rect.w > mWidth) || (mHeight && rect.h > mHeight)) {
+                f7 = f6;
+                f10 = f11;
+            }
+            f6 = f7;
+        }
+        if (f10 == f11) {
+            f9 = f7 / mStyles[0].mInfo.mSize;
+            WrapText(wide.begin(), ret, floats, lines, rect, f9);
+        }
+    }
+    ConstructMeshes(lines, rect, f9);
+}
+
+void RndText::FitTextScroll() {
+    BuildFontMaps(true);
+    std::vector<RndText::Line> lines;
+    std::vector<unsigned short> wide;
+    int ret = ConvertTextToWide(mText.c_str(), wide);
+    float *floats = (float *)_alloca((ret + 2) * sizeof(float));
+    unk60 = 0;
+    unk68.clear();
+    unk70.clear();
+    OnComputeCharWidths(wide.begin(), floats, false);
+    unk40 = false;
+    float f12 = 0;
+    float f11 = mWidth;
+    float f13 = f12;
+    Hmx::Rect rect;
+    if (floats[ret] > f11 || mFitType == kFitScrollMarqueeWrapAlways) {
+        mWidth = 0;
+        unk40 = true;
+        RndFontBase *font = mStyles[0].mFont;
+        MILO_ASSERT(font, 0xA9E);
+        if (font) {
+            unsigned short us;
+            DecodeUTF8(us, "8");
+            float fref;
+            font->CharAdvance(us, us, fref);
+            rect.x = mStyles[0].mInfo.mSize;
+            f12 = (rect.x + 0x2c + fref) * rect.x;
+        }
+    }
+    WrapText(wide.begin(), ret, floats, lines, rect, 1);
+    ConstructMeshes(lines, rect, 1);
+    if (unk40) {
+        mWidth = f11;
+        unk5c = 1;
+        unk44 = f13;
+        unk4c = mScrollRate * f12 * -0.001f;
+        if (mFitType == kFitScrollMarqueeWrapAlways) {
+            unk50 = f11;
+            unk8c = f11;
+            unk60++;
+            unk54 = mIndentation * (float)unk60 + floats[ret];
+            unk68.push_back(unk54);
+            unk68.push_back(f13);
+            unk70.push_back(unk54);
+            unk58 = unk54;
+            f11 = f12;
+            if (f13 < f12) {
+                while (f13 < unk54) {
+                    if (mWidth < f11)
+                        break;
+                    f11 += f12;
+                    unk5c++;
+                }
+            }
+            unk90 = -1;
+            unk94 = -1;
+        } else {
+            unk50 = f13;
+            unk54 = floats[ret];
+            unk58 = f13;
+        }
+        unk48 = mScrollDelay;
+        for (int i = 0; i < mFontMaps.size(); i++) {
+            mFontMaps[i]->SetupScrolling();
+        }
+    }
+}
+
+void RndText::UpdateScrollOffsets() {
+    float delta = TheTaskMgr.DeltaUISeconds();
+    unk44 += delta;
+    if (unk44 >= unk48) {
+        bool b11 = false;
+        float widthDiff = unk54 - mWidth;
+        float f13 = unk4c * delta * 1000;
+        unk50 += f13;
+        switch (mFitType) {
+        case kFitScrollMarqueeWrap:
+            if (unk50 < -unk54) {
+                unk50 = 0;
+            }
+            unk58 = unk54;
+            break;
+        case kFitScrollMarqueeReset:
+            if (unk50 < -(unk54 + 20)) {
+                unk50 = 0;
+                b11 = true;
+            }
+            break;
+        case kFitScrollPingPong:
+            if (unk4c >= 0) {
+                if (unk4c > 0 && unk50 >= 0) {
+                    unk4c = -unk4c;
+                    unk50 = 0;
+                    b11 = true;
+                }
+            } else if (unk50 < -widthDiff) {
+                unk50 = -widthDiff;
+                unk4c = -unk4c;
+                b11 = true;
+            }
+            break;
+        case kFitScrollMarqueeWrapAlways: {
+            static Message textScrolledIn("text_scrolled_in", -1);
+            static Message textScrolledOut("text_scrolled_out", -1);
+            float old8c = unk8c;
+            unk8c += f13;
+            float f14 = unk68.front();
+            if (mWidth - (old8c + f13) >= f14) {
+                unk90++;
+                if (unk90 >= unk60) {
+                    unk90 = 0;
+                }
+                textScrolledIn[0] = unk90;
+                if (f14 == unk54) {
+                    unk8c = mWidth;
+                }
+                if (unk60 == unk68.size()) {
+                    unk68.push_back(unk54);
+                }
+                unk68.pop_front();
+                if (unk78) {
+                    unk78->Handle(textScrolledIn, false);
+                }
+            }
+            float f15 = unk70.front();
+            if (unk50 <= -f15) {
+                unk94++;
+                textScrolledOut[0] = unk94;
+                if (f15 == unk54) {
+                    unk50 = 0;
+                    unk94 = -1;
+                }
+                unk70.push_back(unk50);
+                unk70.pop_front();
+                if (unk78) {
+                    unk78->Handle(textScrolledOut, false);
+                }
+            }
+            break;
+        }
+        default:
+            unk50 = 0;
+            break;
+        }
+
+        if (b11) {
+            unk44 = 0;
+        }
+    }
+    FOREACH (it, mFontMaps) {
+        (*it)->UpdateScrolling(unk50);
+    }
+}
+
+const unsigned short *
+RndText::ParseMarkup(const unsigned short *us1, StyleState &state, unsigned short &usref) {
+    const unsigned short *p = us1 + 1;
+    bool is2f = *p == 0x2F;
+    if (is2f) {
+        p++;
+    }
+    usref = 0;
+    if (WStrniCmp(p, (const unsigned short *)L"sup", 3) == 0) {
+        if (is2f) {
+            state.mInfo.mSize = state.unk3c * state.unk34->mInfo.mSize;
+        } else {
+            state.mInfo.mSize =
+                state.unk3c * state.unk34->mInfo.mSize * gSuperscriptScale;
+        }
+        p += 3;
+    } else if (WStrniCmp(p, (const unsigned short *)L"gtr", 3) == 0) {
+        if (is2f) {
+            state.mInfo.mSize = state.unk3c * state.unk34->mInfo.mSize;
+        } else {
+            state.mInfo.mSize = state.unk3c * state.unk34->mInfo.mSize * gGuitarScale;
+        }
+        if (is2f) {
+            state.mInfo.mZOffset = state.mInfo.mZOffset;
+        } else {
+            state.mInfo.mZOffset = gGuitarZOffset;
+        }
+        p += 3;
+    } else if (WStrniCmp(p, (const unsigned short *)L"it", 2) == 0) {
+        if (is2f) {
+            state.mInfo.mItalics = state.unk34->mInfo.mItalics;
+        } else {
+            state.mInfo.mItalics = state.unk34->mInfo.mItalics + 0.1f;
+        }
+        p += 2;
+    } else if (WStrniCmp(p, (const unsigned short *)L"color", 5) == 0) {
+        if (is2f) {
+            state.mInfo.mTextColor = state.unk34->mInfo.mTextColor;
+            p += 5;
+        } else {
+            int r, g, b;
+            int a = state.mInfo.mTextColor.alpha * 256.0f;
+            swscanf((const wchar_t *)p, L"%d %d %d %d", r, g, b, a);
+            state.mInfo.mTextColor.red = (float)r * 0.003921569f;
+            state.mInfo.mTextColor.green = (float)g * 0.003921569f;
+            state.mInfo.mTextColor.blue = (float)b * 0.003921569f;
+            state.mInfo.mTextColor.alpha = (float)a * 0.003921569f;
+            p += 6;
+        }
+    } else if (WStrniCmp(p, (const unsigned short *)L"&#", 2) == 0) {
+        int x = 0x3F;
+        swscanf((const wchar_t *)p, L"%d", x);
+        usref = x;
+        p += 2;
+    } else if (WStrniCmp(p, (const unsigned short *)L"nobreak", 7) == 0) {
+        if (is2f) {
+            state.unk40 = true;
+        } else {
+            state.unk40 = false;
+        }
+        p += 7;
+    } else if (WStrniCmp(p, (const unsigned short *)L"alt", 3) == 0) {
+        p += 3;
+        if (is2f) {
+            for (; *p != L'>' && *p != L'\0'; p++)
+                ;
+        }
+        // more...
+    }
+
+    while (true) {
+        if (*p == L'>') {
+            return ++p;
+        }
+        if (*p == L'\0') {
+            break;
+        }
+        p++;
+    }
+
+    return p;
 }
 
 void RndText::QueueBlacklightPacket(RndMesh *mesh, float f2, int i3) {

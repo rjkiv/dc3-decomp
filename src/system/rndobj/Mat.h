@@ -120,6 +120,10 @@ public:
         mColor.alpha = a;
         mDirty |= 1;
     }
+    void SetColor(const Hmx::Color &c) {
+        mColor = c;
+        mDirty |= 1;
+    }
     void SetShaderOpts(const MatShaderOptions &opts) { mShaderOptions = opts; }
     void SetTexXfm(const Transform &xfm) {
         mTexXfm = xfm;

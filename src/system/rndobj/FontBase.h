@@ -20,10 +20,10 @@ public:
     virtual void Copy(const Hmx::Object *, Hmx::Object::CopyType);
     virtual void Load(BinStream &);
     virtual float CharWidth(unsigned short) const { return 0; }
+    virtual float CharAdvance(unsigned short) const { return 0; } // 0x60
     virtual bool CharAdvance(unsigned short, unsigned short, float &) const {
         return false;
-    }
-    virtual float CharAdvance(unsigned short) const { return 0; }
+    } // 0x5c
     virtual float Kerning(unsigned short, unsigned short) const;
     virtual bool CharDefined(unsigned short) const;
     virtual float AspectRatio() const { return 0; }
