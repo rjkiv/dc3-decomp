@@ -384,8 +384,7 @@ RndText::RndText()
       mCapsMode(kCapsModeNone), mLeading(1), mFixedLength(0), mMarkup(true),
       mBasicMarkup(true), mScrollDelay(0), mScrollRate(1), mScrollPause(0), unk40(0),
       unk58(0), unk5c(0), unk60(0), mIndentation(0), unk78(nullptr), unk8c(0), unk90(-1),
-      unk94(-1), mStyles(this), unkb4(0), unkb8(0), unkbc(0), unkc0(0), unkc4(0),
-      unkc8(0) {
+      unk94(-1), mStyles(this), mDrawRect(0, 0, 0, 0), unkc4(0), unkc8(0) {
     mStyles.resize(1);
     mFontMaps.reserve(1);
 }

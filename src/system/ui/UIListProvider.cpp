@@ -85,7 +85,7 @@ void DataProvider::Text(int i, int j, UIListLabel *listlabel, UILabel *label) co
         }
     }
     if (mFluidWidth) {
-        const_cast<DataProvider *>(this)->mWidths[j] = label->Unkbc();
+        const_cast<DataProvider *>(this)->mWidths[j] = label->DrawRectWidth();
     }
 }
 

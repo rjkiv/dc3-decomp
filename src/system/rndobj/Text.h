@@ -1,5 +1,6 @@
 #pragma once
 #include "math/Color.h"
+#include "math/Geo.h"
 #include "math/Utl.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
@@ -307,7 +308,7 @@ public:
     FitType GetFitType() const { return mFitType; }
     void SetFitType(FitType f) { mFitType = f; }
     void SetUnk78(Hmx::Object *o) { unk78 = o; };
-    float Unkbc() const { return unkbc; }
+    float DrawRectWidth() const { return mDrawRect.w; }
     ObjVector<Style> &Styles() { return mStyles; }
     const String &RawText() const { return mText; }
     float Indentation() const { return mIndentation; }
@@ -387,10 +388,7 @@ protected:
     /** "The different styles this text can have" */
     ObjVector<Style> mStyles; // 0x98
     std::vector<FontMapBase *> mFontMaps; // 0xa8
-    float unkb4;
-    float unkb8;
-    float unkbc;
-    float unkc0;
+    Hmx::Rect mDrawRect; // 0xb4
     int unkc4;
     float unkc8;
 };

@@ -54,7 +54,7 @@ BEGIN_HANDLERS(UILabel)
         get_font_mats, UILabelDir::GetMatVariations(LStyle(_msg->Int(2)).mFontResource)
     )
     HANDLE(set_height_from_text, OnSetHeightFromText)
-    HANDLE_EXPR(draw_rect_width, unkbc)
+    HANDLE_EXPR(draw_rect_width, mDrawRect.w)
     HANDLE_ACTION(reload_string, (SetTextToken(mTextToken), unk122 = true))
     HANDLE_SUPERCLASS(UIComponent)
 END_HANDLERS
@@ -159,7 +159,7 @@ BEGIN_PROPSYNCS(UILabel)
         fixed_length, mFixedLength, SetFixedLength(_val.Int());
         if (!sDeferUpdate) LabelUpdate(false)
     )
-    SYNC_PROP(draw_width, unkbc)
+    SYNC_PROP(draw_width, mDrawRect.w)
     gMe = this;
     SYNC_PROP(styles, mLabelStyles)
     SYNC_SUPERCLASS(UIComponent)
@@ -676,8 +676,8 @@ void UILabel::CenterWithLabel(UILabel *label, bool b2, float f3) {
     Transform myXfm = LocalXfm();
     Transform labelXfm = label->LocalXfm();
     int add = b2 ? 1 : -1;
-    myXfm.v.x = label->unkbc * 0.5f + f3 * 0.5f * (float)add + labelXfm.v.x;
-    labelXfm.v.x = -(label->unkbc * 0.5f + f3 * 0.5f * (float)add - labelXfm.v.x);
+    myXfm.v.x = label->mDrawRect.w * 0.5f + f3 * 0.5f * (float)add + labelXfm.v.x;
+    labelXfm.v.x = -(label->mDrawRect.w * 0.5f + f3 * 0.5f * (float)add - labelXfm.v.x);
     SetLocalXfm(myXfm);
     label->SetLocalXfm(labelXfm);
 }
