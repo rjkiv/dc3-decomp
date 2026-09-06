@@ -646,6 +646,49 @@ void RndText::UpdateSphere() {
     SetSphere(s);
 }
 
+float RndText::GetDistanceToPlane(const Plane &pl, Vector3 &v) {
+    if (mFontMaps.empty()) {
+        return 0;
+    } else {
+        float f6 = 0;
+        bool b1 = true;
+        FOREACH (it, mFontMaps) {
+            for (int i = 0; i < (*it)->NumMeshes(); i++) {
+                RndMesh *mesh = (*it)->Mesh(i);
+                if (mesh) {
+                    Vector3 locVec;
+                    float f7 = mesh->GetDistanceToPlane(pl, locVec);
+                    if (b1 || (fabs(f7) < fabs(f6))) {
+                        b1 = false;
+                        v = locVec;
+                        f6 = f7;
+                    }
+                }
+            }
+        }
+        return f6;
+    }
+}
+
+bool RndText::MakeWorldSphere(Sphere &s, bool zero) {
+    s.Zero();
+    FOREACH (it, mFontMaps) {
+        for (int i = 0; i < (*it)->NumMeshes(); i++) {
+            RndMesh *mesh = (*it)->Mesh(i);
+            if (mesh) {
+                Sphere locSphere;
+                if (zero) {
+                    mesh->MakeWorldSphere(locSphere, true);
+                } else if (GetSphere().radius != 0) {
+                    Multiply(GetSphere(), WorldXfm(), locSphere);
+                }
+                s.GrowToContain(locSphere);
+            }
+        }
+    }
+    return s.radius;
+}
+
 void RndText::Mats(std::list<class RndMat *> &mats, bool) {
     FOREACH (it, mFontMaps) {
         for (int i = 0; i < (*it)->NumMaterials(); i++) {
@@ -656,6 +699,8 @@ void RndText::Mats(std::list<class RndMat *> &mats, bool) {
         }
     }
 }
+
+// DrawShowing
 
 RndDrawable *RndText::CollideShowing(const Segment &s, float &f, Plane &p) {
     FOREACH (it, mFontMaps) {
