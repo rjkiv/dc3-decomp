@@ -564,7 +564,7 @@ bool RndFont::CharWidthAdvanceCoords(
     unsigned short key, float &f1, float &f2, Vector2 &v1, Vector2 &v2
 ) const {
     const RndFont *font;
-    for (font = this; font->mTextureOwner != font; font = font->mTextureOwner)
+    for (font = mTextureOwner; font->mTextureOwner != font; font = font->mTextureOwner)
         ;
     auto it = font->mCharInfoMap.find(key);
     if (it != font->mCharInfoMap.end()) {
@@ -634,14 +634,12 @@ void RndFont::UpdateChars() {
     if (mPacked) {
         SetBitmapSize(mCellSize);
     } else {
-        if (!mChars.empty()) {
-            if (mChars[0] == 160) {
-                MILO_NOTIFY(
-                    "%s: first character is ascii 160, converting to the space character.",
-                    mChars[0]
-                );
-                mChars[0] = L' ';
-            }
+        if (!mChars.empty() && mChars[0] == 160) {
+            MILO_NOTIFY(
+                "%s: first character is ascii 160, converting to the space character.",
+                Name()
+            );
+            mChars[0] = L' ';
         }
         mCharInfoMap.clear();
         int i12 = 0;
@@ -655,6 +653,36 @@ void RndFont::UpdateChars() {
             unk98[0].x = mCellSize.x / (float)bmap->Width();
             unk98[0].y = mCellSize.y / (float)bmap->Height();
             for (int i = 0; i < mChars.size(); i++) {
+                unsigned short curChar = mChars[i];
+                if (mCellSize.x + v120.x > bmap->Width()) {
+                    v120.x = 0;
+                    v120.y += mCellSize.y;
+                }
+                if (mCellSize.y + v120.y > bmap->Height()) {
+                    i12++;
+                    if (i12 >= mMats.size()) {
+                        MILO_NOTIFY(
+                            "%s: too many characters for bitmap, truncating.", Name()
+                        );
+                        mChars.resize(i);
+                        break;
+                    }
+                    locker.LoadPage(i12);
+                    v120.x = 0;
+                    v120.y = 0;
+                    bmap = locker.Unk8();
+                    unk98[i12].x = mCellSize.x / (float)bmap->Width();
+                    unk98[i12].y = mCellSize.y / (float)bmap->Height();
+                }
+                SetCharInfo(&mCharInfoMap[curChar], *bmap, v120, i12);
+                v120.x += mCellSize.x;
+                if (curChar == 0x20) {
+                    mCharInfoMap[curChar].charWidth = 0;
+                } else if (curChar == 9) {
+                    MILO_ASSERT(HasChar(L' ' ), 0x284);
+                    mCharInfoMap[curChar] = mCharInfoMap[L' '];
+                    mCharInfoMap[curChar].charSpacing *= 3;
+                }
             }
         }
     }
