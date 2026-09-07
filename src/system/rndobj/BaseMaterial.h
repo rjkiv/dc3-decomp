@@ -164,6 +164,7 @@ public:
     bool ForceAlphaWrite() const { return mForceAlphaWrite; }
     Cull GetCull() const { return mCull; }
     RndFur *Fur() const { return mFur; }
+    TexWrap GetTexWrap() const { return mTexWrap; }
 
 protected:
     BaseMaterial();

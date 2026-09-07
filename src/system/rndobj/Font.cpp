@@ -1,4 +1,5 @@
 #include "rndobj/Font.h"
+#include "math/Utl.h"
 #include "os/Debug.h"
 #include "os/System.h"
 #include "rndobj/Bitmap.h"
@@ -37,7 +38,7 @@ float KerningTable::Kerning(unsigned short us1, unsigned short us2) {
 }
 
 bool KerningTable::Valid(const RndFont::KernInfo &info, RndFontBase *font) {
-    return !font || (font->CharDefined(info.unk0) && font->CharDefined(info.unk2));
+    return !font || (font->CharDefined(info.a) && font->CharDefined(info.b));
 }
 
 void KerningTable::Save(BinStream &bs) {
@@ -69,9 +70,9 @@ void KerningTable::SetKerning(
         const RndFont::KernInfo &curInfo = info[i];
         if (Valid(curInfo, font)) {
             Entry &curEntry = mEntries[entryIdx++];
-            curEntry.key = Key(curInfo.unk0, curInfo.unk2);
+            curEntry.key = Key(curInfo.a, curInfo.b);
             curEntry.kerning = curInfo.kerning;
-            int index = TableIndex(curInfo.unk0, curInfo.unk2);
+            int index = TableIndex(curInfo.a, curInfo.b);
             curEntry.next = mTable[index];
             mTable[index] = &curEntry;
         }
@@ -81,8 +82,8 @@ void KerningTable::SetKerning(
 void KerningTable::GetKerning(std::vector<RndFontBase::KernInfo> &info) const {
     info.resize(mNumEntries);
     for (int i = 0; i < mNumEntries; i++) {
-        info[i].unk0 = mEntries[i].key;
-        info[i].unk2 = (unsigned int)(mEntries[i].key) >> 16;
+        info[i].a = mEntries[i].key;
+        info[i].b = (unsigned int)(mEntries[i].key) >> 16;
         info[i].kerning = mEntries[i].kerning;
     }
 }
@@ -121,36 +122,37 @@ void KerningTable::Load(BinStreamRev &d, RndFontBase *f) {
     }
 }
 
-BitmapLocker::BitmapLocker(RndFont *font, int pageIdx) : mFont(font), mTex(0), unk8(0) {
+BitmapLocker::BitmapLocker(RndFont *font, int pageIdx)
+    : mFont(font), mTexture(0), mPbm(0) {
     LoadPage(pageIdx);
 }
 
 BitmapLocker::~BitmapLocker() {
-    if (mTex) {
-        mTex->UnlockBitmap();
+    if (mTexture) {
+        mTexture->UnlockBitmap();
     }
 }
 
 void BitmapLocker::LoadPage(int pageIdx) {
-    if (mTex) {
-        mTex->UnlockBitmap();
+    if (mTexture) {
+        mTexture->UnlockBitmap();
     }
-    unk8 = nullptr;
-    mTex = mFont->ValidTexture(pageIdx);
-    if (mTex) {
-        const char *filename = mTex->File().c_str();
+    mPbm = nullptr;
+    mTexture = mFont->ValidTexture(pageIdx);
+    if (mTexture) {
+        const char *filename = mTexture->File().c_str();
         int len = strlen(filename);
         if (UsingCD() || len < 4 || stricmp(filename + len - 4, ".bmp")) {
-            mTex->LockBitmap(unkc, 3);
-            if (unkc.Pixels()) {
-                unk8 = &unkc;
+            mTexture->LockBitmap(mBm, 3);
+            if (mBm.Pixels()) {
+                mPbm = &mBm;
             }
         } else {
-            unkc.LoadBmp(filename, false, true);
-            if (unkc.Pixels()) {
-                unk8 = &unkc;
+            mBm.LoadBmp(filename, false, true);
+            if (mBm.Pixels()) {
+                mPbm = &mBm;
             }
-            mTex = nullptr;
+            mTexture = nullptr;
         }
     }
 }
@@ -214,11 +216,11 @@ BEGIN_SAVES(RndFont)
     FOREACH (it, mCharInfoMap) {
         bs << it->first;
         CharInfo &info = it->second;
-        bs << info.unk0;
-        bs << info.unk4;
-        bs << info.unk8;
+        bs << info.page;
+        bs << info.normX;
+        bs << info.normY;
         bs << info.charWidth;
-        bs << info.charSpacing;
+        bs << info.charAdvance;
     }
 END_SAVES
 
@@ -256,11 +258,11 @@ __forceinline BinStreamRev &operator>>(BinStreamRev &d, RndFontBase::KernInfo &i
     if (d.rev < 0x11) {
         char x;
         d >> x;
-        info.unk0 = x;
+        info.a = x;
         d >> x;
-        info.unk2 = x;
+        info.b = x;
     } else {
-        d >> info.unk0 >> info.unk2;
+        d >> info.a >> info.b;
     }
     if (d.rev < 6) {
         char x;
@@ -395,20 +397,20 @@ BEGIN_LOADS(RndFont)
         if (d.rev < 0x11) {
             for (int i = 0; i < 0x100; i++) {
                 CharInfo &info = mCharInfoMap[i];
-                info.unk0 = 0;
-                d >> info.unk4;
-                d >> info.unk8;
+                info.page = 0;
+                d >> info.normX;
+                d >> info.normY;
                 d >> info.charWidth;
                 if (info.charWidth < 0) {
                     info.charWidth = 0;
                 }
                 if (d.rev > 0xe) {
-                    d >> info.charSpacing;
+                    d >> info.charAdvance;
                 } else {
-                    info.charSpacing = info.charWidth;
+                    info.charAdvance = info.charWidth;
                 }
-                if (info.charSpacing < 0) {
-                    info.charSpacing = 0;
+                if (info.charAdvance < 0) {
+                    info.charAdvance = 0;
                 }
             }
         } else {
@@ -419,14 +421,14 @@ BEGIN_LOADS(RndFont)
                 d >> keyChar;
                 CharInfo &info = mCharInfoMap[keyChar];
                 if (d.altRev > 0) {
-                    d >> info.unk0;
+                    d >> info.page;
                 } else {
-                    info.unk0 = 0;
+                    info.page = 0;
                 }
-                d >> info.unk4;
-                d >> info.unk8;
+                d >> info.normX;
+                d >> info.normY;
                 d >> info.charWidth;
-                d >> info.charSpacing;
+                d >> info.charAdvance;
             }
         }
     } else {
@@ -462,9 +464,9 @@ bool RndFont::CharAdvance(unsigned short u1, unsigned short c, float &f3) const 
     } else {
         auto it = mCharInfoMap.find(c);
         if (it != mCharInfoMap.end()
-            && (it->second.unk4 != 0 || it->second.unk8 != 0
-                || it->second.charSpacing != 0)) {
-            f3 = mMonospace ? 1 : it->second.charSpacing;
+            && (it->second.normX != 0 || it->second.normY != 0
+                || it->second.charAdvance != 0)) {
+            f3 = mMonospace ? 1 : it->second.charAdvance;
             f3 += Kerning(u1, c);
             return true;
         }
@@ -477,7 +479,7 @@ float RndFont::CharAdvance(unsigned short c) const {
     if (mMonospace) {
         return 1;
     } else {
-        return mTextureOwner->mCharInfoMap[c].charSpacing;
+        return mTextureOwner->mCharInfoMap[c].charAdvance;
     }
 }
 
@@ -485,7 +487,7 @@ bool RndFont::CharDefined(unsigned short c) const {
     if (HasChar(c)) {
         auto it = mCharInfoMap.find(c);
         const CharInfo &info = it->second;
-        return info.unk4 != 0 || info.unk8 != 0 || info.charSpacing != 0;
+        return info.normX != 0 || info.normY != 0 || info.charAdvance != 0;
     } else {
         return false;
     }
@@ -539,7 +541,7 @@ void RndFont::SetCellSize(float x, float y) {
 
 int RndFont::CharPage(unsigned short c) const {
     if (HasChar(c)) {
-        return mCharInfoMap.find(c)->second.unk0;
+        return mCharInfoMap.find(c)->second.page;
     } else {
         return -1;
     }
@@ -569,13 +571,13 @@ bool RndFont::CharWidthAdvanceCoords(
     auto it = font->mCharInfoMap.find(key);
     if (it != font->mCharInfoMap.end()) {
         const CharInfo &cur = it->second;
-        if (cur.unk4 || cur.unk8 || cur.charSpacing) {
+        if (cur.normX || cur.normY || cur.charAdvance) {
             f1 = cur.charWidth;
-            f2 = mMonospace ? 1 : cur.charSpacing;
-            v1.x = cur.unk4;
-            v2.x = unk98[cur.unk0].x * cur.charWidth + cur.unk4;
-            v1.y = cur.unk8;
-            v2.y = unk98[cur.unk0].y + cur.unk8;
+            f2 = mMonospace ? 1 : cur.charAdvance;
+            v1.x = cur.normX;
+            v2.x = unk98[cur.page].x * cur.charWidth + cur.normX;
+            v1.y = cur.normY;
+            v2.y = unk98[cur.page].y + cur.normY;
             return true;
         }
     }
@@ -583,11 +585,11 @@ bool RndFont::CharWidthAdvanceCoords(
 }
 
 void RndFont::SetCharInfo(CharInfo *info, RndBitmap &bmap, const Vector2 &v2, int i4) {
-    info->unk0 = i4;
+    info->page = i4;
     if (mMonospace) {
-        info->charSpacing = 1;
+        info->charAdvance = 1;
         info->charWidth = 1;
-        info->unk4 = v2.x / (float)bmap.Width();
+        info->normX = v2.x / (float)bmap.Width();
     } else {
         int vx = v2.x;
         int vy = v2.y;
@@ -615,18 +617,18 @@ void RndFont::SetCharInfo(CharInfo *info, RndBitmap &bmap, const Vector2 &v2, in
         float f10 = ((float)i9 + 1.0f) - f9;
         if (f10 <= 0) {
             float bW = bmap.Width();
-            info->charSpacing = 0.25f;
+            info->charAdvance = 0.25f;
             info->charWidth = 0.25f;
-            info->unk4 = v2.x / bW;
+            info->normX = v2.x / bW;
         } else {
             float bW = bmap.Width();
-            info->unk4 = f9 / bW;
+            info->normX = f9 / bW;
             float w = f10 / mCellSize.x;
             info->charWidth = w;
-            info->charSpacing = w;
+            info->charAdvance = w;
         }
     }
-    info->unk8 = v2.y / (float)bmap.Height();
+    info->normY = v2.y / (float)bmap.Height();
     MILO_ASSERT(info->charWidth >= 0, 0x1A6);
 }
 
@@ -644,7 +646,7 @@ void RndFont::UpdateChars() {
         mCharInfoMap.clear();
         int i12 = 0;
         BitmapLocker locker(this, 0);
-        RndBitmap *bmap = locker.Unk8();
+        RndBitmap *bmap = locker.PtrToBitmap();
         if (bmap) {
             if (unk98.size() != mMats.size()) {
                 unk98.resize(mMats.size());
@@ -670,7 +672,7 @@ void RndFont::UpdateChars() {
                     locker.LoadPage(i12);
                     v120.x = 0;
                     v120.y = 0;
-                    bmap = locker.Unk8();
+                    bmap = locker.PtrToBitmap();
                     unk98[i12].x = mCellSize.x / (float)bmap->Width();
                     unk98[i12].y = mCellSize.y / (float)bmap->Height();
                 }
@@ -681,9 +683,97 @@ void RndFont::UpdateChars() {
                 } else if (curChar == 9) {
                     MILO_ASSERT(HasChar(L' ' ), 0x284);
                     mCharInfoMap[curChar] = mCharInfoMap[L' '];
-                    mCharInfoMap[curChar].charSpacing *= 3;
+                    mCharInfoMap[curChar].charAdvance *= 3;
                 }
             }
         }
+    }
+}
+
+void RndFont::BleedTest() {
+    String str;
+    for (int i = 0; i < mChars.size(); i++) {
+        unsigned short curChar = mChars[i];
+        CharInfo &curCharInfo = mCharInfoMap[curChar];
+        BitmapLocker locker(this, curCharInfo.page);
+        RndBitmap *bitmap = locker.PtrToBitmap();
+        if (bitmap) {
+            bool isClamp = mMats[curCharInfo.page]->GetTexWrap() == kTexWrapClamp;
+            int i7 = Round((float)bitmap->Height() * curCharInfo.normY);
+            int i8 = Round((float)bitmap->Width() * curCharInfo.normX);
+            int i1128 = Round(mCellSize.x * curCharInfo.charWidth);
+            int i6 = i1128 + i8;
+            if (i7 || !isClamp) {
+                int pixel;
+                unsigned char alpha = bitmap->RowNonTransparent(i8, i6, i7, &pixel);
+                if (alpha != 0) {
+                    str += MakeString(
+                        "Top bleeding in 0x%04x, alpha %d, pixel %d,%d\n",
+                        curChar,
+                        alpha,
+                        pixel,
+                        i7
+                    );
+                }
+            }
+
+            i7 = (int)mCellSize.y + i7 - 1;
+            if (!isClamp && i7 - 1 >= bitmap->Height()) {
+                int pixel;
+                unsigned char alpha = bitmap->RowNonTransparent(i8, i6, i7, &pixel);
+                if (alpha != 0) {
+                    str += MakeString(
+                        "Bottom bleeding in 0x%04x, alpha %d, pixel %d,%d\n",
+                        curChar,
+                        alpha,
+                        pixel,
+                        i7
+                    );
+                }
+            }
+            i7 = Round((float)bitmap->Height() * curCharInfo.normY);
+            int i5 = i8 - 1;
+            if (i8 || (!isClamp && i5 <= 0)) {
+                i5 = Max(i5, 0);
+                int pixel;
+                unsigned char alpha =
+                    bitmap->ColumnNonTransparent(i5, i7, (int)mCellSize.y + i7, &pixel);
+                if (alpha != 0) {
+                    str += MakeString(
+                        "Left bleeding in 0x%04x, alpha %d, pixel %d,%d\n",
+                        curChar,
+                        alpha,
+                        i7,
+                        pixel
+                    );
+                }
+            }
+
+            if (!isClamp) {
+                i8 = bitmap->Width() - 1;
+                if (i8 <= i6) {
+                    if (i8 < i6) {
+                        i6 = i8;
+                    }
+                    int pixel;
+                    unsigned char alpha =
+                        bitmap->ColumnNonTransparent(i6, i7, mCellSize.y + i7, &pixel);
+                    if (alpha != 0) {
+                        str += MakeString(
+                            "Right bleeding in 0x%04x, alpha %d, pixel %d,%d\n",
+                            curChar,
+                            alpha,
+                            i7,
+                            pixel
+                        );
+                    }
+                }
+            }
+        }
+    }
+    if (str.length() != 0) {
+        MILO_NOTIFY("Bleeding in %s:\n%s", Name(), str);
+    } else {
+        MILO_NOTIFY("No bleeding over found.  ");
     }
 }

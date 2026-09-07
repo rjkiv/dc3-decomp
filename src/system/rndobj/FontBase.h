@@ -8,7 +8,8 @@ class RndFontBase : public Hmx::Object {
 public:
     class KernInfo {
     public:
-        unsigned short unk0, unk2; // RB2 dwarf says these are "a" and "b"
+        unsigned short a; // 0x0
+        unsigned short b; // 0x2
         float kerning; // 0x4
     };
 

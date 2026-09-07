@@ -43,13 +43,14 @@ public:
 class RndFont : public RndFontBase {
 public:
     struct CharInfo {
-        int unk0; // 0x0 - page?
-        float unk4;
-        float unk8;
+        int page; // 0x0
+        float normX; // 0x4
+        float normY; // 0x8
         float charWidth; // 0xc
         // how much horizontal space this character takes up
-        float charSpacing; // 0x10
+        float charAdvance; // 0x10
     };
+
     virtual ~RndFont();
     virtual bool Replace(ObjRef *, Hmx::Object *);
     OBJ_CLASSNAME(Font);
@@ -165,11 +166,11 @@ public:
     ~BitmapLocker();
     void LoadPage(int);
 
-    RndBitmap *Unk8() const { return unk8; }
+    RndBitmap *PtrToBitmap() const { return mPbm; }
 
 private:
     RndFont *mFont; // 0x0
-    RndTex *mTex; // 0x4
-    RndBitmap *unk8; // 0x8
-    RndBitmap unkc; // 0xc
+    RndTex *mTexture; // 0x4
+    RndBitmap *mPbm; // 0x8
+    RndBitmap mBm; // 0xc
 };
