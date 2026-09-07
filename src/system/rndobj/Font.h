@@ -110,10 +110,10 @@ protected:
 class RndFont3d : public RndFontBase {
 public:
     struct CharInfo {
-        ~CharInfo() {}
+        CharInfo(Hmx::Object *owner) : unk24(owner) {}
 
         Box unk0;
-        int unk20;
+        float unk20;
         ObjPtr<RndMesh> unk24;
         bool unk38;
 
@@ -132,8 +132,8 @@ public:
     virtual float CharAdvance(unsigned short) const;
     virtual float Kerning(unsigned short, unsigned short) const;
     virtual float AspectRatio() const;
-    virtual RndMat *Mat() const;
-    virtual const RndFontBase *DataOwner() const;
+    virtual RndMat *Mat() const { return unk44; }
+    virtual const RndFontBase *DataOwner() const { return mTextureOwner; }
     virtual float FontUnit() const { return mTextureOwner->unk6c.x; }
     virtual float FontUnitInverse() const { return mTextureOwner->unk7c.x; }
 
