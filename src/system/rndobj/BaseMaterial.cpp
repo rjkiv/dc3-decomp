@@ -239,10 +239,10 @@ const DataNode *BaseMaterial::GetDefaultPropVal(Symbol s) {
 }
 
 bool BaseMaterial::PropValDifferent(Symbol s, BaseMaterial *base) {
-    if (!base) {
-        base = gDefaultMat;
+    // absolute hogwash but hey it matches
+    if (!base && (base = gDefaultMat, !gDefaultMat)) {
+        MILO_ASSERT(base, 0x133);
     }
-    MILO_ASSERT(base, 0x133);
     if (s == "tex_xfm") {
         return base->mTexXfm != mTexXfm;
     } else {

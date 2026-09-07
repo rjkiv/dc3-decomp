@@ -569,7 +569,7 @@
             "system/rndobj/AmbientOcclusion.cpp": "NonMatching",
             "system/rndobj/Anim.cpp": "NonMatching",
             "system/rndobj/AnimFilter.cpp": "Matching",
-            "system/rndobj/BaseMaterial.cpp": "NonMatching",
+            "system/rndobj/BaseMaterial.cpp": "Matching",
             "system/rndobj/Bitmap.cpp": "NonMatching",
             "system/rndobj/BoxMap.cpp": "NonMatching",
             "system/rndobj/Cam.cpp": "NonMatching",
