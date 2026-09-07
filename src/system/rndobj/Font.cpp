@@ -691,6 +691,7 @@ void RndFont::UpdateChars() {
 }
 
 void RndFont::BleedTest() {
+    int pixel;
     String str;
     for (int i = 0; i < mChars.size(); i++) {
         unsigned short curChar = mChars[i];
@@ -701,10 +702,8 @@ void RndFont::BleedTest() {
             bool isClamp = mMats[curCharInfo.page]->GetTexWrap() == kTexWrapClamp;
             int i7 = Round((float)bitmap->Height() * curCharInfo.normY);
             int i8 = Round((float)bitmap->Width() * curCharInfo.normX);
-            int i1128 = Round(mCellSize.x * curCharInfo.charWidth);
-            int i6 = i1128 + i8;
+            int i6 = Round(mCellSize.x * curCharInfo.charWidth) + i8;
             if (i7 || !isClamp) {
-                int pixel;
                 unsigned char alpha = bitmap->RowNonTransparent(i8, i6, i7, &pixel);
                 if (alpha != 0) {
                     str += MakeString(
@@ -717,9 +716,8 @@ void RndFont::BleedTest() {
                 }
             }
 
-            i7 = (int)mCellSize.y + i7 - 1;
-            if (!isClamp && i7 - 1 >= bitmap->Height()) {
-                int pixel;
+            i7 += (int)mCellSize.y - 1;
+            if (!isClamp && i7 >= bitmap->Height() - 1) {
                 unsigned char alpha = bitmap->RowNonTransparent(i8, i6, i7, &pixel);
                 if (alpha != 0) {
                     str += MakeString(
@@ -731,11 +729,10 @@ void RndFont::BleedTest() {
                     );
                 }
             }
-            i7 = Round((float)bitmap->Height() * curCharInfo.normY);
+            i7 = Round(bitmap->Height() * curCharInfo.normY);
             int i5 = i8 - 1;
             if (i8 || (!isClamp && i5 <= 0)) {
-                i5 = Max(i5, 0);
-                int pixel;
+                MaxEq(i5, 0);
                 unsigned char alpha =
                     bitmap->ColumnNonTransparent(i5, i7, (int)mCellSize.y + i7, &pixel);
                 if (alpha != 0) {
@@ -749,24 +746,19 @@ void RndFont::BleedTest() {
                 }
             }
 
-            if (!isClamp) {
-                i8 = bitmap->Width() - 1;
-                if (i8 <= i6) {
-                    if (i8 < i6) {
-                        i6 = i8;
-                    }
-                    int pixel;
-                    unsigned char alpha =
-                        bitmap->ColumnNonTransparent(i6, i7, mCellSize.y + i7, &pixel);
-                    if (alpha != 0) {
-                        str += MakeString(
-                            "Right bleeding in 0x%04x, alpha %d, pixel %d,%d\n",
-                            curChar,
-                            alpha,
-                            i7,
-                            pixel
-                        );
-                    }
+            i5 = i6;
+            if (!isClamp && i5 >= bitmap->Width() - 1) {
+                MinEq(i5, bitmap->Width() - 1);
+                unsigned char alpha =
+                    bitmap->ColumnNonTransparent(i5, i7, (int)mCellSize.y + i7, &pixel);
+                if (alpha != 0) {
+                    str += MakeString(
+                        "Right bleeding in 0x%04x, alpha %d, pixel %d,%d\n",
+                        curChar,
+                        alpha,
+                        i7,
+                        pixel
+                    );
                 }
             }
         }
