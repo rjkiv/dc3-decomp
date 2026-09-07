@@ -331,11 +331,9 @@ RndTex *RndMat::GetRefractNormalMap() {
 }
 
 bool RndMat::GetRefractEnabled(bool b1) {
-    if (mRefractEnabled == 1 && mRefractStrength > 0.0f) {
-        RndTex *tex = mRefractNormalMap ? mRefractNormalMap : mNormalMap;
-        return tex && (b1 || TheRnd.GetCurrentFrameTex(false));
-    }
-    return false;
+    return (mRefractEnabled == 1 && mRefractStrength > 0)
+        && (mRefractNormalMap ? mRefractNormalMap : mNormalMap)
+        && (b1 || TheRnd.GetCurrentFrameTex(false));
 }
 
 MatPropEditAction RndMat::GetMetaMatPropAction(Symbol s) {
@@ -349,13 +347,14 @@ MatPropEditAction RndMat::GetMetaMatPropAction(Symbol s) {
 bool RndMat::OnGetPropertyDisplay(PropDisplay display, Symbol s) {
     MILO_ASSERT(display == kPropDisplayHidden || display == kPropDisplayReadOnly, 0x357);
     if (mMetaMaterial) {
-        if (mToggleDisplayAllProps)
-            return display == kPropDisplayHidden;
-        else
-            return true;
-    } else {
         MatPropEditAction a = GetMetaMatPropAction(s);
-        return a == 2 || (a != 0 && a != 1);
+        if (a == 2 || (a != 0 && a != 1)) {
+            return false;
+        } else if (mToggleDisplayAllProps) {
+            return display == kPropDisplayReadOnly;
+        } else {
+            return true;
+        }
     }
     return false;
 }
