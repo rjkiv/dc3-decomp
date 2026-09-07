@@ -23,6 +23,7 @@
 #include "utl/MemMgr.h"
 #include "utl/UTF8.h"
 #include "wordwrap.h"
+#include <set>
 
 std::vector<RndText::BlacklightPacket> RndText::sBlacklightPacketPool;
 std::list<RndText::FontMapBase *> RndText::sFontMapCache;
@@ -386,7 +387,7 @@ RndText::StyleState::StyleState(RndText *text, float f2)
     unk38 = text->FontMapIndex(unk34->mFont, unk34->mBlacklight);
     unk3c = f2;
     mInfo.mSize *= f2;
-    unk40 = true;
+    brk = true;
 }
 
 RndText::RndText()
@@ -1406,9 +1407,9 @@ RndText::ParseMarkup(const unsigned short *us1, StyleState &state, unsigned shor
         p += 2;
     } else if (WStrniCmp(p, (const unsigned short *)L"nobreak", 7) == 0) {
         if (is2f) {
-            state.unk40 = true;
+            state.brk = true;
         } else {
-            state.unk40 = false;
+            state.brk = false;
         }
         p += 7;
     } else if (WStrniCmp(p, (const unsigned short *)L"alt", 3) == 0) {
@@ -1431,6 +1432,94 @@ RndText::ParseMarkup(const unsigned short *us1, StyleState &state, unsigned shor
     }
 
     return p;
+}
+
+void RndText::ReplaceMissingCharacters(std::vector<unsigned short> &vec) {
+    std::map<RndFontBase *, std::set<unsigned short> > fontMap;
+    std::vector<unsigned short> localUSVec;
+    bool b6 = false;
+    StyleState state(this, 1);
+    auto vecIt = vec.begin();
+    unsigned short curUS = *vecIt;
+    while (curUS != 0) {
+        curUS = *vecIt;
+        if (curUS == 0x3C && mMarkup) {
+            unsigned short ref = curUS;
+            vecIt = (unsigned short *)ParseMarkup(vecIt, state, ref);
+            vecIt--;
+        } else if (curUS != 10 && state.unk38 != -1) {
+            FontMapBase *base = mFontMaps[state.unk38];
+            if (base) {
+                RndFontBase *font = base->Font();
+                if (font && !font->CharDefined(curUS)) {
+                    fontMap[font].insert(curUS);
+                    unsigned short shorts[] = { 0x25A1, 0x3F, 0x23, 0x2A, 0x21, 0x39 };
+                    for (int i = 0; i < 6; i++) {
+                        curUS = shorts[i];
+                        if (font->CharDefined(curUS)) {
+                            break;
+                        }
+                        curUS = 0;
+                    }
+                    if (curUS == 0) {
+                        std::vector<unsigned short> chars = font->Chars();
+                        for (int i = 0; i < chars.size(); i++) {
+                            unsigned short cur = chars[i];
+                            bool isSpace = cur == 0x20 || cur == 0xA0;
+                            if (!isSpace) {
+                                curUS = cur;
+                                break;
+                            }
+                        }
+                    }
+                    if (curUS != 0) {
+                        if (!b6) {
+                            localUSVec = vec;
+                            b6 = true;
+                        }
+                        *vecIt = curUS;
+                    }
+                }
+            }
+        }
+    }
+    FOREACH (it, fontMap) {
+        RndFontBase *key = it->first;
+        String outputStr = MakeString(
+            "%s:%s char%s (", PathName(this), TextToken(), it->second.size() > 1 ? "s" : ""
+        );
+        FOREACH (charIt, it->second) {
+            unsigned short curChar = *charIt;
+            bool displayable =
+                !(curChar < 0x20 || curChar >= 0xFF || curChar == 0x25
+                  || curChar == 0x7F);
+
+            outputStr += MakeString(
+                "%s'%c' 0x%02X",
+                charIt == it->second.begin() ? ", " : "",
+                displayable ? (char)curChar : '?',
+                curChar
+            );
+        }
+        outputStr += MakeString(") missing from %s in string \"", PathName(key));
+        for (int i = 0; i < localUSVec.size(); i++) {
+            unsigned short curChar = localUSVec[i];
+            if (curChar == 0) {
+                break;
+            }
+            bool displayable =
+                !(curChar < 0x20 || curChar >= 0xFF || curChar == 0x25
+                  || curChar == 0x7F);
+
+            if (displayable) {
+                outputStr += MakeString("%c", (char)curChar);
+            } else {
+                outputStr += MakeString("\\x%02X", curChar);
+            }
+        }
+        outputStr += "\"";
+        MILO_NOTIFY(outputStr.c_str());
+    }
 }
 
 void RndText::QueueBlacklightPacket(RndMesh *mesh, float f2, int i3) {

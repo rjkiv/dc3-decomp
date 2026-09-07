@@ -119,7 +119,7 @@ public:
         Style *unk34; // 0x34
         int unk38; // 0x38
         float unk3c; // 0x3c
-        bool unk40; // 0x40
+        bool brk; // 0x40
     };
 
     // size 0x20
@@ -357,6 +357,7 @@ protected:
     void FitTextEllipsis();
     void FitTextScroll();
     void UpdateScrollOffsets();
+    void ReplaceMissingCharacters(std::vector<unsigned short> &);
 
     static void QueueBlacklightPacket(RndMesh *, float, int);
     static FontMapBase *AcquireFontMap(RndFontBase *);
