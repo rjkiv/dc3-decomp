@@ -163,14 +163,16 @@ RndFont::~RndFont() { RELEASE(mKerningTable); }
 
 bool RndFont::Replace(ObjRef *from, Hmx::Object *to) {
     if (&mTextureOwner == from) {
-        RndFont *replace = this;
-        if (mTextureOwner != this) {
-            RndFont *f = dynamic_cast<RndFont *>(to);
-            if (f) {
-                replace = f->mTextureOwner;
+        if (mTextureOwner == this) {
+            mTextureOwner = this;
+        } else {
+            RndFont *fontTo = dynamic_cast<RndFont *>(to);
+            if (fontTo) {
+                mTextureOwner = fontTo->mTextureOwner.Ptr();
+            } else {
+                mTextureOwner = this;
             }
         }
-        mTextureOwner = replace;
         return true;
     } else
         return Hmx::Object::Replace(from, to);
@@ -280,6 +282,7 @@ BEGIN_LOADS(RndFont)
     } else {
         LOAD_SUPERCLASS(RndFontBase)
     }
+    char buf[0x80];
     if (d.rev < 3) {
         String str;
         int a, b, c, e;
@@ -294,7 +297,6 @@ BEGIN_LOADS(RndFont)
             ObjPtr<RndMat> mat(this);
             d >> mat;
             if (d.rev > 9 && d.rev < 0xc) {
-                char buf[0x80];
                 d.stream.ReadString(buf, 0x80);
                 if (!mat && buf[0] != '\0') {
                     mat = LookupOrCreateMat(buf, Dir());
@@ -309,11 +311,12 @@ BEGIN_LOADS(RndFont)
             float w, h;
             if (d.rev < 2) {
                 int iW, iH;
-                d >> iW >> iH;
-                w = iW;
+                d >> iH >> iW;
                 h = iH;
+                w = iW;
             } else {
-                d >> w >> h;
+                d >> h;
+                d >> w;
             }
             RndTex *validTex = ValidTexture(0);
             if (validTex) {
@@ -455,7 +458,7 @@ float RndFont::CharWidth(unsigned short c) const {
 
 bool RndFont::CharAdvance(unsigned short u1, unsigned short c, float &f3) const {
     if (mTextureOwner != this) {
-        mTextureOwner->CharAdvance(u1);
+        return mTextureOwner->CharAdvance(u1, c, f3);
     } else {
         auto it = mCharInfoMap.find(c);
         if (it != mCharInfoMap.end()
@@ -465,8 +468,8 @@ bool RndFont::CharAdvance(unsigned short u1, unsigned short c, float &f3) const 
             f3 += Kerning(u1, c);
             return true;
         }
+        return false;
     }
-    return false;
 }
 
 float RndFont::CharAdvance(unsigned short c) const {

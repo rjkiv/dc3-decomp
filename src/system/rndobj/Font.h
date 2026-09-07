@@ -49,7 +49,6 @@ public:
         float charWidth; // 0xc
         // how much horizontal space this character takes up
         float charSpacing; // 0x10
-        float unk14;
     };
     virtual ~RndFont();
     virtual bool Replace(ObjRef *, Hmx::Object *);
