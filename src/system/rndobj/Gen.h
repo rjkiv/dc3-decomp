@@ -97,5 +97,5 @@ protected:
     float mPathVarMaxY; // 0x188
     float mPathVarMaxZ; // 0x18c
     RndParticle *mCurParticle; // 0x190
-    std::list<RndMultiMesh::Instance>::iterator mCurMultiMesh; // 0x194
+    RndMultiMesh::InstanceList::iterator mCurMultiMesh; // 0x194
 };

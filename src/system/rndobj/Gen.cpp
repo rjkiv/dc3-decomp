@@ -243,13 +243,17 @@ bool RndGenerator::MakeWorldSphere(Sphere &s, bool zero) {
                 if (!mesh && mMultiMesh) {
                     mesh = mMultiMesh->Mesh();
                 }
+                float scalar;
                 if (mesh) {
-                    s.radius += mScaleGenHigh
-                        * (Length(mesh->GetSphere().center) + mesh->GetSphere().radius);
+                    const Sphere &meshSphere = mesh->GetSphere();
+                    scalar = Length(meshSphere.center) + meshSphere.radius;
                 } else if (mParticleSys) {
-                    s.radius += mScaleGenHigh
-                        * Max(mParticleSys->StartSize().x, mParticleSys->StartSize().y);
+                    scalar =
+                        Max(mParticleSys->StartSize().x, mParticleSys->StartSize().y);
+                } else {
+                    return true;
                 }
+                s.radius += mScaleGenHigh * scalar;
             }
         }
         return true;
@@ -258,6 +262,44 @@ bool RndGenerator::MakeWorldSphere(Sphere &s, bool zero) {
         return true;
     } else {
         return false;
+    }
+}
+
+typedef void (RndGenerator::*DrawFunc)(Transform &, float);
+
+void RndGenerator::DrawShowing() {
+    if (mPath && (mMesh || mMultiMesh || mParticleSys)) {
+        DrawFunc func = nullptr;
+
+        if (mMesh) {
+            func = &RndGenerator::DrawMesh;
+        } else if (mMultiMesh) {
+            auto &insts = mMultiMesh->Instances();
+            if (insts.size() != mInstances.size()) {
+                insts.resize(mInstances.size());
+            }
+            func = &RndGenerator::DrawMultiMesh;
+            mCurMultiMesh = insts.begin();
+        } else if (mParticleSys) {
+            func = &RndGenerator::DrawParticleSys;
+            mCurParticle = mParticleSys->ActiveParticles();
+        }
+        if (func) {
+            int i11 = mPathEndFrame - mPathStartFrame > 0 ? 1 : -1;
+            FOREACH (it, mInstances) {
+                float f13 = GetFrame() - it->frameOrg;
+                Transform xfm;
+                mPath->MakeTransform((float)i11 * f13 + mPathStartFrame, xfm, true, 1);
+                Scale(it->scale, xfm.m, xfm.m);
+                Multiply(xfm, it->xfmMod, xfm);
+                (this->*func)(xfm, f13);
+            }
+        }
+        if (mMultiMesh) {
+            mMultiMesh->Draw();
+        } else if (mParticleSys) {
+            mParticleSys->Draw();
+        }
     }
 }
 
