@@ -113,7 +113,7 @@ void WorldDir::BitmapOverride::Sync(bool b) {
         if (!b) {
             ObjRef ref;
             ref.DetachSelf();
-            FOREACH (it, replacement->Refs()) {
+            FOREACH_OBJREF (it, replacement) {
                 if (it->RefOwner()->Dir() != replacement->Dir()) {
                     it = it->MoveBefore(&ref);
                 }
@@ -122,7 +122,7 @@ void WorldDir::BitmapOverride::Sync(bool b) {
         } else {
             ObjRef ref;
             ref.DetachSelf();
-            FOREACH (it, original->Refs()) {
+            FOREACH_OBJREF (it, original) {
                 if (it->RefOwner() && it->RefOwner()->Dir() != replacement->Dir()) {
                     it = it->MoveBefore(&ref);
                 }

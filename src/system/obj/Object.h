@@ -88,6 +88,10 @@ public:
     iterator end() const { return (ObjRef *)this; }
     bool empty() const { return next == this; }
 
+    ObjRef *Begin() const { return next; }
+    ObjRef *End() const { return (ObjRef *)this; }
+    ObjRef *Next(ObjRef *it) const { return it->next; }
+
     /** Make `this` its own standalone single list node. */
     void DetachSelf() { next = prev = this; }
 
@@ -132,6 +136,14 @@ public:
     // per ObjectDir::HasDirPtrs, this is the way to iterate across refs
     // for (ObjRef *it = mRefs.next; it != &mRefs; it = it->next) {
 };
+
+// BEGIN OBJREF ITERATION MACRO ----------------------------------------------------------
+
+#define FOREACH_OBJREF(it, obj)                                                          \
+    for (ObjRef *it = obj->Refs().Begin(); it != obj->Refs().End();                      \
+         it = obj->Refs().Next(it))
+
+// END OBJREF ITERATION MACRO ------------------------------------------------------------
 
 #pragma endregion
 #pragma region ObjRefConcrete

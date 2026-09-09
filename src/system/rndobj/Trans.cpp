@@ -579,7 +579,7 @@ void RndTransformable::SetLocalRotIndex(int index, float f2) {
 }
 
 void RndTransformable::TransformTransAnims(const Transform &tf) {
-    FOREACH (it, Refs()) {
+    FOREACH_OBJREF (it, this) {
         RndTransAnim *transAnim = dynamic_cast<RndTransAnim *>(it->RefOwner());
         if (transAnim && transAnim->Trans() == this) {
             TransformKeys(transAnim, tf);

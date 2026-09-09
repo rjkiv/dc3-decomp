@@ -366,7 +366,7 @@ RndFontBase *UIFontImporter::FindFontForMat(RndMat *mat) const {
     if (mat) {
         static Symbol Font("Font");
         static Symbol Font3d("Font3d");
-        FOREACH (it, mat->Refs()) {
+        FOREACH_OBJREF (it, mat) {
             Hmx::Object *owner = (*it).RefOwner();
             if (owner) {
                 if (owner->ClassName() == Font) {
@@ -399,7 +399,7 @@ void UIFontImporter::OnSetCharsetUTF8(String const &s) {
 RndText *UIFontImporter::FindTextForFont(RndFontBase *font) const {
     if (font) {
         static Symbol Text("Text");
-        FOREACH (it, font->Refs()) {
+        FOREACH_OBJREF (it, font) {
             Hmx::Object *owner = it->RefOwner();
             if (owner && owner->ClassName() == Text) {
                 RndText *text = dynamic_cast<RndText *>(owner);

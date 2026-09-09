@@ -818,13 +818,14 @@ DataNode EventTrigger::Cleanup(DataArray *arr) {
         FOREACH (anim, it->mAnims) {
             RndAnimFilter *filter = dynamic_cast<RndAnimFilter *>(anim->mAnim.Ptr());
             if (filter) {
-                ObjRef::iterator ref;
-                for (ref = filter->Refs().begin(); ref != filter->Refs().end(); ++ref) {
+                ObjRef *ref;
+                for (ref = filter->Refs().Begin(); ref != filter->Refs().End();
+                     ref = filter->Refs().Next(ref)) {
                     if (ref->RefOwner() && ref->RefOwner() != it) {
                         break;
                     }
                 }
-                if (ref == filter->Refs().end()
+                if (ref == filter->Refs().End()
                     && filter->GetType() != RndAnimFilter::kShuttle) {
                     anim->mAnim = filter->Anim();
                     anim->mEnable = true;

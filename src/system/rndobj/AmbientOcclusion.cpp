@@ -313,7 +313,7 @@ bool RndAmbientOcclusion::IsValid_Mesh(const RndMesh *mesh) const {
     RndMesh *nonConstMesh = (RndMesh *)mesh; // lmao
     if (nonConstMesh->Verts().size() && nonConstMesh->Faces().size()) {
         static Symbol classNames[] = { "Spotlight", "WorldCrowd" };
-        FOREACH (it, mesh->Refs()) {
+        FOREACH_OBJREF (it, mesh) {
             Hmx::Object *owner = it->RefOwner();
             if (owner) {
                 for (int i = 0; i < DIM(classNames); i++) {
@@ -333,7 +333,7 @@ bool RndAmbientOcclusion::IsMeshAnimated(const RndMesh *mesh) const {
     static Symbol sRndPropAnim = RndPropAnim::StaticClassName();
     static DataArrayPtr sPropPathScale(Symbol("scale"));
     static DataArrayPtr sPropPathRotation(Symbol("rotation"));
-    FOREACH (it, mesh->Refs()) {
+    FOREACH_OBJREF (it, mesh) {
         Hmx::Object *owner = it->RefOwner();
         if (owner) {
             if (owner->ClassName() == sRndTransAnim) {

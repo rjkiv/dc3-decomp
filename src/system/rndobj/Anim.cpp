@@ -144,7 +144,7 @@ bool RndAnimatable::ConvertFrames(float &f) {
 }
 
 bool RndAnimatable::IsAnimating() {
-    FOREACH (it, Refs()) {
+    FOREACH_OBJREF (it, this) {
         if (dynamic_cast<AnimTask *>(it->RefOwner()))
             return true;
     }
@@ -164,7 +164,7 @@ void RndAnimatable::StopAnimation() {
 
 void RndAnimatable::FireFlowLabel(Symbol s) {
     if (!s.Null()) {
-        for (auto it = Refs().begin(); it != Refs().end(); ++it) {
+        FOREACH_OBJREF (it, this) {
             Hmx::Object *owner = it->RefOwner();
             if (owner && owner->ClassName() == "AnimTask") {
                 AnimTask *task = static_cast<AnimTask *>(owner);
@@ -305,7 +305,7 @@ AnimTask::AnimTask(
     }
     Hmx::Object *target = anim->AnimTarget();
     if (target) {
-        FOREACH (it, target->Refs()) {
+        FOREACH_OBJREF (it, target) {
             Hmx::Object *owner = it->RefOwner();
             if (owner && owner->ClassName() == StaticClassName()) {
                 mBlendTask = static_cast<AnimTask *>(owner);

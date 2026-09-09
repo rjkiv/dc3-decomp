@@ -267,7 +267,7 @@ void WorldInstance::DeleteTransientObjects() {
                 MILO_ASSERT(obj->ClassName() == to->ClassName(), 0x1C7);
                 ObjRef refs;
                 refs.DetachSelf();
-                FOREACH (it, obj->Refs()) {
+                FOREACH_OBJREF (it, obj) {
                     if (it->RefOwner() && it->RefOwner()->Dir() == this) {
                         it = it->MoveBefore(&refs);
                     }
@@ -347,7 +347,7 @@ void WorldInstance::SyncDir() {
                 ObjRef refs;
                 refs.DetachSelf();
                 Hmx::Object *pFrom = p->from;
-                FOREACH (it, pFrom->Refs()) {
+                FOREACH_OBJREF (it, pFrom) {
                     if (it->RefOwner() && !it->RefOwner()->Dir()) {
                         it = it->MoveBefore(&refs);
                     }
