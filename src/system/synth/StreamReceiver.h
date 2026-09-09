@@ -41,6 +41,7 @@ public:
     void EndData();
     void Play();
     void Stop();
+    void WriteData(void const *, int);
     u64 GetBytesPlayed();
 
     static StreamReceiver *New(int, int, bool, int);

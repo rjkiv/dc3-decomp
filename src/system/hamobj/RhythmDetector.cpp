@@ -3,6 +3,10 @@
 #include "gesture/GestureMgr.h"
 #include "gesture/Skeleton.h"
 #include "math/Vec.h"
+#include "math/Vec.inl"
+#include "obj/Dir.h"
+#include "os/Debug.h"
+#include "stl/_vector.h"
 #include "ui/UIPanel.h"
 #include "obj/DataFunc.h"
 #include "gesture/SkeletonUpdate.h"
@@ -114,6 +118,8 @@ namespace {
         return 0.0f;
     }
 
+    const std::vector<float> &minJointSpeedVector();
+
 }
 
 void EraseNewerData(std::vector<RhythmDetector::Frame> &vec, float time) {
@@ -130,6 +136,32 @@ void CameraToScreenUnit(Vector3 &vec, const Skeleton &skeleton, SkeletonJoint jo
     skeleton.ScreenPos(joint, skelPos);
     float y = -skeleton.TrackedJoints()[joint].unk60.z;
     vec.Set((skelPos.x - 0.5f) * 2.0f, y * 0.22977939f, (0.5f - skelPos.y) * 2.0f);
+}
+
+void SetupFrame(
+    RhythmDetector::Frame &frame,
+    float prev_beat,
+    float delt_beat,
+    const Vector3 *prev,
+    const Vector3 *pos,
+    float value
+) {
+    MILO_ASSERT(prev_beat >= 0, 0x4d7);
+    MILO_ASSERT(delt_beat >= 0, 0x4d8);
+    MILO_ASSERT(prev, 0x4d9);
+    MILO_ASSERT(pos, 0x4da);
+
+    static UIPanel *rhythmPanel =
+        ObjectDir::Main()->Find<UIPanel>("rhythm_detector_panel", false);
+    minJointSpeedVector();
+
+    frame.mJointVelocities.resize(20);
+
+    for (int i = 0; i < 20; i++) {
+        int currentJoint = kAnalyzeJoints[i];
+        // yeah idk yet but i know its some vector math!
+    }
+    frame.unk0 = prev_beat + delt_beat;
 }
 
 RhythmDetector::RhythmDetector()

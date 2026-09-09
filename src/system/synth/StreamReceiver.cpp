@@ -1,5 +1,6 @@
 #include "synth/StreamReceiver.h"
 #include "os/Debug.h"
+#include "xdk/xapilibi/xbox.h"
 
 StreamReceiver::StreamReceiver(int numBuffers, bool slip)
     : mSlipEnabled(slip), mNumBuffers(numBuffers), mBuffer(), mRingFreeSpace(0),
@@ -25,17 +26,9 @@ void StreamReceiver::EndData() {
 
 void StreamReceiver::Play() {
     MILO_ASSERT(Ready(), 0x91);
-    switch (mState) {
-    case kPlaying:
-        break;
-    case kStopped:
-        PauseImpl(false);
+    if (mState != kPlaying) {
+        mState == kStopped ? PauseImpl(false) : PlayImpl();
         mState = kPlaying;
-        break;
-    default:
-        PlayImpl();
-        mState = kPlaying;
-        break;
     }
 }
 
@@ -50,4 +43,10 @@ void StreamReceiver::Stop() {
 StreamReceiver *StreamReceiver::New(int i1, int i2, bool b3, int i4) {
     MILO_ASSERT(sFactory, 0x1C);
     return sFactory(i1, i2, b3, i4);
+}
+
+void StreamReceiver::WriteData(void const *v, int bytes) {
+    MILO_ASSERT(bytes > 0 && bytes <= BytesWriteable(), 0x51);
+    XMemCpy(mBuffer + mRingFreeSpace, v, bytes);
+    mRingFreeSpace += bytes;
 }
