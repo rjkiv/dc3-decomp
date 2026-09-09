@@ -166,7 +166,7 @@ bool FxSend::CheckChain(FxSend *send, int i) {
         );
         return false;
     } else {
-        for (ObjRef::iterator it = mRefs.begin(); it != mRefs.end(); ++it) {
+        FOREACH_OBJREF (it, this) {
             FxSend *rsend = dynamic_cast<FxSend *>((*it).RefOwner());
             if (rsend && rsend->NextSend() == this && rsend->Stage() >= i) {
                 MILO_NOTIFY(

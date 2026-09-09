@@ -468,7 +468,7 @@ bool ObjectDir::HasDirPtrs() const {
     if (sDeleting == this) {
         return true;
     } else {
-        for (ObjRef::iterator it = mRefs.begin(); it != mRefs.end(); ++it) {
+        FOREACH_OBJREF (it, this) {
             if (it->IsDirPtr())
                 return true;
         }

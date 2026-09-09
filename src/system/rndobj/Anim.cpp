@@ -152,11 +152,11 @@ bool RndAnimatable::IsAnimating() {
 }
 
 void RndAnimatable::StopAnimation() {
-    for (ObjRef::iterator it = mRefs.begin(); it != mRefs.end();) {
+    for (ObjRef *it = mRefs.Begin(); it != mRefs.End();) {
         AnimTask *task = dynamic_cast<AnimTask *>(it->RefOwner());
         if (task) {
             delete task;
-            it = mRefs.begin();
+            it = mRefs.Begin();
         } else
             ++it;
     }

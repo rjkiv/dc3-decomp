@@ -57,35 +57,6 @@ public:
     }
     virtual ObjRefOwner *Parent() const { return nullptr; }
 
-    class iterator {
-    private:
-        ObjRef *mData;
-
-    public:
-        iterator() : mData(nullptr) {}
-        iterator(ObjRef *ref) : mData(ref) {}
-
-        operator ObjRef *() const { return mData; }
-        ObjRef *operator->() const { return mData; }
-
-        iterator &operator++() {
-            mData = mData->next;
-            return *this;
-        }
-
-        iterator operator++(int) {
-            iterator tmp = *this;
-            ++*this;
-            return tmp;
-        }
-
-        bool operator==(const iterator &it) const { return mData == it.mData; }
-        bool operator!=(const iterator &it) const { return mData != it.mData; }
-        bool operator!() { return mData == nullptr; }
-    };
-
-    iterator begin() const { return next; }
-    iterator end() const { return (ObjRef *)this; }
     bool empty() const { return next == this; }
 
     ObjRef *Begin() const { return next; }

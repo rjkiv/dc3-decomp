@@ -974,7 +974,7 @@ void CharClip::ApplyBlendedSkeletons(
 }
 
 bool CharClip::SharesGroups(CharClip *clip) {
-    FOREACH (it, mRefs) {
+    FOREACH_OBJREF (it, this) {
         Hmx::Object *owner = it->RefOwner();
         CharClipGroup *group = dynamic_cast<CharClipGroup *>(owner);
         if (group && group->HasClip(clip))
@@ -985,7 +985,7 @@ bool CharClip::SharesGroups(CharClip *clip) {
 
 int CharClip::InGroups() {
     int num = 0;
-    FOREACH (it, mRefs) {
+    FOREACH_OBJREF (it, this) {
         Hmx::Object *owner = it->RefOwner();
         CharClipGroup *group = dynamic_cast<CharClipGroup *>(owner);
         if (group)
@@ -996,7 +996,7 @@ int CharClip::InGroups() {
 
 DataNode CharClip::OnGroups(DataArray *) {
     DataArray *groups = new DataArray(0);
-    FOREACH (it, mRefs) {
+    FOREACH_OBJREF (it, this) {
         Hmx::Object *owner = it->RefOwner();
         CharClipGroup *group = dynamic_cast<CharClipGroup *>(owner);
         if (group) {
@@ -1010,7 +1010,7 @@ DataNode CharClip::OnGroups(DataArray *) {
 
 DataNode CharClip::OnHasGroup(DataArray *arr) {
     const char *str = arr->Str(2);
-    FOREACH (it, mRefs) {
+    FOREACH_OBJREF (it, this) {
         Hmx::Object *owner = it->RefOwner();
         CharClipGroup *group = dynamic_cast<CharClipGroup *>(owner);
         if (group && streq(group->Name(), str))
