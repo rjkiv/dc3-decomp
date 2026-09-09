@@ -157,8 +157,9 @@ void RndAnimatable::StopAnimation() {
         if (task) {
             delete task;
             it = mRefs.Begin();
-        } else
-            ++it;
+        } else {
+            it = mRefs.Next(it);
+        }
     }
 }
 
