@@ -424,6 +424,15 @@ void ObjPtrList<T1, T2>::push_front(T1 *obj) {
 }
 
 template <class T1, class T2>
+T1 *ObjPtrList<T1, T2>::back() const {
+    MILO_ASSERT(mNodes != NULL, 0x18A);
+    // stupid way of getting the underlying T1*
+    // the operator T1*() SHOULD work, but it isn't, and I don't wanna add a Obj() method
+    // so here you go. don't like it? cry more
+    return mNodes->prev->operator->();
+}
+
+template <class T1, class T2>
 typename ObjPtrList<T1, T2>::iterator
 ObjPtrList<T1, T2>::insert(typename ObjPtrList<T1, T2>::iterator it, T1 *obj) {
     if (mListMode == kObjListNoNull) {

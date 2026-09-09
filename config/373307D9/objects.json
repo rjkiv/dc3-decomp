@@ -584,7 +584,7 @@
             "system/rndobj/Enter.cpp": "Matching",
             "system/rndobj/Env.cpp": "Matching",
             "system/rndobj/Env_NG.cpp": "NonMatching",
-            "system/rndobj/EventTrigger.cpp": "NonMatching",
+            "system/rndobj/EventTrigger.cpp": "Matching",
             "system/rndobj/Flare.cpp": "NonMatching",
             "system/rndobj/Font.cpp": "NonMatching",
             "system/rndobj/Font3d.cpp": "NonMatching",
