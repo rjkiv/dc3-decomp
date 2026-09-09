@@ -565,11 +565,11 @@ void RndFont::SetBitmapSize(const Vector2 &size) {
 bool RndFont::CharWidthAdvanceCoords(
     unsigned short key, float &f1, float &f2, Vector2 &v1, Vector2 &v2
 ) const {
-    const RndFont *font;
-    for (font = mTextureOwner; font->mTextureOwner != font; font = font->mTextureOwner)
-        ;
-    auto it = font->mCharInfoMap.find(key);
-    if (it != font->mCharInfoMap.end()) {
+    if (mTextureOwner != this) {
+        return mTextureOwner->CharWidthAdvanceCoords(key, f1, f2, v1, v2);
+    }
+    auto it = mCharInfoMap.find(key);
+    if (it != mCharInfoMap.end()) {
         const CharInfo &cur = it->second;
         if (cur.normX || cur.normY || cur.charAdvance) {
             f1 = cur.charWidth;

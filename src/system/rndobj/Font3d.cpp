@@ -15,6 +15,10 @@ BEGIN_HANDLERS(RndFont3d)
     HANDLE_SUPERCLASS(RndFontBase)
 END_HANDLERS
 
+BEGIN_PROPSYNCS(RndFont3d)
+    SYNC_SUPERCLASS(RndFontBase)
+END_PROPSYNCS
+
 BEGIN_SAVES(RndFont3d)
     SAVE_REVS(0, 0)
     SAVE_SUPERCLASS(RndFontBase)
@@ -186,20 +190,16 @@ Vector3 RndFont3d::CharOriginOffset() const {
 bool RndFont3d::CharWidthAdvanceMesh(
     unsigned short us1, float &f2, float &f3, RndMesh **meshPtr
 ) const {
-    const RndFont3d *font;
-    for (font = mTextureOwner; font->mTextureOwner != font; font = font->mTextureOwner)
-        ;
+    if (mTextureOwner != this) {
+        return mTextureOwner->CharWidthAdvanceMesh(us1, f2, f3, meshPtr);
+    }
     auto it = mCharInfoMap.find(us1);
     if (it != mCharInfoMap.end()) {
         CharInfo *c = it->second;
         float f7 = c->unk0.Volume();
         if (f7 > 0 || c->unk20 > 0) {
             f2 = FontUnitInverse() * Max(c->unk0.mMax.x, 0.0f);
-            if (mMonospace) {
-                f3 = 1;
-            } else {
-                f3 = FontUnitInverse() * c->unk20;
-            }
+            f3 = mMonospace ? 1 : FontUnitInverse() * c->unk20;
             *meshPtr = c->unk24;
             return true;
         }

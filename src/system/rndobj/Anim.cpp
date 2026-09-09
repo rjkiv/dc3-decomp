@@ -164,11 +164,11 @@ void RndAnimatable::StopAnimation() {
 
 void RndAnimatable::FireFlowLabel(Symbol s) {
     if (!s.Null()) {
-        FOREACH (it, Refs()) {
+        for (auto it = Refs().begin(); it != Refs().end(); ++it) {
             Hmx::Object *owner = it->RefOwner();
             if (owner && owner->ClassName() == "AnimTask") {
                 AnimTask *task = static_cast<AnimTask *>(owner);
-                if (task->AnimTarget()) {
+                if (task->Listener()) {
                     owner->Handle(Message("on_anim_event", s), false);
                     break;
                 }
