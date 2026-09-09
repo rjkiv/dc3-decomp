@@ -125,7 +125,7 @@ void FxSend::RebuildChain() {
 
 void FxSend::BuildChainVector(std::vector<FxSend *> &sends) {
     sends.push_back(this);
-    FOREACH (it, Refs()) {
+    FOREACH_OBJREF (it, this) {
         FxSend *send = dynamic_cast<FxSend *>(it->RefOwner());
         if (send && send->mNextSend == this) {
             send->BuildChainVector(sends);
@@ -166,7 +166,7 @@ bool FxSend::CheckChain(FxSend *send, int i) {
         );
         return false;
     } else {
-        for (ObjRef::iterator it = mRefs.begin(); it != mRefs.end(); ++it) {
+        FOREACH_OBJREF (it, this) {
             FxSend *rsend = dynamic_cast<FxSend *>((*it).RefOwner());
             if (rsend && rsend->NextSend() == this && rsend->Stage() >= i) {
                 MILO_NOTIFY(

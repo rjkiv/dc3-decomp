@@ -277,7 +277,7 @@ void Hmx::Object::ReplaceRefsFrom(Hmx::Object *from, Hmx::Object *to) {
     MILO_ASSERT(from, 0xA6);
     ObjRef other;
     other.DetachSelf();
-    FOREACH (it, mRefs) {
+    FOREACH_OBJREF (it, this) {
         if (it->RefOwner() == from) {
             it = it->MoveBefore(&other);
         }
@@ -287,7 +287,7 @@ void Hmx::Object::ReplaceRefsFrom(Hmx::Object *from, Hmx::Object *to) {
 
 int Hmx::Object::RefCount() const {
     int size = 0;
-    FOREACH (it, mRefs) {
+    FOREACH_OBJREF (it, this) {
         size++;
     }
     return size;
@@ -598,7 +598,7 @@ DataNode Hmx::Object::HandleType(DataArray *msg) {
 DataNode Hmx::Object::OnIterateRefs(const DataArray *da) {
     DataNode *var = da->Var(2);
     DataNode node(*var);
-    for (ObjRef::iterator it = mRefs.begin(); it != mRefs.end(); ++it) {
+    FOREACH_OBJREF (it, this) {
         *var = it->RefOwner();
         for (int i = 3; i < da->Size(); i++) {
             da->Command(i)->Execute();

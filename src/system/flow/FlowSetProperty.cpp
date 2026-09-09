@@ -34,7 +34,7 @@ PropertyTask::PropertyTask(
     : unk2c(this), unk40(n1), unk48(n2), unk58(f1), unk5c(f2), unk60(b), unk64(this) {
     MILO_ASSERT(target, 0x4D);
     mEaseFunc = GetEaseFunctionForcedInline(t);
-    FOREACH (it, target->Refs()) {
+    FOREACH_OBJREF (it, target) {
         Hmx::Object *owner = it->RefOwner();
         if (owner) {
             if (owner->ClassName() == StaticClassName()) {

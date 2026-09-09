@@ -33,7 +33,7 @@ static WorldCrowd *gParent = nullptr;
 
 namespace {
     void GetMeshShaderFlags(RndMat *mat, std::list<unsigned int> &flags) {
-        FOREACH (it, mat->Refs()) {
+        FOREACH_OBJREF (it, mat) {
             RndMesh *cur = dynamic_cast<RndMesh *>(it->RefOwner());
             if (cur) {
                 // bit 1 = skinned

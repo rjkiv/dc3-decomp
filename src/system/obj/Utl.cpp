@@ -117,7 +117,7 @@ void MergeObjectsRecurse(
         default: {
             ObjRef refs;
             refs.DetachSelf();
-            FOREACH (it, fromDir->Refs()) {
+            FOREACH_OBJREF (it, fromDir) {
                 Hmx::Object *owner = it->RefOwner();
                 if (owner && owner->Dir() == fromDir) {
                     it = it->MoveBefore(&refs);
