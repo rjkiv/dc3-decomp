@@ -227,7 +227,6 @@ void RndTransAnim::SetKeysOwner(RndTransAnim *o) {
 void RndTransAnim::SetTrans(RndTransformable *trans) { mTrans = trans; }
 
 void RndTransAnim::MakeTransform(float frame, Transform &tf, bool whole, float blend) {
-    float f5 = frame;
     if (mKeysOwner != this) {
         mKeysOwner->MakeTransform(frame, tf, whole, blend);
     } else {
@@ -236,18 +235,15 @@ void RndTransAnim::MakeTransform(float frame, Transform &tf, bool whole, float b
             Vector3 v58(0, 0, 0);
             if (mRepeatTrans) {
                 int iac;
-                float &backFrame = mTransKeys.back().frame;
-                float &frontFrame = mTransKeys.front().frame;
-                f5 = Limit(frontFrame, backFrame, frame, iac);
-                Vector3 &frontVec = mTransKeys.front().value;
-                Vector3 &backVec = mTransKeys.back().value;
-                Subtract(backVec, frontVec, v58);
+                frame =
+                    Limit(mTransKeys.front().frame, mTransKeys.back().frame, frame, iac);
+                Subtract(mTransKeys.back().value, mTransKeys.front().value, v58);
                 v58 *= iac;
             }
-            if (blend != 1.0f) {
+            if (blend != 1) {
                 Vector3 v64;
                 InterpVector(
-                    mTransKeys, mTransSpline, f5, v64, mFollowPath ? &v4c : nullptr
+                    mTransKeys, mTransSpline, frame, v64, mFollowPath ? &v4c : nullptr
                 );
                 if (mRepeatTrans) {
                     ::Add(v64, v58, v64);
@@ -255,7 +251,7 @@ void RndTransAnim::MakeTransform(float frame, Transform &tf, bool whole, float b
                 Interp(tf.v, v64, blend, tf.v);
             } else {
                 InterpVector(
-                    mTransKeys, mTransSpline, f5, tf.v, mFollowPath ? &v4c : nullptr
+                    mTransKeys, mTransSpline, frame, tf.v, mFollowPath ? &v4c : nullptr
                 );
                 if (mRepeatTrans) {
                     ::Add(tf.v, v58, tf.v);
@@ -270,15 +266,16 @@ void RndTransAnim::MakeTransform(float frame, Transform &tf, bool whole, float b
             const Key<Hmx::Quat> *prev;
             const Key<Hmx::Quat> *next;
             float ref = 0;
-            mRotKeys.AtFrame(f5, prev, next, ref);
+            mRotKeys.AtFrame(frame, prev, next, ref);
             if (mRotSpline)
                 QuatSpline(mRotKeys, prev, next, ref, q80);
             else {
                 MILO_ASSERT(prev, 0x16D);
-                if (mRotSlerp)
+                if (mRotSlerp) {
                     Interp(prev->value, next->value, ref, q80);
-                else
+                } else {
                     FastInterp(prev->value, next->value, ref, q80);
+                }
             }
             if (blend != 1.0f) {
                 if (!mScaleKeys.empty()) {
@@ -306,7 +303,7 @@ void RndTransAnim::MakeTransform(float frame, Transform &tf, bool whole, float b
         }
         if (!mScaleKeys.empty()) {
             Vector3 v9c;
-            InterpVector(mScaleKeys, mScaleSpline, f5, v9c, 0);
+            InterpVector(mScaleKeys, mScaleSpline, frame, v9c, 0);
             if (blend != 1.0f) {
                 Interp(v70, v9c, blend, v9c);
             }

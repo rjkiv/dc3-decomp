@@ -281,9 +281,9 @@ void MetaMaterial::SetEditAction(MatProp propNum, MatPropEditAction action) {
             if (propNum == kMatPropTexXfm) {
                 Transform xfm;
                 xfm.Reset();
-                mask = mTexXfm == xfm ? kPropForce : kPropDefault;
+                mask = mTexXfm == xfm ? kPropDefault : kPropAll;
             } else {
-                mask = var.Equal(*node, nullptr, true) ? kPropForce : kPropDefault;
+                mask = var.Equal(*node, nullptr, true) ? kPropDefault : kPropAll;
             }
             action = (MatPropEditAction)((int)action & (int)mask);
         }

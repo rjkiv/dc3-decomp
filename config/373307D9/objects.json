@@ -605,7 +605,7 @@
             "system/rndobj/Mesh.cpp": "NonMatching",
             "system/rndobj/MeshAnim.cpp": "NonMatching",
             "system/rndobj/MeshDeform.cpp": "NonMatching",
-            "system/rndobj/MetaMaterial.cpp": "NonMatching",
+            "system/rndobj/MetaMaterial.cpp": "Matching",
             "system/rndobj/Morph.cpp": "NonMatching",
             "system/rndobj/MotionBlur.cpp": "Matching",
             "system/rndobj/Movie.cpp": "Matching",
