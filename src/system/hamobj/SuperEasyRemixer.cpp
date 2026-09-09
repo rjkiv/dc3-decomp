@@ -81,8 +81,8 @@ std::vector<const MoveParent *> &SuperEasyRemixer::GetMoveParentsByDifficulty(in
         return OriginalChoreoRemixer::GetMoveParentsByDifficulty(diff);
 }
 
-std::vector<const MoveVariant *> &SuperEasyRemixer::GetMoveVariantsByDifficulty(int diff
-) {
+std::vector<const MoveVariant *> &
+SuperEasyRemixer::GetMoveVariantsByDifficulty(int diff) {
     if (diff == kDifficultyBeginner) {
         return mSuperEasyVariants;
     } else

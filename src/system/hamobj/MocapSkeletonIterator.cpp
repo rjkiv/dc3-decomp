@@ -51,7 +51,7 @@ bool MocapSkeletonIterator::PrevSkeleton(
 void MocapSkeletonIterator::Update() {
     MILO_ASSERT(mDancer, 0x55);
     TheTaskMgr.SetSeconds(unk24b8 * 0.033333335f, (unk24b0 - unk24b8) == 0);
-    ClipPlayer player;
+    ClipPlayer player(0);
     if (player.Init(0)) {
         player.PlayAnims(mDancer, unk24b8, unk24bc, 0);
         unk24bc = unk24b8;

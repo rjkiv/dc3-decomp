@@ -1,4 +1,6 @@
 #include "hamobj/TransConstraint.h"
+#include "math/Color.h"
+#include "math/Geo.h"
 #include "math/Mtx.h"
 #include "math/Rot.h"
 #include "obj/Object.h"
@@ -6,6 +8,7 @@
 #include "rndobj/Highlight.h"
 #include "rndobj/Poll.h"
 #include "rndobj/Trans.h"
+#include "rndobj/Utl.h"
 
 TransConstraint::TransConstraint()
     : mParent(this), mChild(this), mSpeed(10), mAffectScale(0), mUseUITime(0), unk52(1) {
@@ -139,5 +142,28 @@ void TransConstraint::SnapToParent() {
             }
             SetScaleVectorOnTransform(mChild, v60);
         }
+    }
+}
+
+void TransConstraint::Highlight() {
+    if (mParent && mChild) {
+        auto trans = mParent->WorldXfm();
+        trans.m.Identity();
+
+        Box b;
+        for (int i = 0; i < 3; i++) {
+            float f = mStaticCube[i] / 2.0f;
+            b.mMin[i] = -f;
+            b.mMax[i] = f;
+        }
+
+        Hmx::Color color1(1.0f, 1.0f, 1.0f, 1.0f);
+        UtilDrawAxes(mParent->WorldXfm(), 10.0f, color1);
+
+        Hmx::Color color2(1.0f, 1.0f, 1.0f, 1.0f);
+        UtilDrawAxes(mChild->WorldXfm(), 10.0f, color2);
+
+        Hmx::Color color3(1.0f, 1.0f, 0, 1.0f);
+        UtilDrawBox(trans, b, color3, true);
     }
 }

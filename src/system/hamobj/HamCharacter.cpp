@@ -1,5 +1,6 @@
 #include "hamobj/HamCharacter.h"
 #include "HamCharacter.h"
+#include "HamDirector.h"
 #include "HamRegulate.h"
 #include "char/CharBones.h"
 #include "char/CharClip.h"
@@ -745,4 +746,25 @@ DataNode HamCharacter::OnSoundPlay(DataArray const *a) {
         }
     }
     return 0;
+}
+
+HamCharacter *CharacterNameToCharacter(Symbol name) {
+    static Symbol player0("player0");
+    static Symbol player1("player1");
+    static Symbol backup0("backup0");
+    static Symbol backup1("backup1");
+
+    if (name == player0) {
+        return TheHamDirector->GetCharacter(0);
+    } else if (name == player1) {
+        return TheHamDirector->GetCharacter(1);
+    }
+
+    if (name == backup0) {
+        return TheHamDirector->GetBackup(0);
+    } else if (name == backup1) {
+        return TheHamDirector->GetBackup(1);
+    }
+
+    return nullptr;
 }

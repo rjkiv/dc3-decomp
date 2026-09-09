@@ -2,6 +2,7 @@
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "obj/Utl.h"
+#include "stl/_vector.h"
 #include "utl/FilePath.h"
 #include "utl/Loader.h"
 #include "utl/MemMgr.h"
@@ -128,6 +129,7 @@ public:
     Merger *InMerger(Hmx::Object *);
     bool AsyncLoad() const { return mAsyncLoad; }
     bool HasPendingFiles() const { return !mFilesPending.empty(); }
+    void ClearMergers() { mMergers.clear(); }
 
 protected:
     FileMerger();

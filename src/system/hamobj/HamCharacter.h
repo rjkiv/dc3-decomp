@@ -148,3 +148,5 @@ protected:
     ObjPtr<RndMesh> mCrewCardMesh; // 0x33c
     bool mUseCameraSkeleton; // 0x350
 };
+
+HamCharacter *CharacterNameToCharacter(Symbol);

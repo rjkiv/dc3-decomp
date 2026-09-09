@@ -1,5 +1,6 @@
 #include "hamobj/HamDirector.h"
 #include "Difficulty.h"
+#include "HamSong.h"
 #include "MoveGraph.h"
 #include "MoveMgr.h"
 #include "PoseFatalities.h"
@@ -34,6 +35,7 @@
 #include "hamobj/HamVisDir.h"
 #include "hamobj/HamWardrobe.h"
 #include "hamobj/TransConstraint.h"
+#include "macros.h"
 #include "math/Key.h"
 #include "math/Mtx.h"
 #include "math/Rand.h"
@@ -61,11 +63,13 @@
 #include "rndobj/Tex.h"
 #include "rndobj/TexRenderer.h"
 #include "rndobj/Trans.h"
+#include "rndobj/Wind.h"
 #include "stl/_map.h"
 #include "stl/_vector.h"
 #include "utl/FakeSongMgr.h"
 #include "utl/FilePath.h"
 #include "utl/Loader.h"
+#include "utl/Std.h"
 #include "utl/Str.h"
 #include "utl/Symbol.h"
 #include "utl/TextStream.h"
@@ -457,7 +461,7 @@ void HamDirector::PlayIntroShot() {
         if (unk284) {
             static Message msg("set_intro_shot", 0);
             msg[0] = unk284.Ptr();
-            DataNode handled = HandleType(msg);
+            HandleType(msg);
             mNextShot = unk284;
             unk284 = nullptr;
         } else
@@ -1203,7 +1207,8 @@ void HamDirector::SetMainFaceOverrideClip(Symbol s) {
 Symbol HamDirector::GetMainFaceOverrideClip() const {
     HamCharacter *hChar = GetCharacter(0);
     if (hChar) {
-        return hChar->GetFaceOverrideClip();
+        Symbol sym = hChar->GetFaceOverrideClip();
+        return sym;
     } else
         return Symbol();
 }
@@ -1592,7 +1597,7 @@ void HamDirector::OfflineLoadSong(Symbol song) {
 }
 
 DataNode HamDirector::OnClipAnnotate(DataArray *a) {
-    ClipPlayer player;
+    ClipPlayer player(0);
     if (player.Init(TheGameData->Player(0)->GetDifficulty())) {
         float frame;
         RndPropAnim *anim = a->Obj<RndPropAnim>(2);
@@ -1604,7 +1609,7 @@ DataNode HamDirector::OnClipAnnotate(DataArray *a) {
 }
 
 DataNode HamDirector::OnPracticeAnnotate(DataArray *a) {
-    ClipPlayer player;
+    ClipPlayer player(0);
     if (player.Init(TheGameData->Player(0)->GetDifficulty())) {
         return player.AnnotatePractice();
     } else {
@@ -1645,7 +1650,7 @@ DataNode HamDirector::OnBlendInFaceClip(DataArray *a) {
 
 void HamDirector::InitOffline() {
     if (!mOfflineSong) {
-        // HamSong::mPreferStreaming = true;
+        HamSong::mPreferStreaming = true;
         mOfflineSong = dynamic_cast<Song *>(Hmx::Object::NewObject("Song"));
         MILO_ASSERT(mOfflineSong, 0x114B);
         DataVariable("tool_song") = mOfflineSong;
@@ -2252,6 +2257,7 @@ void HamDirector::UnloadMergers() {
     if (mMerger) {
         mMerger->Clear();
         mMoveMerger->Clear();
+        mMoveMerger->ClearMergers();
         if (TheHamWardrobe) {
             for (int i = 0; i < 2; i++) {
                 HamCharacter *hc = TheHamWardrobe->GetCharacter(i);
@@ -2261,7 +2267,8 @@ void HamDirector::UnloadMergers() {
             }
             int i = 0;
             while (true) {
-                HamCharacter *hc = TheHamWardrobe->GetBackup(i);
+                HamCharacter *hc =
+                    TheHamWardrobe ? TheHamWardrobe->GetBackup(i) : nullptr;
                 i++;
                 if (!hc)
                     break;
@@ -2345,4 +2352,197 @@ void HamDirector::ChangeNextShotIfCharacterCollisionLikely() {
             }
         }
     }
+}
+
+void HamDirector::Poll() {
+    if (TheHamWardrobe) {
+        TheHamWardrobe->UpdateOverlay();
+    }
+    if (unk2ac) {
+        HamCharacter *character0 =
+            TheHamWardrobe ? TheHamWardrobe->GetCharacter(0) : nullptr;
+        HamCharacter *character1 =
+            TheHamWardrobe ? TheHamWardrobe->GetCharacter(1) : nullptr;
+        RndPropAnim *songAnim = SongAnim(0);
+        if (songAnim) {
+            if (character0 && character1) {
+                int songAnim0 = character0->SongAnimation();
+                int songAnim1 = character1->SongAnimation();
+                if (SongAnimation()) {
+                    ClipPlayer clipPlayer0(0);
+                    ClipPlayer clipPlayer1(1);
+                    if (songAnim0 != -1) {
+                        if (clipPlayer0.Init(0)) {
+                            clipPlayer0.PlayAnims(
+                                character0, songAnim->GetFrame(), unk2e4, mBlendDebug
+                            );
+                        }
+                    }
+                    if (songAnim1 != -1) {
+                        Key<Symbol> *k1;
+                        Key<Symbol> *k2;
+                        bool getPracFrames = GetPracticeFrames(k1, k2);
+                        if (!getPracFrames) {
+                            if (clipPlayer1.Init(1)) {
+                                clipPlayer1.PlayAnims(
+                                    character1, songAnim->GetFrame(), unk2e4, mBlendDebug
+                                );
+                            }
+                        }
+                    }
+                    Difficulty p0Diff = TheGameData->Player(0)->GetDifficulty();
+                    bool isEasierDiff = IsEasierDifficulty(
+                        p0Diff, TheGameData->Player(1)->GetDifficulty()
+                    );
+                    ClipPlayer *backupPlayer = isEasierDiff ? &clipPlayer0 : &clipPlayer1;
+                    Key<Symbol> *k1;
+                    Key<Symbol> *k2;
+                    if (!GetPracticeFrames(k1, k2)) {
+                        int i = 0;
+                        while (true) {
+                            HamCharacter *backup =
+                                TheHamWardrobe ? TheHamWardrobe->GetBackup(i) : nullptr;
+                            i++;
+                            if (!backup) {
+                                break;
+                            }
+                            float whiteNoise = RndWind::GetWhiteNoise(
+                                (((songAnim->GetFrame() / 300) + i * 534.46f))
+                            );
+                            float val = (whiteNoise - 0.5f) * mBackupDrift * 0.14f;
+                            if (0 < val) {
+                                val *= -1.0f;
+                            }
+                            backupPlayer->PlayAnims(
+                                backup,
+                                songAnim->GetFrame() - val * 30.0f,
+                                unk2e4 - val * 30.0f,
+                                mBlendDebug
+                            );
+                            backup->SongDriver()->OffsetSec(val);
+                        }
+                    }
+                }
+            }
+            unk2e4 = songAnim->GetFrame();
+            if (0 <= TheTaskMgr.Seconds(TaskMgr::kRealTime)) {
+                float seconds = TheTaskMgr.Seconds(TaskMgr::kRealTime);
+                if (seconds - TheTaskMgr.DeltaSeconds() < 0) {
+                    songAnim->StartAnim();
+                }
+            }
+            mPoseFatalities->Poll();
+            if (mVenue) {
+                mVenue->Poll();
+            }
+            // some f30 missing here? not sure where
+            if (mWorldPostProc) {
+                float overlayFloat = 1.0f;
+                const char *name;
+                RndPostProc *proc0 = nullptr;
+                RndPostProc *proc1 = nullptr;
+                if (mCamPostProc) {
+                    mWorldPostProc->Copy(mCamPostProc, kCopyDeep);
+                    unk18c = mCamPostProc;
+                    proc0 = mCamPostProc;
+                    name = "camera";
+                } else if (mForcePostProc && (mForcePostProcBlend >= 1.0f)) {
+                    mWorldPostProc->Copy(mForcePostProc, kCopyDeep);
+                    unk18c = mForcePostProc;
+                    proc0 = mForcePostProc;
+                    name = "force";
+                } else if (unk1a8 == unk1bc) {
+                    mWorldPostProc->Copy(unk1a8, kCopyDeep);
+                    unk18c = unk1a8;
+                    proc0 = unk1a8;
+                    proc1 = unk1bc;
+                    name = "song authoring - 2 equiv";
+                    overlayFloat = 1.0f;
+                } else {
+                    mWorldPostProc->Interp(unk1a8, unk1bc, unk1d0);
+                    unk18c = unk1bc;
+                    proc0 = unk1a8;
+                    proc1 = unk1bc;
+                    name = "song authoring";
+                    overlayFloat = unk1d0;
+                }
+                if (mForcePostProc && !mCamPostProc) {
+                    if (mForcePostProcBlend > 0 && mForcePostProcBlend < 1) {
+                        mWorldPostProc->Interp(
+                            mWorldPostProc, mForcePostProc, mForcePostProcBlend
+                        );
+                        overlayFloat = mForcePostProcBlend;
+                        proc0 = mWorldPostProc;
+                        proc1 = mForcePostProc;
+                        name = "force";
+                    }
+                    if ((0 < mForcePostProcBlendRate && mForcePostProcBlend < 1)
+                        || (mForcePostProcBlendRate < 0 && 0 < mForcePostProcBlend)) {
+                        mForcePostProcBlend +=
+                            TheTaskMgr.DeltaSeconds() * mForcePostProcBlendRate;
+                        ClampEq(mForcePostProcBlend, 0.0f, 1.0f);
+                    }
+                }
+                UpdatePostProcOverlay(name, proc0, proc1, overlayFloat);
+            }
+            if (mPlayerFreestyle && mVisualizer && !mVisualizer->Showing()) {
+                unk1d4 += TheTaskMgr.DeltaSeconds();
+                if (1.6f < unk1d4) {
+                    StartStopVisualizer();
+                }
+            }
+        }
+    }
+}
+
+void HamDirector::OnPopulateMoves() {
+    if (!mMasterClipAnim) {
+        MILO_NOTIFY("No MasterClipAnim in HamDirector.  Did you load a song?");
+        return;
+    }
+
+    if (sBool) {
+        MILO_NOTIFY(
+            "[HamDirector::OnPopulateMoves] Please wait until the function is finished."
+        );
+        return;
+    }
+
+    sBool = true;
+
+    DataArray *pMoveData = DataReadFile("../meta/move_data.dta", true);
+    MILO_ASSERT(pMoveData, 0xb1c);
+
+    ObjectDir *moveDir = mMerger->Dir()->Find<ObjectDir>("moves", true);
+    ObjectDir *clipDir = mMerger->Dir()->Find<ObjectDir>("clips", true);
+    static Symbol clip("clip");
+    static Symbol move("move");
+    static Symbol move_instance("move_instance");
+    static Symbol charclips("charclips");
+    static Symbol hammoves("hammoves");
+    static Symbol transition_charclips("transition_charclips");
+
+    mMasterClipAnim->RemoveKeys(this, DataArrayPtr(move));
+    mMasterClipAnim->RemoveKeys(this, DataArrayPtr(clip));
+
+    PropKeys *moveKeys =
+        mMasterClipAnim->AddKeys(this, DataArrayPtr(move), PropKeys::kSymbol);
+    PropKeys *clipKeys =
+        mMasterClipAnim->AddKeys(this, DataArrayPtr(clip), PropKeys::kSymbol);
+    PropKeys *moveInstKeys = mMasterClipAnim->GetKeys(this, DataArrayPtr(move_instance));
+
+    Keys<Symbol, Symbol> *moveInstKeySym = moveInstKeys->AsSymbolKeys();
+    Keys<Symbol, Symbol> *moveKeySym = moveInstKeys->AsSymbolKeys();
+    Keys<Symbol, Symbol> *clipKeySym = clipKeys->AsSymbolKeys();
+
+    gMoveMergeMap.clear();
+    mMoveMerger->ClearMergers();
+
+    for (int i = 0; i != moveInstKeySym->NumKeys(); i++) {
+        if ((*moveInstKeySym)[i].value == "") {
+            // yeah im doin this later
+        }
+    }
+
+    mMoveMerger->StartLoad(unk25a);
 }
