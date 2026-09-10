@@ -450,21 +450,21 @@ bool RndConsole::OnMsg(const KeyboardKeyMsg &msg) {
             mTabLen = mInput->CurrentLine().length();
         if (!mBuffer.empty()) {
             if (mBufPtr == mBuffer.end()) {
-                mBufPtr = mBuffer.begin();
+                mBufPtr = PrevItr(mBuffer.end(), 1);
             }
+            auto curPtr = mBufPtr;
             do {
                 ++mBufPtr;
                 if (mBufPtr == mBuffer.end()) {
                     mBufPtr = mBuffer.begin();
                 }
-                if (strncmp(mInput->CurrentLine().c_str(), (*mBufPtr).c_str(), mTabLen)
-                    == 0) {
+                if (strneq(mInput->CurrentLine().c_str(), mBufPtr->c_str(), mTabLen)) {
                     mInput->CurrentLine() = *mBufPtr;
                     break;
                 }
-            } while (mBufPtr != mBuffer.end());
+            } while (mBufPtr != curPtr);
         }
-        MinEq<int>(mCursor, mInput->CurrentLine().length());
+        mCursor = Min<int>(mCursor, mInput->CurrentLine().length());
     } else if (msg.GetKey() == 0x142) {
         if (!mBuffer.empty()) {
             if (mBufPtr != mBuffer.end()) {
@@ -478,16 +478,17 @@ bool RndConsole::OnMsg(const KeyboardKeyMsg &msg) {
         mCursor = mInput->CurrentLine().length();
     } else if (msg.GetKey() == 0x143) {
         if (!mBuffer.empty()) {
-            if (mBufPtr != mBuffer.end()) {
-                --mBufPtr;
-            } else
-                mBufPtr = mBuffer.begin();
-            if (mBufPtr == mBuffer.begin()) {
-                mBufPtr = PrevItr(mBuffer.begin(), 1);
+            if (mBufPtr != mBuffer.begin()) {
+                mBufPtr--;
+            } else {
+                mBufPtr = mBuffer.end();
+            }
+            if (mBufPtr == mBuffer.end()) {
+                mBufPtr = PrevItr(mBuffer.end(), 1);
             }
             mInput->CurrentLine() = *mBufPtr;
         }
-        MinEq<int>(mCursor, mInput->CurrentLine().length());
+        mCursor = Min<int>(mCursor, mInput->CurrentLine().length());
     } else if (msg.GetKey() == 8) {
         String &curLine = mInput->CurrentLine();
         if (mCursor != 0) {
@@ -515,21 +516,19 @@ bool RndConsole::OnMsg(const KeyboardKeyMsg &msg) {
             *mInput << errMsg << "\n";
             MILO_LOG("%s\n", errMsg);
         }
-    } else if (msg.GetKey() == 0x7D) {
-        if (msg.GetCtrl()) {
-            String &curLine = mInput->CurrentLine();
-            curLine.insert(0, 1, '{');
-            curLine.insert(curLine.length(), "} ");
-            mCursor = curLine.length();
-        } else {
-            char buf[2] = { '\0', '\0' };
-            buf[0] = msg.GetKey();
-            if (mCursor > mInput->CurrentLine().length()) {
-                mCursor = mInput->CurrentLine().length();
-            }
-            mInput->CurrentLine().insert(mCursor, buf);
-            mCursor++;
+    } else if (msg.GetKey() == 0x7D && msg.GetCtrl()) {
+        String &curLine = mInput->CurrentLine();
+        curLine.insert(0, 1, '{');
+        curLine.insert(curLine.length(), "} ");
+        mCursor = curLine.length();
+    } else if (msg.GetKey() != 0x10) {
+        char buf[2] = { 0 };
+        buf[0] = msg.GetKey();
+        if (mCursor > mInput->CurrentLine().length()) {
+            mCursor = mInput->CurrentLine().length();
         }
+        mInput->CurrentLine().insert(mCursor, buf);
+        mCursor++;
     }
     mInput->SetCursorChar(msg.GetKey() == 10 ? -1 : mCursor);
     if (msg.GetKey() != 9) {
