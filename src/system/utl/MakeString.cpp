@@ -21,6 +21,11 @@ static int gThreadIds[MAX_BUF_THREADS] = { -1 };
 static int gCurThread = 0;
 static int gNumThreads = 0;
 
+const char *MakeStringNotInlined(const char *c) {
+    FormatString fs(c);
+    return fs.Str();
+}
+
 void InitMakeString() {
     if (!gLock) {
         gLock = new CriticalSection();

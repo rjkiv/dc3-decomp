@@ -604,44 +604,50 @@ bool DataNode::operator>(const DataNode &other) const {
 }
 
 bool DataNode::Equal(const DataNode &n, DataArray *a, bool warn) const {
-    const DataNode &first = mType < n.Type() ? *this : n;
-    const DataNode &second = mType < n.Type() ? n : *this;
-    DataType firstType = first.Type();
+    DataType myType = Type();
+    DataType nType = n.Type();
+    const DataNode &first = myType < nType ? *this : n;
+    const DataNode &second = myType < nType ? n : *this;
     DataType secondType = second.Type();
+    DataType firstType = first.Type();
     if (firstType == secondType) {
-        bool res;
         if (firstType == kDataString) {
-            res = streq(first.StringValue(), second.StringValue());
+            return streq(
+                first.VarValue()->SymbolValue().Str(),
+                second.VarValue()->SymbolValue().Str()
+            );
         } else {
-            res = first.IntValue() == second.IntValue();
+            return first.IntValue() == second.IntValue();
         }
-        return res;
     } else {
-        const char *objName = "";
-        if (firstType == kDataInt && secondType == kDataFloat) {
-            return (float)first.IntValue() == second.FloatValue();
-        } else {
-            if (firstType == kDataObject) {
-                Hmx::Object *obj = first.ObjectValue();
-                if (obj)
-                    objName = obj->Name();
-                if (secondType == kDataSymbol) {
-                    return streq(objName, second.StringValue());
-                } else if (secondType == kDataString) {
-                    return streq(objName, second.StringValue());
-                }
+        if (firstType == kDataInt) {
+            if (secondType == kDataFloat) {
+                return (float)first.IntValue() == second.FloatValue();
             }
+        } else if (firstType == kDataObject) {
+            Hmx::Object *obj = first.ObjectValue();
+            const char *objName = obj ? obj->Name() : "";
+            if (secondType == kDataSymbol) {
+                return streq(objName, second.StringValue());
+            } else if (secondType == kDataString) {
+                return streq(objName, second.VarValue()->SymbolValue().Str());
+            }
+        } else {
             if (firstType == kDataSymbol) {
                 if (secondType == kDataString) {
-                    return streq(first.StringValue(), second.StringValue());
+                    return streq(
+                        first.StringValue(), second.VarValue()->SymbolValue().Str()
+                    );
                 }
             } else if (secondType != kDataString && secondType != kDataSymbol) {
-                warn &= secondType != kDataObject; // i dunno lol
+                warn &= secondType != kDataObject;
             }
         }
-        if (firstType == kDataUnhandled || secondType == kDataUnhandled) {
+
+        if (secondType == kDataUnhandled || firstType == kDataUnhandled) { // 0x1e8
             warn = false;
         }
+
         if (warn) {
             StackString<32> str1;
             StackString<32> str2;

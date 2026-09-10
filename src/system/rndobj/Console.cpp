@@ -7,6 +7,7 @@
 #include "obj/DataFunc.h"
 #include "rndobj/Rnd.h"
 #include "utl/Cheats.h"
+#include "utl/MakeString.h"
 
 static RndConsole *gConsole = nullptr;
 
@@ -364,7 +365,9 @@ void RndConsole::SetBreak(DataArray *arr) {
 
 void RndConsole::Break(DataArray *arr) {
     if (mDebugging)
-        MILO_FAIL("Can't break while debugging, did you mean set_break?");
+        TheDebugFailer << MakeStringNotInlined(
+            "Can't break while debugging, did you mean set_break?"
+        );
     if (arr->Node(0).FuncValue() != DataNop) {
         bool drawing = TheRnd.Drawing();
         bool showing = mShowing;
@@ -403,37 +406,38 @@ void RndConsole::Break(DataArray *arr) {
 void RndConsole::ExecuteLine() {
     String &line_txt = mInput->CurrentLine();
     DataNode n40, n48;
-    if (!line_txt.empty()) {
-        mBuffer.push_front(line_txt);
-        if (line_txt[line_txt.length() - 1] == '/') {
-            line_txt.erase(line_txt.length() - 1, 1);
-            SetShowing(false);
-        }
-        if (mBuffer.size() > mMaxBuffer) {
-            mBuffer.pop_back();
-        }
-        mBufPtr = mBuffer.end();
-        MILO_LOG("> %s\n", line_txt);
-        n40 = DataReadString(line_txt.c_str());
-        n40.Array()->Release();
-        mInput->CurrentLine().erase();
-        LogCheat(-1, 0, n40.Array());
-        MILO_TRY {
-            if (n40.Array()->Type(0) == kDataCommand && n40.Array()->Size() == 1) {
-                n48 = n40.Array()->Command(0)->Execute();
-            } else {
-                n48 = n40.Array()->Execute();
-            }
-        }
-        MILO_CATCH(msg) {
-            MILO_NOTIFY("Script error: %s", msg);
-            n48 = 0;
-        }
-        String output;
-        output << "Evaluates to " << n48 << "\n";
-        mInput->Print(output.c_str());
-        MILO_LOG("%s", output);
+    if (line_txt.empty()) {
+        return;
     }
+    mBuffer.push_front(line_txt);
+    if (line_txt[line_txt.length() - 1] == '/') {
+        line_txt.erase(line_txt.length() - 1, 1);
+        SetShowing(false);
+    }
+    if (mBuffer.size() > mMaxBuffer) {
+        mBuffer.pop_back();
+    }
+    mBufPtr = mBuffer.end();
+    MILO_LOG("> %s\n", line_txt);
+    n40 = DataReadString(line_txt.c_str());
+    n40.Array()->Release();
+    mInput->CurrentLine().erase();
+    LogCheat(-1, 0, n40.Array());
+    MILO_TRY {
+        if (n40.Array()->Type(0) == kDataCommand && n40.Array()->Size() == 1) {
+            n48 = n40.Array()->Command(0)->Execute();
+        } else {
+            n48 = n40.Array()->Execute();
+        }
+    }
+    MILO_CATCH(msg) {
+        MILO_NOTIFY("Script error: %s", msg);
+        n48 = 0;
+    }
+    String output;
+    output << "Evaluates to " << n48 << "\n";
+    mInput->Print(output.c_str());
+    MILO_LOG("%s", output);
 }
 
 bool RndConsole::OnMsg(const KeyboardKeyMsg &msg) {
