@@ -11,7 +11,6 @@ public:
     OBJ_CLASSNAME(DOFProc);
     OBJ_SET_TYPE(DOFProc);
     // DOFProc
-    virtual void Set(RndCam *, float, float, float, float);
     virtual bool Enabled() const { return mEnabled; }
     virtual float FocalPlane() { return mFocalPlane; }
     virtual float BlurDepth() { return mBlurDepth; }
@@ -26,6 +25,7 @@ public:
     NEW_OBJ(NgDOFProc)
 
 protected:
+    virtual void Set(const RndCam *, float, float, float, float);
     virtual void UnSet() { mEnabled = false; }
 
     bool mEnabled; // 0x30

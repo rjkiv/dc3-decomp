@@ -70,6 +70,7 @@ public:
     static float MaxFarNearPlaneRatio() { return sMaxFarNearPlaneRatio; }
     const Hmx::Matrix4 &GetMatrix300() const { return unk300; }
     const Hmx::Matrix4 &GetMatrix340() const { return unk340; }
+    const Vector2 &GetZRange() const { return mZRange; }
 
 protected:
     RndCam();

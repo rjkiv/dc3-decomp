@@ -122,12 +122,19 @@ void NgRnd::ResetStats() {
 }
 
 float EstimateDraw(int idx) {
-    return gNgStats[idx].mMotionBlurs * 0.003f + gNgStats[idx].mFlares * 0.017f
-        + gNgStats[idx].mMultiMeshInsts * 0.001f + gNgStats[idx].mLightsApprox * 0.01f
-        + gNgStats[idx].mLightsReal * 0.001f + gNgStats[idx].mCams * 0.0068f
-        + gNgStats[idx].mMats * 0.0097f + gNgStats[idx].mBones * 0.00126f
-        + gNgStats[idx].mMutMeshes * 0.0112f + gNgStats[idx].mRegMeshes * 0.0028f
-        + gNgStats[idx].mParts * 0.00023333334f + gNgStats[idx].mPartSys * 0.005f;
+    float draw = gNgStats[idx].mParts * 0.00023333334f; // 0x4
+    draw += gNgStats[idx].mPartSys * 0.005f; // 0x8
+    draw += gNgStats[idx].mRegMeshes * 0.0028f; // 0xc
+    draw += gNgStats[idx].mMutMeshes * 0.0112f; // 0x10
+    draw += gNgStats[idx].mBones * 0.00126f; // 0x14
+    draw += gNgStats[idx].mMats * 0.0097f; // 0x18
+    draw += gNgStats[idx].mCams * 0.0068f; // 0x1c
+    draw += gNgStats[idx].mLightsReal * 0.001f; // 0x20
+    draw += gNgStats[idx].mLightsApprox * 0.01f; // 0x24
+    draw += gNgStats[idx].mMultiMeshInsts * 0.001f; // 0x28
+    draw += gNgStats[idx].mFlares * 0.017f; // 0x30
+    draw += gNgStats[idx].mMotionBlurs * 0.003f; // 0x34
+    return draw;
 }
 
 float NgRnd::UpdateOverlay(RndOverlay *overlay, float y) {
@@ -181,7 +188,6 @@ float NgRnd::UpdateOverlay(RndOverlay *overlay, float y) {
             );
             *mStatsOverlay
                 << MakeString("est draw %.1f %.1f\n", EstimateDraw(0), EstimateDraw(1));
-            TheNgStats = &gNgStats[2];
         } else {
             *mStatsOverlay << MakeString("faces %d\n", gNgStats[0].mFaces);
             *mStatsOverlay << MakeString("parts %d\n", gNgStats[0].mParts);
@@ -202,8 +208,8 @@ float NgRnd::UpdateOverlay(RndOverlay *overlay, float y) {
             *mStatsOverlay << MakeString("motion blur %d\n", gNgStats[0].mMotionBlurs);
             *mStatsOverlay << MakeString("spotlights %d\n", gNgStats[0].mSpotlights);
             *mStatsOverlay << MakeString("est draw %.1f\n", EstimateDraw(0));
-            TheNgStats = &gNgStats[2];
         }
+        TheNgStats = &gNgStats[2];
         return y;
     } else {
         return Rnd::UpdateOverlay(overlay, y);

@@ -11,7 +11,7 @@ public:
     OBJ_CLASSNAME(DOFProc);
     OBJ_SET_TYPE(DOFProc);
     virtual DataNode Handle(DataArray *, bool);
-    virtual void Set(RndCam *, float, float, float, float) {}
+    virtual void Set(const RndCam *, float, float, float, float) {}
     virtual void UnSet() {}
     virtual bool Enabled() const { return 0; }
     virtual int Blur() { return 0; }
@@ -40,7 +40,15 @@ public:
     void SetMaxBlurScale(float f) { mMaxBlurScale = f; }
     void SetMaxBlurOffset(float f) { mMaxBlurOffset = f; }
     void SetBlurWidthScale(float f) { mBlurWidthScale = f; }
+    float GetDepthScale() const { return mDepthScale; }
+    float GetDepthOffset() const { return mDepthOffset; }
+    float GetMinBlurScale() const { return mMinBlurScale; }
+    float GetMinBlurOffset() const { return mMinBlurOffset; }
+    float GetMaxBlurScale() const { return mMaxBlurScale; }
+    float GetMaxBlurOffset() const { return mMaxBlurOffset; }
+    float GetBlurWidthScale() const { return mBlurWidthScale; }
 
+protected:
     float mDepthScale;
     float mDepthOffset;
     float mMinBlurScale;

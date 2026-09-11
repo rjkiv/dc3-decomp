@@ -72,7 +72,6 @@ enum MatPropEditAction {
     /** "Allow property to be edited in Material" */
     kPropEdit = 2,
     kNumEditActions = 3,
-    kPropAll = -1, // used as a bitmask
 };
 
 // size 0x204

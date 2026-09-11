@@ -277,15 +277,15 @@ void MetaMaterial::SetEditAction(MatProp propNum, MatPropEditAction action) {
             DataNode var(*val);
             const DataNode *node = Property(propName);
             MILO_ASSERT(node, 0xAC);
-            MatPropEditAction mask;
+            bool useDefault;
             if (propNum == kMatPropTexXfm) {
                 Transform xfm;
                 xfm.Reset();
-                mask = mTexXfm == xfm ? kPropDefault : kPropAll;
+                useDefault = mTexXfm == xfm;
             } else {
-                mask = var.Equal(*node, nullptr, true) ? kPropDefault : kPropAll;
+                useDefault = var.Equal(*node, nullptr, true);
             }
-            action = (MatPropEditAction)((int)action & (int)mask);
+            action = useDefault ? kPropDefault : action;
         }
     }
     mMatPropEditActions[propNum] = action;

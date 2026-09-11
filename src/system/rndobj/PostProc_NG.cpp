@@ -413,7 +413,8 @@ void NgPostProc::DoBloom() {
     }
 
     if (b2) {
-        float scalar = BloomIntensity() * sBloomLocFactor;
+        float intensity = BloomIntensity();
+        float scalar = intensity * sBloomLocFactor;
         Vector4 vc0(
             mBloomColor.red * scalar,
             mBloomColor.green * scalar,
@@ -507,14 +508,12 @@ void NgPostProc::DoBloom() {
         s_prevBloomColor = Hmx::Color(-1, -1, -1, -1);
     }
 
-    if (b2) {
-        if (b1) {
-            TheShaderMgr.SetUnk28(true);
-            TheShaderMgr.SetUnk27(false);
-        } else if (b2) {
-            TheShaderMgr.SetUnk28(false);
-            TheShaderMgr.SetUnk27(true);
-        }
+    if (b2 && b1) {
+        TheShaderMgr.SetUnk28(true);
+        TheShaderMgr.SetUnk27(false);
+    } else if (b2) {
+        TheShaderMgr.SetUnk28(false);
+        TheShaderMgr.SetUnk27(true);
     } else {
         TheShaderMgr.SetUnk27(false);
         TheShaderMgr.SetUnk28(false);
