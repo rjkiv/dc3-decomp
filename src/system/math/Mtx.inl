@@ -178,7 +178,24 @@ inline Hmx::Matrix4::Matrix4(const Transform &xfm) {
 }
 
 void Multiply(const Vector4 &, const Hmx::Matrix4 &, Vector4 &);
-void Transpose(const Hmx::Matrix4 &, Hmx::Matrix4 &);
+
+inline void Transpose(const Hmx::Matrix4 &min, Hmx::Matrix4 &mout) {
+    Vector4 oldX(min.m[0].x, min.m[0].y, min.m[0].z, min.m[0].w);
+    Vector4 oldY(min.m[1].x, min.m[1].y, min.m[1].z, min.m[1].w);
+    Vector4 oldZ(min.m[2].x, min.m[2].y, min.m[2].z, min.m[2].w);
+    Vector4 oldW(min.m[3].x, min.m[3].y, min.m[3].z, min.m[3].w);
+
+    mout.m[0].Set(oldX.x, oldY.x, oldZ.x, oldW.x);
+    mout.m[1].Set(oldX.y, oldY.y, oldZ.y, oldW.y);
+    mout.m[2].Set(oldX.z, oldY.z, oldZ.z, oldW.z);
+    mout.m[3].Set(oldX.w, oldY.w, oldZ.w, oldW.w);
+
+    // mout.m[0].Set(min.m[0].x, min.m[1].x, min.m[2].x, min.m[3].x);
+    // mout.m[1].Set(min.m[0].y, min.m[1].y, min.m[2].y, min.m[3].y);
+    // mout.m[2].Set(min.m[0].z, min.m[1].z, min.m[2].z, min.m[3].z);
+    // mout.m[3].Set(min.m[0].w, min.m[1].w, min.m[2].w, min.m[3].w);
+}
+
 Hmx::Matrix4 operator*(const Transform &, const Hmx::Matrix4 &);
 
 #pragma endregion

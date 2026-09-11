@@ -12,9 +12,10 @@
 #include "rndobj/Draw.h"
 #include "rndobj/Trans.h"
 
+RndCam *RndCam::sCurrent;
 float RndCam::sDefaultNearPlane = 1;
 float RndCam::sMaxFarNearPlaneRatio = 1000;
-static Transform sFlipYZ;
+static Transform sFlipYZ(Hmx::Matrix3(1, 0, 0, 0, 0, 1, 0, 1, 0), Vector3(0, 0, 0));
 
 RndCam::RndCam()
     : mNearPlane(sDefaultNearPlane), mFarPlane(mNearPlane * sMaxFarNearPlaneRatio),
@@ -25,8 +26,9 @@ RndCam::RndCam()
 }
 
 RndCam::~RndCam() {
-    if (sCurrent == this)
+    if (sCurrent == this) {
         sCurrent = nullptr;
+    }
 }
 
 BEGIN_HANDLERS(RndCam)
@@ -86,41 +88,41 @@ BEGIN_LOADS(RndCam)
     LOAD_REVS(bs)
     ASSERT_REVS(12, 0)
     if (d.rev > 10) {
-        Hmx::Object::Load(bs);
+        LOAD_SUPERCLASS(Hmx::Object)
     }
-    RndTransformable::Load(bs);
+    LOAD_SUPERCLASS(RndTransformable)
     if (d.rev < 10) {
-        RndDrawable::DumpLoad(bs);
+        RndDrawable::DumpLoad(d.stream);
     }
     if (d.rev == 8) {
         ObjPtrList<Hmx::Object> objList(this, kObjListNoNull);
         int x;
-        bs >> x >> objList;
+        d >> x >> objList;
     }
-    bs >> mNearPlane;
-    bs >> mFarPlane;
-    bs >> mYFov;
+    d >> mNearPlane;
+    d >> mFarPlane;
+    d >> mYFov;
     if (d.rev < 0xC) {
         mYFov = ConvertFov(mYFov, 0.75f);
     }
     if (d.rev < 2) {
         int x;
-        bs >> x;
+        d >> x;
     }
-    bs >> mScreenRect;
+    d >> mScreenRect;
     if (d.rev > 0 && d.rev < 3) {
         int x;
-        bs >> x;
+        d >> x;
     }
     if (d.rev > 3) {
-        bs >> mZRange;
+        d >> mZRange;
     }
     if (d.rev > 4) {
-        bs >> mTargetTex;
+        d >> mTargetTex;
     }
     if (d.rev == 6) {
         int x;
-        bs >> x;
+        d >> x;
     }
     UpdateLocal();
 END_LOADS
@@ -134,8 +136,10 @@ void RndCam::UpdatedWorldXfm() {
 }
 
 void RndCam::Select() {
-    if (sCurrent) {
-        if (sCurrent->TargetTex() && sCurrent != this) {
+    // i'm chalking this up to an msvc-ism, no way hmx would've written this
+    RndCam *cur = sCurrent;
+    if (cur) {
+        if (sCurrent->TargetTex() && cur != this) {
             sCurrent->TargetTex()->FinishDrawTarget();
         }
     }
@@ -201,29 +205,6 @@ void RndCam::SetFrustum(float near, float far, float yfov, float f4) {
     UpdateLocal();
 }
 
-// float __thiscall RndCam::WorldToScreen(RndCam *this,Vector3 *param_1,Vector2 *param_2)
-
-// {
-
-//   Multiply(param_1,this + 0x180,&local_30);
-//   if (local_30.z == 0.0) {
-//     param_2->x = local_30.x;
-//     param_2->y = local_30.y;
-//   }
-//   else {
-//     param_2->x = local_30.x * (1.0 / local_30.z);
-//     param_2->y = local_30.y * (1.0 / local_30.z);
-//   }
-//   fVar3 = (param_2->x + 1.0) * 0.5;
-//   param_2->x = fVar3;
-//   fVar4 = (param_2->y + 1.0) * 0.5;
-//   param_2->y = fVar4;
-
-//   param_2->y = *(this + 0x2e4) * fVar4 + *(this + 0x2dc);
-//   param_2->x = *(this + 0x2e0) * fVar3 + *(this + 0x2d8);
-//   return local_30.z;
-// }
-
 float RndCam::WorldToScreen(const Vector3 &w, Vector2 &s) const {
     Vector3 v18;
     Multiply(w, mWorldProjectXfm, v18);
@@ -251,8 +232,9 @@ void RndCam::ScreenToWorld(const Vector2 &v2, float f, Vector3 &vout) const {
 }
 
 void RndCam::GetDepthRangeValues(Vector4 &v) const {
-    float zratio = 1.0f / (mZRange.y - mZRange.x);
-    v.Set(mNearPlane, mFarPlane, zratio, zratio * mZRange.x);
+    float zx = mZRange.x;
+    float zratio = 1.0f / (mZRange.y - zx);
+    v.Set(mNearPlane, mFarPlane, zratio, zratio * zx);
 }
 
 void RndCam::GetInfiniteViewProj(Hmx::Matrix4 &m4) const {
@@ -262,6 +244,43 @@ void RndCam::GetInfiniteViewProj(Hmx::Matrix4 &m4) const {
     me0.m[2].z = 1;
     me0.m[3].z = -mNearPlane;
     m4 = tfa0 * me0;
+}
+
+void RndCam::GetCamFrustum(Vector3 &v1, Vector3 (&varr)[4]) {
+    v1 = WorldXfm().v;
+    static Vector2 sV2s[] = { Vector2(0, 0), Vector2(0, 1), Vector2(1, 0), Vector2(1, 1) };
+    for (int i = 0; i < DIM(sV2s); i++) {
+        ScreenToWorld(sV2s[i], mFarPlane, varr[i]);
+        Subtract(varr[i], v1, varr[i]);
+    }
+}
+
+void RndCam::UpdateLocal() {
+    float f2 = (mScreenRect.h / mScreenRect.w) * unk2cc;
+    if (mTargetTex) {
+        f2 *= (float)mTargetTex->Height() / (float)mTargetTex->Width();
+    } else {
+        f2 *= TheRnd.YRatio();
+    }
+    mLocalFrustum.Set(mNearPlane, mFarPlane, mYFov, f2);
+    mLocalProjectXfm.Zero();
+    mInvLocalProjectXfm.Zero();
+    if (!mYFov) {
+        mLocalProjectXfm.m.x.x = 1;
+        mLocalProjectXfm.m.z.y = -1 / f2;
+        mInvLocalProjectXfm.m.x.x = 1;
+        mInvLocalProjectXfm.m.y.z = -f2;
+    } else {
+        float tanned = tanf(mYFov / 2);
+        mLocalProjectXfm.m.x.x = f2 / tanned;
+        mLocalProjectXfm.m.y.z = 1;
+        mLocalProjectXfm.m.z.y = -1 / tanned;
+        mInvLocalProjectXfm.m.x.x = tanned / f2;
+        mInvLocalProjectXfm.m.y.z = -tanned;
+        mInvLocalProjectXfm.m.z.y = 1;
+    }
+    UpdatedWorldXfm();
+    mAspect = TheRnd.GetAspect();
 }
 
 DataNode RndCam::OnGetDefaultNearPlane(DataArray *) { return sDefaultNearPlane; }
