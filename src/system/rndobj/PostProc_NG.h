@@ -4,6 +4,15 @@
 #include "rndobj/PostProc.h"
 #include "rndobj/Tex.h"
 
+enum BloomBlurStyle {
+    kBloomBlurStyle0,
+    kBloomBlurStyle1,
+    kBloomBlurStyle2,
+};
+
+enum BloomBlurDirection {
+};
+
 class NgPostProc : public RndPostProc {
 public:
     class BloomTextureSet {
@@ -29,8 +38,16 @@ public:
         }
 
         void AllocateTextures(unsigned int w, unsigned int h) {
-            for (int i = N; i != 0; i--) {
+            for (int i = 0; i < DIM(mTextures); i++) {
+                w /= 4;
+                h /= 4;
                 mTextures[i].AllocateTextures(w, h);
+            }
+        }
+
+        void FreeTextures() {
+            for (int i = 0; i < DIM(mTextures); i++) {
+                mTextures[i].FreeTextures();
             }
         }
 
@@ -45,8 +62,6 @@ public:
     virtual void Select();
     virtual void QueueMotionBlurObject(class RndDrawable *);
     virtual void SetBloomColor();
-    // virtual void OnSelect();
-    // virtual void OnUnselect();
     virtual void EndWorld();
     virtual void DoPost();
 
@@ -80,20 +95,8 @@ protected:
     void CheckChromaticAberration();
     void CheckPosterizeAndKaleidoscope();
 
-    ObjPtrList<RndDrawable, ObjectDir>::iterator
-    FindInList(ObjPtrList<RndDrawable, ObjectDir> &list, Object *o) {
-        FOREACH (it, list) {
-            if ((Object *)*it == o) {
-                return it;
-            }
-        }
-        return list.end();
-    }
-
-    float unk22c; // 0x22c
-    float unk230; // 0x230
-    float unk234; // 0x234
-    float unk238; // 0x238
+    Vector2 unk22c; // 0x22c
+    Vector2 unk234; // 0x234
     ObjPtrList<RndDrawable> unk23c; // 0x23c
     bool unk250; // 0x250
 };

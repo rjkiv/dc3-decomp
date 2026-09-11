@@ -102,3 +102,8 @@ typedef void (*SplashFunc)(void);
 void SetRndSplasherCallback(
     SplashFunc pollFunc, SplashFunc suspendFunc, SplashFunc resumeFunc
 );
+
+#define kNumBloomTaps 7U
+
+void SetBloomBlurWeights(bool b1, float texWidth, float texHeight);
+void SetBloomBlurWeightsStreak(bool b1, float f2, float f3, float f4, int pass, float f6);

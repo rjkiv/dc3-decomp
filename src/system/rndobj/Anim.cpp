@@ -169,7 +169,8 @@ void RndAnimatable::FireFlowLabel(Symbol s) {
             Hmx::Object *owner = it->RefOwner();
             if (owner && owner->ClassName() == "AnimTask") {
                 AnimTask *task = static_cast<AnimTask *>(owner);
-                if (task->Listener()) {
+                owner = task->Listener();
+                if (owner) {
                     owner->Handle(Message("on_anim_event", s), false);
                     break;
                 }
@@ -343,25 +344,75 @@ void AnimTask::Poll(float f1) {
     if (mAnim) {
         if (unkb0) {
             mAnim->StartAnim();
-            unkb0 = false;
             unk9c = mAnim->GetFrame();
+            unkb0 = false;
         }
         float f14 = 1;
-        if (mBlendPeriod == 0) {
-            if (mBlendTask) {
-                TheTaskMgr.QueueTaskDelete(mBlendTask);
-            }
-        } else if ((f1 / mBlendPeriod) < 1.0f) {
+        float f7 = 1;
+        if (mBlendPeriod != 0) {
             f14 = f1 / mBlendPeriod;
-            float oldblend = mBlendTime;
-            mBlendTime = f1;
-            f14 = (f1 - oldblend) / (mBlendPeriod - oldblend);
-        } else {
+            if (f14 >= 1) {
+                f14 = 1;
+                TheTaskMgr.QueueTaskDelete(mBlendTask);
+                mBlendPeriod = 0;
+            } else {
+                if (!mBlendTask) {
+                    float oldblend = mBlendTime;
+                    mBlendTime = f1;
+                    f14 = (f1 - oldblend) / (mBlendPeriod - oldblend);
+                }
+            }
+        } else if (mBlendTask) {
             TheTaskMgr.QueueTaskDelete(mBlendTask);
-            mBlendPeriod = 0;
         }
 
-        if (!mAnimTarget) {
+        if (!mLoop && f1 <= unkac && unkac != 0) {
+            f7 = mEaseFunc(f1 / unkac, mEasePower, f7) * mScale * unkac + mOffset;
+        } else {
+            f7 = mScale * f1 + mOffset;
+        }
+
+        if (mLoop) {
+            float f12 = ModRange(mMin, mMax, f7);
+            mAnim->SetFrame(f12, f14);
+            if (mListener) {
+                if ((int)(unk9c / (mMax - mMin)) != (int)(f7 / (mMax - mMin))) {
+                    static Message msg("on_anim_event", Symbol("looped"));
+                    mListener->Handle(msg, false);
+                }
+            }
+        } else {
+            float frame;
+            if (unka8) {
+                float start = mAnim->StartFrame();
+                float end = mAnim->EndFrame();
+                float min = Min(start, end);
+                float max = Max(start, end);
+                float diff = max - min;
+                if (f1 == 0) {
+                    if (mScale > 0) {
+                        frame = fmodf(mMin, diff);
+                    } else {
+                        frame = fmodf(mMax, diff);
+                    }
+                } else if (f1 >= unkac) {
+                    if (mScale > 0) {
+                        frame = fmodf(mMax, diff);
+                    } else {
+                        frame = fmodf(mMin, diff);
+                    }
+                } else {
+                    frame = fmodf(f7, diff) + min;
+                }
+            } else {
+                frame = Clamp(mMin, mMax, f7);
+            }
+            mAnim->SetFrame(frame, f14);
+        }
+        unk9c = f7;
+        if (!mAnimTarget
+            || (!mLoop && !mBlending && mBlendPeriod == 0
+                && (f1 > unkac || mScale == 0))) {
             if (mListener) {
                 static Message msg("on_anim_event", Symbol("ended"));
                 mListener->Handle(msg, false);
@@ -395,28 +446,34 @@ DataNode RndAnimatable::OnConvertFrames(DataArray *arr) {
 }
 
 DataNode RndAnimatable::OnAnimate(DataArray *arr) {
-    float local_blend; // 0x88
-    float local_ease_power; // 0x84
-    EaseType local_ease; // 0x80
-    TaskUnits local_units; // 0x7c
-    const char *local_name; // 0x78
-    float local_delay; // 0x74
-    bool local_wait; // 0x72
-    bool local_wrap; // 0x71
-    bool animTaskLoop; // 0x70
+    // // Local variables from RB2 dwarf
+    // float b; // r1+0x3C
+    // float start; // f30
+    // float end; // f29
+    // unsigned char l; // r30
+    // float fpu; // f31
+    // enum TaskUnits u; // r1+0x38
+    // float d; // r1+0x34
+    // const char * n; // r1+0x30
+    // unsigned char w; // r1+0x8
+    // class DataArray * r; // r26
+    // class DataArray * r; // r26
+    // class DataArray * r; // r26
+    // class DataArray * r; // r26
+    // float p; // f0
 
-    local_blend = 0.0f;
+    float local_blend = 0.0f; // 0x88
     float animTaskStart = StartFrame();
     float animTaskEnd = EndFrame();
-    animTaskLoop = Loop();
-    float p = FramesPerUnit();
-    local_units = Units();
-    local_delay = 0.0f;
-    local_name = nullptr;
-    local_wait = false;
-    local_wrap = false;
-    local_ease_power = 2;
-    local_ease = kEaseLinear;
+    bool animTaskLoop = Loop(); // 0x70
+    float fpu = FramesPerUnit();
+    TaskUnits local_units = Units(); // 0x7c
+    float local_delay = 0.0f; // 0x74
+    const char *local_name = nullptr; // 0x78
+    bool local_wait = false; // 0x72
+    bool local_wrap = false; // 0x71
+    float local_ease_power = 2; // 0x84
+    EaseType local_ease = kEaseLinear; // 0x80
     Hmx::Object *local_listener = nullptr;
 
     static Symbol blend("blend");
@@ -443,44 +500,45 @@ DataNode RndAnimatable::OnAnimate(DataArray *arr) {
     arr->FindData(ease, (int &)local_ease, false);
 
     if (arr->FindArray(listener, false)) {
-        local_listener = arr->FindArray(listener, true)->Obj<Hmx::Object>(1);
+        local_listener = arr->FindArray(listener)->Obj<Hmx::Object>(1);
     }
-    DataArray *rangeArr = arr->FindArray(range, false);
-    if (rangeArr) {
-        animTaskStart = rangeArr->Float(1);
-        animTaskEnd = rangeArr->Float(2);
+    DataArray *r = arr->FindArray(range, false);
+    if (r) {
+        animTaskStart = r->Float(1);
+        animTaskEnd = r->Float(2);
         animTaskLoop = false;
     }
-    DataArray *loopArr = arr->FindArray(loop, false);
-    if (loopArr) {
-        if (loopArr->Size() > 1)
-            animTaskStart = loopArr->Float(1);
-        else
+    r = arr->FindArray(loop, false);
+    if (r) {
+        if (r->Size() > 1) {
+            animTaskStart = r->Float(1);
+        } else {
             animTaskStart = StartFrame();
-        if (loopArr->Size() > 2)
-            animTaskEnd = loopArr->Float(2);
-        else
+        }
+        if (r->Size() > 2) {
+            animTaskEnd = r->Float(2);
+        } else {
             animTaskEnd = EndFrame();
+        }
         animTaskLoop = true;
     }
-    DataArray *destArr = arr->FindArray(dest, false);
-    if (destArr) {
+    r = arr->FindArray(dest, false);
+    if (r) {
         animTaskStart = GetFrame();
-        animTaskEnd = destArr->Float(1);
+        animTaskEnd = r->Float(1);
         animTaskLoop = false;
     }
-    DataArray *periodArr = arr->FindArray(period, false);
-    if (periodArr) {
-        p = periodArr->Float(1);
+    r = arr->FindArray(period, false);
+    if (r) {
+        float p = r->Float(1);
         MILO_ASSERT(p, 0x1C5);
-        float fabs = std::fabs(animTaskEnd - animTaskStart);
-        p = fabs / p;
+        fpu = fabsf(animTaskEnd - animTaskStart) / p;
     }
     AnimTask *task = new AnimTask(
         this,
         animTaskStart,
         animTaskEnd,
-        p,
+        fpu,
         animTaskLoop,
         local_blend,
         local_listener,
@@ -493,11 +551,12 @@ DataNode RndAnimatable::OnAnimate(DataArray *arr) {
         MILO_ASSERT(DataThis(), 0x1CD);
         taskPtr->SetName(local_name, DataThis()->DataDir());
     }
-    if (local_wait && taskPtr->BlendTask()) {
+    if (local_wait && taskPtr && taskPtr->BlendTask()) {
         if (taskPtr->BlendTask()->Anim()->GetRate() != GetRate()) {
             MILO_NOTIFY("%s: need same rate to wait", Name());
-        } else
+        } else {
             local_delay = taskPtr->BlendTask()->TimeUntilEnd();
+        }
     }
     static Symbol trigger_anim_task("trigger_anim_task");
     if (!Property(trigger_anim_task, false) || Property(trigger_anim_task)->Int() != 0) {

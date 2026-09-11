@@ -2,6 +2,8 @@
 #include "PostProc.h"
 #include "Rnd.h"
 #include "Utl.h"
+#include "math/Color.h"
+#include "math/Rand.h"
 #include "math/Utl.h"
 #include "obj/Data.h"
 #include "obj/Msg.h"
@@ -12,6 +14,10 @@
 #include "rndobj/DOFProc.h"
 #include "rndobj/HiResScreen.h"
 #include "utl/BinStream.h"
+
+RndPostProc *RndPostProc::sCurrent;
+float RndPostProc::sBloomLocFactor = 1;
+DOFOverrideParams RndPostProc::sDOFOverride;
 
 void RndPostProc::ResetDofProc() { TheDOFProc->UnSet(); }
 RndPostProc *RndPostProc::Current() { return sCurrent; }
@@ -45,17 +51,15 @@ unsigned int ProcCounter::SetEmulateFPS(int fps) {
         return mFPS;
     }
     fps = Clamp(1, 60, fps);
-    if (fps == mFPS) {
-        return mFPS;
+    if (fps != mFPS) {
+        mFPS = fps;
+        int round = Round(120.0f / mFPS);
+        mSwitch = round >> 1;
+        mOdd = round & 1;
+        if (mCount >= mSwitch) {
+            mCount = 0;
+        }
     }
-    mFPS = fps;
-    int round = Round(120.0f / mFPS);
-    mSwitch = round >> 1;
-    mOdd = round;
-    if (mCount < mSwitch) {
-        return mFPS;
-    }
-    mCount = 0;
     return mFPS;
 }
 
@@ -73,7 +77,9 @@ ProcessCmd ProcCounter::ProcCommands() {
         SetEmulateFPS(
             RndPostProc::Current() ? Round(RndPostProc::Current()->EmulateFPS()) : 0
         );
-        if (mSwitch >= 2) {
+        if (mSwitch < 2) {
+            return kProcessAll;
+        } else {
             ProcessCmd cmd = kProcessNone;
             switch (mCount) {
             case -1:
@@ -89,15 +95,13 @@ ProcessCmd ProcCounter::ProcCommands() {
             default:
                 break;
             }
-            mCount++;
-            if (mCount >= mSwitch) {
+            if (++mCount >= mSwitch) {
                 mCount = 0;
                 mSwitch += mOdd;
                 mOdd = -mOdd;
             }
             return cmd;
         }
-        return kProcessAll;
     }
 }
 
@@ -220,18 +224,13 @@ BEGIN_SAVES(RndPostProc)
     bs << mNoiseBaseScale << mNoiseTopScale << mNoiseIntensity << mNoiseStationary;
     bs << mNoiseMap;
     bs << mNoiseMidtone;
-    bs << mTrailThreshold;
-    bs << mTrailDuration;
+    bs << mTrailThreshold << mTrailDuration;
     bs << mEmulateFPS;
     bs << mPosterLevels;
     bs << mPosterMin;
-    bs << mKaleidoscopeComplexity;
-    bs << mKaleidoscopeSize;
-    bs << mKaleidoscopeAngle;
-    bs << mKaleidoscopeRadius;
-    bs << mKaleidoscopeFlipUVs;
-    bs << mHallOfTimeRate;
-    bs << mHallOfTimeColor << mHallOfTimeMix;
+    bs << mKaleidoscopeComplexity << mKaleidoscopeSize << mKaleidoscopeAngle;
+    bs << mKaleidoscopeRadius << mKaleidoscopeFlipUVs;
+    bs << mHallOfTimeRate << mHallOfTimeColor << mHallOfTimeMix;
     bs << mHallOfTimeType;
     bs << mMotionBlurBlend;
     bs << mMotionBlurWeight;
@@ -252,9 +251,7 @@ BEGIN_SAVES(RndPostProc)
     bs << mVignetteColor;
     bs << mVignetteIntensity;
     bs << mBloomGlare;
-    bs << mBloomStreak;
-    bs << mBloomStreakAttenuation;
-    bs << mBloomStreakAngle;
+    bs << mBloomStreak << mBloomStreakAttenuation << mBloomStreakAngle;
     bs << mHueTarget;
     bs << mHueFocus;
     bs << mBlendAmount;
@@ -330,11 +327,12 @@ BEGIN_LOADS(RndPostProc)
         int dRev;
         d >> dRev;
         MILO_ASSERT(dRev == 3, 0x2A8);
-        float f30 = 0;
+        Sphere s;
         bool b70;
-        Vector3 v40;
         int i5c;
-        d >> b70 >> v40 >> f30 >> i5c;
+        // stupid and dumb
+        BinStream &bs2 = (d >> b70).stream;
+        bs2 >> s >> i5c;
     } else {
         LOAD_SUPERCLASS(Hmx::Object)
     }
@@ -420,12 +418,14 @@ bool RndPostProc::DoGradientMap() const {
 
 bool RndPostProc::DoRefraction() const { return mRefractMap && mRefractDist; }
 
+bool RndPostProc::DoHueConverge() const { return true; }
+
 bool RndPostProc::ColorXfmEnabled() const {
     return mColorModulation != 1 || mColorXfm.mHue != 0 || mColorXfm.mSaturation != 0
         || mColorXfm.mLightness != 0 || mColorXfm.mContrast != 0
         || mColorXfm.mBrightness != 0 || mColorXfm.mLevelInLo.Pack() != 0
-        || mColorXfm.mLevelInHi.Pack() != 0 || mColorXfm.mLevelOutLo.Pack() != 0
-        || mColorXfm.mLevelOutHi.Pack() != 0;
+        || mColorXfm.mLevelOutLo.Pack() != 0 || mColorXfm.mLevelInHi.Pack() != 0xffffff
+        || mColorXfm.mLevelOutHi.Pack() != 0xffffff;
 }
 
 void RndPostProc::UpdateTimeDelta() {
@@ -438,6 +438,323 @@ void RndPostProc::UpdateTimeDelta() {
 void RndPostProc::UpdateBlendPrevious() {
     if (BlendPrevious()) {
         MILO_ASSERT(mTrailDuration > 0.f, 0x100);
-        mBlendVec.Set(mTrailThreshold, mDeltaSecs / mTrailDuration, 1.0f / 3.0f);
+        mBlendVec.x = mTrailThreshold;
+        mBlendVec.y = mDeltaSecs / mTrailDuration;
+        mBlendVec.z = 1.0f / 3.0f;
+    }
+}
+
+void RndPostProc::UpdateColorModulation() {
+    if (mFlickerTimeBounds.x > 0 && mFlickerTimeBounds.y > 0 && mFlickerModBounds.y > 0) {
+        if (mFlickerSeconds.x >= mFlickerSeconds.y) {
+            mFlickerSeconds.x = Max(mFlickerSeconds.x - mFlickerSeconds.y, 0.0f);
+            mColorModulation = 1 - RandomFloat(mFlickerModBounds.x, mFlickerModBounds.y);
+            mFlickerSeconds.y =
+                Max(mFlickerSeconds.x,
+                    RandomFloat(mFlickerTimeBounds.x, mFlickerTimeBounds.y));
+        }
+        mFlickerSeconds.x += mDeltaSecs;
+    } else {
+        mColorModulation = 1;
+    }
+}
+
+void RndPostProc::LoadRev(BinStreamRev &d) {
+    if (d.rev > 4) {
+        if (d.rev > 0xA) {
+            d >> mBloomColor;
+            if (d.rev < 0x18) {
+                int x;
+                d >> x;
+            }
+            d >> mBloomIntensity;
+            d >> mBloomThreshold;
+        } else {
+            Hmx::Color c;
+            d >> c;
+            float f10 = c.red;
+            if (c.red > c.green) {
+                f10 = c.green;
+            }
+            if (f10 > c.blue) {
+                f10 = c.blue;
+            }
+            if (f10 < 4) {
+                mBloomThreshold = c.alpha;
+                c.red = (4 - c.red) / (4 - f10);
+                c.green = (4 - c.green) / (4 - f10);
+                c.blue = (4 - c.blue) / (4 - f10);
+                c.alpha = 0;
+                mBloomColor = c;
+            } else {
+                mBloomColor.Set(1, 1, 1, 0);
+                mBloomThreshold = c.alpha;
+            }
+            int x;
+            d >> x;
+            d >> mBloomIntensity;
+            mBloomIntensity = sqrtf(mBloomIntensity);
+            int y;
+            d >> y;
+        }
+    }
+    if (d.rev > 5 && d.altRev < 1) {
+        ObjPtr<RndTex> tex(this);
+        d >> tex;
+    }
+    if (d.rev > 6) {
+        if (d.rev < 0x12) {
+            d >> mColorXfm.mColorXfm;
+        } else {
+            MILO_ASSERT_FMT(
+                mColorXfm.Load(d.stream),
+                "%s can't load new %s version",
+                PathName(this),
+                ClassName()
+            );
+        }
+        d.stream >> mFlickerModBounds >> mFlickerTimeBounds;
+        if (d.rev < 9) {
+            mFlickerModBounds.x = 1 - mFlickerModBounds.x;
+            mFlickerModBounds.y = 1 - mFlickerModBounds.y;
+        }
+        if (d.rev < 0x1D) {
+            mFlickerModBounds.x = 0;
+        }
+        d.stream >> mNoiseBaseScale >> mNoiseTopScale >> mNoiseIntensity;
+        if (d.rev > 0xC) {
+            d >> mNoiseStationary;
+        }
+        if (d.rev > 8) {
+            d >> mNoiseMap;
+        }
+        if (d.rev > 0x24) {
+            d >> mNoiseMidtone;
+        } else {
+            mNoiseMidtone = false;
+        }
+        if (d.rev < 0x12) {
+            d >> mColorXfm.mHue;
+            d >> mColorXfm.mSaturation;
+            d >> mColorXfm.mLightness;
+            d >> mColorXfm.mContrast;
+            d >> mColorXfm.mBrightness;
+        }
+    }
+    if (d.rev > 7) {
+        d >> mTrailThreshold;
+        d >> mTrailDuration;
+        d >> mEmulateFPS;
+    }
+    if (d.rev > 9) {
+        if (d.rev < 0x12) {
+            d.stream >> mColorXfm.mLevelInLo >> mColorXfm.mLevelInHi;
+            d.stream >> mColorXfm.mLevelOutLo >> mColorXfm.mLevelOutHi;
+        }
+        d.stream >> mPosterLevels;
+    }
+    if (d.rev > 0xD) {
+        d.stream >> mPosterMin;
+    }
+    if (d.rev > 0xB) {
+        if (d.rev < 0x16) {
+            float f8;
+            d >> f8;
+            if (f8 != 0) {
+                mKaleidoscopeComplexity = 2;
+            }
+        } else {
+            d >> mKaleidoscopeComplexity;
+            d >> mKaleidoscopeSize;
+            d >> mKaleidoscopeAngle;
+            d >> mKaleidoscopeRadius;
+            d >> mKaleidoscopeFlipUVs;
+        }
+    }
+
+    if (d.rev > 0xE && d.rev < 0x1F) {
+        int x;
+        d >> x;
+        if (d.rev < 0x11) {
+            int y;
+            d >> y;
+            ObjPtr<RndDrawable> draw(this);
+            d >> draw;
+        }
+    }
+    if (d.rev > 0x12) {
+        d.stream >> mHallOfTimeRate;
+        d.stream >> mHallOfTimeColor >> mHallOfTimeMix;
+        if (d.rev > 0x13 && d.rev < 0x20) {
+            bool b;
+            d >> b;
+            mHallOfTimeType = b ? 1 : 0;
+        } else if (d.rev > 0x1F) {
+            d.stream >> mHallOfTimeType;
+        }
+    }
+    if (d.rev > 0x14) {
+        d.stream >> mMotionBlurBlend;
+        if (d.rev > 0x1A) {
+            d.stream >> mMotionBlurWeight;
+            if (d.rev > 0x21) {
+                d >> mMotionBlurVelocity;
+            }
+        }
+    }
+    if (d.rev > 0x16) {
+        d >> mGradientMap;
+        d.stream >> mGradientMapOpacity;
+        d.stream >> mGradientMapIndex;
+        d.stream >> mGradientMapStart;
+        d.stream >> mGradientMapEnd;
+    }
+    if (d.rev < 0x18) {
+        mBloomThreshold *= 4;
+    }
+    if (d.rev > 0x18) {
+        d >> mRefractMap;
+        d >> mRefractDist;
+        d >> mRefractScale;
+        d >> mRefractPanning;
+        d >> mRefractAngle;
+        if (d.rev > 0x1B) {
+            d >> mRefractVelocity;
+        }
+    }
+    if (d.rev > 0x19) {
+        d >> mChromaticAberrationOffset;
+        if (d.rev > 0x22) {
+            d >> mChromaticSharpen;
+        }
+    }
+    if (d.rev > 0x1D) {
+        d.stream >> mVignetteColor >> mVignetteIntensity;
+    }
+    if (d.rev > 0x20) {
+        d >> mBloomGlare;
+    }
+    if (d.rev > 0x23) {
+        d >> mBloomStreak >> mBloomStreakAttenuation >> mBloomStreakAngle;
+    }
+    if (d.altRev > 1) {
+        d >> mHueTarget >> mHueFocus >> mBlendAmount >> mBrightnessPower;
+    }
+}
+
+void RndPostProc::Interp(const RndPostProc *p1, const RndPostProc *p2, float f3) {
+    if ((p1 || p2) && !mForceCurrentInterp) {
+        if (!p2) {
+            p2 = p1;
+        } else if (!p1) {
+            p1 = p2;
+        }
+        const RndPostProc *p5 = f3 > 0 ? p2 : p1;
+        mNoiseMidtone = p5->mNoiseMidtone;
+        mNoiseStationary = p5->mNoiseStationary;
+        mNoiseMap = p5->mNoiseMap.Ptr();
+        mGradientMap = p5->mGradientMap.Ptr();
+        mRefractMap = p5->mRefractMap.Ptr();
+        mBloomGlare = p5->mBloomGlare;
+        mMotionBlurVelocity = p5->mMotionBlurVelocity;
+        mChromaticSharpen = p5->mChromaticSharpen;
+        mBloomIntensity = ::Interp(
+            p1->mBloomGlare && TheHiResScreen.IsActive() ? p1->mBloomIntensity / 3.0f
+                                                         : p1->mBloomIntensity,
+            p2->mBloomGlare && TheHiResScreen.IsActive() ? p2->mBloomIntensity / 3.0f
+                                                         : p2->mBloomIntensity,
+            f3
+        );
+        ::Interp(p1->mBloomColor, p2->mBloomColor, f3, mBloomColor);
+        ::Interp(p1->mBlendVec, p2->mBlendVec, f3, mBlendVec);
+        ::Interp(p1->mTrailDuration, p2->mTrailDuration, f3, mTrailDuration);
+        ::Interp(p1->mTrailThreshold, p2->mTrailThreshold, f3, mTrailThreshold);
+        float f7 = f3;
+        if (p1 != p2 && p1->mNoiseMidtone != p2->mNoiseMidtone && p1->mNoiseIntensity != 0
+            && p2->mNoiseIntensity != 0) {
+            f7 = 1;
+        }
+        ::Interp(p1->mNoiseBaseScale, p2->mNoiseBaseScale, f7, mNoiseBaseScale);
+        ::Interp(p1->mNoiseTopScale, p2->mNoiseTopScale, f7, mNoiseTopScale);
+        ::Interp(p1->mNoiseIntensity, p2->mNoiseIntensity, f7, mNoiseIntensity);
+        ::Interp(
+            p1->mKaleidoscopeComplexity,
+            p2->mKaleidoscopeComplexity,
+            f3,
+            mKaleidoscopeComplexity
+        );
+        ::Interp(p1->mKaleidoscopeSize, p2->mKaleidoscopeSize, f3, mKaleidoscopeSize);
+        ::Interp(p1->mKaleidoscopeAngle, p2->mKaleidoscopeAngle, f3, mKaleidoscopeAngle);
+        ::Interp(
+            p1->mKaleidoscopeRadius, p2->mKaleidoscopeRadius, f3, mKaleidoscopeRadius
+        );
+        mKaleidoscopeFlipUVs =
+            f3 < 1 ? p1->mKaleidoscopeFlipUVs : p2->mKaleidoscopeFlipUVs;
+        ::Interp(p1->mEmulateFPS, p2->mEmulateFPS, f3, mEmulateFPS);
+        ::Interp(p1->mPosterLevels, p2->mPosterLevels, f3, mPosterLevels);
+        ::Interp(p1->mPosterMin, p2->mPosterMin, f3, mPosterMin);
+        ::Interp(p1->mColorModulation, p2->mColorModulation, f3, mColorModulation);
+        ::Interp(
+            p1->mColorXfm.mBrightness, p2->mColorXfm.mBrightness, f3, mColorXfm.mBrightness
+        );
+        ::Interp(p1->mColorXfm.mHue, p2->mColorXfm.mHue, f3, mColorXfm.mHue);
+        ::Interp(
+            p1->mColorXfm.mSaturation, p2->mColorXfm.mSaturation, f3, mColorXfm.mSaturation
+        );
+        ::Interp(
+            p1->mColorXfm.mLightness, p2->mColorXfm.mLightness, f3, mColorXfm.mLightness
+        );
+        ::Interp(
+            p1->mColorXfm.mContrast, p2->mColorXfm.mContrast, f3, mColorXfm.mContrast
+        );
+        ::Interp(
+            p1->mColorXfm.mLevelInLo, p2->mColorXfm.mLevelInLo, f3, mColorXfm.mLevelInLo
+        );
+        ::Interp(
+            p1->mColorXfm.mLevelInHi, p2->mColorXfm.mLevelInHi, f3, mColorXfm.mLevelInHi
+        );
+        ::Interp(
+            p1->mColorXfm.mLevelOutLo, p2->mColorXfm.mLevelOutLo, f3, mColorXfm.mLevelOutLo
+        );
+        ::Interp(
+            p1->mColorXfm.mLevelOutHi, p2->mColorXfm.mLevelOutHi, f3, mColorXfm.mLevelOutHi
+        );
+        mColorXfm.AdjustColorXfm();
+        ::Interp(
+            p1->mGradientMapOpacity, p2->mGradientMapOpacity, f3, mGradientMapOpacity
+        );
+        ::Interp(p1->mGradientMapIndex, p2->mGradientMapIndex, f3, mGradientMapIndex);
+        ::Interp(p1->mGradientMapStart, p2->mGradientMapStart, f3, mGradientMapStart);
+        ::Interp(p1->mGradientMapEnd, p2->mGradientMapEnd, f3, mGradientMapEnd);
+        ::Interp(p1->mRefractDist, p2->mRefractDist, f3, mRefractDist);
+        ::Interp(p1->mRefractScale, p2->mRefractScale, f3, mRefractScale);
+        ::Interp(p1->mRefractPanning, p2->mRefractPanning, f3, mRefractPanning);
+        ::Interp(p1->mRefractVelocity, p2->mRefractVelocity, f3, mRefractVelocity);
+        ::Interp(p1->mRefractAngle, p2->mRefractAngle, f3, mRefractAngle);
+        ::Interp(p1->mMotionBlurBlend, p2->mMotionBlurBlend, f3, mMotionBlurBlend);
+        ::Interp(p1->mMotionBlurWeight, p2->mMotionBlurWeight, f3, mMotionBlurWeight);
+        ::Interp(
+            p1->mChromaticAberrationOffset,
+            p2->mChromaticAberrationOffset,
+            f3,
+            mChromaticAberrationOffset
+        );
+        ::Interp(p1->mVignetteColor, p2->mVignetteColor, f3, mVignetteColor);
+        ::Interp(p1->mVignetteIntensity, p2->mVignetteIntensity, f3, mVignetteIntensity);
+        ::Interp(p1->mHueTarget, p2->mHueTarget, f3, mHueTarget);
+        ::Interp(p1->mHueFocus, p2->mHueFocus, f3, mHueFocus);
+        ::Interp(p1->mBlendAmount, p2->mBlendAmount, f3, mBlendAmount);
+        ::Interp(p1->mBrightnessPower, p2->mBrightnessPower, f3, mBrightnessPower);
+        ::Interp(p1->mFlickerTimeBounds, p2->mFlickerTimeBounds, f3, mFlickerTimeBounds);
+        ::Interp(p1->mFlickerModBounds, p2->mFlickerModBounds, f3, mFlickerModBounds);
+        bool hasRate = p1->mHallOfTimeRate;
+        if (hasRate) {
+            mHallOfTimeType = p1->mHallOfTimeType;
+            mHallOfTimeRate = p1->mHallOfTimeRate;
+            mHallOfTimeColor = p1->mHallOfTimeColor;
+            mHallOfTimeMix = p1->mHallOfTimeMix;
+        } else {
+            mHallOfTimeRate = 0;
+        }
     }
 }

@@ -57,13 +57,13 @@ public:
     virtual void SetVConstant(VShaderConstant, bool) = 0;
     virtual void SetVConstant(VShaderConstant, const Hmx::Matrix4 &) = 0; // 0x18
     virtual void SetVConstant4x3(VShaderConstant, const Hmx::Matrix4 &) = 0;
-    virtual void SetPConstant(PShaderConstant, const Hmx::Matrix4 &) = 0;
+    virtual void SetPConstant(PShaderConstant, const Hmx::Matrix4 &) = 0; // 0x48
     virtual void SetPConstant(PShaderConstant, RndCubeTex *) = 0;
     virtual void SetPConstant(PShaderConstant, const Vector4 &) = 0; // 0x40
     virtual void SetPConstant(PShaderConstant, RndTex *) = 0; // 0x3c
     virtual void SetPConstant(PShaderConstant, int) = 0;
     virtual void SetPConstant(PShaderConstant, bool) = 0;
-    virtual void SetPConstant4x3(PShaderConstant, const Hmx::Matrix4 &) = 0;
+    virtual void SetPConstant4x3(PShaderConstant, const Hmx::Matrix4 &) = 0; // 0x4c
     virtual RndMat *DrawHighlightMat() { return mDrawHighlightMat; }
     virtual RndMat *DrawRectMat() { return mDrawRectMat; }
 
@@ -100,6 +100,14 @@ public:
     void SetUnk30(bool b) { unk30 = b; }
     int NumTaps() const { return mNumTaps; }
     void SetNumTaps(int i) { mNumTaps = i; }
+    void SetUnk2b(bool b) { unk2b = b; }
+    void SetUnk2c(bool b) { unk2c = b; }
+    void SetUnk2a(bool b) { unk2a = b; }
+    void SetUnk3b(bool b) { unk3b = b; }
+    void SetUnk2d(bool b) { unk2d = b; }
+    void SetUnk2e(bool b) { unk2e = b; }
+    void SetUnk3c(bool b) { unk3c = b; }
+    void SetUnk3d(bool b) { unk3d = b; }
 
 protected:
     virtual void LoadShaders(const char *filename);

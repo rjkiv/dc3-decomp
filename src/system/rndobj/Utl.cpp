@@ -1177,8 +1177,6 @@ void SetBloomBlurWeights(bool b1, float texWidth, float texHeight) {
     }
 }
 
-#define kNumBloomTaps 7U
-
 void SetBloomBlurWeightsStreak(bool b1, float f2, float f3, float f4, int pass, float f6) {
     MILO_ASSERT(pass >= 0 && pass < 3, 0x11AA);
 

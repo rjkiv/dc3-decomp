@@ -230,21 +230,10 @@ Transform RndLight::Projection() {
         float radSlope = (mBotRadius - mTopRadius) / mRange;
         Scale(my, radSlope, my);
 
-        out.m.x.x = mx.x;
-        out.m.x.y = mz.x;
-        out.m.x.z = my.x;
-
-        out.m.y.x = mx.y;
-        out.m.y.y = mz.y;
-        out.m.y.z = my.y;
-
-        out.m.z.x = mx.z;
-        out.m.z.y = mz.z;
-        out.m.z.z = my.z;
-
-        out.v.x = -Dot(mx, v);
-        out.v.y = -Dot(mz, v);
-        out.v.z = mTopRadius - Dot(my, v);
+        out.m.x.Set(mx.x, mz.x, my.x);
+        out.m.y.Set(mx.y, mz.y, my.y);
+        out.m.z.Set(mx.z, mz.z, my.z);
+        out.v.Set(-Dot(mx, v), -Dot(mz, v), mTopRadius - Dot(my, v));
 
         Multiply(out, mTextureXfm, out);
         static Transform sXfm(

@@ -87,6 +87,7 @@ public:
     bool DoRefraction() const;
     bool ColorXfmEnabled() const;
     float EmulateFPS() const { return mEmulateFPS; }
+    bool DoHueConverge() const;
 
     static RndPostProc *Current();
     static DOFOverrideParams &DOFOverrides() { return sDOFOverride; }

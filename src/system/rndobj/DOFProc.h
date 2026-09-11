@@ -30,7 +30,9 @@ extern DOFProc *TheDOFProc;
 
 class DOFOverrideParams {
 public:
-    DOFOverrideParams();
+    DOFOverrideParams()
+        : mDepthScale(1), mDepthOffset(0), mMinBlurScale(1), mMinBlurOffset(0),
+          mMaxBlurScale(1), mMaxBlurOffset(0), mBlurWidthScale(1) {}
     void SetDepthScale(float f) { mDepthScale = f; }
     void SetDepthOffset(float f) { mDepthOffset = f; }
     void SetMinBlurScale(float f) { mMinBlurScale = f; }
