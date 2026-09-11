@@ -1,6 +1,7 @@
 #include "rndobj/PostProc_NG.h"
 
 #include "HiResScreen.h"
+#include "hamobj/HamDirector.h"
 #include "math/Color.h"
 #include "math/Geo.h"
 #include "math/Mtx.h"
@@ -12,6 +13,7 @@
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "rndobj/BaseMaterial.h"
+#include "rndobj/Overlay.h"
 #include "rndobj/RenderState.h"
 #include "rndobj/PostProc.h"
 #include "rndobj/Rnd.h"
@@ -383,4 +385,138 @@ void Bloom_Blur(
     TheNgRnd.DrawRect(r, work, shader, c, nullptr, nullptr);
     TheShaderMgr.SetNumTaps(1);
     texDst->FinishDrawTarget();
+}
+
+void NgPostProc::DoBloom() {
+    bool b1, b2;
+
+    if (BloomIntensity() > 0 || mBloomColor.alpha > 0) {
+        b2 = true;
+    } else {
+        b2 = false;
+    }
+    if (mBloomGlare && !TheHiResScreen.IsActive()) {
+        b1 = true;
+    } else {
+        b1 = false;
+    }
+
+    if (!b2 && s_BloomSetter) {
+        RndOverlay *ppOverlay = RndOverlay::Find("postproc");
+        if (ppOverlay->Showing()) {
+            TextStream *r = TheDebug.Reflect();
+            TheDebug.SetReflect(ppOverlay);
+            MILO_LOG("BLOOM : NONE\n");
+            TheDebug.SetReflect(r);
+        }
+        s_BloomSetter = nullptr;
+    }
+
+    if (b2) {
+        float scalar = BloomIntensity() * sBloomLocFactor;
+        Vector4 vc0(
+            mBloomColor.red * scalar,
+            mBloomColor.green * scalar,
+            mBloomColor.blue * scalar,
+            0
+        );
+        if (mBloomColor != s_prevBloomColor || BloomIntensity() != s_prevBloomIntensity
+            || s_BloomSetter != this) {
+            s_prevBloomColor = mBloomColor;
+            s_prevBloomIntensity = BloomIntensity();
+            s_BloomSetter = this;
+            RndOverlay *ppOverlay = RndOverlay::Find("postproc");
+            if (ppOverlay->Showing()) {
+                TextStream *r = TheDebug.Reflect();
+                RndPostProc *path = TheHamDirector->GetUnk18c();
+                TheDebug.SetReflect(ppOverlay);
+                static int s8a30;
+                MILO_LOG(
+                    "%03d:BLOOM: C=<%3d,%3d,%3d> I=%5.2f : %s\n",
+                    s8a30++ % 100,
+                    (int)(mBloomColor.red * 256.0),
+                    (int)(mBloomColor.green * 256.0),
+                    (int)(mBloomColor.blue * 256.0),
+                    BloomIntensity(),
+                    PathName(path)
+                );
+                TheDebug.SetReflect(r);
+            }
+        }
+        TheShaderMgr.SetPConstant((PShaderConstant)6, vc0);
+        TheShaderMgr.SetPConstant(
+            (PShaderConstant)7, TheRnd.GetDefaultTex(Rnd::kDefaultTex_Black)
+        );
+        TheShaderMgr.SetPConstant(
+            (PShaderConstant)11, TheRnd.GetDefaultTex(Rnd::kDefaultTex_Black)
+        );
+        TheShaderMgr.SetPConstant(
+            (PShaderConstant)15, TheRnd.GetDefaultTex(Rnd::kDefaultTex_Black)
+        );
+        TheRenderState.SetTextureFilter(7, RndRenderState::kFilterModeLinear, false);
+        TheRenderState.SetTextureClamp(7, RndRenderState::kClampModeClamp);
+        TheRenderState.SetTextureFilter(7, RndRenderState::kFilterModeLinear, false);
+        TheRenderState.SetTextureClamp(7, RndRenderState::kClampModeClamp);
+        TheRenderState.SetTextureFilter(11, RndRenderState::kFilterModeLinear, false);
+        TheRenderState.SetTextureClamp(11, RndRenderState::kClampModeClamp);
+        TheRenderState.SetTextureFilter(15, RndRenderState::kFilterModeLinear, false);
+        TheRenderState.SetTextureClamp(15, RndRenderState::kClampModeClamp);
+        RndTex *preProcessTex = TheNgRnd.PreProcessTexture();
+        if (preProcessTex) {
+            if (b1) {
+                Bloom_Downsample(kBloomShader, preProcessTex, sBloom.Tex(0, 1));
+                // clang-format off
+                Bloom_Blur(sBloom.Tex(0, 1), sBloom.Tex(0, 0), kBloomBlurStyle0, kBloomBlurDirection0, 0, 0, 0);
+                Bloom_Blur(sBloom.Tex(0, 0), sBloom.Tex(0, 1), kBloomBlurStyle0, kBloomBlurDirection1, 0, 0, 0);
+                Bloom_Blur(sBloom.Tex(0, 1), sBloom.Tex(0, 0), kBloomBlurStyle2, kBloomBlurDirection0, 0, 0, 0);
+                // clang-format on
+                TheShaderMgr.SetPConstant((PShaderConstant)7, sBloom.Tex(0, 0));
+            } else if (mBloomStreak && !mBloomGlare) {
+                Bloom_Downsample(kBloomShader, preProcessTex, sBloom.Tex(0, 1));
+                // clang-format off
+                Bloom_Blur(sBloom.Tex(0, 1), sBloom.Tex(0, 0), kBloomBlurStyle1, kBloomBlurDirection0, 0, mBloomStreakAttenuation, mBloomStreakAngle);
+                Bloom_Blur(sBloom.Tex(0, 0), sBloom.Tex(0, 1), kBloomBlurStyle1, kBloomBlurDirection0, 1, mBloomStreakAttenuation, mBloomStreakAngle);
+                Bloom_Blur(sBloom.Tex(0, 1), sBloom.Tex(0, 0), kBloomBlurStyle1, kBloomBlurDirection0, 2, mBloomStreakAttenuation, mBloomStreakAngle);
+                Bloom_Downsample(kBloomShader, preProcessTex, sBloom.Tex(1, 1));
+                Bloom_Blur(sBloom.Tex(1, 1), sBloom.Tex(1, 0), kBloomBlurStyle1, kBloomBlurDirection1, 0, mBloomStreakAttenuation, mBloomStreakAngle);
+                Bloom_Blur(sBloom.Tex(1, 0), sBloom.Tex(1, 1), kBloomBlurStyle1, kBloomBlurDirection1, 1, mBloomStreakAttenuation, mBloomStreakAngle);
+                Bloom_Blur(sBloom.Tex(1, 1), sBloom.Tex(1, 0), kBloomBlurStyle1, kBloomBlurDirection1, 2, mBloomStreakAttenuation, mBloomStreakAngle);
+                // clang-format on
+                TheShaderMgr.SetPConstant((PShaderConstant)7, sBloom.Tex(0, 0));
+                TheShaderMgr.SetPConstant((PShaderConstant)11, sBloom.Tex(1, 0));
+            } else {
+                Bloom_Downsample(kBloomShader, preProcessTex, sBloom.Tex(0, 0));
+                // clang-format off
+                Bloom_Blur(sBloom.Tex(0, 0), sBloom.Tex(0, 1), kBloomBlurStyle0, kBloomBlurDirection0, 0, 0, 0);
+                Bloom_Blur(sBloom.Tex(0, 1), sBloom.Tex(0, 0), kBloomBlurStyle0, kBloomBlurDirection1, 0, 0, 0);
+                Bloom_Downsample(kDownsample4xShader, sBloom.Tex(0, 0), sBloom.Tex(1, 0));
+                Bloom_Blur(sBloom.Tex(1, 0), sBloom.Tex(1, 1), kBloomBlurStyle0, kBloomBlurDirection0, 0, 0, 0);
+                Bloom_Blur(sBloom.Tex(1, 1), sBloom.Tex(1, 0), kBloomBlurStyle0, kBloomBlurDirection1, 0, 0, 0);
+                Bloom_Downsample(kDownsample4xShader, sBloom.Tex(1, 0), sBloom.Tex(2, 0));
+                Bloom_Blur(sBloom.Tex(2, 0), sBloom.Tex(2, 1), kBloomBlurStyle0, kBloomBlurDirection0, 0, 0, 0);
+                Bloom_Blur(sBloom.Tex(2, 1), sBloom.Tex(2, 0), kBloomBlurStyle0, kBloomBlurDirection1, 0, 0, 0);
+                // clang-format on
+                TheShaderMgr.SetPConstant((PShaderConstant)7, sBloom.Tex(0, 0));
+                TheShaderMgr.SetPConstant((PShaderConstant)11, sBloom.Tex(1, 0));
+                TheShaderMgr.SetPConstant((PShaderConstant)15, sBloom.Tex(2, 0));
+            }
+        }
+    } else {
+        s_BloomSetter = nullptr;
+        s_prevBloomIntensity = -1;
+        s_prevBloomColor = Hmx::Color(-1, -1, -1, -1);
+    }
+
+    if (b2) {
+        if (b1) {
+            TheShaderMgr.SetUnk28(true);
+            TheShaderMgr.SetUnk27(false);
+        } else if (b2) {
+            TheShaderMgr.SetUnk28(false);
+            TheShaderMgr.SetUnk27(true);
+        }
+    } else {
+        TheShaderMgr.SetUnk27(false);
+        TheShaderMgr.SetUnk28(false);
+    }
 }

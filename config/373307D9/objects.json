@@ -617,7 +617,7 @@
             "system/rndobj/PartLauncher.cpp": "NonMatching",
             "system/rndobj/Poll.cpp": "Matching",
             "system/rndobj/PollAnim.cpp": "Matching",
-            "system/rndobj/PostProc.cpp": "NonMatching",
+            "system/rndobj/PostProc.cpp": "Matching",
             "system/rndobj/PostProcMgr.cpp": "Matching",
             "system/rndobj/PostProc_NG.cpp": "NonMatching",
             "system/rndobj/PropAnim.cpp": "NonMatching",

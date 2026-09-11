@@ -447,11 +447,11 @@ void RndPostProc::UpdateBlendPrevious() {
 void RndPostProc::UpdateColorModulation() {
     if (mFlickerTimeBounds.x > 0 && mFlickerTimeBounds.y > 0 && mFlickerModBounds.y > 0) {
         if (mFlickerSeconds.x >= mFlickerSeconds.y) {
-            mFlickerSeconds.x = Max(mFlickerSeconds.x - mFlickerSeconds.y, 0.0f);
+            mFlickerSeconds.x -= mFlickerSeconds.y;
+            mFlickerSeconds.x = Max(mFlickerSeconds.x, 0.0f);
             mColorModulation = 1 - RandomFloat(mFlickerModBounds.x, mFlickerModBounds.y);
-            mFlickerSeconds.y =
-                Max(mFlickerSeconds.x,
-                    RandomFloat(mFlickerTimeBounds.x, mFlickerTimeBounds.y));
+            mFlickerSeconds.y = RandomFloat(mFlickerTimeBounds.x, mFlickerTimeBounds.y);
+            mFlickerSeconds.y = Max(mFlickerSeconds.x, mFlickerSeconds.y);
         }
         mFlickerSeconds.x += mDeltaSecs;
     } else {

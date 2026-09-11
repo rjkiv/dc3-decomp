@@ -151,6 +151,7 @@ public:
     bool Unk33d() const { return unk33d; }
     void SetUnk2AC(bool b) { unk2ac = b; }
     PoseFatalities *GetPoseFatalities() const { return mPoseFatalities; }
+    RndPostProc *GetUnk18c() const { return unk18c; }
 
     DataNode OnGetDancerVisemes(DataArray *);
 

@@ -11,6 +11,8 @@ enum BloomBlurStyle {
 };
 
 enum BloomBlurDirection {
+    kBloomBlurDirection0,
+    kBloomBlurDirection1,
 };
 
 class NgPostProc : public RndPostProc {
@@ -22,6 +24,7 @@ public:
 
         void AllocateTextures(unsigned int, unsigned int);
         void FreeTextures();
+        RndTex *Tex(int idx) { return mBloomTexture[idx]; }
 
     private:
         RndTex *mBloomTexture[2]; // 0x4
@@ -50,6 +53,8 @@ public:
                 mTextures[i].FreeTextures();
             }
         }
+
+        RndTex *Tex(int i, int j) { return mTextures[i].Tex(j); }
 
     private:
         BloomTextureSet mTextures[N];
