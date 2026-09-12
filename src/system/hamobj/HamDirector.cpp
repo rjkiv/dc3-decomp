@@ -1004,12 +1004,8 @@ DataNode HamDirector::OnListPossibleVariants() {
         MoveMgr::Init("../meta/move_data.dta");
     }
     DataArray *moveArr = new DataArray(0);
-    // FIXME: should get MoveMgr's unk104 member
-    for (std::map<Symbol, MoveVariant *>::const_iterator it =
-             TheMoveMgr->MoveVariants().begin();
-         it != TheMoveMgr->MoveVariants().end();
-         ++it) {
-        moveArr->Insert(moveArr->Size(), it->first);
+    FOREACH (it, TheMoveMgr->GetUnk104()) {
+        moveArr->Insert(moveArr->Size(), (*it)->Name());
     }
     moveArr->SortNodes(0);
     DataNode ret(moveArr);

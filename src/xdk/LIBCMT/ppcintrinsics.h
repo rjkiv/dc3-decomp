@@ -7,6 +7,7 @@ extern "C" {
 
 unsigned long long __mftb();
 double __frsqrte(double);
+void __dcbst(long offset, void *memory);
 
 void __SetHWThreadPriorityLow();
 void __SetHWThreadPriorityMed();
