@@ -1,6 +1,8 @@
 #include "rndobj/Env_NG.h"
 #include "math/Color.h"
 #include "math/Mtx.h"
+#include "rndobj/BoxMap.h"
+#include "rndobj/Env.h"
 #include "rndobj/Lit_NG.h"
 #include "rndobj/RenderState.h"
 #include "rndobj/Rnd.h"
@@ -167,3 +169,61 @@ namespace {
 NgEnviron::NgEnviron()
     : mProjectedBlend(), mNumLightsReal(0), mNumLightsApprox(0), mNumLightsPoint(0),
       mNumLightsProj(0), mHasPointCubeTex(0) {}
+
+void NgEnviron::UpdateApproxLighting(const Vector3 *vptr) {
+    mNumLightsApprox = 0;
+    bool b2 = mLightsReal.size() || mLightsApprox.size();
+    bool b1 = mUseApprox_Local || mUseApprox_Global;
+
+    if (b1 && b2) {
+        static BoxMapLighting boxLight;
+        static Hmx::Color boxResults[6];
+        for (int i = 0; i < 6; i++) {
+            boxResults[i].red = 0;
+            boxResults[i].green = 0;
+            boxResults[i].blue = 0;
+        }
+        if (mUseApprox_Local) {
+            boxLight.Clear();
+            FOREACH (it, mLightsApprox) {
+                if (boxLight.QueueLight(*it, 1)) {
+                    mNumLightsApprox++;
+                }
+            }
+            boxLight.ApplyQueuedLights(boxResults, vptr);
+        }
+        if (mUseApprox_Global) {
+            int numInQueue = RndEnviron::GetGlobalLighting().NumQueuedLights();
+            if (numInQueue != 0) {
+                mNumLightsApprox += numInQueue;
+                RndEnviron::GetGlobalLighting().ApplyQueuedLights(boxResults, vptr);
+            }
+        }
+        for (int i = 0; i < 6; i++) {
+            const Hmx::Color &cur = boxResults[i];
+            TheShaderMgr.SetVConstant(
+                (VShaderConstant)(0x50 + i),
+                Vector4(cur.red, cur.green, cur.blue, cur.alpha)
+            );
+            TheShaderMgr.SetPConstant(
+                (PShaderConstant)(0x50 + i),
+                Vector4(cur.red, cur.green, cur.blue, cur.alpha)
+            );
+        }
+    } else {
+        static Hmx::Color sBlank(0, 0, 0, 0);
+        for (int i = 0; i < 6; i++) {
+            TheShaderMgr.SetVConstant(
+                (VShaderConstant)(0x50 + i),
+                Vector4(sBlank.red, sBlank.green, sBlank.blue, sBlank.alpha)
+            );
+            TheShaderMgr.SetPConstant(
+                (PShaderConstant)(0x50 + i),
+                Vector4(sBlank.red, sBlank.green, sBlank.blue, sBlank.alpha)
+            );
+        }
+    }
+    if (mNumLightsReal > 0) {
+        mNumLightsApprox = Max(1, mNumLightsApprox);
+    }
+}
