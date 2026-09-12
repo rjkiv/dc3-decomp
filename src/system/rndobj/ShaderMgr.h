@@ -56,7 +56,7 @@ public:
     SetVConstant(VShaderConstant, const float *__restrict, unsigned int) = 0; // 0x20
     virtual void SetVConstant(VShaderConstant, bool) = 0;
     virtual void SetVConstant(VShaderConstant, const Hmx::Matrix4 &) = 0; // 0x18
-    virtual void SetVConstant4x3(VShaderConstant, const Hmx::Matrix4 &) = 0;
+    virtual void SetVConstant4x3(VShaderConstant, const Hmx::Matrix4 &) = 0; // 0x30
     virtual void SetPConstant(PShaderConstant, const Hmx::Matrix4 &) = 0; // 0x48
     virtual void SetPConstant(PShaderConstant, int) = 0;
     virtual void SetPConstant(PShaderConstant, const Vector4 &) = 0; // 0x40

@@ -41,6 +41,8 @@ public:
     void SetShowing(bool b) { mShowing = b; }
     float Intensity() const;
     void SetProjectedBlend(int i) { mProjectedBlend = i; }
+    int GetProjectedBlend() const { return mProjectedBlend; }
+    RndTex *GetTexture() const { return mTexture; }
     bool GetAnimateFromPreset() const {
         return mAnimateColorFromPreset || mAnimatePositionFromPreset
             || mAnimateRangeFromPreset;
@@ -48,6 +50,9 @@ public:
     bool Showing() const { return mShowing; }
     // bool AnimatePosFromPreset() const { return mAnimatePositionFromPreset; }
     // bool AnimateRangeFromPreset() const { return mAnimateRangeFromPreset; }
+    ObjPtrList<RndDrawable> *GetShadowOverride() const { return mShadowOverride; }
+    const ObjPtrList<RndDrawable> &GetShadowObjects() const { return mShadowObjects; }
+    RndCubeTex *GetCubeTexture() const { return mCubeTexture; }
 
     Transform Projection();
 

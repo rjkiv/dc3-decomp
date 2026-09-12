@@ -164,6 +164,7 @@ public:
     bool InGame() const { return mInGame; }
     bool Drawing() const { return mDrawing; }
     RndTex *GetDefaultTex(int idx) { return mDefaultTex[idx]; }
+    RndCubeTex *GetCubeTexWhite() const { return mCubeTex_White; }
     void ShowConsole(bool);
     bool ConsoleShowing();
     void EndWorld();
