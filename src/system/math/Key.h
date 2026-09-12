@@ -11,7 +11,7 @@ struct Weight {
     float derivOut;
 };
 
-inline BinStreamRev &operator>>(BinStreamRev &bs, Weight &w) {
+inline BinStream &operator>>(BinStream &bs, Weight &w) {
     bs >> w.weight >> w.derivIn >> w.derivOut;
     return bs;
 }
@@ -53,9 +53,9 @@ BinStream &operator>>(BinStream &bs, Key<T> &key) {
 }
 
 template <class T>
-BinStreamRev &operator>>(BinStreamRev &bs, Key<T> &key) {
-    bs >> key.value >> key.frame;
-    return bs;
+BinStreamRev &operator>>(BinStreamRev &d, Key<T> &key) {
+    d >> key.value >> key.frame;
+    return d;
 }
 
 // Keys is a vector<Key<T>>
