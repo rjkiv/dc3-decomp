@@ -5,7 +5,16 @@
 
 void BinkMovieSys::PlatformInit() {
     if (TheXboxSynth) {
-        // FIXME: param2 casted as an int, but expected 64-bit value
         BinkSetSoundSystem(BinkOpenXAudio2, (INT_PTR)TheXboxSynth->GetXAudio());
     }
+}
+
+void BinkMovieSys::PlatformStoreCache(void *buf, uint len) {
+    if (len == 0)
+        return;
+    u32 i = (len - 1) / 0x80 + 1;
+    do {
+        __dcbst(0, buf);
+        buf = (char *)buf + 0x80;
+    } while (--i);
 }
