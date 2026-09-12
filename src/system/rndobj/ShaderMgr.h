@@ -58,10 +58,10 @@ public:
     virtual void SetVConstant(VShaderConstant, const Hmx::Matrix4 &) = 0; // 0x18
     virtual void SetVConstant4x3(VShaderConstant, const Hmx::Matrix4 &) = 0;
     virtual void SetPConstant(PShaderConstant, const Hmx::Matrix4 &) = 0; // 0x48
-    virtual void SetPConstant(PShaderConstant, RndCubeTex *) = 0;
+    virtual void SetPConstant(PShaderConstant, int) = 0;
     virtual void SetPConstant(PShaderConstant, const Vector4 &) = 0; // 0x40
     virtual void SetPConstant(PShaderConstant, RndTex *) = 0; // 0x3c
-    virtual void SetPConstant(PShaderConstant, int) = 0;
+    virtual void SetPConstant(PShaderConstant, RndCubeTex *) = 0; // 0x38
     virtual void SetPConstant(PShaderConstant, bool) = 0;
     virtual void SetPConstant4x3(PShaderConstant, const Hmx::Matrix4 &) = 0; // 0x4c
     virtual RndMat *DrawHighlightMat() { return mDrawHighlightMat; }

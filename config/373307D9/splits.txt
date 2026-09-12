@@ -3274,7 +3274,7 @@ system/rndobj/PropKeys.cpp:
 	.data       start:0x830A6538 end:0x830A6558 rename:.bss
 
 system/rndobj/Text.cpp:
-	.rdata      start:0x8209AE98 end:0x8209C95C
+	.rdata      start:0x8209AE98 end:0x8209C8E8
 	.rdata      start:0x8229A018 end:0x8229A1F8 rename:.rdata$r
 	.pdata      start:0x822DA258 end:0x822DABA8
 	.pdata      start:0x82321550 end:0x82321558
@@ -3285,7 +3285,7 @@ system/rndobj/Text.cpp:
 	.data       start:0x830A6558 end:0x830A663C rename:.bss
 
 system/rndobj/Mat_NG.cpp:
-	.rdata      start:0x8209C95C end:0x8209CA4C
+	.rdata      start:0x8209C8E8 end:0x8209CA4C
 	.rdata      start:0x8229A1F8 end:0x8229A20C rename:.rdata$r
 	.pdata      start:0x822DABA8 end:0x822DAC18
 	.text       start:0x8269C9A0 end:0x8269DFF0
