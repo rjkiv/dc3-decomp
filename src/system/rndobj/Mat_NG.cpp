@@ -3,7 +3,11 @@
 #include "ShaderMgr.h"
 #include "math/Color.h"
 #include "math/Mtx.h"
+#include "math/Rot.h"
+#include "math/Trig.h"
 #include "math/Utl.h"
+#include "os/Debug.h"
+#include "rndobj/Cam.h"
 #include "rndobj/HiResScreen.h"
 #include "rndobj/RenderState.h"
 #include "rndobj/BaseMaterial.h"
@@ -293,5 +297,203 @@ void NgMat::SetRegularShaderConst(bool b1) {
                 (PShaderConstant)0x77, Vector4(strength, strength, strength, strength)
             );
         }
+    }
+}
+
+void NgMat::RefreshState() {
+    if (mDiffuseTex && mDiffuseTex->Width() && mDiffuseTex->Height()) {
+        unk22c.Set(
+            (float)mDiffuseTex->Width() / 2,
+            (float)mDiffuseTex->Height() / 2,
+            -(float)mDiffuseTex->Width() / 2,
+            -(float)mDiffuseTex->Height() / 2
+        );
+    } else {
+        unk22c.Set(0, 0, 0, 0);
+    }
+    switch (mBlend) {
+    case kBlendDest:
+        unk23c = RndRenderState::kBlendZero;
+        mBlendOp = RndRenderState::kBlendOpAdd;
+        unk240 = RndRenderState::kBlendOne;
+        mBlendEnable = true;
+        break;
+    case kBlendSrc:
+        unk23c = RndRenderState::kBlendOne;
+        unk240 = RndRenderState::kBlendZero;
+        mBlendOp = RndRenderState::kBlendOpAdd;
+        mBlendEnable = false;
+        break;
+    case kBlendAdd:
+        mBlendOp = RndRenderState::kBlendOpAdd;
+        unk23c = RndRenderState::kBlendOne;
+        unk240 = RndRenderState::kBlendOne;
+        mBlendEnable = true;
+        break;
+    case kBlendSrcAlpha:
+        mBlendOp = RndRenderState::kBlendOpAdd;
+        unk23c = RndRenderState::kBlendSrcAlpha;
+        unk240 = RndRenderState::kBlendInvSrcAlpha;
+        mBlendEnable = true;
+        break;
+    case kBlendSrcAlphaAdd:
+        mBlendOp = RndRenderState::kBlendOpAdd;
+        unk23c = RndRenderState::kBlendSrcAlpha;
+        unk240 = RndRenderState::kBlendOne;
+        mBlendEnable = true;
+        break;
+    case kBlendSubtract:
+        mBlendOp = RndRenderState::kBlendOpRevSubtract;
+        unk23c = RndRenderState::kBlendOne;
+        unk240 = RndRenderState::kBlendOne;
+        mBlendEnable = true;
+        break;
+    case kBlendMultiply:
+        unk23c = RndRenderState::kBlendZero;
+        unk240 = RndRenderState::kBlendSrcColor;
+        mBlendOp = RndRenderState::kBlendOpAdd;
+        mBlendEnable = true;
+        break;
+    case kPreMultAlpha:
+        unk23c = RndRenderState::kBlendOne;
+        mBlendOp = RndRenderState::kBlendOpAdd;
+        unk240 = RndRenderState::kBlendInvSrcAlpha;
+        mBlendEnable = true;
+        break;
+    case kScreen:
+        mBlendOp = RndRenderState::kBlendOpAdd;
+        unk23c = RndRenderState::kBlendInvDestColor;
+        unk240 = RndRenderState::kBlendOne;
+        mBlendEnable = true;
+        break;
+    case kLighten:
+        mBlendOp = RndRenderState::kBlendOpMax;
+        unk23c = RndRenderState::kBlendOne;
+        unk240 = RndRenderState::kBlendOne;
+        mBlendEnable = true;
+        break;
+    case kDarken:
+        mBlendOp = RndRenderState::kBlendOpMin;
+        unk23c = RndRenderState::kBlendOne;
+        unk240 = RndRenderState::kBlendOne;
+        mBlendEnable = true;
+        break;
+    default:
+        break;
+    }
+    switch (mZMode) {
+    case kZModeDisable:
+        mDepthTestEnable = false;
+        mDepthFunc = RndRenderState::kTestFuncLess;
+        mDepthWriteEnable = false;
+        break;
+    case kZModeNormal:
+        mDepthTestEnable = true;
+        mDepthWriteEnable = true;
+        mDepthFunc = RndRenderState::kTestFuncLess;
+        break;
+    case kZModeTransparent:
+        mDepthTestEnable = true;
+        mDepthFunc = RndRenderState::kTestFuncLessEqual;
+        mDepthWriteEnable = false;
+        break;
+    case kZModeForce:
+        mDepthTestEnable = true;
+        mDepthWriteEnable = true;
+        mDepthFunc = RndRenderState::kTestFuncAlways;
+        break;
+    case kZModeDecal:
+        mDepthTestEnable = true;
+        mDepthWriteEnable = true;
+        mDepthFunc = RndRenderState::kTestFuncLessEqual;
+        break;
+    default:
+        break;
+    }
+    if (mStencilMode == kStencilWrite) {
+        mStencilFunc = RndRenderState::kTestFuncAlways;
+        unk250 = RndRenderState::kStencilOpIncrSat;
+    } else {
+        mStencilFunc = RndRenderState::kTestFuncNotEqual;
+        unk250 = RndRenderState::kStencilOpKeep;
+    }
+    static Transform sStateXfm(Hmx::Matrix3(1, 0, 0, 0, 0, 1, 0, 1, 0), Vector3(0, 0, 0));
+    unk294.Identity();
+    Transform tf160;
+    switch (mTexGen) {
+    case kTexGenNone:
+        unk254.Zero();
+        unk254.m[3].w = 1;
+        unk254.m[2].z = 1;
+        unk254.m[1].y = 1;
+        unk254.m[0].x = 1;
+        break;
+    case kTexGenXfm:
+    case kTexGenXfmOrigin: {
+        MakeTex3(mTexXfm, mTexGen == kTexGenXfm, unk254);
+        tf160.v.Zero();
+        Normalize(mTexXfm.m, tf160.m);
+        MakeTex3(tf160, mTexGen == kTexGenXfm, unk294);
+        break;
+    }
+    case kTexGenSphere:
+    case kTexGenEnviron: {
+        Transpose(mTexXfm.m, tf160.m);
+        Multiply(RndCam::Current()->WorldXfm().m, tf160.m, tf160.m);
+        if (mTexGen == kTexGenSphere) {
+            Vector3 v1a0;
+            MakeEuler(tf160.m, v1a0);
+            v1a0.x = LimitAng(v1a0.x) / 2;
+            v1a0.z = LimitAng(v1a0.z) / 2;
+            MakeRotMatrix(v1a0, tf160.m, true);
+        }
+        Hmx::Matrix3 m190;
+        Transpose(RndCam::Current()->WorldXfm().m, m190);
+        Multiply(m190, tf160.m, tf160.m);
+        m190.Set(0.5f, 0, 0, 0, 0, 1, 0, -0.5f, 0);
+        Multiply(tf160.m, m190, tf160.m);
+        tf160.v.Set(0.5f, 0.5f, 0);
+        unk254 = Hmx::Matrix4(tf160);
+        break;
+    }
+    case kTexGenProjected: {
+        FastInvert(mTexXfm, tf160);
+        Transform tf120 = sStateXfm;
+        tf120.m.z.y = -1;
+        Multiply(tf160, tf120, tf160);
+        unk254 = Hmx::Matrix4(tf160);
+        break;
+    }
+    default:
+        break;
+    }
+
+    switch (mBlend) {
+    case kBlendDest:
+        break;
+    case kBlendSrc:
+        unk2d4 = 0;
+        break;
+    case kBlendSrcAlpha:
+    case kPreMultAlpha:
+        unk2d8.Set(0, 0, 0, 0);
+        unk2d4 = 1;
+        break;
+    case kBlendAdd:
+    case kBlendSrcAlphaAdd:
+    case kBlendSubtract:
+    case kScreen:
+    case kLighten:
+        unk2d8.Set(0, 0, 0, 0);
+        unk2d4 = 2;
+        break;
+    case kBlendMultiply:
+    case kDarken:
+        unk2d8.Set(1, 1, 1, 1);
+        unk2d4 = 2;
+        break;
+    default:
+        MILO_ASSERT(false, 0x139);
+        break;
     }
 }

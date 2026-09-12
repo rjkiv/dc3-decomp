@@ -38,10 +38,7 @@ protected:
     Hmx::Matrix4 unk254;
     Hmx::Matrix4 unk294;
     int unk2d4; // 0x2d4 - some sort of state enum
-    float unk2d8;
-    float unk2dc;
-    float unk2e0;
-    float unk2e4;
+    Vector4 unk2d8;
     RndRenderState::BlendOp mBlendOp; // 0x2e8
     bool mBlendEnable; // 0x2ec
 };

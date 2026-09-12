@@ -95,6 +95,11 @@ namespace Hmx {
 
         Matrix4 &Zero();
 
+        void Identity() {
+            Zero();
+            m[0].x = m[1].y = m[2].z = m[3].w = 1;
+        }
+
         Vector3 Col3(int idx) const { return Vector3(m[0][idx], m[1][idx], m[2][idx]); }
 
         static const Hmx::Matrix4 &ID() { return sID; }
