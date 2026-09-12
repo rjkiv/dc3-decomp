@@ -590,7 +590,7 @@
             "system/rndobj/Font3d.cpp": "NonMatching",
             "system/rndobj/FontBase.cpp": "Matching",
             "system/rndobj/Fur.cpp": "Matching",
-            "system/rndobj/Fur_NG.cpp": "NonMatching",
+            "system/rndobj/Fur_NG.cpp": "Matching",
             "system/rndobj/Gen.cpp": "NonMatching",
             "system/rndobj/Graph.cpp": "Matching",
             "system/rndobj/Group.cpp": "Matching",
