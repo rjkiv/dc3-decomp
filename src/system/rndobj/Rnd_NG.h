@@ -16,6 +16,8 @@ public:
     // size 0x18
     struct Viewport {
         Viewport() : mX(0), mY(0), mWidth(0), mHeight(0), mMinZ(0), mMaxZ(0) {}
+        Viewport(int x, int y, int w, int h, float minZ, float maxZ)
+            : mX(x), mY(y), mWidth(w), mHeight(h), mMinZ(minZ), mMaxZ(maxZ) {}
         int mX; // 0x0
         int mY; // 0x4
         int mWidth; // 0x8

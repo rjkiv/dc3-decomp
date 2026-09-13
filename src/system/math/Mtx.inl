@@ -196,6 +196,29 @@ inline void Transpose(const Hmx::Matrix4 &min, Hmx::Matrix4 &mout) {
     // mout.m[3].Set(min.m[0].w, min.m[1].w, min.m[2].w, min.m[3].w);
 }
 
-Hmx::Matrix4 operator*(const Transform &, const Hmx::Matrix4 &);
+namespace Hmx {
+
+    inline Hmx::Matrix4 operator*(const Transform &xfm, const Hmx::Matrix4 &mtx4) {
+        Hmx::Matrix4 out;
+        out.m[0].x = Dot(xfm.m.x, mtx4.Col3(0));
+        out.m[0].y = Dot(xfm.m.x, mtx4.Col3(1));
+        out.m[0].z = Dot(xfm.m.x, mtx4.Col3(2));
+        out.m[0].w = Dot(xfm.m.x, mtx4.Col3(3));
+        out.m[1].x = Dot(xfm.m.y, mtx4.Col3(0));
+        out.m[1].y = Dot(xfm.m.y, mtx4.Col3(1));
+        out.m[1].z = Dot(xfm.m.y, mtx4.Col3(2));
+        out.m[1].w = Dot(xfm.m.y, mtx4.Col3(3));
+        out.m[2].x = Dot(xfm.m.z, mtx4.Col3(0));
+        out.m[2].y = Dot(xfm.m.z, mtx4.Col3(1));
+        out.m[2].z = Dot(xfm.m.z, mtx4.Col3(2));
+        out.m[2].w = Dot(xfm.m.z, mtx4.Col3(3));
+        out.m[3].x = Dot(xfm.v, mtx4.Col3(0)) + mtx4.m[3].x;
+        out.m[3].y = Dot(xfm.v, mtx4.Col3(1)) + mtx4.m[3].y;
+        out.m[3].z = Dot(xfm.v, mtx4.Col3(2)) + mtx4.m[3].z;
+        out.m[3].w = Dot(xfm.v, mtx4.Col3(3)) + mtx4.m[3].w;
+        return out;
+    }
+
+}
 
 #pragma endregion

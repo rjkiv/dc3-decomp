@@ -165,6 +165,7 @@ public:
     bool Drawing() const { return mDrawing; }
     RndTex *GetDefaultTex(int idx) { return mDefaultTex[idx]; }
     RndCubeTex *GetCubeTexWhite() const { return mCubeTex_White; }
+    int GetDrawCount() const { return mDrawCount; }
     void ShowConsole(bool);
     bool ConsoleShowing();
     void EndWorld();
