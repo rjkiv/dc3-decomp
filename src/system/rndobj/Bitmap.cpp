@@ -19,14 +19,13 @@ int RndBitmap::DxtRowBytes() const { return mOrder & 0x38 ? mRowBytes * 4 : mRow
 
 unsigned char RndBitmap::PixelIndex(int i1, int i2) const {
     bool bb;
-    int offset = PixelOffset(i1, i2, bb);
-    unsigned char pixel = mPixels[offset];
+    unsigned char *pixelPtr = mPixels + PixelOffset(i1, i2, bb);
     if (mBpp == 8) {
-        return pixel;
+        return *pixelPtr;
     } else if (bb) {
-        return pixel >> 4;
+        return *pixelPtr >> 4;
     } else {
-        return pixel & 0xF;
+        return *pixelPtr & 0xF;
     }
 }
 
@@ -37,8 +36,11 @@ BinStream &RndBitmap::LoadHeader(BinStream &bs, u8 &numMips) {
     u8 pad[32];
     bs.Tell();
     bs >> rev;
-    if (rev > 1)
-        bs >> mName;
+    if (rev > 1) {
+        // stupid. lol. lmao even
+        int &crc = reinterpret_cast<int &>(mName);
+        bs >> crc;
+    }
     bs >> mBpp;
     if (rev > 0)
         bs >> mOrder;
@@ -174,14 +176,13 @@ void RndBitmap::AllocateBuffer() {
 
 void RndBitmap::SetPixelIndex(int i1, int i2, unsigned char uc) {
     bool bb;
-    int offset = PixelOffset(i1, i2, bb);
-    u8 *pixels = mPixels;
+    unsigned char *pixelPtr = mPixels + PixelOffset(i1, i2, bb);
     if (mBpp == 8) {
-        *(pixels + offset) = uc;
+        *pixelPtr = uc;
     } else if (bb) {
-        *(pixels + offset) = uc << 4 | *(pixels + offset) & 0xF;
+        *pixelPtr = uc << 4 | *pixelPtr & 0xF;
     } else {
-        *(pixels + offset) = *(pixels + offset) & 0xF0 | uc;
+        *pixelPtr = *pixelPtr & 0xF0 | uc;
     }
 }
 
@@ -576,10 +577,12 @@ bool RndBitmap::LoadBmp(const char *filename, bool wantMips, bool noAlpha) {
             return false;
         } else {
             delete stream;
-            if (!noAlpha) {
+            if (noAlpha) {
                 ProcessFlags(filename, wantMips);
+                // FIXME: uh oh this path doesn't return a bool
+            } else {
+                return true;
             }
-            return true;
         }
     }
 }
