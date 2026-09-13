@@ -6,6 +6,7 @@
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "rndobj/Dir.h"
+#include "rndobj/Draw.h"
 #include "rndobj/Group.h"
 #include "rndobj/Mesh.h"
 #include "rndobj/PropAnim.h"
@@ -41,7 +42,27 @@ unsigned int GatherObjectsFromDir(ObjectDir *dir, std::vector<T *> &objects) {
 }
 
 template <class T>
-unsigned int GatherObjectsFromGroup(RndGroup *, std::vector<T *> &objects);
+unsigned int GatherObjectsFromGroup(RndGroup *group, std::vector<T *> &objects) {
+    if (group->Showing()) {
+        std::list<RndDrawable *> draws;
+        group->ListDrawChildren(draws);
+        FOREACH (it, draws) {
+            RndGroup *curGroup = dynamic_cast<RndGroup *>(*it);
+            if (curGroup && curGroup != group) {
+                GatherObjectsFromGroup(curGroup, objects);
+            }
+            ObjectDir *curDir = dynamic_cast<ObjectDir *>(*it);
+            if (curDir && dynamic_cast<WorldInstance *>((Hmx::Object *)curDir)) {
+                GatherObjectsFromDir(curDir, objects);
+            }
+            RndMesh *curMesh = dynamic_cast<RndMesh *>(*it);
+            if (curMesh) {
+                objects.push_back(curMesh);
+            }
+        }
+    }
+    return objects.size();
+}
 
 template <class T>
 unsigned int GatherObject(Hmx::Object *object, std::vector<T *> &objects) {
@@ -214,7 +235,11 @@ template <class T>
 struct VectorSort {
     VectorSort(const std::vector<T> &v) : vector(v) {}
 
-    bool operator()(T item1, T item2);
+    bool operator()(T item1, T item2) {
+        int diff1 = std::find(vector.begin(), vector.end(), item1) - vector.begin();
+        int diff2 = std::find(vector.begin(), vector.end(), item2) - vector.begin();
+        return diff1 < diff2;
+    }
 
     const std::vector<T> &vector; // idk
 };
@@ -275,10 +300,8 @@ void RndAmbientOcclusion::TransformNormal(
     Normalize(vin, vtmp);
     Hmx::Matrix3 mtmp;
     Invert(min, mtmp);
-    // vout.x = vtmp.x * mtmp.x.x + vtmp.y * mtmp.x.y + vtmp.z * mtmp.x.z;
-    // vout.y = vtmp.x * mtmp.y.x + vtmp.y * mtmp.y.y + vtmp.z * mtmp.y.z;
-    // vout.z = vtmp.x * mtmp.z.x + vtmp.y * mtmp.z.y + vtmp.z * mtmp.z.z;
-    vout.Set(Dot(vtmp, mtmp.x), Dot(vtmp, mtmp.y), Dot(vtmp, mtmp.z));
+    Transpose(mtmp, mtmp);
+    Multiply(vtmp, mtmp, vout);
     Normalize(vout, vout);
 }
 
@@ -304,9 +327,12 @@ bool RndAmbientOcclusion::IsSerializable(const RndMesh *mesh) const {
     if (mesh->GetGeomOwner() != mesh) {
         return false;
     }
-    ObjectDir *meshDir = mesh->Dir();
-    return (meshDir == Dir())
-        || (meshDir->IsSubDir() && meshDir->InlineSubDirType() == kInlineAlways);
+    if (mesh->Dir() == Dir()) {
+        return true;
+    } else {
+        ObjectDir *meshDir = mesh->Dir();
+        return (meshDir->IsSubDir() && meshDir->InlineSubDirType() == kInlineAlways);
+    }
 }
 
 bool RndAmbientOcclusion::IsValid_Mesh(const RndMesh *mesh) const {
