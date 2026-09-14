@@ -1441,11 +1441,11 @@ void ConvertBonesToTranses(ObjectDir *dir, bool b2) {
     }
 }
 
-void BuildSphereStratified(unsigned int ui, std::vector<Vector3> &vectors) {
+void BuildSphereStratified(unsigned int numSamples, std::vector<Vector3> &result) {
     Rand rand(0x29A);
-    unsigned int root = sqrtf((float)ui) + 0.5f;
-    vectors.clear();
-    vectors.reserve(root * root);
+    unsigned int root = sqrtf((float)numSamples) + 0.5f;
+    result.clear();
+    result.reserve(root * root);
     float f12 = -1;
     float f11 = 0;
     float f7 = (1.0f / (float)root) * 2.0f;
@@ -1459,7 +1459,7 @@ void BuildSphereStratified(unsigned int ui, std::vector<Vector3> &vectors) {
             float x = cosf(_x) * f5;
             float y = sinf(_x) * f5;
             Normalize(Vector3(x, y, f6), v490);
-            vectors.push_back(v490);
+            result.push_back(v490);
             f11 += f8;
         }
         f12 += f7;

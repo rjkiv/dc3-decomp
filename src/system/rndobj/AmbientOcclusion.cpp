@@ -1,10 +1,13 @@
 #include "rndobj/AmbientOcclusion.h"
 #include "math/Geo.h"
 #include "math/Mtx.h"
+#include "math/Utl.h"
+#include "math/kdTree.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "rndobj/BaseMaterial.h"
 #include "rndobj/Dir.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Group.h"
@@ -12,6 +15,7 @@
 #include "rndobj/PropAnim.h"
 #include "rndobj/Trans.h"
 #include "rndobj/TransAnim.h"
+#include "rndobj/Utl.h"
 #include "world/Instance.h"
 #include <float.h>
 
@@ -183,6 +187,11 @@ BEGIN_LOADS(RndAmbientOcclusion)
     }
 END_LOADS
 
+static const unsigned int sNumSamples[] = { 0x12C, 0x96 };
+static const kdTree<Triangle>::SplitPlaneType sSplitTypes[] = {
+    kdTree<Triangle>::kSplitPlane_SAH, kdTree<Triangle>::kSplitPlane_Mean
+};
+
 void RndAmbientOcclusion::BuildTrees(Quality quality) {
     MILO_ASSERT(quality < kQuality_Max, 0x1E3);
     mQuality = quality;
@@ -191,8 +200,47 @@ void RndAmbientOcclusion::BuildTrees(Quality quality) {
         Timer timer;
         timer.Restart();
         MILO_LOG("RndAmbientOcclusion: Building kd-Tree...\n");
-        Box box(Vector3(FLT_MAX, FLT_MAX, FLT_MAX), Vector3(-FLT_MAX, -FLT_MAX, -FLT_MAX));
+        kdTree<Triangle>::SplitPlaneType whichType = sSplitTypes[quality];
+        BuildSphereStratified(sNumSamples[quality], unkb8);
+        Vector3 maxNeg(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+        Vector3 maxPos(FLT_MAX, FLT_MAX, FLT_MAX);
+        Box box(maxPos, maxNeg);
         FOREACH (it, mObjectsCast) {
+            RndMesh *cur = *it;
+            const Transform &curWorldXfm = cur->WorldXfm();
+            for (int i = 0; i < cur->Faces().size(); i++) {
+                RndMesh::Face &face = cur->Faces(i);
+                Vector3 v11a0;
+                Multiply(cur->Verts(face.v1).pos, curWorldXfm, v11a0);
+                Vector3 v1190;
+                Multiply(cur->Verts(face.v2).pos, curWorldXfm, v1190);
+                Vector3 v1180;
+                Multiply(cur->Verts(face.v3).pos, curWorldXfm, v1180);
+
+                Vector3 diff23;
+                Subtract(v1190, v1180, diff23);
+                float len23 = Length(diff23);
+                Vector3 diff13;
+                Subtract(v11a0, v1180, diff13);
+                float len13 = Length(diff13);
+                Vector3 diff12;
+                Subtract(v11a0, v1190, diff12);
+                float len12 = Length(diff12);
+
+                if (0.000099999997f < len23 + len13 + len12
+                    && 1.1920929E-7f < len23 * len13 * len12) {
+                    box.GrowToContain(v11a0, false);
+                    box.GrowToContain(v1190, false);
+                    box.GrowToContain(v1180, false);
+                    Triangle tri;
+                    tri.Set(v11a0, v1190, v1180);
+                    mTriList.push_back(tri);
+                    if (mIntersectBackFaces) {
+                        tri.Set(v11a0, v1180, v1190);
+                        mTriList.push_back(tri);
+                    }
+                }
+            }
         }
         MILO_ASSERT(mTree == NULL, 0x234);
         box.Extend(0.001f);
@@ -200,11 +248,10 @@ void RndAmbientOcclusion::BuildTrees(Quality quality) {
         FOREACH (it, mTriList) {
             mTree->Insert(&*it);
         }
-        // kdtree pack
-        mTree->PackNodes(kdTree<Triangle>::kSplitPlane_Mean, 0);
+        mTree->PackNodes(whichType, 0);
         MILO_LOG(
             "RndAmbientOcclusion: Built kd-Tree in %0.2f seconds\n",
-            timer.SplitMs() / 1000.0f
+            timer.SplitMs() * 0.001f
         );
         timer.Restart();
     }
@@ -221,6 +268,52 @@ void RndAmbientOcclusion::Clean() {
     mObjectsTessellate.clear();
     mTriList.clear();
     unkb8.clear();
+}
+
+bool RndAmbientOcclusion::IsValid_AOCast(const RndMesh *mesh) const {
+    bool b2 = false;
+    if (!IsValid_Mesh(mesh)) {
+        return false;
+    }
+    RndMat *mat = mesh->Mat();
+    if (mat) {
+        ZMode zMode = mat->GetZMode();
+        b2 = zMode == kZModeDisable || zMode == kZModeTransparent;
+    }
+    if ((!mIgnoreHidden || mesh->Showing()) && (!mIgnoreTransparent || !b2)) {
+        return true;
+    }
+    return false;
+}
+
+bool RndAmbientOcclusion::IsValid_AOReceive(const RndMesh *mesh) const {
+    bool b2 = false;
+    bool c4 = false;
+    if (!IsSerializable(mesh)) {
+        return false;
+    }
+    if (!IsValid_Mesh(mesh)) {
+        return false;
+    }
+
+    RndMat *mat = mesh->Mat();
+    if (mat) {
+        ZMode zMode = mat->GetZMode();
+        b2 = zMode == kZModeDisable || zMode == kZModeTransparent || mat->Alpha() == 0;
+        c4 = mat->PreLit();
+    }
+    if ((!mIgnoreHidden || mesh->Showing()) && (!mIgnoreTransparent || !b2)
+        && (!mIgnorePrelit || !c4)) {
+        return true;
+    }
+    return false;
+}
+
+bool RndAmbientOcclusion::IsValid_Tessellate(
+    const RndMesh *mesh, const ObjectDir *dir
+) const {
+    return IsValid_AOCast(mesh) && IsValid_AOReceive(mesh) && !mesh->IsSkinned()
+        && mesh->GetGeomOwner() == mesh && mesh->Dir() != dir;
 }
 
 void RndAmbientOcclusion::BuildSHCoeff(const Vector3 &inVector, float *fArr) const {
@@ -483,4 +576,49 @@ void RndAmbientOcclusion::BlendVert(
     v3.tangent.y = tangent.y;
     v3.tangent.z = tangent.z;
     v3.color.Zero();
+}
+
+void RndAmbientOcclusion::BurnTransform(
+    RndMesh *mesh, std::list<RndMesh *> &meshes
+) const {
+    auto it = std::find(meshes.begin(), meshes.end(), mesh);
+    if (it != meshes.end()) {
+        meshes.erase(it);
+        bool b5 = fabsf(1 - Det(mesh->LocalXfm().m)) > 0.0001f;
+        if (mQuality == kQuality_Accurate) {
+            b5 = CanBurnXfm(mesh);
+        } else if (b5) {
+            MILO_NOTIFY_ONCE(
+                "%s: Mesh has scale or mirroring applied. Re-export mesh to ensure accurate AO calculation.",
+                PathName(mesh)
+            );
+            b5 = false;
+        }
+        if (b5) {
+            FOREACH (it, mesh->Children()) {
+                RndMesh *cur = dynamic_cast<RndMesh *>(*it);
+                if (cur) {
+                    BurnTransform(cur, meshes);
+                    Transform tfe0(Hmx::Matrix3(mesh->LocalXfm().m), Vector3(0, 0, 0));
+                    Transform tfa0;
+                    if (cur->TransConstraint() == RndTransformable::kConstraintNone) {
+                        Multiply(cur->LocalXfm(), tfe0, tfa0);
+                    } else if (
+                        cur->TransConstraint() == RndTransformable::kConstraintParentWorld
+                    ) {
+                        tfa0 = tfe0;
+                        cur->SetTransConstraint(
+                            RndTransformable::kConstraintNone,
+                            cur->GetTarget(),
+                            cur->PreserveScale()
+                        );
+                    } else {
+                        tfa0 = cur->LocalXfm();
+                    }
+                    cur->SetLocalXfm(tfa0);
+                }
+            }
+            BurnXfm(mesh, true);
+        }
+    }
 }

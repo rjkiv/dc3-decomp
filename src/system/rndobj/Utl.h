@@ -89,6 +89,7 @@ void BurnXfm(RndMesh *, bool);
 void AttachMesh(RndMesh *, RndMesh *);
 void BuildFromBSP(RndMesh *);
 void ConvertBonesToTranses(ObjectDir *, bool);
+void BuildSphereStratified(unsigned int numSamples, std::vector<Vector3> &result);
 
 const char *CacheResource(const char *, const Hmx::Object *);
 

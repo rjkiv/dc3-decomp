@@ -97,6 +97,9 @@ public:
             || (mConstraint >= kConstraintLookAtTarget && mTarget);
     }
 
+    RndTransformable *GetTarget() const { return mTarget; }
+    bool PreserveScale() const { return mPreserveScale; }
+
     void GetLocalRot(Vector3 &) const;
     void SetWorldXfm(const Transform &);
     void SetWorldPos(const Vector3 &);
