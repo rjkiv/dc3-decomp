@@ -1,5 +1,6 @@
 #pragma once
 #include "math/Geo.h"
+#include "math/Utl.h"
 #include "math/Vec.h"
 #include "math/Vec.inl"
 #include "os/Debug.h"
@@ -111,7 +112,41 @@ public:
         }
 
         bool
-        FindSplit_SAH(const Box &inDimensions, const std::list<Triangle *> &inTriList);
+        FindSplit_SAH(const Box &inDimensions, const std::list<Triangle *> &inTriList) {
+            float numTriangles = inTriList.size();
+
+            float f90[3] = { FLT_MAX, FLT_MAX, FLT_MAX };
+            float f80[3] = { FLT_MAX, FLT_MAX, FLT_MAX };
+
+            for (unsigned char i = 0; i < 3; i++) {
+                float f12 = (inDimensions.mMax[i] - inDimensions.mMin[i]) / 17;
+                float f13 = inDimensions.mMin[i];
+                for (int j = 0; j < 16; j++) {
+                    f13 += f12;
+                    float f14 = EvaluateSplit(inDimensions, inTriList, i, f13);
+                    if (f14 < f90[i]) {
+                        f90[i] = f14;
+                        f80[i] = f13;
+                    }
+                }
+            }
+            unsigned char idx;
+            if (f90[1] >= f90[0]) {
+                idx = 0;
+            } else {
+                idx = 1;
+            }
+            if (f90[2] < f90[idx]) {
+                idx = 2;
+            }
+            if (f90[idx] >= numTriangles) {
+                return false;
+            } else {
+                SetSplitAxis((SplitPlaneType)idx);
+                SetSplitValue(f80[idx]);
+                return true;
+            }
+        }
 
         void Pack(
             SplitPlaneType splitType,

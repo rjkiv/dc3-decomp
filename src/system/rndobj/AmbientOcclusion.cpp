@@ -201,7 +201,7 @@ void RndAmbientOcclusion::BuildTrees(Quality quality) {
             mTree->Insert(&*it);
         }
         // kdtree pack
-        mTree->PackNodes((kdTree<Triangle>::SplitPlaneType)0, 0);
+        mTree->PackNodes(kdTree<Triangle>::kSplitPlane_Mean, 0);
         MILO_LOG(
             "RndAmbientOcclusion: Built kd-Tree in %0.2f seconds\n",
             timer.SplitMs() / 1000.0f
@@ -289,7 +289,7 @@ void RndAmbientOcclusion::BuildObjectLists() {
     std::sort(
         mObjectsTessellate.begin(),
         mObjectsTessellate.end(),
-        VectorSort<RndMesh *>(mObjectsTessellate)
+        VectorSort<RndMesh *>(tessellateMeshes)
     );
 }
 
