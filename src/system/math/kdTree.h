@@ -10,6 +10,7 @@
 #include <list>
 
 // kdTree size: 0x2c
+// https://en.wikipedia.org/wiki/K-d_tree
 template <class T>
 class kdTree {
 public:
@@ -25,9 +26,12 @@ public:
 
         kdTriList() : mData(0) {}
 
-        // const Triangle* GetNext(); // returns this + 4
-        // bool IsEnd() const;
-        // void SetData(const Triangle*);
+        kdTriList *GetNext() {
+            kdTriList *cur = this;
+            return &cur[1];
+        }
+        bool IsEnd() const { return (int)mData == -1; }
+        void SetData(const Triangle *t) { mData = t; }
 
         static kdTriList *Allocate(unsigned int inNumNodes) {
             kdTriList *list = new kdTriList[inNumNodes + 1];
@@ -67,9 +71,34 @@ public:
             unsigned char idx,
             float threshold
         ) const {
-            if (box.mMax[idx] >= threshold && box.mMin[idx] <= threshold) {
-                Box box100 = box;
-                Box boxe0 = box;
+            if (threshold <= box.mMax[idx] && threshold >= box.mMin[idx]) {
+                Box box100;
+                Box boxe0;
+                box100.Set(box.mMin, box.mMax);
+                boxe0.Set(box.mMin, box.mMax);
+                box100.mMax[idx] = threshold;
+                boxe0.mMin[idx] = threshold;
+                float f10 = 1 / box.SurfaceArea();
+                float f8 = box100.SurfaceArea() * f10;
+                float f7 = boxe0.SurfaceArea() * f10;
+                f10 = 0;
+                float f11 = 0;
+                FOREACH (it, triangles) {
+                    Triangle *cur = *it;
+                    if (box100.Contains(*cur)) {
+                        f10 += 1;
+                    } else if (boxe0.Contains(*cur)) {
+                        f11 += 1;
+                    } else {
+                        if (::Intersect(*cur, box100)) {
+                            f10 += 0.5f;
+                        }
+                        if (::Intersect(*cur, boxe0)) {
+                            f11 += 0.5f;
+                        }
+                    }
+                }
+                return f11 * f7 + f10 * f8 + 0.3f;
             } else {
                 return FLT_MAX;
             }
@@ -155,21 +184,55 @@ public:
             kdTreeNode *inRoot,
             unsigned char depth
         ) {
-            if (depth < 0xF) {
-                // a whole lotta stuff
-                if (inTriList.size() >= 10) {
-                    bool find = false;
-                    switch (splitType) {
-                    case 0:
-                    case 1:
-                        find = FindSplit_Mean(inDimensions, inTriList);
-                        break;
-                    case 2:
-                        find = FindSplit_SAH(inDimensions, inTriList);
-                        break;
-                    default:
-                        MILO_FAIL("Invalid split plane type");
-                        break;
+            if (depth < 0xF && inTriList.size() >= 10) {
+                bool find = false;
+                if (splitType == kSplitPlane_Mean) {
+                    find = FindSplit_Mean(inDimensions, inTriList);
+                } else if (splitType == kSplitPlane_Median) {
+                    find = FindSplit_Mean(inDimensions, inTriList);
+                } else if (splitType == kSplitPlane_SAH) {
+                    find = FindSplit_SAH(inDimensions, inTriList);
+                } else {
+                    TheDebugFailer << MakeStringNotInlined("Invalid split plane type");
+                }
+                if (find && GetSplitValue() >= inDimensions.mMin[GetSplitAxis()]
+                    && GetSplitValue() <= inDimensions.mMax[GetSplitAxis()]) {
+                    Box boxe0, boxc0;
+                    boxe0.Set(inDimensions.mMin, inDimensions.mMax);
+                    boxc0.Set(boxe0.mMin, boxe0.mMax);
+                    boxe0.mMax[GetSplitAxis()] = GetSplitValue();
+                    boxc0.mMin[GetSplitAxis()] = GetSplitValue();
+                    std::list<Triangle *> listf0;
+                    std::list<Triangle *> listf8;
+                    auto it = inTriList.begin();
+                    bool b10 = true;
+                    while (it != inTriList.end()) {
+                        Triangle *pCurr = *it;
+                        MILO_ASSERT(::Intersect(*pCurr, inDimensions), 0x166);
+                        bool intersecte0 = ::Intersect(*pCurr, boxe0);
+                        bool intersectc0 = ::Intersect(*pCurr, boxc0);
+                        if (!intersecte0 && !intersectc0) {
+                            b10 = false;
+                            break;
+                        }
+                        ++it;
+                        if (intersecte0) {
+                            listf0.push_back(pCurr);
+                        }
+                        if (intersectc0) {
+                            listf8.push_back(pCurr);
+                        }
+                    }
+                    if (b10 && GetIndex() <= 0x3FFE) {
+                        inTriList.clear();
+                        SetIsLeaf(0);
+                        kdTreeNode *nodea8 = nullptr;
+                        kdTreeNode *nodea4 = nullptr;
+                        nodea8 = GetChild_0(inRoot);
+                        nodea4 = GetChild_1(inRoot);
+                        nodea8->Pack(splitType, boxe0, listf0, inRoot, depth + 1);
+                        nodea4->Pack(splitType, boxc0, listf8, inRoot, depth + 1);
+                        return;
                     }
                 }
             }
@@ -178,18 +241,25 @@ public:
                 mTriList = nullptr;
             } else {
                 mTriList = kdTriList::Allocate(inTriList.size());
-                FOREACH (it, inTriList) {
+                kdTriList *pCurr = mTriList;
+                for (auto it = inTriList.begin(); it != inTriList.end();) {
+                    MILO_ASSERT(!pCurr->IsEnd(), 0x1AE);
+                    pCurr->SetData(*it);
+                    it = inTriList.erase(it);
+                    pCurr = pCurr->GetNext();
                 }
             }
         }
 
         MEM_ARRAY_OVERLOAD(kdTreeNode, 0xEC);
 
-        bool GetIsLeaf() const { return mLeaf_Index & 0x8000; }
+        bool GetIsLeaf() const { return mLeaf_Index >> 15; }
         unsigned short GetIndex() const { return mLeaf_Index & 0x7FFF; }
         unsigned int GetSplitAxis() const { return mSplitAxis & 0x3; }
         float GetSplitValue() const { return mSplitValue; }
-        void SetIsLeaf(unsigned int leaf) { mLeaf_Index |= (leaf << 15); }
+        void SetIsLeaf(unsigned int leaf) {
+            mLeaf_Index = (mLeaf_Index & 0x7FFF) | (leaf << 15);
+        }
         void SetSplitAxis(SplitPlaneType t) {
             mSplitAxis = (mSplitAxis & 0xfffffffc) | t;
         }
@@ -200,8 +270,8 @@ public:
         }
 
         // from RB3 bank 5
-        // GetChild_0(kdTreeNode*)
-        // GetChild_1(kdTreeNode*)
+        kdTreeNode *GetChild_0(kdTreeNode *n) { return &n[GetIndex() * 2 + 1]; }
+        kdTreeNode *GetChild_1(kdTreeNode *n) { return &n[GetIndex() * 2 + 2]; }
 
         union {
             float mSplitValue;
