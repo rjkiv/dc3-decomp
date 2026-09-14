@@ -233,15 +233,15 @@ void RndAmbientOcclusion::BuildSHCoeff(const Vector3 &inVector, float *fArr) con
 
 template <class T>
 struct VectorSort {
-    VectorSort(const std::vector<T> &v) : vector(v) {}
+    VectorSort(const std::vector<T> &v) : mRefList(v) {}
 
     bool operator()(T item1, T item2) {
-        int diff1 = std::find(vector.begin(), vector.end(), item1) - vector.begin();
-        int diff2 = std::find(vector.begin(), vector.end(), item2) - vector.begin();
+        int diff1 = std::find(mRefList.begin(), mRefList.end(), item1) - mRefList.begin();
+        int diff2 = std::find(mRefList.begin(), mRefList.end(), item2) - mRefList.begin();
         return diff1 < diff2;
     }
 
-    const std::vector<T> &vector; // idk
+    const std::vector<T> &mRefList; // 0x0
 };
 
 void RndAmbientOcclusion::BuildObjectLists() {
@@ -252,7 +252,7 @@ void RndAmbientOcclusion::BuildObjectLists() {
     MILO_ASSERT(mObjectsTessellate.empty(), 0x19B);
     std::vector<RndMesh *> meshes;
     GatherObjectsFromDir(myDir, meshes);
-    std::unique_copy(meshes.begin(), meshes.end(), meshes.begin());
+    std::unique(meshes.begin(), meshes.end());
     std::vector<RndMesh *> dontCastMeshes;
     std::vector<RndMesh *> dontReceiveMeshes;
     std::vector<RndMesh *> tessellateMeshes;
@@ -265,9 +265,9 @@ void RndAmbientOcclusion::BuildObjectLists() {
     FOREACH (it, mTessellate) {
         GatherObject(*it, tessellateMeshes);
     }
-    std::unique_copy(dontCastMeshes.begin(), dontCastMeshes.end(), meshes.end());
-    std::unique_copy(dontReceiveMeshes.begin(), dontReceiveMeshes.end(), meshes.end());
-    std::unique_copy(tessellateMeshes.begin(), tessellateMeshes.end(), meshes.end());
+    std::unique(dontCastMeshes.begin(), dontCastMeshes.end());
+    std::unique(dontReceiveMeshes.begin(), dontReceiveMeshes.end());
+    std::unique(tessellateMeshes.begin(), tessellateMeshes.end());
     FOREACH (it, meshes) {
         RndMesh *cur = *it;
         if (IsValid_AOCast(cur)
@@ -380,6 +380,21 @@ bool RndAmbientOcclusion::IsMeshAnimated(const RndMesh *mesh) const {
     return false;
 }
 
+float RndAmbientOcclusion::DistanceSH(
+    const Vector4 &v1, const Vector3 &v2, const Vector4 &v3, const Vector3 &v4
+) const {
+    float x = v1.x - v3.x;
+    float y = (v1.y * 2 - 1) - (v3.y * 2 - 1);
+    float z = (v1.z * 2 - 1) - (v3.z * 2 - 1);
+    float w = (v1.w * 2 - 1) - (v3.w * 2 - 1);
+    float dot = Dot(v2, v4);
+    float len = sqrtf(x * x + y * y + z * z + w * w);
+    if (dot <= 0) {
+        dot = -dot;
+    }
+    return len / (dot + 1);
+}
+
 bool RndAmbientOcclusion::CanBurnXfm(const RndMesh *mesh) const {
     if (IsMeshAnimated(mesh))
         return false;
@@ -445,4 +460,27 @@ DataNode RndAmbientOcclusion::OnGetValidObjects(DataArray *) const {
         }
     }
     return ptr;
+}
+
+void RndAmbientOcclusion::BlendVert(
+    const RndMesh::Vert &v1, const RndMesh::Vert &v2, RndMesh::Vert &v3
+) {
+    v3 = v1;
+    Add(v3.pos, v2.pos, v3.pos);
+    v3.tex += v2.tex;
+    Add(v3.color, v2.color, v3.color);
+    v3.norm += v2.norm;
+    Vector3 tangent = reinterpret_cast<Vector3 &>(v3.tangent);
+    Add(reinterpret_cast<Vector3 &>(v3.tangent),
+        reinterpret_cast<const Vector3 &>(v2.tangent),
+        tangent);
+    v3.pos /= 2;
+    v3.tex /= 2;
+    Multiply(v3.color, 0.5f, v3.color);
+    Normalize(v3.norm, v3.norm);
+    Normalize(tangent, tangent);
+    v3.tangent.x = tangent.x;
+    v3.tangent.y = tangent.y;
+    v3.tangent.z = tangent.z;
+    v3.color.Zero();
 }

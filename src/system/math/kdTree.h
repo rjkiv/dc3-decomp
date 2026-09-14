@@ -1,6 +1,7 @@
 #pragma once
 #include "math/Geo.h"
 #include "math/Vec.h"
+#include "math/Vec.inl"
 #include "os/Debug.h"
 #include "utl/MemMgr.h"
 #include "utl/Std.h"
@@ -78,38 +79,40 @@ public:
             float yDiff = inDimensions.mMax.y - inDimensions.mMin.y;
             float zDiff = inDimensions.mMax.z - inDimensions.mMin.z;
             if (inDimensions.mMax.x - inDimensions.mMin.x > yDiff) {
-                mSplitAxis = 0;
+                SetSplitAxis(kSplitPlane_Mean);
             } else {
-                mSplitAxis = 1;
+                SetSplitAxis(kSplitPlane_Median);
             }
             if (zDiff > yDiff) {
-                mSplitAxis = 2;
+                SetSplitAxis(kSplitPlane_SAH);
             }
-            unsigned int vecIdx = mSplitAxis;
-            float idxDiff = inDimensions.mMax[vecIdx] - inDimensions.mMin[vecIdx];
-            int numContains = 0;
-            mSplitValue = idxDiff / 2.0f + inDimensions.mMin[mSplitAxis];
-            mSplitAxis = 3;
-            float fsum = 0;
-            if (!inTriList.empty()) {
-                FOREACH (it, inTriList) {
-                    Triangle *cur = *it;
-                    for (int i = 0; i < 3; i++) {
-                        if (inDimensions.Contains(cur->origin)) {
-                            numContains++;
-                            fsum += cur->origin[mSplitAxis];
-                        }
+            float idxDiff =
+                inDimensions.mMax[GetSplitAxis()] - inDimensions.mMin[GetSplitAxis()];
+            SetSplitValue(idxDiff / 2 + inDimensions.mMin[GetSplitAxis()]);
+            unsigned int numContains = 0;
+            double fsum = 0;
+            FOREACH (it, inTriList) {
+                Triangle *cur = *it;
+                Vector3 vecs[3];
+                vecs[0] = cur->origin;
+                Add(cur->origin, cur->frame.x, vecs[1]);
+                Add(cur->origin, cur->frame.y, vecs[2]);
+                for (int i = 0; i < 3; i++) {
+                    if (inDimensions.Contains(vecs[i])) {
+                        fsum += vecs[i][GetSplitAxis()];
+                        numContains++;
                     }
                 }
-                if (numContains != 0) {
-                    mSplitValue = fsum / numContains;
-                    mSplitAxis = 3;
-                }
+            }
+            if (numContains != 0) {
+                SetSplitValue(fsum / numContains);
             }
             return true;
         }
+
         bool
         FindSplit_SAH(const Box &inDimensions, const std::list<Triangle *> &inTriList);
+
         void Pack(
             SplitPlaneType splitType,
             const Box &inDimensions,
@@ -119,21 +122,19 @@ public:
         ) {
             if (depth < 0xF) {
                 // a whole lotta stuff
-                if (!inTriList.empty()) {
-                    if (inTriList.size() >= 10) {
-                        bool find = false;
-                        switch (splitType) {
-                        case 0:
-                        case 1:
-                            find = FindSplit_Mean(inDimensions, inTriList);
-                            break;
-                        case 2:
-                            find = FindSplit_SAH(inDimensions, inTriList);
-                            break;
-                        default:
-                            MILO_FAIL("Invalid split plane type");
-                            break;
-                        }
+                if (inTriList.size() >= 10) {
+                    bool find = false;
+                    switch (splitType) {
+                    case 0:
+                    case 1:
+                        find = FindSplit_Mean(inDimensions, inTriList);
+                        break;
+                    case 2:
+                        find = FindSplit_SAH(inDimensions, inTriList);
+                        break;
+                    default:
+                        MILO_FAIL("Invalid split plane type");
+                        break;
                     }
                 }
             }
@@ -154,6 +155,14 @@ public:
         unsigned int GetSplitAxis() const { return mSplitAxis & 0x3; }
         float GetSplitValue() const { return mSplitValue; }
         void SetIsLeaf(unsigned int leaf) { mLeaf_Index |= (leaf << 15); }
+        void SetSplitAxis(SplitPlaneType t) {
+            mSplitAxis = (mSplitAxis & 0xfffffffc) | t;
+        }
+        void SetSplitValue(float value) {
+            unsigned int oldAxis = GetSplitAxis();
+            mSplitValue = value;
+            mSplitAxis = (mSplitAxis & 0xfffffffc) | (oldAxis & 3);
+        }
 
         // from RB3 bank 5
         // GetChild_0(kdTreeNode*)
@@ -172,7 +181,9 @@ public:
     kdTree(const Box &box) {
         mAABB.Set(box.mMin, box.mMax);
         mNodeArray = new kdTreeNode[0x8000];
-        for (int i = 0; i < 0x8000; i++) {
+        for (unsigned short i = 0; i < 0x8000; i++) {
+            kdTreeNode &node = mNodeArray[i];
+            node.mLeaf_Index = (node.mLeaf_Index & 0x8000) | (i & 0x7FFF);
         }
     }
     ~kdTree() { delete[] mNodeArray; }
