@@ -85,9 +85,12 @@ just try and follow what surrounding code does.
 ## Using AI
 Let's get this out of the way right now: I am not completely against the usage of AI. In fact, I'd argue one of its better uses is as a permuter for close-to-100% functions. But with that all being said, if you are going to use an LLM to decomp, there are some things to keep in mind:
 
-- First and foremost, **AI is NOT a substitute for familiarizing yourself with the workflow**. In our experience, while AI does have the potential to get things right, it also frequently generates code that a human would be unlikely to write (i.e. pointer offsets), and we spend more time having to review the poor quality AI code than we would an entirely human PR submission. If you intend to throw this decomp at a series of agents and let them run wild instead of learning the general decomp process, or at least trying a function or two manually by yourself first, this is not the project for you.
+- First and foremost, **AI is NOT a substitute for familiarizing yourself with the workflow**. In our experience, while AI does have the potential to get things right, it also frequently generates code that a human would be unlikely to write (i.e. pointer offsets), and we spend more time having to review the poor quality AI code than we would an entirely human PR submission. If you intend to throw this decomp at a series of agents and let them run wild instead of learning the general decomp process, or at least trying a function or two manually by yourself first, this is not the project for you. In other words, **purely "agentic" PRs with no human involvement will be rejected, and the submitter banned from the repo.**
 - You must also keep in mind: the AI can NOT reference leaked material. We are trying to keep this decomp as clean room as possible. For this reason, it would be best to use an offline or local LLM.
-- You must disclose your usage of AI in your contribution.
+- You must disclose your usage of AI in your contribution. Specifically, you must disclose the model you used, and how much of your PR the AI was involved in (did it clean up a few minor mismatches, or did you have it completely do several functions from zero?)
+- The PR body **must** be human-written. Reviewers don't want to read an AI-generated description.
+  - Furthermore, you must be able to understand and explain the code contained in your PR. And I don't mean "ask your LLM to explain the code", I mean you, the human.
+- You must NOT submit any AI-tailored markdowns (CLAUDE.md, AGENTS.md, etc). If any are spotted in your PR, it will be rejected.
 
 We can, and have, accepted AI code in the past, but the code still needs to be up to the quality that we expect from human contributions. Overall, **AI should *augment* your ability to decomp, not *replace* it entirely**. Thus, any obvious signs of AI slop or lack of meaningful review of AI generated code will result in a ban from future contributions.
 
