@@ -268,6 +268,7 @@ public:
             mSplitValue = value;
             mSplitAxis = (mSplitAxis & 0xfffffffc) | (oldAxis & 3);
         }
+        kdTriList *GetTriList() const { return mTriList; }
 
         // from RB3 bank 5
         kdTreeNode *GetChild_0(kdTreeNode *n) { return &n[GetIndex() * 2 + 1]; }
@@ -296,7 +297,71 @@ public:
     // from RB3 bank 5 and DC1 debug
     void Build(SplitPlaneType splitType);
     void Insert(T *inTri) { mInitialList.push_back(inTri); }
-    bool Intersect(const Vector3 &, const Vector3 &, float, float &) const;
+
+    bool Intersect(const Vector3 &v1, const Vector3 &v2, float f3, float &f4) const {
+        float f1, f2;
+        if (::Intersect(v1, v2, mAABB, f1, f2)) {
+            bool ret = false;
+            f4 = FLT_MAX;
+            f2 = Min(f2, f3);
+            static kdTreeNode::Stack nodeStack[36];
+            unsigned int stackIdx = 0;
+            kdTreeNode *start = mNodeArray;
+            kdTreeNode *it = mNodeArray;
+            while (it) {
+                if (f4 < f1) {
+                    return ret;
+                }
+                if (!it->GetIsLeaf()) {
+                    float val = it->GetSplitValue();
+                    int idx = it->GetSplitAxis();
+                    float f17 = (val - v1[idx]) / v2[idx];
+                    kdTreeNode *children[2];
+                    children[0] = it->GetChild_0(start);
+                    children[1] = it->GetChild_1(start);
+                    int b13;
+                    if (v1[idx] > val) {
+                        b13 = 1;
+                    } else {
+                        b13 = 0;
+                    }
+                    if (f17 < 0 || f17 > f2) {
+                        it = children[!b13];
+                    } else {
+                        if (f17 >= f1) {
+                            nodeStack[stackIdx].mTMax = f2;
+                            nodeStack[stackIdx].mTMin = f17;
+                            nodeStack[stackIdx].mNode = children[!b13];
+                            f2 = f17;
+                            stackIdx++;
+                            it = children[b13];
+                        } else {
+                            it = children[b13];
+                        }
+                    }
+                } else {
+                    for (kdTriList *tri = it->GetTriList(); !tri->IsEnd();
+                         tri = tri->GetNext()) {
+                        float f98 = FLT_MAX;
+                        if (::Intersect(v1, v2, *(tri->mData), f98)) {
+                            ret = true;
+                            f4 = Min(f4, f98);
+                        }
+                    }
+                    if (stackIdx == 0) {
+                        return ret;
+                    }
+                    stackIdx--;
+                    f1 = nodeStack[stackIdx].mTMin;
+                    f2 = nodeStack[stackIdx].mTMax;
+                    it = nodeStack[stackIdx].mNode;
+                }
+            }
+            return ret;
+        } else {
+            return false;
+        }
+    }
 
     // guessed/inferred
     void PackNodes(SplitPlaneType splitType, unsigned char depth) {

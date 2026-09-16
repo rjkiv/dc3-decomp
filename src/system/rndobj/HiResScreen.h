@@ -64,14 +64,14 @@ private:
     bool mActive; // 0x4
     int mTiling; // 0x8
     String mFileBase; // 0xC
-    unsigned int mAccumWidth; // 0x18
-    unsigned int mAccumHeight; // 0x1C
-    int mCurrTile; // 0x20
-    bool mOverride; // 0x24
-    bool mEvenOddDisabled; // 0x25
-    bool mShrinkToSafe; // 0x26
-    bool mConsoleShowing; // 0x27
-    BmpCache *mCache; // 0x28
+    unsigned int mAccumWidth; // 0x14
+    unsigned int mAccumHeight; // 0x18
+    int mCurrTile; // 0x1c
+    bool mOverride; // 0x20
+    bool mEvenOddDisabled; // 0x21
+    bool mShrinkToSafe; // 0x22
+    bool mConsoleShowing; // 0x23
+    BmpCache *mCache; // 0x24
 };
 
 extern HiResScreen &TheHiResScreen;

@@ -79,6 +79,8 @@ protected:
     void BurnTransform(RndMesh *, std::list<RndMesh *> &) const;
     float
     DistanceSH(const Vector4 &, const Vector3 &, const Vector4 &, const Vector3 &) const;
+    void CalculateAOAtPoint(const Vector3 &, const Vector3 &, float *) const;
+    void SmoothResults(RndMesh *) const;
 
     DataNode OnGetValidObjects(DataArray *) const;
     DataNode OnGetRecvMeshes(DataArray *);

@@ -11,22 +11,17 @@
 HiResScreen gHiResScreen;
 HiResScreen &TheHiResScreen = gHiResScreen;
 
-void HiResScreen::BmpCache::DeleteCache() {
-    for (unsigned int i = 0; i < mTotalNumCacheLines; i++) {
-        FileDelete(mFileNames[i].c_str());
-    }
-}
-
-int HiResScreen::GetPaddingX() const { return 480; }
-int HiResScreen::GetPaddingY() const { return 270; }
-
 HiResScreen::BmpCache::BmpCache(unsigned int ui1, unsigned int ui2) {
     mRowsPerCacheLine = ui2 + 1;
     mPixelsPerRow = ui1;
     mTotalRows = ui2;
     mDirtyStart = 0;
     mDirtyEnd = 0;
-    mByteSize = mTotalRows % mRowsPerCacheLine;
+    do {
+        while (mTotalRows % --mRowsPerCacheLine != 0)
+            ;
+        mByteSize = mRowsPerCacheLine * mPixelsPerRow * 4;
+    } while (7200000 < mByteSize);
     MILO_ASSERT(mTotalRows % mRowsPerCacheLine == 0, 0x3B);
     mTotalNumCacheLines = mTotalRows / mRowsPerCacheLine;
     mFileNames = new String[mTotalNumCacheLines];
@@ -41,9 +36,15 @@ HiResScreen::BmpCache::BmpCache(unsigned int ui1, unsigned int ui2) {
 HiResScreen::BmpCache::~BmpCache() {
     DeleteCache();
     delete[] mFileNames;
-    mFileNames = 0;
+    mFileNames = nullptr;
     delete mBuffer;
-    mBuffer = 0;
+    mBuffer = nullptr;
+}
+
+void HiResScreen::BmpCache::DeleteCache() {
+    for (unsigned int i = 0; i < mTotalNumCacheLines; i++) {
+        FileDelete(mFileNames[i].c_str());
+    }
 }
 
 void HiResScreen::BmpCache::GetLoadedRange(unsigned int &ui1, unsigned int &ui2) const {
@@ -58,8 +59,9 @@ void HiResScreen::BmpCache::FlushCache() {
         MILO_ASSERT(cacheFile, 0xA2);
         cacheFile->Seek(mDirtyStart, 0);
         unsigned int nBuffRange = mDirtyEnd - mDirtyStart;
-        MILO_ASSERT(nBuffRange < mByteSize, 0xAA);
-        unsigned int numWritten = cacheFile->Write(mBuffer + mDirtyStart, nBuffRange);
+        unsigned char *bufStart = mBuffer + mDirtyStart;
+        MILO_ASSERT(nBuffRange <= mByteSize, 0xAA);
+        unsigned int numWritten = cacheFile->Write(bufStart, nBuffRange);
         MILO_ASSERT(numWritten == nBuffRange, 0xAE);
         cacheFile->Flush();
         delete cacheFile;
@@ -89,8 +91,8 @@ void HiResScreen::BmpCache::LoadCache(unsigned int y) {
         unsigned int numRead = cacheFile->Read(mBuffer, mByteSize);
         MILO_ASSERT(numRead == mByteSize, 0x8A);
         mDirtyStart = 0;
+        mDirtyEnd = 0;
     }
-    mDirtyEnd = mDirtyStart;
     if (cacheFile != 0) {
         delete cacheFile;
     }
@@ -101,53 +103,55 @@ void HiResScreen::BmpCache::GetPixelColor(
     int x, int y, unsigned char &r, unsigned char &g, unsigned char &b, unsigned char &a
 ) const {
     MILO_ASSERT(x >= 0 && x < mPixelsPerRow, 0xBC);
-    unsigned int nLoadedStart = mCurrLoadedIndex * mRowsPerCacheLine;
-    unsigned int nLoadedEnd = nLoadedStart + mRowsPerCacheLine - 1;
+    unsigned int nLoadedStart, nLoadedEnd;
+    GetLoadedRange(nLoadedStart, nLoadedEnd);
     MILO_ASSERT(y >= nLoadedStart && y <= nLoadedEnd, 0xC1);
     unsigned int yOffset = nLoadedEnd - y;
     unsigned int offset = (yOffset * mPixelsPerRow + x) * 4;
-    a = mBuffer[offset + 3];
-    r = mBuffer[offset + 2];
-    g = mBuffer[offset + 1];
-    b = mBuffer[offset];
+    unsigned char *colorStart = &mBuffer[offset];
+    a = colorStart[3];
+    r = colorStart[2];
+    g = colorStart[1];
+    b = colorStart[0];
 }
 
 void HiResScreen::BmpCache::SetPixelColor(
     int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a
 ) {
     MILO_ASSERT(x >= 0 && x < mPixelsPerRow, 0xD0);
-    unsigned int nLoadedStart = mCurrLoadedIndex * mRowsPerCacheLine;
-    unsigned int nLoadedEnd = nLoadedStart + mRowsPerCacheLine - 1;
+    unsigned int nLoadedStart, nLoadedEnd;
+    GetLoadedRange(nLoadedStart, nLoadedEnd);
     MILO_ASSERT(y >= nLoadedStart && y <= nLoadedEnd, 0xD5);
-    unsigned int yOffset = nLoadedEnd - y;
-    unsigned int offset = (yOffset * mPixelsPerRow + x) * 4;
-    unsigned int newPixel = (a << 24) | (r << 16) | (g << 8) | b;
-    unsigned int oldPixel = *(unsigned int *)(mBuffer + offset);
-    if (newPixel != oldPixel) {
-        *(unsigned int *)(mBuffer + offset) = newPixel;
-        if (offset < mDirtyStart) {
-            mDirtyStart = offset;
-        }
-        unsigned int offsetEnd = offset + 4;
-        if (mDirtyEnd < offsetEnd) {
-            mDirtyEnd = offsetEnd;
-        }
+    unsigned int byteOffset = ((nLoadedEnd - y) * mPixelsPerRow + x) * 4;
+    unsigned char color[4] = { a, r, g, b };
+    unsigned int colorWord = *reinterpret_cast<unsigned int *>(color);
+    unsigned int *colorToSet = (unsigned int *)&mBuffer[byteOffset];
+    if (colorWord != *colorToSet) {
+        *colorToSet = colorWord;
+        mDirtyStart = Min(mDirtyStart, byteOffset);
+        mDirtyEnd = Max(mDirtyEnd, byteOffset + 4);
     }
 }
+
+int HiResScreen::GetPaddingX() const { return 480; }
+int HiResScreen::GetPaddingY() const { return 270; }
 
 void HiResScreen::TakeShot(const char *c, int i) {
     mFileBase = c;
     mTiling = i;
     mActive = true;
     mCurrTile = 0;
-    if (TheRnd.Width() <= 480 || TheRnd.Height() <= 270) {
-        MILO_NOTIFY(MakeString("Padding exceeds screen size"));
+    if (TheRnd.Width() <= GetPaddingX() || TheRnd.Height() <= GetPaddingY()) {
+        MILO_NOTIFY("Padding exceeds screen size");
         mActive = false;
     } else {
-        mAccumWidth = i * (TheRnd.Width() - 480);
-        mAccumHeight = i * TheRnd.Height() - i * 270;
-        if ((int)mAccumWidth < TheRnd.Width() || (int)mAccumHeight < TheRnd.Height()) {
-            MILO_NOTIFY(MakeString("HiResScreenshot requires more tiles (%d specified)", i));
+        int paddingXMult = i * GetPaddingX();
+        int paddingYMult = i * GetPaddingY();
+        mAccumWidth = TheRnd.Width() * i - paddingXMult;
+        mAccumHeight = TheRnd.Height() * i - paddingYMult;
+        if (mAccumWidth < TheRnd.Width() || mAccumHeight < TheRnd.Height()) {
+            int specified = i;
+            MILO_NOTIFY("HiResScreenshot requires more tiles (%d specified)", specified);
             mActive = false;
         } else {
             mCache = new BmpCache(mAccumWidth, mAccumHeight);
@@ -161,54 +165,49 @@ void HiResScreen::TakeShot(const char *c, int i) {
     }
 }
 
-void HiResScreen::GetBorderForTile(int x, int y, int &left, int &right, int &top, int &bottom)
-    const {
+void HiResScreen::GetBorderForTile(
+    int x, int y, int &left, int &right, int &top, int &bottom
+) const {
     left = 0;
-    right = 0;
     top = 0;
+    right = 0;
     bottom = 0;
-    int xStep = TheRnd.Width() - 480;
-    int xPos = xStep * x + TheRnd.Width();
-    if (xPos < (int)mAccumWidth) {
-        right = 480;
-    } else if ((x + 1) * xStep > TheRnd.Width()) {
-        left = 480;
+    int w = TheRnd.Width() - GetPaddingX();
+    if (w * x + TheRnd.Width() < mAccumWidth) {
+        top = GetPaddingX();
+    } else if (w * (x + 1) - TheRnd.Width() > 0) {
+        left = GetPaddingX();
     }
-    int yStep = TheRnd.Height() - 270;
-    int yPos = yStep * y + TheRnd.Height();
-    if (yPos < (int)mAccumHeight) {
-        bottom = 270;
-    } else if ((y + 1) * yStep > TheRnd.Height()) {
-        top = 270;
+    int h = TheRnd.Height() - GetPaddingY();
+    if (h * y + TheRnd.Height() < mAccumHeight) {
+        bottom = GetPaddingY();
+    } else if (h * (y + 1) - TheRnd.Height() > 0) {
+        right = GetPaddingY();
     }
 }
 
 void HiResScreen::Accumulate() {
     if (mCurrTile == 0) {
         mCurrTile = 1;
-        return;
+    } else {
+        int prevTile = mCurrTile - 1;
+        if (prevTile < mTiling * mTiling) {
+            RndTex *tex = Hmx::Object::New<RndTex>();
+            RndBitmap bm;
+            tex->SetBitmap(0, 0, 0, RndTex::kFrontBuffer, false, 0);
+            tex->LockBitmap(bm, true);
+            delete tex;
+            int tileX = prevTile % mTiling;
+            int tileY = prevTile / mTiling;
+            int left, right, top, bottom;
+            GetBorderForTile(tileX, tileY, left, right, top, bottom);
+            int x = (TheRnd.Width() - GetPaddingX()) * tileX;
+            int y = (TheRnd.Height() - GetPaddingY()) * tileY;
+            Merge(bm, x, y, left, right, bm.Width(), bm.Height(), top, bottom);
+            TheRnd.ResetProcCounter();
+            mCurrTile++;
+        }
     }
-    int prevTile = mCurrTile - 1;
-    if (prevTile >= mTiling * mTiling) {
-        return;
-    }
-    RndTex *tex = Hmx::Object::New<RndTex>();
-    RndBitmap bm;
-    tex->SetBitmap(0, 0, 0, RndTex::kFrontBuffer, false, 0);
-    tex->LockBitmap(bm, true);
-    delete tex;
-    int tileX = prevTile % mTiling;
-    int tileY = prevTile / mTiling;
-    int left, right, top, bottom;
-    GetBorderForTile(tileX, tileY, left, right, top, bottom);
-    int xStep = TheRnd.Width() - 480;
-    int yStep = TheRnd.Height() - 270;
-    int xOff = xStep * tileX;
-    int yOff = yStep * tileY;
-    Merge(bm, left, top, bm.Width(), bm.Height(), xOff, yOff, left, top);
-    TheRnd.ResetProcCounter();
-    mCurrTile++;
-    bm.Reset();
 }
 
 void HiResScreen::Finish() {
@@ -225,10 +224,11 @@ void HiResScreen::Finish() {
     } while (existFile);
     mCache->FlushCache();
     FileStream *fs = new FileStream(filename.c_str(), FileStream::kWrite, true);
+    void *pixels = MemAlloc(0x40, __FILE__, 0x250, "TmpRndBitmap");
     RndBitmap bm;
-    bm.Create(mAccumWidth, mAccumHeight, 32, 0, 0, 0, 0, 0);
+    bm.Create(mAccumWidth, mAccumHeight, 0, 32, 0, 0, pixels, 0);
     bm.SaveBmpHeader(fs);
-    delete &bm;
+    delete pixels;
     for (int i = mCache->mTotalNumCacheLines - 1; i >= 0; i--) {
         mCache->LoadCache(i * mCache->mRowsPerCacheLine);
         fs->Write(mCache->mBuffer, mCache->mByteSize);
@@ -244,59 +244,65 @@ void HiResScreen::Finish() {
         RndBitmap loResBm;
         DownSample(loResBm);
         loResBm.SaveBmp(filename.c_str());
-        loResBm.Reset();
     }
     mActive = false;
     TheRnd.SetEvenOddDisabled(mEvenOddDisabled);
     TheRnd.SetShrinkToSafeArea(mShrinkToSafe);
     TheRnd.ShowConsole(mConsoleShowing);
-    if (mCache) {
-        delete mCache;
-    }
-    bm.Reset();
+    delete mCache;
 }
 
 void HiResScreen::Merge(
-    const RndBitmap &bm, int srcX, int srcY, int srcW, int srcH, int dstX, int dstY, int padX, int padY
+    const RndBitmap &src,
+    int dstX,
+    int dstY,
+    int srcX,
+    int srcXEnd,
+    int srcY,
+    int srcYEnd,
+    int blendX,
+    int blendY
 ) {
-    if (srcW >= srcH) {
+    if (srcX >= srcXEnd) {
         return;
     }
-    int xStart = dstX;
-    int xEnd = srcH;
-    int xRange = xEnd - srcX;
+    int xStart = srcY;
+    int xEnd = srcXEnd;
+    int xRange = xEnd - dstX;
     for (; xStart < mAccumHeight && xStart >= 0; xStart++, xRange++) {
-        if (xStart + xRange >= srcH) {
+        if (xStart + xRange >= srcXEnd) {
             break;
         }
         mCache->LoadCache(xStart);
-        int yStart = srcY;
-        int yOff = srcX - padX;
-        int yRange = srcY - padY;
+        int yStart = dstY;
+        int yOff = dstX - blendX;
+        int yRange = dstY - blendY;
         for (; yStart < mAccumWidth && yStart >= 0; yStart++, yOff++, yRange++) {
-            if (yStart + yRange >= srcW) {
+            if (yStart + yRange >= srcX) {
                 break;
             }
             int bmX = xRange + xStart;
             int bmY = yRange + yStart;
             unsigned char r, g, b, a;
-            bm.PixelColor(bmY, bmX, r, g, b, a);
+            src.PixelColor(bmY, bmX, r, g, b, a);
             unsigned char cr, cg, cb, ca;
             mCache->GetPixelColor(yStart, xStart, cr, cg, cb, ca);
             float blendX = 0.0f;
             float blendY = 0.0f;
-            if (bmY > padX) {
-                blendX = (float)yOff / (float)padX;
+            if (bmY > blendX) {
+                blendX = (float)yOff / (float)blendX;
             }
-            if (bmX > srcX) {
-                blendY = (float)xRange / (float)srcX;
+            if (bmX > dstX) {
+                blendY = (float)xRange / (float)dstX;
             }
             float blend = 0.0f;
             if (blendX > 0.0f || blendY > 0.0f) {
                 blend = sqrtf(blendX * blendX + blendY * blendY);
                 blend = (blend - 0.5f) * 2.0f;
-                if (blend < 0.0f) blend = 0.0f;
-                if (blend > 1.0f) blend = 1.0f;
+                if (blend < 0.0f)
+                    blend = 0.0f;
+                if (blend > 1.0f)
+                    blend = 1.0f;
             }
             float invBlend = (1.0f - blend) * 255.0f;
             unsigned char newA = (unsigned char)invBlend;
@@ -319,8 +325,8 @@ void HiResScreen::Merge(
 
 void HiResScreen::DownSample(RndBitmap &outBm) {
     int tiling = mTiling;
-    int newHeight = (tiling * 270 + mAccumHeight) / tiling;
-    int newWidth = (tiling * 480 + mAccumWidth) / tiling;
+    int newHeight = (tiling * GetPaddingY() + mAccumHeight) / tiling;
+    int newWidth = (tiling * GetPaddingX() + mAccumWidth) / tiling;
     float scaleY = (float)mAccumHeight / (float)newHeight;
     float scaleX = (float)mAccumWidth / (float)newWidth;
     outBm.Create(newWidth, newHeight, 32, 0, 0, 0, 0, 0);
@@ -340,42 +346,38 @@ void HiResScreen::DownSample(RndBitmap &outBm) {
 void HiResScreen::CurrentTileRect(
     const Hmx::Rect &inRect, Hmx::Rect &outTileRect, Hmx::Rect &outAccumRect
 ) const {
-    int tiling = mTiling;
-    int tile = mCurrTile;
-    int tileX = tile % tiling;
-    int tileY = tile / tiling;
-    float invTiling = 1.0f / (float)tiling;
-    float tileXf = (float)tileX;
-    float tileYf = (float)tileY;
-    float tileXEnd = tileXf + 1.0f;
-    float tileYEnd = tileYf + 1.0f;
-    float x = inRect.x + inRect.w;
-    float y = inRect.y + inRect.h;
-    float x0 = (inRect.x - tileXf * invTiling) / (tileXEnd * invTiling - tileXf * invTiling);
-    float x1 = (x - tileXf * invTiling) / (tileXEnd * invTiling - tileXf * invTiling);
-    float y0 = (inRect.y - tileYf * invTiling) / (tileYEnd * invTiling - tileYf * invTiling);
-    float y1 = (y - tileYf * invTiling) / (tileYEnd * invTiling - tileYf * invTiling);
-    if (x0 < 0.0f) x0 = 0.0f;
-    if (x0 > 1.0f) x0 = 1.0f;
-    if (x1 < 0.0f) x1 = 0.0f;
-    if (x1 > 1.0f) x1 = 1.0f;
-    if (y0 < 0.0f) y0 = 0.0f;
-    if (y0 > 1.0f) y0 = 1.0f;
-    if (y1 < 0.0f) y1 = 0.0f;
-    if (y1 > 1.0f) y1 = 1.0f;
-    outTileRect.x = x0;
-    outTileRect.w = x1;
-    outTileRect.y = y0;
-    outTileRect.h = y1;
-    outAccumRect.x = x0 * invTiling + tileXf * invTiling;
-    outAccumRect.y = y0 * invTiling + tileYf * invTiling;
-    outAccumRect.w = x1 - x0;
-    outAccumRect.h = y1 - y0;
+    float invTiling = 1.0f / mTiling;
+    float mod = mCurrTile % mTiling;
+    float div = mCurrTile / mTiling;
+    float tileXf = mod * invTiling;
+    float tileYf = div * invTiling;
+
+    float midX = (mod + 1.0f) * invTiling;
+    float midY = (div + 1.0f) * invTiling;
+
+    float rectX = (inRect.x - tileXf) / (midX - tileXf);
+    float rectY = (inRect.y - tileYf) / (midY - tileYf);
+    float rectW = ((inRect.w + inRect.x) - tileXf) / (midX - tileXf);
+    float rectH = ((inRect.h + inRect.y) - tileYf) / (midY - tileYf);
+
+    rectX = Clamp(0.0f, 1.0f, rectX);
+    rectY = Clamp(0.0f, 1.0f, rectY);
+    rectW = Clamp(0.0f, 1.0f, rectW);
+    rectH = Clamp(0.0f, 1.0f, rectH);
+    outTileRect.Set(rectX, rectY, rectW, rectH);
+
+    rectX = rectX * invTiling + tileXf;
+    rectY = rectY * invTiling + tileYf;
+    rectW = rectW * invTiling + tileXf;
+    rectH = rectH * invTiling + tileYf;
+
+    outAccumRect.Set(rectX, rectY, rectW - rectX, rectH - rectY);
 }
 
 Hmx::Rect HiResScreen::ScreenRect(const RndCam *cam, const Hmx::Rect &r) const {
     Hmx::Rect ret = r;
-    if ((cam->TargetTex() != 0 && !mOverride) || !mActive || mCurrTile >= mTiling * mTiling) {
+    if ((cam->TargetTex() != 0 && !mOverride) || !mActive
+        || mCurrTile >= mTiling * mTiling) {
         return r;
     }
     int tiling = mTiling;
@@ -416,10 +418,5 @@ Hmx::Rect HiResScreen::ScreenRect() const {
 
 Hmx::Rect HiResScreen::InvScreenRect() const {
     Hmx::Rect r = ScreenRect();
-    Hmx::Rect ret;
-    ret.w = 1.0f / r.w;
-    ret.h = -1.0f / r.w;
-    ret.x = -r.x * ret.w;
-    ret.y = ret.h * r.y;
-    return ret;
+    return Hmx::Rect(-r.x / r.w, -r.y / r.h, 1 / r.w, 1 / r.h);
 }

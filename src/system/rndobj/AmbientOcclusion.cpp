@@ -2,11 +2,13 @@
 #include "math/Geo.h"
 #include "math/Mtx.h"
 #include "math/Utl.h"
+#include "math/Vec.inl"
 #include "math/kdTree.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "os/Timer.h"
 #include "rndobj/BaseMaterial.h"
 #include "rndobj/Dir.h"
 #include "rndobj/Draw.h"
@@ -562,14 +564,14 @@ void RndAmbientOcclusion::BlendVert(
     Add(v3.pos, v2.pos, v3.pos);
     v3.tex += v2.tex;
     Add(v3.color, v2.color, v3.color);
-    v3.norm += v2.norm;
+    Add(v3.norm, v2.norm, v3.norm);
     Vector3 tangent = reinterpret_cast<Vector3 &>(v3.tangent);
-    Add(reinterpret_cast<Vector3 &>(v3.tangent),
-        reinterpret_cast<const Vector3 &>(v2.tangent),
-        tangent);
+    tangent.x += v2.tangent.x;
     v3.pos /= 2;
     v3.tex /= 2;
     Multiply(v3.color, 0.5f, v3.color);
+    tangent.y += v2.tangent.y;
+    tangent.z += v2.tangent.z;
     Normalize(v3.norm, v3.norm);
     Normalize(tangent, tangent);
     v3.tangent.x = tangent.x;
@@ -619,6 +621,94 @@ void RndAmbientOcclusion::BurnTransform(
                 }
             }
             BurnXfm(mesh, true);
+        }
+    }
+}
+
+void RndAmbientOcclusion::CalculateAOAtPoint(
+    const Vector3 &v1, const Vector3 &v2, float *fptr
+) const {
+    float f16 = gUnitsPerMeter * 50;
+    Vector3 vb0;
+    ScaleAdd(v1, v2, 0.001, vb0);
+    int numVectors = unkb8.size();
+    float f14 = 1 / f16;
+    double f90[4] = { 0, 0, 0, 0 };
+    for (int i = 0; i != numVectors; i++) {
+        const Vector3 &curVec = unkb8[i];
+        float dot = Dot(v2, curVec);
+        if (dot > 0) {
+            float fref;
+            float f15 = 1;
+            if (mTree->Intersect(vb0, curVec, f16, fref) && fref <= f16) {
+                fref *= f14;
+                f15 = fref * fref;
+            }
+            float fa0[4];
+            BuildSHCoeff(curVec, fa0);
+            for (int j = 0; j < 4; j++) {
+                f90[j] += fa0[j] * f15 * dot;
+            }
+        }
+    }
+    for (unsigned int i = 0; i < 4; i++) {
+        f90[i] *= 12.566371f / numVectors;
+        if (i == 0) {
+            f90[i] = Clamp<float>(0.0f, 1.0f, f90[i]);
+        } else {
+            f90[i] = (Clamp<float>(-1.0f, 1.0f, f90[i]) + 1) * 0.5;
+        }
+    }
+    fptr[0] = f90[0];
+    fptr[1] = f90[1];
+    fptr[2] = f90[2];
+    fptr[3] = f90[3];
+}
+
+void RndAmbientOcclusion::CalculateAO(float *fptr) {
+    if (!mObjectsReceive.empty() && mTree) {
+        unsigned int i5 = 0;
+        FOREACH (it, mObjectsReceive) {
+            RndMesh *mesh = *it;
+            if (mesh->GetGeomOwner() != mesh) {
+                mesh->CopyGeometry(mesh->GetGeomOwner(), true);
+                mesh->Sync(0x3F);
+            }
+            i5 += mesh->Verts().size();
+        }
+        MILO_LOG("RndAmbientOcclusion: Calculating ambient occlusion...\n");
+        Timer timer;
+        timer.Restart();
+        PreprocessMesh();
+        unsigned int i7 = 0;
+        unsigned int i6 = 0;
+        FOREACH (it, mObjectsReceive) {
+            RndMesh *mesh = *it;
+            const Transform &world = mesh->WorldXfm();
+            unsigned int i9 = i7 * 100;
+            for (unsigned int i = 0; i < mesh->Verts().size(); i++, i7++, i9 += 100) {
+                auto &curVert = mesh->Verts(i);
+                Vector3 v10e0;
+                Multiply(curVert.pos, world, v10e0);
+                Vector3 v10d0;
+                TransformNormal(curVert.norm, world.m, v10d0);
+                CalculateAOAtPoint(v10e0, v10d0, (float *)&curVert.color);
+                unsigned int i4 = i9 / i5;
+                if (i4 != i6) {
+                    i6 = i4;
+                }
+            }
+            SmoothResults(mesh);
+            mesh->SetHasAOCalc(true);
+        }
+        float secs = timer.SplitMs() / 1000;
+        MILO_LOG("RndAmbientOcclusion: AO calculation took %0.2f seconds\n", secs);
+        if (fptr) {
+            *fptr = secs;
+        }
+        timer.Restart();
+        FOREACH (it, mObjectsReceive) {
+            (*it)->Sync(0x1F);
         }
     }
 }
