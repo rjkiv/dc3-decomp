@@ -748,7 +748,7 @@
             "system/ui/ResourceDirPtr.cpp": "NonMatching",
             "system/ui/Screenshot.cpp": "Matching",
             "system/ui/ScrollSelect.cpp": "Matching",
-            "system/ui/UI.cpp": "NonMatching",
+            "system/ui/UI.cpp": "Matching",
             "system/ui/UIButton.cpp": "Matching",
             "system/ui/UIColor.cpp": "Matching",
             "system/ui/UIComponent.cpp": "Matching",

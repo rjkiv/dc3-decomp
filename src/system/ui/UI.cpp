@@ -7,6 +7,7 @@
 #include "obj/MessageTimer.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
+#include "obj/Task.h"
 #include "os/Debug.h"
 #include "os/File.h"
 #include "os/Joypad.h"
@@ -14,8 +15,10 @@
 #include "os/JoypadMsgs.h"
 #include "os/Keyboard.h"
 #include "os/System.h"
+#include "os/Timer.h"
 #include "os/UserMgr.h"
 #include "rndobj/Cam.h"
+#include "stl/_algobase.h"
 #include "ui/CheatProvider.h"
 #include "ui/InlineHelp.h"
 #include "ui/LabelNumberTicker.h"
@@ -233,6 +236,93 @@ void UIManager::Terminate() {
     RELEASE(mAutomator);
 }
 
+void UIManager::Poll() {
+    START_AUTO_TIMER("ui_poll_raw");
+    if (mAutomator) {
+        mAutomator->Poll();
+    }
+    TheTaskMgr.SetUISeconds(mTimer.SplitMs() / 1000, false);
+    FOREACH (it, mPushedScreens) {
+        (*it)->Poll();
+    }
+    if (mCurrentScreen) {
+        mCurrentScreen->Poll();
+    }
+    if (mTransitionState == kTransitionTo) {
+        if (mTransitionScreen) {
+            if (!mTransitionScreen->CheckIsLoaded())
+                goto state3;
+        }
+        if (mCurrentScreen) {
+            if (mCurrentScreen->Exiting())
+                goto state3;
+        }
+        if (!IsBlockingTransition()) {
+            UIScreen *newCur = mTransitionScreen;
+            UIScreen *newTrans = mCurrentScreen;
+            mTransitionState = kTransitionFrom;
+            mCurrentScreen = newCur;
+            mTransitionScreen = newTrans;
+            if (mCurrentScreen) {
+                if (mCurrentScreen->AllPanelsDown() && mPushedScreens.empty()) {
+                    if (IsTimelineResetAllowed()) {
+                        mTimer.Restart();
+                        TheTaskMgr.SetUISeconds(0, true);
+                    }
+                }
+                mCurrentScreen->Enter(mTransitionScreen);
+            }
+        }
+    }
+state3:
+    if (mTransitionState == kTransitionPop) {
+        if (mCurrentScreen) {
+            if (mCurrentScreen->Exiting())
+                goto state2;
+        }
+        if (mCurrentScreen) {
+            mCurrentScreen->UnloadPanels();
+        }
+        UIScreen *oldCur = mCurrentScreen;
+        MILO_ASSERT(!mPushedScreens.empty(), 0x2D8);
+        mCurrentScreen = mPushedScreens.back();
+        mPushedScreens.pop_back();
+        mTransitionState = kTransitionNone;
+        if (mTransitionScreen == mCurrentScreen) {
+            mTransitionScreen = nullptr;
+            UITransitionCompleteMsg msg(mCurrentScreen, oldCur);
+            Handle(msg, false);
+        } else {
+            GotoScreenImpl(mTransitionScreen, false, false);
+        }
+    }
+state2:
+    if (mTransitionState == kTransitionFrom) {
+        if (mCurrentScreen) {
+            if (mCurrentScreen->Entering())
+                goto end;
+        }
+        if (mOverlay) {
+            if (mOverlay->Showing() && mLoadTimer.Running() && mCurrentScreen) {
+                mLoadTimer.Stop();
+                mOverlay->CurrentLine() = MakeString(
+                    "%s entered in %f seconds",
+                    mCurrentScreen->Name(),
+                    mLoadTimer.Ms() / 1000
+                );
+                MILO_LOG("%s\n", mOverlay->CurrentLine());
+            }
+        }
+        UITransitionCompleteMsg msg(mCurrentScreen, mTransitionScreen);
+        mTransitionState = kTransitionNone;
+        mTransitionScreen = nullptr;
+        Handle(msg, false);
+    }
+end:
+    TheKnownIssues.Draw();
+    TheOSCMessenger.Poll();
+}
+
 void UIManager::Draw() {
     FOREACH (it, mPushedScreens) {
         (*it)->Draw();
@@ -343,7 +433,10 @@ void UIManager::ToggleLoadTimes() {
 }
 
 void UIManager::GotoFirstScreen() {
-    GotoScreen(DataVariable("first_screen").Obj<UIScreen>(), false, false);
+    DataNode &n = DataVariable("first_screen");
+    Hmx::Object *obj = n.GetObj();
+    UIScreen *screen = dynamic_cast<UIScreen *>(obj);
+    GotoScreen(screen, false, false);
     mTimer.Restart();
 }
 
@@ -438,10 +531,9 @@ bool UIManager::OverloadHorizontalNav(JoypadAction act, JoypadButton btn, bool b
 }
 
 void UIManager::GotoScreenImpl(UIScreen *scr, bool b1, bool b2) {
-    if (b1 || mTransitionState != kTransitionNone
-        || mCurrentScreen != scr
-            && (mTransitionState != kTransitionTo && mTransitionState != kTransitionPop)
-        || mTransitionScreen != scr) {
+    if ((b1 || mTransitionState != kTransitionNone || mCurrentScreen != scr)
+        && ((mTransitionState != kTransitionTo && mTransitionState != kTransitionPop)
+            || mTransitionScreen != scr)) {
         CancelTransition();
 
         if (scr) {
@@ -452,9 +544,13 @@ void UIManager::GotoScreenImpl(UIScreen *scr, bool b1, bool b2) {
             }
         }
 
+        const char *curScreenName = mCurrentScreen ? mCurrentScreen->Name() : "<none>";
+        const char *scrName = scr ? scr->Name() : "<none>";
+        MILO_LOG("transition from %s to %s\n", curScreenName, scrName);
+
         mWentBack = b2;
-        // UIScreenChangeMsg msg(scr, mCurrentScreen, mWentBack);
-        // Handle(msg, false);
+        UIScreenChangeMsg msg(scr, mCurrentScreen, mWentBack);
+        Handle(msg, false);
         mTransitionState = kTransitionTo;
         mTransitionScreen = scr;
         if (mCurrentScreen)
@@ -463,7 +559,9 @@ void UIManager::GotoScreenImpl(UIScreen *scr, bool b1, bool b2) {
             scr->LoadPanels();
 
         if (mTransitionScreen) {
-            mOverlay->CurrentLine() = gNullStr;
+            if (mOverlay) {
+                mOverlay->CurrentLine() = gNullStr;
+            }
             mLoadTimer.Restart();
         }
     }
@@ -471,7 +569,9 @@ void UIManager::GotoScreenImpl(UIScreen *scr, bool b1, bool b2) {
 
 bool UIManager::IsGameScreenActive() {
     bool ret = BottomScreen() && streq(BottomScreen()->Name(), "game_screen");
-    ret &= mCurrentScreen != BottomScreen();
+    if (CurrentScreen()) {
+        ret = CurrentScreen() == BottomScreen() ? ret : false;
+    }
     return ret;
 }
 
@@ -711,7 +811,7 @@ Symbol Automator::CurScreenName() {
     if (screen) {
         static Message msg("is_system_cheat");
         DataNode handled = screen->Handle(msg, false);
-        if (!handled.Equal(DATA_UNHANDLED, nullptr, true) && handled.Int() != 0) {
+        if (handled.Equal(DATA_UNHANDLED, nullptr, true) || handled.Int() == 0) {
             return screen->Name();
         }
     }
@@ -762,6 +862,30 @@ DataNode Automator::OnMsg(ButtonDownMsg const &msg) {
         );
         AddRecord(name, ptr);
     }
+    return DATA_UNHANDLED;
+}
+
+DataNode Automator::OnMsg(const UIComponentScrollMsg &msg) {
+    Symbol t = msg->Sym(1);
+    HandleMessage(t);
+    return DATA_UNHANDLED;
+}
+
+DataNode Automator::OnMsg(const UIComponentFocusChangeMsg &msg) {
+    Symbol t = msg->Sym(1);
+    HandleMessage(t);
+    return DATA_UNHANDLED;
+}
+
+DataNode Automator::OnMsg(const UIScreenChangeMsg &msg) {
+    Symbol t = msg->Sym(1);
+    HandleMessage(t);
+    return DATA_UNHANDLED;
+}
+
+DataNode Automator::OnMsg(const UIComponentSelectMsg &msg) {
+    Symbol t = msg->Sym(1);
+    HandleMessage(t);
     return DATA_UNHANDLED;
 }
 
