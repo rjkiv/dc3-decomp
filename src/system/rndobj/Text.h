@@ -337,6 +337,7 @@ public:
     ObjVector<Style> &Styles() { return mStyles; }
     const String &RawText() const { return mText; }
     float Indentation() const { return mIndentation; }
+    const Hmx::Rect &DrawRect() const { return mDrawRect; }
 
 protected:
     RndText();

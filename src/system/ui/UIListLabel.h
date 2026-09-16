@@ -19,6 +19,7 @@ public:
 
     const char *GetDefaultText() const;
     UILabel *ElementLabel(int) const;
+    bool GetUnk8c() const { return unk8c; }
 
     NEW_OBJ(UIListLabel)
     OBJ_MEM_OVERLOAD(0x11)

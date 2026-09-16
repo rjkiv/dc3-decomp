@@ -1,4 +1,5 @@
 #include "ui/UIListLabel.h"
+#include "math/Geo.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "ui/UILabel.h"
@@ -78,6 +79,41 @@ UILabel *UIListLabel::ElementLabel(int display) const {
 
 UIListLabelElement::~UIListLabelElement() { delete mLabel; }
 
-// void UIListLabelElement::Draw(const Transform &tf, float f, UIColor *col, Box *box) {}
+void UIListLabelElement::Draw(const Transform &tf, float f3, UIColor *col, Box *box) {
+    mLabel->SetWorldXfm(tf);
+    if (box) {
+        Box localBox;
+        localBox.Set(box->mMin, box->mMax);
+        const Hmx::Rect &r = mLabel->DrawRect();
+        Vector3 v90;
+        v90.Set(r.x, 0, r.y);
+        localBox.GrowToContain(v90, false);
+        Vector3 v80;
+        v80.Set(r.w + r.x, 0, r.h + r.y);
+        localBox.GrowToContain(v80, false);
+        box->GrowToContain(localBox.mMin, false);
+        box->GrowToContain(localBox.mMax, false);
+    } else {
+        float *alphas = (float *)_alloca(mLabel->NumStyles() * sizeof(float));
+
+        for (int i = 0; i < mLabel->Styles().size(); i++) {
+            RndText::Style &curStyle = mLabel->Style(i);
+            alphas[i] = curStyle.mInfo.mFontColor.alpha;
+        }
+        mLabel->LStyle(0).mColorOverride = col;
+        if (mListLabel->GetUnk8c()) {
+            for (int i = 1; i < mLabel->Styles().size(); i++) {
+                mLabel->LStyle(i).mColorOverride = col;
+            }
+        }
+        for (int i = 0; i < mLabel->Styles().size(); i++) {
+            mLabel->Style(i).mInfo.mFontColor.alpha *= f3;
+        }
+        mLabel->DrawShowing();
+        for (int i = 0; i < mLabel->Styles().size(); i++) {
+            mLabel->Style(i).mInfo.mFontColor.alpha = alphas[i];
+        }
+    }
+}
 
 #pragma endregion UIListLabelElement

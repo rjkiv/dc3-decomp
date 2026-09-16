@@ -761,7 +761,7 @@
             "system/ui/UIListCustom.cpp": "Matching",
             "system/ui/UIListDir.cpp": "NonMatching",
             "system/ui/UIListHighlight.cpp": "Matching",
-            "system/ui/UIListLabel.cpp": "NonMatching",
+            "system/ui/UIListLabel.cpp": "Matching",
             "system/ui/UIListMesh.cpp": "Matching",
             "system/ui/UIListProvider.cpp": "Matching",
             "system/ui/UIListSlot.cpp": "NonMatching",
