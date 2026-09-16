@@ -740,7 +740,7 @@
             "system/synth360/SynthSample.cpp": "Matching",
             "system/synth360/Voice.cpp": "NonMatching",
             "system/ui/CheatProvider.cpp": "Matching",
-            "system/ui/InlineHelp.cpp": "NonMatching",
+            "system/ui/InlineHelp.cpp": "Matching",
             "system/ui/LabelNumberTicker.cpp": "NonMatching",
             "system/ui/LabelShrinkWrapper.cpp": "NonMatching",
             "system/ui/LocalePanel.cpp": "Matching",

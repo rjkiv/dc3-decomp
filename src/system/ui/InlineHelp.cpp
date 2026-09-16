@@ -1,9 +1,14 @@
 #include "ui/InlineHelp.h"
+#include "math/Mtx.h"
+#include "math/Rot.h"
+#include "math/Trig.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "obj/Task.h"
+#include "os/Debug.h"
 #include "os/Joypad.h"
 #include "rndobj/Dir.h"
+#include "rndobj/Trans.h"
 #include "ui/UIComponent.h"
 #include "ui/UILabel.h"
 #include "utl/BinStream.h"
@@ -216,6 +221,45 @@ void InlineHelp::PostLoad(BinStream &bs) {
     Update();
 }
 
+void InlineHelp::DrawShowing() {
+    int numLabels = mTextLabels.size();
+    Transform tf70 = WorldXfm();
+
+    DataArray *t = TypeDef();
+    MILO_ASSERT(t, 0x117);
+
+    Transform tf170;
+    tf170.v.z = 0;
+    tf170.v.x = 0;
+    tf170.m.Identity();
+    tf170.v.y = 0;
+    Transform tf120;
+    if (sLabelRot != 0) {
+        Vector3 v130(sLabelRot * DEG2RAD, 0, 0);
+        Hmx::Matrix3 ma0;
+        MakeRotMatrix(v130, ma0, true);
+        Multiply(tf170, ma0, tf120);
+    } else {
+        tf120.Reset();
+    }
+    for (int i = 0; i < numLabels; i++) {
+        if (i > 0) {
+            if (mHorizontal) {
+                tf170.v.x += mSpacing;
+            } else {
+                tf170.v.z += mSpacing;
+            }
+        }
+        Transform tfe0;
+        Multiply(tf170, tf70, tfe0);
+        if (!mConfig[i].mSecondaryStr.empty()) {
+            Multiply(tf120, tfe0, tfe0);
+        }
+        mTextLabels[i]->SetWorldXfm(tfe0);
+        mTextLabels[i]->Draw();
+    }
+}
+
 void InlineHelp::Poll() {
     UIComponent::Poll();
     float uisecs = TheTaskMgr.UISeconds();
@@ -380,9 +424,9 @@ DataNode InlineHelp::OnSetConfig(const DataArray *da) {
     for (int i = 0; i < arr->Size(); i++) {
         DataArray *loopArr = arr->Array(i);
         ActionElement el((JoypadAction)loopArr->Int(0));
-        el.SetConfig(arr->Node(1), false);
+        el.SetConfig(loopArr->Node(1), false);
         if (loopArr->Size() > 2)
-            el.SetConfig(arr->Node(2), true);
+            el.SetConfig(loopArr->Node(2), true);
         mConfig.push_back(el);
     }
     SyncLabelsToConfig();
