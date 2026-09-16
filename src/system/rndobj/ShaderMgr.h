@@ -111,6 +111,7 @@ public:
     void SetUnk27(bool b) { unk27 = b; }
     void SetUnk28(bool b) { unk28 = b; }
     void SetUnk26(bool b) { unk26 = b; }
+    void SetUnk3f(bool b) { unk3f = b; }
 
 protected:
     virtual void LoadShaders(const char *filename);

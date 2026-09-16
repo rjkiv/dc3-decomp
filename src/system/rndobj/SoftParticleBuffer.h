@@ -22,8 +22,9 @@ public:
 private:
     void AllocateData(unsigned int, unsigned int, unsigned int);
     void FreeData();
+    void BlurSurface();
 
     RndTex *mSurfaces[2]; // 0x30
-    int unk38; // 0x38
+    BaseMaterial::Blend unk38; // 0x38
     ObjPtrList<RndDrawable> unk3c; // 0x3c
 };
