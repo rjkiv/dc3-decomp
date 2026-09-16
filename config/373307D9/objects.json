@@ -769,7 +769,7 @@
             "system/ui/UIListSubList.cpp": "Matching",
             "system/ui/UIListWidget.cpp": "Matching",
             "system/ui/UIPanel.cpp": "Matching",
-            "system/ui/UIPicture.cpp": "NonMatching",
+            "system/ui/UIPicture.cpp": "Matching",
             "system/ui/UIScreen.cpp": "Matching",
             "system/ui/UISlider.cpp": "Matching",
             "system/ui/UITransitionHandler.cpp": "Matching",

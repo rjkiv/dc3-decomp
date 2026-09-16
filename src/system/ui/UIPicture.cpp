@@ -52,9 +52,12 @@ void UIPicture::SetTypeDef(DataArray *da) {
     UIComponent::SetTypeDef(da);
     if (da) {
         DataArray *findtex = da->FindArray("tex_file", false);
-        if (findtex && strlen(findtex->Str(1)) != 0) {
-            FilePath fp(FileGetPath(findtex->File()), findtex->Str(1));
-            SetTex(fp);
+        if (findtex) {
+            const char *str = findtex->Str(1);
+            if (strlen(str) != 0) {
+                FilePath fp(FileGetPath(findtex->File()), findtex->Str(1));
+                SetTex(fp);
+            }
         }
     }
 }
