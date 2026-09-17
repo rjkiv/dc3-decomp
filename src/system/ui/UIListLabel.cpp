@@ -31,11 +31,11 @@ BEGIN_COPYS(UIListLabel)
     COPY_MEMBER_FROM(l, unk8c)
 END_COPYS
 
-INIT_REVS(1, 0)
+INIT_REVS(1, 1)
 
 BEGIN_LOADS(UIListLabel)
     LOAD_REVS(bs)
-    ASSERT_REVS(1, 0)
+    ASSERT_REVS(1, 1)
     LOAD_SUPERCLASS(UIListSlot)
     d >> mLabel;
     if (d.rev < 1) {

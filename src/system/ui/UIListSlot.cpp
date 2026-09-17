@@ -93,9 +93,7 @@ void UIListSlot::Poll() {
     }
 }
 
-bool UIListSlot::Matches(const char *cc) const {
-    return strcmp(mMatchName.c_str(), cc) == 0;
-}
+bool UIListSlot::Matches(const char *cc) const { return streq(mMatchName.c_str(), cc); }
 
 const char *UIListSlot::MatchName() const { return mMatchName.c_str(); }
 

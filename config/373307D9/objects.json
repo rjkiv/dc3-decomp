@@ -773,7 +773,7 @@
             "system/ui/UIScreen.cpp": "Matching",
             "system/ui/UISlider.cpp": "Matching",
             "system/ui/UITransitionHandler.cpp": "Matching",
-            "system/ui/UITrigger.cpp": "NonMatching",
+            "system/ui/UITrigger.cpp": "Matching",
             "system/ui/Utl.cpp": "NonMatching",
             "system/utl/AllocInfo.cpp": "NonMatching",
             "system/utl/BeatMap.cpp": "Matching",

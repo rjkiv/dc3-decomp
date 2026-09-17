@@ -37,23 +37,23 @@ BEGIN_LOADS(UITrigger)
     ASSERT_REVS(1, 0)
     if (d.rev < 1) {
         UIComponent *uiCom = Hmx::Object::New<UIComponent>();
-        uiCom->Load(bs);
+        uiCom->Load(d.stream);
         delete uiCom;
         Symbol sym;
-        bs >> sym;
+        d >> sym;
         UnregisterEvents();
         mTriggerEvents.clear();
         mTriggerEvents.push_back(sym);
         RegisterEvents();
         ObjPtr<RndAnimatable> animPtr(this);
-        bs >> animPtr;
+        d >> animPtr;
         mAnims.clear();
         mAnims.push_back();
         EventTrigger::Anim &anim = mAnims.back();
         anim.mAnim = animPtr;
     } else
         LOAD_SUPERCLASS(EventTrigger);
-    bs >> mBlockTransition;
+    d >> mBlockTransition;
 END_LOADS
 
 void UITrigger::Trigger() {
@@ -61,21 +61,21 @@ void UITrigger::Trigger() {
     mStartTime = TheTaskMgr.UISeconds();
     mEndTime = 0;
     FOREACH (it, mAnims) {
-        Anim &curAnim = *it;
-        if (curAnim.mAnim) {
+        if (it->mAnim) {
             float f4;
-            if (curAnim.mEnable) {
-                if (!(curAnim.mPeriod * 30.0f)) {
-                    f4 = curAnim.mScale;
-                    if (!f4) {
-                        f4 = 1.0f;
+            if (it->mEnable) {
+                f4 = it->mPeriod * 30;
+                if (f4 == 0) {
+                    f4 = it->mScale;
+                    if (f4 == 0) {
+                        f4 = 1;
                     }
-                    f4 = std::fabs(curAnim.mStart - curAnim.mEnd) / f4;
+                    f4 = fabsf(it->mStart - it->mEnd) / f4;
                 }
             } else {
-                f4 = std::fabs(curAnim.mAnim->StartFrame() - curAnim.mAnim->EndFrame());
+                f4 = fabsf(it->mAnim->StartFrame() - it->mAnim->EndFrame());
             }
-            MaxEq(mEndTime, (curAnim.mDelay * 30.0f + f4) / 30.0f);
+            MaxEq(mEndTime, (it->mDelay * 30.0f + f4) / 30.0f);
         }
     }
     if (mBlockTransition && mEndTime > 5.0f) {
