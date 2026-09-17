@@ -39,6 +39,7 @@ compile_commands.json
 *.exe
 *.pdb
 _CL_*
+*.DS_Store
 
 # Doxygen output
 doxygen/
