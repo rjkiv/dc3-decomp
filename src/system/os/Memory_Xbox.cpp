@@ -205,7 +205,8 @@ PhysMemTypeTracker::~PhysMemTypeTracker() {
 void *PhysicalAlloc(int sizeBytes) {
     void *alloc = XPhysicalAlloc(sizeBytes, -1, 0, 4);
     if (alloc) {
-        gPhysicalUsage += XPhysicalSize(alloc);
+        int sz = XPhysicalSize(alloc);
+        gPhysicalUsage += sz;
     } else if (sizeBytes != 0) {
         MemAllocFailed(sizeBytes, true);
     }
