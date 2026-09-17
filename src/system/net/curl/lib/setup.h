@@ -324,7 +324,7 @@ Error Compilation_aborted_SIZEOF_CURL_OFF_T_shall_not_be_defined
 #include <sys/types.h>
 #include <sys/stat.h>
 #undef lseek
-#define lseek(fdes, offset, whence) _lseek64(fdes, offset, whence)
+#define lseek(fdes, offset, whence) _lseeki64(fdes, offset, whence)
 #define fstat(fdes, stp) _fstat64(fdes, stp)
 #define stat(fname, stp) _stat64(fname, stp)
 #define struct_stat struct _stat64

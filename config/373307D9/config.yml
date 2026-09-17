@@ -32,6 +32,62 @@ add_relocations:
 - source: .rdata:0x82089114
   type: abs
   target: merged_BufLockIdxSDVD
+# Curl_http_readwrite_headers
+- source: .text:0x82573474
+  type: ha
+  target: ??_C@_0CI@DLONMNKD@HTTP?11?40?5connection?5set?5to?5keep?5@
+- source: .text:0x825734B4
+  type: ha
+  target: ??_C@_0BD@DNFFOCFM@Transfer?9Encoding?3?$AA@
+- source: .text:0x825734BC
+  type: ha
+  target: ??_C@_05LBOHBHFK@close?$AA@
+- source: .text:0x825734E8
+  type: ha
+  target: ??_C@_0M@HJBFCNNB@Connection?3?$AA@
+- source: .text:0x82573500
+  type: ha
+  target: ??_C@_07KCKHAHHI@chunked?$AA@
+- source: .text:0x8257351C
+  type: ha
+  target: ??_C@_0CG@GBJOIAPM@HTTP?11?41?5proxy?5connection?5set?5cl@
+- source: .text:0x8257355C
+  type: l
+  target: ??_C@_07KCKHAHHI@chunked?$AA@
+- source: .text:0x82573564
+  type: l
+  target: ??_C@_0BD@DNFFOCFM@Transfer?9Encoding?3?$AA@
+- source: .text:0x8257356C
+  type: l
+  target: ??_C@_0CI@DLONMNKD@HTTP?11?40?5connection?5set?5to?5keep?5@
+- source: .text:0x825735C4
+  type: l
+  target: ??_C@_0M@HJBFCNNB@Connection?3?$AA@
+- source: .text:0x825735E0
+  type: l
+  target: ??_C@_0CG@GBJOIAPM@HTTP?11?41?5proxy?5connection?5set?5cl@
+- source: .text:0x82573610
+  type: l
+  target: ??_C@_05LBOHBHFK@close?$AA@
+# Curl_proxyCONNECT
+- source: .text:0x82589F38
+  type: ha
+  target: ??_C@_0BD@DNFFOCFM@Transfer?9Encoding?3?$AA@
+- source: .text:0x82589F44
+  type: ha
+  target: ??_C@_0BL@FDNFJOM@CONNECT?5responded?5chunked?6?$AA@
+- source: .text:0x82589F54
+  type: ha
+  target: ??_C@_07KCKHAHHI@chunked?$AA@
+- source: .text:0x82589F70
+  type: l
+  target: ??_C@_0BD@DNFFOCFM@Transfer?9Encoding?3?$AA@
+- source: .text:0x82589F80
+  type: l
+  target: ??_C@_07KCKHAHHI@chunked?$AA@
+- source: .text:0x82589F84
+  type: l
+  target: ??_C@_0BL@FDNFJOM@CONNECT?5responded?5chunked?6?$AA@
 
 # These are Windows error codes, not relocations!
 block_relocations:
