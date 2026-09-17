@@ -4,9 +4,12 @@
 #include "utl/MemMgr.h"
 
 enum UIListSlotDrawType {
-    kUIListSlotDrawAlways,
-    kUIListSlotDrawHighlight,
-    kUIListSlotDrawNoHighlight
+    kUIListSlotDrawAlways = 0,
+    kUIListSlotDrawHighlight = 1,
+    kUIListSlotDrawNoHighlight = 2,
+    kUIListSlotDrawAlwaysFullAlpha = 3,
+    kUIListSlotDrawHighlightFullAlpha = 4,
+    kUIListSlotDrawNoHighlightFullAlpha = 5
 };
 
 class UIListSlotElement {

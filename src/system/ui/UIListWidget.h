@@ -21,6 +21,7 @@ enum UIListWidgetState {
 enum UIListWidgetDrawType {
     kUIListWidgetDrawAlways,
     kUIListWidgetDrawOnlyFocused,
+    kUIListWidgetDrawNever,
     kUIListWidgetDrawFocusedOrManual,
     kNumUIListWidgetDrawTypes
 };
@@ -33,12 +34,15 @@ enum DrawCommand {
 
 // size 0x3c
 struct UIListElementDrawState {
-    int unk0, unk4, unk8, unkc;
-    int unk10, unk14, unk18, unk1c;
-    int unk20, unk24;
-    UIComponent::State mComponentState; // 0x28
-    int unk2c;
-    int unk30, unk34, unk38;
+    bool mDraw; // 0x0
+    Vector3 mPos; // 0x4
+    Vector3 unk14; // 0x14
+    float mAlpha; // 0x24
+    UIListWidgetState mElementState; // 0x28
+    UIComponent::State mComponentState; // 0x2c
+    int mDisplay; // 0x30
+    int mShowing; // 0x34
+    int mData; // 0x38
 };
 
 struct UIListWidgetDrawState {
@@ -83,6 +87,7 @@ public:
     UIList *ParentList();
 
     UIListWidgetDrawType DrawType() const { return mWidgetDrawType; }
+    float DisabledAlphaScale() const;
 
     NEW_OBJ(UIListWidget)
     OBJ_MEM_OVERLOAD(0x48)

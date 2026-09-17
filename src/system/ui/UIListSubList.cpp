@@ -61,18 +61,18 @@ void UIListSubList::Draw(
         for (int i = 0; i < numElements; i++) {
             const UIListElementDrawState &cur = drawstate.mElements[i];
             UIList *uilist = SubList(i);
-            switch (cur.mComponentState) {
-            case UIComponent::kNormal:
+            switch (cur.mElementState) {
+            case kUIListWidgetActive:
                 uilist->SetState(UIComponent::kNormal);
                 break;
-            case UIComponent::kFocused:
+            case kUIListWidgetHighlight:
                 if (compstate == UIComponent::kFocused) {
                     uilist->SetState(UIComponent::kFocused);
                 } else {
                     uilist->SetState(UIComponent::kNormal);
                 }
                 break;
-            case UIComponent::kDisabled:
+            case kUIListWidgetInactive:
                 uilist->SetState(UIComponent::kDisabled);
                 break;
             }

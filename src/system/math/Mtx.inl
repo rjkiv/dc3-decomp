@@ -56,6 +56,13 @@ inline void Transpose(const Hmx::Matrix3 &in, Hmx::Matrix3 &out) {
     out.Set(in.x.x, in.y.x, in.z.x, in.x.y, in.y.y, in.z.y, in.x.z, in.y.z, in.z.z);
 }
 
+// i have no clue if this actually exists, but it helped UIListSlot::Draw
+inline void ScaleDiagonal(const Vector3 &v, Hmx::Matrix3 &out) {
+    out.x.x *= v.x;
+    out.y.y *= v.y;
+    out.z.z *= v.z;
+}
+
 // so Scale with Matrix first, then Vector, calls Scale(Vector3,Vector3,Vector3)...
 inline void Scale(const Hmx::Matrix3 &mtx, const Vector3 &vec, Hmx::Matrix3 &res) {
     Scale(mtx.x, vec, res.x);
