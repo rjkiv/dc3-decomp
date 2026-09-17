@@ -1,6 +1,7 @@
 #include "ui/LabelShrinkWrapper.h"
 #include "UIComponent.h"
 #include "macros.h"
+#include "math/Geo.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
@@ -75,15 +76,15 @@ INIT_REVS(2, 0)
 void LabelShrinkWrapper::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)
-    bs >> m_pLabel;
-    bs >> m_pShow;
+    d.stream >> m_pLabel;
+    d.stream >> m_pShow;
     if (d.rev >= 1)
-        bs >> mResourceDir;
+        d >> mResourceDir;
     if (d.rev >= 2) {
-        bs >> mLeftBorder;
-        bs >> mRightBorder;
-        bs >> mTopBorder;
-        bs >> mBottomBorder;
+        d >> mLeftBorder;
+        d >> mRightBorder;
+        d >> mTopBorder;
+        d >> mBottomBorder;
     }
     UIComponent::PreLoad(d.stream);
     d.PushRev(this);
@@ -138,5 +139,18 @@ void LabelShrinkWrapper::Init() { REGISTER_OBJ_FACTORY(LabelShrinkWrapper) }
 
 void LabelShrinkWrapper::UpdateAndDrawWrapper() {
     MILO_ASSERT(m_pLabel, 0x86);
+    const Hmx::Rect &r = m_pLabel->DrawRect();
+    float left = r.x - mLeftBorder;
+    float bottom = r.y - mBottomBorder;
+    float right = mRightBorder + r.w + r.x;
+    float top = mTopBorder + r.h + r.y;
     SetWorldXfm(m_pLabel->WorldXfm());
+    Vector3 v1(left, 0, top);
+    Vector3 v2(right, 0, top);
+    Vector3 v3(left, 0, bottom);
+    Vector3 v4(right, 0, bottom);
+    m_pTopLeftBone->SetLocalPos(v1);
+    m_pTopRightBone->SetLocalPos(v2);
+    m_pBottomLeftBone->SetLocalPos(v3);
+    m_pBottomRightBone->SetLocalPos(v4);
 }

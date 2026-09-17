@@ -115,19 +115,19 @@ INIT_REVS(2, 0)
 void LabelNumberTicker::PreLoad(BinStream &bs) {
     LOAD_REVS(bs);
     ASSERT_REVS(2, 0)
-    bs >> mLabel;
-    bs >> mDesiredValue;
-    bs >> mAnimTime;
-    bs >> mAnimDelay;
-    bs >> mWrapperText;
+    d >> mLabel;
+    d >> mDesiredValue;
+    d >> mAnimTime;
+    d >> mAnimDelay;
+    d >> mWrapperText;
     if (d.rev >= 1)
-        bs >> mAcceleration;
-    if (2 <= d.rev) {
-        bs >> mTickTrigger;
-        bs >> mTickEvery;
+        d >> mAcceleration;
+    if (d.rev >= 2) {
+        d >> mTickTrigger;
+        d >> mTickEvery;
     }
-    UIComponent::PreLoad(bs);
-    bs.PushRev(packRevs(d.altRev, d.rev), this);
+    UIComponent::PreLoad(d.stream);
+    d.PushRev(this);
 }
 
 void LabelNumberTicker::SnapToValue(int i) {
@@ -145,7 +145,7 @@ void LabelNumberTicker::Poll() {
         float animsum = animdelay + animtime;
         if (split >= animdelay) {
             float quotient = (split - animdelay) / animtime;
-            quotient *= std::pow(quotient, mAcceleration);
+            quotient *= powf(quotient, mAcceleration);
             int somenum = unk6c + (int)(quotient * (mDesiredValue - unk6c));
             if (mTickTrigger && mTickEvery != 0) {
                 if ((somenum / mTickEvery) > (unk70 / mTickEvery)) {
