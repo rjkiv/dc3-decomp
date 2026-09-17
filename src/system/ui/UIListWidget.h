@@ -82,6 +82,8 @@ public:
     void SetColor(UIListWidgetState, UIComponent::State, UIColor *);
     UIList *ParentList();
 
+    UIListWidgetDrawType DrawType() const { return mWidgetDrawType; }
+
     NEW_OBJ(UIListWidget)
     OBJ_MEM_OVERLOAD(0x48)
 

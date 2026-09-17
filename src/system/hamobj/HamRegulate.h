@@ -36,7 +36,7 @@ protected:
 
     virtual void SetName(const char *, ObjectDir *);
 
-    void Regulate(Vector3 &, float);
+    void Regulate(Vector3 &, float &);
 
     Character *unk10; // 0x10
     ObjPtr<Waypoint> unk14; // 0x14

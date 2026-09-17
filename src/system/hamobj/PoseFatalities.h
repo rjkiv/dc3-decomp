@@ -3,6 +3,7 @@
 #include "char/CharClip.h"
 #include "gesture/BaseSkeleton.h"
 #include "gesture/Skeleton.h"
+#include "gesture/SkeletonViz.h"
 #include "hamobj/HamLabel.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
@@ -23,6 +24,9 @@ public:
     virtual bool SyncProperty(DataNode &, DataArray *, int, PropOp);
 
     NEW_OBJ(PoseFatalities)
+
+    static SkeletonViz *sViz1;
+    static SkeletonViz *sViz2;
 
     void DrawDebug();
     void Enter();

@@ -75,9 +75,8 @@ void HamMaster::Poll(float f1) {
 }
 
 void HamMaster::Jump(float f1) {
-    SongPos calcedPos = mSongData->CalcSongPos(this, f1);
+    unk60 = mSongData->CalcSongPos(this, f1);
     const SongPos &tmp = unk60;
-    unk60 = calcedPos;
     unk78 = tmp;
     unkb4 = -1;
     unkb8 = 0;

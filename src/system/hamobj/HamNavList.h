@@ -176,7 +176,7 @@ protected:
     /** "Don't automatically play the enter anim when this component enters" */
     bool mSuppressAutomaticEnter; // 0x156
     bool unk157; // 0x157
-    float unk158; // 0x158
+    float mHandHeight; // 0x158
     DoubleExponentialSmoother unk15c; // 0x15c
     DoubleExponentialSmoother unk170; // 0x170
     DirectionGestureFilter *unk184;
