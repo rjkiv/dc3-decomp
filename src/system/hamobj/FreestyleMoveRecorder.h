@@ -2,6 +2,7 @@
 #include "FreestyleMove.h"
 #include "gesture/BaseSkeleton.h"
 #include "gesture/Skeleton.h"
+#include "gesture/SkeletonViz.h"
 #include "obj/Data.h"
 #include "os/Debug.h"
 #include "rndobj/Tex.h"
@@ -62,6 +63,8 @@ public:
 
     MEM_OVERLOAD(FreestyleMoveRecorder, 0x2E);
     static FreestyleMoveRecorder *sInstance;
+    static SkeletonViz *sViz1;
+    static SkeletonViz *sViz2;
 
 private:
     void UpdateRecordingAttempt(const BaseSkeleton *, float);

@@ -29,13 +29,6 @@
 #include "utl/Symbol.h"
 #include <cstdio>
 
-static float sFloat0 = 0.03f;
-static float sFloat1 = 0.37f;
-static float sFloat2 = 0.2f;
-static float sFloat3 = 0.6f;
-static float sFloat4 = 0.1f;
-static float sFloat5 = 0.25f;
-
 SkeletonChooser::SkeletonChooser()
     : mDrawDebug(false), unk3c(0), unk44(1), unk48(true), unk80(0), unk84(0), unk88(0),
       unk8c(0), unk90(0), mNextSkelIdxToTrack(-1), mInMultiPlayerUpdateMode(false),
@@ -1071,6 +1064,12 @@ void SkeletonChooser::SetPlayerSkeletonNavData(int p1ID, int p2ID) {
 }
 
 void SkeletonChooser::DrawDebug() {
+    static float sFloat0 = 0.03f;
+    static float sFloat1 = 0.37f;
+    static float sFloat2 = 0.2f;
+    static float sFloat3 = 0.6f;
+    static float sFloat4 = 0.1f;
+    static float sFloat5 = 0.25f;
     if (mDrawDebug) {
         int skelIdx0 = -1;
         int skelIdx1 = -1;
@@ -1096,7 +1095,7 @@ void SkeletonChooser::DrawDebug() {
         static Hmx::Color textColor(1.0f, 1.0f, 1.0f, 1.0f);
 
         TheRnd.DrawRectScreen(
-            Hmx::Rect(sFloat5 + 0.05f, sFloat3, sFloat4 - 0.05f, sFloat2),
+            Hmx::Rect(sFloat5, sFloat3 - 0.05f, sFloat4, sFloat2 + 0.05f),
             bgColor,
             nullptr,
             nullptr,
@@ -1153,12 +1152,8 @@ void SkeletonChooser::DrawDebug() {
                         break;
                     }
                     }
-                    TheRnd.DrawStringScreen(
-                        buf,
-                        Vector2(i * sFloat1 + sFloat2, j * sFloat0 + sFloat4),
-                        textColor,
-                        true
-                    );
+                    Vector2 vec2(i * sFloat1 + sFloat2, j * sFloat0 + sFloat4);
+                    TheRnd.DrawStringScreen(buf, vec2, textColor, true);
                 }
             }
         }
@@ -1166,9 +1161,8 @@ void SkeletonChooser::DrawDebug() {
         if (unk38 >= 0) {
             char buf[50];
             sprintf_s<50>(buf, "Switching to %d in %f seconds", unk38, unk44 - unk40);
-            TheRnd.DrawStringScreen(
-                buf, Vector2(sFloat2 + 0.1f, sFloat0 * 7.0f + sFloat4), textColor, true
-            );
+            Vector2 vec2(sFloat2 + 0.1f, sFloat0 * 7.0f + sFloat4);
+            TheRnd.DrawStringScreen(buf, vec2, textColor, true);
         }
     }
 }

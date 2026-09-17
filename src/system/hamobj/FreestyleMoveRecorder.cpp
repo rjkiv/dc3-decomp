@@ -1,13 +1,22 @@
 #include "hamobj/FreestyleMoveRecorder.h"
 #include "gesture/BaseSkeleton.h"
+#include "gesture/CameraInput.h"
+#include "gesture/Skeleton.h"
+#include "gesture/SkeletonUpdate.h"
+#include "gesture/SkeletonViz.h"
 #include "hamobj/DancerSkeleton.h"
 #include "hamobj/FreestyleMove.h"
+#include "math/Color.h"
+#include "math/Geo.h"
 #include "obj/Data.h"
 #include "obj/DataFunc.h"
 #include "obj/Object.h"
 #include "obj/Task.h"
 #include "os/DateTime.h"
+#include "os/Debug.h"
+#include "rndobj/Rnd.h"
 #include "rndobj/Tex.h"
+#include "stl/_vector.h"
 #include "utl/FileStream.h"
 #include "utl/Symbol.h"
 
@@ -257,3 +266,44 @@ DataNode FreestyleMoveRecorder::OnClearAttempt(DataArray *a) {
 }
 
 void FreestyleMoveRecorder::StopRecording() { unk34 = unk48[unkb8].mNumFrames + 2; }
+
+void FreestyleMoveRecorder::DrawDebug() {
+    static float sFloat0 = 0.3f;
+    static float sFloat1 = 0.1f;
+    static float sFloat2 = 0.3f;
+    if (DataVariable("bam_debug").Int() != 0) {
+        if (!sViz1) {
+            sViz1 = Hmx::Object::New<SkeletonViz>();
+            sViz1->Init();
+            sViz2 = Hmx::Object::New<SkeletonViz>();
+            sViz2->Init();
+        }
+
+        SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
+        std::vector<SkeletonCallback *> callbackList;
+        callbackList.push_back(this);
+
+        Hmx::Rect rect(sFloat1, sFloat0, sFloat2, sFloat2 / TheRnd.YRatio());
+        Hmx::Color color(0, 0, 0, 0.4f);
+        TheRnd.DrawRectScreen(rect, color, nullptr, nullptr, nullptr);
+        sViz1->SetUsePhysicalCam(true);
+        sViz1->SetPhysicalCamScreenRect(rect);
+        sViz1->Visualize(
+            *handle.GetCameraInput(), sLastComparedDancerSkel, &callbackList, false
+        );
+
+        Hmx::Rect rect2(
+            sFloat1 + sFloat2 + 0.1f, sFloat0, sFloat2, sFloat2 / TheRnd.YRatio()
+        );
+        Hmx::Color color2(0, 0, 0, 0.4f);
+        TheRnd.DrawRectScreen(rect2, color2, nullptr, nullptr, nullptr);
+        sViz2->SetUsePhysicalCam(true);
+        sViz2->SetPhysicalCamScreenRect(rect2);
+        BaseSkeleton *liveSkeleton = GetLiveSkeleton();
+        if (liveSkeleton) {
+            sViz2->Visualize(
+                *handle.GetCameraInput(), *liveSkeleton, &callbackList, false
+            );
+        }
+    }
+}

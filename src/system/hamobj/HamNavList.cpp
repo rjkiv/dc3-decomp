@@ -31,6 +31,7 @@
 #include "rndobj/Overlay.h"
 #include "rndobj/Rnd.h"
 #include "rndobj/Trans.h"
+#include "rndobj/Utl.h"
 #include "stl/_vector.h"
 #include "synth/Sound.h"
 #include "ui/UI.h"
@@ -44,6 +45,7 @@
 #include "utl/Loader.h"
 #include "utl/Std.h"
 #include "utl/Symbol.h"
+#include <cstdio>
 
 static float sFloat = 0.1f;
 
@@ -52,7 +54,7 @@ HamNavList::HamNavList()
       mRibbonMode(HamListRibbon::kRibbonSlide), unkc8(0), mListRibbonResource(this),
       mHeaderRibbonResource(this), mListDirResource(this),
       mScrollSpeedIndicatorResource(this), mNavProvider(this), mScrollSpeedAnim(this),
-      unk154(0), mSkipEnterAnim(0), mSuppressAutomaticEnter(0), unk157(0), unk158(0),
+      unk154(0), mSkipEnterAnim(0), mSuppressAutomaticEnter(0), unk157(0), mHandHeight(0),
       unk15c(0, 10, 10), unk170(0, 10, 0), unk184(0), unk188(0), mSkeletonTrackingID(0),
       unk190(this, &mListState), mDisableSlideSound(0), mDisableSelectSound(0),
       mEnabled(1), unk1e7(1), mAlwaysUseActiveSkeleton(1), mOnlyUseWhenFocused(1),
@@ -1173,6 +1175,59 @@ bool HamNavList::IsElementBig(int element) const {
         }
     }
     return false;
+}
+
+void HamNavList::DrawDebug() const {
+    static bool sBool;
+    static float sFloat1 = 0.03f; // 82f0c790
+    static float sFloat2 = 0.37f; // 82f0c794
+    static float sFloat3 = 0.1f; // 82f0c798
+    static float sFloat4 = 0.8f; // 82f0c79c
+    static float sFloat5 = 0.1f; // 82f0c7a0
+    static float sFloat6 = 0.25f; // 82f0c7a4
+    if (sBool) {
+        float handVal = unk188->GetUnk10();
+        UtilDrawLine(
+            Vector2(0, handVal), Vector2(1, handVal), Hmx::Color(0.0f, 1.0f, 0.0f, 1.0f)
+        );
+        static Hmx::Color color2(0.2f, 0.2f, 0.2f, 0.7f);
+        static Hmx::Color color3(1.0f, 1.0f, 1.0f, 1.0f);
+
+        TheRnd.DrawRectScreen(
+            Hmx::Rect(sFloat3, sFloat5 - 0.05f, sFloat4, sFloat6 + 0.05f),
+            color2,
+            nullptr,
+            nullptr,
+            nullptr
+        );
+        for (int i = 0; i < 5; i++) {
+            char buf[50];
+            sprintf_s<50>(buf, "");
+            switch (i) {
+            case 0:
+                sprintf_s<50>(buf, "Hand height %f", mHandHeight);
+                break;
+            case 1:
+                sprintf_s<50>(
+                    buf, "ListState SelectedDisplay: %d", mListState.SelectedDisplay()
+                );
+                break;
+            case 2:
+                sprintf_s<50>(
+                    buf, "ListState FirstShowing: %d", mListState.FirstShowing()
+                );
+                break;
+            case 3:
+                sprintf_s<50>(buf, "ListState Selected: %d", mListState.Selected());
+                break;
+            case 4:
+                sprintf_s<50>(buf, "Num selectable items: %d", NumItems());
+                break;
+            }
+            Vector2 vec2C(sFloat2 * 0 + sFloat3, i * sFloat1 + sFloat5);
+            TheRnd.DrawStringScreen(buf, vec2C, color3, true);
+        }
+    }
 }
 
 DataNode HamNavList::OnMsg(const ButtonDownMsg &msg) {
