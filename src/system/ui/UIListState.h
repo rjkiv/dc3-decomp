@@ -44,6 +44,7 @@ public:
     void Scroll(int, bool);
     void PageScroll(int);
     void SetSelectedSimulateScroll(int);
+    int State2Data(const ScrollState &) const;
 
     bool Circular() const { return mCircular; }
     int NumDisplay() const { return mNumDisplay; }

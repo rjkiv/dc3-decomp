@@ -265,7 +265,71 @@ bool UIListState::ShouldHoldDisplayInPlace(int i2) const {
         && (!Provider()->IsSnappableAtData(Display2Data(i2 + 1)));
 }
 
-// void UIListState::Scroll(int, bool) {}
+int UIListState::State2Data(const ScrollState &state) const {
+    int disp;
+    if (mCircular) {
+        disp = SelectedDisplay();
+    } else {
+        disp = state.mSelected;
+    }
+    if (mScrollPastMinDisplay) {
+        disp -= mMinDisplay;
+    }
+    return Showing2Data(state.mTarget + disp);
+}
+
+void UIListState::Scroll(int i1, bool b2) {
+    if (mFirstShowing == mTargetShowing) {
+        ScrollState state;
+        bool b4 = BuildScroll(i1, mTargetShowing, mSelectedDisplay, state);
+        if (mCircular) {
+            while (true) {
+                if (b2 || mProvider->IsActive(State2Data(state))) {
+                    mTargetShowing = state.mTarget;
+                    MILO_ASSERT(state.mSelected == mSelectedDisplay, 0x1D6);
+                    return;
+                }
+                if (mTargetShowing == state.mTarget) {
+                    return;
+                }
+                int old = state.mTarget;
+                BuildScroll(i1 > 0 ? 1 : -1, state.mTarget, state.mSelected, state);
+                if (old == state.mTarget) {
+                    break;
+                }
+            }
+        } else {
+            bool b1 = false;
+            while (!b2) {
+                if (mProvider->IsActive(State2Data(state))) {
+                    break;
+                }
+                if (b1) {
+                    return;
+                }
+                i1 = i1 > 0 ? 1 : -1;
+                b4 = BuildScroll(i1, state.mTarget, state.mSelected, state);
+                if (i1 == 1) {
+                    b1 = state.mTarget == MaxFirstShowing()
+                        && state.mSelected == ScrollMaxDisplay();
+                } else {
+                    bool zeroTarget = state.mTarget == 0;
+                    if (mScrollPastMinDisplay) {
+                        b1 = zeroTarget && state.mSelected == mMinDisplay;
+                    } else {
+                        b1 = zeroTarget && state.mSelected == 0;
+                    }
+                }
+            }
+            mTargetShowing = state.mTarget;
+            mSelectedDisplay = state.mSelected;
+            if (!b2 && !b4) {
+                mCallback->StartScroll(*this, i1 > 0 ? 1 : -1, false);
+                mCallback->CompleteScroll(*this);
+            }
+        }
+    }
+}
 
 void UIListState::PageScroll(int i1) {
     int i2 = i1 > 0 ? 1 : -1;
