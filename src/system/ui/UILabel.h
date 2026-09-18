@@ -70,6 +70,7 @@ public:
     void SetTimeHMS(int, bool);
     bool CheckValid(bool);
     void SetEditText(char const *);
+    void Update();
 
     char const *GetDefaultText() const;
     void CenterWithLabel(UILabel *, bool, float);
@@ -118,10 +119,11 @@ protected:
     static bool sInDebugHighlight;
 
     Symbol mTextToken; // 0x114
-    String unk118; // 0x118
-    char unk120; // 0x120 - icon
-    bool unk121;
-    bool unk122;
+    String mEditText; // 0x118
+    // this should be just one character, but because it gets grabbed as a const char*,
+    // the second byte serves as the null terminator
+    char mIcon[2]; // 0x120
+    bool mDirty; // 0x122
     ObjVector<LabelStyle> mLabelStyles; // 0x124
 };
 

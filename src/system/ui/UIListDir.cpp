@@ -288,137 +288,137 @@ void UIListDir::BuildDrawState(
     float f4,
     bool b5
 ) const {
-    int i3 = listState.NumDisplayWithData();
-    int i198 = Min(mFadeOffset, listState.NumDisplay() / 2);
+    int numDisplay = listState.NumDisplay();
+    int numDisplayWithData = listState.NumDisplayWithData();
+    int i198 = Min(mFadeOffset, numDisplay / 2);
     int i194 = i198;
-    if (mFadeOffset) {
+    if (mFadeOffset != 0) {
         if (listState.Circular()) {
             MinEq(i194, listState.SelectedDisplay());
-            MinEq(i198, (listState.NumDisplay() - listState.SelectedDisplay()) - 1);
+            MinEq(i198, numDisplay - listState.SelectedDisplay() - 1);
         } else {
-            int first = listState.FirstShowing();
+            int i19c = listState.FirstShowing();
             if (listState.ScrollPastMinDisplay()) {
-                first -= listState.MinDisplay();
+                i19c -= listState.MinDisplay();
             }
-            MaxEq(first, 0);
-            MinEq(i194, first);
-            int tmp4 = first + listState.NumDisplay();
-            int i1a8 = listState.Provider()->NumData() - tmp4;
+            MaxEq(i19c, 0);
+            MinEq(i194, i19c);
+            int i1a8 = i19c + numDisplay;
+            i1a8 = listState.Provider()->NumData() - i1a8;
             MinEq(i198, i1a8);
         }
     }
-
-    float f2 = (float)i194 * mElementSpacing;
-    float f1 = (float)(listState.NumDisplay() - 1 - i198) * mElementSpacing;
-    int i23 = listState.CurrentScroll() > 0 ? 1 : -1;
+    float f27 = (float)i194 * mElementSpacing;
+    float f26 = (float)(numDisplay - 1 - i198) * mElementSpacing;
+    int i1 = listState.CurrentScroll() > 0 ? 1 : -1;
     int selected = listState.Selected();
     int selectedData = listState.SelectedData();
     int selectedDisplay = listState.SelectedDisplay();
     drawState.mHighlightDisplay = selectedDisplay;
     if (listState.IsScrolling()) {
         if (listState.StepPercent() > mScrollHighlightChange) {
-            selected += i23;
-            drawState.mHighlightDisplay += i23;
+            selected += i1;
+            drawState.mHighlightDisplay += i1;
         }
-        i3++;
+        numDisplayWithData++;
     }
     drawState.mElements.clear();
-    drawState.mElements.reserve(i3);
+    drawState.mElements.reserve(numDisplayWithData);
     drawState.mHighlightElementState = kUIListWidgetActive;
-    float f23 = 0;
-    float f17 = 0;
-    float f22 = 0;
     float f24 = 0;
-    float pct = listState.StepPercent() * (float)i23;
+    float f18 = 0;
+    float f23 = 0;
+    float f25 = 0;
+    float f19 = listState.StepPercent() * (float)i1;
     int i7 = 0;
-    for (int i = 0; i < i3; i++) {
-        int i15 = i;
-        if (listState.IsScrolling() && i23 == -1) {
-            i15 = i - 1;
+    for (int i14 = 0; i14 < numDisplayWithData; i14++) {
+        int i15 = i14;
+        if (listState.IsScrolling() && i1 == -1) {
+            i15 = i14 - 1;
         }
         int d2d = listState.Display2Data(i15);
         if (d2d == -1) {
             UIListElementDrawState newState;
             newState.mDraw = false;
             drawState.mElements.push_back(newState);
-        } else {
-            if (!listState.Circular() && i7 > d2d)
-                break;
-            int d2s = listState.Display2Showing(i15);
+        } else if (listState.Circular() || i7 <= d2d) {
+            int i9 = listState.Display2Showing(i15);
             i7 = d2d;
-            int sd4d = listState.SnappedDataForDisplay(i15);
-            if (sd4d >= 0) {
-                i7 = sd4d;
+            int i10 = listState.SnappedDataForDisplay(i15);
+            if (i10 >= 0) {
+                i7 = i10;
             }
-            float f19 = listState.Provider()->GapSize(d2s, i7, selectedData, i23);
-            if (i == 0) {
-                f24 = f19;
+            float f20 = listState.Provider()->GapSize(i9, i7, selectedData, i1);
+            if (i14 == 0) {
+                f25 = f20;
             }
-            float f20;
+            float f21;
             Vector3 v190;
             if (listState.ShouldHoldDisplayInPlace(i15)) {
-                if (i23 == -1) {
-                    f20 =
-                        SetElementPos(v190, (float)i15 + 1, listState.GridSpan(), f22, 0);
+                if (i1 == -1) {
+                    f21 = SetElementPos(
+                        v190, (float)i15 + 1.0f, listState.GridSpan(), f23, 0
+                    );
                 } else {
-                    f20 = SetElementPos(v190, (float)i15, listState.GridSpan(), f22, 0);
+                    f21 = SetElementPos(v190, (float)i15, listState.GridSpan(), f23, 0);
                 }
             } else {
-                f20 = SetElementPos(
-                    v190, (float)i15 + pct, listState.GridSpan(), f24 * pct - f22, 0
+                f21 = SetElementPos(
+                    v190, (float)i15 - f19, listState.GridSpan(), -(f25 * f19 - f23), 0
                 );
             }
-            float f21 = 1;
+            float f22 = 1;
             if (!listState.ShouldHoldDisplayInPlace(i15)) {
-                f20 -= f24 * pct - f22;
-                if (f1 > f20) {
-                    f21 -= (f1 - f20) / ((float)(i194 + 1) * mElementSpacing);
-                } else if (f2 < f20) {
-                    f21 -= (f2 - f20) / ((float)(i198 + 1) * mElementSpacing);
+                f21 = f21 - -(f25 * f19 - f23);
+                if (f21 < f27) {
+                    f22 -= (f27 - f21) / ((float)(i194 + 1) * mElementSpacing);
+                } else if (f21 > f26) {
+                    f22 -= (f21 - f26) / ((float)(i198 + 1) * mElementSpacing);
                 }
             }
-            int widgetState;
+            int i16;
             if (!listState.Provider()->IsActive(i7)) {
-                widgetState = 2;
-            } else if (selected == d2s) {
-                widgetState = 1;
+                i16 = 2;
+            } else if (selected != i9 || !b5) {
+                i16 = 0;
             } else {
-                widgetState = 0;
+                i16 = 1;
             }
-            UIListWidgetState s = listState.Provider()->ElementStateOverride(
-                selected, i7, (UIListWidgetState)widgetState
+            UIListWidgetState ws = listState.Provider()->ElementStateOverride(
+                selected, i7, (UIListWidgetState)i16
             );
-            if (selected == d2s) {
-                drawState.mHighlightElementState = s;
+            if (selected == i9) {
+                drawState.mHighlightElementState = ws;
             }
-            UIComponent::State cs =
-                listState.Provider()->ComponentStateOverride(selected, i7, compState);
+            UIListProvider *prov = listState.Provider();
             UIListElementDrawState newState;
             newState.mDraw = true;
             newState.mPos = v190;
+            newState.mAlpha = f22;
             newState.unk14.Set(0, 0, 0);
-            newState.mAlpha = f21;
-            newState.mElementState = s;
-            newState.mComponentState = cs;
+            newState.mElementState = ws;
+            newState.mComponentState =
+                prov->ComponentStateOverride(selected, i7, compState);
             newState.mDisplay = i15;
             newState.mShowing = selected;
             newState.mData = i7;
             drawState.mElements.push_back(newState);
-
-            f22 += f19;
-            if (i15 > 0 && i15 < listState.NumDisplay() - 1) {
-                f17 += f19;
+            f23 += f20;
+            if (i15 > 0 && i15 < numDisplay - 1) {
+                f18 += f20;
             }
             if (i15 < selectedDisplay) {
-                f23 += f19;
+                f24 += f20;
             }
+        } else {
+            break;
         }
     }
     SetElementPos(drawState.mFirstPos, 0, listState.GridSpan(), 0, 0);
     SetElementPos(
-        drawState.mLastPos, listState.NumDisplay() - 1, listState.GridSpan(), f17, 0
+        drawState.mLastPos, listState.NumDisplay() - 1, listState.GridSpan(), f18, 0
     );
-    SetElementPos(drawState.mHighlightPos, selectedDisplay, listState.GridSpan(), f23, f4);
+    SetElementPos(drawState.mHighlightPos, selectedDisplay, listState.GridSpan(), f24, f4);
 }
 
 void UIListDir::CreateElements(UIList *uilist, std::vector<UIListWidget *> &vec, int i) {

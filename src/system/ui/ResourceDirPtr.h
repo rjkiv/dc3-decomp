@@ -46,6 +46,8 @@ public:
     }
 };
 
+// no << overload, will just call ObjDirPtr's
+
 template <class T>
 BinStream &operator>>(BinStream &bs, ResourceDirPtr<T> &ptr) {
     FilePath path;
