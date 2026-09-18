@@ -37,11 +37,7 @@ public:
     const char *GetName() const { return FileGetBase(GetFile().c_str()); }
     void SetName(const char *name, bool b2) {
         FilePath path;
-        // maybe classname is accessed via a ResourceDirBase helper?
-        // something going on where the ResourceDirBase is addi'ed
-        // from xenia: fuck this shit. why is it putting &mOwner in the RVO????
-        // hours spent grinding against this bastard func: +1
-        // scratch https://decomp.me/scratch/0aEWK
+        // it's matched now :EZ:
         if (MakeResourcePath(path, T::StaticClassName(), name)) {
             LoadFile(path, b2, true, kLoadFront, false);
         } else {

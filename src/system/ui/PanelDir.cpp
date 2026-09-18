@@ -359,21 +359,24 @@ void PanelDir::SendTransition(Message const &msg, Symbol forward, Symbol back) {
 }
 
 bool PanelDir::PanelNav(JoypadAction act, JoypadButton btn, Symbol controller_type) {
-    UIComponent *comp = mFocusComponent;
-    if (comp) {
-        while (comp = ComponentNav(comp, act, btn, controller_type)) {
-            if (comp == mFocusComponent)
-                break;
-            if (comp->GetState() == UIComponent::kDisabled) {
-                continue;
-            }
+    UIComponent *it;
+    if (mFocusComponent) {
+        it = mFocusComponent;
+    } else {
+        return false;
+    }
+    while (it = ComponentNav(it, act, btn, controller_type)) {
+        if (it == mFocusComponent) {
+            return false;
+        }
+        if (it->GetState() != UIComponent::kDisabled) {
             static Symbol none("none");
             if (controller_type != none) {
                 static Symbol panel_navigated("panel_navigated");
                 static Message panelNavigatedMsg(panel_navigated);
                 TheUI->Handle(panelNavigatedMsg, false);
             }
-            SetFocusComponent(comp, controller_type);
+            SetFocusComponent(it, controller_type);
             return true;
         }
     }
@@ -438,6 +441,7 @@ DataNode PanelDir::GetFocusableComponentList() {
     int i = 0;
     FOREACH (it, components) {
         ptr->Node(i) = *it;
+        i++;
     }
     return ptr;
 }
