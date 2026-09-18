@@ -9,9 +9,8 @@
 #include "utl/Std.h"
 
 namespace {
-    class WidgetDrawSort {
-    public:
-        bool operator()(UIListWidget *w1, UIListWidget *w2) {
+    struct WidgetDrawSort {
+        bool operator()(const UIListWidget *w1, const UIListWidget *w2) const {
             return w1->DrawOrder() < w2->DrawOrder();
         }
     };
@@ -136,31 +135,6 @@ void UIListDir::DrawShowing() {
     } else {
         RndDir::DrawShowing();
     }
-    // clang-format off
-//       if ((this[0x178] == (UIListDir)0x0) || (LoadMgrEditMode == '\0')) {
-//     RndDir::DrawShowing((RndDir *)this);
-//   }
-//   else {
-//     local_38 = (UIListElementDrawState *)0x0;
-//     local_34 = 0;
-//     local_30[0] = 0;
-//     BuildDrawState(this + -0x9c,aUStack_70,(UIListState *)(this + 0x17c),*(State *)(this + 0x1cc),
-//                    0.0,in_r7);
-//     if (this[0x10d] == (UIListDir)0x0) {
-//       pTVar1 = (Transform *)(this + 0x98);
-//     }
-//     else {
-//       pTVar1 = RndTransformable::WorldXfm_Force((RndTransformable *)(this + 0x50));
-//     }
-//     DrawWidgets(this + -0x9c,aUStack_70,(UIListState *)(this + 0x17c),(vector<> *)(this + 0x1d4),
-//                 pTVar1,*(State *)(this + 0x1cc),(Box *)0x0,false);
-//     if (local_38 != (UIListElementDrawState *)0x0) {
-//       stlpmtx_std::StlNodeAlloc<>::deallocate
-//                 ((StlNodeAlloc<> *)local_30,local_38,(local_30[0] - (int)local_38) / 0x3c);
-//     }
-//   }
-//   return;
-    // clang-format on
 }
 
 void UIListDir::Poll() {
@@ -231,7 +205,7 @@ void UIListDir::FillElement(
             disp = snapped;
         int disp2show = state.Display2Showing(i);
         bool isnegone = i == -1;
-        ClampEq(i, 0, state.NumDisplay());
+        i = Clamp(0, state.NumDisplay(), i);
         FOREACH (it, vec) {
             (*it)->Fill(*state.Provider(), i, disp2show, disp);
             if (isnegone && snapped >= 0) {
@@ -247,7 +221,7 @@ void UIListDir::StartScroll(
     UIListState const &state, std::vector<UIListWidget *> &widgets, int i, bool b
 ) {
     mDirection = i;
-    MILO_ASSERT(mDirection, 499);
+    MILO_ASSERT(mDirection, 0x1ED);
     FOREACH (it, widgets) {
         (*it)->StartScroll(mDirection, b);
     }
@@ -285,9 +259,9 @@ void UIListDir::ListEntered() {
 
 void UIListDir::CreateElements(UIList *uilist, std::vector<UIListWidget *> &vec, int i) {
     DeleteAll(vec);
-    for (ObjDirItr<UIListWidget> it(this, true); it != 0; ++it) {
-        UIListWidget *widget =
-            dynamic_cast<UIListWidget *>(Hmx::Object::NewObject(it->ClassName()));
+    for (ObjDirItr<UIListWidget> it(this, true); it != nullptr; ++it) {
+        Hmx::Object *obj = Hmx::Object::NewObject(it->ClassName());
+        UIListWidget *widget = dynamic_cast<UIListWidget *>(obj);
         widget->ResourceCopy(it);
         widget->SetParentList(uilist);
         vec.push_back(widget);
@@ -300,7 +274,7 @@ void UIListDir::CreateElements(UIList *uilist, std::vector<UIListWidget *> &vec,
 
 float UIListDir::SetElementPos(Vector3 &v, float f1, int i2, float f3, float f4) const {
     v.Zero();
-    int floored = std::floor(f1);
+    int floored = floorf(f1);
     float f3toset =
         mElementSpacing * ((f1 - (float)floored) + (float)(floored / i2)) + f3;
     float f2toset = mElementSpacing * (float)(floored % i2) + f4;
