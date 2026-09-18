@@ -473,3 +473,5 @@ bool UIListState::BuildScroll(int i1, int i2, int i3, ScrollState &state) const 
     }
     return state.mSelected == i3 || state.mTarget != i2;
 }
+
+float UIListState::StepPercent() const { return mStepPercent; }

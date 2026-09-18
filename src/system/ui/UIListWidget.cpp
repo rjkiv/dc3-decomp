@@ -222,3 +222,4 @@ void UIListWidget::DrawMesh(
 
 UIList *UIListWidget::ParentList() { return mParentList; }
 float UIListWidget::DisabledAlphaScale() const { return mDisabledAlphaScale; }
+UIListWidgetDrawType UIListWidget::DrawType() const { return mWidgetDrawType; }

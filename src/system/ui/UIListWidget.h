@@ -86,7 +86,7 @@ public:
     void SetColor(UIListWidgetState, UIComponent::State, UIColor *);
     UIList *ParentList();
 
-    UIListWidgetDrawType DrawType() const { return mWidgetDrawType; }
+    UIListWidgetDrawType DrawType() const;
     float DisabledAlphaScale() const;
 
     NEW_OBJ(UIListWidget)

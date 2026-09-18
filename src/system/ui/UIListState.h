@@ -61,6 +61,7 @@ public:
     UIListProvider *Provider();
     UIListProvider *Provider() const;
     void SetProvider(UIListProvider *, RndDir *);
+    float StepPercent() const;
 
 protected:
     int ScrollToTarget(int) const;
