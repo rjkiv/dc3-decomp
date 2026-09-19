@@ -20,8 +20,8 @@
 #define HEIGHT_SD 480.0f
 #define HEIGHT_HD 720.0f
 
-float ConvertHeightOGToPctHeight(int i) { return fabsf(-i / HEIGHT_SD); }
-float ConvertHeightNGToPctHeight(int i) { return fabsf(-i / HEIGHT_HD); }
+float ConvertHeightOGToPctHeight(int i) { return fabsf(i / HEIGHT_SD); }
+float ConvertHeightNGToPctHeight(int i) { return fabsf(i / HEIGHT_HD); }
 int ConvertPctHeightToHeightNG(float f) { return -Round(f * HEIGHT_HD); }
 int ConvertPctHeightToHeightOG(float f) { return -Round(f * HEIGHT_SD); }
 
@@ -82,21 +82,22 @@ BEGIN_PROPSYNCS(UIFontImporter)
         font_point_size,
         mLastGenWasNG ? ConvertPctHeightToHeightNG(mFontPctSize)
                       : ConvertPctHeightToHeightOG(mFontPctSize),
-        mFontPctSize = mLastGenWasNG ? ConvertHeightNGToPctHeight(_val.Int())
-                                     : ConvertHeightOGToPctHeight(_val.Int())
+        mFontPctSize = mLastGenWasNG ? ConvertHeightNGToPctHeight(-_val.Int())
+                                     : ConvertHeightOGToPctHeight(-_val.Int())
     )
     SYNC_PROP_SET(
         font_pixel_size,
-        std::abs(
-            mLastGenWasNG ? ConvertPctHeightToHeightNG(mFontPctSize)
-                          : ConvertPctHeightToHeightOG(mFontPctSize)
-        ),
+        mLastGenWasNG ? std::abs(ConvertPctHeightToHeightNG(mFontPctSize))
+                      : std::abs(ConvertPctHeightToHeightOG(mFontPctSize)),
         mFontPctSize = mLastGenWasNG ? ConvertHeightNGToPctHeight(_val.Int())
                                      : ConvertHeightOGToPctHeight(_val.Int())
     )
     SYNC_PROP_MODIFY(weight, mFontWeight, GenerateBitmapFilename())
     SYNC_PROP_SET(
-        bold, std::abs(mFontWeight), mFontWeight = _val.Int() != 0 ? 800 : 400;
+        bold,
+        mFontWeight > 500,
+        if (_val.Int() != 0) { mFontWeight = 800; } else { mFontWeight = 400; }
+
         GenerateBitmapFilename()
     )
     SYNC_PROP_MODIFY(italics, mItalics, GenerateBitmapFilename())
