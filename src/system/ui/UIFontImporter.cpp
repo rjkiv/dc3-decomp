@@ -218,7 +218,7 @@ BEGIN_LOADS(UIFontImporter)
     d >> mPunctuation;
     d >> mUpperEuro;
     d >> mLowerEuro;
-    if (d.rev > 0) {
+    if (d.altRev > 0) {
         d >> mRussian;
         d >> mPolish;
         d >> mIncludeLocale;
@@ -228,7 +228,7 @@ BEGIN_LOADS(UIFontImporter)
     String minus;
     d >> plus;
     d >> minus;
-    if (d.rev < 4) {
+    if (d.altRev < 4) {
         ASCIItoWideVector(mPlus, plus.c_str());
         ASCIItoWideVector(mMinus, minus.c_str());
     } else {
@@ -245,10 +245,10 @@ BEGIN_LOADS(UIFontImporter)
     }
     d >> mFontWeight;
     d >> mItalics;
-    if (d.rev > 1) {
+    if (d.altRev > 1) {
         d >> mDropShadow;
     }
-    if (d.rev > 2) {
+    if (d.altRev > 2) {
         d >> mDropShadowOpacity;
     }
     d >> mPitchAndFamily;
@@ -518,11 +518,9 @@ void UIFontImporter::HandmadeFontChanged() {
                 delete font;
                 delete text;
             }
-            // <?>
-            RndFontBase *next = *mGennedFonts.begin();
-            next = mHandmadeFont;
-            // </?>
-            FOREACH (it, mGennedFonts) {
+            mGennedFonts.Set(mGennedFonts.begin(), mHandmadeFont);
+            for (auto it = NextItr(mGennedFonts.begin(), 1); it != mGennedFonts.end();
+                 ++it) {
                 if (*it == mHandmadeFont) {
                     mGennedFonts.erase(it);
                     break;
@@ -545,9 +543,8 @@ void UIFontImporter::HandmadeFontChanged() {
         mMinus.clear();
         mPlus = mHandmadeFont->Chars();
     }
-    if (mHandmadeFont) {
-        RndFont3d::StaticClassName();
-        mHandmadeFont->ClassName();
+    if (HandMadeFontExists()) {
+        mHandmadeFont->ClassName() == RndFont3d::StaticClassName();
     }
 }
 

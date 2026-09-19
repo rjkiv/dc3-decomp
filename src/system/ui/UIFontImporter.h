@@ -1,6 +1,8 @@
 #pragma once
 #include "obj/Object.h"
 #include "rndobj/Font.h"
+#include "rndobj/FontBase.h"
+#include "rndobj/Mat.h"
 #include "rndobj/Text.h"
 #include "utl/MemMgr.h"
 #include "utl/Str.h"
