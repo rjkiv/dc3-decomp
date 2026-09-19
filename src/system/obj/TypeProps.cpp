@@ -288,48 +288,27 @@ void TypeProps::Save(BinStream &bs) {
     Hmx::Object *owner = RefOwner();
     if (mMap) {
         if (TheLoadMgr.EditMode()) {
-            DataArray *typeDef = owner->TypeDef();
-            if (typeDef) {
+            if (owner->TypeDef()) {
+                DataArray *typeDef = owner->TypeDef();
                 for (int i = 0; mMap && i < mMap->Size();) {
                     DataArray *arr = typeDef->FindArray(mMap->Sym(i), false);
                     if (arr && arr->Type(1) != kDataCommand
                         && !arr->Node(1).CompatibleType(mMap->Type(i + 1))) {
                         ClearKeyValue(mMap->Sym(i));
+                        if (!mMap) {
+                            goto lists;
+                        }
                     } else {
                         i += 2;
                     }
                 }
             }
         }
-        std::list<Symbol> keys;
-        std::list<Hmx::Object *> values;
-        if (mMap) {
-            for (int j = 0; j < mMap->Size();) {
-                Symbol key = mMap->Sym(j);
-                DataNode &value = mMap->Node(j + 1);
-                if (value.Type() == kDataObject) {
-                    Hmx::Object *valObj = value.GetObj();
-                    if (valObj) {
-                        ObjectDir *valObjDir = valObj->Dir();
-                        if (valObjDir) {
-                            if (valObjDir->ClassName() == "EditorDir") {
-                                keys.push_back(key);
-                                values.push_back(valObj);
-                                mMap->Remove(j);
-                                mMap->Remove(j);
-                            } else {
-                                j += 2;
-                            }
-                        }
-                    }
-                } else {
-                    j += 2;
-                }
-            }
-        }
-        if (mMap && owner->DataDir() == owner && owner->Dir() != owner
-            || gLoadingProxyFromDisk) {
+        if (mMap && owner->DataDir() == owner && owner == owner->Dir()
+            && gLoadingProxyFromDisk) {
             DataArray *typeDef = owner->TypeDef();
+            DataArray *arrToWrite = nullptr;
+            int keyIdx = 0;
             std::list<Symbol> classnames;
             ObjectDir *ownerDir = dynamic_cast<ObjectDir *>(owner);
             if (ownerDir) {
@@ -340,52 +319,72 @@ void TypeProps::Save(BinStream &bs) {
                     }
                 }
             }
-            if (mMap->Size() > 0) {
-                DataArray *arrToWrite = nullptr;
-                int keyIdx = 0;
-                for (int i = 0; i < mMap->Size(); i += 2) {
-                    Symbol key = mMap->Sym(i);
-                    if (typeDef) {
-                        arrToWrite = typeDef->FindArray(key, false);
-                    }
-                    bool isProxy = false;
-                    bool none = false;
-                    bool proxy = false;
-                    if (arrToWrite) {
-                        GetSaveFlags(arrToWrite, proxy, none);
-                        isProxy = proxy;
-                    }
-                    if (!none && !isProxy && classnames.empty()) {
-                        // something
-                    }
-                    if (!none && isProxy != gLoadingProxyFromDisk) {
-                        if (!arrToWrite) {
-                            arrToWrite = new DataArray(mMap->Size());
-                        }
-                        arrToWrite->Node(keyIdx) = key;
-                        arrToWrite->Node(keyIdx + 1) = mMap->Node(i + 1);
-                        keyIdx += 2;
+            for (int i = 0; i < mMap->Size(); i += 2) {
+                Symbol curKey = mMap->Sym(i);
+                arrToWrite = nullptr;
+                if (typeDef) {
+                    arrToWrite = typeDef->FindArray(curKey, false);
+                }
+                bool isProxy = false;
+                bool none = false;
+                bool proxy = false;
+                if (arrToWrite) {
+                    GetSaveFlags(arrToWrite, proxy, none);
+                    isProxy = proxy;
+                }
+                if (!none && !isProxy && !classnames.empty()) {
+                    if (std::find(classnames.begin(), classnames.end(), curKey)
+                        != classnames.end()) {
+                        isProxy = !gLoadingProxyFromDisk;
                     }
                 }
-                if (arrToWrite && keyIdx > 0) {
-                    arrToWrite->Resize(keyIdx);
-                    bs << arrToWrite;
-                    arrToWrite->Release();
-                } else {
-                    bs << arrToWrite;
+                if (!none && isProxy != gLoadingProxyFromDisk) {
+                    if (!arrToWrite) {
+                        arrToWrite = new DataArray(mMap->Size());
+                    }
+                    arrToWrite->Node(keyIdx) = curKey;
+                    arrToWrite->Node(keyIdx + 1) = mMap->Node(i + 1);
+                    keyIdx += 2;
                 }
+            }
+            if (arrToWrite && keyIdx > 0) {
+                arrToWrite->Resize(keyIdx);
+                bs << arrToWrite;
+                arrToWrite->Release();
             } else {
-                bs << mMap;
+                bs << arrToWrite;
             }
             return;
         }
-
-        bs << mMap;
-        auto keysIt = keys.begin();
-        auto valsIt = values.begin();
-        for (; keysIt != keys.end(); ++keysIt, ++valsIt) {
-            mMap->Insert(0, *keysIt);
-            mMap->Insert(0, *valsIt);
+    }
+lists:
+    std::list<Symbol> keys;
+    std::list<Hmx::Object *> values;
+    if (mMap) {
+        for (int i = 0; i < mMap->Size(); i += 2) {
+            Symbol curKey = mMap->Sym(i);
+            DataNode &curVal = mMap->Node(i + 1);
+            if (curVal.Type() == kDataObject) {
+                Hmx::Object *curValObj = curVal.GetObj();
+                if (curValObj && curValObj->Dir()) {
+                    if (curValObj->Dir()->ClassName() == "EditorDir") {
+                        keys.push_back(curKey);
+                        values.push_back(curValObj);
+                        mMap->Remove(i);
+                        mMap->Remove(i);
+                        if (mMap->Size() < 1) {
+                            break;
+                        }
+                    }
+                }
+            }
         }
+    }
+    bs << mMap;
+    auto keysIt = keys.begin();
+    auto valsIt = values.begin();
+    for (; keysIt != keys.end(); ++keysIt, ++valsIt) {
+        mMap->Insert(0, *keysIt);
+        mMap->Insert(0, *valsIt);
     }
 }
