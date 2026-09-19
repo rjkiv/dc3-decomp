@@ -26,6 +26,7 @@ public:
     void PollLoading() { Poll(); }
 
     State GetState() const { return mState; }
+    bool ProperState() const { return mState == 1 || mState == 2; }
 
     MEM_OVERLOAD(NetCacheLoader, 0x1C);
 

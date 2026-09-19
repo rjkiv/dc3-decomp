@@ -63,6 +63,8 @@ public:
     bool ReverbEnabled() const { return mReverbEnable; }
     bool Loop() const { return mLoop; }
 
+    bool SoundEmpty() const { return !mSamples.empty() || !mDelayArgs.empty(); }
+
     OBJ_MEM_OVERLOAD(0x16)
     NEW_OBJ(Sound)
 

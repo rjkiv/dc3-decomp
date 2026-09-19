@@ -6,9 +6,13 @@
 #include "obj/DataFunc.h"
 #include "os/CritSec.h"
 #include "os/Debug.h"
+#include "os/Joypad.h"
 #include "os/System.h"
 #include "rnddx9/Rnd.h"
 #include "synth/FxSend.h"
+#include "synth/MicClientMapper.h"
+#include "synth/MicManagerInterface.h"
+#include "synth/Synth.h"
 #include "synth360/ExternalMic.h"
 #include "synth360/FxSend.h"
 #include "synth360/GainEffect.h"
@@ -17,6 +21,7 @@
 #include "utl/Symbol.h"
 #include "xdk/win_types.h"
 #include "xdk/XHV2.h"
+#include "xdk/xhv2/xhv2.h"
 #include <cstring>
 
 MicManagerXbox *sInstance;
@@ -29,8 +34,8 @@ static float gRemoteGain = 3;
 
 #pragma region ChatReceiver
 
-ChatReceiver::ChatReceiver(IXHV2Engine *engine, int i2)
-    : mXHV(engine), unk4(i2), unk8(0), unk9(0), unkc(0), unk10(0), unk14(0), unk18(0),
+ChatReceiver::ChatReceiver(IXHV2Engine *engine, int port)
+    : mXHV(engine), mPort(port), unk8(0), unk9(0), unkc(0), unk10(0), unk14(0), unk18(0),
       unk50(new MemStream(true)) {
     MILO_ASSERT(mXHV, 0x3F2);
 }
@@ -45,14 +50,14 @@ void ChatReceiver::ActivateProcessing(bool b1) {
         unk9 = b1;
         void *mode = _xhv_voicechat_mode;
         if (b1) {
-            HRESULT hr = mXHV->RegisterLocalTalker(unk4);
+            HRESULT hr = mXHV->RegisterLocalTalker(mPort);
             DX_ASSERT(hr, 0x40D);
-            hr = mXHV->StartLocalProcessingModes(unk4, &mode, 1);
+            hr = mXHV->StartLocalProcessingModes(mPort, &mode, 1);
             DX_ASSERT(hr, 0x40E);
         } else {
-            HRESULT hr = mXHV->StopLocalProcessingModes(unk4, &mode, 1);
+            HRESULT hr = mXHV->StopLocalProcessingModes(mPort, &mode, 1);
             DX_ASSERT(hr, 0x412);
-            hr = mXHV->UnregisterLocalTalker(unk4);
+            hr = mXHV->UnregisterLocalTalker(mPort);
             DX_ASSERT(hr, 0x413);
         }
     }
@@ -302,6 +307,83 @@ MicManagerXbox *MicManagerXbox::GetInstance() {
         sInstance = new MicManagerXbox();
     }
     return sInstance;
+}
+
+void MicManagerXbox::OnDataReady(
+    unsigned long userIndex, void *v, unsigned long ul, int *i
+) {
+    MILO_ASSERT(userIndex >= 0 && userIndex < 4, 0x18a);
+    CritSecTracker tracker(&mMicArrayLock);
+    ChatReceiver *receiver = mChatReceivers[userIndex];
+    MILO_ASSERT(receiver, 0x191);
+    if (receiver->GetUnk8()) {
+        if (receiver->GetIXHV2Engine()->IsHeadsetPresent(receiver->GetPort())) {
+            if (unk18 == userIndex) {
+                unk18 = -1;
+            }
+        } else {
+            if (unk18 == -1) {
+                unk18 = userIndex;
+            }
+            if (unk18 == userIndex
+                && (mPad == -1 || JoypadGetPadData(mPad)->mButtons % 2 != 0
+                    || (bool)(JoypadGetPadData(mPad)->mButtons & 2))) {
+                MicClientMapper *mapper = TheSynth->GetMicClientMapper();
+                for (int i = 0; i < 4; i++) {
+                    MicClientID micClientID(i);
+                    int micID = mapper->GetMicIDForClientID(micClientID);
+                    if (micID != -1) {
+                        MicXbox *mic = (MicXbox *)TheSynth->GetMic(micID);
+                        if (mic) {
+                            mic->ReadChatBuffer(v, ul);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (!receiver->GetIXHV2Engine()->IsSharedMicPresent(receiver->GetPort())) {
+        receiver->ProcessChatData(v, ul, i);
+    } else {
+        MicXbox *mic = (MicXbox *)TheSynth->GetMic(0);
+        if (mic) {
+            mic->AddData(v, ul);
+        }
+        *i = 1;
+    }
+}
+
+void MicManagerXbox::DataReadyCallback(
+    unsigned long userIndex, void *v, unsigned long ul, int *i
+) {
+    MILO_ASSERT(sInstance, 0x183);
+    sInstance->OnDataReady(userIndex, v, ul, i);
+}
+
+void MicManagerXbox::AddRemoteMic(
+    unsigned long long const &xuid, XAUDIO2_EFFECT_CHAIN *PairFX
+) {
+    GainEffect *gainEffect = new GainEffect();
+    // param 2 is not right
+    HRESULT registerTalker = mXHVEngine->RegisterRemoteTalker(xuid, 0, PairFX, 0);
+    if (registerTalker != 0) {
+        MILO_FAIL(
+            "File: %s Line: %d Error: %s\n", "Mic.cpp", 0x150, DxRnd::Error(registerTalker)
+        );
+    }
+
+    // param 2 not right
+    HRESULT startRemoteProcessing = mXHVEngine->StartRemoteProcessingModes(xuid, 0, 1);
+    if (startRemoteProcessing != 0) {
+        MILO_FAIL(
+            "File: %s Line: %d Error: %s\n",
+            "Mic.cpp",
+            0x155,
+            DxRnd::Error(startRemoteProcessing)
+        );
+    }
 }
 
 #pragma endregion MicManagerXbox

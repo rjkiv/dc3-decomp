@@ -108,7 +108,7 @@ protected:
     float mRadius; // 0x1c4
     Fader *unk1c8; // 0x1c8
     Transform unk1cc; // 0x1cc
-    float unk20c; // 0x20c
+    float mDistance; // 0x20c
     float unk210; // 0x210
     float mDopplerPower; // 0x214
     bool mStartedPlaying; // 0x218

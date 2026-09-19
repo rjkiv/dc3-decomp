@@ -423,13 +423,7 @@ bool NetLoaderRef::IsValid() const {
 
 bool NetLoaderRef::NeedsToDownload() {
     MILO_ASSERT(IsValid(), 0x31B);
-    if (mCacheLoader) {
-        bool stateCheck = mCacheLoader->GetState() == 1 || mCacheLoader->GetState() == 2;
-        if (!stateCheck) {
-            return false;
-        }
-    }
-    return true;
+    return !mCacheLoader || mCacheLoader->ProperState();
 }
 
 bool NetLoaderRef::IsLoadedOrFailed() {

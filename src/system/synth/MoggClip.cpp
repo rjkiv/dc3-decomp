@@ -330,9 +330,8 @@ void MoggClip::LoadFile(BinStream *bs) {
     unk58 = -1;
     if (!mMoggFile.empty()) {
         bool loadingMusic = IsLoadingMusicMogg(mMoggFile.c_str());
-        bool useless = IsUselessMogg(mMoggFile.c_str());
-        if (!useless) {
-            if (!(bs && bs->Cached()) || loadingMusic) {
+        if (!IsUselessMogg(mMoggFile.c_str())) {
+            if (!bs || !bs->Cached() || loadingMusic) {
                 bs = nullptr;
             }
             mLoader = new FileLoader(

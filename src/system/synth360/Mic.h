@@ -10,6 +10,7 @@
 #include "utl/MemStream.h"
 #include "utl/Symbol.h"
 #include "xdk/XHV2.h"
+#include "xdk/xhv2/xhv2.h"
 
 // size 0x58
 class ChatReceiver {
@@ -18,11 +19,17 @@ public:
     ~ChatReceiver();
     void ActivateProcessing(bool);
 
+    IXHV2Engine *GetIXHV2Engine() const { return mXHV; }
+    DWORD GetPort() const { return mPort; }
+    bool GetUnk8() const { return unk8; }
+
+    friend class MicManagerXbox;
+
 private:
     void ProcessChatData(void *, unsigned int, int *);
 
     IXHV2Engine *mXHV; // 0x0
-    DWORD unk4; // 0x4
+    DWORD mPort; // 0x4
     bool unk8; // 0x8
     bool unk9; // 0x9
     float unkc;
@@ -76,6 +83,8 @@ public:
     void AddData(void *, int);
     void OnMicConnected(unsigned long, bool, Symbol const &);
     void OnMicDisconnected();
+
+    friend class MicManagerXbox;
 
 private:
     void ReadChatBuffer(void *, unsigned int);

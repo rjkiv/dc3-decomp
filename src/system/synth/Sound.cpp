@@ -36,7 +36,7 @@ Sound::~Sound() {
 
 BEGIN_HANDLERS(Sound)
     HANDLE(play, OnPlay)
-    HANDLE_EXPR(disable_pan, DisablePan(nullptr))
+    HANDLE(disable_pan, DisablePan)
     HANDLE_ACTION(stop, Stop(nullptr, _msg->Size() == 4 ? _msg->Int(3) : false))
     HANDLE_ACTION(add_fader, mFaders.Add(_msg->Obj<Fader>(2)))
     HANDLE_ACTION(
