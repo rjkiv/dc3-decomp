@@ -20,8 +20,8 @@
 #define HEIGHT_SD 480.0f
 #define HEIGHT_HD 720.0f
 
-float ConvertHeightOGToPctHeight(int i) { return std::fabs(-i / HEIGHT_SD); }
-float ConvertHeightNGToPctHeight(int i) { return std::fabs(-i / HEIGHT_HD); }
+float ConvertHeightOGToPctHeight(int i) { return fabsf(-i / HEIGHT_SD); }
+float ConvertHeightNGToPctHeight(int i) { return fabsf(-i / HEIGHT_HD); }
 int ConvertPctHeightToHeightNG(float f) { return -Round(f * HEIGHT_HD); }
 int ConvertPctHeightToHeightOG(float f) { return -Round(f * HEIGHT_SD); }
 
