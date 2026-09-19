@@ -335,7 +335,7 @@ void Hmx::Object::ChainSource(Hmx::Object *source, Hmx::Object *o2) {
     if (!o2)
         o2 = this;
     if (mSinks && !mSinks->Sinks().empty()) {
-        source->GetOrAddSinks()->AddSink(this, Symbol());
+        source->AddSink(this);
     } else if (o2->mSinks) {
         o2->mSinks->ChainEventSinks(source, this);
     }
@@ -645,12 +645,12 @@ DataNode Hmx::Object::OnAddSink(DataArray *a) {
         Hmx::Object *obj = a->Obj<Hmx::Object>(2);
         if (obj) {
             if (arr3->Size() == 0) {
-                GetOrAddSinks()->AddSink(obj, Symbol(), Symbol(), mode, true);
+                AddSink(obj, Symbol(), Symbol(), mode, true);
             } else {
                 for (int i = 0; i < arr3->Size(); i++) {
                     DataNode eval = arr3->Evaluate(i);
                     if (eval.Type() == kDataArray) {
-                        GetOrAddSinks()->AddSink(
+                        AddSink(
                             obj,
                             eval.LiteralArray()->LiteralSym(0),
                             eval.LiteralArray()->LiteralSym(1),
@@ -658,29 +658,29 @@ DataNode Hmx::Object::OnAddSink(DataArray *a) {
                             chain
                         );
                     } else {
-                        GetOrAddSinks()->AddSink(
-                            obj, eval.LiteralSym(), Symbol(), mode, chain
-                        );
+                        AddSink(obj, eval.LiteralSym(), Symbol(), mode, chain);
                     }
                 }
             }
         }
     } else {
-        GetOrAddSinks()->AddSink(a->Obj<Hmx::Object>(2), Symbol());
+        AddSink(a->Obj<Hmx::Object>(2), Symbol());
     }
     return 0;
 }
 
 DataNode Hmx::Object::OnRemoveSink(DataArray *a) {
+    Symbol s;
     if (a->Size() > 3) {
         Hmx::Object *obj = a->Obj<Hmx::Object>(2);
         for (int i = 3; i < a->Size(); i++) {
-            Symbol s = a->Sym(i);
-            if (mSinks)
+            s = a->Sym(i);
+            if (mSinks) {
                 mSinks->RemoveSink(obj, s);
+            }
         }
     } else {
-        Symbol s = Symbol();
+        s = Symbol();
         Hmx::Object *obj = a->Obj<Hmx::Object>(2);
         if (mSinks)
             mSinks->RemoveSink(obj, s);
