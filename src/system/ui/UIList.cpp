@@ -345,9 +345,9 @@ float UIList::GetDistanceToPlane(const Plane &p, Vector3 &v) {
                            Vector3(box.mMax.x, box.mMin.y, box.mMax.z),
                            Vector3(box.mMax.x, box.mMax.y, box.mMax.z),
                            Vector3(box.mMin.x, box.mMax.y, box.mMax.z) };
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < DIM(boxVecs); i++) {
         float dot = p.Dot(boxVecs[i]);
-        if (first || (std::fabs(dot) < std::fabs(ret))) {
+        if (first || (fabsf(dot) < fabsf(ret))) {
             ret = dot;
             v = boxVecs[i];
             first = false;
@@ -362,20 +362,16 @@ void UIList::DrawShowing() {
         unk15c = false;
     }
     bool u7 = unk15d;
-    if (mParent) {
-        if (mParent->mListDir->SubList(
-                mParent->mListState.SelectedDisplay(), mParent->mWidgets
-            )
-            == this) {
-            u7 = mParent->unk15d;
+    if (ParentList()) {
+        if (ParentList()->ChildList() == this) {
+            u7 = ParentList()->unk15d;
         }
     }
     float f9;
-
-    UIList *sublist = ChildList();
+    UIList *sublist = mListDir->SubList(mListState.SelectedDisplay(), mWidgets);
     if (sublist) {
-        UIListDir *dir = sublist->mListDir;
-        f9 = dir->ElementSpacing() * sublist->mListState.SelectedDisplay();
+        int disp = sublist->mListState.SelectedDisplay();
+        f9 = sublist->GetUIListDir()->ElementSpacing() * (float)disp;
     } else {
         f9 = 0;
     }
@@ -387,7 +383,6 @@ void UIList::DrawShowing() {
 }
 
 RndDrawable *UIList::CollideShowing(const Segment &s, float &fl, Plane &pl) {
-    RndDrawable *ret = nullptr;
     std::vector<std::vector<Vector3> > vectors;
     BoundingBoxTriangles(vectors);
     Segment segment = s;
@@ -399,19 +394,17 @@ RndDrawable *UIList::CollideShowing(const Segment &s, float &fl, Plane &pl) {
         triangle.Set(curVector[0], curVector[1], curVector[2]);
         float fd0;
         if (Intersect(segment, triangle, false, fd0)) {
-            b1 = true;
             Interp(segment.start, segment.end, fd0, segment.end);
+            b1 = true;
             fl *= fd0;
-            pl.a = triangle.frame.z.x;
-            pl.b = triangle.frame.z.y;
-            pl.c = triangle.frame.z.z;
-            pl.d = -pl.Dot(triangle.origin);
+            pl.Set(triangle.origin, triangle.frame.z);
         }
     }
     if (b1) {
-        ret = this;
+        return this;
+    } else {
+        return nullptr;
     }
-    return ret;
 }
 
 int UIList::CollidePlane(const Plane &pl) {
@@ -441,18 +434,17 @@ void UIList::StartScroll(const UIListState &state, int i2, bool b3) {
 void UIList::CompleteScroll(const UIListState &state) {
     mListDir->CompleteScroll(state, mWidgets);
     if (mAutoScrolling) {
-        int i4 = mNumData;
+        int i4 = mListState.FirstShowing();
         state.Provider();
         int i2 = unk150 > 0 ? mListState.MaxFirstShowing() : 0;
         if (i4 == i2) {
             unk150 = -unk150;
             unk158 = TheTaskMgr.UISeconds() + mAutoScrollPause;
         } else {
-            unk15c = true;
-            mListState.Scroll(unk150, false);
+            Scroll(unk150);
         }
     }
-    if (mListState.Provider()->IsActive(mListState.SelectedData())) {
+    if (state.Provider()->IsActive(state.SelectedData())) {
         if (!mAutoScrolling || mAutoScrollSendMsgs) {
             TheUI->Handle(UIComponentScrollMsg(this, mUser), false);
         }
@@ -529,6 +521,8 @@ void UIList::AutoScroll() {
 
 // int UIList::CollidePlane(std::vector<Vector3> const &vec, Plane const &p) { return 0; }
 
+UIList *UIList::ParentList() const { return mParent; }
+
 UIList *UIList::ChildList() {
     return mListDir->SubList(mListState.SelectedDisplay(), mWidgets);
 }
@@ -570,9 +564,8 @@ void UIList::SetSelected(int i, int j) {
     mListState.SetSelected(i, j, true);
     Refresh(false);
     mListDir->Poll();
-    UIList *sublist = ChildList();
-    if (sublist) {
-        sublist->Poll();
+    if (ChildList()) {
+        Poll();
     }
     HandleSelectionUpdated();
 }
@@ -725,7 +718,16 @@ void UIList::Init() {
 
 void UIList::CalcBoundingBox(Box &box) {
     box.Set(WorldXfm().v, WorldXfm().v);
+    float f9;
+    UIList *sublist = ChildList();
+    if (sublist) {
+        int disp = sublist->mListState.SelectedDisplay();
+        f9 = sublist->GetUIListDir()->ElementSpacing() * (float)disp;
+    } else {
+        f9 = 0;
+    }
     UIListWidgetDrawState drawState;
+    mListDir->BuildDrawState(drawState, mListState, DrawState(this), f9, true);
     mListDir->DrawWidgets(
         drawState, mListState, mWidgets, WorldXfm(), DrawState(this), &box, unk15d
     );
