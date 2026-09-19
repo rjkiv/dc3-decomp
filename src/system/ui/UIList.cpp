@@ -6,6 +6,7 @@
 #include "obj/Object.h"
 #include "obj/Task.h"
 #include "os/Debug.h"
+#include "os/Joypad.h"
 #include "os/JoypadMsgs.h"
 #include "os/User.h"
 #include "rndobj/Draw.h"
@@ -519,7 +520,16 @@ void UIList::AutoScroll() {
     }
 }
 
-// int UIList::CollidePlane(std::vector<Vector3> const &vec, Plane const &p) { return 0; }
+int UIList::CollidePlane(std::vector<Vector3> const &vec, Plane const &p) {
+    bool le0 = vec[0] <= p;
+    bool le1 = vec[1] <= p;
+    bool le2 = vec[2] <= p;
+    if (le0 == le1 && le1 == le2) {
+        return le0 ? 1 : -1;
+    } else {
+        return 0;
+    }
+}
 
 UIList *UIList::ParentList() const { return mParent; }
 
@@ -829,6 +839,7 @@ DataNode UIList::OnSetSelected(DataArray *da) {
 DataNode UIList::OnMsg(const ButtonDownMsg &msg) {
     mUser = msg.GetUser();
     Symbol cntType = JoypadControllerTypePadNum(msg.GetPadNum());
+    bool lefty = JoypadTypeHasLeftyFlip(cntType);
 
     if (CanScroll()) {
         int gridspan = mListState.GridSpan();
@@ -843,7 +854,7 @@ DataNode UIList::OnMsg(const ButtonDownMsg &msg) {
 
             int scrollDir = ScrollDirection(
                 msg,
-                cntType,
+                lefty,
                 childList->GetUIListDir()->Orientation() == 0,
                 childList->GridSpan()
             );
@@ -855,7 +866,7 @@ DataNode UIList::OnMsg(const ButtonDownMsg &msg) {
             }
         }
 
-        int scrollDir = ScrollDirection(msg, cntType, o == 0, gridspan);
+        int scrollDir = ScrollDirection(msg, lefty, o == 0, gridspan);
         if (scrollDir != 0) {
             if (gridspan == 1 || (scrollDir != 1 && scrollDir != -1)
                 || ((scrollDir == 1 && (mListState.SelectedDisplay() + 1) % gridspan)
