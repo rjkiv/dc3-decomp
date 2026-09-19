@@ -101,6 +101,7 @@ public:
     Fader *InstFader() const { return mMidiInstrumentFader; }
     void SetDir(ObjectDir *dir) { unk64 = dir; }
     ByteGrinder &Grinder() { return mByteGrinder; }
+    MicClientMapper *GetMicClientMapper() const { return mMicClientMapper; }
     bool CheckCommonBank(bool warn);
     void SetMasterVolume(float);
     float GetMasterVolume();

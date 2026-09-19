@@ -81,10 +81,12 @@ float ThreeDSoundManager::CalculateDoppler(
         f7 = 1 / f5;
     }
     f7 *= f4;
-    float powed =
-        pow((-(Dot(subSound, sub) * f7) + sDopplerFloats[0])
-                / (Dot(subSound, velocity) * f7 + sDopplerFloats[0]),
-            mDopplerPower);
+    float dotSub = Dot(subSound, sub);
+    float dotVel = Dot(subSound, velocity);
+    float numerator = -(dotSub * f7);
+    numerator += sDopplerFloats[0];
+    float mantissa = numerator / (dotVel * f7 + sDopplerFloats[0]);
+    float powed = pow(mantissa, mDopplerPower);
     return Clamp(sDopplerFloats[2], sDopplerFloats[1], powed);
 }
 
@@ -92,7 +94,12 @@ static const int sMaxNumSounds = 100;
 
 void ThreeDSoundManager::Poll() {
     START_AUTO_TIMER("sound_mgr_poll");
-    RndTransformable *trans = mListener.Ptr() ? mListener.Ptr() : mParent->Cam();
+    RndTransformable *trans;
+    if (mListener) {
+        trans = mListener.Ptr();
+    } else {
+        trans = mParent->Cam();
+    }
     if (trans) {
         const Transform &worldXfm = trans->WorldXfm();
         bool xfmEq = worldXfm != unk18;
