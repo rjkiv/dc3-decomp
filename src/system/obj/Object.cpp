@@ -234,29 +234,25 @@ void Hmx::Object::SetName(const char *name, ObjectDir *dir) {
 
 ObjectDir *Hmx::Object::DataDir() { return mDir ? mDir : ObjectDir::Main(); }
 
+const char *FormatPathName(const char *name, const char *file) {
+    return MakeString("%s (%s)", name, FileLocalize(file, nullptr));
+}
+
 const char *Hmx::Object::FindPathName() {
     const char *name = (mName && *mName) ? mName : ClassName().Str();
 
-    class ObjectDir *dataDir = DataDir();
+    ObjectDir *dataDir = DataDir();
     if (dataDir) {
         if (dataDir->Loader()) {
-            return MakeString(
-                "%s (%s)",
-                name,
-                FileLocalize(dataDir->Loader()->LoaderFile().c_str(), nullptr)
-            );
+            return FormatPathName(name, dataDir->Loader()->LoaderFile().c_str());
         } else if (!dataDir->ProxyFile().empty()) {
-            return MakeString(
-                "%s (%s)", name, FileLocalize(dataDir->ProxyFile().c_str(), nullptr)
-            );
+            return FormatPathName(name, dataDir->ProxyFile().c_str());
         } else if (*dataDir->GetPathName() != '\0') {
-            return MakeString(
-                "%s (%s)", name, FileLocalize(dataDir->GetPathName(), nullptr)
-            );
+            return FormatPathName(name, dataDir->GetPathName());
         } else if (dataDir != this && dataDir->Name() && *dataDir->Name()) {
             return MakeString("%s/%s", dataDir->Name(), name);
         } else if (mDir && *mDir->GetPathName()) {
-            return MakeString("%s (%s)", name, FileLocalize(mDir->GetPathName(), nullptr));
+            return FormatPathName(name, mDir->GetPathName());
         }
     }
     return name;
@@ -598,11 +594,13 @@ DataNode Hmx::Object::HandleType(DataArray *msg) {
 DataNode Hmx::Object::OnIterateRefs(const DataArray *da) {
     DataNode *var = da->Var(2);
     DataNode node(*var);
-    FOREACH_OBJREF (it, this) {
+    for (ObjRef *it = Refs().Begin(); it != Refs().End();) {
+        ObjRef *next = Refs().Next(it);
         *var = it->RefOwner();
         for (int i = 3; i < da->Size(); i++) {
             da->Command(i)->Execute();
         }
+        it = next;
     }
     *var = node;
     return 0;
