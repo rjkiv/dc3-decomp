@@ -3,6 +3,7 @@
 #include "obj/DirLoader.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "os/File.h"
 #include "utl/BinStream.h"
 #include "utl/FilePath.h"
 #include "utl/KeylessHash.h"
@@ -131,7 +132,10 @@ protected:
 };
 
 template <class C>
-BinStream &operator<<(BinStream &bs, const ObjDirPtr<C> &ptr);
+BinStream &operator<<(BinStream &bs, const ObjDirPtr<C> &ptr) {
+    bs << FileRelativePath(FilePath::Root().c_str(), ptr.GetFile().c_str());
+    return bs;
+}
 
 template <class T>
 BinStream &operator>>(BinStream &bs, ObjDirPtr<T> &ptr) {
