@@ -474,7 +474,7 @@
             "system/obj/Object.cpp": "NonMatching",
             "system/obj/PropSync.cpp": "NonMatching",
             "system/obj/Task.cpp": "NonMatching",
-            "system/obj/TextFile.cpp": "NonMatching",
+            "system/obj/TextFile.cpp": "Matching",
             "system/obj/TypeProps.cpp": "Matching",
             "system/obj/Utl.cpp": "Matching",
             "system/oggvorbis/VorbisMem.cpp": "Matching",

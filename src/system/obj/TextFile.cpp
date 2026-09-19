@@ -12,9 +12,11 @@ void TextFile::SetName(const char *name, class ObjectDir *dir) {
             char buf[256];
             strcpy(buf, name);
             int len = strlen(s);
-            int tokLen = sizeof("_append") - 1;
-            char *ptr = &buf[s - name];
-            strncpy(ptr, ptr + tokLen, len - (tokLen - 1));
+            strncpy(
+                buf + (s - name),
+                buf + (s - name) + sizeof("_append") - 1,
+                len - (sizeof("_append") - 2)
+            );
             mFile = NewFile(buf, 0x109);
         } else {
             mFile = NewFile(name, 0x301);
