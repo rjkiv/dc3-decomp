@@ -240,7 +240,7 @@ BEGIN_LOADS(UIFontImporter)
     if (d.rev <= 4) {
         int height;
         d >> height;
-        mFontPctSize = ConvertHeightNGToPctHeight(height);
+        mFontPctSize = ConvertHeightNGToPctHeight(-height);
     } else {
         d >> mFontPctSize;
     }
@@ -302,7 +302,7 @@ void UIFontImporter::ImportSettingsFromFont(RndFontBase *font) {
     if (font && font->Type() == Symbol("imported_font")) {
         SetProperty("font_name", font->Property("font_name")->Str());
         SetProperty(
-            "font_size", ConvertHeightNGToPctHeight(font->Property("font_size")->Int())
+            "font_size", ConvertHeightNGToPctHeight(-font->Property("font_size")->Int())
         );
         SetProperty("weight", font->Property("weight")->Int());
         SetProperty("italics", font->Property("italics")->Int());
