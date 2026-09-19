@@ -3,7 +3,7 @@
 #include "utl/Str.h"
 
 class FormatString {
-private:
+protected:
     enum Type {
         kInt = 0,
         kStr = 1,
@@ -20,7 +20,6 @@ private:
 
     void UpdateType();
 
-protected:
     FormatString();
     void InitializeWithFmt(const char *, bool);
 

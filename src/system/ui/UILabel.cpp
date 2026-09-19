@@ -22,6 +22,7 @@
 #include "utl/Loader.h"
 #include "utl/Locale.h"
 #include "utl/Str.h"
+#include "utl/SuperFormatString.h"
 #include "utl/Symbol.h"
 #include "utl/UTF8.h"
 #include <cmath>
@@ -652,11 +653,11 @@ const char *UILabel::GetDefaultText() const {
 
 void UILabel::CenterWithLabel(UILabel *label, bool b2, float f3) {
     MILO_ASSERT((mAlignment & RndText::kCenter) || (label->mAlignment & RndText::kCenter), 0x400);
+    int add = b2 ? -1 : 1;
     Transform myXfm = LocalXfm();
     Transform labelXfm = label->LocalXfm();
-    int add = b2 ? 1 : -1;
-    myXfm.v.x = label->mDrawRect.w * 0.5f + f3 * 0.5f * (float)add + labelXfm.v.x;
-    labelXfm.v.x = -(label->mDrawRect.w * 0.5f + f3 * 0.5f * (float)add - labelXfm.v.x);
+    myXfm.v.x = (label->mDrawRect.w / 2 + f3 / 2) * (float)add + labelXfm.v.x;
+    labelXfm.v.x = -((mDrawRect.w / 2 + f3 / 2) * (float)add - labelXfm.v.x);
     SetLocalXfm(myXfm);
     label->SetLocalXfm(labelXfm);
 }
@@ -819,7 +820,7 @@ DataNode UILabel::OnSetHeightFromText(DataArray *a) {
 }
 
 void UILabel::SetTokenFmtImp(
-    Symbol s, DataArray const *d1, DataArray const *d2, int i, bool b
+    Symbol s, DataArray const *d1, DataArray const *d2, int i4, bool b5
 ) {
     mTextToken = s;
     if (s.Null()) {
@@ -828,7 +829,18 @@ void UILabel::SetTokenFmtImp(
         bool found;
         const char *localize = Localize(mTextToken, &found, TheLocale);
         if (found) {
-            // well SuperFormatString is called here but that doesnt exist yet
+            SuperFormatString fmtStr(localize, d1, b5, TheLocale, gNullStr);
+            if (d2) {
+                for (int i = i4; i < d2->Size(); i++) {
+                    const DataNode &n = d2->Evaluate(i);
+                    if (n.Type() == kDataSymbol) {
+                        fmtStr << Localize(n.Sym(), nullptr, TheLocale);
+                    } else {
+                        fmtStr << n;
+                    }
+                }
+            }
+            SetDisplayText(fmtStr.FinalStr(), false);
         } else {
             SetDisplayText(localize, false);
         }
