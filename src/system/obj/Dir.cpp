@@ -117,6 +117,7 @@ ObjectDir *SyncSubDir(const FilePath &fp, ObjectDir *dir) {
         }
         return retDir;
     }
+    // FIXME:
     // i would think you'd wanna return nullptr here if there's no dirLoader
     // but this is what HMX did
 }
@@ -224,8 +225,8 @@ void ObjectDir::Save(BinStream &bs) {
     std::vector<ObjDirPtr<ObjectDir> > notInlinedSubDirs;
     if (SaveSubdirs()) {
         for (int i = 0; i < mSubDirs.size(); i++) {
-            if (mSubDirs[i]) {
-                ObjDirPtr<ObjectDir> &curSubDir = mSubDirs[i];
+            ObjDirPtr<ObjectDir> &curSubDir = mSubDirs[i];
+            if (curSubDir.Ptr()) {
                 if (curSubDir->InlineSubDirType() != kInlineNever) {
                     inlinedSubDirs.push_back(curSubDir);
                 } else {
@@ -237,30 +238,31 @@ void ObjectDir::Save(BinStream &bs) {
     bs << notInlinedSubDirs;
     bs << (unsigned char)mInlineSubDirType;
     bs << inlinedSubDirs;
-
     for (int i = 0; i < inlinedSubDirs.size(); i++) {
-        InlineDirType iType = ((ObjectDir *)inlinedSubDirs[i])->InlineSubDirType();
+        InlineDirType iType = inlinedSubDirs[i].Ptr()->InlineSubDirType();
         bs << (unsigned char)iType;
         SaveInlined(inlinedSubDirs[i].GetFile(), false, iType);
     }
-
     std::vector<bool> boolVec;
     boolVec.resize(mInlinedDirs.size(), false);
     for (int i = 0; i < mInlinedDirs.size(); i++) {
         InlinedDir &id = mInlinedDirs[i];
+        const FilePath &idFile = id.file;
         switch (id.mType) {
-        case kInlineCachedShared:
-            id.shared = true;
-        case kInlineCached: {
-            bool old = gLoadingProxyFromDisk;
-            if (!bs.Cached()) {
-                id.dir = nullptr;
-            } else {
+        case kInlineCached:
+        case kInlineCachedShared: {
+            if (id.mType == kInlineCachedShared) {
+                id.shared = true;
+            }
+            if (bs.Cached()) {
+                bool old = gLoadingProxyFromDisk;
                 gLoadingProxyFromDisk = false;
                 DirLoader::SetCacheMode(false);
-                id.dir.LoadFile(id.file, false, false, kLoadFront, true);
+                id.dir.LoadFile(idFile, false, false, kLoadFront, true);
                 DirLoader::SetCacheMode(true);
                 gLoadingProxyFromDisk = old;
+            } else {
+                id.dir = nullptr;
             }
             break;
         }
@@ -268,11 +270,12 @@ void ObjectDir::Save(BinStream &bs) {
             MILO_ASSERT(id.mType == kInlineAlways, 0x211);
             int gg = 0;
             for (; gg != mSubDirs.size(); gg++) {
-                if (mSubDirs[gg].GetFile() == id.file)
+                if (mSubDirs[gg].GetFile() == idFile) {
                     break;
+                }
             }
             MILO_ASSERT(gg < mSubDirs.size(), 0x21A);
-            id.dir = (ObjectDir *)mSubDirs[gg];
+            id.dir = mSubDirs[gg];
             if (id.shared) {
                 id.shared = false;
                 MILO_NOTIFY("Can't share kInlineAlways dirs");
@@ -280,9 +283,10 @@ void ObjectDir::Save(BinStream &bs) {
             break;
         }
         }
-        // what's happening here?
         if (id.dir) {
+            boolVec[i] = id.shared && !bs.AddSharedInlined(idFile);
         } else {
+            boolVec[i] = true;
         }
         bs << boolVec[i];
     }
@@ -292,43 +296,44 @@ void ObjectDir::Save(BinStream &bs) {
     for (int i = mInlinedDirs.size() - 1; i >= 0; i--) {
         InlinedDir &id = mInlinedDirs[i];
         if (!boolVec[i]) {
-            if (id.dir->IsSubDir()) {
+            bool subDir = id.dir->IsSubDir();
+            if (subDir) {
                 RemovingSubDir(id.dir);
             }
-            String dirName = id.dir->Name();
-            ObjectDir *dirDir = id.dir->Dir();
-            if (!id.shared) {
-                ObjectDir *dirToSet = id.dir;
-                if (dirToSet->Dir()) {
-                    int uniqIdx = 0;
-                    const char *uniqStr;
-                    while (true) {
-                        uniqStr = MakeString("uniq%x", uniqIdx);
-                        if (!dirToSet->FindContainingDir(uniqStr)
-                            && !FindContainingDir(uniqStr))
-                            break;
-                        uniqIdx++;
+            {
+                String dirName = id.dir->Name();
+                ObjectDir *dirDir = id.dir->Dir();
+                if (!id.shared) {
+                    ObjectDir *dirToSet = id.dir;
+                    if (dirToSet->Dir()) {
+                        int uniqIdx = 0;
+                        const char *uniqStr;
+                        while (true) {
+                            uniqStr = MakeString("uniq%x", uniqIdx);
+                            if (!dirToSet->FindContainingDir(uniqStr)
+                                && !FindContainingDir(uniqStr))
+                                break;
+                            uniqIdx++;
+                        }
+                        dirToSet->SetName(uniqStr, dirToSet);
                     }
-                    dirToSet->SetName(uniqStr, dirToSet);
+                }
+                FilePathTracker tracker(FileGetPath(id.file.c_str()));
+                DirLoader::SaveObjects(bs, id.dir);
+                if (!id.shared) {
+                    id.dir->SetName(dirName.c_str(), dirDir);
                 }
             }
-            FilePathTracker tracker(FileGetPath(id.file.c_str()));
-            DirLoader::SaveObjects(bs, id.dir);
-            if (!id.shared) {
-                id.dir->SetName(dirName.c_str(), dirDir);
-            }
-            if (id.dir->IsSubDir()) {
+            if (subDir) {
                 AddedSubDir(id.dir);
             }
         }
     }
-    std::vector<InlinedDir> unused;
-    mCurViewportID = (ViewportId)0;
-    const char *nextname = unk8c ? unk8c->Name() : "";
+    std::vector<InlinedDir> tmp;
+    tmp.swap(mInlinedDirs);
     gLoadingProxyFromDisk = oldProxy;
-    bs << nextname;
-    const char *camName = mCurCam ? mCurCam->Name() : "";
-    bs << camName;
+    bs << (unk8c ? unk8c->Name() : "");
+    bs << (mCurCam ? mCurCam->Name() : "");
     SaveRest(bs);
     gLoadingProxyFromDisk = false;
 }
