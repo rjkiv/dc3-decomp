@@ -194,8 +194,6 @@ public:
 
 private:
     struct InlinedDir {
-        InlinedDir();
-        ~InlinedDir();
         ObjDirPtr<ObjectDir> dir; // 0x0
         FilePath file; // 0x14
         bool shared; // 0x1c
