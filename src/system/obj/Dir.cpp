@@ -35,7 +35,7 @@ ObjectDir::ObjectDir()
     : mHashTable(0, Entry(), Entry(), 0), mStringTable(0), mProxyOverride(false),
       mInlineProxyType(kInlineCached), mLoader(nullptr), mIsSubDir(false),
       mInlineSubDirType(kInlineNever), mPathName(gNullStr), mViewports(7),
-      mCurViewportID((ViewportId)0), unk8c(nullptr), mCurCam(nullptr), mAlwaysInlined(0),
+      mCurViewport(kPerspective), mCurAnim(nullptr), mCurCam(nullptr), mAlwaysInlined(0),
       mAlwaysInlineHash(gNullStr) {
     ResetViewports();
 }
@@ -218,7 +218,7 @@ void ObjectDir::Save(BinStream &bs) {
         bs << 0;
     }
     bs << mViewports;
-    bs << mCurViewportID;
+    bs << mCurViewport;
     bs << (unsigned char)mInlineProxyType;
     bs << mProxyFile;
     std::vector<ObjDirPtr<ObjectDir> > inlinedSubDirs;
@@ -332,7 +332,7 @@ void ObjectDir::Save(BinStream &bs) {
     std::vector<InlinedDir> tmp;
     tmp.swap(mInlinedDirs);
     gLoadingProxyFromDisk = oldProxy;
-    bs << (unk8c ? unk8c->Name() : "");
+    bs << (mCurAnim ? mCurAnim->Name() : "");
     bs << (mCurCam ? mCurCam->Name() : "");
     SaveRest(bs);
     gLoadingProxyFromDisk = false;
@@ -345,7 +345,7 @@ BEGIN_COPYS(ObjectDir)
         BEGIN_COPYING_MEMBERS
             if (!IsProxy()) {
                 COPY_MEMBER(mViewports)
-                COPY_MEMBER(mCurViewportID)
+                COPY_MEMBER(mCurViewport)
                 for (int i = 0; i < mSubDirs.size(); i++) {
                     RemovingSubDir(mSubDirs[i]);
                 }
@@ -404,8 +404,8 @@ void ObjectDir::SyncObjects() {
 
 void ObjectDir::ResetEditorState() {
     mViewports.resize(7);
-    mCurViewportID = (ViewportId)0;
-    unk8c = 0;
+    mCurViewport = kPerspective;
+    mCurAnim = nullptr;
     mCurCam = nullptr;
     ResetViewports();
 }
@@ -413,13 +413,13 @@ void ObjectDir::ResetEditorState() {
 void ObjectDir::AddedObject(Hmx::Object *) {}
 
 void ObjectDir::RemovingObject(Hmx::Object *obj) {
-    if (obj == unk8c) {
-        unk8c = nullptr;
+    if (obj == mCurAnim) {
+        mCurAnim = nullptr;
     }
     if (obj == mCurCam) {
         mCurCam = nullptr;
-        if (mCurViewportID == 7) {
-            mCurViewportID = (ViewportId)0;
+        if (mCurViewport == kCustom) {
+            mCurViewport = kPerspective;
         }
     }
 }
@@ -494,10 +494,10 @@ namespace {
 }
 
 ObjectDir::Viewport &ObjectDir::CurViewport() {
-    if (mCurViewportID >= kNumViewports) {
-        MILO_FAIL("%s mCurView = %d, >= kNumViewports", PathName(this), mCurViewportID);
+    if (mCurViewport >= kCustom) {
+        MILO_FAIL("%s mCurView = %d, >= kNumViewports", PathName(this), mCurViewport);
     }
-    return mViewports[mCurViewportID];
+    return mViewports[mCurViewport];
 }
 
 bool ObjectDir::HasSubDir(ObjectDir *dir) {
@@ -874,7 +874,7 @@ void ObjectDir::PreLoadInlined(const FilePath &fp, bool share, InlineDirType typ
 }
 
 void ObjectDir::SetCurViewport(ViewportId id, Hmx::Object *o) {
-    mCurViewportID = id;
+    mCurViewport = id;
     mCurCam = o;
 }
 

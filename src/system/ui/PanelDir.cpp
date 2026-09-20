@@ -118,7 +118,7 @@ void PanelDir::PostLoad(BinStream &bs) {
         }
     }
     if (d.rev < 7 && !mCam) {
-        SetCurViewport(kNumViewports, TheUI->GetCam());
+        SetCurViewport(kCustom, TheUI->GetCam());
     }
     if (d.rev > 3) {
         d >> mCanEndWorld;

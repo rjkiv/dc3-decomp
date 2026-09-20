@@ -165,7 +165,15 @@ class ObjectDir : public virtual Hmx::Object {
 
 public:
     enum ViewportId {
-        kNumViewports = 7
+        kPerspective = 0,
+        kLeft = 1,
+        kRight = 2,
+        kTop = 3,
+        kBottom = 4,
+        kFront = 5,
+        kBack = 6,
+        kCustom = 7,
+        kNumViewports = 8,
     };
 
     class Viewport {
@@ -225,8 +233,8 @@ private:
     FilePath mStoredFile; // 0x68
     std::vector<InlinedDir> mInlinedDirs; // 0x70
     std::vector<Viewport> mViewports; // 0x7c
-    ViewportId mCurViewportID; // 0x88
-    Hmx::Object *unk8c; // 0x8c
+    ViewportId mCurViewport; // 0x88
+    Hmx::Object *mCurAnim; // 0x8c
     Hmx::Object *mCurCam; // 0x90
     int mAlwaysInlined; // 0x94 / -0xC
     const char *mAlwaysInlineHash; // 0x98
