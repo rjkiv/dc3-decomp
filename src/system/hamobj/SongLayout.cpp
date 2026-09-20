@@ -149,9 +149,8 @@ END_LOADS
 
 void SongLayout::ClearChosenPatterns() {
     FOREACH (it, mSongPatterns) {
-        // auto &moveparents = it->mMoveParents;
         memset(
-            &it->mMoveParents.front(), 0, it->mMoveParents.size() * sizeof(MoveParent *)
+            it->mMoveParents.begin(), 0, it->mMoveParents.size() * sizeof(MoveParent *)
         );
         it->mNumMoves = 0;
     }
@@ -275,14 +274,14 @@ void SongLayout::SetDefaultReplacer() {
     }
 }
 
-// https://decomp.me/scratch/XJBPY
 void SongLayout::SetDefaultPattern(int patnum) {
     ClearChosenPatterns();
     MoveParent *mp = nullptr;
     u32 unk_r29 = 5;
     for (int i = 0; i < 2; i++) {
         SongPattern sp;
-        sp.mName = Symbol(MakeString("%s%d", "Verse", i));
+        const char *str = MakeString("%s%d", "Verse", i);
+        sp.mName = Symbol(str);
         for (int j = 0; j < 4; j++) {
             sp.mElements.push_back(Symbol("Rest.move"));
             sp.mMoveParents.push_back(mp);

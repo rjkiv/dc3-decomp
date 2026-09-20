@@ -76,22 +76,22 @@ BEGIN_LOADS(DancerSequence)
             int skeletonRev = 5;
             if (d.rev < 2) {
                 skeletonRev = 0;
-                skeleton.SetDisplacementElapsedMs(-1);
             } else if (d.rev < 3) {
                 skeletonRev = 1;
-                skeleton.SetDisplacementElapsedMs(-1);
             } else if (d.rev < 4) {
                 skeletonRev = 2;
-                skeleton.SetDisplacementElapsedMs(-1);
             } else if (d.rev < 5) {
                 skeletonRev = 3;
-                skeleton.SetDisplacementElapsedMs(-1);
             } else if (d.rev < 6) {
                 skeletonRev = 4;
-                int ms;
-                d >> ms;
-                skeleton.SetDisplacementElapsedMs(ms);
             }
+            int ms;
+            if (skeletonRev >= 4) {
+                d >> ms;
+            } else {
+                ms = -1;
+            }
+            skeleton.SetDisplacementElapsedMs(ms);
             if (skeletonRev < 3) {
                 bool b;
                 d >> b;
@@ -108,7 +108,7 @@ BEGIN_LOADS(DancerSequence)
                 for (int j = 0; j < count; j++) {
                     if (j >= 6) {
                         Vector3 v;
-                        d >> v >> v >> v;
+                        d.stream >> v >> v >> v;
                     } else {
                         if (j == 0) {
                             Vector3 pos, disp;
@@ -118,7 +118,7 @@ BEGIN_LOADS(DancerSequence)
                             skeleton.SetCamJointDisplacement((SkeletonJoint)i, disp);
                         } else {
                             Vector3 v1, v2;
-                            d >> v1 >> v2;
+                            d.stream >> v1 >> v2;
                         }
                         if (skeletonRev < 4) {
                             Vector3 v;
@@ -127,11 +127,11 @@ BEGIN_LOADS(DancerSequence)
                     }
                 }
                 if (skeletonRev < 3) {
-                    std::vector<float> floats;
-                    d >> floats;
+                    Vector2 v2;
+                    d >> v2;
                     int x;
                     d >> x;
-                } else if (skeletonRev > 4) {
+                } else if (skeletonRev >= 5) {
                     int x;
                     d >> x;
                 }

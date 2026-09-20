@@ -85,11 +85,15 @@ BEGIN_LOADS(CharFeedback)
     }
     if (d.rev > 2) {
         if (d.rev < 6) {
-            ObjPtr<RndLine> line(this);
-            ObjPtr<UIColor> color(this);
-            d >> line;
-            d >> color;
-            d >> color;
+            {
+                ObjPtr<RndLine> line(this);
+                ObjPtr<UIColor> color(this);
+                d >> line;
+                d >> color;
+                d >> color;
+            }
+            int x;
+            d >> x;
         } else if (d.rev < 8) {
             int x;
             d >> x;
@@ -118,6 +122,31 @@ BEGIN_LOADS(CharFeedback)
     }
     Sync();
 END_LOADS
+
+void CharFeedback::Poll() {
+    float secs = TheTaskMgr.Seconds(TaskMgr::kRealTime);
+    float delta = TheTaskMgr.DeltaSeconds();
+    for (int i = 0; i < 4; i++) {
+        LimbState &cur = mLimbStates[i];
+        if (cur.unk4 != -1) {
+            if (cur.unk0) {
+                if (!cur.unk1) {
+                    cur.unk0 = false;
+                }
+            } else if (cur.unk1 && secs > mFailTriggerSecs + cur.unk4) {
+                cur.unk0 = true;
+            }
+            float f1 = delta / mFadeSecs;
+            if (!cur.unk0) {
+                f1 *= -1;
+            }
+            cur.unk8 += f1;
+            ClampEq(cur.unk8, 0.0f, 1.0f);
+        } else {
+            cur.unk8 = 0;
+        }
+    }
+}
 
 void CharFeedback::Enter() {
     RndPollable::Enter();
