@@ -399,9 +399,9 @@ void ObjectDir::SyncObjects() {
 
 void ObjectDir::ResetEditorState() {
     mViewports.resize(7);
+    mCurViewportID = (ViewportId)0;
     unk8c = 0;
-    mCurCam = 0;
-    mAlwaysInlined = 0;
+    mCurCam = nullptr;
     ResetViewports();
 }
 
@@ -422,8 +422,9 @@ void ObjectDir::RemovingObject(Hmx::Object *obj) {
 void ObjectDir::OldLoadProxies(BinStream &bs, int i) {
     int x;
     bs >> x;
-    if (x != 0)
+    if (x != 0) {
         MILO_FAIL("Proxies not allowed here");
+    }
 }
 
 #pragma endregion
@@ -448,13 +449,13 @@ void ObjectDir::SetInlineProxyType(InlineDirType t) {
     mInlineProxyType = t;
 }
 
-BinStreamRev &operator>>(BinStreamRev &bs, ObjectDir::Viewport &v) {
-    bs >> v.mXfm;
-    if (bs.rev < 0x12) {
+BinStreamRev &operator>>(BinStreamRev &d, ObjectDir::Viewport &v) {
+    d >> v.mXfm;
+    if (d.rev < 0x12) {
         int x;
-        bs >> x;
+        d >> x;
     }
-    return bs;
+    return d;
 }
 
 void ObjectDir::TransferLoaderState(ObjectDir *dir) {
@@ -677,9 +678,8 @@ void CheckForDuplicates() {
     Symbol previous;
     bool fail = false;
     for (auto it = syms.begin(); it != syms.end(); previous = *it, ++it) {
-        Symbol cur = *it;
-        if (cur == previous) {
-            MILO_NOTIFY("Duplicate object %s in config", cur);
+        if (*it == previous) {
+            MILO_NOTIFY("Duplicate object %s in config", previous);
             fail = true;
         }
     }
@@ -709,13 +709,12 @@ void ObjectDir::Init() {
     DirLoader::sPrintTimes = OptionBool("loader_times", false);
 }
 
-void ObjectDir::Iterate(DataArray *arr, bool b) {
-    const DataNode &n = arr->Evaluate(2);
+void ObjectDir::Iterate(DataArray *msg, bool recurse) {
+    const DataNode &n = msg->Evaluate(2);
     Symbol s2;
     Symbol s8;
     if (n.Type() == kDataSymbol) {
-        const char *str = n.StringValue();
-        s2 = STR_TO_SYM(str);
+        s2 = n.SymbolValue();
     } else {
         DataArray *a2 = n.ArrayValue();
         s2 = a2->Sym(0);
@@ -723,23 +722,23 @@ void ObjectDir::Iterate(DataArray *arr, bool b) {
     }
     static DataArray *objects = SystemConfig("objects");
     objects->FindArray(s2);
-    DataNode *var = arr->Var(3);
+    DataNode *var = msg->Var(3);
     DataNode varNode(*var);
-    for (ObjDirItr<Hmx::Object> it(this, b); it != nullptr; ++it) {
-        bool bbb;
-        Symbol first = it->ClassName();
-        std::pair<Symbol, Symbol> key = std::make_pair(first, s2);
+    for (ObjDirItr<Hmx::Object> it(this, recurse); it != nullptr; ++it) {
+        bool subclass;
+        std::pair<Symbol, Symbol> key = std::make_pair(it->ClassName(), s2);
         std::map<std::pair<Symbol, Symbol>, bool>::iterator superclassIt =
             sSuperClassMap.find(key);
         if (superclassIt == sSuperClassMap.end()) {
-            bbb = IsASubclass(first, s2);
-            sSuperClassMap[key] = bbb;
-        } else
-            bbb = superclassIt->second;
-        if (bbb && (s2.Null() || it->Type() == s2)) {
+            subclass = IsASubclass(key.first, key.second);
+            sSuperClassMap[key] = subclass;
+        } else {
+            subclass = superclassIt->second;
+        }
+        if (subclass && (s8.Null() || it->Type() == s8)) {
             *var = &*it;
-            for (int i = 4; i < arr->Size(); i++) {
-                arr->Command(i)->Execute(true);
+            for (int i = 4; i < msg->Size(); i++) {
+                msg->Command(i)->Execute();
             }
         }
     }
