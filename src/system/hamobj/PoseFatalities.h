@@ -82,6 +82,6 @@ private:
     RndAnimatable *mPoseBeatAnims[kNumSkeletonSides]; // 0x1758
     float unk1760;
     float unk1764;
-    int unk1768; // 0x1768 - flags/mask
+    unsigned int unk1768; // 0x1768 - flags/mask
     float unk176c;
 };

@@ -74,8 +74,9 @@ HamNavList::~HamNavList() {
     delete unk188;
     if (mListRibbonResource) {
         Sound *slideSound = mListRibbonResource->SlideSound();
-        if (slideSound)
+        if (slideSound) {
             slideSound->Stop(nullptr, false);
+        }
     }
 }
 
@@ -831,9 +832,11 @@ void HamNavList::Poll() {
                     if (!mListState.ScrollPastMinDisplay()
                         && mScrollSpeedIndicatorResource->GetUnk1FC()) {
                         mScrollSpeedIndicatorResource->Show(false);
-                    } else if (mRibbonMode == HamListRibbon::kRibbonSwell
-                               && !mScrollSpeedIndicatorResource->GetUnk1FC()
-                               && mListState.ScrollPastMinDisplay()) {
+                    } else if (
+                        mRibbonMode == HamListRibbon::kRibbonSwell
+                        && !mScrollSpeedIndicatorResource->GetUnk1FC()
+                        && mListState.ScrollPastMinDisplay()
+                    ) {
                         mScrollSpeedIndicatorResource->Show(true);
                     } else {
                         mScrollSpeedIndicatorResource->Update(
@@ -1252,8 +1255,7 @@ DataNode HamNavList::OnMsg(const ButtonDownMsg &msg) {
                     int firstShowing = mListState.FirstShowing();
                     if (selected < firstShowing) {
                         unk190.ScrollUp(false);
-                    } else if (selected
-                               >= HamListRibbon::sNumListSelectable + firstShowing) {
+                    } else if (selected >= HamListRibbon::sNumListSelectable + firstShowing) {
                         unk190.ScrollDown(false);
                     } else {
                         SetHighlight(selected);

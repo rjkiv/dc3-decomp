@@ -101,20 +101,23 @@ bool PoseFatalities::InFatality(int player) const {
         }
         if (b1) {
             return FatalActive();
+        } else {
+            return false;
         }
     } else {
         MILO_ASSERT_RANGE(player, 0, 2, 0x391);
-        if (max >= mFatalStartBeats[player]) {
+        if (max < mFatalStartBeats[player]) {
+            return false;
+        } else {
             return mInFatality[player];
         }
     }
-    return false;
 }
 
 bool PoseFatalities::InStrikeAPose() {
     static Symbol gameplay_mode("gameplay_mode");
     static Symbol strike_a_pose("strike_a_pose");
-    return TheHamProvider->Property(gameplay_mode, true)->Sym() == strike_a_pose;
+    return TheHamProvider->Property(gameplay_mode)->Sym() == strike_a_pose;
 }
 
 void PoseFatalities::SetCombo(int player, int combo) {
@@ -146,7 +149,7 @@ void PoseFatalities::Reset() {
         unk15f4[i] = 0;
     }
     TheHamProvider->SetProperty("in_fatalities", 0);
-    RndAnimatable *anim = TheSynth->Find<RndAnimatable>("beat_repeat.anim", true);
+    RndAnimatable *anim = TheSynth->Find<RndAnimatable>("beat_repeat.anim");
     if (anim) {
         anim->SetFrame(4, 1);
     }
@@ -162,11 +165,10 @@ void PoseFatalities::PlayVO(Symbol s) {
 }
 
 String PoseFatalities::GetCelebrationClip(int player) {
-    Symbol outfit =
-        GetOutfitCharacter(TheHamDirector->GetCharacter(player)->Outfit(), true);
+    Symbol outfit = GetOutfitCharacter(TheHamDirector->GetCharacter(player)->Outfit());
     static Symbol strikeapose_celebrations("strikeapose_celebrations");
     DataArray *cfg = SystemConfig(strikeapose_celebrations);
-    DataArray *a = cfg->FindArray(outfit, true);
+    DataArray *a = cfg->FindArray(outfit);
     return a->Node(RandomInt(1, a->Size())).Str();
 }
 
@@ -179,9 +181,9 @@ void PoseFatalities::EndFatal(int player) {
     TheHamProvider->Handle(endFatalityMsg, false);
     if (!InStrikeAPose()) {
         ObjectDir *poseDisplay = TheHamDirector->GetVenueWorld()->Find<ObjectDir>(
-            MakeString("final_pose_display%d", player), true
+            MakeString("final_pose_display%d", player)
         );
-        HamLabel *label = poseDisplay->Find<HamLabel>("pose_combo.lbl", true);
+        HamLabel *label = poseDisplay->Find<HamLabel>("pose_combo.lbl");
         int num;
         if (mGotFullCombo[player]) {
             num = 8;
@@ -193,13 +195,12 @@ void PoseFatalities::EndFatal(int player) {
         } else {
             label->SetTextToken(gNullStr);
         }
-        poseDisplay->Find<RndAnimatable>("pose_combo.anim", true)
-            ->Animate(0, false, 0, nullptr, kEaseLinear, 0, false);
+        poseDisplay->Find<RndAnimatable>("pose_combo.anim")->Animate(0, false, 0);
     }
     mCurrentCombo[player] = 0;
     if (!DataVariable("restart_fatals").Int() && !InStrikeAPose()) {
         for (int i = 0; i < 2; i++) {
-            b10 &= mInFatality[i] != 0;
+            b10 = mInFatality[i] ? false : b10;
         }
         if (b10) {
             unk1760 = 4;
@@ -318,17 +319,16 @@ void PoseFatalities::Enter() {
         if (InStrikeAPose()) {
             mFatalEndBeat = idx * 4;
         }
-        mPoseComboLabels[kSkeletonLeft] = mHudPanel->Find<ObjectDir>("hud_left", true)
-                                              ->Find<HamLabel>("pose_combo.lbl", true);
-        mPoseComboLabels[kSkeletonRight] = mHudPanel->Find<ObjectDir>("hud_right", true)
-                                               ->Find<HamLabel>("pose_combo.lbl", true);
-        mPoseBeatAnims[kSkeletonLeft] = mHudPanel->Find<ObjectDir>("hud_left", true)
-                                            ->Find<RndAnimatable>("pose_beat.anim", true);
+        mPoseComboLabels[kSkeletonLeft] =
+            mHudPanel->Find<ObjectDir>("hud_left")->Find<HamLabel>("pose_combo.lbl");
+        mPoseComboLabels[kSkeletonRight] =
+            mHudPanel->Find<ObjectDir>("hud_right")->Find<HamLabel>("pose_combo.lbl");
+        mPoseBeatAnims[kSkeletonLeft] =
+            mHudPanel->Find<ObjectDir>("hud_left")->Find<RndAnimatable>("pose_beat.anim");
         mPoseBeatAnims[kSkeletonRight] =
-            mHudPanel->Find<ObjectDir>("hud_right", true)
-                ->Find<RndAnimatable>("pose_beat.anim", true);
+            mHudPanel->Find<ObjectDir>("hud_right")->Find<RndAnimatable>("pose_beat.anim");
         unk1748 = InStrikeAPose();
-        FxSendDelay *delay = TheSynth->Find<FxSendDelay>("BeatRepeat.send", true);
+        FxSendDelay *delay = TheSynth->Find<FxSendDelay>("BeatRepeat.send");
         if (delay) {
             float bpm = TheMaster->SongData()->GetTempoMap()->GetTempoBPM(0);
             delay->SetProperty("tempo", bpm);
@@ -342,14 +342,14 @@ void PoseFatalities::PollVO() {
     if (InStrikeAPose()) {
         bool flag1 = unk1768 & 1;
         bool flag2 = (unk1768 >> 1) & 1;
-        if (flag1) {
-            if (flag2) {
+        if (flag1 || flag2) {
+            if (flag1 && flag2) {
                 PlayVO("nar_sap_both_fc");
-            } else {
+            } else if (flag1) {
                 PlayVO("nar_sap_left_fc");
+            } else if (flag2) {
+                PlayVO("nar_sap_right_fc");
             }
-        } else if (flag2) {
-            PlayVO("nar_sap_right_fc");
         }
         if (unk1764 <= 0) {
             if (unk1768 & 4) {
@@ -370,12 +370,8 @@ void PoseFatalities::PollVO() {
 
 void PoseFatalities::Poll() {
     if (InStrikeAPose()) {
-        TheHamDirector->GetVenueWorld()
-            ->Find<HamCharacter>("backup0", true)
-            ->SetShowing(false);
-        TheHamDirector->GetVenueWorld()
-            ->Find<HamCharacter>("backup1", true)
-            ->SetShowing(false);
+        TheHamDirector->GetVenueWorld()->Find<HamCharacter>("backup0")->SetShowing(false);
+        TheHamDirector->GetVenueWorld()->Find<HamCharacter>("backup1")->SetShowing(false);
     }
     if (unk1760 > 0) {
         unk1760 -= TheTaskMgr.DeltaBeat();
@@ -492,9 +488,9 @@ void PoseFatalities::AddFatal(int player) {
             ;
         randClip = *it;
     } else {
-        const char *str =
-            MakeString("pose_fatalities_%s", GetOutfitCharacter(hChar->Outfit()));
-        randClip = driver->FindClip(str, true);
+        randClip = driver->FindClip(
+            MakeString("pose_fatalities_%s", GetOutfitCharacter(hChar->Outfit()))
+        );
     }
 lab5548:
     if (randClip) {
@@ -517,7 +513,7 @@ void PoseFatalities::OnFatalResult(int player, bool hit) {
         if (hit) {
             static Symbol score("score");
             int scoreProp =
-                TheGameData->Player(player)->Provider()->Property(score, true)->Int();
+                TheGameData->Player(player)->Provider()->Property(score)->Int();
             int newScoreProp;
             if (mCurrentCombo[player] < 8) {
                 newScoreProp = mCurrentCombo[player] * 2000 + scoreProp;
@@ -533,7 +529,7 @@ void PoseFatalities::OnFatalResult(int player, bool hit) {
             unk176c = 0;
             unk1768 |= 4;
             if (InStrikeAPose()) {
-                TheSynth->Find<RndAnimatable>("beat_repeat.anim", true)
+                TheSynth->Find<RndAnimatable>("beat_repeat.anim")
                     ->Animate(0, false, 0, nullptr, kEaseLinear, 0, false);
             }
         } else {
@@ -568,8 +564,7 @@ void PoseFatalities::OnFatalResult(int player, bool hit) {
                     unk1768 |= 2;
                 }
                 CharDriver *driver = TheHamDirector->GetCharacter(player)->Driver();
-                CharClip *celebrationClip =
-                    driver->FindClip(GetCelebrationClip(player), true);
+                CharClip *celebrationClip = driver->FindClip(GetCelebrationClip(player));
                 if (celebrationClip) {
                     driver->Play(celebrationClip, 2, -1, kHugeFloat, 0);
                 }
