@@ -600,6 +600,105 @@ void ObjectDir::PreLoad(BinStream &bs) {
     d.PushRev(this);
 }
 
+void ObjectDir::PostLoad(BinStream &bs) {
+    BinStreamRev d(bs, bs.PopRev(this));
+    for (int i = mInlinedDirs.size() - 1; i >= 0; i--) {
+        InlinedDir &iDir = mInlinedDirs[i];
+        ObjDirPtr<ObjectDir> &ptr = iDir.dir;
+        ptr.PostLoad(mLoader);
+        if (iDir.mType == kInlineCachedShared) {
+            iDir.shared = true;
+        }
+        if (iDir.shared) {
+            FilePath &fp = iDir.file;
+            DirLoader *last = DirLoader::FindLast(fp);
+            if (last) {
+                if (last->IsLoaded()) {
+                    ptr = last->GetDir();
+                } else {
+                    MILO_NOTIFY("Can't share unloaded dir %s", fp);
+                }
+            }
+        } else {
+            if (ptr.IsLoaded()) {
+                RELEASE(ptr->mLoader);
+            }
+        }
+    }
+    if (d.rev > 0x17) {
+        int revs2 = d.stream.Cached() ? 0 : bs.PopRev(this);
+        int offset = bs.PopRev(this);
+        MILO_ASSERT_RANGE_EQ(offset, 0, mSubDirs.size(), 0x45D);
+        if (revs2 != 2) {
+            for (int i = mSubDirs.size() - offset - 1; i >= 0; i--) {
+                bool bbb = false;
+                if (revs2 == 1) {
+                    bbb = bs.PopRev(this) != 0;
+                }
+                ObjDirPtr<ObjectDir> inlinedDirPtr = PostLoadInlined();
+                ObjDirPtr<ObjectDir> &curDirPtr = mSubDirs[i + offset];
+                if (revs2 == 0 || bbb) {
+                    curDirPtr = inlinedDirPtr;
+                }
+                AddedSubDir(curDirPtr);
+            }
+            for (offset = offset - 1; offset >= 0; offset--) {
+                ObjDirPtr<ObjectDir> &offsetPtr = mSubDirs[offset];
+                offsetPtr.PostLoad(mLoader);
+                AddedSubDir(offsetPtr);
+            }
+        }
+    } else {
+        for (int i = 0; i < mSubDirs.size(); i++) {
+            ObjDirPtr<ObjectDir> &curDirPtr = mSubDirs[i];
+            curDirPtr.PostLoad(mLoader);
+            AddedSubDir(curDirPtr);
+            if (curDirPtr.IsLoaded()) {
+                if (curDirPtr->InlineSubDirType() != kInlineNever) {
+                    RELEASE(curDirPtr->mLoader);
+                }
+            }
+        }
+    }
+    if (d.rev > 10) {
+        char buf[0x80];
+        d.stream.ReadString(buf, 0x80);
+        mCurAnim = FindObject(buf, false, true);
+        d.stream.ReadString(buf, 0x80);
+        mCurCam = FindObject(buf, true, true);
+        if (!mCurCam && mCurViewport == kCustom) {
+            mCurViewport = kPerspective;
+        }
+    }
+    if (d.rev > 0x15) {
+        LoadRest(d.stream);
+    } else if (d.rev > 0x10) {
+        Hmx::Object::Load(d.stream);
+    }
+    static Message msg("change_proxies");
+    HandleType(msg);
+
+    if (mProxyOverride) {
+        mProxyOverride = false;
+        if (!TheLoadMgr.EditMode() && (!IsProxy() || mInlineProxyType)) {
+            MILO_FAIL("You cannot override an inlined proxy!");
+        }
+    } else if (ShouldSaveProxy(d.stream)) {
+        DeleteObjects();
+        DeleteSubDirs();
+        // FIXME: leak?
+        DirLoader *dl = new DirLoader(
+            mProxyFile,
+            kLoadFront,
+            nullptr,
+            InlineProxy(d.stream) ? &d.stream : nullptr,
+            this,
+            false,
+            nullptr
+        );
+    }
+}
+
 void ObjectDir::SetProxyFile(const FilePath &file, bool override) {
     if (!IsProxy()) {
         MILO_NOTIFY("Can't set proxy file if own dir");
@@ -754,20 +853,24 @@ void ObjectDir::SaveProxy(BinStream &bs) {
 }
 
 void ObjectDir::ResetViewports() {
-    mViewports[1].mXfm.m.Set(0, -1, 0, 1, 0, 0, 0, 0, 1);
-    mViewports[1].mXfm.v.Set(-768, 0, 0);
-    mViewports[2].mXfm.m.Set(0, 1, 0, -1, 0, 0, 0, 0, 1);
-    mViewports[2].mXfm.v.Set(768, 0, 0);
-    mViewports[3].mXfm.m.Set(1, 0, 0, 0, 0, 1, 0, 1, 0);
-    mViewports[3].mXfm.v.Set(0, 0, 768);
-    mViewports[4].mXfm.m.Set(1, 0, 0, 0, 0, 1, 0, -1, 0);
-    mViewports[4].mXfm.v.Set(0, 0, -768);
-    mViewports[5].mXfm.m.Set(1, 0, 0, 0, 1, 0, 0, 0, 1);
-    mViewports[5].mXfm.v.Set(0, -768, 0);
-    mViewports[6].mXfm.m.Set(-1, 0, 0, 0, -1, 0, 0, 0, 1);
-    mViewports[6].mXfm.v.Set(0, 768, 0);
-    MakeRotMatrix(Vector3(1, 1, -1), Vector3(0, 0, 1), mViewports[0].mXfm.m);
-    Multiply(Vector3(0, -768, 0), mViewports[0].mXfm.m, mViewports[0].mXfm.v);
+    mViewports[kLeft].mXfm.m.Set(0, -1, 0, 1, 0, 0, 0, 0, 1);
+    mViewports[kLeft].mXfm.v.Set(-768, 0, 0);
+    mViewports[kRight].mXfm.m.Set(0, 1, 0, -1, 0, 0, 0, 0, 1);
+    mViewports[kRight].mXfm.v.Set(768, 0, 0);
+    mViewports[kTop].mXfm.m.Set(1, 0, 0, 0, 0, 1, 0, 1, 0);
+    mViewports[kTop].mXfm.v.Set(0, 0, 768);
+    mViewports[kBottom].mXfm.m.Set(1, 0, 0, 0, 0, 1, 0, -1, 0);
+    mViewports[kBottom].mXfm.v.Set(0, 0, -768);
+    mViewports[kFront].mXfm.m.Set(1, 0, 0, 0, 1, 0, 0, 0, 1);
+    mViewports[kFront].mXfm.v.Set(0, -768, 0);
+    mViewports[kBack].mXfm.m.Set(-1, 0, 0, 0, -1, 0, 0, 0, 1);
+    mViewports[kBack].mXfm.v.Set(0, 768, 0);
+    MakeRotMatrix(Vector3(1, 1, -1), Vector3(0, 0, 1), mViewports[kPerspective].mXfm.m);
+    Multiply(
+        Vector3(0, -768, 0),
+        mViewports[kPerspective].mXfm.m,
+        mViewports[kPerspective].mXfm.v
+    );
     // ???;
     // clang-format off
     // v = (0, -768, 0)

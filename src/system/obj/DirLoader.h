@@ -57,7 +57,9 @@ public:
     static bool SaveObjects(const char *, ObjectDir *, bool);
     static void SaveObjects(BinStream &, ObjectDir *);
     static void WriteTypeMemDump(TextFileStream *);
-    static Loader *New(const FilePath &, LoaderPos);
+    static Loader *New(const FilePath &path, LoaderPos pos) {
+        return new DirLoader(path, pos, nullptr, nullptr, nullptr, false, nullptr);
+    }
     static DirLoader *Find(const FilePath &);
     static DirLoader *FindLast(const FilePath &);
     static ObjectDir *LoadObjects(const FilePath &, Callback *, BinStream *);
