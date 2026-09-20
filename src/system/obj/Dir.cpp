@@ -531,7 +531,14 @@ void ObjectDir::ResetViewports() {
     mViewports[6].mXfm.m.Set(-1, 0, 0, 0, -1, 0, 0, 0, 1);
     mViewports[6].mXfm.v.Set(0, 768, 0);
     MakeRotMatrix(Vector3(1, 1, -1), Vector3(0, 0, 1), mViewports[0].mXfm.m);
-    Multiply(Vector3(0, -768.0f, 0), mViewports[0].mXfm.m, mViewports[0].mXfm.v);
+    Multiply(Vector3(0, -768, 0), mViewports[0].mXfm.m, mViewports[0].mXfm.v);
+    // ???;
+    // clang-format off
+    // v = (0, -768, 0)
+    // vout.x = (float)(m.x.x * v.x + (float)(m.z.x * v.z + (float)(m.y.x * v.y)));
+    // vout.y = (float)(m.x.y * v.x + (float)(m.z.y * v.z + (float)(m.y.y * v.y)));
+    // vout.z = (float)(m.x.z * v.x + (float)(m.z.z * v.z + (float)(m.y.z * v.y)));
+    // clang-format on
 }
 
 DataNode OnLoadObjects(DataArray *a) {
@@ -643,7 +650,7 @@ void ObjectDir::DeleteObjects() {
 void ObjectDir::RemoveSubDir(const ObjDirPtr<ObjectDir> &dPtr) {
     std::vector<ObjDirPtr<ObjectDir> >::iterator it = mSubDirs.begin();
     while (it != mSubDirs.end()) {
-        if ((*it) == dPtr) {
+        if (*it == dPtr) {
             RemovingSubDir(*it);
             it = mSubDirs.erase(it);
             if (it == mSubDirs.end())
@@ -669,16 +676,16 @@ void CheckForDuplicates() {
     syms.sort();
     Symbol previous;
     bool fail = false;
-    for (std::list<Symbol>::iterator it = syms.begin(); it != syms.end();
-         previous = *it, ++it) {
+    for (auto it = syms.begin(); it != syms.end(); previous = *it, ++it) {
         Symbol cur = *it;
         if (cur == previous) {
             MILO_NOTIFY("Duplicate object %s in config", cur);
             fail = true;
         }
     }
-    if (fail)
+    if (fail) {
         MILO_FAIL("duplicate objects found in configs, bailing");
+    }
     syms.unique();
 }
 
@@ -740,14 +747,14 @@ void ObjectDir::Iterate(DataArray *arr, bool b) {
 }
 
 ObjDirPtr<ObjectDir> ObjectDir::PostLoadInlined() {
-    MILO_ASSERT(mInlinedDirs.size() > 0, 0x296);
+    MILO_ASSERT(mInlinedDirs.size() > 0, 0x28D);
     InlinedDir iDir = mInlinedDirs.back();
     mInlinedDirs.pop_back();
     if (mInlinedDirs.size() == 0) {
-        ClearAndShrink(mInlinedDirs);
+        mInlinedDirs.swap(std::vector<InlinedDir>());
     }
     if (iDir.shared && iDir.file.length() != 0 && !iDir.dir) {
-        MILO_NOTIFY("Couldn't load shared inlined file %s\n", iDir.file);
+        MILO_NOTIFY("Couldn't load shared inlined file %s", iDir.file);
     }
     return iDir.dir;
 }
