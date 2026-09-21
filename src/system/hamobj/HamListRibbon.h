@@ -92,6 +92,22 @@ public:
     void SetMode(RibbonMode mode) { mMode = mode; }
     void SetUnk26C(bool b) { unk26c = b; }
 
+    void PlaySlideSound() {
+        if (mSlideSound) {
+            mSlideSound->Play(0, 0, 0, nullptr, 0);
+        }
+    }
+    void StopSlideSound() {
+        if (mSlideSound) {
+            mSlideSound->Stop(nullptr, false);
+        }
+    }
+    void SetSlideSoundFrame() {
+        if (mSlideSoundAnim) {
+            mSlideSoundAnim->SetFrame(1, 1);
+        }
+    }
+
 private:
     void ResetAnims(bool);
     void SetAnims(bool, float);

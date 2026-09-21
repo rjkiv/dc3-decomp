@@ -141,7 +141,8 @@ private:
 
     static float sSlideSmoothAmount;
     static float sSlideTrendAmount;
-    static int const sListStateMaxDisplay;
+    static const int sListStateMinDisplay;
+    static const int sListStateMaxDisplay;
 
     DataNode OnMsg(const ButtonDownMsg &);
 

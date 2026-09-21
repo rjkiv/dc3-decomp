@@ -47,7 +47,13 @@
 #include "utl/Symbol.h"
 #include <cstdio>
 
-static float sFloat = 0.1f;
+bool HamNavList::sForceDisengage;
+bool HamNavList::sLastSelectInControllerMode;
+
+float HamNavList::sSlideSmoothAmount = 10;
+float HamNavList::sSlideTrendAmount = 10;
+
+const int HamNavList::sListStateMinDisplay = 7;
 
 HamNavList::HamNavList()
     : mNavInputType(kNavInput_RightHand), mListState(this, this),
@@ -73,10 +79,7 @@ HamNavList::~HamNavList() {
     delete unk184;
     delete unk188;
     if (mListRibbonResource) {
-        Sound *slideSound = mListRibbonResource->SlideSound();
-        if (slideSound) {
-            slideSound->Stop(nullptr, false);
-        }
+        mListRibbonResource->StopSlideSound();
     }
 }
 
@@ -424,19 +427,15 @@ void HamNavList::ScrollSubListToIndex(int i, int j) {
 }
 
 int HamNavList::NumItems() const {
-    int i;
     if (mListState.ScrollPastMinDisplay()) {
         if (unk190.AtTop() || unk190.AtBottom()) {
-            i = HamListRibbon::sNumListSelectable + 1;
+            return HamListRibbon::sNumListSelectable + 1;
         } else {
-            i = HamListRibbon::sNumListSelectable + 2;
+            return HamListRibbon::sNumListSelectable + 2;
         }
     } else {
-        int count = GetDisabledCount(mListState.NumShowing());
-        i = mListState.NumShowing();
-        i -= count;
+        return mListState.NumShowing() - GetDisabledCount(mListState.NumShowing());
     }
-    return i;
 }
 
 float HamNavList::StartFrame() {
@@ -573,6 +572,7 @@ void HamNavList::SetHighlight(int i) {
 }
 
 void HamNavList::Update() {
+    static float sFloat = 0.1f;
     delete unk184;
     delete unk188;
     if (mNavInputType == kNavInput_RightHand) {
@@ -689,10 +689,7 @@ void HamNavList::Exit() {
         updateHandle.RemoveCallback(this);
     }
     if (mListRibbonResource) {
-        Sound *slideSound = mListRibbonResource->SlideSound();
-        if (slideSound) {
-            slideSound->Stop(0, false);
-        }
+        mListRibbonResource->StopSlideSound();
     }
     if (mScrollSpeedIndicatorResource) {
         mScrollSpeedIndicatorResource->HandleExit();
@@ -710,10 +707,7 @@ void HamNavList::Enter() {
     }
 
     if (!mDisableSlideSound && mListRibbonResource) {
-        Sound *slideSound = mListRibbonResource->SlideSound();
-        if (slideSound) {
-            slideSound->Play(0, 0, 0, nullptr, 0);
-        }
+        mListRibbonResource->PlaySlideSound();
     }
     unkc8 = false;
     if (mSuppressAutomaticEnter) {
@@ -737,7 +731,7 @@ void HamNavList::Enter() {
     static Symbol cheat_focus_restart("cheat_focus_restart");
     static Symbol pausecommand_restart("pausecommand_restart");
 
-    if (mNavProvider && &DataVariable(cheat_focus_restart)) {
+    if (mNavProvider && DataVariable(cheat_focus_restart).IntValue()) {
         int index = mNavProvider->DataIndex(pausecommand_restart);
         if (index != -1) {
             SetHighlight(index);
@@ -1026,18 +1020,12 @@ void HamNavList::SetSelecting(bool b) {
         }
 
         if (mListRibbonResource) {
-            RndAnimatable *slideSoundAnim = mListRibbonResource->SlideSoundAnim();
-            if (slideSoundAnim) {
-                slideSoundAnim->SetFrame(1.0f, 1.0f);
-            }
+            mListRibbonResource->SetSlideSoundFrame();
             mListRibbonResource->SetUnk26C(ShouldSkipSelectAnim(handle));
         }
 
         if (mHeaderRibbonResource) {
-            RndAnimatable *slideSoundAnim = mHeaderRibbonResource->SlideSoundAnim();
-            if (slideSoundAnim) {
-                slideSoundAnim->SetFrame(1.0f, 1.0f);
-            }
+            mHeaderRibbonResource->SetSlideSoundFrame();
             mHeaderRibbonResource->SetUnk26C(ShouldSkipSelectAnim(handle));
         }
 
@@ -1159,20 +1147,20 @@ float HamNavList::GetTargetSwellAmount(int i) {
 }
 
 bool HamNavList::IsElementBig(int element) const {
-    int numShowing = mListState.NumShowing();
-    if (mListRibbonResource->IsScrollable(numShowing)) {
-        element = (mListState.FirstShowing() + element) - mListState.MinDisplay();
+    int idx;
+    if (mListRibbonResource->IsScrollable(mListState.NumShowing())) {
+        idx = element + mListState.FirstShowing() - mListState.MinDisplay();
     } else {
-        element = numShowing;
+        idx = element;
     }
-    if (element >= 0 && element < mListState.NumShowing()) {
+    if (idx >= 0 && idx < mListState.NumShowing()) {
         for (int i = 0; i < mBigElements.size(); i++) {
-            if (mListState.Provider()->DataSymbol(element) == mBigElements[i]) {
+            if (mListState.Provider()->DataSymbol(idx) == mBigElements[i]) {
                 return true;
             }
         }
         for (int i = 0; i < unk20c.size(); i++) {
-            if (element == unk20c[i]) {
+            if (idx == unk20c[i]) {
                 return true;
             }
         }
