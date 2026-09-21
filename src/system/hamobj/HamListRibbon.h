@@ -13,11 +13,13 @@
 #include "utl/MemMgr.h"
 
 struct HamListRibbonDrawState {
-    HamListRibbonDrawState();
+    HamListRibbonDrawState()
+        : unk0(0, 10, 1), unk14(false), unk18(nullptr), unk1c(false), unk20(0),
+          unk24(false) {}
 
     DoubleExponentialSmoother unk0;
     bool unk14;
-    int unk18;
+    UIListElementDrawState *unk18;
     bool unk1c;
     float unk20;
     bool unk24;

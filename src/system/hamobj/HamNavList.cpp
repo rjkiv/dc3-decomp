@@ -1221,6 +1221,51 @@ void HamNavList::DrawDebug() const {
     }
 }
 
+void HamNavList::LinkRibbonDrawState(
+    std::vector<HamListRibbonDrawState> &ribbonDrawStates,
+    UIListWidgetDrawState &widgetDrawStates
+) {
+    int numUIElements = widgetDrawStates.mElements.size();
+    if (numUIElements != ribbonDrawStates.size()) {
+        ribbonDrawStates.resize(numUIElements);
+    }
+    for (int i = 0; i < numUIElements; i++) {
+        ribbonDrawStates[i].unk14 = i == mListState.SelectedDisplay();
+        if (mListRibbonResource->IsScrollable(mListState.NumShowing())) {
+            ribbonDrawStates[i].unk24 = mListState.Provider()->IsHeader(
+                mListState.FirstShowing() + i - mListState.MinDisplay()
+            );
+        } else {
+            ribbonDrawStates[i].unk24 = mListState.Provider()->IsHeader(i);
+        }
+        ribbonDrawStates[i].unk20 = IsElementBig(i);
+        ribbonDrawStates[i].unk18 = &widgetDrawStates.mElements[i];
+        ribbonDrawStates[i].unk18->mComponentState = mState;
+        if (ribbonDrawStates[i].unk18->mElementState == kUIListWidgetHighlight) {
+            if (!mListRibbonResource->TestEntering()
+                && mRibbonMode != HamListRibbon::kRibbonDisengaged) {
+                if (TheUI->FocusComponent() == this) {
+                    continue;
+                }
+                bool controller = TheGestureMgr && TheGestureMgr->InControllerMode();
+                if (!controller) {
+                    continue;
+                }
+            }
+            ribbonDrawStates[i].unk18->mElementState = kUIListWidgetActive;
+        }
+    }
+}
+
+float HamNavList::CalculateSwell(int i1) const {
+    static float sFloat = 0.8f;
+    int numItems = NumItems();
+    float f2 = Clamp(0.0f, 1.0f, mHandHeight);
+    f2 = sqrtf(fabsf(f2 - (float)i1 / (float)(numItems - 1))) * sqrtf((float)numItems)
+        * sFloat;
+    return 1 - Clamp(0.0f, 1.0f, f2);
+}
+
 DataNode HamNavList::OnMsg(const ButtonDownMsg &msg) {
     if (unk1f0) {
         RealRefresh();
