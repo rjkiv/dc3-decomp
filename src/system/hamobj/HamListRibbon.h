@@ -104,9 +104,9 @@ public:
             mSlideSound->Stop(nullptr, false);
         }
     }
-    void SetSlideSoundFrame() {
+    void SetSlideSoundFrame(float frame) {
         if (mSlideSoundAnim) {
-            mSlideSoundAnim->SetFrame(1, 1);
+            mSlideSoundAnim->SetFrame(frame, 1);
         }
     }
 

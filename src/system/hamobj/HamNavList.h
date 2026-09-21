@@ -115,6 +115,7 @@ public:
     }
     bool IsScrollable() const { return mListState.ScrollPastMinDisplay(); }
     bool InVoiceMode() const { return TheGestureMgr && TheGestureMgr->InVoiceMode(); }
+    HamListRibbon::RibbonMode GetRibbonMode() const { return mRibbonMode; }
 
     static void Init();
     static bool sLastSelectInControllerMode;
