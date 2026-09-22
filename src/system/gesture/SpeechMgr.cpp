@@ -197,7 +197,9 @@ void SpeechMgr::Enable(bool english) {
             } else if (enableRes == E_NUI_DATABASE_VERSION_MISMATCH) {
                 MILO_FAIL("NuiSpeechEnable failed E_NUI_DATABASE_VERSION_MISMATCH");
             } else {
-                MILO_LOG("NuiSpeechEnable failed with error 0x%x (no Kinect?)\n", enableRes);
+                MILO_LOG(
+                    "NuiSpeechEnable failed with error 0x%x (no Kinect?)\n", enableRes
+                );
             }
         } else {
             mEnabled = true;
@@ -458,7 +460,13 @@ void SpeechMgr::PrintSemanticTree(NUI_SPEECH_SEMANTICRESULT *sr, int i2) {
         if (sr->pFirstChild) {
             PrintSemanticTree(sr->pFirstChild, i2 + 1);
         }
-        sr = sr->pNextSibling;
+        NUI_SPEECH_SEMANTICRESULT *sibling = sr->pNextSibling;
+        if (!sibling) {
+            break;
+        } else {
+            sr = sibling;
+        }
+
     } while (sr);
 }
 

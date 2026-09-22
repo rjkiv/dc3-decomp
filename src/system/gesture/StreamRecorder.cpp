@@ -3,6 +3,7 @@
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
+#include "obj/Task.h"
 #include "os/Debug.h"
 #include "rndobj/Dir.h"
 #include "rndobj/Draw.h"
@@ -99,7 +100,7 @@ BEGIN_LOADS(StreamRecorder)
         d >> x;
     }
     d >> mUseAlpha;
-    // BinStreamEnum load here
+    // BinStreamEnum load here for mPlaybackSpeed
     if (d.rev > 4) {
         d >> mOutputWidth;
         d >> mOutputHeight;
@@ -161,9 +162,8 @@ void StreamRecorder::DeleteBuffers() {
 }
 
 void StreamRecorder::CompressTextures() {
-    FOREACH (it, unkcc) {
-        auto cur = it;
-        int index = *it;
+    while (!unkcc.empty()) {
+        int index = unkcc.front();
         unkcc.pop_front();
         MILO_ASSERT(index >= 0 && index < mBuffers.size(), 0x32);
         RndTex::AlphaCompress compress =
@@ -187,6 +187,61 @@ void StreamRecorder::Reset() {
     unkc4 = -1;
     unkc8 = -1;
     unkcc.clear();
+}
+
+void StreamRecorder::DrawShowing() {
+    if ((0 <= unkc0 && unk4c && unk60) && unk60->GetOutputTexture()) {
+        int compressIdx = (unkc0 * -20.0f);
+        compressIdx = -compressIdx - unkd8;
+        if (compressIdx >= 0 && compressIdx >= unkb4) {
+            if (compressIdx < mMaxFrames) {
+                MILO_ASSERT(compressIdx < mBuffers.size(), 0xbc);
+                RndTex *tex = mBuffers[compressIdx];
+                tex->SetBitmap(
+                    mOutputWidth, mOutputHeight, 0x10, RndTex::Type::kRenderedNoZ, false, 0
+                );
+                unk60->SetOutputTexture(tex);
+                unk4c->DrawShowing();
+                unkcc.push_back(compressIdx);
+                unkb4++;
+                if (unkdc <= 0) {
+                    return;
+                }
+                unkdc--;
+                if (unkdc != 0) {
+                    return;
+                }
+            }
+
+            StopRecordingImmediate();
+            StoppedRecordingScript();
+        }
+    }
+}
+
+void StreamRecorder::Poll() {
+    CompressTextures();
+    if (mDebugFrame >= 0) {
+        SetFrame(mDebugFrame);
+    } else {
+        if (unkc0 >= 0 && unk4c) {
+            unk4c->Poll();
+            unkc0 += TheTaskMgr.DeltaSeconds();
+        }
+        if (unkc0 < 0 && unkc4 >= 0) {
+            int speed = mPlaybackSpeed - 3;
+            int frameIdx = (unkc4 * 20.0f);
+            if (speed < 0) {
+                frameIdx /= (1 - speed);
+            } else if (speed > 0) {
+                frameIdx *= (speed + 1);
+            }
+            unkc4 += TheTaskMgr.DeltaSeconds();
+            if (!SetFrame(frameIdx)) {
+                unkc4 = -1.0f;
+            }
+        }
+    }
 }
 
 DataNode StreamRecorder::OnReset(DataArray *d) {

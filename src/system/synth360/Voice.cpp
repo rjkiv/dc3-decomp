@@ -2,6 +2,7 @@
 #include "math/Utl.h"
 #include "os/CritSec.h"
 #include "os/Debug.h"
+#include "os/Timer.h"
 #include "synth/FxSend.h"
 #include "synth360/EnvelopeGenerator.h"
 #include "synth360/Synth.h"
@@ -365,4 +366,33 @@ bool Voice::HasPendingVoices() {
         CritSecTracker t(&gLockPendingLists);
         return gPendingVoices.size() + gPendingSyncVoices.size() != 0;
     }
+}
+
+bool Voice::IsPlaying() {
+    START_AUTO_TIMER("voice_is_playing");
+    // yeah idk how to match this rn but hey 83 is good!
+    bool isPlaying;
+    if (unk4 == 2) {
+        return true;
+    } else {
+        if (GetVoice() || unk4 == 1) {
+            isPlaying = false;
+        } else if (unk4 == 4) {
+            isPlaying = true;
+        } else {
+            XAUDIO2_VOICE_STATE *voiceState;
+            GetVoice()->GetState(voiceState, 0);
+            if (voiceState->BuffersQueued == 0 && voiceState->SamplesPlayed == 0) {
+                isPlaying = false;
+            } else {
+                XAUDIO2_FILTER_PARAMETERS *parameters;
+                if (TheXboxSynth->GetCritSecTryEnter()) {
+                    HRESULT hr = GetVoice()->GetEffectParameters(0, parameters, 16);
+                    TheXboxSynth->GetCritSecExit();
+                    MILO_ASSERT(SUCCEEDED(hr), 0x2ff);
+                }
+            }
+        }
+    }
+    return isPlaying;
 }

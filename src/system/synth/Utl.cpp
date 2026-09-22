@@ -1,5 +1,8 @@
 #include "Utl.h"
 #include "os/FileCache.h"
+#include "os/Platform.h"
+#include "utl/Cache.h"
+#include "utl/Loader.h"
 
 class WavFileCacheHelper : public FileCacheHelper {
 public:
