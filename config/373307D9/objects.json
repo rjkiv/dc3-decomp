@@ -305,7 +305,7 @@
             "system/gesture/SkeletonClip.cpp": "NonMatching",
             "system/gesture/SkeletonDir.cpp": "Matching",
             "system/gesture/SkeletonExtentTracker.cpp": "NonMatching",
-            "system/gesture/SkeletonHistory.cpp": "NonMatching",
+            "system/gesture/SkeletonHistory.cpp": "Matching",
             "system/gesture/SkeletonQualityFilter.cpp": "NonMatching",
             "system/gesture/SkeletonRecoverer.cpp": "NonMatching",
             "system/gesture/SkeletonUpdate.cpp": "NonMatching",

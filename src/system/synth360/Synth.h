@@ -43,6 +43,9 @@ public:
     IXAudio2Voice *ReverbSendVoice() const { return mReverbSendVoice; }
     IXAudio2 *GetXAudio() const { return mXAudio; }
 
+    bool GetCritSecTryEnter() { return mCritSec.TryEnter(); }
+    void GetCritSecExit() { return mCritSec.Exit(); }
+
     void SetGlobalReverbPreset(const char *);
     IXAudio2SubmixVoice *GetHeadsetSubmix(int);
     void RemoveFxSend(FxSend360 *);

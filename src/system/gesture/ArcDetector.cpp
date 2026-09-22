@@ -1,5 +1,6 @@
 #include "gesture/ArcDetector.h"
 #include "gesture/BaseSkeleton.h"
+#include "math/Vec.h"
 #include "os/Debug.h"
 #include "rndobj/Rnd.h"
 #include "utl/Std.h"
@@ -83,7 +84,7 @@ void ArcDetector::Update(const Skeleton &skel, int playernum) {
 
 Vector3 ArcDetector::GetCurveStart() const {
     MILO_ASSERT(!mJointPath.empty(), 0xE9);
-    return Vector3((mSide)*unk28, unk2c, 0);
+    return Vector3((mSide != kSkeletonLeft ? -1 : 1) * unk28, unk2c, 0);
 }
 
 void ArcDetector::Clear() {
@@ -233,4 +234,31 @@ void ArcDetector::Draw(const Skeleton &skel, SkeletonViz &viz) {
     DrawPath(
         mJointPath, viz, Hmx::Color(1, 0, 1), skel.TrackedJoints()[unkc].mJointPos[0]
     );
+}
+
+bool ArcDetector::IsPathAcceptable() const {
+    static float sFloat = 0.5f;
+    if (1 >= mJointPath.size()) {
+        return true;
+    } else {
+        if (!IsLockedIn()) {
+            const Vector3 &front = mJointPath.front();
+            const Vector3 &back = mJointPath.back();
+            float vecYsub = front.y - back.y;
+            float vecXsub = (mSide != kSkeletonLeft ? 1 : -1) * (front.x - back.x);
+            float vecZsub = front.z - back.z;
+            if (vecXsub < 0) {
+                return false;
+            }
+            if (vecYsub != 0) {
+                float f3 = 1.0f / vecYsub;
+                if (f3 * vecXsub < sFloat && vecYsub < sFloat) {
+                    return false;
+                }
+            }
+        } else {
+            return 0.0f < GetSwipeAmount();
+        }
+    }
+    return true;
 }

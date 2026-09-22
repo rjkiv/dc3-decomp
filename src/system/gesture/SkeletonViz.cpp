@@ -1,6 +1,7 @@
 #include "gesture/SkeletonViz.h"
 #include "SkeletonViz.h"
 #include "gesture/BaseSkeleton.h"
+#include "gesture/Skeleton.h"
 #include "hamobj/HamCharacter.h"
 #include "math/Geo.h"
 #include "math/Mtx.h"
@@ -17,6 +18,7 @@
 #include "rndobj/Trans.h"
 #include "utl/BinStream.h"
 #include "utl/Loader.h"
+#include "utl/Std.h"
 
 SkeletonViz::SkeletonViz()
     : mUsePhysicalCam(0), mPhysicalCamRotation(0), unk110(0), mAxesCoordSys(kCoordCamera),
@@ -233,4 +235,51 @@ void SkeletonViz::Poll() {
         }
     }
     mPhysicalCamRotation = unk110;
+}
+
+void SkeletonViz::Visualize(
+    const CameraInput &camInput,
+    const BaseSkeleton &skeleton,
+    std::vector<SkeletonCallback *> *callbacks,
+    bool b
+) {
+    if (!mResource) {
+        MILO_ASSERT(TheLoadMgr.EditMode(), 0x72);
+        Init();
+    }
+
+    MILO_ASSERT(mResource.IsLoaded(), 0x76);
+
+    RndEnvironTracker tracker(mSkeletonEnv, 0);
+    unk218 = camInput.NatalToWorld(unk1d4) == 0;
+    if (unk218) {
+        unk1d4 = unk194;
+    }
+    unk214 = camInput.DrawScale();
+    Transform trans = unk218 ? WorldXfm() : unk1d4;
+
+    const SkeletonFrame &cachedFrame = camInput.CachedFrame();
+    RndCam *currCam = RndCam::Current();
+    if (skeleton.IsTracked()) {
+        Vector3 vec1[20];
+        Vector3 vec2[20];
+        for (int i = 0; i < 20; i++) {
+            skeleton.JointPos(kCoordCamera, (SkeletonJoint)i, vec1[i]);
+            Multiply(vec1[i], unk194, vec2[i]);
+        }
+        SetCamera(cachedFrame, trans, vec2[0].y);
+        DrawJoints(skeleton, vec1, vec2, b);
+
+        if (callbacks) {
+            FOREACH_PTR (it, callbacks) {
+                SkeletonCallback *callback = *it;
+                callback->Draw(skeleton, *this);
+            }
+        }
+    } else {
+        SetCamera(cachedFrame, trans, 0);
+    }
+    if (currCam) {
+        currCam->Select();
+    }
 }

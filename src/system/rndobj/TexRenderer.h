@@ -40,6 +40,7 @@ public:
     static void Init() { REGISTER_OBJ_FACTORY(RndTexRenderer) }
 
     void DrawToTexture();
+    RndTex *GetOutputTexture() const { return mOutputTexture; }
     void SetOutputTexture(RndTex *tex) { mOutputTexture = tex; }
 
 protected:
