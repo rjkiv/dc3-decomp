@@ -205,8 +205,6 @@ protected:
     std::vector<int> unk20c; // 0x20c
 };
 
-void HamNavListGlitchCB(float, void *);
-
 DECLARE_MESSAGE(NavSelectMsg, "nav_select")
 NavSelectMsg(Symbol s, int i, HamNavList *list, bool b)
     : Message(Type(), s, i, list, b) {}

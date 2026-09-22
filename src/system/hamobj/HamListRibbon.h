@@ -109,6 +109,7 @@ public:
             mSlideSoundAnim->SetFrame(frame, 1);
         }
     }
+    void SetScrollAnimFrame(float frame) { mScrollAnims.SetScrollFrame(frame); }
 
 private:
     void ResetAnims(bool);

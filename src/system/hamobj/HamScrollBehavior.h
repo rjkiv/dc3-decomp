@@ -18,9 +18,10 @@ public:
     void Update(float);
     void PlayScrollSound();
 
-    float GetFirstVal() { return unk0; } // change once context found
-    int GetUnk30() { return unk30; }
+    float GetFirstVal() const { return unk0; } // change once context found
+    int GetUnk30() const { return unk30; }
     void SetUnk30(int i) { unk30 = i; }
+    float GetUnk20() const { return unk20; }
 
     static void Init();
     static float mNeutralToSlowDownDelay;
@@ -59,6 +60,6 @@ private:
     int unk30;
     DoubleExponentialSmoother unk34;
     int unk48;
-    UIListState *unk4c;
-    HamNavList *unk50;
+    UIListState *unk4c; // 0x4c - owner liststate?
+    HamNavList *unk50; // 0x50 - owner navlist?
 };
