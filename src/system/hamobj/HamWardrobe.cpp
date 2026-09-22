@@ -23,6 +23,70 @@
 
 HamWardrobe *TheHamWardrobe;
 
+namespace {
+    Symbol HandleRobot(Symbol s) {
+        static Symbol robota01("robota01");
+        static Symbol robota02("robota02");
+        static Symbol robotb01("robotb01");
+        static Symbol robotb02("robotb02");
+        if (s == robota02) {
+            return robota01;
+        } else if (s == robotb02) {
+            return robotb01;
+        } else {
+            return s;
+        }
+    }
+}
+
+Symbol HamWardrobe::GetBackupOutfitOverride(int x) {
+    if (x >= 0 && x < 2) {
+        return unk4c[x];
+    } else
+        return gNullStr;
+}
+
+Symbol HamWardrobe::GetCrewChar(Symbol s, int i) {
+    return DataGetMacro("CREWS")->FindArray(s, "characters")->Sym(i + 1);
+}
+
+Symbol GetOutfitBackupDancer(Symbol outfit) {
+    MILO_ASSERT(!outfit.Null(), 0x112);
+    DataArray *entry = GetOutfitEntry(outfit, true);
+    static Symbol backup_dancers("backup_dancers");
+    DataArray *backupArr = entry->FindArray(backup_dancers, true);
+    return backupArr->Sym(1);
+}
+
+Symbol GetDanceBattleBackupOutfit(Symbol s1, Symbol s2) {
+    DataArray *charArr = DataGetMacro("CREWS")->FindArray(s2, "characters");
+    Symbol out(gNullStr);
+    String str88(s1);
+    String str90(str88);
+    int str90len = str90.length();
+    if (str90len >= 2) {
+        str90 = str90.substr(0, str90len - 2);
+    }
+    for (int i = 1; i < charArr->Size(); i++) {
+        const char *curStr = charArr->Sym(i).Str();
+        if (str90 != curStr) {
+            unsigned int crewCharLen = strlen(curStr);
+            if (crewCharLen < 30) {
+                char buf[32];
+                strcpy(buf, curStr);
+                buf[crewCharLen + 2] = '\0';
+                buf[crewCharLen + 1] = str88[str90len - 1];
+                buf[crewCharLen] = str88[str90len - 2];
+                out = GetOutfitRemap(buf, false);
+                break;
+            } else {
+                MILO_ASSERT(crewCharLen < 30, 0x13C);
+            }
+        }
+    }
+    return out;
+}
+
 HamWardrobe::HamWardrobe()
     : mCrowdMembers(this), mMainCharacters(this, (EraseMode)1, kObjListAllowNull),
       unk34("medium"), unk38(0), unk3c(gNullStr), unk40(0) {
@@ -100,54 +164,6 @@ void HamWardrobe::SetBackupOverrideOutfits(Symbol s1, Symbol s2) {
     unk4c[1] = s2;
 }
 
-namespace {
-    Symbol HandleRobot(Symbol s) {
-        static Symbol robota01("robota01");
-        static Symbol robota02("robota02");
-        static Symbol robotb01("robotb01");
-        static Symbol robotb02("robotb02");
-        if (s == robota02) {
-            s = robota01;
-        }
-        if (s == robotb02) {
-            s = robotb01;
-        }
-        return s;
-    }
-}
-
-Symbol HamWardrobe::GetBackupOutfitOverride(int x) {
-    if (x >= 0 && x < 2) {
-        return unk4c[x];
-    } else
-        return gNullStr;
-}
-
-Symbol HamWardrobe::GetCrewChar(Symbol s, int i) {
-    return DataGetMacro("CREWS")->FindArray(s, "characters")->Sym(i + 1);
-}
-
-Symbol GetOutfitBackupDancer(Symbol outfit) {
-    MILO_ASSERT(!outfit.Null(), 0x112);
-    DataArray *entry = GetOutfitEntry(outfit, true);
-    static Symbol backup_dancers("backup_dancers");
-    DataArray *backupArr = entry->FindArray(backup_dancers, true);
-    return backupArr->Sym(1);
-}
-
-Symbol GetDanceBattleBackupOutfit(Symbol s1, Symbol s2) {
-    DataArray *charArr = DataGetMacro("CREWS")->FindArray(s2, "characters");
-    Symbol out(gNullStr);
-    String str88(s1);
-    String str90(str88);
-    if (str90.length() >= 2) {
-        str90 = str90.substr(0, str90.length() - 2);
-    }
-    for (int i = 1; i < charArr->Size(); i++) {
-    }
-    return out;
-}
-
 HamCharacter *HamWardrobe::GetBackup(int i) const {
     return Dir()->Find<HamCharacter>(MakeString("backup%d", i), false);
 }
@@ -156,9 +172,11 @@ void HamWardrobe::EndCrowdOverride() {
     if (unk38) {
         if (unk3c == gNullStr) {
             unk38 = false;
-            int flags = unk40;
-            if (flags & 2) {
-                flags &= ~2;
+            int flags;
+            if (unk40 & 2) {
+                flags = (unk40 & 0xfffffffc) | 1;
+            } else {
+                flags = unk40;
             }
             PlayCrowdAnimation(unk44, flags, false);
         }
