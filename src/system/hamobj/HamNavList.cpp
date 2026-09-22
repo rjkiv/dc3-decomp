@@ -1332,6 +1332,90 @@ void HamNavList::DetermineHighlightedItem() {
     }
 }
 
+void HamNavList::UpdateGestures(const Skeleton *skeleton) {
+    if (unk1f0) {
+        RealRefresh();
+    }
+    if (!InControllerMode() && !GesturingWithVoice() && mEnabled) {
+        if (mRibbonMode == HamListRibbon::kRibbonSelect) {
+            if (IsAnimating()) {
+                return;
+            }
+            if (GetFrame() == EndFrame()) {
+                return;
+            }
+        }
+        if (InVoiceMode()) {
+            TheGestureMgr->SetInVoiceMode(false);
+        }
+
+        if (mRibbonMode == HamListRibbon::kRibbonDisengaged) {
+            unk184->Clear();
+            unk184->SetEngaged(false);
+        } else {
+            unk184->SetEngaged(true);
+        }
+        if (unk190.IsScrolling()) {
+            unk184->Clear();
+            unk184->ResetHoverTimer();
+        }
+        if (NumItems() == 1) {
+            unk184->ResetHoverTimer();
+            unk184->SetAllowAboveShoulder(false);
+        } else {
+            unk184->SetAllowAboveShoulder(true);
+        }
+        int first = mListState.FirstShowing();
+        bool scroll = mListState.ScrollPastMinDisplay();
+        if (mListState.Selected() + (scroll != false) - first == NumItems() - 1) {
+            unk184->ResetHoverTimer();
+        }
+
+        bool b6 = skeleton && skeleton->IsValid() && unk184->IsHandValid(*skeleton);
+        bool b8 =
+            mListState.ScrollPastMinDisplay() && unk184->IsValidScrollPos(*skeleton);
+        if (!b6 && !b8 && unkc8 && !TheLoadMgr.EditMode()) {
+            Disengage();
+        }
+
+        if (b8 && mRibbonMode == HamListRibbon::kRibbonDisengaged) {
+            SetSwelling();
+        }
+
+        if (mListRibbonResource->TestEntering()) {
+            return;
+        }
+
+        mHandHeight = unk188->GetUnk10();
+        if (unk184->HasDirection() && unk1e7) {
+            unk184->ClearSwipe();
+            static Message forceLetterboxOff("force_letterbox_off");
+            TheUI->Handle(forceLetterboxOff, false);
+            SetSelecting(false);
+            return;
+        }
+
+        if (b6) {
+            bool cmp =
+                !unk184->IsLockedIn() && !unk184->HasDirection() || unk190.GetUnk30();
+            if (cmp) {
+                SetSwelling();
+                return;
+            }
+
+            if (!unk1e7) {
+                return;
+            }
+            SetSliding(unk184->GetPercentPulled());
+            return;
+        }
+        unk184->ClearSwipe();
+
+    } else {
+        unk184->ClearSwipe();
+    }
+}
+
 DataNode HamNavList::OnMsg(const ButtonDownMsg &msg) {
     if (unk1f0) {
         RealRefresh();
