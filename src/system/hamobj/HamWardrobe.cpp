@@ -1,4 +1,5 @@
 #include "hamobj/HamWardrobe.h"
+#include "char/CharClipDriver.h"
 #include "char/CharClipGroup.h"
 #include "char/CharDriver.h"
 #include "char/CharInterest.h"
@@ -291,8 +292,28 @@ void HamWardrobe::UpdateOverlay() {
             if (cur) {
                 *mOverlay << cur->Name() << ": ";
                 CharDriver *driver = cur->Driver();
-                if (driver) {
+                if (!driver) {
+                    *mOverlay << "\n";
+                    continue;
                 }
+                CharClipGroup *grp = driver->LastPlayedGroup();
+                if (!grp) {
+                    *mOverlay << "\n";
+                    continue;
+                }
+                *mOverlay << grp->Name() << "    [ ";
+                std::set<String> strings;
+                for (CharClipDriver *it = driver->First(); it != nullptr;
+                     it = it->Next()) {
+                    String cur(it->GetClip() ? it->GetClip()->Name() : "<NULL>");
+                    if (strings.find(cur) != strings.end()) {
+                        continue;
+                    } else {
+                        strings.insert(cur);
+                        *mOverlay << cur.c_str() << " ";
+                    }
+                }
+                *mOverlay << "]\n";
             }
         }
     }
@@ -322,8 +343,8 @@ void HamWardrobe::SetDir(ObjectDir *dir) {
 void HamWardrobe::LoadCharacters(
     Symbol outfit1,
     Symbol outfit2,
-    Symbol s3,
-    Symbol s4,
+    Symbol crew1,
+    Symbol crew2,
     HamBackupDancers dancers,
     Symbol s5,
     Symbol s6,
@@ -336,23 +357,21 @@ void HamWardrobe::LoadCharacters(
     outfit2 = HandleRobot(outfit2);
     mMainCharacters.clear();
     for (int i = 0; i < 2; i++) {
-        HamCharacter *character =
-            Dir()->Find<HamCharacter>(MakeString("player%d", i), true);
-        mMainCharacters.push_back(character);
+        mMainCharacters.push_back(Dir()->Find<HamCharacter>(MakeString("player%d", i)));
     }
 
     unk34 = s5;
 
-    if (!(outfit1 == "")) {
+    if (outfit1 != "") {
         LoadMainCharacter(0, outfit1, b);
     }
-    if (!(outfit2 == "")) {
+    if (outfit2 != "") {
         LoadMainCharacter(1, outfit2, b);
     }
 
     for (int i = 0; i < 2; i++) {
         Symbol outfit = (i == 0) ? outfit1 : outfit2;
-        Symbol crew = (i == 0) ? s3 : s4;
+        Symbol crew = (i == 0) ? crew1 : crew2;
         Symbol finalOutfit = gNullStr;
 
         if (dancers == (HamBackupDancers)0) {
@@ -426,5 +445,19 @@ DataNode HamWardrobe::OnLoadCharacters(DataArray *arr) {
         TheGameData->Venue().Str(),
         i
     );
+    return 0;
+}
+
+DataNode HamWardrobe::OnAddCrowd(DataArray *arr) {
+    WorldCrowd *crowd = arr->Obj<WorldCrowd>(2);
+    auto &chars = crowd->Characters();
+    FOREACH (it, chars) {
+        Character *curChar = it->mDef.mChar;
+        if (curChar) {
+            if (mCrowdMembers.find(curChar) == mCrowdMembers.end()) {
+                mCrowdMembers.push_back(curChar);
+            }
+        }
+    }
     return 0;
 }
