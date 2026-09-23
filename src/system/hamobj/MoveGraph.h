@@ -83,17 +83,6 @@ public:
     const std::vector<const MoveParent *> &NextAdjacents() const {
         return mNextAdjacents;
     }
-
-    void AddGenre(Symbol genre) {
-        if (!HasGenre(genre)) {
-            mGenreFlags.push_back(genre);
-        }
-    }
-    void AddEra(Symbol era) {
-        if (!HasEra(era)) {
-            mEraFlags.push_back(era);
-        }
-    }
     void AddVariant(MoveVariant *v) { mVariants.push_back(v); }
     void SetUnkc(bool b) { unkc = b; }
 
@@ -135,6 +124,7 @@ struct MoveCandidate {
 class MoveVariant {
     friend class MoveCandidate;
     friend class MoveParent;
+    friend class MoveGraph;
 
 public:
     MoveVariant() {}

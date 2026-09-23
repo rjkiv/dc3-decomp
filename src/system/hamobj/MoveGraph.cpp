@@ -56,8 +56,13 @@ MoveGraph &MoveGraph::operator=(const MoveGraph &graph) {
         FOREACH (v, cur->Variants()) {
             MoveVariant *variant = new MoveVariant(this, *v, parent);
             parent->AddVariant(variant);
-            parent->AddGenre(variant->Genre());
-            parent->AddEra(variant->Era());
+            if (!parent->HasGenre(variant->mGenre)) {
+                parent->mGenreFlags.push_back(variant->mGenre);
+            }
+            if (!parent->HasEra(variant->mEra)) {
+                parent->mEraFlags.push_back(variant->mEra);
+            }
+
             mMoveVariants[variant->Name()] = variant;
         }
         if (parent->Variants().size() != 0) {
@@ -132,6 +137,15 @@ bool MoveGraph::HasVariantPair(const MoveParent *p1, const MoveParent *p2) const
     return FindVariantPair(v1, v2, p1, p2, nullptr, nullptr, gNullStr, true);
 }
 
+MoveParent *MoveGraph::GetNonConstMoveParent(Symbol s) const {
+    auto it = mMoveParents.find(s);
+    if (it != mMoveParents.end()) {
+        return it->second;
+    } else {
+        return nullptr;
+    }
+}
+
 bool MoveGraph::FindVariantPair(
     const MoveVariant *&vref1,
     const MoveVariant *&vref2,
@@ -160,7 +174,7 @@ bool MoveGraph::FindVariantPair(
     }
     if (v1) {
         auto it = mMoveVariants.find(v1->Name());
-        if (it != mMoveVariants.end() && it->second->Parent() != p1) {
+        if (it != mMoveVariants.end() && it->second->Parent() == p1) {
             v1 = it->second;
         } else {
             v1 = nullptr;
@@ -168,15 +182,100 @@ bool MoveGraph::FindVariantPair(
     }
     if (v2) {
         auto it = mMoveVariants.find(v2->Name());
-        if (it != mMoveVariants.end() && it->second->Parent() != p2) {
+        if (it != mMoveVariants.end() && it->second->Parent() == p2) {
             v2 = it->second;
         } else {
             v2 = nullptr;
         }
     }
     if (p1 && p2) {
-        vref1 = 0;
-        vref2 = 0;
+        int u6 = 0;
+        FOREACH (v, p1->Variants()) {
+            MoveVariant *var1 = *v;
+            FOREACH (c, var1->mNextCandidates) {
+                const MoveVariant *var2 = c->mValue.mVariant;
+                int u9;
+                if (var2->Parent() == p2) {
+                    u9 = 0x200;
+                    if (var2->Song() == s) {
+                        u9 = 0x220;
+                    }
+                    if (var1->Song() == s) {
+                        u9 |= 0x40;
+                    }
+                    if (var2 == v2) {
+                        u9 |= 0x80;
+                    }
+                    if (var1 == v1) {
+                        u9 |= 0x100;
+                    }
+                    if (c->mAdjacencyFlag & 2) {
+                        u9 |= 4;
+                    }
+                    int u4 = c->mAdjacencyFlag & 0x3C;
+                    if (u4 == 4) {
+                        u9 |= 0x10;
+                    }
+                    if (u4 == 8) {
+                        u9 |= 8;
+                    }
+                    if (u4 == 0x10) {
+                        u9 |= 1;
+                    }
+                    if (u4 == 0x20) {
+                        u9 |= 2;
+                    }
+                    int tmp = u6;
+                    if (u6 < u9) {
+                        u6 = u9;
+                        if (u9 != tmp) {
+                            vref1 = var1;
+                            vref2 = var2;
+                            if (b8) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return u6;
+    } else if (p1) {
+        auto &vars = p1->Variants();
+        if (!vars.empty()) {
+            if (v1) {
+                vref1 = v1;
+            } else {
+                vref1 = p1->Variants().front();
+                if (!s.Null()) {
+                    for (int i = 0; i < p1->Variants().size(); i++) {
+                        if (p1->Variants()[i]->Song() == s) {
+                            vref1 = p1->Variants()[i];
+                            break;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+    } else if (p2) {
+        auto &vars = p2->Variants();
+        if (!vars.empty()) {
+            if (v2) {
+                vref2 = v2;
+            } else {
+                vref2 = p2->Variants().front();
+                if (!s.Null()) {
+                    for (int i = 0; i < p2->Variants().size(); i++) {
+                        if (p2->Variants()[i]->Song() == s) {
+                            vref2 = p2->Variants()[i];
+                            break;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
     }
-    return 0;
+    return false;
 }

@@ -373,7 +373,7 @@
             "system/hamobj/MocapSkeletonIterator.cpp": "Matching",
             "system/hamobj/MoveAsyncDetector.cpp": "NonMatching",
             "system/hamobj/MoveDir.cpp": "NonMatching",
-            "system/hamobj/MoveGraph.cpp": "NonMatching",
+            "system/hamobj/MoveGraph.cpp": "Matching",
             "system/hamobj/MoveMgr.cpp": "NonMatching",
             "system/hamobj/MoveParent.cpp": "Matching",
             "system/hamobj/MoveVariant.cpp": "NonMatching",
