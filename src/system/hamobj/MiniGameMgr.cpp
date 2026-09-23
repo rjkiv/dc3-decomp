@@ -95,9 +95,8 @@ void MiniGameMgr::UpdateCascadeMovePool(
     }
     std::random_shuffle(allMoves.begin(), allMoves.end());
     for (int i = 0; i < 1; i++) {
-        auto it = allMoves.begin();
-        while (it != allMoves.end()
-               && allMoves.size() > mBlockingFactor + mNumMovesNeeded) {
+        for (auto it = allMoves.begin(); it != allMoves.end()
+             && allMoves.size() > mBlockingFactor + mNumMovesNeeded;) {
             const MoveVariant *mv = *it;
             bool b8 = true;
             if (i != 0) {

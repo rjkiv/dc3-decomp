@@ -103,8 +103,9 @@ void HamNavProvider::Text(int i1, int i2, UIListLabel *list, UILabel *label) con
             mNavItems[i2].unk14->Node(0) = mNavItems[i2].mLabel;
             Message msg("set_token_fmt", mNavItems[i2].unk14);
             label->Handle(msg, false);
-        } else
+        } else {
             label->SetTextToken(mNavItems[i2].mLabel);
+        }
     } else if (list->Matches("checkbox")) {
         switch (mNavItems[i2].mCheckboxState) {
         case 0:
@@ -124,6 +125,8 @@ void HamNavProvider::Text(int i1, int i2, UIListLabel *list, UILabel *label) con
             mNavItems[i2].unk14->Node(0) = mNavItems[i2].mLabel;
             Message msg("set_token_fmt", mNavItems[i2].unk14);
             label->Handle(msg, false);
+        } else {
+            label->SetTextToken(mNavItems[i2].mLabel);
         }
     } else {
         label->SetTextToken(gNullStr);
@@ -202,9 +205,10 @@ void HamNavProvider::SetLabel(int elementIndex, int i2, Symbol s) {
     curItem.mLabels.clear();
     curItem.mLabels.push_back(s);
     if (curItem.mLabelProvider) {
-        DataArray *provData = curItem.mLabelProvider->Data();
-        if (i2 < provData->Size()) {
-            DataArray *cloned = provData->Clone(true, false, 0);
+        if (i2 < curItem.mLabelProvider->Data()->Size()) {
+            DataProvider *prov = curItem.mLabelProvider;
+            DataArray *provData = prov->Data();
+            DataArray *cloned = prov->Data()->Clone(true, false, 0);
             cloned->Node(i2) = s;
             curItem.mLabelProvider->SetData(cloned);
             cloned->Release();
