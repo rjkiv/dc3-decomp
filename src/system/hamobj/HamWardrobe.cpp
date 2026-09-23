@@ -7,6 +7,8 @@
 #include "char/FileMerger.h"
 #include "hamobj/HamCharacter.h"
 #include "hamobj/HamGameData.h"
+#include "math/Rand.h"
+#include "math/Utl.h"
 #include "obj/Data.h"
 #include "obj/DataUtl.h"
 #include "obj/Dir.h"
@@ -21,6 +23,7 @@
 #include "utl/Symbol.h"
 #include "world/Crowd.h"
 #include "world/Dir.h"
+#include <cstdio>
 
 HamWardrobe *TheHamWardrobe;
 
@@ -338,6 +341,65 @@ void HamWardrobe::SetDir(ObjectDir *dir) {
         }
     }
     SyncInterestObjects(dir);
+}
+
+void HamWardrobe::PlayCrowdAnimation(Symbol s1, int i2, bool b3) {
+    if (!mCrowdMembers.empty()) {
+        unk44 = s1;
+        unk40 = i2;
+        if ((b3 || !unk38) && unk3c == gNullStr) {
+            unk38 = b3;
+            float f6;
+            if ((i2 & 0xF0) == 0x10) {
+                f6 = 0;
+            } else {
+                f6 = 4;
+            }
+            FOREACH (it, mCrowdMembers) {
+                Character *cur = *it;
+                if (s1.Null()) {
+                    cur->Enter();
+                } else {
+                    Symbol stance = cur->Property("stance")->Sym();
+                    if (stance == gNullStr) {
+                        MILO_LOG("    stance = NULL!\n");
+                    }
+                    char buf[128];
+                    _snprintf(buf, 0x78, "%s_%s", stance.Str(), s1.Str());
+                    cur->Driver()->SetBlendWidth(3);
+                    CharClipDriver *clip =
+                        cur->Driver()->PlayGroup(buf, i2 | 0x30U, -1, kHugeFloat, 0);
+                    if (clip) {
+                        if (clip->Next()) {
+                            clip->mRampIn = RandomFloat(0, f6);
+                        }
+                    } else {
+                        MILO_LOG("clip not found - groupName = %s\n", buf);
+                        MILO_NOTIFY(
+                            "%s could not find clip from group %s", PathName(cur), buf
+                        );
+                        _snprintf(buf, 0x78, "%s_ok", stance.Str());
+                        cur->Driver()->SetBlendWidth(3);
+
+                        CharClipDriver *clip =
+                            cur->Driver()->PlayGroup(buf, i2 | 0x30U, -1, kHugeFloat, 0);
+                        if (clip) {
+                            if (clip->Next()) {
+                                clip->mRampIn = RandomFloat(0, f6);
+                            }
+                        } else {
+                            MILO_LOG("  clip not found - groupName = %s\n", buf);
+                            MILO_NOTIFY(
+                                "  %s could not find clip from group %s",
+                                PathName(cur),
+                                buf
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 void HamWardrobe::LoadCharacters(

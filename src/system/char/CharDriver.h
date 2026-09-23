@@ -50,6 +50,7 @@ public:
     CharBonesObject *GetBones() const { return mBones; }
     CharClipDriver *First() { return mFirst; }
     CharClipGroup *LastPlayedGroup() const { return mLastPlayedGroup; }
+    void SetBlendWidth(float w) { mBlendWidth = w; }
     CharClip *FirstClip();
     CharClipDriver *FirstPlaying();
     CharClipDriver *Last();
