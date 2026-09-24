@@ -4,6 +4,7 @@
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "rndobj/Dir.h"
+#include "rndobj/Env.h"
 #include "rndobj/Text.h"
 #include "ui/UIComponent.h"
 #include "utl/BinStream.h"
@@ -473,4 +474,108 @@ void HamListRibbon::DrawRibbon(
         mLabelPlaceholder->Style(0).mInfo.mFontColor.alpha = alpha;
         mLabelPlaceholder->SetShowing(true);
     }
+}
+
+void HamListRibbon::Draw(
+    const Transform &tf1,
+    const std::vector<HamListRibbonDrawState> &drawStates,
+    bool b3,
+    bool b4
+) {
+    RndEnvironTracker t(mEnv, nullptr);
+    if (mSelectAllAnim) {
+        if (mMode == kRibbonSelect && !mTestEntering && !unk26c) {
+            mSelectAllAnim->SetFrame(GetFrame(), 1);
+        } else {
+            mSelectAllAnim->SetFrame(0, 1);
+        }
+    }
+    if (mTestEntering && mEnterAnim) {
+        mEnterAnim->SetFrame(GetFrame(), 1);
+    }
+
+    int numDrawStates = drawStates.size();
+    bool cmp = numDrawStates > 6 ? true : false;
+    int i9 = cmp ? 4 : numDrawStates;
+    int i7 = Max(0, (mPaddedSize - numDrawStates + 1) / 2);
+    std::vector<HamListRibbonDrawState> drawStateVec;
+    HamListRibbonDrawState dummyState;
+    for (int i = 0; i < i7; i++) {
+        drawStateVec.push_back(dummyState);
+    }
+    for (int i = 0; i < numDrawStates; i++) {
+        drawStateVec.push_back(drawStates[i]);
+    }
+    for (int i = 0; i < i7; i++) {
+        drawStateVec.push_back(dummyState);
+    }
+    int i15 = 0;
+    if (cmp) {
+        int div = numDrawStates / 2;
+        i15 = div - 2;
+        if (mTestSelectedIndex < i15 || mTestSelectedIndex > i15 + 4) {
+            mTestSelectedIndex = i15;
+        }
+    } else if (mScrollAnims.mScrollAnim) {
+        mScrollAnims.mScrollAnim->SetFrame(0, 1);
+    }
+
+    int i13 = (mPaddedSize < numDrawStates ? numDrawStates : mPaddedSize) - i9;
+    float f22 = (i9 * mSpacing + i13 * mPaddedSpacing) / 2;
+
+    if (i13 % 2 == 0) {
+        f22 = -(mSpacing / 2 - f22);
+    } else if (i9 < mPaddedSize) {
+        f22 += (mPaddedSpacing - mSpacing) / 2;
+    }
+
+    Transform tf00 = tf1;
+    Transform tf1c0;
+    tf1c0.v.z = f22;
+    tf1c0.m.Identity();
+    tf1c0.v.x = 0;
+    tf1c0.v.y = 0;
+
+    int i14 = -1;
+    Transform tf130;
+    for (int i = 0; i < drawStateVec.size(); i++) {
+        bool b5 = i >= i15 + i7 && i < i15 + i7 + i9 - 1;
+
+        if (b3 != drawStateVec[i].unk24) {
+            if (b5) {
+                tf1c0.v.z -= mSpacing;
+            } else {
+                tf1c0.v.z -= mPaddedSpacing;
+            }
+        }
+
+        else {
+            if (!drawStateVec[i].unk14) {
+                DrawRibbon(i, tf1c0, tf1, drawStateVec[i], i7, numDrawStates, i15, b4);
+            } else {
+                i14 = i;
+                tf130 = tf1c0;
+            }
+
+            if (b5) {
+                tf1c0.v.z -= mSpacing;
+            } else {
+                tf1c0.v.z -= mPaddedSpacing;
+            }
+        }
+    }
+    if (i14 != -1) {
+        DrawRibbon(i14, tf130, tf1, drawStateVec[i14], i7, numDrawStates, i15, b4);
+    }
+
+    if (TheLoadMgr.EditMode()) {
+        SetAnims(true, 1);
+        if (mScrollAnims.mScrollAnim) {
+            float frame = mScrollAnims.mScrollAnim->GetFrame();
+            if (mScrollAnims.mScrollFade) {
+                mScrollAnims.mScrollFade->SetFrame(1 - frame, 1);
+            }
+        }
+    }
+    SetWorldXfm(tf00);
 }
