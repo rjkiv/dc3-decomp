@@ -3,6 +3,7 @@
 #include "gesture/GestureMgr.h"
 #include "hamobj/HamLabel.h"
 #include "math/DoubleExponentialSmoother.h"
+#include "math/Mtx.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "rndobj/Anim.h"
@@ -130,7 +131,16 @@ private:
     void ResetAnims(bool);
     void SetAnims(bool, float);
     float GetLabelTotalAlpha() const;
-
+    void DrawRibbon(
+        int,
+        const Transform &,
+        const Transform &,
+        const HamListRibbonDrawState &,
+        int,
+        int,
+        int,
+        bool
+    );
     DataNode OnEnterBlacklightMode(const DataArray *);
     DataNode OnExitBlacklightMode(const DataArray *);
 

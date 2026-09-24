@@ -34,6 +34,8 @@ public:
     NEW_OBJ(HamLabel)
     static void Init();
 
+    void SetCanHaveFocus(bool focus) { mCanHaveFocus = focus; }
+
 protected:
     HamLabel();
 

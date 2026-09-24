@@ -1,10 +1,13 @@
 #include "hamobj/HamListRibbon.h"
 #include "hamobj/HamLabel.h"
+#include "math/Mtx.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "rndobj/Dir.h"
 #include "rndobj/Text.h"
+#include "ui/UIComponent.h"
 #include "utl/BinStream.h"
+#include "utl/Loader.h"
 
 const int HamListRibbon::sNumListSelectable = 4;
 
@@ -413,4 +416,61 @@ float HamListRibbon::GetLabelTotalAlpha() const {
         ret *= mLabelPlaceholder->Style(i).mInfo.mFontColor.alpha;
     }
     return ret;
+}
+
+void HamListRibbon::DrawRibbon(
+    int i1,
+    const Transform &tf2,
+    const Transform &tf3,
+    const HamListRibbonDrawState &drawState,
+    int i5,
+    int i6,
+    int i7,
+    bool b8
+) {
+    bool b5 = i1 >= i5 && i1 < i5 + i6;
+    ResetAnims(false);
+    SetAnims(drawState.unk14, drawState.unk0.Level());
+    if (i6 > 6) {
+        mScrollAnims.SetAnims(i1 - i5 - i7);
+    } else if (mScrollAnims.mScrollActive) {
+        mScrollAnims.mScrollActive->SetFrame(0, 1);
+    }
+    Transform tfa0;
+    Multiply(tf2, tf3, tfa0);
+    SetWorldXfm(Transform::GetIdentity());
+
+    if (mLabelPlaceholder) {
+        mLabelPlaceholder->SetShowing(b8 && b5);
+        mLabelPlaceholder->SetCanHaveFocus(true);
+        if (drawState.unk14) {
+            mLabelPlaceholder->SetState(UIComponent::kFocused);
+        } else {
+            mLabelPlaceholder->SetState(UIComponent::kNormal);
+        }
+        if (drawState.unk18) {
+            static Vector3 v1(1.3f, 1, 1.3f);
+            static Vector3 v2(1, 1, 1);
+            Vector3 pos = mLabelPlaceholder->WorldXfm().v;
+            pos.z += tf2.v.z;
+            drawState.unk18->mPos = pos;
+            drawState.unk18->mAlpha = GetLabelTotalAlpha();
+            drawState.unk18->unk14 = drawState.unk20 != 0 ? v1 : v2;
+        }
+    }
+    float alpha = 0;
+    if (TheLoadMgr.EditMode() && mLabelPlaceholder) {
+        alpha = mLabelPlaceholder->Style(0).mInfo.mFontColor.alpha;
+        mLabelPlaceholder->Style(0).mInfo.mFontColor.alpha = GetLabelTotalAlpha();
+    }
+    SetWorldXfm(tfa0);
+    if (!drawState.unk1c) {
+        FOREACH (it, mDraws) {
+            (*it)->Draw();
+        }
+    }
+    if (TheLoadMgr.EditMode() && mLabelPlaceholder) {
+        mLabelPlaceholder->Style(0).mInfo.mFontColor.alpha = alpha;
+        mLabelPlaceholder->SetShowing(true);
+    }
 }
