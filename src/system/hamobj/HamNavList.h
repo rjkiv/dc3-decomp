@@ -71,9 +71,6 @@ public:
     NEW_OBJ(HamNavList)
     void Refresh();
     void HandleHighlightChanged(int);
-    void PlayScrollSound();
-    void StopScrollSound();
-    void SetScrollSoundFrame(float);
     void SetNavProvider(HamNavProvider *);
     Symbol GetSelectedSym() const;
     void ScrollToIndex(int, int);
@@ -116,6 +113,23 @@ public:
     bool IsScrollable() const { return mListState.ScrollPastMinDisplay(); }
     bool InVoiceMode() const { return TheGestureMgr && TheGestureMgr->InVoiceMode(); }
     HamListRibbon::RibbonMode GetRibbonMode() const { return mRibbonMode; }
+    RndAnimatable *GetScrollSoundAnim() const { return mScrollSpeedAnim; }
+
+    void PlayScrollSound() {
+        if (mListRibbonResource) {
+            mListRibbonResource->PlayScrollSound();
+        }
+    }
+    void StopScrollSound() {
+        if (mListRibbonResource) {
+            mListRibbonResource->StopScrollSound();
+        }
+    }
+    void SetScrollSoundFrame(float frame) {
+        if (mListRibbonResource) {
+            mListRibbonResource->SetScrollSoundFrame(frame);
+        }
+    }
 
     static void Init();
     static bool sLastSelectInControllerMode;

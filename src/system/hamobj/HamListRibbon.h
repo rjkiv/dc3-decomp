@@ -94,6 +94,21 @@ public:
     void SetMode(RibbonMode mode) { mMode = mode; }
     void SetUnk26C(bool b) { unk26c = b; }
 
+    void PlayScrollSound() {
+        if (mScrollSound) {
+            mScrollSound->Play(0, 0, 0, nullptr, 0);
+        }
+    }
+    void StopScrollSound() {
+        if (mScrollSound) {
+            mScrollSound->Stop(nullptr, false);
+        }
+    }
+    void SetScrollSoundFrame(float frame) {
+        if (mScrollSoundAnim) {
+            mScrollSoundAnim->SetFrame(frame, 1);
+        }
+    }
     void PlaySlideSound() {
         if (mSlideSound) {
             mSlideSound->Play(0, 0, 0, nullptr, 0);
