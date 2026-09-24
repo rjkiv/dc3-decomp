@@ -6,6 +6,8 @@
 #include "rndobj/Text.h"
 #include "utl/BinStream.h"
 
+const int HamListRibbon::sNumListSelectable = 4;
+
 #pragma region ScrollAnims
 
 void HamListRibbon::ScrollAnims::SetScrollFrame(float frame) {
@@ -177,24 +179,22 @@ void HamListRibbon::PostLoad(BinStream &bs) {
     if (d.rev >= 3) {
         d >> mDisengageAnim;
     }
-    if (d.rev >= 4) {
-        if (d.rev < 9) {
-            Symbol s;
-            int num;
-            d >> num;
-            for (int i = 0; i < num; i++) {
-                d >> s;
-            }
-            d >> num;
-            for (int i = 0; i < num; i++) {
-                d >> s;
-            }
-        }
-        if (d.rev == 4) {
-            Symbol s;
-            d >> s;
+    if (d.rev >= 4 && d.rev < 9) {
+        Symbol s;
+        int num;
+        d >> num;
+        for (int i = 0; i < num; i++) {
             d >> s;
         }
+        d >> num;
+        for (int i = 0; i < num; i++) {
+            d >> s;
+        }
+    }
+    if (d.rev == 4) {
+        Symbol s;
+        d >> s;
+        d >> s;
     }
     if (d.rev >= 5) {
         d >> mSlideSound;
@@ -267,14 +267,46 @@ float HamListRibbon::StartFrame() {
         case kRibbonSelect:
             if (unk26c && mSelectToggleAnim) {
                 return mSelectToggleAnim->StartFrame();
-            } else if (mSelectAnim || mSelectAllAnim) {
-                if (mSelectAnim && !mSelectAllAnim) {
-                    return mSelectAnim->StartFrame();
-                } else if (!mSelectAnim && mSelectAllAnim) {
-                    return mSelectAllAnim->StartFrame();
-                } else if (mSelectAnim && mSelectAllAnim) {
-                    return Min(mSelectAnim->StartFrame(), mSelectAllAnim->StartFrame());
-                }
+            } else if (mSelectAnim && !mSelectAllAnim) {
+                return mSelectAnim->StartFrame();
+            } else if (!mSelectAnim && mSelectAllAnim) {
+                return mSelectAllAnim->StartFrame();
+            } else if (mSelectAnim && mSelectAllAnim) {
+                return Min(mSelectAnim->StartFrame(), mSelectAllAnim->StartFrame());
+            }
+            return 0;
+        default:
+            return 0;
+        }
+    }
+}
+
+float HamListRibbon::EndFrame() {
+    if (mTestEntering && mEnterAnim) {
+        return mEnterAnim->EndFrame();
+    } else {
+        switch (mMode) {
+        case kRibbonSwell:
+            if (mSwellAnim) {
+                return mSwellAnim->EndFrame();
+            } else {
+                return 0;
+            }
+        case kRibbonSlide:
+            if (mSlideAnim) {
+                return mSlideAnim->EndFrame();
+            } else {
+                return 0;
+            }
+        case kRibbonSelect:
+            if (unk26c && mSelectToggleAnim) {
+                return mSelectToggleAnim->EndFrame();
+            } else if (mSelectAnim && !mSelectAllAnim) {
+                return mSelectAnim->EndFrame();
+            } else if (!mSelectAnim && mSelectAllAnim) {
+                return mSelectAllAnim->EndFrame();
+            } else if (mSelectAnim && mSelectAllAnim) {
+                return Max(mSelectAnim->EndFrame(), mSelectAllAnim->EndFrame());
             }
             return 0;
         default:
