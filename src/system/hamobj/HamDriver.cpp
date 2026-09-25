@@ -133,8 +133,9 @@ float HamDriver::DisplayRecurse(Layer *layer, int i, float f) {
         if (array->unk8 != 0) {
             float sem = i * CharClipDisplay::GetSEm();
             CharClipDisplay display;
-            display.unk10 = f;
+            display.unk18 = f;
             display.unk1c = unk78;
+            display.mText[0] = 0;
             display.unk64 = sem;
             display.SetText(MakeString("(%s)", array->unkc));
             display.SetStartEnd(unk78 - 4.0f, unk78 + 4.0f, true);
@@ -153,6 +154,7 @@ float HamDriver::DisplayRecurse(Layer *layer, int i, float f) {
         if (clip && clip->unk8 != 0) {
             float sem = i * CharClipDisplay::GetSEm();
             CharClipDisplay display;
+            display.mText[0] = 0;
             float beat = (unk78 - clip->unkc) + clip->unk10->StartBeat();
             display.unk64 = sem;
             display.unk1c = beat;

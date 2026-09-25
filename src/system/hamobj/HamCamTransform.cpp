@@ -65,18 +65,19 @@ BEGIN_COPYS(HamCamTransform)
     END_COPYING_MEMBERS
 END_COPYS
 
-BinStream &operator>>(BinStreamRev &d, ObjVector<TransformArea> &);
-
 BinStream &operator<<(BinStream &bs, const TransformCrowd &c) {
     c.Save(bs);
     return bs;
 }
 
-void TransformCrowd::Save(BinStream &bs) const { bs << mCrowd << mCrowdRotate; }
+void TransformCrowd::Save(BinStream &bs) const {
+    bs << mCrowd;
+    bs << mCrowdRotate;
+}
 
-BinStream &operator>>(BinStream &bs, TransformCrowd &c) {
-    c.Load(bs);
-    return bs;
+BinStreamRev &operator>>(BinStreamRev &d, TransformCrowd &c) {
+    c.Load(d.stream);
+    return d;
 }
 
 void TransformCrowd::Load(BinStream &bs) {
@@ -114,7 +115,7 @@ void TransformArea::Load(BinStreamRev &d) {
     mCamshots.Load(d.stream, false, nullptr, true);
     d >> mAnims;
     if (d.rev > 1) {
-        d.stream >> mCrowds;
+        d >> mCrowds;
     }
     if (d.rev > 2) {
         d >> mFlow;
