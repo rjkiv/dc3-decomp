@@ -51,6 +51,7 @@ public:
     CharLipSync *LipSync() const { return mLipSync; }
     ObjectDir *OverrideOptions() const { return mOverrideOptions; }
     ObjectDir *Clips() const { return mClips; }
+    CharLipSync::PlayBack *GetPlayBack() const { return unk88; }
 
 protected:
     CharLipSyncDriver();

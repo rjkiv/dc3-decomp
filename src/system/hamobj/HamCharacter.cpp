@@ -18,6 +18,7 @@
 #include "hamobj/HamGameData.h"
 #include "macros.h"
 #include "math/Mtx.h"
+#include "math/Rot.h"
 #include "obj/Data.h"
 #include "obj/DataUtl.h"
 #include "obj/Dir.h"
@@ -31,6 +32,7 @@
 #include "os/System.h"
 #include "rndobj/Anim.h"
 #include "rndobj/Draw.h"
+#include "rndobj/Tex.h"
 #include "rndobj/TexBlender.h"
 #include "rndobj/Trans.h"
 #include "synth/Synth.h"
@@ -230,6 +232,82 @@ void HamCharacter::DrawShowing() {
     Character::DrawShowing();
     if (mShowBox) {
         mWaypoint->Highlight();
+    }
+}
+
+void HamCharacter::Poll() {
+    float f19;
+    if (SongAnimation() == -1 || InClipTest()) {
+        if (mDriver) {
+            mDriver->SetWeight(1);
+        }
+    } else {
+        if (mDriver) {
+            mDriver->SetWeight(0);
+        }
+    }
+    bool oldShowing = Showing();
+    if (!oldShowing && mPollWhenHidden) {
+        SetShowing(true);
+    }
+    Character::Poll();
+    SetShowing(oldShowing);
+    RndTransformable *boneMesh = Find<RndTransformable>("bone_prop0.mesh", false);
+    if (boneMesh) {
+        RndTransformable *spotMesh = Find<RndTransformable>("spot_prop0.mesh", false);
+        if (spotMesh) {
+            if (SongAnimation() != -1) {
+                f19 = 0;
+            } else if (mDriver->First()) {
+                f19 = mDriver->EvaluateFlags(2);
+            } else {
+                f19 = 1;
+            }
+            QuatXfm q1c0(boneMesh->WorldXfm());
+            QuatXfm q1a0(spotMesh->WorldXfm());
+            QuatXfm q14;
+            Interp(q1a0.v, q1c0.v, f19, q14.v);
+            Interp(q1a0.q, q1c0.q, f19, q14.q);
+            Transform tf180;
+            tf180.v = q14.v;
+            MakeRotMatrix(q14.q, tf180.m);
+            boneMesh->SetWorldXfm(tf180);
+        }
+    }
+
+    RndMat *robotFaceMat = Find<RndMat>("robot_face.mat", false);
+    if (robotFaceMat) {
+        CharLipSyncDriver *driver = Find<CharLipSyncDriver>("face.lipdrv", false);
+        CharLipSync::PlayBack *playback = driver->GetPlayBack();
+        const char *name = "base";
+        if (playback) {
+            float val = 0;
+            for (int i = 0; i < playback->mWeights.size(); i++) {
+                CharLipSync::PlayBack::Weight &cur = playback->mWeights[i];
+                if (cur.clip) {
+                    if (MaxEq(val, cur.current)) {
+                        name = cur.clip->Name();
+                    }
+                }
+            }
+        }
+        char buf[256];
+        strcpy(buf, name);
+        strlwr(buf);
+        strcat(buf, ".tex");
+        RndTex *tex = Find<RndTex>(buf, false);
+        if (tex) {
+            robotFaceMat->SetDiffuseTex(tex);
+        } else {
+            tex = Find<RndTex>("base.tex", false);
+            if (tex) {
+                robotFaceMat->SetDiffuseTex(tex);
+            } else {
+                MILO_NOTIFY_ONCE(
+                    "%s could not find viseme texture %s", PathName(this), buf
+                );
+            }
+        }
     }
 }
 

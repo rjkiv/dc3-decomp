@@ -30,5 +30,7 @@ namespace std {
     using ::strstr;
     using ::strtok;
 
+    using ::strlwr;
+
     using ::strerror;
 }

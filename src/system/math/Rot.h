@@ -90,7 +90,10 @@ public:
 class QuatXfm {
 public:
     QuatXfm() {}
-    QuatXfm(const Transform &);
+    QuatXfm(const Transform &tf) {
+        v = tf.v;
+        q.Set(tf.m);
+    }
 
     Vector3 v;
     Hmx::Quat q;

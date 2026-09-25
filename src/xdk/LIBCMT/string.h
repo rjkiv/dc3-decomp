@@ -34,6 +34,8 @@ char *strpbrk(const char *dest, const char *breakset);
 char *strstr(const char *str, const char *substr);
 char *strtok(char *str, const char *delim);
 
+char *strlwr(char *str); // this doesn't exist in newer versions of cstdlib
+
 char *strerror(int errnum);
 
 void *memchr(const void *ptr, int ch, size_t count);
