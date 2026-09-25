@@ -25,9 +25,6 @@ public:
 
     NEW_OBJ(PoseFatalities)
 
-    static SkeletonViz *sViz1;
-    static SkeletonViz *sViz2;
-
     void DrawDebug();
     void Enter();
     bool InFatality(int) const;

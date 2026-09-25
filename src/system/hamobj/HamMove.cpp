@@ -812,3 +812,42 @@ const std::vector<float> *HamMove::RatingOverride() const {
         return nullptr;
     }
 }
+
+float HamMove::PSNRToDetectFrac(float psnr) const {
+    int idx = 0;
+    for (; idx < 4; idx++) {
+        if (psnr > PSNRThreshold((MoveRating)idx)) {
+            break;
+        }
+    }
+    if (idx == 0) {
+        return 1;
+    } else {
+        int r = idx - 1;
+        float f4 = PSNRThreshold((MoveRating)r);
+        float f5;
+        if (idx == 4) {
+            f5 = 0;
+        } else {
+            f5 = PSNRThreshold((MoveRating)idx);
+        }
+        if (f4 <= f5) {
+            MILO_FAIL("upper psnr threshold (%f) not greater than lower (%f)", f4, f5);
+        }
+        f5 = (psnr - f5) / (f4 - f5);
+        f5 = Clamp(0.0f, 1.0f, f5);
+        float f2;
+        if (r == 0) {
+            f2 = 1;
+        } else {
+            f2 = sDefaultRatingThresholds[r - 1];
+        }
+        float f6;
+        if (idx == 4) {
+            f6 = 0;
+        } else {
+            f6 = sDefaultRatingThresholds[idx - 1];
+        }
+        return (f2 - f6) * f5 + f6;
+    }
+}
