@@ -4,6 +4,7 @@
 #include "HamRegulate.h"
 #include "char/CharBones.h"
 #include "char/CharClip.h"
+#include "char/CharDriver.h"
 #include "char/CharEyes.h"
 #include "char/CharFaceServo.h"
 #include "char/CharLipSync.h"
@@ -43,6 +44,9 @@
 namespace {
     const char *kCrewCardMeshName = "crew_card.mesh";
 }
+
+CharClip *HamCharacter::sSkeletonClips[kNumSkeletons];
+bool HamCharacter::sLoadVO = true;
 
 String mCampaignVO;
 
@@ -112,11 +116,7 @@ BEGIN_PROPSYNCS(HamCharacter)
     SYNC_PROP_MODIFY(
         tex_blenders_active, mTexBlendersActive, SetTexBlendersActive(mTexBlendersActive)
     )
-    SYNC_PROP_SET(
-        crew_card_showing,
-        mCrewCardMesh ? mCrewCardMesh->Showing() : false,
-        if (mCrewCardMesh) mCrewCardMesh->SetShowing(_val.Int())
-    )
+    SYNC_PROP_SET(crew_card_showing, CrewCardShowing(), SetCrewCardShowing(_val.Int()))
     SYNC_PROP_SET(prop_0_showing, GetPropShowing(0), SetPropShowing(0, _val.Int()))
     SYNC_PROP_SET(prop_1_showing, GetPropShowing(1), SetPropShowing(1, _val.Int()))
     SYNC_PROP_SET(prop_2_showing, GetPropShowing(2), SetPropShowing(2, _val.Int()))
@@ -152,13 +152,16 @@ BEGIN_LOADS(HamCharacter)
     PostLoad(bs);
 END_LOADS
 
-INIT_REVS(0, 0)
+INIT_REVS(3, 0)
 
 void HamCharacter::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
-    ASSERT_REVS(0, 0)
-    Character::PreLoad(bs);
-    bs.PushRev(packRevs(d.altRev, d.rev), this);
+    ASSERT_REVS(3, 0)
+    Character::PreLoad(d.stream);
+    int hash = HashTableUsedSize();
+    // these are oddly specific numbers
+    Reserve((hash + 20) * 2, StrTableUsedSize() + 440);
+    d.PushRev(this);
 }
 
 void HamCharacter::PostLoad(BinStream &bs) {
@@ -186,7 +189,7 @@ void HamCharacter::PostLoad(BinStream &bs) {
 
 void HamCharacter::SyncObjects() {
     const char *meshes[2] = { "bone_pelvis.mesh", "spot_neck.mesh" };
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < DIM(meshes); i++) {
         RndTransformable *t = Find<RndTransformable>(meshes[i], false);
         if (t) {
             t->SetTransParent(this, false);
@@ -202,9 +205,13 @@ void HamCharacter::SyncObjects() {
         CharFaceServo *servo = Find<CharFaceServo>("face.faceservo", false);
         CharLipSyncDriver *lipDrv = Find<CharLipSyncDriver>("face.lipdrv", false);
         EnableFacialAnimation(lipDrv->LipSync(), 0);
-        bool blinking = servo
-            && (!servo->BlinkClipLeftName().Null()
-                && !servo->BlinkClipRightName().Null());
+        bool blinking;
+        if (servo) {
+            blinking =
+                !servo->BlinkClipLeftName().Null() || servo->BlinkClipRightName().Null();
+        } else {
+            blinking = false;
+        }
         SetBlinking(blinking);
     }
     mCrewCardMesh = Find<RndMesh>(kCrewCardMeshName, false);
@@ -510,25 +517,29 @@ HamRegulate *HamCharacter::Regulator() { return Find<HamRegulate>("song.hreg", f
 HamDriver *HamCharacter::SongDriver() { return Find<HamDriver>("song.hdrv", false); }
 
 int HamCharacter::SongAnimation() {
+    CharDriver *d = Driver();
     CharClip *c = nullptr;
-    if (Driver()) {
-        c = Driver()->FirstClip();
+    if (d) {
+        c = d->FirstClip();
         if (c) {
             MILO_ASSERT(c->Type() == "main", 0x3AB);
         }
     }
-    if (InClipTest() && (c && c->Dir()->Dir() != this)) {
-        return c->Property("clip_skeleton_index", false)->Int();
-    } else if (mUseCameraSkeleton || c) {
-        return -1;
-    } else if (SongDriver()) {
-        c = SongDriver()->FirstClip();
-        if (c) {
-            MILO_ASSERT(c->Type() == "main", 0x3C8);
+    if (InClipTest()) {
+        if (c && c->Dir()->Dir() != this) {
             return c->Property("clip_skeleton_index", false)->Int();
         }
+    } else if (!mUseCameraSkeleton && !c) {
+        if (SongDriver()) {
+            c = SongDriver()->FirstClip();
+            if (c) {
+                MILO_ASSERT(c->Type() == "main", 0x3C8);
+                return c->Property("clip_skeleton_index", false)->Int();
+            }
+        }
+        return 0;
     }
-    return 0;
+    return -1;
 }
 
 bool HamCharacter::GetPropShowing(int prop) {
@@ -538,8 +549,9 @@ bool HamCharacter::GetPropShowing(int prop) {
 
 void HamCharacter::SetPropShowing(int prop, bool show) {
     if (mShowableProps.size() > prop) {
-        if (mShowableProps[prop])
+        if (mShowableProps[prop]) {
             mShowableProps[prop]->SetShowing(show);
+        }
     }
 }
 
@@ -565,11 +577,11 @@ void HamCharacter::ApplyBlendedSkeletons(HamDriver *driver, CharClip *clip, floa
 
 void HamCharacter::BlendInFaceOverrideClip(Symbol s, float f1, float f2) {
     CharLipSyncDriver *faceDriver = Find<CharLipSyncDriver>("face.lipdrv", false);
-    bool check = false;
+    bool found = false;
     if (faceDriver) {
         if (s.Null()) {
-            check = true;
-            faceDriver->ClearOverrideClip();
+            found = true;
+            faceDriver->SetOverrideClip(nullptr);
         } else {
             for (ObjDirItr<CharClip> it(
                      faceDriver->OverrideOptions() ? faceDriver->OverrideOptions()
@@ -579,12 +591,12 @@ void HamCharacter::BlendInFaceOverrideClip(Symbol s, float f1, float f2) {
                  it != nullptr;
                  ++it) {
                 if (s == it->Name()) {
-                    check = true;
+                    found = true;
                     faceDriver->BlendInOverrideClip(it, f1, f2);
                 }
             }
 
-            if (!check) {
+            if (!found) {
                 MILO_NOTIFY(
                     "HamCharacter::SetFaceOverrideClip couldn\'t find clip named %s for %s",
                     s.Str(),
@@ -594,7 +606,7 @@ void HamCharacter::BlendInFaceOverrideClip(Symbol s, float f1, float f2) {
             }
         }
     }
-    if (!check) {
+    if (!found) {
         // they really copied and pasted this from SetFaceOverrideClip
         MILO_NOTIFY(
             "HamCharacter::SetFaceOverrideClip couldn\'t find  lip sync driver for %s",
@@ -603,13 +615,13 @@ void HamCharacter::BlendInFaceOverrideClip(Symbol s, float f1, float f2) {
     }
 }
 
-void HamCharacter::SetFaceOverrideClip(Symbol s, bool b) {
+void HamCharacter::SetFaceOverrideClip(Symbol s, bool notify) {
     CharLipSyncDriver *faceDriver = Find<CharLipSyncDriver>("face.lipdrv", false);
-    bool check = false;
+    bool found = false;
     if (faceDriver) {
         if (s.Null()) {
-            check = true;
-            faceDriver->ClearOverrideClip();
+            found = true;
+            faceDriver->SetOverrideClip(nullptr);
         } else {
             for (ObjDirItr<CharClip> it(
                      faceDriver->OverrideOptions() ? faceDriver->OverrideOptions()
@@ -619,11 +631,11 @@ void HamCharacter::SetFaceOverrideClip(Symbol s, bool b) {
                  it != nullptr;
                  ++it) {
                 if (s == it->Name()) {
-                    check = true;
-                    // faceDriver->OverRideClip has to be it
+                    found = true;
+                    faceDriver->SetOverrideClip(it);
                 }
             }
-            if (!check) {
+            if (!found && notify) {
                 MILO_NOTIFY(
                     "HamCharacter::SetFaceOverrideClip couldn\'t find clip named %s for %s",
                     s.Str(),
@@ -633,7 +645,7 @@ void HamCharacter::SetFaceOverrideClip(Symbol s, bool b) {
             }
         }
     }
-    if (!check || b) {
+    if (!found && notify) {
         MILO_NOTIFY(
             "HamCharacter::SetFaceOverrideClip couldn\'t find  lip sync driver for %s",
             Name()
@@ -704,17 +716,19 @@ DataNode HamCharacter::OnToggleInterestDebugOverlay(DataArray *a) {
 }
 
 DataNode HamCharacter::OnCamTeleport(DataArray *a) {
-    mWaypoint->SetLocalXfm(LocalXfm());
+    // actually dumb, it marks dirty before setting the xfm
+    Transform &localXfm = mWaypoint->DirtyLocalXfm();
+    localXfm = LocalXfm();
     if (Regulator()) {
         Regulator()->SetWaypoint(nullptr);
     }
     return 0;
 }
 
-DataNode HamCharacter::OnSoundPlay(DataArray const *a) {
-    auto &val = a->Node(2).Evaluate();
+DataNode HamCharacter::OnSoundPlay(const DataArray *a) {
+    const DataNode &val = a->Node(2).Evaluate();
     if (val.Type() == kDataObject) {
-        auto obj = val.ObjectValue();
+        Hmx::Object *obj = val.ObjectValue();
         if (!obj) {
             return 0;
         }
@@ -746,25 +760,4 @@ DataNode HamCharacter::OnSoundPlay(DataArray const *a) {
         }
     }
     return 0;
-}
-
-HamCharacter *CharacterNameToCharacter(Symbol name) {
-    static Symbol player0("player0");
-    static Symbol player1("player1");
-    static Symbol backup0("backup0");
-    static Symbol backup1("backup1");
-
-    if (name == player0) {
-        return TheHamDirector->GetCharacter(0);
-    } else if (name == player1) {
-        return TheHamDirector->GetCharacter(1);
-    }
-
-    if (name == backup0) {
-        return TheHamDirector->GetBackup(0);
-    } else if (name == backup1) {
-        return TheHamDirector->GetBackup(1);
-    }
-
-    return nullptr;
 }

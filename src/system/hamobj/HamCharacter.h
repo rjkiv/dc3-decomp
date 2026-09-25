@@ -117,6 +117,13 @@ protected:
     DataNode OnSoundPlay(const DataArray *);
     DataNode OnToggleInterestDebugOverlay(DataArray *);
 
+    bool CrewCardShowing() const { return mCrewCardMesh && mCrewCardMesh->Showing(); }
+    void SetCrewCardShowing(bool showing) {
+        if (mCrewCardMesh) {
+            mCrewCardMesh->SetShowing(showing);
+        }
+    }
+
     static CharClip *sSkeletonClips[kNumSkeletons];
 
     String mCampaignVO; // 0x2d8
@@ -148,5 +155,3 @@ protected:
     ObjPtr<RndMesh> mCrewCardMesh; // 0x33c
     bool mUseCameraSkeleton; // 0x350
 };
-
-HamCharacter *CharacterNameToCharacter(Symbol);

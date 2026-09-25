@@ -34,6 +34,27 @@
 HamCamShot *gHamCamShot;
 std::list<HamCamShot::TargetCache> HamCamShot::sCache;
 
+HamCharacter *CharacterNameToCharacter(Symbol name) {
+    static Symbol player0("player0");
+    static Symbol player1("player1");
+    static Symbol backup0("backup0");
+    static Symbol backup1("backup1");
+
+    if (name == player0) {
+        return TheHamDirector->GetCharacter(0);
+    } else if (name == player1) {
+        return TheHamDirector->GetCharacter(1);
+    }
+
+    if (name == backup0) {
+        return TheHamDirector->GetBackup(0);
+    } else if (name == backup1) {
+        return TheHamDirector->GetBackup(1);
+    }
+
+    return nullptr;
+}
+
 HamCamShot::HamCamShot()
     : mTargets(this), mMinTime(0), mMaxTime(0), mZeroTime(0), mPlayerFlag(kHamPlayerOff),
       mNextShots(this), mCurrentShot(this), unk2cc(0), unk2d0(0), unk2d4(0), unk2d8(0),
