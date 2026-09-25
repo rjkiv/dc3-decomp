@@ -18,7 +18,6 @@
 #include "rndobj/Anim.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Trans.h"
-#include "stl/_vector.h"
 #include "utl/BinStream.h"
 #include "utl/Loader.h"
 #include "utl/NetCacheMgr.h"
@@ -29,6 +28,7 @@
 #include <climits>
 #include <cstring>
 #include <list>
+#include <vector>
 #include <float.h>
 
 HamCamShot *gHamCamShot;
@@ -190,15 +190,16 @@ BEGIN_LOADS(HamCamShot)
     d >> mZeroTime;
     d >> mMinTime;
     d >> mMaxTime;
-    bs >> mNextShots;
+    d >> mNextShots;
     unk2f4 = mNextShots.size();
     int x;
     if (d.rev > 1) {
-        bs.ReadEndian(&x, 4);
+        int x;
+        d >> x;
         mPlayerFlag = (HamPlayerFlags)x;
     }
     if (d.rev > 2) {
-        bs >> mMasterAnims;
+        d >> mMasterAnims;
     }
 
     ResetNextShot();
@@ -258,15 +259,13 @@ void HamCamShot::StartAnim() {
 
 void HamCamShot::ListAnimChildren(std::list<RndAnimatable *> &children) const {
     CamShot::ListAnimChildren(children);
-    for (ObjPtrList<RndAnimatable>::iterator it = mMasterAnims.begin();
-         it != mMasterAnims.end();
-         ++it) {
+    FOREACH (it, mMasterAnims) {
         children.push_back(*it);
     }
 }
 
 bool HamCamShot::TargetTeleportTransform(Symbol s, Transform &xfm) {
-    for (ObjList<Target>::iterator it = mTargets.begin(); it != mTargets.end(); ++it) {
+    FOREACH (it, mTargets) {
         Target &cur = *it;
         if (cur.mTeleport && s == cur.mTarget) {
             xfm = cur.mTo;
@@ -336,7 +335,7 @@ std::list<HamCamShot::TargetCache>::iterator HamCamShot::GetTargetCache(Symbol s
 }
 
 void HamCamShot::Store() {
-    for (ObjList<Target>::iterator it = mTargets.begin(); it != mTargets.end(); ++it) {
+    FOREACH (it, mTargets) {
         it->Store(this);
     }
 }
@@ -368,7 +367,7 @@ DataNode HamCamShot::OnListAllNextShots(const DataArray *a) {
     std::list<HamCamShot *> shots;
     ListNextShots(shots);
     DataArrayPtr ptr;
-    for (std::list<HamCamShot *>::iterator it = shots.begin(); it != shots.end(); ++it) {
+    FOREACH (it, shots) {
         ptr->Insert(ptr->Size(), *it);
     }
     return ptr;
@@ -435,7 +434,7 @@ float HamCamShot::GetTotalDurationSeconds() {
     float dur = GetDurationSeconds();
     std::list<HamCamShot *> shots;
     ListNextShots(shots);
-    for (std::list<HamCamShot *>::iterator it = shots.begin(); it != shots.end(); ++it) {
+    FOREACH (it, shots) {
         dur += (*it)->GetDurationSeconds();
     }
     return dur;
@@ -801,37 +800,22 @@ void HamCamShot::UpdateTargetsFlipped() {
     }
 }
 
-DataNode HamCamShot::OnAllowableNextShots(DataArray const *a) {
+DataNode HamCamShot::OnAllowableNextShots(const DataArray *a) {
     DataArrayPtr ptr;
-    {
-        ObjDirItr<HamCamShot> it(Dir(), true);
-        while (it) {
-            if (this != it) {
-                if (mNextShots.find(it) == nullptr) {
-                    std::list<HamCamShot *> camshots;
-                    it->ListNextShots(camshots);
-                    auto it2 = camshots.begin();
-                    while (it2 != camshots.end()) {
-                        if (*it2 == this)
-                            break;
-                        ++it2;
-                    }
-                    if (it2 == camshots.end()) {
-                        ptr->Insert(ptr->Size(), DataNode(it));
-                    }
+    for (ObjDirItr<HamCamShot> it(Dir(), true); it != nullptr; ++it) {
+        if (this != it) {
+            if (mNextShots.find(it) == nullptr) {
+                std::list<HamCamShot *> camshots;
+                it->ListNextShots(camshots);
+                if (std::find(camshots.begin(), camshots.end(), this) == camshots.end()) {
+                    ptr->Insert(ptr->Size(), &*it);
                 }
             }
-            ++it;
         }
     }
     static DataNode &propNode = DataVariable("milo_prop_path");
     if (propNode.Type() == kDataArray && propNode.Array()->Size() == 2) {
-        int i = propNode.Array()->Int(1);
-        auto it = mNextShots.begin();
-        while (i != 0) {
-            ++it;
-            i--;
-        }
+        auto it = NextItr(mNextShots.begin(), propNode.Array()->Int(1));
         ptr->Insert(ptr->Size(), *it);
     }
     return ptr;
@@ -841,12 +825,10 @@ HamCamShot::Target *HamCamShot::GetFlipTarget(Target *target) {
     Symbol temp = target->mTarget;
     Symbol flipTarget = GetFlipTarget(temp);
     if (temp != flipTarget) {
-        auto it = mTargets.begin();
-        while (it != mTargets.end()) {
+        FOREACH (it, mTargets) {
             if (it->mTarget == flipTarget) {
                 return &*it;
             }
-            ++it;
         }
     }
     return target;
