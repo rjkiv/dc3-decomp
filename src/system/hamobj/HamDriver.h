@@ -85,6 +85,7 @@ public:
     void OffsetSec(float);
     CharClip *FirstClip();
     LayerArray &Layers() { return mLayers; }
+    const std::map<CharClip *, float> &ClipWeights() const { return mClipWeights; }
 
 protected:
     HamDriver();
@@ -97,5 +98,5 @@ protected:
     ObjPtr<CharBonesObject> mBones; // 0x30
     LayerArray mLayers; // 0x44
     float unk78; // 0x78 - beat?
-    std::map<CharClip *, float> unk7c; // 0x7c
+    std::map<CharClip *, float> mClipWeights; // 0x7c
 };

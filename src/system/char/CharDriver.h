@@ -69,6 +69,7 @@ public:
     CharClipDriver *PlayGroup(const char *, int, float, float, float);
     void SetClipWeightMap();
     CharClip *FindClip(DataNode const &, bool notify = true);
+    const std::map<CharClip *, float> &ClipWeights() const { return mClipWeightMap; }
 
 protected:
     CharDriver();

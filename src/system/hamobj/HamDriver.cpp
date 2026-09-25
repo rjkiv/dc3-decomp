@@ -113,15 +113,15 @@ void HamDriver::Poll() {
 }
 
 void HamDriver::SetClipWeightMap() {
-    unk7c.clear();
+    mClipWeights.clear();
     SetClipMapRecurse(&mLayers);
     float total = 0;
-    FOREACH (it, unk7c) {
+    FOREACH (it, mClipWeights) {
         total += it->second;
     }
 
     if (total > 0) {
-        FOREACH (it, unk7c) {
+        FOREACH (it, mClipWeights) {
             it->second *= (1.0f / total);
         }
     }
@@ -192,11 +192,11 @@ void HamDriver::SetClipMapRecurse(HamDriver::Layer *layer) {
         LayerClip *clip = dynamic_cast<LayerClip *>(layer);
         if (clip && clip->unk8 != 0) {
             CharClip *c = clip->unk10;
-            auto it = unk7c.find(c);
-            if (it != unk7c.end()) {
+            auto it = mClipWeights.find(c);
+            if (it != mClipWeights.end()) {
                 it->second += clip->unk8;
             } else {
-                unk7c.insert(std::pair<CharClip *, float>(c, clip->unk8));
+                mClipWeights.insert(std::pair<CharClip *, float>(c, clip->unk8));
             }
         }
     }

@@ -731,6 +731,62 @@ void HamCharacter::SetFaceOverrideClip(Symbol s, bool notify) {
     }
 }
 
+ObjectDir *HamCharacter::GetNeutralSkeleton() {
+    if (SongAnimation() != -1) {
+        HamDriver *driver = Find<HamDriver>("song.hdrv", false);
+        if (driver && driver->FirstClip()) {
+            driver->SetClipWeightMap();
+            auto weights = driver->ClipWeights();
+            if (weights.empty()) {
+                return this;
+            }
+            mSkeletonBones->Zero();
+            FOREACH (it, weights) {
+                CharClip *first = it->first;
+                float second = it->second;
+                if (first) {
+                    ApplyBlendedSkeletons(driver, first, second);
+                }
+            }
+            mSkeletonBones->Poll();
+        } else {
+            CharClip *firstPlayingClip = mDriver->FirstPlayingClip();
+            if (firstPlayingClip) {
+                mSkeletonBones->Zero();
+                mDriver->SetClipWeightMap();
+                auto weights = mDriver->ClipWeights();
+                FOREACH (it, weights) {
+                    CharClip *first = it->first;
+                    float second = it->second;
+                    if (first && second > 0) {
+                        int idx = first->Property("clip_skeleton_index", false)->Int();
+                        sSkeletonClips[idx]->ScaleAdd(*mSkeletonBones, second, 0, 0);
+                    }
+                }
+                mSkeletonBones->Poll();
+            } else {
+                mSkeletonBones->Zero();
+                sSkeletonClips[mGender == kHamFemale ? 1 : 0]->ScaleAdd(
+                    *mSkeletonBones, 1, 0, 0
+                );
+                mSkeletonBones->Poll();
+            }
+        }
+    } else {
+        CharClip *firstClip = mDriver->FirstClip();
+        if (firstClip && (firstClip->Flags() & 1U) == 0) {
+            mSkeletonBones->Zero();
+            sSkeletonClips[mGender == kHamFemale ? 1 : 0]->ScaleAdd(
+                *mSkeletonBones, 1, 0, 0
+            );
+            mSkeletonBones->Poll();
+        } else {
+            return this;
+        }
+    }
+    return mNeutralSkelDir;
+}
+
 DataNode HamCharacter::OnConfigureFileMerger(DataArray *a) {
     FilePathTracker tracker(FileRoot());
     if (!mFileMerger) {
