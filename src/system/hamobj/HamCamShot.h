@@ -71,8 +71,8 @@ public:
     struct TargetCache {
         TargetCache() : unk4(), unk8() { unkxfm.Reset(); }
 
-        Symbol unksym; // 0x0
-        RndTransformable *unk4; // 0x4
+        Symbol unksym; // 0x0 - target name?
+        RndTransformable *unk4; // 0x4 - target?
         RndEnviron *unk8;
         Transform unkxfm; // 0xc
     };

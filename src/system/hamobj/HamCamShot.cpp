@@ -123,8 +123,50 @@ BEGIN_PROPSYNCS(HamCamShot)
     SYNC_SUPERCLASS(CamShot)
 END_PROPSYNCS
 
-BinStream &operator<<(BinStream &, const HamCamShot::Target &);
-BinStream &operator>>(BinStream &, const HamCamShot::Target &);
+BinStream &operator<<(BinStream &bs, const HamCamShot::Target &target) {
+    bs << target.mTarget;
+    bs << target.mTeleport;
+    bs << target.mTo;
+    bs << target.mAnimGroup;
+    bs << target.mReturn;
+    bs << target.mFastForward;
+    bs << target.mForwardEvent;
+    bs << target.mSelfShadow;
+    bs << target.unk68p4;
+    bs << target.unk68p3;
+    bs << target.mEnvOverride;
+    unsigned char lod = target.mForceLOD;
+    bs << lod;
+    return bs;
+}
+
+BinStream &operator>>(BinStream &bs, HamCamShot::Target &target) {
+    bs >> target.mTarget;
+    char teleport;
+    bs >> teleport;
+    target.mTeleport = teleport;
+    bs >> target.mTo;
+    bs >> target.mAnimGroup;
+    char ret;
+    bs >> ret;
+    target.mReturn = ret;
+    bs >> target.mFastForward;
+    bs >> target.mForwardEvent;
+    char selfshadow;
+    bs >> selfshadow;
+    target.mSelfShadow = selfshadow;
+    char p4;
+    bs >> p4;
+    target.unk68p4 = p4;
+    char p3;
+    bs >> p3;
+    target.unk68p3 = p3;
+    bs >> target.mEnvOverride;
+    char lod;
+    bs >> lod;
+    target.mForceLOD = lod;
+    return bs;
+}
 
 INIT_REVS(3, 0)
 
@@ -269,10 +311,9 @@ void HamCamShot::Target::UpdateTarget(Symbol s, HamCamShot *shot) {
 }
 
 std::list<HamCamShot::TargetCache>::iterator HamCamShot::CreateTargetCache(Symbol s) {
-    TargetCache cache;
-    sCache.push_back(cache);
-    cache.unksym = s;
-    cache.unk4 = FindTarget(s);
+    sCache.push_front(TargetCache());
+    sCache.front().unksym = s;
+    sCache.front().unk4 = FindTarget(s);
     return sCache.begin();
 }
 
@@ -690,14 +731,11 @@ void HamCamShot::UpdateTargetsFlipped() {
                         }
                     }
 
-                    // something mismatching here
-                    const char *clipsName = clips ? clips->Name() : "NULL";
-                    const char *characterName = character ? character->Name() : "NULL";
                     MILO_LOG(
                         "   Target %d: character = \'%s\' clips = \'%s\' animGroup = \'%s\'\n",
                         targetIdx,
-                        characterName,
-                        clipsName,
+                        character ? character->Name() : "NULL",
+                        clips ? clips->ProxyFile().c_str() : "NULL",
                         t.mAnimGroup
                     );
                     targetIdx++;
@@ -719,7 +757,7 @@ void HamCamShot::UpdateTargetsFlipped() {
                 FOREACH (it2, frame.mTargets) {
                     RndTransformable *target = *it2;
                     const char *name = target->Name();
-                    char buf[240];
+                    char buf[256];
                     strcpy(buf, name);
 
                     RndTransformable *transform = target;
