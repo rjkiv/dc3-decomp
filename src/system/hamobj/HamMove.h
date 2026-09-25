@@ -32,14 +32,14 @@ public:
     void SetNodeScale(int, MoveMirrored, const Vector3 &);
     float QuantizedSeconds(float) const;
     FilterVersionType Version() const {
-        int filterMask = (unk4 & 0x300000) >> 5;
+        unsigned int filterMask = (mFlags & 0x300000) >> 5;
         return filterMask ? kFilterVersionHam1 : kFilterVersionHam2;
     }
     float Beat() const { return mBeat; }
 
 private:
     float mBeat; // 0x0
-    int unk4; // 0x4 - flags?
+    unsigned int mFlags; // 0x4
     Ham1NodeWeight mHam1NodeWeights[kNumMoveModes][kNumMoveMirrored][kNumHam1Nodes]; // 0x8
     Vector3 mNodeWeights[kNumMoveMirrored][kMaxNumErrorNodes]; // 0x508
     Vector3 mNodeScales[kNumMoveMirrored][kMaxNumErrorNodes]; // 0x928

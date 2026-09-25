@@ -118,7 +118,7 @@ BinStream &operator>>(BinStreamRev &d, Ham2FrameWeight &wt) {
 
 void MoveFrame::Save(BinStream &bs) const {
     bs << mBeat;
-    bs << unk4;
+    bs << mFlags;
     bs << kNumHam1Nodes;
     for (int i = 0; i < kNumMoveModes; i++) {
         for (int j = 0; j < kNumMoveMirrored; j++) {
@@ -146,9 +146,10 @@ void MoveFrame::Load(BinStreamRev &d) {
         MILO_FAIL("Versions less than 14 no longer supported");
     }
     if (d.rev > 0x2B) {
-        d >> unk4;
-    } else
-        unk4 = -1;
+        d >> mFlags;
+    } else {
+        mFlags = -1;
+    }
     int num_ham2_nodes = FilterVersion::NumHam2Nodes();
     int num_ham1_nodes = kNumHam1Nodes;
     if (d.rev > 0x27) {
@@ -156,7 +157,7 @@ void MoveFrame::Load(BinStreamRev &d) {
         MILO_ASSERT(num_ham1_nodes == kNumHam1Nodes, 0x122);
         for (int i = 0; i < kNumMoveModes; i++) {
             for (int j = 0; j < kNumMoveMirrored; j++) {
-                for (int k = 0; k < kNumHam1Nodes; k++) {
+                for (int k = 0; k < num_ham1_nodes; k++) {
                     d >> mHam1NodeWeights[i][j][k];
                 }
             }
@@ -166,7 +167,7 @@ void MoveFrame::Load(BinStreamRev &d) {
         }
         int count;
         d >> count;
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < kNumMoveMirrored; i++) {
             for (int j = 0; j < count; j++) {
                 if (j >= num_ham2_nodes) {
                     if (d.rev < 0x29) {
@@ -195,18 +196,21 @@ void MoveFrame::Load(BinStreamRev &d) {
                     }
                     for (int k = 0; k < 3; k++) {
                         float &cur = mNodeScales[i][j][k];
-                        float set = kHugeFloat;
-                        if (0.0000099999997f <= fabsf(cur)) {
+                        float set;
+                        if (0.00001f > fabsf(cur)) {
+                            set = kHugeFloat;
+                        } else {
                             set = 1.0f / cur;
                         }
-                        mNodeScales[i][j][k] = set;
+                        mNodesInverseScale[i][j][k] = set;
                     }
                 }
             }
         }
-        for (; count < num_ham2_nodes; count++) {
+        for (int i = count; i < num_ham2_nodes; i++) {
             for (int mirror = 0; mirror < kNumMoveMirrored; mirror++) {
-                SetNodeScale(count, (MoveMirrored)mirror, Vector3(1, 1, 1));
+                mNodeWeights[mirror][i].Zero();
+                SetNodeScale(i, (MoveMirrored)mirror, Vector3(1, 1, 1));
             }
         }
     } else {
@@ -229,28 +233,70 @@ void MoveFrame::Load(BinStreamRev &d) {
                 d >> v;
             }
         }
-        std::vector<OldNodeWeight> oldNodeWeights[8];
+        std::vector<OldNodeWeight> oldNodeWeights[2][kNumMoveModes][kNumMoveMirrored];
         if (d.rev < 0x1E) {
             if (d.rev > 0x17) {
-                for (int i = 0; i < 2; i++) {
-                    d >> oldNodeWeights[i];
+                for (int i = 0; i < kNumMoveMirrored; i++) {
+                    d >> oldNodeWeights[0][0][i];
                 }
             }
             if (d.rev > 0x1B) {
-                for (int i = 2; i < 4; i++) {
-                    d >> oldNodeWeights[i];
+                for (int i = 0; i < kNumMoveMirrored; i++) {
+                    d >> oldNodeWeights[0][1][i];
                 }
             }
         } else {
-            for (int i = 0; i < 4; i++) {
-                for (int j = 0; j < 2; j++) {
-                    for (int k = 0; k < 2; k++) {
-                        d >> oldNodeWeights[i + k];
+            for (int i = 0; i < 2; i++) {
+                for (int j = 0; j < kNumMoveModes; j++) {
+                    for (int k = 0; k < kNumMoveMirrored; k++) {
+                        d >> oldNodeWeights[i][j][k];
                     }
                 }
             }
         }
-        // more...
+        for (int i = 0; i < kNumMoveModes; i++) {
+            for (int j = 0; j < kNumMoveMirrored; j++) {
+                for (int k = 0; k < kNumHam1Nodes; k++) {
+                    std::vector<OldNodeWeight> &curOldWeights = oldNodeWeights[0][i][j];
+                    if (k < curOldWeights.size()) {
+                        OldNodeWeight &cur = curOldWeights[k];
+                        Ham1NodeWeight &curHam1 = mHam1NodeWeights[i][j][k];
+                        curHam1.unk0 = cur.unk0 != 0;
+                        curHam1.unkc = cur.unkc;
+                        curHam1.unk10 = cur.unk10;
+                        curHam1.unk4 = cur.unk4;
+                        curHam1.unk8 = cur.unk8;
+                    }
+                }
+            }
+        }
+        for (int i = 0; i < kNumMoveMirrored; i++) {
+            std::vector<OldNodeWeight> &curOldWeights = oldNodeWeights[1][0][i];
+            for (int j = 0; j < num_ham2_nodes; j++) {
+                if (j + kNumHam1Nodes < curOldWeights.size()) {
+                    float set = curOldWeights[j + kNumHam1Nodes].unk0;
+                    mNodeWeights[i][j].Set(set, set, set);
+                }
+            }
+        }
+
+        if (d.rev < 0x1E) {
+            if (d.rev > 0x1C) {
+                for (int i = 0; i < kNumMoveMirrored; i++) {
+                    d >> mFrameWeights[i];
+                }
+            }
+        } else {
+            Ham2FrameWeight ham2Weights[2][kNumMoveMirrored];
+            for (int i = 0; i < 2; i++) {
+                for (int j = 0; j < kNumMoveMirrored; j++) {
+                    d >> ham2Weights[i][j];
+                }
+            }
+            for (int i = 0; i < kNumMoveMirrored; i++) {
+                mFrameWeights[i] = ham2Weights[1][i];
+            }
+        }
     }
 }
 
