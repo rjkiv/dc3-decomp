@@ -147,3 +147,47 @@ bool WebSvcMgrCurl::InitRequest(
     req->SetHttpReq(curl_req);
     return true;
 }
+
+void WebSvcMgrCurl::FindAndFinish(void *handle, bool success, unsigned int http_status) {
+    auto it = mRequests.begin();
+    WebSvcRequest *request;
+    for (; it != mRequests.end(); ++it) {
+        request = *it;
+        if (request->GetRequest() == handle) {
+            goto func;
+        }
+    }
+
+    MILO_NOTIFY("WSMC::FindAndFinish: Handle not found!");
+    return;
+
+func:
+    curl_slist *cookies;
+    CURLcode getInfo = curl_easy_getinfo(handle, CURLINFO_COOKIELIST, &cookies);
+    if (getInfo == 0) {
+        std::map<String, String> map;
+
+        curl_slist *cookie = cookies;
+        while (cookie) {
+            std::vector<String> vec;
+            String str(cookie->data);
+            str.split("\t", vec);
+            if (vec.size() == 7) {
+                map.insert(std::make_pair(vec[5], vec[6]));
+            }
+            cookie = cookie->next;
+        }
+        request->SetCookies(map);
+    }
+
+    // TODO: should be calling curl_slist_free_all to free the cookies..
+    //  but hmx didnt, will have to add once milo hits 100
+
+    curl_multi_remove_handle(mCurlMultiHandle, handle);
+    request->SetStatusCode(http_status);
+    if (success) {
+        request->OnSuccess();
+    } else {
+        request->OnFailure();
+    }
+}

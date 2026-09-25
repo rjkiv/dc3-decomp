@@ -16,6 +16,8 @@ INT XNetConnect(const IN_ADDR ina);
 DWORD XNetGetTitleXnAddr(XNADDR *pxna);
 INT XNetXnAddrToMachineId(const XNADDR *pxnaddr, ULONGLONG *pqwMachineId);
 
+INT XNetServerToInAddr(const IN_ADDR ina, DWORD dwServiceId, IN_ADDR *pina);
+
 #ifdef __cplusplus
 }
 #endif

@@ -66,25 +66,24 @@ void HttpGet::StartSending() {
     if (!mSocket->CanSend()) {
         mFailType = (HttpGetFailType)1;
         SetState((State)7);
-    } else {
-        String str("GET ");
-        str += unkc;
-        str += " ";
-        str += "HTTP/1.1";
-        if (!unk58.empty()) {
-            str += "\r\n";
-            str += unk58;
-        }
-        str += "\r\n\r\n";
-        int len = str.length();
-        mSocket->Send(str.c_str(), len);
-        if (len != 0) {
-            mFailType = (HttpGetFailType)1;
-            SetState((State)7);
-        } else {
-            SetState((State)3);
-        }
+        return;
     }
+    String str("GET ");
+    str += unkc;
+    str += " ";
+    str += "HTTP/1.1";
+    if (!unk58.empty()) {
+        str += "\r\n";
+        str += unk58;
+    }
+    str += "\r\n\r\n";
+    int len = str.length();
+    if (mSocket->Send(str.c_str(), len) != len) {
+        mFailType = (HttpGetFailType)1;
+        SetState((State)7);
+        return;
+    }
+    SetState((State)3);
 }
 
 void HttpGet::SafeShutdown() {
@@ -197,15 +196,18 @@ bool HttpPost::CanRetry() {
 
 void HttpPost::StartSending() {
     MILO_ASSERT(mSocket, 0x3CD);
-    if (mSocket->CanSend()) {
+    if (!mSocket->CanSend()) {
+        mFailType = (HttpGetFailType)1;
+        SetState((State)7);
+    } else {
         unk9c = unk94.length();
-        if (mSocket->Send(unk94.c_str(), unk9c) == unk9c) {
+        if (mSocket->Send(unk94.c_str(), unk9c) != unk9c) {
+            mFailType = (HttpGetFailType)1;
+            SetState((State)7);
+        } else {
             SetState((State)2);
-            return;
         }
     }
-    mFailType = (HttpGetFailType)1;
-    SetState((State)7);
 }
 
 void HttpPost::Sending() {

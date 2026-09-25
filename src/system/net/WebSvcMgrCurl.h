@@ -3,6 +3,7 @@
 #include "curl/multi.h"
 #include "net/HttpReq.h"
 #include "net/WebSvcMgr.h"
+#include "os/Debug.h"
 
 class WebSvcMgrCurl : public WebSvcMgr {
 public:

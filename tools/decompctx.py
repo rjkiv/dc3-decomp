@@ -61,6 +61,9 @@ passthrough_defines = [
     "_STLP_USE_NAMESPACES",
     "_STLP_USE_OWN_NAMESPACE",
     "_STLP_NO_NAMESPACES",
+
+    # pcpp skips the evaluation of the branch that defines this due to checking `__cplusplus`
+    "CURL_ISOCPP",
 ]
 
 

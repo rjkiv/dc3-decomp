@@ -2,13 +2,17 @@
 #include "curl/curl.h"
 #include "curl/easy.h"
 #include "net/HttpReq.h"
+#include "net/WebSvcMgr.h"
 #include "os/Debug.h"
 #include "os/NetworkSocket.h"
 #include "utl/MemMgr.h"
 #include "utl/Std.h"
+#include <cstdlib>
 
 namespace {
-    unsigned int WriteMemoryCallback(void *, unsigned int, unsigned int, void *);
+    unsigned int WriteMemoryCallback(
+        void *contents, unsigned int size, unsigned int nmemb, void *userp
+    );
 }
 
 HttpReqCurl::HttpReqCurl(

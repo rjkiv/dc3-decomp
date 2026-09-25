@@ -3,6 +3,8 @@
 #include "os/Timer.h"
 #include "utl/Str.h"
 #include "xdk/XNET.h"
+#include "xdk/xnet/winsockx.h"
+#include "xdk/xonline/xonline.h"
 
 class XLSPConnection : public ThreadCallback {
 public:
@@ -37,10 +39,10 @@ private:
     String unkc;
     unsigned int unk14;
     HANDLE unk18;
-    void *unk1c;
+    XTITLE_SERVER_INFO *unk1c;
     DWORD unk20;
     int unk24;
     XOVERLAPPED mXOverlapped; // 0x28
-    int unk44;
+    IN_ADDR unk44;
     Timer unk48;
 };
