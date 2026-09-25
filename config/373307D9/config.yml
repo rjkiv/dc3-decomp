@@ -88,6 +88,13 @@ add_relocations:
 - source: .text:0x82589F84
   type: l
   target: ??_C@_0BL@FDNFJOM@CONNECT?5responded?5chunked?6?$AA@
+# ?Reteleport@HamCamShot@@QAAXABVVector3@@_NVSymbol@@@Z
+- source: .text:0x824A6B94
+  type: ha
+  target: ?TheGameData@@3PAVHamGameData@@A
+- source: .text:0x824A6DD0
+  type: l
+  target: ?TheGameData@@3PAVHamGameData@@A
 
 # These are Windows error codes, not relocations!
 block_relocations:

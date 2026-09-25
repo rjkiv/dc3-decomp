@@ -657,6 +657,61 @@ void HamCamShot::SetPreFrame(float frame, float blend) {
     }
 }
 
+void HamCamShot::Reteleport(const Vector3 &v3, bool b2, Symbol s3) {
+    bool unkb = unk388;
+    FOREACH (it, mTargets) {
+        Target &t11 = *it;
+        Target &t6 = unkb ? *GetFlipTarget(&t11) : t11;
+        if (!t11.mTarget.Null() && (!b2 || t11.mTeleport)
+            && (s3 == gNullStr || s3 == t11.mTarget)) {
+            auto cacheItr = CreateTargetCache(t11.mTarget);
+            if (cacheItr->unk4) {
+                cacheItr->unkxfm = cacheItr->unk4->LocalXfm();
+                Transform tfe0 = t6.mTo;
+                static Symbol player0("player0");
+                static Symbol player1("player1");
+                static Symbol backup0("backup0");
+                static Symbol backup1("backup1");
+                static Symbol DC_PLAYER_FREESTYLE("DC_PLAYER_FREESTYLE");
+                static Symbol INTRO_QUICK("INTRO_QUICK");
+                static Symbol INTRO_PLAYLIST("INTRO_PLAYLIST");
+                if (TheGameData->SidesSwapped() && (mPlayerFlag == 2 || mPlayerFlag == 3)
+                    && (t11.mTarget == player0 || t11.mTarget == player1
+                        || t11.mTarget == backup0 || t11.mTarget == backup1)) {
+                    static Symbol AUTHORED_CAM_CATS("AUTHORED_CAM_CATS");
+                    DataArray *macro = DataGetMacro(AUTHORED_CAM_CATS);
+                    if ((macro && macro->Contains(mCategory))
+                        || mCategory == DC_PLAYER_FREESTYLE || mCategory == INTRO_QUICK
+                        || mCategory == INTRO_PLAYLIST) {
+                        Symbol s10;
+                        if (t6.mTarget == player0) {
+                            s10 = player1;
+                        } else if (t6.mTarget == player1) {
+                            s10 = player0;
+                        } else if (t6.mTarget == backup0) {
+                            s10 = backup1;
+                        } else if (t6.mTarget == backup1) {
+                            s10 = backup0;
+                        }
+                        FOREACH (t, mTargets) {
+                            if (t->mTarget == s10) {
+                                tfe0 = t->mTo;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                Transform tf120;
+                Multiply(tfe0, WorldXfm(), tf120);
+                tf120.v += v3;
+                TeleportTarget(cacheItr->unk4, tf120, false);
+            }
+        }
+    }
+    sCache.clear();
+}
+
 void HamCamShot::FlipTargetAnimGroups() {
     static Symbol player0("player0");
     static Symbol player1("player1");
