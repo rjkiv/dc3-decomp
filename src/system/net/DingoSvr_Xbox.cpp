@@ -16,8 +16,8 @@ DingoSvrXbox gDingoSvrXbox;
 DingoServer &TheServer = gDingoSvrXbox;
 
 DingoSvrXbox::DingoSvrXbox()
-    : unkb0(0), mXUID(0), unk148(0), mJobMgr(this), unk15c(0), unk160(0), unk168(0),
-      unk170(0), mMsBetweenReconnDingo(0), mLeaderboardID(-1),
+    : mState(0), mXUID(0), mDingoServiceID(0), mJobMgr(this), unk15c(0), unk160(0),
+      unk168(0), unk170(0), mMsBetweenReconnDingo(0), mLeaderboardID(-1),
       mLeaderboardScorePropID(-1) {}
 
 BEGIN_HANDLERS(DingoSvrXbox)
@@ -37,7 +37,7 @@ void DingoSvrXbox::Init() {
 }
 
 bool DingoSvrXbox::Authenticate(int i1) {
-    if (unkb0 != 2) {
+    if (mState != 2) {
         SendDebugDataPoint(
             "no_xlsp_connection",
             "location",
@@ -61,7 +61,7 @@ void DingoSvrXbox::Logout() {
 }
 
 void DingoSvrXbox::Disconnect() {
-    unkb0 = 0;
+    mState = 0;
     unkc8.Disconnect();
 }
 
@@ -169,35 +169,31 @@ bool DingoSvrXbox::FillAuthParamsFromPadNum(DataPoint &pt, int padnum) {
     DingoServer::FillAuthParams(pt);
     if (padnum < 0) {
         MILO_NOTIFY("Bad auth attempt with padnum = %d.", padnum);
-        return false;
-    } else {
-        if (ThePlatformMgr.IsSignedIntoLive(padnum)
-            && !ThePlatformMgr.IsPadAGuest(padnum)) {
-            String str70;
-            XUID xuid;
-            HRESULT i3 = XUserGetXUID(padnum, &xuid);
-            char name[32];
-            HRESULT i4 = XUserGetName(padnum, name, 0x1E);
-            bool ret;
-            if (i3 == 0 && i4 == 0) {
-                str70 = name;
-                if (unk74 == -1) {
-                    unk70 = padnum;
-                    mUserName = name;
-                    mXUID = xuid;
-                }
-                static Symbol username("username");
-                pt.AddPair(username, str70.c_str());
-                static Symbol platform_uid("platform_uid");
-                String str80;
-                MILO_ASSERT(xuid, 0x101);
-                str80 << xuid;
-                pt.AddPair(platform_uid, str80.c_str());
-                ret = true;
-            } else {
-                ret = false;
+    } else if (ThePlatformMgr.IsSignedIntoLive(padnum)
+               && !ThePlatformMgr.IsPadAGuest(padnum)) {
+        String str70;
+        XUID xuid;
+        HRESULT i3 = XUserGetXUID(padnum, &xuid);
+        char name[32];
+        HRESULT i4 = XUserGetName(padnum, name, 0x1E);
+        bool ret;
+        if (i3 != 0 || i4 != 0) {
+            return false;
+        } else {
+            str70 = name;
+            if (unk74 == -1) {
+                unk70 = padnum;
+                mUserName = name;
+                mXUID = xuid;
             }
-            return ret;
+            static Symbol username("username");
+            pt.AddPair(username, str70.c_str());
+            static Symbol platform_uid("platform_uid");
+            String str80;
+            MILO_ASSERT(xuid, 0x101);
+            str80 << xuid;
+            pt.AddPair(platform_uid, str80.c_str());
+            return true;
         }
     }
     return false;
@@ -242,24 +238,25 @@ void DingoSvrXbox::Poll() {
     }
     mJobMgr.Poll();
 
-    switch (unkb0) {
+    switch (mState) {
     case 0: {
-        bool getID = ThePlatformMgr.GetServiceID("dingo", unk148);
-        if (getID) {
+        if (ThePlatformMgr.GetServiceID("dingo", mDingoServiceID)) {
             if (mXLSPFilter.empty()) {
                 MILO_NOTIFY("DingoSvrXbox: Empty XLSP filter string.");
-            } else if (unk148 == 0) {
+                break;
+            } else if (mDingoServiceID == 0) {
                 MILO_NOTIFY("DingoSvrXbox: Invalid Dingo service ID.");
+                break;
             } else {
-                unkc8.Connect(mXLSPFilter.c_str(), unk148);
-                unkb0 = 1;
+                unkc8.Connect(mXLSPFilter.c_str(), mDingoServiceID);
+                mState = 1;
             }
         }
         break;
     }
     case 1:
         if (unkc8.GetState() == 3) {
-            unkb0 = 2;
+            mState = 2;
             mIPAddr = unkc8.GetServiceIP();
             mHostName.erase();
         }
@@ -267,7 +264,7 @@ void DingoSvrXbox::Poll() {
     case 2:
         break;
     default:
-        MILO_FAIL("DingoSvrXbox: State %d unhandled.", unkb0);
+        MILO_FAIL("DingoSvrXbox: State %d unhandled.", mState);
         break;
     }
 

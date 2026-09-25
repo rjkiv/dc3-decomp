@@ -71,8 +71,7 @@ void DingoServer::ManageJob(DingoJob *job) {
                 c4 = false;
             }
         }
-        HttpReq *req = job->GetHttpReq();
-        if (c4 && !req) {
+        if (c4 && !job->HasHttpReq()) {
             u7 = !InitAndAddJob(job, false, b8);
         }
     }
@@ -221,10 +220,9 @@ DataNode DingoServer::OnMsg(const DingoJobCompleteMsg &msg) {
                 mAuthState = kServerAuthed;
                 OnAuthSuccess();
                 AddDelayedCalls();
-                ServerStatusChangedMsg msg(kServerStatusConnected);
-                Export(msg, false);
+                Export(ServerStatusChangedMsg(kServerStatusConnected), false);
                 DoAdditionalLogin();
-
+                return 1;
             } else {
                 DataPoint dataP("svr_sent_non_success_on_auth");
                 dataP.AddPair("location", "DingoSvr::OnMsg1");
@@ -238,8 +236,8 @@ DataNode DingoServer::OnMsg(const DingoJobCompleteMsg &msg) {
                 CancelDelayedCalls();
                 TheWebSvcMgr.CancelOutstandingCalls();
                 Logout();
-                ServerStatusChangedMsg msg(kServerStatusDisconnected);
-                Export(msg, false);
+                Export(ServerStatusChangedMsg(kServerStatusDisconnected), false);
+                return 0;
             }
         } else {
             SendDebugDataPoint(
@@ -254,8 +252,8 @@ DataNode DingoServer::OnMsg(const DingoJobCompleteMsg &msg) {
             CancelDelayedCalls();
             TheWebSvcMgr.CancelOutstandingCalls();
             Logout();
-            ServerStatusChangedMsg msg(kServerStatusDisconnected);
-            Export(msg, false);
+            Export(ServerStatusChangedMsg(kServerStatusDisconnected), false);
+            return 0;
         }
         return 0;
     }

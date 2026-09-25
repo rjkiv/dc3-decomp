@@ -39,13 +39,13 @@ protected:
     virtual bool FillAuthParamsFromPadNum(DataPoint &pt, int padnum);
     virtual void OnAuthSuccess();
 
-    int unkb0;
+    int mState; // 0xb0
     int unkb4;
     XUID mXUID; // 0xb8
     String mUserName; // 0xc0
     XLSPConnection unkc8;
     String mXLSPFilter; // 0x140
-    unsigned int unk148;
+    unsigned int mDingoServiceID; // 0x148
     JobMgr mJobMgr; // 0x14c
     int unk15c; // 0x15c - state? last job type queued?
     u64 unk160;

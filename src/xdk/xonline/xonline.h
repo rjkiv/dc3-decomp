@@ -42,6 +42,12 @@ typedef struct _XSTORAGE_ENUMERATE_RESULTS { /* Size=0xc */
     /* 0x0008 */ XSTORAGE_FILE_INFO *pItems;
 } XSTORAGE_ENUMERATE_RESULTS;
 
+struct XTITLE_SERVER_INFO { /* Size=0xd0 */
+    /* 0x0000 */ IN_ADDR inaServer;
+    /* 0x0004 */ DWORD dwFlags;
+    /* 0x0008 */ char szServerInfo[200];
+};
+
 DWORD XTitleServerCreateEnumerator(
     LPCSTR pszServerInfo, DWORD cItem, DWORD *pcbBuffer, HANDLE *hEnum
 );

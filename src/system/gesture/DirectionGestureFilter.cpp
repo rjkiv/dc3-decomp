@@ -7,6 +7,7 @@
 #include "gesture/StandingStillGestureFilter.h"
 #include "obj/Task.h"
 #include "rndobj/Overlay.h"
+#include <cmath>
 
 float DirectionGestureFilter::sLastSwipeTime[6] = { -100, -100, -100, -100, -100, -100 };
 
@@ -123,6 +124,26 @@ void DirectionGestureFilterSingleUser::ResetHoverTimer() {
 
 float DirectionGestureFilterSingleUser::UpdateOverlay(RndOverlay *overlay, float f1) {
     return mArcDetector.UpdateOverlay(overlay, f1);
+}
+
+bool DirectionGestureFilterSingleUser::HandAtSide(
+    const Skeleton &skeleton, float f1, float f2, float f3
+) const {
+    float jointVal = skeleton.TrackedJoints()[3].mJointPos[0].y
+        - skeleton.TrackedJoints()[19].mJointPos[0].y;
+
+    const TrackedJoint &handJoint = skeleton.HandJoint(unk4);
+    const TrackedJoint &hipJoint = skeleton.HipJoint(unk4);
+    const TrackedJoint &kneeJoint = skeleton.KneeJoint(unk4);
+    const TrackedJoint &elbowJoint = skeleton.ElbowJoint(unk4);
+    float jointX = handJoint.mJointPos[0].x - (f1 * f3 + elbowJoint.mJointPos[0].x) * f2;
+    float jointY = handJoint.mJointPos[0].y
+        - (kneeJoint.mJointPos[0].y + hipJoint.mJointPos[0].y) / 2;
+    float jointZ = handJoint.mJointPos[0].z
+        - (kneeJoint.mJointPos[0].z + hipJoint.mJointPos[0].z) / 2;
+
+    return sqrt(jointX * jointX + jointZ * jointZ + jointY * jointY)
+        <= jointVal * 0.59171593f * f1;
 }
 
 #pragma endregion
