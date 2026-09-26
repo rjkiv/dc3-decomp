@@ -116,7 +116,7 @@ void HamSkeletonConverter::Highlight() {
 
         Vector3 scaled;
         Add(scaledX, curXfm.v, scaled);
-        TheRnd.DrawLine(curXfm.v, scaledX, Hmx::Color(1, 0, 0), false);
+        TheRnd.DrawLine(curXfm.v, scaled, Hmx::Color(1, 0, 0), false);
         Add(scaledY, curXfm.v, scaled);
         TheRnd.DrawLine(curXfm.v, scaled, Hmx::Color(0, 1, 0), false);
         Add(scaledZ, curXfm.v, scaled);
@@ -200,19 +200,19 @@ void HamSkeletonConverter::RotateTowards(
         Hmx::Quat q40;
         MakeRotQuat(v1, v2, q40);
         float angle = acos(Dot(v1, v2));
-        if (fabsf(angle) < 1e-9) {
+        if (IsNaN(angle) || fabsf(angle) < 1e-9) {
             vout.x = v1.x;
             vout.y = v1.y;
             vout.z = v1.z;
         } else {
             float fabsed = fabsf(f / angle);
-            if (fabsed < 1.0f) {
-                Interp(q50, q40, fabsed, q40);
-                Multiply(v1, q40, vout);
-            } else {
+            if (fabsed >= 1.0f) {
                 vout.x = v2.x;
                 vout.y = v2.y;
                 vout.z = v2.z;
+            } else {
+                Interp(q50, q40, fabsed, q40);
+                Multiply(v1, q40, vout);
             }
         }
     }
