@@ -237,7 +237,7 @@ DataNode FreestyleMoveRecorder::OnWriteCreated(DataArray *a) {
     sInstance->WriteFreestyleMoveClip(
         str,
         sInstance->unk48[sInstance->unkb8].mNumFrames,
-        sInstance->unk48[sInstance->unkb8].unk18
+        sInstance->unk48[sInstance->unkb8].mFreestyleMoveFrames
     );
     return 0;
 }
@@ -245,7 +245,7 @@ DataNode FreestyleMoveRecorder::OnWriteCreated(DataArray *a) {
 DataNode FreestyleMoveRecorder::OnReadCreated(DataArray *a) {
     int framecount;
     sInstance->ReadFreestyleMoveClip(
-        a->Str(1), framecount, sInstance->unk48[sInstance->unkb8].unk18
+        a->Str(1), framecount, sInstance->unk48[sInstance->unkb8].mFreestyleMoveFrames
     );
     sInstance->unk48[sInstance->unkb8].Init(sInstance->unk24);
     sInstance->unk48[sInstance->unkb8].mNumFrames = framecount;

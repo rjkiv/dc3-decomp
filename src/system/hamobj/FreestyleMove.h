@@ -18,9 +18,16 @@ struct FreestyleMoveFrame {
     }
 };
 
+// size 0x50
+struct DepthFrameStruct {
+    bool unk0;
+    int unk4, unk8, unkc;
+    char filler[0x40];
+};
+
 // size 0x12c0
 struct DepthFrame {
-    char filler[0x12c0];
+    DepthFrameStruct structs[60]; // there's an array of 60 structs, each are 0x50 sized
 
     static void *operator new[](unsigned int s) {
         return _MemAllocTemp(s, __FILE__, 0x26, "DepthFrame", 0);
@@ -42,12 +49,12 @@ public:
 
     MEM_OVERLOAD(FreestyleMove, 0x18);
 
-    DepthFrame *unk4; // 0x4
-    int mNumFrames; // 0x8 - num frames
+    DepthFrame *mDepthFrames; // 0x4
+    int mNumFrames; // 0x8
     int unkc;
     int unk10;
     int unk14;
-    FreestyleMoveFrame *unk18; // 0x18
+    FreestyleMoveFrame *mFreestyleMoveFrames; // 0x18
 };
 
 // size 0x10
