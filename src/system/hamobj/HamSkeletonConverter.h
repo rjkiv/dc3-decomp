@@ -50,6 +50,17 @@ protected:
     void SetRotzBoneValue(String, float);
     void SetPosBoneValue(String, Vector3);
     void RotateTowards(const Vector3 &, const Vector3 &, float, Vector3 &);
+    void ScaleBone(
+        SkeletonJoint,
+        SkeletonJoint,
+        SkeletonCoordSys,
+        const Vector3 &,
+        const Vector3 &,
+        const Vector3 &,
+        Vector3 &
+    );
+    void CalcRotzBone(SkeletonJoint, SkeletonJoint, SkeletonJoint);
+    void CalcQuatBone(SkeletonJoint, SkeletonJoint, SkeletonJoint);
 
     /** "The CharBones object to add into." */
     ObjPtr<CharBonesObject> mBones; // 0x14

@@ -189,6 +189,72 @@ void HamSkeletonConverter::SetPosBoneValue(String s, Vector3 v) {
     vPtr->z = v.z;
 }
 
+void HamSkeletonConverter::ScaleBone(
+    SkeletonJoint j1,
+    SkeletonJoint j2,
+    SkeletonCoordSys cs3,
+    const Vector3 &v4,
+    const Vector3 &v5,
+    const Vector3 &v6,
+    Vector3 &v7
+) {
+    float len = Distance(v4, v5);
+    RndTransformable *t1 = unk6c0[j1];
+    RndTransformable *t2 = unk6c0[j2];
+    float tlen = Distance(t1->WorldXfm().v, t2->WorldXfm().v);
+    Vector3 diff;
+    Subtract(v5, v4, diff);
+    Scale(diff, tlen / len, diff);
+    Add(diff, v6, v7);
+}
+
+void HamSkeletonConverter::CalcRotzBone(
+    SkeletonJoint j1, SkeletonJoint j2, SkeletonJoint j3
+) {
+    Vector3 vd0;
+    Subtract(unk80[j2], unk80[j1], vd0);
+    Normalize(vd0, vd0);
+    Vector3 vc0;
+    Subtract(unk80[j3], unk80[j1], vc0);
+    Normalize(vc0, vc0);
+    float dot = -acosf(Dot(vc0, vd0));
+    if (!IsNaN(dot)) {
+        RndTransformable *t = unk6c0[j2];
+        Hmx::Matrix3 mb0 = t->LocalXfm().m;
+        MakeRotMatrixZ(dot, mb0);
+        Multiply(Transform(mb0, t->LocalXfm().v), unk1c0[j1], unk1c0[j2]);
+        SetRotzBoneValue(MirrorBoneName(j2), dot);
+    }
+}
+
+void HamSkeletonConverter::CalcQuatBone(
+    SkeletonJoint j1, SkeletonJoint j2, SkeletonJoint j3
+) {
+    Vector3 v1b0;
+    Subtract(unk80[j3], unk80[j2], v1b0);
+    Normalize(v1b0, v1b0);
+    RndTransformable *t = unk6c0[j2];
+    Transform tf180 = t->LocalXfm();
+    Transform tff0;
+    GetParentWorldXfm(t, tff0, j1);
+    Multiply(tf180, tff0, tf180);
+    Hmx::Quat q1a0;
+    MakeRotQuat(tf180.m.x, v1b0, q1a0);
+    Transform tf130;
+    Multiply(tf180.m.x, q1a0, tf130.m.x);
+    Multiply(tf180.m.y, q1a0, tf130.m.y);
+    Multiply(tf180.m.z, q1a0, tf130.m.z);
+    Normalize(tf130.m, tf130.m);
+    tf130.v = tf180.v;
+    unk1c0[j2].Set(tf130.m, tf180.v);
+    Transform tfb0;
+    Invert(tff0, tfb0);
+    Transform tf70;
+    Multiply(tf130, tfb0, tf70);
+    Hmx::Quat q190(tf70.m);
+    SetQuatBoneValue(CharBoneName(j2), q190);
+}
+
 void HamSkeletonConverter::RotateTowards(
     const Vector3 &v1, const Vector3 &v2, float f, Vector3 &vout
 ) {
