@@ -131,8 +131,7 @@ void HamIKEffector::SetName(const char *name, ObjectDir *dir) {
 }
 
 void HamIKEffector::ListPollChildren(std::list<RndPollable *> &polls) const {
-    RndPollable *poll = mMore ? mMore->mSkeleton.Ptr() : nullptr;
-    polls.push_back(poll);
+    polls.push_back(mMore);
     polls.push_back(mOther);
 }
 
@@ -173,14 +172,20 @@ HamIKEffector::EffectorType HamIKEffector::GetType() {
         return kEffectorTypeNone;
     } else if (strneq(mEffector->Name(), "bone_pelvis", 11)) {
         return kEffectorTypePelvis;
-    } else if (strneq(mEffector->Name(), "bone_L-ankle", 12)
-               || strneq(mEffector->Name(), "bone_R-ankle", 12)) {
+    } else if (
+        strneq(mEffector->Name(), "bone_L-ankle", 12)
+        || strneq(mEffector->Name(), "bone_R-ankle", 12)
+    ) {
         return kEffectorTypeAnkle;
-    } else if (strneq(mEffector->Name(), "bone_L-hand", 11)
-               || strneq(mEffector->Name(), "bone_R-hand", 11)) {
+    } else if (
+        strneq(mEffector->Name(), "bone_L-hand", 11)
+        || strneq(mEffector->Name(), "bone_R-hand", 11)
+    ) {
         return kEffectorTypeHand;
-    } else if (strneq(mEffector->Name(), "bone_L-foreArm", 11)
-               || strneq(mEffector->Name(), "bone_R-foreArm", 11)) {
+    } else if (
+        strneq(mEffector->Name(), "bone_L-foreArm", 11)
+        || strneq(mEffector->Name(), "bone_R-foreArm", 11)
+    ) {
         return kEffectorTypeForearm;
     } else if (strneq(mEffector->Name(), "bone_head", 9)) {
         return kEffectorTypeHead;
@@ -282,12 +287,28 @@ float HamIKEffector::ApplyPosConstraints(
 }
 
 float HamIKEffector::GetGroundHeight(RndTransformable *t) {
-    for (HamIKEffector *it = this; it != nullptr; it = it->mMore) {
-        if (it->mGround) {
-            t = it->mGround;
-            break;
+    // this is evil and stupid and dumb, but a for loop didn't match
+    HamIKEffector *it = this;
+    do {
+        RndTransformable *ground = it->mGround;
+        if ((int)ground) {
+            return ground->WorldXfm().v.z;
         }
-    }
+        HamIKEffector *next = it->mMore;
+        if (!(int)next) {
+            break;
+        } else {
+            it = next;
+        }
+    } while (true);
+
+    // in the future please just use this for the love of god
+    // for (HamIKEffector *it = this; it != nullptr; it = it->mMore) {
+    //     RndTransformable *ground = it->mGround;
+    //     if (ground) {
+    //         return ground->WorldXfm().v.z;
+    //     }
+    // }
     return t->WorldXfm().v.z;
 }
 
@@ -298,8 +319,9 @@ void HamIKEffector::ComputeElbowPullAndQuat(
     MultiplyTranspose(v, xfm, v40);
     const Vector3 &effectorV = mEffector->TransParent()->LocalXfm().v;
     MakeRotQuat(effectorV, v40, q.q);
-    Vector3 vdiff;
-    Subtract(v, xfm.v, vdiff);
-    q.v.x = vdiff.x;
-    Scale(q.v, 1.0f - effectorV.x / Length(vdiff), q.v);
+    Vector3 vsub;
+    Subtract(v, xfm.v, vsub);
+    q.v.x = vsub.x;
+    float scalar = 1.0f - effectorV.x / Length(vsub);
+    Scale(vsub, scalar, q.v);
 }
