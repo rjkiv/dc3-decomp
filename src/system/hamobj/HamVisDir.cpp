@@ -28,7 +28,7 @@ PoseOwner::~PoseOwner() {
 
 HamVisDir::HamVisDir()
     : mFilter(0), mRunning(0), mPlayer1Right(this), mPlayer1Left(this),
-      mPlayer2Right(this), mPlayer2Left(this), mMiloManualFrame(1), unk334(0) {
+      mPlayer2Right(this), mPlayer2Left(this), mMiloManualFrame(1), mGrooviness(0) {
     SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
     if (!handle.HasCallback(this)) {
         handle.AddCallback(this);
@@ -256,13 +256,20 @@ void HamVisDir::PostUpdate(const SkeletonUpdateData *data) {
                 mFilter->UpdateFilters(*data);
             }
             if (mRunning) {
+                bool b4 = false;
                 for (int i = 0; i < 2; i++) {
                     HamPlayerData *player_data = TheGameData->Player(i);
                     MILO_ASSERT(player_data, 0x101);
                     if (player_data->IsPlaying()) {
                         const Skeleton *cur = data->unk0[i];
                         if (cur && cur->IsTracked()) {
-                            UpdateGestureFilter(*cur, i);
+                            int i8 = i;
+                            if (i == 0) {
+                                b4 = true;
+                            } else if (!b4) {
+                                i8 = 0;
+                            }
+                            UpdateGestureFilter(*cur, i8);
                             mSquatPoses[i].pose->Update(*cur);
                             mSquatPoses[i].holder->Update(*cur);
                             mYPoses[i].pose->Update(*cur);
@@ -278,8 +285,8 @@ void HamVisDir::PostUpdate(const SkeletonUpdateData *data) {
 }
 
 void HamVisDir::SetGrooviness(float groove) {
-    unk334 = (groove - 0.5f) * (2.0f / 3.0f);
-    ClampEq<float>(unk334, 0.0f, 1.0f);
+    mGrooviness = (groove - 0.5f) * (2.0f / 3.0f);
+    ClampEq<float>(mGrooviness, 0.0f, 1.0f);
     for (ObjDirItr<DepthBuffer3D> it(this, true); it != nullptr; ++it) {
         it->SetGrooviness(groove);
     }
@@ -320,10 +327,10 @@ void HamVisDir::CalcArmLengths(std::vector<float> &vec, const Skeleton &skel) {
     }
 }
 
-void HamVisDir::UpdateGestureFilter(Skeleton const &skeleton, int i) {
+void HamVisDir::UpdateGestureFilter(Skeleton const &skeleton, int player) {
     RndAnimatable *leftPlayer;
     RndAnimatable *rightPlayer;
-    if (i == 0) {
+    if (player == 0) {
         leftPlayer = mPlayer1Left;
         rightPlayer = mPlayer1Right;
     } else {
@@ -342,7 +349,7 @@ void HamVisDir::UpdateGestureFilter(Skeleton const &skeleton, int i) {
         wrists[1] = skeleton.TrackedJoints()[kJointWristRight].mJointPos[0].y;
         for (int i = 0; i < 2; i++) {
             RndAnimatable *animatable = (i == 0) ? leftPlayer : rightPlayer;
-            float val = unk334 * 100.0f;
+            float val = mGrooviness * 100.0f;
             if (animatable) {
                 animatable->SetFrame(val, 1.0f);
             }

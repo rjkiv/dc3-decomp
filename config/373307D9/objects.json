@@ -364,7 +364,7 @@
             "system/hamobj/HamSong.cpp": "Matching",
             "system/hamobj/HamSongData.cpp": "Matching",
             "system/hamobj/HamSupereasyData.cpp": "Matching",
-            "system/hamobj/HamVisDir.cpp": "NonMatching",
+            "system/hamobj/HamVisDir.cpp": "Matching",
             "system/hamobj/HamWardrobe.cpp": "NonMatching",
             "system/hamobj/HollaBackMinigame.cpp": "NonMatching",
             "system/hamobj/MeterDisplay.cpp": "NonMatching",

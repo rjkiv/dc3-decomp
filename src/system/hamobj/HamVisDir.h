@@ -52,7 +52,7 @@ protected:
     Transform unk284; // 0x284
     FreestyleMotionFilter *mFilter; // 0x2c4
     bool mRunning; // 0x2c8
-    std::vector<bool> unk2cc; // 0x2cc
+    std::vector<bool> unk2cc; // 0x2cc - unused
     /** "Animated from 0 - 100, depending on player one's hand height" */
     ObjPtr<RndAnimatable> mPlayer1Right; // 0x2e0
     /** "Animated from 0 - 100, depending on player one's hand height" */
@@ -64,7 +64,7 @@ protected:
     /** "Allow Milo anim bar to drive the gesture propanim frame,
         not the player's skeleton." */
     bool mMiloManualFrame; // 0x330
-    float unk334; // 0x334
+    float mGrooviness; // 0x334
     PoseOwner mSquatPoses[2]; // 0x338
     PoseOwner mYPoses[2]; // 0x358
 };
