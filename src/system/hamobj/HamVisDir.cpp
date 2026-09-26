@@ -27,9 +27,8 @@ PoseOwner::~PoseOwner() {
 }
 
 HamVisDir::HamVisDir()
-    : mFilter(0), mRunning(0), unk2d8(0), unk2dc(0), mPlayer1Right(this),
-      mPlayer1Left(this), mPlayer2Right(this), mPlayer2Left(this), mMiloManualFrame(1),
-      unk334(0) {
+    : mFilter(0), mRunning(0), mPlayer1Right(this), mPlayer1Left(this),
+      mPlayer2Right(this), mPlayer2Left(this), mMiloManualFrame(1), unk334(0) {
     SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
     if (!handle.HasCallback(this)) {
         handle.AddCallback(this);
@@ -43,7 +42,7 @@ HamVisDir::HamVisDir()
         mSquatPoses[i].pose->AddElement(
             new JointDistPoseElement(kJointHead, kJointKneeLeft, 0, 0.9)
         );
-        mSquatPoses[i].pose->AddElement(new CamDistancePoseElement(2, 1));
+        mSquatPoses[i].pose->AddElement(new CamDistancePoseElement(1, 2));
 
         mSquatPoses[i].holder = new Pose(10, (Pose::ScoreMode)0);
         mSquatPoses[i].holder->AddElement(
@@ -52,7 +51,7 @@ HamVisDir::HamVisDir()
         mSquatPoses[i].holder->AddElement(
             new JointDistPoseElement(kJointHead, kJointKneeLeft, 0, 0.94)
         );
-        mSquatPoses[i].holder->AddElement(new CamDistancePoseElement(1.6, 1));
+        mSquatPoses[i].holder->AddElement(new CamDistancePoseElement(1, 1.6f));
 
         mYPoses[i].name = MakeString("pose_y_%i", i);
         mYPoses[i].pose = new Pose(10, (Pose::ScoreMode)1);
@@ -83,28 +82,28 @@ HamVisDir::HamVisDir()
 
         mYPoses[i].holder = new Pose(10, (Pose::ScoreMode)0);
         mYPoses[i].holder->AddElement(new BoneAngleRangePoseElement(
-            kBoneArmLowerRight, Vector3(1, 1, 0), 1.047197580337524, 0
+            kBoneArmLowerRight, Vector3(1, 1, 0), 1.047197580337524, 1
         ));
         mYPoses[i].holder->AddElement(new BoneAngleRangePoseElement(
-            kBoneArmLowerLeft, Vector3(-1, 1, 0), 1.047197580337524, 0
+            kBoneArmLowerLeft, Vector3(-1, 1, 0), 1.047197580337524, 1
         ));
         mYPoses[i].holder->AddElement(new BoneAngleRangePoseElement(
-            kBoneArmUpperRight, Vector3(1, 1, 0), 1.047197580337524, 0
+            kBoneArmUpperRight, Vector3(1, 1, 0), 1.047197580337524, 1
         ));
         mYPoses[i].holder->AddElement(new BoneAngleRangePoseElement(
-            kBoneArmUpperLeft, Vector3(-1, 1, 0), 1.047197580337524, 0
+            kBoneArmUpperLeft, Vector3(-1, 1, 0), 1.047197580337524, 1
         ));
         mYPoses[i].holder->AddElement(new BoneAngleRangePoseElement(
-            kBoneLegLowerRight, Vector3(1, -1, 0), 1.047197580337524, 0
+            kBoneLegLowerRight, Vector3(1, -1, 0), 1.047197580337524, 1
         ));
         mYPoses[i].holder->AddElement(new BoneAngleRangePoseElement(
-            kBoneLegLowerLeft, Vector3(-1, -1, 0), 1.047197580337524, 0
+            kBoneLegLowerLeft, Vector3(-1, -1, 0), 1.047197580337524, 1
         ));
         mYPoses[i].holder->AddElement(new BoneAngleRangePoseElement(
-            kBoneLegUpperRight, Vector3(1, -1, 0), 1.047197580337524, 0
+            kBoneLegUpperRight, Vector3(1, -1, 0), 1.047197580337524, 1
         ));
         mYPoses[i].holder->AddElement(new BoneAngleRangePoseElement(
-            kBoneLegUpperLeft, Vector3(-1, -1, 0), 1.047197580337524, 0
+            kBoneLegUpperLeft, Vector3(-1, -1, 0), 1.047197580337524, 1
         ));
     }
 }
@@ -235,17 +234,15 @@ void HamVisDir::PostLoad(BinStream &bs) {
 void HamVisDir::Enter() {
     PanelDir::Enter();
     mRunning = TheLoadMgr.EditMode();
-    if (TheLoadMgr.EditMode() == 0 && TheGestureMgr != nullptr) {
-        auto freestyle_filter =
+    if (!TheLoadMgr.EditMode() && TheGestureMgr) {
+        mFilter =
             ObjectDir::Main()->Find<FreestyleMotionFilter>("freestyle_filter", false);
-        mFilter = freestyle_filter;
-        if (freestyle_filter == nullptr) {
-            freestyle_filter = new FreestyleMotionFilter();
-            mFilter = freestyle_filter;
+        if (!mFilter) {
+            mFilter = new FreestyleMotionFilter();
+            mFilter->SetName("freestyle_filter", Main());
         }
-        freestyle_filter->SetName("freestyle_filter", Main());
+        mFilter->Deactivate();
     }
-    mFilter->Deactivate();
 }
 
 void HamVisDir::PostUpdate(const SkeletonUpdateData *data) {
@@ -282,7 +279,7 @@ void HamVisDir::PostUpdate(const SkeletonUpdateData *data) {
 
 void HamVisDir::SetGrooviness(float groove) {
     unk334 = (groove - 0.5f) * (2.0f / 3.0f);
-    unk334 = Clamp<float>(0.0, 1.0, unk334);
+    ClampEq<float>(unk334, 0.0f, 1.0f);
     for (ObjDirItr<DepthBuffer3D> it(this, true); it != nullptr; ++it) {
         it->SetGrooviness(groove);
     }
