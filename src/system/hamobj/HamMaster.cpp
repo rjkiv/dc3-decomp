@@ -16,10 +16,12 @@
 #include "utl/SongPos.h"
 #include "utl/TimeConversion.h"
 
+HamMaster *TheMaster;
+
 HamMaster::HamMaster(HamSongData *data, MidiParserMgr *mgr)
     : mSongData(data), mAudio(nullptr), mMidiParserMgr(mgr), mSongInfo(nullptr),
       mLoader(0), unk45(0), unk48(0), mStreamMs(-1), unk50(0), unk54(-1), unk58(-1),
-      unk5c(-1), unk9c(0), unka0(0), unka4(0), unkb0(0), mMetronome(0) {
+      unk5c(-1), unka4(0), unkb0(0), mMetronome(0) {
     Reset();
     mAudio = new HamAudio();
 }
@@ -42,17 +44,12 @@ void HamMaster::Poll(float f1) {
     if (IsLoaded() && mAudio->GetSongStream()) {
         unk48 = f1;
         unk60 = mSongData->CalcSongPos(this, unk48);
-        float f8 = mAudio->GetSongStream()->GetJumpBackTotalTime(f1);
-        float f9 = f8 + unk48;
+        float f9 = mAudio->GetSongStream()->GetJumpBackTotalTime(unk48) + unk48;
         unk50 = f9 < mStreamMs;
-        Marker marker1, marker2;
+        Marker marker2, marker1;
         bool jp = mAudio->GetSongStream()->CurrentJumpPoints(marker1, marker2);
         if (!unk50 && jp && marker1.posMS <= marker2.posMS) {
-            if (mStreamMs <= marker2.posMS && marker2.posMS < f9) {
-                unk50 = true;
-            } else {
-                unk50 = false;
-            }
+            unk50 = mStreamMs <= marker2.posMS && marker2.posMS < f9;
         }
         if (unk50) {
             float f10;
@@ -62,11 +59,17 @@ void HamMaster::Poll(float f1) {
                 f10 = unk60.GetTotalTick();
             }
             if (mMidiParserMgr) {
-                mMidiParserMgr->Reset();
+                mMidiParserMgr->Reset(f10);
             }
-            unk5c = mStreamMs;
+            unk54 = mStreamMs;
+            unk58 = marker1.posMS;
+            unk5c = marker2.posMS;
             static Message msg("stream_jump");
             Export(msg, true);
+        }
+        mStreamMs = f9;
+        if (mMidiParserMgr) {
+            mMidiParserMgr->Poll();
         }
         CheckBeat();
         CheckLevels();
@@ -217,15 +220,17 @@ void HamMaster::LoaderPoll() {
 }
 
 void HamMaster::CheckBeat() {
-    int totalbeat1 = unk60.GetTotalBeat();
-    int totalbeat2 = unk78.GetTotalBeat();
+    int totalbeat1 = unk78.GetTotalBeat();
+    int totalbeat2 = unk60.GetTotalBeat();
     if (totalbeat1 != totalbeat2) {
         int beat = unk60.GetBeat();
         TheHamProvider->SetProperty("beat", beat + 1);
-        if (mMetronome) {
-            if (beat == 0) {
+        if (beat == 0) {
+            if (mMetronome) {
                 TheSynth->PlaySound("metronome_measure", 0, 0, 0);
-            } else {
+            }
+        } else {
+            if (mMetronome) {
                 TheSynth->PlaySound("metronome_beat", 0, 0, 0);
             }
         }

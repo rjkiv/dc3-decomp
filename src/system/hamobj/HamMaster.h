@@ -77,8 +77,9 @@ private:
     SongPos unk60;
     SongPos unk78;
     std::vector<int> unk90;
-    float unk9c;
-    float unka0;
+    std::pair<float, float> unk9c;
+    // float unk9c;
+    // float unka0;
     float unka4;
     std::list<Vector2> unka8;
     int unkb0;
