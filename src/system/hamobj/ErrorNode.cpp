@@ -19,6 +19,58 @@ namespace {
     };
 }
 
+void DistanceToErrors(
+    const Vector3 &v1, const Vector3 &v2, const Vector3 &v3, Vector3 &v4
+) {
+    Subtract(v1, v2, v4);
+    Scale(v4, v3, v4);
+    for (int i = 0; i < 3; i++) {
+        v4[i] = Clamp(0.0f, 1.0f, fabsf(v4[i]));
+    }
+}
+
+float ScaleDistToError(const ScaleOp &op, float f2) {
+    if (op.mPerfectDist != -1) {
+        if (f2 < 0) {
+            MILO_NOTIFY(
+                "%f distance is less than zero (%f, %f)", f2, op.mPerfectDist, op.mRate
+            );
+            return 1;
+        } else if (f2 > op.mPerfectDist) {
+            float f1 = f2 - op.mPerfectDist;
+            if (op.mType == kErrorScaleDistSq) {
+                f1 *= f1;
+            }
+            f2 = op.mRate * f1;
+        } else {
+            return 0;
+        }
+    }
+    return f2;
+}
+
+float ScaleFullErrorDist(const ScaleOp &op) {
+    if (op.mPerfectDist == -1) {
+        return 1;
+    } else if (op.mType == kErrorScaleDist) {
+        float f1 = 1 / op.mRate;
+        return f1 + op.mPerfectDist;
+    } else {
+        float f1 = sqrtf(1 / op.mRate);
+        return f1 + op.mPerfectDist;
+    }
+}
+
+void XZErrorWeight(const Vector3 &v3, float &f2, float &f3) {
+    Vector3 v = v3;
+    v.y = 0;
+    Normalize(v, v);
+    static Vector3 sVec(0, 0, 1);
+    float dot = acosf(fabsf(Dot(sVec, v)));
+    f2 = dot * 0.63661975f;
+    f3 = 1 - (dot * 0.63661975f);
+}
+
 ErrorFrameInput::ErrorFrameInput(
     const SkeletonHistory *history,
     const DancerSkeleton &dancerSkeleton,
@@ -34,9 +86,10 @@ ErrorFrameInput::ErrorFrameInput(
     mDisplacements = false;
     int elapsedMs = dancerSkeleton.ElapsedMs();
     if (elapsedMs != -1) {
-        int div = elapsedMs / f1;
-        mDisplacements =
-            baseSkeleton.Displacements(history, kCoordCamera, div, mBaseJointDisps, div);
+        int div;
+        mDisplacements = baseSkeleton.Displacements(
+            history, kCoordCamera, elapsedMs / f1, mBaseJointDisps, div
+        );
     }
 }
 
@@ -149,8 +202,9 @@ Ham1EuclideanNode::Ham1EuclideanNode(ErrorNodeType e, const DataArray *cfg)
     DataArray *weightArr = cfg->FindArray(component_weight_ranges);
     for (int i = 1; i < 4; i++) {
         DataArray *arr = weightArr->Array(i);
-        mComponentWeightRanges[i - 1][0] = arr->Float(0);
-        mComponentWeightRanges[i - 1][1] = arr->Float(1);
+        float *curRange = mComponentWeightRanges[i - 1];
+        curRange[0] = arr->Float(0);
+        curRange[1] = arr->Float(1);
     }
 }
 
@@ -166,15 +220,19 @@ void Ham1EuclideanNode::CalcError(
     Subtract(dancerVec, baseVec, diff);
     Vector3 vToProcess;
     for (int i = 0; i < 3; i++) {
-        float set = Max(mComponentWeightRanges[0][i], node_input.mNodeComponentWeight[i]);
-        vToProcess[i] = Min(set, mComponentWeightRanges[1][i]);
+        vToProcess[i] = Clamp(
+            mComponentWeightRanges[i][0],
+            mComponentWeightRanges[i][1],
+            node_input.mNodeComponentWeight[i]
+        );
     }
     ScaleOp op;
     op.mPerfectDist = node_input.mNodeWeight->unk4;
     op.mType = kErrorScaleDistSq;
     op.mRate = node_input.mNodeWeight->unk8;
-    Scale(vToProcess, diff, vToProcess);
-    vout.x = ScaleDistToError(op, Length(vToProcess));
+    Vector3 tmp;
+    Scale(vToProcess, diff, tmp);
+    vout.x = ScaleDistToError(op, Length(tmp));
 }
 
 #pragma endregion
@@ -225,8 +283,6 @@ bool BaseDisplacementNode::Displacements(
     dispData.mJointDisplacement.Zero();
     return false;
 }
-
-void DistanceToErrors(const Vector3 &, const Vector3 &, const Vector3 &, Vector3 &);
 
 void DisplacementNode::CalcError(
     const ErrorFrameInput &frame_input, const ErrorNodeInput &node_input, Vector3 &vout
@@ -293,7 +349,8 @@ void PositionNode::CalcError(
         vout.Set(1, 1, 1);
     } else {
         Vector3 scaledBaseDiff;
-        Scale(baseJointDiff, desired_bone_len / base_bone_len, scaledBaseDiff);
+        float scalar = desired_bone_len / base_bone_len;
+        Scale(baseJointDiff, scalar, scaledBaseDiff);
         DistanceToErrors(jointDiff, scaledBaseDiff, node_input.mNodeComponentWeight, vout);
     }
 }

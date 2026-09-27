@@ -36,6 +36,7 @@ public:
         return filterMask ? kFilterVersionHam1 : kFilterVersionHam2;
     }
     float Beat() const { return mBeat; }
+    unsigned int Flags() const { return mFlags; }
 
 private:
     float mBeat; // 0x0
