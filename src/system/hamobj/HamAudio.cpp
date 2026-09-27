@@ -14,8 +14,7 @@
 
 HamAudio::HamAudio()
     : mFileLoader(0), unk34(0), mSongInfo(0), mSongStream(0), mReady(0),
-      mMasterFader(Hmx::Object::New<Fader>()), mMuteMaster(0), unk59(0), unk68(0),
-      unk78(0) {
+      mMasterFader(Hmx::Object::New<Fader>()), mMuteMaster(0), unk59(0) {
     unk44[0] = 0;
     unk44[1] = 0;
     mCrossFaders[0] = Hmx::Object::New<Fader>();
@@ -33,12 +32,12 @@ BEGIN_HANDLERS(HamAudio)
     HANDLE_ACTION(toggle_mute_master, ToggleMuteMaster())
     HANDLE_ACTION(set_mute_master, SetMuteMaster(_msg->Int(2)))
     HANDLE_ACTION(print_faders, PrintFaders())
-    HANDLE_EXPR(num_channels, (int)unk84.size())
+    HANDLE_EXPR(num_channels, (int)mChannels.size())
     HANDLE_ACTION(set_channel_volume, SetChannelVolume(_msg->Int(2), _msg->Float(3)))
     HANDLE_ACTION_IF(
         set_track_volume,
-        unk90[_msg->Sym(2)],
-        unk90[_msg->Sym(2)]->SetVolume(_msg->Float(3))
+        mTracks[_msg->Sym(2)],
+        mTracks[_msg->Sym(2)]->SetVolume(_msg->Float(3))
     )
     HANDLE_ACTION(set_loop, SetLoop(_msg->Float(2), _msg->Float(3)))
     HANDLE_ACTION(clear_loop, ClearLoop())
@@ -102,7 +101,7 @@ void HamAudio::SetMasterVolume(float vol) {
 }
 
 void HamAudio::SetChannelVolume(int channel, float volume) {
-    unk84[channel]->SetVolume(volume);
+    mChannels[channel]->SetVolume(volume);
 }
 
 void HamAudio::SetMuteMaster(bool mute) {
@@ -133,7 +132,7 @@ void HamAudio::Jump(float f1) {
         mSongStream->Stop();
         mCrossFaders[0]->SetVolume(0);
         mCrossFaders[1]->SetVolume(kDbSilence);
-        unk78 = 0;
+        unk6c.unkc = 0;
         if (unk44[1]) {
             unk44[1]->Stop();
         }
@@ -146,15 +145,15 @@ void HamAudio::ClearLoop() {
     if (GetSongStream()) {
         GetSongStream()->ClearJump();
     }
-    unk68 = 0;
+    unk5c.unkc = 0;
 }
 
 void HamAudio::DeleteFaders() {
-    DeleteAll(unk84);
-    FOREACH (it, unk90) {
+    DeleteAll(mChannels);
+    FOREACH (it, mTracks) {
         RELEASE(it->second);
     }
-    unk90.clear();
+    mTracks.clear();
 }
 
 void HamAudio::Clear() {
@@ -174,8 +173,8 @@ void HamAudio::Clear() {
     }
     mSongInfo = nullptr;
     DeleteFaders();
-    unk68 = 0;
-    unk78 = 0;
+    unk5c.unkc = 0;
+    unk6c.unkc = 0;
 }
 
 void HamAudio::Load(SongInfo *info, bool b2) {
@@ -189,8 +188,9 @@ void HamAudio::Load(SongInfo *info, bool b2) {
         FinishLoad();
     } else {
         String moggStr(MakeString("%s.mogg", str.c_str()));
-        mFileLoader =
-            new FileLoader(moggStr.c_str(), "main", kLoadFront, 0, false, true, 0, 0);
+        mFileLoader = new FileLoader(
+            moggStr.c_str(), moggStr.c_str(), kLoadFront, 0, false, true, 0, "main"
+        );
     }
 }
 
@@ -228,13 +228,12 @@ void HamAudio::SetStereo(bool) {}
 bool HamAudio::GetCurrLoopMarkers(float &f1, float &f2) const {
     Marker m1, m2;
     Stream *s = mSongStream;
-    if (s && s->CurrentJumpPoints(m1, m2)) {
-        f1 = m1.posMS;
-        f2 = m2.posMS;
-        return true;
-    } else {
+    if (!s || !s->CurrentJumpPoints(m2, m1)) {
         return false;
     }
+    f1 = m1.posMS;
+    f2 = m2.posMS;
+    return true;
 }
 
 bool HamAudio::GetCurrLoopBeats(int &i1, int &i2) const {
@@ -254,28 +253,29 @@ void HamAudio::SetLoop(float f1, float f2) {
 
 void HamAudio::SetCrossfadeJump(float f1, float f2, float f3) {
     MILO_ASSERT_FMT(unk44[0] && unk44[1], "Crossfade requires 2 song streams");
-    if (unk68) {
+    if (unk5c.unkc) {
         MILO_NOTIFY("Stomping on current queued crossfade");
     }
-    unk64 = f3;
-    unk60 = f2;
-    unk5c = f1;
-    unk68 = 1;
+    Crossfade &fade = unk5c;
+    fade.unk8 = f3;
+    fade.unk4 = f2;
+    fade.unk0 = f1;
+    fade.unkc = 1;
     bool b2 = false;
-    if (f1 - (f3 / 2.0f) <= 0) {
+    if (fade.unk0 - fade.unk8 / 2 <= 0) {
         MILO_NOTIFY(
             "Crossfade begins before start of song. Setting up hard jump instead of crossfade."
         );
         b2 = true;
     }
-    if (unk78 > 1 && unk5c - (unk64 / 2.0f) <= (unk74 / 2.0f) + unk70) {
+    if (unk6c.unkc > 1 && fade.unk0 - fade.unk8 / 2 <= unk6c.unk8 / 2 + unk6c.unk4) {
         MILO_NOTIFY(
             "Crossfade begins before existing crossfade ends. Setting up hard jump instead of crossfade."
         );
         b2 = true;
     }
     if (b2) {
-        unk68 = 0;
+        unk5c.unkc = 0;
     }
     SetLoop(f2, f1, unk44[0]);
 }
