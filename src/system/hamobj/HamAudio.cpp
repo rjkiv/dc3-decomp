@@ -6,9 +6,11 @@
 #include "os/System.h"
 #include "synth/Faders.h"
 #include "synth/FxSend.h"
+#include "synth/Stream.h"
 #include "synth/Synth.h"
 #include "utl/Loader.h"
 #include "utl/MemMgr.h"
+#include "utl/SongInfoAudioType.h"
 #include "utl/SongInfoCopy.h"
 #include "utl/TimeConversion.h"
 
@@ -296,6 +298,86 @@ void HamAudio::SetLoop(float f1, float f2, Stream *stream) {
         stream->AddMarker(m1);
         stream->AddMarker(m2);
         stream->SetJump(end, start);
+    }
+}
+
+void HamAudio::FinishLoad() {
+    if (mFileLoader) {
+        unk34 = mFileLoader->GetBuffer(&unk38);
+        RELEASE(mFileLoader);
+        unk44[0] = TheSynth->NewBufStream(unk34, unk38, "mogg", 0.25f, true);
+        unk44[1] = TheSynth->NewBufStream(unk34, unk38, "mogg", 0.25f, true);
+        mSongStream = unk44[0];
+    }
+
+    for (int i = 0; i < 2; i++) {
+        if (unk44[i]) {
+            unk44[i]->Faders()->Add(mMasterFader);
+            unk44[i]->Faders()->Add(mCrossFaders[i]);
+            mCrossFaders[i]->SetVolume(0);
+            const auto &vols = mSongInfo->GetVols();
+            const auto &pans = mSongInfo->GetPans();
+            int numChannels = vols.size();
+            MILO_ASSERT(pans.size() == numChannels, 0x9D);
+            for (int c = 0; c < numChannels; c++) {
+                Fader *curFader;
+                if (c >= mChannels.size()) {
+                    curFader = Hmx::Object::New<Fader>();
+                    curFader->SetVolume(vols[c]);
+                    mChannels.push_back(curFader);
+                } else {
+                    curFader = mChannels[c];
+                }
+                unk44[i]->ChannelFaders(c).Add(curFader);
+                unk44[i]->SetPan(c, pans[c]);
+            }
+            const auto &trackChannels = mSongInfo->GetTracks();
+            for (int tc = 0; tc < trackChannels.size(); tc++) {
+                SongInfoAudioType audioType = trackChannels[tc].mAudioType;
+                Symbol audioSym = SongInfoAudioTypeToSym(audioType);
+                Fader *trackFader;
+                if (mTracks.find(audioSym) == mTracks.end()) {
+                    trackFader = Hmx::Object::New<Fader>();
+                    mTracks[audioSym] = trackFader;
+                } else {
+                    trackFader = mTracks[audioSym];
+                }
+                auto &channels = trackChannels[tc].mChannels;
+                for (int c = 0; c < channels.size(); c++) {
+                    unk44[i]->ChannelFaders(channels[c]).Add(trackFader);
+                }
+                if (TheSynth->CheckCommonBank(false)) {
+                    Fader *vocalFader = TheSynth->Find<Fader>("vocals_level.fade", false);
+                    if (vocalFader && audioType == kAudioTypeVocals) {
+                        for (int c = 0; c < channels.size(); c++) {
+                            unk44[i]->ChannelFaders(channels[c]).Add(vocalFader);
+                        }
+                    }
+                    Fader *multiFader = TheSynth->Find<Fader>("multi_level.fade", false);
+                    if (multiFader && audioType == kAudioTypeMulti) {
+                        for (int c = 0; c < channels.size(); c++) {
+                            unk44[i]->ChannelFaders(channels[c]).Add(multiFader);
+                        }
+                    }
+                    FxSend *songSend = TheSynth->Find<FxSend>("song.send", false);
+                    if (songSend) {
+                        for (int c = 0; c < numChannels; c++) {
+                            unk44[i]->SetFXSend(c, songSend);
+                        }
+                        unk59 = true;
+                    }
+                }
+            }
+        }
+    }
+    if (unk44[1]) {
+        if (unk44[1]->IsReady()) {
+            unk44[1]->Resync(10000);
+        } else {
+            MILO_NOTIFY(
+                "HamAudio::FinishLoad() - almost tried to resync stream before it was ready"
+            );
+        }
     }
 }
 

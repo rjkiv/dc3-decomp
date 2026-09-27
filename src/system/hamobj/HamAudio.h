@@ -62,8 +62,8 @@ private:
     void SetLoop(float, float, Stream *);
 
     FileLoader *mFileLoader; // 0x30
-    char *unk34;
-    int unk38;
+    char *unk34; // 0x34 - file
+    int unk38; // 0x38 - file size
     SongInfo *mSongInfo; // 0x3c
     Stream *mSongStream; // 0x40
     Stream *unk44[2]; // 0x44
