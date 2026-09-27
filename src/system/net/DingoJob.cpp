@@ -107,9 +107,12 @@ bool DingoJob::CheckReqResult() {
         if (authenticating) {
             TheServer.DelayJob(this);
             return false;
+        } else {
+            return true;
         }
+    } else {
+        return true;
     }
-    return true;
 }
 
 void DingoJob::Reset() {

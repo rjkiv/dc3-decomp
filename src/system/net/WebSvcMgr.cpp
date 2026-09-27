@@ -3,6 +3,8 @@
 #include "obj/Dir.h"
 #include "os/Debug.h"
 #include "os/NetworkSocket.h"
+#include "ppcintrinsics.h"
+#include "utl/Std.h"
 
 const char *kHMXDomain = "harmonixmusic.com";
 
@@ -96,4 +98,39 @@ WebSvcMgr::ResolveHostname(const char *hostname, const char *domain, unsigned sh
         mHostCache.insert(std::make_pair(str, ret));
     }
     return ret;
+}
+
+void WebSvcMgr::Poll() {
+    bool b = false;
+    unsigned int i = 0;
+    auto it = mRequests.begin();
+    while (it != mRequests.end()) {
+        WebSvcRequest *req = *it;
+        if (!b) {
+            if (req->GetState() == WebSvcRequest::kNotStarted) {
+                if (i >= 5) {
+                    return;
+                }
+                Start(req);
+            }
+            req->Poll();
+        }
+
+        if (req->IsDeleteReady() || req->GetState() == WebSvcRequest::kReadyForRemoval) {
+            it = mRequests.erase(it);
+            if (req->IsDeleteReady()) {
+                OnReqFinished(req);
+            } else if (req->GetState() == WebSvcRequest::kReadyForRemoval) {
+                req->OnReset();
+            }
+        } else {
+            if (req->IsRunning() || req->IsFinished()) {
+                i++;
+            }
+            if (req->MustFinish()) {
+                b = true;
+            }
+            ++it;
+        }
+    }
 }

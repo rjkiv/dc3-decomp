@@ -57,7 +57,7 @@ protected:
     NetworkSocket *mSocket; // 0x8
     String unkc; // 0xc
     unsigned short mPort; // 0x14
-    int mState; // 0x18
+    State mState; // 0x18
     bool unk1c;
     Timer unk20;
     float mTimeoutMs; // 0x50
