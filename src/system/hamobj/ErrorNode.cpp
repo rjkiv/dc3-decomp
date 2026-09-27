@@ -284,6 +284,50 @@ bool BaseDisplacementNode::Displacements(
     return false;
 }
 
+bool BaseDisplacementNode::Displacements(
+    const ErrorFrameInput &frame_input,
+    BaseDisplacementNode::DisplacementData &dispData,
+    BaseDisplacementNode::Ham1DisplacementData &ham1Data
+) const {
+    ham1Data.unk4.Zero();
+    ham1Data.unk14 = false;
+    ham1Data.unk18 = 0;
+    ham1Data.unk0 = 0;
+    ham1Data.unk1c = 0;
+    if (Displacements(frame_input, dispData)) {
+        float jointDispLen = Length(dispData.mJointDisplacement);
+        ham1Data.unk1c = jointDispLen;
+
+        Vector3 invJointDisp;
+        if (jointDispLen > 0) {
+            Scale(dispData.mJointDisplacement, 1 / jointDispLen, invJointDisp);
+        } else {
+            invJointDisp.Set(0, 0, 0);
+        }
+
+        float jointDot = Dot(invJointDisp, dispData.mBaseJointDisplacement);
+        Scale(invJointDisp, jointDot, ham1Data.unk4);
+        ham1Data.unk14 = jointDot > 0;
+
+        float baseJointDispLen = Length(dispData.mBaseJointDisplacement);
+        ham1Data.unk0 = baseJointDispLen;
+
+        Vector3 invBaseJointDisp;
+        if (baseJointDispLen > 0) {
+            Scale(dispData.mBaseJointDisplacement, 1 / baseJointDispLen, invBaseJointDisp);
+        } else {
+            invBaseJointDisp.Set(0, 0, 0);
+        }
+
+        ham1Data.unk18 =
+            fabsf(acosf(Clamp(-1.0f, 1.0f, Dot(invBaseJointDisp, invJointDisp))));
+
+        return true;
+    } else {
+        return false;
+    }
+}
+
 void DisplacementNode::CalcError(
     const ErrorFrameInput &frame_input, const ErrorNodeInput &node_input, Vector3 &vout
 ) const {
@@ -316,6 +360,44 @@ void Ham1DisplacementNode::CalcError(
     Ham1DisplacementData ham1DispData;
     Errors(frame_input, node_input, errData, dispData, ham1DispData);
     vout.x = errData.unk4 * errData.unk8 + errData.unk0;
+}
+
+void Ham1DisplacementNode::Errors(
+    const ErrorFrameInput &frame_input,
+    const ErrorNodeInput &node_input,
+    ErrorData &errorData,
+    DisplacementData &dispData,
+    Ham1DisplacementData &ham1DispData
+) const {
+    if (!Displacements(frame_input, dispData, ham1DispData)) {
+        errorData.unk8 = 1;
+        errorData.unk0 = 1;
+        errorData.unk4 = 1;
+    } else {
+        float u18 = ham1DispData.unk18;
+        ScaleOp op;
+        op.mType = kErrorScaleDistSq;
+        op.mPerfectDist = node_input.mNodeWeight->unkc;
+        op.mRate = node_input.mNodeWeight->unk10;
+        float len = Length(ham1DispData.unk4);
+        errorData.unk4 = ScaleDistToError(mPotentialAngleOp, ham1DispData.unk0);
+        MinEq(errorData.unk4, 1.0f);
+        errorData.unk8 = ScaleDistToError(op, u18);
+        float f2 = 1;
+        if (ham1DispData.unk1c > 0) {
+            f2 = len / ham1DispData.unk1c;
+        }
+        float f6;
+        if (ham1DispData.unk14) {
+            f6 = fabsf(1 - f2);
+        } else {
+            f6 = f2 + 1;
+        }
+        op.mType = kErrorScaleDistSq;
+        op.mPerfectDist = node_input.mNodeWeight->unk4;
+        op.mRate = node_input.mNodeWeight->unk8;
+        errorData.unk0 = ScaleDistToError(op, f6);
+    }
 }
 
 PositionNode::PositionNode(ErrorNodeType e, const DataArray *cfg) : ErrorNode(e, cfg) {
