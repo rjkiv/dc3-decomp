@@ -51,6 +51,7 @@ public:
     HttpReq *GetHttpReq() const { return mHttpReq; }
     bool HasHttpReq() const { return mHttpReq; }
     Hmx::Object *GetCallback() const { return mCallback; }
+    State GetState() const { return mState; }
 
     void OnSuccess() {
         MarkSuccess();
@@ -61,6 +62,9 @@ public:
         MarkFailure();
         OnReqFailed();
     }
+
+    void OnReset() { Reset(); }
+    bool MustFinish() { return MustFinishBeforeNext(); }
 
 protected:
     virtual void CleanUp(bool success);

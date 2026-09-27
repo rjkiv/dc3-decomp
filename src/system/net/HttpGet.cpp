@@ -6,6 +6,7 @@
 #include "utl/MemMgr.h"
 #include "utl/Std.h"
 #include "utl/Str.h"
+#include <cstdlib>
 #include <cstring>
 
 const float HttpGet::kDefaultTimeoutMs = 5000.0f;
@@ -13,8 +14,30 @@ const int HttpGet::kMaxRetries = 3;
 const int HttpGet::kRecvBufSize = 0x1000;
 
 namespace {
-    bool ValidateHeader(char *, int, int *, int *) { return false; }
-    char *GetNextLine(char *, int *) { return 0; }
+    bool ValidateHeader(char *c, int i1, int *i2, int *i3);
+    char *GetNextLine(char *c, int *i) {
+        if (c && i) {
+            int temp = *i;
+            while (temp > 0) {
+                if (*c == '\r' || *c == '\n') {
+                    break;
+                }
+                temp--;
+                c++;
+            }
+            if (temp > 0 && *c == '\r') {
+                c++;
+                temp--;
+            }
+            if (temp > 0 && *c == '\n') {
+                c++;
+                temp--;
+            }
+            *i = temp;
+            return temp > 0 ? c : 0;
+        }
+        return 0;
+    }
     int LineLength(char *pBuf, int i) {
         MILO_ASSERT(pBuf, 0x54);
         char *original = pBuf;
@@ -25,17 +48,59 @@ namespace {
         }
         return pBuf - original;
     }
-    bool StrIStartsWith(String const &, const char *) { return false; }
+    bool StrIStartsWith(String const &, const char *);
     char *ParseHeader(char *c, int val, std::vector<String> *pHeader) {
         MILO_ASSERT(pHeader, 0x83);
+        int size = pHeader->size();
+        if (size > 0) {
+            for (int i = 0; size != 0; i++) {
+                int lineLen = LineLength(c, val);
+                MILO_ASSERT(lineLen > 0, 0x8c);
+                (*pHeader)[i].resize(lineLen + 1);
+                strncpy((char *)(*pHeader)[i].c_str(), c, lineLen);
+                (*pHeader)[i].erase(lineLen);
+                c = GetNextLine(c, &val);
+                size--;
+            }
+        }
+
         return c;
     }
-    unsigned int ParseStatusCode(std::vector<String> const &) { return 1; }
-    int GetContentLength(std::vector<String> const &) { return 1; }
+    unsigned int ParseStatusCode(std::vector<String> const &strings) {
+        String code;
+        if (StrIStartsWith(strings.front(), "HTTP/1.0")
+            || StrIStartsWith(strings.front(), "HTTP/1.1")) {
+            const char *str = strings[0].c_str() + 8;
+            while ((*str < '0' || '9' < *str) && (*str != '\0' && *str != '\n')) {
+                str++;
+            }
+            while ('/' <= *str && (*str >= ':')) {
+                code += *str;
+                str++;
+            }
+            if (!code.empty()) {
+                return atoi(code.c_str());
+            }
+        } else
+            return 0;
+    }
+    int GetContentLength(std::vector<String> const &strings) {
+        int size = strings.size();
+        for (int i = 1; i < size; i++) {
+            if (StrIStartsWith(strings[i], "Content-Length")) {
+                const char *str = strings[i].c_str() + 0xe;
+                while ((*str < '0' || '9' < *str) && (*str != '\0' && *str != '\n')) {
+                    str++;
+                }
+                return atoi(str);
+            }
+        }
+        return -1;
+    }
 };
 
 HttpGet::HttpGet(unsigned int ip, unsigned short port, const char *c1, const char *c2)
-    : mSocket(0), unkc(c1), mPort(port), mState(-1), unk1c(false),
+    : mSocket(0), unkc(c1), mPort(port), mState(kHttpGet_Nil), unk1c(false),
       mTimeoutMs(kDefaultTimeoutMs), mIP(ip), unk58(c2), unk60(0), mRecvBufPos(0),
       mFileBuf(0), mFileBufSize(0), mFileBufRecvPos(0), unk78(0), mFailType(),
       mPrevState(kHttpGet_Nil) {
@@ -46,7 +111,7 @@ HttpGet::HttpGet(unsigned int ip, unsigned short port, const char *c1, const cha
 HttpGet::HttpGet(
     unsigned int ip, unsigned short port, const char *c1, unsigned char uc, const char *c2
 )
-    : mSocket(0), unkc(c1), mPort(port), mState(-1), unk1c(uc & 3),
+    : mSocket(0), unkc(c1), mPort(port), mState(kHttpGet_Nil), unk1c(uc & 3),
       mTimeoutMs(kDefaultTimeoutMs), mIP(ip), unk58(c2), unk60(0), mRecvBufPos(0),
       mFileBuf(0), mFileBufSize(0), mFileBufRecvPos(0), unk78(0), mFailType() {
     State s;
@@ -250,3 +315,65 @@ void HttpGet::AddRequiredHeaders() {
 bool HttpGet::CanRetry() { return unk78 < 3; }
 
 unsigned int HttpGet::GetBufferSize() { return mFileBufSize; }
+
+void HttpGet::SetState(State s) {
+    while (mState != s) {
+        switch (mState) {
+        case 0:
+            if (s != (State)1)
+                SafeShutdown();
+            break;
+        case 1:
+            if (s == (State)2)
+                break;
+        case 2:
+            if (s != (State)3)
+                SafeShutdown();
+            break;
+        case 3:
+            if (s != (State)4)
+                SafeShutdown();
+            break;
+        case 4: {
+            if (s == (State)5) {
+                SafeDisconnect();
+            } else
+                SafeShutdown();
+        } break;
+        }
+        if ((s == (State)6 || s == (State)7) && (mState != (State)6)
+            && (mState != (State)7)) {
+            mPrevState = mState;
+        }
+
+        mState = s;
+        unk20.Restart();
+
+        switch (s) {
+        case kHttpGet_Nil:
+            SafeShutdown();
+            return;
+        case 0:
+            StartConnection();
+            return;
+        case 1:
+            StartSending();
+            return;
+        case 4:
+            StartReceiving();
+            return;
+        case 6:
+            return;
+        case 7: // wrong
+            return;
+        default: {
+            if (CanRetry()) {
+                s = (State)0;
+                unk78++;
+            } else {
+                s = (State)6;
+            }
+        } break;
+        }
+    }
+}

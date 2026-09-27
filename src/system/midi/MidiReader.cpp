@@ -382,7 +382,7 @@ void MidiReader::ReadFileHeader(BinStream &bs) {
             mTicksPerQuarter
         );
     }
-    if (mNumTracks == 0 || midiType != 1 || (mTicksPerQuarter & 0x8000U)
+    if (mNumTracks == 0 || midiType != 1 || ((unsigned short)mTicksPerQuarter & 0x8000U)
         || mTicksPerQuarter != 480) {
         mFail = true;
         return;
