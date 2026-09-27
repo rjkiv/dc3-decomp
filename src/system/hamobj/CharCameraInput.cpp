@@ -65,3 +65,13 @@ const SkeletonFrame *CharCameraInput::PollNewFrame() {
     }
     return &unk11d8;
 }
+
+void CharCameraInput::ResetSkeletonCharOrigin() {
+    mNatalXfm.Reset();
+    float scale = DrawScale();
+    mNatalXfm.m.Set(-scale, 0, 0, 0, 0, scale, 0, -scale, 0);
+    Vector3 charV = mChar->WorldXfm().v;
+    charV.y += DrawScale() * 2;
+    charV.z += DrawScale();
+    mNatalXfm.v = charV;
+}
