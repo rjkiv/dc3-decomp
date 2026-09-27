@@ -20,8 +20,9 @@ public:
     const HamMove *Move() const { return mMove; }
     void Reset() {
         if (mActive) {
-            mLastDetectFracs[0] = 0;
-            mLastDetectFracs[1] = 0;
+            for (int i = 0; i < 2; i++) {
+                mLastDetectFracs[i] = 0;
+            }
             unk8 = -1;
             unkc = -1;
             mActive = false;
@@ -33,7 +34,7 @@ protected:
     bool mActive; // 0x4
     int unk8; // 0x8
     int unkc; // 0xc
-    std::vector<DancerFrame> unk10; // 0x10
+    std::vector<DancerFrame> mDancerFrames; // 0x10
     std::vector<DetectFrame> mPlayerDetectFrames[2]; // 0x1c
     float mLastDetectFracs[2]; // 0x34
     float unk3c[2][4]; // 0x3c

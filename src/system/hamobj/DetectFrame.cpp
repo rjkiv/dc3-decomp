@@ -116,9 +116,9 @@ float DetectFrame::LimbPSNR(const FilterVersion *filter_version, int i2) const {
 }
 
 bool DetectFrameMoveIdxCmp::operator()(const DetectFrame &frame, int idx) const {
-    return frame.GetDancerFrame()->unk0 < idx;
+    return frame.GetDancerFrame()->mMoveIdx < idx;
 }
 
 bool DetectFrameMoveIdxCmp::operator()(int idx, const DetectFrame &frame) const {
-    return idx < frame.GetDancerFrame()->unk0;
+    return idx < frame.GetDancerFrame()->mMoveIdx;
 }

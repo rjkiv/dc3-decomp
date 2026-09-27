@@ -6,7 +6,7 @@
 
 // size 0x2dc
 struct DancerFrame {
-    short unk0; // 0x0
+    short mMoveIdx; // 0x0
     short mMoveFrameIdx; // 0x2
     DancerSkeleton mSkeleton; // 0x4
 };
