@@ -14,10 +14,30 @@
 #include "rndobj/PropAnim.h"
 #include "rndobj/PropKeys.h"
 #include "utl/Loader.h"
+#include "utl/MakeString.h"
 
 const char *ClipPlayer::sRestStepNames[4] = {
     "rest_step_left", "rest_step_right", "rest_step_fwd", "rest_step_back"
 };
+
+namespace {
+    float ClipStart(CharClip *clip, float beat, float &start, float &end) {
+        if (fmodf(beat, 1.0) != 0.0f && ceilf(beat) - beat < 0.0001f) {
+            beat = ceil(beat);
+        }
+        float offset = 0.0f;
+        float period = (clip->PlayFlags() >> 12) & 0xF;
+
+        if (period != 0.0f) {
+            offset = Mod(beat - clip->StartBeat(), period);
+        }
+
+        start = beat - offset;
+        end = clip->EndBeat() - clip->StartBeat() + start;
+
+        return clip->StartBeat() + offset;
+    }
+}
 
 void Annotate(DataArray *a, float f, const char *cc) {
     a->Insert(a->Size(), DataArrayPtr(BeatToFrame(f), cc));
@@ -49,6 +69,7 @@ bool ClipPlayer::Init(RndPropAnim *anim) {
                 str.ReplaceAll('*', '\0');
                 mInClip =
                     mClipDir->Find<CharClip>(MakeString("%s_in", str.c_str()), false);
+                k2--;
                 str = k2->value;
                 str.ReplaceAll('*', '\0');
                 mOutClip =
@@ -72,11 +93,9 @@ bool ClipPlayer::Init(Difficulty d) {
 bool ClipPlayer::Init(int x) { return Init(TheHamDirector->SongAnim(x)); }
 
 bool ClipPlayer::CanUseRestStep() {
-    if ((!TheLoadMgr.EditMode() || !TheHamDirector->NoTransitions()) && mOutClip
-        && (ClipLength(mOutClip) != 3 || mOutClip->Flags() & 4)) {
-        return false;
-    } else
-        return true;
+    CharClip *c;
+    return (TheLoadMgr.EditMode() && TheHamDirector->NoTransitions())
+        || (c = mOutClip, !(c && (ClipLength(c) != 3 || c->Flags() & 4)));
 }
 
 void ClipPlayer::PlayAnims(HamCharacter *c, float f1, float f2, int x) {
@@ -91,25 +110,6 @@ void ClipPlayer::PlayAnims(HamCharacter *c, float f1, float f2, int x) {
     reg->RegulateWay(c->GetWaypoint(), 8);
 }
 
-namespace {
-    float ClipStart(CharClip *clip, float beat, float &start, float &end) {
-        if (fmodf(beat, 1.0) != 0.0f && ceilf(beat) - beat < 0.0001f) {
-            beat = ceil(beat);
-        }
-        float offset = 0.0f;
-        float period = (clip->PlayFlags() >> 12) & 0xF;
-
-        if (period != 0.0f) {
-            offset = Mod(beat - clip->StartBeat(), period);
-        }
-
-        start = beat - offset;
-        end = clip->EndBeat() - clip->StartBeat() + start;
-
-        return clip->StartBeat() + offset;
-    }
-}
-
 void ClipPlayer::PlayClip(CharClip *clip, float f1, float f2, HamDriver::LayerArray *arr) {
     if (clip) {
         float f50, f4c;
@@ -120,7 +120,7 @@ void ClipPlayer::PlayClip(CharClip *clip, float f1, float f2, HamDriver::LayerAr
             layerClip->unk10 = clip;
             layerClip->unkc = f50 - unk50;
             layerClip->unk4 = f2 - unk50;
-            arr->unk2c.push_back(layerClip);
+            arr->unk2c.push_front(layerClip);
             if (TheLoadMgr.EditMode() && unk48 > 0) {
                 layerClip->unk4 = -kHugeFloat;
             }
@@ -203,30 +203,32 @@ void ClipPlayer::GetRoutineCrossoverClips(
 
 void ClipPlayer::PlayNormal(float f1, HamDriver::LayerArray *arr, const char *cc) {
     HamDriver::LayerArray *newArr;
-    if (newArr) {
+    if (arr) {
         newArr = new HamDriver::LayerArray();
-        arr->unk2c.push_back(newArr);
-        strncpy(arr->unkc, cc, 0x1F);
+        arr->unk2c.push_front(newArr);
+        strncpy(newArr->unkc, cc, 0x1F);
     } else {
         newArr = &unk1c->Layers();
     }
     newArr->unk4 = f1 - unk50;
     if (!mClipKeys) {
         if (TheLoadMgr.EditMode()) {
-            MILO_NOTIFY_ONCE(
-                "No 'clips' keyframes in your song.anim.  Please don't save this song!"
-            );
+            {
+                static DebugNotifyOncer _dw;
+                _dw << MakeStringNotInlined(
+                    "No 'clips' keyframes in your song.anim.  Please don't save this song!"
+                );
+            }
         }
     } else {
         static Symbol merge_moves("merge_moves");
-        int prop = TheHamProvider->Property(merge_moves, true)->Int();
-        float beat = unkc;
-        if (prop != 0) {
-            PushRoutineBuilderClip(mClipKeys->KeyLessEq(BeatToFrame(beat)), newArr);
+        if (TheHamProvider->Property(merge_moves, true)->Int() != 0) {
+            int keyIdx = mClipKeys->KeyLessEq(BeatToFrame(unkc));
+            PushRoutineBuilderClip(keyIdx, newArr);
         } else if (mClipKeys == mMasterClipKeys) {
-            PushExpertClip(mClipKeys->KeyLessEq(BeatToFrame(beat)), newArr);
+            PushExpertClip(mClipKeys->KeyLessEq(BeatToFrame(unkc)), newArr);
         } else {
-            PushClip(mClipKeys->KeyGreaterEq(BeatToFrame(beat)), newArr);
+            PushClip(mClipKeys->KeyGreaterEq(BeatToFrame(unkc)), newArr);
         }
     }
 }
@@ -254,4 +256,27 @@ bool ClipPlayer::GetClipRange(
         return true;
     }
     return false;
+}
+
+CharClip *ClipPlayer::GetPrevRoutineTransition(int idx) {
+    if (idx <= 0) {
+        return nullptr;
+    } else {
+        MinEq<int>(idx, mClipKeys->size() - 1);
+        if (TheLoadMgr.EditMode() && TheHamDirector->NoTransitions()) {
+            return nullptr;
+        } else {
+            Key<Symbol> &key = mClipKeys->at(idx);
+            Key<Symbol> &keyPrev = mClipKeys->at(idx - 1);
+
+            float f8 = FrameToBeat(keyPrev.frame);
+            if (f8 > 0) {
+                f8 += 1;
+            }
+            CharClip *c1 = nullptr;
+            CharClip *c2 = nullptr;
+            GetRoutineCrossoverClips(f8, keyPrev.value.Str(), &c1, &c2);
+            return GetRoutineTransition(c2->Name(), &key);
+        }
+    }
 }
