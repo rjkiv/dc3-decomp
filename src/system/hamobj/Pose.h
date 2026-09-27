@@ -9,15 +9,21 @@ class PoseElement {
 public:
     virtual ~PoseElement() {}
     virtual float Score(const Skeleton &) const = 0;
+
+    float Weight() const { return mWeight; }
+
+protected:
+    PoseElement(float wt) : mWeight(wt) {}
+
+    float mWeight; // 0x4
 };
 
 class CamDistancePoseElement : public PoseElement {
 public:
-    CamDistancePoseElement(float f1, float f2) : unk4(f1), unk8(f2) {}
+    CamDistancePoseElement(float f1, float f2) : PoseElement(f1), unk8(f2) {}
     virtual float Score(const Skeleton &) const;
 
 protected:
-    float unk4;
     float unk8;
 };
 
@@ -27,12 +33,11 @@ public:
     virtual float Score(const Skeleton &) const;
 
 protected:
-    float unk4;
     SkeletonJoint unk8;
     SkeletonJoint unkc;
     float unk10;
     float unk14;
-    int unk18;
+    SkeletonCoordSys unk18;
 };
 
 class BoneAngleRangePoseElement : public PoseElement {
@@ -41,7 +46,6 @@ public:
     virtual float Score(const Skeleton &) const;
 
 protected:
-    float unk4; // 0x4
     SkeletonBone unk8; // 0x8
     Vector3 mAngle; // 0xc
     float unk1c; // 0x1c
