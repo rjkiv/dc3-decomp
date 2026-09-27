@@ -1612,7 +1612,7 @@ system/hamobj/HamMaster.cpp:
 	.text       start:0x825213A8 end:0x825235F8
 	.text       start:0x82EE1C00 end:0x82EE1CC0 rename:.text$yd
 	.data       start:0x82F0F158 end:0x82F0F1C4
-	.data       start:0x82F61D54 end:0x82F620B4 rename:.bss
+	.data       start:0x82F61D54 end:0x82F61DC0 rename:.bss
 
 system/hamobj/FreestyleMoveRecorder.cpp:
 	.rdata      start:0x8205C7F8 end:0x8205D030
@@ -1623,6 +1623,7 @@ system/hamobj/FreestyleMoveRecorder.cpp:
 	.text       start:0x82EDAF28 end:0x82EDAF60 rename:.text$yc
 	.text       start:0x82EE1CC0 end:0x82EE1CD8 rename:.text$yd
 	.data       start:0x82F0F1C4 end:0x82F0F308
+	.data       start:0x82F61DC0 end:0x82F620B4 rename:.bss
 
 system/hamobj/CharCameraInput.cpp:
 	.rdata      start:0x8205D030 end:0x8205D1A0

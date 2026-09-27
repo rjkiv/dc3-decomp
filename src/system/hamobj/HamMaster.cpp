@@ -2,6 +2,7 @@
 #include "HamAudio.h"
 #include "flow/PropertyEventProvider.h"
 #include "hamobj/HamSongData.h"
+#include "math/Decibels.h"
 #include "midi/DataEventList.h"
 #include "midi/MidiParserMgr.h"
 #include "obj/Data.h"
@@ -254,6 +255,63 @@ void HamMaster::CheckBeat() {
         TheHamProvider->Export(msg, true);
     }
     unk78 = unk60;
+}
+
+void HamMaster::CheckLevels() {
+    static float sFloat1c0 = 40;
+    if (TheSynth) {
+        PropertyEventProvider *prov =
+            ObjectDir::Main()->Find<PropertyEventProvider>("audio_channels", false);
+        if (prov) {
+            const auto &levelData = TheSynth->GetLevelData();
+            if (levelData.size() != 0) {
+                float f12 = levelData[levelData.size() - 1].mRMS;
+                float f13;
+                if (levelData.size() > 2) {
+                    f13 = levelData[levelData.size() - 2].mRMS;
+                } else {
+                    f13 = f12;
+                }
+                f12 = (RatioToDb(f12) + sFloat1c0) / sFloat1c0;
+                f13 = (RatioToDb(f13) + sFloat1c0) / sFloat1c0;
+
+                ClampEq(f12, 0.0f, 1.0f);
+                ClampEq(f13, 0.0f, 1.0f);
+
+                unka8.push_back(Vector2(f12, f13));
+
+                float f14 = 0;
+                float f15 = 0;
+                FOREACH (it, unka8) {
+                    Vector2 &cur = *it;
+                    f15 += cur.x;
+                    f14 += cur.y;
+                }
+                unsigned int numVecs = unka8.size();
+                float f15div = (1 / (float)numVecs) * f15;
+                float f14div = (1 / (float)numVecs) * f14;
+
+                while (unka8.size() > 3) {
+                    unka8.pop_front();
+                }
+
+                float channels[8];
+                float firstloc = 1;
+                for (int i = 0; i < 4; i++) {
+                    channels[3 - i] = firstloc * f15div;
+                    firstloc *= 0.7f;
+                }
+                float secondloc = 1;
+                for (int i = 4; i < 8; i++) {
+                    channels[i] = secondloc * f14div;
+                    secondloc *= 0.7f;
+                }
+                for (int i = 0; i < 8; i++) {
+                    prov->SetProperty(MakeString("channel%d", i), channels[i]);
+                }
+            }
+        }
+    }
 }
 
 HamMasterLoader::HamMasterLoader(HamMaster *master)

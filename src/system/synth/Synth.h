@@ -126,6 +126,7 @@ public:
     void DrawMeterScale(float &y0);
     void DrawMeter(float &y0, float lvl, float pkLvl, const char *);
     bool TrackLevels() const { return mTrackLevels; }
+    const std::vector<LevelData> &GetLevelData() const { return mLevelData; }
 
     template <class T>
     T *Find(const char *name, bool fail = true) {
