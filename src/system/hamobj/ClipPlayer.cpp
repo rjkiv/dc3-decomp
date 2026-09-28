@@ -7,6 +7,7 @@
 #include "hamobj/HamCharacter.h"
 #include "hamobj/HamDirector.h"
 #include "hamobj/HamDriver.h"
+#include "hamobj/HamGameData.h"
 #include "hamobj/SongUtl.h"
 #include "math/Utl.h"
 #include "obj/Data.h"
@@ -277,6 +278,53 @@ CharClip *ClipPlayer::GetPrevRoutineTransition(int idx) {
             CharClip *c2 = nullptr;
             GetRoutineCrossoverClips(f8, keyPrev.value.Str(), &c1, &c2);
             return GetRoutineTransition(c2->Name(), &key);
+        }
+    }
+}
+
+void ClipPlayer::PushClip(int idx, HamDriver::LayerArray *arr) {
+    if (idx >= 0 && !mClipKeys->empty()) {
+        MinEq<int>(idx, mClipKeys->size() - 1);
+        Key<Symbol> &key = mClipKeys->at(idx);
+
+        float beat = FrameToBeat(key.frame);
+        CharClip *clip = unkc < beat + 1 ? GetTransitionBefore(&key) : nullptr;
+        float f12 = clip ? ClipLength(clip) - 2 : 0;
+
+        if (unkc < beat - f12) {
+            PushClip(idx - 1, arr);
+        }
+        float f10;
+        if (clip) {
+            f12 = (beat - ClipLength(clip)) + 1;
+            PlayClip(clip, f12, f12, arr);
+            f10 = beat;
+        } else {
+            f10 = beat - 1;
+        }
+        if (unkc > f10) {
+            Key<Symbol> *master = TheHamDirector->GetMasterPracticeFrame(key.value.Str());
+            if (master) {
+                Keys<Symbol, Symbol> *oldClipKeys = mClipKeys;
+                mClipKeys = mMasterClipKeys;
+                beat = FrameToBeat(master->frame) - beat;
+                unk50 += beat;
+                unkc += beat;
+                unk20 += beat;
+                unk24 += beat;
+                PlayNormal(unk50 + f10, arr, key.value.Str());
+                unkc -= beat;
+                unk20 -= beat;
+                mClipKeys = oldClipKeys;
+                unk24 -= beat;
+                unk50 -= beat;
+            } else {
+                MILO_NOTIFY_ONCE(
+                    "%s: can't find %s in expert practice track",
+                    TheGameData->GetSong(),
+                    key.value.Str()
+                );
+            }
         }
     }
 }
