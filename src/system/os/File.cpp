@@ -82,9 +82,9 @@ const char *FileGetName(const char *file) {
         dir = strrchr(file, '\\');
     }
     if (dir) {
-        file = dir + 1;
+        file = dir;
     }
-    return file;
+    return file + 1;
 }
 
 static bool FileMatchInternal(const char *arg0, const char *arg1, bool arg2) {
