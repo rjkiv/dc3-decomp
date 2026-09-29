@@ -71,6 +71,7 @@ public:
         StyleInfo()
             : mSize(30), mTextColor(1, 1, 1), mFontColorOverride(false),
               mFontColor(1, 1, 1), mItalics(0), mKerning(0), mZOffset(0) {}
+
         /** "Size of the text" */
         float mSize; // 0x0
         /** "Color of the text, put into mesh verts.
@@ -101,6 +102,7 @@ public:
             mInfo = s.mInfo;
             return *this;
         }
+        void SetAlpha(float alpha) { mInfo.mFontColor.alpha = alpha; }
 
         StyleInfo mInfo; // 0x0
         /** "Font to use for this style" */
