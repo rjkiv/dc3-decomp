@@ -399,3 +399,76 @@ bool ClipPlayer::PushRoutineBuilderClip(int i1, HamDriver::LayerArray *arr) {
         return false;
     }
 }
+
+DataNode ClipPlayer::AnnotateClip(float frame) {
+    DataArray *arr = nullptr;
+    int keyIdx = mClipKeys->KeyLessEq(frame);
+    if (keyIdx >= 0) {
+        Key<Symbol> &key = mClipKeys->at(keyIdx);
+
+        if (mClipKeys == mMasterClipKeys) {
+            const char *c12 = "";
+            if (keyIdx + 1 < mClipKeys->size()) {
+                c12 = mClipKeys->at(keyIdx + 1).value.Str();
+            }
+            float f2, f3, f4;
+            if (GetClipRange(key.value.Str(), c12, FrameToBeat(key.frame), f2, f3, f4)) {
+                arr = new DataArray(0);
+                Annotate(arr, f2, "start");
+                Annotate(arr, f3, "end");
+                if (f4 != kHugeFloat) {
+                    Annotate(arr, f4, "blend");
+                }
+            }
+        } else if (keyIdx + 1 < mClipKeys->size()) {
+            Key<Symbol> &keyNext = mClipKeys->at(keyIdx + 1);
+            CharClip *clip = GetTransitionBefore(&keyNext);
+            if (clip) {
+                arr = new DataArray(0);
+                float clipLength = ClipLength(clip);
+                Annotate(arr, FrameToBeat(keyNext.frame) - clipLength + 1, clip->Name());
+            }
+        }
+    }
+    if (!arr) {
+        return 0;
+    } else {
+        DataNode ret(arr);
+        arr->Release();
+        return ret;
+    }
+}
+
+DataNode ClipPlayer::AnnotatePractice() {
+    bool cmp = unk24 != kHugeFloat;
+    if (!cmp) {
+        return 0;
+    } else {
+        DataArray *arr = new DataArray(0);
+        if (!TheLoadMgr.EditMode() || !TheHamDirector->NoTransitions()) {
+            CharClip *c = mInClip;
+            if (c) {
+                Annotate(arr, (unk20 + 1) - ClipLength(c), c->Name());
+                Annotate(arr, unk20 + 1, "");
+            }
+        }
+        float f5 = unk24;
+        if (!TheLoadMgr.EditMode() || !TheHamDirector->NoTransitions()) {
+            CharClip *c = mOutClip;
+            if (c) {
+                Annotate(arr, f5 - 1, c->Name());
+                f5 += ClipLength(c) - 2;
+            }
+        }
+        if (CanUseRestStep()) {
+            Annotate(arr, f5, "rest_step");
+            f5 = unk24 + 4;
+        }
+        Annotate(arr, f5, "rest");
+        Annotate(arr, unk20 - (float)(TheHamDirector->StartLoopMargin() * 4), "loop");
+        Annotate(arr, unk24 + 1 + (float)(TheHamDirector->EndLoopMargin() * 4), "loop");
+        DataNode ret(arr);
+        arr->Release();
+        return ret;
+    }
+}
