@@ -61,12 +61,12 @@ void SuperEasyRemixer::Init() {
     SaveSuperEasyMoveParents();
     for (Difficulty d = EasiestDifficulty(); d != kNumDifficulties;
          d = DifficultyOneHarder(d)) {
-        unsigned int numParents = GetMoveParentsByDifficulty(d).size();
-        if (numParents != mTotalMeasures) {
+        std::vector<const MoveParent *> &parents = GetMoveParentsByDifficulty(d);
+        if (parents.size() != mTotalMeasures) {
             MILO_NOTIFY(
                 "this song has wrong number of measures in %s track (has %d, want %d)",
                 DifficultyToSym(d).Str(),
-                numParents,
+                parents.size(),
                 mTotalMeasures
             );
         }
@@ -95,7 +95,7 @@ bool InsertVariants(std::set<const MoveVariant *> &vars, Symbol name) {
     if (!mp) {
         return false;
     } else {
-        for (int i = 0; i < mp->Variants().size(); i++) {
+        for (int i = 0; i < (int)mp->Variants().size(); i++) {
             const MoveVariant *v = mp->Variants()[i];
             vars.insert(v);
         }

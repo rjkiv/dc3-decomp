@@ -106,8 +106,10 @@ void OriginalChoreoRemixer::SelectMove(int player, int measure) {
         } else {
             i8 = mDesiredDiffs[player];
         }
-        const MoveParent *mp_next = GetMoveParentsByDifficulty(i8)[measure];
-        const MoveVariant *mv_next = GetMoveVariantsByDifficulty(i8)[measure];
+        const auto &parents = GetMoveParentsByDifficulty(i8);
+        const MoveParent *mp_next = parents[measure];
+        const auto &vars = GetMoveVariantsByDifficulty(i8);
+        const MoveVariant *mv_next = vars[measure];
         MILO_ASSERT(mp_next, 0xA1);
         AddRoutineMove(player, measure, mp_next, mv_next);
         unkec[player][measure] = i8;
@@ -207,40 +209,47 @@ void OriginalChoreoRemixer::BridgeGapsInMoveParents(int i1) {
     std::vector<const MoveParent *> &moveParentsByDiff = GetMoveParentsByDifficulty(i1);
     for (int i = 0; i < mTotalMeasures; i++) {
         if (!moveParentsByDiff[i]) {
-            if (i <= 0) {
-                MILO_FAIL(
-                    "MixItMgr: Gap at measure 0 in song %s\n", TheGameData->GetSong()
-                );
-            }
+            MILO_ASSERT_FMT(
+                i > 0, "MixItMgr: Gap at measure 0 in song %s\n", TheGameData->GetSong()
+            );
             int i12 = i + 1;
             for (; i12 < mTotalMeasures && !moveParentsByDiff[i12]; i12++) {
             }
-            if (i12 > unk108) {
-                MILO_FAIL(
-                    "MixItMgr: Gap beyond finishing move in song %s\n",
-                    TheGameData->GetSong()
-                );
-            }
+            MILO_ASSERT_FMT(
+                i12 <= unk108,
+                "MixItMgr: Gap beyond finishing move in song %s\n",
+                TheGameData->GetSong()
+            );
             setVec.clear();
             setVec.resize(mTotalMeasures);
             setVec[i - 1].insert(moveParentsByDiff[i - 1]);
-            setVec[i].insert(moveParentsByDiff[i]);
-            for (int j = i12 - 1; j >= 0; j--) {
+            setVec[i12].insert(moveParentsByDiff[i12]);
+            for (int j = i12 - 1; j >= i; j--) {
                 BuildSetOfPrevAdjacentMoveParents(setVec[j], setVec[j + 1]);
             }
-            for (; i < i12; i++) {
-                std::set<const MoveParent *> &curSet = setVec[i];
-                const MoveParent *curMoveParentByDiff = moveParentsByDiff[i];
+            for (int j = i; j < i12; j++) {
+                const std::set<const MoveParent *> &curSet = setVec[j];
+                const MoveParent *curMoveParentByDiff = moveParentsByDiff[j - 1];
+                const MoveParent *found = nullptr;
                 FOREACH (it, curSet) {
-                    if ((*it)->HasPrevAdjacent(curMoveParentByDiff)) {
-                        moveParentsByDiff[i] = *it;
-                        break; // needs to go to the next iteration of the i < i12 loop
+                    const MoveParent *cur = *it;
+                    if (cur->HasPrevAdjacent(curMoveParentByDiff)) {
+                        found = cur;
+                        break;
                     }
                 }
-                if (curSet.size() == 0) {
-                } else {
-                    moveParentsByDiff[i] = *curSet.begin();
+                if (!found) {
+                    if (curSet.size() == 0) {
+                        if (curMoveParentByDiff->NextAdjacents().size() != 0) {
+                            found = curMoveParentByDiff->NextAdjacents().front();
+                        } else {
+                            found = curMoveParentByDiff;
+                        }
+                    } else {
+                        found = *curSet.begin();
+                    }
                 }
+                moveParentsByDiff[j] = found;
             }
         }
     }
