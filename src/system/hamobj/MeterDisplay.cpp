@@ -69,27 +69,59 @@ void MeterDisplay::PreLoad(BinStream &bs) {
     ASSERT_REVS(4, 0)
     d >> mShowText;
     if (d.rev >= 1) {
-        bs >> mCurrentValue;
-        bs >> mMaxValue;
+        d >> mCurrentValue;
+        d >> mMaxValue;
     }
     if (d.rev >= 2) {
         d >> mPercentageText;
     }
     if (d.rev >= 3) {
-        bs >> mAnimPeriod;
+        d >> mAnimPeriod;
     }
     if (d.rev >= 4) {
         d >> mHideDenominator;
-        bs >> mWrapperText;
+        d >> mWrapperText;
     }
-    bs >> mResourceDir;
-    UIComponent::PreLoad(bs);
+    d >> mResourceDir;
+    UIComponent::PreLoad(d.stream);
 }
 
 void MeterDisplay::PostLoad(BinStream &bs) {
     mResourceDir.PostLoad(nullptr);
     UIComponent::PostLoad(bs);
     Update();
+}
+
+void MeterDisplay::DrawShowing() {
+    if (mResourceDir) {
+        float f8 = 0;
+        if (mMaxValue > 0) {
+            f8 = (float)mCurrentValue / (float)mMaxValue;
+            float f6 = TheTaskMgr.UISeconds() - unk4c;
+            if (mAnimPeriod > 0 && unk50 >= 0 && f6 > 0) {
+                if (f6 < mAnimPeriod) {
+                    f8 = ((f6 / mAnimPeriod) * (float)(unk50 - mCurrentValue)
+                          + (float)mCurrentValue)
+                        / (float)mMaxValue;
+                } else {
+                    mCurrentValue = unk50;
+                    unk50 = -1;
+                    f8 = (float)mCurrentValue / (float)mMaxValue;
+                    UpdateDisplay();
+                }
+            }
+        }
+        ClampEq(f8, 0.0f, 1.0f);
+        float range = mMeterAnim->EndFrame() - mMeterAnim->StartFrame();
+        mMeterAnim->SetFrame(range * f8 + mMeterAnim->StartFrame(), 1);
+        mResourceDir->SetWorldXfm(WorldXfm());
+        mResourceDir->Draw();
+        if (mShowText) {
+            if (unk54) {
+                unk54->Draw();
+            }
+        }
+    }
 }
 
 void MeterDisplay::Poll() {
