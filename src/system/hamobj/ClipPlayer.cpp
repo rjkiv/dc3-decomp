@@ -328,3 +328,74 @@ void ClipPlayer::PushClip(int idx, HamDriver::LayerArray *arr) {
         }
     }
 }
+
+bool ClipPlayer::PushRoutineBuilderClip(int i1, HamDriver::LayerArray *arr) {
+    if (i1 >= 0 && mClipKeys->size() >= 1) {
+        Difficulty d = TheGameData->Player(unk14)->GetDifficulty();
+        int i10 = i1 + 1;
+        MinEq<int>(i1, mClipKeys->size() - 1);
+        MinEq<int>(i10, mClipKeys->size() - 1);
+        Key<Symbol> &keyi1 = mClipKeys->at(i1);
+        int i14;
+        CharClip *c = GetPrevRoutineTransition(i1);
+        if (c) {
+            c = c->GetUnk198() & (1 << d) ? c : nullptr;
+        }
+        CharClip *c13 = nullptr;
+        bool b7 = false;
+        float beat = FrameToBeat(keyi1.frame);
+        float f18 = beat > 0 ? beat + 1 : beat;
+        float f181 = f18 + 1;
+        float f20 = f18 + 1.5f;
+        float f19 = c ? f18 : beat;
+        if (unkc < f181) {
+            b7 = PushRoutineBuilderClip(i1 - 1, arr);
+        }
+        if (c && unkc < f18) {
+            return false;
+        }
+        CharClip *c1 = nullptr;
+        CharClip *c2 = nullptr;
+        GetRoutineCrossoverClips(f18, keyi1.value.Str(), &c1, &c2);
+        float f24;
+        if (i1 != i10) {
+            Key<Symbol> &keyNext = mClipKeys->at(i10);
+            c13 = GetRoutineTransition(c2->Name(), &keyNext);
+            if (c13) {
+                c13 = c13->GetUnk198() & (1 << d) ? c13 : nullptr;
+            }
+            f24 = FrameToBeat(keyNext.frame);
+        } else {
+            f24 = f18 + 3;
+        }
+        f18 += 2;
+        if (c13) {
+            f18 = f24 - ClipLength(c13) + 2;
+            f24 = f18 + 1;
+        }
+        float f201 = f20 + 1;
+
+        if (c1 == c2) {
+            if (unkc >= beat && !(c13 && unkc > f24)) {
+                PlayClip(c1, beat, b7 ? f19 : -kHugeFloat, arr);
+                b7 = true;
+            }
+        } else {
+            if (unkc >= beat && unkc <= f201) {
+                PlayClip(c1, beat, b7 ? f19 : -kHugeFloat, arr);
+                b7 = true;
+            }
+            if (unkc >= f20 && !(c13 && unkc > f24)) {
+                PlayClip(c2, beat, b7 ? f20 : -kHugeFloat, arr);
+                b7 = true;
+            }
+        }
+        if (c13 && unkc >= f18) {
+            PlayClip(c13, f18, b7 ? f18 : -kHugeFloat, arr);
+            b7 = true;
+        }
+        return b7;
+    } else {
+        return false;
+    }
+}

@@ -220,6 +220,7 @@ public:
     void StuffBones(CharBones &bones);
     void PoseMeshes(ObjectDir *dir, float beat);
     CharBoneDir *GetResource() const;
+    int GetUnk198() const { return unk198; } // bitmask, indexed by Difficulty
 
     static const float kBeatAccuracy;
     static DataNode GetClipEvents();
