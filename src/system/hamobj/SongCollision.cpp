@@ -7,6 +7,7 @@
 #include "hamobj/MocapSkeletonIterator.h"
 #include "hamobj/MoveDir.h"
 #include "math/Mtx.h"
+#include "math/Utl.h"
 #include "math/Vec.h"
 #include "obj/Data.h"
 #include "obj/DataUtl.h"
@@ -16,6 +17,7 @@
 #include "utl/BinStream.h"
 #include "utl/Std.h"
 #include "utl/TimeConversion.h"
+#include <float.h>
 
 std::vector<const char *> sCollisionUsefulBoneNames;
 float SongCollision::sCollisionTolerance;
@@ -35,11 +37,36 @@ void bones_min_max_x(
 }
 
 bool AreDancersColliding1D(
-    std::vector<RndTransformable *> &,
-    std::vector<RndTransformable *> &,
-    const Vector3 &,
-    const Vector3 &
-);
+    std::vector<RndTransformable *> &t1,
+    std::vector<RndTransformable *> &t2,
+    const Vector3 &v1,
+    const Vector3 &v2
+) {
+    if (t1.empty() || t2.empty()) {
+        return false;
+    } else {
+        Transform tf60;
+        tf60.v = v1;
+        Subtract(v2, v1, tf60.m.x);
+        tf60.m.x.z = 0;
+        Normalize(tf60.m.x, tf60.m.x);
+        tf60.m.z.Set(0, 0, 1);
+        float f70 = FLT_MAX;
+        float f6c = FLT_MAX;
+        float f68 = FLT_MIN;
+        float f63 = FLT_MIN;
+
+        Cross(tf60.m.z, tf60.m.x, tf60.m.y);
+        bones_min_max_x(f70, f68, t1, tf60);
+        bones_min_max_x(f6c, f63, t2, tf60);
+        if (f70 < f6c) {
+            f63 = f68 - f6c;
+        } else {
+            f63 -= f70;
+        }
+        return f63 > SongCollision::CollisionTolerance();
+    }
+}
 
 #pragma region BeatCollisionData
 
@@ -224,6 +251,83 @@ void SongCollision::GatherUsefulBones(
             }
         }
     }
+}
+
+bool SongCollision::IsCollision(
+    int i1,
+    int i2,
+    const Difficulty *const diffs,
+    const Transform *const xfms,
+    std::vector<SongCollisionOutput> *outputs
+) const {
+    Transform localXfms[2];
+    for (int i = 0; i < 2; i++) {
+        localXfms[i] = xfms[i];
+    }
+    bool b6 = false;
+    for (int i = i1; i < i2; i++) {
+        SongCollisionOutput output;
+        CheckCollision(i, diffs, localXfms, output);
+        if (output.unke0) {
+            if (!outputs) {
+                return true;
+            }
+            b6 = true;
+        }
+        if (outputs) {
+            outputs->push_back(output);
+        }
+        for (int j = 0; j < 2; j++) {
+            const BeatCollisionData *bcd = BeatData(i, diffs[j]);
+            if (bcd) {
+                Add(localXfms[j].v, bcd->mOffset, localXfms[j].v);
+            }
+        }
+    }
+    return b6;
+}
+
+void SongCollision::CheckCollision(
+    int i1,
+    const Difficulty *const diffs,
+    const Transform *const xfms,
+    SongCollisionOutput &songCollOutput
+) const {
+    Vector3 vb0;
+    Subtract(xfms[1].v, xfms[0].v, vb0);
+    Vector3 va0;
+    Normalize(vb0, va0);
+    for (int i = 0; i < 2; i++) {
+        songCollOutput.unk60[i] = xfms[i];
+        const BeatCollisionData *bcd = BeatData(i1, diffs[i]);
+        if (!bcd) {
+            songCollOutput.unk0[i].Zero();
+            songCollOutput.unk20[i].Zero();
+            songCollOutput.unk40[i].Zero();
+        } else {
+            Multiply(Vector3(bcd->mMinX, 0, 0), xfms[i], songCollOutput.unk0[i]);
+            Multiply(Vector3(bcd->mMaxX, 0, 0), xfms[i], songCollOutput.unk20[i]);
+
+            Vector3 vsub2;
+            Vector3 vsub1;
+            Subtract(songCollOutput.unk20[i], xfms[i].v, vsub2);
+            Subtract(songCollOutput.unk0[i], xfms[i].v, vsub1);
+            float dot = Dot(va0, vsub1);
+            if ((dot <= 0 || i != 0) && (0 <= dot || i != 1)) {
+                dot = Dot(va0, vsub2);
+                Scale(va0, dot, songCollOutput.unk40[i]);
+            } else {
+                Scale(va0, dot, songCollOutput.unk40[i]);
+            }
+        }
+    }
+
+    float vb0len = Length(vb0);
+    float f15 = 0;
+    for (int i = 0; i < 2; i++) {
+        f15 += Length(songCollOutput.unk40[i]);
+    }
+    songCollOutput.unke0 = (f15 - sCollisionTolerance) > vb0len;
 }
 
 void SongCollision::Update(MoveDir *moveDir) {

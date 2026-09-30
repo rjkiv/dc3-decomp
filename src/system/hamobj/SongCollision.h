@@ -17,7 +17,13 @@ struct BeatCollisionData {
 };
 
 // size 0xe4
-struct SongCollisionOutput {};
+struct SongCollisionOutput {
+    Vector3 unk0[2];
+    Vector3 unk20[2];
+    Vector3 unk40[2];
+    Transform unk60[2];
+    bool unke0;
+};
 
 /** "Contains data for handling potential character collisions" */
 class SongCollision : public Hmx::Object {
@@ -47,6 +53,7 @@ public:
 
     static void Init();
     static void GatherUsefulBones(std::vector<RndTransformable *> &, HamCharacter *);
+    static float CollisionTolerance() { return sCollisionTolerance; }
 
 private:
     static float sCollisionTolerance;
