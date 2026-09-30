@@ -16,6 +16,7 @@ struct BeatCollisionData {
     Vector3 mOffset; // 0x8
 };
 
+// size 0xe4
 struct SongCollisionOutput {};
 
 /** "Contains data for handling potential character collisions" */
