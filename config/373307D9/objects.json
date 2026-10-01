@@ -393,7 +393,7 @@
             "system/hamobj/SongLayout.cpp": "Matching",
             "system/hamobj/SongUtl.cpp": "Matching",
             "system/hamobj/StarsDisplay.cpp": "Matching",
-            "system/hamobj/SuperEasyRemixer.cpp": "NonMatching",
+            "system/hamobj/SuperEasyRemixer.cpp": "Matching",
             "system/hamobj/TransConstraint.cpp": "NonMatching",
             "system/math/Color.cpp": "Matching",
             "system/math/Decibels.cpp": "Matching",

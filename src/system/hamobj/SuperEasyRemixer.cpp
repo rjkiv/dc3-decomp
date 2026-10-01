@@ -151,30 +151,33 @@ void SuperEasyRemixer::SaveSuperEasyMoveParents() {
     mSuperEasyParents.clear();
     mSuperEasyVariants.reserve(mTotalMeasures);
     mSuperEasyParents.reserve(mTotalMeasures);
-    int i7 = 1;
+    bool i7 = 1;
     HamSupereasyData *data =
         ObjDirItr<HamSupereasyData>(TheHamDirector->GetMoveDir(), false);
     if (data) {
-        if (data->mRoutine.size() != mTotalMeasures) {
+        auto &routine = data->mRoutine;
+        if (routine.size() != mTotalMeasures) {
             MILO_FAIL(
                 "HamSuperEasyData has wrong number of measures in routine in song '%s'",
                 TheGameData->GetSong()
             );
         }
-        for (int i = 0; i < data->mRoutine.size(); i++) {
-            HamSupereasyMeasure &curMeasure = data->mRoutine[i];
-            if (curMeasure.preferred.Null() && curMeasure.first.Null()) {
+        for (int i = 0; i < routine.size(); i++) {
+            Symbol name = routine[i].preferred;
+            if (name.Null()) {
+                name = routine[i].first;
+            }
+            if (name.Null()) {
                 mSuperEasyVariants.push_back(nullptr);
             } else {
-                const MoveVariant *mv =
-                    TheMoveMgr->Graph().FindMoveByVariantName(curMeasure.preferred);
+                const MoveVariant *mv = TheMoveMgr->Graph().FindMoveByVariantName(name);
                 if (mv) {
                     mSuperEasyVariants.push_back(mv);
                 } else {
                     MILO_FAIL(
                         "'%s' HamSupereasyData has move '%s' at index %d not found in move graph",
                         TheGameData->GetSong().Str(),
-                        curMeasure.preferred,
+                        name,
                         i
                     );
                     i7 = 0;
