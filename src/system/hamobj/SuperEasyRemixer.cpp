@@ -12,6 +12,7 @@
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "utl/DataPointMgr.h"
+#include "utl/TextStream.h"
 #include "world/Dir.h"
 
 SuperEasyRemixer::SuperEasyRemixer() {}
@@ -107,28 +108,26 @@ void SuperEasyRemixer::DumpSongLayout() {
     MILO_LOG("\tSUPEREASY\t\tEASY\t\tMEDIUM\t\tHARD\n");
     String str;
     for (int i = 0; i < mTotalMeasures; i++) {
+        int prevI = i - 1;
         str = MakeString("%d", i + 1);
         for (Difficulty d = EasiestDifficulty(); d != kNumDifficulties;
              d = DifficultyOneHarder(d)) {
             str += "\t";
-            // there's a string print here
-            str.Print(GetMoveParentsByDifficulty(d)[i]->Name().Str());
+            str += GetMoveParentsByDifficulty(d)[prevI + 1]->Name();
             Difficulty next = DifficultyOneHarder(d);
             if (next != kNumDifficulties) {
                 str += "\t";
                 if (i - 1 >= 0) {
-                    if (TheMoveMgr->HasVariantPair(
-                            GetMoveParentsByDifficulty(next)[i - 1],
-                            GetMoveParentsByDifficulty(d)[i]
-                        )) {
+                    const MoveParent *n1 = GetMoveParentsByDifficulty(next)[prevI];
+                    const MoveParent *d1 = GetMoveParentsByDifficulty(d)[prevI + 1];
+                    if (TheMoveMgr->HasVariantPair(n1, d1)) {
                         str += "<";
                     } else {
                         str += "_";
                     }
-                    if (TheMoveMgr->HasVariantPair(
-                            GetMoveParentsByDifficulty(d)[i - 1],
-                            GetMoveParentsByDifficulty(next)[i]
-                        )) {
+                    const MoveParent *d2 = GetMoveParentsByDifficulty(d)[prevI];
+                    const MoveParent *n2 = GetMoveParentsByDifficulty(next)[prevI + 1];
+                    if (TheMoveMgr->HasVariantPair(d2, n2)) {
                         str += ">";
                     } else {
                         str += "_";
@@ -169,7 +168,9 @@ void SuperEasyRemixer::SaveSuperEasyMoveParents() {
             } else {
                 const MoveVariant *mv =
                     TheMoveMgr->Graph().FindMoveByVariantName(curMeasure.preferred);
-                if (!mv) {
+                if (mv) {
+                    mSuperEasyVariants.push_back(mv);
+                } else {
                     MILO_FAIL(
                         "'%s' HamSupereasyData has move '%s' at index %d not found in move graph",
                         TheGameData->GetSong().Str(),
@@ -179,7 +180,6 @@ void SuperEasyRemixer::SaveSuperEasyMoveParents() {
                     i7 = 0;
                     break;
                 }
-                mSuperEasyVariants.push_back(mv);
             }
         }
         if (i7 != 0) {
@@ -206,20 +206,22 @@ void SuperEasyRemixer::SaveSuperEasyMoveParents() {
 
 void SuperEasyRemixer::LoadAllVariants() {
     std::set<const MoveVariant *> vars;
-    const char *song = TheGameData->GetSong().Str();
+    Symbol song = TheGameData->GetSong();
     if (TheMoveMgr->MoveParents().size() == 0) {
-        MILO_FAIL("Failed to load move graph for: %s\n", song);
+        MILO_FAIL("Failed to load move graph for: %s\n", song.Str());
     }
     DataArray *layout = TheMoveMgr->Graph().Layout();
     if (!layout) {
-        MILO_FAIL("couldn't load layout for: %s", song);
+        MILO_FAIL("couldn't load layout for: %s", song.Str());
     }
     for (int i = 0; i < 3; i++) {
         Symbol diffSym = DifficultyToSym((Difficulty)i);
-        DataArray *a = layout->FindArray(diffSym, true)->Array(1);
+        DataArray *a = layout->FindArray(diffSym)->Array(1);
         if (a->Size() == 0) {
             MILO_FAIL(
-                "%s's %s layout is not stored in its move graph", song, diffSym.Str()
+                "%s's %s layout is not stored in its move graph",
+                song.Str(),
+                diffSym.Str()
             );
         }
         for (int j = 0; j < a->Size(); j++) {
@@ -227,7 +229,7 @@ void SuperEasyRemixer::LoadAllVariants() {
             if (!InsertVariants(vars, s)) {
                 MILO_NOTIFY(
                     "%s's %s layout, at index %d, (%s) not found in move graph",
-                    song,
+                    song.Str(),
                     diffSym.Str(),
                     j,
                     s.Str()
@@ -241,15 +243,16 @@ void SuperEasyRemixer::LoadAllVariants() {
     MILO_ASSERT(hamMoves, 0x12D);
     HamSupereasyData *data = ObjDirItr<HamSupereasyData>(hamMoves, false);
     if (data) {
-        for (int i = 0; i < data->mRoutine.size(); i++) {
-            HamSupereasyMeasure &curMeasure = data->mRoutine[i];
-            Symbol name = curMeasure.second;
-            if (name.Null())
-                name = curMeasure.first;
+        auto &routine = data->mRoutine;
+        for (int i = 0; i < routine.size(); i++) {
+            Symbol name = routine[i].preferred;
+            if (name.Null()) {
+                name = routine[i].first;
+            }
             if (!InsertVariants(vars, name)) {
                 MILO_NOTIFY(
                     "%s's supereasy layout, at index %d, (%s) not found in move graph",
-                    song,
+                    song.Str(),
                     i,
                     name.Str()
                 );
