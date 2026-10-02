@@ -49,3 +49,5 @@ protected:
     float mEasePower; // 0x80
     EaseFunc *mEaseFunc; // 0x84
 };
+
+bool SliderChildSort(FlowNode *, FlowNode *);

@@ -1,14 +1,23 @@
 #include "synth/StandardStream.h"
+#include "math/Decibels.h"
+#include "math/Utl.h"
 #include "os/Debug.h"
 #include "os/File.h"
 #include "os/System.h"
+#include "stl/_algo.h"
+#include "stl/_function.h"
 #include "synth/ADSR.h"
+#include "synth/Pollable.h"
+#include "synth/Stream.h"
+#include "synth/StreamReader.h"
 #include "synth/Synth.h"
 #include "utl/MemMgr.h"
 #include "utl/Std.h"
 #include "synth/StreamReceiver.h"
 #include "synth/StreamReceiverFile.h"
 #include "utl/Symbol.h"
+#include <cmath>
+#include <cstdlib>
 #include <functional>
 
 bool StandardStream::sReportLargeTimerErrors = true;
@@ -474,4 +483,200 @@ float StandardStream::GetBufferAheadTime() const {
         time = SampToMs(mCurrentSamp);
     }
     return time;
+}
+
+void StandardStream::DoJump() {
+    MILO_ASSERT(mJumpFromSamples != 0, 0x316);
+    if (!mJumpFile.empty()) {
+        if (mFile) {
+            delete mFile;
+        }
+        if (mRdr) {
+            delete mRdr;
+        }
+        mFile = NewFile(mJumpFile.c_str(), 2);
+        if (!mFile) {
+            MILO_FAIL("\nCould not open %s", mJumpFile.c_str());
+        }
+        mRdr = TheSynth->NewStreamDecoder(mFile, this, mExt);
+        mFileStartMs = SampToMs(mJumpToSamples);
+        mCurrentSamp = 0;
+        ClearJump();
+    } else {
+        if (mJumpFromSamples != mJumpToSamples) {
+            mRdr->Seek(mJumpToSamples);
+        }
+        mCurrentSamp = mJumpToSamples;
+    }
+
+    JumpInstance instance;
+    instance.unk0 = mJumpFromMs;
+    instance.unk4 = mJumpToMs;
+    if (!mJumpInstances.empty()) {
+        instance.unkc = (instance.unk4 - instance.unk0) + mJumpInstances.back().unkc;
+        instance.unk8 =
+            (instance.unk0 - mJumpInstances.back().unk4) + mJumpInstances.back().unk8;
+    } else {
+        instance.unk8 = instance.unk4 - instance.unk0;
+        instance.unkc = instance.unk0;
+    }
+    mJumpInstances.push_back(instance);
+}
+
+void StandardStream::UpdateVolumes() {
+    static Symbol _parent("_parent");
+    static Symbol _default("_default");
+    if (mFaders->Dirty()) {
+        float volume = mFaders->GetVolume();
+        FOREACH (it, mChanParams) {
+            ChannelParams *params = *it;
+            Fader *local = params->mFaders.FindLocal(_parent, true);
+            local->SetVolume(volume);
+        }
+        mFaders->ClearDirty();
+    }
+
+    for (int i = 0; i < mChannels.size(); i++) {
+        if (mChanParams[i]->mFaders.Dirty()) {
+            float volume = mChanParams[i]->mFaders.GetVolume();
+            float ratio = RatioToDb(volume);
+            ClampEq(ratio, 0.0f, 1.0f);
+            mChannels[i]->SetVolume(ratio);
+            mChanParams[i]->mFaders.ClearDirty();
+        }
+    }
+}
+
+// something wrong here
+bool StandardStream::IsPastStreamJumpPointOfNoReturn() {
+    if (mState == kInit) {
+        return false;
+    }
+    float f = 0;
+    if (mSampleRate != 0) {
+        f = SampToMs(mCurrentSamp);
+    }
+    float inSongTime = GetInSongTime();
+    if (0 < inSongTime
+        && (f < inSongTime || (inSongTime < mJumpFromMs && mJumpFromMs < f))) {
+        return true;
+    }
+}
+
+void StandardStream::setJumpSamplesFromMs(float f1, float f2) {
+    mJumpFromSamples = kStreamEndSamples;
+    mJumpToSamples = 0;
+    if (Stream::kStreamEndMs != f1) {
+        mJumpFromSamples = MsToSamp(f1);
+    }
+    if (f2 != 0) {
+        mJumpToSamples = MsToSamp(f2);
+        if (SampToMs(mJumpToSamples) < f2) {
+            mJumpToSamples++;
+        }
+    }
+}
+
+void StandardStream::UpdateTimeByFiltering() {
+    if (mChannels.empty() || mSampleRate == 0) {
+        mLastStreamTime = mStartMs;
+    } else {
+        // wrong vfunc???
+        float f = GetRawTime() - mTimer.Ms();
+        if (fabs(f) > 50.0f) {
+            if (sReportLargeTimerErrors) {
+                MILO_LOG("timer error is large: %f\n", f);
+            }
+        } else {
+            f *= 0.1f;
+        }
+        mTimer.Reset(mTimer.Ms() + f);
+        mLastStreamTime = mTimer.Ms();
+    }
+}
+
+void StandardStream::UpdateTime() {
+    if (mChannels.empty() || mSampleRate == 0) {
+        mLastStreamTime = mStartMs;
+    } else {
+        float rawtime = GetRawTime();
+        float var3 = floor(rawtime * 0.1875f + 0.5f);
+        float var6 = var3 * 5.3333335f;
+        var3 = mTimer.Ms() - (rawtime - var6);
+        float var2 = floor(var3 * 0.1875f);
+
+        if (var6 != var2 * 5.3333335f) {
+            float f4 = var6 - var3;
+            if (f4 < 0) {
+                f4 += 5.3333335f;
+            }
+            if (fabs(f4) < 5.3333335f) {
+                f4 *= 0.1f;
+            }
+            mTimer.Reset(mTimer.Ms() + f4);
+            if (fabs(f4) > 50.0f) {
+                if (sReportLargeTimerErrors) {
+                    MILO_LOG("timer error is large: %f\n", f4);
+                }
+            }
+        }
+        mLastStreamTime = mTimer.Ms();
+    }
+}
+
+void StandardStream::PollStream() {
+    mFrameTimer.Restart();
+    float lastMs = mFrameTimer.GetLastMs();
+    float f;
+    if (mState == kBuffering) {
+        f = 8.0f;
+    } else {
+        f = 1.0f;
+    }
+    mRdr->Poll(Max(lastMs * mThrottle, f));
+    std::for_each(mChannels.begin(), mChannels.end(), std::mem_fun(&StreamReceiver::Poll));
+
+    switch (mState) {
+    case kInit:
+    case kReady:
+        break;
+    case kBuffering: {
+        if (StuffChannels()) {
+            mState = kReady;
+        }
+    } break;
+
+    case kPlaying:
+    case kSuspended:
+    case kStopped: {
+        StuffChannels();
+        if (mChannels[0]->GetDoneBufferCounter() > mChannels[0]->NumBuffers() + 2) {
+            mState = kFinished;
+        }
+    } break;
+    case kFinished:
+        break;
+    default:
+        MILO_FAIL("bad state logic.");
+        break;
+    }
+
+    if (mState != kInit && mJumpFromSamples != 0) {
+        if (0 > mJumpFromSamples && mRdr->Done()) {
+            DoJump();
+        } else if (mJumpFromSamples > 0) {
+            if (mJumpFromSamples < mJumpToSamples) {
+                if (mCurrentSamp >= mJumpFromSamples && mCurrentSamp < mJumpToSamples) {
+                    DoJump();
+                }
+            } else if (mJumpFromSamples > mJumpToSamples
+                       && mCurrentSamp >= mJumpFromSamples) {
+                DoJump();
+            }
+        }
+    }
+
+    UpdateVolumes();
+    // wrong vfunc address
+    UpdateTime();
 }

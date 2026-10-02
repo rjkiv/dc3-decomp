@@ -44,6 +44,9 @@ public:
     void WriteData(void const *, int);
     u64 GetBytesPlayed();
 
+    int NumBuffers() const { return mNumBuffers; }
+    int GetDoneBufferCounter() const { return mDoneBufferCounter; }
+
     static StreamReceiver *New(int, int, bool, int);
 
 protected:

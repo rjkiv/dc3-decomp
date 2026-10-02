@@ -3,6 +3,7 @@
 #include "math/Rand.h"
 #include "obj/Object.h"
 #include "obj/Task.h"
+#include "utl/Std.h"
 
 bool sForceSerialSequences;
 
@@ -579,7 +580,7 @@ void GroupSeqInst::SetTranspose(float f) {
 #pragma region RandomGroupSeqInst
 
 RandomGroupSeqInst::RandomGroupSeqInst(RandomGroupSeq *seq)
-    : GroupSeqInst(seq, true), mIt(mSeqs.end()) {}
+    : GroupSeqInst(seq, false), mIt(mSeqs.end()) {}
 
 void RandomGroupSeqInst::StartImpl() {
     for (ObjVector<ObjPtr<SeqInst> >::iterator it = mIt; it != mSeqs.end(); it++) {
@@ -608,7 +609,31 @@ void RandomGroupSeqInst::Poll() {
 #pragma region RandomIntervalGroupSeqInst
 
 RandomIntervalGroupSeqInst::RandomIntervalGroupSeqInst(RandomIntervalGroupSeq *seq)
-    : GroupSeqInst(seq, true) {}
+    : GroupSeqInst(seq, false), unk4c(seq->Children().size()), mRunning(false) {
+    mMaxSimultaneous = seq->MaxSimultaneous();
+    mAvgIntervalSecs = seq->AvgIntervalSecs();
+    mIntervalSpread = seq->IntervalSpread();
+    for (int i = 0; i < seq->Children().size(); i++) {
+        unk4c[i] = -1.0f;
+    }
+}
+
+bool RandomIntervalGroupSeqInst::IsRunning() { return mRunning; }
+
+void RandomIntervalGroupSeqInst::Stop() {
+    FOREACH (it, mSeqs) {
+        if (*it)
+            (*it)->Stop();
+    }
+    mRunning = false;
+}
+
+void RandomIntervalGroupSeqInst::StartImpl() {
+    for (int i = 0; i < unk4c.size(); i++) {
+        ComputeNextTime(i);
+    }
+    mRunning = true;
+}
 
 #pragma endregion
 #pragma region SerialGroupSeqInst

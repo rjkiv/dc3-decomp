@@ -41,7 +41,7 @@ public:
     virtual bool FillDone() const = 0;
     virtual void EnableReads(bool) = 0;
     virtual float GetTime() = 0;
-    virtual float GetJumpBackTotalTime(float) = 0;
+    virtual float GetJumpBackTotalTime(float) const = 0;
     virtual float GetInSongTime() = 0;
     virtual std::vector<struct JumpInstance> *GetJumpInstances() = 0;
     virtual float GetFilePos() const = 0;

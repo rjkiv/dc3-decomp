@@ -18,7 +18,7 @@ public:
     virtual bool FillDone() const { return true; }
     virtual void EnableReads(bool) {}
     virtual float GetTime();
-    virtual float GetJumpBackTotalTime(float) { return 0; }
+    virtual float GetJumpBackTotalTime(float) const { return 0; }
     virtual float GetInSongTime() { return 0; }
     virtual std::vector<struct JumpInstance> *GetJumpInstances() { return nullptr; }
     virtual float GetFilePos() const { return 0; }

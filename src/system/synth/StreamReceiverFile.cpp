@@ -11,3 +11,7 @@ void StreamReceiverFile::StartSendImpl(unsigned char *data, int bufSize, int tar
     MILO_ASSERT(targetIdx * kStreamBufSize + bufSize <= mBufSize, 0x1F);
     memcpy(targetIdx * kStreamBufSize + mTargetBuffer, data, bufSize);
 }
+
+int StreamReceiverFile::GetPlayCursor() {
+    return ((unsigned int)sPlayCursor * 2) % (mNumBuffers * kStreamBufSize);
+}

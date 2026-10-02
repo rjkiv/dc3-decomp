@@ -448,14 +448,14 @@ DataNode Sound::OnPlay(DataArray *a) {
 
 SynthSample *Sound::Sample() { return mSynthSample; }
 
-void Sound::SetSpeed(float f1, Hmx::Object *o2) {
+void Sound::SetSpeed(float f1, Hmx::Object *eventReceiver) {
     float speedTranspose = CalcSpeedFromTranspose(mFaders.GetTranspose());
-    float clamped = Clamp(sSpeedCaps[0], sSpeedCaps[1], speedTranspose);
-    if (o2) {
+    float clamped = Clamp(sSpeedCaps[0], sSpeedCaps[1], f1);
+    if (eventReceiver) {
         FOREACH (it, mSamples) {
-            if ((*it)->GetEventReceiver() == o2) {
+            if ((*it)->GetEventReceiver() == eventReceiver) {
                 (*it)->SetSpeed(
-                    Clamp(sSpeedCaps[0], sSpeedCaps[1], clamped * speedTranspose)
+                    Clamp(sSpeedCaps[0], sSpeedCaps[1], speedTranspose * clamped)
                 );
                 return;
             }
@@ -464,6 +464,33 @@ void Sound::SetSpeed(float f1, Hmx::Object *o2) {
         mSpeed = clamped;
         FOREACH (it, mSamples) {
             (*it)->SetSpeed(Clamp(sSpeedCaps[0], sSpeedCaps[1], speedTranspose * mSpeed));
+        }
+    }
+}
+
+void Sound::SetPan(float pan, Hmx::Object *eventReceiver) {
+    bool clipOk;
+    if (mMoggClip && mMoggClip->NumChannels() > 1) {
+        clipOk = true;
+        mPan = 0;
+    } else {
+        clipOk = false;
+    }
+
+    if (!clipOk) {
+        float faderPan = mFaders.GetPan();
+        if (eventReceiver) {
+            FOREACH (it, mSamples) {
+                if ((*it)->GetEventReceiver() == eventReceiver) {
+                    (*it)->SetPan(Clamp(-4.0f, 4.0f, faderPan + pan));
+                    return;
+                }
+            }
+        } else {
+            mPan = pan;
+            FOREACH (it, mSamples) {
+                (*it)->SetPan(Clamp(-4.0f, 4.0f, faderPan + pan));
+            }
         }
     }
 }

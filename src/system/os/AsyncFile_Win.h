@@ -8,9 +8,10 @@ public:
     AsyncFileWin(const char *, int);
     virtual ~AsyncFileWin();
 
-    MEM_OVERLOAD(AsyncFile, 0x17);
+    MEM_TEMP_OVERLOAD(AsyncFile, 0x17);
 
 protected:
+    virtual bool GetFileHandle(void *&);
     virtual bool Truncate(int);
     virtual void _OpenAsync();
     virtual bool _OpenDone() { return true; }
@@ -21,7 +22,7 @@ protected:
     virtual bool _ReadDone();
     virtual void _Close();
 
-    int unk34; // 0x34
+    int mSectorBytes; // 0x34
     HANDLE mFile; // 0x38
     int fildes; // 0x3c
     bool mReadInProgress; // 0x40

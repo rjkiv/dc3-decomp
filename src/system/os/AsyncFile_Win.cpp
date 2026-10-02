@@ -2,9 +2,13 @@
 #include "File.h"
 #include "os/Debug.h"
 #include "utl/MemMgr.h"
+#include "utl/TextStream.h"
 #include "xdk/win_types.h"
 #include "xdk/xapilibi/errhandlingapi.h"
+#include "xdk/xapilibi/fileapi.h"
 #include "xdk/xapilibi/ioapiset.h"
+#include "xdk/xapilibi/minwinbase.h"
+#include "xdk/xapilibi/winerror.h"
 #include <cstring>
 #include <errno.h>
 #include "os/ContentMgr.h"
@@ -46,7 +50,7 @@ void AsyncFileWin::_OpenAsync() {
         mFail = true;
         return;
     }
-    unk34 = 0x800;
+    mSectorBytes = 0x800;
     if (((mMode & 0x7fffe) << 0x20 | mMode & 0x40002) == 0) {
         int _FileHandle = _open(mFilename.c_str(), mMode & 0xfffffffd | 0x8000, 0x180);
         fildes = _FileHandle;
@@ -158,28 +162,18 @@ void AsyncFileWin::_WriteAsync(const void *data, int count) {
     } else {
         MILO_ASSERT(!mWriteInProgress && !mReadInProgress, 229);
         MILO_ASSERT(count >= 0, 230);
-        if (count == 0) {
-            return;
-        }
-        mWriteInProgress = true;
-        mOverlapped.Internal = 0;
-        mOverlapped.InternalHigh = 0;
-        mOverlapped.Offset = 0;
-        mOverlapped.OffsetHigh = 0;
-        mOverlapped.hEvent = nullptr;
-        u32 data_alignment = reinterpret_cast<u32>(data) & 3;
-        bool aligned;
-        if (data_alignment == 0) {
-            u32 aligned2 = Tell() % unk34;
-            if (aligned2 != 0) {
-                aligned = aligned2 % count;
+        if (count != 0) {
+            mWriteInProgress = true;
+            memset(&mOverlapped, 0, sizeof(OVERLAPPED));
+            bool aligned;
+            aligned = ((int)data & 3) == 0 && Tell() % mSectorBytes == 0
+                && count % mSectorBytes == 0;
+            MILO_ASSERT(aligned, 245);
+            mOverlapped.Offset = Tell();
+            if (!WriteFile(mFile, data, count, 0, &mOverlapped)
+                && GetLastError() != ERROR_IO_PENDING) {
+                mFail = true;
             }
-        }
-        MILO_ASSERT(aligned, 245);
-        mOverlapped.Offset = Tell();
-        if (!WriteFile(mFile, data, count, 0, &mOverlapped)
-            && GetLastError() == ERROR_IO_PENDING) {
-            mFail = true;
         }
     }
 }
@@ -209,5 +203,49 @@ bool AsyncFileWin::_ReadDone() {
         }
         mReadInProgress = false;
         return true;
+    }
+}
+
+void AsyncFileWin::_ReadAsync(void *v, int count) {
+    MILO_ASSERT(!mReadInProgress && !mWriteInProgress, 0x139);
+    MILO_ASSERT(count >= 0, 0x13a);
+
+    if (gFakeFileErrors) {
+        SetLastError(0x20000002);
+        ReadError(mFilename.c_str());
+        mFail = true;
+    } else {
+        if (count != 0) {
+            bool aligned;
+            mReadInProgress = true;
+            memset(&mOverlapped, 0, sizeof(OVERLAPPED));
+            unk5c = v;
+            unk64 = count;
+            aligned = ((int)v & 3) == 0 && Tell() % mSectorBytes == 0
+                && unk64 % mSectorBytes == 0;
+
+            int bytesToRead;
+            unk58 = aligned;
+            if (aligned) {
+                mOverlapped.Offset = Tell();
+                bytesToRead = unk64;
+                unk60 = unk5c;
+            } else {
+                mOverlapped.Offset = (Tell() / mSectorBytes) * mSectorBytes;
+                int i =
+                    ((Tell() + unk64 + mSectorBytes - 1) / mSectorBytes) * mSectorBytes;
+                bytesToRead = i - mOverlapped.Offset;
+                MILO_ASSERT(bytesToRead%mSectorBytes == 0, 0x16a);
+                unk60 =
+                    _MemAllocTemp(bytesToRead, __FILE__, 0x16d, "AsyncFileTempBuf", 0);
+                unk68 = Tell() - mOverlapped.Offset;
+            }
+
+            if (!ReadFile(mFile, unk60, bytesToRead, 0, &mOverlapped)
+                && GetLastError() != ERROR_IO_PENDING) {
+                ReadError(mFilename.c_str());
+                mFail = true;
+            }
+        }
     }
 }
