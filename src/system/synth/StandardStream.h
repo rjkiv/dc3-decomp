@@ -1,4 +1,5 @@
 #pragma once
+#include "StreamReceiver.h"
 #include "os/File.h"
 #include "synth/ADSR.h"
 #include "synth/Pollable.h"
@@ -45,7 +46,7 @@ public:
     virtual bool FillDone() const { return true; }
     virtual void EnableReads(bool);
     virtual float GetTime();
-    virtual float GetJumpBackTotalTime(float);
+    virtual float GetJumpBackTotalTime(float) const;
     virtual float GetInSongTime();
     virtual std::vector<struct JumpInstance> *GetJumpInstances() {
         return &mJumpInstances;
@@ -115,6 +116,7 @@ private:
     int MsToSamp(float) const;
     float SampToMs(int) const;
     bool StuffChannels();
+    void DoJump();
 
     static bool sReportLargeTimerErrors;
 

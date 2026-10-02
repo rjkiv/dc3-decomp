@@ -148,3 +148,31 @@ void SampleData::Dealloc() {
     mData = nullptr;
     (int &)mCRC = 0;
 }
+
+int SampleData::SizeAs(Format f) const {
+    switch (f) {
+    case kPCM:
+    case kBigEndPCM:
+        return mNumChannels * mNumSamples * 2;
+    case kVAG:
+        return ((mNumSamples + 0x6f) / 0x70) * mNumChannels * 64;
+    case kATRAC:
+        return ((mNumSamples + 0x3ff) / 1024) * mNumChannels * 0xc0;
+    case kXMA:
+        MILO_NOTIFY("don't know size as XMA");
+        return mNumSamples / 5;
+    case kMP3:
+        return ((mNumSamples + 0x3ff) / 1024) * mNumChannels * 0xc0;
+    case 7: {
+        int ret = ((mNumChannels * mNumSamples) * 2) / 3.4f;
+        return ret + 0x60;
+    }
+    case kNintendoADPCM: {
+        int ret = ((mNumChannels * mNumSamples) * 2) / 3.4f;
+        return ret + 0x60;
+    }
+    default:
+        MILO_ASSERT(0, 299);
+        return 0;
+    }
+}

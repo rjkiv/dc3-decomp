@@ -1,7 +1,11 @@
 #include "os/AsyncFile.h"
 #include "HolmesClient.h"
+#include "macros.h"
 #include "math/Utl.h"
 #include "obj/Data.h"
+#include "os/Archive.h"
+#include "os/AsyncFileHolmes_p.h"
+#include "os/AsyncFile_Win.h"
 #include "os/Debug.h"
 #include "os/Endian.h"
 #include "os/File.h"
@@ -268,4 +272,30 @@ void AsyncFile::Terminate() {
     }
     _Close();
     MemFree(mBuffer);
+}
+
+AsyncFile *AsyncFile::New(const char *file, int i) {
+    if (Archive::DebugArkOrder()) {
+        PrintDiscFile(file);
+    }
+    if ((UsingHolmes(1) && (i & 1U) != 0) && !FileIsLocal(file)) {
+        AsyncFileHolmes *syncFile = new AsyncFileHolmes(file, i);
+        if (syncFile) {
+            syncFile->Init();
+            return syncFile;
+        }
+    } else if (!UsingCD() && !FileIsLocal(file)) {
+        char c[256];
+        if (HolmesClientCacheFile(c, file)) {
+            file = c;
+        }
+        AsyncFileHolmes *syncFile = new AsyncFileHolmes(file, i);
+        if (syncFile) {
+            syncFile->Init();
+            return syncFile;
+        }
+    }
+    AsyncFileWin *syncFile = new AsyncFileWin(file, i);
+    syncFile->Init();
+    return syncFile;
 }

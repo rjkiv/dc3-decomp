@@ -1,4 +1,5 @@
 #include "flow/FlowSlider.h"
+#include "FlowValueCase.h"
 #include "flow/FlowManager.h"
 #include "flow/FlowNode.h"
 #include "flow/PropertyEventListener.h"

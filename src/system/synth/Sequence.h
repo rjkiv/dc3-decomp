@@ -164,6 +164,10 @@ public:
     NEW_OBJ(RandomIntervalGroupSeq)
     static void Init() { REGISTER_OBJ_FACTORY(RandomIntervalGroupSeq) }
 
+    float AvgIntervalSecs() const { return mAvgIntervalSecs; }
+    float IntervalSpread() const { return mIntervalSpread; }
+    int MaxSimultaneous() const { return mMaxSimultaneous; }
+
 protected:
     /** "the number of seconds on average we wait to play a child cue again" */
     float mAvgIntervalSecs; // 0x94

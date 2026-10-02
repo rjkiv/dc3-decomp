@@ -62,19 +62,19 @@ public:
     virtual ~RandomIntervalGroupSeqInst() {}
     virtual void Stop();
     virtual bool IsRunning();
-    virtual void Poll();
-    virtual void StartImpl();
-
-    void ComputeNextTime();
 
     POOL_OVERLOAD(RandomIntervalGroupSeqInst, 0x90);
 
 protected:
-    int unk40;
-    int unk44;
-    int unk48;
+    virtual void Poll();
+    virtual void StartImpl();
+    void ComputeNextTime(int);
+
+    int mMaxSimultaneous; // 0x40
+    float mAvgIntervalSecs; // 0x44
+    float mIntervalSpread; // 0x48
     std::vector<float> unk4c;
-    bool unk54;
+    bool mRunning; // 0x54
 };
 
 class SerialGroupSeqInst : public GroupSeqInst {

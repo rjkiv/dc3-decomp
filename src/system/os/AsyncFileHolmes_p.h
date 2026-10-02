@@ -6,9 +6,10 @@ public:
     AsyncFileHolmes(const char *, int);
     virtual ~AsyncFileHolmes();
 
-    MEM_OVERLOAD(AsyncFile, 0x14);
+    MEM_TEMP_OVERLOAD(AsyncFile, 0x14);
 
 protected:
+    virtual bool GetFileHandle(void *&);
     virtual bool Truncate(int);
     virtual void _OpenAsync();
     virtual bool _OpenDone() { return true; }
