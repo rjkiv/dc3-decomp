@@ -114,7 +114,6 @@ protected:
     void SyncMirror();
     float FindConfusabilty(const HamMove *) const;
     void SetName(Symbol, const char *);
-    bool IsCheatWinning() const;
 
     /** "Move to mirror" */
     ObjPtr<HamMove> mMirror; // 0x30
@@ -151,7 +150,9 @@ protected:
     /** "Override threshold for super perfect /
         perfect/flawless / awesome/nice / ok/almost (0 means no override)" */
     float mOverrides[kNumMoveRatings]; // 0xc0
-    bool unkd0; // 0xd0 - dirty
+    /** If true, members set in Update(const HamMove*)
+        will not be overwritten from a call to Load(BinStream&). */
+    bool mUpdateOverride; // 0xd0
     /** "id used when comparing to other moves" */
     Hmx::CRC mConfusabilityID; // 0xd4
     std::map<Hmx::CRC, float> mConfusabilities; // 0xd8

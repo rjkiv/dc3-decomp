@@ -349,8 +349,8 @@ HamMove::HamMove()
     : mMirror(this), mTex(this), mSmallTex(this), mTexState(kTexNormal), mScored(true),
       mParadiddle(false), mFinalPose(false), mSuppressGuide(false),
       mSuppressPracticeOptions(false), mOmitMinigame(false), mDisplayName(nullptr),
-      mDifficulty(kDifficultyExpert), mShoulderDisplacements(false), unkd0(0),
-      mDancerSeq(this) {
+      mDifficulty(kDifficultyExpert), mShoulderDisplacements(false),
+      mUpdateOverride(false), mDancerSeq(this) {
     SetRate(k480_fpb);
     Symbol lang = SystemLanguage(); // unused lol
     DataArray *supportedLangs = SupportedLanguages(false);
@@ -568,7 +568,7 @@ BEGIN_LOADS(HamMove)
         for (int i = 0; i < count; i++) {
             d >> language;
             d >> name;
-            if (!unkd0) {
+            if (!mUpdateOverride) {
                 SetName(language, name.c_str());
             }
         }
@@ -615,7 +615,7 @@ BEGIN_LOADS(HamMove)
     if (d.rev > 0x21) {
         bool omit;
         d >> omit;
-        if (!unkd0) {
+        if (!mUpdateOverride) {
             mOmitMinigame = omit;
         }
     }
@@ -641,14 +641,14 @@ BEGIN_LOADS(HamMove)
     if (d.rev > 0x2A) {
         std::map<Hmx::CRC, float> confusabilities;
         d >> confusabilities;
-        if (!unkd0) {
+        if (!mUpdateOverride) {
             mConfusabilities = confusabilities;
         }
     }
     if (d.rev > 0x2E) {
         int diff;
         d >> diff;
-        if (!unkd0) {
+        if (!mUpdateOverride) {
             mDifficulty = (Difficulty)diff;
         }
     }
@@ -658,11 +658,11 @@ BEGIN_LOADS(HamMove)
     if (d.rev > 0x30) {
         Hmx::CRC id;
         d >> id;
-        if (!unkd0) {
+        if (!mUpdateOverride) {
             mConfusabilityID = id;
         }
     }
-    unkd0 = false;
+    mUpdateOverride = false;
 END_LOADS
 
 void HamMove::SetFrame(float frame, float blend) {
@@ -755,7 +755,7 @@ void HamMove::Update(const HamMove *other) {
     mConfusabilities = other->mConfusabilities;
     mConfusabilityID = other->mConfusabilityID;
     mDifficulty = other->mDifficulty;
-    unkd0 = true;
+    mUpdateOverride = true;
 }
 
 void HamMove::SyncMirror() {

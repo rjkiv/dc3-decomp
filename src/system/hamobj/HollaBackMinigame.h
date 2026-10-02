@@ -50,7 +50,7 @@ protected:
 
     int unk8; // 0x8
     int unkc; // 0xc
-    Symbol unk10[0x100]; // 0x10
+    Symbol mMoveStates[256]; // 0x10
     bool unk410; // 0x410
     int mState; // 0x414 - state
     int unk418;

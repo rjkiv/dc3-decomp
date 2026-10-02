@@ -56,6 +56,8 @@ public:
     HamAudio *GetAudio() const { return mAudio; }
     HamSongData *SongData() const { return mSongData; }
     MidiParserMgr *GetMidiParserMgr() const { return mMidiParserMgr; }
+    const SongPos &Pos1() const { return unk60; }
+    const SongPos &Pos2() const { return unk78; }
 
 private:
     void CheckBeat();

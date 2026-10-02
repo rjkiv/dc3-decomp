@@ -11,6 +11,7 @@
 #include "hamobj/HamPlayerData.h"
 #include "hamobj/MoveDir.h"
 #include "math/Easing.h"
+#include "midi/MidiParser.h"
 #include "midi/MidiParserMgr.h"
 #include "obj/Data.h"
 #include "obj/Dir.h"
@@ -24,20 +25,22 @@
 #include "ui/PanelDir.h"
 #include "ui/UIPanel.h"
 #include "utl/Loader.h"
+#include "utl/SongPos.h"
 #include "utl/Std.h"
 #include "utl/TimeConversion.h"
+#include "world/Dir.h"
 
 void JumpToMeasure(float beat) {
     float ms = BeatToMs(beat * 4.0f);
-    Hmx::Object *game = ObjectDir::Main()->Find<Hmx::Object>("game", true);
+    Hmx::Object *game = ObjectDir::Main()->Find<Hmx::Object>("game");
     if (game) {
         game->Handle(Message("jump", ms), true);
     }
 }
 
 HollaBackMinigame::HollaBackMinigame()
-    : unk410(0), mSpecifyFirstMoveMeasure(-1), mInitialMoveCount(2), unk450(0), unk474(0),
-      mSound(0) {}
+    : unk410(false), mSpecifyFirstMoveMeasure(-1), mInitialMoveCount(2), unk450(0),
+      unk474(false), mSound(nullptr) {}
 
 HollaBackMinigame::~HollaBackMinigame() { EndMinigame(true); }
 
@@ -79,7 +82,7 @@ END_LOADS
 void HollaBackMinigame::Poll() {
     if (!TheLoadMgr.EditMode() && unk410) {
         RndPropAnim *anim =
-            TheHamDirector->GetVenueWorld()->Find<RndPropAnim>("set_bid.anim", true);
+            TheHamDirector->GetVenueWorld()->Find<RndPropAnim>("set_bid.anim");
         if (anim) {
             anim->Animate(0, false, 0, nullptr, kEaseLinear, 0, false);
         }
@@ -88,7 +91,7 @@ void HollaBackMinigame::Poll() {
             EndShoutOut();
         }
         if (unk474) {
-            Hmx::Object *game = ObjectDir::Main()->Find<Hmx::Object>("game", true);
+            Hmx::Object *game = ObjectDir::Main()->Find<Hmx::Object>("game");
             bool b20 = !game ? false : !game->Handle(Message("is_waiting"), true).Int();
             if (b20 && unk474) {
                 JumpToMeasure(mInitialMusicJump);
@@ -109,8 +112,7 @@ void HollaBackMinigame::Poll() {
                     mHUDPanel
                         ->Find<RndPropAnim>(
                             hpd->Side() == kSkeletonRight ? "player_1_hud.anim"
-                                                          : "player_2_hud.anim",
-                            true
+                                                          : "player_2_hud.anim"
                         )
                         ->SetFrame(0, 1);
                 }
@@ -118,7 +120,7 @@ void HollaBackMinigame::Poll() {
             if (!unk481 && TheMaster->GetAudio()->IsReady() && unk494-- <= 0) {
                 unk481 = true;
                 TheHamProvider->SetProperty(holla_back_stage, Symbol("title"));
-                Hmx::Object *game = ObjectDir::Main()->Find<Hmx::Object>("game", true);
+                Hmx::Object *game = ObjectDir::Main()->Find<Hmx::Object>("game");
                 if (game) {
                     game->Handle(Message("set_realtime", 1), true);
                 }
@@ -130,7 +132,7 @@ void HollaBackMinigame::Poll() {
                 }
                 TheHamProvider->SetProperty("game_stage", Symbol("title"));
                 TheHamDirector->GetVenueWorld()
-                    ->Find<Flow>("animate_timeywimey.flow", true)
+                    ->Find<Flow>("animate_timeywimey.flow")
                     ->Activate();
                 SetDefaultShot();
             } else if (unk481 && TheMaster->GetAudio()->IsReady()) {
@@ -141,7 +143,7 @@ void HollaBackMinigame::Poll() {
                         goto next;
                 }
                 TheMaster->GetAudio()->SetPaused(false);
-                Hmx::Object *game = ObjectDir::Main()->Find<Hmx::Object>("game", true);
+                Hmx::Object *game = ObjectDir::Main()->Find<Hmx::Object>("game");
                 if (game) {
                     game->Handle(Message("set_realtime", 0), true);
                 }
@@ -173,8 +175,8 @@ void HollaBackMinigame::BeginMinigame(DataArray *a) {
         unk47c = 0;
         unk481 = false;
         static Symbol captured("captured");
-        for (int i = 0; i < 0x40; i++) {
-            unk10[i] = captured;
+        for (int i = 0; i < 64; i++) {
+            mMoveStates[i] = captured;
         }
         TheHamDirector->StartStopVisualizer(false, 0);
         TheHamProvider->SetProperty("use_char_projection", 1);
@@ -186,8 +188,8 @@ void HollaBackMinigame::BeginMinigame(DataArray *a) {
         TheGameData->Player(1);
         unk444 = false;
         mInitialMoveCount = 2;
-        mSpecifyFirstMoveMeasure = -1;
         mMaxRoutineSize = 4;
+        mSpecifyFirstMoveMeasure = -1;
         mInitialMusicJump = -1;
         mIntroShoutout = Symbol("hb_intro_70s");
         mWinShoutouts.clear();
@@ -230,7 +232,7 @@ void HollaBackMinigame::BeginMinigame(DataArray *a) {
         unk410 = true;
         TheMaster->AddSink(this, "beat");
         mHUDPanel = DataVariable("hud_panel").Obj<PanelDir>();
-        mHollabackHUD = mHUDPanel->Find<RndDir>("holla_back_hud", true);
+        mHollabackHUD = mHUDPanel->Find<RndDir>("holla_back_hud");
         if (mSound) {
             Flow *flow = mHollabackHUD->Find<Flow>("hide_shoutout.flow", false);
             if (flow) {
@@ -239,15 +241,14 @@ void HollaBackMinigame::BeginMinigame(DataArray *a) {
             mSound->Stop(nullptr, false);
             mSound = nullptr;
         }
-        HamLabel *lbl = mHollabackHUD->Find<HamLabel>("shoutout.lbl", true);
+        HamLabel *lbl = mHollabackHUD->Find<HamLabel>("shoutout.lbl");
         if (lbl) {
             lbl->SetPrelocalizedString(String(""));
         }
         static Symbol set_num_display("set_num_display");
         static Symbol set_card_move("set_card_move");
         static Symbol set_card_campaign_status_2("set_card_campaign_status_2");
-        mFlashcardDockPanel =
-            ObjectDir::Main()->Find<UIPanel>("flashcard_dock_panel", true);
+        mFlashcardDockPanel = ObjectDir::Main()->Find<UIPanel>("flashcard_dock_panel");
         unk460 = mFlashcardDockPanel->DataDir();
         MoveDir *theMoveDir = TheHamDirector->GetMoveDir();
         unk488.clear();
@@ -274,12 +275,12 @@ void HollaBackMinigame::BeginMinigame(DataArray *a) {
         static Symbol horz_layout("horz_layout");
         int numMoves = unk488.size();
         if (numMoves <= 4) {
-            unk460->Find<Flow>("horz_layout4.flow", true)->Activate();
+            unk460->Find<Flow>("horz_layout4.flow")->Activate();
         } else {
-            unk460->Find<Flow>("horz_layout6.flow", true)->Activate();
+            unk460->Find<Flow>("horz_layout6.flow")->Activate();
         }
-        mScoreLeft = mHUDPanel->Find<RndDir>("score_left", true);
-        mScoreRight = mHUDPanel->Find<RndDir>("score_right", true);
+        mScoreLeft = mHUDPanel->Find<RndDir>("score_left");
+        mScoreRight = mHUDPanel->Find<RndDir>("score_right");
         mScoreLeft->SetShowing(false);
         mScoreRight->SetShowing(false);
         TheHamDirector->SetPlayerSpotlightsEnabled(false);
@@ -289,9 +290,7 @@ void HollaBackMinigame::BeginMinigame(DataArray *a) {
         TheHamProvider->SetProperty("visible_flashcard_top", unkc);
         TheHamProvider->SetProperty("hide_venue", 1);
         TheHamDirector->UnselectVisualizerPostProc();
-        TheHamDirector->GetVenueWorld()
-            ->Find<Flow>("animate_timeywimey.flow", true)
-            ->Activate();
+        TheHamDirector->GetVenueWorld()->Find<Flow>("animate_timeywimey.flow")->Activate();
         static Symbol start_score_move_index("start_score_move_index");
         static Symbol hide_hud("hide_hud");
         for (int i = 0; i < 2; i++) {
@@ -310,7 +309,7 @@ void HollaBackMinigame::BeginMinigame(DataArray *a) {
 Symbol HollaBackMinigame::GetMoveState(int measure) const {
     static Symbol captured("captured");
     if (measure >= 0 && measure < 64) {
-        return unk10[measure];
+        return mMoveStates[measure];
     } else {
         MILO_NOTIFY(
             "HollaBackMinigame::GetMoveState(int measure = %d), measure not between 0 and 64",
@@ -331,7 +330,7 @@ void HollaBackMinigame::SetNumMoves(int num) {
 }
 
 void HollaBackMinigame::StartShoutOut(const char *cc) {
-    HamLabel *label = mHollabackHUD->Find<HamLabel>("shoutout.lbl", true);
+    HamLabel *label = mHollabackHUD->Find<HamLabel>("shoutout.lbl");
     if (label) {
         label->SetTextToken(Symbol(cc));
     }
@@ -364,7 +363,7 @@ void HollaBackMinigame::SetDefaultShot() {
         TheHamDirector->Handle(Message("force_shot", "practice_center_p1.shot"), true);
     }
     RndPropAnim *anim = TheHamDirector->GetVenueWorld()->Find<RndPropAnim>(
-        "bid_start_character_faded_out.anim", true
+        "bid_start_character_faded_out.anim"
     );
     anim->Animate(0, false, 0, nullptr, kEaseLinear, 0, false);
 }
@@ -386,10 +385,10 @@ void HollaBackMinigame::DecipherShoutOut(float pct) {
 }
 
 void HollaBackMinigame::WinShoutOut() {
-    if (mWinShoutouts.size()) {
+    if (mWinShoutouts.size() > 0) {
         StartShoutOut(mWinShoutouts.front().Str());
     }
-    if (mWinCamCuts.size()) {
+    if (mWinCamCuts.size() > 0) {
         TheHamDirector->Handle(Message("force_shot", mWinCamCuts.front().Str()), true);
     }
 }
@@ -419,13 +418,13 @@ float HollaBackMinigame::NailedMovesInRoutinePct() {
             HamMove *moveAtMeasure =
                 theMoveDir->GetMoveAtMeasure(0, mSpecifyFirstMoveMeasure + j);
             if (moveAtMeasure == curMove
-                && unk10[mSpecifyFirstMoveMeasure + j] == powered_up) {
+                && mMoveStates[mSpecifyFirstMoveMeasure + j] == powered_up) {
                 i5++;
                 for (int k = 0; k < mMaxRoutineSize; k++) {
                     HamMove *moveAtMeasure =
                         theMoveDir->GetMoveAtMeasure(0, mSpecifyFirstMoveMeasure + k);
                     if (moveAtMeasure == curMove) {
-                        unk10[mSpecifyFirstMoveMeasure + j] = powered_up;
+                        mMoveStates[mSpecifyFirstMoveMeasure + j] = powered_up;
                     }
                 }
             }
@@ -439,13 +438,11 @@ void HollaBackMinigame::EndMinigame(bool b1) {
         unk410 = false;
         TheMaster->RemoveSink(this);
         TheHamProvider->RemoveSink(this);
-        Hmx::Object *game = ObjectDir::Main()->Find<Hmx::Object>("game_panel", true);
+        Hmx::Object *game = ObjectDir::Main()->Find<Hmx::Object>("game_panel");
         game->RemoveSink(this);
-        mHUDPanel->Find<Flow>("unset_flashcards_mystery.flow", true)->Activate();
-        mHUDPanel->Find<UILabel>("song_name.lbl", true)
-            ->SetPrelocalizedString(String("???"));
-        mHUDPanel->Find<UILabel>("song_artist.lbl", true)
-            ->SetPrelocalizedString(String("???"));
+        mHUDPanel->Find<Flow>("unset_flashcards_mystery.flow")->Activate();
+        mHUDPanel->Find<UILabel>("song_name.lbl")->SetPrelocalizedString(String("???"));
+        mHUDPanel->Find<UILabel>("song_artist.lbl")->SetPrelocalizedString(String("???"));
         TheHamProvider->SetProperty("visible_flashcard_btm", -1);
         TheHamProvider->SetProperty("visible_flashcard_top", -1);
         static Symbol clear_all_flashcard_campaign_status(
@@ -465,25 +462,25 @@ void HollaBackMinigame::EndMinigame(bool b1) {
 }
 
 void HollaBackMinigame::SetMoveState(int measure, Symbol state) {
-    if (measure >= 0 && measure < 0x40) {
+    if (measure >= 0 && measure < 64) {
         static Symbol powered_up("powered_up");
         static Symbol set_card_campaign_status_2("set_card_campaign_status_2");
         MoveDir *theMoveDir = TheHamDirector->GetMoveDir();
         HamMove *move = theMoveDir->GetMoveAtMeasure(0, measure);
-        if (unk10[measure] != state) {
+        if (mMoveStates[measure] != state) {
             if (state == powered_up) {
                 bool b2 = false;
-                for (int i = mSpecifyFirstMoveMeasure;
+                for (unsigned int i = mSpecifyFirstMoveMeasure;
                      i < mSpecifyFirstMoveMeasure + mMaxRoutineSize;
                      i++) {
                     HamMove *curMove = theMoveDir->GetMoveAtMeasure(0, i);
-                    if (curMove == move && unk10[i] == powered_up) {
+                    if (curMove == move && mMoveStates[i] == powered_up) {
                         b2 = true;
                     }
                 }
                 if (!b2) {
                     mFlashcardDockPanel->SetShowing(true);
-                    int numMoves = unk488.size();
+                    unsigned int numMoves = unk488.size();
                     for (int i = 0; i < numMoves; i++) {
                         if (move == unk488[i]) {
                             mFlashcardDockPanel->Handle(
@@ -492,10 +489,10 @@ void HollaBackMinigame::SetMoveState(int measure, Symbol state) {
                             break;
                         }
                     }
-                    unk460->Find<Flow>("activate_popup.flow", true)->Activate();
+                    unk460->Find<Flow>("activate_popup.flow")->Activate();
                 }
             }
-            unk10[measure] = state;
+            mMoveStates[measure] = state;
         }
     } else {
         MILO_NOTIFY(
@@ -520,20 +517,17 @@ void HollaBackMinigame::SetState(State s) {
         mState = s;
         unk418 = -1;
         switch (mState) {
-        case -1:
         case 0:
             theMoveDir->ResetDetection();
             TheHamProvider->SetProperty(game_stage, title);
             mHUDPanel->Find<RndPropAnim>("song_overlay.anim", true)
                 ->Animate(0, false, 0, nullptr, kEaseLinear, 0, false);
             TheHamProvider->SetProperty(holla_back_stage, enter_title);
-            OnBeat();
             break;
         case 1:
             TheHamProvider->SetProperty(game_stage, playing);
             mHUDPanel->Find<Flow>("unset_flashcards_mystery.flow", true)->Activate();
             TheHamProvider->SetProperty(holla_back_stage, enter_instruction);
-            OnBeat();
             break;
         case 2: {
             TheHamProvider->SetProperty("game_stage", Symbol("outro"));
@@ -542,12 +536,140 @@ void HollaBackMinigame::SetState(State s) {
             MidiParser *p = TheMidiParserMgr->GetParser("count_in_player");
             p->SetProperty("active", 0);
             TheMaster->GetAudio()->SetLoop(0, unk450 * 4.0f);
-            OnBeat();
             break;
         }
         default:
-            OnBeat();
             break;
         }
+        OnBeat();
+    }
+}
+
+void HollaBackMinigame::OnBeat() {
+    static Symbol holla_back_stage("holla_back_stage");
+    static Symbol exit_title("exit_title");
+    static Symbol exit_instruction("exit_instruction");
+    static Symbol exit_win("exit_win");
+    MoveDir *moveDir = TheHamDirector->GetMoveDir();
+    const SongPos &pos1 = TheMaster->Pos1();
+    const SongPos &pos2 = TheMaster->Pos2();
+    int i98, i94;
+    TheMaster->GetAudio()->GetCurrLoopBeats(i98, i94);
+    float beat1 = pos1.GetTotalBeat();
+    if (beat1 < pos2.GetTotalBeat()) {
+        TheMidiParserMgr->GetParser("midi_player")
+            ->Handle(Message("reset_to_beat", pos1.GetTotalBeat()), true);
+        TheMidiParserMgr->GetParser("count_in_player")
+            ->Handle(Message("reset_to_beat", pos1.GetTotalBeat()), true);
+        moveDir->ResetDetection();
+    }
+    int iBeat1 = beat1;
+    unk420 = iBeat1 / 4;
+    if (mSpecifyFirstMoveMeasure > 0 && mState == 1) {
+        unk418 = (4 - mSpecifyFirstMoveMeasure) * 4 + iBeat1;
+    } else {
+        if (mState != 0) {
+            unk418++;
+        }
+    }
+    int i18 = unk418 / 4;
+    int i17 = unk418 % 4;
+    int i19 = iBeat1 % 4;
+    if (unk418 >= 0 && i17 != i19) {
+        int sub = i19 - i17;
+        unk418 += sub;
+    }
+    bool i19IsZero = i19 == 0;
+    if (mState == 1) {
+        if (unk480 && i18 == 3 && i19 == 0) {
+            unk480 = false;
+            WorldDir *world = TheHamDirector->GetVenueWorld();
+            world->Find<RndPropAnim>("bid_start_character_faded_out.anim")
+                ->Animate(0, false, 0);
+            TheHamProvider->Export(Message("show_char_projection"), true);
+        }
+        if (i18 == 3 && i19 == 3) {
+            MidiParser *parser = TheMidiParserMgr->GetParser("count_in_player");
+            parser->SetProperty("active", false);
+        }
+
+        if (i19IsZero || i18 < 0) {
+            if (i18 == 1) {
+                MidiParser *parser = TheMidiParserMgr->GetParser("count_in_player");
+                parser->SetProperty("active", true);
+                parser->Handle(
+                    Message(
+                        "set_section",
+                        mSpecifyFirstMoveMeasure * 4 - 4,
+                        mSpecifyFirstMoveMeasure * 4
+                    ),
+                    true
+                );
+            }
+            if (i18 == 2) {
+                TheMaster->GetAudio()->SetLoop((float)(unk8 + 1) * 4, (float)unkc * 4);
+            }
+            static int sInt8a4 = 4;
+            if (i18 == sInt8a4) {
+                unk46c = true;
+                TheHamDirector->SetPlayerSpotlightsEnabled(true);
+                TheHamProvider->SetProperty(holla_back_stage, exit_instruction);
+            }
+            bool b5 =
+                (unk46c && (unk420 == mSpecifyFirstMoveMeasure - 3 || unk420 == unkc));
+            bool b4 =
+                (unk46c
+                 && (unk420 == mSpecifyFirstMoveMeasure - 3 || unk420 == unkc - 1));
+            if (b4) {
+                TheHamProvider->Export(Message("hide_char_projection"), true);
+            }
+            if (b5) {
+                TheHamDirector->SetPlayerSpotlightsEnabled(false);
+                float pct = NailedMovesInRoutinePct();
+                unk475 = pct >= 1;
+                if (unk475) {
+                    mScoreLeft->SetShowing(true);
+                    mScoreRight->SetShowing(true);
+                    WinShoutOut();
+                    ObjectDir::Main()->Find<Hmx::Object>("songseq")->Handle(
+                        Message("load_next_song_audio"), true
+                    );
+                    for (int i = 0; i < 2; i++) {
+                        Hmx::Object *prov = TheGameData->Player(i)->Provider();
+                        prov->SetProperty("start_score_move_index", 1000);
+                        prov->Export(Message("hide_hud", false), true);
+                    }
+                    if (unk484 == 0) {
+                        Hmx::Object *gamePanel =
+                            ObjectDir::Main()->Find<Hmx::Object>("game_panel");
+                        gamePanel->Handle(
+                            Message("earn_acc", Symbol("acc_hollaback")), true
+                        );
+                    }
+                    SetState((State)2);
+                } else {
+                    DecipherShoutOut(pct);
+                    unk484++;
+                    SetState((State)1);
+                }
+            }
+        }
+
+    } else if (mState == 2) {
+        if (mSound && mSound->IsPlaying()) {
+            return;
+        }
+        if (mWinShoutouts.size() > 1) {
+            const char *name = MakeString("%s.snd", mWinShoutouts[1].Str());
+            WorldDir *world = TheHamDirector->GetVenueWorld();
+            mSound = world->Find<Sound>(name, false);
+            if (mSound) {
+                mSound->Play(0, 0, 0, nullptr, 0);
+            }
+        }
+        TheHamDirector->SetPlayerSpotlightsEnabled(true);
+        ObjectDir::Main()
+            ->Find<Hmx::Object>("game_panel")
+            ->Handle(Message("win_hollaback"), true);
     }
 }

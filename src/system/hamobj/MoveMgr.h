@@ -21,6 +21,12 @@ public:
 
 class MoveChoiceSet {
 public:
+    MoveChoiceSet() {
+        for (int i = 0; i < kNumDifficulties; i++) {
+            unk0[i] = nullptr;
+        }
+    }
+
     const MoveParent *unk0[kNumDifficulties];
 };
 
