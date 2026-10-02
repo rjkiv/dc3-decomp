@@ -555,8 +555,10 @@ void HollaBackMinigame::OnBeat() {
     const SongPos &pos2 = TheMaster->Pos2();
     int i98, i94;
     TheMaster->GetAudio()->GetCurrLoopBeats(i98, i94);
-    float beat1 = pos1.GetTotalBeat();
-    if (beat1 < pos2.GetTotalBeat()) {
+
+    float beat1;
+    if ((beat1 = pos1.GetTotalBeat()) < pos2.GetTotalBeat()) {
+        float beat1_2 = pos1.GetTotalBeat();
         TheMidiParserMgr->GetParser("midi_player")
             ->Handle(Message("reset_to_beat", pos1.GetTotalBeat()), true);
         TheMidiParserMgr->GetParser("count_in_player")

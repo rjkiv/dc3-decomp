@@ -4,7 +4,9 @@
 #include "gesture/Skeleton.h"
 #include "math/Vec.h"
 #include "math/Vec.inl"
+#include "obj/Data.h"
 #include "obj/Dir.h"
+#include "obj/Object.h"
 #include "os/Debug.h"
 #include "stl/_vector.h"
 #include "ui/UIPanel.h"
@@ -23,23 +25,7 @@ namespace {
                             "-++0--++0--++0--++0-",
                             "-0++--0++--0++--0++-" };
     int kConvCount = 4;
-    int kConvLen;
-
-    //     void AnalyzeData(
-    //         const std::vector<RhythmDetector::Frame> &frames,
-    //         float &f1,
-    //         float &f2,
-    //         float &f3,
-    //         float f4,
-    //         bool b1,
-    //         Symbol sym,
-    //         bool b2,
-    //         DebugGraph *dbg,
-    //         int i1,
-    //         TextStream *stream
-    //     ) {
-    //         return;
-    //     }
+    int kConvLen = strlen(kConv[0]);
 
     DataNode TightenDebugBone(DataArray *da) {
         gAdjust *= 1.01f;
@@ -63,7 +49,7 @@ namespace {
 
     DataNode CycleDebugBone(DataArray *da) {
         gDebugBone += 1;
-        gAdjust = 1.0;
+        gAdjust = 1;
 
         if (gDebugBone == 20) {
             gDebugBone = -1;
@@ -73,40 +59,36 @@ namespace {
     }
 
     void initCheat() {
-        // if(SomeGlobalOrSymbol == 0) {
-        // SomeGlobalOrSymbol = 1;
-        Symbol cycle_movement_bone("cycle_movement_bone");
-        DataRegisterFunc(cycle_movement_bone, CycleDebugBone);
-        Symbol tighten_current_bone("tighten_current_bone");
-        DataRegisterFunc(tighten_current_bone, TightenDebugBone);
-        Symbol loosen_current_bone("loosen_current_bone");
-        DataRegisterFunc(loosen_current_bone, LoosenDebugBone);
-        Symbol ktb_debug_cheat("ktb_debug_cheat");
-        DataRegisterFunc(ktb_debug_cheat, DataSpaceCheat);
-        //}
+        static bool sInitted = false;
+        if (!sInitted) {
+            sInitted = true;
+            DataRegisterFunc("cycle_movement_bone", CycleDebugBone);
+            DataRegisterFunc("tighten_current_bone", TightenDebugBone);
+            DataRegisterFunc("loosen_current_bone", LoosenDebugBone);
+            DataRegisterFunc("ktb_debug_cheat", DataSpaceCheat);
+        }
     }
 
     float Mean(const std::vector<float> &vec, int start, int end) {
-        // some fruity branchless stuff going on in here
         int size = (vec.size());
         end = size < end ? size : end;
-        start = start < 0 ? 0 : start;
+        start = start > 0 ? start : 0;
         float sum = 0.0f;
         for (int i = start; i < end; i++) {
             sum += vec[i];
         }
         int count = end - start;
-        if (count == 0) {
+        if (count != 0) {
+            return sum / count;
+        } else {
             return 0.0f;
         }
-        return sum / count;
     }
 
     float Variance(const std::vector<float> &vec, float mean, int start, int end) {
-        // dear god please someone figure what isnt right here
         int size = (vec.size());
         end = size < end ? size : end;
-        start = start < 0 ? 0 : start;
+        start = start > 0 ? start : 0;
         float sum = 0.0f;
         for (int i = start; i < end; i++) {
             sum += (vec[i] - mean) * (vec[i] - mean);
@@ -114,11 +96,60 @@ namespace {
         int count = end - start;
         if (count != 0) {
             return sum / count;
+        } else {
+            return 0.0f;
         }
-        return 0.0f;
     }
 
-    const std::vector<float> &minJointSpeedVector();
+    const std::vector<float> &minJointSpeedVector() {
+        static std::vector<float> data;
+        static UIPanel *rhythm_detector_panel =
+            ObjectDir::Main()->Find<UIPanel>("rhythm_detector_panel", false);
+
+        DataArray *typeDef = rhythm_detector_panel->TypeDef();
+        if (data.empty()) {
+            DataArray *minJoints = typeDef->FindArray("min_joint_speed");
+            MILO_ASSERT(minJoints->Size() == kNumJoints + 1, 0xE4);
+            for (int i = 1; i < minJoints->Size(); i++) {
+                data.push_back(minJoints->Float(i));
+            }
+            MILO_ASSERT(data.size() == kNumJoints, 0xF2);
+        }
+        return data;
+    }
+
+    const std::vector<float> &jointWeight() {
+        static std::vector<float> data;
+        static UIPanel *rhythm_detector_panel =
+            ObjectDir::Main()->Find<UIPanel>("rhythm_detector_panel", false);
+
+        DataArray *typeDef = rhythm_detector_panel->TypeDef();
+        if (data.empty()) {
+            DataArray *minJoints = typeDef->FindArray("joint_weight");
+            MILO_ASSERT(minJoints->Size() == kNumJoints + 1, 0x104);
+            for (int i = 1; i < minJoints->Size(); i++) {
+                data.push_back(minJoints->Float(i));
+            }
+            MILO_ASSERT(data.size() == kNumJoints, 0x112);
+        }
+        return data;
+    }
+
+    //     void AnalyzeData(
+    //         const std::vector<RhythmDetector::Frame> &frames,
+    //         float &f1,
+    //         float &f2,
+    //         float &f3,
+    //         float f4,
+    //         bool b1,
+    //         Symbol sym,
+    //         bool b2,
+    //         DebugGraph *dbg,
+    //         int i1,
+    //         TextStream *stream
+    //     ) {
+    //         return;
+    //     }
 
 }
 
