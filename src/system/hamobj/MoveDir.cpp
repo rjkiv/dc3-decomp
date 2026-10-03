@@ -773,7 +773,7 @@ void MoveDir::PostUpdate(const SkeletonUpdateData *data) {
                 }
             } else {
                 const Skeleton *playerSkeleton = TheGameData->Player(0)->GetSkeleton(
-                    (const Skeleton *const(&)[6])data->unk4
+                    reinterpret_cast<const Skeleton *const(&)[6]>(*data->unk4)
                 );
                 if (playerSkeleton) {
                     unk424 = *playerSkeleton;
@@ -783,8 +783,8 @@ void MoveDir::PostUpdate(const SkeletonUpdateData *data) {
     }
     PostUpdateFilters();
     for (int i = 0; i < 2; i++) {
-        if (!mFiltersEnabled
-            || (mMovePlayerData[i].mCurMove && mMovePlayerData[i].mCurMove->IsRest())) {
+        HamMove *curMove = mMovePlayerData[i].mCurMove;
+        if (!mFiltersEnabled || !curMove || curMove->IsRest()) {
             if (mMovePlayerData[i].mFeedback) {
                 mMovePlayerData[i].mFeedback->ResetErrors();
             }

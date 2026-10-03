@@ -181,7 +181,9 @@ void SkeletonUpdate::PostUpdate() {
     if (unk78) {
         LiveCameraInput::sInstance->SetNewFrame(&mSkeletonFrame);
     }
-    SkeletonUpdateData updateData(*unk5360[0], *unk5368[0]);
+    SkeletonUpdateData updateData;
+    updateData.unk0 = unk5360;
+    updateData.unk4 = unk5368;
     updateData.unk8 = &mSkeletonFrame;
     updateData.unkc = this;
     updateData.unk10 = mCameraInput;
