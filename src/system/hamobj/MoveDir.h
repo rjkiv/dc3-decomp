@@ -186,7 +186,7 @@ protected:
     ObjPtr<DancerSequence> mDancerSeq; // 0x400
     DancerSkeleton *unk414; // 0x414
     SkeletonViz *mSkeletonViz; // 0x418
-    int unk41c; // 0x41c
+    DetectFrame *unk41c; // 0x41c
     /** "Offset debug skeleton by latency offset" */
     bool mDebugLatencyOffset; // 0x420
     Skeleton unk424; // 0x424

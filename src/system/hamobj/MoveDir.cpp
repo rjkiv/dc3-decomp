@@ -193,6 +193,20 @@ MoveMode CurrentMoveMode() {
     return TheHamDirector->InPracticeMode() ? (MoveMode)1 : (MoveMode)0;
 }
 
+void SetupRecordClip(
+    ObjPtr<SkeletonClip> &clip, int i1, int i2, const char *cc, ObjectDir *dir
+) {
+    clip = Hmx::Object::New<SkeletonClip>();
+    clip->EnableAlternateRecord(i1);
+    clip->SetUnk11fc(i2);
+    String clipName = RecordClipName(cc, i1);
+    clipName += ".clp";
+    clip->SetName(clipName.c_str(), dir);
+    const char *path = MakeString("devkit:\\%s", clip->Name());
+    MILO_LOG("Starting song recording: %s\n", path);
+    clip->StartXboxRecording(path);
+}
+
 MoveDir::MoveDir()
     : mShowMoveOverlay(0), mErrorNodeInfo(0), mPlayClip(this), mRecordClip(this),
       unk2bc(this), unk2d0(this), unk2e4(0), mReportMove(this), mFiltersEnabled(0),
@@ -781,20 +795,20 @@ void MoveDir::PostUpdate(const SkeletonUpdateData *data) {
 
 void MoveDir::Draw(const BaseSkeleton &baseSkeleton, SkeletonViz &skeletonViz) {
     if (unk414) {
-        int actual_ms = unk414->ElapsedMs();
-        if (actual_ms != -1) {
+        int disp_ms = unk414->ElapsedMs();
+        if (disp_ms != -1) {
             for (int i = 0; i < kNumJoints; i++) {
                 Vector3 vdisp;
-                int disp_ms;
+                int actual_ms;
                 unk414->Displacement(
-                    nullptr, kCoordCamera, (SkeletonJoint)i, actual_ms, vdisp, disp_ms
+                    nullptr, kCoordCamera, (SkeletonJoint)i, disp_ms, vdisp, actual_ms
                 );
                 MILO_ASSERT(disp_ms == actual_ms, 0x50F);
-                const Vector3 &camJointPos = unk414->CamJointPos((SkeletonJoint)i);
+                Vector3 camJointPos = unk414->CamJointPos((SkeletonJoint)i);
                 Vector3 vdiff;
                 Subtract(camJointPos, vdisp, vdiff);
                 Hmx::Color color(0.3f, 0.6f, 0.3f);
-                mSkeletonViz->DrawLine3D(vdiff, camJointPos, 0.01f, color, &color);
+                mSkeletonViz->DrawLine3D(vdiff, camJointPos, 0.01f, color, nullptr);
             }
         }
     } else if (mFiltersEnabled && unk41c) {
@@ -804,8 +818,18 @@ void MoveDir::Draw(const BaseSkeleton &baseSkeleton, SkeletonViz &skeletonViz) {
         const Skeleton *player_skel = dynamic_cast<const Skeleton *>(&baseSkeleton);
         MILO_ASSERT(player_skel, 0x51F);
         SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
-        // ErrorFrameInput input(handle.History(), )
+        float songSpeed = SongSpeed();
+        ErrorFrameInput input(
+            handle.History(), unk41c->GetDancerFrame()->mSkeleton, *player_skel, songSpeed
+        );
+        ErrorNode **errorNodes = mFilterVer->mErrorNodes;
         for (int i = 0; i < mFilterVer->NumNodes(); i++) {
+            ErrorNode *node = errorNodes[i];
+            if (node->IsTypeJointMatch(mErrorNodeInfo)) {
+                ErrorNodeInput nodeInput;
+                mFilterVer->NodeInput(i, unk41c, moveMode, nodeInput);
+                node->VizError(skeletonViz, input, nodeInput);
+            }
         }
     }
 }
@@ -966,20 +990,6 @@ DancerSequence *MoveDir::PerformanceSequence(Difficulty diff) {
     Symbol diffSym = DifficultyToSym(diff);
     const char *seqName = MakeString("performance_%s.seq", diffSym);
     return Find<DancerSequence>(seqName, false);
-}
-
-void SetupRecordClip(
-    ObjPtr<SkeletonClip> &clip, int i1, int i2, const char *cc, ObjectDir *dir
-) {
-    clip = Hmx::Object::New<SkeletonClip>();
-    clip->EnableAlternateRecord(i1);
-    clip->SetUnk11fc(i2);
-    String clipName = RecordClipName(cc, i1);
-    clipName += ".clp";
-    clip->SetName(clipName.c_str(), dir);
-    const char *path = MakeString("devkit:\\%s", clip->Name());
-    MILO_LOG("Starting song recording: %s\n", path);
-    clip->StartXboxRecording(path);
 }
 
 void MoveDir::FinishGameRecord() {
@@ -1145,12 +1155,10 @@ void MoveDir::SetCurrentMove(int player, HamMove *move) {
     HamPhraseMeter *hpm = mpd.unk30;
     if (hpm) {
         hpm->SetRatingFrac(0, -1);
-        if (move && move->Scored() && TheGameData->Player(player)->IsPlaying()
-            && !InGracePeriod(player)) {
-            hpm->SetShowing(true);
-        } else {
-            hpm->SetShowing(false);
-        }
+        hpm->SetShowing(
+            move && move->Scored() && TheGameData->Player(player)->IsPlaying()
+            && !InGracePeriod(player)
+        );
     }
     if (mpd.unk38) {
         mpd.unk38->SetShowing(mpd.unk2c == 0);
@@ -1230,16 +1238,15 @@ float MoveDir::DetectRangeFrac(
 
 bool MoveDir::InGracePeriod(int player) {
     Hmx::Object *provider = TheGameData->Player(player)->Provider();
-    if (provider) {
-        static Symbol start_score_move_index("start_score_move_index");
-        const DataNode *prop = provider->Property(start_score_move_index, false);
-        if (prop) {
-            return TheTaskMgr.CurrentMeasure() < prop->Int();
-        } else {
-            return false;
-        }
-    } else {
+    if (!provider) {
         return false;
+    }
+    static Symbol start_score_move_index("start_score_move_index");
+    const DataNode *prop = provider->Property(start_score_move_index, false);
+    if (!prop) {
+        return false;
+    } else {
+        return TheTaskMgr.CurrentMeasure() < prop->Int();
     }
 }
 
