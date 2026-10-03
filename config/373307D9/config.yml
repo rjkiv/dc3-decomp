@@ -95,6 +95,19 @@ add_relocations:
 - source: .text:0x824A6DD0
   type: l
   target: ?TheGameData@@3PAVHamGameData@@A
+# ?FinalPoseStateMachine@MoveDir@@QAAXXZ
+- source: .text:0x82503BB0
+  type: ha
+  target: ?sMinFrameDistBeats@HamMove@@2MA
+- source: .text:0x82503BC4
+  type: ha
+  target: ?TheMoveMgr@@3PAVMoveMgr@@A
+- source: .text:0x82503CD8
+  type: l
+  target: ?TheMoveMgr@@3PAVMoveMgr@@A
+- source: .text:0x82503F00
+  type: l
+  target: ?sMinFrameDistBeats@HamMove@@2MA
 
 # These are Windows error codes, not relocations!
 block_relocations:

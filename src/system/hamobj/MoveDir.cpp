@@ -28,6 +28,7 @@
 #include "hamobj/HamPhraseMeter.h"
 #include "hamobj/HamPlayerData.h"
 #include "hamobj/MoveDetector.h"
+#include "hamobj/MoveMgr.h"
 #include "hamobj/PracticeSection.h"
 #include "hamobj/ScoreUtl.h"
 #include "hamobj/SongCollision.h"
@@ -687,7 +688,7 @@ void MoveDir::Poll() {
             mCurMove[i] = nullptr;
             filler[i] = oldMove;
             MovePlayerData &curPlayerData = mMovePlayerData[i];
-            auto &keys = curPlayerData.unk20;
+            auto &keys = curPlayerData.mMoveKeys;
             if (curMeasure >= 0 && curMeasure < keys.size()) {
                 mCurMove[i] = keys[curMeasure].move;
             }
@@ -700,7 +701,7 @@ void MoveDir::Poll() {
 
             if (mCurMove[i]) {
                 std::pair<DetectFrame *, DetectFrame *> frames;
-                DetectRange(curPlayerData.unk14, frames, curMeasure, curMeasure);
+                DetectRange(curPlayerData.mDetectFrames, frames, curMeasure, curMeasure);
                 float frac = DetectFrac(i, mCurMove[i], frames);
                 mCurMoveRating[i] =
                     DetectFracToMoveRating(frac, mCurMove[i]->RatingOverride());
@@ -753,8 +754,8 @@ void MoveDir::Enter() {
     for (int i = 0; i < 2; i++) {
         MovePlayerData &cur = mMovePlayerData[i];
         cur.mCurMove = nullptr;
-        cur.unk20.reserve(i13);
-        cur.unk14.reserve(i13 << 4);
+        cur.mMoveKeys.reserve(i13);
+        cur.mDetectFrames.reserve(i13 * 16);
     }
 
     if (!TheLoadMgr.EditMode()) {
@@ -783,9 +784,9 @@ void MoveDir::Enter() {
                 if (cur.mFeedback) {
                     cur.mFeedback->ResetErrors();
                 }
-                cur.unk30 =
+                cur.mPhraseMeter =
                     wDir->Find<HamPhraseMeter>(MakeString("phrase_meter%i", i), false);
-                cur.unk38 =
+                cur.mTextFeedback =
                     wDir->Find<RndDrawable>(MakeString("text_feedback%i", i), false);
             }
         }
@@ -1214,7 +1215,7 @@ DancerSequence *MoveDir::SkillsSequence(Difficulty d, Symbol s1, Symbol s2) {
 void MoveDir::SetCurrentMove(int player, HamMove *move) {
     MILO_ASSERT_RANGE(player, 0, 2, 0x563);
     MovePlayerData &mpd = mMovePlayerData[player];
-    HamPhraseMeter *hpm = mpd.unk30;
+    HamPhraseMeter *hpm = mpd.mPhraseMeter;
     if (hpm) {
         hpm->SetRatingFrac(0, -1);
         hpm->SetShowing(
@@ -1222,8 +1223,8 @@ void MoveDir::SetCurrentMove(int player, HamMove *move) {
             && !InGracePeriod(player)
         );
     }
-    if (mpd.unk38) {
-        mpd.unk38->SetShowing(mpd.unk2c == 0);
+    if (mpd.mTextFeedback) {
+        mpd.mTextFeedback->SetShowing(mpd.mState == 0);
     }
     mpd.mCurMove = move;
     if (move) {
@@ -1398,7 +1399,7 @@ float MoveDir::DetectFrac(int player, int i2) {
     }
 
     MovePlayerData &mpd = mMovePlayerData[player];
-    auto &keys = mpd.unk20;
+    auto &keys = mpd.mMoveKeys;
     HamMove *move = nullptr;
     if (i2 >= 0 && i2 < keys.size()) {
         move = keys[i2].move;
@@ -1408,7 +1409,7 @@ float MoveDir::DetectFrac(int player, int i2) {
         return 0;
     } else {
         std::pair<DetectFrame *, DetectFrame *> range;
-        DetectRange(mpd.unk14, range, i2, i2);
+        DetectRange(mpd.mDetectFrames, range, i2, i2);
         if (range.first == range.second) {
             return mAsyncDetector->MoveRatingFrac(
                 player, (MoveAsyncDetector::RatingBar)(u2 != i2), move
@@ -1455,8 +1456,8 @@ void MoveDir::ResetDetectFrames(int player, Difficulty diff) {
     }
     auto &mpd = mMovePlayerData[player];
     unk310 = -1;
-    mpd.unk2c = 0;
-    mpd.unk14.clear();
+    mpd.mState = 0;
+    mpd.mDetectFrames.clear();
     if (diff != kDifficultyBeginner) {
         DancerSequence *seq;
         if (TheHamDirector->InPracticeMode()) {
@@ -1483,7 +1484,7 @@ void MoveDir::ResetDetectFrames(int player, Difficulty diff) {
                 );
             } else {
                 auto dancerFrameIt = dancerFrames.begin();
-                auto &moveKeys = mpd.unk20;
+                auto &moveKeys = mpd.mMoveKeys;
                 int moveKeysCap = moveKeys.capacity();
                 TheHamDirector->MoveKeys(diff, this, moveKeys);
                 if (moveKeys.size() > moveKeysCap) {
@@ -1495,7 +1496,7 @@ void MoveDir::ResetDetectFrames(int player, Difficulty diff) {
                         moveKeysCap
                     );
                 }
-                int detectFramesCap = mpd.unk14.capacity();
+                int detectFramesCap = mpd.mDetectFrames.capacity();
                 for (int i = 0; i < moveKeys.size(); i++) {
                     if (dancerFrameIt->mMoveIdx == i) {
                         auto &curMoveKey = moveKeys[i];
@@ -1516,11 +1517,12 @@ void MoveDir::ResetDetectFrames(int player, Difficulty diff) {
                                     dancerFrameIt,
                                     mirrored
                                 );
-                                mpd.unk14.push_back(detectFrame);
+                                mpd.mDetectFrames.push_back(detectFrame);
                                 ++dancerFrameIt;
                                 if (dancerFrameIt == dancerFrames.end()) {
-                                    if (mpd.unk14.size() > detectFramesCap) {
-                                        unsigned int detectFramesSize = mpd.unk14.size();
+                                    if (mpd.mDetectFrames.size() > detectFramesCap) {
+                                        unsigned int detectFramesSize =
+                                            mpd.mDetectFrames.size();
                                         MILO_NOTIFY(
                                             "%s detect frames size (%i) above capacity (%i)",
                                             PathName(this),
@@ -1539,6 +1541,63 @@ void MoveDir::ResetDetectFrames(int player, Difficulty diff) {
                                     dancerFrameIt->mMoveFrameIdx
                                 );
                             }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void MoveDir::FinalPoseStateMachine() {
+    int other_player = 1;
+    float f13 = TheTaskMgr.TotalBeat() - (float)(TheTaskMgr.CurrentMeasure() * 4);
+    for (int player = 0; other_player > -1; player++, other_player--) {
+        HamMove *curMove = mMovePlayerData[player].mCurMove;
+        if (TheGameData->Player(player)->IsPlaying() && !InGracePeriod(player) && curMove
+            && curMove->IsFinalPose()) {
+            const FilterVersion *fv = curMove->FilterVer();
+            if (curMove->IsFinalPose() && mMovePlayerData[player].mState != 2) {
+                float frac;
+                if (TheMoveMgr->HasRoutine()) {
+                    frac = mAsyncDetector->MoveRatingFrac(
+                        player, (MoveAsyncDetector::RatingBar)0, curMove
+                    );
+                } else {
+                    frac = DetectFrac(player, -1);
+                }
+                auto &moveFrames = curMove->GetMoveFrames();
+                if (!moveFrames.empty()) {
+                    float backBeat = moveFrames.back().Beat();
+                    if (mMovePlayerData[player].mState == 0 && backBeat <= f13) {
+                        MILO_ASSERT_RANGE(other_player, 0, 2, 0x4CE);
+                        if (mMovePlayerData[other_player].mState == 0) {
+                            static Message msg("final_pose_photo");
+                            TheHamProvider->Export(msg, true);
+                        }
+                        mMovePlayerData[player].mState = 1;
+                    }
+                    if (mMovePlayerData[player].mState == 1) {
+                        float measure = TheTaskMgr.CurrentMeasure() * 4;
+                        float secs = BeatToSeconds(measure + backBeat);
+                        float dist =
+                            ScaleFullErrorDist(fv->mScaleOp) + sLatencySeconds + secs;
+                        float beat = SecondsToBeat(dist);
+                        if (4 <= beat - measure) {
+                            MILO_NOTIFY_ONCE(
+                                "%s last frame is too late, end pose won't be scored correctly",
+                                curMove->Name()
+                            );
+                        }
+                        if (dist <= unk30c || f13 >= 4 - HamMove::sMinFrameDistBeats) {
+                            static Symbol final_pose_rating("final_pose_rating");
+                            TheGameData->Player(player)->Provider()->SetProperty(
+                                final_pose_rating,
+                                DetectFracToRating(
+                                    frac, curMove->RatingOverride(), nullptr
+                                )
+                            );
+                            mMovePlayerData[player].mState = 2;
                         }
                     }
                 }

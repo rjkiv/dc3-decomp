@@ -35,18 +35,18 @@ public:
         MovePlayerData() : mCurMove(nullptr) {}
         void Reset() {
             mCurMove = nullptr;
-            unk30 = nullptr;
+            mPhraseMeter = nullptr;
             mFeedback = nullptr;
-            unk38 = nullptr;
-            unk2c = 0;
+            mTextFeedback = nullptr;
+            mState = 0;
         }
         ObjPtr<HamMove> mCurMove; // 0x0
-        std::vector<DetectFrame> unk14; // 0x14
-        std::vector<HamMoveKey> unk20; // 0x20
-        int unk2c; // 0x2c
-        HamPhraseMeter *unk30; // 0x30
+        std::vector<DetectFrame> mDetectFrames; // 0x14
+        std::vector<HamMoveKey> mMoveKeys; // 0x20
+        int mState; // 0x2c
+        HamPhraseMeter *mPhraseMeter; // 0x30
         CharFeedback *mFeedback; // 0x34
-        RndDrawable *unk38; // 0x38
+        RndDrawable *mTextFeedback; // 0x38
     };
     // Hmx::Object
     virtual ~MoveDir();
