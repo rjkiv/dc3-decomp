@@ -44,6 +44,15 @@ enum NumErrorNodes {
     kMaxNumErrorNodes = 33
 };
 
+enum FeedbackLimbs {
+    kFeedbackNone = 0,
+    kFeedbackLeftArm = 1,
+    kFeedbackRightArm = 2,
+    kFeedbackLeftLeg = 4,
+    kFeedbackRightLeg = 8,
+    kNumLimbFeedbacks = 4
+};
+
 struct ScaleOp {
     void Set(const DataArray *);
 
@@ -80,8 +89,8 @@ struct Ham1NodeWeight {
 // Ham2FrameWeight size: 0x24
 struct Ham2FrameWeight {
     float unk0; // 0x0 - PSNR?
-    float unk4[4];
-    float unk14[4];
+    float unk4[kNumLimbFeedbacks]; // 0x4
+    float unk14[kNumLimbFeedbacks]; // 0x14
 };
 
 struct OldNodeWeight {

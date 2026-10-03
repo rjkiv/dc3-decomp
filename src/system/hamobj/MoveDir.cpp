@@ -1605,3 +1605,162 @@ void MoveDir::FinalPoseStateMachine() {
         }
     }
 }
+
+void MoveDir::PostUpdateFilters() {
+    if (mFilterQueue) {
+        if (!mFilterQueue->HasJob()) {
+            unkf88.clear();
+            bool b15 = false;
+            for (int i = 0; i < 2; i++) {
+                if (mMovePlayerData[i].mCurMove) {
+                    b15 = true;
+                    break;
+                }
+            }
+            if (mFiltersEnabled && b15 && TheMaster && TheMaster->GetAudio()
+                && TheMaster->GetAudio()->IsReady()) {
+                MILO_ASSERT(TheGameData, 0x3D9);
+                float f32 = SongSeconds() - sLatencySeconds;
+                bool cmp = f32 > unk310;
+                if (cmp || TheLoadMgr.EditMode()) {
+                    if (cmp) {
+                        unk310 = f32;
+                    }
+                    mFilterQueue->EnqueueNewJob(f32, SongSpeed(), CurrentMoveMode());
+                    for (int i = 0; i < 2; i++) {
+                        if (TheGameData->Player(i)->IsPlaying() && !InGracePeriod(i)) {
+                            MovePlayerData &mpd = mMovePlayerData[i];
+                            if (mpd.mCurMove && mpd.mCurMove->Scored()) {
+                                EnqueueDetectFrames(
+                                    f32, i, mpd.mDetectFrames, mpd.mCurMove->FilterVer()
+                                );
+                            }
+                        }
+                        if (mAsyncDetector) {
+                            mAsyncDetector->EnqueueDetectFrames(
+                                TheTaskMgr.CurrentMeasure(),
+                                TheTaskMgr.CurrentBeat(),
+                                f32,
+                                i
+                            );
+                        }
+                    }
+                    mFilterQueue->StartJob();
+                }
+            }
+        } else if (mFilterQueue->IsJobFinished()) {
+            mLastPollMs = mFilterQueue->LastPollMs();
+            MoveMode moveMode = CurrentMoveMode();
+            float fracs[2];
+            for (int i = 0; i < 2; i++) {
+                if (TheMoveMgr->HasRoutine()) {
+                    fracs[i] = mAsyncDetector->MoveRatingFrac(
+                        i, (MoveAsyncDetector::RatingBar)0, mMovePlayerData[i].mCurMove
+                    );
+                } else {
+                    fracs[i] = DetectFrac(i, -1);
+                }
+            }
+
+            DetectFrame *frames[2];
+            if (mFilterQueue->GetResults(unk30c, frames, sPLFMinTimeError)) {
+                static Symbol flip_camshot_targets("flip_camshot_targets");
+                const DataNode *prop = TheHamProvider->Property(flip_camshot_targets);
+                bool b15 = prop ? prop->Int() != 0 : false;
+                for (int i = 0; i < 2; i++) {
+                    CharFeedback *charFeedback = b15 ? mMovePlayerData[i == 0].mFeedback
+                                                     : mMovePlayerData[i].mFeedback;
+                    HamPlayerData *hpd = TheGameData->Player(i);
+                    bool cmp = charFeedback && hpd && hpd->IsPlaying();
+                    if (!cmp) {
+                        charFeedback->ResetErrors();
+                    } else {
+                        HamMove *curMove = mMovePlayerData[i].mCurMove;
+                        DetectFrame *curFrame = frames[i];
+                        if (curMove && curFrame) {
+                            const FilterVersion *fv = curMove->FilterVer();
+                            auto *errorNodes = fv->mErrorNodes;
+                            if (curMove->Version() == kFilterVersionHam1) {
+                                float float_arr[kNumLimbFeedbacks];
+                                memset(float_arr, 0, sizeof(float_arr));
+                                for (int n = 0; n < MoveFrame::kNumHam1Nodes; n++) {
+                                    const Ham1NodeWeight &wt =
+                                        curFrame->GetMoveFrame()->NodeWeightHam1(
+                                            n, moveMode, curFrame->Mirror()
+                                        );
+                                    if (wt.unk0) {
+                                        ErrorNode *node = errorNodes[n];
+                                        float f34 = curFrame->BestNodeError(n).x;
+                                        int limbs = node->GetFeedbackLimbs();
+                                        for (int k = 0; k < kNumLimbFeedbacks; k++) {
+                                            if ((1 << k) & limbs) {
+                                                float_arr[k] += f34;
+                                            }
+                                        }
+                                    }
+                                }
+                                for (int k = 0; k < kNumLimbFeedbacks; k++) {
+                                    float frac = Clamp(0.0f, 1.0f, 1.0f - float_arr[k]);
+                                    int move_rating;
+                                    DetectFracToRating(
+                                        frac, curMove->RatingOverride(), &move_rating
+                                    );
+                                    if (move_rating == kMoveRatingOk) {
+                                        charFeedback->UpdateLimb(k, true);
+                                    } else if (move_rating <= kMoveRatingPerfect) {
+                                        charFeedback->UpdateLimb(k, false);
+                                    }
+                                }
+                            } else {
+                                MILO_ASSERT(fv->mType == kFilterVersionHam2, 0x460);
+                                const MoveFrame *mf = curFrame->GetMoveFrame();
+                                const Ham2FrameWeight &wt =
+                                    mf->FrameWeight(curFrame->Mirror());
+                                if (wt.unk0 > 0.5f) {
+                                    for (int k = 0; k < kNumLimbFeedbacks; k++) {
+                                        float f35 = curFrame->LimbPSNR(fv, 1 << k);
+                                        if (wt.unk14[k] > wt.unk4[k]) {
+                                            if (f35 > wt.unk14[k]) {
+                                                charFeedback->UpdateLimb(k, false);
+                                            } else if (f35 < wt.unk4[k]) {
+                                                charFeedback->UpdateLimb(k, true);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                float f32 =
+                    TheTaskMgr.TotalBeat() - (float)(TheTaskMgr.CurrentMeasure() * 4);
+                for (int i = 0; i < 2; i++) {
+                    auto &mpd = mMovePlayerData[i];
+                    HamMove *curMove = mpd.mCurMove;
+                    if (TheGameData->Player(i)->IsPlaying() && !InGracePeriod(i)
+                        && curMove && curMove->Scored()) {
+                        float frac;
+                        if (TheMoveMgr->HasRoutine()) {
+                            frac = mAsyncDetector->MoveRatingFrac(
+                                i, (MoveAsyncDetector::RatingBar)0, curMove
+                            );
+                        } else {
+                            frac = DetectFrac(i, -1);
+                        }
+                        Symbol autoplay = TheGameData->Player(i)->Autoplay();
+                        if (frac > fracs[i] || !autoplay.Null()) {
+                            frac =
+                                DetectFracToRatingFrac(frac, curMove->RatingOverride());
+                            MILO_ASSERT(mpd.mPhraseMeter, 0x49A);
+                            mpd.mPhraseMeter->SetRatingFrac(frac, 4 - f32);
+                            static Symbol rating_frac("rating_frac");
+                            TheGameData->Player(i)->Provider()->SetProperty(
+                                rating_frac, frac
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
