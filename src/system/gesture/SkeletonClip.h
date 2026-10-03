@@ -69,6 +69,7 @@ public:
     void SetSong(Symbol sym) { mSong = sym; }
     void SetDifficulty(Difficulty d) { mDifficulty = d; }
     void SetBuild(const String &str) { mBuild = str; }
+    void SetUnk11fc(int x) { unk11fc = x; }
     bool IsRecording() const;
     const String &Path() const;
     String DateTimeStr() const;

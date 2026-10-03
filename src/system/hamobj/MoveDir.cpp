@@ -27,6 +27,7 @@
 #include "hamobj/MoveDetector.h"
 #include "hamobj/PracticeSection.h"
 #include "hamobj/ScoreUtl.h"
+#include "math/Color.h"
 #include "math/Geo.h"
 #include "math/Vec.h"
 #include "meta/SongMetadata.h"
@@ -66,15 +67,23 @@
 #include "world/Dir.h"
 #include "xdk/XAPILIB.h"
 
+float MoveDir::sLatencySeconds = 0;
+float MoveDir::sPLFMinTimeError = 0;
+bool MoveDir::sGameRecord = false;
+bool MoveDir::sGameRecord2Player = false;
+
 std::vector<FilterVersion *> MoveDir::sFilterVersions;
 static float sFloat = 0.0f;
 
 namespace {
+    static Hmx::Rect sRect(0.05f, 0.95f, 0.25f, 0.25f);
     static Hmx::Color sGray(0.5, 0.5, 0.5, 1);
     static Hmx::Color sGreen(0, 0.6, 0, 0.5);
     static Hmx::Color sDarkerGray(0.3, 0.3, 0.3, 0.8);
     static Hmx::Color sLightGray(0.8, 0.8, 0.8, 1);
     static Hmx::Color sDarkGray(0.3, 0.3, 0.3, 0.6);
+
+    float sOverlayWidth = sRect.y - sRect.x;
 
     float DrawOverlayBar(float f1, float f2, float f3, const Hmx::Color &c, float f4) {
         TheRnd.DrawRectScreen(
@@ -85,8 +94,42 @@ namespace {
         return f4;
     }
 
-    float DrawDetectedBar(float, const char *, float, float, float, bool, bool);
-    void DrawBeatLine(float, float, float, const Hmx::Color &);
+    float DrawDetectedBar(
+        float f1, const char *c2, float f3, float f4, float f5, bool b6, bool b7
+    ) {
+        Hmx::Color gray = sDarkerGray;
+        Hmx::Color green = sGreen;
+        Hmx::Color lightGray = sLightGray;
+        if (b6) {
+            Multiply(sDarkerGray, 0.5f, gray);
+            gray.alpha = sDarkerGray.alpha;
+            Multiply(sGreen, 0.5f, green);
+            green.alpha = sGreen.alpha;
+            Multiply(sLightGray, 0.5f, lightGray);
+            lightGray.alpha = sLightGray.alpha;
+        }
+        String str(c2);
+        if (b7) {
+            str += MakeString(": %.2f%%", f3 * 100);
+        } else {
+            str += MakeString(": %.2f", f3);
+        }
+        float fvar5 = (f5 - f4) * f3;
+        DrawOverlayBar(f1, f4, (f5 - f4) + f4, gray, sFloat);
+        DrawOverlayBar(f1, f4, fvar5 + f4, green, sFloat);
+        TheRnd.DrawStringScreen(str.c_str(), Vector2(f4, f1), lightGray, true);
+        return sFloat + f1;
+    }
+
+    void DrawBeatLine(float f1, float f2, float f3, const Hmx::Color &c) {
+        Vector2 v20;
+        v20.x = Interp(sRect.x, sRect.y, (sRect.w + f3) / (sRect.h + sRect.w + 4));
+        v20.y = f1 + f2;
+        Vector2 v18;
+        v18.x = v20.x;
+        v18.y = f1;
+        UtilDrawLine(v18, v20, c);
+    }
 
     float DrawPlayClip(float f, SkeletonClip *clip, int bar) {
         MILO_ASSERT(clip, 0x762);
@@ -135,15 +178,10 @@ String RecordClipName(const char *cc, int i2) {
     default:
         break;
     }
-    String ret(MakeString(
-        "%s%d~%s~%c~%s~%s",
-        prefix,
-        dt.ToCode(),
-        TheGameData->GetSong(),
-        diff,
-        TheGameData->Player(0)->Unk2c(),
-        cc
-    ));
+    unsigned int dtCode = dt.ToCode();
+    Symbol song = TheGameData->GetSong();
+    const String &x = TheGameData->Player(0)->Unk2c();
+    String ret(MakeString("%s%d~%s~%c~%s~%s", prefix, dtCode, song, diff, x, cc));
     if (ret.length() > 38) {
         ret.resize(38);
     }
@@ -334,9 +372,9 @@ void MoveDir::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(0x23, 0)
     if (d.rev < 9) {
-        RndDir::PreLoad(bs);
+        RndDir::PreLoad(d.stream);
     } else {
-        SkeletonDir::PreLoad(bs);
+        SkeletonDir::PreLoad(d.stream);
     }
     Symbol song = TheGameData->GetSong();
     if (!IsProxy() && gLoadingProxyFromDisk && !song.Null()) {
@@ -358,9 +396,9 @@ void MoveDir::PreLoad(BinStream &bs) {
 void MoveDir::PostLoad(BinStream &bs) {
     BinStreamRev d(bs, bs.PopRev(this));
     if (d.rev < 9) {
-        RndDir::PostLoad(bs);
+        RndDir::PostLoad(d.stream);
     } else {
-        SkeletonDir::PostLoad(bs);
+        SkeletonDir::PostLoad(d.stream);
     }
     if (d.rev < 5) {
         bool b;
@@ -935,6 +973,7 @@ void SetupRecordClip(
 ) {
     clip = Hmx::Object::New<SkeletonClip>();
     clip->EnableAlternateRecord(i1);
+    clip->SetUnk11fc(i2);
     String clipName = RecordClipName(cc, i1);
     clipName += ".clp";
     clip->SetName(clipName.c_str(), dir);
