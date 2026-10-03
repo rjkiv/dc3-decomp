@@ -12,13 +12,16 @@
 #include "gesture/SkeletonDir.h"
 #include "gesture/SkeletonUpdate.h"
 #include "gesture/SkeletonViz.h"
+#include "gesture/StubCameraInput.h"
 #include "hamobj/CharFeedback.h"
 #include "hamobj/DancerSequence.h"
+#include "hamobj/DancerSkeleton.h"
 #include "hamobj/DetectFrame.h"
 #include "hamobj/Difficulty.h"
 #include "hamobj/ErrorNode.h"
 #include "hamobj/FilterVersion.h"
 #include "hamobj/HamAudio.h"
+#include "hamobj/HamCharacter.h"
 #include "hamobj/HamDirector.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamMove.h"
@@ -27,6 +30,7 @@
 #include "hamobj/MoveDetector.h"
 #include "hamobj/PracticeSection.h"
 #include "hamobj/ScoreUtl.h"
+#include "hamobj/SongCollision.h"
 #include "math/Color.h"
 #include "math/Geo.h"
 #include "math/Vec.h"
@@ -602,6 +606,74 @@ void MoveDir::PostLoad(BinStream &bs) {
         }
     } else {
         mRecordClip = nullptr;
+    }
+}
+
+void MoveDir::DrawShowing() {
+    if (IsProxy()) {
+        if (mDebugCollision) {
+            SongCollision *col = Find<SongCollision>("SongCollision", false);
+            if (col) {
+                int beat = TheTaskMgr.Beat();
+                if (unkf84 != beat) {
+                    unkf84 = beat;
+                    MILO_ASSERT(TheHamDirector, 0xAB1);
+                    for (int i = 0; i < 2; i++) {
+                        HamCharacter *hChar = TheHamDirector->GetCharacter(i);
+                        if (hChar) {
+                            unkf04[i] = hChar->WorldXfm();
+                        }
+                    }
+                }
+                Difficulty diffs[2];
+                for (int i = 0; i < 2; i++) {
+                    diffs[i] = TheGameData->Player(i)->GetDifficulty();
+                }
+                std::vector<SongCollisionOutput> songCollisionOutputs;
+                col->IsCollision(beat, beat + 1, diffs, unkf04, &songCollisionOutputs);
+                for (int i = 0; i < songCollisionOutputs.size(); i++) {
+                    SongCollisionOutput &curOutput = songCollisionOutputs[i];
+                    Hmx::Color color(0.8f, 0.8f, 0.8f);
+                    Hmx::Color color20;
+                    if (curOutput.unke0) {
+                        color20.Set(1, 0, 0);
+                    } else {
+                        color20.Set(0, 1, 0);
+                    }
+                    for (int j = 0; j < 2; j++) {
+                        const Vector3 &v = curOutput.unk60[j].v;
+                        UtilDrawSphere(v, 1, color, nullptr);
+                        UtilDrawString(MakeString("%i:%i", j, beat + i), v, color);
+                        TheRnd.DrawLine(v, curOutput.unk0[j], color, false);
+                        UtilDrawSphere(curOutput.unk0[j], 1, color, nullptr);
+                        TheRnd.DrawLine(v, curOutput.unk20[j], color, false);
+                        UtilDrawSphere(curOutput.unk20[j], 1, color, nullptr);
+                    }
+                    for (int j = 0; j < 2; j++) {
+                        const Vector3 &v = curOutput.unk60[j].v;
+                        Vector3 vsub;
+                        Add(curOutput.unk40[j], v, vsub);
+                        TheRnd.DrawLine(v, vsub, color20, false);
+                        UtilDrawSphere(vsub, 2, color20, nullptr);
+                        UtilDrawString(MakeString("%i", j), vsub, color20);
+                    }
+                }
+            }
+        }
+    } else if (TheLoadMgr.EditMode()) {
+        if (mDancerSeq) {
+            ObjDirItr<SkeletonViz> it(this, true);
+            if (it) {
+                StubCameraInput input;
+                input.PollTracking();
+                const DancerSkeleton *skel = mDancerSeq->CurSkeleton();
+                if (skel) {
+                    it->Visualize(input, *skel, nullptr, false);
+                }
+            }
+        } else {
+            SkeletonDir::DrawShowing();
+        }
     }
 }
 
@@ -1296,19 +1368,21 @@ float MoveDir::DetectFrac(
         } else {
             frac = RatingToDetectFrac(autoplay, move->RatingOverride());
         }
-        int i8 = 0;
-        int i7 = 0;
-        for (DetectFrame *it = detectFrames.first; it != detectFrames.second; ++it) {
-            const Ham2FrameWeight &wt = it->GetMoveFrame()->FrameWeight(it->Mirror());
-            if (wt.unk0 != 0) {
-                i8++;
-                if (it->HasScore()) {
-                    i7++;
+        if (detectFrames.first != detectFrames.second) {
+            int i8 = 0;
+            int i7 = 0;
+            for (DetectFrame *it = detectFrames.first; it != detectFrames.second; ++it) {
+                const Ham2FrameWeight &wt = it->GetMoveFrame()->FrameWeight(it->Mirror());
+                if (wt.unk0 != 0) {
+                    i8++;
+                    if (it->HasScore()) {
+                        i7++;
+                    }
                 }
             }
-        }
-        if (i8 != 0) {
-            frac = i7 / (i8 * frac);
+            if (i8 != 0) {
+                frac *= (float)i7 / (float)i8;
+            }
         }
     }
     return frac;
@@ -1324,4 +1398,30 @@ void MoveDir::DetectRange(
         std::lower_bound(frames.begin(), frames.end(), low, DetectFrameMoveIdxCmp());
     range.second =
         std::upper_bound(frames.begin(), frames.end(), high, DetectFrameMoveIdxCmp());
+}
+
+float MoveDir::DetectFrac(int player, int i2) {
+    MILO_ASSERT_RANGE(player, 0, 2, 0x16A);
+    int u2 = TheTaskMgr.CurrentMeasure();
+    if (i2 == -1) {
+        i2 = u2;
+    }
+
+    MovePlayerData &mpd = mMovePlayerData[player];
+    auto &keys = mpd.unk20;
+    if (i2 >= 0 && i2 < keys.size()) {
+        HamMove *move = keys[i2].move;
+        if (move) {
+            std::pair<DetectFrame *, DetectFrame *> range;
+            DetectRange(mpd.unk14, range, i2, i2);
+            if (range.first == range.second) {
+                return mAsyncDetector->MoveRatingFrac(
+                    player, (MoveAsyncDetector::RatingBar)(u2 != i2), move
+                );
+            } else {
+                return DetectFrac(player, move, range);
+            }
+        }
+    }
+    return 0;
 }
