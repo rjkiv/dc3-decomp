@@ -93,9 +93,9 @@ protected:
     DebugGraph *mDebugGraphD; // 0x78
     DebugGraph *mDebugGraphE; // 0x7c
     int unk80; // 0x80
-    char buffer[0xA00]; // 0x84 some big ass buffer maybe who knows
+    Vector3 unk84[8][kNumJoints]; // 0x84
     float unka84[8]; // 0xa84
-    int unkaa4;
+    int unkaa4; // 0xaa4 - index into the above arrays
     float unkaa8; // 0xaa8 - mLastBeatTime?
     Vector3 unkaac[kNumJoints]; // 0xaac
     RecordData mRecordData; // 0xbec

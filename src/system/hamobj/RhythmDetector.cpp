@@ -7,6 +7,7 @@
 #include "obj/Data.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
+#include "obj/Task.h"
 #include "os/Debug.h"
 #include "stl/_vector.h"
 #include "ui/UIPanel.h"
@@ -135,31 +136,137 @@ namespace {
         return data;
     }
 
-    //     void AnalyzeData(
-    //         const std::vector<RhythmDetector::Frame> &frames,
-    //         float &f1,
-    //         float &f2,
-    //         float &f3,
-    //         float f4,
-    //         bool b1,
-    //         Symbol sym,
-    //         bool b2,
-    //         DebugGraph *dbg,
-    //         int i1,
-    //         TextStream *stream
-    //     ) {
-    //         return;
-    //     }
+    void AnalyzeData(
+        const std::vector<RhythmDetector::Frame> &frames,
+        float &f1,
+        float &f2,
+        float &f3,
+        float f4,
+        bool b1,
+        Symbol sym,
+        bool b2,
+        DebugGraph *dbg,
+        int i1,
+        TextStream *stream
+    ) {
+        float f21 = (float)frames.size() * 0.025f;
+        float f24 = 0;
+        float f23 = 0;
+        if (frames.size() >= 10) {
+            for (int i = 0; i < kNumJoints; i++) {
+                float curWeight = jointWeight()[i];
+                if (curWeight != 0) {
+                    if (stream) {
+                        *stream << "<br>";
+                    }
+                    for (int j = 0; j < 3; j++) {
+                        float f26 = 0;
+                        float f27 = 0;
+                        static std::vector<float> raw;
+                        static std::vector<float> normalized;
+
+                        raw.resize(Min<unsigned int>(40, frames.size()));
+                        normalized.resize(Min<unsigned int>(40, frames.size()));
+
+                        for (int k = 0; k < raw.size(); k++) {
+                            float val = frames[k].mJointVelocities[i][j];
+                            val = fabsf(val);
+                            raw[k] = val;
+                            f26 += val;
+                        }
+                        {
+                            float mean = Mean(raw, 0, 10);
+                            float variance = Variance(raw, mean, 0, 10);
+                            for (int k = 0; k < 6; k++) {
+                                normalized[k] = (raw[k] - mean) * (1 / variance);
+                            }
+                        }
+                        int nextIdx = Max<unsigned int>(6, raw.size() - 6);
+                        for (int k = 6; k < nextIdx; k++) {
+                            int l = k - 5;
+                            float f28 = Mean(raw, l, l + 10);
+                            float f17 = raw[k] - f28;
+                            f28 = Variance(raw, f28, l, l + 10);
+                            normalized[k] = f17 / f28;
+                        }
+                        {
+                            float mean = Mean(raw, nextIdx - 5, nextIdx + 5);
+                            float variance =
+                                Variance(raw, mean, nextIdx - 5, nextIdx + 5);
+                            for (int k = nextIdx; k < raw.size() - 1; k++) {
+                                normalized[k] = (raw[k] - mean) * (1 / variance);
+                            }
+                        }
+                        float f17 = 0;
+                        for (int k = 0; k < normalized.size(); k++) {
+                            f17 += fabsf(normalized[k]);
+                        }
+
+                        for (int k = 0; k < kConvCount; k++) {
+                            const char *curConv = kConv[k];
+                            for (int l = 0; l < kConvLen; l++) {
+                                float f18 = 0;
+                                for (int n = 0; n < normalized.size(); n++) {
+                                    float f16 = normalized[n];
+                                    int convIdx = (l + n) % kConvLen;
+                                    if (curConv[convIdx] == '-') {
+                                        f16 *= -1;
+                                    } else if (curConv[convIdx] == '0') {
+                                        f16 = fabsf(f16);
+                                    }
+                                    f18 += f16;
+                                }
+                                if (f18 > f27) {
+                                    f27 = f18;
+                                }
+                            }
+                        }
+                        float div = f27 / f17;
+                        f27 = div * f26;
+                        if (stream) {
+                            *stream << " ";
+                            *stream << MakeString("%0.2f", div);
+                            *stream << "&middot;";
+                            int x = f26 * curWeight;
+                            *stream << x;
+                            if (x < 10) {
+                                *stream << "&nbsp;&nbsp;";
+                            } else if (x < 100) {
+                                *stream << "&nbsp;";
+                            }
+                        }
+
+                        f23 += f26 * curWeight;
+                        f24 += f27 * curWeight;
+                    }
+                }
+            }
+
+            float f19 = Max(f23, f21 * 200);
+            f1 = (f24 / f19) * f21;
+            f2 = f23 < 200 ? 0 : f23;
+            if (stream) {
+                *stream << "<br>";
+                *stream << (int)f24;
+                *stream << "/";
+                *stream << (int)f23;
+                *stream << "=";
+                *stream << f1;
+            }
+        }
+    }
 
 }
 
 void EraseNewerData(std::vector<RhythmDetector::Frame> &vec, float time) {
+    auto found = vec.end();
     FOREACH (it, vec) {
         if (it->unk0 >= time) {
-            vec.erase(it, vec.end());
+            found = it;
             break;
         }
     }
+    vec.erase(found, vec.end());
 }
 
 void CameraToScreenUnit(Vector3 &vec, const Skeleton &skeleton, SkeletonJoint joint) {
@@ -186,13 +293,49 @@ void SetupFrame(
         ObjectDir::Main()->Find<UIPanel>("rhythm_detector_panel", false);
     minJointSpeedVector();
 
-    frame.mJointVelocities.resize(20);
+    frame.mJointVelocities.resize(kNumJoints);
 
-    for (int i = 0; i < 20; i++) {
+    float scale = 1 / value;
+    for (int i = 0; i < kNumJoints; i++) {
         int currentJoint = kAnalyzeJoints[i];
-        // yeah idk yet but i know its some vector math!
+        const Vector3 &prevJoint = prev[currentJoint];
+        const Vector3 &posJoint = pos[currentJoint];
+        Vector3 vsub;
+        Subtract(posJoint, prevJoint, vsub);
+        frame.mJointVelocities[i].x = vsub.x * scale;
+        frame.mJointVelocities[i].y = vsub.y * scale;
+        frame.mJointVelocities[i].z = vsub.z * scale;
     }
     frame.unk0 = prev_beat + delt_beat;
+}
+
+RhythmDetector::Frame BlendFrameDataToBeat(
+    const RhythmDetector::Frame &a, const RhythmDetector::Frame &b, float f3
+) {
+    if (f3 < a.unk0 || b.unk0 < f3) {
+        MILO_NOTIFY(
+            "bad rhythm detector floating point precision at %f %f %f\n",
+            a.unk0,
+            b.unk0,
+            f3
+        );
+    }
+    const int kSize = a.mJointVelocities.size();
+    MILO_ASSERT(kSize == b.mJointVelocities.size(), 0x5A9);
+
+    float t = Clamp(0.0f, 1.0f, (f3 - a.unk0) / (b.unk0 - a.unk0));
+    RhythmDetector::Frame out;
+    out.unk0 = f3;
+    out.mJointVelocities.resize(kSize);
+
+    for (int i = 0; i < kSize; i++) {
+        for (int j = 0; j < 3; j++) {
+            out.mJointVelocities[i][j] =
+                Interp(a.mJointVelocities[i][j], b.mJointVelocities[i][j], t);
+        }
+    }
+
+    return out;
 }
 
 RhythmDetector::RhythmDetector()
@@ -257,6 +400,14 @@ BEGIN_COPYS(RhythmDetector)
         COPY_MEMBER(mDirection)
     END_COPYING_MEMBERS
 END_COPYS
+
+// shows up in the binary, needs to go before the revs
+const int kAnalyzeJointsButNotAnonymousLol[] = { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
+                                                 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 };
+
+int dummyfuncinrhythmdetectorlmao(int idx) {
+    return kAnalyzeJointsButNotAnonymousLol[idx];
+}
 
 INIT_REVS(2, 0)
 
@@ -339,6 +490,7 @@ float RhythmDetector::Freshness() const {
     else
         return 0;
 }
+
 Vector4 RhythmDetector::Data1(int idx) const {
     const Vector3 &v = unkaac[idx];
     return Vector4(v.x, v.y, v.z, 0);
@@ -428,71 +580,161 @@ void RhythmDetector::ClearData() {
     AddFullDebugGraphs();
 }
 
-// void RhythmDetector::AddFrame(BaseSkeleton const &skel) {
-//     auto panel = ObjectDir::Main()->Find<UIPanel>("rhythm_detector_panel", false);
-//     if (panel) {
-//         Vector3 jointPosVec;
-//         for (int skelJoint = 0; skelJoint < kNumJoints; skelJoint++) {
-//             skel.JointPos(
-//                 kCoordCamera, static_cast<SkeletonJoint>(skelJoint), jointPosVec
-//             );
-//         }
-//         float beat = TheTaskMgr.Beat();
-//         float seconds = TheTaskMgr.Seconds(TaskMgr::kRealTime);
-//         float beatDiff = beat - unkaa8;
-//         if (beatDiff < 0.0) {
-//             ClearData();
-//             beatDiff = 0.0;
-//         }
-//         int temp = -1;
-//         int anotherInt = 0;
-//         float something = 0.0;
-//         for (int i = 0; i < 8; i++) {
-//             if (0.0 < unka80.back()
-//                 && ((fabs(seconds - unka80.back()) - 0.1) < something || temp == -1)) {
-//                 something = fabs(seconds - unka80.back()) - 0.1;
-//                 temp = anotherInt;
-//                 anotherInt++;
-//             }
-//         }
-//         if (temp != -1) {
-//         }
-//     }
-// }
+void RhythmDetector::AddFrame(const BaseSkeleton &skel) {
+    static UIPanel *rhythm_detector_panel =
+        ObjectDir::Main()->Find<UIPanel>("rhythm_detector_panel", false);
+    if (rhythm_detector_panel) {
+        Vector3 v1a0[kNumJoints];
+        for (int i = 0; i < kNumJoints; i++) {
+            skel.JointPos(kCoordCamera, (SkeletonJoint)i, v1a0[i]);
+        }
+        float beat = TheTaskMgr.Beat();
+        float secs = TheTaskMgr.Seconds(TaskMgr::kRealTime);
+        float f13 = beat - unkaa8;
+        if (f13 < 0) {
+            f13 = 0;
+            ClearData();
+        }
+        float f14 = 0;
+        int i8 = -1;
+        for (int i = 0; i < 8; i++) {
+            if (0 <= unka84[i]) {
+                float f10 = fabsf(secs - unka84[i] - 0.1f);
+                if (f10 < f14 || i8 == -1) {
+                    i8 = i;
+                    f14 = f10;
+                }
+            }
+        }
+        if (i8 != -1) {
+            unk14.push_back(Frame());
+            if (unk14.size() > 3) {
+                unk14.pop_front();
+            }
+            SetupFrame(unk14.back(), unk68, f13, unk84[i8], v1a0, secs - unka84[i8]);
+        }
+        unkaa8 = beat;
+        for (int i = 0; i < kNumJoints; i++) {
+            unk84[unkaa4][i] = v1a0[i];
+        }
+        unka84[unkaa4] = secs;
+        unk68 += f13;
+        unkaa4 = (unkaa4 + 1) % 8;
+    }
+}
 
-// const RhythmDetector::RecordData &
-// RhythmDetector::GetRecord(float f1, float f2, bool b, Symbol sym, TextStream *stream) {
-//     RecordData ret = mRecordData;
-//     if (mRecordData.unkbec == f1 && mRecordData.unkbf8 == f2) {
-//         if (stream) {
-//             AnalyzeData(
-//                 unk38,
-//                 mRecordData.unkbfc,
-//                 mRecordData.mTracked00,
-//                 mRhythmDecay,
-//                 mToleranceFactor,
-//                 mDebugGraphA->GetmFold(),
-//                 0,
-//                 b,
-//                 0,
-//                 mDebugGraphA->GetUnk38(),
-//                 stream
-//             );
-//             mTracked04 = true;
-//         }
-//     } else {
-//         if (mTracked04 == false) {
-//             MILO_NOTIFY(
-//                 "new rhythm detector window w/o finalization [%.1f,%.1f] to [%.1f,
-//                 %.1f]", mRecordData.unkbec, mRecordData.unkbf0, f1, f2
-//             );
-//         }
-//         ClearData();
-//         mRecordData.unkbf0 = f2;
-//         mTracked04 = false;
-//         mRecordData.unkbf4 = -1.0;
-//         mRecordData.unkbf8 = -1.0;
-//         mTracked08.clear();
-//     }
-//     return ret;
-// }
+const RhythmDetector::RecordData &
+RhythmDetector::GetRecord(float f1, float f2, bool b3, Symbol s4, TextStream *stream) {
+    if (mRecordData.unk0 == f1 && mRecordData.unk4 == f2) {
+        if (b3) {
+            AnalyzeData(
+                unk38,
+                mRecordData.unk10,
+                mRecordData.unk14,
+                mRhythmDecay,
+                mToleranceFactor,
+                true,
+                s4,
+                false,
+                mDebugGraphA,
+                gLog,
+                stream
+            );
+            mRecordData.unk18 = true;
+        }
+    } else {
+        if (!mRecordData.unk18) {
+            MILO_NOTIFY(
+                "new rhythm detector window w/o finalization [%.1f,%.1f] to [%.1f, %.1f]",
+                mRecordData.unk0,
+                mRecordData.unk4,
+                f1,
+                f2
+            );
+        }
+        ClearData();
+        mRecordData.unk0 = f1;
+        mRecordData.unk4 = f2;
+        mRecordData.unk18 = false;
+        mRecordData.unkc = -1;
+        mRecordData.unk8 = -1;
+        mRecordData.frames.clear();
+    }
+    return mRecordData;
+}
+
+void RhythmDetector::ProcessFrames() {
+    std::list<Frame> frames;
+    frames.swap(unk14);
+    bool b2 = false;
+    if (!frames.empty()) {
+        float time = frames.front().unk0;
+        EraseNewerData(mRecordData.frames, time);
+        EraseNewerData(unk2c, time);
+        Frame &f13 = unk1c;
+        FOREACH (it, frames) {
+            Frame &cur = *it;
+            unk2c.push_back(cur);
+            int i7 = f13.unk0 * 10;
+            int i11 = ((int)(cur.unk0 * 10) - i7) % 40;
+            if (!unk1c.mJointVelocities.empty()) {
+                b2 = true;
+                for (int i = 0; i < i11; i++) {
+                    unk38.push_back(
+                        BlendFrameDataToBeat(f13, cur, (float)(i + i7 + 1) / 10)
+                    );
+                }
+            }
+            f13 = cur;
+            unk1c.mJointVelocities = cur.mJointVelocities;
+        }
+        if (frames.size() > 1) {
+            frames.pop_back();
+        }
+        if (frames.size() > 1) {
+            frames.pop_back();
+        }
+        unk1c = frames.back();
+    }
+    if (!unk2c.empty()) {
+        static UIPanel *rhythm_detector_panel =
+            ObjectDir::Main()->Find<UIPanel>("rhythm_detector_panel", false);
+        float f1;
+        if (rhythm_detector_panel) {
+            DataArray *typeDef = rhythm_detector_panel->TypeDef();
+            static Symbol analyze_beat_frequency("analyze_beat_frequency");
+            DataArray *freqArr = typeDef->FindArray(analyze_beat_frequency);
+            static Symbol analyze_period_count("analyze_period_count");
+            int i7 = typeDef->FindInt(analyze_period_count);
+            freqArr->Int(freqArr->Size() - 1); // whoopsies
+            int i11 = freqArr->Int(freqArr->Size() - 1);
+            f1 = (float)i11 * (float)(i7 - 1) * 2;
+        } else {
+            f1 = 0;
+        }
+        auto found = unk2c.end();
+        FOREACH (it, unk2c) {
+            if (it->unk0 >= unk2c.back().unk0 - f1) {
+                found = it;
+                break;
+            }
+        }
+        unk2c.erase(found, unk2c.end());
+        if (b2) {
+            static Symbol blank("");
+            AnalyzeData(
+                unk38,
+                mRecordData.unk10,
+                mRecordData.unk14,
+                mRhythmDecay,
+                mToleranceFactor,
+                false,
+                blank,
+                false,
+                mDebugGraphA,
+                -1,
+                nullptr
+            );
+        }
+    }
+}
