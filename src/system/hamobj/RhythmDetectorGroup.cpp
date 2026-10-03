@@ -95,12 +95,12 @@ void RhythmDetectorGroup::AddDebugGraphs() {
         0.1f,
         0.0f,
         0.8f,
-        0.9f,
-        Hmx::Color(0.4, 0.4, 0.4, 0.8),
-        Hmx::Color(0.4, 0.4, 0.4, 0.8),
-        null,
-        0.0,
-        2.0,
+        f7,
+        Hmx::Color(1, 1, 1),
+        Hmx::Color(0.4f, 0.4f, 0.4f, 0.8f),
+        0x78,
+        0.0f,
+        2.0f,
         ""
     );
     mDebugGraph->SetUnk44(1);
@@ -108,7 +108,7 @@ void RhythmDetectorGroup::AddDebugGraphs() {
     FOREACH (it, mDetectors) {
         RhythmDetector *cur = *it;
         cur->RemoveDebugGraphs();
-        cur->AddDebugGraph(0.1f, f10, 0.8f, 0.1f / 0.8f, Hmx::Color(1, 0, 1, 0));
+        cur->AddDebugGraph(0.1f, f10, 0.8f, f7, Hmx::Color(0, 1, 0));
         f10 += f6;
     }
 }

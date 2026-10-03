@@ -386,7 +386,7 @@
             "system/hamobj/RhythmBattle.cpp": "NonMatching",
             "system/hamobj/RhythmBattlePlayer.cpp": "NonMatching",
             "system/hamobj/RhythmDetector.cpp": "NonMatching",
-            "system/hamobj/RhythmDetectorGroup.cpp": "NonMatching",
+            "system/hamobj/RhythmDetectorGroup.cpp": "Matching",
             "system/hamobj/ScoreUtl.cpp": "Matching",
             "system/hamobj/SongCollision.cpp": "NonMatching",
             "system/hamobj/SongDifficultyDisplay.cpp": "Matching",
