@@ -85,32 +85,32 @@ public:
     bool ShowShaderErrors() const { return mShowShaderErrors; }
     bool Unk18() const { return unk18; }
     bool ShowMetaMatErrors() const { return mShowMetaMatErrors; }
-    int Unk10() const { return mNumBones; }
+    int NumBones() const { return mNumBones; }
     bool UseAO() const { return mHasAOCalc; }
     bool Unk24() const { return unk24; }
     bool AllowPerPixel() const { return mAllowPerPixel; }
-    bool Unk3a() const { return unk3a; }
-    void SetUnk3a(bool b) { unk3a = b; }
-    void SetUnk3e(bool b) { unk3e = b; }
-    void SetUnk38(bool b) { unk38 = b; }
+    bool GradientMapEnabled() const { return mGradientMapEnabled; }
+    void SetGradientMapEnabled(bool b) { mGradientMapEnabled = b; }
+    void SetVignetteEnabled(bool b) { mVignetteEnabled = b; }
+    void SetMotionBlurEnabled(bool b) { mMotionBlurEnabled = b; }
     void SetUnk39(bool b) { unk39 = b; }
     void SetUnk34(int i) { unk34 = i; }
-    void SetUnk29(bool b) { unk29 = b; }
+    void SetColorXfmEnabled(bool b) { mColorXfmEnabled = b; }
     void SetUnk2f(bool b) { unk2f = b; }
     void SetUnk30(bool b) { unk30 = b; }
     int NumTaps() const { return mNumTaps; }
     void SetNumTaps(int i) { mNumTaps = i; }
-    void SetUnk2b(bool b) { unk2b = b; }
-    void SetUnk2c(bool b) { unk2c = b; }
-    void SetUnk2a(bool b) { unk2a = b; }
+    void SetPosterizeEnabled(bool b) { mPosterizeEnabled = b; }
+    void SetKaleidoscopeEnabled(bool b) { mKaleidoscopeEnabled = b; }
+    void SetHueConvergeEnabled(bool b) { mHueConvergeEnabled = b; }
     void SetUnk3b(bool b) { unk3b = b; }
     void SetUnk2d(bool b) { unk2d = b; }
     void SetUnk2e(bool b) { unk2e = b; }
-    void SetUnk3c(bool b) { unk3c = b; }
-    void SetUnk3d(bool b) { unk3d = b; }
+    void SetChromaticAberrationEnabled(bool b) { mChromaticAberrationEnabled = b; }
+    void SetChromaticSharpenEnabled(bool b) { mChromaticSharpenEnabled = b; }
     void SetUnk27(bool b) { unk27 = b; }
     void SetUnk28(bool b) { unk28 = b; }
-    void SetUnk26(bool b) { unk26 = b; }
+    void SetDOFEnabled(bool b) { mDOFEnabled = b; }
     void SetUnk3f(bool b) { unk3f = b; }
 
 protected:
@@ -129,28 +129,31 @@ protected:
     int unk1c;
     int unk20; // 0x20 - some sort of enum
     bool unk24;
+
+    // all of these are various postproc flags
     bool unk25;
-    bool unk26;
-    bool unk27;
-    bool unk28;
-    bool unk29;
-    bool unk2a;
-    bool unk2b;
-    bool unk2c;
+    bool mDOFEnabled; // 0x26
+    bool unk27; // 0x27 - bloom related
+    bool unk28; // 0x28 - bloom related
+    bool mColorXfmEnabled; // 0x29
+    bool mHueConvergeEnabled; // 0x2a
+    bool mPosterizeEnabled; // 0x2b
+    bool mKaleidoscopeEnabled; // 0x2c
     bool unk2d;
     bool unk2e;
     bool unk2f;
     bool unk30;
     bool unk31;
     int unk34;
-    bool unk38; // mMotionBlurChecked?
+    bool mMotionBlurEnabled; // 0x38
     bool unk39;
-    bool unk3a; // mGradientMapChecked?
-    bool unk3b;
-    bool unk3c;
-    bool unk3d;
-    bool unk3e; // mVignetteChecked?
+    bool mGradientMapEnabled; // 0x3a
+    bool unk3b; // 0x3b
+    bool mChromaticAberrationEnabled; // 0x3c
+    bool mChromaticSharpenEnabled; // 0x3d
+    bool mVignetteEnabled; // 0x3e
     bool unk3f;
+
     bool mAllowPerPixel; // 0x40
     bool unk41;
     bool mDisplayShaderError; // 0x42
@@ -165,7 +168,7 @@ protected:
     float *mConstantCache; // 0x64
     int unk68;
     bool mCacheShaders; // 0x6c
-    bool unk6d;
+    bool mInitted; // 0x6d
     bool mShowShaderErrors; // 0x6e
     bool mShowMetaMatErrors; // 0x6f
 };

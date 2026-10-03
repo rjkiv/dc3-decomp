@@ -270,7 +270,8 @@ void RndShaderSimple::Select(RndMat *mat, ShaderType s, bool b) {
         }
     }
     TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
-    bool isSkinned = TheShaderMgr.Unk10() && (s == kErrorShader || s == kShadowmapShader);
+    bool isSkinned =
+        TheShaderMgr.NumBones() && (s == kErrorShader || s == kShadowmapShader);
     if (!RedundantState(mat, s, isSkinned, TheShaderMgr.UseAO(), b)) {
         TheNgStats->mMats++;
         NgMat *ngMat = static_cast<NgMat *>(mat);
@@ -320,7 +321,7 @@ void RndShaderStandard::Select(RndMat *mat, ShaderType shader_type, bool b) {
     }
     TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
     if (!RedundantState(
-            mat, shader_type, TheShaderMgr.Unk10() != 0, TheShaderMgr.UseAO(), b
+            mat, shader_type, TheShaderMgr.NumBones() != 0, TheShaderMgr.UseAO(), b
         )) {
         TheNgStats->mMats++;
         NgMat *ngMat = static_cast<NgMat *>(mat);
@@ -402,7 +403,7 @@ void RndShaderVelocity::Select(RndMat *mat, ShaderType s, bool b) {
         mat = TheRnd.DefaultMat();
     }
     TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
-    if (!RedundantState(mat, s, TheShaderMgr.Unk10() != 0, false, b)) {
+    if (!RedundantState(mat, s, TheShaderMgr.NumBones() != 0, false, b)) {
         TheNgStats->mMats++;
         NgMat *ngMat = static_cast<NgMat *>(mat);
         ngMat->SetupShader(false, false);
@@ -434,7 +435,7 @@ void RndShaderDepthVolume::Select(RndMat *mat, ShaderType s, bool b) {
         mat = TheRnd.DefaultMat();
     }
     TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
-    if (!RedundantState(mat, s, TheShaderMgr.Unk10() != 0, false, b)) {
+    if (!RedundantState(mat, s, TheShaderMgr.NumBones() != 0, false, b)) {
         TheNgStats->mMats++;
         NgMat *ngMat = static_cast<NgMat *>(mat);
         ngMat->SetupShader(TheShaderMgr.AllowPerPixel(), true);
@@ -469,7 +470,7 @@ void RndShaderFur::Select(RndMat *mat, ShaderType s, bool b) {
         mat = TheRnd.DefaultMat();
     }
     TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
-    if (!RedundantState(mat, s, TheShaderMgr.Unk10() != 0, false, b)) {
+    if (!RedundantState(mat, s, TheShaderMgr.NumBones() != 0, false, b)) {
         TheNgStats->mMats++;
         NgMat *ngMat = static_cast<NgMat *>(mat);
         ngMat->SetupShader(false, true);
@@ -487,7 +488,7 @@ void RndShaderSyncTrack::Select(RndMat *mat, ShaderType shader_type, bool b) {
     }
     TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
     if (!RedundantState(
-            mat, shader_type, TheShaderMgr.Unk10() != 0, TheShaderMgr.UseAO(), b
+            mat, shader_type, TheShaderMgr.NumBones() != 0, TheShaderMgr.UseAO(), b
         )) {
         TheNgStats->mMats++;
         NgMat *ngMat = static_cast<NgMat *>(mat);

@@ -179,7 +179,7 @@ void NgDOFProc::DoPost() {
             TheRenderState.SetTextureClamp(8, RndRenderState::kClampModeClamp);
             TheNgRnd.SetViewport(old);
         }
-        TheShaderMgr.SetUnk26(ngEnabled);
+        TheShaderMgr.SetDOFEnabled(ngEnabled);
     }
 }
 

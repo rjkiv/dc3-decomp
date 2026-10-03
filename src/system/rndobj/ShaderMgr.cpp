@@ -16,13 +16,13 @@
 #include "utl/MemMgr.h"
 
 RndShaderMgr::RndShaderMgr()
-    : mShaderPoolCount(0), unk5c(0), mConstantCache(0), unk68(0), unk6d(0),
+    : mShaderPoolCount(0), unk5c(0), mConstantCache(0), unk68(0), mInitted(0),
       mShowShaderErrors(1), mShowMetaMatErrors(0) {}
 
 void RndShaderMgr::PreInit() {
-    if (!unk6d) {
-        mHasAOCalc = 0;
-        unk6d = true;
+    if (!mInitted) {
+        mHasAOCalc = false;
+        mInitted = true;
         mNumBones = 0;
         mNumTaps = 1;
         unk18 = 0;
@@ -30,26 +30,26 @@ void RndShaderMgr::PreInit() {
         unk20 = 0;
         unk24 = 0;
         unk25 = 0;
-        unk26 = 0;
+        mDOFEnabled = 0;
         unk27 = 0;
         unk28 = 0;
-        unk29 = 0;
-        unk2b = 0;
-        unk2c = 0;
+        mColorXfmEnabled = 0;
+        mPosterizeEnabled = 0;
+        mKaleidoscopeEnabled = 0;
         unk2d = 0;
         unk2e = 0;
         unk2f = 0;
         unk30 = 0;
         unk31 = 0;
         unk34 = 0;
-        unk38 = 0;
+        mMotionBlurEnabled = false;
         unk39 = 0;
-        unk3a = 0;
-        unk2a = 0;
+        mGradientMapEnabled = false;
+        mHueConvergeEnabled = 0;
         unk3b = 0;
-        unk3c = 0;
-        unk3d = 0;
-        unk3e = 0;
+        mChromaticAberrationEnabled = 0;
+        mChromaticSharpenEnabled = 0;
+        mVignetteEnabled = 0;
         unk3f = 0;
         mAllowPerPixel = 1;
         unk41 = 1;
