@@ -687,8 +687,9 @@ void MoveDir::Poll() {
             mCurMove[i] = nullptr;
             filler[i] = oldMove;
             MovePlayerData &curPlayerData = mMovePlayerData[i];
-            if (curMeasure >= 0 && curMeasure < curPlayerData.unk20.size()) {
-                mCurMove[i] = curPlayerData.unk20[curMeasure].move;
+            auto &keys = curPlayerData.unk20;
+            if (curMeasure >= 0 && curMeasure < keys.size()) {
+                mCurMove[i] = keys[curMeasure].move;
             }
             MoveRating oldRating = mCurMoveRating[i];
             mCurMoveRating[i] = kMoveRatingOk;
@@ -736,9 +737,7 @@ void MoveDir::Enter() {
         for (int i = 0; i < kNumDifficultiesDC2; i++) {
             TheHamDirector->MoveKeys((Difficulty)i, this, hamMoveKeys);
             int numKeys = hamMoveKeys.size();
-            if (i13 < numKeys) {
-                i13 = numKeys;
-            }
+            MaxEq(i13, numKeys);
             if (i == kDifficultyEasy) {
                 while (--numKeys > 0) {
                     HamMoveKey &curKey = hamMoveKeys[numKeys];
@@ -761,10 +760,7 @@ void MoveDir::Enter() {
     if (!TheLoadMgr.EditMode()) {
         mGamePanel = ObjectDir::Main()->Find<Hmx::Object>("game_panel", false);
         mErrorNodeInfo = 0;
-        mFiltersEnabled = true;
-        if (TheLoadMgr.EditMode()) {
-            MiloInit();
-        }
+        SetFiltersEnabled(true);
         unk310 = -1;
     } else {
         mGamePanel = nullptr;
@@ -992,10 +988,7 @@ int MoveDir::MoveBeat() const { return TheTaskMgr.CurrentBeat(); }
 
 void MoveDir::SetMoveOverlay(bool overlay) {
     if (!mFiltersEnabled && TheLoadMgr.EditMode()) {
-        mFiltersEnabled = true;
-        if (TheLoadMgr.EditMode()) {
-            MiloInit();
-        }
+        SetFiltersEnabled(true);
     }
     mShowMoveOverlay = overlay;
     mMoveOverlay->SetShowing(overlay);
@@ -1161,10 +1154,7 @@ void MoveDir::ResetDetection() {
 
 void MoveDir::SetSongPlayClip(SkeletonClip *clip) {
     if (!mFiltersEnabled && clip) {
-        mFiltersEnabled = true;
-        if (TheLoadMgr.EditMode()) {
-            MiloInit();
-        }
+        SetFiltersEnabled(true);
     }
     if (mRecordClip && mRecordClip->IsRecording()) {
         MILO_NOTIFY("Can't set play clip while recording");
@@ -1409,19 +1399,48 @@ float MoveDir::DetectFrac(int player, int i2) {
 
     MovePlayerData &mpd = mMovePlayerData[player];
     auto &keys = mpd.unk20;
+    HamMove *move = nullptr;
     if (i2 >= 0 && i2 < keys.size()) {
-        HamMove *move = keys[i2].move;
-        if (move) {
-            std::pair<DetectFrame *, DetectFrame *> range;
-            DetectRange(mpd.unk14, range, i2, i2);
-            if (range.first == range.second) {
-                return mAsyncDetector->MoveRatingFrac(
-                    player, (MoveAsyncDetector::RatingBar)(u2 != i2), move
-                );
-            } else {
-                return DetectFrac(player, move, range);
+        move = keys[i2].move;
+    }
+
+    if (!move) {
+        return 0;
+    } else {
+        std::pair<DetectFrame *, DetectFrame *> range;
+        DetectRange(mpd.unk14, range, i2, i2);
+        if (range.first == range.second) {
+            return mAsyncDetector->MoveRatingFrac(
+                player, (MoveAsyncDetector::RatingBar)(u2 != i2), move
+            );
+        } else {
+            return DetectFrac(player, move, range);
+        }
+    }
+}
+
+void MoveDir::EnqueueDetectFrames(
+    float f1, int player, std::vector<DetectFrame> &frames, const FilterVersion *fv
+) {
+    MILO_ASSERT(mFilterQueue, 0x536);
+    MILO_ASSERT_RANGE(player, 0, 2, 0x537);
+    MILO_ASSERT(TheHamDirector, 0x538);
+
+    std::pair<DetectFrame *, DetectFrame *> range;
+    int measure = TheTaskMgr.CurrentMeasure();
+    DetectRange(frames, range, measure - 1, measure + 1);
+    CurrentMoveMode();
+    DetectFrame *toInsert = nullptr;
+    for (DetectFrame *it = range.first; it != range.second; ++it) {
+        float f12 = ScaleDistToError(fv->mScaleOp, fabsf(it->Seconds() - f1));
+        if (f12 < 1) {
+            mFilterQueue->EnqueueFrame(player, f12, f1 - it->Seconds(), it, fv);
+            if (f12 <= 1000) {
+                toInsert = it;
             }
         }
     }
-    return 0;
+    if (toInsert) {
+        unkf88.insert(toInsert);
+    }
 }
