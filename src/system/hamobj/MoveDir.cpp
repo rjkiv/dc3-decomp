@@ -1444,3 +1444,105 @@ void MoveDir::EnqueueDetectFrames(
         unkf88.insert(toInsert);
     }
 }
+
+void MoveDir::ResetDetectFrames(int player, Difficulty diff) {
+    MILO_ASSERT_RANGE(player, 0, 2, 0x678);
+    MILO_ASSERT_RANGE(diff, 0, kNumDifficulties, 0x679);
+    MILO_ASSERT(TheHamDirector, 0x67A);
+    SetupSongRecordClip();
+    if (mFilterQueue) {
+        mFilterQueue->CancelJob();
+    }
+    auto &mpd = mMovePlayerData[player];
+    unk310 = -1;
+    mpd.unk2c = 0;
+    mpd.unk14.clear();
+    if (diff != kDifficultyBeginner) {
+        DancerSequence *seq;
+        if (TheHamDirector->InPracticeMode()) {
+            Symbol start = TheHamDirector->PracticeStart();
+            Symbol end = TheHamDirector->PracticeEnd();
+            seq = SkillsSequence(diff, start, end);
+        } else {
+            seq = PerformanceSequence(diff);
+        }
+        if (!seq) {
+            MILO_NOTIFY(
+                "%s: could not find %s DancerSequence (%s)",
+                PathName(this),
+                DifficultyToSym(diff),
+                TheHamDirector->InPracticeMode() ? "skills" : "perform"
+            );
+        } else {
+            auto &dancerFrames = seq->GetDancerFrames();
+            if (dancerFrames.empty()) {
+                MILO_LOG(
+                    "%s %s: could not reset detect frames, no DancerFrames\n",
+                    PathName(this),
+                    DifficultyToSym(diff)
+                );
+            } else {
+                auto dancerFrameIt = dancerFrames.begin();
+                auto &moveKeys = mpd.unk20;
+                int moveKeysCap = moveKeys.capacity();
+                TheHamDirector->MoveKeys(diff, this, moveKeys);
+                if (moveKeys.size() > moveKeysCap) {
+                    unsigned int moveKeysSize = moveKeys.size();
+                    MILO_NOTIFY(
+                        "%s move keys size (%i) above capacity (%i)",
+                        PathName(this),
+                        moveKeysSize,
+                        moveKeysCap
+                    );
+                }
+                int detectFramesCap = mpd.unk14.capacity();
+                for (int i = 0; i < moveKeys.size(); i++) {
+                    if (dancerFrameIt->mMoveIdx == i) {
+                        auto &curMoveKey = moveKeys[i];
+                        HamMove *move = curMoveKey.move;
+                        auto &moveFrames = move->GetMoveFrames();
+                        MoveMirrored mirrored =
+                            move->Mirrored() ? kMirroredYes : kMirroredNo;
+                        for (int j = 0; j < moveFrames.size(); j++) {
+                            if (dancerFrameIt->mMoveFrameIdx == j) {
+                                DetectFrame detectFrame;
+                                auto &curMoveFrame = moveFrames[j];
+                                float secs =
+                                    curMoveFrame.QuantizedSeconds(curMoveKey.beat);
+                                detectFrame.Reset(
+                                    mFilterVer,
+                                    secs,
+                                    &curMoveFrame,
+                                    dancerFrameIt,
+                                    mirrored
+                                );
+                                mpd.unk14.push_back(detectFrame);
+                                ++dancerFrameIt;
+                                if (dancerFrameIt == dancerFrames.end()) {
+                                    if (mpd.unk14.size() > detectFramesCap) {
+                                        unsigned int detectFramesSize = mpd.unk14.size();
+                                        MILO_NOTIFY(
+                                            "%s detect frames size (%i) above capacity (%i)",
+                                            PathName(this),
+                                            detectFramesSize,
+                                            detectFramesCap
+                                        );
+                                    }
+                                    return;
+                                }
+                            } else {
+                                MILO_LOG(
+                                    "%s %s: invalid DancerFrame at move %i frame %i\n",
+                                    PathName(this),
+                                    DifficultyToSym(diff),
+                                    i,
+                                    dancerFrameIt->mMoveFrameIdx
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

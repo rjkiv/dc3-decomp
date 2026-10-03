@@ -154,6 +154,8 @@ public:
     RndPostProc *GetUnk18c() const { return unk18c; }
     int StartLoopMargin() const { return mStartLoopMargin; }
     int EndLoopMargin() const { return mEndLoopMargin; }
+    Symbol PracticeStart() const { return mPracticeStart; }
+    Symbol PracticeEnd() const { return mPracticeEnd; }
 
     DataNode OnGetDancerVisemes(DataArray *);
 
