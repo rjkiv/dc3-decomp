@@ -212,14 +212,8 @@ bool MicXbox::AddToBuffer(std::vector<short> &buf, void *v, int i1, int *i2) {
     }
 
     int bufSize = buf.size();
-    short s;
     samps = bufSize + samps;
-    // idk
-    if (samps < bufSize) {
-        buf.erase(&buf[samps]);
-    } else {
-        buf.insert(buf.end(), s);
-    }
+    buf.resize(samps);
     XMemCpy(&buf[bufSize], v, i1);
     return b;
 }
