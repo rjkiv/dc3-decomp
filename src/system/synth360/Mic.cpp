@@ -21,7 +21,9 @@
 #include "utl/Symbol.h"
 #include "xdk/win_types.h"
 #include "xdk/XHV2.h"
+#include "xdk/xapilibi/xbox.h"
 #include "xdk/xhv2/xhv2.h"
+#include <cmath>
 #include <cstring>
 
 MicManagerXbox *sInstance;
@@ -195,6 +197,69 @@ void MicXbox::OnMicConnected(unsigned long ul, bool b, Symbol const &s) {
 }
 
 void MicXbox::OnMicDisconnected() { MicManagerXbox::GetInstance()->SetMicsChanged(); }
+
+bool MicXbox::AddToBuffer(std::vector<short> &buf, void *v, int i1, int *i2) {
+    int samps = i1 / 2;
+    bool b = false;
+    MILO_ASSERT(samps <= buf.capacity(), 0x3ac);
+
+    if (samps + buf.size() > buf.capacity()) {
+        if (i2 != nullptr) {
+            *i2 = *i2 + buf.size();
+        }
+        b = true;
+        buf.clear();
+    }
+
+    int bufSize = buf.size();
+    short s;
+    samps = bufSize + samps;
+    // idk
+    if (samps < bufSize) {
+        buf.erase(&buf[samps]);
+    } else {
+        buf.insert(buf.end(), s);
+    }
+    XMemCpy(&buf[bufSize], v, i1);
+    return b;
+}
+
+void MicXbox::AddData(void *v, int bytes) {
+    CritSecTracker t(MicManagerXbox::GetInstance()->CritSec());
+    MILO_ASSERT((bytes&1) == 0, 0x344);
+
+    if (mOutputGain != 1.0f) {
+        int i = bytes / 2;
+        if (0 < i) {
+            short *s = (short *)v - 2;
+            while (i != 0) {
+                float f = floor(*s * mOutputGain + 0.5f);
+                i--;
+
+                s++;
+            }
+        }
+        // stuff
+    }
+
+    if (mVoice) {
+        if (unk301c < unk301c + bytes) {
+            // is it 0???
+            XMemCpy(unk301c, v, 0);
+            XMemCpy(mVoiceBuffer, v, 0);
+        } else {
+            XMemCpy(unk301c, v, bytes);
+        }
+        // hmmmm
+        if (!mVoice->IsPlaying()) {
+            mVoice->SetVolume(mVolume);
+        }
+    }
+
+    AddToBuffer(unk3020, v, bytes, 0);
+    mRingBufferRecent.Write(v, bytes);
+    mDroppedSamples = mRingBufferContinuous.Write(v, bytes);
+}
 
 #pragma endregion MicXbox
 #pragma region MicManagerXbox

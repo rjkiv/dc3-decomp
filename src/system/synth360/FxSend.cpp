@@ -1,9 +1,13 @@
 #include "FxSend.h"
 #include "Synth.h"
+#include "Voice.h"
+#include "math/Decibels.h"
+#include "math/Utl.h"
 #include "os/Debug.h"
 #include "os/Timer.h"
 #include "synth/FxSend.h"
 #include "synth/Synth.h"
+#include "synth360/Synth.h"
 #include "xdk/win_types.h"
 #include "xdk/xaudio2/xaudio2.h"
 
@@ -192,4 +196,148 @@ void FxSend360::CreateVoice(int i1, int i2) {
     MILO_ASSERT(mFx.back(), 0x1CE);
 
 // clang-format on
+}
+
+void FxSend360::UpdateVoiceMatrices() {
+    float gain = DbToRatio(mThis->InputGain());
+    if (mThis->Bypass()) {
+        gain = 0.0f;
+    }
+    float reverbMix = DbToRatio(mThis->ReverbMixDb());
+    SendChannels channel = mThis->GetChannels();
+    gain = Max(gain, 1E-10f);
+    reverbMix = Max(reverbMix, 1E-10f);
+    switch (channel) {
+    case kSendAll: {
+        const float floats[12] = { gain, 0, 0, 0, 0, 0, 0, gain, 0, 0, 0, 0 };
+        mOutputVoice->SetOutputMatrix(mVoices[0], 6, 2, floats, 0);
+        const float floats2[6] = { 0, 0, gain, 0, 0, 0 };
+        mOutputVoice->SetOutputMatrix(mVoices[1], 6, 1, floats2, 0);
+        const float floats3[12] = { 0, 0, 0, 0, gain, 0, 0, 0, 0, 0, 0, gain };
+        mOutputVoice->SetOutputMatrix(mVoices[2], 6, 2, floats3, 0);
+        gain = 1.0f;
+        const float floats4[12] = { gain, 0, 0, gain, 0, 0, 0, 0, 0, 0, 0, 0 };
+        if (mVoices.front()) {
+            mVoices.front()->SetOutputMatrix(OutputVoice(), 2, 6, floats4, 0);
+        }
+        const float floats5[6] = { 0, 0, 1.0f, 0, 0, 0 };
+        if (mVoices[1]) {
+            mVoices[1]->SetOutputMatrix(OutputVoice(), 1, 6, floats5, 0);
+        }
+        const float floats6[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 1.0f, 0, 0, 1.0f };
+        if (mVoices[2]) {
+            mVoices[2]->SetOutputMatrix(OutputVoice(), 2, 6, floats6, 0);
+        }
+
+        if (mThis->ReverbEnabled()) {
+            const float floats7[12] = {
+                reverbMix, 0, 0, reverbMix, 0, 0, 0, 0, 0, 0, 0, 0
+            };
+            mVoices[0]->SetOutputMatrix(TheXboxSynth->ReverbSendVoice(), 2, 6, floats7, 0);
+            const float floats8[6] = { 0, 0, reverbMix, 0, 0, 0 };
+            mVoices[1]->SetOutputMatrix(TheXboxSynth->ReverbSendVoice(), 1, 6, floats8, 0);
+            const float floats9[12] = {
+                0, 0, 0, 0, 0, 0, 0, 0, reverbMix, 0, 0, reverbMix
+            };
+            mVoices[2]->SetOutputMatrix(TheXboxSynth->ReverbSendVoice(), 2, 6, floats9, 0);
+        }
+
+    } break;
+    case kSendCenter: {
+        const float floats[6] = { gain / 2, gain / 2, gain, 0, gain / 4, gain / 4 };
+        mOutputVoice->SetOutputMatrix(mVoices[0], 6, 1, floats, 0);
+        if (mThis->ReverbEnabled()) {
+            const float floats2[6] = { 0, 0, reverbMix, 0, 0, 0 };
+            mVoices[0]->SetOutputMatrix(TheXboxSynth->ReverbSendVoice(), 1, 6, floats2, 0);
+        }
+
+    } break;
+    case kSendStereo: {
+        const float floats[12] = { gain, 0,    gain * 0.7f, 0, gain * 0.3f, 0,
+                                   0,    gain, gain * 0.7f, 0, 0,           gain * 0.3f };
+        mOutputVoice->SetOutputMatrix(mVoices[0], 6, 2, floats, 0);
+        if (mThis->ReverbEnabled()) {
+            const float floats2[12] = {
+                reverbMix, 0, 0, reverbMix, 0, 0, 0, 0, 0, 0, 0, 0
+            };
+            mVoices[0]->SetOutputMatrix(TheXboxSynth->ReverbSendVoice(), 2, 6, floats2, 0);
+        }
+
+    }
+
+    break;
+    case kSendAllXMix: {
+        const float floats[12] = {
+            gain, 0, gain / 4, 0, 0, 0, 0, gain, gain / 4, 0, 0, 0
+        };
+        mOutputVoice->SetOutputMatrix(mVoices[0], 6, 2, floats, 0);
+        const float floats2[6] = { 0, 0, gain / 10, 0, 0, 0 };
+        mOutputVoice->SetOutputMatrix(mVoices[1], 6, 1, floats2, 0);
+        const float floats3[12] = {
+            0, 0, gain / 4, 0, gain, 0, 0, 0, gain / 4, 0, 0, gain
+        };
+        mOutputVoice->SetOutputMatrix(mVoices[2], 6, 2, floats3, 0);
+        gain = 1.0f;
+        const float floats4[12] = { gain, 0, 0, gain, 0, 0, 0, 0, 0, 0, 0, 0 };
+        if (mVoices.front()) {
+            mVoices.front()->SetOutputMatrix(OutputVoice(), 2, 6, floats4, 0);
+        }
+        const float floats5[6] = { 0, 0, gain, 0, 0, 0 };
+        if (mVoices[1]) {
+            mVoices[1]->SetOutputMatrix(OutputVoice(), 1, 6, floats5, 0);
+        }
+        const float floats6[12] = { 0, 0, 0, 0, 0, 0, 0, 0, gain, 0, 0, gain };
+        if (mVoices[2]) {
+            mVoices[2]->SetOutputMatrix(OutputVoice(), 2, 6, floats6, 0);
+        }
+
+        if (mThis->ReverbEnabled()) {
+            const float floats7[12] = {
+                reverbMix, 0, 0, reverbMix, 0, 0, 0, 0, 0, 0, 0, 0
+            };
+            mVoices[0]->SetOutputMatrix(TheXboxSynth->ReverbSendVoice(), 2, 6, floats7, 0);
+            const float floats8[6] = { 0, 0, reverbMix, 0, 0, 0 };
+            mVoices[1]->SetOutputMatrix(TheXboxSynth->ReverbSendVoice(), 1, 6, floats8, 0);
+            const float floats9[12] = {
+                0, 0, 0, 0, 0, 0, 0, 0, reverbMix, 0, 0, reverbMix
+            };
+            mVoices[2]->SetOutputMatrix(TheXboxSynth->ReverbSendVoice(), 2, 6, floats9, 0);
+        }
+
+    } break;
+    default:
+        MILO_ASSERT(0, 0x136);
+        break;
+    }
+}
+
+void FxSend360::UpdateVolumes() {
+    if (mOutputVoice) {
+        float wetGain = DbToRatio(mThis->WetGain());
+        float dryGain = DbToRatio(mThis->DryGain());
+        if (mThis->Bypass()) {
+            dryGain = 1.0f;
+            wetGain = 0;
+        }
+
+        dryGain = Max(dryGain, 1E-10F);
+        wetGain = Max(wetGain, 1E-10F);
+
+        const float floats[36] = { dryGain, 0, 0, 0, 0, 0, 0, dryGain, 0, 0, 0, 0, 0, 0,
+                                   dryGain, 0, 0, 0, 0, 0, 0, dryGain, 0, 0, 0, 0, 0, 0,
+                                   dryGain, 0, 0, 0, 0, 0, 0, dryGain };
+        HRESULT hr = mOutputVoice->SetOutputMatrix(OutputVoice(), 6, 6, floats, 0);
+        MILO_ASSERT(SUCCEEDED(hr), 0x203);
+        UpdateVoiceMatrices();
+        for (int i = 0; i < mVoices.size(); i++) {
+            hr = mVoices[i]->SetVolume(wetGain, 0);
+            MILO_ASSERT(SUCCEEDED(hr), 0x212);
+        }
+
+        if (IsStandard()) {
+            for (int i = 0; i != mVoices.size(); i++) {
+                SyncEffectParams(mVoices[i]);
+            }
+        }
+    }
 }

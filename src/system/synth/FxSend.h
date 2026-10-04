@@ -52,6 +52,11 @@ public:
     bool UpdatesEnabled() const { return mEnableUpdates; }
     SendChannels GetChannels() const { return mChannels; }
     bool ReverbEnabled() const { return mReverbEnable; }
+    float InputGain() const { return mInputGain; }
+    float DryGain() const { return mDryGain; }
+    float WetGain() const { return mWetGain; }
+    bool Bypass() const { return mBypass; }
+    float ReverbMixDb() const { return mReverbMixDb; }
 
 protected:
     FxSend();

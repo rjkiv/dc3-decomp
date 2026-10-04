@@ -74,4 +74,7 @@ private:
     bool unk14c;
 };
 
+void StartSynchronizedVoices();
+void StopSynchronizedVoices();
+
 extern Synth360 *TheXboxSynth;
