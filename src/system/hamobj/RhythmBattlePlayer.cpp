@@ -30,6 +30,8 @@ namespace {
     bool gDebugFresh;
 }
 
+static const float sThreshold = 0.6f;
+
 RhythmBattlePlayer::RhythmBattlePlayer()
     : mComboPosAnim(this), mComboColorAnim(this), mResetComboAnim(this),
       m2xMultAnim(this), m3xMultAnim(this), m4xMultAnim(this), mRhythmBattleAnim(this),
@@ -177,20 +179,21 @@ void RhythmBattlePlayer::Poll() {
                 f17 = 0;
             }
             float f13 = unk244 <= 0 && unk248 <= 0 ? 0.0f : 1.0f;
-            if (unk24c <= unk244) {
-                unk24c = unk244;
-            }
+
+            unk24c = unk24c <= unk244 ? unk244 : unk24c;
             if (unk2a4) {
                 unk24c = 0;
             }
             unk250 += unk248 * f17;
             unk254 += f13 * f17;
             unk258 += f17;
-            f13 = unk24c > 1.0f ? 1.0f : unk24c;
-            float f16 = 4.0f - unk258 - f17;
+            float frac = unk24c;
+            if (frac > 1) {
+                frac = 1;
+            }
+            float f16 = 4.0f - unk258;
             if (mPhraseMeter) {
-                f16 = Max(f16, 0.0f);
-                mPhraseMeter->SetRatingFrac(f13, f16);
+                mPhraseMeter->SetRatingFrac(frac, Max(f16, 0.0f));
             }
             if (mInTheZone == 1 && mRhythmBattle && mRhythmBattle->InFullKTB()) {
                 unk284 -= f17 * 1.125f;
@@ -200,7 +203,7 @@ void RhythmBattlePlayer::Poll() {
                     if (!unk240) {
                         i7 = -1;
                     }
-                    if (i7 != 1) {
+                    if (i7 != mInTheZone) {
                         AnimateBoxyState(i7, true, false);
                     }
                 }
@@ -360,7 +363,7 @@ bool RhythmBattlePlayer::UpdateState() {
     unk264 = unk260;
     if (unk270 < 0.5f) {
         unk260 = 0;
-    } else if (unk274 >= 0.6f) {
+    } else if (unk274 >= sThreshold) {
         unk260 = 1;
     } else if (unk260 <= 1) {
         unk260 = 2;
@@ -398,46 +401,23 @@ void RhythmBattlePlayer::SwagJackedBonus(Hmx::Object *, RhythmBattleJackState, i
     }
 }
 
+void SwapAnim(ObjPtr<RndAnimatable> &a1, ObjPtr<RndAnimatable> &a2) {
+    RndAnimatable *tmp = a1;
+    a1 = a2;
+    a2 = tmp;
+}
+
 void RhythmBattlePlayer::SwapObjs(RhythmBattlePlayer *player) {
-    RndAnimatable *temp = player->mComboPosAnim;
-    player->mComboPosAnim = mComboPosAnim;
-    mComboPosAnim = temp;
-
-    temp = player->mComboColorAnim;
-    player->mComboColorAnim = mComboColorAnim;
-    mComboColorAnim = temp;
-
-    temp = player->mResetComboAnim;
-    player->mResetComboAnim = mResetComboAnim;
-    mResetComboAnim = temp;
-
-    temp = player->m2xMultAnim;
-    player->m2xMultAnim = m2xMultAnim;
-    m2xMultAnim = temp;
-
-    temp = player->m3xMultAnim;
-    player->m3xMultAnim = m3xMultAnim;
-    m3xMultAnim = temp;
-
-    temp = player->m4xMultAnim;
-    player->m4xMultAnim = m4xMultAnim;
-    m4xMultAnim = temp;
-
-    temp = player->mBattleMeterStaleAnim;
-    player->mBattleMeterStaleAnim = mBattleMeterStaleAnim;
-    mBattleMeterStaleAnim = temp;
-
-    temp = player->mBattleMeterInAnim;
-    player->mBattleMeterInAnim = mBattleMeterInAnim;
-    mBattleMeterInAnim = temp;
-
-    temp = player->mShowScoreAnim;
-    player->mShowScoreAnim = mShowScoreAnim;
-    mShowScoreAnim = temp;
-
-    temp = player->mBattleMeterOutAnim;
-    player->mBattleMeterOutAnim = mBattleMeterOutAnim;
-    mBattleMeterOutAnim = temp;
+    SwapAnim(player->mComboPosAnim, mComboPosAnim);
+    SwapAnim(player->mComboColorAnim, mComboColorAnim);
+    SwapAnim(player->mResetComboAnim, mResetComboAnim);
+    SwapAnim(player->m2xMultAnim, m2xMultAnim);
+    SwapAnim(player->m3xMultAnim, m3xMultAnim);
+    SwapAnim(player->m4xMultAnim, m4xMultAnim);
+    SwapAnim(player->mBattleMeterStaleAnim, mBattleMeterStaleAnim);
+    SwapAnim(player->mBattleMeterInAnim, mBattleMeterInAnim);
+    SwapAnim(player->mShowScoreAnim, mShowScoreAnim);
+    SwapAnim(player->mBattleMeterOutAnim, mBattleMeterOutAnim);
 
     HamLabel *tempLabel = player->unk10c;
     player->unk10c = unk10c;
@@ -447,9 +427,7 @@ void RhythmBattlePlayer::SwapObjs(RhythmBattlePlayer *player) {
     player->mScoreLabel = mScoreLabel;
     mScoreLabel = tempLabel;
 
-    temp = player->unk94;
-    player->unk94 = unk94;
-    unk94 = temp;
+    SwapAnim(player->unk94, unk94);
 
     unk288 = !unk288;
     player->unk288 = !player->unk288;
@@ -469,9 +447,9 @@ void RhythmBattlePlayer::UpdateScore(int i1) {
 
 void RhythmBattlePlayer::OnReset(RhythmBattle *rb) {
     static Symbol none("none");
+    unk27c = none;
     mRhythmBattle = rb;
     unk29c = 0;
-    unk27c = none;
     unk260 = 0;
     unk278 = 0;
     unk264 = 0;
@@ -571,12 +549,16 @@ void RhythmBattlePlayer::UpdateAnimations(Hmx::Object *handler) {
                 }
             }
         }
+        bool d13; // lol. lmao even
         if (groove_passed[1] != move_ok && groove_passed[1] != move_awesome) {
             unk29c = 0;
+            d13 = false;
         } else if (unk29c > 0) {
             unk29c--;
+            d13 = false;
+        } else {
+            d13 = false;
         }
-        bool d13 = false;
         if (gDebugGroove) {
             unk294 = unk270 * 100.0f;
         } else if (gDebugFresh) {
