@@ -99,16 +99,18 @@ public:
     virtual void ScreenDump(const char *file);
     virtual void ScreenDumpUnique(const char *file);
     virtual void DrawRect(
-        const Hmx::Rect &,
-        const Hmx::Color &,
-        RndMat *,
-        const Hmx::Color *,
-        const Hmx::Color *
+        const Hmx::Rect &r,
+        const Hmx::Color &c,
+        RndMat *mat,
+        const Hmx::Color *right,
+        const Hmx::Color *bottom
     ) {}
-    virtual Vector2 &
-    DrawString(const char *, const Vector2 &, const Hmx::Color &, bool); // 0x80
+    virtual Vector2 &DrawString(
+        const char *s, const Vector2 &place, const Hmx::Color &c, bool draw
+    ); // 0x80
     virtual void
-    DrawLine(const Vector3 &, const Vector3 &, const Hmx::Color &, bool no_z) {} // 0x84
+    DrawLine(const Vector3 &start, const Vector3 &end, const Hmx::Color &c, bool no_z) {
+    } // 0x84
     virtual void BeginDrawing();
     virtual void EndDrawing();
     virtual void MakeDrawTarget() {}
@@ -183,7 +185,7 @@ public:
         const Hmx::Color *
     );
     const Vector2 &
-    DrawStringScreen(const char *c, const Vector2 &v, const Hmx::Color &color, bool b4);
+    DrawStringScreen(const char *s, const Vector2 &v, const Hmx::Color &color, bool draw);
     RndPostProc *GetPostProcOverride();
     RndPostProc *GetSelectedPostProc();
     void CopyWorldCam(RndCam *);
