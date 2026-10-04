@@ -45,7 +45,7 @@ namespace {
 
 Symbol HamWardrobe::GetBackupOutfitOverride(int x) {
     if (x >= 0 && x < 2) {
-        return unk4c[x];
+        return mBackupOverrideOutfits[x];
     } else
         return gNullStr;
 }
@@ -93,7 +93,7 @@ Symbol GetDanceBattleBackupOutfit(Symbol s1, Symbol s2) {
 
 HamWardrobe::HamWardrobe()
     : mCrowdMembers(this), mMainCharacters(this, (EraseMode)1, kObjListAllowNull),
-      mTempo("medium"), unk38(0), unk3c(gNullStr), unk40(0) {
+      mTempo("medium"), unk38(0), mCrowdForceState(gNullStr), unk40(0) {
     static DataNode &n = DataVariable("hamwardrobe");
     if (TheHamWardrobe) {
         MILO_NOTIFY("Trying to make > 1 HamWardrobe, which should be single");
@@ -120,7 +120,7 @@ BEGIN_HANDLERS(HamWardrobe)
     HANDLE_EXPR(get_character, GetCharacter(_msg->Int(2)))
     HANDLE_EXPR(get_backup, GetBackup(_msg->Int(2)))
     HANDLE(add_crowd, OnAddCrowd)
-    HANDLE_ACTION(set_force_character, unk48 = _msg->Sym(2))
+    HANDLE_ACTION(set_force_character, mCharOverrideOutfit = _msg->Sym(2))
     HANDLE_ACTION(crowd, PlayCrowdAnimation(_msg->Sym(2), 1, false))
     HANDLE_ACTION(crowd_end_override, EndCrowdOverride())
     HANDLE_ACTION(crowd_force_state_enable, ForceCrowdAnimationStart(_msg->Sym(2)))
@@ -163,9 +163,9 @@ BEGIN_COPYS(HamWardrobe)
     END_COPYING_MEMBERS
 END_COPYS
 
-void HamWardrobe::SetBackupOverrideOutfits(Symbol s1, Symbol s2) {
-    unk4c[0] = s1;
-    unk4c[1] = s2;
+void HamWardrobe::SetBackupOverrideOutfits(Symbol outfit1, Symbol outfit2) {
+    mBackupOverrideOutfits[0] = outfit1;
+    mBackupOverrideOutfits[1] = outfit2;
 }
 
 HamCharacter *HamWardrobe::GetBackup(int i) const {
@@ -174,7 +174,7 @@ HamCharacter *HamWardrobe::GetBackup(int i) const {
 
 void HamWardrobe::EndCrowdOverride() {
     if (unk38) {
-        if (unk3c == gNullStr) {
+        if (mCrowdForceState == gNullStr) {
             unk38 = false;
             int flags;
             if (unk40 & 2) {
@@ -188,28 +188,28 @@ void HamWardrobe::EndCrowdOverride() {
 }
 
 void HamWardrobe::ForceCrowdAnimationEnd() {
-    unk3c = gNullStr;
+    mCrowdForceState = gNullStr;
     EndCrowdOverride();
 }
 
 void HamWardrobe::ForceCrowdAnimationStart(Symbol s) {
     static Symbol none("none");
-    if (s == gNullStr || s == none || s == unk3c) {
-        if (unk3c != gNullStr) {
+    if (s == gNullStr || s == none || s == mCrowdForceState) {
+        if (mCrowdForceState != gNullStr) {
             ForceCrowdAnimationEnd();
         }
     } else {
         MILO_LOG(
             "HamWardrobe::ForceCrowdAnimationStart: %s : current mCrowdForceState = '%s'\n",
             s.Str(),
-            unk3c.Str()
+            mCrowdForceState.Str()
         );
-        unk3c = gNullStr;
+        mCrowdForceState = gNullStr;
         PlayCrowdAnimation(s, 1, true);
-        unk3c = s;
+        mCrowdForceState = s;
         static Symbol none2("none");
         if (s == none2) {
-            unk3c = gNullStr;
+            mCrowdForceState = gNullStr;
         }
     }
 }
@@ -253,7 +253,7 @@ bool HamWardrobe::AllCharsLoaded() {
 }
 
 HamCharacter *HamWardrobe::GetCharacter(int i) const {
-    MILO_ASSERT((0) <= (i) && (i) < (2), 0x213);
+    MILO_ASSERT_RANGE(i, 0, 2, 0x213);
     return (HamCharacter *)mMainCharacters[i];
 }
 
@@ -261,7 +261,7 @@ void HamWardrobe::ClearCrowdClips() { LoadCrowdClips(gNullStr, gNullStr, false);
 
 void HamWardrobe::ClearCrowd() {
     mCrowdMembers.clear();
-    unk3c = gNullStr;
+    mCrowdForceState = gNullStr;
     unk38 = false;
 }
 
@@ -347,7 +347,7 @@ void HamWardrobe::PlayCrowdAnimation(Symbol s1, int i2, bool b3) {
     if (!mCrowdMembers.empty()) {
         unk44 = s1;
         unk40 = i2;
-        if ((b3 || !unk38) && unk3c == gNullStr) {
+        if ((b3 || !unk38) && mCrowdForceState == gNullStr) {
             unk38 = b3;
             float f6;
             if ((i2 & 0xF0) == 0x10) {
@@ -412,8 +412,8 @@ void HamWardrobe::LoadCharacters(
     Symbol venue,
     bool async
 ) {
-    if (!unk48.Null()) {
-        outfit1 = unk48;
+    if (!mCharOverrideOutfit.Null()) {
+        outfit1 = mCharOverrideOutfit;
     }
     outfit1 = HandleRobot(outfit1);
     outfit2 = HandleRobot(outfit2);

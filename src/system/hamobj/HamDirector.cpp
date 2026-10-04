@@ -85,7 +85,7 @@ std::map<Symbol, int> gMoveMergeMap;
 
 static bool sBool;
 
-float FrameToBeat(float frame) { return SecondsToBeat(frame * 0.033333335f); }
+float FrameToBeat(float frame) { return SecondsToBeat(frame / 30.0f); }
 float BeatToFrame(float beat) { return BeatToSeconds(beat) * 30.0f; }
 
 ObjectDir *OfflineCallback::SongMainDir() {
