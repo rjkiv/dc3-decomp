@@ -20,6 +20,7 @@
 #include "os/Debug.h"
 #include "os/File.h"
 #include "os/System.h"
+#include "os/Timer.h"
 #include "synth/BinkReader.h"
 #include "synth/Mic.h"
 #include "synth/StandardStream.h"
@@ -488,6 +489,24 @@ void Synth360::SetupHeadsetSubmixes() {
     MILO_ASSERT(SUCCEEDED(hr), 0x319);
     hr = unke8->Start(0, 0);
     MILO_ASSERT(SUCCEEDED(hr), 0x31C);
+}
+
+void Synth360::Poll(){
+    START_AUTO_TIMER("synth");
+    mOutputVoice->SetEffectParameters(1, unk13c, 4, 0);
+    static float ratio1 = DbToRatio(-3.0f);
+    static float ratio2 = DbToRatio(-1.2f);
+    static float ratio3 = DbToRatio(-6.2f);
+
+    Synth::Poll();
+    if (!mMics.empty()) {
+        MicManagerXbox::GetInstance()->Poll();
+    }
+
+    
+    StartSynchronizedVoices();
+    StopSynchronizedVoices();
+    VorbisReader::SignalDecodeThread();
 }
 
 // defined in Synth360's Synth.cpp

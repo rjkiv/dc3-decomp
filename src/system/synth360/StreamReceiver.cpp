@@ -1,4 +1,5 @@
 #include "synth360/StreamReceiver.h"
+#include "math/Utl.h"
 #include "os/Debug.h"
 #include "synth/ADSR.h"
 #include "synth/FxSend.h"
@@ -92,9 +93,10 @@ void StreamReceiver360::Tag() {
         } else {
             unk803c->SetUnk50(4);
         }
-    } else {
-        unk803c->SetUnk50(4);
     }
+
+    if (unk803c)
+        unk803c->SetUnk50(4);
 }
 
 void StreamReceiver360::Poll() {
@@ -161,4 +163,17 @@ void StreamReceiver360::UpdateADSR() {
         unk8038->SetAttackRate(mADSR.GetAttackRate());
         unk8038->SetReleaseRate(mADSR.GetReleaseRate());
     }
+}
+
+float StreamReceiver360::GetSlipOffset() {
+    MILO_ASSERT(mSlipEnabled, 0x102);
+    if (unk8038) {
+        int addr1 = unk803c->GetAddr();
+        int addr2 = unk8038->GetAddr();
+        float val = (float)(unk8044 << 0xe) / 2;
+        float negativeVal = -val;
+        float f6 = Mod((addr2 - addr1) - negativeVal, (val - negativeVal));
+        return (((f6 + negativeVal) * 0.5f) / unk8040) * 1000.0f;
+    } else
+        return 0;
 }

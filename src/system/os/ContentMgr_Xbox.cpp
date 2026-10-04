@@ -505,7 +505,7 @@ void XboxContentMgr::NotifyFailed(Content *c) {
 
 DataNode XboxContentMgr::OnMsg(const SigninChangedMsg &msg) {
     for (int i = 0; i < 4; i++) {
-        if ((msg.GetChangedMask() >> i) & 1) {
+        if (((unsigned int)msg.GetChangedMask() >> i) & 1) {
             if (ThePlatformMgr.IsSignedIn(i)) {
                 unk70 = true;
             }
