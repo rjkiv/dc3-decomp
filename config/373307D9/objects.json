@@ -384,7 +384,7 @@
             "system/hamobj/PracticeOptionsProvider.cpp": "Matching",
             "system/hamobj/PracticeSection.cpp": "Matching",
             "system/hamobj/RhythmBattle.cpp": "NonMatching",
-            "system/hamobj/RhythmBattlePlayer.cpp": "NonMatching",
+            "system/hamobj/RhythmBattlePlayer.cpp": "Matching",
             "system/hamobj/RhythmDetector.cpp": "NonMatching",
             "system/hamobj/RhythmDetectorGroup.cpp": "Matching",
             "system/hamobj/ScoreUtl.cpp": "Matching",

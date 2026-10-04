@@ -747,3 +747,66 @@ void RhythmBattlePlayer::UpdateComboProgress() {
         unk284 += f;
     }
 }
+
+void RhythmBattlePlayer::AnimateBoxyState(int i1, bool b2, bool b3) {
+    b3 = mInTheZone != -1 ? b3 : false;
+    if (mRhythmBattleAnim) {
+        float f30 = 0;
+        static Symbol none("none");
+        Symbol lmao = none;
+        RndAnimatable::Rate rate = mRhythmBattleAnim->GetRate();
+        if (i1 > 0) {
+            if (b2) {
+                mRhythmBattleAnim->Animate(0, false, 0, rate, 8, 12, 0, 1, lmao);
+                f30 = 4;
+            }
+            static Symbol loop("loop");
+            mRhythmBattleAnim->Animate(0, false, f30, rate, 12, 20, 0, 1, Symbol(loop));
+        } else if (i1 == 0) {
+            if (b2) {
+                if (mInTheZone == -1) {
+                    mRhythmBattleAnim->Animate(0, false, 0, rate, 36, 40, 0, 1, lmao);
+                    f30 = 4;
+                } else if (mInTheZone == 1) {
+                    mRhythmBattleAnim->Animate(0, false, 0, rate, 20, 24, 0, 1, lmao);
+                    f30 = 4;
+                }
+            }
+            static Symbol loop("loop");
+            mRhythmBattleAnim->Animate(0, false, f30, rate, 0, 8, 0, 1, Symbol(loop));
+        } else if (i1 < 0) {
+            if (b2) {
+                if (mInTheZone == 0) {
+                    mRhythmBattleAnim->Animate(0, false, 0, rate, 24, 28, 0, 1, lmao);
+                    f30 = 4;
+                } else if (mInTheZone == 1) {
+                    mRhythmBattleAnim->Animate(0, false, 0, rate, 20, 28, 0, 2, lmao);
+                    f30 = 4;
+                }
+            }
+            static Symbol loop("loop");
+            mRhythmBattleAnim->Animate(0, false, f30, rate, 28, 36, 0, 1, Symbol(loop));
+        }
+    }
+
+    mInTheZone = i1;
+    static Symbol swag_jacked("swag_jacked");
+    HamPlayerData *hpd = TheGameData->Player(mPlayer);
+    static Symbol rhythmbattle_inthezone("rhythmbattle_inthezone");
+    static Symbol rhythmbattle_outthezone("rhythmbattle_outthezone");
+    if (i1 != -1) {
+        if (i1 != 0) {
+            if (mInTheZoneFlow) {
+                mInTheZoneFlow->Activate();
+            }
+            hpd->Provider()->Export(Message(rhythmbattle_inthezone), true);
+        } else {
+            if (b3 && mOutTheZoneBadFlow && !unk2a4) {
+                mOutTheZoneBadFlow->Activate();
+            } else if (!b3 && mOutTheZoneOkFlow) {
+                mOutTheZoneOkFlow->Activate();
+            }
+            hpd->Provider()->Export(Message(rhythmbattle_outthezone), true);
+        }
+    }
+}
