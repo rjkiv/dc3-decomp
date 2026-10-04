@@ -281,11 +281,12 @@ protected:
     /** 0-1 = players 0-1, 2-3 = backups 0-1 */
     bool mCharsShowing[4]; // 0x255
     bool mDisabled; // 0x259
-    bool unk25a;
+    /** Whether or not to load asynchronously. */
+    bool mAsync; // 0x25a
     /** "currently shown camshot, nice for debugging." */
     ObjPtr<HamCamShot> mCurShot; // 0x25c
     ObjPtr<HamCamShot> mNextShot; // 0x270
-    ObjPtr<HamCamShot> unk284; // 0x284
+    ObjPtr<HamCamShot> mIntroShot; // 0x284
     /** "HamCamShot category" */
     Symbol mShot; // 0x298
     float unk29c; // 0x29c
@@ -313,19 +314,22 @@ protected:
     int mBlendDebug; // 0x2e8
     int unk2ec; // 0x2ec
     Symbol unk2f0; // 0x2f0
-    Symbol unk2f4[2]; // 0x2f4 - player char outfits
-    Symbol unk2fc[2]; // 0x2fc - player crews
+    /** Each player's current character/outfit (i.e. aubrey02). */
+    Symbol mCharOutfits[2]; // 0x2f4
+    /** Each player's current crew. */
+    Symbol mCrews[2]; // 0x2fc
     HamBackupDancers mBackupDancers; // 0x304
     ObjPtr<ObjectDir> mClipDir; // 0x308
     ObjPtr<ObjectDir> mMoveDir; // 0x31c
-    Symbol unk330; // 0x330 - tempo
+    /** How fast the crowd should move. Options are "slow", "medium", "fast". */
+    Symbol mTempo; // 0x330
     /** "If true, does not play transitions" */
     bool mNoTransitions; // 0x334
     /** "If true, check character collisions when picking cam shots" */
     bool mCollisionChecks; // 0x335
     bool mLoadedNewSong; // 0x336
     PoseFatalities *mPoseFatalities; // 0x338
-    bool unk33c; // 0x33c
+    bool unk33c; // 0x33c - camshot flag
     bool unk33d; // 0x33d
     ObjPtr<Character> mIconManChar; // 0x340
     ObjPtr<RndTexRenderer> mIconManTex; // 0x354

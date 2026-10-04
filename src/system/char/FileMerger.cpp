@@ -269,7 +269,7 @@ void FileMerger::Clear() {
     }
 }
 
-bool FileMerger::StartLoad(bool b) { return StartLoadInternal(b, false); }
+bool FileMerger::StartLoad(bool async) { return StartLoadInternal(async, false); }
 
 FileMerger::Merger *FileMerger::FindMerger(Symbol name, bool warn) {
     int idx = FindMergerIndex(name, warn);

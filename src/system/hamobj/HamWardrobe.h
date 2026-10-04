@@ -31,8 +31,16 @@ public:
     void ForceCrowdAnimationStart(Symbol);
     void ForceCrowdAnimationEnd();
     void SetBackupOverrideOutfits(Symbol, Symbol);
-    void
-    LoadCharacters(Symbol, Symbol, Symbol, Symbol, HamBackupDancers, Symbol, Symbol, bool);
+    void LoadCharacters(
+        Symbol outfit1,
+        Symbol outfit2,
+        Symbol crew1,
+        Symbol crew2,
+        HamBackupDancers dancers,
+        Symbol tempo,
+        Symbol venue,
+        bool async
+    );
     Symbol GetBackupOutfitOverride(int);
     bool AllCharsLoaded();
     void ClearCrowdClips();
@@ -44,8 +52,8 @@ protected:
     HamWardrobe();
 
     Symbol GetCrewChar(Symbol, int);
-    HamCharacter *LoadMainCharacter(int, Symbol, bool);
-    void LoadCrowdClips(Symbol, Symbol, bool);
+    HamCharacter *LoadMainCharacter(int index, Symbol outfit, bool async);
+    void LoadCrowdClips(Symbol tempo, Symbol venue, bool async);
     void SyncInterestObjects(ObjectDir *);
 
     DataNode OnSetVenue(DataArray *);
@@ -54,7 +62,8 @@ protected:
 
     ObjPtrList<Character> mCrowdMembers; // 0x4
     ObjPtrVec<HamCharacter> mMainCharacters; // 0x18
-    Symbol unk34; // 0x34
+    /** How fast the crowd moves. */
+    Symbol mTempo; // 0x34
     bool unk38; // 0x38
     Symbol unk3c; // 0x3c
     int unk40; // 0x40

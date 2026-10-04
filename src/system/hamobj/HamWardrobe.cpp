@@ -93,7 +93,7 @@ Symbol GetDanceBattleBackupOutfit(Symbol s1, Symbol s2) {
 
 HamWardrobe::HamWardrobe()
     : mCrowdMembers(this), mMainCharacters(this, (EraseMode)1, kObjListAllowNull),
-      unk34("medium"), unk38(0), unk3c(gNullStr), unk40(0) {
+      mTempo("medium"), unk38(0), unk3c(gNullStr), unk40(0) {
     static DataNode &n = DataVariable("hamwardrobe");
     if (TheHamWardrobe) {
         MILO_NOTIFY("Trying to make > 1 HamWardrobe, which should be single");
@@ -142,7 +142,7 @@ END_PROPSYNCS
 BEGIN_SAVES(HamWardrobe)
     SAVE_REVS(2, 0)
     SAVE_SUPERCLASS(Hmx::Object)
-    bs << unk34;
+    bs << mTempo;
 END_SAVES
 
 INIT_REVS(2, 0)
@@ -152,14 +152,14 @@ BEGIN_LOADS(HamWardrobe)
     ASSERT_REVS(2, 0)
     LOAD_SUPERCLASS(Hmx::Object)
     if (d.rev > 1)
-        bs >> unk34;
+        bs >> mTempo;
 END_LOADS
 
 BEGIN_COPYS(HamWardrobe)
     COPY_SUPERCLASS(Hmx::Object)
     CREATE_COPY(HamWardrobe)
     BEGIN_COPYING_MEMBERS
-        COPY_MEMBER(unk34)
+        COPY_MEMBER(mTempo)
     END_COPYING_MEMBERS
 END_COPYS
 
@@ -214,21 +214,21 @@ void HamWardrobe::ForceCrowdAnimationStart(Symbol s) {
     }
 }
 
-HamCharacter *HamWardrobe::LoadMainCharacter(int index, Symbol s, bool b3) {
+HamCharacter *HamWardrobe::LoadMainCharacter(int index, Symbol outfit, bool async) {
     MILO_ASSERT(index < mMainCharacters.size(), 0x160);
     HamCharacter *c = mMainCharacters[index];
-    c->SetOutfit(s);
-    c->StartLoad(b3);
+    c->SetOutfit(outfit);
+    c->StartLoad(async);
     return c;
 }
 
-void HamWardrobe::LoadCrowdClips(Symbol s1, Symbol s2, bool b3) {
+void HamWardrobe::LoadCrowdClips(Symbol tempo, Symbol venue, bool async) {
     FileMerger *fm = Dir()->Find<FileMerger>("crowd_clips.fm", false);
     if (fm) {
         static Message msg("load_tempo", 0, 0, 0, 0);
-        msg[0] = s1;
-        msg[1] = b3;
-        msg[2] = s2;
+        msg[0] = tempo;
+        msg[1] = async;
+        msg[2] = venue;
         fm->HandleType(msg);
     }
 }
@@ -408,9 +408,9 @@ void HamWardrobe::LoadCharacters(
     Symbol crew1,
     Symbol crew2,
     HamBackupDancers dancers,
-    Symbol s5,
-    Symbol s6,
-    bool b
+    Symbol tempo,
+    Symbol venue,
+    bool async
 ) {
     if (!unk48.Null()) {
         outfit1 = unk48;
@@ -422,13 +422,13 @@ void HamWardrobe::LoadCharacters(
         mMainCharacters.push_back(Dir()->Find<HamCharacter>(MakeString("player%d", i)));
     }
 
-    unk34 = s5;
+    mTempo = tempo;
 
     if (outfit1 != "") {
-        LoadMainCharacter(0, outfit1, b);
+        LoadMainCharacter(0, outfit1, async);
     }
     if (outfit2 != "") {
-        LoadMainCharacter(1, outfit2, b);
+        LoadMainCharacter(1, outfit2, async);
     }
 
     for (int i = 0; i < 2; i++) {
@@ -458,9 +458,9 @@ void HamWardrobe::LoadCharacters(
         backup->SetOutfitDir(
             (dancers == kBackupDancersRegular) ? "char/main/backup" : "char/main/dancer"
         );
-        backup->StartLoad(b);
+        backup->StartLoad(async);
     }
-    LoadCrowdClips(unk34, s6, b);
+    LoadCrowdClips(mTempo, venue, async);
 }
 
 DataNode HamWardrobe::OnSetVenue(DataArray *arr) {
@@ -485,7 +485,7 @@ DataNode HamWardrobe::OnSetVenue(DataArray *arr) {
     }
 
     LoadCharacters(
-        "mo01", "emilia01", "crew02", "crew01", (HamBackupDancers)0, unk34, venue, false
+        "mo01", "emilia01", "crew02", "crew01", kBackupDancersRegular, mTempo, venue, false
     );
     return 0;
 }

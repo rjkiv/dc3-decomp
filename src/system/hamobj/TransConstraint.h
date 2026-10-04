@@ -27,6 +27,7 @@ public:
     NEW_OBJ(TransConstraint)
     void SnapToParent();
     void SetParent(RndTransformable *parent) { mParent = parent; }
+    void SetUnk52(bool b1) { unk52 = b1; }
 
 private:
     void SetScaleVectorOnTransform(RndTransformable *, Vector3 &);

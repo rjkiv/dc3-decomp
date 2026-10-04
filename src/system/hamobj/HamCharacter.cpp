@@ -383,8 +383,8 @@ void HamCharacter::Terminate() {
 
 String HamCharacter::GetCampaignVo() { return mCampaignVO; }
 
-void HamCharacter::StartLoad(bool start) {
-    if (!mFileMerger->StartLoad(start)) {
+void HamCharacter::StartLoad(bool async) {
+    if (!mFileMerger->StartLoad(async)) {
         SyncObjects();
     }
 }
