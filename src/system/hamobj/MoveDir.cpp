@@ -157,6 +157,14 @@ namespace {
         return stringScreen.y;
     }
 
+    namespace {
+        struct DetectFrameSecondsCmp {
+            bool operator()(const DetectFrame &frame, const float &f) const {
+                return frame.Seconds() < f;
+            }
+        };
+    }
+
 }
 
 String RecordClipName(const char *cc, int i2) {
@@ -1024,8 +1032,9 @@ float MoveDir::UpdateOverlay(RndOverlay *overlay, float f2) {
             }
 
             float beat = TheTaskMgr.TotalBeat();
-            float measure = TheTaskMgr.CurrentMeasure() * 4;
-            float f38 = beat - measure;
+            int measure = TheTaskMgr.CurrentMeasure() * 4;
+            float fMeasure = measure;
+            float f38 = beat - fMeasure;
             float yRatio = TheRnd.YRatio() * sFloat * 0.5f;
             MoveFrame *closestMoveFrame = ClosestMoveFrame();
             auto &moveFrames = curMove->GetMoveFrames();
@@ -1083,6 +1092,104 @@ float MoveDir::UpdateOverlay(RndOverlay *overlay, float f2) {
             }
             static Symbol merge_moves("merge_moves");
             int mergeMovesProp = TheHamProvider->Property(merge_moves)->Int();
+            const DancerSkeleton *skelPtr = nullptr;
+            unk41c = nullptr;
+            if (mergeMovesProp) {
+                if (curMove->GetDancerSequence()) {
+                    float f41 = f38 / 4;
+                    auto &dancerFrames = curMove->GetDancerSequence()->GetDancerFrames();
+                    int skelIdx = Round((float)dancerFrames.size() * f41);
+                    skelPtr = &dancerFrames[skelIdx].mSkeleton;
+                }
+            } else {
+                float secs = BeatToSeconds(fMeasure - sRect.w);
+                float nextSecs = BeatToSeconds((float)(measure + 4) + sRect.h);
+                auto it = std::lower_bound(
+                    mMovePlayerData[0].mDetectFrames.begin(),
+                    mMovePlayerData[0].mDetectFrames.end(),
+                    secs,
+                    DetectFrameSecondsCmp()
+                );
+                float f48 = f34 + f33;
+                for (; it != mMovePlayerData[0].mDetectFrames.end(); ++it) {
+                    // stuff and things
+                }
+            }
+            Hmx::Color yellow(1, 1, 0);
+            DrawBeatLine(f33, f34, f38, sLightGray);
+            TheRnd.DrawStringScreen(
+                MakeString("%.2f", f38),
+                Vector2(
+                    (sRect.y - sRect.x) * (f33 + sRect.w) / (sRect.h + sRect.w + 4)
+                        + sRect.x,
+                    f33
+                ),
+                yellow,
+                true
+            );
+            float latencyBeat = SecondsToBeat(BeatToSeconds(beat) - sLatencySeconds);
+            DrawBeatLine(f33, f34, latencyBeat - fMeasure, Hmx::Color(0, 0.5f, 0));
+
+            f34 = f34 + sFloat + f33;
+            if (fv->mType == kFilterVersionHam2) {
+                f34 = f34 + sFloat;
+            }
+            float f39 = Max(0.2f, 1.0f - f34);
+            Hmx::Rect r4b50(sRect.x, f34, TheRnd.YRatio() * f39, f39);
+            TheRnd.DrawRectScreen(r4b50, sDarkGray, nullptr, nullptr, nullptr);
+
+            Vector2 mfVec(sRect.x, f34);
+
+            if (closestMoveFrame) {
+                TheRnd.DrawStringScreen(
+                    MakeString("%.2f", closestMoveFrame->Beat()), mfVec, sLightGray, true
+                );
+                mDancerViz->SetUsePhysicalCam(true);
+                mDancerViz->SetPhysicalCamScreenRect(r4b50);
+                if (skelPtr) {
+                    StubCameraInput input;
+                    input.PollTracking();
+                    std::vector<SkeletonCallback *> callbacks;
+                    callbacks.push_back(this);
+                    unk414 = skelPtr;
+                    mDancerViz->Visualize(input, *skelPtr, &callbacks, false);
+                    unk414 = nullptr;
+                }
+            } else {
+                int numDFs = unkf88.size();
+                TheRnd.DrawStringScreen(
+                    MakeString("asyc: %d", numDFs), mfVec, sLightGray, true
+                );
+                if (numDFs != 0) {
+                    mDancerViz->SetUsePhysicalCam(true);
+                    int ceiled = ceilf(sqrtf((float)numDFs));
+                    // more stuff and more things
+                    FOREACH (it, unkf88) {
+                    }
+                }
+            }
+
+            std::vector<SkeletonCallback *> callbacks;
+            callbacks.push_back(this);
+            Hmx::Rect r2 = r4b50;
+            r2.x += r4b50.w + 0.01f;
+            TheRnd.DrawRectScreen(r2, sDarkGray, nullptr, nullptr, nullptr);
+            mDancerViz->SetUsePhysicalCam(true);
+            mDancerViz->SetPhysicalCamScreenRect(r2);
+            mDancerViz->Visualize(*handle.GetCameraInput(), *unk414, &callbacks, false);
+            const Vector2 &vret = TheRnd.DrawStringScreen(
+                MakeString("latency offset: %s", mDebugLatencyOffset ? "ON" : "OFF"),
+                Vector2(r2.x, r2.y),
+                sLightGray,
+                true
+            );
+            TheRnd.DrawStringScreen(
+                MakeString("rotation: %.2f", mDancerViz->PhysicalCamRotation()),
+                Vector2(r2.x, vret.y),
+                sLightGray,
+                true
+            );
+            return f34 + f39;
         }
     }
     return f2;

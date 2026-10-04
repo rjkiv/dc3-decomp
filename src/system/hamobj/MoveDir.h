@@ -184,7 +184,7 @@ protected:
     int mFinishingMoveMeasure; // 0x3f8
     RndOverlay *mMoveOverlay; // 0x3fc
     ObjPtr<DancerSequence> mDancerSeq; // 0x400
-    DancerSkeleton *unk414; // 0x414
+    const DancerSkeleton *unk414; // 0x414
     SkeletonViz *mDancerViz; // 0x418
     DetectFrame *unk41c; // 0x41c
     /** "Offset debug skeleton by latency offset" */
