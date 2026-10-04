@@ -204,7 +204,10 @@ public:
         mEndColorHigh = high;
     }
     const Vector2 &EmitRate() const { return mEmitRate; }
-    void SetEmitRate(float x, float y) { mEmitRate.Set(x, y); }
+    void SetEmitRate(float x, float y) {
+        mEmitRate.x = x;
+        mEmitRate.y = y;
+    }
     const Vector2 &Speed() const { return mSpeed; }
     void SetSpeed(float x, float y) { mSpeed.Set(x, y); }
     const Vector2 &Life() const { return mLife; }

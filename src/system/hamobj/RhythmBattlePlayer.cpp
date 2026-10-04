@@ -622,7 +622,6 @@ void RhythmBattlePlayer::UpdateScore(Hmx::Object *handler) {
     );
     static UIPanel *sRhythmDetectorPanel =
         ObjectDir::Main()->Find<UIPanel>("rhythm_detector_panel", false);
-    int i10 = 0;
     if (sRhythmDetectorPanel && skelIdx != -1 && sRhythmDetectorPanel->LoadedDir()) {
         String name = MakeString("RhythmDetectorX%d.rhy", skelIdx);
         RhythmDetector *rd =
@@ -650,11 +649,7 @@ void RhythmBattlePlayer::UpdateScore(Hmx::Object *handler) {
                     unk248 = 1;
                 }
             }
-            float set = unk244;
-            if (unk24c > unk244) {
-                set = unk24c;
-            }
-            unk24c = set;
+            unk24c = unk24c > unk244 ? unk24c : unk244;
         }
     }
     if (unk2a4) {
@@ -667,6 +662,7 @@ void RhythmBattlePlayer::UpdateScore(Hmx::Object *handler) {
     static Symbol rhythmbattle_trickpose("rhythmbattle_trickpose");
     static Symbol rhythmbattle_trickgetlow("rhythmbattle_trickgetlow");
     static Symbol rhythmbattle_trickjump("rhythmbattle_trickjump");
+    int i10 = 0;
     unk27c = none;
     unk278 = unk254 / unk258;
     static Symbol autotrick(OptionStr("autotrick", "none"));
