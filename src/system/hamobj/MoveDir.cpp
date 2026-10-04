@@ -217,9 +217,9 @@ MoveDir::MoveDir()
       unk2bc(this), unk2d0(this), unk2e4(0), mReportMove(this), mFiltersEnabled(0),
       mGamePanel(0), unk30c(0), mFilterQueue(0), mAsyncDetector(0), mUpdateLoader(0),
       mFinishingMoveMeasure(10000), mMoveOverlay(RndOverlay::Find("ham_move")),
-      mDancerSeq(this), unk414(0), mSkeletonViz(Hmx::Object::New<SkeletonViz>()),
-      unk41c(0), mDebugLatencyOffset(0), mDebugLoop(0), mLastPollMs(0),
-      mDebugCollision(0), unkf84(-1) {
+      mDancerSeq(this), unk414(0), mDancerViz(Hmx::Object::New<SkeletonViz>()), unk41c(0),
+      mDebugLatencyOffset(0), mDebugLoop(0), mLastPollMs(0), mDebugCollision(0),
+      unkf84(-1) {
     for (int i = 0; i < 2; i++) {
         mMovePlayerData[i].Reset();
         mCurMoveSmoothers[i].SetCoeffs(1, 0);
@@ -244,7 +244,7 @@ MoveDir::~MoveDir() {
             mMoveOverlay->SetShowing(false);
         }
     }
-    delete mSkeletonViz;
+    delete mDancerViz;
     if (SkeletonUpdate::HasInstance()) {
         SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
         if (handle.HasCallback(this)) {
@@ -266,7 +266,7 @@ BEGIN_HANDLERS(MoveDir)
     HANDLE_ACTION(reset_detection, ResetDetection())
     HANDLE(stream_jump, OnStreamJump)
     HANDLE_EXPR(import_clip, ImportClip(_msg->Int(2)))
-    HANDLE_ACTION(debug_rotate, mSkeletonViz->Rotate(_msg->Float(2)))
+    HANDLE_ACTION(debug_rotate, mDancerViz->Rotate(_msg->Float(2)))
     // these don't appear to be inlined methods
     {
         static Symbol _s("disable_all_detectors");
@@ -334,8 +334,8 @@ BEGIN_PROPSYNCS(MoveDir)
     SYNC_PROP(debug_latency_offset, mDebugLatencyOffset)
     SYNC_PROP_SET(
         debug_skeleton_rotation,
-        mSkeletonViz->PhysicalCamRotation(),
-        mSkeletonViz->SetPhysicalCamRotation(_val.Float())
+        mDancerViz->PhysicalCamRotation(),
+        mDancerViz->SetPhysicalCamRotation(_val.Float())
     )
     SYNC_PROP(debug_collision, mDebugCollision)
     SYNC_PROP(debug_node_types, mErrorNodeInfo)
@@ -680,7 +680,7 @@ void MoveDir::DrawShowing() {
 
 void MoveDir::Poll() {
     SkeletonDir::Poll();
-    mSkeletonViz->Poll();
+    mDancerViz->Poll();
     if (TheHamDirector) {
         int curMeasure = TheTaskMgr.CurrentMeasure();
         for (int i = 0; i < 2; i++) {
@@ -794,7 +794,7 @@ void MoveDir::Enter() {
         mFilterQueue = new FilterQueue();
         RELEASE(mAsyncDetector);
         mAsyncDetector = new MoveAsyncDetector(this);
-        mSkeletonViz->Init();
+        mDancerViz->Init();
         if (TheMaster) {
             static Symbol stream_jump("stream_jump");
             static Symbol beat("beat");
@@ -877,7 +877,7 @@ void MoveDir::Draw(const BaseSkeleton &baseSkeleton, SkeletonViz &skeletonViz) {
                 Vector3 vdiff;
                 Subtract(camJointPos, vdisp, vdiff);
                 Hmx::Color color(0.3f, 0.6f, 0.3f);
-                mSkeletonViz->DrawLine3D(vdiff, camJointPos, 0.01f, color, nullptr);
+                mDancerViz->DrawLine3D(vdiff, camJointPos, 0.01f, color, nullptr);
             }
         }
     } else if (mFiltersEnabled && unk41c) {
@@ -901,6 +901,191 @@ void MoveDir::Draw(const BaseSkeleton &baseSkeleton, SkeletonViz &skeletonViz) {
             }
         }
     }
+}
+
+float MoveDir::UpdateOverlay(RndOverlay *overlay, float f2) {
+    if (mFiltersEnabled) {
+        HamMove *curMove = mMovePlayerData[0].mCurMove;
+        if (curMove) {
+            const FilterVersion *fv = curMove->FilterVer();
+            SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
+            int numNodes = fv->NumNodes();
+            MILO_ASSERT(TheGestureMgr, 0x795);
+            MILO_ASSERT(mDancerViz, 0x796);
+            MILO_ASSERT(TheHamDirector, 0x797);
+            MoveMode moveMode = CurrentMoveMode();
+            MoveMirrored mirrored =
+                curMove->Mirrored() != false ? kMirroredYes : kMirroredNo;
+            if (sFloat == 0) {
+                Vector2 v =
+                    TheRnd.DrawStringScreen("W", Vector2(sRect.x, f2), sLightGray, false);
+                sFloat = (v.y - f2) * 0.8f;
+            }
+            if (mPlayClip) {
+                f2 = DrawPlayClip(f2, mPlayClip, TheTaskMgr.CurrentMeasure());
+            }
+
+            TheRnd.DrawStringScreen(
+                MakeString("%s", fv->mVersionSym),
+                Vector2(sRect.x - 0.05f, f2),
+                sLightGray,
+                true
+            );
+
+            for (int i = 0; i < 4; i++) {
+                Symbol ratingState;
+                float threshold;
+                RatingStateThreshold(i, ratingState, threshold, curMove->RatingOverride());
+                Vector2 v88, v98;
+                v88.y = f2;
+                v98.y = sFloat + f2;
+                float f33 = (sRect.y - sRect.x) / (sRect.h + sRect.w + 4) + sRect.x;
+                v98.x = (0.99f - f33) * (threshold + f33);
+                v88.x = v98.x;
+                UtilDrawLine(v88, v98, sGray);
+                const char *str = strstr(ratingState.Str(), "_");
+                if (str) {
+                    TheRnd.DrawStringScreen(str + 1, Vector2(v98.x, f2), sLightGray, true);
+                }
+            }
+
+            float f44 = sFloat + f2;
+            float f49 = (sRect.y - sRect.x) / (sRect.h + sRect.w + 4) + sRect.x;
+            float f33 = 0.99f - f49;
+            float f34 = curMove->IsRest() ? 0 : DetectFrac(0, -1);
+            const char *mirrorText = mirrored == kMirroredYes ? "(mirror)" : gNullStr;
+            f44 = DrawDetectedBar(
+                f44,
+                MakeString(
+                    "%i %s %s", TheTaskMgr.CurrentMeasure(), curMove->Name(), mirrorText
+                ),
+                f34,
+                f49,
+                0.99f,
+                false,
+                true
+            );
+            DrawOverlayBar(f44, f49, 0.99f, sDarkGray, sFloat);
+            DrawOverlayBar(f44, f49, mLastPollMs * 0.0625f * f33 + f49, sGreen, sFloat);
+            TheRnd.DrawStringScreen(
+                MakeString("timer: %.3fms\n", mLastPollMs),
+                Vector2(f49, f44),
+                sLightGray,
+                true
+            );
+
+            f34 = sFloat;
+            if (fv->mType == kFilterVersionHam1) {
+                f34 *= (float)numNodes + 1;
+            } else if (fv->mType == kFilterVersionHam2) {
+                f34 *= 2;
+            }
+            Hmx::Rect r4a20(
+                0,
+                sFloat * 2 + f44,
+                (sRect.y - sRect.x) * (0 / (sRect.h + sRect.w + 4)) + sRect.x,
+                f34
+            );
+            f33 = r4a20.y;
+            TheRnd.DrawRectScreen(
+                r4a20, Hmx::Color(0.3f, 0.3f, 0.3f, 0.9f), nullptr, nullptr, nullptr
+            );
+            Hmx::Rect r49c0;
+            r49c0.x = r4a20.w;
+            r49c0.y = r4a20.y;
+            r49c0.h = r4a20.h;
+            float f50 = sRect.h + sRect.w + 4;
+            r49c0.w = (sRect.y - sRect.x) * (f50 / f50) + sRect.x - f44;
+            TheRnd.DrawRectScreen(r49c0, sDarkGray, nullptr, nullptr, nullptr);
+
+            if (fv->mType == kFilterVersionHam1) {
+                Vector2 v2(sRect.x, sFloat + f33);
+                for (int n = 0; n < numNodes; n++) {
+                    ErrorNode *errorNode = fv->mErrorNodes[n];
+                    Vector2 v1 = TheRnd.DrawStringScreen(
+                        errorNode->Name().Str(), v2, sLightGray, false
+                    );
+                    TheRnd.DrawStringScreen(
+                        errorNode->Name().Str(),
+                        Vector2(v2.x - (v1.x - v2.x), v2.y),
+                        sLightGray,
+                        true
+                    );
+                    v2.y += sFloat;
+                };
+            }
+
+            for (int i = 0; i < 5; i++) {
+                float fI = i;
+                float x = (sRect.y - sRect.x) * (fI + sRect.w) / (sRect.h + sRect.w + 4)
+                    + sRect.x;
+                TheRnd.DrawStringScreen(MakeString("%i", i), Vector2(x, f33), sGray, true);
+                DrawBeatLine(f33, f34, fI, sGray);
+            }
+
+            float beat = TheTaskMgr.TotalBeat();
+            float measure = TheTaskMgr.CurrentMeasure() * 4;
+            float f38 = beat - measure;
+            float yRatio = TheRnd.YRatio() * sFloat * 0.5f;
+            MoveFrame *closestMoveFrame = ClosestMoveFrame();
+            auto &moveFrames = curMove->GetMoveFrames();
+            for (int i = 0; i < moveFrames.size(); i++) {
+                MoveFrame &cur = moveFrames[i];
+                const Ham2FrameWeight &wt = cur.FrameWeight(mirrored);
+                if (wt.unk0 != 0) {
+                    float x = (sRect.y - sRect.x) * (wt.unk0 + sRect.w)
+                            / (sRect.h + sRect.w + 4)
+                        + sRect.x;
+                    bool isClosest = &cur == closestMoveFrame;
+                    Hmx::Color c49b0 = isClosest ? Hmx::Color(0.8f, 0.8f, 0.8f)
+                                                 : Hmx::Color(0.8f, 0.8f, 0);
+                    DrawBeatLine(f33, f34, wt.unk0, c49b0);
+                    TheRnd.DrawStringScreen(
+                        MakeString("%.2f", wt.unk0), Vector2(x, f33 - sFloat), c49b0, true
+                    );
+                    if (fv->mType == kFilterVersionHam1) {
+                        Vector2 v4b00(x - yRatio, sFloat + f33);
+                        for (int n = 0; n < numNodes; n++) {
+                            Vector2 v4ad0(x, v4b00.y + sFloat);
+                            UtilDrawRect2D(v4b00, v4ad0, c49b0);
+                            v4b00.y += sFloat;
+                        }
+                    }
+                }
+            }
+            std::pair<DetectFrame *, DetectFrame *> range;
+            DetectRange(
+                mMovePlayerData[0].mDetectFrames,
+                range,
+                TheTaskMgr.CurrentMeasure(),
+                TheTaskMgr.CurrentMeasure()
+            );
+            if (fv->mType == kFilterVersionHam1) {
+                for (DetectFrame *it = range.first; it != range.second; ++it) {
+                    const MoveFrame *mf = it->GetMoveFrame();
+                    float f35 = sFloat + f33;
+                    float f36 = (sRect.y - sRect.x) * (mf->Beat() + sRect.w)
+                            / (sRect.h + sRect.w + 4)
+                        + sRect.x;
+                    float f45 = f36 - f44;
+                    for (int n = 0; n < numNodes; n++) {
+                        Hmx::Rect r49e0(f45, f35, f36, f35 + sFloat - f35);
+                        const Ham1NodeWeight &wt =
+                            mf->NodeWeightHam1(n, moveMode, mirrored);
+                        if (wt.unk0) {
+                            float green = 1 - it->BestNodeError(n).x;
+                            Hmx::Color c4a30(green * -1 + 1, green, green * 0, 1);
+                            TheRnd.DrawRectScreen(r49e0, c4a30, nullptr, nullptr, nullptr);
+                        }
+                    }
+                    f35 += sFloat;
+                }
+            }
+            static Symbol merge_moves("merge_moves");
+            int mergeMovesProp = TheHamProvider->Property(merge_moves)->Int();
+        }
+    }
+    return f2;
 }
 
 DataNode OnDetectFracToRating(DataArray *a) {

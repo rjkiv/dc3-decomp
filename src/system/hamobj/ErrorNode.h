@@ -121,6 +121,7 @@ public:
     bool XZErrorAxis(Vector3 &, const DancerSkeleton &) const;
     int GetFeedbackLimbs() const { return mFeedbackLimbs; }
     ErrorNodeType Type() const { return mType; }
+    Symbol Name() const { return mNodeName; }
 
     static ErrorNode *Create(const DataArray *);
 
