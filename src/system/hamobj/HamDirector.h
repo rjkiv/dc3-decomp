@@ -313,12 +313,12 @@ protected:
     int mBlendDebug; // 0x2e8
     int unk2ec; // 0x2ec
     Symbol unk2f0; // 0x2f0
-    Symbol unk2f4[2]; // 0x2f4
-    Symbol unk2fc[2]; // 0x2fc
+    Symbol unk2f4[2]; // 0x2f4 - player char outfits
+    Symbol unk2fc[2]; // 0x2fc - player crews
     HamBackupDancers mBackupDancers; // 0x304
     ObjPtr<ObjectDir> mClipDir; // 0x308
     ObjPtr<ObjectDir> mMoveDir; // 0x31c
-    Symbol unk330; // 0x330
+    Symbol unk330; // 0x330 - tempo
     /** "If true, does not play transitions" */
     bool mNoTransitions; // 0x334
     /** "If true, check character collisions when picking cam shots" */

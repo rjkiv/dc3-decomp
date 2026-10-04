@@ -430,9 +430,11 @@ void WorldDir::SyncObjects() {
     if (IsSubDir())
         return;
     if (!mCameraMgr) {
-        ObjDirItr<CameraManager> it(this, true);
-        if (it) {
-            mCameraMgr = it;
+        for (ObjDirItr<CameraManager> it(this, true); it != nullptr; ++it) {
+            if (it) {
+                mCameraMgr = it;
+            }
+            break;
         }
     }
     if (!mCameraMgr) {

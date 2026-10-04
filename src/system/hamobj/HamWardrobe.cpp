@@ -456,7 +456,7 @@ void HamWardrobe::LoadCharacters(
         HamCharacter *backup = GetBackup(i);
         backup->SetOutfit(finalOutfit);
         backup->SetOutfitDir(
-            (dancers == (HamBackupDancers)0) ? "char/main/backup" : "char/main/dancer"
+            (dancers == kBackupDancersRegular) ? "char/main/backup" : "char/main/dancer"
         );
         backup->StartLoad(b);
     }

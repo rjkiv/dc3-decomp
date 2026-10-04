@@ -291,6 +291,8 @@ BEGIN_COPYS(HamDirector)
     END_COPYING_MEMBERS
 END_COPYS
 
+static const float sPollFloat = 1.6f;
+
 INIT_REVS(9, 0)
 
 BEGIN_LOADS(HamDirector)
@@ -473,7 +475,7 @@ void HamDirector::PlayIntroShot() {
 void HamDirector::SetupAnims() {
     mSongAnims.clear();
     mDancerFaceAnims.clear();
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < kNumDifficultiesDC2; i++) {
         Difficulty d = (Difficulty)i;
         mSongAnims[d] = GetPropAnim(d, "song.anim", true);
         mDancerFaceAnims[d] = GetPropAnim(d, "dancer_face.anim", false);
@@ -481,9 +483,12 @@ void HamDirector::SetupAnims() {
     SetupRoutineBuilderAnims();
     mClipDir = mMerger->Dir()->Find<ObjectDir>("clips", false);
     mMoveDir = mMerger->Dir()->Find<ObjectDir>("moves", false);
-    ObjDirItr<SongCollision> it(mMoveDir, true);
-    if (it)
-        unk124 = &*it;
+    for (ObjDirItr<SongCollision> it(mMoveDir, true); it != nullptr; ++it) {
+        if (it) {
+            unk124 = &*it;
+        }
+        break;
+    }
 }
 
 WorldDir *HamDirector::GetWorld() {
@@ -930,31 +935,30 @@ DataNode HamDirector::OnLoadSong(DataArray *a) {
         unk2fc[i] = hpd->Crew();
         unk2f4[i] = hpd->CharacterOutfit(unk2fc[i]);
     }
-    int i3 = a->Int(3);
-    bool i4 = a->Int(4);
-    bool b5 = a->Int(5);
-    String str(a->Str(2));
+    int bpm = a->Int(3);
+    bool i4 = a->Int(4); // merge extras?
+    bool async = a->Int(5);
+    String songMilo(a->Str(2));
     int dancers = a->Int(6);
     MILO_ASSERT(dancers >= 0 && dancers < kBackupDancersNumTypes, 0xC2E);
     mBackupDancers = (HamBackupDancers)dancers;
     mLoadedNewSong = true;
-    if (mMerger && !str.empty()) {
-        const char *speed;
-        if (i3 < 113)
-            speed = "slow";
-        else if (i3 < 136)
-            speed = "medium";
-        else
-            speed = "fast";
-        unk330 = speed;
-        TheGameData->SetSong(FileGetBase(str.c_str()));
-        mMerger->Select("song", str.c_str(), true);
+    if (mMerger && !songMilo.empty()) {
+        if (bpm < 113) {
+            unk330 = "slow";
+        } else if (bpm < 136) {
+            unk330 = "medium";
+        } else {
+            unk330 = "fast";
+        }
+        TheGameData->SetSong(FileGetBase(songMilo.c_str()));
+        mMerger->Select("song", songMilo.c_str(), true);
         if (i4) {
-            mMerger->StartLoad(b5);
+            mMerger->StartLoad(async);
             if (mVenue) {
                 FileMerger *extras = mVenue->Find<FileMerger>("extras.fm", false);
                 if (extras) {
-                    extras->StartLoad(b5);
+                    extras->StartLoad(async);
                 }
             }
         }
@@ -1064,7 +1068,9 @@ DataNode HamDirector::OnFileLoaded(DataArray *a) {
     static Symbol viz("viz");
     static Symbol game_hud("game_hud");
     Symbol sym = a->Sym(2);
-    if (sym != game_hud || mMerger) {
+    if (sym == game_hud && !mMerger) {
+        return 0;
+    } else {
         unk25a = mMerger->AsyncLoad();
         if (sym == song) {
             if (!TheGameData->Venue().Null()) {
@@ -1103,8 +1109,8 @@ DataNode HamDirector::OnFileLoaded(DataArray *a) {
                 mVisualizer = dynamic_cast<HamVisDir *>(dir);
             }
         }
+        return 0;
     }
-    return 0;
 }
 
 DataNode HamDirector::OnPostProcInterp(DataArray *a) {
@@ -1146,14 +1152,12 @@ DataNode HamDirector::OnSetDircut(DataArray *a) {
         std::vector<CameraManager::PropertyFilter> filters;
         if (a->Size() > 3) {
             const DataNode &node = a->Evaluate(3);
-            DataArray *arr;
             if (node.Type() == kDataInt && node.Int() != 0) {
-                arr = nullptr;
+                AddNumPlayers(filters, nullptr);
             } else {
                 MILO_ASSERT(node.Type() == kDataArray, 0xE74);
-                arr = node.Array();
+                AddNumPlayers(filters, node.Array());
             }
-            AddNumPlayers(filters, arr);
         }
         SetDircut(sym, filters);
     }
@@ -1349,15 +1353,8 @@ void HamDirector::BlendOutFaceOverrides(float f1) {
 }
 
 bool HamDirector::ShotsDisabled() {
-    if (!mDisablePicking) {
-        if (GetWorld() && GetWorld()->GetCameraManager()->HasFreeCam()) {
-            return true;
-        }
-        if (!mPlayerFreestyle || mFreestyleEnabled) {
-            return false;
-        }
-    }
-    return true;
+    return mDisablePicking || (GetWorld() && GetWorld()->GetCameraManager()->HasFreeCam())
+        || (mPlayerFreestyle && !mFreestyleEnabled);
 }
 
 void HamDirector::SyncScene() {
@@ -2025,31 +2022,33 @@ void HamDirector::MoveKeys(
 DataNode HamDirector::OnClipSafeToAdd(DataArray *a) {
     if (a->Int(2)) {
         for (int i = 0; i < kNumDifficultiesDC2; i++) {
-            if (mSongAnims[(Difficulty)i]) {
-                PropKeys *propKeys = mSongAnims[(Difficulty)i]->GetKeys(
-                    this, DataArrayPtr(Symbol("clip"))
-                );
+            Difficulty diff = (Difficulty)i;
+            if (mSongAnims[diff]) {
+                PropKeys *propKeys =
+                    mSongAnims[diff]->GetKeys(this, DataArrayPtr(Symbol("clip")));
                 if (propKeys) {
                     Keys<Symbol, Symbol> *symKeys = propKeys->AsSymbolKeys();
                     for (int j = 0; j < symKeys->size(); j++) {
                         Key<Symbol> &curKey = (*symKeys)[j];
                         curKey.frame =
-                            BeatToFrame(floor(FrameToBeat(curKey.frame) + 0.5f));
+                            BeatToFrame(floorf(FrameToBeat(curKey.frame) + 0.5f));
                     }
                 }
             }
         }
+        return 0;
+    } else {
+        return 0;
     }
-    return 0;
 }
 
 DataNode HamDirector::OnPracticeSafeToAdd(DataArray *a) {
     if (a->Int(2)) {
         for (int i = 0; i < kNumDifficultiesDC2; i++) {
-            if (mSongAnims[(Difficulty)i]) {
-                PropKeys *propKeys = mSongAnims[(Difficulty)i]->GetKeys(
-                    this, DataArrayPtr(Symbol("practice"))
-                );
+            Difficulty diff = (Difficulty)i;
+            if (mSongAnims[diff]) {
+                PropKeys *propKeys =
+                    mSongAnims[diff]->GetKeys(this, DataArrayPtr(Symbol("practice")));
                 if (propKeys) {
                     Keys<Symbol, Symbol> *symKeys = propKeys->AsSymbolKeys();
                     for (int j = 0; j < symKeys->size(); j++) {
@@ -2060,8 +2059,10 @@ DataNode HamDirector::OnPracticeSafeToAdd(DataArray *a) {
                 }
             }
         }
+        return 0;
+    } else {
+        return 0;
     }
-    return 0;
 }
 
 void HamDirector::HandleDifficultyChange() {
@@ -2483,7 +2484,7 @@ void HamDirector::Poll() {
             }
             if (mPlayerFreestyle && mVisualizer && !mVisualizer->Showing()) {
                 unk1d4 += TheTaskMgr.DeltaSeconds();
-                if (1.6f < unk1d4) {
+                if (sPollFloat < unk1d4) {
                     StartStopVisualizer();
                 }
             }

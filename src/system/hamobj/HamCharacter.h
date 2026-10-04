@@ -18,7 +18,10 @@
 #include "utl/Symbol.h"
 
 enum HamBackupDancers {
+    kBackupDancersRegular = 0,
     kBackupDancersDanceBattle = 1,
+    kBackupDancersFinale = 2,
+    kBackupDancersOverride = 3,
     kBackupDancersNumTypes = 4
 };
 
