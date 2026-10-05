@@ -77,6 +77,78 @@ int vorbis_synthesis(vorbis_block *vb,ogg_packet *op){
 						   mapping]));
 }
 
+// pollable version of vorbis_synthesis, seems to return -50 until it is done
+// mostly just a copy paste with some minor changes
+int vorbis_synthesis_poll(vorbis_block *vb,ogg_packet *op){
+  vorbis_dsp_state     *vd=vb->vd;
+  private_state        *b=vd->backend_state;
+  vorbis_info          *vi=vd->vi;
+  codec_setup_info     *ci=vi->codec_setup;
+  oggpack_buffer       *opb=&vb->opb;
+  int                   type,mode,i;
+  int                   ret=-50;
+
+  if(vb->synthesis_state!=vss_init){
+    /* unpack_header enforces range checking */
+    type=ci->map_type[ci->mode_param[vb->mode]->mapping];
+
+    ret=_poll_mapping_P[type]->inverse(vb,ci->map_param[ci->mode_param[vb->mode]->
+							mapping]);
+  }else{
+    /* first things first.  Make sure decode is ready */
+    _vorbis_block_ripcord(vb);
+    oggpack_readinit(opb,op->packet,op->bytes);
+
+    /* Check the packet type */
+    if(oggpack_read(opb,1)!=0){
+      /* Oops.  This is not an audio data packet */
+      ret=OV_ENOTAUDIO;
+      goto done;
+    }
+
+    /* read our mode and pre/post windowsize */
+    mode=oggpack_read(opb,b->modebits);
+    if(mode==-1){
+      ret=OV_EBADPACKET;
+      goto done;
+    }
+
+    vb->mode=mode;
+    vb->W=ci->mode_param[mode]->blockflag;
+    if(vb->W){
+
+      /* this doesn;t get mapped through mode selection as it's used
+         only for window selection */
+      vb->lW=oggpack_read(opb,1);
+      vb->nW=oggpack_read(opb,1);
+      if(vb->nW==-1){
+        ret=OV_EBADPACKET;
+        goto done;
+      }
+    }else{
+      vb->lW=0;
+      vb->nW=0;
+    }
+
+    /* more setup */
+    vb->granulepos=op->granulepos;
+    vb->sequence=op->packetno;
+    vb->eofflag=op->e_o_s;
+
+    /* alloc pcm passback storage */
+    vb->pcmend=ci->blocksizes[vb->W];
+    vb->pcm=_vorbis_block_alloc(vb,sizeof(*vb->pcm)*vi->channels);
+    for(i=0;i<vi->channels;i++)
+      vb->pcm[i]=_vorbis_block_alloc(vb,vb->pcmend*sizeof(*vb->pcm[i]));
+
+    vb->synthesis_state=vss_decode;
+  }
+
+ done:
+  if(ret!=-50)vb->synthesis_state=vss_init;
+  return(ret);
+}
+
 /* used to track pcm position without actually performing decode.
    Useful for sequential 'fast forward' */
 int vorbis_synthesis_trackonly(vorbis_block *vb,ogg_packet *op){

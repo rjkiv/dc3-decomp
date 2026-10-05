@@ -109,20 +109,19 @@ static inline int vorbis_ftoi(double f) { /* yes, double!  Otherwise,
 }
 #endif
 
-#if defined(_WIN32) && !defined(__GNUC__) && !defined(__BORLANDC__)
+// seems to work and get the match up to 100%? if there was a reason to not add _M_IX86 here then feel free to undo this
+#if defined(_WIN32) && defined(_M_IX86) && !defined(__GNUC__) && !defined(__BORLANDC__)
 #define VORBIS_FPU_CONTROL
 
 typedef ogg_int16_t vorbis_fpu_control;
 
-// fix this pls, MSVC is being weird about this
 static __inline int vorbis_ftoi(double f) {
-    return 0;
-    // int i;
-    // __asm {
-    // fld f
-    // fistp i
-    // }
-    // return i;
+    int i;
+    __asm {
+        fld f
+        fistp i
+    }
+    return i;
 }
 
 static __inline void vorbis_fpu_setround(vorbis_fpu_control *fpu) {}

@@ -11,6 +11,7 @@ extern int *_errno(void);
 #define EAGAIN 11
 #define ENOMEM 12
 #define EACCES 13
+#define EINVAL 22
 #define ENOSPC 28
 #define ERANGE 34
 

@@ -21,9 +21,10 @@ typedef struct _SYSTEMTIME {
     WORD wMilliseconds;
 } SYSTEMTIME, *PSYSTEMTIME, *LPSYSTEMTIME;
 
+// based on how I have seen this get used it seems this is flipped due to endian
 typedef struct _FILETIME {
-    DWORD dwLowDateTime;
     DWORD dwHighDateTime;
+    DWORD dwLowDateTime;
 } FILETIME, *PFILETIME, *LPFILETIME;
 
 typedef struct _WIN32_FIND_DATAA {

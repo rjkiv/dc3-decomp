@@ -184,7 +184,7 @@ bool Skeleton::Velocity(
     int &iref
 ) const {
     if (Displacement(&history, cs, joint, i4, velocity, iref)) {
-        velocity *= (1.0f / (iref * 0.001f));
+        velocity /= (iref * 0.001f);
         return true;
     } else {
         velocity.Zero();

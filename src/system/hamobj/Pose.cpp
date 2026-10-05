@@ -87,7 +87,9 @@ float JointDistPoseElement::Score(const Skeleton &skeleton) const {
     skeleton.JointPos(unk18, unk8, v40);
     Vector3 v30;
     skeleton.JointPos(unk18, unkc, v30);
-    float dist = Distance(v40, v30);
+    Vector3 harness_diff;
+    Subtract(v40, v30, harness_diff);
+    float dist = std::sqrt(harness_diff.y * harness_diff.y + harness_diff.x * harness_diff.x + harness_diff.z * harness_diff.z);
     if (dist >= unk10 && dist <= unk14) {
         return 1;
     } else {

@@ -121,8 +121,8 @@ public:
     virtual void Text(UIListLabel *, UILabel *) const;
     virtual void Custom(UIListCustom *, Hmx::Object *) const;
     virtual RndMat *Mat(UIListMesh *) const { return nullptr; }
-    virtual bool IsEnabled() const = 0; // 0x9c
-    virtual bool IsActive() const = 0; // 0xa0
+    virtual bool IsActive() const = 0; // 0x9c
+    virtual bool IsEnabled() const = 0; // 0xa0
     virtual const char *GetAlbumArtPath() = 0; // 0xa4
     virtual void DeleteAll();
     virtual void Renumber(std::vector<NavListSortNode *> &);
@@ -195,7 +195,7 @@ public:
     virtual void Text(UIListLabel *, UILabel *) const;
     virtual void Custom(UIListCustom *, Hmx::Object *) const {}
     virtual RndMat *Mat(UIListMesh *) const;
-    virtual bool IsEnabled() const { return IsEnabled(); } // lmao what
+    virtual bool IsEnabled() const { return IsActive(); }
     virtual bool IsActive() const { return true; }
     virtual const char *GetAlbumArtPath() { return nullptr; }
     virtual void Renumber(std::vector<NavListSortNode *> &);
@@ -258,7 +258,7 @@ public:
     virtual int GetItemCount() { return 0; }
     virtual NavListSortNode *GetFirstActive() { return nullptr; }
     virtual bool IsEnabled() const;
-    virtual bool IsActive() const { return IsActive(); } // ok then
+    virtual bool IsActive() const { return IsEnabled(); }
     virtual const char *GetAlbumArtPath() { return nullptr; }
     virtual void Insert(NavListItemNode *, NavListSort *);
     virtual void UpdateItemCount(NavListItemNode *) {} // 0xb8

@@ -1286,8 +1286,7 @@ void HamNavList::DetermineHighlightedItem() {
 
     int i2 = NumItems();
     int i7 = i2 - 1;
-    float f10 = i7;
-    float f8 = -(f10 * sFloat - 1);
+    float f8 = -(i7 * sFloat - 1);
     f8 = f8 / (float)i2;
     i2 = GetHighlightItem();
     if (mListState.ScrollPastMinDisplay() && !unk190.AtTop()
@@ -1299,8 +1298,8 @@ void HamNavList::DetermineHighlightedItem() {
         }
     }
 
-    int i6 = f10 * mHandHeight + 0.5f;
-    f10 = (float)i2 / f10;
+    int i6 = i7 * mHandHeight + 0.5f;
+    float f10 = (float)i2 / i7;
 
     if (i6 <= i7) {
         i7 = Max(i6, 0);

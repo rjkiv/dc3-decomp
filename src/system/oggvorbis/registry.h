@@ -28,5 +28,6 @@
 extern vorbis_func_floor     *_floor_P[];
 extern vorbis_func_residue   *_residue_P[];
 extern vorbis_func_mapping   *_mapping_P[];
+extern vorbis_func_mapping   *_poll_mapping_P[]; // added by HMX for polling
 
 #endif

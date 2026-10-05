@@ -97,6 +97,7 @@ typedef struct _WIN32_FILE_ATTRIBUTE_DATA {
 #define FILE_CURRENT 1
 #define FILE_END 2
 
+LONG CompareFileTime(const FILETIME *lpFileTime1, const FILETIME *lpFileTime2);
 BOOL CreateDirectoryA(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes);
 HANDLE CreateFileA(
     LPCSTR lpFileName,
