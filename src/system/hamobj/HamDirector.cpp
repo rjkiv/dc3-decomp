@@ -1450,9 +1450,10 @@ Symbol HamDirector::ClosestMove() {
                     keys->KeyNearest(mSongAnims[playerDiff]->GetFrame());
                 if (nearest) {
                     strcpy(buf, nearest->value.Str());
-                    char *chr = strchr(buf, 0x2E);
-                    if (chr)
+                    char *chr = strchr(buf, '.');
+                    if (chr) {
                         *chr = '\0';
+                    }
                     DataNode list = PracticeList(kDifficultyExpert);
                     DataArray *listArr = list.Array();
                     int i17 = -1;
@@ -1460,12 +1461,21 @@ Symbol HamDirector::ClosestMove() {
                         const char *str = listArr->Str(i);
                         int numlower = 0;
                         if (*str) {
-                            char *p = (char *)str;
-                            while (p[buf - str]) {
-                                if (tolower(p[buf - str]) != tolower(*p))
+                            for (const char *p = str; *p != '\0'; p++, numlower++) {
+                                if ((unsigned char)buf[p - str] == 0)
                                     break;
-                                numlower++;
+                                if (tolower(*p) != tolower(buf[p - str])) {
+                                    break;
+                                }
                             }
+                        }
+                        int len = Max(strlen(str + numlower), strlen(buf + numlower));
+
+                        int old = i17;
+                        i17 = Max(i17, numlower - len);
+
+                        if (i17 != old) {
+                            out = str;
                         }
                     }
                 }
@@ -1771,7 +1781,8 @@ void HamDirector::PoseIconMan(
         clip1->StuffBones(meshes);
         meshes.Zero();
         if (clip2) {
-            clip1->ScaleAdd(meshes, 1 - f6, f2, 0);
+            float fsub = 1 - f6;
+            clip1->ScaleAdd(meshes, fsub, f2, 0);
             clip2->ScaleAdd(meshes, f6, f5, 0);
         } else {
             clip1->ScaleAdd(meshes, 1, f2, 0);
@@ -1907,8 +1918,8 @@ void HamDirector::LoadRoutineBuilderData(
         if (!moveMgrDir) {
             MILO_NOTIFY("Move data missing from %s", TheGameData->GetSong());
         } else {
-            ObjectDir *movesDir = GetWorld()->Find<ObjectDir>("moves", true);
-            int movesDirHash = movesDir->HashTableSize() + moveMgrDir->HashTableSize();
+            ObjectDir *movesDir = GetWorld()->Find<ObjectDir>("moves");
+            int movesDirHash = moveMgrDir->HashTableSize() + movesDir->HashTableSize();
             int movesDirStr = movesDir->StrTableSize() + moveMgrDir->StrTableSize();
             movesDir->Reserve(movesDirHash, movesDirStr);
             std::vector<Hmx::Object *> objects;
@@ -1919,25 +1930,23 @@ void HamDirector::LoadRoutineBuilderData(
             FOREACH (it, objects) {
                 Hmx::Object *cur = *it;
                 const char *name = cur->Name();
-                Hmx::Object *find = movesDir->FindObject(name, false, false);
-                if (!find) {
+                if (!movesDir->FindObject(name, false, false)) {
                     cur->SetName(name, movesDir);
                     unk370.insert(cur);
                 }
             }
             objects.clear();
-            ObjectDir *clipsDir = GetWorld()->Find<ObjectDir>("clips", true);
+            ObjectDir *clipsDir = GetWorld()->Find<ObjectDir>("clips");
             int clipsDirHash = clipsDir->HashTableSize() + moveMgrDir->HashTableSize();
             int clipsDirStr = clipsDir->StrTableSize() + moveMgrDir->StrTableSize();
             clipsDir->Reserve(clipsDirHash, clipsDirStr);
-            for (ObjDirItr<CharClip> it(clipsDir, false); it != nullptr; ++it) {
+            for (ObjDirItr<CharClip> it(moveMgrDir, false); it != nullptr; ++it) {
                 objects.push_back(it);
             }
             FOREACH (it, objects) {
                 Hmx::Object *cur = *it;
                 const char *name = cur->Name();
-                Hmx::Object *find = clipsDir->FindObject(name, false, false);
-                if (!find) {
+                if (!clipsDir->FindObject(name, false, false)) {
                     cur->SetName(name, clipsDir);
                     unk370.insert(cur);
                 }

@@ -275,15 +275,13 @@ public:
         float diff = kHugeFloat;
         int idx = KeyLessEq(f1);
         if (idx >= 0 && idx < size()) {
-            diff = f1 - (*this)[idx].frame;
-            if (MaxEq(diff, kHugeFloat)) {
+            if (MinEq(diff, f1 - (*this)[idx].frame)) {
                 i4 = idx;
             }
         }
         int next = idx + 1;
         if (next >= 0 && next < size()) {
-            f1 = (*this)[next].frame - f1;
-            if (MaxEq(diff, f1)) {
+            if (MinEq(diff, (*this)[next].frame - f1)) {
                 i4 = next;
             }
         }
