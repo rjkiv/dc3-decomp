@@ -32,6 +32,7 @@
 #include "hamobj/HamPlayerData.h"
 #include "hamobj/HamRibbon.h"
 #include "hamobj/HamSkeletonConverter.h"
+#include "hamobj/HamSongData.h"
 #include "hamobj/HamVisDir.h"
 #include "hamobj/HamWardrobe.h"
 #include "hamobj/TransConstraint.h"
@@ -1165,6 +1166,56 @@ DataNode HamDirector::OnSetDircut(DataArray *a) {
         SetDircut(sym, filters);
     }
     return mNextShot;
+}
+
+DataNode HamDirector::OnSelectCamera(DataArray *a) {
+    RndPropAnim *anim = SongAnim(0);
+    if (!mDisabled) {
+        float frame = Max(0.0f, BeatToFrame(TheTaskMgr.Beat()));
+        if (TheTaskMgr.Seconds(TaskMgr::kRealTime) >= 0 || TheLoadMgr.EditMode()) {
+            if (anim && (!TheLoadMgr.EditMode() || frame != anim->GetFrame())) {
+                START_AUTO_TIMER("song_anim");
+                anim->SetFrame(frame, 1);
+            }
+            for (int i = 0; i < kNumDifficultiesDC2; i++) {
+                Difficulty diff = (Difficulty)i;
+                if (mDancerFaceAnims[diff]
+                    && (!TheLoadMgr.EditMode()
+                        || frame != mDancerFaceAnims[diff]->GetFrame())) {
+                    mDancerFaceAnims[diff]->SetFrame(frame, 1);
+                }
+            }
+        }
+        if (unk14c) {
+            SyncScene();
+        }
+        if (TheLoadMgr.EditMode() && TheTaskMgr.DeltaSeconds() < 0) {
+            unk29c = -kHugeFloat;
+            unk2a8 = -kHugeFloat;
+        }
+        if (!mNextShot && TheTaskMgr.Seconds(TaskMgr::kRealTime) >= unk29c
+            && !ShotsDisabled()) {
+            mNextShot = FindNextDircut();
+            if (!mNextShot && !unk140 && ShouldDoCollisionPrevention()
+                && AreCharactersColliding()
+                && TheTaskMgr.Seconds(TaskMgr::kRealTime) >= unk2a8
+                && ReactToCollision(frame)) {
+                float xBeats =
+                    DataGetMacro("SONG_COLLISION_DONT_CUT_AGAIN_FOR_X_BEATS")->Float(0);
+                float beat = TheTaskMgr.Beat();
+                float secs = (BeatToMs(beat + xBeats) - BeatToMs(beat)) / 1000;
+                unk2a8 = TheTaskMgr.Seconds(TaskMgr::kRealTime) + secs;
+            }
+            if (!mNextShot && unk140) {
+                FindNextShot();
+                if (mNextShot && unk124 && ShouldDoCollisionPrevention()) {
+                    ChangeNextShotIfCharacterCollisionLikely();
+                }
+            }
+        }
+    }
+    PlayNextShot();
+    return 0;
 }
 
 HamCharacter *HamDirector::GetCharacter(int i) const {
@@ -2606,8 +2657,56 @@ CharClip *HamDirector::GetClipStartAndEndBeats(
             }
         }
     }
-
     return nullptr;
+}
+
+void HamDirector::RemapSongAnimToTempoMap(TempoMap *tmap) {
+    TempoMap *sTMap = HamSongData::sInstance->GetTempoMap();
+
+    DataArrayPtr clip(Symbol("clip"));
+    DataArrayPtr move(Symbol("move"));
+    DataArrayPtr practice(Symbol("practice"));
+
+    sTMap->TickToTime(1920);
+    tmap->TickToTime(1920);
+
+    for (int i = 0; i < kNumDifficultiesDC2; i++) {
+        RndPropAnim *anim = TheHamDirector->SongAnimByDifficulty((Difficulty)i);
+        if (anim) {
+            PropKeys *clipKeys = anim->GetKeys(TheHamDirector, clip);
+            PropKeys *moveKeys = anim->GetKeys(TheHamDirector, move);
+            PropKeys *practiceKeys = anim->GetKeys(TheHamDirector, practice);
+
+            Keys<Symbol, Symbol> *moveSymKeys = moveKeys->AsSymbolKeys();
+            Keys<Symbol, Symbol> *clipSymKeys = clipKeys->AsSymbolKeys();
+            Keys<Symbol, Symbol> *practiceSymKeys = practiceKeys->AsSymbolKeys();
+
+            unsigned int numMoveKeys = moveSymKeys->size();
+            unsigned int numClipKeys = clipSymKeys->size();
+            unsigned int numPracticeKeys = practiceSymKeys->size();
+
+            for (int i = 0; i < numMoveKeys; i++) {
+                Key<Symbol> &cur = moveSymKeys->at(i);
+                float tick = tmap->TimeToTick(cur.frame * (100.0f / 3.0f));
+                float time = sTMap->TickToTime(tick);
+                moveKeys->ChangeFrame(i, time * 0.03f, false);
+            }
+
+            for (int i = 0; i < numClipKeys; i++) {
+                Key<Symbol> &cur = clipSymKeys->at(i);
+                float tick = tmap->TimeToTick(cur.frame * (100.0f / 3.0f));
+                float time = sTMap->TickToTime(tick);
+                clipKeys->ChangeFrame(i, time * 0.03f, false);
+            }
+
+            for (int i = 0; i < numPracticeKeys; i++) {
+                Key<Symbol> &cur = practiceSymKeys->at(i);
+                float tick = tmap->TimeToTick(cur.frame * (100.0f / 3.0f));
+                float time = sTMap->TickToTime(tick);
+                practiceKeys->ChangeFrame(i, time * 0.03f, true);
+            }
+        }
+    }
 }
 
 void HamDirector::OnPopulateMoves() {
