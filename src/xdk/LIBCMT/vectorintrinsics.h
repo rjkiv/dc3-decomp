@@ -124,6 +124,27 @@ XMVECTOR __vspltw(XMVECTOR vSrcA, unsigned int uImmed);
 // Vector128 Multiply Floating-Point
 XMVECTOR __vmulfp(XMVECTOR vSrcA, XMVECTOR vSrcB);
 
+// Vector128 Permute
+XMVECTOR __vperm(XMVECTOR vSrcA, XMVECTOR vSrcB, XMVECTOR vControl);
+
+// Vector128 Negative Multiply-Subtract Floating Point
+XMVECTOR __vnmsubfp(XMVECTOR mul1, XMVECTOR mul2, XMVECTOR subtrahend);
+
+// Vector128 Merge High Word
+XMVECTOR __vmrghw(XMVECTOR vSrcA, XMVECTOR vSrcB);
+
+// Vector128 Merge Low Word
+XMVECTOR __vmrglw(XMVECTOR vSrcA, XMVECTOR vSrcB);
+
+// Vector128 Add Floating Point
+XMVECTOR __vaddfp(XMVECTOR vSrcA, XMVECTOR vSrcB);
+
+// Vector128 Subtract Floating Point
+XMVECTOR __vsubfp(XMVECTOR vSrcA, XMVECTOR vSrcB);
+
+// Vector128 Select
+XMVECTOR __vsel(XMVECTOR vSrcA, XMVECTOR vSrcB, XMVECTOR vSelect);
+
 #ifdef __cplusplus
 }
 #endif

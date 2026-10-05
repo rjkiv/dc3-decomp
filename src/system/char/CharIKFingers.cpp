@@ -289,7 +289,7 @@ void CharIKFingers::Poll() {
             int i3 = 0;
             int i1 = -1;
             for (int i = 0; i < 5; i++) {
-                if (mFingers[i].unk0) {
+                if (mFingers.begin()[i].unk0) {
                     if (i1 == -1) {
                         i1 = i;
                     }

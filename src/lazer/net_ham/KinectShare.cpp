@@ -41,8 +41,8 @@ KinectShare::KinectShare(
     unkdd = 3;
     unke0 = etype;
     unkce = mContentLength + unk138;
-    unka5 = (lpSystemTimeAsFileTime.dwLowDateTime & 0xFFFF) * 0x10000
-            + lpSystemTimeAsFileTime.dwHighDateTime
+    unka5 = (lpSystemTimeAsFileTime.dwHighDateTime & 0xFFFF) * 0x10000
+            + lpSystemTimeAsFileTime.dwLowDateTime
         & 0xFFFFFFFF;
     HxGuid hx60;
     hx60.Generate();

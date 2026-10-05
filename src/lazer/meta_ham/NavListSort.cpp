@@ -45,7 +45,7 @@ void NavListSort::UpdateHighlight() {
         i6 = unk50->StartIndex();
     }
     int idx = unk50->StartIndex();
-    while (!unk50->IsEnabled()) {
+    while (!unk50->IsActive()) {
         idx = (idx + 1) % mList.size();
         if (i6 == idx)
             break;

@@ -23,10 +23,10 @@ void Vector2DESmoother::SetSmoothParameters(float alpha, float beta) {
 }
 
 void Vector2DESmoother::ForceValue(Vector2 v) {
-    mX.mLevel = mX.mPrevLevel = v.x;
+    mX.mPrevLevel = v.x;
+    mX.mLevel = v.x;
     mX.mTrend = 0;
-    mY.mPrevLevel = mY.mLevel = v.y;
-    mY.mTrend = 0;
+    mY.SetParams(v.y, v.y, 0);
 }
 
 Vector2 Vector2DESmoother::Value() const { return Vector2(mX.mLevel, mY.mLevel); }
@@ -47,8 +47,7 @@ Vector3 Vector3DESmoother::Value() const {
 void Vector3DESmoother::ForceValue(Vector3 v) {
     mX.mLevel = mX.mPrevLevel = v.x;
     mX.mTrend = 0;
-    mY.mPrevLevel = mY.mLevel = v.y;
-    mY.mTrend = 0;
+    mY.SetParams(v.y, v.y, 0);
     mZ.mLevel = mZ.mPrevLevel = v.z;
     mZ.mTrend = 0;
 }

@@ -62,7 +62,6 @@ public:
     virtual void SetFXCore(int, FXCore) {}
     virtual FXCore GetFXCore(int) const { return kFXCoreNone; }
     virtual void SetFXSend(int, FxSend *);
-    virtual void SetADSR(int, const ADSR &) {}
     virtual void SetSpeed(float);
     virtual float GetSpeed() const { return mSpeed; }
     virtual void LoadMarkerList(const char *);
@@ -87,6 +86,7 @@ public:
     virtual void UpdateTime();
     virtual void UpdateTimeByFiltering();
     virtual float GetRawTime();
+    virtual void SetADSR(int, const ADSR &) {}
     virtual void SetADSR(int, const ADSRImpl &);
     virtual void SetJumpSamples(int, int, const char *);
     virtual int GetSampleRate() { return mSampleRate; }
