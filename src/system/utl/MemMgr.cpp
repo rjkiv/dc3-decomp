@@ -423,8 +423,8 @@ void *MemResizeElem(
     const char *name
 ) {
     void *old = mem;
-    int prefixSize = (char *)cutPoint - (char *)mem;
     int suffixSize = 0;
+    int prefixSize = (char *)cutPoint - (char *)mem;
     int newTotalSize = prefixSize;
     if (insertLength > -1) {
         suffixSize = (totalSize - newTotalSize) - cutLength;

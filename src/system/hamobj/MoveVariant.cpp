@@ -263,12 +263,12 @@ void MoveVariant::Load(BinStream &bs, MoveGraph *graph, MoveParent *parent) {
     }
     if (rev >= 1) {
         bs >> isSym;
-        if (isSym) {
+        if (!(isSym)) {
+            mLinkedFrom.mVariant = nullptr;
+        } else {
             Symbol s;
             bs >> s;
             mLinkedFrom.mVariantName = s.Str();
-        } else {
-            mLinkedFrom.mVariant = nullptr;
         }
     } else {
         mLinkedFrom.mVariant = nullptr;

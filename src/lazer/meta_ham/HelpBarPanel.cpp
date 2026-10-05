@@ -282,10 +282,13 @@ void HelpBarPanel::SyncToPanel(UIPanel *panel) {
 bool HelpBarPanel::UpdateBackButton(UIPanel *panel) {
     static Symbol back_token("back_token");
     const DataNode *prop = nullptr;
+    RndGroup *backIcon;
     if (panel) {
         prop = panel->Property(back_token, false);
+        backIcon = DataDir()->Find<RndGroup>("back_icon.grp", false);
+    } else {
+        backIcon = DataDir()->Find<RndGroup>("back_icon.grp", false);
     }
-    RndGroup *backIcon = DataDir()->Find<RndGroup>("back_icon.grp", false);
     UILabel *leftHandLabel = DataDir()->Find<UILabel>("left_hand.lbl", false);
     bool b11 = false;
     if (prop) {

@@ -99,9 +99,10 @@ void UIListSlot::Draw(
                     );
                     UIComponent::State cs = curElDrawState.mComponentState;
                     UIColor *color = DisplayColor(element_state, cs);
-                    c = prov->SlotColorOverride(
+                    UIColor *harness_tmp_12 = prov->SlotColorOverride(
                         curElDrawState.mShowing, curElDrawState.mData, this, color
                     );
+                    c = harness_tmp_12;
                     if (mSlotDrawType != kUIListSlotDrawAlwaysFullAlpha
                         && mSlotDrawType != kUIListSlotDrawHighlightFullAlpha
                         && mSlotDrawType != kUIListSlotDrawNoHighlightFullAlpha) {

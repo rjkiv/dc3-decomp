@@ -1128,7 +1128,8 @@ void RndParticleSys::UpdateRelativeXfm() {
         Hmx::Quat q50(mLastWorldXfm.m);
         FastInterp(q60, q50, mRelativeMotion, q60);
         MakeRotMatrix(q60, mLastWorldXfm.m);
-        Subtract(mRelativeXfm.v, mLastWorldXfm.v, mRelativeXfm.v);
+        auto &harness_ref_0 = mRelativeXfm.v;
+        Subtract(harness_ref_0, mLastWorldXfm.v, mRelativeXfm.v);
         Multiply(mRelativeXfm, mLastWorldXfm.m, mRelativeXfm);
         Normalize(mRelativeXfm.m, mRelativeXfm.m);
         Interp(mLastWorldXfm.v, parentWorld.v, mRelativeMotion, mLastWorldXfm.v);

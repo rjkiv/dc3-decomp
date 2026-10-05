@@ -431,7 +431,7 @@ DataNode TaskMgr::OnTimeTilNext(DataArray *arr) {
     float f3 = arr->Float(3);
     float beat = Beat();
     float floored = floor(beat / f2);
-    float f1 = f3 * (1.0f - (beat / f2 - floored));
+    float f1 = f2 * (1.0f - (beat / f2 - floored));
     if (f2 - f1 <= f3) {
         return 0.0f;
     } else

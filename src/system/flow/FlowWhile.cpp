@@ -169,64 +169,63 @@ void FlowWhile::ReActivate() {
             PathName(Dir())
         );
         mEntryCount--;
-    } else {
-        if (mRunningNodes.empty()) {
-            if (unk64.Equal(mValue, nullptr, true)) {
-                mEntryCount--;
-                return;
-            }
-            if (!ActivateTransitionCases(mValue, unk64)) {
-                ActivateValueCases(mValue, unk64);
-            }
-            unk64 = mValue;
-        } else if (mFirstValidCaseOnly) {
-            FlowSwitchCase *first = static_cast<FlowSwitchCase *>(mRunningNodes.front());
-            if (first->Op() != kTransition) {
-                FlowSwitchCase *cur = nullptr;
-                FOREACH (it, mChildNodes) {
-                    FlowSwitchCase *switchCase =
-                        static_cast<FlowSwitchCase *>((FlowNode *)*it);
-                    if (switchCase->IsValidCase(this, &mValue, &mValue, true)) {
-                        cur = switchCase;
-                        break;
-                    }
-                }
-                if (cur != first) {
-                    first->RequestStop();
-                }
-            }
-        } else {
-            FOREACH (it, mChildNodes) {
-                FlowSwitchCase *cur = static_cast<FlowSwitchCase *>((FlowNode *)*it);
-                if (!cur->IsValidCase(this, &mValue, &unk64, true)) {
-                    if (cur->IsRunning()) {
-                        cur->RequestStop();
-                    }
-                } else {
-                    if (cur->IsRunning()) {
-                        cur->RequestStopCancel();
-                        continue;
-                    } else {
-                        ActivateChild(cur);
-                        if (mRequestingStop)
-                            break;
-                    }
-                }
-            }
-        }
-        mEntryCount--;
-        timer.Stop();
-        FlowNode *n = this;
-        Flow *topFlow;
-        while (true) {
-            topFlow = n->GetTopFlow();
-            if (!topFlow->GetParent())
-                break;
-            n = topFlow->GetParent();
-        }
-        Symbol s = MakeString(
-            "%s: %s->%s", ClassName(), topFlow->Dir()->Name(), topFlow->Name()
-        );
-        TheFlowMgr->AddEventTime(s, timer.Ms());
+        return;
     }
+    if (mRunningNodes.empty()) {
+        if (unk64.Equal(mValue, nullptr, true)) {
+            mEntryCount--;
+            return;
+        }
+        if (!ActivateTransitionCases(mValue, unk64)) {
+            ActivateValueCases(mValue, unk64);
+        }
+        unk64 = mValue;
+    } else if (mFirstValidCaseOnly) {
+        FlowSwitchCase *first = static_cast<FlowSwitchCase *>(mRunningNodes.front());
+        if (first->Op() != kTransition) {
+            FlowSwitchCase *cur = nullptr;
+            FOREACH (it, mChildNodes) {
+                FlowSwitchCase *switchCase =
+                    static_cast<FlowSwitchCase *>((FlowNode *)*it);
+                if (switchCase->IsValidCase(this, &mValue, &mValue, true)) {
+                    cur = switchCase;
+                    break;
+                }
+            }
+            if (cur != first) {
+                first->RequestStop();
+            }
+        }
+    } else {
+        FOREACH (it, mChildNodes) {
+            FlowSwitchCase *cur = static_cast<FlowSwitchCase *>((FlowNode *)*it);
+            if (!cur->IsValidCase(this, &mValue, &unk64, true)) {
+                if (cur->IsRunning()) {
+                    cur->RequestStop();
+                }
+            } else {
+                if (cur->IsRunning()) {
+                    cur->RequestStopCancel();
+                    continue;
+                } else {
+                    ActivateChild(cur);
+                    if (mRequestingStop)
+                        break;
+                }
+            }
+        }
+    }
+    mEntryCount--;
+    timer.Stop();
+    FlowNode *n = this;
+    Flow *topFlow;
+    while (true) {
+        topFlow = n->GetTopFlow();
+        if (!topFlow->GetParent())
+            break;
+        n = topFlow->GetParent();
+    }
+    Symbol s =
+        MakeString("%s: %s->%s", ClassName(), topFlow->Dir()->Name(), topFlow->Name());
+    TheFlowMgr->AddEventTime(s, timer.Ms());
 }

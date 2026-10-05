@@ -607,7 +607,8 @@ void RhythmDetector::AddFrame(const BaseSkeleton &skel) {
             }
         }
         if (i8 != -1) {
-            unk14.push_back(Frame());
+            auto harness_tmp_13 = Frame();
+            unk14.push_back(harness_tmp_13);
             if (unk14.size() > 3) {
                 unk14.pop_front();
             }

@@ -76,7 +76,11 @@ bool FlowDistance::Activate() {
         }
         Vector3 diff;
         Subtract(mObj1->WorldXfm().v, mObj2->WorldXfm().v, diff);
-        unka2 = Length(diff) > mDistance;
+        Vector3 harness_reduction_vector;
+        harness_reduction_vector.x = diff.y;
+        harness_reduction_vector.y = diff.z;
+        harness_reduction_vector.z = diff.x;
+        unka2 = Length(harness_reduction_vector) > mDistance;
         Execute(kWhenAble);
         if (mPersistent) {
             return true;

@@ -574,6 +574,7 @@ void RndTransformable::SetLocalRotIndex(int index, float f2) {
     v5c[index] = f2 * DEG2RAD;
     Hmx::Matrix3 m50;
     MakeRotMatrix(v5c, m50, true);
+    float harness_scalar = v68.y;
     Scale(v68, m50, m50);
     SetLocalRot(m50);
 }

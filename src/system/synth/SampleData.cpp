@@ -43,10 +43,7 @@ BinStream &operator<<(BinStream &bs, const SampleMarker &s) {
 void SampleData::Save(BinStream &bs) const {
     SAVE_REVS(0x10, 0);
     bs << mCRC;
-    bs << mFormat;
-    bs << mNumSamples;
-    bs << mSampleRate;
-    bs << mSizeBytes;
+    bs << mFormat << mNumSamples << mSampleRate << mSizeBytes;
     bool hasData = mData;
     bs << hasData;
     if (hasData) {
