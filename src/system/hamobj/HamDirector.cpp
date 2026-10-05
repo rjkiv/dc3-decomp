@@ -1505,31 +1505,37 @@ void HamDirector::CheckBeginFatal(int i1, HamMove *move, int i3) {
 void HamDirector::UpdatePostProcOverlay(
     const char *cc, const RndPostProc *p1, const RndPostProc *p2, float f4
 ) {
-    RndOverlay *ppOverlay = RndOverlay::Find("postproc", true);
+    RndOverlay *ppOverlay = RndOverlay::Find("postproc");
     static const RndPostProc *sPostProcA;
     static const RndPostProc *sPostProcB;
-    float sPostProcBlend = -99;
+    static float sPostProcBlend = -99;
     if (!ppOverlay->Showing())
         return;
-    if (p1 == sPostProcA && p2 == sPostProcB && f4 == sPostProcBlend)
-        return;
-    static int sHamDirID = 0;
-    sHamDirID = (sHamDirID + 1) % 100;
     TextStream *reflect = TheDebug.SetReflect(ppOverlay);
-    if (p1 && p2) {
-        MILO_LOG("%03d:HAMDIR Post Proc A %s\n", sHamDirID, p1->Name());
-        MILO_LOG("%03d:HAMDIR Post Proc B %s\n", sHamDirID, p2->Name());
-    } else if (p1) {
-        MILO_LOG("%03d:HAMDIR Post Proc %s is not blended\n", sHamDirID, p1->Name());
-    } else if (p2) {
-        MILO_LOG("%03d:HAMDIR Post Proc B %s\n", sHamDirID, p2->Name());
+
+    if (p1 != sPostProcA || p2 != sPostProcB || f4 != sPostProcBlend) {
+        static int sHamDirID = 0;
+        sHamDirID++;
+        int id = sHamDirID % 100;
+
+        if (p1) {
+            if (!p2) {
+                MILO_LOG("%03d:HAMDIR Post Proc %s is not blended\n", id, p1->Name());
+            } else {
+                MILO_LOG("%03d:HAMDIR Post Proc A %s\n", id, p1->Name());
+            }
+        }
+        if (p2) {
+            MILO_LOG("%03d:HAMDIR Post Proc B %s\n", id, p2->Name());
+        }
+        MILO_LOG(
+            "           PostProc set by %s, blend is %.2f%%\n", cc ? cc : "", f4 * 100.0f
+        );
+        sPostProcA = p1;
+        sPostProcB = p2;
+        sPostProcBlend = f4;
     }
-    MILO_LOG(
-        "           PostProc set by %s, blend is %.2f%%\n", cc ? cc : "", f4 * 100.0f
-    );
-    sPostProcA = p1;
-    sPostProcB = p2;
-    sPostProcBlend = f4;
+
     TheDebug.SetReflect(reflect);
 }
 
@@ -2134,6 +2140,32 @@ void HamDirector::FindNextShot() {
     }
 }
 
+void HamDirector::PlayNextShot() {
+    if (unk2a4 > 0) {
+        unk140 = false;
+        if (mNextShot) {
+            unk2a4--;
+        }
+    } else {
+        unk140 = false;
+        if (mNextShot) {
+            HamCamShot *shot = mNextShot;
+            mNextShot = nullptr;
+            if (shot && strstr(shot->Category().Str(), "dc")) {
+                float frames = (float)shot->MinTime() + shot->ZeroTime();
+                shot->ConvertFrames(frames);
+                unk29c = TheTaskMgr.Seconds(TaskMgr::kRealTime) + frames;
+            } else if (mCurShot && strneq(mCurShot->Category().Str(), "dc_", 3)) {
+                unk29c = TheTaskMgr.Seconds(TaskMgr::kRealTime) + 1;
+            } else {
+                unk29c = -kHugeFloat;
+            }
+            mCurShot = shot;
+            GetWorld()->GetCameraManager()->ForceCameraShot(mCurShot, false);
+        }
+    }
+}
+
 void HamDirector::SetShot(Symbol s) {
     if (TheTaskMgr.Seconds(TaskMgr::kRealTime) >= 0
         && !(SongAnim(0) && SongAnim(0)->GetFrame() < 0)) {
@@ -2186,11 +2218,22 @@ void HamDirector::Reteleport() {
         GetPropAnim(TheGameData->Player(0)->GetDifficulty(), "song.anim", false);
     PropKeys *propKeys = anim->GetKeys(this, DataArrayPtr(practice));
     int frameIdx = 0;
+    CharClip *clip; // uninitialized variable smh my head hmx
+    float f1, f2;
     if (propKeys) {
         frameIdx = propKeys->AsSymbolKeys()->AtFrame(BeatToFrame(beat), s);
-        // GetClipStartAndEndBeats
+        clip = GetClipStartAndEndBeats(s, f1, f2, nullptr);
     }
     Vector3 v = Vector3::GetZero();
+    if (clip && frameIdx > 0) {
+        ClipPredict predict;
+        predict.SetClip(clip);
+        predict.PredictDeltaPos(f2 - 4, f2);
+        v = predict.Pos();
+    }
+    if (mCurShot) {
+        mCurShot->Reteleport(v, false, gNullStr);
+    }
 }
 
 bool HamDirector::ReactToCollision(float frame) {
@@ -2198,70 +2241,76 @@ bool HamDirector::ReactToCollision(float frame) {
         return false;
     }
     float beat = FrameToBeat(frame);
-    if (!mCurShot)
-        return false;
-    Symbol cat = mCurShot->Category();
-    if (strncmp(cat.Str(), "Area", 4) != 0) {
+    if (!mCurShot) {
         return false;
     }
+    Symbol catToStart = mCurShot->Category();
+    if (strncmp(catToStart.Str(), "Area", 4) != 0) {
+        return false;
+    }
+    Symbol cat = catToStart;
     static Symbol shot("shot");
     PropKeys *propKeys = GetPropKeysByPlayer(0, shot);
-    Symbol symAt;
-    if (!propKeys)
+    if (!propKeys) {
         return false;
-    int keyIdx = propKeys->SymbolAt(frame, symAt);
-    if (keyIdx >= 0 && strncmp(symAt.Str(), "Area", 4) == 0) {
+    }
+    Symbol symAt;
+    int symIdx = propKeys->SymbolAt(frame, symAt);
+    if (symIdx >= 0 && strncmp(symAt.Str(), "Area", 4) == 0) {
         cat = symAt;
     }
-    float frame2;
-    bool idxExists = propKeys->FrameFromIndex(keyIdx, frame2);
-    Symbol symAt2;
-    if (!idxExists)
+    float frameNext;
+    if (!propKeys->FrameFromIndex(symIdx + 1, frameNext)) {
         return false;
-    int keyIdx2 = propKeys->SymbolAt(frame, symAt2);
-    if (keyIdx2 == -1 || keyIdx2 == propKeys->NumKeys() - 1
+    }
+    Symbol symAt2;
+    int symIdxNext = propKeys->SymbolAt(frameNext, symAt2);
+    if (symIdxNext == -1 || symIdxNext == propKeys->NumKeys() - 1
         || strncmp(symAt2.Str(), "Area", 4) != 0) {
         mShot = cat;
         unk140 = true;
         return true;
     }
-    float beat2 = FrameToBeat(frame2);
+    float frameNextNext;
+    float beatNext = FrameToBeat(frameNext);
     static float sSongCollisionUseShotWithinXBeats =
         DataGetMacro("SONG_COLLISION_USE_SHOT_WITHIN_X_BEATS")->Float(0);
-    if (beat2 < sSongCollisionUseShotWithinXBeats + beat) {
-        ReactToCollision_MoveShot(keyIdx2, beat);
+    if (beatNext < sSongCollisionUseShotWithinXBeats + beat) {
+        ReactToCollision_MoveShot(symIdxNext, beat);
         return true;
     } else {
         static float sSongCollisionForXBeatsSuppressNextShot =
             DataGetMacro("SONG_COLLISION_FOR_X_BEATS_SUPPRESS_NEXT_SHOT")->Float(0);
-        float beatSum = sSongCollisionForXBeatsSuppressNextShot + beat;
-        if (beat2 < beatSum) {
+        if (sSongCollisionForXBeatsSuppressNextShot + beat < beatNext) {
             ReactToCollision_InsertRealShot(cat, beat);
+            return true;
         } else {
+            float beatSum = sSongCollisionForXBeatsSuppressNextShot + beat;
             static bool sSongCollisionRoundUpSuppressedShotToMeasure =
                 DataGetMacro("SONG_COLLISION_ROUND_UP_SUPPRESSED_SHOT_TO_MEASURE")->Int(0);
             if (sSongCollisionRoundUpSuppressedShotToMeasure) {
-                beatSum = ceil(beatSum / 4.0f);
+                beatSum = ceilf(beatSum / 4.0f) * 4;
             }
-            float frame3;
-            if (!propKeys->FrameFromIndex(keyIdx2 + 1, frame3)) {
+            int nextnext = symIdxNext + 1;
+            if (!propKeys->FrameFromIndex(nextnext, frameNextNext)) {
                 return false;
             }
-            float beat3 = FrameToBeat(frame3);
+            float beatNextNext = FrameToBeat(frameNextNext);
             static float sSongCollisionAbortSuppressedShotIfAnotherWithinXBeats =
                 DataGetMacro(
                     "SONG_COLLISION_ABORT_SUPPRESSED_SHOT_IF_ANOTHER_WITHIN_X_BEATS"
                 )
                     ->Float(0);
             if (beatSum
-                < beat3 - sSongCollisionAbortSuppressedShotIfAnotherWithinXBeats) {
-                ReactToCollision_MoveShot(keyIdx2, beat3);
+                < beatNextNext - sSongCollisionAbortSuppressedShotIfAnotherWithinXBeats) {
+                ReactToCollision_MoveShot(symIdxNext, beatSum);
+                ReactToCollision_InsertRealShot(cat, beat);
             } else {
-                ReactToCollision_MoveShot(keyIdx2, beat2);
+                ReactToCollision_MoveShot(symIdxNext, beat);
             }
         }
+        return true;
     }
-    return true;
 }
 
 void HamDirector::UnloadMergers() {
@@ -2446,7 +2495,6 @@ void HamDirector::Poll() {
             if (mVenue) {
                 mVenue->Poll();
             }
-            // some f30 missing here? not sure where
             if (mWorldPostProc) {
                 float overlayFloat = 1.0f;
                 const char *name;
@@ -2504,6 +2552,62 @@ void HamDirector::Poll() {
             }
         }
     }
+}
+
+CharClip *HamDirector::GetClipStartAndEndBeats(
+    Symbol s, float &f2, float &f3, std::pair<float, float> *pair
+) {
+    static Symbol practice("practice");
+    static Symbol clip("clip");
+    if (!mMasterClipAnim) {
+        return nullptr;
+    }
+
+    PropKeys *practiceKeys = mMasterClipAnim->GetKeys(this, DataArrayPtr(practice));
+    PropKeys *clipKeys = mMasterClipAnim->GetKeys(this, DataArrayPtr(clip));
+
+    if (practiceKeys && clipKeys) {
+        Keys<Symbol, Symbol> *practiceSymKeys = practiceKeys->AsSymbolKeys();
+        int found;
+        for (int i = 0; i < practiceSymKeys->size(); i++) {
+            if (s == (*practiceSymKeys)[i].value) {
+                found = i;
+                goto done;
+            }
+        }
+        found = -1;
+    done:
+        if (found != -1) {
+            Key<Symbol> &practiceKeyAt = (*practiceSymKeys)[found];
+            if (found + 1 < (int)practiceSymKeys->size()) {
+                Key<Symbol> &nextPracticeKey = (*practiceSymKeys)[found + 1];
+                Keys<Symbol, Symbol> *clipSymKeys = clipKeys->AsSymbolKeys();
+                int clipIdx = clipSymKeys->KeyLessEq(practiceKeyAt.frame);
+                Key<Symbol> &clipKeyAt = clipSymKeys->at(clipIdx);
+                CharClip *clip = mClipDir->Find<CharClip>(clipKeyAt.value.Str());
+                if (clip) {
+                    float clipBeat = FrameToBeat(clipKeyAt.frame);
+                    float flags = (clip->PlayFlags() >> 12) & 0xF;
+                    float f12 = 0;
+                    if (flags != 0) {
+                        f12 = Mod(clipBeat - clip->StartBeat(), flags);
+                    }
+                    float practiceBeat = FrameToBeat(practiceKeyAt.frame);
+                    f12 = clipBeat - f12;
+                    f2 = practiceBeat - f12 + clip->StartBeat();
+                    float f15 = FrameToBeat(nextPracticeKey.frame);
+                    f3 = f15 - f12 + clip->StartBeat();
+                    if (pair) {
+                        pair->first = FrameToBeat(practiceKeyAt.frame);
+                        pair->second = FrameToBeat(nextPracticeKey.frame);
+                    }
+                    return clip;
+                }
+            }
+        }
+    }
+
+    return nullptr;
 }
 
 void HamDirector::OnPopulateMoves() {

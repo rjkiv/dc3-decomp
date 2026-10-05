@@ -28,6 +28,7 @@ public:
 
 class ClipPredict {
 public:
+    ClipPredict() : mClip(nullptr) {}
     ClipPredict(CharClip *, const Vector3 &, float);
     void SetClip(CharClip *);
     void PredictDeltaPos(float, float);

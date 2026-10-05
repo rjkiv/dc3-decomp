@@ -105,6 +105,10 @@ public:
     bool TargetTeleportTransform(Symbol, Transform &);
     void TeleportTarget(RndTransformable *, const Transform &, bool);
 
+    int MinTime() const { return mMinTime; }
+    int MaxTime() const { return mMaxTime; }
+    float ZeroTime() const { return mZeroTime; }
+
     OBJ_MEM_OVERLOAD(0x16)
     NEW_OBJ(HamCamShot)
 
