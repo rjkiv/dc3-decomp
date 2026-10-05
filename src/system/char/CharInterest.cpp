@@ -165,7 +165,7 @@ float CharInterest::ComputeScore(
         Vector3 v7c(WorldXfm().v);
         Vector3 v88;
         Subtract(v7c, v2, v88);
-        float lensq = LengthSquared(v88);
+        float lensq = (v88.x * v88.x + v88.z * v88.z + v88.y * v88.y);
         Normalize(v88, v88);
 
         float dot = Dot(v1, v88);

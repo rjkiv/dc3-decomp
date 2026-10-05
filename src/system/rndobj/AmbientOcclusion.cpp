@@ -519,13 +519,14 @@ void RndAmbientOcclusion::PreprocessMesh() {
 }
 
 void RndAmbientOcclusion::OnCalculate(bool b1) {
-    float f1 = 0;
-    float f2 = 0;
-    float f3 = 0;
+    float harness_stack[3];
+    harness_stack[0] = 0;
+    harness_stack[2] = 0;
+    harness_stack[1] = 0;
     BuildObjectLists();
     BuildTrees((Quality)0);
-    CalculateAO(&f1);
-    Tessellate(&f2, &f3);
+    CalculateAO(&harness_stack[0]);
+    Tessellate(&harness_stack[2], &harness_stack[1]);
     Clean();
 }
 

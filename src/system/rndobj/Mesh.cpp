@@ -32,7 +32,7 @@ int MESH_REV_SEP_COLOR = 0x25;
 CompressedVertex_Xbox gCompressedVertexXbox;
 
 void PatchVerts::Add(int vert, RndMesh::VertVector &verts, Vector3 &centroid) {
-    mPatchVerts.insert(mPatchVerts.begin() + GreaterEq(vert), vert);
+    auto harness_tmp_0 = mPatchVerts.insert(mPatchVerts.begin() + GreaterEq(vert), vert);
     mCentroid += verts[vert].pos;
     centroid = mCentroid;
     centroid *= (1.0f / mPatchVerts.size());

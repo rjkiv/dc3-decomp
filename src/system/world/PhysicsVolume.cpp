@@ -137,7 +137,11 @@ BEGIN_LOADS(PhysicsVolume)
     Vector3 ext;
     HalfExtends(ext);
     Sphere s;
-    s.radius = Length(ext);
+    Vector3 harness_reduction_vector;
+    harness_reduction_vector.x = ext.x;
+    harness_reduction_vector.y = ext.z;
+    harness_reduction_vector.z = ext.y;
+    s.radius = Length(harness_reduction_vector);
     s.center = WorldXfm().v;
     SetSphere(s);
 END_LOADS

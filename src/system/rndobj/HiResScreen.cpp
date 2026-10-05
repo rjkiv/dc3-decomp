@@ -123,7 +123,11 @@ void HiResScreen::BmpCache::SetPixelColor(
     GetLoadedRange(nLoadedStart, nLoadedEnd);
     MILO_ASSERT(y >= nLoadedStart && y <= nLoadedEnd, 0xD5);
     unsigned int byteOffset = ((nLoadedEnd - y) * mPixelsPerRow + x) * 4;
-    unsigned char color[4] = { a, r, g, b };
+    unsigned char color[4];
+    color[3] = a;
+    color[2] = r;
+    color[1] = g;
+    color[0] = b;
     unsigned int colorWord = *reinterpret_cast<unsigned int *>(color);
     unsigned int *colorToSet = (unsigned int *)&mBuffer[byteOffset];
     if (colorWord != *colorToSet) {

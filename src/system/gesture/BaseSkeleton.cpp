@@ -70,7 +70,7 @@ void BaseSkeleton::BoneVec(SkeletonBone bone, SkeletonCoordSys cs, Vector3 &vres
 float BaseSkeleton::BoneLength(SkeletonBone bone, SkeletonCoordSys cs) const {
     Vector3 v;
     BoneVec(bone, cs, v);
-    return Length(v);
+    return std::sqrt(v.z * v.z + v.y * v.y + v.x * v.x);
 }
 
 void BaseSkeleton::CalcNormalizedOffset(SkeletonJoint joint, Vector3 &vres) const {

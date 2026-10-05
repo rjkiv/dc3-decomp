@@ -204,7 +204,9 @@ DataNode op5(DataArray *msg) {
 DataNode op6(DataArray *msg) {
     u32 operand = msg->Int(1);
     u32 w = msg->Int(2);
-    return u8(!w ^ operand);
+    int harness_bits_1 = u8(operand);
+    int harness_bits_0 = u8(!w);
+    return DataNode(kDataInt, harness_bits_1 ^ harness_bits_0);
 }
 
 DataNode op7(DataArray *msg) {

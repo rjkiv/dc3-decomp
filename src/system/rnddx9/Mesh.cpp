@@ -461,7 +461,7 @@ void DxMesh::CacheFurTransform(const Transform &xfm, int i, float f3) {
     Transform &cur = mTransformCache[i];
     Vector3 diff;
     Subtract(cur.v, xfm.v, diff);
-    if (Dot(cur.m.y, xfm.m.y) >= 0.8660254f && LengthSquared(diff) < 2500.0f) {
+    if (Dot(cur.m.y, xfm.m.y) >= 0.8660254f && (Dot(diff, diff)) < 2500.0f) {
         cur.m.x *= 1.0f - f3;
         cur.m.y *= 1.0f - f3;
         cur.m.z *= 1.0f - f3;

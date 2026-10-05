@@ -30,6 +30,7 @@ void WebSvcMgrCurl::Init() {
 }
 
 void WebSvcMgrCurl::Poll() {
+    int msgs_in_queue;
     WebSvcMgr::Poll();
     MILO_ASSERT(mCurlMultiHandle, 0xFE);
     int running_handles;
@@ -38,7 +39,7 @@ void WebSvcMgrCurl::Poll() {
         if (sRunningHandles != running_handles) {
             sRunningHandles = running_handles;
         }
-        int msgs_in_queue = 0;
+        msgs_in_queue = 0;
         int i5 = 100;
         CURLMsg *msg;
         while (msg = curl_multi_info_read(mCurlMultiHandle, &msgs_in_queue), msg) {

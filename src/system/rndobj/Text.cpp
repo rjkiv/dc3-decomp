@@ -919,10 +919,10 @@ float RndText::ComputeHeight(int i1, float f2, float &f3) {
 
 void RndText::SetText(const char *str) {
     if (mFixedLength != 0) {
+        unsigned short us;
         MILO_ASSERT(mText.capacity() >= mFixedLength, 0x75E);
         const char *p = str;
         for (int newLen = 0; *p != '\0' && newLen < mFixedLength; newLen++) {
-            unsigned short us;
             p += DecodeUTF8(us, p);
         }
         int newLen = p - str;

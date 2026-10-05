@@ -995,11 +995,10 @@ bool PlatformMgr::HasOnlinePrivilege(int padNum) const {
     MILO_ASSERT(padNum >= 0, 0x693);
     if (!IsSignedIntoLive(padNum)) {
         return false;
-    } else {
-        BOOL result;
-        XUserCheckPrivilege(padNum, XPRIVILEGE_MULTIPLAYER_SESSIONS, &result);
-        return result;
     }
+    BOOL result;
+    XUserCheckPrivilege(padNum, XPRIVILEGE_MULTIPLAYER_SESSIONS, &result);
+    return result;
 }
 
 ShowGamercardResult

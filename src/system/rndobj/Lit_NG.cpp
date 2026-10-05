@@ -62,9 +62,8 @@ void NgLight::RenderShadows(std::vector<RndDrawable *> &shadowCasters) {
 }
 
 void NgLight::SetAndClearShadowViewport() {
-    TheNgRnd.SetViewport(
-        NgRnd::Viewport(0, 0, mShadowRT->Width(), mShadowRT->Height(), 0, 1)
-    );
+    auto harness_tmp_0 = mShadowRT->Width();
+    TheNgRnd.SetViewport(NgRnd ::Viewport(0, 0, harness_tmp_0, mShadowRT->Height(), 0, 1));
     TheNgRnd.Clear(1, Hmx::Color(0, 0, 0, 0));
 }
 

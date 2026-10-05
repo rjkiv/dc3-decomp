@@ -181,14 +181,14 @@ static void BinkFileSetInfo(
     unsigned int filesize,
     unsigned int simulate
 ) {
-    unsigned int mask = size & 0xFFFF8000;
+    size &= 0xFFFF8000;
     BINKFILE *binkFile = (BINKFILE *)pBinkIO->iodata;
     binkFile->pBuffer = (unsigned char *)buffer;
     binkFile->pBufPos = (unsigned char *)buffer;
     binkFile->pBufBack = (unsigned char *)buffer;
-    binkFile->pBufEnd = (unsigned char *)buffer + mask;
-    binkFile->iBufEmpty = mask;
-    pBinkIO->BufSize = mask;
+    binkFile->pBufEnd = (unsigned char *)buffer + size;
+    binkFile->iBufEmpty = size;
+    pBinkIO->BufSize = size;
     pBinkIO->CurBufUsed = 0;
     binkFile->iSimulateBPS = simulate;
 }
