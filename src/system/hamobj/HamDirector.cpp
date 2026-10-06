@@ -84,8 +84,6 @@ HamDirector *TheHamDirector;
 OfflineCallback gOfflineCallback;
 std::map<Symbol, int> gMoveMergeMap;
 
-static bool sBool;
-
 float FrameToBeat(float frame) { return SecondsToBeat(frame / 30.0f); }
 float BeatToFrame(float beat) { return BeatToSeconds(beat) * 30.0f; }
 
@@ -2368,7 +2366,7 @@ void HamDirector::UnloadMergers() {
     if (mMerger) {
         mMerger->Clear();
         mMoveMerger->Clear();
-        mMoveMerger->ClearMergers();
+        mMoveMerger->Mergers().clear();
         if (TheHamWardrobe) {
             for (int i = 0; i < 2; i++) {
                 HamCharacter *hc = TheHamWardrobe->GetCharacter(i);
@@ -2715,20 +2713,23 @@ void HamDirector::OnPopulateMoves() {
         return;
     }
 
-    if (sBool) {
+    static bool sPopulateInProgress;
+
+    if (sPopulateInProgress) {
         MILO_NOTIFY(
             "[HamDirector::OnPopulateMoves] Please wait until the function is finished."
         );
         return;
     }
 
-    sBool = true;
+    sPopulateInProgress = true;
 
     DataArray *pMoveData = DataReadFile("../meta/move_data.dta", true);
     MILO_ASSERT(pMoveData, 0xb1c);
 
-    ObjectDir *moveDir = mMerger->Dir()->Find<ObjectDir>("moves", true);
-    ObjectDir *clipDir = mMerger->Dir()->Find<ObjectDir>("clips", true);
+    ObjectDir *moveDir = mMerger->Dir()->Find<ObjectDir>("moves");
+    ObjectDir *clipDir = mMerger->Dir()->Find<ObjectDir>("clips");
+
     static Symbol clip("clip");
     static Symbol move("move");
     static Symbol move_instance("move_instance");
@@ -2745,18 +2746,87 @@ void HamDirector::OnPopulateMoves() {
         mMasterClipAnim->AddKeys(this, DataArrayPtr(clip), PropKeys::kSymbol);
     PropKeys *moveInstKeys = mMasterClipAnim->GetKeys(this, DataArrayPtr(move_instance));
 
-    Keys<Symbol, Symbol> *moveInstKeySym = moveInstKeys->AsSymbolKeys();
-    Keys<Symbol, Symbol> *moveKeySym = moveInstKeys->AsSymbolKeys();
-    Keys<Symbol, Symbol> *clipKeySym = clipKeys->AsSymbolKeys();
+    Keys<Symbol, Symbol> *moveInstSymKeys = moveInstKeys->AsSymbolKeys();
+    Keys<Symbol, Symbol> *moveSymKeys = moveKeys->AsSymbolKeys();
+    Keys<Symbol, Symbol> *clipSymKeys = clipKeys->AsSymbolKeys();
 
     gMoveMergeMap.clear();
-    mMoveMerger->ClearMergers();
+    mMoveMerger->Mergers().clear();
 
-    for (int i = 0; i != moveInstKeySym->NumKeys(); i++) {
-        if ((*moveInstKeySym)[i].value == "") {
-            // yeah im doin this later
+    for (int i = 0; i < moveInstSymKeys->size(); i++) {
+        if ((*moveInstSymKeys)[i].value != "") {
+            float moveInstFrame = (*moveInstSymKeys)[i].frame;
+            float beat = floorf(FrameToBeat((*moveInstSymKeys)[i].frame) + 0.5f);
+            if (i != 0) {
+                beat -= 1;
+            }
+            float frame = BeatToFrame(beat);
+            int moveKeyIdx = moveKeys->SetKey(moveInstFrame);
+            int clipKeyIdx = clipKeys->SetKey(frame);
+            DataArray *pVariant = nullptr;
+            for (int j = 0; j < pMoveData->Size(); j++) {
+                const char *str = pMoveData->Array(j)->FindStr("name");
+                if (streq(str, (*moveInstSymKeys)[i].value.Str())) {
+                    pVariant = pMoveData->Array(j)->FindArray("variant")->Array(1);
+                    break;
+                }
+            }
+            MILO_ASSERT(pVariant, 0xB5E);
+            pMoveData->Release();
+            Symbol hamMoveName = pVariant->FindSym("ham_move_name");
+            Symbol clipName = pVariant->Sym(0);
+            (*moveSymKeys)[moveKeyIdx].value = hamMoveName;
+            (*clipSymKeys)[clipKeyIdx].value = clipName;
+            Symbol s1300;
+            if (i > 0) {
+                Symbol prevValue = (*clipSymKeys)[clipKeyIdx - 1].value;
+                DataArray *candArr = pVariant->FindArray("prev_candidates");
+                DataArray *prevArr = candArr->FindArray(prevValue, false);
+                if (prevArr && prevArr->Int(2)) {
+                    s1300 = MakeString("%s_%s", prevValue.Str(), clipName.Str());
+                }
+                if (!s1300.Null() && gMoveMergeMap[s1300] == 0) {
+                    FilePath fp(MakeString(
+                        "modular_song_data/transition_charclips/%s.milo", s1300
+                    ));
+                    FileMerger::Merger fm(mMoveMerger);
+                    fm.mName = transition_charclips;
+                    fm.mDir = clipDir;
+                    fm.mSubdirs = MergeFilter::kAllSubdirs;
+                    fm.mPreClear = true;
+                    fm.SetSelected(fp, true);
+                    mMoveMerger->Mergers().push_back(fm);
+                    gMoveMergeMap[s1300]++;
+                }
+            }
+            if (gMoveMergeMap[clipName] == 0) {
+                FilePath fp(MakeString("modular_song_data/charclips/%s.milo", clipName));
+                FileMerger::Merger fm(mMoveMerger);
+                fm.mName = charclips;
+                fm.mDir = clipDir;
+                fm.mSubdirs = MergeFilter::kAllSubdirs;
+                fm.mPreClear = true;
+                fm.SetSelected(fp, true);
+                mMoveMerger->Mergers().push_back(fm);
+                gMoveMergeMap[clipName]++;
+            }
+
+            Symbol hamMoveMiloName = pVariant->FindSym("ham_move_milo_name");
+            if (gMoveMergeMap[hamMoveMiloName] == 0) {
+                FilePath fp(
+                    MakeString("modular_song_data/hammoves/%s.milo", hamMoveMiloName)
+                );
+                FileMerger::Merger fm(mMoveMerger);
+                fm.mName = hammoves;
+                fm.mDir = moveDir;
+                fm.mSubdirs = MergeFilter::kAllSubdirs;
+                fm.mPreClear = true;
+                fm.SetSelected(fp, true);
+                mMoveMerger->Mergers().push_back(fm);
+                gMoveMergeMap[hamMoveMiloName]++;
+            }
         }
     }
-
     mMoveMerger->StartLoad(mAsync);
+    sPopulateInProgress = false;
 }

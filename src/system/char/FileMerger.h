@@ -129,7 +129,7 @@ public:
     Merger *InMerger(Hmx::Object *);
     bool AsyncLoad() const { return mAsyncLoad; }
     bool HasPendingFiles() const { return !mFilesPending.empty(); }
-    void ClearMergers() { mMergers.clear(); }
+    std::vector<Merger> &Mergers() { return mMergers; }
 
 protected:
     FileMerger();
