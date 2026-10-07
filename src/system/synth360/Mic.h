@@ -100,7 +100,7 @@ private:
     std::vector<short> unk3020;
     RingBuffer mRingBufferRecent; // 0x302c
     RingBuffer mRingBufferContinuous; // 0x3040
-    short unk3054[0x3000];
+    short mPlaybackBuffer[0x3000]; // 0x3054
     float unk9054; // 0x9054 - speed
     float unk9058;
     float unk905c;

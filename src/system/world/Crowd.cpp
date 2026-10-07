@@ -18,6 +18,8 @@
 #include "rndobj/Rnd.h"
 #include "rndobj/Tex.h"
 #include "rndobj/Utl.h"
+#include "stl/_pair.h"
+#include "stl/_vector.h"
 #include "utl/BinStream.h"
 #include "utl/Loader.h"
 #include "utl/Std.h"
@@ -628,8 +630,9 @@ void WorldCrowd::Force3DCrowd(bool force) {
         Set3DCharAll();
     } else {
         SetFullness(1, 1);
+        Hmx::Object *o = this;
         std::vector<std::pair<int, int> > vec;
-        Set3DCharList(vec, this);
+        Set3DCharList(vec, o);
     }
 }
 
@@ -868,6 +871,67 @@ RndMesh *WorldCrowd::BuildBillboard(Character *c, float f) {
         RndTransformable::kConstraintFastBillboardXYZ, gImpostorCamera, false
     );
     return mesh;
+}
+
+void WorldCrowd::Set3DCharList(
+    const std::vector<std::pair<int, int> > &pairs, Hmx::Object *obj
+) {
+    START_AUTO_TIMER("crowd_set3d");
+
+    if (mForce3DCrowd) {
+        AssignRandomColors(false);
+    } else {
+        float f = mFlatFullness;
+        Reset3DCrowd();
+
+        std::vector<std::pair<RndMultiMesh *, InstanceList::iterator> > meshVec;
+        meshVec.reserve(pairs.size());
+
+        for (int i = 0; i != pairs.size(); i++) {
+            int mesh = pairs[i].first;
+            if (mesh >= mCharacters.size()) {
+                MILO_NOTIFY(
+                    "%s setting bad mesh %d, only has %d",
+                    PathName(obj),
+                    mesh,
+                    mCharacters.size()
+                );
+                continue;
+            }
+
+            auto it = mCharacters.begin();
+            for (int j = 0; j < mesh; j++) {
+                ++it;
+            }
+            if (it->mMMesh) {
+                int charVal = pairs[i].second;
+                if (charVal >= it->mMMesh->Instances().size()) {
+                    MILO_NOTIFY(
+                        "%s setting bad 3d char %d on mmesh %s, only has %d chars",
+                        PathName(obj),
+                        charVal,
+                        it->mMMesh->Name(),
+                        it->mMMesh->Instances().size()
+                    );
+                } else {
+                    auto it2 = it->mMMesh->Instances().begin();
+                    for (int j = 0; j < charVal; j++) {
+                        ++it2;
+                    }
+                    it->m3DChars.push_back(CharData::Char3D(it2->mXfm, charVal));
+                    meshVec.push_back(std::make_pair(it->mMMesh, it2));
+                }
+            }
+        }
+
+        for (int i = 0; i != meshVec.size(); i++) {
+            meshVec[i].first->Instances().erase(meshVec[i].second);
+            meshVec[i].first->InvalidateProxies();
+        }
+        Sort3DCharList();
+        SetFullness(f, mCharFullness);
+        AssignRandomColors(false);
+    }
 }
 
 DataNode WorldCrowd::OnIterateFrac(DataArray *a) {

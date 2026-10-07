@@ -1,6 +1,7 @@
 #pragma once
 #include "math/Color.h"
 #include "math/Mtx.h"
+#include "math/Rot.h"
 #include "obj/Object.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Env.h"
@@ -123,8 +124,12 @@ public:
         return mSpotTarget ? mSpotTarget : mTarget;
     }
     RndTransformable *GetTarget() const { return mTarget; }
+    void SetTarget(RndTransformable *trans) { mTarget = trans; }
     RndMat *LensMesh() const { return mLensMaterial; }
     bool GetCastShadow() const { return mTargetShadow; }
+    bool FlareEnabled() const { return mFlareEnabled; }
+    void SetUnk2F0(bool b) { unk2f0 = b; }
+    void SetUnk36E(bool b) { unk36e = b; }
     RndTransformable *ResolveTarget();
     void SetFlareEnabled(bool);
     Hmx::Color IntensifiedColor() const {
@@ -135,7 +140,9 @@ public:
     bool GetAnimateFromPreset() const {
         return mAnimateColorFromPreset || mAnimateOrientationFromPreset;
     }
-
+    bool AnimateColorFromPreset() const { return mAnimateColorFromPreset; }
+    bool AnimateOrientationFromPreset() const { return mAnimateOrientationFromPreset; }
+    Hmx::Quat &GetUnk370() { return unk370; }
     static void RemoveFromLists(Spotlight *);
     static RndMesh *GetDiskMesh() { return sDiskMesh; }
 

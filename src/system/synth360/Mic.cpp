@@ -1,4 +1,5 @@
 #include "synth360/Mic.h"
+#include "Synth.h"
 #include "macros.h"
 #include "math/Decibels.h"
 #include "math/Utl.h"
@@ -16,12 +17,14 @@
 #include "synth360/ExternalMic.h"
 #include "synth360/FxSend.h"
 #include "synth360/GainEffect.h"
+#include "synth360/HeadsetPlaybackEffect.h"
 #include "synth360/Voice.h"
 #include "utl/MemStream.h"
 #include "utl/Symbol.h"
 #include "xdk/win_types.h"
 #include "xdk/XHV2.h"
 #include "xdk/xapilibi/xbox.h"
+#include "xdk/xaudio2/xaudio2.h"
 #include "xdk/xhv2/xhv2.h"
 #include <cmath>
 #include <cstring>
@@ -33,6 +36,10 @@ static int gNoiseInt = 5; // rename
 static float gLowCut = 800;
 static float gLocalGain = -3;
 static float gRemoteGain = 3;
+
+const static float sFloat1 = 2700.0f;
+const static u64 bignumber = 0;
+const static float sFloat2 = 1800.0f;
 
 #pragma region ChatReceiver
 
@@ -146,15 +153,11 @@ void MicXbox::StartPlayback() {
     }
     Start();
     mMute = false;
-    if (unkc) {
-        unk9058 = 2700;
-    } else {
-        unk9058 = 1800;
-    }
+    unk9058 = unkc ? sFloat2 : sFloat1;
     unk905c = 0;
-    unk9054 = 1;
+    unk9054 = 1.0f;
     mVoice = new Voice(false, 1, false);
-    mVoice->SetSampleRate(48000);
+    mVoice->SetSampleRate(48000.0f);
     mVoice->SetData(mVoiceBuffer, sizeof(mVoiceBuffer), 0);
     mVoice->SetLoopRegion(0, -1);
     mVoice->SetSend(dynamic_cast<FxSend360 *>(mSend));
@@ -177,15 +180,15 @@ void MicXbox::ClearBuffers() {
 
 short *MicXbox::GetRecentBuf(int &iref) {
     CritSecTracker t(MicManagerXbox::GetInstance()->CritSec());
-    mRingBufferRecent.Peek(unk3054, 0xC00);
+    mRingBufferRecent.Peek(mPlaybackBuffer, 0xC00);
     iref = 0x600;
-    return unk3054;
+    return mPlaybackBuffer;
 }
 
 short *MicXbox::GetContinuousBuf(int &iref) {
     CritSecTracker t(MicManagerXbox::GetInstance()->CritSec());
-    iref = mRingBufferContinuous.Read(unk3054, 0x6000) / sizeof(short);
-    return unk3054;
+    iref = mRingBufferContinuous.Read(mPlaybackBuffer, 0x6000) / sizeof(short);
+    return mPlaybackBuffer;
 }
 
 int MicXbox::GetDroppedSamples() { return mDroppedSamples; }
@@ -278,6 +281,7 @@ static DataNode SetLocalGain(DataArray *a) {
 
 static DataNode SetRemoteGain(DataArray *a) {
     gRemoteGain = a->Float(1);
+    GainEffect::SetGain(DbToRatio(gRemoteGain));
     return 0;
 }
 
@@ -314,8 +318,33 @@ void MicManagerXbox::Init() {
     params.pfnMicrophoneRawDataReady = DataReadyCallback;
     params.bCustomVADProvided = true;
     params.bRelaxPrivileges = true;
+    params.pXAudio2 = TheXboxSynth->GetXAudio();
     HRESULT hr = XHV2CreateEngine(&params, &mXHVWorkerThread, &mXHVEngine);
     DX_ASSERT(hr, 0xCD);
+
+    auto &headsetSubmixes = TheXboxSynth->GetHeadsetSubmixes();
+    if (!headsetSubmixes.empty()) {
+        for (int i = 0; i < 4; i++) {
+            // idk about the params here...
+            HRESULT hr =
+                TheXboxSynth->GetHeadsetSubmix(i)->GetEffectParameters(0, &params, 4);
+            MILO_ASSERT(SUCCEEDED(hr), 0xd9);
+
+            XAUDIO2_EFFECT_CHAIN chain;
+            chain.EffectCount = 0;
+            XAUDIO2_EFFECT_DESCRIPTOR descriptor;
+            descriptor.InitialState = false;
+            descriptor.OutputChannels = 1;
+            chain.pEffectDescriptors = &descriptor;
+
+            AddRemoteMic(bignumber, &chain);
+        }
+    }
+
+    for (int i = 0; i < 16; i++) {
+        ChatReceiver *receiver = new ChatReceiver(mXHVEngine, i);
+        mChatReceivers[i] = receiver;
+    }
 }
 
 void MicManagerXbox::RequirePushToTalk(bool req, int pad) {
