@@ -1174,11 +1174,15 @@ void LightPreset::FillSpotPresetData(Spotlight *spotlight, SpotlightEntry &entry
     }
     if ((i & 2) != 0) {
         entry.mTarget = spotlight->GetTarget();
+        // something here is off
         Hmx::Quat q;
-        entry.mTarget ? q.Zero() : q.Set(spotlight->GetWorldXfm().m);
+        if (entry.mTarget) {
+            q.Set(0, 0, 0, 0);
+        } else {
+            q.Set(spotlight->LocalXfm().m);
+        }
         entry.mOrientation = q;
     }
-
     if (i != 0 && spotlight->FlareEnabled()) {
         entry.mFlags = entry.mFlags | 1;
     }
