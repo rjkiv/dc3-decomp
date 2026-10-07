@@ -1732,9 +1732,8 @@ bool HamDirector::GetPracticeFrames(Key<Symbol> *&k1, Key<Symbol> *&k2) {
             GetPropKeys(TheGameData->Player(0)->GetDifficulty(), "practice");
         if (propKeys) {
             Keys<Symbol, Symbol> *keys = propKeys->AsSymbolKeys();
-            int numKeys = keys->size();
             int startIdx;
-            for (unsigned int i = 0; i < numKeys; i++) {
+            for (unsigned int i = 0; i < keys->size(); i++) {
                 if (mPracticeStart == (*keys)[i].value) {
                     startIdx = i;
                     goto next;
@@ -1743,7 +1742,7 @@ bool HamDirector::GetPracticeFrames(Key<Symbol> *&k1, Key<Symbol> *&k2) {
             startIdx = -1;
         next:
             int endIdx = 0;
-            for (unsigned int i = 0; i < numKeys; i++) {
+            for (unsigned int i = 0; i < keys->size(); i++) {
                 if (mPracticeEnd == (*keys)[i].value) {
                     endIdx = i;
                     goto end;
@@ -1967,6 +1966,80 @@ void HamDirector::DrawIconMan(
                 }
                 DrawIconMan(key.value, s, s2, f2 - beat, f5, tex);
             }
+        }
+    }
+}
+
+void HamDirector::DrawIconMan(
+    Symbol s1, Symbol s2, Symbol s3, float f4, float f5, RndTex *tex
+) {
+    if (!mMasterClipAnim) {
+        SetMasterClipAnim();
+    }
+    if (mIconManChar && mIconManTex && mMasterClipAnim && tex && mClipDir) {
+        static Symbol practice("practice");
+        static Symbol clip("clip");
+        PropKeys *practiceKeys = mMasterClipAnim->GetKeys(this, DataArrayPtr(practice));
+        Keys<Symbol, Symbol> *practiceSymKeys = practiceKeys->AsSymbolKeys();
+        int found = 0;
+        for (int i = 0; i < practiceSymKeys->size(); i++) {
+            if (s1 == (*practiceSymKeys)[i].value) {
+                found = i;
+                goto done;
+            }
+        }
+        found = -1;
+    done:
+        if (found == -1) {
+            String str(s1);
+            str += ".move";
+            Symbol newSym(str.c_str());
+            static Symbol move("move");
+            practiceKeys = mMasterClipAnim->GetKeys(this, DataArrayPtr(move));
+            practiceSymKeys = practiceKeys->AsSymbolKeys();
+            for (int i = 0; i < practiceSymKeys->size(); i++) {
+                if (newSym == (*practiceSymKeys)[i].value) {
+                    found = i;
+                    goto done2;
+                }
+            }
+            found = -1;
+        done2:
+            int dummy = 0; // only here to appease the done2 label
+        }
+        Key<Symbol> &key = (*practiceSymKeys)[found];
+
+        if (FrameToBeat(key.frame) + f5 < 0) {
+            f5 = 0;
+        }
+
+        float beat = FrameToBeat(key.frame) + f4 + f5;
+        float frame = BeatToFrame(beat);
+        FrameToBeat(key.frame);
+        PropKeys *clipKeys = mMasterClipAnim->GetKeys(this, DataArrayPtr(clip));
+        Keys<Symbol, Symbol> *clipSymKeys = clipKeys->AsSymbolKeys();
+        int keyIdx = clipSymKeys->KeyLessEq(frame);
+
+        Key<Symbol> &clipKey = clipSymKeys->at(keyIdx);
+        CharClip *charClip = mClipDir->Find<CharClip>(clipKey.value.Str(), false);
+        if (!charClip) {
+            MILO_NOTIFY("Could not draw IconMan for %s", s1.Str());
+        } else {
+            float clipBeat = FrameToBeat(clipKey.frame);
+            float flag = (charClip->PlayFlags() >> 12) & 0xF;
+            float f13 = 0;
+            if (flag) {
+                f13 = Mod(clipBeat - charClip->StartBeat(), flag);
+            }
+            PoseIconMan(
+                charClip,
+                (beat - (clipBeat - f13)) + charClip->StartBeat(),
+                tex,
+                true,
+                nullptr,
+                0,
+                0
+            );
         }
     }
 }
