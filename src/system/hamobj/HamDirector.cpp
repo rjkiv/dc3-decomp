@@ -84,6 +84,11 @@ HamDirector *TheHamDirector;
 OfflineCallback gOfflineCallback;
 std::map<Symbol, int> gMoveMergeMap;
 
+void unuseddancerskeletonfunclol(std::vector<DancerFrame> &frames) {
+    frames.swap(std::vector<DancerFrame>());
+    frames.resize(69);
+}
+
 float FrameToBeat(float frame) { return SecondsToBeat(frame / 30.0f); }
 float BeatToFrame(float beat) { return BeatToSeconds(beat) * 30.0f; }
 
@@ -1910,6 +1915,60 @@ void HamDirector::PoseIconMan(const BaseSkeleton *skeleton, RndTex *tex) {
     mIconManTex->DrawShowing();
     mIconManTex->SetShowing(false);
     iconMan->SetUseCameraSkeleton(false);
+}
+
+void HamDirector::DrawIconMan(
+    Difficulty diff, float f2, float f3, float f4, float f5, RndTex *tex
+) {
+    if (!mMasterClipAnim) {
+        SetMasterClipAnim();
+    }
+    if (mIconManChar && mIconManTex && mMasterClipAnim && tex && mClipDir) {
+        if (diff == kDifficultyExpert) {
+            static Symbol clip("clip");
+            PropKeys *clipKeys = mMasterClipAnim->GetKeys(this, DataArrayPtr(clip));
+            if (clipKeys) {
+                Keys<Symbol, Symbol> *clipSymKeys = clipKeys->AsSymbolKeys();
+                int keyIdx = clipSymKeys->KeyLessEq(BeatToFrame(f2));
+                Key<Symbol> &key = clipSymKeys->at(keyIdx);
+                CharClip *clip = mClipDir->Find<CharClip>(key.value.Str(), false);
+                if (clip) {
+                    float beat = FrameToBeat(key.frame);
+                    if (f3 + f5 < beat) {
+                        f5 = 0;
+                    }
+                    float flag = (clip->PlayFlags() >> 12) & 0xF;
+                    float f17 = 0;
+                    if (flag) {
+                        f17 = Mod(beat - clip->StartBeat(), flag);
+                    }
+                    float f13 = (f2 - (beat - f17)) + clip->StartBeat();
+                    if (f2 - f3 > f4 + f5) {
+                        f13 -= f4;
+                    }
+                    PoseIconMan(clip, f13, tex, true, nullptr, 0, 0);
+                }
+            }
+        } else {
+            PropKeys *clipKeys = GetPropKeys(diff, "clip");
+            if (clipKeys) {
+                Keys<Symbol, Symbol> *clipSymKeys = clipKeys->AsSymbolKeys();
+                int keyIdx = clipSymKeys->KeyLessEq(BeatToFrame(f2));
+                Key<Symbol> &key = clipSymKeys->at(keyIdx);
+                float beat = FrameToBeat(key.frame);
+                Symbol s;
+                Symbol s2;
+                int next = keyIdx + 1;
+                if (next < clipSymKeys->size()) {
+                    s = (*clipSymKeys)[next].value;
+                }
+                if (keyIdx > 0) {
+                    s2 = clipSymKeys->at(keyIdx - 1).value;
+                }
+                DrawIconMan(key.value, s, s2, f2 - beat, f5, tex);
+            }
+        }
+    }
 }
 
 DataNode HamDirector::OnGetDancerVisemes(DataArray *a) {
