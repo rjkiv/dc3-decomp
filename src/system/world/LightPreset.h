@@ -187,6 +187,8 @@ protected:
     int NextManualFrame(LightPreset::KeyframeCmd) const;
     void FillLightPresetData(RndLight *, LightPreset::EnvLightEntry &);
     void AnimateLightFromPreset(RndLight *, const LightPreset::EnvLightEntry &, float);
+    void AnimateEnvFromPreset(RndEnviron *, const LightPreset::EnvironmentEntry &, float);
+    void AnimateSpotFromPreset(Spotlight *, const LightPreset::SpotlightEntry &, float);
     void ApplyState(LightPreset::Keyframe const &);
     void SetKeyframe(Keyframe &);
     void FillEnvPresetData(RndEnviron *, EnvironmentEntry &);

@@ -63,6 +63,7 @@ public:
     OBJ_MEM_OVERLOAD(0x1C);
 
     const Transform &LocalXfm() const { return mLocalXfm; }
+    const Transform &GetWorldXfm() const { return mWorldXfm; }
     RndTransformable *TransParent() const { return mParent; }
     bool Dirty() const { return mDirty; }
     Constraint TransConstraint() const { return mConstraint; }

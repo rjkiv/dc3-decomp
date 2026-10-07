@@ -308,7 +308,7 @@ void WorldInstance::SyncDir() {
             objPairs.push_back(ObjPair(mDir, this));
 
             for (ObjDirItr<Hmx::Object> it(mDir, false); it != nullptr; ++it) {
-                bool curMesh = dynamic_cast<RndMesh *>(&*it); // mismatch here
+                bool curMesh = nullptr != dynamic_cast<RndMesh *>(&*it);
                 if (!grp || (it != grp && !GroupedUnder(grp, it))) {
                 lmao:
                     if (it->ClassName() != Tex && it->ClassName() != CubeTex

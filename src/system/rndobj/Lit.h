@@ -48,8 +48,9 @@ public:
             || mAnimateRangeFromPreset;
     }
     bool Showing() const { return mShowing; }
-    // bool AnimatePosFromPreset() const { return mAnimatePositionFromPreset; }
-    // bool AnimateRangeFromPreset() const { return mAnimateRangeFromPreset; }
+    bool AnimateColorFromPreset() const { return mAnimateColorFromPreset; }
+    bool AnimatePosFromPreset() const { return mAnimatePositionFromPreset; }
+    bool AnimateRangeFromPreset() const { return mAnimateRangeFromPreset; }
     ObjPtrList<RndDrawable> *GetShadowOverride() const { return mShadowOverride; }
     const ObjPtrList<RndDrawable> &GetShadowObjects() const { return mShadowObjects; }
     RndCubeTex *GetCubeTexture() const { return mCubeTexture; }

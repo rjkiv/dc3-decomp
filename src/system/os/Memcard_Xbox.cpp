@@ -140,21 +140,20 @@ bool MCFileXbox::IsOpen() { return mFile != INVALID_HANDLE_VALUE; }
 MCResult MCFileXbox::GetSize(int *iptr) {
     DWORD fileSize = 0;
     DWORD res = GetFileSize(mFile, &fileSize);
-    if (res != -1) {
-        return kMCNoError;
-    } else {
+    if (res == -1) {
         DWORD err = GetLastError();
         if (err != ERROR_SUCCESS) {
             return TranslateCommonWinErrorToMCResult(err);
-        } else if (iptr) {
-            if (fileSize == 0 && res < 0x80000000) {
-                *iptr = res;
-            } else {
-                *iptr = 0x7FFFFFFF;
-            }
         }
-        return kMCNoError;
     }
+    if (iptr) {
+        if (fileSize == 0 && res <= 0x7FFFFFFF) {
+            *iptr = res;
+        } else {
+            *iptr = 0x7FFFFFFF;
+        }
+    }
+    return kMCNoError;
 }
 
 #pragma endregion

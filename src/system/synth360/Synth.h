@@ -43,6 +43,10 @@ public:
     IXAudio2Voice *ReverbSendVoice() const { return mReverbSendVoice; }
     IXAudio2 *GetXAudio() const { return mXAudio; }
 
+    const std::vector<IXAudio2SubmixVoice *> &GetHeadsetSubmixes() const {
+        return mHeadsetSubmixes;
+    }
+
     bool GetCritSecTryEnter() { return mCritSec.TryEnter(); }
     void GetCritSecExit() { return mCritSec.Exit(); }
 

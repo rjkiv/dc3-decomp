@@ -313,13 +313,13 @@ void SpotlightDrawer::DrawLenses(
     MILO_ASSERT(spotIter != spotEnd, 0x2B1);
     for (; spotIter != spotEnd; ++spotIter) {
         Spotlight *sl = spotIter->mLight;
-        // if (sl->LensMesh()) {
-        if (Spotlight::GetDiskMesh()) {
-            MILO_ASSERT(sl->LensMesh(), 0x2B9);
-            Spotlight::GetDiskMesh()->SetMat(sl->LensMesh());
-            Spotlight::GetDiskMesh()->Draw();
-        }
+        // idk something weird is happening here
+        //  if (!Spotlight::GetDiskMesh()) {
+        //  MILO_ASSERT(sl->LensMesh(), 0x2B9);
         // }
+        MILO_ASSERT(sl->LensMesh(), 0x2B9);
+        Spotlight::GetDiskMesh()->SetMat(sl->LensMesh());
+        Spotlight::GetDiskMesh()->Draw();
     }
 }
 
