@@ -19,30 +19,30 @@
 static DataArray *sFileMsg = nullptr;
 static ModalCallbackFunc *sOldModalCallback = nullptr;
 static DataArray *sNotifyMsg = nullptr;
-static bool sUnused = false;
+static bool sOldNotifyDisable = false;
 static bool sOldNoModal = false;
 std::map<Symbol, DataFunc *> gDataFuncs;
 DataThisPtr gDataThisPtr;
 
-bool SwitchMatch(const DataNode &n1, const DataNode &n2) {
-    if (n1.Type() == kDataArray) {
-        DataArray *arr = n1.ArrayValue();
+bool SwitchMatch(const DataNode &tag, const DataNode &node) {
+    if (tag.Type() == kDataArray) {
+        DataArray *arr = tag.ArrayValue();
         for (int i = 0; i < arr->Size(); i++) {
             DataNode &cur = arr->Node(i);
-            if (cur.Equal(n2, nullptr, true)) {
+            if (cur.Equal(node, nullptr, true)) {
                 return true;
             }
         }
         return false;
     } else
-        return n1.Equal(n2, nullptr, true);
+        return tag.Equal(node, nullptr, true);
 }
 
-DataNode DataFuncObj::New(DataArray *arr) {
-    Hmx::Object *o = ObjectDir::Main()->Find<Hmx::Object>(arr->Str(1), false);
+DataNode DataFuncObj::New(DataArray *a) {
+    Hmx::Object *o = ObjectDir::Main()->Find<Hmx::Object>(a->Str(1), false);
     if (o)
         delete o;
-    return new DataFuncObj(arr);
+    return new DataFuncObj(a);
 }
 
 DEF_DATA_FUNC(DataSprintf) {
@@ -1084,11 +1084,11 @@ DataNode DataFindExists(DataArray *array, bool fail) {
             arr = arr->FindArray(n.IntValue(), false);
             if (!arr) {
                 if (fail) {
-                    String str;
-                    n.Print(str, true, 0);
+                    String s;
+                    n.Print(s, true, 0);
                     MILO_FAIL(
                         "Failed to find %s (file %s, line %d)",
-                        str.c_str(),
+                        s.c_str(),
                         array->File(),
                         array->Line()
                     );
@@ -1096,10 +1096,10 @@ DataNode DataFindExists(DataArray *array, bool fail) {
                 return DATA_UNHANDLED;
             }
         } else {
-            String str;
-            n.Print(str, true, 0);
+            String s;
+            n.Print(s, true, 0);
             MILO_FAIL(
-                "Bad key %s (file %s, line %d)", str.c_str(), array->File(), array->Line()
+                "Bad key %s (file %s, line %d)", s.c_str(), array->File(), array->Line()
             );
         }
     }
@@ -1402,7 +1402,7 @@ DEF_DATA_FUNC(DataDisableNotify) {
     return 0;
 }
 
-void ScriptDebugModal(Debug::ModalType &, FixedString &, bool) {}
+void ScriptDebugModal(Debug::ModalType &mt, FixedString &msg, bool wait) {}
 
 DEF_DATA_FUNC(DataFilterNotify) {
     if (array->Size() > 3) {
@@ -1454,11 +1454,11 @@ DEF_DATA_FUNC(DataMemoryAllocReport) {
     return 0;
 }
 
-void DataThisPtr::Replace(Hmx::Object *replace) {
+void DataThisPtr::Replace(Hmx::Object *to) {
     Hmx::Object *old = mObject;
-    SetObjConcrete(replace);
+    SetObjConcrete(to);
     if (gDataThis == old) {
-        DataSetThis(replace);
+        DataSetThis(to);
     }
 }
 
@@ -1482,16 +1482,16 @@ DEF_DATA_FUNC(DataExists) {
     return found;
 }
 
-DataMergeFilter::DataMergeFilter(const DataNode &node, Subdirs subs)
-    : MergeFilter((Action)0, subs), mType(node.Type()) {
+DataMergeFilter::DataMergeFilter(const DataNode &n, Subdirs s)
+    : MergeFilter((Action)0, s), mType(n.Type()) {
     if (mType == kDataInt)
-        mInt = node.Int();
+        mInt = n.Int();
     else if (mType == kDataFunc)
-        mFunc = node.Func();
+        mFunc = n.Func();
     else if (mType == kDataObject)
-        mObj = node.GetObj();
+        mObj = n.GetObj();
     else if (mType == kDataSymbol) {
-        const char *_name = node.StringValue();
+        const char *_name = n.StringValue();
         Symbol name = STR_TO_SYM(_name);
         mObj = gDataDir->FindObject(name.Str(), true, true);
         if (!mObj) {
@@ -1505,7 +1505,7 @@ DataMergeFilter::DataMergeFilter(const DataNode &node, Subdirs subs)
 }
 
 MergeFilter::Action
-DataMergeFilter::Filter(Hmx::Object *from, Hmx::Object *to, class ObjectDir *dir) {
+DataMergeFilter::Filter(Hmx::Object *from, Hmx::Object *to, class ObjectDir *toDir) {
     if (mType == kDataInt) {
         return (MergeFilter::Action)mInt;
     } else {
@@ -1527,11 +1527,11 @@ DEF_DATA_FUNC(DataMergeDirs) {
 
 void DataTermFuncs() { gDataFuncs.clear(); }
 
-void DataRegisterFunc(Symbol s, DataFunc *func) {
-    const std::map<Symbol, DataFunc *>::iterator it = gDataFuncs.find(s);
+void DataRegisterFunc(Symbol sym, DataFunc *func) {
+    const std::map<Symbol, DataFunc *>::iterator it = gDataFuncs.find(sym);
     if (it != gDataFuncs.end() && it->second != func)
-        MILO_FAIL("Can't register different func %s", s);
-    gDataFuncs[s] = func;
+        MILO_FAIL("Can't register different func %s", sym);
+    gDataFuncs[sym] = func;
 }
 
 DEF_DATA_FUNC(DataNotifyOnce) {
