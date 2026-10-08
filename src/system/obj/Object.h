@@ -87,10 +87,10 @@ public:
 
     /** Reposition `this` so it's just before `ref`. */
     ObjRef *MoveTo(ObjRef &ref) {
-        ObjRef &oldPrev = ref;
+        ObjRef *oldPrev = mPrevRef;
         Unlink();
         InsertBefore(&ref);
-        return &oldPrev;
+        return oldPrev;
     }
 };
 
