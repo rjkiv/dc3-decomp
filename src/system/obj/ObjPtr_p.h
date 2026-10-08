@@ -79,7 +79,7 @@ bool ObjRefConcrete<T1, T2>::Load(BinStream &bs, bool print, ObjectDir *dir) {
         }
     } else {
         if (mObject) {
-            Release();
+            Unlink();
         }
         mObject = nullptr;
         if (buf[0] != '\0') {
@@ -152,32 +152,32 @@ BinStream &operator>>(BinStream &bs, ObjOwnerPtr<T1> &ptr) {
 
 template <class T1, class T2>
 ObjPtrVec<T1, T2>::ObjPtrVec(Hmx::Object *owner, EraseMode e, ObjListMode o)
-    : mOwner(owner), mEraseMode(e), mListMode(o) {
+    : mOwner(owner), mEraseMode(e), mMode(o) {
     MILO_ASSERT(owner, 0x321);
 }
 
 template <class T1, class T2>
 ObjPtrVec<T1, T2>::ObjPtrVec(const ObjPtrVec &other)
-    : mOwner(other.mOwner), mEraseMode(other.mEraseMode), mListMode(other.mListMode) {
+    : mOwner(other.mOwner), mEraseMode(other.mEraseMode), mMode(other.mMode) {
     *this = other;
 }
 
 template <class T1, class T2>
 ObjPtrVec<T1, T2>::Node::Node(const Node &n)
-    : ObjRefConcrete<T1, T2>(n), mOwner(n.mOwner) {}
+    : ObjRefConcrete<T1, T2>(n), parent(n.parent) {}
 
 template <class T1, class T2>
 ObjPtrVec<T1, T2>::~ObjPtrVec() {
-    mNodes.clear();
+    mVec.clear();
 }
 
 template <class T1, class T2>
 void ObjPtrVec<T1, T2>::ReplaceNode(Node *n, Hmx::Object *obj) {
-    if (mListMode == kObjListOwnerControl) {
+    if (mMode == kObjListOwnerControl) {
         mOwner->Replace(n, obj);
     } else {
         Hmx::Object *oldObj = n->SetObj(obj);
-        if (!oldObj && mListMode == kObjListNoNull) {
+        if (!oldObj && mMode == kObjListNoNull) {
             erase(n);
         }
     }
@@ -185,20 +185,22 @@ void ObjPtrVec<T1, T2>::ReplaceNode(Node *n, Hmx::Object *obj) {
 
 template <class T1, class T2>
 __declspec(noinline) void ObjPtrVec<T1, T2>::Set(iterator it, T1 *obj) {
-    if (!obj && mListMode == 0) {
+    if (!obj && mMode == 0) {
         erase(it);
-    } else
-        it->SetObjConcrete(obj);
+    } else {
+        Node *itNode = *reinterpret_cast<Node **>(&it);
+        itNode->SetObjConcrete(obj);
+    }
 }
 
 template <class T1, class T2>
 void ObjPtrVec<T1, T2>::operator=(const ObjPtrVec &other) {
     if (this != &other) {
-        mNodes.clear();
-        mNodes.reserve(other.mNodes.size());
+        mVec.clear();
+        mVec.reserve(other.mVec.size());
         for (const_iterator it = other.begin(); it != other.end(); ++it) {
             Node n(this);
-            mNodes.push_back(n);
+            mVec.push_back(n);
             Set(--end(), *it);
         }
     }
@@ -212,10 +214,12 @@ void ObjPtrVec<T1, T2>::push_back(T1 *obj) {
 template <class T1, class T2>
 typename ObjPtrVec<T1, T2>::iterator
 ObjPtrVec<T1, T2>::insert(typename ObjPtrVec<T1, T2>::const_iterator it, T1 *obj) {
-    if (obj || mListMode != kObjListNoNull) {
-        int idx = it != nullptr ? (&*it - &*mNodes.begin()) : 0;
+    if (obj || mMode != kObjListNoNull) {
+        Node *itNode = *reinterpret_cast<Node **>(&it);
+        Node *firstNode = *reinterpret_cast<Node **>(mVec.begin());
+        unsigned int idx = it != nullptr ? (itNode - firstNode) : 0;
         Node n(this);
-        mNodes.insert(mNodes.begin() + idx, n);
+        mVec.insert(mVec.begin() + idx, n);
         Set(begin() + idx, obj);
     }
     return reinterpret_cast<iterator &>(it);
@@ -224,13 +228,13 @@ ObjPtrVec<T1, T2>::insert(typename ObjPtrVec<T1, T2>::const_iterator it, T1 *obj
 template <class T1, class T2>
 typename ObjPtrVec<T1, T2>::iterator
 ObjPtrVec<T1, T2>::erase(typename ObjPtrVec<T1, T2>::iterator it) {
-    unsigned int idx = it != nullptr ? (&*it - &*mNodes.begin()) : 0;
+    unsigned int idx = it != nullptr ? (it - begin()) : 0;
     if (mEraseMode == 1 && idx != size() - 1) {
-        T1 *n = mNodes.back();
-        mNodes.pop_back();
+        T1 *n = mVec.back();
+        mVec.pop_back();
         Set(begin() + idx, n);
     } else {
-        mNodes.erase(mNodes.begin() + idx);
+        mVec.erase(mVec.begin() + idx);
     }
     return it;
 }
@@ -250,7 +254,7 @@ ObjPtrVec<T1, T2>::find(const Hmx::Object *target) const {
 template <class T1, class T2>
 bool ObjPtrVec<T1, T2>::remove(T1 *obj) {
     const_iterator found = find(obj);
-    if (found != end_const()) {
+    if (found != cend()) {
         erase(reinterpret_cast<iterator &>(found));
         return true;
     } else {
@@ -271,10 +275,10 @@ typename ObjPtrVec<T1, T2>::iterator ObjPtrVec<T1, T2>::FindRef(ObjRef *ref) {
 template <class T1, class T2>
 bool ObjPtrVec<T1, T2>::Load(BinStream &bs, bool print, ObjectDir *dir) {
     bool ret = true;
-    mNodes.clear();
+    mVec.clear();
     int count;
     bs >> count;
-    mNodes.reserve(count);
+    mVec.reserve(count);
     if (!dir && mOwner) {
         dir = mOwner->Dir();
     }
@@ -292,7 +296,7 @@ bool ObjPtrVec<T1, T2>::Load(BinStream &bs, bool print, ObjectDir *dir) {
                         "%s couldn't find %s in %s", PathName(mOwner), buf, PathName(dir)
                     );
                 ret = false;
-            } else if (casted || mListMode != kObjListNoNull) {
+            } else if (casted || mMode != kObjListNoNull) {
                 push_back(casted);
             }
         }
@@ -329,7 +333,7 @@ BinStream &operator>>(BinStream &bs, ObjPtrVec<T1, ObjectDir> &vec) {
 
 template <class T1, class T2>
 ObjPtrList<T1, T2>::ObjPtrList(ObjRefOwner *owner, ObjListMode mode)
-    : mSize(0), mNodes(nullptr), mOwner(owner), mListMode(mode) {
+    : mSize(0), mNodes(nullptr), mOwner(owner), mMode(mode) {
     if (mode == kObjListOwnerControl) {
         MILO_ASSERT(owner, 0x103);
     }
@@ -337,7 +341,7 @@ ObjPtrList<T1, T2>::ObjPtrList(ObjRefOwner *owner, ObjListMode mode)
 
 template <class T1, class T2>
 ObjPtrList<T1, T2>::ObjPtrList(const ObjPtrList &other)
-    : mSize(0), mNodes(nullptr), mOwner(other.mOwner), mListMode(other.mListMode) {
+    : mSize(0), mNodes(nullptr), mOwner(other.mOwner), mMode(other.mMode) {
     for (iterator it = other.begin(); it != other.end(); ++it) {
         push_back(*it);
     }
@@ -355,9 +359,9 @@ void ObjPtrList<T1, T2>::Node::operator delete(void *v) {
 
 template <class T1, class T2>
 void ObjPtrList<T1, T2>::ReplaceNode(struct ObjPtrList::Node *node, Hmx::Object *obj) {
-    if (mListMode == kObjListOwnerControl) {
+    if (mMode == kObjListOwnerControl) {
         mOwner->Replace(node, obj);
-    } else if (!node->SetObj(obj) && mListMode == kObjListNoNull) {
+    } else if (!node->SetObj(obj) && mMode == kObjListNoNull) {
         erase(node);
     }
 }
@@ -379,8 +383,9 @@ void ObjPtrList<T1, T2>::operator=(const ObjPtrList &other) {
 
 template <class T1, class T2>
 void ObjPtrList<T1, T2>::Link(iterator it, Node *n) {
-    n->mOwner = this;
-    n->next = it.mNode;
+    n->parent = this;
+    Node *itNode = *reinterpret_cast<Node **>(&it);
+    n->next = itNode;
     if (n->next == mNodes) {
         if (mNodes) {
             n->prev = mNodes->prev;
@@ -394,11 +399,35 @@ void ObjPtrList<T1, T2>::Link(iterator it, Node *n) {
         mNodes->prev->next = n;
         mNodes->prev = n;
     } else {
-        n->prev = it.mNode->prev;
-        it.mNode->prev->next = n;
-        it.mNode->prev = n;
+        n->prev = itNode->prev;
+        itNode->prev->next = n;
+        itNode->prev = n;
     }
     mSize++;
+}
+
+template <class T1, class T2>
+typename ObjPtrList<T1, T2>::Node *ObjPtrList<T1, T2>::Unlink(Node *n) {
+    MILO_ASSERT(n != NULL && mNodes != NULL, 0x26B);
+    if (n == mNodes) {
+        if (mNodes->next) {
+            mNodes->next->prev = mNodes->prev;
+            mNodes = mNodes->next;
+        } else {
+            mNodes = nullptr;
+        }
+        n = mNodes;
+    } else if (n == mNodes->prev) {
+        mNodes->prev = mNodes->prev->prev;
+        mNodes->prev->next = nullptr;
+        n = mNodes->prev;
+    } else {
+        n->prev->next = n->next;
+        n->next->prev = n->prev;
+        n = n->next;
+    }
+    mSize--;
+    return n;
 }
 
 template <class T1, class T2>
@@ -444,7 +473,7 @@ T1 *ObjPtrList<T1, T2>::back() const {
 template <class T1, class T2>
 typename ObjPtrList<T1, T2>::iterator
 ObjPtrList<T1, T2>::insert(typename ObjPtrList<T1, T2>::iterator it, T1 *obj) {
-    if (mListMode == kObjListNoNull) {
+    if (mMode == kObjListNoNull) {
         MILO_ASSERT(obj, 0x177);
     }
     Node *node = new Node();
@@ -455,7 +484,16 @@ ObjPtrList<T1, T2>::insert(typename ObjPtrList<T1, T2>::iterator it, T1 *obj) {
 
 template <class T1, class T2>
 void ObjPtrList<T1, T2>::Set(iterator it, T1 *obj) {
-    it.mNode->SetObjConcrete(obj);
+    Node *n = *reinterpret_cast<Node **>(&it);
+    n->SetObjConcrete(obj);
+}
+
+template <class T1, class T2>
+typename ObjPtrList<T1, T2>::iterator ObjPtrList<T1, T2>::erase(iterator it) {
+    Node *n = *reinterpret_cast<Node **>(&it);
+    Node *unlinked = Unlink(n);
+    delete n;
+    return unlinked;
 }
 
 template <class T1, class T2>
@@ -504,12 +542,13 @@ bool ObjPtrList<T1, T2>::remove(T1 *target) {
 // remove a particular item inside iterator otherIt, from list otherList,
 // and insert it into this list at the position indicated by thisIt
 template <class T1, class T2>
-void ObjPtrList<T1, T2>::MoveItem(
+void ObjPtrList<T1, T2>::splice(
     iterator thisIt, ObjPtrList<T1, T2> &otherList, iterator otherIt
 ) {
     if (otherIt != thisIt) {
-        otherList.Unlink(otherIt.mNode);
-        Link(thisIt, otherIt.mNode);
+        Node *n = *reinterpret_cast<Node **>(&otherIt);
+        otherList.Unlink(n);
+        Link(thisIt, n);
     }
 }
 

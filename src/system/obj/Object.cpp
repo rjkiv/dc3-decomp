@@ -29,7 +29,7 @@ MsgSinks gSinks(nullptr);
 Hmx::Object::Object()
     : mTypeProps(nullptr), mTypeDef(nullptr), mName(gNullStr), mDir(nullptr),
       mSinks(nullptr) {
-    mRefs.DetachSelf();
+    mRefs.Relink();
 }
 
 Hmx::Object::~Object() {
@@ -261,10 +261,10 @@ const char *Hmx::Object::FindPathName() {
 #pragma region Ref Methods
 
 void Hmx::Object::ReplaceRefs(Hmx::Object *obj) {
-    if (!mRefs.empty()) {
+    if (HasRefs()) {
         ObjRef other(mRefs);
-        other.AddSelf();
-        mRefs.DetachSelf();
+        other.LinkSelf();
+        mRefs.Relink();
         other.ReplaceList(obj);
     }
 }
@@ -272,10 +272,10 @@ void Hmx::Object::ReplaceRefs(Hmx::Object *obj) {
 void Hmx::Object::ReplaceRefsFrom(Hmx::Object *from, Hmx::Object *to) {
     MILO_ASSERT(from, 0xA6);
     ObjRef other;
-    other.DetachSelf();
+    other.Relink();
     FOREACH_OBJREF (it, this) {
         if (it->RefOwner() == from) {
-            it = it->MoveBefore(&other);
+            it = it->MoveTo(other);
         }
     }
     other.ReplaceList(to);
@@ -594,8 +594,8 @@ DataNode Hmx::Object::HandleType(DataArray *msg) {
 DataNode Hmx::Object::OnIterateRefs(const DataArray *da) {
     DataNode *var = da->Var(2);
     DataNode node(*var);
-    for (ObjRef *it = Refs().Begin(); it != Refs().End();) {
-        ObjRef *next = Refs().Next(it);
+    for (ObjRef *it = BeginRef(); it != EndRef();) {
+        ObjRef *next = it->NextRef();
         *var = it->RefOwner();
         for (int i = 3; i < da->Size(); i++) {
             da->Command(i)->Execute();

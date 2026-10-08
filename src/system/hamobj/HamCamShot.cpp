@@ -458,20 +458,20 @@ void HamCamShot::SetFrameEx(float frame, float blend) {
 
 HamCamShot *HamCamShot::InitialShot() {
     HamCamShot *shot = this;
-    auto it = shot->Refs().Begin();
-    while (it != shot->Refs().End()) {
+    auto it = shot->BeginRef();
+    while (it != shot->EndRef()) {
         HamCamShot *cur = dynamic_cast<HamCamShot *>((*it).RefOwner());
         if (cur) {
             FOREACH (it2, cur->mNextShots) {
                 if ((*it2) == shot) {
                     shot = cur;
                     MILO_ASSERT(cur != this, 0x268);
-                    it = shot->Refs().Begin();
+                    it = shot->BeginRef();
                     break;
                 }
             }
         } else {
-            it = shot->Refs().Next(it);
+            it = it->NextRef();
         }
     }
     return shot;

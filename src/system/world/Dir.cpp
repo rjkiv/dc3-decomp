@@ -112,19 +112,19 @@ void WorldDir::BitmapOverride::Sync(bool b) {
     if (original && replacement) {
         if (!b) {
             ObjRef ref;
-            ref.DetachSelf();
+            ref.Relink();
             FOREACH_OBJREF (it, replacement) {
                 if (it->RefOwner()->Dir() != replacement->Dir()) {
-                    it = it->MoveBefore(&ref);
+                    it = it->MoveTo(ref);
                 }
             }
             ref.ReplaceList(original);
         } else {
             ObjRef ref;
-            ref.DetachSelf();
+            ref.Relink();
             FOREACH_OBJREF (it, original) {
                 if (it->RefOwner() && it->RefOwner()->Dir() != replacement->Dir()) {
-                    it = it->MoveBefore(&ref);
+                    it = it->MoveTo(ref);
                 }
             }
             ref.ReplaceList(replacement);

@@ -126,7 +126,7 @@ int BinStream::PopRev(Hmx::Object *o) {
         mRevStack->pop_back();
         back = &mRevStack->back();
     }
-    int revs = back->revs;
+    int revs = back->ver;
     if (o != back->obj) {
         MILO_LOG("rev stack $this mismatch (%08x != %08x\n", o, back->obj);
         MILO_LOG("curr obj: %s %s\n", o->ClassName(), PathName(o));

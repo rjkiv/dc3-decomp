@@ -35,7 +35,7 @@ BEGIN_COPYS(CharPollGroup)
     BEGIN_COPYING_MEMBERS
         if (ty == kCopyFromMax) {
             FOREACH (it, c->mPolls) {
-                if (!mPolls.find(*it)) {
+                if (mPolls.find(*it).Null()) {
                     mPolls.push_back(*it);
                 }
             }

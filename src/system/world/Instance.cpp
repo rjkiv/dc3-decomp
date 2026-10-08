@@ -266,10 +266,10 @@ void WorldInstance::DeleteTransientObjects() {
                 Hmx::Object *to = mDir->Find<Hmx::Object>(obj->Name());
                 MILO_ASSERT(obj->ClassName() == to->ClassName(), 0x1C7);
                 ObjRef refs;
-                refs.DetachSelf();
+                refs.Relink();
                 FOREACH_OBJREF (it, obj) {
                     if (it->RefOwner() && it->RefOwner()->Dir() == this) {
-                        it = it->MoveBefore(&refs);
+                        it = it->MoveTo(refs);
                     }
                 }
                 refs.ReplaceList(to);
@@ -345,11 +345,11 @@ void WorldInstance::SyncDir() {
                     );
                 }
                 ObjRef refs;
-                refs.DetachSelf();
+                refs.Relink();
                 Hmx::Object *pFrom = p->from;
                 FOREACH_OBJREF (it, pFrom) {
                     if (it->RefOwner() && !it->RefOwner()->Dir()) {
-                        it = it->MoveBefore(&refs);
+                        it = it->MoveTo(refs);
                     }
                 }
                 refs.ReplaceList(p->to);
