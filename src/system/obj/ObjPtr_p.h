@@ -216,8 +216,7 @@ typename ObjPtrVec<T1, T2>::iterator
 ObjPtrVec<T1, T2>::insert(typename ObjPtrVec<T1, T2>::const_iterator it, T1 *obj) {
     if (obj || mMode != kObjListNoNull) {
         Node *itNode = *reinterpret_cast<Node **>(&it);
-        Node *firstNode = *reinterpret_cast<Node **>(mVec.begin());
-        unsigned int idx = it != nullptr ? (itNode - firstNode) : 0;
+        unsigned int idx = it != nullptr ? (itNode - mVec.begin()) : 0;
         Node n(this);
         mVec.insert(mVec.begin() + idx, n);
         Set(begin() + idx, obj);
