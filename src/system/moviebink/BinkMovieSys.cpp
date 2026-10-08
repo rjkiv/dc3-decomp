@@ -19,8 +19,8 @@ namespace {
 }
 
 BinkMovieSys::BinkMovieSys() : mCritSec(0), mBinkCore0(-1), mBinkCore1(-1), mTrack(0) {
-    unkc = true;
-    unk10 = 1;
+    mAsyncBink = true;
+    mNumFramebuffers = 1;
 }
 
 BinkMovieSys::~BinkMovieSys() { RELEASE(mCritSec); }
@@ -39,7 +39,7 @@ void BinkMovieSys::Init() {
     if (!initial) {
         BinkSetMemory(RadAlloc, RadFree);
         PlatformInit();
-        if (unkc) {
+        if (mAsyncBink) {
             MILO_ASSERT_FMT(
                 BinkStartAsyncThread(mBinkCore0, nullptr)
                     && BinkStartAsyncThread(mBinkCore1, nullptr),
