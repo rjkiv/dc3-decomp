@@ -120,17 +120,17 @@ protected:
     DataNode OnSoundPlay(const DataArray *);
     DataNode OnToggleInterestDebugOverlay(DataArray *);
 
-    bool CrewCardShowing() const { return mCrewCardMesh && mCrewCardMesh->Showing(); }
+    bool GetCrewCardShowing() const { return mCrewCard && mCrewCard->Showing(); }
     void SetCrewCardShowing(bool showing) {
-        if (mCrewCardMesh) {
-            mCrewCardMesh->SetShowing(showing);
+        if (mCrewCard) {
+            mCrewCard->SetShowing(showing);
         }
     }
 
     static CharClip *sSkeletonClips[kNumSkeletons];
 
     String mCampaignVO; // 0x2d8
-    Hmx::Object *mCampaignVOBank; // 0x2e0
+    Hmx::Object *mCampaignVOBankDir; // 0x2e0
     ObjectDir *mCampaignVODir; // 0x2e4
     FileMerger *mFileMerger; // 0x2e8
     /** "which character to look like" */
@@ -138,10 +138,10 @@ protected:
     Waypoint *mWaypoint; // 0x2f0
     /** "where to load outfits from" */
     Symbol mOutfitDir; // 0x2f4
-    bool unk2f8; // 0x2f8
+    bool mIsBackup; // 0x2f8
     /** "Draws a 6 foot square box around the character teleport point" */
     bool mShowBox; // 0x2f9
-    bool unk2fa; // 0x2fa
+    bool mOutfitLoaded; // 0x2fa
     ObjPtr<CharEyes> mEyes; // 0x2fc
     /** "Gender of this character" */
     HamGender mGender; // 0x310
@@ -151,10 +151,10 @@ protected:
     bool mPollWhenHidden; // 0x318
     /** "True if the internal TexBlenders are working." */
     bool mTexBlendersActive; // 0x319
-    ObjPtrList<CharWeightable> mIKEffectors; // 0x31c
-    float unk330; // 0x330 - song offset?
+    ObjPtrList<CharWeightable> mEffectors; // 0x31c
+    float mStoredSongOffset; // 0x330 - song offset?
     ObjectDir *mNeutralSkelDir; // 0x334
     CharServoBone *mSkeletonBones; // 0x338
-    ObjPtr<RndMesh> mCrewCardMesh; // 0x33c
+    ObjPtr<RndMesh> mCrewCard; // 0x33c
     bool mUseCameraSkeleton; // 0x350
 };
