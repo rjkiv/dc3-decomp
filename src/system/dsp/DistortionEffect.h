@@ -20,5 +20,5 @@ public:
     void Reset();
 
 private:
-    float unk0;
+    float mDrive;
 };

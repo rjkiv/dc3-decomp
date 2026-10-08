@@ -163,15 +163,15 @@ namespace {
         return gPendingResponse == prot;
     }
 
-    void CheckInput(bool b) {
-        if (CheckForResponse(Holmes::kPollKeyboard, b)) {
+    void CheckInput(bool isPolling) {
+        if (CheckForResponse(Holmes::kPollKeyboard, isPolling)) {
             BeginCmd(Holmes::kPollKeyboard, true);
             gInput.LoadKeyboard(*gHolmesStream);
             gPendingResponse = Holmes::kInvalidOpcode;
             EndCmd(Holmes::kPollKeyboard);
         }
 
-        if (CheckForResponse(Holmes::kPollJoypad, b)) {
+        if (CheckForResponse(Holmes::kPollJoypad, isPolling)) {
             BeginCmd(Holmes::kPollJoypad, true);
             gInput.LoadJoypad(*gHolmesStream);
             gPendingResponse = Holmes::kInvalidOpcode;
@@ -179,9 +179,9 @@ namespace {
         }
     };
 
-    bool CheckReads(bool b) {
+    bool CheckReads(bool isPolling) {
         FOREACH (it, gRequests) {
-            if (!CheckForResponse(Holmes::kReadFile, b)) {
+            if (!CheckForResponse(Holmes::kReadFile, isPolling)) {
                 return false;
             }
             BeginCmd(Holmes::kReadFile, false);
@@ -752,10 +752,10 @@ void HolmesClientSendMessage(const Message &msg) {
     }
 }
 
-void HolmesToLocal(char *p1, const char *p2) {
+void HolmesToLocal(char *out, const char *file) {
     String path;
-    path = HolmesXboxPath(gServerName.c_str(), p2);
-    strcpy(p1, path.c_str());
+    path = HolmesXboxPath(gServerName.c_str(), file);
+    strcpy(out, path.c_str());
 }
 
 void HolmesClientPoll() {

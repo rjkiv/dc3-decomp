@@ -23,7 +23,7 @@ void MakeDir(const char *dir) {
 // returns true if it could successfully copy to the devkit drive, false if not
 bool BinkMovieImpl::PlatformCacheFile(const char *file) {
 	// if we are running off disc or some other unknown condition, do nothing
-    if (UsingCD() || unk18) {
+    if (UsingCD() || mPreload) {
         return true;
     }
 	

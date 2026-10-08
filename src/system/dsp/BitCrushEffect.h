@@ -19,8 +19,8 @@ public:
     void Reset();
 
 private:
-    float unk0;
-    int unk4;
-    float unk8;
-    float unkc;
+    float mAmount; // 0x0
+    int mSamplesLeftToHold; // 0x4
+    float mHoldSample1; // 0x8
+    float mHoldSample2; // 0xC
 };

@@ -1081,7 +1081,7 @@ float MoveDir::UpdateOverlay(RndOverlay *overlay, float f2) {
                         Hmx::Rect r49e0(f45, f35, f36, f35 + sFloat - f35);
                         const Ham1NodeWeight &wt =
                             mf->NodeWeightHam1(n, moveMode, mirrored);
-                        if (wt.unk0) {
+                        if (wt.mHasError) {
                             float green = 1 - it->BestNodeError(n).x;
                             Hmx::Color c4a30(green * -1 + 1, green, green * 0, 1);
                             TheRnd.DrawRectScreen(r49e0, c4a30, nullptr, nullptr, nullptr);
@@ -1980,7 +1980,7 @@ void MoveDir::PostUpdateFilters() {
                                         curFrame->GetMoveFrame()->NodeWeightHam1(
                                             n, moveMode, curFrame->Mirror()
                                         );
-                                    if (wt.unk0) {
+                                    if (wt.mHasError) {
                                         ErrorNode *node = errorNodes[n];
                                         float f34 = curFrame->BestNodeError(n).x;
                                         int limbs = node->GetFeedbackLimbs();

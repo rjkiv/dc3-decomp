@@ -8,10 +8,10 @@
 class Splash {
 public:
     enum SplashState {
-        s0,
+        kInvalid,
         kSuspending = 1,
         kSuspended = 2,
-        s3,
+        kResumingTest,
         kResuming = 4,
         kResumed = 5,
         kWaitingForTerminating = 6,
@@ -46,24 +46,24 @@ public:
     int mSplashTime; // 0x8
     bool mWaitForSplash; // 0xc
     std::list<ScreenParams> mScreens; // 0x10
-    Timer unk18;
-    RndDir *unk48;
-    RndCam *unk4c;
-    TexMovie *unk50;
-    EventTrigger *unk54;
-    int unk58;
-    bool unk5c;
+    Timer mTimer; // 0x18
+    RndDir *mActiveSplash; // 0x48
+    RndCam *mActiveCam; // 0x4C
+    TexMovie *mActiveMovie; // 0x50
+    EventTrigger *mActiveTrigger; // 0x54
+    int mLastMovieFrame; // 0x58
+    bool mDrawn; // 0x5C
     int mSuspendCount; // 0x60
-    bool unk64;
+    bool /* const */ mThreadedSplash; // 0x64
     DWORD mSplashThreadID; // 0x68
-    CriticalSection unk6c;
+    CriticalSection mStateCrit; // 0x6C
     SynchronizationEvent unk8c; // 0x8c
     SynchronizationEvent unk90; // 0x90
     SplashState mState; // 0x94
-    CriticalSection unk98;
+    CriticalSection mPrepareCrit; // 0x98
     std::list<PreparedScreenParams> mPreparedScreens; // 0xb8
-    std::list<RndDir *> unkc0;
-    Timer unk_0xC8;
+    std::list<RndDir *> mPastScreens;
+    Timer mMainThreadRedraw; // 0xC8
     void *mThreadStack;
 
 protected:

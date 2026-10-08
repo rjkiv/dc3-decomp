@@ -227,9 +227,9 @@ void Ham1EuclideanNode::CalcError(
         );
     }
     ScaleOp op;
-    op.mPerfectDist = node_input.mNodeWeight->unk4;
+    op.mPerfectDist = node_input.mNodeWeight->mPerfectDist;
     op.mType = kErrorScaleDistSq;
-    op.mRate = node_input.mNodeWeight->unk8;
+    op.mRate = node_input.mNodeWeight->mRate;
     Vector3 tmp;
     Scale(vToProcess, diff, tmp);
     vout.x = ScaleDistToError(op, Length(tmp));
@@ -377,8 +377,8 @@ void Ham1DisplacementNode::Errors(
         float u18 = ham1DispData.unk18;
         ScaleOp op;
         op.mType = kErrorScaleDistSq;
-        op.mPerfectDist = node_input.mNodeWeight->unkc;
-        op.mRate = node_input.mNodeWeight->unk10;
+        op.mPerfectDist = node_input.mNodeWeight->mAnglePerfectDist;
+        op.mRate = node_input.mNodeWeight->mAngleRate;
         float len = Length(ham1DispData.unk4);
         errorData.unk4 = ScaleDistToError(mPotentialAngleOp, ham1DispData.unk0);
         MinEq(errorData.unk4, 1.0f);
@@ -394,8 +394,8 @@ void Ham1DisplacementNode::Errors(
             f6 = f2 + 1;
         }
         op.mType = kErrorScaleDistSq;
-        op.mPerfectDist = node_input.mNodeWeight->unk4;
-        op.mRate = node_input.mNodeWeight->unk8;
+        op.mPerfectDist = node_input.mNodeWeight->mPerfectDist;
+        op.mRate = node_input.mNodeWeight->mRate;
         errorData.unk0 = ScaleDistToError(op, f6);
     }
 }

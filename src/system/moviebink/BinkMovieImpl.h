@@ -79,29 +79,29 @@ private:
     /** The movie's name. */
     String mName; // 0xc
     BINK *mBink; // 0x14
-    bool unk18;
+    bool mPreload; // 0x18
     void *mPreloadBuf; // 0x1c
     int mBufferSize; // 0x20
-    bool unk24;
-    bool unk25;
-    bool unk26;
-    bool unk27;
-    bool unk28;
+    bool mOwnPreloadBuf; // 0x24
+    bool mPreloadFromFile; // 0x25
+    bool mLoop; // 0x26
+    bool mMute; // 0x27
+    bool mFillWidth; // 0x28
     float mAspect; // 0x2c
-    Hmx::Rect unk30; // 0x30
-    int unk40;
+    Hmx::Rect mRect; // 0x30
+    int mFrameNum; // 0x40
     int mWidth; // 0x44
     int mHeight; // 0x48
     bool mPaused; // 0x4c
-    Timer unk50;
-    Timer unk80;
-    int unkb0;
-    int unkb4;
-    void *unkb8; // 0xb8 - file handle, retrieved from mName
+    Timer mPerfTimer; // 0x50
+    Timer mBinkTimer; // 0x80
+    int mTargetFrame; // 0xB0
+    int mTargetBuf; // 0xB4
+    void *mBinkHandle; // 0xb8 - file handle, retrieved from mName
     std::map<void *, String> unkbc; // 0xbc - key = loader ptr, val = loader file?
-    bool unkd4;
-    bool unkd5; // 0xd5 - mMidFrame?
-    bool unkd6;
+    bool mLoadPending; // 0xD4
+    bool mMidFrame; // 0xD5 - mMidFrame?
+    bool mAsync; // 0xD6
     DWORD mThreadId; // 0xd8
     int mLocalizationTrack; // 0xdc
     int mVolume; // 0xe0

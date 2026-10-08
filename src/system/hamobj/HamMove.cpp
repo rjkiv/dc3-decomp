@@ -24,25 +24,25 @@
 float HamMove::sMinFrameDistBeats = 0.2;
 
 BinStream &operator<<(BinStream &bs, const Ham1NodeWeight &wt) {
-    bs << wt.unk4 << wt.unk8 << wt.unkc << wt.unk10 << wt.unk0;
+    bs << wt.mPerfectDist << wt.mRate << wt.mAnglePerfectDist << wt.mAngleRate << wt.mHasError;
     return bs;
 }
 
 BinStream &operator>>(BinStreamRev &d, Ham1NodeWeight &wt) {
-    d >> wt.unk4;
-    d >> wt.unk8;
-    d >> wt.unkc;
-    d >> wt.unk10;
+    d >> wt.mPerfectDist;
+    d >> wt.mRate;
+    d >> wt.mAnglePerfectDist;
+    d >> wt.mAngleRate;
     if (d.rev > 39) {
-        d >> wt.unk0;
+        d >> wt.mHasError;
     } else if (d.rev > 32) {
         float f1;
         d >> f1;
-        wt.unk0 = f1 != 0;
+        wt.mHasError = f1 != 0;
     } else if (d.rev > 24) {
-        d >> wt.unk0;
+        d >> wt.mHasError;
     } else
-        wt.unk0 = 1;
+        wt.mHasError = 1;
     return d.stream;
 }
 
@@ -261,11 +261,11 @@ void MoveFrame::Load(BinStreamRev &d) {
                     if (k < curOldWeights.size()) {
                         OldNodeWeight &cur = curOldWeights[k];
                         Ham1NodeWeight &curHam1 = mHam1NodeWeights[i][j][k];
-                        curHam1.unk0 = cur.unk0 != 0;
-                        curHam1.unkc = cur.unkc;
-                        curHam1.unk10 = cur.unk10;
-                        curHam1.unk4 = cur.unk4;
-                        curHam1.unk8 = cur.unk8;
+                        curHam1.mHasError = cur.unk0 != 0;
+                        curHam1.mAnglePerfectDist = cur.unkc;
+                        curHam1.mAngleRate = cur.unk10;
+                        curHam1.mPerfectDist = cur.unk4;
+                        curHam1.mRate = cur.unk8;
                     }
                 }
             }

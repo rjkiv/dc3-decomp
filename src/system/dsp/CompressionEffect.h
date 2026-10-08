@@ -41,20 +41,20 @@ public:
     void SetParameters(const CompressionEffect::Params &);
 
 private:
-    float unk0;
-    float unk4;
-    float unk8;
-    float unkc;
-    float unk10;
-    float unk14;
-    float unk18;
-    float unk1c;
-    float unk20;
-    float unk24;
-    float unk28;
-    float unk2c;
-    float unk30;
-    float unk34;
-    float unk38;
-    float unk3c;
+    float mThreshold; // 0x0
+    float mThresholdDB; // 0x4
+    float mMakeupGain; // 0x8
+    float mCompRatio; // 0xC
+    float mOutputLevel; // 0x10
+    float mAttackDelta; // 0x14
+    float mReleaseDelta; // 0x18
+    float mExpRatio; // 0x1C
+    float mExpAttackDelta; // 0x20
+    float mExpReleaseDelta; // 0x24
+    float mGateThresholdDB; // 0x28
+    float mDynamicGateThreshold; // 0x2C
+    float mGateThreshold; // 0x30
+    float mClipAttenuation; // 0x34
+    float mEnvState; // 0x38
+    float mExpEnvState; // 0x3C
 };

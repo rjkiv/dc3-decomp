@@ -2,10 +2,10 @@
 #include "os/Debug.h"
 
 BitCrushEffect::BitCrushEffect(IXAudioBatchAllocator *)
-    : unk0(0), unk4(0), unk8(0), unkc(0) {}
+    : mAmount(0), mSamplesLeftToHold(0), mHoldSample1(0), mHoldSample2(0) {}
 
 void BitCrushEffect::SetParameters(const BitCrushEffect::Params &params) {
-    unk0 = params.amount;
+    mAmount = params.amount;
 }
 
 void BitCrushEffect::Process(float *fptr, int i1, int numChans) {
@@ -13,17 +13,17 @@ void BitCrushEffect::Process(float *fptr, int i1, int numChans) {
     float *fcur = fptr;
     float *fitr = fptr + 1;
     for (int i = 0; i < i1; i++, fcur += numChans, fitr += 2) {
-        if (unk4 > 0) {
-            *fcur = unk8;
+        if (mSamplesLeftToHold > 0) {
+            *fcur = mHoldSample1;
             if (numChans == 2) {
-                *fitr = unkc;
+                *fitr = mHoldSample2;
             }
-            unk4--;
+            mSamplesLeftToHold--;
         } else {
-            unk4 = (int)unk0;
-            unk8 = *fcur;
+            mSamplesLeftToHold = (int)mAmount;
+            mHoldSample1 = *fcur;
             if (numChans == 2) {
-                unkc = *fitr;
+                mHoldSample2 = *fitr;
             }
         }
     }
