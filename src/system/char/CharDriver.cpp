@@ -461,54 +461,73 @@ CharClip *CharDriver::FindClip(const DataNode &n, bool notify) {
     return clip;
 }
 
-float CharDriver::Display(float f1) {
+float CharDriver::Display(float top) {
     CharClipDisplay::Init(Dir());
-    std::vector<CharClipDisplay> displays;
-    for (CharClipDriver *it = mFirst; it != nullptr; it = it->Next()) {
-        CharClipDisplay disp;
-        displays.push_back(disp);
-        displays.back().unk1c = it->mBeat;
-        displays.back().SetClip(it->GetClip(), false);
-        displays.back().unk20 = it->mBlendFrac;
+    std::vector<CharClipDisplay> clips;
+    for (CharClipDriver *d = mFirst; d != nullptr; d = d->Next()) {
+        clips.push_back(CharClipDisplay());
+        clips.back().SetBeat(d->mBeat);
+        clips.back().SetClip(d->GetClip(), false);
+        clips.back().SetWeight(d->mBlendFrac);
     }
     float lineSpacing = CharClipDisplay::LineSpacing();
-    float f20 = (float)displays.size() * lineSpacing + TheRnd.Height() * f1;
-    for (int i = 0; i < displays.size(); i++) {
-        displays[i].unk18 = -(i * lineSpacing - f20);
-    }
+    float y = clips.size() * lineSpacing + TheRnd.Height() * top;
+    for (int i = 0; i < clips.size(); i++)
+        clips[i].SetTop(y - i * lineSpacing);
     Hmx::Object *src = CharClipDisplay::FindSource(this);
+    y = (((src != nullptr) + 1) * lineSpacing + y) / TheRnd.Height();
     TheRnd.DrawRectScreen(
-        Hmx::Rect(
-            0, f1, 1, ((src ? 1 : 2) * lineSpacing + f20 / (float)TheRnd.Height()) - f1
-        ),
-        Hmx::Color(0, 0, 0),
-        nullptr,
-        nullptr,
-        nullptr
+        Hmx::Rect(0, top, 1, y - top), Hmx::Color(0, 0, 0, 0.5f), nullptr, nullptr, nullptr
     );
-    float oldBeat = mOldBeat;
     TheRnd.DrawString(
-        MakeString("%s %s, beat: %.2f", Dir()->Name(), PathName(this), oldBeat),
-        Vector2(CharClipDisplay::GetSEm(), TheRnd.Height() * f1 + lineSpacing * 0.1f),
+        MakeString("%s %s, beat: %.2f", Dir()->Name(), PathName(this), Beat()),
+        Vector2(CharClipDisplay::Em(), TheRnd.Height() * top + lineSpacing * 0.1f),
         Hmx::Color(1, 1, 1),
         true
     );
-    for (int i = 0; i < displays.size(); i++) {
-        displays[i].DrawTrack();
+    for (int i = 0; i < clips.size(); i++)
+        clips[i].DrawTrack();
+    int n = 0;
+    for (CharClipDriver *d = mFirst; d != nullptr && d->Next() != nullptr;
+         d = d->Next(), n++) {
+        CharClipDriver *next = d->Next();
+        CharClipDisplay &from = clips[n];
+        CharClipDisplay &to = clips[n + 1];
+        CharClip::NodeVector *nodes =
+            next->GetClip()->GetTransitions().FindNodes(d->GetClip());
+        if (nodes) {
+            for (int i = 0; i < nodes->size; i++) {
+                int toOffset = 0;
+                int fromOffset = 0;
+                Vector2 p;
+                p.x = to.GetX(nodes->nodes[i].curBeat);
+                for (int j = 0; j < i; j++) {
+                    if (std::fabs(p.x - to.GetX(nodes->nodes[j].curBeat)) < 8)
+                        toOffset += 11;
+                }
+                p.y = toOffset + to.GetY() + 1;
+                TheRnd.DrawString(MakeString("%d", i), p, Hmx::Color(1, 0, 0), true);
+                p.x = from.GetX(nodes->nodes[i].nextBeat);
+                for (int j = 0; j < i; j++) {
+                    if (std::fabs(p.x - from.GetX(nodes->nodes[j].nextBeat)) < 8)
+                        fromOffset += 11;
+                }
+                p.y = from.GetY() - 14 - fromOffset;
+                TheRnd.DrawString(MakeString("%d", i), p, Hmx::Color(1, 0, 0), true);
+            }
+        }
+        to.DrawBlend(next->mBeat + d->mRampIn, d->mBlendWidth);
+        from.DrawBlend(Min(0.0f, d->mRampIn) + d->mBeat, d->mBlendWidth);
     }
-    for (CharClipDriver *d = mFirst; d != nullptr; d = d->Next()) {
-        // ...
-    }
-    for (int i = 0; i < displays.size(); i++) {
-        displays[i].DrawCursor();
-    }
+    for (int i = 0; i < clips.size(); i++)
+        clips[i].DrawCursor();
     if (src) {
         static Message msg("debug_draw", 2.0f, 2.0f);
-        msg[0] = displays[0].unk18 + lineSpacing;
+        msg[0] = clips[0].GetY() + lineSpacing;
         msg[1] = TheTaskMgr.Beat();
         src->Handle(msg, false);
     }
-    return 0;
+    return y;
 }
 
 DataNode CharDriver::OnSetFirstBeatOffset(DataArray *msg) {

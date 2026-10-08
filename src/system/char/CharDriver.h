@@ -49,6 +49,7 @@ public:
     ObjectDir *ClipDir() const { return mClips; }
     CharBonesObject *GetBones() const { return mBones; }
     CharClipDriver *First() { return mFirst; }
+    float Beat() const { return mOldBeat; }
     CharClipGroup *LastPlayedGroup() const { return mLastPlayedGroup; }
     void SetBlendWidth(float w) { mBlendWidth = w; }
     CharClip *FirstClip();

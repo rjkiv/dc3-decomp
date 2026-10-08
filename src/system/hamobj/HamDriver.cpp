@@ -89,7 +89,7 @@ float HamDriver::Display(float f1) {
     float scaledHeight = TheRnd.Height() * f1;
     auto pathName = PathName(this);
     Hmx::Color color(1.0f, 1.0f, 1.0f, 1.0f);
-    Vector2 screenPos(CharClipDisplay::GetSEm(), scaledHeight);
+    Vector2 screenPos(CharClipDisplay::Em(), scaledHeight);
     TheRnd.DrawString(
         MakeString("%s beat: %.2f", pathName, unk78), screenPos, color, true
     );
@@ -131,15 +131,14 @@ float HamDriver::DisplayRecurse(Layer *layer, int i, float f) {
     LayerArray *array = dynamic_cast<LayerArray *>(layer);
     if (array) {
         if (array->unk8 != 0) {
-            float sem = i * CharClipDisplay::GetSEm();
+            float sem = i * CharClipDisplay::Em();
             CharClipDisplay display;
-            display.unk18 = f;
-            display.unk1c = unk78;
-            display.mText[0] = 0;
-            display.unk64 = sem;
+            display.mTop = f;
+            display.mBeat = unk78;
+            display.mIndent = sem;
             display.SetText(MakeString("(%s)", array->unkc));
             display.SetStartEnd(unk78 - 4.0f, unk78 + 4.0f, true);
-            display.unk20 = array->unk8;
+            display.mWeight = array->unk8;
             display.DrawTrack();
             display.DrawBlend(array->unk4, 1.0f);
             display.DrawCursor();
@@ -152,15 +151,14 @@ float HamDriver::DisplayRecurse(Layer *layer, int i, float f) {
     } else {
         LayerClip *clip = dynamic_cast<LayerClip *>(layer);
         if (clip && clip->unk8 != 0) {
-            float sem = i * CharClipDisplay::GetSEm();
+            float sem = i * CharClipDisplay::Em();
             CharClipDisplay display;
-            display.mText[0] = 0;
             float beat = (unk78 - clip->unkc) + clip->unk10->StartBeat();
-            display.unk64 = sem;
-            display.unk1c = beat;
-            display.unk20 = clip->unk8;
+            display.mIndent = sem;
+            display.mBeat = beat;
+            display.mWeight = clip->unk8;
             display.SetClip(clip->unk10, true);
-            display.unk18 = f;
+            display.mTop = f;
             display.DrawTrack();
             float beat2 = (clip->unk10->StartBeat() + clip->unk4) - clip->unkc;
             display.DrawBlend(beat2, 1.0f);

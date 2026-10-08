@@ -18,16 +18,16 @@ static const float sDisplayFloat = 2;
 
 float CharClipDisplay::GetX(float f1) const {
     float f2;
-    if (unk10 > unkc) {
-        f2 = unk10 - unkc;
+    if (mRight > mLeft) {
+        f2 = mRight - mLeft;
     } else {
         f2 = 1;
     }
-    float f3 = unk64 + unk14 + sEm * 3.0f;
-    return ((TheRnd.Width() - sEm * 3.0f) - f3) * ((f1 - unkc) / f2) + f3;
+    float f3 = mIndent + mTextWidth + sEm * 3.0f;
+    return ((TheRnd.Width() - sEm * 3.0f) - f3) * ((f1 - mLeft) / f2) + f3;
 }
 
-void CharClipDisplay::GetXY(Vector2 &v, float f1) const { v.Set(GetX(f1), unk18); }
+void CharClipDisplay::GetXY(Vector2 &v, float f1) const { v.Set(GetX(f1), mTop); }
 
 void CharClipDisplay::DrawBeatString(char const *c, float f1, const Hmx::Color &color) {
     Vector2 xy;
@@ -48,25 +48,25 @@ void CharClipDisplay::DrawBeatString(float f1, const Hmx::Color &c) {
 void CharClipDisplay::DrawCursor() {
     Hmx::Color yellow(1, 1, 0);
     Vector2 v38;
-    GetXY(v38, unk1c);
+    GetXY(v38, mBeat);
     TheRnd.DrawRect(Hmx::Rect(v38.x, v38.y - 3, 1, 9), yellow, nullptr, nullptr, nullptr);
     const char *str;
-    if (unk20 < 1) {
-        str = MakeString("%.1f (%.2f)", unk1c, unk20);
+    if (mWeight < 1) {
+        str = MakeString("%.1f (%.2f)", mBeat, mWeight);
     } else {
-        str = MakeString("%.1f", unk1c);
+        str = MakeString("%.1f", mBeat);
     }
-    DrawBeatString(str, unk1c, yellow);
+    DrawBeatString(str, mBeat, yellow);
 }
 
 void CharClipDisplay::DrawBlend(float f1, float f2) {
-    Hmx::Rect r(0, unk18 + 1, 0, sDisplayFloat);
+    Hmx::Rect r(0, mTop + 1, 0, sDisplayFloat);
     r.x = GetX(f1);
     float sub = GetX(f1 + f2) - r.x;
     Hmx::Color c(0, 0, 1, 0.4f);
     r.w = sub;
     TheRnd.DrawRect(r, c, nullptr, nullptr, nullptr);
-    r.y = unk18 - 1;
+    r.y = mTop - 1;
     r.h = 4;
     r.w = 3;
     r.x = GetX(f2 / 2.0f + f1) - 1;
@@ -74,32 +74,32 @@ void CharClipDisplay::DrawBlend(float f1, float f2) {
 }
 
 void CharClipDisplay::SetStartEnd(float f1, float f2, bool b3) {
-    unk4 = f1;
-    unk8 = f2;
-    unkc = f1;
-    unk10 = f2;
+    mStart = f1;
+    mEnd = f2;
+    mLeft = f1;
+    mRight = f2;
     float div = 16.0f / sZoom;
     if (b3) {
         float em3 = sEm * 3.0f;
         float w = TheRnd.Width();
-        float fvar1 = unk64 + unk14 + em3;
-        unkc = unk1c - ((w / 2.0f - fvar1) * div) / w;
-        unk10 = (((w - em3) - fvar1) * div) / TheRnd.Width() + unkc;
+        float fvar1 = mIndent + mTextWidth + em3;
+        mLeft = mBeat - ((w / 2.0f - fvar1) * div) / w;
+        mRight = (((w - em3) - fvar1) * div) / TheRnd.Width() + mLeft;
     } else if (f2 - f1 > div) {
         float fvar3 = div / 2;
-        if (unk1c < fvar3 + f1) {
-            unk10 = div + f1;
+        if (mBeat < fvar3 + f1) {
+            mRight = div + f1;
         } else {
-            if (unk1c > f2 - fvar3) {
-                unkc = f2 - div;
+            if (mBeat > f2 - fvar3) {
+                mLeft = f2 - div;
             } else {
-                unkc = unk1c - fvar3;
-                unk10 = fvar3 + unk1c;
+                mLeft = mBeat - fvar3;
+                mRight = fvar3 + mBeat;
             }
         }
     } else if (f2 == f1) {
-        unkc = f1 - div / 2;
-        unk10 = f2 + div / 2;
+        mLeft = f1 - div / 2;
+        mRight = f2 + div / 2;
     }
 }
 
@@ -114,13 +114,13 @@ void CharClipDisplay::DrawTrack() {
     Hmx::Color green(0, 1, 0);
     Hmx::Color black(0, 0, 0);
     Hmx::Color red(1, 0, 0);
-    float unk18Proxy = unk18;
-    float f19 = -(sEm / 2 - unk18Proxy);
-    float start = Max(unkc, unk4);
-    float end = Min(unk10, unk8);
+    float topProxy = mTop;
+    float f19 = -(sEm / 2 - topProxy);
+    float start = Max(mLeft, mStart);
+    float end = Min(mRight, mEnd);
     Hmx::Rect firstRect;
     firstRect.x = GetX(start);
-    firstRect.y = unk18;
+    firstRect.y = mTop;
     firstRect.w = GetX(end) - firstRect.x;
     firstRect.h = 3;
     TheRnd.DrawRect(firstRect, white, nullptr, nullptr, nullptr);
@@ -130,7 +130,7 @@ void CharClipDisplay::DrawTrack() {
     if (f18 + 1 != f18) {
         for (; f18 <= f17; f18 += 1) {
             Hmx::Rect r;
-            r.y = unk18Proxy - 3;
+            r.y = topProxy - 3;
             r.h = 9;
             r.x = GetX(f18);
             r.w = 1;
@@ -145,19 +145,19 @@ void CharClipDisplay::DrawTrack() {
             float xBeat = GetX(cur.beat);
             float emdiv = sEm / 2;
             TheRnd.DrawRect(
-                Hmx::Rect(xBeat, unk18Proxy - emdiv, 1, 0.2f),
+                Hmx::Rect(xBeat, topProxy - emdiv, 1, 0.2f),
                 Hmx::Color(0.2f, 0.2f, 1),
                 nullptr,
                 nullptr,
                 nullptr
             );
             if (b1
-                && (cur.beat > unk1c
-                    || (i == 0 && unk1c > mClip->BeatEvents().back().beat))) {
+                && (cur.beat > mBeat
+                    || (i == 0 && mBeat > mClip->BeatEvents().back().beat))) {
                 b1 = false;
                 TheRnd.DrawString(
                     cur.event.Str(),
-                    Vector2(xBeat, unk18Proxy - (10.0f + emdiv)),
+                    Vector2(xBeat, topProxy - (10.0f + emdiv)),
                     Hmx::Color(0.2f, 0.2f, 1),
                     true
                 );
@@ -167,7 +167,7 @@ void CharClipDisplay::DrawTrack() {
         CharIKFoot *rightIk = sDir->Find<CharIKFoot>("right.ikfoot", false);
         if (!leftIk && !rightIk) {
             float fx;
-            Hmx::Rect r(0, unk18Proxy + 1, 1, 1);
+            Hmx::Rect r(0, topProxy + 1, 1, 1);
             int startSample = mClip->BeatToSample(start, &fx);
             int endSample = mClip->BeatToSample(end, &fx);
             for (; startSample <= endSample; startSample++) {
@@ -182,46 +182,43 @@ void CharClipDisplay::DrawTrack() {
                     CharBones::ChannelName(data->Name(), CharBones::TYPE_POS);
                 void *channel = mClip->GetChannel(channelName);
                 float fdata[4];
-                mClip->EvaluateChannel(fdata, channel, unk1c);
+                mClip->EvaluateChannel(fdata, channel, mBeat);
                 Hmx::Color yellow(1, 1, 0);
-                float x1c = GetX(unk1c);
+                float x1c = GetX(mBeat);
                 if (leftIk) {
                     const char *dataStr =
                         MakeString("L: %.1f", fdata[leftIk->DataIndex()]);
-                    TheRnd.DrawString(
-                        dataStr, Vector2(x1c - 90, unk18 + 10), yellow, true
-                    );
+                    TheRnd.DrawString(dataStr, Vector2(x1c - 90, mTop + 10), yellow, true);
                 }
                 if (rightIk) {
                     const char *dataStr =
                         MakeString("R: %.1f", fdata[rightIk->DataIndex()]);
-                    TheRnd.DrawString(
-                        dataStr, Vector2(x1c - 40, unk18 + 10), yellow, true
-                    );
+                    TheRnd.DrawString(dataStr, Vector2(x1c - 40, mTop + 10), yellow, true);
                 }
             }
         }
         DrawBeatString(f11, green);
         DrawBeatString(end, green);
         TheRnd.DrawString(
-            MakeString("%.1f", unk4),
-            Vector2(-(sEm * 2 - (sEm * 3 + unk64 + unk14)), f19),
+            MakeString("%.1f", mStart),
+            Vector2(-(sEm * 2 - (sEm * 3 + mIndent + mTextWidth)), f19),
             white,
             true
         );
         TheRnd.DrawString(
-            MakeString("%.1f", unk8),
+            MakeString("%.1f", mEnd),
             Vector2(-(sEm * 3 - (float)TheRnd.Width()), f19),
             white,
             true
         );
     }
-    TheRnd.DrawString(mText, Vector2(sEm + unk64, f19), Hmx::Color(1, 1, 1), true);
+    TheRnd.DrawString(mText, Vector2(sEm + mIndent, f19), Hmx::Color(1, 1, 1), true);
 }
 
 void CharClipDisplay::SetText(const char *text) {
     strcpy(mText, text);
-    unk14 = TheRnd.DrawString(text, Vector2(0, 0), Hmx::Color(1.0f, 0.0f, 0.0f), false).x
+    mTextWidth =
+        TheRnd.DrawString(text, Vector2(0, 0), Hmx::Color(1.0f, 0.0f, 0.0f), false).x
         + sEm;
 }
 
