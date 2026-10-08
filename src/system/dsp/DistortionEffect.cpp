@@ -2,14 +2,14 @@
 #include "math/Utl.h"
 #include "os/Debug.h"
 
-DistortionEffect::DistortionEffect(IXAudioBatchAllocator *) : unk0(0) {}
+DistortionEffect::DistortionEffect(IXAudioBatchAllocator *) : mDrive(0) {}
 
 void DistortionEffect::Process(float *samples, int sampct, int numChans) {
     MILO_ASSERT(numChans <= 2, 27);
-    float first_peak = 1.0f - unk0; // unk0 some clipping cutoff?
+    float first_peak = 1.0f - mDrive; // mDrive some clipping cutoff?
     float min = 0.01f;
     float &p = first_peak < min ? min : first_peak;
-    float clipconst = unk0 / p * 2.0f;
+    float clipconst = mDrive / p * 2.0f;
     if (sampct <= 0)
         return;
     float cc2 = clipconst + 1.0f;
@@ -34,7 +34,7 @@ void DistortionEffect::Process(float *samples, int sampct, int numChans) {
 }
 
 void DistortionEffect::SetParameters(DistortionEffect::Params const &params) {
-    unk0 = params.drive * 0.01f;
+    mDrive = params.drive * 0.01f;
 }
 
 void DistortionEffect::Reset() {}
