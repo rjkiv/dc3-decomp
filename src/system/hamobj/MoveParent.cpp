@@ -10,7 +10,7 @@ MoveParent::MoveParent() {}
 MoveParent::MoveParent(const MoveParent *other) {
     mName = other->mName;
     mDifficulty = other->mDifficulty;
-    unkc = false;
+    mSuperEasy = false;
 }
 
 MoveParent::MoveParent(MoveGraph *graph, DataArray *arr) {
@@ -52,7 +52,7 @@ MoveParent::MoveParent(MoveGraph *graph, DataArray *arr) {
         MILO_ASSERT(pVariant, 0x44);
         mVariants.push_back(pVariant);
     }
-    unkc = false;
+    mSuperEasy = false;
 }
 
 MoveParent::~MoveParent() {
@@ -162,7 +162,7 @@ void MoveParent::Load(BinStream &bs, MoveGraph *graph) {
         bs >> era;
         mEraFlags.push_back(era);
     }
-    bs >> unkc;
+    bs >> mSuperEasy;
     String str;
     bs >> str;
     bs >> numFlags;

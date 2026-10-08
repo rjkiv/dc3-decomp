@@ -705,7 +705,7 @@ void MoveMgr::LoadSubCategoryData() {
     FOREACH (it, mMoveGraph.MoveParents()) {
         MoveParent *cur = it->second;
         if (IsSuperEasyMove(cur->Name())) {
-            cur->SetUnkc(true);
+            cur->SetSuperEasy(true);
         }
         for (int i = 0; i < it->second->mGenreFlags.size(); i++) {
             map70[it->second->mGenreFlags[i]]++;

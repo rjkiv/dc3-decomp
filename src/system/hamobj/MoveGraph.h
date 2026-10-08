@@ -84,14 +84,14 @@ public:
         return mNextAdjacents;
     }
     void AddVariant(MoveVariant *v) { mVariants.push_back(v); }
-    void SetUnkc(bool b) { unkc = b; }
+    void SetSuperEasy(bool b) { mSuperEasy = b; }
 
 private:
     void PopulateAdjacentParents();
 
     Symbol mName; // 0x4
     Difficulty mDifficulty; // 0x8
-    bool unkc; // 0xc
+    bool mSuperEasy; // 0xc
     std::vector<MoveVariant *> mVariants; // 0x10
     std::vector<Symbol> mGenreFlags; // 0x1c
     std::vector<Symbol> mEraFlags; // 0x28
