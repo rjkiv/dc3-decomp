@@ -163,15 +163,15 @@ namespace {
         return gPendingResponse == prot;
     }
 
-    void CheckInput(bool b) {
-        if (CheckForResponse(Holmes::kPollKeyboard, b)) {
+    void CheckInput(bool isPolling) {
+        if (CheckForResponse(Holmes::kPollKeyboard, isPolling)) {
             BeginCmd(Holmes::kPollKeyboard, true);
             gInput.LoadKeyboard(*gHolmesStream);
             gPendingResponse = Holmes::kInvalidOpcode;
             EndCmd(Holmes::kPollKeyboard);
         }
 
-        if (CheckForResponse(Holmes::kPollJoypad, b)) {
+        if (CheckForResponse(Holmes::kPollJoypad, isPolling)) {
             BeginCmd(Holmes::kPollJoypad, true);
             gInput.LoadJoypad(*gHolmesStream);
             gPendingResponse = Holmes::kInvalidOpcode;
@@ -179,9 +179,9 @@ namespace {
         }
     };
 
-    bool CheckReads(bool b) {
+    bool CheckReads(bool isPolling) {
         FOREACH (it, gRequests) {
-            if (!CheckForResponse(Holmes::kReadFile, b)) {
+            if (!CheckForResponse(Holmes::kReadFile, isPolling)) {
                 return false;
             }
             BeginCmd(Holmes::kReadFile, false);
