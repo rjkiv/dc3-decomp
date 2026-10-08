@@ -264,7 +264,7 @@ void MoveFrame::Load(BinStreamRev &d) {
                         curHam1.mHasError = cur.unk0 != 0;
                         curHam1.mAnglePerfectDist = cur.unkc;
                         curHam1.mAngleRate = cur.unk10;
-                        curHam1.mHasError = cur.unk4;
+                        curHam1.mPerfectDist = cur.unk4;
                         curHam1.mRate = cur.unk8;
                     }
                 }

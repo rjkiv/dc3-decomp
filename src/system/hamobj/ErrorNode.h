@@ -79,11 +79,11 @@ struct ErrorFrameInput {
 
 // Ham1NodeWeight size: 0x14
 struct Ham1NodeWeight {
-    bool mHasError;
-    float mPerfectDist; // seen this assigned to ScaleOp's mPerfectDist
-    float mRate; // seen this assigned to ScaleOp's mRate
-    float mAnglePerfectDist; // seen this assigned to ScaleOp's mPerfectDist
-    float mAngleRate; // seen this assigned to ScaleOp's mRate
+    bool mHasError; // 0x0
+    float mPerfectDist; // 0x4
+    float mRate; // 0x8
+    float mAnglePerfectDist; // 0xC
+    float mAngleRate; // 0x10
 };
 
 // Ham2FrameWeight size: 0x24
