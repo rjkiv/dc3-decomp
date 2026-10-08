@@ -752,10 +752,10 @@ void HolmesClientSendMessage(const Message &msg) {
     }
 }
 
-void HolmesToLocal(char *p1, const char *p2) {
+void HolmesToLocal(char *out, const char *file) {
     String path;
-    path = HolmesXboxPath(gServerName.c_str(), p2);
-    strcpy(p1, path.c_str());
+    path = HolmesXboxPath(gServerName.c_str(), file);
+    strcpy(out, path.c_str());
 }
 
 void HolmesClientPoll() {

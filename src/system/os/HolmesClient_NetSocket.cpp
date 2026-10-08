@@ -18,7 +18,7 @@ NetAddress HolmesClient::PlatformResolveIP() {
     return addr;
 }
 
-BinStream *HolmesClient::PlatformCreateServerStream(bool b1, const char *cc2) {
+BinStream *HolmesClient::PlatformCreateServerStream(bool iHolmesOptional, const char *iHolmesShare) {
     std::vector<String> names;
     String curName = HolmesFileHostName();
     if (!curName.empty()) {
@@ -37,7 +37,7 @@ BinStream *HolmesClient::PlatformCreateServerStream(bool b1, const char *cc2) {
         names.push_back(curName);
     }
     if (names.size() == 0) {
-        if (b1) {
+        if (iHolmesOptional) {
             return nullptr;
         } else {
             MILO_FAIL(
@@ -55,16 +55,16 @@ BinStream *HolmesClient::PlatformCreateServerStream(bool b1, const char *cc2) {
     while (true) {
         i4++;
         if (i4 >= names.size()) {
-            if (b1) {
+            if (iHolmesOptional) {
                 return nullptr;
             }
             i4 = 0;
             Timer::Sleep(1000);
         }
-        HolmesSetFileShare(names[i4].c_str(), cc2);
+        HolmesSetFileShare(names[i4].c_str(), iHolmesShare);
         NetAddress addr = HolmesResolveIP();
         if (addr.GetIP() == 0) {
-            if (!b1) {
+            if (!iHolmesOptional) {
                 printf(
                     "\n\nCOULD NOT RESOLVE HOST ADDRESS '%s'\n\n", HolmesFileHostName()
                 );
@@ -76,7 +76,7 @@ BinStream *HolmesClient::PlatformCreateServerStream(bool b1, const char *cc2) {
             if (ret->Fail()) {
                 delete ret;
                 ret = nullptr;
-                if (!b1) {
+                if (!iHolmesOptional) {
                     printf(
                         "\n\nCOULD NOT CONNECT TO HOLMES ADDRESS '%s'\n\n",
                         HolmesFileHostName()
