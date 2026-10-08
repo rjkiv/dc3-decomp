@@ -127,7 +127,8 @@ private:
     std::vector<const MoveVariant *> unk134[2]; // 0x134
     Symbol unk14c; // 0x14c
     // indexed by number of players
-    std::vector<std::pair<const MoveVariant *, const MoveVariant *> > unk150[2]; // 0x150
+    std::vector<std::pair<const MoveVariant *, const MoveVariant *> >
+        unk150[2]; // 0x150 - routines?
     bool unk168; // 0x168
     std::vector<MoveChoiceSet> unk16c; // 0x16c
     std::vector<CategoryData> unk178; // 0x178 - genre data

@@ -486,13 +486,12 @@ void MoveMgr::UnRegisterSongLayout(SongLayout *sl) {
 }
 
 const std::pair<const MoveVariant *, const MoveVariant *> *
-MoveMgr::GetRoutineMeasure(int x, int y) const {
-    const std::vector<std::pair<const MoveVariant *, const MoveVariant *> > &vec =
-        unk150[(int)unk150[x].size() - x];
-    if (vec.size() <= y) {
+MoveMgr::GetRoutineMeasure(int player, int measure) const {
+    int idx = unk150[player].size() ? player : 0;
+    if (unk150[idx].size() <= measure) {
         return 0;
     }
-    return &vec[y];
+    return &unk150[idx][measure];
 }
 
 CategoryData MoveMgr::GetCategoryByName(Symbol name) {
@@ -559,19 +558,24 @@ void MoveMgr::LoadRoutineVariants(const DataArray *a) {
 }
 
 HamMove *MoveMgr::FindHamMoveFromName(Symbol name) const {
-    if (name == Symbol("") && TheHamDirector->GetMoveDir()) {
-        HamMove *move = TheHamDirector->GetMoveDir()->Find<HamMove>(name.Str(), false);
-        if (!move) {
-            move = TheHamDirector->MergerDir()->Find<HamMove>(name.Str(), false);
-            if (!move) {
-                MILO_NOTIFY(
-                    "MoveMgr::FindHamMoveFromName couldn't find a move for %s", name
-                );
-            }
-        }
-        return move;
+    if (name == Symbol("")) {
+        return nullptr;
     }
-    return nullptr;
+
+    MoveDir *moveDir = TheHamDirector->GetMoveDir();
+
+    if (!moveDir) {
+        return nullptr;
+    }
+
+    HamMove *move = moveDir->Find<HamMove>(name.Str(), false);
+    if (!move) {
+        move = TheHamDirector->MergerDir()->Find<HamMove>(name.Str(), false);
+        if (!move) {
+            MILO_NOTIFY("MoveMgr::FindHamMoveFromName couldn't find a move for %s", name);
+        }
+    }
+    return move;
 }
 
 CharClip *MoveMgr::FindCharClip(Symbol name) const {
@@ -718,4 +722,32 @@ void MoveMgr::LoadSubCategoryData() {
     FOREACH (it, map90) {
         unk19c.push_back(GetCategoryByName(it->first));
     }
+}
+
+void MoveMgr::FillRoutineFromReplacer(int x) {
+    FOREACH (it, unk40->MoveReplacers()) {
+        if (it->unk8) {
+            FOREACH (measure, it->mMeasures) {
+                mMoveParents[0][*measure] = it->unk8;
+            }
+        }
+    }
+    FillRoutineFromParents(x);
+}
+
+void MoveMgr::FillRoutineFromVerses(int x) {
+    FOREACH (it, unk40->SongSections()) {
+        int secLen = (it->mMeasureRange.end - it->mMeasureRange.start) + 1;
+        int patLen = (it->mPatternRange.end - it->mPatternRange.start) + 1;
+        MILO_ASSERT(patLen == secLen, 0x428);
+        for (int i = 0; i < it->unk14->mNumMoves; i++) {
+            int measureIdx = it->mMeasureRange.start + i;
+            int patternIdx = (it->mPatternRange.start + i) - 1;
+            if (patternIdx >= it->unk14->mElements.size() - 1) {
+                patternIdx = it->unk14->mElements.size() - 1;
+            }
+            mMoveParents[0][measureIdx] = it->unk14->mMoveParents[patternIdx];
+        }
+    }
+    FillRoutineFromParents(x);
 }

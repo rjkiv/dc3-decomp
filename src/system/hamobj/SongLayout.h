@@ -88,6 +88,7 @@ public:
 
     int NumReplacers() const { return mMoveReplacers.size(); }
     const std::vector<SongSection> &SongSections() const { return mSongSections; }
+    const std::vector<MoveReplacer> &MoveReplacers() const { return mMoveReplacers; }
 
     DataNode GetPatternName(int) const;
 
