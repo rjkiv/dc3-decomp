@@ -53,10 +53,10 @@ bool HamCharacter::sLoadVO = true;
 String mCampaignVO;
 
 HamCharacter::HamCharacter()
-    : mCampaignVOBank(0), mCampaignVODir(0), mFileMerger(0), unk2f8(0), mShowBox(0),
-      unk2fa(1), mEyes(this), mGender(kHamFemale), unk314(0), mPollWhenHidden(0),
-      mTexBlendersActive(1), mIKEffectors(this), unk330(0), mNeutralSkelDir(0),
-      mSkeletonBones(0), mCrewCardMesh(nullptr), mUseCameraSkeleton(0) {
+    : mCampaignVOBankDir(0), mCampaignVODir(0), mFileMerger(0), mIsBackup(0), mShowBox(0),
+      mOutfitLoaded(1), mEyes(this), mGender(kHamFemale), unk314(0), mPollWhenHidden(0),
+      mTexBlendersActive(1), mEffectors(this), mStoredSongOffset(0), mNeutralSkelDir(0),
+      mSkeletonBones(0), mCrewCard(nullptr), mUseCameraSkeleton(0) {
     mWaypoint = Hmx::Object::New<Waypoint>();
     mWaypoint->SetAngRadius(0);
     mWaypoint->SetRadius(36);
@@ -96,7 +96,7 @@ BEGIN_HANDLERS(HamCharacter)
     HANDLE_ACTION(set_blinking, SetBlinking(_msg->Int(2)))
     HANDLE_EXPR(crew_card_found, Find<RndMesh>(kCrewCardMeshName, false))
     HANDLE_ACTION(set_campaign_vo, SetCampaignVo(_msg->Str(2)))
-    HANDLE_EXPR(get_campaign_vo_bank, mCampaignVOBank)
+    HANDLE_EXPR(get_campaign_vo_bank, mCampaignVOBankDir)
     HANDLE(toggle_interests_overlay, OnToggleInterestDebugOverlay)
     HANDLE_SUPERCLASS(Character)
 END_HANDLERS
@@ -118,7 +118,7 @@ BEGIN_PROPSYNCS(HamCharacter)
     SYNC_PROP_MODIFY(
         tex_blenders_active, mTexBlendersActive, SetTexBlendersActive(mTexBlendersActive)
     )
-    SYNC_PROP_SET(crew_card_showing, CrewCardShowing(), SetCrewCardShowing(_val.Int()))
+    SYNC_PROP_SET(crew_card_showing, GetCrewCardShowing(), SetCrewCardShowing(_val.Int()))
     SYNC_PROP_SET(prop_0_showing, GetPropShowing(0), SetPropShowing(0, _val.Int()))
     SYNC_PROP_SET(prop_1_showing, GetPropShowing(1), SetPropShowing(1, _val.Int()))
     SYNC_PROP_SET(prop_2_showing, GetPropShowing(2), SetPropShowing(2, _val.Int()))
@@ -197,8 +197,8 @@ void HamCharacter::SyncObjects() {
             t->SetTransParent(this, false);
         }
     }
-    if (unk2fa && BoneServo()) {
-        unk2fa = false;
+    if (mOutfitLoaded && BoneServo()) {
+        mOutfitLoaded = false;
         BoneServo()->AcquirePose();
     }
     SetTexBlendersActive(mTexBlendersActive);
@@ -216,7 +216,7 @@ void HamCharacter::SyncObjects() {
         }
         SetBlinking(blinking);
     }
-    mCrewCardMesh = Find<RndMesh>(kCrewCardMeshName, false);
+    mCrewCard = Find<RndMesh>(kCrewCardMeshName, false);
 }
 
 void HamCharacter::Draw() {
@@ -339,7 +339,7 @@ void HamCharacter::AddedObject(Hmx::Object *obj) {
     } else if (streq(obj->Name(), "CharEyes.eyes")) {
         mEyes = dynamic_cast<CharEyes *>(obj);
     } else if (className == HamIKEffector) {
-        mIKEffectors.push_back(dynamic_cast<CharWeightable *>(obj));
+        mEffectors.push_back(dynamic_cast<CharWeightable *>(obj));
     }
 }
 
@@ -416,7 +416,7 @@ bool HamCharacter::InClipTest() {
 }
 
 void HamCharacter::SetIKEffectorWeights(float weight) {
-    FOREACH (it, mIKEffectors) {
+    FOREACH (it, mEffectors) {
         auto w = *it;
         if (w) {
             w->SetWeight(weight);
@@ -458,7 +458,7 @@ void HamCharacter::EnableFacialAnimation(CharLipSync *sync, float f2) {
     if (visemeDir && !visemeDir->Find<CharClip>("Base", false)) {
         return;
     }
-    unk330 = f2;
+    mStoredSongOffset = f2;
     CharLipSyncDriver *driver = Find<CharLipSyncDriver>("face.lipdrv", false);
     if (sync && driver) {
         if (!driver->SetLipSync(sync)) {
@@ -524,7 +524,7 @@ void HamCharacter::BlendOutFaceOverrides(float f1) {
 void HamCharacter::SetLipsyncOffset(float offset) {
     CharLipSyncDriver *driver = Find<CharLipSyncDriver>("face.lipdrv", false);
     if (driver) {
-        driver->SetSongOffset(unk330 + offset);
+        driver->SetSongOffset(mStoredSongOffset + offset);
     }
 }
 
@@ -569,15 +569,15 @@ void HamCharacter::ResetFaceOverrideBlending() {
 
 void HamCharacter::SetCampaignVo(const char *cc) {
     mCampaignVO = cc;
-    if (mCampaignVOBank) {
-        RELEASE(mCampaignVOBank);
+    if (mCampaignVOBankDir) {
+        RELEASE(mCampaignVOBankDir);
     }
     if (!mCampaignVO.empty()) {
         String milo = GetCampaignVoMilo();
         mCampaignVODir = DirLoader::LoadObjects(FilePath(milo.c_str()), nullptr, nullptr);
         for (ObjDirItr<Hmx::Object> it(mCampaignVODir, false); it != nullptr; ++it) {
             if (it->Type() == "character_vo") {
-                mCampaignVOBank = it;
+                mCampaignVOBankDir = it;
                 return;
             }
         }
@@ -621,14 +621,14 @@ int HamCharacter::SongAnimation() {
 }
 
 bool HamCharacter::GetPropShowing(int prop) {
-    return mShowableProps.size() > prop && mShowableProps[prop]
-        && mShowableProps[prop]->Showing();
+    return mProps.size() > prop && mProps[prop]
+        && mProps[prop]->Showing();
 }
 
 void HamCharacter::SetPropShowing(int prop, bool show) {
-    if (mShowableProps.size() > prop) {
-        if (mShowableProps[prop]) {
-            mShowableProps[prop]->SetShowing(show);
+    if (mProps.size() > prop) {
+        if (mProps[prop]) {
+            mProps[prop]->SetShowing(show);
         }
     }
 }
@@ -792,18 +792,18 @@ DataNode HamCharacter::OnConfigureFileMerger(DataArray *a) {
     if (!mFileMerger) {
         return 0;
     } else {
-        unk2fa = true;
+        mOutfitLoaded = true;
         FilePath outfitPath = "";
         FilePath visemePath = "";
         FilePath voPath = "";
-        unk2f8 = !strstr(mOutfitDir.Str(), "dancer");
+        mIsBackup = !strstr(mOutfitDir.Str(), "dancer");
         if (!mOutfit.Null()) {
             const char *model = GetOutfitModel(mOutfit);
             outfitPath.Set(FilePath::Root().c_str(), model);
             Symbol charSym = GetOutfitCharacter(mOutfit);
             const char *viseme = GetCharacterViseme(charSym);
             visemePath.Set(FilePath::Root().c_str(), viseme);
-            if (!unk2f8) {
+            if (!mIsBackup) {
                 String vo = GetCampaignVo();
                 if (!vo.empty()) {
                     voPath.Set(FilePath::Root().c_str(), GetCampaignVoMilo().c_str());

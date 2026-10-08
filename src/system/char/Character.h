@@ -180,10 +180,10 @@ protected:
     /** "select an interest object here and select 'force_interest' below
         to force the character to look at it." */
     Symbol mInterestToForce; // 0x29c
-    ObjPtr<RndEnviron> unk2a0;
-    Vector3 *unk2b4;
+    ObjPtr<RndEnviron> mOpaqueEnv;
+    Vector3 *mOpaquePos;
     /** "Props to show and hide for cut scenes" */
-    DrawPtrVec mShowableProps; // 0x2b8
+    DrawPtrVec mProps; // 0x2b8
     bool mDebugDrawInterestObjects; // 0x2d4
 };
 
