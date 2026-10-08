@@ -311,7 +311,9 @@ void MoveMgr::Init(const char *filename) {
 const MoveVariant *MoveMgr::GetRoutinePreferredVariant(int i1, int i2) const {
     if (i2 < unk134[i1].size()) {
         const MoveVariant *var = unk134[i1][i2];
-        if (var && var->Parent() == mMoveParents[i1].at(i2)) {
+        if (var && var->Parent() != mMoveParents[i1].at(i2)) {
+            return nullptr;
+        } else {
             return var;
         }
     }
@@ -339,9 +341,9 @@ void MoveMgr::ComputePotentialMoves(std::set<const MoveParent *> &moves, int i2)
             }
         } else {
             if (i2 > 0) {
-                const MoveParent *last = mMoveParents[i2].back();
-                if (last) {
-                    FOREACH (adj, last->NextAdjacents()) {
+                if (mMoveParents[0][i2 - 1]) {
+                    const MoveParent *prev = mMoveParents[0][i2 - 1];
+                    FOREACH (adj, prev->NextAdjacents()) {
                         if ((*adj)->IsValidForMiniGame()) {
                             moves.insert(*adj);
                         }
@@ -349,10 +351,7 @@ void MoveMgr::ComputePotentialMoves(std::set<const MoveParent *> &moves, int i2)
                 }
             }
             if (moves.size() < 1) {
-                for (std::map<Symbol, MoveParent *>::const_iterator it =
-                         MoveParents().begin();
-                     it != MoveParents().end();
-                     ++it) {
+                FOREACH (it, MoveParents()) {
                     MoveParent *cur = it->second;
                     if (cur->IsValidForMiniGame()) {
                         moves.insert(cur);
@@ -517,8 +516,8 @@ void MoveMgr::SaveRoutineVariants(DataArray *a) const {
     FOREACH (it, unk150[0]) {
         if (it->first) {
             Symbol first_name = it->first->Name();
-            a->Node(idx) =
-                DataArrayPtr(first_name, it->second ? it->second->Name() : first_name);
+            Symbol second_name = it->second ? it->second->Name() : first_name;
+            a->Node(idx) = DataArrayPtr(first_name, second_name);
         } else {
             a->Node(idx) = DataArrayPtr(0, 0);
         }
@@ -676,14 +675,16 @@ void MoveMgr::InitSong() {
     unk150[0].resize(i13 + 2);
     unk16c.resize(i13 + 2);
     unk104.clear();
-    FOREACH (it, mMoveParents[0]) {
+    auto itEnd = mMoveParents[0].end();
+    for (auto it = mMoveParents[0].begin(); it != itEnd; ++it) {
         *it = nullptr;
     }
-    FOREACH (it, unk150[0]) {
-        it->first = nullptr;
-        it->second = nullptr;
+    auto itEnd2 = unk150[0].end();
+    for (auto it = unk150[0].begin(); it != itEnd2; ++it) {
+        *it = std::make_pair(nullptr, nullptr);
     }
-    FOREACH (it, unk16c) {
+    auto itEnd3 = unk16c.end();
+    for (auto it = unk16c.begin(); it != itEnd3; ++it) {
         it->unk0[0] = 0;
         it->unk0[1] = 0;
         it->unk0[2] = 0;
