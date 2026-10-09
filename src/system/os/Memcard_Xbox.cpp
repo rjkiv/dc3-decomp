@@ -43,11 +43,11 @@ void ContainerId::Set(int idx, DWORD dw) {
 
 #pragma region MCFileXbox
 
-MCResult MCFileXbox::Open(const char *cc, AccessType at, CreateType ct) {
+MCResult MCFileXbox::Open(const char *file, AccessType mode, CreateType createType) {
     MILO_ASSERT(mFile == INVALID_HANDLE_VALUE, 0x307);
-    DWORD access = at == kAccessRead ? GENERIC_READ : GENERIC_WRITE;
+    DWORD access = mode == kAccessRead ? GENERIC_READ : GENERIC_WRITE;
     DWORD creationDisposition = 0;
-    switch (ct) {
+    switch (createType) {
     case 0:
         creationDisposition = OPEN_EXISTING;
         break;
@@ -60,7 +60,7 @@ MCResult MCFileXbox::Open(const char *cc, AccessType at, CreateType ct) {
     default:
         break;
     }
-    String path = mContainer->BuildPath(cc);
+    String path = mContainer->BuildPath(file);
     mFile =
         CreateFileA(path.c_str(), access, 0, nullptr, creationDisposition, 0x80, nullptr);
     bool success = mFile != INVALID_HANDLE_VALUE;
@@ -70,7 +70,7 @@ MCResult MCFileXbox::Open(const char *cc, AccessType at, CreateType ct) {
         if (err != ERROR_FILE_NOT_FOUND) {
             ret = TranslateCommonWinErrorToMCResult(err);
         } else {
-            if (ct == 0) {
+            if (createType == 0) {
                 return kMCFileNotFound;
             } else {
                 return kMCGeneralError;
@@ -82,30 +82,30 @@ MCResult MCFileXbox::Open(const char *cc, AccessType at, CreateType ct) {
     }
 }
 
-MCResult MCFileXbox::Read(void *data, int bytes) {
+MCResult MCFileXbox::Read(void *data, int size) {
     MILO_ASSERT(mFile != INVALID_HANDLE_VALUE, 0x342);
     DWORD numRead = 0;
-    if (ReadFile(mFile, data, bytes, &numRead, nullptr) == 0U) {
+    if (ReadFile(mFile, data, size, &numRead, nullptr) == 0U) {
         return TranslateCommonWinErrorToMCResult(GetLastError());
     } else {
-        return numRead == bytes ? kMCNoError : kMCCorrupt;
+        return numRead == size ? kMCNoError : kMCCorrupt;
     }
 }
 
-MCResult MCFileXbox::Write(const void *data, int bytes) {
+MCResult MCFileXbox::Write(const void *data, int size) {
     MILO_ASSERT(mFile != INVALID_HANDLE_VALUE, 0x35B);
     DWORD numRead = 0;
-    if (WriteFile(mFile, data, bytes, &numRead, nullptr) == 0U) {
+    if (WriteFile(mFile, data, size, &numRead, nullptr) == 0U) {
         return TranslateCommonWinErrorToMCResult(GetLastError());
     } else {
-        return numRead == bytes ? kMCNoError : kMCGeneralError;
+        return numRead == size ? kMCNoError : kMCGeneralError;
     }
 }
 
-MCResult MCFileXbox::Seek(int x, SeekType st) {
+MCResult MCFileXbox::Seek(int offset, SeekType seek) {
     MILO_ASSERT(mFile != INVALID_HANDLE_VALUE, 0x374);
     DWORD dwMoveMethod;
-    switch (st) {
+    switch (seek) {
     case kSeekBegin:
         dwMoveMethod = FILE_BEGIN;
         break;
@@ -119,7 +119,7 @@ MCResult MCFileXbox::Seek(int x, SeekType st) {
         MILO_ASSERT(false, 0x387);
         break;
     }
-    if (SetFilePointer(mFile, x, nullptr, dwMoveMethod) == -1) {
+    if (SetFilePointer(mFile, offset, nullptr, dwMoveMethod) == -1) {
         return TranslateCommonWinErrorToMCResult(GetLastError());
     } else
         return kMCNoError;
@@ -137,7 +137,7 @@ MCResult MCFileXbox::Close() {
 
 bool MCFileXbox::IsOpen() { return mFile != INVALID_HANDLE_VALUE; }
 
-MCResult MCFileXbox::GetSize(int *iptr) {
+MCResult MCFileXbox::GetSize(int *pFileSize) {
     DWORD fileSize = 0;
     DWORD res = GetFileSize(mFile, &fileSize);
     if (res == -1) {
@@ -146,11 +146,11 @@ MCResult MCFileXbox::GetSize(int *iptr) {
             return TranslateCommonWinErrorToMCResult(err);
         }
     }
-    if (iptr) {
+    if (pFileSize) {
         if (fileSize == 0 && res <= 0x7FFFFFFF) {
-            *iptr = res;
+            *pFileSize = res;
         } else {
-            *iptr = 0x7FFFFFFF;
+            *pFileSize = 0x7FFFFFFF;
         }
     }
     return kMCNoError;
@@ -161,7 +161,7 @@ MCResult MCFileXbox::GetSize(int *iptr) {
 
 MCContainerXbox::MCContainerXbox(const ContainerId &c) : MCContainer(c) {}
 
-MCResult MCContainerXbox::Mount(CreateType ct) {
+MCResult MCContainerXbox::Mount(CreateType createType) {
     MILO_ASSERT(!IsMounted(), 0x144);
     MILO_ASSERT(Cid().mDeviceId != XCONTENTDEVICE_ANY, 0x145);
     mDriveName = TheMC.GenerateDriveName(Cid().mDeviceId, Cid().mUserIndex);
@@ -171,7 +171,7 @@ MCResult MCContainerXbox::Mount(CreateType ct) {
     strncpy(data.szFileName, TheMC.FileName(), XCONTENT_MAX_FILENAME_LENGTH);
     wcsncpy(data.szDisplayName, TheMC.DisplayName(), XCONTENT_MAX_DISPLAYNAME_LENGTH);
     DWORD u5 = 0;
-    switch (ct) {
+    switch (createType) {
     case 0:
         u5 = 3;
         break;
@@ -217,7 +217,7 @@ MCResult MCContainerXbox::Unmount() {
     return kMCNoError;
 }
 
-MCResult MCContainerXbox::GetPathFreeSpace(const char *cc, u64 *u) {
+MCResult MCContainerXbox::GetPathFreeSpace(const char *strPath, u64 *pFreeSpace) {
     MILO_ASSERT(IsMounted(), 0x1B4);
     ULARGE_INTEGER u1;
     ULARGE_INTEGER u2;
@@ -228,61 +228,61 @@ MCResult MCContainerXbox::GetPathFreeSpace(const char *cc, u64 *u) {
     u1.u.LowPart = 0;
     u2.u.LowPart = 0;
     u3.u.LowPart = 0;
-    String str = BuildPath(cc);
+    String str = BuildPath(strPath);
     bool success = GetDiskFreeSpaceExA(str.c_str(), &u1, &u2, &u3);
     if (success == 0U) {
         return TranslateCommonWinErrorToMCResult(GetLastError());
-    } else if (u) {
-        *u = u1.QuadPart;
+    } else if (pFreeSpace) {
+        *pFreeSpace = u1.QuadPart;
     }
     return kMCNoError;
 }
 
-MCResult MCContainerXbox::GetDeviceFreeSpace(u64 *u) {
+MCResult MCContainerXbox::GetDeviceFreeSpace(u64 *pFreeSpace) {
     XDEVICE_DATA data;
     DWORD res = XContentGetDeviceData(Cid().mDeviceId, &data);
     if (res != ERROR_SUCCESS) {
         return TranslateCommonWinErrorToMCResult(res);
-    } else if (u) {
-        *u = data.ulDeviceFreeBytes;
+    } else if (pFreeSpace) {
+        *pFreeSpace = data.ulDeviceFreeBytes;
     }
     return kMCNoError;
 }
 
-MCResult MCContainerXbox::Delete(const char *cc) {
+MCResult MCContainerXbox::Delete(const char *file) {
     MILO_ASSERT(IsMounted(), 0x1ED);
-    String str = BuildPath(cc);
+    String str = BuildPath(file);
     if (!DeleteFileA(str.c_str())) {
         return TranslateCommonWinErrorToMCResult(GetLastError());
     } else
         return kMCNoError;
 }
 
-MCResult MCContainerXbox::RemoveDir(const char *cc) {
+MCResult MCContainerXbox::RemoveDir(const char *path) {
     MILO_ASSERT(IsMounted(), 0x201);
-    String str = BuildPath(cc);
+    String str = BuildPath(path);
     if (!RemoveDirectoryA(str.c_str())) {
         return TranslateCommonWinErrorToMCResult(GetLastError());
     } else
         return kMCNoError;
 }
 
-MCResult MCContainerXbox::MakeDir(const char *cc) {
+MCResult MCContainerXbox::MakeDir(const char *path) {
     MILO_ASSERT(IsMounted(), 0x215);
-    String str = BuildPath(cc);
+    String str = BuildPath(path);
     if (!CreateDirectoryA(str.c_str(), nullptr)) {
         return TranslateCommonWinErrorToMCResult(GetLastError());
     } else
         return kMCNoError;
 }
 
-MCResult MCContainerXbox::GetSize(const char *cc, int *iptr) {
-    MCFileXbox *file = new MCFileXbox(this);
-    MCResult res = file->Open(cc, kAccessRead, kOsOpenExisting);
+MCResult MCContainerXbox::GetSize(const char *file, int *pFileSize) {
+    MCFileXbox *fp = new MCFileXbox(this);
+    MCResult res = fp->Open(file, kAccessRead, kOsOpenExisting);
     if (res == kMCNoError) {
-        res = file->GetSize(iptr);
-        file->Close();
-        DestroyMCFile(file);
+        res = fp->GetSize(pFileSize);
+        fp->Close();
+        DestroyMCFile(fp);
         return res;
     }
     return res;
@@ -290,12 +290,12 @@ MCResult MCContainerXbox::GetSize(const char *cc, int *iptr) {
 
 MCFile *MCContainerXbox::CreateMCFile() { return new MCFileXbox(this); }
 
-String MCContainerXbox::BuildPath(const char *cc) {
+String MCContainerXbox::BuildPath(const char *path) {
     String out = mDriveName + ':';
-    if (*cc != '\\' && *cc != '/') {
+    if (*path != '\\' && *path != '/') {
         out += '\\';
     }
-    out += cc;
+    out += path;
     for (int i = 0; i < out.length(); i++) {
         if (out[i] == '/') {
             out[i] = '\\';
@@ -304,8 +304,8 @@ String MCContainerXbox::BuildPath(const char *cc) {
     return out;
 }
 
-MCResult MCContainerXbox::PrintDir(const char *cc, bool b2) {
-    String str(cc);
+MCResult MCContainerXbox::PrintDir(const char *path, bool recurse) {
+    String str(path);
     str += "/*";
     str = BuildPath(str.c_str());
     WIN32_FIND_DATAA findData;
@@ -314,7 +314,7 @@ MCResult MCContainerXbox::PrintDir(const char *cc, bool b2) {
         if (GetLastError() != ERROR_FILE_NOT_FOUND) {
             return kMCGeneralError;
         } else {
-            MILO_LOG("%s:\n", cc);
+            MILO_LOG("%s:\n", path);
             MILO_LOG("%-20s %10s %30s\n", "name", "bytes", "modified");
             MILO_LOG("------------------------------------------------------------\n");
             MILO_LOG("total: 0\n");
@@ -322,7 +322,7 @@ MCResult MCContainerXbox::PrintDir(const char *cc, bool b2) {
         }
     } else {
         int num = 0;
-        MILO_LOG("%s:\n", cc);
+        MILO_LOG("%s:\n", path);
         MILO_LOG("%-20s %10s %30s\n", "name", "bytes", "modified");
         MILO_LOG("------------------------------------------------------------\n");
         std::list<String> strings;
@@ -350,7 +350,7 @@ MCResult MCContainerXbox::PrintDir(const char *cc, bool b2) {
                 findData.nFileSizeLow,
                 dateString.c_str()
             );
-            if (b2 && findData.dwFileAttributes & 0x10) {
+            if (recurse && findData.dwFileAttributes & 0x10) {
                 strings.push_back(fileName);
             }
             num++;
@@ -359,11 +359,11 @@ MCResult MCContainerXbox::PrintDir(const char *cc, bool b2) {
         MILO_LOG("total: %i\n", num);
         if (err != ERROR_NO_MORE_FILES) {
             return kMCGeneralError;
-        } else if (b2) {
+        } else if (recurse) {
             FOREACH (it, strings) {
                 String str1218;
-                if (*cc != '\0') {
-                    str1218 = cc;
+                if (*path != '\0') {
+                    str1218 = path;
                     str1218 += "/";
                 }
                 str1218 += *it;
@@ -399,32 +399,32 @@ void MemcardXbox::Poll() {
     }
 }
 
-void MemcardXbox::SetContainerName(const char *name) {
-    strncpy(mFileName, name, XCONTENT_MAX_FILENAME_LENGTH - 1);
+void MemcardXbox::SetContainerName(const char *containerName) {
+    strncpy(mFileName, containerName, XCONTENT_MAX_FILENAME_LENGTH - 1);
     mFileName[XCONTENT_MAX_FILENAME_LENGTH - 1] = '\0';
 }
 
-void MemcardXbox::SetContainerDisplayName(const wchar_t *name) {
-    wcsncpy(mDisplayName, name, XCONTENT_MAX_DISPLAYNAME_LENGTH - 1);
+void MemcardXbox::SetContainerDisplayName(const wchar_t *displayName) {
+    wcsncpy(mDisplayName, displayName, XCONTENT_MAX_DISPLAYNAME_LENGTH - 1);
     mDisplayName[XCONTENT_MAX_DISPLAYNAME_LENGTH - 1] = 0;
 }
 
 void MemcardXbox::ShowDeviceSelector(
-    const ContainerId &c, Hmx::Object *o, int i3, bool b4
+    const ContainerId &cid, Hmx::Object *pCallbackObj, int padOverride, bool forceShow
 ) {
     memset(&mXOverlapped, 0, sizeof(XOVERLAPPED));
-    unk158 = o;
+    unk158 = pCallbackObj;
     unk15c = 0;
     int i1 = 0;
-    if (b4) {
+    if (forceShow) {
         i1 = 0x200;
     }
-    if (i3 == -1) {
-        i3 = c.mUserIndex;
+    if (padOverride == -1) {
+        padOverride = cid.mUserIndex;
     }
     ULARGE_INTEGER u;
     u.QuadPart = 0;
-    if (ThePlatformMgr.ShowDeviceSelectorUI(i3, 1, i1, u, &unk15c, &mXOverlapped)
+    if (ThePlatformMgr.ShowDeviceSelectorUI(padOverride, 1, i1, u, &unk15c, &mXOverlapped)
         == 0x3E5) {
         unk156 = true;
     } else if (unk158) {
@@ -456,8 +456,8 @@ MCContainer *MemcardXbox::CreateContainer(const ContainerId &cid) {
     return new MCContainerXbox(cid);
 }
 
-String MemcardXbox::GenerateDriveName(DWORD deviceId, int i) {
-    return MakeString("s%08xp%d", deviceId, i);
+String MemcardXbox::GenerateDriveName(DWORD deviceId, int padNum) {
+    return MakeString("s%08xp%d", deviceId, padNum);
 }
 
 MCResult MemcardXbox::FindValidUnit(ContainerId *pCid) {
