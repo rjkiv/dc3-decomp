@@ -475,7 +475,7 @@ void WorldCrowd::DrawShowing() {
         return;
     }
     Draw3DChars();
-    if (TheRnd.DrawMode() == 5) {
+    if (TheRnd.DrawMode() == Rnd::kDrawOcclusion) {
         return;
     }
     MILO_ASSERT(!gImpostorMat->NextPass(), 0x3A0);

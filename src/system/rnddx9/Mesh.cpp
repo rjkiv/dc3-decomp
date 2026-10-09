@@ -214,7 +214,7 @@ void DxMesh::DrawShowing() {
         if (owner->Verts().unkc) {
             Sync(0x1F);
         }
-        if (TheRnd.DrawMode() == 6) {
+        if (TheRnd.DrawMode() == Rnd::kDrawVelocity) {
             RndVelocityBuffer::Singleton().DrawMesh(this);
         } else {
             SetTransforms();
@@ -227,7 +227,7 @@ void DxMesh::DrawShowing() {
                     if (unk180 != kMaxShaderTypes) {
                         t = (ShaderType)unk180;
                     }
-                    if (TheRnd.DrawMode() == 9) {
+                    if (TheRnd.DrawMode() == Rnd::kDrawAllWhite) {
                         t = kAllWhiteShader;
                     }
                     RndShader::SelectConfig(it, t, false);
@@ -517,7 +517,7 @@ void DxMesh::SetTransforms() {
 }
 
 DxMat *DxMesh::DrawFur(DxMat *mat) {
-    if (TheRnd.DrawMode() != 0) {
+    if (TheRnd.DrawMode() != Rnd::kDrawNormal) {
         return static_cast<DxMat *>(mat->NextPass());
     } else {
         DxMesh *owner = static_cast<DxMesh *>(mGeomOwner.Ptr());

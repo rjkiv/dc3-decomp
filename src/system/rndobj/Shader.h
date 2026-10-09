@@ -9,7 +9,16 @@
 
 class RndShader {
 public:
+    // mat flags that have to agree with the current Environ, so
+    // these are the types of errors that can occur when mat flags do not match the
+    // current Environ
     enum MatFlagErrorType {
+        // fade_out has to match whether the environment fades out
+        kFadeOutErr = 0,
+        // point_lights has to be checked if the environment has point lights
+        kLightingErr = 1,
+        // color_adjust has to be checked if the environment uses a color xfm
+        kColorXfmErr = 2
     };
 
     virtual ~RndShader() {}
@@ -60,7 +69,8 @@ protected:
 class RndShaderParticles : public RndShader {
 public:
     virtual bool CheckError(MatFlagErrorType e) {
-        return (e == 0 || e == 2) && TheRnd.DrawMode() != 4;
+        return (e == kFadeOutErr || e == kColorXfmErr)
+            && TheRnd.DrawMode() != Rnd::kDrawShadowColor;
     }
 
 protected:
@@ -70,7 +80,9 @@ protected:
 
 class RndShaderMultimesh : public RndShader {
 public:
-    virtual bool CheckError(MatFlagErrorType e) { return e == 0 || e == 1 || e == 2; }
+    virtual bool CheckError(MatFlagErrorType e) {
+        return e == kFadeOutErr || e == kLightingErr || e == kColorXfmErr;
+    }
 
 protected:
     virtual void Select(RndMat *, ShaderType, bool);

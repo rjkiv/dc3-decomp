@@ -552,7 +552,7 @@ void Spotlight::DrawShowing() {
             }
         }
     }
-    if (TheRnd.DrawMode() == 0) {
+    if (TheRnd.DrawMode() == Rnd::kDrawNormal) {
         SpotlightDrawer::DrawLight(this);
         return;
     } else if (!unk2f0) {
@@ -575,7 +575,7 @@ void Spotlight::DrawShowing() {
             sDiskMesh->DrawShowing();
         }
         RndMesh *beam = mBeam.mBeam;
-        if (beam && TheRnd.DrawMode() != 5) {
+        if (beam && TheRnd.DrawMode() != Rnd::kDrawOcclusion) {
             beam->DrawShowing();
         }
         if (mFlare && mFlare->GetMat()) {

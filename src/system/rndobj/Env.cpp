@@ -16,7 +16,7 @@ RndEnviron::RndEnviron()
     : mLightsReal(this), mLightsApprox(this), mLightsOld(this), mAmbientColor(0, 0, 0, 1),
       mAmbientFogOwner(this, this), mFogEnable(0), mFogStart(0), mFogEnd(1),
       mFogColor(1, 1, 1), mFadeOut(0), mFadeStart(0), mFadeEnd(1000), mFadeMax(1),
-      mFadeRef(this), mLRFade(0, 0, 0, 0), mColorXfm(), mUseColorAdjust(0),
+      mFadeRef(this), mLRFade(0, 0, 0, 0), mColorXfm(), mUseColorXfm(0),
       mAnimateFromPreset(1), mAOEnabled(1), mAOStrength(1), mUpdateTimer(),
       mIntensityAverage(0), mIntensityRate(0.1f), mExposure(1), mWhitePoint(1),
       mUseToneMapping(0), mUseApprox_Local(1), mUseApprox_Global(1) {
@@ -86,7 +86,7 @@ BEGIN_PROPSYNCS(RndEnviron)
     SYNC_PROP(exposure, mExposure)
     SYNC_PROP(white_point, mWhitePoint)
     SYNC_PROP(tone_map, mUseToneMapping)
-    SYNC_PROP(use_color_adjust, mUseColorAdjust)
+    SYNC_PROP(use_color_adjust, mUseColorXfm)
     SYNC_PROP_MODIFY(hue, mColorXfm.mHue, mColorXfm.AdjustColorXfm())
     SYNC_PROP_MODIFY(saturation, mColorXfm.mSaturation, mColorXfm.AdjustColorXfm())
     SYNC_PROP_MODIFY(lightness, mColorXfm.mLightness, mColorXfm.AdjustColorXfm())
@@ -113,7 +113,7 @@ BEGIN_SAVES(RndEnviron)
     bs << mAnimateFromPreset;
     bs << mFadeOut << mFadeStart << mFadeEnd << mFadeMax << mFadeRef << mLRFade;
     bs << mAmbientFogOwner;
-    bs << mUseColorAdjust;
+    bs << mUseColorXfm;
     mColorXfm.Save(bs);
     bs << mAOStrength;
     bs << mIntensityRate;
@@ -138,7 +138,7 @@ BEGIN_COPYS(RndEnviron)
             COPY_MEMBER(mFadeMax)
             COPY_MEMBER(mFadeRef)
             COPY_MEMBER(mLRFade)
-            COPY_MEMBER(mUseColorAdjust)
+            COPY_MEMBER(mUseColorXfm)
             COPY_MEMBER(mColorXfm)
             COPY_MEMBER(mAnimateFromPreset)
             COPY_MEMBER(mAOEnabled)
@@ -214,7 +214,7 @@ BEGIN_LOADS(RndEnviron)
         }
     }
     if (d.rev > 7) {
-        d >> mUseColorAdjust;
+        d >> mUseColorXfm;
         mColorXfm.Load(d.stream);
     }
     if (d.rev > 9) {
@@ -282,7 +282,7 @@ const Transform &RndEnviron::ColorXfm() const {
     static Vector3 y(0, 1, 0);
     static Vector3 z(0, 0, 1);
     static Transform ident(Hmx::Matrix3(x, y, z), Vector3(0, 0, 0));
-    if (mUseColorAdjust)
+    if (mUseColorXfm)
         return mColorXfm.mColorXfm;
     else
         return ident;

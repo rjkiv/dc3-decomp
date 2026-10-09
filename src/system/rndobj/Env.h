@@ -63,7 +63,10 @@ public:
         mAmbientFogOwner->mAmbientColor.Set(col.red, col.green, col.blue);
     }
     bool FadeOut() const { return mFadeOut; }
-    bool UseColorAdjust() const { return mUseColorAdjust; }
+    bool UseColorXfm() const { return mUseColorXfm; }
+    bool GetAmbientOcclusionEnabled() const { return mAOEnabled; }
+    float GetAmbientOcclusionStrength() const { return mAOStrength; }
+    bool GetUseToneMapping() const { return mUseToneMapping; }
     float FadeStart() const { return mFadeStart; }
     float FadeEnd() const { return mFadeEnd; }
     static BoxMapLighting &GetGlobalLighting() { return sGlobalLighting; }
@@ -108,7 +111,7 @@ protected:
     ObjPtr<RndTransformable> mFadeRef; // 0x18c
     Vector4 mLRFade; // 0x1a0, mLeftOut, mLeftOpaque, mRightOpaque, mRightOut
     RndColorXfm mColorXfm; // 0x1b0
-    bool mUseColorAdjust; // 0x244
+    bool mUseColorXfm; // 0x244
     bool mAnimateFromPreset; // 0x245
     bool mAOEnabled; // 0x246
     float mAOStrength; // 0x248

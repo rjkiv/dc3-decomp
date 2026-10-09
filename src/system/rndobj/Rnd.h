@@ -49,12 +49,27 @@ public:
         kDefaultTex_Max = 8
     };
     enum Mode {
+        // regular ass rendering
         kDrawNormal = 0,
-        kDrawShadowDepth = 1,
-        kDrawExtrude = 2,
-        kDrawShadowColor = 3,
-        kDrawOcclusion = 4,
-        kDrawVelocity = 6
+        // as the name implies, cheap and fast render with just basic lighting and diffuse
+        // texture
+        kDrawFastAndCheap = 1,
+        // depth into a shadow map, everything uses the shadowmap shader
+        kDrawShadowDepth = 2,
+        // extruded depth volumes
+        kDrawExtrude = 3,
+        // shadows into a light's blurred shadow textxure
+        kDrawShadowColor = 4,
+        // occlusion
+        kDrawOcclusion = 5,
+        // per-object motion vectors used for motion blur
+        kDrawVelocity = 6,
+        // soft particles
+        kDrawSoftDepth = 7,
+        // mirrored cam for reflections?
+        kDrawReversed = 8,
+        // everything, but with the all white shader
+        kDrawAllWhite = 9
     };
 
     struct PointTest {

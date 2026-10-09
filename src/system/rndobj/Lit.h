@@ -17,6 +17,8 @@ public:
         kShadowRef = 4,
     };
     enum ProjectedBlend {
+        kAdd = 0,
+        kMultiply = 1
     };
     OBJ_CLASSNAME(Light)
     OBJ_SET_TYPE(Light)

@@ -887,10 +887,12 @@ void Character::DrawLodOrShadow(int lod, DrawMode drawMode) {
 
 void Character::DrawLod(int lod) {
     unsigned char drawMode = mDrawMode & 1;
-    if (TheRnd.DrawMode() != 5 && (TheRnd.DrawMode() != 3 || (mSpotCutout && drawMode))
-        && (TheRnd.DrawMode() != 4 || mFloorShadow && drawMode)) {
-        bool cond =
-            TheRnd.DrawMode() == 3 || TheRnd.DrawMode() == 4 || TheRnd.DrawMode() == 2;
+    if (TheRnd.DrawMode() != Rnd::kDrawOcclusion
+        && (TheRnd.DrawMode() != Rnd::kDrawExtrude || (mSpotCutout && drawMode))
+        && (TheRnd.DrawMode() != Rnd::kDrawShadowColor || mFloorShadow && drawMode)) {
+        bool cond = TheRnd.DrawMode() == Rnd::kDrawExtrude
+            || TheRnd.DrawMode() == Rnd::kDrawShadowColor
+            || TheRnd.DrawMode() == Rnd::kDrawShadowDepth;
         DrawLodOrShadow(lod, cond ? (DrawMode)4 : mDrawMode);
     }
 }

@@ -38,7 +38,7 @@ static const float sSplineFloats[3] = { 10, 10, 4 };
 RndSpline::RndSpline()
     : mManual(false), mPulseLength(sSplineFloats[0]), mPulseAmplitude(sSplineFloats[0]),
       mStartCtrlPoint(-1), mEndCtrlPoint(-1), mYOffset(0),
-      mYPerCtrlPoint(sSplineFloats[0]), unk144(0), unk145(0), unk146(0), unk148(-1000),
+      mYPerCtrlPoint(sSplineFloats[0]), unk144(0), unk145(0), mPulse(0), unk148(-1000),
       unk14c(0) {}
 
 BEGIN_HANDLERS(RndSpline)
@@ -134,11 +134,11 @@ BEGIN_LOADS(RndSpline)
 END_LOADS
 
 void RndSpline::Poll() {
-    if (unk14c && unk146) {
+    if (unk14c && mPulse) {
         unk148 += 0.033333335f;
         if (unk148 > (float)mCtrlPoints.size()) {
             unk14c = false;
-            unk146 = false;
+            mPulse = false;
             unk148 = -1000;
         }
     }
@@ -245,7 +245,7 @@ void RndSpline::PrepareShader(float f1, float f2) const {
         TheShaderMgr.SetVConstant(
             (VShaderConstant)0x19, Vector4(endCtrlPt - startCtrlPt, f1, 1.0f / f2, 0)
         );
-        if (unk146) {
+        if (mPulse) {
             TheShaderMgr.SetVConstant(
                 (VShaderConstant)0x1A,
                 Vector4(
@@ -262,7 +262,7 @@ void RndSpline::PrepareShader(float f1, float f2) const {
 DataNode RndSpline::OnTestPulse(DataArray *) {
     if (!unk14c) {
         unk14c = true;
-        unk146 = true;
+        mPulse = true;
         unk148 = -1;
     }
     return 0;

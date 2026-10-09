@@ -29,8 +29,8 @@ void DxMultiMesh::DrawShowing() {
             MILO_LOG("MultiMesh: mesh can't be skinned\n");
         } else {
             DxMesh *mesh = static_cast<DxMesh *>(mMesh.Ptr());
-            if (mesh->OwnerCanDraw() && TheRnd.DrawMode() != 5
-                && TheRnd.DrawMode() == 0) {
+            if (mesh->OwnerCanDraw() && TheRnd.DrawMode() != Rnd::kDrawOcclusion
+                && TheRnd.DrawMode() == Rnd::kDrawNormal) {
                 DrawBatchedNewGfx();
             }
         }

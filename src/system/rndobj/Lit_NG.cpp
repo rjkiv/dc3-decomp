@@ -43,7 +43,7 @@ void NgLight::RenderShadows(std::vector<RndDrawable *> &shadowCasters) {
     SetAndClearShadowViewport();
     SetShadowTransforms();
     Rnd::Mode old = TheRnd.DrawMode();
-    TheRnd.SetDrawMode(Rnd::kDrawOcclusion);
+    TheRnd.SetDrawMode(Rnd::kDrawShadowColor);
     auto it = shadowCasters.begin();
     auto itEnd = shadowCasters.end();
     for (; it != itEnd; ++it) {

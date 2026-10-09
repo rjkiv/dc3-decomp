@@ -226,36 +226,36 @@ void DxShader::SetShaders(D3DVertexShader *v, D3DPixelShader *p) {
 #pragma region DxShaderMgr
 
 void DxShaderMgr::PreInit() {
-    unk60 = 0x38;
+    mShaderSize = 0x38;
     RndShaderMgr::PreInit();
-    RELEASE(mWorkMat);
-    mWorkMat = Hmx::Object::New<RndMat>();
-    CreateAndSetMetaMat(mWorkMat);
-    RELEASE(mPostProcMat);
-    mPostProcMat = Hmx::Object::New<RndMat>();
-    CreateAndSetMetaMat(mPostProcMat);
-    RELEASE(mDrawHighlightMat);
-    mDrawHighlightMat = Hmx::Object::New<RndMat>();
-    mDrawHighlightMat->SetUseEnv(false);
-    mDrawHighlightMat->SetZMode(kZModeForce);
-    mDrawHighlightMat->SetBlend(BaseMaterial::kBlendSrc);
-    mDrawHighlightMat->SetAlphaCut(false);
-    CreateAndSetMetaMat(mDrawHighlightMat);
-    RELEASE(mDrawRectMat);
-    mDrawRectMat = Hmx::Object::New<RndMat>();
-    mDrawRectMat->SetZMode(kZModeDisable);
-    mDrawRectMat->SetUseEnv(false);
-    mDrawRectMat->SetPreLit(true);
-    mDrawRectMat->SetBlend(BaseMaterial::kBlendSrcAlpha);
-    mDrawRectMat->SetAlphaCut(false);
-    CreateAndSetMetaMat(mDrawRectMat);
+    RELEASE(mWork);
+    mWork = Hmx::Object::New<RndMat>();
+    CreateAndSetMetaMat(mWork);
+    RELEASE(mPostProc);
+    mPostProc = Hmx::Object::New<RndMat>();
+    CreateAndSetMetaMat(mPostProc);
+    RELEASE(mHighlight);
+    mHighlight = Hmx::Object::New<RndMat>();
+    mHighlight->SetUseEnv(false);
+    mHighlight->SetZMode(kZModeForce);
+    mHighlight->SetBlend(BaseMaterial::kBlendSrc);
+    mHighlight->SetAlphaCut(false);
+    CreateAndSetMetaMat(mHighlight);
+    RELEASE(mDrawRect);
+    mDrawRect = Hmx::Object::New<RndMat>();
+    mDrawRect->SetZMode(kZModeDisable);
+    mDrawRect->SetUseEnv(false);
+    mDrawRect->SetPreLit(true);
+    mDrawRect->SetBlend(BaseMaterial::kBlendSrcAlpha);
+    mDrawRect->SetAlphaCut(false);
+    CreateAndSetMetaMat(mDrawRect);
 }
 
 void DxShaderMgr::Terminate() {
-    RELEASE(mDrawHighlightMat);
-    RELEASE(mDrawRectMat);
-    RELEASE(mWorkMat);
-    RELEASE(mPostProcMat);
+    RELEASE(mHighlight);
+    RELEASE(mDrawRect);
+    RELEASE(mWork);
+    RELEASE(mPostProc);
     RndShaderMgr::Terminate();
 }
 

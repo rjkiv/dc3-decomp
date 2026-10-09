@@ -55,7 +55,7 @@ public:
     }
     int NumCtrlPts() const { return mCtrlPoints.size(); }
     bool Manual() const { return mManual; }
-    bool Unk146() const { return unk146; }
+    bool HasPulse() const { return mPulse; }
 
     const CtrlPoint &GetDeformedCtrlPoint(int) const;
 
@@ -90,7 +90,7 @@ private:
     CtrlPoint unkec; // 0xec
     bool unk144;
     bool unk145;
-    bool unk146;
+    bool mPulse;
     float unk148;
     bool unk14c;
 };
