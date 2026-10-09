@@ -3,41 +3,42 @@
 #include "hamobj/DancerSkeleton.h"
 
 FreestyleMove::FreestyleMove()
-    : mDepthFrames(0), mNumFrames(0), unk10(0), unk14(0), mFreestyleMoveFrames(0) {}
+    : mDepthFrames(0), mFrameCount(0), mCentering(0), mAverageDepth(0),
+      mSkeletonFrames(0) {}
 
 FreestyleMove::~FreestyleMove() {
     delete[] mDepthFrames;
-    delete[] mFreestyleMoveFrames;
+    delete[] mSkeletonFrames;
 }
 
-void FreestyleMove::Clear() { mNumFrames = 0; }
+void FreestyleMove::Clear() { mFrameCount = 0; }
 
 void FreestyleMove::Free() {
-    mNumFrames = 0;
+    mFrameCount = 0;
     delete[] mDepthFrames;
-    delete[] mFreestyleMoveFrames;
+    delete[] mSkeletonFrames;
     mDepthFrames = nullptr;
-    mFreestyleMoveFrames = nullptr;
+    mSkeletonFrames = nullptr;
 }
 
 void FreestyleMove::Init(int frames) {
-    mNumFrames = 0;
+    mFrameCount = 0;
     if (!mDepthFrames) {
         mDepthFrames = new DepthFrame[frames];
     }
-    if (!mFreestyleMoveFrames) {
-        mFreestyleMoveFrames = new FreestyleMoveFrame[frames];
+    if (!mSkeletonFrames) {
+        mSkeletonFrames = new FreestyleMoveFrame[frames];
     }
 }
 
 void FreestyleMove::RecordSkeletonFrame(BaseSkeleton *skeleton, int i2, float f3) {
     FreestyleMoveFrame frame;
-    frame.skeleton.Init();
-    frame.unk2d8 = f3;
+    frame.mSkeleton.Init();
+    frame.mTime = f3;
     if (skeleton && skeleton->IsTracked()) {
-        frame.skeleton.Set(*skeleton);
+        frame.mSkeleton.Set(*skeleton);
     }
-    mFreestyleMoveFrames[i2] = frame;
+    mSkeletonFrames[i2] = frame;
 }
 
 void FreestyleMove::CalcCentering(int i1) {
@@ -49,7 +50,7 @@ void FreestyleMove::CalcCentering(int i1) {
 
     for (int i = 0; i < 80; i++) {
         for (int j = 0; j < 60; j++) {
-            bool b = whichFrame[i].structs[j].unk0;
+            unsigned char b = whichFrame->mPixels[i + j];
             if (b) {
                 i10++;
                 i170[i]++;
@@ -57,7 +58,7 @@ void FreestyleMove::CalcCentering(int i1) {
             }
         }
     }
-    unk14 = f12 / (float)i10;
+    mAverageDepth = f12 / (float)i10;
 
     int i7 = 0;
     int i9 = 0;
@@ -68,5 +69,5 @@ void FreestyleMove::CalcCentering(int i1) {
     if (i9 != 0) {
         i9 /= i7;
     }
-    unk10 = i9 - 40;
+    mCentering = i9 - 40;
 }

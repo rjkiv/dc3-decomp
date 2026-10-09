@@ -132,8 +132,8 @@ void FreestyleMoveRecorder::UpdateRecordingAttempt(
     const BaseSkeleton *skeleton, float f2
 ) {
     if (unk10 != gNullStr) {
-        unk18[unk1c].skeleton.Set(*skeleton);
-        unk18[unk1c].unk2d8 = f2;
+        unk18[unk1c].mSkeleton.Set(*skeleton);
+        unk18[unk1c].mTime = f2;
         unk1c++;
     }
 }
@@ -183,8 +183,8 @@ void FreestyleMoveRecorder::WriteFreestyleMoveClip(
     stream << unk3c;
     stream << framecount;
     for (int i = 0; i < framecount; i++) {
-        frames[i].skeleton.Write(stream);
-        stream << frames[i].unk2d8;
+        frames[i].mSkeleton.Write(stream);
+        stream << frames[i].mTime;
     }
     MILO_LOG("Saved clip to %s, framecount: %d\n", path, framecount);
 }
@@ -202,8 +202,8 @@ void FreestyleMoveRecorder::ReadFreestyleMoveClip(
     stream >> s;
     stream >> framecount;
     for (int i = 0; i < framecount; i++) {
-        frames[i].skeleton.Read(stream);
-        stream >> frames[i].unk2d8;
+        frames[i].mSkeleton.Read(stream);
+        stream >> frames[i].mTime;
     }
     MILO_LOG("Loaded clip that was recorded with %s, framecount: %d\n", s, framecount);
 }
@@ -236,8 +236,8 @@ DataNode FreestyleMoveRecorder::OnWriteCreated(DataArray *a) {
     }
     sInstance->WriteFreestyleMoveClip(
         str,
-        sInstance->unk48[sInstance->unkb8].mNumFrames,
-        sInstance->unk48[sInstance->unkb8].mFreestyleMoveFrames
+        sInstance->unk48[sInstance->unkb8].mFrameCount,
+        sInstance->unk48[sInstance->unkb8].mSkeletonFrames
     );
     return 0;
 }
@@ -245,10 +245,10 @@ DataNode FreestyleMoveRecorder::OnWriteCreated(DataArray *a) {
 DataNode FreestyleMoveRecorder::OnReadCreated(DataArray *a) {
     int framecount;
     sInstance->ReadFreestyleMoveClip(
-        a->Str(1), framecount, sInstance->unk48[sInstance->unkb8].mFreestyleMoveFrames
+        a->Str(1), framecount, sInstance->unk48[sInstance->unkb8].mSkeletonFrames
     );
     sInstance->unk48[sInstance->unkb8].Init(sInstance->unk24);
-    sInstance->unk48[sInstance->unkb8].mNumFrames = framecount;
+    sInstance->unk48[sInstance->unkb8].mFrameCount = framecount;
     sInstance->unk20 = sInstance->unkb8;
     return 0;
 }
@@ -265,7 +265,7 @@ DataNode FreestyleMoveRecorder::OnClearAttempt(DataArray *a) {
     return 0;
 }
 
-void FreestyleMoveRecorder::StopRecording() { unk34 = unk48[unkb8].mNumFrames + 2; }
+void FreestyleMoveRecorder::StopRecording() { unk34 = unk48[unkb8].mFrameCount + 2; }
 
 void FreestyleMoveRecorder::DrawDebug() {
     static float sFloat0 = 0.3f;
