@@ -90,13 +90,13 @@ namespace {
 
 Licenses sLicense("system/src/stlport", Licenses::kRequirementNotification);
 
-int Hx_snprintf(char *buffer, unsigned int bufSize, const char *fmt, ...) {
+int Hx_snprintf(char *buf, unsigned int bufSize, const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    int ret = vsnprintf(buffer, bufSize, fmt, args);
+    int ret = vsnprintf(buf, bufSize, fmt, args);
     va_end(args);
     if (ret < 0) {
-        buffer[bufSize - 1] = '\0';
+        buf[bufSize - 1] = '\0';
         return -1;
     }
     return ret;
@@ -104,10 +104,10 @@ int Hx_snprintf(char *buffer, unsigned int bufSize, const char *fmt, ...) {
 
 GfxMode GetGfxMode() { return gGfxMode; }
 
-Symbol PlatformSymbol(Platform pform) {
+Symbol PlatformSymbol(Platform plat) {
     static Symbol sym[] = { gNullStr, gNullStr, "xbox", "pc", "ps3", "wii", "3ds" };
-    if (pform >= 0 && pform < 7) {
-        return sym[pform];
+    if (plat >= 0 && plat < 7) {
+        return sym[plat];
     } else
         return gNullStr;
 }
@@ -154,11 +154,11 @@ Symbol GetSongTitlePronunciationLanguage() {
     return lang;
 }
 
-int SystemExec(const char *args) {
+int SystemExec(const char *str) {
     if (gUsingCD)
         return -1;
     else
-        return HolmesClientSysExec(args);
+        return HolmesClientSysExec(str);
 }
 
 bool PlatformLittleEndian(Platform p) {
@@ -236,25 +236,25 @@ void SystemPoll(bool b1) {
     TheContentMgr.PollRefresh();
 }
 
-DataArray *SupportedLanguages(bool cheats) {
+DataArray *SupportedLanguages(bool cheat) {
     static Symbol system("system");
     static Symbol language("language");
     static Symbol supported("supported");
     static Symbol cheat_supported("cheat_supported");
-    return SystemConfig(system, language, cheats ? cheat_supported : supported)->Array(1);
+    return SystemConfig(system, language, cheat ? cheat_supported : supported)->Array(1);
 }
 
-bool IsSupportedLanguage(Symbol language, bool cheats) {
-    DataArray *languages = SupportedLanguages(cheats);
+bool IsSupportedLanguage(Symbol lang, bool cheat) {
+    DataArray *languages = SupportedLanguages(cheat);
     for (int i = 0; i < languages->Size(); i++) {
-        if (languages->Sym(i) == language)
+        if (languages->Sym(i) == lang)
             return true;
     }
     return false;
 }
 
-void SetSystemLanguage(Symbol lang, bool cheats) {
-    if (!IsSupportedLanguage(lang, cheats)) {
+void SetSystemLanguage(Symbol lang, bool cheat) {
+    if (!IsSupportedLanguage(lang, cheat)) {
         static Symbol system("system");
         static Symbol language("language");
         static Symbol defaultSym("default");
@@ -262,7 +262,7 @@ void SetSystemLanguage(Symbol lang, bool cheats) {
         DataArray *arr = cfg->FindArray(defaultSym, false);
         if (arr) {
             Symbol arrLang = arr->Sym(1);
-            if (IsSupportedLanguage(arrLang, cheats)) {
+            if (IsSupportedLanguage(arrLang, cheat)) {
                 lang = arrLang;
                 goto blah;
             } else {
@@ -293,10 +293,10 @@ void SetSystemLanguage(Symbol lang, bool cheats) {
     }
 }
 
-void SetGfxMode(GfxMode mode) {
-    gGfxMode = mode;
+void SetGfxMode(GfxMode g) {
+    gGfxMode = g;
     HolmesClientReInit();
-    DataVariable("gfx_mode") = mode;
+    DataVariable("gfx_mode") = g;
 }
 
 DataNode OnSystemLanguage(DataArray *) { return gSystemLanguage; }
@@ -341,10 +341,10 @@ void LanguageInit() {
     SetSystemLanguage(lang, false);
 }
 
-void AppendStackTrace(FixedString &str, void *v) {
+void AppendStackTrace(FixedString &msg, void *context) {
     StackData data;
     memset(&data, 0, sizeof(StackData));
-    CaptureStackTrace(50, &data, v);
+    CaptureStackTrace(50, &data, context);
     int stackIdx;
     for (stackIdx = 0; stackIdx < 50; stackIdx++) {
         if (data.mFailThreadStack[stackIdx] == 0)
@@ -352,40 +352,40 @@ void AppendStackTrace(FixedString &str, void *v) {
     }
     String mapName;
     GetMapFileName(mapName);
-    str += "Stack Trace: \r\n";
+    msg += "Stack Trace: \r\n";
     bool parse;
     if (!UsingCD() && !FileIsLocal(mapName.c_str())) {
         String strf8;
         HolmesClientStackTrace(mapName.c_str(), &data, stackIdx, strf8);
-        str += strf8.c_str();
+        msg += strf8.c_str();
         parse = !strf8.empty();
     } else if (TheArchive && TheArchive->Patched()) {
         parse = false;
     } else {
-        parse = (*ParseStack)(mapName.c_str(), &data, stackIdx, str);
+        parse = (*ParseStack)(mapName.c_str(), &data, stackIdx, msg);
     }
     if (!parse) {
-        GenericMapFile::ParseStack(mapName.c_str(), &data, stackIdx, str);
+        GenericMapFile::ParseStack(mapName.c_str(), &data, stackIdx, msg);
     }
-    str += "\r\n";
+    msg += "\r\n";
 }
 
-void AppendThreadStackTrace(FixedString &str, StackData *stack) {
-    str += "\n\n-- Thread failure, no stack yet --";
+void AppendThreadStackTrace(FixedString &msg, StackData *stack) {
+    msg += "\n\n-- Thread failure, no stack yet --";
     int idx;
     for (idx = 0; idx < 50; idx++) {
         if (stack->mFailThreadStack[idx] == 0)
             break;
     }
-    GenericMapFile::ParseStack(nullptr, stack, idx, str);
+    GenericMapFile::ParseStack(nullptr, stack, idx, msg);
 }
 
 bool GenericMapFile::ParseStack(
-    const char *cc, struct StackData *stack, int stackIdx, FixedString &str
+    const char *mapname, struct StackData *stack, int stack_size, FixedString &msg
 ) {
-    str += " (map file unavailable)";
-    for (int i = 0; i < stackIdx; i++) {
-        str += MakeString("\n   %08x", stack->mFailThreadStack[i]);
+    msg += " (map file unavailable)";
+    for (int i = 0; i < stack_size; i++) {
+        msg += MakeString("\n   %08x", stack->mFailThreadStack[i]);
     }
     return true;
 }
@@ -588,9 +588,9 @@ void SystemPreInit(const char *config) {
     TheTaskMgr.Init();
 }
 
-void SystemPreInit(const char *cmdLine, const char *cfg) {
-    SetSystemArgs(cmdLine);
-    SystemPreInit(cfg);
+void SystemPreInit(const char *commandLine, const char *config) {
+    SetSystemArgs(commandLine);
+    SystemPreInit(config);
 }
 
 void SystemTerminate() {
