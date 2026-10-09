@@ -376,7 +376,7 @@
             "system/hamobj/MoveGraph.cpp": "Matching",
             "system/hamobj/MoveMgr.cpp": "NonMatching",
             "system/hamobj/MoveParent.cpp": "Matching",
-            "system/hamobj/MoveVariant.cpp": "NonMatching",
+            "system/hamobj/MoveVariant.cpp": "Matching",
             "system/hamobj/OriginalChoreoRemixer.cpp": "NonMatching",
             "system/hamobj/PhotoSpotlightPositioner.cpp": "Matching",
             "system/hamobj/Pose.cpp": "Matching",

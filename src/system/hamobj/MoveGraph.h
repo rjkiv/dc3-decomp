@@ -170,6 +170,7 @@ public:
     Symbol GetName() const { return m_Name; }
     Symbol GetHamMoveName() const { return m_HamMoveName; }
     bool IsFinalPose() const { return mFlags & (1 << kMV_IsFinalPose); }
+    bool IsOmitedFromMinigames() const { return mFlags & (1 << kMV_OmitMinigame); }
     MoveParent *GetParent() const { return mParent; }
     Symbol GetSongName() const { return mSongName; }
 

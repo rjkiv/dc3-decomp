@@ -85,14 +85,22 @@ MoveVariant::MoveVariant(MoveGraph *graph, const MoveVariant *other, MoveParent 
     mGenre = other->mGenre;
     mEra = other->mEra;
     mFlags = other->mFlags & ~1;
+    const char *toName;
     if (other->mLinkedTo) {
-        mLinkedToName = other->mLinkedTo->m_Name.Str();
+        const MoveVariant *to = other->mLinkedTo;
+        toName = to->m_Name.Str();
     } else {
-        mLinkedTo = nullptr;
+        toName = nullptr;
     }
+    mLinkedToName = toName;
+    const char *fromName;
     if (other->mLinkedFrom) {
-        mLinkedFromName = other->mLinkedFrom->m_Name.Str();
+        const MoveVariant *from = other->mLinkedFrom;
+        fromName = from->m_Name.Str();
+    } else {
+        fromName = nullptr;
     }
+    mLinkedFromName = fromName;
     mDelta = other->mDelta;
     graph->mVariantsByName[m_Name] = this;
 }
@@ -294,10 +302,10 @@ bool MoveVariant::IsValidForMinigame() const {
     if (IsRest()) {
         return false;
     }
-    if (mNextCandidates.size() < 8) {
+    if ((int)mNextCandidates.size() < 1) {
         return false;
     }
-    if (IsFinalPose())
+    if (IsOmitedFromMinigames())
         return false;
-    return !(mFlags & 1);
+    return !IsFinalPose();
 }
