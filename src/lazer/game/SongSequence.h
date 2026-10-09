@@ -40,19 +40,21 @@ public:
     bool DoNext(bool, bool);
     void Init();
     void Add(const DataArray *);
-    int CurrentIndex() const { return mCurrentIndex; }
-    bool GetUnk28() const { return unk28; }
-    void SetUnk28(bool val) { unk28 = val; } // 0x28 - venueEntered flag
+    int CurrentIndex() const { return m_Current; }
+    bool GetHaveReenteredCharacters() const { return m_HaveReenteredCharacters; }
+    void SetHaveReenteredCharacters(bool b) {
+        m_HaveReenteredCharacters = b;
+    } // 0x28 - venueEntered flag
 
 protected:
-    std::vector<Entry> mEntries; // 0x8
-    int mCurrentIndex; // 0x14
-    float unk18;
-    float unk1c;
-    u32 unk20;
-    float unk24;
-    bool unk28;
-    FileCache *mFileCache; // 0x2c
+    std::vector<Entry> m_Entries; // 0x8
+    int m_Current; // 0x14
+    float m_PrevChangeTime; // 0x18
+    float m_TimeSinceLoad; // 0x1c
+    float m_MasterVolume; // 0x20
+    float m_BeginLoadTime; // 0x24
+    bool m_HaveReenteredCharacters; // 0x28
+    FileCache *sCache; // 0x2c
 };
 
 extern SongSequence TheSongSequence;

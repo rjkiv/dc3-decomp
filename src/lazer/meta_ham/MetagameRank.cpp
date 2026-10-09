@@ -762,7 +762,7 @@ void MetagameRank::UpdateScore(
         } else if (xp_force_award_all.Int()) {
             MILO_LOG("XP Forcing Awarding All Ranks\n");
             float f37 = 1.0f;
-            if (TheRockCentral.GetUnk8c()) {
+            if (TheRockCentral.HasXpMult()) {
                 f37 = 0.5f;
             }
             static Symbol played_1000_songs_disp("played_1000_songs_disp");
@@ -774,7 +774,7 @@ void MetagameRank::UpdateScore(
             if (RandomInt(0, 100) == 42) {
                 AwardPointsForTask(random_bonus_occurs_1pct_of_the_time);
             }
-            if (TheRockCentral.GetUnk8c()) {
+            if (TheRockCentral.HasXpMult()) {
                 AwardPointsForTask(double_xp_weekend);
             }
             if (stars >= 6) {
@@ -995,7 +995,7 @@ void MetagameRank::UpdateScore(
 }
 
 void MetagameRank::AwardPoints(int i, Symbol s) {
-    if (TheRockCentral.GetUnk8c()) {
+    if (TheRockCentral.HasXpMult()) {
         i = i << 1;
     }
     DeferredPoints df;

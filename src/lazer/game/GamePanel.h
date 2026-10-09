@@ -1,6 +1,7 @@
 #pragma once
 #include "game/Game.h"
 #include "gesture/FitnessFilter.h"
+#include "meta_ham/MetaPerformer.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
 #include "os/Timer.h"
@@ -11,11 +12,21 @@
 
 class GamePanel : public UIPanel {
 public:
-    enum State {
-        kGameInIntro = 1,
-        kGamePlaying = 2,
-        kGameOver = 3,
+    enum GameState {
+        kGameNeedIntro = 0x0000,
+        kGameNeedStart = 0x0001,
+        kGamePlaying = 0x0002,
+        kGameOver = 0x0003,
     };
+
+    enum LoadingState {
+        kLoadingState_NotReady = 0x0000,
+        kLoadingState_UILoaded = 0x0001,
+        kLoadingState_WorldLoaded = 0x0002,
+        kLoadingState_CharsLoaded = 0x0003,
+        kLoadingState_Ready = 0x0004,
+    };
+
     GamePanel();
     // Hmx::Object
     virtual ~GamePanel();
@@ -43,7 +54,7 @@ public:
 
     DataNode OnGetFitnessData(const DataArray *);
     bool IsGameOver() const { return mState == kGameOver; }
-    bool GetUnkF8() const { return unkf8; }
+    bool GetDriveTime() const { return mDriveTime; }
 
 private:
     void CreateGame();
@@ -71,28 +82,29 @@ protected:
 
     DataNode OnMsg(const EndGameMsg &);
 
+private:
     Game *mGame; // 0x38
-    FitnessFilter mFitnessFilters[2]; // 0x3c
-    RndOverlay *mTimeOverlay; // 0x6c
-    RndOverlay *mLatencyOverlay; // 0x70
-    RndOverlay *mFitnessOverlay; // 0x74
-    RndOverlay *mLoopVizOverlay; // 0x78
-    bool unk7c;
-    State mState; // 0x80
-    int unk84;
-    Profiler unk88;
-    bool unkd8;
-    std::vector<float> unkdc;
-    int unke8;
-    int unkec;
-    float unkf0;
-    int unkf4;
-    bool unkf8;
-    Timer *unkfc;
-    bool unk100;
-    bool unk101;
-    int unk104;
-    bool unk108;
+    FitnessFilter mFitnessFilter[2]; // 0x3c
+    RndOverlay *mNowBar; // 0x6c
+    RndOverlay *mLatency; // 0x70
+    RndOverlay *mFitness; // 0x74
+    RndOverlay *mLoopViz; // 0x78
+    bool mStartPaused; // 0x7c
+    GamePanel::GameState mState; // 0x80
+    EndGameResult mResult; // 0x84
+    Profiler mLoadProf; // 0x88
+    bool mReplay; // 0xd8
+    std::vector<float> mJitter; // 0xdc
+    int mJitterIndex; // 0xe8
+    int mJitterWindow; // 0xec
+    float mLastAverage; // 0xf0
+    int mLastMs; // 0xf4
+    bool mDriveTime; // 0xf8
+    Timer *mPauseCountInTimer; // 0xfc
+    bool mShouldCountIn; // 0x100
+    bool mCheatPaused; // 0x101
+    int mLoadingState; // 0x104
+    bool mbSoundEventReceiverSet; // 0x108
 };
 
 extern GamePanel *TheGamePanel;

@@ -63,9 +63,9 @@ bool MainMenuProvider::HasNewDLC() const {
                 MILO_LOG(
                     "---- Compare profile time %i and rc time %i\n",
                     pProfile->GetProfileTime(),
-                    TheRockCentral.GetRockCentralTime()
+                    TheRockCentral.GetLastNewSong()
                 );
-                if (pProfile->GetProfileTime() < TheRockCentral.GetRockCentralTime())
+                if (pProfile->GetProfileTime() < TheRockCentral.GetLastNewSong())
                     return true;
             }
         }

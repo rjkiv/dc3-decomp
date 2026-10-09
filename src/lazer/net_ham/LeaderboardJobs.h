@@ -5,16 +5,16 @@
 
 class LeaderboardRow {
 public:
-    String unk0; // 0x0 - gamertag
-    int unk8;
-    int unkc; // 0xc - score
-    unsigned int unk10; // 0x10 - rank fmt/rank/level?
-    int unk14;
-    Difficulty unk18; // 0x18 - difficulty
-    bool unk1c; // 0x1c - no flashcards?
-    bool unk1d;
-    bool unk1e;
-    XUID unk20;
+    String gamertag; // 0x0
+    unsigned int pid; // 0x8
+    unsigned int score; // 0xc
+    unsigned int rank; // 0x10
+    unsigned int orank; // 0x14
+    Difficulty diff; // 0x18
+    bool noFlashcards; // 0x1c
+    bool isPercentile; // 0x1d
+    bool isFriend; // 0x1e
+    XUID xuid; // 0x20
 };
 
 class GetLeaderboardByPlayerJob : public RCJob {
@@ -29,10 +29,10 @@ public:
         unsigned int
     );
     void GetRows(std::vector<LeaderboardRow> *);
-    unsigned int SongID() const { return unkb0; }
+    unsigned int GetChecksum() const { return mChecksum; }
 
 private:
-    unsigned int unkb0;
+    unsigned int mChecksum; // 0xa0 on pdb but 0xb0 here ?
 };
 
 class GetMiniLeaderboardJob : public RCJob {
@@ -40,8 +40,5 @@ public:
     GetMiniLeaderboardJob(Hmx::Object *callback, const HamProfile *, int songID);
     void GetRows(std::vector<LeaderboardRow> *);
 
-    int SongID() const { return mSongID; }
-
-private:
     int mSongID; // 0xb0
 };

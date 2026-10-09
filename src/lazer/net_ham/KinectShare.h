@@ -2,54 +2,64 @@
 #include "net/HttpGet.h"
 #include "net/XLSPConnection.h"
 #include "utl/HxGuid.h"
+#include "xdk/xapilibi/xbase.h"
+
+#pragma pack(push, 1)
+struct KinectShareHeaderDataStruct {
+    unsigned char Flags; // 0x0
+    unsigned short MajorVersion; // 0x1
+    unsigned short MinorVersion; // 0x3
+    u64 SessionStartTime; // 0x5
+    u64 UserID0; // 0xd
+    u64 UserID1; // 0x15
+    u64 UserID2; // 0x1d
+    u64 UserID3; // 0x25
+    unsigned char CompressionType; // 0x2d
+    unsigned int DataSize; // 0x2e
+    unsigned char MessageType; // 0x32
+    unsigned int CompressedPartitionSizeInBytes; // 0x33
+    unsigned int CompressedWindowSizeInBytes; // 0x37
+    unsigned short MagicNumber; // 0x3b
+    unsigned char Type; // 0x3d
+    unsigned short ContentMagicNumber; // 0x3e
+    unsigned char ContentType; // 0x40
+    int ID[4]; // 0x41
+    unsigned int DataChunkSizeInBytes; // 0x51
+    unsigned short DataChunkIndex; // 0x55
+    unsigned short ChunkCount; // 0x57
+    int BatchID[4]; // 0x59
+    unsigned int TimeStamp; // 0x69
+    unsigned char Reserved; // 0x6d
+    unsigned char Reserved2; // 0x6e
+    unsigned int DataTotalSizeInBytes; // 0x6f
+    u64 CreationTimeStampUtc; // 0x73
+    int TitleServerEnumerationID[4]; // 0x7b
+    unsigned int Score; // 0x8b
+    unsigned int LevelInfo; // 0x8f
+    unsigned short Language; // 0x93
+    unsigned short Locale; // 0x95
+};
+#pragma pack(pop)
 
 // size 0x140
-#pragma pack(push, 1)
 class KinectShare : public HttpPost {
 public:
     enum EContentType {
+        kPhotoContentType = 0x0000,
+        kVideoContentType = 0x0001
     };
     KinectShare(unsigned int, int, const char *, int, EContentType, u64, u64, u64, u64);
+
+    void Cancel();
 
 protected:
     virtual bool CanRetry();
     virtual void Sending();
 
-    unsigned char unka0; // 0xa0
-    unsigned short unka1; // 0xa1
-    unsigned short unka3; // 0xa3
-    u64 unka5; // 0xa5
-    u64 unkad; // 0xad
-    u64 unkb5; // 0xb5
-    u64 unkbd; // 0xbd
-    u64 unkc5; // 0xc5
-    bool unkcd; // 0xcd
-    int unkce; // 0xce
-    bool unkd2; // 0xd2
-    int unkd3; // 0xd3
-    int unkd7; // 0xd7
-    unsigned short unkdb;
-    unsigned char unkdd;
-    unsigned short unkde;
-    unsigned char unke0;
-    int unke1[4];
-    int unkf1;
-    unsigned short unkf5;
-    unsigned short unkf7;
-    int unkf9[4];
-    int unk109;
-    bool unk10d;
-    bool unk10e;
-    int unk10f;
-    u64 unk113;
-    int unk11b[4];
-    int unk12b;
-    int unk12f;
-    unsigned short unk133;
-    unsigned short unk135;
-    bool unk137;
-    int unk138;
-    int unk13c;
+private:
+    KinectShareHeaderDataStruct mHeaderData; // 0xa0
+    int mHeaderSize; // 0x138
+    int mHeaderBytesLeftToSend; // 0x13c
 };
 #pragma pack(pop)
 
@@ -58,17 +68,19 @@ public:
     ~KinectShareConnection();
     void Poll();
 
-    int GetUnk78() const { return unk78; }
+    int GetState() const { return mState; }
 
 private:
-    XLSPConnection mConnection; // 0x0
-    int unk78; // 0x78 - state?
+    XLSPConnection mXLSPConnection; // 0x0
+    enum {
+        kConnecting = 0x0000,
+        kUploading = 0x0001,
+        kSuccess = 0x0002,
+        kFailed = 0x0003
+    } mState; // 0x78
     KinectShare *mKinectShare; // 0x7c
-    const char *unk80;
-    int unk84;
-    KinectShare::EContentType unk88;
-    u64 unk90;
-    u64 unk98;
-    u64 unka0;
-    u64 unka8;
+    const char *mPhotoData; // 0x80
+    int mPhotoDataLen; // 0x84
+    KinectShare::EContentType mContentType; // 0x88
+    XUID mXUIDs[4]; // 0x90
 };

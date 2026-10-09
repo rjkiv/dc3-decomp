@@ -91,9 +91,9 @@ int ChallengeSortMgr::GetPotentialChallengeExp(int i1) {
 
 int ChallengeSortMgr::GetOwnerChallengeScore(int songID) {
     for (int i = 0; i < mChallengeRecords.size(); i++) {
-        if (songID == mChallengeRecords[i].GetChallengeRow().mSongID
+        if (songID == (int)mChallengeRecords[i].GetChallengeRow().songId
             && mChallengeRecords[i].GetUnk48() == mChallengeRecords[i].GetUnk4c()) {
-            return mChallengeRecords[i].GetChallengeRow().mScore;
+            return mChallengeRecords[i].GetChallengeRow().score;
         }
     }
     return 0;
@@ -132,9 +132,9 @@ Symbol ChallengeSortMgr::GetSongShortName(int songID) {
 
 int ChallengeSortMgr::GetOwnerChallengeTimeStamp(int i1) {
     for (int i = 0; i < mChallengeRecords.size(); i++) {
-        if (i1 == mChallengeRecords[i].GetChallengeRow().mSongID
+        if (i1 == (int)mChallengeRecords[i].GetChallengeRow().songId
             && mChallengeRecords[i].GetUnk48() == mChallengeRecords[i].GetUnk4c()) {
-            return mChallengeRecords[i].GetChallengeRow().mTimeStamp;
+            return mChallengeRecords[i].GetChallengeRow().dateTime;
         }
     }
     return 0;
@@ -158,8 +158,8 @@ Symbol ChallengeSortMgr::GetChallengerName() {
 int ChallengeSortMgr::GetBestChallengeScore(int songID) {
     int currentHighest = 0;
     for (int i = 0; i < mChallengeRecords.size(); i++) {
-        int score = mChallengeRecords[i].GetChallengeRow().mScore;
-        if (songID == mChallengeRecords[i].GetChallengeRow().mSongID
+        int score = mChallengeRecords[i].GetChallengeRow().score;
+        if (songID == (int)mChallengeRecords[i].GetChallengeRow().songId
             && currentHighest < score) {
             currentHighest = score;
         }
@@ -258,10 +258,10 @@ int ChallengeSortMgr::GetChallengerXp(int val) {
         int highScore = 0;
         int xp = 0;
         for (int i = 0; i < mChallengeRecords.size(); i++) {
-            int score = mChallengeRecords[i].GetChallengeRow().mScore;
-            if (songID == mChallengeRecords[i].GetChallengeRow().mSongID
+            int score = mChallengeRecords[i].GetChallengeRow().score;
+            if (songID == (int)mChallengeRecords[i].GetChallengeRow().songId
                 && highScore < score) {
-                xp = mChallengeRecords[i].GetChallengeRow().mChallengerXp;
+                xp = mChallengeRecords[i].GetChallengeRow().xp;
                 highScore = score;
             }
         }
@@ -277,8 +277,9 @@ char const *ChallengeSortMgr::GetBestChallengeScoreGamertag(int id) {
     int highScore = -1;
     int idx = -1;
     for (int i = 0; i < mChallengeRecords.size(); i++) {
-        int score = mChallengeRecords[i].GetChallengeRow().mScore;
-        if (id == mChallengeRecords[i].GetChallengeRow().mSongID && highScore < score) {
+        int score = mChallengeRecords[i].GetChallengeRow().score;
+        if (id == (int)mChallengeRecords[i].GetChallengeRow().songId
+            && highScore < score) {
             highScore = score;
             idx = i;
         }
@@ -287,7 +288,7 @@ char const *ChallengeSortMgr::GetBestChallengeScoreGamertag(int id) {
         return gNullStr;
     }
 
-    int type = mChallengeRecords[idx].GetChallengeRow().mType;
+    int type = mChallengeRecords[idx].GetChallengeRow().type;
     bool b = (type >= 0 && type <= 2);
     if (!b) {
         b = (type >= 3 && type <= 5);

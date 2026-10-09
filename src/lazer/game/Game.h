@@ -16,8 +16,31 @@
 #include "utl/Symbol.h"
 #include "meta_ham/MetaPerformer.h"
 
+struct GamePauseRequest { /* Size=0x3 */
+public:
+    bool mRequest; // 0x0
+    bool mPlaying; // 0x1
+    bool mPauseSfx; // 0x2
+};
+
 class Game : public Hmx::Object, public SkeletonCallback {
 public:
+    enum LoadState {
+        kLoadingSong = 0x0000,
+        kWaitingForMoveGraph = 0x0001,
+        kWaitingForAudio = 0x0002,
+        kReady = 0x0003
+    };
+
+    enum WaitState {
+        kWaitNone = 0x0000,
+        kWaitStart = 0x0001,
+        kWaitJump = 0x0002,
+        kWaitRestart = 0x0003,
+        kWaitRestartAndStart = 0x0004,
+        kWaitNewSong = 0x0005,
+    };
+
     Game();
     // Hmx::Object
     virtual ~Game();
@@ -67,7 +90,7 @@ public:
     MoveDir *GetMoveDir() const { return mMoveDir; }
     HamMaster *GetMaster() const { return mMaster; }
     bool Paused() const { return mPaused; }
-    bool TimePaused() const { return mTimePaused; }
+    bool PauseTime() const { return mPauseTime; }
 
 private:
     void PostWaitStart();
@@ -89,33 +112,30 @@ private:
     SongInfo *mSongInfo; // 0x4c
     HamMaster *mMaster; // 0x50
     GameInput *mGameInput; // 0x54
-    int unk58;
-    bool unk5c;
-    bool unk5d; // 0x5d - cascade?
-    bool mPaused;
-    bool mTimePaused;
-    bool unk60;
-    bool unk61;
+    int mNumRestarts; // 0x58
+    bool mCurrentMoveDetected; // 0x5c
+    bool mUsingMoveGraph; // 0x5d
+    bool mPaused; // 0x5e
+    bool mPauseTime; // 0x5f
+    bool mRealtime; // 0x60
+    bool mRestartedYet; // 0x61
     bool mHasIntro; // 0x62
-    float unk64;
-    bool unk68;
-    bool unk69;
-    float unk6c;
-    bool unk70;
-    bool unk71;
-    bool unk72;
-    bool unk73;
-    bool unk74;
+    float mLastPollMs; // 0x64
+    bool mBroadcastIntroEnd; // 0x68
+    float mMusicSpeed; // 0x6c
+    bool mNeverAllowInput; // 0x70
+    bool mSetPausedCalled; // 0x71
+    GamePauseRequest mGamePauseRequest; // 0x72
     Overshell *mOvershell; // 0x78
     ObjPtr<MoveDir> mMoveDir; // 0x7c
-    int unk90;
+    Game::LoadState mLoadState; // 0x90
     Shuttle *mShuttle; // 0x94
-    int unk98;
-    float unk9c;
-    Symbol unka0;
-    int unka4; // 0xa4 - state?
-    int unka8;
-    MultiTempoTempoMap *unkac;
+    bool mUseOldWait; // 0x98
+    float mJumpWaitMs; // 0x9c
+    Symbol mOldSongAudioName; // 0xa0
+    Game::WaitState mWaitState; // 0xa4
+    Game::WaitState mPrevWaitState; // 0xa8
+    MultiTempoTempoMap *mMovesTempoMap; // 0xac
 };
 
 void GameInit();
@@ -124,7 +144,7 @@ void GameTerminate();
 extern Game *TheGame;
 
 static inline bool AllPaused() {
-    if (!TheGame || TheGame->TimePaused() || TheGame->Paused())
+    if (!TheGame || TheGame->PauseTime() || TheGame->Paused())
         return false;
     return true;
 }

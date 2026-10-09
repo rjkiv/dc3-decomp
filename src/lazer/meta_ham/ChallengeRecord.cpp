@@ -5,11 +5,11 @@
 
 ChallengeRecord::ChallengeRecord(ChallengeRow row) {
     mRow = row;
-    unk40 = TheHamSongMgr.GetShortNameFromSongID(mRow.mSongID, false);
+    unk40 = TheHamSongMgr.GetShortNameFromSongID(mRow.songId, false);
     if (unk40.Null()) {
-        if (TheChallenges->IsExportedSongDC1(mRow.mSongID)) {
+        if (TheChallenges->IsExportedSongDC1(mRow.songId)) {
             unk50 = 2;
-        } else if (TheChallenges->IsExportedSongDC2(mRow.mSongID)) {
+        } else if (TheChallenges->IsExportedSongDC2(mRow.songId)) {
             unk50 = 3;
         } else {
             unk50 = 4;
@@ -19,7 +19,7 @@ ChallengeRecord::ChallengeRecord(ChallengeRow row) {
     } else {
         unk50 = 1;
     }
-    unk44 = mRow.mSongTitle.c_str();
-    unk48 = Symbol(mRow.mGamertag.c_str());
-    unk4c = Symbol(mRow.unk2c.c_str());
+    unk44 = mRow.songName.c_str();
+    unk48 = Symbol(mRow.challengerUsername.c_str());
+    unk4c = Symbol(mRow.challengeeUsername.c_str());
 }

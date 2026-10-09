@@ -23,12 +23,17 @@ public:
     UpdateFriendsListJob(Hmx::Object *, HamProfile *);
     void EnumerateFriends();
 
-protected:
+private:
     HamProfile *mProfile; // 0xb0
-    int mPadNum; // 0xb4
-    int mFriendsListToken; // 0xb8
-    std::vector<Friend *> mFriendsList; // 0xbc
-    FriendsListJobState mFriendsListJobState; // 0xc8
+    int mUserPadNum; // 0xb4
+    int mUploadFriendsToken; // 0xb8
+    std::vector<Friend *> mFriends; // 0xbc
+    enum {
+        kNone = 0x0000,
+        kEnumeratingFriends = 0x0001,
+        kUpdatingFriends = 0x0002,
+        kFinished = 0x0003
+    } mFriendsListJobState; // 0xc8
 
 private:
     void GetFriendsListToken();

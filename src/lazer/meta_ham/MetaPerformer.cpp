@@ -1267,7 +1267,7 @@ void MetaPerformer::HandleGameplayEnded(const EndGameResult &egr) {
                 );
             }
             bool inmode = TheGameMode->InMode("campaign");
-            if (inmode && egr == kEndGameResult_3) {
+            if (inmode && egr == kQuit) {
                 pProfileFromPad->DiscardRecentCampaignProgress();
             }
         }

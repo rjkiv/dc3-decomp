@@ -17,51 +17,51 @@ public:
         kNumChallengeTypes = 6
     };
     bool operator!=(const ChallengeRow &other) const {
-        return (unsigned int)unk0 != other.unk0 || mGamertag != other.mGamertag
-            || (unsigned int)mSongID != other.mSongID || mArtist != other.mArtist
-            || mSongTitle != other.mSongTitle || (unsigned int)mScore != other.mScore
-            || (unsigned int)mDiff != other.mDiff || (unsigned int)mType != other.mType
-            || unk2c != other.unk2c || mTimeStamp != other.mTimeStamp
-            || (unsigned int)mChallengerXp != other.mChallengerXp;
+        return id != other.id || challengerUsername != other.challengerUsername
+            || songId != other.songId || artistName != other.artistName
+            || songName != other.songName || score != other.score || diff != other.diff
+            || (unsigned int)type != other.type
+            || challengeeUsername != other.challengeeUsername
+            || dateTime != other.dateTime || xp != other.xp;
     }
     bool IsHMXChallenge() const {
-        return mType >= kChallengeHmxGold && mType <= kChallengeHmxBronze;
+        return type >= kChallengeHmxGold && type <= kChallengeHmxBronze;
     }
     bool IsDLCChallenge() const {
-        return mType >= kChallengeDlcGold && mType <= kChallengeDlcBronze;
+        return type >= kChallengeDlcGold && type <= kChallengeDlcBronze;
     }
 
-    int unk0; // 0x0
-    String mGamertag; // 0x4
-    int mSongID; // 0xc
-    String mArtist; // 0x10
-    String mSongTitle; // 0x18
-    int mScore; // 0x20
+    unsigned int id; // 0x0
+    String challengerUsername; // 0x4
+    unsigned int songId; // 0xc
+    String artistName; // 0x10
+    String songName; // 0x18
+    unsigned int score; // 0x20
     // difficulty/"dots" of this song, 0-7?
     // doesn't look like the choreo difficulty easy/medium/expert
-    int mDiff; // 0x24
-    Type mType; // 0x28
-    String unk2c; // 0x2c
-    unsigned int mTimeStamp; // 0x34
-    int mChallengerXp; // 0x38
+    unsigned int diff; // 0x24
+    Type type; // 0x28
+    String challengeeUsername; // 0x2c
+    unsigned int dateTime; // 0x34
+    unsigned int xp; // 0x38
 };
 
 enum ChallengeBadgeType {
-    kBadgeGold = 0,
-    kBadgeSilver = 1,
-    kBadgeBronze = 2,
-    kNumBadgeTypes = 3
+    kGold = 0x0000,
+    kSilver = 0x0001,
+    kBronze = 0x0002,
+    kNumBadgeTypes = 0x0003,
 };
 
 class ChallengeBadgeInfo {
 public:
     ChallengeBadgeInfo() {
         for (int i = 0; i < kNumBadgeTypes; i++) {
-            mMedalCounts[i] = 0;
+            badge[i] = 0;
         }
     }
 
-    int mMedalCounts[kNumBadgeTypes]; // 0x0
+    int badge[kNumBadgeTypes]; // 0x0
     // int mGold; // 0x0
     // int mSilver; // 0x4
     // int mBronze; // 0x8
@@ -69,11 +69,11 @@ public:
 
 class FlauntScoreData {
 public:
-    FlauntScoreData() : mProfile(0), mStatus(0) {}
+    FlauntScoreData() : mProfile(0), mFlauntData(0) {}
     virtual ~FlauntScoreData() {}
 
     HamProfile *mProfile; // 0x4
-    FlauntStatusData *mStatus; // 0x8
+    FlauntStatusData *mFlauntData; // 0x8
 };
 
 class FlauntScoreJob : public RCJob {

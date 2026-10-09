@@ -33,7 +33,7 @@
 Challenges *TheChallenges;
 
 bool ChallengeScoreCmp(ChallengeRow cRow1, ChallengeRow cRow2) {
-    return (unsigned int)cRow1.mScore < (unsigned int)cRow2.mScore;
+    return (unsigned int)cRow1.score < (unsigned int)cRow2.score;
 }
 
 Challenges::Challenges() {
@@ -130,7 +130,7 @@ void Challenges::DownloadOfficialChallenges() {
 int Challenges::GetGlobalChallengeSongID() {
     for (int i = 0; i < mOfficialChallenges.size(); i++) {
         if (mOfficialChallenges[i].IsHMXChallenge()) {
-            return mOfficialChallenges[i].mSongID;
+            return mOfficialChallenges[i].songId;
         }
     }
     return 0;
@@ -138,10 +138,10 @@ int Challenges::GetGlobalChallengeSongID() {
 
 int Challenges::GetDlcChallengeSongID() {
     for (int i = mOfficialChallenges.size() - 1; i >= 0; i--) {
-        bool okay = mOfficialChallenges[i].mType >= ChallengeRow::kChallengeDlcGold
-            && mOfficialChallenges[i].mType <= ChallengeRow::kChallengeDlcBronze;
+        bool okay = mOfficialChallenges[i].type >= ChallengeRow::kChallengeDlcGold
+            && mOfficialChallenges[i].type <= ChallengeRow::kChallengeDlcBronze;
         if (okay) {
-            return mOfficialChallenges[i].mSongID;
+            return mOfficialChallenges[i].songId;
         }
     }
     return 0;
@@ -149,10 +149,10 @@ int Challenges::GetDlcChallengeSongID() {
 
 String Challenges::GetGlobalChallengeSongName() {
     for (int i = 0; i < mOfficialChallenges.size(); i++) {
-        bool okay = mOfficialChallenges[i].mType >= ChallengeRow::kChallengeHmxGold
-            && mOfficialChallenges[i].mType <= ChallengeRow::kChallengeHmxBronze;
+        bool okay = mOfficialChallenges[i].type >= ChallengeRow::kChallengeHmxGold
+            && mOfficialChallenges[i].type <= ChallengeRow::kChallengeHmxBronze;
         if (okay) {
-            return mOfficialChallenges[i].mSongTitle;
+            return mOfficialChallenges[i].songName;
         }
     }
     return gNullStr;
@@ -161,7 +161,7 @@ String Challenges::GetGlobalChallengeSongName() {
 String Challenges::GetDlcChallengeSongName() {
     for (int i = mOfficialChallenges.size() - 1; i >= 0; i--) {
         if (mOfficialChallenges[i].IsDLCChallenge()) {
-            return mOfficialChallenges[i].mSongTitle;
+            return mOfficialChallenges[i].songName;
         }
     }
     return gNullStr;
@@ -192,7 +192,7 @@ String Challenges::GetMissionInfoGamertag() {
     PropertyEventProvider *provider = playerData->Provider();
     MILO_ASSERT(provider, 0x381);
     int challengeIndex = provider->Property(challenge_mission_index)->Int();
-    return mPlayerChallenges[playerIndex][challengeIndex].mGamertag;
+    return mPlayerChallenges[playerIndex][challengeIndex].challengerUsername;
 }
 
 int Challenges::GetMissionInfoScore() {
@@ -204,7 +204,7 @@ int Challenges::GetMissionInfoScore() {
     PropertyEventProvider *provider = playerData->Provider();
     MILO_ASSERT(provider, 0x392);
     int challengeIndex = provider->Property(challenge_mission_index)->Int();
-    return mPlayerChallenges[playerIndex][challengeIndex].mScore;
+    return mPlayerChallenges[playerIndex][challengeIndex].score;
 }
 
 void Challenges::UpdateInGameEvent() {
@@ -232,10 +232,11 @@ void Challenges::UpdateInGameEvent() {
                 } else {
                     provider->SetProperty(challenge_target_index, i6);
                     provider->SetProperty(
-                        challenge_target_score, mPlayerChallenges[i][i6].mScore
+                        challenge_target_score, (int)mPlayerChallenges[i][i6].score
                     );
                     provider->SetProperty(
-                        challenge_target_rival, mPlayerChallenges[i][i6].mGamertag
+                        challenge_target_rival,
+                        mPlayerChallenges[i][i6].challengerUsername
                     );
                 }
             }
@@ -257,9 +258,11 @@ void Challenges::ResetInGameEvent() {
         MILO_ASSERT(provider, 0x3D9);
         if (provider->Property(has_valid_challenge_data)->Int()) {
             provider->SetProperty(challenge_target_index, 0);
-            provider->SetProperty(challenge_target_score, mPlayerChallenges[i][0].mScore);
             provider->SetProperty(
-                challenge_target_rival, mPlayerChallenges[i][0].mGamertag
+                challenge_target_score, (int)mPlayerChallenges[i][0].score
+            );
+            provider->SetProperty(
+                challenge_target_rival, mPlayerChallenges[i][0].challengerUsername
             );
         }
     }
@@ -277,9 +280,9 @@ void Challenges::PollInGameStatus() {
             HamProfile *profile = TheProfileMgr.GetProfileFromPad(playerData->PadNum());
             if (profile) {
                 if (mPlayerChallenges[i].size() != 0) {
-                    if ((unsigned int)mPlayerChallenges[i][0].mType
+                    if ((unsigned int)mPlayerChallenges[i][0].type
                         == ChallengeRow::kNumChallengeTypes) {
-                        if (mPlayerChallenges[i][0].unk2c
+                        if (mPlayerChallenges[i][0].challengeeUsername
                             != provider->Property(player_name)->Str()) {
                             provider->SetProperty(has_valid_challenge_data, false);
                         }
@@ -304,9 +307,9 @@ int Challenges::GetTotalXpEarned(int player) {
     // std::vector<ChallengeRow> &playerChallenges = mPlayerChallenges[player];
     int xp = 0;
     for (int i = 0; i < mPlayerChallenges[player].size(); i++) {
-        if (playerScore > mPlayerChallenges[player][i].mScore) {
+        if (playerScore > (int)mPlayerChallenges[player][i].score) {
             xp += CalculateChallengeXp(
-                mPlayerChallenges[player][i].mScore, mPlayerChallenges[player][i].mDiff
+                mPlayerChallenges[player][i].score, mPlayerChallenges[player][i].diff
             );
         }
     }
@@ -320,13 +323,15 @@ void Challenges::UploadNextFlaunt() {
     if (!mHasFlaunted) {
         mHasFlaunted = true;
     }
-    mFlauntScoreData.mStatus = &mFlauntList.front();
+    mFlauntScoreData.mFlauntData = &mFlauntList.front();
     MILO_LOG("***********************************\n");
     MILO_LOG("Challenges::UploadNextFlaunt()\n");
-    MILO_LOG(MakeString("   mDiff       = %d\n", mFlauntScoreData.mStatus->mDiff));
-    MILO_LOG(MakeString("   mNeedUpload = %d\n", mFlauntScoreData.mStatus->mNeedUpload));
-    MILO_LOG(MakeString("   mScore      = %d\n", mFlauntScoreData.mStatus->mScore));
-    MILO_LOG(MakeString("   mSongID     = %d\n", mFlauntScoreData.mStatus->mSongID));
+    MILO_LOG(MakeString("   mDiff       = %d\n", mFlauntScoreData.mFlauntData->mDiff));
+    MILO_LOG(
+        MakeString("   mNeedUpload = %d\n", mFlauntScoreData.mFlauntData->mNeedUpload)
+    );
+    MILO_LOG(MakeString("   mScore      = %d\n", mFlauntScoreData.mFlauntData->mScore));
+    MILO_LOG(MakeString("   mSongID     = %d\n", mFlauntScoreData.mFlauntData->mSongID));
     MILO_LOG("***********************************\n");
     mFlauntScoreData.mProfile = mFlauntingProfile;
     TheRockCentral.ManageJob(new FlauntScoreJob(this, mFlauntScoreData));
@@ -389,13 +394,13 @@ void Challenges::UpdateChallengeTimeStamp() {
             FOREACH (it, mProfileChallenges) {
                 if (it->first == profile->GetName()) {
                     int profileChallengeTimestamp = profile->GetChallengeTimestamp();
-                    int challengeTimeStamp = it->second[0].mTimeStamp;
+                    int challengeTimeStamp = it->second[0].dateTime;
                     MILO_LOG(
                         ">>>> Update challenge time stamp from %i to %i\n",
                         profileChallengeTimestamp,
                         challengeTimeStamp
                     );
-                    profile->SetChallengeTimestamp(it->second[0].mTimeStamp);
+                    profile->SetChallengeTimestamp(it->second[0].dateTime);
                     profile->SetDirty(true);
                     return;
                 }
@@ -435,7 +440,7 @@ int Challenges::GetMedalCount(int type) {
         String name = profile->GetName();
         auto it = mProfileBadgeInfos.find(name);
         if (it != mProfileBadgeInfos.end()) {
-            return it->second.mMedalCounts[type];
+            return it->second.badge[type];
         }
     }
     return 0;
@@ -471,9 +476,9 @@ bool Challenges::GetBeatenChallengeXPs(
                 if (mPlayerChallenges[i].size() == 0)
                     return false;
                 for (int j = 0; j < mPlayerChallenges[i].size(); j++) {
-                    if ((unsigned int)score > mPlayerChallenges[i][j].mScore) {
+                    if ((unsigned int)score > mPlayerChallenges[i][j].score) {
                         int xp = CalculateChallengeXp(
-                            mPlayerChallenges[i][j].mScore, mPlayerChallenges[i][j].mDiff
+                            mPlayerChallenges[i][j].score, mPlayerChallenges[i][j].diff
                         );
                         beatenXPs.push_back(xp);
                         MILO_LOG("XP = %i\n", xp);
@@ -602,8 +607,8 @@ void Challenges::SetupInGameData() {
     ChallengeRecord *record = challenge->GetChallengeRecord();
     MILO_ASSERT(record, 0x2e9);
 
-    int songID = record->GetChallengeRow().mSongID;
-    int score = record->GetChallengeRow().mScore;
+    int songID = record->GetChallengeRow().songId;
+    int score = record->GetChallengeRow().score;
     Symbol record48 = record->GetUnk48();
 
     HamProfile *primaryProfile = TheProfileMgr.GetActiveProfile(true);
@@ -694,7 +699,7 @@ void Challenges::SetupInGameChallenges(
     if (it != mProfileChallenges.end()) {
         const std::vector<ChallengeRow> &vec = it->second;
         for (int i = 0; i < vec.size(); i++) {
-            if (vec[i].mSongID == i1) {
+            if ((int)vec[i].songId == i1) {
                 challengeRows.push_back(vec[i]);
             }
         }
@@ -705,7 +710,7 @@ void Challenges::SetupInGameChallenges(
     }
 
     for (int i = 0; i < mOfficialChallenges.size(); i++) {
-        if (mOfficialChallenges[i].mSongID == i1) {
+        if ((int)mOfficialChallenges[i].songId == i1) {
             challengeRows.push_back(mOfficialChallenges[i]);
         }
     }
@@ -718,26 +723,30 @@ void Challenges::SetupInGameChallenges(
     MILO_LOG(">>>>>>>>>> %s in game data\n", b ? "Primary" : "2nd");
 
     for (int i = 0; i < challengeRows.size(); i++) {
-        int score = challengeRows[i].mScore;
+        int score = challengeRows[i].score;
         MILO_LOG(
-            ">>>>>>>>>> score = %i, gamertag = %s\n", score, challengeRows[i].mGamertag
+            ">>>>>>>>>> score = %i, gamertag = %s\n",
+            score,
+            challengeRows[i].challengerUsername
         );
     }
     provider->SetProperty(num_challenge_targets, (int)challengeRows.size());
     provider->SetProperty(challenge_target_index, 0);
-    provider->SetProperty(challenge_target_score, challengeRows.front().mScore);
-    provider->SetProperty(challenge_target_rival, challengeRows.front().mGamertag);
+    provider->SetProperty(challenge_target_score, (int)challengeRows.front().score);
+    provider->SetProperty(
+        challenge_target_rival, challengeRows.front().challengerUsername
+    );
     provider->SetProperty(has_valid_challenge_data, true);
     provider->SetProperty(is_challenging_self, false);
 
     for (int i = 0; i < challengeRows.size(); i++) {
-        if (challengeRows[i].mSongID == i1 && challengeRows[i].mScore == i2
-            && challengeRows[i].mGamertag == c) {
+        if ((int)challengeRows[i].songId == i1 && (int)challengeRows[i].score == i2
+            && challengeRows[i].challengerUsername == c) {
             if (profileName == c) {
                 provider->SetProperty(is_challenging_self, true);
             }
             provider->SetProperty(challenge_mission_index, i);
-            provider->SetProperty(challenge_mission_score, challengeRows[i].mScore);
+            provider->SetProperty(challenge_mission_score, (int)challengeRows[i].score);
             break;
         }
     }
@@ -888,7 +897,8 @@ void Challenges::DownloadPlayerChallenges() {
 
 void Challenges::Poll() {
     if (mOfficialChallengeTimer.Running()) {
-        if (1.0f <= mOfficialChallengeTimer.SplitMs() / TheRockCentral.GetUnk84()) {
+        if (1.0f <= mOfficialChallengeTimer.SplitMs()
+                / TheRockCentral.GetChallengeInterval()) {
             mOfficialChallengeTimer.Stop();
             DownloadOfficialChallenges();
         }
@@ -903,7 +913,8 @@ void Challenges::Poll() {
     }
 
     if (mPlayerChallengeTimer.Running()) {
-        if (1.0f <= mPlayerChallengeTimer.SplitMs() / TheRockCentral.GetUnk84()) {
+        if (1.0f
+            <= mPlayerChallengeTimer.SplitMs() / TheRockCentral.GetChallengeInterval()) {
             mPlayerChallengeTimer.Stop();
             AutoDownloadPlayerChallenges();
         }
@@ -937,21 +948,21 @@ bool Challenges::HasNewChallenges() {
                 std::vector<ChallengeRow> &rows = it->second;
 
                 for (int i = 0; i < rows.size(); i++) {
-                    if (rows[i].mGamertag == rows[i].unk2c) {
-                        int songID = rows[i].mSongID;
-                        scores[songID] = rows[i].mTimeStamp;
+                    if (rows[i].challengerUsername == rows[i].challengeeUsername) {
+                        int songID = rows[i].songId;
+                        scores[songID] = rows[i].dateTime;
                     }
                 }
 
                 for (int i = 0; i < rows.size(); i++) {
                     Symbol shortname =
-                        TheHamSongMgr.GetShortNameFromSongID(rows[i].mSongID, false);
+                        TheHamSongMgr.GetShortNameFromSongID(rows[i].songId, false);
                     if (shortname.Null() || TheProfileMgr.IsContentUnlocked(shortname)) {
-                        int songID = rows[i].mSongID;
+                        int songID = rows[i].songId;
                         auto find = scores.find(songID);
 
                         if (find != scores.end()) {
-                            if (find->second < (int)rows[i].mTimeStamp) {
+                            if (find->second < (int)rows[i].dateTime) {
                                 return true;
                             }
                         } else {
@@ -961,11 +972,11 @@ bool Challenges::HasNewChallenges() {
                 }
 
                 for (int i = 0; i < mOfficialChallenges.size(); i++) {
-                    int songID = mOfficialChallenges[i].mSongID;
+                    int songID = mOfficialChallenges[i].songId;
                     auto find = scores.find(songID);
 
                     if (find != scores.end()) {
-                        if (find->second < (int)mOfficialChallenges[i].mTimeStamp) {
+                        if (find->second < (int)mOfficialChallenges[i].dateTime) {
                             return true;
                         }
                     } else

@@ -4,14 +4,14 @@
 #include "types.h"
 #include <cmath>
 
-Shuttle::Shuttle() : mMs(0), mEndMs(0), mActive(0), mController(0) {}
+Shuttle::Shuttle() : mMs(0), mEndMs(0), mActive(0), mPadNum(0) {}
 Shuttle::~Shuttle() {}
 
 void Shuttle::SetActive(bool b) { mActive = b; }
 
 void Shuttle::Poll() {
     if (mActive) {
-        JoypadData *data = JoypadGetPadData(mController);
+        JoypadData *data = JoypadGetPadData(mPadNum);
         if (data) {
             float sticks = data->mSticks[0][0];
             float powF = pow(sticks, 5);

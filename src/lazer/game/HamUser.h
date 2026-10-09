@@ -20,6 +20,6 @@ public:
 protected:
     HamUser(int);
 
-    int unk4;
-    int unk8; // 0x8 - player index
+    int mSkeletonIndex; // 0x4
+    int mEnrollmentIndex; // 0x8
 };
