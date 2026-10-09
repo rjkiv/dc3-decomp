@@ -49,14 +49,14 @@ void FileTerminate() {
     HolmesClientTerminate();
 }
 
-void FileQualifiedFilename(String &out, const char *in) {
+void FileQualifiedFilename(String &oNewName, const char *iOldName) {
     char buf[256];
-    FileQualifiedFilename(buf, 0x100, in);
-    out = buf;
+    FileQualifiedFilename(buf, 0x100, iOldName);
+    oNewName = buf;
 }
 
-void FileNormalizePath(const char *cc) {
-    for (char *ptr = (char *)cc; *ptr != '\0'; ptr++) {
+void FileNormalizePath(const char *str) {
+    for (char *ptr = (char *)str; *ptr != '\0'; ptr++) {
         if (*ptr == '\\')
             *ptr = '/';
         else
@@ -64,9 +64,9 @@ void FileNormalizePath(const char *cc) {
     }
 }
 
-const char *FileGetExt(const char *root) {
-    const char *end = root + strlen(root);
-    for (const char *search = end - 1; search >= root; search--) {
+const char *FileGetExt(const char *file) {
+    const char *end = file + strlen(file);
+    for (const char *search = end - 1; search >= file; search--) {
         if (*search == '.') {
             return search + 1;
         } else if (*search == '/' || *search == '\\') {
@@ -98,28 +98,28 @@ static bool FileMatchInternal(const char *arg0, const char *arg1, bool arg2) {
     return (*arg1 == *arg0);
 }
 
-bool FileMatch(const char *param1, const char *param2) {
-    if (param2 == 0)
+bool FileMatch(const char *path, const char *pattern) {
+    if (pattern == 0)
         return false;
-    while (*param2 != '\0') {
-        if (*param2 == '*')
-            return FileMatchInternal(param1, param2 + 1, 0);
-        if (*param2 == '&')
-            return FileMatchInternal(param1, param2 + 1, 1);
-        if (*param1 == '\0')
+    while (*pattern != '\0') {
+        if (*pattern == '*')
+            return FileMatchInternal(path, pattern + 1, 0);
+        if (*pattern == '&')
+            return FileMatchInternal(path, pattern + 1, 1);
+        if (*path == '\0')
             break;
-        if (*param2 == '?') {
-            if ((*param1 == '\\') || (*param1 == '/'))
+        if (*pattern == '?') {
+            if ((*path == '\\') || (*path == '/'))
                 return 0;
-        } else if ((*param2 == '/') || (*param2 == '\\')) {
-            if ((*param1 != '/') && (*param1 != '\\'))
+        } else if ((*pattern == '/') || (*pattern == '\\')) {
+            if ((*path != '/') && (*path != '\\'))
                 return 0;
-        } else if (*param2 != *param1)
+        } else if (*pattern != *path)
             return 0;
-        param2++;
-        param1++;
+        pattern++;
+        path++;
     }
-    return (*param2 - *param1) == 0;
+    return (*pattern - *path) == 0;
 }
 
 bool FileDiscSpinUp() { return TheBlockMgr.SpinUp(); }
@@ -128,10 +128,10 @@ const char *FrameRateSuffix() {
     return MakeString("_keep_%s.dta", PlatformSymbol(TheLoadMgr.GetPlatform()));
 }
 
-const char *FileGetPathBuf(const char *iBuf, char *oBuf) {
+const char *FileGetPathBuf(const char *iFilepath, char *oBuf) {
     MILO_ASSERT(oBuf, 0x3F6);
-    if (iBuf) {
-        strcpy(oBuf, iBuf);
+    if (iFilepath) {
+        strcpy(oBuf, iFilepath);
         char *p = oBuf + strlen(oBuf) - 1;
         for (; p >= oBuf && *p != '/' && *p != '\\'; p--)
             ;
@@ -323,34 +323,34 @@ const char *FileRelativePathBuf(const char *iRoot, const char *iFilepath, char *
     return iFilepath;
 }
 
-const char *FileGetPath(const char *file) {
+const char *FileGetPath(const char *iFilepath) {
     static char sBuf[0x100];
     MainThread();
-    return FileGetPathBuf(file, sBuf);
+    return FileGetPathBuf(iFilepath, sBuf);
 }
 
-const char *FileGetDrive(const char *file) {
+const char *FileGetDrive(const char *iFilepath) {
     static char sBuf[0x100];
     MainThread();
-    return FileGetDriveBuf(file, sBuf);
+    return FileGetDriveBuf(iFilepath, sBuf);
 }
 
-const char *FileGetBase(const char *file) {
+const char *FileGetBase(const char *iFilepath) {
     static char sBuf[0x100];
     MainThread();
-    return FileGetBaseBuf(file, sBuf);
+    return FileGetBaseBuf(iFilepath, sBuf);
 }
 
-const char *FileMakePath(const char *root, const char *file) {
+const char *FileMakePath(const char *iRoot, const char *iFilepath) {
     static char sBuf[0x100];
     MainThread();
-    return FileMakePathBuf(root, file, sBuf);
+    return FileMakePathBuf(iRoot, iFilepath, sBuf);
 }
 
-const char *FileRelativePath(const char *root, const char *filepath) {
+const char *FileRelativePath(const char *iRoot, const char *iFilepath) {
     MainThread();
     static char relative[256];
-    return FileRelativePathBuf(root, filepath, relative);
+    return FileRelativePathBuf(iRoot, iFilepath, relative);
 }
 
 const char *FileLocalize(const char *iFilename, char *buffer) {
@@ -422,27 +422,27 @@ BinStream &operator>>(BinStream &bs, FileStat &fs) {
 
 DataNode OnFileExecRoot(DataArray *da) { return gExecRoot; }
 DataNode OnFileRoot(DataArray *da) { return gRoot; }
-DataNode OnFileGetExt(DataArray *da) { return FileGetExt(da->Str(1)); }
-DataNode OnFileMatch(DataArray *da) { return FileMatch(da->Str(1), da->Str(2)); }
+DataNode OnFileGetExt(DataArray *arg) { return FileGetExt(arg->Str(1)); }
+DataNode OnFileMatch(DataArray *arg) { return FileMatch(arg->Str(1), arg->Str(2)); }
 
-DataNode OnWithFileRoot(DataArray *da) {
-    FilePathTracker fpt(da->Str(1));
-    int thresh = da->Size() - 1;
+DataNode OnWithFileRoot(DataArray *arg) {
+    FilePathTracker fpt(arg->Str(1));
+    int thresh = arg->Size() - 1;
     int i;
     for (i = 2; i < thresh; i++) {
-        da->Command(i)->Execute(true);
+        arg->Command(i)->Execute(true);
     }
-    return da->Evaluate(i);
+    return arg->Evaluate(i);
 }
 
-DataNode OnSynchProc(DataArray *) {
+DataNode OnSynchProc(DataArray *msg) {
     MILO_FAIL("calling synchproc on non-pc platform");
     return "";
 }
 
-void OnFrameRateRecurseCB(const char *cc1, const char *cc2) {
+void OnFrameRateRecurseCB(const char *dir, const char *file) {
     MILO_ASSERT(gFrameRateArray, 0x120);
-    String str(cc2);
+    String str(file);
     str = str.substr(0, str.length() - strlen(FrameRateSuffix()));
     gFrameRateArray->Insert(gFrameRateArray->Size(), str);
 }
@@ -460,29 +460,29 @@ bool FileExists(const char *iFilename, int iMode, String *str) {
         return false;
 }
 
-String UniqueFilename(const char *c1, const char *c2) {
+String UniqueFilename(const char *base, const char *ext) {
     String ret;
     int i = 0;
     File *file = nullptr;
     do {
         i++;
-        ret = MakeString("%s_%06d.%s", c1, i, c2);
+        ret = MakeString("%s_%06d.%s", base, i, ext);
         delete file;
         file = NewFile(ret.c_str(), 1);
     } while (file);
     return ret;
 }
 
-DataNode OnFileGetDrive(DataArray *a) { return FileGetDrive(a->Str(1)); }
-DataNode OnFileGetPath(DataArray *a) { return FileGetPath(a->Str(1)); }
-DataNode OnFileGetBase(DataArray *a) { return FileGetBase(a->Str(1)); }
-DataNode OnFileAbsolutePath(DataArray *a) { return FileMakePath(a->Str(1), a->Str(2)); }
+DataNode OnFileGetDrive(DataArray *arg) { return FileGetDrive(arg->Str(1)); }
+DataNode OnFileGetPath(DataArray *arg) { return FileGetPath(arg->Str(1)); }
+DataNode OnFileGetBase(DataArray *arg) { return FileGetBase(arg->Str(1)); }
+DataNode OnFileAbsolutePath(DataArray *arg) { return FileMakePath(arg->Str(1), arg->Str(2)); }
 
-DataNode OnFileRelativePath(DataArray *a) {
-    return FileRelativePath(a->Str(1), a->Str(2));
+DataNode OnFileRelativePath(DataArray *arg) {
+    return FileRelativePath(arg->Str(1), arg->Str(2));
 }
 
-DataNode OnToggleFakeFileErrors(DataArray *a) {
+DataNode OnToggleFakeFileErrors(DataArray *arg) {
     gFakeFileErrors = !gFakeFileErrors;
     Hmx::Object *cheatDisplay = ObjectDir::Main()->Find<Hmx::Object>("cheat_display");
     if (cheatDisplay) {
@@ -493,10 +493,10 @@ DataNode OnToggleFakeFileErrors(DataArray *a) {
     return 0;
 }
 
-void DirListCB(const char *, const char *c) { gDirList.push_back(c); }
+void DirListCB(const char *dir, const char *file) { gDirList.push_back(file); }
 
 void RecursePatternInternal(
-    const char *pttn, void (*cb)(char const *, char const *), bool b3, bool b4
+    const char *pttn, void (*cb)(char const *, char const *), bool recurse, bool findDirs
 ) {
     MILO_ASSERT(pttn && pttn[0], 0x5B8);
     String patternStr = pttn;
@@ -506,12 +506,12 @@ void RecursePatternInternal(
     if (ui2 != FixedString::npos) {
         ui3 = Min<unsigned int>(ui3, ui2);
     }
-    if (b3 && ui1 == FixedString::npos) {
+    if (recurse && ui1 == FixedString::npos) {
         int len = patternStr.length();
         for (; ui3 < len && patternStr[ui3] != '/' && patternStr[ui3] != '\\'; ui3++)
             ;
         if (ui3 == len) {
-            b3 = false;
+            recurse = false;
             for (; ui3 >= 0 && patternStr[ui3] != '/' && patternStr[ui3] != '\\'; ui3--)
                 ;
         } else {
@@ -523,7 +523,7 @@ void RecursePatternInternal(
             patternStr = FileGetPath(patternStr.c_str());
             for (int i = 0; i < dirLists.size(); i++) {
                 RecursePatternInternal(
-                    MakeString("%s/%s%s", patternStr, dirLists[i], subStr1), cb, b3, b4
+                    MakeString("%s/%s%s", patternStr, dirLists[i], subStr1), cb, recurse, findDirs
                 );
             }
             return;
@@ -531,14 +531,14 @@ void RecursePatternInternal(
     }
     String str48;
     str48 = ui3 <= 0 ? String(".") : patternStr.substr(0, ui3);
-    FileEnumerate(str48.c_str(), cb, b3, patternStr.c_str(), b4);
+    FileEnumerate(str48.c_str(), cb, recurse, patternStr.c_str(), findDirs);
 }
 
-void FileRecursePattern(const char *c, void (*cb)(char const *, char const *), bool b3) {
-    RecursePatternInternal(c, cb, b3, false);
+void FileRecursePattern(const char *pttn, void (*cb)(char const *, char const *), bool recurse) {
+    RecursePatternInternal(pttn, cb, recurse, false);
 }
 
-DataNode OnEnumerateFrameRateResults(DataArray *a) {
+DataNode OnEnumerateFrameRateResults(DataArray *arg) {
     DataNode n(new DataArray(0));
     gFrameRateArray = n.Array();
     FileRecursePattern(
@@ -577,7 +577,7 @@ void FileInit() {
     TheDebug.AddExitCallback(FileTerminate);
 }
 
-bool FileReadOnly(const char *filepath) { return true; }
+bool FileReadOnly(const char *iFilename) { return true; }
 
 File *NewFile(const char *iFilename, int iMode) {
     if (gNullFiles) {

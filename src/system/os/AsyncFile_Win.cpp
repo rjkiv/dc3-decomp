@@ -37,8 +37,8 @@ AsyncFileWin::AsyncFileWin(const char *filename, int mode)
 
 AsyncFileWin::~AsyncFileWin() { Terminate(); }
 
-bool AsyncFileWin::Truncate(int distanceToMove) {
-    SetFilePointer(mFile, distanceToMove, nullptr, 0);
+bool AsyncFileWin::Truncate(int length) {
+    SetFilePointer(mFile, length, nullptr, 0);
     return SetEndOfFile(mFile);
 }
 
@@ -149,9 +149,9 @@ void AsyncFileWin::_Close() {
     mFile = INVALID_HANDLE_VALUE;
 }
 
-void AsyncFileWin::_WriteAsync(const void *data, int count) {
+void AsyncFileWin::_WriteAsync(const void *src, int count) {
     if (fildes >= 0) {
-        int wrote = _write(fildes, data, count);
+        int wrote = _write(fildes, src, count);
         if (wrote >= count)
             return;
         if (wrote == -1 && errno == ENOSPC) {
@@ -166,11 +166,11 @@ void AsyncFileWin::_WriteAsync(const void *data, int count) {
             mWriteInProgress = true;
             memset(&mOverlapped, 0, sizeof(OVERLAPPED));
             bool aligned;
-            aligned = ((int)data & 3) == 0 && Tell() % mSectorBytes == 0
+            aligned = ((int)src & 3) == 0 && Tell() % mSectorBytes == 0
                 && count % mSectorBytes == 0;
             MILO_ASSERT(aligned, 245);
             mOverlapped.Offset = Tell();
-            if (!WriteFile(mFile, data, count, 0, &mOverlapped)
+            if (!WriteFile(mFile, src, count, 0, &mOverlapped)
                 && GetLastError() != ERROR_IO_PENDING) {
                 mFail = true;
             }
@@ -197,16 +197,16 @@ bool AsyncFileWin::_ReadDone() {
             mFail = true;
             return false;
         }
-        if (unk58) {
-            memcpy(unk5c, static_cast<char *>(unk60) + unk68, unk64);
-            MemFree(unk60);
+        if (mAlignedRead) {
+            memcpy(mReadTarget, static_cast<char *>(mTempReadTarget) + mBytesToSkip, mBytesRequested);
+            MemFree(mTempReadTarget);
         }
         mReadInProgress = false;
         return true;
     }
 }
 
-void AsyncFileWin::_ReadAsync(void *v, int count) {
+void AsyncFileWin::_ReadAsync(void *dst, int count) {
     MILO_ASSERT(!mReadInProgress && !mWriteInProgress, 0x139);
     MILO_ASSERT(count >= 0, 0x13a);
 
@@ -219,29 +219,29 @@ void AsyncFileWin::_ReadAsync(void *v, int count) {
             bool aligned;
             mReadInProgress = true;
             memset(&mOverlapped, 0, sizeof(OVERLAPPED));
-            unk5c = v;
-            unk64 = count;
-            aligned = ((int)v & 3) == 0 && Tell() % mSectorBytes == 0
-                && unk64 % mSectorBytes == 0;
+            mReadTarget = dst;
+            mBytesRequested = count;
+            aligned = ((int)dst & 3) == 0 && Tell() % mSectorBytes == 0
+                && mBytesRequested % mSectorBytes == 0;
 
             int bytesToRead;
-            unk58 = aligned;
+            mAlignedRead = aligned;
             if (aligned) {
                 mOverlapped.Offset = Tell();
-                bytesToRead = unk64;
-                unk60 = unk5c;
+                bytesToRead = mBytesRequested;
+                mTempReadTarget = mReadTarget;
             } else {
                 mOverlapped.Offset = (Tell() / mSectorBytes) * mSectorBytes;
                 int i =
-                    ((Tell() + unk64 + mSectorBytes - 1) / mSectorBytes) * mSectorBytes;
+                    ((Tell() + mBytesRequested + mSectorBytes - 1) / mSectorBytes) * mSectorBytes;
                 bytesToRead = i - mOverlapped.Offset;
                 MILO_ASSERT(bytesToRead%mSectorBytes == 0, 0x16a);
-                unk60 =
+                mTempReadTarget =
                     _MemAllocTemp(bytesToRead, __FILE__, 0x16d, "AsyncFileTempBuf", 0);
-                unk68 = Tell() - mOverlapped.Offset;
+                mBytesToSkip = Tell() - mOverlapped.Offset;
             }
 
-            if (!ReadFile(mFile, unk60, bytesToRead, 0, &mOverlapped)
+            if (!ReadFile(mFile, mTempReadTarget, bytesToRead, 0, &mOverlapped)
                 && GetLastError() != ERROR_IO_PENDING) {
                 ReadError(mFilename.c_str());
                 mFail = true;

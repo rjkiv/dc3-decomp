@@ -72,9 +72,9 @@ protected:
     int mMaxSize; // 0x0
     bool mTryClear; // 0x4
     std::vector<FileCacheEntry *> mEntries; // 0x8
-    LoaderPos unk14;
-    bool unk18;
-    bool unk19;
+    LoaderPos mLoaderPos;
+    bool mTemp; // 0x18
+    bool mNotifyOnDump; // 0x19
 
     static FileCacheHelper *sResourceCacheHelper;
     static FileCacheHelper *sWavCacheHelper;

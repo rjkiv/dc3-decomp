@@ -84,7 +84,7 @@ bool CDReadDone() {
     return true;
 }
 
-int CDRead(int arkFile, int i2, int i3, void *v) {
+int CDRead(int arkfileNum, int sector, int numSectors, void *buf) {
     if (gFakeFileErrors || !UsingCD()) {
         gErrorCode = 0x45D;
         DiskErrorLoop();
@@ -94,13 +94,13 @@ int CDRead(int arkFile, int i2, int i3, void *v) {
         if (ret) {
             return ret;
         }
-        gOverlapped.OffsetHigh = (i2 << 0xB) >> 0x20;
-        gOverlapped.Offset = i2 << 0xB;
-        if (!ReadFile(gArkFiles[arkFile], v, i3 << 0xB, nullptr, &gOverlapped)) {
+        gOverlapped.OffsetHigh = (sector << 0xB) >> 0x20;
+        gOverlapped.Offset = sector << 0xB;
+        if (!ReadFile(gArkFiles[arkfileNum], buf, numSectors << 0xB, nullptr, &gOverlapped)) {
             DWORD err = GetLastError();
             if (err == ERROR_IO_PENDING || err == ERROR_IO_INCOMPLETE) {
                 MILO_NOTIFY("Disc error: ERROR_IO_INCOMPLETE, ignoring");
-                gPendingFile = arkFile;
+                gPendingFile = arkfileNum;
                 return 0;
             } else {
                 gErrorCode = err;
@@ -111,13 +111,13 @@ int CDRead(int arkFile, int i2, int i3, void *v) {
     }
 }
 
-bool CDReadExternal(void *&v, int i, u64 u) {
+bool CDReadExternal(void *&out_handle, int arkfileNum, u64 startByte) {
     if (ArkFilesInit() != 0) {
         return false;
     } else {
-        v = gExternalArkFiles[i];
-        LONG l = u;
-        SetFilePointer(v, u, &l, 0);
+        out_handle = gExternalArkFiles[arkfileNum];
+        LONG l = startByte;
+        SetFilePointer(out_handle, startByte, &l, 0);
         return true;
     }
 }

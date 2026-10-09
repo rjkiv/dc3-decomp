@@ -6,8 +6,8 @@
 #include "xdk/XAPILIB.h"
 #include <cstdio>
 
-bool FileIsLocal(const char *file) {
-    const char *drive = FileGetDrive(file);
+bool FileIsLocal(const char *filename) {
+    const char *drive = FileGetDrive(filename);
     MILO_ASSERT(!strieq(drive, "game"), 0x24);
     return strlen(drive) > 1;
 }

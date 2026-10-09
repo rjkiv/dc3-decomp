@@ -24,10 +24,10 @@ END_PROPSYNCS
 
 void User::Reset() { mMachineID = -1; }
 
-void User::SyncSave(BinStream &bs, unsigned int ui) const {
-    bs << mMachineID;
-    bs << UserName();
-    bs << *mOnlineID;
+void User::SyncSave(BinStream &dest, unsigned int dirtyMask) const {
+    dest << mMachineID;
+    dest << UserName();
+    dest << *mOnlineID;
 }
 
 #pragma endregion

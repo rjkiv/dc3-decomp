@@ -26,8 +26,8 @@ void AppChild::Sync() {
     mSync = true;
 }
 
-void AppChild::Sync(unsigned short sh) {
-    *mStream << sh;
+void AppChild::Sync(unsigned short data) {
+    *mStream << data;
     mStream->Flush();
     mSync = true;
 }

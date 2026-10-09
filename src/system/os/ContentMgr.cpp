@@ -11,9 +11,9 @@
 bool Content::Contains(const char *str) { return !(str - strstr(str, Root())); }
 
 ContentMgr::CallbackFile::CallbackFile(
-    const char *file, Callback *cb, ContentLocT loc, const char *name
+    const char *f, Callback *c, ContentLocT l, const char *n
 )
-    : mFile(file), mCallback(cb), mLocation(loc), mName(name) {}
+    : mFile(f), mCallback(c), mLocation(l), mName(n) {}
 
 BEGIN_HANDLERS(ContentMgr)
     HANDLE_ACTION(start_refresh, StartRefresh())
@@ -56,40 +56,40 @@ void ContentMgr::RefreshSynchronously() {
     }
 }
 
-void ContentMgr::OnReadFailure(bool b1, const char *cc) {
+void ContentMgr::OnReadFailure(bool corrupt, const char *package_name) {
     if (mReadFailureHandler) {
-        ContentReadFailureMsg msg(b1, cc);
+        ContentReadFailureMsg msg(corrupt, package_name);
         mReadFailureHandler->Handle(msg, true);
     }
 }
 
-bool ContentMgr::Contains(const char *cc, String &str) {
+bool ContentMgr::Contains(const char *path, String &contentName) {
     FOREACH (it, mContents) {
-        if ((*it)->Contains(cc)) {
-            str = (*it)->DisplayName();
+        if ((*it)->Contains(path)) {
+            contentName = (*it)->DisplayName();
             return true;
         }
     }
     return false;
 }
 
-void ContentMgr::RegisterCallback(Callback *cb, bool midRefreshAllowed) {
+void ContentMgr::RegisterCallback(Callback *c, bool midRefreshAllowed) {
     MILO_ASSERT(midRefreshAllowed || !RefreshInProgress(), 0x122);
-    mCallbacks.push_back(cb);
+    mCallbacks.push_back(c);
 }
 
-void ContentMgr::UnregisterCallback(Callback *cb, bool midRefreshAllowed) {
+void ContentMgr::UnregisterCallback(Callback *c, bool midRefreshAllowed) {
     MILO_ASSERT(midRefreshAllowed || !RefreshInProgress(), 0x128);
-    mCallbacks.remove(cb);
+    mCallbacks.remove(c);
 }
 
-void ContentMgr::AddCallbackFile(const char *c1, const char *c2) {
-    const char *str = MakeString("%s/%s", c1, c2);
+void ContentMgr::AddCallbackFile(const char *dir, const char *file) {
+    const char *str = MakeString("%s/%s", dir, file);
     mCallbackFiles.push_back(CallbackFile(str, mCallback, mLocation, mName.c_str()));
 }
 
-void ContentMgr::RecurseCallback(const char *c1, const char *c2) {
-    TheContentMgr.AddCallbackFile(c1, c2);
+void ContentMgr::RecurseCallback(const char *dir, const char *file) {
+    TheContentMgr.AddCallbackFile(dir, file);
 }
 
 void ContentMgr::PollRefresh() {
@@ -222,16 +222,16 @@ void ContentMgr::PollRefresh() {
     }
 }
 
-DataNode ContentMgr::OnAddContent(DataArray *da) {
-    OnRemoveContent(da);
-    mExtraContents.push_back(da->Str(2));
+DataNode ContentMgr::OnAddContent(DataArray *msg) {
+    OnRemoveContent(msg);
+    mExtraContents.push_back(msg->Str(2));
     return 0;
 }
 
-DataNode ContentMgr::OnRemoveContent(DataArray *a) {
+DataNode ContentMgr::OnRemoveContent(DataArray *msg) {
     mDirty = true;
     for (auto it = mExtraContents.begin(); it != mExtraContents.end();) {
-        if (streq(it->c_str(), a->Str(2))) {
+        if (streq(it->c_str(), msg->Str(2))) {
             it = mExtraContents.erase(it);
         } else
             ++it;

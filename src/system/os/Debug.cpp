@@ -96,11 +96,11 @@ void Debug::Print(const char *msg) {
     OutputDebugStringA(msg);
 }
 
-void Debug::Exit(int exitCode, bool call_exit) {
+void Debug::Exit(int err, bool call_exit) {
     if (!mExiting) {
         mExiting = true;
         MILO_LOG("APP EXITING\n");
-        MILO_LOG("EXIT CODE %d call_exit %d\n", exitCode, call_exit);
+        MILO_LOG("EXIT CODE %d call_exit %d\n", err, call_exit);
         if (!gMemoryUsageTest) {
             FOREACH (it, mExitCallbacks) {
                 (*it)();
@@ -147,7 +147,7 @@ void Debug::Notify(const char *msg) {
     }
 }
 
-void Debug::Fail(const char *msg, void *v) {
+void Debug::Fail(const char *msg, void *context) {
     if (!mNoDebug && !mFailing) {
         bool &failing = mFailing;
         failing = true;
@@ -159,7 +159,7 @@ void Debug::Fail(const char *msg, void *v) {
         {
             MemHeapTracker tracker(heap);
             if (!MainThread()) {
-                CaptureStackTrace(DIM(mStackData.mFailThreadStack), &mStackData, v);
+                CaptureStackTrace(DIM(mStackData.mFailThreadStack), &mStackData, context);
                 mFailThreadMsg = msg;
                 MILO_LOG("THREAD-FAIL: %s\n", msgStr);
                 while (true) {
@@ -176,7 +176,7 @@ void Debug::Fail(const char *msg, void *v) {
             }
             mFailCallbacks.clear();
             ModalType t = kModalFail;
-            Modal(t, msgStr.c_str(), v);
+            Modal(t, msgStr.c_str(), context);
             if (t != kModalFail) {
                 mFailing = false;
             }
@@ -203,22 +203,22 @@ void Debug::Poll() {
     }
 }
 
-void Debug::SetTry(bool tryBool) {
+void Debug::SetTry(bool b) {
     MILO_ASSERT(MainThread(), 0x1F5);
     if (!mNoTry) {
-        if (tryBool) {
+        if (b) {
             mTry++;
         } else
             mTry--;
     }
 }
 
-void Debug::StartLog(const char *log, bool flush) {
+void Debug::StartLog(const char *file, bool always_flush) {
     RELEASE(mLog);
-    mLog = new TextFileStream(log, false);
-    mAlwaysFlush = flush;
+    mLog = new TextFileStream(file, false);
+    mAlwaysFlush = always_flush;
     if (mLog->File().Fail()) {
-        MILO_NOTIFY("Couldn't open log %s", log);
+        MILO_NOTIFY("Couldn't open log %s", file);
         RELEASE(mLog);
     }
 }
@@ -258,12 +258,12 @@ const char *GetExpCode(int code) {
     }
 }
 
-LONG HmxGlobalHandler(EXCEPTION_POINTERS *ptrs) {
+LONG HmxGlobalHandler(EXCEPTION_POINTERS *pExp) {
     if (DmIsDebuggerPresent()) {
         return 1;
     } else {
         TheDebug.Fail(
-            GetExpCode(ptrs->ExceptionRecord->ExceptionCode), ptrs->ContextRecord
+            GetExpCode(pExp->ExceptionRecord->ExceptionCode), pExp->ContextRecord
         );
         return 0;
     }
@@ -295,17 +295,17 @@ void Debug::Init() {
     mSource = NetworkSocket::GetHostName();
 }
 
-void Debug::Modal(Debug::ModalType &t, const char *msg, void *v) {
+void Debug::Modal(Debug::ModalType &mt, const char *msg, void *context) {
     String str = msg;
-    DoCrucible(t, str.c_str(), nullptr);
+    DoCrucible(mt, str.c_str(), nullptr);
     StackString<4096> outputStr(str.c_str());
     StackString<256> cheatsLog;
     StackString<512> dataStackTrace;
     StackString<2048> cStackTrace;
-    if (t == kModalFail) {
+    if (mt == kModalFail) {
         MILO_LOG("FAIL-MSG: %s\n", msg);
         if (mModalCallback) {
-            mModalCallback(t, outputStr, false);
+            mModalCallback(mt, outputStr, false);
         }
         if (mFailThreadMsg) {
             AppendThreadStackTrace(outputStr, &mStackData);
@@ -340,22 +340,22 @@ void Debug::Modal(Debug::ModalType &t, const char *msg, void *v) {
             outputStr += cheatsLog.c_str();
             DataAppendStackTrace(dataStackTrace);
             outputStr += dataStackTrace.c_str();
-            AppendStackTrace(cStackTrace, v);
+            AppendStackTrace(cStackTrace, context);
             outputStr += "\n";
             outputStr += cStackTrace.c_str();
         }
-        if (t == kModalFail && TheAppChild) {
+        if (mt == kModalFail && TheAppChild) {
             TheAppChild->Sync(2);
         }
     }
     if (mModalCallback) {
-        mModalCallback(t, outputStr, true);
+        mModalCallback(mt, outputStr, true);
     } else {
         const char *modalStrs[3] = { "WARN", "NOTIFY", "FAIL" };
-        const char *myStr = modalStrs[t];
+        const char *myStr = modalStrs[mt];
         MILO_LOG("%s: %s\n", myStr, outputStr);
     }
-    if (t == kModalFail) {
+    if (mt == kModalFail) {
         if (mModalCallback) {
             PlatformDebugBreak();
         }
@@ -363,7 +363,7 @@ void Debug::Modal(Debug::ModalType &t, const char *msg, void *v) {
     }
 }
 
-void Debug::DoCrucible(Debug::ModalType t, const char *msg, void *v) {
+void Debug::DoCrucible(Debug::ModalType mt, const char *msg, void *context) {
     if (!mHostname) {
         if (SystemConfig()) {
             DataArray *cfg = SystemConfig()->FindArray("crucible", false);
@@ -381,9 +381,9 @@ void Debug::DoCrucible(Debug::ModalType t, const char *msg, void *v) {
     DataPoint dataPtJson;
     dataPt.AddPair("message", msg);
     const char *severityMsg;
-    if (t == kModalFail) {
+    if (mt == kModalFail) {
         severityMsg = "crash";
-    } else if (t == kModalNotify) {
+    } else if (mt == kModalNotify) {
         severityMsg = "notify";
     } else {
         severityMsg = "warn";
@@ -434,11 +434,11 @@ void Debug::DoCrucible(Debug::ModalType t, const char *msg, void *v) {
     }
     dataPtJson.AddPair("opsys", mSDK);
     dataPt.AddPair("extra", "");
-    if (t == kModalFail) {
+    if (mt == kModalFail) {
         StackString<512> dataStackTrace;
         DataAppendStackTrace(dataStackTrace);
         StackString<2048> cStackTrace;
-        AppendStackTrace(cStackTrace, v);
+        AppendStackTrace(cStackTrace, context);
         StackString<3096> stackOutput;
         stackOutput += "\r\n";
         stackOutput += cStackTrace.c_str();
@@ -453,7 +453,7 @@ void Debug::DoCrucible(Debug::ModalType t, const char *msg, void *v) {
         }
     }
     if (mDataPointCallback) {
-        mDataPointCallback(t, dataPtJson);
+        mDataPointCallback(mt, dataPtJson);
     }
     String json;
     dataPtJson.ToJSON(json);

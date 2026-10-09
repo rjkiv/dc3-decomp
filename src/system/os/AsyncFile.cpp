@@ -53,14 +53,14 @@ void PrintDiscFile(const char *file) {
     HolmesClientPrint(fullPath.c_str());
 }
 
-AsyncFile::AsyncFile(const char *c, int i)
-    : mMode(i), mFail(false), mFilename(c), mTell(0), mOffset(0), mSize(0), mUCSize(0),
+AsyncFile::AsyncFile(const char *iFilename, int iMode)
+    : mMode(iMode), mFail(false), mFilename(iFilename), mTell(0), mOffset(0), mSize(0), mUCSize(0),
       mBuffer(0), mData(0), mBytesLeft(0), mBytesRead(0) {}
 
 AsyncFile::~AsyncFile() {}
 
-int AsyncFile::Read(void *iBuf, int iBytes) {
-    ReadAsync(iBuf, iBytes);
+int AsyncFile::Read(void *iData, int iBytes) {
+    ReadAsync(iData, iBytes);
     if (mFail)
         return 0;
     else
@@ -69,20 +69,20 @@ int AsyncFile::Read(void *iBuf, int iBytes) {
     return iBytes;
 }
 
-bool AsyncFile::ReadAsync(void *iBuff, int iBytes) {
+bool AsyncFile::ReadAsync(void *iData, int iBytes) {
     MILO_ASSERT(iBytes >= 0, 0x126);
     MILO_ASSERT(mMode & FILE_OPEN_READ, 0x128);
     if (mFail)
         return false;
     else {
         if (!mBuffer) {
-            _ReadAsync(iBuff, iBytes);
+            _ReadAsync(iData, iBytes);
         } else {
             if (mTell + iBytes > mSize) {
                 iBytes = mSize - mTell;
             }
             MILO_ASSERT(iBytes >= 0, 0x139);
-            mData = (char *)iBuff;
+            mData = (char *)iData;
             mBytesLeft = iBytes;
             mBytesRead = 0;
             ReadDone(iBytes);
@@ -91,8 +91,8 @@ bool AsyncFile::ReadAsync(void *iBuff, int iBytes) {
     }
 }
 
-int AsyncFile::Write(const void *iBuf, int iBytes) {
-    WriteAsync((void *)iBuf, iBytes);
+int AsyncFile::Write(const void *iData, int iBytes) {
+    WriteAsync((void *)iData, iBytes);
     if (mFail)
         return 0;
     else
@@ -101,27 +101,27 @@ int AsyncFile::Write(const void *iBuf, int iBytes) {
     return iBytes;
 }
 
-bool AsyncFile::WriteAsync(const void *v, int i) {
+bool AsyncFile::WriteAsync(const void *iData, int iBytes) {
     MILO_ASSERT(mMode & FILE_OPEN_WRITE, 0x186);
     if (mFail)
         return false;
     else {
         if (!mBuffer) {
-            _WriteAsync(v, i);
+            _WriteAsync(iData, iBytes);
         } else {
             do {
-                if (mOffset + i > gBufferSize) {
+                if (mOffset + iBytes > gBufferSize) {
                     int size = gBufferSize - mOffset;
-                    memcpy(mBuffer + mOffset, v, size);
+                    memcpy(mBuffer + mOffset, iData, size);
                     mOffset = gBufferSize;
-                    v = (void *)((int)v + size);
+                    iData = (void *)((int)iData + size);
                     mTell += size;
                     Flush();
-                    i -= size;
+                    iBytes -= size;
                 } else {
-                    memcpy(mBuffer + mOffset, v, i);
-                    mTell += i;
-                    mOffset += i;
+                    memcpy(mBuffer + mOffset, iData, iBytes);
+                    mTell += iBytes;
+                    mOffset += iBytes;
                     if (mSize < mTell)
                         mSize = mTell;
                     goto okthen;
@@ -131,11 +131,11 @@ bool AsyncFile::WriteAsync(const void *v, int i) {
             return false;
         }
     okthen:
-        return i != 0;
+        return iBytes != 0;
     }
 }
 
-int AsyncFile::Seek(int i, int j) {
+int AsyncFile::Seek(int iOffset, int iSeekType) {
     if (mFail)
         return mTell;
     else {
@@ -164,17 +164,17 @@ void AsyncFile::Flush() {
 
 bool AsyncFile::Eof() { return mTell == mSize; }
 
-bool AsyncFile::ReadDone(int &i) {
+bool AsyncFile::ReadDone(int &oBytes) {
     if (mFail) {
-        i = 0;
+        oBytes = 0;
         return true;
     } else {
         if (mBuffer && mBytesLeft == 0) {
-            i = mBytesRead;
+            oBytes = mBytesRead;
             return true;
         } else {
             if (!_ReadDone()) {
-                i = mBytesRead;
+                oBytes = mBytesRead;
                 return false;
             } else {
                 if (!mBuffer)
@@ -189,7 +189,7 @@ bool AsyncFile::ReadDone(int &i) {
                         mBytesLeft -= size;
                         mData += size;
                         FillBuffer();
-                        i = mBytesRead;
+                        oBytes = mBytesRead;
                         return false;
                     } else {
                         memcpy(mData, mBuffer + mOffset, mBytesLeft);
@@ -198,7 +198,7 @@ bool AsyncFile::ReadDone(int &i) {
                         mTell += mBytesLeft;
                         mBytesLeft = 0;
                         mBytesRead = ret;
-                        i = ret;
+                        oBytes = ret;
                         return true;
                     }
                 }
@@ -207,7 +207,7 @@ bool AsyncFile::ReadDone(int &i) {
     }
 }
 
-bool AsyncFile::WriteDone(int &i) {
+bool AsyncFile::WriteDone(int &oBytes) {
     if (mBuffer)
         return true;
     else
@@ -274,28 +274,28 @@ void AsyncFile::Terminate() {
     MemFree(mBuffer);
 }
 
-AsyncFile *AsyncFile::New(const char *file, int i) {
+AsyncFile *AsyncFile::New(const char *filename, int mode) {
     if (Archive::DebugArkOrder()) {
-        PrintDiscFile(file);
+        PrintDiscFile(filename);
     }
-    if ((UsingHolmes(1) && (i & 1U) != 0) && !FileIsLocal(file)) {
-        AsyncFileHolmes *syncFile = new AsyncFileHolmes(file, i);
+    if ((UsingHolmes(1) && (mode & 1U) != 0) && !FileIsLocal(filename)) {
+        AsyncFileHolmes *syncFile = new AsyncFileHolmes(filename, mode);
         if (syncFile) {
             syncFile->Init();
             return syncFile;
         }
-    } else if (!UsingCD() && !FileIsLocal(file)) {
+    } else if (!UsingCD() && !FileIsLocal(filename)) {
         char c[256];
-        if (HolmesClientCacheFile(c, file)) {
-            file = c;
+        if (HolmesClientCacheFile(c, filename)) {
+            filename = c;
         }
-        AsyncFileHolmes *syncFile = new AsyncFileHolmes(file, i);
+        AsyncFileHolmes *syncFile = new AsyncFileHolmes(filename, mode);
         if (syncFile) {
             syncFile->Init();
             return syncFile;
         }
     }
-    AsyncFileWin *syncFile = new AsyncFileWin(file, i);
+    AsyncFileWin *syncFile = new AsyncFileWin(filename, mode);
     syncFile->Init();
     return syncFile;
 }

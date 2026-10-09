@@ -46,11 +46,11 @@ int ArkHash::AddString(const char *str) {
     return hashIdx;
 }
 
-int ArkHash::GetHashValue(const char *c) const {
-    int hashIdx = HashString(c, mTableSize);
+int ArkHash::GetHashValue(const char *str) const {
+    int hashIdx = HashString(str, mTableSize);
     MILO_ASSERT(hashIdx < mTableSize, 0xD4);
     while (mTable[hashIdx]) {
-        if (streq(mTable[hashIdx], c))
+        if (streq(mTable[hashIdx], str))
             return hashIdx;
         if (++hashIdx == mTableSize)
             hashIdx = 0;
@@ -63,23 +63,23 @@ const char *ArkHash::operator[](int idx) const {
     return mTable[idx];
 }
 
-void ArkHash::Read(BinStream &bs, int len) {
+void ArkHash::Read(BinStream &s, int heap_headroom) {
     MemFree(mHeap);
     MemFree(mTable);
     int i40;
-    bs >> i40;
-    int iSizeBytes = i40 + len;
+    s >> i40;
+    int iSizeBytes = i40 + heap_headroom;
     char *mem = (char *)MemAlloc(iSizeBytes, __FILE__, 0x112, "ArkHash");
     mHeap = mem;
     mFree = mem + i40;
     mHeapEnd = mem + iSizeBytes;
-    bs.Read(mem, iSizeBytes);
+    s.Read(mem, iSizeBytes);
     memset(mFree, 0, mHeapEnd - mFree);
-    bs >> mTableSize;
+    s >> mTableSize;
     mTable = (char **)MemAlloc(mTableSize * 4, __FILE__, 0x11A, "ArkHash");
     for (char *p = *mTable; p != mTable[mTableSize]; p++) {
         int offset;
-        bs >> offset;
+        s >> offset;
         p = offset == 0 ? nullptr : mHeap + offset;
     }
 }
@@ -91,23 +91,23 @@ bool Archive::DebugArkOrder() { return gDebugArkOrder; }
 
 Archive::~Archive() {}
 
-Archive::Archive(const char *name, int heap_headroom)
-    : mNumArkfiles(0), mBasename(name), mMode(kRead), mMaxArkfileSize(0),
-      mIsPatched(false), unk6c(0), unk70(0) {
+Archive::Archive(const char *basename, int heap_headroom)
+    : mNumArkfiles(0), mBasename(basename), mMode(kRead), mMaxArkfileSize(0),
+      mIsPatched(false), mArkfilePerms(0), mArkfilePermsCount(0) {
     Read(heap_headroom);
 }
 
-bool Archive::HasArchivePermission(int x) const {
-    for (int i = 0; i < unk70; i++) {
-        if (unk6c[i] == x)
+bool Archive::HasArchivePermission(int arkfileNum) const {
+    for (int i = 0; i < mArkfilePermsCount; i++) {
+        if (mArkfilePerms[i] == arkfileNum)
             return true;
     }
     return false;
 }
 
-void Archive::SetArchivePermission(int i, const int *ci) {
-    unk70 = i;
-    unk6c = ci;
+void Archive::SetArchivePermission(int count, const int *arkfiles) {
+    mArkfilePermsCount = count;
+    mArkfilePerms = arkfiles;
 }
 
 void Archive::GetGuid(HxGuid &guid) const { guid = mGuid; }
@@ -115,7 +115,7 @@ void Archive::GetGuid(HxGuid &guid) const { guid = mGuid; }
 BinStream &operator>>(BinStream &bs, FileEntry &entry) {
     bs >> entry.mOffset >> entry.mHashedName >> entry.mHashedPath >> entry.mSize
         >> entry.mUCSize;
-    return bs;
+    return bs; ////////////////////////////////////////////////////////////////////////////////////
 }
 
 void Archive::Enumerate(
@@ -149,8 +149,8 @@ int Archive::GetArkfileCachePriority(int arkfileNum) const {
     return mArkfileCachePriority[arkfileNum];
 }
 
-int Archive::GetArkfileNumBlocks(int file) const {
-    return (mArkfileSizes[file] - 1) / kArkBlockSize + 1;
+int Archive::GetArkfileNumBlocks(int arkfileNum) const {
+    return (mArkfileSizes[arkfileNum] - 1) / kArkBlockSize + 1;
 }
 
 void Archive::SetLocationHardDrive() {
