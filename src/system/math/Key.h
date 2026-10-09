@@ -68,17 +68,19 @@ BinStreamRev &operator>>(BinStreamRev &d, Key<T> &key) {
 template <class T1, class T2>
 class Keys : public std::vector<Key<T1> > {
 public:
-    /** Get the number of keyframes in this collection. */
-    int NumKeys() const { return size(); }
-
     /** Remove the key at the given index.
      * @param [in] idx The index in the vector to remove.
      */
     void Remove(int idx) { erase(begin() + idx); }
 
-    int Remove(float start, float end) {
-        int startidx = KeyGreaterEq(start);
-        int endidx = KeyGreaterEq(end);
+    /** Remove all keyframes whose frames are in the range [from, to).
+     * @param [in] from The first frame to remove.
+     * @param [in] to The end of the removal range (exclusive).
+     * @returns The index in the vector where the removal began.
+     */
+    int Remove(float from, float to) {
+        int startidx = KeyGreaterEq(from);
+        int endidx = KeyGreaterEq(to);
         erase(begin() + startidx, begin() + endidx);
         return startidx;
     }
@@ -90,15 +92,15 @@ public:
      * create a new keyframe.
      * @returns The index in the vector corresponding to this new keyframe.
      */
-    int Add(const T1 &val, float frame, bool unique) {
+    int Add(const T1 &value, float frame, bool unique) {
         int bound = KeyGreaterEq(frame);
         if (unique && bound != size() && (*this)[bound].frame == frame) {
-            (*this)[bound].value = val;
+            (*this)[bound].value = value;
         } else {
             while (bound < size() && (*this)[bound].frame == frame) {
                 bound++;
             }
-            insert(&(*this)[bound], Key<T1>(val, frame));
+            insert(&(*this)[bound], Key<T1>(value, frame));
         }
         return bound;
     }
@@ -107,21 +109,21 @@ public:
      * NOTE: if both the start and end frame are 0, they will be overwritten to the first
      * and last frame, istart will become 0, and iend will become the last index of the
      * vector.
-     * @param [in] fstart The start frame.
-     * @param [in] fend The end frame.
-     * @param [out] istart The index of the last key whose frame <= the start frame.
-     * @param [out] iend The index of the first key whose frame >= the end frame.
+     * @param [in] start The start frame.
+     * @param [in] end The end frame.
+     * @param [out] startKey The index of the last key whose frame <= the start frame.
+     * @param [out] endKey The index of the first key whose frame >= the end frame.
      */
-    void FindBounds(float &fstart, float &fend, int &istart, int &iend) {
+    void FindBounds(float &start, float &end, int &startKey, int &endKey) {
         MILO_ASSERT(size(), 0x1AF);
-        if (!fstart && !fend) {
-            fstart = front().frame;
-            fend = back().frame;
-            istart = 0;
-            iend = size() - 1;
+        if (!start && !end) {
+            start = front().frame;
+            end = back().frame;
+            startKey = 0;
+            endKey = size() - 1;
         } else {
-            istart = KeyLessEq(Max(fstart, front().frame));
-            iend = KeyGreaterEq(Min(fend, back().frame));
+            startKey = KeyLessEq(Max(start, front().frame));
+            endKey = KeyGreaterEq(Min(end, back().frame));
         }
     }
 
@@ -145,22 +147,22 @@ public:
      * @param [in] frame The keyframe to get a value from.
      * @param [out] prev The previous key relative to the keyframe we want.
      * @param [out] next The next key relative to the keyframe we want.
-     * @param [out] ref TODO: unknown
+     * @param [out] r The interpolation ratio between prev and next, used to blend their
+     * values.
      * @returns The index in the vector where this keyframe resides.
      */
-    int
-    AtFrame(float frame, const Key<T1> *&prev, const Key<T1> *&next, float &ref) const {
+    int AtFrame(float frame, const Key<T1> *&prev, const Key<T1> *&next, float &r) const {
         if (empty()) {
             prev = next = nullptr;
-            ref = 0;
+            r = 0;
             return -1;
         } else if (frame < front().frame) {
             prev = next = &front();
-            ref = 0;
+            r = 0;
             return -1;
         } else if (frame >= back().frame) {
             prev = next = &back();
-            ref = 0;
+            r = 0;
             return size() - 1;
         } else {
             int frameIdx = KeyLessEq(frame);
@@ -168,7 +170,7 @@ public:
             next = &(*this)[frameIdx + 1];
             float den = next->frame - prev->frame;
             MILO_ASSERT(den != 0, 0xFF);
-            ref = (frame - prev->frame) / den;
+            r = (frame - prev->frame) / den;
             return frameIdx;
         }
     }
@@ -243,45 +245,58 @@ public:
         }
     }
 
-    void KeysLessEq(float f, int &iref1, int &iref2) const {
-        iref2 = -1;
-        iref1 = -1;
-        if (empty() || f < front().frame)
+    /** Get the index range of all keyframes whose frames are <= the supplied frame.
+     * If several keyframes share the same frame, the full run of them is returned.
+     * NOTE: if the vector is empty or the frame is before the first keyframe, both
+     * indices are set to -1.
+     * @param [in] frame The supplied frame.
+     * @param [out] first The index of the first keyframe at that frame.
+     * @param [out] last The index of the last keyframe at that frame.
+     */
+    void KeysLessEq(float frame, int &first, int &last) const {
+        last = -1;
+        first = -1;
+        if (empty() || frame < front().frame)
             return;
         int i1 = 0;
         int i2 = size();
         while (i2 > i1 + 1) {
             int i5 = (i1 + i2) >> 1;
             const Key<T1> &cur = (*this)[i5];
-            if (f < cur.frame)
+            if (frame < cur.frame)
                 i2 = i5;
             else
                 i1 = i5;
         }
-        iref2 = i1;
-        iref1 = i1;
+        last = i1;
+        first = i1;
         while (i1 - 1 >= 0 && (*this)[i1 - 1].frame == (*this)[i1].frame) {
             i1--;
-            iref1 = i1;
+            first = i1;
         }
         while (i1 + 1 < size() && (*this)[i1 + 1].frame == (*this)[i1].frame) {
             i1++;
-            iref2 = i1;
+            last = i1;
         }
     }
 
-    Key<T1> *KeyNearest(float f1) {
+    /** Get the keyframe whose frame is closest to the supplied frame.
+     * Only the keyframes immediately before and after the supplied frame are considered.
+     * @param [in] frame The supplied frame.
+     * @returns A pointer to the nearest keyframe, or nullptr if none exists.
+     */
+    Key<T1> *KeyNearest(float frame) {
         int i4 = -1;
         float diff = kHugeFloat;
-        int idx = KeyLessEq(f1);
+        int idx = KeyLessEq(frame);
         if (idx >= 0 && idx < size()) {
-            if (MinEq(diff, f1 - (*this)[idx].frame)) {
+            if (MinEq(diff, frame - (*this)[idx].frame)) {
                 i4 = idx;
             }
         }
         int next = idx + 1;
         if (next >= 0 && next < size()) {
-            if (MinEq(diff, (*this)[next].frame - f1)) {
+            if (MinEq(diff, (*this)[next].frame - frame)) {
                 i4 = next;
             }
         }
@@ -292,56 +307,76 @@ public:
         }
     }
 
-    bool Linear(float f1, float &fref) const {
+    /** Linearly interpolate the value at the supplied frame.
+     * Frames outside the key range are clamped to the first or last segment.
+     * NOTE: unlike AtFrame, this interpolates the key value type T1 directly.
+     * @param [in] frame The frame to interpolate at.
+     * @param [out] val The interpolated value.
+     * @returns False if the vector is empty, otherwise true.
+     */
+    bool Linear(float frame, T1 &val) const {
         if (size() == 0)
             return false;
         else {
             if (size() == 1)
-                fref = front().value;
+                val = front().value;
             else {
-                int idx = Clamp<int>(0, size() - 2, KeyLessEq(f1));
+                int idx = Clamp<int>(0, size() - 2, KeyLessEq(frame));
                 const Key<T1> &keyNow = (*this)[idx];
                 const Key<T1> &keyNext = (*this)[idx + 1];
                 Interp(
                     keyNow.value,
                     keyNext.value,
-                    (f1 - keyNow.frame) / (keyNext.frame - keyNow.frame),
-                    fref
+                    (frame - keyNow.frame) / (keyNext.frame - keyNow.frame),
+                    val
                 );
             }
             return true;
         }
     }
 
-    bool ReverseLinear(const float &fconst, float &fref) const {
+    /** Find the frame at which the supplied value would occur, by linearly
+     * interpolating between the keyframes that bracket the value.
+     * @param [in] val The value to search for.
+     * @param [out] frame The interpolated frame at which this value occurs.
+     * @returns False if the vector is empty, otherwise true.
+     */
+    bool ReverseLinear(const T1 &val, float &frame) const {
         if (size() == 0)
             return false;
         else if (size() == 1) {
-            fref = front().frame;
+            frame = front().frame;
             return true;
         } else {
-            int idx = Clamp<int>(0, size() - 2, ReverseKeyLessEq(fconst));
+            int idx = Clamp<int>(0, size() - 2, ReverseKeyLessEq(val));
             const Key<T1> &keyNow = (*this)[idx];
             const Key<T1> &keyNext = (*this)[idx + 1];
             Interp(
                 keyNow.frame,
                 keyNext.frame,
-                (fconst - keyNow.value) / (keyNext.value - keyNow.value),
-                fref
+                (val - keyNow.value) / (keyNext.value - keyNow.value),
+                frame
             );
             return true;
         }
     }
 
-    int ReverseKeyLessEq(const T1 &fref) const {
-        if (empty() || fref < front().value) {
+    /** Get the index of the last keyframe whose value <= the supplied value.
+     * If several keyframes share the same value, the last of them is returned.
+     * NOTE: unlike KeyLessEq, this searches by key *value* rather than by frame.
+     * @param [in] val The supplied value.
+     * @returns The index of the keyframe that satisfies the condition above, or -1
+     * if the vector is empty or the value is below the first key's value.
+     */
+    int ReverseKeyLessEq(const T1 &val) const {
+        if (empty() || val < front().value) {
             return -1;
         } else {
             int i1 = 0;
             int i2 = size();
             while (i2 > i1 + 1) {
                 int newCnt = (i1 + i2) >> 1;
-                if (fref < (*this)[newCnt].value)
+                if (val < (*this)[newCnt].value)
                     i2 = newCnt;
                 else
                     i1 = newCnt;
@@ -352,17 +387,28 @@ public:
         }
     }
 
-    const T1 *Cross(float f1, float f2) const {
-        int idx = KeyLessEq(f1);
+    /** Get the value of the last keyframe at or before the supplied frame.
+     * @param [in] frame The supplied frame.
+     * @param [in] lastFrame The frame the key must lie after.
+     * @returns A pointer to the key's value, or nullptr if none qualifies.
+     */
+    const T1 *Cross(float frame, float lastFrame) const {
+        int idx = KeyLessEq(frame);
         if (idx == -1)
             return 0;
         else {
-            if (f2 >= (*this)[idx].frame)
+            if (lastFrame >= (*this)[idx].frame)
                 return 0;
             else
                 return &(*this)[idx].value;
         }
     }
+
+    // int KeyIdxNearest(float);
+    // void Linearize(Keys&, float) const;
+    // void LinearizeHelper(Keys&, float, int, int) const;
+    // int FindFirst(T1&);
+    // bool AllSameValues() const;
 };
 
 template <class T1, class T2>

@@ -205,7 +205,7 @@ bool PropSync(Keys<T, T> &keys, DataNode &node, DataArray *prop, int i, PropOp o
         return false;
     else if (i == prop->Size()) {
         MILO_ASSERT(op == kPropSize || op == kPropInsert, 0x10A);
-        node = keys.NumKeys();
+        node = (int)keys.size();
         return true;
     } else {
         typename Keys<T, T>::iterator it = keys.begin() + prop->Int(i++);
