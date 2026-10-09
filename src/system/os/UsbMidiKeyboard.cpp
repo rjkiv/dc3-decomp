@@ -104,21 +104,21 @@ void UsbMidiKeyboard::Poll() {
     }
 }
 
-int UsbMidiKeyboard::GetSlottedKeyVelocityFromExtended(int i, unsigned char *uc) {
+int UsbMidiKeyboard::GetSlottedKeyVelocityFromExtended(int slot, unsigned char *extended) {
     if (gUseMidiPort)
         return 0;
-    if (i >= 1 && i <= 5) {
-        switch (i) {
+    if (slot >= 1 && slot <= 5) {
+        switch (slot) {
         case 1:
-            return uc[3] & 0x7F;
+            return extended[3] & 0x7F;
         case 2:
-            return uc[4] & 0x7F;
+            return extended[4] & 0x7F;
         case 3:
-            return uc[5] & 0x7F;
+            return extended[5] & 0x7F;
         case 4:
-            return uc[6] & 0x7F;
+            return extended[6] & 0x7F;
         case 5:
-            return uc[7] & 0x7F;
+            return extended[7] & 0x7F;
         }
     }
     return 0;
@@ -151,7 +151,7 @@ void UsbMidiKeyboard::SetAccelerometer(int pad, int a1, int a2, int a3) {
     mAccelerometer[pad][2] = a3;
 }
 
-bool UsbMidiKeyboard::GetSustain(int pad) { return mSustain[pad]; }
+bool UsbMidiKeyboard::GetSustain(int padNum) { return mSustain[pad]; }
 void UsbMidiKeyboard::SetSustain(int pad, bool sus) { mSustain[pad] = sus; }
 
 void UsbMidiKeyboard::SetStompPedal(int pad, bool stomp) { mStompPedal[pad] = stomp; }

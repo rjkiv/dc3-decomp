@@ -54,27 +54,27 @@ const char *VirtualKeyboard::GetInputString() {
 }
 
 DataNode VirtualKeyboard::ShowKeyboardUI(
-    int pad, int i2, String windowTitle, String descText, String defaultTxt, int i8
+    int pad, int textLength, String strWindowTitle, String strDescription, String strDefaultText, int configType
 ) {
     MILO_ASSERT(!mCallbackReady, 0x62);
     RELEASE(gXoKeyboard);
     RELEASE(gWstrKeyboard);
-    wchar_t *newWStr = new wchar_t[i2];
+    wchar_t *newWStr = new wchar_t[textLength];
     XOVERLAPPED *newXo = new XOVERLAPPED();
     MILO_ASSERT(pad != -1, 0x7F);
-    UTF8toWChar_t(gDefaultText, defaultTxt.c_str());
-    UTF8toWChar_t(gWindowTitle, windowTitle.c_str());
-    UTF8toWChar_t(gDescrptionText, descText.c_str());
+    UTF8toWChar_t(gDefaultText, strDefaultText.c_str());
+    UTF8toWChar_t(gWindowTitle, strWindowTitle.c_str());
+    UTF8toWChar_t(gDescrptionText, strDescription.c_str());
     DWORD flags = 0;
-    if (i8 == 0) {
+    if (configType == 0) {
         flags = 0x20000001;
-    } else if (i8 == 1) {
+    } else if (configType == 1) {
         flags = 0x20;
     } else {
         MILO_ASSERT(false, 0x98);
     }
     DWORD res = XShowKeyboardUI(
-        pad, flags, gDefaultText, gWindowTitle, gDescrptionText, newWStr, i2, newXo
+        pad, flags, gDefaultText, gWindowTitle, gDescrptionText, newWStr, textLength, newXo
     );
     if (res != 0x3E5) {
         delete newWStr;

@@ -1,28 +1,28 @@
 #include "os/UsbMidiKeyboardMsgs.h"
 
-KeyboardKeyPressedMsg::KeyboardKeyPressedMsg(int i1, int i2, int i3)
-    : Message(Type(), i1, i2, i3) {}
+KeyboardKeyPressedMsg::KeyboardKeyPressedMsg(int keyNumber, int keyVel, int iPadNum)
+    : Message(Type(), keyNumber, keyVel, iPadNum) {}
 
-KeyboardKeyReleasedMsg::KeyboardKeyReleasedMsg(int i1, int i2)
-    : Message(Type(), i1, i2) {}
+KeyboardKeyReleasedMsg::KeyboardKeyReleasedMsg(int keyNumber, int iPadNum)
+    : Message(Type(), keyNumber, iPadNum) {}
 
-KeyboardModMsg::KeyboardModMsg(int i1, int i2) : Message(Type(), i1, i2) {}
+KeyboardModMsg::KeyboardModMsg(int modVal, int iPadNum) : Message(Type(), modVal, iPadNum) {}
 
-KeyboardExpressionPedalMsg::KeyboardExpressionPedalMsg(int i1, int i2)
-    : Message(Type(), i1, i2) {}
+KeyboardExpressionPedalMsg::KeyboardExpressionPedalMsg(int expressionPedal, int iPadNum)
+    : Message(Type(), expressionPedal, iPadNum) {}
 
-KeyboardConnectedAccessoriesMsg::KeyboardConnectedAccessoriesMsg(int i1, int i2)
-    : Message(Type(), i1, i2) {}
+KeyboardConnectedAccessoriesMsg::KeyboardConnectedAccessoriesMsg(int connectedAccessories, int iPadNum)
+    : Message(Type(), connectedAccessories, iPadNum) {}
 
-KeyboardSustainMsg::KeyboardSustainMsg(bool i1, int i2) : Message(Type(), i1, i2) {}
+KeyboardSustainMsg::KeyboardSustainMsg(bool sustain, int iPadNum) : Message(Type(), sustain, iPadNum) {}
 
-KeyboardStompBoxMsg::KeyboardStompBoxMsg(bool i1, int i2) : Message(Type(), i1, i2) {}
+KeyboardStompBoxMsg::KeyboardStompBoxMsg(bool stompBox, int iPadNum) : Message(Type(), stompBox, iPadNum) {}
 
-KeysAccelerometerMsg::KeysAccelerometerMsg(int i1, int i2, int i3, int i4)
-    : Message(Type(), i1, i2, i3, i4) {}
+KeysAccelerometerMsg::KeysAccelerometerMsg(int accelX, int accelY, int accelZ, int iPadNum)
+    : Message(Type(), accelX, accelY, accelZ, iPadNum) {}
 
-KeyboardLowHandPlacementMsg::KeyboardLowHandPlacementMsg(int i1, int i2)
-    : Message(Type(), i1, i2) {}
+KeyboardLowHandPlacementMsg::KeyboardLowHandPlacementMsg(int keyNum, int iPadNum)
+    : Message(Type(), keyNum, iPadNum) {}
 
-KeyboardHighHandPlacementMsg::KeyboardHighHandPlacementMsg(int i1, int i2)
-    : Message(Type(), i1, i2) {}
+KeyboardHighHandPlacementMsg::KeyboardHighHandPlacementMsg(int keyNum, int iPadNum)
+    : Message(Type(), keyNum, iPadNum) {}
