@@ -5,6 +5,8 @@
 #include "obj/Data.h"
 #include "os/Debug.h"
 
+int FilterVersion::sNumHam2Nodes = 0;
+
 FilterVersion::FilterVersion(FilterVersionType t, const DataArray *cfg)
     : mName(cfg->Sym(0)), mType(t) {
     static Symbol time_error("time_error");
@@ -46,14 +48,13 @@ void Ham1FilterVersion::NodeInput(
     int x, const DetectFrame *detectFrame, MoveMode mode, ErrorNodeInput &input
 ) const {
     const Ham1NodeWeight &ham1 =
-        detectFrame->GetMoveFrame()->NodeWeightHam1(x, mode, detectFrame->Mirror());
+        detectFrame->mMoveFrame->NodeWeightHam1(x, mode, detectFrame->mMirrored);
     input.Set(detectFrame->NodeComponentWeight(x), &ham1);
 }
 
 void Ham2FilterVersion::NodeInput(
     int x, const DetectFrame *detectFrame, MoveMode mode, ErrorNodeInput &input
 ) const {
-    input.Set(
-        detectFrame->GetMoveFrame()->NodeInverseScale(x, detectFrame->Mirror()), nullptr
-    );
+    MoveMirrored mirror = detectFrame->mMirrored;
+    input.Set(detectFrame->mMoveFrame->NodeInverseScale(x, mirror), nullptr);
 }

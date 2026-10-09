@@ -119,7 +119,7 @@ void MoveDetector::Poll(int i1, int i2, MoveDir *moveDir) {
             int numFrames = mPlayerDetectFrames[0].size();
             for (int i = 0; i < numFrames; i++) {
                 float f12 =
-                    BeatToSeconds(mPlayerDetectFrames[0][i].GetMoveFrame()->Beat() + f11);
+                    BeatToSeconds(mPlayerDetectFrames[0][i].mMoveFrame->Beat() + f11);
                 for (int j = 0; j < 2; j++) {
                     mPlayerDetectFrames[j][i].SetSecondsAndReset(f12);
                 }

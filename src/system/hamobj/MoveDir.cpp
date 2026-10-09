@@ -160,7 +160,7 @@ namespace {
     namespace {
         struct DetectFrameSecondsCmp {
             bool operator()(const DetectFrame &frame, const float &f) const {
-                return frame.Seconds() < f;
+                return frame.mSeconds < f;
             }
         };
     }
@@ -897,7 +897,7 @@ void MoveDir::Draw(const BaseSkeleton &baseSkeleton, SkeletonViz &skeletonViz) {
         SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
         float songSpeed = SongSpeed();
         ErrorFrameInput input(
-            handle.History(), unk41c->GetDancerFrame()->mSkeleton, *player_skel, songSpeed
+            handle.History(), unk41c->mDancerFrame->mSkeleton, *player_skel, songSpeed
         );
         ErrorNode **errorNodes = mFilterVer->mNodes;
         for (int i = 0; i < mFilterVer->NumNodes(); i++) {
@@ -1071,7 +1071,7 @@ float MoveDir::UpdateOverlay(RndOverlay *overlay, float f2) {
             );
             if (fv->mType == kFilterVersionHam1) {
                 for (DetectFrame *it = range.first; it != range.second; ++it) {
-                    const MoveFrame *mf = it->GetMoveFrame();
+                    const MoveFrame *mf = it->mMoveFrame;
                     float f35 = sFloat + f33;
                     float f36 = (sRect.y - sRect.x) * (mf->Beat() + sRect.w)
                             / (sRect.h + sRect.w + 4)
@@ -1565,7 +1565,7 @@ float MoveDir::DetectRangePSNR(
     float ret = 0;
     MoveMode moveMode = CurrentMoveMode();
     for (const DetectFrame *it = detectFrames.first; it != detectFrames.second; ++it) {
-        const Ham2FrameWeight &wt = it->GetMoveFrame()->FrameWeight(it->Mirror());
+        const Ham2FrameWeight &wt = it->mMoveFrame->FrameWeight(it->mMirrored);
         float cmp = wt.mWeight;
         if (cmp > 0 && it->HasScore()) {
             ret += it->Score(fv, moveMode) * cmp;
@@ -1655,7 +1655,7 @@ float MoveDir::DetectFrac(
             int i8 = 0;
             int i7 = 0;
             for (DetectFrame *it = detectFrames.first; it != detectFrames.second; ++it) {
-                const Ham2FrameWeight &wt = it->GetMoveFrame()->FrameWeight(it->Mirror());
+                const Ham2FrameWeight &wt = it->mMoveFrame->FrameWeight(it->mMirrored);
                 if (wt.mWeight != 0) {
                     i8++;
                     if (it->HasScore()) {
@@ -1725,9 +1725,9 @@ void MoveDir::EnqueueDetectFrames(
     CurrentMoveMode();
     DetectFrame *toInsert = nullptr;
     for (DetectFrame *it = range.first; it != range.second; ++it) {
-        float f12 = ScaleDistToError(fv->mTimeErrorOp, fabsf(it->Seconds() - f1));
+        float f12 = ScaleDistToError(fv->mTimeErrorOp, fabsf(it->mSeconds - f1));
         if (f12 < 1) {
-            mFilterQueue->EnqueueFrame(player, f12, f1 - it->Seconds(), it, fv);
+            mFilterQueue->EnqueueFrame(player, f12, f1 - it->mSeconds, it, fv);
             if (f12 <= 1000) {
                 toInsert = it;
             }
@@ -1977,8 +1977,8 @@ void MoveDir::PostUpdateFilters() {
                                 memset(float_arr, 0, sizeof(float_arr));
                                 for (int n = 0; n < MoveFrame::kNumHam1Nodes; n++) {
                                     const Ham1NodeWeight &wt =
-                                        curFrame->GetMoveFrame()->NodeWeightHam1(
-                                            n, moveMode, curFrame->Mirror()
+                                        curFrame->mMoveFrame->NodeWeightHam1(
+                                            n, moveMode, curFrame->mMirrored
                                         );
                                     if (wt.mHasError) {
                                         ErrorNode *node = errorNodes[n];
@@ -2005,9 +2005,9 @@ void MoveDir::PostUpdateFilters() {
                                 }
                             } else {
                                 MILO_ASSERT(fv->mType == kFilterVersionHam2, 0x460);
-                                const MoveFrame *mf = curFrame->GetMoveFrame();
+                                const MoveFrame *mf = curFrame->mMoveFrame;
                                 const Ham2FrameWeight &wt =
-                                    mf->FrameWeight(curFrame->Mirror());
+                                    mf->FrameWeight(curFrame->mMirrored);
                                 if (wt.mWeight > 0.5f) {
                                     for (int k = 0; k < kNumLimbFeedbacks; k++) {
                                         float f35 = curFrame->LimbPSNR(fv, 1 << k);
