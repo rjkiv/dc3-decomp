@@ -314,9 +314,9 @@ MatShaderOptions GetDefaultMatShaderOpts(const Hmx::Object *obj, RndMat *mat) {
     const RndMesh *mesh = dynamic_cast<const RndMesh *>(obj);
     if (mesh) {
         if (mesh->Mat() == mat) {
-            opts.SetLast5(0x12);
-            opts.shader_struct.mHasBones = mesh->NumBones() != 0;
-            opts.shader_struct.mHasAOCalc = mesh->HasAOCalc();
+            opts.shaderType = kStandardShader;
+            opts.skinned = mesh->NumBones() != 0;
+            opts.useAO = mesh->HasAOCalc();
         }
     } else {
         const RndMultiMesh *multimesh = dynamic_cast<const RndMultiMesh *>(obj);
@@ -326,24 +326,24 @@ MatShaderOptions GetDefaultMatShaderOpts(const Hmx::Object *obj, RndMat *mat) {
                 if (mesh->Mat() == mat) {
                     int mask = mesh->TransConstraint()
                             == RndTransformable::kConstraintFastBillboardXYZ
-                        ? 0xD
-                        : 0xC;
-                    opts.SetLast5(mask);
-                    opts.SetHasBones(false);
-                    opts.SetHasAOCalc(mesh->HasAOCalc());
+                        ? kMultimeshBBShader
+                        : kMultimeshShader;
+                    opts.shaderType = mask;
+                    opts.skinned = false;
+                    opts.useAO = mesh->HasAOCalc();
                 }
             }
         } else {
             const RndParticleSys *partSys = dynamic_cast<const RndParticleSys *>(obj);
             if (partSys) {
                 if (partSys->GetMat() == mat) {
-                    opts.SetLast5(0xE);
+                    opts.shaderType = kParticlesShader;
                 }
             } else {
                 const RndFlare *flare = dynamic_cast<const RndFlare *>(obj);
                 if (flare) {
                     if (flare->GetMat() == mat) {
-                        opts.SetLast5(6);
+                        opts.shaderType = kDrawRectShader;
                     }
                 }
             }

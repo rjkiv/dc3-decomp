@@ -18,6 +18,7 @@
 #include "rndobj/Mesh.h"
 #include "rndobj/Poll.h"
 #include "rndobj/Rnd.h"
+#include "rndobj/ShaderOptions.h"
 #include "rndobj/Trans.h"
 #include "utl/BinStream.h"
 #include "utl/Loader.h"
@@ -504,9 +505,10 @@ void Spotlight::Mats(std::list<class RndMat *> &mats, bool b2) {
         mats.push_back(mLensMaterial);
         for (int i = 0; i < 2U; i++) {
             MatShaderOptions opts;
-            opts.SetLast5(0xC);
+            opts.shaderType = kMultimeshShader;
             opts.mTempMat = true;
-            opts.SetHasAOCalc(i);
+            bool ao = i;
+            opts.useAO = ao;
             RndMat *mat = Hmx::Object::New<RndMat>();
             mat->Copy(mLensMaterial, kCopyDeep);
             mat->SetShaderOpts(opts);
@@ -518,16 +520,17 @@ void Spotlight::Mats(std::list<class RndMat *> &mats, bool b2) {
     }
     if (mLightCanMesh && mLightCanMesh->Mat()) {
         MatShaderOptions opts;
-        opts.SetLast5(0xC);
+        opts.shaderType = kMultimeshShader;
         RndMat *lightMat = mLightCanMesh->Mat();
         lightMat->SetShaderOpts(opts);
         mats.push_back(lightMat);
         if (b2) {
             for (int i = 0; i < 2U; i++) {
                 MatShaderOptions opts;
-                opts.SetLast5(0xC);
+                opts.shaderType = kMultimeshShader;
                 opts.mTempMat = true;
-                opts.SetHasAOCalc(i);
+                bool ao = i;
+                opts.useAO = ao;
                 RndMat *mat = Hmx::Object::New<RndMat>();
                 mat->Copy(mLightCanMesh->Mat(), kCopyDeep);
                 mat->SetShaderOpts(opts);

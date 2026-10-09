@@ -16,6 +16,7 @@
 #include "rndobj/MultiMesh.h"
 #include "rndobj/Poll.h"
 #include "rndobj/Rnd.h"
+#include "rndobj/ShaderOptions.h"
 #include "rndobj/Tex.h"
 #include "rndobj/Utl.h"
 #include "stl/_pair.h"
@@ -420,17 +421,19 @@ bool WorldCrowd::MakeWorldSphere(Sphere &s, bool b) {
 void WorldCrowd::Mats(std::list<RndMat *> &mats, bool b2) {
     if (b2) {
         MatShaderOptions opts;
-        opts.pack |= 0x20;
+        // b10100
+        opts.value |= 0x20;
+        // opts.billboard = 1;
         int masks[2] = { 0xD, 0x13 };
         for (int i = 0; i < 2; i++) {
-            opts.SetLast5(masks[i]);
+            opts.shaderType = masks[i];
             for (int j = 0; j < 2; j++) {
                 for (int k = 0; k < 2; k++) {
                     RndMat *mat = Hmx::Object::New<RndMat>();
                     mat->Copy(gImpostorMat, kCopyDeep);
                     mat->SetUseEnv(j);
                     opts.mTempMat = true;
-                    opts.SetHasAOCalc(k);
+                    opts.useAO = k;
                     mat->SetShaderOpts(opts);
                     mats.push_back(mat);
                 }
@@ -452,9 +455,9 @@ void WorldCrowd::Mats(std::list<RndMat *> &mats, bool b2) {
                             GetMeshShaderFlags(*mat, flags);
                             FOREACH (flag, flags) {
                                 unsigned int curFlag = *flag;
-                                opts.SetLast5(0x12);
-                                opts.SetHasBones(curFlag & 1);
-                                opts.SetHasAOCalc(curFlag >> 1 & 1);
+                                opts.shaderType = kStandardShader;
+                                opts.skinned = curFlag & 1;
+                                opts.useAO = (curFlag >> 1) & 1;
                                 RndMat *curMat = Hmx::Object::New<RndMat>();
                                 curMat->Copy(*mat, kCopyDeep);
                                 opts.mTempMat = true;
