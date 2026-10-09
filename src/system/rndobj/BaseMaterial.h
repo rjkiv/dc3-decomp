@@ -18,6 +18,9 @@ enum Cull {
     kCullBackwards = 2
 };
 
+// extra variation of the standard and multimesh shaders
+// these presumably subtly change lighting, if they are anything but None second speuclar
+// (specular2_rgb) comes into play
 enum ShaderVariation {
     kShaderVariationNone = 0,
     kShaderVariationSkin = 1,
@@ -25,9 +28,13 @@ enum ShaderVariation {
     kShaderVariationWorldProjection = 3
 };
 
+// stencil buffer usage modes
 enum StencilMode {
+    // ignore the stencil buffer entirely
     kStencilIgnore = 0,
+    // write to the stencil buffer
     kStencilWrite = 1,
+    // test against the stencil buffer without actually writing
     kStencilTest = 2,
 };
 
@@ -145,6 +152,8 @@ public:
     NEW_OBJ(BaseMaterial)
     static void Init() { REGISTER_OBJ_FACTORY(BaseMaterial) }
 
+    MatPerfSettings &PerfSettings() { return mPerfSettings; }
+    const MatPerfSettings &PerfSettings() const { return mPerfSettings; }
     const DataNode *GetDefaultPropVal(Symbol);
     RndTex *GetDiffuseTex() const { return mDiffuseTex; }
     RndTex *NormalMap() const { return mNormalMap; }

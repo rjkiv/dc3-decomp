@@ -77,7 +77,7 @@ bool RndShadowMap::PrepShadow(RndDrawable *draw, RndEnviron *env) {
             sLightCam->SetFrustum(f12, f13, 0.7853982f, 1);
             sLightCam->Select();
             Rnd::Mode drawMode = TheRnd.DrawMode();
-            TheRnd.SetDrawMode(Rnd::kDrawExtrude);
+            TheRnd.SetDrawMode(Rnd::kDrawShadowDepth);
             draw->DrawShowing();
             TheRnd.SetDrawMode(drawMode);
             curCam->Select();

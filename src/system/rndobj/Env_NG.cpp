@@ -181,8 +181,10 @@ void NgEnviron::Select(const Vector3 *vptr) {
     mNumLightsProj = 0;
     mHasPointCubeTex = false;
     mProjectedBlend = (RndLight::ProjectedBlend)0;
-    if (TheRnd.DrawMode() != 4 && TheRnd.DrawMode() != 2 && TheRnd.DrawMode() != 6
-        && TheRnd.DrawMode() != 3) {
+    if (TheRnd.DrawMode() != Rnd::kDrawShadowColor
+        && TheRnd.DrawMode() != Rnd::kDrawShadowDepth
+        && TheRnd.DrawMode() != Rnd::kDrawVelocity
+        && TheRnd.DrawMode() != Rnd::kDrawExtrude) {
         ReclassifyLights();
         int pointLightCount = 0;
         int projLightCount = 0;
@@ -299,7 +301,7 @@ void NgEnviron::Select(const Vector3 *vptr) {
             TheShaderMgr.SetPConstant((PShaderConstant)0x35, v170);
             TheShaderMgr.SetPConstant((PShaderConstant)0x36, v180);
         }
-        if (mUseColorAdjust) {
+        if (mUseColorXfm) {
             const Transform &colorXfm = ColorXfm();
             TheShaderMgr.SetPConstant((PShaderConstant)0x6D, Hmx::Matrix4(colorXfm));
         }

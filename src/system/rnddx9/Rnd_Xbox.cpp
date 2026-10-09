@@ -788,7 +788,7 @@ void DxRnd::CopyPostProcess() {
     RndMat *mat = TheShaderMgr.GetPostProcMat();
     mat->SetBlend(RndMat::kBlendSrc);
     mat->SetZMode(kZModeDisable);
-    TheShaderMgr.SetUnk30(true);
+    TheShaderMgr.SetPostCopyPrevious(true);
     static bool sInitted = true;
     if (sInitted) {
         sInitted = true;

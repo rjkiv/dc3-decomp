@@ -94,7 +94,7 @@ void NgMat::SetBasicState() {
     TheRenderState.SetCullMode(cm);
     TheRenderState.SetBlendEnable(mBlendEnable);
     TheRenderState.SetBlendOp(mBlendOp);
-    TheRenderState.SetBlend(unk23c, unk240, unk23c, unk240);
+    TheRenderState.SetBlend(mBlendA, mBlendB, mBlendA, mBlendB);
     TheRenderState.SetAlphaTestEnable(mAlphaCut);
     if (mAlphaCut) {
         TheRenderState.SetAlphaFunc(RndRenderState::kTestFuncGreater, mAlphaThreshold);
@@ -108,7 +108,7 @@ void NgMat::SetBasicState() {
         TheRenderState.SetStencilTestEnable(true);
         TheRenderState.SetStencilFunc(mStencilFunc, 0);
         TheRenderState.SetStencilOp(
-            RndRenderState::kStencilOpKeep, RndRenderState::kStencilOpKeep, unk250
+            RndRenderState::kStencilOpKeep, RndRenderState::kStencilOpKeep, mStencilPass
         );
     }
     RndRenderState::ClampMode cur = sTexWrapClampModes[mTexWrap];
@@ -145,10 +145,10 @@ void NgMat::SetupAmbient() {
         color.Set(1, 1, 1, 1);
     }
     TheShaderMgr.SetVConstant(
-        kVShader_EnvAmbientColor, Vector4(color.red, color.green, color.blue, color.alpha)
+        kVShader_AmbientCol, Vector4(color.red, color.green, color.blue, color.alpha)
     );
     TheShaderMgr.SetPConstant(
-        kPShader_EnvAmbientColor, Vector4(color.red, color.green, color.blue, color.alpha)
+        kPShader_AmbientCol, Vector4(color.red, color.green, color.blue, color.alpha)
     );
 }
 
@@ -194,7 +194,7 @@ void NgMat::SetRegularShaderConst(bool b1) {
     TheRenderState.SetTextureFilter(
         6, RndRenderState::kFilterModeLinear, mPerfSettings.mPS3ForceTrilinear
     );
-    TheShaderMgr.SetPConstant((PShaderConstant)0xF, unk22c);
+    TheShaderMgr.SetPConstant((PShaderConstant)0xF, mTexelOffsets);
 
     Hmx::Color specularColor = mSpecularRGB;
     Hmx::Color specularColor2 = mSpecular2RGB;
@@ -278,7 +278,7 @@ void NgMat::SetRegularShaderConst(bool b1) {
             Vector4(mWorldProjectionTiling, y, -(mWorldProjectionStartBlend * y), 0)
         );
     }
-    TheShaderMgr.SetVConstant((VShaderConstant)0x14, unk254);
+    TheShaderMgr.SetVConstant((VShaderConstant)0x14, mCachedXfm);
     if (mAnisotropy > 0) {
         TheShaderMgr.SetPConstant((PShaderConstant)0xD, Vector4(mAnisotropy, 0, 0, 1));
     }
@@ -302,80 +302,80 @@ void NgMat::SetRegularShaderConst(bool b1) {
 
 void NgMat::RefreshState() {
     if (mDiffuseTex && mDiffuseTex->Width() && mDiffuseTex->Height()) {
-        unk22c.Set(
+        mTexelOffsets.Set(
             (float)mDiffuseTex->Width() / 2,
             (float)mDiffuseTex->Height() / 2,
             -(float)mDiffuseTex->Width() / 2,
             -(float)mDiffuseTex->Height() / 2
         );
     } else {
-        unk22c.Set(0, 0, 0, 0);
+        mTexelOffsets.Set(0, 0, 0, 0);
     }
     switch (mBlend) {
     case kBlendDest:
-        unk23c = RndRenderState::kBlendZero;
+        mBlendA = RndRenderState::kBlendZero;
         mBlendOp = RndRenderState::kBlendOpAdd;
-        unk240 = RndRenderState::kBlendOne;
+        mBlendB = RndRenderState::kBlendOne;
         mBlendEnable = true;
         break;
     case kBlendSrc:
-        unk23c = RndRenderState::kBlendOne;
-        unk240 = RndRenderState::kBlendZero;
+        mBlendA = RndRenderState::kBlendOne;
+        mBlendB = RndRenderState::kBlendZero;
         mBlendOp = RndRenderState::kBlendOpAdd;
         mBlendEnable = false;
         break;
     case kBlendAdd:
         mBlendOp = RndRenderState::kBlendOpAdd;
-        unk23c = RndRenderState::kBlendOne;
-        unk240 = RndRenderState::kBlendOne;
+        mBlendA = RndRenderState::kBlendOne;
+        mBlendB = RndRenderState::kBlendOne;
         mBlendEnable = true;
         break;
     case kBlendSrcAlpha:
         mBlendOp = RndRenderState::kBlendOpAdd;
-        unk23c = RndRenderState::kBlendSrcAlpha;
-        unk240 = RndRenderState::kBlendInvSrcAlpha;
+        mBlendA = RndRenderState::kBlendSrcAlpha;
+        mBlendB = RndRenderState::kBlendInvSrcAlpha;
         mBlendEnable = true;
         break;
     case kBlendSrcAlphaAdd:
         mBlendOp = RndRenderState::kBlendOpAdd;
-        unk23c = RndRenderState::kBlendSrcAlpha;
-        unk240 = RndRenderState::kBlendOne;
+        mBlendA = RndRenderState::kBlendSrcAlpha;
+        mBlendB = RndRenderState::kBlendOne;
         mBlendEnable = true;
         break;
     case kBlendSubtract:
         mBlendOp = RndRenderState::kBlendOpRevSubtract;
-        unk23c = RndRenderState::kBlendOne;
-        unk240 = RndRenderState::kBlendOne;
+        mBlendA = RndRenderState::kBlendOne;
+        mBlendB = RndRenderState::kBlendOne;
         mBlendEnable = true;
         break;
     case kBlendMultiply:
-        unk23c = RndRenderState::kBlendZero;
-        unk240 = RndRenderState::kBlendSrcColor;
+        mBlendA = RndRenderState::kBlendZero;
+        mBlendB = RndRenderState::kBlendSrcColor;
         mBlendOp = RndRenderState::kBlendOpAdd;
         mBlendEnable = true;
         break;
     case kPreMultAlpha:
-        unk23c = RndRenderState::kBlendOne;
+        mBlendA = RndRenderState::kBlendOne;
         mBlendOp = RndRenderState::kBlendOpAdd;
-        unk240 = RndRenderState::kBlendInvSrcAlpha;
+        mBlendB = RndRenderState::kBlendInvSrcAlpha;
         mBlendEnable = true;
         break;
     case kScreen:
         mBlendOp = RndRenderState::kBlendOpAdd;
-        unk23c = RndRenderState::kBlendInvDestColor;
-        unk240 = RndRenderState::kBlendOne;
+        mBlendA = RndRenderState::kBlendInvDestColor;
+        mBlendB = RndRenderState::kBlendOne;
         mBlendEnable = true;
         break;
     case kLighten:
         mBlendOp = RndRenderState::kBlendOpMax;
-        unk23c = RndRenderState::kBlendOne;
-        unk240 = RndRenderState::kBlendOne;
+        mBlendA = RndRenderState::kBlendOne;
+        mBlendB = RndRenderState::kBlendOne;
         mBlendEnable = true;
         break;
     case kDarken:
         mBlendOp = RndRenderState::kBlendOpMin;
-        unk23c = RndRenderState::kBlendOne;
-        unk240 = RndRenderState::kBlendOne;
+        mBlendA = RndRenderState::kBlendOne;
+        mBlendB = RndRenderState::kBlendOne;
         mBlendEnable = true;
         break;
     default:
@@ -412,28 +412,28 @@ void NgMat::RefreshState() {
     }
     if (mStencilMode == kStencilWrite) {
         mStencilFunc = RndRenderState::kTestFuncAlways;
-        unk250 = RndRenderState::kStencilOpIncrSat;
+        mStencilPass = RndRenderState::kStencilOpIncrSat;
     } else {
         mStencilFunc = RndRenderState::kTestFuncNotEqual;
-        unk250 = RndRenderState::kStencilOpKeep;
+        mStencilPass = RndRenderState::kStencilOpKeep;
     }
     static Transform sStateXfm(Hmx::Matrix3(1, 0, 0, 0, 0, 1, 0, 1, 0), Vector3(0, 0, 0));
-    unk294.Identity();
+    mCachedXfmNorm.Identity();
     Transform tf160;
     switch (mTexGen) {
     case kTexGenNone:
-        unk254.Zero();
-        unk254.m[3].w = 1;
-        unk254.m[2].z = 1;
-        unk254.m[1].y = 1;
-        unk254.m[0].x = 1;
+        mCachedXfm.Zero();
+        mCachedXfm.m[3].w = 1;
+        mCachedXfm.m[2].z = 1;
+        mCachedXfm.m[1].y = 1;
+        mCachedXfm.m[0].x = 1;
         break;
     case kTexGenXfm:
     case kTexGenXfmOrigin: {
-        MakeTex3(mTexXfm, mTexGen == kTexGenXfm, unk254);
+        MakeTex3(mTexXfm, mTexGen == kTexGenXfm, mCachedXfm);
         tf160.v.Zero();
         Normalize(mTexXfm.m, tf160.m);
-        MakeTex3(tf160, mTexGen == kTexGenXfm, unk294);
+        MakeTex3(tf160, mTexGen == kTexGenXfm, mCachedXfmNorm);
         break;
     }
     case kTexGenSphere:
@@ -453,7 +453,7 @@ void NgMat::RefreshState() {
         m190.Set(0.5f, 0, 0, 0, 0, 1, 0, -0.5f, 0);
         Multiply(tf160.m, m190, tf160.m);
         tf160.v.Set(0.5f, 0.5f, 0);
-        unk254 = Hmx::Matrix4(tf160);
+        mCachedXfm = Hmx::Matrix4(tf160);
         break;
     }
     case kTexGenProjected: {
@@ -461,7 +461,7 @@ void NgMat::RefreshState() {
         Transform tf120 = sStateXfm;
         tf120.m.z.y = -1;
         Multiply(tf160, tf120, tf160);
-        unk254 = Hmx::Matrix4(tf160);
+        mCachedXfm = Hmx::Matrix4(tf160);
         break;
     }
     default:
@@ -472,25 +472,25 @@ void NgMat::RefreshState() {
     case kBlendDest:
         break;
     case kBlendSrc:
-        unk2d4 = 0;
+        mFadeType = kFade_None;
         break;
     case kBlendSrcAlpha:
     case kPreMultAlpha:
-        unk2d8.Set(0, 0, 0, 0);
-        unk2d4 = 1;
+        mFadeColor.Set(0, 0, 0, 0);
+        mFadeType = kFade_Alpha;
         break;
     case kBlendAdd:
     case kBlendSrcAlphaAdd:
     case kBlendSubtract:
     case kScreen:
     case kLighten:
-        unk2d8.Set(0, 0, 0, 0);
-        unk2d4 = 2;
+        mFadeColor.Set(0, 0, 0, 0);
+        mFadeType = kFade_Color;
         break;
     case kBlendMultiply:
     case kDarken:
-        unk2d8.Set(1, 1, 1, 1);
-        unk2d4 = 2;
+        mFadeColor.Set(1, 1, 1, 1);
+        mFadeType = kFade_Color;
         break;
     default:
         MILO_ASSERT(false, 0x139);

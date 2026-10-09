@@ -233,7 +233,8 @@ void SpotlightDrawer::DrawWorld() {
                 if (sHaveLenses) {
                     DrawAccessories<LensExtract>(colorBegin, colorEnd);
                 }
-                if (!DrawNGSpotlights() && !sNoBeams && TheRnd.DrawMode() != 5) {
+                if (!DrawNGSpotlights() && !sNoBeams
+                    && TheRnd.DrawMode() != Rnd::kDrawOcclusion) {
                     DrawBeams(spotIter, colorEnd);
                 }
                 if (sHaveFlares) {

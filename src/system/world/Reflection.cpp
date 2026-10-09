@@ -138,7 +138,7 @@ void WorldReflection::DrawShowing() {
         Multiply(cur->WorldXfm(), tfa8, unk134->DirtyLocalXfm());
         unk134->Select();
         Rnd::Mode oldMode = TheRnd.DrawMode();
-        TheRnd.SetDrawMode((Rnd::Mode)8);
+        TheRnd.SetDrawMode(Rnd::kDrawReversed);
         DoHide();
         DoLOD(1);
         FOREACH (it, mDraws) {

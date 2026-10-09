@@ -112,7 +112,7 @@ void NgPostProc::CheckGradientMap() {
         );
         TheShaderMgr.SetPConstant((PShaderConstant)3, mGradientMap.Ptr());
         TheShaderMgr.SetPConstant((PShaderConstant)118, vec);
-        TheShaderMgr.SetGradientMapEnabled(mGradientMap.Ptr());
+        TheShaderMgr.SetPostGradientMap(mGradientMap.Ptr());
     }
 }
 
@@ -125,7 +125,7 @@ void NgPostProc::CheckVignette() {
             mVignetteIntensity
         );
         TheShaderMgr.SetPConstant((PShaderConstant)123, vec);
-        TheShaderMgr.SetVignetteEnabled(true);
+        TheShaderMgr.SetPostVignette(true);
     }
 }
 
@@ -139,7 +139,7 @@ void NgPostProc::CheckMotionBlur() {
             mMotionBlurWeight.alpha
         );
         TheShaderMgr.SetPConstant((PShaderConstant)105, vec);
-        TheShaderMgr.SetMotionBlurEnabled(true);
+        TheShaderMgr.SetPostMotionBlur(true);
     }
 }
 
@@ -148,11 +148,11 @@ void NgPostProc::CheckBlendPrevious() {
     TheShaderMgr.SetPConstant((PShaderConstant)125, vec);
 }
 void NgPostProc::DoVelocity() {
-    TheShaderMgr.SetUnk39(false);
+    TheShaderMgr.SetPostVelocity(false);
     if (mMotionBlurVelocity != false && TheHiResScreen.IsActive() == false) {
         bool flag = RndVelocityBuffer::Singleton().Draw(TheRnd.GetWorldCamCopy(), unk23c);
         if (flag) {
-            TheShaderMgr.SetUnk39(true);
+            TheShaderMgr.SetPostVelocity(true);
             Vector4 vec(
                 RndVelocityBuffer::Singleton().GetUnk36be8(),
                 RndVelocityBuffer::Singleton().GetUnk36be8(),
@@ -188,8 +188,8 @@ void NgPostProc::CheckNoise() {
         TheRenderState.SetTextureFilter(13, RndRenderState::kFilterModeLinear, false);
         TheRenderState.SetTextureClamp(13, RndRenderState::kClampModeWrap);
     }
-    TheShaderMgr.SetUnk2d(flag);
-    TheShaderMgr.SetUnk2e(flag ? mNoiseMidtone : false);
+    TheShaderMgr.SetPostNoise(flag);
+    TheShaderMgr.SetPostNoiseMidtone(flag ? mNoiseMidtone : false);
 }
 
 void NgPostProc::CheckHallOfTime() {
@@ -202,7 +202,7 @@ void NgPostProc::CheckHallOfTime() {
         );
         TheShaderMgr.SetPConstant((PShaderConstant)0x74, c2);
 
-        TheShaderMgr.SetUnk34(mHallOfTimeType + 1);
+        TheShaderMgr.SetPostHallOfTime(mHallOfTimeType + 1);
     }
 }
 
@@ -221,8 +221,8 @@ void NgPostProc::DoPost() {
     CheckChromaticAberration();
     CheckPosterizeAndKaleidoscope();
     CheckVignette();
-    TheShaderMgr.SetColorXfmEnabled(ColorXfmEnabled());
-    TheShaderMgr.SetUnk2f(BlendPrevious());
+    TheShaderMgr.SetPostColorXfm(ColorXfmEnabled());
+    TheShaderMgr.SetPostBlendPrevious(BlendPrevious());
     unk250 = false;
 }
 
@@ -236,12 +236,12 @@ void NgPostProc::CheckPosterizeAndKaleidoscope() {
     Vector4 v30(0, 0, 0, 0);
     Vector4 v20(0, 0, 0, 0);
     if (mPosterLevels * mPosterMin > 0) {
-        TheShaderMgr.SetPosterizeEnabled(true);
+        TheShaderMgr.SetPostPosterize(true);
         v30.x = mPosterLevels;
         v30.y = mPosterLevels * mPosterMin;
     }
     if (mKaleidoscopeComplexity > 0) {
-        TheShaderMgr.SetKaleidoscopeEnabled(true);
+        TheShaderMgr.SetPostKaleidoscope(true);
         v30.z = (2 * PI) / mKaleidoscopeComplexity;
         v30.w = mKaleidoscopeSize;
         v20.x = mKaleidoscopeAngle * DEG2RAD;
@@ -262,7 +262,7 @@ void NgPostProc::CheckHueConverge() {
             mHueTarget * 0.0027777778f + 0.5f, mHueFocus, mBlendAmount, mBrightnessPower
         );
         TheShaderMgr.SetPConstant((PShaderConstant)0xDE, v30);
-        TheShaderMgr.SetHueConvergeEnabled(mBlendAmount > 0);
+        TheShaderMgr.SetPostHueConverge(mBlendAmount > 0);
     }
 }
 
@@ -287,7 +287,7 @@ void NgPostProc::CheckRefract() {
         TheShaderMgr.SetPConstant((PShaderConstant)1, mRefractMap);
         TheRenderState.SetTextureFilter(1, RndRenderState::kFilterModeLinear, false);
         TheRenderState.SetTextureClamp(1, RndRenderState::kClampModeWrap);
-        TheShaderMgr.SetUnk3b(true);
+        TheShaderMgr.SetPostRefract(true);
     } else {
         unk234.x = 0;
         unk234.y = 0;
@@ -304,9 +304,9 @@ void NgPostProc::CheckChromaticAberration() {
         );
         TheShaderMgr.SetPConstant((PShaderConstant)0x79, v30);
         if (mChromaticSharpen) {
-            TheShaderMgr.SetChromaticSharpenEnabled(true);
+            TheShaderMgr.SetPostChromaticSharpen(true);
         } else {
-            TheShaderMgr.SetChromaticAberrationEnabled(true);
+            TheShaderMgr.SetPostChromaticAberration(true);
         }
     }
 }
@@ -509,13 +509,13 @@ void NgPostProc::DoBloom() {
     }
 
     if (b2 && b1) {
-        TheShaderMgr.SetUnk28(true);
-        TheShaderMgr.SetUnk27(false);
+        TheShaderMgr.SetPostGlare(true);
+        TheShaderMgr.SetPostBloom(false);
     } else if (b2) {
-        TheShaderMgr.SetUnk28(false);
-        TheShaderMgr.SetUnk27(true);
+        TheShaderMgr.SetPostGlare(false);
+        TheShaderMgr.SetPostBloom(true);
     } else {
-        TheShaderMgr.SetUnk27(false);
-        TheShaderMgr.SetUnk28(false);
+        TheShaderMgr.SetPostBloom(false);
+        TheShaderMgr.SetPostGlare(false);
     }
 }

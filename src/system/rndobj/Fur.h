@@ -37,6 +37,7 @@ public:
 protected:
     RndFur();
 
+public:
     /** "Number of passes" */
     int mLayers; // 0x2c
     /** "Length of fur" */

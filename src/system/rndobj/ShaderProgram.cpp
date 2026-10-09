@@ -63,12 +63,12 @@ void RndShaderProgram::CopyErrorShader(ShaderType shader, const ShaderOptions &o
         MILO_NOTIFY(
             "missing shader %s_%llx cannot be cached (not used in main thread).",
             ShaderTypeName(shader),
-            opts.flags
+            opts.value
         );
     }
     MILO_ASSERT(shader != kErrorShader && shader != kPostprocessErrorShader, 0x12F);
     ShaderType errorType = kPostprocessShader ? kPostprocessErrorShader : kErrorShader;
-    u64 mask = (errorType == kErrorShader && opts.flags & 0x1000) ? 0x1000 : 0;
+    u64 mask = (errorType == kErrorShader && opts.value & 0x1000) ? 0x1000 : 0;
     mask |= TheShaderMgr.GetShaderErrorDisplay() << 0x23;
     ShaderOptions newOpts(mask);
     RndShaderProgram &program = TheShaderMgr.FindShader(errorType, newOpts);
@@ -112,7 +112,7 @@ bool RndShaderProgram::Cache(
                 MILO_NOTIFY(
                     "Missing shader %s_%llx\n(material: %s)\n(environment: %s)\n(compile options: %s)",
                     ShaderTypeName(t),
-                    opts.flags,
+                    opts.value,
                     PathName(NgMat::Current()),
                     PathName(RndEnviron::Current()),
                     str.c_str()
@@ -126,9 +126,9 @@ bool RndShaderProgram::Cache(
                         "type",
                         ShaderTypeName(t),
                         "flags",
-                        MakeString("%llx", opts.flags),
+                        MakeString("%llx", opts.value),
                         "shader",
-                        MakeString("%s_%llx", ShaderTypeName(t), opts.flags),
+                        MakeString("%s_%llx", ShaderTypeName(t), opts.value),
                         "mat",
                         PathName(NgMat::Current()),
                         "environ",
@@ -138,7 +138,7 @@ bool RndShaderProgram::Cache(
                 return false;
             } else {
                 AutoSlowFrame frame("RndShaderProgram::Cache", 5);
-                s64 flags = opts.flags;
+                s64 flags = opts.value;
                 char source[256];
                 strcpy(source, ShaderSourcePath(ShaderTypeName(t)));
                 char vertex[256];

@@ -9,8 +9,24 @@
 #include "rndobj/Tex.h"
 #include "utl/BinStream.h"
 
+// configurable length bitfield, nasty stuff
+// width pos defines the field's size and position within T
+// see below MatShaderOptions for usage examples
+// in the pdb this is bf<unsigned __int64, pos, width> and it matches everywhere it is
+// used so I am confident this impl is correct
+template <class T, int Pos, int Width>
 struct bf {
-    uint val;
+    static const T EXT_MASK = (T(1) << Width) - 1;
+    static const T INT_MASK = EXT_MASK << Pos;
+
+    operator T() const { return (val & INT_MASK) >> Pos; }
+
+    bf &operator=(T v) {
+        val = (val & ~INT_MASK) | ((v & EXT_MASK) << Pos);
+        return *this;
+    }
+
+    T val;
 };
 
 struct MatShaderOptions {
@@ -29,12 +45,11 @@ struct MatShaderOptions {
         } shader_struct;
         u32 pack;
 
-        // from bank 5
         uint value;
-        bf shaderType;
-        bf billboard;
-        bf skinned;
-        bf useAO;
+        bf<uint, 0, 5> shaderType;
+        bf<uint, 5, 1> billboard;
+        bf<uint, 6, 1> skinned;
+        bf<uint, 7, 1> useAO;
     }; // 0x0
     bool mTempMat;
 
@@ -153,6 +168,25 @@ public:
     MetaMaterial *CreateMetaMaterial(bool);
     MetaMaterial *GetMetaMaterial() const { return mMetaMaterial; }
     RndMat *NextPass() const { return dynamic_cast<RndMat *>(mNextPass.Ptr()); }
+    TexGen GetTexGen() const { return mTexGen; }
+    bool Intensify() const { return mIntensify; }
+    bool PerPixelLighting() const { return mPerPixelLit; }
+    const Hmx::Color &Specular() const { return mSpecularRGB; }
+    RndTex *SpecularMap() const { return mSpecularMap; }
+    RndCubeTex *EnvironMap() const { return mEnvironMap; }
+    bool EnvironMapFalloff() const { return mEnvironMapFalloff; }
+    bool EnvironMapSpecMask() const { return mEnvironMapSpecMask; }
+    RndTex *EmissiveMap() const { return mEmissiveMap; }
+    const Hmx::Color &GetRimColor() const { return mRimRGB; }
+    const RndTex *GetRimMap() const { return mRimMap; }
+    bool GetRimLightUnder() const { return mRimLightUnder; }
+    ColorModFlags GetColorModFlags() const { return mFlags; }
+    ShaderVariation GetShaderVariation() const { return mShaderVariation; }
+    bool ScreenAligned() const { return mScreenAligned; }
+    float Anisotropy() const { return mAnisotropy; }
+    bool NormDetail() const { return mNormDetailMap && mNormDetailStrength > 0; }
+    bool Fog() const { return mFog; }
+    bool ColorXfm() const { return mColorAdjust; }
 
     static void Init();
     static void Terminate();

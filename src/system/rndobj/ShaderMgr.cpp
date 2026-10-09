@@ -16,61 +16,61 @@
 #include "utl/MemMgr.h"
 
 RndShaderMgr::RndShaderMgr()
-    : mShaderPoolCount(0), unk5c(0), mConstantCache(0), unk68(0), mInitted(0),
-      mShowShaderErrors(1), mShowMetaMatErrors(0) {}
+    : mShaderPoolCount(0), mPendingShaderPoolCount(0), mConstantCache(0), mCacheSize(0),
+      mPreInitialized(0), mShowShaderErrors(1), mShowMetaMatErrors(0) {}
 
 void RndShaderMgr::PreInit() {
-    if (!mInitted) {
-        mHasAOCalc = false;
-        mInitted = true;
+    if (!mPreInitialized) {
+        mUseAO = false;
+        mPreInitialized = true;
         mNumBones = 0;
         mNumTaps = 1;
-        unk18 = 0;
-        unk1c = 0;
-        unk20 = 0;
-        unk24 = 0;
-        unk25 = 0;
-        mDOFEnabled = 0;
-        unk27 = 0;
-        unk28 = 0;
-        mColorXfmEnabled = 0;
-        mPosterizeEnabled = 0;
-        mKaleidoscopeEnabled = 0;
-        unk2d = 0;
-        unk2e = 0;
-        unk2f = 0;
-        unk30 = 0;
-        unk31 = 0;
-        unk34 = 0;
-        mMotionBlurEnabled = false;
-        unk39 = 0;
-        mGradientMapEnabled = false;
-        mHueConvergeEnabled = 0;
-        unk3b = 0;
-        mChromaticAberrationEnabled = 0;
-        mChromaticSharpenEnabled = 0;
-        mVignetteEnabled = 0;
-        unk3f = 0;
+        mDepthVolume = 0;
+        mDepthShape = 0;
+        mCull = 0;
+        mSubtract = 0;
+        mPostSpotlight = 0;
+        mPostDOF = 0;
+        mPostBloom = 0;
+        mPostGlare = 0;
+        mPostColorXfm = 0;
+        mPostPosterize = 0;
+        mPostKaleidoscope = 0;
+        mPostNoise = 0;
+        mPostNoiseMidtone = 0;
+        mPostBlendPrevious = 0;
+        mPostCopyPrevious = 0;
+        mPostResamp = 0;
+        mPostHallOfTime = 0;
+        mPostMotionBlur = false;
+        mPostVelocity = 0;
+        mPostGradientMap = false;
+        mPostHueConverge = 0;
+        mPostRefract = 0;
+        mPostChromaticAberration = 0;
+        mPostChromaticSharpen = 0;
+        mPostVignette = 0;
+        mPostSoftDepth = 0;
         mAllowPerPixel = 1;
-        unk41 = 1;
-        mDisplayShaderError = true;
-        RELEASE(mWorkMat);
-        RELEASE(mPostProcMat);
-        RELEASE(mDrawHighlightMat);
-        RELEASE(mDrawRectMat);
-        mWorkMat = Hmx::Object::New<RndMat>();
-        mPostProcMat = Hmx::Object::New<RndMat>();
-        mDrawHighlightMat = Hmx::Object::New<RndMat>();
-        mDrawRectMat = Hmx::Object::New<RndMat>();
-        CreateAndSetMetaMat(mWorkMat);
-        CreateAndSetMetaMat(mPostProcMat);
-        CreateAndSetMetaMat(mDrawHighlightMat);
-        CreateAndSetMetaMat(mDrawRectMat);
+        mPrecacheOffscreen = 1;
+        mShaderErrorDisplay = true;
+        RELEASE(mWork);
+        RELEASE(mPostProc);
+        RELEASE(mHighlight);
+        RELEASE(mDrawRect);
+        mWork = Hmx::Object::New<RndMat>();
+        mPostProc = Hmx::Object::New<RndMat>();
+        mHighlight = Hmx::Object::New<RndMat>();
+        mDrawRect = Hmx::Object::New<RndMat>();
+        CreateAndSetMetaMat(mWork);
+        CreateAndSetMetaMat(mPostProc);
+        CreateAndSetMetaMat(mHighlight);
+        CreateAndSetMetaMat(mDrawRect);
         MILO_ASSERT(mConstantCache == NULL, 104);
-        unk68 = 516;
+        mCacheSize = 516;
         {
             MemDoTempAllocations tmp;
-            mConstantCache = new float[unk68];
+            mConstantCache = new float[mCacheSize];
         }
         LoadShaders("%s_preinit_shaders");
     }
@@ -84,7 +84,7 @@ void RndShaderMgr::Init() {
 void RndShaderMgr::Terminate() {
     Invalidate(kMaxShaderTypes);
     RELEASE(mConstantCache);
-    unk68 = 0;
+    mCacheSize = 0;
 }
 
 void RndShaderMgr::UpdateCache(const Transform &xfm, int idx) {
@@ -125,15 +125,15 @@ void RndShaderMgr::UpdateCache(const Transform &xfm, int idx) {
     cacheIdx->vz = vz;
 }
 
-void RndShaderMgr::ShaderPoolAlloc(int i) { unk5c = i; }
+void RndShaderMgr::ShaderPoolAlloc(int i) { mPendingShaderPoolCount = i; }
 
 void RndShaderMgr::SetMeshInfo(int i, bool b) {
     mNumBones = i;
-    mHasAOCalc = b;
+    mUseAO = b;
 }
 
-void RndShaderMgr::SetShaderErrorDisplay(bool disp) { mDisplayShaderError = disp; }
-bool RndShaderMgr::GetShaderErrorDisplay() { return mDisplayShaderError; }
+void RndShaderMgr::SetShaderErrorDisplay(bool disp) { mShaderErrorDisplay = disp; }
+bool RndShaderMgr::GetShaderErrorDisplay() { return mShaderErrorDisplay; }
 
 unsigned long RndShaderMgr::InitShaders() {
     if (UsingCD() || GetGfxMode() == kOldGfx)
@@ -207,7 +207,7 @@ void RndShaderMgr::LoadShaderFile(FileStream &fs) {
         ShaderType shaderType = ShaderTypeFromName(name.Str());
         int alloc; // prolly not the best var name
         fs >> alloc;
-        unk5c = alloc;
+        mPendingShaderPoolCount = alloc;
         while (alloc--) {
             u64 shaderFlags;
             fs >> shaderFlags;
@@ -231,31 +231,32 @@ void RndShaderMgr::LoadShaderFile(FileStream &fs) {
 }
 
 void *RndShaderMgr::AllocShader() {
-    if (mShaderPoolCount == 0 && unk5c > 0) {
-        mShaderPoolCount = unk5c;
-        unk5c = 0;
-        mShaderPool = MemAlloc(unk60 * mShaderPoolCount, __FILE__, 0x11c, "ShaderPool");
+    if (mShaderPoolCount == 0 && mPendingShaderPoolCount > 0) {
+        mShaderPoolCount = mPendingShaderPoolCount;
+        mPendingShaderPoolCount = 0;
+        mShaderPool =
+            MemAlloc(mShaderSize * mShaderPoolCount, __FILE__, 0x11c, "ShaderPool");
     }
     if (mShaderPoolCount <= 0) {
         if (UsingCD()) {
             MILO_NOTIFY_ONCE("Shader Pool is allocating dynamically");
         }
-        unk5c = 0;
+        mPendingShaderPoolCount = 0;
         mShaderPoolCount = 0x100;
-        mShaderPool = MemAlloc(unk60 << 8, __FILE__, 0x127, "ShaderPool");
+        mShaderPool = MemAlloc(mShaderSize << 8, __FILE__, 0x127, "ShaderPool");
     }
     MILO_ASSERT(mShaderPoolCount-- > 0, 0x12A);
-    // increment mShaderPool by unk60
+    // increment mShaderPool by mShaderSize
     void *old = mShaderPool;
     char *pool = (char *)mShaderPool;
-    pool += unk60;
+    pool += mShaderSize;
     mShaderPool = pool;
-    unk5c--;
+    mPendingShaderPoolCount--;
     return old;
 }
 
 RndShaderProgram &RndShaderMgr::FindShader(ShaderType t, const ShaderOptions &opts) {
-    u64 flags = opts.flags;
+    u64 flags = opts.value;
     FOREACH (it, mShaderTrees) {
         // we found the shader, traverse through its tree
         if (it->shaderType == t) {

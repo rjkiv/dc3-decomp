@@ -51,8 +51,8 @@ void NgSpotlightDrawer::DoPost() { RenderScene(); }
 void NgSpotlightDrawer::SetAmbientColor(const Hmx::Color &color) {
     Vector4 v4(color.red, color.green, color.blue, color.alpha);
     sEnviron->SetAmbientColor(color);
-    TheShaderMgr.SetVConstant(kVShader_EnvAmbientColor, v4);
-    TheShaderMgr.SetPConstant(kPShader_EnvAmbientColor, v4);
+    TheShaderMgr.SetVConstant(kVShader_AmbientCol, v4);
+    TheShaderMgr.SetPConstant(kPShader_AmbientCol, v4);
 }
 
 void NgSpotlightDrawer::ClearPostDraw() { sNeedDraw = false; }

@@ -2,6 +2,14 @@
 
 class RndRenderState {
 public:
+    enum ColorBits {
+        kRed = 1,
+        kGreen = 2,
+        kBlue = 4,
+        kAlpha = 8,
+        kColorOnly = 7,
+        kAllChannels = 15
+    };
     // basically D3DBLEND
     enum Blend {
         kBlendZero = 0x0000,
