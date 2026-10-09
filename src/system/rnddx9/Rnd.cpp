@@ -112,7 +112,8 @@ void DxRnd::PushClipPlanesInternal(ObjPtrVec<RndTransformable> &planes) {
 
 void DxRnd::PopClipPlanesInternal(ObjPtrVec<RndTransformable> &planes) {
     for (int i = 0; i < planes.size() && i < 6; i++) {
-        if (planes[i]) {
+        RndTransformable *cur = planes[i];
+        if (cur) {
             unk408--;
         }
     }

@@ -51,7 +51,7 @@ void TypeProps::ClearKeyValue(Symbol key) {
                 if (val.Type() == kDataObject) {
                     Hmx::Object *obj = val.ObjectValue();
                     if (obj) {
-                        mObjects.remove(obj);
+                        mRefs.remove(obj);
                     }
                 }
                 mMap->Remove(i);
@@ -70,7 +70,7 @@ void TypeProps::SetKeyValue(Symbol key, const DataNode &value, bool b) {
     if (b && value.Type() == kDataObject) {
         Hmx::Object *obj = value.ObjectValue();
         if (obj) {
-            mObjects.push_back(obj);
+            mRefs.push_back(obj);
         }
     }
     if (!mMap) {
@@ -85,7 +85,7 @@ void TypeProps::SetKeyValue(Symbol key, const DataNode &value, bool b) {
                 if (n.Type() == kDataObject) {
                     Hmx::Object *obj = n.ObjectValue();
                     if (obj) {
-                        mObjects.remove(obj);
+                        mRefs.remove(obj);
                     }
                 }
                 n = value;
@@ -101,10 +101,10 @@ void TypeProps::SetKeyValue(Symbol key, const DataNode &value, bool b) {
 void TypeProps::ReplaceObject(DataNode &n, Hmx::Object *from, Hmx::Object *to) {
     Hmx::Object *fromObj = n.ObjectValue();
     if (fromObj == from) {
-        mObjects.remove(fromObj);
+        mRefs.remove(fromObj);
         n = to;
         if (to) {
-            mObjects.push_back(to);
+            mRefs.push_back(to);
         }
     }
 }
@@ -132,7 +132,7 @@ bool TypeProps::Replace(ObjRef *from, Hmx::Object *to) {
 
 void TypeProps::ReleaseObjects() {
     if (mMap)
-        mObjects.clear();
+        mRefs.clear();
 }
 
 void TypeProps::AddRefObjects() {
@@ -142,7 +142,7 @@ void TypeProps::AddRefObjects() {
             if (node.Type() == kDataObject) {
                 Hmx::Object *obj = node.ObjectValue();
                 if (obj) {
-                    mObjects.push_back(obj);
+                    mRefs.push_back(obj);
                 }
             } else if (node.Type() == kDataArray) {
                 DataArray *inner = node.ArrayValue();
@@ -151,7 +151,7 @@ void TypeProps::AddRefObjects() {
                     if (node2.Type() == kDataObject) {
                         Hmx::Object *obj = node2.ObjectValue();
                         if (obj)
-                            mObjects.push_back(obj);
+                            mRefs.push_back(obj);
                     }
                 }
             }
@@ -190,14 +190,14 @@ void TypeProps::SetArrayValue(Symbol prop, int i, const DataNode &value) {
     if (n.Type() == kDataObject) {
         Hmx::Object *obj = n.ObjectValue();
         if (obj) {
-            mObjects.remove(obj);
+            mRefs.remove(obj);
         }
     }
     n = value;
     if (n.Type() == kDataObject) {
         Hmx::Object *obj = n.ObjectValue();
         if (obj) {
-            mObjects.push_back(obj);
+            mRefs.push_back(obj);
         }
     }
 }
@@ -208,7 +208,7 @@ void TypeProps::RemoveArrayValue(Symbol prop, int i) {
     if (n.Type() == kDataObject) {
         Hmx::Object *obj = n.ObjectValue();
         if (obj) {
-            mObjects.remove(obj);
+            mRefs.remove(obj);
         }
     }
     a->Remove(i);
@@ -220,7 +220,7 @@ void TypeProps::InsertArrayValue(Symbol prop, int i, const DataNode &value) {
     if (value.Type() == kDataObject) {
         Hmx::Object *obj = value.ObjectValue();
         if (obj) {
-            mObjects.push_back(obj);
+            mRefs.push_back(obj);
         }
     }
 }
