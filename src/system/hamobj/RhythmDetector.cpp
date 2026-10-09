@@ -272,7 +272,7 @@ void EraseNewerData(std::vector<RhythmDetector::Frame> &vec, float time) {
 void CameraToScreenUnit(Vector3 &vec, const Skeleton &skeleton, SkeletonJoint joint) {
     Vector2 skelPos;
     skeleton.ScreenPos(joint, skelPos);
-    float y = -skeleton.TrackedJoints()[joint].unk60.z;
+    float y = -skeleton.TrackedJoints()[joint].mRawCameraPos.z;
     vec.Set((skelPos.x - 0.5f) * 2.0f, y * 0.22977939f, (0.5f - skelPos.y) * 2.0f);
 }
 
@@ -466,7 +466,7 @@ void RhythmDetector::PostUpdate(const SkeletonUpdateData *data) {
         mRecordData.frames.clear();
     } else if (data) {
         Skeleton &skeleton = TheGestureMgr->GetSkeleton(mSkeletonID);
-        if (skeleton.ElapsedMs() != data->unk8->mElapsedMs) {
+        if (skeleton.ElapsedMs() != data->mFrame.mElapsedMs) {
             MILO_WARN("current skeleton doesn't match update data");
         }
         AddFrame(skeleton);

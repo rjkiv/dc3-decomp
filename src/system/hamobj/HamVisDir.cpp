@@ -261,7 +261,7 @@ void HamVisDir::PostUpdate(const SkeletonUpdateData *data) {
                     HamPlayerData *player_data = TheGameData->Player(i);
                     MILO_ASSERT(player_data, 0x101);
                     if (player_data->IsPlaying()) {
-                        const Skeleton *cur = data->unk0[i];
+                        const Skeleton *cur = data->mPlayerSkeletons[i];
                         if (cur && cur->IsTracked()) {
                             int i8 = i;
                             if (i == 0) {
@@ -342,11 +342,11 @@ void HamVisDir::UpdateGestureFilter(Skeleton const &skeleton, int player) {
         std::vector<float> armLengths(2, 0.0f);
         CalcArmLengths(armLengths, skeleton);
         std::vector<float> shoulders(2, 0.0f);
-        shoulders[0] = skeleton.TrackedJoints()[kJointShoulderLeft].mJointPos[0].y;
-        shoulders[1] = skeleton.TrackedJoints()[kJointShoulderRight].mJointPos[0].y;
+        shoulders[0] = skeleton.TrackedJoints()[kJointShoulderLeft].mPos[0].y;
+        shoulders[1] = skeleton.TrackedJoints()[kJointShoulderRight].mPos[0].y;
         std::vector<float> wrists(2, 0.0f);
-        wrists[0] = skeleton.TrackedJoints()[kJointWristLeft].mJointPos[0].y;
-        wrists[1] = skeleton.TrackedJoints()[kJointWristRight].mJointPos[0].y;
+        wrists[0] = skeleton.TrackedJoints()[kJointWristLeft].mPos[0].y;
+        wrists[1] = skeleton.TrackedJoints()[kJointWristRight].mPos[0].y;
         for (int i = 0; i < 2; i++) {
             RndAnimatable *animatable = (i == 0) ? leftPlayer : rightPlayer;
             float val = mGrooviness * 100.0f;

@@ -48,17 +48,17 @@ void ReserveFrames() {
 void RecordedFrame::MakeSkeletonFrame(SkeletonFrame &frame, int skel_idx) const {
     MILO_ASSERT_RANGE(skel_idx, 0, 6, 0x2e);
     memset(&frame, 0, sizeof(SkeletonFrame));
-    frame.unk0 = unk0;
+    frame.mFrameNumber = unk0;
     frame.mElapsedMs = unk4;
-    frame.unk8 = unk8;
-    frame.unk18 = unk18;
+    frame.mUpVector = unk8;
+    frame.mFloorPlane = unk18;
     SkeletonData &data = frame.mSkeletonDatas[skel_idx];
     data.mTracking = unk28 ? kSkeletonTracked : kSkeletonNotTracked;
-    memcpy(data.unk144, unk2c, 0x140);
-    memcpy(data.unk284, unk16c, 0x50);
+    memcpy(data.mJointPositions, unk2c, 0x140);
+    memcpy(data.mJointConfidences, unk16c, 0x50);
     data.mQualityFlags = unk1bc;
     data.mTrackingID = unk1c0;
-    data.unk2e0 = data.unk144[0];
+    data.mCenter = data.mJointPositions[0];
 }
 
 SkeletonClip::SkeletonClip()
@@ -670,10 +670,10 @@ void SkeletonClip::PollRecording(const SkeletonFrame &frame) {
         }
 
         RecordedFrame recordedFrame;
-        recordedFrame.unk0 = frame.unk0;
+        recordedFrame.unk0 = frame.mFrameNumber;
         recordedFrame.unk4 = frame.mElapsedMs;
-        recordedFrame.unk8 = frame.unk8;
-        recordedFrame.unk18 = frame.unk18;
+        recordedFrame.unk8 = frame.mUpVector;
+        recordedFrame.unk18 = frame.mFloorPlane;
 
         int active_skel_idx = -1;
         if (unk11fc == -1) {
@@ -689,8 +689,8 @@ void SkeletonClip::PollRecording(const SkeletonFrame &frame) {
             MILO_ASSERT_RANGE(active_skel_idx, 0, 6, 0x2a9);
             const SkeletonData &data = frame.mSkeletonDatas[active_skel_idx];
             recordedFrame.unk28 = data.mTracking == kSkeletonTracked;
-            memcpy(recordedFrame.unk2c, data.unk144, 0x140);
-            memcpy(recordedFrame.unk16c, data.unk284, 0x50);
+            memcpy(recordedFrame.unk2c, data.mJointPositions, 0x140);
+            memcpy(recordedFrame.unk16c, data.mJointConfidences, 0x50);
             recordedFrame.unk1bc = data.mQualityFlags;
             recordedFrame.unk1c0 = data.mTrackingID;
             recordedFrame.unk1c4 = songSeconds;

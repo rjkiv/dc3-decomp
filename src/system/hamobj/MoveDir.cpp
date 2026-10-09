@@ -828,13 +828,13 @@ void MoveDir::Update(const SkeletonUpdateData &data) {
 void MoveDir::PostUpdate(const SkeletonUpdateData *data) {
     if (data) {
         if (mRecordClip) {
-            mRecordClip->PollRecording(*data->unk8);
+            mRecordClip->PollRecording(data->mFrame);
         }
         if (unk2bc) {
-            unk2bc->PollRecording(*data->unk8);
+            unk2bc->PollRecording(data->mFrame);
         }
         if (unk2d0) {
-            unk2d0->PollRecording(*data->unk8);
+            unk2d0->PollRecording(data->mFrame);
         }
         if (TheLoadMgr.EditMode()) {
             MILO_ASSERT(TheGameData, 0x387);
@@ -849,9 +849,8 @@ void MoveDir::PostUpdate(const SkeletonUpdateData *data) {
                     unk424.Poll(0, skeletonFrame);
                 }
             } else {
-                const Skeleton *playerSkeleton = TheGameData->Player(0)->GetSkeleton(
-                    reinterpret_cast<const Skeleton *const(&)[6]>(*data->unk4)
-                );
+                const Skeleton *playerSkeleton =
+                    TheGameData->Player(0)->GetSkeleton(data->mAllSkeletons);
                 if (playerSkeleton) {
                     unk424 = *playerSkeleton;
                 }

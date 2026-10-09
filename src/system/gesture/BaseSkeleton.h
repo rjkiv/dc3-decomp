@@ -55,7 +55,7 @@ enum SkeletonCoordSys {
     kCoordRightArm = 2,
     kCoordLeftLeg = 3,
     kCoordRightLeg = 4,
-    kUnk5 = 5,
+    kCoordPelvis = 5,
     kNumCoordSys = 6
 };
 
@@ -74,21 +74,21 @@ enum JointConfidence {
 class SkeletonHistory;
 
 struct BoneJoints {
-    SkeletonBone bone;
-    SkeletonJoint joint1;
-    SkeletonJoint joint2;
+    SkeletonBone mBone; // 0x0
+    SkeletonJoint mStartJoint; // 0x4
+    SkeletonJoint mEndJoint; // 0x8
 };
 
 class BaseSkeleton {
 public:
     virtual ~BaseSkeleton() {} // 0x0
     virtual void JointPos(SkeletonCoordSys, SkeletonJoint, Vector3 &) const = 0; // 0x4
-    virtual bool
-    Displacement(const SkeletonHistory *, SkeletonCoordSys, SkeletonJoint, int, Vector3 &, int &)
-        const = 0; // 0x8
-    virtual bool
-    Displacements(const SkeletonHistory *, SkeletonCoordSys, int, Vector3 *, int &)
-        const = 0; // 0xc
+    virtual bool Displacement(
+        const SkeletonHistory *, SkeletonCoordSys, SkeletonJoint, int, Vector3 &, int &
+    ) const = 0; // 0x8
+    virtual bool Displacements(
+        const SkeletonHistory *, SkeletonCoordSys, int, Vector3 *, int &
+    ) const = 0; // 0xc
     virtual JointConfidence JointConf(SkeletonJoint) const = 0; // 0x10
     virtual bool IsTracked() const = 0; // 0x14
     virtual int QualityFlags() const = 0; // 0x18

@@ -38,8 +38,8 @@ void ArcDetector::Update(const Skeleton &skel, int playernum) {
         Clear();
         return;
     }
-    const Vector3 &body_maybe = skel.TrackedJoints()[unkc].mJointPos[0],
-                  &hand_maybe = skel.TrackedJoints()[unk8].mJointPos[0];
+    const Vector3 &body_maybe = skel.TrackedJoints()[unkc].mPos[0],
+                  &hand_maybe = skel.TrackedJoints()[unk8].mPos[0];
     float hpos_x = hand_maybe.x - body_maybe.x, hpos_y = hand_maybe.y - body_maybe.y,
           hpos_z = hand_maybe.z - body_maybe.z; // why
     Vector3 hand_pos(hpos_x, hpos_y, hpos_z); // in body coords? i think
@@ -64,14 +64,13 @@ void ArcDetector::Update(const Skeleton &skel, int playernum) {
         if (LengthSquared(v) > 0.0001f) {
             mJointPath.insert(mJointPath.begin(), hand_pos);
         }
-        const Vector3 &body_maybe = skel.TrackedJoints()[unkc].mJointPos[0],
-                      &hand_maybe = skel.TrackedJoints()[unk8].mJointPos[0];
+        const Vector3 &body_maybe = skel.TrackedJoints()[unkc].mPos[0],
+                      &hand_maybe = skel.TrackedJoints()[unk8].mPos[0];
         float hpos_x_recalc = hand_maybe.x - body_maybe.x,
               hpos_z_recalc = hand_maybe.z - body_maybe.z;
         unk28 = (Vector2(hpos_x_recalc, hpos_z_recalc).Length() + unk28) / 2;
     }
-    unk2c = skel.TrackedJoints()[unk8].mJointPos[0].y
-        - skel.TrackedJoints()[unkc].mJointPos[0].y;
+    unk2c = skel.TrackedJoints()[unk8].mPos[0].y - skel.TrackedJoints()[unkc].mPos[0].y;
     CullPath();
     unk38 = Max(unk38, GetSwipeAmount());
     if (!IsPathAcceptable()) {
@@ -174,14 +173,14 @@ float ArcDetector::GetPathError() const {
 void ArcDetector::TryToStartSwipe(const Vector3 &startpos, const Skeleton &skel) {
     MILO_ASSERT(mJointPath.empty(), 139);
     bool joint_not_tracked = true;
-    if (skel.TrackedJoints()[unk8].mJointConf != kConfidenceTracked
-        || skel.TrackedJoints()[unkc].mJointConf != kConfidenceTracked) {
+    if (skel.TrackedJoints()[unk8].mConfidence != kConfidenceTracked
+        || skel.TrackedJoints()[unkc].mConfidence != kConfidenceTracked) {
         joint_not_tracked = false;
     }
     if (joint_not_tracked) {
         mJointPath.push_front(startpos);
-        const Vector3 &ucjoint = skel.TrackedJoints()[unkc].mJointPos[0];
-        const Vector3 &u8joint = skel.TrackedJoints()[unk8].mJointPos[0];
+        const Vector3 &ucjoint = skel.TrackedJoints()[unkc].mPos[0];
+        const Vector3 &u8joint = skel.TrackedJoints()[unk8].mPos[0];
         unk28 = Vector2(u8joint.x - ucjoint.x, u8joint.z - ucjoint.z).Length();
     }
 }
@@ -228,12 +227,10 @@ void ArcDetector::Draw(const Skeleton &skel, SkeletonViz &viz) {
             v.x = x * f0;
             joints2draw.insert(joints2draw.begin(), v);
         }
-        Add(skel.TrackedJoints()[unkc].mJointPos[0], unk18, v);
+        Add(skel.TrackedJoints()[unkc].mPos[0], unk18, v);
         DrawPath(joints2draw, viz, Hmx::Color(1, 1, 0), v);
     }
-    DrawPath(
-        mJointPath, viz, Hmx::Color(1, 0, 1), skel.TrackedJoints()[unkc].mJointPos[0]
-    );
+    DrawPath(mJointPath, viz, Hmx::Color(1, 0, 1), skel.TrackedJoints()[unkc].mPos[0]);
 }
 
 bool ArcDetector::IsPathAcceptable() const {

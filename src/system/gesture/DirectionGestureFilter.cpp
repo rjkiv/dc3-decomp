@@ -72,7 +72,7 @@ void DirectionGestureFilterSingleUser::Update(const Skeleton &skeleton, int elap
 void DirectionGestureFilterSingleUser::Draw(const Skeleton &skeleton, SkeletonViz &viz) {
     mArcDetector.Draw(skeleton, viz);
     viz.DrawPoint3D(
-        skeleton.HandJoint(unk4).mJointPos[0],
+        skeleton.HandJoint(unk4).mPos[0],
         0.1f,
         IsValidSwipePosition(skeleton) ? Hmx::Color(0, 1, 0) : Hmx::Color(1, 0, 0),
         0.2f
@@ -80,7 +80,7 @@ void DirectionGestureFilterSingleUser::Draw(const Skeleton &skeleton, SkeletonVi
     if (sLastSwipeTime[skeleton.SkeletonIndex()] + unk20 > TheTaskMgr.UISeconds()
         && sLastSwipeTime[skeleton.SkeletonIndex()] < TheTaskMgr.UISeconds()) {
         viz.DrawPoint3D(
-            skeleton.HandJoint(unk4).mJointPos[0],
+            skeleton.HandJoint(unk4).mPos[0],
             0.1f,
             // FIXME: I need to be able to reuse the color from the first DrawPoint3D call
             IsValidSwipePosition(skeleton) ? Hmx::Color(0, 1, 0) : Hmx::Color(1, 0, 0),
@@ -129,18 +129,18 @@ float DirectionGestureFilterSingleUser::UpdateOverlay(RndOverlay *overlay, float
 bool DirectionGestureFilterSingleUser::HandAtSide(
     const Skeleton &skeleton, float f1, float f2, float f3
 ) const {
-    float jointVal = skeleton.TrackedJoints()[3].mJointPos[0].y
-        - skeleton.TrackedJoints()[19].mJointPos[0].y;
+    float jointVal = skeleton.TrackedJoints()[3].mPos[0].y
+        - skeleton.TrackedJoints()[19].mPos[0].y;
 
     const TrackedJoint &handJoint = skeleton.HandJoint(unk4);
     const TrackedJoint &hipJoint = skeleton.HipJoint(unk4);
     const TrackedJoint &kneeJoint = skeleton.KneeJoint(unk4);
     const TrackedJoint &elbowJoint = skeleton.ElbowJoint(unk4);
-    float jointX = handJoint.mJointPos[0].x - (f1 * f3 + elbowJoint.mJointPos[0].x) * f2;
-    float jointY = handJoint.mJointPos[0].y
-        - (kneeJoint.mJointPos[0].y + hipJoint.mJointPos[0].y) / 2;
-    float jointZ = handJoint.mJointPos[0].z
-        - (kneeJoint.mJointPos[0].z + hipJoint.mJointPos[0].z) / 2;
+    float jointX = handJoint.mPos[0].x - (f1 * f3 + elbowJoint.mPos[0].x) * f2;
+    float jointY = handJoint.mPos[0].y
+        - (kneeJoint.mPos[0].y + hipJoint.mPos[0].y) / 2;
+    float jointZ = handJoint.mPos[0].z
+        - (kneeJoint.mPos[0].z + hipJoint.mPos[0].z) / 2;
 
     return sqrt(jointX * jointX + jointZ * jointZ + jointY * jointY)
         <= jointVal * 0.59171593f * f1;

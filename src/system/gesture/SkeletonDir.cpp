@@ -147,7 +147,7 @@ void SkeletonDir::PrintSkeleton() const {
             MILO_LOG("joints:\n");
             for (int i = 0; i < kNumJoints; i++) {
                 TheDebug << "\t" << i << ":\t" << JointName((SkeletonJoint)i) << "\t\t"
-                         << skel->TrackedJoints()[i].mJointPos[kCoordCamera] << "\n";
+                         << skel->TrackedJoints()[i].mPos[kCoordCamera] << "\n";
             }
         }
     } else {

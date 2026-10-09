@@ -25,7 +25,9 @@ Vector3DESmoother SkeletonFrame::sUpVectorSmoother;
 
 #pragma region SkeletonFrame
 
-float SkeletonFrame::TiltAngle() const { return (PI / 2) - (float)atan2(unk8.y, unk8.z); }
+float SkeletonFrame::TiltAngle() const {
+    return (PI / 2) - (float)atan2(mUpVector.y, mUpVector.z);
+}
 
 void SkeletonFrame::Init() {
     static Symbol kinect("kinect");
@@ -40,10 +42,10 @@ void SkeletonFrame::Init() {
 }
 
 void SkeletonFrame::Create(const NUI_SKELETON_FRAME &nui_frame, int i2) {
-    unk0 = nui_frame.dwFrameNumber;
+    mFrameNumber = nui_frame.dwFrameNumber;
     mElapsedMs = i2;
-    unk8 = sUpVectorSmoother.Value();
-    unk18.Set(
+    mUpVector = sUpVectorSmoother.Value();
+    mFloorPlane.Set(
         nui_frame.vFloorClipPlane.x,
         nui_frame.vFloorClipPlane.y,
         nui_frame.vFloorClipPlane.z,
@@ -54,14 +56,14 @@ void SkeletonFrame::Create(const NUI_SKELETON_FRAME &nui_frame, int i2) {
 #pragma endregion
 #pragma region Skeleton
 
-Skeleton::Skeleton() : mTracking(kSkeletonNotTracked), mTrackingID(-1), unkac4(0) {
+Skeleton::Skeleton() : mTracking(kSkeletonNotTracked), mTrackingID(-1), mPelvisHeight(0) {
     Init();
 }
 
 void Skeleton::JointPos(SkeletonCoordSys cs, SkeletonJoint joint, Vector3 &pos) const {
     MILO_ASSERT((0) <= (cs) && (cs) < (kNumCoordSys), 0xDA);
     MILO_ASSERT((0) <= (joint) && (joint) < (kNumJoints), 0xDB);
-    pos = mTrackedJoints[joint].mJointPos[cs];
+    pos = mTrackedJoints[joint].mPos[cs];
 }
 
 bool Skeleton::Displacement(
@@ -76,7 +78,7 @@ bool Skeleton::Displacement(
     if (PrevTrackedSkeleton(history, i4, iref, archiveSkeleton)) {
         Vector3 v3;
         archiveSkeleton.JointPos(cs, joint, v3);
-        Subtract(mTrackedJoints[joint].mJointPos[cs], v3, disp);
+        Subtract(mTrackedJoints[joint].mPos[cs], v3, disp);
         return true;
     } else {
         disp.Zero();
@@ -86,7 +88,7 @@ bool Skeleton::Displacement(
 
 JointConfidence Skeleton::JointConf(SkeletonJoint joint) const {
     MILO_ASSERT((0) <= (joint) && (joint) < (kNumJoints), 0xE1);
-    return mTrackedJoints[joint].mJointConf;
+    return mTrackedJoints[joint].mConfidence;
 }
 
 bool Skeleton::IsTracked() const { return mTracking == kSkeletonTracked; }
@@ -95,44 +97,44 @@ int Skeleton::ElapsedMs() const { return mElapsedMs; }
 
 void Skeleton::CameraToPlayerXfm(SkeletonCoordSys cs, Transform &playerXfm) const {
     MILO_ASSERT((kCoordLeftArm) <= (cs) && (cs) < (kNumCoordSys), 0x127);
-    playerXfm = mPlayerXfms[cs - 1];
+    playerXfm = mCameraToPlayer[cs - 1];
 }
 
 void Skeleton::CamJointPositions(Vector3 *positions) const {
     for (int i = 0; i < kNumJoints; i++) {
-        *positions++ = mTrackedJoints[i].mJointPos[kCoordCamera];
+        *positions++ = mTrackedJoints[i].mPos[kCoordCamera];
     }
 }
 
 void Skeleton::CamBoneLengths(float *lens) const {
-    memcpy(lens, mCamBoneLengths, sizeof(mCamBoneLengths));
+    memcpy(lens, mCameraBoneLengths, sizeof(mCameraBoneLengths));
 }
 
 float Skeleton::BoneLength(SkeletonBone bone, SkeletonCoordSys cs) const {
     if (cs == kCoordCamera) {
         MILO_ASSERT((0) <= (bone) && (bone) < (kNumBones), 0x12F);
-        return mCamBoneLengths[bone];
+        return mCameraBoneLengths[bone];
     } else
         return BaseSkeleton::BoneLength(bone, cs);
 }
 
 bool Skeleton::IsValid() const {
-    if (mSkeletonIdx >= 0) {
-        return TheGestureMgr->IsSkeletonValid(mSkeletonIdx);
+    if (mSkeletonIndex >= 0) {
+        return TheGestureMgr->IsSkeletonValid(mSkeletonIndex);
     } else
         return false;
 }
 
 bool Skeleton::IsSitting() const {
-    if (mSkeletonIdx >= 0) {
-        return TheGestureMgr->IsSkeletonSitting(mSkeletonIdx);
+    if (mSkeletonIndex >= 0) {
+        return TheGestureMgr->IsSkeletonSitting(mSkeletonIndex);
     } else
         return false;
 }
 
 bool Skeleton::IsSideways() const {
-    if (mSkeletonIdx >= 0) {
-        return TheGestureMgr->IsSkeletonSideways(mSkeletonIdx);
+    if (mSkeletonIndex >= 0) {
+        return TheGestureMgr->IsSkeletonSideways(mSkeletonIndex);
     } else
         return false;
 }
@@ -194,30 +196,30 @@ bool Skeleton::Velocity(
 
 void Skeleton::Init() {
     mTracking = kSkeletonNotTracked;
-    mSkeletonIdx = -1;
+    mSkeletonIndex = -1;
     mQualityFlags = 0;
-    unkab0.Zero();
+    mCenter.Zero();
     for (int i = 0; i < 5; i++) {
-        mPlayerXfms[i].Reset();
+        mCameraToPlayer[i].Reset();
     }
     for (int i = 0; i < kNumJoints; i++) {
         for (int j = 0; j < kNumCoordSys; j++) {
-            mTrackedJoints[i].mJointPos[j].Zero();
+            mTrackedJoints[i].mPos[j].Zero();
         }
-        mTrackedJoints[i].mJointConf = kConfidenceNotTracked;
-        mTrackedJoints[i].unk60.Zero();
+        mTrackedJoints[i].mConfidence = kConfidenceNotTracked;
+        mTrackedJoints[i].mRawCameraPos.Zero();
     }
-    memset(mCamBoneLengths, 0, sizeof(mCamBoneLengths));
-    mCamDisplacements.clear();
+    memset(mCameraBoneLengths, 0, sizeof(mCameraBoneLengths));
+    mCachedCameraDisplacements.clear();
 }
 
 bool Skeleton::ProfileMatched() const {
-    IdentityInfo *info = TheGestureMgr->GetIdentityInfo(mSkeletonIdx);
+    IdentityInfo *info = TheGestureMgr->GetIdentityInfo(mSkeletonIndex);
     return info ? info->ProfileMatched() : false;
 }
 
 int Skeleton::GetEnrollmentIndex() const {
-    IdentityInfo *info = TheGestureMgr->GetIdentityInfo(mSkeletonIdx);
+    IdentityInfo *info = TheGestureMgr->GetIdentityInfo(mSkeletonIndex);
     return info ? info->EnrollmentIndex() : -1;
 }
 
@@ -229,7 +231,7 @@ void Skeleton::PostUpdate() {}
 
 bool Skeleton::RequestIdentity() {
     MILO_ASSERT(!GestureMgr::sIdentityOpInProgress, 0x2A9);
-    IdentityInfo *info = TheGestureMgr->GetIdentityInfo(mSkeletonIdx);
+    IdentityInfo *info = TheGestureMgr->GetIdentityInfo(mSkeletonIndex);
     if (info) {
         HRESULT hr = NuiIdentityIdentify(mTrackingID, 0, IdentityCallback, info);
         MILO_ASSERT(hr != E_INVALIDARG, 0x2B1);
@@ -252,7 +254,7 @@ bool Skeleton::RequestIdentity() {
 
 bool Skeleton::EnrollIdentity(int i) {
     MILO_ASSERT(!GestureMgr::sIdentityOpInProgress, 0x25d);
-    IdentityInfo *info = TheGestureMgr->GetIdentityInfo(mSkeletonIdx);
+    IdentityInfo *info = TheGestureMgr->GetIdentityInfo(mSkeletonIndex);
     if (!info) {
         return false;
     }
@@ -312,18 +314,18 @@ int Skeleton::IdentityCallback(void *pvContext, NUI_IDENTITY_MESSAGE *pMessage) 
 
 void Skeleton::Poll(int skel_idx, SkeletonFrame const &skeletonFrame) {
     MILO_ASSERT_RANGE(skel_idx, 0, 6, 0x1f8);
-    if (mSkeletonIdx != skel_idx && TheGestureMgr) {
+    if (mSkeletonIndex != skel_idx && TheGestureMgr) {
         IdentityInfo *identityInfo = TheGestureMgr->GetIdentityInfo(skel_idx);
         MILO_ASSERT(identityInfo, 0x1fc);
         identityInfo->SetProfileMatched(false);
         identityInfo->SetEnrollmentIndex(-1);
     }
 
-    mSkeletonIdx = skel_idx;
+    mSkeletonIndex = skel_idx;
     mElapsedMs = skeletonFrame.mElapsedMs;
     const SkeletonData &data = skeletonFrame.mSkeletonDatas[skel_idx];
     mTrackingID = data.mTrackingID;
-    unkab0 = data.unk2e0;
+    mCenter = data.mCenter;
     mTracking = data.mTracking;
     if (mTracking != kSkeletonNotTracked) {
         if (mTracking == kSkeletonTracked) {
@@ -331,8 +333,8 @@ void Skeleton::Poll(int skel_idx, SkeletonFrame const &skeletonFrame) {
             if (TheGestureMgr) {
                 IdentityInfo *identityInfo = TheGestureMgr->GetIdentityInfo(skel_idx);
                 MILO_ASSERT(identityInfo, 0x211);
-                if (identityInfo->EnrollmentIndex() != data.unk2dc) {
-                    identityInfo->SetEnrollmentIndex(data.unk2dc);
+                if (identityInfo->EnrollmentIndex() != data.mEnrollmentIndex) {
+                    identityInfo->SetEnrollmentIndex(data.mEnrollmentIndex);
                     identityInfo->SetUnk9(true);
                 }
             }
@@ -340,9 +342,9 @@ void Skeleton::Poll(int skel_idx, SkeletonFrame const &skeletonFrame) {
             for (int i = 1; i < 6; i++) {
                 BaseSkeleton::MakeCameraToPlayerXfm(
                     (SkeletonCoordSys)i,
-                    mPlayerXfms[i - 1],
-                    data.unk144,
-                    skeletonFrame.unk8
+                    mCameraToPlayer[i - 1],
+                    data.mJointPositions,
+                    skeletonFrame.mUpVector
                 );
             }
 
@@ -351,29 +353,29 @@ void Skeleton::Poll(int skel_idx, SkeletonFrame const &skeletonFrame) {
                 TrackedJoint &joint = mTrackedJoints[i];
                 for (int j = 0; j < kNumCoordSys; j++) {
                     if (j == 0) {
-                        joint.mJointPos[0] = data.unk144[i];
+                        joint.mPos[0] = data.mJointPositions[i];
                     } else {
                         MultiplyTranspose(
-                            data.unk144[i], mPlayerXfms[j - 1], joint.mJointPos[j]
+                            data.mJointPositions[i], mCameraToPlayer[j - 1], joint.mPos[j]
                         );
                     }
                 }
-                joint.mJointConf = (JointConfidence)data.unk284[i];
-                joint.unk60 = data.unk144[i];
+                joint.mConfidence = (JointConfidence)data.mJointConfidences[i];
+                joint.mRawCameraPos = data.mJointPositions[i];
             }
 
             for (int i = 0; i < kNumJoints; i++) {
-                mCamBoneLengths[i] =
+                mCameraBoneLengths[i] =
                     BaseSkeleton::BoneLength((SkeletonBone)i, kCoordCamera);
             }
 
-            mCamDisplacements.clear();
+            mCachedCameraDisplacements.clear();
 
-            Vector4 vec4 = skeletonFrame.unk18;
-            unkac4 = (mTrackedJoints[kJointHipRight].mJointPos[kCoordCamera].y
-                      + mTrackedJoints[kJointHipLeft].mJointPos[kCoordCamera].y)
+            Plane vec4 = skeletonFrame.mFloorPlane;
+            mPelvisHeight = (mTrackedJoints[kJointHipRight].mPos[kCoordCamera].y
+                             + mTrackedJoints[kJointHipLeft].mPos[kCoordCamera].y)
                     * 0.5f
-                + vec4.w;
+                + vec4.d;
         }
 
     } else {
@@ -384,30 +386,32 @@ void Skeleton::Poll(int skel_idx, SkeletonFrame const &skeletonFrame) {
 bool Skeleton::Displacements(
     const SkeletonHistory *history, SkeletonCoordSys sys, int i1, Vector3 *vec, int &i2
 ) const {
-    FOREACH (it, mCamDisplacements) {
-        if (it->unk0 == i1) {
-            memcpy(vec, it->unk8, 0x140);
-            i2 = it->unk4;
-            return it->unk4 + 1 != 0;
+    FOREACH (it, mCachedCameraDisplacements) {
+        if (it->mCachedMs == i1) {
+            memcpy(vec, it->mCameraDisplacements, sizeof(it->mCameraDisplacements));
+            i2 = it->mActualMs;
+            return it->mActualMs + 1 != 0;
         }
     }
 
     CameraDisplacement displacement;
-    displacement.unk0 = i1;
+    displacement.mCachedMs = i1;
     ArchiveSkeleton skeleton;
     bool check = PrevTrackedSkeleton(history, i1, i2, skeleton);
     if (check) {
         for (int i = 0; i < kNumJoints; i++) {
             Vector3 v;
             skeleton.JointPos(sys, (SkeletonJoint)i, v);
-            Subtract(mTrackedJoints[i].mJointPos[sys], v, vec[i]);
+            Subtract(mTrackedJoints[i].mPos[sys], v, vec[i]);
         }
     } else {
         memset(vec, 0, 0x140);
     }
 
-    displacement.unk4 = i2;
-    memcpy(displacement.unk8, vec, 0x140);
-    mCamDisplacements.push_back(displacement);
+    displacement.mActualMs = i2;
+    memcpy(
+        displacement.mCameraDisplacements, vec, sizeof(displacement.mCameraDisplacements)
+    );
+    const_cast<Skeleton *>(this)->mCachedCameraDisplacements.push_back(displacement);
     return check;
 }

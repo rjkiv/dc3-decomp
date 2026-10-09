@@ -181,16 +181,16 @@ void SkeletonUpdate::PostUpdate() {
     if (unk78) {
         LiveCameraInput::sInstance->SetNewFrame(&mSkeletonFrame);
     }
-    SkeletonUpdateData updateData;
-    updateData.unk0 = unk5360;
-    updateData.unk4 = unk5368;
-    updateData.unk8 = &mSkeletonFrame;
-    updateData.unkc = this;
-    updateData.unk10 = mCameraInput;
-    FOREACH (it, mCallbacks) {
-        AutoGlitchReport report(4.0f, SkeletonUpdateCallbackSlowdownCB, *it);
-        (*it)->PostUpdate(unk78 ? &updateData : nullptr);
-    }
+    // SkeletonUpdateData updateData;
+    // updateData.unk0 = unk5360;
+    // updateData.unk4 = unk5368;
+    // updateData.unk8 = &mSkeletonFrame;
+    // updateData.unkc = this;
+    // updateData.mCamInput = mCameraInput;
+    // FOREACH (it, mCallbacks) {
+    //     AutoGlitchReport report(4.0f, SkeletonUpdateCallbackSlowdownCB, *it);
+    //     (*it)->PostUpdate(unk78 ? &updateData : nullptr);
+    // }
     unk78 = false;
     for (int i = 0; i < NUM_SKELETONS; i++) {
         mSkeletons[i].PostUpdate();
@@ -288,12 +288,12 @@ void SkeletonUpdate::Update() {
                 data.mTracking = kSkeletonNotTracked;
                 data.mQualityFlags = 0;
                 for (int j = 0; j < kNumJoints; j++) {
-                    data.unk144[j].Zero();
-                    data.unk284[j] = 0;
+                    data.mJointPositions[j].Zero();
+                    data.mJointConfidences[j] = kConfidenceNotTracked;
                 }
                 data.mTrackingID = -1;
-                data.unk2dc = -1;
-                data.unk2e0 = Vector3::GetZero();
+                data.mEnrollmentIndex = -1;
+                data.mCenter = Vector3::GetZero();
             }
         }
     }

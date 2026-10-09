@@ -58,13 +58,14 @@ const int HamNavList::sListStateMinDisplay = 7;
 HamNavList::HamNavList()
     : mNavInputType(kNavInput_RightHand), mListState(this, this),
       mRibbonMode(HamListRibbon::kRibbonSlide), mFiltersUpdated(0), mListRibbon(this),
-      mHeaderRibbon(this), mListDir(this),
-      mScrollSpeedIndicator(this), mNavProvider(this), mScrollSpeedAnim(this),
-      mPlayEnterAnim(0), mSkipEnterAnim(0), mSuppressAutomaticEnter(0), mSuppressingEnter(0), mHandHeight(0),
-      mSlideAmount(0, 10, 10), mDisengageAmount(0, 10, 0), mDirectionFilter(0), mHandHeightFilter(0), mSkeletonTrackingID(0),
-      mScrollBehavior(this, &mListState), mDisableSlideSound(0), mDisableSelectSound(0),
-      mEnabled(1), mEnableSelection(1), mAlwaysUseActiveSkeleton(1), mOnlyUseWhenFocused(1),
-      unk1ec(0), unk1f0(0), unk1f8(-1), unk1fd(0), unk1fe(0) {
+      mHeaderRibbon(this), mListDir(this), mScrollSpeedIndicator(this),
+      mNavProvider(this), mScrollSpeedAnim(this), mPlayEnterAnim(0), mSkipEnterAnim(0),
+      mSuppressAutomaticEnter(0), mSuppressingEnter(0), mHandHeight(0),
+      mSlideAmount(0, 10, 10), mDisengageAmount(0, 10, 0), mDirectionFilter(0),
+      mHandHeightFilter(0), mSkeletonTrackingID(0), mScrollBehavior(this, &mListState),
+      mDisableSlideSound(0), mDisableSelectSound(0), mEnabled(1), mEnableSelection(1),
+      mAlwaysUseActiveSkeleton(1), mOnlyUseWhenFocused(1), unk1ec(0), unk1f0(0),
+      unk1f8(-1), unk1fd(0), unk1fe(0) {
     mListState.SetSpeed(0);
     mListState.SetSelected(0, -1, true);
     SetRate(k30_fps_ui);
@@ -130,9 +131,7 @@ BEGIN_PROPSYNCS(HamNavList)
     SYNC_PROP_MODIFY(list_ribbon_resource, mListRibbon, Update())
     SYNC_PROP_MODIFY(header_ribbon_resource, mHeaderRibbon, Update())
     SYNC_PROP_MODIFY(list_dir_resource, mListDir, Update())
-    SYNC_PROP_MODIFY(
-        scroll_speed_indicator_resource, mScrollSpeedIndicator, Update()
-    )
+    SYNC_PROP_MODIFY(scroll_speed_indicator_resource, mScrollSpeedIndicator, Update())
     SYNC_PROP_SET(mode, mRibbonMode, SetRibbonMode((HamListRibbon::RibbonMode)_val.Int()))
     SYNC_PROP_SET(
         nav_provider, mNavProvider.Ptr(), SetNavProvider(_val.Obj<HamNavProvider>())
@@ -668,7 +667,7 @@ void HamNavList::PostUpdate(SkeletonUpdateData const *data) {
     if (data && !SkipPoll()) {
         mFiltersUpdated = true;
         for (int i = 0; i < 6; i++) {
-            const Skeleton *skeleton = data->unk4[i];
+            const Skeleton *skeleton = data->mAllSkeletons[i];
             if (skeleton->TrackingID() == mSkeletonTrackingID) {
                 int elapsedMs = skeleton->ElapsedMs();
                 mDirectionFilter->Update(*skeleton, 0 < elapsedMs ? elapsedMs : 0);
@@ -883,8 +882,7 @@ void HamNavList::Poll() {
             }
         } else if (!InVoiceMode()) {
             Disengage();
-            if (mScrollSpeedIndicator
-                && mScrollSpeedIndicator->GetUnk1FC()) {
+            if (mScrollSpeedIndicator && mScrollSpeedIndicator->GetUnk1FC()) {
                 mScrollSpeedIndicator->Show(false);
             }
         }
@@ -923,8 +921,7 @@ void HamNavList::Poll() {
     }
 
     if (mListRibbon) {
-        if (mRibbonMode == HamListRibbon::kRibbonSlide
-            && !mListRibbon->TestEntering()) {
+        if (mRibbonMode == HamListRibbon::kRibbonSlide && !mListRibbon->TestEntering()) {
             mListRibbon->SetSlideSoundFrame(mSlideAmount.Level());
         } else {
             mListRibbon->SetSlideSoundFrame(0);
@@ -1139,7 +1136,8 @@ float HamNavList::GetTargetSwellAmount(int i) {
                         return 1.0f;
                     }
                 } else if (mRibbonMode != 3) {
-                    if (i == mListState.SelectedDisplay() && mScrollBehavior.GetUnk30() == 0) {
+                    if (i == mListState.SelectedDisplay()
+                        && mScrollBehavior.GetUnk30() == 0) {
                         return 1.0f;
                     }
                     if (mRibbonMode == 0 && i < mListState.NumShowing()) {
@@ -1291,7 +1289,8 @@ void HamNavList::DetermineHighlightedItem() {
     i2 = GetHighlightItem();
     if (mListState.ScrollPastMinDisplay() && !mScrollBehavior.AtTop()
         && (i2 != 0 || mScrollBehavior.GetUnk30() != 1)) {
-        if (i2 == HamListRibbon::sNumListSelectable - 1 && mScrollBehavior.GetUnk30() == 2) {
+        if (i2 == HamListRibbon::sNumListSelectable - 1
+            && mScrollBehavior.GetUnk30() == 2) {
             i2 = HamListRibbon::sNumListSelectable + 1;
         } else {
             i2++;
@@ -1370,9 +1369,10 @@ void HamNavList::UpdateGestures(const Skeleton *skeleton) {
             mDirectionFilter->ResetHoverTimer();
         }
 
-        bool b6 = skeleton && skeleton->IsValid() && mDirectionFilter->IsHandValid(*skeleton);
-        bool b8 =
-            mListState.ScrollPastMinDisplay() && mDirectionFilter->IsValidScrollPos(*skeleton);
+        bool b6 =
+            skeleton && skeleton->IsValid() && mDirectionFilter->IsHandValid(*skeleton);
+        bool b8 = mListState.ScrollPastMinDisplay()
+            && mDirectionFilter->IsValidScrollPos(*skeleton);
         if (!b6 && !b8 && mFiltersUpdated && !TheLoadMgr.EditMode()) {
             Disengage();
         }
@@ -1396,7 +1396,8 @@ void HamNavList::UpdateGestures(const Skeleton *skeleton) {
 
         if (b6) {
             bool cmp =
-                !mDirectionFilter->IsLockedIn() && !mDirectionFilter->HasDirection() || mScrollBehavior.GetUnk30();
+                !mDirectionFilter->IsLockedIn() && !mDirectionFilter->HasDirection()
+                || mScrollBehavior.GetUnk30();
             if (cmp) {
                 SetSwelling();
                 return;

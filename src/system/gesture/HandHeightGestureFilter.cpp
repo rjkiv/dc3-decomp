@@ -17,10 +17,10 @@ void HandHeightGestureFilter::Update(const Skeleton &skeleton, int i2) {
         const TrackedJoint &hip = skeleton.HipJoint(mSide);
         const TrackedJoint &hand = skeleton.HandJoint(mSide);
 
-        float f2 = shoulder.mJointPos[kCoordCamera].y - hip.mJointPos[kCoordCamera].y;
+        float f2 = shoulder.mPos[kCoordCamera].y - hip.mPos[kCoordCamera].y;
         if (f2 != 0) {
             unk10 =
-                (shoulder.mJointPos[kCoordCamera].y - hand.mJointPos[kCoordCamera].y) / f2
+                (shoulder.mPos[kCoordCamera].y - hand.mPos[kCoordCamera].y) / f2
                 + unk8;
         } else
             unk10 = 0;

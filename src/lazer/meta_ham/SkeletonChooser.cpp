@@ -104,7 +104,7 @@ void SkeletonChooser::GetJointDepthPos(int i1, int i2, Vector3 &v) {
     if (pSkeleton) {
         Vector2 jointPos;
         pSkeleton->ScreenPos((SkeletonJoint)i2, jointPos);
-        Vector3 jointV3 = pSkeleton->TrackedJoints()[i2].unk60;
+        Vector3 jointV3 = pSkeleton->TrackedJoints()[i2].mRawCameraPos;
         v.z = jointV3.z;
         v.x = jointPos.x;
         v.y = jointPos.y;
@@ -623,9 +623,8 @@ bool SkeletonChooser::IsBehindPlayer(int skelID, int refSkelID) {
     Skeleton *pRefSkeleton = TheGestureMgr->GetSkeletonByTrackingID(refSkelID);
     MILO_ASSERT(pRefSkeleton, 0x570);
     if (pSkeleton->IsTracked() && pRefSkeleton->IsTracked()) {
-        if (pSkeleton->TrackedJoints()[kJointSpine].mJointPos[kCoordCamera].z
-            > pRefSkeleton->TrackedJoints()[kJointSpine].mJointPos[kCoordCamera].z
-                + 0.3f) {
+        if (pSkeleton->TrackedJoints()[kJointSpine].mPos[kCoordCamera].z
+            > pRefSkeleton->TrackedJoints()[kJointSpine].mPos[kCoordCamera].z + 0.3f) {
             return true;
         }
     }
@@ -952,13 +951,13 @@ void SkeletonChooser::SetPlayerSkeletonNavData(int p1ID, int p2ID) {
         int side1 = 2;
         if (p1Skel) {
             if (p1side == kSkeletonRight) {
-                if (p1Skel->GetUnkab0().x < 0.15f) {
+                if (p1Skel->Center().x < 0.15f) {
                     side1 = 0;
                 } else {
                     side1 = 1;
                 }
             } else {
-                if (p1Skel->GetUnkab0().x > -0.15f) {
+                if (p1Skel->Center().x > -0.15f) {
                     side1 = 1;
                 } else {
                     side1 = 0;
@@ -970,13 +969,13 @@ void SkeletonChooser::SetPlayerSkeletonNavData(int p1ID, int p2ID) {
         int side2 = 2;
         if (p2Skel) {
             if (p2side == kSkeletonRight) {
-                if (p2Skel->GetUnkab0().x < -0.15f) {
+                if (p2Skel->Center().x < -0.15f) {
                     side2 = 0;
                 } else {
                     side2 = 1;
                 }
             } else {
-                if (0.15f < p2Skel->GetUnkab0().x) {
+                if (0.15f < p2Skel->Center().x) {
                     side2 = 1;
                 } else {
                     side2 = 0;
