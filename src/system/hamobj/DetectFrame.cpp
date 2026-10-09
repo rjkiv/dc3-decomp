@@ -17,22 +17,22 @@ void DetectFrame::Reset() {
 
 void DetectFrame::Reset(
     const FilterVersion *fv,
-    float secs,
-    const MoveFrame *mf,
-    const DancerFrame *df,
+    float seconds,
+    const MoveFrame *move_frame,
+    const DancerFrame *dancer_frame,
     MoveMirrored mirror
 ) {
     Reset();
-    mSeconds = secs;
-    mMoveFrame = mf;
-    mDancerFrame = df;
+    mSeconds = seconds;
+    mMoveFrame = move_frame;
+    mDancerFrame = dancer_frame;
     mMirrored = mirror;
     const ErrorNode *const *nodes = fv->mNodes;
     if (fv->mType == kFilterVersionHam1) {
         for (int i = 0; i < MoveFrame::kNumHam1Nodes; i++) {
             mNodeComponentWeights[i].y = 1;
             Vector3 v;
-            if (nodes[i]->XZErrorAxis(v, df->mSkeleton)) {
+            if (nodes[i]->XZErrorAxis(v, dancer_frame->mSkeleton)) {
                 XZErrorWeight(v, mNodeComponentWeights[i].x, mNodeComponentWeights[i].z);
             } else {
                 mNodeComponentWeights[i].x = mNodeComponentWeights[i].z = 1;
@@ -41,8 +41,8 @@ void DetectFrame::Reset(
     }
 }
 
-void DetectFrame::SetSecondsAndReset(float secs) {
-    mSeconds = secs;
+void DetectFrame::SetSecondsAndReset(float seconds) {
+    mSeconds = seconds;
     Reset();
 }
 
@@ -58,10 +58,12 @@ const Vector3 &DetectFrame::NodeComponentWeight(int node) const {
     return mNodeComponentWeights[node];
 }
 
-void DetectFrame::AddError(const Vector3 (&errors)[kMaxNumErrorNodes], float f) {
+void DetectFrame::AddError(
+    const Vector3 (&node_errors)[kMaxNumErrorNodes], float time_error
+) {
     for (int i = 0; i < kMaxNumErrorNodes; i++) {
         for (int j = 0; j < 3; j++) {
-            float sum = errors[i][j] + f;
+            float sum = node_errors[i][j] + time_error;
             if (sum < mBestNodeErrors[i][j]) {
                 mBestNodeErrors[i][j] = sum;
             }
@@ -84,7 +86,7 @@ float DetectFrame::Score(const FilterVersion *fv, MoveMode mode) const {
     }
 }
 
-float DetectFrame::LimbPSNR(const FilterVersion *filter_version, int i2) const {
+float DetectFrame::LimbPSNR(const FilterVersion *filter_version, int limb_flags) const {
     MILO_ASSERT(filter_version->mType == kFilterVersionHam2, 0x53);
     float f13 = 0;
     float f12 = 0;
@@ -92,7 +94,7 @@ float DetectFrame::LimbPSNR(const FilterVersion *filter_version, int i2) const {
     unsigned int mfFlags = mMoveFrame->Flags();
     for (int i = 0; i < numNodes; i++) {
         ErrorNode *curErrorNode = filter_version->mNodes[i];
-        if ((i2 == -1 || curErrorNode->GetFeedbackLimbs() & i2)
+        if ((limb_flags == -1 || curErrorNode->GetFeedbackLimbs() & limb_flags)
             && curErrorNode->Type() & mfFlags) {
             const Vector3 &nodeWeight = mMoveFrame->NodeWeight(i, mMirrored);
             float dot = Dot(nodeWeight, mBestNodeErrors[i]);
