@@ -298,21 +298,21 @@ void HDCache::OpenFiles(int numCachedArkfiles) {
 void HDCache::Init() {
     mLockCrit = new CriticalSection();
     if (TheArchive) {
-		
         // this option actually does nothing as Flush does nothing in this build
         if (OptionBool("no_hdcache", true)) {
             Flush();
         }
-		
+
         int numArkfiles = TheArchive->NumArkFiles();
         mReadArkFiles.resize(numArkfiles);
         mWriteArkFiles.resize(numArkfiles);
-		
+
         // this will always be null due to how mHdrFmt/mFileFmt are never set to anything?
         FileStream *header = OpenHeader();
-		
+
         // the header is only considered good if it's the expected size, it's v2,
-        // and it was written for the current archive, so if the ark guid changes the hdcache is invalidated
+        // and it was written for the current archive, so if the ark guid changes the
+        // hdcache is invalidated
         bool valid = header && header->Size() == HdrSize();
         if (valid) {
             header->EnableReadEncryption();
@@ -337,11 +337,13 @@ void HDCache::Init() {
         }
         // create  or open the cache file for each arkfile on the HDD
         OpenFiles(numCachedArkfiles);
-		
-        // one bitmap per ark and 1 bit per block, which becomes set if the block is cached
+
+        // one bitmap per ark and 1 bit per block, which becomes set if the block is
+        // cached
         mBlockState = new int *[numArkfiles];
-		
-        // hash of all the saved bitmaps which is checked against the one at the end of the header
+
+        // hash of all the saved bitmaps which is checked against the one at the end of
+        // the header
         CSHA1 dataSignature;
         int cacheBuf[1024];
         for (int i = 0; i < numArkfiles; i++) {
@@ -353,7 +355,7 @@ void HDCache::Init() {
                 } else {
                     header->Read(cacheBuf, cacheBytes);
                 }
-				
+
                 // any read failure invalidates it all
                 if (header->Fail() || !valid) {
                     cacheBytes = 0;
@@ -364,7 +366,7 @@ void HDCache::Init() {
                     dataSignature.Update((const unsigned char *)cacheBuf, cacheBytes);
                 }
             }
-			
+
             File *&readFile = mReadArkFiles[i];
             File *&writeFile = mWriteArkFiles[i];
             if (!readFile || readFile->Fail() || !writeFile || writeFile->Fail()) {
@@ -391,7 +393,7 @@ void HDCache::Init() {
             valid = !header->Fail()
                 && memcmp(dataSignatureStringA, dataSignatureStringB, 256) == 0;
         }
-		
+
         // does what it says on the tin
         if (OptionBool("skip_hdcache", false)) {
             valid = false;

@@ -14,9 +14,6 @@
 #include "utl/HxGuid.h"
 #include "utl/Str.h"
 
-DECLARE_MESSAGE(TmsDownloadedMsg, "tms_downloaded")
-END_MESSAGE
-
 DECLARE_MESSAGE(UserLoginMsg, "user_login")
 END_MESSAGE
 

@@ -10,24 +10,23 @@ SuperFormatString::SuperFormatString(
     const char *fmt, const DataArray *dict, bool tokens_only, Locale &locale, Symbol lang
 )
     : mTokensOnly(tokens_only), mNeedsDoublePercentCollapse(false) {
-		
     // there is nothing to actually fill, so it's just becomes a regular FormatString
     if (!dict && !tokens_only) {
         InitializeWithFmt(fmt, true);
         return;
     }
-	
+
     char tempFmt[BUF_SIZE];
     char *tempFmtPos = tempFmt;
     char phInfo[64];
     char *phInfoPos = phInfo;
     char param[8];
     char *paramPos = param;
-	
+
     // used to tell whether the string has %% but no actual printf args
     bool hasPrintfArg = false;
     bool atDoublePercent = false;
-	
+
     enum {
         kString,
         kInt,
@@ -42,7 +41,7 @@ SuperFormatString::SuperFormatString(
         kParam,
         kName
     } state = kInit;
-	
+
     for (const char *i = fmt; *i != '\0'; i++) {
         switch (state) {
         case kInit:
@@ -102,7 +101,8 @@ SuperFormatString::SuperFormatString(
             }
             break;
         case kParam:
-            // reading the param (seesm to be int, float, and ordinal only) up to the next :
+            // reading the param (seesm to be int, float, and ordinal only) up to the next
+            // :
             if (*i == ':') {
                 if (phType == kFloat) {
                     *paramPos++ = 'f';
@@ -122,7 +122,8 @@ SuperFormatString::SuperFormatString(
             }
             break;
         case kName:
-            // reading the name up to the closing }, and then we can fill in the placeholder
+            // reading the name up to the closing }, and then we can fill in the
+            // placeholder
             if (*i == '}') {
                 MILO_ASSERT(phInfoPos - phInfo < 64, 0xa3);
                 *phInfoPos = '\0';
@@ -257,7 +258,7 @@ SuperFormatString::SuperFormatString(
     }
     *tempFmtPos = '\0';
     MILO_ASSERT(tempFmtPos - tempFmt < BUF_SIZE, 0x10b);
-	
+
     // tokens_only skips the printf parsing, since the result won't have args fed into it
     InitializeWithFmt(tempFmt, !tokens_only);
 }

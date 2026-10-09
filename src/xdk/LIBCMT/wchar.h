@@ -67,6 +67,9 @@ int swprintf(wchar_t *buffer, size_t bufsz, const wchar_t *format, ...);
 int vwprintf(const wchar_t *format, va_list vlist);
 int vfwprintf(FILE *stream, const wchar_t *format, va_list vlist);
 int vswprintf(wchar_t *buffer, size_t bufsz, const wchar_t *format, va_list vlist);
+int vswprintf_s(
+    wchar_t *buffer, size_t numberOfElements, const wchar_t *format, va_list argptr
+);
 
 int wscanf(const wchar_t *format, ...);
 int fwscanf(FILE *stream, const wchar_t *format, ...);
@@ -114,5 +117,16 @@ size_t wcsrtombs(char * dst, const wchar_t ** src, size_t len, struct mbstate_t 
 /* clang-format on */
 
 #ifdef __cplusplus
+}
+#endif
+
+#ifdef __cplusplus
+extern "C++" {
+template <size_t size>
+int swprintf_s(wchar_t (&buffer)[size], const wchar_t *format, ...) {
+    va_list args;
+    va_start(args, format);
+    return vswprintf_s(buffer, size, format, args);
+}
 }
 #endif
