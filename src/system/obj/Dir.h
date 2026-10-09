@@ -26,6 +26,7 @@ public:
     ObjDirPtr() : ObjRefConcrete(nullptr), mLoader(nullptr) {}
     ObjDirPtr(C *c) : ObjRefConcrete(c), mLoader(nullptr) {}
     ObjDirPtr(const ObjDirPtr &o) : ObjRefConcrete<C>(o.mObject), mLoader(nullptr) {}
+    // ObjDirPtr(const FilePath&);
     virtual ~ObjDirPtr() { *this = nullptr; }
     virtual bool IsDirPtr() { return true; }
     virtual void Replace(Hmx::Object *o) {
@@ -33,12 +34,13 @@ public:
         *this = o ? dynamic_cast<C *>(o) : nullptr;
     }
 
+    // int operator==(const ObjDirPtr&) const;
+    // int operator!=(const ObjDirPtr&) const;
+    // void WipeWithoutDeleting();
+
     bool IsLoaded() const;
 
-    ObjDirPtr &operator=(const ObjDirPtr &oPtr) {
-        *this = (C *)oPtr;
-        return *this;
-    }
+    void operator=(const ObjDirPtr &oPtr) { *this = (C *)oPtr; }
 
     ObjDirPtr &operator=(C *dir) {
         if (mLoader && mLoader->IsLoaded())
@@ -58,8 +60,8 @@ public:
         return *this;
     }
 
+    const class DirLoader *GetDirLoader() const { return mLoader; }
     operator C *() const { return mObject; }
-    C *Ptr() const { return mObject; }
     C *operator->() const {
         MILO_ASSERT(ObjRefConcrete<C>::mObject, 0x5F);
         return mObject;
@@ -73,7 +75,7 @@ public:
         }
     }
 
-    void LoadFile(const FilePath &p, bool async, bool share, LoaderPos pos, bool b3) {
+    void LoadFile(const FilePath &p, bool async, bool share, LoaderPos pos, bool subdir) {
         *this = nullptr;
         DirLoader *d = nullptr;
         if (share) {
@@ -89,7 +91,7 @@ public:
                 pos = kLoadFrontStayBack;
             }
             if (!p.empty())
-                d = new DirLoader(p, pos, nullptr, nullptr, nullptr, b3, nullptr);
+                d = new DirLoader(p, pos, nullptr, nullptr, nullptr, subdir, nullptr);
         }
         mLoader = d;
         if (d) {
@@ -178,6 +180,7 @@ public:
         Entry() : name(0), obj(0) {}
         bool operator==(const Entry &e) const { return name == e.name; }
         bool operator!=(const Entry &e) const { return name != e.name; }
+        // TODO: remove this, the pdb doesn't have it
         operator const char *() const { return name; }
 
         const char *name;
@@ -186,9 +189,9 @@ public:
 
 private:
     struct InlinedDir {
-        ObjDirPtr<ObjectDir> dir; // 0x0
-        FilePath file; // 0x14
-        bool shared; // 0x1c
+        ObjDirPtr<ObjectDir> mDir; // 0x0
+        FilePath mPath; // 0x14
+        bool mShare; // 0x1c
         InlineDirType mType; // 0x20
     };
 
@@ -226,8 +229,8 @@ private:
     ViewportId mCurViewport; // 0x88
     Hmx::Object *mCurAnim; // 0x8c
     Hmx::Object *mCurCam; // 0x90
-    int mAlwaysInlined; // 0x94 / -0xC
-    const char *mAlwaysInlineHash; // 0x98
+    int mAlwaysInlineVer; // 0x94 / -0xC
+    char *mAlwaysInlineHash; // 0x98
 
 public:
     // Hmx::Object
@@ -286,10 +289,10 @@ public:
     void SetLoader(DirLoader *dl) { mLoader = dl; }
     DirLoader *Loader() const { return mLoader; }
     bool IsProxy() const { return this != Dir(); }
-    int HashTableSize() const { return mHashTable.Size(); }
-    int StrTableSize() const { return mStringTable.Size(); }
-    int HashTableUsedSize() const { return mHashTable.UsedSize(); }
-    int StrTableUsedSize() const { return mStringTable.UsedSize(); }
+    int HashSize() const { return mHashTable.Size(); }
+    int StringSize() const { return mStringTable.Size(); }
+    int HashUsed() const { return mHashTable.UsedSize(); }
+    int StringUsed() const { return mStringTable.UsedSize(); }
     KeylessHash<const char *, Entry> &HashTable() { return mHashTable; }
     const char *GetPathName() const { return mPathName; }
     const std::vector<ObjDirPtr<ObjectDir> > &SubDirs() const { return mSubDirs; }
@@ -401,15 +404,15 @@ template <class T>
 class ObjDirItr {
 private:
     void Advance() {
-        for (; mEntry != nullptr; mEntry = mSubDirs.front()->HashTable().Next(mEntry)) {
+        for (; mEntry != nullptr; mEntry = mDirs.front()->HashTable().Next(mEntry)) {
             mObj = dynamic_cast<T *>(mEntry->obj);
             if (mObj)
                 return;
         }
-        if (mSubDirs.size() != 0) {
-            mSubDirs.pop_front();
-            if (mSubDirs.size() != 0) {
-                mEntry = mSubDirs.front()->HashTable().Begin();
+        if (mDirs.size() != 0) {
+            mDirs.pop_front();
+            if (mDirs.size() != 0) {
+                mEntry = mDirs.front()->HashTable().Begin();
                 Advance();
                 return;
             }
@@ -417,8 +420,8 @@ private:
         mObj = nullptr;
     }
     void RecurseSubdirs(ObjectDir *dir) {
-        if (dir && std::find(mSubDirs.begin(), mSubDirs.end(), dir) == mSubDirs.end()) {
-            mSubDirs.push_back(dir);
+        if (dir && std::find(mDirs.begin(), mDirs.end(), dir) == mDirs.end()) {
+            mDirs.push_back(dir);
             for (int i = 0; i < dir->SubDirs().size(); i++) {
                 RecurseSubdirs(dir->SubDirs()[i]);
             }
@@ -430,7 +433,7 @@ private:
     /** The current object in the iterator. */
     T *mObj; // 0x4
     /** All the subdirs we need to iterate through. */
-    std::list<ObjectDir *> mSubDirs; // 0x8
+    std::list<ObjectDir *> mDirs; // 0x8
 
 public:
     /** Create an ObjDirItr (ObjectDir iterator).
@@ -442,9 +445,9 @@ public:
             if (recurse) {
                 RecurseSubdirs(dir);
             } else {
-                mSubDirs.push_back(dir);
+                mDirs.push_back(dir);
             }
-            mEntry = mSubDirs.front()->HashTable().Begin();
+            mEntry = mDirs.front()->HashTable().Begin();
             Advance();
         } else {
             mObj = nullptr;
@@ -453,7 +456,7 @@ public:
     }
     ObjDirItr &operator++() {
         if (mEntry) {
-            mEntry = mSubDirs.front()->HashTable().Next(mEntry);
+            mEntry = mDirs.front()->HashTable().Next(mEntry);
             Advance();
         }
         return *this;

@@ -22,7 +22,7 @@ DirUnloader::~DirUnloader() { MILO_ASSERT(mObjects.empty(), 0x20); }
 
 DirUnloader::DirUnloader(ObjectDir *dir)
     : Loader(dir->GetPathName(), kLoadFront), mObjects() {
-    mObjects.reserve(dir->HashTableSize() / 2);
+    mObjects.reserve(dir->HashSize() / 2);
     for (ObjDirItr<Hmx::Object> it(dir, false); it != 0; ++it) {
         Hmx::Object *cur = it;
         if (cur != dir) {

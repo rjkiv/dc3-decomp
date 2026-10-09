@@ -160,9 +160,9 @@ void HamCharacter::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(3, 0)
     Character::PreLoad(d.stream);
-    int hash = HashTableUsedSize();
+    int hash = HashUsed();
     // these are oddly specific numbers
-    Reserve((hash + 20) * 2, StrTableUsedSize() + 440);
+    Reserve((hash + 20) * 2, StringUsed() + 440);
     d.PushRev(this);
 }
 
@@ -621,8 +621,7 @@ int HamCharacter::SongAnimation() {
 }
 
 bool HamCharacter::GetPropShowing(int prop) {
-    return mProps.size() > prop && mProps[prop]
-        && mProps[prop]->Showing();
+    return mProps.size() > prop && mProps[prop] && mProps[prop]->Showing();
 }
 
 void HamCharacter::SetPropShowing(int prop, bool show) {

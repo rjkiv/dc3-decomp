@@ -98,19 +98,19 @@ ObjectDir *OfflineCallback::SongMainDir() {
 }
 
 HamDirector::HamDirector()
-    : mMasterClipAnim(this), mRoutineBuilderAnim0(this),
-      mRoutineBuilderAnim1(this), mFaceWeight(0), mFaceViseme(""), mBackupDrift(1),
-      mMerger(this), mMoveMerger(this), mGameModeMerger(this), mVenue(this), mSongCollision(this),
-      mPickNewShot(0), mSyncScene(0), mWorldPostProc(this), mCamPostProc(this),
-      mForcePostProc(this), unk18c(this), mForcePostProcBlend(0),
-      mForcePostProcBlendRate(1), mPostProcA(this), mPostProcB(this), mPostProcBlend(0), mVizNumSec(0),
-      mPrevForcePostProc(this), mVizStartPostProc(this), mFreestyleEnabled(1), mPlayer0(this),
-      mPlayer1(this), mBackup0(this), mBackup1(this), mBackupsHidden(0), mDisabled(0),
-      mAsync(0), mCurShot(this), mNextShot(this), mIntroShot(this), mNextShotSec(-kHugeFloat),
+    : mMasterClipAnim(this), mRoutineBuilderAnim0(this), mRoutineBuilderAnim1(this),
+      mFaceWeight(0), mFaceViseme(""), mBackupDrift(1), mMerger(this), mMoveMerger(this),
+      mGameModeMerger(this), mVenue(this), mSongCollision(this), mPickNewShot(0),
+      mSyncScene(0), mWorldPostProc(this), mCamPostProc(this), mForcePostProc(this),
+      unk18c(this), mForcePostProcBlend(0), mForcePostProcBlendRate(1), mPostProcA(this),
+      mPostProcB(this), mPostProcBlend(0), mVizNumSec(0), mPrevForcePostProc(this),
+      mVizStartPostProc(this), mFreestyleEnabled(1), mPlayer0(this), mPlayer1(this),
+      mBackup0(this), mBackup1(this), mBackupsHidden(0), mDisabled(0), mAsync(0),
+      mCurShot(this), mNextShot(this), mIntroShot(this), mNextShotSec(-kHugeFloat),
       mDisablePicking(0), unk2a1(0), unk2a4(0), unk2a8(-kHugeFloat), unk2ac(1),
-      mPlayerFreestyle(0), mPausePlayerFreestyle(0), mVisualizer(this),
-      mPracticeStart(0), mPracticeEnd(0), mStartLoopMargin(1), mEndLoopMargin(1),
-      mBlendDebug(0), mBackupDancers((HamBackupDancers)0), mSongClips(this), mMovesDir(this),
+      mPlayerFreestyle(0), mPausePlayerFreestyle(0), mVisualizer(this), mPracticeStart(0),
+      mPracticeEnd(0), mStartLoopMargin(1), mEndLoopMargin(1), mBlendDebug(0),
+      mBackupDancers((HamBackupDancers)0), mSongClips(this), mMovesDir(this),
       mNoTransitions(0), mCollisionChecks(1), mLoadedNewSong(1), mPoseFatalities(0),
       unk33c(RandomInt(0, 2)), unk33d(0), mIconManChar(this), mIconManTex(this),
       unk369(0), mOfflineSong(0) {
@@ -525,8 +525,7 @@ RndPropAnim *HamDirector::SongAnim(int playerIndex) {
     } else {
         MILO_ASSERT((0) <= (playerIndex) && (playerIndex) < (2), 0x620);
         if (TheHamProvider->Property("merge_moves", true)->Int()) {
-            return playerIndex == 0 ? mRoutineBuilderAnim0
-                                    : mRoutineBuilderAnim1;
+            return playerIndex == 0 ? mRoutineBuilderAnim0 : mRoutineBuilderAnim1;
         } else {
             HamPlayerData *hpd = TheGameData->Player(playerIndex);
             return SongAnimByDifficulty(LegacyDifficulty(hpd->GetDifficulty()));
@@ -2106,8 +2105,8 @@ void HamDirector::LoadRoutineBuilderData(
             MILO_NOTIFY("Move data missing from %s", TheGameData->GetSong());
         } else {
             ObjectDir *movesDir = GetWorld()->Find<ObjectDir>("moves");
-            int movesDirHash = moveMgrDir->HashTableSize() + movesDir->HashTableSize();
-            int movesDirStr = movesDir->StrTableSize() + moveMgrDir->StrTableSize();
+            int movesDirHash = moveMgrDir->HashSize() + movesDir->HashSize();
+            int movesDirStr = movesDir->StringSize() + moveMgrDir->StringSize();
             movesDir->Reserve(movesDirHash, movesDirStr);
             std::vector<Hmx::Object *> objects;
             objects.reserve(0x80);
@@ -2124,8 +2123,8 @@ void HamDirector::LoadRoutineBuilderData(
             }
             objects.clear();
             ObjectDir *clipsDir = GetWorld()->Find<ObjectDir>("clips");
-            int clipsDirHash = clipsDir->HashTableSize() + moveMgrDir->HashTableSize();
-            int clipsDirStr = clipsDir->StrTableSize() + moveMgrDir->StrTableSize();
+            int clipsDirHash = clipsDir->HashSize() + moveMgrDir->HashSize();
+            int clipsDirStr = clipsDir->StringSize() + moveMgrDir->StringSize();
             clipsDir->Reserve(clipsDirHash, clipsDirStr);
             for (ObjDirItr<CharClip> it(moveMgrDir, false); it != nullptr; ++it) {
                 objects.push_back(it);
@@ -2585,10 +2584,13 @@ void HamDirector::ChangeNextShotIfCharacterCollisionLikely() {
                 index++;
             }
 
-            if (mSongCollision->IsCollision(beat, secondsToBeat, difficulties, transforms, 0)) {
+            if (mSongCollision->IsCollision(
+                    beat, secondsToBeat, difficulties, transforms, 0
+                )) {
                 static Symbol Area1_WIDE("Area1_WIDE");
                 static Symbol Area2_WIDE("Area2_WIDE");
-                mShotCategory = (strncmp(category, "Area1", 5) == 0) ? Area1_WIDE : Area2_WIDE;
+                mShotCategory =
+                    (strncmp(category, "Area1", 5) == 0) ? Area1_WIDE : Area2_WIDE;
                 FindNextShot();
             }
         }
@@ -2626,7 +2628,10 @@ void HamDirector::Poll() {
                         if (!getPracFrames) {
                             if (clipPlayer1.Init(1)) {
                                 clipPlayer1.PlayAnims(
-                                    character1, songAnim->GetFrame(), mLastFrame, mBlendDebug
+                                    character1,
+                                    songAnim->GetFrame(),
+                                    mLastFrame,
+                                    mBlendDebug
                                 );
                             }
                         }

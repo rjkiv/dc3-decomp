@@ -169,8 +169,8 @@ void WorldInstance::Enter() {
 
 void WorldInstance::SavePersistentObjects(BinStream &bs) {
     if (IsProxy()) {
-        int hashSize = HashTableUsedSize();
-        int strSize = StrTableUsedSize();
+        int hashSize = HashUsed();
+        int strSize = StringUsed();
         DeleteTransientObjects();
         for (ObjDirItr<Hmx::Object> i(this, false); i != nullptr; ++i) {
             if (i != this) {
@@ -355,7 +355,7 @@ void WorldInstance::SyncDir() {
                 refs.ReplaceList(p->to);
             }
 
-            Reserve(mDir->HashTableSize(), mDir->StrTableSize());
+            Reserve(mDir->HashSize(), mDir->StringSize());
 
             FOREACH (p, objPairs) {
                 if (p->to != this) {
