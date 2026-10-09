@@ -27,7 +27,7 @@ void NetStream::ReadImpl(void *data, int bytes) {
     Timer t;
     t.Start();
     while (bytes > 0) {
-        int sentBytes = mSocket->Recv(bytes, data);
+        int sentBytes = mSocket->Recv(data, bytes);
         if (mSocket->Fail() || (mReadTimeoutMs && t.SplitMs() > mReadTimeoutMs)) {
             mFail = true;
             break;
