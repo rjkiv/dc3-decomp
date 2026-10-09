@@ -307,7 +307,7 @@ int Challenges::GetTotalXpEarned(int player) {
     // std::vector<ChallengeRow> &playerChallenges = mPlayerChallenges[player];
     int xp = 0;
     for (int i = 0; i < mPlayerChallenges[player].size(); i++) {
-        if (playerScore > mPlayerChallenges[player][i].score) {
+        if (playerScore > (int)mPlayerChallenges[player][i].score) {
             xp += CalculateChallengeXp(
                 mPlayerChallenges[player][i].score, mPlayerChallenges[player][i].diff
             );
@@ -699,7 +699,7 @@ void Challenges::SetupInGameChallenges(
     if (it != mProfileChallenges.end()) {
         const std::vector<ChallengeRow> &vec = it->second;
         for (int i = 0; i < vec.size(); i++) {
-            if (vec[i].songId == i1) {
+            if ((int)vec[i].songId == i1) {
                 challengeRows.push_back(vec[i]);
             }
         }
@@ -710,7 +710,7 @@ void Challenges::SetupInGameChallenges(
     }
 
     for (int i = 0; i < mOfficialChallenges.size(); i++) {
-        if (mOfficialChallenges[i].songId == i1) {
+        if ((int)mOfficialChallenges[i].songId == i1) {
             challengeRows.push_back(mOfficialChallenges[i]);
         }
     }
@@ -740,7 +740,7 @@ void Challenges::SetupInGameChallenges(
     provider->SetProperty(is_challenging_self, false);
 
     for (int i = 0; i < challengeRows.size(); i++) {
-        if (challengeRows[i].songId == i1 && challengeRows[i].score == i2
+        if ((int)challengeRows[i].songId == i1 && (int)challengeRows[i].score == i2
             && challengeRows[i].challengerUsername == c) {
             if (profileName == c) {
                 provider->SetProperty(is_challenging_self, true);

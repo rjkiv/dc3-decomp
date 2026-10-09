@@ -45,37 +45,37 @@ void ChallengeResultPanel::Text(int, int data, UIListLabel *slot, UILabel *label
     } else {
         String curGamerTag = mItems[data].challengerUsername;
         if (slot->Matches("white_small_gamertag")) {
-            if (unk5c <= mItems[data].score && data != unk60 && data != unk6c) {
+            if (unk5c <= (int)mItems[data].score && data != unk60 && data != unk6c) {
                 label->SetPrelocalizedString(curGamerTag);
             } else {
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("grey_small_gamertag")) {
-            if (unk5c > mItems[data].score && data != unk60) {
+            if (unk5c > (int)mItems[data].score && data != unk60) {
                 label->SetPrelocalizedString(curGamerTag);
             } else {
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("white_large_gamertag")) {
-            if (unk5c <= mItems[data].score && data == unk60) {
+            if (unk5c <= (int)mItems[data].score && data == unk60) {
                 label->SetPrelocalizedString(curGamerTag);
             } else {
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("grey_large_gamertag")) {
-            if (unk5c > mItems[data].score && data == unk60) {
+            if (unk5c > (int)mItems[data].score && data == unk60) {
                 label->SetPrelocalizedString(curGamerTag);
             } else {
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("gold_large_gamertag")) {
-            if (unk5c == mItems[data].score && data == unk6c) {
+            if (unk5c == (int)mItems[data].score && data == unk6c) {
                 label->SetPrelocalizedString(curGamerTag);
             } else {
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("white_small_score")) {
-            if (unk5c <= mItems[data].score && data != unk60 && data != unk6c) {
+            if (unk5c <= (int)mItems[data].score && data != unk60 && data != unk6c) {
                 app_label->SetTokenFmt(
                     best_score, LocalizeSeparatedInt(mItems[data].score, TheLocale)
                 );
@@ -83,7 +83,7 @@ void ChallengeResultPanel::Text(int, int data, UIListLabel *slot, UILabel *label
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("grey_small_score")) {
-            if (unk5c > mItems[data].score && data != unk60) {
+            if (unk5c > (int)mItems[data].score && data != unk60) {
                 app_label->SetTokenFmt(
                     best_score, LocalizeSeparatedInt(mItems[data].score, TheLocale)
                 );
@@ -91,7 +91,7 @@ void ChallengeResultPanel::Text(int, int data, UIListLabel *slot, UILabel *label
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("white_large_score")) {
-            if (unk5c <= mItems[data].score && data == unk60) {
+            if (unk5c <= (int)mItems[data].score && data == unk60) {
                 app_label->SetTokenFmt(
                     best_score, LocalizeSeparatedInt(mItems[data].score, TheLocale)
                 );
@@ -99,7 +99,7 @@ void ChallengeResultPanel::Text(int, int data, UIListLabel *slot, UILabel *label
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("grey_large_score")) {
-            if (unk5c > mItems[data].score && data == unk60) {
+            if (unk5c > (int)mItems[data].score && data == unk60) {
                 app_label->SetTokenFmt(
                     best_score, LocalizeSeparatedInt(mItems[data].score, TheLocale)
                 );
@@ -107,7 +107,7 @@ void ChallengeResultPanel::Text(int, int data, UIListLabel *slot, UILabel *label
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("gold_large_score")) {
-            if (unk5c == mItems[data].score && data == unk6c) {
+            if (unk5c == (int)mItems[data].score && data == unk6c) {
                 app_label->SetTokenFmt(
                     best_score, LocalizeSeparatedInt(mItems[data].score, TheLocale)
                 );
@@ -209,7 +209,7 @@ void ChallengeResultPanel::UpdateList(int player) {
     auto &challenges = TheChallenges->GetPlayerChallenges(player);
     int numPlayerChallenges = challenges.size();
     for (int i = 0; i < numPlayerChallenges; i++) {
-        if (unk5c <= challenges[i].score && !b3) {
+        if (unk5c <= (int)challenges[i].score && !b3) {
             b3 = true;
             unk6c = mItems.size();
             mItems.push_back(row);
@@ -223,7 +223,7 @@ void ChallengeResultPanel::UpdateList(int player) {
     int i8 = 0;
     int d20;
     for (int i = numDisplay; i < mItems.size(); i++) {
-        if (unk5c > mItems[i].score) {
+        if (unk5c > (int)mItems[i].score) {
             if (i < unk60) {
                 d15 +=
                     TheChallenges->CalculateChallengeXp(mItems[i].score, mItems[i].diff);

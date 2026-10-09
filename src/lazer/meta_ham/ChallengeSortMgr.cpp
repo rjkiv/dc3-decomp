@@ -91,7 +91,7 @@ int ChallengeSortMgr::GetPotentialChallengeExp(int i1) {
 
 int ChallengeSortMgr::GetOwnerChallengeScore(int songID) {
     for (int i = 0; i < mChallengeRecords.size(); i++) {
-        if (songID == mChallengeRecords[i].GetChallengeRow().songId
+        if (songID == (int)mChallengeRecords[i].GetChallengeRow().songId
             && mChallengeRecords[i].GetUnk48() == mChallengeRecords[i].GetUnk4c()) {
             return mChallengeRecords[i].GetChallengeRow().score;
         }
@@ -132,7 +132,7 @@ Symbol ChallengeSortMgr::GetSongShortName(int songID) {
 
 int ChallengeSortMgr::GetOwnerChallengeTimeStamp(int i1) {
     for (int i = 0; i < mChallengeRecords.size(); i++) {
-        if (i1 == mChallengeRecords[i].GetChallengeRow().songId
+        if (i1 == (int)mChallengeRecords[i].GetChallengeRow().songId
             && mChallengeRecords[i].GetUnk48() == mChallengeRecords[i].GetUnk4c()) {
             return mChallengeRecords[i].GetChallengeRow().dateTime;
         }
@@ -159,7 +159,7 @@ int ChallengeSortMgr::GetBestChallengeScore(int songID) {
     int currentHighest = 0;
     for (int i = 0; i < mChallengeRecords.size(); i++) {
         int score = mChallengeRecords[i].GetChallengeRow().score;
-        if (songID == mChallengeRecords[i].GetChallengeRow().songId
+        if (songID == (int)mChallengeRecords[i].GetChallengeRow().songId
             && currentHighest < score) {
             currentHighest = score;
         }
@@ -259,7 +259,7 @@ int ChallengeSortMgr::GetChallengerXp(int val) {
         int xp = 0;
         for (int i = 0; i < mChallengeRecords.size(); i++) {
             int score = mChallengeRecords[i].GetChallengeRow().score;
-            if (songID == mChallengeRecords[i].GetChallengeRow().songId
+            if (songID == (int)mChallengeRecords[i].GetChallengeRow().songId
                 && highScore < score) {
                 xp = mChallengeRecords[i].GetChallengeRow().xp;
                 highScore = score;
@@ -278,7 +278,8 @@ char const *ChallengeSortMgr::GetBestChallengeScoreGamertag(int id) {
     int idx = -1;
     for (int i = 0; i < mChallengeRecords.size(); i++) {
         int score = mChallengeRecords[i].GetChallengeRow().score;
-        if (id == mChallengeRecords[i].GetChallengeRow().songId && highScore < score) {
+        if (id == (int)mChallengeRecords[i].GetChallengeRow().songId
+            && highScore < score) {
             highScore = score;
             idx = i;
         }

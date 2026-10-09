@@ -287,7 +287,7 @@ void HamStoreProvider::PopulateOffersInCart() {
             if ((offer->IsAvailable() || IsDebug())) {
                 static Symbol song("song");
                 if (offer->OfferType() == song
-                    && offer->GetSingleSongID() == row.songId) {
+                    && offer->GetSingleSongID() == (int)row.songId) {
                     if (offer->IsPurchased()) {
                         storePanel->RemoveDLCFromCart(offer->GetSingleSongID());
                     } else {

@@ -199,7 +199,7 @@ int ChallengeHeaderNode::GetTotalEarnedExp(int score) {
     FOREACH (it, mChildren) {
         ChallengeSortNode *node = static_cast<ChallengeSortNode *>(*it);
         MILO_ASSERT(node, 0xf5);
-        if (score >= node->GetChallengeRecord()->GetChallengeRow().score) {
+        if (score >= (int)node->GetChallengeRecord()->GetChallengeRow().score) {
             xp += TheChallenges->CalculateChallengeXp(
                 node->GetChallengeScore(), node->GetDifficulty()
             );

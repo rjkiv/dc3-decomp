@@ -663,14 +663,14 @@ bool Game::IsLoaded() {
             }
             mLoadState = kWaitingForMoveGraph;
         }
-        if (mLoadState = kWaitingForMoveGraph) {
+        if (mLoadState == kWaitingForMoveGraph) {
             if (mUsingMoveGraph && !TheHamDirector->IsMoveMergerFinished()) {
                 return false;
             }
             MILO_LOG("Game::IsLoaded() - Done waiting for MoveGraph\n");
             mLoadState = kWaitingForAudio;
         }
-        if (mLoadState = kWaitingForAudio) {
+        if (mLoadState == kWaitingForAudio) {
             if (mMaster->GetAudio()->Fail()) {
                 return true;
             }
