@@ -330,7 +330,7 @@
             "system/hamobj/ErrorNode.cpp": "NonMatching",
             "system/hamobj/FilterQueue.cpp": "NonMatching",
             "system/hamobj/FilterVersion.cpp": "Matching",
-            "system/hamobj/FreestyleMove.cpp": "NonMatching",
+            "system/hamobj/FreestyleMove.cpp": "Matching",
             "system/hamobj/FreestyleMoveRecorder.cpp": "NonMatching",
             "system/hamobj/Ham.cpp": "Matching",
             "system/hamobj/HamAudio.cpp": "NonMatching",

@@ -50,7 +50,7 @@ void FreestyleMove::CalcCentering(int i1) {
 
     for (int i = 0; i < 80; i++) {
         for (int j = 0; j < 60; j++) {
-            unsigned char b = whichFrame->mPixels[i + j];
+            unsigned char b = whichFrame->mPixels[i + j * 80];
             if (b) {
                 i10++;
                 i170[i]++;
