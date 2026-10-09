@@ -2,6 +2,7 @@
 #include "math/Mtx.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "rnddx9/Tex.h"
 #include "rndobj/Cam.h"
 #include "rndobj/Tex.h"
 #include "utl/MemMgr.h"
@@ -14,18 +15,19 @@ public:
     class SpotlightResources {
     public:
         SpotlightResources()
-            : unk4(0), unk8(0), mDensityMap(0), unk10(0), unk14(0), unk18(0) {}
+            : mDepthTex(0), mDepthRT(0), mDensityMap(0), mBlack(0), mWhite(0),
+              mFarDepth(0) {}
         virtual ~SpotlightResources() {}
         void Clear();
 
         MEM_OVERLOAD(SpotlightResources, 0x3B);
 
-        D3DResource *unk4;
-        RndTex *unk8;
-        RndTex *mDensityMap;
-        RndTex *unk10;
-        RndTex *unk14;
-        RndTex *unk18;
+        D3DTexture *mDepthTex; // 0x4
+        DxTex *mDepthRT; // 0x8
+        RndTex *mDensityMap; // 0xC
+        RndTex *mBlack; // 0x10
+        RndTex *mWhite; // 0x14
+        RndTex *mFarDepth; // 0x18
     };
 
     NgSpotlightDrawer();
@@ -81,8 +83,8 @@ protected:
     void BlurRT();
     void SetupForPostProcess();
 
-    RndCam *unk94; // 0x94
-    ObjPtr<RndCam> unk98; // 0x98
+    RndCam *mCam; // 0x94
+    ObjPtr<RndCam> mHoldCam; // 0x98
     RndTex *mFogDensityMap; // 0xac
-    bool unkb0; // 0xb0
+    bool mDbgDrawEnable; // 0xb0
 };
