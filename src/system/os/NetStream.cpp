@@ -27,14 +27,14 @@ void NetStream::ReadImpl(void *data, int bytes) {
     Timer t;
     t.Start();
     while (bytes > 0) {
-        int bytes = mSocket->Recv(data, bytes);
+        int sentBytes = mSocket->Recv(bytes, data);
         if (mSocket->Fail() || (mReadTimeoutMs && t.SplitMs() > mReadTimeoutMs)) {
             mFail = true;
             break;
         }
 
-        data = (void *)((uint)data + bytes);
-        bytes -= bytes;
+        data = (void *)((uint)data + sentBytes);
+        bytes -= sentBytes;
     }
     if (!mFail) {
         mBytesRead += orig_i;
@@ -48,14 +48,14 @@ void NetStream::WriteImpl(const void *data, int bytes) {
     Timer t;
     t.Start();
     while (bytes > 0) {
-        int bytes = mSocket->Send(data, bytes);
+        int sentBytes = mSocket->Send(data, bytes);
         if (mSocket->Fail() || (mReadTimeoutMs && t.SplitMs() > mReadTimeoutMs)) {
             mFail = true;
             break;
         }
 
-        data = (void *)((uint)data + bytes);
-        bytes -= bytes;
+        data = (void *)((uint)data + sentBytes);
+        bytes -= sentBytes;
     }
     if (!mFail) {
         mBytesWritten += orig_i;
