@@ -181,10 +181,10 @@ void ClipPlayer::GetRoutineCrossoverClips(
             TheMoveMgr->GetRoutineMeasure(unk14, Round(f1 / 4.0f));
         if (moveVars) {
             if (moveVars->first) {
-                *c1 = mClipDir->Find<CharClip>(moveVars->first->Name().Str(), false);
+                *c1 = mClipDir->Find<CharClip>(moveVars->first->GetName().Str(), false);
             }
             if (moveVars->second) {
-                *c2 = mClipDir->Find<CharClip>(moveVars->second->Name().Str(), false);
+                *c2 = mClipDir->Find<CharClip>(moveVars->second->GetName().Str(), false);
             }
         }
     }

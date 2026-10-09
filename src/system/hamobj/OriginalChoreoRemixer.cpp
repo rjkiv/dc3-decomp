@@ -118,9 +118,9 @@ void OriginalChoreoRemixer::SelectMove(int player, int measure) {
 }
 
 void OriginalChoreoRemixer::Init() {
-    if (TheMoveMgr->mWholeMoveGraph.MoveParents().size() == 0) {
+    if (TheMoveMgr->mWholeMoveGraph.mNodes.size() == 0) {
         TheMoveMgr->InitSong();
-        if (TheMoveMgr->mWholeMoveGraph.MoveParents().size() == 0) {
+        if (TheMoveMgr->mWholeMoveGraph.mNodes.size() == 0) {
             MILO_FAIL("Failed to load move graph for: %s\n", TheGameData->GetSong());
         }
     }
@@ -149,7 +149,7 @@ OriginalChoreoRemixer::GetMoveVariantsByDifficulty(int aDiff) {
 
 void OriginalChoreoRemixer::SaveOriginalMoveParents() {
     unk104 = unk108 = -1;
-    DataArray *layout = TheMoveMgr->mWholeMoveGraph.Layout();
+    DataArray *layout = TheMoveMgr->mWholeMoveGraph.mLayoutData;
     Symbol song = TheGameData->GetSong();
     if (!layout) {
         MILO_FAIL("couldn't load layout for: %s\n", song.Str());
@@ -173,7 +173,7 @@ void OriginalChoreoRemixer::SaveOriginalMoveParents() {
             Symbol varName = a->Sym(j);
             const MoveVariant *variant =
                 TheMoveMgr->mWholeMoveGraph.FindMoveByVariantName(varName);
-            const MoveParent *parent = variant ? variant->Parent() : nullptr;
+            const MoveParent *parent = variant ? variant->GetParent() : nullptr;
             MILO_ASSERT((variant==NULL) == (parent==NULL), 0xD4);
             mMoveVariantsByDiff[i].push_back(variant);
             mMoveParentsByDiff[i].push_back(parent);
@@ -240,8 +240,8 @@ void OriginalChoreoRemixer::BridgeGapsInMoveParents(int i1) {
                 }
                 if (!found) {
                     if (curSet.size() == 0) {
-                        if (curMoveParentByDiff->NextAdjacents().size() != 0) {
-                            found = curMoveParentByDiff->NextAdjacents().front();
+                        if (curMoveParentByDiff->mNext.size() != 0) {
+                            found = curMoveParentByDiff->mNext.front();
                         } else {
                             found = curMoveParentByDiff;
                         }

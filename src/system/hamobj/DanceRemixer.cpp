@@ -22,7 +22,7 @@ Symbol OnMoveVariantFromHamMove(const DataArray *array) {
     MILO_ASSERT(move, 0x21F);
     const MoveVariant *mv = remixer->MoveVariantFromHamMove(move);
     MILO_ASSERT(mv, 0x221);
-    return mv ? mv->Name() : "";
+    return mv ? mv->GetName() : "";
 }
 
 BEGIN_HANDLERS(DanceRemixer)
@@ -90,7 +90,7 @@ BEGIN_LOADS(DanceRemixer)
 END_LOADS
 
 void DanceRemixer::Init(int x) {
-    if (TheMoveMgr->mWholeMoveGraph.MoveParents().size() == 0) {
+    if (TheMoveMgr->mWholeMoveGraph.mNodes.size() == 0) {
         MILO_FAIL("Failed to load move graph for: %s\n", TheGameData->GetSong());
     }
     mTotalMeasures = x;
@@ -138,7 +138,7 @@ void DanceRemixer::PostMoveFinished() {
         if (ScoredDanceMeasure(i, moveIdx)) {
             const MoveVariant *mv = TheMoveMgr->mRoutine[i][moveIdx].first;
             if (mv) {
-                const char *hamMoveName = mv->HamMoveName().Str();
+                const char *hamMoveName = mv->GetHamMoveName().Str();
                 HamMove *move = moveDir->Find<HamMove>(hamMoveName, false);
                 if (move) {
                     detector->EnableDetector(move);
@@ -147,7 +147,7 @@ void DanceRemixer::PostMoveFinished() {
                     MILO_NOTIFY(
                         "Ham move %s missing, possibly not loaded yet. From move variant %s",
                         hamMoveName,
-                        mv->Name()
+                        mv->GetName()
                     );
                 }
             }

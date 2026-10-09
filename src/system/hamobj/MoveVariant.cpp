@@ -10,27 +10,27 @@
 
 MoveCandidate::MoveCandidate(Symbol s1, Symbol, Symbol s3, bool b4) : mAdjacencyFlag(0) {
     if (b4)
-        mAdjacencyFlag = 2;
+        mAdjacencyFlag = kMC_HasTransition;
     mAdjacencyFlag |= Adjacency(s3);
-    mValue.mVariantName = s1.Str();
+    mVariantName = s1.Str();
 }
 
 MoveCandidate::MoveCandidate(const MoveCandidate &c) {
-    if (c.mAdjacencyFlag & 1) {
-        mValue.mVariantName = c.mValue.mVariant->mVariantName.Str();
+    if (c.mAdjacencyFlag & kMC_IsCached) {
+        mVariantName = c.mVariant->m_Name.Str();
     } else
-        mValue.mVariant = c.mValue.mVariant;
-    mAdjacencyFlag = c.mAdjacencyFlag & ~1;
+        mVariant = c.mVariant;
+    mAdjacencyFlag = c.mAdjacencyFlag & ~kMC_IsCached;
 }
 
 void MoveCandidate::CacheLinks(MoveGraph *graph) {
     const char *variantName =
-        mAdjacencyFlag & 1 ? mValue.mVariant->mVariantName.Str() : mValue.mVariantName;
-    mValue.mVariant = graph->FindNonConstMoveByVariantName(variantName);
-    if (!mValue.mVariant) {
+        mAdjacencyFlag & kMC_IsCached ? mVariant->m_Name.Str() : mVariantName;
+    mVariant = graph->FindNonConstMoveByVariantName(variantName);
+    if (!mVariant) {
         MILO_FAIL("Could not find link to %s", variantName);
     }
-    mAdjacencyFlag |= 1;
+    mAdjacencyFlag |= kMC_IsCached;
 }
 
 void MoveCandidate::Load(BinStream &bs) {
@@ -41,7 +41,7 @@ void MoveCandidate::Load(BinStream &bs) {
     bs >> s1;
     bs >> s2;
     bs >> s3;
-    mValue.mVariantName = s2.Str();
+    mVariantName = s2.Str();
     if (rev < 1) {
         mAdjacencyFlag |= Adjacency(s3);
     }
@@ -55,18 +55,18 @@ unsigned int MoveCandidate::Adjacency(Symbol s) {
     static Symbol fake("fake");
 
     if (s == original_adjacent)
-        return 4;
+        return kMC_Adjacency_Original;
     else if (s == easy_med_adjacent)
-        return 8;
+        return kMC_Adjacency_EasyMed;
     else if (s == auto_score)
-        return 0x10;
+        return kMC_Adjacency_AutoScore;
     else if (s == anim_hot_or_not)
-        return 0x20;
+        return kMC_Adjacency_AnimHotOrNot;
     else if (s == fake)
-        return 0;
+        return kMC_Adjacency_Fake;
     else {
         MILO_NOTIFY("MoveCandidate has unknown source '%s'", s.Str());
-        return 0;
+        return kMC_Adjacency_Fake;
     }
 }
 
@@ -74,27 +74,27 @@ unsigned int MoveCandidate::Adjacency(Symbol s) {
 #pragma region MoveVariant
 
 MoveVariant::MoveVariant(MoveGraph *graph, const MoveVariant *other, MoveParent *parent) {
-    mVariantName = other->mVariantName;
-    mMoveParent = parent;
+    m_Name = other->m_Name;
+    mParent = parent;
     mPrevCandidates = other->mPrevCandidates;
     mNextCandidates = other->mNextCandidates;
     mSongName = other->mSongName;
-    mAvgBeatsPerSec = other->mAvgBeatsPerSec;
-    mHamMoveName = other->mHamMoveName;
-    mHamMoveMiloName = other->mHamMoveMiloName;
+    m_fAbps = other->m_fAbps;
+    m_HamMoveName = other->m_HamMoveName;
+    m_HamMoveMiloName = other->m_HamMoveMiloName;
     mGenre = other->mGenre;
     mEra = other->mEra;
     mFlags = other->mFlags & ~1;
-    if (other->mLinkedTo.mVariant) {
-        mLinkedTo.mVariantName = other->mLinkedTo.mVariant->mVariantName.Str();
+    if (other->mLinkedTo) {
+        mLinkedToName = other->mLinkedTo->m_Name.Str();
     } else {
-        mLinkedTo.mVariant = nullptr;
+        mLinkedTo = nullptr;
     }
-    if (other->mLinkedFrom.mVariant) {
-        mLinkedFrom.mVariantName = other->mLinkedFrom.mVariant->mVariantName.Str();
+    if (other->mLinkedFrom) {
+        mLinkedFromName = other->mLinkedFrom->m_Name.Str();
     }
-    mPositionOffset = other->mPositionOffset;
-    graph->mMoveVariants[mVariantName] = this;
+    mDelta = other->mDelta;
+    graph->mVariantsByName[m_Name] = this;
 }
 
 MoveVariant::MoveVariant(MoveGraph *graph, DataArray *cfg, MoveParent *parent) {
@@ -118,10 +118,10 @@ MoveVariant::MoveVariant(MoveGraph *graph, DataArray *cfg, MoveParent *parent) {
     static Symbol prev_candidates("prev_candidates");
     static Symbol next_candidates("next_candidates");
     static Symbol original_adjacent("original_adjacent");
-    mVariantName = cfg->Sym(0);
-    mMoveParent = parent;
+    m_Name = cfg->Sym(0);
+    mParent = parent;
     mSongName = cfg->FindArray(song_name)->Sym(1);
-    mAvgBeatsPerSec = cfg->FindArray(average_beats_per_second)->Float(1);
+    m_fAbps = cfg->FindArray(average_beats_per_second)->Float(1);
     mGenre = cfg->FindArray(genre)->Sym(1);
     mEra = cfg->FindArray(era)->Sym(1);
     mFlags = 0;
@@ -136,23 +136,23 @@ MoveVariant::MoveVariant(MoveGraph *graph, DataArray *cfg, MoveParent *parent) {
     else
         mFlags &= ~0x40;
     if (cfg->FindArray(linked_to, false))
-        mLinkedTo.mVariantName = cfg->FindArray(linked_to)->Sym(1).Str();
+        mLinkedToName = cfg->FindArray(linked_to)->Sym(1).Str();
     else
-        mLinkedTo.mVariant = nullptr;
+        mLinkedTo = nullptr;
     if (cfg->FindArray(linked_from, false))
-        mLinkedFrom.mVariantName = cfg->FindArray(linked_from)->Sym(1).Str();
+        mLinkedFromName = cfg->FindArray(linked_from)->Sym(1).Str();
     else
-        mLinkedFrom.mVariant = nullptr;
+        mLinkedFrom = nullptr;
 
     if (cfg->FindArray(position_offset, false)) {
-        mPositionOffset.x = cfg->FindArray(position_offset)->Float(1);
-        mPositionOffset.y = cfg->FindArray(position_offset)->Float(2);
-        mPositionOffset.z = cfg->FindArray(position_offset)->Float(3);
+        mDelta.x = cfg->FindArray(position_offset)->Float(1);
+        mDelta.y = cfg->FindArray(position_offset)->Float(2);
+        mDelta.z = cfg->FindArray(position_offset)->Float(3);
     } else {
-        mPositionOffset.Zero();
+        mDelta.Zero();
     }
-    mHamMoveName = cfg->FindArray(ham_move_name)->Sym(1);
-    mHamMoveMiloName = cfg->FindArray(ham_move_milo_name)->Sym(1);
+    m_HamMoveName = cfg->FindArray(ham_move_name)->Sym(1);
+    m_HamMoveMiloName = cfg->FindArray(ham_move_milo_name)->Sym(1);
     mPrevCandidates.clear();
     mNextCandidates.clear();
 
@@ -203,7 +203,7 @@ MoveVariant::MoveVariant(MoveGraph *graph, DataArray *cfg, MoveParent *parent) {
         mNextCandidates.push_back(MoveCandidate(s1, s2, s3, b3));
     }
 
-    graph->mMoveVariants[mVariantName] = this;
+    graph->mVariantsByName[m_Name] = this;
 }
 
 MoveVariant::~MoveVariant() {
@@ -211,16 +211,16 @@ MoveVariant::~MoveVariant() {
     mNextCandidates.clear();
 }
 
-Difficulty MoveVariant::GetDifficulty() const { return mMoveParent->GetDifficulty(); }
+Difficulty MoveVariant::GetDifficulty() const { return mParent->GetDifficulty(); }
 
 bool MoveVariant::IsRest() const {
     static Symbol Rest("Rest.move");
     static Symbol rest("rest.move");
     static Symbol groove("groove");
-    if (mHamMoveName == Rest || mHamMoveName == rest || mHamMoveName == groove)
+    if (m_HamMoveName == Rest || m_HamMoveName == rest || m_HamMoveName == groove)
         return true;
 
-    String move = mHamMoveName.Str();
+    String move = m_HamMoveName.Str();
     if (move.contains("finish")) {
         return true;
     }
@@ -228,8 +228,8 @@ bool MoveVariant::IsRest() const {
 }
 
 void MoveVariant::CacheLinks(MoveGraph *graph) {
-    mLinkedTo.mVariant = graph->FindMoveByVariantName(mLinkedTo.mVariantName);
-    mLinkedFrom.mVariant = graph->FindMoveByVariantName(mLinkedFrom.mVariantName);
+    mLinkedTo = graph->FindMoveByVariantName(mLinkedToName);
+    mLinkedFrom = graph->FindMoveByVariantName(mLinkedFromName);
     FOREACH (it, mPrevCandidates) {
         it->CacheLinks(graph);
     }
@@ -241,15 +241,15 @@ void MoveVariant::CacheLinks(MoveGraph *graph) {
 void MoveVariant::Load(BinStream &bs, MoveGraph *graph, MoveParent *parent) {
     int rev;
     bs >> rev;
-    mMoveParent = parent;
-    bs >> mPositionOffset;
-    bs >> mVariantName;
-    bs >> mHamMoveName;
-    bs >> mHamMoveMiloName;
+    mParent = parent;
+    bs >> mDelta;
+    bs >> m_Name;
+    bs >> m_HamMoveName;
+    bs >> m_HamMoveMiloName;
     bs >> mGenre;
     bs >> mEra;
     bs >> mSongName;
-    bs >> mAvgBeatsPerSec;
+    bs >> m_fAbps;
     bs >> mFlags;
 
     bool isSym;
@@ -257,21 +257,21 @@ void MoveVariant::Load(BinStream &bs, MoveGraph *graph, MoveParent *parent) {
     if (isSym) {
         Symbol s;
         bs >> s;
-        mLinkedTo.mVariantName = s.Str();
+        mLinkedToName = s.Str();
     } else {
-        mLinkedTo.mVariant = nullptr;
+        mLinkedTo = nullptr;
     }
     if (rev >= 1) {
         bs >> isSym;
         if (!(isSym)) {
-            mLinkedFrom.mVariant = nullptr;
+            mLinkedFrom = nullptr;
         } else {
             Symbol s;
             bs >> s;
-            mLinkedFrom.mVariantName = s.Str();
+            mLinkedFromName = s.Str();
         }
     } else {
-        mLinkedFrom.mVariant = nullptr;
+        mLinkedFrom = nullptr;
     }
 
     unsigned int numCandidates;
@@ -287,7 +287,7 @@ void MoveVariant::Load(BinStream &bs, MoveGraph *graph, MoveParent *parent) {
     for (int i = 0; i < numCandidates; i++) {
         nextCandidates[i].Load(bs);
     }
-    graph->mMoveVariants[mVariantName] = this;
+    graph->mVariantsByName[m_Name] = this;
 }
 
 bool MoveVariant::IsValidForMinigame() const {

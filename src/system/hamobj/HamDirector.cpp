@@ -998,8 +998,8 @@ DataNode HamDirector::OnListPossibleMoves() {
     }
     DataArray *moveArr = new DataArray(0);
     for (std::map<Symbol, MoveParent *>::const_iterator it =
-             TheMoveMgr->mWholeMoveGraph.MoveParents().begin();
-         it != TheMoveMgr->mWholeMoveGraph.MoveParents().end();
+             TheMoveMgr->mWholeMoveGraph.mNodes.begin();
+         it != TheMoveMgr->mWholeMoveGraph.mNodes.end();
          ++it) {
         moveArr->Insert(moveArr->Size(), it->first);
     }
@@ -1015,7 +1015,7 @@ DataNode HamDirector::OnListPossibleVariants() {
     }
     DataArray *moveArr = new DataArray(0);
     FOREACH (it, TheMoveMgr->mMovesNeeded) {
-        moveArr->Insert(moveArr->Size(), (*it)->Name());
+        moveArr->Insert(moveArr->Size(), (*it)->GetName());
     }
     moveArr->SortNodes(0);
     DataNode ret(moveArr);
@@ -2176,10 +2176,11 @@ void HamDirector::OnPopulateFromMoveMgr() {
                 float beatSeconds = BeatToSeconds(i * 4.0f - 1.0f) * 30.0f;
                 int move = moveKeys->SetKey(beatSeconds);
                 int clip = clipKeys->SetKey(beatSeconds);
-                (*moveSymbolKeys)[move].value = TheMoveMgr->mRoutineParents[0][i]->Name();
+                (*moveSymbolKeys)[move].value =
+                    TheMoveMgr->mRoutineParents[0][i]->GetName();
                 const MoveVariant *variant = TheMoveMgr->mRoutine[0][i].second;
                 if (variant) {
-                    (*clipSymbolKeys)[clip].value = variant->Name();
+                    (*clipSymbolKeys)[clip].value = variant->GetName();
                 }
             }
         }
