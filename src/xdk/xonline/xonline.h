@@ -19,6 +19,7 @@ typedef struct _XSESSION_VIEW_PROPERTIES { /* Size=0xc */
     /* 0x0008 */ _XUSER_PROPERTY *pProperties;
 } XSESSION_VIEW_PROPERTIES;
 
+#pragma pack(push, 1)
 typedef struct _XSTORAGE_FILE_INFO { /* Size=0x41 */
     /* 0x0000 */ DWORD dwTitleID;
     /* 0x0004 */ DWORD dwTitleVersion;
@@ -41,6 +42,37 @@ typedef struct _XSTORAGE_ENUMERATE_RESULTS { /* Size=0xc */
     /* 0x0004 */ DWORD dwNumItemsReturned;
     /* 0x0008 */ XSTORAGE_FILE_INFO *pItems;
 } XSTORAGE_ENUMERATE_RESULTS;
+
+typedef struct _XSTORAGE_DOWNLOAD_TO_MEMORY_RESULTS { /* Size=0x14 */
+    /* 0x0000 */ DWORD dwBytesTotal;
+    /* 0x0004 */ XUID xuidOwner;
+    /* 0x000c */ FILETIME ftCreated;
+} XSTORAGE_DOWNLOAD_TO_MEMORY_RESULTS;
+#pragma pack(pop)
+
+typedef enum _XSTORAGE_FACILITY {
+    XSTORAGE_FACILITY_GAME_CLIP = 1,
+    XSTORAGE_FACILITY_PER_TITLE = 2,
+    XSTORAGE_FACILITY_PER_USER_TITLE = 3,
+} XSTORAGE_FACILITY;
+
+#define XONLINE_FRIENDSTATE_FLAG_REQUEST 0x40000000
+#define XONLINE_FRIENDSTATE_FLAG_PENDING 0x80000000
+
+#pragma pack(push, 4)
+typedef struct _XONLINE_FRIEND { /* Size=0xc4 */
+    /* 0x0000 */ XUID xuid;
+    /* 0x0008 */ char szGamertag[16];
+    /* 0x0018 */ DWORD dwFriendState;
+    /* 0x001c */ XNKID sessionID;
+    /* 0x0024 */ DWORD dwTitleID;
+    /* 0x0028 */ FILETIME ftUserTime;
+    /* 0x0030 */ XNKID xnkidInvite;
+    /* 0x0038 */ FILETIME gameinviteTime;
+    /* 0x0040 */ DWORD cchRichPresence;
+    /* 0x0044 */ WCHAR wszRichPresence[64];
+} XONLINE_FRIEND;
+#pragma pack(pop)
 
 struct XTITLE_SERVER_INFO { /* Size=0xd0 */
     /* 0x0000 */ IN_ADDR inaServer;
@@ -84,6 +116,40 @@ DWORD XSessionLeaveLocal(
     HANDLE hSession,
     DWORD dwUserCount,
     const DWORD *pdwUserIndexes,
+    XOVERLAPPED *pXOverlapped
+);
+DWORD XFriendsCreateEnumerator(
+    DWORD dwUserIndex,
+    DWORD dwStartingIndex,
+    DWORD dwFriendsToReturn,
+    DWORD *pcbBuffer,
+    HANDLE *ph
+);
+DWORD XStorageBuildServerPath(
+    DWORD dwUserIndex,
+    XSTORAGE_FACILITY StorageFacility,
+    const void *pvStorageFacilityInfo,
+    DWORD dwStorageFacilityInfoSize,
+    LPCWSTR pwszItemName,
+    WCHAR *pwszServerPath,
+    DWORD *pdwServerPathLength
+);
+DWORD XStorageEnumerate(
+    DWORD dwUserIndex,
+    LPCWSTR pwszServerPath,
+    DWORD dwStartingIndex,
+    DWORD dwMaxResultsToReturn,
+    DWORD cbResultsBuffer,
+    XSTORAGE_ENUMERATE_RESULTS *pResults,
+    XOVERLAPPED *pXOverlapped
+);
+DWORD XStorageDownloadToMemory(
+    DWORD dwUserIndex,
+    LPCWSTR pwszServerPath,
+    DWORD dwBufferSize,
+    const BYTE *pbBuffer,
+    DWORD cbResults,
+    XSTORAGE_DOWNLOAD_TO_MEMORY_RESULTS *pResults,
     XOVERLAPPED *pXOverlapped
 );
 DWORD XOnlineStartup();

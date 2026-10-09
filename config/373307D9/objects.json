@@ -834,7 +834,7 @@
             "system/utl/SongInfoCopy.cpp": "Matching",
             "system/utl/Str.cpp": "Matching",
             "system/utl/StringTable.cpp": "Matching",
-            "system/utl/SuperFormatString.cpp": "NonMatching",
+            "system/utl/SuperFormatString.cpp": "Matching",
             "system/utl/Symbol.cpp": "Matching",
             "system/utl/TempoMap.cpp": "Matching",
             "system/utl/TextFileStream.cpp": "Matching",

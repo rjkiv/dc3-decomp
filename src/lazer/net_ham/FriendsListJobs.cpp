@@ -80,7 +80,7 @@ DataNode UpdateFriendsListJob::OnMsg(PlatformMgrOpCompleteMsg const &msg) {
         char buf[24];
         for (int i = 0; i < friendSize - 1; i++) {
             friendName = mFriends[i]->GetName();
-            XUID xuid = mFriends[i]->unk18;
+            XUID xuid = mFriends[i]->GetXUID();
             friendInfo += MakeString("%llu,", xuid);
             Hx_snprintf(namebuf, 8, "name%03d", i);
             dataP.AddPair(namebuf, friendName);
@@ -90,7 +90,7 @@ DataNode UpdateFriendsListJob::OnMsg(PlatformMgrOpCompleteMsg const &msg) {
         }
         if (mFriends.size() > 0) {
             friendName = mFriends[friendSize - 1]->GetName();
-            XUID xuid = mFriends[friendSize - 1]->unk18;
+            XUID xuid = mFriends[friendSize - 1]->GetXUID();
             friendInfo += MakeString("%llu", xuid);
         }
         dataP.AddPair(friends, friendInfo);

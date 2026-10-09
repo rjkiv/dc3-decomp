@@ -1,6 +1,7 @@
 #include "gesture/GestureMgr.h"
 #include "meta/ConnectionStatusPanel.h"
 #include "obj/Data.h"
+#include "obj/DataFile.h"
 #include "obj/Dir.h"
 #include "obj/Object.h"
 #include "os/ContentMgr.h"
@@ -39,17 +40,26 @@ int PlatformMgr::snShowControllerPadNum = 0;
 
 namespace {
     enum ServiceIdState {
+        kServiceIdStart = 0,
+        kServiceIdEnumBegin = 1,
+        kServiceIdEnum = 2,
+        kServiceIdDownloadBegin = 3,
+        kServiceIdDownload = 4,
+        kServiceIdErrorTimeout = 5,
+        kServiceIdEnd = 6,
     };
 
     class FriendEnumRequest {
     public:
-        FriendEnumRequest(int i, std::vector<Friend *> &f, Hmx::Object *o)
-            : unk0(i), unk4(f), unk8(o) {}
+        FriendEnumRequest(
+            int padNum, std::vector<Friend *> *friends, Hmx::Object *callback
+        )
+            : mPadNum(padNum), mFriends(friends), mCallback(callback) {}
         MEM_OVERLOAD(FriendEnumRequest, 0x3E);
 
-        int unk0;
-        std::vector<Friend *> &unk4;
-        Hmx::Object *unk8;
+        int mPadNum;
+        std::vector<Friend *> *mFriends;
+        Hmx::Object *mCallback;
     };
 
     DWORD gSmartGlassClientIDs[4];
@@ -66,15 +76,14 @@ namespace {
     ServiceIdState mServiceIdState;
     float mRetryTime;
     std::vector<Friend *> *mFriendsList;
-    WCHAR (*mStrStorageFiles)[256];
+    wchar_t mStrStorageFiles[1][256];
     Hmx::Object *mFriendsCallback;
     void *mFriendsAsync; // XOVERLAPPED*
     void *mFriendsBuffer; // array of 0xc4 sized structs?
     void *mFriendsEnum;
     HANDLE mListener;
     int mSigninSameGuest;
-    // ...
-    // struct _XSTORAGE_DOWNLOAD_TO_MEMORY_RESULTS `anonymous namespace'::mResults
+    XSTORAGE_DOWNLOAD_TO_MEMORY_RESULTS mResults;
     int gNumSmartGlassClients;
     int gNumSmartGlassSendsInProgress;
     std::list<FriendEnumRequest *> mFriendEnumRequests;
@@ -156,63 +165,80 @@ namespace {
         }
     }
 
-    DataArrayPtr JsonToDta(HJSONREADER *reader, bool b2) {
-        DataArrayPtr ptr;
-        DataArray *arr = nullptr;
-        JSONTokenType tokenType;
+    DataArrayPtr JsonToDta(HJSONREADER *hReader, bool topLevel) {
+        DataArrayPtr res;
+        DataArray *pair = nullptr;
+        JSONTokenType jsonTokenType;
         DWORD tokenLength;
         DWORD parsed;
-        WCHAR src[128];
-        char dest[256];
-        while (XJSONReadToken(reader, &tokenType, &tokenLength, &parsed) == 0) {
-            DataNode curNode;
-            dest[0] = 0;
-            if (tokenType >= 5 && (tokenType <= 6 || tokenType == 10)) {
-                XJSONGetTokenValue(reader, src, 128);
-                wcstombs(dest, src, 256);
+        WCHAR valueBufferWC[128];
+        char valueBuffer[256];
+        while (XJSONReadToken(hReader, &jsonTokenType, &tokenLength, &parsed) == S_OK) {
+            DataNode n;
+            valueBuffer[0] = '\0';
+            if (jsonTokenType >= Json_String
+                && (jsonTokenType <= Json_Number || jsonTokenType == Json_FieldName)) {
+                XJSONGetTokenValue(hReader, valueBufferWC, 128);
+                wcstombs(valueBuffer, valueBufferWC, 256);
             }
-            switch (tokenType) {
-            case 0:
-            case0:
-                if (arr) {
-                    arr->Node(1) = curNode;
-                    curNode = arr;
-                    arr = nullptr;
-                }
-                if (b2 && curNode.Type() == kDataArray) {
-                    ptr = curNode.Array();
-                    b2 = false;
+            switch (jsonTokenType) {
+            case Json_FieldName:
+                pair = new DataArray(2);
+                pair->Node(0) = Symbol(valueBuffer);
+                continue;
+            case Json_NotStarted:
+                break;
+            case Json_BeginArray:
+                n = JsonToDta(hReader, false);
+                break;
+            case Json_EndArray:
+                return res;
+            case Json_BeginObject:
+                n = JsonToDta(hReader, false);
+                break;
+            case Json_EndObject:
+                return res;
+            case Json_String:
+                n = DataNode(valueBuffer);
+                break;
+            case Json_Number:
+                if (strchr(valueBuffer, '.')) {
+                    n = (float)atof(valueBuffer);
                 } else {
-                    ptr->Insert(ptr->Size(), curNode);
+                    n = atoi(valueBuffer);
                 }
                 break;
-            case 1:
-                curNode = JsonToDta(reader, false);
-                goto case0;
+            case Json_True:
+                n = 1;
                 break;
-            case 2:
-                ptr->AddRef();
+            case Json_False:
+                n = 0;
                 break;
-            case 3:
-                curNode = JsonToDta(reader, false);
-                goto case0;
+            case Json_Null:
+                n = 0;
                 break;
-            case 4:
-                ptr->AddRef();
-                break;
-            case 5:
-            case 6:
-            case 7:
-            case 8:
-            case 9:
-            case 10:
-            case 11:
-            case 12:
-            case 13:
-                break;
+            case Json_NameSeparator:
+                continue;
+            case Json_ObjectSeparator:
+                continue;
+            case Json_ValueSeparator:
+                continue;
+            default:
+                continue;
+            }
+            if (pair) {
+                pair->Node(1) = n;
+                n = pair;
+                pair = nullptr;
+            }
+            if (topLevel && n.Type() == kDataArray) {
+                res = n.Array();
+                topLevel = false;
+            } else {
+                res->Insert(res->Size(), n);
             }
         }
-        return ptr;
+        return res;
     }
 
     HJSONWRITER *DtaToJson(const DataArray *a) {
@@ -588,7 +614,7 @@ PlatformMgr::PlatformMgr() : mSigninMask(0) {
     mServiceIDOverlapped2 = nullptr;
     mStorageList = nullptr;
     mPathLen = 0x200;
-    mServiceIdState = (ServiceIdState)0;
+    mServiceIdState = kServiceIdStart;
     mListSize = 0;
     mUserID = -1;
     mResult = 0;
@@ -1054,7 +1080,7 @@ void PlatformMgr::ShowControllerRequiredUI(Hmx::Object *o1) {
 }
 
 void PlatformMgr::EnumerateFriends(int i1, std::vector<Friend *> &vec, Hmx::Object *o) {
-    mFriendEnumRequests.push_back(new FriendEnumRequest(i1, vec, o));
+    mFriendEnumRequests.push_back(new FriendEnumRequest(i1, &vec, o));
 }
 
 bool PlatformMgr::GetServiceID(const String &str, unsigned int &ui) {
@@ -1082,27 +1108,42 @@ DataNode PlatformMgr::OnSignInUsers(const DataArray *a) {
 void PlatformMgr::Poll() {
     SmartGlassPoll();
     mJobMgr->Poll();
-    mTime.Pause();
-    DWORD dwId;
-    ULONG param;
-    static bool sb4;
-    while (XNotifyGetNext(mListener, 0, &dwId, &param)) {
-        switch (dwId) {
-        case 9: {
-            mGuideShowing = param == 0;
-            UIChangedMsg msg(mGuideShowing);
-            Handle(msg, false);
-            break;
-        }
+    mTime.Split();
+    DWORD notificationID;
+    ULONG_PTR param;
+    static bool connectAfterSignin;
+    while (XNotifyGetNext(mListener, 0, &notificationID, &param)) {
+        switch (notificationID) {
         case 10: {
             UpdateSigninState();
-            if (sb4 && mSigninMask) {
+            if (connectAfterSignin && mSigninMask) {
                 mConnected = true;
-                sb4 = false;
+                connectAfterSignin = false;
                 ConnectionStatusChangedMsg msg(true);
                 Handle(msg, false);
             }
             SigninChangedMsg msg(mSigninMask, mSigninChangeMask);
+            Handle(msg, false);
+            break;
+        }
+        case 0x2000001: {
+            bool connected = mConnected;
+            connectAfterSignin = false;
+            mConnected = param == 0x1510f0;
+            if (connected != mConnected) {
+                if (mConnected && mSigninMask == 0) {
+                    mConnected = false;
+                    connectAfterSignin = true;
+                } else {
+                    ConnectionStatusChangedMsg msg(mConnected);
+                    Handle(msg, false);
+                }
+            }
+            break;
+        }
+        case 9: {
+            mGuideShowing = param != 0;
+            UIChangedMsg msg(mGuideShowing);
             Handle(msg, false);
             break;
         }
@@ -1111,46 +1152,9 @@ void PlatformMgr::Poll() {
             Handle(msg, false);
             break;
         }
-        case 0x60019: {
-            int u17;
-            if (param & 4) {
-                u17 = 2;
-            } else if (param & 2) {
-                u17 = 1;
-            } else if (param & 1) {
-                u17 = 0;
-            } else {
-                u17 = 2;
-            }
-            KinectHardwareStatusMsg msg(u17);
+        case 0x2000007: {
+            ContentInstalledMsg msg;
             Handle(msg, false);
-            break;
-        }
-        case 1: {
-            static KinectGuideGestureMsg msg(0);
-            msg[0] = param;
-            Handle(msg, false);
-            break;
-        }
-        case 4: {
-            static KinectUserBindingChangedMsg msg(0);
-            msg[0] = param;
-            Handle(msg, false);
-            break;
-        }
-        case 0x2000001: {
-            bool oldConnected = mConnected;
-            sb4 = false;
-            mConnected = param == 0x1510f0;
-            if (oldConnected != mConnected) {
-                if (mConnected && mSigninMask == 0) {
-                    mConnected = false;
-                    sb4 = true;
-                } else {
-                    ConnectionStatusChangedMsg msg(mConnected);
-                    Handle(msg, false);
-                }
-            }
             break;
         }
         case 0x2000002: {
@@ -1158,8 +1162,8 @@ void PlatformMgr::Poll() {
             Handle(msg, false);
             break;
         }
-        case 0x2000007: {
-            ContentInstalledMsg msg;
+        case 0xa000001: {
+            XMPStateChangedMsg msg(param);
             Handle(msg, false);
             break;
         }
@@ -1169,13 +1173,32 @@ void PlatformMgr::Poll() {
             Handle(msg, false);
             break;
         }
-        case 0xa000001: {
-            XMPStateChangedMsg msg(param);
+        case 0xe040002: {
+            PartyMembersChangedMsg msg;
             Handle(msg, false);
             break;
         }
-        case 0xe040002: {
-            PartyMembersChangedMsg msg;
+        case 0x6001A: {
+            static KinectGuideGestureMsg msg(0);
+            msg[0] = param;
+            Handle(msg, false);
+            break;
+        }
+        case 0x60019: {
+            int status = 2;
+            if (param & 4)
+                status = 2;
+            else if (param & 2)
+                status = 1;
+            else if (param & 1)
+                status = 0;
+            KinectHardwareStatusMsg msg(status);
+            Handle(msg, false);
+            break;
+        }
+        case 0x6001D: {
+            static KinectUserBindingChangedMsg msg(0);
+            msg[0] = param;
             Handle(msg, false);
             break;
         }
@@ -1188,29 +1211,193 @@ void PlatformMgr::Poll() {
         MILO_ASSERT(mFriendsCallback, 0x4BF);
         MILO_ASSERT(mFriendsAsync, 0x4C0);
         MILO_ASSERT(mFriendsList, 0x4C1);
-        DWORD result;
-        DWORD res = XGetOverlappedResult((XOVERLAPPED *)mFriendsAsync, &result, false);
+        XOVERLAPPED *pFriendsAsync = (XOVERLAPPED *)mFriendsAsync;
+        DWORD numFriends;
+        DWORD res = XGetOverlappedResult(pFriendsAsync, &numFriends, false);
         if (res != ERROR_IO_INCOMPLETE) {
             static PlatformMgrOpCompleteMsg msg(false);
             if (res == ERROR_SUCCESS) {
-                for (int i = 0; i < result; i++) {
-                    // do a thing with mFriendsBuffer[i]
+                XONLINE_FRIEND *friends = (XONLINE_FRIEND *)mFriendsBuffer;
+                for (DWORD i = 0; i < numFriends; i++) {
+                    DWORD state = friends[i].dwFriendState;
+                    if (!(state & XONLINE_FRIENDSTATE_FLAG_REQUEST)
+                        && !(state & XONLINE_FRIENDSTATE_FLAG_PENDING)) {
+                        Friend *newFriend = new Friend();
+                        String name(friends[i].szGamertag);
+                        newFriend->SetName(name);
+                        newFriend->SetXUID(friends[i].xuid);
+                        mFriendsList->push_back(newFriend);
+                    }
                 }
                 msg[0] = true;
             } else {
                 msg[0] = false;
             }
             mFriendsCallback->Handle(msg, true);
+            mFriendsCallback = nullptr;
+            mFriendsList = nullptr;
+            RELEASE(mFriendsBuffer);
+            RELEASE(mFriendsAsync);
+            CloseHandle(mFriendsEnum);
+            mFriendsEnum = nullptr;
         }
-        mFriendsCallback = nullptr;
-        mFriendsList = nullptr;
-        RELEASE(mFriendsBuffer);
-        RELEASE(mFriendsAsync);
-        CloseHandle(mFriendsEnum);
-        mFriendsEnum = nullptr;
-    } else {
-        if (!mFriendEnumRequests.empty() && mFriendEnumRequests.size() != 0) {
-            // stuff and things
+    } else if (mFriendEnumRequests.size() != 0) {
+        FriendEnumRequest *req = mFriendEnumRequests.front();
+        DWORD bufferSize;
+        DWORD res =
+            XFriendsCreateEnumerator(req->mPadNum, 0, 100, &bufferSize, &mFriendsEnum);
+        bool failed = false;
+        if (res == ERROR_SUCCESS) {
+            MILO_ASSERT(!mFriendsBuffer, 0x503);
+            mFriendsBuffer = new char[bufferSize];
+            XOVERLAPPED *pFriendsAsync = new XOVERLAPPED;
+            mFriendsAsync = pFriendsAsync;
+            memset(pFriendsAsync, 0, sizeof(XOVERLAPPED));
+            if (XEnumerate(
+                    mFriendsEnum, mFriendsBuffer, bufferSize, nullptr, pFriendsAsync
+                )
+                != ERROR_IO_PENDING) {
+                failed = true;
+            }
+        } else {
+            failed = true;
+        }
+        if (failed) {
+            if (mFriendsEnum) {
+                CloseHandle(mFriendsEnum);
+                mFriendsEnum = nullptr;
+            }
+            RELEASE(mFriendsBuffer);
+            RELEASE(mFriendsAsync);
+            static PlatformMgrOpCompleteMsg msg(false);
+            req->mCallback->Handle(msg, true);
+        } else {
+            MILO_ASSERT(!mFriendsCallback, 0x52D);
+            MILO_ASSERT(!mFriendsList, 0x52E);
+            mFriendsCallback = req->mCallback;
+            mFriendsList = req->mFriends;
+        }
+        delete req;
+        mFriendEnumRequests.pop_front();
+    }
+    if (mServiceIdState != kServiceIdEnd) {
+        switch (mServiceIdState) {
+        case kServiceIdStart:
+            mUserID = -1;
+            for (int i = 0; i < 4; i++) {
+                if (XUserGetSigninState(i) == eXUserSigninState_SignedInToLive) {
+                    mUserID = i;
+                    mResult = XStorageBuildServerPath(
+                        i,
+                        XSTORAGE_FACILITY_PER_TITLE,
+                        nullptr,
+                        0,
+                        L"service_ids.dta",
+                        mStrServerPath,
+                        &mPathLen
+                    );
+                    if (mResult == ERROR_SUCCESS) {
+                        mServiceIdState = kServiceIdEnumBegin;
+                    } else {
+                        mRetryTime = mTime.Ms() + 300000.0f;
+                        mServiceIdState = kServiceIdErrorTimeout;
+                    }
+                    break;
+                }
+            }
+            break;
+        case kServiceIdEnumBegin:
+            mStorageList = (XSTORAGE_ENUMERATE_RESULTS *)new BYTE[0x24B];
+            if (mStorageList) {
+                mServiceIDOverlapped = new XOVERLAPPED();
+                mResult = XStorageEnumerate(
+                    mUserID, mStrServerPath, 0, 1, 0x24B, mStorageList, mServiceIDOverlapped
+                );
+                if (mResult == ERROR_SUCCESS || mResult == ERROR_IO_PENDING) {
+                    mServiceIdState = kServiceIdEnum;
+                } else {
+                    RELEASE(mStorageList);
+                    RELEASE(mServiceIDOverlapped);
+                    mServiceIdState = kServiceIdErrorTimeout;
+                    mRetryTime = mTime.Ms() + 300000.0f;
+                }
+            } else {
+                mServiceIdState = kServiceIdErrorTimeout;
+                mRetryTime = mTime.Ms() + 300000.0f;
+            }
+            break;
+        case kServiceIdEnum: {
+            DWORD res = XGetOverlappedResult(mServiceIDOverlapped, &mResult, false);
+            if (res == ERROR_IO_INCOMPLETE) {
+                break;
+            }
+            if (res == ERROR_SUCCESS && mStorageList->dwNumItemsReturned != 0) {
+                for (DWORD i = 0; i < mStorageList->dwNumItemsReturned; i++) {
+                    swprintf_s(
+                        mStrStorageFiles[i], L"%s", mStorageList->pItems[i].pwszPathName
+                    );
+                }
+                mListSize = mStorageList->dwNumItemsReturned;
+                mServiceIdState = kServiceIdDownloadBegin;
+            } else {
+                mRetryTime = mTime.Ms() + 300000.0f;
+                mServiceIdState = kServiceIdErrorTimeout;
+            }
+            RELEASE(mStorageList);
+            RELEASE(mServiceIDOverlapped);
+            break;
+        }
+        case kServiceIdDownloadBegin:
+            mServiceIDOverlapped = new XOVERLAPPED();
+            mResult = XStorageDownloadToMemory(
+                mUserID,
+                mStrStorageFiles[0],
+                sizeof(mFileReadBuffer),
+                (BYTE *)mFileReadBuffer,
+                sizeof(XSTORAGE_DOWNLOAD_TO_MEMORY_RESULTS),
+                &mResults,
+                mServiceIDOverlapped
+            );
+            if (mResult == ERROR_SUCCESS || mResult == ERROR_IO_PENDING) {
+                mServiceIdState = kServiceIdDownload;
+            } else {
+                RELEASE(mServiceIDOverlapped);
+                mServiceIdState = kServiceIdErrorTimeout;
+                mRetryTime = mTime.Ms() + 300000.0f;
+            }
+            break;
+        case kServiceIdDownload: {
+            DWORD res = XGetOverlappedResult(mServiceIDOverlapped, &mResult, false);
+            if (res == ERROR_IO_INCOMPLETE) {
+                break;
+            }
+            if (res == ERROR_SUCCESS) {
+                static Symbol service_ids("service_ids");
+                DataArray *ids =
+                    DataReadString((char *)mFileReadBuffer)->FindArray(service_ids, true);
+                int numIds = ids->Size();
+                mServiceIdMap.clear();
+                for (int i = 1; i < numIds; i++) {
+                    DataArray *entry = ids->Array(i);
+                    String tmpServiceIdStr(entry->Str(0));
+                    unsigned int id = entry->Int(1);
+                    mServiceIdMap.insert(std::make_pair(tmpServiceIdStr, id));
+                }
+            }
+            mServiceIdState = kServiceIdEnd;
+            RELEASE(mServiceIDOverlapped);
+            TmsDownloadedMsg msg;
+            Handle(msg, false);
+            break;
+        }
+        case kServiceIdErrorTimeout:
+            if (mTime.Ms() >= mRetryTime) {
+                mServiceIdState = kServiceIdStart;
+            }
+            break;
+        default:
+            MILO_FAIL("Invalid state!");
+            break;
         }
     }
 }

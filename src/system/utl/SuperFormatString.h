@@ -11,6 +11,6 @@ public:
     const char *FinalStr();
 
 private:
-    bool unk1014;
-    bool unk1015;
+    bool mTokensOnly;
+    bool mNeedsDoublePercentCollapse;
 };

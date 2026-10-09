@@ -196,3 +196,7 @@ END_MESSAGE
 DECLARE_MESSAGE(PartyMembersChangedMsg, "party_members_changed")
 PartyMembersChangedMsg() : Message(Type()) {}
 END_MESSAGE
+
+DECLARE_MESSAGE(TmsDownloadedMsg, "tms_downloaded")
+TmsDownloadedMsg() : Message(Type()) {}
+END_MESSAGE
