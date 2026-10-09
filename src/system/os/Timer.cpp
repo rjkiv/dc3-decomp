@@ -27,9 +27,9 @@ std::list<Symbol> sConditionalTimersEnabled;
 const char *FormatTime(float ms) {
     if (ms < 0.001) {
         return MakeString("%.2fns", ms * 1e+06f);
-    } else if (time < 1) {
+    } else if (ms < 1) {
         return MakeString("%.2fus", ms * 1000);
-    } else if (time >= 1000) {
+    } else if (ms >= 1000) {
         return MakeString("%.2fs", ms / 1000);
     } else {
         return MakeString("%.2fms", ms);
