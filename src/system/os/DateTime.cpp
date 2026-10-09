@@ -5,26 +5,26 @@
 #include "utl/LocaleOrdinal.h"
 #include "xdk/XAPILIB.h"
 
-void GetDateAndTime(DateTime &dt) {
+void GetDateAndTime(DateTime &out) {
     SYSTEMTIME time;
     GetLocalTime(&time);
-    dt.mYear = time.wYear - 108;
-    dt.mMonth = time.wMonth - 1;
-    dt.mDay = time.wDay;
-    dt.mHour = time.wHour;
-    dt.mMin = time.wMinute;
-    dt.mSec = time.wSecond;
+    out.mYear = time.wYear - 108;
+    out.mMonth = time.wMonth - 1;
+    out.mDay = time.wDay;
+    out.mHour = time.wHour;
+    out.mMin = time.wMinute;
+    out.mSec = time.wSecond;
 }
 
-void GetSystemDateAndTime(DateTime &dt) {
+void GetSystemDateAndTime(DateTime &out) {
     SYSTEMTIME time;
     GetSystemTime(&time);
-    dt.mYear = time.wYear - 108;
-    dt.mMonth = time.wMonth - 1;
-    dt.mDay = time.wDay;
-    dt.mHour = time.wHour;
-    dt.mMin = time.wMinute;
-    dt.mSec = time.wSecond;
+    out.mYear = time.wYear - 108;
+    out.mMonth = time.wMonth - 1;
+    out.mDay = time.wDay;
+    out.mHour = time.wHour;
+    out.mMin = time.wMinute;
+    out.mSec = time.wSecond;
 }
 
 void GetTimeZoneBias(long &bias) {
@@ -59,16 +59,16 @@ DateTime::DateTime(
     unsigned short year,
     unsigned char month,
     unsigned char day,
-    unsigned char hr,
-    unsigned char min,
-    unsigned char sec
+    unsigned char hour,
+    unsigned char minute,
+    unsigned char second
 ) {
     mYear = year - 1900;
     mMonth = month - 1;
     mDay = day;
-    mHour = hr;
-    mMin = min;
-    mSec = sec;
+    mHour = hour;
+    mMin = minute;
+    mSec = second;
 }
 
 unsigned int DateTime::ToCode() const {

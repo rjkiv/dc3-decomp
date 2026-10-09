@@ -59,12 +59,12 @@ public:
 
 #pragma region FileCacheEntry
 
-FileCacheEntry::FileCacheEntry(FilePath const &path1, FilePath const &path2, int i)
-    : mFileName(path1), mReadFileName(path2), mBuf(0), mLoader(0), mSize(-1),
-      mRefCount(0), mPriority(i), mReads(0), mLastRead(-kHugeFloat) {}
+FileCacheEntry::FileCacheEntry(FilePath const &file, FilePath const &readFile, int priority)
+    : mFileName(file), mReadFileName(readFile), mBuf(0), mLoader(0), mSize(-1),
+      mRefCount(0), mPriority(priority), mReads(0), mLastRead(-kHugeFloat) {}
 
-FileCacheEntry::FileCacheEntry(FilePath const &path, char *c, int i)
-    : mFileName(path), mReadFileName(path), mBuf(c), mLoader(0), mSize(i), mRefCount(0),
+FileCacheEntry::FileCacheEntry(FilePath const &file, char *buffer, int size)
+    : mFileName(file), mReadFileName(file), mBuf(buffer), mLoader(0), mSize(size), mRefCount(0),
       mPriority(-1), mReads(0), mLastRead(-kHugeFloat) {}
 
 FileCacheEntry::~FileCacheEntry() {
@@ -73,8 +73,8 @@ FileCacheEntry::~FileCacheEntry() {
     MemFree((void *)mBuf);
 }
 
-bool FileCacheEntry::ReadDone(bool b) {
-    if (!b)
+bool FileCacheEntry::ReadDone(bool silent) {
+    if (!silent)
         mLastRead = SystemMs();
 
     if (mSize > -1)
@@ -91,12 +91,12 @@ bool FileCacheEntry::ReadDone(bool b) {
     return false;
 }
 
-void FileCacheEntry::StartRead(LoaderPos lp, bool b) {
+void FileCacheEntry::StartRead(LoaderPos pos, bool temp) {
     MILO_ASSERT(mLoader == NULL, 0x9b);
     MILO_ASSERT(!mBuf, 0x9c);
     MILO_ASSERT(mSize == -1, 0x9d);
     mLoader =
-        new FileLoader(mReadFileName, mReadFileName.c_str(), lp, 0x20000, b, false, 0, 0);
+        new FileLoader(mReadFileName, mReadFileName.c_str(), pos, 0x20000, temp, false, 0, 0);
 }
 
 File *FileCacheEntry::MakeFile() {
@@ -119,9 +119,9 @@ FileCacheFile::FileCacheFile(FileCacheEntry *entry)
 
 FileCacheFile::~FileCacheFile() { mParent->Release(); }
 
-bool FileCacheFile::ReadDone(int &iref) {
+bool FileCacheFile::ReadDone(int &oBytes) {
     if (!mParent->ReadDone(false)) {
-        iref = 0;
+        oBytes = 0;
         return false;
     } else {
         if (mParent->Fail())
@@ -132,7 +132,7 @@ bool FileCacheFile::ReadDone(int &iref) {
                 mData = 0;
                 Read(buf, mBytesRead);
             }
-            iref = mBytesRead;
+            oBytes = mBytesRead;
             return true;
         }
     }
@@ -152,33 +152,33 @@ int FileCacheFile::Read(void *iData, int iBytes) {
     }
 }
 
-bool FileCacheFile::ReadAsync(void *v, int i) {
+bool FileCacheFile::ReadAsync(void *iData, int iBytes) {
     MILO_ASSERT(!mData, 0x110);
     if (mParent->ReadDone(false)) {
         if (mParent->Fail())
             return false;
         else {
-            Read(v, i);
+            Read(iData, iBytes);
             return true;
         }
     } else {
-        mBytesRead = i;
-        mData = v;
+        mBytesRead = iBytes;
+        mData = iData;
         return true;
     }
 }
 
-int FileCacheFile::Seek(int i1, int i2) {
+int FileCacheFile::Seek(int iOffset, int iType) {
     int ret;
-    switch (i2) {
+    switch (iType) {
     case 0:
-        ret = i1;
+        ret = iOffset;
         break;
     case 1:
-        ret = Tell() + i1;
+        ret = Tell() + iOffset;
         break;
     case 2:
-        ret = mParent->mSize + i1;
+        ret = mParent->mSize + iOffset;
         break;
     default:
         return mPos;
@@ -194,8 +194,8 @@ int FileCacheFile::Size() { return mParent->mSize; }
 #pragma endregion
 #pragma region FileCache
 
-FileCache::FileCache(int size, LoaderPos lp, bool b1, bool b2)
-    : mMaxSize(size), mTryClear(0), unk14(lp), unk18(b1), unk19(b2) {
+FileCache::FileCache(int size, LoaderPos pos, bool temp, bool notifyOnDump)
+    : mMaxSize(size), mTryClear(0), mLoaderPos(pos), mTemp(temp), mNotifyOnDump(notifyOnDump) {
     gCaches.push_back(this);
     mEntries.reserve(0x200);
 }
@@ -228,26 +228,26 @@ bool FileCache::DoneCaching() {
     return true;
 }
 
-File *FileCache::GetFileAll(const char *cc) {
+File *FileCache::GetFileAll(const char *file) {
     FOREACH (it, gCaches) {
-        File *file = (*it)->GetFile(cc);
-        if (file)
-            return file;
+        File *fp = (*it)->GetFile(file);// TODO: find the proper name for this var in the pdb
+        if (fp)
+            return fp;
     }
     return nullptr;
 }
 
-bool FileCache::FileCached(const char *cc) {
-    FilePath path(DirLoader::CachedPath(cc, 0));
-    File *file = GetFile(path.c_str());
-    if (file) {
-        delete file;
+bool FileCache::FileCached(const char *file) {
+    FilePath path(DirLoader::CachedPath(file, 0));
+    File *fp = GetFile(path.c_str()); // TODO: find the proper name for this var in the pdb
+    if (fp) {
+        delete fp;
         return true;
     } else
         return false;
 }
 
-void FileCache::StartSet(int iii) {
+void FileCache::StartSet(int priority) {
     mTryClear = false;
     for (int i = 0; i < mEntries.size(); i++) {
         FileCacheEntry *curEntry = mEntries[i];
@@ -257,7 +257,7 @@ void FileCache::StartSet(int iii) {
             mEntries.erase(mEntries.begin() + i);
             i--;
         } else {
-            mEntries[i]->mPriority = iii;
+            mEntries[i]->mPriority = priority;
         }
     }
 }
@@ -292,14 +292,14 @@ void FileCache::EndSet() {
     Poll();
 }
 
-void FileCache::SetSize(int i) {
-    mMaxSize = i;
+void FileCache::SetSize(int size) {
+    mMaxSize = size;
     EndSet();
 }
 
-File *FileCache::GetFile(const char *cc) {
+File *FileCache::GetFile(const char *p) {
     FilePathTracker tracker(".");
-    FilePath file(cc);
+    FilePath file(p);
     for (int i = 0; i < mEntries.size(); i++) {
         FileCacheEntry *curEntry = mEntries[i];
         if (curEntry->mFileName == file) {
@@ -335,7 +335,7 @@ void FileCache::Poll() {
         }
         FileCacheEntry *cur = mEntries[i];
         if (cur->mSize <= -1 && !cur->HasLoader()) {
-            cur->StartRead(unk14, unk18);
+            cur->StartRead(mLoaderPos, mTemp);
             i3--;
         }
     }
@@ -367,9 +367,9 @@ void FileCache::PollUntilLoaded() {
     Poll();
 }
 
-void FileCache::DumpOverSize(int iii) {
+void FileCache::DumpOverSize(int maxSize) {
     int i2 = CurSize();
-    while (i2 > iii) {
+    while (i2 > maxSize) {
         int u9 = -1;
         int i8 = 0;
         float f1 = 0;
@@ -386,7 +386,7 @@ void FileCache::DumpOverSize(int iii) {
         if (u9 == -1)
             break;
         FileCacheEntry *delEntry = mEntries[u9];
-        if (unk19) {
+        if (mNotifyOnDump) {
             int eSize = delEntry->mSize;
             MILO_NOTIFY(
                 "Forced to dump entry with size %i (max size %i)", eSize, mMaxSize
@@ -398,51 +398,51 @@ void FileCache::DumpOverSize(int iii) {
     }
 }
 
-void FileCache::Add(const FilePath &fp, char *c, int iii) {
+void FileCache::Add(const FilePath &p, char *buffer, int size) {
     mTryClear = false;
-    FilePath file(DirLoader::CachedPath(fp.c_str(), 0));
+    FilePath file(DirLoader::CachedPath(p.c_str(), 0));
     for (int i = 0; i < mEntries.size(); i++) {
         if (file == mEntries[i]->mFileName) {
             return;
         }
     }
     MILO_ASSERT(GetFileAll(file.c_str()) == NULL, 0x23D);
-    mEntries.push_back(new FileCacheEntry(file, c, iii));
+    mEntries.push_back(new FileCacheEntry(file, buffer, size));
 }
 
-void FileCache::Add(const FilePath &fp1, int iii, const FilePath &fp2) {
+void FileCache::Add(const FilePath &p, int priority, const FilePath &rFile) {
     mTryClear = false;
     FilePath file;
-    const char *ext = FileGetExt(fp1.c_str());
+    const char *ext = FileGetExt(p.c_str());
     if (streq(ext, "milo")) {
-        file.SetRoot(DirLoader::CachedPath(fp1.c_str(), 0));
+        file.SetRoot(DirLoader::CachedPath(p.c_str(), 0));
     } else if (streq(ext, "png") || streq(ext, "bmp")) {
         if (sResourceCacheHelper) {
-            file.SetRoot(sResourceCacheHelper->CacheFile(fp1.c_str()));
+            file.SetRoot(sResourceCacheHelper->CacheFile(p.c_str()));
         } else {
-            file = fp1;
+            file = p;
         }
     } else if (streq(ext, "wav")) {
         if (sWavCacheHelper) {
-            file.SetRoot(sWavCacheHelper->CacheFile(fp1.c_str()));
+            file.SetRoot(sWavCacheHelper->CacheFile(p.c_str()));
         } else {
-            file = fp1;
+            file = p;
         }
     } else {
-        file = fp1;
+        file = p;
     }
 
     for (int i = 0; i < mEntries.size(); i++) {
         if (file == mEntries[i]->mFileName) {
-            MaxEq(mEntries[i]->mPriority, iii);
+            MaxEq(mEntries[i]->mPriority, priority);
             return;
         }
     }
     MILO_ASSERT(GetFileAll(file.c_str()) == NULL, 0x21A);
     FilePath fp30;
-    if (fp2.empty())
+    if (rFile.empty())
         fp30 = file;
     else
-        fp30.SetRoot(DirLoader::CachedPath(fp2.c_str(), 0));
-    mEntries.push_back(new FileCacheEntry(file, fp30, iii));
+        fp30.SetRoot(DirLoader::CachedPath(rFile.c_str(), 0));
+    mEntries.push_back(new FileCacheEntry(file, fp30, priority));
 }

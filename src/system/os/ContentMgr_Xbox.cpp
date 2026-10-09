@@ -361,11 +361,11 @@ void XboxContentMgr::PollRefresh() {
     ContentMgr::PollRefresh();
 }
 
-bool XboxContentMgr::MountContent(Symbol name) {
+bool XboxContentMgr::MountContent(Symbol contentName) {
     bool ret = false;
     bool found = false;
     FOREACH (it, mContents) {
-        if (name == (*it)->FileName()) {
+        if (contentName == (*it)->FileName()) {
             found = true;
             (*it)->Mount();
             mState = kContentMgrState7;
@@ -376,7 +376,7 @@ bool XboxContentMgr::MountContent(Symbol name) {
         }
     }
     if (!found) {
-        MILO_NOTIFY("\"%s\" not found to mount.", name.Str());
+        MILO_NOTIFY("\"%s\" not found to mount.", contentName.Str());
     }
     int i11 = 0;
     int i4 = 0;
@@ -388,7 +388,7 @@ bool XboxContentMgr::MountContent(Symbol name) {
             Content::State cState = (*it)->GetState();
             if (cState == 4 || cState == 2 || cState == 1) {
                 i11++;
-                if (name != (*it)->FileName() && (*it)->GetLRM() < i9
+                if (contentName != (*it)->FileName() && (*it)->GetLRM() < i9
                     && (*it)->GetState() != 2) {
                     cnt = *it;
                     i9 = cnt->GetLRM();
@@ -407,10 +407,10 @@ bool XboxContentMgr::MountContent(Symbol name) {
     return ret;
 }
 
-bool XboxContentMgr::IsMounted(Symbol name) {
+bool XboxContentMgr::IsMounted(Symbol contentName) {
     bool ret = false;
     FOREACH (it, mContents) {
-        if (name == (*it)->FileName()) {
+        if (contentName == (*it)->FileName()) {
             ret = (*it)->GetState() == Content::kMounted;
             break;
         }
@@ -418,12 +418,12 @@ bool XboxContentMgr::IsMounted(Symbol name) {
     return ret;
 }
 
-bool XboxContentMgr::IsCorrupt(Symbol contentName, const char *&displayName) {
+bool XboxContentMgr::IsCorrupt(Symbol contentName, const char *&packageName) {
     bool ret = false;
     FOREACH (it, mContents) {
         if (contentName == (*it)->FileName()) {
             ret = (*it)->IsCorrupt();
-            displayName = (*it)->DisplayName();
+            packageName = (*it)->DisplayName();
             break;
         }
     }
