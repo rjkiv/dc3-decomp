@@ -9,8 +9,8 @@
 #include "utl/Loader.h"
 #include "utl/Str.h"
 
-int ArkFile::Read(void *c, int a) {
-    if (ReadAsync(c, a) == 0)
+int ArkFile::Read(void *iBuff, int iBytes) {
+    if (ReadAsync(iBuff, iBytes) == 0)
         return 0;
     int ret = -1;
     while (ReadDone(ret) == 0)
@@ -18,16 +18,16 @@ int ArkFile::Read(void *c, int a) {
     return ret;
 }
 
-int ArkFile::Seek(int offset, int mode) {
-    switch (mode) {
+int ArkFile::Seek(int iOffset, int iMode) {
+    switch (iMode) {
     case 0:
-        mTell = offset;
+        mTell = iOffset;
         break;
     case 1:
-        mTell += offset;
+        mTell += iOffset;
         break;
     case 2:
-        mTell = mSize + offset;
+        mTell = mSize + iOffset;
         break;
     default:
         break;
@@ -35,15 +35,15 @@ int ArkFile::Seek(int offset, int mode) {
     return mTell;
 }
 
-void ArkFile::TaskDone(int a) {
+void ArkFile::TaskDone(int iBytes) {
     mNumOutstandingTasks--;
-    mBytesRead += a;
-    mTell += a;
+    mBytesRead += iBytes;
+    mTell += iBytes;
 }
 
-bool ArkFile::ReadDone(int &i) {
+bool ArkFile::ReadDone(int &oBytes) {
     TheBlockMgr.Poll();
-    i = mBytesRead;
+    oBytes = mBytesRead;
     return mNumOutstandingTasks == 0;
 }
 
@@ -65,7 +65,7 @@ ArkFile::~ArkFile() {
     }
 }
 
-int ArkFile::Write(const void *, int) {
+int ArkFile::Write(const void *iBuff, int iBytes) {
     MILO_FAIL("ERROR: Cannot write to a file in an archive!");
     return 0;
 }

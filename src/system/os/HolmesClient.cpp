@@ -65,17 +65,17 @@ namespace {
     bool gHolmesPrintEnable = true;
     Holmes::Protocol gPendingResponse = Holmes::kInvalidOpcode;
 
-    void BeginCmd(Holmes::Protocol prot, bool b) {
-        if (b) {
-            gProfile[prot].count += 1;
+    void BeginCmd(Holmes::Protocol type, bool count) {
+        if (count) {
+            gProfile[type].count += 1;
         }
-        gProfile[prot].work.Start();
+        gProfile[type].work.Start();
     }
 
     static const int sEndCmdState = 0x2000d;
 
-    void EndCmd(Holmes::Protocol prot) {
-        gProfile[prot].work.Stop();
+    void EndCmd(Holmes::Protocol type) {
+        gProfile[type].work.Stop();
         if (gRealMaxBufferSize != 0) {
             MILO_NOTIFY_ONCE(
                 "HolmesClient buffer exceeded %d < %d", sEndCmdState, gRealMaxBufferSize
@@ -92,25 +92,25 @@ namespace {
         gStreamBuffer->Compact();
     }
 
-    void WaitForAnyResponse(Holmes::Protocol prot) {
+    void WaitForAnyResponse(Holmes::Protocol type) {
         if (gPendingResponse == Holmes::kInvalidOpcode
             && gHolmesStream->Eof() != NotEof) {
             AutoSlowFrame frame(__FUNCTION__, 5);
-            gProfile[prot].wait.Start();
-            float split = gProfile[prot].wait.SplitMs();
+            gProfile[type].wait.Start();
+            float split = gProfile[type].wait.SplitMs();
             float f9 = 2000;
             while (gHolmesStream->Eof() != NotEof) {
                 Timer::Sleep(0);
-                if (!gStackTraced && gProfile[prot].wait.SplitMs() - split > f9) {
+                if (!gStackTraced && gProfile[type].wait.SplitMs() - split > f9) {
                     printf(
                         "[Holmes] %s opcode blocked for %.0f seconds\n",
-                        Holmes::ProtocolDebugString(prot),
+                        Holmes::ProtocolDebugString(type),
                         f9 / 1000
                     );
                     f9 += 1000;
                 }
             }
-            gProfile[prot].wait.Stop();
+            gProfile[type].wait.Stop();
         }
     }
 
@@ -121,10 +121,10 @@ namespace {
                                               Holmes::kInvalidOpcode };
     static Timer *holmesReadopcTimer;
 
-    bool CheckForResponse(Holmes::Protocol prot, bool b) {
+    bool CheckForResponse(Holmes::Protocol type, bool IsPolling) {
         if (gPendingResponse == Holmes::kInvalidOpcode) {
             bool b9;
-            if (b) {
+            if (IsPolling) {
                 gPollStreamEof = gHolmesStream->Eof() != NotEof;
                 b9 = gPollStreamEof;
             } else {
@@ -141,11 +141,11 @@ namespace {
                 MILO_ASSERT(gPendingResponse != Holmes::kInvalidOpcode, 0xEF);
             }
         }
-        bool isPending = gPendingResponse == prot;
+        bool isPending = gPendingResponse == type;
         if (!isPending) {
             for (int i = 0; i < DIM(sPossibleResponses); i++) {
                 if (sPossibleResponses[i] == gPendingResponse
-                    || sPossibleResponses[i] == prot) {
+                    || sPossibleResponses[i] == type) {
                     isPending = true;
                     break;
                 }
@@ -157,10 +157,10 @@ namespace {
             MILO_FAIL(
                 "this shouldn't be happening %s %s\n",
                 Holmes::ProtocolDebugString(gPendingResponse),
-                Holmes::ProtocolDebugString(prot)
+                Holmes::ProtocolDebugString(type)
             );
         }
-        return gPendingResponse == prot;
+        return gPendingResponse == type;
     }
 
     void CheckInput(bool isPolling) {
@@ -203,13 +203,13 @@ namespace {
         return false;
     }
 
-    void WaitForResponse(Holmes::Protocol prot) {
+    void WaitForResponse(Holmes::Protocol type) {
         while (true) {
-            if (CheckForResponse(prot, false)) {
+            if (CheckForResponse(type, false)) {
                 return;
             }
-            WaitForAnyResponse(prot);
-            if (CheckReads(false) && prot == 5) {
+            WaitForAnyResponse(type);
+            if (CheckReads(false) && type == 5) {
                 return;
             }
             CheckInput(false);
@@ -233,14 +233,14 @@ namespace {
         }
     }
 
-    void HolmesClientPollInternal(bool b) {
+    void HolmesClientPollInternal(bool isPolling) {
         CritSecTracker cst(&gCrit);
 
         if (!gHolmesStream)
             return;
 
-        CheckInput(b);
-        CheckReads(b);
+        CheckInput(isPolling);
+        CheckReads(isPolling);
     };
 }
 
@@ -255,29 +255,29 @@ bool PendingRead(File *file) {
     return false;
 }
 
-bool CanUseHolmes(int p1) {
+bool CanUseHolmes(int iMode) {
     if (!UsingCD())
         return true;
 
-    if (gHostConfig != false && (p1 & 2U) != 0)
+    if (gHostConfig != false && (iMode & 2U) != 0)
         return true;
 
-    if (gHostLogging != false && (p1 & 1U) != 0)
+    if (gHostLogging != false && (iMode & 1U) != 0)
         return true;
 
     return false;
 }
 
-bool UsingHolmes(int p1) {
+bool UsingHolmes(int iMode) {
     if (!gHolmesStream)
         return false;
 
-    return CanUseHolmes(p1);
+    return CanUseHolmes(iMode);
 }
 
-void HolmesSetFileShare(const char *machine, const char *share) {
-    strncpy(gMachineName, machine, 64);
-    strncpy(gShareName, share, 64);
+void HolmesSetFileShare(const char *machineName, const char *shareName) {
+    strncpy(gMachineName, machineName, 64);
+    strncpy(gShareName, shareName, 64);
 }
 
 const char *HolmesFileHostName() { return gMachineName; }
@@ -314,7 +314,7 @@ DataNode DumpHolmesLog(DataArray *) {
 
 static const int kHolmesCurrentVersion = HOLMES_CURRENT_VERSION;
 
-bool HolmesClientInitOpcode(bool quiet) {
+bool HolmesClientInitOpcode(bool reinit) {
     bool fail = 0;
     *gStreamBuffer << u8(Holmes::kVersion) << HOLMES_CURRENT_VERSION;
     *gStreamBuffer << HolmesClient::PlatformGetHostName();
@@ -324,7 +324,7 @@ bool HolmesClientInitOpcode(bool quiet) {
     *gStreamBuffer << u8(TheLoadMgr.GetPlatform());
     *gStreamBuffer << u8(GetGfxMode());
     HolmesFlushStreamBuffer();
-    if (!quiet) {
+    if (!reinit) {
         WaitForAnyResponse(Holmes::kVersion);
         u8 response;
         *gHolmesStream >> response;
@@ -431,11 +431,11 @@ void HolmesClientReInit() {
     return;
 }
 
-int HolmesClientSysExec(const char *cc) {
+int HolmesClientSysExec(const char *cmdLine) {
     CritSecTracker cst(&gCrit);
     BeginCmd(Holmes::kSysExec, true);
     MILO_ASSERT(gHolmesStream, 750);
-    *gStreamBuffer << u8(Holmes::kSysExec) << cc;
+    *gStreamBuffer << u8(Holmes::kSysExec) << cmdLine;
     HolmesFlushStreamBuffer();
     WaitForResponse(Holmes::kSysExec);
     int ret;
@@ -466,12 +466,12 @@ int HolmesClientGetStat(const char *filename, FileStat &stat) {
         return -1;
 }
 
-int HolmesClientMkDir(const char *cc) {
+int HolmesClientMkDir(const char *path) {
     CritSecTracker cst(&gCrit);
     BeginCmd(Holmes::kMkDir, true);
     MILO_ASSERT(gHolmesStream, 818);
     *gStreamBuffer << u8(Holmes::kMkDir);
-    *gStreamBuffer << cc;
+    *gStreamBuffer << path;
     HolmesFlushStreamBuffer();
     WaitForResponse(Holmes::kMkDir);
     int ret;
@@ -481,12 +481,12 @@ int HolmesClientMkDir(const char *cc) {
     return ret;
 }
 
-int HolmesClientDelete(const char *cc) {
+int HolmesClientDelete(const char *path) {
     CritSecTracker cst(&gCrit);
     BeginCmd(Holmes::kDelete, true);
     MILO_ASSERT(gHolmesStream, 839);
     *gStreamBuffer << u8(Holmes::kDelete);
-    *gStreamBuffer << cc;
+    *gStreamBuffer << path;
     HolmesFlushStreamBuffer();
     WaitForResponse(Holmes::kDelete);
     int ret;
@@ -518,12 +518,12 @@ unsigned int HolmesClientPollJoypad() {
     return ret;
 }
 
-void HolmesClientTruncate(int i1, int i2) {
+void HolmesClientTruncate(int file_handle, int length) {
     CritSecTracker tracker(&gCrit);
     MILO_ASSERT(gHolmesStream, 0x3AD);
     if (!gHolmesStream->Fail() || !gHostLogging) {
         BeginCmd(Holmes::kTruncateFile, true);
-        *gStreamBuffer << (unsigned char)Holmes::kTruncateFile << i1 << i2;
+        *gStreamBuffer << (unsigned char)Holmes::kTruncateFile << file_handle << length;
         HolmesFlushStreamBuffer();
         WaitForResponse(Holmes::kTruncateFile);
         int x;
@@ -534,15 +534,15 @@ void HolmesClientTruncate(int i1, int i2) {
     }
 }
 
-bool HolmesClientOpen(const char *cc1, int i2, unsigned int &uiref, int &iref) {
+bool HolmesClientOpen(const char *filename, int mode, unsigned int &file_size, int &file_handle) {
     CritSecTracker tracker(&gCrit);
     if (gHostLogging) {
-        if (i2 & 1U) {
+        if (mode & 1U) {
             if (!gHolmesStream) {
                 return false;
             }
         } else if (!gHostConfig) {
-            MILO_FAIL("gHostLogging tried to read file: %s", cc1);
+            MILO_FAIL("gHostLogging tried to read file: %s", filename);
         }
     }
     MILO_ASSERT(gHolmesStream, 0x36A);
@@ -551,13 +551,13 @@ bool HolmesClientOpen(const char *cc1, int i2, unsigned int &uiref, int &iref) {
     } else {
         BeginCmd(Holmes::kOpenFile, true);
         unsigned char val = 3;
-        *gStreamBuffer << val << cc1;
-        val = (i2 >> 1) & 1;
+        *gStreamBuffer << val << filename;
+        val = (mode >> 1) & 1;
         *gStreamBuffer << val;
-        *gStreamBuffer << (unsigned char)((i2 >> 0x12) & 1);
+        *gStreamBuffer << (unsigned char)((mode >> 0x12) & 1);
         if (val == 0) {
-            *gStreamBuffer << (unsigned char)((i2 >> 8) & 1);
-            val = (i2 >> 9) & 1;
+            *gStreamBuffer << (unsigned char)((mode >> 8) & 1);
+            val = (mode >> 9) & 1;
             *gStreamBuffer << val;
         }
         HolmesFlushStreamBuffer();
@@ -565,8 +565,8 @@ bool HolmesClientOpen(const char *cc1, int i2, unsigned int &uiref, int &iref) {
         int i7c;
         *gHolmesStream >> i7c;
         if (i7c != -1) {
-            *gHolmesStream >> iref;
-            uiref = i7c;
+            *gHolmesStream >> file_handle;
+            file_size = i7c;
         }
         gPendingResponse = Holmes::kInvalidOpcode;
         EndCmd(Holmes::kOpenFile);
@@ -577,14 +577,14 @@ bool HolmesClientOpen(const char *cc1, int i2, unsigned int &uiref, int &iref) {
     return false;
 }
 
-void HolmesClientWrite(int i1, int i2, int i3, const void *v) {
-    if (i3 != 0) {
+void HolmesClientWrite(int file_handle, int start, int bytes, const void *buf) {
+    if (bytes != 0) {
         CritSecTracker tracker(&gCrit);
         MILO_ASSERT(gHolmesStream, 0x395);
         if (!gHolmesStream->Fail() || !gHostLogging) {
             BeginCmd(Holmes::kWriteFile, true);
-            *gStreamBuffer << (unsigned char)Holmes::kWriteFile << i1 << i2 << i3;
-            gStreamBuffer->Write(v, i3);
+            *gStreamBuffer << (unsigned char)Holmes::kWriteFile << file_handle << start << bytes;
+            gStreamBuffer->Write(buf, bytes);
             HolmesFlushStreamBuffer();
             WaitForResponse(Holmes::kWriteFile);
             int x;
@@ -596,54 +596,54 @@ void HolmesClientWrite(int i1, int i2, int i3, const void *v) {
     }
 }
 
-void HolmesClientRead(int i1, int i2, int i3, void *v, File *file) {
-    if (i3 != 0) {
+void HolmesClientRead(int file_handle, int start, int bytes, void *buf, File *requestor) {
+    if (bytes != 0) {
         CritSecTracker tracker(&gCrit);
         MILO_ASSERT(gHolmesStream, 0x3C7);
         BeginCmd(Holmes::kReadFile, true);
-        *gStreamBuffer << (unsigned char)Holmes::kReadFile << i1 << i2 << i3;
+        *gStreamBuffer << (unsigned char)Holmes::kReadFile << file_handle << start << bytes;
         HolmesFlushStreamBuffer();
 
         ReadRequest req;
-        req.mRequestor = file;
-        req.mBuffer = v;
-        req.mBytes = i3;
+        req.mRequestor = requestor;
+        req.mBuffer = buf;
+        req.mBytes = bytes;
         gRequests.push_back(req);
         EndCmd(Holmes::kReadFile);
         return;
     }
 }
 
-bool HolmesClientReadDone(File *file) {
+bool HolmesClientReadDone(File *f) {
     CritSecTracker tracker(&gCrit);
-    if (PendingRead(file)) {
+    if (PendingRead(f)) {
         HolmesClientPollInternal(false);
-        return !PendingRead(file);
+        return !PendingRead(f);
     } else {
         return false;
     }
 }
 
-void HolmesClientClose(File *file, int i2) {
+void HolmesClientClose(File *f, int file_handle) {
     CritSecTracker tracker(&gCrit);
     BeginCmd(Holmes::kCloseFile, true);
     MILO_ASSERT(gHolmesStream, 0x3F4);
-    if (PendingRead(file)) {
+    if (PendingRead(f)) {
         WaitForReads();
     }
-    *gStreamBuffer << (unsigned char)Holmes::kCloseFile << i2;
+    *gStreamBuffer << (unsigned char)Holmes::kCloseFile << file_handle;
     HolmesFlushStreamBuffer();
     EndCmd(Holmes::kCloseFile);
 }
 
-CacheResourceResult HolmesClientCacheResource(const char *c1, const char *c2) {
+CacheResourceResult HolmesClientCacheResource(const char *filename, const char *cachedName) {
     AutoSlowFrame frame(__FUNCTION__, 1000);
     CritSecTracker tracker(&gCrit);
     BeginCmd(Holmes::kCacheResource, true);
-    gLastCachedResource = c2;
+    gLastCachedResource = cachedName;
     MILO_ASSERT(gHolmesStream, 0x4CC);
     *gStreamBuffer << (unsigned char)Holmes::kCacheResource;
-    *gStreamBuffer << c1;
+    *gStreamBuffer << filename;
     HolmesFlushStreamBuffer();
     WaitForResponse(Holmes::kCacheResource);
     char result;
@@ -654,18 +654,18 @@ CacheResourceResult HolmesClientCacheResource(const char *c1, const char *c2) {
     return gLastCacheResult;
 }
 
-bool HolmesClientCacheFile(char *c1, const char *cc2) {
+bool HolmesClientCacheFile(char *localName, const char *filename) {
     CritSecTracker tracker(&gCrit);
     AutoSlowFrame frame(__FUNCTION__, 20000);
     BeginCmd(Holmes::kCacheFile, true);
-    String str(cc2);
-    HolmesToLocal(c1, str.c_str());
-    if (*c1 == '\0') {
+    String str(filename);
+    HolmesToLocal(localName, str.c_str());
+    if (*localName == '\0') {
         EndCmd(Holmes::kCacheFile);
         return false;
     } else {
         FileStat curStat;
-        bool fileRes = GetFileAttributesExA(c1, GetFileExInfoStandard, &curStat);
+        bool fileRes = GetFileAttributesExA(localName, GetFileExInfoStandard, &curStat);
         u64 time = curStat.st_mtime;
         if (str == gLastCachedResource && (gLastCacheResult > 0 || fileRes)) {
             EndCmd(Holmes::kCacheFile);
@@ -687,16 +687,16 @@ bool HolmesClientCacheFile(char *c1, const char *cc2) {
 }
 
 void HolmesClientEnumerate(
-    const char *cc1,
-    void (*func)(const char *, const char *),
-    bool b3,
-    const char *cc4,
-    bool b5
+    const char *dir,
+    void (*cb)(const char *, const char *), // param called cb in the pdb
+    bool recurse,
+    const char *pattern,
+    bool dirs
 ) {
     CritSecTracker tracker(&gCrit);
     BeginCmd(Holmes::kEnumerate, true);
     *gStreamBuffer << (unsigned char)Holmes::kEnumerate;
-    *gStreamBuffer << cc1 << b3 << cc4 << b5;
+    *gStreamBuffer << dir << recurse << pattern << dirs;
     HolmesFlushStreamBuffer();
     std::vector<RecurseInfo> info;
     WaitForResponse(Holmes::kEnumerate);
@@ -710,34 +710,34 @@ void HolmesClientEnumerate(
     }
     gPendingResponse = Holmes::kInvalidOpcode;
     for (int i = 0; i < info.size(); i++) {
-        func(info[i].s1.c_str(), info[i].s2.c_str());
+        cb(info[i].s1.c_str(), info[i].s2.c_str());
     }
     EndCmd(Holmes::kEnumerate);
 }
 
-void HolmesClientStackTrace(const char *cc, struct StackData *stack, int i, String &ret) {
-    ret = "";
+void HolmesClientStackTrace(const char *file, struct StackData *stack, int stack_size, String &stack_desc) {
+    stack_desc = "";
     CritSecTracker cst(&gCrit);
     if (gHolmesStream && !gHolmesStream->Fail()) {
         BeginCmd(Holmes::kStackTrace, true);
         *gStreamBuffer << u8(Holmes::kStackTrace);
-        *gStreamBuffer << cc;
-        *gStreamBuffer << i;
-        for (int j = 0; j < i; j++) {
+        *gStreamBuffer << file;
+        *gStreamBuffer << stack_size;
+        for (int j = 0; j < stack_size; j++) {
             *gStreamBuffer << stack->mFailThreadStack[j];
         }
         HolmesFlushStreamBuffer();
         gStackTraced = true;
         WaitForResponse(Holmes::kStackTrace);
-        *gHolmesStream >> ret;
+        *gHolmesStream >> stack_desc;
         gPendingResponse = Holmes::kInvalidOpcode;
         EndCmd(Holmes::kStackTrace);
         return;
     }
 }
 
-void HolmesClientSendMessage(const Message &msg) {
-    DataNode dn(msg);
+void HolmesClientSendMessage(const Message &m) {
+    DataNode dn(m);
     CritSecTracker cst(&gCrit);
     if (gHolmesStream && !gHolmesStream->Fail()) {
         BeginCmd(Holmes::kSendMessage, true);

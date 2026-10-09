@@ -20,5 +20,5 @@ protected:
     virtual bool _ReadDone();
     virtual void _Close();
 
-    int unk34; // 0x34
+    int mFileHandle; // 0x34
 };

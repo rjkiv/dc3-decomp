@@ -95,8 +95,8 @@ private:
     unsigned int mMaxArkfileSize; // 0x54
     bool mIsPatched; // 0x58
     HxGuid mGuid; // 0x5c
-    const int *unk6c; // 0x6c
-    int unk70; // 0x70
+    const int *mArkfilePerms; // 0x6c
+    int mArkfilePermsCount; // 0x70
 };
 
 extern Archive *TheArchive;

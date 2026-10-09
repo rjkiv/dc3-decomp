@@ -62,20 +62,20 @@ void HolmesInput::SendKeyboardMessages() {
     mKeyboardStream->Compact();
 }
 
-void HolmesInput::LoadJoypad(BinStream &bs) {
+void HolmesInput::LoadJoypad(BinStream &d) {
     mKeyboardStream->Seek(0, BinStream::kSeekEnd);
     int i20;
-    bs >> i20;
+    d >> i20;
     if (i20 > 0) {
-        mJoypadStream->WriteStream(bs, i20);
+        mJoypadStream->WriteStream(d, i20);
     }
 }
 
-void HolmesInput::LoadKeyboard(BinStream &bs) {
+void HolmesInput::LoadKeyboard(BinStream &d) {
     mKeyboardStream->Seek(0, BinStream::kSeekEnd);
     int i20;
-    bs >> i20;
+    d >> i20;
     if (i20 > 0) {
-        mKeyboardStream->WriteStream(bs, i20);
+        mKeyboardStream->WriteStream(d, i20);
     }
 }
