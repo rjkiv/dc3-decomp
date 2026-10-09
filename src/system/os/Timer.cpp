@@ -24,15 +24,15 @@ Timer Timer::sSlowFrameTimer;
 std::list<std::pair<Timer, TimerStats> > AutoTimer::sTimers;
 std::list<Symbol> sConditionalTimersEnabled;
 
-const char *FormatTime(float time) {
-    if (time < 0.001) {
-        return MakeString("%.2fns", time * 1e+06f);
+const char *FormatTime(float ms) {
+    if (ms < 0.001) {
+        return MakeString("%.2fns", ms * 1e+06f);
     } else if (time < 1) {
-        return MakeString("%.2fus", time * 1000);
+        return MakeString("%.2fus", ms * 1000);
     } else if (time >= 1000) {
-        return MakeString("%.2fs", time / 1000);
+        return MakeString("%.2fs", ms / 1000);
     } else {
-        return MakeString("%.2fms", time);
+        return MakeString("%.2fms", ms);
     }
 }
 
@@ -89,16 +89,16 @@ void Timer::Restart() {
 #pragma endregion
 #pragma region TimerStats
 
-TimerStats::TimerStats(DataArray *cfg)
+TimerStats::TimerStats(DataArray *config)
     : mCount(0), mAvgMs(0.0f), mStdDevMs(0.0f), mMaxMs(0.0f), mNumOverBudget(0),
       mBudget(0.0f), mCritical(0), mNumCritOverBudget(0), mAvgMsInCrit(0.0f) {
-    cfg->FindData("budget", mBudget, false);
-    cfg->FindData("critical", mCritical, false);
+    config->FindData("budget", mBudget, false);
+    config->FindData("critical", mCritical, false);
     for (int i = 0; i < MAX_TOP_VALS; i++)
         mTopValues[i] = 0.0f;
 }
 
-void TimerStats::CollectStats(float ms, bool critical, int critCount) {
+void TimerStats::CollectStats(float ms, bool critFrame, int critFrameCount) {
     static float sTopMs;
     if (mCount++ != 0) {
         mAvgMs += (ms - mAvgMs) / mCount;
@@ -112,9 +112,9 @@ void TimerStats::CollectStats(float ms, bool critical, int critCount) {
         }
         if (mBudget > 0 && ms > mBudget) {
             mNumOverBudget++;
-            if (critical) {
+            if (critFrame) {
                 mNumCritOverBudget++;
-                mAvgMsInCrit += (ms - mAvgMsInCrit) / critCount;
+                mAvgMsInCrit += (ms - mAvgMsInCrit) / critFrameCount;
             }
         }
 
@@ -133,8 +133,8 @@ void TimerStats::CollectStats(float ms, bool critical, int critCount) {
     }
 }
 
-void TimerStats::PrintPctile(float pctile) {
-    float target = mCount * (1.0f - pctile);
+void TimerStats::PrintPctile(float pct) {
+    float target = mCount * (1.0f - pct);
     float top;
     for (int i = 0; i < MAX_TOP_VALS; i++) {
         top = mTopValues[i];
@@ -142,7 +142,7 @@ void TimerStats::PrintPctile(float pctile) {
             break;
         }
     }
-    int a = floorf(pctile * 100);
+    int a = floorf(pct * 100);
     if (target > MAX_TOP_VALS) {
         MILO_LOG(
             "   %dth pctile:   <%.2f THIS IS AN OVERESTIMATE.  For accurate percentile, increase MAX_TOP_VALS in Timer.h\n",
@@ -154,22 +154,22 @@ void TimerStats::PrintPctile(float pctile) {
     }
 }
 
-void TimerStats::Dump(const char *tag, int critCount) {
+void TimerStats::Dump(const char *name, int numCritFrames) {
     if (mCount != 0) {
         MILO_LOG(
             "%s\t(%2.2f, %2.2f), %4.2f, [>%.1f] %.2f {%2.2f} %.1f\n",
-            tag,
+            name,
             mAvgMs,
             mStdDevMs,
             mMaxMs,
             mBudget,
             (float)(mNumOverBudget * 100) / mCount,
             mAvgMsInCrit,
-            (float)(mNumCritOverBudget * 100) / critCount
+            (float)(mNumCritOverBudget * 100) / numCritFrames
         );
         PrintPctile(0.99);
     } else {
-        MILO_LOG("%s <no data>\n", tag);
+        MILO_LOG("%s <no data>\n", name);
     }
 }
 
@@ -224,12 +224,12 @@ DataNode OnPrintTimers(DataArray *a) {
 void AutoGlitchReport::EnableCallback() { gGlitchCallback = true; }
 
 void AutoGlitchReport::SendCallback(
-    float f1, float f2, const char *cc, AutoTimerCallback cb, void *v
+    float ms, float thresh, const char *name, AutoTimerCallback cb, void *v
 ) {
     if (gGlitchCallback) {
         float min = Min(Timer::SlowFrameTimer().SplitMs(), Timer::SlowFrameWaiver());
-        f1 = f1 - min;
-        if (f1 >= f2) {
+        ms = ms - min;
+        if (ms >= thresh) {
             String str;
             for (int i = 0; i < sDepth; i++) {
                 str += ' ';
@@ -237,9 +237,9 @@ void AutoGlitchReport::SendCallback(
             TextStream &d = TheDebug;
             d.Print(str.c_str());
             if (!cb) {
-                MILO_LOG("%s took %.2f ms\n", cc, f1);
+                MILO_LOG("%s took %.2f ms\n", name, ms);
             } else {
-                cb(f1, v);
+                cb(ms, v);
             }
         }
     }
@@ -314,9 +314,9 @@ void AutoTimer::PrintTimers(bool worst) {
     }
 }
 
-void AutoTimer::SetCollectStats(bool collect, bool dump) {
-    sCollectingStats = collect;
-    if (dump && !collect) {
+void AutoTimer::SetCollectStats(bool val, bool dump) {
+    sCollectingStats = val;
+    if (dump && !val) {
         DumpTimerStats();
     }
 }
