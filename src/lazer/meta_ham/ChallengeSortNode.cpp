@@ -333,7 +333,7 @@ void ChallengeSortNode::Text(UIListLabel *listlabel, UILabel *label) const {
         int ownerChallengeScore = TheChallengeSortMgr->GetOwnerChallengeScore(
             mChallengeRecord->GetChallengeRow().songId
         );
-        if (ownerChallengeScore <= mChallengeRecord->GetChallengeRow().score) {
+        if (ownerChallengeScore <= (int)mChallengeRecord->GetChallengeRow().score) {
             if (mChallengeRecord->GetUnk48() != mChallengeRecord->GetUnk4c()) {
                 app_label->SetChallengerName(mChallengeRecord->GetUnk48().Str());
             } else {
@@ -354,7 +354,7 @@ void ChallengeSortNode::Text(UIListLabel *listlabel, UILabel *label) const {
         int ownerChallengeScore = TheChallengeSortMgr->GetOwnerChallengeScore(
             mChallengeRecord->GetChallengeRow().songId
         );
-        if (ownerChallengeScore > mChallengeRecord->GetChallengeRow().score) {
+        if (ownerChallengeScore > (int)mChallengeRecord->GetChallengeRow().score) {
             int ownerChallengeTimestamp = TheChallengeSortMgr->GetOwnerChallengeTimeStamp(
                 mChallengeRecord->GetChallengeRow().songId
             );
@@ -386,7 +386,7 @@ void ChallengeSortNode::Text(UIListLabel *listlabel, UILabel *label) const {
             mChallengeRecord->GetChallengeRow().songId
         );
 
-        if (ownerChallengeScore <= mChallengeRecord->GetChallengeRow().score) {
+        if (ownerChallengeScore <= (int)mChallengeRecord->GetChallengeRow().score) {
             if (mChallengeRecord->GetUnk48() != mChallengeRecord->GetUnk4c()) {
                 app_label->SetChallengeScoreLabel(
                     mChallengeRecord->GetChallengeRow().score
@@ -412,7 +412,7 @@ void ChallengeSortNode::Text(UIListLabel *listlabel, UILabel *label) const {
             mChallengeRecord->GetChallengeRow().songId
         );
 
-        if (ownerChallengeScore > mChallengeRecord->GetChallengeRow().score) {
+        if (ownerChallengeScore > (int)mChallengeRecord->GetChallengeRow().score) {
             int ownerChallengeTimestamp = TheChallengeSortMgr->GetOwnerChallengeTimeStamp(
                 mChallengeRecord->GetChallengeRow().songId
             );
