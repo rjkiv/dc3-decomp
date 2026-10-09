@@ -1,8 +1,10 @@
 #include "world/SpotlightDrawer_NG.h"
 #include "macros.h"
 #include "math/Color.h"
+#include "math/Vec.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "rnddx9/Rnd.h"
 #include "rndobj/RenderState.h"
 #include "rndobj/Cam.h"
 #include "rndobj/Rnd.h"
@@ -33,11 +35,11 @@ void GetLightPosition(Spotlight *s, Vector3 &v) {
 }
 
 NgSpotlightDrawer::NgSpotlightDrawer()
-    : unk94(), unk98(this), mFogDensityMap(0), unkb0(false) {
-    unk94 = Hmx::Object::New<RndCam>();
+    : mCam(), mHoldCam(this), mFogDensityMap(0), mDbgDrawEnable(false) {
+    mCam = Hmx::Object::New<RndCam>();
 }
 
-NgSpotlightDrawer::~NgSpotlightDrawer() { RELEASE(unk94); }
+NgSpotlightDrawer::~NgSpotlightDrawer() { RELEASE(mCam); }
 
 void NgSpotlightDrawer::EndWorld() {
     if (SpotlightDrawer::sNeedDraw) {
@@ -89,19 +91,19 @@ int NgSpotlightDrawer::RTHeight() {
 }
 
 void NgSpotlightDrawer::SpotlightResources::Clear() {
-    if (unk4) {
-        D3DResource_Release(unk4);
-        unk4 = nullptr;
+    if (mDepthTex) {
+        D3DResource_Release(mDepthTex);
+        mDepthTex = nullptr;
     }
-    RELEASE(unk8);
+    RELEASE(mDepthRT);
     RELEASE(mDensityMap);
-    unk18 = nullptr;
+    mFarDepth = nullptr;
 }
 
 void NgSpotlightDrawer::SetXSectionTexture(const Spotlight::BeamDef &def) {
     RndTex *tex = def.mXSection;
     if (!tex) {
-        tex = SR().unk14;
+        tex = SR().mWhite;
     }
     TheShaderMgr.SetPConstant((PShaderConstant)0xB, tex);
     TheRenderState.SetTextureClamp(0xB, RndRenderState::kClampModeClamp);
@@ -109,8 +111,8 @@ void NgSpotlightDrawer::SetXSectionTexture(const Spotlight::BeamDef &def) {
 }
 
 bool NgSpotlightDrawer::RestoreCam() {
-    if (unk98) {
-        unk98->Select();
+    if (mHoldCam) {
+        mHoldCam->Select();
     } else {
         TheRnd.GetDefaultCam()->Select();
     }
@@ -123,14 +125,15 @@ bool NgSpotlightDrawer::CheckFogTexture() {
     } else if (mParams.mTexture) {
         mFogDensityMap = mParams.mTexture;
     } else {
-        mFogDensityMap = SR().unk10;
+        mFogDensityMap = SR().mBlack;
     }
     return mFogDensityMap;
 }
 
 bool NgSpotlightDrawer::CheckSharedResources() {
     if (sSharedResources) {
-        if (sSharedResources->unk8 && sSharedResources->unk8->Width() != RTWidth()) {
+        if (sSharedResources->mDepthRT
+            && sSharedResources->mDepthRT->Width() != RTWidth()) {
             RELEASE(sSharedResources);
         }
         if (sSharedResources)
@@ -138,4 +141,41 @@ bool NgSpotlightDrawer::CheckSharedResources() {
     }
     sSharedResources = new SpotlightResources();
     return CheckRTs(sSharedResources);
+}
+
+void NgSpotlightDrawer::BlurRT() {
+    static float kPixBlur = 1.0f;
+    static bool kTwoPass = true;
+
+    TheDxRnd.Device()->SetDepthStencilSurface(0);
+
+    if (kTwoPass) {
+        BlurRT(kPixBlur, 0.0);
+        BlurRT(0.0, kPixBlur);
+    } else {
+        BlurRT(kPixBlur, kPixBlur);
+    }
+}
+
+void NgSpotlightDrawer::SetupFogDensityState() {
+    Hmx::Matrix4 viewProj;
+
+    if (mFogDensityMap) {
+        TheShaderMgr.SetPConstant(kPShader_FogDensityMap, mFogDensityMap);
+        TheRenderState.SetTextureClamp(5, RndRenderState::kClampModeClamp);
+    }
+
+    RndCam::Current()->GetInfiniteViewProj(viewProj);
+    TheShaderMgr.SetVConstant(kVShader_NumLights, viewProj);
+
+    TheShaderMgr.SetPConstant(
+        kPShader_FogDensity,
+        Vector4(0.0f, mCam->FarPlane() > 0.0f ? 1.0f / mCam->FarPlane() : 0.0f, 0.0f, 0.0f)
+    );
+}
+
+void NgSpotlightDrawer::SetupFogDensityMap() {
+    float x = mParams.mBaseIntensity * 0.01f;
+    float y = mParams.mSmokeIntensity * 0.01f;
+    TheShaderMgr.SetPConstant(kPShader_FogDensity, Vector4(x, y * (1.0f - x), 0.0f, 0.0f));
 }
