@@ -7,9 +7,9 @@
 
 class CartRow {
 public:
-    int unk0;
-    String unk4;
-    String unkc;
+    unsigned int songId; // x0
+    String artist; // 0x4
+    String song; // 0xc
 };
 
 class LockCartJob : public RCJob {

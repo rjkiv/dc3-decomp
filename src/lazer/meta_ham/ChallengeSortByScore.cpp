@@ -77,15 +77,15 @@ NavListHeaderNode *ChallengeSortByScore::NewHeaderNode(NavListItemNode *node) co
 
 NavListItemNode *ChallengeSortByScore::NewItemNode(void *p1) const {
     ChallengeRecord *record = static_cast<ChallengeRecord *>(p1);
-    int score = record->GetChallengeRow().mScore;
+    int score = record->GetChallengeRow().score;
     Symbol sym = record->GetUnk44();
-    int songID = record->GetChallengeRow().mSongID;
+    int songID = record->GetChallengeRow().songId;
 
     int type = 2;
     if (songID == TheChallenges->GetGlobalChallengeSongID()) {
         type = 0;
     } else {
-        songID = record->GetChallengeRow().mSongID;
+        songID = record->GetChallengeRow().songId;
         if (songID == TheChallenges->GetDlcChallengeSongID()) {
             type = 1;
         }

@@ -198,10 +198,10 @@ void GetSongQueue(JsonConverter &c, const JsonObject *o, std::list<SongQueueRow>
     for (int i = 0; i < aSize; i++) {
         JsonArray *cur = static_cast<JsonArray *>(c.GetValue(a, i));
         SongQueueRow row;
-        row.unk0 = c.GetValue(cur, 0)->Int();
-        row.mSongID = c.GetValue(cur, 1)->Int();
-        row.unk8 = c.GetValue(cur, 2)->Str();
-        row.unk10 = c.GetValue(cur, 3)->Str();
+        row.songQueueID = c.GetValue(cur, 0)->Int();
+        row.songID = c.GetValue(cur, 1)->Int();
+        row.artist = c.GetValue(cur, 2)->Str();
+        row.song = c.GetValue(cur, 3)->Str();
         rows->push_back(row);
     }
 }

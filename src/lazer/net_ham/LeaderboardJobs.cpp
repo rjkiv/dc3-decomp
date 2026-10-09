@@ -19,7 +19,7 @@ GetLeaderboardByPlayerJob::GetLeaderboardByPlayerJob(
     static Symbol type_id("type_id");
     static Symbol mode_id("mode_id");
     static Symbol num_rows("num_rows");
-    unkb0 = ui;
+    mChecksum = ui;
     DataPoint dataP;
     dataP.AddPair(song_id, songID);
     dataP.AddPair(type_id, typeID);
@@ -45,15 +45,15 @@ void GetRows(JsonConverter &c, const JsonObject *o, std::vector<LeaderboardRow> 
     for (int i = 0; i < aSize; i++) {
         JsonArray *cur = static_cast<JsonArray *>(c.GetValue(a, i));
         LeaderboardRow row;
-        row.unk0 = c.GetValue(cur, 1)->Str();
-        row.unk8 = c.GetValue(cur, 0)->Int();
-        row.unkc = c.GetValue(cur, 4)->Int();
-        row.unk10 = c.GetValue(cur, 3)->Int();
-        row.unk14 = c.GetValue(cur, 7)->Int();
-        row.unk18 = (Difficulty)c.GetValue(cur, 2)->Int();
-        row.unk1c = false;
-        row.unk1d = c.GetValue(cur, 5)->Bool();
-        row.unk1e = c.GetValue(cur, 6)->Bool();
+        row.gamertag = c.GetValue(cur, 1)->Str();
+        row.pid = c.GetValue(cur, 0)->Int();
+        row.score = c.GetValue(cur, 4)->Int();
+        row.rank = c.GetValue(cur, 3)->Int();
+        row.orank = c.GetValue(cur, 7)->Int();
+        row.diff = (Difficulty)c.GetValue(cur, 2)->Int();
+        row.noFlashcards = false;
+        row.isPercentile = c.GetValue(cur, 5)->Bool();
+        row.isFriend = c.GetValue(cur, 6)->Bool();
         const char *str = c.GetValue(cur, 8)->Str();
         if (strcmp(str, gNullStr) != 0) {
             u64 total = 0;
@@ -61,7 +61,7 @@ void GetRows(JsonConverter &c, const JsonObject *o, std::vector<LeaderboardRow> 
                 int val = *str - 0x30;
                 total = total * 10 + val;
             }
-            row.unk20 = total;
+            row.xuid = total;
         }
         rows->push_back(row);
     }

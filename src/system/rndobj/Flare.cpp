@@ -153,7 +153,7 @@ void RndFlare::SetSteps(int steps) {
     if (mStep == mSteps) {
         mStep = steps;
     } else {
-        mStep *= ((float)steps / (float)mSteps);
+        mStep *= (int)((float)steps / (float)mSteps);
     }
     mSteps = steps;
 }

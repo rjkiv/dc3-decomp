@@ -163,7 +163,7 @@
             "lazer/net_ham/FitnessGoalJobs.cpp": "Matching",
             "lazer/net_ham/FriendsListJobs.cpp": "NonMatching",
             "lazer/net_ham/HamStoreCartJobs.cpp": "Matching",
-            "lazer/net_ham/KinectShare.cpp": "NonMatching",
+            "lazer/net_ham/KinectShare.cpp": "Matching",
             "lazer/net_ham/KinectShareJobs.cpp": "Matching",
             "lazer/net_ham/LeaderboardJobs.cpp": "Matching",
             "lazer/net_ham/MotdJobs.cpp": "Matching",

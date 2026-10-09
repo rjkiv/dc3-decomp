@@ -30,8 +30,8 @@
 StorePanel::StorePanel()
     : unk50(false), mLoadOk(false), unk52(false), unk5c(0),
       unk60(Hmx::Object::New<RndTex>()), mPendingArtCallback(), mJobId(-1),
-      mStorePreviewMgr(0), unk70(false), mPurchaser(0), unk78(nullptr), unk7c(nullptr),
-      unk8c(gNullStr), unk90(gNullStr), unk94(0), unk98(0) {}
+      mStorePreviewMgr(0), unk70(false), mPurchaser(0), unk8c(gNullStr), unk90(gNullStr),
+      unk94(0), unk98(0) {}
 
 StorePanel::~StorePanel() {
     DeleteAll(unk38);
@@ -123,8 +123,8 @@ void StorePanel::Unload() {
     }
     mJobId = -1;
     RELEASE(mPurchaser);
-    unk78 = nullptr;
-    unk7c = nullptr;
+    mPendingPurchase.first = nullptr;
+    mPendingPurchase.second = nullptr;
     unk80.clear();
     RemoveSink(mStorePreviewMgr);
     RELEASE(mStorePreviewMgr);
@@ -143,8 +143,8 @@ void StorePanel::CheckOut(StorePurchaseable *p) {
     MILO_ASSERT(!mPurchaser, 0x2c1);
     Profile *profile = StoreProfile();
     MILO_ASSERT(profile, 0x2c4);
-    unk78 = p;
-    unk7c = profile;
+    mPendingPurchase.first = p;
+    mPendingPurchase.second = profile;
     mPurchaser = new XboxPurchaser(profile->GetPadNum(), p->SongID(), 0, 0, unk8c, 0);
     mPurchaser->Initiate();
 }
@@ -418,19 +418,21 @@ void StorePanel::Poll() {
                                 b2 = true;
                             }
                         } else {
-                            if (unk78 && !unk78->IsPurchased()) {
+                            if (mPendingPurchase.first
+                                && !mPendingPurchase.first->IsPurchased()) {
                                 if (mPurchaser->PurchaseMade()) {
                                     b1 = true;
-                                    unk78->isPurchased = true;
+                                    mPendingPurchase.first->isPurchased = true;
                                     static Message msg("enum_finished");
                                     HandleType(msg);
                                     TheUI->Handle(msg, false);
                                 } else {
-                                    if (mPurchaser->NeedsEnum() && unk7c) {
+                                    if (mPurchaser->NeedsEnum()
+                                        && mPendingPurchase.second) {
                                         unk98 = new PostPurchaseEnumJob(
                                             this,
-                                            unk7c->GetPadNum(),
-                                            unk78->songID,
+                                            mPendingPurchase.second->GetPadNum(),
+                                            mPendingPurchase.first->songID,
                                             mPurchaser->unk4,
                                             mPurchaser->unk8
                                         );
@@ -446,8 +448,8 @@ void StorePanel::Poll() {
                     HandleType(msg);
                     TheUI->Handle(msg, false);
                     RELEASE(mPurchaser);
-                    unk78 = nullptr;
-                    unk7c = nullptr;
+                    mPendingPurchase.first = nullptr;
+                    mPendingPurchase.second = nullptr;
                     unk80.clear();
                 }
             }

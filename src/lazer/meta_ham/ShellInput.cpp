@@ -309,7 +309,7 @@ void ShellInput::EnterControllerMode(bool b) {
         unk_0xA4 = false;
         static Symbol in_controller_mode("in_controller_mode");
         TheHamProvider->SetProperty(in_controller_mode, true);
-        TheRockCentral.SetUnk128(TheRockCentral.GetUnk128() + 1);
+        TheRockCentral.EnterControllerMode();
         unk_0x68.Restart();
         int hamUIPadNum = TheHamUI.GetPadNum();
         if (!TheProfileMgr.CriticalProfile()) {
@@ -335,7 +335,7 @@ void ShellInput::ExitControllerMode(bool b) {
     TheUI->Handle(controllerModeExited, false);
     static Symbol in_controller_mode("in_controller_mode");
     TheHamProvider->SetProperty(in_controller_mode, 0);
-    TheRockCentral.SetUnk12c(TheRockCentral.GetUnk12c() + 1);
+    TheRockCentral.ExitControllerMode();
 }
 
 void ShellInput::DrawDebug() {

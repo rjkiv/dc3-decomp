@@ -51,12 +51,12 @@ void Leaderboards::Text(int, int data, UIListLabel *slot, UILabel *label) const 
     if (data < NumData()) {
         if (slot->Matches("gamertag")) {
             static Symbol gamertag("gamertag");
-            label->SetTokenFmt(gamertag, unk58[data].unk0);
+            label->SetTokenFmt(gamertag, unk58[data].gamertag);
         } else if (slot->Matches("score")) {
-            label->SetInt(unk58[data].unkc, false);
+            label->SetInt(unk58[data].score, false);
         } else if (slot->Matches("no_flashcards")) {
             static Symbol no_flashcards_icon("no_flashcards_icon");
-            if (unk58[data].unk1c) {
+            if (unk58[data].noFlashcards) {
                 label->SetTextToken(no_flashcards_icon);
             } else {
                 label->SetTextToken(gNullStr);
@@ -66,14 +66,14 @@ void Leaderboards::Text(int, int data, UIListLabel *slot, UILabel *label) const 
                 label->SetTextToken(gNullStr);
 
             } else {
-                if (unk58[data].unk1d && unk88 != 2) {
+                if (unk58[data].isPercentile && unk88 != 2) {
                     static char sBuffer[20];
-                    Hx_snprintf(sBuffer, 20, "%d%% ", unk58[data].unk10);
+                    Hx_snprintf(sBuffer, 20, "%d%% ", unk58[data].rank);
                     String str58(sBuffer);
                     label->SetTextToken(str58.c_str());
                 } else {
                     static Symbol rank_fmt("rank_fmt");
-                    label->SetInt(unk58[data].unk10, false);
+                    label->SetInt(unk58[data].rank, false);
                 }
             }
         } else if (slot->Matches("difficulty")) {
@@ -81,7 +81,7 @@ void Leaderboards::Text(int, int data, UIListLabel *slot, UILabel *label) const 
             static Symbol easy_short("easy_short");
             static Symbol medium_short("medium_short");
             static Symbol expert_short("expert_short");
-            Difficulty d = unk58[data].unk18;
+            Difficulty d = unk58[data].diff;
             switch (d) {
             case kDifficultyEasy:
                 label->SetTextToken(easy_short);
@@ -99,8 +99,8 @@ void Leaderboards::Text(int, int data, UIListLabel *slot, UILabel *label) const 
                 MILO_NOTIFY(
                     "Bad difficulty %d retrieved from leaderboards for user                    %s at rank %d!",
                     d,
-                    unk58[data].unk0,
-                    unk58[data].unk10
+                    unk58[data].gamertag,
+                    unk58[data].rank
                 );
                 break;
             }
@@ -152,7 +152,7 @@ bool Leaderboards::HasSelf() const {
     MILO_ASSERT(bHasOnlineID, 0x1CF);
     XUID theXUID = pProfile->GetOnlineID()->GetXUID();
     FOREACH (it, unk58) {
-        if (it->unk20 == theXUID) {
+        if (it->xuid == theXUID) {
             ret = true;
             break;
         }
@@ -170,7 +170,7 @@ bool Leaderboards::IsSelf(int i1) const {
     XUID theXUID = pProfile->GetOnlineID()->GetXUID();
     int idx = 0;
     for (auto it = unk58.begin(); it != unk58.end(); ++it, ++idx) {
-        if (i1 == idx && it->unk20 == theXUID) {
+        if (i1 == idx && it->xuid == theXUID) {
             ret = true;
             break;
         }
@@ -196,12 +196,14 @@ void Leaderboards::Poll() {
 
 void Leaderboards::UploadNextScore() {
     static Symbol ham3("ham3");
-    mRecordScoreData.mStatus = &unk30.front();
+    mRecordScoreData.mSongData = &unk30.front();
     mRecordScoreData.mProfile = unk54;
-    mRecordScoreData.unkc = unk54->GetSongStatusMgr()->CalculateTotalScore(gNullStr);
-    mRecordScoreData.unk10 = unk54->GetSongStatusMgr()->CalculateTotalScore(ham3);
+    mRecordScoreData.mCareerScore =
+        unk54->GetSongStatusMgr()->CalculateTotalScore(gNullStr);
+    mRecordScoreData.mCappedCareerScore =
+        unk54->GetSongStatusMgr()->CalculateTotalScore(ham3);
     TheRockCentral.ManageJob(new RecordScoreJob(
-        this, mRecordScoreData, mRecordScoreData.mStatus->mSongID, true
+        this, mRecordScoreData, mRecordScoreData.mSongData->mSongID, true
     ));
 }
 
@@ -279,7 +281,7 @@ Symbol Leaderboards::ShowGamercard(int i, HamProfile *profile) {
     if ((0 <= i) && (i <= unk58.size())) {
         if (ThePlatformMgr.IsSignedIntoLive(profile->GetPadNum())) {
             if (unk58.size() != 0) {
-                const OnlineID id(unk58[i].unk20);
+                const OnlineID id(unk58[i].xuid);
                 ShowGamercardResult result =
                     ThePlatformMgr.ShowGamercardForPadNum(profile->GetPadNum(), &id);
                 if (result == (ShowGamercardResult)-2) {
@@ -332,7 +334,7 @@ void Leaderboards::ReadScoresComplete(bool b1, bool b2) {
         job->GetRows(&unk58);
         unk98 = nullptr;
         if (b2) {
-            unk64.insert(std::make_pair((unsigned int)job->SongID(), unk58));
+            unk64.insert(std::make_pair((unsigned int)job->GetChecksum(), unk58));
         }
     }
 

@@ -42,7 +42,7 @@ void CursorPanel::Poll() {
         } else {
             pMat = LoadedDir()->Find<RndMat>("depth_buffer_right_crown.mat");
         }
-        RndTex *tex = TheRockCentral.GetMiscArt();
+        RndTex *tex = TheRockCentral.GetUtilityArt();
         if (!tex) {
             tex = pBufferLeftTex;
         }

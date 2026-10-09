@@ -4,13 +4,15 @@
 #include "meta_ham/ProfileMgr.h"
 #include "obj/Task.h"
 
-LiveInput::LiveInput(HamAudio &audio) : mAudio(audio), unk8(0) { mTimer.Restart(); }
+LiveInput::LiveInput(HamAudio &audio) : mAudio(audio), mTimeOffset(0) {
+    mRealTimer.Restart();
+}
 
 float LiveInput::CurrentMs(bool b1) const {
-    const_cast<LiveInput *>(this)->mTimer.Split();
+    const_cast<LiveInput *>(this)->mRealTimer.Split();
     float toAdd;
     if (b1) {
-        toAdd = const_cast<LiveInput *>(this)->mTimer.Ms() + unk8;
+        toAdd = const_cast<LiveInput *>(this)->mRealTimer.Ms() + mTimeOffset;
     } else {
         toAdd = mAudio.GetTime();
     }
@@ -31,11 +33,11 @@ void LiveInput::SetPaused(bool b1) {
 
 void LiveInput::SetTimeOffset() {
     float f1 = TheTaskMgr.Seconds(TaskMgr::kRealTime) * 1000.0f;
-    f1 = f1 - mTimer.SplitMs();
-    unk8 = f1 - TheProfileMgr.GetSongToTaskMgrMs(kGame);
+    f1 = f1 - mRealTimer.SplitMs();
+    mTimeOffset = f1 - TheProfileMgr.GetSongToTaskMgrMs(kGame);
 }
 
 void LiveInput::SetPostWaitJumpOffset(float f1) {
-    mTimer.Restart();
-    unk8 = f1 - mTimer.Ms();
+    mRealTimer.Restart();
+    mTimeOffset = f1 - mRealTimer.Ms();
 }

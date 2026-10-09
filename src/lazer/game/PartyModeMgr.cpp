@@ -877,7 +877,7 @@ void PartyModeMgr::AddNextSongToRCPartySongQueue() {
         BroadcastSyncMsg("skipped_sync");
     } else {
         mPartyJobs[3] = new AddSongToPartySongQueueJob(
-            this, profile->GetOnlineID()->ToString(), unk308.front().mSongID
+            this, profile->GetOnlineID()->ToString(), unk308.front().songID
         );
         TheRockCentral.ManageJob(mPartyJobs[3]);
     }
@@ -1518,16 +1518,16 @@ void PartyModeMgr::ReadPartySongQueue() {
     if (unk308.size() != 0) {
         mCurrSyncedSongID = 0;
         while (unk308.size() != 0) {
-            if (!TheHamSongMgr.GetShortNameFromSongID(unk308.front().mSongID, false)
+            if (!TheHamSongMgr.GetShortNameFromSongID(unk308.front().songID, false)
                      .Null()) {
                 break;
             }
-            DeleteSongFromRCPartySongQueue(unk308.front().unk0);
+            DeleteSongFromRCPartySongQueue(unk308.front().songQueueID);
             unk308.pop_front();
         }
         if (unk308.size() != 0) {
-            mCurrSyncedSongID = unk308.front().mSongID;
-            DeleteSongFromRCPartySongQueue(unk308.front().unk0);
+            mCurrSyncedSongID = unk308.front().songID;
+            DeleteSongFromRCPartySongQueue(unk308.front().songQueueID);
             unk308.pop_front();
         }
     } else {

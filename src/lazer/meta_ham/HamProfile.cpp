@@ -967,13 +967,13 @@ DataNode HamProfile::OnMsg(const SingleItemEnumCompleteMsg &msg) {
 
 void HamProfile::SetLastNewSong() {
     if (IsOkToUpdateProfile() && TheRockCentral.IsOnline()
-        && 0 < TheRockCentral.GetRockCentralTime()) {
+        && 0 < TheRockCentral.GetLastNewSong()) {
         MILO_LOG(
             "---- Updating mLastNewSong from %i to %i\n",
             mProfileTime,
-            TheRockCentral.GetRockCentralTime()
+            TheRockCentral.GetLastNewSong()
         );
-        int i = TheRockCentral.GetRockCentralTime();
+        int i = TheRockCentral.GetLastNewSong();
         mDirty = true;
         mProfileTime = i;
     }

@@ -5,7 +5,7 @@
 #include "os/User.h"
 #include "xdk/XAPILIB.h"
 
-HamUser::HamUser(int i) : unk4(0), unk8(i) {}
+HamUser::HamUser(int i) : mSkeletonIndex(0), mEnrollmentIndex(i) {}
 
 HamUser::~HamUser() {}
 
@@ -23,8 +23,8 @@ BEGIN_PROPSYNCS(HamUser)
 END_PROPSYNCS
 
 int HamUser::GetPadNum() const {
-    if (TheSkeletonIdentifier->GetPlayerPadNum(unk8) < 4) {
-        return TheSkeletonIdentifier->GetPlayerPadNum(unk8);
+    if (TheSkeletonIdentifier->GetPlayerPadNum(mEnrollmentIndex) < 4) {
+        return TheSkeletonIdentifier->GetPlayerPadNum(mEnrollmentIndex);
     } else {
         return -1;
     }

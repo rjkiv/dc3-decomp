@@ -1,4 +1,5 @@
 #include "net_ham/ScoreJobs.h"
+#include "meta_ham/HamProfile.h"
 #include "net_ham/RCJobDingo.h"
 #include "obj/Object.h"
 #include "os/System.h"
@@ -14,15 +15,15 @@ RecordScoreJob::RecordScoreJob(
     static Symbol xp("xp");
     char buffer[36];
     Hx_snprintf(buffer, 36, "score%03d", 0);
-    pt.AddPair(buffer, data.mStatus->mScore);
+    pt.AddPair(buffer, data.mSongData->mScore);
     Hx_snprintf(buffer, 36, "coop_score%03d", 0);
-    pt.AddPair(buffer, data.mStatus->mCoopScore);
+    pt.AddPair(buffer, data.mSongData->mCoopScore);
     Hx_snprintf(buffer, 36, "stars%03d", 0);
-    pt.AddPair(buffer, data.mStatus->mStars);
+    pt.AddPair(buffer, data.mSongData->mStars);
     Hx_snprintf(buffer, 36, "no_flashcards%03d", 0);
-    pt.AddPair(buffer, data.mStatus->mNoFlashcards != false);
+    pt.AddPair(buffer, data.mSongData->mNoFlashcards != false);
     Hx_snprintf(buffer, 36, "diff%03d", 0);
-    pt.AddPair(buffer, data.mStatus->mDifficulty);
+    pt.AddPair(buffer, data.mSongData->mDifficulty);
     Hx_snprintf(buffer, 36, "pid%03d", 0);
     pt.AddPair(buffer, data.mProfile ? data.mProfile->GetOnlineID()->ToString() : "N/A");
     Hx_snprintf(buffer, 36, "xp%03d", 0);
@@ -32,13 +33,13 @@ RecordScoreJob::RecordScoreJob(
         pt.AddPair(buffer, 0);
     }
     Hx_snprintf(buffer, 36, "c_score%03d", 0);
-    pt.AddPair(buffer, data.unkc);
+    pt.AddPair(buffer, (int)data.mCareerScore);
     Hx_snprintf(buffer, 36, "cc_score%03d", 0);
-    pt.AddPair(buffer, data.unk10);
+    pt.AddPair(buffer, (int)data.mCappedCareerScore);
     float f1 = 0;
     float f2 = 0;
     float f3 = 0;
-    data.mProfile->GetFitnessStats(f1, f2, f3);
+    ((HamProfile *)data.mProfile)->GetFitnessStats(f1, f2, f3);
     Hx_snprintf(buffer, 36, "calories%03d", 0);
     pt.AddPair(buffer, f3);
     pt.AddPair(song_id, songID);

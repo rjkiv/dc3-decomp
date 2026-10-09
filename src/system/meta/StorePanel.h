@@ -8,6 +8,7 @@
 #include "obj/Object.h"
 #include "os/PlatformMgr.h"
 #include "rndobj/Tex.h"
+#include "stl/_pair.h"
 #include "types.h"
 #include "ui/UIPanel.h"
 #include "utl/NetCacheLoader.h"
@@ -77,8 +78,9 @@ public:
     StorePreviewMgr *mStorePreviewMgr; // 0x6c
     bool unk70;
     StorePurchaser *mPurchaser; // 0x74
-    StorePurchaseable *unk78;
-    Profile *unk7c;
+    // StorePurchaseable *unk78;
+    // Profile *unk7c;
+    std::pair<StorePurchaseable *, Profile *> mPendingPurchase; // 0x78
     std::vector<std::pair<StorePurchaseable *, const Profile *> > unk80;
     Symbol unk8c;
     Symbol unk90;
