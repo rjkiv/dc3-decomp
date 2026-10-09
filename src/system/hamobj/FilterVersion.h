@@ -35,12 +35,13 @@ protected:
 
     static int sNumHam2Nodes;
 
-    // why are these members public? hmx pls
 public:
-    Symbol mVersionSym; // 0x4 - i've seen it be either ham1 or ham2
+    /** The filter's name - will either be ham1 or ham2. */
+    Symbol mName; // 0x4
+    /** The filter's type. */
     FilterVersionType mType; // 0x8
-    ScaleOp mScaleOp; // 0xc
-    ErrorNode *mErrorNodes[kMaxNumErrorNodes]; // 0x18
+    ScaleOp mTimeErrorOp; // 0xc
+    ErrorNode *mNodes[kMaxNumErrorNodes]; // 0x18
 };
 
 // Ham1FilterVersion size: 0x9c

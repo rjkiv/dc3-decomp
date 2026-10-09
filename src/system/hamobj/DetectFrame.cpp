@@ -27,7 +27,7 @@ void DetectFrame::Reset(
     unk4 = mf;
     unk0 = df;
     unkc = mirror;
-    const ErrorNode *const *nodes = fv->mErrorNodes;
+    const ErrorNode *const *nodes = fv->mNodes;
     if (fv->mType == kFilterVersionHam1) {
         for (int i = 0; i < MoveFrame::kNumHam1Nodes; i++) {
             mNodeComponentWeights[i].y = 1;
@@ -91,7 +91,7 @@ float DetectFrame::LimbPSNR(const FilterVersion *filter_version, int i2) const {
     int numNodes = filter_version->NumNodes();
     unsigned int mfFlags = unk4->Flags();
     for (int i = 0; i < numNodes; i++) {
-        ErrorNode *curErrorNode = filter_version->mErrorNodes[i];
+        ErrorNode *curErrorNode = filter_version->mNodes[i];
         if ((i2 == -1 || curErrorNode->GetFeedbackLimbs() & i2)
             && curErrorNode->Type() & mfFlags) {
             const Vector3 &nodeWeight = unk4->NodeWeight(i, unkc);

@@ -6,27 +6,27 @@
 #include "os/Debug.h"
 
 FilterVersion::FilterVersion(FilterVersionType t, const DataArray *cfg)
-    : mVersionSym(cfg->Sym(0)), mType(t) {
+    : mName(cfg->Sym(0)), mType(t) {
     static Symbol time_error("time_error");
-    mScaleOp.Set(cfg->FindArray(time_error));
+    mTimeErrorOp.Set(cfg->FindArray(time_error));
     static Symbol nodes("nodes");
     DataArray *error_nodes_data = cfg->FindArray(nodes);
     MILO_ASSERT(error_nodes_data->Size()-1 <= kMaxNumErrorNodes, 0x4E);
     int i;
     for (i = 0; i < error_nodes_data->Size() - 1; i++) {
-        mErrorNodes[i] = ErrorNode::Create(error_nodes_data->Array(i + 1));
+        mNodes[i] = ErrorNode::Create(error_nodes_data->Array(i + 1));
     }
     if (mType == kFilterVersionHam2) {
         sNumHam2Nodes = i;
     }
     for (; i < kMaxNumErrorNodes; i++) {
-        mErrorNodes[i] = nullptr;
+        mNodes[i] = nullptr;
     }
 }
 
 FilterVersion::~FilterVersion() {
     for (int i = 0; i < kMaxNumErrorNodes; i++) {
-        RELEASE(mErrorNodes[i]);
+        RELEASE(mNodes[i]);
     }
 }
 

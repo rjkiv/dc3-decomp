@@ -73,40 +73,42 @@ void XZErrorWeight(const Vector3 &v3, float &f2, float &f3) {
 
 ErrorFrameInput::ErrorFrameInput(
     const SkeletonHistory *history,
-    const DancerSkeleton &dancerSkeleton,
-    const BaseSkeleton &baseSkeleton,
-    float f1
+    const DancerSkeleton &desired,
+    const BaseSkeleton &actual,
+    float song_speed
 )
-    : mSkeleton(dancerSkeleton), mBaseSkeleton(baseSkeleton) {
-    dancerSkeleton.CamBoneLengths(mBoneLengths);
-    baseSkeleton.CamBoneLengths(mBaseBoneLengths);
-    dancerSkeleton.CamJointPositions(mJointPositions);
-    baseSkeleton.CamJointPositions(mBaseJointPositions);
-    dancerSkeleton.CamJointDisplacements(mJointDisps);
-    mDisplacements = false;
-    int elapsedMs = dancerSkeleton.ElapsedMs();
+    : mDesired(desired), mActual(actual) {
+    desired.CamBoneLengths(mDesiredBoneLengths);
+    actual.CamBoneLengths(mActualBoneLengths);
+    desired.CamJointPositions(mDesiredCamJointPos);
+    actual.CamJointPositions(mActualCamJointPos);
+    desired.CamJointDisplacements(mDesiredDisplacements);
+    mHasActualDisplacements = false;
+    int elapsedMs = desired.ElapsedMs();
     if (elapsedMs != -1) {
         int div;
-        mDisplacements = baseSkeleton.Displacements(
-            history, kCoordCamera, elapsedMs / f1, mBaseJointDisps, div
+        mHasActualDisplacements = actual.Displacements(
+            history, kCoordCamera, elapsedMs / song_speed, mActualDisplacements, div
         );
     }
 }
 
-void ErrorNodeInput::Set(const Vector3 &v, const Ham1NodeWeight *w) {
-    mNodeComponentWeight = v;
-    mNodeWeight = w;
+void ErrorNodeInput::Set(
+    const Vector3 &component_scales, const Ham1NodeWeight *node_weight
+) {
+    mComponentScales = component_scales;
+    mNodeWeight = node_weight;
 }
 
 #pragma region ErrorNode
 
 ErrorNode::ErrorNode(ErrorNodeType e, const DataArray *cfg)
-    : mType(e), mXErrorAxis(kJointHipCenter), mZErrorAxis(kJointHipCenter) {
-    mNodeName = cfg->Sym(0);
+    : mType(e), mXZErrorJoints(std::make_pair(kJointHipCenter, kJointHipCenter)) {
+    mName = cfg->Sym(0);
     static Symbol joint("joint");
     static Symbol feedback_limbs("feedback_limbs");
     static Symbol xz_error_axis("xz_error_axis");
-    mJoint = (SkeletonJoint)cfg->FindInt(joint);
+    mSkeletonJoint = (SkeletonJoint)cfg->FindInt(joint);
     DataArray *limbsArr = cfg->FindArray(feedback_limbs, true);
     mFeedbackLimbs = kFeedbackNone;
     for (int i = 1; i < limbsArr->Size(); i++) {
@@ -114,10 +116,10 @@ ErrorNode::ErrorNode(ErrorNodeType e, const DataArray *cfg)
     }
     DataArray *axisArr = cfg->FindArray(xz_error_axis, false);
     if (axisArr) {
-        mXErrorAxis = (SkeletonJoint)axisArr->Int(1);
-        mZErrorAxis = (SkeletonJoint)axisArr->Int(2);
+        mXZErrorJoints.first = (SkeletonJoint)axisArr->Int(1);
+        mXZErrorJoints.second = (SkeletonJoint)axisArr->Int(2);
     } else {
-        mXErrorAxis = mZErrorAxis = kNumJoints;
+        mXZErrorJoints.first = mXZErrorJoints.second = kNumJoints;
     }
 }
 
@@ -133,13 +135,13 @@ void ErrorNode::NormBoneLengths(
         SkeletonBone curBone = bones[i];
         if (curBone == kNumBones)
             return;
-        totalBoneLengths += input.mBoneLengths[curBone];
-        totalBaseBoneLengths += input.mBaseBoneLengths[curBone];
+        totalBoneLengths += input.mDesiredBoneLengths[curBone];
+        totalBaseBoneLengths += input.mActualBoneLengths[curBone];
     }
 }
 
 bool ErrorNode::IsTypeJointMatch(int joint) const {
-    return mType & joint && gSkeletonJointToErrorJoint[mJoint] & joint;
+    return mType & joint && gSkeletonJointToErrorJoint[mSkeletonJoint] & joint;
 }
 
 void ErrorNode::InitNormBones(
@@ -158,10 +160,14 @@ void ErrorNode::InitNormBones(
 }
 
 bool ErrorNode::XZErrorAxis(Vector3 &v, const DancerSkeleton &skeleton) const {
-    if (mXErrorAxis == kNumJoints) {
+    if (mXZErrorJoints.first == kNumJoints) {
         return false;
     } else {
-        Subtract(skeleton.CamJointPos(mXErrorAxis), skeleton.CamJointPos(mZErrorAxis), v);
+        Subtract(
+            skeleton.CamJointPos(mXZErrorJoints.first),
+            skeleton.CamJointPos(mXZErrorJoints.second),
+            v
+        );
         return true;
     }
 }
@@ -187,13 +193,6 @@ ErrorNode *ErrorNode::Create(const DataArray *cfg) {
 
 Ham1EuclideanNode::Ham1EuclideanNode(ErrorNodeType e, const DataArray *cfg)
     : ErrorNode(e, cfg) {
-    for (int i = 0; i < 3; i++) {
-        // 0x24, 0x28 i = 0
-        // 0x2c, 0x30 i = 1
-        // 0x34, 0x38 i = 2
-        mComponentWeightRanges[i][0] = 0;
-        mComponentWeightRanges[i][1] = 0;
-    }
     static Symbol coord_sys("coord_sys");
     mCoordSys = (SkeletonCoordSys)cfg->FindInt(coord_sys);
     static Symbol base_joint("base_joint");
@@ -202,9 +201,8 @@ Ham1EuclideanNode::Ham1EuclideanNode(ErrorNodeType e, const DataArray *cfg)
     DataArray *weightArr = cfg->FindArray(component_weight_ranges);
     for (int i = 1; i < 4; i++) {
         DataArray *arr = weightArr->Array(i);
-        float *curRange = mComponentWeightRanges[i - 1];
-        curRange[0] = arr->Float(0);
-        curRange[1] = arr->Float(1);
+        mComponentWeightRanges[i - 1].first = arr->Float(0);
+        mComponentWeightRanges[i - 1].second = arr->Float(1);
     }
 }
 
@@ -213,17 +211,17 @@ void Ham1EuclideanNode::CalcError(
 ) const {
     MILO_ASSERT(node_input.mNodeWeight, 0x10E);
     Vector3 dancerVec;
-    frame_input.mSkeleton.NormPos(mCoordSys, mJoint, dancerVec);
+    frame_input.mDesired.NormPos(mCoordSys, mSkeletonJoint, dancerVec);
     Vector3 baseVec;
-    frame_input.mBaseSkeleton.NormPos(mCoordSys, mJoint, baseVec);
+    frame_input.mActual.NormPos(mCoordSys, mSkeletonJoint, baseVec);
     Vector3 diff;
     Subtract(dancerVec, baseVec, diff);
     Vector3 vToProcess;
     for (int i = 0; i < 3; i++) {
         vToProcess[i] = Clamp(
-            mComponentWeightRanges[i][0],
-            mComponentWeightRanges[i][1],
-            node_input.mNodeComponentWeight[i]
+            mComponentWeightRanges[i].first,
+            mComponentWeightRanges[i].second,
+            node_input.mComponentScales[i]
         );
     }
     ScaleOp op;
@@ -245,7 +243,7 @@ BaseDisplacementNode::BaseDisplacementNode(ErrorNodeType e, const DataArray *cfg
     if (jointArr) {
         mBaseJoint = (SkeletonJoint)jointArr->Int(1);
     } else {
-        mBaseJoint = mJoint;
+        mBaseJoint = mSkeletonJoint;
     }
     InitNormBones(cfg, mNormBones);
 }
@@ -253,34 +251,30 @@ BaseDisplacementNode::BaseDisplacementNode(ErrorNodeType e, const DataArray *cfg
 bool BaseDisplacementNode::Displacements(
     const ErrorFrameInput &frame_input, BaseDisplacementNode::DisplacementData &dispData
 ) const {
-    if (frame_input.mDisplacements) {
-        dispData.mJointDisplacement = frame_input.mJointDisps[mJoint];
-        dispData.mBaseJointDisplacement = frame_input.mBaseJointDisps[mJoint];
-        if (mBaseJoint != mJoint) {
+    if (frame_input.mHasActualDisplacements) {
+        dispData.mDesired = frame_input.mDesiredDisplacements[mSkeletonJoint];
+        dispData.mActual = frame_input.mActualDisplacements[mSkeletonJoint];
+        if (mBaseJoint != mSkeletonJoint) {
             Subtract(
-                dispData.mJointDisplacement,
-                frame_input.mJointDisps[mBaseJoint],
-                dispData.mJointDisplacement
+                dispData.mDesired,
+                frame_input.mDesiredDisplacements[mBaseJoint],
+                dispData.mDesired
             );
             Subtract(
-                dispData.mBaseJointDisplacement,
-                frame_input.mBaseJointDisps[mBaseJoint],
-                dispData.mBaseJointDisplacement
+                dispData.mActual,
+                frame_input.mActualDisplacements[mBaseJoint],
+                dispData.mActual
             );
         }
         float boneLen, baseBoneLen;
         NormBoneLengths(frame_input, mNormBones, boneLen, baseBoneLen);
         if (baseBoneLen > 0) {
-            Scale(
-                dispData.mBaseJointDisplacement,
-                boneLen / baseBoneLen,
-                dispData.mBaseJointDisplacement
-            );
+            Scale(dispData.mActual, boneLen / baseBoneLen, dispData.mActual);
             return true;
         }
     }
-    dispData.mBaseJointDisplacement.Zero();
-    dispData.mJointDisplacement.Zero();
+    dispData.mActual.Zero();
+    dispData.mDesired.Zero();
     return false;
 }
 
@@ -289,37 +283,37 @@ bool BaseDisplacementNode::Displacements(
     BaseDisplacementNode::DisplacementData &dispData,
     BaseDisplacementNode::Ham1DisplacementData &ham1Data
 ) const {
-    ham1Data.unk4.Zero();
-    ham1Data.unk14 = false;
-    ham1Data.unk18 = 0;
-    ham1Data.unk0 = 0;
-    ham1Data.unk1c = 0;
+    ham1Data.mProjected.Zero();
+    ham1Data.mPositiveProjection = false;
+    ham1Data.mAngle = 0;
+    ham1Data.mActualMag = 0;
+    ham1Data.mDesiredMag = 0;
     if (Displacements(frame_input, dispData)) {
-        float jointDispLen = Length(dispData.mJointDisplacement);
-        ham1Data.unk1c = jointDispLen;
+        float jointDispLen = Length(dispData.mDesired);
+        ham1Data.mDesiredMag = jointDispLen;
 
         Vector3 invJointDisp;
         if (jointDispLen > 0) {
-            Scale(dispData.mJointDisplacement, 1 / jointDispLen, invJointDisp);
+            Scale(dispData.mDesired, 1 / jointDispLen, invJointDisp);
         } else {
             invJointDisp.Set(0, 0, 0);
         }
 
-        float jointDot = Dot(invJointDisp, dispData.mBaseJointDisplacement);
-        Scale(invJointDisp, jointDot, ham1Data.unk4);
-        ham1Data.unk14 = jointDot > 0;
+        float jointDot = Dot(invJointDisp, dispData.mActual);
+        Scale(invJointDisp, jointDot, ham1Data.mProjected);
+        ham1Data.mPositiveProjection = jointDot > 0;
 
-        float baseJointDispLen = Length(dispData.mBaseJointDisplacement);
-        ham1Data.unk0 = baseJointDispLen;
+        float baseJointDispLen = Length(dispData.mActual);
+        ham1Data.mActualMag = baseJointDispLen;
 
         Vector3 invBaseJointDisp;
         if (baseJointDispLen > 0) {
-            Scale(dispData.mBaseJointDisplacement, 1 / baseJointDispLen, invBaseJointDisp);
+            Scale(dispData.mActual, 1 / baseJointDispLen, invBaseJointDisp);
         } else {
             invBaseJointDisp.Set(0, 0, 0);
         }
 
-        ham1Data.unk18 =
+        ham1Data.mAngle =
             fabsf(acosf(Clamp(-1.0f, 1.0f, Dot(invBaseJointDisp, invJointDisp))));
 
         return true;
@@ -335,10 +329,7 @@ void DisplacementNode::CalcError(
     DisplacementData dispData;
     if (Displacements(frame_input, dispData)) {
         DistanceToErrors(
-            dispData.mJointDisplacement,
-            dispData.mBaseJointDisplacement,
-            node_input.mNodeComponentWeight,
-            vout
+            dispData.mDesired, dispData.mActual, node_input.mComponentScales, vout
         );
     } else {
         vout.Set(1, 1, 1);
@@ -359,7 +350,7 @@ void Ham1DisplacementNode::CalcError(
     DisplacementData dispData;
     Ham1DisplacementData ham1DispData;
     Errors(frame_input, node_input, errData, dispData, ham1DispData);
-    vout.x = errData.unk4 * errData.unk8 + errData.unk0;
+    vout.x = errData.mPotentialAngleError * errData.mAngleError + errData.mMagError;
 }
 
 void Ham1DisplacementNode::Errors(
@@ -370,25 +361,26 @@ void Ham1DisplacementNode::Errors(
     Ham1DisplacementData &ham1DispData
 ) const {
     if (!Displacements(frame_input, dispData, ham1DispData)) {
-        errorData.unk8 = 1;
-        errorData.unk0 = 1;
-        errorData.unk4 = 1;
+        errorData.mAngleError = 1;
+        errorData.mMagError = 1;
+        errorData.mPotentialAngleError = 1;
     } else {
-        float u18 = ham1DispData.unk18;
+        float u18 = ham1DispData.mAngle;
         ScaleOp op;
         op.mType = kErrorScaleDistSq;
         op.mPerfectDist = node_input.mNodeWeight->mAnglePerfectDist;
         op.mRate = node_input.mNodeWeight->mAngleRate;
-        float len = Length(ham1DispData.unk4);
-        errorData.unk4 = ScaleDistToError(mPotentialAngleOp, ham1DispData.unk0);
-        MinEq(errorData.unk4, 1.0f);
-        errorData.unk8 = ScaleDistToError(op, u18);
+        float len = Length(ham1DispData.mProjected);
+        errorData.mPotentialAngleError =
+            ScaleDistToError(mPotentialAngleOp, ham1DispData.mActualMag);
+        MinEq(errorData.mPotentialAngleError, 1.0f);
+        errorData.mAngleError = ScaleDistToError(op, u18);
         float f2 = 1;
-        if (ham1DispData.unk1c > 0) {
-            f2 = len / ham1DispData.unk1c;
+        if (ham1DispData.mDesiredMag > 0) {
+            f2 = len / ham1DispData.mDesiredMag;
         }
         float f6;
-        if (ham1DispData.unk14) {
+        if (ham1DispData.mPositiveProjection) {
             f6 = fabsf(1 - f2);
         } else {
             f6 = f2 + 1;
@@ -396,7 +388,7 @@ void Ham1DisplacementNode::Errors(
         op.mType = kErrorScaleDistSq;
         op.mPerfectDist = node_input.mNodeWeight->mPerfectDist;
         op.mRate = node_input.mNodeWeight->mRate;
-        errorData.unk0 = ScaleDistToError(op, f6);
+        errorData.mMagError = ScaleDistToError(op, f6);
     }
 }
 
@@ -413,14 +405,14 @@ void PositionNode::CalcError(
     MILO_ASSERT(node_input.mNodeWeight == NULL, 0x21C);
     Vector3 jointDiff;
     Subtract(
-        frame_input.mJointPositions[mJoint],
-        frame_input.mJointPositions[mBaseJoint],
+        frame_input.mDesiredCamJointPos[mSkeletonJoint],
+        frame_input.mDesiredCamJointPos[mBaseJoint],
         jointDiff
     );
     Vector3 baseJointDiff;
     Subtract(
-        frame_input.mBaseJointPositions[mJoint],
-        frame_input.mBaseJointPositions[mBaseJoint],
+        frame_input.mActualCamJointPos[mSkeletonJoint],
+        frame_input.mActualCamJointPos[mBaseJoint],
         baseJointDiff
     );
     float desired_bone_len;
@@ -433,7 +425,7 @@ void PositionNode::CalcError(
         Vector3 scaledBaseDiff;
         float scalar = desired_bone_len / base_bone_len;
         Scale(baseJointDiff, scalar, scaledBaseDiff);
-        DistanceToErrors(jointDiff, scaledBaseDiff, node_input.mNodeComponentWeight, vout);
+        DistanceToErrors(jointDiff, scaledBaseDiff, node_input.mComponentScales, vout);
     }
 }
 
