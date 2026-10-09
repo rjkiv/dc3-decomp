@@ -32,40 +32,17 @@ struct bf {
 struct MatShaderOptions {
     MatShaderOptions();
     union {
-        struct {
-            int itop : 24;
-            int mHasAOCalc : 1;
-            int mHasBones : 1;
-            int i5 : 1;
-            int i4 : 1;
-            int i3 : 1;
-            int i2 : 1;
-            int i1 : 1;
-            int i0 : 1;
-        } shader_struct;
-        u32 pack;
-
-        uint value;
         bf<uint, 0, 5> shaderType;
         bf<uint, 5, 1> billboard;
         bf<uint, 6, 1> skinned;
         bf<uint, 7, 1> useAO;
+        uint value;
     }; // 0x0
-    bool mTempMat;
+    bool mTempMat; // 0x4
 
-    // TODO: rename this once you have a better idea of what it does
-    // i think this is some sort of enum/opcode
-    void SetLast5(int mask) { pack = (pack & ~0x1f) | (mask & 0x1f); }
-
-    void SetHasBones(bool bones) {
-        shader_struct.mHasBones = 0;
-        shader_struct.mHasBones = bones;
-    }
-
-    void SetHasAOCalc(bool calc) {
-        shader_struct.mHasAOCalc = 0;
-        shader_struct.mHasAOCalc = calc;
-    }
+    // MatShaderOptions(uint);
+    // bool operator<(const MatShaderOptions&) const;
+    // bool operator==(const MatShaderOptions&) const;
 };
 
 class RndMat : public BaseMaterial {

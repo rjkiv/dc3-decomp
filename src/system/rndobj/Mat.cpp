@@ -22,7 +22,7 @@
 const char *kAnonMetaMatPrefix = "{anon}";
 const char *kMiloMetaMatPrefix = "{milo}";
 
-MatShaderOptions::MatShaderOptions() : pack(0x12), mTempMat(0) {}
+MatShaderOptions::MatShaderOptions() : value(0x12), mTempMat(0) {}
 
 namespace {
     void MergeMetaMaterials(ObjectDir *o1, ObjectDir *o2) {
