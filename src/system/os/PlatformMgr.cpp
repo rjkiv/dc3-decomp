@@ -40,12 +40,12 @@ PlatformRegion SymbolToPlatformRegion(Symbol s) {
     return kNumRegions;
 }
 
-void UTF8FilterKeyboardString(char *c, int i, const char *cc) {
+void UTF8FilterKeyboardString(char *out, int len, const char *in) {
     static Symbol platform_mgr("platform_mgr");
     static Symbol keyboard_allowed_chars("keyboard_allowed_chars");
     static const char *allowed =
         SystemConfig(platform_mgr)->FindStr(keyboard_allowed_chars);
-    UTF8FilterString(c, i, cc, allowed, '?');
+    UTF8FilterString(out, len, in, allowed, '?');
 }
 
 bool PlatformMgr::IsSignedIn(int padnum) const {
@@ -60,13 +60,13 @@ bool PlatformMgr::IsUserSignedIn(const LocalUser *pUser) const {
     return IsSignedIn(pUser->GetPadNum());
 }
 
-bool PlatformMgr::IsPadNumSignedIn(int padnum) const { return IsSignedIn(padnum); }
+bool PlatformMgr::IsPadNumSignedIn(int padNum) const { return IsSignedIn(padNum); }
 
-bool PlatformMgr::HasPadNumsSigninChanged(int padnum) const {
-    if (padnum < 0) {
-        MILO_FAIL("PadNum = %d", padnum);
+bool PlatformMgr::HasPadNumsSigninChanged(int padNum) const {
+    if (padNum < 0) {
+        MILO_FAIL("PadNum = %d", padNum);
     }
-    return 1 << padnum & mSigninChangeMask;
+    return 1 << padNum & mSigninChangeMask;
 }
 
 bool PlatformMgr::HasUserSigninChanged(const LocalUser *pUser) const {
@@ -118,12 +118,12 @@ LocalUser *PlatformMgr::GetOwnerUserOfGuestUser(LocalUser *pUser) {
     return TheUserMgr->GetLocalUserFromPadNum(GetOwnerOfGuest(pUser->GetPadNum()));
 }
 
-void PlatformMgr::SetRegion(PlatformRegion region) {
+void PlatformMgr::SetRegion(PlatformRegion r) {
     const char *regionStr = OptionStr("region", nullptr);
     if (regionStr) {
         mRegion = SymbolToPlatformRegion(regionStr);
     } else {
-        mRegion = region;
+        mRegion = r;
     }
     MILO_ASSERT(mRegion != kRegionNone, 0xCC);
     String str(PlatformRegionToSymbol(mRegion));
@@ -133,9 +133,9 @@ void PlatformMgr::SetRegion(PlatformRegion region) {
     DataSetMacro(str.c_str(), ptr);
 }
 
-void PlatformMgr::SetDiskError(DiskError derr) {
-    if (mDiskError != kFailedChecksum && mDiskError != derr) {
-        mDiskError = derr;
+void PlatformMgr::SetDiskError(DiskError state) {
+    if (mDiskError != kFailedChecksum && mDiskError != state) {
+        mDiskError = state;
         if (mDiskError != kNoDiskError) {
             static DiskErrorMsg msg;
             Handle(msg, false);
@@ -150,20 +150,20 @@ void PlatformMgr::SetDiskError(DiskError derr) {
     }
 }
 
-void PlatformMgr::DebugFakeSigninChangeMsg(int padnum) {
-    if (padnum < 0) {
-        MILO_FAIL("PadNum = %d", padnum);
+void PlatformMgr::DebugFakeSigninChangeMsg(int padNum) {
+    if (padNum < 0) {
+        MILO_FAIL("PadNum = %d", padNum);
     }
-    mSigninChangeMask = 1 << padnum;
+    mSigninChangeMask = 1 << padNum;
     static SigninChangedMsg msg(0, 0);
     msg[0] = mSigninMask;
     msg[1] = mSigninChangeMask;
     Handle(msg, false);
 }
 
-void PlatformMgr::QueueEnumJob(Job *j) { mJobMgr->QueueJob(j); }
+void PlatformMgr::QueueEnumJob(Job *job) { mJobMgr->QueueJob(job); }
 
-void PlatformMgr::CancelEnumJob(int i) { mJobMgr->CancelJob(i); }
+void PlatformMgr::CancelEnumJob(int jobID) { mJobMgr->CancelJob(jobID); }
 
 BEGIN_HANDLERS(PlatformMgr)
     HANDLE_EXPR(is_connected, mConnected)
