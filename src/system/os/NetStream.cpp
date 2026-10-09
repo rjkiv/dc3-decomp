@@ -19,22 +19,22 @@ NetStream::~NetStream() {
 
 EofType NetStream::Eof() { return (EofType)!mSocket->CanRead(); }
 
-int NetStream::ReadAsync(void *v, int i) { return mSocket->Recv(v, i); }
+int NetStream::ReadAsync(void *data, int maxbytes) { return mSocket->Recv(data, maxbytes); }
 
-void NetStream::ReadImpl(void *v, int i) {
-    int orig_i = i;
-    void *orig_v = v;
+void NetStream::ReadImpl(void *data, int bytes) {
+    int orig_i = bytes;
+    void *orig_v = data;
     Timer t;
     t.Start();
-    while (i > 0) {
-        int bytes = mSocket->Recv(v, i);
+    while (bytes > 0) {
+        int sentBytes = mSocket->Recv(data, bytes);
         if (mSocket->Fail() || (mReadTimeoutMs && t.SplitMs() > mReadTimeoutMs)) {
             mFail = true;
             break;
         }
 
-        v = (void *)((uint)v + bytes);
-        i -= bytes;
+        data = (void *)((uint)data + sentBytes);
+        bytes -= sentBytes;
     }
     if (!mFail) {
         mBytesRead += orig_i;
@@ -43,19 +43,19 @@ void NetStream::ReadImpl(void *v, int i) {
         memset(orig_v, 0xEA, orig_i);
 }
 
-void NetStream::WriteImpl(const void *v, int i) {
-    int orig_i = i;
+void NetStream::WriteImpl(const void *data, int bytes) {
+    int orig_i = bytes;
     Timer t;
     t.Start();
-    while (i > 0) {
-        int bytes = mSocket->Send(v, i);
+    while (bytes > 0) {
+        int sentBytes = mSocket->Send(data, bytes);
         if (mSocket->Fail() || (mReadTimeoutMs && t.SplitMs() > mReadTimeoutMs)) {
             mFail = true;
             break;
         }
 
-        v = (void *)((uint)v + bytes);
-        i -= bytes;
+        data = (void *)((uint)data + sentBytes);
+        bytes -= sentBytes;
     }
     if (!mFail) {
         mBytesWritten += orig_i;

@@ -114,16 +114,16 @@ namespace {
         return -1;
     }
 
-    bool XPrivilegeCheck(XPRIVILEGE_TYPE t1, XPRIVILEGE_TYPE t2, XUID xuid) {
+    bool XPrivilegeCheck(XPRIVILEGE_TYPE xprivilege, XPRIVILEGE_TYPE xprivilege_friends_only, XUID xuid) {
         BOOL result = false;
-        XUserCheckPrivilege(0xFF, t1, &result);
+        XUserCheckPrivilege(0xFF, xprivilege, &result);
         if (!result) {
-            XUserCheckPrivilege(0xFF, t2, &result);
+            XUserCheckPrivilege(0xFF, xprivilege_friends_only, &result);
             if (!result) {
                 return false;
             }
             for (int i = 0; i < 4; i++) {
-                if (XUserCheckPrivilege(i, t1, &result) == 0 && !result
+                if (XUserCheckPrivilege(i, xprivilege, &result) == 0 && !result
                     && XUserAreUsersFriends(i, &xuid, 1, &result, nullptr) == 0
                     && !result) {
                     return false;
@@ -133,11 +133,11 @@ namespace {
         return true;
     }
 
-    void DtaToJsonHelper(HJSONWRITER *writer, const DataArray *a) {
-        int aSize = a->Size();
+    void DtaToJsonHelper(HJSONWRITER *writer, const DataArray *dta) {
+        int aSize = dta->Size();
         if (aSize != 0) {
             for (int i = 0; i < aSize; i++) {
-                const DataNode &n = a->Node(i);
+                const DataNode &n = dta->Node(i);
                 switch (n.Type()) {
                 case kDataInt:
                     XJSONWriteNumberValue(writer, n.Int());
@@ -241,17 +241,17 @@ namespace {
         return res;
     }
 
-    HJSONWRITER *DtaToJson(const DataArray *a) {
+    HJSONWRITER *DtaToJson(const DataArray *dta) {
         HJSONWRITER *writer = XJSONCreateWriter();
         XJSONBeginArray(writer);
-        DtaToJsonHelper(writer, a);
+        DtaToJsonHelper(writer, dta);
         XJSONEndArray(writer);
         return writer;
     }
 
-    void XbcSendMsg(DWORD id, const DataArray *a) {
-        HJSONWRITER *writer = DtaToJson(a);
-        if (id == 0) {
+    void XbcSendMsg(DWORD nClientId, const DataArray *msgDta) {
+        HJSONWRITER *writer = DtaToJson(msgDta);
+        if (nClientId == 0) {
             // i hate this
             for (DWORD *it = gSmartGlassClientIDs; it < &gSmartGlassClientIDs[4]; it++) {
                 if (*it) {
@@ -260,37 +260,37 @@ namespace {
                 }
             }
         } else {
-            XbcSendJSON(XBC_DELIVERY_RELIABLE, id, writer, nullptr);
+            XbcSendJSON(XBC_DELIVERY_RELIABLE, nClientId, writer, nullptr);
             gNumSmartGlassSendsInProgress++;
         }
         XJSONCloseWriter(writer);
     }
 
-    void XbcRecieveMsg(DWORD id, HJSONREADER *reader) {
-        DataArrayPtr dta = JsonToDta(reader, true);
-        SmartGlassMsg msg(id, dta);
+    void XbcRecieveMsg(DWORD nClientId, HJSONREADER *hReader) {
+        DataArrayPtr dta = JsonToDta(hReader, true);
+        SmartGlassMsg msg(nClientId, dta);
         ThePlatformMgr.Handle(msg, true);
     }
 
-    void XbcCallback(long err, XBC_EVENT_PARAMS *params, void *) {
-        if (err != 0) {
-            MILO_NOTIFY("SmartGlass: Error in cb: 0x%08x", err);
-        } else if (params->nUserIndex >= 4) {
+    void XbcCallback(long hr, XBC_EVENT_PARAMS *pParams, void *pv) {
+        if (hr != 0) {
+            MILO_NOTIFY("SmartGlass: Error in cb: 0x%08x", hr);
+        } else if (pParams->nUserIndex >= 4) {
             MILO_NOTIFY(
                 "SmartGlass: Error in cb: user index %d (event: %d)",
-                params->nUserIndex,
-                params->Type
+                pParams->nUserIndex,
+                pParams->Type
             );
         } else {
-            switch (params->Type) {
+            switch (pParams->Type) {
             case XBC_EVENT_CLIENT_CONNECTED: {
-                gSmartGlassClientIDs[params->nUserIndex] = params->nClientId;
+                gSmartGlassClientIDs[pParams->nUserIndex] = pParams->nClientId;
                 gNumSmartGlassClients++;
                 MILO_ASSERT(gNumSmartGlassClients <= XBC_MAX_CLIENTS, 0x20C);
                 break;
             }
             case XBC_EVENT_CLIENT_DISCONNECTED: {
-                gSmartGlassClientIDs[params->nUserIndex] = 0;
+                gSmartGlassClientIDs[pParams->nUserIndex] = 0;
                 gNumSmartGlassClients--;
                 MILO_ASSERT(gNumSmartGlassClients >= 0, 0x214);
                 break;
@@ -300,7 +300,7 @@ namespace {
                 break;
             }
             case XBC_EVENT_JSON_RECEIVE_COMPLETE: {
-                XbcRecieveMsg(params->nClientId, params->hReader);
+                XbcRecieveMsg(pParams->nClientId, pParams->hReader);
                 break;
             }
             default:
@@ -330,8 +330,8 @@ namespace {
 #pragma endregion
 #pragma region Jobs
 
-SingleItemEnumJob::SingleItemEnumJob(Hmx::Object *callback, int pad, QWORD offerID)
-    : mCallback(callback), mPadNum(pad), mOfferID(offerID), mState(0), unk1c(false),
+SingleItemEnumJob::SingleItemEnumJob(Hmx::Object *callback, int pad_num, QWORD offerID)
+    : mCallback(callback), mPadNum(pad_num), mOfferID(offerID), mState(0), unk1c(false),
       unk20(0), mEnum(0) {}
 
 SingleItemEnumJob::~SingleItemEnumJob() {
@@ -385,11 +385,11 @@ bool SingleItemEnumJob::IsFinished() {
     return mState != 1;
 }
 
-void SingleItemEnumJob::Cancel(Hmx::Object *) {
+void SingleItemEnumJob::Cancel(Hmx::Object *callback) {
     MILO_FAIL("SingleItemEnumJob::Cancel called");
 }
 
-void SingleItemEnumJob::OnCompletion(Hmx::Object *) {
+void SingleItemEnumJob::OnCompletion(Hmx::Object *callback) {
     if (mCallback) {
         static SingleItemEnumCompleteMsg msg(false, false, gNullStr);
         msg.SetSuccess(mState == 2);
@@ -420,11 +420,11 @@ void SingleItemEnumJob::Poll() {
 }
 
 PostPurchaseEnumJob::PostPurchaseEnumJob(
-    Hmx::Object *callback, int pad, QWORD offerID, Symbol src, unsigned int purchaser
+    Hmx::Object *callback, int pad_num, QWORD offerID, Symbol pid, unsigned int purchaser
 )
-    : SingleItemEnumJob(callback, pad, offerID), mSource(src), mPurchaser(purchaser) {}
+    : SingleItemEnumJob(callback, pad_num, offerID), mSource(pid), mPurchaser(purchaser) {}
 
-void PostPurchaseEnumJob::OnCompletion(Hmx::Object *o) {
+void PostPurchaseEnumJob::OnCompletion(Hmx::Object *callback) {
     if (mState == 2) {
         if (unk1c) {
             static Symbol source("source");
@@ -442,13 +442,13 @@ void PostPurchaseEnumJob::OnCompletion(Hmx::Object *o) {
             );
         }
     }
-    SingleItemEnumJob::OnCompletion(o);
+    SingleItemEnumJob::OnCompletion(callback);
 }
 
 MultipleItemsEnumJob::MultipleItemsEnumJob(
-    Hmx::Object *callback, int pad, std::vector<QWORD> &ids
+    Hmx::Object *callback, int pad_num, std::vector<QWORD> &ids
 )
-    : mCallback(callback), mPadNum(pad), mOfferIDs(ids), mState(0), unk34(false),
+    : mCallback(callback), mPadNum(pad_num), mOfferIDs(ids), mState(0), unk34(false),
       unk38(0), mEnum(0) {}
 
 MultipleItemsEnumJob::~MultipleItemsEnumJob() {
@@ -505,11 +505,11 @@ bool MultipleItemsEnumJob::IsFinished() {
     return mState != 1;
 }
 
-void MultipleItemsEnumJob::Cancel(Hmx::Object *) {
+void MultipleItemsEnumJob::Cancel(Hmx::Object *callback) {
     MILO_FAIL("MultipleItemsEnumJob::Cancel called");
 }
 
-void MultipleItemsEnumJob::OnCompletion(Hmx::Object *) {
+void MultipleItemsEnumJob::OnCompletion(Hmx::Object *callback) {
     if (mCallback) {
         static MultipleItemsEnumCompleteMsg msg(false, false, mOfferIDs.size(), gNullStr);
         msg.SetSuccess(mState == 2);
@@ -548,15 +548,15 @@ void MultipleItemsEnumJob::Poll() {
 
 MultipleItemsPostPurchaseEnumJob::MultipleItemsPostPurchaseEnumJob(
     Hmx::Object *callback,
-    int pad,
+    int pad_num,
     std::vector<QWORD> &offerIDs,
-    Symbol src,
+    Symbol pid,
     unsigned int purchaser
 )
-    : MultipleItemsEnumJob(callback, pad, offerIDs), mSource(src), mPurchaser(purchaser) {
+    : MultipleItemsEnumJob(callback, pad_num, offerIDs), mSource(pid), mPurchaser(purchaser) {
 }
 
-void MultipleItemsPostPurchaseEnumJob::OnCompletion(Hmx::Object *o) {
+void MultipleItemsPostPurchaseEnumJob::OnCompletion(Hmx::Object *callback) {
     if (mState == 2) {
         if (unk34) {
             static Symbol source("source");
@@ -576,15 +576,15 @@ void MultipleItemsPostPurchaseEnumJob::OnCompletion(Hmx::Object *o) {
             }
         }
     }
-    MultipleItemsEnumJob::OnCompletion(o);
+    MultipleItemsEnumJob::OnCompletion(callback);
 }
 
 QWORD SingleItemEnumCompleteMsg::OfferID() const {
     return _strtoui64(mData->Str(4), 0, 16);
 }
 
-QWORD MultipleItemsEnumCompleteMsg::OfferID(int i) const {
-    return _strtoui64(mData->Array(5)->Str(i), 0, 16);
+QWORD MultipleItemsEnumCompleteMsg::OfferID(int index) const {
+    return _strtoui64(mData->Array(5)->Str(index), 0, 16);
 }
 
 #pragma endregion
@@ -695,15 +695,15 @@ bool PlatformMgr::HasKinectSharePrvilege() const {
 
 bool PlatformMgr::IsSmartGlassConnected() { return gNumSmartGlassClients > 0; }
 
-void PlatformMgr::SetPadContext(int padNum, int id, int val) const {
+void PlatformMgr::SetPadContext(int padNum, int contextID, int contextValue) const {
     if (padNum != -1 && ThePlatformMgr.IsSignedIn(padNum)) {
-        XUserSetContext(padNum, id, val);
+        XUserSetContext(padNum, contextID, contextValue);
     }
 }
 
-void PlatformMgr::SetPadPresence(int padNum, int val) const {
+void PlatformMgr::SetPadPresence(int padNum, int presenceValue) const {
     if (padNum != -1 && ThePlatformMgr.IsSignedIn(padNum)) {
-        XUserSetContext(padNum, 0x8001, val);
+        XUserSetContext(padNum, 0x8001, presenceValue);
     }
 }
 
@@ -719,9 +719,9 @@ void PlatformMgr::ShowFriendsUI(int padNum) {
     }
 }
 
-void PlatformMgr::SetBackgroundDownloadPriority(bool alwaysAllow) {
+void PlatformMgr::SetBackgroundDownloadPriority(bool always) {
     XBackgroundDownloadSetMode(
-        alwaysAllow ? XBACKGROUND_DOWNLOAD_MODE_ALWAYS_ALLOW
+        always ? XBACKGROUND_DOWNLOAD_MODE_ALWAYS_ALLOW
                     : XBACKGROUND_DOWNLOAD_MODE_AUTO
     );
 }
@@ -861,12 +861,12 @@ void PlatformMgr::ShowOfferUI(int padNum) {
 }
 
 DWORD PlatformMgr::ShowDeviceSelectorUI(
-    DWORD userIndex,
-    DWORD contentType,
-    DWORD contentFlags,
-    ULARGE_INTEGER bytesRequested,
-    DWORD *deviceID,
-    XOVERLAPPED *overlapped
+    DWORD dwUserIndex,
+    DWORD dwContentType,
+    DWORD dwContentFlags,
+    ULARGE_INTEGER uliBytesRequested,
+    DWORD *pDeviceID,
+    XOVERLAPPED *pOverlapped
 ) {
     DWORD trackingID;
     DWORD ret;
@@ -874,16 +874,16 @@ DWORD PlatformMgr::ShowDeviceSelectorUI(
     if (sXShowCallback(trackingID)) {
         ret = XShowNuiDeviceSelectorUI(
             trackingID,
-            userIndex,
-            contentType,
-            contentFlags,
-            bytesRequested,
-            deviceID,
-            overlapped
+            dwUserIndex,
+            dwContentType,
+            dwContentFlags,
+            uliBytesRequested,
+            pDeviceID,
+            pOverlapped
         );
     } else {
         ret = XShowDeviceSelectorUI(
-            userIndex, contentType, contentFlags, bytesRequested, deviceID, overlapped
+            dwUserIndex, dwContentType, dwContentFlags, uliBytesRequested, pDeviceID, pOverlapped
         );
     }
 
@@ -910,7 +910,7 @@ const char *PlatformMgr::GetName(int padnum) const {
     return MakeString("%s %i", Localize(player, nullptr, TheLocale), padnum + 1);
 }
 
-void PlatformMgr::SmartGlassSend(DWORD id, const DataArray *a) { XbcSendMsg(id, a); }
+void PlatformMgr::SmartGlassSend(DWORD clientId, const DataArray *msg) { XbcSendMsg(clientId, msg); }
 
 bool PlatformMgr::QueryXSocialCapabilities() {
     mSocialCapabilities = 0;
@@ -952,10 +952,10 @@ bool PlatformMgr::QueryXSocialCapabilities() {
     }
 }
 
-void PlatformMgr::SetPadProperty(int pad, int i2, const unsigned short *us) const {
-    if (pad != -1 && ThePlatformMgr.IsSignedIn(pad)) {
-        int len = Min<int>(wcslen((wchar_t *)us) * 2, 126);
-        XUserSetPropertyEx(pad, i2, len, us, nullptr);
+void PlatformMgr::SetPadProperty(int padNum, int propertyID, const unsigned short *name) const {
+    if (padNum != -1 && ThePlatformMgr.IsSignedIn(padNum)) {
+        int len = Min<int>(wcslen((wchar_t *)name) * 2, 126);
+        XUserSetPropertyEx(padNum, propertyID, len, name, nullptr);
     }
 }
 
@@ -1001,8 +1001,8 @@ int PlatformMgr::GetOwnerOfGuest(int padNum) {
     }
 }
 
-void PlatformMgr::SetNotifyUILocation(NotifyLocation loc) {
-    switch (loc) {
+void PlatformMgr::SetNotifyUILocation(NotifyLocation notifyLoc) {
+    switch (notifyLoc) {
     case 0:
         XNotifyPositionUI(9);
         break;
@@ -1010,7 +1010,7 @@ void PlatformMgr::SetNotifyUILocation(NotifyLocation loc) {
         XNotifyPositionUI(2);
         break;
     default:
-        MILO_FAIL("Unknown NotifyLocation %d", loc);
+        MILO_FAIL("Unknown NotifyLocation %d", notifyLoc);
         break;
     }
 }
@@ -1060,7 +1060,7 @@ PlatformMgr::ShowGamercardForPadNum(int padNum, const OnlineID *onlineID) {
     return (ShowGamercardResult)-1;
 }
 
-void PlatformMgr::ShowControllerRequiredUI(Hmx::Object *o1) {
+void PlatformMgr::ShowControllerRequiredUI(Hmx::Object *callback) {
     sdwShowControllerTrackingID = 0;
     snShowControllerPadNum = 0;
     spShowControllerObject = nullptr;
@@ -1068,27 +1068,27 @@ void PlatformMgr::ShowControllerRequiredUI(Hmx::Object *o1) {
     if (sXShowCallback(dw)) {
         sdwShowControllerTrackingID = dw;
         snShowControllerPadNum = 0xFF;
-        spShowControllerObject = o1;
+        spShowControllerObject = callback;
         ThreadCall(ShowControllerRequiredUIThreaded, ShowControllerRequiredUIThreadedCB);
     } else {
         static ControllerReqOpCompleteMsg msg(true);
         msg.SetSuccess(true);
-        if (o1) {
-            o1->Handle(msg, false);
+        if (callback) {
+            callback->Handle(msg, false);
         }
     }
 }
 
-void PlatformMgr::EnumerateFriends(int i1, std::vector<Friend *> &vec, Hmx::Object *o) {
-    mFriendEnumRequests.push_back(new FriendEnumRequest(i1, &vec, o));
+void PlatformMgr::EnumerateFriends(int padNum, std::vector<Friend *> &friends, Hmx::Object *callback) {
+    mFriendEnumRequests.push_back(new FriendEnumRequest(padNum, &friends, callback));
 }
 
-bool PlatformMgr::GetServiceID(const String &str, unsigned int &ui) {
-    ui = 0;
+bool PlatformMgr::GetServiceID(const String &strIdentifier, unsigned int &serviceID) {
+    serviceID = 0;
     bool ret = false;
-    auto it = mServiceIdMap.find(str);
+    auto it = mServiceIdMap.find(strIdentifier);
     if (it != mServiceIdMap.end()) {
-        ui = it->second;
+        serviceID = it->second;
         ret = true;
     }
     return ret;
