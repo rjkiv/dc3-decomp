@@ -3,7 +3,7 @@
 StringStrummedMsg::StringStrummedMsg(int stringNum, int fretNum, int velocity, int iPadNum)
     : Message(Type(), stringNum, fretNum, velocity, iPadNum) {}
 
-RGAccelerometerMsg::RGAccelerometerMsg(int accelY, int accelX, int accelZ, int iPadNum)
+RGAccelerometerMsg::RGAccelerometerMsg(int accelX, int accelY, int accelZ, int iPadNum)
     : Message(Type(), accelX, accelY, accelZ, iPadNum) {}
 
 RGConnectedAccessoriesMsg::RGConnectedAccessoriesMsg(int connectedAccessories, int iPadNum)
@@ -20,10 +20,10 @@ RGProgramChangeMsg::RGProgramChangeMsg(int programChange, int iPadNum) : Message
 RGSwingMsg::RGSwingMsg(int swingMask, int iPadNum) : Message(Type(), swingMask, iPadNum) {}
 
 RGFretButtonDownMsg::RGFretButtonDownMsg(int fret, int iPadNum, bool shifted)
-    : Message(Type(), fret, iPadNum, iPadNum) {}
+    : Message(Type(), fret, iPadNum, shifted) {}
 
 RGFretButtonUpMsg::RGFretButtonUpMsg(int fret, int iPadNum, bool shifted)
-    : Message(Type(), fret, iPadNum, iPadNum) {}
+    : Message(Type(), fret, iPadNum, shifted) {}
 
 StringStoppedMsg::StringStoppedMsg(int i1, int i2, int i3, int i4)
     : Message(Type(), i1, i2, i3, i4) {}
