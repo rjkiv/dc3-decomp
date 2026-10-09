@@ -88,7 +88,7 @@ END_CUSTOM_PROPSYNC
 bool PropSync(
     ObjVector<UILabel::LabelStyle> &v, DataNode &val, DataArray *prop, int i, PropOp op
 ) {
-    if (op == kPropUnknown0x40)
+    if (op == kPropNoNull)
         return false;
     else if (i == prop->Size()) {
         MILO_ASSERT(op == kPropSize, 0x4A9);

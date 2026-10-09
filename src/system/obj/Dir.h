@@ -291,7 +291,7 @@ public:
     bool IsProxy() const { return this != Dir(); }
     int HashSize() const { return mHashTable.Size(); }
     int StringSize() const { return mStringTable.Size(); }
-    int HashUsed() const { return mHashTable.UsedSize(); }
+    int HashUsed() const { return mHashTable.NumEntries(); }
     int StringUsed() const { return mStringTable.UsedSize(); }
     KeylessHash<const char *, Entry> &HashTable() { return mHashTable; }
     const char *GetPathName() const { return mPathName; }

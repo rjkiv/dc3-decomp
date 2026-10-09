@@ -33,6 +33,9 @@ private:
      */
     T2 *FirstFrom(T2 *entry);
 
+    // private: void IncIdx(int32_t&);
+    // private: void DecIdx(int32_t&);
+
     /** Advance the index to search the supplied hash table with.
      * The hash table implementation is a circular buffer,
      * so if the end is reached, loop back to index zero.
@@ -43,6 +46,7 @@ private:
             idx = 0;
     }
 
+    // these don't exist...so how is it hashing?
     int Hash(const char *str, int size) { return HashString(str, size); }
     int Hash(void *key, int size) { return HashKey(key, size); }
     int HashValue(T2 &entry, int size);
@@ -52,9 +56,6 @@ private:
     bool Cmp(void *key, T2 &entry) { return entry->mMem == key; }
 
 public:
-    // NEW_OVERLOAD;
-    // DELETE_OVERLOAD;
-
     KeylessHash(int, const T2 &, const T2 &, T2 *);
     ~KeylessHash();
 
@@ -79,7 +80,7 @@ public:
 
     // getters
     int Size() const { return mSize; }
-    int UsedSize() const { return mNumEntries; }
+    int NumEntries() const { return mNumEntries; }
 
     void Remove(T2 *);
     void Clear();
