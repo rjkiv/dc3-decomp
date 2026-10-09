@@ -5,8 +5,8 @@ enum Difficulty {
     kDifficultyEasy = 0,
     kDifficultyMedium = 1,
     kDifficultyExpert = 2,
-    kDifficultyBeginner = 3,
     kNumDifficultiesDC2 = 3,
+    kDifficultyBeginner = 3,
     kNumDifficulties = 4
 };
 

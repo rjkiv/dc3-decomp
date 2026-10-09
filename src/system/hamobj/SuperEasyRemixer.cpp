@@ -91,7 +91,7 @@ SuperEasyRemixer::GetMoveVariantsByDifficulty(int diff) {
 }
 
 bool InsertVariants(std::set<const MoveVariant *> &vars, Symbol name) {
-    const MoveVariant *mv = TheMoveMgr->Graph().FindMoveByVariantName(name);
+    const MoveVariant *mv = TheMoveMgr->mWholeMoveGraph.FindMoveByVariantName(name);
     const MoveParent *mp = mv ? mv->Parent() : nullptr;
     if (!mp) {
         return false;
@@ -120,14 +120,14 @@ void SuperEasyRemixer::DumpSongLayout() {
                 if (i - 1 >= 0) {
                     const MoveParent *n1 = GetMoveParentsByDifficulty(next)[prevI];
                     const MoveParent *d1 = GetMoveParentsByDifficulty(d)[prevI + 1];
-                    if (TheMoveMgr->HasVariantPair(n1, d1)) {
+                    if (TheMoveMgr->mWholeMoveGraph.HasVariantPair(n1, d1)) {
                         str += "<";
                     } else {
                         str += "_";
                     }
                     const MoveParent *d2 = GetMoveParentsByDifficulty(d)[prevI];
                     const MoveParent *n2 = GetMoveParentsByDifficulty(next)[prevI + 1];
-                    if (TheMoveMgr->HasVariantPair(d2, n2)) {
+                    if (TheMoveMgr->mWholeMoveGraph.HasVariantPair(d2, n2)) {
                         str += ">";
                     } else {
                         str += "_";
@@ -170,7 +170,8 @@ void SuperEasyRemixer::SaveSuperEasyMoveParents() {
             if (name.Null()) {
                 mSuperEasyVariants.push_back(nullptr);
             } else {
-                const MoveVariant *mv = TheMoveMgr->Graph().FindMoveByVariantName(name);
+                const MoveVariant *mv =
+                    TheMoveMgr->mWholeMoveGraph.FindMoveByVariantName(name);
                 if (mv) {
                     mSuperEasyVariants.push_back(mv);
                 } else {
@@ -210,10 +211,10 @@ void SuperEasyRemixer::SaveSuperEasyMoveParents() {
 void SuperEasyRemixer::LoadAllVariants() {
     std::set<const MoveVariant *> vars;
     Symbol song = TheGameData->GetSong();
-    if (TheMoveMgr->MoveParents().size() == 0) {
+    if (TheMoveMgr->mWholeMoveGraph.MoveParents().size() == 0) {
         MILO_FAIL("Failed to load move graph for: %s\n", song.Str());
     }
-    DataArray *layout = TheMoveMgr->Graph().Layout();
+    DataArray *layout = TheMoveMgr->mWholeMoveGraph.Layout();
     if (!layout) {
         MILO_FAIL("couldn't load layout for: %s", song.Str());
     }

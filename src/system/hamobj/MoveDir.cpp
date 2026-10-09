@@ -203,7 +203,7 @@ String RecordClipName(const char *cc, int i2) {
 
 MoveMode CurrentMoveMode() {
     MILO_ASSERT(TheHamDirector, 0x79);
-    return TheHamDirector->InPracticeMode() ? (MoveMode)1 : (MoveMode)0;
+    return TheHamDirector->InPracticeMode() ? kMoveSkills : kMovePerformance;
 }
 
 void SetupRecordClip(
@@ -923,7 +923,7 @@ float MoveDir::UpdateOverlay(RndOverlay *overlay, float f2) {
             MILO_ASSERT(TheHamDirector, 0x797);
             MoveMode moveMode = CurrentMoveMode();
             MoveMirrored mirrored =
-                curMove->Mirrored() != false ? kMirroredYes : kMirroredNo;
+                curMove->Mirrored() != false ? kMoveMirrored : kMoveNotMirrored;
             if (sFloat == 0) {
                 Vector2 v =
                     TheRnd.DrawStringScreen("W", Vector2(sRect.x, f2), sLightGray, false);
@@ -961,7 +961,7 @@ float MoveDir::UpdateOverlay(RndOverlay *overlay, float f2) {
             float f49 = (sRect.y - sRect.x) / (sRect.h + sRect.w + 4) + sRect.x;
             float f33 = 0.99f - f49;
             float f34 = curMove->IsRest() ? 0 : DetectFrac(0, -1);
-            const char *mirrorText = mirrored == kMirroredYes ? "(mirror)" : gNullStr;
+            const char *mirrorText = mirrored == kMoveMirrored ? "(mirror)" : gNullStr;
             f44 = DrawDetectedBar(
                 f44,
                 MakeString(
@@ -1795,7 +1795,7 @@ void MoveDir::ResetDetectFrames(int player, Difficulty diff) {
                         HamMove *move = curMoveKey.move;
                         auto &moveFrames = move->GetMoveFrames();
                         MoveMirrored mirrored =
-                            move->Mirrored() ? kMirroredYes : kMirroredNo;
+                            move->Mirrored() ? kMoveMirrored : kMoveNotMirrored;
                         for (int j = 0; j < moveFrames.size(); j++) {
                             if (dancerFrameIt->mMoveFrameIdx == j) {
                                 DetectFrame detectFrame;

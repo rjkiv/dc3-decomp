@@ -12,8 +12,8 @@
 #include "utl/MemMgr.h"
 
 enum MoveMirrored {
-    kMirroredNo = 0,
-    kMirroredYes = 1,
+    kMoveNotMirrored = 0,
+    kMoveMirrored = 1,
     kNumMoveMirrored = 2
 };
 

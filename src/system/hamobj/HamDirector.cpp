@@ -998,8 +998,8 @@ DataNode HamDirector::OnListPossibleMoves() {
     }
     DataArray *moveArr = new DataArray(0);
     for (std::map<Symbol, MoveParent *>::const_iterator it =
-             TheMoveMgr->MoveParents().begin();
-         it != TheMoveMgr->MoveParents().end();
+             TheMoveMgr->mWholeMoveGraph.MoveParents().begin();
+         it != TheMoveMgr->mWholeMoveGraph.MoveParents().end();
          ++it) {
         moveArr->Insert(moveArr->Size(), it->first);
     }
@@ -1014,7 +1014,7 @@ DataNode HamDirector::OnListPossibleVariants() {
         MoveMgr::Init("../meta/move_data.dta");
     }
     DataArray *moveArr = new DataArray(0);
-    FOREACH (it, TheMoveMgr->GetUnk104()) {
+    FOREACH (it, TheMoveMgr->mMovesNeeded) {
         moveArr->Insert(moveArr->Size(), (*it)->Name());
     }
     moveArr->SortNodes(0);
@@ -2100,7 +2100,7 @@ void HamDirector::LoadRoutineBuilderData(
         }
         unk370.clear();
     } else {
-        ObjectDir *moveMgrDir = TheMoveMgr->MoveDataDir();
+        ObjectDir *moveMgrDir = TheMoveMgr->mMoveData;
         if (!moveMgrDir) {
             MILO_NOTIFY("Move data missing from %s", TheGameData->GetSong());
         } else {
@@ -2147,7 +2147,7 @@ void HamDirector::OnPopulateMoveMgr() {
     TheMoveMgr->AutoFillParents();
     TheMoveMgr->FillRoutineFromParents(-1);
     TheMoveMgr->ComputeLoadedMoveSet();
-    LoadRoutineBuilderData(TheMoveMgr->GetUnk104(), true);
+    LoadRoutineBuilderData(TheMoveMgr->mMovesNeeded, true);
     OnPopulateFromMoveMgr();
     DataArrayPtr variants;
     TheMoveMgr->SaveRoutineVariants(variants);
@@ -2170,14 +2170,14 @@ void HamDirector::OnPopulateFromMoveMgr() {
         );
         Keys<Symbol, Symbol> *moveSymbolKeys = moveKeys->AsSymbolKeys();
         Keys<Symbol, Symbol> *clipSymbolKeys = clipKeys->AsSymbolKeys();
-        int size = TheMoveMgr->CurParents(0).size();
+        int size = TheMoveMgr->mRoutineParents[0].size();
         for (int i = 0; i < size; i++) {
-            if (TheMoveMgr->CurParents(0)[i]) {
+            if (TheMoveMgr->mRoutineParents[0][i]) {
                 float beatSeconds = BeatToSeconds(i * 4.0f - 1.0f) * 30.0f;
                 int move = moveKeys->SetKey(beatSeconds);
                 int clip = clipKeys->SetKey(beatSeconds);
-                (*moveSymbolKeys)[move].value = TheMoveMgr->CurParents(0)[i]->Name();
-                const MoveVariant *variant = TheMoveMgr->Unk150(0)[i].second;
+                (*moveSymbolKeys)[move].value = TheMoveMgr->mRoutineParents[0][i]->Name();
+                const MoveVariant *variant = TheMoveMgr->mRoutine[0][i].second;
                 if (variant) {
                     (*clipSymbolKeys)[clip].value = variant->Name();
                 }
@@ -2195,7 +2195,7 @@ void HamDirector::OnPopulateFromFile() {
         variants->Release();
     }
     TheMoveMgr->ComputeLoadedMoveSet();
-    LoadRoutineBuilderData(TheMoveMgr->GetUnk104(), true);
+    LoadRoutineBuilderData(TheMoveMgr->mMovesNeeded, true);
     OnPopulateFromMoveMgr();
 }
 

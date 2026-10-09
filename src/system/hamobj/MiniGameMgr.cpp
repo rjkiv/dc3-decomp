@@ -76,7 +76,7 @@ void MiniGameMgr::InitCascade(int numMovesNeeded, int blockingFactor) {
     mMovePool.clear();
     mValidMoves.clear();
     mInvalidMoves.clear();
-    UpdateCascadeMovePool(TheMoveMgr->Graph(), mMovePool, mValidMoves);
+    UpdateCascadeMovePool(TheMoveMgr->mWholeMoveGraph, mMovePool, mValidMoves);
     LoadValidMoves(false);
 }
 
@@ -146,7 +146,7 @@ void MiniGameMgr::LoadValidMoves(bool b1) {
 void MiniGameMgr::GetCascadeMoveList(DataArray *a1, DataArray *a2) {
     int new_moves_count = a1->Size();
     if (new_moves_count != 0) {
-        UpdateCascadeMovePool(TheMoveMgr->Graph(), mMovePool, mValidMoves);
+        UpdateCascadeMovePool(TheMoveMgr->mWholeMoveGraph, mMovePool, mValidMoves);
         MILO_ASSERT(mMovePool.size() >= new_moves_count, 0xDA);
     }
     for (int i = 0; i < a1->Size(); i++) {

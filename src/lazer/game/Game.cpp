@@ -493,7 +493,7 @@ void Game::LoadSong() {
     }
     TheMoveMgr->Clear();
     if (unk5d) {
-        TheMoveMgr->SetSong(song);
+        TheMoveMgr->SetPreferredSong(song);
     }
     RELEASE(mSongInfo);
     mSongInfo = new SongInfoCopy(TheHamSongMgr.SongMgr::SongAudioData(song));
@@ -608,9 +608,9 @@ void Game::LoadNewSong(Symbol s1, Symbol s2) {
     Symbol s48(TheMaster->GetAudio()->Name());
     LoadNewSongMoves(s2, true);
     if (unk5d) {
-        TheMoveMgr->SetSong(s2);
+        TheMoveMgr->SetPreferredSong(s2);
     } else {
-        TheMoveMgr->Graph().Clear();
+        TheMoveMgr->mWholeMoveGraph.Clear();
     }
     unk90 = 0;
 }
