@@ -102,7 +102,7 @@ public:
     int TrackingID() const { return mSkeletonTrackingID; }
     void SetTrackingID(int id) { mSkeletonTrackingID = id; }
     void SetSelected(int i) { mListState.SetSelected(i, -1, true); }
-    bool IsScrollingSettled() { return unk190.GetFirstVal() <= 0.0f; }
+    bool IsScrollingSettled() { return mScrollBehavior.GetFirstVal() <= 0.0f; }
 
     bool InControllerMode() const {
         return TheGestureMgr && TheGestureMgr->InControllerMode();
@@ -116,18 +116,18 @@ public:
     RndAnimatable *GetScrollSoundAnim() const { return mScrollSpeedAnim; }
 
     void PlayScrollSound() {
-        if (mListRibbonResource) {
-            mListRibbonResource->PlayScrollSound();
+        if (mListRibbon) {
+            mListRibbon->PlayScrollSound();
         }
     }
     void StopScrollSound() {
-        if (mListRibbonResource) {
-            mListRibbonResource->StopScrollSound();
+        if (mListRibbon) {
+            mListRibbon->StopScrollSound();
         }
     }
     void SetScrollSoundFrame(float frame) {
-        if (mListRibbonResource) {
-            mListRibbonResource->SetScrollSoundFrame(frame);
+        if (mListRibbon) {
+            mListRibbon->SetScrollSoundFrame(frame);
         }
     }
 
@@ -175,34 +175,34 @@ protected:
     std::vector<HamListRibbonDrawState> mRibbonDrawStates; // 0xb8
     /** "Mode for animations" */
     HamListRibbon::RibbonMode mRibbonMode; // 0xc4
-    bool unkc8; // 0xc8
+    bool mFiltersUpdated; // 0xc8
     /** "HamListRibbon resource file" */
-    ResourceDirPtr<HamListRibbon> mListRibbonResource; // 0xcc
+    ResourceDirPtr<HamListRibbon> mListRibbon; // 0xcc
     /** "HamListRibbon resource file" */
-    ResourceDirPtr<HamListRibbon> mHeaderRibbonResource; // 0xe4
+    ResourceDirPtr<HamListRibbon> mHeaderRibbon; // 0xe4
     /** "UIListDir resource file" */
-    ResourceDirPtr<UIListDir> mListDirResource; // 0xfc
+    ResourceDirPtr<UIListDir> mListDir; // 0xfc
     /** "HamScrollSpeedIndicator resource file" */
-    ResourceDirPtr<HamScrollSpeedIndicator> mScrollSpeedIndicatorResource; // 0x114
+    ResourceDirPtr<HamScrollSpeedIndicator> mScrollSpeedIndicator; // 0x114
     ObjPtr<HamNavProvider> mNavProvider; // 0x12c
     ObjPtr<RndAnimatable> mScrollSpeedAnim; // 0x140
-    bool unk154; // 0x154
+    bool mPlayEnterAnim; // 0x154
     /** "Skip the enter anim altogether" */
     bool mSkipEnterAnim; // 0x155
     /** "Don't automatically play the enter anim when this component enters" */
     bool mSuppressAutomaticEnter; // 0x156
-    bool unk157; // 0x157
+    bool mSuppressingEnter; // 0x157
     float mHandHeight; // 0x158
-    DoubleExponentialSmoother unk15c; // 0x15c
-    DoubleExponentialSmoother unk170; // 0x170
-    DirectionGestureFilter *unk184;
-    HandHeightGestureFilter *unk188;
+    DoubleExponentialSmoother mSlideAmount; // 0x15c
+    DoubleExponentialSmoother mDisengageAmount; // 0x170
+    DirectionGestureFilter *mDirectionFilter;
+    HandHeightGestureFilter *mHandHeightFilter;
     int mSkeletonTrackingID; // 0x18c
-    HamScrollBehavior unk190;
+    HamScrollBehavior mScrollBehavior;
     bool mDisableSlideSound; // 0x1e4
     bool mDisableSelectSound; // 0x1e5
     bool mEnabled; // 0x1e6
-    bool unk1e7; // 0x1e7
+    bool mEnableSelection; // 0x1e7
     /** "Automatically tie this navlist to the active skeleton" */
     bool mAlwaysUseActiveSkeleton; // 0x1e8
     /** "This list can only be used when it is focused" */

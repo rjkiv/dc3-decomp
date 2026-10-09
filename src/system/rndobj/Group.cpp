@@ -370,7 +370,7 @@ int RndGroup::MoveObject(Hmx::Object *obj, int idx) {
             for (; newIdx != 0 && otherIt != mObjects.begin(); --otherIt, ++newIdx) {
             }
         }
-        mObjects.MoveItem(otherIt, mObjects, found);
+        mObjects.splice(otherIt, mObjects, found);
         Update();
         return idx - newIdx;
     }

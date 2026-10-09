@@ -483,8 +483,8 @@ void DirLoader::SaveObjects(BinStream &bs, ObjectDir *dir) {
     if (parentDir != dir) {
         dir->SetName(NextName(dir->Name(), dir), dir);
     }
-    int hashSize = dir->HashTableUsedSize();
-    int strSize = dir->StrTableUsedSize();
+    int hashSize = dir->HashUsed();
+    int strSize = dir->StringUsed();
     for (ObjDirItr<Hmx::Object> it(dir, false); it != nullptr; ++it) {
         if (it != dir) {
             it->PreSave(bs);
@@ -907,8 +907,8 @@ void DirLoader::LoadHeader() {
         if (mRev > 0x1C) {
             *mStream >> unk9a;
         }
-        size1 += mDir->HashTableUsedSize() + 0x10;
-        size2 += mDir->StrTableUsedSize() + 0x98;
+        size1 += mDir->HashUsed() + 0x10;
+        size2 += mDir->StringUsed() + 0x98;
         mDir->Reserve(size1, size2);
         mDir->SetName(buf, mDir);
     } else if (mRev > 0xC) {

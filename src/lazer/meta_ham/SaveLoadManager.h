@@ -15,8 +15,7 @@
 enum SaveLoadMode {
     kAutoLoad = 0,
     kAutoSave = 1,
-    kDisableAutoSave = 2,
-    kManualDelete = 3
+    kDisableAutoSave = 2
 };
 
 enum SaveLoadMgrStatus {
@@ -156,13 +155,11 @@ public:
     bool IsIdle() const;
     int GetDialogFocusOption();
     void Poll();
-    bool IsInitialLoadDone() const { return !unk2d; }
+    bool IsInitialLoadDone() const { return !mFirstTime; }
 
     DataNode GetDialogMsg();
 
     static void Init();
-
-    bool GetUnk2c() { return unk2c; }
 
 private:
     bool SongCacheNeedsWrite();
@@ -183,23 +180,23 @@ protected:
     bool IsSafePlaceToSave() const;
     bool IsSafePlaceToLoad() const;
 
-    bool unk2c;
-    bool unk2d;
+    bool mActivated; // 0x2c
+    bool mFirstTime; // 0x2d
     SaveLoadMode mMode; // 0x30
     State mState; // 0x34
     State mStateAtSelectStart; // 0x38
-    int unk3c; // 0x3c
-    HamProfile *unk40; // 0x40
-    String unk44;
-    unsigned int unk4c;
-    bool unk50;
+    int mLastSelectionPadNum; // 0x3c
+    HamProfile *mProfileCur; // 0x40
+    String mSongCacheName; // 0x44
+    unsigned int mSongCacheSize; // 0x4c
+    bool mHasAutoloaded; // 0x50
     CacheID *mCacheID; // 0x54
     Cache *mCache; // 0x58
     void *mData; // 0x5c
     bool mSongCacheWriteDisabled; // 0x60
     bool mWaiting; // 0x61
-    MCResult unk64;
-    CacheResult unk68; // 0x68
+    MCResult mLastMCResult; // 0x64
+    CacheResult mLastCacheResult; // 0x68
     bool mNeedsSave; // 0x6c
     bool mNeedsLoad; // 0x6d
     int mLastChosenDeviceID; // 0x70

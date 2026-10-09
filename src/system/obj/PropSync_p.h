@@ -20,7 +20,7 @@ inline bool PropSync(float &f, DataNode &node, DataArray *prop, int i, PropOp op
 }
 
 inline bool PropSync(DataNode &obj, DataNode &node, DataArray *prop, int i, PropOp op) {
-    if (op == kPropUnknown0x40)
+    if (op == kPropNoNull)
         return false;
     else {
         MILO_ASSERT(i == prop->Size() && op <= kPropInsert, 0x19);
@@ -45,7 +45,7 @@ PropSync(unsigned char &uc, DataNode &node, DataArray *prop, int i, PropOp op) {
 
 inline bool
 PropSync(DataNodeObjTrack &objTrack, DataNode &node, DataArray *prop, int i, PropOp op) {
-    if (op == kPropUnknown0x40)
+    if (op == kPropNoNull)
         return false;
     else {
         MILO_ASSERT(i == prop->Size() && op <= kPropInsert, 0x25);
@@ -96,7 +96,7 @@ inline bool PropSync(Symbol &sym, DataNode &node, DataArray *prop, int i, PropOp
 
 template <class T>
 bool PropSync(std::vector<T> &vec, DataNode &node, DataArray *prop, int i, PropOp op) {
-    if (op == kPropUnknown0x40)
+    if (op == kPropNoNull)
         return false;
     else if (i == prop->Size()) {
         MILO_ASSERT(op == kPropSize || op == kPropInsert, 0xC9);
@@ -127,7 +127,7 @@ bool PropSync(std::vector<T> &vec, DataNode &node, DataArray *prop, int i, PropO
 
 template <class T>
 bool PropSync(std::list<T> &pList, DataNode &node, DataArray *prop, int i, PropOp op) {
-    if (op == kPropUnknown0x40)
+    if (op == kPropNoNull)
         return false;
     else if (i == prop->Size()) {
         MILO_ASSERT(op == kPropSize || op == kPropInsert, 0x9E);
@@ -179,7 +179,7 @@ bool PropSync(Key<Hmx::Color> &key, DataNode &node, DataArray *prop, int i, Prop
 
 template <class T>
 bool PropSync(Key<T> &key, DataNode &node, DataArray *prop, int i, PropOp op) {
-    if (op == kPropUnknown0x40)
+    if (op == kPropNoNull)
         return false;
     else if (i == prop->Size()) {
         return true;
@@ -201,11 +201,11 @@ bool PropSync(Key<T> &key, DataNode &node, DataArray *prop, int i, PropOp op) {
 
 template <class T>
 bool PropSync(Keys<T, T> &keys, DataNode &node, DataArray *prop, int i, PropOp op) {
-    if (op == kPropUnknown0x40)
+    if (op == kPropNoNull)
         return false;
     else if (i == prop->Size()) {
         MILO_ASSERT(op == kPropSize || op == kPropInsert, 0x10A);
-        node = keys.NumKeys();
+        node = (int)keys.size();
         return true;
     } else {
         typename Keys<T, T>::iterator it = keys.begin() + prop->Int(i++);
@@ -233,7 +233,7 @@ bool PropSync(Keys<T, T> &keys, DataNode &node, DataArray *prop, int i, PropOp o
 // this is called and inlined in the ObjPtrVec propsync
 template <class T>
 bool PropSync(T *&obj, DataNode &node, DataArray *prop, int i, PropOp op) {
-    if (op == kPropUnknown0x40)
+    if (op == kPropNoNull)
         return false;
     else {
         MILO_ASSERT(i == prop->Size() && op <= kPropInsert, 0x66);
@@ -258,7 +258,7 @@ bool PropSync(ObjDirPtr<T> &ptr, DataNode &node, DataArray *prop, int i, PropOp 
 
 template <class T>
 bool PropSync(ObjPtr<T> &ptr, DataNode &node, DataArray *prop, int i, PropOp op) {
-    if (op == kPropUnknown0x40)
+    if (op == kPropNoNull)
         return false;
     else {
         MILO_ASSERT(i == prop->Size() && op <= kPropInsert, 0x133);
@@ -272,7 +272,7 @@ bool PropSync(ObjPtr<T> &ptr, DataNode &node, DataArray *prop, int i, PropOp op)
 
 template <class T>
 bool PropSync(ObjOwnerPtr<T> &ptr, DataNode &node, DataArray *prop, int i, PropOp op) {
-    if (op == kPropUnknown0x40)
+    if (op == kPropNoNull)
         return false;
     else {
         MILO_ASSERT(op <= kPropInsert, 0x140);
@@ -288,7 +288,7 @@ template <class T>
 bool PropSync(
     ObjPtrList<T, ObjectDir> &ptr, DataNode &node, DataArray *prop, int i, PropOp op
 ) {
-    if (op == kPropUnknown0x40)
+    if (op == kPropNoNull)
         return ptr.Mode() == kObjListNoNull;
     else if (i == prop->Size()) {
         MILO_ASSERT(op == kPropSize || op == kPropInsert, 0x154);
@@ -338,7 +338,7 @@ bool PropSync(
 template <class T>
 __forceinline bool
 PropSyncInline(T *&obj, DataNode &node, DataArray *prop, int i, PropOp op) {
-    if (op == kPropUnknown0x40)
+    if (op == kPropNoNull)
         return false;
     else {
         MILO_ASSERT(i == prop->Size() && op <= kPropInsert, 0x66);
@@ -354,7 +354,7 @@ template <class T>
 bool PropSync(
     ObjPtrVec<T, ObjectDir> &objPtrVec, DataNode &node, DataArray *prop, int i, PropOp op
 ) {
-    if (op == kPropUnknown0x40)
+    if (op == kPropNoNull)
         return false;
     else if (i == prop->Size()) {
         MILO_ASSERT(op == kPropSize || op == kPropInsert, 0x1D9);
@@ -391,7 +391,7 @@ bool PropSync(
 
 template <class T>
 bool PropSync(ObjVector<T> &objVec, DataNode &node, DataArray *prop, int i, PropOp op) {
-    if (op == kPropUnknown0x40)
+    if (op == kPropNoNull)
         return false;
     else if (i == prop->Size()) {
         MILO_ASSERT(op == kPropSize || op == kPropInsert, 0x18B);
@@ -417,7 +417,7 @@ bool PropSync(ObjVector<T> &objVec, DataNode &node, DataArray *prop, int i, Prop
 
 template <class T>
 bool PropSync(ObjList<T> &objList, DataNode &node, DataArray *prop, int i, PropOp op) {
-    if (op == kPropUnknown0x40)
+    if (op == kPropNoNull)
         return false;
     else if (i == prop->Size()) {
         MILO_ASSERT(op == kPropSize || op == kPropInsert, 0x1B2);

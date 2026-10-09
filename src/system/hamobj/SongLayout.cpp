@@ -181,7 +181,7 @@ void SongLayout::DumpPatterns() const {
         MILO_LOG(" size=%d moves=%d\n", (int)it->mElements.size(), it->mNumMoves);
         i++;
         for (int j = 0; j < it->mNumMoves; j++) {
-            MILO_LOG("   %s\n", it->mMoveParents[j]->Name());
+            MILO_LOG("   %s\n", it->mMoveParents[j]->GetName());
         }
     }
 }
@@ -190,7 +190,8 @@ void SongLayout::AddPatternMove(int i1, Symbol s2) {
     if (mSongPatterns[i1].mNumMoves < mSongPatterns[i1].mElements.size()) {
         int numMoves = mSongPatterns[i1].mNumMoves;
         mSongPatterns[i1].mElements[numMoves] = s2;
-        mSongPatterns[i1].mMoveParents[numMoves] = TheMoveMgr->Graph().GetMoveParent(s2);
+        mSongPatterns[i1].mMoveParents[numMoves] =
+            TheMoveMgr->mWholeMoveGraph.GetMoveParent(s2);
         mSongPatterns[i1].mNumMoves++;
     }
 }
@@ -208,7 +209,7 @@ void SongLayout::SetReplacerMove(int i, Symbol s2) {
     }
     MILO_LOG("\n");
     mMoveReplacers[i].unk4 = s2;
-    mMoveReplacers[i].unk8 = TheMoveMgr->Graph().GetMoveParent(s2);
+    mMoveReplacers[i].unk8 = TheMoveMgr->mWholeMoveGraph.GetMoveParent(s2);
 }
 
 int SongLayout::ReplacerFirstMeasure(int i) const {

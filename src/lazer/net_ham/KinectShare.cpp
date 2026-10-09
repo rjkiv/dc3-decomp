@@ -5,69 +5,75 @@
 #include "utl/HxGuid.h"
 #include "utl/MemMgr.h"
 #include "xdk/xapilibi/sysinfoapi.h"
+#include "xdk/xapilibi/xbox.h"
+#include <cstring>
 
 KinectShare::KinectShare(
     unsigned int ip,
-    int port,
-    const char *cc,
+    int svrPort,
+    const char *data,
     int len,
-    EContentType etype,
-    u64 i5,
-    u64 i6,
-    u64 i7,
-    u64 i8
+    EContentType contentType,
+    u64 xuid0,
+    u64 xuid1,
+    u64 xuid2,
+    u64 xuid3
 )
-    : HttpPost(ip, port, "/lspfrontdoorprocessor/default.aspx", 0) {
-    SetTimeout(10000);
+    : HttpPost(ip, svrPort, "/lspfrontdoorprocessor/default.aspx", 0) {
+    SetTimeout(10000.0f);
     mContentLength = len;
-    unk138 = 0x97;
-    unk13c = 0x97;
+    mHeaderSize = 0x97;
+    mHeaderBytesLeftToSend = 0x97;
     unk90 = len;
-    unka0 = 0x80;
-    unka1 = 0;
-    unka3 = 7;
-    FILETIME lpSystemTimeAsFileTime;
-    GetSystemTimeAsFileTime(&lpSystemTimeAsFileTime);
-    unkdb = 0xF00D;
-    unkde = 0xF00D;
-    unkcd = false;
-    unkad = i5;
-    unkb5 = i6;
-    unkbd = i7;
-    unkc5 = i8;
-    unkd2 = true;
-    unkd3 = 0;
-    unkd7 = 0;
-    unkdd = 3;
-    unke0 = etype;
-    unkce = mContentLength + unk138;
-    unka5 = (lpSystemTimeAsFileTime.dwHighDateTime & 0xFFFF) * 0x10000
-            + lpSystemTimeAsFileTime.dwLowDateTime
-        & 0xFFFFFFFF;
-    HxGuid hx60;
-    hx60.Generate();
-    memcpy(unke1, hx60.Data(), sizeof(HxGuid));
-    unkf5 = 0;
-    unkf7 = 1;
-    unkf1 = mContentLength + unk138;
-    hx60.Generate();
-    memcpy(unkf9, hx60.Data(), sizeof(HxGuid));
-    unk109 = 0;
-    unk10d = false;
-    unk10e = false;
-    unk10f = mContentLength;
-    unk113 = unka5;
-    hx60.Generate();
-    memcpy(unk11b, hx60.Data(), sizeof(HxGuid));
-    unk12b = 0;
-    unk12f = 0;
-    unk133 = ULSystemLanguage();
-    unk135 = ULSystemLocale();
+    mHeaderData.Flags = 0x80;
+    mHeaderData.MajorVersion = 0;
+    mHeaderData.MinorVersion = 7;
+
+    FILETIME fileTime;
+    GetSystemTimeAsFileTime(&fileTime);
+    mHeaderData.SessionStartTime =
+        (fileTime.dwHighDateTime) * 0x10000 + fileTime.dwLowDateTime;
+    mHeaderData.MagicNumber = 0xF00D;
+    mHeaderData.ContentMagicNumber = 0xF00D;
+    mHeaderData.CompressionType = 0;
+    mHeaderData.UserID0 = xuid0;
+    mHeaderData.UserID1 = xuid1;
+    mHeaderData.UserID2 = xuid2;
+    mHeaderData.UserID3 = xuid3;
+    mHeaderData.MessageType = 1;
+    mHeaderData.CompressedPartitionSizeInBytes = 0;
+    mHeaderData.CompressedWindowSizeInBytes = 0;
+    mHeaderData.Type = 3;
+    mHeaderData.ContentType = contentType;
+    mHeaderData.DataSize = mContentLength + mHeaderSize;
+
+    HxGuid tmpGuid;
+    tmpGuid.Generate();
+    memcpy(mHeaderData.ID, tmpGuid.Data(), sizeof(HxGuid));
+
+    mHeaderData.DataChunkIndex = 0;
+    mHeaderData.ChunkCount = 1;
+    mHeaderData.DataChunkSizeInBytes = mContentLength + mHeaderSize;
+
+    tmpGuid.Generate();
+    memcpy(mHeaderData.BatchID, tmpGuid.Data(), sizeof(HxGuid));
+    mHeaderData.TimeStamp = 0;
+    mHeaderData.Reserved = 0;
+    mHeaderData.Reserved2 = 0;
+    mHeaderData.DataTotalSizeInBytes = mContentLength;
+    mHeaderData.CreationTimeStampUtc = mHeaderData.SessionStartTime;
+
+    tmpGuid.Generate();
+    memcpy(mHeaderData.TitleServerEnumerationID, tmpGuid.Data(), sizeof(HxGuid));
+    mHeaderData.Score = 0;
+    mHeaderData.LevelInfo = 0;
+    mHeaderData.Language = ULSystemLanguage();
+    mHeaderData.Locale = ULSystemLocale();
 }
 
 bool KinectShare::CanRetry() {
-    if ((unk13c || unk90) && HttpPost::CanRetry()) {
-        unk13c = unk138;
+    if ((mHeaderBytesLeftToSend || unk90) && HttpPost::CanRetry()) {
+        mHeaderBytesLeftToSend = mHeaderSize;
         return true;
     } else {
         return false;
@@ -76,15 +82,18 @@ bool KinectShare::CanRetry() {
 
 void KinectShare::Sending() {
     MILO_ASSERT(mSocket, 0x87);
-    if (unk13c > 0) {
-        int ret = mSocket->Send(&unka0 + (unk138 - unk13c), unk13c);
+    if (mHeaderBytesLeftToSend > 0) {
+        int ret = mSocket->Send(
+            &mHeaderData.Flags + (mHeaderSize - mHeaderBytesLeftToSend),
+            mHeaderBytesLeftToSend
+        );
         if (ret == -1) {
             mFailType = (HttpGetFailType)1;
             SetState((State)7);
-        } else if (ret != unk13c) {
-            unk13c -= ret;
+        } else if (ret != mHeaderBytesLeftToSend) {
+            mHeaderBytesLeftToSend -= ret;
         } else {
-            unk13c = 0;
+            mHeaderBytesLeftToSend = 0;
         }
     } else {
         HttpPost::Sending();
@@ -93,43 +102,43 @@ void KinectShare::Sending() {
 
 KinectShareConnection::~KinectShareConnection() {
     RELEASE(mKinectShare);
-    mConnection.Disconnect();
+    mXLSPConnection.Disconnect();
 }
 
 void KinectShareConnection::Poll() {
-    switch (unk78) {
-    case 0: {
+    switch (mState) {
+    case kConnecting: {
         MILO_ASSERT(!mKinectShare, 0xC6);
-        mConnection.Poll();
-        int connectionState = mConnection.GetState();
+        mXLSPConnection.Poll();
+        int connectionState = mXLSPConnection.GetState();
         if (connectionState == 4) {
             MILO_LOG(
                 "KinectShareConnection::Poll: XLSP connection failed while connecting\n"
             );
-            mConnection.Disconnect();
-            unk78 = 3;
+            mXLSPConnection.Disconnect();
+            mState = kFailed;
         } else if (connectionState == 3) {
             mKinectShare = new KinectShare(
-                mConnection.GetServiceIP(),
+                mXLSPConnection.GetServiceIP(),
                 1000,
-                unk80,
-                unk84,
-                unk88,
-                unk90,
-                unk98,
-                unka0,
-                unka8
+                mPhotoData,
+                mPhotoDataLen,
+                mContentType,
+                mXUIDs[0],
+                mXUIDs[1],
+                mXUIDs[2],
+                mXUIDs[3]
             );
             mKinectShare->Send();
-            unk78 = 1;
+            mState = kUploading;
         } else {
             return;
         }
         break;
     }
-    case 1: {
+    case kUploading: {
         MILO_ASSERT(mKinectShare, 0xDA);
-        mConnection.Poll();
+        mXLSPConnection.Poll();
         mKinectShare->Poll();
         if (mKinectShare->HasFailed()) {
             MILO_LOG(
@@ -137,28 +146,28 @@ void KinectShareConnection::Poll() {
                 mKinectShare->FailType(),
                 mKinectShare->PrevState()
             );
-            mConnection.Disconnect();
+            mXLSPConnection.Disconnect();
             RELEASE(mKinectShare);
-            unk78 = 3;
+            mState = kFailed;
         } else if (mKinectShare->IsDownloaded()) {
             if (mKinectShare->GetBufferSize() == 5) {
                 char *response = mKinectShare->DetachBuffer();
                 MILO_ASSERT(response, 0xEA);
                 if (response[4] == 1) {
-                    unk78 = 2;
+                    mState = kSuccess;
                 } else {
                     MILO_LOG(
                         "KinectShare::Poll: Upload failed, response code = %d\n",
                         response[4]
                     );
-                    unk78 = 3;
+                    mState = kFailed;
                 }
                 MemFree(response, __FILE__, 0xF4);
             } else {
                 MILO_LOG("KinectShare::Poll: Upload failed, invalid response data\n");
-                unk78 = 3;
+                mState = kFailed;
             }
-            mConnection.Disconnect();
+            mXLSPConnection.Disconnect();
             RELEASE(mKinectShare);
         }
         break;

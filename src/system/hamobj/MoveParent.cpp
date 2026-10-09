@@ -44,26 +44,26 @@ MoveParent::MoveParent(MoveGraph *graph, DataArray *arr) {
             mEraFlags.push_back(eraArr->Sym(i));
         }
     }
-    mVariants.clear();
+    mMoveVariants.clear();
     DataArray *variantArr = arr->FindArray(variant, true);
     for (int i = 1; i < variantArr->Size(); i++) {
         DataArray *curVarArr = variantArr->Array(i);
         MoveVariant *pVariant = new MoveVariant(graph, curVarArr, this);
         MILO_ASSERT(pVariant, 0x44);
-        mVariants.push_back(pVariant);
+        mMoveVariants.push_back(pVariant);
     }
     mSuperEasy = false;
 }
 
 MoveParent::~MoveParent() {
-    for (int i = 0; i < mVariants.size(); i++) {
-        RELEASE(mVariants[i]);
+    for (int i = 0; i < mMoveVariants.size(); i++) {
+        RELEASE(mMoveVariants[i]);
     }
-    mVariants.clear();
+    mMoveVariants.clear();
 }
 
 bool MoveParent::IsValidForMiniGame() const {
-    FOREACH (it, mVariants) {
+    FOREACH (it, mMoveVariants) {
         if ((*it)->IsValidForMinigame())
             return true;
     }
@@ -71,11 +71,11 @@ bool MoveParent::IsValidForMiniGame() const {
 }
 
 const MoveVariant *MoveParent::PickRandomVariant() const {
-    return mVariants[RandomInt(0, mVariants.size())];
+    return mMoveVariants[RandomInt(0, mMoveVariants.size())];
 }
 
 bool MoveParent::HasPrevAdjacent(const MoveParent *parent) const {
-    FOREACH (it, mPrevAdjacents) {
+    FOREACH (it, mPrev) {
         if (parent == *it)
             return true;
     }
@@ -101,7 +101,7 @@ bool MoveParent::HasEra(Symbol era) const {
 bool MoveParent::HasCategory(Symbol cat) const { return HasGenre(cat) || HasEra(cat); }
 
 bool MoveParent::HasFinalMoveVariant() const {
-    FOREACH (it, mVariants) {
+    FOREACH (it, mMoveVariants) {
         if ((*it)->IsFinalPose())
             return true;
     }
@@ -109,7 +109,7 @@ bool MoveParent::HasFinalMoveVariant() const {
 }
 
 bool MoveParent::HasRestMoveVariant() const {
-    FOREACH (it, mVariants) {
+    FOREACH (it, mMoveVariants) {
         if ((*it)->IsRest())
             return true;
     }
@@ -119,22 +119,22 @@ bool MoveParent::HasRestMoveVariant() const {
 void MoveParent::PopulateAdjacentParents() {
     std::set<const MoveParent *> nextParents;
     std::set<const MoveParent *> prevParents;
-    FOREACH (it, mVariants) {
+    FOREACH (it, mMoveVariants) {
         FOREACH (cand, (*it)->mNextCandidates) {
-            nextParents.insert(cand->mValue.mVariant->Parent());
+            nextParents.insert(cand->mVariant->GetParent());
         }
         FOREACH (cand, (*it)->mPrevCandidates) {
-            prevParents.insert(cand->mValue.mVariant->Parent());
+            prevParents.insert(cand->mVariant->GetParent());
         }
     }
-    mNextAdjacents.resize(nextParents.size());
-    std::copy(nextParents.begin(), nextParents.end(), mNextAdjacents.begin());
-    mPrevAdjacents.resize(prevParents.size());
-    std::copy(prevParents.begin(), prevParents.end(), mPrevAdjacents.begin());
+    mNext.resize(nextParents.size());
+    std::copy(nextParents.begin(), nextParents.end(), mNext.begin());
+    mPrev.resize(prevParents.size());
+    std::copy(prevParents.begin(), prevParents.end(), mPrev.begin());
 }
 
 void MoveParent::CacheLinks(MoveGraph *graph) {
-    FOREACH (it, mVariants) {
+    FOREACH (it, mMoveVariants) {
         (*it)->CacheLinks(graph);
     }
     PopulateAdjacentParents();
@@ -166,10 +166,10 @@ void MoveParent::Load(BinStream &bs, MoveGraph *graph) {
     String str;
     bs >> str;
     bs >> numFlags;
-    mVariants.reserve(numFlags);
+    mMoveVariants.reserve(numFlags);
     for (int i = 0; i < numFlags; i++) {
         MoveVariant *var = new MoveVariant();
         var->Load(bs, graph, this);
-        mVariants.push_back(var);
+        mMoveVariants.push_back(var);
     }
 }

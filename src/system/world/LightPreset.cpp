@@ -402,7 +402,7 @@ bool LightPreset::Replace(ObjRef *from, Hmx::Object *to) {
     if (spotIt != mSpotlights.end()) {
         mSpotlights.Set(spotIt, to ? dynamic_cast<Spotlight *>(to) : nullptr);
         if (!*spotIt) {
-            RemoveSpotlight(&*spotIt - &*mSpotlights.begin());
+            RemoveSpotlight(spotIt - mSpotlights.begin());
         }
         CacheFrames();
         return true;
@@ -411,7 +411,7 @@ bool LightPreset::Replace(ObjRef *from, Hmx::Object *to) {
     if (envIt != mEnvironments.end()) {
         mEnvironments.Set(envIt, to ? dynamic_cast<RndEnviron *>(to) : nullptr);
         if (!*envIt) {
-            RemoveEnvironment(&*envIt - &*mEnvironments.begin());
+            RemoveEnvironment(envIt - mEnvironments.begin());
         }
         CacheFrames();
         return true;
@@ -420,7 +420,7 @@ bool LightPreset::Replace(ObjRef *from, Hmx::Object *to) {
     if (lightIt != mLights.end()) {
         mLights.Set(lightIt, to ? dynamic_cast<RndLight *>(to) : nullptr);
         if (!*lightIt) {
-            RemoveLight(&*lightIt - &*mLights.begin());
+            RemoveLight(lightIt - mLights.begin());
         }
         CacheFrames();
         return true;
@@ -431,7 +431,7 @@ bool LightPreset::Replace(ObjRef *from, Hmx::Object *to) {
             spotDrawIt, to ? dynamic_cast<SpotlightDrawer *>(to) : nullptr
         );
         if (!*spotDrawIt) {
-            RemoveSpotlightDrawer(&*spotDrawIt - &*mSpotlightDrawers.begin());
+            RemoveSpotlightDrawer(spotDrawIt - mSpotlightDrawers.begin());
         }
         CacheFrames();
         return true;
@@ -1014,7 +1014,7 @@ void LightPreset::FillEnvPresetData(RndEnviron *env, LightPreset::EnvironmentEnt
 void LightPreset::SyncNewSpotlights() {
     for (ObjDirItr<Spotlight> it(Dir(), true); it != nullptr; ++it) {
         Spotlight *cur = it;
-        if (mSpotlights.find(cur) == mSpotlights.end_const()) {
+        if (mSpotlights.find(cur) == mSpotlights.cend()) {
             AddSpotlight(cur, true);
         }
     }
@@ -1099,25 +1099,25 @@ void LightPreset::CacheFrames() {
 void LightPreset::SyncKeyframeTargets() {
     for (ObjDirItr<Spotlight> it(Dir(), true); it != nullptr; ++it) {
         Spotlight *spotlight = it;
-        if (mSpotlights.find(spotlight) == mSpotlights.end_const()) {
+        if (mSpotlights.find(spotlight) == mSpotlights.cend()) {
             AddSpotlight(spotlight, false);
         }
     }
 
     for (ObjDirItr<RndEnviron> it(Dir(), true); it != nullptr; ++it) {
         RndEnviron *env = it;
-        if (mEnvironments.find(env) == mEnvironments.end_const()) {
+        if (mEnvironments.find(env) == mEnvironments.cend()) {
             AddEnvironment(env);
         }
         FOREACH (it2, env->LightsReal()) {
             RndLight *light = *it2;
-            if (mLights.find(light) == mLights.end_const()) {
+            if (mLights.find(light) == mLights.cend()) {
                 AddLight(light);
             }
         }
         FOREACH (it2, env->LightsApprox()) {
             RndLight *light = *it2;
-            if (mLights.find(light) == mLights.end_const()) {
+            if (mLights.find(light) == mLights.cend()) {
                 AddLight(light);
             }
         }
@@ -1125,7 +1125,7 @@ void LightPreset::SyncKeyframeTargets() {
 
     for (ObjDirItr<SpotlightDrawer> it(Dir(), true); it != nullptr; ++it) {
         SpotlightDrawer *drawer = it;
-        if (mSpotlightDrawers.find(drawer) == mSpotlightDrawers.end_const()) {
+        if (mSpotlightDrawers.find(drawer) == mSpotlightDrawers.cend()) {
             AddSpotlightDrawer(drawer);
         }
     }

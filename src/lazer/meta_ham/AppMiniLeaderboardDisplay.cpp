@@ -90,7 +90,7 @@ AppMiniLeaderboardDisplay::ElementStateOverride(int, int data, UIListWidgetState
         bool bHasOnlineID = profile->IsSignedIn();
         MILO_ASSERT(bHasOnlineID, 500);
         XUID xuid = profile->GetOnlineID()->GetXUID();
-        if (mLBRows[data].unk20 == xuid) {
+        if (mLBRows[data].xuid == xuid) {
             return kUIListWidgetHighlight;
         }
     }
@@ -122,7 +122,7 @@ DataNode AppMiniLeaderboardDisplay::OnMsg(const ServerStatusChangedMsg &) {
 DataNode AppMiniLeaderboardDisplay::OnMsg(const RCJobCompleteMsg &msg) {
     if (msg.Success()) {
         GetMiniLeaderboardJob *job = dynamic_cast<GetMiniLeaderboardJob *>(msg.Job());
-        if (job && job->SongID() == mSongID) {
+        if (job && job->mSongID == mSongID) {
             UpdateData(job);
         }
         if (unk60 != 1) {
@@ -227,7 +227,7 @@ void AppMiniLeaderboardDisplay::UpdateSelfInRows() {
         if (0 < score) {
             bool check = false;
             for (auto it = (mLBRows).begin(); it != (mLBRows).end(); (++it)) {
-                if (it->unk20 == xuid && score > (unsigned int)it->unkc) {
+                if (it->xuid == xuid && score > (unsigned int)it->score) {
                     mLBRows.erase(it);
                     check = true;
                     break;
@@ -235,19 +235,19 @@ void AppMiniLeaderboardDisplay::UpdateSelfInRows() {
             }
             if (check) {
                 LeaderboardRow row;
-                row.unk20 = xuid;
-                row.unkc = score;
-                row.unk1d = false;
-                row.unk10 = 0;
-                row.unk1e = true;
-                row.unk0 = pActiveProfile->GetName();
-                row.unk1c = noFlashcards;
-                row.unk18 = diff;
+                row.xuid = xuid;
+                row.score = score;
+                row.isPercentile = false;
+                row.rank = 0;
+                row.isFriend = true;
+                row.gamertag = pActiveProfile->GetName();
+                row.noFlashcards = noFlashcards;
+                row.diff = diff;
 
                 check = false;
                 int idx = 0;
                 for (auto it = (mLBRows).begin(); it != (mLBRows).end(); (++it)) {
-                    if (score >= (unsigned int)mLBRows[idx].unkc) {
+                    if (score >= (unsigned int)mLBRows[idx].score) {
                         mLBRows.insert(it, row);
                         check = true;
                         break;
@@ -255,13 +255,13 @@ void AppMiniLeaderboardDisplay::UpdateSelfInRows() {
                     idx++;
                 }
                 if (!check) {
-                    row.unk14 = 1;
+                    row.orank = 1;
                     mLBRows.push_back(row);
                 }
                 idx = 0;
                 int val = 1;
                 for (auto it = (mLBRows).begin(); it != (mLBRows).end(); (++it)) {
-                    mLBRows[idx].unk14 = val++;
+                    mLBRows[idx].orank = val++;
                     idx++;
                 }
             }
@@ -281,29 +281,29 @@ void AppMiniLeaderboardDisplay::Text(
 
         if (listLabel->Matches("gamertag")) {
             static Symbol gamertag("gamertag");
-            if (name == mLBRows[data].unk0) {
+            if (name == mLBRows[data].gamertag) {
                 label->SetTextToken(gNullStr);
             } else {
-                label->SetTokenFmt(gamertag, mLBRows[data].unk0);
+                label->SetTokenFmt(gamertag, mLBRows[data].gamertag);
             }
         } else if (listLabel->Matches("score")) {
-            label->SetInt(mLBRows[data].unkc, false);
+            label->SetInt(mLBRows[data].score, false);
         } else if (listLabel->Matches("no_flashcards")) {
             static Symbol no_flashcards_icon("no_flashcards_icon");
-            if (mLBRows[data].unk1c) {
+            if (mLBRows[data].noFlashcards) {
                 label->SetTextToken(no_flashcards_icon);
             } else {
                 label->SetTextToken(gNullStr);
             }
         } else if (listLabel->Matches("rank")) {
             static Symbol rank_fmt("rank_fmt");
-            label->SetInt(mLBRows[data].unk14, false);
+            label->SetInt(mLBRows[data].orank, false);
         } else if (listLabel->Matches("difficulty")) {
             static Symbol beginner_short("beginner_short");
             static Symbol easy_short("easy_short");
             static Symbol medium_short("medium_short");
             static Symbol expert_short("expert_short");
-            Difficulty diff = mLBRows[data].unk18;
+            Difficulty diff = mLBRows[data].diff;
             switch (diff) {
             case kDifficultyBeginner:
                 label->SetTextToken(beginner_short);
@@ -321,15 +321,15 @@ void AppMiniLeaderboardDisplay::Text(
                 MILO_NOTIFY(
                     "Bad difficulty %d retrieved from leaderboards for user                    %s at rank %d!", // yes this is what it should be
                     diff,
-                    mLBRows[data].unk0,
-                    mLBRows[data].unk10
+                    mLBRows[data].gamertag,
+                    mLBRows[data].rank
                 );
                 break;
             }
         } else if (listLabel->Matches("self")) {
             static Symbol Gamertag("gamertag");
-            if (name == mLBRows[data].unk0) {
-                label->SetTokenFmt(Gamertag, mLBRows[data].unk0);
+            if (name == mLBRows[data].gamertag) {
+                label->SetTokenFmt(Gamertag, mLBRows[data].gamertag);
             } else {
                 label->SetTextToken(gNullStr);
             }

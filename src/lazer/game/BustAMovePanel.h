@@ -74,54 +74,50 @@ private:
     void SetFlashcardImage(int, int, int);
 
     BAMState mState; // 0x3c
-    FreestyleMoveRecorder *unk40;
+    FreestyleMoveRecorder *mRecorder; // 0x40
     int mReps; // 0x44
-    std::list<Symbol> unk48;
-    std::list<int> unk50;
-    int unk58; // FreestyleMoveRecorder*
-    float unk5c;
-    ObjectDir *mHUDPanel; // 0x60
-    int unk64;
-    int unk68;
-    int unk6c;
-    int unk70; // 0x70 - BAMState
-    HamLabel *mStatusLabel; // 0x74
-    HamLabel *mMovePromptLabel; // 0x78
-    bool unk7c;
-    float unk80;
-    int unk84;
-    int unk88;
-    int unk8c;
-    float unk90[2];
-    RndDir *mBAMColumns[kNumSkeletonSides]; // 0x98
-    SkeletonSide unka0;
-    DancerSkeleton unka4[3]; // 0xa4
-    int unk92c;
-    float unk930;
-    int unk934;
-    HamPanel *mBAMVisualizerPanel; // 0x938
-    int unk93c[4];
-    int unk94c[2];
-    int unk954;
-    float unk958;
-    float unk95c;
-    HamPhraseMeter *mPhraseMeters[kNumSkeletonSides]; // 0x960
-    int unk968;
-    int unk96c;
-    bool unk970;
-    float unk974;
-    float unk978;
+    std::list<Symbol> mFlashcardText; // 0x48
+    std::list<int> mFlashcardImage; // 0x50
+    int mRecordedSkeletonIndex; // 0x58
+    float mMoveScore; // 0x5c
+    ObjectDir *mHudPanel; // 0x60
+    int mRecordingPlayer; // 0x64
+    int mStartOffset; // 0x68
+    int mSuccesses; // 0x6c
+    BAMState mQueueState; // 0x70 - BAMState
+    HamLabel *mStatus; // 0x74
+    HamLabel *mMovePrompt; // 0x78
+    bool mBustedMoveSuccessfully; // 0x7c
+    float mRecordTime; // 0x80
+    int mNumCreatedMoves; // 0x84
+    int mSequenceSkelIndex[2]; // 0x88
+    float mSequenceMoveScore[2]; // 0x90
+    RndDir *mPlayerColumn[kNumSkeletonSides]; // 0x98
+    SkeletonSide mActiveSide; // 0xa0
+    DancerSkeleton mFlashcardPose[3]; // 0xa4
+    int mCaptureFlashcard; // 0x92c
+    float mCaptureFlashcardTimer; // 0x930
+    int mRenderFlashcard; // 0x934
+    HamPanel *mVisualizer; // 0x938
+    int mFlashcardName[4]; // 0x93c
+    int mBustFailures[2]; // 0x94c
+    int mAllowedBustFailures; // 0x954
+    float mSongLoopStart; // 0x958
+    float mSongLoopEnd; // 0x95c
+    HamPhraseMeter *mPhraseMeter[kNumSkeletonSides]; // 0x960
+    int mHideTransitionOnBeat; // 0x968
+    int mFinalSequenceType; // 0x96c
+    bool mUsingMulligan; // 0x970
+    float mDuringBustMoveRatings[2]; // 0x974
     std::vector<int> mSongStructure; // 0x97c
-    int unk988; // 0x988 - num reps
-    bool unk98c;
+    int mRepsLeft; // 0x988
+    bool mStreamJumped; // 0x98c
     std::vector<int> mShuffledMoveNames; // 0x990
-    int unk99c;
-    float unk9a0;
-    bool unk9a4[2];
-    int unk9a8[2];
-    int unk9b0;
-    int unk9b4;
-    bool unk9b8;
+    int mShuffledMoveNameIndex; // 0x99c
+    float mPlayMovePromptAt; // 0x9a0
+    bool mHasFlawlessedAllMoves[2]; // 0x9a4
+    int mMoveCreator[4]; // 0x9a8
+    bool mNeedToPlayIntroVO; // 0x9b8
     bool unk9b9;
     int unk9bc;
 };

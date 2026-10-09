@@ -24,20 +24,20 @@ void PresenceMgr::Init() {
     if (presenceArray) {
         static Symbol presence_modes("presence_modes");
         DataArray *presenceModesArray = presenceArray->FindArray(presence_modes, false);
-        mPresenceModes = presenceModesArray;
+        mDataModes = presenceModesArray;
         if (presenceModesArray) {
             static Symbol presence_mode_contexts("presence_mode_contexts");
             DataArray *presenceModeContextArray =
                 presenceArray->FindArray(presence_mode_contexts);
-            mPresenceModeContexts = presenceModeContextArray;
+            mDataModeContextsMap = presenceModeContextArray;
             static Symbol instrument_play_mode_contexts("instrument_play_mode_contexts");
             DataArray *instrumentPlayModeContextsArray =
                 presenceArray->FindArray(instrument_play_mode_contexts);
-            mInstrumentPlayModeContexts = instrumentPlayModeContextsArray;
+            mDataInstrumentContextsMap = instrumentPlayModeContextsArray;
         }
     }
 
-    if (mPresenceModes) {
+    if (mDataModes) {
         static Symbol signin_changed("signin_changed");
         ThePlatformMgr.AddSink(this, signin_changed);
         TheHamUI.AddSink(this, CurrentScreenChangedMsg::Type());
@@ -56,7 +56,7 @@ void PresenceMgr::Init() {
 }
 
 void PresenceMgr::UpdatePresence() {
-    if (mPresenceModes) {
+    if (mDataModes) {
         Symbol presenceMode = GetPresenceMode();
         for (int i = 0; i < 4; i++) {
             if (ThePlatformMgr.IsSignedIn(i)) {
@@ -77,11 +77,11 @@ void PresenceMgr::UpdatePresence() {
 }
 
 int PresenceMgr::GetPlayModeContext() {
-    if (!mPresenceModes)
+    if (!mDataModes)
         return -1;
     else {
         static Symbol defaultSym("default");
-        DataArray *defaultArray = mInstrumentPlayModeContexts->FindArray(defaultSym);
+        DataArray *defaultArray = mDataInstrumentContextsMap->FindArray(defaultSym);
         static Symbol learn("learn");
         static Symbol multiplayer("multiplayer");
         static Symbol party("party");
@@ -120,7 +120,7 @@ DataNode PresenceMgr::OnPlayerPresentChange(DataArray *) {
 }
 
 DataNode PresenceMgr::OnPresenceChange(DataArray *) {
-    if (!mPresenceModes)
+    if (!mDataModes)
         return 0;
     else {
         UpdatePresence();
@@ -129,7 +129,7 @@ DataNode PresenceMgr::OnPresenceChange(DataArray *) {
 }
 
 void PresenceMgr::SetNotInGame() {
-    if (!mPresenceModes) {
+    if (!mDataModes) {
         return;
     }
     mInGame = false;
@@ -138,7 +138,7 @@ void PresenceMgr::SetNotInGame() {
 }
 
 void PresenceMgr::SetInGame(int id) {
-    if (!mPresenceModes)
+    if (!mDataModes)
         return;
     mSongID = id;
     mInGame = true;
@@ -146,10 +146,10 @@ void PresenceMgr::SetInGame(int id) {
 }
 
 int PresenceMgr::GetPresenceContextFromMode(Symbol s, bool b) {
-    if (!mPresenceModes)
+    if (!mDataModes)
         return -1;
     else {
-        DataArray *presenceArray = mPresenceModeContexts->FindArray(s, true);
+        DataArray *presenceArray = mDataModeContextsMap->FindArray(s, true);
         return presenceArray->Int(b ? 1 : 2);
     }
 }
@@ -166,16 +166,16 @@ bool PresenceMgr::IsPadPlaying(int pad) {
 }
 
 Symbol PresenceMgr::GetPresenceMode() {
-    if (!mPresenceModes)
+    if (!mDataModes)
         return gNullStr;
 
     static Symbol in_game("in_game");
     static Symbol screens("screens");
     static Symbol gamemode("gamemode");
 
-    int size = mPresenceModes->Size();
+    int size = mDataModes->Size();
     for (int i = 1; i < size; i++) {
-        DataArray *arr = mPresenceModes->Array(i);
+        DataArray *arr = mDataModes->Array(i);
         int arrSize = arr->Size();
         if (arrSize >= 1) {
             Symbol mode = arr->Sym(0);

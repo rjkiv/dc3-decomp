@@ -81,26 +81,26 @@ MetagameRank::MetagameRank(HamProfile *p) : mProfile(p) {
 }
 
 BEGIN_HANDLERS(MetagameRank)
-    HANDLE_EXPR(get_score, mScore)
-    HANDLE_EXPR(get_rank_number, mRankNumber)
+    HANDLE_EXPR(get_score, mPoints)
+    HANDLE_EXPR(get_rank_number, mCurrRank)
     HANDLE_EXPR(get_rank_in_tier, GetRankInTier())
     HANDLE_EXPR(get_tier, GetTier())
     HANDLE_EXPR(get_xp_of_rank, GetXPOfRank(_msg->Int(2)))
     HANDLE_EXPR(has_new_rank, HasNewRank())
     HANDLE_EXPR(at_max_rank, mAtMaxRank)
-    HANDLE_EXPR(get_percent_to_next_rank, mPctToNextRank)
+    HANDLE_EXPR(get_percent_to_next_rank, mPercentToNextRank)
     HANDLE_ACTION(award_points, AwardPointsForTask(_msg->Sym(2)))
-    HANDLE_EXPR(have_deferred_points, mDeferredPoints.size() > 0)
+    HANDLE_EXPR(have_deferred_points, mDeferredPointsQueue.size() > 0)
     HANDLE(get_next_deferred_points, GetNextDeferredPoints)
 END_HANDLERS
 
 void MetagameRank::SaveFixed(FixedSizeSaveableStream &fs) const {
-    fs << mScore;
-    bool b1 = unk38;
+    fs << mPoints;
+    bool b1 = mFirstTime;
     if (!b1) {
         static Symbol play_first_time_disp("play_first_time_disp");
-        FOREACH (it, mDeferredPoints) {
-            if (it->unk4 == play_first_time_disp) {
+        FOREACH (it, mDeferredPointsQueue) {
+            if (it->mMessage == play_first_time_disp) {
                 b1 = true;
                 break;
             }
@@ -108,15 +108,15 @@ void MetagameRank::SaveFixed(FixedSizeSaveableStream &fs) const {
     }
     fs << b1;
     fs << mAtMaxRank;
-    fs.Write(unk39, 0x40);
-    fs.Write(unk79, 0x40);
+    fs.Write(mOneTimeTasksDone, 0x40);
+    fs.Write(mUnlocked, 0x40);
     static Symbol combined_xp_disp("combined_xp_disp");
     Symbol s = combined_xp_disp; // lmao
     int sum;
-    if (mDeferredPoints.size() != 0) {
+    if (mDeferredPointsQueue.size() != 0) {
         sum = 0;
-        FOREACH (it, mDeferredPoints) {
-            sum += it->unk0;
+        FOREACH (it, mDeferredPointsQueue) {
+            sum += it->mPoints;
         }
     } else {
         sum = 0;
@@ -127,23 +127,23 @@ void MetagameRank::SaveFixed(FixedSizeSaveableStream &fs) const {
 }
 
 void MetagameRank::LoadFixed(FixedSizeSaveableStream &fs, int i2) {
-    fs >> mScore;
+    fs >> mPoints;
     if (i2 > 0x45) {
-        fs >> unk38;
+        fs >> mFirstTime;
     }
     if (i2 > 0x4E) {
         fs >> mAtMaxRank;
     }
-    fs.Read(unk39, 0x40);
-    if (unk38) {
+    fs.Read(mOneTimeTasksDone, 0x40);
+    if (mFirstTime) {
         int idx = -1;
         static Symbol play_first_time("play_first_time");
         GetOneTimeTask(play_first_time, nullptr, &idx);
         if (idx >= 0) {
-            unk39[idx] = 0;
+            mOneTimeTasksDone[idx] = 0;
         }
     }
-    fs.Read(unk79, 0x40);
+    fs.Read(mUnlocked, 0x40);
     if (i2 > 0x3D) {
         if (i2 <= 0x5A) {
             int x;
@@ -152,10 +152,10 @@ void MetagameRank::LoadFixed(FixedSizeSaveableStream &fs, int i2) {
     }
     if (i2 > 0x5A) {
         DeferredPoints pt;
-        LoadSymbolFromID(fs, pt.unk4);
-        fs >> pt.unk0;
-        if (pt.unk0 > 0) {
-            mDeferredPoints.push_front(pt);
+        LoadSymbolFromID(fs, pt.mMessage);
+        fs >> pt.mPoints;
+        if (pt.mPoints > 0) {
+            mDeferredPointsQueue.push_front(pt);
         }
     }
     ComputeRankNumber(true);
@@ -164,9 +164,9 @@ void MetagameRank::LoadFixed(FixedSizeSaveableStream &fs, int i2) {
 
 bool MetagameRank::HasNewRank() const {
     if (!mAtMaxRank) {
-        return mPctToNextRank == 1;
+        return mPercentToNextRank == 1;
     } else {
-        return unkc9;
+        return mNewlyAtMaxRank;
     }
 }
 
@@ -285,21 +285,21 @@ void MetagameRank::Init() {
 
 void MetagameRank::Clear() {
     mDirty = false;
-    mScore = 0;
-    unk38 = true;
-    memset(unk39, 0, 0x40);
-    memset(unk79, 0, 0x40);
-    mDeferredPoints.clear();
-    mRankNumber = 0;
+    mPoints = 0;
+    mFirstTime = true;
+    memset(mOneTimeTasksDone, 0, 0x40);
+    memset(mUnlocked, 0, 0x40);
+    mDeferredPointsQueue.clear();
+    mCurrRank = 0;
     mAtMaxRank = false;
-    unkc9 = false;
-    mPctToNextRank = 0;
+    mNewlyAtMaxRank = false;
+    mPercentToNextRank = 0;
     ComputeRankNumber(true);
 }
 
 Symbol MetagameRank::GetRankTitle() const {
     char buf[32];
-    sprintf(buf, "rank_%d", mRankNumber);
+    sprintf(buf, "rank_%d", mCurrRank);
     return buf;
 }
 
@@ -334,7 +334,7 @@ int MetagameRank::GetRankInTier() const {
     if (mAtMaxRank) {
         return 0;
     }
-    int i3 = mRankNumber;
+    int i3 = mCurrRank;
     for (int i = 0; i < gTiers.size(); i++) {
         int i2 = gTiers[i].size();
         if (i2 >= i3) {
@@ -346,10 +346,10 @@ int MetagameRank::GetRankInTier() const {
 }
 
 int MetagameRank::GetTier() const {
-    if (mRankNumber == 0) {
+    if (mCurrRank == 0) {
         return 0;
     }
-    int i3 = mRankNumber;
+    int i3 = mCurrRank;
     unsigned int numTiers = gTiers.size();
     for (int i = 0; i < numTiers; i++) {
         for (int j = 0; j < gTiers[i].size(); j++) {
@@ -373,16 +373,16 @@ int MetagameRank::GetXPOfRank(int i) const {
 }
 
 DataNode MetagameRank::GetNextDeferredPoints(DataArray *a) {
-    if (mDeferredPoints.empty()) {
+    if (mDeferredPointsQueue.empty()) {
         static Symbol xp_previous_points_msg("xp_previous_points_msg");
         return xp_previous_points_msg;
     } else {
-        DeferredPoints pt = mDeferredPoints.front();
-        mDeferredPoints.pop_front();
-        mScore += pt.unk0;
+        DeferredPoints pt = mDeferredPointsQueue.front();
+        mDeferredPointsQueue.pop_front();
+        mPoints += pt.mPoints;
         ComputeRankNumber(false);
         mDirty = true;
-        DataArrayPtr ptr(pt.unk4, pt.unk0);
+        DataArrayPtr ptr(pt.mMessage, pt.mPoints);
         return ptr;
     }
 }
@@ -538,8 +538,8 @@ bool compare_deferred_points(DeferredPoints a, DeferredPoints b) {
         }
         indicesInitted = true;
     }
-    auto ait = award_sort_indices.find(a.unk4);
-    auto bit = award_sort_indices.find(b.unk4);
+    auto ait = award_sort_indices.find(a.mMessage);
+    auto bit = award_sort_indices.find(b.mMessage);
     int aIndex = INT_MAX;
     int bIndex = INT_MAX;
     if (ait != award_sort_indices.end()) {
@@ -547,7 +547,7 @@ bool compare_deferred_points(DeferredPoints a, DeferredPoints b) {
     } else {
         MILO_LOG(
             "WARNING: XP Task for %s not in sort order. It should be added.\n",
-            a.unk4.Str()
+            a.mMessage.Str()
         );
     }
     if (bit != award_sort_indices.end()) {
@@ -555,7 +555,7 @@ bool compare_deferred_points(DeferredPoints a, DeferredPoints b) {
     } else {
         MILO_LOG(
             "WARNING: XP Task for %s not in sort order. It should be added.\n",
-            b.unk4.Str()
+            b.mMessage.Str()
         );
     }
     return aIndex < bIndex;
@@ -638,8 +638,8 @@ void MetagameRank::UpdateScore(
         static Symbol campaign_completed_on_hard("campaign_completed_on_hard");
         static Symbol five_star_a_characters_songlist("five_star_a_characters_songlist");
 
-        if (unk38) {
-            unk38 = false;
+        if (mFirstTime) {
+            mFirstTime = false;
             AwardPointsForTask(play_first_time);
         }
 
@@ -737,7 +737,7 @@ void MetagameRank::UpdateScore(
                 int task_index = -1;
                 if (GetOneTimeTask(curTask, nullptr, &task_index)) {
                     MILO_ASSERT(task_index >= 0 && task_index < kMaxTasksOneTime, 0x36F);
-                    if (!unk39[task_index]) {
+                    if (!mOneTimeTasksDone[task_index]) {
                         MILO_LOG("XP Forcing One-Time Task: %s\n", curTask.Str());
                         AwardPointsForTask(curTask);
                         b25 = true;
@@ -758,15 +758,15 @@ void MetagameRank::UpdateScore(
         } else if (xp_force_one_rank_up.Int()) {
             MILO_LOG("XP Forcing One Rank Up\n");
             static Symbol played_1000_songs_disp("played_1000_songs_disp");
-            AwardPoints(GetXPOfRank(mRankNumber), played_1000_songs_disp);
+            AwardPoints(GetXPOfRank(mCurrRank), played_1000_songs_disp);
         } else if (xp_force_award_all.Int()) {
             MILO_LOG("XP Forcing Awarding All Ranks\n");
             float f37 = 1.0f;
-            if (TheRockCentral.GetUnk8c()) {
+            if (TheRockCentral.HasXpMult()) {
                 f37 = 0.5f;
             }
             static Symbol played_1000_songs_disp("played_1000_songs_disp");
-            for (int i = mRankNumber; i < 65; i++) {
+            for (int i = mCurrRank; i < 65; i++) {
                 AwardPoints((float)GetXPOfRank(i) * f37, played_1000_songs_disp);
             }
             xp_force_award_all = 0;
@@ -774,7 +774,7 @@ void MetagameRank::UpdateScore(
             if (RandomInt(0, 100) == 42) {
                 AwardPointsForTask(random_bonus_occurs_1pct_of_the_time);
             }
-            if (TheRockCentral.GetUnk8c()) {
+            if (TheRockCentral.HasXpMult()) {
                 AwardPointsForTask(double_xp_weekend);
             }
             if (stars >= 6) {
@@ -989,19 +989,19 @@ void MetagameRank::UpdateScore(
                     AwardPointsForTask(nail_fatality);
                 }
             }
-            mDeferredPoints.sort(compare_deferred_points);
+            mDeferredPointsQueue.sort(compare_deferred_points);
         }
     }
 }
 
 void MetagameRank::AwardPoints(int i, Symbol s) {
-    if (TheRockCentral.GetUnk8c()) {
+    if (TheRockCentral.HasXpMult()) {
         i = i << 1;
     }
     DeferredPoints df;
-    df.unk0 = i;
-    df.unk4 = s;
-    mDeferredPoints.push_back(df);
+    df.mPoints = i;
+    df.mMessage = s;
+    mDeferredPointsQueue.push_back(df);
     mDirty = true;
 }
 
@@ -1020,10 +1020,10 @@ void MetagameRank::AwardPointsForTask(Symbol task) {
         if (!oneTimeTask) {
             return;
         }
-        if (unk39[task_index] != 0) {
+        if (mOneTimeTasksDone[task_index] != 0) {
             return;
         }
-        unk39[task_index] = 1;
+        mOneTimeTasksDone[task_index] = 1;
     }
 
     int scoreNum = taskArray->FindInt(score);
@@ -1038,7 +1038,7 @@ void MetagameRank::AwardForRankUp(int i1) {
     auto it = unlocks.rbegin();
     for (; i1 > 0; i1--) {
         if (unlocks.empty()) {
-            BuildUnlockablesList(unk79, unlocks);
+            BuildUnlockablesList(mUnlocked, unlocks);
             it = unlocks.rbegin();
             if (unlocks.empty()) {
                 return;
@@ -1050,7 +1050,7 @@ void MetagameRank::AwardForRankUp(int i1) {
             award.unk0 = mProfile->GetHamUser()->UserName();
         }
         award.unk8 = cur;
-        unk79[cur->unk0] = true;
+        mUnlocked[cur->unk0] = true;
         char buffer[16];
         memcpy(buffer, "no_unlock_", 11);
         if (strncmp(cur->unk4.Str(), buffer, strlen(buffer))) {
@@ -1063,25 +1063,25 @@ void MetagameRank::AwardForRankUp(int i1) {
 }
 
 int MetagameRank::ComputeRankNumber(bool b1) {
-    if (unk38) {
-        mRankNumber = 0;
-        mPctToNextRank = 0;
+    if (mFirstTime) {
+        mCurrRank = 0;
+        mPercentToNextRank = 0;
         return 0;
     } else {
         if (mAtMaxRank) {
-            mPctToNextRank = 0;
+            mPercentToNextRank = 0;
             mAtMaxRank = true;
-            mRankNumber = gRanksArray->Size() - 1;
+            mCurrRank = gRanksArray->Size() - 1;
         } else {
             int i7 = 1;
             int i6 = 0;
             for (; i7 < gRanksArray->Size(); i7++) {
                 DataArray *curArr = gRanksArray->Array(i7);
                 int i5 = curArr->Int(0);
-                if (mScore < i5) {
+                if (mPoints < i5) {
                     i7--;
                     if (i7 != -1) {
-                        mPctToNextRank = (float)(mScore - i6) / (float)(i5 - i6);
+                        mPercentToNextRank = (float)(mPoints - i6) / (float)(i5 - i6);
                         goto next;
                     }
                     break;
@@ -1090,18 +1090,18 @@ int MetagameRank::ComputeRankNumber(bool b1) {
             }
             mAtMaxRank = true;
             i7 = gRanksArray->Size() - 1;
-            mPctToNextRank = 0;
+            mPercentToNextRank = 0;
         next:
-            if (mRankNumber != i7) {
+            if (mCurrRank != i7) {
                 if (mAtMaxRank) {
-                    unkc9 = true;
+                    mNewlyAtMaxRank = true;
                 }
                 if (!b1) {
-                    AwardForRankUp(i7 - mRankNumber);
+                    AwardForRankUp(i7 - mCurrRank);
                 }
-                mRankNumber = i7;
+                mCurrRank = i7;
             }
         }
-        return mRankNumber;
+        return mCurrRank;
     }
 }

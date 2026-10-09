@@ -50,13 +50,13 @@ public:
 
 private:
     Symbol mMode; // 0x2c
-    Symbol mBattleMode; // 0x30
+    Symbol mMicrogame; // 0x30
     Symbol mParentMode; // 0x34
     int mParentOnly; // 0x38
     Symbol mGameplayMode; // 0x3c
     int mCanLose; // 0x40
     int mPauseCountIn; // 0x44
-    int mRequires2Players; // 0x48
+    int mRequiresTwoPlayers; // 0x48
     int mCrowdReacts; // 0x4c
     int mLoadChars; // 0x50
     int mUseStaticTip; // 0x54

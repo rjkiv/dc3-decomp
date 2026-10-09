@@ -9,7 +9,7 @@ public:
     void Poll();
     bool IsActive() const { return mActive; }
     float Ms() const { return mMs; }
-    void SetController(int cnt) { mController = cnt; }
+    void SetController(int cnt) { mPadNum = cnt; }
     void SetMs(float ms) { mMs = ms; }
     void SetEndMs(float ms) { mEndMs = ms; }
 
@@ -19,5 +19,5 @@ private:
     float mMs; // 0x0
     float mEndMs; // 0x4
     bool mActive; // 0x8
-    int mController; // 0xc
+    int mPadNum; // 0xc
 };

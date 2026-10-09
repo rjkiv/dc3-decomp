@@ -303,8 +303,8 @@ void RndMat::Init() {
     BaseMaterial::SetDefaultMat(mat);
     RELEASE(sMetaMaterials);
     sMetaMaterials = LoadMetaMaterials();
-    int hashsize = (sMetaMaterials->HashTableUsedSize() + 200) * 2;
-    sMetaMaterials->Reserve(hashsize, sMetaMaterials->StrTableUsedSize() + 4400);
+    int hashsize = (sMetaMaterials->HashUsed() + 200) * 2;
+    sMetaMaterials->Reserve(hashsize, sMetaMaterials->StringUsed() + 4400);
     CreateAndSetMetaMat(mat);
 }
 

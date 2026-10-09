@@ -41,23 +41,22 @@ BEGIN_HANDLERS(SongSequence)
     HANDLE_EXPR(get_outro_cam_shot, GetOutroCamShot())
     HANDLE_EXPR(
         loop_start,
-        mCurrentIndex > mEntries.size() ? 0
-                                        : BeatToMs(mEntries[mCurrentIndex].unk18 * 4.0f)
+        m_Current > m_Entries.size() ? 0 : BeatToMs(m_Entries[m_Current].unk18 * 4.0f)
     )
-    HANDLE_EXPR(empty, mEntries.size() == 0)
-    HANDLE_EXPR(current_index, mCurrentIndex)
+    HANDLE_EXPR(empty, m_Entries.size() == 0)
+    HANDLE_EXPR(current_index, m_Current)
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
 
 void SongSequence::Init() {
-    mFileCache = nullptr;
+    sCache = nullptr;
     SetName("songseq", ObjectDir::Main());
     Clear();
 }
 
 bool SongSequence::Done() const {
-    int numEntries = mEntries.size();
-    return numEntries == 0 || mCurrentIndex >= numEntries;
+    int num_Entries = m_Entries.size();
+    return num_Entries == 0 || m_Current >= num_Entries;
 }
 
 void SongSequence::Add(const DataArray *a) {
@@ -82,17 +81,17 @@ void SongSequence::Add(const DataArray *a) {
         entry.unk2c = aSize > 14 ? a->Sym(14) : "";
         entry.unk30 = aSize > 15 ? a->Sym(15) : "";
         entry.unk34 = entry.unk38 = 0;
-        mEntries.push_back(entry);
+        m_Entries.push_back(entry);
     }
 }
 
 void SongSequence::Clear() {
-    mCurrentIndex = -1;
-    mEntries.clear();
-    unk18 = 0;
-    unk1c = 0;
-    if (mFileCache) {
-        RELEASE(mFileCache);
+    m_Current = -1;
+    m_Entries.clear();
+    m_PrevChangeTime = 0;
+    m_TimeSinceLoad = 0;
+    if (sCache) {
+        RELEASE(sCache);
     }
 }
 
@@ -100,7 +99,7 @@ Symbol SongSequence::GetIntroCamShot() const {
     if (Done()) {
         return "";
     } else {
-        return mEntries[mCurrentIndex].mIntroCamShot;
+        return m_Entries[m_Current].mIntroCamShot;
     }
 }
 
@@ -108,17 +107,17 @@ Symbol SongSequence::GetOutroCamShot() const {
     if (Done()) {
         return "";
     } else {
-        return mEntries[mCurrentIndex].mOutroCamShot;
+        return m_Entries[m_Current].mOutroCamShot;
     }
 }
 
 void SongSequence::LoadNextSongAudio() {
-    if (!Done() && mCurrentIndex <= mEntries.size() - 2) {
+    if (!Done() && m_Current <= m_Entries.size() - 2) {
         Hmx::Object *game = ObjectDir::Main()->Find<Hmx::Object>("game");
         if (game) {
             game->Handle(Message("set_realtime", true), true);
         }
-        Entry &curEntry = mEntries[mCurrentIndex + 1];
+        Entry &curEntry = m_Entries[m_Current + 1];
         TheGame->LoadNewSongAudio(curEntry.unk4);
         bool b3 = false;
         if (*curEntry.unk2c.Str() != '\0') {
@@ -156,23 +155,23 @@ bool SongSequence::DoNext(bool b1, bool b2) {
     static Symbol in_campaign_era_intro("in_campaign_era_intro");
     static Symbol holla_back("holla_back");
     static Symbol mind_control("mind_control");
-    unk28 = false;
-    int numEntries = mEntries.size();
-    if (numEntries == 0)
+    m_HaveReenteredCharacters = false;
+    int num_Entries = m_Entries.size();
+    if (num_Entries == 0)
         return true;
     bool isLoaded = TheGame->IsLoaded();
     if (!b1 && !isLoaded) {
-        return numEntries <= mCurrentIndex;
+        return num_Entries <= m_Current;
     }
     if (!b1) {
         float ui = TheTaskMgr.UISeconds();
-        float old = unk18;
-        unk18 = ui;
-        if (unk18 - old < 0.5f) {
-            return numEntries <= mCurrentIndex;
+        float old = m_PrevChangeTime;
+        m_PrevChangeTime = ui;
+        if (m_PrevChangeTime - old < 0.5f) {
+            return num_Entries <= m_Current;
         }
     }
-    if (!b2 && mCurrentIndex >= 0) {
+    if (!b2 && m_Current >= 0) {
         if (TheHamProvider->Property(in_campaign_era_intro)->Int()) {
             static Symbol num_stars("num_stars");
             const DataNode *prop = TheGamePanel->Property(num_stars, false);
@@ -182,29 +181,29 @@ bool SongSequence::DoNext(bool b1, bool b2) {
             } else {
                 stars = 0;
             }
-            mEntries[mCurrentIndex].unk38 = stars;
+            m_Entries[m_Current].unk38 = stars;
             PropertyEventProvider *p0 = TheGameData->Player(0)->Provider();
             PropertyEventProvider *p1 = TheGameData->Player(1)->Provider();
-            mEntries[mCurrentIndex].unk34 =
+            m_Entries[m_Current].unk34 =
                 p0->Property("score")->Int() + p1->Property("score")->Int();
             CampaignPerformer *campaignPerf =
                 static_cast<CampaignPerformer *>(MetaPerformer::Current());
             campaignPerf->UpdateEraSong(
                 campaignPerf->GetDifficulty(),
                 campaignPerf->Era(),
-                mEntries[0].unk4,
-                mEntries[0].unk38
+                m_Entries[0].unk4,
+                m_Entries[0].unk38
             );
-            campaignPerf->TriggerSongCompletion(mEntries[0].unk34, mEntries[0].unk38);
+            campaignPerf->TriggerSongCompletion(m_Entries[0].unk34, m_Entries[0].unk38);
         }
     }
-    if (!b2 && mEntries[mCurrentIndex].unk8 == mind_control) {
+    if (!b2 && m_Entries[m_Current].unk8 == mind_control) {
         CampaignPerformer *campaignPerf =
             static_cast<CampaignPerformer *>(MetaPerformer::Current());
         campaignPerf->SetCampaignMindControlComplete(true);
     }
-    if (++mCurrentIndex < (int)mEntries.size() && !b2) {
-        Entry &nextEntry = mEntries[mCurrentIndex];
+    if (++m_Current < (int)m_Entries.size() && !b2) {
+        Entry &nextEntry = m_Entries[m_Current];
         bool loadCrew = false;
         if (*nextEntry.unk2c.Str() != '\0') {
             loadCrew = true;
@@ -249,7 +248,7 @@ bool SongSequence::DoNext(bool b1, bool b2) {
         }
         TheGameMode->SetGameplayMode(nextEntry.unk8, nextEntry.unk8 == perform);
         TheGame->LoadNewSong(nextEntry.unk4, nextEntry.unk0);
-        unk24 = TheTaskMgr.UISeconds();
+        m_BeginLoadTime = TheTaskMgr.UISeconds();
         static Symbol deinit("deinit");
         UIPanel *gamePanel = ObjectDir::Main()->Find<UIPanel>("game_panel");
         gamePanel->Handle(Message(deinit), true);
@@ -275,7 +274,7 @@ bool SongSequence::DoNext(bool b1, bool b2) {
         }
         TheGameMode->SetGameplayMode(perform, true);
         Clear();
-        mCurrentIndex = -1;
+        m_Current = -1;
         return true;
     }
 }
@@ -293,8 +292,11 @@ void SongSequence::OnSongLoaded() {
         static Symbol freestyle_enabled("freestyle_enabled");
         static Symbol holla_back("holla_back");
         static Symbol mind_control("mind_control");
-        MILO_LOG("Time to advance song sequence = %.3f\n", TheTaskMgr.UISeconds() - unk24);
-        Entry &curEntry = mEntries[mCurrentIndex];
+        MILO_LOG(
+            "Time to advance song sequence = %.3f\n",
+            TheTaskMgr.UISeconds() - m_BeginLoadTime
+        );
+        Entry &curEntry = m_Entries[m_Current];
         UIPanel *gamePanel = ObjectDir::Main()->Find<UIPanel>("game_panel");
         bool hasIntro = TheGame->HasIntro();
         Symbol gameMode = TheGameMode->Property(gameplay_mode)->Sym();
@@ -311,7 +313,7 @@ void SongSequence::OnSongLoaded() {
                 hpd->Provider()->SetProperty(start_score_move_index, 1000);
             }
         }
-        if (mCurrentIndex != 0 || !inHollaback) {
+        if (m_Current != 0 || !inHollaback) {
             gamePanel->Handle(Message(reset), true);
         }
         if (!inMindControl) {
@@ -336,12 +338,12 @@ void SongSequence::OnSongLoaded() {
             hudPanel->Find<UILabel>("song_name.lbl")->SetPrelocalizedString(String(""));
             hudPanel->Find<UILabel>("song_artist.lbl")->SetPrelocalizedString(String(""));
         }
-        if (mFileCache) {
-            mFileCache->Clear();
-            if (mCurrentIndex < mEntries.size() - 1) {
+        if (sCache) {
+            sCache->Clear();
+            if (m_Current < m_Entries.size() - 1) {
                 char buffer[256];
-                mFileCache->StartSet(0);
-                Symbol s0 = mEntries[mCurrentIndex + 1].unk0;
+                sCache->StartSet(0);
+                Symbol s0 = m_Entries[m_Current + 1].unk0;
                 int s0len = strlen(s0.Str());
                 strcpy(buffer, TheHamSongMgr.SongPath(s0, 0));
                 buffer[strlen(buffer) + s0len] = 0;
@@ -349,14 +351,14 @@ void SongSequence::OnSongLoaded() {
                 const char *moves = MakeString("%s%s.milo", buffer, "moves");
                 const char *clips = MakeString("%s%s.milo", buffer, "clips");
                 const char *mogg = MakeString("%s%s.milo", buffer, s0);
-                mFileCache->Add(milo, 1, milo);
-                mFileCache->Add(moves, 1, moves);
-                mFileCache->Add(clips, 1, clips);
-                mFileCache->Add(mogg, 1, mogg);
-                mFileCache->EndSet();
+                sCache->Add(milo, 1, milo);
+                sCache->Add(moves, 1, moves);
+                sCache->Add(clips, 1, clips);
+                sCache->Add(mogg, 1, mogg);
+                sCache->EndSet();
             }
         }
-        unk1c = 0;
+        m_TimeSinceLoad = 0;
         if (!curEntry.unk21) {
             TheHamDirector->StartStopVisualizer(false, 1);
             RndGroup *grp = TheHamDirector->GetVenueWorld()->Find<RndGroup>("bid.grp");
@@ -391,7 +393,7 @@ void SongSequence::OnSongLoaded() {
     next:
         TheGame->Handle(Message("set_realtime", false), true);
         TheHamProvider->SetProperty("game_stage", Symbol("playing"));
-        unk28 = true;
+        m_HaveReenteredCharacters = true;
         TheGame->Jump(0, true);
         TheHamDirector->Handle(Message("set_suppress_next_shot", 0x78), true);
     }

@@ -1413,8 +1413,8 @@ void ConvertBonesToTranses(ObjectDir *dir, bool b2) {
             meshes.push_back(it);
         } else if (b2) {
             bool b1 = false;
-            for (auto rit = it->Refs().Begin(); !b1 && rit != it->Refs().End();
-                 rit = it->Refs().Next(rit)) {
+            for (auto rit = it->BeginRef(); !b1 && rit != it->EndRef();
+                 rit = rit->NextRef()) {
                 RndMesh *curRefOwner = dynamic_cast<RndMesh *>(rit->RefOwner());
                 if (curRefOwner) {
                     for (int i = 0; i < curRefOwner->NumBones(); i++) {

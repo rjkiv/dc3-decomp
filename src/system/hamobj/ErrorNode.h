@@ -7,7 +7,7 @@
 #include "utl/MemMgr.h"
 #include "utl/Symbol.h"
 
-enum ErrorNodeType {
+enum ErrorNodeJoint {
     kErrorJointHipCenter = 1,
     kErrorJointSpine = 2,
     kErrorJointShoulderCenter = 4,
@@ -28,10 +28,14 @@ enum ErrorNodeType {
     kErrorJointAnkleRight = 0x20000,
     kErrorJointFootLeft = 0x40000,
     kErrorJointFootRight = 0x80000,
+};
+
+enum ErrorNodeType {
     kErrorHam1Euclidean = 0x100000,
     kErrorHam1Displacement = 0x200000,
     kErrorDisplacement = 0x400000,
-    kErrorPosition = 0x800000
+    kErrorPosition = 0x800000,
+    kNumErrorNodeTypes = 5,
 };
 
 enum ErrorScaleType {
@@ -63,18 +67,21 @@ struct ScaleOp {
 
 struct ErrorFrameInput {
     ErrorFrameInput(
-        const SkeletonHistory *, const DancerSkeleton &, const BaseSkeleton &, float
+        const SkeletonHistory *history,
+        const DancerSkeleton &desired,
+        const BaseSkeleton &actual,
+        float song_speed
     );
 
-    const DancerSkeleton &mSkeleton; // 0x0
-    const BaseSkeleton &mBaseSkeleton; // 0x4
-    float mBoneLengths[kNumBones]; // 0x8
-    float mBaseBoneLengths[kNumBones]; // 0x54
-    Vector3 mJointDisps[kNumJoints]; // 0xa0
-    Vector3 mBaseJointDisps[kNumJoints]; // 0x1e0
-    bool mDisplacements; // 0x320
-    Vector3 mJointPositions[kNumJoints]; // 0x324
-    Vector3 mBaseJointPositions[kNumJoints]; // 0x464
+    const DancerSkeleton &mDesired; // 0x0
+    const BaseSkeleton &mActual; // 0x4
+    float mDesiredBoneLengths[kNumBones]; // 0x8
+    float mActualBoneLengths[kNumBones]; // 0x54
+    Vector3 mDesiredDisplacements[kNumJoints]; // 0xa0
+    Vector3 mActualDisplacements[kNumJoints]; // 0x1e0
+    bool mHasActualDisplacements; // 0x320
+    Vector3 mDesiredCamJointPos[kNumJoints]; // 0x324
+    Vector3 mActualCamJointPos[kNumJoints]; // 0x464
 };
 
 // Ham1NodeWeight size: 0x14
@@ -88,20 +95,23 @@ struct Ham1NodeWeight {
 
 // Ham2FrameWeight size: 0x24
 struct Ham2FrameWeight {
-    float unk0; // 0x0 - PSNR?
-    float unk4[kNumLimbFeedbacks]; // 0x4
-    float unk14[kNumLimbFeedbacks]; // 0x14
+    float mWeight; // 0x0
+    float mMaxFeedbackOnPSNRs[kNumLimbFeedbacks]; // 0x4
+    float mMinFeedbackOffPSNRs[kNumLimbFeedbacks]; // 0x14
 };
 
 struct OldNodeWeight {
-    float unk0;
-    float unk4, unk8, unkc, unk10;
+    float mWeight; // 0x0
+    float mPerfectDist; // 0x4
+    float mRate; // 0x8
+    float mAnglePerfectDist; // 0xc
+    float mAngleRate; // 0x10
 };
 
 struct ErrorNodeInput {
-    void Set(const Vector3 &, const Ham1NodeWeight *);
+    void Set(const Vector3 &component_scales, const Ham1NodeWeight *node_weight);
 
-    Vector3 mNodeComponentWeight; // 0x0
+    Vector3 mComponentScales; // 0x0
     const Ham1NodeWeight *mNodeWeight; // 0x10
 };
 
@@ -117,29 +127,31 @@ public:
     VizError(SkeletonViz &, const ErrorFrameInput &, const ErrorNodeInput &) const = 0;
 
     MEM_OVERLOAD(ErrorNode, 0x7D);
-    bool IsTypeJointMatch(int) const;
-    bool XZErrorAxis(Vector3 &, const DancerSkeleton &) const;
+    bool IsTypeJointMatch(int type_joint_flags) const;
+    bool XZErrorAxis(Vector3 &x_axis, const DancerSkeleton &dancer_skel) const;
     int GetFeedbackLimbs() const { return mFeedbackLimbs; }
     ErrorNodeType Type() const { return mType; }
-    Symbol Name() const { return mNodeName; }
+    Symbol Name() const { return mName; }
 
-    static ErrorNode *Create(const DataArray *);
+    static ErrorNode *Create(const DataArray *cfg);
 
 protected:
-    ErrorNode(ErrorNodeType, const DataArray *);
+    ErrorNode(ErrorNodeType type, const DataArray *cfg);
 
     void NormBoneLengths(
-        const ErrorFrameInput &, const SkeletonBone (&)[3], float &, float &
+        const ErrorFrameInput &frame_input,
+        const SkeletonBone (&norm_bones)[3],
+        float &desired_bone_len,
+        float &actual_bone_len
     ) const;
-    void InitNormBones(const DataArray *, SkeletonBone (&)[3]);
+    void InitNormBones(const DataArray *cfg, SkeletonBone (&bone_list)[3]);
 
     ErrorNodeType mType; // 0x4
-    Symbol mNodeName; // 0x8
-    SkeletonJoint mJoint; // 0xc
+    Symbol mName; // 0x8
+    SkeletonJoint mSkeletonJoint; // 0xc
     /** A FeedbackLimbs bitmask of which limbs to highlight to provide feedback for. */
     int mFeedbackLimbs; // 0x10
-    SkeletonJoint mXErrorAxis; // 0x14
-    SkeletonJoint mZErrorAxis; // 0x18
+    std::pair<SkeletonJoint, SkeletonJoint> mXZErrorJoints; // 0x14
 };
 
 // Ham1EuclideanNode size: 0x3c
@@ -147,37 +159,45 @@ class Ham1EuclideanNode : public ErrorNode {
 private:
     SkeletonCoordSys mCoordSys; // 0x1c
     SkeletonJoint mBaseJoint; // 0x20
-    float mComponentWeightRanges[3][2]; // 0x24
+    std::pair<float, float> mComponentWeightRanges[3]; // 0x24
 public:
     Ham1EuclideanNode(ErrorNodeType, const DataArray *);
     virtual bool SkipFirstFrame() const { return false; }
-    virtual void
-    CalcError(const ErrorFrameInput &, const ErrorNodeInput &, Vector3 &) const;
-    virtual void
-    VizError(SkeletonViz &, const ErrorFrameInput &, const ErrorNodeInput &) const {}
+    virtual void CalcError(
+        const ErrorFrameInput &frame_input,
+        const ErrorNodeInput &node_input,
+        Vector3 &errors
+    ) const;
+    virtual void VizError(
+        SkeletonViz &viz,
+        const ErrorFrameInput &frame_input,
+        const ErrorNodeInput &node_input
+    ) const {}
 };
 
 // BaseDisplacementNode size: 0x2c
 class BaseDisplacementNode : public ErrorNode {
 protected:
     struct DisplacementData {
-        Vector3 mJointDisplacement;
-        Vector3 mBaseJointDisplacement;
+        Vector3 mDesired; // 0x0
+        Vector3 mActual; // 0x10
     };
 
     struct Ham1DisplacementData {
-        float unk0;
-        Vector3 unk4;
-        bool unk14;
-        float unk18;
-        float unk1c;
+        float mActualMag; // 0x0
+        Vector3 mProjected; // 0x4
+        bool mPositiveProjection; // 0x14
+        float mAngle; // 0x18
+        float mDesiredMag; // 0x1c
     };
 
-    bool Displacements(const ErrorFrameInput &, DisplacementData &) const;
+    bool
+    Displacements(const ErrorFrameInput &frame_input, DisplacementData &disp_data) const;
     bool Displacements(
         const ErrorFrameInput &, DisplacementData &, Ham1DisplacementData &
     ) const;
 
+private:
     SkeletonJoint mBaseJoint; // 0x1c
     SkeletonBone mNormBones[kMaxNumNormBones]; // 0x20
 public:
@@ -204,19 +224,19 @@ public:
 class Ham1DisplacementNode : public BaseDisplacementNode {
 private:
     struct ErrorData {
-        float unk0;
-        float unk4;
-        float unk8;
+        float mMagError; // 0x0
+        float mPotentialAngleError; // 0x4
+        float mAngleError; // 0x8
     };
 
     ScaleOp mPotentialAngleOp; // 0x2c
 
     void Errors(
-        const ErrorFrameInput &,
-        const ErrorNodeInput &,
-        ErrorData &,
-        DisplacementData &,
-        Ham1DisplacementData &
+        const ErrorFrameInput &frame_input,
+        const ErrorNodeInput &node_input,
+        ErrorData &err_data,
+        DisplacementData &disp_data,
+        Ham1DisplacementData &ham1_disp_data
     ) const;
 
 public:
@@ -243,6 +263,6 @@ public:
     VizError(SkeletonViz &, const ErrorFrameInput &, const ErrorNodeInput &) const {}
 };
 
-void XZErrorWeight(const Vector3 &, float &, float &);
-float ScaleDistToError(const ScaleOp &, float);
-float ScaleFullErrorDist(const ScaleOp &);
+void XZErrorWeight(const Vector3 &joint_vector, float &x_weight, float &z_weight);
+float ScaleDistToError(const ScaleOp &op, float dist);
+float ScaleFullErrorDist(const ScaleOp &op);

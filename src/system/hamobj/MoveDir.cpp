@@ -203,7 +203,7 @@ String RecordClipName(const char *cc, int i2) {
 
 MoveMode CurrentMoveMode() {
     MILO_ASSERT(TheHamDirector, 0x79);
-    return TheHamDirector->InPracticeMode() ? (MoveMode)1 : (MoveMode)0;
+    return TheHamDirector->InPracticeMode() ? kMoveSkills : kMovePerformance;
 }
 
 void SetupRecordClip(
@@ -369,7 +369,7 @@ BEGIN_SAVES(MoveDir)
         bs << 0;
     }
     MILO_ASSERT(mFilterVer, 0x922);
-    bs << mFilterVer->mVersionSym;
+    bs << mFilterVer->mName;
 END_SAVES
 
 BEGIN_COPYS(MoveDir)
@@ -899,7 +899,7 @@ void MoveDir::Draw(const BaseSkeleton &baseSkeleton, SkeletonViz &skeletonViz) {
         ErrorFrameInput input(
             handle.History(), unk41c->GetDancerFrame()->mSkeleton, *player_skel, songSpeed
         );
-        ErrorNode **errorNodes = mFilterVer->mErrorNodes;
+        ErrorNode **errorNodes = mFilterVer->mNodes;
         for (int i = 0; i < mFilterVer->NumNodes(); i++) {
             ErrorNode *node = errorNodes[i];
             if (node->IsTypeJointMatch(mErrorNodeInfo)) {
@@ -923,7 +923,7 @@ float MoveDir::UpdateOverlay(RndOverlay *overlay, float f2) {
             MILO_ASSERT(TheHamDirector, 0x797);
             MoveMode moveMode = CurrentMoveMode();
             MoveMirrored mirrored =
-                curMove->Mirrored() != false ? kMirroredYes : kMirroredNo;
+                curMove->Mirrored() != false ? kMoveMirrored : kMoveNotMirrored;
             if (sFloat == 0) {
                 Vector2 v =
                     TheRnd.DrawStringScreen("W", Vector2(sRect.x, f2), sLightGray, false);
@@ -934,10 +934,7 @@ float MoveDir::UpdateOverlay(RndOverlay *overlay, float f2) {
             }
 
             TheRnd.DrawStringScreen(
-                MakeString("%s", fv->mVersionSym),
-                Vector2(sRect.x - 0.05f, f2),
-                sLightGray,
-                true
+                MakeString("%s", fv->mName), Vector2(sRect.x - 0.05f, f2), sLightGray, true
             );
 
             for (int i = 0; i < 4; i++) {
@@ -961,7 +958,7 @@ float MoveDir::UpdateOverlay(RndOverlay *overlay, float f2) {
             float f49 = (sRect.y - sRect.x) / (sRect.h + sRect.w + 4) + sRect.x;
             float f33 = 0.99f - f49;
             float f34 = curMove->IsRest() ? 0 : DetectFrac(0, -1);
-            const char *mirrorText = mirrored == kMirroredYes ? "(mirror)" : gNullStr;
+            const char *mirrorText = mirrored == kMoveMirrored ? "(mirror)" : gNullStr;
             f44 = DrawDetectedBar(
                 f44,
                 MakeString(
@@ -1009,7 +1006,7 @@ float MoveDir::UpdateOverlay(RndOverlay *overlay, float f2) {
             if (fv->mType == kFilterVersionHam1) {
                 Vector2 v2(sRect.x, sFloat + f33);
                 for (int n = 0; n < numNodes; n++) {
-                    ErrorNode *errorNode = fv->mErrorNodes[n];
+                    ErrorNode *errorNode = fv->mNodes[n];
                     Vector2 v1 = TheRnd.DrawStringScreen(
                         errorNode->Name().Str(), v2, sLightGray, false
                     );
@@ -1041,16 +1038,19 @@ float MoveDir::UpdateOverlay(RndOverlay *overlay, float f2) {
             for (int i = 0; i < moveFrames.size(); i++) {
                 MoveFrame &cur = moveFrames[i];
                 const Ham2FrameWeight &wt = cur.FrameWeight(mirrored);
-                if (wt.unk0 != 0) {
-                    float x = (sRect.y - sRect.x) * (wt.unk0 + sRect.w)
+                if (wt.mWeight != 0) {
+                    float x = (sRect.y - sRect.x) * (wt.mWeight + sRect.w)
                             / (sRect.h + sRect.w + 4)
                         + sRect.x;
                     bool isClosest = &cur == closestMoveFrame;
                     Hmx::Color c49b0 = isClosest ? Hmx::Color(0.8f, 0.8f, 0.8f)
                                                  : Hmx::Color(0.8f, 0.8f, 0);
-                    DrawBeatLine(f33, f34, wt.unk0, c49b0);
+                    DrawBeatLine(f33, f34, wt.mWeight, c49b0);
                     TheRnd.DrawStringScreen(
-                        MakeString("%.2f", wt.unk0), Vector2(x, f33 - sFloat), c49b0, true
+                        MakeString("%.2f", wt.mWeight),
+                        Vector2(x, f33 - sFloat),
+                        c49b0,
+                        true
                     );
                     if (fv->mType == kFilterVersionHam1) {
                         Vector2 v4b00(x - yRatio, sFloat + f33);
@@ -1253,7 +1253,7 @@ void MoveDir::SetFiltersEnabled(bool enabled) {
 
 void MoveDir::SetFilterVersion(Symbol version) {
     for (int i = 0; i < sFilterVersions.size(); i++) {
-        if (sFilterVersions[i]->mVersionSym == version) {
+        if (sFilterVersions[i]->mName == version) {
             mFilterVer = sFilterVersions[i];
             return;
         }
@@ -1566,7 +1566,7 @@ float MoveDir::DetectRangePSNR(
     MoveMode moveMode = CurrentMoveMode();
     for (const DetectFrame *it = detectFrames.first; it != detectFrames.second; ++it) {
         const Ham2FrameWeight &wt = it->GetMoveFrame()->FrameWeight(it->Mirror());
-        float cmp = wt.unk0;
+        float cmp = wt.mWeight;
         if (cmp > 0 && it->HasScore()) {
             ret += it->Score(fv, moveMode) * cmp;
         }
@@ -1656,7 +1656,7 @@ float MoveDir::DetectFrac(
             int i7 = 0;
             for (DetectFrame *it = detectFrames.first; it != detectFrames.second; ++it) {
                 const Ham2FrameWeight &wt = it->GetMoveFrame()->FrameWeight(it->Mirror());
-                if (wt.unk0 != 0) {
+                if (wt.mWeight != 0) {
                     i8++;
                     if (it->HasScore()) {
                         i7++;
@@ -1725,7 +1725,7 @@ void MoveDir::EnqueueDetectFrames(
     CurrentMoveMode();
     DetectFrame *toInsert = nullptr;
     for (DetectFrame *it = range.first; it != range.second; ++it) {
-        float f12 = ScaleDistToError(fv->mScaleOp, fabsf(it->Seconds() - f1));
+        float f12 = ScaleDistToError(fv->mTimeErrorOp, fabsf(it->Seconds() - f1));
         if (f12 < 1) {
             mFilterQueue->EnqueueFrame(player, f12, f1 - it->Seconds(), it, fv);
             if (f12 <= 1000) {
@@ -1795,7 +1795,7 @@ void MoveDir::ResetDetectFrames(int player, Difficulty diff) {
                         HamMove *move = curMoveKey.move;
                         auto &moveFrames = move->GetMoveFrames();
                         MoveMirrored mirrored =
-                            move->Mirrored() ? kMirroredYes : kMirroredNo;
+                            move->Mirrored() ? kMoveMirrored : kMoveNotMirrored;
                         for (int j = 0; j < moveFrames.size(); j++) {
                             if (dancerFrameIt->mMoveFrameIdx == j) {
                                 DetectFrame detectFrame;
@@ -1873,7 +1873,7 @@ void MoveDir::FinalPoseStateMachine() {
                         float measure = TheTaskMgr.CurrentMeasure() * 4;
                         float secs = BeatToSeconds(measure + backBeat);
                         float dist =
-                            ScaleFullErrorDist(fv->mScaleOp) + sLatencySeconds + secs;
+                            ScaleFullErrorDist(fv->mTimeErrorOp) + sLatencySeconds + secs;
                         float beat = SecondsToBeat(dist);
                         if (4 <= beat - measure) {
                             MILO_NOTIFY_ONCE(
@@ -1971,7 +1971,7 @@ void MoveDir::PostUpdateFilters() {
                         DetectFrame *curFrame = frames[i];
                         if (curMove && curFrame) {
                             const FilterVersion *fv = curMove->FilterVer();
-                            auto *errorNodes = fv->mErrorNodes;
+                            auto *errorNodes = fv->mNodes;
                             if (curMove->Version() == kFilterVersionHam1) {
                                 float float_arr[kNumLimbFeedbacks];
                                 memset(float_arr, 0, sizeof(float_arr));
@@ -2008,13 +2008,14 @@ void MoveDir::PostUpdateFilters() {
                                 const MoveFrame *mf = curFrame->GetMoveFrame();
                                 const Ham2FrameWeight &wt =
                                     mf->FrameWeight(curFrame->Mirror());
-                                if (wt.unk0 > 0.5f) {
+                                if (wt.mWeight > 0.5f) {
                                     for (int k = 0; k < kNumLimbFeedbacks; k++) {
                                         float f35 = curFrame->LimbPSNR(fv, 1 << k);
-                                        if (wt.unk14[k] > wt.unk4[k]) {
-                                            if (f35 > wt.unk14[k]) {
+                                        if (wt.mMinFeedbackOffPSNRs[k]
+                                            > wt.mMaxFeedbackOnPSNRs[k]) {
+                                            if (f35 > wt.mMinFeedbackOffPSNRs[k]) {
                                                 charFeedback->UpdateLimb(k, false);
-                                            } else if (f35 < wt.unk4[k]) {
+                                            } else if (f35 < wt.mMaxFeedbackOnPSNRs[k]) {
                                                 charFeedback->UpdateLimb(k, true);
                                             }
                                         }

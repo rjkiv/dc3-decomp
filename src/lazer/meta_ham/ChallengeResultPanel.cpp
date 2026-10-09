@@ -39,77 +39,77 @@ void ChallengeResultPanel::Text(int, int data, UIListLabel *slot, UILabel *label
     static Symbol best_score("best_score");
     AppLabel *app_label = dynamic_cast<AppLabel *>(label);
     MILO_ASSERT(app_label, 0x11E);
-    if (mItems[data].mGamertag == gNullStr) {
+    if (mItems[data].challengerUsername == gNullStr) {
         label->SetTextToken(gNullStr);
         return;
     } else {
-        String curGamerTag = mItems[data].mGamertag;
+        String curGamerTag = mItems[data].challengerUsername;
         if (slot->Matches("white_small_gamertag")) {
-            if (unk5c <= mItems[data].mScore && data != unk60 && data != unk6c) {
+            if (unk5c <= (int)mItems[data].score && data != unk60 && data != unk6c) {
                 label->SetPrelocalizedString(curGamerTag);
             } else {
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("grey_small_gamertag")) {
-            if (unk5c > mItems[data].mScore && data != unk60) {
+            if (unk5c > (int)mItems[data].score && data != unk60) {
                 label->SetPrelocalizedString(curGamerTag);
             } else {
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("white_large_gamertag")) {
-            if (unk5c <= mItems[data].mScore && data == unk60) {
+            if (unk5c <= (int)mItems[data].score && data == unk60) {
                 label->SetPrelocalizedString(curGamerTag);
             } else {
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("grey_large_gamertag")) {
-            if (unk5c > mItems[data].mScore && data == unk60) {
+            if (unk5c > (int)mItems[data].score && data == unk60) {
                 label->SetPrelocalizedString(curGamerTag);
             } else {
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("gold_large_gamertag")) {
-            if (unk5c == mItems[data].mScore && data == unk6c) {
+            if (unk5c == (int)mItems[data].score && data == unk6c) {
                 label->SetPrelocalizedString(curGamerTag);
             } else {
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("white_small_score")) {
-            if (unk5c <= mItems[data].mScore && data != unk60 && data != unk6c) {
+            if (unk5c <= (int)mItems[data].score && data != unk60 && data != unk6c) {
                 app_label->SetTokenFmt(
-                    best_score, LocalizeSeparatedInt(mItems[data].mScore, TheLocale)
+                    best_score, LocalizeSeparatedInt(mItems[data].score, TheLocale)
                 );
             } else {
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("grey_small_score")) {
-            if (unk5c > mItems[data].mScore && data != unk60) {
+            if (unk5c > (int)mItems[data].score && data != unk60) {
                 app_label->SetTokenFmt(
-                    best_score, LocalizeSeparatedInt(mItems[data].mScore, TheLocale)
+                    best_score, LocalizeSeparatedInt(mItems[data].score, TheLocale)
                 );
             } else {
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("white_large_score")) {
-            if (unk5c <= mItems[data].mScore && data == unk60) {
+            if (unk5c <= (int)mItems[data].score && data == unk60) {
                 app_label->SetTokenFmt(
-                    best_score, LocalizeSeparatedInt(mItems[data].mScore, TheLocale)
+                    best_score, LocalizeSeparatedInt(mItems[data].score, TheLocale)
                 );
             } else {
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("grey_large_score")) {
-            if (unk5c > mItems[data].mScore && data == unk60) {
+            if (unk5c > (int)mItems[data].score && data == unk60) {
                 app_label->SetTokenFmt(
-                    best_score, LocalizeSeparatedInt(mItems[data].mScore, TheLocale)
+                    best_score, LocalizeSeparatedInt(mItems[data].score, TheLocale)
                 );
             } else {
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("gold_large_score")) {
-            if (unk5c == mItems[data].mScore && data == unk6c) {
+            if (unk5c == (int)mItems[data].score && data == unk6c) {
                 app_label->SetTokenFmt(
-                    best_score, LocalizeSeparatedInt(mItems[data].mScore, TheLocale)
+                    best_score, LocalizeSeparatedInt(mItems[data].score, TheLocale)
                 );
             } else {
                 label->SetTextToken(gNullStr);
@@ -203,13 +203,13 @@ void ChallengeResultPanel::UpdateList(int player) {
     }
     bool b3 = false;
     ChallengeRow row;
-    row.mScore = unk5c;
-    row.mGamertag = playerName;
-    row.unk2c = playerName;
+    row.score = unk5c;
+    row.challengerUsername = playerName;
+    row.challengeeUsername = playerName;
     auto &challenges = TheChallenges->GetPlayerChallenges(player);
     int numPlayerChallenges = challenges.size();
     for (int i = 0; i < numPlayerChallenges; i++) {
-        if (unk5c <= challenges[i].mScore && !b3) {
+        if (unk5c <= (int)challenges[i].score && !b3) {
             b3 = true;
             unk6c = mItems.size();
             mItems.push_back(row);
@@ -223,16 +223,13 @@ void ChallengeResultPanel::UpdateList(int player) {
     int i8 = 0;
     int d20;
     for (int i = numDisplay; i < mItems.size(); i++) {
-        if (unk5c > mItems[i].mScore) {
+        if (unk5c > (int)mItems[i].score) {
             if (i < unk60) {
-                d15 += TheChallenges->CalculateChallengeXp(
-                    mItems[i].mScore, mItems[i].mDiff
-                );
+                d15 +=
+                    TheChallenges->CalculateChallengeXp(mItems[i].score, mItems[i].diff);
             } else if (i == unk60) {
                 d14 = d15
-                    + TheChallenges->CalculateChallengeXp(
-                        mItems[i].mScore, mItems[i].mDiff
-                    );
+                    + TheChallenges->CalculateChallengeXp(mItems[i].score, mItems[i].diff);
                 d16 = 1;
             }
             i8++;

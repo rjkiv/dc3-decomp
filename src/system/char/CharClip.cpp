@@ -117,7 +117,7 @@ void CharClip::Transitions::AddNode(CharClip *clip, const CharGraphNode &node) {
     it->nodes[size] = node;
     it->size++;
     for (NodeVector *n = mNodeStart; n < mNodeEnd; n = n->Next()) {
-        n->clip.AddSelf();
+        n->clip.LinkSelf();
     }
 }
 
@@ -128,7 +128,7 @@ void CharClip::Transitions::RemoveNodes(NodeVector *n) {
     memmove(n, next, (int)mNodeEnd - (int)next);
     Resize(BytesInMemory() - ((int)next - (int)n), nullptr);
     for (NodeVector *it = mNodeStart; it < mNodeEnd; it = it->Next()) {
-        it->clip.AddSelf();
+        it->clip.LinkSelf();
     }
 }
 
@@ -219,7 +219,7 @@ void CharClip::Transitions::Load(BinStreamRev &d, int oldRev) {
         Resize((int)it - (int)start, nullptr);
         memcpy(mNodeStart, start, BytesInMemory());
         for (NodeVector *it = mNodeStart; it < mNodeEnd; it = it->Next()) {
-            it->clip.AddSelf();
+            it->clip.LinkSelf();
         }
         MemFree(start);
     }
@@ -363,7 +363,7 @@ BEGIN_CUSTOM_PROPSYNC(CharClip::NodeVector)
 END_CUSTOM_PROPSYNC
 
 bool PropSync(
-    CharClip ::Transitions &o, DataNode &_val, DataArray *_prop, int _i, PropOp _op
+    CharClip::Transitions &o, DataNode &_val, DataArray *_prop, int _i, PropOp _op
 ) {
     if (_i == _prop->Size()) {
         MILO_ASSERT(_op == kPropSize, 0x73B);

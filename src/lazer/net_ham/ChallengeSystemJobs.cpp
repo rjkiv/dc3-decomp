@@ -15,10 +15,10 @@ FlauntScoreJob::FlauntScoreJob(Hmx::Object *callback, FlauntScoreData &data)
     static Symbol score("score");
     static Symbol diff("diff");
     static Symbol xp("xp");
-    pt.AddPair(song_id, data.mStatus->mSongID);
+    pt.AddPair(song_id, data.mFlauntData->mSongID);
     pt.AddPair(pid, data.mProfile ? data.mProfile->GetOnlineID()->ToString() : "N/A");
-    pt.AddPair(score, data.mStatus->mScore);
-    pt.AddPair(diff, data.mStatus->mDiff);
+    pt.AddPair(score, data.mFlauntData->mScore);
+    pt.AddPair(diff, data.mFlauntData->mDiff);
     pt.AddPair(xp, data.mProfile->GetMetagameRank()->RankNumber());
     SetDataPoint(pt);
 }
@@ -93,46 +93,46 @@ void GetOfficialChallengesJob::GetRows(
                     ChallengeRow localRows[3];
                     JsonObject *goldName = reader.GetByName(response, "hmx_gold_score");
                     if (goldName) {
-                        localRows[0].mScore = goldName->Int();
-                        localRows[0].mType = ChallengeRow::kChallengeHmxGold;
-                        localRows[0].mGamertag =
+                        localRows[0].score = goldName->Int();
+                        localRows[0].type = ChallengeRow::kChallengeHmxGold;
+                        localRows[0].challengerUsername =
                             Localize(challenge_gold, nullptr, TheLocale);
                     }
                     JsonObject *silverName =
                         reader.GetByName(response, "hmx_silver_score");
                     if (silverName) {
-                        localRows[1].mScore = silverName->Int();
-                        localRows[1].mType = ChallengeRow::kChallengeHmxSilver;
-                        localRows[1].mGamertag =
+                        localRows[1].score = silverName->Int();
+                        localRows[1].type = ChallengeRow::kChallengeHmxSilver;
+                        localRows[1].challengerUsername =
                             Localize(challenge_silver, nullptr, TheLocale);
                     }
                     JsonObject *bronzeName =
                         reader.GetByName(response, "hmx_bronze_score");
                     if (bronzeName) {
-                        localRows[2].mScore = bronzeName->Int();
-                        localRows[2].mType = ChallengeRow::kChallengeHmxBronze;
-                        localRows[2].mGamertag =
+                        localRows[2].score = bronzeName->Int();
+                        localRows[2].type = ChallengeRow::kChallengeHmxBronze;
+                        localRows[2].challengerUsername =
                             Localize(challenge_bronze, nullptr, TheLocale);
                     }
                     for (int i = 0; i < 3; i++) {
-                        localRows[i].mSongID = songID;
-                        localRows[i].unk0 = i;
+                        localRows[i].songId = songID;
+                        localRows[i].id = i;
                         JsonObject *artistName = reader.GetByName(response, "hmx_artist");
                         if (artistName) {
-                            localRows[i].mArtist = artistName->Str();
+                            localRows[i].artistName = artistName->Str();
                         }
                         JsonObject *songName =
                             reader.GetByName(response, "hmx_song_name");
                         if (songName) {
-                            localRows[i].mSongTitle = songName->Str();
+                            localRows[i].songName = songName->Str();
                         }
                         JsonObject *diffName = reader.GetByName(response, "hmx_diff");
                         if (diffName) {
-                            localRows[i].mDiff = diffName->Int();
+                            localRows[i].diff = diffName->Int();
                         }
-                        localRows[i].unk2c = "";
-                        localRows[i].mTimeStamp = startTime.ToCode();
-                        localRows[i].mChallengerXp = 0;
+                        localRows[i].challengeeUsername = "";
+                        localRows[i].dateTime = startTime.ToCode();
+                        localRows[i].xp = 0;
                         calcedRows.push_back(localRows[i]);
                     }
                 }
@@ -144,46 +144,46 @@ void GetOfficialChallengesJob::GetRows(
                     ChallengeRow localRows[3];
                     JsonObject *goldName = reader.GetByName(response, "dlc_gold_score");
                     if (goldName) {
-                        localRows[0].mScore = goldName->Int();
-                        localRows[0].mType = ChallengeRow::kChallengeDlcGold;
-                        localRows[0].mGamertag =
+                        localRows[0].score = goldName->Int();
+                        localRows[0].type = ChallengeRow::kChallengeDlcGold;
+                        localRows[0].challengerUsername =
                             Localize(challenge_gold, nullptr, TheLocale);
                     }
                     JsonObject *silverName =
                         reader.GetByName(response, "dlc_silver_score");
                     if (silverName) {
-                        localRows[1].mScore = silverName->Int();
-                        localRows[1].mType = ChallengeRow::kChallengeDlcSilver;
-                        localRows[1].mGamertag =
+                        localRows[1].score = silverName->Int();
+                        localRows[1].type = ChallengeRow::kChallengeDlcSilver;
+                        localRows[1].challengerUsername =
                             Localize(challenge_silver, nullptr, TheLocale);
                     }
                     JsonObject *bronzeName =
                         reader.GetByName(response, "dlc_bronze_score");
                     if (bronzeName) {
-                        localRows[2].mScore = bronzeName->Int();
-                        localRows[2].mType = ChallengeRow::kChallengeDlcBronze;
-                        localRows[2].mGamertag =
+                        localRows[2].score = bronzeName->Int();
+                        localRows[2].type = ChallengeRow::kChallengeDlcBronze;
+                        localRows[2].challengerUsername =
                             Localize(challenge_bronze, nullptr, TheLocale);
                     }
                     for (int i = 0; i < 3; i++) {
-                        localRows[i].mSongID = dlcSongID;
-                        localRows[i].unk0 = i;
+                        localRows[i].songId = dlcSongID;
+                        localRows[i].id = i;
                         JsonObject *artistName = reader.GetByName(response, "dlc_artist");
                         if (artistName) {
-                            localRows[i].mArtist = artistName->Str();
+                            localRows[i].artistName = artistName->Str();
                         }
                         JsonObject *songName =
                             reader.GetByName(response, "dlc_song_name");
                         if (songName) {
-                            localRows[i].mSongTitle = songName->Str();
+                            localRows[i].songName = songName->Str();
                         }
                         JsonObject *diffName = reader.GetByName(response, "dlc_diff");
                         if (diffName) {
-                            localRows[i].mDiff = diffName->Int();
+                            localRows[i].diff = diffName->Int();
                         }
-                        localRows[i].unk2c = "";
-                        localRows[i].mTimeStamp = startTime.ToCode();
-                        localRows[i].mChallengerXp = 0;
+                        localRows[i].challengeeUsername = "";
+                        localRows[i].dateTime = startTime.ToCode();
+                        localRows[i].xp = 0;
                         calcedRows.push_back(localRows[i]);
                     }
                 }
@@ -255,14 +255,14 @@ void GetBadgeInfo(
         MILO_LOG("***********************************\n");
         auto it = badgeInfos.find(gamerTag);
         if (it != badgeInfos.end()) {
-            it->second.mMedalCounts[kBadgeGold] = dlcGold + hmxGold;
-            it->second.mMedalCounts[kBadgeSilver] = dlcSilver + hmxSilver;
-            it->second.mMedalCounts[kBadgeBronze] = dlcBronze + hmxBronze;
+            it->second.badge[kGold] = dlcGold + hmxGold;
+            it->second.badge[kSilver] = dlcSilver + hmxSilver;
+            it->second.badge[kBronze] = dlcBronze + hmxBronze;
         } else {
             ChallengeBadgeInfo value;
-            value.mMedalCounts[kBadgeGold] = dlcGold + hmxGold;
-            value.mMedalCounts[kBadgeSilver] = dlcSilver + hmxSilver;
-            value.mMedalCounts[kBadgeBronze] = dlcBronze + hmxBronze;
+            value.badge[kGold] = dlcGold + hmxGold;
+            value.badge[kSilver] = dlcSilver + hmxSilver;
+            value.badge[kBronze] = dlcBronze + hmxBronze;
             badgeInfos[gamerTag] = value;
         }
     }
@@ -276,9 +276,7 @@ void GetChallengeBadgeCountsJob::GetBadgeInfo(
     }
 }
 
-bool TimeStampCmp(ChallengeRow r1, ChallengeRow r2) {
-    return r1.mTimeStamp < r2.mTimeStamp;
-}
+bool TimeStampCmp(ChallengeRow r1, ChallengeRow r2) { return r1.dateTime < r2.dateTime; }
 
 void GetRows(
     JsonConverter &c,
@@ -292,20 +290,20 @@ void GetRows(
     for (int i = 0; i < aSize; i++) {
         JsonArray *cur = static_cast<JsonArray *>(c.GetValue(a, i));
         ChallengeRow curRow;
-        curRow.unk0 = c.GetValue(cur, 0)->Int();
-        curRow.mGamertag = c.GetValue(cur, 1)->Str();
-        curRow.mSongID = c.GetValue(cur, 2)->Int();
-        curRow.mArtist = c.GetValue(cur, 3)->Str();
-        curRow.mSongTitle = c.GetValue(cur, 4)->Str();
-        curRow.mScore = c.GetValue(cur, 5)->Int();
-        curRow.mDiff = c.GetValue(cur, 6)->Int();
-        curRow.mType = ChallengeRow::kNumChallengeTypes;
-        curRow.unk2c = c.GetValue(cur, 7)->Str();
+        curRow.id = c.GetValue(cur, 0)->Int();
+        curRow.challengerUsername = c.GetValue(cur, 1)->Str();
+        curRow.songId = c.GetValue(cur, 2)->Int();
+        curRow.artistName = c.GetValue(cur, 3)->Str();
+        curRow.songName = c.GetValue(cur, 4)->Str();
+        curRow.score = c.GetValue(cur, 5)->Int();
+        curRow.diff = c.GetValue(cur, 6)->Int();
+        curRow.type = ChallengeRow::kNumChallengeTypes;
+        curRow.challengeeUsername = c.GetValue(cur, 7)->Str();
         DateTime dt;
         dt.ParseDate(c.GetValue(cur, 8)->Str());
-        curRow.mTimeStamp = dt.ToCode();
-        curRow.mChallengerXp = c.GetValue(cur, 9)->Int();
-        calcedRows[curRow.unk2c].push_back(curRow);
+        curRow.dateTime = dt.ToCode();
+        curRow.xp = c.GetValue(cur, 9)->Int();
+        calcedRows[curRow.challengeeUsername].push_back(curRow);
     }
     bref = false;
     FOREACH (it, calcedRows) {

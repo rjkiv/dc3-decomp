@@ -12,7 +12,7 @@ MoveGraph::~MoveGraph() {
 }
 
 BEGIN_HANDLERS(MoveGraph)
-    HANDLE_EXPR(has_variant, mMoveVariants.find(_msg->Sym(2)) != mMoveVariants.end())
+    HANDLE_EXPR(has_variant, mVariantsByName.find(_msg->Sym(2)) != mVariantsByName.end())
     HANDLE_EXPR(get_layout_data, mLayoutData)
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
@@ -42,7 +42,7 @@ BEGIN_LOADS(MoveGraph)
         }
         MoveParent *parent = new MoveParent();
         parent->Load(d.stream, this);
-        mMoveParents[parent->Name()] = parent;
+        mNodes[parent->GetName()] = parent;
     }
     CacheLinks();
     mLayoutData->Load(d.stream);
@@ -50,12 +50,12 @@ END_LOADS
 
 MoveGraph &MoveGraph::operator=(const MoveGraph &graph) {
     Clear();
-    FOREACH (it, graph.mMoveParents) {
+    FOREACH (it, graph.mNodes) {
         MoveParent *cur = it->second;
         MoveParent *parent = new MoveParent(cur);
-        FOREACH (v, cur->Variants()) {
+        FOREACH (v, cur->mMoveVariants) {
             MoveVariant *variant = new MoveVariant(this, *v, parent);
-            parent->AddVariant(variant);
+            parent->mMoveVariants.push_back(variant);
             if (!parent->HasGenre(variant->mGenre)) {
                 parent->mGenreFlags.push_back(variant->mGenre);
             }
@@ -63,10 +63,10 @@ MoveGraph &MoveGraph::operator=(const MoveGraph &graph) {
                 parent->mEraFlags.push_back(variant->mEra);
             }
 
-            mMoveVariants[variant->Name()] = variant;
+            mVariantsByName[variant->GetName()] = variant;
         }
-        if (parent->Variants().size() != 0) {
-            mMoveParents[parent->Name()] = parent;
+        if (parent->mMoveVariants.size() != 0) {
+            mNodes[parent->GetName()] = parent;
         } else {
             delete parent;
         }
@@ -77,11 +77,11 @@ MoveGraph &MoveGraph::operator=(const MoveGraph &graph) {
 }
 
 void MoveGraph::Clear() {
-    FOREACH (it, mMoveParents) {
+    FOREACH (it, mNodes) {
         RELEASE(it->second);
     }
-    mMoveParents.clear();
-    mMoveVariants.clear();
+    mNodes.clear();
+    mVariantsByName.clear();
 }
 
 void MoveGraph::ImportMoveData(DataArray *pMoveData) {
@@ -91,23 +91,23 @@ void MoveGraph::ImportMoveData(DataArray *pMoveData) {
         MILO_ASSERT(pParentConfig, 0x57);
         MoveParent *pParent = new MoveParent(this, pParentConfig);
         MILO_ASSERT(pParent, 0x5A);
-        mMoveParents[pParent->Name()] = pParent;
-        FOREACH (it, pParent->Variants()) {
-            mMoveVariants[(*it)->Name()] = *it;
+        mNodes[pParent->GetName()] = pParent;
+        FOREACH (it, pParent->mMoveVariants) {
+            mVariantsByName[(*it)->GetName()] = *it;
         }
     }
     CacheLinks();
 }
 
 void MoveGraph::CacheLinks() {
-    FOREACH (it, mMoveParents) {
+    FOREACH (it, mNodes) {
         it->second->CacheLinks(this);
     }
 }
 
 MoveVariant *MoveGraph::FindNonConstMoveByVariantName(Symbol name) const {
-    std::map<Symbol, MoveVariant *>::const_iterator it = mMoveVariants.find(name);
-    if (it != mMoveVariants.end())
+    std::map<Symbol, MoveVariant *>::const_iterator it = mVariantsByName.find(name);
+    if (it != mVariantsByName.end())
         return it->second;
     else
         return nullptr;
@@ -120,10 +120,10 @@ const MoveVariant *MoveGraph::FindMoveByVariantName(Symbol name) const {
 void MoveGraph::GatherVariants(
     std::vector<const MoveVariant *> *vars, MoveVariantFunc *func, void *v3
 ) const {
-    vars->reserve(mMoveParents.size() * 10);
-    FOREACH (it, mMoveParents) {
+    vars->reserve(mNodes.size() * 10);
+    FOREACH (it, mNodes) {
         MoveParent *curParent = it->second;
-        FOREACH (var, curParent->Variants()) {
+        FOREACH (var, curParent->mMoveVariants) {
             if (!func || func(*var, v3)) {
                 vars->push_back(*var);
             }
@@ -138,8 +138,8 @@ bool MoveGraph::HasVariantPair(const MoveParent *p1, const MoveParent *p2) const
 }
 
 MoveParent *MoveGraph::GetNonConstMoveParent(Symbol s) const {
-    auto it = mMoveParents.find(s);
-    if (it != mMoveParents.end()) {
+    auto it = mNodes.find(s);
+    if (it != mNodes.end()) {
         return it->second;
     } else {
         return nullptr;
@@ -157,32 +157,32 @@ bool MoveGraph::FindVariantPair(
     bool b8
 ) const {
     if (p1) {
-        auto it = mMoveParents.find(p1->Name());
-        if (it == mMoveParents.end()) {
+        auto it = mNodes.find(p1->GetName());
+        if (it == mNodes.end()) {
             return false;
         } else {
             p1 = it->second;
         }
     }
     if (p2) {
-        auto it = mMoveParents.find(p2->Name());
-        if (it == mMoveParents.end()) {
+        auto it = mNodes.find(p2->GetName());
+        if (it == mNodes.end()) {
             return false;
         } else {
             p2 = it->second;
         }
     }
     if (v1) {
-        auto it = mMoveVariants.find(v1->Name());
-        if (it != mMoveVariants.end() && it->second->Parent() == p1) {
+        auto it = mVariantsByName.find(v1->GetName());
+        if (it != mVariantsByName.end() && it->second->GetParent() == p1) {
             v1 = it->second;
         } else {
             v1 = nullptr;
         }
     }
     if (v2) {
-        auto it = mMoveVariants.find(v2->Name());
-        if (it != mMoveVariants.end() && it->second->Parent() == p2) {
+        auto it = mVariantsByName.find(v2->GetName());
+        if (it != mVariantsByName.end() && it->second->GetParent() == p2) {
             v2 = it->second;
         } else {
             v2 = nullptr;
@@ -190,17 +190,17 @@ bool MoveGraph::FindVariantPair(
     }
     if (p1 && p2) {
         int u6 = 0;
-        FOREACH (v, p1->Variants()) {
+        FOREACH (v, p1->mMoveVariants) {
             MoveVariant *var1 = *v;
             FOREACH (c, var1->mNextCandidates) {
-                const MoveVariant *var2 = c->mValue.mVariant;
+                const MoveVariant *var2 = c->mVariant;
                 int u9;
-                if (var2->Parent() == p2) {
+                if (var2->GetParent() == p2) {
                     u9 = 0x200;
-                    if (var2->Song() == s) {
+                    if (var2->GetSongName() == s) {
                         u9 = 0x220;
                     }
-                    if (var1->Song() == s) {
+                    if (var1->GetSongName() == s) {
                         u9 |= 0x40;
                     }
                     if (var2 == v2) {
@@ -209,10 +209,10 @@ bool MoveGraph::FindVariantPair(
                     if (var1 == v1) {
                         u9 |= 0x100;
                     }
-                    if (c->mAdjacencyFlag & 2) {
+                    if (c->HasTransition()) {
                         u9 |= 4;
                     }
-                    int u4 = c->mAdjacencyFlag & 0x3C;
+                    int u4 = c->Adjacency();
                     if (u4 == 4) {
                         u9 |= 0x10;
                     }
@@ -241,16 +241,16 @@ bool MoveGraph::FindVariantPair(
         }
         return u6;
     } else if (p1) {
-        auto &vars = p1->Variants();
+        auto &vars = p1->mMoveVariants;
         if (!vars.empty()) {
             if (v1) {
                 vref1 = v1;
             } else {
-                vref1 = p1->Variants().front();
+                vref1 = p1->mMoveVariants.front();
                 if (!s.Null()) {
-                    for (int i = 0; i < p1->Variants().size(); i++) {
-                        if (p1->Variants()[i]->Song() == s) {
-                            vref1 = p1->Variants()[i];
+                    for (int i = 0; i < p1->mMoveVariants.size(); i++) {
+                        if (p1->mMoveVariants[i]->GetSongName() == s) {
+                            vref1 = p1->mMoveVariants[i];
                             break;
                         }
                     }
@@ -259,16 +259,16 @@ bool MoveGraph::FindVariantPair(
             return true;
         }
     } else if (p2) {
-        auto &vars = p2->Variants();
+        auto &vars = p2->mMoveVariants;
         if (!vars.empty()) {
             if (v2) {
                 vref2 = v2;
             } else {
-                vref2 = p2->Variants().front();
+                vref2 = p2->mMoveVariants.front();
                 if (!s.Null()) {
-                    for (int i = 0; i < p2->Variants().size(); i++) {
-                        if (p2->Variants()[i]->Song() == s) {
-                            vref2 = p2->Variants()[i];
+                    for (int i = 0; i < p2->mMoveVariants.size(); i++) {
+                        if (p2->mMoveVariants[i]->GetSongName() == s) {
+                            vref2 = p2->mMoveVariants[i];
                             break;
                         }
                     }

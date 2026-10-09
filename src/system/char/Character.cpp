@@ -166,7 +166,7 @@ Character::Character()
       mDriver(0), mSelfShadow(0), mSpotCutout(0), mFloorShadow(1),
       mSphereBase(this, this), mBounding(Vector3(0, 0, 0), 0), mPollState(kCharCreated),
       mTest(new CharacterTest(this)), mFrozen(0), mDrawMode(kCharDrawAll), mTeleported(1),
-      unk2a0(this), mShowableProps(this), mDebugDrawInterestObjects(false) {}
+      mOpaqueEnv(this), mProps(this), mDebugDrawInterestObjects(false) {}
 
 Character::~Character() {
     UnhookShadow();
@@ -226,7 +226,7 @@ BEGIN_PROPSYNCS(Character)
     SYNC_PROP_MODIFY(
         interest_to_force, mInterestToForce, SetFocusInterest(mInterestToForce, 0)
     )
-    SYNC_PROP(showable_props, mShowableProps)
+    SYNC_PROP(showable_props, mProps)
     SYNC_PROP(debug_draw_interest_objects, mDebugDrawInterestObjects)
     SYNC_PROP(CharacterTesting, *mTest)
     SYNC_SUPERCLASS(RndDir)
@@ -253,7 +253,7 @@ BEGIN_SAVES(Character)
         bs << mFrozen;
         bs << mForceLod;
         bs << mTranslucent;
-        bs << mShowableProps;
+        bs << mProps;
     }
     mTest->Save(bs);
 END_SAVES
@@ -273,7 +273,7 @@ BEGIN_COPYS(Character)
             COPY_MEMBER(mLods)
             COPY_MEMBER(mTranslucent)
             COPY_MEMBER(mShadow)
-            COPY_MEMBER(mShowableProps)
+            COPY_MEMBER(mProps)
         }
     END_COPYING_MEMBERS
 END_COPYS
@@ -392,7 +392,7 @@ void Character::PostLoad(BinStream &bs) {
                 ObjPtrVec<RndGroup> vec(this);
                 d >> vec;
             } else if (d.rev > 0x14) {
-                d >> mShowableProps;
+                d >> mProps;
             }
             if (d.rev > 9) {
                 mTest->Load(d.stream);
@@ -775,7 +775,7 @@ void Character::MergeDraws(const Character *c) {
     }
     mTranslucent.merge(c->mTranslucent);
     mShadow.merge(c->mShadow);
-    mShowableProps.merge(c->mShowableProps);
+    mProps.merge(c->mProps);
 }
 
 void Character::SetInterestObjects(
@@ -870,13 +870,13 @@ void Character::DrawLodOrShadow(int lod, DrawMode drawMode) {
             RndEnvironTracker tracker(mEnv, &WorldXfm().v);
             DrawOpaque();
             if (drawMode == 1) {
-                unk2a0 = RndEnviron::Current();
-                unk2b4 = RndEnviron::CurrentPos();
+                mOpaqueEnv = RndEnviron::Current();
+                mOpaquePos = RndEnviron::CurrentPos();
             }
         }
         if (drawMode & 2) {
             if (drawMode == 2) {
-                RndEnvironTracker tracker(unk2a0, unk2b4);
+                RndEnvironTracker tracker(mOpaqueEnv, mOpaquePos);
                 DrawTranslucent();
             } else {
                 DrawTranslucent();

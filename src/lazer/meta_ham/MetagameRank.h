@@ -8,8 +8,8 @@ class HamProfile;
 #define kMaxTasksOneTime 0x40
 
 struct DeferredPoints {
-    int unk0; // score?
-    Symbol unk4;
+    int mPoints;
+    Symbol mMessage;
 };
 
 class MetagameRank : public Hmx::Object, public FixedSizeSaveable {
@@ -35,7 +35,7 @@ public:
     static void Preinit();
     static void Init();
 
-    int RankNumber() { return mRankNumber; }
+    int RankNumber() { return mCurrRank; }
     bool Dirty() const { return mDirty; }
 
 private:
@@ -48,15 +48,15 @@ private:
     void AwardForRankUp(int);
 
 protected:
-    int mScore; // 0x34
-    bool unk38;
-    bool unk39[kMaxTasksOneTime];
-    bool unk79[kMaxTasksOneTime];
+    int mPoints; // 0x34
+    bool mFirstTime;
+    bool mOneTimeTasksDone[kMaxTasksOneTime];
+    bool mUnlocked[kMaxTasksOneTime];
     HamProfile *mProfile; // 0xbc
-    int mRankNumber; // 0xc0 - current level?
-    float mPctToNextRank; // 0xc4
+    int mCurrRank; // 0xc0 - current level?
+    float mPercentToNextRank; // 0xc4
     bool mAtMaxRank; // 0xc8
-    bool unkc9;
+    bool mNewlyAtMaxRank;
     bool mDirty; // 0xca
-    std::list<DeferredPoints> mDeferredPoints; // 0xcc
+    std::list<DeferredPoints> mDeferredPointsQueue; // 0xcc
 };

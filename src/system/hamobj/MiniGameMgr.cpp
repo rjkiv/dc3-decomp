@@ -15,7 +15,7 @@ public:
     CompareMoveVariantName(const DataNode &n) : mName(n) {}
 
     bool operator()(const MoveVariant *mv) {
-        DataNode otherMV = mv->Name();
+        DataNode otherMV = mv->GetName();
         if (otherMV.Equal(mName, nullptr, true)) {
             return true;
         } else {
@@ -76,7 +76,7 @@ void MiniGameMgr::InitCascade(int numMovesNeeded, int blockingFactor) {
     mMovePool.clear();
     mValidMoves.clear();
     mInvalidMoves.clear();
-    UpdateCascadeMovePool(TheMoveMgr->Graph(), mMovePool, mValidMoves);
+    UpdateCascadeMovePool(TheMoveMgr->mWholeMoveGraph, mMovePool, mValidMoves);
     LoadValidMoves(false);
 }
 
@@ -86,7 +86,7 @@ void MiniGameMgr::UpdateCascadeMovePool(
     std::vector<const MoveVariant *> &validMoves
 ) {
     allMoves.clear();
-    FOREACH (it, graph.MoveParents()) {
+    FOREACH (it, graph.mNodes) {
         const MoveVariant *mv = it->second->PickRandomVariant();
         if (mv->IsValidForMinigame()
             && std::find(validMoves.begin(), validMoves.end(), mv) == validMoves.end()) {
@@ -102,7 +102,7 @@ void MiniGameMgr::UpdateCascadeMovePool(
             if (i != 0) {
                 MILO_ASSERT(0, 0xB3);
             } else {
-                b8 = mv->Song() == TheGameData->GetSong();
+                b8 = mv->GetSongName() == TheGameData->GetSong();
             }
             if (b8) {
                 ++it;
@@ -119,13 +119,13 @@ void MiniGameMgr::GetMoveOptions(DataArray *a1, DataArray *a2) {
     options.clear();
     a1->Resize(1);
     a2->Resize(mNumMovesNeeded - 1);
-    a1->Node(0) = mValidMoves.front()->Name();
+    a1->Node(0) = mValidMoves.front()->GetName();
     options.insert(mValidMoves.front());
-    MILO_LOG("ADDING %s...\n", mValidMoves.front()->Name());
+    MILO_LOG("ADDING %s...\n", mValidMoves.front()->GetName());
     for (int i = 0; i < mNumMovesNeeded - 1; i++) {
-        a2->Node(i) = mInvalidMoves[i]->Name();
+        a2->Node(i) = mInvalidMoves[i]->GetName();
         options.insert(mInvalidMoves[i]);
-        MILO_LOG("ADDING %s...\n", mInvalidMoves[i]->Name());
+        MILO_LOG("ADDING %s...\n", mInvalidMoves[i]->GetName());
     }
     LoadMoveOptions(options, false);
 }
@@ -146,7 +146,7 @@ void MiniGameMgr::LoadValidMoves(bool b1) {
 void MiniGameMgr::GetCascadeMoveList(DataArray *a1, DataArray *a2) {
     int new_moves_count = a1->Size();
     if (new_moves_count != 0) {
-        UpdateCascadeMovePool(TheMoveMgr->Graph(), mMovePool, mValidMoves);
+        UpdateCascadeMovePool(TheMoveMgr->mWholeMoveGraph, mMovePool, mValidMoves);
         MILO_ASSERT(mMovePool.size() >= new_moves_count, 0xDA);
     }
     for (int i = 0; i < a1->Size(); i++) {
@@ -164,6 +164,6 @@ void MiniGameMgr::GetCascadeMoveList(DataArray *a1, DataArray *a2) {
     }
     a2->Resize(mNumMovesNeeded);
     for (int i = 0; i < mNumMovesNeeded; i++) {
-        a2->Node(i) = mValidMoves[i]->Name();
+        a2->Node(i) = mValidMoves[i]->GetName();
     }
 }

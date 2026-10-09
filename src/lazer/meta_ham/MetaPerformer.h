@@ -21,10 +21,10 @@ enum PlayerFlag {
 };
 
 enum EndGameResult {
-    kEndGameResult_0,
-    kEndGameResult_1,
-    kEndGameResult_2,
-    kEndGameResult_3
+    kRestart = 0x0000,
+    kWon = 0x0001,
+    kWonFinale = 0x0002,
+    kQuit = 0x0003,
 };
 
 DECLARE_MESSAGE(EndGameMsg, "end_game")

@@ -7,7 +7,7 @@
 class PresenceMgr : public Hmx::Object {
 public:
     PresenceMgr()
-        : mPresenceModes(0), mPresenceModeContexts(0), mInstrumentPlayModeContexts(0),
+        : mDataModes(0), mDataModeContextsMap(0), mDataInstrumentContextsMap(0),
           mSongID(0), mInGame(0) {}
     virtual DataNode Handle(DataArray *, bool);
 
@@ -24,10 +24,11 @@ protected:
     DataNode OnPlayerPresentChange(DataArray *);
     DataNode OnPresenceChange(DataArray *);
 
-    DataArray *mPresenceModes; // 0x2c
-    DataArray *mPresenceModeContexts; // 0x30
-    DataArray *mInstrumentPlayModeContexts; // 0x34
-    Symbol unk38; // 0x38
+private:
+    DataArray *mDataModes; // 0x2c
+    DataArray *mDataModeContextsMap; // 0x30
+    DataArray *mDataInstrumentContextsMap; // 0x34
+    Symbol mSymPrevMode; // 0x38
     int mSongID; // 0x3c
     bool mInGame; // 0x40
 };

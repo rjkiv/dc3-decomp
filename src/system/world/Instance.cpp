@@ -169,8 +169,8 @@ void WorldInstance::Enter() {
 
 void WorldInstance::SavePersistentObjects(BinStream &bs) {
     if (IsProxy()) {
-        int hashSize = HashTableUsedSize();
-        int strSize = StrTableUsedSize();
+        int hashSize = HashUsed();
+        int strSize = StringUsed();
         DeleteTransientObjects();
         for (ObjDirItr<Hmx::Object> i(this, false); i != nullptr; ++i) {
             if (i != this) {
@@ -266,10 +266,10 @@ void WorldInstance::DeleteTransientObjects() {
                 Hmx::Object *to = mDir->Find<Hmx::Object>(obj->Name());
                 MILO_ASSERT(obj->ClassName() == to->ClassName(), 0x1C7);
                 ObjRef refs;
-                refs.DetachSelf();
+                refs.Relink();
                 FOREACH_OBJREF (it, obj) {
                     if (it->RefOwner() && it->RefOwner()->Dir() == this) {
-                        it = it->MoveBefore(&refs);
+                        it = it->MoveTo(refs);
                     }
                 }
                 refs.ReplaceList(to);
@@ -345,17 +345,17 @@ void WorldInstance::SyncDir() {
                     );
                 }
                 ObjRef refs;
-                refs.DetachSelf();
+                refs.Relink();
                 Hmx::Object *pFrom = p->from;
                 FOREACH_OBJREF (it, pFrom) {
                     if (it->RefOwner() && !it->RefOwner()->Dir()) {
-                        it = it->MoveBefore(&refs);
+                        it = it->MoveTo(refs);
                     }
                 }
                 refs.ReplaceList(p->to);
             }
 
-            Reserve(mDir->HashTableSize(), mDir->StrTableSize());
+            Reserve(mDir->HashSize(), mDir->StringSize());
 
             FOREACH (p, objPairs) {
                 if (p->to != this) {

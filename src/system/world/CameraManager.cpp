@@ -243,8 +243,7 @@ Symbol CameraManager::MakeCategoryAndFilters(
                 if (filt.prop.Type() == kDataSymbol && filt.prop.Sym() == flags_exact) {
                     filt.mask = currArr->Int(1);
                     filt.match = currArr->Int(2);
-                } else if (filt.prop.Type() == kDataSymbol
-                           && filt.prop.Sym() == flags_any) {
+                } else if (filt.prop.Type() == kDataSymbol && filt.prop.Sym() == flags_any) {
                     filt.mask = currArr->Int(1);
                     filt.match = 1;
                 } else {
@@ -326,7 +325,7 @@ CameraManager::FindCameraShot(Symbol s, const std::vector<PropertyFilter> &filts
         CamShot *cur = *it;
         if (!cur->Disabled() && ShotMatches(cur, filts)) {
             if (cur->ShotOk(mCurrentShot)) {
-                camlist.MoveItem(camlist.end(), camlist, it);
+                camlist.splice(camlist.end(), camlist, it);
                 return cur;
             }
         }

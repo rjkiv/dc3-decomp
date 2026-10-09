@@ -13,13 +13,13 @@ class DataArray;
 class ObjectDir;
 
 enum PropOp {
-    kPropGet = 1,
-    kPropSet = 2,
-    kPropInsert = 4,
-    kPropRemove = 8,
-    kPropSize = 16,
-    kPropHandle = 32,
-    kPropUnknown0x40 = 64,
+    kPropGet = 0x1,
+    kPropSet = 0x2,
+    kPropInsert = 0x4,
+    kPropRemove = 0x8,
+    kPropSize = 0x10,
+    kPropHandle = 0x20,
+    kPropNoNull = 0x40,
 };
 
 bool PropSync(class String &, DataNode &, DataArray *, int, PropOp);

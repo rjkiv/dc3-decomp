@@ -22,7 +22,7 @@ Symbol OnMoveVariantFromHamMove(const DataArray *array) {
     MILO_ASSERT(move, 0x21F);
     const MoveVariant *mv = remixer->MoveVariantFromHamMove(move);
     MILO_ASSERT(mv, 0x221);
-    return mv ? mv->Name() : "";
+    return mv ? mv->GetName() : "";
 }
 
 BEGIN_HANDLERS(DanceRemixer)
@@ -90,14 +90,14 @@ BEGIN_LOADS(DanceRemixer)
 END_LOADS
 
 void DanceRemixer::Init(int x) {
-    if (TheMoveMgr->MoveParents().size() == 0) {
+    if (TheMoveMgr->mWholeMoveGraph.mNodes.size() == 0) {
         MILO_FAIL("Failed to load move graph for: %s\n", TheGameData->GetSong());
     }
     mTotalMeasures = x;
     for (int i = 0; i < 2; i++) {
-        TheMoveMgr->mMoveParents[i].resize(mTotalMeasures);
-        TheMoveMgr->unk134[i].resize(mTotalMeasures);
-        TheMoveMgr->unk150[i].resize(mTotalMeasures);
+        TheMoveMgr->mRoutineParents[i].resize(mTotalMeasures);
+        TheMoveMgr->mRoutinePreferredVariants[i].resize(mTotalMeasures);
+        TheMoveMgr->mRoutine[i].resize(mTotalMeasures);
     }
     ClearJump();
     HandleType(Message("post_init"));
@@ -136,9 +136,9 @@ void DanceRemixer::PostMoveFinished() {
     }
     for (int i = 0; i < 2; i++) {
         if (ScoredDanceMeasure(i, moveIdx)) {
-            const MoveVariant *mv = TheMoveMgr->unk150[i][moveIdx].first;
+            const MoveVariant *mv = TheMoveMgr->mRoutine[i][moveIdx].first;
             if (mv) {
-                const char *hamMoveName = mv->HamMoveName().Str();
+                const char *hamMoveName = mv->GetHamMoveName().Str();
                 HamMove *move = moveDir->Find<HamMove>(hamMoveName, false);
                 if (move) {
                     detector->EnableDetector(move);
@@ -147,7 +147,7 @@ void DanceRemixer::PostMoveFinished() {
                     MILO_NOTIFY(
                         "Ham move %s missing, possibly not loaded yet. From move variant %s",
                         hamMoveName,
-                        mv->Name()
+                        mv->GetName()
                     );
                 }
             }
@@ -161,10 +161,10 @@ bool DanceRemixer::ScoredDanceMeasure(int x, int y) const {
 
 void DanceRemixer::UpdateHamDirector() {
     for (int i = 0; i < 2; i++) {
-        for (int j = 0; j < TheMoveMgr->unk150[i].size(); j++) {
+        for (int j = 0; j < TheMoveMgr->mRoutine[i].size(); j++) {
             if (j <= mFromMeasure || mToMeasure <= j) {
                 std::pair<const MoveVariant *, const MoveVariant *> mvs =
-                    TheMoveMgr->unk150[i][j];
+                    TheMoveMgr->mRoutine[i][j];
                 if (mvs.first) {
                     unk30.insert(mvs.first);
                 }
@@ -185,7 +185,7 @@ void DanceRemixer::SelectMove(int, int) {}
 int DanceRemixer::JumpedMoveIdx(int idx) const { return Round(JumpedBeat(idx * 4)) / 4; }
 
 const MoveParent *DanceRemixer::GetMoveParent(int x, int y) {
-    return TheMoveMgr->CurParents(x)[y];
+    return TheMoveMgr->mRoutineParents[x][y];
 }
 
 void BuildSetOfPrevAdjacentMoveParents(
@@ -211,10 +211,10 @@ void DanceRemixer::ClearUnscoredMeasureRange(int x, int y, int z) {
 void DanceRemixer::AddRoutineMove(
     int x, int y, const MoveParent *mp, const MoveVariant *mv
 ) {
-    TheMoveMgr->mMoveParents[x][y] = mp;
-    TheMoveMgr->unk134[x][y] = mv;
+    TheMoveMgr->mRoutineParents[x][y] = mp;
+    TheMoveMgr->mRoutinePreferredVariants[x][y] = mv;
     TheMoveMgr->FillInRoutineAt(x, y);
-    TheMoveMgr->InsertMoveInSong(TheMoveMgr->unk150[x][y].first, y, x);
+    TheMoveMgr->InsertMoveInSong(TheMoveMgr->mRoutine[x][y].first, y, x);
     MILO_NOTIFY(
         "Jump target to index %d is out of bounds of the song (0 to %d)!",
         mTotalMeasures - 1

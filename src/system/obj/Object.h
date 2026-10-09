@@ -33,18 +33,11 @@ public:
 // ObjRef size: 0xc
 /** A circular doubly linked list to track an Object's refs. */
 class ObjRef {
-    friend class Hmx::Object;
-
 protected:
-    ObjRef *next; // 0x4
-    ObjRef *prev; // 0x8
+    ObjRef *mNextRef; // 0x4
+    ObjRef *mPrevRef; // 0x8
 
 public:
-    // ObjRef() {}
-    // ObjRef(const ObjRef &other) : next(other.next), prev(other.prev) {
-    //     prev->next = this;
-    //     next->prev = this;
-    // }
     virtual ~ObjRef() {}
     virtual Hmx::Object *RefOwner() const { return nullptr; }
     virtual bool IsDirPtr() { return false; }
@@ -57,20 +50,16 @@ public:
     }
     virtual ObjRefOwner *Parent() const { return nullptr; }
 
-    bool empty() const { return next == this; }
-
-    ObjRef *Begin() const { return next; }
-    ObjRef *End() const { return (ObjRef *)this; }
-    ObjRef *Next(ObjRef *it) const { return it->next; }
+    ObjRef *NextRef() const { return mNextRef; }
 
     /** Make `this` its own standalone single list node. */
-    void DetachSelf() { next = prev = this; }
+    void Relink() { mNextRef = mPrevRef = this; }
 
     void ReplaceList(Hmx::Object *obj) {
-        while (!empty()) {
-            ObjRef *oldNext = next;
-            next->Replace(obj);
-            MILO_ASSERT_FMT(oldNext != next, "ReplaceList stuck in infinite loop");
+        while (mNextRef != this) {
+            ObjRef *oldNext = mNextRef;
+            mNextRef->Replace(obj);
+            MILO_ASSERT_FMT(oldNext != mNextRef, "ReplaceList stuck in infinite loop");
         }
     }
 
@@ -78,41 +67,37 @@ public:
      *  e.g. A <-> `ref` <-> B will then become
      *  A <-> `this` <-> `ref` <-> B
      */
-    void AddRef(ObjRef *ref) {
-        next = ref;
-        prev = ref->prev;
-        ref->prev = this;
-        prev->next = this;
+    void InsertBefore(ObjRef *ref) {
+        mNextRef = ref;
+        mPrevRef = ref->mPrevRef;
+        ref->mPrevRef = this;
+        mPrevRef->mNextRef = this;
     }
 
     /** Remove `this` from the list. */
-    void Release() {
-        prev->next = next;
-        next->prev = prev;
+    void Unlink() {
+        mPrevRef->mNextRef = mNextRef;
+        mNextRef->mPrevRef = mPrevRef;
     }
 
-    void AddSelf() {
-        prev->next = this;
-        next->prev = this;
+    void LinkSelf() {
+        mPrevRef->mNextRef = this;
+        mNextRef->mPrevRef = this;
     }
 
     /** Reposition `this` so it's just before `ref`. */
-    ObjRef *MoveBefore(ObjRef *ref) {
-        ObjRef *oldPrev = prev;
-        Release();
-        AddRef(ref);
+    ObjRef *MoveTo(ObjRef &ref) {
+        ObjRef *oldPrev = mPrevRef;
+        Unlink();
+        InsertBefore(&ref);
         return oldPrev;
     }
-
-    // per ObjectDir::HasDirPtrs, this is the way to iterate across refs
-    // for (ObjRef *it = mRefs.next; it != &mRefs; it = it->next) {
 };
 
 // BEGIN OBJREF ITERATION MACRO ----------------------------------------------------------
 
 #define FOREACH_OBJREF(it, obj)                                                          \
-    for (ObjRef *it = obj->Refs().Begin(); it != obj->Refs().End();                      \
-         it = obj->Refs().Next(it))
+    for (ObjRef *it = obj->BeginRef(); it != obj->EndRef(); it = it->NextRef())
 
 // END OBJREF ITERATION MACRO ------------------------------------------------------------
 
@@ -122,12 +107,8 @@ public:
 // ObjRefConcrete size: 0x10
 template <class T1, class T2 = class ObjectDir>
 class ObjRefConcrete : public ObjRef {
-protected:
-    // hack because passing in nullptr to the T1* ctor doesn't omit the AddRef asm
-    ObjRefConcrete() : mObject(nullptr) {}
-
-    T1 *mObject; // 0xc
 public:
+    ObjRefConcrete() : mObject(nullptr) {}
     ObjRefConcrete(T1 *obj);
     ObjRefConcrete(const ObjRefConcrete &o);
     virtual ~ObjRefConcrete();
@@ -136,13 +117,16 @@ public:
 
     T1 *operator->() const { return mObject; }
     operator T1 *() const { return mObject; }
-    void operator=(T1 *obj) { SetObjConcrete(obj); }
+    T1 *Ptr() { return mObject; }
+    T1 *Ptr() const { return mObject; }
     void operator=(const ObjRefConcrete &o) { SetObjConcrete(o); }
 
     void SetObjConcrete(T1 *obj);
     void CopyRef(const ObjRefConcrete &);
     Hmx::Object *SetObj(Hmx::Object *root_obj);
     bool Load(BinStream &, bool, ObjectDir *);
+
+    T1 *mObject; // 0xc
 };
 
 template <class T1>
@@ -154,7 +138,7 @@ BinStream &operator<<(BinStream &bs, const ObjRefConcrete<T1, class ObjectDir> &
 // ObjPtr size: 0x14
 template <class T>
 class ObjPtr : public ObjRefConcrete<T> {
-private:
+protected:
     Hmx::Object *mOwner; // 0x10
 public:
     ObjPtr(Hmx::Object *owner, T *ptr = nullptr);
@@ -163,7 +147,6 @@ public:
 
     void operator=(T *obj) { SetObjConcrete(obj); }
     void operator=(const ObjPtr &p) { CopyRef(p); }
-    T *Ptr() const { return mObject; }
     Hmx::Object *Owner() const { return mOwner; }
 };
 
@@ -179,7 +162,7 @@ BinStream &operator>>(BinStream &bs, ObjPtr<T1> &ptr);
 // ObjOwnerPtr size: 0x14
 template <class T>
 class ObjOwnerPtr : public ObjRefConcrete<T> {
-private:
+protected:
     ObjRefOwner *mOwner; // 0x10
 public:
     ObjOwnerPtr(ObjRefOwner *owner, T *ptr = nullptr);
@@ -188,7 +171,7 @@ public:
     virtual Hmx::Object *RefOwner() const;
     virtual void Replace(Hmx::Object *obj) { mOwner->Replace(this, obj); }
     void operator=(T *obj) { SetObjConcrete(obj); }
-    T *Ptr() const { return mObject; }
+    void operator=(const ObjOwnerPtr &p) { CopyRef(p); }
 };
 
 template <class T1>
@@ -201,41 +184,38 @@ BinStream &operator>>(BinStream &bs, ObjOwnerPtr<T1> &ptr);
 #pragma region ObjPtrVec
 
 enum EraseMode {
+    kEraseShiftDown = 0x0000,
+    kEraseCopyBack = 0x0001,
 };
 
 enum ObjListMode {
-    kObjListNoNull,
-    kObjListAllowNull,
-    kObjListOwnerControl
+    kObjListNoNull = 0x0000,
+    kObjListAllowNull = 0x0001,
+    kObjListOwnerControl = 0x0002,
 };
 
 // ObjPtrVec size: 0x1c
 template <class T1, class T2 = class ObjectDir>
-class ObjPtrVec : public ObjRefOwner {
+class ObjPtrVec : protected ObjRefOwner {
 private:
     // Node size: 0x14
     struct Node : public ObjRefConcrete<T1, T2> {
-        Node(ObjRefOwner *owner) : ObjRefConcrete<T1>(), mOwner(owner) {}
+        Node(ObjPtrVec<T1, T2> *p) : ObjRefConcrete<T1>(), parent(p) {}
         Node(const Node &n);
+
         virtual ~Node() {}
-        virtual Hmx::Object *RefOwner() const {
-            ObjPtrVec<T1, T2> *vec = static_cast<ObjPtrVec<T1, T2> *>(mOwner);
-            return vec->Owner();
-        }
-        virtual void Replace(Hmx::Object *obj) {
-            ObjPtrVec<T1, T2> *vec = static_cast<ObjPtrVec<T1, T2> *>(mOwner);
-            vec->ReplaceNode(this, obj);
-        }
-        virtual ObjRefOwner *Parent() const { return mOwner; }
+        virtual Hmx::Object *RefOwner() const { return parent->Owner(); }
+        virtual void Replace(Hmx::Object *obj) { parent->ReplaceNode(this, obj); }
+        virtual ObjRefOwner *Parent() const { return parent; }
 
         Node &operator=(const Node &n) {
             CopyRef(n);
-            mOwner = n.mOwner;
+            parent = n.parent;
             return *this;
         }
 
         /** The ObjPtrVec this Node belongs to. */
-        ObjRefOwner *mOwner; // 0x10
+        ObjPtrVec<T1, T2> *parent; // 0x10
     };
 
 protected:
@@ -251,115 +231,120 @@ protected:
     void ReplaceNode(Node *, Hmx::Object *);
 
 public:
-    // from RBVR
-    // they don't use an ObjPtrVec but they did make their own BufVector
-    // and it's got both iterator and const_iterator
     class iterator {
         friend class const_iterator;
 
-    private:
-        Node *mData; // 0x0
+    protected:
+        Node *mNode; // 0x0
     public:
-        iterator(Node *n) : mData(n) {}
-        iterator() : mData(nullptr) {}
+        iterator(Node *n) : mNode(n) {}
+        iterator() : mNode(nullptr) {}
+
+        T1 *operator*() { return mNode->Ptr(); }
+
         iterator operator++(int);
-        iterator &operator++() {
-            mData++;
+        iterator operator++() {
+            mNode++;
             return *this;
         }
+
+        iterator operator+(int n) { return mNode + n; }
+        // iterator operator+=(int n);
+
         iterator operator--(int);
-        iterator &operator--() {
-            mData--;
+        iterator operator--() {
+            mNode--;
             return *this;
         }
-        iterator operator+(int n) const { return mData + n; }
-        int operator-(iterator &) const;
+        int operator-(iterator &rhs) const { return mNode - rhs.mNode; }
         iterator operator-(int) const;
+        iterator operator-=(int) const;
 
-        Node &operator*() { return *mData; }
-        Node *operator->() { return mData; }
-
-        bool operator==(const iterator &it) const { return mData == it.mData; }
-        bool operator!=(const iterator &it) const { return mData != it.mData; }
-        // bool operator<(const iterator &) const;
-        // bool operator>=(const iterator &) const;
+        bool operator==(iterator it) { return mNode == it.mNode; }
+        bool operator!=(iterator it) { return mNode != it.mNode; }
     };
 
-    // ditto
     class const_iterator {
-    private:
-        const Node *mData; // 0x0
+    protected:
+        const Node *mNode; // 0x0
     public:
-        const_iterator(const Node *n) : mData(n) {}
-        const_iterator() : mData(nullptr) {}
-        const_iterator(const iterator &other) : mData(other.mData) {}
+        const_iterator() : mNode(nullptr) {}
+        const_iterator(iterator other) : mNode(other.mNode) {}
+        const_iterator(const Node *n) : mNode(n) {}
+
+        T1 *operator*() { return mNode->Ptr(); }
 
         const_iterator operator++(int);
-        const_iterator &operator++() {
-            mData++;
+        const_iterator operator++() {
+            mNode++;
             return *this;
         }
+        const_iterator operator+(int n) { return mNode + n; }
+        const_iterator operator+=(int);
+
         const_iterator operator--(int);
-        const_iterator &operator--() {
-            mData--;
+        const_iterator operator--() {
+            mNode--;
             return *this;
         }
-        const_iterator operator+(int n) const { return mData + n; }
-        int operator-(const_iterator &) const;
-        const_iterator operator-(int) const;
+        const_iterator operator-(int);
+        const_iterator operator-=(int);
 
-        const Node &operator*() const { return *mData; }
-        const Node *operator->() const { return mData; }
-
-        bool operator==(const const_iterator &it) const { return mData == it.mData; }
-        bool operator!=(const const_iterator &it) const { return mData != it.mData; }
-        // bool operator<(const const_iterator &) const;
-        // bool operator>=(const const_iterator &) const;
+        bool operator==(const_iterator it) { return mNode == it.mNode; }
+        bool operator!=(const_iterator it) { return mNode != it.mNode; }
     };
 
-    ObjPtrVec(Hmx::Object *owner, EraseMode = (EraseMode)0, ObjListMode = kObjListNoNull);
+    ObjPtrVec(
+        Hmx::Object *owner, EraseMode = kEraseShiftDown, ObjListMode = kObjListNoNull
+    );
     ObjPtrVec(const ObjPtrVec &);
     virtual ~ObjPtrVec();
 
-    iterator begin() { return empty() ? nullptr : &mNodes[0]; }
-    const_iterator begin() const { return empty() ? nullptr : &mNodes[0]; }
+    iterator begin() { return empty() ? nullptr : &mVec[0]; }
     iterator end() { return begin() + size(); }
+    const_iterator begin() const { return empty() ? nullptr : &mVec[0]; }
     const_iterator end() const { return begin() + size(); }
 
-    // this stupid hack exists because when just calling end(),
-    // the compiler thinks we want the non-const version
-    const_iterator end_const() const { return end(); }
+    // the pdb says these are both begin() and end(),
+    // but i can't get the compiler to consistently emit the right versions
+    // so here are some distinct, explicit versions to use when needed
+    const_iterator cbegin() const { return empty() ? nullptr : &mVec[0]; }
+    const_iterator cend() const { return cbegin() + size(); }
+
+    const_iterator find(const Hmx::Object *) const;
+    // iterator find(const Hmx::Object*);
     iterator FindRef(ObjRef *);
 
-    iterator erase(iterator);
+    void Set(iterator it, T1 *obj);
     iterator insert(const_iterator, T1 *);
-    const_iterator find(const Hmx::Object *) const;
-    int size() const { return mNodes.size(); }
-    bool empty() const { return mNodes.empty(); }
+    iterator erase(iterator);
+
+    void swap(int, int);
+    T1 *&operator[](int idx) const { return const_cast<T1 *&>(mVec[idx].mObject); }
+    void push_back(T1 *);
+    // void pop_back();
+    void clear() { mVec.clear(); }
+    bool remove(T1 *);
+    void reserve(int n) { mVec.reserve(n); }
+    bool empty() const { return mVec.empty(); }
+    int size() const { return mVec.size(); }
     T1 *front() const { return *begin(); }
-    T1 *operator[](int idx) { return mNodes[idx]; }
-    const T1 *operator[](int idx) const { return mNodes[idx]; }
+    // T1* back() const;
 
     template <class S>
     void sort(const S &);
 
-    bool remove(T1 *);
-    void push_back(T1 *);
-    void swap(int, int);
-    bool Load(BinStream &, bool, ObjectDir *);
-    void clear() { mNodes.clear(); }
-    void reserve(unsigned int n) { mNodes.reserve(n); }
-    void unique();
-    void Set(iterator it, T1 *obj);
     void merge(const ObjPtrVec &);
+    void unique();
     void operator=(const ObjPtrVec &other);
     Hmx::Object *Owner() const { return mOwner; }
+    bool Load(BinStream &, bool, ObjectDir *);
 
-private:
-    std::vector<Node> mNodes; // 0x4
+protected:
+    std::vector<Node> mVec; // 0x4
     Hmx::Object *mOwner; // 0x10
     EraseMode mEraseMode; // 0x14
-    ObjListMode mListMode; // 0x18
+    ObjListMode mMode; // 0x18
 };
 
 template <class T1>
@@ -383,34 +368,36 @@ private:
     // Node size: 0x14
     struct Node : public ObjRefConcrete<T1, T2> {
         Node() : ObjRefConcrete(nullptr) {}
+        // Node(const Node&);
         virtual ~Node() {}
         virtual Hmx::Object *RefOwner() const {
-            ObjPtrList<T1, T2> *list = static_cast<ObjPtrList<T1, T2> *>(mOwner);
-            if (list->mOwner) {
-                return list->mOwner->RefOwner();
+            if (parent->mOwner) {
+                return parent->mOwner->RefOwner();
             } else {
                 return nullptr;
             }
         }
-        virtual void Replace(Hmx::Object *obj) {
-            ObjPtrList<T1, T2> *list = static_cast<ObjPtrList<T1, T2> *>(mOwner);
-            list->ReplaceNode(this, obj);
-        }
-        virtual ObjRefOwner *Parent() const { return mOwner; }
+        virtual void Replace(Hmx::Object *obj) { parent->ReplaceNode(this, obj); }
+        virtual ObjRefOwner *Parent() const { return parent; }
 
         static void *operator new(unsigned int);
+        //   public: static void* operator new[](uint32_t);
         static void operator delete(void *);
+        //   public: static void operator delete[](void*);
 
-        void operator=(const Node &n) { SetObjConcrete(n.mObject); }
+        Node &operator=(const Node &n) {
+            SetObjConcrete(n.mObject);
+            return *this;
+        }
 
-        ObjRefOwner *mOwner; // 0x10
+        ObjPtrList<T1, T2> *parent; // 0x10
         Node *next; // 0x14
         Node *prev; // 0x18
     };
     int mSize; // 0x4
     Node *mNodes; // 0x8
     ObjRefOwner *mOwner; // 0xc
-    ObjListMode mListMode; // 0x10
+    ObjListMode mMode; // 0x10
 
     virtual Hmx::Object *RefOwner() const;
     virtual bool Replace(ObjRef *, Hmx::Object *) {
@@ -426,7 +413,7 @@ public:
         iterator(Node *node) : mNode(node) {}
         T1 *operator*() { return *mNode; }
 
-        iterator &operator++() {
+        iterator operator++() {
             mNode = mNode->next;
             return *this;
         }
@@ -437,19 +424,22 @@ public:
             return tmp;
         }
 
-        iterator &operator--() {
+        iterator operator--() {
             mNode = mNode->prev;
             return *this;
         }
 
-        bool operator==(const iterator &it) const { return mNode == it.mNode; }
-        bool operator!=(const iterator &it) const { return mNode != it.mNode; }
-        bool operator!() { return mNode == 0; }
+        iterator operator--(int);
 
+        bool operator==(iterator it) { return mNode == it.mNode; }
+        bool operator!=(iterator it) { return mNode != it.mNode; }
+        bool Null() { return mNode == nullptr; }
+
+    private:
         struct Node *mNode; // 0x0
     };
 
-    ObjListMode Mode() const { return mListMode; }
+    ObjListMode Mode() const { return mMode; }
     int size() const { return mSize; }
     bool empty() const { return mSize == 0; }
     Hmx::Object *Owner() const { return mOwner ? mOwner->RefOwner() : nullptr; }
@@ -479,7 +469,8 @@ public:
     iterator erase(iterator);
     iterator insert(iterator, T1 *);
     void Set(iterator it, T1 *obj);
-    void MoveItem(iterator thisIt, ObjPtrList<T1, T2> &otherList, iterator otherIt);
+    void splice(iterator thisIt, ObjPtrList<T1, T2> &otherList, iterator otherIt);
+    iterator FindRef(ObjRef *);
 
     typedef bool SortFunc(T1 *, T1 *);
 
@@ -489,6 +480,9 @@ public:
     void operator=(const ObjPtrList &list);
     bool remove(T1 *);
     bool Load(BinStream &bs, bool, ObjectDir *, bool);
+
+    void merge(const ObjPtrList &);
+    void unique();
 
 private:
     void Link(iterator, Node *);
@@ -507,36 +501,39 @@ BinStream &operator>>(BinStream &bs, ObjPtrList<T1, ObjectDir> &list);
 // DataNodeObjTrack
 class DataNodeObjTrack {
 public:
-    DataNodeObjTrack(const DataNode &node) : unk0(nullptr, nullptr) {
-        unk14 = node.Evaluate();
-        if (unk14.Type() == kDataObject) {
-            unk0 = unk14.GetObj();
+    DataNodeObjTrack(const DataNode &node) : mObj(nullptr, nullptr) {
+        mNode = node.Evaluate();
+        if (mNode.Type() == kDataObject) {
+            mObj = mNode.GetObj();
         }
     }
     DataNode Node() const {
-        if (unk14.Type() == kDataObject) {
-            return unk0.Ptr();
+        if (mNode.Type() == kDataObject) {
+            return mObj.Ptr();
         } else
-            return unk14;
+            return mNode;
     }
+
+    // operator DataNode() const;
+
     DataNodeObjTrack &operator=(const DataNode &node) {
-        unk14 = node.Evaluate();
-        if (unk14.Type() == kDataObject) {
-            unk0 = unk14.GetObj();
+        mNode = node.Evaluate();
+        if (mNode.Type() == kDataObject) {
+            mObj = mNode.GetObj();
         }
         return *this;
     }
     DataNodeObjTrack &operator=(const DataNodeObjTrack &other) {
-        unk14 = other.Node().Evaluate();
-        if (unk14.Type() == kDataObject) {
-            unk0 = unk14.GetObj();
+        mNode = other.Node().Evaluate();
+        if (mNode.Type() == kDataObject) {
+            mObj = mNode.GetObj();
         }
         return *this;
     }
 
 protected:
-    ObjPtr<Hmx::Object> unk0; // 0x0
-    DataNode unk14; // 0x14
+    ObjPtr<Hmx::Object> mObj; // 0x0
+    DataNode mNode; // 0x14
 };
 
 #pragma endregion
@@ -938,6 +935,11 @@ extern DataArray *SystemConfig(Symbol, Symbol, Symbol);
 #define REGISTER_OBJ_FACTORY(objType)                                                    \
     Hmx::Object::RegisterFactory(objType::StaticClassName(), objType::NewObject);
 
+#define REGISTER_OBJ(objType)                                                            \
+    static void Register() {                                                             \
+        RegisterFactory(objType::StaticClassName(), objType::NewObject);                 \
+    }
+
 #pragma endregion
 #pragma region TypeProps
 
@@ -946,7 +948,7 @@ class TypeProps : public ObjRefOwner {
 private:
     DataArray *mMap; // 0x4
     Hmx::Object *mOwner; // 0x8
-    ObjPtrList<Hmx::Object> mObjects; // 0xc
+    ObjPtrList<Hmx::Object> mRefs; // 0xc
 
     void ReplaceObject(DataNode &n, Hmx::Object *from, Hmx::Object *to);
     void ReleaseObjects();
@@ -955,7 +957,7 @@ private:
 
 public:
     TypeProps(Hmx::Object *o)
-        : mOwner(o), mMap(nullptr), mObjects(this, kObjListOwnerControl) {}
+        : mOwner(o), mMap(nullptr), mRefs(this, kObjListOwnerControl) {}
     virtual ~TypeProps() { ClearAll(); }
     virtual Hmx::Object *RefOwner() const { return mOwner; }
     virtual bool Replace(ObjRef *from, Hmx::Object *to);
@@ -971,8 +973,8 @@ public:
     void Load(BinStreamRev &d);
     TypeProps &operator=(const TypeProps &);
     void Save(BinStream &d);
-    DataArray *Map() const { return mMap; }
-    bool HasProps() const { return mMap && mMap->Size() != 0; }
+    DataArray *Map() { return mMap; }
+    bool HasProps() { return mMap && mMap->Size() != 0; }
 
     MEM_OVERLOAD(TypeProps, 0x485);
 };
@@ -1162,17 +1164,19 @@ namespace Hmx {
             else
                 return Symbol();
         }
-        const ObjRef &Refs() const { return mRefs; }
         void SetNote(const char *note);
         DataArray *TypeDef() const { return mTypeDef; }
         ObjectDir *Dir() const { return mDir; }
         const char *Name() const { return mName; }
         const String &Note() const { return mNote; }
         const char *AllocHeapName() { return MemHeapName(MemFindAddrHeap(this)); }
-        void AddRef(ObjRef *ref) { ref->AddRef(&mRefs); }
-        void Release(ObjRef *ref) { ref->Release(); }
         MsgSinks *Sinks() const { return mSinks; }
 
+        void AddRef(ObjRef *ref) { ref->InsertBefore(&mRefs); }
+        void Release(ObjRef *ref) { ref->Unlink(); }
+        ObjRef *BeginRef() const { return mRefs.NextRef(); }
+        const ObjRef *EndRef() const { return &mRefs; }
+        bool HasRefs() const { return BeginRef() != EndRef(); }
         void ReplaceRefs(Hmx::Object *);
         void ReplaceRefsFrom(Hmx::Object *from, Hmx::Object *);
         /** How many other objects reference this Object? */
@@ -1288,9 +1292,9 @@ struct ObjPair {
 };
 
 struct ObjMatchPr {
-    ObjMatchPr(Hmx::Object *o) : obj(o) {}
-    bool operator()(const Hmx::Object *value) const { return obj == value; }
-    Hmx::Object *obj;
+    ObjMatchPr(Hmx::Object *o) : mObj(o) {}
+    bool operator()(const Hmx::Object *value) const { return mObj == value; }
+    Hmx::Object *mObj;
 };
 
 struct ObjNameSort {
@@ -1320,6 +1324,7 @@ public:
         back() = t;
     }
 
+    void reserve(unsigned int size) { Base::reserve(size); }
     void resize(unsigned int size) { Base::resize(size, T(mOwner)); }
 
     void operator=(const ObjVector &vec) {
@@ -1328,6 +1333,8 @@ public:
             Base::operator=((Base &)vec);
         }
     }
+
+    // T* FindRef(ObjRef*, ObjRef*);
 };
 
 // there are symbols for both BinStreamRev >> ObjVector
@@ -1414,7 +1421,8 @@ BinStream &operator>>(BinStreamRev &bs, ObjList<T> &oList) {
 // ObjectStage
 class ObjectStage : public ObjPtr<Hmx::Object> {
 public:
-    ObjectStage(Hmx::Object *o = nullptr) : ObjPtr<Hmx::Object>(sOwner, o) {}
+    ObjectStage() : ObjPtr<Hmx::Object>(sOwner, nullptr) {}
+    ObjectStage(Hmx::Object *o) : ObjPtr<Hmx::Object>(sOwner, o) {}
 
     static Hmx::Object *sOwner;
 };
@@ -1433,11 +1441,10 @@ BinStreamRev &operator>>(BinStreamRev &, ObjectStage &);
 
 // ObjVersion
 struct ObjVersion {
-    ObjVersion(int i, Hmx::Object *o) : revs(i), obj(nullptr, o) {}
-    ~ObjVersion() {}
+    ObjVersion(int i, Hmx::Object *o) : ver(i), obj(nullptr, o) {}
 
     ObjPtr<Hmx::Object> obj;
-    int revs;
+    int ver;
 };
 
 #pragma endregion

@@ -42,16 +42,16 @@ struct Alpha {
 
 DataNode PrintSymbolTable(DataArray *msg) {
     MILO_LOG("Symbol table:\n");
-    MILO_LOG("%d / %d hashes\n", gHashTable.UsedSize(), gHashTable.Size());
+    MILO_LOG("%d / %d hashes\n", gHashTable.NumEntries(), gHashTable.Size());
     MILO_LOG("%d / %d strings\n", gStringTable->UsedSize(), gStringTable->Size());
     MILO_LOG(
         "adding 30%%, suggest Symbol::PreInit(%d, %d)\n",
         (int)(gStringTable->UsedSize() * 1.3f),
-        (int)((gHashTable.UsedSize() << 1) * 1.3f)
+        (int)((gHashTable.NumEntries() << 1) * 1.3f)
     );
     if (msg->Size() > 1) {
         std::vector<const char *> strs;
-        strs.reserve(gHashTable.UsedSize());
+        strs.reserve(gHashTable.NumEntries());
         for (const char **it = gHashTable.Begin(); it != nullptr;
              it = gHashTable.Next(it)) {
             strs.push_back(*it);

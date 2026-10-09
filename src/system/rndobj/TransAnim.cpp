@@ -334,11 +334,15 @@ DataNode RndTransAnim::OnSetRotSlerp(const DataArray *da) {
 
 DataNode RndTransAnim::OnTrans(const DataArray *) { return mTrans.Ptr(); }
 
-DataNode RndTransAnim::OnNumTransKeys(const DataArray *) { return TransKeys().NumKeys(); }
+DataNode RndTransAnim::OnNumTransKeys(const DataArray *) {
+    return (int)TransKeys().size();
+}
 
-DataNode RndTransAnim::OnNumRotKeys(const DataArray *) { return RotKeys().NumKeys(); }
+DataNode RndTransAnim::OnNumRotKeys(const DataArray *) { return (int)RotKeys().size(); }
 
-DataNode RndTransAnim::OnNumScaleKeys(const DataArray *) { return ScaleKeys().NumKeys(); }
+DataNode RndTransAnim::OnNumScaleKeys(const DataArray *) {
+    return (int)ScaleKeys().size();
+}
 
 DataNode RndTransAnim::OnAddTransKey(const DataArray *da) {
     TransKeys().Add(

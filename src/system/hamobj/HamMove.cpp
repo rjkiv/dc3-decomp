@@ -24,7 +24,8 @@
 float HamMove::sMinFrameDistBeats = 0.2;
 
 BinStream &operator<<(BinStream &bs, const Ham1NodeWeight &wt) {
-    bs << wt.mPerfectDist << wt.mRate << wt.mAnglePerfectDist << wt.mAngleRate << wt.mHasError;
+    bs << wt.mPerfectDist << wt.mRate << wt.mAnglePerfectDist << wt.mAngleRate
+       << wt.mHasError;
     return bs;
 }
 
@@ -48,38 +49,38 @@ BinStream &operator>>(BinStreamRev &d, Ham1NodeWeight &wt) {
 
 BinStream &operator>>(BinStreamRev &d, OldNodeWeight &wt) {
     MILO_ASSERT(d.rev < 40, 0xA6);
-    d >> wt.unk4;
-    d >> wt.unk8;
-    d >> wt.unkc;
-    d >> wt.unk10;
+    d >> wt.mPerfectDist;
+    d >> wt.mRate;
+    d >> wt.mAnglePerfectDist;
+    d >> wt.mAngleRate;
     if (d.rev > 32) {
-        d >> wt.unk0;
+        d >> wt.mWeight;
     } else if (d.rev > 24) {
         bool b;
         d >> b;
         if (b) {
-            wt.unk0 = 1;
+            wt.mWeight = 1;
         } else {
-            wt.unk0 = 0;
+            wt.mWeight = 0;
         }
     } else {
-        wt.unk0 = 1;
+        wt.mWeight = 1;
     }
     return d.stream;
 }
 
 BinStream &operator<<(BinStream &bs, const Ham2FrameWeight &wt) {
-    bs << wt.unk0;
+    bs << wt.mWeight;
     for (int i = 0; i < 4; i++) {
-        bs << wt.unk4[i];
-        bs << wt.unk14[i];
+        bs << wt.mMaxFeedbackOnPSNRs[i];
+        bs << wt.mMinFeedbackOffPSNRs[i];
     }
     return bs;
 }
 
 BinStream &operator>>(BinStreamRev &d, Ham2FrameWeight &wt) {
     if (d.rev > 34) {
-        d >> wt.unk0;
+        d >> wt.mWeight;
     }
     if (d.rev < 33) {
         if (d.rev > 31) {
@@ -102,13 +103,13 @@ BinStream &operator>>(BinStreamRev &d, Ham2FrameWeight &wt) {
 
     if (d.rev > 37) {
         for (int i = 0; i < 4; i++) {
-            d >> wt.unk4[i];
-            d >> wt.unk14[i];
+            d >> wt.mMaxFeedbackOnPSNRs[i];
+            d >> wt.mMinFeedbackOffPSNRs[i];
         }
     } else {
         for (int i = 0; i < 4; i++) {
-            wt.unk4[i] = 0;
-            wt.unk14[i] = kHugeFloat;
+            wt.mMaxFeedbackOnPSNRs[i] = 0;
+            wt.mMinFeedbackOffPSNRs[i] = kHugeFloat;
         }
     }
     return d.stream;
@@ -261,11 +262,11 @@ void MoveFrame::Load(BinStreamRev &d) {
                     if (k < curOldWeights.size()) {
                         OldNodeWeight &cur = curOldWeights[k];
                         Ham1NodeWeight &curHam1 = mHam1NodeWeights[i][j][k];
-                        curHam1.mHasError = cur.unk0 != 0;
-                        curHam1.mAnglePerfectDist = cur.unkc;
-                        curHam1.mAngleRate = cur.unk10;
-                        curHam1.mPerfectDist = cur.unk4;
-                        curHam1.mRate = cur.unk8;
+                        curHam1.mHasError = cur.mWeight != 0;
+                        curHam1.mAnglePerfectDist = cur.mAnglePerfectDist;
+                        curHam1.mAngleRate = cur.mAngleRate;
+                        curHam1.mPerfectDist = cur.mPerfectDist;
+                        curHam1.mRate = cur.mRate;
                     }
                 }
             }
@@ -274,7 +275,7 @@ void MoveFrame::Load(BinStreamRev &d) {
             std::vector<OldNodeWeight> &curOldWeights = oldNodeWeights[1][0][i];
             for (int j = 0; j < num_ham2_nodes; j++) {
                 if (j + kNumHam1Nodes < curOldWeights.size()) {
-                    float set = curOldWeights[j + kNumHam1Nodes].unk0;
+                    float set = curOldWeights[j + kNumHam1Nodes].mWeight;
                     mNodeWeights[i][j].Set(set, set, set);
                 }
             }

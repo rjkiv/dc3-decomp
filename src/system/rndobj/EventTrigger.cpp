@@ -820,13 +820,13 @@ DataNode EventTrigger::Cleanup(DataArray *arr) {
             RndAnimFilter *filter = dynamic_cast<RndAnimFilter *>(anim->mAnim.Ptr());
             if (filter) {
                 ObjRef *ref;
-                for (ref = filter->Refs().Begin(); ref != filter->Refs().End();
-                     ref = filter->Refs().Next(ref)) {
+                for (ref = filter->BeginRef(); ref != filter->EndRef();
+                     ref = ref->NextRef()) {
                     if (ref->RefOwner() && ref->RefOwner() != it) {
                         break;
                     }
                 }
-                if (ref == filter->Refs().End()
+                if (ref == filter->EndRef()
                     && filter->GetType() != RndAnimFilter::kShuttle) {
                     anim->mAnim = filter->Anim();
                     anim->mEnable = true;

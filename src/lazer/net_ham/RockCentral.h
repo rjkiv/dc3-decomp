@@ -19,9 +19,6 @@ END_MESSAGE
 
 class RockCentral : public Hmx::Object {
 public:
-    enum State {
-        kFailed = 4
-    };
     RockCentral();
     virtual ~RockCentral();
     virtual DataNode Handle(DataArray *, bool);
@@ -55,20 +52,16 @@ public:
     DataNode OnMsg(const UserLoginMsg &);
 
     bool IsLoginBlocked() const { return mLoginBlocked; }
-    String GetDlcImage() { return unka8; }
-    String GetUtilityImage() { return unkc0; }
-    String GetUtilitySound() { return unkc8; }
-    String GetMiscImage() { return unkd0; }
-    RndTex *GetMiscArt() const { return mMiscArt; }
-    void SetMiscArt(RndTex *tex) { mMiscArt = tex; }
-    int GetRockCentralTime() { return mRockCentralTime; }
-    void SetRockCentralTime(int i) { mRockCentralTime = i; }
-    unsigned int GetUnk84() const { return unk84; }
-    int GetUnk12c() const { return unk12c; }
-    void SetUnk12c(int i) { unk12c = i; }
-    int GetUnk128() const { return unk128; }
-    void SetUnk128(int i) { unk128 = i; }
-    bool GetUnk8c() const { return unk8c; }
+    String GetDlcImage() { return mDlcImage; }
+    String GetUtilityImage() { return mUtilityImage; }
+    String GetUtilitySound() { return mUtilitySound; }
+    String GetMiscImage() { return mMiscImage; }
+    RndTex *GetUtilityArt() { return mUtilityArt; }
+    int GetLastNewSong() const { return mLastNewSong; }
+    unsigned int GetChallengeInterval() const { return mChallengeInterval; }
+    void EnterControllerMode() { mNumEnteringControllerMode++; }
+    void ExitControllerMode() { mNumExitingControllerMode++; }
+    bool HasXpMult() const { return mHasXpMult; }
 
 private:
     static const String kServerVer;
@@ -77,35 +70,42 @@ private:
 protected:
     virtual void OnJobFinished(RCJob *);
 
-    std::vector<RCJob *> unk2c;
-    std::vector<RCJob *> unk38;
-    State mState; // 0x44
-    Timer unk48;
-    float unk78;
-    float unk7c;
-    GetMotdJob *mMOTDJob; // 0x80
-    unsigned int unk84;
-    int mRockCentralTime; // 0x88
-    bool unk8c;
-    int unk90;
+private:
+    std::vector<RCJob *> mJobs; // 0x2c
+    std::vector<RCJob *> mNewJobs; // 0x38
+    enum {
+        kOffline = 0x0000,
+        kConnecting = 0x0001,
+        kOnline = 0x0002,
+        kDisconnecting = 0x0003,
+        kFailed = 0x0004
+    } mState; // 0x44
+    Timer mTime; // 0x48
+    float mRetryTime; // 0x78
+    float mUploadControllerStatsTime; // 0x7c
+    GetMotdJob *mMotdJob; // 0x80
+    unsigned int mChallengeInterval; // 0x84
+    int mLastNewSong; // 0x88
+    bool mHasXpMult; // 0x8c
+    int mMotdFreq; // 0x90
     std::vector<String> mCommunityMsgs; // 0x94
-    String mDLCMsg; // 0xa0
-    String unka8; // 0xa8
-    String unkb0;
+    String mDlcMsg; // 0xa0
+    String mDlcImage; // 0xa8
+    String mDlcSound; // 0xb0
     String mUtilityMsg; // 0xb8
-    String unkc0;
-    String unkc8;
-    String unkd0;
-    RndTex *mMiscArt; // 0xd8
+    String mUtilityImage; // 0xc0
+    String mUtilitySound; // 0xc8
+    String mMiscImage; // 0xd0 - not in PDB
+    RndTex *mUtilityArt; // 0xd8
     bool mLoginBlocked; // 0xdc
-    bool unkdd;
-    HxGuid unke0;
-    XNADDR mXNetAddr; // 0xf0
-    ULONGLONG mMachineID; // 0x118
-    KinectShareConnection *mKinectShareConnection; // 0x120
-    Hmx::Object *unk124; // unsure what class this should be
-    int unk128;
-    int unk12c;
+    bool mHasLoggedIn; // 0xdd
+    HxGuid mGameSessionGuid; // 0xe0
+    XNADDR mXnaddr; // 0xf0
+    ULONGLONG mMachineId; // 0x118
+    KinectShareConnection *mKinectShare; // 0x120
+    Hmx::Object *mKinectShareCallback;
+    int mNumEnteringControllerMode; // 0x128
+    int mNumExitingControllerMode; // 0x12c
 };
 
 extern RockCentral TheRockCentral;

@@ -116,11 +116,11 @@ void MergeObjectsRecurse(
             return;
         default: {
             ObjRef refs;
-            refs.DetachSelf();
+            refs.Relink();
             FOREACH_OBJREF (it, fromDir) {
                 Hmx::Object *owner = it->RefOwner();
                 if (owner && owner->Dir() == fromDir) {
-                    it = it->MoveBefore(&refs);
+                    it = it->MoveTo(refs);
                 }
             }
             refs.ReplaceList(toDir);
@@ -152,7 +152,7 @@ int SubDirStringUsed(ObjectDir *dir) {
     if (!dir)
         return 0;
     else {
-        int size = dir->StrTableUsedSize();
+        int size = dir->StringUsed();
         const std::vector<ObjDirPtr<ObjectDir> > &subdirs = dir->SubDirs();
         for (std::vector<ObjDirPtr<ObjectDir> >::const_iterator it = subdirs.begin();
              it != subdirs.end();
@@ -239,7 +239,7 @@ int SubDirHashUsed(ObjectDir *dir) {
     if (!dir)
         return 0;
     else {
-        int size = dir->HashTableUsedSize();
+        int size = dir->HashUsed();
         const std::vector<ObjDirPtr<ObjectDir> > &subdirs = dir->SubDirs();
         for (std::vector<ObjDirPtr<ObjectDir> >::const_iterator it = subdirs.begin();
              it != subdirs.end();
@@ -274,8 +274,8 @@ const DataNode *GetPropertyVal(Hmx::Object *o, DataArray *prop, bool fail) {
 }
 
 void ReserveToFit(ObjectDir *src, ObjectDir *dst, int extraObjects) {
-    int stringSize = dst->StrTableUsedSize() + SubDirStringUsed(src) + extraObjects * 10;
-    int hashSize = (dst->HashTableUsedSize() + SubDirHashUsed(src) + extraObjects) * 2;
+    int stringSize = dst->StringUsed() + SubDirStringUsed(src) + extraObjects * 10;
+    int hashSize = (dst->HashUsed() + SubDirHashUsed(src) + extraObjects) * 2;
     dst->Reserve(hashSize, stringSize);
 }
 
