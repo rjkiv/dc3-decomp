@@ -11,49 +11,55 @@ class FilterQueue {
 public:
     FilterQueue();
 
-    bool GetResults(float &, DetectFrame **, float);
-    void EnqueueNewJob(float, float, MoveMode);
-    void EnqueueFrame(int, float, float, DetectFrame *, const FilterVersion *);
+    bool GetResults(float &seconds, DetectFrame **plf_frames, float plf_min_time_error);
+    void EnqueueNewJob(float seconds, float song_speed, MoveMode mode);
+    void EnqueueFrame(
+        int player,
+        float time_error,
+        float delta_secs,
+        DetectFrame *df,
+        const FilterVersion *fv
+    );
     bool IsJobFinished() const;
     float LastPollMs() const;
     bool HasJob() const;
     void CancelJob();
     void StartJob();
-    void Poll(const SkeletonUpdateData &);
+    void Poll(const SkeletonUpdateData &data);
 
 private:
     // size 0x14
     class FilterInputFrame {
     public:
-        int unk0;
-        float unk4;
-        float unk8;
-        DetectFrame *unkc;
-        const FilterVersion *unk10;
+        int mPlayer; // 0x0
+        float mTimeError; // 0x4
+        float mDeltaSecs; // 0x8
+        DetectFrame *mDetectFrame; // 0xc
+        const FilterVersion *mFilterVersion; // 0x10
     };
 
     // size 0x214
     class FilterOutputFrame {
     public:
-        int unk0;
-        Vector3 unk4[kMaxNumErrorNodes]; // 0x4
+        const FilterInputFrame *mInputFrame; // 0x0
+        Vector3 mNodeErrors[kMaxNumErrorNodes]; // 0x4
     };
 
     struct QueuedJob {
-        float unk0; // 0x0 - song seconds minus latency seconds
-        MoveMode unk4; // 0x4 - current move mode
-        float unk8; // 0x8 - song speed
-        std::vector<FilterInputFrame> frames; // 0xc
+        float mSeconds; // 0x0
+        MoveMode mMode; // 0x4
+        float mSongSpeed; // 0x8
+        std::vector<FilterInputFrame> mQueuedFrames; // 0xc
     };
 
-    struct Output {
-        float unk0;
-        MoveMode unk4;
-        std::vector<FilterOutputFrame> frames; // 0x20
+    struct ThreadJob {
+        float mSongSpeed; // 0x0
+        MoveMode mMode; // 0x4
+        std::vector<FilterOutputFrame> mOutputFrames; // 0x8
+        bool mIsFinished; // 0x14
     };
 
     QueuedJob mQueuedJob; // 0x0
-    Output mOutput; // 0x18
-    bool jobFinished; // 0x2c
-    float lastPollMs; // 0x30
+    ThreadJob mThreadJob; // 0x18
+    float mLastPollMs; // 0x30
 };
