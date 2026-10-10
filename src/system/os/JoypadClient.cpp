@@ -47,24 +47,24 @@ void JoypadRepeat::Start(JoypadButton btn, JoypadAction act, int pad) {
     mLastPad = pad;
 }
 
-void JoypadRepeat::SendRepeat(Hmx::Object *o, int i) {
-    LocalUser *user = TheUserMgr ? TheUserMgr->GetLocalUserFromPadNum(i) : nullptr;
-    o->Handle(ButtonDownMsg(user, mLastBtn, mLastAction, mLastPad), false);
+void JoypadRepeat::SendRepeat(Hmx::Object *sink, int pad) {
+    LocalUser *user = TheUserMgr ? TheUserMgr->GetLocalUserFromPadNum(pad) : nullptr;
+    sink->Handle(ButtonDownMsg(user, mLastBtn, mLastAction, mLastPad), false);
 }
 
-void JoypadRepeat::Poll(float f1, float f2, Hmx::Object *o, int i4) {
+void JoypadRepeat::Poll(float minHoldMs, float minRepeatMs, Hmx::Object *sink, int pad) {
     mHoldTimer.Pause();
     mRepeatTimer.Pause();
     float holdMs = mHoldTimer.Ms();
     float repeatMs = mRepeatTimer.Ms();
     mHoldTimer.Resume();
     mRepeatTimer.Resume();
-    if (holdMs >= f1) {
-        SendRepeat(o, i4);
+    if (holdMs >= minHoldMs) {
+        SendRepeat(sink, pad);
         mHoldTimer.Reset();
         mRepeatTimer.Start();
-    } else if (repeatMs >= f2) {
-        SendRepeat(o, i4);
+    } else if (repeatMs >= minRepeatMs) {
+        SendRepeat(sink, pad);
         mRepeatTimer.Reset();
         mRepeatTimer.Start();
     }
@@ -95,7 +95,7 @@ BEGIN_HANDLERS(JoypadClient)
     HANDLE_MEMBER_PTR(mSink)
 END_HANDLERS
 
-void JoypadClient::SetVirtualDpad(bool b) { mVirtualDpad = b; }
+void JoypadClient::SetVirtualDpad(bool dpad) { mVirtualDpad = dpad; }
 
 int JoypadClient::OnMsg(const ButtonDownMsg &msg) {
     if (mFilterAllButStart && msg.GetAction() != kAction_Start)

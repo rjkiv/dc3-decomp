@@ -206,10 +206,10 @@ void TryDemangleFunc(char *demangled, const char *mangled) {
     }
 }
 
-XboxMapFile::XboxMapFile(const char *file) {
+XboxMapFile::XboxMapFile(const char *filename) {
     static int _x = MemFindHeap("main");
     MemHeapTracker tmp(_x);
-    mFile = NewFile(file, 0x10002);
+    mFile = NewFile(filename, 0x10002);
     char buf[1024];
     if (!mFile)
         return;
@@ -224,30 +224,30 @@ XboxMapFile::XboxMapFile(const char *file) {
 
 XboxMapFile::~XboxMapFile() { delete mFile; }
 
-void XboxMapFile::ReadLine(char *line, int size) {
+void XboxMapFile::ReadLine(char *dest, int destSize) {
     int idx = 0;
     while (!mFile->Eof()) {
         char curChar;
         mFile->Read(&curChar, 1);
         if (curChar == '\n')
             break;
-        if (idx < size - 1) {
-            line[idx] = curChar;
+        if (idx < destSize - 1) {
+            dest[idx] = curChar;
             idx++;
         }
     }
-    line[idx] = '\0';
+    dest[idx] = '\0';
 }
 
-const char *XboxMapFile::GetFunction(unsigned int ui, bool b2) {
+const char *XboxMapFile::GetFunction(unsigned int addr, bool restart) {
     static char sBuffer[0x400];
-    if (b2) {
+    if (restart) {
         mFile->Seek(mStart, 0);
     }
     char localC40[1024];
     char local1440[2048];
     char *cur = local1440;
-    sprintf(localC40, "%8x", ui);
+    sprintf(localC40, "%8x", addr);
     int oldTell = mFile->Tell();
     char *b4 = "";
     while (!mFile->Eof()) {
