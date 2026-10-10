@@ -120,7 +120,7 @@ BEGIN_SAVES(SongCollision)
     SAVE_REVS(2, 1)
     SAVE_SUPERCLASS(Hmx::Object)
     for (int i = 0; i < kNumDifficulties; i++) {
-        bs << mData[i];
+        bs << mDiffBeatCollisions[i];
     }
 END_SAVES
 
@@ -129,7 +129,7 @@ BEGIN_COPYS(SongCollision)
     CREATE_COPY(SongCollision)
     BEGIN_COPYING_MEMBERS
         for (int i = 0; i < kNumDifficulties; i++) {
-            COPY_MEMBER(mData[i])
+            COPY_MEMBER(mDiffBeatCollisions[i])
         }
     END_COPYING_MEMBERS
 END_COPYS
@@ -142,12 +142,12 @@ BEGIN_LOADS(SongCollision)
     LOAD_SUPERCLASS(Hmx::Object)
     if (d.altRev < 1) {
         for (int i = 0; i < kNumDifficultiesDC2; i++) {
-            d >> mData[i];
+            d >> mDiffBeatCollisions[i];
         }
-        mData[kDifficultyBeginner] = mData[kDifficultyEasy];
+        mDiffBeatCollisions[kDifficultyBeginner] = mDiffBeatCollisions[kDifficultyEasy];
     } else {
         for (int i = 0; i < kNumDifficulties; i++) {
-            d >> mData[i];
+            d >> mDiffBeatCollisions[i];
         }
     }
 END_LOADS
@@ -155,7 +155,7 @@ END_LOADS
 void SongCollision::Print() {
     int maxDatas = 0;
     for (int i = 0; i < kNumDifficulties; i++) {
-        maxDatas = Max<int>(maxDatas, mData[i].size());
+        maxDatas = Max<int>(maxDatas, mDiffBeatCollisions[i].size());
     }
     String str;
     str = "Beat\tData";
@@ -168,8 +168,8 @@ void SongCollision::Print() {
         BeatCollisionData allDatas[kNumDifficulties];
         BeatCollisionData *dataIt = allDatas;
         for (int j = 0; j < kNumDifficulties; j++, dataIt++) {
-            if (i < mData[j].size()) {
-                *dataIt = mData[j][i];
+            if (i < mDiffBeatCollisions[j].size()) {
+                *dataIt = mDiffBeatCollisions[j][i];
             } else {
                 memset(dataIt, 0, sizeof(BeatCollisionData));
             }
@@ -224,7 +224,7 @@ void SongCollision::Init() {
 
 const BeatCollisionData *SongCollision::BeatData(int beat, Difficulty diff) const {
     MILO_ASSERT_RANGE(diff, 0, kNumDifficulties, 0xe8);
-    const std::vector<BeatCollisionData> &diffData = mData[diff];
+    const std::vector<BeatCollisionData> &diffData = mDiffBeatCollisions[diff];
     MILO_ASSERT(beat >= 0, 0xeb);
     if (beat < diffData.size()) {
         return &diffData[beat];
@@ -254,8 +254,8 @@ void SongCollision::GatherUsefulBones(
 }
 
 bool SongCollision::IsCollision(
-    int i1,
-    int i2,
+    int start_beat,
+    int end_beat,
     const Difficulty *const diffs,
     const Transform *const xfms,
     std::vector<SongCollisionOutput> *outputs
@@ -265,10 +265,10 @@ bool SongCollision::IsCollision(
         localXfms[i] = xfms[i];
     }
     bool b6 = false;
-    for (int i = i1; i < i2; i++) {
+    for (int i = start_beat; i < end_beat; i++) {
         SongCollisionOutput output;
         CheckCollision(i, diffs, localXfms, output);
-        if (output.unke0) {
+        if (output.mCollision) {
             if (!outputs) {
                 return true;
             }
@@ -288,7 +288,7 @@ bool SongCollision::IsCollision(
 }
 
 void SongCollision::CheckCollision(
-    int i1,
+    int beat,
     const Difficulty *const diffs,
     const Transform *const xfms,
     SongCollisionOutput &songCollOutput
@@ -298,26 +298,26 @@ void SongCollision::CheckCollision(
     Vector3 va0;
     Normalize(vb0, va0);
     for (int i = 0; i < 2; i++) {
-        songCollOutput.unk60[i] = xfms[i];
-        const BeatCollisionData *bcd = BeatData(i1, diffs[i]);
+        songCollOutput.mPlayerXfms[i] = xfms[i];
+        const BeatCollisionData *bcd = BeatData(beat, diffs[i]);
         if (!bcd) {
-            songCollOutput.unk0[i].Zero();
-            songCollOutput.unk20[i].Zero();
-            songCollOutput.unk40[i].Zero();
+            songCollOutput.mMinOffsets[i].Zero();
+            songCollOutput.mMaxOffsets[i].Zero();
+            songCollOutput.mCollideProjections[i].Zero();
         } else {
-            Multiply(Vector3(bcd->mMinX, 0, 0), xfms[i], songCollOutput.unk0[i]);
-            Multiply(Vector3(bcd->mMaxX, 0, 0), xfms[i], songCollOutput.unk20[i]);
+            Multiply(Vector3(bcd->mMinX, 0, 0), xfms[i], songCollOutput.mMinOffsets[i]);
+            Multiply(Vector3(bcd->mMaxX, 0, 0), xfms[i], songCollOutput.mMaxOffsets[i]);
 
             Vector3 vsub2;
             Vector3 vsub1;
-            Subtract(songCollOutput.unk20[i], xfms[i].v, vsub2);
-            Subtract(songCollOutput.unk0[i], xfms[i].v, vsub1);
+            Subtract(songCollOutput.mMaxOffsets[i], xfms[i].v, vsub2);
+            Subtract(songCollOutput.mMinOffsets[i], xfms[i].v, vsub1);
             float dot = Dot(va0, vsub1);
             if ((dot <= 0 || i != 0) && (0 <= dot || i != 1)) {
                 dot = Dot(va0, vsub2);
-                Scale(va0, dot, songCollOutput.unk40[i]);
+                Scale(va0, dot, songCollOutput.mCollideProjections[i]);
             } else {
-                Scale(va0, dot, songCollOutput.unk40[i]);
+                Scale(va0, dot, songCollOutput.mCollideProjections[i]);
             }
         }
     }
@@ -325,13 +325,13 @@ void SongCollision::CheckCollision(
     float vb0len = Length(vb0);
     float f15 = 0;
     for (int i = 0; i < 2; i++) {
-        f15 += Length(songCollOutput.unk40[i]);
+        f15 += Length(songCollOutput.mCollideProjections[i]);
     }
-    songCollOutput.unke0 = (f15 - sCollisionTolerance) > vb0len;
+    songCollOutput.mCollision = (f15 - sCollisionTolerance) > vb0len;
 }
 
-void SongCollision::Update(MoveDir *moveDir) {
-    if (moveDir) {
+void SongCollision::Update(MoveDir *moves) {
+    if (moves) {
         MILO_ASSERT(TheGameData, 0xFB);
         MILO_ASSERT(TheHamDirector, 0xFC);
         HamCharacter *dancer = TheHamDirector->GetCharacter(0);
@@ -344,7 +344,7 @@ void SongCollision::Update(MoveDir *moveDir) {
             timer.Restart();
             MILO_ASSERT(TheGameData, 0x10C);
             TheGameData->Player(0)->SetDifficulty((Difficulty)i);
-            mData[i].clear();
+            mDiffBeatCollisions[i].clear();
             MocapSkeletonIterator it(0, TheHamDirector->SongAnim(0)->EndFrame());
             int current_beat = -1;
             Transform startXfm;
@@ -357,7 +357,7 @@ void SongCollision::Update(MoveDir *moveDir) {
                     if (current_beat >= 0) {
                         BeatCollisionData data;
                         data.Set(minX, maxX, startXfm, dancer->WorldXfm());
-                        mData[i].push_back(data);
+                        mDiffBeatCollisions[i].push_back(data);
                     }
                     startXfm = dancer->WorldXfm();
                     maxX = 0;
@@ -369,7 +369,7 @@ void SongCollision::Update(MoveDir *moveDir) {
             if (current_beat != -1) {
                 BeatCollisionData data;
                 data.Set(minX, maxX, startXfm, dancer->WorldXfm());
-                mData[i].push_back(data);
+                mDiffBeatCollisions[i].push_back(data);
             } else {
                 MILO_NOTIFY(
                     "Could not process collision mocap for %s", TheGameData->GetSong()
@@ -378,7 +378,8 @@ void SongCollision::Update(MoveDir *moveDir) {
             timer.Stop();
             MILO_LOG("Took %fms\n", timer.Ms());
         }
-        int sizeKB = mData[0].size() * 0x48; // where is this 0x48 coming from
+        int sizeKB = mDiffBeatCollisions[0].size() * 0x48; // where is this 0x48 coming
+                                                           // from
         sizeKB /= 1024;
         MILO_LOG("Approx size = %ikB\n", sizeKB);
     }

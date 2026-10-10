@@ -9,7 +9,8 @@
 #include "utl/MemMgr.h"
 
 struct BeatCollisionData {
-    void Set(float, float, const Transform &, const Transform &);
+    void
+    Set(float min_x, float max_x, const Transform &start_xfm, const Transform &end_xfm);
 
     float mMinX; // 0x0
     float mMaxX; // 0x4
@@ -18,11 +19,11 @@ struct BeatCollisionData {
 
 // size 0xe4
 struct SongCollisionOutput {
-    Vector3 unk0[2];
-    Vector3 unk20[2];
-    Vector3 unk40[2];
-    Transform unk60[2];
-    bool unke0;
+    Vector3 mMinOffsets[2]; // 0x0
+    Vector3 mMaxOffsets[2]; // 0x20
+    Vector3 mCollideProjections[2]; // 0x40
+    Transform mPlayerXfms[2]; // 0x60
+    bool mCollision; // 0xe0
 };
 
 /** "Contains data for handling potential character collisions" */
@@ -41,33 +42,37 @@ public:
     OBJ_MEM_OVERLOAD(0x2D)
     NEW_OBJ(SongCollision)
 
-    void Update(MoveDir *);
-    bool Equals(SongCollision *);
+    void Update(MoveDir *moves);
+    bool Equals(SongCollision *collision);
     bool IsCollision(
-        int,
-        int,
-        const Difficulty *const,
-        const Transform *const,
-        std::vector<SongCollisionOutput> *
+        int start_beat,
+        int end_beat,
+        const Difficulty *const difficulties,
+        const Transform *const xfms,
+        std::vector<SongCollisionOutput> *outputs
     ) const;
 
     static void Init();
-    static void GatherUsefulBones(std::vector<RndTransformable *> &, HamCharacter *);
+    static void
+    GatherUsefulBones(std::vector<RndTransformable *> &usefulBones, HamCharacter *dancer);
     static float CollisionTolerance() { return sCollisionTolerance; }
 
 private:
     static float sCollisionTolerance;
 
-    const BeatCollisionData *BeatData(int, Difficulty) const;
+    const BeatCollisionData *BeatData(int beat, Difficulty diff) const;
     void CheckCollision(
-        int, const Difficulty *const, const Transform *const, SongCollisionOutput &
+        int beat,
+        const Difficulty *const difficulties,
+        const Transform *const xfms,
+        SongCollisionOutput &output
     ) const;
 
 protected:
     SongCollision();
 
     // indexed by difficulty, then beat
-    // so mData[kDifficultyExpert][4] is
+    // so mDiffBeatCollisions[kDifficultyExpert][4] is
     // the BeatCollisionData for expert difficulty at beat 4
-    std::vector<BeatCollisionData> mData[kNumDifficulties]; // 0x2c
+    std::vector<BeatCollisionData> mDiffBeatCollisions[kNumDifficulties]; // 0x2c
 };

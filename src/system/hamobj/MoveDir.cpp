@@ -644,24 +644,24 @@ void MoveDir::DrawShowing() {
                     SongCollisionOutput &curOutput = songCollisionOutputs[i];
                     Hmx::Color color(0.8f, 0.8f, 0.8f);
                     Hmx::Color color20;
-                    if (curOutput.unke0) {
+                    if (curOutput.mCollision) {
                         color20.Set(1, 0, 0);
                     } else {
                         color20.Set(0, 1, 0);
                     }
                     for (int j = 0; j < 2; j++) {
-                        const Vector3 &v = curOutput.unk60[j].v;
+                        const Vector3 &v = curOutput.mPlayerXfms[j].v;
                         UtilDrawSphere(v, 1, color, nullptr);
                         UtilDrawString(MakeString("%i:%i", j, beat + i), v, color);
-                        TheRnd.DrawLine(v, curOutput.unk0[j], color, false);
-                        UtilDrawSphere(curOutput.unk0[j], 1, color, nullptr);
-                        TheRnd.DrawLine(v, curOutput.unk20[j], color, false);
-                        UtilDrawSphere(curOutput.unk20[j], 1, color, nullptr);
+                        TheRnd.DrawLine(v, curOutput.mMinOffsets[j], color, false);
+                        UtilDrawSphere(curOutput.mMinOffsets[j], 1, color, nullptr);
+                        TheRnd.DrawLine(v, curOutput.mMaxOffsets[j], color, false);
+                        UtilDrawSphere(curOutput.mMaxOffsets[j], 1, color, nullptr);
                     }
                     for (int j = 0; j < 2; j++) {
-                        const Vector3 &v = curOutput.unk60[j].v;
+                        const Vector3 &v = curOutput.mPlayerXfms[j].v;
                         Vector3 vsub;
-                        Add(v, curOutput.unk40[j], vsub);
+                        Add(v, curOutput.mCollideProjections[j], vsub);
                         TheRnd.DrawLine(v, vsub, color20, false);
                         UtilDrawSphere(vsub, 2, color20, nullptr);
                         UtilDrawString(MakeString("%i", j), vsub, color20);
