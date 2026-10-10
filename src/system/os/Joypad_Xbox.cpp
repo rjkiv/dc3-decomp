@@ -26,14 +26,14 @@ namespace {
     }
 }
 
-void GetXinputSinceLastFrame(int pad, XINPUT_STATE *state, unsigned int *ui3) {
+void GetXinputSinceLastFrame(int xinput_id, XINPUT_STATE *state, unsigned int *buttons) {
     CritSecTracker tracker(&tCritSection);
-    *state = tXInputStates[pad];
+    *state = tXInputStates[xinput_id];
     unsigned int x;
-    TranslateButtons(&x, tXInputStates[pad].Gamepad.wButtons);
-    *ui3 = x | unkc8[pad];
-    unkd8[pad] = unkc8[pad];
-    unkc8[pad] = 0;
+    TranslateButtons(&x, tXInputStates[xinput_id].Gamepad.wButtons);
+    *buttons = x | unkc8[xinput_id];
+    unkd8[xinput_id] = unkc8[xinput_id];
+    unkc8[xinput_id] = 0;
 }
 
 void XinputJoypadThreadDestruction() {
@@ -52,143 +52,143 @@ void JoypadTerminate() {
 
 void JoypadPoll() { JoypadPollCommon(); }
 
-JoypadType SetupHXKeytar(int, const XINPUT_CAPABILITIES &c) {
-    if ((c.Gamepad.sThumbLY & 0xFFF0U) == 0x1730) {
+JoypadType SetupHXKeytar(int iPadNum, const XINPUT_CAPABILITIES &xcaps) {
+    if ((xcaps.Gamepad.sThumbLY & 0xFFF0U) == 0x1730) {
         return kJoypadXboxMidiBoxKeyboard;
     } else
         return kJoypadXboxKeytar;
 }
 
-void ReceiveUpstreamLowPriorityOutputResponse(int pad, unsigned char *data) {
-    MILO_LOG("Low Priority Output Report for controller %d:\n", pad);
-    MILO_LOG("0x%02x 0x%02x 0x%02x\n", data[1], data[2], data[3]);
+void ReceiveUpstreamLowPriorityOutputResponse(int xinput_id, unsigned char *usefulRawStart) {
+    MILO_LOG("Low Priority Output Report for controller %d:\n", xinput_id);
+    MILO_LOG("0x%02x 0x%02x 0x%02x\n", usefulRawStart[1], usefulRawStart[2], usefulRawStart[3]);
 }
 
-void ReceiveUpstreamBreedDataResponse(int pad, unsigned char *data) {
-    if (JoypadGetPadData(pad)->mConnected) {
-        MILO_LOG("Breed Data Response for controller %d\n", pad);
+void ReceiveUpstreamBreedDataResponse(int xinput_id, unsigned char *usefulRawStart) {
+    if (JoypadGetPadData(xinput_id)->mConnected) {
+        MILO_LOG("Breed Data Response for controller %d\n", xinput_id);
         MILO_LOG(
             "Vendor:      0x%02x\nProject:     0x%02x\nPeriph Type: 0x%02x\nPlatform:    0x%02x\nFactory:     0x%02x\nDesign Iter: 0x%02x\nManu Date(1):0x%02x\nManu Date(2):0x%02x\nIdent. v(1): 0x%02x\nIdent. v(2): 0x%02x\n",
-            data[1],
-            data[2],
-            data[3],
-            data[4],
-            data[5],
-            data[6],
-            data[7],
-            data[8],
-            data[9],
-            data[10]
+            usefulRawStart[1],
+            usefulRawStart[2],
+            usefulRawStart[3],
+            usefulRawStart[4],
+            usefulRawStart[5],
+            usefulRawStart[6],
+            usefulRawStart[7],
+            usefulRawStart[8],
+            usefulRawStart[9],
+            usefulRawStart[10]
         );
     }
-    tBreed[pad].bVendor = data[1];
-    tBreed[pad].bProject = data[2];
-    tBreed[pad].bPeriphType = data[3];
-    tBreed[pad].bPlatform = data[4];
-    tBreed[pad].bFactory = data[5];
-    tBreed[pad].bDesignIter = data[6];
-    tBreed[pad].uManuDate = data[8] * 0x100 + data[7];
-    tBreed[pad].uUnique = data[10] * 0x100 + data[9];
-    tBreed[pad].bUninitialized = false;
-    JoypadHandleBreedDataResponse(pad);
+    tBreed[xinput_id].bVendor = usefulRawStart[1];
+    tBreed[xinput_id].bProject = usefulRawStart[2];
+    tBreed[xinput_id].bPeriphType = usefulRawStart[3];
+    tBreed[xinput_id].bPlatform = usefulRawStart[4];
+    tBreed[xinput_id].bFactory = usefulRawStart[5];
+    tBreed[xinput_id].bDesignIter = usefulRawStart[6];
+    tBreed[xinput_id].uManuDate = usefulRawStart[8] * 0x100 + usefulRawStart[7];
+    tBreed[xinput_id].uUnique = usefulRawStart[10] * 0x100 + usefulRawStart[9];
+    tBreed[xinput_id].bUninitialized = false;
+    JoypadHandleBreedDataResponse(xinput_id);
 }
 
-void ReceiveUpstreamCalbertResponse(int pad, unsigned char *data) {
-    MILO_LOG("Calbert Response for controller %d\n", pad);
-    MILO_LOG("Sensor Output Mode: 0x%02x\n", data[1]);
+void ReceiveUpstreamCalbertResponse(int xinput_id, unsigned char *usefulRawStart) {
+    MILO_LOG("Calbert Response for controller %d\n", xinput_id);
+    MILO_LOG("Sensor Output Mode: 0x%02x\n", usefulRawStart[1]);
 }
 
-void ReceiveUpstreamAccelerometerResponse(int pad, unsigned char *data) {
-    MILO_LOG("Accelerometer Mode Response for controller %d\n", pad);
+void ReceiveUpstreamAccelerometerResponse(int xinput_id, unsigned char *usefulRawStart) {
+    MILO_LOG("Accelerometer Mode Response for controller %d\n", xinput_id);
     MILO_LOG(
         "Accelerometer Output Mode: 0x%02x\nX axis resolution:         0x%02x\nY axis resolution:         0x%02x\nZ axis resolution:         0x%02x\n",
-        data[1],
-        data[2],
-        data[3],
-        data[4]
+        usefulRawStart[1],
+        usefulRawStart[2],
+        usefulRawStart[3],
+        usefulRawStart[4]
     );
 }
 
-void ReceiveUpstreamOutputModeResponse(int pad, unsigned char *data) {
-    MILO_LOG("Output Mode Switch Response for controller %d\n", pad);
-    MILO_LOG("Output Mode: 0x%02x\n", data[1]);
+void ReceiveUpstreamOutputModeResponse(int xinput_id, unsigned char *usefulRawStart) {
+    MILO_LOG("Output Mode Switch Response for controller %d\n", xinput_id);
+    MILO_LOG("Output Mode: 0x%02x\n", usefulRawStart[1]);
 }
 
-void ReceiveUpstreamDeviceStateResponse(int pad, unsigned char *data) {
-    MILO_LOG("Device State Response for controller %d\n", pad);
-    MILO_LOG("Battery Level: 0x%02x\nOutput Mode:   0x%02x\n", data[1], data[2]);
+void ReceiveUpstreamDeviceStateResponse(int xinput_id, unsigned char *usefulRawStart) {
+    MILO_LOG("Device State Response for controller %d\n", xinput_id);
+    MILO_LOG("Battery Level: 0x%02x\nOutput Mode:   0x%02x\n", usefulRawStart[1], usefulRawStart[2]);
 }
 
-void ReceiveUpstreamEEPROMReadResponse(int pad, unsigned char *data) {
-    MILO_LOG("EEPROM Read Response for controller %d\n", pad);
+void ReceiveUpstreamEEPROMReadResponse(int xinput_id, unsigned char *usefulRawStart) {
+    MILO_LOG("EEPROM Read Response for controller %d\n", xinput_id);
     MILO_LOG(
         "Offset (low):      0x%02x\nOffset (high):     0x%02x\nData Length:       0x%02x\n",
-        data[1],
-        data[2],
-        data[3]
+        usefulRawStart[1],
+        usefulRawStart[2],
+        usefulRawStart[3]
     );
     MILO_LOG(
         "Packet Payload Len:0x%02x\nEEPROM Data(1):    0x%02x\nEEPROM Data(2):    0x%02x\nEEPROM Data(3):    0x%02x\nEEPROM Data(4):    0x%02x\nEEPROM Data(5):    0x%02x\nEEPROM Data(6):    0x%02x\nEEPROM Data(7):    0x%02x\nEEPROM Data(8):    0x%02x\n",
-        data[5],
-        data[6],
-        data[7],
-        data[8],
-        data[9],
-        data[10],
-        data[11],
-        data[12],
-        data[13]
+        usefulRawStart[5],
+        usefulRawStart[6],
+        usefulRawStart[7],
+        usefulRawStart[8],
+        usefulRawStart[9],
+        usefulRawStart[10],
+        usefulRawStart[11],
+        usefulRawStart[12],
+        usefulRawStart[13]
     );
 }
 
-void ReceiveUpstreamEEPROMWriteResponse(int pad, unsigned char *data) {
-    MILO_LOG("EEPROM Write Response for controller %d\n", pad);
+void ReceiveUpstreamEEPROMWriteResponse(int xinput_id, unsigned char *usefulRawStart) {
+    MILO_LOG("EEPROM Write Response for controller %d\n", xinput_id);
     MILO_LOG(
         "Offset (low):       0x%02x\nOffset (high):      0x%02x\nData Length:        0x%02x\nStatus:             0x%02x\n",
-        data[1],
-        data[2],
-        data[3],
-        data[4]
+        usefulRawStart[1],
+        usefulRawStart[2],
+        usefulRawStart[3],
+        usefulRawStart[4]
     );
     MILO_LOG(
         "Packet Payload Len: 0x%02x\nEEPROM Data Echo(1):0x%02x\nEEPROM Data Echo(2):0x%02x\nEEPROM Data Echo(3):0x%02x\nEEPROM Data Echo(4):0x%02x\nEEPROM Data Echo(5):0x%02x\nEEPROM Data Echo(6):0x%02x\nEEPROM Data Echo(7):0x%02x\nEEPROM Data Echo(8):0x%02x\n",
-        data[5],
-        data[6],
-        data[7],
-        data[8],
-        data[9],
-        data[10],
-        data[11],
-        data[12],
-        data[13]
+        usefulRawStart[5],
+        usefulRawStart[6],
+        usefulRawStart[7],
+        usefulRawStart[8],
+        usefulRawStart[9],
+        usefulRawStart[10],
+        usefulRawStart[11],
+        usefulRawStart[12],
+        usefulRawStart[13]
     );
-    JoypadHandleEepromWriteResponse(pad, (JoypadBreedDataStatus)(data[4] != 0));
+    JoypadHandleEepromWriteResponse(xinput_id, (JoypadBreedDataStatus)(usefulRawStart[4] != 0));
 }
 
 void SendRawData(
-    int,
-    unsigned char,
-    unsigned char,
-    unsigned char,
-    unsigned char,
-    unsigned char,
-    unsigned char,
-    unsigned char
+    int xinput_id,
+    unsigned char command,
+    unsigned char data1,
+    unsigned char data2,
+    unsigned char data3,
+    unsigned char data4,
+    unsigned char data5,
+    unsigned char data6
 );
 
-BreedData *GetBreedData(int pad) {
-    if (tBreed[pad].bUninitialized) {
-        SendRawData(pad, 0x81, 0, 0, 0, 0, 0, 0);
+BreedData *GetBreedData(int iPadNum) {
+    if (tBreed[iPadNum].bUninitialized) {
+        SendRawData(iPadNum, 0x81, 0, 0, 0, 0, 0, 0);
         return nullptr;
     } else {
-        return &tBreed[pad];
+        return &tBreed[iPadNum];
     }
 }
 
-bool requestBreedWrite(int pad, unsigned char *pBreedWritePacket) {
+bool requestBreedWrite(int iPadNum, unsigned char *pBreedWritePacket) {
     MILO_ASSERT(pBreedWritePacket, 0x301);
     SendRawData(
-        pad,
+        iPadNum,
         0xF3,
         pBreedWritePacket[0],
         pBreedWritePacket[1],
@@ -200,8 +200,8 @@ bool requestBreedWrite(int pad, unsigned char *pBreedWritePacket) {
     return true;
 }
 
-JoypadType SetupHXRealGuitar(int pad, const XINPUT_CAPABILITIES &c) {
-    unsigned short us = c.Gamepad.sThumbLY & 0xfffffff0;
+JoypadType SetupHXRealGuitar(int iPadNum, const XINPUT_CAPABILITIES &xcaps) {
+    unsigned short us = xcaps.Gamepad.sThumbLY & 0xfffffff0;
     bool u1 = us == 0x1530;
     bool u2 = us == 0x1430;
     if (!u1 && !u2)
@@ -211,33 +211,33 @@ JoypadType SetupHXRealGuitar(int pad, const XINPUT_CAPABILITIES &c) {
     } else if (u2) {
         return kJoypadXboxButtonGuitar;
     } else {
-        MILO_LOG("sThymbLY = %d does not correspond to subtype x19\n", c.Gamepad.sThumbLY);
+        MILO_LOG("sThymbLY = %d does not correspond to subtype x19\n", xcaps.Gamepad.sThumbLY);
         return kJoypadAnalog;
     }
 }
 
-JoypadType SetupHXGuitar(int pad, const XINPUT_CAPABILITIES &c) {
-    bool u5 = c.Flags & 0x2;
-    bool u1 = c.Flags & 1;
-    bool u4 = u5 && (u1 || c.Gamepad.sThumbRX >= 0x100);
-    JoypadGetPadData(pad)->SetWireless(u5);
-    JoypadGetPadData(pad)->SetCanForceFeedback(u1);
-    if (c.Gamepad.sThumbLX == 0x1BAD) {
-        GetBreedData(pad);
+JoypadType SetupHXGuitar(int iPadNum, const XINPUT_CAPABILITIES &xcaps) {
+    bool u5 = xcaps.Flags & 0x2;
+    bool u1 = xcaps.Flags & 1;
+    bool u4 = u5 && (u1 || xcaps.Gamepad.sThumbRX >= 0x100);
+    JoypadGetPadData(iPadNum)->SetWireless(u5);
+    JoypadGetPadData(iPadNum)->SetCanForceFeedback(u1);
+    if (xcaps.Gamepad.sThumbLX == 0x1BAD) {
+        GetBreedData(iPadNum);
         return kJoypadXboxCoreGuitar;
     } else
         return u4 ? kJoypadXboxHxGuitarRb2 : kJoypadXboxHxGuitar;
 }
 
-JoypadType SetupHXDrums(int pad, const XINPUT_CAPABILITIES &c) {
-    bool u5 = c.Flags & 0x2;
-    bool u1 = c.Flags & 1;
-    bool u4 = u5 && (u1 || c.Gamepad.sThumbRX >= 0x100);
+JoypadType SetupHXDrums(int iPadNum, const XINPUT_CAPABILITIES &xcaps) {
+    bool u5 = xcaps.Flags & 0x2;
+    bool u1 = xcaps.Flags & 1;
+    bool u4 = u5 && (u1 || xcaps.Gamepad.sThumbRX >= 0x100);
     bool u2 = u5 && u1;
-    JoypadGetPadData(pad)->SetWireless(u5);
-    JoypadGetPadData(pad)->SetCanForceFeedback(u1);
-    if (c.Gamepad.sThumbLX == 0x1BAD) {
-        GetBreedData(pad);
+    JoypadGetPadData(iPadNum)->SetWireless(u5);
+    JoypadGetPadData(iPadNum)->SetCanForceFeedback(u1);
+    if (xcaps.Gamepad.sThumbLX == 0x1BAD) {
+        GetBreedData(iPadNum);
         return kJoypadXboxMidiBoxDrums;
     } else if (u4) {
         return kJoypadXboxDrumsRb2;
@@ -245,31 +245,31 @@ JoypadType SetupHXDrums(int pad, const XINPUT_CAPABILITIES &c) {
         return u2 ? kJoypadXboxRoDrums : kJoypadXboxDrums;
 }
 
-bool ReceiveUpstreamResponse(int pad, unsigned char *data) {
-    switch (data[0]) {
+bool ReceiveUpstreamResponse(int xinput_id, unsigned char *usefulRawStart) {
+    switch (usefulRawStart[0]) {
     case 0x80:
-        ReceiveUpstreamLowPriorityOutputResponse(pad, data);
+        ReceiveUpstreamLowPriorityOutputResponse(xinput_id, usefulRawStart);
         break;
     case 0x82:
-        ReceiveUpstreamBreedDataResponse(pad, data);
+        ReceiveUpstreamBreedDataResponse(xinput_id, usefulRawStart);
         break;
     case 0x84:
-        ReceiveUpstreamCalbertResponse(pad, data);
+        ReceiveUpstreamCalbertResponse(xinput_id, usefulRawStart);
         break;
     case 0x86:
-        ReceiveUpstreamAccelerometerResponse(pad, data);
+        ReceiveUpstreamAccelerometerResponse(xinput_id, usefulRawStart);
         break;
     case 0x8A:
-        ReceiveUpstreamOutputModeResponse(pad, data);
+        ReceiveUpstreamOutputModeResponse(xinput_id, usefulRawStart);
         break;
     case 0xC4:
-        ReceiveUpstreamDeviceStateResponse(pad, data);
+        ReceiveUpstreamDeviceStateResponse(xinput_id, usefulRawStart);
         break;
     case 0xF2:
-        ReceiveUpstreamEEPROMReadResponse(pad, data);
+        ReceiveUpstreamEEPROMReadResponse(xinput_id, usefulRawStart);
         break;
     case 0xF4:
-        ReceiveUpstreamEEPROMWriteResponse(pad, data);
+        ReceiveUpstreamEEPROMWriteResponse(xinput_id, usefulRawStart);
         break;
     default:
         return false;

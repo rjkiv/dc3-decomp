@@ -15,15 +15,15 @@ namespace {
     CriticalSection gCritSection;
 }
 
-void JoypadInitXboxPCDeadzone(DataArray *arr) {
-    arr->FindData("deadzone", gXboxDeadzone);
+void JoypadInitXboxPCDeadzone(DataArray *joypad_config) {
+    joypad_config->FindData("deadzone", gXboxDeadzone);
     gXboxDeadzone /= 256.0f;
 }
 
-void TranslateStick(char *keys, short s, bool param_a, bool param_b) {
-    float var1 = (s + 0.5f) * 0.000030518044f; // this should be / 32768
+void TranslateStick(char *out, short in, bool flip, bool deadzone) {
+    float var1 = (in + 0.5f) * 0.000030518044f; // this should be / 32768
 
-    if (param_b) {
+    if (deadzone) {
         if (var1 > gXboxDeadzone) {
             var1 = (var1 - gXboxDeadzone) / (1 - gXboxDeadzone);
         } else if (var1 < -gXboxDeadzone) {
@@ -33,44 +33,44 @@ void TranslateStick(char *keys, short s, bool param_a, bool param_b) {
         }
     }
     char c = (var1 * 127);
-    *keys = c;
+    *out = c;
 
-    if (param_a) {
-        *keys = -c;
+    if (flip) {
+        *out = -c;
     }
 }
 
-void TranslateButtons(unsigned int *buttons, unsigned short s) {
+void TranslateButtons(unsigned int *out, unsigned short digButs) {
     static int var2[16] = { 0xC, 0xE, 0xF, 0xD, 0xB, 8, 9, 0xA, 2, 3, 0, 0, 6, 5, 7, 4 };
-    *buttons = 0;
+    *out = 0;
 
     for (int i = 0; i < 16; i++) {
-        if (s & 1 << i) {
-            *buttons = 1 << var2[i] | *buttons;
+        if (digButs & 1 << i) {
+            *out = 1 << var2[i] | *out;
         }
     }
 }
 
-bool JoypadGetCachedXInputCaps(int pad, XINPUT_CAPABILITIES *caps, bool b3) {
-    if (gCapsValid[pad] && !b3) {
-        *caps = gCaps[pad];
+bool JoypadGetCachedXInputCaps(int xinput_id, XINPUT_CAPABILITIES *pxcaps, bool forceFreshGet) {
+    if (gCapsValid[xinput_id] && !forceFreshGet) {
+        *pxcaps = gCaps[xinput_id];
     } else {
         CritSecTracker tracker(&gCritSection);
-        if (XInputGetCapabilities(pad, 0, caps) == ERROR_SUCCESS) {
-            gCaps[pad] = *caps;
-            gCapsValid[pad] = true;
+        if (XInputGetCapabilities(xinput_id, 0, pxcaps) == ERROR_SUCCESS) {
+            gCaps[xinput_id] = *pxcaps;
+            gCapsValid[xinput_id] = true;
         } else
             return false;
     }
     return true;
 }
 
-void JoypadResetXboxPC(int pad) {
+void JoypadResetXboxPC(int numJoypads) {
     ResetAllUsersPads();
     if (TheUserMgr && TheUserMgr->GetBool()) {
         std::vector<LocalUser *> users;
         TheUserMgr->GetLocalUsers(users);
-        for (int i = 0; i < pad; i++) {
+        for (int i = 0; i < numJoypads; i++) {
             if (i >= users.size())
                 break;
             AssociateUserAndPad(users[i], i);
@@ -79,8 +79,8 @@ void JoypadResetXboxPC(int pad) {
 }
 
 JoypadType ReadSingleXinputJoypad(
-    int i1,
-    int i2,
+    int iPadNum,
+    int xinput_id,
     unsigned int *iButtons,
     char *iLeftStickX,
     char *iLeftStickY,
@@ -94,18 +94,18 @@ JoypadType ReadSingleXinputJoypad(
 ) {
     JoypadType ret = kJoypadAnalog;
     XINPUT_STATE state;
-    GetXinputSinceLastFrame(i2, &state, iButtons);
+    GetXinputSinceLastFrame(xinput_id, &state, iButtons);
     if (state.dwPacketNumber == -1) {
         return kJoypadNone;
     }
 
     bool i7 = 0;
     XINPUT_CAPABILITIES caps;
-    if (JoypadGetCachedXInputCaps(i2, &caps, false)) {
+    if (JoypadGetCachedXInputCaps(xinput_id, &caps, false)) {
         switch (caps.SubType) {
         case XINPUT_DEVSUBTYPE_GUITAR:
         case XINPUT_DEVSUBTYPE_GUITAR_BASS:
-            ret = SetupHXGuitar(i1, caps);
+            ret = SetupHXGuitar(iPadNum, caps);
             if (ret == kJoypadNone) {
                 return kJoypadNone;
             }
@@ -118,16 +118,16 @@ JoypadType ReadSingleXinputJoypad(
             i7 = 1;
             break;
         case XINPUT_DEVSUBTYPE_DRUM_KIT:
-            ret = SetupHXDrums(i1, caps);
+            ret = SetupHXDrums(iPadNum, caps);
             break;
         case 9:
             ret = kJoypadXboxStageKit;
             break;
         case 15:
-            ret = SetupHXKeytar(i1, caps);
+            ret = SetupHXKeytar(iPadNum, caps);
             break;
         case 25:
-            ret = SetupHXRealGuitar(i1, caps);
+            ret = SetupHXRealGuitar(iPadNum, caps);
             break;
         default:
             break;
@@ -162,7 +162,7 @@ JoypadType ReadSingleXinputJoypad(
     TranslateStick(iRightStickY, state.Gamepad.sThumbRY, true, i7 == 0 && ret != 8);
 
     if (ret == kJoypadXboxMidiBoxKeyboard || ret == kJoypadXboxKeytar) {
-        bool sustain = TheKeyboard ? TheKeyboard->GetSustain(i1) : false;
+        bool sustain = TheKeyboard ? TheKeyboard->GetSustain(iPadNum) : false;
         if (sustain) {
             *iButtons |= 4;
         } else {

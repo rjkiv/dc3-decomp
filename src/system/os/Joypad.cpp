@@ -89,18 +89,18 @@ float JoypadData::GetAxis(Symbol axis) const {
     return 0.0f;
 }
 
-int JoypadData::FloatToBucket(float f) const {
-    if (f < 0.11f)
+int JoypadData::FloatToBucket(float val) const {
+    if (val < 0.11f)
         return 0;
-    if (f < 0.31f)
+    if (val < 0.31f)
         return 6;
-    if (f < 0.46f)
+    if (val < 0.46f)
         return 5;
-    if (f < 0.61f)
+    if (val < 0.61f)
         return 4;
-    if (f < 0.77f)
+    if (val < 0.77f)
         return 3;
-    if (f < 0.89f)
+    if (val < 0.89f)
         return 2;
     return 1;
 }
@@ -118,15 +118,15 @@ void JoypadTerminateCommon() {
     RELEASE(gKeyboardExporter);
 }
 
-void JoypadSubscribe(Hmx::Object *obj) {
+void JoypadSubscribe(Hmx::Object *iSink) {
     if (gJoypadMsgSource) {
-        gJoypadMsgSource->AddSink(obj, Symbol());
+        gJoypadMsgSource->AddSink(iSink, Symbol());
     }
 }
 
-void JoypadUnsubscribe(Hmx::Object *obj) {
+void JoypadUnsubscribe(Hmx::Object *iSink) {
     if (gJoypadMsgSource) {
-        gJoypadMsgSource->RemoveSink(obj, Symbol());
+        gJoypadMsgSource->RemoveSink(iSink, Symbol());
     }
 }
 
@@ -145,7 +145,7 @@ bool JoypadIsConnectedPadNum(int padNum) {
 }
 
 namespace {
-    bool IsJoypadDetectMatch(DataArray *detect_cfg, const JoypadData &data) {
+    bool IsJoypadDetectMatch(DataArray *array, const JoypadData &data) {
         static Symbol type("type");
         static Symbol button("button");
         static Symbol stick("stick");
@@ -154,14 +154,14 @@ namespace {
         static Symbol Y("Y");
         static Symbol OR("or");
         static Symbol AND("and");
-        Symbol sym = detect_cfg->Sym(0);
+        Symbol sym = array->Sym(0);
         if (sym == type) {
-            return data.mType == (JoypadType)detect_cfg->Int(1);
+            return data.mType == (JoypadType)array->Int(1);
         } else if (sym == button) {
-            return data.Pressed((JoypadButton)detect_cfg->Int(1));
+            return data.Pressed((JoypadButton)array->Int(1));
         } else if (sym == stick) {
             int i4 = 0;
-            Symbol axis_sym = detect_cfg->Sym(2);
+            Symbol axis_sym = array->Sym(2);
             if (axis_sym == X) {
                 i4 = 0;
             } else if (axis_sym == Y) {
@@ -169,19 +169,19 @@ namespace {
             } else {
                 MILO_FAIL("bad axis %s in controller detect array\n", axis_sym);
             }
-            return data.mSticks[detect_cfg->Int(1)][i4] == detect_cfg->Float(3);
+            return data.mSticks[array->Int(1)][i4] == array->Float(3);
         } else if (sym == trigger) {
-            return data.mTriggers[detect_cfg->Int(1)] == detect_cfg->Float(2);
+            return data.mTriggers[array->Int(1)] == array->Float(2);
         } else if (sym == OR) {
-            for (int i = 1; i < detect_cfg->Size(); i++) {
-                if (IsJoypadDetectMatch(detect_cfg->Array(i), data)) {
+            for (int i = 1; i < array->Size(); i++) {
+                if (IsJoypadDetectMatch(array->Array(i), data)) {
                     return true;
                 }
             }
             return false;
         } else if (sym == AND) {
-            for (int i = 1; i < detect_cfg->Size(); i++) {
-                if (!IsJoypadDetectMatch(detect_cfg->Array(i), data)) {
+            for (int i = 1; i < array->Size(); i++) {
+                if (!IsJoypadDetectMatch(array->Array(i), data)) {
                     return false;
                 }
             }
@@ -198,36 +198,36 @@ namespace {
         }
     }
 
-    DataNode OnJoypadSetVibrate(DataArray *arr) {
-        JoypadSetVibrate(arr->Int(1), arr->Int(2) != 0);
+    DataNode OnJoypadSetVibrate(DataArray *args) {
+        JoypadSetVibrate(args->Int(1), args->Int(2) != 0);
         return 1;
     }
 
-    DataNode OnJoypadVibrate(DataArray *arr) { return JoypadVibrate(arr->Int(1)); }
+    DataNode OnJoypadVibrate(DataArray *args) { return JoypadVibrate(args->Int(1)); }
 
-    DataNode OnJoypadControllerTypePadNum(DataArray *arr) {
-        return JoypadControllerTypePadNum(arr->Int(1));
+    DataNode OnJoypadControllerTypePadNum(DataArray *args) {
+        return JoypadControllerTypePadNum(args->Int(1));
     }
 
-    DataNode OnJoypadIsConnectedPadNum(DataArray *arr) {
-        return JoypadIsConnectedPadNum(arr->Int(1));
+    DataNode OnJoypadIsConnectedPadNum(DataArray *args) {
+        return JoypadIsConnectedPadNum(args->Int(1));
     }
 
-    DataNode OnJoypadIsButtonDownPadNum(DataArray *arr) {
-        int pad = arr->Int(1);
+    DataNode OnJoypadIsButtonDownPadNum(DataArray *args) {
+        int pad = args->Int(1);
         MILO_ASSERT_RANGE(pad, 0, kNumJoypads, 0x7F);
-        return gJoypadData[pad].Pressed((JoypadButton)arr->Int(2));
+        return gJoypadData[pad].Pressed((JoypadButton)args->Int(2));
     }
 
-    DataNode OnJoypadStageKitRaw(DataArray *arr) {
-        arr->Int(2);
-        arr->Int(1);
+    DataNode OnJoypadStageKitRaw(DataArray *args) {
+        args->Int(2);
+        args->Int(1);
         // probably a stub
         return 1;
     }
 
-    DataNode OnJoypadIsCalbertGuitar(DataArray *arr) {
-        return JoypadIsCalbertGuitar(arr->Int(1)) != 0;
+    DataNode OnJoypadIsCalbertGuitar(DataArray *args) {
+        return JoypadIsCalbertGuitar(args->Int(1)) != 0;
     }
 
     DataNode DataJoypadReset(DataArray *) {
@@ -267,19 +267,19 @@ void JoypadInitCommon(DataArray *joypad_config) {
     gJoypadLibInitialized = true;
 }
 
-void TranslateSticksToButs(JoypadData &data, unsigned int &mask) {
-    float dist = data.mDistFromRest;
+void TranslateSticksToButs(JoypadData &iPadData, unsigned int &iButMask) {
+    float dist = iPadData.mDistFromRest;
     for (int i = 0; i < kNumAnalogSticks; i++) {
         int shift = i * 4;
-        if (data.mSticks[i][0] > dist) {
-            mask |= 1 << (kPad_LStickRight + shift);
-        } else if (data.mSticks[i][0] < -dist) {
-            mask |= 1 << (kPad_LStickLeft + shift);
+        if (iPadData.mSticks[i][0] > dist) {
+            iButMask |= 1 << (kPad_LStickRight + shift);
+        } else if (iPadData.mSticks[i][0] < -dist) {
+            iButMask |= 1 << (kPad_LStickLeft + shift);
         }
-        if (data.mSticks[i][1] > dist) {
-            mask |= 1 << (kPad_LStickDown + shift);
-        } else if (data.mSticks[i][1] < -dist) {
-            mask |= 1 << (kPad_LStickUp + shift);
+        if (iPadData.mSticks[i][1] > dist) {
+            iButMask |= 1 << (kPad_LStickDown + shift);
+        } else if (iPadData.mSticks[i][1] < -dist) {
+            iButMask |= 1 << (kPad_LStickUp + shift);
         }
     }
 }
@@ -294,8 +294,8 @@ int GetUsersPadNum(const LocalUser *user) {
 
 int JoypadGetUsersPadNum(const LocalUser *user) { return GetUsersPadNum(user); }
 
-bool JoypadIsCalbertGuitar(int padNum) {
-    JoypadType ty = gJoypadData[padNum].mType;
+bool JoypadIsCalbertGuitar(int pad) {
+    JoypadType ty = gJoypadData[pad].mType;
     if (ty == kJoypadXboxHxGuitarRb2 || ty == kJoypadPs3HxGuitarRb2
         || ty == kJoypadWiiHxGuitarRb2 || ty == kJoypadXboxButtonGuitar
         || ty == kJoypadPs3ButtonGuitar || ty == kJoypadWiiButtonGuitar)
@@ -315,14 +315,14 @@ int JoypadData::GetPressureBucket(JoypadButton b) const {
     return 0;
 }
 
-int ButtonToVelocityBucket(JoypadData *data, JoypadButton btn) {
+int ButtonToVelocityBucket(JoypadData *data, JoypadButton b) {
     static Symbol LX("LX");
     static Symbol LY("LY");
     static Symbol RX("RX");
     static Symbol RY("RY");
     switch (data->mType) {
     case kJoypadXboxDrumsRb2:
-        switch (btn) {
+        switch (b) {
         case kPad_Xbox_B:
             return data->GetVelocityBucket(LX);
         case kPad_Xbox_Y:
@@ -336,7 +336,7 @@ int ButtonToVelocityBucket(JoypadData *data, JoypadButton btn) {
         }
         break;
     case kJoypadXboxDrums:
-        switch (btn) {
+        switch (b) {
         case kPad_Xbox_B:
             return data->GetVelocityBucket(LY);
         case kPad_Xbox_Y:
@@ -352,12 +352,12 @@ int ButtonToVelocityBucket(JoypadData *data, JoypadButton btn) {
     case kJoypadPs3HxDrums:
     case kJoypadPs3HxDrumsRb2:
     case kJoypadWiiHxDrumsRb2:
-        switch (btn) {
+        switch (b) {
         case kPad_Xbox_B:
         case kPad_Xbox_Y:
         case kPad_Xbox_X:
         case kPad_Xbox_A:
-            return data->GetPressureBucket(btn);
+            return data->GetPressureBucket(b);
         default:
             return 0;
         }
@@ -366,9 +366,9 @@ int ButtonToVelocityBucket(JoypadData *data, JoypadButton btn) {
     }
 }
 
-void JoypadSetVibrate(int pad, bool vibrate) {
-    JoypadSetActuatorsImp(pad, 0, 0);
-    JoypadGetPadData(pad)->mForceFeedback = vibrate;
+void JoypadSetVibrate(int padNum, bool enable) {
+    JoypadSetActuatorsImp(padNum, 0, 0);
+    JoypadGetPadData(padNum)->mForceFeedback = enable;
 }
 
 void AssociateUserAndPad(LocalUser *iUser, int iPadNum) {
@@ -465,15 +465,15 @@ bool JoypadIsShiftButton(int padNum, JoypadButton btn) {
         return false;
 }
 
-JoypadAction ButtonToAction(JoypadButton btn, Symbol sym) {
+JoypadAction ButtonToAction(JoypadButton button, Symbol controller_type) {
     static Symbol none("none");
     JoypadAction ret = kAction_None;
-    if (sym == none)
+    if (controller_type == none)
         return ret;
     else {
-        DataArray *arr = gButtonMeanings->FindArray(sym, false);
+        DataArray *arr = gButtonMeanings->FindArray(controller_type, false);
         if (arr) {
-            arr = arr->FindArray(btn, false);
+            arr = arr->FindArray(button, false);
             if (arr)
                 ret = (JoypadAction)arr->Int(1);
         }
@@ -483,24 +483,24 @@ JoypadAction ButtonToAction(JoypadButton btn, Symbol sym) {
 
 void JoypadPushThroughMsg(const Message &msg) { Export(msg); }
 
-void JoypadHandleBreedDataResponse(int pad) {
-    if (gJoypadData[pad].mpCallbackBreedData) {
-        *gJoypadData[pad].mpCallbackBreedData = gJoypadData[pad].mBreedData;
+void JoypadHandleBreedDataResponse(int padNum) {
+    if (gJoypadData[padNum].mpCallbackBreedData) {
+        *gJoypadData[padNum].mpCallbackBreedData = gJoypadData[padNum].mBreedData;
     }
-    JoypadBreedDataReadMsg msg(gJoypadData[pad].mUser, kBreedSuccess);
-    if (gJoypadData[pad].mBreedCallbackHandler) {
-        gJoypadData[pad].mBreedCallbackHandler->Handle(msg, true);
-        gJoypadData[pad].mBreedCallbackHandler = nullptr;
+    JoypadBreedDataReadMsg msg(gJoypadData[padNum].mUser, kBreedSuccess);
+    if (gJoypadData[padNum].mBreedCallbackHandler) {
+        gJoypadData[padNum].mBreedCallbackHandler->Handle(msg, true);
+        gJoypadData[padNum].mBreedCallbackHandler = nullptr;
     }
 }
 
-void JoypadHandleEepromWriteResponse(int pad, JoypadBreedDataStatus status) {
-    gJoypadData[pad].mEpwAcknowledged = true;
-    if (!gJoypadData[pad].mEpwDataLeft) {
-        JoypadBreedDataWriteMsg msg(gJoypadData[pad].mUser, status);
-        if (gJoypadData[pad].mBreedCallbackHandler) {
-            gJoypadData[pad].mBreedCallbackHandler->Handle(msg, true);
-            gJoypadData[pad].mBreedCallbackHandler = nullptr;
+void JoypadHandleEepromWriteResponse(int padNum, JoypadBreedDataStatus breedStatus) {
+    gJoypadData[padNum].mEpwAcknowledged = true;
+    if (!gJoypadData[padNum].mEpwDataLeft) {
+        JoypadBreedDataWriteMsg msg(gJoypadData[padNum].mUser, breedStatus);
+        if (gJoypadData[padNum].mBreedCallbackHandler) {
+            gJoypadData[padNum].mBreedCallbackHandler->Handle(msg, true);
+            gJoypadData[padNum].mBreedCallbackHandler = nullptr;
         }
     }
 }
