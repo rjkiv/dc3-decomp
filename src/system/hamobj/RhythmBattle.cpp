@@ -79,8 +79,8 @@ RhythmBattle::RhythmBattle()
       mSwagJack1BarP2ToP1Anim(this), mSwagJack1BarP1ToP2Anim(this),
       mSwagJack2BarP2ToP1Anim(this), mSwagJack2BarP1ToP2Anim(this), mGoofy(false),
       mFullKTB(true), mFinale(false), mActive(false), unk101(false), unk102(false),
-      unk10c(0), unk110(0), unk114(0), unk118(0), unk11c(0), unk120(0), unk124(-1),
-      unk128(0), unk130(0), unk148(0), unk14c(0) {}
+      unk10c(0), unk110(0), mHalftimeBeat(0), mAlmostOverBeat(0), unk11c(0), unk120(0),
+      unk124(-1), unk128(0), unk130(0), unk148(0), unk14c(0) {}
 
 RhythmBattle::~RhythmBattle() { End(); }
 
@@ -564,11 +564,12 @@ void RhythmBattle::Begin() {
             PropKeys *keys = TheHamDirector->GetPropKeys(kDifficultyExpert, "move");
             if (keys) {
                 Keys<Symbol, Symbol> *symKeys = keys->AsSymbolKeys();
+                int i = 0;
                 Symbol Rest("Rest.move");
                 Symbol rest("rest.move");
                 float f26 = 0;
                 Symbol startSym = Rest;
-                for (int i = 0; i < symKeys->size(); i++) {
+                for (; i < symKeys->size(); i++) {
                     if (startSym == Rest || startSym == rest) {
                         startSym = (*symKeys)[i].value;
                         f26 = (*symKeys)[i].frame;
@@ -579,7 +580,7 @@ void RhythmBattle::Begin() {
                 mStartBeat = FrameToBeat(f26);
                 MILO_ASSERT(mStartBeat > 0, 0xE3);
                 Symbol endSym = Rest;
-                for (int i = symKeys->size() - 1; i >= 0; i--) {
+                for (i = symKeys->size() - 1; i >= 0; i--) {
                     if (endSym == Rest || endSym == rest) {
                         endSym = (*symKeys)[i].value;
                         f26 = (*symKeys)[i].frame;
@@ -589,24 +590,25 @@ void RhythmBattle::Begin() {
                 }
                 mEndBeat = FrameToBeat(f26);
                 MILO_ASSERT(mEndBeat > 0, 0xEF);
-                float f27 = 0;
+                float jumpStart = 0;
+                float jumpEnd = 0;
                 DataArray *arr = SystemConfig()->FindArray("party_jumps", false);
                 if (arr) {
                     arr = arr->FindArray(TheGameData->GetSong(), false);
                     if (arr && gShortenSong) {
-                        f26 = arr->Int(1) * 4.0f;
-                        f27 = (arr->Int(2) - 1) * 4.0f;
+                        jumpStart = arr->Int(1) * 4.0f;
+                        jumpEnd = (arr->Int(2) - 1) * 4.0f;
                     }
                 }
-                float diff = f27 - f26;
+                float diff = jumpEnd - jumpStart;
                 float f28 = mEndBeat - mStartBeat - diff;
-                unk114 = (f28 / 2.0f) + mStartBeat;
-                unk118 = (f28 * 0.8f) + mStartBeat;
-                if (unk114 > f26) {
-                    unk114 += diff;
+                mHalftimeBeat = (f28 / 2.0f) + mStartBeat;
+                mAlmostOverBeat = (f28 * 0.8f) + mStartBeat;
+                if (mHalftimeBeat > jumpStart) {
+                    mHalftimeBeat += diff;
                 }
-                if (unk118 > f26) {
-                    unk118 += diff;
+                if (mAlmostOverBeat > jumpStart) {
+                    mAlmostOverBeat += diff;
                 }
             }
             mPlayerOne->SetInTheZone(-1, false, false);
@@ -616,8 +618,8 @@ void RhythmBattle::Begin() {
             unkfc = true;
             mStartBeat = -1;
             mEndBeat = -1;
-            unk114 = -1;
-            unk118 = -1;
+            mHalftimeBeat = -1;
+            mAlmostOverBeat = -1;
             mPlayerOne->SetActive(true);
             mPlayerTwo->SetActive(true);
         }
@@ -733,7 +735,7 @@ void RhythmBattle::OnBeat() {
         unkfd = true;
     }
     if (remainingValue > 2000) {
-        if (!unkfe && unk114 < curBeat) {
+        if (!unkfe && mHalftimeBeat < curBeat) {
             static Symbol halftime("halftime");
             play_vo[0] = halftime;
             play_vo[1] = leader;
@@ -743,7 +745,7 @@ void RhythmBattle::OnBeat() {
             }
             unkfe = true;
         }
-        if (remainingValue > 2000 && !unkff && unk118 < curBeat) {
+        if (remainingValue > 2000 && !unkff && mAlmostOverBeat < curBeat) {
             static Symbol almost_over("almost_over");
             play_vo[0] = almost_over;
             play_vo[1] = leader;

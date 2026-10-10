@@ -20,6 +20,8 @@
 #include "xdk/xapilibi/processthreadsapi.h"
 #include "xdk/xapilibi/xbox.h"
 
+const char *kSplashMovie = "s_splash.tmov";
+const char *kSplashCam = "s_splash.cam";
 bool gSplashing = false;
 Splash *TheSplasher;
 

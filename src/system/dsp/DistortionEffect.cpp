@@ -6,30 +6,14 @@ DistortionEffect::DistortionEffect(IXAudioBatchAllocator *) : mDrive(0) {}
 
 void DistortionEffect::Process(float *samples, int sampct, int numChans) {
     MILO_ASSERT(numChans <= 2, 27);
-    float first_peak = 1.0f - mDrive; // mDrive some clipping cutoff?
-    float min = 0.01f;
-    float &p = first_peak < min ? min : first_peak;
-    float clipconst = mDrive / p * 2.0f;
-    if (sampct <= 0)
-        return;
-    float cc2 = clipconst + 1.0f;
+    float k = mDrive / std::max(1.0f - mDrive, 0.01f) * 2.0f;
     for (int i = 0; i < sampct; i++) {
-        float *samples_l = samples + (i * numChans);
-        float *samples_r = (samples + 1) + i * 2;
-        // lap 1: left/mono channel
-        float asamp = fabsf(*samples_l);
-        float s2 = *samples_l * cc2;
-        asamp = asamp * clipconst + 1.0f;
-        *samples_l = s2 / asamp;
+        float &l = samples[i * numChans];
+        l = l * (k + 1.0f) / (fabsf(l) * k + 1.0f);
         if (numChans == 2) {
-            // lap 2: right channel
-            float asamp = fabsf(*samples_r);
-            float s2 = *samples_r * cc2;
-            asamp = asamp * clipconst + 1.0f;
-            *samples_r = s2 / asamp;
+            float &r = samples[i * numChans + 1];
+            r = r * (k + 1.0f) / (fabsf(r) * k + 1.0f);
         }
-        samples_l = samples + (i * numChans);
-        samples_r = (samples + 1) + i * 2;
     }
 }
 

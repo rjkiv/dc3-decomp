@@ -753,9 +753,8 @@ void RndMesh::LoadVertices(BinStreamRev &d) {
     }
     unsigned int loadedCompressedSize = 0;
     unsigned int loadedVersion = 0;
-    unsigned int i8c = 0;
-    unsigned int i88 = 0;
-    unsigned int i9 = 0;
+    unsigned int vertSize = 0;
+    unsigned int version = 0;
     bool b3 = false;
     if (c8) {
         d >> loadedCompressedSize;
@@ -764,19 +763,18 @@ void RndMesh::LoadVertices(BinStreamRev &d) {
         if (TheLoadMgr.GetPlatform() != kPlatformXBox) {
             MILO_FAIL("Unsupported platform for vertex compression");
         } else {
-            i9 = 36;
-            i8c = 36;
-            i88 = 1;
+            vertSize = 36;
+            version = 1;
         }
-        b3 = i9 == loadedCompressedSize && i88 == loadedVersion;
+        b3 = vertSize == loadedCompressedSize && version == loadedVersion;
         if (!b3) {
             MILO_NOTIFY(
                 "Loaded stale compressed vertex data, resave mesh file \"%s\"(loaded size = %d, current = %d; loaded ver = %d, current = %d",
                 d.stream.Name(),
                 loadedCompressedSize,
-                i8c,
+                vertSize,
                 loadedVersion,
-                i88
+                version
             );
         }
     }
@@ -784,8 +782,8 @@ void RndMesh::LoadVertices(BinStreamRev &d) {
         if (b3) {
             mNumCompressedVerts = numVerts;
             if (mNumCompressedVerts != 0) {
-                unsigned int compressedSize = mNumCompressedVerts * i9;
-                unsigned int i99 = i9 << 9;
+                unsigned int compressedSize = mNumCompressedVerts * vertSize;
+                unsigned int i99 = vertSize << 9;
                 MILO_ASSERT(compressedSize > 0, 0x2D4);
                 {
                     MemDoTempAllocations tmp;

@@ -121,7 +121,7 @@ inline TextStream &operator<<(TextStream &ts, const FixedString &str) {
 template <int N>
 class StackString : public FixedString, public TextStream {
 private:
-    char mStack[N];
+    char mStack[N + 5];
 
 public:
     StackString() : FixedString(mStack, N + 5) {}

@@ -146,14 +146,10 @@ protected:
     float mCrewPhotoBlurWidth; // 0x184
     float mCrewPhotoBlurIterations; // 0x188
     float mCrewPhotoBackgroundBrightness; // 0x18c
-    float unk190; // 0x190
-    float unk194; // 0x194
-    float unk198; // 0x198
-    float unk19c; // 0x19c
-    float unk1a0; // 0x1a0
-    float unk1a4; // 0x1a4
-    float mPinkPlayer; // 0x1a8
-    float mBluePlayer; // 0x1ac
+    // crew photo shader constants
+    Vector4 mCrewPhotoPlayersDetected; // 0x190 - players 1-4 detected
+    Vector4 mCrewPhotoPlayerParams; // 0x1a0 - players 5-6 detected, pink player, blue
+                                    // player
     char filler2[0x60];
     Vector3DESmoother mSmoothers[6]; // 0x210
 };

@@ -740,7 +740,7 @@ void RndFont::BleedTest() {
                         "Left bleeding in 0x%04x, alpha %d, pixel %d,%d\n",
                         curChar,
                         alpha,
-                        i7,
+                        i5,
                         pixel
                     );
                 }
@@ -756,7 +756,7 @@ void RndFont::BleedTest() {
                         "Right bleeding in 0x%04x, alpha %d, pixel %d,%d\n",
                         curChar,
                         alpha,
-                        i7,
+                        i5,
                         pixel
                     );
                 }

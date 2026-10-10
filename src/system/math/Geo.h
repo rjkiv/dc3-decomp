@@ -143,7 +143,10 @@ void Multiply(const Plane &, const Transform &, Plane &);
 
 inline void Multiply(const Sphere &s, const Transform &t, Sphere &out) {
     Multiply(s.center, t, out.center);
-    float len = Max(LengthSquared(t.m.z), LengthSquared(t.m.y), LengthSquared(t.m.x));
+    float lx = LengthSquared(t.m.x);
+    float ly = LengthSquared(t.m.y);
+    float lz = LengthSquared(t.m.z);
+    float len = Max(Max(lx, ly), lz);
     len = std::sqrt(len);
     if (NearlyOne(len)) {
         len = 1;

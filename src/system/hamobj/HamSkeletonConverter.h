@@ -77,9 +77,9 @@ protected:
     int unk28; // 0x28
     ObjPtr<HamCharacter> unk2c; // 0x2c
     Transform unk40; // 0x40
-    Vector3 unk80[kNumJoints]; // 0x80
-    Transform unk1c0[kNumJoints]; // 0x1c0
-    std::vector<RndTransformable *> unk6c0; // 0x6c0
+    Vector3 mJointPos[kNumJoints]; // 0x80
+    Transform mBoneXfms[kNumJoints]; // 0x1c0
+    std::vector<RndTransformable *> mBoneTrans; // 0x6c0
     RndTransformable *unk6cc; // 0x6cc
     Transform unk6d0; // 0x6d0
     Vector3 unk710[2]; // 0x710

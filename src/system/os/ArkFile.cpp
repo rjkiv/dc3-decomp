@@ -71,6 +71,7 @@ int ArkFile::Write(const void *iBuff, int iBytes) {
 }
 
 bool ArkFile::ReadAsync(void *iData, int iBytes) {
+    int ib8, ib4, ib0;
     MILO_ASSERT(iBytes >= 0, 0x5D);
     if (mTell == mSize || mNumOutstandingTasks != 0)
         return false;
@@ -98,9 +99,9 @@ bool ArkFile::ReadAsync(void *iData, int iBytes) {
             iBytes = mSize - mTell;
         }
         MILO_ASSERT(iBytes >= 0, 0x8B);
-        int ib8 = 0;
-        int ib4 = 0;
-        int ib0 = 0;
+        ib8 = 0;
+        ib4 = 0;
+        ib0 = 0;
         u64 curPos = mTell + mByteStart;
         TheBlockMgr.GetAssociatedBlocks(curPos, iBytes, ib8, ib4, ib0);
         bool first = true;

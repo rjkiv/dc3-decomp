@@ -289,12 +289,12 @@ bool BaseDisplacementNode::Displacements(
     ham1Data.mActualMag = 0;
     ham1Data.mDesiredMag = 0;
     if (Displacements(frame_input, dispData)) {
-        float jointDispLen = Length(dispData.mDesired);
+        const Vector3 &jointDisp = dispData.mDesired;
+        float jointDispLen = Length(jointDisp);
         ham1Data.mDesiredMag = jointDispLen;
-
         Vector3 invJointDisp;
         if (jointDispLen > 0) {
-            Scale(dispData.mDesired, 1 / jointDispLen, invJointDisp);
+            Scale(jointDisp, 1 / jointDispLen, invJointDisp);
         } else {
             invJointDisp.Set(0, 0, 0);
         }
@@ -403,12 +403,10 @@ void PositionNode::CalcError(
     const ErrorFrameInput &frame_input, const ErrorNodeInput &node_input, Vector3 &vout
 ) const {
     MILO_ASSERT(node_input.mNodeWeight == NULL, 0x21C);
+    const Vector3 &jointPos = frame_input.mDesiredCamJointPos[mSkeletonJoint];
+    const Vector3 &baseJointPos = frame_input.mDesiredCamJointPos[mBaseJoint];
     Vector3 jointDiff;
-    Subtract(
-        frame_input.mDesiredCamJointPos[mSkeletonJoint],
-        frame_input.mDesiredCamJointPos[mBaseJoint],
-        jointDiff
-    );
+    Subtract(jointPos, baseJointPos, jointDiff);
     Vector3 baseJointDiff;
     Subtract(
         frame_input.mActualCamJointPos[mSkeletonJoint],

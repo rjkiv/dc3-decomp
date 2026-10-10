@@ -221,7 +221,7 @@ void SpotlightDrawer::DrawWorld() {
             while (spotIter != spotEnd) {
                 Hmx::Color envColor = spotIter->mLight->IntensifiedColor();
                 SpotlightEntry *const colorBegin = spotIter;
-                SpotlightEntry *colorEnd = spotIter;
+                SpotlightEntry *colorEnd = spotIter + 1;
                 for (; colorEnd != spotEnd
                      && colorEnd->mPackedColor == colorBegin->mPackedColor;
                      ++colorEnd)

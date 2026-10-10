@@ -104,7 +104,7 @@ public:
     bool IsForced3DCrowd() const { return mForce3DCrowd; }
     float CharFullness() const { return mCharFullness; }
     float FlatFullness() const { return mFlatFullness; }
-    const ObjList<CharData> &Characters() const { return mCharacters; }
+    ObjList<CharData> &Characters() { return mCharacters; }
 
 protected:
     WorldCrowd();

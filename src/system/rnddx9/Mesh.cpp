@@ -485,7 +485,7 @@ void DxMesh::SetTransforms() {
     unsigned int i4 = NumBones();
     TheShaderMgr.SetMeshInfo(i4, HasAOCalc());
     float weight = FurWeight(mMat);
-    bool hasWeight = weight > 0;
+    bool hasWeight = weight > 0 ? true : false;
     if (i4 == 0) {
         TheShaderMgr.UpdateCache(WorldXfm(), 0);
         if (hasWeight) {

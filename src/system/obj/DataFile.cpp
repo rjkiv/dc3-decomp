@@ -240,20 +240,20 @@ DataArray *ReadEmbeddedFile(const char *file, bool b) {
     CritSecTracker tracker(&gDataReadCrit);
     const char *filepath = FileGetPath(gFile.Str());
     const char *madePath = FileMakePath(filepath, file);
-    Symbol localfile = gFile;
-    int dataline = gDataLine;
     int node = gNode;
     BinStream *bs = gStream;
-    int openArr = gOpenArray;
+    int dataline = gDataLine;
+    Symbol localfile = gFile;
     DataArray *arr = gArray;
+    int openArr = gOpenArray;
     yyrestart(nullptr);
     DataArray *da = DataReadFile(madePath, b);
     if (b && !da) {
         MILO_FAIL(
             "Couldn't open embedded file: %s (file %s, line %d)",
             madePath,
-            da->File(),
-            da->Line()
+            arr->File(),
+            arr->Line()
         );
     }
     gNode = node;

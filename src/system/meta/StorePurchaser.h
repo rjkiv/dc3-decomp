@@ -26,10 +26,13 @@ public:
     virtual bool NeedsEnum() const { return false; } // 0x14
     virtual void Poll() = 0; // 0x18
 
-    StorePurchaser(Symbol s, unsigned int i) : unk4(s), unk8(i) {}
+    StorePurchaser(Symbol s, unsigned int i) : mSource(s), mPID(i) {}
 
-    Symbol unk4;
-    unsigned int unk8;
+    Symbol Source() const { return mSource; }
+    unsigned int PID() const { return mPID; }
+
+    Symbol mSource;
+    unsigned int mPID;
 };
 
 class XboxPurchaser : public StorePurchaser, public Hmx::Object {

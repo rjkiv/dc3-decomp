@@ -504,17 +504,14 @@ void DirLoader::SaveObjects(BinStream &bs, ObjectDir *dir) {
     }
     objects.sort(ClassAndNameSort());
     bs << objects.size();
-    for (std::list<Hmx::Object *>::const_iterator it = objects.begin();
-         it != objects.end();
-         it++) {
+    std::list<Hmx::Object *>::const_iterator it;
+    for (it = objects.begin(); it != objects.end(); it++) {
         bs << (*it)->ClassName() << (*it)->Name();
     }
     SetActiveChunkObject(dir);
     dir->Save(bs);
     WriteDeadAndMark(bs);
-    for (std::list<Hmx::Object *>::const_iterator it = objects.begin();
-         it != objects.end();
-         it++) {
+    for (it = objects.begin(); it != objects.end(); it++) {
         SetActiveChunkObject(*it);
         (*it)->Save(bs);
         WriteDeadAndMark(bs);
@@ -777,22 +774,20 @@ void DirLoader::LoadDir() {
             gLoadingProxyFromDisk = oldproxy;
             return;
         }
-        if (t == NotEof) {
-            MemPoint pt(MemPoint::kInitType0);
-            if (sObjectMemDumpFile || sTypeMemDumpFile) {
-                pt = MemPoint(MemPoint::kInitType1);
-            }
-            mDir->PostLoad(*mStream);
-            gLoadingProxyFromDisk = oldproxy;
-            mPostLoad = false;
-            if (sObjectMemDumpFile) {
-                MemPoint start;
-                DumpObjectMemDelta(mDir, start - pt);
-            }
-            if (sTypeMemDumpFile) {
-                MemPoint start;
-                AddTypeObjectMemDelta(mDir, start - pt);
-            }
+        MemPoint pt(MemPoint::kInitType0);
+        if (sObjectMemDumpFile || sTypeMemDumpFile) {
+            pt = MemPoint(MemPoint::kInitType1);
+        }
+        mDir->PostLoad(*mStream);
+        gLoadingProxyFromDisk = oldproxy;
+        mPostLoad = false;
+        if (sObjectMemDumpFile) {
+            MemPoint start;
+            DumpObjectMemDelta(mDir, start - pt);
+        }
+        if (sTypeMemDumpFile) {
+            MemPoint start;
+            AddTypeObjectMemDelta(mDir, start - pt);
         }
     }
     ReadDead(*mStream);

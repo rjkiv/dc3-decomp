@@ -252,10 +252,11 @@ namespace {
     void XbcSendMsg(DWORD nClientId, const DataArray *msgDta) {
         HJSONWRITER *writer = DtaToJson(msgDta);
         if (nClientId == 0) {
-            // i hate this
-            for (DWORD *it = gSmartGlassClientIDs; it < &gSmartGlassClientIDs[4]; it++) {
-                if (*it) {
-                    XbcSendJSON(XBC_DELIVERY_RELIABLE, *it, writer, nullptr);
+            for (int i = 0; i < 4; i++) {
+                if (gSmartGlassClientIDs[i]) {
+                    XbcSendJSON(
+                        XBC_DELIVERY_RELIABLE, gSmartGlassClientIDs[i], writer, nullptr
+                    );
                     gNumSmartGlassSendsInProgress++;
                 }
             }
@@ -1031,6 +1032,7 @@ ShowGamercardResult
 PlatformMgr::ShowGamercardForPadNum(int padNum, const OnlineID *onlineID) {
     static GlitchAverager glAvg;
     AutoGlitchPoker poker(__FUNCTION__, 1, 0, &glAvg);
+    DWORD dw;
     MILO_ASSERT(onlineID, 0x7C6);
     if (!onlineID->GetIsValid()) {
         return (ShowGamercardResult)-1;
@@ -1044,7 +1046,6 @@ PlatformMgr::ShowGamercardForPadNum(int padNum, const OnlineID *onlineID) {
             )) {
             return (ShowGamercardResult)-2;
         }
-        DWORD dw;
         DWORD i4;
         if (sXShowCallback(dw)) {
             i4 = XShowNuiGamerCardUI(dw, padNum, xuid);

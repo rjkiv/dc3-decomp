@@ -672,14 +672,13 @@ void WorldCrowd::Draw3DChars() {
             Character *curChar = it->mDef.mChar;
             RndMultiMesh *curMMesh = it->mMMesh;
             if (curChar && curMMesh) {
-                auto &chars = it->m3DChars;
-                for (int i = 0; i != chars.size(); i++) {
+                for (int i = 0; i != it->m3DChars.size(); i++) {
                     Apply3DCharXfm(it, i, RndCam::Current());
                     if (it->mDef.mUseRandomColor) {
                         SetMatColorFlags(
                             it->mDef.mMats,
                             RndMat::kColorModModulate,
-                            &chars[i].mRandColors
+                            &it->m3DChars[i].mRandColors
                         );
                     }
                     bool selfShadow = curChar->SelfShadow();

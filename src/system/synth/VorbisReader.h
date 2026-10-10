@@ -21,7 +21,8 @@ public:
     static void SignalDecodeThread();
 
     bool DecodeThreadPoll();
-    bool Unk24() const { return unk24; }
+    bool PendingRemoval() const { return mPendingRemoval; }
+    void SetPendingRemoval(bool b) { mPendingRemoval = b; }
 
 private:
     bool TryReadHeader();
@@ -44,7 +45,7 @@ protected:
 
     // volatile so the dtor matches.
     // doesn't seem to affect any other function so i guess it's fine
-    volatile bool unk24;
+    volatile bool mPendingRemoval;
     int mNumChannels; // 0x28
     int mSampleRate; // 0x2c
 private:
@@ -84,7 +85,7 @@ private:
     bool mFail; // 0xef
     /** The mogg's encryption version. */
     int mVersion; // 0xf0
-    std::vector<std::vector<short> > unkf4; // 0xf4
-    s64 unk100;
-    int unk108;
+    std::vector<std::vector<short> > mChannelBufs; // 0xf4
+    s64 mBufStartSample;
+    int mConsumedSamples;
 };

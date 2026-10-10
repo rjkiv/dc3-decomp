@@ -89,19 +89,22 @@ void DirectionGestureFilterSingleUser::Draw(const Skeleton &skeleton, SkeletonVi
     }
 }
 
-static float sValidHandFloats[4] = { 0.2f, 2.0f, 0.3f, 0.3f };
+static float sValidHandRadius = 0.2f;
+static float sValidHandScale = 2.0f;
+static float sScrollPosRadius = 0.3f;
+static float sScrollPosCenterRadius = 0.3f;
 
 bool DirectionGestureFilterSingleUser::IsHandValid(const Skeleton &skeleton) const {
     return IsValidSwipePosition(skeleton)
         || (mArcDetector.NumJointsInPath() > 1U
-            && !HandAtSide(skeleton, sValidHandFloats[0], sValidHandFloats[1], 0.0f));
+            && !HandAtSide(skeleton, sValidHandRadius, sValidHandScale, 0.0f));
 }
 
 bool DirectionGestureFilterSingleUser::IsValidScrollPos(const Skeleton &skeleton) const {
     if (IsValidSwipePosition(skeleton)) {
         return true;
-    } else if (HandAtSide(skeleton, sValidHandFloats[2], 1.0f, 0.5f)) {
-        return !HandAtSide(skeleton, sValidHandFloats[3], 1.0f, 0.0f);
+    } else if (HandAtSide(skeleton, sScrollPosRadius, 1.0f, 0.5f)) {
+        return !HandAtSide(skeleton, sScrollPosCenterRadius, 1.0f, 0.0f);
     } else {
         return false;
     }

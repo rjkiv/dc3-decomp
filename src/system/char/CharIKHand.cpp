@@ -176,12 +176,10 @@ void CharIKHand::PullShoulder(
         float f2 = fff * 0.95f;
         if (lensq > f2 * f2) {
             v *= 1.0f - f2 / (float)std::sqrt(lensq);
-        } else {
-            v.x = 0;
-            v.y = 0;
-            v.z = 0;
+            return;
         }
     }
+    v.Set(0, 0, 0);
 }
 
 void CharIKHand::MeasureLengths() {

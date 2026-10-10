@@ -301,7 +301,7 @@ typedef struct _XALLOC_ATTRIBUTES { /* Size=0x4 */
 } XALLOC_ATTRIBUTES;
 #pragma reverse_bitfield(off)
 
-#define XALLOC_MEMPROTECT_READWRITE 0x20000000
+#define XALLOC_MEMPROTECT_READWRITE 2
 
 #ifdef __cplusplus
 }

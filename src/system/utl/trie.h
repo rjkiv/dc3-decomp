@@ -47,7 +47,7 @@ public:
         check_index(idx);
         return _nodes[idx].firstChild;
     }
-    void set_first_child(unsigned int idx, unsigned int value) {
+    void set_first_child(unsigned int idx, const unsigned int &value) {
         check_index(idx);
         _nodes[idx].firstChild = value;
     }
@@ -55,7 +55,7 @@ public:
         check_index(idx);
         return _nodes[idx].nextSibling;
     }
-    void set_next_sibling(unsigned int idx, unsigned int sibling) {
+    void set_next_sibling(unsigned int idx, const unsigned int &sibling) {
         check_index(idx);
         _nodes[idx].nextSibling = sibling;
     }

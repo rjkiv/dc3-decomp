@@ -344,7 +344,7 @@ bool HamStorePanel::BuySpecialOffer(Symbol offer) {
             Profile *profile = StoreProfile();
             if (profile) {
                 mXboxPurchaser =
-                    new XboxPurchaser(profile->GetPadNum(), it->unk8, 0, 0, unk8c, 0);
+                    new XboxPurchaser(profile->GetPadNum(), it->unk8, 0, 0, mSource, 0);
                 mXboxPurchaser->Initiate();
             }
             return true;

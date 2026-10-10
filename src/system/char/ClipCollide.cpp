@@ -237,11 +237,11 @@ void ClipCollide::Collide() {
         SyncWaypoint();
         CharServoBone *servo = mChar->BoneServo();
         float addVal = 0;
+        Vector3 vd0[3];
         for (float beat = mClip->StartBeat(); beat <= mClip->EndBeat(); beat += 1) {
             mClip->ScaleDown(*servo, 0);
             mClip->ScaleAdd(*servo, 1, beat, addVal);
-            servo->Poll(); // possibly wrong virtual call?
-            Vector3 vd0[3];
+            servo->Poll();
             for (int i = 0; i < 3; i++) {
                 Vector3 v150 = boneTranses[i]->WorldXfm().v;
                 if (i == 2) {
@@ -254,12 +254,13 @@ void ClipCollide::Collide() {
                     Segment segment;
                     segment.start = vd0[i];
                     segment.end = v150;
-                    Vector3 v130;
+                    float t;
                     Plane p;
-                    RndDrawable *collided = drawDir->Collide(segment, v130.x, p);
+                    RndDrawable *collided = drawDir->Collide(segment, t, p);
                     if (collided) {
-                        Interp(segment.start, segment.end, v130.x, v130);
-                        bool donotadd = v130.z < mChar->WorldXfm().v.z + addVal;
+                        Vector3 v130;
+                        Interp(segment.start, segment.end, t, v130);
+                        bool donotadd = v130.z < mChar->WorldXfm().v.z + 1.0f;
                         if (!donotadd) {
                             RndMesh *mesh = dynamic_cast<RndMesh *>(collided);
                             if (mesh) {

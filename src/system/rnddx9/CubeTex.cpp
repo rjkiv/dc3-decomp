@@ -32,43 +32,36 @@ void DxCubeTex::Sync() {
     XGGetTextureDesc(mTex, 0, &desc);
     for (int i = 0; i < kNumCubeFaces; i++) {
         RndBitmap bitmap;
-        RndBitmap &curFace = mBitmap[i];
-        if (curFace.Width() && curFace.Height()) {
-            RndBitmap *bmp;
-            if (!curFace.Palette()) {
-                bmp = &curFace;
-                if (curFace.Bpp() == 0x18) {
-                    goto ok;
-                }
-            } else {
-            ok:
-                bitmap.Create(curFace, 0x20, curFace.Order(), nullptr);
-                bmp = &bitmap;
-            }
-            for (int j = 0; j < numLevels; j++) {
-                MILO_ASSERT(bmp, 0x53);
-                D3DLOCKED_RECT d3dRect;
-                mTex->LockRect((D3DCUBEMAP_FACES)i, j, &d3dRect, nullptr, 0);
-                unsigned char gpuFmt = desc.Format;
-                XGTileTextureLevel(
-                    desc.Width,
-                    desc.Height,
-                    j,
-                    gpuFmt,
-                    0,
-                    d3dRect.pBits,
-                    nullptr,
-                    bmp->Pixels(),
-                    bmp->DxtRowBytes(),
-                    nullptr
-                );
-                mTex->UnlockRect((D3DCUBEMAP_FACES)i, j);
-                bmp = bmp->nextMip();
-            }
-            curFace.Reset();
-        } else {
+        RndBitmap *bmp = &mBitmap[i];
+        if (!bmp->Width() || !bmp->Height()) {
             MILO_NOTIFY("%s face %d width or height == 0 ", PathName(this), i);
+            continue;
         }
+        if (bmp->Palette() || bmp->Bpp() == 0x18) {
+            bitmap.Create(*bmp, 0x20, bmp->Order(), nullptr);
+            bmp = &bitmap;
+        }
+        for (int j = 0; j < numLevels; j++) {
+            MILO_ASSERT(bmp, 0x53);
+            D3DLOCKED_RECT d3dRect;
+            mTex->LockRect((D3DCUBEMAP_FACES)i, j, &d3dRect, nullptr, 0);
+            DWORD gpuFmt = desc.Format & 0x3F;
+            XGTileTextureLevel(
+                desc.Width,
+                desc.Height,
+                j,
+                gpuFmt,
+                0,
+                d3dRect.pBits,
+                nullptr,
+                bmp->Pixels(),
+                bmp->DxtRowBytes(),
+                nullptr
+            );
+            mTex->UnlockRect((D3DCUBEMAP_FACES)i, j);
+            bmp = bmp->nextMip();
+        }
+        mBitmap[i].Reset();
     }
     NgMat::SetCurrent(nullptr);
 }

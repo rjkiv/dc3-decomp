@@ -148,18 +148,16 @@ void ASCIItoUTF8(char *out, int len, const char *in) {
 const char *WideCharToChar(const unsigned short *us) {
     if (us == 0)
         return 0;
-    else {
-        static std::vector<char> cstring;
-        cstring.clear();
-        for (; *us != 0; us++) {
-            if (*us > 0xFF)
-                cstring.push_back('*');
-            else
-                cstring.push_back(*us);
-        }
-        cstring.push_back('\0');
-        return &cstring[0];
+    static std::vector<char> cstring;
+    cstring.clear();
+    for (; *us != 0; us++) {
+        if (*us > 0xFF)
+            cstring.push_back('*');
+        else
+            cstring.push_back(*us);
     }
+    cstring.push_back('\0');
+    return &cstring[0];
 }
 
 unsigned int UTF8StrLen(const char *str) {
@@ -369,15 +367,14 @@ void UTF8toWideVector(std::vector<unsigned short> &vec, const char *cc) {
 }
 
 const unsigned short *CharToWideChar(const char *str) {
-    if (str) {
-        int len = strlen(str);
-        static std::vector<unsigned short> wstring;
-        wstring.clear();
-        for (int i = 0; i < len; i++) {
-            wstring.push_back((unsigned char)*str++);
-        }
-        wstring.push_back(0);
-        return &wstring[0];
+    if (str == 0)
+        return 0;
+    int len = strlen(str);
+    static std::vector<unsigned short> wstring;
+    wstring.clear();
+    for (int i = 0; i < len; i++) {
+        wstring.push_back((unsigned char)*str++);
     }
-    // i guess they didn't return anything if str was null?
+    wstring.push_back(0);
+    return &wstring[0];
 }

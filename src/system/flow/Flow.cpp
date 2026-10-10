@@ -429,22 +429,22 @@ void Flow::SyncObjects() {
                 Symbol name(it->mName.c_str());
                 DataArrayPtr ptr(new DataArray(1));
                 ptr->Node(0) = name;
-                if (topFlow->HasPropertySink(this, ptr)) {
-                    topFlow->RemovePropertySink(this, ptr);
+                if (loadingDir->HasPropertySink(this, ptr)) {
+                    loadingDir->RemovePropertySink(this, ptr);
                 }
                 if (HasPropertySink(this, ptr)) {
                     RemovePropertySink(this, ptr);
                 }
-                if (!topFlow->Property(ptr, false)) {
+                if (!loadingDir->Property(ptr, false)) {
                     if (Property(ptr, false)) {
-                        topFlow->SetProperty(ptr, *Property(ptr, true));
+                        loadingDir->SetProperty(ptr, *Property(ptr, true));
                     } else {
-                        topFlow->SetProperty(ptr, it->mDefaultVal);
+                        loadingDir->SetProperty(ptr, it->mDefaultVal);
                     }
                 } else {
-                    SetProperty(ptr, *topFlow->Property(ptr, true));
+                    SetProperty(ptr, *loadingDir->Property(ptr, true));
                 }
-                topFlow->AddPropertySink(this, ptr, "on_reflected_property_changed");
+                loadingDir->AddPropertySink(this, ptr, "on_reflected_property_changed");
                 AddPropertySink(this, ptr, "on_internal_property_changed");
             }
         }

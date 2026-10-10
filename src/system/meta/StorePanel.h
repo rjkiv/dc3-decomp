@@ -56,12 +56,12 @@ public:
         mPendingArtCallback = nullptr;
     }
     void SetSource(Symbol s, bool b) {
-        unk8c = s;
+        mSource = s;
         if (b) {
-            unk90 = s;
+            mBackupSource = s;
         }
     }
-    void SetSourceToBackup() { unk8c = unk90; }
+    void SetSourceToBackup() { mSource = mBackupSource; }
 
     int GetUnk68() const { return mJobId; }
 
@@ -78,12 +78,10 @@ public:
     StorePreviewMgr *mStorePreviewMgr; // 0x6c
     bool unk70;
     StorePurchaser *mPurchaser; // 0x74
-    // StorePurchaseable *unk78;
-    // Profile *unk7c;
-    std::pair<StorePurchaseable *, Profile *> mPendingPurchase; // 0x78
-    std::vector<std::pair<StorePurchaseable *, const Profile *> > unk80;
-    Symbol unk8c;
-    Symbol unk90;
+    std::pair<StorePurchaseable *, const Profile *> mPendingPurchase; // 0x78
+    std::vector<std::pair<StorePurchaseable *, const Profile *> > mPendingPurchases; // 0x80
+    Symbol mSource; // 0x8c
+    Symbol mBackupSource; // 0x90
     int unk94;
     Job *unk98;
 

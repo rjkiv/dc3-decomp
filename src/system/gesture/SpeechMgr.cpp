@@ -570,8 +570,9 @@ void SpeechMgr::AddDynamicRuleWord(
     MILO_ASSERT(it != mGrammars.end(), 0x3C9);
     Grammar grammar(*it);
     bool createSuccess = true;
+    HRESULT res;
     if (toState) {
-        HRESULT res = NuiSpeechCreateState(&grammar.mGrammar, *fromState, toState);
+        res = NuiSpeechCreateState(&grammar.mGrammar, *fromState, toState);
         createSuccess = SUCCEEDED(res);
         if (!createSuccess) {
             MILO_NOTIFY(
@@ -580,16 +581,18 @@ void SpeechMgr::AddDynamicRuleWord(
         }
     }
     if (createSuccess) {
-        wchar_t buffer[1024];
+        wchar_t value[1024];
         size_t ret;
-        mbstowcs_s(&ret, buffer, 1024, c3, strlen(c3));
-        UTF8toWChar_t(buffer, c2);
+        mbstowcs_s(&ret, value, 1024, c3, strlen(c3));
         NUI_SPEECH_SEMANTIC s;
-        HRESULT res = NuiSpeechAddWordTransition(
+        s.pcwszValue = value;
+        wchar_t words[1024];
+        UTF8toWChar_t(words, c2);
+        res = NuiSpeechAddWordTransition(
             &grammar.mGrammar,
             *fromState,
             toState ? *toState : nullptr,
-            buffer,
+            words,
             nullptr,
             NUI_SPEECH_WORDTYPE_LEXICAL,
             1,

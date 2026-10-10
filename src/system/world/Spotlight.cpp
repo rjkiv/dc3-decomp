@@ -212,7 +212,11 @@ BEGIN_PROPSYNCS(Spotlight)
     SYNC_PROP_MODIFY(spot_height, mSpotHeight, UpdateBounds())
     SYNC_PROP_MODIFY(spot_material, mSpotMaterial, UpdateBounds())
     SYNC_PROP_SET(color, Color().Pack(), SetColor(_val.Int()))
-    SYNC_PROP_SET(intensity, Intensity(), SetIntensity(_val.Float())) // fix this line
+    SYNC_PROP_SET(intensity, Intensity(), {
+        float intensity = _val.Float();
+        const Hmx::Color &color = Color();
+        SetColorIntensity(color, intensity);
+    })
     SYNC_PROP(color_owner, mColorOwner)
     SYNC_PROP(damping_constant, mDampingConstant)
     SYNC_PROP_MODIFY(lens_size, mLensSize, UpdateBounds())
@@ -282,7 +286,8 @@ BEGIN_COPYS(Spotlight)
             COPY_MEMBER(mSpotTarget)
             COPY_MEMBER(mSpotScale)
             COPY_MEMBER(mSpotHeight)
-            SetColorIntensity(c->Color(), c->Intensity());
+            const Hmx::Color &color = c->Color();
+            SetColorIntensity(color, c->Intensity());
             COPY_MEMBER(mSpotMaterial)
             COPY_MEMBER(mDampingConstant)
             COPY_MEMBER(mLensSize)
@@ -377,11 +382,11 @@ BEGIN_LOADS(Spotlight)
             d >> mIntensity;
         }
         d >> mSpotMaterial;
+        char spotMatName[0x80];
         if (d.rev > 0x11 && d.rev < 0x13) {
-            char buf[0x80];
-            bs.ReadString(buf, 0x80);
-            if (!mSpotMaterial && buf[0] != '\0') {
-                mSpotMaterial = LookupOrCreateMat(buf, Dir());
+            bs.ReadString(spotMatName, 0x80);
+            if (!mSpotMaterial && spotMatName[0] != '\0') {
+                mSpotMaterial = LookupOrCreateMat(spotMatName, Dir());
             }
         }
         d >> mDampingConstant;
@@ -420,11 +425,11 @@ BEGIN_LOADS(Spotlight)
             d >> mLensOffset;
             d >> mLensMaterial;
         }
+        char lensMatName[0x80];
         if (d.rev > 0x11 && d.rev < 0x13) {
-            char buf[0x80];
-            bs.ReadString(buf, 0x80);
-            if (!mLensMaterial && buf[0] != '\0') {
-                mLensMaterial = LookupOrCreateMat(buf, Dir());
+            bs.ReadString(lensMatName, 0x80);
+            if (!mLensMaterial && lensMatName[0] != '\0') {
+                mLensMaterial = LookupOrCreateMat(lensMatName, Dir());
             }
         }
         if (d.rev > 0xC) {
@@ -844,10 +849,13 @@ void Spotlight::Generate() {
         if (mBeam.HasLength()) {
             if (SpotlightDrawer::DrawNGSpotlights()) {
                 BuildNGShaft(mBeam);
-            } else if (mBeam.IsCone()) {
-                BuildCone(mBeam);
             } else {
-                BuildBeam(mBeam);
+                BeamDef &beam = mBeam;
+                if (beam.IsCone()) {
+                    BuildCone(beam);
+                } else {
+                    BuildBeam(beam);
+                }
             }
         }
         UpdateBounds();

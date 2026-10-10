@@ -30,7 +30,6 @@ void DxMovie::StreamReadFinish() {
 
 void DxMovie::SetFile(const FilePath &file, bool stream) {
     RELEASE(unk4c);
-    char *buffer = nullptr;
     if (unk44) {
         MemFree(unk44, __FILE__, 0x2B);
         unk44 = nullptr;
@@ -55,10 +54,8 @@ void DxMovie::SetFile(const FilePath &file, bool stream) {
         } else {
             FileLoader *fl = dynamic_cast<FileLoader *>(TheLoadMgr.ForceGetLoader(file));
             int size;
-            if (fl) {
-                buffer = fl->GetBuffer(&size);
-                delete fl;
-            }
+            char *buffer = fl ? fl->GetBuffer(&size) : nullptr;
+            delete fl;
             if (!buffer)
                 return;
             BufStream bStream(buffer, size, true);

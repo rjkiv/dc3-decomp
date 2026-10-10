@@ -223,10 +223,8 @@ void FileLoader::SaveData(BinStream &bs, void *v, int size) {
     bs << size;
     int seek = 0;
     while (true) {
-        int curBytes = size - seek;
-        if (curBytes > 0x10000) {
-            curBytes = 0x10000;
-        } else if (curBytes == 0)
+        int curBytes = Min(size - seek, 0x10000);
+        if (curBytes == 0)
             return;
         const char *c = (char *)v;
         bs.Write(c + seek, curBytes);

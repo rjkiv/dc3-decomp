@@ -661,7 +661,7 @@ void MoveDir::DrawShowing() {
                     for (int j = 0; j < 2; j++) {
                         const Vector3 &v = curOutput.unk60[j].v;
                         Vector3 vsub;
-                        Add(curOutput.unk40[j], v, vsub);
+                        Add(v, curOutput.unk40[j], vsub);
                         TheRnd.DrawLine(v, vsub, color20, false);
                         UtilDrawSphere(vsub, 2, color20, nullptr);
                         UtilDrawString(MakeString("%i", j), vsub, color20);
@@ -718,8 +718,9 @@ void MoveDir::Poll() {
             }
             mCurMoveSmoothers[i].Smooth(
                 mCurMoveNormalizedResult[i],
-                TheMaster && TheMaster->Unk70() == 3 ? TheTaskMgr.DeltaUISeconds() * 4.0f
-                                                     : TheTaskMgr.DeltaUISeconds()
+                TheMaster && TheMaster->Pos1().GetBeat() == 3
+                    ? TheTaskMgr.DeltaUISeconds() * 4.0f
+                    : TheTaskMgr.DeltaUISeconds()
             );
             if (mCurMoveRating[i] <= kMoveRatingPerfect && unk3f0[i] > 1) {
                 static Symbol passed_move_p1("passed_move_p1");

@@ -1,10 +1,11 @@
 #include "StubCameraInput.h"
 
 StubCameraInput::StubCameraInput() {
-    mCachedFrame.mUpVector.Set(0.0, 1.0, 0.0);
-    mCachedFrame.mFloorPlane.Set(0.04584, 0.991929, 0.118222, 0.786);
-    mCachedFrame.mFrameNumber = 0;
-    mCachedFrame.mElapsedMs = 33;
+    StubSkeletonFrame(mFrame);
+    for (int i = 0; i < 6; i++) {
+        mSkeletonOffsets[i].mTracked = false;
+        mSkeletonOffsets[i].mCenterOffsetMeters.Zero();
+    }
 }
 
 void StubCameraInput::StubSkeletonFrame(SkeletonFrame &frame) {
@@ -20,9 +21,9 @@ void StubCameraInput::StubSkeletonData(SkeletonData &data, const Vector3 &vec) {
     data.mEnrollmentIndex = 0;
     data.mTracking = kSkeletonTracked;
     data.mCenter.Set(0.0, 0.5, 2.3);
-    data.mCenter.Set(data.mCenter.x + vec.x, vec.y + 0.5f, vec.z + 2.3f);
+    data.mCenter += vec;
     data.mJointPositions[0].Set(0.126847f, 0.111759f, 2.264718f);
-    data.mJointPositions[1].Set(0.127627f, 0.178946f, 2.32085f);
+    data.mJointPositions[1].Set(0.127672f, 0.178935f, 2.32085f);
     data.mJointPositions[2].Set(0.13937f, 0.554082f, 2.307118f);
     data.mJointPositions[3].Set(0.140168f, 0.734258f, 2.252467f);
     data.mJointPositions[4].Set(-0.046645f, 0.45371f, 2.323363f);
@@ -41,11 +42,21 @@ void StubCameraInput::StubSkeletonData(SkeletonData &data, const Vector3 &vec) {
     data.mJointPositions[17].Set(0.22748f, -0.893713f, 2.355198f);
     data.mJointPositions[18].Set(-0.043792f, -0.917228f, 2.308891f);
     data.mJointPositions[19].Set(0.216633f, -0.932548f, 2.347959f);
-    for (int i = 0; i < 20; i++) {
-        data.mJointPositions[i].Set(
-            data.mJointPositions[i].x + vec.x,
-            data.mJointPositions[i].y + vec.y,
-            data.mJointPositions[i].z + vec.z
-        );
+    for (int i = 0; i < kNumJoints; i++) {
+        Add(data.mJointPositions[i], vec, data.mJointPositions[i]);
+        data.mJointConfidences[i] = kConfidenceTracked;
+        data.mRawJointPositions[i] = data.mJointPositions[i];
     }
+}
+
+const SkeletonFrame *StubCameraInput::PollNewFrame() {
+    for (int i = 0; i < 6; i++) {
+        SkeletonData &data = mFrame.mSkeletonDatas[i];
+        if (mSkeletonOffsets[i].mTracked) {
+            StubSkeletonData(data, mSkeletonOffsets[i].mCenterOffsetMeters);
+        } else {
+            data.mTracking = kSkeletonNotTracked;
+        }
+    }
+    return &mFrame;
 }

@@ -59,7 +59,7 @@ protected:
     unsigned short mPort; // 0x14
     State mState; // 0x18
     bool unk1c;
-    Timer unk20;
+    Timer mStateTimer;
     float mTimeoutMs; // 0x50
     unsigned int mIP; // 0x54
     String unk58;
@@ -69,7 +69,7 @@ protected:
     char *mFileBuf; // 0x6c
     int mFileBufSize; // 0x70
     int mFileBufRecvPos; // 0x74
-    int unk78;
+    int mRetryCount;
     HttpGetFailType mFailType; // 0x7c
     State mPrevState; // 0x80
 };

@@ -270,15 +270,16 @@ void JoypadInitCommon(DataArray *joypad_config) {
 void TranslateSticksToButs(JoypadData &data, unsigned int &mask) {
     float dist = data.mDistFromRest;
     for (int i = 0; i < kNumAnalogSticks; i++) {
+        int shift = i * 4;
         if (data.mSticks[i][0] > dist) {
-            mask |= 1 << (kPad_LStickRight + (i * 4));
+            mask |= 1 << (kPad_LStickRight + shift);
         } else if (data.mSticks[i][0] < -dist) {
-            mask |= 1 << (kPad_LStickLeft + (i * 4));
+            mask |= 1 << (kPad_LStickLeft + shift);
         }
         if (data.mSticks[i][1] > dist) {
-            mask |= 1 << (kPad_LStickDown + (i * 4));
+            mask |= 1 << (kPad_LStickDown + shift);
         } else if (data.mSticks[i][1] < -dist) {
-            mask |= 1 << (kPad_LStickUp + (i * 4));
+            mask |= 1 << (kPad_LStickUp + shift);
         }
     }
 }

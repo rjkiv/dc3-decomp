@@ -140,42 +140,34 @@ void FxSend360::CreateInputVoice() {
         { 0, OutputVoice() }
     };
 
-    XAUDIO2_SEND_DESCRIPTOR stereoDescs[2] = {
-        { 0, mVoices[0] }, { 0, OutputVoice() }
-    };
-
     XAUDIO2_SEND_DESCRIPTOR centerDescs[2] = {
         { 0, mVoices[0] }, { 0, OutputVoice() }
     };
 
-    HRESULT hr = S_OK;
+    XAUDIO2_SEND_DESCRIPTOR stereoDescs[2] = {
+        { 0, mVoices[0] }, { 0, OutputVoice() }
+    };
+
     int stage = mThis->Stage() << 1;
+    XAUDIO2_VOICE_SENDS sends;
     switch (mThis->GetChannels()) {
         default: 
             MILO_FAIL("FxSend: Unknown Channels");  
         case kSendAll: 
-        case kSendAllXMix:{
-            XAUDIO2_VOICE_SENDS sends;
+        case kSendAllXMix:
             sends.SendCount = 4;
             sends.pSends = allDescs;
-            hr = TheXboxSynth->GetXAudio()->CreateSubmixVoice(&mOutputVoice, 6, 48000, 0, stage, &sends, nullptr);
             break;
-        }
-        case kSendCenter: {
-            XAUDIO2_VOICE_SENDS sends;
+        case kSendCenter:
             sends.SendCount = 2;
             sends.pSends = centerDescs;
-            hr = TheXboxSynth->GetXAudio()->CreateSubmixVoice(&mOutputVoice, 6, 48000, 0, stage, &sends, nullptr);
             break;
-        }
-        case kSendStereo: {
-            XAUDIO2_VOICE_SENDS sends;
+        case kSendStereo:
             sends.SendCount = 2;
             sends.pSends = stereoDescs;
-            hr = TheXboxSynth->GetXAudio()->CreateSubmixVoice(&mOutputVoice, 6, 48000, 0, stage, &sends, nullptr);
             break;
-        }
     }
+    HRESULT hr = TheXboxSynth->GetXAudio()->CreateSubmixVoice(&mOutputVoice, 6, 48000, 0, stage, &sends, nullptr);
     MILO_ASSERT(SUCCEEDED(hr), 0x1A6);
 // clang-format on
 }

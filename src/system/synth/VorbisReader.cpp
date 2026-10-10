@@ -33,9 +33,7 @@ namespace {
         while (true) {
             WaitForSingleObject(gEvent, -1);
             gLock.Enter();
-            if (!gNewReaders.empty()) {
-                gReaders.insert(gReaders.end(), gNewReaders.begin(), gNewReaders.end());
-            }
+            gReaders.splice(gReaders.begin(), gNewReaders);
             gLock.Exit();
 
             bool b2;
@@ -43,12 +41,12 @@ namespace {
                 b2 = false;
                 for (auto it = gReaders.begin(); it != gReaders.end();) {
                     VorbisReader *cur = *it;
-                    if (cur->Unk24()) {
+                    if (cur->PendingRemoval()) {
                         it = gReaders.erase(it);
-                        // set unk24 to false
+                        cur->SetPendingRemoval(false);
                     } else {
                         ++it;
-                        b2 = cur->DecodeThreadPoll() || !b2;
+                        b2 = cur->DecodeThreadPoll() || b2;
                     }
                 }
             } while (b2);
@@ -66,7 +64,7 @@ VorbisReader::VorbisReader(File *file, bool expectMap, StandardStream *stream, b
       mStream(stream), mOggSync(0), mOggStream(0), mVorbisInfo(0), mVorbisComment(0),
       mVorbisDsp(0), mVorbisBlock(0), mDecodePending(0), mSeekTarget(-1),
       mSamplesToSkip(0), mHdrSize(0), mHdrBuf(0), mCtrState(0), unkec(b2), unked(0),
-      mEof(0), mFail(0), unk100(-1), unk108(0) {
+      mEof(0), mFail(0), mBufStartSample(-1), mConsumedSamples(0) {
     MILO_ASSERT(mFile, 0xEC);
     if (expectMap) {
         mHdrBuf = new char[60000];
@@ -75,7 +73,7 @@ VorbisReader::VorbisReader(File *file, bool expectMap, StandardStream *stream, b
     }
     mOggSync = new ogg_sync_state;
     ogg_sync_init(mOggSync);
-    unk24 = false;
+    mPendingRemoval = false;
     if (gEvent == INVALID_HANDLE_VALUE) {
         gEvent = CreateEventA(nullptr, false, false, nullptr);
         MILO_ASSERT(gEvent, 0xFE);
@@ -91,9 +89,9 @@ VorbisReader::VorbisReader(File *file, bool expectMap, StandardStream *stream, b
 }
 
 VorbisReader::~VorbisReader() {
-    unk24 = true;
+    mPendingRemoval = true;
     unked = false;
-    while (unk24) {
+    while (mPendingRemoval) {
         SetEvent(gEvent);
     }
     delete[] mHdrBuf;
@@ -156,9 +154,9 @@ void VorbisReader::Poll(float until) {
         } else {
             mNumChannels = mVorbisInfo->channels;
             mSampleRate = mVorbisInfo->rate;
-            unkf4.resize(mNumChannels);
+            mChannelBufs.resize(mNumChannels);
             for (int i = 0; i < mNumChannels; i++) {
-                unkf4[i].reserve(0x1000);
+                mChannelBufs[i].reserve(0x1000);
             }
             Init();
             mNeedInitDecoder = true;
@@ -170,19 +168,21 @@ void VorbisReader::Poll(float until) {
         std::vector<short *> shorts;
         shorts.resize(mNumChannels);
         int i12 = 0;
-        while (unk108 < unkf4[0].size() && i12 < 0x800) {
+        while (mConsumedSamples < mChannelBufs[0].size() && i12 < 0x800) {
             for (int c = 0; c < mNumChannels; c++) {
-                shorts[c] = &unkf4[c][unk108]; // something up here
+                shorts[c] = &mChannelBufs[c][mConsumedSamples];
             }
             int i8;
-            if (unk100 == -1) {
+            if (mBufStartSample == -1) {
                 i8 = -1;
             } else {
-                i8 = unk100 + unk108;
+                i8 = mBufStartSample + mConsumedSamples;
             }
-            int ret = ConsumeData((void **)&shorts, unkf4[0].size() - unk108, i8);
+            int ret = ConsumeData(
+                (void **)&shorts[0], mChannelBufs[0].size() - mConsumedSamples, i8
+            );
             i12 += ret;
-            unk108 += ret;
+            mConsumedSamples += ret;
             if (ret == 0)
                 break;
         }
@@ -375,7 +375,7 @@ bool VorbisReader::TryDecode() {
             }
         }
     } else if (mEof && !mReadBuffer && QueuedOutputSamples() == 0 && !mDone
-               && unk108 >= unkf4[0].size()) {
+               && mConsumedSamples >= mChannelBufs[0].size()) {
         EndData();
         mDone = true;
     }
@@ -396,10 +396,10 @@ void VorbisReader::DoRawSeek(int byte) {
         mEnableReads = true;
     }
     for (int i = 0; i < mNumChannels; i++) {
-        unkf4[i].clear();
+        mChannelBufs[i].clear();
     }
-    unk108 = 0;
-    unk100 = -1;
+    mConsumedSamples = 0;
+    mBufStartSample = -1;
     int streamErr = ogg_stream_reset(mOggStream);
     if (streamErr < 0)
         VORBIS_FAIL("StreamReset", streamErr);
@@ -572,12 +572,12 @@ bool VorbisReader::DecodeThreadPoll() {
         return false;
     }
     for (int i = 0; i < mNumChannels; i++) {
-        unkf4[i].clear(); // ???
+        mChannelBufs[i].clear(); // ???
     }
-    if (unk100 != -1) {
-        unk100 += unk108;
+    if (mBufStartSample != -1) {
+        mBufStartSample += mConsumedSamples;
     }
-    unk108 = 0;
+    mConsumedSamples = 0;
     bool ret = TryDecode();
     if (QueuedOutputSamples() > 0) {
         float **pcmPtr;

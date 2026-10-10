@@ -46,10 +46,10 @@ int Trie::store(const char *s) {
         int len = strlen(s);
         for (int i = 0; i <= len; i++) {
             char curChar = s[i];
-            int dupeCount = dup_count(node_idx);
-            for (int j = 0; j < dupeCount; j++) {
+            char cnt = count(node_idx);
+            for (int j = 0; j < cnt; j++) {
                 if (ch(node_idx) != curChar) {
-                    if (j != dupeCount - 1) {
+                    if (j != cnt - 1) {
                         node_idx = sibling(node_idx);
                     }
                 } else {
@@ -59,7 +59,7 @@ int Trie::store(const char *s) {
                 }
             }
             unsigned int next_free = get_free_node();
-            if (dupeCount == 0) {
+            if (cnt == 0) {
                 if (n_00 > 0) {
                     set_first_child(n_00, next_free);
                 }
@@ -77,13 +77,13 @@ int Trie::store(const char *s) {
             node_idx = next_free;
             if (s[i] != '\0') {
                 while (i++ < len) {
-                    n_00 = get_free_node();
-                    set_first_child(next_free, n_00);
-                    set_parent(n_00, next_free);
-                    set_char(n_00, s[i]);
-                    inc_count(n_00);
-                    node_idx = n_00;
-                    next_free = n_00;
+                    next_free = get_free_node();
+                    set_first_child(n_00, next_free);
+                    set_parent(next_free, n_00);
+                    set_char(next_free, s[i]);
+                    inc_count(next_free);
+                    n_00 = next_free;
+                    node_idx = next_free;
                 }
                 break;
             } else {

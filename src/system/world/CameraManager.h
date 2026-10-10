@@ -91,7 +91,7 @@ protected:
     ObjPtr<CamShot> mNextShot; // 0x3c
     /** "Next camera blend time in units of camera, is run-time, not serialized" */
     float mBlendTime; // 0x50
-    float unk54; // 0x54
+    float mBlendAmount; // 0x54
     bool unk58; // 0x58
     ObjPtr<CamShot> mCurrentShot; // 0x5c
     float mCamStartTime; // 0x70

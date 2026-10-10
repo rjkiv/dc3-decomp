@@ -160,7 +160,7 @@ void CameraManager::StartShot_(CamShot *shot) {
     if (mCurrentShot) {
         mCurrentShot->StartAnim();
         mCamStartTime = TheTaskMgr.Time(shot->Units());
-        unk54 = 0.0f;
+        mBlendAmount = 0.0f;
     }
 }
 
@@ -403,18 +403,16 @@ void CameraManager::Poll() {
                     Cross(localXfm.m.x, localXfm.m.y, localXfm.m.z);
                     Normalize(localXfm.m.z, localXfm.m.z);
                     Cross(localXfm.m.y, localXfm.m.z, localXfm.m.x);
-                    cam->SetFrustum(
-                        Interp(nearPlane, cam->NearPlane(), f16),
-                        Interp(farPlane, cam->FarPlane(), f16),
-                        Interp(yFov, cam->YFov(), f16),
-                        1
-                    );
-                } else if (unk54 < 1) {
+                    float blendYFov = Interp(yFov, cam->YFov(), f16);
+                    float blendNear = Interp(nearPlane, cam->NearPlane(), f16);
+                    float blendFar = Interp(farPlane, cam->FarPlane(), f16);
+                    cam->SetFrustum(blendNear, blendFar, blendYFov, 1);
+                } else if (mBlendAmount < 1) {
                     static Message msg("blend_finished", 0);
                     msg[0] = mCurrentShot.Ptr();
                     Export(msg, true);
                 }
-                unk54 = f16;
+                mBlendAmount = f16;
             }
             if (!shotOver && mCurrentShot && mCurrentShot->ShotOver()) {
                 static Message msg("shot_over", 0);

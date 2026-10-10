@@ -95,6 +95,20 @@ namespace Hmx {
 
         Matrix4 &Zero();
 
+        // clang-format off
+        void Set(
+            float xx, float xy, float xz, float xw,
+            float yx, float yy, float yz, float yw,
+            float zx, float zy, float zz, float zw,
+            float wx, float wy, float wz, float ww
+        ) {
+            m[0].Set(xx, xy, xz, xw);
+            m[1].Set(yx, yy, yz, yw);
+            m[2].Set(zx, zy, zz, zw);
+            m[3].Set(wx, wy, wz, ww);
+        }
+        // clang-format on
+
         void Identity() {
             Zero();
             m[0].x = m[1].y = m[2].z = m[3].w = 1;

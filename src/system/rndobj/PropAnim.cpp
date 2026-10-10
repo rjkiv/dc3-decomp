@@ -308,7 +308,7 @@ RndPropAnim::AddKeys(Hmx::Object *obj, DataArray *prop, PropKeys::AnimKeysType t
 std::list<PropKeys *>::iterator RndPropAnim::FindKeys(Hmx::Object *obj, DataArray *prop) {
     FOREACH (it, mPropKeys) {
         PropKeys *cur = *it;
-        if (!prop && !cur->Prop()) {
+        if (!prop && cur->Prop() == prop) {
             return it;
         }
         if (cur->Target() == obj && PathCompare(prop, cur->Prop())) {
@@ -625,12 +625,12 @@ void RndPropAnim::LoadPre7(BinStreamRev &d) {
             ty = (PropKeys::AnimKeysType)animtype;
             d >> floatKeys;
             d >> colorKeys;
-            Hmx::Object *oldowner = ObjectStage::sOwner;
             if (d.rev > 3) {
+                Hmx::Object *oldowner = ObjectStage::sOwner;
                 ObjectStage::sOwner = this;
-                d >> objKeys;
+                d >> (Keys<ObjectStage, Hmx::Object *> &)objKeys;
+                ObjectStage::sOwner = oldowner;
             }
-            ObjectStage::sOwner = oldowner;
             if (d.rev > 4) {
                 d >> boolKeys;
             }

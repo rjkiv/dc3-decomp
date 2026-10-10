@@ -75,30 +75,30 @@ BEGIN_LOADS(CharCuff)
     LOAD_SUPERCLASS(Hmx::Object)
     LOAD_SUPERCLASS(RndTransformable)
     for (int i = 0; i < 3; i++) {
-        bs >> mShape[i].radius >> mShape[i].offset;
+        d >> mShape[i].radius >> mShape[i].offset;
     }
     if (d.rev > 1)
-        bs >> mOuterRadius;
+        d >> mOuterRadius;
     else
         mOuterRadius = mShape[1].radius + 0.5f;
     if (d.rev > 2)
-        bs >> mOpenEnd;
+        d >> mOpenEnd;
     else
         mOpenEnd = false;
     if (d.rev > 3)
-        bs >> mBone;
+        d >> mBone;
     else
         mBone = TransParent();
     if (d.rev > 4)
-        bs >> mEccentricity;
+        d >> mEccentricity;
     else
         mEccentricity = 1.0f;
     if (d.rev > 5)
-        bs >> mCategory;
+        d >> mCategory;
     else
-        mCategory = Symbol("");
+        mCategory = "";
     if (d.rev > 7)
-        bs >> mIgnore;
+        d >> mIgnore;
     if (d.rev < 7)
         MILO_NOTIFY("%s old CharCuff, must convert, see James", PathName(this));
 END_LOADS

@@ -13,6 +13,7 @@ public:
 class CharPollableSorter {
 public:
     struct Dep {
+        Dep() : obj(nullptr), poll(nullptr) {}
         Hmx::Object *obj; // 0x0
         std::list<Dep *> changedBy; // 0x4
         RndPollable *poll; // 0xc

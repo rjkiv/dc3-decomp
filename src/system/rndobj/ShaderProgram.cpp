@@ -106,17 +106,16 @@ bool RndShaderProgram::Cache(
                 CopyErrorShader(t, opts);
                 String str;
                 ShaderMakeOptionsString(t, opts, str);
-                // this needs to be all wrapped into another MakeString,
-                // but our standalone MakeString is always inlined.
-                // it needs to not be here
-                MILO_NOTIFY(
+                // the original wraps this in another MakeString,
+                // but our standalone MakeString is always inlined
+                TheDebugNotifier << MakeStringNotInlined(MakeString(
                     "Missing shader %s_%llx\n(material: %s)\n(environment: %s)\n(compile options: %s)",
                     ShaderTypeName(t),
                     opts.value,
                     PathName(NgMat::Current()),
                     PathName(RndEnviron::Current()),
                     str.c_str()
-                );
+                ));
                 if (UsingCD()) {
                     SendDebugDataPoint(
                         MakeString(

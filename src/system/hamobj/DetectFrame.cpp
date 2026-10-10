@@ -30,12 +30,13 @@ void DetectFrame::Reset(
     const ErrorNode *const *nodes = fv->mNodes;
     if (fv->mType == kFilterVersionHam1) {
         for (int i = 0; i < MoveFrame::kNumHam1Nodes; i++) {
-            mNodeComponentWeights[i].y = 1;
+            Vector3 &weights = mNodeComponentWeights[i];
+            weights.y = 1;
             Vector3 v;
             if (nodes[i]->XZErrorAxis(v, dancer_frame->mSkeleton)) {
-                XZErrorWeight(v, mNodeComponentWeights[i].x, mNodeComponentWeights[i].z);
+                XZErrorWeight(v, weights.x, weights.z);
             } else {
-                mNodeComponentWeights[i].x = mNodeComponentWeights[i].z = 1;
+                weights.x = weights.z = 1;
             }
         }
     }

@@ -148,18 +148,17 @@ void Locale::Init() {
     int numElements = 0;
     LocaleChunkSort::OrderedLocaleChunk *chunks = nullptr;
     DataArray *localeCfg = nullptr;
-    String stre4 = FileMakePath(
+    String devkitLocalePath = FileMakePath(
         "devkit:\\locale", MakeString("%s\\locale_keep.dta", SystemLanguage())
     );
-    const char *old;
-    FileQualifiedFilename(stre4, old);
+    FileQualifiedFilename(devkitLocalePath, devkitLocalePath.c_str());
     static Symbol locale("locale");
-    DataArrayPtr ptr(locale, stre4);
+    DataArrayPtr ptr(locale, devkitLocalePath);
 
     if (SystemConfig()) {
         localeCfg = SystemConfig("locale");
-        if (DmMapDevkitDrive() >= 0 && FileExists(old, 0, nullptr)) {
-            MILO_NOTIFY("Using alternate locale file from HDD: %s", stre4);
+        if (DmMapDevkitDrive() >= 0 && FileExists(devkitLocalePath.c_str(), 0, nullptr)) {
+            MILO_NOTIFY("Using alternate locale file from HDD: %s", devkitLocalePath);
             localeCfg = ptr;
         }
         {

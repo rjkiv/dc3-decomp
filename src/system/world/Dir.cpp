@@ -480,13 +480,11 @@ void WorldDir::DrawShowing() {
                 shot = shot->CurrentShot();
             }
         }
-        RndCam *cam = nullptr;
-        RndCam *camOverride = CamOverride();
-        if (!camOverride) {
+        RndCam *cam = CamOverride();
+        if (!cam) {
             cam = RndCam::Current();
         } else {
-            camOverride->Select();
-            cam = camOverride;
+            cam->Select();
         }
         RndEnviron *env = GetEnv() ? GetEnv() : TheUI->GetEnv();
         env->Select(nullptr);

@@ -39,7 +39,7 @@ void OptionsPanel::Poll() {
             if (unk40->IsSuccess() && !unk40->PurchaseMade() && unk40->NeedsEnum()
                 && unk50) {
                 ThePlatformMgr.QueueEnumJob(new PostPurchaseEnumJob(
-                    this, unk50->GetPadNum(), unk48, unk40->unk4, unk40->unk8
+                    this, unk50->GetPadNum(), unk48, unk40->Source(), unk40->PID()
                 ));
             }
             RELEASE(unk40);

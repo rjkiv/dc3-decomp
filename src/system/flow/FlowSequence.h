@@ -30,8 +30,8 @@ protected:
     bool mLooping; // 0x60
     /** "how many times to reapeat this sequence" */
     int mRepeats; // 0x64
-    int unk68; // 0x68
+    int mRepeatCount; // 0x68
     /** "How should we handle stop requests?" */
     StopMode mStopMode; // 0x6c
-    bool unk70;
+    bool mActivatingChildren;
 };

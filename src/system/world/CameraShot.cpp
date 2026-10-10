@@ -593,7 +593,8 @@ void CamShotCrowd::GetSelectedCrowd(
         RndMultiMeshProxy *proxy = it->first;
         MILO_ASSERT(proxy, 0xA06);
         RndMultiMesh *multiMesh = proxy->MultiMesh();
-        if (proxy->HasRefs() && multiMesh) {
+        Hmx::Object *obj = proxy;
+        if (obj->HasRefs() && multiMesh) {
             crowdChars.push_back(std::make_pair(multiMesh, proxy->Index()));
             proxy->SetMultiMesh(0, 0);
         }
@@ -1443,33 +1444,31 @@ bool CamShot::AddCrowd(CamShotCrowd &crowd) {
 
 // why does ~AutoPrepTarget even inline this?
 __declspec(noinline) bool CamShot::SetPos(CamShotFrame &frame, RndCam *cam) {
-    if (!cam) {
-        cam = GetCam();
-    }
-    if (!cam) {
+    RndCam *shotCam = cam ? cam : GetCam();
+    if (!shotCam) {
         return false;
     } else {
-        frame.mWorldOffset = cam->WorldXfm();
+        frame.mWorldOffset = shotCam->WorldXfm();
         if (frame.HasTargets()) {
             Vector3 ve0;
             frame.GetCurrentTargetPosition(ve0);
-            cam->WorldToScreen(ve0, frame.mScreenOffset);
+            shotCam->WorldToScreen(ve0, frame.mScreenOffset);
             frame.mScreenOffset += Vector2(-0.5f, -0.5f);
             frame.mScreenOffset.x *= 2.0f;
             frame.mScreenOffset.y *= -2.0f;
             Vector3 vec;
             Subtract(ve0, frame.mWorldOffset.v, vec);
-            Vector3 vf8(cam->WorldXfm().m.y);
-            vf8 *= Dot(vec, cam->WorldXfm().m.y);
+            Vector3 vf8(shotCam->WorldXfm().m.y);
+            vf8 *= Dot(vec, shotCam->WorldXfm().m.y);
             Vector3 v104;
-            Add(cam->WorldXfm().v, vf8, v104);
+            Add(shotCam->WorldXfm().v, vf8, v104);
             Vector3 v110;
             Subtract(ve0, v104, v110);
             Add(frame.mWorldOffset.v, v110, frame.mWorldOffset.v);
         } else {
             frame.mScreenOffset.Zero();
         }
-        frame.mFOV = cam->YFov();
+        frame.mFOV = shotCam->YFov();
         RndTransformable *frameParent = frame.mParent;
         if (frameParent) {
             Transform tf70(frameParent->WorldXfm());

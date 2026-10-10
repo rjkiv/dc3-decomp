@@ -178,9 +178,9 @@ void CharClipDriver::PlayEvents(float oldBeat) {
         mNextEvent = 0;
     }
     for (; mNextEvent < mClip->BeatEvents().size(); mNextEvent++) {
-        const CharClip::BeatEvent &cur = mClip->BeatEvents()[mNextEvent];
-        if (cur.beat <= mBeat) {
-            ExecuteEvent(cur.event);
+        CharClip *clip = mClip;
+        if (clip->BeatEvents()[mNextEvent].beat <= mBeat) {
+            ExecuteEvent(clip->BeatEvents()[mNextEvent].event);
         } else {
             return;
         }
@@ -228,20 +228,14 @@ float CharClipDriver::Evaluate(float beat, float f2, float f3) {
     if ((mPlayFlags & 0xF0) == 0x20) {
         if (mBeat > mClip->EndBeat()) {
             float len = mClip->LengthBeats();
-            if (len > 0) {
-                mBeat = mClip->StartBeat() + fmodf(mClip->EndBeat() - mBeat, len);
-            } else {
-                mBeat = mClip->StartBeat();
-            }
+            mBeat = len > 0 ? mClip->StartBeat() + fmodf(mClip->EndBeat() - mBeat, len)
+                            : mClip->StartBeat();
             mBeat += AlignToBeat(beat);
             mNextEvent = 0;
         } else if (mBeat < mClip->StartBeat()) {
             float len = mClip->LengthBeats();
-            if (len > 0) {
-                mBeat = mClip->EndBeat() - fmodf(mClip->StartBeat() - mBeat, len);
-            } else {
-                mBeat = mClip->StartBeat();
-            }
+            mBeat = len > 0 ? mClip->EndBeat() - fmodf(mClip->StartBeat() - mBeat, len)
+                            : mClip->StartBeat();
             mBeat += AlignToBeat(beat);
             mNextEvent = mClip->NumBeatEvents();
         }

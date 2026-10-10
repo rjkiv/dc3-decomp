@@ -208,11 +208,11 @@ void SkeletonViz::DrawLine3D(
     MILO_ASSERT(mat, 0x178);
 
     if (!color2) {
-        mat->SetColor(color2->red, color2->green, color2->blue);
+        mat->SetColor(color1.red, color1.green, color1.blue);
     } else {
         mUtlLine->SetMat(0);
-        mUtlLine->SetPointColor(0, *color2, true);
-        mUtlLine->SetPointColor(1, color1, true);
+        mUtlLine->SetPointColor(0, color1, true);
+        mUtlLine->SetPointColor(1, *color2, true);
     }
     mUtlLine->SetWidth(unk214 * f);
     mUtlLine->DrawShowing();

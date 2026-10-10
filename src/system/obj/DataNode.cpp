@@ -640,7 +640,9 @@ bool DataNode::Equal(const DataNode &n, DataArray *a, bool warn) const {
                     );
                 }
             } else if (secondType != kDataString && secondType != kDataSymbol) {
-                warn &= secondType != kDataObject;
+                if (secondType != kDataObject) {
+                    warn = false;
+                }
             }
         }
 
@@ -657,8 +659,8 @@ bool DataNode::Equal(const DataNode &n, DataArray *a, bool warn) const {
                 "DataNode::Equal: DataNodes %s and %s (%s and %s) are not compatible (file %s, line %d)",
                 str1,
                 str2,
-                DataTypeString(first.Type()),
-                DataTypeString(second.Type()),
+                DataTypeString(first.mType),
+                DataTypeString(second.mType),
                 a ? a->File() : "",
                 a ? a->Line() : -1
             );

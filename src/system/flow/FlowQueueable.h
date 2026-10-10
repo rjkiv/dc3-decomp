@@ -30,5 +30,5 @@ protected:
 
     /** "Determines how we handle re-triggering of this label" */
     QueueState mInterrupt; // 0x5c
-    std::list<Hmx::Object *> unk60; // 0x60
+    std::list<Hmx::Object *> mQueuedListeners; // 0x60
 };

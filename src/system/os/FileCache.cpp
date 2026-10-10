@@ -431,10 +431,10 @@ void FileCache::Add(const FilePath &p, int priority, const FilePath &rFile) {
     } else {
         file = p;
     }
-
     for (int i = 0; i < mEntries.size(); i++) {
         if (file == mEntries[i]->mFileName) {
-            MaxEq(mEntries[i]->mPriority, priority);
+            FileCacheEntry *entry = mEntries[i];
+            entry->mPriority = Max(entry->mPriority, priority);
             return;
         }
     }

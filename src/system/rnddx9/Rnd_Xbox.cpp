@@ -230,8 +230,8 @@ void DxRnd::EndDrawing() {
     Rnd::EndDrawing();
     unk3a4 = false;
     EndTiling(mFrontBuffers[unk35c - 1 & 1], 0);
-    mD3DDevice->SetRenderTarget(0, mBackBuffer);
-    mD3DDevice->SetDepthStencilSurface(unk388);
+    Device()->SetRenderTarget(0, mBackBuffer);
+    Device()->SetDepthStencilSurface(unk388);
     if (mRegAlloc != 0) {
         mRegAlloc = (RegisterAlloc)0;
         mD3DDevice->SetShaderGPRAllocation(0, 0, 0);

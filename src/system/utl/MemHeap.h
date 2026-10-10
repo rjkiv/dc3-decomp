@@ -71,6 +71,7 @@ public:
 private:
     void InsertFreeBlock(FreeBlock *, int, FreeBlock *, FreeBlock *, int);
 
+public:
     FreeBlock *mFreeBlockChain; // 0x0
     int *mStart; // 0x4
     const char *mName; // 0x8

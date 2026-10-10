@@ -216,7 +216,7 @@ int WinSockSocket::RecvFrom(
             MILO_FAIL("error in RecvFrom: %i", err);
             port = -1;
             ip = 0;
-            return 0;
+            ret = 0;
         }
     } else {
         ip = addr.sin_addr.s_un.s_addr;

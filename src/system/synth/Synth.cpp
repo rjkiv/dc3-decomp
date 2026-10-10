@@ -281,18 +281,19 @@ float Synth::UpdateOverlay(RndOverlay *o, float y) {
         DrawMeter(f24, rms, peakhold, mLevelData[i].mName.c_str());
     }
     auto pollIt = SynthPollable::Pollables().begin();
-    char buf[64];
+    char buf[32];
     sprintf(buf, "Total active Sequences: %d", SynthPollable::Pollables().size());
-    TheRnd.DrawString(buf, Vector2(100, f24), white, true);
-    float f12 = f24 + 12.0f;
+    y = f24;
+    TheRnd.DrawString(buf, Vector2(100, y), white, true);
+    y += 12.0f;
     for (; pollIt != SynthPollable::Pollables().end(); ++pollIt) {
         const char *name = (*pollIt)->GetSoundDisplayName();
         if (*name != '\0') {
-            TheRnd.DrawString(name, Vector2(100, f12), white, true);
-            f12 += 12.0f;
+            TheRnd.DrawString(name, Vector2(100, y), white, true);
+            y += 12.0f;
         }
     }
-    return f12 / (float)TheRnd.Height();
+    return y / (float)TheRnd.Height();
 }
 
 void Synth::SetMasterVolume(float volume) { mMasterFader->SetVolume(volume); }
@@ -451,11 +452,10 @@ void Synth::AddZombie(SampleInst *inst) {
 
 void Synth::CullZombies() {
     for (auto it = mZombieInsts.begin(); it != mZombieInsts.end();) {
-        auto next = it++;
-        if ((*it)->DonePlaying()) {
-            mZombieInsts.erase(it);
+        auto cur = it;
+        if ((*it++)->DonePlaying()) {
+            mZombieInsts.erase(cur);
         }
-        it = next;
     }
 }
 

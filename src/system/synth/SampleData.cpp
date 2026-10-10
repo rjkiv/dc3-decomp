@@ -12,7 +12,7 @@
 SampleDataAllocFunc SampleData::sAlloc = nullptr;
 SampleDataFreeFunc SampleData::sFree = nullptr;
 
-SampleData::SampleData() : mData(0), mMarkers() { Reset(); }
+SampleData::SampleData() : mCRC(0), mData(0), mMarkers() { Reset(); }
 SampleData::~SampleData() { Dealloc(); }
 
 void SampleData::SetAllocator(SampleDataAllocFunc a, SampleDataFreeFunc f) {
@@ -72,7 +72,7 @@ void SampleData::Load(BinStream &bs, const FilePath &fp) {
         );
     }
     if (d.rev > 0xE) {
-        d >> (int &)mCRC;
+        d >> mCRC;
     } else {
         mCRC = Hmx::CRC(FileRelativePath(FileExecRoot(), fp.c_str()));
     }
@@ -111,7 +111,7 @@ void SampleData::LoadWAV(BinStream &bs, const FilePath &fp, bool b3) {
         return;
     } else {
         if (!b3) {
-            mCRC = FileRelativePath(FileExecRoot(), fp.c_str());
+            mCRC = Hmx::CRC(FileRelativePath(FileExecRoot(), fp.c_str()));
         } else {
             mCRC = Hmx::CRC();
         }
@@ -139,11 +139,11 @@ void SampleData::LoadWAV(BinStream &bs, const FilePath &fp, bool b3) {
 }
 
 void SampleData::Dealloc() {
-    if (mCRC && !TheWavMgr->ReleaseRes(mCRC)) {
+    if (!mCRC || !TheWavMgr->ReleaseRes(mCRC)) {
         sFree(mData, __FILE__, 0xC4, "SampleData");
     }
     mData = nullptr;
-    (int &)mCRC = 0;
+    mCRC = 0;
 }
 
 int SampleData::SizeAs(Format f) const {

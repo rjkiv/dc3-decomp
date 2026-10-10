@@ -78,27 +78,27 @@ public:
                 boxe0.Set(box.mMin, box.mMax);
                 box100.mMax[idx] = threshold;
                 boxe0.mMin[idx] = threshold;
-                float f10 = 1 / box.SurfaceArea();
-                float f8 = box100.SurfaceArea() * f10;
-                float f7 = boxe0.SurfaceArea() * f10;
-                f10 = 0;
-                float f11 = 0;
+                float invArea = 1 / box.SurfaceArea();
+                float leftArea = box100.SurfaceArea() * invArea;
+                float rightArea = boxe0.SurfaceArea() * invArea;
+                float leftCount = 0;
+                float rightCount = 0;
                 FOREACH (it, triangles) {
                     Triangle *cur = *it;
                     if (box100.Contains(*cur)) {
-                        f10 += 1;
+                        leftCount += 1;
                     } else if (boxe0.Contains(*cur)) {
-                        f11 += 1;
+                        rightCount += 1;
                     } else {
                         if (::Intersect(*cur, box100)) {
-                            f10 += 0.5f;
+                            leftCount += 0.5f;
                         }
                         if (::Intersect(*cur, boxe0)) {
-                            f11 += 0.5f;
+                            rightCount += 0.5f;
                         }
                     }
                 }
-                return f11 * f7 + f10 * f8 + 0.3f;
+                return leftCount * leftArea + rightCount * rightArea + 0.3f;
             } else {
                 return FLT_MAX;
             }
@@ -261,10 +261,10 @@ public:
             mLeaf_Index = (mLeaf_Index & 0x7FFF) | (leaf << 15);
         }
         void SetSplitAxis(SplitPlaneType t) {
-            mSplitAxis = (mSplitAxis & 0xfffffffc) | t;
+            mSplitAxis = (mSplitAxis & 0xfffffffc) | (t & 3);
         }
         void SetSplitValue(float value) {
-            unsigned int oldAxis = GetSplitAxis();
+            unsigned char oldAxis = GetSplitAxis();
             mSplitValue = value;
             mSplitAxis = (mSplitAxis & 0xfffffffc) | (oldAxis & 3);
         }

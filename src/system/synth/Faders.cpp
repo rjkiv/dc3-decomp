@@ -12,11 +12,11 @@ Fader::Fader()
       unkd0(0) {
     unkd4.clear();
     mLevelEaseType = kEasePolyOut;
-    mLevelEaseFunc = gEaseFuncs[mLevelEaseType];
+    mLevelEaseFunc = GetEaseFunction(kEasePolyOut);
     mPanEaseType = kEaseLinear;
-    mPanEaseFunc = gEaseFuncs[mPanEaseType];
+    mPanEaseFunc = GetEaseFunction(kEaseLinear);
     mTransposeEaseType = kEaseLinear;
-    mTransposeEaseFunc = gEaseFuncs[mTransposeEaseType];
+    mTransposeEaseFunc = GetEaseFunction(kEaseLinear);
 }
 
 Fader::~Fader() { CancelFade(); }

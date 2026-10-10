@@ -50,7 +50,7 @@
 
 const char *gNullStr = "";
 
-static GfxMode gGfxMode;
+static GfxMode gGfxMode = kOldGfx;
 
 namespace {
     bool gPreconfigOverride = false;
@@ -60,12 +60,12 @@ bool gHostConfig = false;
 bool gHostLogging = false;
 bool gHostCached = false;
 
-static DataArray *gSystemConfig;
-static DataArray *gSystemTitles;
-static int gUsingCD;
-static int gSystemMs;
-static float gSystemFrac;
-const char *gHostFile;
+static DataArray *gSystemConfig = nullptr;
+static DataArray *gSystemTitles = nullptr;
+static int gUsingCD = 0;
+static int gSystemMs = 0;
+static float gSystemFrac = 0;
+const char *gHostFile = nullptr;
 static Symbol gSystemLanguage;
 
 std::vector<char *> TheSystemArgs;
@@ -74,8 +74,6 @@ static Symbol gSystemLocale;
 static std::vector<char *> gPristineSystemArgs;
 static Timer gSystemTimer;
 
-bool gNetUseTimedSleep;
-
 namespace {
     bool gHasPreconfig = true;
 
@@ -83,8 +81,8 @@ namespace {
         gUsingCD = true;
         FileStat buffer;
         Symbol plat = PlatformSymbol(TheLoadMgr.GetPlatform());
-        int ret = FileGetStat(MakeString("gen/main_%s.hdr", plat), &buffer);
-        gUsingCD = ret == 0 ? ret : gUsingCD;
+        if (FileGetStat(MakeString("gen/main_%s.hdr", plat), &buffer) < 0)
+            gUsingCD = false;
     }
 }
 
@@ -395,7 +393,7 @@ void InitSystem(const char *config) {
         bool oldCD = UsingCD();
         Archive *oldArchive = TheArchive;
         if (gHostConfig) {
-            gUsingCD = false;
+            SetUsingCD(false);
             TheArchive = nullptr;
         }
         DataArray *systemConfig = ReadSystemConfig(config);
@@ -405,7 +403,7 @@ void InitSystem(const char *config) {
         gSystemConfig->Release();
         gSystemConfig = systemConfig;
         DataVariable("syscfg") = gSystemConfig;
-        gUsingCD = oldCD;
+        SetUsingCD(oldCD);
         TheArchive = oldArchive;
         StripEditorData();
     }
@@ -430,7 +428,7 @@ void PreInitSystem(const char *config) {
     bool oldCD = UsingCD();
     Archive *oldArchive = TheArchive;
     if (gHostConfig) {
-        gUsingCD = false;
+        SetUsingCD(false);
         TheArchive = nullptr;
     }
     DataArrayPtr ptr(1);
@@ -451,7 +449,7 @@ void PreInitSystem(const char *config) {
     gSystemConfig = ReadSystemConfig(config);
     MILO_ASSERT(gSystemConfig, 0x1FF);
     DataVariable("syscfg") = gSystemConfig;
-    gUsingCD = oldCD;
+    SetUsingCD(oldCD);
     TheArchive = oldArchive;
     DataRegisterFunc("system_language", OnSystemLanguage);
     DataRegisterFunc("system_locale", OnSystemLocale);
@@ -505,33 +503,31 @@ void SetSystemArgs(const char *commandLine) {
     MILO_ASSERT(commandLine && strlen(commandLine) < kCommandLineSz, 0x39A);
     static char buffer[512];
     strncpy(buffer, commandLine, sizeof(buffer) - 1);
-    char *arg = buffer;
     buffer[sizeof(buffer) - 1] = '\0';
-    bool b2 = true;
-    unsigned int b4 = false;
-    for (char *p = buffer; *p != '\0'; p++) {
-        if (!b4 && *p == ' ') {
+    char *p = buffer;
+    bool newArg = true;
+    bool inQuotes = false;
+    while (*p != '\0') {
+        if (!inQuotes && *p == ' ') {
             *p = '\0';
-            b4 = true;
-            arg = p + 1;
-        } else {
-            if (*p == '\"') {
-                *p = '\0';
-                arg = p + 1;
-                b4 = !b4;
-                if (b4) {
-                    TheSystemArgs.push_back(arg);
-                    b2 = false;
-                } else {
-                    b2 = true;
-                }
+            newArg = true;
+            p++;
+        } else if (*p == '\"') {
+            *p = '\0';
+            p++;
+            inQuotes = !inQuotes;
+            if (inQuotes) {
+                TheSystemArgs.push_back(p);
+                newArg = false;
             } else {
-                if (b2) {
-                    TheSystemArgs.push_back(arg);
-                    b2 = false;
-                }
-                arg = p + 1;
+                newArg = true;
             }
+        } else {
+            if (newArg) {
+                TheSystemArgs.push_back(p);
+                newArg = false;
+            }
+            p++;
         }
     }
     NormalizeSystemArgs();

@@ -9,6 +9,7 @@
 #include "xdk/nui/nuidetroit.h"
 
 struct CamTexClip {
+    CamTexClip() : mTex(nullptr) {}
     void StoreTextureClip(RndTex *, float, float, float, float);
 
     Transform mXfm; // 0x0
@@ -32,11 +33,11 @@ public:
     };
     // size 0x18
     struct Buffer {
-        HANDLE unk0;
-        const NUI_IMAGE_FRAME *unk4[2];
-        int unkc;
-        int unk10;
-        RndMat *unk14;
+        HANDLE mStreamHandle;
+        const NUI_IMAGE_FRAME *mFrames[2];
+        int mWriteIdx;
+        int mReleaseIdx;
+        RndMat *mMat;
     };
     class TextureStore {
     public:

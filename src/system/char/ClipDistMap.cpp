@@ -171,9 +171,11 @@ void ClipDistMap::SetNodes(ClipDistMap::Node *best, ClipDistMap::Node *worst) {
         if (worst && MaxEq(worst->err, mNodes[i].err)) {
             *worst = mNodes[i];
         }
+        float a = mNodes[i].a;
+        float b = mNodes[i].b;
         CharGraphNode graphNode;
-        graphNode.curBeat = mNodes[i].a;
-        graphNode.nextBeat = mNodes[i].b;
+        graphNode.curBeat = a;
+        graphNode.nextBeat = b;
         mClipA->GetTransitions().AddNode(mClipB, graphNode);
     }
 }
@@ -184,7 +186,7 @@ void ClipDistMap::DrawDot(float x, float y, float f3, float f4, Hmx::Color const
     rect.h = 2.0;
     float scale = (float)mSamplesPerBeat;
     rect.x = (f3 - mAStart) * scale * 2.0f + (x - 1.0f);
-    rect.y = ((f4 - mBStart) * scale - (float)(mDists.Height() - 1)) * 2.0f + y + 1.0f;
+    rect.y = ((float)(mDists.Height() - 1) - (f4 - mBStart) * scale) * 2.0f + y + 1.0f;
     TheRnd.DrawRect(rect, color, nullptr, nullptr, nullptr);
 }
 
