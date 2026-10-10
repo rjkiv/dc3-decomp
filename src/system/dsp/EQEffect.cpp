@@ -218,23 +218,23 @@ void EQEffect::SetParameter(int idx, float val) {
         createFilter(
             FilterType(1), FilterBand(0), 0, unk14 / 48000.0f, unk14 / 48000.0f, &f, 2
         );
-        unk_0x130 = f.unk_0x1000;
-        if (f.unk_0x100C > 0) {
-            _blkmov(&unk_0x15c, &f.pad[0x800], f.unk_0x100C * sizeof(float));
+        unk_0x130 = f.gain;
+        if (f.numpoles > 0) {
+            _blkmov(&unk_0x15c, &f.ycoeffs, f.numpoles * sizeof(float));
         }
         createFilter(
             FilterType(1), FilterBand(2), 0, unk14 / 48000.0f, unk0 / 48000.0f, &f, 2
         );
-        unk_0x134 = f.unk_0x1000;
-        if (f.unk_0x100C > 0) {
-            _blkmov(&unk_0x15c, &f.pad[0x800], f.unk_0x100C * sizeof(float));
+        unk_0x134 = f.gain;
+        if (f.numpoles > 0) {
+            _blkmov(&unk_0x15c, &f.ycoeffs, f.numpoles * sizeof(float));
         }
         createFilter(
             FilterType(1), FilterBand(1), 0, unk0 / 48000.0f, unk0 / 48000.0f, &f, 2
         );
-        unk_0x138 = f.unk_0x1000;
-        if (f.unk_0x100C > 0) {
-            _blkmov(&unk_0x15c, &f.pad[0x800], f.unk_0x100C * sizeof(float));
+        unk_0x138 = f.gain;
+        if (f.numpoles > 0) {
+            _blkmov(&unk_0x15c, &f.ycoeffs, f.numpoles * sizeof(float));
         }
         Reset();
     }
