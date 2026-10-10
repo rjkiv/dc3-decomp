@@ -3,6 +3,7 @@
 #include "gesture/CameraInput.h"
 #include "gesture/GestureMgr.h"
 #include "gesture/Skeleton.h"
+#include "gesture/SkeletonHistory.h"
 #include "gesture/SkeletonUpdate.h"
 #include "gesture/SkeletonViz.h"
 #include "hamobj/DancerSkeleton.h"
@@ -357,4 +358,124 @@ void FreestyleMoveRecorder::CompareDisplacementVectors(
     Scale(v2, len2 > 0 ? 1 / len2 : 0.0f, scale2);
     float clamped = Clamp(0.0f, 1.0f, -(Dot(scale1, scale2) * 0.87f - 1.0f));
     score = 1 - Clamp(0.0f, 1.0f, clamped * clamped * 20.0f);
+}
+
+float FreestyleMoveRecorder::CompareSkeletonPositions(
+    const BaseSkeleton *skel1, const BaseSkeleton *skel2, float errorWeight
+) const {
+    if (skel1 && skel2 && skel1->IsTracked() && skel2->IsTracked()) {
+        float f7 = 0;
+        for (int i = 0; i < mJointPos.size(); i++) {
+            Vector3 v70;
+            skel1->NormPos(mJointPos[i].mCoordSys, mJointPos[i].mJoint, v70);
+            Vector3 v60;
+            skel2->NormPos(mJointPos[i].mCoordSys, mJointPos[i].mJoint, v60);
+            f7 += DistanceSquared(v70, v60);
+        }
+        errorWeight *= f7 / (float)mJointAngles.size();
+        return 1 - Clamp(0.0f, 1.0f, errorWeight);
+    }
+    return 0;
+}
+
+float FreestyleMoveRecorder::CompareSkeletonJointDisplacement(
+    const FreestyleMoveFrame *frames,
+    int frameIndex,
+    const BaseSkeleton *liveSkel,
+    float &dispImportance
+) const {
+    float f14 = 0;
+    float f13 = 0;
+    int prevIndex = Max(0, frameIndex - 1);
+    for (int i = 0; i < mDispJoints.size(); i++) {
+        SkeletonJoint joint = mDispJoints[i];
+        Vector3 vPos;
+        frames[frameIndex].mSkeleton.JointPos(kCoordCamera, joint, vPos);
+        Vector3 vPrev;
+        frames[prevIndex].mSkeleton.JointPos(kCoordCamera, joint, vPrev);
+        int diff = frames[frameIndex].mTime - frames[prevIndex].mTime;
+        Vector3 vDispRecorded;
+        Subtract(vPos, vPrev, vDispRecorded);
+        vDispRecorded.y = 0;
+        int liveElapsedMs = 0;
+        const SkeletonHistory *history = SkeletonUpdate::InstanceHandle().History();
+        Vector3 vDispLive;
+        bool disp = liveSkel->Displacement(
+            history, kCoordCamera, joint, diff, vDispLive, liveElapsedMs
+        );
+        float jointScore = 0;
+        float jointWeight = 0;
+        vDispLive.y = 0;
+        if (disp) {
+            CompareDisplacementVectors(
+                vDispRecorded, diff, vDispLive, liveElapsedMs, jointScore, jointWeight
+            );
+        }
+        f14 += jointWeight * jointScore;
+        f13 += jointWeight;
+    }
+    if (f13 > 0) {
+        f14 = f14 / f13;
+    }
+    dispImportance = f13;
+    return f14;
+}
+
+float FreestyleMoveRecorder::GetScore(
+    int skeletonIndex, int historySlot, float overrideTime, bool compareDancerFrames
+) {
+    BaseSkeleton *skel = nullptr;
+    if (skeletonIndex >= 0) {
+        skel = &TheGestureMgr->GetSkeleton(skeletonIndex);
+    }
+    BaseSkeleton *liveSkel = GetLiveSkeleton();
+    if (liveSkel) {
+        Skeleton *skel2 =
+            mSkeletonIndex >= 0 ? &TheGestureMgr->GetSkeleton(mSkeletonIndex) : nullptr;
+        if (liveSkel != skel2) {
+            skel = liveSkel;
+        }
+    }
+    return GetScore(skel, historySlot, overrideTime, compareDancerFrames);
+}
+
+float FreestyleMoveRecorder::GetScore(
+    const BaseSkeleton *liveSkel,
+    int historySlot,
+    float overrideTime,
+    bool compareDancerFrames
+) {
+    if (mDebugAlreadyLoadedMoveFor == mCurrentMove && overrideTime > 0) {
+        return 1;
+    } else {
+        bool validOverride = overrideTime != -1;
+        float f7 = validOverride ? mPlayTime : overrideTime;
+        f7 *= 1000;
+        UpdateRecordingAttempt(liveSkel, f7);
+        FreestyleMoveFrame *frames;
+        int numFrames;
+        if (compareDancerFrames) {
+            frames = mDancerTakeFrames;
+            numFrames = mDancerTakeFrameCount;
+        } else {
+            frames = mFreestyleMove[mCurrentMove].mSkeletonFrames;
+            numFrames = mFreestyleMove[mCurrentMove].mFrameCount;
+        }
+        // i'm sure this is probably one big Max or something
+        int i2 = Max(0, numFrames - 1);
+        int i4 = (int)(mFrameRate * f7) - 2;
+        if (i4 <= i2) {
+            i2 = Max(i4, 0);
+        }
+        sLastComparedDancerSkel.Set(frames[i2].mSkeleton);
+        FreestyleFrameScores &scores = mFrameScoreSlots[historySlot];
+        if (liveSkel && liveSkel->IsTracked()) {
+            CalcFrameScore(scores, frames, numFrames, liveSkel, f7 - 100);
+        }
+        float total = 0;
+        for (int i = 0; i < scores.mNumFrames; i++) {
+            total += scores.mFrameScores[i] / (float)numFrames;
+        }
+        return total;
+    }
 }

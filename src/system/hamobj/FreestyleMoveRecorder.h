@@ -56,7 +56,17 @@ public:
         float overrideTime,
         bool compareDancerFrames
     );
-    float GetScore(int, int, float, bool);
+    float GetScore(
+        int skeletonIndex, int historySlot, float overrideTime, bool compareDancerFrames
+    );
+
+    void CalcFrameScore(
+        FreestyleFrameScores &scores,
+        const FreestyleMoveFrame *frames,
+        int numFrames,
+        const BaseSkeleton *liveSkel,
+        float ms
+    ) const;
 
     void SetUnk40(int i) { mPlaybackRep = i; }
     void SetVal44(int i) { mSkeletonIndex = i; } // change once context found
@@ -81,6 +91,12 @@ private:
     void UpdateFakeSkeleton();
     void CompareDisplacementVectors(
         const Vector3 &v1, int ms1, const Vector3 &v2, int ms2, float &score, float &weight
+    ) const;
+    float CompareSkeletonJointDisplacement(
+        const FreestyleMoveFrame *frames,
+        int frameIndex,
+        const BaseSkeleton *liveSkel,
+        float &dispImportance
     ) const;
 
     static DataNode OnRecordAttempt(DataArray *);

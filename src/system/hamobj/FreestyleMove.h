@@ -53,8 +53,7 @@ public:
 };
 
 // size 0x10
-class FreestyleFrameScores {
-public:
+struct FreestyleFrameScores {
     FreestyleFrameScores() {
         mFrameScores.resize(60);
         Clear();
