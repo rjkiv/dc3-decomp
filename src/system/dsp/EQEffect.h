@@ -60,15 +60,15 @@ private:
     float mLRMode; // 0x2C
     float mTransitionTime; // 0x30
     float mTTk; // 0x34
-    
-    bool unk38;
-    float unk3c;
-    float unk40;
-    float unk44;
-    float unk48;
-    float unk4c;
-    float unk50;
-    bool unk54;
+    bool mComputeHF; // 0x38
+    float mHF_k; // 0x3C
+    float mHF_v0; // 0x40
+    float mHF_v0TT; // 0x44
+    float mHF_h02; // 0x48
+    float mHF_h02TT; // 0x4C
+    float mHF_a; // 0x50
+    bool mComputeMF; // 0x54
+
     float unk58;
     float unk5c;
     float unk60;

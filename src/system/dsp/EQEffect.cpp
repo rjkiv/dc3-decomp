@@ -148,18 +148,18 @@ void EQEffect::SetParameter(int idx, float val) {
     } break;
     }
     if (dirty29) { // recalculate high band
-        unk3c = tan(6.544985e-5f * mHighFreqCutoff);
-        unk40 = pow(10, mHighFreqGain / 20);
-        unk48 = (unk40 - 1.0f) / 2;
-        unk38 = unk4c != 0.0f || unk48 != 0.0f;
-        float f = mHighFreqGain > 0.0f ? unk3c : unk3c * unk40;
-        unk50 = (f - 1.0f) / (f + 1.0f);
+        mHF_k = tan(6.544985e-5f * mHighFreqCutoff);
+        mHF_v0 = pow(10, mHighFreqGain / 20);
+        mHF_h02 = (mHF_v0 - 1.0f) / 2;
+        mComputeHF = mHF_h02TT != 0.0f || mHF_h02 != 0.0f;
+        float f = mHighFreqGain > 0.0f ? mHF_k : mHF_k * mHF_v0;
+        mHF_a = (f - 1.0f) / (f + 1.0f);
     } else if (dirty30) { // recalculate mid band
         unk5c = tan(6.544985e-5f * mMidFreqBandwidth);
         unk60 = pow(10, mMidFreqGain / 20);
         unk68 = (unk60 - 1.0f) / 2;
         unk70 = -cosf(mMidFreqCutoff * 0.0001308997f);
-        unk54 = unk6c != 0.0f || unk68 != 0.0f;
+        mComputeMF = unk6c != 0.0f || unk68 != 0.0f;
         unk58 = mMidFreqGain > 0.0f ? (unk5c - 1.0f) / (unk5c + 1.0f)
                              : (unk5c - unk60) / (unk5c + unk60);
         unk70 *= 1.0f - unk58;
@@ -241,8 +241,8 @@ void EQEffect::SetParameter(int idx, float val) {
 }
 
 EQEffect::EQEffect(IXAudioBatchAllocator *) {
-    unk38 = false;
-    unk54 = false;
+    mComputeHF = false;
+    mComputeMF = false;
     unk74 = false;
     mHighFreqCutoff = 12000.0f;
     unk90 = false;
@@ -259,12 +259,12 @@ EQEffect::EQEffect(IXAudioBatchAllocator *) {
     mHPFReso = 0;
     mLRMode = 0;
     mTransitionTime = 25.0f;
-    unk3c = 0;
-    unk40 = 0;
-    unk44 = 0;
-    unk48 = 0;
-    unk4c = 0;
-    unk50 = 0;
+    mHF_k = 0;
+    mHF_v0 = 0;
+    mHF_v0TT = 0;
+    mHF_h02 = 0;
+    mHF_h02TT = 0;
+    mHF_a = 0;
     unk58 = 0;
     unk5c = 0;
     unk60 = 0;
@@ -311,10 +311,10 @@ void EQEffect::Reset() {
     unkc8 = unkc0 = 0.0f;
     for (int i = 0; i < 2; i++) {
     }
-    unk44 = unk40;
+    mHF_v0TT = mHF_v0;
     unk64 = unk60;
     unk80 = unk7c;
-    unk4c = unk48;
+    mHF_h02TT = mHF_h02;
     unk6c = unk68;
     unk88 = unk84;
     if (mTransitionTime != 0.0f) {
