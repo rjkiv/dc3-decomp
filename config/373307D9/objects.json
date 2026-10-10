@@ -344,7 +344,7 @@
             "system/hamobj/HamIKEffector.cpp": "NonMatching",
             "system/hamobj/HamIKSkeleton.cpp": "NonMatching",
             "system/hamobj/HamIconMan.cpp": "Matching",
-            "system/hamobj/HamLabel.cpp": "NonMatching",
+            "system/hamobj/HamLabel.cpp": "Matching",
             "system/hamobj/HamList.cpp": "Matching",
             "system/hamobj/HamListRibbon.cpp": "Matching",
             "system/hamobj/HamMaster.cpp": "Matching",
