@@ -182,7 +182,7 @@ public:
     float Range() const { return mRange; }
     const std::vector<BeatEvent> &BeatEvents() const { return mBeatEvents; }
     int NumBeatEvents() { return mBeatEvents.size(); }
-    int Unk18CSize() { return unk18c.size(); }
+    int Unk18CSize() { return mSkeletonSamples.size(); }
     RndAnimatable *SyncAnim() const { return mSyncAnim; }
     float FramesPerSec() { return mFramesPerSec; }
 
@@ -270,6 +270,6 @@ protected:
     CharBonesSamples mOne; // 0x104
     FacingSet mFacing; // 0x170
     std::vector<CharBones::Bone> mZeros; // 0x180
-    std::vector<std::map<int, float> > unk18c; // 0x18c
+    std::vector<std::map<int, float> > mSkeletonSamples; // 0x18c
     int unk198; // 0x198
 };

@@ -37,7 +37,7 @@ BEGIN_COPYS(CharDriverMidi)
     COPY_SUPERCLASS(CharDriver)
     CREATE_COPY_AS(CharDriverMidi, c)
     BEGIN_COPYING_MEMBERS_FROM(c)
-        COPY_MEMBER(unke0)
+        COPY_MEMBER(mActive)
         COPY_MEMBER(mParser)
         COPY_MEMBER(mFlagParser)
         COPY_MEMBER(mBlendOverridePct)
@@ -73,7 +73,7 @@ void CharDriverMidi::PollDeps(
 }
 
 void CharDriverMidi::Enter() {
-    unke0 = true;
+    mActive = true;
     CharDriver::Enter();
     Hmx::Object *parserObj = Dir()->FindObject(mParser.Str(), true, true);
     if (parserObj) {
@@ -100,7 +100,7 @@ void CharDriverMidi::Exit() {
 
 DataNode CharDriverMidi::OnMidiParser(DataArray *da) {
     CharClip *clip;
-    if (!unke0 && mDefaultClip) {
+    if (!mActive && mDefaultClip) {
         clip = dynamic_cast<CharClip *>(mDefaultClip.Ptr());
     } else {
         clip = FindClip(da->Node(2), false);
@@ -135,7 +135,7 @@ DataNode CharDriverMidi::OnMidiParserGroup(DataArray *da) {
         return 0;
     } else {
         CharClip *clip;
-        if (!unke0 && mDefaultClip) {
+        if (!mActive && mDefaultClip) {
             clip = dynamic_cast<CharClip *>(mDefaultClip.Ptr());
         } else {
             clip = grp->GetClip(mClipFlags);

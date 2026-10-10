@@ -20,7 +20,7 @@ CharacterTest::CharacterTest(Character *theChar)
     : mMe(theChar), mDriver(theChar), mClip1(theChar), mClip2(theChar),
       mFilterGroup(theChar), mTeleportTo(theChar), mWalkPath(theChar), mTransition(0),
       mCycleTransition(1), mMetronome(0), mZeroTravel(0), mShowScreenSize(0),
-      mShowFootExtents(0), unk94(0), mDistMap(0),
+      mShowFootExtents(0), mInternalTransition(0), mDistMap(0),
       mOverlay(RndOverlay::Find("char_test")) {
     static Symbol none("none");
     mShowDistMap = none;
@@ -72,7 +72,7 @@ BEGIN_SAVES(CharacterTest)
     bs << mShowDistMap;
     bs << mTransition;
     bs << mCycleTransition;
-    bs << unk94;
+    bs << mInternalTransition;
     bs << mMetronome;
     bs << mZeroTravel;
     bs << mShowScreenSize;
@@ -119,7 +119,7 @@ BEGIN_LOADS(CharacterTest)
     d >> mShowDistMap;
     d >> mTransition;
     d >> mCycleTransition;
-    d >> unk94;
+    d >> mInternalTransition;
     if (d.rev < 10) {
         int i;
         d >> i;
@@ -373,7 +373,7 @@ void CharacterTest::Poll() {
 }
 
 void CharacterTest::Sync() {
-    unk94 = 0;
+    mInternalTransition = 0;
     if (!mDriver || (mClip1 && mClip1->Dir() != Clips())) {
         mClip1 = nullptr;
     }
@@ -418,7 +418,7 @@ void CharacterTest::Sync() {
     if (mClip1 || mClip2) {
         mDriver->Enter();
     }
-    unk94 = 0;
+    mInternalTransition = 0;
 }
 
 void CharacterTest::PlayNew() {
@@ -430,10 +430,10 @@ void CharacterTest::PlayNew() {
             CharClip::NodeVector *nodes = mClip1->GetTransitions().FindNodes(mClip2);
             if (nodes) {
                 ccd->mPlayFlags = ccd->mPlayFlags & 0xFFFF0FFF;
-                unk94 = unk94 % nodes->size;
+                mInternalTransition = mInternalTransition % nodes->size;
                 int idx;
                 if (mCycleTransition) {
-                    idx = unk94++;
+                    idx = mInternalTransition++;
                 } else {
                     idx = mTransition;
                 }

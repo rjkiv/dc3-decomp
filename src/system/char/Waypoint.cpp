@@ -18,7 +18,7 @@ int waypointunusedlmao() {
 }
 
 Waypoint::Waypoint()
-    : mFlags(0), mRadius(12), mYRadius(0), mAngRadius(0), unkd0(0), mStrictAngDelta(0),
+    : mFlags(0), mRadius(12), mYRadius(0), mAngRadius(0), mSearchID(0), mStrictAngDelta(0),
       mStrictRadiusDelta(0), mConnections(this, (EraseMode)1) {
     if (RandomFloat() < 0.5f) {
         sWaypoints->push_back(this);

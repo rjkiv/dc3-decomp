@@ -8,7 +8,7 @@
 #include <cstring>
 
 CharClipGroup::CharClipGroup()
-    : mClips(this, (EraseMode)1), mWhich(0), unk24(0), mFlags(0) {}
+    : mClips(this, (EraseMode)1), mWhich(0), mQueueStart(0), mFlags(0) {}
 
 BEGIN_HANDLERS(CharClipGroup)
     HANDLE_EXPR(get_clip, GetClip(0))
@@ -117,12 +117,12 @@ int CharClipGroup::QueueRandom(int i1, int i2) const {
 CharClip *CharClipGroup::GetClip(int flags) {
     if (mClips.size()) {
         mWhich = Min<int>(mWhich, mClips.size() - 1);
-        unk24 = Min<int>(unk24, mClips.size() - 1);
+        mQueueStart = Min<int>(mQueueStart, mClips.size() - 1);
         int oldWhich = mWhich;
         int it = mWhich - (mWhich < mClips.size() ? 0 : mClips.size());
         mWhich = it;
-        for (; it < unk24; it = (it == mClips.size() ? 0 : it + 1)) {
-            mClips.swap(it, QueueRandom(it, unk24));
+        for (; it < mQueueStart; it = (it == mClips.size() ? 0 : it + 1)) {
+            mClips.swap(it, QueueRandom(it, mQueueStart));
             CharClip *clip = mClips[it];
             if ((clip->Flags() & flags) == flags) {
                 mClips.swap(it, mWhich);
@@ -134,16 +134,16 @@ CharClip *CharClipGroup::GetClip(int flags) {
             CharClip *clip = mClips[it];
             if ((clip->Flags() & flags) == flags) {
                 mClips.swap(it, mWhich);
-                mClips.swap(it, unk24);
-                unk24 = (unk24 + 1 < mClips.size() ? unk24 + 1 : mClips.size());
+                mClips.swap(it, mQueueStart);
+                mQueueStart = (mQueueStart + 1 < mClips.size() ? mQueueStart + 1 : mClips.size());
                 return clip;
             }
         }
         CharClip *clip = mClips[it];
         if ((clip->Flags() & flags) == flags) {
             mClips.swap(it, mWhich);
-            mClips.swap(it, unk24);
-            unk24 = (unk24 + 1 < mClips.size() ? unk24 + 1 : mClips.size());
+            mClips.swap(it, mQueueStart);
+            mQueueStart = (mQueueStart + 1 < mClips.size() ? mQueueStart + 1 : mClips.size());
             return clip;
         }
     }

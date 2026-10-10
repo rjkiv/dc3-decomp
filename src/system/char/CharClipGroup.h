@@ -38,6 +38,6 @@ protected:
     /** "LRU list of clips belonging to this group" */
     ObjPtrVec<CharClip> mClips; // 0x4
     int mWhich; // 0x20
-    int unk24;
+    int mQueueStart;
     int mFlags; // 0x28
 };
