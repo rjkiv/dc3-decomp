@@ -46,74 +46,68 @@ public:
     void SetParameters(const EQEffect::Params &);
 
 private:
-    float unk0;
-    float unk4;
-    float unk8;
-    float unkc;
-    float unk10;
-    float unk14;
-    float unk18;
-    float unk1c;
-    float unk20;
-    float unk24;
-    float unk28;
-    float unk2c;
-    float unk30;
-    float unk34;
-    bool unk38;
-    float unk3c;
-    float unk40;
-    float unk44;
-    float unk48;
-    float unk4c;
-    float unk50;
-    bool unk54;
-    float unk58;
-    float unk5c;
-    float unk60;
-    float unk64;
-    float unk68;
-    float unk6c;
-    float unk70;
-    bool unk74;
-    float unk78;
-    float unk7c;
-    float unk80;
-    float unk84;
-    float unk88;
-    float unk8c;
-    bool unk90;
-    float unk94;
-    float unk98;
-    float unk9c;
-    float unka0;
-    float unka4;
-    bool unka8;
-    float unkac;
-    float unkb0;
-    float unkb4;
-    float unkb8;
-    float unkbc;
-    float unkc0;
-    float unkc4;
-    float unkc8;
-    float unkcc;
-    float unkd0;
-    float unkd4;
-    float unkd8;
-    float unkdc;
-    float unke0;
-    float unke4;
-    float unke8;
-    float unkec;
-    float unkf0;
-    float unkf4;
-    float unkf8;
-    float unkfc;
-    char pad[0x30];
-    float unk_0x130;
-    float unk_0x134;
-    float unk_0x138;
-    char pad2[0x20];
-    float unk_0x15c[124];
+    float mHighFreqCutoff; // 0x0
+    float mHighFreqGain; // 0x4
+    float mMidFreqCutoff; // 0x8
+    float mMidFreqBandwidth; // 0xC
+    float mMidFreqGain; // 0x10
+    float mLowFreqCutoff; // 0x14
+    float mLowFreqGain; // 0x18
+    float mLPFCutoff; // 0x1C
+    float mLPFReso; // 0x20
+    float mHPFCutoff; // 0x24
+    float mHPFReso; // 0x28
+    float mLRMode; // 0x2C
+    float mTransitionTime; // 0x30
+    float mTTk; // 0x34
+    bool mComputeHF; // 0x38
+    float mHF_k; // 0x3C
+    float mHF_v0; // 0x40
+    float mHF_v0TT; // 0x44
+    float mHF_h02; // 0x48
+    float mHF_h02TT; // 0x4C
+    float mHF_a; // 0x50
+    bool mComputeMF; // 0x54
+    float mMF_a; // 0x58
+    float mMF_k; // 0x5C
+    float mMF_v0; // 0x60
+    float mMF_v0TT; // 0x64
+    float mMF_h02; // 0x68
+    float mMF_h02TT; // 0x6C
+    float mMF_d; // 0x70
+    bool mComputeLF; // 0x74
+    float mLF_k; // 0x78
+    float mLF_v0; // 0x7C
+    float mLF_v0TT; // 0x80
+    float mLF_h02; // 0x84
+    float mLF_h02TT; // 0x88
+    float mLF_a; // 0x8C
+    bool mComputeLPF; // 0x90
+    float mLPF_A0; // 0x94
+    float mLPF_A1; // 0x98
+    float mLPF_A2; // 0x9C
+    float mLPF_B1; // 0xA0
+    float mLPF_B2; // 0xA4
+    bool mComputeHPF; // 0xA8
+    float mHPF_A0; // 0xAC
+    float mHPF_A1; // 0xB0
+    float mHPF_A2; // 0xB4
+    float mHPF_B1; // 0xB8
+    float mHPF_B2; // 0xBC
+    float mMF_xn1[2]; // 0xC0
+    float mMF_xn2[2]; // 0xC8
+    float mMF_y1n1[2]; // 0xD0
+    float mMF_y1n2[2]; // 0xD8
+    float mHFDelay[2]; // 0xE0
+    float mLFDelay[2]; // 0xE8
+    float mLPFDelayX[2][2]; // 0xF0
+    float mLPFDelayY[2][2]; // 0x100
+    float mHPFDelayX[2][2]; // 0x110
+    float mHPFDelayY[2][2]; // 0x120
+    float mLPGain; // 0x130
+    float mBPGain; // 0x134
+    float mHPGain; // 0x138
+    float mLRB[3][4]; // 0x13C
+    float mLRxv[2][3][2][5]; // 0x16C
+    float mLRyv[2][3][2][5]; // 0x25C
 };

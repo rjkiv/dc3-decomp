@@ -49,10 +49,12 @@ typedef enum FilterType {
 typedef enum FilterBand {
 } FilterBand;
 typedef struct FILTER {
-    char pad[0x1000];
-    float unk_0x1000;
-    float unk_0x1004;
-    float unk_0x1008;
-    int unk_0x100C;
+    float xcoeffs[512]; // 0x0
+    float ycoeffs[512]; // 0x800
+    float gain; // 0x1000
+    float gainSq; // 0x1004
+    float invGainSq; // 0x1008
+    int numpoles; // 0x100C
+    int numzeros; // 0x1010
 } FILTER;
 void createFilter(FilterType, FilterBand, uint, float, float, FILTER *, int);

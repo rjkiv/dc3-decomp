@@ -36,24 +36,22 @@ public:
     void SetParameters(const WahEffect::Params &);
 
 private:
-    float unk0;
-    float unk4;
-    float unk8;
-    float unkc;
-    float unk10;
-    float unk14;
-    float unk18;
-    float unk1c;
-    float unk20;
-    float unk24;
-    float unk28;
-    int unk2c;
-    float unk30;
-    float unk34;
-    float unk38;
-    float unk3c;
-    float unk40;
-    float unk44;
-    float unk48;
-    int unk4c;
+    float mResonance; // 0x0
+    float mMinFreq; // 0x4
+    float mMaxFreq; // 0x8
+    float mLfoFreq; // 0xC
+    float mMagic; // 0x10
+    float mBeatFrac; // 0x14
+    float mDistAmount; // 0x18
+    float mAutoWah; // 0x1C
+    float mFrequency; // 0x20
+    float mSmoothCutoff; // 0x24
+    float mPreviousAutoWah; // 0x28
+    int mManualWahRecoveryTimer; // 0x2C
+    float mLastPhase; // 0x30
+    float mA1[2]; // 0x34
+    float mA2[2]; // 0x3C
+    float mInSample; // 0x44
+    float mOutSample; // 0x48
+    float mDump; // 0x4C
 };
