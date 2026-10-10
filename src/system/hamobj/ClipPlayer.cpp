@@ -22,7 +22,7 @@ const char *ClipPlayer::sRestStepNames[4] = {
 };
 
 namespace {
-    float ClipStart(CharClip *clip, float beat, float &start, float &end) {
+    float ClipStart(CharClip *clip, float beat, float &startBeat, float &endBeat) {
         if (fmodf(beat, 1.0) != 0.0f && ceilf(beat) - beat < 0.0001f) {
             beat = ceil(beat);
         }
@@ -33,52 +33,50 @@ namespace {
             offset = Mod(beat - clip->StartBeat(), period);
         }
 
-        start = beat - offset;
-        end = clip->EndBeat() - clip->StartBeat() + start;
+        startBeat = beat - offset;
+        endBeat = clip->EndBeat() - clip->StartBeat() + startBeat;
 
         return clip->StartBeat() + offset;
     }
 }
 
-void Annotate(DataArray *a, float f, const char *cc) {
-    a->Insert(a->Size(), DataArrayPtr(BeatToFrame(f), cc));
+static void Annotate(DataArray *arr, float beat, const char *msg) {
+    arr->Insert(arr->Size(), DataArrayPtr(BeatToFrame(beat), msg));
 }
 
-bool ClipPlayer::Init(RndPropAnim *anim) {
-    mClipDir = TheHamDirector->ClipDir();
-    if (anim) {
-        PropKeys *clipKeys = anim->GetKeys(TheHamDirector, DataArrayPtr(Symbol("clip")));
+bool ClipPlayer::Init(RndPropAnim *songAnim) {
+    mClips = TheHamDirector->ClipDir();
+    if (songAnim) {
+        PropKeys *clipKeys =
+            songAnim->GetKeys(TheHamDirector, DataArrayPtr(Symbol("clip")));
         if (clipKeys) {
             mClipKeys = clipKeys->AsSymbolKeys();
         }
         PropKeys *clipCrossoverKeys =
-            anim->GetKeys(TheHamDirector, DataArrayPtr(Symbol("clip_crossover")));
+            songAnim->GetKeys(TheHamDirector, DataArrayPtr(Symbol("clip_crossover")));
         if (clipCrossoverKeys) {
-            mClipCrossoverKeys = clipCrossoverKeys->AsSymbolKeys();
+            mCrossoverKeys = clipCrossoverKeys->AsSymbolKeys();
         }
         PropKeys *masterKeys = TheHamDirector->GetMasterKeys("clip");
         if (masterKeys) {
             mMasterClipKeys = masterKeys->AsSymbolKeys();
         }
-        if (mClipKeys && mMasterClipKeys && mClipDir) {
+        if (mClipKeys && mMasterClipKeys && mClips) {
             Key<Symbol> *k1;
             Key<Symbol> *k2;
             if (TheHamDirector->GetPracticeFrames(k1, k2)) {
-                unk20 = Round(FrameToBeat(k1->frame));
-                unk24 = Round(FrameToBeat(k2->frame)) - 1.0f;
+                mB1 = Round(FrameToBeat(k1->frame));
+                mB2 = Round(FrameToBeat(k2->frame)) - 1.0f;
                 String str(k1->value);
                 str.ReplaceAll('*', '\0');
-                mInClip =
-                    mClipDir->Find<CharClip>(MakeString("%s_in", str.c_str()), false);
+                mIntro = mClips->Find<CharClip>(MakeString("%s_in", str.c_str()), false);
                 k2--;
                 str = k2->value;
                 str.ReplaceAll('*', '\0');
-                mOutClip =
-                    mClipDir->Find<CharClip>(MakeString("%s_out", str.c_str()), false);
-                mRestClip = mClipDir->Find<CharClip>("rest", false);
-                for (int i = 0; i < 4; i++) {
-                    mRestStepClips[i] =
-                        mClipDir->Find<CharClip>(sRestStepNames[i], false);
+                mOutro = mClips->Find<CharClip>(MakeString("%s_out", str.c_str()), false);
+                mRest = mClips->Find<CharClip>("rest", false);
+                for (int i = 0; i < kNumRestSteps; i++) {
+                    mRestSteps[i] = mClips->Find<CharClip>(sRestStepNames[i], false);
                 }
             }
             return true;
@@ -91,56 +89,58 @@ bool ClipPlayer::Init(Difficulty d) {
     return Init(TheHamDirector->GetPropAnim(d, "song.anim", false));
 }
 
-bool ClipPlayer::Init(int x) { return Init(TheHamDirector->SongAnim(x)); }
+bool ClipPlayer::Init(int player) { return Init(TheHamDirector->SongAnim(player)); }
 
 bool ClipPlayer::CanUseRestStep() {
     CharClip *c;
     return (TheLoadMgr.EditMode() && TheHamDirector->NoTransitions())
-        || (c = mOutClip, !(c && (ClipLength(c) != 3 || c->Flags() & 4)));
+        || (c = mOutro, !(c && (ClipLength(c) != 3 || c->Flags() & 4)));
 }
 
-void ClipPlayer::PlayAnims(HamCharacter *c, float f1, float f2, int x) {
-    unk48 = x;
-    unkc = FrameToBeat(f1);
-    unk10 = FrameToBeat(f2);
-    unk1c = c->SongDriver();
-    unk44 = 0;
-    unk1c->Clear();
+void ClipPlayer::PlayAnims(HamCharacter *c, float frame, float lastFrame, int blendDebug) {
+    mBlendDebug = blendDebug;
+    mBeat = FrameToBeat(frame);
+    mLastBeat = FrameToBeat(lastFrame);
+    mDriver = c->SongDriver();
+    mBlendCount = 0;
+    mDriver->Clear();
     HamRegulate *reg = c->Regulator();
     PlayNormal(-kHugeFloat, nullptr, "");
     reg->RegulateWay(c->GetWaypoint(), 8);
 }
 
-void ClipPlayer::PlayClip(CharClip *clip, float f1, float f2, HamDriver::LayerArray *arr) {
+void ClipPlayer::PlayClip(
+    CharClip *clip, float startBeat, float startBlend, HamDriver::LayerArray *layer
+) {
     if (clip) {
         float f50, f4c;
-        ClipStart(clip, f1, f50, f4c);
-        unk44++;
-        if (!TheLoadMgr.EditMode() || (unk48 <= 0 || unk44 == unk48)) {
-            HamDriver::LayerClip *layerClip = unk1c->NewLayerClip();
+        ClipStart(clip, startBeat, f50, f4c);
+        mBlendCount++;
+        if (!TheLoadMgr.EditMode() || (mBlendDebug <= 0 || mBlendCount == mBlendDebug)) {
+            HamDriver::LayerClip *layerClip = mDriver->NewLayerClip();
             layerClip->unk10 = clip;
-            layerClip->unkc = f50 - unk50;
-            layerClip->unk4 = f2 - unk50;
-            arr->unk2c.push_front(layerClip);
-            if (TheLoadMgr.EditMode() && unk48 > 0) {
+            layerClip->unkc = f50 - mOffset;
+            layerClip->unk4 = startBlend - mOffset;
+            layer->unk2c.push_front(layerClip);
+            if (TheLoadMgr.EditMode() && mBlendDebug > 0) {
                 layerClip->unk4 = -kHugeFloat;
             }
         }
     }
 }
 
-bool ClipPlayer::PushExpertClip(int i1, HamDriver::LayerArray *arr) {
-    if (i1 < 0)
+bool ClipPlayer::PushExpertClip(int index, HamDriver::LayerArray *layer) {
+    if (index < 0)
         return false;
     else {
-        Key<Symbol> &curKey = mClipKeys->at(i1);
+        Key<Symbol> &curKey = mClipKeys->at(index);
         float beat = FrameToBeat(curKey.frame);
         bool b2 = false;
-        if (unkc < beat + 1.0f) {
-            b2 = PushExpertClip(i1 - 1, arr);
+        if (mBeat < beat + 1.0f) {
+            b2 = PushExpertClip(index - 1, layer);
         }
         float f6 = b2 ? beat : -kHugeFloat;
-        PlayClip(mClipDir->Find<CharClip>(curKey.value.Str(), false), beat, f6, arr);
+        PlayClip(mClips->Find<CharClip>(curKey.value.Str(), false), beat, f6, layer);
         return true;
     }
 }
@@ -153,7 +153,7 @@ CharClip *ClipPlayer::GetTransitionBefore(Key<Symbol> *key) {
             strcpy(name, (key - 1)->value.Str());
             strcat(name, "_");
             strcat(name, key->value.Str());
-            return mClipDir->Find<CharClip>(name, false);
+            return mClips->Find<CharClip>(name, false);
         }
     }
     return nullptr;
@@ -167,7 +167,7 @@ CharClip *ClipPlayer::GetRoutineTransition(const char *cc, Key<Symbol> *key) {
             strcpy(name, cc);
             strcat(name, "_");
             strcat(name, key->value.Str());
-            return mClipDir->Find<CharClip>(name, false);
+            return mClips->Find<CharClip>(name, false);
         }
     }
     return nullptr;
@@ -178,22 +178,22 @@ void ClipPlayer::GetRoutineCrossoverClips(
 ) {
     if (TheMoveMgr->HasRoutine()) {
         const std::pair<const MoveVariant *, const MoveVariant *> *moveVars =
-            TheMoveMgr->GetRoutineMeasure(unk14, Round(f1 / 4.0f));
+            TheMoveMgr->GetRoutineMeasure(mCharIndex, Round(f1 / 4.0f));
         if (moveVars) {
             if (moveVars->first) {
-                *c1 = mClipDir->Find<CharClip>(moveVars->first->GetName().Str(), false);
+                *c1 = mClips->Find<CharClip>(moveVars->first->GetName().Str(), false);
             }
             if (moveVars->second) {
-                *c2 = mClipDir->Find<CharClip>(moveVars->second->GetName().Str(), false);
+                *c2 = mClips->Find<CharClip>(moveVars->second->GetName().Str(), false);
             }
         }
     }
     if (!*c1) {
         *c1 = *c2;
         if (!*c1) {
-            *c1 = mClipDir->Find<CharClip>(cc, false);
+            *c1 = mClips->Find<CharClip>(cc, false);
             if (!*c1) {
-                *c1 = mClipDir->Find<CharClip>(mMasterClipKeys->at(0).value.Str(), false);
+                *c1 = mClips->Find<CharClip>(mMasterClipKeys->at(0).value.Str(), false);
             }
         }
     }
@@ -202,16 +202,18 @@ void ClipPlayer::GetRoutineCrossoverClips(
     }
 }
 
-void ClipPlayer::PlayNormal(float f1, HamDriver::LayerArray *arr, const char *cc) {
+void ClipPlayer::PlayNormal(
+    float blendStart, HamDriver::LayerArray *layer, const char *name
+) {
     HamDriver::LayerArray *newArr;
-    if (arr) {
+    if (layer) {
         newArr = new HamDriver::LayerArray();
-        arr->unk2c.push_front(newArr);
-        strncpy(newArr->unkc, cc, 0x1F);
+        layer->unk2c.push_front(newArr);
+        strncpy(newArr->unkc, name, 0x1F);
     } else {
-        newArr = &unk1c->Layers();
+        newArr = &mDriver->Layers();
     }
-    newArr->unk4 = f1 - unk50;
+    newArr->unk4 = blendStart - mOffset;
     if (!mClipKeys) {
         if (TheLoadMgr.EditMode()) {
             {
@@ -224,12 +226,12 @@ void ClipPlayer::PlayNormal(float f1, HamDriver::LayerArray *arr, const char *cc
     } else {
         static Symbol merge_moves("merge_moves");
         if (TheHamProvider->Property(merge_moves, true)->Int() != 0) {
-            int keyIdx = mClipKeys->KeyLessEq(BeatToFrame(unkc));
+            int keyIdx = mClipKeys->KeyLessEq(BeatToFrame(mBeat));
             PushRoutineBuilderClip(keyIdx, newArr);
         } else if (mClipKeys == mMasterClipKeys) {
-            PushExpertClip(mClipKeys->KeyLessEq(BeatToFrame(unkc)), newArr);
+            PushExpertClip(mClipKeys->KeyLessEq(BeatToFrame(mBeat)), newArr);
         } else {
-            PushClip(mClipKeys->KeyGreaterEq(BeatToFrame(unkc)), newArr);
+            PushClip(mClipKeys->KeyGreaterEq(BeatToFrame(mBeat)), newArr);
         }
     }
 }
@@ -241,17 +243,22 @@ float ClipPlayer::ClipLength(CharClip *clip) {
 }
 
 bool ClipPlayer::GetClipRange(
-    const char *c1, const char *c2, float f1, float &f2, float &f3, float &f4
+    const char *clipName,
+    const char *nextClipName,
+    float beat,
+    float &startBeat,
+    float &endBeat,
+    float &blendBeat
 ) {
-    auto clip = mClipDir->Find<CharClip>(c1, false);
+    CharClip *clip = mClips->Find<CharClip>(clipName, false);
     if (clip) {
-        float clipStart = ClipStart(clip, f1, f2, f3);
-        f4 = 1e+30;
-        auto clip2 = mClipDir->Find<CharClip>(c2, false);
+        float clipStart = ClipStart(clip, beat, startBeat, endBeat);
+        blendBeat = kHugeFloat;
+        auto clip2 = mClips->Find<CharClip>(nextClipName, false);
         if (clip2 != nullptr) {
             auto node = clip->FindLastNode(clip2, clipStart);
             if (node != nullptr) {
-                f4 = (node->curBeat - clip->StartBeat()) + f2;
+                blendBeat = (node->curBeat - clip->StartBeat()) + startBeat;
             }
         }
         return true;
@@ -282,42 +289,42 @@ CharClip *ClipPlayer::GetPrevRoutineTransition(int idx) {
     }
 }
 
-void ClipPlayer::PushClip(int idx, HamDriver::LayerArray *arr) {
-    if (idx >= 0 && !mClipKeys->empty()) {
-        MinEq<int>(idx, mClipKeys->size() - 1);
-        Key<Symbol> &key = mClipKeys->at(idx);
+void ClipPlayer::PushClip(int index, HamDriver::LayerArray *layer) {
+    if (index >= 0 && !mClipKeys->empty()) {
+        MinEq<int>(index, mClipKeys->size() - 1);
+        Key<Symbol> &key = mClipKeys->at(index);
 
         float beat = FrameToBeat(key.frame);
-        CharClip *clip = unkc < beat + 1 ? GetTransitionBefore(&key) : nullptr;
+        CharClip *clip = mBeat < beat + 1 ? GetTransitionBefore(&key) : nullptr;
         float f12 = clip ? ClipLength(clip) - 2 : 0;
 
-        if (unkc < beat - f12) {
-            PushClip(idx - 1, arr);
+        if (mBeat < beat - f12) {
+            PushClip(index - 1, layer);
         }
         float f10;
         if (clip) {
             f12 = (beat - ClipLength(clip)) + 1;
-            PlayClip(clip, f12, f12, arr);
+            PlayClip(clip, f12, f12, layer);
             f10 = beat;
         } else {
             f10 = beat - 1;
         }
-        if (unkc > f10) {
+        if (mBeat > f10) {
             Key<Symbol> *master = TheHamDirector->GetMasterPracticeFrame(key.value.Str());
             if (master) {
                 Keys<Symbol, Symbol> *oldClipKeys = mClipKeys;
                 mClipKeys = mMasterClipKeys;
                 beat = FrameToBeat(master->frame) - beat;
-                unk50 += beat;
-                unkc += beat;
-                unk20 += beat;
-                unk24 += beat;
-                PlayNormal(unk50 + f10, arr, key.value.Str());
-                unkc -= beat;
-                unk20 -= beat;
+                mOffset += beat;
+                mBeat += beat;
+                mB1 += beat;
+                mB2 += beat;
+                PlayNormal(mOffset + f10, layer, key.value.Str());
+                mBeat -= beat;
+                mB1 -= beat;
                 mClipKeys = oldClipKeys;
-                unk24 -= beat;
-                unk50 -= beat;
+                mB2 -= beat;
+                mOffset -= beat;
             } else {
                 MILO_NOTIFY_ONCE(
                     "%s: can't find %s in expert practice track",
@@ -329,15 +336,15 @@ void ClipPlayer::PushClip(int idx, HamDriver::LayerArray *arr) {
     }
 }
 
-bool ClipPlayer::PushRoutineBuilderClip(int i1, HamDriver::LayerArray *arr) {
-    if (i1 >= 0 && mClipKeys->size() >= 1) {
-        Difficulty d = TheGameData->Player(unk14)->GetDifficulty();
-        int i10 = i1 + 1;
-        MinEq<int>(i1, mClipKeys->size() - 1);
+bool ClipPlayer::PushRoutineBuilderClip(int index, HamDriver::LayerArray *layer) {
+    if (index >= 0 && mClipKeys->size() >= 1) {
+        Difficulty d = TheGameData->Player(mCharIndex)->GetDifficulty();
+        int i10 = index + 1;
+        MinEq<int>(index, mClipKeys->size() - 1);
         MinEq<int>(i10, mClipKeys->size() - 1);
-        Key<Symbol> &keyi1 = mClipKeys->at(i1);
+        Key<Symbol> &keyi1 = mClipKeys->at(index);
         int i14;
-        CharClip *c = GetPrevRoutineTransition(i1);
+        CharClip *c = GetPrevRoutineTransition(index);
         if (c) {
             c = c->GetUnk198() & (1 << d) ? c : nullptr;
         }
@@ -348,17 +355,17 @@ bool ClipPlayer::PushRoutineBuilderClip(int i1, HamDriver::LayerArray *arr) {
         float f181 = f18 + 1;
         float f20 = f18 + 1.5f;
         float f19 = c ? f18 : beat;
-        if (unkc < f181) {
-            b7 = PushRoutineBuilderClip(i1 - 1, arr);
+        if (mBeat < f181) {
+            b7 = PushRoutineBuilderClip(index - 1, layer);
         }
-        if (c && unkc < f18) {
+        if (c && mBeat < f18) {
             return false;
         }
         CharClip *c1 = nullptr;
         CharClip *c2 = nullptr;
         GetRoutineCrossoverClips(f18, keyi1.value.Str(), &c1, &c2);
         float f24;
-        if (i1 != i10) {
+        if (index != i10) {
             Key<Symbol> &keyNext = mClipKeys->at(i10);
             c13 = GetRoutineTransition(c2->Name(), &keyNext);
             if (c13) {
@@ -376,22 +383,22 @@ bool ClipPlayer::PushRoutineBuilderClip(int i1, HamDriver::LayerArray *arr) {
         float f201 = f20 + 1;
 
         if (c1 == c2) {
-            if (unkc >= beat && !(c13 && unkc > f24)) {
-                PlayClip(c1, beat, b7 ? f19 : -kHugeFloat, arr);
+            if (mBeat >= beat && !(c13 && mBeat > f24)) {
+                PlayClip(c1, beat, b7 ? f19 : -kHugeFloat, layer);
                 b7 = true;
             }
         } else {
-            if (unkc >= beat && unkc <= f201) {
-                PlayClip(c1, beat, b7 ? f19 : -kHugeFloat, arr);
+            if (mBeat >= beat && mBeat <= f201) {
+                PlayClip(c1, beat, b7 ? f19 : -kHugeFloat, layer);
                 b7 = true;
             }
-            if (unkc >= f20 && !(c13 && unkc > f24)) {
-                PlayClip(c2, beat, b7 ? f20 : -kHugeFloat, arr);
+            if (mBeat >= f20 && !(c13 && mBeat > f24)) {
+                PlayClip(c2, beat, b7 ? f20 : -kHugeFloat, layer);
                 b7 = true;
             }
         }
-        if (c13 && unkc >= f18) {
-            PlayClip(c13, f18, b7 ? f18 : -kHugeFloat, arr);
+        if (c13 && mBeat >= f18) {
+            PlayClip(c13, f18, b7 ? f18 : -kHugeFloat, layer);
             b7 = true;
         }
         return b7;
@@ -440,21 +447,21 @@ DataNode ClipPlayer::AnnotateClip(float frame) {
 }
 
 DataNode ClipPlayer::AnnotatePractice() {
-    bool cmp = unk24 != kHugeFloat;
+    bool cmp = mB2 != kHugeFloat;
     if (!cmp) {
         return 0;
     } else {
         DataArray *arr = new DataArray(0);
         if (!TheLoadMgr.EditMode() || !TheHamDirector->NoTransitions()) {
-            CharClip *c = mInClip;
+            CharClip *c = mIntro;
             if (c) {
-                Annotate(arr, (unk20 + 1) - ClipLength(c), c->Name());
-                Annotate(arr, unk20 + 1, "");
+                Annotate(arr, (mB1 + 1) - ClipLength(c), c->Name());
+                Annotate(arr, mB1 + 1, "");
             }
         }
-        float f5 = unk24;
+        float f5 = mB2;
         if (!TheLoadMgr.EditMode() || !TheHamDirector->NoTransitions()) {
-            CharClip *c = mOutClip;
+            CharClip *c = mOutro;
             if (c) {
                 Annotate(arr, f5 - 1, c->Name());
                 f5 += ClipLength(c) - 2;
@@ -462,11 +469,11 @@ DataNode ClipPlayer::AnnotatePractice() {
         }
         if (CanUseRestStep()) {
             Annotate(arr, f5, "rest_step");
-            f5 = unk24 + 4;
+            f5 = mB2 + 4;
         }
         Annotate(arr, f5, "rest");
-        Annotate(arr, unk20 - (float)(TheHamDirector->StartLoopMargin() * 4), "loop");
-        Annotate(arr, unk24 + 1 + (float)(TheHamDirector->EndLoopMargin() * 4), "loop");
+        Annotate(arr, mB1 - (float)(TheHamDirector->StartLoopMargin() * 4), "loop");
+        Annotate(arr, mB2 + 1 + (float)(TheHamDirector->EndLoopMargin() * 4), "loop");
         DataNode ret(arr);
         arr->Release();
         return ret;
