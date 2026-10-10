@@ -17,9 +17,10 @@ BEGIN_HANDLERS(OriginalChoreoRemixer)
     HANDLE_ACTION(init, Init())
     HANDLE_ACTION(reset, Reset())
     HANDLE(move_passed, OnMovePassed)
-    HANDLE_EXPR(desired_difficulty, mDesiredDiffs[_msg->Int(2)])
+    HANDLE_EXPR(desired_difficulty, mDesiredPlayerDifficulty[_msg->Int(2)])
     HANDLE_ACTION(
-        set_desired_difficulty, mDesiredDiffs[_msg->Int(2)] = (Difficulty)_msg->Int(3)
+        set_desired_difficulty,
+        mDesiredPlayerDifficulty[_msg->Int(2)] = (Difficulty)_msg->Int(3)
     )
     HANDLE_SUPERCLASS(DanceRemixer)
 END_HANDLERS
@@ -37,15 +38,15 @@ BEGIN_COPYS(OriginalChoreoRemixer)
     CREATE_COPY(OriginalChoreoRemixer)
     BEGIN_COPYING_MEMBERS
         for (int i = 0; i < kNumDifficultiesDC2; i++) {
-            COPY_MEMBER(mMoveVariantsByDiff[i])
-            COPY_MEMBER(mMoveParentsByDiff[i])
+            COPY_MEMBER(mOriginalMoveVariants[i])
+            COPY_MEMBER(mOriginalMoveParents[i])
         }
         for (int i = 0; i < 2; i++) {
-            COPY_MEMBER(mDesiredDiffs[i])
-            COPY_MEMBER(unkec[i])
+            COPY_MEMBER(mDesiredPlayerDifficulty[i])
+            COPY_MEMBER(mRoutineDifficulty[i])
         }
-        COPY_MEMBER(unk104)
-        COPY_MEMBER(unk108)
+        COPY_MEMBER(mIntroMeasures)
+        COPY_MEMBER(mFinishingMoveIdx)
     END_COPYING_MEMBERS
 END_COPYS
 
@@ -57,8 +58,8 @@ void OriginalChoreoRemixer::Reset() {
     DanceRemixer::Reset();
     for (int i = 0; i < 2; i++) {
         HamPlayerData *hpd = TheGameData->Player(i);
-        mDesiredDiffs[i] = hpd->GetDifficulty();
-        for (int j = 0; j < mTotalMeasures; j++) {
+        mDesiredPlayerDifficulty[i] = hpd->GetDifficulty();
+        for (int j = 0; j < mSongMeasures; j++) {
             SelectMove(i, j);
         }
     }
@@ -80,7 +81,7 @@ void OriginalChoreoRemixer::PostMoveFinished() {
 
 bool OriginalChoreoRemixer::ScoredDanceMeasure(int x, int y) const {
     int idx = JumpedMoveIdx(y - 1);
-    if (idx >= unk104 && idx <= unk108) {
+    if (idx >= mIntroMeasures && idx <= mFinishingMoveIdx) {
         return DanceRemixer::ScoredDanceMeasure(x, y);
     } else
         return false;
@@ -94,17 +95,20 @@ void OriginalChoreoRemixer::SelectMove(int player, int measure) {
         int idx = JumpedMoveIdxAdd(measure, -1);
         int i8;
         if (ValidMoveIdx(idx)) {
-            i8 = unkec[player][idx];
-            if (i8 != mDesiredDiffs[player]) {
+            i8 = mRoutineDifficulty[player][idx];
+            if (i8 != mDesiredPlayerDifficulty[player]) {
                 const MoveParent *mp = GetMoveParent(player, idx);
                 if (TheMoveMgr->mWholeMoveGraph.HasVariantPair(
-                        mp, GetMoveParentsByDifficulty(mDesiredDiffs[player])[measure]
+                        mp,
+                        GetMoveParentsByDifficulty(
+                            mDesiredPlayerDifficulty[player]
+                        )[measure]
                     )) {
-                    i8 = mDesiredDiffs[player];
+                    i8 = mDesiredPlayerDifficulty[player];
                 }
             }
         } else {
-            i8 = mDesiredDiffs[player];
+            i8 = mDesiredPlayerDifficulty[player];
         }
         const auto &parents = GetMoveParentsByDifficulty(i8);
         const MoveParent *mp_next = parents[measure];
@@ -112,7 +116,7 @@ void OriginalChoreoRemixer::SelectMove(int player, int measure) {
         const MoveVariant *mv_next = vars[measure];
         MILO_ASSERT(mp_next, 0xA1);
         AddRoutineMove(player, measure, mp_next, mv_next);
-        unkec[player][measure] = i8;
+        mRoutineDifficulty[player][measure] = i8;
         DanceRemixer::SelectMove(player, measure);
     }
 }
@@ -125,30 +129,30 @@ void OriginalChoreoRemixer::Init() {
         }
     }
     SaveOriginalMoveParents();
-    DanceRemixer::Init(mMoveParentsByDiff[0].size());
+    DanceRemixer::Init(mOriginalMoveParents[0].size());
     for (int i = 0; i < 3; i++) {
         BridgeGapsInMoveParents(i);
     }
     for (int i = 0; i < 2; i++) {
-        unkec[i].clear();
-        unkec[i].resize(mTotalMeasures, 999);
+        mRoutineDifficulty[i].clear();
+        mRoutineDifficulty[i].resize(mSongMeasures, 999);
     }
 }
 
 std::vector<const MoveParent *> &
 OriginalChoreoRemixer::GetMoveParentsByDifficulty(int aDiff) {
     MILO_ASSERT(aDiff >= kDifficultyEasy && aDiff < kNumDifficultiesDC2, 0x37);
-    return mMoveParentsByDiff[aDiff];
+    return mOriginalMoveParents[aDiff];
 }
 
 std::vector<const MoveVariant *> &
 OriginalChoreoRemixer::GetMoveVariantsByDifficulty(int aDiff) {
     MILO_ASSERT(aDiff >= kDifficultyEasy && aDiff < kNumDifficultiesDC2, 0x3D);
-    return mMoveVariantsByDiff[aDiff];
+    return mOriginalMoveVariants[aDiff];
 }
 
 void OriginalChoreoRemixer::SaveOriginalMoveParents() {
-    unk104 = unk108 = -1;
+    mIntroMeasures = mFinishingMoveIdx = -1;
     DataArray *layout = TheMoveMgr->mWholeMoveGraph.mLayoutData;
     Symbol song = TheGameData->GetSong();
     if (!layout) {
@@ -164,10 +168,10 @@ void OriginalChoreoRemixer::SaveOriginalMoveParents() {
                 diffSym.Str()
             );
         }
-        mMoveVariantsByDiff[i].clear();
-        mMoveVariantsByDiff[i].reserve(a->Size());
-        mMoveParentsByDiff[i].clear();
-        mMoveParentsByDiff[i].reserve(a->Size());
+        mOriginalMoveVariants[i].clear();
+        mOriginalMoveVariants[i].reserve(a->Size());
+        mOriginalMoveParents[i].clear();
+        mOriginalMoveParents[i].reserve(a->Size());
         bool b2 = true;
         for (int j = 0; j < a->Size(); j++) {
             Symbol varName = a->Sym(j);
@@ -175,53 +179,54 @@ void OriginalChoreoRemixer::SaveOriginalMoveParents() {
                 TheMoveMgr->mWholeMoveGraph.FindMoveByVariantName(varName);
             const MoveParent *parent = variant ? variant->GetParent() : nullptr;
             MILO_ASSERT((variant==NULL) == (parent==NULL), 0xD4);
-            mMoveVariantsByDiff[i].push_back(variant);
-            mMoveParentsByDiff[i].push_back(parent);
+            mOriginalMoveVariants[i].push_back(variant);
+            mOriginalMoveParents[i].push_back(parent);
             if (variant) {
                 if (!variant->IsRest() && b2) {
                     b2 = false;
-                    if (unk104 != -1 && unk104 != j) {
+                    if (mIntroMeasures != -1 && mIntroMeasures != j) {
                         MILO_FAIL(
                             "Different difficulties have different number of intro moves\n"
                         );
                     }
-                    unk104 = j;
+                    mIntroMeasures = j;
                 }
                 if (variant->IsFinalPose()) {
-                    if (unk108 != -1 && unk108 != j) {
+                    if (mFinishingMoveIdx != -1 && mFinishingMoveIdx != j) {
                         MILO_FAIL(
                             "Different difficulties have final pose at different position\n"
                         );
                     }
-                    unk108 = j;
+                    mFinishingMoveIdx = j;
                     break;
                 }
             }
         }
     }
-    if (unk104 == -1 || unk108 == -1) {
+    if (mIntroMeasures == -1 || mFinishingMoveIdx == -1) {
         MILO_FAIL("Remixer could not determine start and end moves in %s", song.Str());
     }
 }
 
-void OriginalChoreoRemixer::BridgeGapsInMoveParents(int i1) {
+void OriginalChoreoRemixer::BridgeGapsInMoveParents(int difficulty) {
     std::vector<std::set<const MoveParent *> > setVec;
-    std::vector<const MoveParent *> &moveParentsByDiff = GetMoveParentsByDifficulty(i1);
-    for (int i = 0; i < mTotalMeasures; i++) {
+    std::vector<const MoveParent *> &moveParentsByDiff =
+        GetMoveParentsByDifficulty(difficulty);
+    for (int i = 0; i < mSongMeasures; i++) {
         if (!moveParentsByDiff[i]) {
             MILO_ASSERT_FMT(
                 i > 0, "MixItMgr: Gap at measure 0 in song %s\n", TheGameData->GetSong()
             );
             int i12 = i + 1;
-            for (; i12 < mTotalMeasures && !moveParentsByDiff[i12]; i12++) {
+            for (; i12 < mSongMeasures && !moveParentsByDiff[i12]; i12++) {
             }
             MILO_ASSERT_FMT(
-                i12 <= unk108,
+                i12 <= mFinishingMoveIdx,
                 "MixItMgr: Gap beyond finishing move in song %s\n",
                 TheGameData->GetSong()
             );
             setVec.clear();
-            setVec.resize(mTotalMeasures);
+            setVec.resize(mSongMeasures);
             setVec[i - 1].insert(moveParentsByDiff[i - 1]);
             setVec[i12].insert(moveParentsByDiff[i12]);
             for (int j = i12 - 1; j >= i; j--) {

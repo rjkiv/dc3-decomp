@@ -19,7 +19,7 @@ SuperEasyRemixer::SuperEasyRemixer() {}
 
 BEGIN_HANDLERS(SuperEasyRemixer)
     HANDLE_SUPERCLASS(OriginalChoreoRemixer)
-    HANDLE_EXPR(super_easy_data_error, unk124)
+    HANDLE_EXPR(super_easy_data_error, mSupereasyDataError)
     HANDLE_ACTION(
         send_downgrade_datapoint,
         SendDowngradeDatapoint(
@@ -46,8 +46,8 @@ BEGIN_COPYS(SuperEasyRemixer)
     COPY_SUPERCLASS(OriginalChoreoRemixer)
     CREATE_COPY(SuperEasyRemixer)
     BEGIN_COPYING_MEMBERS
-        COPY_MEMBER(mSuperEasyParents)
-        COPY_MEMBER(mSuperEasyVariants)
+        COPY_MEMBER(mSupereasyMoveParents)
+        COPY_MEMBER(mSupereasyMoveVariants)
     END_COPYING_MEMBERS
 END_COPYS
 
@@ -63,12 +63,12 @@ void SuperEasyRemixer::Init() {
     for (Difficulty d = EasiestDifficulty(); d != kNumDifficulties;
          d = DifficultyOneHarder(d)) {
         std::vector<const MoveParent *> &parents = GetMoveParentsByDifficulty(d);
-        if (parents.size() != mTotalMeasures) {
+        if (parents.size() != mSongMeasures) {
             MILO_NOTIFY(
                 "this song has wrong number of measures in %s track (has %d, want %d)",
                 DifficultyToSym(d).Str(),
                 parents.size(),
-                mTotalMeasures
+                mSongMeasures
             );
         }
     }
@@ -77,7 +77,7 @@ void SuperEasyRemixer::Init() {
 
 std::vector<const MoveParent *> &SuperEasyRemixer::GetMoveParentsByDifficulty(int diff) {
     if (diff == kDifficultyBeginner) {
-        return mSuperEasyParents;
+        return mSupereasyMoveParents;
     } else
         return OriginalChoreoRemixer::GetMoveParentsByDifficulty(diff);
 }
@@ -85,7 +85,7 @@ std::vector<const MoveParent *> &SuperEasyRemixer::GetMoveParentsByDifficulty(in
 std::vector<const MoveVariant *> &
 SuperEasyRemixer::GetMoveVariantsByDifficulty(int diff) {
     if (diff == kDifficultyBeginner) {
-        return mSuperEasyVariants;
+        return mSupereasyMoveVariants;
     } else
         return OriginalChoreoRemixer::GetMoveVariantsByDifficulty(diff);
 }
@@ -107,7 +107,7 @@ bool InsertVariants(std::set<const MoveVariant *> &vars, Symbol name) {
 void SuperEasyRemixer::DumpSongLayout() {
     MILO_LOG("\tSUPEREASY\t\tEASY\t\tMEDIUM\t\tHARD\n");
     String str;
-    for (int i = 0; i < mTotalMeasures; i++) {
+    for (int i = 0; i < mSongMeasures; i++) {
         int prevI = i - 1;
         str = MakeString("%d", i + 1);
         for (Difficulty d = EasiestDifficulty(); d != kNumDifficulties;
@@ -135,10 +135,10 @@ void SuperEasyRemixer::DumpSongLayout() {
                 }
             }
         }
-        if (i == mFromMeasure) {
+        if (i == mJumpFromIdx) {
             str += "\tjump_from";
         }
-        if (i == mToMeasure) {
+        if (i == mJumpToIdx) {
             str += "\tjump_to";
         }
         str += "\n";
@@ -147,16 +147,16 @@ void SuperEasyRemixer::DumpSongLayout() {
 }
 
 void SuperEasyRemixer::SaveSuperEasyMoveParents() {
-    mSuperEasyVariants.clear();
-    mSuperEasyParents.clear();
-    mSuperEasyVariants.reserve(mTotalMeasures);
-    mSuperEasyParents.reserve(mTotalMeasures);
+    mSupereasyMoveVariants.clear();
+    mSupereasyMoveParents.clear();
+    mSupereasyMoveVariants.reserve(mSongMeasures);
+    mSupereasyMoveParents.reserve(mSongMeasures);
     bool i7 = 1;
     HamSupereasyData *data =
         ObjDirItr<HamSupereasyData>(TheHamDirector->GetMoveDir(), false);
     if (data) {
         auto &routine = data->mRoutine;
-        if (routine.size() != mTotalMeasures) {
+        if (routine.size() != mSongMeasures) {
             MILO_FAIL(
                 "HamSuperEasyData has wrong number of measures in routine in song '%s'",
                 TheGameData->GetSong()
@@ -168,12 +168,12 @@ void SuperEasyRemixer::SaveSuperEasyMoveParents() {
                 name = routine[i].first;
             }
             if (name.Null()) {
-                mSuperEasyVariants.push_back(nullptr);
+                mSupereasyMoveVariants.push_back(nullptr);
             } else {
                 const MoveVariant *mv =
                     TheMoveMgr->mWholeMoveGraph.FindMoveByVariantName(name);
                 if (mv) {
-                    mSuperEasyVariants.push_back(mv);
+                    mSupereasyMoveVariants.push_back(mv);
                 } else {
                     MILO_FAIL(
                         "'%s' HamSupereasyData has move '%s' at index %d not found in move graph",
@@ -187,12 +187,12 @@ void SuperEasyRemixer::SaveSuperEasyMoveParents() {
             }
         }
         if (i7 != 0) {
-            for (int i = 0; i < mSuperEasyVariants.size(); i++) {
+            for (int i = 0; i < mSupereasyMoveVariants.size(); i++) {
                 MoveParent *parent = nullptr;
-                if (mSuperEasyVariants[i]) {
-                    parent = mSuperEasyVariants[i]->GetParent();
+                if (mSupereasyMoveVariants[i]) {
+                    parent = mSupereasyMoveVariants[i]->GetParent();
                 }
-                mSuperEasyParents.push_back(parent);
+                mSupereasyMoveParents.push_back(parent);
             }
             BridgeGapsInMoveParents(3);
         }
@@ -202,10 +202,10 @@ void SuperEasyRemixer::SaveSuperEasyMoveParents() {
     }
     if (i7 == 0) {
         MILO_NOTIFY("Supereasy will use the easy track for '%s'", TheGameData->GetSong());
-        mSuperEasyParents = GetMoveParentsByDifficulty(kDifficultyEasy);
-        mSuperEasyVariants = GetMoveVariantsByDifficulty(kDifficultyEasy);
+        mSupereasyMoveParents = GetMoveParentsByDifficulty(kDifficultyEasy);
+        mSupereasyMoveVariants = GetMoveVariantsByDifficulty(kDifficultyEasy);
     }
-    unk124 = i7 == 0;
+    mSupereasyDataError = i7 == 0;
 }
 
 void SuperEasyRemixer::LoadAllVariants() {

@@ -17,46 +17,53 @@ public:
     virtual void Save(BinStream &);
     virtual void Copy(const Hmx::Object *, Hmx::Object::CopyType);
     virtual void Load(BinStream &);
-    virtual void Init(int);
+    virtual void Init(int aNumMeasures);
     virtual void Reset();
-    virtual DataNode OnMovePassed(DataArray *);
-    virtual void MovePassed(int, HamMove *, Symbol) {}
+    virtual DataNode OnMovePassed(DataArray *msg);
+    virtual void MovePassed(int aPlayer, HamMove *aMove, Symbol aRating) {}
     virtual void PostMoveFinished();
-    virtual bool ScoredDanceMeasure(int, int) const;
+    virtual bool ScoredDanceMeasure(int player, int measure) const;
 
     OBJ_MEM_OVERLOAD(0x1A)
     NEW_OBJ(DanceRemixer)
-    void SetJump(int, int);
+    void SetJump(int aFromMeasure, int aToMeasure);
     void ClearJump();
-    float JumpedBeat(float) const;
-    int JumpedMoveIdx(int) const;
-    int JumpedMeasureAdd(int, int) const;
+    float JumpedBeat(float b) const;
+    int JumpedMoveIdx(int i) const;
+    int JumpedMeasureAdd(int measure, int n) const;
     int JumpedMeasureStepsBetween(int, int, int) const;
-    void SetUnscoredMeasureRange(int, int, int);
-    void ClearUnscoredMeasureRange(int, int, int);
+    void SetUnscoredMeasureRange(int player, int first_measure, int last_measure);
+    void ClearUnscoredMeasureRange(int player, int first_measure, int last_measure);
     void SetUnscoredMeasure(int, int);
     void ClearUnscoredMeasure(int, int);
-    const MoveVariant *MoveVariantFromHamMove(const HamMove *) const;
-    int JumpedMoveIdxAdd(int, int) const;
+    const MoveVariant *MoveVariantFromHamMove(const HamMove *aHamMove) const;
+    int JumpedMoveIdxAdd(int moveIdx, int n) const;
 
-    bool ValidMoveIdx(int idx) const { return idx >= 0 && idx < mTotalMeasures; }
+    bool ValidMoveIdx(int idx) const { return idx >= 0 && idx < mSongMeasures; }
 
 protected:
     DanceRemixer();
 
     virtual void UpdateHamDirector();
-    virtual void SelectMove(int, int);
+    virtual void SelectMove(int aPlayer, int aMoveIdx);
 
-    const MoveParent *GetMoveParent(int, int);
-    void AddRoutineMove(int, int, const MoveParent *, const MoveVariant *);
+    const MoveParent *GetMoveParent(int aPlayer, int aIdx);
+    void AddRoutineMove(
+        int aPlayer,
+        int aMoveIdx,
+        const MoveParent *aMove,
+        const MoveVariant *aPreferredVariant
+    );
 
-    int mTotalMeasures; // 0x2c
-    std::set<const MoveVariant *> unk30; // 0x30
-    unsigned char unk48; // 0x48
-    int mFromMeasure; // 0x4c
-    int mToMeasure; // 0x50
-    std::map<int, int> unk54; // 0x54
+    int mSongMeasures; // 0x2c
+    std::set<const MoveVariant *> mVariantsNeededInMemory; // 0x30
+    bool mReloadVariantsNeededInMemory; // 0x48
+    int mJumpFromIdx; // 0x4c
+    int mJumpToIdx; // 0x50
+    std::map<int, int> mJumpMap; // 0x54
     std::set<int> mUnscoredMeasures[2]; // 0x6c
 };
 
-void BuildSetOfPrevAdjacentMoveParents(std::set<const MoveParent *> &, const std::set<const MoveParent *> &);
+void BuildSetOfPrevAdjacentMoveParents(
+    std::set<const MoveParent *> &, const std::set<const MoveParent *> &
+);

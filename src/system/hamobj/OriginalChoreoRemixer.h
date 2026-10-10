@@ -32,18 +32,17 @@ public:
     virtual void Init();
 
 protected:
-    virtual std::vector<const MoveParent *> &GetMoveParentsByDifficulty(int);
-    virtual std::vector<const MoveVariant *> &GetMoveVariantsByDifficulty(int);
+    virtual std::vector<const MoveParent *> &GetMoveParentsByDifficulty(int aDiff);
+    virtual std::vector<const MoveVariant *> &GetMoveVariantsByDifficulty(int aDiff);
 
     void SaveOriginalMoveParents();
-    void BridgeGapsInMoveParents(int);
+    void BridgeGapsInMoveParents(int difficulty);
 
-    std::vector<const MoveVariant *> mMoveVariantsByDiff[kNumDifficultiesDC2]; // 0x9c
-    std::vector<const MoveParent *> mMoveParentsByDiff[kNumDifficultiesDC2]; // 0xc0
+    std::vector<const MoveVariant *> mOriginalMoveVariants[kNumDifficultiesDC2]; // 0x9c
+    std::vector<const MoveParent *> mOriginalMoveParents[kNumDifficultiesDC2]; // 0xc0
     // by num players
-    Difficulty mDesiredDiffs[2]; // 0xe4
-    std::vector<int> unkec[2]; // 0xec
-
-    int unk104; // 0x104 - start move idx?
-    int unk108; // 0x108 - end move idx?
+    Difficulty mDesiredPlayerDifficulty[2]; // 0xe4
+    std::vector<int> mRoutineDifficulty[2]; // 0xec
+    int mIntroMeasures; // 0x104
+    int mFinishingMoveIdx; // 0x108
 };

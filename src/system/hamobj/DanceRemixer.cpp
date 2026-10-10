@@ -30,10 +30,10 @@ BEGIN_HANDLERS(DanceRemixer)
     HANDLE_ACTION(post_move_finished, PostMoveFinished())
     HANDLE_ACTION(set_jump, SetJump(_msg->Int(2), _msg->Int(3)))
     HANDLE_ACTION(clear_jump, ClearJump())
-    HANDLE_EXPR(jump_from_beat, mFromMeasure * 4)
-    HANDLE_EXPR(jump_to_beat, mToMeasure * 4)
-    HANDLE_EXPR(jump_from_measure, mFromMeasure + 1)
-    HANDLE_EXPR(jump_to_measure, mToMeasure + 1)
+    HANDLE_EXPR(jump_from_beat, mJumpFromIdx * 4)
+    HANDLE_EXPR(jump_to_beat, mJumpToIdx * 4)
+    HANDLE_EXPR(jump_from_measure, mJumpFromIdx + 1)
+    HANDLE_EXPR(jump_to_measure, mJumpToIdx + 1)
     HANDLE_EXPR(jumped_beat, JumpedBeat(_msg->Float(2)))
     HANDLE_EXPR(jumped_measure, JumpedMoveIdx(_msg->Int(2) - 1) + 1)
     HANDLE_EXPR(jumped_measure_add, JumpedMeasureAdd(_msg->Int(2), _msg->Int(3)))
@@ -54,7 +54,7 @@ BEGIN_HANDLERS(DanceRemixer)
     )
     HANDLE_ACTION(clear_unscored_measures, mUnscoredMeasures[_msg->Int(2)].clear())
     HANDLE_EXPR(move_variant_from_ham_move, OnMoveVariantFromHamMove(_msg))
-    HANDLE_EXPR(measures_total, mTotalMeasures)
+    HANDLE_EXPR(measures_total, mSongMeasures)
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
 
@@ -73,15 +73,15 @@ BEGIN_COPYS(DanceRemixer)
     COPY_SUPERCLASS(Hmx::Object)
     CREATE_COPY(DanceRemixer)
     BEGIN_COPYING_MEMBERS
-        COPY_MEMBER(mTotalMeasures)
+        COPY_MEMBER(mSongMeasures)
         for (int i = 0; i < 2; i++) {
             COPY_MEMBER(mUnscoredMeasures[i])
         }
-        COPY_MEMBER(unk30)
-        COPY_MEMBER(unk48)
-        COPY_MEMBER(mFromMeasure)
-        COPY_MEMBER(mToMeasure)
-        COPY_MEMBER(unk54)
+        COPY_MEMBER(mVariantsNeededInMemory)
+        COPY_MEMBER(mReloadVariantsNeededInMemory)
+        COPY_MEMBER(mJumpFromIdx)
+        COPY_MEMBER(mJumpToIdx)
+        COPY_MEMBER(mJumpMap)
     END_COPYING_MEMBERS
 END_COPYS
 
@@ -89,26 +89,26 @@ BEGIN_LOADS(DanceRemixer)
     Hmx::Object::Load(bs);
 END_LOADS
 
-void DanceRemixer::Init(int x) {
+void DanceRemixer::Init(int aNumMeasures) {
     if (TheMoveMgr->mWholeMoveGraph.mNodes.size() == 0) {
         MILO_FAIL("Failed to load move graph for: %s\n", TheGameData->GetSong());
     }
-    mTotalMeasures = x;
+    mSongMeasures = aNumMeasures;
     for (int i = 0; i < 2; i++) {
-        TheMoveMgr->mRoutineParents[i].resize(mTotalMeasures);
-        TheMoveMgr->mRoutinePreferredVariants[i].resize(mTotalMeasures);
-        TheMoveMgr->mRoutine[i].resize(mTotalMeasures);
+        TheMoveMgr->mRoutineParents[i].resize(mSongMeasures);
+        TheMoveMgr->mRoutinePreferredVariants[i].resize(mSongMeasures);
+        TheMoveMgr->mRoutine[i].resize(mSongMeasures);
     }
     ClearJump();
     HandleType(Message("post_init"));
 }
 
 void DanceRemixer::Reset() {
-    unk30.clear();
-    unk48 = false;
+    mVariantsNeededInMemory.clear();
+    mReloadVariantsNeededInMemory = false;
     ClearJump();
     for (int i = 0; i < 2; i++) {
-        for (int j = 0; j < mTotalMeasures; i++) {
+        for (int j = 0; j < mSongMeasures; i++) {
         }
         mUnscoredMeasures[i].clear();
     }
@@ -155,28 +155,28 @@ void DanceRemixer::PostMoveFinished() {
     }
 }
 
-bool DanceRemixer::ScoredDanceMeasure(int x, int y) const {
-    return mUnscoredMeasures[x].find(y) == mUnscoredMeasures[x].end();
+bool DanceRemixer::ScoredDanceMeasure(int player, int measure) const {
+    return mUnscoredMeasures[player].find(measure) == mUnscoredMeasures[player].end();
 }
 
 void DanceRemixer::UpdateHamDirector() {
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < TheMoveMgr->mRoutine[i].size(); j++) {
-            if (j <= mFromMeasure || mToMeasure <= j) {
+            if (j <= mJumpFromIdx || mJumpToIdx <= j) {
                 std::pair<const MoveVariant *, const MoveVariant *> mvs =
                     TheMoveMgr->mRoutine[i][j];
                 if (mvs.first) {
-                    unk30.insert(mvs.first);
+                    mVariantsNeededInMemory.insert(mvs.first);
                 }
                 if (mvs.second && mvs.second != mvs.first) {
-                    unk30.insert(mvs.second);
+                    mVariantsNeededInMemory.insert(mvs.second);
                 }
             }
         }
     }
-    if (unk48 && TheHamDirector->IsMoveMergerFinished()) {
-        TheHamDirector->LoadRoutineBuilderData(unk30, true);
-        unk48 = false;
+    if (mReloadVariantsNeededInMemory && TheHamDirector->IsMoveMergerFinished()) {
+        TheHamDirector->LoadRoutineBuilderData(mVariantsNeededInMemory, true);
+        mReloadVariantsNeededInMemory = false;
     }
 }
 
@@ -184,39 +184,49 @@ void DanceRemixer::SelectMove(int, int) {}
 
 int DanceRemixer::JumpedMoveIdx(int idx) const { return Round(JumpedBeat(idx * 4)) / 4; }
 
-const MoveParent *DanceRemixer::GetMoveParent(int x, int y) {
-    return TheMoveMgr->mRoutineParents[x][y];
+const MoveParent *DanceRemixer::GetMoveParent(int aPlayer, int aIdx) {
+    return TheMoveMgr->mRoutineParents[aPlayer][aIdx];
 }
 
 void BuildSetOfPrevAdjacentMoveParents(
-    std::set<const MoveParent *> &s1, const std::set<const MoveParent *> &s2
+    std::set<const MoveParent *> &aFromSet, const std::set<const MoveParent *> &aToSet
 ) {
-    for (std::set<const MoveParent *>::const_iterator it = s2.begin(); it != s2.end();
+    for (std::set<const MoveParent *>::const_iterator it = aToSet.begin();
+         it != aToSet.end();
          ++it) {
     }
 }
 
-void DanceRemixer::SetUnscoredMeasureRange(int x, int y, int z) {
-    for (int i = y; i <= z; i++) {
-        mUnscoredMeasures[x].insert(i);
+void DanceRemixer::SetUnscoredMeasureRange(
+    int player, int first_measure, int last_measure
+) {
+    for (int i = first_measure; i <= last_measure; i++) {
+        mUnscoredMeasures[player].insert(i);
     }
 }
 
-void DanceRemixer::ClearUnscoredMeasureRange(int x, int y, int z) {
-    for (int i = y; i < z; i++) {
-        mUnscoredMeasures[x].erase(i);
+void DanceRemixer::ClearUnscoredMeasureRange(
+    int player, int first_measure, int last_measure
+) {
+    for (int i = first_measure; i < last_measure; i++) {
+        mUnscoredMeasures[player].erase(i);
     }
 }
 
 void DanceRemixer::AddRoutineMove(
-    int x, int y, const MoveParent *mp, const MoveVariant *mv
+    int aPlayer,
+    int aMoveIdx,
+    const MoveParent *aMove,
+    const MoveVariant *aPreferredVariant
 ) {
-    TheMoveMgr->mRoutineParents[x][y] = mp;
-    TheMoveMgr->mRoutinePreferredVariants[x][y] = mv;
-    TheMoveMgr->FillInRoutineAt(x, y);
-    TheMoveMgr->InsertMoveInSong(TheMoveMgr->mRoutine[x][y].first, y, x);
+    TheMoveMgr->mRoutineParents[aPlayer][aMoveIdx] = aMove;
+    TheMoveMgr->mRoutinePreferredVariants[aPlayer][aMoveIdx] = aPreferredVariant;
+    TheMoveMgr->FillInRoutineAt(aPlayer, aMoveIdx);
+    TheMoveMgr->InsertMoveInSong(
+        TheMoveMgr->mRoutine[aPlayer][aMoveIdx].first, aMoveIdx, aPlayer
+    );
     MILO_NOTIFY(
         "Jump target to index %d is out of bounds of the song (0 to %d)!",
-        mTotalMeasures - 1
+        mSongMeasures - 1
     );
 }
