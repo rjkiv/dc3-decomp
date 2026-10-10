@@ -19,14 +19,18 @@ WahEffect::WahEffect(IXAudioBatchAllocator *) {
     mLastPhase = 0;
     mInSample = 0;
     mOutSample = 0;
-    mA1[2] = 0;
-    mA2[2] = 0;
+    mA2[1] = 0;
+    mA2[0] = 0;
+    mA1[1] = 0;
+    mA1[0] = 0;
 }
 
 void WahEffect::Reset() {
     mLastPhase = 0;
-    mA1[2] = 0;
-    mA2[2] = 0;
+    mA1[1] = 0;
+    mA1[0] = 0;
+    mA2[1] = 0;
+    mA2[0] = 0;
 }
 
 void WahEffect::SetParameters(WahEffect::Params const &params) {
