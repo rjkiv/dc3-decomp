@@ -612,10 +612,8 @@ DataNode op53(DataArray *msg) {
     u32 operand = msg->Int(1);
     u32 w = msg->Int(2) & 0xFF;
 
-    u16 working2 = (w ^ 0x5Cu);
-    u16 working3 = (w << 8) ^ 0x36u;
-    u16 tmp = ((working2 | working3) >> 7);
-    return u8(tmp ^ operand);
+    u32 working = (w << 8) | w;
+    return DataNode(kDataInt, ((working >> 7) ^ operand) & 0xFF);
 }
 
 DataNode op54(DataArray *msg) {
