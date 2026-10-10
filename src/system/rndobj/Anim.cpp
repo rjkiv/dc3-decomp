@@ -281,15 +281,15 @@ AnimTask::AnimTask(
     Hmx::Object *listener,
     EaseType easeType,
     float easePower,
-    bool wait
+    bool wrap
 )
     : mAnim(this), mListener(this), mAnimTarget(this), mBlendTask(this),
       mBlendPeriod(blend), mLoop(loop), mEasePower(easePower) {
     mBlending = false;
     mBlendTime = 0;
-    unka8 = wait;
+    unka8 = wrap;
     unkb0 = true;
-    mEaseFunc = GetEaseFunctionForcedInline(easeType);
+    mEaseFunc = GetEaseFunction(easeType);
     mListener = listener;
     MILO_ASSERT(anim, 0x213);
     mMin = Min(start, end);
@@ -388,21 +388,20 @@ void AnimTask::Poll(float f1) {
                 float end = mAnim->EndFrame();
                 float min = Min(start, end);
                 float max = Max(start, end);
-                float diff = max - min;
                 if (f1 == 0) {
                     if (mScale > 0) {
-                        frame = fmodf(mMin, diff);
+                        frame = fmodf(mMin, max - min);
                     } else {
-                        frame = fmodf(mMax, diff);
+                        frame = fmodf(mMax, max - min);
                     }
                 } else if (f1 >= unkac) {
                     if (mScale > 0) {
-                        frame = fmodf(mMax, diff);
+                        frame = fmodf(mMax, max - min);
                     } else {
-                        frame = fmodf(mMin, diff);
+                        frame = fmodf(mMin, max - min);
                     }
                 } else {
-                    frame = fmodf(f7, diff) + min;
+                    frame = fmodf(f7, max - min) + min;
                 }
             } else {
                 frame = Clamp(mMin, mMax, f7);
@@ -544,7 +543,7 @@ DataNode RndAnimatable::OnAnimate(DataArray *arr) {
         local_listener,
         local_ease,
         local_ease_power,
-        local_wait
+        local_wrap
     );
     ObjPtr<AnimTask> taskPtr(nullptr, task);
     if (local_name && taskPtr) {
@@ -559,7 +558,9 @@ DataNode RndAnimatable::OnAnimate(DataArray *arr) {
         }
     }
     static Symbol trigger_anim_task("trigger_anim_task");
-    if (!Property(trigger_anim_task, false) || Property(trigger_anim_task)->Int() != 0) {
+    if (!Property(trigger_anim_task, false)) {
+        TheTaskMgr.Start(taskPtr, local_units, local_delay);
+    } else if (Property(trigger_anim_task)->Int() != 0) {
         TheTaskMgr.Start(taskPtr, local_units, local_delay);
     }
 

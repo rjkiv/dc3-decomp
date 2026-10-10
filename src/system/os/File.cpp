@@ -78,11 +78,11 @@ const char *FileGetExt(const char *file) {
 
 const char *FileGetName(const char *file) {
     const char *dir = strrchr(file, '/');
-    if(dir){
+    if (dir) {
         return dir + 1;
-    } 
+    }
     dir = strrchr(file, '\\');
-    if(!dir){
+    if (!dir) {
         return file;
     }
     return dir + 1;
@@ -223,7 +223,7 @@ const char *FileMakePathBuf(const char *iRoot, const char *iFilepath, char *oBuf
         }
     }
     FileNormalizePath(oBuf);
-    bool slashFirst = oBuf[0] == '/';
+    bool slashFirst = *c == '/';
 
     char *dirs[32];
     char **endDir = dirs;
@@ -243,25 +243,25 @@ const char *FileMakePathBuf(const char *iRoot, const char *iFilepath, char *oBuf
         tok = strtok(nullptr, "/");
     }
     MILO_ASSERT(endDir - dirs <= 32, 0x35C);
-
+    char *p = c;
     if (endDir == dirs) {
         if (slashFirst) {
-            *c++ = '/';
+            *p++ = '/';
         } else {
-            *c++ = '.';
+            *p++ = '.';
         }
     } else {
         for (char **it = dirs; it != endDir; ++it) {
             if (it != dirs || slashFirst) {
-                *c++ = '/';
+                *p++ = '/';
             }
             for (char *ptr = *it; *ptr != '\0'; ptr++) {
-                *c++ = *ptr;
+                *p++ = *ptr;
             }
         }
     }
-    MILO_ASSERT(c - oBuf < File::MaxFileNameLen, 0x372);
-    *c = '\0';
+    MILO_ASSERT(p - oBuf < File::MaxFileNameLen, 0x372);
+    *p = '\0';
     return oBuf;
 }
 
@@ -506,31 +506,33 @@ void RecursePatternInternal(
     if (ui2 != FixedString::npos) {
         ui3 = Min<unsigned int>(ui3, ui2);
     }
+    int idx;
     if (recurse && ui1 == FixedString::npos) {
         int len = patternStr.length();
-        for (; ui3 < len && patternStr[ui3] != '/' && patternStr[ui3] != '\\'; ui3++)
+        for (idx = ui3; idx < len && patternStr[idx] != '/' && patternStr[idx] != '\\';
+             idx++)
             ;
-        if (ui3 == len) {
+        if (idx == len) {
             recurse = false;
-            for (; ui3 >= 0 && patternStr[ui3] != '/' && patternStr[ui3] != '\\'; ui3--)
-                ;
         } else {
-            String subStr1 = patternStr.substr(ui3, len - ui3);
-            patternStr = patternStr.substr(0, ui3);
+            String subStr1 = patternStr.substr(idx, len - idx);
+            patternStr = patternStr.substr(0, idx);
             RecursePatternInternal(patternStr.c_str(), DirListCB, false, true);
             std::vector<String> dirLists(gDirList);
             gDirList.clear();
             patternStr = FileGetPath(patternStr.c_str());
             for (int i = 0; i < dirLists.size(); i++) {
-                RecursePatternInternal(
-                    MakeString("%s/%s%s", patternStr, dirLists[i], subStr1), cb, recurse, findDirs
-                );
+                const char *path =
+                    MakeString("%s/%s%s", patternStr, dirLists[i], subStr1);
+                RecursePatternInternal(path, cb, recurse, findDirs);
             }
             return;
         }
     }
+    for (idx = ui3; idx >= 0 && patternStr[idx] != '/' && patternStr[idx] != '\\'; idx--)
+        ;
     String str48;
-    str48 = ui3 <= 0 ? String(".") : patternStr.substr(0, ui3);
+    str48 = idx <= 0 ? String(".") : patternStr.substr(0, idx);
     FileEnumerate(str48.c_str(), cb, recurse, patternStr.c_str(), findDirs);
 }
 
@@ -612,12 +614,11 @@ File *NewFile(const char *iFilename, int iMode) {
                 delete theFile;
                 return nullptr;
             } else {
-                if (!gOpenCaptureFile || !(iMode & 2) || gCaptureFileMode >= 1U) {
-                    return theFile;
+                if (gOpenCaptureFile && (iMode & 2) && gCaptureFileMode < 1U) {
+                    sprintf(pathBuf, "'%s'\n", FileMakePath(".", iFilename));
+                    gOpenCaptureFile->Write(pathBuf, strlen(pathBuf));
+                    gOpenCaptureFile->Flush();
                 }
-                sprintf(pathBuf, "'%s'\n", FileMakePath(".", iFilename));
-                gOpenCaptureFile->Write(pathBuf, strlen(pathBuf));
-                gOpenCaptureFile->Flush();
                 return theFile;
             }
         }

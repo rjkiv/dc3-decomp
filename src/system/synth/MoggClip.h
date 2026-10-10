@@ -60,10 +60,11 @@ public:
     void SetPan(int, float);
     void AddFader(Fader *);
     void SetupPanInfo(float, float, bool);
+    void SetMoggVolume(float);
     const FilePath Path() const { return mMoggFile; }
     StandardStream *GetStream() const { return mStream; }
     bool HasStream() const { return mStream; }
-    int NumChannels() const { return unk58; }
+    int NumChannels() const { return mNumChannels; }
 
 private:
     void ApplyLoop(bool, int, int);
@@ -82,23 +83,23 @@ protected:
     FilePath mMoggFile; // 0x38
     /** "Volume in dB (0 is full volume, -96 is silence)." */
     float mVolume; // 0x40
-    float unk44;
+    float mControllerVolume; // 0x44
     StandardStream *mStream; // 0x48
     float unk4c;
     void *mData; // 0x50
-    int unk54; // 0x54 - buffer size?
-    int unk58; // 0x58
+    int mDataSize; // 0x54
+    int mNumChannels; // 0x58
     FileLoader *mLoader; // 0x5c
     std::vector<Fader *> mFaders; // 0x60
     std::vector<PanInfo> mPanInfos; // 0x6c
-    ObjPtr<FxSend> unk78; // 0x78
+    ObjPtr<FxSend> mFxSend; // 0x78
     Fader *mFader; // 0x8c
     bool unk90;
     bool mUnloadWhenFinished; // 0x91
     bool mPlaying; // 0x92
     bool mLoop; // 0x93
-    int unk94; // 0x94
-    int unk98; // 0x98
+    int mLoopStart; // 0x94
+    int mLoopEnd; // 0x98
     Hmx::Object *mEventReceiver; // 0x9c
     /** "Number of seconds to buffer (uses default value if set to 0.0)" */
     float mBufSecs; // 0xa0

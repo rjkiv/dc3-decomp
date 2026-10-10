@@ -34,12 +34,12 @@ StandardStream::ChannelParams::ChannelParams()
 StandardStream::StandardStream(
     File *f, float f1, float f2, Symbol ext, bool b1, bool b2, bool b3
 )
-    : unk150(b2), unk158(b3) {
+    : unk150(b2), mUseFileReceivers(b3) {
     MILO_ASSERT(f, 0x4A);
     mExt = ext;
     mFile = f;
     mInfoChannels = -1;
-    unkec = -1;
+    mTotalSecs = -1;
     Init(f1, f2, ext, false);
 }
 
@@ -366,37 +366,34 @@ void StandardStream::Init(float f1, float f2, Symbol s, bool b4) {
 }
 
 void StandardStream::InitInfo(int numChannels, int sampleRate, bool floatSamples, int i4) {
-    unk154 = i4;
+    mTotalSamples = i4;
     numChannels = mVirtualChans + numChannels;
     mInfoChannels = numChannels;
-    unkec = (mInfoChannels / sampleRate);
+    mTotalSecs = (float)i4 / sampleRate;
     if (!mGetInfoOnly) {
         if (mSampleRate == 0) {
             mFloatSamples = floatSamples;
             mSampleRate = sampleRate;
             int bufBytes = mBufSecs * sampleRate * 2.0f;
+            bufBytes = bufBytes - bufBytes % (2 * kStreamBufSize) + 2 * kStreamBufSize;
             MILO_ASSERT(bufBytes % (2*kStreamBufSize) == 0, 0x13F);
-            bufBytes >>= 0xE;
+            int numBufs = bufBytes / kStreamBufSize;
             SystemConfig("synth", "iop")->FindInt("max_slip");
             for (int i = 0; i < numChannels; i++) {
-                if (unk158) {
-                    mChannels.push_back(
-                        new StreamReceiverFile(bufBytes, mChanParams[i]->mSlipEnabled)
-                    );
+                bool slip = mChanParams[i]->mSlipEnabled;
+                if (mUseFileReceivers) {
+                    mChannels.push_back(new StreamReceiverFile(numBufs, slip));
                 } else {
-                    mChannels.push_back(
-                        StreamReceiver::New(
-                            bufBytes, sampleRate, mChanParams[i]->mSlipEnabled, i
-                        )
-                    );
+                    mChannels.push_back(StreamReceiver::New(numBufs, sampleRate, slip, i));
                 }
             }
             for (int i = 0; i < mVirtualChans; i++) {
                 void *buf = MemAlloc(
-                    mFloatSamples ? 0x1000 : 0x800, __FILE__, 0x159, "stream mVirtBufs"
+                    (mFloatSamples ? 4 : 2) * 0x800, __FILE__, 0x159, "stream mVirtBufs"
                 );
                 mVirtBufs.push_back(buf);
             }
+            mState = kBuffering;
         } else {
             MILO_ASSERT(numChannels == mChannels.size(), 0x161);
             MILO_ASSERT(mSampleRate == sampleRate, 0x162);
@@ -510,15 +507,16 @@ void StandardStream::DoJump() {
     }
 
     JumpInstance instance;
-    instance.unk0 = mJumpFromMs;
-    instance.unk4 = mJumpToMs;
+    instance.mFromMs = mJumpFromMs;
+    instance.mToMs = mJumpToMs;
     if (!mJumpInstances.empty()) {
-        instance.unkc = (instance.unk4 - instance.unk0) + mJumpInstances.back().unkc;
-        instance.unk8 =
-            (instance.unk0 - mJumpInstances.back().unk4) + mJumpInstances.back().unk8;
+        instance.mTotalOffsetMs =
+            (instance.mToMs - instance.mFromMs) + mJumpInstances.back().mTotalOffsetMs;
+        instance.mPlayedMs = (instance.mFromMs - mJumpInstances.back().mToMs)
+            + mJumpInstances.back().mPlayedMs;
     } else {
-        instance.unk8 = instance.unk4 - instance.unk0;
-        instance.unkc = instance.unk0;
+        instance.mTotalOffsetMs = instance.mToMs - instance.mFromMs;
+        instance.mPlayedMs = instance.mFromMs;
     }
     mJumpInstances.push_back(instance);
 }
@@ -557,10 +555,13 @@ bool StandardStream::IsPastStreamJumpPointOfNoReturn() {
         f = SampToMs(mCurrentSamp);
     }
     float inSongTime = GetInSongTime();
-    if (0 < inSongTime
-        && (f < inSongTime || (inSongTime < mJumpFromMs && mJumpFromMs < f))) {
-        return true;
+    if (inSongTime <= 0) {
+        return false;
     }
+    if (f >= inSongTime && (inSongTime >= mJumpFromMs || mJumpFromMs >= f)) {
+        return false;
+    }
+    return true;
 }
 
 void StandardStream::setJumpSamplesFromMs(float f1, float f2) {

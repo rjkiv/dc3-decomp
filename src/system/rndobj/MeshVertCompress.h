@@ -38,12 +38,10 @@ void PackVector(
 }
 
 // defined twice in rndobj and rnddx9, guess they forgot to inline it
-void FillCompressedVertex(
-    CompressedVertex_Xbox &vertXbox, const RndMesh::Vert &vert, bool b3
-) {
-    vertXbox.color = D3DCOLOR_COLORVALUE(
-        vert.color.red, vert.color.green, vert.color.blue, vert.color.alpha
-    );
+static void
+FillCompressedVertex(CompressedVertex_Xbox &vertXbox, const RndMesh::Vert &vert, bool b3) {
+    const Hmx::Color &c = vert.color;
+    vertXbox.color = D3DCOLOR_COLORVALUE(c.red, c.green, c.blue, c.alpha);
     PackVector(vertXbox.boneWeights, vert.boneWeights, 10, 10, 10, 2, false);
     vertXbox.x = vert.pos.x;
     vertXbox.y = vert.pos.y;

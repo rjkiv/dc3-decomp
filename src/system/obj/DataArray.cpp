@@ -648,6 +648,7 @@ DataNode DataArray::ExecuteScript(
 
     int numVars = 0;
     int size = mSize;
+    int blockIndex = index;
 
     if (index < (size - 1) && mNodes[index].Type() == kDataArray) {
         DataArray *arr = mNodes[index].ArrayValue();
@@ -660,15 +661,15 @@ DataNode DataArray::ExecuteScript(
             *var = _args->Evaluate(i + _argStart);
         }
 
-        index++;
+        blockIndex = index + 1;
     }
 
     DataNode ret;
-    if (index >= size) {
+    if (blockIndex >= size) {
         ret = DataNode(0);
     } else {
         Hmx::Object *setThis = DataSetThis(obj);
-        ret = ExecuteBlock(index);
+        ret = ExecuteBlock(blockIndex);
         DataSetThis(setThis);
     }
 
@@ -776,8 +777,8 @@ void DataArray::Load(BinStream &d) {
                         MemDoTempAllocations tmp;
                         Resize(size);
                     }
-                    for (int j = 0; j < array->Size(); j++) {
-                        mNodes[i++] = array->Node(j);
+                    for (int j = 0; j < macro->Size(); j++) {
+                        mNodes[i++] = macro->Node(j);
                     }
                 } else {
                     if (macro->Size() == 0) {

@@ -255,10 +255,7 @@ update:
 #pragma region LiveCameraInput
 
 LiveCameraInput::LiveCameraInput()
-    : mConnected(true), unk11e9(0), unk11ea(0), unk11eb(0), unk11ec(0), mSpeechMgr(0) {
-    for (int i = 0; i < DIM(mTexClips); i++) {
-        mTexClips[i].mTex = nullptr;
-    }
+    : mConnected(true), unk11e9(0), unk11ea(0), unk11eb(0), unk11ec(0) {
     mSpeechMgr = nullptr;
     unk14a8 = 0;
     unk14ac = 0;
@@ -269,18 +266,20 @@ LiveCameraInput::LiveCameraInput()
     SkeletonUpdate::Init();
     DataArray *kinectArr = SystemConfig()->FindArray("kinect", false);
     bool b17 = false;
+    DataArray *speechArr;
     if (kinectArr) {
-        DataArray *speechArr = kinectArr->FindArray("speech");
+        speechArr = kinectArr->FindArray("speech");
         b17 = speechArr->FindArray("enabled")->Int(1);
     }
     for (int i = 0; i < kBufferNum; i++) {
         Buffer &cur = mStreams[i];
-        cur.unk0 = nullptr;
-        cur.unk4[0] = nullptr;
-        cur.unk4[1] = nullptr;
-        cur.unkc = 0;
-        cur.unk10 = 1;
-        cur.unk14 = nullptr;
+        cur.mStreamHandle = nullptr;
+        for (int j = 0; j < 2; j++) {
+            cur.mFrames[j] = nullptr;
+        }
+        cur.mWriteIdx = 0;
+        cur.mReleaseIdx = 1;
+        cur.mMat = nullptr;
     }
     int initFlags = 0x4049;
     if (!UsingCD()) {
@@ -296,7 +295,7 @@ LiveCameraInput::LiveCameraInput()
     }
     MILO_ASSERT_FMT(SUCCEEDED(initRes), "NuiInitialize failed (0x%x)", initRes);
     if (b17) {
-        mSpeechMgr = new SpeechMgr(kinectArr);
+        mSpeechMgr = new SpeechMgr(speechArr);
     }
     unk11d4 = 0;
     if (SUCCEEDED(NuiAudioCreate(5, NuiAudioErrorCallback, 1, &unk11d8, nullptr))) {
@@ -318,12 +317,12 @@ LiveCameraInput::LiveCameraInput()
             0,
             2,
             nullptr,
-            &mStreams[kBufferColor].unk0
+            &mStreams[kBufferColor].mStreamHandle
         )),
         "NuiImageStreamOpen color failed"
     );
     EndMemTrackObjectName();
-    mStreams[kBufferColor].unk14 = CreateCameraBufferMat(640, 480, RndTex::kScratch);
+    mStreams[kBufferColor].mMat = CreateCameraBufferMat(640, 480, RndTex::kScratch);
     BeginMemTrackObjectName("NuiImageStreamOpen:depth");
     MILO_ASSERT_FMT(
         SUCCEEDED(NuiImageStreamOpen(
@@ -332,15 +331,14 @@ LiveCameraInput::LiveCameraInput()
             0,
             2,
             0,
-            &mStreams[kBufferDepth].unk0
+            &mStreams[kBufferDepth].mStreamHandle
         )),
         "NuiImageStreamOpen depth failed"
     );
     EndMemTrackObjectName();
-    mStreams[kBufferDepth].unk14 = CreateCameraBufferMat(320, 240, RndTex::kScratch);
-    mStreams[kBufferPlayer].unk14 = CreateCameraBufferMat(320, 240, RndTex::kScratch);
-    mStreams[kBufferPlayerColor].unk14 =
-        CreateCameraBufferMat(640, 480, RndTex::kScratch);
+    mStreams[kBufferDepth].mMat = CreateCameraBufferMat(320, 240, RndTex::kScratch);
+    mStreams[kBufferPlayer].mMat = CreateCameraBufferMat(320, 240, RndTex::kScratch);
+    mStreams[kBufferPlayerColor].mMat = CreateCameraBufferMat(640, 480, RndTex::kScratch);
     RELEASE(unk14a8);
     unk14a8 = Hmx::Object::New<DxTex>();
     RELEASE(unk14ac);
@@ -359,12 +357,12 @@ LiveCameraInput::LiveCameraInput()
 LiveCameraInput::~LiveCameraInput() {
     SkeletonUpdate::Terminate();
     for (int i = 0; i < 4; i++) {
-        RndMat *curMat = mStreams[i].unk14;
+        RndMat *curMat = mStreams[i].mMat;
         RndTex *diffuseTex = curMat ? curMat->GetDiffuseTex() : nullptr;
         delete diffuseTex;
         delete curMat;
-        if (mStreams[i].unk0) {
-            CloseHandle(mStreams[i].unk0);
+        if (mStreams[i].mStreamHandle) {
+            CloseHandle(mStreams[i].mStreamHandle);
         }
     }
     ClearSnapshots();
@@ -514,9 +512,10 @@ void LiveCameraInput::PollNewStream(BufferType buf) {
     MILO_ASSERT(kBufferColor == buf || kBufferDepth == buf, 0x227);
     MILO_ASSERT_RANGE(buf, 0, DIM(mStreams), 0x22C);
     Buffer &curBuf = mStreams[buf];
-    if (curBuf.unk0) {
-        HRESULT hr =
-            NuiImageStreamGetNextFrame(curBuf.unk0, 0, &curBuf.unk4[curBuf.unkc]);
+    if (curBuf.mStreamHandle) {
+        HRESULT hr = NuiImageStreamGetNextFrame(
+            curBuf.mStreamHandle, 0, &curBuf.mFrames[curBuf.mWriteIdx]
+        );
         if (buf == kBufferColor) {
             g_ColorPollCnt++;
             unk11e9 = true;
@@ -532,14 +531,15 @@ void LiveCameraInput::PollNewStream(BufferType buf) {
             mConnected = true;
             unk14a8->SetDeviceTex(nullptr);
             unk14ac->SetDeviceTex(nullptr);
-            if (curBuf.unk4[curBuf.unk10]) {
-                HRESULT hr =
-                    NuiImageStreamReleaseFrame(curBuf.unk0, curBuf.unk4[curBuf.unk10]);
+            if (curBuf.mFrames[curBuf.mReleaseIdx]) {
+                HRESULT hr = NuiImageStreamReleaseFrame(
+                    curBuf.mStreamHandle, curBuf.mFrames[curBuf.mReleaseIdx]
+                );
                 MILO_ASSERT(SUCCEEDED(hr), 0x24E);
-                curBuf.unk4[curBuf.unk10] = 0;
+                curBuf.mFrames[curBuf.mReleaseIdx] = 0;
             }
-            curBuf.unkc = curBuf.unkc - 1U & 1;
-            curBuf.unk10 = curBuf.unk10 - 1U & 1;
+            curBuf.mWriteIdx = curBuf.mWriteIdx - 1U & 1;
+            curBuf.mReleaseIdx = curBuf.mReleaseIdx - 1U & 1;
         } else if (hr == E_NUI_DEVICE_NOT_CONNECTED) {
             mConnected = false;
         } else if (hr == (HRESULT)0x83010001 && buf == kBufferColor) {
@@ -556,8 +556,8 @@ void *LiveCameraInput::StreamBufferData(BufferType type) const {
     } else {
         i3 = type == kBufferPlayerColor ? 1 : 0;
     }
-    if (mStreams[type].unk4[i3]) {
-        return mStreams[type].unk4[i3]->pFrameTexture;
+    if (mStreams[type].mFrames[i3]) {
+        return mStreams[type].mFrames[i3]->pFrameTexture;
     } else {
         return nullptr;
     }
@@ -565,7 +565,7 @@ void *LiveCameraInput::StreamBufferData(BufferType type) const {
 
 RndMat *LiveCameraInput::DisplayMat(BufferType type) const {
     MILO_ASSERT(type < kBufferNum, 0x20F);
-    return mStreams[type].unk14;
+    return mStreams[type].mMat;
 }
 
 RndTex *LiveCameraInput::DisplayTex(BufferType type) const {

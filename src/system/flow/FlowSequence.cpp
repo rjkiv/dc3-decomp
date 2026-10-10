@@ -5,8 +5,8 @@
 #include "os/Debug.h"
 
 FlowSequence::FlowSequence()
-    : mItr(nullptr), mLooping(0), mRepeats(0), unk68(0), mStopMode(kStopImmediate),
-      unk70(0) {}
+    : mItr(nullptr), mLooping(0), mRepeats(0), mRepeatCount(0), mStopMode(kStopImmediate),
+      mActivatingChildren(0) {}
 
 FlowSequence::~FlowSequence() {}
 
@@ -59,35 +59,35 @@ bool FlowSequence::Activate() {
             "FlowSequence re-entrance error, activated when already running, deactivating and aborting, check your logic"
         );
         Deactivate(false);
-    } else {
-        if (unk68 == 0) {
-            PushDrivenProperties();
-        }
-        unk68 = 0;
-        if (!mChildNodes.empty()) {
-            unk70 = true;
-            for (mItr = mChildNodes.begin();; ++mItr) {
-                do {
-                    if (mItr == mChildNodes.end() || !mRunningNodes.empty()
-                        || (ActivateChild(*mItr), mRequestingStop)) {
-                        unk70 = false;
-                        MILO_ASSERT(mRunningNodes.size() < 2, 0x50);
-                        if (mItr == mChildNodes.end() && mRunningNodes.empty()) {
-                            if (!mLooping && mRepeats == 0) {
-                                return false;
-                            }
-                            MILO_NOTIFY_ONCE(
-                                "Instant looping sequence in %s! Stopping Sequence",
-                                GetOwnerFlow()->Name()
-                            );
-                        }
-                        return !mRunningNodes.empty();
-                    }
-                } while (!mRunningNodes.empty());
-            }
-        }
+        return false;
     }
-    return false;
+    if (mRepeatCount == 0) {
+        PushDrivenProperties();
+    }
+    mRepeatCount = 0;
+    if (mChildNodes.empty()) {
+        return false;
+    }
+    mActivatingChildren = true;
+    for (mItr = mChildNodes.begin();; ++mItr) {
+        do {
+            if (mItr == mChildNodes.end() || !mRunningNodes.empty()
+                || (ActivateChild(*mItr), mRequestingStop)) {
+                mActivatingChildren = false;
+                MILO_ASSERT(mRunningNodes.size() < 2, 0x50);
+                if (mItr == mChildNodes.end() && mRunningNodes.empty()) {
+                    if (!mLooping && mRepeats == 0) {
+                        return false;
+                    }
+                    MILO_NOTIFY_ONCE(
+                        "Instant looping sequence in %s! Stopping Sequence",
+                        GetOwnerFlow()->Name()
+                    );
+                }
+                return !mRunningNodes.empty();
+            }
+        } while (!mRunningNodes.empty());
+    }
 }
 
 void FlowSequence::ChildFinished(FlowNode *node) {
@@ -96,7 +96,7 @@ void FlowSequence::ChildFinished(FlowNode *node) {
     );
     mRunningNodes.remove(node);
     MILO_ASSERT(mRunningNodes.empty(), 0x74);
-    if (unk70)
+    if (mActivatingChildren)
         return;
     if (mRequestingStop) {
         mRequestingStop = false;
@@ -108,22 +108,25 @@ void FlowSequence::ChildFinished(FlowNode *node) {
         ++mItr;
     }
     FLOW_LOG("Advancing sequence\n");
-    unk70 = true;
+    mActivatingChildren = true;
     for (; mItr != mChildNodes.end(); ++mItr) {
         ActivateChild(*mItr);
         if (mRequestingStop || !mRunningNodes.empty())
             break;
     }
-    unk70 = false;
+    mActivatingChildren = false;
     if (!mRequestingStop || !mRunningNodes.empty()) {
         if (mItr != mChildNodes.end())
             goto ret;
-        if (!mLooping && unk68 >= mRepeats - 1) {
+        if (!mLooping && mRepeatCount >= mRepeats - 1) {
             MILO_ASSERT(mRunningNodes.empty(), 0xA1);
             FLOW_LOG("Releasing\n");
-        } else if (Activate()) {
-            unk68++;
-            goto ret;
+        } else {
+            int count = mRepeatCount;
+            if (Activate()) {
+                mRepeatCount = count + 1;
+                goto ret;
+            }
         }
     }
     mFlowParent->ChildFinished(this);

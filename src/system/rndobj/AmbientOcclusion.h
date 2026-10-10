@@ -124,5 +124,5 @@ protected:
     std::vector<Triangle> mTriList; // 0xa4
     kdTree<Triangle> *mTree; // 0xb0
     Quality mQuality; // 0xb4
-    std::vector<Vector3> unkb8;
+    std::vector<Vector3> mSampleDirs;
 };

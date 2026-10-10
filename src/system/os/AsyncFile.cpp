@@ -219,7 +219,7 @@ void AsyncFile::FillBuffer() {
         if (mOffset != gBufferSize)
             _SeekToTell();
         int newsize = mSize - mTell;
-        _ReadAsync(mBuffer, Min<unsigned int>(gBufferSize, newsize));
+        _ReadAsync(mBuffer, Min<unsigned int>(newsize, gBufferSize));
         mOffset = 0;
     }
 }

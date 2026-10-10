@@ -101,9 +101,13 @@ BEGIN_LOADS(FlowTrigger)
     if (d.rev > 0) {
         d >> mTriggerProperties;
         d >> mStopProperties;
-    } else {
-        FOREACH (it, mTriggerEvents) {
+    }
+    if (d.rev == 0) {
+        auto it = mTriggerEvents.begin();
+        auto next = it;
+        while (it != mTriggerEvents.end()) {
             String cur = it->Str();
+            ++next;
             if (cur.contains("on_") && cur.contains("_change")) {
                 cur.erase(cur.length() - 7, 7);
                 cur.erase(0, 3);
@@ -115,6 +119,7 @@ BEGIN_LOADS(FlowTrigger)
                 mTriggerProperties.push_back(defn);
                 mTriggerEvents.erase(it);
             }
+            it = next;
         }
     }
 END_LOADS

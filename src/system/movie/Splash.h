@@ -87,5 +87,5 @@ void SuspendFunc();
 void ResumeFunc();
 void PollFunc();
 
-const char *kSplashMovie = "s_splash.tmov";
-const char *kSplashCam = "s_splash.cam";
+extern const char *kSplashMovie;
+extern const char *kSplashCam;

@@ -297,11 +297,11 @@ void RndText::FontMap3d::AllocateMeshes(RndText *text, int i2) {
     if (mFont) {
         i9 = i2 ? i2 : mDisplayableChars;
     }
-    int numMeshes = mMeshes.size();
     for (int i = i9; i < mMeshes.size(); i++) {
         delete mMeshes[i];
     }
-    mMeshes.resize(numMeshes);
+    int numMeshes = mMeshes.size();
+    mMeshes.resize(i9);
     for (int i = 0; i < mMeshes.size(); i++) {
         if (i >= numMeshes) {
             mMeshes[i] = Hmx::Object::New<RndMesh>();

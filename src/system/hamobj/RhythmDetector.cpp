@@ -295,16 +295,15 @@ void SetupFrame(
 
     frame.mJointVelocities.resize(kNumJoints);
 
-    float scale = 1 / value;
     for (int i = 0; i < kNumJoints; i++) {
         int currentJoint = kAnalyzeJoints[i];
         const Vector3 &prevJoint = prev[currentJoint];
         const Vector3 &posJoint = pos[currentJoint];
         Vector3 vsub;
         Subtract(posJoint, prevJoint, vsub);
-        frame.mJointVelocities[i].x = vsub.x * scale;
-        frame.mJointVelocities[i].y = vsub.y * scale;
-        frame.mJointVelocities[i].z = vsub.z * scale;
+        frame.mJointVelocities[i].x = vsub.x * (1 / value);
+        frame.mJointVelocities[i].y = vsub.y * (1 / value);
+        frame.mJointVelocities[i].z = vsub.z * (1 / value);
     }
     frame.unk0 = prev_beat + delt_beat;
 }

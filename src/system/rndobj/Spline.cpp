@@ -62,7 +62,7 @@ BEGIN_PROPSYNCS(RndSpline)
     SYNC_PROP_SET(end_ctrl_point, mEndCtrlPoint, SetEndCtrlPoint(_val.Int()))
     SYNC_PROP_SET(y_offset, mYOffset, mYOffset = _val.Float())
     SYNC_PROP_SET(
-        y_per_ctrl_point, mYPerCtrlPoint, mYPerCtrlPoint = Min(0.1f, _val.Float())
+        y_per_ctrl_point, mYPerCtrlPoint, mYPerCtrlPoint = Max(_val.Float(), 0.1f)
     )
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
@@ -226,11 +226,8 @@ void RndSpline::SyncDeformedDummyCtrlPoints(int iStartIndex, int iEndIndex) cons
 
 void RndSpline::PrepareShader(float f1, float f2) const {
     if (mDeformedCtrlPoints.size() >= 2) {
-        int endCtrlPt = mEndCtrlPoint;
-        int startCtrlPt = Max(mStartCtrlPoint, 0);
-        if (endCtrlPt == -1) {
-            endCtrlPt = mCtrlPoints.size() - 1;
-        }
+        int startCtrlPt = mStartCtrlPoint == -1 ? 0 : mStartCtrlPoint;
+        int endCtrlPt = mEndCtrlPoint == -1 ? mCtrlPoints.size() - 1 : mEndCtrlPoint;
         SyncDeformedCtrlPoints(startCtrlPt, endCtrlPt);
         MILO_ASSERT(((endCtrlPt - startCtrlPt) + 1) < kVShader_SplineMaxCtrlPoints, 0x1C1);
         int shaderConstant = 0xAE;

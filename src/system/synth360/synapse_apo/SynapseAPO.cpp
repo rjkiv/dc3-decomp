@@ -6,27 +6,28 @@ DSP::SynapseAPO::~SynapseAPO() { delete mSynapse; }
 
 void DSP::SynapseAPO::OnSetParameters(const SynapseAPOParams &params) {
     for (unsigned int i = 0; i < 3; i++) {
-        if (mParams.mNoteProps[i].enabled != params.mNoteProps[i].enabled) {
-            mSynapse->SetVoiceEnabled(i, params.mNoteProps[i].enabled);
+        const VoiceParams &cur = mParams.mNoteProps[i];
+        const VoiceParams &next = params.mNoteProps[i];
+        if (cur.enabled != next.enabled) {
+            mSynapse->SetVoiceEnabled(i, next.enabled);
         }
-        if (mParams.mNoteProps[i].gain != params.mNoteProps[i].gain) {
-            mSynapse->SetVoiceGain(i, params.mNoteProps[i].gain);
+        if (cur.gain != next.gain) {
+            mSynapse->SetVoiceGain(i, next.gain);
         }
-        if (mParams.mNoteProps[i].targetNote != params.mNoteProps[i].targetNote) {
-            mSynapse->SetVoiceTargetNote(i, params.mNoteProps[i].targetNote);
+        if (cur.targetNote != next.targetNote) {
+            mSynapse->SetVoiceTargetNote(i, next.targetNote);
         }
-        if (mParams.mNoteProps[i].transposition != params.mNoteProps[i].transposition) {
-            mSynapse->SetVoiceTransposition(i, params.mNoteProps[i].transposition);
+        if (cur.transposition != next.transposition) {
+            mSynapse->SetVoiceTransposition(i, next.transposition);
         }
-        if (mParams.mNoteProps[i].amount != params.mNoteProps[i].amount) {
-            mSynapse->SetVoiceAmount(i, params.mNoteProps[i].amount);
+        if (cur.amount != next.amount) {
+            mSynapse->SetVoiceAmount(i, next.amount);
         }
-        if (mParams.mNoteProps[i].proximityEffect
-            != params.mNoteProps[i].proximityEffect) {
-            mSynapse->SetVoiceProximityEffect(i, params.mNoteProps[i].proximityEffect);
+        if (cur.proximityEffect != next.proximityEffect) {
+            mSynapse->SetVoiceProximityEffect(i, next.proximityEffect);
         }
-        if (mParams.mNoteProps[i].proximityFocus != params.mNoteProps[i].proximityFocus) {
-            mSynapse->SetVoiceProximityFocus(i, params.mNoteProps[i].proximityFocus);
+        if (cur.proximityFocus != next.proximityFocus) {
+            mSynapse->SetVoiceProximityFocus(i, next.proximityFocus);
         }
     }
     if (mParams.attackSmoothing != params.attackSmoothing) {

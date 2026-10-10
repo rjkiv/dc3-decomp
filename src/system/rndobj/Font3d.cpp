@@ -55,16 +55,10 @@ BEGIN_COPYS(RndFont3d)
         *c = *(it->second);
         mCharInfoMap[it->first] = c;
     }
-    switch (ty) {
-    case Hmx::Object::kCopyShallow:
+    if (ty == kCopyShallow || (ty == kCopyFromMax && f->mTextureOwner != f)) {
         mTextureOwner = f->mTextureOwner.Ptr();
-        break;
-    case Hmx::Object::kCopyFromMax:
-        mTextureOwner = f->mTextureOwner != f ? f->mTextureOwner.Ptr() : this;
-        break;
-    default:
+    } else {
         mTextureOwner = this;
-        break;
     }
 END_COPYS
 

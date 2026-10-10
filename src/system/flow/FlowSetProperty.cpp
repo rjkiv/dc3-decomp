@@ -33,7 +33,7 @@ PropertyTask::PropertyTask(
 )
     : unk2c(this), unk40(n1), unk48(n2), unk58(f1), unk5c(f2), unk60(b), unk64(this) {
     MILO_ASSERT(target, 0x4D);
-    mEaseFunc = GetEaseFunctionForcedInline(t);
+    mEaseFunc = GetEaseFunction(t);
     FOREACH_OBJREF (it, target) {
         Hmx::Object *owner = it->RefOwner();
         if (owner) {
@@ -479,10 +479,8 @@ void FlowSetProperty::ReActivate() {
     if (mBlendTime == 0.0f && mChangePerUnit == 0.0f) {
         FLOW_LOG("Setting Value on %s\n", mTarget->Name())
         mTarget->SetProperty(mPropPath.Array(), mValue.Node());
-        return;
-    }
-    if (mTarget->Property(mPropPath.Array(), true)->Evaluate()
-        != mValue.Node().Evaluate()) {
+    } else if (mTarget->Property(mPropPath.Array(), true)->Evaluate()
+               != mValue.Node().Evaluate()) {
         FLOW_LOG("Queueing\n")
         TheFlowMgr->QueueCommand(this, kQueue);
     }

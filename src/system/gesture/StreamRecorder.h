@@ -11,6 +11,17 @@
 #include "utl/MemMgr.h"
 #include <list>
 
+// playback runs at 1/4x, 1/3x, 1/2x, 1x, 2x, 3x, 4x speed
+enum StreamPlaybackSpeed {
+    kStreamPlaybackQuarter = 0,
+    kStreamPlaybackThird = 1,
+    kStreamPlaybackHalf = 2,
+    kStreamPlaybackNormal = 3,
+    kStreamPlaybackDouble = 4,
+    kStreamPlaybackTriple = 5,
+    kStreamPlaybackQuadruple = 6
+};
+
 class StreamRecorder : public RndDrawable,
                        public RndPollable,
                        public Rnd::CompressTextureCallback {
@@ -65,7 +76,7 @@ protected:
     int mFramesRecorded; // 0xb0
     int unkb4;
     int mDebugFrame; // 0xb8
-    int mPlaybackSpeed; // 0xbc - actually an enum StreamPlaybackSpeed
+    StreamPlaybackSpeed mPlaybackSpeed; // 0xbc
     float unkc0;
     float unkc4;
     float unkc8;

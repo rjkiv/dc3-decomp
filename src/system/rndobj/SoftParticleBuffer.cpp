@@ -18,7 +18,9 @@ RndSoftParticleBuffer::RndSoftParticleBuffer()
     for (int i = 0; i < 2; i++) {
         mSurfaces[i] = nullptr;
     }
-    AllocateData(TheNgRnd.Width() >> 2, TheNgRnd.Height() >> 2, TheNgRnd.Bpp());
+    int width = TheNgRnd.Width() >> 2;
+    int height = TheNgRnd.Height() >> 2;
+    AllocateData(width, height, TheNgRnd.Bpp());
 }
 
 RndSoftParticleBuffer::~RndSoftParticleBuffer() { FreeData(); }

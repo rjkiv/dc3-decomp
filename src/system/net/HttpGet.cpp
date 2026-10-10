@@ -102,7 +102,7 @@ namespace {
 HttpGet::HttpGet(unsigned int ip, unsigned short port, const char *c1, const char *c2)
     : mSocket(0), unkc(c1), mPort(port), mState(kHttpGet_Nil), unk1c(false),
       mTimeoutMs(kDefaultTimeoutMs), mIP(ip), unk58(c2), unk60(0), mRecvBufPos(0),
-      mFileBuf(0), mFileBufSize(0), mFileBufRecvPos(0), unk78(0), mFailType(),
+      mFileBuf(0), mFileBufSize(0), mFileBufRecvPos(0), mRetryCount(0), mFailType(),
       mPrevState(kHttpGet_Nil) {
     SetState((State)0);
     AddRequiredHeaders();
@@ -113,7 +113,7 @@ HttpGet::HttpGet(
 )
     : mSocket(0), unkc(c1), mPort(port), mState(kHttpGet_Nil), unk1c(uc & 3),
       mTimeoutMs(kDefaultTimeoutMs), mIP(ip), unk58(c2), unk60(0), mRecvBufPos(0),
-      mFileBuf(0), mFileBufSize(0), mFileBufRecvPos(0), unk78(0), mFailType() {
+      mFileBuf(0), mFileBufSize(0), mFileBufRecvPos(0), mRetryCount(0), mFailType() {
     State s;
     if ((uc & 4) == 0) {
         s = (State)8;
@@ -212,8 +212,8 @@ void HttpGet::StartConnection() {
 }
 
 bool HttpGet::HasTimedOut() {
-    unk20.Split();
-    return unk20.Ms() > mTimeoutMs;
+    mStateTimer.Split();
+    return mStateTimer.Ms() > mTimeoutMs;
 }
 
 void HttpGet::SetTimeout(float timeout) { mTimeoutMs = timeout; }
@@ -251,7 +251,7 @@ void HttpPost::SetContentLength(unsigned int len) {
 }
 
 bool HttpPost::CanRetry() {
-    if (unk78 < 3) {
+    if (mRetryCount < 3) {
         unk90 = mContentLength;
         return true;
     } else {
@@ -312,68 +312,66 @@ void HttpGet::AddRequiredHeaders() {
     unk58 += header.c_str();
 }
 
-bool HttpGet::CanRetry() { return unk78 < 3; }
+bool HttpGet::CanRetry() { return mRetryCount < 3; }
 
 unsigned int HttpGet::GetBufferSize() { return mFileBufSize; }
 
 void HttpGet::SetState(State s) {
-    while (mState != s) {
-        switch (mState) {
-        case 0:
-            if (s != (State)1)
-                SafeShutdown();
-            break;
-        case 1:
-            if (s == (State)2)
-                break;
-        case 2:
-            if (s != (State)3)
-                SafeShutdown();
-            break;
-        case 3:
-            if (s != (State)4)
-                SafeShutdown();
-            break;
-        case 4: {
-            if (s == (State)5) {
-                SafeDisconnect();
-            } else
-                SafeShutdown();
-        } break;
-        }
-        if ((s == (State)6 || s == (State)7) && (mState != (State)6)
-            && (mState != (State)7)) {
-            mPrevState = mState;
-        }
-
-        mState = s;
-        unk20.Restart();
-
-        switch (s) {
-        case kHttpGet_Nil:
+    if (mState == s)
+        return;
+    switch (mState) {
+    case 0:
+        if (s != (State)1)
             SafeShutdown();
-            return;
-        case 0:
-            StartConnection();
-            return;
-        case 1:
-            StartSending();
-            return;
-        case 4:
-            StartReceiving();
-            return;
-        case 6:
-            return;
-        case 7: // wrong
-            return;
-        default: {
-            if (CanRetry()) {
-                s = (State)0;
-                unk78++;
-            } else {
-                s = (State)6;
-            }
-        } break;
+        break;
+    case 1:
+        if (s == (State)2)
+            break;
+    case 2:
+        if (s != (State)3)
+            SafeShutdown();
+        break;
+    case 3:
+        if (s != (State)4)
+            SafeShutdown();
+        break;
+    case 4:
+        if (s != (State)5)
+            SafeShutdown();
+        else
+            SafeDisconnect();
+        break;
+    }
+    if ((s == (State)6 || s == (State)7) && (mState != (State)6)
+        && (mState != (State)7)) {
+        mPrevState = mState;
+    }
+
+    mState = s;
+    mStateTimer.Restart();
+
+    switch (s) {
+    case kHttpGet_Nil:
+        SafeShutdown();
+        break;
+    case 0:
+        StartConnection();
+        break;
+    case 1:
+        StartSending();
+        break;
+    case 4:
+        StartReceiving();
+        break;
+    case 6:
+        return;
+    case 7:
+        if (CanRetry()) {
+            mRetryCount++;
+            SetState((State)0);
+        } else {
+            SetState((State)6);
         }
+        break;
     }
 }

@@ -258,9 +258,7 @@ void ThreeDSound::CalculateFaderVolume() {
 
         float val1 = 1.0f / (mMinFalloffDistance - mSilenceDistance);
         float val2 = val1 * mDistance + (-(mMinFalloffDistance * val1 - 1.0f));
-        EaseType e = mFalloffType;
-        MILO_ASSERT(e >= kEaseLinear && e <= kEaseQuarterHalfStairstep, 0x16b);
-        float ease = gEaseFuncs[e](val2, mFalloffParameter, 0);
+        float ease = GetEaseFunction(mFalloffType)(val2, mFalloffParameter, 0);
         ease = Clamp(0.0f, 1.0f, ease);
         volume = RatioToDb(ease);
         volume = Max(volume, -96.0f);

@@ -41,8 +41,8 @@ BEGIN_LOADS(FlowQueueable)
 END_LOADS
 
 void FlowQueueable::Deactivate(bool b1) {
-    std::list<Hmx::Object *> objects(unk60);
-    unk60.clear();
+    std::list<Hmx::Object *> objects(mQueuedListeners);
+    mQueuedListeners.clear();
     while (objects.size() != 0) {
         ReleaseListener(objects.back());
         objects.pop_back();
@@ -58,8 +58,8 @@ void FlowQueueable::ChildFinished(FlowNode *n) {
         mRunningNodes.remove(n);
         if (mRunningNodes.empty()) {
             if (mRequestingStop) {
-                std::list<Hmx::Object *> objects(unk60);
-                unk60.clear();
+                std::list<Hmx::Object *> objects(mQueuedListeners);
+                mQueuedListeners.clear();
                 while (objects.size() != 0) {
                     ReleaseListener(objects.back());
                     objects.pop_back();
@@ -69,23 +69,24 @@ void FlowQueueable::ChildFinished(FlowNode *n) {
                     FLOW_LOG("Releasing\n");
                     mFlowParent->ChildFinished(this);
                 }
-            } else if (unk60.size() > 1) {
-                auto first = unk60.begin();
+            } else if (mQueuedListeners.size() > 1) {
+                Hmx::Object *obj = mQueuedListeners.front();
                 bool found = false;
-                for (auto it = ++unk60.begin(); it != unk60.end(); ++it) {
-                    if (*it == *first) {
+                for (auto it = ++mQueuedListeners.begin(); it != mQueuedListeners.end();
+                     ++it) {
+                    if (*it == obj) {
                         found = true;
                         break;
                     }
                 }
                 if (!found) {
-                    ReleaseListener(*first);
+                    ReleaseListener(mQueuedListeners.front());
                 }
-                unk60.pop_front();
+                mQueuedListeners.pop_front();
                 ActivateTrigger();
-            } else if (!unk60.empty()) {
-                ReleaseListener(unk60.front());
-                unk60.pop_front();
+            } else if (!mQueuedListeners.empty()) {
+                ReleaseListener(mQueuedListeners.front());
+                mQueuedListeners.pop_front();
             }
         }
     }
@@ -104,14 +105,14 @@ bool FlowQueueable::Activate(Hmx::Object *obj) {
     mRequestingStop = false;
     if (mRunningNodes.empty()) {
         if (obj) {
-            unk60.push_back(obj);
+            mQueuedListeners.push_back(obj);
         } else {
-            unk60.push_back(nullptr);
+            mQueuedListeners.push_back(nullptr);
         }
         if (ActivateTrigger()) {
             return true;
         } else {
-            unk60.clear();
+            mQueuedListeners.clear();
             return false;
         }
     } else {
@@ -123,43 +124,43 @@ bool FlowQueueable::Activate(Hmx::Object *obj) {
         case kQueue:
             FLOW_LOG("Queueing trigger\n");
             if (obj) {
-                unk60.push_back(obj);
+                mQueuedListeners.push_back(obj);
             } else {
-                unk60.push_back(nullptr);
+                mQueuedListeners.push_back(nullptr);
             }
             return true;
         case kQueueOne:
             FLOW_LOG("Queue One\n");
-            while (unk60.size() > 1) {
-                ReleaseListener(unk60.back());
-                unk60.pop_back();
+            while (mQueuedListeners.size() > 1) {
+                ReleaseListener(mQueuedListeners.back());
+                mQueuedListeners.pop_back();
             }
             if (obj) {
-                unk60.push_back(obj);
+                mQueuedListeners.push_back(obj);
             } else {
-                unk60.push_back(nullptr);
+                mQueuedListeners.push_back(nullptr);
             }
             return true;
         case kImmediate:
             FLOW_LOG("Immediate Interrupt\n");
             FlowQueueable::Deactivate(false);
             if (obj) {
-                unk60.push_back(obj);
+                mQueuedListeners.push_back(obj);
             } else {
-                unk60.push_back(nullptr);
+                mQueuedListeners.push_back(nullptr);
             }
             ActivateTrigger();
             return !mRunningNodes.empty();
         case kWhenAble:
             FLOW_LOG("When Able Interruption\n");
-            while (unk60.size() > 1) {
-                ReleaseListener(unk60.back());
-                unk60.pop_back();
+            while (mQueuedListeners.size() > 1) {
+                ReleaseListener(mQueuedListeners.back());
+                mQueuedListeners.pop_back();
             }
             if (obj) {
-                unk60.push_back(obj);
+                mQueuedListeners.push_back(obj);
             } else {
-                unk60.push_back(nullptr);
+                mQueuedListeners.push_back(nullptr);
             }
             RequestStop();
             return true;

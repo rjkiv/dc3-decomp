@@ -202,6 +202,7 @@ bool Archive::GetFileInfo(
             byteOffset = 0;
             fileSize = 0;
             fileUCSize = 0;
+            return false;
         }
     }
     return false;

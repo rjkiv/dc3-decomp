@@ -91,11 +91,8 @@ void MemcardMgr::ThreadDone(int mcResult) {
     case kS_LoadGame: {
         mAction->SetResult((MCResult)mcResult);
         mAction->PostAction();
-        if (mcResult == 0) {
-            MCResult res = mAction->Result();
-            if (res != kMCNoError) {
-                mcResult = res;
-            }
+        if (mcResult == kMCNoError && mAction->Result() != kMCNoError) {
+            mcResult = mAction->Result();
         }
         mAction = nullptr;
         mPadNum = -1;

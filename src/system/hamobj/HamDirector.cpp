@@ -1513,14 +1513,9 @@ Symbol HamDirector::ClosestMove() {
                     for (int i = 0; i < listArr->Size(); i++) {
                         const char *str = listArr->Str(i);
                         int numlower = 0;
-                        if (*str) {
-                            for (const char *p = str; *p != '\0'; p++, numlower++) {
-                                if ((unsigned char)buf[p - str] == 0)
-                                    break;
-                                if (tolower(*p) != tolower(buf[p - str])) {
-                                    break;
-                                }
-                            }
+                        while (str[numlower] && buf[numlower]
+                               && tolower(str[numlower]) == tolower(buf[numlower])) {
+                            numlower++;
                         }
                         int len = Max(strlen(str + numlower), strlen(buf + numlower));
 

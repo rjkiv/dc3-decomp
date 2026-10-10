@@ -18,10 +18,10 @@ struct Marker {
     float posMS; // 0xc
 };
 struct JumpInstance {
-    float unk0;
-    float unk4;
-    float unk8;
-    float unkc;
+    float mFromMs;
+    float mToMs;
+    float mPlayedMs;
+    float mTotalOffsetMs;
 };
 
 class Stream {

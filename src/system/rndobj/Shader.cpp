@@ -210,6 +210,10 @@ void RndShader::WarnMatProp(const char *prop, NgMat *mat, NgEnviron *env, Shader
     sMatShadersOK = false;
 }
 
+static bool EnvFadeOutActive(NgEnviron *env) {
+    return env->FadeOut() && env->FadeEnd() != env->FadeStart();
+}
+
 bool RndShader::MatShaderFlagsOK(RndMat *mat, ShaderType s) {
     if (!mat || TheRnd.DefaultEnv() == RndEnviron::Current()
         || TheRnd.DrawMode() == Rnd::kDrawShadowColor) {
@@ -219,15 +223,10 @@ bool RndShader::MatShaderFlagsOK(RndMat *mat, ShaderType s) {
     sMatShadersOK = true;
     RndShader *curShader = sShaders[s];
     bool b1824 = mat->UseEnviron() && RndEnviron::Current()->NumLights_Real() != 0;
-    if (curShader->CheckError(kFadeOutErr) && !mat->FadeOut()) {
-        bool fadeoutCheck = curEnv->FadeOut() && curEnv->FadeEnd() != curEnv->FadeStart();
-        if (fadeoutCheck) {
+    if (curShader->CheckError(kFadeOutErr)) {
+        if (!mat->FadeOut() && EnvFadeOutActive(curEnv)) {
             WarnMatProp("fadeout checked", (NgMat *)mat, curEnv, s);
-        }
-    } else if (mat->FadeOut()) {
-        bool fadeoutUncheck =
-            curEnv->FadeOut() && curEnv->FadeEnd() != curEnv->FadeStart();
-        if (!fadeoutUncheck) {
+        } else if (mat->FadeOut() && !EnvFadeOutActive(curEnv)) {
             WarnMatProp("fadeout unchecked", (NgMat *)mat, curEnv, s);
         }
     }

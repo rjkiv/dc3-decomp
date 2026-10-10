@@ -303,10 +303,10 @@ void NgMat::SetRegularShaderConst(bool b1) {
 void NgMat::RefreshState() {
     if (mDiffuseTex && mDiffuseTex->Width() && mDiffuseTex->Height()) {
         mTexelOffsets.Set(
-            (float)mDiffuseTex->Width() / 2,
-            (float)mDiffuseTex->Height() / 2,
-            -(float)mDiffuseTex->Width() / 2,
-            -(float)mDiffuseTex->Height() / 2
+            0.5f / mDiffuseTex->Width(),
+            0.5f / mDiffuseTex->Height(),
+            -0.5f / mDiffuseTex->Width(),
+            -0.5f / mDiffuseTex->Height()
         );
     } else {
         mTexelOffsets.Set(0, 0, 0, 0);

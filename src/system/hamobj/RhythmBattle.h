@@ -88,8 +88,8 @@ private:
     float mEndBeat; // 0x108
     float unk10c;
     float unk110;
-    float unk114;
-    float unk118;
+    float mHalftimeBeat;
+    float mAlmostOverBeat;
     int unk11c;
     float unk120;
     int unk124; // 0x124 - RhythmBattleJackState

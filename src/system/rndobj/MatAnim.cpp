@@ -107,7 +107,7 @@ BEGIN_LOADS(RndMatAnim)
         }
     }
     if (d.rev > 6) {
-        d >> mTransKeys >> mScaleKeys >> mRotKeys >> mTexKeys;
+        d >> mTransKeys >> mScaleKeys >> mRotKeys >> (Keys<TexPtr, RndTex *> &)mTexKeys;
     }
 END_LOADS
 
@@ -215,7 +215,7 @@ void RndMatAnim::LoadStage(BinStreamRev &d) {
         d >> mTransKeys >> mScaleKeys >> mRotKeys;
     }
     if (d.rev > 1) {
-        d >> mTexKeys;
+        d >> (Keys<TexPtr, RndTex *> &)mTexKeys;
     }
 }
 

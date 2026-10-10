@@ -48,26 +48,28 @@ void DiffTblReport(
         int alloc0, alloc1;
         int req0, req1;
         int heap;
-        const char *name = st1.mName;
+        const char *name;
         if (name_cmp < 0) {
-            alloc0 = st0.mNumAllocs;
-            alloc1 = 0;
-            req0 = st0.mSizeReq;
-            req1 = 0;
             name = st0.mName;
+            alloc0 = st0.mNumAllocs;
+            req0 = st0.mSizeReq;
+            alloc1 = 0;
+            req1 = 0;
             heap = st0.mHeap;
             idx0++;
         } else if (name_cmp > 0) {
+            name = st1.mName;
             alloc0 = 0;
-            alloc1 = st1.mNumAllocs;
             req0 = 0;
+            alloc1 = st1.mNumAllocs;
             req1 = st1.mSizeReq;
             heap = st1.mHeap;
             idx1++;
         } else {
+            name = st0.mName;
             alloc0 = st0.mNumAllocs;
-            alloc1 = st1.mNumAllocs;
             req0 = st0.mSizeReq;
+            alloc1 = st1.mNumAllocs;
             req1 = st1.mSizeReq;
             heap = st1.mHeap;
             idx0++;

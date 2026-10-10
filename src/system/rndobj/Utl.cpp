@@ -1229,7 +1229,7 @@ void SetBloomBlurWeightsStreak(bool b1, float f2, float f3, float f4, int pass, 
 
 void RandomXfms(RndMultiMesh *multiMesh) {
     InstanceList randomized;
-    FOREACH (it, multiMesh->Instances()) {
+    while (!multiMesh->Instances().empty()) {
         int idx = RandomInt(0, multiMesh->Instances().size());
         randomized.splice(
             randomized.begin(),

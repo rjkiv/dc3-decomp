@@ -18,8 +18,8 @@
 StreamRecorder::StreamRecorder()
     : unk4c(this), unk60(this), mBuffers(this), mOutputMat(this), mMaxFrames(0),
       mOutputWidth(320), mOutputHeight(240), mFramesRecorded(0), unkb4(0),
-      mDebugFrame(-1), mPlaybackSpeed(3), unkc0(-1.0f), unkc4(-1.0f), unkc8(-1.0f),
-      mUseAlpha(true), unkd8(5), unkdc(0) {}
+      mDebugFrame(-1), mPlaybackSpeed(kStreamPlaybackNormal), unkc0(-1.0f), unkc4(-1.0f),
+      unkc8(-1.0f), mUseAlpha(true), unkd8(5), unkdc(0) {}
 
 StreamRecorder::~StreamRecorder() {}
 
@@ -40,7 +40,7 @@ BEGIN_PROPSYNCS(StreamRecorder)
     SYNC_PROP_SET(input, unk4c.Ptr(), SetPhotoInput(dynamic_cast<RndDir *>(_val.GetObj())))
     SYNC_PROP(use_alpha, mUseAlpha)
     SYNC_PROP(output_mat, mOutputMat)
-    SYNC_PROP(playback_speed, mPlaybackSpeed)
+    SYNC_PROP(playback_speed, (int &)mPlaybackSpeed)
     SYNC_PROP_MODIFY(max_frames, mMaxFrames, Reset())
     SYNC_PROP_SET(frames_recorded, mFramesRecorded, )
     SYNC_PROP_SET(debug_frame, mDebugFrame, SetDebugFrame(_val.Int()))
@@ -100,7 +100,7 @@ BEGIN_LOADS(StreamRecorder)
         d >> x;
     }
     d >> mUseAlpha;
-    // BinStreamEnum load here for mPlaybackSpeed
+    d >> (BinStreamEnum<StreamPlaybackSpeed> &)mPlaybackSpeed;
     if (d.rev > 4) {
         d >> mOutputWidth;
         d >> mOutputHeight;

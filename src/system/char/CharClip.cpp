@@ -183,10 +183,9 @@ void CharClip::Transitions::Load(BinStreamRev &d, int oldRev) {
         d >> num_nodes;
         d >> num_node_vectors;
         if (d.rev < 0x14) {
-            num_nodes = ((num_nodes - (num_node_vectors * 8)) / 8) - num_node_vectors;
-        } else {
-            num_nodes = num_nodes - num_node_vectors;
+            num_nodes = (num_nodes - num_node_vectors * 8) / 8;
         }
+        num_nodes -= num_node_vectors;
         NodeVector *start = (NodeVector *)_MemAllocTemp(
             num_nodes * sizeof(CharGraphNode) + num_node_vectors * sizeof(NodeVector),
             __FILE__,

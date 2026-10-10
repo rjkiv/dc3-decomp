@@ -137,7 +137,7 @@ void FlowSlider::UpdateIntensity() {
     UpdateActivations();
 }
 
-void FlowSlider::UpdateEase() { mEaseFunc = GetEaseFunctionForcedInline(mEaseType); }
+void FlowSlider::UpdateEase() { mEaseFunc = GetEaseFunction(mEaseType); }
 
 void FlowSlider::ReActivate() {
     Timer timer;

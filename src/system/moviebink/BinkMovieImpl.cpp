@@ -706,7 +706,8 @@ void BinkMovieImpl::MovieOpen(const char *name, unsigned int flags) {
             flags |= 0x4000;
         }
         flags |= 0x100000;
-        if ((flags >> 26) & 1) {
+        bool fromDisk = !(flags & BINKFROMMEMORY);
+        if (fromDisk) {
             AutoSlowFrame frame("BinkOpen", 200);
             mBink = BinkOpen(name, flags);
         } else {
@@ -741,14 +742,14 @@ void BinkMovieImpl::FinishOpen() {
         BinkSetSoundOnOff(mBink, mMute == 0);
         BINKSUMMARY summary;
         BinkGetSummary(mBink, &summary);
-        mAspect = float(summary.Width) / summary.Height;
-        int width_low_4 = summary.Width % 16;
-        if (summary.Height % 16 != 0 || width_low_4 != 0) {
-            int height_low_4 = summary.Height % 16;
-            int width_fixed = summary.Width;
-            width_fixed += width_low_4 != 0 ? 16 - width_low_4 : 0;
-            int height_fixed = summary.Height;
+        mAspect = float(summary.Height) / summary.Width;
+        int height_low_4 = summary.Height % 16;
+        if (summary.Width % 16 != 0 || height_low_4 != 0) {
+            int width_low_4 = summary.Width % 16;
+            unsigned int height_fixed = summary.Height;
             height_fixed += height_low_4 != 0 ? 16 - height_low_4 : 0;
+            unsigned int width_fixed = summary.Width;
+            width_fixed += width_low_4 != 0 ? 16 - width_low_4 : 0;
             MILO_FAIL(
                 "Bink movie %s must have multiples of 16 for its width and height.\nTry changing from %d x %d to %d x %d.",
                 mName.c_str(),

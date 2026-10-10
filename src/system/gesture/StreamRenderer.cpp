@@ -58,8 +58,7 @@ StreamRenderer::StreamRenderer()
       mPlayer2DepthPaletteOffset(0), mPlayerOtherDepthPaletteOffset(0),
       mBackgroundDepthPaletteOffset(0), mDrawPreClear(0), mForceDraw(0),
       mStaticColorIndices(0), mPCTestTex(this), mLagPrimaryTexture(0), unk154(0),
-      unk190(0), unk194(0), unk198(0), unk19c(0), unk1a0(0), unk1a4(0), mPinkPlayer(0),
-      mBluePlayer(0) {
+      mCrewPhotoPlayersDetected(0, 0, 0, 0), mCrewPhotoPlayerParams(0, 0, 0, 0) {
     for (int i = 0; i < 6; i++) {
         mSmoothers[i].SetSmoothParameters(6, 0);
     }
@@ -330,8 +329,8 @@ void StreamRenderer::Terminate() {
     RELEASE(mCam);
 }
 
-void StreamRenderer::SetPinkPlayer(int player) { mPinkPlayer = player; }
-void StreamRenderer::SetBluePlayer(int player) { mBluePlayer = player; }
+void StreamRenderer::SetPinkPlayer(int player) { mCrewPhotoPlayerParams.z = player; }
+void StreamRenderer::SetBluePlayer(int player) { mCrewPhotoPlayerParams.w = player; }
 
 DataNode StreamRenderer::OnGetRenderTextures(DataArray *) {
     return GetRenderTextures(Dir());
@@ -356,31 +355,31 @@ void StreamRenderer::SetCrewPhotoVerticalColor(DataArray *cfg) {
 ShaderType StreamRenderer::GetShaderType() const {
     ShaderType t = kDrawRectShader;
     switch (mDisplay) {
-    case 0:
+    case kStreamColor:
         t = kYUVtoRGBShader;
         break;
-    case 1:
+    case kStreamBlackAndWhite:
         t = kYUVtoBlackAndWhiteShader;
         break;
-    case 2:
+    case kStreamBasicDepth:
         t = kDrawRectShader;
         break;
-    case 3:
+    case kStreamPlayerDepthVis:
         t = kPlayerDepthVisShader;
         break;
-    case 4:
+    case kStreamPlayerDepthShell:
         t = kPlayerDepthShellShader;
         break;
-    case 5:
+    case kStreamPlayerDepthShell2:
         t = kPlayerDepthShell2Shader;
         break;
-    case 6:
+    case kStreamPlayerGreenscreen:
         t = kPlayerGreenScreenShader;
         break;
-    case 7:
+    case kStreamPlayerDepthGreenscreen:
         t = kPlayerDepthGreenScreenShader;
         break;
-    case 8:
+    case kStreamCrewPhoto:
         t = kCrewPhotoShader;
         break;
     default:
@@ -395,22 +394,22 @@ void StreamRenderer::SetCrewPhotoPlayerDetected(int player, bool b2) {
     float set = b2 ? 1.0f : 0.0f;
     switch (player) {
     case 0:
-        unk190 = set;
+        mCrewPhotoPlayersDetected.x = set;
         break;
     case 1:
-        unk194 = set;
+        mCrewPhotoPlayersDetected.y = set;
         break;
     case 2:
-        unk198 = set;
+        mCrewPhotoPlayersDetected.z = set;
         break;
     case 3:
-        unk19c = set;
+        mCrewPhotoPlayersDetected.w = set;
         break;
     case 4:
-        unk1a0 = set;
+        mCrewPhotoPlayerParams.x = set;
         break;
     case 5:
-        unk1a4 = set;
+        mCrewPhotoPlayerParams.y = set;
         break;
     default:
         break;

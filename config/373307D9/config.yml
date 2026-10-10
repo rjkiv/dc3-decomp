@@ -115,3 +115,4 @@ block_relocations:
 - target: .data:0x83010003
 - target: .data:0x8301000B
 - target: .data:0x8301000D
+- target: .data:0x8301000E

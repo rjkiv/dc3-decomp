@@ -292,8 +292,7 @@ NetAddress HolmesResolveIP() {
 
 DataNode DumpHolmesLog(DataArray *) {
     TextFileStream *log = new TextFileStream("holmes.csv", true);
-    FileStream &fs = log->File();
-    if (!fs.Fail()) {
+    if (!log->File().Fail()) {
         *log << HolmesClient::PlatformGetHostName() << ", ";
         *log << -1 << ", ";
         *log << -1 << "\n";
@@ -304,9 +303,9 @@ DataNode DumpHolmesLog(DataArray *) {
             *log << Holmes::ProtocolDebugString(i) << ", ";
             *log << count << ", ";
             *log << wait << ", ";
-            *log << work << ", ";
+            *log << work << "\n";
         }
-        fs.Flush();
+        log->File().Flush();
     }
     delete log;
     return 0;
@@ -385,7 +384,7 @@ void HolmesClientInit() {
             gHostConfig = false;
             gHostLogging = false;
         }
-        bool unk = gHostConfig && !gHostLogging;
+        bool unk = gHostLogging && !gHostConfig;
         BeginCmd(Holmes::kVersion, true);
         gHolmesTarget = OptionStr("holmes_target", gNullStr);
         String share(gShareName);
@@ -616,12 +615,12 @@ void HolmesClientRead(int file_handle, int start, int bytes, void *buf, File *re
 
 bool HolmesClientReadDone(File *f) {
     CritSecTracker tracker(&gCrit);
-    if (PendingRead(f)) {
+    bool pending = PendingRead(f);
+    if (pending) {
         HolmesClientPollInternal(false);
-        return !PendingRead(f);
-    } else {
-        return false;
+        pending = PendingRead(f);
     }
+    return !pending;
 }
 
 void HolmesClientClose(File *f, int file_handle) {

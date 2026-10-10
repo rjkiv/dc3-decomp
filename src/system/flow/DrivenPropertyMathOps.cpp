@@ -89,12 +89,111 @@ float FlowMathOp::Apply(float f1) {
             y = prop->LiteralFloat();
         }
     }
-    if (unk_0x4 > 100) {
-    notify:
-        MILO_NOTIFY_ONCE("Bad mathop operation value");
+    switch (unk_0x4) {
+    case 0x11: {
+        if (lhs.Type() == kDataString) {
+            String str = lhs.Str();
+            DataNode n;
+            if (!str.empty()) {
+                DataVariable("val") = f1;
+                float ret = f1;
+                MILO_TRY {
+                    n = DataReadString(str.c_str());
+                    n.Array()->Release();
+                    if (n.Array()->Type(0) == kDataCommand && n.Array()->Size() == 1) {
+                        ret = n.Array()->Command(0)->Execute().Float();
+                    } else {
+                        ret = n.Array()->Execute().Float();
+                    }
+                }
+                MILO_CATCH(msg) {
+                    MILO_NOTIFY(
+                        "Bad script expression in mathop : %s, expression is: %s",
+                        msg,
+                        lhs.Str()
+                    );
+                }
+                return ret;
+            }
+        } else {
+            goto script;
+        }
         return f1;
-    } else if (unk_0x4 == 100) {
-    top:
+    }
+    case 0:
+        return f1 + y;
+    case 1:
+        return f1 - y;
+    case 2:
+        return f1 * y;
+    case 3:
+        if (y == 0) {
+            y = 0.0001f;
+        }
+        return f1 / y;
+    case 4:
+        return RandomFloat(0, y * 2) - y + f1;
+    case 5:
+        if (f1 >= y) {
+            return f1;
+        } else {
+            return y;
+        }
+    case -1:
+        return y;
+    case 6:
+        if (f1 <= y) {
+            return f1;
+        } else {
+            return y;
+        }
+    case 7:
+        if (y <= 0) {
+            return f1;
+        } else {
+            return fmod(f1, y);
+        }
+    case 8: {
+        if (y == 0) {
+            y = 1;
+        }
+        int num = (((y / 2) + f1) / y);
+        return (float)num * y;
+    }
+    case 9:
+        if (y <= 0) {
+            y = 1;
+        }
+        return floorf(f1 / y) * y;
+    case 10:
+        if (y <= 0) {
+            y = 1;
+        }
+        return ceilf(f1 / y) * y;
+    case 11: {
+        float clamped = Clamp(0.0f, y, f1);
+        if (y != 0) {
+            clamped = clamped / y;
+        }
+        return RatioToDb(clamped);
+    }
+    case 12: {
+        float clamped = Clamp(0.0f, y, f1);
+        if (y != 0) {
+            clamped = clamped / y;
+        }
+        return RatioToDb(1.0f - clamped);
+    }
+    case 13:
+        return fabs(f1);
+    case 14:
+        return sin(f1);
+    case 15:
+        return cos(f1);
+    case 16:
+        return pow(f1, y);
+    case 100:
+    script:
         if (lhs.Type() == kDataSymbol) {
             DataArray *cfg = SystemConfig("objects", "FlowNode", "mathops");
             DataArray *mathOpArray = cfg->FindArray(lhs.Sym(), false);
@@ -106,112 +205,8 @@ float FlowMathOp::Apply(float f1) {
             }
         }
         return f1;
-    } else {
-        switch (unk_0x4) {
-        case 0x11: {
-            if (lhs.Type() == kDataString) {
-                String str = lhs.Str();
-                DataNode n;
-                if (!str.empty()) {
-                    DataVariable("val") = f1;
-                    MILO_TRY {
-                        n = DataReadString(str.c_str());
-                        n.Array()->Release();
-                        if (n.Array()->Type(0) == kDataCommand
-                            && n.Array()->Size() == 1) {
-                            f1 = n.Array()->Command(0)->Execute().Float();
-                        } else {
-                            f1 = n.Array()->Execute().Float();
-                        }
-                    }
-                    MILO_CATCH(msg) {
-                        // TODO: figure out what the first string should be
-                        MILO_NOTIFY(
-                            "Bad script expression in mathop : %s, expression is: %s",
-                            n.Str()
-                        );
-                    }
-                }
-            } else {
-                goto top;
-            }
-            return f1;
-        }
-        case 0:
-            return f1 + y;
-        case 1:
-            return f1 - y;
-        case 2:
-            return f1 * y;
-        case 3:
-            if (y == 0) {
-                y = 0.0001f;
-            }
-            return f1 / y;
-        case 4:
-            return RandomFloat(0, y * 2) - y + f1;
-        case 5:
-            if (f1 >= y) {
-                return f1;
-            } else {
-                return y;
-            }
-        case -1:
-            return y;
-        case 6:
-            if (f1 <= y) {
-                return f1;
-            } else {
-                return y;
-            }
-        case 7:
-            if (y <= 0) {
-                return f1;
-            } else {
-                return fmod(f1, y);
-            }
-        case 8: {
-            if (y == 0) {
-                y = 1;
-            }
-            int num = (((y / 2) + f1) / y);
-            return (float)num * y;
-        }
-        case 9:
-            if (y <= 0) {
-                y = 1;
-            }
-            return floorf(f1 / y) * y;
-        case 10:
-            if (y <= 0) {
-                y = 1;
-            }
-            return ceilf(f1 / y) * y;
-        case 11: {
-            float clamped = Clamp(0.0f, f1, y);
-            if (y != 0) {
-                clamped = clamped / y;
-            }
-            return RatioToDb(clamped);
-        }
-        case 12: {
-            float clamped = Clamp(0.0f, f1, y);
-            if (y != 0) {
-                clamped = clamped / y;
-            }
-            return RatioToDb(1.0f - clamped);
-        }
-        case 13:
-            return fabs(f1);
-        case 14:
-            return sin(f1);
-        case 15:
-            return cos(f1);
-        case 16:
-            return pow(f1, y);
-        default:
-            goto notify;
-        }
+    default:
+        MILO_NOTIFY_ONCE("Bad mathop operation value");
+        return f1;
     }
-    return y;
 }

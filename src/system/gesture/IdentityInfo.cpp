@@ -33,6 +33,6 @@ void IdentityInfo::Identified(unsigned int i) {
         break;
     }
 
-    SkeletonIdentifiedMsg msg(val, unkc);
+    SkeletonIdentifiedMsg msg(val, mSkeletonIdx);
     TheGestureMgr->Export(msg, true);
 }

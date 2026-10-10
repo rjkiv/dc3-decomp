@@ -8,6 +8,13 @@ public:
     static void StubSkeletonData(SkeletonData &, const Vector3 &);
 
 protected:
+    struct SkeletonStatus {
+        bool mTracked; // 0x0
+        Vector3 mCenterOffsetMeters; // 0x4
+    };
+
     const SkeletonFrame *PollNewFrame();
-    const SkeletonFrame unk11d4; // 0x11d4
+
+    SkeletonFrame mFrame; // 0x11d4
+    SkeletonStatus mSkeletonOffsets[6]; // 0x239c
 };

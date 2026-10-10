@@ -148,8 +148,9 @@ unsigned long RndShaderMgr::InitShaders() {
 
 void RndShaderMgr::LoadShaders(const char *filename) {
     unsigned long shaders = InitShaders();
-    if (TheLoadMgr.GetPlatform() != kPlatformNone) {
-        String str(MakeString(filename, PlatformSymbol(TheLoadMgr.GetPlatform())));
+    Platform plat = TheLoadMgr.GetPlatform();
+    if (plat != kPlatformNone) {
+        String str(MakeString(filename, PlatformSymbol(plat)));
         FileStat stat;
         if (!mCacheShaders
             || (!FileGetStat(str.c_str(), &stat) && stat.st_mtime > shaders)

@@ -353,10 +353,9 @@ FlowNode *FlowNode::DuplicateChild(FlowNode *n) {
         }
         FOREACH (it, flow->ChildNodes()) {
             if ((*it)->ClassName() == FlowLabel::StaticClassName()
-                && (*it)->Dir() != newFlow) {
-                FlowLabel *newLabel = dynamic_cast<FlowLabel *>(
-                    Hmx::Object::NewObject(FlowLabel::StaticClassName())
-                );
+                && (*it)->Dir() != flow) {
+                Hmx::Object *obj = Hmx::Object::NewObject(FlowLabel::StaticClassName());
+                FlowLabel *newLabel = dynamic_cast<FlowLabel *>(obj);
                 newLabel->InitObject();
                 newLabel->Copy(*it, kCopyDeep);
                 newLabel->SetParent(newFlow, true);
@@ -381,26 +380,20 @@ Hmx::Object *FlowNode::LoadObjectFromMainOrDir(BinStream &bs, ObjectDir *dir) {
         return nullptr;
     }
     Hmx::Object *found = ObjectDir::Main()->Find<Hmx::Object>(name.Str(), false);
-    if (found) {
-        return found;
-    }
-    found = dir->Find<Hmx::Object>(name.Str(), false);
-    if (found) {
-        return found;
-    }
-    Flow *flow = dynamic_cast<Flow *>(dir);
-    if (!flow) {
-        return nullptr;
-    }
-    if (flow->LoadingDir()) {
-        found = flow->LoadingDir()->Find<Hmx::Object>(name.Str(), false);
-    }
-    if (found) {
-        return found;
-    }
-    flow = dynamic_cast<Flow *>(flow->LoadingDir());
-    if (flow && flow->LoadingDir()) {
-        found = flow->LoadingDir()->Find<Hmx::Object>(name.Str(), false);
+    if (!found) {
+        found = dir->Find<Hmx::Object>(name.Str(), false);
+        if (!found) {
+            Flow *flow = dynamic_cast<Flow *>(dir);
+            if (flow && flow->LoadingDir()) {
+                found = flow->LoadingDir()->Find<Hmx::Object>(name.Str(), false);
+                if (!found) {
+                    flow = dynamic_cast<Flow *>(flow->LoadingDir());
+                    if (flow && flow->LoadingDir()) {
+                        found = flow->LoadingDir()->Find<Hmx::Object>(name.Str(), false);
+                    }
+                }
+            }
+        }
     }
     return found;
 }

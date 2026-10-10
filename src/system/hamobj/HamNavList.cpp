@@ -1434,10 +1434,12 @@ DataNode HamNavList::OnMsg(const ButtonDownMsg &msg) {
                 } while (!mListState.Provider()->IsActive(selected));
 
                 if (mListState.ScrollPastMinDisplay()) {
-                    int firstShowing = mListState.FirstShowing();
-                    if (selected < firstShowing) {
+                    if (selected < mListState.FirstShowing()) {
                         mScrollBehavior.ScrollUp(false);
-                    } else if (selected >= HamListRibbon::sNumListSelectable + firstShowing) {
+                    } else if (
+                        selected
+                        >= mListState.FirstShowing() + HamListRibbon::sNumListSelectable
+                    ) {
                         mScrollBehavior.ScrollDown(false);
                     } else {
                         SetHighlight(selected);

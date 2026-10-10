@@ -37,7 +37,7 @@ namespace {
             MILO_LOG(
                 "   %d particles can be allocated, %.1f KB.\n",
                 size,
-                (float)(size * 200 * 0.0009765625f)
+                size * sizeof(RndFancyParticle) / 1024.0f
             );
             MILO_LOG(
                 "   %d particles active, %d is the high water mark.\n",
@@ -553,7 +553,7 @@ BEGIN_COPYS(RndParticleSys)
             }
             SetRelativeMotion(
                 c->mRelativeMotion,
-                c->mMotionParent.Ptr() == c ? this : c->mMotionParent.Ptr()
+                (Hmx::Object *)c->mMotionParent.Ptr() == c ? this : c->mMotionParent.Ptr()
             );
             SetSubSamples(c->mSubSamples);
         }

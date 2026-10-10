@@ -16,7 +16,7 @@ public:
     virtual int Seek(int, int);
     virtual int Tell() { return mTell; }
     virtual void Flush() {}
-    virtual bool Eof() { return (mSize - mTell) == 0; }
+    virtual bool Eof() { return mTell == mSize; }
     virtual bool Fail() { return mFail; }
     virtual int Size() { return mSize; }
     virtual int UncompressedSize() { return mUCSize; }

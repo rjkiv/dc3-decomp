@@ -68,7 +68,7 @@ private:
     static SampleDataAllocFunc sAlloc;
     static SampleDataFreeFunc sFree;
 
-    Hmx::CRC mCRC; // 0x0
+    int mCRC; // 0x0
     int mNumSamples; // 0x4
     int mSampleRate; // 0x8
     int mNumChannels; // 0xc

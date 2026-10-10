@@ -120,7 +120,7 @@ void HamRibbon::Reset() { unk8c.clear(); }
 
 void HamRibbon::ExposeMesh() {
     if (!mMesh->Dir()) {
-        mMesh->SetName(MakeString("%s_mesh.mesh", FileGetBase(mMesh->Name())), Dir());
+        mMesh->SetName(MakeString("%s_mesh.mesh", FileGetBase(Name())), Dir());
     }
 }
 

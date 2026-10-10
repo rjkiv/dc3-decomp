@@ -231,14 +231,17 @@ void UIList::PostLoad(BinStream &bs) {
             if (d.rev > 6) {
                 d >> z;
             } else {
-                d >> b8e;
+                bool b;
+                d >> b;
             }
         }
         if (d.rev > 6) {
-            d >> b8e;
+            bool b;
+            d >> b;
         }
         if (d.rev > 8) {
-            d >> b8e;
+            bool b;
+            d >> b;
         }
         int i6c; // 0x6c
         if (d.rev > 10) {
@@ -346,11 +349,11 @@ float UIList::GetDistanceToPlane(const Plane &p, Vector3 &v) {
                            Vector3(box.mMax.x, box.mMin.y, box.mMax.z),
                            Vector3(box.mMax.x, box.mMax.y, box.mMax.z),
                            Vector3(box.mMin.x, box.mMax.y, box.mMax.z) };
-    for (int i = 0; i < DIM(boxVecs); i++) {
-        float dot = p.Dot(boxVecs[i]);
+    for (Vector3 *it = boxVecs; it != boxVecs + DIM(boxVecs); it++) {
+        float dot = p.Dot(*it);
         if (first || (fabsf(dot) < fabsf(ret))) {
             ret = dot;
-            v = boxVecs[i];
+            v = *it;
             first = false;
         }
     }
@@ -415,7 +418,9 @@ int UIList::CollidePlane(const Plane &pl) {
     if (collided == 0) {
         return 0;
     } else {
-        FOREACH (it, vectors) {
+        for (std::vector<std::vector<Vector3> >::iterator it = vectors.begin() + 1;
+             it != vectors.end();
+             ++it) {
             if (collided != CollidePlane(*it, pl)) {
                 return 0;
             }

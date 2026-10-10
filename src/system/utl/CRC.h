@@ -8,7 +8,7 @@ namespace Hmx {
         CRC(const char *cstr) : mCRC(ComputeHash(cstr, strlen(cstr))) {
             MILO_ASSERT(ValidateCRC(mCRC, cstr), 0x20);
         }
-        // CRC(int);
+        CRC(int crc) : mCRC(crc) {}
         // CRC(const FixedString&);
 
         operator int() const { return mCRC; }

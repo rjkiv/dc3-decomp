@@ -528,14 +528,15 @@ int CacheXbox::ThreadGetDir(String str1, String str2) {
     }
     if (err == ERROR_FILE_NOT_FOUND || err == ERROR_NO_MORE_FILES) {
         return kCache_NoError;
-    } else if (err == ERROR_NOT_READY || err == ERROR_MEDIA_CHANGED
-               || err == ERROR_DEVICE_NOT_CONNECTED || err == ERROR_DEVICE_REMOVED) {
-        return kCache_ErrorStorageDeviceMissing;
-    } else if (!IsDeviceConnected(mCacheID.ContentData()->DeviceID)) {
-        return kCache_ErrorStorageDeviceMissing;
-    } else {
-        return kCache_ErrorUnknown;
     }
+    if (err == ERROR_NOT_READY || err == ERROR_MEDIA_CHANGED
+        || err == ERROR_DEVICE_NOT_CONNECTED || err == ERROR_DEVICE_REMOVED) {
+        return kCache_ErrorStorageDeviceMissing;
+    }
+    if (!IsDeviceConnected(mCacheID.ContentData()->DeviceID)) {
+        return kCache_ErrorStorageDeviceMissing;
+    }
+    return kCache_ErrorUnknown;
 }
 
 #pragma endregion

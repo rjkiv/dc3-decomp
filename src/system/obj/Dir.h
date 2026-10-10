@@ -62,6 +62,8 @@ public:
 
     const class DirLoader *GetDirLoader() const { return mLoader; }
     operator C *() const { return mObject; }
+    int operator==(const ObjDirPtr &o) const { return mObject == o.mObject; }
+    int operator!=(const ObjDirPtr &o) const { return mObject != o.mObject; }
     C *operator->() const {
         MILO_ASSERT(ObjRefConcrete<C>::mObject, 0x5F);
         return mObject;

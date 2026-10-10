@@ -18,23 +18,26 @@
 #define MAX_HEAPS 16
 #define MAX_BUF_THREADS 32
 
+static int gThreadIds[MAX_BUF_THREADS] = { -1 };
 int MemHeapStack::sDefaultHeap = -1;
 const char *gStlAllocName = "StlAlloc";
 
-// these global offsets need fixing lol
-static MemHeapStack gNullMemStack;
-static MemHeapStack gThreadBuf[MAX_BUF_THREADS];
+static MemHeapStack gNullMemStack = {};
+static MemHeapStack gThreadBuf[MAX_BUF_THREADS] = {};
 int gSingleHeap = 0;
-static MemHeap gHeaps[MAX_HEAPS];
+static int gUnknown0 = 0;
+static MemHeap gHeaps[MAX_HEAPS] = {};
 static bool sUnkB = false;
 static bool gInitted = false;
 bool gbUseLowestMip = false;
 bool gInsideMemFunc = false;
-static int gCurThread;
-static int gNumThreads;
-static int gNumHeaps;
-static int gCheckConsistency;
-static int gNewOperatorAlign;
+static int gCurThread = 0;
+static int gNumThreads = 0;
+static int gUnknown1 = 0;
+static int gUnknown2 = 0;
+static int gNumHeaps = 0;
+static int gCheckConsistency = 0;
+static int gNewOperatorAlign = 0;
 bool gStlAllocNameLookup = false;
 CriticalSection *gMemLock = nullptr;
 CriticalSection *gMemStackLock = nullptr;
@@ -42,7 +45,6 @@ std::vector<String> gUseLowestMipExceptions;
 
 bool gMemoryUsageTest = false;
 String gMemLogType;
-int gThreadIds[MAX_BUF_THREADS];
 
 void *operator new(unsigned int size) {
     return MemAlloc(size, __FILE__, 0x5CF, "new", gNewOperatorAlign);
@@ -216,7 +218,7 @@ void MemOrPoolFreeSTL(
     }
 }
 
-void AddHeap(
+static void AddHeap(
     int heapNum,
     int bytes,
     const char *name,
@@ -246,7 +248,7 @@ void AddHeap(
     );
 }
 
-void AddHeap(int heapNum, int bytes, DataArray *arr) {
+static void AddHeap(int heapNum, int bytes, DataArray *arr) {
     Symbol handle("handle");
     Symbol region("region");
     Symbol debug("debug");
@@ -459,7 +461,7 @@ MemRealloc(void *mem, int size, const char *file, int line, const char *name, in
         return dst;
     } else {
         void *dst = realloc(mem, size);
-        MemTrackRealloc(mem, size, (size + 3) / 4, dst);
+        MemTrackRealloc(mem, size, ((size + 3) >> 2) * 4, dst);
         return dst;
     }
 }
@@ -470,35 +472,33 @@ MemHeapStack &ThreadMemStack(bool b1) {
         gThreadIds[0] = GetCurrentThreadId();
         gNumThreads = 1;
     } else {
-        if (gThreadIds[gCurThread] != GetCurrentThreadId()) {
-            int i;
-            for (i = 0; i < gNumThreads; i++) {
-                if (gThreadIds[i] == GetCurrentThreadId())
+        int tID;
+        DWORD curThread = GetCurrentThreadId();
+        if (gThreadIds[gCurThread] != curThread) {
+            for (tID = 0; tID < gNumThreads; tID++) {
+                DWORD curID = GetCurrentThreadId();
+                if (gThreadIds[tID] == curID)
                     break;
             }
             if (!b1) {
                 return gNullMemStack;
             }
-            if (i == gNumThreads) {
-                int cur = 0;
-                for (; cur < gNumThreads; cur++) {
-                    if (!ValidateThreadId(gThreadIds[cur])) {
-                        MILO_ASSERT(gThreadBuf[cur].mSize == 0, 0x12E);
-                        MILO_ASSERT(gThreadBuf[cur].mTempRefs == 0, 0x12F);
-                        gThreadIds[cur] = GetCurrentThreadId();
+            if (tID == gNumThreads) {
+                for (tID = 0; tID < gNumThreads; tID++) {
+                    if (!ValidateThreadId(gThreadIds[tID])) {
+                        MILO_ASSERT(gThreadBuf[tID].mSize == 0, 0x12E);
+                        MILO_ASSERT(gThreadBuf[tID].mTempRefs == 0, 0x12F);
+                        gThreadIds[tID] = GetCurrentThreadId();
                         break;
                     }
                 }
-                if (cur == gNumThreads) {
+                if (tID == gNumThreads) {
                     MILO_ASSERT(gNumThreads < MAX_BUF_THREADS, 0x138);
-                    DWORD id = GetCurrentThreadId();
+                    gThreadIds[tID] = GetCurrentThreadId();
                     gNumThreads++;
-                    gThreadIds[cur] = id;
                 }
-                gCurThread = cur;
-            } else {
-                gCurThread = i;
             }
+            gCurThread = tID;
         }
     }
     return gThreadBuf[gCurThread];
@@ -616,7 +616,7 @@ void MemPrintOverview(int i1, char *const c) {
         const char *str = "physical";
         MEMORYSTATUS status;
         GlobalMemoryStatus(&status);
-        static SIZE_T sAvailPhys;
+        static SIZE_T sAvailPhys = -1;
         if (sAvailPhys >= status.dwAvailPhys) {
             sAvailPhys = status.dwAvailPhys;
         }
@@ -634,24 +634,19 @@ void MemPrintOverview(int i1, char *const c) {
     }
     for (int i = 0; i < gNumHeaps; i++) {
         if (i1 == -3 || i1 == i) {
-            int i7c, i80, i88, i8c, i84;
-            MemFreeBlockStats(i, i7c, i80, i88, i8c, i84);
-            int waste = (i88 - i84) >> 10;
-            int big = i84 >> 10;
-            int free2 = i8c >> 10;
-            int freeAmt = i88 >> 10;
-            const char *str = "physical";
+            int lfrag, rfrag, numFree, i5, largest;
+            MemFreeBlockStats(i, lfrag, rfrag, numFree, i5, largest);
             strcpy(
                 p,
                 MakeString(
                     " [%5s] KB free:%7d(%7d) big:%7d lfrag:%5d rfrag:%5d waste:%5d\n",
-                    str,
-                    freeAmt,
-                    free2,
-                    big,
-                    i7c,
-                    i80,
-                    waste
+                    MemHeapName(i),
+                    numFree >> 10,
+                    i5 >> 10,
+                    largest >> 10,
+                    lfrag,
+                    rfrag,
+                    (numFree - largest) >> 10
                 )
             );
             p += strlen(p);

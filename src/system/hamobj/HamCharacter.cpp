@@ -189,6 +189,10 @@ void HamCharacter::PostLoad(BinStream &bs) {
     }
 }
 
+inline bool IsServoBlinking(const CharFaceServo *servo) {
+    return !servo->BlinkClipLeftName().Null() || servo->BlinkClipRightName().Null();
+}
+
 void HamCharacter::SyncObjects() {
     const char *meshes[2] = { "bone_pelvis.mesh", "spot_neck.mesh" };
     for (int i = 0; i < DIM(meshes); i++) {
@@ -207,14 +211,7 @@ void HamCharacter::SyncObjects() {
         CharFaceServo *servo = Find<CharFaceServo>("face.faceservo", false);
         CharLipSyncDriver *lipDrv = Find<CharLipSyncDriver>("face.lipdrv", false);
         EnableFacialAnimation(lipDrv->LipSync(), 0);
-        bool blinking;
-        if (servo) {
-            blinking =
-                !servo->BlinkClipLeftName().Null() || servo->BlinkClipRightName().Null();
-        } else {
-            blinking = false;
-        }
-        SetBlinking(blinking);
+        SetBlinking(servo && IsServoBlinking(servo));
     }
     mCrewCard = Find<RndMesh>(kCrewCardMeshName, false);
 }

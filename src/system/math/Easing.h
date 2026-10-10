@@ -353,49 +353,44 @@ inline float EaseQuarterHalfStairstep(float t, float power, float) {
 
 typedef float EaseFunc(float, float, float);
 
-EaseFunc *gEaseFuncs[35] = {
-    EaseLinear,
-    EasePolyIn,
-    EasePolyOut,
-    EasePolyInOut,
-    EasePolyOutIn,
-    EaseBounceIn,
-    EaseBounceOut,
-    EaseBounceInOut,
-    EaseBounceOutIn,
-    EaseElasticIn,
-    EaseElasticOut,
-    EaseElasticInOut,
-    EaseElasticOutIn,
-    EaseBackIn,
-    EaseBackOut,
-    EaseBackInOut,
-    EaseBackOutIn,
-    EaseSineIn,
-    EaseSineOut,
-    EaseSineInOut,
-    EaseSineOutIn,
-    EaseExpoIn,
-    EaseExpoOut,
-    EaseExpoInOut,
-    EaseExpoOutIn,
-    EaseCircIn,
-    EaseCircOut,
-    EaseCircInOut,
-    EaseCircOutIn,
-    EaseStairstep,
-    EaseThirdStairstep,
-    EaseQuarterStairstep,
-    EaseHalfQuarterStairstep,
-    EaseQuarterHalfStairstep,
-};
-
-inline EaseFunc *GetEaseFunction(EaseType e) {
+static EaseFunc *GetEaseFunction(EaseType e) {
     MILO_ASSERT(e >= kEaseLinear && e <= kEaseQuarterHalfStairstep, 0x16B);
-    return gEaseFuncs[e];
-}
-
-__forceinline EaseFunc *GetEaseFunctionForcedInline(EaseType e) {
-    MILO_ASSERT(e >= kEaseLinear && e <= kEaseQuarterHalfStairstep, 0x16B);
-    return gEaseFuncs[e];
+    static EaseFunc *table[35] = {
+        EaseLinear,
+        EasePolyIn,
+        EasePolyOut,
+        EasePolyInOut,
+        EasePolyOutIn,
+        EaseBackIn,
+        EaseBackOut,
+        EaseBackInOut,
+        EaseBackOutIn,
+        EaseBounceIn,
+        EaseBounceOut,
+        EaseBounceInOut,
+        EaseBounceOutIn,
+        EaseCircIn,
+        EaseCircOut,
+        EaseCircInOut,
+        EaseCircOutIn,
+        EaseElasticIn,
+        EaseElasticOut,
+        EaseElasticInOut,
+        EaseElasticOutIn,
+        EaseExpoIn,
+        EaseExpoOut,
+        EaseExpoInOut,
+        EaseExpoOutIn,
+        EaseSigmoid,
+        EaseSineIn,
+        EaseSineOut,
+        EaseSineInOut,
+        EaseSineOutIn,
+        EaseStairstep,
+        EaseThirdStairstep,
+        EaseQuarterStairstep,
+        EaseHalfQuarterStairstep,
+        EaseQuarterHalfStairstep,
+    };
+    return table[e];
 }

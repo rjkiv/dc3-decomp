@@ -83,8 +83,8 @@ void AllocInfo::Print(TextStream &ts) const {
            << mFile << " " << mLine << ") ";
         int i = 0;
         ts << "(stack ";
-        for (; mStackTrace[i] != 0 && i < 16; i++) {
-            ts << mStackTrace[i] << " ";
+        for (int addr = mStackTrace[0]; addr != 0 && i < 16; addr = mStackTrace[++i]) {
+            ts << addr << " ";
         }
         ts << ") ";
     }

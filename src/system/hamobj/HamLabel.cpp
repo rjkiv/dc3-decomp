@@ -69,17 +69,21 @@ void HamLabel::PostLoad(BinStream &bs) {
 }
 
 void HamLabel::Count(int i1, int i2, float f3, Symbol s) {
-    unk168.clear();
-    float uiMs = TheTaskMgr.UISeconds() * 1000.0f;
-    unk168.push_back(Key<float>(i1, uiMs));
-    unk168.push_back(Key<float>(i2, uiMs + f3));
-    unk174 = s;
+    mCountKeys.clear();
+    Key<float> key;
+    key.frame = TheTaskMgr.UISeconds() * 1000.0f;
+    key.value = i1;
+    mCountKeys.push_back(key);
+    key.frame += f3;
+    key.value = i2;
+    mCountKeys.push_back(key);
+    mCountToken = s;
 }
 
 void HamLabel::FinishCount() {
-    if (unk168.size() >= 2) {
-        SetTokenFmt(unk174, LocalizeSeparatedInt(unk168[1].value, TheLocale));
-        unk168.clear();
+    if (mCountKeys.size() >= 2) {
+        SetTokenFmt(mCountToken, LocalizeSeparatedInt(mCountKeys[1].value, TheLocale));
+        mCountKeys.clear();
     }
 }
 
@@ -94,13 +98,13 @@ void HamLabel::SetMoveName(HamMove *move) {
 
 void HamLabel::Poll() {
     UILabel::Poll();
-    if (unk168.size() >= 2) {
+    if (mCountKeys.size() >= 2) {
         float f3 = 0;
         float ui_ms = TheTaskMgr.UISeconds() * 1000;
-        unk168.AtFrame(ui_ms, f3);
-        SetTokenFmt(unk174, LocalizeSeparatedInt(f3, TheLocale));
-        if (ui_ms > unk168.LastFrame()) {
-            unk168.clear();
+        mCountKeys.AtFrame(ui_ms, f3);
+        SetTokenFmt(mCountToken, LocalizeSeparatedInt(f3, TheLocale));
+        if (ui_ms > mCountKeys.LastFrame()) {
+            mCountKeys.clear();
             HamLabelCountDoneMsg msg(this);
             TheUI->Handle(msg, false);
         }

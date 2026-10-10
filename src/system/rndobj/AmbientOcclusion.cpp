@@ -203,7 +203,7 @@ void RndAmbientOcclusion::BuildTrees(Quality quality) {
         timer.Restart();
         MILO_LOG("RndAmbientOcclusion: Building kd-Tree...\n");
         kdTree<Triangle>::SplitPlaneType whichType = sSplitTypes[quality];
-        BuildSphereStratified(sNumSamples[quality], unkb8);
+        BuildSphereStratified(sNumSamples[quality], mSampleDirs);
         Vector3 maxNeg(-FLT_MAX, -FLT_MAX, -FLT_MAX);
         Vector3 maxPos(FLT_MAX, FLT_MAX, FLT_MAX);
         Box box(maxPos, maxNeg);
@@ -219,15 +219,9 @@ void RndAmbientOcclusion::BuildTrees(Quality quality) {
                 Vector3 v1180;
                 Multiply(cur->Verts(face.v3).pos, curWorldXfm, v1180);
 
-                Vector3 diff23;
-                Subtract(v1190, v1180, diff23);
-                float len23 = Length(diff23);
-                Vector3 diff13;
-                Subtract(v11a0, v1180, diff13);
-                float len13 = Length(diff13);
-                Vector3 diff12;
-                Subtract(v11a0, v1190, diff12);
-                float len12 = Length(diff12);
+                float len12 = Distance(v11a0, v1190);
+                float len13 = Distance(v11a0, v1180);
+                float len23 = Distance(v1190, v1180);
 
                 if (0.000099999997f < len23 + len13 + len12
                     && 1.1920929E-7f < len23 * len13 * len12) {
@@ -269,7 +263,7 @@ void RndAmbientOcclusion::Clean() {
     mObjectsReceive.clear();
     mObjectsTessellate.clear();
     mTriList.clear();
-    unkb8.clear();
+    mSampleDirs.clear();
 }
 
 bool RndAmbientOcclusion::IsValid_AOCast(const RndMesh *mesh) const {
@@ -482,12 +476,8 @@ float RndAmbientOcclusion::DistanceSH(
     float y = (v1.y * 2 - 1) - (v3.y * 2 - 1);
     float z = (v1.z * 2 - 1) - (v3.z * 2 - 1);
     float w = (v1.w * 2 - 1) - (v3.w * 2 - 1);
-    float dot = Dot(v2, v4);
     float len = sqrtf(x * x + y * y + z * z + w * w);
-    if (dot <= 0) {
-        dot = -dot;
-    }
-    return len / (dot + 1);
+    return len / (Abs(Dot(v2, v4)) + 1);
 }
 
 bool RndAmbientOcclusion::CanBurnXfm(const RndMesh *mesh) const {
@@ -606,9 +596,8 @@ void RndAmbientOcclusion::BurnTransform(
                     Transform tfa0;
                     if (cur->TransConstraint() == RndTransformable::kConstraintNone) {
                         Multiply(cur->LocalXfm(), tfe0, tfa0);
-                    } else if (
-                        cur->TransConstraint() == RndTransformable::kConstraintParentWorld
-                    ) {
+                    } else if (cur->TransConstraint()
+                               == RndTransformable::kConstraintParentWorld) {
                         tfa0 = tfe0;
                         cur->SetTransConstraint(
                             RndTransformable::kConstraintNone,
@@ -632,11 +621,11 @@ void RndAmbientOcclusion::CalculateAOAtPoint(
     float f16 = gUnitsPerMeter * 50;
     Vector3 vb0;
     ScaleAdd(v1, v2, 0.001, vb0);
-    int numVectors = unkb8.size();
+    unsigned int numVectors = mSampleDirs.size();
     float f14 = 1 / f16;
     double f90[4] = { 0, 0, 0, 0 };
     for (int i = 0; i != numVectors; i++) {
-        const Vector3 &curVec = unkb8[i];
+        const Vector3 &curVec = mSampleDirs[i];
         float dot = Dot(v2, curVec);
         if (dot > 0) {
             float fref;

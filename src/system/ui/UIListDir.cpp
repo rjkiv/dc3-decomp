@@ -290,8 +290,8 @@ void UIListDir::BuildDrawState(
 ) const {
     int numDisplay = listState.NumDisplay();
     int numDisplayWithData = listState.NumDisplayWithData();
-    int i198 = Min(mFadeOffset, numDisplay / 2);
-    int i194 = i198;
+    int i194 = Min(mFadeOffset, numDisplay / 2);
+    int i198 = i194;
     if (mFadeOffset != 0) {
         if (listState.Circular()) {
             MinEq(i194, listState.SelectedDisplay());
@@ -325,10 +325,10 @@ void UIListDir::BuildDrawState(
     drawState.mElements.clear();
     drawState.mElements.reserve(numDisplayWithData);
     drawState.mHighlightElementState = kUIListWidgetActive;
-    float f24 = 0;
-    float f18 = 0;
-    float f23 = 0;
     float f25 = 0;
+    float f23 = 0;
+    float f18 = 0;
+    float f24 = 0;
     float f19 = listState.StepPercent() * (float)i1;
     int i7 = 0;
     for (int i14 = 0; i14 < numDisplayWithData; i14++) {
@@ -395,7 +395,7 @@ void UIListDir::BuildDrawState(
             newState.mDraw = true;
             newState.mPos = v190;
             newState.mAlpha = f22;
-            newState.unk14.Set(0, 0, 0);
+            newState.unk14.Set(1, 1, 1);
             newState.mElementState = ws;
             newState.mComponentState =
                 prov->ComponentStateOverride(selected, i7, compState);

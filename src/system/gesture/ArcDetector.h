@@ -35,14 +35,14 @@ private:
 
     SkeletonSide mSide; // 0x4
     SkeletonJoint unk8; // 0x8
-    SkeletonJoint unkc; // 0xc
+    SkeletonJoint mRefJoint; // 0xc
     std::list<Vector3> mJointPath; // 0x10
-    Vector3 unk18;
+    Vector3 mCurveStart;
     float unk28;
     float unk2c;
     float unk30;
     bool unk34;
-    bool unk35;
+    bool mNeedSwipeReset;
     float unk38;
     int unk3c;
     Vector3 unk40; // last frame hand pos?

@@ -49,6 +49,7 @@ QUOTED_SYMBOL       \'[^\']*\'
 STRING              \"[^\"]*\"
 
 COMMENT             ;[^\n]*
+LINE_COMMENT        \/\/[^\n]*
 
 %x BLOCK_COMMENT
 /* BUG: /** won't start a block */
@@ -58,7 +59,6 @@ BCOMMENT_SKIP       \*+[^\n\/\*]*
 BCOMMENT_END        \*+\/
 
 %%
-\r                                                  { /* skip carriage returns */ TESTER_RETURN(kDataTokenCarriageReturn); }
 \n                                                  { gDataLine++; TESTER_RETURN(kDataTokenNewline); }
 {STRING}                                            { return kDataTokenString; }
 {QUOTED_SYMBOL}                                     { return kDataTokenQuotedSymbol; }
@@ -68,6 +68,7 @@ BCOMMENT_END        \*+\/
 <BLOCK_COMMENT>\n                                   { gDataLine++; TESTER_RETURN(kDataTokenBlockCommentNewline); }
 <BLOCK_COMMENT>{BCOMMENT_END}                       { BEGIN(INITIAL); TESTER_RETURN(kDataTokenBlockCommentEnd); }
 {COMMENT}                                           { /* skip comments */ TESTER_RETURN(kDataTokenComment); }
+{LINE_COMMENT}                                      { /* skip comments */ TESTER_RETURN(kDataTokenComment); }
 kDataUnhandled                                      { return kDataTokenUnhandled; }
 
 {HEX_NUMBER}                                        { return kDataTokenHex; }

@@ -146,7 +146,7 @@ protected:
     bool mFloatSamples; // 0xe0
     int mVirtualChans; // 0xe4
     int mInfoChannels; // 0xe8
-    float unkec; // 0xec
+    float mTotalSecs; // 0xec
     bool mGetInfoOnly; // 0xf0
     std::vector<void *> mVirtBufs; // 0xf4
     std::vector<std::pair<int, int> > mChanMaps; // 0x100
@@ -156,6 +156,6 @@ protected:
     Marker mStartMarker; // 0x130
     Marker mEndMarker; // 0x140
     bool unk150; // 0x150
-    int unk154; // 0x154
-    bool unk158; // 0x158
+    int mTotalSamples; // 0x154
+    bool mUseFileReceivers; // 0x158
 };

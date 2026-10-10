@@ -33,12 +33,12 @@ static void ReadFunc(struct BINKIO *pBinkIO, bool bStartNewRead) {
         pBinkIO->DoingARead = 0;
         if (binkFile->mEncryptionHeader.mVersion == 2) {
             START_AUTO_TIMER("XTEA");
+            XTEABlock decrypted;
             for (XTEABlock *it = (XTEABlock *)binkFile->pBufBack;
                  it < (XTEABlock *)(binkFile->pBufBack + bytes);
                  it++) {
                 it->mData[0] = EndianSwap(it->mData[0]);
                 it->mData[1] = EndianSwap(it->mData[1]);
-                XTEABlock decrypted;
                 binkFile->pXTEADecrypter->Encrypt(it, &decrypted);
                 unsigned int *itUI = (unsigned int *)it;
                 unsigned int *decUI = (unsigned int *)&decrypted;
@@ -121,13 +121,13 @@ static unsigned int BinkFileReadHeader(
             unsigned char key[16];
             KeyChain::getKey(pEncryptionHeader->mKeyIndex, key, masterKey);
             TheSynth->Grinder().GrindArray(
-                pEncryptionHeader->mMagicA, pEncryptionHeader->mMagicB, masterKey, 16, 12
+                pEncryptionHeader->mMagicA, pEncryptionHeader->mMagicB, key, 16, 12
             );
             for (int i = 0; i < 16; i++) {
-                masterKey[i] ^= pEncryptionHeader->mKeyMask[i];
+                key[i] ^= pEncryptionHeader->mKeyMask[i];
             }
-            EndianSwapBlock((unsigned int *)masterKey, 4);
-            pBinkFileInfo->pXTEADecrypter->SetKey(masterKey);
+            EndianSwapBlock((unsigned int *)key, 4);
+            pBinkFileInfo->pXTEADecrypter->SetKey(key);
             pBinkFileInfo->pXTEADecrypter->SetNonce(
                 pBinkFileInfo->mEncryptionHeader.mNonce, 0
             );
