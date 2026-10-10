@@ -199,48 +199,35 @@ void SkeletonUpdate::PostUpdate() {
 
 DataNode OnToggleSkeletalUpdateThread(DataArray *) {
     SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
-    handle.Inst()->SetUnk539C(!handle.Inst()->GetUnk539C());
+    handle.SetThreadedUpdate(!handle.IsThreadedUpdate());
     ResetEvent(SkeletonUpdate::SkeletonUpdatedEvent());
-    return handle.Inst()->GetUnk539C();
+    return handle.IsThreadedUpdate();
 }
 
 DataNode OnCycleNumStubSkeletons(DataArray *) {
     SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
-    int i = (handle.Inst()->GetUnk5388() + 1) % 3;
-    if (i < 0) {
-        i += 3;
-    }
-    handle.Inst()->SetUnk5388(i);
-    return i;
+    return handle.CycleNumStubSkeletons();
 }
 
 DataNode OnCycleFakeShellSkeletons(DataArray *arr) {
     SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
-    int i = (1 << arr->Int(1)) ^ handle.Inst()->GetUnk538C();
-    handle.Inst()->SetUnk538C(i);
-    return i;
+    return handle.CycleFakeShellSkeletons(arr->Int(1));
 }
 
 DataNode OnCycleActiveFakeShellSkeleton(DataArray *) {
     SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
-    int i = (handle.Inst()->GetUnk5394() + 1) % 2;
-    if (i < 0) {
-        i += 2;
-    }
-    handle.Inst()->SetUnk5394(i);
-    return i;
+    return handle.CycleActiveFakeShellSkeleton();
 }
 
 DataNode OnSetFakeSkeletonSidesSwapped(DataArray *arr) {
     SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
-    bool b = arr->Int(1) != 0;
-    handle.Inst()->SetUnk5390(b);
+    handle.SetFakeSkeletonSidesSwapped(arr->Int(1));
     return 0;
 }
 
 DataNode OnGetFakeSkeletonSidesSwapped(DataArray *) {
     SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
-    return handle.Inst()->GetUnk5390();
+    return handle.GetFakeSkeletonSidesSwapped();
 }
 
 void SkeletonUpdate::Init() {

@@ -24,6 +24,15 @@ public:
 
     SkeletonUpdate *Inst() const { return mInst; }
 
+    bool IsThreadedUpdate();
+    void SetThreadedUpdate(bool);
+    void Update();
+    int CycleNumStubSkeletons();
+    int CycleFakeShellSkeletons(int);
+    int CycleActiveFakeShellSkeleton();
+    void SetFakeSkeletonSidesSwapped(bool);
+    int GetFakeSkeletonSidesSwapped();
+
 private:
     SkeletonUpdate *mInst; // 0x0
 
@@ -48,19 +57,6 @@ public:
     static HANDLE NewSkeletonEvent();
     static HANDLE SkeletonUpdatedEvent() { return sSkeletonUpdatedEvent; }
     static SkeletonUpdateHandle InstanceHandle();
-
-    void PublicUpdate() { Update(); }
-
-    int GetUnk5388() const { return mNumStubSkeletons; }
-    void SetUnk5388(int i) { mNumStubSkeletons = i; }
-    int GetUnk538C() const { return mFakeShellSkeletonMask; }
-    void SetUnk538C(int i) { mFakeShellSkeletonMask = i; }
-    bool GetUnk5390() const { return mSwapFakeSkeletonSides; }
-    void SetUnk5390(bool b) { mSwapFakeSkeletonSides = b; }
-    int GetUnk5394() const { return mActiveFakeShellSkeleton; }
-    void SetUnk5394(int i) { mActiveFakeShellSkeleton = i; }
-    bool GetUnk539C() const { return mThreadedUpdate; }
-    void SetUnk539C(bool b) { mThreadedUpdate = b; }
 
 private:
     SkeletonUpdate();
@@ -96,3 +92,35 @@ private:
     HANDLE mSkeletonUpdateThread; // 0x53a0
     NUI_SKELETON_FRAME *mNuiSkeletonFrame; // 0x53a4
 };
+
+inline bool SkeletonUpdateHandle::IsThreadedUpdate() { return mInst->mThreadedUpdate; }
+inline void SkeletonUpdateHandle::SetThreadedUpdate(bool t) {
+    mInst->mThreadedUpdate = t;
+}
+inline int SkeletonUpdateHandle::CycleNumStubSkeletons() {
+    int ret = (mInst->mNumStubSkeletons + 1) % 3;
+    if (ret < 0) {
+        ret += 3;
+    }
+    mInst->mNumStubSkeletons = ret;
+    return ret;
+}
+inline int SkeletonUpdateHandle::CycleFakeShellSkeletons(int i) {
+    int ret = (1 << i) ^ mInst->mFakeShellSkeletonMask;
+    mInst->mFakeShellSkeletonMask = ret;
+    return ret;
+}
+inline int SkeletonUpdateHandle::CycleActiveFakeShellSkeleton() {
+    int ret = (mInst->mActiveFakeShellSkeleton + 1) % 2;
+    if (ret < 0) {
+        ret += 2;
+    }
+    mInst->mActiveFakeShellSkeleton = ret;
+    return ret;
+}
+inline void SkeletonUpdateHandle::SetFakeSkeletonSidesSwapped(bool swapped) {
+    mInst->mSwapFakeSkeletonSides = swapped;
+}
+inline int SkeletonUpdateHandle::GetFakeSkeletonSidesSwapped() {
+    return mInst->mSwapFakeSkeletonSides;
+}
