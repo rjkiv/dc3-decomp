@@ -19,18 +19,14 @@ WahEffect::WahEffect(IXAudioBatchAllocator *) {
     mLastPhase = 0;
     mInSample = 0;
     mOutSample = 0;
-    unk40 = 0;
-    unk3c = 0;
-    unk38 = 0;
-    unk34 = 0;
+    mA1[2] = 0;
+    mA2[2] = 0;
 }
 
 void WahEffect::Reset() {
     mLastPhase = 0;
-    unk38 = 0;
-    unk34 = 0;
-    unk40 = 0;
-    unk3c = 0;
+    mA1[2] = 0;
+    mA2[2] = 0;
 }
 
 void WahEffect::SetParameters(WahEffect::Params const &params) {
@@ -67,10 +63,10 @@ void WahEffect::Process(float *buf, int numSamples, int numChans) {
     float f23 = f8 * f12_twopi; // resonance * 2*PI
 
     // Load state variables BEFORE the comparison
-    float f10_state = unk34;
-    float f0_state = unk38;
-    float f12_state = unk3c;
-    float f11_state = unk40;
+    float f10_state = mA1[1];
+    float f0_state = mA1[2];
+    float f12_state = mA2[1];
+    float f11_state = mA2[2];
     float f27 = mLastPhase;
     float f30 = 0.5f;
 
@@ -230,7 +226,7 @@ void WahEffect::Process(float *buf, int numSamples, int numChans) {
     }
 
     // Copy state back from stack
-    float *dest = &unk3c;
+    float *dest = &mA2[1];
     for (int i = 0; i < 2; i++) {
         float s1 = stack50[i];
         float s2 = stack58[i];

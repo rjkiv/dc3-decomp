@@ -49,10 +49,8 @@ private:
     float mPreviousAutoWah; // 0x28
     int mManualWahRecoveryTimer; // 0x2C
     float mLastPhase; // 0x30
-    float unk34;
-    float unk38;
-    float unk3c;
-    float unk40;
+    float mA1[2]; // 0x34
+    float mA2[2]; // 0x3C
     float mInSample; // 0x44
     float mOutSample; // 0x48
     float mDump; // 0x4C
