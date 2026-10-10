@@ -1,7 +1,11 @@
 #include "hamobj/FilterQueue.h"
+#include "gesture/Skeleton.h"
 #include "hamobj/DetectFrame.h"
+#include "hamobj/ErrorNode.h"
+#include "hamobj/FilterVersion.h"
 #include "hamobj/HamMove.h"
 #include "os/Debug.h"
+#include "os/Timer.h"
 #include "utl/Loader.h"
 
 FilterQueue::FilterQueue() {
@@ -13,17 +17,21 @@ bool FilterQueue::GetResults(
     float &seconds, DetectFrame **plf_frames, float plf_min_time_error
 ) {
     mThreadJob.mIsFinished = false;
-    std::vector<FilterInputFrame> &qframes = mQueuedJob.mQueuedFrames;
-    std::vector<FilterOutputFrame> &oframes = mThreadJob.mOutputFrames;
-    if (qframes.empty()) {
-        oframes.clear();
+    if (mQueuedJob.mQueuedFrames.empty()) {
+        mThreadJob.mOutputFrames.clear();
     }
     seconds = mQueuedJob.mSeconds;
+    std::vector<FilterInputFrame> &qframes = mQueuedJob.mQueuedFrames;
+    std::vector<FilterOutputFrame> &oframes = mThreadJob.mOutputFrames;
     MILO_ASSERT(qframes.size() == oframes.size(), 0x42);
-    plf_frames[0] = nullptr;
-    plf_frames[1] = nullptr;
+    plf_frames[0] = plf_frames[1] = nullptr;
     for (int i = 0; i < qframes.size(); i++) {
-        qframes[i].mDetectFrame->AddError(oframes[i].mNodeErrors, qframes[i].mTimeError);
+        auto &qframe = qframes[i];
+        qframe.mDetectFrame->AddError(oframes[i].mNodeErrors, qframe.mTimeError);
+        if (mQueuedJob.mSeconds > qframe.mDetectFrame->mSeconds
+            && qframe.mTimeError > plf_min_time_error) {
+            plf_frames[qframe.mPlayer] = qframe.mDetectFrame;
+        }
     }
     qframes.clear();
     oframes.clear();
@@ -77,4 +85,44 @@ void FilterQueue::StartJob() {
     for (int i = 0; i < numQFrames; i++) {
         mThreadJob.mOutputFrames[i].mInputFrame = &mQueuedJob.mQueuedFrames[i];
     }
+}
+
+void FilterQueue::Poll(const SkeletonUpdateData &data) {
+    Timer t;
+    t.Start();
+    float songSpeed = mThreadJob.mSongSpeed;
+    MoveMode mode = mThreadJob.mMode;
+    auto &outFrames = mThreadJob.mOutputFrames;
+    FOREACH (it, outFrames) {
+        FilterOutputFrame &curOutFrame = *it;
+        const FilterInputFrame *input = curOutFrame.mInputFrame;
+        const FilterVersion *fv = input->mFilterVersion;
+        auto *nodes = fv->mNodes;
+        const Skeleton *skeleton = data.mPlayerSkeletons[input->mPlayer];
+        int numNodes = fv->NumNodes();
+        if (skeleton && skeleton->IsTracked()) {
+            DetectFrame *df = input->mDetectFrame;
+            const MoveFrame *mf = df->mMoveFrame;
+            ErrorFrameInput frame_input(
+                &data.mHistory, df->mDancerFrame->mSkeleton, *skeleton, songSpeed
+            );
+            for (int i = 0; i < numNodes; i++) {
+                ErrorNode *n = nodes[i];
+                if (n->Type() & mf->Flags()) {
+                    ErrorNodeInput node_input;
+                    input->mFilterVersion->NodeInput(i, df, mode, node_input);
+                    n->CalcError(frame_input, node_input, curOutFrame.mNodeErrors[i]);
+                } else {
+                    curOutFrame.mNodeErrors[i].Set(1, 1, 1);
+                }
+            }
+        } else {
+            for (int i = 0; i < numNodes; i++) {
+                curOutFrame.mNodeErrors[i].Set(1, 1, 1);
+            }
+        }
+    }
+    mThreadJob.mIsFinished = true;
+    t.Stop();
+    mLastPollMs = t.Ms();
 }
