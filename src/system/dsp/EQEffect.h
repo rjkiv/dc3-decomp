@@ -94,30 +94,20 @@ private:
     float mHPF_A2; // 0xB4
     float mHPF_B1; // 0xB8
     float mHPF_B2; // 0xBC
-
-    ///arrays
-    float unkc0;
-    float unkc4;
-    float unkc8;
-    float unkcc;
-    float unkd0;
-    float unkd4;
-    float unkd8;
-    float unkdc;
-    float unke0;
-    float unke4;
-    float unke8;
-    float unkec;
-    
-    ///arrays in arrays
-    float unkf0;
-    float unkf4;
-    float unkf8;
-    float unkfc;
-    char pad[0x30];
-    float unk_0x130;
-    float unk_0x134;
-    float unk_0x138;
-    char pad2[0x20];
-    float unk_0x15c[124];
+    float mMF_xn1[2]; // 0xC0
+    float mMF_xn2[2]; // 0xC8
+    float mMF_y1n1[2]; // 0xD0
+    float mMF_y1n2[2]; // 0xD8
+    float mHFDelay[2]; // 0xE0
+    float mLFDelay[2]; // 0xE8
+    float mLPFDelayX[2][2]; // 0xF0
+    float mLPFDelayY[2][2]; // 0x100
+    float mHPFDelayX[2][2]; // 0x110
+    float mHPFDelayY[2][2]; // 0x120
+    float mLPGain; // 0x130
+    float mBPGain; // 0x134
+    float mHPGain; // 0x138
+    float mLRB[3][4]; // 0x13C
+    float mLRxv[2][3][2][5]; // 0x16C
+    float mLRyv[2][3][2][5]; // 0x25C
 };

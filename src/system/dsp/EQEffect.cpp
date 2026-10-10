@@ -218,23 +218,23 @@ void EQEffect::SetParameter(int idx, float val) {
         createFilter(
             FilterType(1), FilterBand(0), 0, mLowFreqCutoff / 48000.0f, mLowFreqCutoff / 48000.0f, &f, 2
         );
-        unk_0x130 = f.gain;
+        mLPGain = f.gain;
         if (f.numpoles > 0) {
-            _blkmov(&unk_0x15c, &f.ycoeffs, f.numpoles * sizeof(float));
+            _blkmov(&mLRB, &f.ycoeffs, f.numpoles * sizeof(float));
         }
         createFilter(
             FilterType(1), FilterBand(2), 0, mLowFreqCutoff / 48000.0f, mHighFreqCutoff / 48000.0f, &f, 2
         );
-        unk_0x134 = f.gain;
+        mBPGain = f.gain;
         if (f.numpoles > 0) {
-            _blkmov(&unk_0x15c, &f.ycoeffs, f.numpoles * sizeof(float));
+            _blkmov(&mLRB, &f.ycoeffs, f.numpoles * sizeof(float));
         }
         createFilter(
             FilterType(1), FilterBand(1), 0, mHighFreqCutoff / 48000.0f, mHighFreqCutoff / 48000.0f, &f, 2
         );
-        unk_0x138 = f.gain;
+        mHPGain = f.gain;
         if (f.numpoles > 0) {
-            _blkmov(&unk_0x15c, &f.ycoeffs, f.numpoles * sizeof(float));
+            _blkmov(&mLRB, &f.ycoeffs, f.numpoles * sizeof(float));
         }
         Reset();
     }
@@ -308,7 +308,7 @@ void EQEffect::SetParameters(const EQEffect::Params &params) {
 }
 
 void EQEffect::Reset() {
-    unkc8 = unkc0 = 0.0f;
+    mMF_xn2[1] = mMF_xn1[1] = 0.0f;
     for (int i = 0; i < 2; i++) {
     }
     mHF_v0TT = mHF_v0;
