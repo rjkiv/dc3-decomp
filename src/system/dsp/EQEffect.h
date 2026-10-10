@@ -46,20 +46,21 @@ public:
     void SetParameters(const EQEffect::Params &);
 
 private:
-    float unk0;
-    float unk4;
-    float unk8;
-    float unkc;
-    float unk10;
-    float unk14;
-    float unk18;
-    float unk1c;
-    float unk20;
-    float unk24;
-    float unk28;
-    float unk2c;
-    float unk30;
-    float unk34;
+    float mHighFreqCutoff; // 0x0
+    float mHighFreqGain; // 0x4
+    float mMidFreqCutoff; // 0x8
+    float mMidFreqBandwidth; // 0xC
+    float mMidFreqGain; // 0x10
+    float mLowFreqCutoff; // 0x14
+    float mLowFreqGain; // 0x18
+    float mLPFCutoff; // 0x1C
+    float mLPFReso; // 0x20
+    float mHPFCutoff; // 0x24
+    float mHPFReso; // 0x28
+    float mLRMode; // 0x2C
+    float mTransitionTime; // 0x30
+    float mTTk; // 0x34
+    
     bool unk38;
     float unk3c;
     float unk40;

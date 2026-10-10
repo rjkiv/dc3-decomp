@@ -6,7 +6,7 @@
 #include <cstring>
 
 void EQEffect::Process(float *samples, int sampct, int numChans) {
-    if (unk2c != 0.0f) {
+    if (mLRMode != 0.0f) {
         MILO_ASSERT(numChans <= 2, 120);
         if (numChans <= 0)
             return;
@@ -27,153 +27,153 @@ void EQEffect::SetParameter(int idx, float val) {
          dirty26 = false, dirty25 = false;
     switch (idx) {
     case 0: {
-        float old_hfc = unk0;
+        float old_hfc = mHighFreqCutoff;
         float new_hfc = Min(24000.f, val);
         new_hfc = Max(0.0f, new_hfc);
         if (new_hfc != old_hfc) {
-            unk0 = new_hfc;
+            mHighFreqCutoff = new_hfc;
             dirty25 = true;
             dirty29 = true;
         }
     } break;
     case 1: {
-        float old_hfg = unk4;
+        float old_hfg = mHighFreqGain;
         float new_hfg = Min(42.0f, val);
         new_hfg = Max(-42.0f, new_hfg);
         if (new_hfg != old_hfg) {
-            unk4 = new_hfg;
+            mHighFreqGain = new_hfg;
             dirty29 = true;
         }
     } break;
     case 2: {
-        float old_mfc = unk8;
+        float old_mfc = mMidFreqCutoff;
         float new_mfc = Min(24000.f, val);
         new_mfc = Max(0.0f, new_mfc);
         if (new_mfc != old_mfc) {
-            unk8 = new_mfc;
+            mMidFreqCutoff = new_mfc;
             dirty25 = true;
             dirty30 = true;
         }
     } break;
     case 3: {
-        float old_mfb = unkc;
+        float old_mfb = mMidFreqBandwidth;
         float new_mfb = Min(24000.f, val);
         new_mfb = Max(0.0f, new_mfb);
         if (new_mfb != old_mfb) {
-            unkc = new_mfb;
+            mMidFreqBandwidth = new_mfb;
             dirty30 = true;
         }
     } break;
     case 4: {
-        float old_mfg = unk10;
+        float old_mfg = mMidFreqGain;
         float new_mfg = Min(42.0f, val);
         new_mfg = Max(-42.0f, new_mfg);
         if (new_mfg != old_mfg) {
-            unk10 = new_mfg;
+            mMidFreqGain = new_mfg;
             dirty30 = true;
         }
     } break;
     case 5: {
-        float old_lfc = unk14;
+        float old_lfc = mLowFreqCutoff;
         float new_lfc = Min(24000.f, val);
         new_lfc = Max(0.0f, new_lfc);
         if (new_lfc != old_lfc) {
-            unk14 = new_lfc;
+            mLowFreqCutoff = new_lfc;
             dirty25 = true;
             dirty28 = true;
         }
     } break;
     case 6: {
-        float old_lfg = unk18;
+        float old_lfg = mLowFreqGain;
         float new_lfg = Min(42.0f, val);
         new_lfg = Max(-42.0f, new_lfg);
         if (new_lfg != old_lfg) {
-            unk18 = new_lfg;
+            mLowFreqGain = new_lfg;
             dirty28 = true;
         }
     } break;
     case 7: {
-        float old_lpc = unk1c;
+        float old_lpc = mLPFCutoff;
         float new_lpc = Min(20000.0f, val);
         new_lpc = Max(20.0f, new_lpc);
         if (new_lpc != old_lpc) {
-            unk1c = new_lpc;
+            mLPFCutoff = new_lpc;
             dirty27 = true;
         }
     } break;
     case 8: {
-        float old_lpr = unk20;
+        float old_lpr = mLPFReso;
         float new_lpr = Min(25.0f, val);
         new_lpr = Max(-25.0f, new_lpr);
         if (new_lpr != old_lpr) {
-            unk20 = new_lpr;
+            mLPFReso = new_lpr;
             dirty27 = true;
         }
     } break;
     case 9: {
-        float old_hpc = unk24;
+        float old_hpc = mHPFCutoff;
         float new_hpc = Min(20000.0f, val);
         new_hpc = Max(20.0f, new_hpc);
         if (new_hpc != old_hpc) {
-            unk24 = new_hpc;
+            mHPFCutoff = new_hpc;
             dirty26 = true;
         }
     } break;
     case 10: {
-        float old_hpr = unk28;
+        float old_hpr = mHPFReso;
         float new_hpr = Min(25.0f, val);
         new_hpr = Max(-25.0f, new_hpr);
         if (new_hpr != old_hpr) {
-            unk28 = new_hpr;
+            mHPFReso = new_hpr;
             dirty26 = true;
         }
     } break;
     case 11: {
-        unk2c = bool(val > 0.5f);
+        mLRMode = bool(val > 0.5f);
     } break;
     case 12: {
         float newtranstime = Min(5000.0f, val);
         newtranstime = Max(25.0f, newtranstime);
-        unk30 = newtranstime;
+        mTransitionTime = newtranstime;
         float new34;
         if (newtranstime != 0.0f) {
             new34 = powf(0.368000000, 1.0f / (48.0f * newtranstime));
         } else {
             new34 = 1.0f;
         }
-        unk34 = new34;
+        mTTk = new34;
     } break;
     default: {
         MILO_FAIL("bad parameter %i\n", idx);
     } break;
     }
     if (dirty29) { // recalculate high band
-        unk3c = tan(6.544985e-5f * unk0);
-        unk40 = pow(10, unk4 / 20);
+        unk3c = tan(6.544985e-5f * mHighFreqCutoff);
+        unk40 = pow(10, mHighFreqGain / 20);
         unk48 = (unk40 - 1.0f) / 2;
         unk38 = unk4c != 0.0f || unk48 != 0.0f;
-        float f = unk4 > 0.0f ? unk3c : unk3c * unk40;
+        float f = mHighFreqGain > 0.0f ? unk3c : unk3c * unk40;
         unk50 = (f - 1.0f) / (f + 1.0f);
     } else if (dirty30) { // recalculate mid band
-        unk5c = tan(6.544985e-5f * unkc);
-        unk60 = pow(10, unk10 / 20);
+        unk5c = tan(6.544985e-5f * mMidFreqBandwidth);
+        unk60 = pow(10, mMidFreqGain / 20);
         unk68 = (unk60 - 1.0f) / 2;
-        unk70 = -cosf(unk8 * 0.0001308997f);
+        unk70 = -cosf(mMidFreqCutoff * 0.0001308997f);
         unk54 = unk6c != 0.0f || unk68 != 0.0f;
-        unk58 = unk10 > 0.0f ? (unk5c - 1.0f) / (unk5c + 1.0f)
+        unk58 = mMidFreqGain > 0.0f ? (unk5c - 1.0f) / (unk5c + 1.0f)
                              : (unk5c - unk60) / (unk5c + unk60);
         unk70 *= 1.0f - unk58;
     } else if (dirty28) { // recalculate low band
-        unk78 = tan(6.544985e-5f * unk14);
-        unk7c = pow(10, unk18 / 20);
+        unk78 = tan(6.544985e-5f * mLowFreqCutoff);
+        unk7c = pow(10, mLowFreqGain / 20);
         unk84 = (unk88 - 1.0f) / 2;
         unk74 = unk88 != 0.0f || unk84 != 0.0f;
-        unk8c = unk18 > 0.0f ? (unk78 - 1.0f) / (unk78 + 1.0f)
+        unk8c = mLowFreqGain > 0.0f ? (unk78 - 1.0f) / (unk78 + 1.0f)
                              : (unk78 - unk7c) / (unk78 + unk7c);
     } else if (dirty27) { // recalculate low pass
-        unk90 = unk1c < 19999;
-        float f = unk1c / 24000;
-        float f2 = pow(10, -unk20 / 20);
+        unk90 = mLPFCutoff < 19999;
+        float f = mLPFCutoff / 24000;
+        float f2 = pow(10, -mLPFReso / 20);
         f *= float(PI);
         float f3 = sinf(f);
         f3 *= f2;
@@ -192,9 +192,9 @@ void EQEffect::SetParameter(int idx, float val) {
         unk98 = unka0 * 4;
         unk9c = unk94;
     } else if (dirty26) { // recalculate high pass
-        unka8 = unk1c > 21;
-        float f = unk1c / 24000;
-        float f2 = pow(10, -unk28 / 20);
+        unka8 = mLPFCutoff > 21;
+        float f = mLPFCutoff / 24000;
+        float f2 = pow(10, -mHPFReso / 20);
         f *= float(PI);
         float f3 = sinf(f);
         f3 *= f2;
@@ -213,24 +213,24 @@ void EQEffect::SetParameter(int idx, float val) {
         unk98 = unka0 * 4;
         unk9c = unk94;
     }
-    if (dirty25 && unk2c != 0.0f) {
+    if (dirty25 && mLRMode != 0.0f) {
         FILTER f;
         createFilter(
-            FilterType(1), FilterBand(0), 0, unk14 / 48000.0f, unk14 / 48000.0f, &f, 2
+            FilterType(1), FilterBand(0), 0, mLowFreqCutoff / 48000.0f, mLowFreqCutoff / 48000.0f, &f, 2
         );
         unk_0x130 = f.gain;
         if (f.numpoles > 0) {
             _blkmov(&unk_0x15c, &f.ycoeffs, f.numpoles * sizeof(float));
         }
         createFilter(
-            FilterType(1), FilterBand(2), 0, unk14 / 48000.0f, unk0 / 48000.0f, &f, 2
+            FilterType(1), FilterBand(2), 0, mLowFreqCutoff / 48000.0f, mHighFreqCutoff / 48000.0f, &f, 2
         );
         unk_0x134 = f.gain;
         if (f.numpoles > 0) {
             _blkmov(&unk_0x15c, &f.ycoeffs, f.numpoles * sizeof(float));
         }
         createFilter(
-            FilterType(1), FilterBand(1), 0, unk0 / 48000.0f, unk0 / 48000.0f, &f, 2
+            FilterType(1), FilterBand(1), 0, mHighFreqCutoff / 48000.0f, mHighFreqCutoff / 48000.0f, &f, 2
         );
         unk_0x138 = f.gain;
         if (f.numpoles > 0) {
@@ -244,21 +244,21 @@ EQEffect::EQEffect(IXAudioBatchAllocator *) {
     unk38 = false;
     unk54 = false;
     unk74 = false;
-    unk0 = 12000.0f;
+    mHighFreqCutoff = 12000.0f;
     unk90 = false;
-    unk4 = 0;
+    mHighFreqGain = 0;
     unka8 = false;
-    unk8 = 8000.0f;
-    unkc = 1000.0f;
-    unk10 = 0;
-    unk14 = 2000.0f;
-    unk18 = 0;
-    unk1c = 20000.0f;
-    unk20 = 0;
-    unk24 = 20.0f;
-    unk28 = 0;
-    unk2c = 0;
-    unk30 = 25.0f;
+    mMidFreqCutoff = 8000.0f;
+    mMidFreqBandwidth = 1000.0f;
+    mMidFreqGain = 0;
+    mLowFreqCutoff = 2000.0f;
+    mLowFreqGain = 0;
+    mLPFCutoff = 20000.0f;
+    mLPFReso = 0;
+    mHPFCutoff = 20.0f;
+    mHPFReso = 0;
+    mLRMode = 0;
+    mTransitionTime = 25.0f;
     unk3c = 0;
     unk40 = 0;
     unk44 = 0;
@@ -317,9 +317,9 @@ void EQEffect::Reset() {
     unk4c = unk48;
     unk6c = unk68;
     unk88 = unk84;
-    if (unk30 != 0.0f) {
-        unk34 = powf(0.368, 1.0f / (unk30 * 48.0f));
+    if (mTransitionTime != 0.0f) {
+        mTTk = powf(0.368, 1.0f / (mTransitionTime * 48.0f));
     } else {
-        unk34 = 1.0f;
+        mTTk = 1.0f;
     }
 }
