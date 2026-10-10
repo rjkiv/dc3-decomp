@@ -8,10 +8,12 @@ class Vector2 {
 public:
     Vector2() {}
     Vector2(float xIn, float yIn) : x(xIn), y(yIn) {}
+    // Vector2(const float*);
 
     const float &operator[](int i) const { return *(&x + i); }
     float &operator[](int i) { return *(&x + i); }
 
+    // void Set(const float*);
     // clang-format off
     void Set(float xIn, float yIn) { x = xIn; y = yIn; }
     void Zero() { x = y = 0; }
@@ -24,21 +26,10 @@ public:
 
     bool operator==(const Vector2 &v) const { return x == v.x && y == v.y; }
     bool operator!=(const Vector2 &v) const { return x != v.x || y != v.y; }
+    // bool operator!() const;
 
-    // maybe these are used, maybe not, i dunno
-    // i'm leaning towards not tho
-
-    // float const *AsArray() const;
-    // float *AsArray();
-    // void Set(float const *);
-    float Length() const { return sqrtf(x * x + y * y); }
-    // float LengthSquared() const;
-    // float Distance(Vector2 const &) const;
-    // float DistanceSquared(Vector2 const &) const;
-    // float Dot(Vector2 const &) const;
-    // float Cross(Vector2 const &) const;
-    // Vector2 Expand() const;
-    // Vector2 Narrow() const;
+    // const float* AsArray() const;
+    // float* AsArray();
 
     float x; // 0x0
     float y; // 0x4
@@ -50,6 +41,7 @@ class Vector3 {
 public:
     Vector3() {}
     Vector3(float xIn, float yIn, float zIn) : x(xIn), y(yIn), z(zIn) {}
+    // Vector3(const float*)
 
     const float &operator[](int i) const {
         MILO_ASSERT_RANGE(i, 0, 3, 0x122);
@@ -61,6 +53,7 @@ public:
         return *(&x + i);
     }
 
+    // void Set(const float*);
     // clang-format off
     void Set(float xIn, float yIn, float zIn) { x = xIn; y = yIn; z = zIn; }
     void Zero() { x = y = z = 0; }
@@ -73,22 +66,12 @@ public:
 
     bool operator==(const Vector3 &v) const { return x == v.x && y == v.y && z == v.z; }
     bool operator!=(const Vector3 &v) const { return x != v.x || y != v.y || z != v.z; }
+    // bool operator!() const;
 
-    // maybe these are used, maybe not, i dunno
-    // i'm leaning towards not tho
-
-    // float const *AsArray() const;
-    // float *AsArray();
+    // const float* AsArray() const;
+    // float* AsArray();
     // Vector2 &AsVector2();
-    // Vector2 const &AsVector2() const;
-    // float Length() const;
-    // float LengthSquared() const;
-    // float Distance(Vector3 const &) const;
-    // float DistanceSquared(Vector3 const &) const;
-    // Vector3 Cross(Vector3 const &) const;
-    // float Dot(Vector3 const &) const;
-    // Vector3 Expand() const;
-    // Vector3 Narrow() const;
+    // const Vector2 &AsVector2() const;
 
     static const Vector3 &GetXAxis() { return sX; }
     static const Vector3 &GetYAxis() { return sY; }
@@ -98,8 +81,7 @@ public:
     float x; // 0x0
     float y; // 0x4
     float z; // 0x8
-private:
-    u32 PAD; // should NEVER be used!!!! for simd alignment!!!
+    float w; // 0xc - should NEVER be used!!!! for simd alignment!!!
 protected:
     static Vector3 sX;
     static Vector3 sY;

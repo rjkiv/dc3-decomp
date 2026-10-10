@@ -11,8 +11,8 @@ float ArcDetector::_acceptablePathErrorRatio = 0.89999998;
 int sDefaultHoverTimer = 600;
 
 ArcDetector::ArcDetector()
-    : mCurveStart(0, 0, 0), unk28(0), unk2c(0), unk30(0.15f), unk34(0), mNeedSwipeReset(0),
-      unk3c(sDefaultHoverTimer) {
+    : mCurveStart(0, 0, 0), unk28(0), unk2c(0), unk30(0.15f), unk34(0),
+      mNeedSwipeReset(0), unk3c(sDefaultHoverTimer) {
     Clear();
 }
 
@@ -69,10 +69,11 @@ void ArcDetector::Update(const Skeleton &skel, int playernum) {
                       &hand_maybe = skel.TrackedJoints()[unk8].mPos[0];
         float hpos_x_recalc = hand_maybe.x - body_maybe.x,
               hpos_z_recalc = hand_maybe.z - body_maybe.z;
-        unk28 = (Vector2(hpos_x_recalc, hpos_z_recalc).Length() + unk28) / 2;
+        float len = Length(Vector2(hpos_x_recalc, hpos_z_recalc));
+        unk28 = (len + unk28) / 2;
     }
-    unk2c = skel.TrackedJoints()[unk8].mPos[0].y
-        - skel.TrackedJoints()[mRefJoint].mPos[0].y;
+    unk2c =
+        skel.TrackedJoints()[unk8].mPos[0].y - skel.TrackedJoints()[mRefJoint].mPos[0].y;
     CullPath();
     unk38 = Max(unk38, GetSwipeAmount());
     if (!IsPathAcceptable()) {
@@ -183,7 +184,7 @@ void ArcDetector::TryToStartSwipe(const Vector3 &startpos, const Skeleton &skel)
         mJointPath.push_front(startpos);
         const Vector3 &ucjoint = skel.TrackedJoints()[mRefJoint].mPos[0];
         const Vector3 &u8joint = skel.TrackedJoints()[unk8].mPos[0];
-        unk28 = Vector2(u8joint.x - ucjoint.x, u8joint.z - ucjoint.z).Length();
+        unk28 = Length(Vector2(u8joint.x - ucjoint.x, u8joint.z - ucjoint.z));
     }
 }
 
