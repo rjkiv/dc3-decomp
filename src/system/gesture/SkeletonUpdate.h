@@ -24,6 +24,15 @@ public:
 
     SkeletonUpdate *Inst() const { return mInst; }
 
+    bool IsThreadedUpdate();
+    void SetThreadedUpdate(bool);
+    void Update();
+    int CycleNumStubSkeletons();
+    int CycleFakeShellSkeletons(int);
+    int CycleActiveFakeShellSkeleton();
+    void SetFakeSkeletonSidesSwapped(bool);
+    int GetFakeSkeletonSidesSwapped();
+
 private:
     SkeletonUpdate *mInst; // 0x0
 
@@ -49,19 +58,6 @@ public:
     static HANDLE SkeletonUpdatedEvent() { return sSkeletonUpdatedEvent; }
     static SkeletonUpdateHandle InstanceHandle();
 
-    void PublicUpdate() { Update(); }
-
-    int GetUnk5388() const { return unk5388; }
-    void SetUnk5388(int i) { unk5388 = i; }
-    int GetUnk538C() const { return unk538c; }
-    void SetUnk538C(int i) { unk538c = i; }
-    bool GetUnk5390() const { return unk5390; }
-    void SetUnk5390(bool b) { unk5390 = b; }
-    int GetUnk5394() const { return unk5394; }
-    void SetUnk5394(int i) { unk5394 = i; }
-    bool GetUnk539C() const { return unk539c; }
-    void SetUnk539C(bool b) { unk539c = b; }
-
 private:
     SkeletonUpdate();
 
@@ -77,26 +73,54 @@ private:
     static HANDLE sNewSkeletonEvent;
     static HANDLE sSkeletonUpdatedEvent;
 
-    bool unk78; // 0x78
+    bool mNewFrame; // 0x78
     ObjOwnerPtr<CameraInput> mCameraInput; // 0x7c
-    bool unk90;
-    bool unk91;
+    bool mCameraConnected; // 0x90
+    bool mCameraOverride; // 0x91
     std::vector<SkeletonCallback *> mCallbacks; // 0x94
     SkeletonFrame mSkeletonFrame; // 0xa0
     Skeleton mSkeletons[6]; // 0x1268
-    Skeleton *unk5360[2]; // 0x5360
-    Skeleton *unk5368[2]; // 0x5368
-    int unk5370;
-    int unk5374;
-    int unk5378;
-    int unk537c;
-    int unk5380[2]; // 0x5380
-    int unk5388; // 0x5388
-    int unk538c; // 0x538c
-    bool unk5390; // 0x5390 - sides swapped?
-    int unk5394;
-    float unk5398;
-    bool unk539c; // 0x539c - update thread?
-    HANDLE unk53a0;
-    NUI_SKELETON_FRAME *mNUISkeletonFrame; // 0x53a4
+    const Skeleton *mPlayerSkeletons[2]; // 0x5360
+    const Skeleton *mAllSkeletons[6]; // 0x5368
+    int mPlayerSkeletonTrackingIDs[2]; // 0x5380
+    int mNumStubSkeletons; // 0x5388
+    int mFakeShellSkeletonMask; // 0x538c
+    bool mSwapFakeSkeletonSides; // 0x5390
+    int mActiveFakeShellSkeleton; // 0x5394
+    float mFakeArmHeight; // 0x5398
+    bool mThreadedUpdate; // 0x539c
+    HANDLE mSkeletonUpdateThread; // 0x53a0
+    NUI_SKELETON_FRAME *mNuiSkeletonFrame; // 0x53a4
 };
+
+inline bool SkeletonUpdateHandle::IsThreadedUpdate() { return mInst->mThreadedUpdate; }
+inline void SkeletonUpdateHandle::SetThreadedUpdate(bool t) {
+    mInst->mThreadedUpdate = t;
+}
+inline int SkeletonUpdateHandle::CycleNumStubSkeletons() {
+    int ret = (mInst->mNumStubSkeletons + 1) % 3;
+    if (ret < 0) {
+        ret += 3;
+    }
+    mInst->mNumStubSkeletons = ret;
+    return ret;
+}
+inline int SkeletonUpdateHandle::CycleFakeShellSkeletons(int i) {
+    int ret = (1 << i) ^ mInst->mFakeShellSkeletonMask;
+    mInst->mFakeShellSkeletonMask = ret;
+    return ret;
+}
+inline int SkeletonUpdateHandle::CycleActiveFakeShellSkeleton() {
+    int ret = (mInst->mActiveFakeShellSkeleton + 1) % 2;
+    if (ret < 0) {
+        ret += 2;
+    }
+    mInst->mActiveFakeShellSkeleton = ret;
+    return ret;
+}
+inline void SkeletonUpdateHandle::SetFakeSkeletonSidesSwapped(bool swapped) {
+    mInst->mSwapFakeSkeletonSides = swapped;
+}
+inline int SkeletonUpdateHandle::GetFakeSkeletonSidesSwapped() {
+    return mInst->mSwapFakeSkeletonSides;
+}

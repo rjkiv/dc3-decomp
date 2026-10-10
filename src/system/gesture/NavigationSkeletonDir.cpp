@@ -42,7 +42,7 @@ void NavigationSkeletonDir::PostUpdate(const SkeletonUpdateData *data) {
     if (data) {
         RndOverlay::Find("swipe_direction")->SetCallback(mDirectionGestureFilter);
         if (mDirectionGestureFilter) {
-            const Skeleton &skeleton = *data->unk4[0];
+            const Skeleton &skeleton = *data->mAllSkeletons[0];
             mDirectionGestureFilter->Update(skeleton, skeleton.ElapsedMs());
         }
     }

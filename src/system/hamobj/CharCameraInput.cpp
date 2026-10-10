@@ -21,9 +21,9 @@ CharCameraInput::CharCameraInput(Character *c) : mChar(c), unk2430(0) {
         }
     }
     memset(&unk11d8, 0, sizeof(SkeletonFrame));
-    unk11d8.unk8.Set(0, 1, 0);
-    unk11d8.unk18.Set(0, 0, 0, 0);
-    unk11d8.unk0 = 0;
+    unk11d8.mUpVector.Set(0, 1, 0);
+    unk11d8.mFloorPlane.Set(0, 0, 0, 0);
+    unk11d8.mFrameNumber = 0;
     unk11d8.mElapsedMs = 33;
     for (int i = 0; i < 6; i++) { // literally why is this for loop here
         SkeletonData &data = unk11d8.mSkeletonDatas[i];
@@ -31,7 +31,7 @@ CharCameraInput::CharCameraInput(Character *c) : mChar(c), unk2430(0) {
             data.mTracking = kSkeletonTracked;
             data.mQualityFlags = 0;
             for (int j = 0; j < kNumJoints; j++) {
-                data.unk284[j] = kSkeletonTracked;
+                data.mJointConfidences[j] = kConfidenceTracked;
             }
         }
     }
@@ -52,16 +52,16 @@ const SkeletonFrame *CharCameraInput::PollNewFrame() {
         SkeletonJoint mirrorJoint = BaseSkeleton::MirrorJoint((SkeletonJoint)i);
         RndTransformable *currBone = mBoneNames[i];
         if (currBone) {
-            Multiply(currBone->WorldXfm().v, t, data.unk144[mirrorJoint]);
+            Multiply(currBone->WorldXfm().v, t, data.mJointPositions[mirrorJoint]);
         } else {
-            data.unk144[mirrorJoint].Zero();
+            data.mJointPositions[mirrorJoint].Zero();
         }
 
         if (unk2430) {
-            data.unk144[mirrorJoint].x *= -1.0f;
-            data.unk144[mirrorJoint].z *= -1.0f;
+            data.mJointPositions[mirrorJoint].x *= -1.0f;
+            data.mJointPositions[mirrorJoint].z *= -1.0f;
         }
-        data.unk4[mirrorJoint] = data.unk144[mirrorJoint];
+        data.mRawJointPositions[mirrorJoint] = data.mJointPositions[mirrorJoint];
     }
     return &unk11d8;
 }

@@ -38,7 +38,7 @@ bool FreestyleMotionFilter::Detected() { return 0 < unk30; }
 void FreestyleMotionFilter::UpdateFilters(SkeletonUpdateData const &skeletonData) {
     HamPlayerData *player = TheGameData->Player(0);
     MILO_ASSERT(player, 0x44);
-    if (player->IsPlaying() && skeletonData.unk0) {
+    if (player->IsPlaying() && skeletonData.mPlayerSkeletons[0]) {
         unk30 = 0.0f;
         for (int i = 0; i < 20; i++) {
             // do something

@@ -61,9 +61,9 @@ void BaseSkeleton::BoneVec(SkeletonBone bone, SkeletonCoordSys cs, Vector3 &vres
     MILO_ASSERT((0) <= (bone) && (bone) < (kNumBones), 0xD1);
     MILO_ASSERT((0) <= (cs) && (cs) < (kNumCoordSys), 0xD2);
     Vector3 v1;
-    JointPos(cs, sBones[bone].joint1, v1);
+    JointPos(cs, sBones[bone].mStartJoint, v1);
     Vector3 v2;
-    JointPos(cs, sBones[bone].joint2, v2);
+    JointPos(cs, sBones[bone].mEndJoint, v2);
     Subtract(v2, v1, vres);
 }
 

@@ -128,8 +128,8 @@ void HamSkeletonConverter::PostUpdate(const SkeletonUpdateData *data) {
     if (unk750 && data) {
         const BaseSkeleton *skeleton = nullptr;
         for (int i = 0; i < 6; i++) {
-            if (data->unk0[i] && data->unk0[i]->IsTracked()) {
-                skeleton = data->unk0[i];
+            if (data->mPlayerSkeletons[i] && data->mPlayerSkeletons[i]->IsTracked()) {
+                skeleton = data->mPlayerSkeletons[i];
                 break;
             }
         }

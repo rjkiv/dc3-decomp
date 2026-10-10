@@ -26,7 +26,7 @@ void SkeletonQualityFilter::RestoreDefaultSidewaysCutoffThreshold() {
 void SkeletonQualityFilter::UpdateIsConfident(const TrackedJoint *joints) {
     mConfidence = 0.0f;
     for (int i = 0; i < kNumJoints; i++) {
-        if (joints[i].mJointConf == kConfidenceTracked || i == kJointFootLeft
+        if (joints[i].mConfidence == kConfidenceTracked || i == kJointFootLeft
             || i == kJointFootRight || i == kJointAnkleLeft || i == kJointAnkleRight) {
             mConfidence += 1.0f;
         }
@@ -41,7 +41,7 @@ void SkeletonQualityFilter::UpdateIsConfident(const TrackedJoint *joints) {
 
 void SkeletonQualityFilter::UpdateIsSideways(const TrackedJoint *joint) {
     Vector3 vDiff;
-    Subtract(joint[8].mJointPos[0], joint[4].mJointPos[0], vDiff);
+    Subtract(joint[8].mPos[0], joint[4].mPos[0], vDiff);
     Normalize(vDiff, vDiff);
     float threshold = fabsf((vDiff.x + vDiff.y) * 0.0f + vDiff.z);
     float thresh = mSideways ? mSidewaysCutoffThreshold * 0.9f : mSidewaysCutoffThreshold;
@@ -50,10 +50,10 @@ void SkeletonQualityFilter::UpdateIsSideways(const TrackedJoint *joint) {
         side = false;
     }
     mSideways = side;
-    Subtract(joint[8].mJointPos[0], joint[2].mJointPos[0], vDiff);
+    Subtract(joint[8].mPos[0], joint[2].mPos[0], vDiff);
     Normalize(vDiff, vDiff);
     Vector3 vDiff2;
-    Subtract(joint[4].mJointPos[0], joint[2].mJointPos[0], vDiff2);
+    Subtract(joint[4].mPos[0], joint[2].mPos[0], vDiff2);
     Normalize(vDiff2, vDiff2);
     if (0.25f < Dot(vDiff, vDiff2)) {
         mSideways = true;
@@ -62,10 +62,10 @@ void SkeletonQualityFilter::UpdateIsSideways(const TrackedJoint *joint) {
 
 void SkeletonQualityFilter::UpdateIsSitting(const TrackedJoint *joint) {
     Vector3 vDiff;
-    Subtract(joint[0xD].mJointPos[0], joint[0xC].mJointPos[0], vDiff);
+    Subtract(joint[0xD].mPos[0], joint[0xC].mPos[0], vDiff);
     Normalize(vDiff, vDiff);
     Vector3 vDiff2;
-    Subtract(joint[0x10].mJointPos[0], joint[0xF].mJointPos[0], vDiff2);
+    Subtract(joint[0x10].mPos[0], joint[0xF].mPos[0], vDiff2);
     Normalize(vDiff2, vDiff2);
     if (!mSitting) {
         if (vDiff.y > -0.7f && vDiff2.y > -0.7f) {
@@ -84,7 +84,7 @@ void SkeletonQualityFilter::Update(const Skeleton &skeleton, bool b2) {
             mSideways = false;
             mIsConfident = false;
             return;
-        } else if (skeleton.GetUnkab0() == Vector3::GetZero()) {
+        } else if (skeleton.Center() == Vector3::GetZero()) {
             mValid = false;
             mSitting = false;
             mSideways = false;

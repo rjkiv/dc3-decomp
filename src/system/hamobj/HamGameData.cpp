@@ -508,9 +508,10 @@ void HamGameData::UpdateAssociatedPads() {
 void HamGameData::AutoAssignSkeletons(const SkeletonUpdateData *data) {
     MILO_ASSERT(data, 0x259);
     for (int i = 0; i < 2; i++) {
-        if (!(int)data->unk0[i]) {
+        const Skeleton *playerSkel = data->mPlayerSkeletons[i];
+        if (!playerSkel) {
             for (int j = 0; j < 6; j++) {
-                const Skeleton *cur = data->unk4[j];
+                const Skeleton *cur = data->mAllSkeletons[j];
                 if (cur->IsValid()) {
                     int id = cur->TrackingID();
                     bool b1;

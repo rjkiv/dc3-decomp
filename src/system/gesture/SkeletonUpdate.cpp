@@ -88,31 +88,33 @@ DWORD SkeletonUpdateThread(LPVOID) {
 }
 
 SkeletonUpdate::SkeletonUpdate()
-    : unk78(0), mCameraInput(this), unk90(0), unk91(0), unk5388(0), unk538c(0),
-      unk5390(0), unk5394(0), unk5398(0), unk539c(true) {
+    : mNewFrame(0), mCameraInput(this), mCameraConnected(0), mCameraOverride(0),
+      mNumStubSkeletons(0), mFakeShellSkeletonMask(0), mSwapFakeSkeletonSides(0),
+      mActiveFakeShellSkeleton(0), mFakeArmHeight(0), mThreadedUpdate(true) {
     MILO_ASSERT(sInstance == NULL, 0x119);
     SetCameraInput(LiveCameraInput::sInstance);
     for (int i = 0; i < 2; i++) {
-        unk5360[i] = nullptr;
-        unk5368[i] = nullptr;
+        mPlayerSkeletons[i] = nullptr;
+        mAllSkeletons[i] = nullptr;
     }
-    mNUISkeletonFrame = (NUI_SKELETON_FRAME *)MemAlloc(
+    mNuiSkeletonFrame = (NUI_SKELETON_FRAME *)MemAlloc(
         sizeof(NUI_SKELETON_FRAME), __FILE__, 0x126, "NUI_SKELETON_FRAME", 0x10
     );
-    memset(mNUISkeletonFrame, 0, sizeof(NUI_SKELETON_FRAME));
+    memset(mNuiSkeletonFrame, 0, sizeof(NUI_SKELETON_FRAME));
     memset(&mSkeletonFrame, 0, sizeof(SkeletonFrame));
-    unk53a0 = CreateThread(nullptr, 0, SkeletonUpdateThread, nullptr, 4, nullptr);
-    XSetThreadProcessor(unk53a0, 5);
-    ResumeThread(unk53a0);
+    mSkeletonUpdateThread =
+        CreateThread(nullptr, 0, SkeletonUpdateThread, nullptr, 4, nullptr);
+    XSetThreadProcessor(mSkeletonUpdateThread, 5);
+    ResumeThread(mSkeletonUpdateThread);
 }
 
 SkeletonUpdate::~SkeletonUpdate() {
     sBool878 = true;
     SetEvent(sNewSkeletonEvent);
-    WaitForSingleObject(unk53a0, -1);
-    CloseHandle(unk53a0);
-    unk53a0 = nullptr;
-    MemFree(mNUISkeletonFrame);
+    WaitForSingleObject(mSkeletonUpdateThread, -1);
+    CloseHandle(mSkeletonUpdateThread);
+    mSkeletonUpdateThread = nullptr;
+    MemFree(mNuiSkeletonFrame);
 }
 
 bool SkeletonUpdate::PrevSkeleton(
@@ -156,42 +158,40 @@ void SkeletonUpdate::PostUpdate() {
     MILO_ASSERT(MainThread(), 0x26F);
     MILO_ASSERT(mCameraInput, 0x273);
     mCameraInput->PollTracking();
-    unk90 = mCameraInput->IsConnected();
-    unk91 = mCameraInput->IsOverride();
-    if (unk91) {
+    mCameraConnected = mCameraInput->IsConnected();
+    mCameraOverride = mCameraInput->IsOverride();
+    if (mCameraOverride) {
         const SkeletonFrame *newFrame = mCameraInput->NewFrame();
         if (newFrame) {
             mSkeletonFrame = *newFrame;
-            unk78 = true;
+            mNewFrame = true;
         }
     }
     if (TheGameData) {
         for (int i = 0; i < 2; i++) {
             HamPlayerData *player_data = TheGameData->Player(i);
             MILO_ASSERT(player_data, 0x28B);
-            unk5380[i] = player_data->GetSkeletonTrackingID();
+            mPlayerSkeletonTrackingIDs[i] = player_data->GetSkeletonTrackingID();
         }
     }
-    if (unk539c) {
+    if (mThreadedUpdate) {
         WaitForSingleObject(sSkeletonUpdatedEvent, 1);
         ResetEvent(sSkeletonUpdatedEvent);
     } else {
         Update();
     }
-    if (unk78) {
+    if (mNewFrame) {
         LiveCameraInput::sInstance->SetNewFrame(&mSkeletonFrame);
     }
-    SkeletonUpdateData updateData;
-    updateData.unk0 = unk5360;
-    updateData.unk4 = unk5368;
-    updateData.unk8 = &mSkeletonFrame;
-    updateData.unkc = this;
-    updateData.unk10 = mCameraInput;
+
+    SkeletonUpdateData updateData(
+        mPlayerSkeletons, mAllSkeletons, mSkeletonFrame, *this, *mCameraInput
+    );
     FOREACH (it, mCallbacks) {
         AutoGlitchReport report(4.0f, SkeletonUpdateCallbackSlowdownCB, *it);
-        (*it)->PostUpdate(unk78 ? &updateData : nullptr);
+        (*it)->PostUpdate(mNewFrame ? &updateData : nullptr);
     }
-    unk78 = false;
+    mNewFrame = false;
     for (int i = 0; i < NUM_SKELETONS; i++) {
         mSkeletons[i].PostUpdate();
     }
@@ -199,48 +199,35 @@ void SkeletonUpdate::PostUpdate() {
 
 DataNode OnToggleSkeletalUpdateThread(DataArray *) {
     SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
-    handle.Inst()->SetUnk539C(!handle.Inst()->GetUnk539C());
+    handle.SetThreadedUpdate(!handle.IsThreadedUpdate());
     ResetEvent(SkeletonUpdate::SkeletonUpdatedEvent());
-    return handle.Inst()->GetUnk539C();
+    return handle.IsThreadedUpdate();
 }
 
 DataNode OnCycleNumStubSkeletons(DataArray *) {
     SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
-    int i = (handle.Inst()->GetUnk5388() + 1) % 3;
-    if (i < 0) {
-        i += 3;
-    }
-    handle.Inst()->SetUnk5388(i);
-    return i;
+    return handle.CycleNumStubSkeletons();
 }
 
 DataNode OnCycleFakeShellSkeletons(DataArray *arr) {
     SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
-    int i = (1 << arr->Int(1)) ^ handle.Inst()->GetUnk538C();
-    handle.Inst()->SetUnk538C(i);
-    return i;
+    return handle.CycleFakeShellSkeletons(arr->Int(1));
 }
 
 DataNode OnCycleActiveFakeShellSkeleton(DataArray *) {
     SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
-    int i = (handle.Inst()->GetUnk5394() + 1) % 2;
-    if (i < 0) {
-        i += 2;
-    }
-    handle.Inst()->SetUnk5394(i);
-    return i;
+    return handle.CycleActiveFakeShellSkeleton();
 }
 
 DataNode OnSetFakeSkeletonSidesSwapped(DataArray *arr) {
     SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
-    bool b = arr->Int(1) != 0;
-    handle.Inst()->SetUnk5390(b);
+    handle.SetFakeSkeletonSidesSwapped(arr->Int(1));
     return 0;
 }
 
 DataNode OnGetFakeSkeletonSidesSwapped(DataArray *) {
     SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
-    return handle.Inst()->GetUnk5390();
+    return handle.GetFakeSkeletonSidesSwapped();
 }
 
 void SkeletonUpdate::Init() {
@@ -259,41 +246,41 @@ void SkeletonUpdate::UpdateFakeArmPos() {
     float sticks = data->mSticks[1][1];
     float uiSeconds = TheTaskMgr.DeltaUISeconds();
     uiSeconds *= sFloat;
-    unk5398 = -(uiSeconds * sticks - unk5398);
+    mFakeArmHeight = -(uiSeconds * sticks - mFakeArmHeight);
 
     float val = -0.25f;
-    val = (-0.25f - unk5398 >= 0) ? -0.25f : unk5398;
-    unk5398 = (val - 0.6f >= 0) ? 0.6f : val;
+    val = (-0.25f - mFakeArmHeight >= 0) ? -0.25f : mFakeArmHeight;
+    mFakeArmHeight = (val - 0.6f >= 0) ? 0.6f : val;
 }
 
 void SkeletonUpdate::Update() {
-    LONGLONG l = mNUISkeletonFrame->liTimeStamp.QuadPart;
-    if (NuiSkeletonGetNextFrame(0, mNUISkeletonFrame) == 0) {
-        unk78 = true;
-        if (!unk91) {
+    LONGLONG l = mNuiSkeletonFrame->liTimeStamp.QuadPart;
+    if (NuiSkeletonGetNextFrame(0, mNuiSkeletonFrame) == 0) {
+        mNewFrame = true;
+        if (!mCameraOverride) {
             mSkeletonFrame.Create(
-                *mNUISkeletonFrame, mNUISkeletonFrame->liTimeStamp.QuadPart - l
+                *mNuiSkeletonFrame, mNuiSkeletonFrame->liTimeStamp.QuadPart - l
             );
         }
     } else {
-        if (unk90) {
+        if (mCameraConnected) {
             return;
         }
 
-        if (!unk91) {
-            unk78 = true;
+        if (!mCameraOverride) {
+            mNewFrame = true;
             StubCameraInput::StubSkeletonFrame(mSkeletonFrame);
             for (int i = 0; i < NUM_SKELETONS; i++) {
                 SkeletonData &data = mSkeletonFrame.mSkeletonDatas[i];
                 data.mTracking = kSkeletonNotTracked;
                 data.mQualityFlags = 0;
                 for (int j = 0; j < kNumJoints; j++) {
-                    data.unk144[j].Zero();
-                    data.unk284[j] = 0;
+                    data.mJointPositions[j].Zero();
+                    data.mJointConfidences[j] = kConfidenceNotTracked;
                 }
                 data.mTrackingID = -1;
-                data.unk2dc = -1;
-                data.unk2e0 = Vector3::GetZero();
+                data.mEnrollmentIndex = -1;
+                data.mCenter = Vector3::GetZero();
             }
         }
     }

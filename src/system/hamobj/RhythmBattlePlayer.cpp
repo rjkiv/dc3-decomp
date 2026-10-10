@@ -674,8 +674,8 @@ void RhythmBattlePlayer::UpdateScore(Hmx::Object *handler) {
     );
     if (skelIdx >= 0) {
         Skeleton &skeleton = TheGestureMgr->GetSkeleton(skelIdx);
-        float yLeft = skeleton.TrackedJoints()[kJointFootLeft].mJointPos[0].y;
-        float yRight = skeleton.TrackedJoints()[kJointFootRight].mJointPos[0].y;
+        float yLeft = skeleton.TrackedJoints()[kJointFootLeft].mPos[0].y;
+        float yRight = skeleton.TrackedJoints()[kJointFootRight].mPos[0].y;
         float yMin = yLeft < yRight ? yLeft : yRight;
         float yMax = yLeft > yRight ? yLeft : yRight;
         if (unk2a0 != -1 && (yMin - unk2a0 > 0.1f) && mRhythmBattle->CanTrick(jump)) {
