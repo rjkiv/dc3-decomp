@@ -4,36 +4,36 @@
 #include "xdk/xaudio2/xaudio2.h"
 
 FlangerEffect::FlangerEffect(IXAudioBatchAllocator *ix)
-    : unk10(0), unk14(100), unk18(0), unk1c(0), unk20(0.5f), unk24(0), unk28(0), unk2c(0),
-      unk30(0.1f) {
+    : mWritePos(0), mDelaySamples(100), mDepth(0), mLastDepth(0), mFeedback(0.5f), mLastPhase(0), mPhaseInc(0), mLastPhaseInc(0),
+      mOffset(0.1f) {
     for (int i = 0; i < 2; i++) {
-        DspAllocate(unk0[i], 0x2580, ix);
-        DspAllocate(unk0[i + 2], 0x2580, ix);
+        DspAllocate(mDelayBuffer[i], 0x2580, ix);
+        DspAllocate(mDelayBuffer[i + 2], 0x2580, ix);
     }
 }
 
 FlangerEffect::~FlangerEffect() {
     for (int i = 0; i < 2; i++) {
-        DspFree(unk0[i]);
-        DspFree(unk0[i + 2]);
+        DspFree(mDelayBuffer[i]);
+        DspFree(mDelayBuffer[i + 2]);
     }
 }
 
 void FlangerEffect::Reset() {
-    unk10 = 0;
-    unk1c = 0;
-    unk24 = 0;
-    unk2c = 0;
+    mWritePos = 0;
+    mLastDepth = 0;
+    mLastPhase = 0;
+    mLastPhaseInc = 0;
     for (int i = 0; i < 2; i++) {
-        DspClearBuffer(unk0[i], 0x2580);
-        DspClearBuffer(unk0[i + 2], 0x2580);
+        DspClearBuffer(mDelayBuffer[i], 0x2580);
+        DspClearBuffer(mDelayBuffer[i + 2], 0x2580);
     }
 }
 
 void FlangerEffect::SetParameters(FlangerEffect::Params const &params) {
-    unk14 = params.delayMs * 48.0f;
-    unk28 = (params.rate / 48000.0f) * (2 * PI);
-    unk18 = params.depthPct / 100.0f;
-    unk20 = params.feedbackPct / 100.0f;
-    unk30 = params.offsetPct / 100.0f;
+    mDelaySamples = params.delayMs * 48.0f;
+    mPhaseInc = (params.rate / 48000.0f) * (2 * PI);
+    mDepth = params.depthPct / 100.0f;
+    mFeedback = params.feedbackPct / 100.0f;
+    mOffset = params.offsetPct / 100.0f;
 }

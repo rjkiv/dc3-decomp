@@ -30,14 +30,15 @@ public:
     void SetParameters(const FlangerEffect::Params &);
 
 private:
-    float *unk0[4];
-    int unk10;
-    int unk14;
-    float unk18;
-    float unk1c;
-    float unk20;
-    float unk24;
-    float unk28;
-    float unk2c;
-    float unk30;
+    float *mDelayBuffer[2]; // 0x0
+    float *mFeedbackBuffer[2]; // 0x8
+    int mWritePos; // 0x10
+    int mDelaySamples; // 0x14
+    float mDepth; // 0x18
+    float mLastDepth; // 0x1C
+    float mFeedback; // 0x20
+    float mLastPhase; // 0x24
+    float mPhaseInc; // 0x28
+    float mLastPhaseInc; // 0x2C
+    float mOffset; // 0x30
 };
