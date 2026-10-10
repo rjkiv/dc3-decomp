@@ -1,4 +1,3 @@
-#include "char/CharCollide.h"
 #include "char/Character.h"
 #include "math/Color.h"
 #include "math/Geo.h"
@@ -28,7 +27,6 @@
 #include "world/ColorPalette.h"
 #include "world/Crowd.h"
 #include "world/Crowd3DCharHandle.h"
-#include <float.h>
 
 static RndTex *gImpostorTex[kNumLods] = { nullptr };
 static RndCam *gImpostorCamera = nullptr;
