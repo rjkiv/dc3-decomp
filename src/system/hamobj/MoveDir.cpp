@@ -1540,7 +1540,7 @@ void MoveDir::SetCurrentMove(int player, HamMove *move) {
 }
 
 float MoveDir::SongSeconds() {
-    float secs = TheTaskMgr.Seconds(TaskMgr::kRealTime);
+    float secs = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
     if (TheMaster && TheMaster->GetAudio() && TheMaster->GetAudio()->GetSongStream()) {
         float time =
             TheMaster->GetAudio()->GetSongStream()->GetJumpBackTotalTime(secs * 1000.f);

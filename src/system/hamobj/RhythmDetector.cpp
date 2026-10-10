@@ -588,7 +588,7 @@ void RhythmDetector::AddFrame(const BaseSkeleton &skel) {
             skel.JointPos(kCoordCamera, (SkeletonJoint)i, v1a0[i]);
         }
         float beat = TheTaskMgr.Beat();
-        float secs = TheTaskMgr.Seconds(TaskMgr::kRealTime);
+        float secs = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
         float f13 = beat - unkaa8;
         if (f13 < 0) {
             f13 = 0;

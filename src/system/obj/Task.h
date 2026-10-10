@@ -129,8 +129,8 @@ private:
 class TaskMgr : public Hmx::Object {
 public:
     enum TimeReference {
-        kDelayedTime = 0,
-        kRealTime = 1
+        kTaskTRAudio = 0,
+        kTaskTRVideo = 1
     };
 
     TaskMgr();

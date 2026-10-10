@@ -140,7 +140,7 @@ void CharLipSyncDriver::Poll() {
             }
             return;
         } else {
-            float f15 = TheTaskMgr.Seconds(TaskMgr::kRealTime) * 1000;
+            float f15 = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) * 1000;
             if (unkd0) {
                 unkd4 = f15;
                 unkd0 = false;
@@ -238,7 +238,7 @@ void CharLipSyncDriver::Poll() {
                 UpdatePlayback(unk88, unk90 * f11, mSongOffset);
                 if (!unk8c && unk88) {
                     if (unk88->mLipSync
-                        && TheTaskMgr.Seconds(TaskMgr::kRealTime) + mSongOffset
+                        && TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) + mSongOffset
                             >= unk88->mLipSync->Duration()) {
                         MILO_LOG(
                             "CharLipSyncDriver::Poll() - Triggering VO Lip Sync FadeOut - Name:%s\n",
@@ -277,8 +277,8 @@ void CharLipSyncDriver::Poll() {
                     UpdatePlayback(unk94, f11, 0);
                 }
                 if (mSongOwner && mSongOwner->unk88) {
-                    float f15 =
-                        TheTaskMgr.Seconds(TaskMgr::kRealTime) + mSongOwner->mSongOffset;
+                    float f15 = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo)
+                        + mSongOwner->mSongOffset;
                     if (unk8c) {
                         f15 = Mod(f15, mSongOwner->unk88->mLipSync->Duration() - 0.001f);
                     }
@@ -440,7 +440,7 @@ void CharLipSyncDriver::ScaleAddViseme(CharClip *clip, float f1) {
     float length;
     float dVar2;
     if (clip->LengthSeconds() != 0) {
-        dVar2 = fmodf(TheTaskMgr.Seconds(TaskMgr::kRealTime), clip->LengthSeconds());
+        dVar2 = fmodf(TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo), clip->LengthSeconds());
     } else {
         dVar2 = 0;
     }
@@ -450,7 +450,7 @@ void CharLipSyncDriver::ScaleAddViseme(CharClip *clip, float f1) {
 
 void CharLipSyncDriver::UpdatePlayback(CharLipSync::PlayBack *pb, float f2, float f3) {
     if (pb) {
-        float f10 = TheTaskMgr.Seconds(TaskMgr::kRealTime) + f3;
+        float f10 = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) + f3;
         if (mLoop) {
             f10 = Mod(f10, pb->mLipSync->Duration() - 0.001f);
         }

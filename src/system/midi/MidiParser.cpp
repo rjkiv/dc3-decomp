@@ -637,7 +637,7 @@ DataNode MidiParser::OnDebugDraw(DataArray *arr) {
 
 DataNode MidiParser::OnBeatToSecLength(DataArray *arr) {
     return BeatToSeconds(TheTaskMgr.Beat() + arr->Float(2))
-        - TheTaskMgr.Seconds(TaskMgr::kRealTime);
+        - TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
 }
 
 DataNode MidiParser::OnSecOffsetAll(DataArray *arr) {

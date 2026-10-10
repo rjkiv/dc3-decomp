@@ -271,7 +271,7 @@ void GamePanel::Poll() {
         if (!mPauseCountInTimer->Running()) {
             mGame->Poll();
         }
-        if (mState == kGameNeedStart && TheTaskMgr.Seconds(TaskMgr::kRealTime) > -0.025f
+        if (mState == kGameNeedStart && TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) > -0.025f
             && !TheHamDirector->Unk33d()) {
             StartGame();
         }
@@ -664,7 +664,7 @@ void GamePanel::ClearDrawGlitch() {
 
 void GamePanel::UpdateNowBar() {
     MILO_ASSERT(mGame, 0x23d);
-    float seconds = TheTaskMgr.Seconds(TaskMgr::kRealTime);
+    float seconds = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
     float songDuration = TheSongDB->GetSongDurationMs();
     float durVal = songDuration * 0.001f - seconds;
     char operation = '-';

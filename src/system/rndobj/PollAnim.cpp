@@ -77,7 +77,7 @@ void RndPollAnim::Poll() {
         float frame = 0;
         switch (cur->GetRate()) {
         case RndAnimatable::k30_fps:
-            frame = 30.0f * TheTaskMgr.Seconds(TaskMgr::kRealTime);
+            frame = 30.0f * TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
             break;
         case RndAnimatable::k480_fpb:
             frame = 480.0f * TheTaskMgr.Beat();

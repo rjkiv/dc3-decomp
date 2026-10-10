@@ -227,7 +227,7 @@ void CharLookAt::Poll() {
                     ve4.Set(loc144, mBounds.mMin.y, loc140);
                 } else if (mShowRange) {
                     charweight = 1.0f;
-                    switch (((int)TheTaskMgr.Seconds(TaskMgr::kRealTime)) & 7) {
+                    switch (((int)TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo)) & 7) {
                     case 0:
                         ve4.Set(mBounds.mMin.x, mBounds.mMin.y, mBounds.mMin.z);
                         break;

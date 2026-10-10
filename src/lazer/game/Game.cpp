@@ -160,7 +160,7 @@ END_PROPSYNCS
 
 void Game::PostUpdate(const SkeletonUpdateData *data) {
     if (data) {
-        if (TheTaskMgr.Seconds(TaskMgr::kRealTime) >= 0 && !TheGamePanel->IsGameOver()) {
+        if (TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) >= 0 && !TheGamePanel->IsGameOver()) {
             if (!mPaused) {
                 static Symbol practice("practice");
                 static Symbol gameplay_mode("gameplay_mode");
@@ -534,7 +534,7 @@ void Game::SetGamePaused(bool b1, bool b2, bool b3) {
         mSetPausedCalled = true;
         if (b1) {
             TheTaskMgr.SetSecondsAndBeat(
-                TheTaskMgr.Seconds(TaskMgr::kRealTime), TheTaskMgr.Beat(), false
+                TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo), TheTaskMgr.Beat(), false
             );
         } else if (mRealtime) {
             mGameInput->SetTimeOffset();
@@ -720,7 +720,7 @@ bool Game::HandleWait() {
     }
     if (mWaitState != kWaitNone) {
         if (mWaitState == kWaitRestart && mRealtime
-            && TheTaskMgr.Seconds(TaskMgr::TimeReference::kRealTime) < 0.0f) {
+            && TheTaskMgr.Seconds(TaskMgr::TimeReference::kTaskTRVideo) < 0.0f) {
             return true;
         }
         HamAudio *pAudio = mMaster->GetAudio();

@@ -474,7 +474,7 @@ void DxMesh::CacheFurTransform(const Transform &xfm, int i, float f3) {
     RndFur *fur = mMat->Fur();
     if (fur->Wind()) {
         Vector3 v2;
-        fur->Wind()->GetWind(xfm.v, TheTaskMgr.Seconds(TaskMgr::kRealTime), v2);
+        fur->Wind()->GetWind(xfm.v, TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo), v2);
         ScaleAddEq(cur.v, v2, 0.05f);
     }
 }

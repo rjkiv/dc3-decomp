@@ -26,7 +26,7 @@ float chareyesdummyfunclmao() { return sFloats[0]; }
 
 bool CharEyes::CharInterestState::IsInRefractoryPeriod() {
     if (mInterest && unk14 >= 0) {
-        float secs = TheTaskMgr.Seconds(TaskMgr::kRealTime) - unk14;
+        float secs = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) - unk14;
         if (secs < mInterest->RefractoryPeriod()) {
             return true;
         }
@@ -36,7 +36,7 @@ bool CharEyes::CharInterestState::IsInRefractoryPeriod() {
 
 float CharEyes::CharInterestState::RefractoryTimeRemaining() {
     if (mInterest && unk14 >= 0) {
-        float secs = TheTaskMgr.Seconds(TaskMgr::kRealTime) - unk14;
+        float secs = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) - unk14;
         if (secs < mInterest->RefractoryPeriod()) {
             return mInterest->RefractoryPeriod() - secs;
         }
@@ -429,7 +429,7 @@ void CharEyes::Poll() {
         unkfc = false;
         unk194++;
         b3 = true;
-        unk19c = TheTaskMgr.Seconds(TaskMgr::kRealTime);
+        unk19c = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
     }
     unkf8 = f14;
 
@@ -441,7 +441,7 @@ void CharEyes::Poll() {
     Normalize(vf8, vf8);
     float clamped = Clamp(-1.0f, 1.0f, Dot(ve0, vf8));
     if (unke8 != kHugeFloat) {
-        TheTaskMgr.Seconds(TaskMgr::kRealTime);
+        TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
         unkf4 = Interp(unkf4, clamped - unke8, 0.1f);
         float f9 = unk100 ? unk100->MinLookTime() : 1;
         float f10 = unk100 ? unk100->MaxLookTime() : 3;
@@ -625,7 +625,7 @@ void CharEyes::PollDeps(
 void CharEyes::ForceBlink() {
     if (unk1b1 && !unk18c) {
         unk18c = true;
-        unk190 = TheTaskMgr.Seconds(TaskMgr::kRealTime);
+        unk190 = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
         unk194++;
     }
 }
@@ -711,7 +711,7 @@ void CharEyes::ProceduralBlinkUpdate() {
             unk198 = 15.0f;
         }
         if (mFaceServo && unk18c) {
-            float elapsed = TheTaskMgr.Seconds(TaskMgr::kRealTime) - unk190;
+            float elapsed = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) - unk190;
             if (elapsed < 0.115f) {
                 // Closing phase
                 float ease = EaseInExp(Clamp(0.0f, 1.0f, elapsed * 8.695652f));

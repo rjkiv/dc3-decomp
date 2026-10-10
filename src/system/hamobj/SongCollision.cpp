@@ -350,7 +350,7 @@ void SongCollision::Update(MoveDir *moveDir) {
             Transform startXfm;
             float minX, maxX;
             for (; it; ++it) {
-                int beat = SecondsToBeat(it.Unk24b8() * 0.03333333507180214f);
+                int beat = SecondsToBeat(it.Frame() / 30.0f);
                 MILO_ASSERT(beat >= 0, 0x11B);
                 if (beat != current_beat) {
                     MILO_ASSERT(beat == current_beat + 1, 0x11F);

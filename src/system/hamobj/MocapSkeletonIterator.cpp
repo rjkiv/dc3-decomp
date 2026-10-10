@@ -8,21 +8,22 @@
 #include "obj/Task.h"
 #include "os/Debug.h"
 
-MocapSkeletonIterator::MocapSkeletonIterator(int x, int y)
-    : mDancer(TheHamDirector->GetCharacter(0)), mInput(mDancer), unk24b0(x), unk24b4(y) {
+MocapSkeletonIterator::MocapSkeletonIterator(int start_frame, int end_frame)
+    : mDancer(TheHamDirector->GetCharacter(0)), mCamInput(mDancer),
+      mStartFrame(start_frame), mEndFrame(end_frame) {
     MILO_ASSERT(TheGameData, 0x16);
-    unk24c4.Init();
-    unk24bc = -kHugeFloat;
-    unk24b8 = unk24b0;
-    unk2f98 = TheTaskMgr.Seconds(TaskMgr::kRealTime);
+    mSkeleton.Init();
+    mPrevFrame = -kHugeFloat;
+    mFrame = mStartFrame;
+    mOrigSeconds = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
     HamCharacter *c = mDancer;
     if (mDancer) {
-        unk2f9c = mDancer->LocalXfm();
+        mOrigXfm = mDancer->LocalXfm();
         c->Enter();
         mDancer->DirtyLocalXfm().Reset();
         mDancer->Teleport(nullptr);
         Update();
-        mInput.ResetSkeletonCharOrigin();
+        mCamInput.ResetSkeletonCharOrigin();
     }
 }
 
@@ -30,15 +31,15 @@ MocapSkeletonIterator::~MocapSkeletonIterator() {
     if (mDancer) {
         mDancer->DirtyLocalXfm().Reset();
         mDancer->Teleport(nullptr);
-        mDancer->SetLocalXfm(unk2f9c);
+        mDancer->SetLocalXfm(mOrigXfm);
     }
-    TheTaskMgr.SetSeconds(unk2f98, true);
+    TheTaskMgr.SetSeconds(mOrigSeconds, true);
 }
 
-MocapSkeletonIterator::operator bool() { return mDancer && unk24b8 < unk24b4; }
+MocapSkeletonIterator::operator bool() { return mDancer && mFrame < mEndFrame; }
 
 void MocapSkeletonIterator::operator++() {
-    unk24b8++;
+    mFrame++;
     Update();
 }
 
@@ -50,11 +51,11 @@ bool MocapSkeletonIterator::PrevSkeleton(
 
 void MocapSkeletonIterator::Update() {
     MILO_ASSERT(mDancer, 0x55);
-    TheTaskMgr.SetSeconds(unk24b8 * 0.033333335f, (unk24b0 - unk24b8) == 0);
+    TheTaskMgr.SetSeconds(mFrame / 30.0f, (mStartFrame - mFrame) == 0);
     ClipPlayer player(0);
     if (player.Init(0)) {
-        player.PlayAnims(mDancer, unk24b8, unk24bc, 0);
-        unk24bc = unk24b8;
+        player.PlayAnims(mDancer, mFrame, mPrevFrame, 0);
+        mPrevFrame = mFrame;
     } else {
         MILO_NOTIFY(
             "Failed to init ClipPlayer for %s!", PathName(TheHamDirector->ClipDir())
@@ -63,13 +64,13 @@ void MocapSkeletonIterator::Update() {
     HamRegulate *reg = mDancer->Regulator();
     reg->SetWaypoint(nullptr);
     mDancer->Poll();
-    if (unk24c4.IsTracked()) {
-        AddToHistory(0, unk24c4);
+    if (mSkeleton.IsTracked()) {
+        AddToHistory(0, mSkeleton);
     }
-    mInput.PollTracking();
-    const SkeletonFrame *frame_data = mInput.NewFrame();
+    mCamInput.PollTracking();
+    const SkeletonFrame *frame_data = mCamInput.NewFrame();
     MILO_ASSERT(frame_data, 0x6F);
     MILO_ASSERT(frame_data->mElapsedMs == 33, 0x70);
     MILO_ASSERT(frame_data->mSkeletonDatas[0].mTracking == kSkeletonTracked, 0x71);
-    unk24c4.Poll(0, *frame_data);
+    mSkeleton.Poll(0, *frame_data);
 }

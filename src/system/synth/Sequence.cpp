@@ -523,13 +523,13 @@ WaitSeqInst::WaitSeqInst(WaitSeq *seq) : SeqInst(seq), mEndTime(-1.0f) {
 }
 
 void WaitSeqInst::StartImpl() {
-    mEndTime = TheTaskMgr.Seconds(TaskMgr::kRealTime) * 1000.0f + mWaitMs;
+    mEndTime = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) * 1000.0f + mWaitMs;
 }
 
 void WaitSeqInst::Stop() { mEndTime = -1.0f; }
 
 bool WaitSeqInst::IsRunning() {
-    return TheTaskMgr.Seconds(TaskMgr::kRealTime) * 1000.0f < mEndTime;
+    return TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) * 1000.0f < mEndTime;
 }
 
 #pragma endregion

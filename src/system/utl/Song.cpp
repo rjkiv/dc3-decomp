@@ -453,7 +453,7 @@ void Song::SyncState() {
             }
         }
         int tick = GetTempoMap()->TimeToTick(GetFrame() * 1000);
-        float seconds = TheTaskMgr.Seconds(TaskMgr::kRealTime);
+        float seconds = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
         float deltaSecs = TheTaskMgr.DeltaSeconds();
         float deltaBeat = TheTaskMgr.DeltaBeat();
         for (int i = -1920; i <= tick; i += 1920) {

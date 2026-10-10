@@ -883,7 +883,7 @@ DataNode HamCharacter::OnSoundPlay(const DataArray *a) {
                         sound->Name()
                     );
                     EnableFacialAnimation(
-                        lipSync, -TheTaskMgr.Seconds(TaskMgr::kRealTime)
+                        lipSync, -TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo)
                     );
                 }
             }

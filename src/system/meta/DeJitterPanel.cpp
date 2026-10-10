@@ -27,7 +27,7 @@ void DeJitterPanel::Poll() {
 }
 
 DeJitterSetter::DeJitterSetter(DeJitter &dj, Timer *t) {
-    secs = TheTaskMgr.Seconds(TaskMgr::kRealTime);
+    secs = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
     delta_secs = TheTaskMgr.DeltaSeconds();
     float f1 = 0.0f;
     float f18 = 0.0f;

@@ -32,7 +32,7 @@ void LiveInput::SetPaused(bool b1) {
 }
 
 void LiveInput::SetTimeOffset() {
-    float f1 = TheTaskMgr.Seconds(TaskMgr::kRealTime) * 1000.0f;
+    float f1 = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) * 1000.0f;
     f1 = f1 - mRealTimer.SplitMs();
     mTimeOffset = f1 - TheProfileMgr.GetSongToTaskMgrMs(kGame);
 }

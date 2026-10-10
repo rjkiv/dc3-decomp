@@ -494,7 +494,7 @@ void CharHair::SimulateInternal(float f) {
     Vector3 vec134(0, 0, 0);
     if (mWindObj) {
         if (mStrands[0].Root()) {
-            float secs = TheTaskMgr.Seconds(TaskMgr::kRealTime);
+            float secs = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
             mWindObj->GetWind(mStrands[0].Root()->WorldXfm().v, secs, vec134);
             vec134 *= f19 * 0.5f;
         }

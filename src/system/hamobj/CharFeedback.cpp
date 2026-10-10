@@ -124,7 +124,7 @@ BEGIN_LOADS(CharFeedback)
 END_LOADS
 
 void CharFeedback::Poll() {
-    float secs = TheTaskMgr.Seconds(TaskMgr::kRealTime);
+    float secs = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
     float delta = TheTaskMgr.DeltaSeconds();
     for (int i = 0; i < 4; i++) {
         LimbState &cur = mLimbStates[i];
@@ -175,7 +175,7 @@ void CharFeedback::UpdateLimb(int limb_index, bool b2) {
     MILO_ASSERT((0) <= (limb_index) && (limb_index) < (kNumLimbFeedbacks), 0x25);
     LimbState &cur = mLimbStates[limb_index];
     if (b2 != cur.unk1) {
-        float secs = TheTaskMgr.Seconds(TaskMgr::kRealTime);
+        float secs = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
         if (b2 || cur.unk4 == -1 || secs - cur.unk4 > mMinFailSecs) {
             cur.unk4 = secs;
             cur.unk1 = b2;

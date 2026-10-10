@@ -429,7 +429,7 @@ bool RndPostProc::ColorXfmEnabled() const {
 }
 
 void RndPostProc::UpdateTimeDelta() {
-    float secs = TheTaskMgr.Seconds(TaskMgr::kRealTime);
+    float secs = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
     float delta = secs - mLastRender;
     mLastRender = secs;
     mDeltaSecs = Clamp(0.0f, 1.0f, delta);

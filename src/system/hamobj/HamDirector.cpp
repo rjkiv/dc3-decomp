@@ -658,7 +658,7 @@ Key<Symbol> *HamDirector::GetMasterPracticeFrame(Symbol s) {
 }
 
 HamCamShot *HamDirector::FindNextDircut() {
-    float secs = TheTaskMgr.Seconds(TaskMgr::kRealTime);
+    float secs = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
     const DircutEntry *entry = mDirCutKeys.Cross(secs, secs - TheTaskMgr.DeltaSeconds());
     if (!entry) {
         return nullptr;
@@ -1174,7 +1174,7 @@ DataNode HamDirector::OnSelectCamera(DataArray *a) {
     RndPropAnim *anim = SongAnim(0);
     if (!mDisabled) {
         float frame = Max(0.0f, BeatToFrame(TheTaskMgr.Beat()));
-        if (TheTaskMgr.Seconds(TaskMgr::kRealTime) >= 0 || TheLoadMgr.EditMode()) {
+        if (TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) >= 0 || TheLoadMgr.EditMode()) {
             if (anim && (!TheLoadMgr.EditMode() || frame != anim->GetFrame())) {
                 START_AUTO_TIMER("song_anim");
                 anim->SetFrame(frame, 1);
@@ -1195,18 +1195,18 @@ DataNode HamDirector::OnSelectCamera(DataArray *a) {
             mNextShotSec = -kHugeFloat;
             unk2a8 = -kHugeFloat;
         }
-        if (!mNextShot && TheTaskMgr.Seconds(TaskMgr::kRealTime) >= mNextShotSec
+        if (!mNextShot && TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) >= mNextShotSec
             && !ShotsDisabled()) {
             mNextShot = FindNextDircut();
             if (!mNextShot && !mPickNewShot && ShouldDoCollisionPrevention()
                 && AreCharactersColliding()
-                && TheTaskMgr.Seconds(TaskMgr::kRealTime) >= unk2a8
+                && TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) >= unk2a8
                 && ReactToCollision(frame)) {
                 float xBeats =
                     DataGetMacro("SONG_COLLISION_DONT_CUT_AGAIN_FOR_X_BEATS")->Float(0);
                 float beat = TheTaskMgr.Beat();
                 float secs = (BeatToMs(beat + xBeats) - BeatToMs(beat)) / 1000;
-                unk2a8 = TheTaskMgr.Seconds(TaskMgr::kRealTime) + secs;
+                unk2a8 = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) + secs;
             }
             if (!mNextShot && mPickNewShot) {
                 FindNextShot();
@@ -2330,9 +2330,9 @@ void HamDirector::PlayNextShot() {
             if (shot && strstr(shot->Category().Str(), "dc")) {
                 float frames = (float)shot->MinTime() + shot->ZeroTime();
                 shot->ConvertFrames(frames);
-                mNextShotSec = TheTaskMgr.Seconds(TaskMgr::kRealTime) + frames;
+                mNextShotSec = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) + frames;
             } else if (mCurShot && strneq(mCurShot->Category().Str(), "dc_", 3)) {
-                mNextShotSec = TheTaskMgr.Seconds(TaskMgr::kRealTime) + 1;
+                mNextShotSec = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) + 1;
             } else {
                 mNextShotSec = -kHugeFloat;
             }
@@ -2343,7 +2343,7 @@ void HamDirector::PlayNextShot() {
 }
 
 void HamDirector::SetShot(Symbol s) {
-    if (TheTaskMgr.Seconds(TaskMgr::kRealTime) >= 0
+    if (TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) >= 0
         && !(SongAnim(0) && SongAnim(0)->GetFrame() < 0)) {
         static Symbol review("review");
         static Symbol skills_mode("skills_mode");
@@ -2667,8 +2667,8 @@ void HamDirector::Poll() {
                 }
             }
             mLastFrame = songAnim->GetFrame();
-            if (0 <= TheTaskMgr.Seconds(TaskMgr::kRealTime)) {
-                float seconds = TheTaskMgr.Seconds(TaskMgr::kRealTime);
+            if (0 <= TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo)) {
+                float seconds = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
                 if (seconds - TheTaskMgr.DeltaSeconds() < 0) {
                     songAnim->StartAnim();
                 }

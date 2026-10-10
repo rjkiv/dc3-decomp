@@ -381,7 +381,7 @@ void BustAMovePanel::QueueMovePromptVO() {
     int reps = mRepsLeft;
     float beatsToWait = (float)((reps * 4) - 4);
     float timeOffset = beatsToWait * secondsPerBeat;
-    float currentTime = TheTaskMgr.Seconds(TaskMgr::kRealTime);
+    float currentTime = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
     mPlayMovePromptAt = currentTime + timeOffset - voLength - 1.0f;
 }
 
@@ -699,7 +699,7 @@ void BustAMovePanel::Poll() {
         static Message hideTransitionMsg("bustamove_hide_transition");
         TheHamProvider->Handle(hideTransitionMsg, false);
     }
-    if (mPlayMovePromptAt <= TheTaskMgr.Seconds(TaskMgr::kRealTime)) {
+    if (mPlayMovePromptAt <= TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo)) {
         PlayMovePromptVO();
         mPlayMovePromptAt = FLT_MAX;
     }

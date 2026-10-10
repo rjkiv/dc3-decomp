@@ -109,7 +109,7 @@ DataNode CharDriverMidi::OnMidiParser(DataArray *da) {
         float somefloat = da->Float(3);
         if (clip->PlayFlags() & 0x200) {
             somefloat = BeatToSeconds(somefloat + TheTaskMgr.Beat());
-            somefloat -= TheTaskMgr.Seconds(TaskMgr::kRealTime);
+            somefloat -= TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
             somefloat *= clip->AverageBeatsPerSecond();
         }
         MaxEq(somefloat, 0.0f);

@@ -68,7 +68,7 @@ void RndPostProcMgr::Poll() {
         }
         if (unk20) {
             float f4 = Clamp(
-                0.0f, 1.0f, (TheTaskMgr.Seconds(TaskMgr::kRealTime) - unk38) / unk34
+                0.0f, 1.0f, (TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) - unk38) / unk34
             );
             mSelectedPostProc->Interp(unk1c, unk20, f4);
             if (NearlyEqual(f4, 1)) {
@@ -114,7 +114,7 @@ void RndPostProcMgr::BlendToPostProc(RndPostProc *iPostProc, float iBlendTime) {
             unk1c->Copy(mSelectedPostProc, kCopyShallow);
             unk20 = iPostProc;
             unk34 = iBlendTime;
-            unk38 = TheTaskMgr.Seconds(TaskMgr::kRealTime);
+            unk38 = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
         }
     }
 }
