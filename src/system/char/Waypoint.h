@@ -61,7 +61,7 @@ protected:
     float mYRadius; // 0xc8
     /** "Angular slop in degrees away from y axis" */
     float mAngRadius; // 0xcc
-    int unkd0; // 0xd0
+    int mSearchID; // 0xd0
     /** "degrees beyond ang radius you can never rotate past, if >= 0".
         Ranges from -1 to 360. */
     float mStrictAngDelta; // 0xd4

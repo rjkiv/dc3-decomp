@@ -16,9 +16,9 @@ void DrawBounds(Vector3, const Hmx::Matrix3 &, const Vector3 &, RndGraph *);
 CharLookAt::CharLookAt()
     : mSource(this), mPivot(this), mTarget(this), mHalfTime(0), mMinYaw(-80), mMaxYaw(80),
       mMinPitch(-80), mMaxPitch(sMaxThreshold), mMinWeightYaw(-1), mMaxWeightYaw(-1),
-      mWeightYawSpeed(10000), unk8c(kHugeFloat, 0, 0), unk9c(1), mSourceRadius(0),
-      unka4(0, 0, 0), mShowRange(false), mTestRange(false), mTestRangePitch(0.5),
-      mTestRangeYaw(0.5), mAllowRoll(true), unke1(false), mEnableJitter(false),
+      mWeightYawSpeed(10000), mLastLocal(kHugeFloat, 0, 0), mLastYawWeight(1), mSourceRadius(0),
+      mSourceFilter(0, 0, 0), mShowRange(false), mTestRange(false), mTestRangePitch(0.5),
+      mTestRangeYaw(0.5), mAllowRoll(true), mClamped(false), mEnableJitter(false),
       mYawJitterLimit(0), mPitchJitterLimit(0) {
     SyncLimits();
 }
@@ -178,20 +178,20 @@ void CharLookAt::Poll() {
                     1.0f,
                     mMaxWeightYaw - (std::acos(clamped) / (mMaxWeightYaw - mMinWeightYaw))
                 );
-                float loc13c = (clamped2 - unk9c) / deltasecs;
+                float loc13c = (clamped2 - mLastYawWeight) / deltasecs;
                 if (MinEq(loc13c, mWeightYawSpeed)) {
-                    clamped2 = loc13c * deltasecs + unk9c;
+                    clamped2 = loc13c * deltasecs + mLastYawWeight;
                 }
                 charweight *= clamped2;
-                unk9c = clamped2;
+                mLastYawWeight = clamped2;
             }
             if (charweight != 0.0f) {
                 Vector3 v108(0.0f, 0.0f, 0.0f);
                 if (mSourceRadius > 0.0f) {
                     if (TheTaskMgr.DeltaSeconds() > 0.0f) {
-                        Interp(unka4, srcTrans->WorldXfm().m.y, 0.1f, unka4);
+                        Interp(mSourceFilter, srcTrans->WorldXfm().m.y, 0.1f, mSourceFilter);
                     }
-                    Subtract(srcTrans->WorldXfm().m.y, unka4, v108);
+                    Subtract(srcTrans->WorldXfm().m.y, mSourceFilter, v108);
                     float v108sq = LengthSquared(v108);
                     float srcrad = mSourceRadius * DEG2RAD;
                     if (srcrad * srcrad < v108sq) {
@@ -214,12 +214,12 @@ void CharLookAt::Poll() {
                     Normalize(ve4, ve4);
                 Multiply(mPivot->TransParent()->WorldXfm().m, ve4, ve4);
                 Normalize(ve4, ve4);
-                unke1 = mBounds.Clamp(ve4);
+                mClamped = mBounds.Clamp(ve4);
                 Normalize(ve4, ve4);
-                if (unk8c.x != kHugeFloat && mHalfTime != 0.0f) {
-                    Interp(unk8c, ve4, deltasecs / (deltasecs + mHalfTime), ve4);
+                if (mLastLocal.x != kHugeFloat && mHalfTime != 0.0f) {
+                    Interp(mLastLocal, ve4, deltasecs / (deltasecs + mHalfTime), ve4);
                 }
-                unk8c = ve4;
+                mLastLocal = ve4;
                 if (mTestRange) {
                     float loc140, loc144;
                     Interp(mBounds.mMin.z, mBounds.mMax.z, mTestRangeYaw, loc140);
@@ -308,7 +308,7 @@ void CharLookAt::Poll() {
 }
 
 void CharLookAt::Enter() {
-    unk8c.Set(kHugeFloat, 0, 0);
+    mLastLocal.Set(kHugeFloat, 0, 0);
     if (mPivot) {
         mPivot->DirtyLocalXfm().m.Identity();
     }

@@ -35,7 +35,7 @@ public:
     void SetMaxPitch(float);
     RndTransformable *GetSource() const { return mSource ? mSource : mPivot; }
     RndTransformable *Target() const { return mTarget; }
-    bool Unke1() const { return unke1; } // clamped?
+    bool Clamped() const { return mClamped; } // clamped?
     static void SetDisableJitter(bool disable) { sDisableJitter = disable; }
 
 protected:
@@ -68,11 +68,11 @@ protected:
     float mMaxWeightYaw; // 0x84
     /** "Max speed in weight/sec that the auto-weight can change" */
     float mWeightYawSpeed; // 0x88
-    Vector3 unk8c; // 0x8c
-    float unk9c; // 0x9c
+    Vector3 mLastLocal; // 0x8c
+    float mLastYawWeight; // 0x9c
     /** "radius in degrees of filtered source motion that's allowed through" */
     float mSourceRadius; // 0xa0
-    Vector3 unka4; // 0xa4
+    Vector3 mSourceFilter; // 0xa4
     Box mBounds; // 0xb4
     /** "Graphically show the extreme ranges of motion" */
     bool mShowRange; // 0xd4
@@ -86,7 +86,7 @@ protected:
         keeps the local pivot z axis down to prevent rolling.
         Eyeballs can't roll, for instance, but heads can." */
     bool mAllowRoll; // 0xe0
-    bool unke1;
+    bool mClamped;
     /** "If enabled, high frequency noise is added to pitch and/or yaw each frame" */
     bool mEnableJitter; // 0xe2
     /** "if enable_jitter is on, random noise from

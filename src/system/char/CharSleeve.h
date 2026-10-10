@@ -32,9 +32,9 @@ public:
 
     ObjPtr<RndTransformable> mSleeve; // 0x10
     ObjPtr<RndTransformable> mTopSleeve; // 0x24
-    Vector3 unk38;
-    Vector3 unk48;
-    float unk58;
+    Vector3 mPos;
+    Vector3 mLastPos;
+    float mLastDT;
     float mInertia; // unk5c
     float mGravity; // 0x60
     float mRange; // 0x64

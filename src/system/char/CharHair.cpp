@@ -24,7 +24,7 @@ CharHair::Point::Point(Hmx::Object *owner)
     force.Zero();
     lastFriction.Zero();
     lastZ.Zero();
-    unk78.Zero();
+    pose.Zero();
 }
 
 CharHair::Point::Point(const CharHair::Point &pt) : bone(pt.bone), collides(pt.collides) {
@@ -38,7 +38,7 @@ CharHair::Point::Point(const CharHair::Point &pt) : bone(pt.bone), collides(pt.c
     lastFriction = pt.lastFriction;
     lastZ = pt.lastZ;
     sideLength = pt.sideLength;
-    unk78 = pt.unk78;
+    pose = pt.pose;
 }
 
 BEGIN_CUSTOM_PROPSYNC(CharHair::Point)
@@ -57,7 +57,7 @@ void operator<<(BinStream &bs, const CharHair::Point &p) {
     bs << p.radius;
     bs << p.outerRadius;
     bs << p.sideLength;
-    bs << p.unk78;
+    bs << p.pose;
 }
 
 void operator>>(BinStreamRev &d, CharHair::Point &pt) {
@@ -106,7 +106,7 @@ void operator>>(BinStreamRev &d, CharHair::Point &pt) {
         }
     }
     if (d.rev > 9) {
-        d >> pt.unk78;
+        d >> pt.pose;
     }
     pt.collides.clear();
     pt.force.Zero();
@@ -416,7 +416,7 @@ void CharHair::FreezePoseRaw() {
             Transform tf48(root->TransParent()->WorldXfm());
             Invert(tf48, tf48);
             for (int j = 0; j < pts.size(); j++) {
-                Multiply(pts[j].pos, tf48, pts[j].unk78);
+                Multiply(pts[j].pos, tf48, pts[j].pose);
             }
         }
     }
@@ -462,7 +462,7 @@ void CharHair::DoReset(int reset) {
             Vector3 v8c(strand.Root()->WorldXfm().m.x);
             for (int j = 0; j < pts.size(); j++) {
                 Point &pt = pts[j];
-                Multiply(pt.unk78, tf70, pt.pos);
+                Multiply(pt.pose, tf70, pt.pos);
                 Vector3 v98;
                 Subtract(pt.pos, v80, v98);
                 v80 = pt.pos;

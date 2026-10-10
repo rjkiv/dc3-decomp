@@ -84,7 +84,7 @@ public:
 
     void SetInterestFilterFlags(int i) { mInterestFilterFlags = i; }
     void ClearInterestFilterFlags() { mInterestFilterFlags = mDefaultFilterFlags; }
-    void SetUnk1b0(bool b) { unk1b0 = b; } // change once context found
+    void SetUnk1b0(bool b) { mInterestFiltersChanged = b; } // change once context found
 
     void ForceBlink();
     CharInterest *GetCurrentInterest();
@@ -165,31 +165,31 @@ protected:
     bool mLowerLidTrackRotate; // 0xcc
     RndOverlay *mEyeStatusOverlay; // 0xd0
     int mInterestFilterFlags; // 0xd4
-    Vector3 unkd8; // 0xd8
-    float unke8;
-    float unkec;
-    float unkf0;
-    float unkf4;
-    float unkf8;
-    bool unkfc;
-    bool unkfd;
-    ObjPtr<CharInterest> unk100; // 0x100
-    ObjPtr<CharInterest> unk114; // 0x114 - focus interest
-    int unk128;
-    bool unk12c;
-    Vector3 unk130;
-    float unk140;
-    CharEyeDartRuleset::EyeDartRulesetData mData; // 0x144
-    bool unk170;
-    float unk174;
-    int unk178;
-    Vector3 unk17c;
-    bool unk18c;
-    float unk190;
-    int unk194;
-    float unk198;
-    float unk19c;
-    Vector3 unk1a0;
-    bool unk1b0;
-    bool unk1b1;
+    Vector3 mLastFacing; // 0xd8
+    float mLastCang;
+    float mLastLook;
+    float mMaxEyeCang;
+    float mAvDelta;
+    float mLastBlinkWeight;
+    bool mBlinkDetect;
+    bool mTargetTooClose;
+    ObjPtr<CharInterest> mCurInterest; // 0x100
+    ObjPtr<CharInterest> mFocusInterest; // 0x114 - focus interest
+    int mCurFocusPriorityClass;
+    bool mNewFocusInterest;
+    Vector3 mLastExtrapolatedDir;
+    float mLastHeadIKWeight;
+    CharEyeDartRuleset::EyeDartRulesetData mCurDartRuleset; // 0x144
+    bool mDarting;
+    float mDartNextEventTime;
+    int mDartsRemaining;
+    Vector3 mCurDartOffset;
+    bool mProceduralBlink;
+    float mBlinkTimestamp;
+    int mBlinkWindowCount;
+    float mBlinkWindowSecsRemaining;
+    float mLastBlinkDetectTime;
+    Vector3 mDelayedTarget;
+    bool mInterestFiltersChanged;
+    bool mBlinksEnabled;
 };
