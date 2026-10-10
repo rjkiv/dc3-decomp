@@ -101,9 +101,9 @@ class SkeletonCallback {
 public:
     virtual ~SkeletonCallback() {}
     virtual void Clear() = 0;
-    virtual void Update(const struct SkeletonUpdateData &) = 0;
-    virtual void PostUpdate(const struct SkeletonUpdateData *) = 0;
-    virtual void Draw(const BaseSkeleton &, class SkeletonViz &) = 0;
+    virtual void Update(const struct SkeletonUpdateData &data) = 0;
+    virtual void PostUpdate(const struct SkeletonUpdateData *data) = 0;
+    virtual void Draw(const BaseSkeleton &skel, class SkeletonViz &viz) = 0;
 };
 
 // size 0x2f0

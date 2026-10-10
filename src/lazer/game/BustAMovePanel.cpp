@@ -352,7 +352,7 @@ void BustAMovePanel::CacheObjects() {
         const Hmx::Color &color = DataDir()->Find<UIColor>("gray.color")->GetColor();
         mat->SetColor(color.red, color.green, color.blue);
     }
-    mRecorder->SetUnk3C(MetaPerformer::Current()->GetSong());
+    mRecorder->SetSongName(MetaPerformer::Current()->GetSong());
     for (int i = 0; i < 2; i++) {
         mHasFlawlessedAllMoves[i] = true;
     }
@@ -885,7 +885,7 @@ void BustAMovePanel::OnBeat() {
                             MILO_LOG(
                                 "1: %f(%d)   2: %f(%d)\n",
                                 mDuringBustMoveRatings[0],
-                                mRecorder->GetUnkC4(),
+                                mRecorder->GetDancerTakeFrameCount(),
                                 mDuringBustMoveRatings[1],
                                 mRecorder->GetUnkB8()
                             );
@@ -989,7 +989,7 @@ void BustAMovePanel::OnBeat() {
                                 cur->SetShowing(!DataVariable("hide_bam_ghost").Int());
                                 cur->SetUnk18C(nullptr);
                             } else {
-                                cur->SetUnk18C(mRecorder->GetTex());
+                                cur->SetUnk18C(mRecorder->GetOutputTex());
                             }
                         }
                     }
@@ -1049,7 +1049,7 @@ void BustAMovePanel::OnBeat() {
                     for (ObjDirItr<DepthBuffer3D> it(mVisualizer->DataDir(), true);
                          it != nullptr;
                          ++it) {
-                        it->SetUnk18C(mRecorder->GetTex());
+                        it->SetUnk18C(mRecorder->GetOutputTex());
                     }
                     break;
 
@@ -1386,7 +1386,7 @@ void BustAMovePanel::OnBeat() {
                         for (ObjDirItr<DepthBuffer3D> it(mVisualizer->DataDir(), true);
                              it != nullptr;
                              ++it) {
-                            it->SetUnk18C(mRecorder->GetTex());
+                            it->SetUnk18C(mRecorder->GetOutputTex());
                             it->SetShowing(true);
                         }
                         mRecorder->SetFreestyleMove(mFlashcardImage.back());

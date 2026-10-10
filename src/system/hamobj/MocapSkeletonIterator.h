@@ -25,7 +25,7 @@ private:
     int mEndFrame; // 0x24b4
     int mFrame; // 0x24b8
     float mPrevFrame; // 0x24bc
-    int unk24c0; // 0x24c0 - unused?
+    float mSeconds; // 0x24c0 - unused
     Skeleton mSkeleton; // 0x24c4
     float mOrigSeconds; // 0x2f98
     Transform mOrigXfm; // 0x2f9c

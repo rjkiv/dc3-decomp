@@ -16,11 +16,14 @@
 class FreestyleMoveRecorder : public SkeletonCallback {
 public:
     struct JointAngle {
+        JointAngle(SkeletonJoint joint) : mJoint(joint) {}
         SkeletonJoint mJoint;
     };
     struct JointPos {
-        int unk0; // SkeletonJoint?
-        int unk4;
+        JointPos(SkeletonJoint joint, SkeletonCoordSys cs)
+            : mJoint(joint), mCoordSys(cs) {}
+        SkeletonJoint mJoint; // 0x0
+        SkeletonCoordSys mCoordSys; // 0x4
     };
     FreestyleMoveRecorder();
     virtual ~FreestyleMoveRecorder();
@@ -35,44 +38,50 @@ public:
     void StartRecordingDancerTake();
     void StopRecording();
     void ClearRecording();
-    void StartPlayback(bool);
+    void StartPlayback(bool usePreviousRecording);
     void StopPlayback();
     void ClearDancerTake();
     BaseSkeleton *GetLiveSkeleton();
-    float
-    CompareSkeletonPositions(const BaseSkeleton *, const BaseSkeleton *, float) const;
+    float CompareSkeletonPositions(
+        const BaseSkeleton *skel1, const BaseSkeleton *skel2, float errorWeight
+    ) const;
     void AssignStaticInstance();
     void DrawDebug();
     void PlaybackComplete();
     void ClearFrameScores();
-    void ReadFreestyleMoveClip(String, int &, FreestyleMoveFrame *);
-    float GetScore(const BaseSkeleton *, int, float, bool);
+    void ReadFreestyleMoveClip(String name, int &frameCount, FreestyleMoveFrame *frames);
+    float GetScore(
+        const BaseSkeleton *liveSkel,
+        int historySlot,
+        float overrideTime,
+        bool compareDancerFrames
+    );
     float GetScore(int, int, float, bool);
 
-    void SetUnk40(int i) { unk40 = i; }
-    void SetVal44(int i) { unk44 = i; } // change once context found
-    void SetUnk3C(Symbol s) { unk3c = s; }
-    int GetUnkB8() const { return unkb8; }
-    RndTex *GetTex() const { return unkbc; }
-    int GetUnkC4() const { return unkc4; }
+    void SetUnk40(int i) { mPlaybackRep = i; }
+    void SetVal44(int i) { mSkeletonIndex = i; } // change once context found
+    void SetSongName(Symbol s) { mSongName = s; }
+    int GetUnkB8() const { return mCurrentMove; }
+    RndTex *GetOutputTex() const { return mOutputTex; }
+    int GetDancerTakeFrameCount() const { return mDancerTakeFrameCount; }
 
     void SetFreestyleMove(int index) {
         MILO_ASSERT(index >= 0 && index < MAX_FREESTYLE_MOVES, 0x50);
-        unkb8 = index;
+        mCurrentMove = index;
     }
 
     MEM_OVERLOAD(FreestyleMoveRecorder, 0x2E);
-    static FreestyleMoveRecorder *sInstance;
-    static SkeletonViz *sViz1;
-    static SkeletonViz *sViz2;
 
 private:
-    void UpdateRecordingAttempt(const BaseSkeleton *, float);
-    void RecordMoveAttempt(String);
+    void UpdateRecordingAttempt(const BaseSkeleton *liveSkel, float ms);
+    void RecordMoveAttempt(String name);
     void WriteRecordedMoveAttempt();
-    void WriteFreestyleMoveClip(String, int, FreestyleMoveFrame *);
+    void WriteFreestyleMoveClip(String name, int frameCount, FreestyleMoveFrame *frames);
     void ClearFreestyleMoveClip();
     void UpdateFakeSkeleton();
+    void CompareDisplacementVectors(
+        const Vector3 &v1, int ms1, const Vector3 &v2, int ms2, float &score, float &weight
+    ) const;
 
     static DataNode OnRecordAttempt(DataArray *);
     static DataNode OnWriteCreated(DataArray *);
@@ -80,31 +89,31 @@ private:
     static DataNode OnReadAttempt(DataArray *);
     static DataNode OnClearAttempt(DataArray *);
 
-    float unk4;
-    FreestyleMoveFrame *unk8; // 0x8 - frames
-    int unkc; // 0xc - frame count for unk8
-    String unk10;
-    FreestyleMoveFrame *unk18;
-    int unk1c;
-    int unk20;
-    int unk24;
-    float unk28;
-    float unk2c;
-    float unk30;
-    int unk34;
-    bool unk38;
-    bool unk39;
-    Symbol unk3c;
-    int unk40;
-    int unk44;
-    FreestyleMove unk48[4]; // 0x48
-    int unkb8;
-    RndTex *unkbc;
-    FreestyleMoveFrame *unkc0;
-    int unkc4;
-    int unkc8;
-    std::vector<JointAngle> unkcc;
-    std::vector<SkeletonJoint> unkd8;
-    FreestyleFrameScores unke4[2];
-    std::vector<JointPos> unk104;
+    float mFakeSkeletonTime; // 0x4
+    FreestyleMoveFrame *mFakeSkeletonFrames; // 0x8
+    int mFakeSkeletonFrameCount; // 0xc
+    String mRecordingName; // 0x10
+    FreestyleMoveFrame *mRecordedAttemptFrames; // 0x18
+    int mRecordedAttemptFrameCount; // 0x1c
+    int mDebugAlreadyLoadedMoveFor; // 0x20
+    int mMaxFrames; // 0x24
+    float mRecordTime; // 0x28
+    float mPlayTime; // 0x2c
+    float mFrameRate; // 0x30
+    int mStopRecordingAt; // 0x34
+    bool mRecordingDancerTake; // 0x38
+    bool mPlayPreviousRecording; // 0x39
+    Symbol mSongName; // 0x3c
+    int mPlaybackRep; // 0x40
+    int mSkeletonIndex; // 0x44
+    FreestyleMove mFreestyleMove[4]; // 0x48
+    int mCurrentMove; // 0xb8
+    RndTex *mOutputTex; // 0xbc
+    FreestyleMoveFrame *mDancerTakeFrames; // 0xc0
+    int mDancerTakeFrameCount; // 0xc4
+    int mRecordedFramesThisMove; // 0xc8
+    std::vector<JointAngle> mJointAngles; // 0xcc
+    std::vector<SkeletonJoint> mDispJoints; // 0xd8
+    FreestyleFrameScores mFrameScoreSlots[2]; // 0xe4
+    std::vector<JointPos> mJointPos; // 0x104
 };
