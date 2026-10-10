@@ -89,12 +89,13 @@ private:
     float mLPF_B1; // 0xA0
     float mLPF_B2; // 0xA4
     bool mComputeHPF; // 0xA8
-    
-    float unkac;
-    float unkb0;
-    float unkb4;
-    float unkb8;
-    float unkbc;
+    float mHPF_A0; // 0xAC
+    float mHPF_A1; // 0xB0
+    float mHPF_A2; // 0xB4
+    float mHPF_B1; // 0xB8
+    float mHPF_B2; // 0xBC
+
+    ///arrays
     float unkc0;
     float unkc4;
     float unkc8;
@@ -107,6 +108,8 @@ private:
     float unke4;
     float unke8;
     float unkec;
+    
+    ///arrays in arrays
     float unkf0;
     float unkf4;
     float unkf8;

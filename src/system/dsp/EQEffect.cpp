@@ -205,7 +205,7 @@ void EQEffect::SetParameter(int idx, float val) {
         float f30 = f13 / f3;
         float f10 = cos(f);
         float f9 = f30 + 0.5f;
-        unkbc = f30 * 2;
+        mHPF_B2 = f30 * 2;
         f10 *= f9;
         f9 = f10 + f30;
         mLPF_B1 = f30 * -2;
@@ -283,11 +283,11 @@ EQEffect::EQEffect(IXAudioBatchAllocator *) {
     mLPF_A2 = 0;
     mLPF_B1 = 0;
     mLPF_B2 = 0;
-    unkac = 0;
-    unkb0 = 0;
-    unkb4 = 0;
-    unkb8 = 0;
-    unkbc = 0;
+    mHPF_A0 = 0;
+    mHPF_A1 = 0;
+    mHPF_A2 = 0;
+    mHPF_B1 = 0;
+    mHPF_B2 = 0;
     Reset();
 }
 
