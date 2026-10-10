@@ -67,7 +67,7 @@ protected:
     bool mShowScreenSize; // 0x8b
     bool mShowFootExtents; // 0x8c
     float mPopFrame; // 0x90
-    int unk94;
+    int mInternalTransition;
     ClipDistMap *mDistMap; // 0x98
     RndOverlay *mOverlay; // 0x9c
 };
