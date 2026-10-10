@@ -1,3 +1,4 @@
+#include "char/CharCollide.h"
 #include "char/Character.h"
 #include "math/Color.h"
 #include "math/Geo.h"
@@ -27,6 +28,7 @@
 #include "world/ColorPalette.h"
 #include "world/Crowd.h"
 #include "world/Crowd3DCharHandle.h"
+#include <float.h>
 
 static RndTex *gImpostorTex[kNumLods] = { nullptr };
 static RndCam *gImpostorCamera = nullptr;
@@ -108,9 +110,9 @@ BinStreamRev &operator>>(BinStreamRev &d, WorldCrowd::CharData &cd) {
 
 WorldCrowd::WorldCrowd()
     : mPlacementMesh(this), mCharacters(this), mNum(0), mRotate(), mForce3DCrowd(0),
-      mShow3DOnly(0), mCharFullness(1), mFlatFullness(1), mLod(0), mEnviron(this),
-      mEnviron3D(this), mFocus(this), mCharForceLod(kLODPerFrame), unkd0(1),
-      mModifyStamp(0) {
+      m3DOnly(0), mCharFullness(1), mFlatFullness(1), mLod(0), mImposterEnviron(this),
+      m3DCrowdEnviron(this), mFocus(this), mCharForceLod(kLODPerFrame),
+      mRandomColorSeed(1), mModifyStamp(0) {
     if (gNumCrowd++ == 0) {
         int w, h, bpp;
         if (GetGfxMode() == kNewGfx) {
@@ -186,9 +188,9 @@ BEGIN_PROPSYNCS(WorldCrowd)
     SYNC_PROP(num, mNum)
     SYNC_PROP(placement_mesh, mPlacementMesh)
     SYNC_PROP(characters, mCharacters)
-    SYNC_PROP(show_3d_only, mShow3DOnly)
-    SYNC_PROP(environ, mEnviron)
-    SYNC_PROP(environ_3d, mEnviron3D)
+    SYNC_PROP(show_3d_only, m3DOnly)
+    SYNC_PROP(environ, mImposterEnviron)
+    SYNC_PROP(environ_3d, m3DCrowdEnviron)
     SYNC_PROP_SET(lod, mLod, SetLod(_val.Int()))
     SYNC_PROP_SET(force_3D_crowd, mForce3DCrowd, Force3DCrowd(_val.Int()))
     SYNC_PROP(focus, mFocus)
@@ -204,8 +206,8 @@ BEGIN_SAVES(WorldCrowd)
     SAVE_SUPERCLASS(RndDrawable)
     bool force = mForce3DCrowd;
     Force3DCrowd(false);
-    bs << mPlacementMesh << mNum << mCharacters << mEnviron;
-    bs << mEnviron3D;
+    bs << mPlacementMesh << mNum << mCharacters << mImposterEnviron;
+    bs << m3DCrowdEnviron;
     FOREACH (it, mCharacters) {
         std::list<Transform> transforms;
         RndMultiMesh *mesh = it->mMMesh;
@@ -218,10 +220,10 @@ BEGIN_SAVES(WorldCrowd)
     }
     bs << mModifyStamp;
     bs << force;
-    bs << mShow3DOnly;
+    bs << m3DOnly;
     bs << mFocus;
     bs << mCharForceLod;
-    bs << unkd0;
+    bs << mRandomColorSeed;
     Force3DCrowd(force);
     SAVE_SUPERCLASS(RndPollable)
 END_SAVES
@@ -234,17 +236,17 @@ BEGIN_COPYS(WorldCrowd)
         Delete3DCrowdHandles();
         COPY_MEMBER(mPlacementMesh)
         COPY_MEMBER(mNum)
-        COPY_MEMBER(unk70)
+        COPY_MEMBER(mCenter)
         COPY_MEMBER(mCharFullness)
         COPY_MEMBER(mFlatFullness)
         COPY_MEMBER(mLod)
-        COPY_MEMBER(mEnviron)
-        COPY_MEMBER(mEnviron3D)
+        COPY_MEMBER(mImposterEnviron)
+        COPY_MEMBER(m3DCrowdEnviron)
         COPY_MEMBER(mForce3DCrowd)
-        COPY_MEMBER(mShow3DOnly)
+        COPY_MEMBER(m3DOnly)
         COPY_MEMBER(mFocus)
         COPY_MEMBER(mCharForceLod)
-        COPY_MEMBER(unkd0)
+        COPY_MEMBER(mRandomColorSeed)
 
         mCharacters.clear();
         mCharacters.resize(c->mCharacters.size());
@@ -287,12 +289,12 @@ BEGIN_LOADS(WorldCrowd)
     }
     d >> mCharacters;
     if (d.rev > 6) {
-        d >> mEnviron;
+        d >> mImposterEnviron;
     }
     if (d.rev > 9) {
-        d >> mEnviron3D;
+        d >> m3DCrowdEnviron;
     } else {
-        mEnviron3D = mEnviron;
+        m3DCrowdEnviron = mImposterEnviron;
     }
     if (d.rev > 1) {
         CreateMeshes();
@@ -355,7 +357,7 @@ BEGIN_LOADS(WorldCrowd)
         Force3DCrowd(force);
     }
     if (d.rev > 5) {
-        d >> mShow3DOnly;
+        d >> m3DOnly;
     }
     if (d.rev > 0xB) {
         d >> mFocus;
@@ -364,7 +366,7 @@ BEGIN_LOADS(WorldCrowd)
         d >> (int &)mCharForceLod;
     }
     if (d.rev > 0xF) {
-        d >> unkd0;
+        d >> mRandomColorSeed;
     }
     if (d.rev > 0) {
         LOAD_SUPERCLASS(RndPollable);
@@ -661,7 +663,7 @@ void WorldCrowd::Reset3DCrowd() {
 
 void WorldCrowd::Draw3DChars() {
     if (Crowd3DExists()) {
-        RndEnviron *env = mEnviron3D ? mEnviron3D : mEnviron;
+        RndEnviron *env = m3DCrowdEnviron ? m3DCrowdEnviron : mImposterEnviron;
         bool global = true;
         if (env) {
             global = env->UsesApproxGlobal();
@@ -817,7 +819,7 @@ void WorldCrowd::SetFullness(float f1, float f2) {
 
 void WorldCrowd::AssignRandomColors(bool b1) {
     if (b1) {
-        unkd0++;
+        mRandomColorSeed++;
     }
     FOREACH (it, mCharacters) {
         if (it->mDef.mChar && it->mMMesh && !it->m3DChars.empty()) {
@@ -834,7 +836,7 @@ void WorldCrowd::AssignRandomColors(bool b1) {
                 for (int i = 0; i != it->m3DChars.size(); i++) {
                     CharData::Char3D &curChar3D = it->m3DChars[i];
                     curChar3D.mRandColors.clear();
-                    Rand rand(curChar3D.mIndex + unkd0);
+                    Rand rand(curChar3D.mIndex + mRandomColorSeed);
                     it->mDef.mUseRandomColor = true;
                     for (int j = 0; j < 3; j++) {
                         ColorPalette *curPalette = colorPalettes[j];
