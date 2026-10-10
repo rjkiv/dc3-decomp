@@ -34,11 +34,11 @@ protected:
 
     void DoFSM(Character *, Transform &);
 
-    ObjPtr<RndTransformable> unkb0; // 0xb0
-    int unkc4; // 0xc4
+    ObjPtr<RndTransformable> mDummy; // 0xb0
+    int mState; // 0xc4, PDB says CharIKFoot::State 
     ObjPtr<RndTransformable> mData; // 0xc8
     int mDataIndex; // 0xdc
-    Vector3 unke0; // 0xe0
-    float unkf0; // 0xf0
-    Transform unkf4; // 0xf4
+    Vector3 mFreezePos; // 0xe0
+    float mLastDist; // 0xf0
+    Transform mLastTrans; // 0xf4
 };

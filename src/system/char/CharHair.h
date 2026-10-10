@@ -34,7 +34,7 @@ public:
         float outerRadius; // 0x70
         /** "if >= 0 the base length to the side modified by min_slack and max_slack" */
         float sideLength; // 0x74
-        Vector3 unk78; // 0x78
+        Vector3 pose; // 0x78
     };
 
     class Strand {

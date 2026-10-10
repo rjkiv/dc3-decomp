@@ -13,11 +13,11 @@ public:
         Point(Hmx::Object *);
         Point(CharIKHead::Point const &);
 
-        ObjPtr<RndTransformable> unk0;
-        Vector3 unk14;
-        float unk24;
-        float unk28;
-        Vector3 unk2c;
+        ObjPtr<RndTransformable> trans; // 0x0
+        Vector3 pos; // 0x14
+        float dist; // 0x24
+        float weight; // 0x28
+        Vector3 debugPos; // 0x2C
     };
     // Hmx::Object
     virtual ~CharIKHead();

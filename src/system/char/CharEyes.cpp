@@ -286,7 +286,7 @@ void CharEyes::Highlight() {
                 const Transform &tf2 = trans->WorldXfm();
                 Vector3 v100;
                 ScaleAdd(tf2.v, tf1.m.y, 3, v100);
-                if (it->mEye->Unke1())
+                if (it->mEye->Clamped())
                     oneframe->AddLine(
                         trans->WorldXfm().v, v100, Hmx::Color(1.0f, 0.0f, 0.0f), true
                     );
@@ -536,7 +536,7 @@ next:
 
 bool CharEyes::EitherEyeClamped() {
     FOREACH (it, mEyes) {
-        if (it->mEye && it->mEye->Unke1()) {
+        if (it->mEye && it->mEye->Clamped()) {
             return true;
         }
     }
