@@ -68,28 +68,28 @@ private:
     float mHF_h02TT; // 0x4C
     float mHF_a; // 0x50
     bool mComputeMF; // 0x54
-
-    float unk58;
-    float unk5c;
-    float unk60;
-    float unk64;
-    float unk68;
-    float unk6c;
-    float unk70;
-    bool unk74;
-    float unk78;
-    float unk7c;
-    float unk80;
-    float unk84;
-    float unk88;
-    float unk8c;
-    bool unk90;
-    float unk94;
-    float unk98;
-    float unk9c;
-    float unka0;
-    float unka4;
-    bool unka8;
+    float mMF_a; // 0x58
+    float mMF_k; // 0x5C
+    float mMF_v0; // 0x60
+    float mMF_v0TT; // 0x64
+    float mMF_h02; // 0x68
+    float mMF_h02TT; // 0x6C
+    float mMF_d; // 0x70
+    bool mComputeLF; // 0x74
+    float mLF_k; // 0x78
+    float mLF_v0; // 0x7C
+    float mLF_v0TT; // 0x80
+    float mLF_h02; // 0x84
+    float mLF_h02TT; // 0x88
+    float mLF_a; // 0x8C
+    bool mComputeLPF; // 0x90
+    float mLPF_A0; // 0x94
+    float mLPF_A1; // 0x98
+    float mLPF_A2; // 0x9C
+    float mLPF_B1; // 0xA0
+    float mLPF_B2; // 0xA4
+    bool mComputeHPF; // 0xA8
+    
     float unkac;
     float unkb0;
     float unkb4;

@@ -155,23 +155,23 @@ void EQEffect::SetParameter(int idx, float val) {
         float f = mHighFreqGain > 0.0f ? mHF_k : mHF_k * mHF_v0;
         mHF_a = (f - 1.0f) / (f + 1.0f);
     } else if (dirty30) { // recalculate mid band
-        unk5c = tan(6.544985e-5f * mMidFreqBandwidth);
-        unk60 = pow(10, mMidFreqGain / 20);
-        unk68 = (unk60 - 1.0f) / 2;
-        unk70 = -cosf(mMidFreqCutoff * 0.0001308997f);
-        mComputeMF = unk6c != 0.0f || unk68 != 0.0f;
-        unk58 = mMidFreqGain > 0.0f ? (unk5c - 1.0f) / (unk5c + 1.0f)
-                             : (unk5c - unk60) / (unk5c + unk60);
-        unk70 *= 1.0f - unk58;
+        mMF_k = tan(6.544985e-5f * mMidFreqBandwidth);
+        mMF_v0 = pow(10, mMidFreqGain / 20);
+        mMF_h02 = (mMF_v0 - 1.0f) / 2;
+        mMF_d = -cosf(mMidFreqCutoff * 0.0001308997f);
+        mComputeMF = mMF_h02TT != 0.0f || mMF_h02 != 0.0f;
+        mMF_a = mMidFreqGain > 0.0f ? (mMF_k - 1.0f) / (mMF_k + 1.0f)
+                             : (mMF_k - mMF_v0) / (mMF_k + mMF_v0);
+        mMF_d *= 1.0f - mMF_a;
     } else if (dirty28) { // recalculate low band
-        unk78 = tan(6.544985e-5f * mLowFreqCutoff);
-        unk7c = pow(10, mLowFreqGain / 20);
-        unk84 = (unk88 - 1.0f) / 2;
-        unk74 = unk88 != 0.0f || unk84 != 0.0f;
-        unk8c = mLowFreqGain > 0.0f ? (unk78 - 1.0f) / (unk78 + 1.0f)
-                             : (unk78 - unk7c) / (unk78 + unk7c);
+        mLF_k = tan(6.544985e-5f * mLowFreqCutoff);
+        mLF_v0 = pow(10, mLowFreqGain / 20);
+        mLF_h02 = (mLF_h02TT - 1.0f) / 2;
+        mComputeLF = mLF_h02TT != 0.0f || mLF_h02 != 0.0f;
+        mLF_a = mLowFreqGain > 0.0f ? (mLF_k - 1.0f) / (mLF_k + 1.0f)
+                             : (mLF_k - mLF_v0) / (mLF_k + mLF_v0);
     } else if (dirty27) { // recalculate low pass
-        unk90 = mLPFCutoff < 19999;
+        mComputeLPF = mLPFCutoff < 19999;
         float f = mLPFCutoff / 24000;
         float f2 = pow(10, -mLPFReso / 20);
         f *= float(PI);
@@ -184,15 +184,15 @@ void EQEffect::SetParameter(int idx, float val) {
         float f30 = f13 / f3;
         float f31 = f30 + 0.5f;
         float f10 = cos(f);
-        unka4 = f30 * 2;
+        mLPF_B2 = f30 * 2;
         f10 *= f31;
         f31 -= f10;
-        unka0 = f30 * -2;
-        unk94 = f31 / 4;
-        unk98 = unka0 * 4;
-        unk9c = unk94;
+        mLPF_B1 = f30 * -2;
+        mLPF_A0 = f31 / 4;
+        mLPF_A1 = mLPF_B1 * 4;
+        mLPF_A2 = mLPF_A0;
     } else if (dirty26) { // recalculate high pass
-        unka8 = mLPFCutoff > 21;
+        mComputeHPF = mLPFCutoff > 21;
         float f = mLPFCutoff / 24000;
         float f2 = pow(10, -mHPFReso / 20);
         f *= float(PI);
@@ -208,10 +208,10 @@ void EQEffect::SetParameter(int idx, float val) {
         unkbc = f30 * 2;
         f10 *= f9;
         f9 = f10 + f30;
-        unka0 = f30 * -2;
-        // unk94 = f31 / 4;
-        unk98 = unka0 * 4;
-        unk9c = unk94;
+        mLPF_B1 = f30 * -2;
+        // mLPF_A0 = f31 / 4;
+        mLPF_A1 = mLPF_B1 * 4;
+        mLPF_A2 = mLPF_A0;
     }
     if (dirty25 && mLRMode != 0.0f) {
         FILTER f;
@@ -243,11 +243,11 @@ void EQEffect::SetParameter(int idx, float val) {
 EQEffect::EQEffect(IXAudioBatchAllocator *) {
     mComputeHF = false;
     mComputeMF = false;
-    unk74 = false;
+    mComputeLF = false;
     mHighFreqCutoff = 12000.0f;
-    unk90 = false;
+    mComputeLPF = false;
     mHighFreqGain = 0;
-    unka8 = false;
+    mComputeHPF = false;
     mMidFreqCutoff = 8000.0f;
     mMidFreqBandwidth = 1000.0f;
     mMidFreqGain = 0;
@@ -265,24 +265,24 @@ EQEffect::EQEffect(IXAudioBatchAllocator *) {
     mHF_h02 = 0;
     mHF_h02TT = 0;
     mHF_a = 0;
-    unk58 = 0;
-    unk5c = 0;
-    unk60 = 0;
-    unk64 = 0;
-    unk68 = 0;
-    unk6c = 0;
-    unk70 = 0;
-    unk78 = 0;
-    unk7c = 0;
-    unk80 = 0;
-    unk84 = 0;
-    unk88 = 0;
-    unk8c = 0;
-    unk94 = 0;
-    unk98 = 0;
-    unk9c = 0;
-    unka0 = 0;
-    unka4 = 0;
+    mMF_a = 0;
+    mMF_k = 0;
+    mMF_v0 = 0;
+    mMF_v0TT = 0;
+    mMF_h02 = 0;
+    mMF_h02TT = 0;
+    mMF_d = 0;
+    mLF_k = 0;
+    mLF_v0 = 0;
+    mLF_v0TT = 0;
+    mLF_h02 = 0;
+    mLF_h02TT = 0;
+    mLF_a = 0;
+    mLPF_A0 = 0;
+    mLPF_A1 = 0;
+    mLPF_A2 = 0;
+    mLPF_B1 = 0;
+    mLPF_B2 = 0;
     unkac = 0;
     unkb0 = 0;
     unkb4 = 0;
@@ -312,11 +312,11 @@ void EQEffect::Reset() {
     for (int i = 0; i < 2; i++) {
     }
     mHF_v0TT = mHF_v0;
-    unk64 = unk60;
-    unk80 = unk7c;
+    mMF_v0TT = mMF_v0;
+    mLF_v0TT = mLF_v0;
     mHF_h02TT = mHF_h02;
-    unk6c = unk68;
-    unk88 = unk84;
+    mMF_h02TT = mMF_h02;
+    mLF_h02TT = mLF_h02;
     if (mTransitionTime != 0.0f) {
         mTTk = powf(0.368, 1.0f / (mTransitionTime * 48.0f));
     } else {
