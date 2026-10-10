@@ -54,7 +54,7 @@ typedef struct FILTER {
     float gain; // 0x1000
     float gainSq; // 0x1004
     float invGainSq; // 0x1008
-    __int32 numpoles; // 0x100C
-    __int32 numzeros; // 0x1010
+    int numpoles; // 0x100C
+    int numzeros; // 0x1010
 } FILTER;
 void createFilter(FilterType, FilterBand, uint, float, float, FILTER *, int);
