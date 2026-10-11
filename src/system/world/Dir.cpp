@@ -180,8 +180,8 @@ WorldDir::WorldDir()
     : mPresetOverrides(this), mBitmapOverrides(this), mMatOverrides(this),
       mHideOverrides(this), mCamShotOverrides(this), mPS3PerPixelShows(this),
       mPS3PerPixelHides(this), mHUDDir(0), mShowHUD(0), mHUD(this), mCameraMgr(this),
-      unk314(0), m3DSoundMgr(this), mLightPresetMgr(this), mPhysicsMgr(0), unk3e0(0),
-      mEchoMsgs(0), unk3f4(0), mTestLightPreset1(this), mTestLightPreset2(this),
+      mMyCameraManager(0), m3DSoundMgr(this), mLightPresetMgr(this), mPhysicsMgr(0), mPhysicsManagerNeedsToEnter(0),
+      mEchoMsgs(0), mFirstPoll(0), mTestLightPreset1(this), mTestLightPreset2(this),
       mTestAnimTime(10), mExplicitPostProc(1) {
     ClearDeltas();
 }
@@ -193,7 +193,7 @@ WorldDir::~WorldDir() {
         SetTheWorld(nullptr);
     }
     RELEASE(mPhysicsMgr);
-    if (unk314) {
+    if (mMyCameraManager) {
         RELEASE(mCameraMgr);
     }
 }
@@ -424,7 +424,7 @@ void WorldDir::PostLoad(BinStream &bs) {
 
 void WorldDir::SyncObjects() {
     PanelDir::SyncObjects();
-    if (!unk314) {
+    if (!mMyCameraManager) {
         mCameraMgr = nullptr;
     }
     if (IsSubDir())
@@ -438,7 +438,7 @@ void WorldDir::SyncObjects() {
         }
     }
     if (!mCameraMgr) {
-        unk314 = true;
+        mMyCameraManager = true;
         mCameraMgr = new CameraManager(this);
     }
     if (mCameraMgr) {
@@ -450,7 +450,7 @@ void WorldDir::SyncObjects() {
         mPhysicsMgr->SyncObjects(false);
     } else if (CreatePhysicsManager) {
         mPhysicsMgr = CreatePhysicsManager(this);
-        if (unk3e0) {
+        if (mPhysicsManagerNeedsToEnter) {
             mPhysicsMgr->Enter();
         }
         mPhysicsMgr->SyncObjects(false);
@@ -544,8 +544,8 @@ void WorldDir::Poll() {
         SetTheWorld(this);
         float deltas[4];
         AccumulateDeltas(deltas);
-        bool b = (unk3f4 || (TheRnd.ProcCmds() != kProcessWorld));
-        unk3f4 = false;
+        bool b = (mFirstPoll || (TheRnd.ProcCmds() != kProcessWorld));
+        mFirstPoll = false;
         if (b) {
             for (int i = 0; i < 4; i++) {
                 TheTaskMgr.SetDeltaTime((TaskUnits)i, mDeltaSincePoll[i]);
@@ -587,11 +587,11 @@ void WorldDir::Enter() {
     if (mPhysicsMgr) {
         mPhysicsMgr->Enter();
     } else {
-        unk3e0 = true;
+        mPhysicsManagerNeedsToEnter = true;
     }
     PanelDir::Enter();
     ClearDeltas();
-    unk3f4 = true;
+    mFirstPoll = true;
     TheRnd.SetProcAndLock(false);
     TheRnd.ResetProcCounter();
     if (TheWorld == this) {

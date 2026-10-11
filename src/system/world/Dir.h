@@ -120,14 +120,14 @@ protected:
     /** "hud to be drawn last" */
     ObjPtr<RndDir> mHUD; // 0x2ec
     ObjPtr<CameraManager> mCameraMgr; // 0x300
-    bool unk314; // 0x314
+    bool mMyCameraManager; // 0x314
     ThreeDSoundManager m3DSoundMgr; // 0x318
     LightPresetManager mLightPresetMgr; // 0x38c
     PhysicsManager *mPhysicsMgr; // 0x3dc
-    bool unk3e0;
+    bool mPhysicsManagerNeedsToEnter; // 0x3E0
     bool mEchoMsgs; // 0x3e1
     float mDeltaSincePoll[4]; // 0x3e4
-    bool unk3f4;
+    bool mFirstPoll; // 0x3F4
     /** "The first light preset to start" */
     ObjPtr<LightPreset> mTestLightPreset1; // 0x3f8
     /** "The second light preset to start" */
