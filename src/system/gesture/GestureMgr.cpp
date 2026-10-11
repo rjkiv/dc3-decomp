@@ -1,6 +1,7 @@
 #include "gesture/GestureMgr.h"
 #include "GestureMgr.h"
 #include "SkeletonViz.h"
+#include "gesture/BaseSkeleton.h"
 #include "gesture/CameraTilt.h"
 #include "gesture/DrawUtl.h"
 #include "IdentityInfo.h"
@@ -11,13 +12,18 @@
 #include "gesture/SpeechMgr.h"
 #include "gesture/WaveToTurnOnLight.h"
 #include "hamobj/Ham.h"
+#include "hamobj/HamGameData.h"
+#include "math/Trig.h"
 #include "obj/Dir.h"
 #include "obj/DirLoader.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/PlatformMgr.h"
 #include "os/System.h"
+#include "rndobj/Anim.h"
 #include "rndobj/Dir.h"
+#include "rndobj/Rnd.h"
+#include "ui/UILabel.h"
 #include "utl/Loader.h"
 #include "xdk/NUI.h"
 
@@ -382,6 +388,93 @@ int GestureMgr::GetSecondarySkeletonIndex(bool b) const {
         }
     }
     return -1;
+}
+
+void GestureMgr::DrawSkeletonKinectData() {
+    Vector2 v2(0.15f, 0.2);
+    for (int i = 0; i < NUM_SKELETONS; i++) {
+        Skeleton &skeleton = GetSkeleton(i);
+        SkeletonTracking tracking = skeleton.TrackingState();
+        if (!mSkeletonDebugDisplay) {
+            const char *state;
+            if (tracking == kSkeletonTracked) {
+                state = "tracked";
+            } else if (tracking == kSkeletonPositionOnly) {
+                state = "position only";
+            } else {
+                state = "not tracked";
+            }
+            int trackingID = skeleton.TrackingID();
+            const char *c138 = i == GetActiveSkeletonIndex() ? "(active)" : "";
+            v2.y = TheRnd
+                       .DrawString(
+                           MakeString("%i: %s %s %d", i, state, c138, trackingID),
+                           v2,
+                           Hmx::Color(1, 1, 1),
+                           true
+                       )
+                       .y;
+        } else {
+            RndDir *marker =
+                mSkeletonDebugDisplay->Find<RndDir>(MakeString("marker%d", i), false);
+            if (marker) {
+                marker->SetShowing(tracking != kSkeletonNotTracked);
+                if (tracking != kSkeletonNotTracked) {
+                    marker->SetLocalPos(
+                        Vector3(skeleton.Center().x, -skeleton.Center().z, 0)
+                    );
+                    UILabel *lbl = marker->Find<UILabel>("id.lbl", false);
+                    if (lbl) {
+                        lbl->SetInt(skeleton.TrackingID(), false);
+                    }
+                    lbl = marker->Find<UILabel>("index.lbl", false);
+                    if (lbl) {
+                        lbl->SetInt(i, false);
+                    }
+                    RndAnimatable *anim =
+                        marker->Find<RndAnimatable>("active.anim", false);
+                    if (anim) {
+                        anim->SetFrame(i == GetActiveSkeletonIndex() ? 1.0f : 0.0f, 1);
+                    }
+                    RndAnimatable *tracked =
+                        marker->Find<RndAnimatable>("tracked.anim", false);
+                    if (tracked) {
+                        tracked->SetFrame((float)(tracking == kSkeletonTracked), 1);
+                    }
+                    RndAnimatable *color =
+                        marker->Find<RndAnimatable>("player_color.anim", false);
+                    if (color) {
+                        int idx = -1;
+                        for (int i = 0; i < MAX_NUM_PLAYERS; i++) {
+                            if (skeleton.TrackingID()
+                                == TheGameData->Player(i)->GetSkeletonTrackingID()) {
+                                idx = i;
+                            }
+                        }
+                        color->SetFrame(idx, 1);
+                    }
+                    float f12 = 0;
+                    if (tracking == kSkeletonTracked) {
+                        Vector3 left;
+                        skeleton.JointPos(kCoordCamera, kJointShoulderLeft, left);
+                        Vector3 right;
+                        skeleton.JointPos(kCoordCamera, kJointShoulderRight, right);
+                        Subtract(right, left, right);
+                        f12 = atanf(right.z / right.x);
+                        f12 *= RAD2DEG;
+                    }
+                    RndAnimatable *rot =
+                        marker->Find<RndAnimatable>("rotation.anim", false);
+                    if (rot) {
+                        rot->SetFrame(f12, 1);
+                    }
+                }
+            }
+        }
+    }
+    if (mSkeletonDebugDisplay) {
+        mSkeletonDebugDisplay->DrawShowing();
+    }
 }
 
 DataNode GestureMgr::OnMsg(const KinectHardwareStatusMsg &msg) {
