@@ -9,15 +9,15 @@
 #include "utl/SongPos.h"
 
 BeatClock::BeatClock()
-    : mMeasureMap(new MeasureMap()), mSound(this), mBeatsPerMinute(100),
-      mBeatsPerMeasure(4), mMeasuresPerPhrase(0), mUseGlobal(0), mTotalSeconds(0),
-      unk50(0), unk54(0), mTimeline(kTaskSeconds) {}
+    : mMeasureMap(new MeasureMap()), mSound(this), mBpm(100),
+      mBeatsPerMeasure(4), mMeasuresPerPhrase(0), mUseGlobal(0), mElapsedTime(0),
+      mLastTime(0), mIsRunning(0), mTimeUnits(kTaskSeconds) {}
 
 BeatClock::~BeatClock() { RELEASE(mMeasureMap); }
 
 BEGIN_HANDLERS(BeatClock)
-    HANDLE_ACTION(start, unk54 = true)
-    HANDLE_ACTION(pause, unk54 = false)
+    HANDLE_ACTION(start, mIsRunning = true)
+    HANDLE_ACTION(pause, mIsRunning = false)
     HANDLE_ACTION(reset, Reset())
     HANDLE(sync, OnSyncState)
     HANDLE_SUPERCLASS(RndPollable)
@@ -25,7 +25,7 @@ BEGIN_HANDLERS(BeatClock)
 END_HANDLERS
 
 BEGIN_PROPSYNCS(BeatClock)
-    SYNC_PROP(bpm, mBeatsPerMinute)
+    SYNC_PROP(bpm, mBpm)
     SYNC_PROP_SET(beats_per_measure, mBeatsPerMeasure, SetBeatsPerMeasure(_val.Int()))
     SYNC_PROP(measures_per_phrase, mMeasuresPerPhrase)
     SYNC_PROP_MODIFY(use_global, mUseGlobal, mSound = nullptr)
@@ -35,34 +35,34 @@ BEGIN_PROPSYNCS(BeatClock)
     SYNC_PROP(tick, mSongPos.AccessTick())
     SYNC_PROP(sub_division, mSubDivision)
     SYNC_PROP(total_beat, mSongPos.AccessTotalBeat())
-    SYNC_PROP(seconds, mTotalSeconds)
+    SYNC_PROP(seconds, mElapsedTime)
     SYNC_PROP_MODIFY(sound, mSound, mUseGlobal = false)
-    SYNC_PROP(timeline, (int &)mTimeline)
+    SYNC_PROP(timeline, (int &)mTimeUnits)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
 BEGIN_SAVES(BeatClock)
     SAVE_REVS(3, 0)
     SAVE_SUPERCLASS(Hmx::Object)
-    bs << mBeatsPerMinute;
+    bs << mBpm;
     bs << mBeatsPerMeasure;
     bs << mUseGlobal;
     bs << mMeasuresPerPhrase;
     bs << mSound;
-    bs << mTimeline;
+    bs << mTimeUnits;
 END_SAVES
 
 BEGIN_COPYS(BeatClock)
     COPY_SUPERCLASS(Hmx::Object)
     CREATE_COPY(BeatClock)
     BEGIN_COPYING_MEMBERS
-        COPY_MEMBER(mBeatsPerMinute)
+        COPY_MEMBER(mBpm)
         COPY_MEMBER(mBeatsPerMeasure)
         COPY_MEMBER(mMeasuresPerPhrase)
         COPY_MEMBER(mUseGlobal)
-        COPY_MEMBER(mTotalSeconds)
+        COPY_MEMBER(mElapsedTime)
         COPY_MEMBER(mSound)
-        COPY_MEMBER(mTimeline)
+        COPY_MEMBER(mTimeUnits)
     END_COPYING_MEMBERS
 END_COPYS
 
@@ -72,7 +72,7 @@ BEGIN_LOADS(BeatClock)
     LOAD_REVS(bs)
     ASSERT_REVS(3, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    d >> mBeatsPerMinute;
+    d >> mBpm;
     d >> mBeatsPerMeasure;
     d >> mUseGlobal;
     if (d.rev >= 1) {
@@ -82,7 +82,7 @@ BEGIN_LOADS(BeatClock)
         d >> mSound;
     }
     if (d.rev >= 3) {
-        d >> (int &)mTimeline;
+        d >> (int &)mTimeUnits;
     }
     SetBeatsPerMeasure(mBeatsPerMeasure);
 END_LOADS
@@ -117,23 +117,23 @@ void BeatClock::UpdateSongPos() {
     float secs = 0;
     if (mUseGlobal) {
         pos = TheTaskMgr.GetSongPos();
-        secs = TheTaskMgr.Time(mTimeline);
+        secs = TheTaskMgr.Time(mTimeUnits);
     } else {
         if (mSound) {
             secs = mSound->ElapsedTime();
         } else {
-            float time = TheTaskMgr.Time(mTimeline);
-            float old50 = unk50;
-            unk50 = time;
+            float time = TheTaskMgr.Time(mTimeUnits);
+            float old50 = mLastTime;
+            mLastTime = time;
             if (time - old50 == 0) {
                 return;
             }
-            if (unk54 == 0) {
+            if (mIsRunning == 0) {
                 return;
             }
-            secs = mTotalSeconds + (time - old50);
+            secs = mElapsedTime + (time - old50);
         }
-        pos.AccessTotalBeat() = mBeatsPerMinute * secs * 0.016666668f;
+        pos.AccessTotalBeat() = mBpm * secs * 0.016666668f;
         pos.AccessTotalTick() = pos.GetTotalBeat() * 480.0f;
         mMeasureMap->TickToMeasureBeatTick(
             pos.AccessTotalTick(), pos.AccessMeasure(), pos.AccessBeat(), pos.AccessTick()
@@ -189,7 +189,7 @@ DataNode BeatClock::OnSyncState(DataArray *a) {
             mSongPos.AccessTotalBeat() += f5;
             mSongPos.AccessTotalTick() = mSongPos.AccessTotalBeat() * 480.0f;
             BroadcastPropertyChange("total_beat");
-            mTotalSeconds += (60.0f / mBeatsPerMinute) * f5;
+            mElapsedTime += (60.0f / mBpm) * f5;
             BroadcastPropertyChange("seconds");
         }
     }

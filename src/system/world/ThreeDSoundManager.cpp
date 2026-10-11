@@ -11,7 +11,7 @@
 #include <float.h>
 
 ThreeDSoundManager::ThreeDSoundManager(WorldDir *dir)
-    : mParent(dir), mSounds(dir), mListener(dir), unk6c(0), mDopplerPower(1) {}
+    : mParent(dir), mSounds(dir), mListener(dir), mIgnoreDopplerThisFrame(0), mDopplerShiftPower(1) {}
 
 ThreeDSoundManager::~ThreeDSoundManager() {}
 
@@ -71,7 +71,7 @@ float ThreeDSoundManager::CalculateDoppler(
     ThreeDSound *sound, const Transform &xfm, float f3, float f4, float f5
 ) {
     Vector3 sub;
-    Subtract(xfm.v, unk18.v, sub);
+    Subtract(xfm.v, mPrevListenerTrans.v, sub);
     Vector3 velocity;
     sound->GetVelocity(velocity);
     Vector3 subSound;
@@ -86,7 +86,7 @@ float ThreeDSoundManager::CalculateDoppler(
     float numerator = -(dotSub * f7);
     numerator += sDopplerFloats[0];
     float mantissa = numerator / (dotVel * f7 + sDopplerFloats[0]);
-    float powed = pow(mantissa, mDopplerPower);
+    float powed = pow(mantissa, mDopplerShiftPower);
     return Clamp(sDopplerFloats[2], sDopplerFloats[1], powed);
 }
 
@@ -102,7 +102,7 @@ void ThreeDSoundManager::Poll() {
     }
     if (trans) {
         const Transform &worldXfm = trans->WorldXfm();
-        bool xfmEq = worldXfm != unk18;
+        bool xfmEq = worldXfm != mPrevListenerTrans;
         float deltaSecs = TheTaskMgr.DeltaSeconds();
         float invDeltaSecs = deltaSecs ? 1 / deltaSecs : 0;
         int numSounds = 0;
@@ -129,7 +129,7 @@ void ThreeDSoundManager::Poll() {
                     float angle = CalculateAngle(*it, worldXfm);
                     (*it)->SetAngle(angle);
                 }
-                if ((*it)->DopplerEnabled() && !unk6c) {
+                if ((*it)->DopplerEnabled() && !mIgnoreDopplerThisFrame) {
                     float doppler =
                         CalculateDoppler(*it, worldXfm, deltaSecs, invDeltaSecs, f1);
                     (*it)->SetDoppler(doppler);
@@ -137,7 +137,7 @@ void ThreeDSoundManager::Poll() {
             }
             (*it)->SaveWorldXfm();
         }
-        unk6c = false;
-        unk18 = worldXfm;
+        mIgnoreDopplerThisFrame = false;
+        mPrevListenerTrans = worldXfm;
     }
 }

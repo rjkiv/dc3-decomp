@@ -161,7 +161,7 @@ void HamCamTransform::Setup(bool b) {
                     bool check = false;
                     FOREACH (it2, area.mCrowds) {
                         CamShotCrowd crowd(camShot);
-                        crowd.unk24 = camShot;
+                        crowd.mCamShot = camShot;
                         crowd.mCrowd = (*it2).mCrowd;
                         crowd.mCrowdRotate = (*it2).mCrowdRotate;
                         camShot->AddCrowd(crowd);

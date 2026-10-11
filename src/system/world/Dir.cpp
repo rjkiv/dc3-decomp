@@ -236,7 +236,7 @@ BEGIN_PROPSYNCS(WorldDir)
     SYNC_PROP(test_animation_time, mTestAnimTime)
     SYNC_PROP_MODIFY(hud, mHUD, SyncObjects())
     SYNC_PROP_SET(
-        doppler_power, m3DSoundMgr.mDopplerPower, m3DSoundMgr.mDopplerPower = _val.Float()
+        doppler_power, m3DSoundMgr.mDopplerShiftPower, m3DSoundMgr.mDopplerShiftPower = _val.Float()
     )
     SYNC_PROP_SET(
         listener,
@@ -255,7 +255,7 @@ BEGIN_SAVES(WorldDir)
     bs << mCamShotOverrides << mPS3PerPixelHides << mPS3PerPixelShows;
     bs << mTestLightPreset1 << mTestLightPreset2 << mTestAnimTime;
     bs << mHUD;
-    bs << m3DSoundMgr.mDopplerPower;
+    bs << m3DSoundMgr.mDopplerShiftPower;
     ObjPtr<RndTransformable> listener(this, m3DSoundMgr.mListener);
     bs << listener;
     bs << mExplicitPostProc;
@@ -287,7 +287,7 @@ BEGIN_COPYS(WorldDir)
         COPY_MEMBER(mTestLightPreset2)
         COPY_MEMBER(mTestAnimTime)
         COPY_MEMBER(mHUD)
-        COPY_MEMBER(m3DSoundMgr.mDopplerPower)
+        COPY_MEMBER(m3DSoundMgr.mDopplerShiftPower)
         m3DSoundMgr.SetListener(c->m3DSoundMgr.mListener);
         SyncHUD();
         COPY_MEMBER(mExplicitPostProc)
@@ -408,7 +408,7 @@ void WorldDir::PostLoad(BinStream &bs) {
     if (d.rev >= 0x1C) {
         float x;
         d >> x;
-        m3DSoundMgr.mDopplerPower = x;
+        m3DSoundMgr.mDopplerShiftPower = x;
     }
     if (d.rev >= 0x1D) {
         ObjPtr<RndTransformable> trans(this);

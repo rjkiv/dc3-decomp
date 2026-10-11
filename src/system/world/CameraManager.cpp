@@ -24,12 +24,12 @@ Rand CameraManager::sRand(0);
 int CameraManager::sSeed;
 
 CameraManager::CameraManager()
-    : mParent(nullptr), mNextShot(this), mBlendTime(0), unk58(true), mCurrentShot(this),
-      mCamStartTime(0), mFreeCam(nullptr), unk78(this) {}
+    : mParent(nullptr), mNextShot(this), mBlendTime(0), mNextShotChanged(true), mCurrentCam(this),
+      mCamStartTime(0), mFreeCam(nullptr), mCrowds(this) {}
 
 CameraManager::CameraManager(WorldDir *parent)
-    : mParent(parent), mNextShot(this), mBlendTime(0), unk58(true), mCurrentShot(this),
-      mCamStartTime(0), mFreeCam(nullptr), unk78(this) {
+    : mParent(parent), mNextShot(this), mBlendTime(0), mNextShotChanged(true), mCurrentCam(this),
+      mCamStartTime(0), mFreeCam(nullptr), mCrowds(this) {
     MILO_ASSERT(mParent, 0x34);
 }
 
@@ -37,7 +37,7 @@ CameraManager::~CameraManager() {
     StartShot_(nullptr);
     RELEASE(mFreeCam);
     FOREACH (it, mCameraShotCategories) {
-        delete it->unk4;
+        delete it->mShots;
     }
 }
 
@@ -91,20 +91,20 @@ BEGIN_LOADS(CameraManager)
 END_LOADS
 
 void CameraManager::Enter() {
-    unk58 = true;
+    mNextShotChanged = true;
     mBlendTime = 0.0f;
     StartShot_(0);
     DeleteFreeCam();
 }
 
 void CameraManager::ForceCamShot(CamShot *shot) {
-    unk58 = true;
+    mNextShotChanged = true;
     mNextShot = shot;
 }
 
 float CameraManager::CalcFrame() {
-    float ttime = TheTaskMgr.Time(mCurrentShot->Units()) - mCamStartTime;
-    ttime *= mCurrentShot->FramesPerUnit();
+    float ttime = TheTaskMgr.Time(mCurrentCam->Units()) - mCamStartTime;
+    ttime *= mCurrentCam->FramesPerUnit();
     return ttime;
 }
 
@@ -133,12 +133,12 @@ FreeCamera *CameraManager::GetFreeCam(int padnum) {
 void CameraManager::DeleteFreeCam() { RELEASE(mFreeCam); }
 
 void CameraManager::SetNextShot(CamShot *shot) {
-    unk58 = shot != mNextShot || unk58;
+    mNextShotChanged = shot != mNextShot || mNextShotChanged;
     mNextShot = shot;
 }
 
 void CameraManager::ForceCameraShot(CamShot *shot, bool b) {
-    unk58 = (shot != mNextShot || b) || unk58;
+    mNextShotChanged = (shot != mNextShot || b) || mNextShotChanged;
     mNextShot = shot;
 }
 
@@ -149,18 +149,18 @@ void CameraManager::FirstShotOk(Symbol s) {
 }
 
 void CameraManager::StartShot_(CamShot *shot) {
-    if (mCurrentShot)
-        mCurrentShot->EndAnim();
+    if (mCurrentCam)
+        mCurrentCam->EndAnim();
 
-    if (TheDOFProc && !shot && mCurrentShot) {
+    if (TheDOFProc && !shot && mCurrentCam) {
         TheDOFProc->UnSet();
     }
 
-    mCurrentShot = shot;
-    if (mCurrentShot) {
-        mCurrentShot->StartAnim();
+    mCurrentCam = shot;
+    if (mCurrentCam) {
+        mCurrentCam->StartAnim();
         mCamStartTime = TheTaskMgr.Time(shot->Units());
-        mBlendAmount = 0.0f;
+        mLastBlend = 0.0f;
     }
 }
 
@@ -193,12 +193,12 @@ void CameraManager::RandomizeCategory(ObjPtrList<CamShot> &camlist) {
 
 void CameraManager::PrePoll() {
     if (!MiloCamera()) {
-        if (unk58) {
+        if (mNextShotChanged) {
             StartShot_(mNextShot);
-            unk58 = false;
+            mNextShotChanged = false;
         }
-        if (mCurrentShot) {
-            mCurrentShot->SetPreFrame(CalcFrame(), 1.0f);
+        if (mCurrentCam) {
+            mCurrentCam->SetPreFrame(CalcFrame(), 1.0f);
         }
     }
 }
@@ -217,7 +217,7 @@ CamShot *CameraManager::ShotAfter(CamShot *cshot) {
 }
 
 DataNode CameraManager::OnCycleShot(DataArray *da) {
-    CamShot *after = ShotAfter(mCurrentShot);
+    CamShot *after = ShotAfter(mCurrentCam);
     if (after)
         ForceCameraShot(after, true);
     return 0;
@@ -262,7 +262,7 @@ Symbol CameraManager::MakeCategoryAndFilters(
 
 bool CameraManager::SetCrowds(ObjVector<CamShotCrowd> &crowds) {
     bool ret = false;
-    FOREACH (it, unk78) {
+    FOREACH (it, mCrowds) {
         WorldCrowd *curCrowd = *it;
         ObjVector<CamShotCrowd>::iterator target = crowds.end();
         FOREACH (cit, crowds) {
@@ -324,7 +324,7 @@ CameraManager::FindCameraShot(Symbol s, const std::vector<PropertyFilter> &filts
     FOREACH (it, camlist) {
         CamShot *cur = *it;
         if (!cur->Disabled() && ShotMatches(cur, filts)) {
-            if (cur->ShotOk(mCurrentShot)) {
+            if (cur->ShotOk(mCurrentCam)) {
                 camlist.splice(camlist.end(), camlist, it);
                 return cur;
             }
@@ -335,19 +335,19 @@ CameraManager::FindCameraShot(Symbol s, const std::vector<PropertyFilter> &filts
 
 ObjPtrList<CamShot> &CameraManager::FindOrAddCategory(Symbol cat) {
     Category targetCat;
-    targetCat.unk0 = cat;
+    targetCat.mCategory = cat;
     Category *lowerCat = std::lower_bound(
         mCameraShotCategories.begin(), mCameraShotCategories.end(), targetCat
     );
-    if (lowerCat == mCameraShotCategories.end() || lowerCat->unk0 != cat) {
-        targetCat.unk4 = new ObjPtrList<CamShot>(mParent);
+    if (lowerCat == mCameraShotCategories.end() || lowerCat->mCategory != cat) {
+        targetCat.mShots = new ObjPtrList<CamShot>(mParent);
         mCameraShotCategories.push_back(targetCat);
         std::sort(mCameraShotCategories.begin(), mCameraShotCategories.end());
         lowerCat = std::lower_bound(
             mCameraShotCategories.begin(), mCameraShotCategories.end(), targetCat
         );
     }
-    return *lowerCat->unk4;
+    return *lowerCat->mShots;
 }
 
 int CameraManager::NumCameraShots(
@@ -359,7 +359,7 @@ int CameraManager::NumCameraShots(
     FOREACH (it, camlist) {
         CamShot *cur = *it;
         if (cur->Disabled() == 0 && ShotMatches(cur, filts)
-            && cur->ShotOk(mCurrentShot)) {
+            && cur->ShotOk(mCurrentCam)) {
             shots->push_back(cur);
             num++;
         }
@@ -370,7 +370,7 @@ int CameraManager::NumCameraShots(
 void CameraManager::Randomize() {
     sRand.Seed(sSeed);
     FOREACH (it, mCameraShotCategories) {
-        RandomizeCategory(*it->unk4);
+        RandomizeCategory(*it->mShots);
     }
 }
 
@@ -378,18 +378,18 @@ void CameraManager::Poll() {
     static Symbol shot("shot");
     static Symbol category("category");
     if (!MiloCamera()) {
-        if (mCurrentShot) {
-            bool shotOver = mCurrentShot->ShotOver();
-            RndCam *cam = mCurrentShot->GetCam();
+        if (mCurrentCam) {
+            bool shotOver = mCurrentCam->ShotOver();
+            RndCam *cam = mCurrentCam->GetCam();
             if (cam) {
                 Transform tfc0 = cam->LocalXfm();
                 float yFov = cam->YFov();
                 float nearPlane = cam->NearPlane();
                 float farPlane = cam->FarPlane();
                 float frame = CalcFrame();
-                mCurrentShot->SetFrame(frame, 1);
+                mCurrentCam->SetFrame(frame, 1);
                 float f16 = mBlendTime > 0 ? Clamp(0.0f, 1.0f, frame / mBlendTime) : 1;
-                if (unk58) {
+                if (mNextShotChanged) {
                     f16 = 0;
                 }
                 if (f16 < 1) {
@@ -407,16 +407,16 @@ void CameraManager::Poll() {
                     float blendNear = Interp(nearPlane, cam->NearPlane(), f16);
                     float blendFar = Interp(farPlane, cam->FarPlane(), f16);
                     cam->SetFrustum(blendNear, blendFar, blendYFov, 1);
-                } else if (mBlendAmount < 1) {
+                } else if (mLastBlend < 1) {
                     static Message msg("blend_finished", 0);
-                    msg[0] = mCurrentShot.Ptr();
+                    msg[0] = mCurrentCam.Ptr();
                     Export(msg, true);
                 }
-                mBlendAmount = f16;
+                mLastBlend = f16;
             }
-            if (!shotOver && mCurrentShot && mCurrentShot->ShotOver()) {
+            if (!shotOver && mCurrentCam && mCurrentCam->ShotOver()) {
                 static Message msg("shot_over", 0);
-                msg[0] = mCurrentShot.Ptr();
+                msg[0] = mCurrentCam.Ptr();
                 Export(msg, true);
             }
         }
@@ -430,7 +430,7 @@ void CameraManager::SyncObjects(WorldDir *parent) {
     mParent = parent;
     mCameraShotCategories.clear();
     mCameraShotCategories.reserve(100);
-    unk78.clear();
+    mCrowds.clear();
     for (ObjDirItr<Hmx::Object> it(mParent, true); it != nullptr; ++it) {
         CamShot *shot = dynamic_cast<CamShot *>(&*it);
         if (shot) {
@@ -441,7 +441,7 @@ void CameraManager::SyncObjects(WorldDir *parent) {
         } else {
             WorldCrowd *crowd = dynamic_cast<WorldCrowd *>(&*it);
             if (crowd) {
-                unk78.push_back(crowd);
+                mCrowds.push_back(crowd);
             }
         }
     }
@@ -467,7 +467,7 @@ CameraManager::PickCameraShot(Symbol s, const std::vector<PropertyFilter> &filts
         MILO_NOTIFY(msg.c_str());
         return nullptr;
     } else {
-        unk58 = true;
+        mNextShotChanged = true;
         mNextShot = ret;
         return ret;
     }
@@ -503,7 +503,7 @@ DataNode CameraManager::OnRandomSeed(DataArray *da) {
 DataNode CameraManager::OnGetShotList(DataArray *a) {
     DataArray *list = new DataArray(0);
     FOREACH (it, mCameraShotCategories) {
-        FOREACH_PTR (shotIt, it->unk4) {
+        FOREACH_PTR (shotIt, it->mShots) {
             list->Insert(list->Size(), *shotIt);
         }
     }
@@ -518,7 +518,7 @@ DataNode CameraManager::OnIterateShot(DataArray *da) {
     DataNode *var = da->Var(2);
     DataNode d28(*var);
     FOREACH (it, mCameraShotCategories) {
-        FOREACH_PTR (lit, it->unk4) {
+        FOREACH_PTR (lit, it->mShots) {
             *var = *lit;
             for (int i = 3; i < da->Size(); i++) {
                 da->Command(i)->Execute();
