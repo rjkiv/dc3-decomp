@@ -1961,12 +1961,30 @@ def calculate_progress(config: ProjectConfig) -> None:
         )
 
     print_category("All", report_data["measures"])
+    game_category: Dict[str, Any] = None
+    engine_category: Dict[str, Any] = None
     for category in report_data.get("categories", []):
         if config.print_progress_categories is True or (
             isinstance(config.print_progress_categories, list)
             and category["id"] in config.print_progress_categories
         ):
             print_category(category["name"], category["measures"])
+            if category["id"] == "game":
+                game_category = category
+            if category["id"] == "engine":
+                engine_category = category
+
+    # let's get just game+engine and make 1 big super category
+    if game_category and engine_category:
+        combined_category = game_category
+        for value in ["total_code", "matched_code", "total_data", "matched_data", "total_functions", "matched_functions", "total_units", "complete_units"]:
+            combined_category["measures"][value] += engine_category["measures"][value]
+
+        combined_category["measures"]["matched_code_percent"] = combined_category["measures"]["matched_code"]/combined_category["measures"]["total_code"] * 100
+        combined_category["measures"]["matched_data_percent"] = combined_category["measures"]["matched_data"]/combined_category["measures"]["total_data"] * 100
+        combined_category["measures"]["complete_code_percent"] = combined_category["measures"]["complete_units"]/combined_category["measures"]["total_units"] * 100
+
+        print_category("Engine + Game", combined_category["measures"])
 
     if config.progress_use_fancy:
         measures = report_data["measures"]
