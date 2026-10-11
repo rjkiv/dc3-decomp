@@ -82,35 +82,54 @@ struct BoneJoints {
 class BaseSkeleton {
 public:
     virtual ~BaseSkeleton() {} // 0x0
-    virtual void JointPos(SkeletonCoordSys, SkeletonJoint, Vector3 &) const = 0; // 0x4
+    virtual void
+    JointPos(SkeletonCoordSys cs, SkeletonJoint joint, Vector3 &pos) const = 0; // 0x4
     virtual bool Displacement(
-        const SkeletonHistory *, SkeletonCoordSys, SkeletonJoint, int, Vector3 &, int &
+        const SkeletonHistory *history,
+        SkeletonCoordSys cs,
+        SkeletonJoint j,
+        int desired_ms,
+        Vector3 &disp,
+        int &actual_ms
     ) const = 0; // 0x8
     virtual bool Displacements(
-        const SkeletonHistory *, SkeletonCoordSys, int, Vector3 *, int &
+        const SkeletonHistory *history,
+        SkeletonCoordSys cs,
+        int desired_ms,
+        Vector3 *displacements,
+        int &actual_ms
     ) const = 0; // 0xc
-    virtual JointConfidence JointConf(SkeletonJoint) const = 0; // 0x10
+    virtual JointConfidence JointConf(SkeletonJoint joint) const = 0; // 0x10
     virtual bool IsTracked() const = 0; // 0x14
     virtual int QualityFlags() const = 0; // 0x18
     virtual int ElapsedMs() const = 0; // 0x1c
-    virtual void CameraToPlayerXfm(SkeletonCoordSys, Transform &) const = 0; // 0x20
-    virtual void NormOffset(SkeletonJoint, Vector3 &) const; // 0x24
-    virtual void CamJointPositions(Vector3 *) const; // 0x28
-    virtual void CamBoneLengths(float *) const; // 0x2c
-    virtual float BoneLength(SkeletonBone, SkeletonCoordSys) const; // 0x30
+    virtual void CameraToPlayerXfm(SkeletonCoordSys cs, Transform &xfm) const = 0; // 0x20
+    virtual void NormOffset(SkeletonJoint joint, Vector3 &offset) const; // 0x24
+    virtual void CamJointPositions(Vector3 *joint_positions) const; // 0x28
+    virtual void CamBoneLengths(float *bone_lengths) const; // 0x2c
+    virtual float BoneLength(SkeletonBone bone, SkeletonCoordSys cs) const; // 0x30
 
-    void BoneVec(SkeletonBone, SkeletonCoordSys, Vector3 &) const;
-    void NormPos(SkeletonCoordSys, SkeletonJoint, Vector3 &) const;
+    void BoneVec(SkeletonBone bone, SkeletonCoordSys cs, Vector3 &vec) const;
+    void NormPos(SkeletonCoordSys cs, SkeletonJoint joint, Vector3 &norm_pos) const;
 
-    static SkeletonJoint MirrorJoint(SkeletonJoint);
-    static void
-    MakeCameraToPlayerXfm(SkeletonCoordSys, Transform &, const Vector3 *, const Vector3 &);
+    static SkeletonJoint MirrorJoint(SkeletonJoint joint);
+    static void MakeCameraToPlayerXfm(
+        SkeletonCoordSys cs,
+        Transform &xfm,
+        const Vector3 *joints,
+        const Vector3 &gravity_normal
+    );
 
     static const BoneJoints sBones[kNumBones];
     static const SkeletonJoint sJointParents[kNumJoints];
 
 protected:
-    void CalcNormalizedOffset(SkeletonJoint, Vector3 &) const;
-    void
-    LimbNormPos(SkeletonCoordSys, SkeletonJoint, bool, const Vector3 &, Vector3 &) const;
+    void CalcNormalizedOffset(SkeletonJoint joint, Vector3 &offset) const;
+    void LimbNormPos(
+        SkeletonCoordSys cs,
+        SkeletonJoint joint,
+        bool normalize,
+        const Vector3 &in,
+        Vector3 &out
+    ) const;
 };
