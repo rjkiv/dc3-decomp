@@ -15,10 +15,10 @@ class CameraManager : public Hmx::Object {
 public:
     class Category {
     public:
-        bool operator<(const Category &c) const { return unk0 < c.unk0; }
+        bool operator<(const Category &c) const { return mCategory < c.mCategory; }
 
-        Symbol unk0;
-        ObjPtrList<CamShot> *unk4;
+        Symbol mCategory;
+        ObjPtrList<CamShot> *mShots;
     };
 
     struct PropertyFilter {
@@ -44,7 +44,7 @@ public:
     static int sSeed;
 
     CamShot *NextShot() const { return mNextShot; }
-    CamShot *CurrentShot() const { return mCurrentShot; }
+    CamShot *CurrentShot() const { return mCurrentCam; }
     bool HasFreeCam() const { return mFreeCam; }
     void ForceCamShot(CamShot *);
     FreeCamera *GetFreeCam(int);
@@ -91,10 +91,10 @@ protected:
     ObjPtr<CamShot> mNextShot; // 0x3c
     /** "Next camera blend time in units of camera, is run-time, not serialized" */
     float mBlendTime; // 0x50
-    float mBlendAmount; // 0x54
-    bool unk58; // 0x58
-    ObjPtr<CamShot> mCurrentShot; // 0x5c
+    float mLastBlend; // 0x54
+    bool mNextShotChanged; // 0x58
+    ObjPtr<CamShot> mCurrentCam; // 0x5c
     float mCamStartTime; // 0x70
     FreeCamera *mFreeCam; // 0x74
-    ObjPtrList<WorldCrowd> unk78; // 0x78
+    ObjPtrList<WorldCrowd> mCrowds; // 0x78
 };

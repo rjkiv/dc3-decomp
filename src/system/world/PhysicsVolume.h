@@ -106,11 +106,11 @@ protected:
     DataNode OnSetTangentialForce(const DataArray *);
     DataNode OnIterateOverlaps(const DataArray *);
 
-    ObjPtr<DetectionVolume> mDetectionVolume; // 0x10c
+    ObjPtr<DetectionVolume> mVolume; // 0x10c
     /** "Volume type generated from PhysicsVolume's transform" */
     PhysicsVolumeType mShapeType; // 0x120
-    int unk124;
-    Vector3 unk128;
+    int mOverlapping;
+    Vector3 mHalfExtends; // 0x128
     /** "Directional force applied to overlapping physics objects" */
     Vector3 mDirectionalForce; // 0x138
     /** "Flattened planar tangential force applied to overlapping physics objects;
@@ -122,7 +122,7 @@ protected:
     float mRadialForce; // 0x168
     /** "What type of collision meshes does this physics volume detect collision with?"
         Options are restricted to the enums that start with "kCollidePhysics". */
-    CollisionFilter mFilter; // 0x16c
+    CollisionFilter mCollisionFilter; // 0x16c
     /** "Are we active?" */
     bool mActive; // 0x170
     /** "calls 'while_has_overlaps' handler while

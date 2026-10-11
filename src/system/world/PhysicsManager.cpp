@@ -27,13 +27,13 @@ namespace {
 }
 
 PhysicsManager::PhysicsManager(RndDir *dir)
-    : unk2c(dir), mPhysicsClampTime(30), unk34(0), unk35(0), unk38(30), unk3c(0) {
+    : mWorldDir(dir), mClampTime(30), mWorldIsBuild(0), mIsFixedRate(0), mFixedRate(30), mTimeUnits(0) {
     if (SystemConfig()) {
         DataArray *physicsCfg = SystemConfig()->FindArray("physics", false);
         if (physicsCfg) {
             DataArray *clampArr = physicsCfg->FindArray("physics_clamp_time", false);
             if (clampArr) {
-                mPhysicsClampTime = clampArr->Float(1);
+                mClampTime = clampArr->Float(1);
             }
         }
     }
@@ -125,9 +125,9 @@ void PhysicsManager::SyncObjects(bool b1) {
     RemoveAll();
     Timer timer;
     timer.Start();
-    HarvestCollidables(unk2c);
+    HarvestCollidables(mWorldDir);
     timer.SplitMs();
-    unk34 = true;
+    mWorldIsBuild = true;
 }
 
 DataNode PhysicsManager::OnGetVelocity(const DataArray *a) {

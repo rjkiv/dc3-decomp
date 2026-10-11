@@ -521,16 +521,16 @@ END_CUSTOM_PROPSYNC
 
 CamShotCrowd::CamShotCrowd(Hmx::Object *owner)
     : mCrowd(owner), mCrowdRotate(kCrowdRotateNone),
-      unk24(dynamic_cast<CamShot *>(owner)) {}
+      mCamShot(dynamic_cast<CamShot *>(owner)) {}
 
 CamShotCrowd::CamShotCrowd(Hmx::Object *owner, const CamShotCrowd &other)
-    : mCrowd(other.mCrowd), mCrowdRotate(other.mCrowdRotate), unk18(other.unk18),
-      unk24(dynamic_cast<CamShot *>(owner)) {}
+    : mCrowd(other.mCrowd), mCrowdRotate(other.mCrowdRotate), mCrowdList(other.mCrowdList),
+      mCamShot(dynamic_cast<CamShot *>(owner)) {}
 
 void CamShotCrowd::Save(BinStream &bs) const {
     bs << mCrowd;
     bs << mCrowdRotate;
-    bs << unk18;
+    bs << mCrowdList;
     int num = -1;
     if (mCrowd) {
         num = mCrowd->GetModifyStamp();
@@ -541,11 +541,11 @@ void CamShotCrowd::Save(BinStream &bs) const {
 void CamShotCrowd::Load(BinStream &bs) {
     bs >> mCrowd;
     bs >> (int &)mCrowdRotate;
-    bs >> unk18;
+    bs >> mCrowdList;
     int num;
     bs >> num;
     if (mCrowd && num != mCrowd->GetModifyStamp() || (!mCrowd && num != -1)) {
-        unk18.clear();
+        mCrowdList.clear();
     }
 }
 
@@ -578,11 +578,11 @@ void CamShotCrowd::SetCrowdChars() {
 }
 
 void CamShotCrowd::ClearCrowdChars() {
-    unk18.clear();
+    mCrowdList.clear();
     if (!mCrowd) {
         MILO_NOTIFY("No crowd selected");
     }
-    mCrowd->Set3DCharList(unk18, unk24);
+    mCrowd->Set3DCharList(mCrowdList, mCamShot);
 }
 
 void CamShotCrowd::GetSelectedCrowd(
@@ -609,7 +609,7 @@ void CamShotCrowd::AddCrowdChars(
         MILO_NOTIFY("No crowd selected");
     } else if (!mCrowd->IsForced3DCrowd()) {
         float fullness = mCrowd->FlatFullness();
-        mCrowd->Set3DCharList(std::vector<std::pair<int, int> >(), unk24);
+        mCrowd->Set3DCharList(std::vector<std::pair<int, int> >(), mCamShot);
         mCrowd->SetFullness(1, mCrowd->CharFullness());
         if (!listPtr) {
             int i64 = 0;
@@ -618,7 +618,7 @@ void CamShotCrowd::AddCrowdChars(
                 auto &insts = it->mMMesh->Instances();
                 for (auto instIt = insts.begin(); instIt != insts.end();
                      ++instIt, ++i68) {
-                    unk18.push_back(std::make_pair(i64, i68));
+                    mCrowdList.push_back(std::make_pair(i64, i68));
                 }
                 ++i64;
             }
@@ -640,19 +640,19 @@ void CamShotCrowd::AddCrowdChars(
                         ;
                     MILO_ASSERT(ki != mmesh->Instances().size(), 0xA58);
                     std::pair<int, int> iPair = std::make_pair(i5, ki);
-                    if (std::find(unk18.begin(), unk18.end(), iPair) == unk18.end()) {
-                        unk18.push_back(iPair);
+                    if (std::find(mCrowdList.begin(), mCrowdList.end(), iPair) == mCrowdList.end()) {
+                        mCrowdList.push_back(iPair);
                     }
                 }
             }
-            mCrowd->Set3DCharList(unk18, unk24);
+            mCrowd->Set3DCharList(mCrowdList, mCamShot);
         }
         mCrowd->SetFullness(fullness, mCrowd->CharFullness());
     }
 }
 
 BEGIN_CUSTOM_PROPSYNC(CamShotCrowd)
-    SYNC_PROP_MODIFY(crowd, o.mCrowd, o.unk18.clear())
+    SYNC_PROP_MODIFY(crowd, o.mCrowd, o.mCrowdList.clear())
     SYNC_PROP(crowd_rotate, (int &)o.mCrowdRotate)
 END_CUSTOM_PROPSYNC
 
@@ -670,13 +670,13 @@ CamShot::CamShot()
       mFarPlane(mNearPlane * RndCam::MaxFarNearPlaneRatio()), mUseDepthOfField(true),
       mFilter(0.9), mClampHeight(-1), mAnims(this), mPath(this), mPathFrame(-1),
       mPlatform(kPlatformNone), mHideList(this), mShowList(this), mGenHideList(this),
-      mDrawOverrides(this), mPostProcOverrides(this), unk1a4(this), mCrowds(this),
+      mDrawOverrides(this), mPostProcOverrides(this), mWorldDir(this), mCrowds(this),
       mCrowdStateOverride(gNullStr), mPS3PerPixel(true), mGlowSpot(this), mFlags(0),
       mEndHideList(this), mEndShowList(this), mLastShakeOffset(0, 0, 0),
       mLastShakeAngOffset(0, 0, 0), mLastDesiredShakeOffset(0, 0, 0),
       mLastDesiredShakeAngOffset(0, 0, 0), mShakeVelocity(0, 0, 0),
       mShakeAngVelocity(0, 0, 0), mLastNext(0), mLastPrev(0), mDuration(0), mDisabled(0),
-      mShotStarted(1), mShotOver(0), mHidden(0), unk283(0) {}
+      mFirstFrame(1), mShotOver(0), mHided(0), mInSetFrame(0) {}
 
 CamShot::~CamShot() {}
 
@@ -703,7 +703,7 @@ BEGIN_HANDLERS(CamShot)
 END_HANDLERS
 
 WorldDir *CamShot::GetCrowdDir() const {
-    ObjectDir *dir = unk1a4.Ptr() ? unk1a4.Ptr() : Dir();
+    ObjectDir *dir = mWorldDir.Ptr() ? mWorldDir.Ptr() : Dir();
     return dynamic_cast<WorldDir *>(dir);
 }
 
@@ -854,7 +854,7 @@ INIT_REVS(0x34, 0)
 BEGIN_LOADS(CamShot)
     LOAD_REVS(bs)
     ASSERT_REVS(0x34, 0)
-    bool hidden = mHidden;
+    bool hidden = mHided;
     if (hidden) {
         UnHide();
     }
@@ -996,7 +996,7 @@ BEGIN_LOADS(CamShot)
     CamShotCrowd csc(this);
 
     if (dRev > 4 && dRev < 42) {
-        d >> csc.unk18;
+        d >> csc.mCrowdList;
     }
     int loc240 = -1;
     if (dRev >= 8 && dRev < 42)
@@ -1034,9 +1034,9 @@ BEGIN_LOADS(CamShot)
     if (dRev >= 8 && dRev < 42) {
         if (csc.mCrowd) {
             if (loc240 != csc.mCrowd->GetModifyStamp())
-                csc.unk18.clear();
+                csc.mCrowdList.clear();
         } else if (loc240 != -1)
-            csc.unk18.clear();
+            csc.mCrowdList.clear();
     }
     if (dRev == 0xE) {
         float f244, f248, f24c;
@@ -1113,7 +1113,7 @@ void CamShot::StartAnim() {
     mShotOver = false;
     mLastNext = 0;
     mLastPrev = 0;
-    mShotStarted = true;
+    mFirstFrame = true;
     mLastShakeOffset.Zero();
     mLastDesiredShakeOffset.Zero();
     mShakeVelocity.Zero();
@@ -1124,7 +1124,7 @@ void CamShot::StartAnim() {
     for (int i = 0; i != mCrowds.size(); i++) {
         CamShotCrowd &cur = mCrowds[i];
         if (cur.mCrowd) {
-            cur.mCrowd->Set3DCharList(cur.unk18, cur.unk24);
+            cur.mCrowd->Set3DCharList(cur.mCrowdList, cur.mCamShot);
         }
     }
     RndVelocityBuffer::Singleton().ResetFrame();
@@ -1146,7 +1146,7 @@ void CamShot::EndAnim() {
 
 void CamShot::SetFrame(float frame, float blend) {
     START_AUTO_TIMER("camera");
-    if (unk283) {
+    if (mInSetFrame) {
         return;
     } else {
         RndAnimatable::SetFrame(frame, blend);
@@ -1158,7 +1158,7 @@ void CamShot::SetFrame(float frame, float blend) {
             if (mKeyframes.empty()) {
                 return;
             } else {
-                unk283 = true;
+                mInSetFrame = true;
                 mPathFrame = -1;
                 EndFrame();
                 static CamShotFrame nullFrame(nullptr);
@@ -1172,7 +1172,7 @@ void CamShot::SetFrame(float frame, float blend) {
                     if (frame50) {
                         frame50->UpdateTarget();
                     }
-                    unk283 = false;
+                    mInSetFrame = false;
                     return;
                 } else {
                     if (frame54 != mLastNext) {
@@ -1193,12 +1193,12 @@ void CamShot::SetFrame(float frame, float blend) {
                     if (CheckShotStarted()) {
                         static Message msg("shot_started");
                         HandleType(msg);
-                        mShotStarted = false;
+                        mFirstFrame = false;
                     }
                     if (CheckShotOver(frame)) {
                         SetShotOver();
                     }
-                    unk283 = false;
+                    mInSetFrame = false;
                 }
             }
         }
@@ -1223,7 +1223,7 @@ void CamShot::Disable(bool disable, int mask) {
         mDisabled &= ~mask;
 }
 
-bool CamShot::CheckShotStarted() { return mShotStarted; }
+bool CamShot::CheckShotStarted() { return mFirstFrame; }
 
 bool CamShot::CheckShotOver(float f) { return !mShotOver && !mLooping && f >= mDuration; }
 
@@ -1346,7 +1346,7 @@ void CamShot::AddAnim(RndAnimatable *anim) {
 
 void CamShot::DoHide() {
     CAMERA_LOG("** %s CamShot::DoHide() start\n", Name());
-    if (!mHidden) {
+    if (!mHided) {
         mEndHideList.clear();
         mEndShowList.clear();
         FOREACH (it, mHideList) {
@@ -1381,14 +1381,14 @@ void CamShot::DoHide() {
                 CAMERA_LOG("   ** %s show from mEndShowList\n", cur->Name());
             }
         }
-        mHidden = true;
+        mHided = true;
     }
     CAMERA_LOG("** %s CamShot::DoHide() stop\n", Name());
 }
 
 void CamShot::UnHide() {
     CAMERA_LOG(" ** %s CamShot::UnHide() start\n", Name());
-    if (mHidden) {
+    if (mHided) {
         FOREACH (it, mEndHideList) {
             (*it)->SetShowing(false);
             CAMERA_LOG("   ** %s hide from mEndHideList\n", (*it)->Name());
@@ -1399,7 +1399,7 @@ void CamShot::UnHide() {
         }
         mEndHideList.clear();
         mEndShowList.clear();
-        mHidden = false;
+        mHided = false;
     }
     CAMERA_LOG(" ** %s CamShot::UnHide() stop\n", Name());
 }

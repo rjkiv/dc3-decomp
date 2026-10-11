@@ -19,10 +19,10 @@ namespace {
 }
 
 PhysicsVolume::PhysicsVolume()
-    : mDetectionVolume(nullptr), mShapeType(kPhysicsVolumeBox), unk124(0),
+    : mVolume(nullptr), mShapeType(kPhysicsVolumeBox), mOverlapping(0),
       mDirectionalForce(Vector3::GetZero()), mTangentialForce(Vector3::GetZero()),
       mDirectionalVelocity(Vector3::GetZero()), mRadialForce(0),
-      mFilter(kCollidePhysicsVolumeDynamicFixed), mActive(true),
+      mCollisionFilter(kCollidePhysicsVolumeDynamicFixed), mActive(true),
       mReportOnOverlaps(false) {}
 
 PhysicsVolume::~PhysicsVolume() { DestroyPhysicsVolume(); }
@@ -39,9 +39,9 @@ BEGIN_HANDLERS(PhysicsVolume)
 END_HANDLERS
 
 void PhysicsVolume::SetCollisionFilter(CollisionFilter cf) {
-    mFilter = cf;
-    if (mDetectionVolume) {
-        mDetectionVolume->SetCollisionFilter(mFilter);
+    mCollisionFilter = cf;
+    if (mVolume) {
+        mVolume->SetCollisionFilter(mCollisionFilter);
     }
 }
 
@@ -49,7 +49,7 @@ BEGIN_PROPSYNCS(PhysicsVolume)
     SYNC_PROP_SET(active, mActive, SetActiveState(_val.Int()))
     SYNC_PROP(report_on_overlaps, mReportOnOverlaps)
     SYNC_PROP_SET(
-        collision_filter, (int &)mFilter, SetCollisionFilter((CollisionFilter)_val.Int())
+        collision_filter, (int &)mCollisionFilter, SetCollisionFilter((CollisionFilter)_val.Int())
     )
     SYNC_PROP(radial_force, mRadialForce)
     SYNC_PROP(directional_force, mDirectionalForce)
@@ -73,7 +73,7 @@ BEGIN_SAVES(PhysicsVolume)
     bs << mDirectionalVelocity;
     bs << mShapeType;
     bs << mReportOnOverlaps;
-    bs << mFilter;
+    bs << mCollisionFilter;
     bs << mTangentialForce;
 END_SAVES
 
@@ -84,15 +84,15 @@ BEGIN_COPYS(PhysicsVolume)
     CREATE_COPY(PhysicsVolume)
     BEGIN_COPYING_MEMBERS
         COPY_MEMBER(mShapeType)
-        COPY_MEMBER(unk124)
-        COPY_MEMBER(unk128)
+        COPY_MEMBER(mOverlapping)
+        COPY_MEMBER(mHalfExtends)
         COPY_MEMBER(mDirectionalForce)
         COPY_MEMBER(mTangentialForce)
         COPY_MEMBER(mDirectionalVelocity)
         COPY_MEMBER(mRadialForce)
         COPY_MEMBER(mActive)
         COPY_MEMBER(mReportOnOverlaps)
-        COPY_MEMBER(mFilter)
+        COPY_MEMBER(mCollisionFilter)
     END_COPYING_MEMBERS
     DestroyPhysicsVolume();
 END_COPYS
@@ -129,7 +129,7 @@ BEGIN_LOADS(PhysicsVolume)
     if (d.rev > 5) {
         int filter;
         d >> filter;
-        mFilter = (CollisionFilter)filter;
+        mCollisionFilter = (CollisionFilter)filter;
     }
     if (d.rev > 6) {
         d >> mTangentialForce;
@@ -161,7 +161,7 @@ void PhysicsVolume::DrawShowing() {
         if (!mActive) {
             v40.Set(0.5f, 0.5f, 0.5f);
             c30 = Hmx::Color(0.5f, 0.5f, 0.5f);
-        } else if (unk124 != 0) {
+        } else if (mOverlapping != 0) {
             v40.Set(1, 0, 0);
             c30 = Hmx::Color(1, 0, 0);
         } else {
@@ -180,26 +180,26 @@ void PhysicsVolume::DrawShowing() {
 }
 
 void PhysicsVolume::Poll() {
-    if (mDetectionVolume) {
-        if (mDetectionVolume->GetActiveState() != mActive) {
-            mDetectionVolume->SetActiveState(mActive);
+    if (mVolume) {
+        if (mVolume->GetActiveState() != mActive) {
+            mVolume->SetActiveState(mActive);
         }
-        mDetectionVolume->Reset(WorldXfm());
+        mVolume->Reset(WorldXfm());
         if (mActive) {
             if (mRadialForce > 0) {
-                mDetectionVolume->ApplyRadialForce(mRadialForce);
+                mVolume->ApplyRadialForce(mRadialForce);
             }
             if (LengthSquared(mDirectionalForce) > 0) {
-                mDetectionVolume->ApplyDirectionalForce(mDirectionalForce);
+                mVolume->ApplyDirectionalForce(mDirectionalForce);
             }
             if (LengthSquared(mTangentialForce) > 0) {
-                mDetectionVolume->ApplyTangentialForce(mTangentialForce);
+                mVolume->ApplyTangentialForce(mTangentialForce);
             }
             if (LengthSquared(mDirectionalVelocity) > 0) {
-                mDetectionVolume->ApplyDirectionalLinearVelocity(mDirectionalVelocity);
+                mVolume->ApplyDirectionalLinearVelocity(mDirectionalVelocity);
             }
         }
-        if (unk124) {
+        if (mOverlapping) {
             if (mReportOnOverlaps) {
                 static Symbol while_has_overlaps("while_has_overlaps");
                 Handle(Message(while_has_overlaps, this), false);
@@ -216,14 +216,14 @@ void PhysicsVolume::Enter() {
 void PhysicsVolume::OnCollidableEnter(Hmx::Object *object, ObjectDir *dir) {
     static Symbol object_enter("object_enter");
     Handle(Message(object_enter, this, object, dir), false);
-    unk124++;
+    mOverlapping++;
 }
 
 void PhysicsVolume::OnCollidableExit(Hmx::Object *object, ObjectDir *dir) {
     static Symbol object_exit("object_exit");
     Handle(Message(object_exit, this, object, dir), false);
-    if (--unk124 < 0) {
-        unk124 = 0;
+    if (--mOverlapping < 0) {
+        mOverlapping = 0;
     }
 }
 
@@ -240,33 +240,33 @@ void PhysicsVolume::ChangeShapeType(int t) {
 }
 
 void PhysicsVolume::SetActiveState(bool active) {
-    if (mDetectionVolume) {
+    if (mVolume) {
         if (active) {
-            mDetectionVolume->Reset(WorldXfm());
+            mVolume->Reset(WorldXfm());
         }
-        mDetectionVolume->SetActiveState(active);
+        mVolume->SetActiveState(active);
     }
     mActive = active;
 }
 
 void PhysicsVolume::CreatePhysicsVolume(PhysicsManager *mgr) {
-    if (!mDetectionVolume) {
+    if (!mVolume) {
         Vector3 v;
         HalfExtends(v);
         Sphere s;
         s.radius = Length(v);
         s.center = WorldXfm().v;
         SetSphere(s);
-        mDetectionVolume =
-            mgr->MakeDetectionVolume(this, WorldXfm(), mShapeType, mFilter);
+        mVolume =
+            mgr->MakeDetectionVolume(this, WorldXfm(), mShapeType, mCollisionFilter);
         SetActiveState(mActive);
     }
 }
 
 void PhysicsVolume::DestroyPhysicsVolume() {
-    if (mDetectionVolume)
-        delete mDetectionVolume;
-    mDetectionVolume = nullptr;
+    if (mVolume)
+        delete mVolume;
+    mVolume = nullptr;
 }
 
 DataNode PhysicsVolume::OnSetDirectionalForce(const DataArray *args) {
@@ -291,11 +291,11 @@ DataNode PhysicsVolume::OnSetDirectionalVelocity(const DataArray *args) {
 }
 
 DataNode PhysicsVolume::OnIterateOverlaps(const DataArray *args) {
-    if (!mDetectionVolume->GetActiveState()) {
+    if (!mVolume->GetActiveState()) {
         return 0;
     } else {
         std::list<std::pair<Hmx::Object *, ObjectDir *> > pairs;
-        mDetectionVolume->GetOverlaps(pairs);
+        mVolume->GetOverlaps(pairs);
         if (pairs.empty()) {
             return 0;
         } else {

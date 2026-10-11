@@ -125,11 +125,11 @@ public:
     }
     RndTransformable *GetTarget() const { return mTarget; }
     void SetTarget(RndTransformable *trans) { mTarget = trans; }
-    RndMat *LensMesh() const { return mLensMaterial; }
-    bool GetCastShadow() const { return mTargetShadow; }
+    RndMat *LensMesh() const { return mLensMat; }
+    bool GetCastShadow() const { return mCastShadow; }
     bool FlareEnabled() const { return mFlareEnabled; }
-    void SetUnk2F0(bool b) { unk2f0 = b; }
-    void SetUnk36E(bool b) { unk36e = b; }
+    void SetUnk2F0(bool b) { mTargetExists = b; }
+    void SetUnk36E(bool b) { mAnimatingFromPreset = b; }
     RndTransformable *ResolveTarget();
     void SetFlareEnabled(bool);
     Hmx::Color IntensifiedColor() const {
@@ -142,7 +142,7 @@ public:
     }
     bool AnimateColorFromPreset() const { return mAnimateColorFromPreset; }
     bool AnimateOrientationFromPreset() const { return mAnimateOrientationFromPreset; }
-    Hmx::Quat &GetUnk370() { return unk370; }
+    Hmx::Quat &GetUnk370() { return mPresetOrient; }
     static void RemoveFromLists(Spotlight *);
     static RndMesh *GetDiskMesh() { return sDiskMesh; }
 
@@ -171,12 +171,12 @@ protected:
     static void BuildBoard();
 
     /** "Material to use for the floor spot" */
-    ObjPtr<RndMat> mSpotMaterial; // 0x108
+    ObjPtr<RndMat> mDiscMat; // 0x108
     RndFlare *mFlare; // 0x11c
     /** "Whether the flare is enabled (keyframed by light presets)" */
     bool mFlareEnabled; // 0x120
     /** "Whether the flare performs a visiblity test (or is always visible)" */
-    bool mFlareVisibilityTest; // 0x121
+    bool mFlareIsBillboard; // 0x121
     /** "Offset of flare along spotlight trajectory" */
     float mFlareOffset; // 0x124
     /** "Scale of the floor disc" */
@@ -196,7 +196,7 @@ protected:
     /** "Offset of the lens billboard" */
     float mLensOffset; // 0x1dc
     /** "Material to use for the lens" */
-    ObjPtr<RndMat> mLensMaterial; // 0x1e0
+    ObjPtr<RndMat> mLensMat; // 0x1e0
     BeamDef mBeam; // 0x1f4
     ObjPtrList<RndLight> mSlaves; // 0x270
     /** "Optional light can mesh to use" */
@@ -208,25 +208,25 @@ protected:
         Note that it's easier to move a targetted spotlight
         in World space when in Milo." */
     ObjPtr<RndTransformable> mTarget; // 0x2dc
-    bool unk2f0;
+    bool mTargetExists;
     /** "Reference object for floor height, uses spot target if not set" */
     ObjPtr<RndTransformable> mSpotTarget; // 0x2f4
-    float unk308;
+    float mLastFloorSpotHeight;
     /** "Whether the target should cast a shadow" */
-    bool mTargetShadow; // 0x30c
+    bool mCastShadow; // 0x30c
     /** "Can't optimize render end of render batching of light can with others" */
     bool mLightCanSort; // 0x30d
-    Hmx::Matrix3 unk310;
-    bool unk340;
+    Hmx::Matrix3 mLastDirection; // 0x310
+    bool mFirstFrame; // 0x340
     /** "0-1, controls how fast spotlight moves to reach target" */
     float mDampingConstant; // 0x344
     /** "Additional objects that should be drawn by the spotlight." */
     ObjPtrList<RndDrawable> mAdditionalObjects; // 0x348
-    Vector3 unk35c;
+    Vector3 mLastTargetPosition; // 0x35C
     /** "Whether this spotlight coloring should be animated by light presets." */
     bool mAnimateColorFromPreset; // 0x36c
     /** "Whether this spotlight position/rotation should be animated by light presets." */
     bool mAnimateOrientationFromPreset; // 0x36d
-    bool unk36e; // 0x36e
-    Hmx::Quat unk370;
+    bool mAnimatingFromPreset; // 0x36e
+    Hmx::Quat mPresetOrient; // 0x370
 };

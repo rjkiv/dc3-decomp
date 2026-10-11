@@ -121,8 +121,8 @@ public:
     ObjPtr<WorldCrowd> mCrowd; // 0x0
     /** "How to rotate crowd" */
     CrowdRotate mCrowdRotate; // 0x14
-    std::vector<std::pair<int, int> > unk18; // 0x18
-    CamShot *unk24; // 0x24
+    std::vector<std::pair<int, int> > mCrowdList; // 0x18
+    CamShot *mCamShot; // 0x24
 };
 
 inline BinStream &operator<<(BinStream &bs, const CamShotCrowd &f) {
@@ -177,7 +177,7 @@ public:
     bool ShotOk(CamShot *);
     bool SetPos(CamShotFrame &, RndCam *);
     RndCam *GetCam();
-    void SetParent(RndDir *d) { unk1a4 = d; }
+    void SetParent(RndDir *d) { mWorldDir = d; }
     bool ShotOver() const { return mShotOver; }
     class WorldDir *GetCrowdDir() const;
     void AddAnim(RndAnimatable *);
@@ -187,7 +187,7 @@ public:
     RndTransAnim *Path() const { return mPath; }
     float PathFrame() const { return mPathFrame; }
     float Duration() const { return mDuration; }
-    bool ShotStarted() const { return mShotStarted; }
+    bool ShotStarted() const { return mFirstFrame; }
     float ClampHeight() const { return mClampHeight; }
     const CamShotFrame &FrameAt(int idx) const { return mKeyframes[idx]; }
 
@@ -238,7 +238,7 @@ protected:
     float mClampHeight; // 0xf8
     /** "Category for shot-picking" */
     Symbol mCategory; // 0xfc
-    int unk100; // 0x100
+    int mWeight; // 0x100
     /** "animatables to be driven with the same frame" */
     ObjPtrList<RndAnimatable> mAnims; // 0x104
     /** "Optional camera path to use" */
@@ -260,7 +260,7 @@ protected:
     ObjPtrList<RndDrawable> mDrawOverrides; // 0x17c
     /** "List of objects to draw after post-processing" */
     ObjPtrList<RndDrawable> mPostProcOverrides; // 0x190
-    ObjPtr<RndDir> unk1a4;
+    ObjPtr<RndDir> mWorldDir;
     ObjVector<CamShotCrowd> mCrowds; // 0x1b8
     /** "Force the croawd into a particular state".
         Options are: (none bad ok great
@@ -286,10 +286,10 @@ protected:
     float mDuration; // 0x278
     /** "disabled bits" */
     int mDisabled; // 0x27c
-    bool mShotStarted; // 0x280
+    bool mFirstFrame; // 0x280
     bool mShotOver; // 0x281
-    bool mHidden; // 0x282
-    bool unk283;
+    bool mHided; // 0x282
+    bool mInSetFrame;
 };
 
 class AutoPrepTarget {

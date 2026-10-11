@@ -103,14 +103,14 @@ BinStreamRev &operator>>(BinStreamRev &d, LightPreset::EnvironmentEntry &e) {
 #pragma region EnvLightEntry
 
 LightPreset::EnvLightEntry::EnvLightEntry() : mRange(0), mLightType(RndLight::kPoint) {
-    unk0.Reset();
+    mOrientation.Reset();
     mPosition.Zero();
     mColor.Zero();
     mRotation.Zero();
 }
 
 void LightPreset::EnvLightEntry::Save(BinStream &bs) const {
-    bs << unk0;
+    bs << mOrientation;
     bs << mPosition;
     bs << mColor;
     bs << mRange;
@@ -118,7 +118,7 @@ void LightPreset::EnvLightEntry::Save(BinStream &bs) const {
 }
 
 void LightPreset::EnvLightEntry::Load(BinStream &bs) {
-    bs >> unk0;
+    bs >> mOrientation;
     bs >> mPosition;
     bs >> mColor;
     mColor.alpha = 1;
@@ -131,7 +131,7 @@ void LightPreset::EnvLightEntry::Animate(
 ) {
     Interp(mColor, entry.mColor, f2, mColor);
     Interp(mRange, entry.mRange, f2, mRange);
-    Interp(unk0, entry.unk0, f2, unk0);
+    Interp(mOrientation, entry.mOrientation, f2, mOrientation);
     Interp(mPosition, entry.mPosition, f2, mPosition);
 }
 
@@ -140,7 +140,7 @@ bool LightPreset::EnvLightEntry::operator!=(const LightPreset::EnvLightEntry &e)
         return true;
     else if ((unsigned int)mLightType != e.mLightType)
         return true;
-    else if (unk0 != e.unk0)
+    else if (mOrientation != e.mOrientation)
         return true;
     else if (mPosition != e.mPosition)
         return true;
@@ -164,7 +164,7 @@ BinStreamRev &operator>>(BinStreamRev &d, LightPreset::EnvLightEntry &e) {
 LightPreset::SpotlightEntry::SpotlightEntry(Hmx::Object *owner)
     : mIntensity(0), mColor(0), mFlags(3), mTarget(owner) {
     mOrientation.Reset();
-    unk30.Zero();
+    mCachedDisplayRot.Zero();
 }
 
 void LightPreset::SpotlightEntry::Save(BinStream &bs) const {
@@ -308,7 +308,7 @@ BinStreamRev &operator>>(BinStreamRev &d, LightPreset::SpotlightDrawerEntry &e) 
 
 LightPreset::Keyframe::Keyframe(Hmx::Object *owner)
     : mSpotlightEntries(owner), mTriggers(owner), mDuration(0), mFadeOutTime(0),
-      unka8(-1) {
+      mFrame(-1) {
     LightPreset *preset = dynamic_cast<LightPreset *>(owner);
     MILO_ASSERT(preset, 0x56F);
 
@@ -498,7 +498,7 @@ BEGIN_CUSTOM_PROPSYNC(LightPreset::EnvLightEntry)
     SYNC_PROP_SET(type, RndLight::TypeToStr(o.mLightType), ) {
         static Symbol _s("rotation");
         if (sym == _s) {
-            MakeRotMatrix(o.unk0, o.mRotation);
+            MakeRotMatrix(o.mOrientation, o.mRotation);
             if (PropSync(o.mRotation, _val, _prop, _i + 1, _op))
                 return true;
             else
@@ -518,8 +518,8 @@ BEGIN_CUSTOM_PROPSYNC(LightPreset::SpotlightEntry)
     SYNC_PROP_SET(flare_enabled, o.mFlags & LightPreset::SpotlightEntry::kEnabled, ) {
         static Symbol _s("rotation");
         if (sym == _s) {
-            MakeRotMatrix(o.mOrientation, o.unk30);
-            if (PropSync(o.unk30, _val, _prop, _i + 1, _op))
+            MakeRotMatrix(o.mOrientation, o.mCachedDisplayRot);
+            if (PropSync(o.mCachedDisplayRot, _val, _prop, _i + 1, _op))
                 return true;
             else
                 return false;
@@ -797,7 +797,7 @@ void LightPreset::AdvanceManual(LightPreset::KeyframeCmd cmd) {
 
 void LightPreset::FillLightPresetData(RndLight *light, LightPreset::EnvLightEntry &entry) {
     entry.mColor = light->GetColor();
-    entry.unk0 = Hmx::Quat(light->WorldXfm().m);
+    entry.mOrientation = Hmx::Quat(light->WorldXfm().m);
     entry.mPosition = light->WorldXfm().v;
     entry.mRange = light->Range();
     entry.mLightType = light->GetType();
@@ -1043,7 +1043,7 @@ void LightPreset::AnimateLightFromPreset(
 
     if (light->AnimatePosFromPreset()) {
         Hmx::Matrix3 matrix;
-        MakeRotMatrix(entry.unk0, matrix);
+        MakeRotMatrix(entry.mOrientation, matrix);
         Transform trans;
         Interp(light->WorldXfm().v, entry.mPosition, f, trans.v);
         Interp(light->WorldXfm().m, matrix, f, trans.m);
@@ -1055,7 +1055,7 @@ void LightPreset::CacheFrames() {
     float f = 0;
     for (unsigned int i = 0; i != mKeyframes.size(); i++) {
         Keyframe &frame = mKeyframes[i];
-        frame.unka8 = f;
+        frame.mFrame = f;
         f += frame.mDuration + frame.mFadeOutTime;
         frame.mSpotlightChanges.clear();
         frame.mSpotlightChanges.resize(frame.mSpotlightEntries.size());

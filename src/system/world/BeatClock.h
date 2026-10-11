@@ -48,7 +48,7 @@ protected:
     /** "Sound object to which this BeatClock's time is synchronized." */
     ObjPtr<Sound> mSound; // 0xc
     /** "beats per minute" */
-    float mBeatsPerMinute; // 0x20
+    float mBpm; // 0x20
     /** "beats per measure" */
     int mBeatsPerMeasure; // 0x24
     /** "Measures per phrase.  Use 0 to disable phrases." */
@@ -60,9 +60,9 @@ protected:
     /** "Current 16th note subdivision of the beat" */
     int mSubDivision; // 0x48
     /** "Total seconds" */
-    float mTotalSeconds; // 0x4c
-    float unk50; // 0x50
-    bool unk54; // 0x54
+    float mElapsedTime; // 0x4c
+    float mLastTime; // 0x50
+    bool mIsRunning; // 0x54
     /** "which timeline does this beatclock run on?" */
-    TaskUnits mTimeline; // 0x58
+    TaskUnits mTimeUnits; // 0x58
 };
