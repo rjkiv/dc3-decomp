@@ -6,6 +6,7 @@
 #include "gesture/GestureMgr.h"
 #include "gesture/LiveCameraInput.h"
 #include "gesture/Skeleton.h"
+#include "hamobj/Ham.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
 #include "math/Vec.h"

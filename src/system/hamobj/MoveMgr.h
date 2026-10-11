@@ -1,6 +1,7 @@
 #pragma once
 #include "char/CharClip.h"
 #include "hamobj/Difficulty.h"
+#include "hamobj/Ham.h"
 #include "hamobj/MoveGraph.h"
 #include "hamobj/SongLayout.h"
 #include "obj/Data.h"
@@ -103,12 +104,13 @@ public:
     MoveGraph mWholeMoveGraph; // 0xa4
     std::set<const MoveVariant *> mMovesNeeded; // 0x104
     // indexed by number of players, then number of measures in the song
-    std::vector<const MoveParent *> mRoutineParents[2]; // 0x11c
+    std::vector<const MoveParent *> mRoutineParents[MAX_NUM_PLAYERS]; // 0x11c
     // indexed by number of players, then number of measures in the song
-    std::vector<const MoveVariant *> mRoutinePreferredVariants[2]; // 0x134
+    std::vector<const MoveVariant *> mRoutinePreferredVariants[MAX_NUM_PLAYERS]; // 0x134
     Symbol mPreferredSong; // 0x14c
     // indexed by number of players, then number of measures in the song
-    std::vector<std::pair<const MoveVariant *, const MoveVariant *> > mRoutine[2]; // 0x150
+    std::vector<std::pair<const MoveVariant *, const MoveVariant *> >
+        mRoutine[MAX_NUM_PLAYERS]; // 0x150
     bool mHasRoutine; // 0x168
     std::vector<MoveChoiceSet> mTempSongChoices; // 0x16c
     std::vector<CategoryData> mGenres; // 0x178

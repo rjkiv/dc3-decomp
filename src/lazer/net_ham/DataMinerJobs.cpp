@@ -5,7 +5,7 @@
 #include "hamobj/HamMaster.h"
 #include "hamobj/HamPlayerData.h"
 #include "hamobj/MoveDir.h"
-#include "hamobj/PoseFatalities.h"
+#include "hamobj/Ham.h"
 #include "hamobj/PracticeSection.h"
 #include "hamobj/ScoreUtl.h"
 #include "math/Utl.h"

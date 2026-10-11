@@ -3,6 +3,7 @@
 #include "flow/PropertyEventProvider.h"
 #include "gesture/GestureMgr.h"
 #include "gesture/Skeleton.h"
+#include "hamobj/Ham.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamPlayerData.h"
 #include "math/Geo.h"
@@ -469,8 +470,10 @@ DataNode SkeletonIdentifier::OnMsg(const SkeletonIdentifiedMsg &msg) {
                     -1
                 );
             }
-        } else if (mIdentityStatus == kIdentityStatus_Enrolling
-                   || mIdentityStatus == kIdentityStatus_Correcting) {
+        } else if (
+            mIdentityStatus == kIdentityStatus_Enrolling
+            || mIdentityStatus == kIdentityStatus_Correcting
+        ) {
             mEnrollmentIdx = enrollmentIdx;
             UpdateEnrolledPlayers();
             TheGameData->SetAssociatedPadNum(

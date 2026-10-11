@@ -6,6 +6,7 @@
 #include "char/FileMerger.h"
 #include "gesture/BaseSkeleton.h"
 #include "hamobj/Difficulty.h"
+#include "hamobj/Ham.h"
 #include "hamobj/HamCamShot.h"
 #include "hamobj/HamCharacter.h"
 #include "hamobj/HamMove.h"
@@ -316,9 +317,9 @@ protected:
     int mBlendCount; // 0x2ec
     Symbol mClip; // 0x2f0
     /** Each player's current character/outfit (i.e. aubrey02). */
-    Symbol mCharacter[2]; // 0x2f4
+    Symbol mCharacter[MAX_NUM_PLAYERS]; // 0x2f4
     /** Each player's current crew. */
-    Symbol mCrew[2]; // 0x2fc
+    Symbol mCrew[MAX_NUM_PLAYERS]; // 0x2fc
     HamBackupDancers mBackupDancers; // 0x304
     ObjPtr<ObjectDir> mSongClips; // 0x308
     ObjPtr<ObjectDir> mMovesDir; // 0x31c

@@ -5,6 +5,7 @@
 #include "game/HamUserMgr.h"
 #include "gesture/GestureMgr.h"
 #include "hamobj/Difficulty.h"
+#include "hamobj/Ham.h"
 #include "hamobj/HamDirector.h"
 #include "hamobj/HamGameData.h"
 #include "hamobj/HamMove.h"
@@ -1192,8 +1193,7 @@ void MetaPerformer::CalcCharacters(
             primaryPlayerChar = player2Char;
             secondaryPlayer = pPlayer1Data;
             secondaryPlayerChar = player1Char;
-        } else if (pPlayer1Data->TrackingAgeSeconds()
-                   >= pPlayer2Data->TrackingAgeSeconds()) {
+        } else if (pPlayer1Data->TrackingAgeSeconds() >= pPlayer2Data->TrackingAgeSeconds()) {
             primaryPlayer = pPlayer1Data;
             primaryPlayerChar = player1Char;
             secondaryPlayer = pPlayer2Data;

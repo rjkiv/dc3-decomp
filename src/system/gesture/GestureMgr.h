@@ -5,6 +5,7 @@
 #include "gesture/IdentityInfo.h"
 #include "gesture/Skeleton.h"
 #include "gesture/SkeletonQualityFilter.h"
+#include "hamobj/Ham.h"
 #include "obj/Dir.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
@@ -28,8 +29,6 @@ END_MESSAGE
 DECLARE_MESSAGE(SkeletonEnrollmentChangedMsg, "skeleton_enrollment_changed")
 SkeletonEnrollmentChangedMsg() : Message(Type()) {}
 END_MESSAGE
-
-#define NUM_SKELETONS 6
 
 // size 0x4294
 class GestureMgr : public Hmx::Object, public SkeletonCallback {

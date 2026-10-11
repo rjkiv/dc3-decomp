@@ -8,6 +8,7 @@
 #include "gesture/Skeleton.h"
 #include "gesture/SkeletonUpdate.h"
 #include "gesture/SkeletonViz.h"
+#include "hamobj/Ham.h"
 #include "hamobj/CharCameraInput.h"
 #include "hamobj/Difficulty.h"
 #include "hamobj/HamCharacter.h"

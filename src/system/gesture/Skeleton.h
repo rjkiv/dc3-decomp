@@ -95,7 +95,7 @@ protected:
 
     TrackedJoint mTrackedJoints[kNumJoints]; // 0x4
     float mCameraBoneLengths[kNumBones]; // 0x914
-    Transform mCameraToPlayer[5]; // 0x960
+    Transform mCameraToPlayer[kNumCoordSys - 1]; // 0x960
     SkeletonTracking mTracking; // 0xaa0
     int mQualityFlags; // 0xaa4
     int mElapsedMs; // 0xaa8
