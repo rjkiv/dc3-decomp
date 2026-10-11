@@ -132,7 +132,7 @@ BEGIN_LOADS(HamSongMetadata)
     if (rev >= 6) {
         int i;
         bs >> i;
-        mGender = (Gender)i;
+        mGender = (HamCharacter::Gender)i;
     }
     if (rev >= 8) {
         bs >> mLength;
@@ -271,7 +271,7 @@ void HamSongMetadata::InitHamSongMetadata() {
     mRating = 1;
     mRank = 0;
     mCharacter = emelia;
-    mGender = kHamMale;
+    mGender = HamCharacter::kHamMale;
     mBpm = 0;
     mLength = 0;
     mHasAlternatePath = false;
@@ -315,7 +315,7 @@ void HamSongMetadata::Integrate(DataArray *main_arr, DataArray *backup_arr, bool
     }
     static Symbol gender("gender");
     if (FIND_WITH_BACKUP(gender)) {
-        mGender = (Gender)member_arr->Int(1);
+        mGender = (HamCharacter::Gender)member_arr->Int(1);
     }
     static Symbol song_length("song_length");
     if (FIND_WITH_BACKUP(song_length)) {

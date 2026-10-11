@@ -76,7 +76,7 @@ private:
         Unused in DC3 in favor of default/backup characters below. */
     Symbol mCharacter; // 0x7c
     /** The assigned gender for this song. Should match the character. */
-    Gender mGender; // 0x80
+    HamCharacter::Gender mGender; // 0x80
     /** The length of this song, in ms. */
     int mLength; // 0x84
     /** The overall BPM of this song. */

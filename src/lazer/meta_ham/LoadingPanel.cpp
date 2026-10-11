@@ -23,8 +23,8 @@
 #include "utl/TempoMap.h"
 #include "utl/TimeConversion.h"
 
-static HamMaster *sLoadingMaster; // DAT_8311A440
-static SongDB *sLoadingSongDB; // DAT_8311A444
+static HamMaster *sLoadingMaster = nullptr; // DAT_8311A440
+static SongDB *sLoadingSongDB = nullptr; // DAT_8311A444
 
 LoadingPanel::LoadingPanel() : mSongInfo(0), mTempoMapBackup(), mBeatMapBackup(0) {
     sLoadingSongDB = new SongDB();
