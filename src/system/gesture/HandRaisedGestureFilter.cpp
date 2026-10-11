@@ -11,7 +11,7 @@ static const float sFloat2 = 0.1f;
 static const float sFloat3 = 0.3f;
 
 HandRaisedGestureFilter::HandRaisedGestureFilter()
-    : mHandRaised(false), mRaisedMs(0), mRequiredMs(500) {
+    : mHandRaised(false), mHandRaisedTimer(0), mNeedHandRaisedTime(500) {
     Clear();
 }
 

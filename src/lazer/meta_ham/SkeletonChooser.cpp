@@ -860,7 +860,7 @@ int SkeletonChooser::RoundRobinForHandRaised(int i) {
                     mHandRaiseMsgTimer -= TheTaskMgr.DeltaUISeconds();
                     mHandRaiseMsgSpamTimer -= TheTaskMgr.DeltaUISeconds();
                     if (mHandRaiseMsgTimer <= 0.0f && mHandRaiseMsgSpamTimer <= 0.0f
-                        && mHandRaiseFilter[0]->StandingStillFilter().StandingStill()) {
+                        && mHandRaiseFilter[0]->IsStandingStill()) {
                         mElectiveCheckTimer = 0.08f;
                         mHandRaiseMsgCount++;
                         mHandRaiseMsgSpamTimer = 13.0f;

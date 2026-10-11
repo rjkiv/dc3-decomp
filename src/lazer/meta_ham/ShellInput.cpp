@@ -142,13 +142,13 @@ void ShellInput::Poll() {
         static Symbol gameplay_mode("gameplay_mode");
         static Symbol suppress_practice_options("suppress_practice_options");
         if (TheGameMode->Property(gameplay_mode)->Sym() == practice) {
-            if (mInvokeOptionsFilter->GetUnk140() && !sPracticeOptionsInvoked) {
+            if (mInvokeOptionsFilter->InPosition() && !sPracticeOptionsInvoked) {
                 if (TheHamProvider->Property(suppress_practice_options)->Int() == 0) {
                     TheHamProvider->Export(Message("invoke_practice_options"), true);
                     sPracticeOptionsInvoked = true;
                 }
             }
-            if (!mInvokeOptionsFilter->GetUnk140()
+            if (!mInvokeOptionsFilter->InPosition()
                 || TheHamProvider->Property(suppress_practice_options)->Int()) {
                 if (sPracticeOptionsInvoked) {
                     TheHamProvider->Export(Message("deinvoke_practice_options"), true);
@@ -160,11 +160,11 @@ void ShellInput::Poll() {
                || TheHamProvider->Property(is_in_party_mode)->Int()) {
         TheGestureMgr->SetIdentificationEnabled(false);
         if (TheHamProvider->Property(is_in_shell_pause)->Int() == 0) {
-            if (mInvokeOptionsFilter->GetUnk140() && !sPracticeOptionsInvokedPartyMode) {
+            if (mInvokeOptionsFilter->InPosition() && !sPracticeOptionsInvokedPartyMode) {
                 TheHamProvider->Export(Message("invoke_practice_options"), true);
                 sPracticeOptionsInvokedPartyMode = true;
             }
-            if (!mInvokeOptionsFilter->GetUnk140() && sPracticeOptionsInvokedPartyMode) {
+            if (!mInvokeOptionsFilter->InPosition() && sPracticeOptionsInvokedPartyMode) {
                 TheHamProvider->Export(Message("deinvoke_practice_options"), true);
                 sPracticeOptionsInvokedPartyMode = false;
             }
