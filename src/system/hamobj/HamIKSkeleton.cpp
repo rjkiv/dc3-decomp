@@ -56,35 +56,37 @@ void HamIKSkeleton::SetName(const char *name, ObjectDir *dir) {
     mChar = dynamic_cast<HamCharacter *>(dir);
 }
 
-void HamIKSkeleton::NeutralLocalPos(RndTransformable *t, Vector3 &v) {
+void HamIKSkeleton::NeutralLocalPos(RndTransformable *bone, Vector3 &pos) {
     if (mNeutralSkelDir) {
-        if (!streq(t->Name(), "bone_pelvis.mesh")) {
-            t = mNeutralSkelDir->Find<RndTransformable>(t->Name(), true);
+        if (!streq(bone->Name(), "bone_pelvis.mesh")) {
+            bone = mNeutralSkelDir->Find<RndTransformable>(bone->Name(), true);
         }
     }
-    v = t->LocalXfm().v;
+    pos = bone->LocalXfm().v;
 }
 
-void HamIKSkeleton::NeutralWorldXfm(RndTransformable *t, Transform &xfm) {
+void HamIKSkeleton::NeutralWorldXfm(RndTransformable *bone, Transform &world) {
     if (mNeutralSkelDir && mNeutralSkelDir != mChar) {
         RndTransformable *charTrans =
-            mNeutralSkelDir->Find<RndTransformable>(t->Name(), false);
+            mNeutralSkelDir->Find<RndTransformable>(bone->Name(), false);
         if (charTrans) {
-            SetBone(t, charTrans);
-            t = charTrans;
+            SetBone(bone, charTrans);
+            bone = charTrans;
         }
     }
-    xfm = t->WorldXfm();
+    world = bone->WorldXfm();
 }
 
-void HamIKSkeleton::SetBone(RndTransformable *t1, RndTransformable *t2) {
-    if (t2->Dirty()) {
-        if (!t1) {
-            MILO_NOTIFY_ONCE("%s bone is NULL, neutral is %s", PathName(this), t2->Name());
+void HamIKSkeleton::SetBone(RndTransformable *bone, RndTransformable *neutral) {
+    if (neutral->Dirty()) {
+        if (!bone) {
+            MILO_NOTIFY_ONCE(
+                "%s bone is NULL, neutral is %s", PathName(this), neutral->Name()
+            );
         } else {
-            SetBone(t1->TransParent(), t2->TransParent());
-            t2->SetLocalRot(t1->LocalXfm().m);
-            t2->WorldXfm();
+            SetBone(bone->TransParent(), neutral->TransParent());
+            neutral->SetLocalRot(bone->LocalXfm().m);
+            neutral->WorldXfm();
         }
     }
 }

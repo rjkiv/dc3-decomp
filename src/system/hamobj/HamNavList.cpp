@@ -64,15 +64,15 @@ HamNavList::HamNavList()
       mSlideAmount(0, 10, 10), mDisengageAmount(0, 10, 0), mDirectionFilter(0),
       mHandHeightFilter(0), mSkeletonTrackingID(0), mScrollBehavior(this, &mListState),
       mDisableSlideSound(0), mDisableSelectSound(0), mEnabled(1), mEnableSelection(1),
-      mAlwaysUseActiveSkeleton(1), mOnlyUseWhenFocused(1), unk1ec(0), unk1f0(0),
-      unk1f8(-1), unk1fd(0), unk1fe(0) {
+      mAlwaysUseActiveSkeleton(1), mOnlyUseWhenFocused(1), mLastDrawnTime(0),
+      mRefreshing(0), mLastSelectedIndex(-1), mDoubleUser(0), unk1fe(0) {
     mListState.SetSpeed(0);
     mListState.SetSelected(0, -1, true);
     SetRate(k30_fps_ui);
 }
 
 HamNavList::~HamNavList() {
-    DeleteAll(unk64);
+    DeleteAll(mWidgets);
     SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
     if (handle.HasCallback(this)) {
         handle.RemoveCallback(this);
@@ -100,7 +100,7 @@ BEGIN_HANDLERS(HamNavList)
     HANDLE_EXPR(is_scrolling_settled, IsScrollingSettled())
     HANDLE_ACTION(scroll_to_index, ScrollToIndex(_msg->Int(2), _msg->Int(3)))
     HANDLE_EXPR(get_top_index, mListState.FirstShowing())
-    HANDLE_ACTION(refresh, unk1f0 = true)
+    HANDLE_ACTION(refresh, mRefreshing = true)
     HANDLE_ACTION(set_controller_focus, SetControllerFocus(_msg->Int(2)))
     HANDLE_ACTION(play_enter_anim, PlayEnterAnim())
     HANDLE_ACTION(enable_navigation, mEnabled = true)
@@ -114,8 +114,8 @@ BEGIN_HANDLERS(HamNavList)
     HANDLE_ACTION(push_back_big_element, PushBackBigElement(_msg->Sym(2)))
     HANDLE_ACTION(pop_back_big_element, mBigElements.pop_back())
     HANDLE_ACTION(erase_big_element, EraseBigElement(_msg->Int(2)))
-    HANDLE_ACTION(push_back_big_element_index, unk20c.push_back(_msg->Int(2)))
-    HANDLE_ACTION(pop_back_big_element_index, unk20c.pop_back())
+    HANDLE_ACTION(push_back_big_element_index, mBigElementIndices.push_back(_msg->Int(2)))
+    HANDLE_ACTION(pop_back_big_element_index, mBigElementIndices.pop_back())
     HANDLE_EXPR(is_data_header, IsDataHeader(_msg->Int(2)))
     HANDLE_EXPR(get_num_display, mListState.NumDisplay())
     HANDLE_EXPR(data_index, mListState.Provider()->DataIndex(_msg->Sym(2)))
@@ -262,8 +262,8 @@ void HamNavList::PostLoad(BinStream &bs) {
 }
 
 void HamNavList::DrawShowing() {
-    if (mListDir && !unk1f0) {
-        unk1ec = TheTaskMgr.UISeconds();
+    if (mListDir && !mRefreshing) {
+        mLastDrawnTime = TheTaskMgr.UISeconds();
         UIListWidgetDrawState drawState;
         mListDir->BuildDrawState(
             drawState, mListState, kFocused, 0, !mScrollBehavior.IsScrolling()
@@ -273,7 +273,7 @@ void HamNavList::DrawShowing() {
             for (int i = 0; i < mRibbonDrawStates.size(); i++) {
                 if (i < mListState.MinDisplay()
                     || i >= mListState.MinDisplay() + HamListRibbon::sNumListSelectable) {
-                    mRibbonDrawStates[i].unk0.SetParams(0, 0, 0);
+                    mRibbonDrawStates[i].mSwellAmount.SetParams(0, 0, 0);
                 }
             }
         }
@@ -292,12 +292,12 @@ void HamNavList::DrawShowing() {
             mHeaderRibbon->Draw(WorldXfm(), mRibbonDrawStates, true, false);
         }
         for (int i = 0; i < mRibbonDrawStates.size(); i++) {
-            if (mRibbonDrawStates[i].unk1c && mRibbonDrawStates[i].unk18) {
-                mRibbonDrawStates[i].unk18->mAlpha = 0;
+            if (mRibbonDrawStates[i].mHide && mRibbonDrawStates[i].mElementDrawState) {
+                mRibbonDrawStates[i].mElementDrawState->mAlpha = 0;
             }
         }
         mListDir->DrawWidgets(
-            drawState, mListState, unk64, WorldXfm(), GetState(), nullptr, false
+            drawState, mListState, mWidgets, WorldXfm(), GetState(), nullptr, false
         );
         if (mScrollSpeedIndicator) {
             mScrollSpeedIndicator->Draw(WorldXfm());
@@ -326,7 +326,7 @@ void HamNavList::EraseBigElement(int idx) {
 
 bool HamNavList::SkipPoll() const {
     float uiSeconds = (float)TheTaskMgr.UISeconds();
-    if (unk1ec < uiSeconds - 0.5f) {
+    if (mLastDrawnTime < uiSeconds - 0.5f) {
         return true;
     } else {
         return mNavInputType == kNavInput_RightHand && mOnlyUseWhenFocused
@@ -335,7 +335,7 @@ bool HamNavList::SkipPoll() const {
     return false;
 }
 
-void HamNavList::Refresh() { unk1f0 = true; }
+void HamNavList::Refresh() { mRefreshing = true; }
 
 void HamNavList::SetHighButtonMode(bool b) {
     unk1fe = b;
@@ -347,7 +347,7 @@ void HamNavList::SetHighButtonMode(bool b) {
 int HamNavList::NumData() const { return 18; }
 
 void HamNavList::SetSwelling() {
-    if (unk1f0)
+    if (mRefreshing)
         RealRefresh();
 
     if (mRibbonMode != HamListRibbon::kRibbonSelect) {
@@ -407,7 +407,7 @@ void HamNavList::RemoveRibbonSinks(Hmx::Object *o, Symbol s) {
 }
 
 void HamNavList::DoSelectFor(int i) {
-    if (unk1f0)
+    if (mRefreshing)
         RealRefresh();
     mListState.SetSelected(i, mListState.FirstShowing(), true);
     sLastSelectInControllerMode = true;
@@ -434,10 +434,10 @@ void HamNavList::OldResourcePreload(BinStream &bs) {
 }
 
 void HamNavList::HideItem(int index, bool b) {
-    if (unk1f0)
+    if (mRefreshing)
         RealRefresh();
     MILO_ASSERT_RANGE(index, 0, mRibbonDrawStates.size(), 0x527);
-    mRibbonDrawStates[index].unk1c = b;
+    mRibbonDrawStates[index].mHide = b;
     if (mNavProvider)
         mNavProvider->SetEnabled(index, b == false);
 }
@@ -452,19 +452,19 @@ bool HamNavList::IsDataHeader(int i) {
 }
 
 void HamNavList::ScrollSubList(int i, int j) {
-    if (unk1f0)
+    if (mRefreshing)
         RealRefresh();
 
-    UIList *list = mListDir->SubList(i, unk64);
+    UIList *list = mListDir->SubList(i, mWidgets);
     if (list)
         list->Scroll(j);
 }
 
 void HamNavList::ScrollSubListToIndex(int i, int j) {
-    if (unk1f0)
+    if (mRefreshing)
         RealRefresh();
 
-    UIList *list = mListDir->SubList(i, unk64);
+    UIList *list = mListDir->SubList(i, mWidgets);
     if (list)
         list->SetSelected(j, j);
 }
@@ -533,7 +533,7 @@ void HamNavList::SetProviderNavItemLabels(int i, DataArray *d) {
 
 void HamNavList::StartScroll(UIListState const &state, int i, bool b) {
     if (mListDir) {
-        mListDir->StartScroll(state, unk64, i, b);
+        mListDir->StartScroll(state, mWidgets, i, b);
     }
 }
 
@@ -551,7 +551,7 @@ Symbol HamNavList::GetSelectedSym() const {
 }
 
 void HamNavList::SendHighlightMsg(int i) {
-    if (unk1f0)
+    if (mRefreshing)
         RealRefresh();
     UIListProvider *provider = mListState.Provider();
     MILO_ASSERT(provider, 0x339);
@@ -579,7 +579,7 @@ int HamNavList::GetHighlightItem() const {
 }
 
 void HamNavList::SetSliding(float f) {
-    if (unk1f0)
+    if (mRefreshing)
         RealRefresh();
 
     if (mRibbonMode != HamListRibbon::kRibbonSelect) {
@@ -604,7 +604,7 @@ void HamNavList::Draw(const BaseSkeleton &baseSkeleton, SkeletonViz &skeletonViz
 }
 
 void HamNavList::SetHighlight(int i) {
-    if (unk1f0)
+    if (mRefreshing)
         RealRefresh();
     UIListProvider *provider = mListState.Provider();
     if (provider && (0 <= i) && (i < mListState.NumShowing())) {
@@ -642,7 +642,7 @@ void HamNavList::Update() {
         mHandHeightFilter = new HandHeightGestureFilter(kSkeletonLeft);
     }
 
-    unk1fd = TheGestureMgr->InDoubleUserMode();
+    mDoubleUser = TheGestureMgr->InDoubleUserMode();
     if (mDirectionFilter) {
         mDirectionFilter->SetHighButtonMode(unk1fe);
     }
@@ -658,9 +658,9 @@ void HamNavList::Update() {
 
     if (mListDir) {
         int numShowing = mListState.NumDisplay();
-        mListDir->CreateElements(nullptr, unk64, numShowing);
+        mListDir->CreateElements(nullptr, mWidgets, numShowing);
     }
-    unk1f0 = true;
+    mRefreshing = true;
 }
 
 void HamNavList::PostUpdate(SkeletonUpdateData const *data) {
@@ -722,7 +722,7 @@ void HamNavList::SetRibbonMode(HamListRibbon::RibbonMode mode) {
 
 void HamNavList::ClearBigElements() {
     mBigElements.clear();
-    unk20c.clear();
+    mBigElementIndices.clear();
 }
 
 void HamNavList::Exit() {
@@ -738,8 +738,8 @@ void HamNavList::Exit() {
         mScrollSpeedIndicator->HandleExit();
     }
     mScrollBehavior.Exit();
-    unk1f4 = gNullStr;
-    unk1f8 = -1;
+    mLastSelected = gNullStr;
+    mLastSelectedIndex = -1;
 }
 
 void HamNavList::Enter() {
@@ -768,7 +768,7 @@ void HamNavList::Enter() {
     if (mScrollSpeedIndicator) {
         mScrollSpeedIndicator->HandleEnter();
     }
-    unk1ec = TheTaskMgr.UISeconds();
+    mLastDrawnTime = TheTaskMgr.UISeconds();
     RealRefresh();
 
     static Symbol cheat_focus_restart("cheat_focus_restart");
@@ -792,7 +792,7 @@ void HamNavList::Disengage() {
 
 void HamNavList::CompleteScroll(const UIListState &state) {
     if (mListDir) {
-        mListDir->CompleteScroll(state, unk64);
+        mListDir->CompleteScroll(state, mWidgets);
     }
 }
 
@@ -801,7 +801,7 @@ void HamNavList::ScrollToIndex(int i, int j) {
         mScrollBehavior.Exit();
     }
     mListState.SetSelected(i, j, true);
-    unk1f0 = true;
+    mRefreshing = true;
     SetHighlight(i);
 }
 
@@ -833,12 +833,12 @@ void HamNavList::PlayEnterAnim() {
 
 void HamNavList::Poll() {
     UIComponent::Poll();
-    if (unk1f0) {
+    if (mRefreshing) {
         RealRefresh();
     }
 
     if (mListDir) {
-        mListDir->PollWidgets(unk64);
+        mListDir->PollWidgets(mWidgets);
     }
 
     if (SkipPoll()) {
@@ -850,7 +850,7 @@ void HamNavList::Poll() {
     }
 
     if (TheGestureMgr && !TheLoadMgr.EditMode()) {
-        if (TheGestureMgr->InDoubleUserMode() != unk1fd) {
+        if (TheGestureMgr->InDoubleUserMode() != mDoubleUser) {
             Update();
         }
         if (mAlwaysUseActiveSkeleton) {
@@ -929,7 +929,7 @@ void HamNavList::Poll() {
     }
 
     for (int i = 0; i < mRibbonDrawStates.size(); i++) {
-        mRibbonDrawStates[i].unk0.Smooth(
+        mRibbonDrawStates[i].mSwellAmount.Smooth(
             GetTargetSwellAmount(i), TheTaskMgr.DeltaUISeconds()
         );
     }
@@ -944,23 +944,23 @@ void HamNavList::Poll() {
         && !TheUI->InTransition() && !TheLoadMgr.EditMode()) {
         SetRibbonMode(HamListRibbon::kRibbonSwell);
         for (int i = 0; i < mRibbonDrawStates.size(); i++) {
-            mRibbonDrawStates[i].unk0.SetParams(0, 0, 0);
+            mRibbonDrawStates[i].mSwellAmount.SetParams(0, 0, 0);
         }
 
-        if (unk1f8 != -1) {
+        if (mLastSelectedIndex != -1) {
             UIListProvider *provider = mListState.Provider();
             MILO_ASSERT(provider, 0x185);
 
             static Message navSelectDoneMsg("nav_select_done", 0, 0, 0, 0);
-            navSelectDoneMsg[0] = unk1f4;
-            navSelectDoneMsg[1] = unk1f8;
+            navSelectDoneMsg[0] = mLastSelected;
+            navSelectDoneMsg[1] = mLastSelectedIndex;
             navSelectDoneMsg[2] = this;
-            navSelectDoneMsg[3] = unk1fc;
+            navSelectDoneMsg[3] = mLastCanSelect;
 
             TheUI->Handle(navSelectDoneMsg, false);
             TheHamProvider->Handle(navSelectDoneMsg, false);
 
-            unk1f8 = -1;
+            mLastSelectedIndex = -1;
         }
 
         if (mListRibbon) {
@@ -999,7 +999,7 @@ void HamNavList::SetSelecting(bool b) {
         UIListProvider *provider = mListState.Provider();
         MILO_ASSERT(provider, 0x491);
         int selected = mListState.Selected();
-        UIList *sublist = mListDir->SubList(selected, unk64);
+        UIList *sublist = mListDir->SubList(selected, mWidgets);
         Symbol s;
         if (sublist) {
             HamNavProvider *navProvider = mNavProvider; // -_-
@@ -1018,9 +1018,9 @@ void HamNavList::SetSelecting(bool b) {
         }
         UIComponent::SendSelect(nullptr);
         bool canSelect = provider->CanSelect(selected);
-        unk1fc = canSelect;
-        unk1f4 = s;
-        unk1f8 = selected;
+        mLastCanSelect = canSelect;
+        mLastSelected = s;
+        mLastSelectedIndex = selected;
 
         NavSelectMsg msg(s, selected, this, canSelect);
         TheHamProvider->Handle(msg, false);
@@ -1035,12 +1035,12 @@ void HamNavList::SetSelecting(bool b) {
 
         if (mListRibbon) {
             mListRibbon->SetSlideSoundFrame(1);
-            mListRibbon->SetUnk26C(ShouldSkipSelectAnim(handle));
+            mListRibbon->SetToggleAnim(ShouldSkipSelectAnim(handle));
         }
 
         if (mHeaderRibbon) {
             mHeaderRibbon->SetSlideSoundFrame(1);
-            mHeaderRibbon->SetUnk26C(ShouldSkipSelectAnim(handle));
+            mHeaderRibbon->SetToggleAnim(ShouldSkipSelectAnim(handle));
         }
 
         RndAnimatable::Animate(0, 0, 0);
@@ -1058,7 +1058,7 @@ void HamNavListGlitchCB(float ms, void *refresh) {
 
 void HamNavList::RealRefresh() {
     AutoGlitchReport report(15.0f, HamNavListGlitchCB, this);
-    unk1f0 = false;
+    mRefreshing = false;
     if (mListRibbon) {
         UIListProvider *provider = mListState.Provider();
         if (provider) {
@@ -1084,7 +1084,7 @@ void HamNavList::RealRefresh() {
     if (mListDir) {
         mListState.Provider()->UnHighlightCurrent();
         mListState.Provider()->ClearIconLabels();
-        mListDir->FillElements(mListState, unk64);
+        mListDir->FillElements(mListState, mWidgets);
     }
 
     if (mNavInputType == kNavInput_RightHand) {
@@ -1174,8 +1174,8 @@ bool HamNavList::IsElementBig(int element) const {
                 return true;
             }
         }
-        for (int i = 0; i < unk20c.size(); i++) {
-            if (idx == unk20c[i]) {
+        for (int i = 0; i < mBigElementIndices.size(); i++) {
+            if (idx == mBigElementIndices[i]) {
                 return true;
             }
         }
@@ -1245,25 +1245,25 @@ void HamNavList::LinkRibbonDrawState(
         ribbonDrawStates.resize(numUIElements);
     }
     for (int i = 0; i < numUIElements; i++) {
-        ribbonDrawStates[i].unk14 = i == mListState.SelectedDisplay();
+        ribbonDrawStates[i].mHighlight = i == mListState.SelectedDisplay();
         if (mListRibbon->IsScrollable(mListState.NumShowing())) {
-            ribbonDrawStates[i].unk24 = mListState.Provider()->IsHeader(
+            ribbonDrawStates[i].mHeader = mListState.Provider()->IsHeader(
                 mListState.FirstShowing() + i - mListState.MinDisplay()
             );
         } else {
-            ribbonDrawStates[i].unk24 = mListState.Provider()->IsHeader(i);
+            ribbonDrawStates[i].mHeader = mListState.Provider()->IsHeader(i);
         }
-        ribbonDrawStates[i].unk20 = IsElementBig(i);
-        ribbonDrawStates[i].unk18 = &widgetDrawStates.mElements[i];
-        ribbonDrawStates[i].unk18->mComponentState = mState;
-        if (ribbonDrawStates[i].unk18->mElementState == kUIListWidgetHighlight) {
+        ribbonDrawStates[i].mBig = IsElementBig(i);
+        ribbonDrawStates[i].mElementDrawState = &widgetDrawStates.mElements[i];
+        ribbonDrawStates[i].mElementDrawState->mComponentState = mState;
+        if (ribbonDrawStates[i].mElementDrawState->mElementState == kUIListWidgetHighlight) {
             if (!mListRibbon->TestEntering()
                 && mRibbonMode != HamListRibbon::kRibbonDisengaged) {
                 if (TheUI->FocusComponent() == this || !InControllerMode()) {
                     continue;
                 }
             }
-            ribbonDrawStates[i].unk18->mElementState = kUIListWidgetActive;
+            ribbonDrawStates[i].mElementDrawState->mElementState = kUIListWidgetActive;
         }
     }
 }
@@ -1331,7 +1331,7 @@ void HamNavList::DetermineHighlightedItem() {
 }
 
 void HamNavList::UpdateGestures(const Skeleton *skeleton) {
-    if (unk1f0) {
+    if (mRefreshing) {
         RealRefresh();
     }
     if (!InControllerMode() && !GesturingWithVoice() && mEnabled) {
@@ -1417,7 +1417,7 @@ void HamNavList::UpdateGestures(const Skeleton *skeleton) {
 }
 
 DataNode HamNavList::OnMsg(const ButtonDownMsg &msg) {
-    if (unk1f0) {
+    if (mRefreshing) {
         RealRefresh();
     }
 

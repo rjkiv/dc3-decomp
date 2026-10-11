@@ -21,8 +21,9 @@ HamMaster *TheMaster;
 
 HamMaster::HamMaster(HamSongData *data, MidiParserMgr *mgr)
     : mSongData(data), mAudio(nullptr), mMidiParserMgr(mgr), mSongInfo(nullptr),
-      mLoader(0), unk45(0), unk48(0), mStreamMs(-1), unk50(0), unk54(-1), unk58(-1),
-      unk5c(-1), unka4(0), unkb0(0), mMetronome(0) {
+      mLoader(0), mLoaded(0), mLastStreamMs(0), mStreamMs(-1), mLoopBack(0),
+      mLoopBackFromStreamMs(-1), mLastLoopFromMs(-1), mLastLoopToMs(-1),
+      mLevelHighWaterMark(0), mActivePlayerTrack(0), mMetronome(0) {
     Reset();
     mAudio = new HamAudio();
 }
@@ -41,30 +42,31 @@ BEGIN_PROPSYNCS(HamMaster)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
-void HamMaster::Poll(float f1) {
+void HamMaster::Poll(float ms) {
     if (IsLoaded() && mAudio->GetSongStream()) {
-        unk48 = f1;
-        unk60 = mSongData->CalcSongPos(this, unk48);
-        float f9 = mAudio->GetSongStream()->GetJumpBackTotalTime(unk48) + unk48;
-        unk50 = f9 < mStreamMs;
+        mLastStreamMs = ms;
+        mSongPos = mSongData->CalcSongPos(this, mLastStreamMs);
+        float f9 =
+            mAudio->GetSongStream()->GetJumpBackTotalTime(mLastStreamMs) + mLastStreamMs;
+        mLoopBack = f9 < mStreamMs;
         Marker marker2, marker1;
         bool jp = mAudio->GetSongStream()->CurrentJumpPoints(marker1, marker2);
-        if (!unk50 && jp && marker1.posMS <= marker2.posMS) {
-            unk50 = mStreamMs <= marker2.posMS && marker2.posMS < f9;
+        if (!mLoopBack && jp && marker1.posMS <= marker2.posMS) {
+            mLoopBack = mStreamMs <= marker2.posMS && marker2.posMS < f9;
         }
-        if (unk50) {
+        if (mLoopBack) {
             float f10;
             if (jp) {
                 f10 = MsToTick(marker2.posMS) - 1.0f;
             } else {
-                f10 = unk60.GetTotalTick();
+                f10 = mSongPos.GetTotalTick();
             }
             if (mMidiParserMgr) {
                 mMidiParserMgr->Reset(f10);
             }
-            unk54 = mStreamMs;
-            unk58 = marker1.posMS;
-            unk5c = marker2.posMS;
+            mLoopBackFromStreamMs = mStreamMs;
+            mLastLoopFromMs = marker1.posMS;
+            mLastLoopToMs = marker2.posMS;
             static Message msg("stream_jump");
             Export(msg, true);
         }
@@ -78,24 +80,24 @@ void HamMaster::Poll(float f1) {
     }
 }
 
-void HamMaster::Jump(float f1) {
-    unk60 = mSongData->CalcSongPos(this, f1);
-    const SongPos &tmp = unk60;
-    unk78 = tmp;
-    unkb4 = -1;
-    unkb8 = 0;
+void HamMaster::Jump(float ms) {
+    mSongPos = mSongData->CalcSongPos(this, ms);
+    const SongPos &tmp = mSongPos;
+    mLastSongPos = tmp;
+    mCurActivePlayers = -1;
+    mActivePlayerGemIdx = 0;
     if (mMidiParserMgr) {
         mMidiParserMgr->Reset(tmp.GetTotalTick());
     }
-    mAudio->Jump(f1);
+    mAudio->Jump(ms);
 }
 
 void HamMaster::Reset() {
-    unk78 = SongPos();
-    unkb8 = 0;
-    unkb4 = -1;
-    for (int i = 0; i < unk90.size(); i++) {
-        unk90[i] = 0;
+    mLastSongPos = SongPos();
+    mActivePlayerGemIdx = 0;
+    mCurActivePlayers = -1;
+    for (int i = 0; i < mSubmixIdxs.size(); i++) {
+        mSubmixIdxs[i] = 0;
     }
     if (mMidiParserMgr) {
         mMidiParserMgr->Reset();
@@ -104,9 +106,9 @@ void HamMaster::Reset() {
     Export(msg, true);
     ResetAudio();
     mStreamMs = 0;
-    unk54 = 0;
-    unk50 = false;
-    unk48 = 0;
+    mLoopBackFromStreamMs = 0;
+    mLoopBack = false;
+    mLastStreamMs = 0;
     if (TheSynth->CheckCommonBank(false)) {
         Fader *fade = TheSynth->Find<Fader>("music_level.fade", false);
         if (fade) {
@@ -139,27 +141,29 @@ float HamMaster::SongDurationMs() {
 }
 
 void HamMaster::Load(
-    SongInfo *s,
-    bool b2,
-    int i3,
-    bool b4,
-    HamSongDataValidate v,
-    std::vector<MidiReceiver *> *
+    SongInfo *song_info,
+    bool stream,
+    int num_difficulties,
+    bool synchronous,
+    HamSongDataValidate validateMode,
+    std::vector<MidiReceiver *> *receivers
 ) {
-    unk44 = b2;
-    mSongInfo = s;
-    mSongData->Load(s, b4, v);
+    mSongStream = stream;
+    mSongInfo = song_info;
+    mSongData->Load(song_info, synchronous, validateMode);
     MILO_ASSERT(!mLoader, 0x69);
     mLoader = new HamMasterLoader(this);
-    unk45 = false;
-    if (b4) {
+    mLoaded = false;
+    if (synchronous) {
         TheLoadMgr.PollUntilLoaded(mLoader, nullptr);
     }
 }
 
-void HamMaster::LoadOnlySongData(SongInfo *s, bool b, HamSongDataValidate v) {
-    mSongInfo = s;
-    mSongData->Load(s, b, v);
+void HamMaster::LoadOnlySongData(
+    SongInfo *song_info, bool synchronous, HamSongDataValidate validateMode
+) {
+    mSongInfo = song_info;
+    mSongData->Load(song_info, synchronous, validateMode);
 }
 
 void HamMaster::ResetAudio() {
@@ -171,12 +175,12 @@ void HamMaster::ResetAudio() {
 float HamMaster::StreamMs() const { return mStreamMs; }
 
 bool HamMaster::DetectStreamJump(float &f1, float &f2, float &f3) const {
-    if (!unk50) {
+    if (!mLoopBack) {
         return false;
     } else {
-        f1 = unk54;
-        f2 = unk58;
-        f3 = unk5c;
+        f1 = mLoopBackFromStreamMs;
+        f2 = mLastLoopFromMs;
+        f3 = mLastLoopToMs;
         return true;
     }
 }
@@ -210,21 +214,21 @@ void HamMaster::LoaderPoll() {
             dir.LoadFile(cfg->Str(1), false, true, kLoadFront, false);
             TheSynth->SetDir(dir);
         }
-        mAudio->Load(mSongInfo, unk44);
+        mAudio->Load(mSongInfo, mSongStream);
         mSongInfo = nullptr;
         if (mMidiParserMgr) {
             mMidiParserMgr->FinishLoad();
         }
-        unk45 = true;
+        mLoaded = true;
         RELEASE(mLoader);
     }
 }
 
 void HamMaster::CheckBeat() {
-    int totalbeat1 = unk78.GetTotalBeat();
-    int totalbeat2 = unk60.GetTotalBeat();
+    int totalbeat1 = mLastSongPos.GetTotalBeat();
+    int totalbeat2 = mSongPos.GetTotalBeat();
     if (totalbeat1 != totalbeat2) {
-        int beat = unk60.GetBeat();
+        int beat = mSongPos.GetBeat();
         TheHamProvider->SetProperty("beat", beat + 1);
         if (beat == 0) {
             if (mMetronome) {
@@ -240,21 +244,21 @@ void HamMaster::CheckBeat() {
         static Message msg("beat");
         Export(msg, true);
     }
-    if (unk78.GetMeasure() != unk60.GetMeasure()) {
+    if (mLastSongPos.GetMeasure() != mSongPos.GetMeasure()) {
         static DataNode &n = DataVariable("measure");
-        n = unk60.GetMeasure();
+        n = mSongPos.GetMeasure();
         static Message msg("downbeat");
         TheHamProvider->Export(msg, true);
     }
-    if (unk78.GetTick() / 240 != unk60.GetTick() / 240) {
+    if (mLastSongPos.GetTick() / 240 != mSongPos.GetTick() / 240) {
         static Message msg("halfbeat");
         TheHamProvider->Export(msg, true);
     }
-    if (unk78.GetTick() / 120 != unk60.GetTick() / 120) {
+    if (mLastSongPos.GetTick() / 120 != mSongPos.GetTick() / 120) {
         static Message msg("quarterbeat");
         TheHamProvider->Export(msg, true);
     }
-    unk78 = unk60;
+    mLastSongPos = mSongPos;
 }
 
 void HamMaster::CheckLevels() {
@@ -278,21 +282,21 @@ void HamMaster::CheckLevels() {
                 ClampEq(f12, 0.0f, 1.0f);
                 ClampEq(f13, 0.0f, 1.0f);
 
-                unka8.push_back(Vector2(f12, f13));
+                mLevelHistorisis.push_back(Vector2(f12, f13));
 
                 float f14 = 0;
                 float f15 = 0;
-                FOREACH (it, unka8) {
+                FOREACH (it, mLevelHistorisis) {
                     Vector2 &cur = *it;
                     f15 += cur.x;
                     f14 += cur.y;
                 }
-                unsigned int numVecs = unka8.size();
+                unsigned int numVecs = mLevelHistorisis.size();
                 float f15div = (1 / (float)numVecs) * f15;
                 float f14div = (1 / (float)numVecs) * f14;
 
-                while (unka8.size() > 3) {
-                    unka8.pop_front();
+                while (mLevelHistorisis.size() > 3) {
+                    mLevelHistorisis.pop_front();
                 }
 
                 float channels[8];

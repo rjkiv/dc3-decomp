@@ -38,7 +38,7 @@ public:
     virtual void Reset();
     virtual HxAudio *GetHxAudio() { return mAudio ? mAudio : nullptr; }
     virtual float SongDurationMs();
-    virtual bool IsLoaded() { return unk45; }
+    virtual bool IsLoaded() { return mLoaded; }
 
     void
     Load(SongInfo *, bool, int, bool, HamSongDataValidate, std::vector<MidiReceiver *> *);
@@ -50,14 +50,14 @@ public:
     void AddMusicFader(Fader *);
     void SetMaps();
     void LoaderPoll();
-    int Unk70() const { return unk60.GetMeasure(); }
-    float TotalBeat1() const { return unk60.GetTotalBeat(); }
-    float TotalBeat2() const { return unk78.GetTotalBeat(); }
+    int Unk70() const { return mSongPos.GetMeasure(); }
+    float TotalBeat1() const { return mSongPos.GetTotalBeat(); }
+    float TotalBeat2() const { return mLastSongPos.GetTotalBeat(); }
     HamAudio *GetAudio() const { return mAudio; }
     HamSongData *SongData() const { return mSongData; }
     MidiParserMgr *GetMidiParserMgr() const { return mMidiParserMgr; }
-    const SongPos &Pos1() const { return unk60; }
-    const SongPos &Pos2() const { return unk78; }
+    const SongPos &Pos1() const { return mSongPos; }
+    const SongPos &Pos2() const { return mLastSongPos; }
 
 private:
     void CheckBeat();
@@ -68,25 +68,25 @@ private:
     MidiParserMgr *mMidiParserMgr; // 0x38
     SongInfo *mSongInfo; // 0x3c
     HamMasterLoader *mLoader; // 0x40
-    bool unk44;
-    bool unk45;
-    float unk48;
+    bool mSongStream;
+    bool mLoaded;
+    float mLastStreamMs;
     float mStreamMs; // 0x4c
-    bool unk50;
-    float unk54;
-    float unk58;
-    float unk5c;
-    SongPos unk60;
-    SongPos unk78;
-    std::vector<int> unk90;
-    std::pair<float, float> unk9c;
+    bool mLoopBack;
+    float mLoopBackFromStreamMs;
+    float mLastLoopFromMs;
+    float mLastLoopToMs;
+    SongPos mSongPos;
+    SongPos mLastSongPos;
+    std::vector<int> mSubmixIdxs;
+    std::pair<float, float> mCurLevel;
     // float unk9c;
     // float unka0;
-    float unka4;
-    std::list<Vector2> unka8;
-    int unkb0;
-    int unkb4;
-    int unkb8;
+    float mLevelHighWaterMark;
+    std::list<Vector2> mLevelHistorisis;
+    int mActivePlayerTrack;
+    int mCurActivePlayers;
+    int mActivePlayerGemIdx;
     bool mMetronome; // 0xbc
 };
 

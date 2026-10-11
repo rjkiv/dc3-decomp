@@ -632,12 +632,13 @@ void HamCharacter::SetPropShowing(int prop, bool show) {
 void HamCharacter::ApplyBlendedSkeletons(HamDriver *driver, CharClip *clip, float f) {
     if (clip->Unk18CSize() != 0) {
         auto &layers = driver->Layers();
-        FOREACH (it, layers.unk2c) {
+        FOREACH (it, layers.layers) {
             HamDriver::LayerClip *layerClip;
-            if ((*it)->FirstClip() == clip && (*it)->unk8 == f) {
+            if ((*it)->FirstClip() == clip && (*it)->usedWeight == f) {
                 layerClip = dynamic_cast<HamDriver::LayerClip *>(*it);
                 if (layerClip) {
-                    float val = TheTaskMgr.Beat() - layerClip->unkc + clip->StartBeat();
+                    float val =
+                        TheTaskMgr.Beat() - layerClip->startBeat + clip->StartBeat();
                     clip->ApplyBlendedSkeletons(sSkeletonClips, *mSkeletonBones, val, f);
                     return;
                 }

@@ -156,6 +156,7 @@ protected:
     /** "id used when comparing to other moves" */
     Hmx::CRC mConfusabilityID; // 0xd4
     std::map<Hmx::CRC, float> mConfusabilities; // 0xd8
+    /** "Dancer sequence to use for this move" */
     ObjPtr<DancerSequence> mDancerSeq; // 0xf0
 };
 
@@ -167,6 +168,16 @@ struct HamMoveKey {
 struct HamMoveScore {
     HamMove *move; // 0x0
     int ratingIdx; // 0x4
+    /**
+        Rating fraction, from 0 to 1, where:
+
+        Bad (-) >= 0
+        Almost (ALMOST) >= 0.5
+        OK (NICE!) >= 0.7
+        Flawless (FLAWLESS!!!) >= 0.9
+        Perfect (FLAWLESS!!!) = 1
+    */
     float detectFrac; // 0x8
+    /** Used in rehearse mode */
     bool slowMo; // 0xc
 };

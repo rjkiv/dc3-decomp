@@ -11,7 +11,8 @@
 #include "utl/Str.h"
 
 HamLabel::HamLabel()
-    : UITransitionHandler(this), unk178(""), unk180(0), mCanHaveFocus(0) {}
+    : UITransitionHandler(this), mPendingDisplayText(""), mPendingClearToken(0),
+      mCanHaveFocus(0) {}
 
 HamLabel::~HamLabel() {}
 
@@ -68,14 +69,14 @@ void HamLabel::PostLoad(BinStream &bs) {
     LoadHandlerData(d.stream);
 }
 
-void HamLabel::Count(int i1, int i2, float f3, Symbol s) {
+void HamLabel::Count(int from, int to, float timeS, Symbol s) {
     mCountKeys.clear();
     Key<float> key;
     key.frame = TheTaskMgr.UISeconds() * 1000.0f;
-    key.value = i1;
+    key.value = from;
     mCountKeys.push_back(key);
-    key.frame += f3;
-    key.value = i2;
+    key.frame += timeS;
+    key.value = to;
     mCountKeys.push_back(key);
     mCountToken = s;
 }
@@ -112,16 +113,16 @@ void HamLabel::Poll() {
     UpdateHandler();
 }
 
-void HamLabel::SetDisplayText(const char *cc, bool b2) {
-    if (!streq(cc, unk178.c_str()) || b2 != unk180) {
-        unk178 = cc;
-        unk180 = b2;
+void HamLabel::SetDisplayText(const char *text, bool clear_token) {
+    if (!streq(text, mPendingDisplayText.c_str()) || clear_token != mPendingClearToken) {
+        mPendingDisplayText = text;
+        mPendingClearToken = clear_token;
         UITransitionHandler::StartValueChange();
     }
 }
 
 void HamLabel::FinishValueChange() {
-    UILabel::SetDisplayText(unk178.c_str(), unk180);
+    UILabel::SetDisplayText(mPendingDisplayText.c_str(), mPendingClearToken);
     UITransitionHandler::FinishValueChange();
 }
 

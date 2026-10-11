@@ -15,15 +15,15 @@
 
 struct HamListRibbonDrawState {
     HamListRibbonDrawState()
-        : unk0(0, 10, 1), unk14(false), unk18(nullptr), unk1c(false), unk20(0),
-          unk24(false) {}
+        : mSwellAmount(0, 10, 1), mHighlight(false), mElementDrawState(nullptr),
+          mHide(false), mBig(0), mHeader(false) {}
 
-    DoubleExponentialSmoother unk0;
-    bool unk14;
-    UIListElementDrawState *unk18;
-    bool unk1c;
-    float unk20;
-    bool unk24;
+    DoubleExponentialSmoother mSwellAmount;
+    bool mHighlight;
+    UIListElementDrawState *mElementDrawState;
+    bool mHide;
+    float mBig;
+    bool mHeader;
 };
 
 /** "Top-level resource object for UILists" */
@@ -90,10 +90,10 @@ public:
     RndAnimatable *ScrollSoundAnim() const { return mScrollSoundAnim; }
     RndAnimatable *SlideSoundAnim() const { return mSlideSoundAnim; }
     RndAnimatable *EnterAnim() const { return mEnterAnim; }
-    void SetTestEntering(bool b) { mTestEntering = b; }
+    void SetTestEntering(bool entering) { mTestEntering = entering; }
     bool TestEntering() const { return mTestEntering; }
     void SetMode(RibbonMode mode) { mMode = mode; }
-    void SetUnk26C(bool b) { unk26c = b; }
+    void SetToggleAnim(bool toggle) { mUseToggleAnim = toggle; }
 
     void PlayScrollSound() {
         if (mScrollSound) {
@@ -161,7 +161,7 @@ private:
     int mPaddedSize; // 0x264
     /** "Spacing between padded ribbons" */
     float mPaddedSpacing; // 0x268
-    bool unk26c; // 0x26c
+    bool mUseToggleAnim; // 0x26c
     ObjPtr<RndAnimatable> mSwellAnim; // 0x270
     ObjPtr<RndAnimatable> mSlideAnim; // 0x284
     ObjPtr<RndAnimatable> mSelectAnim; // 0x298

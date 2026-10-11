@@ -6,8 +6,13 @@
 
 // size 0x2dc
 struct DancerFrame {
+    /** ID of the move that this frame belongs to */
     short mMoveIdx; // 0x0
+
+    /** Index of the frame within the move - from 1 to 16 */
     short mMoveFrameIdx; // 0x2
+
+    /** The DancerSkeleton for this frame */
     DancerSkeleton mSkeleton; // 0x4
 };
 
@@ -30,11 +35,19 @@ public:
     OBJ_MEM_OVERLOAD(0x1E);
     NEW_OBJ(DancerSequence);
 
+    /** Returns the DancerFrames - belonging to a move is done by mMoveIdx within each
+     */
     const std::vector<DancerFrame> &GetDancerFrames() const;
+
+    /** Returns the DancerSkeleton for the current DancerFrame
+     */
     const DancerSkeleton *CurSkeleton() const;
 
 protected:
     DancerSequence();
 
+    /** DancerFrames within this DancerSequence - belonging to a move is done by mMoveIdx
+     * within each
+     */
     std::vector<DancerFrame> mDancerFrames; // 0x10
 };

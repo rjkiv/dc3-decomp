@@ -16,7 +16,7 @@
 
 HamIKEffector::HamIKEffector()
     : mSkeleton(this), mEffector(this), mFinger(this), mGround(this), mMore(this),
-      mOther(this), mElbow(this), mConstraints(this), unkcc(this) {}
+      mOther(this), mElbow(this), mConstraints(this), mMe(this) {}
 
 HamIKEffector::~HamIKEffector() {}
 
@@ -127,7 +127,7 @@ END_LOADS
 
 void HamIKEffector::SetName(const char *name, ObjectDir *dir) {
     Hmx::Object::SetName(name, dir);
-    unkcc = dynamic_cast<Character *>(dir);
+    mMe = dynamic_cast<Character *>(dir);
 }
 
 void HamIKEffector::ListPollChildren(std::list<RndPollable *> &polls) const {

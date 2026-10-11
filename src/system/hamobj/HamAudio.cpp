@@ -15,10 +15,10 @@
 #include "utl/TimeConversion.h"
 
 HamAudio::HamAudio()
-    : mFileLoader(0), unk34(0), mSongInfo(0), mSongStream(0), mReady(0),
-      mMasterFader(Hmx::Object::New<Fader>()), mMuteMaster(0), unk59(0) {
-    unk44[0] = 0;
-    unk44[1] = 0;
+    : mFileLoader(0), mAudioData(0), mCurrSongInfo(0), mSongStream(0), mStreamEnabled(0),
+      mMasterFader(Hmx::Object::New<Fader>()), mMuteMaster(0), mInitSend(0) {
+    mSongStreams[0] = 0;
+    mSongStreams[1] = 0;
     mCrossFaders[0] = Hmx::Object::New<Fader>();
     mCrossFaders[1] = Hmx::Object::New<Fader>();
 }
@@ -61,14 +61,14 @@ BEGIN_PROPSYNCS(HamAudio)
 END_PROPSYNCS
 
 bool HamAudio::IsReady() {
-    if (!mSongStream && !unk34) {
+    if (!mSongStream && !mAudioData) {
         if (mFileLoader && mFileLoader->IsLoaded()) {
             FinishLoad();
         } else
             return false;
     }
-    mReady = mSongStream && mSongStream->IsReady();
-    return mReady;
+    mStreamEnabled = mSongStream && mSongStream->IsReady();
+    return mStreamEnabled;
 }
 
 bool HamAudio::Paused() const { return !(mSongStream && mSongStream->IsPlaying()); }
@@ -134,11 +134,11 @@ void HamAudio::Jump(float f1) {
         mSongStream->Stop();
         mCrossFaders[0]->SetVolume(0);
         mCrossFaders[1]->SetVolume(kDbSilence);
-        unk6c.unkc = 0;
-        if (unk44[1]) {
-            unk44[1]->Stop();
+        mActiveCrossfade.mXstate = CFS_UNSET;
+        if (mSongStreams[1]) {
+            mSongStreams[1]->Stop();
         }
-        mReady = false;
+        mStreamEnabled = false;
         mSongStream->Resync(f1);
     }
 }
@@ -147,7 +147,7 @@ void HamAudio::ClearLoop() {
     if (GetSongStream()) {
         GetSongStream()->ClearJump();
     }
-    unk5c.unkc = 0;
+    mQueuedCrossfade.mXstate = CFS_UNSET;
 }
 
 void HamAudio::DeleteFaders() {
@@ -164,29 +164,29 @@ void HamAudio::Clear() {
             mSongStream->SetFX(i, false);
         }
     }
-    RELEASE(unk44[0]);
-    RELEASE(unk44[1]);
+    RELEASE(mSongStreams[0]);
+    RELEASE(mSongStreams[1]);
     mSongStream = nullptr;
     RELEASE(mFileLoader);
-    if (unk34) {
-        MemFree(unk34);
-        unk34 = nullptr;
-        unk38 = 0;
+    if (mAudioData) {
+        MemFree(mAudioData);
+        mAudioData = nullptr;
+        mAudioDataSize = 0;
     }
-    mSongInfo = nullptr;
+    mCurrSongInfo = nullptr;
     DeleteFaders();
-    unk5c.unkc = 0;
-    unk6c.unkc = 0;
+    mQueuedCrossfade.mXstate = CFS_UNSET;
+    mActiveCrossfade.mXstate = CFS_UNSET;
 }
 
-void HamAudio::Load(SongInfo *info, bool b2) {
+void HamAudio::Load(SongInfo *song_info, bool stream) {
     Clear();
-    mSongInfo = info;
-    String str(info->GetBaseFileName());
-    if (b2) {
+    mCurrSongInfo = song_info;
+    String str(song_info->GetBaseFileName());
+    if (stream) {
         Stream *stream = TheSynth->NewStream(str.c_str(), 0, 0, false);
         mSongStream = stream;
-        unk44[0] = stream;
+        mSongStreams[0] = stream;
         FinishLoad();
     } else {
         String moggStr(MakeString("%s.mogg", str.c_str()));
@@ -199,18 +199,18 @@ void HamAudio::Load(SongInfo *info, bool b2) {
 void HamAudio::Play() {
     MILO_ASSERT(mSongStream, 0x11B);
     mSongStream->Play();
-    if (!unk59) {
+    if (!mInitSend) {
         if (TheSynth->CheckCommonBank(false)) {
             FxSend *send = TheSynth->Find<FxSend>("song.send", false);
             if (send) {
                 for (int i = 0; i < 2; i++) {
-                    if (unk44[i]) {
-                        for (int j = 0; j < unk44[i]->GetNumChannels(); j++) {
-                            unk44[i]->SetFXSend(j, send);
+                    if (mSongStreams[i]) {
+                        for (int j = 0; j < mSongStreams[i]->GetNumChannels(); j++) {
+                            mSongStreams[i]->SetFXSend(j, send);
                         }
                     }
                 }
-                unk59 = true;
+                mInitSend = true;
             }
         }
     }
@@ -238,53 +238,57 @@ bool HamAudio::GetCurrLoopMarkers(float &f1, float &f2) const {
     return true;
 }
 
-bool HamAudio::GetCurrLoopBeats(int &i1, int &i2) const {
+bool HamAudio::GetCurrLoopBeats(int &startBeats, int &endBeats) const {
     float f1, f2;
     if (!GetCurrLoopMarkers(f1, f2)) {
         return false;
     } else {
-        i1 = SecondsToBeat(f1 / 1000.0f) + 0.5f;
-        i2 = SecondsToBeat(f2 / 1000.0f) + 0.5f;
+        startBeats = SecondsToBeat(f1 / 1000.0f) + 0.5f;
+        endBeats = SecondsToBeat(f2 / 1000.0f) + 0.5f;
         return true;
     }
 }
 
-void HamAudio::SetLoop(float f1, float f2) {
-    SetLoop(BeatToMs(f1), BeatToMs(f2), GetSongStream());
+void HamAudio::SetLoop(float startBeat, float endBeat) {
+    SetLoop(BeatToMs(startBeat), BeatToMs(endBeat), GetSongStream());
 }
 
-void HamAudio::SetCrossfadeJump(float f1, float f2, float f3) {
-    MILO_ASSERT_FMT(unk44[0] && unk44[1], "Crossfade requires 2 song streams");
-    if (unk5c.unkc) {
+void HamAudio::SetCrossfadeJump(float fromMs, float toMs, float fadeMs) {
+    MILO_ASSERT_FMT(
+        mSongStreams[0] && mSongStreams[1], "Crossfade requires 2 song streams"
+    );
+    if (mQueuedCrossfade.mXstate != CrossfadeState::CFS_UNSET) {
         MILO_NOTIFY("Stomping on current queued crossfade");
     }
-    Crossfade &fade = unk5c;
-    fade.unk8 = f3;
-    fade.unk4 = f2;
-    fade.unk0 = f1;
-    fade.unkc = 1;
-    bool b2 = false;
-    if (fade.unk0 - fade.unk8 / 2 <= 0) {
+    Crossfade &fade = mQueuedCrossfade;
+    fade.fadeMs = fadeMs;
+    fade.mXtoMs = toMs;
+    fade.mXfromMs = fromMs;
+    fade.mXstate = CrossfadeState::CFS_READY;
+    bool skip = false;
+    if (fade.mXfromMs - fade.fadeMs / 2 <= 0) {
         MILO_NOTIFY(
             "Crossfade begins before start of song. Setting up hard jump instead of crossfade."
         );
-        b2 = true;
+        skip = true;
     }
-    if (unk6c.unkc > 1 && fade.unk0 - fade.unk8 / 2 <= unk6c.unk8 / 2 + unk6c.unk4) {
+    if (mActiveCrossfade.mXstate > CrossfadeState::CFS_READY
+        && fade.mXfromMs - fade.fadeMs / 2
+            <= mActiveCrossfade.fadeMs / 2 + mActiveCrossfade.mXtoMs) {
         MILO_NOTIFY(
             "Crossfade begins before existing crossfade ends. Setting up hard jump instead of crossfade."
         );
-        b2 = true;
+        skip = true;
     }
-    if (b2) {
-        unk5c.unkc = 0;
+    if (skip) {
+        mQueuedCrossfade.mXstate = CrossfadeState::CFS_UNSET;
     }
-    SetLoop(f2, f1, unk44[0]);
+    SetLoop(toMs, fromMs, mSongStreams[0]);
 }
 
-void HamAudio::SetLoop(float f1, float f2, Stream *stream) {
+void HamAudio::SetLoop(float startMs, float endMs, Stream *stream) {
     Marker m1, m2;
-    if (stream->CurrentJumpPoints(m2, m1) && m1.posMS == f1 && m2.posMS == f2) {
+    if (stream->CurrentJumpPoints(m2, m1) && m1.posMS == startMs && m2.posMS == endMs) {
         return;
     } else {
         stream->ClearJump();
@@ -292,9 +296,9 @@ void HamAudio::SetLoop(float f1, float f2, Stream *stream) {
         String start = "start";
         String end = "end";
         m1.name = start;
-        m1.posMS = f1;
+        m1.posMS = startMs;
         m2.name = end;
-        m2.posMS = f2;
+        m2.posMS = endMs;
         stream->AddMarker(m1);
         stream->AddMarker(m2);
         stream->SetJump(end, start);
@@ -303,20 +307,22 @@ void HamAudio::SetLoop(float f1, float f2, Stream *stream) {
 
 void HamAudio::FinishLoad() {
     if (mFileLoader) {
-        unk34 = mFileLoader->GetBuffer(&unk38);
+        mAudioData = mFileLoader->GetBuffer(&mAudioDataSize);
         RELEASE(mFileLoader);
-        unk44[0] = TheSynth->NewBufStream(unk34, unk38, "mogg", 0.25f, true);
-        unk44[1] = TheSynth->NewBufStream(unk34, unk38, "mogg", 0.25f, true);
-        mSongStream = unk44[0];
+        mSongStreams[0] =
+            TheSynth->NewBufStream(mAudioData, mAudioDataSize, "mogg", 0.25f, true);
+        mSongStreams[1] =
+            TheSynth->NewBufStream(mAudioData, mAudioDataSize, "mogg", 0.25f, true);
+        mSongStream = mSongStreams[0];
     }
 
     for (int i = 0; i < 2; i++) {
-        if (unk44[i]) {
-            unk44[i]->Faders()->Add(mMasterFader);
-            unk44[i]->Faders()->Add(mCrossFaders[i]);
+        if (mSongStreams[i]) {
+            mSongStreams[i]->Faders()->Add(mMasterFader);
+            mSongStreams[i]->Faders()->Add(mCrossFaders[i]);
             mCrossFaders[i]->SetVolume(0);
-            const auto &vols = mSongInfo->GetVols();
-            const auto &pans = mSongInfo->GetPans();
+            const auto &vols = mCurrSongInfo->GetVols();
+            const auto &pans = mCurrSongInfo->GetPans();
             int numChannels = vols.size();
             MILO_ASSERT(pans.size() == numChannels, 0x9D);
             for (int c = 0; c < numChannels; c++) {
@@ -328,10 +334,10 @@ void HamAudio::FinishLoad() {
                 } else {
                     curFader = mChannels[c];
                 }
-                unk44[i]->ChannelFaders(c).Add(curFader);
-                unk44[i]->SetPan(c, pans[c]);
+                mSongStreams[i]->ChannelFaders(c).Add(curFader);
+                mSongStreams[i]->SetPan(c, pans[c]);
             }
-            const auto &trackChannels = mSongInfo->GetTracks();
+            const auto &trackChannels = mCurrSongInfo->GetTracks();
             for (int tc = 0; tc < trackChannels.size(); tc++) {
                 SongInfoAudioType audioType = trackChannels[tc].mAudioType;
                 Symbol audioSym = SongInfoAudioTypeToSym(audioType);
@@ -344,35 +350,35 @@ void HamAudio::FinishLoad() {
                 }
                 auto &channels = trackChannels[tc].mChannels;
                 for (int c = 0; c < channels.size(); c++) {
-                    unk44[i]->ChannelFaders(channels[c]).Add(trackFader);
+                    mSongStreams[i]->ChannelFaders(channels[c]).Add(trackFader);
                 }
                 if (TheSynth->CheckCommonBank(false)) {
                     Fader *vocalFader = TheSynth->Find<Fader>("vocals_level.fade", false);
                     if (vocalFader && audioType == kAudioTypeVocals) {
                         for (int c = 0; c < channels.size(); c++) {
-                            unk44[i]->ChannelFaders(channels[c]).Add(vocalFader);
+                            mSongStreams[i]->ChannelFaders(channels[c]).Add(vocalFader);
                         }
                     }
                     Fader *multiFader = TheSynth->Find<Fader>("multi_level.fade", false);
                     if (multiFader && audioType == kAudioTypeMulti) {
                         for (int c = 0; c < channels.size(); c++) {
-                            unk44[i]->ChannelFaders(channels[c]).Add(multiFader);
+                            mSongStreams[i]->ChannelFaders(channels[c]).Add(multiFader);
                         }
                     }
                     FxSend *songSend = TheSynth->Find<FxSend>("song.send", false);
                     if (songSend) {
                         for (int c = 0; c < numChannels; c++) {
-                            unk44[i]->SetFXSend(c, songSend);
+                            mSongStreams[i]->SetFXSend(c, songSend);
                         }
-                        unk59 = true;
+                        mInitSend = true;
                     }
                 }
             }
         }
     }
-    if (unk44[1]) {
-        if (unk44[1]->IsReady()) {
-            unk44[1]->Resync(10000);
+    if (mSongStreams[1]) {
+        if (mSongStreams[1]->IsReady()) {
+            mSongStreams[1]->Resync(10000);
         } else {
             MILO_NOTIFY(
                 "HamAudio::FinishLoad() - almost tried to resync stream before it was ready"

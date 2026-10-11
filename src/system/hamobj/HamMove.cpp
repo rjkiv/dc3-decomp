@@ -327,19 +327,19 @@ const Vector3 &MoveFrame::NodeInverseScale(int node, MoveMirrored mirror) const 
     return mNodesInverseScale[mirror][node];
 }
 
-void MoveFrame::SetNodeScale(int node, MoveMirrored mirror, const Vector3 &v) {
+void MoveFrame::SetNodeScale(int node, MoveMirrored mirror, const Vector3 &scale) {
     MILO_ASSERT_RANGE(mirror, 0, kNumMoveMirrored, 0x6D);
     MILO_ASSERT_RANGE(node, 0, FilterVersion::NumHam2Nodes(), 0x6E);
     for (int i = 0; i < 3; i++) {
-        float s = v[i];
+        float s = scale[i];
         MILO_ASSERT(s > 0, 0x72);
         mNodeScales[mirror][node][i] = s;
         mNodesInverseScale[mirror][node][i] = 1.0f / s;
     }
 }
 
-float MoveFrame::QuantizedSeconds(float f) const {
-    float seconds = floor(BeatToSeconds(mBeat + f) * 30.0f + 0.5f);
+float MoveFrame::QuantizedSeconds(float move_start_beat) const {
+    float seconds = floor(BeatToSeconds(mBeat + move_start_beat) * 30.0f + 0.5f);
     return seconds / 30.0f;
 }
 
@@ -841,14 +841,16 @@ float HamMove::ConfusabilityWithMoveDataArray(const DataArray *a) {
     }
 }
 
-float HamMove::AdjustNormalizedPercentToConfusability(float f1, float f2) {
+float HamMove::AdjustNormalizedPercentToConfusability(
+    float normalized_pct, float confusability
+) {
     float awesomeFrac = PSNRToDetectFrac(mThresholds[kMoveRatingAwesome]);
     float perfectFrac = PSNRToDetectFrac(mThresholds[kMoveRatingPerfect]);
-    float fvar1 = awesomeFrac * f2;
-    if (f1 < fvar1) {
-        return (0.5f / fvar1) * f1;
+    float fvar1 = awesomeFrac * confusability;
+    if (normalized_pct < fvar1) {
+        return (0.5f / fvar1) * normalized_pct;
     } else {
-        return ((f1 - fvar1) / (perfectFrac - fvar1) + 1.0f) / 2.0f;
+        return ((normalized_pct - fvar1) / (perfectFrac - fvar1) + 1.0f) / 2.0f;
     }
 }
 

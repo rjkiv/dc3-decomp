@@ -56,7 +56,7 @@ void HamListRibbon::ScrollAnims::Load(BinStreamRev &bs) {
 HamListRibbon::HamListRibbon()
     : mScrollAnims(this), mTestMode(0), mTestNumDisplay(4), mTestSelectedIndex(0),
       mSpacing(25), mMode(kRibbonSlide), mTestEntering(0), mPaddedSize(0),
-      mPaddedSpacing(29), unk26c(0), mSwellAnim(this), mSlideAnim(this),
+      mPaddedSpacing(29), mUseToggleAnim(0), mSwellAnim(this), mSlideAnim(this),
       mSelectAnim(this), mSelectToggleAnim(this), mSelectInactiveAnim(this),
       mSelectAllAnim(this), mDisengageAnim(this), mEnterAnim(this),
       mLabelPlaceholder(this), mHighlightSounds(this), mSelectSounds(this),
@@ -234,16 +234,16 @@ void HamListRibbon::DrawShowing() {
         std::vector<HamListRibbonDrawState> drawStates(mTestNumDisplay);
         for (int i = 0; i < mTestNumDisplay; i++) {
             if (i == mTestSelectedIndex) {
-                drawStates[i].unk14 = true;
+                drawStates[i].mHighlight = true;
                 if (mMode == kRibbonSwell && !mTestEntering) {
                     float frame = GetFrame();
-                    drawStates[i].unk0.SetParams(frame, frame, 0);
+                    drawStates[i].mSwellAmount.SetParams(frame, frame, 0);
                 } else {
-                    drawStates[i].unk0.SetParams(1, 1, 0);
+                    drawStates[i].mSwellAmount.SetParams(1, 1, 0);
                 }
             } else {
-                drawStates[i].unk14 = false;
-                drawStates[i].unk0.SetParams(0, 0, 0);
+                drawStates[i].mHighlight = false;
+                drawStates[i].mSwellAmount.SetParams(0, 0, 0);
             }
         }
         Transform xfm = WorldXfm();
@@ -269,7 +269,7 @@ float HamListRibbon::StartFrame() {
                 return 0;
             }
         case kRibbonSelect:
-            if (unk26c && mSelectToggleAnim) {
+            if (mUseToggleAnim && mSelectToggleAnim) {
                 return mSelectToggleAnim->StartFrame();
             } else if (mSelectAnim && !mSelectAllAnim) {
                 return mSelectAnim->StartFrame();
@@ -303,7 +303,7 @@ float HamListRibbon::EndFrame() {
                 return 0;
             }
         case kRibbonSelect:
-            if (unk26c && mSelectToggleAnim) {
+            if (mUseToggleAnim && mSelectToggleAnim) {
                 return mSelectToggleAnim->EndFrame();
             } else if (mSelectAnim && !mSelectAllAnim) {
                 return mSelectAnim->EndFrame();
@@ -392,14 +392,14 @@ void HamListRibbon::SetAnims(bool b1, float f2) {
             mSlideAnim->SetFrame(GetFrame(), 1);
         }
         if (mMode == 2) {
-            if (unk26c && mSelectToggleAnim) {
+            if (mUseToggleAnim && mSelectToggleAnim) {
                 mSelectToggleAnim->SetFrame(GetFrame(), 1);
             } else if (mSelectAnim) {
                 mSelectAnim->SetFrame(GetFrame(), 1);
             }
         }
     } else {
-        if (mMode == 2 && !unk26c && mSelectInactiveAnim) {
+        if (mMode == 2 && !mUseToggleAnim && mSelectInactiveAnim) {
             mSelectInactiveAnim->SetFrame(GetFrame(), 1);
         }
     }
@@ -431,7 +431,7 @@ void HamListRibbon::DrawRibbon(
 ) {
     bool b5 = i1 >= i5 && i1 < i5 + i6;
     ResetAnims(false);
-    SetAnims(drawState.unk14, drawState.unk0.Level());
+    SetAnims(drawState.mHighlight, drawState.mSwellAmount.Level());
     if (i6 > 6) {
         mScrollAnims.SetAnims(i1 - i5 - i7);
     } else if (mScrollAnims.mScrollActive) {
@@ -444,19 +444,19 @@ void HamListRibbon::DrawRibbon(
     if (mLabelPlaceholder) {
         mLabelPlaceholder->SetShowing(b8 && b5);
         mLabelPlaceholder->SetCanHaveFocus(true);
-        if (drawState.unk14) {
+        if (drawState.mHighlight) {
             mLabelPlaceholder->SetState(UIComponent::kFocused);
         } else {
             mLabelPlaceholder->SetState(UIComponent::kNormal);
         }
-        if (drawState.unk18) {
+        if (drawState.mElementDrawState) {
             static Vector3 v1(1.3f, 1, 1.3f);
             static Vector3 v2(1, 1, 1);
             Vector3 pos = mLabelPlaceholder->WorldXfm().v;
             pos.z += tf2.v.z;
-            drawState.unk18->mPos = pos;
-            drawState.unk18->mAlpha = GetLabelTotalAlpha();
-            drawState.unk18->unk14 = drawState.unk20 != 0 ? v1 : v2;
+            drawState.mElementDrawState->mPos = pos;
+            drawState.mElementDrawState->mAlpha = GetLabelTotalAlpha();
+            drawState.mElementDrawState->unk14 = drawState.mBig != 0 ? v1 : v2;
         }
     }
     float alpha = 0;
@@ -465,7 +465,7 @@ void HamListRibbon::DrawRibbon(
         mLabelPlaceholder->Style(0).mInfo.mFontColor.alpha = GetLabelTotalAlpha();
     }
     SetWorldXfm(tfa0);
-    if (!drawState.unk1c) {
+    if (!drawState.mHide) {
         FOREACH (it, mDraws) {
             (*it)->Draw();
         }
@@ -484,7 +484,7 @@ void HamListRibbon::Draw(
 ) {
     RndEnvironTracker t(mEnv, nullptr);
     if (mSelectAllAnim) {
-        if (mMode == kRibbonSelect && !mTestEntering && !unk26c) {
+        if (mMode == kRibbonSelect && !mTestEntering && !mUseToggleAnim) {
             mSelectAllAnim->SetFrame(GetFrame(), 1);
         } else {
             mSelectAllAnim->SetFrame(0, 1);
@@ -541,7 +541,7 @@ void HamListRibbon::Draw(
     for (int i = 0; i < drawStateVec.size(); i++) {
         bool b5 = i >= i15 + i7 && i < i15 + i7 + i9 - 1;
 
-        if (b3 != drawStateVec[i].unk24) {
+        if (b3 != drawStateVec[i].mHeader) {
             if (b5) {
                 tf1c0.v.z -= mSpacing;
             } else {
@@ -550,7 +550,7 @@ void HamListRibbon::Draw(
         }
 
         else {
-            if (!drawStateVec[i].unk14) {
+            if (!drawStateVec[i].mHighlight) {
                 DrawRibbon(i, tf1c0, tf1, drawStateVec[i], i7, numDrawStates, i15, b4);
             } else {
                 i14 = i;

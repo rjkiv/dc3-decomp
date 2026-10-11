@@ -7,14 +7,21 @@
 #include "utl/SongInfoCopy.h"
 #include "utl/Symbol.h"
 
+enum CrossfadeState {
+    CFS_UNSET = 0x0000,
+    CFS_READY = 0x0001,
+    CFS_FADE1STHALF = 0x0002,
+    CFS_FADE2NDHALF = 0x0003,
+};
+
 class HamAudio : public Hmx::Object, public HxAudio {
 public:
     struct Crossfade {
-        Crossfade() : unkc(0) {}
-        float unk0;
-        float unk4;
-        float unk8;
-        int unkc;
+        Crossfade() : mXstate(CrossfadeState::CFS_UNSET) {}
+        float mXfromMs;
+        float mXtoMs;
+        float fadeMs;
+        CrossfadeState mXstate;
     };
 
     HamAudio();
@@ -62,18 +69,20 @@ private:
     void SetLoop(float, float, Stream *);
 
     FileLoader *mFileLoader; // 0x30
-    char *unk34; // 0x34 - file
-    int unk38; // 0x38 - file size
-    SongInfo *mSongInfo; // 0x3c
+    void *mAudioData; // 0x34 - file
+    int mAudioDataSize; // 0x38 - file size
+    SongInfo *mCurrSongInfo; // 0x3c
     Stream *mSongStream; // 0x40
-    Stream *unk44[2]; // 0x44
-    bool mReady; // 0x4c
+    Stream *mSongStreams[2]; // 0x44
+    bool mStreamEnabled; // 0x4c
     Fader *mMasterFader; // 0x50
     float mMasterVolume; // 0x54
     bool mMuteMaster; // 0x58
-    bool unk59;
-    Crossfade unk5c; // 0x5c
-    Crossfade unk6c;
+    bool mInitSend;
+    /** See HamAudio::SetCrossfadeJump for usage details */
+    Crossfade mQueuedCrossfade; // 0x5c
+    /** See HamAudio::SetCrossfadeJump for usage details */
+    Crossfade mActiveCrossfade;
     Fader *mCrossFaders[2]; // 0x7c
     std::vector<Fader *> mChannels; // 0x84
     std::map<Symbol, Fader *> mTracks; // 0x90
