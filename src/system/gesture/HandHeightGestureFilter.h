@@ -12,7 +12,7 @@ public:
 
     float GetHeightAdjust() const { return mHeightAdjust; }
     JointConfidence Confidence() const { return mConfidence; }
-    float GetHandHeight() { return mHeightAdjust; }
+    float GetHandHeight() { return mHandHeight; }
     void SetHeightAdjust(float newHeightAdjust) { mHeightAdjust = newHeightAdjust; }
 
 protected:
