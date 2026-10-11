@@ -40,14 +40,14 @@ protected:
     /** "How far to stretch vertically" */
     float mVerticalStretch; // 0x128
     std::list<RndMat *> unk12c; // 0x12c
-    RndCam *unk134; // 0x134
-    bool unk138; // 0x138
+    RndCam *mCam; // 0x134
+    bool mDrawStarted; // 0x138
     /** "List of objects to hide in the reflection,
         shows them when reflection has finished drawing." */
     ObjPtrList<RndDrawable> mHideList; // 0x13c
     /** "List of objects to show in the reflection,
         hides them when reflection has finished drawing." */
     ObjPtrList<RndDrawable> mShowList; // 0x15c
-    ObjPtrList<RndDrawable> unk164; // 0x164
-    ObjPtrList<RndDrawable> unk178; // 0x178
+    ObjPtrList<RndDrawable> mEndHideList; // 0x164
+    ObjPtrList<RndDrawable> mEndShowList; // 0x178
 };
