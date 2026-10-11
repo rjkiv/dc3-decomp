@@ -757,7 +757,7 @@ struct D3DDevice { /* Size=0x2b00 */
         return S_OK;
     }
     HRESULT GetViewport(D3DVIEWPORT9 *pViewport);
-    __forceinline HRESULT SetRenderState(D3DRENDERSTATETYPE State, DWORD Value) {
+    FORCEINLINE HRESULT SetRenderState(D3DRENDERSTATETYPE State, DWORD Value) {
         D3DDevice_SetRenderState(this, State, Value);
         return S_OK;
     }
@@ -769,12 +769,12 @@ struct D3DDevice { /* Size=0x2b00 */
         D3DDevice_SetTexture(this, Stage, pTexture, 0x8000000000000000 >> (Stage + 0x20U));
         return S_OK;
     }
-    __forceinline HRESULT
+    FORCEINLINE HRESULT
     GetSamplerState(DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD *pValue) {
         *pValue = D3DDevice_GetSamplerState(this, Sampler, Type);
         return *pValue ? S_OK : E_OUTOFMEMORY;
     }
-    __forceinline HRESULT
+    FORCEINLINE HRESULT
     SetSamplerState(DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD Value) {
         D3DDevice_SetSamplerState(this, Sampler, Type, Value);
         return S_OK;
@@ -866,7 +866,7 @@ struct D3DDevice { /* Size=0x2b00 */
         D3DDevice_SetVertexShaderConstantB(this, StartRegister, pConstantData, BoolCount);
         return S_OK;
     }
-    __forceinline HRESULT SetVertexShaderConstantF(
+    FORCEINLINE HRESULT SetVertexShaderConstantF(
         UINT StartRegister, const float *pConstantData, UINT Vector4fCount
     ) {
         D3DDevice_SetVertexShaderConstantF(
@@ -926,7 +926,7 @@ struct D3DDevice { /* Size=0x2b00 */
         D3DDevice_SetPixelShaderConstantB(this, StartRegister, pConstantData, BoolCount);
         return S_OK;
     }
-    __forceinline HRESULT SetPixelShaderConstantF(
+    FORCEINLINE HRESULT SetPixelShaderConstantF(
         UINT StartRegister, const float *pConstantData, UINT Vector4fCount
     ) {
         D3DDevice_SetPixelShaderConstantF(
@@ -1298,7 +1298,7 @@ static inline void D3DDevice_SetVertexShaderConstantF1(
 }
 
 // i dunno man
-__forceinline void D3DDevice_SetVertexShaderConstantF(
+FORCEINLINE void D3DDevice_SetVertexShaderConstantF(
     D3DDevice *pDevice, UINT StartRegister, const float *pConstantData, UINT Vector4fCount
 ) {
     if (__IsIntConst(Vector4fCount) && Vector4fCount == 1) {
@@ -1339,7 +1339,7 @@ static inline void D3DDevice_SetPixelShaderConstantF1(
     // pDevice->m_Pending.m_Mask[1] |= (0x8000000000000000U >> (StartRegister >> 2));
 }
 
-__forceinline void D3DDevice_SetPixelShaderConstantF(
+FORCEINLINE void D3DDevice_SetPixelShaderConstantF(
     D3DDevice *pDevice, UINT StartRegister, const float *pConstantData, UINT Vector4fCount
 ) {
     if (__IsIntConst(Vector4fCount) && Vector4fCount == 1) {
@@ -1355,7 +1355,7 @@ __forceinline void D3DDevice_SetPixelShaderConstantF(
     }
 }
 
-__forceinline void
+FORCEINLINE void
 D3DDevice_SetRenderState(D3DDevice *pDevice, D3DRENDERSTATETYPE State, DWORD Value) {
     switch (State) {
     case D3DRS_ZENABLE:
@@ -1636,7 +1636,7 @@ D3DDevice_SetRenderState(D3DDevice *pDevice, D3DRENDERSTATETYPE State, DWORD Val
     }
 }
 
-__forceinline void D3DDevice_SetSamplerState(
+FORCEINLINE void D3DDevice_SetSamplerState(
     D3DDevice *pDevice, DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD Value
 ) {
     switch (Type) {
@@ -1705,7 +1705,7 @@ __forceinline void D3DDevice_SetSamplerState(
     }
 }
 
-__forceinline DWORD
+FORCEINLINE DWORD
 D3DDevice_GetSamplerState(D3DDevice *pDevice, DWORD Sampler, D3DSAMPLERSTATETYPE Type) {
     switch (Type) {
     case D3DSAMP_ADDRESSU:

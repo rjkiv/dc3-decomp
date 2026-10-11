@@ -220,7 +220,7 @@ void SaveLoadManager::AutoLoad() {
 
 void SaveLoadManager::HandleEventResponseStart(int) { mStateAtSelectStart = mState; }
 
-__forceinline bool SaveLoadManager::IsIdle() const {
+FORCEINLINE bool SaveLoadManager::IsIdle() const {
     return mState == 0 && (!mActivated || (!mNeedsSave && !mNeedsLoad));
 }
 

@@ -36,7 +36,8 @@ public:
 template <class T, class Allocator>
 TextStream &operator<<(TextStream &ts, const std::vector<T, Allocator> &vec) {
     ts << "(size:" << vec.size() << ")";
-    for (std::vector<T, Allocator>::const_iterator it = vec.begin(); it != vec.end();
+    for (typename std::vector<T, Allocator>::const_iterator it = vec.begin();
+         it != vec.end();
          ++it) {
         ts << "\n" << it - vec.begin() << "\t" << *it;
     }
@@ -47,7 +48,8 @@ template <class T, class Allocator>
 TextStream &operator<<(TextStream &ts, const std::list<T, Allocator> &list) {
     ts << "(size:" << list.size() << ")";
     int i = 0;
-    for (std::list<T, Allocator>::const_iterator it = list.begin(); it != list.end();
+    for (typename std::list<T, Allocator>::const_iterator it = list.begin();
+         it != list.end();
          ++it, ++i) {
         ts << "\n" << i << "\t" << *it;
     }

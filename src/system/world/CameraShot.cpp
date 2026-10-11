@@ -524,8 +524,8 @@ CamShotCrowd::CamShotCrowd(Hmx::Object *owner)
       mCamShot(dynamic_cast<CamShot *>(owner)) {}
 
 CamShotCrowd::CamShotCrowd(Hmx::Object *owner, const CamShotCrowd &other)
-    : mCrowd(other.mCrowd), mCrowdRotate(other.mCrowdRotate), mCrowdList(other.mCrowdList),
-      mCamShot(dynamic_cast<CamShot *>(owner)) {}
+    : mCrowd(other.mCrowd), mCrowdRotate(other.mCrowdRotate),
+      mCrowdList(other.mCrowdList), mCamShot(dynamic_cast<CamShot *>(owner)) {}
 
 void CamShotCrowd::Save(BinStream &bs) const {
     bs << mCrowd;
@@ -640,7 +640,8 @@ void CamShotCrowd::AddCrowdChars(
                         ;
                     MILO_ASSERT(ki != mmesh->Instances().size(), 0xA58);
                     std::pair<int, int> iPair = std::make_pair(i5, ki);
-                    if (std::find(mCrowdList.begin(), mCrowdList.end(), iPair) == mCrowdList.end()) {
+                    if (std::find(mCrowdList.begin(), mCrowdList.end(), iPair)
+                        == mCrowdList.end()) {
                         mCrowdList.push_back(iPair);
                     }
                 }
@@ -1443,7 +1444,7 @@ bool CamShot::AddCrowd(CamShotCrowd &crowd) {
 }
 
 // why does ~AutoPrepTarget even inline this?
-__declspec(noinline) bool CamShot::SetPos(CamShotFrame &frame, RndCam *cam) {
+NOINLINE bool CamShot::SetPos(CamShotFrame &frame, RndCam *cam) {
     RndCam *shotCam = cam ? cam : GetCam();
     if (!shotCam) {
         return false;

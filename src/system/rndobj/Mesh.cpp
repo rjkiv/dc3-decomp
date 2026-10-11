@@ -89,7 +89,7 @@ BEGIN_CUSTOM_PROPSYNC(RndMesh::Vert)
 END_CUSTOM_PROPSYNC
 
 bool PropSync(
-    RndMesh ::VertVector &vec, DataNode &node, DataArray *prop, int i, PropOp op
+    RndMesh::VertVector &vec, DataNode &node, DataArray *prop, int i, PropOp op
 ) {
     if (op == kPropNoNull)
         return false;
@@ -183,7 +183,7 @@ BEGIN_HANDLERS(RndMesh)
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
 
-__forceinline bool RndMesh::HasInstancedBones() {
+FORCEINLINE bool RndMesh::HasInstancedBones() {
     return mGeomOwner && !mBones.empty() && mGeomOwner->BoneTransAt(0) != BoneTransAt(0);
 }
 
@@ -567,7 +567,7 @@ BEGIN_LOADS(RndMesh)
     Sync(0xBF);
 END_LOADS
 
-__forceinline TextStream &operator<<(TextStream &ts, RndMesh::Volume v) {
+FORCEINLINE TextStream &operator<<(TextStream &ts, RndMesh::Volume v) {
     if (v == RndMesh::kVolumeEmpty)
         ts << "Empty";
     else if (v == RndMesh::kVolumeTriangles)

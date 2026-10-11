@@ -38,7 +38,7 @@ void FrontLoaderGlitchCB(float f1, void *v) {
     );
 }
 
-__declspec(noinline) const char *WhiteSpace(int count) {
+NOINLINE const char *WhiteSpace(int count) {
     const int len = 0x80;
     MILO_ASSERT(count < len, 0x179);
     MILO_ASSERT(count >= 0, 0x17A);

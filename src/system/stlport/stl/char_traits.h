@@ -67,7 +67,7 @@ typedef _STLP_LONG_LONG streamoff;
 typedef ptrdiff_t streamoff;
 #  endif
 #else // __unix
-typedef off_t streamoff;
+typedef ptrdiff_t streamoff;
 #endif /* _STLP_HAS_NO_NEW_C_HEADERS */
 
 #if defined (_STLP_WIN32)

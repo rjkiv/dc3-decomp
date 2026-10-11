@@ -277,8 +277,7 @@ DataNode BaseMaterial::OnIsDefaultPropVal(const DataArray *a) {
     return ret;
 }
 
-__declspec(noinline) BaseMaterial::Blend
-CheckBlendMode(BaseMaterial::Blend b, BaseMaterial *) {
+NOINLINE BaseMaterial::Blend CheckBlendMode(BaseMaterial::Blend b, BaseMaterial *) {
     return b;
 }
 

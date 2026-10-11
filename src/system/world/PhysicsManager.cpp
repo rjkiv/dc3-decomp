@@ -13,7 +13,7 @@
 #include "world/PhysicsVolume.h"
 
 namespace {
-    __declspec(noinline) bool HasKeepMeshData(const RndMesh *mesh) {
+    NOINLINE bool HasKeepMeshData(const RndMesh *mesh) {
         for (; mesh != nullptr; mesh = mesh->GetGeomOwner()) {
             if (mesh->GetKeepMeshData()) {
                 return true;
@@ -27,7 +27,8 @@ namespace {
 }
 
 PhysicsManager::PhysicsManager(RndDir *dir)
-    : mWorldDir(dir), mClampTime(30), mWorldIsBuild(0), mIsFixedRate(0), mFixedRate(30), mTimeUnits(0) {
+    : mWorldDir(dir), mClampTime(30), mWorldIsBuild(0), mIsFixedRate(0), mFixedRate(30),
+      mTimeUnits(0) {
     if (SystemConfig()) {
         DataArray *physicsCfg = SystemConfig()->FindArray("physics", false);
         if (physicsCfg) {

@@ -336,7 +336,7 @@ bool PropSync(
 // if you can find a way to call the regular PropSync<T>(T*&)
 // that'll be inlined in the ObjPtrVec PropSync, i'm all ears
 template <class T>
-__forceinline bool
+FORCEINLINE bool
 PropSyncInline(T *&obj, DataNode &node, DataArray *prop, int i, PropOp op) {
     if (op == kPropNoNull)
         return false;

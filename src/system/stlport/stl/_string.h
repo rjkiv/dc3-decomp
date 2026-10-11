@@ -370,15 +370,15 @@ protected:
   // Helper functions used by constructors.  It is a severe error for
   // any of them to be called anywhere except from within constructors.
 
-  void _M_terminate_string_aux(const __false_type& __is_integral) {
+  void _M_terminate_string_aux(const __false_type& _is_integral) {
     _STLP_TRY {
-      _M_construct_null_aux(this->_M_Finish(), __is_integral);
+      _M_construct_null_aux(this->_M_Finish(), _is_integral);
     }
     _STLP_UNWIND(this->_M_destroy_range(0,0))
   }
 
-  void _M_terminate_string_aux(const __true_type& __is_integral) {
-    _M_construct_null_aux(this->_M_Finish(), __is_integral);
+  void _M_terminate_string_aux(const __true_type& _is_integral) {
+    _M_construct_null_aux(this->_M_Finish(), _is_integral);
   }
 
   void _M_force_terminate_string(const __true_type& /* _Is_POD */) {

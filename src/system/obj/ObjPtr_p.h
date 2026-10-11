@@ -22,7 +22,7 @@ ObjRefConcrete<T1, T2>::ObjRefConcrete(T1 *obj) : mObject(obj) {
 }
 
 template <class T1, class T2>
-__forceinline ObjRefConcrete<T1, T2>::ObjRefConcrete(const ObjRefConcrete &o)
+FORCEINLINE ObjRefConcrete<T1, T2>::ObjRefConcrete(const ObjRefConcrete &o)
     : mObject(o.mObject) {
     if (mObject)
         mObject->AddRef(this);
@@ -97,11 +97,10 @@ bool ObjRefConcrete<T1, T2>::Load(BinStream &bs, bool print, ObjectDir *dir) {
 // ------------------------------------------------
 
 template <class T>
-ObjPtr<T>::ObjPtr(Hmx::Object *owner, T *ptr = nullptr)
-    : ObjRefConcrete<T>(ptr), mOwner(owner) {}
+ObjPtr<T>::ObjPtr(Hmx::Object *owner, T *ptr) : ObjRefConcrete<T>(ptr), mOwner(owner) {}
 
 template <class T>
-ObjPtr<T>::ObjPtr(const ObjPtr &p) : ObjRefConcrete(p), mOwner(p.mOwner) {}
+ObjPtr<T>::ObjPtr(const ObjPtr &p) : ObjRefConcrete<T>(p), mOwner(p.mOwner) {}
 
 template <class T>
 BinStream &operator>>(BinStream &bs, ObjPtr<T> &ptr) {
@@ -123,7 +122,7 @@ ObjOwnerPtr<T>::ObjOwnerPtr(ObjRefOwner *owner, T *ptr)
 
 template <class T>
 ObjOwnerPtr<T>::ObjOwnerPtr(const ObjOwnerPtr &o)
-    : ObjRefConcrete(o.mObject), mOwner(o.mOwner) {
+    : ObjRefConcrete<T>(o.mObject), mOwner(o.mOwner) {
     MILO_ASSERT(mOwner, 0xCE);
 }
 
@@ -132,7 +131,7 @@ ObjOwnerPtr<T>::~ObjOwnerPtr() {}
 
 template <class T>
 Hmx::Object *ObjOwnerPtr<T>::RefOwner() const {
-    return mObject->RefOwner();
+    return ObjRefConcrete<T>::mObject->RefOwner();
 }
 
 // template <class T1>
@@ -184,7 +183,7 @@ void ObjPtrVec<T1, T2>::ReplaceNode(Node *n, Hmx::Object *obj) {
 }
 
 template <class T1, class T2>
-__declspec(noinline) void ObjPtrVec<T1, T2>::Set(iterator it, T1 *obj) {
+NOINLINE void ObjPtrVec<T1, T2>::Set(iterator it, T1 *obj) {
     if (!obj && mMode == 0) {
         erase(it);
     } else {
@@ -347,7 +346,7 @@ ObjPtrList<T1, T2>::ObjPtrList(const ObjPtrList &other)
 }
 
 template <class T1, class T2>
-void *ObjPtrList<T1, T2>::Node::operator new(unsigned int s) {
+void *ObjPtrList<T1, T2>::Node::operator new(size_t s) {
     return PoolAlloc(s, s, __FILE__, 0x122, "ObjPtrList_node");
 }
 

@@ -19,7 +19,7 @@ DWORD XBackgroundDownloadSetMode(XBACKGROUND_DOWNLOAD_MODE Mode);
 DWORD XEnableScreenSaver(BOOL fEnable);
 DWORD XGetLocale();
 DWORD XTLGetLanguage();
-__declspec(noreturn) VOID XLaunchNewImage(LPCSTR szImagePath, DWORD dwFlags);
+NORETURN VOID XLaunchNewImage(LPCSTR szImagePath, DWORD dwFlags);
 LPVOID XPhysicalAlloc(
     SIZE_T dwSize, ULONG_PTR ulPhysicalAddress, ULONG_PTR ulAlignment, DWORD flProtect
 );
@@ -201,8 +201,8 @@ DWORD XShowDeviceSelectorUI(
 );
 DWORD XGetGameRegion();
 DWORD XShowSigninUI(DWORD cPanes, DWORD dwFlags);
-__declspec(noreturn) DWORD XShowNuiDirtyDiscErrorUI(DWORD dwTrackingID, DWORD dwUserIndex);
-__declspec(noreturn) DWORD XShowDirtyDiscErrorUI(DWORD dwUserIndex);
+NORETURN DWORD XShowNuiDirtyDiscErrorUI(DWORD dwTrackingID, DWORD dwUserIndex);
+NORETURN DWORD XShowDirtyDiscErrorUI(DWORD dwUserIndex);
 
 HANDLE XNotifyCreateListener(QWORD qwAreas);
 void XNotifyPositionUI(DWORD dwPosition);
