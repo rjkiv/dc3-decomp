@@ -41,13 +41,13 @@ private:
         Impl() {}
         void Init(CampaignMasterQuestSongSelectPanel *);
 
-        UILabel *mContextualTitleLabel; // 0x0
-        UILabel *mContextualInstructionsLabel; // 0x4
-        UILabel *mContextualStarsLabel; // 0x8
+        UILabel *m_ContextualTitle; // 0x0
+        UILabel *m_ContextualInstructions; // 0x4
+        UILabel *m_ContextualStars; // 0x8
     };
 
     MQSongSortMgr *m_pCampaignSongProvider; // 0x54
-    DateTime mEnterTime; // 0x58
-    bool mPreviewDelayFinished; // 0x5e
-    Impl *mImpl; // 0x60
+    DateTime m_cEnterTime; // 0x58
+    bool m_bDelayFinished; // 0x5e
+    Impl *m_Impl; // 0x60
 };

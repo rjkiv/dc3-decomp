@@ -29,10 +29,10 @@ public:
     void CancelSongAtIndex(int);
     void Refresh();
 
-    PlaylistSongProvider *m_pPlaylistSongProvider; // 0x3c
-    Playlist *m_pPlaylist; // 0x40
-
 private:
     void InsertSong(Symbol, int);
     void MoveSong(Symbol, int);
+
+    PlaylistSongProvider *m_pPlaylistSongProvider; // 0x3c
+    Playlist *m_pPlaylist; // 0x40
 };

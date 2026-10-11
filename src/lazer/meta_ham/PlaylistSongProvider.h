@@ -18,6 +18,7 @@ public:
     PlaylistSongProvider();
     void UpdateList(Playlist const *, bool);
 
+private:
     const Playlist *m_pPlaylist; // 0x30
-    bool unk34;
+    bool m_bEditMode; // 0x34
 };

@@ -13,7 +13,9 @@
 
 #pragma region Playlist
 
-Playlist::Playlist() : mName(gNullStr), mFitness(0), unk9(0) { m_vSongs.clear(); }
+Playlist::Playlist() : m_symName(gNullStr), m_bIsFitness(0), m_bIsEra(0) {
+    m_vSongs.clear();
+}
 
 Playlist::~Playlist() { m_vSongs.clear(); }
 
@@ -127,7 +129,7 @@ int Playlist::GetNumSongs() const { return m_vSongs.size(); }
 #pragma endregion Playlist
 #pragma region CustomPlaylist
 
-CustomPlaylist::CustomPlaylist() : mProfile(0), unk24(false), mOnlineID(-1) {
+CustomPlaylist::CustomPlaylist() : m_pParentProfile(0), mDirty(false), mOnlineID(-1) {
     m_vSongs.clear();
     mSaveSizeMethod = SaveSize;
 }
@@ -137,19 +139,19 @@ CustomPlaylist::~CustomPlaylist() { m_vSongs.clear(); }
 void CustomPlaylist::SaveFixed(FixedSizeSaveableStream &fs) const {
     FixedSizeSaveable::SaveStd(fs, m_vSongs, 20, 4);
     fs << mOnlineID;
-    if (unk24) {
-        TheRockCentral.ManageJob(new PlaylistChangedJob(0, mName, GetNumSongs()));
+    if (mDirty) {
+        TheRockCentral.ManageJob(new PlaylistChangedJob(0, m_symName, GetNumSongs()));
     }
-    static_cast<bool>(unk24) = false;
+    static_cast<bool>(mDirty) = false;
 }
 
 void CustomPlaylist::LoadFixed(FixedSizeSaveableStream &fs, int) {
     FixedSizeSaveable::LoadStd(fs, m_vSongs, 20, 4);
     fs >> mOnlineID;
-    unk24 = false;
+    mDirty = false;
 }
 
-void CustomPlaylist::SetParentProfile(HamProfile *hp) { mProfile = hp; }
+void CustomPlaylist::SetParentProfile(HamProfile *hp) { m_pParentProfile = hp; }
 
 int CustomPlaylist::SaveSize(int x) {
     int i = 0x58;
@@ -161,19 +163,19 @@ int CustomPlaylist::SaveSize(int x) {
 
 void CustomPlaylist::Copy(CustomPlaylist *customP) {
     mOnlineID = customP->mOnlineID;
-    mProfile = customP->mProfile;
-    mName = customP->mName;
-    mFitness = customP->mFitness;
-    unk9 = customP->unk9;
+    m_pParentProfile = customP->m_pParentProfile;
+    m_symName = customP->m_symName;
+    m_bIsFitness = customP->m_bIsFitness;
+    m_bIsEra = customP->m_bIsEra;
     m_vSongs = customP->m_vSongs;
     HandleChange();
 }
 
 void CustomPlaylist::HandleChange() {
-    if (mProfile) {
-        mProfile->MakeDirty();
+    if (m_pParentProfile) {
+        m_pParentProfile->MakeDirty();
     }
-    unk24 = true;
+    mDirty = true;
 }
 
 #pragma endregion CustomPlaylist

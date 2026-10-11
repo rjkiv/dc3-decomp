@@ -55,23 +55,23 @@ HamStoreProvider::HamStoreProvider(
     std::vector<HamStoreFilter *> *filters,
     std::vector<CartRow> *rows
 )
-    : unk30(offers), unk34(filters), unk5c(0), mFilteredOffers(0), unkac(rows),
+    : mOffers(offers), mFilters(filters), mFilter(0), mFilteredOffers(0), mCartData(rows),
       mCartCheckout(nullptr) {
-    unk74 = new HamStoreFilterProvider(unk34);
+    mFilterProvider = new HamStoreFilterProvider(mFilters);
 }
 
 HamStoreProvider::~HamStoreProvider() {
-    FOREACH (it, unk38) {
+    FOREACH (it, mFilterToOffersMap) {
         RELEASE(it->second);
     }
-    unk38.clear();
+    mFilterToOffersMap.clear();
     mFilteredOffers = nullptr;
-    RELEASE(unk74);
+    RELEASE(mFilterProvider);
 }
 
 int HamStoreProvider::NumOffersInCart() {
     int offers = 0;
-    FOREACH (it, unkb0) {
+    FOREACH (it, mOffersInCart) {
         offers++;
     }
     return offers;
@@ -153,7 +153,7 @@ StoreOffer *HamStoreProvider::OnGetOffer(int idx) {
 StoreOffer const *HamStoreProvider::FindPack(StoreOffer const *song) const {
     MILO_ASSERT(song->OfferType() == "song", 0x18e);
     static Symbol pack("pack");
-    FOREACH_PTR (it, unk30) {
+    FOREACH_PTR (it, mOffers) {
         if ((*it)->OfferType() == pack && (*it)->HasSong(song))
             return *it;
     }
@@ -162,7 +162,7 @@ StoreOffer const *HamStoreProvider::FindPack(StoreOffer const *song) const {
 
 StoreOffer const *HamStoreProvider::FindSong(int id) const {
     static Symbol song("song");
-    FOREACH_PTR (it, unk30) {
+    FOREACH_PTR (it, mOffers) {
         StoreOffer *so = *it;
         if (so->OfferType() == song && so->GetSingleSongID() == id)
             return so;
@@ -180,13 +180,13 @@ Symbol HamStoreProvider::CurrentSort() const {
 void HamStoreProvider::UpdateOffersInCart(StoreOffer *offer, int i) {
     switch (i) {
     case 0:
-        unkb0.push_back(offer);
+        mOffersInCart.push_back(offer);
         break;
     case 1:
-        unkb0.remove(offer);
+        mOffersInCart.remove(offer);
         break;
     case 2:
-        unkb0.clear();
+        mOffersInCart.clear();
         break;
     }
     RefreshFilteredCartOffers();
@@ -196,9 +196,9 @@ void HamStoreProvider::SetPackList(StoreOffer const *offer) {
     static Symbol pack("pack");
     if (offer->OfferType() == pack) {
         static Symbol songs("songs");
-        unk78.mSongs = offer->GetData(DataArrayPtr(songs), false).Array();
+        mPackSongList.mSongs = offer->GetData(DataArrayPtr(songs), false).Array();
     } else {
-        unk78.mSongs = 0;
+        mPackSongList.mSongs = 0;
     }
 }
 
@@ -233,7 +233,7 @@ void HamStoreProvider::ApplySort() {
     }
 }
 
-std::list<StoreOffer *> *HamStoreProvider::GetOffersInCart() { return &unkb0; }
+std::list<StoreOffer *> *HamStoreProvider::GetOffersInCart() { return &mOffersInCart; }
 
 bool HamStoreProvider::ShowBrowserPurchased(const StoreOffer *offer) const {
     static Symbol song("song");
@@ -261,15 +261,15 @@ bool HamStoreProvider::ShowBrowserPurchased(const StoreOffer *offer) const {
 
 void HamStoreProvider::SetFilter(StoreOffer const *pack) {
     MILO_ASSERT(pack->OfferType()=="pack", 0xb0);
-    unk50.clear();
-    unk50.push_back((StoreOffer *)pack);
+    mPackSongs.clear();
+    mPackSongs.push_back((StoreOffer *)pack);
     for (int i = 0; i < pack->NumSongs(); i++) {
         const StoreOffer *offer = FindSong(pack->Song(i));
         if (offer && (offer->IsAvailable() || TheNetCacheMgr->IsDebug())) {
-            unk50.push_back((StoreOffer *)offer);
+            mPackSongs.push_back((StoreOffer *)offer);
         }
     }
-    mFilteredOffers = &unk50;
+    mFilteredOffers = &mPackSongs;
     mSorts.clear();
     mSortIndex = 0;
 }
@@ -279,10 +279,10 @@ bool HamStoreProvider::IsDebug() { return TheNetCacheMgr->IsDebug(); }
 void HamStoreProvider::PopulateOffersInCart() {
     HamStorePanel *storePanel = dynamic_cast<HamStorePanel *>(TheHamUI.FocusPanel());
     MILO_ASSERT(storePanel, 0x206);
-    unkb0.clear();
-    FOREACH_PTR (it_cartRow, unkac) {
+    mOffersInCart.clear();
+    FOREACH_PTR (it_cartRow, mCartData) {
         CartRow &row = *it_cartRow;
-        FOREACH_PTR (it_storeOffer, unk30) {
+        FOREACH_PTR (it_storeOffer, mOffers) {
             StoreOffer *offer = *it_storeOffer;
             if ((offer->IsAvailable() || IsDebug())) {
                 static Symbol song("song");
@@ -291,7 +291,7 @@ void HamStoreProvider::PopulateOffersInCart() {
                     if (offer->IsPurchased()) {
                         storePanel->RemoveDLCFromCart(offer->GetSingleSongID());
                     } else {
-                        unkb0.push_back((StoreOffer *)offer);
+                        mOffersInCart.push_back((StoreOffer *)offer);
                     }
                     break;
                 }
@@ -308,15 +308,17 @@ void HamStoreProvider::OnNextSort() {
 }
 
 void HamStoreProvider::SetFilter(HamStoreFilter const *filter) {
-    unk5c = (HamStoreFilter *)filter;
-    unk50.clear();
+    mFilter = filter;
+    mPackSongs.clear();
     std::map<Symbol, std::vector<StoreOffer *> *>::iterator it;
-    if (unk5c && (it = unk38.find(unk5c->unk0), it != unk38.end())) {
+    if (mFilter
+        && (it = mFilterToOffersMap.find(mFilter->GetName()),
+            it != mFilterToOffersMap.end())) {
         mFilteredOffers = it->second;
-        mSorts = unk5c->unkc;
+        mSorts = mFilter->GetSorts();
     } else {
-        unk5c = nullptr;
-        mFilteredOffers = unk30;
+        mFilter = nullptr;
+        mFilteredOffers = mOffers;
         mSorts.clear();
     }
     mSortIndex = 0;
@@ -324,7 +326,7 @@ void HamStoreProvider::SetFilter(HamStoreFilter const *filter) {
 }
 
 bool HamStoreProvider::IsOfferInCart(StoreOffer *offer) {
-    FOREACH (it, unkb0) {
+    FOREACH (it, mOffersInCart) {
         if (offer == *it) {
             return true;
         }
@@ -334,16 +336,16 @@ bool HamStoreProvider::IsOfferInCart(StoreOffer *offer) {
 
 void HamStoreProvider::RefreshFilteredCartOffers() {
     static Symbol store_filter_shopping_cart("store_filter_shopping_cart");
-    auto it = unk38.find(store_filter_shopping_cart);
-    if (it != unk38.end()) {
+    auto it = mFilterToOffersMap.find(store_filter_shopping_cart);
+    if (it != mFilterToOffersMap.end()) {
         RELEASE(it->second);
-        unk38.erase(it);
+        mFilterToOffersMap.erase(it);
     }
 
-    if (unkb0.size() != 0) {
+    if (mOffersInCart.size() != 0) {
         if (!mCartCheckout) {
             static Symbol store_checkout("store_checkout");
-            FOREACH_REVERSE_PTR(it, unk30) {
+            FOREACH_REVERSE_PTR(it, mOffers) {
                 Symbol data = (*it)->StoreOfferData()->Sym(0);
                 if (data == store_checkout) {
                     mCartCheckout = *it;
@@ -354,10 +356,10 @@ void HamStoreProvider::RefreshFilteredCartOffers() {
         MILO_ASSERT(mCartCheckout, 0x242);
         std::vector<StoreOffer *> *offers = new std::vector<StoreOffer *>();
         offers->push_back(mCartCheckout);
-        FOREACH (it, unkb0) {
+        FOREACH (it, mOffersInCart) {
             offers->push_back(*it);
         }
-        unk38.insert(
+        mFilterToOffersMap.insert(
             std::pair<Symbol, std::vector<StoreOffer *> *>(
                 store_filter_shopping_cart, offers
             )
@@ -366,24 +368,24 @@ void HamStoreProvider::RefreshFilteredCartOffers() {
 }
 
 void HamStoreProvider::Refresh() {
-    FOREACH (it, unk38) {
+    FOREACH (it, mFilterToOffersMap) {
         RELEASE(it->second);
     }
-    unk38.clear();
+    mFilterToOffersMap.clear();
     mFilteredOffers = nullptr;
 
-    FOREACH_PTR (it, unk30) {
+    FOREACH_PTR (it, mOffers) {
         StoreOffer *offer = *it;
         if (offer->IsAvailable() || TheNetCacheMgr->IsDebug()) {
             DataArray *filters =
                 offer->GetData(DataArrayPtr(Symbol("filters")), true).Array(0);
             for (int i = 1; i < filters->Size(); i++) {
                 Symbol filterSym = filters->Sym(i);
-                auto offerIt = unk38.find(filterSym);
-                if (offerIt == unk38.end()) {
+                auto offerIt = mFilterToOffersMap.find(filterSym);
+                if (offerIt == mFilterToOffersMap.end()) {
                     std::vector<StoreOffer *> *offers = new std::vector<StoreOffer *>();
                     offers->push_back(offer);
-                    unk38.insert(
+                    mFilterToOffersMap.insert(
                         std::pair<Symbol, std::vector<StoreOffer *> *>(filterSym, offers)
                     );
                 } else {
@@ -396,24 +398,24 @@ void HamStoreProvider::Refresh() {
     PopulateOffersInCart();
     static Symbol store_filter_shopping_cart("store_filter_shopping_cart");
     static Symbol store_filter_song_import_offers("store_filter_song_import_offers");
-    for (auto it = unk34->begin(); it != unk34->end();) {
-        auto filterIt = unk38.find((*it)->unk0);
-        if ((filterIt == unk38.end() || filterIt->second->size() == 0)
-            && (*it)->unk0 != store_filter_shopping_cart
-            && (*it)->unk0 != store_filter_song_import_offers) {
-            it = unk34->erase(it);
+    for (auto it = mFilters->begin(); it != mFilters->end();) {
+        auto filterIt = mFilterToOffersMap.find((*it)->GetName());
+        if ((filterIt == mFilterToOffersMap.end() || filterIt->second->size() == 0)
+            && (*it)->GetName() != store_filter_shopping_cart
+            && (*it)->GetName() != store_filter_song_import_offers) {
+            it = mFilters->erase(it);
         } else {
             ++it;
         }
     }
-    SetFilter(unk5c);
+    SetFilter(mFilter);
 }
 
 BEGIN_HANDLERS(HamStoreProvider)
     HANDLE_ACTION(refresh, Refresh())
     HANDLE_EXPR(get_offer, OnGetOffer(_msg->Int(2)))
     HANDLE_ACTION(set_pack, SetPackList(_msg->Obj<StoreOffer>(2)))
-    HANDLE_EXPR(get_pack_provider, &unk78)
+    HANDLE_EXPR(get_pack_provider, &mPackSongList)
     HANDLE_EXPR(find_pack, (Hmx::Object *)FindPack(_msg->Obj<StoreOffer>(2)))
     HANDLE_EXPR(show_browser_purchased, ShowBrowserPurchased(_msg->Obj<StoreOffer>(2)))
     HANDLE_EXPR(show_unavailable, TheNetCacheMgr->IsDebug())

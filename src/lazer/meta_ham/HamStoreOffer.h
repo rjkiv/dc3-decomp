@@ -15,6 +15,6 @@ public:
     int Difficulty() const;
 
 protected:
-    String mAlbumArtPath; // 0x60
+    String mArtPath; // 0x60
     String mPreviewPath; // 0x68
 };

@@ -36,21 +36,22 @@
 #include "utl/Symbol.h"
 
 ShellInput::ShellInput()
-    : mVoiceControlEnabled(0), unk_0x34(this), unk_0x48(0, 15, 0), unk_0x9C(0.2),
-      unk_0xA0(0.25), unk_0xA4(0), mWrongHandPosAnim(this), mInputPanel(0),
-      mCursorPanel(nullptr), unk_0xC4(0), mDepthBuffer(0), mSkelIdentifier(0),
-      mSkelChooser(0), mSkelExtTracker(0) {
-    unk_0x31 = 0;
-    unk_0x32 = 0;
+    : mWasVoiceControlEnabled(0), mDisengageAnim(this), mDisengageFrame(0, 15, 0),
+      mRightHandDisengage(0.2), mLeftHandDisengage(0.25), mLastWrongHandPosition(0),
+      mWrongHandPositionAnim(this), mInputPanel(0), mCursorPanel(nullptr), mDrawCursor(0),
+      mDepthBuffer(0), mSkeletonIdentifier(0), mSkeletonChooser(0),
+      mSkeletonExtentTracker(0) {
+    mWasHandUp[0] = false;
+    mWasHandUp[1] = false;
 }
 
 ShellInput::~ShellInput() {
     SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
     handle.RemoveCallback(this);
     delete mDepthBuffer;
-    delete mSkelIdentifier;
-    delete mSkelChooser;
-    delete mSkelExtTracker;
+    delete mSkeletonIdentifier;
+    delete mSkeletonChooser;
+    delete mSkeletonExtentTracker;
 }
 
 BEGIN_HANDLERS(ShellInput)
@@ -69,7 +70,7 @@ BEGIN_HANDLERS(ShellInput)
         set_last_select_in_controller_mode,
         HamNavList::sLastSelectInControllerMode = _msg->Int(2)
     )
-    HANDLE_EXPR(voice_control_enabled, mVoiceControlEnabled)
+    HANDLE_EXPR(voice_control_enabled, mWasVoiceControlEnabled)
     HANDLE_MESSAGE(ButtonDownMsg)
     HANDLE_MESSAGE(JoypadConnectionMsg)
     HANDLE_MESSAGE(SpeechRecoMessage)
@@ -83,8 +84,8 @@ void ShellInput::PostUpdate(const SkeletonUpdateData *updata) {
     if (updata) {
         Skeleton *skeleton = TheGestureMgr->GetActiveSkeleton();
         if (skeleton) {
-            mHandInvokeGestureFilter->Update(*skeleton, skeleton->ElapsedMs());
-            mHandsUpGestureFilter->Update(*skeleton, skeleton->ElapsedMs());
+            mInvokeOptionsFilter->Update(*skeleton, skeleton->ElapsedMs());
+            mCorrectIdentityFilter->Update(*skeleton, skeleton->ElapsedMs());
         }
     }
 }
@@ -98,18 +99,18 @@ void ShellInput::Init() {
     MILO_ASSERT(mCursorPanel->LoadedDir(), 96);
     mDepthBuffer = new DepthBuffer();
     mDepthBuffer->Init(mCursorPanel);
-    mWrongHandPosAnim =
+    mWrongHandPositionAnim =
         mCursorPanel->DataDir()->Find<RndAnimatable>("wrong_hand_position.anim", true);
     MILO_ASSERT(TheGameData, 102);
-    mSkelIdentifier = new SkeletonIdentifier;
-    mSkelIdentifier->Init();
-    mSkelChooser = new SkeletonChooser;
-    mHandInvokeGestureFilter = new HandInvokeGestureFilter;
-    mHandsUpGestureFilter = Hmx::Object::New<HandsUpGestureFilter>();
-    mHandsUpGestureFilter->SetRequiredMs(1200);
+    mSkeletonIdentifier = new SkeletonIdentifier;
+    mSkeletonIdentifier->Init();
+    mSkeletonChooser = new SkeletonChooser;
+    mInvokeOptionsFilter = new HandInvokeGestureFilter;
+    mCorrectIdentityFilter = Hmx::Object::New<HandsUpGestureFilter>();
+    mCorrectIdentityFilter->SetRequiredMs(1200);
     mCursorPanel->Enter();
     TheSpeechMgr->AddSink(TheUI);
-    mSkelExtTracker = new SkeletonExtentTracker;
+    mSkeletonExtentTracker = new SkeletonExtentTracker;
 
     static Symbol reset_controller_mode_timeout("reset_controller_mode_timeout");
     TheHamUI.AddSink(this, reset_controller_mode_timeout);
@@ -126,9 +127,9 @@ void ShellInput::Poll() {
     static bool sHasSkeleton = false;
 
     if (TheUI->FocusPanel() == TheGamePanel) {
-        if (mWrongHandPosAnim->GetFrame() > 0.0f) {
-            mWrongHandPosAnim->SetFrame(0.0f, 1.0f);
-            unk_0xA4 = false;
+        if (mWrongHandPositionAnim->GetFrame() > 0.0f) {
+            mWrongHandPositionAnim->SetFrame(0.0f, 1.0f);
+            mLastWrongHandPosition = false;
         }
 
         if (TheGestureMgr->InControllerMode() && !TheUIEventMgr->HasActiveDialogEvent()) {
@@ -141,13 +142,13 @@ void ShellInput::Poll() {
         static Symbol gameplay_mode("gameplay_mode");
         static Symbol suppress_practice_options("suppress_practice_options");
         if (TheGameMode->Property(gameplay_mode)->Sym() == practice) {
-            if (mHandInvokeGestureFilter->GetUnk140() && !sPracticeOptionsInvoked) {
+            if (mInvokeOptionsFilter->GetUnk140() && !sPracticeOptionsInvoked) {
                 if (TheHamProvider->Property(suppress_practice_options)->Int() == 0) {
                     TheHamProvider->Export(Message("invoke_practice_options"), true);
                     sPracticeOptionsInvoked = true;
                 }
             }
-            if (!mHandInvokeGestureFilter->GetUnk140()
+            if (!mInvokeOptionsFilter->GetUnk140()
                 || TheHamProvider->Property(suppress_practice_options)->Int()) {
                 if (sPracticeOptionsInvoked) {
                     TheHamProvider->Export(Message("deinvoke_practice_options"), true);
@@ -159,24 +160,23 @@ void ShellInput::Poll() {
                || TheHamProvider->Property(is_in_party_mode)->Int()) {
         TheGestureMgr->SetIdentificationEnabled(false);
         if (TheHamProvider->Property(is_in_shell_pause)->Int() == 0) {
-            if (mHandInvokeGestureFilter->GetUnk140()
-                && !sPracticeOptionsInvokedPartyMode) {
+            if (mInvokeOptionsFilter->GetUnk140() && !sPracticeOptionsInvokedPartyMode) {
                 TheHamProvider->Export(Message("invoke_practice_options"), true);
                 sPracticeOptionsInvokedPartyMode = true;
             }
-            if (!mHandInvokeGestureFilter->GetUnk140()
-                && sPracticeOptionsInvokedPartyMode) {
+            if (!mInvokeOptionsFilter->GetUnk140() && sPracticeOptionsInvokedPartyMode) {
                 TheHamProvider->Export(Message("deinvoke_practice_options"), true);
                 sPracticeOptionsInvokedPartyMode = false;
             }
         }
     }
 
-    if (TheGestureMgr->InControllerMode() && unk_0x68.SplitMs() >= unk_0x98) {
+    if (TheGestureMgr->InControllerMode()
+        && mControllerModeTimeoutTimer.SplitMs() >= mControllerModeTimeoutDurationMs) {
         ExitControllerMode(true);
     }
-    if (mHandsUpGestureFilter->HandsUp() && TheHamUI.EventDialogPanel()
-        && TheHamUI.EventDialogPanel()->GetState() != UIPanel::kUp
+    if (mCorrectIdentityFilter->HandsUp() && TheHamUI.EventDialog()
+        && TheHamUI.EventDialog()->GetState() != UIPanel::kUp
         && !TheHamUI.InTransition()) {
         static Symbol ui_nav_mode("ui_nav_mode");
         static Symbol movie("movie");
@@ -184,7 +184,7 @@ void ShellInput::Poll() {
         MILO_ASSERT(pNavModeNode, 0xd2);
         Symbol navmodeSym = pNavModeNode->Sym();
         if (TheGestureMgr->IDEnabled() && navmodeSym != movie) {
-            mHandsUpGestureFilter->Clear();
+            mCorrectIdentityFilter->Clear();
             if (TheHamUI.GetOverlayPanel()) {
                 TheHamUI.GetOverlayPanel()->Dismiss();
             }
@@ -198,18 +198,18 @@ void ShellInput::Poll() {
 
     OverlayPanel *panel = TheHamUI.GetOverlayPanel();
     if (panel) {
-        mHandsUpGestureFilter->Clear();
+        mCorrectIdentityFilter->Clear();
         if (TheHamUI.GetTransitionState() != 0) {
             panel->Dismiss();
         }
     }
-    bool raised = mHandsUpGestureFilter->RaisedMs() > 0.0f;
+    bool raised = mCorrectIdentityFilter->RaisedMs() > 0.0f;
     HamNavList::sForceDisengage = raised != false;
     mCursorPanel->Poll();
     mDepthBuffer->Poll();
-    mSkelIdentifier->Poll();
-    mSkelChooser->Poll();
-    mSkelExtTracker->Poll();
+    mSkeletonIdentifier->Poll();
+    mSkeletonChooser->Poll();
+    mSkeletonExtentTracker->Poll();
 
     bool hasSkel = HasSkeleton();
     if (hasSkel != sHasSkeleton) {
@@ -253,8 +253,8 @@ int ShellInput::NumTrackedSkeletons() const {
 }
 
 int ShellInput::CycleDrawCursor() {
-    unk_0xC4 = !unk_0xC4;
-    return unk_0xC4;
+    mDrawCursor = !mDrawCursor;
+    return mDrawCursor;
 }
 
 void ShellInput::SyncVoiceControl() {
@@ -265,10 +265,10 @@ void ShellInput::SyncVoiceControl() {
     } else {
         prop = nullptr;
     }
-    if (mInputPanel && (!prop || prop->Int() == 1) && !TheProfileMgr.DisableVoice()
+    if (mInputPanel && (!prop || prop->Int() == 1) && !TheProfileMgr.GetDisableVoice()
         && !TheUIEventMgr->HasActiveDialogEvent() && TheSpeechMgr->SpeechSupported()) {
         TheSpeechMgr->SetRecognizing(true);
-        mVoiceControlEnabled = true;
+        mWasVoiceControlEnabled = true;
 
         static Symbol show_microphone_icon("show_microphone_icon");
         static Message show_microphone_msg(show_microphone_icon);
@@ -288,7 +288,7 @@ void ShellInput::SyncVoiceControl() {
         }
     } else {
         TheSpeechMgr->SetRecognizing(false);
-        mVoiceControlEnabled = false;
+        mWasVoiceControlEnabled = false;
         static Symbol hide_microphone_icon("hide_microphone_icon");
         static Message hide_microphone_msg(hide_microphone_icon);
         TheHamProvider->Handle(hide_microphone_msg, false);
@@ -299,25 +299,25 @@ void ShellInput::SyncVoiceControl() {
 }
 
 void ShellInput::EnterControllerMode(bool b) {
-    HelpBarPanel *pHelpbarPanel = TheHamUI.GetHelpBarPanel();
+    HelpBarPanel *pHelpbarPanel = TheHamUI.Helpbar();
     MILO_ASSERT(pHelpbarPanel, 0x230);
-    if (pHelpbarPanel->AllowController() || b) {
+    if (pHelpbarPanel->IsControllerModeAllowed() || b) {
         pHelpbarPanel->EnterControllerMode();
         TheGestureMgr->SetInControllerMode(true);
         static Message controller_mode_entered("controller_mode_entered");
         TheUI->Handle(controller_mode_entered, false);
-        unk_0xA4 = false;
+        mLastWrongHandPosition = false;
         static Symbol in_controller_mode("in_controller_mode");
         TheHamProvider->SetProperty(in_controller_mode, true);
         TheRockCentral.EnterControllerMode();
-        unk_0x68.Restart();
-        int hamUIPadNum = TheHamUI.GetPadNum();
-        if (!TheProfileMgr.CriticalProfile()) {
+        mControllerModeTimeoutTimer.Restart();
+        int hamUIPadNum = TheHamUI.GetLastButtonDownPadNum();
+        if (!TheProfileMgr.GetCriticalProfile()) {
             for (int i = 0; i < 2; i++) {
                 HamPlayerData *pPlayer = TheGameData->Player(i);
                 MILO_ASSERT(pPlayer, 0x251);
                 if (pPlayer->PadNum() == hamUIPadNum) {
-                    mSkelChooser->SetActivePlayer(i);
+                    mSkeletonChooser->SetActivePlayer(i);
                     return;
                 }
             }
@@ -328,8 +328,8 @@ void ShellInput::EnterControllerMode(bool b) {
 }
 
 void ShellInput::ExitControllerMode(bool b) {
-    if (TheHamUI.GetHelpBarPanel())
-        TheHamUI.GetHelpBarPanel()->ExitControllerMode(b);
+    if (TheHamUI.Helpbar())
+        TheHamUI.Helpbar()->ExitControllerMode(b);
     TheGestureMgr->SetInControllerMode(false);
     static Message controllerModeExited("controller_mode_exited");
     TheUI->Handle(controllerModeExited, false);
@@ -346,13 +346,13 @@ void ShellInput::DrawDebug() {
             list->DrawDebug();
         }
     }
-    mSkelIdentifier->DrawDebug();
-    mSkelChooser->DrawDebug();
+    mSkeletonIdentifier->DrawDebug();
+    mSkeletonChooser->DrawDebug();
 }
 
 void ShellInput::SetCursorAlpha(float f1) const {
-    if (TheHamUI.GetHelpBarPanel()) {
-        ObjectDir *hbpDataDir = TheHamUI.GetHelpBarPanel()->DataDir();
+    if (TheHamUI.Helpbar()) {
+        ObjectDir *hbpDataDir = TheHamUI.Helpbar()->DataDir();
         PanelDir *dir = dynamic_cast<PanelDir *>(hbpDataDir);
         if (dir) {
             RndAnimatable *anim =
@@ -366,25 +366,25 @@ void ShellInput::SetCursorAlpha(float f1) const {
 
 void ShellInput::SyncToCurrentScreen() {
     if (TheUIEventMgr->HasActiveDialogEvent()
-        && TheHamUI.EventDialogPanel()->GetState() == UIPanel::kUp) {
-        mInputPanel = TheHamUI.EventDialogPanel();
+        && TheHamUI.EventDialog()->GetState() == UIPanel::kUp) {
+        mInputPanel = TheHamUI.EventDialog();
     } else if (TheHamUI.GetOverlayPanel()) {
         mInputPanel = TheHamUI.GetOverlayPanel();
     } else {
         mInputPanel = TheHamUI.FocusPanel();
     }
     TheGestureMgr->SetBool4271(!IsGameplayPanel());
-    TheHamUI.GetHelpBarPanel()->SyncToPanel(mInputPanel);
-    unk_0x98 = 5000;
-    if (TheHamUI.GetHelpBarPanel()) {
+    TheHamUI.Helpbar()->SyncToPanel(mInputPanel);
+    mControllerModeTimeoutDurationMs = 5000;
+    if (TheHamUI.Helpbar()) {
         static Symbol controller_mode_timeout("controller_mode_timeout");
         const DataNode *prop =
-            TheHamUI.GetHelpBarPanel()->Property(controller_mode_timeout, false);
+            TheHamUI.Helpbar()->Property(controller_mode_timeout, false);
         if (prop) {
-            unk_0x98 = prop->Int();
+            mControllerModeTimeoutDurationMs = prop->Int();
         }
     }
-    LetterboxPanel *lbp = TheHamUI.GetLetterboxPanel();
+    LetterboxPanel *lbp = TheHamUI.Letterbox();
     if (lbp) {
         lbp->SyncToPanel(mInputPanel);
     }
@@ -415,7 +415,7 @@ DataNode ShellInput::OnMsg(const SpeechEnableMsg &msg) {
 }
 
 DataNode ShellInput::OnMsg(const ResetControllerModeTimeoutMsg &msg) {
-    unk_0x68.Restart();
+    mControllerModeTimeoutTimer.Restart();
     return DATA_UNHANDLED;
 }
 
@@ -438,7 +438,7 @@ DataNode ShellInput::OnMsg(const ButtonDownMsg &msg) {
         if (!b2 && !TheGestureMgr->InControllerMode()) {
             EnterControllerMode(false);
             if (msg.GetButton() != kPad_Xbox_B) {
-                if (!TheHamUI.GetHelpBarPanel()->AllowController()) {
+                if (!TheHamUI.Helpbar()->IsControllerModeAllowed()) {
                     TheSynth->RunFlow("invalid_select.flow");
                 }
                 return 0;
@@ -452,7 +452,7 @@ DataNode ShellInput::OnMsg(const ButtonDownMsg &msg) {
 
 DataNode ShellInput::OnMsg(const JoypadConnectionMsg &msg) {
     if (TheGestureMgr->InControllerMode() && !msg.Connected()) {
-        if (msg->Int(5) == TheHamUI.GetPadNum())
+        if (msg->Int(5) == TheHamUI.GetLastButtonDownPadNum())
             ExitControllerMode(false);
     }
     return DATA_UNHANDLED;
@@ -461,7 +461,7 @@ DataNode ShellInput::OnMsg(const JoypadConnectionMsg &msg) {
 DataNode ShellInput::OnMsg(const SpeechRecoMessage &msg) { return 0; }
 
 DataNode ShellInput::OnMsg(const LeftHandListEngagementMsg &msg) {
-    if (msg.Success()) {
+    if (msg.Engaged()) {
         static Symbol voice_commander_help_hide("voice_commander_help_hide");
         static Message voice_commander_help_hide_msg(voice_commander_help_hide);
         TheHamProvider->Handle(voice_commander_help_hide_msg, false);

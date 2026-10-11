@@ -12,22 +12,22 @@
 #include "utl/Symbol.h"
 
 OvershellSlot::OvershellSlot(HamPlayerData &data)
-    : mPlayerData(data), mState((OvershellSlotState)0), unk38(0), unk3c(-1) {}
+    : mPlayerData(data), mState(kJoinNoSkeleton), mSkeleton(0), mTrackingId(-1) {}
 
 void OvershellSlot::SetPlaying(bool playing) {
     static Message quitMsg("player_quit", 0);
     static Message joinMsg("player_join", 0);
     if (playing) {
-        joinMsg[0] = mPlayerNum;
+        joinMsg[0] = mSlot;
         TheHamProvider->Export(joinMsg, true);
     } else {
-        quitMsg[0] = mPlayerNum;
+        quitMsg[0] = mSlot;
         TheHamProvider->Export(quitMsg, true);
     }
 }
 
 void OvershellSlot::SetState(OvershellSlotState state) {
-    bool state3 = mState == 3;
+    bool state3 = mState == kJoinPlaying;
     if (!state3 || TheGestureMgr->Unk425C() != 1) {
         PropertyEventProvider *prov = mPlayerData.Provider();
         if (prov) {
@@ -47,14 +47,14 @@ void OvershellSlot::SetState(OvershellSlotState state) {
 void OvershellSlot::Poll(const Skeleton *const (&skeletons)[6]) {
     int trackingID = mPlayerData.GetSkeletonTrackingID();
     Skeleton *skel = TheGestureMgr->GetSkeletonByTrackingID(trackingID);
-    if (mState == 3 && trackingID > 0 && !skel) {
+    if (mState == kJoinPlaying && trackingID > 0 && !skel) {
         return;
-    } else if (mState == 0 || (skel && skel->IsValid())) {
-        if (mState == 0) {
+    } else if (mState == kJoinNoSkeleton || (skel && skel->IsValid())) {
+        if (mState == kJoinNoSkeleton) {
             if (mPlayerData.Autoplay().Null()) {
-                SkeletonChooser *chooser = TheHamUI.GetShellInput()->mSkelChooser;
+                SkeletonChooser *chooser = TheHamUI.GetShellInput()->GetSkeletonChooser();
                 MILO_ASSERT(chooser, 0x99);
-                HamPlayerData *playerData = TheGameData->Player(mPlayerNum);
+                HamPlayerData *playerData = TheGameData->Player(mSlot);
                 if (playerData->GetSkeletonTrackingID() <= 0)
                     return;
             }
@@ -88,7 +88,7 @@ END_HANDLERS
 void Overshell::Init() {
     SetName("overshell", ObjectDir::Main());
     for (int i = 0; i < 2; i++) {
-        mSlots[i]->SetPlayerNum(i);
+        mSlots[i]->Init(i);
     }
 }
 

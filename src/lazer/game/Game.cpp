@@ -80,7 +80,7 @@ Game::Game()
     TheMaster->GetAudio()->SetName("audio", ObjectDir::Main());
     SetBackgroundVolume(TheProfileMgr.GetMusicVolumeDb());
     SetForegroundVolume(TheProfileMgr.GetMusicVolumeDb());
-    mMaster->GetAudio()->SetStereo(!TheProfileMgr.Mono());
+    mMaster->GetAudio()->SetStereo(!TheProfileMgr.GetMono());
     LoadSong();
     mGamePauseRequest.mRequest = false;
     mGamePauseRequest.mPlaying = false;

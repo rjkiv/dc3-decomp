@@ -20,7 +20,7 @@ struct CharacterPref {
 
     Symbol mChar; // 0x0
     Symbol mOutfit; // 0x4
-    int mVoicemailIdx; // 0x8
+    int mVOIndex; // 0x8
 };
 
 class HamProfile : public Profile {
@@ -29,6 +29,14 @@ public:
         kMaxPlaylists = 5,
         kNumCharacters = 23
     };
+
+    enum ExportCheckState {
+        kUnknown = 0x0000,
+        kEnumerating = 0x0001,
+        kPurchased = 0x0002,
+        kNotPurchased = 0x0003
+    };
+
     HamProfile(int);
     virtual ~HamProfile();
     // Hmx::Object

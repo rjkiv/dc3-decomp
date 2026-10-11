@@ -9,10 +9,10 @@ public:
     virtual ~PlaylistTypeCmp();
     virtual int Compare(NavListItemSortCmp const *, NavListNodeType) const;
 
-    PlaylistTypeCmp(int type, const char *name) : mType(type), mName(name) {}
+    PlaylistTypeCmp(int type, const char *name) : mPlaylistType(type), mName(name) {}
 
-    int mType;
-    const char *mName;
+    int mPlaylistType; // 0x4
+    const char *mName; // 0x8
 };
 
 class PlaylistSortByType : public PlaylistSort {

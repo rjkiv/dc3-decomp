@@ -82,23 +82,23 @@ public:
     void SetIntroPlaylist();
     bool SetEraToFirstIncomplete();
 
-    Symbol GetTanBattleEra() { return "era_tan_battle"; }
-    Symbol Era() const { return mEra; }
-    Difficulty GetDifficulty() const { return mDifficulty; }
-    bool JustUnlockedEraSong() { return mJustUnlockedEraSong; }
+    Symbol GetTanBattleEra() const { return "era_tan_battle"; }
+    Symbol Era() const { return m_symEra; }
+    Difficulty GetDifficulty() const { return m_eDifficulty; }
+    bool JustUnlockedEraSong() const { return m_bJustUnlockedEraSong; }
 
 protected:
-    Playlist mIntroPlaylist; // 0x114
-    Playlist mOutroPlaylist; // 0x12c
-    Symbol mEra; // 0x144
-    Difficulty mDifficulty; // 0x148
-    bool mJustFinishedEra; // 0x14c
-    bool mJustUnlockedEraSong; // 0x14d
-    bool mWasLastMoveMastered; // 0x14e
-    Symbol mLastMoveMasteredName; // 0x150
-    int mLastEraStars; // 0x154
-    int mLastEraMoves; // 0x158
-    int mStarsEarnedSoFar; // 0x15c
+    Playlist m_introPlaylist; // 0x114
+    Playlist m_outroPlaylist; // 0x12c
+    Symbol m_symEra; // 0x144
+    Difficulty m_eDifficulty; // 0x148
+    bool m_bJustFinishedEra; // 0x14c
+    bool m_bJustUnlockedEraSong; // 0x14d
+    bool m_bLastMoveMastered; // 0x14e
+    Symbol m_symLastMoveCapturedName; // 0x150
+    int m_iLastEraStars; // 0x154
+    int m_iLastEraMoves; // 0x158
+    int m_iStarsEarnedSoFar; // 0x15c - not in pdb
 
 private:
     void CheckForEraSongUnlock();

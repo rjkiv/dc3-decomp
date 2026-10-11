@@ -2,6 +2,8 @@
 #include "meta_ham/FitnessCalorieSort.h"
 #include "meta_ham/NavListNode.h"
 
+// both classes not in pdb :(
+
 class FitnessCalorieSortCmp : public NavListItemSortCmp {
 public:
     virtual ~FitnessCalorieSortCmp();

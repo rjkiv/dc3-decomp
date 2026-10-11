@@ -8,9 +8,8 @@
 
 DECLARE_MESSAGE(SkeletonIdentifiedMsg, "skeleton_identified")
 SkeletonIdentifiedMsg(int i, int j) : Message(Type(), i, j) {}
-int GetVal1() const { return mData->Int(1); }
-int GetVal2() const { return mData->Int(2); }
-int GetIndex() const { return mData->Int(3); }
+int GetEnrollmentIndex() const { return mData->Int(2); }
+int GetSkeletonIndex() const { return mData->Int(3); }
 END_MESSAGE
 
 enum IdentityStatus {
@@ -31,8 +30,8 @@ public:
         EnrolledPlayer() : mPadNum(-1) {}
         bool UpdatePlayerBinding();
 
-        int mPadNum; // 0x0 - padnum/user index
-        String mName; // 0x4 - name
+        int mPadNum; // 0x0
+        String mPlayerName; // 0x4
         int mEnrollmentIndex; // 0xc
     };
 
@@ -43,8 +42,8 @@ public:
 
     void Init();
     void Poll();
-    String GetPlayerName(int idx) const { return mEnrolledPlayers[idx].mName; }
-    int GetPlayerPadNum(int idx) const { return mEnrolledPlayers[idx].mPadNum; }
+    String GetPlayerName(int idx) const { return mEnrolledPlayers[idx].mPlayerName; }
+    int GetPadNum(int idx) const { return mEnrolledPlayers[idx].mPadNum; }
     IdentityStatus GetIdentityStatus(int);
     void CorrectIdentity(int);
     bool IsAssociatedWithProfile(int) const;
@@ -65,12 +64,12 @@ private:
     DataNode OnMsg(const SkeletonIdentifiedMsg &);
 
     IdentityStatus mIdentityStatus; // 0x2c
-    int mSkeletonIdx; // 0x30
-    int mPlayerIdx; // 0x34
-    int mEnrollmentIdx; // 0x38
-    int unk3c; // 0x3c - enrollment identity?
-    int mActiveTrackingID; // 0x40
-    int unk44; // 0x44 - also a tracking ID
+    int mIdentifyingSkeletonAtIndex; // 0x30
+    int mIdentifyingPlayerAtIndex; // 0x34
+    int mLastEnrolledIndex; // 0x38
+    int mCorrectIdentityEnrollmentIndex; // 0x3c
+    int mCorrectIdentityTrackingID; // 0x40
+    int mLastTrackingIdFailure; // 0x44 - also a tracking ID
     EnrolledPlayer mEnrolledPlayers[8]; // 0x48
     bool mDrawDebug; // 0xc8
 };

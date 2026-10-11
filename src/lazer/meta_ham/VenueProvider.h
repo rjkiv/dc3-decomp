@@ -13,9 +13,9 @@ public:
 
     void UpdateList();
 
-    void SetPlayer(int i) { mPlayer = i; }
+    void SetPlayerIndex(int i) { mPlayerIndex = i; }
 
 private:
-    int mPlayer; // 0x30
+    int mPlayerIndex; // 0x30
     std::vector<Symbol> mVenues; // 0x34
 };

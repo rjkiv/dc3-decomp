@@ -14,11 +14,11 @@ int MQSongCharCmp::Compare(const NavListItemSortCmp *cmp, NavListNodeType type) 
         break;
     case kNodeHeader:
         mqCmp = cmp->GetMQSongCharCmp();
-        return strcmp(unk8, mqCmp->unk8);
+        return strcmp(mCharacter.Str(), mqCmp->mCharacter.Str());
         break;
     case kNodeItem:
         mqCmp = cmp->GetMQSongCharCmp();
-        return strcmp(unk4, mqCmp->unk4);
+        return strcmp(mSong.Str(), mqCmp->mSong.Str());
         break;
     default:
         MILO_FAIL("invalid type of node comparison.\n");
@@ -29,19 +29,19 @@ int MQSongCharCmp::Compare(const NavListItemSortCmp *cmp, NavListNodeType type) 
 
 NavListHeaderNode *MQSongSortByCharacter::NewHeaderNode(NavListItemNode *node) const {
     auto cmp = node->GetCmp()->GetMQSongCharCmp();
-    const char *p1 = cmp->unk4;
-    const char *p2 = cmp->unk8;
+    Symbol p1 = cmp->mSong;
+    Symbol p2 = cmp->mCharacter;
     MQSongCharCmp *songCharCmp = new MQSongCharCmp(p1, p2);
-    const char *c = p2;
+    Symbol c = p2;
     Symbol sym(MakeString("mqheader_%s", c));
     return new MQSongHeaderNode(songCharCmp, sym, true);
 }
 
 NavListShortcutNode *MQSongSortByCharacter::NewShortcutNode(NavListItemNode *node) const {
-    const char *p1 = node->GetCmp()->GetMQSongCharCmp()->unk4;
-    const char *p2 = node->GetCmp()->GetMQSongCharCmp()->unk8;
+    Symbol p1 = node->GetCmp()->GetMQSongCharCmp()->mSong;
+    Symbol p2 = node->GetCmp()->GetMQSongCharCmp()->mCharacter;
     MQSongCharCmp *songCharCmp = new MQSongCharCmp(p1, p2);
-    return new NavListShortcutNode(songCharCmp, STR_TO_SYM(p1), true);
+    return new NavListShortcutNode(songCharCmp, p1, true);
 }
 
 NavListItemNode *MQSongSortByCharacter::NewItemNode(void *node) const {
@@ -50,6 +50,6 @@ NavListItemNode *MQSongSortByCharacter::NewItemNode(void *node) const {
         TheHamSongMgr.Data(TheHamSongMgr.GetSongIDFromShortName(*pSongSymbol))->Outfit(),
         true
     );
-    MQSongCharCmp *songCharCmp = new MQSongCharCmp(pSongSymbol->Str(), outfitChar.Str());
+    MQSongCharCmp *songCharCmp = new MQSongCharCmp(*pSongSymbol, outfitChar);
     return new MQSongSortNode(songCharCmp, *pSongSymbol, outfitChar);
 }

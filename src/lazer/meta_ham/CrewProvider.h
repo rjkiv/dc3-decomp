@@ -17,10 +17,10 @@ public:
     Symbol GetRandomAvailableCrew() const;
     void UpdateList();
     void SetPanelDir(PanelDir *);
-    void SetPlayer(int player) { mPlayer = player; }
+    void SetPlayerIndex(int player) { mPlayerIndex = player; }
 
 private:
-    int mPlayer; // 0x30
+    int mPlayerIndex; // 0x30
     PanelDir *mPanelDir; // 0x34
     std::vector<Symbol> mCrews; // 0x38
 };

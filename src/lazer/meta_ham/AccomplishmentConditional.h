@@ -6,13 +6,13 @@
 #include <vector>
 
 struct AccomplishmentCondition {
-    Symbol mCondition; // 0x0
-    int mValue; // 0x4
-    Symbol mEra; // 0x8
-    Difficulty mDifficulty; // 0xc
-    Symbol mCharacter; // 0x10
-    Symbol mMode; // 0x14
-    bool mNoFlashcards; // 0x18
+    Symbol m_symCondition; // 0x0
+    int m_iValue; // 0x4
+    Symbol m_symValue; // 0x8
+    Difficulty m_eDifficulty; // 0xc
+    Symbol m_symCharacter; // 0x10
+    Symbol m_symMode; // 0x14
+    bool m_bNoFlashcards; // 0x18
 };
 
 class AccomplishmentConditional : public Accomplishment {

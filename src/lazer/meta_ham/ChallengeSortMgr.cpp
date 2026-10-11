@@ -20,16 +20,17 @@
 #include "utl/Symbol.h"
 
 ChallengeRecord::ChallengeRecord(const ChallengeRecord &other)
-    : mRow(other.mRow), unk40(other.unk40), unk44(other.unk44), unk48(other.unk48),
-      unk4c(other.unk4c), unk50(other.unk50) {}
+    : mData(other.mData), mSongShortName(other.mSongShortName),
+      mSongTitle(other.mSongTitle), mChallenger(other.mChallenger),
+      mChallengee(other.mChallengee), mChallengeType(other.mChallengeType) {}
 
 ChallengeRecord &ChallengeRecord::operator=(const ChallengeRecord &other) {
-    this->mRow = other.mRow;
-    this->unk40 = other.unk40;
-    this->unk44 = other.unk44;
-    this->unk48 = other.unk48;
-    this->unk4c = other.unk4c;
-    this->unk50 = other.unk50;
+    this->mData = other.mData;
+    this->mSongShortName = other.mSongShortName;
+    this->mSongTitle = other.mSongTitle;
+    this->mChallenger = other.mChallenger;
+    this->mChallengee = other.mChallengee;
+    this->mChallengeType = other.mChallengeType;
     return *this;
 }
 
@@ -69,7 +70,7 @@ void ChallengeSortMgr::Terminate() {
 }
 
 int ChallengeSortMgr::GetTotalXpEarned(int i1) {
-    NavListNode *highlight = GetHighlightItem()->Parent();
+    NavListNode *highlight = GetHighlightItem()->GetParent();
     NavListNode *header = dynamic_cast<ChallengeHeaderNode *>(highlight);
     MILO_ASSERT(header, 0xcc);
     return static_cast<ChallengeHeaderNode *>(header)->GetTotalEarnedExp(i1);
@@ -77,11 +78,11 @@ int ChallengeSortMgr::GetTotalXpEarned(int i1) {
 
 int ChallengeSortMgr::GetPotentialChallengeExp(int i1) {
     if (IsIndexHeader(i1)) {
-        auto node = mSorts[mCurrentSortIdx]->GetList()[i1];
+        auto node = mSorts[mSortIndex]->GetList()[i1];
         return static_cast<ChallengeHeaderNode *>(node)->GetChallengeExp();
     } else {
         auto highlight = GetHighlightItem();
-        NavListNode *header = dynamic_cast<ChallengeHeaderNode *>(highlight->Parent());
+        NavListNode *header = dynamic_cast<ChallengeHeaderNode *>(highlight->GetParent());
         MILO_ASSERT(header, 0xa5);
         return static_cast<ChallengeHeaderNode *>(header)->GetPotentialChallengeExp(
             highlight
@@ -92,7 +93,8 @@ int ChallengeSortMgr::GetPotentialChallengeExp(int i1) {
 int ChallengeSortMgr::GetOwnerChallengeScore(int songID) {
     for (int i = 0; i < mChallengeRecords.size(); i++) {
         if (songID == (int)mChallengeRecords[i].GetChallengeRow().songId
-            && mChallengeRecords[i].GetUnk48() == mChallengeRecords[i].GetUnk4c()) {
+            && mChallengeRecords[i].GetPlayerName()
+                == mChallengeRecords[i].GetChallengeeName()) {
             return mChallengeRecords[i].GetChallengeRow().score;
         }
     }
@@ -101,39 +103,38 @@ int ChallengeSortMgr::GetOwnerChallengeScore(int songID) {
 
 int ChallengeSortMgr::GetChallengeExp(int i1) {
     if (IsIndexHeader(i1)) {
-        auto node = mSorts[mCurrentSortIdx]->GetList()[i1];
+        auto node = mSorts[mSortIndex]->GetList()[i1];
         return static_cast<ChallengeHeaderNode *>(node)->GetChallengeExp();
     } else {
-        auto node = mSorts[mCurrentSortIdx]->GetList()[i1];
+        auto node = mSorts[mSortIndex]->GetList()[i1];
         return static_cast<ChallengeSortNode *>(node)->GetChallengeExp();
     }
 }
 
 int ChallengeSortMgr::GetSongID(int i1) {
     if (IsIndexHeader(i1)) {
-        auto node = mSorts[mCurrentSortIdx]->GetList()[i1];
+        auto node = mSorts[mSortIndex]->GetList()[i1];
         return static_cast<ChallengeHeaderNode *>(node)->GetSongID();
     } else {
-        auto node = mSorts[mCurrentSortIdx]->GetList()[i1];
+        auto node = mSorts[mSortIndex]->GetList()[i1];
         return static_cast<ChallengeSortNode *>(node)->GetSongID();
     }
 }
 
 Symbol ChallengeSortMgr::GetSongShortName(int songID) {
     if (IsIndexHeader(songID)) {
-        return static_cast<ChallengeHeaderNode *>(
-                   mSorts[mCurrentSortIdx]->GetList()[songID]
-        )
+        return static_cast<ChallengeHeaderNode *>(mSorts[mSortIndex]->GetList()[songID])
             ->GetSongShortName();
     } else {
-        return mSorts[mCurrentSortIdx]->GetList()[songID]->GetToken();
+        return mSorts[mSortIndex]->GetList()[songID]->GetToken();
     }
 }
 
 int ChallengeSortMgr::GetOwnerChallengeTimeStamp(int i1) {
     for (int i = 0; i < mChallengeRecords.size(); i++) {
         if (i1 == (int)mChallengeRecords[i].GetChallengeRow().songId
-            && mChallengeRecords[i].GetUnk48() == mChallengeRecords[i].GetUnk4c()) {
+            && mChallengeRecords[i].GetPlayerName()
+                == mChallengeRecords[i].GetChallengeeName()) {
             return mChallengeRecords[i].GetChallengeRow().dateTime;
         }
     }
@@ -144,7 +145,7 @@ int ChallengeSortMgr::GetChallengeScore(int i1) {
     if (IsIndexHeader(i1)) {
         return GetBestChallengeScore(GetSongID(i1));
     } else {
-        auto node = mSorts[mCurrentSortIdx]->GetList()[i1];
+        auto node = mSorts[mSortIndex]->GetList()[i1];
         return static_cast<ChallengeSortNode *>(node)->GetChallengeScore();
     }
 }
@@ -152,7 +153,7 @@ int ChallengeSortMgr::GetChallengeScore(int i1) {
 Symbol ChallengeSortMgr::GetChallengerName() {
     auto node = dynamic_cast<ChallengeSortNode *>(GetHighlightItem());
     MILO_ASSERT(node, 0xdb);
-    return node->GetChallengeRecord()->GetUnk4c();
+    return node->GetChallengeRecord()->GetChallengeeName();
 }
 
 int ChallengeSortMgr::GetBestChallengeScore(int songID) {
@@ -169,15 +170,13 @@ int ChallengeSortMgr::GetBestChallengeScore(int songID) {
 
 String ChallengeSortMgr::GetSongTitle(int songID) {
     if (IsIndexHeader(songID)) {
-        return static_cast<ChallengeHeaderNode *>(
-                   mSorts[mCurrentSortIdx]->GetList()[songID]
-        )
+        return static_cast<ChallengeHeaderNode *>(mSorts[mSortIndex]->GetList()[songID])
             ->GetSongShortTitle();
         ;
     } else {
-        return static_cast<ChallengeSortNode *>(mSorts[mCurrentSortIdx]->GetList()[songID])
+        return static_cast<ChallengeSortNode *>(mSorts[mSortIndex]->GetList()[songID])
             ->GetChallengeRecord()
-            ->GetUnk44(); // FIXME
+            ->GetSongTitle();
     }
 }
 
@@ -185,9 +184,9 @@ int ChallengeSortMgr::GetChallengeRecordSongType(int i1) {
     if (IsIndexHeader(i1)) {
         return -1;
     } else {
-        return static_cast<ChallengeSortNode *>(mSorts[mCurrentSortIdx]->GetList()[i1])
+        return static_cast<ChallengeSortNode *>(mSorts[mSortIndex]->GetList()[i1])
             ->GetChallengeRecord()
-            ->GetUnk50();
+            ->GetChallengeType();
     }
 }
 
@@ -222,7 +221,7 @@ const char *ChallengeSortMgr::GetChallengerGamertag(int i) {
         return GetBestChallengeScoreGamertag(GetSongID(i));
     } else {
         ChallengeSortNode *node =
-            static_cast<ChallengeSortNode *>(mSorts[mCurrentSortIdx]->GetList()[i]);
+            static_cast<ChallengeSortNode *>(mSorts[mSortIndex]->GetList()[i]);
         return node->GetChallengerGamertag();
     }
     return 0;
@@ -243,11 +242,11 @@ void ChallengeSortMgr::OnEnter() {
     FOREACH (it, mSorts) {
         (*it)->BuildTree();
     }
-    NavListSort *pSort = mSorts[mCurrentSortIdx];
+    NavListSort *pSort = mSorts[mSortIndex];
     pSort->BuildItemList();
-    if (unk48) {
-        pSort->SetHighlightID(unk44);
-        unk48 = false;
+    if (mSavedHighlight) {
+        pSort->SetHighlightID(mSavedHighlightID);
+        mSavedHighlight = false;
     }
     pSort->UpdateHighlight();
 }
@@ -268,7 +267,7 @@ int ChallengeSortMgr::GetChallengerXp(int val) {
         return xp;
     } else {
         ChallengeSortNode *node =
-            static_cast<ChallengeSortNode *>(mSorts[mCurrentSortIdx]->GetList()[val]);
+            static_cast<ChallengeSortNode *>(mSorts[mSortIndex]->GetList()[val]);
         return node->GetChallengerXp();
     }
 }
@@ -293,7 +292,7 @@ char const *ChallengeSortMgr::GetBestChallengeScoreGamertag(int id) {
     if (!b) {
         b = (type >= 3 && type <= 5);
         if (!b) {
-            return mChallengeRecords[idx].GetUnk48().Str();
+            return mChallengeRecords[idx].GetPlayerName().Str();
         }
     }
 

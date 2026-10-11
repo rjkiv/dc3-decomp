@@ -18,15 +18,15 @@ END_CUSTOM_HANDLERS
 
 void HamScreen::Enter(UIScreen *screen) {
     TheHamUI.InitPanels();
-    HelpBarPanel *hbp = TheHamUI.GetHelpBarPanel();
+    HelpBarPanel *hbp = TheHamUI.Helpbar();
     if (hbp->GetState() != UIPanel::kUp) {
         hbp->Enter();
     }
-    LetterboxPanel *lbp = TheHamUI.GetLetterboxPanel();
+    LetterboxPanel *lbp = TheHamUI.Letterbox();
     if (lbp && lbp->GetState() != UIPanel::kUp) {
         lbp->Enter();
     }
-    BlacklightPanel *blp = TheHamUI.GetBlacklightPanel();
+    BlacklightPanel *blp = TheHamUI.Blacklight();
     if (blp && blp->GetState() != UIPanel::kUp) {
         blp->Enter();
     }
@@ -39,14 +39,14 @@ void HamScreen::Exit(UIScreen *screen) { UIScreen::Exit(screen); }
 bool HamScreen::Exiting() const { return UIScreen::Exiting(); }
 
 bool HamScreen::IsEventDialogOnTop() const {
-    UIPanel *event_dialog = TheHamUI.EventDialogPanel();
+    UIPanel *event_dialog = TheHamUI.EventDialog();
     MILO_ASSERT(event_dialog, 0x5f);
     return TheUI->CurrentScreen() == this && event_dialog->GetState() == UIPanel::kUp;
 }
 
 bool HamScreen::InComponentSelect() const {
     if (IsEventDialogOnTop()) {
-        UIComponent *component = TheHamUI.EventDialogPanel()->FocusComponent();
+        UIComponent *component = TheHamUI.EventDialog()->FocusComponent();
         if (component) {
             return component->GetState() == UIComponent::kSelecting;
         }
@@ -66,7 +66,7 @@ DataNode HamScreen::OnEventMsgCommon(const Message &msg) {
         if (handled != DATA_UNHANDLED) {
             return handled;
         } else if (IsEventDialogOnTop()) {
-            UIPanel *event_dialog = TheHamUI.EventDialogPanel();
+            UIPanel *event_dialog = TheHamUI.EventDialog();
             MILO_ASSERT(event_dialog, 0x4D);
             return event_dialog->Handle(msg, false);
         }

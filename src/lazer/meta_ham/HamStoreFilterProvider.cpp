@@ -8,20 +8,20 @@
 #include "utl/Symbol.h"
 
 HamStoreFilter::HamStoreFilter(Symbol s) {
-    unk0 = s;
-    unk4 = Localize(unk0, false, TheLocale);
+    mName = s;
+    mText = Localize(mName, false, TheLocale);
 }
 
 HamStoreFilter::HamStoreFilter(DataArray const *d) {
-    unk0 = d->Sym(0);
+    mName = d->Sym(0);
     static Symbol name("name");
     Symbol s = name; // why
     DataArray *nameArray = d->FindArray(s);
-    unk4 = nameArray->Str(1);
+    mText = nameArray->Str(1);
     static Symbol sorts("sorts");
     DataArray *sortArray = d->FindArray(sorts);
     for (int i = 1; i < sortArray->Size(); i++) {
-        unkc.push_back(sortArray->Sym(i));
+        mSorts.push_back(sortArray->Sym(i));
     }
 }
 
@@ -30,7 +30,7 @@ HamStoreFilterProvider::HamStoreFilterProvider(std::vector<HamStoreFilter *> *fi
 
 Symbol HamStoreFilterProvider::DataSymbol(int data) const {
     MILO_ASSERT_RANGE(data, 0, mFilters->size(), 0x45);
-    return (*mFilters)[data]->unk0;
+    return (*mFilters)[data]->GetName();
 }
 
 int HamStoreFilterProvider::NumData() const { return mFilters->size(); }

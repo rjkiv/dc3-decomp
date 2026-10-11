@@ -20,7 +20,8 @@
 #include "utl/Symbol.h"
 
 ChallengeResultPanel::ChallengeResultPanel()
-    : mChallengeList(0), unk4c(0), unk5c(0), unk60(0), unk64(0), unk6c(0) {}
+    : mList(0), mState(kStateInit), mScore(0), mMissionIndex(0), mCheckingIdx(0),
+      mMyIndex(0) {}
 
 ChallengeResultPanel::~ChallengeResultPanel() {}
 
@@ -45,37 +46,39 @@ void ChallengeResultPanel::Text(int, int data, UIListLabel *slot, UILabel *label
     } else {
         String curGamerTag = mItems[data].challengerUsername;
         if (slot->Matches("white_small_gamertag")) {
-            if (unk5c <= (int)mItems[data].score && data != unk60 && data != unk6c) {
+            if (mScore <= (int)mItems[data].score && data != mMissionIndex
+                && data != mMyIndex) {
                 label->SetPrelocalizedString(curGamerTag);
             } else {
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("grey_small_gamertag")) {
-            if (unk5c > (int)mItems[data].score && data != unk60) {
+            if (mScore > (int)mItems[data].score && data != mMissionIndex) {
                 label->SetPrelocalizedString(curGamerTag);
             } else {
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("white_large_gamertag")) {
-            if (unk5c <= (int)mItems[data].score && data == unk60) {
+            if (mScore <= (int)mItems[data].score && data == mMissionIndex) {
                 label->SetPrelocalizedString(curGamerTag);
             } else {
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("grey_large_gamertag")) {
-            if (unk5c > (int)mItems[data].score && data == unk60) {
+            if (mScore > (int)mItems[data].score && data == mMissionIndex) {
                 label->SetPrelocalizedString(curGamerTag);
             } else {
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("gold_large_gamertag")) {
-            if (unk5c == (int)mItems[data].score && data == unk6c) {
+            if (mScore == (int)mItems[data].score && data == mMyIndex) {
                 label->SetPrelocalizedString(curGamerTag);
             } else {
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("white_small_score")) {
-            if (unk5c <= (int)mItems[data].score && data != unk60 && data != unk6c) {
+            if (mScore <= (int)mItems[data].score && data != mMissionIndex
+                && data != mMyIndex) {
                 app_label->SetTokenFmt(
                     best_score, LocalizeSeparatedInt(mItems[data].score, TheLocale)
                 );
@@ -83,7 +86,7 @@ void ChallengeResultPanel::Text(int, int data, UIListLabel *slot, UILabel *label
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("grey_small_score")) {
-            if (unk5c > (int)mItems[data].score && data != unk60) {
+            if (mScore > (int)mItems[data].score && data != mMissionIndex) {
                 app_label->SetTokenFmt(
                     best_score, LocalizeSeparatedInt(mItems[data].score, TheLocale)
                 );
@@ -91,7 +94,7 @@ void ChallengeResultPanel::Text(int, int data, UIListLabel *slot, UILabel *label
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("white_large_score")) {
-            if (unk5c <= (int)mItems[data].score && data == unk60) {
+            if (mScore <= (int)mItems[data].score && data == mMissionIndex) {
                 app_label->SetTokenFmt(
                     best_score, LocalizeSeparatedInt(mItems[data].score, TheLocale)
                 );
@@ -99,7 +102,7 @@ void ChallengeResultPanel::Text(int, int data, UIListLabel *slot, UILabel *label
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("grey_large_score")) {
-            if (unk5c > (int)mItems[data].score && data == unk60) {
+            if (mScore > (int)mItems[data].score && data == mMissionIndex) {
                 app_label->SetTokenFmt(
                     best_score, LocalizeSeparatedInt(mItems[data].score, TheLocale)
                 );
@@ -107,7 +110,7 @@ void ChallengeResultPanel::Text(int, int data, UIListLabel *slot, UILabel *label
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("gold_large_score")) {
-            if (unk5c == (int)mItems[data].score && data == unk6c) {
+            if (mScore == (int)mItems[data].score && data == mMyIndex) {
                 app_label->SetTokenFmt(
                     best_score, LocalizeSeparatedInt(mItems[data].score, TheLocale)
                 );
@@ -122,39 +125,39 @@ int ChallengeResultPanel::NumData() const { return mItems.size(); }
 
 void ChallengeResultPanel::FinishLoad() {
     UIPanel::FinishLoad();
-    mChallengeList = DataDir()->Find<UIList>("challengee.lst");
-    mRightHandNavList = DataDir()->Find<HamNavList>("right_hand.hnl");
-    mResultEventProvider = DataDir()->Find<PropertyEventProvider>("result.ep");
+    mList = DataDir()->Find<UIList>("challengee.lst");
+    mNavList = DataDir()->Find<HamNavList>("right_hand.hnl");
+    mSettings = DataDir()->Find<PropertyEventProvider>("result.ep");
 }
 
 void ChallengeResultPanel::Poll() {
     HamPanel::Poll();
-    switch (unk4c) {
-    case 0:
+    switch (mState) {
+    case kStateInit:
         if (!DataDir()->Find<Flow>("result_init.flow")->IsRunning()) {
             DataDir()->Find<Flow>("score.flow")->Activate();
-            unk4c = 1;
-            mChallengeList->AutoScroll();
+            mState = kStateScrollToRival;
+            mList->AutoScroll();
         }
         break;
-    case 2:
+    case kStateCheckingRivalResult:
         if (!DataDir()->Find<Flow>("rival_result.flow")->IsRunning()) {
-            unk4c = 3;
-            mChallengeList->AutoScroll();
+            mState = kStateScrollToEnd;
+            mList->AutoScroll();
         }
         break;
-    case 3:
-        if (!mChallengeList->IsScrolling()) {
-            mChallengeList->StopAutoScroll();
-            unk4c = 4;
+    case kStateScrollToEnd:
+        if (!mList->IsScrolling()) {
+            mList->StopAutoScroll();
+            mState = kStateCheckingFinalResult;
             DataDir()->Find<Flow>("final_result.flow")->Activate();
         }
         break;
-    case 4:
+    case kStateCheckingFinalResult:
         if (!DataDir()->Find<Flow>("final_result.flow")->IsRunning()) {
-            unk4c = 5;
-            mRightHandNavList->Enable();
-            mRightHandNavList->SetShowing(true);
+            mState = kStateEnd;
+            mNavList->Enable();
+            mNavList->SetShowing(true);
         }
         break;
     default:
@@ -179,7 +182,7 @@ void ChallengeResultPanel::UpdateList(int player) {
     static Symbol rival_is_self("rival_is_self");
     bool d16 = 0;
     String playerName;
-    int numDisplay = mChallengeList->NumDisplay();
+    int numDisplay = mList->NumDisplay();
     int d15 = 0;
     int d14 = 0;
     int totalXP = TheChallenges->GetTotalXpEarned(player);
@@ -187,47 +190,47 @@ void ChallengeResultPanel::UpdateList(int player) {
     MILO_ASSERT(playerData, 0x7D);
     PropertyEventProvider *provider = playerData->Provider();
     MILO_ASSERT(provider, 0x7F);
-    unk5c = provider->Property(score)->Int();
-    unk60 = provider->Property(challenge_mission_index)->Int() + numDisplay;
+    mScore = provider->Property(score)->Int();
+    mMissionIndex = provider->Property(challenge_mission_index)->Int() + numDisplay;
     unk68 = (SkeletonSide)provider->Property(side)->Int();
     playerName = provider->Property(player_name)->Str();
     int challengeScore = provider->Property(challenge_mission_score)->Int();
     bool challengeSelf = provider->Property(is_challenging_self)->Int();
-    unk64 = (numDisplay / 2) + 1;
-    if (unk5c <= challengeScore) {
-        unk60++;
+    mCheckingIdx = (numDisplay / 2) + 1;
+    if (mScore <= challengeScore) {
+        mMissionIndex++;
     }
     mItems.clear();
-    for (int i = 0; i < mChallengeList->NumDisplay(); i++) {
+    for (int i = 0; i < mList->NumDisplay(); i++) {
         mItems.push_back(ChallengeRow());
     }
     bool b3 = false;
     ChallengeRow row;
-    row.score = unk5c;
+    row.score = mScore;
     row.challengerUsername = playerName;
     row.challengeeUsername = playerName;
-    auto &challenges = TheChallenges->GetPlayerChallenges(player);
+    auto &challenges = TheChallenges->GetInGameChallenges(player);
     int numPlayerChallenges = challenges.size();
     for (int i = 0; i < numPlayerChallenges; i++) {
-        if (unk5c <= (int)challenges[i].score && !b3) {
+        if (mScore <= (int)challenges[i].score && !b3) {
             b3 = true;
-            unk6c = mItems.size();
+            mMyIndex = mItems.size();
             mItems.push_back(row);
         }
         mItems.push_back(challenges[i]);
     }
     if (!b3) {
-        unk6c = mItems.size();
+        mMyIndex = mItems.size();
         mItems.push_back(row);
     }
     int i8 = 0;
     int d20;
     for (int i = numDisplay; i < mItems.size(); i++) {
-        if (unk5c > (int)mItems[i].score) {
-            if (i < unk60) {
+        if (mScore > (int)mItems[i].score) {
+            if (i < mMissionIndex) {
                 d15 +=
                     TheChallenges->CalculateChallengeXp(mItems[i].score, mItems[i].diff);
-            } else if (i == unk60) {
+            } else if (i == mMissionIndex) {
                 d14 = d15
                     + TheChallenges->CalculateChallengeXp(mItems[i].score, mItems[i].diff);
                 d16 = 1;
@@ -240,7 +243,7 @@ void ChallengeResultPanel::UpdateList(int player) {
     } else if (i8 == mItems.size() - numDisplay - 1) {
         d20 = 4;
     } else if (d16) {
-        if (i8 > unk60 + 1) {
+        if (i8 > mMissionIndex + 1) {
             d20 = 3;
         } else {
             d20 = 2;
@@ -248,29 +251,29 @@ void ChallengeResultPanel::UpdateList(int player) {
     } else {
         d20 = 1;
     }
-    mChallengeList->SetProperty(max_display, 0);
-    mChallengeList->SetProperty(scroll_past_max_display, 1);
-    mChallengeList->StopAutoScroll();
-    mChallengeList->SetProvider(this);
-    mRightHandNavList->Disable();
-    mRightHandNavList->SetShowing(false);
-    mResultEventProvider->SetProperty(rival_beaten, d16);
-    mResultEventProvider->SetProperty(grade, d20);
-    mResultEventProvider->SetProperty(side, unk68);
-    mResultEventProvider->SetProperty(xp_before_mission, d15);
-    mResultEventProvider->SetProperty(xp_mission, d14);
-    mResultEventProvider->SetProperty(xp_total, totalXP);
-    mResultEventProvider->SetProperty(rival_is_self, challengeSelf);
-    unk4c = 0;
+    mList->SetProperty(max_display, 0);
+    mList->SetProperty(scroll_past_max_display, 1);
+    mList->StopAutoScroll();
+    mList->SetProvider(this);
+    mNavList->Disable();
+    mNavList->SetShowing(false);
+    mSettings->SetProperty(rival_beaten, d16);
+    mSettings->SetProperty(grade, d20);
+    mSettings->SetProperty(side, unk68);
+    mSettings->SetProperty(xp_before_mission, d15);
+    mSettings->SetProperty(xp_mission, d14);
+    mSettings->SetProperty(xp_total, totalXP);
+    mSettings->SetProperty(rival_is_self, challengeSelf);
+    mState = kStateInit;
     DataDir()->Find<Flow>("result_init.flow")->Activate();
 }
 
 DataNode ChallengeResultPanel::OnMsg(const UIComponentScrollMsg &msg) {
-    if (msg.GetUIComponent() == mChallengeList) {
-        int firstShowing = mChallengeList->FirstShowing();
-        if (unk60 - firstShowing == unk64) {
-            mChallengeList->StopAutoScroll();
-            unk4c = 2;
+    if (msg.GetUIComponent() == mList) {
+        int firstShowing = mList->FirstShowing();
+        if (mMissionIndex - firstShowing == mCheckingIdx) {
+            mList->StopAutoScroll();
+            mState = kStateCheckingRivalResult;
             Flow *f = DataDir()->Find<Flow>("rival_result.flow", true);
             f->Activate();
         }

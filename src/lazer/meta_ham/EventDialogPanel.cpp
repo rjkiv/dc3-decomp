@@ -21,7 +21,7 @@ EventDialogPanel::~EventDialogPanel() { TheUIEventMgr->RemoveSink(this); }
 DataNode EventDialogPanel::OnMsg(EventDialogStartMsg const &msg) {
     MILO_ASSERT(msg.EventType(), 0x23);
     SetTypeDef(msg.EventType());
-    HandleType(msg.EventAction());
+    HandleType(msg.InitMsg());
     mFocusName = gNullStr;
     return 1;
 }

@@ -22,15 +22,17 @@ public:
 class DLCTex : public DynamicTex {
 public:
     enum State {
-        kMounting = 1,
-        kLoaded = 3
+        kStarting = 0x0000,
+        kMounting = 0x0001,
+        kLoading = 0x0002,
+        kLoaded = 0x0003
     };
 
     void StartLoading();
 
-    Symbol unk18; // 0x18
-    int mState; // 0x1c
-    RndTex *unk24; // 0x20
+    Symbol mSong; // 0x18
+    DLCTex::State mState; // 0x1c
+    RndTex *mFailTex; // 0x20
 };
 
 class TexLoadPanel : public HamPanel, public ContentMgr::Callback {

@@ -26,10 +26,10 @@ public:
     ContentLoadingPanel();
     void AllowedToShow(bool);
 
-    bool unk3c;
-    int unk40;
-    int unk44;
-
 private:
     void ShowIfPossible();
+
+    bool mAllowedToShow; // 0x3c
+    int mCount; // 0x40
+    int mCurrent; // 0x44
 };

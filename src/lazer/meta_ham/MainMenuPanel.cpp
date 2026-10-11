@@ -30,27 +30,29 @@
 #include "utl/Std.h"
 #include "utl/Symbol.h"
 
-MainMenuPanel::MotdData::MotdData() : unkc(0) {}
+MainMenuPanel::MotdData::MotdData() : length(0) {}
 
 MainMenuPanel::MotdData::MotdData(MotdData const &motdData)
-    : unk0(motdData.unk0), unk4(motdData.unk4), unkc(motdData.unkc) {}
+    : type(motdData.type), text(motdData.text), length(motdData.length) {}
 
 MainMenuPanel::MainMenuPanel()
-    : mMsgLabel(), unk80(false), unk81(false), unk8c(), unk90(), unk94(false),
-      unk95(false), unk96(false), unkb0(false), unkbc(), unkc0(), unkc4(), unkc8(),
-      unkcc(), unkd0(), unkd8() {}
+    : mMsgLabel(), mNeedToLoadNetCacheMgr(false), mNeedToCleanupNetCacheMgr(false),
+      mDlcArt(), mUtilityArt(), mIsDlcArtLoaded(false), mIsUtilityArtLoaded(false),
+      mIsMiscArtLoaded(false), mMotdUpdatedNeeded(false), mMotdFreq(), mCurrMotdFreq(),
+      mStatsDisplayLimit(), mCurrStatsAccumulated(), mCommunityDisplayLimit(),
+      mCurrCommunityAccumulated(), mSettings() {}
 
 MainMenuPanel::~MainMenuPanel() { DeleteDownloadedArts(); }
 
-MainMenuProvider *MainMenuPanel::GetMainMenuProvider() { return &unk44; }
+MainMenuProvider *MainMenuPanel::GetMainMenuProvider() { return &mProvider; }
 
 BEGIN_HANDLERS(MainMenuPanel)
     HANDLE_ACTION(
-        update_main_menu_provider, unk44.UpdateList(_msg->Obj<UIListProvider>(2))
+        update_main_menu_provider, mProvider.UpdateList(_msg->Obj<UIListProvider>(2))
     )
     HANDLE_EXPR(get_main_menu_provider, GetMainMenuProvider())
-    HANDLE_EXPR(dlc_image, unk8c)
-    HANDLE_EXPR(utility_image, unk90)
+    HANDLE_EXPR(dlc_image, mDlcArt)
+    HANDLE_EXPR(utility_image, mUtilityArt)
     HANDLE_ACTION(update_icon_state, UpdateIconState(_msg->Sym(2)))
     HANDLE_ACTION(motd_setup, MotdSetup(_msg->Obj<HamLabel>(2)))
     HANDLE_ACTION(download_motd_art, DownloadMotdArt())
@@ -66,32 +68,32 @@ END_PROPSYNCS
 void MainMenuPanel::Load() {
     UIPanel::Load();
     TheContentMgr.StartRefresh();
-    unk81 = false;
-    unk80 = true;
-    unk94 = false;
-    unk95 = false;
-    unk96 = false;
+    mNeedToCleanupNetCacheMgr = false;
+    mNeedToLoadNetCacheMgr = true;
+    mIsDlcArtLoaded = false;
+    mIsUtilityArtLoaded = false;
+    mIsMiscArtLoaded = false;
     DeleteDownloadedArts();
-    unk8c = New<RndTex>();
-    unk90 = New<RndTex>();
+    mDlcArt = New<RndTex>();
+    mUtilityArt = New<RndTex>();
 }
 
 void MainMenuPanel::Enter() {
     HamPanel::Enter();
-    if (unk80) {
+    if (mNeedToLoadNetCacheMgr) {
         TheNetCacheMgr->Load((NetCacheMgr::CacheSize)1);
-        unk80 = false;
-        unk81 = true;
+        mNeedToLoadNetCacheMgr = false;
+        mNeedToCleanupNetCacheMgr = true;
     }
     TheContentMgr.RegisterCallback(this, true);
 }
 
 void MainMenuPanel::Exit() {
     UIPanel::Exit();
-    unk98.clear();
+    mMessages.clear();
     mMotdData.clear();
     mMsgLabel = 0;
-    unkb0 = false;
+    mMotdUpdatedNeeded = false;
     TheContentMgr.UnregisterCallback(this, true);
 }
 
@@ -108,7 +110,7 @@ void MainMenuPanel::Poll() {
 }
 
 void MainMenuPanel::Unload() {
-    if (unk81)
+    if (mNeedToCleanupNetCacheMgr)
         CleanupNetCacheRelated();
     DeleteDownloadedArts();
     UIPanel::Unload();
@@ -116,7 +118,7 @@ void MainMenuPanel::Unload() {
 
 void MainMenuPanel::FinishLoad() {
     UIPanel::FinishLoad();
-    unkd8 = DataDir()->Find<PropertyEventProvider>("player.ep", true);
+    mSettings = DataDir()->Find<PropertyEventProvider>("player.ep", true);
 }
 
 void MainMenuPanel::UpdateIconState(Symbol s) {
@@ -129,16 +131,16 @@ void MainMenuPanel::UpdateIconState(Symbol s) {
     static Symbol tier("tier");
     static Symbol gamertag("gamertag");
     if (s == dlc || s == utility) {
-        unkd8->SetProperty(state, s);
+        mSettings->SetProperty(state, s);
     } else {
         HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
         if (pProfile) {
-            unkd8->SetProperty(state, profile);
-            unkd8->SetProperty(rank, pProfile->GetMetagameRank()->RankNumber());
-            unkd8->SetProperty(tier, pProfile->GetMetagameRank()->GetTier());
-            unkd8->SetProperty(gamertag, pProfile->GetName());
+            mSettings->SetProperty(state, profile);
+            mSettings->SetProperty(rank, pProfile->GetMetagameRank()->RankNumber());
+            mSettings->SetProperty(tier, pProfile->GetMetagameRank()->GetTier());
+            mSettings->SetProperty(gamertag, pProfile->GetName());
         } else {
-            unkd8->SetProperty(state, no_profile);
+            mSettings->SetProperty(state, no_profile);
         }
     }
     Flow *f = DataDir()->Find<Flow>("udpate_icon_state.flow", true);
@@ -146,32 +148,32 @@ void MainMenuPanel::UpdateIconState(Symbol s) {
 }
 
 void MainMenuPanel::CleanupNetCacheRelated() {
-    FOREACH (it, unk84)
+    FOREACH (it, mLoaders)
         TheNetCacheMgr->DeleteNetCacheLoader(*it);
-    unk84.clear();
+    mLoaders.clear();
     TheNetCacheMgr->Unload();
-    unk81 = false;
+    mNeedToCleanupNetCacheMgr = false;
 }
 
 void MainMenuPanel::ContentDone() { HandleType(Message("content_refresh_Done")); }
 
 void MainMenuPanel::DownloadMotdArt() {
-    if (unk80) {
+    if (mNeedToLoadNetCacheMgr) {
         TheNetCacheMgr->Load((NetCacheMgr::CacheSize)1);
-        unk81 = true;
-        unk80 = false;
+        mNeedToCleanupNetCacheMgr = true;
+        mNeedToLoadNetCacheMgr = false;
     }
-    unk94 = true;
-    unk95 = true;
-    unk96 = true;
+    mIsDlcArtLoaded = true;
+    mIsUtilityArtLoaded = true;
+    mIsMiscArtLoaded = true;
 }
 
 void MainMenuPanel::DeleteDownloadedArts() {
-    if (unk8c) {
-        RELEASE(unk8c);
+    if (mDlcArt) {
+        RELEASE(mDlcArt);
     }
-    if (unk90) {
-        RELEASE(unk90);
+    if (mUtilityArt) {
+        RELEASE(mUtilityArt);
     }
 }
 
@@ -219,24 +221,24 @@ void MainMenuPanel::MotdSetup(HamLabel *label) {
     static Symbol community("community");
     static Symbol stats("stats");
     static Symbol no_profile("no_profile");
-    unk98.clear();
+    mMessages.clear();
     HamProfile *activeProfile = TheProfileMgr.GetActiveProfile(true);
     if (activeProfile) {
         if (TheRockCentral.HasDlcMsg()) {
             String msg;
             TheRockCentral.GetDlcMsg(msg);
-            unk98[dlc].push_back(msg);
+            mMessages[dlc].push_back(msg);
         }
         if (TheRockCentral.HasUtilityMsg()) {
             String msg;
             TheRockCentral.GetUtilityMsg(msg);
-            unk98[utility].push_back(msg);
+            mMessages[utility].push_back(msg);
         }
         int commMsgCount = TheRockCentral.GetCommunityMsgCount();
         for (int i = 0; i < commMsgCount; i++) {
             String msg;
             TheRockCentral.GetCommunityMsg(i, msg);
-            unk98[community].push_back(msg);
+            mMessages[community].push_back(msg);
         }
 
         MetagameStats *playerStats = activeProfile->GetMetagameStats();
@@ -252,7 +254,7 @@ void MainMenuPanel::MotdSetup(HamLabel *label) {
             for (int i = 0; i < numData; i++) {
                 String stat;
                 playerStats->InqStatString(i, stat);
-                unk98[stats].push_back(stat);
+                mMessages[stats].push_back(stat);
             }
             if (TheContentMgr.RefreshDone()) {
                 static Symbol stat_curr_library_size("stat_curr_library_size");
@@ -261,17 +263,17 @@ void MainMenuPanel::MotdSetup(HamLabel *label) {
                     Localize(stat_curr_library_size, false, TheLocale),
                     LocalizeSeparatedInt(totalNumSongs, TheLocale)
                 );
-                unk98[stats].push_back(retval);
+                mMessages[stats].push_back(retval);
             }
         } else {
             static Symbol stat_welcome("stat_welcome");
             String locale = Localize(stat_welcome, false, TheLocale);
-            unk98[stats].push_back(locale);
+            mMessages[stats].push_back(locale);
         }
     } else {
         static Symbol message_noprofile("message_noprofile");
         String locale = Localize(message_noprofile, false, TheLocale);
-        unk98[no_profile].push_back(locale);
+        mMessages[no_profile].push_back(locale);
     }
     mMsgLabel = label;
     MotdInitializeTexts();
@@ -280,23 +282,23 @@ void MainMenuPanel::MotdSetup(HamLabel *label) {
 void MainMenuPanel::MotdHandleTextScrolledIn(int i) {
     static Symbol dlc("dlc");
     static Symbol utility("utility");
-    if (unkb0) {
+    if (mMotdUpdatedNeeded) {
         auto begin = mMotdData.begin();
         std::advance(begin, i);
 
-        if (begin->unk0 == dlc) {
+        if (begin->type == dlc) {
             Sound *s = DataDir()->Find<Sound>("motd_store_item_new.snd", false);
             if (s) {
                 s->Play(0, 0, 0, nullptr, 0);
             }
-            UpdateIconState(begin->unk0);
-        } else if (begin->unk0 == utility) {
+            UpdateIconState(begin->type);
+        } else if (begin->type == utility) {
             Sound *s =
                 DataDir()->Find<Sound>(TheRockCentral.GetUtilitySound().c_str(), false);
             if (s) {
                 s->Play(0, 0, 0, nullptr, 0);
             }
-            UpdateIconState(begin->unk0);
+            UpdateIconState(begin->type);
         }
     }
 }
@@ -305,8 +307,8 @@ void MainMenuPanel::MotdHandleTextScrolledOut(int) {
     static Symbol dlc("dlc");
     static Symbol utility("utility");
     static Symbol none("none");
-    if (unkb0) {
-        Symbol type = mMotdData.front().unk0;
+    if (mMotdUpdatedNeeded) {
+        Symbol type = mMotdData.front().type;
         if (type == dlc || type == utility) {
             UpdateIconState(none);
         }
@@ -319,17 +321,17 @@ void MainMenuPanel::MotdHandleTextScrolledOut(int) {
             MotdPickNextText();
         } else {
             for (++motdIt; motdIt != mMotdData.end(); ++motdIt) {
-                f += motdIt->unkc;
+                f += motdIt->length;
             }
         }
         while (f < width) {
             f += MotdPickNextText();
         }
         MILO_ASSERT(mMotdData.size(), 0x301);
-        String text = mMotdData.front().unk4;
+        String text = mMotdData.front().text;
         for (auto it = ++mMotdData.begin(); it != mMotdData.end(); ++it) {
             text += "\n";
-            text += it->unk4;
+            text += it->text;
         }
         mMsgLabel->ReFitTextScroll(text);
     }
@@ -338,24 +340,24 @@ void MainMenuPanel::MotdHandleTextScrolledOut(int) {
 void MainMenuPanel::UpdateArtLoaders() {
     if (TheNetCacheMgr->HasFailed()) {
         HandleNetCacheMgrFailure();
-        if (unk81) {
+        if (mNeedToCleanupNetCacheMgr) {
             CleanupNetCacheRelated();
         }
-        unk80 = true;
+        mNeedToLoadNetCacheMgr = true;
     } else if (TheNetCacheMgr->IsReady()) {
-        if (unk94) {
-            unk94 = false;
+        if (mIsDlcArtLoaded) {
+            mIsDlcArtLoaded = false;
             LoadArt(TheRockCentral.GetDlcImage());
         }
-        if (unk95) {
-            unk95 = false;
+        if (mIsUtilityArtLoaded) {
+            mIsUtilityArtLoaded = false;
             LoadArt(TheRockCentral.GetUtilityImage());
         }
-        if (unk96) {
-            unk96 = false;
+        if (mIsMiscArtLoaded) {
+            mIsMiscArtLoaded = false;
             LoadArt(TheRockCentral.GetMiscImage());
         }
-        for (auto it = unk84.begin(); it != unk84.end();) {
+        for (auto it = mLoaders.begin(); it != mLoaders.end();) {
             NetCacheLoader *loader = *it;
             if (loader->IsLoaded()) {
                 int size = loader->GetSize();
@@ -367,14 +369,14 @@ void MainMenuPanel::UpdateArtLoaders() {
                 bitmap.SetMip(nullptr);
                 TheNetCacheMgr->DeleteNetCacheLoader(loader);
                 if (TheRockCentral.GetDlcImage() == loader->GetRemotePath()) {
-                    unk8c->SetBitmap(bitmap, nullptr, false, RndTex::kRegular);
+                    mDlcArt->SetBitmap(bitmap, nullptr, false, RndTex::kRegular);
                     if (mState == 1) {
                         static Message dlc_image_loaded("dlc_image_loaded");
                         Handle(dlc_image_loaded, false);
                     }
                 }
                 if (TheRockCentral.GetUtilityImage() == loader->GetRemotePath()) {
-                    unk90->SetBitmap(bitmap, nullptr, false, RndTex::kRegular);
+                    mUtilityArt->SetBitmap(bitmap, nullptr, false, RndTex::kRegular);
                     if (mState == 1) {
                         static Message utility_image_loaded("utility_image_loaded");
                         Handle(utility_image_loaded, false);
@@ -383,13 +385,13 @@ void MainMenuPanel::UpdateArtLoaders() {
                 if (TheRockCentral.GetMiscImage() == loader->GetRemotePath()) {
                     TheRockCentral.SetMiscArtBitMap(bitmap);
                 }
-                // unk84.pop_front();
-                it = unk84.erase(it);
+                // mLoaders.pop_front();
+                it = mLoaders.erase(it);
             } else if (loader->HasFailed()) {
                 NetCacheMgrFailType failType = loader->GetFailType();
                 TheNetCacheMgr->DeleteNetCacheLoader(loader);
-                // unk84.pop_front();
-                it = unk84.erase(it);
+                // mLoaders.pop_front();
+                it = mLoaders.erase(it);
                 HandleNetCacheLoaderFailure(failType);
             } else {
                 ++it;
@@ -411,52 +413,52 @@ void MainMenuPanel::MotdInitializeTexts() {
         mMsgLabel->SetFitType(RndText::FitType::kFitScrollMarqueeWrapAlways);
     }
     mMsgLabel->SetUnk78(nullptr);
-    unkb0 = false;
+    mMotdUpdatedNeeded = false;
     mMotdData.clear();
-    if (!unk98[no_profile].empty()) {
-        mMsgLabel->SetPrelocalizedString(unk98[no_profile].front());
-    } else if (unk98[dlc].empty() && unk98[utility].empty()
-               && unk98[community].size() + unk98[stats].size() == 1) {
-        mMsgLabel->SetPrelocalizedString(unk98[stats].front());
+    if (!mMessages[no_profile].empty()) {
+        mMsgLabel->SetPrelocalizedString(mMessages[no_profile].front());
+    } else if (mMessages[dlc].empty() && mMessages[utility].empty()
+               && mMessages[community].size() + mMessages[stats].size() == 1) {
+        mMsgLabel->SetPrelocalizedString(mMessages[stats].front());
     } else {
-        unkb0 = true;
+        mMotdUpdatedNeeded = true;
         mMsgLabel->SetUnk78(this);
 
         float width = mMsgLabel->Width() * 2.0f;
-        unkbc = TheRockCentral.GetMotdFreq();
-        int commStatSize = unk98[community].size() + unk98[stats].size();
-        if (unk98[dlc].empty() && unk98[utility].empty()) {
-            unkbc = 0;
-        } else if (unkbc < 1) {
-            unkbc = 1;
-        } else if (commStatSize < unkbc - 1) {
-            unkbc = commStatSize + 1;
+        mMotdFreq = TheRockCentral.GetMotdFreq();
+        int commStatSize = mMessages[community].size() + mMessages[stats].size();
+        if (mMessages[dlc].empty() && mMessages[utility].empty()) {
+            mMotdFreq = 0;
+        } else if (mMotdFreq < 1) {
+            mMotdFreq = 1;
+        } else if (commStatSize < mMotdFreq - 1) {
+            mMotdFreq = commStatSize + 1;
         }
-        if (unk98[community].size() == 0) {
-            unkcc = 0;
-        } else if (unk98[community].size() > 1) {
-            unkcc = 2;
+        if (mMessages[community].size() == 0) {
+            mCommunityDisplayLimit = 0;
+        } else if (mMessages[community].size() > 1) {
+            mCommunityDisplayLimit = 2;
         }
-        if (unk98[stats].size() > 1) {
-            unkc4 = 2;
+        if (mMessages[stats].size() > 1) {
+            mStatsDisplayLimit = 2;
         } else {
-            unkc4 = 1;
+            mStatsDisplayLimit = 1;
         }
 
-        unkc8 = 0;
-        unkd0 = 0;
-        unkc0 = 0;
+        mCurrStatsAccumulated = 0;
+        mCurrCommunityAccumulated = 0;
+        mCurrMotdFreq = 0;
         float f = 0.0f;
-        unkd4 = utility;
+        prevMotd = utility;
         MotdPickNextText();
         while (f < width) {
             f += MotdPickNextText();
         }
         MILO_ASSERT(mMotdData.size(), 600);
-        String text = mMotdData.front().unk4;
+        String text = mMotdData.front().text;
         for (auto it = ++mMotdData.begin(); it != mMotdData.end(); ++it) {
             text += "\n";
-            text += it->unk4;
+            text += it->text;
         }
         mMsgLabel->SetPrelocalizedString(text);
     }
@@ -467,17 +469,17 @@ void MainMenuPanel::LoadArt(String s) {
         return;
     }
 
-    auto it = unk84.begin();
-    for (; it != unk84.end(); ++it) {
+    auto it = mLoaders.begin();
+    for (; it != mLoaders.end(); ++it) {
         if (s == (*it)->GetRemotePath()) {
             return;
         }
     }
-    if (it == unk84.end()) {
+    if (it == mLoaders.end()) {
         NetCacheLoader *pLoader =
             TheNetCacheMgr->AddNetCacheLoader(s.c_str(), (NetLoaderPos)0);
         if (pLoader) {
-            unk84.push_back(pLoader);
+            mLoaders.push_back(pLoader);
         }
     }
 }
@@ -489,58 +491,59 @@ float MainMenuPanel::MotdPickNextText() {
     static Symbol community("community");
     static Symbol stats("stats");
     MotdData motdData;
-    if (unkbc != 0 && (unkc0 % unkbc) == 0) {
-        Symbol key = unkd4 == utility ? dlc : utility;
-        motdData.unk0 = key;
-        motdData.unk4 = unk98[key].front();
-        motdData.unkc =
-            mMsgLabel->ComputeCharWidthsForText(motdData.unk4) + mMsgLabel->Indentation();
-        unkd4 = key;
-        unkc0 = 1;
+    if (mMotdFreq != 0 && (mCurrMotdFreq % mMotdFreq) == 0) {
+        Symbol key = prevMotd == utility ? dlc : utility;
+        motdData.type = key;
+        motdData.text = mMessages[key].front();
+        motdData.length =
+            mMsgLabel->ComputeCharWidthsForText(motdData.text) + mMsgLabel->Indentation();
+        prevMotd = key;
+        mCurrMotdFreq = 1;
     } else {
         Symbol key;
-        if (unkcc == 0 || unkd0 >= unkcc) {
+        if (mCommunityDisplayLimit == 0
+            || mCurrCommunityAccumulated >= mCommunityDisplayLimit) {
             key = stats;
-            unkd0 = 0;
-            unkc8 = 1;
-        } else if (unkc8 >= unkc4) {
+            mCurrCommunityAccumulated = 0;
+            mCurrStatsAccumulated = 1;
+        } else if (mCurrStatsAccumulated >= mStatsDisplayLimit) {
             key = community;
-            unkd0 = 1;
-            unkc8 = 0;
+            mCurrCommunityAccumulated = 1;
+            mCurrStatsAccumulated = 0;
         } else if (RandomInt(0, 2) != 0) {
             key = community;
-            unkc8 = 0;
-            unkd0++;
+            mCurrStatsAccumulated = 0;
+            mCurrCommunityAccumulated++;
         } else {
             key = stats;
-            unkd0 = 0;
-            unkc8++;
+            mCurrCommunityAccumulated = 0;
+            mCurrStatsAccumulated++;
         }
         int rand = 0;
-        motdData.unk0 = key;
-        if (unk98[key].size() > 1) {
-            rand = RandomInt(0, unk98[key].size() / 2);
+        motdData.type = key;
+        if (mMessages[key].size() > 1) {
+            rand = RandomInt(0, mMessages[key].size() / 2);
         }
-        auto it = unk98[key].begin();
+        auto it = mMessages[key].begin();
         if (rand > 0) {
             for (; rand != 0; rand--) {
                 ++it;
             }
-            motdData.unk4 = *it;
+            motdData.text = *it;
         } else {
             for (; rand != 0; rand++) {
                 --it;
             }
-            motdData.unk4 = *it;
+            motdData.text = *it;
         }
-        motdData.unkc =
-            mMsgLabel->ComputeCharWidthsForText(motdData.unk4) + mMsgLabel->Indentation();
-        unk98[key].push_back(*it);
-        unk98[key].erase(it);
-        if (unkbc != 0) {
-            unkc0++;
+        motdData.length =
+            mMsgLabel->ComputeCharWidthsForText(motdData.text) + mMsgLabel->Indentation();
+        mMessages[key].push_back(*it);
+        mMessages[key].erase(it);
+        if (mMotdFreq != 0) {
+            mCurrMotdFreq++;
         }
     }
     mMotdData.push_back(motdData);
-    return mMotdData.back().unkc;
+    return mMotdData.back().length;
 }

@@ -4,14 +4,11 @@
 #include "utl/Symbol.h"
 
 enum PlaylistType { // Taken from RB3 and "Setlist" replaced with "Playlist"
-    kPlaylistLocal = 0,
-    kPlaylistInternal = 1,
-    kPlaylistFriend = 2,
-    kPlaylistHarmonix = 3,
-    kBattleHarmonix = 4,
-    kBattleFriend = 5,
-    kBattleHarmonixArchived = 6,
-    kBattleFriendArchived = 7
+    ENDLESS = 0x0000,
+    CUSTOM = 0x0001,
+    ERA = 0x0002,
+    CREW = 0x0003,
+    FITNESS = 0x0004
 };
 
 class Playlist {
@@ -23,12 +20,12 @@ public:
     virtual int GetOnlineID() { return -1; } // 0xc
     virtual bool IsDirty() { return false; } // 0x10
     virtual PlaylistType GetType() const {
-        if (unk9) {
-            return (PlaylistType)2;
-        } else if (mFitness) {
-            return (PlaylistType)4;
+        if (m_bIsEra) {
+            return ERA;
+        } else if (m_bIsFitness) {
+            return FITNESS;
         } else {
-            return IsCustom() ? (PlaylistType)1 : (PlaylistType)3;
+            return IsCustom() ? CUSTOM : CREW;
         }
     } // 0x14
 
@@ -48,19 +45,19 @@ public:
     int GetNumSongs() const;
     bool IsEmpty() const { return m_vSongs.empty(); }
     bool IsFull() const { return m_vSongs.size() >= 20; }
-    Symbol GetName() const { return mName; }
-    void SetName(Symbol name) { mName = name; }
-    void SetFitness(bool b) { mFitness = b; }
-    bool IsFitness() const { return mFitness; }
-    void SetUnk9(bool b) { unk9 = b; }
-    bool GetUnk9() const { return unk9; }
+    Symbol GetName() const { return m_symName; }
+    void SetName(Symbol name) { m_symName = name; }
+    void SetIsFitness(bool b) { m_bIsFitness = b; }
+    bool IsFitness() const { return m_bIsFitness; }
+    void SetIsEra(bool b) { m_bIsEra = b; }
+    bool IsEra() const { return m_bIsEra; }
 
 protected:
     virtual void HandleChange() {}
 
-    Symbol mName; // 0x4
-    bool mFitness; // 0x8 - is fitness
-    bool unk9; // 0x9
+    Symbol m_symName; // 0x4
+    bool m_bIsFitness; // 0x8
+    bool m_bIsEra; // 0x9
     std::vector<int> m_vSongs; // 0xc
 };
 
@@ -81,12 +78,13 @@ public:
 
     static int SaveSize(int);
 
-    HamProfile *mProfile; // 0x20
-    bool unk24; // 0x24
-    int mOnlineID; // 0x28
-
 protected:
     virtual void HandleChange(); // 0x18
+
+private:
+    HamProfile *m_pParentProfile; // 0x20
+    bool mDirty; // 0x24
+    int mOnlineID; // 0x28
 };
 
 int GetDynamicPlaylistID(Symbol);

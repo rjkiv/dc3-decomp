@@ -17,11 +17,11 @@ public:
     virtual void InitData(RndDir *);
 
     int GetOffset(int);
-    void ClearOffsets() { mOffsets.clear(); }
+    void Cleanup() { mOffsets.clear(); }
 
 private:
     std::vector<int> mOffsets; // 0x30
-    UIPanel *unk3c;
+    UIPanel *mCalibrationPanel; // 0x3c
 };
 
 class CalibrationPanel : public HamPanel {
@@ -48,9 +48,9 @@ private:
     void UpdateStream();
     void UpdateAnimation();
 
-    CalibrationOffsetProvider mProvider; // 0x3c
-    float unk7c;
-    float mVolume; // 0x80
+    CalibrationOffsetProvider mOffsetProvider; // 0x3c
+    float mCycleTime; // 0x7c
+    float mVolDb; // 0x80
     Stream *mStream; // 0x84
-    bool unk88; // 0x88
+    bool mStartASAP; // 0x88
 };

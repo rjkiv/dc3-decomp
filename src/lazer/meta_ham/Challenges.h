@@ -45,9 +45,9 @@ public:
     void UploadFlaunt(HamProfile *, bool);
     bool GetExpireTime(int &, int &, int &, int &);
 
-    int ConsolationXP() const { return mConsolationXP; }
-    const std::vector<ChallengeRow> &GetPlayerChallenges(int x) const {
-        return mPlayerChallenges[x];
+    int GetConsolationXp() { return mConsolationXp; }
+    const std::vector<ChallengeRow> &GetInGameChallenges(int x) {
+        return mInGameChallenges[x];
     }
 
 protected:
@@ -84,37 +84,37 @@ private:
     bool NotRunning();
     bool ChallengesDirty();
 
-    bool unk2c;
-    GetPlayerChallengesJob *mGetPlayerChallengesJob; // 0x30
-    GetOfficialChallengesJob *mGetOfficialChallengesJob; // 0x34
+    bool mHasDeferredDownload; // 0x2c
+    GetPlayerChallengesJob *mGetPlayerChallengeJob; // 0x30
+    GetOfficialChallengesJob *mGetOfficialChallengeJob; // 0x34
     // key = profile name, value = that player's challenges
-    std::map<String, std::vector<ChallengeRow> > mProfileChallenges; // 0x38
+    std::map<String, std::vector<ChallengeRow> > mPlayerChallengesCache; // 0x38
     // official challenges? like, hmx's gold/silver/bronze challenge sets
-    std::vector<ChallengeRow> mOfficialChallenges; // 0x50
-    Timer mPlayerChallengeTimer; // 0x60
-    Timer mOfficialChallengeTimer; // 0x90
-    int mScoreFactorDenom; // 0xc0
+    std::vector<ChallengeRow> mOfficialChallengesCache; // 0x50
+    Timer mPlayerDownloadTimer; // 0x60
+    Timer mOfficialDownloadTimer; // 0x90
+    int mScoreFactorDenominator; // 0xc0
     std::vector<int> mSongTierFactor; // 0xc4
-    int mConsolationXP; // 0xd0
+    int mConsolationXp; // 0xd0
     double mExpireTime; // 0xd8
     /** Do our official challenges need updating/resyncing? */
-    bool mOfficialChallengesDirty; // 0xe0
+    bool mHasNewOfficialChallenges; // 0xe0
     /** Do our player challenges need updating/resyncing? */
-    bool mPlayerChallengesDirty; // 0xe1
-    HamProfile *mFlauntingProfile; // 0xe4
+    bool mHasNewPlayerChallenges; // 0xe1
+    HamProfile *mUploadingProfile; // 0xe4
     std::list<FlauntStatusData> mFlauntList; // 0xe8
     std::list<HamProfile *> mPendingProfiles; // 0xf0
-    FlauntScoreData mFlauntScoreData; // 0xf8
+    FlauntScoreData mFlauntData; // 0xf8
     // profile names that have flaunted
     std::vector<String> mFlauntedProfiles; // 0x104
     // gets marked true when uploading a flaunt - has flaunted?
-    bool mHasFlaunted; // 0x110
+    bool mUploadingFlaunt; // 0x110
     // challenge rows, 1 per player
     /** The series of live challenges each player has to beat. */
-    std::vector<ChallengeRow> mPlayerChallenges[2]; // 0x114
-    GetChallengeBadgeCountsJob *mGetChallengeBadgeCountsJob; // 0x12c
+    std::vector<ChallengeRow> mInGameChallenges[2]; // 0x114
+    RCJob *mGetPlayerBadgeJob; // 0x12c
     // key = profile name, value = that player's badge info
-    std::map<String, ChallengeBadgeInfo> mProfileBadgeInfos; // 0x130
+    std::map<String, ChallengeBadgeInfo> mPlayerBadgeCache; // 0x130
     std::vector<int> mExportedDC1SongIDs; // 0x148
     std::vector<int> mExportedDC2SongIDs; // 0x154
 };

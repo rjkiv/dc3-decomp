@@ -7,7 +7,8 @@
 #include "ui/PanelDir.h"
 #include "ui/UIPanel.h"
 
-ContentLoadingPanel::ContentLoadingPanel() : unk3c(false), unk40(0), unk44(0) {
+ContentLoadingPanel::ContentLoadingPanel()
+    : mAllowedToShow(false), mCount(0), mCurrent(0) {
     TheContentMgr.RegisterCallback(this, false);
     mShowing = false;
 }
@@ -17,15 +18,15 @@ ContentLoadingPanel::~ContentLoadingPanel() {
 }
 
 void ContentLoadingPanel::AllowedToShow(bool b) {
-    unk3c = b;
+    mAllowedToShow = b;
     if (b) {
         ShowIfPossible();
     }
 }
 
 void ContentLoadingPanel::ContentMountBegun(int i) {
-    unk40 = i;
-    unk44 = 0;
+    mCount = i;
+    mCurrent = 0;
     RndGroup *r = LoadedDir()->Find<RndGroup>("progress.grp", true);
     r->SetFrame(0, 1.0f);
     ShowIfPossible();
@@ -33,7 +34,7 @@ void ContentLoadingPanel::ContentMountBegun(int i) {
 
 void ContentLoadingPanel::ShowIfPossible() {
     if (!mShowing) {
-        if (unk3c && (bool)(unk40 > 1)) {
+        if (mAllowedToShow && (bool)(mCount > 1)) {
             MILO_ASSERT(CheckIsLoaded(), 0x84);
             Enter();
             mShowing = true;
@@ -42,9 +43,9 @@ void ContentLoadingPanel::ShowIfPossible() {
 }
 
 void ContentLoadingPanel::ContentDone() {
-    unk40 = 0;
-    unk44 = 0;
-    unk3c = false;
+    mCount = 0;
+    mCurrent = 0;
+    mAllowedToShow = false;
     if (mState == 1 && mShowing) {
         Exit();
         mShowing = false;
@@ -59,8 +60,8 @@ void ContentLoadingPanel::Poll() {
         float frame = progressGroup->GetFrame();
         static float sFloat = 100.0f;
         float f;
-        if (unk40 > 0) {
-            f = unk44 * 110.0f / unk40;
+        if (mCount > 0) {
+            f = mCurrent * 110.0f / mCount;
         } else {
             f = sFloat;
         }
@@ -74,7 +75,7 @@ void ContentLoadingPanel::Poll() {
             deltaSeconds = 1.0f;
         }
         float tempFrame = (f - frame) * deltaSeconds + frame;
-        if (unk44 == unk40) {
+        if (mCurrent == mCount) {
             tempFrame = sFloat;
         }
         progressGroup->SetFrame(tempFrame, 1.0f);
@@ -82,12 +83,12 @@ void ContentLoadingPanel::Poll() {
 }
 
 void ContentLoadingPanel::ContentMounted(char const *c1, char const *c2) {
-    unk44++;
+    mCurrent++;
     ShowIfPossible();
 }
 
 void ContentLoadingPanel::ContentFailed(const char *) {
-    unk44++;
+    mCurrent++;
     ShowIfPossible();
 }
 

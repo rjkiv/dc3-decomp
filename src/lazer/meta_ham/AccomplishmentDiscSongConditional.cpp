@@ -10,7 +10,7 @@
 AccomplishmentDiscSongConditional::AccomplishmentDiscSongConditional(
     DataArray *cfg, int idx
 )
-    : AccomplishmentSongConditional(cfg, idx), mSongCount(0) {
+    : AccomplishmentSongConditional(cfg, idx), m_iRequiredSongCount(0) {
     Configure(cfg);
 }
 
@@ -25,11 +25,11 @@ bool AccomplishmentDiscSongConditional::IsFulfilled(HamProfile *profile) const {
             num++;
         }
     }
-    if (mSongCount == 0) {
+    if (m_iRequiredSongCount == 0) {
         if (num >= songs.size()) {
             return true;
         }
-    } else if (num >= mSongCount) {
+    } else if (num >= m_iRequiredSongCount) {
         return true;
     }
     return false;
@@ -66,7 +66,7 @@ int AccomplishmentDiscSongConditional::GetNumCompletedSongs(HamProfile *profile)
 
 void AccomplishmentDiscSongConditional::Configure(DataArray *i_pConfig) {
     MILO_ASSERT(i_pConfig, 0x20);
-    mSongCount = 0;
+    m_iRequiredSongCount = 0;
     static Symbol song_count("song_count");
-    i_pConfig->FindData(song_count, mSongCount, false);
+    i_pConfig->FindData(song_count, m_iRequiredSongCount, false);
 }

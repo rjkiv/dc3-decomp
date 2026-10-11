@@ -25,7 +25,8 @@
 
 LockedContentPanel *TheLockedContentPanel;
 
-LockedContentPanel::LockedContentPanel() : mSound(), mTimer(new Timer()), unk84(false) {
+LockedContentPanel::LockedContentPanel()
+    : mSound(), mTimer(new Timer()), mPlaying(false) {
     MILO_ASSERT(TheLockedContentPanel == NULL, 0x27);
     TheLockedContentPanel = this;
 }
@@ -37,12 +38,12 @@ LockedContentPanel::~LockedContentPanel() {
 }
 
 void LockedContentPanel::Exit() {
-    if (mSound && unk84) {
+    if (mSound && mPlaying) {
         mSound->Stop(nullptr, false);
     }
     mSound = nullptr;
     mTimer->Reset();
-    unk84 = false;
+    mPlaying = false;
     UIPanel::Exit();
 }
 
@@ -52,9 +53,9 @@ void LockedContentPanel::Enter() {
 }
 
 void LockedContentPanel::Poll() {
-    if (mSound && !unk84 && mTimer->SplitMs() >= 750.0f) {
+    if (mSound && !mPlaying && mTimer->SplitMs() >= 750.0f) {
         mSound->Play(0, 0, 0, nullptr, 0);
-        unk84 = true;
+        mPlaying = true;
         mTimer->Reset();
     }
     HamPanel::Poll();
@@ -62,7 +63,7 @@ void LockedContentPanel::Poll() {
 
 void LockedContentPanel::SetVoiceOver(Sound *s, bool b) {
     mSound = s;
-    unk84 = b;
+    mPlaying = b;
 }
 
 void LockedContentPanel::TriggerTeaserText() {
@@ -179,13 +180,13 @@ void LockedContentPanel::SetUpNoFlashcards(Symbol song, Difficulty diff) {
     Flow *pFlowSingle = DataDir()->Find<Flow>("song_list_single.flow");
     pFlowSingle->Activate();
     int songID = TheHamSongMgr.GetSongIDFromShortName(song);
-    unk3c[0]->SetShowing(true);
-    unk5c[0]->SetShowing(true);
-    unk3c[0]->SetSongName(song, -1, false);
-    unk5c[0]->SetSongWithDifficulty(songID, diff, true);
+    mSongName[0]->SetShowing(true);
+    mSongStars[0]->SetShowing(true);
+    mSongName[0]->SetSongName(song, -1, false);
+    mSongStars[0]->SetSongWithDifficulty(songID, diff, true);
     for (int i = 1; i <= 7; i++) {
-        unk3c[i]->SetShowing(false);
-        unk5c[i]->SetShowing(false);
+        mSongName[i]->SetShowing(false);
+        mSongStars[i]->SetShowing(false);
     }
 }
 
@@ -217,8 +218,8 @@ void LockedContentPanel::SetUpDifficultyLocked(Symbol s1, Symbol s2) {
         }
 
         for (int i = 0; i <= 7; i++) {
-            unk3c[i]->SetShowing(false);
-            unk5c[i]->SetShowing(false);
+            mSongName[i]->SetShowing(false);
+            mSongStars[i]->SetShowing(false);
         }
     } else {
         if (diff == kDifficultyMedium) {
@@ -229,13 +230,13 @@ void LockedContentPanel::SetUpDifficultyLocked(Symbol s1, Symbol s2) {
         Flow *pPracticeFlow = DataDir()->Find<Flow>("song_list_perform_practice.flow");
         pPracticeFlow->Activate();
         int songID = TheHamSongMgr.GetSongIDFromShortName(s1);
-        unk3c[0]->SetShowing(true);
-        unk5c[0]->SetShowing(true);
-        unk3c[0]->SetSongName(s1, -1, false);
-        unk5c[0]->SetSongWithDifficulty(songID, (Difficulty)(diff - 1), true);
+        mSongName[0]->SetShowing(true);
+        mSongStars[0]->SetShowing(true);
+        mSongName[0]->SetSongName(s1, -1, false);
+        mSongStars[0]->SetSongWithDifficulty(songID, (Difficulty)(diff - 1), true);
         for (int i = 1; i <= 7; i++) {
-            unk3c[i]->SetShowing(false);
-            unk5c[i]->SetShowing(false);
+            mSongName[i]->SetShowing(false);
+            mSongStars[i]->SetShowing(false);
         }
     }
 }
@@ -243,9 +244,9 @@ void LockedContentPanel::SetUpDifficultyLocked(Symbol s1, Symbol s2) {
 void LockedContentPanel::FinishLoad() {
     UIPanel::FinishLoad();
     for (int i = 0; i < 8; i++) {
-        unk3c[i] = mDir->Find<AppLabel>(MakeString("song_name0%d.lbl", i + 1));
-        unk5c[i] = mDir->Find<HamStarsDisplay>(MakeString("stars0%d.std", i + 1));
-        unk5c[i]->SetShowUnplayedSong(true);
+        mSongName[i] = mDir->Find<AppLabel>(MakeString("song_name0%d.lbl", i + 1));
+        mSongStars[i] = mDir->Find<HamStarsDisplay>(MakeString("stars0%d.std", i + 1));
+        mSongStars[i]->SetShowUnplayedSong(true);
     }
 }
 

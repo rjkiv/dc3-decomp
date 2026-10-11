@@ -10,10 +10,10 @@
 
 class VoiceInputPanel : public HamPanel {
 public:
-    struct Config {
+    struct VoiceContextConfig {
         std::vector<Symbol> mGrammars; // 0x0
-        DataArray *mAltConfThresholds; // 0xc
-        float mDefaultConfThreshold; // 0x10
+        DataArray *mAlternateConfidenceThresholds; // 0xc
+        float mDefaultConfidenceThreshold; // 0x10
     };
 
     struct VoiceContext {
@@ -24,10 +24,10 @@ public:
         }
 
         Symbol mName; // 0x0
-        Config *mBlacklightOffConfig; // 0x4
-        Config *mBlacklightOnConfig; // 0x8
-        Config *mActiveConfig; // 0xc
-        float mConfThreshold; // 0x10
+        VoiceContextConfig *mBlacklightOffConfig; // 0x4
+        VoiceContextConfig *mBlacklightOnConfig; // 0x8
+        VoiceContextConfig *mActiveConfig; // 0xc
+        float mConfidenceThreshold; // 0x10
     };
 
     VoiceInputPanel();
@@ -65,8 +65,8 @@ private:
         return nullptr;
     }
 
-    bool mBlacklight; // 0x3c
-    std::vector<Symbol> unk40;
+    bool mBlacklightMode; // 0x3c
+    std::vector<Symbol> mActiveSpeechRules; // 0x40
     std::vector<VoiceContext *> mVoiceContexts; // 0x4c
     VoiceContext *mActiveVoiceContext; // 0x58
     VoiceContext *mDisabledVoiceContext; // 0x5c

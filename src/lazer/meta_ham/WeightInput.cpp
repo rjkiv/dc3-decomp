@@ -25,7 +25,7 @@ void WeightInputProvider::Text(
     static Symbol weight_done("weight_done");
     HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
     MILO_ASSERT(pProfile, 0x22);
-    int units = TheProfileMgr.GetUnk4c();
+    int units = TheProfileMgr.GetPreferredWeightUnit();
     float weight = GetWeight(data);
     if (listlabel->Matches("label")) {
         if (units == 0) {
@@ -68,7 +68,7 @@ int WeightInputProvider::GetIndexForWeight(float f1) const {
 
 float WeightInputProvider::GetWeight(int i_iIndex) const {
     MILO_ASSERT_RANGE(i_iIndex, 0, NumData(), 0x76);
-    if (TheProfileMgr.GetUnk4c() == 0) {
+    if (TheProfileMgr.GetPreferredWeightUnit() == 0) {
         return i_iIndex * sFloats2 + sFloats0;
     } else {
         return i_iIndex * sFloats5 + sFloats3;
@@ -129,8 +129,8 @@ void WeightInputPanel::SetWeight(float weight) {
     if (!pProfile) {
         MILO_ASSERT(pProfile, 0xec);
     }
-    if (TheProfileMgr.GetUnk4c() == 1) {
-        weight = mWeightInputProvider.GetPoundsForKgs(weight);
+    if (TheProfileMgr.GetPreferredWeightUnit() == 1) {
+        weight = mWeightProvider.GetPoundsForKgs(weight);
     }
     pProfile->SetFitnessPounds(weight);
 }
@@ -140,8 +140,8 @@ float WeightInputPanel::GetWeight() {
     MILO_ASSERT(pProfile, 0xdc);
     float weight = pProfile->GetFitnessPounds();
 
-    if (TheProfileMgr.GetUnk4c() == 1) {
-        weight = mWeightInputProvider.GetKgForPounds(weight);
+    if (TheProfileMgr.GetPreferredWeightUnit() == 1) {
+        weight = mWeightProvider.GetKgForPounds(weight);
     }
 
     return weight;
@@ -151,7 +151,7 @@ Symbol WeightInputPanel::GetPreferredUnits() {
     static Symbol pounds("pounds");
     static Symbol kilograms("kilograms");
     Symbol units = pounds;
-    if (TheProfileMgr.GetUnk4c() == 1) {
+    if (TheProfileMgr.GetPreferredWeightUnit() == 1) {
         units = kilograms;
     }
     return units;
@@ -160,10 +160,10 @@ Symbol WeightInputPanel::GetPreferredUnits() {
 void WeightInputPanel::SetPreferredUnits(Symbol units) {
     static Symbol pounds("pounds");
     if (units == pounds) {
-        TheProfileMgr.SetUnk4c(0);
+        TheProfileMgr.SetPreferredWeightUnit(0);
         TheProfileMgr.SetGlobalOptionsDirty(true);
     } else {
-        TheProfileMgr.SetUnk4c(1);
+        TheProfileMgr.SetPreferredWeightUnit(1);
         TheProfileMgr.SetGlobalOptionsDirty(true);
     }
 }

@@ -14,7 +14,7 @@
 #include "utl/Symbol.h"
 #include <cstdio>
 
-CrewProvider::CrewProvider() : mPlayer(0), mPanelDir(0) {}
+CrewProvider::CrewProvider() : mPlayerIndex(0), mPanelDir(0) {}
 
 void CrewProvider::Text(int, int data, UIListLabel *slot, UILabel *label) const {
     MILO_ASSERT_RANGE(data, 0, mCrews.size(), 0x69);
@@ -23,8 +23,9 @@ void CrewProvider::Text(int, int data, UIListLabel *slot, UILabel *label) const 
     Symbol crewSym = mCrews[data];
     if (slot->Matches("crew")) {
         static Symbol player_present("player_present");
-        int otherPlayer = !mPlayer;
-        if (TheGameData->Player(mPlayer)->Provider()->Property(player_present)->Int() != 1
+        int otherPlayer = !mPlayerIndex;
+        if (TheGameData->Player(mPlayerIndex)->Provider()->Property(player_present)->Int()
+                != 1
             && TheGameData->Player(otherPlayer)->Provider()->Property(player_present)->Int()
                 != 0) {
             char buffer[32];
@@ -86,7 +87,7 @@ bool CrewProvider::IsCrewAvailable(Symbol crewSym) const {
     } else {
         MetaPerformer *performer = MetaPerformer::Current();
         MILO_ASSERT(performer, 0xe1);
-        int index = mPlayer == 0;
+        int index = mPlayerIndex == 0;
         HamPlayerData *pOtherPlayerData = TheGameData->Player(index);
         MILO_ASSERT(pOtherPlayerData, 0xe5);
         if (!TheGameMode->InMode("dance_battle", true)) {

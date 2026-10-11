@@ -20,5 +20,5 @@ public:
 
     OverlayPanel();
 
-    RndPostProc *mPostProc; // 0x3c
+    RndPostProc *mPostProc; // 0x3c - not in pdb
 };

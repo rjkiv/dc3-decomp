@@ -8,11 +8,11 @@
 class HamStarsDisplay : public StarsDisplay {
 public:
     enum StarDisplayMode {
-        kStarDisplayStandard = 0,
-        kStarDisplayWithDiff = 1,
-        kStarDisplayWithDiffAlways = 2,
-        kStarDisplayLastPlayed = 3,
-        kStarDisplayCampaign = 4
+        kStarDisplayMode_Normal = 0x0000,
+        kStarDisplayMode_Difficulty = 0x0001,
+        kStarDisplayMode_ForceShowDifficulty = 0x0002,
+        kStarDisplayMode_LastPlayed = 0x0003,
+        kStarDisplayMode_Campaign = 0x0004
     };
 
     OBJ_CLASSNAME(StarsDisplay) // bruh

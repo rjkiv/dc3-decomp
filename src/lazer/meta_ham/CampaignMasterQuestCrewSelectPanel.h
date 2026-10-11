@@ -12,14 +12,14 @@ public:
     CampaignMqCrewProvider();
     virtual void Text(int, int, UIListLabel *, UILabel *) const;
     virtual Symbol DataSymbol(int) const;
-    virtual int NumData() const { return mMQCrews.size(); }
+    virtual int NumData() const { return m_vCrews.size(); }
 
     void UpdateList();
-    void SetPanelDir(PanelDir *p) { mPanelDir = p; }
+    void SetPanelDir(PanelDir *p) { m_pPanelDir = p; }
 
 private:
-    PanelDir *mPanelDir; // 0x40
-    std::vector<Symbol> mMQCrews; // 0x44
+    PanelDir *m_pPanelDir; // 0x40
+    std::vector<Symbol> m_vCrews; // 0x44
 };
 
 class CampaignMasterQuestCrewSelectPanel : public TexLoadPanel {
@@ -41,6 +41,6 @@ public:
 
 protected:
     CampaignMqCrewProvider *m_pCampaignMqCrewProvider; // 0x54
-    DateTime mDateTime; // 0x58
-    bool mPreviewDelayFinished; // 0x5e
+    DateTime m_cEnterTime; // 0x58
+    bool m_bDelayFinished; // 0x5e
 };

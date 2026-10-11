@@ -24,8 +24,9 @@ void OutfitProvider::Text(int, int i_iData, UIListLabel *slot, UILabel *label) c
     MILO_ASSERT(pAppLabel, 0x52);
     if (slot->Matches("asset")) {
         static Symbol player_present("player_present");
-        int otherPlayer = !mPlayer;
-        if (TheGameData->Player(mPlayer)->Provider()->Property(player_present)->Int() != 1
+        int otherPlayer = !mPlayerIndex;
+        if (TheGameData->Player(mPlayerIndex)->Provider()->Property(player_present)->Int()
+                != 1
             && TheGameData->Player(otherPlayer)->Provider()->Property(player_present)->Int()
                 != 0) {
             char buffer[32];
@@ -64,7 +65,7 @@ void OutfitProvider::Text(int, int i_iData, UIListLabel *slot, UILabel *label) c
 
 Symbol OutfitProvider::DataSymbol(int i_iData) const {
     MILO_ASSERT_RANGE(i_iData, 0, NumData(), 0xa4);
-    return mOutfits[i_iData];
+    return m_vOutfits[i_iData];
 }
 
 bool OutfitProvider::CanSelect(int data) const {
@@ -74,8 +75,8 @@ bool OutfitProvider::CanSelect(int data) const {
 }
 
 void OutfitProvider::UpdateList() {
-    mOutfits.clear();
-    HamPlayerData *pPlayerData = TheGameData->Player(mPlayer);
+    m_vOutfits.clear();
+    HamPlayerData *pPlayerData = TheGameData->Player(mPlayerIndex);
     MILO_ASSERT(pPlayerData, 0x36);
     Symbol character = pPlayerData->Char();
     int numOutfits = GetNumCharacterOutfits(character, false);
@@ -85,7 +86,7 @@ void OutfitProvider::UpdateList() {
         bool hiddenCheck = false;
         charOutfitEntry->FindData("hidden", hiddenCheck, false);
         if (!hiddenCheck || TheProfileMgr.IsContentUnlocked(outfit)) {
-            mOutfits.push_back(outfit);
+            m_vOutfits.push_back(outfit);
         }
     }
 }

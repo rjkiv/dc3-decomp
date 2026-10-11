@@ -51,7 +51,7 @@ SongSortMgr::SongSortMgr(SongPreview &sp) : NavListSortMgr(sp) {
     mSorts.push_back(new SongSortByDiff());
     mSorts.push_back(new SongSortBySong());
     mSorts.push_back(new SongSortByLocation());
-    unk90 = 0;
+    mRankedSongs = 0;
 }
 
 SongSortMgr::~SongSortMgr() {}
@@ -120,34 +120,34 @@ void SongSortMgr::MarkElementInPlaylist(Symbol sym, bool b) {
 }
 
 int SongSortMgr::GetListIndexFromHeaderIndex(int i1) {
-    int size = mHeadersB.size();
+    int size = mHeaderIndicesAlone.size();
     if (i1 < 0) {
         if (0 < size) {
-            return mHeadersB.front();
+            return mHeaderIndicesAlone.front();
         }
         return 1;
     }
     if (i1 >= size) {
         if (0 < size) {
-            return mHeadersB[size - 1];
+            return mHeaderIndicesAlone[size - 1];
         }
         return 1;
     }
 
-    return mHeadersB[i1];
+    return mHeaderIndicesAlone[i1];
 }
 
 void SongSortMgr::OnSetlistChanged() {
-    mSorts[mCurrentSortIdx]->BuildItemList();
-    mSorts[mCurrentSortIdx]->UpdateHighlight();
+    mSorts[mSortIndex]->BuildItemList();
+    mSorts[mSortIndex]->UpdateHighlight();
     static Symbol refresh_setlist("refresh_setlist");
     static Message msg(refresh_setlist);
     TheUI->Handle(msg, false);
 }
 
 void SongSortMgr::OnSetlistModeChanged() {
-    mSorts[mCurrentSortIdx]->BuildItemList();
-    mSorts[mCurrentSortIdx]->UpdateHighlight();
+    mSorts[mSortIndex]->BuildItemList();
+    mSorts[mSortIndex]->UpdateHighlight();
 
     static Symbol on_change_setlist_mode("on_change_setlist_mode");
     static Message msg(on_change_setlist_mode);
@@ -181,7 +181,7 @@ bool SongSortMgr::DataIs(int i1, Symbol sym) {
     static Symbol song("song");
     static Symbol header("header");
     static Symbol function("function");
-    NavListSortNode *node = mSorts[mCurrentSortIdx]->GetListFromIdx(i1);
+    NavListSortNode *node = mSorts[mSortIndex]->GetListFromIdx(i1);
     if (sym == song) {
         return dynamic_cast<SongSortNode *>(node) != 0;
     } else if (sym == header) {
@@ -194,11 +194,11 @@ bool SongSortMgr::DataIs(int i1, Symbol sym) {
 
 int SongSortMgr::FirstArtistSongIndex(Symbol sym) {
     int retval = 0;
-    int dataCount = mSorts[mCurrentSortIdx]->GetDataCount();
+    int dataCount = mSorts[mSortIndex]->GetDataCount();
 
     for (int i = 0; i < dataCount; i++) {
         SongSortNode *ssNode =
-            dynamic_cast<SongSortNode *>(mSorts[mCurrentSortIdx]->GetListFromIdx(i));
+            dynamic_cast<SongSortNode *>(mSorts[mSortIndex]->GetListFromIdx(i));
         if (ssNode && streq(ssNode->GetArtist(), sym.Str())) {
             retval = GetHeaderIndexFromChildListIndex(i);
             break;
@@ -208,16 +208,16 @@ int SongSortMgr::FirstArtistSongIndex(Symbol sym) {
 }
 
 void SongSortMgr::RebuildSongRecordMap() {
-    unk78.clear();
+    mSongs.clear();
     std::vector<int> rankedSongs;
     TheHamSongMgr.GetRankedSongs(rankedSongs);
-    unk90 = rankedSongs.size();
+    mRankedSongs = rankedSongs.size();
     FOREACH (it, rankedSongs) {
         const HamSongMetadata *metadata = TheHamSongMgr.Data(*it);
         if (metadata && !metadata->IsFake()
             && TheProfileMgr.IsContentUnlocked(metadata->ShortName())) {
             SongRecord second(metadata);
-            unk78.insert(std::pair<Symbol, SongRecord>(second.ShortName(), second));
+            mSongs.insert(std::pair<Symbol, SongRecord>(second.ShortName(), second));
         }
     }
 }
@@ -258,11 +258,11 @@ void SongSortMgr::OnEnter() {
     FOREACH (it, mSorts) {
         (*it)->BuildTree();
     }
-    auto current = mSorts[mCurrentSortIdx];
+    auto current = mSorts[mSortIndex];
     current->BuildItemList();
-    if (unk48) {
-        current->SetHighlightID(unk44);
-        unk48 = false;
+    if (mSavedHighlight) {
+        current->SetHighlightID(mSavedHighlightID);
+        mSavedHighlight = false;
     }
     current->UpdateHighlight();
 }
@@ -284,23 +284,23 @@ void SongSortMgr::SetSetlistMode(bool b) {
 }
 
 void SongSortMgr::SetQuasiRandomSong() {
-    int numIndices = unk94.size();
+    int numIndices = mQuasiRandomIndices.size();
     MILO_ASSERT(numIndices > 0, 0x175);
 
     int randVal = rand() % (numIndices / 2);
-    int val = unk94[randVal];
-    unk94.erase(unk94.begin() + randVal);
-    unk94.push_back(val);
+    int val = mQuasiRandomIndices[randVal];
+    mQuasiRandomIndices.erase(mQuasiRandomIndices.begin() + randVal);
+    mQuasiRandomIndices.push_back(val);
 
-    NavListSortNode *node = mSorts[mCurrentSortIdx]->GetListFromIdx(val);
+    NavListSortNode *node = mSorts[mSortIndex]->GetListFromIdx(val);
     MetaPerformer *performer = MetaPerformer::Current();
     performer->SetSong(node->GetToken());
 }
 
 void SongSortMgr::SetupQuasiRandomSongs() {
-    int datacount = mSorts[mCurrentSortIdx]->GetDataCount();
+    int datacount = mSorts[mSortIndex]->GetDataCount();
     int *tempArr = new int[datacount];
-    unk94.clear();
+    mQuasiRandomIndices.clear();
 
     for (int i = 0; i < datacount; i++) {
         tempArr[i] = i;
@@ -310,11 +310,13 @@ void SongSortMgr::SetupQuasiRandomSongs() {
         int random = rand() % i;
         int val = tempArr[random];
         SongSortNode *sortNode =
-            dynamic_cast<SongSortNode *>(mSorts[mCurrentSortIdx]->GetListFromIdx(val));
+            dynamic_cast<SongSortNode *>(mSorts[mSortIndex]->GetListFromIdx(val));
         if (sortNode) {
             if (!sortNode->IsMedley() && !sortNode->IsFake()
-                && TheProfileMgr.IsContentUnlocked(sortNode->Record()->ShortName())) {
-                unk94.push_back(val);
+                && TheProfileMgr.IsContentUnlocked(
+                    sortNode->GetSongRecord()->ShortName()
+                )) {
+                mQuasiRandomIndices.push_back(val);
             }
         }
         tempArr[random] = tempArr[i - 1];

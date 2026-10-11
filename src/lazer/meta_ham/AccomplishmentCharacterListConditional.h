@@ -24,9 +24,9 @@ public:
 private:
     void Configure(DataArray *);
 
-    std::vector<Symbol> mChars; // 0x70
-    std::vector<Symbol> mCrewChars; // 0x7c
-    std::vector<Symbol> mOldOutfits; // 0x88
-    std::vector<Symbol> mUnlockableOutfits; // 0x94
-    std::vector<bool> unka0; // 0xa0 - unlockable outfits unlocked?
+    std::vector<Symbol> m_vCharacters; // 0x70
+    std::vector<Symbol> m_vCrews; // 0x7c
+    std::vector<Symbol> m_vOldOutfits; // 0x88
+    std::vector<Symbol> m_vUnlockableOutfits; // 0x94
+    std::vector<bool> m_vUsedUnlockableOutfits; // 0xa0
 };

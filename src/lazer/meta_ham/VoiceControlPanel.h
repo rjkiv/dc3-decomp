@@ -39,17 +39,17 @@ private:
     void CreatePlaySongGrammar() const;
     void CycleTip();
 
-    float unk44;
-    bool unk48;
-    float unk4c;
-    float unk50;
-    bool unk54;
-    bool unk55;
-    bool unk56;
-    Symbol mSong; // 0x58 - song shortname
-    Difficulty mDifficulty; // 0x5c
-    Symbol mGameMode; // 0x60 - game mode
-    bool unk64;
-    int unk68;
-    int unk6c;
+    float mEnterTime; // 0x44
+    bool mEntered; // 0x48
+    float mPickRandomSongTimer; // 0x4c
+    float mCycleTipTimer; // 0x50
+    bool mHasSelectedDifficulty; // 0x54
+    bool mHasSelectedMode; // 0x55
+    bool mMustTurnMusicBackOn; // 0x56
+    Symbol mSong; // 0x58
+    Difficulty mDiff; // 0x5c
+    Symbol mMode; // 0x60
+    bool mDismissOnTransitionComplete; // ox64
+    int mNumShellCmds; // 0x68
+    int mNumBidCmds; // 0x6c
 };

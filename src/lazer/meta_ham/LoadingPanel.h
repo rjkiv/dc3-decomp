@@ -7,6 +7,7 @@
 #include "ui/UIPanel.h"
 #include "utl/BeatMap.h"
 #include "utl/MemMgr.h"
+#include "utl/SongInfoCopy.h"
 #include "utl/Symbol.h"
 #include "utl/TempoMap.h"
 
@@ -23,10 +24,6 @@ public:
 
     LoadingPanel();
 
-    DataArraySongInfo *unk38;
-    TempoMap *unk3c;
-    BeatMap *unk40;
-
 protected:
     // UIPanel
     virtual void Load();
@@ -39,6 +36,13 @@ protected:
     char const *GetLoadingScreen(Symbol);
     Symbol ChooseLoadingScreen();
     void PlayLoadingMusic();
+
+private:
+    static bool sFirstLoad;
+
+    SongInfo *mSongInfo; // 0x38
+    TempoMap *mTempoMapBackup; // 0x3c
+    BeatMap *mBeatMapBackup; // 0x40
 };
 
 void ResetLoadingMusic();

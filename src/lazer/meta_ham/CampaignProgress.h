@@ -24,14 +24,14 @@ public:
 
     static int SaveSize(int);
 
-    int GetStarsEarned() const { return mStarsEarned; }
-    int NumMovesMastered() const { return m_MovesMastered.size(); }
+    int GetStars() const { return m_iStars; }
+    int GetMovesMastered() const { return m_MovesMastered.size(); }
     bool IsMoveMastered(Symbol move) const {
         return m_MovesMastered.find(move) != m_MovesMastered.end();
     }
-    bool IsSongPlayed() const { return mSongPlayed; }
-    void SetSongPlayed(bool played) { mSongPlayed = played; }
-    void SetStarsEarned(int stars) { mStarsEarned = stars; }
+    bool IsPlayed() const { return m_bPlayed; }
+    void SetPlayed(bool played) { m_bPlayed = played; }
+    void UpdateStars(int stars) { m_iStars = stars; }
     void ClearMovesMastered() { m_MovesMastered.clear(); }
 
 protected:
@@ -40,17 +40,18 @@ protected:
 
     void Cleanup();
 
+private:
     // current progress
-    int mStarsEarned; // 0x8
+    int m_iStars; // 0x8
     std::set<Symbol> m_MovesMastered; // 0xc
-    bool mSongPlayed; // 0x24
+    bool m_bPlayed; // 0x24
 
-    bool unk25; // 0x25
+    bool m_bReached; // 0x25
 
     // bookmarked progress
-    int mBookmarkedStarsEarned; // 0x28
-    std::set<Symbol> mBookmarkedMovesMastered; // 0x2c
-    bool mBookmarkedSongPlayed; // 0x44
+    int m_iStarsBookmark; // 0x28
+    std::set<Symbol> m_MovesMasteredBookmark; // 0x2c
+    bool m_bPlayedBookmark; // 0x44
 };
 
 class CampaignEraProgress : public FixedSizeSaveable {
@@ -78,8 +79,8 @@ public:
 
     static int SaveSize(int);
 
-    bool GetIntroMoviePlayed() const { return mIntroMoviePlayed; }
-    void SetIntroMoviePlayed(bool played) { mIntroMoviePlayed = played; }
+    bool GetIntroMoviePlayed() const { return m_bIntroMoviePlayed; }
+    void SetIntroMoviePlayed(bool played) { m_bIntroMoviePlayed = played; }
 
 protected:
     virtual void SaveFixed(FixedSizeSaveableStream &) const;
@@ -87,9 +88,10 @@ protected:
 
     void Cleanup();
 
-    Symbol mEra; // 0x8
-    bool mIntroMoviePlayed; // 0xc
-    bool unkd; // 0xd
+private:
+    Symbol m_symName; // 0x8
+    bool m_bIntroMoviePlayed; // 0xc
+    bool m_bIntroSequencePlayed; // 0xd
     // key = song shortname, value = campaign era song progress
     std::map<Symbol, CampaignEraSongProgress *> m_mapCampaignEraSongProgress; // 0x10
 };
@@ -138,18 +140,18 @@ public:
     bool UpdateEraSongMoveMastered(Symbol era, Symbol song, Symbol move);
     void UnlockAllMoves(Symbol era, Symbol song);
 
-    void SetProfile(HamProfile *p) { mProfile = p; }
-    int Num5StarredMQSongs() const { return mNum5StarredMQSongs; }
-    void SetNum5StarredMQSongs(int i) { mNum5StarredMQSongs = i; }
+    void SetParent(HamProfile *p) { m_pParentProfile = p; }
+    int GetMasterQuestSongCountForRequiredStars() const { return m_masterQuestSongs; }
+    void IncrementMasterQuestSongCountForRequiredStars() { m_masterQuestSongs++; }
 
 private:
     CampaignEraProgress *GetEraProgress(Symbol era) const;
 
-    HamProfile *mProfile; // 0x8
-    bool mIntroCompleted; // 0xc
-    bool mMindControlCompleted; // 0xd
-    bool mTanBattleCompleted; // 0xe
+    HamProfile *m_pParentProfile; // 0x8
+    bool m_bCampaignIntroCompleted; // 0xc
+    bool m_bCampaignMindControlCompleted; // 0xd - not in pdb
+    bool m_bCampaignTanBattleCompleted; // 0xe
     // key = era, value = campaign era progress
     std::map<Symbol, CampaignEraProgress *> m_mapCampaignEraProgress; // 0x10
-    int mNum5StarredMQSongs; // 0x28 - num master quest songs you earned 5 stars on
+    int m_masterQuestSongs; // 0x28
 };

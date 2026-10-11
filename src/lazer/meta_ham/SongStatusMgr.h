@@ -18,11 +18,11 @@ struct SongStatusData {
         mPracticeScore = 0;
         mCoopScore = 0;
         mStars = 0;
-        mPercentPassed = 0;
-        mNumPerfects = 0;
-        mNumNices = 0;
-        unk10 = 0;
-        mNoFlashcards = 0;
+        mMovesPercent = 0;
+        mNumPerfect = 0;
+        mNumNice = 0;
+        mStarsNoFlashcards = false;
+        mScoreNoFlashcards = false;
         mNeedUpload = false;
     }
 
@@ -30,13 +30,13 @@ struct SongStatusData {
     int mPracticeScore; // 0x4
     int mCoopScore; // 0x8
     unsigned char mStars; // 0xc
-    unsigned char mPercentPassed; // 0xd
-    unsigned char mNumPerfects; // 0xe
-    unsigned char mNumNices; // 0xf
-    bool unk10;
-    bool mNoFlashcards; // 0x11
+    unsigned char mMovesPercent; // 0xd
+    unsigned char mNumPerfect; // 0xe
+    unsigned char mNumNice; // 0xf
+    bool mStarsNoFlashcards; // 0x10
+    bool mScoreNoFlashcards; // 0x11
     bool mNeedUpload; // 0x12
-    Difficulty mDifficulty; // 0x14
+    Difficulty mDiff; // 0x14
     int mSongID; // 0x18
 };
 
@@ -59,21 +59,21 @@ public:
     const SongStatusData &GetBestPracticeSongStatusData() const;
 
     int mSongID; // 0x0
-    SongStatusData mStatusData[kNumDifficulties]; // 0x4
+    SongStatusData mSongData[kNumDifficulties]; // 0x4
     unsigned int mLastPlayed; // 0x74
-    unsigned char unk78; // 0x78 - stars related
-    bool unk79; // 0x79
-    Difficulty unk7c; // 0x7c
+    unsigned char mLastStars; // 0x78
+    bool mLastStarsNoFlashcards; // 0x79
+    Difficulty mLastDiff; // 0x7c
     int mLastScore; // 0x80
-    int unk84;
+    int mLastCoopScore; // 0x84
     int mBattleScore; // 0x88
-    int mTotalBattleWins; // 0x8c
-    int mTotalBattleLosses; // 0x90
-    bool mWonLastBattle; // 0x94
+    int mBattleWins; // 0x8c
+    int mBattleLosses; // 0x90
+    bool mWonLastDanceBattle; // 0x94
     unsigned int mLastPlayedPractice; // 0x98
-    int unk9c;
-    int unka0;
-    int unka4;
+    int mLastScorePractice; // 0x9c
+    Difficulty mLastDiffPractice; // 0xa0
+    int mFlags; // 0xa4
     FlauntStatusData mFlauntData; // 0xa8
 };
 

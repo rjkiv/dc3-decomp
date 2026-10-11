@@ -15,11 +15,11 @@ public:
     virtual void Text(int, int, UIListLabel *, UILabel *) const;
     virtual RndMat *Mat(int, int, UIListMesh *) const;
     virtual Symbol DataSymbol(int) const;
-    virtual int NumData() const { return mItems.size(); }
+    virtual int NumData() const { return m_vEntries.size(); }
 
     void UpdateList(bool);
     NEW_OBJ(TitleProvider)
 
-protected:
-    std::vector<Symbol> mItems; // 0x30
+private:
+    std::vector<Symbol> m_vEntries; // 0x30
 };

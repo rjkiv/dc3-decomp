@@ -24,17 +24,17 @@ void VoiceInputPanel::VoiceContext::SetActiveConfig(bool blacklight) {
     } else {
         mActiveConfig = mBlacklightOffConfig;
     }
-    mConfThreshold = mActiveConfig->mDefaultConfThreshold;
-    DataArray *thresholds = mActiveConfig->mAltConfThresholds->FindArray(
+    mConfidenceThreshold = mActiveConfig->mDefaultConfidenceThreshold;
+    DataArray *thresholds = mActiveConfig->mAlternateConfidenceThresholds->FindArray(
         TheSpeechMgr->GetSpeechLanguageDir().c_str(), false
     );
     if (thresholds) {
-        mConfThreshold = thresholds->Float(1);
+        mConfidenceThreshold = thresholds->Float(1);
     }
 }
 
 VoiceInputPanel::VoiceInputPanel() {
-    mBlacklight = false; // i really gotta declare these here huh
+    mBlacklightMode = false; // i really gotta declare these here huh
     mActiveVoiceContext = nullptr;
     mDisabledVoiceContext = nullptr;
     LoadVoiceContexts();
@@ -93,7 +93,7 @@ void VoiceInputPanel::RestoreCurrentVoiceContext() {
 }
 
 void VoiceInputPanel::ToggleBlacklight(bool b1) {
-    mBlacklight = b1;
+    mBlacklightMode = b1;
     if (mActiveVoiceContext) {
         ActivateVoiceContext(mActiveVoiceContext->mName);
     }
@@ -106,29 +106,29 @@ void VoiceInputPanel::LoadVoiceContexts() {
         VoiceContext *ctx = new VoiceContext();
         DataArray *arr = cfg->Array(i);
         ctx->mName = arr->Sym(0);
-        Config *g1 = new Config();
+        VoiceContextConfig *g1 = new VoiceContextConfig();
         DataArray *blacklightArr = arr->FindArray("blacklight_off");
         DataArray *grammars = blacklightArr->FindArray("grammars");
         int numGrammars = grammars->Size();
         for (int j = 1; j < numGrammars; j++) {
             g1->mGrammars.push_back(grammars->Sym(j));
         }
-        g1->mDefaultConfThreshold =
+        g1->mDefaultConfidenceThreshold =
             blacklightArr->FindFloat("default_confidence_threshold");
-        g1->mAltConfThresholds =
+        g1->mAlternateConfidenceThresholds =
             blacklightArr->FindArray("alternate_confidence_thresholds");
         ctx->mBlacklightOffConfig = g1;
 
-        Config *g2 = new Config();
+        VoiceContextConfig *g2 = new VoiceContextConfig();
         DataArray *blacklightOnArr = arr->FindArray("blacklight_on");
         DataArray *grammarsOn = blacklightOnArr->FindArray("grammars");
         int numOnGrammars = grammarsOn->Size();
         for (int j = 1; j < numOnGrammars; j++) {
             g2->mGrammars.push_back(grammarsOn->Sym(j));
         }
-        g2->mDefaultConfThreshold =
+        g2->mDefaultConfidenceThreshold =
             blacklightOnArr->FindFloat("default_confidence_threshold");
-        g2->mAltConfThresholds =
+        g2->mAlternateConfidenceThresholds =
             blacklightOnArr->FindArray("alternate_confidence_thresholds");
         ctx->mBlacklightOnConfig = g2;
         mVoiceContexts.push_back(ctx);
@@ -137,13 +137,13 @@ void VoiceInputPanel::LoadVoiceContexts() {
 
 void VoiceInputPanel::OnConfidenceChange(float conf) {
     if (mActiveVoiceContext) {
-        float newConf = conf + mActiveVoiceContext->mConfThreshold;
-        mActiveVoiceContext->mConfThreshold = Clamp(0.0f, 1.0f, newConf);
+        float newConf = conf + mActiveVoiceContext->mConfidenceThreshold;
+        mActiveVoiceContext->mConfidenceThreshold = Clamp(0.0f, 1.0f, newConf);
         if (TheSpeechMgr->Overlay()->Showing()) {
             TheSpeechMgr->Overlay()->Print(MakeString(
                 "voice context %s, confidence: %f\n",
                 mActiveVoiceContext->mName.Str(),
-                mActiveVoiceContext->mConfThreshold
+                mActiveVoiceContext->mConfidenceThreshold
             ));
         }
     }
@@ -237,11 +237,12 @@ void VoiceInputPanel::CreatePlaylistEditorGrammar() const {
             TheSongSortMgr->OnEnter();
         }
 
-        const std::map<Symbol, SongRecord> &songSortMembers = TheSongSortMgr->GetUnk78();
+        const std::map<Symbol, SongRecord> &songSortMembers =
+            TheSongSortMgr->GetSongRecords();
         FOREACH (it, songSortMembers) {
             const SongRecord &record = it->second;
             const std::vector<String> &pronunciations =
-                record.Metadata()->Pronunciations();
+                record.GetData()->Pronunciations();
             for (int i = 0; i < pronunciations.size(); i++) {
                 String pronunciation = pronunciations[i];
                 TheSpeechMgr->AddDynamicRuleWord(
@@ -282,7 +283,7 @@ void VoiceInputPanel::ActivateVoiceContext(Symbol s1) {
         }
         if (!s1.Null()) {
             mActiveVoiceContext = ctx;
-            mActiveVoiceContext->SetActiveConfig(mBlacklight);
+            mActiveVoiceContext->SetActiveConfig(mBlacklightMode);
             int numGrammars = mActiveVoiceContext->mActiveConfig->mGrammars.size();
             for (int i = 0; i < numGrammars; i++) {
                 TheSpeechMgr->SetGrammarState(mActiveVoiceContext->GetGrammarSym(i), true);
@@ -292,7 +293,7 @@ void VoiceInputPanel::ActivateVoiceContext(Symbol s1) {
                 TheSpeechMgr->Overlay()->Print(MakeString(
                     "Activating voice context %s, confidence: %f\n",
                     s1.Str(),
-                    mActiveVoiceContext->mConfThreshold
+                    mActiveVoiceContext->mConfidenceThreshold
                 ));
             }
         } else {
@@ -307,7 +308,7 @@ DataNode VoiceInputPanel::OnMsg(const SpeechRecoMessage &msg) {
         DataArray *tags = msg.Tags();
         Symbol rule = msg.RuleName();
         Symbol tag = tags->Sym(0);
-        bool within = conf >= mActiveVoiceContext->mConfThreshold;
+        bool within = conf >= mActiveVoiceContext->mConfidenceThreshold;
         if (within) {
             MetaPerformer::SendSpeechDatapoint(tags, conf, rule);
         }
@@ -319,7 +320,7 @@ DataNode VoiceInputPanel::OnMsg(const SpeechRecoMessage &msg) {
             rule.Str()
         );
         TheSpeechMgr->Overlay()->Print(within ? "recognized\n" : "not recognized\n");
-        LetterboxPanel *letter = TheHamUI.GetLetterboxPanel();
+        LetterboxPanel *letter = TheHamUI.Letterbox();
         if (letter) {
             if (letter->InBlacklightTransition()) {
                 return 0;

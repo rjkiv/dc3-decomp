@@ -4,6 +4,8 @@
 #include "obj/Data.h"
 #include "utl/Symbol.h"
 
+// class not in pdb :(
+
 class FitnessCalorieSortMgr : public NavListSortMgr {
 private:
     FitnessCalorieSortMgr(SongPreview &);
@@ -18,11 +20,11 @@ public:
     static void Terminate();
     static void Init(SongPreview &);
 
-    std::vector<int> &GetUnk78() { return unk78; }
+    std::vector<int> &GetCalories() { return mCalories; }
     int GetGroupSize() const { return mGroupSize; }
 
-protected:
-    std::vector<int> unk78;
+private:
+    std::vector<int> mCalories; // 0x78
     int mGroupSize; // 0x84
 };
 

@@ -5,20 +5,20 @@
 #include "utl/Symbol.h"
 
 AccomplishmentGroup::AccomplishmentGroup(DataArray *d, int i)
-    : mName(""), unk8(i), mAward("") {
+    : m_symName(""), m_iIndex(i), m_symAward("") {
     Configure(d);
 }
 
 AccomplishmentGroup::~AccomplishmentGroup() {}
 
-bool AccomplishmentGroup::HasAward() const { return mAward != ""; }
+bool AccomplishmentGroup::HasAward() const { return m_symAward != ""; }
 
-Symbol AccomplishmentGroup::GetName() const { return mName; }
+Symbol AccomplishmentGroup::GetName() const { return m_symName; }
 
 void AccomplishmentGroup::Configure(DataArray *i_pConfig) {
     MILO_ASSERT(i_pConfig, 0x1b);
-    mName = i_pConfig->Sym(0);
+    m_symName = i_pConfig->Sym(0);
 
     static Symbol award("award");
-    i_pConfig->FindData(award, mAward, false);
+    i_pConfig->FindData(award, m_symAward, false);
 }

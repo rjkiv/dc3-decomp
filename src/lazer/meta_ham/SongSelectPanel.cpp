@@ -27,17 +27,17 @@ void SongSelectPanel::Load() {
 }
 
 void SongSelectPanel::Enter() {
-    if (TheHamUI.GetLetterboxPanel()) {
-        TheHamUI.GetLetterboxPanel()->AddSink(this, "enter_blacklight_mode");
-        TheHamUI.GetLetterboxPanel()->AddSink(this, "exit_blacklight_mode");
+    if (TheHamUI.Letterbox()) {
+        TheHamUI.Letterbox()->AddSink(this, "enter_blacklight_mode");
+        TheHamUI.Letterbox()->AddSink(this, "exit_blacklight_mode");
     }
     HamPanel::Enter();
 }
 
 void SongSelectPanel::Exit() {
-    if (TheHamUI.GetLetterboxPanel()) {
-        TheHamUI.GetLetterboxPanel()->RemoveSink(this, "enter_blacklight_mode");
-        TheHamUI.GetLetterboxPanel()->RemoveSink(this, "exit_blacklight_mode");
+    if (TheHamUI.Letterbox()) {
+        TheHamUI.Letterbox()->RemoveSink(this, "enter_blacklight_mode");
+        TheHamUI.Letterbox()->RemoveSink(this, "exit_blacklight_mode");
     }
     UIPanel::Exit();
 }

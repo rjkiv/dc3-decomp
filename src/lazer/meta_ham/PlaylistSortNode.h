@@ -17,13 +17,13 @@ public:
     virtual Symbol OnSelect();
     virtual void OnContentMounted(char const *, char const *);
 
-    Playlist *GetPlaylist() { return unk48; }
+    const Playlist *GetPlaylist() const { return mPlaylist; }
 
     PlaylistSortNode(NavListItemSortCmp *cmp, Playlist *p)
-        : NavListItemNode(cmp), unk48(p) {}
+        : NavListItemNode(cmp), mPlaylist(p) {}
 
-protected:
-    Playlist *unk48;
+private:
+    Playlist *mPlaylist; // 0x48
 };
 
 class PlaylistHeaderNode : public NavListHeaderNode {
@@ -48,5 +48,5 @@ public:
     PlaylistHeaderNode(NavListItemSortCmp *, Symbol, bool);
 
 protected:
-    int mChallengeCount; // 0x58
+    int mCount; // 0x58
 };

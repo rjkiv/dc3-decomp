@@ -36,19 +36,21 @@ void HamStarsDisplay::SetSongChallenge(Difficulty diff) {
 }
 
 void HamStarsDisplay::SetSong(int i) {
-    SetSongImpl(i, kNumDifficulties, kStarDisplayStandard);
+    SetSongImpl(i, kNumDifficulties, kStarDisplayMode_Normal);
 }
 
 void HamStarsDisplay::SetSongLastPlayed(int i) {
-    SetSongImpl(i, kNumDifficulties, kStarDisplayLastPlayed);
+    SetSongImpl(i, kNumDifficulties, kStarDisplayMode_LastPlayed);
 }
 
 void HamStarsDisplay::SetSongCampaign(int i) {
-    SetSongImpl(i, kNumDifficulties, kStarDisplayCampaign);
+    SetSongImpl(i, kNumDifficulties, kStarDisplayMode_Campaign);
 }
 
 void HamStarsDisplay::SetSongWithDifficulty(int i, Difficulty d, bool always) {
-    SetSongImpl(i, d, always ? kStarDisplayWithDiffAlways : kStarDisplayWithDiff);
+    SetSongImpl(
+        i, d, always ? kStarDisplayMode_ForceShowDifficulty : kStarDisplayMode_Difficulty
+    );
 }
 
 void HamStarsDisplay::SetSongImpl(int songID, Difficulty diff, StarDisplayMode mode) {
@@ -66,32 +68,32 @@ void HamStarsDisplay::SetSongImpl(int songID, Difficulty diff, StarDisplayMode m
                 if (data.mScore > 0) {
                     u11 = true;
                     for (int i = 0; i < kNumDifficulties; i++) {
-                        if (&data == &status.mStatusData[i]) {
+                        if (&data == &status.mSongData[i]) {
                             diff = (Difficulty)i;
                         }
                     }
                     stars = data.mStars;
-                    c10 = data.unk10;
+                    c10 = data.mStarsNoFlashcards;
                 }
                 break;
             }
             case 1:
             case 2: {
                 MILO_ASSERT(diff < kNumDifficulties, 0x5C);
-                if (status.mStatusData[diff].mScore > 0) {
-                    stars = status.mStatusData[diff].mStars;
+                if (status.mSongData[diff].mScore > 0) {
+                    stars = status.mSongData[diff].mStars;
                     u11 = true;
-                    c10 = status.mStatusData[diff].unk10;
+                    c10 = status.mSongData[diff].mStarsNoFlashcards;
                 }
                 break;
             }
             case 3: {
                 MILO_ASSERT(diff == kNumDifficulties, 0x67);
-                if (status.unk7c != kNumDifficulties) {
-                    stars = status.unk78;
+                if (status.mLastDiff != kNumDifficulties) {
+                    stars = status.mLastStars;
                     u11 = true;
-                    c10 = status.unk79;
-                    diff = status.unk7c;
+                    c10 = status.mLastStarsNoFlashcards;
+                    diff = status.mLastDiff;
                 }
                 break;
             }

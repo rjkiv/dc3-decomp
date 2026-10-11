@@ -11,7 +11,7 @@ public:
     virtual ~CampaignDiffProvider() {}
     virtual void Text(int, int, UIListLabel *, UILabel *) const;
     virtual Symbol DataSymbol(int) const;
-    virtual int NumData() const { return mDifficulties.size(); }
+    virtual int NumData() const { return m_vDiffs.size(); }
     OBJ_CLASSNAME(CampaignDiffProvider)
     OBJ_SET_TYPE(CampaignDiffProvider)
     virtual DataNode Handle(DataArray *, bool);
@@ -21,7 +21,7 @@ public:
     void UpdateList(bool);
 
 private:
-    std::vector<int> mDifficulties; // 0x30
+    std::vector<int> m_vDiffs; // 0x30
 };
 
 class CampaignDiffSelectPanel : public HamPanel {

@@ -10,7 +10,7 @@
 #include "ui/UIListProvider.h"
 #include "utl/Symbol.h"
 
-PlaylistSongProvider::PlaylistSongProvider() : m_pPlaylist(0), unk34(false) {}
+PlaylistSongProvider::PlaylistSongProvider() : m_pPlaylist(0), m_bEditMode(false) {}
 
 int PlaylistSongProvider::NumData() const {
     if (m_pPlaylist == nullptr) {
@@ -71,7 +71,7 @@ void PlaylistSongProvider::Text(
 }
 
 void PlaylistSongProvider::UpdateList(Playlist const *p, bool b) {
-    unk34 = b;
+    m_bEditMode = b;
     m_pPlaylist = p;
 }
 

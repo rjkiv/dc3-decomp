@@ -28,13 +28,13 @@ public:
     String GetSongShortTitle();
 
 protected:
-    int mChallengeCount; // 0x58
+    int mCount; // 0x58
 };
 
 class ChallengeSortNode : public NavListItemNode {
 public:
     ChallengeSortNode(NavListItemSortCmp *cmp, ChallengeRecord *record)
-        : NavListItemNode(cmp), mChallengeRecord(record) {}
+        : NavListItemNode(cmp), mRecord(record) {}
     virtual DataNode Handle(DataArray *, bool);
     virtual Symbol GetToken() const;
     virtual Symbol OnSelect();
@@ -54,11 +54,10 @@ public:
     void SetNewIcon(UILabel *) const;
     void SetBuyIcon(UILabel *) const;
 
-    ChallengeRecord *GetChallengeRecord() { return mChallengeRecord; };
+    const ChallengeRecord *GetChallengeRecord() const { return mRecord; };
 
 private:
     int GetPlayerSide() const;
 
-protected:
-    ChallengeRecord *mChallengeRecord; // 0x48
+    ChallengeRecord *mRecord; // 0x48
 };

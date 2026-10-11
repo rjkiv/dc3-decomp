@@ -53,8 +53,8 @@ bool AccomplishmentSongConditional::CheckStarsCondition(
 ) const {
     bool b;
     int songID = TheHamSongMgr.GetSongIDFromShortName(shortname);
-    int bestStars = statusMgr->GetBestStars(songID, b, ac.mDifficulty);
-    return (bestStars >= ac.mValue);
+    int bestStars = statusMgr->GetBestStars(songID, b, ac.m_eDifficulty);
+    return (bestStars >= ac.m_iValue);
 }
 
 bool AccomplishmentSongConditional::CheckScoreCondition(
@@ -62,8 +62,8 @@ bool AccomplishmentSongConditional::CheckScoreCondition(
 ) const {
     bool b;
     int songID = TheHamSongMgr.GetSongIDFromShortName(shortname);
-    int bestScore = statusMgr->GetBestScore(songID, b, ac.mDifficulty);
-    return (bestScore >= ac.mValue);
+    int bestScore = statusMgr->GetBestScore(songID, b, ac.m_eDifficulty);
+    return (bestScore >= ac.m_iValue);
 }
 
 bool AccomplishmentSongConditional::CheckPracticePercentageCondition(
@@ -71,7 +71,7 @@ bool AccomplishmentSongConditional::CheckPracticePercentageCondition(
 ) const {
     int songID = TheHamSongMgr.GetSongIDFromShortName(shortname);
     int pracScore = statusMgr->GetPracticeScore(songID);
-    return (pracScore >= ac.mValue);
+    return (pracScore >= ac.m_iValue);
 }
 
 bool AccomplishmentSongConditional::CheckNoFlashcardsCondition(
@@ -103,14 +103,15 @@ bool AccomplishmentSongConditional::CheckConditionsForSong(
 
     FOREACH (it, m_lConditions) {
         const AccomplishmentCondition &curCond = *it;
-        Symbol curSym = curCond.mCondition;
+        Symbol curSym = curCond.m_symCondition;
         MetaPerformer *pMetaPerformer = MetaPerformer::Current();
         MILO_ASSERT(pMetaPerformer, 0x60);
-        if (curCond.mNoFlashcards) {
+        if (curCond.m_bNoFlashcards) {
             if (!CheckNoFlashcardsCondition(mgr, shortname)) {
                 return false;
             }
-        } else if (curCond.mMode != gNullStr && TheGameMode->Mode() != curCond.mMode) {
+        } else if (curCond.m_symMode != gNullStr
+                   && TheGameMode->Mode() != curCond.m_symMode) {
             return false;
         }
         if (curSym == stars) {

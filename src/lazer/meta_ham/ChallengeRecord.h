@@ -9,18 +9,18 @@ public:
 
     ChallengeRecord &operator=(const ChallengeRecord &other);
 
-    ChallengeRow &GetChallengeRow() { return mRow; }
-    Symbol GetUnk40() { return unk40; }
-    Symbol GetUnk44() { return unk44; }
-    Symbol GetUnk48() { return unk48; }
-    Symbol GetUnk4c() { return unk4c; }
-    int GetUnk50() { return unk50; }
+    const ChallengeRow &GetChallengeRow() const { return mData; }
+    Symbol GetSong() const { return mSongShortName; }
+    const char *GetSongTitle() const { return mSongTitle.Str(); }
+    Symbol GetPlayerName() const { return mChallenger; }
+    Symbol GetChallengeeName() const { return mChallengee; }
+    int GetChallengeType() const { return mChallengeType; }
 
 private:
-    ChallengeRow mRow; // 0x4
-    Symbol unk40; // 0x40
-    Symbol unk44; // 0x44
-    Symbol unk48; // 0x48
-    Symbol unk4c; // 0x4c
-    int unk50; // 0x50
+    ChallengeRow mData; // 0x4
+    Symbol mSongShortName; // 0x40
+    Symbol mSongTitle; // 0x44
+    Symbol mChallenger; // 0x48
+    Symbol mChallengee; // 0x4c
+    int mChallengeType; // 0x50 - not in pdb
 };

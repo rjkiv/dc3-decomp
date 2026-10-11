@@ -19,23 +19,20 @@ public:
     virtual void SetCollapseStateIcon(bool) const;
     virtual void Renumber(std::vector<NavListSortNode *> &);
 
-    int unk58; // 0x58
-    bool unk5c; // 0x5c
+protected:
+    int mCount; // 0x58
+    bool mIsHighlighted; // 0x5c
 };
 
 class MQSongSortNode : public NavListItemNode {
 public:
     MQSongSortNode(NavListItemSortCmp *cmp, Symbol s1, Symbol s2)
-        : NavListItemNode(cmp), unk48(s1), unk4c(s2) {};
+        : NavListItemNode(cmp), mSong(s1), mCharacter(s2) {};
     virtual ~MQSongSortNode();
     virtual Symbol OnSelect();
     virtual void Text(UIListLabel *, UILabel *) const;
     virtual void Custom(UIListCustom *, Hmx::Object *) const;
 
-    void SetUnk4C(Symbol s) { unk4c = s; }
-    Symbol GetUnk4C() const { return unk4c; }
-
-protected:
-    Symbol unk48; // 0x48
-    Symbol unk4c; // 0x4c
+    Symbol mSong; // 0x48
+    Symbol mCharacter; // 0x4c
 };

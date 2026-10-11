@@ -31,16 +31,16 @@ void CampaignMasterQuestSongSelectPanel::Impl::Init(
     CampaignMasterQuestSongSelectPanel *panel
 ) {
     ObjectDir *dir = panel->DataDir();
-    mContextualTitleLabel = dir->Find<UILabel>("contextual_title.lbl");
-    mContextualInstructionsLabel = dir->Find<UILabel>("contextual_instructions.lbl");
-    mContextualStarsLabel = dir->Find<UILabel>("contextual_stars.lbl");
+    m_ContextualTitle = dir->Find<UILabel>("contextual_title.lbl");
+    m_ContextualInstructions = dir->Find<UILabel>("contextual_instructions.lbl");
+    m_ContextualStars = dir->Find<UILabel>("contextual_stars.lbl");
 }
 
 CampaignMasterQuestSongSelectPanel::CampaignMasterQuestSongSelectPanel()
-    : m_pCampaignSongProvider(), mPreviewDelayFinished(false), mImpl(0) {}
+    : m_pCampaignSongProvider(), m_bDelayFinished(false), m_Impl(0) {}
 
 CampaignMasterQuestSongSelectPanel::~CampaignMasterQuestSongSelectPanel() {
-    RELEASE(mImpl);
+    RELEASE(m_Impl);
 }
 
 BEGIN_HANDLERS(CampaignMasterQuestSongSelectPanel)
@@ -49,7 +49,7 @@ BEGIN_HANDLERS(CampaignMasterQuestSongSelectPanel)
     HANDLE_EXPR(can_select_current_song, CanSelectCurrentSong())
     HANDLE_EXPR(can_select_song, CanSelectSong(_msg->Int(2)))
     HANDLE_ACTION(select_song, SelectSong())
-    HANDLE_EXPR(is_preview_delay_finished, mPreviewDelayFinished)
+    HANDLE_EXPR(is_preview_delay_finished, m_bDelayFinished)
     HANDLE_ACTION(refresh, Refresh())
     HANDLE_EXPR(is_current_selection_character, IsCurrentSelectionSong() == 0)
     HANDLE_EXPR(is_current_selection_song, IsCurrentSelectionSong())
@@ -59,16 +59,16 @@ BEGIN_HANDLERS(CampaignMasterQuestSongSelectPanel)
 END_HANDLERS
 
 void CampaignMasterQuestSongSelectPanel::Enter() {
-    if (!mImpl) {
-        mImpl = new Impl();
+    if (!m_Impl) {
+        m_Impl = new Impl();
     }
-    mImpl->Init(this);
-    GetDateAndTime(mEnterTime);
-    mPreviewDelayFinished = false;
+    m_Impl->Init(this);
+    GetDateAndTime(m_cEnterTime);
+    m_bDelayFinished = false;
     HamPanel::Enter();
     HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
     if (pProfile) {
-        Symbol crew = TheCampaign->GetMQCrew();
+        Symbol crew = TheCampaign->GetMasterQuestCrew();
         static DataNode &mq_difficulty = DataVariable("mq_difficulty");
         Difficulty mqDiff = (Difficulty)mq_difficulty.Int();
         int x, y;
@@ -88,8 +88,8 @@ void CampaignMasterQuestSongSelectPanel::Enter() {
 
 void CampaignMasterQuestSongSelectPanel::Poll() {
     TexLoadPanel::Poll();
-    if (!mPreviewDelayFinished && 3 <= GetTimeSinceEnter())
-        mPreviewDelayFinished = true;
+    if (!m_bDelayFinished && 3 <= GetTimeSinceEnter())
+        m_bDelayFinished = true;
 }
 
 void CampaignMasterQuestSongSelectPanel::Unload() { TexLoadPanel::Unload(); }
@@ -112,7 +112,7 @@ int CampaignMasterQuestSongSelectPanel::GetTimeSinceEnter() const {
     DateTime dt;
     GetDateAndTime(dt);
     unsigned int iNow = dt.ToCode();
-    unsigned int iEnter = mEnterTime.ToCode();
+    unsigned int iEnter = m_cEnterTime.ToCode();
     MILO_ASSERT(iNow >= iEnter, 0x133);
     return iNow - iEnter;
 }
@@ -144,15 +144,15 @@ void CampaignMasterQuestSongSelectPanel::OnHighlightSong() {
     int songID = TheHamSongMgr.GetSongIDFromShortName(song);
     Symbol defaultChar = TheHamSongMgr.Data(songID)->DefaultCharacter();
     Symbol token = MakeString("%s%s", defaultChar.Str(), "_title");
-    mImpl->mContextualTitleLabel->SetTextToken(token);
-    mImpl->mContextualInstructionsLabel->SetPrelocalizedString(String());
+    m_Impl->m_ContextualTitle->SetTextToken(token);
+    m_Impl->m_ContextualInstructions->SetPrelocalizedString(String());
     static DataNode &mq_difficulty = DataVariable("mq_difficulty");
     Difficulty mqDiff = (Difficulty)mq_difficulty.Int();
     SongStatusMgr *songstatusMgr =
         TheProfileMgr.GetActiveProfile(true)->GetSongStatusMgr();
     bool bref;
     int stars = Min(5, songstatusMgr->GetStarsForDifficulty(songID, mqDiff, bref));
-    mImpl->mContextualStarsLabel->SetPrelocalizedString(
+    m_Impl->m_ContextualStars->SetPrelocalizedString(
         String(MakeString("%d / %d", stars, 5))
     );
 }
@@ -186,7 +186,7 @@ void CampaignMasterQuestSongSelectPanel::Refresh() {
     HamNavList *list = DataDir()->Find<HamNavList>("right_hand.hnl", false);
     SetNavList(list);
     list->ClearBigElements();
-    FOREACH (it, m_pCampaignSongProvider->GetUnk90()) {
+    FOREACH (it, m_pCampaignSongProvider->m_vSongs) {
         if (m_pCampaignSongProvider->IsCharacter(*it)) {
             mNavList->PushBackBigElement(*it);
         }
@@ -198,9 +198,9 @@ void CampaignMasterQuestSongSelectPanel::OnHighlightHeader() {
     bool b;
     int totalStars = 0;
     int maxStars = 0;
-    mImpl->mContextualTitleLabel->SetTextToken(selectedSong);
-    mImpl->mContextualInstructionsLabel->SetTextToken(gNullStr);
-    auto &songs = m_pCampaignSongProvider->GetUnk78()[selectedSong];
+    m_Impl->m_ContextualTitle->SetTextToken(selectedSong);
+    m_Impl->m_ContextualInstructions->SetTextToken(gNullStr);
+    auto &songs = m_pCampaignSongProvider->m_songsPerCharacter[selectedSong];
     static DataNode &mq_difficulty = DataVariable("mq_difficulty");
     Difficulty mqDiff = (Difficulty)mq_difficulty.Int();
     FOREACH (it, songs) {
@@ -215,7 +215,7 @@ void CampaignMasterQuestSongSelectPanel::OnHighlightHeader() {
         totalStars += stars;
         maxStars += 5;
     }
-    mImpl->mContextualStarsLabel->SetPrelocalizedString(
+    m_Impl->m_ContextualStars->SetPrelocalizedString(
         String(MakeString("%d / %d", totalStars, maxStars))
     );
 }

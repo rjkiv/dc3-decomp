@@ -20,11 +20,11 @@ void SongStatusData::SaveToStream(BinStream &bs) const {
     bs << mPracticeScore;
     bs << mCoopScore;
     bs << mStars;
-    bs << mPercentPassed;
-    bs << mNumPerfects;
-    bs << mNumNices;
-    bs << unk10;
-    bs << mNoFlashcards;
+    bs << mMovesPercent;
+    bs << mNumPerfect;
+    bs << mNumNice;
+    bs << mStarsNoFlashcards;
+    bs << mScoreNoFlashcards;
     bs << mNeedUpload;
 }
 
@@ -33,11 +33,11 @@ void SongStatusData::LoadFromStream(BinStream &bs) {
     bs >> mPracticeScore;
     bs >> mCoopScore;
     bs >> mStars;
-    bs >> mPercentPassed;
-    bs >> mNumPerfects;
-    bs >> mNumNices;
-    bs >> unk10;
-    bs >> mNoFlashcards;
+    bs >> mMovesPercent;
+    bs >> mNumPerfect;
+    bs >> mNumNice;
+    bs >> mStarsNoFlashcards;
+    bs >> mScoreNoFlashcards;
     bs >> mNeedUpload;
 }
 
@@ -63,7 +63,7 @@ void FlauntStatusData::LoadFromStream(BinStream &bs) {
 
 SongStatus::SongStatus() {
     for (int i = 0; i < 4; i++) {
-        mStatusData[i].Clear();
+        mSongData[i].Clear();
     }
     mFlauntData.mScore = 0;
     mFlauntData.mDiff = DefaultDifficulty();
@@ -73,7 +73,7 @@ SongStatus::SongStatus() {
 
 SongStatus::SongStatus(int songID) {
     for (int i = 0; i < 4; i++) {
-        mStatusData[i].Clear();
+        mSongData[i].Clear();
     }
     mFlauntData.mScore = 0;
     mFlauntData.mDiff = DefaultDifficulty();
@@ -81,31 +81,31 @@ SongStatus::SongStatus(int songID) {
     Clear();
     mSongID = songID;
     for (int i = 0; i < 4; i++) {
-        mStatusData[i].mSongID = mSongID;
+        mSongData[i].mSongID = mSongID;
     }
 }
 
 void SongStatus::Clear() {
     mSongID = 0;
     for (int i = 0; i < kNumDifficulties; i++) {
-        mStatusData[i].Clear();
-        mStatusData[i].mDifficulty = (Difficulty)i;
-        mStatusData[i].mSongID = mSongID;
+        mSongData[i].Clear();
+        mSongData[i].mDiff = (Difficulty)i;
+        mSongData[i].mSongID = mSongID;
     }
     mLastPlayed = 0;
-    unk78 = false;
-    unk79 = false;
-    unk7c = kNumDifficulties;
+    mLastStars = false;
+    mLastStarsNoFlashcards = false;
+    mLastDiff = kNumDifficulties;
     mLastScore = 0;
-    unk84 = 0;
+    mLastCoopScore = 0;
     mLastPlayedPractice = 0;
-    unk9c = 0;
-    unka0 = 4;
+    mLastScorePractice = 0;
+    mLastDiffPractice = kNumDifficulties;
     mBattleScore = 0;
-    mTotalBattleWins = 0;
-    mTotalBattleLosses = 0;
-    mWonLastBattle = false;
-    unka4 = 0;
+    mBattleWins = 0;
+    mBattleLosses = 0;
+    mWonLastDanceBattle = false;
+    mFlags = 0;
     mFlauntData.mScore = 0;
     mFlauntData.mDiff = DefaultDifficulty();
     mFlauntData.mNeedUpload = false;
@@ -115,46 +115,46 @@ const SongStatusData &SongStatus::GetBestSongStatusData() const {
     Difficulty best = kDifficultyEasy;
     for (Difficulty d = EasiestDifficulty(); d != kNumDifficulties;
          d = DifficultyOneHarder(d)) {
-        if (0 < mStatusData[d].mScore
-            && (3 <= mStatusData[d].mStars
-                || mStatusData[d].mStars >= mStatusData[best].mStars)) {
+        if (0 < mSongData[d].mScore
+            && (3 <= mSongData[d].mStars
+                || mSongData[d].mStars >= mSongData[best].mStars)) {
             best = d;
         }
     }
-    return mStatusData[best];
+    return mSongData[best];
 }
 
 const SongStatusData &SongStatus::GetBestPracticeSongStatusData() const {
     Difficulty best = kDifficultyEasy;
     for (Difficulty d = EasiestDifficulty(); d != kNumDifficulties;
          d = DifficultyOneHarder(d)) {
-        if ((50 <= mStatusData[d].mPracticeScore
-             || mStatusData[d].mPracticeScore >= mStatusData[best].mPracticeScore)) {
+        if ((50 <= mSongData[d].mPracticeScore
+             || mSongData[d].mPracticeScore >= mSongData[best].mPracticeScore)) {
             best = d;
         }
     }
-    return mStatusData[best];
+    return mSongData[best];
 }
 
 BinStream &operator<<(BinStream &bs, const SongStatus &stat) {
     bs << stat.mSongID;
     for (int i = 0; i < 4; i++) {
-        stat.mStatusData[i].SaveToStream(bs);
+        stat.mSongData[i].SaveToStream(bs);
     }
     bs << stat.mLastPlayed;
-    bs << stat.unk78;
-    bs << stat.unk79;
-    bs << (unsigned char)stat.unk7c;
+    bs << stat.mLastStars;
+    bs << stat.mLastStarsNoFlashcards;
+    bs << (unsigned char)stat.mLastDiff;
     bs << stat.mLastScore;
-    bs << stat.unk84;
+    bs << stat.mLastCoopScore;
     bs << stat.mLastPlayedPractice;
-    bs << stat.unk9c;
-    bs << (unsigned char)stat.unka0;
+    bs << stat.mLastScorePractice;
+    bs << (unsigned char)stat.mLastDiffPractice;
     bs << stat.mBattleScore;
-    bs << stat.mTotalBattleWins;
-    bs << stat.mTotalBattleLosses;
-    bs << stat.mWonLastBattle;
-    bs << stat.unka4;
+    bs << stat.mBattleWins;
+    bs << stat.mBattleLosses;
+    bs << stat.mWonLastDanceBattle;
+    bs << stat.mFlags;
     stat.mFlauntData.SaveToStream(bs);
     return bs;
 }
@@ -162,26 +162,26 @@ BinStream &operator<<(BinStream &bs, const SongStatus &stat) {
 BinStream &operator>>(BinStream &bs, SongStatus &stat) {
     bs >> stat.mSongID;
     for (int i = 0; i < 4; i++) {
-        stat.mStatusData[i].LoadFromStream(bs);
-        stat.mStatusData[i].mSongID = stat.mSongID;
+        stat.mSongData[i].LoadFromStream(bs);
+        stat.mSongData[i].mSongID = stat.mSongID;
     }
     bs >> stat.mLastPlayed;
-    bs >> stat.unk78;
-    bs >> stat.unk79;
+    bs >> stat.mLastStars;
+    bs >> stat.mLastStarsNoFlashcards;
     unsigned char uc;
     bs >> uc;
-    stat.unk7c = (Difficulty)uc;
+    stat.mLastDiff = (Difficulty)uc;
     bs >> stat.mLastScore;
-    bs >> stat.unk84;
+    bs >> stat.mLastCoopScore;
     bs >> stat.mLastPlayedPractice;
-    bs >> stat.unk9c;
+    bs >> stat.mLastScorePractice;
     bs >> uc;
-    stat.unka0 = uc;
+    stat.mLastDiffPractice = (Difficulty)uc;
     bs >> stat.mBattleScore;
-    bs >> stat.mTotalBattleWins;
-    bs >> stat.mTotalBattleLosses;
-    bs >> stat.mWonLastBattle;
-    bs >> stat.unka4;
+    bs >> stat.mBattleWins;
+    bs >> stat.mBattleLosses;
+    bs >> stat.mWonLastDanceBattle;
+    bs >> stat.mFlags;
     stat.mFlauntData.LoadFromStream(bs);
     return bs;
 }
@@ -235,7 +235,7 @@ void SongStatusMgr::Clear() { mSongStatusMap.clear(); }
 
 void SongStatusMgr::ClearNeedUpload(int songID, Difficulty d) {
     if (HasSongStatus(songID)) {
-        AccessSongStatus(songID).mStatusData[d].mNeedUpload = false;
+        AccessSongStatus(songID).mSongData[d].mNeedUpload = false;
     }
 }
 
@@ -255,9 +255,9 @@ void SongStatusMgr::GetScoresToUpload(std::list<SongStatusData> &data) {
     FOREACH (it, mSongStatusMap) {
         SongStatus cur = it->second;
         for (int i = 0; i < 4; i++) {
-            if (cur.mStatusData[i].mNeedUpload) {
-                cur.mStatusData[i].mDifficulty = (Difficulty)i;
-                data.push_back(cur.mStatusData[i]);
+            if (cur.mSongData[i].mNeedUpload) {
+                cur.mSongData[i].mDiff = (Difficulty)i;
+                data.push_back(cur.mSongData[i]);
             }
         }
     }
@@ -275,7 +275,7 @@ void SongStatusMgr::GetFlauntsToUpload(std::list<FlauntStatusData> &data) {
 
 Difficulty SongStatusMgr::GetDifficulty(int songID) const {
     if (HasSongStatus(songID)) {
-        return GetSongStatus(songID).GetBestSongStatusData().mDifficulty;
+        return GetSongStatus(songID).GetBestSongStatusData().mDiff;
     } else {
         return DefaultDifficulty();
     }
@@ -285,7 +285,7 @@ int SongStatusMgr::GetPercentForDifficulty(int songID, Difficulty d) const {
     int pct = 0;
     if (HasSongStatus(songID)) {
         const SongStatus &status = GetSongStatus(songID);
-        pct = status.mStatusData[d].mPercentPassed;
+        pct = status.mSongData[d].mMovesPercent;
     }
     return pct;
 }
@@ -294,7 +294,7 @@ int SongStatusMgr::GetNumPerfectForDifficulty(int songID, Difficulty d) const {
     int num = 0;
     if (HasSongStatus(songID)) {
         const SongStatus &status = GetSongStatus(songID);
-        num = status.mStatusData[d].mNumPerfects;
+        num = status.mSongData[d].mNumPerfect;
     }
     return num;
 }
@@ -303,14 +303,14 @@ int SongStatusMgr::GetNumNiceForDifficulty(int songID, Difficulty d) const {
     int num = 0;
     if (HasSongStatus(songID)) {
         const SongStatus &status = GetSongStatus(songID);
-        num = status.mStatusData[d].mNumNices;
+        num = status.mSongData[d].mNumNice;
     }
     return num;
 }
 
 Difficulty __cdecl SongStatusMgr::GetPracticeDifficulty(int songID) const {
     if (HasSongStatus(songID)) {
-        return GetSongStatus(songID).GetBestPracticeSongStatusData().mDifficulty;
+        return GetSongStatus(songID).GetBestPracticeSongStatusData().mDiff;
     } else {
         return DefaultDifficulty();
     }
@@ -320,7 +320,7 @@ int SongStatusMgr::GetScore(int songID, bool &noFlashcards) const {
     noFlashcards = false;
     if (HasSongStatus(songID)) {
         const SongStatusData &data = GetSongStatus(songID).GetBestSongStatusData();
-        noFlashcards = data.mNoFlashcards;
+        noFlashcards = data.mScoreNoFlashcards;
         return data.mScore;
     } else {
         return 0;
@@ -341,8 +341,8 @@ int SongStatusMgr::GetScoreForDifficulty(
     noFlashcards = false;
     if (HasSongStatus(songID)) {
         const SongStatus &status = GetSongStatus(songID);
-        noFlashcards = status.mStatusData[d].mNoFlashcards;
-        return status.mStatusData[d].mScore;
+        noFlashcards = status.mSongData[d].mScoreNoFlashcards;
+        return status.mSongData[d].mScore;
     } else {
         return 0;
     }
@@ -355,9 +355,9 @@ int SongStatusMgr::GetBestScore(int songID, bool &noFlashcards, Difficulty d) co
         for (Difficulty loopdiff = d; loopdiff != kNumDifficulties;
              loopdiff = DifficultyOneHarder(loopdiff)) {
             const SongStatus &status = GetSongStatus(songID);
-            int score = status.mStatusData[loopdiff].mScore;
+            int score = status.mSongData[loopdiff].mScore;
             if (score > bestScore) {
-                noFlashcards = status.mStatusData[loopdiff].mNoFlashcards;
+                noFlashcards = status.mSongData[loopdiff].mScoreNoFlashcards;
                 bestScore = score;
             }
         }
@@ -369,7 +369,7 @@ int SongStatusMgr::GetStars(int songID, bool &bref) const {
     bref = false;
     if (HasSongStatus(songID)) {
         const SongStatusData &data = GetSongStatus(songID).GetBestSongStatusData();
-        bref = data.unk10;
+        bref = data.mStarsNoFlashcards;
         return data.mStars;
     } else {
         return 0;
@@ -380,8 +380,8 @@ int SongStatusMgr::GetStarsForDifficulty(int songID, Difficulty d, bool &bref) c
     bref = false;
     if (HasSongStatus(songID)) {
         const SongStatus &status = GetSongStatus(songID);
-        bref = status.mStatusData[d].unk10;
-        return status.mStatusData[d].mStars;
+        bref = status.mSongData[d].mStarsNoFlashcards;
+        return status.mSongData[d].mStars;
     } else {
         return 0;
     }
@@ -394,9 +394,9 @@ int SongStatusMgr::GetBestStars(int songID, bool &bref, Difficulty d) const {
         const SongStatus &status = GetSongStatus(songID);
         for (Difficulty loopDiff = d; loopDiff != kNumDifficulties;
              loopDiff = DifficultyOneHarder(loopDiff)) {
-            int curStars = status.mStatusData[loopDiff].mStars;
+            int curStars = status.mSongData[loopDiff].mStars;
             if (curStars >= bestStars) {
-                bref = status.mStatusData[loopDiff].unk10;
+                bref = status.mSongData[loopDiff].mStarsNoFlashcards;
                 bestStars = curStars;
             }
         }
@@ -420,7 +420,7 @@ int SongStatusMgr::GetBestBattleScore(int songID) const {
 int SongStatusMgr::GetTotalBattleWins(int songID) const {
     int total = 0;
     if (HasSongStatus(songID)) {
-        total = GetSongStatus(songID).mTotalBattleWins;
+        total = GetSongStatus(songID).mBattleWins;
     }
     return total;
 }
@@ -428,7 +428,7 @@ int SongStatusMgr::GetTotalBattleWins(int songID) const {
 int SongStatusMgr::GetTotalBattleLosses(int songID) const {
     int total = 0;
     if (HasSongStatus(songID)) {
-        total = GetSongStatus(songID).mTotalBattleLosses;
+        total = GetSongStatus(songID).mBattleLosses;
     }
     return total;
 }
@@ -436,7 +436,7 @@ int SongStatusMgr::GetTotalBattleLosses(int songID) const {
 bool SongStatusMgr::GetLastBattleResult(int songID) const {
     bool res = false;
     if (HasSongStatus(songID)) {
-        res = GetSongStatus(songID).mWonLastBattle;
+        res = GetSongStatus(songID).mWonLastDanceBattle;
     }
     return res;
 }
@@ -453,7 +453,7 @@ int SongStatusMgr::GetLastScore(int songID, bool &bref) const {
     bref = false;
     if (HasSongStatus(songID)) {
         const SongStatus &status = GetSongStatus(songID);
-        bref = status.unk79;
+        bref = status.mLastStarsNoFlashcards;
         return status.mLastScore;
     } else {
         return 0;
@@ -479,7 +479,7 @@ int SongStatusMgr::GetPracticeScore(int songID) const {
 int SongStatusMgr::GetPracticeScore(int songID, Difficulty d) const {
     if (HasSongStatus(songID)) {
         const SongStatus &status = GetSongStatus(songID);
-        return status.mStatusData[d].mPracticeScore;
+        return status.mSongData[d].mPracticeScore;
     } else {
         return 0;
     }
@@ -529,22 +529,22 @@ bool SongStatusMgr::UpdateBattleSong(int songID, int score, bool won) {
     } else {
         if (HasSongStatus(songID)) {
             SongStatus &status = AccessSongStatus(songID);
-            status.mWonLastBattle = won;
+            status.mWonLastDanceBattle = won;
             if (won) {
-                status.mTotalBattleWins++;
+                status.mBattleWins++;
             } else {
-                status.mTotalBattleLosses++;
+                status.mBattleLosses++;
             }
             if (status.mBattleScore <= score) {
                 status.mBattleScore = score;
             }
         } else {
             SongStatus status(songID);
-            status.mWonLastBattle = won;
+            status.mWonLastDanceBattle = won;
             if (won) {
-                status.mTotalBattleWins++;
+                status.mBattleWins++;
             } else {
-                status.mTotalBattleLosses++;
+                status.mBattleLosses++;
             }
             status.mBattleScore = score;
             mSongStatusMap[songID] = status;
@@ -579,36 +579,36 @@ bool SongStatusMgr::UpdateSong(
             DateTime dt;
             GetDateAndTime(dt);
             status.mLastPlayed = dt.ToCode();
-            status.unk78 = stars;
+            status.mLastStars = stars;
             if (stars >= 5) {
-                status.unk79 = b11;
+                status.mLastStarsNoFlashcards = b11;
             }
-            status.unk7c = difficulty;
+            status.mLastDiff = difficulty;
             status.mLastScore = score;
-            status.unk84 = i3;
-            if (status.mStatusData[difficulty].mScore <= score) {
-                status.mStatusData[difficulty].mScore = score;
-                status.mStatusData[difficulty].mNoFlashcards = b11;
-                status.mStatusData[difficulty].mNeedUpload = !b10;
+            status.mLastCoopScore = i3;
+            if (status.mSongData[difficulty].mScore <= score) {
+                status.mSongData[difficulty].mScore = score;
+                status.mSongData[difficulty].mScoreNoFlashcards = b11;
+                status.mSongData[difficulty].mNeedUpload = !b10;
             }
-            if (status.mStatusData[difficulty].mCoopScore <= i3) {
-                status.mStatusData[difficulty].mCoopScore = i3;
-                status.mStatusData[difficulty].mNeedUpload = !b10;
+            if (status.mSongData[difficulty].mCoopScore <= i3) {
+                status.mSongData[difficulty].mCoopScore = i3;
+                status.mSongData[difficulty].mNeedUpload = !b10;
             }
-            if (status.mStatusData[difficulty].mStars <= stars) {
-                status.mStatusData[difficulty].mStars = stars;
+            if (status.mSongData[difficulty].mStars <= stars) {
+                status.mSongData[difficulty].mStars = stars;
                 if (b11 && 5 <= stars) {
-                    status.mStatusData[difficulty].unk10 = b11;
+                    status.mSongData[difficulty].mStarsNoFlashcards = b11;
                 }
             }
-            if (status.mStatusData[difficulty].mNumNices <= numNices) {
-                status.mStatusData[difficulty].mNumNices = numNices;
+            if (status.mSongData[difficulty].mNumNice <= numNices) {
+                status.mSongData[difficulty].mNumNice = numNices;
             }
-            if (status.mStatusData[difficulty].mNumPerfects <= numPerfects) {
-                status.mStatusData[difficulty].mNumPerfects = numPerfects;
+            if (status.mSongData[difficulty].mNumPerfect <= numPerfects) {
+                status.mSongData[difficulty].mNumPerfect = numPerfects;
             }
-            if (status.mStatusData[difficulty].mPercentPassed <= percentPassed) {
-                status.mStatusData[difficulty].mPercentPassed = percentPassed;
+            if (status.mSongData[difficulty].mMovesPercent <= percentPassed) {
+                status.mSongData[difficulty].mMovesPercent = percentPassed;
             }
             ret = true;
         }
@@ -616,27 +616,27 @@ bool SongStatusMgr::UpdateSong(
     } else {
         SongStatus status(songID);
         if (TheGameMode->Property(gameplay_mode)->Sym() == perform) {
-            status.mStatusData[difficulty].mScore = score;
-            status.mStatusData[difficulty].mCoopScore = i3;
-            status.mStatusData[difficulty].mStars = stars;
-            status.mStatusData[difficulty].mNoFlashcards = b11;
+            status.mSongData[difficulty].mScore = score;
+            status.mSongData[difficulty].mCoopScore = i3;
+            status.mSongData[difficulty].mStars = stars;
+            status.mSongData[difficulty].mScoreNoFlashcards = b11;
             if (5 <= stars) {
-                status.mStatusData[difficulty].unk10 = b11;
+                status.mSongData[difficulty].mStarsNoFlashcards = b11;
             }
             DateTime dt;
-            status.mStatusData[difficulty].mNeedUpload = !b10;
+            status.mSongData[difficulty].mNeedUpload = !b10;
             GetDateAndTime(dt);
             status.mLastPlayed = dt.ToCode();
-            status.unk78 = stars;
+            status.mLastStars = stars;
             if (5 <= stars) {
-                status.unk79 = b11;
+                status.mLastStarsNoFlashcards = b11;
             }
-            status.unk7c = difficulty;
+            status.mLastDiff = difficulty;
             status.mLastScore = score;
-            status.unk84 = i3;
-            status.mStatusData[difficulty].mNumNices = numNices;
-            status.mStatusData[difficulty].mNumPerfects = numPerfects;
-            status.mStatusData[difficulty].mPercentPassed = percentPassed;
+            status.mLastCoopScore = i3;
+            status.mSongData[difficulty].mNumNice = numNices;
+            status.mSongData[difficulty].mNumPerfect = numPerfects;
+            status.mSongData[difficulty].mMovesPercent = percentPassed;
         }
         mSongStatusMap[songID] = status;
         return true;

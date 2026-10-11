@@ -32,9 +32,9 @@ bool AccomplishmentOneShot::AreOneShotConditionsMet(
     const AccomplishmentProgress &progress = profile->GetAccomplishmentProgress();
     FOREACH (it, m_lConditions) {
         const AccomplishmentCondition &cur = *it;
-        Symbol condition = cur.mCondition;
-        Difficulty d2 = cur.mDifficulty;
-        int val = cur.mValue;
+        Symbol condition = cur.m_symCondition;
+        Difficulty d2 = cur.m_eDifficulty;
+        int val = cur.m_iValue;
         unsigned char b6;
         if (d2 == kDifficultyBeginner) {
             b6 = 1;
@@ -64,10 +64,10 @@ bool AccomplishmentOneShot::AreOneShotConditionsMet(
                 if (progress.GetNiceMoveCount() >= val)
                     return true;
             } else if (condition == days) {
-                if (progress.NumDays() >= val)
+                if (progress.GetPlayDaysCount() >= val)
                     return true;
             } else if (condition == weekends) {
-                if (progress.NumWeekends() >= val)
+                if (progress.GetPlayWeekendsCount() >= val)
                     return true;
             } else if (condition == hardest_stars) {
                 static Symbol omg("omg");

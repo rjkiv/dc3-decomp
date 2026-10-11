@@ -13,14 +13,6 @@ enum StatLayout {
     kStatsLayoutSpacer = -2,
 };
 
-enum StatType {
-    kStatType_Count = 0,
-    kStatType_Time = 1,
-    kStatType_FavoriteMode = 2,
-    kStatType_FavoriteSong = 3,
-    kStatType_FavoriteCharacter = 4
-};
-
 class MetagameStats : public Hmx::Object,
                       public UIListProvider,
                       public FixedSizeSaveable {
@@ -31,7 +23,7 @@ public:
         //  -index in big char array macro for character metric
         //  -mode enum for favorite mode
         // value = the relevant count
-        std::map<int, int> mCounts;
+        std::map<int, int> mCounts; // 0x0
     };
     enum CountStatID {
         kCountStat_StatScreenVisits = 0,
@@ -69,6 +61,14 @@ public:
         kFavoriteStat_FavoriteSongFitness = 6,
         kNumFavoriteStats = 7,
     };
+    enum StatType {
+        kStatType_Count = 0,
+        kStatType_Time = 1,
+        kStatType_FavoriteMode = 2,
+        kStatType_FavoriteSong = 3,
+        kStatType_FavoriteCharacter = 4,
+        kNumStatTypes = 5
+    };
 
     MetagameStats();
     // Hmx::Object
@@ -76,7 +76,7 @@ public:
     // UIListProvider
     virtual void Text(int, int, UIListLabel *, UILabel *) const;
     virtual RndMat *Mat(int, int, UIListMesh *) const;
-    virtual int NumData() const { return mStatsCfg->Size() - 1; }
+    virtual int NumData() const { return mStatsLayout->Size() - 1; }
 
     void Clear();
     void IncrementCount(CountStatID, int);
@@ -126,7 +126,7 @@ private:
 
     int mCountStats[kNumCountStats]; // 0x38
     FavoriteStat mFavoriteStats[kNumFavoriteStats]; // 0x94
-    DataArray *mStatsCfg; // 0x13c
-    int unk140; // 0x140 - total time played?
+    DataArray *mStatsLayout; // 0x13c
+    int mCurrentSessionLength; // 0x140 - total time played?
     bool mDirty; // 0x144
 };

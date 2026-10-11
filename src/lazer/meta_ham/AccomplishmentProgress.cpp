@@ -22,13 +22,14 @@
 
 #pragma region GamerAwardStatus
 
-GamerAwardStatus::GamerAwardStatus() : unk8(-1), mType(type0), unk10(false) {
+GamerAwardStatus::GamerAwardStatus()
+    : mID(-1), mType(kGamerAwardInvalid), mWaiting(false) {
     memset(&mOverlapped, 0, sizeof(XOVERLAPPED));
     mSaveSizeMethod = SaveSize;
 }
 
 GamerAwardStatus::GamerAwardStatus(int i, GamerAwardType type)
-    : unk8(i), mType(type), unk10(false) {
+    : mID(i), mType(type), mWaiting(false) {
     memset(&mOverlapped, 0, sizeof(XOVERLAPPED));
     mSaveSizeMethod = SaveSize;
 }
@@ -40,12 +41,12 @@ GamerAwardStatus::~GamerAwardStatus() {
 }
 
 void GamerAwardStatus::SaveFixed(FixedSizeSaveableStream &fs) const {
-    fs << unk8;
+    fs << mID;
     fs << mType;
 }
 
 void GamerAwardStatus::LoadFixed(FixedSizeSaveableStream &fs, int) {
-    fs >> unk8;
+    fs >> mID;
     int type = 0;
     fs >> type;
     mType = (GamerAwardType)type;
@@ -62,68 +63,72 @@ AccomplishmentProgress::AccomplishmentProgress(HamProfile *prof) : mParentProfil
 }
 
 AccomplishmentProgress::~AccomplishmentProgress() {
-    FOREACH (it, unk50) {
+    FOREACH (it, mGamerAwardStatusList) {
         delete *it;
     }
-    unk50.clear();
+    mGamerAwardStatusList.clear();
 }
 
 BEGIN_HANDLERS(AccomplishmentProgress)
     HANDLE_EXPR(
         get_icon_hardcore_status,
-        TheAccomplishmentMgr->GetIconHardCoreStatus(unk58.size())
+        TheAccomplishmentMgr->GetIconHardCoreStatus(mAccomplishments.size())
     )
-    HANDLE_ACTION(set_freestyle_photo_count, mFreestylePhotoCount = _msg->Int(2))
-    HANDLE_EXPR(get_freestyle_photo_count, mFreestylePhotoCount)
+    HANDLE_ACTION(set_freestyle_photo_count, mFreestylePictureCount = _msg->Int(2))
+    HANDLE_EXPR(get_freestyle_photo_count, mFreestylePictureCount)
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
 
 void AccomplishmentProgress::SaveFixed(FixedSizeSaveableStream &fs) const {
-    FixedSizeSaveable::SaveStd(fs, unk58, 200);
-    FixedSizeSaveable::SaveStd(fs, unk70, 200);
-    FixedSizeSaveable::SaveStd(fs, unk94, 100);
-    FixedSizeSaveable::SaveStd(fs, unkbc, 200, 8);
+    FixedSizeSaveable::SaveStd(fs, mAccomplishments, 200);
+    FixedSizeSaveable::SaveStd(fs, mNewlyAcquiredAccomplishments, 200);
+    FixedSizeSaveable::SaveStd(fs, mAwards, 100);
+    FixedSizeSaveable::SaveStd(fs, mAccomplishmentCountTracking, 200, 8);
     fs << mTotalSongsPlayed;
     fs << mTotalCampaignSongsPlayed;
-    fs << mFreestylePhotoCount;
-    fs << unke0;
+    fs << mFreestylePictureCount;
+    fs << mRandomCharacterCount;
     fs << mFlawlessMoveCount;
     fs << mNiceMoveCount;
-    fs << unk114;
-    fs << unk118;
-    fs << unk11c;
-    fs << unk120;
-    FixedSizeSaveable::SaveStdPtr(fs, unk50, 50, GamerAwardStatus::SaveSize(0x5C));
-    FixedSizeSaveable::SaveStd(fs, mCharacterUseCounts, 20, 8);
+    fs << mPlayDaysCount;
+    fs << mLastPlayDate;
+    fs << mPlayWeekendsCount;
+    fs << mLastWeekendPlayDate;
+    FixedSizeSaveable::SaveStdPtr(
+        fs, mGamerAwardStatusList, 50, GamerAwardStatus::SaveSize(0x5C)
+    );
+    FixedSizeSaveable::SaveStd(fs, mCharacterUseMap, 20, 8);
 }
 
 void AccomplishmentProgress::LoadFixed(FixedSizeSaveableStream &fs, int i2) {
-    FixedSizeSaveable::LoadStd(fs, unk58, 200);
-    FixedSizeSaveable::LoadStd(fs, unk70, 200);
-    FixedSizeSaveable::LoadStd(fs, unk94, 100);
-    FixedSizeSaveable::LoadStd(fs, unkbc, 200, 8);
+    FixedSizeSaveable::LoadStd(fs, mAccomplishments, 200);
+    FixedSizeSaveable::LoadStd(fs, mNewlyAcquiredAccomplishments, 200);
+    FixedSizeSaveable::LoadStd(fs, mAwards, 100);
+    FixedSizeSaveable::LoadStd(fs, mAccomplishmentCountTracking, 200, 8);
     fs >> mTotalSongsPlayed;
     fs >> mTotalCampaignSongsPlayed;
-    fs >> mFreestylePhotoCount;
-    fs >> unke0;
+    fs >> mFreestylePictureCount;
+    fs >> mRandomCharacterCount;
     fs >> mFlawlessMoveCount;
     fs >> mNiceMoveCount;
-    fs >> unk114;
-    fs >> unk118;
-    fs >> unk11c;
-    fs >> unk120;
-    FixedSizeSaveable::LoadStdPtr(fs, unk50, 50, GamerAwardStatus::SaveSize(i2));
-    FixedSizeSaveable::LoadStd(fs, mCharacterUseCounts, 20, 8);
+    fs >> mPlayDaysCount;
+    fs >> mLastPlayDate;
+    fs >> mPlayWeekendsCount;
+    fs >> mLastWeekendPlayDate;
+    FixedSizeSaveable::LoadStdPtr(
+        fs, mGamerAwardStatusList, 50, GamerAwardStatus::SaveSize(i2)
+    );
+    FixedSizeSaveable::LoadStd(fs, mCharacterUseMap, 20, 8);
 }
 
 int AccomplishmentProgress::GetNiceMoveCount() const { return mNiceMoveCount; }
 void AccomplishmentProgress::IncrementDanceBattleCount() { mDanceBattleCount++; }
-void AccomplishmentProgress::ClearAllPerfectMoves() { mPerfectMovesCleared = true; }
+void AccomplishmentProgress::ClearAllPerfectMoves() { mAllPerfectMoves = true; }
 bool AccomplishmentProgress::HasNewAwards() const { return !mNewAwards.empty(); }
 
 void AccomplishmentProgress::ClearPerfectStreak() {
-    unke4 = 0;
-    unke8 = 0;
+    mCurrentPerfectStreak = 0;
+    mBestPerfectStreak = 0;
 }
 
 void AccomplishmentProgress::SetTotalSongsPlayed(int songs) {
@@ -148,13 +153,13 @@ void AccomplishmentProgress::MovePassed(Symbol gameplayMode, int ratingIndex) {
         mNiceMoveCount++;
     }
     if (rating != move_perfect) {
-        mPerfectMovesCleared = false;
+        mAllPerfectMoves = false;
     }
 }
 
 int AccomplishmentProgress::GetCharacterUseCount(Symbol s) const {
-    auto it = mCharacterUseCounts.find(s);
-    if (it == mCharacterUseCounts.end()) {
+    auto it = mCharacterUseMap.find(s);
+    if (it == mCharacterUseMap.end()) {
         return 0;
     }
     return it->second;
@@ -162,8 +167,8 @@ int AccomplishmentProgress::GetCharacterUseCount(Symbol s) const {
 
 int AccomplishmentProgress::GetCount(Symbol s) const {
     int count = 0;
-    auto it = unkbc.find(s);
-    if (it != unkbc.end()) {
+    auto it = mAccomplishmentCountTracking.find(s);
+    if (it != mAccomplishmentCountTracking.end()) {
         count = it->second;
     }
     return count;
@@ -171,13 +176,13 @@ int AccomplishmentProgress::GetCount(Symbol s) const {
 
 void AccomplishmentProgress::GiveGamerpic(Accomplishment *a) {
     int reward = a->GetGamerpicReward();
-    GamerAwardStatus *gStatus = new GamerAwardStatus(reward, type1);
-    unk50.push_back(gStatus);
+    GamerAwardStatus *gStatus = new GamerAwardStatus(reward, kGamerAwardGamerpic);
+    mGamerAwardStatusList.push_back(gStatus);
     DWORD res = XUserAwardGamerPicture(
         mParentProfile->GetPadNum(), reward, 0, &gStatus->mOverlapped
     );
     if (res == ERROR_IO_PENDING) {
-        gStatus->unk10 = true;
+        gStatus->mWaiting = true;
     }
 }
 
@@ -196,44 +201,46 @@ Symbol AccomplishmentProgress::GetFirstNewAwardReason() const {
     return mNewAwards.front().second;
 }
 
-bool AccomplishmentProgress::IsAccomplished(Symbol s) const { return unk58.count(s); }
+bool AccomplishmentProgress::IsAccomplished(Symbol s) const {
+    return mAccomplishments.count(s);
+}
 
 void AccomplishmentProgress::Clear() {
-    unk58.clear();
-    unk70.clear();
-    unk88.clear();
-    unk94.clear();
-    unkbc.clear();
+    mAccomplishments.clear();
+    mNewlyAcquiredAccomplishments.clear();
+    mAccomplishmentsPendingUpdate.clear();
+    mAwards.clear();
+    mAccomplishmentCountTracking.clear();
     mTotalSongsPlayed = 0;
     mTotalCampaignSongsPlayed = 0;
     mDanceBattleCount = 0;
-    mFreestylePhotoCount = 0;
-    mPerfectMovesCleared = true;
-    unke0 = 0;
-    unke4 = 0;
-    unke8 = 0;
-    mCharacterUseCounts.clear();
+    mFreestylePictureCount = 0;
+    mAllPerfectMoves = true;
+    mRandomCharacterCount = 0;
+    mCurrentPerfectStreak = 0;
+    mBestPerfectStreak = 0;
+    mCharacterUseMap.clear();
     mFlawlessMoveCount = 0;
     mNiceMoveCount = 0;
-    unk114 = 0;
-    unk118 = 0;
-    unk11c = 0;
-    unk120 = -1;
+    mPlayDaysCount = 0;
+    mLastPlayDate = 0;
+    mPlayWeekendsCount = 0;
+    mLastWeekendPlayDate = -1;
 }
 
 void AccomplishmentProgress::Poll() {
-    for (auto it = unk50.begin(); it != unk50.end();) {
+    for (auto it = mGamerAwardStatusList.begin(); it != mGamerAwardStatusList.end();) {
         GamerAwardStatus *curStatus = *it;
-        if (curStatus->unk10) {
+        if (curStatus->mWaiting) {
             DWORD dw;
             DWORD res = XGetOverlappedResult(&curStatus->mOverlapped, &dw, false);
             if (res == ERROR_SUCCESS) {
-                unk50.erase(it++);
+                mGamerAwardStatusList.erase(it++);
                 mParentProfile->MakeDirty();
                 continue;
             }
             if (res != ERROR_IO_INCOMPLETE) {
-                curStatus->unk10 = false;
+                curStatus->mWaiting = false;
             }
         }
         ++it;
@@ -251,18 +258,18 @@ void AccomplishmentProgress::NotifyPlayerOfAccomplishment(Symbol s, const char *
 }
 
 void AccomplishmentProgress::IncrementCount(Symbol s, int i2) {
-    auto it = unkbc.find(s);
-    if (it != unkbc.end()) {
+    auto it = mAccomplishmentCountTracking.find(s);
+    if (it != mAccomplishmentCountTracking.end()) {
         it->second += i2;
     } else {
-        unkbc[s] = i2;
+        mAccomplishmentCountTracking[s] = i2;
     }
 }
 
 void AccomplishmentProgress::IncrementCharacterUseCount(Symbol s) {
-    auto it = mCharacterUseCounts.find(s);
-    if (it == mCharacterUseCounts.end()) {
-        mCharacterUseCounts[s] = 1;
+    auto it = mCharacterUseMap.find(s);
+    if (it == mCharacterUseMap.end()) {
+        mCharacterUseMap[s] = 1;
     } else {
         it->second++;
     }
@@ -271,12 +278,12 @@ void AccomplishmentProgress::IncrementCharacterUseCount(Symbol s) {
 void AccomplishmentProgress::GiveAvatarAsset(Accomplishment *acc) {
     int reward = acc->GetAvatarAssetReward();
     GamerAwardStatus *status = new GamerAwardStatus(reward, (GamerAwardType)2);
-    unk50.push_back(status);
-    status->mAsset.dwUserIndex = mParentProfile->GetPadNum();
-    status->mAsset.dwAwardId = reward;
-    DWORD res = XUserAwardAvatarAssets(1, &status->mAsset, &status->mOverlapped);
+    mGamerAwardStatusList.push_back(status);
+    status->mAvatarAward.dwUserIndex = mParentProfile->GetPadNum();
+    status->mAvatarAward.dwAwardId = reward;
+    DWORD res = XUserAwardAvatarAssets(1, &status->mAvatarAward, &status->mOverlapped);
     if (res == ERROR_IO_PENDING) {
-        status->unk10 = true;
+        status->mWaiting = true;
     }
 }
 
@@ -307,7 +314,7 @@ int AccomplishmentProgress::GetNumCompletedInGroup(Symbol group) const {
 
 bool AccomplishmentProgress::AddAward(Symbol award, Symbol reason) {
     if (!HasAward(award)) {
-        unk94.insert(award);
+        mAwards.insert(award);
         Award *pAward = TheAccomplishmentMgr->GetAward(award);
         MILO_ASSERT(pAward, 0x11D);
         if (!pAward->IsSilent()) {
@@ -335,8 +342,8 @@ bool AccomplishmentProgress::AddAccomplishment(Symbol s) {
             Symbol award = pAcc->GetAward();
             AddAward(award, s);
         }
-        unk58.insert(s);
-        unk70.insert(s);
+        mAccomplishments.insert(s);
+        mNewlyAcquiredAccomplishments.insert(s);
         Symbol category = pAcc->GetCategory();
         AccomplishmentCategory *pCategory =
             TheAccomplishmentMgr->GetAccomplishmentCategory(category);

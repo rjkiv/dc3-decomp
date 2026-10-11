@@ -1,5 +1,7 @@
 #pragma once
+#include "hamobj/HamList.h"
 #include "hamobj/MiniLeaderboardDisplay.h"
+#include "meta_ham/Leaderboards.h"
 #include "net/DingoSvr.h"
 #include "net_ham/LeaderboardJobs.h"
 #include "net_ham/RCJobDingo.h"
@@ -33,9 +35,6 @@ public:
 
     bool UpdateLeaderboard(Symbol);
 
-private:
-    void UpdateSelfInRows();
-
 protected:
     virtual void Update();
 
@@ -45,9 +44,12 @@ protected:
     DataNode OnMsg(const ServerStatusChangedMsg &);
     DataNode OnMsg(const RCJobCompleteMsg &);
 
-    int unk60; // 0x60 - state?
-    UIList *mLeaderboardList; // 0x64
+private:
+    void UpdateSelfInRows();
+
+    LeaderboardStatus mStatus; // 0x60
+    HamList *mLeaderboardList; // 0x64
     int mSongID; // 0x68
-    float unk6c; // 0x6c
-    std::vector<LeaderboardRow> mLBRows; // 0x70
+    float mSourceSetTime; // 0x6c
+    std::vector<LeaderboardRow> mRows; // 0x70
 };

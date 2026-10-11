@@ -52,7 +52,7 @@ AccomplishmentManager::AccomplishmentManager(DataArray *cfg) {
     ConfigureAccomplishmentGroupToCategoriesData();
     ConfigureAccomplishmentRewardData(cfg->FindArray("accomplishment_rewards"));
     for (int i = 0; i < 2; i++) {
-        unk30[i] = false;
+        mProfileChanged[i] = false;
     }
     TheContentMgr.RegisterCallback(this, false);
 }
@@ -112,11 +112,11 @@ END_HANDLERS
 void AccomplishmentManager::ContentDone() { InitializeDiscSongs(); }
 
 bool AccomplishmentManager::IsUnlockableAsset(Symbol s) const {
-    return mAssetToAward.find(s) != mAssetToAward.end();
+    return m_mapAssetToAward.find(s) != m_mapAssetToAward.end();
 }
 
 void AccomplishmentManager::InitializeDiscSongs() {
-    mDiscSongs.clear();
+    m_vDiscSongs.clear();
     std::vector<int> songs;
     TheHamSongMgr.GetRankedSongs(songs);
     FOREACH (it, songs) {
@@ -126,36 +126,36 @@ void AccomplishmentManager::InitializeDiscSongs() {
         static Symbol ham3("ham3");
         if (pSongData->GameOrigin() == ham3) {
             Symbol shortname = TheHamSongMgr.GetShortNameFromSongID(curSongID);
-            mDiscSongs.push_back(shortname);
+            m_vDiscSongs.push_back(shortname);
         }
     }
 }
 
 void AccomplishmentManager::AddGoalAcquisitionInfo(Symbol s1, const char *cc, Symbol s2) {
     GoalAcquisitionInfo info;
-    info.unk0 = s1;
-    info.unk4 = cc;
-    info.unkc = s2;
-    mGoalAcquisitionInfos.push_back(info);
+    info.m_symGoal = s1;
+    info.m_strName = cc;
+    info.m_symSong = s2;
+    m_vGoalAcquisitionInfos.push_back(info);
 }
 
 // @BUG: what is the point of this
 void AccomplishmentManager::Init(DataArray *cfg) { new AccomplishmentManager(cfg); }
 
 void AccomplishmentManager::ClearGoalProgressionAcquisitionInfo() {
-    mGoalAcquisitionInfos.clear();
-    mGoalProgressionInfos.clear();
+    m_vGoalAcquisitionInfos.clear();
+    m_vGoalProgressionInfos.clear();
 }
 
 void AccomplishmentManager::Cleanup() {
-    FOREACH (it, mAccomplishments) {
+    FOREACH (it, m_mapAccomplishments) {
         RELEASE(it->second);
     }
-    mAccomplishments.clear();
-    FOREACH (it, mAccomplishmentCategories) {
+    m_mapAccomplishments.clear();
+    FOREACH (it, m_mapAccomplishmentCategories) {
         RELEASE(it->second);
     }
-    mAccomplishmentCategories.clear();
+    m_mapAccomplishmentCategories.clear();
     FOREACH (it, m_mapCategoryToAccomplishmentSet) {
         RELEASE(it->second);
     }
@@ -164,16 +164,16 @@ void AccomplishmentManager::Cleanup() {
         RELEASE(it->second);
     }
     m_mapGroupToCategories.clear();
-    FOREACH (it, mAccomplishmentGroups) {
+    FOREACH (it, m_mapAccomplishmentGroups) {
         RELEASE(it->second);
     }
-    mAccomplishmentGroups.clear();
-    FOREACH (it, mAwards) {
+    m_mapAccomplishmentGroups.clear();
+    FOREACH (it, m_mapAwards) {
         RELEASE(it->second);
     }
-    mAwards.clear();
-    mAssetToAward.clear();
-    mAwardToSource.clear();
+    m_mapAwards.clear();
+    m_mapAssetToAward.clear();
+    m_mapAwardToSource.clear();
     TheContentMgr.UnregisterCallback(this, false);
     TheAccomplishmentMgr = nullptr;
 }
@@ -182,7 +182,7 @@ void AccomplishmentManager::AddAssetAward(Symbol s1, Symbol s2) {
     if (GetAssetAward(s1) != gNullStr) {
         MILO_NOTIFY("Asset:%s is earned by multiple sources!", s1.Str());
     } else {
-        mAssetToAward[s1] = s2;
+        m_mapAssetToAward[s1] = s2;
     }
 }
 
@@ -200,16 +200,16 @@ void AccomplishmentManager::AddAwardSource(Symbol s1, Symbol s2) {
                 s1.Str()
             );
         }
-        mAwardToSource[s1] = s2;
+        m_mapAwardToSource[s1] = s2;
     }
 }
 
 bool AccomplishmentManager::HasAccomplishmentCategory(Symbol s) const {
-    return mAccomplishmentCategories.find(s) != mAccomplishmentCategories.end();
+    return m_mapAccomplishmentCategories.find(s) != m_mapAccomplishmentCategories.end();
 }
 
 bool AccomplishmentManager::HasAccomplishmentGroup(Symbol s) const {
-    return mAccomplishmentGroups.find(s) != mAccomplishmentGroups.end();
+    return m_mapAccomplishmentGroups.find(s) != m_mapAccomplishmentGroups.end();
 }
 
 void AccomplishmentManager::ConfigureAccomplishmentCategoryData(DataArray *cfg) {
@@ -233,7 +233,7 @@ void AccomplishmentManager::ConfigureAccomplishmentCategoryData(DataArray *cfg) 
                 delete pAccomplishmentCategory;
                 continue;
             } else {
-                mAccomplishmentCategories[name] = pAccomplishmentCategory;
+                m_mapAccomplishmentCategories[name] = pAccomplishmentCategory;
                 if (pAccomplishmentCategory->HasAward()) {
                     AddAwardSource(
                         pAccomplishmentCategory->GetAward(),
@@ -247,7 +247,7 @@ void AccomplishmentManager::ConfigureAccomplishmentCategoryData(DataArray *cfg) 
 
 void AccomplishmentManager::ConfigureAccomplishmentCategoryGroupingData() {
     MILO_ASSERT(m_mapCategoryToAccomplishmentSet.empty(), 0x15C);
-    FOREACH (it, mAccomplishments) {
+    FOREACH (it, m_mapAccomplishments) {
         Accomplishment *pAccomplishment = it->second;
         MILO_ASSERT(pAccomplishment, 0x164);
         Symbol category = pAccomplishment->GetCategory();
@@ -262,7 +262,7 @@ void AccomplishmentManager::ConfigureAccomplishmentCategoryGroupingData() {
 }
 
 bool AccomplishmentManager::HasAccomplishment(Symbol s) const {
-    return mAccomplishments.find(s) != mAccomplishments.end();
+    return m_mapAccomplishments.find(s) != m_mapAccomplishments.end();
 }
 
 void AccomplishmentManager::ConfigureAccomplishmentData(DataArray *cfg) {
@@ -285,7 +285,7 @@ void AccomplishmentManager::ConfigureAccomplishmentData(DataArray *cfg) {
                 delete pAccomplishment;
                 continue;
             } else {
-                mAccomplishments[name] = pAccomplishment;
+                m_mapAccomplishments[name] = pAccomplishment;
                 if (pAccomplishment->HasAward()) {
                     AddAwardSource(
                         pAccomplishment->GetAward(), pAccomplishment->GetName()
@@ -306,7 +306,7 @@ void AccomplishmentManager::ConfigureAccomplishmentGroupData(DataArray *cfg) {
             MILO_NOTIFY("%s accomplishment category already exists, skipping", name.Str());
             delete pAccomplishmentGroup;
         } else {
-            mAccomplishmentGroups[name] = pAccomplishmentGroup;
+            m_mapAccomplishmentGroups[name] = pAccomplishmentGroup;
             if (pAccomplishmentGroup->HasAward()) {
                 AddAwardSource(
                     pAccomplishmentGroup->GetAward(), pAccomplishmentGroup->GetName()
@@ -318,7 +318,7 @@ void AccomplishmentManager::ConfigureAccomplishmentGroupData(DataArray *cfg) {
 
 void AccomplishmentManager::ConfigureAccomplishmentGroupToCategoriesData() {
     MILO_ASSERT(m_mapGroupToCategories.empty(), 0x178);
-    FOREACH (it, mAccomplishmentCategories) {
+    FOREACH (it, m_mapAccomplishmentCategories) {
         AccomplishmentCategory *pCategory = it->second;
         MILO_ASSERT(pCategory, 0x180);
         Symbol name = pCategory->GetName();
@@ -336,17 +336,18 @@ void AccomplishmentManager::ConfigureAccomplishmentRewardData(DataArray *cfg) {
     DataArray *pLeaderboardThresholds = cfg->Array(1);
     for (int i = 0; i < 4; i++) {
         MILO_ASSERT(pLeaderboardThresholds->Array(i+1)->Int(0) == i, 0x197);
-        mLeaderboardThresholds[i] = pLeaderboardThresholds->Array(i + 1)->Int(1);
+        m_aAccomplishmentRewardLeaderboardThresholds[i] =
+            pLeaderboardThresholds->Array(i + 1)->Int(1);
     }
     DataArray *pIconThresholds = cfg->Array(2);
     for (int i = 0; i < 4; i++) {
         MILO_ASSERT(pIconThresholds->Array( i + 1 )->Int( 0 ) == i, 0x19E);
-        mIconThresholds[i] = pIconThresholds->Array(i + 1)->Int(1);
+        m_aAccomplishmentRewardIconThresholds[i] = pIconThresholds->Array(i + 1)->Int(1);
     }
 }
 
 bool AccomplishmentManager::HasAward(Symbol s) const {
-    return mAwards.find(s) != mAwards.end();
+    return m_mapAwards.find(s) != m_mapAwards.end();
 }
 
 void AccomplishmentManager::ConfigureAwardData(DataArray *cfg) {
@@ -358,14 +359,14 @@ void AccomplishmentManager::ConfigureAwardData(DataArray *cfg) {
             MILO_NOTIFY("%s award already exists, skipping", name.Str());
             delete pAward;
         } else {
-            mAwards[name] = pAward;
+            m_mapAwards[name] = pAward;
         }
     }
 }
 
 Symbol AccomplishmentManager::GetAssetAward(Symbol s) const {
-    auto it = mAssetToAward.find(s);
-    if (it != mAssetToAward.end())
+    auto it = m_mapAssetToAward.find(s);
+    if (it != m_mapAssetToAward.end())
         return it->second;
     else
         return gNullStr;
@@ -377,16 +378,16 @@ Symbol AccomplishmentManager::GetAssetSource(Symbol s) const {
 }
 
 Award *AccomplishmentManager::GetAward(Symbol s) const {
-    auto it = mAwards.find(s);
-    if (it != mAwards.end())
+    auto it = m_mapAwards.find(s);
+    if (it != m_mapAwards.end())
         return it->second;
     else
         return nullptr;
 }
 
 Symbol AccomplishmentManager::GetAwardSource(Symbol s) const {
-    auto it = mAwardToSource.find(s);
-    if (it != mAwardToSource.end())
+    auto it = m_mapAwardToSource.find(s);
+    if (it != m_mapAwardToSource.end())
         return it->second;
     else
         return gNullStr;
@@ -568,8 +569,8 @@ AccomplishmentManager::GetAccomplishmentSetForCategory(Symbol category) const {
 }
 
 AccomplishmentCategory *AccomplishmentManager::GetAccomplishmentCategory(Symbol s) const {
-    auto it = mAccomplishmentCategories.find(s);
-    if (it != mAccomplishmentCategories.end()) {
+    auto it = m_mapAccomplishmentCategories.find(s);
+    if (it != m_mapAccomplishmentCategories.end()) {
         return it->second;
     } else {
         return nullptr;
@@ -577,8 +578,8 @@ AccomplishmentCategory *AccomplishmentManager::GetAccomplishmentCategory(Symbol 
 }
 
 AccomplishmentGroup *AccomplishmentManager::GetAccomplishmentGroup(Symbol s) const {
-    auto it = mAccomplishmentGroups.find(s);
-    if (it != mAccomplishmentGroups.end()) {
+    auto it = m_mapAccomplishmentGroups.find(s);
+    if (it != m_mapAccomplishmentGroups.end()) {
         return it->second;
     } else {
         return nullptr;
@@ -586,8 +587,8 @@ AccomplishmentGroup *AccomplishmentManager::GetAccomplishmentGroup(Symbol s) con
 }
 
 Accomplishment *AccomplishmentManager::GetAccomplishment(Symbol s) const {
-    auto it = mAccomplishments.find(s);
-    if (it != mAccomplishments.end()) {
+    auto it = m_mapAccomplishments.find(s);
+    if (it != m_mapAccomplishments.end()) {
         return it->second;
     } else {
         return nullptr;
@@ -601,11 +602,11 @@ void AccomplishmentManager::EarnAccomplishmentForProfile(
     if (!pAcc) {
         MILO_NOTIFY("No accomplishment for %s", accSym.Str());
     } else {
-        if (b3 && pAcc->GiveToAll()) {
+        if (b3 && pAcc->ShouldGiveToAll()) {
             EarnAccomplishmentForAll(accSym, false);
         } else if (profile) {
             int padnum = profile->GetPadNum();
-            if (!unk30[padnum]
+            if (!mProfileChanged[padnum]
                 && !profile->GetAccomplishmentProgress().IsAccomplished(accSym)) {
                 profile->EarnAccomplishment(accSym);
                 int ctxID = pAcc->GetContextID();
@@ -625,7 +626,7 @@ void AccomplishmentManager::EarnAccomplishmentForAll(Symbol accSym, bool b2) {
             HamPlayerData *pPlayer = TheGameData->Player(i);
             MILO_ASSERT(pPlayer, 0x2F5);
             int padnum = pPlayer->PadNum();
-            if (!unk30[padnum]) {
+            if (!mProfileChanged[padnum]) {
                 HamProfile *profile = TheProfileMgr.GetProfileFromPad(padnum);
                 if (profile && profile->HasValidSaveData() && pPlayer->IsPlaying()) {
                     if (!profile->GetAccomplishmentProgress().IsAccomplished(accSym)) {
@@ -680,7 +681,7 @@ bool AccomplishmentManager::HasArtForFirstNewAward(HamProfile *i_pProfile) const
     if (sym != "") {
         Award *pAward = GetAward(sym);
         MILO_ASSERT(pAward, 0x77F);
-        ret = pAward->GetArtName() != gNullStr;
+        ret = pAward->HasArt();
     } else {
         MILO_ASSERT(false, 0x785);
     }
@@ -744,7 +745,7 @@ void AccomplishmentManager::EarnAccomplishmentForPlayer(
     MILO_ASSERT_RANGE(i_iPlayerIndex, 0, 2, 0x282);
     HamPlayerData *pPlayer = TheGameData->Player(i_iPlayerIndex);
     MILO_ASSERT(pPlayer, 0x285);
-    if (!unk30[pPlayer->PadNum()]) {
+    if (!mProfileChanged[pPlayer->PadNum()]) {
         HamProfile *profile = TheProfileMgr.GetProfileFromPad(pPlayer->PadNum());
         if (profile) {
             EarnAccomplishmentForProfile(profile, accSym, true);
@@ -756,7 +757,7 @@ void AccomplishmentManager::CheckForCampaignAccomplishmentsForProfile(
     HamProfile *profile
 ) {
     const AccomplishmentProgress &progress = profile->GetAccomplishmentProgress();
-    FOREACH (it, mAccomplishments) {
+    FOREACH (it, m_mapAccomplishments) {
         Symbol key = it->first;
         if (!progress.IsAccomplished(key)) {
             Accomplishment *pAccomplishment = it->second;
@@ -775,7 +776,7 @@ void AccomplishmentManager::CheckForOneShotAccomplishments(
     MILO_ASSERT(i_pPlayerData, 0x45B);
     Difficulty d = i_pPlayerData->GetDifficulty();
     const AccomplishmentProgress &progress = profile->GetAccomplishmentProgress();
-    FOREACH (it, mAccomplishments) {
+    FOREACH (it, m_mapAccomplishments) {
         Symbol key = it->first;
         if (!progress.IsAccomplished(key)) {
             Accomplishment *pAccomplishment = it->second;
@@ -801,7 +802,7 @@ void AccomplishmentManager::CheckForCharacterListAccomplishments(
     static Symbol acc_last_fashion("acc_last_fashion");
     static Symbol acc_unlockable_costume("acc_unlockable_costume");
     const AccomplishmentProgress &progress = profile->GetAccomplishmentProgress();
-    FOREACH (it, mAccomplishments) {
+    FOREACH (it, m_mapAccomplishments) {
         Symbol key = it->first;
         if (!progress.IsAccomplished(key)) {
             Accomplishment *pAccomplishment = it->second;
@@ -836,7 +837,7 @@ void AccomplishmentManager::CheckForCharacterListAccomplishments(
 
 int AccomplishmentManager::GetNumAccomplishments() const {
     int num = 0;
-    FOREACH (it, mAccomplishments) {
+    FOREACH (it, m_mapAccomplishments) {
         if (IsAvailable(it->first)) {
             num++;
         }
@@ -899,7 +900,7 @@ void AccomplishmentManager::UpdateMiscellaneousSongDataForUser(
 HardCoreStatus AccomplishmentManager::GetIconHardCoreStatus(int x) const {
     HardCoreStatus result = (HardCoreStatus)0;
     int i = 0;
-    const int *thresholds = mIconThresholds;
+    const int *thresholds = m_aAccomplishmentRewardIconThresholds;
     while (i < 4) {
         if (x < *thresholds) {
             return result;
@@ -938,7 +939,7 @@ DataNode AccomplishmentManager::OnMsg(const SigninChangedMsg &msg) {
             HamProfile *profile = TheProfileMgr.GetProfileFromPad(padnum);
             if (profile) {
                 if ((1 << profile->GetPadNum()) & msg.GetChangedMask()) {
-                    unk30[padnum] = true;
+                    mProfileChanged[padnum] = true;
                 }
             }
         }
@@ -989,7 +990,7 @@ void AccomplishmentManager::HandleSongCompleted(Symbol song) {
             HamProfile *pProfile = TheProfileMgr.GetProfileFromPad(padNum);
             if (pProfile && pProfile->HasValidSaveData() && pPlayer->IsPlaying()) {
                 static Symbol practice("practice");
-                if (!unk30[padNum]) {
+                if (!mProfileChanged[padNum]) {
                     HandleSongCompletedForProfile(song, pPlayer, pProfile);
                 }
                 if (TheGameMode->InMode(practice)) {
@@ -1147,17 +1148,18 @@ void AccomplishmentManager::UpdateConsecutiveDaysPlayed(HamProfile *profile) {
     AccomplishmentProgress &progress = profile->AccessAccomplishmentProgress();
     GetDateAndTime(dt);
     int toDayNumber = dt.ToDayNumber();
-    if (progress.GetUnk118() <= 0 || toDayNumber - progress.GetUnk118() == 1) {
-        numDays = progress.NumDays() + 1;
+    if (progress.GetLastPlayDate() <= 0
+        || toDayNumber - progress.GetLastPlayDate() == 1) {
+        numDays = progress.GetPlayDaysCount() + 1;
     } else {
-        if (toDayNumber - progress.GetUnk118() <= 1) {
-            progress.SetUnk118(toDayNumber);
+        if (toDayNumber - progress.GetLastPlayDate() <= 1) {
+            progress.SetLastPlayDate(toDayNumber);
             return;
         }
         numDays = 1;
     }
-    progress.SetNumDays(numDays);
-    progress.SetUnk118(toDayNumber);
+    progress.SetPlayDaysCount(numDays);
+    progress.SetLastPlayDate(toDayNumber);
 }
 
 void AccomplishmentManager::UpdateWeekendWarrior(HamProfile *profile) {
@@ -1170,15 +1172,16 @@ void AccomplishmentManager::UpdateWeekendWarrior(HamProfile *profile) {
         return;
     }
     unsigned int toDayNumber = dt.ToDayNumber();
-    if (progress.GetUnk120() < 0 || toDayNumber - progress.GetUnk120() > 9) {
+    if (progress.GetLastWeekendPlayDate() < 0
+        || toDayNumber - progress.GetLastWeekendPlayDate() > 9) {
         numWeekends = 1;
     } else {
-        if (toDayNumber - progress.GetUnk120() <= 2) {
-            progress.SetUnk120(toDayNumber);
+        if (toDayNumber - progress.GetLastWeekendPlayDate() <= 2) {
+            progress.SetLastWeekendPlayDate(toDayNumber);
             return;
         }
-        numWeekends = progress.NumWeekends() + 1;
+        numWeekends = progress.GetPlayWeekendsCount() + 1;
     }
-    progress.SetWeekends(numWeekends);
-    progress.SetUnk120(toDayNumber);
+    progress.SetWeekendPlayCount(numWeekends);
+    progress.SetLastWeekendPlayDate(toDayNumber);
 }

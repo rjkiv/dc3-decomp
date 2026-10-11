@@ -16,8 +16,9 @@
 class HamProfile;
 
 enum GamerAwardType {
-    type0,
-    type1
+    kGamerAwardInvalid = 0x0000,
+    kGamerAwardGamerpic = 0x0001,
+    kGamerAwardAvatarAsset = 0x0002
 };
 
 class GamerAwardStatus : public FixedSizeSaveable {
@@ -30,10 +31,10 @@ public:
 
     static int SaveSize(int);
 
-    int unk8;
+    int mID; // 0x8
     GamerAwardType mType; // 0xc
-    bool unk10;
-    XUSER_AVATARASSET mAsset; // 0x14
+    bool mWaiting; // 0x10
+    XUSER_AVATARASSET mAvatarAward; // 0x14
     XOVERLAPPED mOverlapped; // 0x1c
 };
 
@@ -75,47 +76,51 @@ public:
     int GetTotalCampaignSongsPlayed() const;
     int GetNumCompleted() const;
     int GetFlawlessMoveCount() const;
-    bool HasAward(Symbol award) const { return unk94.find(award) != unk94.end(); }
-    int NumDays() const { return unk114; }
-    void SetNumDays(int i) { unk114 = i; }
-    int NumWeekends() const { return unk11c; }
-    int GetUnk118() const { return unk118; }
-    void SetUnk118(int i) { unk118 = i; }
-    int GetUnk120() const { return unk120; }
-    void SetWeekends(int i) { unk11c = i; }
-    void SetUnk120(int i) { unk120 = i; }
-    const std::list<std::pair<Symbol, Symbol> > &NewAwards() const { return mNewAwards; }
+    bool HasAward(Symbol award) const { return mAwards.find(award) != mAwards.end(); }
+    int GetPlayDaysCount() const { return mPlayDaysCount; }
+    void SetPlayDaysCount(int days) { mPlayDaysCount = days; }
+    void IncrementPlayDaysCount() { mPlayDaysCount++; }
+    void ClearPlayDaysCount() { mPlayDaysCount = 0; }
+    int GetPlayWeekendsCount() const { return mPlayWeekendsCount; }
+    int GetLastPlayDate() const { return mLastPlayDate; }
+    void SetLastPlayDate(int i) { mLastPlayDate = i; }
+    int GetLastWeekendPlayDate() const { return mLastWeekendPlayDate; }
+    void SetWeekendPlayCount(int i) { mPlayWeekendsCount = i; }
+    void SetLastWeekendPlayDate(int i) { mLastWeekendPlayDate = i; }
+    const std::list<std::pair<Symbol, Symbol> > &GetNewAwards() const {
+        return mNewAwards;
+    }
 
 private:
     void GiveGamerpic(Accomplishment *pAcc);
     void GiveAvatarAsset(Accomplishment *pAcc);
 
-    std::map<Symbol, int> unk34;
+    std::map<Symbol, int> mStepTrackingMap; // 0x34
     HamProfile *mParentProfile; // 0x4c
-    std::list<GamerAwardStatus *> unk50;
-    std::set<Symbol> unk58;
-    std::set<Symbol> unk70;
-    std::vector<Symbol> unk88;
-    std::set<Symbol> unk94;
+    std::list<GamerAwardStatus *> mGamerAwardStatusList; // 0x50
+    std::set<Symbol> mAccomplishments; // 0x58
+    std::set<Symbol> mNewlyAcquiredAccomplishments; // 0x70
+    std::vector<Symbol> mAccomplishmentsPendingUpdate; // 0x88
+    std::set<Symbol> mAwards; // 0x94
     // award, reason
     std::list<std::pair<Symbol, Symbol> > mNewAwards; // 0xac
     int mTotalSongsPlayed; // 0xb4
     int mTotalCampaignSongsPlayed; // 0xb8
-    std::map<Symbol, int> unkbc; // 0xbc
+    std::map<Symbol, int> mAccomplishmentCountTracking; // 0xbc
     int mDanceBattleCount; // 0xd4
-    int mFreestylePhotoCount; // 0xd8
-    bool mPerfectMovesCleared; // 0xdc - completely flawless?
-    int unke0;
-    int unke4; // 0xe4
-    int unke8; // 0xe8
+    int mFreestylePictureCount; // 0xd8
+    bool mAllPerfectMoves; // 0xdc
+    int mRandomCharacterCount; // 0xe0
+    int mCurrentPerfectStreak; // 0xe4
+    int mBestPerfectStreak; // 0xe8
     // symbol = char, int = use count
-    std::map<Symbol, int> mCharacterUseCounts; // 0xec
+    std::map<Symbol, int> mCharacterUseMap; // 0xec
     int mFlawlessMoveCount; // 0x104
     int mNiceMoveCount; // 0x108
-    Symbol unk10c;
-    int unk110;
-    int unk114; // 0x114
-    int unk118;
-    int unk11c;
-    int unk120;
+    Symbol mLastMove; // 0x10c
+    int mSameRatingCount; // 0x110
+    int mPlayDaysCount; // 0x114
+    int mLastPlayDate; // 0x118
+    int mPlayWeekendsCount; // 0x11c
+    int mLastWeekendPlayDate; // 0x120
 };

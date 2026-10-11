@@ -39,13 +39,13 @@
 
 MultiUserGesturePanel::MultiUserGesturePanel() {
     for (int i = 0; i < 2; i++) {
-        unk54[i] = nullptr;
-        unk5c[i] = nullptr;
-        mCharacterProviders[i].SetPlayer(i);
-        mVenueProviders[i].SetPlayer(i);
-        mCrewProviders[i].SetPlayer(i);
-        mOutfitProviders[i].SetPlayer(i);
-        mDifficultyProviders[i].SetPlayer(i);
+        mNavList[i] = nullptr;
+        mNavListLeftHand[i] = nullptr;
+        mCharacterProvider[i].SetPlayerIndex(i);
+        mVenueProvider[i].SetPlayerIndex(i);
+        mCrewProvider[i].SetPlayerIndex(i);
+        mOutfitProvider[i].SetPlayerIndex(i);
+        mDifficultyProvider[i].SetPlayerIndex(i);
     }
 }
 
@@ -61,16 +61,16 @@ void MultiUserGesturePanel::Poll() {
 void MultiUserGesturePanel::Unload() {
     TexLoadPanel::Unload();
     for (int i = 0; i < 2; i++) {
-        mCharacterProviders[i].SetPanelDir(nullptr);
-        mCrewProviders[i].SetPanelDir(nullptr);
+        mCharacterProvider[i].SetPanelDir(nullptr);
+        mCrewProvider[i].SetPanelDir(nullptr);
     }
 }
 
 void MultiUserGesturePanel::FinishLoad() {
     TexLoadPanel::FinishLoad();
     for (int i = 0; i < 2; i++) {
-        mCharacterProviders[i].SetPanelDir(LoadedDir());
-        mCrewProviders[i].SetPanelDir(LoadedDir());
+        mCharacterProvider[i].SetPanelDir(LoadedDir());
+        mCrewProvider[i].SetPanelDir(LoadedDir());
     }
 }
 
@@ -78,36 +78,36 @@ bool MultiUserGesturePanel::Exiting() const { return HamPanel::Exiting(); }
 
 void MultiUserGesturePanel::UpdateProviders() {
     for (int i = 0; i < 2; i++) {
-        mCharacterProviders[i].UpdateList();
-        mVenueProviders[i].UpdateList();
-        mCrewProviders[i].UpdateList();
-        mOutfitProviders[i].UpdateList();
+        mCharacterProvider[i].UpdateList();
+        mVenueProvider[i].UpdateList();
+        mCrewProvider[i].UpdateList();
+        mOutfitProvider[i].UpdateList();
     }
 }
 
 CharacterProvider const *MultiUserGesturePanel::GetCharProvider(int index) const {
     MILO_ASSERT_RANGE(index, 0, 2, 0xcf);
-    return &mCharacterProviders[index];
+    return &mCharacterProvider[index];
 }
 
 VenueProvider const *MultiUserGesturePanel::GetVenueProvider(int index) const {
     MILO_ASSERT_RANGE(index, 0, 2, 0xd6);
-    return &mVenueProviders[index];
+    return &mVenueProvider[index];
 }
 
 CrewProvider const *MultiUserGesturePanel::GetCrewProvider(int index) const {
     MILO_ASSERT_RANGE(index, 0, 2, 0xdd);
-    return &mCrewProviders[index];
+    return &mCrewProvider[index];
 }
 
 OutfitProvider const *MultiUserGesturePanel::GetOutfitProvider(int index) const {
     MILO_ASSERT_RANGE(index, 0, 2, 0xe4);
-    return &mOutfitProviders[index];
+    return &mOutfitProvider[index];
 }
 
 DifficultyProvider *MultiUserGesturePanel::GetDifficultyProvider(int index) {
     MILO_ASSERT_RANGE(index, 0, 2, 0xeb);
-    return &mDifficultyProviders[index];
+    return &mDifficultyProvider[index];
 }
 
 Symbol MultiUserGesturePanel::GetOutfit(int i1, int i2) const {
@@ -344,23 +344,23 @@ void MultiUserGesturePanel::UpdateNavLists(int player) {
     int trackingID = pPlayerData->GetSkeletonTrackingID();
     SkeletonSide side = skeletonChooser->GetPlayerSide(player);
     int idx = side != kSkeletonRight;
-    if (unk54[idx]) {
-        unk54[idx]->SetTrackingID(trackingID);
+    if (mNavList[idx]) {
+        mNavList[idx]->SetTrackingID(trackingID);
         if ((trackingID <= 0 && !TheGestureMgr->InControllerMode())
             || TheHamUI.GetOverlayPanel()) {
-            unk54[idx]->SetTrackingID(0);
-            unk54[idx]->Disengage();
+            mNavList[idx]->SetTrackingID(0);
+            mNavList[idx]->Disengage();
         }
     }
-    if (unk5c[idx]) {
-        unk5c[idx]->SetShowing(true);
-        unk5c[idx]->SetTrackingID(trackingID);
+    if (mNavListLeftHand[idx]) {
+        mNavListLeftHand[idx]->SetShowing(true);
+        mNavListLeftHand[idx]->SetTrackingID(trackingID);
         if ((trackingID <= 0 && !TheGestureMgr->InControllerMode())
             || TheHamUI.GetOverlayPanel()) {
-            unk5c[idx]->SetTrackingID(0);
-            unk5c[idx]->Disengage();
+            mNavListLeftHand[idx]->SetTrackingID(0);
+            mNavListLeftHand[idx]->Disengage();
             if (TheHamUI.GetOverlayPanel()) {
-                unk5c[idx]->SetShowing(false);
+                mNavListLeftHand[idx]->SetShowing(false);
             }
         }
     }
@@ -368,7 +368,7 @@ void MultiUserGesturePanel::UpdateNavLists(int player) {
 
 bool MultiUserGesturePanel::HasNavList() const {
     for (int i = 0; i < 2; i++) {
-        if (unk54[i]) {
+        if (mNavList[i]) {
             return true;
         }
     }
@@ -378,11 +378,11 @@ bool MultiUserGesturePanel::HasNavList() const {
 void MultiUserGesturePanel::UpdateProviderPlayerIndices() {
     for (int i = 0; i < 2; i++) {
         int index = GetPlayerIndex(i);
-        mCharacterProviders[i].SetPlayer(index);
-        mVenueProviders[i].SetPlayer(index);
-        mDifficultyProviders[i].SetPlayer(index);
-        mCrewProviders[i].SetPlayer(index);
-        mOutfitProviders[i].SetPlayer(index);
+        mCharacterProvider[i].SetPlayerIndex(index);
+        mVenueProvider[i].SetPlayerIndex(index);
+        mDifficultyProvider[i].SetPlayerIndex(index);
+        mCrewProvider[i].SetPlayerIndex(index);
+        mOutfitProvider[i].SetPlayerIndex(index);
     }
 }
 
@@ -409,9 +409,9 @@ void MultiUserGesturePanel::Enter() {
     UpdateProviderPlayerIndices();
     HamPanel::Enter();
     for (int i = 0; i < 2; i++) {
-        unk54[i] =
+        mNavList[i] =
             DataDir()->Find<HamNavList>(MakeString("right_hand_p%d.hnl", i + 1), false);
-        unk5c[i] =
+        mNavListLeftHand[i] =
             DataDir()->Find<HamNavList>(MakeString("left_hand_p%d.hnl", i + 1), false);
     }
     UpdateProviders();
@@ -526,8 +526,8 @@ void MultiUserGesturePanel::UpdateCharPic(
 DataNode MultiUserGesturePanel::OnMsg(const ButtonDownMsg &msg) {
     static Symbol side("side");
     if (msg.GetButton() == kPad_LStickLeft || msg.GetButton() == kPad_DLeft) {
-        if (TheUI->FocusPanel() && TheUI->FocusComponent() == unk54[0]) {
-            TheUI->FocusPanel()->SetFocusComponent(unk54[1]);
+        if (TheUI->FocusPanel() && TheUI->FocusComponent() == mNavList[0]) {
+            TheUI->FocusPanel()->SetFocusComponent(mNavList[1]);
             PropertyEventProvider *multiUserProvider =
                 DataDir()->Find<PropertyEventProvider>("multiuser.ep", false);
             if (multiUserProvider) {
@@ -537,8 +537,8 @@ DataNode MultiUserGesturePanel::OnMsg(const ButtonDownMsg &msg) {
     }
 
     if (msg.GetButton() == kPad_LStickRight || msg.GetButton() == kPad_DRight) {
-        if (TheUI->FocusPanel() && TheUI->FocusComponent() == unk54[1]) {
-            TheUI->FocusPanel()->SetFocusComponent(unk54[0]);
+        if (TheUI->FocusPanel() && TheUI->FocusComponent() == mNavList[1]) {
+            TheUI->FocusPanel()->SetFocusComponent(mNavList[0]);
             PropertyEventProvider *multiUserProvider =
                 DataDir()->Find<PropertyEventProvider>("multiuser.ep", false);
             if (multiUserProvider) {

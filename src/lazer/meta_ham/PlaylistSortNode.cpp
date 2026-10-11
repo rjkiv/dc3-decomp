@@ -83,7 +83,7 @@ void PlaylistSortNode::Text(UIListLabel *uiListLabel, UILabel *uiLabel) const {
     } else if (uiListLabel->Matches("duration")) {
         HamLabel *pHamLabel = app_label;
         MILO_ASSERT(pHamLabel, 0x12d);
-        int duration = unk48->GetDuration();
+        int duration = mPlaylist->GetDuration();
         if (0 < duration) {
             pHamLabel->SetTimeHMS(duration, false);
             return;
@@ -111,16 +111,16 @@ void PlaylistSortNode::OnContentMounted(const char *contentName, const char *) {
 #pragma region PlaylistHeaderNode
 
 BEGIN_HANDLERS(PlaylistHeaderNode)
-    HANDLE_EXPR(get_challenge_count, mChallengeCount)
+    HANDLE_EXPR(get_challenge_count, mCount)
     HANDLE_SUPERCLASS(NavListSortNode)
 END_HANDLERS
 
 PlaylistHeaderNode::PlaylistHeaderNode(NavListItemSortCmp *cmp, Symbol s, bool b)
-    : NavListHeaderNode(cmp, s, b), mChallengeCount() {}
+    : NavListHeaderNode(cmp, s, b), mCount() {}
 
 void PlaylistHeaderNode::OnHighlight() {
-    SongPreview *preview = ThePlaylistSortMgr->GetSongPreview();
-    preview->Start(0, 0);
+    SongPreview &preview = ThePlaylistSortMgr->GetSongPreview();
+    preview.Start(0, 0);
 }
 
 Symbol PlaylistHeaderNode::OnSelect() {
@@ -137,7 +137,7 @@ Symbol PlaylistHeaderNode::OnSelect() {
 
 Symbol PlaylistHeaderNode::OnSelectDone() {
     if (ThePlaylistSortMgr->IsInHeaderMode()
-        && !ThePlaylistSortMgr->EnteringHeaderMode()) {
+        && !ThePlaylistSortMgr->GetEnteringHeaderMode()) {
         ThePlaylistSortMgr->SetHeaderMode(false);
     }
     ThePlaylistSortMgr->OnEnter();
@@ -152,7 +152,7 @@ bool PlaylistHeaderNode::IsActive() const {
 }
 
 NavListSortNode *PlaylistHeaderNode::GetFirstActive() {
-    FOREACH (it, Children()) {
+    FOREACH (it, GetChildren()) {
         auto firstActive = (*it)->GetFirstActive();
         if (firstActive)
             return ThePlaylistSortMgr->HeadersSelectable() ? this : firstActive;
@@ -175,7 +175,7 @@ char const *PlaylistHeaderNode::GetAlbumArtPath() {
 
 void PlaylistHeaderNode::Renumber(stlpmtx_std::vector<NavListSortNode *> &vec) {
     mStartIx = vec.size();
-    if (ThePlaylistSortMgr->GetHeadersSelectable()) {
+    if (ThePlaylistSortMgr->SortWithHeaders()) {
         vec.push_back(this);
         ThePlaylistSortMgr->AddHeaderIndex(mStartIx);
     }
@@ -198,18 +198,18 @@ void PlaylistHeaderNode::Text(UIListLabel *uiListLabel, UILabel *uiLabel) const 
     }
 }
 
-Symbol PlaylistHeaderNode::Select() { return SelectChildren(mChildren, mChallengeCount); }
+Symbol PlaylistHeaderNode::Select() { return SelectChildren(mChildren, mCount); }
 
 void PlaylistHeaderNode::UpdateItemCount(NavListItemNode *node) {
     if (!node) {
         return;
     }
-    mChallengeCount++;
+    mCount++;
 }
 
 void PlaylistHeaderNode::SetItemCountString(UILabel *label) const {
     char buffer[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-    sprintf(buffer, "(%d)", mChallengeCount);
+    sprintf(buffer, "(%d)", mCount);
     Symbol sym = buffer;
     label->SetPrelocalizedString(String(sym));
 }

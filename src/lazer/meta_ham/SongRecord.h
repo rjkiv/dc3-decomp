@@ -8,11 +8,11 @@ public:
     virtual ~SongRecord() {}
 
     const Symbol &ShortName() const { return mShortName; }
-    const HamSongMetadata *Metadata() const { return mMetadata; }
+    const HamSongMetadata *GetData() const { return mData; }
     int GetTier() const;
 
-protected:
-    Symbol mShortName;
-    int mRankTier;
-    const HamSongMetadata *mMetadata;
+private:
+    Symbol mShortName; // 0x4
+    int mTier; // 0x8
+    const HamSongMetadata *mData; // 0xc
 };

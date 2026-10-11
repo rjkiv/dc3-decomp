@@ -11,7 +11,7 @@ int PlaylistTypeCmp::Compare(NavListItemSortCmp const *cmp, NavListNodeType type
         return 0;
         break;
     case kNodeHeader:
-        return mType - cmp->GetPlaylistTypeCmp()->mType;
+        return mPlaylistType - cmp->GetPlaylistTypeCmp()->mPlaylistType;
         break;
     case kNodeItem:
         cmp->GetPlaylistTypeCmp();
@@ -25,7 +25,7 @@ int PlaylistTypeCmp::Compare(NavListItemSortCmp const *cmp, NavListNodeType type
 }
 
 NavListShortcutNode *PlaylistSortByType::NewShortcutNode(NavListItemNode *node) const {
-    Playlist *p = ((PlaylistSortNode *)node)->GetPlaylist();
+    const Playlist *p = ((PlaylistSortNode *)node)->GetPlaylist();
     int type;
     Symbol name;
     if (p->IsCustom()) {
@@ -36,7 +36,7 @@ NavListShortcutNode *PlaylistSortByType::NewShortcutNode(NavListItemNode *node) 
         type = 4;
         static Symbol playlist_fitness("playlist_fitness");
         name = playlist_fitness;
-    } else if (p->GetUnk9()) {
+    } else if (p->IsEra()) {
         type = 2;
         static Symbol playlist_era("playlist_era");
         name = playlist_era;
@@ -51,7 +51,7 @@ NavListShortcutNode *PlaylistSortByType::NewShortcutNode(NavListItemNode *node) 
 }
 
 NavListHeaderNode *PlaylistSortByType::NewHeaderNode(NavListItemNode *node) const {
-    Playlist *p = ((PlaylistSortNode *)node)->GetPlaylist();
+    const Playlist *p = ((PlaylistSortNode *)node)->GetPlaylist();
     int type;
     Symbol name;
     if (p->IsCustom()) {
@@ -62,7 +62,7 @@ NavListHeaderNode *PlaylistSortByType::NewHeaderNode(NavListItemNode *node) cons
         type = 4;
         static Symbol playlist_fitness("playlist_fitness");
         name = playlist_fitness;
-    } else if (p->GetUnk9()) {
+    } else if (p->IsEra()) {
         type = 2;
         static Symbol playlist_era("playlist_era");
         name = playlist_era;
@@ -83,7 +83,7 @@ NavListItemNode *PlaylistSortByType::NewItemNode(void *p1) const {
         type = 1;
     } else if (p->IsFitness()) {
         type = 4;
-    } else if (p->GetUnk9()) {
+    } else if (p->IsEra()) {
         type = 2;
     } else {
         type = 3;

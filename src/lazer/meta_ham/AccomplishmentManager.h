@@ -12,19 +12,24 @@
 #include "utl/Symbol.h"
 
 enum HardCoreStatus {
+    kHardCoreStatusNormal = 0x0000,
+    kHardCoreStatusSilver = 0x0001,
+    kHardCoreStatusGold = 0x0002,
+    kHardCoreStatusPsychedelic = 0x0003,
+    kHardCoreStatusNumLevels = 0x0004
 };
 
 struct GoalAcquisitionInfo {
-    Symbol unk0;
-    String unk4;
-    Symbol unkc;
+    Symbol m_symGoal; // 0x0
+    String m_strName; // 0x4
+    Symbol m_symSong; // 0xc
 };
 
 struct GoalProgressionInfo {
-    int unk0;
-    String unk4;
-    int unkc;
-    int unk10;
+    Symbol m_symGoal; // 0x0
+    String m_strName; // 0x4
+    Symbol m_symSong; // 0xc
+    int m_iAmountNeeded; // 0x10
 };
 
 class AccomplishmentManager : public Hmx::Object, public ContentMgr::Callback {
@@ -93,9 +98,9 @@ public:
     void CheckForCrewsAccomplishments(HamProfile *profile);
     HardCoreStatus GetIconHardCoreStatus(int) const;
     void HandleSongCompleted(Symbol song);
-    const std::vector<Symbol> &GetDiscSongs() const { return mDiscSongs; }
-    bool Unk30(int i) const { return unk30[i]; }
-    void SetUnk30(int i, bool b) { unk30[i] = b; }
+    const std::vector<Symbol> &GetDiscSongs() { return m_vDiscSongs; }
+    bool GetProfileChanged(int i) const { return mProfileChanged[i]; }
+    void SetProfileChanged(int i, bool b) { mProfileChanged[i] = b; }
 
     static void Init(DataArray *);
 
@@ -120,22 +125,23 @@ protected:
 
     DataNode OnMsg(const SigninChangedMsg &);
 
-    bool unk30[2]; // 0x30 - players are not signed in?
-    std::map<Symbol, Accomplishment *> mAccomplishments; // 0x34
-    std::map<Symbol, AccomplishmentCategory *> mAccomplishmentCategories; // 0x4c
-    std::map<Symbol, AccomplishmentGroup *> mAccomplishmentGroups; // 0x64
-    std::map<Symbol, Award *> mAwards; // 0x7c
-    std::map<Symbol, Symbol> mAssetToAward; // 0x94
-    std::map<Symbol, Symbol> mAwardToSource; // 0xac
+private:
+    bool mProfileChanged[2]; // 0x30
+    std::map<Symbol, Accomplishment *> m_mapAccomplishments; // 0x34
+    std::map<Symbol, AccomplishmentCategory *> m_mapAccomplishmentCategories; // 0x4c
+    std::map<Symbol, AccomplishmentGroup *> m_mapAccomplishmentGroups; // 0x64
+    std::map<Symbol, Award *> m_mapAwards; // 0x7c
+    std::map<Symbol, Symbol> m_mapAssetToAward; // 0x94
+    std::map<Symbol, Symbol> m_mapAwardToSource; // 0xac
     // key = group symbol, value = category list for group
     std::map<Symbol, std::list<Symbol> *> m_mapGroupToCategories; // 0xc4
     // key = category symbol, value = accomplishment set for category
     std::map<Symbol, std::set<Symbol> *> m_mapCategoryToAccomplishmentSet; // 0xdc
-    int mLeaderboardThresholds[4]; // 0xf4
-    int mIconThresholds[4]; // 0x104
-    std::vector<GoalAcquisitionInfo> mGoalAcquisitionInfos; // 0x114
-    std::vector<GoalProgressionInfo> mGoalProgressionInfos; // 0x120
-    std::vector<Symbol> mDiscSongs; // 0x12c
+    int m_aAccomplishmentRewardLeaderboardThresholds[4]; // 0xf4
+    int m_aAccomplishmentRewardIconThresholds[4]; // 0x104
+    std::vector<GoalAcquisitionInfo> m_vGoalAcquisitionInfos; // 0x114
+    std::vector<GoalProgressionInfo> m_vGoalProgressionInfos; // 0x120
+    std::vector<Symbol> m_vDiscSongs; // 0x12c
 };
 
 extern AccomplishmentManager *TheAccomplishmentMgr;

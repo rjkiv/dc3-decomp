@@ -30,17 +30,16 @@ public:
     static void Init(SongPreview &);
     static void Terminate();
 
-    std::map<Symbol, SongRecord> &GetUnk78() { return unk78; }
-    unsigned int MapSize() { return unk78.size(); }
+    std::map<Symbol, SongRecord> &GetSongRecords() { return mSongs; }
+    unsigned int MapSize() { return mSongs.size(); }
 
 private:
     SongSortMgr(SongPreview &);
     virtual ~SongSortMgr();
 
-protected:
-    std::map<Symbol, SongRecord> unk78; // 0x78
-    int unk90; // 0x90
-    std::vector<int> unk94; // 0x94
+    std::map<Symbol, SongRecord> mSongs; // 0x78
+    int mRankedSongs; // 0x90 - not in pdb
+    std::vector<int> mQuasiRandomIndices; // 0x94
 };
 
 extern SongSortMgr *TheSongSortMgr;

@@ -17,7 +17,7 @@
 #include "utl/Locale.h"
 #include "utl/Symbol.h"
 
-MetagameStats::MetagameStats() : mStatsCfg(SystemConfig("stats")) {
+MetagameStats::MetagameStats() : mStatsLayout(SystemConfig("stats")) {
     Clear();
     mSaveSizeMethod = SaveSize;
 }
@@ -37,7 +37,7 @@ END_HANDLERS
 
 void MetagameStats::Text(int, int data, UIListLabel *slot, UILabel *label) const {
     MILO_ASSERT(data >= 0 && data < NumData(), 0x69);
-    DataArray *statArr = mStatsCfg->Array(data + 1);
+    DataArray *statArr = mStatsLayout->Array(data + 1);
     if (statArr->Int(0) == kStatsLayoutHeader) {
         if (slot->Matches("header")) {
             label->SetTextToken(statArr->Sym(1));
@@ -150,7 +150,7 @@ void MetagameStats::Text(int, int data, UIListLabel *slot, UILabel *label) const
 
 RndMat *MetagameStats::Mat(int, int data, UIListMesh *slot) const {
     MILO_ASSERT(data >= 0 && data < NumData(), 0xFC);
-    DataArray *arr = mStatsCfg->Array(data + 1);
+    DataArray *arr = mStatsLayout->Array(data + 1);
     int i1 = arr->Int(0);
     if (i1 == -1 && slot->Matches("underline")) {
         return slot->DefaultMat();
@@ -189,7 +189,7 @@ void MetagameStats::Clear() {
     for (int i = 0; i < kNumFavoriteStats; i++) {
         mFavoriteStats[i].mCounts.clear();
     }
-    unk140 = 0;
+    mCurrentSessionLength = 0;
 }
 
 int MetagameStats::GetCount(CountStatID id) const {
@@ -283,7 +283,7 @@ void MetagameStats::WriteTimePlayed(HamProfile *profile, int i2) {
         IncFavoriteStat(kFavoriteStat_FavoriteMode, 2, i2); // well ok then
         mDirty = true;
     }
-    unk140 += i2;
+    mCurrentSessionLength += i2;
 }
 
 void MetagameStats::IncrementCount(CountStatID id, int cnt) {
@@ -313,7 +313,7 @@ Symbol MetagameStats::SetTitleForFavorite(int i1, int i2, DataArray *arr) const 
 
 bool MetagameStats::InqStatString(int statIndex, String &statStr) {
     MILO_ASSERT_RANGE(statIndex, 0, NumData(), 0x10B);
-    DataArray *stat = mStatsCfg->Array(statIndex + 1);
+    DataArray *stat = mStatsLayout->Array(statIndex + 1);
     MILO_ASSERT(stat, 0x10D);
     int id = stat->Int(0);
     StatType statType = (StatType)stat->Int(1);

@@ -3,15 +3,16 @@
 #include "obj/Object.h"
 #include "ui/UIPanel.h"
 
+enum DepthBufferState {
+    kDepthBuffer_Normal = 0,
+    kDepthBuffer_Tutorial = 1,
+    kDepthBufferGameplay_Perform = 10,
+    kDepthBufferGameplay_Practice_Learn = 11,
+    kDepthBufferGameplay_Practice_Review = 12,
+};
+
 class DepthBuffer : public Hmx::Object {
 public:
-    enum State {
-        kDepthBuffer_Normal = 0,
-        kDepthBuffer_Tutorial = 1,
-        kDepthBufferGameplay_Perform = 10,
-        kDepthBufferGameplay_Practice_Learn = 11,
-        kDepthBufferGameplay_Practice_Review = 12,
-    };
     DepthBuffer();
     virtual ~DepthBuffer() {}
     virtual DataNode Handle(DataArray *, bool);
@@ -19,14 +20,14 @@ public:
     void Init(UIPanel *);
     void Poll();
 
-    void SetState(int state) {
+    void SetState(DepthBufferState state) {
         if (state != mState) {
-            mState = (State)state;
+            mState = state;
         }
     }
 
 private:
-    UIPanel *unk2c; // 0x2c
-    State mState; // 0x30
-    bool unk34;
+    UIPanel *mCursorPanel; // 0x2c
+    DepthBufferState mState; // 0x30
+    bool mWantGameplayStateTransition; // 0x34
 };

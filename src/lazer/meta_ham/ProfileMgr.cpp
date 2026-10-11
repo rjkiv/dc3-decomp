@@ -2,6 +2,7 @@
 #include "HamProfile.h"
 #include "HamUI.h"
 #include "ProfileMgr.h"
+#include "WeightInput.h"
 #include "flow/PropertyEventProvider.h"
 #include "game/Game.h"
 #include "gesture/SpeechMgr.h"
@@ -50,17 +51,19 @@ static int sVersion = 28;
 ProfileMgr TheProfileMgr;
 
 ProfileMgr::ProfileMgr()
-    : mPlatformAudioLatency(5), mPlatformVideoLatency(22), unk34(22), unk38(50),
-      mGlobalOptionsSaveState(kMetaProfileUnloaded), mGlobalOptionsDirty(0), unk45(0),
-      mTutorialsSeen(0), unk4c(0), mMusicVolume(4), mFxVolume(4), mCrowdVolume(4),
-      mMono(0), mSyncOffset(0), mSongToTaskMgrMs(0), mBassBoost(0), mDolby(0), unk6a(0),
+    : kPlatformAudioLatency(5), kPlatformVideoLatency(22), kInGameExtraVideoLatency(22),
+      kInGameSyncOffsetAdjustment(50), mGlobalOptionsSaveState(kMetaProfileUnloaded),
+      mGlobalOptionsDirty(0), mHasPlayedBefore(0), mSeenTutorials(0),
+      mPreferredWeightUnit(0), mMusicVolume(4), mFxVolume(4), mCrowdVolume(4), mMono(0),
+      mSyncOffset(0), mSongToTaskMgrMs(0), mBassBoost(0), mDolby(0), mMuteFx(0),
       mSyncPresetIx(0), mOverscan(0), mDisablePhotos(0), mNoFlashcards(0),
       mDisableVoice(0), mDisableVoiceCommander(0), mDisableVoicePause(0),
-      mDisableVoicePractice(0), mShowVoiceTip(1), unk78(0), mDisableFreestyle(0),
-      mVenuePreference(gNullStr), mLocale(0), mLanguage(0), mCriticalProfile(0),
-      mAllUnlocked(0), mProfileSaveBuffer(0), unka8(0), unka9(0), mProfilesOverlay(0),
-      unkb0(0) {
-    mSyncOffset = -mPlatformVideoLatency;
+      mDisableVoicePractice(0), mShowVoiceTip(1), mForceSpeechLanguageSupport(0),
+      mDisableFreestyle(0), mVenuePreference(gNullStr), mLocale(0), mLanguage(0),
+      mCriticalProfile(0), mAllUnlocked(0), mProfileSaveBuffer(0),
+      mDeferredFlauntCheckRequested(0), mDeferredFitnessGoalCheckRequested(0),
+      mProfilesOverlay(0), unkb0(0) {
+    mSyncOffset = -kPlatformVideoLatency;
 }
 
 BEGIN_HANDLERS(ProfileMgr)
@@ -97,7 +100,7 @@ BEGIN_HANDLERS(ProfileMgr)
     HANDLE_EXPR(get_sync_preset_ix, mSyncPresetIx)
     HANDLE_EXPR(get_sync_offset_raw, GetSyncOffsetRaw())
     HANDLE_EXPR(get_sync_offset, GetSyncOffset(_msg->Int(2)))
-    HANDLE_EXPR(get_song_to_taskmgr_ms, mSongToTaskMgrMs - unk34)
+    HANDLE_EXPR(get_song_to_taskmgr_ms, mSongToTaskMgrMs - kInGameExtraVideoLatency)
     HANDLE_EXPR(get_song_to_taskmgr_ms_raw, GetSongToTaskMgrMsRaw())
     HANDLE_EXPR(get_excess_audio_lag, GetExcessAudioLag())
     HANDLE_EXPR(get_excess_video_lag, GetExcessVideoLag())
@@ -166,7 +169,7 @@ bool ProfileMgr::GlobalOptionsNeedsSave() {
 }
 
 int ProfileMgr::GetMusicVolume() const { return mMusicVolume; }
-int ProfileMgr::GetFxVolume() const { return unk6a ? 0 : mFxVolume; }
+int ProfileMgr::GetFxVolume() const { return mMuteFx ? 0 : mFxVolume; }
 int ProfileMgr::GetCrowdVolume() const { return mCrowdVolume; }
 
 float ProfileMgr::GetMusicVolumeDb() const { return SliderIxToDb(GetMusicVolume()); }
@@ -253,7 +256,7 @@ void ProfileMgr::SetSongToTaskMgrMs(float ms) {
 }
 
 void ProfileMgr::SetExcessAudioLag(float lag) {
-    SetSongToTaskMgrMsRaw(-(lag + mPlatformAudioLatency + GetSyncOffsetRaw()));
+    SetSongToTaskMgrMsRaw(-(lag + kPlatformAudioLatency + GetSyncOffsetRaw()));
 }
 
 void ProfileMgr::SetSongToTaskMgrMsRaw(float ms) {
@@ -268,13 +271,13 @@ bool ProfileMgr::IsAutosaveEnabled(HamProfile *p) const {
 }
 
 bool ProfileMgr::HasSeenTutorial(int tutorial) {
-    return mTutorialsSeen & tutorial
+    return mSeenTutorials & tutorial
         || TheProfileMgr.mGlobalOptionsSaveState != kMetaProfileLoaded;
 }
 
 void ProfileMgr::MarkTutorialSeen(int tutorial) {
     mGlobalOptionsDirty = true;
-    mTutorialsSeen |= tutorial;
+    mSeenTutorials |= tutorial;
 }
 
 void ProfileMgr::EnableForceSpeechLanguageSupport() {
@@ -282,7 +285,7 @@ void ProfileMgr::EnableForceSpeechLanguageSupport() {
     mDisableVoice = false;
     mDisableVoicePause = false;
     mDisableVoicePractice = false;
-    unk78 = true;
+    mForceSpeechLanguageSupport = true;
     mGlobalOptionsDirty = true;
 }
 
@@ -295,17 +298,17 @@ void ProfileMgr::ToggleOverlay() {
 float ProfileMgr::GetSyncOffsetRaw() const { return mSyncOffset; }
 float ProfileMgr::GetSongToTaskMgrMsRaw() const { return mSongToTaskMgrMs; }
 float ProfileMgr::GetExcessAudioLag() const {
-    return -(mPlatformAudioLatency + GetSongToTaskMgrMsRaw() + GetSyncOffsetRaw());
+    return -(kPlatformAudioLatency + GetSongToTaskMgrMsRaw() + GetSyncOffsetRaw());
 }
 float ProfileMgr::GetExcessVideoLag() const {
-    return -(mPlatformVideoLatency + GetSyncOffsetRaw());
+    return -(kPlatformVideoLatency + GetSyncOffsetRaw());
 }
 
 void ProfileMgr::SetVenuePreference(Symbol venue) { mVenuePreference = venue; }
 
 void ProfileMgr::Init() {
     for (int i = 0; i < 4; i++) {
-        unk90.push_back(new HamProfile(i));
+        mProfiles.push_back(new HamProfile(i));
     }
     SetName("profile_mgr", ObjectDir::Main());
     ThePlatformMgr.AddSink(this, SigninChangedMsg::Type());
@@ -329,9 +332,9 @@ void ProfileMgr::Init() {
     InitSliders();
     static Symbol eng("eng");
     if (ThePlatformMgr.GetRegion() == kRegionNA && SystemLanguage() == eng) {
-        unk4c = 0;
+        mPreferredWeightUnit = 0;
     } else {
-        unk4c = 1;
+        mPreferredWeightUnit = 1;
     }
     MILO_ASSERT(mProfileSaveBuffer == NULL, 0xBC);
     int size = FixedSizeSaveableStream::GetSymbolTableSize(0x5C) + 8;
@@ -354,7 +357,7 @@ void ProfileMgr::Init() {
 
 std::vector<HamProfile *> ProfileMgr::GetAll() {
     std::vector<HamProfile *> all;
-    FOREACH (it, unk90) {
+    FOREACH (it, mProfiles) {
         all.push_back(*it);
     }
     return all;
@@ -362,7 +365,7 @@ std::vector<HamProfile *> ProfileMgr::GetAll() {
 
 std::vector<HamProfile *> ProfileMgr::GetSignedIn() {
     std::vector<HamProfile *> profiles;
-    FOREACH (it, unk90) {
+    FOREACH (it, mProfiles) {
         if (ThePlatformMgr.IsSignedIn((*it)->GetPadNum())) {
             profiles.push_back(*it);
         }
@@ -372,7 +375,7 @@ std::vector<HamProfile *> ProfileMgr::GetSignedIn() {
 
 std::vector<HamProfile *> ProfileMgr::GetSignedInProfiles() {
     std::vector<HamProfile *> profiles;
-    FOREACH (it, unk90) {
+    FOREACH (it, mProfiles) {
         if (ThePlatformMgr.IsSignedIn((*it)->GetPadNum())) {
             profiles.push_back(*it);
         }
@@ -421,12 +424,12 @@ float ProfileMgr::GetSongToTaskMgrMs(LagContext lc) const {
         x = (lc == kPractice70) ? 35 : 0;
         break;
     }
-    return mSongToTaskMgrMs - unk34 - x;
+    return mSongToTaskMgrMs - kInGameExtraVideoLatency - x;
 }
 
 HamProfile *ProfileMgr::GetProfileFromPad(int pad) const {
     HamProfile *ret = nullptr;
-    FOREACH (it, unk90) {
+    FOREACH (it, mProfiles) {
         if ((*it)->GetPadNum() == pad) {
             ret = *it;
             break;
@@ -437,7 +440,7 @@ HamProfile *ProfileMgr::GetProfileFromPad(int pad) const {
 
 int ProfileMgr::GetSavableProfileCount() const {
     int i = 0;
-    FOREACH (it, unk90) {
+    FOREACH (it, mProfiles) {
         HamProfile *pProfile = *it;
         MILO_ASSERT(pProfile, 0x191);
         if (pProfile->HasValidSaveData())
@@ -447,7 +450,7 @@ int ProfileMgr::GetSavableProfileCount() const {
 }
 
 HamProfile *ProfileMgr::GetFirstSavableProfile() const {
-    FOREACH (it, unk90) {
+    FOREACH (it, mProfiles) {
         HamProfile *pProfile = *it;
         MILO_ASSERT(pProfile, 0x1A1);
         if (pProfile->HasValidSaveData())
@@ -484,7 +487,7 @@ HamProfile *ProfileMgr::GetSaveData(const HamUser *user) {
 
 bool ProfileMgr::NeedsUpload() {
     if (!mAllUnlocked) {
-        FOREACH (it, unk90) {
+        FOREACH (it, mProfiles) {
             if ((*it)->HasSomethingToUpload()) {
                 return true;
             }
@@ -494,10 +497,10 @@ bool ProfileMgr::NeedsUpload() {
 }
 
 void ProfileMgr::CheckForServerCrewUnlock() {
-    for (int i = 0; i < unk90.size(); i++) {
-        if (unk90[i]->HasValidSaveData()) {
-            unk90[i]->CheckForIconManUnlock();
-            unk90[i]->CheckForNinjaUnlock();
+    for (int i = 0; i < mProfiles.size(); i++) {
+        if (mProfiles[i]->HasValidSaveData()) {
+            mProfiles[i]->CheckForIconManUnlock();
+            mProfiles[i]->CheckForNinjaUnlock();
         }
     }
 }
@@ -529,9 +532,9 @@ void ProfileMgr::SaveGlobalOptions(FixedSizeSaveableStream &fs) {
     fs << mDisableFreestyle;
     fs << mSyncPresetIx;
     fs << mOverscan;
-    fs << mTutorialsSeen;
-    fs << unk4c;
-    fs << unk78;
+    fs << mSeenTutorials;
+    fs << mPreferredWeightUnit;
+    fs << mForceSpeechLanguageSupport;
     fs << (u64)mLocale;
     fs << (u64)mLanguage;
     mGlobalOptionsDirty = false;
@@ -556,7 +559,7 @@ float ProfileMgr::GetSyncOffset(int i1) const {
     if (i1 != -1) {
         f1 = GetPadExtraLag(i1, kGame);
     }
-    return mSyncOffset + unk38 - f1;
+    return mSyncOffset + kInGameSyncOffsetAdjustment - f1;
 }
 
 bool ProfileMgr::IsAnyProfileSignedIntoLive() const {
@@ -575,7 +578,7 @@ bool ProfileMgr::IsAnyProfileSignedIntoLive() const {
 bool ProfileMgr::HasActiveProfile(bool b1) const { return GetActiveProfile(b1); }
 
 void ProfileMgr::PurgeOldData() {
-    FOREACH (it, unk90) {
+    FOREACH (it, mProfiles) {
         HamProfile *pProfile = *it;
         if (pProfile->GetSaveState() == kMetaProfileDelete) {
             pProfile->DeleteAll();
@@ -628,7 +631,7 @@ void ProfileMgr::PushAllOptions() {
     static DataNode &n = DataVariable("crowd_audio.volume");
     n = GetCrowdVolumeDb();
     if (TheSpeechMgr) {
-        if (unk78 && TheSpeechMgr->OnIsSpeechSupportable()) {
+        if (mForceSpeechLanguageSupport && TheSpeechMgr->OnIsSpeechSupportable()) {
             TheSpeechMgr->ForceLanguageSupport();
         } else if (!TheSpeechMgr->SpeechSupported() && !mDisableVoice) {
             mDisableVoice = !mDisableVoice;
@@ -663,7 +666,7 @@ void ProfileMgr::SetMusicVolume(int step) {
 
 void ProfileMgr::SetExcessVideoLag(float lag) {
     float audioLag = GetExcessAudioLag();
-    SetSyncOffset(-(mPlatformVideoLatency + lag));
+    SetSyncOffset(-(kPlatformVideoLatency + lag));
     SetExcessAudioLag(audioLag);
 }
 
@@ -690,7 +693,7 @@ void ProfileMgr::HandlePlayerNameChange() {
 
 std::vector<HamProfile *> ProfileMgr::GetNewlySignedIn() {
     std::vector<HamProfile *> profiles;
-    FOREACH (it, unk90) {
+    FOREACH (it, mProfiles) {
         HamProfile *pProfile = *it;
         int padNum = pProfile->GetPadNum();
         if (ThePlatformMgr.IsSignedIn(padNum) && !ThePlatformMgr.IsPadAGuest(padNum)
@@ -703,7 +706,7 @@ std::vector<HamProfile *> ProfileMgr::GetNewlySignedIn() {
 
 std::vector<HamProfile *> ProfileMgr::GetShouldAutosave() {
     std::vector<HamProfile *> profiles;
-    FOREACH (it, unk90) {
+    FOREACH (it, mProfiles) {
         HamProfile *pProfile = *it;
         int padNum = pProfile->GetPadNum();
         if (ThePlatformMgr.IsSignedIn(padNum)
@@ -722,8 +725,8 @@ void ProfileMgr::HandleProfileSaveComplete() {
 void ProfileMgr::HandleProfileLoadComplete() {
     UpdateFriendsList();
     UpdateUsingFitnessState();
-    unka8 = true;
-    unka9 = true;
+    mDeferredFlauntCheckRequested = true;
+    mDeferredFitnessGoalCheckRequested = true;
 }
 
 int ProfileMgr::GetNumValidProfiles() const {
@@ -750,7 +753,7 @@ bool ProfileMgr::HasActiveProfileWithInvalidSaveData() const {
     if (!pProfile) {
         ShellInput *pShellInput = TheHamUI.GetShellInput();
         MILO_ASSERT(pShellInput, 0x5bb);
-        SkeletonChooser *pSkeletonChooser = pShellInput->mSkelChooser;
+        SkeletonChooser *pSkeletonChooser = pShellInput->GetSkeletonChooser();
         MILO_ASSERT(pSkeletonChooser, 0x5be);
         HamPlayerData *pActivePlayer = TheGameData->Player(pSkeletonChooser->Unk3C());
         MILO_ASSERT(pActivePlayer, 0x5c2);
@@ -767,9 +770,9 @@ bool ProfileMgr::IsUnlockableContent(Symbol s) const {
 }
 
 void ProfileMgr::UploadDeferredFlaunt() {
-    if (!unka8)
+    if (!mDeferredFlauntCheckRequested)
         return;
-    unka8 = false;
+    mDeferredFlauntCheckRequested = false;
     TheChallenges->UploadFlauntForAll(true);
 }
 
@@ -792,7 +795,7 @@ bool ProfileMgr::HasFinishedCampaign() const {
     if (MetaPanel::sUnlockAll) {
         return true;
     } else {
-        FOREACH (it, unk90) {
+        FOREACH (it, mProfiles) {
             HamProfile *profile = *it;
             MILO_ASSERT(profile, 0x6ae);
             if (profile->HasFinishedCampaign()) {
@@ -807,7 +810,7 @@ bool ProfileMgr::HasAnyEraSongBeenPlayed(Symbol era) const {
     if (MetaPanel::sUnlockAll) {
         return true;
     } else {
-        FOREACH (it, unk90) {
+        FOREACH (it, mProfiles) {
             HamProfile *profile = *it;
             MILO_ASSERT(profile, 0x6c3);
             if (profile->HasAnyEraSongBeenPlayed(era)) {
@@ -822,7 +825,7 @@ bool ProfileMgr::IsDifficultyUnlocked(Symbol s1, Symbol s2) const {
     if (MetaPanel::sUnlockAll) {
         return true;
     } else {
-        FOREACH (it, unk90) {
+        FOREACH (it, mProfiles) {
             HamProfile *profile = *it;
             MILO_ASSERT(profile, 0x6d7);
             if (profile->IsDifficultyUnlockedForProfile(s1, s2)) {
@@ -839,7 +842,7 @@ bool ProfileMgr::IsContentUnlocked(Symbol s) const {
     } else if (!TheAccomplishmentMgr->IsUnlockableAsset(s)) {
         return true;
     }
-    FOREACH (it, unk90) {
+    FOREACH (it, mProfiles) {
         HamProfile *profile = *it;
         MILO_ASSERT(profile, 0x680);
         if (profile->IsContentUnlockedForProfile(s)) {
@@ -866,9 +869,9 @@ void ProfileMgr::UpdateUsingFitnessState() {
 }
 
 void ProfileMgr::UploadDeferredFitnessGoal() {
-    if (unka9) {
-        unka9 = false;
-        FOREACH (it, unk90) {
+    if (mDeferredFitnessGoalCheckRequested) {
+        mDeferredFitnessGoalCheckRequested = false;
+        FOREACH (it, mProfiles) {
             HamProfile *profile = *it;
             MILO_ASSERT(profile, 0x74a);
             TheFitnessGoalMgr->UpdateFitnessGoal(profile);
@@ -881,11 +884,11 @@ void ProfileMgr::TriggerSignoutEvent() {
     static Message init("init", 0);
     init[0] = 0;
     TheUIEventMgr->TriggerEvent(sign_out, init);
-    unk90.front()->SetSaveState(kMetaProfileUnloaded);
+    mProfiles.front()->SetSaveState(kMetaProfileUnloaded);
 }
 
 HamProfile *ProfileMgr::GetActiveProfile(bool b) const {
-    HamProfile *criticalProfile = TheProfileMgr.CriticalProfile();
+    HamProfile *criticalProfile = TheProfileMgr.GetCriticalProfile();
     if (criticalProfile) {
         return criticalProfile;
     }
@@ -951,7 +954,7 @@ void ProfileMgr::Poll() {
         int lines = 1;
         HamProfile *pActiveProfile = GetActiveProfile(false);
         HamProfile *critProfile = mCriticalProfile;
-        FOREACH (it, unk90) {
+        FOREACH (it, mProfiles) {
             HamProfile *profile = *it;
             if (profile) {
                 int padnum = profile->GetPadNum();
@@ -1006,13 +1009,13 @@ void ProfileMgr::LoadGlobalOptions(FixedSizeSaveableStream &fs) {
         fs >> mDisableFreestyle;
         fs >> mSyncPresetIx;
         fs >> mOverscan;
-        fs >> mTutorialsSeen;
+        fs >> mSeenTutorials;
 
         int temp4c;
         fs >> temp4c;
-        unk4c = temp4c;
+        mPreferredWeightUnit = temp4c;
 
-        fs >> unk78;
+        fs >> mForceSpeechLanguageSupport;
 
         u64 temp80;
         fs >> temp80;
@@ -1020,7 +1023,7 @@ void ProfileMgr::LoadGlobalOptions(FixedSizeSaveableStream &fs) {
 
         u64 temp84;
         fs >> temp84;
-        unk45 = true;
+        mHasPlayedBefore = true;
         mLanguage = temp84;
     }
     PushAllOptions();

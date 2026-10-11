@@ -11,10 +11,10 @@ public:
 
     virtual int Compare(const NavListItemSortCmp *, NavListNodeType) const;
 
-    LocationCmp(const char *name, Symbol location) : mName(name), mLocation(location) {}
+    LocationCmp(const char *name, Symbol location) : mName(name), mOrigin(location) {}
 
     const char *mName; // 0x4
-    Symbol mLocation; // 0x8
+    Symbol mOrigin; // 0x8
 };
 
 class SongSortByLocation : public SongSort {

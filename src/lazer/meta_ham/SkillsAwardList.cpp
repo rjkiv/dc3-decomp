@@ -7,7 +7,7 @@
 #include "utl/Std.h"
 
 void SkillsAwardList::SaveFixed(FixedSizeSaveableStream &stream) const {
-    int size = mAwardList.size();
+    int size = mMap.size();
     if (size > 0x4000) {
         static int sMaxSize = 0x4000;
         MILO_NOTIFY(
@@ -19,10 +19,10 @@ void SkillsAwardList::SaveFixed(FixedSizeSaveableStream &stream) const {
     }
     stream.Tell();
     stream << size;
-    FOREACH (it, mAwardList) {
+    FOREACH (it, mMap) {
         stream << it->first.mSongID;
         for (int i = 0; i < 4; i++) {
-            SaveSymbolID(stream, it->first.unk4[i]);
+            SaveSymbolID(stream, it->first.mMoves[i]);
         }
         stream << it->second;
     }
@@ -33,9 +33,9 @@ void SkillsAwardList::SaveFixed(FixedSizeSaveableStream &stream) const {
 }
 
 void SkillsAwardList::LoadFixed(FixedSizeSaveableStream &stream, int i2) {
-    if (mAwardList.size() > 0) {
+    if (mMap.size() > 0) {
         MILO_NOTIFY("Skills awardlist map is not empty on load!");
-        mAwardList.clear();
+        mMap.clear();
     }
     int size;
     stream >> size;
@@ -43,11 +43,11 @@ void SkillsAwardList::LoadFixed(FixedSizeSaveableStream &stream, int i2) {
         Key key;
         stream >> key.mSongID;
         for (int j = 0; j < 4; j++) {
-            LoadSymbolFromID(stream, key.unk4[j]);
+            LoadSymbolFromID(stream, key.mMoves[j]);
         }
-        SkillsAward award = (SkillsAward)0;
+        SkillsAward award = kSkillsAward_Unplayed;
         stream >> (int &)award;
-        mAwardList[key] = award;
+        mMap[key] = award;
     }
     if (size < 0x4000) {
         DepadStream(stream, (0x4000 - size) * 0x18);
@@ -55,7 +55,7 @@ void SkillsAwardList::LoadFixed(FixedSizeSaveableStream &stream, int i2) {
 }
 
 bool SkillsAwardList::HasFailure() const {
-    FOREACH (it, mAwardList) {
+    FOREACH (it, mMap) {
         if (it->second == 1) {
             return true;
         }
@@ -73,18 +73,18 @@ SkillsAward SkillsAwardList::GetAward(Symbol song, DataArray *da) {
     Key key;
     key.mSongID = TheHamSongMgr.GetSongIDFromShortName(song);
     for (int i = 0; i < da->Size() && i < 4; i++) {
-        key.unk4[i] = da->Obj<Hmx::Object>(i)->Name();
+        key.mMoves[i] = da->Obj<Hmx::Object>(i)->Name();
     }
     if (HasAward(key)) {
-        return mAwardList[key];
+        return mMap[key];
     } else {
-        return (SkillsAward)0;
+        return kSkillsAward_Unplayed;
     }
 }
 
 int SkillsAwardList::AwardCount(SkillsAward sa) const {
     int count = 0;
-    FOREACH (it, mAwardList) {
+    FOREACH (it, mMap) {
         if (it->second == sa) {
             count++;
         }
@@ -93,7 +93,7 @@ int SkillsAwardList::AwardCount(SkillsAward sa) const {
 }
 
 void SkillsAwardList::Clear() {
-    mAwardList.clear();
+    mMap.clear();
     mDirty = false;
 }
 
@@ -105,10 +105,10 @@ void SkillsAwardList::SetAward(Symbol song, DataArray *a, SkillsAward award) {
     Key key;
     key.mSongID = TheHamSongMgr.GetSongIDFromShortName(song);
     for (int i = 0; i < a->Size() && i < 4; i++) {
-        key.unk4[i] = a->Obj<Hmx::Object>(i)->Name();
+        key.mMoves[i] = a->Obj<Hmx::Object>(i)->Name();
     }
-    if (!HasAward(key) || mAwardList[key] < award) {
-        mAwardList[key] = award;
+    if (!HasAward(key) || mMap[key] < award) {
+        mMap[key] = award;
         mDirty = true;
     }
 }

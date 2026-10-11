@@ -22,48 +22,52 @@
 #include "xdk/xapilibi/xbox.h"
 
 OptionsPanel::OptionsPanel() {
-    unk48 = 0;
-    unk50 = nullptr;
-    unk40 = nullptr;
-    unk3c = nullptr;
-    unk58 = nullptr;
+    mPurchaser = nullptr;
+    mPendingPurchase.first = 0;
+    mPendingPurchase.second = nullptr;
+    mTokenJob = nullptr;
+    mGetLinkingCodeJob = nullptr;
 }
 
 OptionsPanel::~OptionsPanel() {}
 
 void OptionsPanel::Poll() {
     UIPanel::Poll();
-    if (unk40) {
-        unk40->Poll();
-        if (!unk40->IsPurchasing()) {
-            if (unk40->IsSuccess() && !unk40->PurchaseMade() && unk40->NeedsEnum()
-                && unk50) {
+    if (mPurchaser) {
+        mPurchaser->Poll();
+        if (!mPurchaser->IsPurchasing()) {
+            if (mPurchaser->IsSuccess() && !mPurchaser->PurchaseMade()
+                && mPurchaser->NeedsEnum() && mPendingPurchase.second) {
                 ThePlatformMgr.QueueEnumJob(new PostPurchaseEnumJob(
-                    this, unk50->GetPadNum(), unk48, unk40->Source(), unk40->PID()
+                    this,
+                    mPendingPurchase.second->GetPadNum(),
+                    mPendingPurchase.first,
+                    mPurchaser->Source(),
+                    mPurchaser->PID()
                 ));
             }
-            RELEASE(unk40);
+            RELEASE(mPurchaser);
         }
     }
 }
 
 bool OptionsPanel::OnRedeemToken(int i, char const *str) {
-    unk3c = new RedeemTokenJob(this, i, str);
-    TheRockCentral.ManageJob(unk3c);
+    mTokenJob = new RedeemTokenJob(this, i, str);
+    TheRockCentral.ManageJob(mTokenJob);
     return true;
 }
 
 void OptionsPanel::OnPurchaseOfferByOfferString(int i, char const *c) {
     unsigned long long ID = StorePurchaseable::OfferStringToID(c);
-    unk40 = new XboxPurchaser(i, ID, 0, 0, gNullStr, 0);
-    unk48 = ID;
-    unk50 = TheProfileMgr.GetProfileFromPad(i);
-    unk40->Initiate();
+    mPurchaser = new XboxPurchaser(i, ID, 0, 0, gNullStr, 0);
+    mPendingPurchase.first = ID;
+    mPendingPurchase.second = TheProfileMgr.GetProfileFromPad(i);
+    mPurchaser->Initiate();
 }
 
 bool OptionsPanel::OnGetLinkingCode(int i) {
-    unk58 = new GetWebLinkCodeJob(this, i);
-    TheRockCentral.ManageJob(unk58);
+    mGetLinkingCodeJob = new GetWebLinkCodeJob(this, i);
+    TheRockCentral.ManageJob(mGetLinkingCodeJob);
     return true;
 }
 
@@ -80,8 +84,8 @@ DataNode OptionsPanel::OnMsg(SingleItemEnumCompleteMsg const &msg) {
 }
 
 DataNode OptionsPanel::OnMsg(RCJobCompleteMsg const &msg) {
-    if (msg.Job() == unk3c) {
-        MILO_LOG("Token: server response: %s\n", unk3c->GetResponseString());
+    if (msg.Job() == mTokenJob) {
+        MILO_LOG("Token: server response: %s\n", mTokenJob->GetResponseString());
         int res;
         String offer;
         static Symbol token_redemption_ready("token_redemption_ready");
@@ -92,7 +96,7 @@ DataNode OptionsPanel::OnMsg(RCJobCompleteMsg const &msg) {
         static Symbol token_redemption_too_early("token_redemption_too_early");
         static Symbol token_redemption_too_late("token_redemption_too_late");
         static Symbol leaderboard_no_net("leaderboard_no_net");
-        unk3c->GetRedeemTokenData(res, offer);
+        mTokenJob->GetRedeemTokenData(res, offer);
         bool success;
         Symbol error;
         switch (res) {
@@ -144,11 +148,11 @@ DataNode OptionsPanel::OnMsg(RCJobCompleteMsg const &msg) {
         msg.SetError(error);
         UIPanel *panel = ObjectDir::Main()->Find<UIPanel>("store_redeem_token_panel");
         panel->HandleType(msg);
-        unk3c = nullptr;
-    } else if (msg.Job() == unk58) {
+        mTokenJob = nullptr;
+    } else if (msg.Job() == mGetLinkingCodeJob) {
         String wlcData;
         String offer;
-        bool webData = unk58->GetWebLinkCodeData(wlcData);
+        bool webData = mGetLinkingCodeJob->GetWebLinkCodeData(wlcData);
         static LinkingCodeRetrievedMsg msg(true, String(""));
         bool success = webData && wlcData != "N/A";
         static Symbol linking_code_desc("linking_code_desc");
@@ -166,7 +170,7 @@ DataNode OptionsPanel::OnMsg(RCJobCompleteMsg const &msg) {
         if (panel->GetState() == UIPanel::kUp) {
             panel->HandleType(msg);
         }
-        unk58 = nullptr;
+        mGetLinkingCodeJob = nullptr;
     }
     return 1;
 }

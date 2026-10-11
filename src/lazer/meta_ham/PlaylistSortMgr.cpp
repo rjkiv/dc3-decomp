@@ -55,10 +55,10 @@ PlaylistSortMgr::PlaylistSortMgr(SongPreview &sp) : NavListSortMgr(sp) {
     SetName("playlist_sort_mgr", ObjectDir::Main());
     mSorts.push_back(new PlaylistSortByType());
     static Symbol never_use("never_use");
-    unk84.SetName(never_use);
-    unkb0 = gNullStr;
-    unkb8 = gNullStr;
-    unkc8 = false;
+    m_cBlankPlaylist.SetName(never_use);
+    mCurrProfileName = gNullStr;
+    mCurrProfileOnlineIDs = gNullStr;
+    mIsProccessingCmd = false;
 }
 
 PlaylistSortMgr::~PlaylistSortMgr() {}
@@ -77,7 +77,7 @@ bool PlaylistSortMgr::IsProfileChanged() {
     } else {
         name = gNullStr;
     }
-    return unkb0 != name;
+    return mCurrProfileName != name;
 }
 
 void PlaylistSortMgr::OnSmartGlassListen(int i) {
@@ -95,13 +95,13 @@ bool PlaylistSortMgr::HasValidProfile() {
         if (pProfile->IsSignedIn()) {
             int padNum = pProfile->GetPadNum();
             if (ThePlatformMgr.IsSignedIntoLive(padNum) && TheRockCentral.IsOnline()) {
-                unkb0 = pProfile->GetName();
+                mCurrProfileName = pProfile->GetName();
                 QueueCmdChangeProfileOnlineID(pProfile->GetOnlineID()->ToString());
                 return true;
             }
         }
     }
-    unkb0 = gNullStr;
+    mCurrProfileName = gNullStr;
     QueueCmdChangeProfileOnlineID(gNullStr);
     return false;
 }
@@ -111,12 +111,12 @@ void PlaylistSortMgr::StartCmdGetPlaylistsFromRC() {
     if (pProfile && pProfile->IsSignedIn()) {
         int padNum = pProfile->GetPadNum();
         if (ThePlatformMgr.IsSignedIntoLive(padNum) && TheRockCentral.IsOnline()) {
-            MILO_LOG("MY PORFILE ID: %s\n", unkb8.c_str());
+            MILO_LOG("MY PORFILE ID: %s\n", mCurrProfileOnlineIDs.c_str());
             MILO_LOG("ACTUAL PORFILE ID: %s\n", pProfile->GetOnlineID()->ToString());
         }
     }
-    unkcc = new GetPlaylistsJob(this, unkb8.c_str());
-    TheRockCentral.ManageJob(unkcc);
+    mCurrJob = new GetPlaylistsJob(this, mCurrProfileOnlineIDs.c_str());
+    TheRockCentral.ManageJob(mCurrJob);
 }
 
 void PlaylistSortMgr::FakeAddPlaylistsToRC() {
@@ -155,8 +155,8 @@ void PlaylistSortMgr::FakeAddPlaylistsToRC() {
 
 int PlaylistSortMgr::ConvertListIndexToPlaylistIndex(int listIndex) {
     int playlistIndex = 0;
-    for (int i = 0; i < mHeadersB.size(); i++) {
-        if (listIndex >= mHeadersB[i])
+    for (int i = 0; i < mHeaderIndicesAlone.size(); i++) {
+        if (listIndex >= mHeaderIndicesAlone[i])
             playlistIndex--;
     }
 
@@ -176,37 +176,38 @@ void PlaylistSortMgr::OnEnter() {
     FOREACH (it, mSorts) {
         (*it)->BuildTree();
     }
-    NavListSort *sort = mSorts[mCurrentSortIdx];
+    NavListSort *sort = mSorts[mSortIndex];
     sort->BuildItemList();
-    if (unk48) {
-        sort->SetHighlightID(unk44);
-        unk48 = false;
+    if (mSavedHighlight) {
+        sort->SetHighlightID(mSavedHighlightID);
+        mSavedHighlight = false;
     }
     sort->UpdateHighlight();
 }
 
 void PlaylistSortMgr::StartCmdGetPlaylistFromRC() {
-    CmdGetPlaylistFromRC *cmd = (CmdGetPlaylistFromRC *)unkc0.front();
-    unkcc = new GetPlaylistJob(this, unkb8.c_str(), cmd->num);
-    TheRockCentral.ManageJob(unkcc);
+    CmdGetPlaylistFromRC *cmd = (CmdGetPlaylistFromRC *)mCommands.front();
+    mCurrJob = new GetPlaylistJob(this, mCurrProfileOnlineIDs.c_str(), cmd->playlistID);
+    TheRockCentral.ManageJob(mCurrJob);
 }
 
 void PlaylistSortMgr::StartCmdAddPlaylistToRC() {
-    CmdAddPlaylistToRC *cmd = (CmdAddPlaylistToRC *)unkc0.front();
-    unkcc = new AddPlaylistJob(this, unkb8.c_str(), cmd->playlist);
-    TheRockCentral.ManageJob(unkcc);
+    CmdAddPlaylistToRC *cmd = (CmdAddPlaylistToRC *)mCommands.front();
+    mCurrJob = new AddPlaylistJob(this, mCurrProfileOnlineIDs.c_str(), cmd->playlist);
+    TheRockCentral.ManageJob(mCurrJob);
 }
 
 void PlaylistSortMgr::StartCmdDeletePlaylistFromRC() {
-    CmdDeletePlaylistFromRC *cmd = (CmdDeletePlaylistFromRC *)unkc0.front();
-    unkcc = new DeletePlaylistJob(this, unkb8.c_str(), cmd->num);
-    TheRockCentral.ManageJob(unkcc);
+    CmdDeletePlaylistFromRC *cmd = (CmdDeletePlaylistFromRC *)mCommands.front();
+    mCurrJob =
+        new DeletePlaylistJob(this, mCurrProfileOnlineIDs.c_str(), cmd->playlistID);
+    TheRockCentral.ManageJob(mCurrJob);
 }
 
 void PlaylistSortMgr::StartCmdEditPlaylist() {
-    CmdEditPlaylist *cmd = (CmdEditPlaylist *)unkc0.front();
-    unkcc = new EditPlaylistJob(this, unkb8.c_str(), cmd->playlist);
-    TheRockCentral.ManageJob(unkcc);
+    CmdEditPlaylist *cmd = (CmdEditPlaylist *)mCommands.front();
+    mCurrJob = new EditPlaylistJob(this, mCurrProfileOnlineIDs.c_str(), cmd->playlist);
+    TheRockCentral.ManageJob(mCurrJob);
 }
 
 DataNode PlaylistSortMgr::OnMsg(SmartGlassMsg const &) {
@@ -218,65 +219,65 @@ DataNode PlaylistSortMgr::OnMsg(SmartGlassMsg const &) {
 
 void PlaylistSortMgr::QueueCmdAddPlaylistToRC(Playlist *pl) {
     CmdAddPlaylistToRC *cmd = new CmdAddPlaylistToRC((CustomPlaylist *)pl);
-    unkc0.push_back(cmd);
-    if (!unkc8) {
+    mCommands.push_back(cmd);
+    if (!mIsProccessingCmd) {
         ProcessNextCommand();
     }
 }
 
 void PlaylistSortMgr::QueueCmdDeletePlaylistFromRC(int i) {
     CmdDeletePlaylistFromRC *cmd = new CmdDeletePlaylistFromRC(i);
-    unkc0.push_back(cmd);
-    if (!unkc8) {
+    mCommands.push_back(cmd);
+    if (!mIsProccessingCmd) {
         ProcessNextCommand();
     }
 }
 
 void PlaylistSortMgr::QueueCmdEditPlaylist(Playlist *pl) {
     CmdEditPlaylist *cmd = new CmdEditPlaylist((CustomPlaylist *)pl);
-    unkc0.push_back(cmd);
-    if (!unkc8) {
+    mCommands.push_back(cmd);
+    if (!mIsProccessingCmd) {
         ProcessNextCommand();
     }
 }
 
 void PlaylistSortMgr::QueueCmdResolvePlaylists() {
     CmdResolvePlaylists *cmd = new CmdResolvePlaylists();
-    unkc0.push_back(cmd);
-    if (!unkc8) {
+    mCommands.push_back(cmd);
+    if (!mIsProccessingCmd) {
         ProcessNextCommand();
     }
 }
 
 void PlaylistSortMgr::QueueCmdGetPlaylistFromRC(int i) {
     CmdGetPlaylistFromRC *cmd = new CmdGetPlaylistFromRC(i);
-    unkc0.push_back(cmd);
-    if (!unkc8) {
+    mCommands.push_back(cmd);
+    if (!mIsProccessingCmd) {
         ProcessNextCommand();
     }
 }
 
 void PlaylistSortMgr::QueueCmdGetPlaylistsFromRC() {
     CmdGetPlaylistsFromRC *cmd = new CmdGetPlaylistsFromRC();
-    unkc0.push_back(cmd);
-    if (!unkc8) {
+    mCommands.push_back(cmd);
+    if (!mIsProccessingCmd) {
         ProcessNextCommand();
     }
 }
 
 void PlaylistSortMgr::QueueCmdChangeProfileOnlineID(String str) {
-    unkc0.push_back(new CmdChangeProfileOnlineID(str));
-    if (!unkc8) {
+    mCommands.push_back(new CmdChangeProfileOnlineID(str));
+    if (!mIsProccessingCmd) {
         ProcessNextCommand();
     }
 }
 
 void PlaylistSortMgr::ProcessNextCommand() {
-    if (unkc0.size() == 0) {
-        unkc8 = false;
+    if (mCommands.size() == 0) {
+        mIsProccessingCmd = false;
     } else {
-        unkc8 = true;
-        int i = unkc0.front()->GetType();
+        mIsProccessingCmd = true;
+        int i = mCommands.front()->GetType();
         switch (i) {
         case 0:
             HandleCmdChangeProfileOnlineID();
@@ -305,15 +306,15 @@ void PlaylistSortMgr::ProcessNextCommand() {
 
 void PlaylistSortMgr::ResolvePlaylists() {
     HamProfile *activeProfile = TheProfileMgr.GetActiveProfile(true);
-    if (!activeProfile || unkb0 != activeProfile->GetName()) {
+    if (!activeProfile || mCurrProfileName != activeProfile->GetName()) {
         BroadcastSyncMsg("sync_failed");
     } else {
-        int something = Max(5 - (int)unkd0.size(), 0);
-        int size = (int)unkd0.size();
+        int something = Max(5 - (int)mPlaylistsFromRC.size(), 0);
+        int size = (int)mPlaylistsFromRC.size();
         for (int i = 0; i < size; i++) {
             CustomPlaylist &cusPlaylist =
                 dynamic_cast<CustomPlaylist &>(activeProfile->GetPlaylist(i));
-            cusPlaylist.Copy(&unkd0[i]);
+            cusPlaylist.Copy(&mPlaylistsFromRC[i]);
             cusPlaylist.SetParentProfile(activeProfile);
         }
         for (int i = 5 - something; i < 5; i++) {
@@ -330,7 +331,7 @@ void PlaylistSortMgr::ResolvePlaylists() {
             TheSaveLoadMgr->AutoSave();
 
         BroadcastSyncMsg("playlists_synced");
-        if (unkd0.size() > 0) {
+        if (mPlaylistsFromRC.size() > 0) {
             SendPassiveMsg("playlist_syned_with_rc");
         }
     }
@@ -338,76 +339,78 @@ void PlaylistSortMgr::ResolvePlaylists() {
 
 void PlaylistSortMgr::HandleCmdDeletePlaylistFromRC() {
     MILO_LOG("===== HandleCmdDeletePlaylistFromRC\n");
-    unkcc = nullptr;
-    RELEASE(unkc0.front());
-    unkc0.pop_front();
+    mCurrJob = nullptr;
+    RELEASE(mCommands.front());
+    mCommands.pop_front();
     ProcessNextCommand();
 }
 
 void PlaylistSortMgr::HandleCmdAddPlaylistToRC() {
     MILO_LOG("===== HandleCmdAddPlaylistToRC\n");
-    ((AddPlaylistJob *)unkcc)
-        ->GetPlaylistID(((CmdAddPlaylistToRC *)unkc0.front())->playlist);
-    unkcc = nullptr;
-    RELEASE(unkc0.front());
-    unkc0.pop_front();
+    ((AddPlaylistJob *)mCurrJob)
+        ->GetPlaylistID(
+            (CustomPlaylist *)((CmdAddPlaylistToRC *)mCommands.front())->playlist
+        );
+    mCurrJob = nullptr;
+    RELEASE(mCommands.front());
+    mCommands.pop_front();
     ProcessNextCommand();
 }
 
 void PlaylistSortMgr::HandleCmdResolvePlaylists() {
     MILO_LOG("===== HandleCmdResolvePlaylists\n");
     ResolvePlaylists();
-    RELEASE(unkc0.front());
-    unkc0.pop_front();
+    RELEASE(mCommands.front());
+    mCommands.pop_front();
     ProcessNextCommand();
 }
 
 void PlaylistSortMgr::HandleCmdEditPlaylist() {
-    unkcc = nullptr;
-    RELEASE(unkc0.front());
-    unkc0.pop_front();
+    mCurrJob = nullptr;
+    RELEASE(mCommands.front());
+    mCommands.pop_front();
     ProcessNextCommand();
 }
 
 void PlaylistSortMgr::HandleCmdChangeProfileOnlineID() {
     MILO_LOG("===== HandleCmdChangeProfileOnlineID\n");
-    unkb8 = ((CmdChangeProfileOnlineID *)unkc0.front())->str;
-    RELEASE(unkc0.front());
-    unkc0.pop_front();
+    mCurrProfileOnlineIDs = ((CmdChangeProfileOnlineID *)mCommands.front())->onlineID;
+    RELEASE(mCommands.front());
+    mCommands.pop_front();
     ProcessNextCommand();
 }
 
 void PlaylistSortMgr::HandleCmdGetPlaylistFromRC() {
     MILO_LOG("===== HandleCmdGetPlaylistFromRC\n");
-    GetPlaylistJob *pJob = ((GetPlaylistJob *)unkcc);
-    CmdGetPlaylistFromRC *cmd = ((CmdGetPlaylistFromRC *)unkc0.front());
-    for (int i = 0; i < unkd0.size(); i++) {
-        if (unkd0[i].GetOnlineID() == cmd->num) {
-            pJob->GetPlaylist(&unkd0[i]);
+    GetPlaylistJob *pJob = ((GetPlaylistJob *)mCurrJob);
+    CmdGetPlaylistFromRC *cmd = ((CmdGetPlaylistFromRC *)mCommands.front());
+    for (int i = 0; i < mPlaylistsFromRC.size(); i++) {
+        if (mPlaylistsFromRC[i].GetOnlineID() == cmd->playlistID) {
+            pJob->GetPlaylist(&mPlaylistsFromRC[i]);
             break;
         }
     }
-    unkcc = nullptr;
-    RELEASE(unkc0.front());
-    unkc0.pop_front();
+    mCurrJob = nullptr;
+    RELEASE(mCommands.front());
+    mCommands.pop_front();
     ProcessNextCommand();
 }
 
 void PlaylistSortMgr::HandleCmdGetPlaylistsFromRC() {
     MILO_LOG("===== HandleCmdGetPlaylistsFromRC\n");
-    GetPlaylistsJob *pJob = ((GetPlaylistsJob *)unkcc);
-    unkd0.clear();
-    pJob->GetPlaylists(&unkd0);
-    unkcc = nullptr;
-    MILO_LOG(">>>>>>>>>> there are %i of playlists on RC.\n", unkd0.size());
-    if (unkd0.size() != 0) {
-        for (int i = 0; i < unkd0.size(); i++) {
-            QueueCmdGetPlaylistFromRC(unkd0[i].GetOnlineID());
+    GetPlaylistsJob *pJob = ((GetPlaylistsJob *)mCurrJob);
+    mPlaylistsFromRC.clear();
+    pJob->GetPlaylists(&mPlaylistsFromRC);
+    mCurrJob = nullptr;
+    MILO_LOG(">>>>>>>>>> there are %i of playlists on RC.\n", mPlaylistsFromRC.size());
+    if (mPlaylistsFromRC.size() != 0) {
+        for (int i = 0; i < mPlaylistsFromRC.size(); i++) {
+            QueueCmdGetPlaylistFromRC(mPlaylistsFromRC[i].GetOnlineID());
         }
     }
     QueueCmdResolvePlaylists();
-    RELEASE(unkc0.front());
-    unkc0.pop_front();
+    RELEASE(mCommands.front());
+    mCommands.pop_front();
     ProcessNextCommand();
 }
 
@@ -420,7 +423,7 @@ void PlaylistSortMgr::SendPassiveMsg(Symbol s) {
     for (int i = 0; i < 2; i++) {
         HamPlayerData *playerData = TheGameData->Player(i);
         MILO_ASSERT(playerData, 0xf6);
-        if (playerData->GetPlayerName() == unkb0) {
+        if (playerData->GetPlayerName() == mCurrProfileName) {
             player = i == 0 ? p1 : p2;
             break;
         }
@@ -442,14 +445,14 @@ Playlist *PlaylistSortMgr::GetPlaylist(int i) {
     if (!IsHeader(i)) {
         int convertIndex = ConvertListIndexToPlaylistIndex(i);
         if (convertIndex >= 0) {
-            return unk78[convertIndex];
+            return mPlaylists[convertIndex];
         }
     }
     return nullptr;
 }
 
 void PlaylistSortMgr::UpdateList() {
-    unk78.clear();
+    mPlaylists.clear();
     HamProfile *pActiveProfile = TheProfileMgr.GetActiveProfile(true);
     if (pActiveProfile) {
         for (int i = 0; i < 5; i++) {
@@ -472,7 +475,7 @@ void PlaylistSortMgr::UpdateList() {
     for (int i = 0; i < TheHamSongMgr.GetNumPlaylists(); i++) {
         ThePlaylistSortMgr->AddPlaylist(TheHamSongMgr.GetPlaylist(i));
     }
-    std::sort(unk78.begin(), unk78.end(), CompareType);
+    std::sort(mPlaylists.begin(), mPlaylists.end(), CompareType);
 }
 
 void PlaylistSortMgr::UpdateCurrPlaylistWithRC() {
@@ -520,18 +523,18 @@ void PlaylistSortMgr::UpdateCurrPlaylistWithRC() {
 DataNode PlaylistSortMgr::OnMsg(const RCJobCompleteMsg &msg) {
     if (!msg.Success()) {
         MILO_LOG("[PlaylistSortMgr::OnMsg] Playlist net API failed.\n");
-        unkcc = nullptr;
+        mCurrJob = nullptr;
         BroadcastSyncMsg("sync_failed");
-        unkc8 = false;
-        while (!unkc0.empty()) {
-            RELEASE(unkc0.front());
-            unkc0.pop_front();
+        mIsProccessingCmd = false;
+        while (!mCommands.empty()) {
+            RELEASE(mCommands.front());
+            mCommands.pop_front();
         }
         return 1;
     } else {
         bool check = false;
-        if (msg.Job() == unkcc) {
-            switch (unkc0.front()->GetType()) {
+        if (msg.Job() == mCurrJob) {
+            switch (mCommands.front()->GetType()) {
             case 1:
                 HandleCmdGetPlaylistsFromRC();
                 break;

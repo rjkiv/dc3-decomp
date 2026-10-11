@@ -11,10 +11,11 @@ public:
     Symbol GetName() const;
     Symbol GetAward() const;
 
-    Symbol mName;
-    int unk8;
-    Symbol mAward;
-
 protected:
     virtual void Configure(DataArray *);
+
+private:
+    Symbol m_symName; // 0x4
+    int m_iIndex; // 0x8
+    Symbol m_symAward; // 0xc
 };

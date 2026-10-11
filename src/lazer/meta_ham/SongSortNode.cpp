@@ -4,6 +4,7 @@
 #include "NavListSortMgr.h"
 #include "SongSortMgr.h"
 #include "meta/SongMgr.h"
+#include "meta/SongPreview.h"
 #include "meta_ham/AccomplishmentManager.h"
 #include "meta_ham/AppLabel.h"
 #include "meta_ham/HamSongMgr.h"
@@ -24,16 +25,16 @@
 #include "utl/Symbol.h"
 #include <cstdio>
 
-int SongHeaderNode::GetItemCount() { return mDiscSongs + mDLCSongs; }
+int SongHeaderNode::GetItemCount() { return mDiscCount + mDownloadCount; }
 
 SongHeaderNode::SongHeaderNode(NavListItemSortCmp *cmp, Symbol s, bool b)
-    : NavListHeaderNode(cmp, s, b), mDiscSongs(0), mDLCSongs(0) {}
+    : NavListHeaderNode(cmp, s, b), mDiscCount(0), mDownloadCount(0) {}
 
 SongHeaderNode::~SongHeaderNode() { delete mDateTime; }
 
 void SongHeaderNode::OnHighlight() {
-    auto song = TheSongSortMgr->GetSongPreview();
-    song->Start(0, 0);
+    SongPreview &song = TheSongSortMgr->GetSongPreview();
+    song.Start(0, 0);
     SetCollapseStateIcon(true);
 }
 
@@ -74,14 +75,14 @@ Symbol SongHeaderNode::OnSelect() {
 }
 
 Symbol SongHeaderNode::Select() {
-    return SelectChildren(mChildren, mDiscSongs + mDLCSongs);
+    return SelectChildren(mChildren, mDiscCount + mDownloadCount);
 }
 
 Symbol SongHeaderNode::OnSelectDone() {
-    if (TheSongSortMgr->EnteringHeaderMode()) {
+    if (TheSongSortMgr->GetEnteringHeaderMode()) {
         TheSongSortMgr->SetEnteringHeaderMode(false);
     }
-    if (TheSongSortMgr->ExitingHeaderMode()) {
+    if (TheSongSortMgr->GetExitingHeaderMode()) {
         if (TheSongSortMgr->IsInHeaderMode()) {
             TheSongSortMgr->SetHeaderMode(false);
         }
@@ -95,7 +96,7 @@ Symbol SongHeaderNode::OnSelectDone() {
 
 void SongHeaderNode::SetItemCountString(UILabel *lbl) const {
     char buf[8] = { 0, 0, 0, 0, 0, 0, 0, 0 }; // why
-    sprintf(buf, "(%d)", mDiscSongs + mDLCSongs);
+    sprintf(buf, "(%d)", mDiscCount + mDownloadCount);
     Symbol s = buf;
     lbl->SetPrelocalizedString(String(s));
 }
@@ -110,22 +111,22 @@ bool SongHeaderNode::IsActive() const {
 void SongHeaderNode::UpdateItemCount(NavListItemNode *itemnode) {
     SongSortNode *songsn = dynamic_cast<SongSortNode *>(itemnode);
     if (songsn != nullptr) {
-        if (songsn->Record()->Metadata()->IsDownload()) {
-            mDLCSongs++;
+        if (songsn->GetSongRecord()->GetData()->IsDownload()) {
+            mDownloadCount++;
         } else {
-            mDiscSongs++;
+            mDiscCount++;
         }
     }
 }
 
 void SongHeaderNode::Renumber(std::vector<NavListSortNode *> &vec) {
     SetStartIndex(vec.size());
-    if (TheSongSortMgr->GetHeadersSelectable()) {
+    if (TheSongSortMgr->SortWithHeaders()) {
         vec.push_back(this);
-        TheSongSortMgr->AddHeaderIndex(StartIndex());
+        TheSongSortMgr->AddHeaderIndex(GetIndex());
     }
     if (!TheSongSortMgr->IsInHeaderMode()) {
-        FOREACH (it, Children()) {
+        FOREACH (it, GetChildren()) {
             (*it)->Renumber(vec);
         }
     }
@@ -146,7 +147,7 @@ char const *SongHeaderNode::GetAlbumArtPath() {
 
 Symbol SongSortNode::Select() {
     static Symbol invalid_version_screen("invalid_version_screen");
-    if (!unk_0x48->Metadata()->IsVersionOK()) {
+    if (!mSongRecord->GetData()->IsVersionOK()) {
         return invalid_version_screen;
     } else {
         static Symbol locked_content_screen("locked_content_screen");
@@ -199,13 +200,13 @@ void SongSortNode::OnContentMounted(const char *contentName, const char *) {
     }
 }
 
-void SongSortNode::SetInPlaylist(bool b) { unk_0x4C = b; }
+void SongSortNode::SetInPlaylist(bool b) { mInPlaylist = b; }
 
 void SongHeaderNode::Text(UIListLabel *list_label, UILabel *ui_label) const {
     AppLabel *app_label = dynamic_cast<AppLabel *>(ui_label);
     MILO_ASSERT(app_label, 0xb6);
 
-    if (unk44) {
+    if (mCover) {
         if (list_label->Matches("famousby")) {
             static Symbol store_famous_by("store_famous_by");
             ui_label->SetTextToken(store_famous_by);
@@ -259,7 +260,7 @@ bool SongSortNode::IsCoverSong(Symbol shortname) const {
 }
 
 bool SongSortNode::IsMedley() const {
-    auto shortname = unk_0x48->ShortName();
+    auto shortname = mSongRecord->ShortName();
     if (!TheSongMgr.HasSong(shortname, false)) {
         return false;
     } else {
@@ -271,7 +272,7 @@ bool SongSortNode::IsMedley() const {
 }
 
 bool SongSortNode::IsFake() const {
-    auto shortname = unk_0x48->ShortName();
+    auto shortname = mSongRecord->ShortName();
     if (!TheSongMgr.HasSong(shortname, false)) {
         return false;
     } else {
@@ -286,7 +287,7 @@ void SongSortNode::Text(UIListLabel *ull, UILabel *ul) const {
     static Symbol score("score");
     static Symbol disc("disc");
     static Symbol dlc("dlc");
-    const Symbol shortname = unk_0x48->ShortName();
+    const Symbol shortname = mSongRecord->ShortName();
     if (ull->Matches("song")) {
         AppLabel *app_label = dynamic_cast<AppLabel *>(ul);
         MILO_ASSERT(app_label, 513);
@@ -310,7 +311,7 @@ void SongSortNode::Text(UIListLabel *ull, UILabel *ul) const {
         MILO_ASSERT(app_label, 546);
         app_label->SetNew(nu);
     } else if (ull->Matches("download")) {
-        const HamSongMetadata *pData = unk_0x48->Metadata();
+        const HamSongMetadata *pData = mSongRecord->GetData();
         MILO_ASSERT(pData, 552);
         if (TheHamUI.IsBlacklightMode()) {
             ul->SetTextToken(gNullStr);
@@ -346,7 +347,7 @@ void SongSortNode::Text(UIListLabel *ull, UILabel *ul) const {
             ul->SetTextToken(ull->GetDefaultText());
         }
     } else if (ull->Matches("artist")) {
-        Symbol sName = unk_0x48->ShortName();
+        Symbol sName = mSongRecord->ShortName();
         if (TheAccomplishmentMgr->IsUnlockableAsset(sName)) {
             ul->SetTextToken(gNullStr);
             return;
@@ -361,7 +362,7 @@ void SongSortNode::Text(UIListLabel *ull, UILabel *ul) const {
         app_label->SetBlacklightSongName(shortname, -1, false);
 
     } else if (ull->Matches("in_playlist")) {
-        if (unk_0x4C) {
+        if (mInPlaylist) {
             ul->SetIcon('i');
         } else {
             ul->SetTextToken(gNullStr);
@@ -393,30 +394,30 @@ void SongSortNode::Custom(UIListCustom *ulc, Hmx::Object *obj) const {
 }
 
 const char *SongSortNode::GetArtist(void) const {
-    auto *songData = unk_0x48->Metadata();
+    auto *songData = mSongRecord->GetData();
     MILO_ASSERT(songData, 723);
     return songData->Artist();
 }
 
-Symbol SongSortNode::GetToken() const { return unk_0x48->ShortName(); }
+Symbol SongSortNode::GetToken() const { return mSongRecord->ShortName(); }
 
 BEGIN_HANDLERS(SongHeaderNode)
-    HANDLE_EXPR(get_song_count, mDiscSongs + mDLCSongs)
-    HANDLE_EXPR(get_download_count, mDLCSongs)
-    HANDLE_EXPR(get_disc_count, mDiscSongs)
+    HANDLE_EXPR(get_song_count, mDiscCount + mDownloadCount)
+    HANDLE_EXPR(get_download_count, mDownloadCount)
+    HANDLE_EXPR(get_disc_count, mDiscCount)
     HANDLE_SUPERCLASS(NavListHeaderNode)
 END_HANDLERS
 
 BEGIN_HANDLERS(SongSortNode)
-    HANDLE_MEMBER_PTR(const_cast<HamSongMetadata *>(unk_0x48->Metadata()))
+    HANDLE_MEMBER_PTR(const_cast<HamSongMetadata *>(mSongRecord->GetData()))
     HANDLE_SUPERCLASS(NavListItemNode)
 END_HANDLERS
 
-void SongFunctionNode::OnHighlight() { TheSongSortMgr->GetSongPreview()->Start(0, 0); }
+void SongFunctionNode::OnHighlight() { TheSongSortMgr->GetSongPreview().Start(0, 0); }
 
 bool SongFunctionNode::IsActive() const {
     static Symbol play_setlist("play_setlist");
-    return unk4c != play_setlist;
+    return mToken != play_setlist;
 }
 
 Symbol SongFunctionNode::OnSelect() {

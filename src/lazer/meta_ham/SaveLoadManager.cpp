@@ -607,7 +607,7 @@ DataNode SaveLoadManager::OnMsg(const SigninChangedMsg &msg) {
     case 0x61:
     case 0x62:
     case 99: {
-        HamProfile *critProfile = TheProfileMgr.CriticalProfile();
+        HamProfile *critProfile = TheProfileMgr.GetCriticalProfile();
         bool changed = mProfileCur
             && ThePlatformMgr.HasPadNumsSigninChanged(mProfileCur->GetPadNum());
 

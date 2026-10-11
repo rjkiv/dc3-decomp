@@ -46,8 +46,8 @@ public:
 class CmdChangeProfileOnlineID : public QueueableCommand {
 public:
     virtual int GetType() { return 0; }
-    CmdChangeProfileOnlineID(String s) { str = s; }
-    String str;
+    CmdChangeProfileOnlineID(String id) { onlineID = id; }
+    String onlineID;
 };
 
 class FitnessGoalMgr : public Hmx::Object {
@@ -61,15 +61,6 @@ public:
     void UpdateFitnessGoal(HamProfile *);
 
     static void Init();
-
-protected:
-    String unk2c;
-    String unk34;
-    std::list<QueueableCommand *> mCommands; // 0x3c
-    bool unk44;
-    RCJob *unk48;
-    HamProfile *unk4c;
-    std::list<HamProfile *> unk50;
 
 private:
     bool IsProfileChanged();
@@ -96,6 +87,14 @@ private:
     void OnSmartGlassListen(int);
     DataNode OnMsg(RCJobCompleteMsg const &);
     DataNode OnMsg(SmartGlassMsg const &);
+
+    String mCurrProfileName; // 0x2c
+    String mCurrProfileOnlineIDs; // 0x34
+    std::list<QueueableCommand *> mCommands; // 0x3c
+    bool mIsProccessingCmd; // 0x44
+    RCJob *mCurrJob; // 0x48
+    HamProfile *mUploadingProfile; // 0x4c
+    std::list<HamProfile *> mPendingProfiles; // 0x50
 };
 
 extern FitnessGoalMgr *TheFitnessGoalMgr;

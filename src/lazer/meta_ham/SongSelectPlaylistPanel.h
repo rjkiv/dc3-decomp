@@ -18,8 +18,9 @@ public:
     SongSelectPlaylistProvider();
     Playlist *GetPlaylist(int) const;
 
+private:
     std::vector<Playlist *> m_vPlaylists; // 0x40
-    CustomPlaylist unk4c;
+    CustomPlaylist m_cBlankPlaylist; // 0x4c
 };
 
 class SongSelectPlaylistPanel : public HamPanel {
@@ -45,6 +46,7 @@ public:
     void Refresh();
     bool IsSelectingCustomPlaylist();
 
+private:
     SongSelectPlaylistProvider *m_pSongSelectPlaylistProvider; // 0x3c
     PlaylistSongProvider *m_pPlaylistSongProvider; // 0x40
 };

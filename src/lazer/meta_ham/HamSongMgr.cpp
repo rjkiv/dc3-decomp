@@ -39,7 +39,7 @@
 HamSongMgr TheHamSongMgr;
 SongMgr &TheSongMgr = TheHamSongMgr;
 
-HamSongMgr::HamSongMgr() : unkd0(0), mJukebox(2000), mRandomSongDebug(false) {
+HamSongMgr::HamSongMgr() : mTempSongData(0), mSongJuke(2000), mRandomSongDebug(false) {
     ClearAndShrink<String>(mContentAltDirs);
 }
 
@@ -54,7 +54,7 @@ BEGIN_HANDLERS(HamSongMgr)
     HANDLE_EXPR(rank_tier, RankTier(_msg->Int(2)))
     HANDLE_EXPR(rank_tier_for_song, RankTier(_msg->Sym(2)))
     HANDLE_EXPR(dancer_for_song, GetCharacter(_msg->Sym(2)))
-    HANDLE_EXPR(num_rank_tiers, (int)mRankTiers.size())
+    HANDLE_EXPR(num_rank_tiers, (int)mTierRanges.size())
     HANDLE_EXPR(rank_tier_token, RankTierToken(_msg->Int(2)))
     HANDLE(get_random_song, OnGetRandomSong)
     HANDLE_ACTION(add_recent_song, AddRecentSong(_msg->Sym(2)))
@@ -86,18 +86,18 @@ struct SongRankCmp {
 
 void HamSongMgr::ContentDone() {
     SongMgr::ContentDone();
-    unk11c.clear();
+    mAllRankedSongs.clear();
     FOREACH (it, mAvailableSongs) {
         const HamSongMetadata *data = Data(*it);
         if (data->IsRanked()) {
-            unk11c.push_back(*it);
+            mAllRankedSongs.push_back(*it);
         }
     }
-    std::sort(unk11c.begin(), unk11c.end(), SongRankCmp(this));
-    unk128.clear();
-    FOREACH (it, unk11c) {
+    std::sort(mAllRankedSongs.begin(), mAllRankedSongs.end(), SongRankCmp(this));
+    mCoreRankedSongs.clear();
+    FOREACH (it, mAllRankedSongs) {
         if (!Data(*it)->IsDownload()) {
-            unk128.push_back(*it);
+            mCoreRankedSongs.push_back(*it);
         }
     }
     InitializePlaylists();
@@ -128,10 +128,10 @@ void HamSongMgr::Init() {
     static Symbol tier_ranges("tier_ranges");
     DataArray *tierArr = cfg->FindArray(tier_ranges);
     int numTiers = tierArr->Size() - 1;
-    mRankTiers.reserve(numTiers);
+    mTierRanges.reserve(numTiers);
     for (int i = 0; i < numTiers; i++) {
         int arrIdx = i + 1;
-        mRankTiers.push_back(
+        mTierRanges.push_back(
             stlpmtx_std::make_pair(
                 tierArr->Array(arrIdx)->Int(0), tierArr->Array(arrIdx)->Int(1)
             )
@@ -140,7 +140,7 @@ void HamSongMgr::Init() {
 }
 
 void HamSongMgr::Terminate() {
-    RELEASE(unkd0);
+    RELEASE(mTempSongData);
     TheContentMgr.UnregisterCallback(this, false);
     mSongNameLookup.clear();
     mSongIDLookup.clear();
@@ -160,18 +160,18 @@ SongInfo *HamSongMgr::SongAudioData(int songID) const {
         SongInfo *songInfo = data->SongBlock();
         MILO_ASSERT(songInfo, 0x19E);
         HamSongMgr *me = const_cast<HamSongMgr *>(this);
-        RELEASE(me->unkd0);
-        me->unkd0 = new DataArraySongInfo(songInfo);
+        RELEASE(me->mTempSongData);
+        me->mTempSongData = new DataArraySongInfo(songInfo);
         const char *content = ContentName(songID);
         if (content && TheContentMgr.IsMounted(content)) {
             const char *root = ContentNameRoot(content);
             if (root) {
-                const char *base = unkd0->GetBaseFileName();
+                const char *base = mTempSongData->GetBaseFileName();
                 MILO_ASSERT(!streq(root, ""), 0x1B1);
-                unkd0->SetBaseFileName(MakeString("%s/%s", root, base));
+                mTempSongData->SetBaseFileName(MakeString("%s/%s", root, base));
             }
         }
-        return unkd0;
+        return mTempSongData;
     }
 }
 
@@ -330,7 +330,7 @@ char const *HamSongMgr::GetAlbumArtPath(Symbol shortname) const {
 
 void HamSongMgr::AddRecentSong(Symbol shortname) {
     int id = GetSongIDFromShortName(shortname, true);
-    mJukebox.Play(id);
+    mSongJuke.Play(id);
 }
 
 Symbol HamSongMgr::GetArtistNameFromShortName(Symbol shortname) {
@@ -427,7 +427,7 @@ void HamSongMgr::InitializePlaylists() {
         bool isFitness = false;
         playlistEntry->FindData(is_fitness, isFitness, false);
         p->SetName(playlistName);
-        p->SetFitness(isFitness);
+        p->SetIsFitness(isFitness);
         DataArray *songArray = playlistEntry->FindArray(songs);
         MILO_ASSERT(songArray, 0xed);
         for (int j = 1; j < songArray->Size(); j++) {
@@ -449,7 +449,7 @@ void HamSongMgr::InitializePlaylists() {
     }
     std::map<Symbol, Playlist *> playlistMap;
     char buffer[64];
-    FOREACH (it, TheHamSongMgr.unk11c) {
+    FOREACH (it, TheHamSongMgr.mAllRankedSongs) {
         const HamSongMetadata *data = TheHamSongMgr.Data(*it);
         if (data->IsComplete() && !data->IsFake()
             && TheProfileMgr.IsContentUnlocked(data->ShortName())) {
@@ -466,7 +466,7 @@ void HamSongMgr::InitializePlaylists() {
                 playlistMap[decadeSym] = new Playlist();
                 sprintf(playlistBuffer, "%s_dynamic_playlist", decadeSym.Str());
                 playlistMap[decadeSym]->SetName(playlistBuffer);
-                playlistMap[decadeSym]->SetUnk9(true);
+                playlistMap[decadeSym]->SetIsEra(true);
             }
             playlistMap[crewSym]->AddSong(*it);
             playlistMap[decadeSym]->AddSong(*it);
@@ -505,7 +505,7 @@ void HamSongMgr::ClearPlaylists() {
 DataNode HamSongMgr::OnGetRandomSong(DataArray *) { return GetRandomSong(); }
 
 const std::vector<int> &HamSongMgr::RankedSongs(SongType s) const {
-    return s == 1 ? unk128 : unk11c;
+    return s == 1 ? mCoreRankedSongs : mAllRankedSongs;
 }
 
 bool HamSongMgr::IsDummySong(Symbol shortname) const {
@@ -519,8 +519,8 @@ void HamSongMgr::AddSongs(DataArray *a) {
 
 int HamSongMgr::RankTier(int rank) const {
     int i = 0;
-    for (; i < mRankTiers.size(); i++) {
-        if (rank <= mRankTiers[i].second) {
+    for (; i < mTierRanges.size(); i++) {
+        if (rank <= mTierRanges[i].second) {
             return i;
         }
     }
@@ -564,7 +564,7 @@ Symbol HamSongMgr::GetRandomSong() {
             vec68.push_back(*it);
         }
     }
-    int randID = mJukebox.Pick(vec68);
+    int randID = mSongJuke.Pick(vec68);
     Symbol ret = GetShortNameFromSongID(randID);
     if (mRandomSongDebug) {
         MILO_LOG("Picked %s\n", ret);
