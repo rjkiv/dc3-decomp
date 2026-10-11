@@ -257,14 +257,14 @@ void HamAudio::SetCrossfadeJump(float fromMs, float toMs, float fadeMs) {
     MILO_ASSERT_FMT(
         mSongStreams[0] && mSongStreams[1], "Crossfade requires 2 song streams"
     );
-    if (mQueuedCrossfade.mXstate != CrossfadeState::CFS_UNSET) {
+    if (mQueuedCrossfade.mXstate != CFS_UNSET) {
         MILO_NOTIFY("Stomping on current queued crossfade");
     }
     Crossfade &fade = mQueuedCrossfade;
     fade.fadeMs = fadeMs;
     fade.mXtoMs = toMs;
     fade.mXfromMs = fromMs;
-    fade.mXstate = CrossfadeState::CFS_READY;
+    fade.mXstate = CFS_READY;
     bool skip = false;
     if (fade.mXfromMs - fade.fadeMs / 2 <= 0) {
         MILO_NOTIFY(
@@ -272,7 +272,7 @@ void HamAudio::SetCrossfadeJump(float fromMs, float toMs, float fadeMs) {
         );
         skip = true;
     }
-    if (mActiveCrossfade.mXstate > CrossfadeState::CFS_READY
+    if (mActiveCrossfade.mXstate > CFS_READY
         && fade.mXfromMs - fade.fadeMs / 2
             <= mActiveCrossfade.fadeMs / 2 + mActiveCrossfade.mXtoMs) {
         MILO_NOTIFY(
@@ -281,7 +281,7 @@ void HamAudio::SetCrossfadeJump(float fromMs, float toMs, float fadeMs) {
         skip = true;
     }
     if (skip) {
-        mQueuedCrossfade.mXstate = CrossfadeState::CFS_UNSET;
+        mQueuedCrossfade.mXstate = CFS_UNSET;
     }
     SetLoop(toMs, fromMs, mSongStreams[0]);
 }

@@ -17,7 +17,7 @@ enum CrossfadeState {
 class HamAudio : public Hmx::Object, public HxAudio {
 public:
     struct Crossfade {
-        Crossfade() : mXstate(CrossfadeState::CFS_UNSET) {}
+        Crossfade() : mXstate(CFS_UNSET) {}
         float mXfromMs;
         float mXtoMs;
         float fadeMs;
