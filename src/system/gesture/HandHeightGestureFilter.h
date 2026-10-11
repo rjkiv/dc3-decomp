@@ -10,13 +10,14 @@ public:
     void Update(const Skeleton &, int);
     void Clear();
 
-    float GetUnk8() const { return unk8; }
-    int GetUnkC() const { return unkc; }
-    float GetUnk10() const { return unk10; }
+    float GetHeightAdjust() const { return mHeightAdjust; }
+    JointConfidence Confidence() const { return mConfidence; }
+    float GetHandHeight() { return mHeightAdjust; }
+    void SetHeightAdjust(float newHeightAdjust) { mHeightAdjust = newHeightAdjust; }
 
 protected:
     SkeletonSide mSide; // 0x4
-    float unk8; // 0x8
-    int unkc; // 0xc - height?
-    float unk10; // 0x10
+    float mHeightAdjust; // 0x8
+    JointConfidence mConfidence; // 0xC
+    float mHandHeight; // 0x10
 };

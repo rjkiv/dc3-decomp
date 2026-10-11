@@ -19,19 +19,19 @@ public:
     void Update(const Skeleton &, int);
     void Update(int, int);
     void Clear();
+    bool IsStandingStill() { return mStandingStillFilter.Satisfied(); }
     bool HandRaised() const { return mHandRaised; }
-    void SetHandRaised(bool b) { mHandRaised = b; }
-    void SetRaisedMs(int i) { mRaisedMs = i; }
-    int RaisedMs() const { return mRaisedMs; }
-    StandingStillGestureFilter &StandingStillFilter() { return mStandingStillFilter; }
+    bool HandPotentiallyRaised() {} // ???
+    int RaisedMs() const { return mHandRaisedTimer; }
 
     NEW_OBJ(HandRaisedGestureFilter)
 
 protected:
     HandRaisedGestureFilter();
 
+private:
     bool mHandRaised; // 0x2c
-    int mRaisedMs; // 0x30
-    int mRequiredMs; // 0x34
+    int mHandRaisedTimer; // 0x30
+    int mNeedHandRaisedTime; // 0x34
     StandingStillGestureFilter mStandingStillFilter; // 0x38
 };

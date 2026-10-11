@@ -15,13 +15,13 @@ StandingStillGestureFilter::~StandingStillGestureFilter() {}
 BEGIN_HANDLERS(StandingStillGestureFilter)
     HANDLE_ACTION(clear, Clear())
     HANDLE_ACTION(update, Update(_msg->Int(2), _msg->Int(3)))
-    HANDLE_EXPR(check, mStandingStill)
+    HANDLE_EXPR(check, mSatisfied)
     HANDLE_EXPR(raised_ms, mRaisedMs)
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
 
 BEGIN_PROPSYNCS(StandingStillGestureFilter)
-    SYNC_PROP(required_ms, mStandingStill)
+    SYNC_PROP(required_ms, mSatisfied)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
@@ -43,6 +43,6 @@ void StandingStillGestureFilter::Update(int trackingID, int j) {
 }
 
 void StandingStillGestureFilter::Clear() {
-    mStandingStill = 0;
+    mSatisfied = 0;
     mRaisedMs = 0;
 }

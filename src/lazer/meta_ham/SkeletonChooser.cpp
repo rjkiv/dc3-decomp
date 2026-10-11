@@ -810,7 +810,7 @@ int SkeletonChooser::RoundRobinForStandingStill(int i) {
         mStandingStillFilter[0]->Update(
             skel.TrackingID(), TheTaskMgr.DeltaUISeconds() * 1000.0f
         );
-        if (mStandingStillFilter[0]->StandingStill()) {
+        if (mStandingStillFilter[0]->Satisfied()) {
             mLookingAtIndex = -1;
         } else {
             if (StandingStillRaisedEnough()) {

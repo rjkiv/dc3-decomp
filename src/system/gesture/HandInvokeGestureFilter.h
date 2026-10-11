@@ -8,20 +8,20 @@ public:
     HandInvokeGestureFilter();
     virtual ~HandInvokeGestureFilter();
 
-    void Update(const Skeleton &, int ms);
-    bool GetUnk140() const { return unk140; }
+    void Update(const Skeleton &, int elapsed_ms);
+    bool InPosition() const { return mInPosition; }
 
 private:
     float GetBend(const Vector3 &, const Vector3 &, const Vector3 &) const;
     bool UpdateBodyPlane(const Skeleton &, float);
     bool CalcInPose(const Skeleton &, float);
 
-    Vector3DESmoother unk4; // 0x4
-    Vector3 unk40; // 0x40
-    Vector3DESmoother unk50; // 0x50
-    Vector3DESmoother unk8c; // 0x8c
-    Vector3DESmoother unkc8; // 0xc8
-    Vector3DESmoother unk104; // 0x104
-    bool unk140;
-    int unk144;
+    Vector3DESmoother mForward; // 0x4
+    Vector3 mRight; // 0x40
+    Vector3DESmoother mDampenedRightHand; // 0x50
+    Vector3DESmoother mDampenedRightShoulder; // 0x8C
+    Vector3DESmoother mDampenedLeftHand; // 0xC8
+    Vector3DESmoother mDampenedLeftShoulder; // 0x104
+    bool mInPosition; // 0x140
+    int mTimer; // 0x144
 };

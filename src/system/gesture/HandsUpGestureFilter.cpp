@@ -6,19 +6,19 @@
 #include "math/Mtx.h"
 #include "obj/Object.h"
 
-HandsUpGestureFilter::HandsUpGestureFilter() : mRequiredMs(500) { Clear(); }
+HandsUpGestureFilter::HandsUpGestureFilter() : mNeedHandsUpTime(500) { Clear(); }
 
 HandsUpGestureFilter::~HandsUpGestureFilter() {}
 
 BEGIN_PROPSYNCS(HandsUpGestureFilter)
-    SYNC_PROP(required_ms, mRequiredMs)
+    SYNC_PROP(required_ms, mNeedHandsUpTime)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
-void HandsUpGestureFilter::Update(Skeleton const &skeleton, int i) {
+void HandsUpGestureFilter::Update(Skeleton const &skeleton, int elapsed_ms) {
     if (skeleton.IsTracked()) {
         mHandsUp = true;
-        mRaisedMs = 1;
+        mHandsUpTimer = 1;
         return;
     }
 
@@ -33,25 +33,25 @@ void HandsUpGestureFilter::Update(Skeleton const &skeleton, int i) {
     }
 }
 
-void HandsUpGestureFilter::Update(int i, int j) {
-    Skeleton *skel = TheGestureMgr->GetSkeletonByTrackingID(i);
+void HandsUpGestureFilter::Update(int trackingId, int elapsed_ms) {
+    Skeleton *skel = TheGestureMgr->GetSkeletonByTrackingID(trackingId);
     if (skel)
-        Update(*skel, j);
+        Update(*skel, elapsed_ms);
     else {
         mHandsUp = false;
-        mRaisedMs = 0;
+        mHandsUpTimer = 0;
     }
 }
 
 void HandsUpGestureFilter::Clear() {
     mHandsUp = false;
-    mRaisedMs = 0;
+    mHandsUpTimer = 0;
 }
 
 BEGIN_HANDLERS(HandsUpGestureFilter)
     HANDLE_ACTION(clear, Clear())
     HANDLE_ACTION(update, Update(_msg->Int(2), _msg->Int(3)))
     HANDLE_EXPR(check, mHandsUp)
-    HANDLE_EXPR(raised_ms, mRaisedMs)
+    HANDLE_EXPR(raised_ms, mHandsUpTimer)
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
