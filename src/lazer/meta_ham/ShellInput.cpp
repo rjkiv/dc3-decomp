@@ -156,8 +156,10 @@ void ShellInput::Poll() {
                 }
             }
         }
-    } else if (TheHamProvider->Property(is_in_infinite_party_mode)->Int()
-               || TheHamProvider->Property(is_in_party_mode)->Int()) {
+    } else if (
+        TheHamProvider->Property(is_in_infinite_party_mode)->Int()
+        || TheHamProvider->Property(is_in_party_mode)->Int()
+    ) {
         TheGestureMgr->SetIdentificationEnabled(false);
         if (TheHamProvider->Property(is_in_shell_pause)->Int() == 0) {
             if (mInvokeOptionsFilter->InPosition() && !sPracticeOptionsInvokedPartyMode) {
@@ -373,7 +375,7 @@ void ShellInput::SyncToCurrentScreen() {
     } else {
         mInputPanel = TheHamUI.FocusPanel();
     }
-    TheGestureMgr->SetBool4271(!IsGameplayPanel());
+    TheGestureMgr->SetUIMode(!IsGameplayPanel());
     TheHamUI.Helpbar()->SyncToPanel(mInputPanel);
     mControllerModeTimeoutDurationMs = 5000;
     if (TheHamUI.Helpbar()) {

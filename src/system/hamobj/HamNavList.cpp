@@ -421,7 +421,7 @@ void HamNavList::HandleHighlightChanged(int i) {
         if (sendMsg) {
             SendHighlightSettledMsg(i);
         }
-        if (TheGestureMgr->GetBool4271() && mListRibbon) {
+        if (TheGestureMgr->UIMode() && mListRibbon) {
             mListRibbon->PlayHighlightSound(i);
         }
     }
@@ -866,9 +866,11 @@ void HamNavList::Poll() {
                      || !mListState.ScrollPastMinDisplay())
                     && mScrollSpeedIndicator->GetUnk1FC()) {
                     mScrollSpeedIndicator->Show(false);
-                } else if (mRibbonMode == HamListRibbon::kRibbonSwell
-                           && !mScrollSpeedIndicator->GetUnk1FC()
-                           && mListState.ScrollPastMinDisplay()) {
+                } else if (
+                    mRibbonMode == HamListRibbon::kRibbonSwell
+                    && !mScrollSpeedIndicator->GetUnk1FC()
+                    && mListState.ScrollPastMinDisplay()
+                ) {
                     mScrollSpeedIndicator->Show(true);
                 } else {
                     mScrollSpeedIndicator->Update(
@@ -1435,8 +1437,10 @@ DataNode HamNavList::OnMsg(const ButtonDownMsg &msg) {
                 if (mListState.ScrollPastMinDisplay()) {
                     if (selected < mListState.FirstShowing()) {
                         mScrollBehavior.ScrollUp(false);
-                    } else if (selected >= mListState.FirstShowing()
-                                   + HamListRibbon::sNumListSelectable) {
+                    } else if (
+                        selected
+                        >= mListState.FirstShowing() + HamListRibbon::sNumListSelectable
+                    ) {
                         mScrollBehavior.ScrollDown(false);
                     } else {
                         SetHighlight(selected);

@@ -182,7 +182,9 @@ float HamPlayerData::TrackingAgeSeconds() const {
 }
 
 bool HamPlayerData::IsPlaying() const {
-    if (!TheLoadMgr.EditMode() && mAutoplay.Null() && TheGestureMgr->GetVal425C() != 1) {
+    if (!TheLoadMgr.EditMode() && mAutoplay.Null()
+        && TheGestureMgr->PauseOnSkeletonLoss()
+            != GestureMgr::kSkelLoss_NoPauseFlashcardsDontDropOut) {
         return mSkeletonTrackingID > 0;
     } else {
         return true;

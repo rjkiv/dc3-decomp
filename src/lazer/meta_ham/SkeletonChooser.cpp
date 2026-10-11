@@ -469,7 +469,7 @@ bool SkeletonChooser::ShouldWaitForRecovery() {
     if (id1 > 0) {
         skel1 = TheGestureMgr->GetSkeletonByTrackingID(id1);
     }
-    if ((!skel0 || !skel1) && TheGestureMgr->Recoverer().WaitingToRecover()) {
+    if ((!skel0 || !skel1) && TheGestureMgr->GetSkeletonRecoverer().WaitingToRecover()) {
         return true;
     } else {
         return false;
@@ -477,7 +477,7 @@ bool SkeletonChooser::ShouldWaitForRecovery() {
 }
 
 bool SkeletonChooser::PotentiallyRecoverSkeletons() {
-    SkeletonRecoverer &recoverer = TheGestureMgr->Recoverer();
+    SkeletonRecoverer &recoverer = TheGestureMgr->GetSkeletonRecoverer();
     int id0 = TheGameData->Player(0)->GetSkeletonTrackingID();
     int id1 = TheGameData->Player(1)->GetSkeletonTrackingID();
     bool ret = false;
@@ -508,7 +508,7 @@ int SkeletonChooser::NextSkeletonIndexToTrack(int i1) {
     int i = 0; // moving this here made it almost match so idk
     int curSkelIdx = (i1 + 1) % 6;
     int idxToTrack = -1;
-    SkeletonRecoverer &recoverer = TheGestureMgr->Recoverer();
+    SkeletonRecoverer &recoverer = TheGestureMgr->GetSkeletonRecoverer();
     for (; i < 6; i++) {
         int skelID = TheGestureMgr->GetSkeleton(curSkelIdx).TrackingID();
         if (idxToTrack >= 0) {
@@ -757,7 +757,7 @@ void SkeletonChooser::ResolveMultiPlayerUpdate() {
 
     for (int i = 0; i < 6; i++) {
         mSkeletonHandRaised[i] = 0;
-        TheGestureMgr->SetUnk30AtPos(i, 0);
+        TheGestureMgr->SetSkeletonStatus(i, 0);
     }
 
     for (int i = 0; i < 6; i++) {
@@ -773,7 +773,7 @@ void SkeletonChooser::ResolveMultiPlayerUpdate() {
 
 int SkeletonChooser::GetNumValidSkeletonChoices() {
     int numValidSkeletonChoices = 0;
-    SkeletonRecoverer &recoverer = TheGestureMgr->Recoverer();
+    SkeletonRecoverer &recoverer = TheGestureMgr->GetSkeletonRecoverer();
     for (int i = 0; i < 6; i++) {
         Skeleton &skel = TheGestureMgr->GetSkeleton(i);
         int trackingID = skel.TrackingID();

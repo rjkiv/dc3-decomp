@@ -29,38 +29,38 @@ GestureMgr *TheGestureMgr;
 bool GestureMgr::sIdentityOpInProgress;
 
 GestureMgr::GestureMgr()
-    : mLiveCamInput(LiveCameraInput::sInstance), unk425c(2), mIDEnabled(1),
-      mInControllerMode(0), mInVoiceMode(0), mGesturingWithVoice(0), mInDoubleUserMode(0),
-      unk4271(0), unk4274(0) {
+    : mLiveCamInput(LiveCameraInput::sInstance), mPauseOnSkeletonLoss(kSkelLoss_Pause),
+      mIdentificationEnabled(1), mInControllerMode(0), mInVoiceMode(0),
+      mGesturingWithVoice(0), mInDoubleUserMode(0), mUIMode(0), mSkeletonDebugDisplay(0) {
     MILO_ASSERT(mLiveCamInput, 0x40);
-    mPlayerSkeletonIDs[0] = -1;
-    mPlayerSkeletonIDs[1] = -1;
-    for (int i = 0; i < 6; i++) {
+    mPlayerSkeletonID[0] = -1;
+    mPlayerSkeletonID[1] = -1;
+    for (int i = 0; i < NUM_SKELETONS; i++) {
         mSkeletons[i].Init();
-        mFilters[i].Init(sConfidenceLossThreshold, sConfidenceRegainThreshold);
-        mIdentityInfos[i].mSkeletonIdx = i;
-        unk30[i] = 0;
+        mSkeletonQuality[i].Init(sConfidenceLossThreshold, sConfidenceRegainThreshold);
+        mIdentityInfo[i].mSkeletonIdx = i;
+        mSkeletonTrackingStatus[i] = 0;
     }
-    mTrackingAllSkeletons = false;
+    mTrackAllSkeletons = false;
     SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
     handle.AddCallback(this);
-    memset(&mOverlapped, 0, sizeof(XOVERLAPPED));
+    memset(&mTiltOverlapped, 0, sizeof(XOVERLAPPED));
 }
 
 GestureMgr::~GestureMgr() {
     SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
     handle.RemoveCallback(this);
-    RELEASE(unk4274);
+    RELEASE(mSkeletonDebugDisplay);
 }
 
 BEGIN_HANDLERS(GestureMgr)
-    HANDLE_EXPR(pause_on_skeleton_loss, unk425c)
+    HANDLE_EXPR(pause_on_skeleton_loss, mPauseOnSkeletonLoss)
     HANDLE_EXPR(toggle_pause_on_skeleton_loss, TogglePauseOnSkeletonLoss())
     HANDLE_EXPR(get_max_snapshots, mLiveCamInput->MaxSnapshots())
     HANDLE_ACTION(init_snapshots, mLiveCamInput->InitSnapshots(_msg->Int(2)))
     HANDLE_ACTION(clear_snapshots, mLiveCamInput->ClearSnapshots())
     HANDLE_EXPR(num_snapshots, mLiveCamInput->NumSnapshots())
-    HANDLE_EXPR(snapshot_tex, GetSnapshotTex(_msg->Int(2)))
+    HANDLE_EXPR(snapshot_tex, SnapshotTex(_msg->Int(2)))
     HANDLE_ACTION(start_snapshot_batch, mLiveCamInput->StartSnapshotBatch())
     HANDLE_EXPR(num_snapshot_batches, mLiveCamInput->NumSnapshotBatches())
     HANDLE_EXPR(
@@ -83,10 +83,10 @@ BEGIN_HANDLERS(GestureMgr)
         toggle_autoexposure,
         mLiveCamInput->SetAutoexposure(!mLiveCamInput->GetAutoexposure())
     )
-    HANDLE_EXPR(is_identification_enabled, mIDEnabled)
+    HANDLE_EXPR(is_identification_enabled, mIdentificationEnabled)
     HANDLE_ACTION(set_identification_enabled, SetIdentificationEnabled(_msg->Int(2)))
     HANDLE_ACTION(auto_tilt, AutoTilt())
-    HANDLE_EXPR(get_player_index_by_tracking_id, mPlayerSkeletonIDs[1] == _msg->Int(2))
+    HANDLE_EXPR(get_player_index_by_tracking_id, mPlayerSkeletonID[1] == _msg->Int(2))
     HANDLE_EXPR(
         get_skeleton_index_by_tracking_id, GetSkeletonIndexByTrackingID(_msg->Int(2))
     )
@@ -124,8 +124,8 @@ void GestureMgr::DebugInit() {
     const char *debugStr = nullptr;
     if (SystemConfig("kinect")->FindData("gesture_debug", debugStr, false) && debugStr) {
         ObjectDir *dir = DirLoader::LoadObjects(debugStr, nullptr, nullptr);
-        TheGestureMgr->unk4274 = dynamic_cast<RndDir *>(dir);
-        if (!TheGestureMgr->unk4274 && dir) {
+        TheGestureMgr->mSkeletonDebugDisplay = dynamic_cast<RndDir *>(dir);
+        if (!TheGestureMgr->mSkeletonDebugDisplay && dir) {
             delete dir;
         }
     }
@@ -138,22 +138,23 @@ void GestureMgr::Terminate() {
 }
 
 void GestureMgr::Poll() {
-    if (TheSpeechMgr)
+    if (TheSpeechMgr) {
         TheSpeechMgr->Poll();
+    }
     TheCameraTilt->Poll();
     TheWaveToTurnOnLight->Poll();
 }
 
 IdentityInfo *GestureMgr::GetIdentityInfo(int idx) {
-    if (idx >= 0 && idx < 6)
-        return &mIdentityInfos[idx];
+    if (idx >= 0 && idx < NUM_SKELETONS)
+        return &mIdentityInfo[idx];
     else
         return nullptr;
 }
 
 int GestureMgr::GetSkeletonIndexByTrackingID(int id) const {
     if (id > 0) {
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < NUM_SKELETONS; i++) {
             if (mSkeletons[i].TrackingID() == id)
                 return i;
         }
@@ -163,7 +164,7 @@ int GestureMgr::GetSkeletonIndexByTrackingID(int id) const {
 
 Skeleton *GestureMgr::GetSkeletonByTrackingID(int id) {
     if (id > 0) {
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < NUM_SKELETONS; i++) {
             if (mSkeletons[i].TrackingID() == id
                 && mSkeletons[i].TrackingState() != kSkeletonNotTracked)
                 return &mSkeletons[i];
@@ -174,7 +175,7 @@ Skeleton *GestureMgr::GetSkeletonByTrackingID(int id) {
 
 Skeleton *GestureMgr::GetSkeletonByEnrollmentIndex(int idx) {
     if (idx >= 0) {
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < NUM_SKELETONS; i++) {
             if (mSkeletons[i].GetEnrollmentIndex() == idx) {
                 return &mSkeletons[i];
             }
@@ -184,29 +185,29 @@ Skeleton *GestureMgr::GetSkeletonByEnrollmentIndex(int idx) {
 }
 
 Skeleton *GestureMgr::GetActiveSkeleton() {
-    return GetSkeletonByTrackingID(mActiveSkelTrackingID);
+    return GetSkeletonByTrackingID(mActiveTrackingID);
 }
 
 Skeleton &GestureMgr::GetSkeleton(int idx) {
-    MILO_ASSERT((0) <= (idx) && (idx) < (6), 0x99);
+    MILO_ASSERT_RANGE(idx, 0, 6, 0x99);
     return mSkeletons[idx];
 }
 
 const Skeleton &GestureMgr::GetSkeleton(int idx) const {
-    MILO_ASSERT((0) <= (idx) && (idx) < (6), 0x9F);
+    MILO_ASSERT_RANGE(idx, 0, 6, 0x9F);
     return mSkeletons[idx];
 }
 
 SkeletonQualityFilter &GestureMgr::GetSkeletonQualityFilter(int idx) {
-    MILO_ASSERT((0) <= (idx) && (idx) < (6), 0x122);
-    return mFilters[idx];
+    MILO_ASSERT_RANGE(idx, 0, 6, 0x122);
+    return mSkeletonQuality[idx];
 }
 
 int GestureMgr::GetActiveSkeletonIndex() const {
     int i;
-    if (mActiveSkelTrackingID > 0) {
-        for (i = 0; i < 6; i++) {
-            if (mSkeletons[i].TrackingID() == mActiveSkelTrackingID)
+    if (mActiveTrackingID > 0) {
+        for (i = 0; i < NUM_SKELETONS; i++) {
+            if (mSkeletons[i].TrackingID() == mActiveTrackingID)
                 goto done;
         }
     }
@@ -216,17 +217,17 @@ done:
 }
 
 void GestureMgr::SetTrackedSkeletons(int i1, int i2) {
-    mPlayerSkeletonIDs[0] = i1;
-    mPlayerSkeletonIDs[1] = i2;
+    mPlayerSkeletonID[0] = i1;
+    mPlayerSkeletonID[1] = i2;
     UpdateTrackedSkeletons();
 }
 
 void GestureMgr::SetIdentificationEnabled(bool enabled) {
-    if (enabled != mIDEnabled) {
+    if (enabled != mIdentificationEnabled) {
         if (!enabled) {
             NuiIdentityAbort();
         }
-        mIDEnabled = enabled;
+        mIdentificationEnabled = enabled;
     }
 }
 
@@ -238,57 +239,57 @@ void GestureMgr::SetGesturingWithVoice(bool gesturing) {
 void GestureMgr::SetInDoubleUserMode(bool mode) { mInDoubleUserMode = mode; }
 
 void GestureMgr::StartTrackAllSkeletons() {
-    mTrackingAllSkeletons = true;
-    for (int i = 0; i < 6; i++) {
-        mFilters[i].Init(10, 12);
-        mFilters[i].SetSidewaysCutoffThreshold(0.9);
+    mTrackAllSkeletons = true;
+    for (int i = 0; i < NUM_SKELETONS; i++) {
+        mSkeletonQuality[i].Init(10, 12);
+        mSkeletonQuality[i].SetSidewaysCutoffThreshold(0.9);
     }
 }
 
 void GestureMgr::CancelTrackAllSkeletons() {
-    mTrackingAllSkeletons = false;
-    for (int i = 0; i < 6; i++) {
-        mFilters[i].Init(sConfidenceLossThreshold, sConfidenceRegainThreshold);
-        mFilters[i].RestoreDefaultSidewaysCutoffThreshold();
+    mTrackAllSkeletons = false;
+    for (int i = 0; i < NUM_SKELETONS; i++) {
+        mSkeletonQuality[i].Init(sConfidenceLossThreshold, sConfidenceRegainThreshold);
+        mSkeletonQuality[i].RestoreDefaultSidewaysCutoffThreshold();
     }
 }
 
-bool GestureMgr::IsTrackingAllSkeletons() const { return mTrackingAllSkeletons; }
+bool GestureMgr::IsTrackingAllSkeletons() const { return mTrackAllSkeletons; }
 
 bool GestureMgr::IsSkeletonValid(int idx) const {
-    MILO_ASSERT((0) <= (idx) && (idx) < (6), 0x128);
-    return mFilters[idx].Valid();
+    MILO_ASSERT_RANGE(idx, 0, 6, 0x128);
+    return mSkeletonQuality[idx].Valid();
 }
 
 bool GestureMgr::IsSkeletonSitting(int idx) const {
-    MILO_ASSERT((0) <= (idx) && (idx) < (6), 0x12E);
-    return mFilters[idx].Sitting();
+    MILO_ASSERT_RANGE(idx, 0, 6, 0x12E);
+    return mSkeletonQuality[idx].Sitting();
 }
 
 bool GestureMgr::IsSkeletonSideways(int idx) const {
-    MILO_ASSERT((0) <= (idx) && (idx) < (6), 0x134);
-    return mFilters[idx].Sideways();
+    MILO_ASSERT_RANGE(idx, 0, 6, 0x134);
+    return mSkeletonQuality[idx].Sideways();
 }
 
 void GestureMgr::UpdateTrackedSkeletons() {
     LiveCameraInput *cameraInput = mLiveCamInput;
     MILO_ASSERT(cameraInput, 0x14F);
-    cameraInput->SetTrackedSkeletons(mPlayerSkeletonIDs[0], mPlayerSkeletonIDs[1]);
+    cameraInput->SetTrackedSkeletons(mPlayerSkeletonID[0], mPlayerSkeletonID[1]);
 }
 
 int GestureMgr::GetPlayerSkeletonID(int playerIndex) {
-    MILO_ASSERT((0) <= (playerIndex) && (playerIndex) < (2), 0x2DA);
-    return mPlayerSkeletonIDs[playerIndex];
+    MILO_ASSERT_RANGE(playerIndex, 0, 2, 0x2DA);
+    return mPlayerSkeletonID[playerIndex];
 }
 
 void GestureMgr::SetPlayerSkeletonID(int playerIndex, int id) {
-    MILO_ASSERT((0) <= (playerIndex) && (playerIndex) < (2), 0x2E0);
-    mPlayerSkeletonIDs[playerIndex] = id;
+    MILO_ASSERT_RANGE(playerIndex, 0, 2, 0x2E0);
+    mPlayerSkeletonID[playerIndex] = id;
     UpdateTrackedSkeletons();
 }
 
 int GestureMgr::GetPlayerFilteredSkeletonID(int playerIndex, bool b2) {
-    MILO_ASSERT((0) <= (playerIndex) && (playerIndex) < (2), 0x2E8);
+    MILO_ASSERT_RANGE(playerIndex, 0, 2, 0x2E8);
     int id = GetPlayerSkeletonID(playerIndex);
     if (id >= 0) {
         Skeleton *skeleton = GetSkeletonByTrackingID(id);
@@ -300,7 +301,7 @@ int GestureMgr::GetPlayerFilteredSkeletonID(int playerIndex, bool b2) {
 }
 
 int GestureMgr::GetSecondarySkeletonIndex(bool b) const {
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < NUM_SKELETONS; i++) {
         if (i != GetActiveSkeletonIndex() && GetSkeleton(i).IsTracked()) {
             if (!b || GetSkeleton(i).IsValid()) {
                 return i;
@@ -311,7 +312,7 @@ int GestureMgr::GetSecondarySkeletonIndex(bool b) const {
 }
 
 DataNode GestureMgr::OnMsg(const KinectHardwareStatusMsg &msg) {
-    if (msg->Int(2) == 1) {
+    if (msg.HardwareStatus() == KinectHardwareStatusMsg::kKinectReady) {
         MILO_ASSERT(mLiveCamInput, 0x21B);
         mLiveCamInput->SetAutoexposure(true);
     }

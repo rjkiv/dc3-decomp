@@ -160,7 +160,8 @@ END_PROPSYNCS
 
 void Game::PostUpdate(const SkeletonUpdateData *data) {
     if (data) {
-        if (TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) >= 0 && !TheGamePanel->IsGameOver()) {
+        if (TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) >= 0
+            && !TheGamePanel->IsGameOver()) {
             if (!mPaused) {
                 static Symbol practice("practice");
                 static Symbol gameplay_mode("gameplay_mode");
@@ -616,7 +617,10 @@ void Game::LoadNewSong(Symbol s1, Symbol s2) {
 
 void Game::PauseForSkeletonLoss() {
     if (!mPaused) {
-        if (TheGestureMgr->GetVal425C() != 0 && TheGestureMgr->GetVal425C() != 1
+        if (TheGestureMgr->PauseOnSkeletonLoss()
+                != GestureMgr::kSkelLoss_NoPauseFlashcardsDropOut
+            && TheGestureMgr->PauseOnSkeletonLoss()
+                != GestureMgr::kSkelLoss_NoPauseFlashcardsDontDropOut
             && !TheSynth->HasPendingVoices() && !TheUI->InTransition()) {
             static Message pauseOnSkeletonLossMsg("pause_on_skeleton_loss");
             DataNode handled = TheGamePanel->HandleType(pauseOnSkeletonLossMsg);

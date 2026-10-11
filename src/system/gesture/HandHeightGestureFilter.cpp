@@ -4,16 +4,13 @@
 #include "gesture/Skeleton.h"
 
 HandHeightGestureFilter::HandHeightGestureFilter(SkeletonSide side)
-    : mSide(side), mHeightAdjust(0.15),
-      mConfidence(JointConfidence::kConfidenceNotTracked) {}
+    : mSide(side), mHeightAdjust(0.15), mConfidence(kConfidenceNotTracked) {}
 
-void HandHeightGestureFilter::Clear() {
-    mConfidence = JointConfidence::kConfidenceNotTracked;
-}
+void HandHeightGestureFilter::Clear() { mConfidence = kConfidenceNotTracked; }
 
 void HandHeightGestureFilter::Update(const Skeleton &skeleton, int i2) {
     if (!skeleton.IsTracked()) {
-        mConfidence = JointConfidence::kConfidenceNotTracked;
+        mConfidence = kConfidenceNotTracked;
         mHandHeight = 0.5;
     } else {
         const TrackedJoint &shoulder = skeleton.ShoulderJoint(mSide);
@@ -30,6 +27,6 @@ void HandHeightGestureFilter::Update(const Skeleton &skeleton, int i2) {
         skeleton.HipJoint(mSide);
         skeleton.KneeJoint(mSide);
         skeleton.ElbowJoint(mSide);
-        mConfidence = JointConfidence::kConfidenceTracked;
+        mConfidence = kConfidenceTracked;
     }
 }
