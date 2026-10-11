@@ -224,12 +224,12 @@ void Skeleton::Init() {
 
 bool Skeleton::ProfileMatched() const {
     IdentityInfo *info = TheGestureMgr->GetIdentityInfo(mSkeletonIndex);
-    return info ? info->ProfileMatched() : false;
+    return info ? info->mProfileMatched : false;
 }
 
 int Skeleton::GetEnrollmentIndex() const {
     IdentityInfo *info = TheGestureMgr->GetIdentityInfo(mSkeletonIndex);
-    return info ? info->EnrollmentIndex() : -1;
+    return info ? info->mEnrollmentIndex : -1;
 }
 
 bool Skeleton::NeedIdentify() const {
@@ -251,7 +251,7 @@ bool Skeleton::RequestIdentity() {
         }
 
         if (hr == 0) {
-            info->SetUnk0(true);
+            info->mJustIdentified = true;
         } else {
             GestureMgr::sIdentityOpInProgress = true;
         }
@@ -286,7 +286,7 @@ bool Skeleton::EnrollIdentity(int i) {
     }
 
     if (hr == 0) {
-        info->SetUnk0(true);
+        info->mJustIdentified = true;
     } else {
         GestureMgr::sIdentityOpInProgress = true;
     }
@@ -301,11 +301,11 @@ int Skeleton::IdentityCallback(void *pvContext, NUI_IDENTITY_MESSAGE *pMessage) 
     case NUI_IDENTITY_MESSAGE_ID_FRAME_PROCESSED:
         break;
     case NUI_IDENTITY_MESSAGE_ID_COMPLETE:
-        info->SetUnk0(true);
-        info->SetProfileMatched(pMessage->Data.Complete.bProfileMatched != 0);
-        if (info->EnrollmentIndex() != pMessage->Data.Complete.dwEnrollmentIndex) {
-            info->SetEnrollmentIndex(pMessage->Data.Complete.dwEnrollmentIndex);
-            info->SetUnk9(true);
+        info->mJustIdentified = true;
+        info->mProfileMatched = pMessage->Data.Complete.bProfileMatched != 0;
+        if (info->mEnrollmentIndex != pMessage->Data.Complete.dwEnrollmentIndex) {
+            info->mEnrollmentIndex = pMessage->Data.Complete.dwEnrollmentIndex;
+            info->mEnrollmentUpdated = true;
         }
         break;
     default:
@@ -326,8 +326,8 @@ void Skeleton::Poll(int skel_idx, SkeletonFrame const &skeletonFrame) {
     if (mSkeletonIndex != skel_idx && TheGestureMgr) {
         IdentityInfo *identityInfo = TheGestureMgr->GetIdentityInfo(skel_idx);
         MILO_ASSERT(identityInfo, 0x1fc);
-        identityInfo->SetProfileMatched(false);
-        identityInfo->SetEnrollmentIndex(-1);
+        identityInfo->mProfileMatched = false;
+        identityInfo->mEnrollmentIndex = -1;
     }
 
     mSkeletonIndex = skel_idx;
@@ -342,9 +342,9 @@ void Skeleton::Poll(int skel_idx, SkeletonFrame const &skeletonFrame) {
             if (TheGestureMgr) {
                 IdentityInfo *identityInfo = TheGestureMgr->GetIdentityInfo(skel_idx);
                 MILO_ASSERT(identityInfo, 0x211);
-                if (identityInfo->EnrollmentIndex() != data.mEnrollmentIndex) {
-                    identityInfo->SetEnrollmentIndex(data.mEnrollmentIndex);
-                    identityInfo->SetUnk9(true);
+                if (identityInfo->mEnrollmentIndex != data.mEnrollmentIndex) {
+                    identityInfo->mEnrollmentIndex = data.mEnrollmentIndex;
+                    identityInfo->mEnrollmentUpdated = true;
                 }
             }
 

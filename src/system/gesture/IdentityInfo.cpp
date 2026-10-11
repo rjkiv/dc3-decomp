@@ -3,13 +3,13 @@
 #include "meta_ham/SkeletonIdentifier.h"
 
 void IdentityInfo::PostUpdate() {
-    if (unk0) {
-        Identified(mEnrollmentIdx);
-        unk0 = false;
+    if (mJustIdentified) {
+        Identified(mEnrollmentIndex);
+        mJustIdentified = false;
     }
 
-    if (unk9) {
-        unk9 = false;
+    if (mEnrollmentUpdated) {
+        mEnrollmentUpdated = false;
         static SkeletonEnrollmentChangedMsg msg;
         TheGestureMgr->Export(msg, true);
     }

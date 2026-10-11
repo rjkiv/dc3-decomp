@@ -38,7 +38,7 @@ GestureMgr::GestureMgr()
     for (int i = 0; i < 6; i++) {
         mSkeletons[i].Init();
         mFilters[i].Init(sConfidenceLossThreshold, sConfidenceRegainThreshold);
-        mIdentityInfos[i].Init(i);
+        mIdentityInfos[i].mSkeletonIdx = i;
         unk30[i] = 0;
     }
     mTrackingAllSkeletons = false;
