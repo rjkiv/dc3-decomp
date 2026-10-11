@@ -337,17 +337,17 @@ bool GestureMgr::IsTrackingAllSkeletons() const { return mTrackAllSkeletons; }
 
 bool GestureMgr::IsSkeletonValid(int idx) const {
     MILO_ASSERT_RANGE(idx, 0, 6, 0x128);
-    return mSkeletonQuality[idx].Valid();
+    return mSkeletonQuality[idx].IsSkeletonValid();
 }
 
 bool GestureMgr::IsSkeletonSitting(int idx) const {
     MILO_ASSERT_RANGE(idx, 0, 6, 0x12E);
-    return mSkeletonQuality[idx].Sitting();
+    return mSkeletonQuality[idx].IsSitting();
 }
 
 bool GestureMgr::IsSkeletonSideways(int idx) const {
     MILO_ASSERT_RANGE(idx, 0, 6, 0x134);
-    return mSkeletonQuality[idx].Sideways();
+    return mSkeletonQuality[idx].IsSideways();
 }
 
 void GestureMgr::UpdateTrackedSkeletons() {

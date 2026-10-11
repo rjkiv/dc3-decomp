@@ -3,9 +3,9 @@
 #include "gesture/Skeleton.h"
 #include "math/Vec.h"
 
-bool IsSkeletonBone(const char *);
-const char *JointName(SkeletonJoint);
-const char *CharBoneName(SkeletonJoint);
-const char *MirrorBoneName(SkeletonJoint);
-void JointScreenPos(const TrackedJoint &, Vector2 &);
-void JointScreenPos(const TrackedJoint &, Vector3 &);
+bool IsSkeletonBone(const char *meshName);
+const char *JointName(SkeletonJoint joint);
+const char *CharBoneName(SkeletonJoint joint);
+const char *MirrorBoneName(SkeletonJoint joint);
+void JointScreenPos(const TrackedJoint &joint, Vector2 &pos);
+void JointScreenPos(const TrackedJoint &joint, Vector3 &pos);

@@ -86,7 +86,7 @@ void JointScreenPos(const TrackedJoint &joint, Vector2 &v2) {
     vmx.y = joint.mRawCameraPos.y;
     vmx.z = joint.mRawCameraPos.z;
     NuiTransformSkeletonToDepthImage(vmx, &fDepthX, &fDepthY);
-    v2.Set(fDepthX * 0.003125f, fDepthY * 0.004166667f);
+    v2.Set(fDepthX / 320, fDepthY / 240);
 }
 
 void JointScreenPos(const TrackedJoint &joint, Vector3 &v3) {
@@ -97,7 +97,5 @@ void JointScreenPos(const TrackedJoint &joint, Vector3 &v3) {
     vmx.y = joint.mRawCameraPos.y;
     vmx.z = joint.mRawCameraPos.z;
     NuiTransformSkeletonToDepthImage(vmx, &lDepthX, &lDepthY, &uDepth);
-    v3.x = (float)lDepthX / 240;
-    v3.y = (float)lDepthY / 320;
-    v3.z = uDepth >> 3;
+    v3.Set((float)lDepthX / 320, (float)lDepthY / 240, uDepth >> 3);
 }

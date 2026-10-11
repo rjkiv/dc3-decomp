@@ -27,7 +27,7 @@ void HandsUpGestureFilter::Update(Skeleton const &skeleton, int elapsed_ms) {
         return;
 
     SkeletonQualityFilter qualityFilter = TheGestureMgr->GetSkeletonQualityFilter(idx);
-    if (skeleton.IsTracked() && !qualityFilter.Sitting()) {
+    if (skeleton.IsTracked() && !qualityFilter.IsSitting()) {
         const TrackedJoint &lShoulder = skeleton.ShoulderJoint(kSkeletonLeft);
         const TrackedJoint &rShoulder = skeleton.ShoulderJoint(kSkeletonRight);
     }

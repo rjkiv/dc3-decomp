@@ -7,12 +7,12 @@
 #include "math/Vec.h"
 
 SkeletonQualityFilter::SkeletonQualityFilter()
-    : mConfidenceLossThreshold(0), mConfidenceRegainThreshold(20), mValid(0),
-      mConfidence(0), mSitting(0), mSideways(0), mSidewaysCutoffThreshold(0.55) {}
+    : mMinToLose(0), mNeedToRegain(20), mValid(0), mTotalConfidence(0), mSitting(0),
+      mSideways(0), mSidewaysCutoffThreshold(0.55) {}
 
 void SkeletonQualityFilter::Init(float loss, float regain) {
-    mConfidenceLossThreshold = loss;
-    mConfidenceRegainThreshold = regain;
+    mMinToLose = loss;
+    mNeedToRegain = regain;
 }
 
 void SkeletonQualityFilter::SetSidewaysCutoffThreshold(float thresh) {
@@ -24,18 +24,18 @@ void SkeletonQualityFilter::RestoreDefaultSidewaysCutoffThreshold() {
 }
 
 void SkeletonQualityFilter::UpdateIsConfident(const TrackedJoint *joints) {
-    mConfidence = 0.0f;
+    mTotalConfidence = 0.0f;
     for (int i = 0; i < kNumJoints; i++) {
         if (joints[i].mConfidence == kConfidenceTracked || i == kJointFootLeft
             || i == kJointFootRight || i == kJointAnkleLeft || i == kJointAnkleRight) {
-            mConfidence += 1.0f;
+            mTotalConfidence += 1.0f;
         }
     }
-    if (mConfidence < mConfidenceLossThreshold) {
-        mIsConfident = false;
+    if (mTotalConfidence < mMinToLose) {
+        mConfident = false;
     }
-    if (mConfidence > mConfidenceRegainThreshold) {
-        mIsConfident = true;
+    if (mTotalConfidence > mNeedToRegain) {
+        mConfident = true;
     }
 }
 
@@ -82,13 +82,13 @@ void SkeletonQualityFilter::Update(const Skeleton &skeleton, bool b2) {
             mValid = false;
             mSitting = false;
             mSideways = false;
-            mIsConfident = false;
+            mConfident = false;
             return;
         } else if (skeleton.Center() == Vector3::GetZero()) {
             mValid = false;
             mSitting = false;
             mSideways = false;
-            mIsConfident = false;
+            mConfident = false;
             return;
         } else {
             bool b3 = false;
@@ -104,7 +104,7 @@ void SkeletonQualityFilter::Update(const Skeleton &skeleton, bool b2) {
             UpdateIsSideways(joints);
             UpdateIsSitting(joints);
             if (b2 || !b3) {
-                if (mIsConfident && !mSideways && !mSitting) {
+                if (mConfident && !mSideways && !mSitting) {
                     b3 = true;
                 } else {
                     b3 = false;
