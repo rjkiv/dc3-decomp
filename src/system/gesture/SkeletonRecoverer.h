@@ -1,16 +1,14 @@
 #pragma once
+#include "math/Vec.h"
 #include "types.h"
 #include <list>
 
 class SkeletonRecoverer {
 public:
     struct TrackingIDHistory {
-        int unk0;
-        float unk4;
-        float unk8;
-        float unkc;
-        float unk10;
-        float unk14;
+        int mTrackingID; // 0x0
+        Vector3 mPos; // 0x4
+        float mAge; // 0x14
     };
     SkeletonRecoverer();
     virtual ~SkeletonRecoverer();
@@ -20,7 +18,7 @@ public:
     void Poll();
 
 protected:
-    std::list<TrackingIDHistory> mIDHistory; // 0x4
+    std::list<TrackingIDHistory> mHistory; // 0x4
 
 private:
     bool IsSkeletonTracked(int) const;

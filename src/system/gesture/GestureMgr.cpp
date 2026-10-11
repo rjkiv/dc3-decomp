@@ -241,13 +241,15 @@ IdentityInfo *GestureMgr::GetIdentityInfo(int idx) {
 }
 
 int GestureMgr::GetSkeletonIndexByTrackingID(int id) const {
-    if (id > 0) {
+    if (id <= 0) {
+        return -1;
+    } else {
         for (int i = 0; i < NUM_SKELETONS; i++) {
             if (mSkeletons[i].TrackingID() == id)
                 return i;
         }
+        return -1;
     }
-    return -1;
 }
 
 Skeleton *GestureMgr::GetSkeletonByTrackingID(int id) {

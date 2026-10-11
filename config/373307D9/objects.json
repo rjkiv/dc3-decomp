@@ -291,7 +291,7 @@
             "system/gesture/FitnessFilter.cpp": "Matching",
             "system/gesture/FreestyleMotionFilter.cpp": "NonMatching",
             "system/gesture/Gesture.cpp": "Matching",
-            "system/gesture/GestureMgr.cpp": "NonMatching",
+            "system/gesture/GestureMgr.cpp": "Matching",
             "system/gesture/HandHeightGestureFilter.cpp": "Matching",
             "system/gesture/HandInvokeGestureFilter.cpp": "NonMatching",
             "system/gesture/HandRaisedGestureFilter.cpp": "NonMatching",
