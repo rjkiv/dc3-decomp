@@ -236,14 +236,13 @@ void HamListRibbon::DrawShowing() {
             if (i == mTestSelectedIndex) {
                 drawStates[i].mHighlight = true;
                 if (mMode == kRibbonSwell && !mTestEntering) {
-                    float frame = GetFrame();
-                    drawStates[i].mSwellAmount.SetParams(frame, frame, 0);
+                    drawStates[i].mSwellAmount.ForceValue(GetFrame());
                 } else {
-                    drawStates[i].mSwellAmount.SetParams(1, 1, 0);
+                    drawStates[i].mSwellAmount.ForceValue(1);
                 }
             } else {
                 drawStates[i].mHighlight = false;
-                drawStates[i].mSwellAmount.SetParams(0, 0, 0);
+                drawStates[i].mSwellAmount.ForceValue(0);
             }
         }
         Transform xfm = WorldXfm();
@@ -431,7 +430,7 @@ void HamListRibbon::DrawRibbon(
 ) {
     bool b5 = i1 >= i5 && i1 < i5 + i6;
     ResetAnims(false);
-    SetAnims(drawState.mHighlight, drawState.mSwellAmount.Level());
+    SetAnims(drawState.mHighlight, drawState.mSwellAmount.Value());
     if (i6 > 6) {
         mScrollAnims.SetAnims(i1 - i5 - i7);
     } else if (mScrollAnims.mScrollActive) {

@@ -230,7 +230,7 @@ MoveDir::MoveDir()
       unkf84(-1) {
     for (int i = 0; i < 2; i++) {
         mMovePlayerData[i].Reset();
-        mCurMoveSmoothers[i].SetCoeffs(1, 0);
+        mCurMoveSmoothers[i].SetSmoothParameters(1, 0);
         filler[i] = 0;
         mCurMoveNormalizedResult[i] = 0;
         unk3e8[i] = 0;
@@ -320,7 +320,7 @@ BEGIN_HANDLERS(MoveDir)
         )
     )
     HANDLE_EXPR(
-        cur_move_normalized_result_smoothed, mCurMoveSmoothers[_msg->Int(2)].Level()
+        cur_move_normalized_result_smoothed, mCurMoveSmoothers[_msg->Int(2)].Value()
     )
     HANDLE_ACTION(
         detector_clear_looped_result,
@@ -1479,7 +1479,7 @@ void MoveDir::OnBeat() {
     if (TheMaster && (int)TheMaster->TotalBeat2() % 4 == 3
         && (int)TheMaster->TotalBeat1() % 4 == 0) {
         for (int i = 0; i < 2; i++) {
-            mCurMoveSmoothers[i].Reset();
+            mCurMoveSmoothers[i].ForceValue(0);
         }
     }
 }

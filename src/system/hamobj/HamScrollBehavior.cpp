@@ -130,8 +130,8 @@ void HamScrollBehavior::Reset() {
     unk28 = 0;
     unk0 = 0;
     unk24 = 0;
-    unk34.Reset();
-    unk50->SetScrollSoundFrame(unk34.Level());
+    unk34.ForceValue(0);
+    unk50->SetScrollSoundFrame(unk34.Value());
     unkc = 0;
     unk4 = false;
     unk20 = 0;
@@ -241,13 +241,13 @@ void HamScrollBehavior::Update(float f1) {
     }
 
     unk34.Smooth(f9, TheTaskMgr.DeltaUISeconds());
-    unk50->SetScrollSoundFrame(unk34.Level());
+    unk50->SetScrollSoundFrame(unk34.Value());
 
     RndAnimatable *anim = unk50->GetScrollSoundAnim();
     if (anim) {
         switch (unk48) {
         case 0:
-            anim->SetFrame(-1 - unk34.Level(), 1);
+            anim->SetFrame(-1 - unk34.Value(), 1);
             break;
         case 1:
             anim->SetFrame(-1, 1);
@@ -272,7 +272,7 @@ void HamScrollBehavior::Update(float f1) {
             anim->SetFrame(1, 1);
             break;
         case 4:
-            anim->SetFrame(unk34.Level() + 1, 1);
+            anim->SetFrame(unk34.Value() + 1, 1);
             break;
         default:
             break;

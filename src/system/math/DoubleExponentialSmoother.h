@@ -3,43 +3,41 @@
 
 // https://en.wikipedia.org/wiki/Exponential_smoothing#Double_exponential_smoothing_(Holt_linear)
 class DoubleExponentialSmoother {
-    friend class Vector2DESmoother;
-    friend class Vector3DESmoother;
-
 public:
     DoubleExponentialSmoother();
-    DoubleExponentialSmoother(float, float, float);
+    DoubleExponentialSmoother(float start, float smooth, float trend);
     void Smooth(float, float);
-    void Reset() {
-        mPrevLevel = 0;
-        mLevel = 0;
-        mTrend = 0;
-    }
-    void SetCoeffs(float alpha, float beta) {
-        mAlpha = alpha;
-        mBeta = beta;
-    }
-    void SetParams(float prevLevel, float level, float trend) {
-        mPrevLevel = prevLevel;
-        mLevel = level;
+
+    void SetSmoothParameters(float smooth, float trend) {
+        mSmooth = smooth;
         mTrend = trend;
     }
-    float Level() const { return mLevel; }
+    void ForceValue(float value) {
+        mA = value;
+        mCurrent = value;
+        mB = 0;
+    }
 
-protected:
-    float mLevel; // 0x0
-    float mPrevLevel; // 0x4
-    float mTrend; // 0x8
-    float mAlpha; // 0xc
-    float mBeta; // 0x10
+    float Value() const { return mCurrent; }
+    float GetSmoothParam() const { return mSmooth; }
+    float GetTrendParam() const { return mTrend; }
+
+private:
+    float mCurrent; // 0x0
+    float mA; // 0x4
+    float mB; // 0x8
+    float mSmooth; // 0xc
+    float mTrend; // 0x10
 };
 
 class Vector2DESmoother {
 public:
-    void SetSmoothParameters(float, float);
-    void Smooth(Vector2, float, bool);
+    Vector2DESmoother() {}
+    Vector2DESmoother(Vector2, float, float);
+    void SetSmoothParameters(float smooth, float trend);
+    void Smooth(Vector2 target, float dt, bool normalize);
     Vector2 Value() const;
-    void ForceValue(Vector2);
+    void ForceValue(Vector2 value);
 
 private:
     DoubleExponentialSmoother mX; // 0x0

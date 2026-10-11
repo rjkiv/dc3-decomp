@@ -273,21 +273,21 @@ void HamNavList::DrawShowing() {
             for (int i = 0; i < mRibbonDrawStates.size(); i++) {
                 if (i < mListState.MinDisplay()
                     || i >= mListState.MinDisplay() + HamListRibbon::sNumListSelectable) {
-                    mRibbonDrawStates[i].mSwellAmount.SetParams(0, 0, 0);
+                    mRibbonDrawStates[i].mSwellAmount.ForceValue(0);
                 }
             }
         }
         if (mListRibbon) {
             mListRibbon->SetFrame(GetFrame(), 1);
             mListRibbon->SetScrollAnimFrame(mScrollBehavior.GetUnk20());
-            mListRibbon->SetDisengageFrame(mDisengageAmount.Level());
+            mListRibbon->SetDisengageFrame(mDisengageAmount.Value());
             mListRibbon->SetMode(mRibbonMode);
             mListRibbon->Draw(WorldXfm(), mRibbonDrawStates, false, false);
         }
         if (mHeaderRibbon) {
             mHeaderRibbon->SetFrame(GetFrame(), 1);
             mHeaderRibbon->SetScrollAnimFrame(mScrollBehavior.GetUnk20());
-            mHeaderRibbon->SetDisengageFrame(mDisengageAmount.Level());
+            mHeaderRibbon->SetDisengageFrame(mDisengageAmount.Value());
             mHeaderRibbon->SetMode(mRibbonMode);
             mHeaderRibbon->Draw(WorldXfm(), mRibbonDrawStates, true, false);
         }
@@ -585,15 +585,15 @@ void HamNavList::SetSliding(float f) {
     if (mRibbonMode != HamListRibbon::kRibbonSelect) {
         float f1 = 0.0f;
         if (mRibbonMode != HamListRibbon::kRibbonSlide) {
-            mSlideAmount.Reset();
+            mSlideAmount.ForceValue(0);
             SetRibbonMode(HamListRibbon::kRibbonSlide);
         }
         if (sSlideSmoothAmount == 0) {
-            mSlideAmount.SetParams(f, f, 0);
+            mSlideAmount.ForceValue(f);
         } else {
             mSlideAmount.Smooth(f, TheTaskMgr.DeltaUISeconds());
         }
-        SetFrame(mSlideAmount.Level(), 1.0f);
+        SetFrame(mSlideAmount.Value(), 1.0f);
     }
 }
 
@@ -922,7 +922,7 @@ void HamNavList::Poll() {
 
     if (mListRibbon) {
         if (mRibbonMode == HamListRibbon::kRibbonSlide && !mListRibbon->TestEntering()) {
-            mListRibbon->SetSlideSoundFrame(mSlideAmount.Level());
+            mListRibbon->SetSlideSoundFrame(mSlideAmount.Value());
         } else {
             mListRibbon->SetSlideSoundFrame(0);
         }
@@ -944,7 +944,7 @@ void HamNavList::Poll() {
         && !TheUI->InTransition() && !TheLoadMgr.EditMode()) {
         SetRibbonMode(HamListRibbon::kRibbonSwell);
         for (int i = 0; i < mRibbonDrawStates.size(); i++) {
-            mRibbonDrawStates[i].mSwellAmount.SetParams(0, 0, 0);
+            mRibbonDrawStates[i].mSwellAmount.ForceValue(0);
         }
 
         if (mLastSelectedIndex != -1) {
@@ -1256,7 +1256,8 @@ void HamNavList::LinkRibbonDrawState(
         ribbonDrawStates[i].mBig = IsElementBig(i);
         ribbonDrawStates[i].mElementDrawState = &widgetDrawStates.mElements[i];
         ribbonDrawStates[i].mElementDrawState->mComponentState = mState;
-        if (ribbonDrawStates[i].mElementDrawState->mElementState == kUIListWidgetHighlight) {
+        if (ribbonDrawStates[i].mElementDrawState->mElementState
+            == kUIListWidgetHighlight) {
             if (!mListRibbon->TestEntering()
                 && mRibbonMode != HamListRibbon::kRibbonDisengaged) {
                 if (TheUI->FocusComponent() == this || !InControllerMode()) {
