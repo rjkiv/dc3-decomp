@@ -14,7 +14,7 @@ public:
     virtual ~SkeletonRecoverer();
 
     bool WaitingToRecover();
-    int GetTrackingIDWithRecovery(int, int);
+    int GetTrackingIDWithRecovery(int trackingID, int ignoreTrackingID);
     void Poll();
 
 protected:
@@ -22,4 +22,5 @@ protected:
 
 private:
     bool IsSkeletonTracked(int) const;
+    TrackingIDHistory *GetHistory(int trackingID);
 };
