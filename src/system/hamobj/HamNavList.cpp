@@ -866,15 +866,13 @@ void HamNavList::Poll() {
                      || !mListState.ScrollPastMinDisplay())
                     && mScrollSpeedIndicator->GetUnk1FC()) {
                     mScrollSpeedIndicator->Show(false);
-                } else if (
-                    mRibbonMode == HamListRibbon::kRibbonSwell
-                    && !mScrollSpeedIndicator->GetUnk1FC()
-                    && mListState.ScrollPastMinDisplay()
-                ) {
+                } else if (mRibbonMode == HamListRibbon::kRibbonSwell
+                           && !mScrollSpeedIndicator->GetUnk1FC()
+                           && mListState.ScrollPastMinDisplay()) {
                     mScrollSpeedIndicator->Show(true);
                 } else {
                     mScrollSpeedIndicator->Update(
-                        mHandHeightFilter->GetUnk10(),
+                        mHandHeightFilter->GetHandHeight(),
                         HamScrollBehavior::mScrollUpCap,
                         HamScrollBehavior::mScrollDownCap
                     );
@@ -917,7 +915,7 @@ void HamNavList::Poll() {
 
     if (mListRibbon && mListState.Provider()
         && mListRibbon->IsScrollable(mListState.NumShowing()) && !sUnknownBool) {
-        mScrollBehavior.Update(mHandHeightFilter->GetUnk10());
+        mScrollBehavior.Update(mHandHeightFilter->GetHandHeight());
     }
 
     if (mListRibbon) {
@@ -1192,7 +1190,7 @@ void HamNavList::DrawDebug() const {
     static float sFloat5 = 0.1f; // 82f0c7a0
     static float sFloat6 = 0.25f; // 82f0c7a4
     if (sBool) {
-        float handVal = mHandHeightFilter->GetUnk10();
+        float handVal = mHandHeightFilter->GetHandHeight();
         UtilDrawLine(
             Vector2(0, handVal), Vector2(1, handVal), Hmx::Color(0.0f, 1.0f, 0.0f, 1.0f)
         );
@@ -1386,7 +1384,7 @@ void HamNavList::UpdateGestures(const Skeleton *skeleton) {
             return;
         }
 
-        mHandHeight = mHandHeightFilter->GetUnk10();
+        mHandHeight = mHandHeightFilter->GetHandHeight();
         if (mDirectionFilter->HasDirection() && mEnableSelection) {
             mDirectionFilter->ClearSwipe();
             static Message forceLetterboxOff("force_letterbox_off");
@@ -1437,10 +1435,8 @@ DataNode HamNavList::OnMsg(const ButtonDownMsg &msg) {
                 if (mListState.ScrollPastMinDisplay()) {
                     if (selected < mListState.FirstShowing()) {
                         mScrollBehavior.ScrollUp(false);
-                    } else if (
-                        selected
-                        >= mListState.FirstShowing() + HamListRibbon::sNumListSelectable
-                    ) {
+                    } else if (selected >= mListState.FirstShowing()
+                                   + HamListRibbon::sNumListSelectable) {
                         mScrollBehavior.ScrollDown(false);
                     } else {
                         SetHighlight(selected);

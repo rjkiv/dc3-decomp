@@ -14,16 +14,18 @@ public:
     void Update(Skeleton const &, int);
     void Update(int, int);
     void Clear();
-    void SetRequiredMs(int ms) { mRequiredMs = ms; }
-    int RaisedMs() const { return mRaisedMs; }
+    void SetRequiredMs(int ms) { mNeedHandsUpTime = ms; }
+    int RaisedMs() const { return mHandsUpTimer; }
     bool HandsUp() { return mHandsUp; }
+    bool HandsPotentiallyUp(); // ???
 
     NEW_OBJ(HandsUpGestureFilter)
 
 protected:
     HandsUpGestureFilter();
 
+private:
     bool mHandsUp; // 0x2c
-    int mRaisedMs; // 0x30
-    int mRequiredMs; // 0x34
+    int mHandsUpTimer; // 0x30
+    int mNeedHandsUpTime; // 0x34
 };

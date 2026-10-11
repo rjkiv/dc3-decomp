@@ -810,7 +810,7 @@ int SkeletonChooser::RoundRobinForStandingStill(int i) {
         mStandingStillFilter[0]->Update(
             skel.TrackingID(), TheTaskMgr.DeltaUISeconds() * 1000.0f
         );
-        if (mStandingStillFilter[0]->StandingStill()) {
+        if (mStandingStillFilter[0]->Satisfied()) {
             mLookingAtIndex = -1;
         } else {
             if (StandingStillRaisedEnough()) {
@@ -860,7 +860,7 @@ int SkeletonChooser::RoundRobinForHandRaised(int i) {
                     mHandRaiseMsgTimer -= TheTaskMgr.DeltaUISeconds();
                     mHandRaiseMsgSpamTimer -= TheTaskMgr.DeltaUISeconds();
                     if (mHandRaiseMsgTimer <= 0.0f && mHandRaiseMsgSpamTimer <= 0.0f
-                        && mHandRaiseFilter[0]->StandingStillFilter().StandingStill()) {
+                        && mHandRaiseFilter[0]->IsStandingStill()) {
                         mElectiveCheckTimer = 0.08f;
                         mHandRaiseMsgCount++;
                         mHandRaiseMsgSpamTimer = 13.0f;

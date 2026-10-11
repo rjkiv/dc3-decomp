@@ -11,7 +11,7 @@ static const float sFloat2 = 0.1f;
 static const float sFloat3 = 0.3f;
 
 HandRaisedGestureFilter::HandRaisedGestureFilter()
-    : mHandRaised(false), mRaisedMs(0), mRequiredMs(500) {
+    : mHandRaised(false), mHandRaisedTimer(0), mNeedHandRaisedTime(500) {
     Clear();
 }
 
@@ -21,17 +21,17 @@ BEGIN_HANDLERS(HandRaisedGestureFilter)
     HANDLE_ACTION(clear, Clear())
     HANDLE_ACTION(update, Update(_msg->Int(2), _msg->Int(3)))
     HANDLE_EXPR(check, mHandRaised)
-    HANDLE_EXPR(raised_ms, mRaisedMs)
+    HANDLE_EXPR(raised_ms, mHandRaisedTimer)
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
 
 BEGIN_PROPSYNCS(HandRaisedGestureFilter)
-    SYNC_PROP(required_ms, mRequiredMs)
+    SYNC_PROP(required_ms, mNeedHandRaisedTime)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
 void HandRaisedGestureFilter::SetRequiredMs(int ms) {
-    mRequiredMs = ms;
+    mNeedHandRaisedTime = ms;
     mStandingStillFilter.SetRequiredMs(ms / 2);
 }
 
@@ -54,5 +54,5 @@ void HandRaisedGestureFilter::Update(int trackingID, int j) {
 
 void HandRaisedGestureFilter::Clear() {
     mHandRaised = false;
-    mRaisedMs = 0;
+    mHandRaisedTimer = 0;
 }

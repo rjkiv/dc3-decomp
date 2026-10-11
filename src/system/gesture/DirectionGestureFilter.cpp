@@ -132,18 +132,16 @@ float DirectionGestureFilterSingleUser::UpdateOverlay(RndOverlay *overlay, float
 bool DirectionGestureFilterSingleUser::HandAtSide(
     const Skeleton &skeleton, float f1, float f2, float f3
 ) const {
-    float jointVal = skeleton.TrackedJoints()[3].mPos[0].y
-        - skeleton.TrackedJoints()[19].mPos[0].y;
+    float jointVal =
+        skeleton.TrackedJoints()[3].mPos[0].y - skeleton.TrackedJoints()[19].mPos[0].y;
 
     const TrackedJoint &handJoint = skeleton.HandJoint(unk4);
     const TrackedJoint &hipJoint = skeleton.HipJoint(unk4);
     const TrackedJoint &kneeJoint = skeleton.KneeJoint(unk4);
     const TrackedJoint &elbowJoint = skeleton.ElbowJoint(unk4);
     float jointX = handJoint.mPos[0].x - (f1 * f3 + elbowJoint.mPos[0].x) * f2;
-    float jointY = handJoint.mPos[0].y
-        - (kneeJoint.mPos[0].y + hipJoint.mPos[0].y) / 2;
-    float jointZ = handJoint.mPos[0].z
-        - (kneeJoint.mPos[0].z + hipJoint.mPos[0].z) / 2;
+    float jointY = handJoint.mPos[0].y - (kneeJoint.mPos[0].y + hipJoint.mPos[0].y) / 2;
+    float jointZ = handJoint.mPos[0].z - (kneeJoint.mPos[0].z + hipJoint.mPos[0].z) / 2;
 
     return sqrt(jointX * jointX + jointZ * jointZ + jointY * jointY)
         <= jointVal * 0.59171593f * f1;
@@ -243,9 +241,9 @@ bool DirectionGestureFilterDoubleUser::IsHandValid(const Skeleton &skel) const {
     int p1, p2;
     GetValidSkeletons(p1, p2);
     return (p1 >= 0 && unk4->IsHandValid(TheGestureMgr->GetSkeleton(p1))
-            && unkc[0]->StandingStill())
+            && unkc[0]->Satisfied())
         || (p2 >= 0 && unk8->IsHandValid(TheGestureMgr->GetSkeleton(p2))
-            && unkc[1]->StandingStill());
+            && unkc[1]->Satisfied());
 }
 
 void DirectionGestureFilterDoubleUser::GetValidSkeletons(int &p1, int &p2) const {
