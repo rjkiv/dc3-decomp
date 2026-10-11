@@ -79,28 +79,24 @@ public:
     void SetHeaderMode(int);
     void NextSort();
 
-    bool &IsInHeaderMode() { return mHeaderMode; }
-    bool &EnteringHeaderMode() { return mEnteringHeaderMode; }
-    bool &GetHeadersSelectable() { return mHeadersSelectable; }
-    bool &ExitingHeaderMode() { return mExitingHeaderMode; }
-    std::vector<NavListSort *> &Sorts() { return mSorts; };
-    std::vector<int> &GetHeadersA() { return mHeadersA; };
-    std::vector<int> &GetHeadersB() { return mHeadersB; };
-    int &GetHeadersBAtIdx(int idx) { return mHeadersB[idx]; };
-    int GetCurrentSortIdx() const { return mCurrentSortIdx; };
-    SongPreview *GetSongPreview() { return mSongPreview; };
+    bool IsInHeaderMode() { return mHeaderMode; }
+    bool GetEnteringHeaderMode() { return mEnteringHeaderMode; }
+    bool SortWithHeaders() { return mSortWithHeaders; }
+    bool GetExitingHeaderMode() { return mExitingHeaderMode; }
 
-protected:
+    int GetSortIndex() { return mSortIndex; };
+    SongPreview &GetSongPreview() { return mSongPreview; };
+
     std::vector<NavListSort *> mSorts; // 0x34
-    int mCurrentSortIdx; // 0x40
-    DataArray *unk44; // 0x44
-    bool unk48; // 0x48 mHighlightSaved maybe?
-    SongPreview *mSongPreview; // 0x4c
+    int mSortIndex; // 0x40
+    DataArray *mSavedHighlightID; // 0x44
+    bool mSavedHighlight; // 0x48
+    SongPreview &mSongPreview; // 0x4c
     bool mHeaderMode; // 0x50
     bool mEnteringHeaderMode; // 0x51
     bool mExitingHeaderMode; // 0x52
-    std::vector<int> mHeadersA; // 0x54
-    std::vector<int> mHeadersB; // 0x60
-    bool mHeadersSelectable; // 0x6c
-    std::list<Symbol> unk70; // 0x70 mSortNames?
+    std::vector<int> mHeaderIndicesAmongAll; // 0x54
+    std::vector<int> mHeaderIndicesAlone; // 0x60
+    bool mSortWithHeaders; // 0x6c
+    std::list<Symbol> mUncollapsedHeaderIDs; // 0x70 mSortNames?
 };

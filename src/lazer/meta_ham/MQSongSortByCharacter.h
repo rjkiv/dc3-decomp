@@ -3,11 +3,11 @@
 #include "NavListNode.h"
 class MQSongCharCmp : public NavListItemSortCmp {
 public:
-    MQSongCharCmp(const char *c, const char *c2) : unk4(c), unk8(c2) {}
+    MQSongCharCmp(Symbol song, Symbol character) : mSong(song), mCharacter(character) {}
     virtual int Compare(const NavListItemSortCmp *, NavListNodeType) const;
 
-    const char *unk4;
-    const char *unk8;
+    Symbol mSong; // 0x4
+    Symbol mCharacter; // 0x8
 };
 
 class MQSongSortByCharacter : public MQSongSort {

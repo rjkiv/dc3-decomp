@@ -16,9 +16,8 @@ public:
     MainMenuProvider();
     void UpdateList(UIListProvider *);
 
-protected:
-    std::vector<Symbol> mItems; // 0x30
-
 private:
     bool HasNewDLC() const;
+
+    std::vector<Symbol> mItems; // 0x30
 };

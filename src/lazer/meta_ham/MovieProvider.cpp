@@ -22,11 +22,11 @@ void MovieProvider::Text(
 
 Symbol MovieProvider::DataSymbol(int i_iData) const {
     MILO_ASSERT_RANGE(i_iData, 0, NumData(), 0x5e);
-    return mMovies[i_iData];
+    return m_vMovies[i_iData];
 }
 
 void MovieProvider::UpdateList() {
-    mMovies.clear();
+    m_vMovies.clear();
     static Symbol movie_intro("movie_intro");
     static Symbol campaign_intro("campaign_intro");
     static Symbol era01("era01");
@@ -43,16 +43,16 @@ void MovieProvider::UpdateList() {
     static Symbol tan_intro("tan_intro");
     static Symbol tan_outro("tan_outro");
     static Symbol credits("credits");
-    mMovies.push_back(movie_intro);
+    m_vMovies.push_back(movie_intro);
     if (TheProfileMgr.HasAnyEraSongBeenPlayed(era01))
-        mMovies.push_back(era01_intro);
+        m_vMovies.push_back(era01_intro);
     if (TheProfileMgr.HasAnyEraSongBeenPlayed(era02))
-        mMovies.push_back(era02_intro);
+        m_vMovies.push_back(era02_intro);
     if (TheProfileMgr.HasAnyEraSongBeenPlayed(era03))
-        mMovies.push_back(era03_intro);
+        m_vMovies.push_back(era03_intro);
     if (TheProfileMgr.HasAnyEraSongBeenPlayed(era04))
-        mMovies.push_back(era04_intro);
-    mMovies.push_back(credits);
+        m_vMovies.push_back(era04_intro);
+    m_vMovies.push_back(credits);
 }
 
 BEGIN_HANDLERS(MovieProvider)

@@ -18,7 +18,7 @@ public:
     virtual void Text(int, int, UIListLabel *, UILabel *) const;
     virtual void Custom(int, int, UIListCustom *, Hmx::Object *) const;
     virtual Symbol DataSymbol(int) const;
-    virtual int NumData() const { return mSongs.size(); }
+    virtual int NumData() const { return m_vSongs.size(); }
 
     bool IsSongAvailable(Symbol) const;
     int SymbolIndex(Symbol) const;
@@ -26,11 +26,11 @@ public:
     bool IsCrazeSong(Symbol) const;
     void UpdateList();
 
-    void SetPanelDir(PanelDir *p) { mPanelDir = p; }
+    void SetPanelDir(PanelDir *p) { m_pPanelDir = p; }
 
-protected:
-    PanelDir *mPanelDir; // 0x40
-    std::vector<Symbol> mSongs; // 0x44
+private:
+    PanelDir *m_pPanelDir; // 0x40
+    std::vector<Symbol> m_vSongs; // 0x44
 };
 
 class CampaignSongSelectPanel : public TexLoadPanel {
@@ -62,12 +62,12 @@ public:
     void CheatWinEraSong(Symbol, int);
     void CheatTransitionPending();
 
-protected:
+private:
     CampaignSongProvider *m_pCampaignSongProvider; // 0x54
-    DateTime mEnterTime; // 0x58
-    bool mPreviewDelayFinished; // 0x5e
-    Symbol mEra; // 0x60
+    DateTime m_cEnterTime; // 0x58
+    bool m_bDelayFinished; // 0x5e
+    Symbol m_symCurEra; // 0x60
     CampaignEra *m_pCurCampaignEra; // 0x64
-    Difficulty mDifficulty; // 0x68
-    CampaignProgress *m_pCurCampaignProgress; // 0x6c
+    Difficulty m_difCurDifficulty; // 0x68
+    const CampaignProgress *m_pCurCampaignProgress; // 0x6c
 };

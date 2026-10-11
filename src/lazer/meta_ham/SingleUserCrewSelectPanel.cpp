@@ -26,9 +26,9 @@
 
 SingleUserCrewSelectPanel::SingleUserCrewSelectPanel() {
     for (int i = 0; i < 2; i++) {
-        mCrewProviders[i].SetPlayer(i);
-        mCharProviders[i].SetPlayer(i);
-        mOutfitProviders[i].SetPlayer(i);
+        mCrewProvider[i].SetPlayerIndex(i);
+        mCharProvider[i].SetPlayerIndex(i);
+        mOutfitProvider[i].SetPlayerIndex(i);
     }
 }
 
@@ -47,49 +47,49 @@ void SingleUserCrewSelectPanel::Poll() {
 void SingleUserCrewSelectPanel::Unload() {
     TexLoadPanel::Unload();
     for (int i = 0; i < 2; i++) {
-        mCrewProviders[i].SetPanelDir(nullptr);
-        mCharProviders[i].SetPanelDir(nullptr);
+        mCrewProvider[i].SetPanelDir(nullptr);
+        mCharProvider[i].SetPanelDir(nullptr);
     }
 }
 
 void SingleUserCrewSelectPanel::FinishLoad() {
     TexLoadPanel::FinishLoad();
     for (int i = 0; i < 2; i++) {
-        mCrewProviders[i].SetPanelDir(LoadedDir());
-        mCharProviders[i].SetPanelDir(LoadedDir());
+        mCrewProvider[i].SetPanelDir(LoadedDir());
+        mCharProvider[i].SetPanelDir(LoadedDir());
     }
 }
 
 void SingleUserCrewSelectPanel::UpdateProviders() {
     for (int i = 0; i < 2; i++) {
-        mCrewProviders[i].UpdateList();
-        mCharProviders[i].UpdateList();
-        mOutfitProviders[i].UpdateList();
+        mCrewProvider[i].UpdateList();
+        mCharProvider[i].UpdateList();
+        mOutfitProvider[i].UpdateList();
     }
 }
 
 void SingleUserCrewSelectPanel::UpdateProviderPlayerIndices() {
     for (int i = 0; i < 2; i++) {
         int playerIndex = GetPlayerIndex(i);
-        mCrewProviders[i].SetPlayer(playerIndex);
-        mCharProviders[i].SetPlayer(playerIndex);
-        mOutfitProviders[i].SetPlayer(playerIndex);
+        mCrewProvider[i].SetPlayerIndex(playerIndex);
+        mCharProvider[i].SetPlayerIndex(playerIndex);
+        mOutfitProvider[i].SetPlayerIndex(playerIndex);
     }
 }
 
 CrewProvider const *SingleUserCrewSelectPanel::GetCrewProvider(int index) const {
     MILO_ASSERT_RANGE(index, 0, 2, 0x85);
-    return &mCrewProviders[index];
+    return &mCrewProvider[index];
 }
 
 CharacterProvider const *SingleUserCrewSelectPanel::GetCharProvider(int index) const {
     MILO_ASSERT_RANGE(index, 0, 2, 0x8c);
-    return &mCharProviders[index];
+    return &mCharProvider[index];
 }
 
 OutfitProvider const *SingleUserCrewSelectPanel::GetOutfitProvider(int index) const {
     MILO_ASSERT_RANGE(index, 0, 2, 0x93);
-    return &mOutfitProviders[index];
+    return &mOutfitProvider[index];
 }
 
 void SingleUserCrewSelectPanel::SetRandomOutfit(int index) {

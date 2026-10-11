@@ -37,7 +37,7 @@ static int sIndex;
 
 bool StepMoves::IsRecap() const {
     static Symbol review("review");
-    return mType == review;
+    return mStep.mType == review;
 }
 
 float StepMoves::GetOverallRating() const {
@@ -64,8 +64,8 @@ String StepMoves::GetDisplayName(bool b1) const {
     if (IsRecap()) {
         static Symbol recap_name("recap_name");
         out = Localize(recap_name, nullptr, TheLocale);
-    } else if (!mNameOverride.empty()) {
-        out = mNameOverride;
+    } else if (!mStep.mNameOverride.empty()) {
+        out = mStep.mNameOverride;
     } else if (numMoves == 1) {
         out = mMoves[0]->DisplayName();
     } else if (numMoves <= 1) {
@@ -79,9 +79,9 @@ String StepMoves::GetDisplayName(bool b1) const {
             "%s %s", mMoves[0]->DisplayName(), Localize(sequence, nullptr, TheLocale)
         );
     }
-    if (unk28) {
+    if (mStepNumber) {
         if (!out.empty() && !b1) {
-            out += MakeString(" %d", unk28);
+            out += MakeString(" %d", mStepNumber);
         }
     }
     return out;
@@ -108,7 +108,7 @@ bool StepMoves::operator<(const StepMoves &moves) const {
             }
         }
     }
-    return unk2c < moves.unk2c;
+    return mSongPosition < moves.mSongPosition;
 }
 
 BEGIN_CUSTOM_PROPSYNC(StepMoves)
@@ -129,7 +129,7 @@ BEGIN_HANDLERS(PracticeChoosePanel)
     HANDLE_EXPR(step_start_beat, StepStartBeat(_msg->Int(2)))
     HANDLE_EXPR(step_end_beat, StepEndBeat(_msg->Int(2)))
     HANDLE_EXPR(step_is_recap, mStepMoves[_msg->Int(2)].IsRecap())
-    HANDLE_ACTION(clear_memory, ClearAndShrink(unk54))
+    HANDLE_ACTION(clear_memory, ClearAndShrink(mLastSelected))
     HANDLE_SUPERCLASS(HamPanel)
 END_HANDLERS
 
@@ -140,14 +140,15 @@ END_PROPSYNCS
 void PracticeChoosePanel::Exit() {
     UIPanel::Exit();
     DataVariable("auto_select_practice_moves") = 0;
-    unk4c = TheGameData->GetSong();
-    unk50 = DifficultyToSym(TheGameData
-                                ->Player(TheHamProvider->Property("ui_nav_player")->Int())
-                                ->GetDifficulty());
-    unk54.clear();
+    mLastSong = TheGameData->GetSong();
+    mLastDiff =
+        DifficultyToSym(TheGameData
+                            ->Player(TheHamProvider->Property("ui_nav_player")->Int())
+                            ->GetDifficulty());
+    mLastSelected.clear();
     FOREACH (it, mStepMoves) {
         if (it->mSelected) {
-            unk54.push_back(it->unk2c);
+            mLastSelected.push_back(it->mSongPosition);
         }
     }
 }
@@ -180,7 +181,7 @@ RndMat *PracticeChoosePanel::Mat(int, int idx, UIListMesh *slot) const {
     if (slot->Matches("problem_callout")) {
         if (WantToAutoSelectRecommended()
             && CheckIfAutoSelected(mStepMoves[idx].mMoves)) {
-            return unk60;
+            return mProblemCallout;
         } else {
             int i4 = 0;
             int i5 = 0;
@@ -202,7 +203,7 @@ RndMat *PracticeChoosePanel::Mat(int, int idx, UIListMesh *slot) const {
             if ((float)i4 / (float)i5 <= 0.49f) {
                 return nullptr;
             }
-            return unk60;
+            return mProblemCallout;
         }
     } else {
         return nullptr;
@@ -215,13 +216,13 @@ Symbol PracticeChoosePanel::DataSymbol(int idx) const {
     if (mStepMoves[idx].MoveRecapCheck()) {
         return gameplay;
     } else {
-        return mStepMoves[idx].mStart;
+        return mStepMoves[idx].mStep.mStart;
     }
 }
 
 int PracticeChoosePanel::DataIndex(Symbol s) const {
     for (int i = 0; i < mStepMoves.size(); i++) {
-        if (mStepMoves[i].mStart == s) {
+        if (mStepMoves[i].mStep.mStart == s) {
             return i;
         }
     }
@@ -232,13 +233,13 @@ int PracticeChoosePanel::NumData() const { return mStepMoves.size(); }
 
 void PracticeChoosePanel::InitData(RndDir *dir) {
     TheGame->GetMaster()->SetMaps();
-    if (unk4c != TheGameData->GetSong()
-        || unk50
+    if (mLastSong != TheGameData->GetSong()
+        || mLastDiff
             != DifficultyToSym(
                 TheGameData->Player(TheHamProvider->Property("ui_nav_player")->Int())
                     ->GetDifficulty()
             )) {
-        ClearAndShrink(unk54);
+        ClearAndShrink(mLastSelected);
     }
     mStepMoves.clear();
     StepMoves stepMoves;
@@ -264,7 +265,7 @@ void PracticeChoosePanel::InitData(RndDir *dir) {
             StepMoves innerSteps;
             (PracticeStep &)(innerSteps) = *it;
             innerSteps.mMoves = GetMovesInStep(*it);
-            innerSteps.unk2c = stepNum;
+            innerSteps.mSongPosition = stepNum;
             if (WantToAutoSelectRecommended()) {
                 innerSteps.mSelected = CheckIfAutoSelected(innerSteps.mMoves);
             } else {
@@ -276,9 +277,9 @@ void PracticeChoosePanel::InitData(RndDir *dir) {
     }
     mStepMoves.push_back(stepMoves);
     FOREACH (it, mStepMoves) {
-        it->unk28 = GetStepNumber(*it);
+        it->mStepNumber = GetStepNumber(*it);
     }
-    unk60 = dir->Find<RndMat>("problem_callout.mat");
+    mProblemCallout = dir->Find<RndMat>("problem_callout.mat");
     sIndex = 0;
 }
 
@@ -306,7 +307,7 @@ float PracticeChoosePanel::StepStartBeat(int i1) const {
     if (cur.MoveRecapCheck()) {
         return -1;
     } else {
-        return Max(0.0f, TheHamDirector->BeatFromTag(cur.mStart));
+        return Max(0.0f, TheHamDirector->BeatFromTag(cur.mStep.mStart));
     }
 }
 
@@ -315,7 +316,7 @@ float PracticeChoosePanel::StepEndBeat(int i1) const {
     if (cur.MoveRecapCheck()) {
         return -1;
     } else {
-        return Max(0.0f, TheHamDirector->BeatFromTag(cur.mEnd));
+        return Max(0.0f, TheHamDirector->BeatFromTag(cur.mStep.mEnd));
     }
 }
 
@@ -363,7 +364,7 @@ void PracticeChoosePanel::SetUpCustomSection() {
     customSect->ClearSteps();
     FOREACH (it, mStepMoves) {
         StepMoves cur = *it;
-        PracticeStep step(cur);
+        PracticeStep step(cur.mStep);
         if (cur.mSelected) {
             if (cur.IsRecap()) {
                 i4 = 0;

@@ -13,10 +13,10 @@
 #include "utl/Symbol.h"
 
 SortNodeFind::SortNodeFind(const NavListSortNode *node)
-    : mToken(node->GetToken()), mType(node->GetType()) {}
+    : mSym(node->GetToken()), mType(node->GetType()) {}
 
 bool SortNodeFind::operator()(const NavListSortNode *node) const {
-    return node->GetToken() == mToken && node->GetType() == mType;
+    return node->GetToken() == mSym && node->GetType() == mType;
 }
 
 #pragma region ChallengeSort
@@ -28,17 +28,17 @@ BEGIN_HANDLERS(ChallengeSort)
 END_HANDLERS
 
 void ChallengeSort::SetHighlightedIx(int idx) {
-    unk54 = unk50;
+    mPrevHighlightNode = mHighlightNode;
     if (idx >= 0) {
         if (mList.size() >= idx) {
             if (mList.size() == 0)
                 return;
-            unk50 = mList[idx];
+            mHighlightNode = mList[idx];
             TheChallengeSortMgr->OnHighlightChanged();
             return;
         }
     }
-    unk50 = nullptr;
+    mHighlightNode = nullptr;
 }
 
 void ChallengeSort::DeleteItemList() {
@@ -63,17 +63,17 @@ void ChallengeSort::OnSelectShortcut(int idx) {
 void ChallengeSort::Text(int i1, int i2, UIListLabel *listlabel, UILabel *label) const {
     AppLabel *app_label = dynamic_cast<AppLabel *>(label);
     MILO_ASSERT(app_label, 0xe1);
-    app_label->SetFromGeneralSelectNode(unk30[i2]);
+    app_label->SetFromGeneralSelectNode(mTree[i2]);
 }
 
 void ChallengeSort::SetHighlightItem(const NavListSortNode *node) {
-    unk54 = unk50;
-    unk50 = nullptr;
+    mPrevHighlightNode = mHighlightNode;
+    mHighlightNode = nullptr;
     if (node) {
         if (node->GetType() == 5 || node->GetType() == 4) {
             auto findNode = std::find_if(mList.begin(), mList.end(), SortNodeFind(node));
             if (findNode != mList.end()) {
-                unk50 = *findNode;
+                mHighlightNode = *findNode;
                 TheChallengeSortMgr->OnHighlightChanged();
             }
         }
@@ -82,22 +82,22 @@ void ChallengeSort::SetHighlightItem(const NavListSortNode *node) {
 
 void ChallengeSort::BuildItemList() {
     Symbol sym(gNullStr);
-    auto sortNode = unk50;
+    auto sortNode = mHighlightNode;
     if (sortNode && sortNode->GetType() == 5) {
         sym = sortNode->GetToken();
     }
     DeleteItemList();
-    FOREACH (it, unk3c) {
+    FOREACH (it, mFunctions) {
         (*it)->Renumber(mList);
     }
-    FOREACH (it, unk30) {
+    FOREACH (it, mTree) {
         (*it)->Renumber(mList);
     }
-    FOREACH (it, unk30) {
+    FOREACH (it, mTree) {
         (*it)->FinishBuildList(this);
     }
     if (!sym.Null()) {
-        unk50 = GetNode(sym);
+        mHighlightNode = GetNode(sym);
     }
     TheChallengeSortMgr->FinalizeHeaders();
 }
@@ -107,10 +107,10 @@ void ChallengeSort::BuildTree() {
     Init();
     std::vector<NavListItemNode *> nodes;
 
-    std::vector<ChallengeRecord> &records = TheChallengeSortMgr->GetUnk78();
+    std::vector<ChallengeRecord> &records = TheChallengeSortMgr->GetChallengeRecords();
     for (int i = 0; i < records.size(); i++) {
         ChallengeRecord *record = &records[i];
-        if (record->GetUnk50() != 1) {
+        if (record->GetChallengeType() != 1) {
             NavListItemNode *node = NewItemNode(record);
             auto bound =
                 std::lower_bound(nodes.begin(), nodes.end(), node, CompareHeaders());
@@ -145,15 +145,15 @@ void ChallengeSort::BuildTree() {
 
     globalShortcutNode->InsertNode(globalHeaderNode);
     dlcShortcutNode->InsertNode(dlcHeaderNode);
-    unk30.push_back(globalShortcutNode);
-    unk30.push_back(dlcShortcutNode);
+    mTree.push_back(globalShortcutNode);
+    mTree.push_back(dlcShortcutNode);
 
     FOREACH (it, nodes) {
         NavListShortcutNode *shortcutNode = NewShortcutNode(*it);
         auto findIf =
-            std::find_if(unk30.begin(), unk30.end(), NodeFind(shortcutNode->GetToken()));
-        if (findIf == unk30.end()) {
-            unk30.push_back(shortcutNode);
+            std::find_if(mTree.begin(), mTree.end(), NodeFind(shortcutNode->GetToken()));
+        if (findIf == mTree.end()) {
+            mTree.push_back(shortcutNode);
         } else {
             delete shortcutNode;
             shortcutNode = *findIf;
@@ -161,7 +161,7 @@ void ChallengeSort::BuildTree() {
         shortcutNode->Insert(*it, this);
     }
 
-    FOREACH (it, unk30) {
+    FOREACH (it, mTree) {
         (*it)->FinishSort(this);
     }
 }

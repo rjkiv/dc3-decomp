@@ -60,15 +60,14 @@ public:
     void SetCharacter(Symbol, int);
     void SetCrew(Symbol, int);
 
-protected:
-    HamNavList *unk54[2];
-    HamNavList *unk5c[2];
-    CharacterProvider mCharacterProviders[2]; // 0x64
-    CrewProvider mCrewProviders[2]; // 0xec
-    DifficultyProvider mDifficultyProviders[2]; // 0x174
-    OutfitProvider mOutfitProviders[2]; // 0x1f4
-    VenueProvider mVenueProviders[2]; // 0x274
-
 private:
     void UpdateNavLists(int);
+
+    HamNavList *mNavList[2]; // 0x54
+    HamNavList *mNavListLeftHand[2]; // 0x5c
+    CharacterProvider mCharacterProvider[2]; // 0x64
+    CrewProvider mCrewProvider[2]; // 0xec
+    DifficultyProvider mDifficultyProvider[2]; // 0x174
+    OutfitProvider mOutfitProvider[2]; // 0x1f4
+    VenueProvider mVenueProvider[2]; // 0x274
 };

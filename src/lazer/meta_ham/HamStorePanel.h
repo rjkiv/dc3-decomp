@@ -23,10 +23,10 @@
 
 struct HamSpecialOffer {
 public:
-    Symbol unk4;
-    unsigned long long unk8;
-    Symbol unk10;
-    bool unk14;
+    Symbol mID; // 0x4
+    unsigned long long mOfferId; // 0x8
+    Symbol mLocalFileName; // 0x10
+    bool mIsOwned; // 0x14
 };
 
 class HamStorePanel : public StorePanel, public ContentMgr::Callback {
@@ -69,8 +69,6 @@ public:
     void RemoveOfferFromCart(StoreOffer *);
     void AddOfferToCart(StoreOffer *);
 
-    int GetUnk184() const { return unk184; }
-
 protected:
     virtual StoreError UpdateOffers(std::list<EnumProduct> const &, bool);
     virtual void StoreUserProfileSwappedToUser(LocalUser *);
@@ -92,17 +90,18 @@ protected:
     void ResetCancelTimer();
     DataNode OnMsg(RCJobCompleteMsg const &);
 
-    DataNetLoader *unka0;
+private:
+    DataNetLoader *mMetadataLoader; // 0xa0
     DataArray *mMetadata; // 0xa4
     HamStoreProvider *mOfferProvider; // 0xa8
-    std::vector<HamStoreFilter *> unkac;
-    String unkb8;
-    bool unkc0;
-    Timer unkc4;
-    Timer unkf8;
-    int unk128;
-    std::vector<CartRow> unk12c;
-    RCJob *unk138[7];
+    std::vector<HamStoreFilter *> mFilters; // 0xac
+    String mMotd; // 0xb8
+    bool mAllowCancel; // 0xc0
+    Timer mCancelTimer; // 0xc4
+    Timer mReLockCartTimer; // 0xf8
+    int mReLockDuration; // 0x128
+    std::vector<CartRow> mCartData; // 0x12c
+    RCJob *mCartJobs[7]; // 0x138
     /*
         0x138 - [0] - AddDLCToCartJob
         0x13c - [1] - RemoveDLCFromCartJob
@@ -112,18 +111,18 @@ protected:
         0x14c - [5] - UnlockCartJob
         0x150 - [6] - LockCartJob (for Relocking?)
     */
-    bool unk154;
-    bool unk155;
-    bool unk156;
-    bool unk157;
-    bool unk158;
-    bool unk159;
-    std::list<int> unk15c;
-    std::list<int> unk164;
-    std::vector<HamSpecialOffer> unk16c;
-    std::vector<unsigned long long> unk178;
-    int unk184;
-    XboxPurchaser *mXboxPurchaser; // 0x188
+    bool mReadyToEnumCartOffer; // 0x154
+    bool mIsCartEnabled; // 0x155- not in pdb
+    bool mCartLocked; // 0x156 - not in pdb
+    bool mCartLoaded; // 0x157 - not in pdb
+    bool mRemovingDLCFromCart; // 0x158
+    bool mAddingDLCFromCart; // 0x159
+    std::list<int> mPendingRemovals; // 0x15c
+    std::list<int> mPendingAdds; // 0x164
+    std::vector<HamSpecialOffer> mSpecialOffers; // 0x16c
+    std::vector<unsigned long long> mSpecialOfferIDs; // 0x178
+    int mSpecialEnumJobID; // 0x184
+    StorePurchaser *mSpecialPurchaser; // 0x188
 };
 
 class SpecialOfferEnumJob : public MultipleItemsEnumJob {
@@ -136,5 +135,5 @@ public:
     virtual void OnCompletion(Hmx::Object *);
 
 protected:
-    HamStorePanel *unk5c;
+    HamStorePanel *mStorePanel; // 0x5c - not in pdb
 };

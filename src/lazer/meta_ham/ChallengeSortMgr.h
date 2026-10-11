@@ -31,7 +31,7 @@ public:
     static void Init(SongPreview &);
     static void Terminate();
 
-    std::vector<ChallengeRecord> &GetUnk78() { return mChallengeRecords; }
+    std::vector<ChallengeRecord> &GetChallengeRecords() { return mChallengeRecords; }
 
 private:
     ChallengeSortMgr(SongPreview &);

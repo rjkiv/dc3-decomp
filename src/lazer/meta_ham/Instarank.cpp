@@ -14,15 +14,15 @@ const char *Instarank::Str() const {
     static Symbol ir_among_all("ir_among_all");
 
     const char *among_group =
-        Localize(mFriendsOnly ? ir_among_friends : ir_among_all, nullptr, TheLocale);
+        Localize(mFriendMode ? ir_among_friends : ir_among_all, nullptr, TheLocale);
     const char *ord = LocalizeOrdinal(
-        unk_0x108, LocaleGenderMasculine, LocaleSingular, false, gNullStr, TheLocale
+        rankArg, LocaleGenderMasculine, LocaleSingular, false, gNullStr, TheLocale
     );
-    const char *score = LocalizeSeparatedInt(unk_0x10C, TheLocale);
+    const char *score = LocalizeSeparatedInt(scoreArg, TheLocale);
     const char *ret;
-    if (mToken == 'd') {
-        ret = MakeString(Localize(ir_unranked, nullptr, TheLocale), mStr, score);
-    } else if (mToken == 'c') {
+    if (fmtToken == 'd') {
+        ret = MakeString(Localize(ir_unranked, nullptr, TheLocale), strArg, score);
+    } else if (fmtToken == 'c') {
         ret = MakeString(
             Localize(ir_number_one, nullptr, TheLocale),
             LocalizeOrdinal(
@@ -30,21 +30,21 @@ const char *Instarank::Str() const {
             ),
             among_group
         );
-    } else if (mToken == 'b') {
+    } else if (fmtToken == 'b') {
         ret = MakeString(
-            Localize(ir_not_best, nullptr, TheLocale), ord, among_group, mStr, score
+            Localize(ir_not_best, nullptr, TheLocale), ord, among_group, strArg, score
         );
-    } else if (mToken == 'a') {
+    } else if (fmtToken == 'a') {
         ret = MakeString(
-            Localize(ir_at_rank, nullptr, TheLocale), ord, among_group, mStr, score
+            Localize(ir_at_rank, nullptr, TheLocale), ord, among_group, strArg, score
         );
-    } else if (mToken == 'e') {
+    } else if (fmtToken == 'e') {
         ret = MakeString(
-            Localize(ir_still_rank, nullptr, TheLocale), ord, among_group, mStr, score
+            Localize(ir_still_rank, nullptr, TheLocale), ord, among_group, strArg, score
         );
     } else {
         ret = "";
-        MILO_NOTIFY("unrecognized instarank token: %c\n", mToken);
+        MILO_NOTIFY("unrecognized instarank token: %c\n", fmtToken);
     }
     return ret;
 }

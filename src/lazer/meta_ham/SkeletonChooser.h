@@ -27,7 +27,7 @@ public:
     void Poll();
 
     DataNode OnGetJointDepthPos(const DataArray *);
-    int Unk3C() { return unk3c; }
+    int Unk3C() { return mActivePlayerIndex; }
 
 private:
     void SwitchActiveToPlayerIndexImmediate(int);
@@ -68,30 +68,32 @@ private:
     void SetPlayerSkeletonWarningData(int, int);
     void ChoosePlayerSides();
 
-    bool StandingStillRaisedEnough() { return unk64[0]->RaisedMs() > 0.0f; }
-    bool HandRaisedRaisedEnough() { return unk4c[0]->RaisedMs() > 0.0f; }
+    bool StandingStillRaisedEnough() {
+        return mStandingStillFilter[0]->RaisedMs() > 0.0f;
+    }
+    bool HandRaisedRaisedEnough() { return mHandRaiseFilter[0]->RaisedMs() > 0.0f; }
 
-protected:
-    DirectionGestureFilterSingleUser *unk2c;
-    DirectionGestureFilterSingleUser *unk30;
+private:
+    DirectionGestureFilterSingleUser *mRightHandUp; // 0x2c
+    DirectionGestureFilterSingleUser *mLeftHandUp; // 0x30
     bool mDrawDebug; // 0x34
-    int unk38;
-    int unk3c; // 0x3c - current player index?
-    float unk40;
-    float unk44;
-    bool unk48;
-    HandRaisedGestureFilter *unk4c[6]; // 0x4c
-    StandingStillGestureFilter *unk64[6]; // 0x64
-    HighFiveGestureFilter *unk7c; // 0x7c
-    float unk80;
-    float unk84;
-    float unk88;
-    int unk8c;
-    int unk90;
-    int mNextSkelIdxToTrack; // 0x94
-    HandRaisedGestureFilter *mHandRaisedFilters[2]; // 0x98
+    int mQueuedActivePlayerIndex; // 0x38
+    int mActivePlayerIndex; // 0x3c - current player index?
+    float mSwitchTimer; // 0x40
+    float mSwitchDelay; // 0x44
+    bool mSkeletonUpdateAutomatic; // 0x48
+    HandRaisedGestureFilter *mHandRaiseFilter[6]; // 0x4c
+    StandingStillGestureFilter *mStandingStillFilter[6]; // 0x64
+    HighFiveGestureFilter *mHighFiveGestureFilter; // 0x7c
+    float mElectiveCheckTimer; // 0x80
+    float mHandRaiseMsgTimer; // 0x84
+    float mHandRaiseMsgSpamTimer; // 0x88
+    int mHandRaiseMsgCount; // 0x8c
+    int mLastValidSkeletonCount; // 0x90
+    int mLookingAtIndex; // 0x94
+    HandRaisedGestureFilter *mPlayerHandRaiseFilter[2]; // 0x98
     bool mInMultiPlayerUpdateMode; // 0xa0
-    int unka4[6];
-    int unkbc;
+    int mSkeletonHandRaised[6]; // 0xa4
+    int mEnrollmentLookingAtIndex; // 0xbc
     bool mEnrollmentLocked; // 0xc0
 };

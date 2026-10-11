@@ -9,6 +9,7 @@
 #include "obj/Msg.h"
 #include "obj/Object.h"
 #include "os/PlatformMgr.h"
+#include "synth/MetaMusic.h"
 #include "ui/UIPanel.h"
 #include "utl/Symbol.h"
 #include <vector>
@@ -48,12 +49,12 @@ protected:
     int PickLoopIndex(int);
     DataNode OnMsg(XMPStateChangedMsg const &);
 
-    std::vector<int> unk38;
-    int unk44;
-    int unk48;
-    SongPreview unk4c;
-    bool unkdc;
-    MetaMusicManager *unke0;
-    Campaign *unke4;
-    HAQManager *unke8;
+    std::vector<int> mRecentIndices; // 0x38
+    int mCurrentSlot; // 0x44
+    MetaMusic *mMusic; // 0x48
+    SongPreview mSongPreview; // 0x4c
+    bool mXMPPlaying; // 0xdc
+    MetaMusicManager *mMetaMusicMgr; // 0xe0
+    Campaign *mCampaign; // 0xe4
+    HAQManager *mHAQMgr; // 0xe8
 };

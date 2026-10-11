@@ -19,10 +19,10 @@ bool AccomplishmentCampaignConditional::IsFulfilled(HamProfile *profile) const {
     static Symbol crewcomplete_count("crewcomplete_count");
     FOREACH (it, m_lConditions) {
         const AccomplishmentCondition &curCond = *it;
-        Difficulty curDiff = curCond.mDifficulty;
-        Symbol era = curCond.mEra;
-        int val = curCond.mValue;
-        Symbol condition = curCond.mCondition;
+        Difficulty curDiff = curCond.m_eDifficulty;
+        Symbol era = curCond.m_symValue;
+        int val = curCond.m_iValue;
+        Symbol condition = curCond.m_symCondition;
         const CampaignProgress &progress = profile->GetCampaignProgress(curDiff);
         if (condition == crewsong) {
             if (progress.IsDanceCrazeSongAvailable(era))

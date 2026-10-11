@@ -29,11 +29,11 @@ void ChooseModeProvider::Text(
 
 Symbol ChooseModeProvider::DataSymbol(int i_iData) const {
     MILO_ASSERT_RANGE(i_iData, 0, NumData(), 0xaf);
-    return mModes[i_iData];
+    return m_vEntries[i_iData];
 }
 
 void ChooseModeProvider::UpdateList(bool b) {
-    mModes.clear();
+    m_vEntries.clear();
     static Symbol perform("perform");
     static Symbol practice("practice");
     static Symbol dance_battle("dance_battle");
@@ -51,22 +51,22 @@ void ChooseModeProvider::UpdateList(bool b) {
     static Symbol bustamove("bustamove");
     static Symbol mind_control("mind_control");
 
-    mModes.push_back(perform);
-    mModes.push_back(practice);
+    m_vEntries.push_back(perform);
+    m_vEntries.push_back(practice);
     if (!TheGameMode->InMode("campaign", true)) {
-        mModes.push_back(dance_battle);
-        mModes.push_back(custom_party);
-        mModes.push_back(crew_showdown);
+        m_vEntries.push_back(dance_battle);
+        m_vEntries.push_back(custom_party);
+        m_vEntries.push_back(crew_showdown);
         if (b) {
-            mModes.push_back(perform_legacy);
-            mModes.push_back(rtnbldrproto);
-            mModes.push_back(namethatdance);
-            mModes.push_back(concentration);
-            mModes.push_back(rhythm_battle);
-            mModes.push_back(holla_back_70s_craze);
-            mModes.push_back(dance_battle);
-            mModes.push_back(bustamove);
-            mModes.push_back(mind_control);
+            m_vEntries.push_back(perform_legacy);
+            m_vEntries.push_back(rtnbldrproto);
+            m_vEntries.push_back(namethatdance);
+            m_vEntries.push_back(concentration);
+            m_vEntries.push_back(rhythm_battle);
+            m_vEntries.push_back(holla_back_70s_craze);
+            m_vEntries.push_back(dance_battle);
+            m_vEntries.push_back(bustamove);
+            m_vEntries.push_back(mind_control);
         }
     }
 }

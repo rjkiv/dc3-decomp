@@ -17,7 +17,7 @@
 
 DECLARE_MESSAGE(LeftHandListEngagementMsg, "left_hand_list_engagement")
 LeftHandListEngagementMsg(bool b) : Message(Type(), b) {}
-bool Success() const { return mData->Int(2); }
+bool Engaged() const { return mData->Int(2); }
 END_MESSAGE
 
 DECLARE_MESSAGE(ResetControllerModeTimeoutMsg, "reset_controller_mode_timeout")
@@ -50,30 +50,7 @@ public:
     void EnterControllerMode(bool);
     void DrawDebug();
 
-    SkeletonChooser *GetSkeletonChooser() { return mSkelChooser; }
-
-    bool mVoiceControlEnabled; // 0x30
-    bool unk_0x31, unk_0x32;
-    ObjPtr<RndAnimatable> unk_0x34; // 0x34
-    DoubleExponentialSmoother unk_0x48; // 0x48
-    int unk5c; // 0x5c
-    u32 unk_0x60, unk_0x64;
-    Timer unk_0x68;
-    float unk_0x98;
-    float unk_0x9C;
-    float unk_0xA0;
-    bool unk_0xA4;
-    ObjPtr<RndAnimatable> mWrongHandPosAnim; // 0xa8
-    UIPanel *mInputPanel; // 0xbc
-    UIPanel *mCursorPanel; // 0xc0
-    u8 unk_0xC4;
-    DepthBuffer *mDepthBuffer; // 0xc8
-    SkeletonIdentifier *mSkelIdentifier; // 0xcc
-    SkeletonChooser *mSkelChooser; // 0xd0
-    HandInvokeGestureFilter *mHandInvokeGestureFilter; // 0xd4
-    HandsUpGestureFilter *mHandsUpGestureFilter; // 0xd8
-    SkeletonExtentTracker *mSkelExtTracker; // 0xdc
-    int unke0;
+    SkeletonChooser *GetSkeletonChooser() { return mSkeletonChooser; }
 
 private:
     void SyncVoiceControl();
@@ -85,4 +62,27 @@ private:
     DataNode OnMsg(const SpeechRecoMessage &);
     DataNode OnMsg(const ButtonDownMsg &);
     DataNode OnMsg(const JoypadConnectionMsg &);
+
+    bool mWasVoiceControlEnabled; // 0x30
+    bool mWasHandUp[2]; // 0x31
+    ObjPtr<RndAnimatable> mDisengageAnim; // 0x34
+    DoubleExponentialSmoother mDisengageFrame; // 0x48
+    float mHandReappearedTimer; // 0x5c
+    int mLastButtonDownPadNum; // 0x60
+    Timer mControllerModeTimeoutTimer; // 0x68
+    float mControllerModeTimeoutDurationMs; // 0x98
+    float mRightHandDisengage; // 0x9c
+    float mLeftHandDisengage; // 0xa0
+    bool mLastWrongHandPosition; // 0xa4
+    ObjPtr<RndAnimatable> mWrongHandPositionAnim; // 0xa8
+    UIPanel *mInputPanel; // 0xbc
+    UIPanel *mCursorPanel; // 0xc0
+    bool mDrawCursor; // 0xc4
+    DepthBuffer *mDepthBuffer; // 0xc8
+    SkeletonIdentifier *mSkeletonIdentifier; // 0xcc
+    SkeletonChooser *mSkeletonChooser; // 0xd0
+    HandInvokeGestureFilter *mInvokeOptionsFilter; // 0xd4
+    HandsUpGestureFilter *mCorrectIdentityFilter; // 0xd8
+    SkeletonExtentTracker *mSkeletonExtentTracker; // 0xdc
+    int mLastInputPadNum; // 0xe0
 };

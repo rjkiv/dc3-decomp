@@ -180,9 +180,7 @@ void NavListShortcutNode::InsertHeaderRange(
 #pragma endregion
 #pragma region NavListItemNode
 
-NavListSortNode *NavListItemNode::GetFirstActive() {
-    return IsActive() ? this : nullptr;
-}
+NavListSortNode *NavListItemNode::GetFirstActive() { return IsActive() ? this : nullptr; }
 
 BEGIN_HANDLERS(NavListItemNode)
     HANDLE_SUPERCLASS(NavListSortNode)
@@ -193,7 +191,7 @@ void NavListItemNode::Text(UIListLabel *listLabel, UILabel *label) const {
 }
 
 RndMat *NavListItemNode::Mat(UIListMesh *mesh) const {
-    if (mesh->Matches("header_back") && !mHeader.Null()) {
+    if (mesh->Matches("header_back") && !mHeaderText.Null()) {
         return mesh->DefaultMat();
     } else
         return nullptr;
@@ -204,10 +202,10 @@ void NavListItemNode::Renumber(std::vector<NavListSortNode *> &nodes) {
     nodes.push_back(this);
 }
 
-void NavListItemNode::FinishBuildList(NavListSort *) { mHeader = gNullStr; }
+void NavListItemNode::FinishBuildList(NavListSort *) { mHeaderText = gNullStr; }
 
-bool NavListItemNode::IsHeader() const { return !mHeader.Null(); }
-Symbol NavListItemNode::HeaderText() const { return mHeader; }
+bool NavListItemNode::IsHeader() const { return !mHeaderText.Null(); }
+Symbol NavListItemNode::HeaderText() const { return mHeaderText; }
 
 bool NavListItemNode::UseQuickplayPerformer() {
     static Symbol song_select_quickplay("song_select_quickplay");
@@ -233,7 +231,7 @@ void NavListFunctionNode::Renumber(std::vector<NavListSortNode *> &nodes) {
     nodes.push_back(this);
 }
 
-Symbol NavListFunctionNode::GetToken() const { return unk4c; }
+Symbol NavListFunctionNode::GetToken() const { return mToken; }
 
 bool NavListFunctionNode::IsEnabled() const { return IsActive(); }
 
@@ -241,8 +239,8 @@ bool NavListFunctionNode::IsEnabled() const { return IsActive(); }
 #pragma region NavListHeaderNode
 
 NavListHeaderNode::NavListHeaderNode(NavListItemSortCmp *cmp, Symbol token, bool localize)
-    : NavListSortNode(cmp), unk44(false), mToken(token), mLocalizeToken(localize),
-      mDateTime(nullptr), mCollapseIconLabel(nullptr) {}
+    : NavListSortNode(cmp), mCover(false), mToken(token), mLocalizeToken(localize),
+      mDateTime(nullptr), mHeaderCollapseIconLabel(nullptr) {}
 
 NavListHeaderNode::~NavListHeaderNode() { delete mDateTime; }
 

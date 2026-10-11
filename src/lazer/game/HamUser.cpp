@@ -23,8 +23,8 @@ BEGIN_PROPSYNCS(HamUser)
 END_PROPSYNCS
 
 int HamUser::GetPadNum() const {
-    if (TheSkeletonIdentifier->GetPlayerPadNum(mEnrollmentIndex) < 4) {
-        return TheSkeletonIdentifier->GetPlayerPadNum(mEnrollmentIndex);
+    if (TheSkeletonIdentifier->GetPadNum(mEnrollmentIndex) < 4) {
+        return TheSkeletonIdentifier->GetPadNum(mEnrollmentIndex);
     } else {
         return -1;
     }

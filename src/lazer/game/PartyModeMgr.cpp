@@ -1802,7 +1802,7 @@ void PartyModeMgr::ResetSongs() {
     }
     for (int i = 0; i < size; i++) {
         const HamSongMetadata *data = TheHamSongMgr.Data(unk1d4[i]);
-        mSubModeSongPickers[data->DJIntensityRank() - 1].AddItem(
+        mSubModeSongPickers[data->DjIntensityRank() - 1].AddItem(
             TheHamSongMgr.GetShortNameFromSongID(unk1d4[i])
         );
     }

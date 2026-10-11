@@ -26,7 +26,8 @@
 #include "xdk/xapilibi/xbase.h"
 
 AppMiniLeaderboardDisplay::AppMiniLeaderboardDisplay()
-    : unk60(0), mLeaderboardList(0), mSongID(0), unk6c(0) {}
+    : mStatus(kLeaderboardStatusInactive), mLeaderboardList(0), mSongID(0),
+      mSourceSetTime(0) {}
 
 AppMiniLeaderboardDisplay::~AppMiniLeaderboardDisplay() {
     TheRockCentral.CancelOutstandingCalls(this);
@@ -42,14 +43,15 @@ END_HANDLERS
 void AppMiniLeaderboardDisplay::Poll() {
     UIComponent::Poll();
     if (mSongID != 0) {
-        if (unk60 == 0) {
+        if (mStatus == kLeaderboardStatusInactive) {
             float uiSeconds = TheTaskMgr.UISeconds();
-            if (unk6c > uiSeconds)
-                unk6c = uiSeconds;
-            if (1.0f <= uiSeconds - unk6c) {
+            if (mSourceSetTime > uiSeconds)
+                mSourceSetTime = uiSeconds;
+            if (1.0f <= uiSeconds - mSourceSetTime) {
                 UpdateLeaderboardOnline(mSongID);
             }
-        } else if (unk60 == 5 && ThePlatformMgr.IsConnected()) {
+        } else if (mStatus == kLeaderboardStatusNotConnected
+                   && ThePlatformMgr.IsConnected()) {
             Symbol name = TheSongMgr.GetShortNameFromSongID(mSongID);
             UpdateLeaderboard(name);
         }
@@ -59,8 +61,8 @@ void AppMiniLeaderboardDisplay::Poll() {
 void AppMiniLeaderboardDisplay::Enter() {
     UIComponent::Enter();
     TheServer.AddSink(this);
-    if (unk60 != 0) {
-        unk60 = 0;
+    if (mStatus != kLeaderboardStatusInactive) {
+        mStatus = kLeaderboardStatusInactive;
         Flow *f = mResourceDir->Find<Flow>("pending.flow");
         f->Activate();
     }
@@ -71,7 +73,7 @@ void AppMiniLeaderboardDisplay::Exit() {
     TheServer.RemoveSink(this);
     TheRockCentral.CancelOutstandingCalls(this);
     mSongID = 0;
-    unk6c = 0;
+    mSourceSetTime = 0;
 }
 
 void AppMiniLeaderboardDisplay::DrawShowing() {
@@ -80,7 +82,7 @@ void AppMiniLeaderboardDisplay::DrawShowing() {
     mResourceDir->Draw();
 }
 
-int AppMiniLeaderboardDisplay::NumData() const { return mLBRows.size(); }
+int AppMiniLeaderboardDisplay::NumData() const { return mRows.size(); }
 
 UIListWidgetState
 AppMiniLeaderboardDisplay::ElementStateOverride(int, int data, UIListWidgetState s) const {
@@ -90,7 +92,7 @@ AppMiniLeaderboardDisplay::ElementStateOverride(int, int data, UIListWidgetState
         bool bHasOnlineID = profile->IsSignedIn();
         MILO_ASSERT(bHasOnlineID, 500);
         XUID xuid = profile->GetOnlineID()->GetXUID();
-        if (mLBRows[data].xuid == xuid) {
+        if (mRows[data].xuid == xuid) {
             return kUIListWidgetHighlight;
         }
     }
@@ -98,15 +100,15 @@ AppMiniLeaderboardDisplay::ElementStateOverride(int, int data, UIListWidgetState
 }
 
 void AppMiniLeaderboardDisplay::UpdateData(GetMiniLeaderboardJob *job) {
-    mLBRows.clear();
-    job->GetRows(&mLBRows);
+    mRows.clear();
+    job->GetRows(&mRows);
     UpdateSelfInRows();
     MILO_ASSERT(mLeaderboardList, 0x15f);
     mLeaderboardList->Refresh(false);
 }
 
 void AppMiniLeaderboardDisplay::ClearData() {
-    mLBRows.clear();
+    mRows.clear();
     MILO_ASSERT(mLeaderboardList, 0xfa);
     mLeaderboardList->Refresh(false);
 }
@@ -125,12 +127,12 @@ DataNode AppMiniLeaderboardDisplay::OnMsg(const RCJobCompleteMsg &msg) {
         if (job && job->mSongID == mSongID) {
             UpdateData(job);
         }
-        if (unk60 != 1) {
-            unk60 = 1;
+        if (mStatus != kLeaderboardStatusReady) {
+            mStatus = kLeaderboardStatusReady;
             mResourceDir->Find<Flow>("ready.flow")->Activate();
         }
-    } else if (unk60 != 3) {
-        unk60 = 3;
+    } else if (mStatus != kLeaderboardStatusFailure) {
+        mStatus = kLeaderboardStatusFailure;
         mResourceDir->Find<Flow>("connection_error.flow")->Activate();
     }
     return 1;
@@ -149,19 +151,19 @@ void AppMiniLeaderboardDisplay::UpdateLeaderboardOnline(int i1) {
     HamProfile *profile = TheProfileMgr.GetActiveProfile(true);
     if (profile && profile->IsSignedIn() && ThePlatformMgr.IsConnected()) {
         TheRockCentral.ManageJob(new GetMiniLeaderboardJob(this, profile, i1));
-        if (unk60 != 2) {
-            unk60 = 2;
+        if (mStatus != kLeaderboardStatusPending) {
+            mStatus = kLeaderboardStatusPending;
             mResourceDir->Find<Flow>("pending.flow")->Activate();
         }
     } else {
         if (!ThePlatformMgr.IsConnected()) {
-            if (unk60 != 5) {
-                unk60 = 5;
+            if (mStatus != kLeaderboardStatusNotConnected) {
+                mStatus = kLeaderboardStatusNotConnected;
                 mResourceDir->Find<Flow>("no_profile.flow")->Activate();
             }
         } else {
-            if (unk60 != 4) {
-                unk60 = 4;
+            if (mStatus != kLeaderboardStatusNoProfile) {
+                mStatus = kLeaderboardStatusNoProfile;
                 mResourceDir->Find<Flow>("no_profile.flow")->Activate();
             }
         }
@@ -170,8 +172,8 @@ void AppMiniLeaderboardDisplay::UpdateLeaderboardOnline(int i1) {
 
 bool AppMiniLeaderboardDisplay::UpdateLeaderboard(Symbol s) {
     if (!TheProfileMgr.HasActiveProfile(true)) {
-        if (unk60 != 4) {
-            unk60 = 4;
+        if (mStatus != kLeaderboardStatusNoProfile) {
+            mStatus = kLeaderboardStatusNoProfile;
             Flow *f = mResourceDir->Find<Flow>("no_profile.flow", true);
             f->Activate();
             return true;
@@ -181,15 +183,15 @@ bool AppMiniLeaderboardDisplay::UpdateLeaderboard(Symbol s) {
         MILO_ASSERT(profile, 0xb1);
         profile->UpdateOnlineID();
         if (!profile->IsSignedIn()) {
-            if (unk60 != 4) {
-                unk60 = 4;
+            if (mStatus != kLeaderboardStatusNoProfile) {
+                mStatus = kLeaderboardStatusNoProfile;
                 Flow *f = mResourceDir->Find<Flow>("no_profile.flow", true);
                 f->Activate();
                 return true;
             }
         } else if (!ThePlatformMgr.IsConnected()) {
-            if (unk60 != 5) {
-                unk60 = 5;
+            if (mStatus != kLeaderboardStatusNotConnected) {
+                mStatus = kLeaderboardStatusNotConnected;
                 Flow *f = mResourceDir->Find<Flow>("no_profile.flow", true);
                 f->Activate();
                 return true;
@@ -201,12 +203,12 @@ bool AppMiniLeaderboardDisplay::UpdateLeaderboard(Symbol s) {
             if (mSongID == 0) {
                 return true;
             }
-            if (unk60 != 0) {
-                unk60 = 0;
+            if (mStatus != kLeaderboardStatusInactive) {
+                mStatus = kLeaderboardStatusInactive;
                 Flow *f = mResourceDir->Find<Flow>("pending.flow", true);
                 f->Activate();
             }
-            unk6c = TheTaskMgr.UISeconds();
+            mSourceSetTime = TheTaskMgr.UISeconds();
         }
     }
     return true;
@@ -226,9 +228,9 @@ void AppMiniLeaderboardDisplay::UpdateSelfInRows() {
         Difficulty diff = pSongStatusMgr->GetDifficulty(mSongID);
         if (0 < score) {
             bool check = false;
-            for (auto it = (mLBRows).begin(); it != (mLBRows).end(); (++it)) {
+            for (auto it = (mRows).begin(); it != (mRows).end(); (++it)) {
                 if (it->xuid == xuid && score > (unsigned int)it->score) {
-                    mLBRows.erase(it);
+                    mRows.erase(it);
                     check = true;
                     break;
                 }
@@ -246,9 +248,9 @@ void AppMiniLeaderboardDisplay::UpdateSelfInRows() {
 
                 check = false;
                 int idx = 0;
-                for (auto it = (mLBRows).begin(); it != (mLBRows).end(); (++it)) {
-                    if (score >= (unsigned int)mLBRows[idx].score) {
-                        mLBRows.insert(it, row);
+                for (auto it = (mRows).begin(); it != (mRows).end(); (++it)) {
+                    if (score >= (unsigned int)mRows[idx].score) {
+                        mRows.insert(it, row);
                         check = true;
                         break;
                     }
@@ -256,12 +258,12 @@ void AppMiniLeaderboardDisplay::UpdateSelfInRows() {
                 }
                 if (!check) {
                     row.orank = 1;
-                    mLBRows.push_back(row);
+                    mRows.push_back(row);
                 }
                 idx = 0;
                 int val = 1;
-                for (auto it = (mLBRows).begin(); it != (mLBRows).end(); (++it)) {
-                    mLBRows[idx].orank = val++;
+                for (auto it = (mRows).begin(); it != (mRows).end(); (++it)) {
+                    mRows[idx].orank = val++;
                     idx++;
                 }
             }
@@ -281,29 +283,29 @@ void AppMiniLeaderboardDisplay::Text(
 
         if (listLabel->Matches("gamertag")) {
             static Symbol gamertag("gamertag");
-            if (name == mLBRows[data].gamertag) {
+            if (name == mRows[data].gamertag) {
                 label->SetTextToken(gNullStr);
             } else {
-                label->SetTokenFmt(gamertag, mLBRows[data].gamertag);
+                label->SetTokenFmt(gamertag, mRows[data].gamertag);
             }
         } else if (listLabel->Matches("score")) {
-            label->SetInt(mLBRows[data].score, false);
+            label->SetInt(mRows[data].score, false);
         } else if (listLabel->Matches("no_flashcards")) {
             static Symbol no_flashcards_icon("no_flashcards_icon");
-            if (mLBRows[data].noFlashcards) {
+            if (mRows[data].noFlashcards) {
                 label->SetTextToken(no_flashcards_icon);
             } else {
                 label->SetTextToken(gNullStr);
             }
         } else if (listLabel->Matches("rank")) {
             static Symbol rank_fmt("rank_fmt");
-            label->SetInt(mLBRows[data].orank, false);
+            label->SetInt(mRows[data].orank, false);
         } else if (listLabel->Matches("difficulty")) {
             static Symbol beginner_short("beginner_short");
             static Symbol easy_short("easy_short");
             static Symbol medium_short("medium_short");
             static Symbol expert_short("expert_short");
-            Difficulty diff = mLBRows[data].diff;
+            Difficulty diff = mRows[data].diff;
             switch (diff) {
             case kDifficultyBeginner:
                 label->SetTextToken(beginner_short);
@@ -321,15 +323,15 @@ void AppMiniLeaderboardDisplay::Text(
                 MILO_NOTIFY(
                     "Bad difficulty %d retrieved from leaderboards for user                    %s at rank %d!", // yes this is what it should be
                     diff,
-                    mLBRows[data].gamertag,
-                    mLBRows[data].rank
+                    mRows[data].gamertag,
+                    mRows[data].rank
                 );
                 break;
             }
         } else if (listLabel->Matches("self")) {
             static Symbol Gamertag("gamertag");
-            if (name == mLBRows[data].gamertag) {
-                label->SetTokenFmt(Gamertag, mLBRows[data].gamertag);
+            if (name == mRows[data].gamertag) {
+                label->SetTokenFmt(Gamertag, mRows[data].gamertag);
             } else {
                 label->SetTextToken(gNullStr);
             }

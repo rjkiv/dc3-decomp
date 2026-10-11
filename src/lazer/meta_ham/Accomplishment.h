@@ -53,35 +53,34 @@ public:
     int GetAvatarAssetReward() const;
     int GetContextID() const;
     int GetGamerpicReward() const;
-    bool GiveToAll() const { return mGiveToAll; }
-
-protected:
-    Symbol mName; // 0x4
-    std::vector<Symbol> mSecretPrereqs; // 0x8
-    AccomplishmentType mAccomplishmentType; // 0x14
-    Symbol mCategory; // 0x18
-    Symbol mAward; // 0x1c
-    Symbol mUnitsToken; // 0x20
-    Difficulty mDifficulty; // 0x24
-    Symbol mPassiveMsgChannel; // 0x28
-    int mPassiveMsgPriority; // 0x2c
-    bool mRequiresUnisonAbility; // 0x30
-    int mPlayerCountMin; // 0x34
-    int mPlayerCountMax; // 0x38
-    int mNumSongs; // 0x3c
-    std::vector<Symbol> mDynamicPrereqsSongs; // 0x40
-    int mProgressStep; // 0x4c
-    int mGamerpicReward; // 0x50
-    int mAvatarAssetReward; // 0x54
-    bool mShowBestAfterEarn; // 0x58
-    bool mHideProgress; // 0x59
-    int mIndex; // 0x5c
-    int mContextID; // 0x60
-    bool mEarnedNoFail; // 0x64
-    bool mLeaderboard; // 0x65
-    bool mIsSecondaryGoal; // 0x66
-    bool mGiveToAll; // 0x67
+    bool ShouldGiveToAll() const { return m_bGiveToAll; }
 
 private:
     void Configure(DataArray *);
+
+    Symbol m_symName; // 0x4
+    std::vector<Symbol> m_vSecretPrereqs; // 0x8
+    AccomplishmentType m_eType; // 0x14
+    Symbol m_symCategory; // 0x18
+    Symbol m_symAward; // 0x1c
+    Symbol m_symUnits; // 0x20
+    Difficulty m_eLaunchableDifficulty; // 0x24
+    Symbol m_symPassiveMsgChannel; // 0x28
+    int m_iPassiveMsgPriority; // 0x2c
+    bool m_bLaunchableRequiresUnisonAbility; // 0x30
+    int m_iLaunchableMinPlayers; // 0x34
+    int m_iLaunchableMaxPlayers; // 0x38
+    int m_iDynamicPrereqsNumSongs; // 0x3c
+    std::vector<Symbol> m_vDynamicPrereqsSongs; // 0x40
+    int m_iProgressStep; // 0x4c
+    int m_iGamerpicReward; // 0x50
+    int m_iAvatarAssetReward; // 0x54
+    bool m_bShowBestAfterEarn; // 0x58
+    bool m_bHideProgress; // 0x59
+    int m_iIndex; // 0x5c
+    int m_iContextID; // 0x60
+    bool m_bCanBeEarnedWithNoFail; // 0x64
+    bool m_bTrackedInLeaderboard; // 0x65
+    bool m_bIsSecondaryGoal; // 0x66
+    bool m_bGiveToAll; // 0x67
 };

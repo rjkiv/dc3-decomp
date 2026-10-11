@@ -47,8 +47,8 @@ static const char *sCampaignStateDescs[] = { "kCampaignStateInactive",
                                              "kCampaignStateExit" };
 
 Campaign::Campaign(DataArray *d)
-    : mCampaignState(kCampaignStateInactive), mWorkItActive(false),
-      mOutroIntroSeen(false), m_pCurLoader(0), unkbc(gNullStr), unkd8(0) {
+    : m_curState(kCampaignStateInactive), m_WorkItActive(false), m_OutroIntroSeen(false),
+      m_pCurLoader(0), m_currentlyLoadedEra(gNullStr), mCurLoaderDir(0) {
     MILO_ASSERT(!TheCampaign, 0x41);
     TheCampaign = this;
     SetName("campaign", ObjectDir::Main());
@@ -61,18 +61,18 @@ Campaign::~Campaign() {
         s_pReloadedCampaignData->Release();
     }
     Cleanup();
-    RELEASE(unkd8);
+    RELEASE(mCurLoaderDir);
 }
 
 BEGIN_HANDLERS(Campaign)
     HANDLE_ACTION(set_campaign_state, SetCurState((CampaignState)_msg->Int(2)))
-    HANDLE_EXPR(get_campaign_state, mCampaignState)
+    HANDLE_EXPR(get_campaign_state, m_curState)
     HANDLE_EXPR(get_campaign_state_desc, (Symbol)sCampaignStateDescs[_msg->Int(2)])
     HANDLE_EXPR(get_intro_song, GetIntroSong(_msg->Int(2)))
     HANDLE_EXPR(get_intro_song_character, GetIntroSongCharacter(_msg->Int(2)))
     HANDLE_EXPR(get_intro_song_stars, GetIntroSongStarsRequired(_msg->Int(2)))
-    HANDLE_EXPR(get_intro_venue, mIntroVenue)
-    HANDLE_EXPR(get_intro_crew, mIntroCrew)
+    HANDLE_EXPR(get_intro_venue, m_IntroVenue)
+    HANDLE_EXPR(get_intro_crew, m_IntroCrew)
     HANDLE_EXPR(get_outro_song, GetOutroSong(_msg->Int(2)))
     HANDLE_EXPR(get_outro_song_character, GetOutroSongCharacter(_msg->Int(2)))
     HANDLE_EXPR(get_outro_song_stars_required, GetOutroSongStarsRequired(_msg->Int(2)))
@@ -88,25 +88,25 @@ BEGIN_HANDLERS(Campaign)
     HANDLE_EXPR(
         get_outro_song_freestyle_enabled, GetOutroSongFreestyleEnabled(_msg->Int(2))
     )
-    HANDLE_ACTION(set_master_quest_crew, mMasterQuestCrew = _msg->Sym(2))
-    HANDLE_EXPR(get_master_quest_crew, mMasterQuestCrew)
-    HANDLE_ACTION(set_master_quest_song, mMasterQuestSong = _msg->Sym(2))
-    HANDLE_EXPR(get_master_quest_song, mMasterQuestSong)
-    HANDLE_EXPR(num_campaign_moves, (int)(mCampaignMoves.size())) // idk
+    HANDLE_ACTION(set_master_quest_crew, m_symMasterQuestCrew = _msg->Sym(2))
+    HANDLE_EXPR(get_master_quest_crew, m_symMasterQuestCrew)
+    HANDLE_ACTION(set_master_quest_song, m_symMasterQuestSong = _msg->Sym(2))
+    HANDLE_EXPR(get_master_quest_song, m_symMasterQuestSong)
+    HANDLE_EXPR(num_campaign_moves, (int)(m_Moves.size())) // idk
     HANDLE_EXPR(num_campaign_song_moves, NumCampaignSongMoves(_msg->Sym(2))) // idk
     HANDLE_EXPR(
         get_campaign_ham_move,
         dynamic_cast<HamMove *>((GetHamMove(_msg->Sym(2), _msg->Int(3))))
     )
     HANDLE_EXPR(get_campaign_move_name, GetMoveName(_msg->Sym(2), _msg->Int(3)))
-    HANDLE_EXPR(get_outro_intro_seen, mOutroIntroSeen)
-    HANDLE_ACTION(set_outro_intro_seen, mOutroIntroSeen = _msg->Int(2))
+    HANDLE_EXPR(get_outro_intro_seen, m_OutroIntroSeen)
+    HANDLE_ACTION(set_outro_intro_seen, m_OutroIntroSeen = _msg->Int(2))
     HANDLE_ACTION(cheat_reload_data, CheatReloadData())
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
 
 BEGIN_PROPSYNCS(Campaign)
-    SYNC_PROP(work_it_active, mWorkItActive);
+    SYNC_PROP(work_it_active, m_WorkItActive);
     SYNC_SUPERCLASS(Hmx::Object);
 END_PROPSYNCS
 
@@ -114,22 +114,23 @@ void Campaign::FinishLoading(Loader *l) {
     DirLoader *dl = dynamic_cast<DirLoader *>(l);
     MILO_ASSERT(dl == m_pCurLoader, 0x315);
     MILO_ASSERT(m_pCurLoader->IsLoaded(), 0x316);
-    unkd8 = m_pCurLoader->GetDir();
-    FOREACH (it, mCampaignMoves) {
+    mCurLoaderDir = m_pCurLoader->GetDir();
+    FOREACH (it, m_Moves) {
         CampaignMove *pActiveLoad = *it;
         MILO_ASSERT(pActiveLoad, 0x31D);
-        HamMove *move = unkd8->Find<HamMove>(pActiveLoad->mMoveVariantName.Str(), false);
+        HamMove *move =
+            mCurLoaderDir->Find<HamMove>(pActiveLoad->m_symMoveVariantName.Str(), false);
         if (move) {
-            pActiveLoad->mMove = move;
-            pActiveLoad->unk10 = 3;
+            pActiveLoad->m_pHamMove = move;
+            pActiveLoad->m_LoadStatus = kMoveLoadStatusComplete;
         } else {
             MILO_NOTIFY(
                 "Loading Campaign Move Data: move '%s' not found in %s!",
-                pActiveLoad->mMoveName.Str(),
-                pActiveLoad->mMoveVariantName.Str()
+                pActiveLoad->m_symMoveName.Str(),
+                pActiveLoad->m_symMoveVariantName.Str()
             );
-            pActiveLoad->mMove = nullptr;
-            pActiveLoad->unk10 = 2;
+            pActiveLoad->m_pHamMove = nullptr;
+            pActiveLoad->m_LoadStatus = kMoveLoadStatusFailed;
         }
     }
     RELEASE(m_pCurLoader);
@@ -140,26 +141,26 @@ void Campaign::FailedLoading(Loader *l) {
     MILO_ASSERT(dl == m_pCurLoader, 0x337);
     RELEASE(m_pCurLoader);
     MILO_NOTIFY("Loading Campaign Move Data: move data not found");
-    FOREACH (it, mCampaignMoves) {
+    FOREACH (it, m_Moves) {
         CampaignMove *move = *it;
-        move->unk10 = 2;
-        move->mMove = nullptr;
+        move->m_LoadStatus = kMoveLoadStatusFailed;
+        move->m_pHamMove = nullptr;
     }
 }
 
 void Campaign::SetCurState(CampaignState state) {
-    char const *currState = sCampaignStateDescs[mCampaignState];
+    char const *currState = sCampaignStateDescs[m_curState];
     char const *addState = sCampaignStateDescs[state];
     MILO_LOG(
         "[==============================================================================] %-32s -> %s\n",
         currState,
         addState
     );
-    mCampaignState = state;
+    m_curState = state;
 }
 
-Symbol Campaign::GetIntroVenue() const { return mIntroVenue; }
-Symbol Campaign::GetIntroCrew() const { return mIntroCrew; }
+Symbol Campaign::GetIntroVenue() const { return m_IntroVenue; }
+Symbol Campaign::GetIntroCrew() const { return m_IntroCrew; }
 
 int Campaign::GetMaxStars() const {
     int stars = 0;
@@ -176,86 +177,86 @@ int Campaign::GetNumOutroSongs() const { return m_vOutroSongs.size(); }
 
 void Campaign::ResetOutroStarsEarnedStartingAtIndex(int iIndex) {
     for (int i = iIndex; i < m_vOutroSongs.size(); i++) {
-        m_vOutroSongs[i]->mStarsEarned = 0;
+        m_vOutroSongs[i]->m_iStarsEarned = 0;
     }
 }
 
 Symbol Campaign::GetCampaignWinInstructions(int iIndex) const {
     iIndex--;
     MILO_ASSERT_RANGE(iIndex, 0, m_vInstructions.size(), 0x248);
-    return mWinInstructions[iIndex];
+    return m_vWinInstructions[iIndex];
 }
 
 Symbol Campaign::GetIntroSong(int i_iIndex) const {
     MILO_ASSERT(i_iIndex < m_vIntroSongs.size(), 0x259);
-    return m_vIntroSongs[i_iIndex]->mIntroSong;
+    return m_vIntroSongs[i_iIndex]->m_symSongName;
 }
 
 Symbol Campaign::GetIntroSongCharacter(int i_iIndex) const {
     MILO_ASSERT(i_iIndex < m_vIntroSongs.size(), 0x25f);
-    return m_vIntroSongs[i_iIndex]->mCharacter;
+    return m_vIntroSongs[i_iIndex]->m_symDefaultCharacter;
 }
 
 int Campaign::GetIntroSongStarsRequired(int i_iIndex) const {
     MILO_ASSERT(i_iIndex < m_vIntroSongs.size(), 0x265);
-    return m_vIntroSongs[i_iIndex]->mStarsRequired;
+    return m_vIntroSongs[i_iIndex]->m_iMinStarsToMaster;
 }
 
 Symbol Campaign::GetOutroSong(int i_iIndex) const {
     MILO_ASSERT(i_iIndex < m_vOutroSongs.size(), 0x279);
-    return m_vOutroSongs[i_iIndex]->mOutroSong;
+    return m_vOutroSongs[i_iIndex]->m_symSongName;
 }
 
 Symbol Campaign::GetOutroSongCharacter(int i_iIndex) const {
     MILO_ASSERT(i_iIndex < m_vOutroSongs.size(), 0x27f);
-    return m_vOutroSongs[i_iIndex]->mCharacter;
+    return m_vOutroSongs[i_iIndex]->m_symDefaultCharacter;
 }
 
 int Campaign::GetOutroSongStarsRequired(int i_iIndex) const {
     MILO_ASSERT(i_iIndex < m_vOutroSongs.size(), 0x285);
-    return m_vOutroSongs[i_iIndex]->mStarsRequired;
+    return m_vOutroSongs[i_iIndex]->m_iMinStarsToMaster;
 }
 
 Symbol Campaign::GetOutroSongGameplayMode(int i_iIndex) const {
     MILO_ASSERT(i_iIndex < m_vOutroSongs.size(), 0x28b);
-    return m_vOutroSongs[i_iIndex]->mGameplayMode;
+    return m_vOutroSongs[i_iIndex]->m_symGameplayMode;
 }
 
 int Campaign::GetOutroSongFailRestartIndex(int i_iIndex) const {
     MILO_ASSERT(i_iIndex < m_vOutroSongs.size(), 0x291);
-    return m_vOutroSongs[i_iIndex]->mFailRestartIndex;
+    return m_vOutroSongs[i_iIndex]->m_iFailRestartIndex;
 }
 
 bool Campaign::GetOutroSongRehearseAllowed(int i_iIndex) const {
     MILO_ASSERT(i_iIndex < m_vOutroSongs.size(), 0x297);
-    return m_vOutroSongs[i_iIndex]->mRehearseAllowed;
+    return m_vOutroSongs[i_iIndex]->m_bRehearseAllowed;
 }
 
 bool Campaign::GetOutroSongShortened(int i_iIndex) const {
     MILO_ASSERT(i_iIndex < m_vOutroSongs.size(), 0x29d);
-    return m_vOutroSongs[i_iIndex]->mSongShortened;
+    return m_vOutroSongs[i_iIndex]->m_bShortenSong;
 }
 
 bool Campaign::GetOutroSongFreestyleEnabled(int i_iIndex) const {
     MILO_ASSERT(i_iIndex < m_vOutroSongs.size(), 0x2a3);
-    return m_vOutroSongs[i_iIndex]->mFreestyleEnabled;
+    return m_vOutroSongs[i_iIndex]->m_bFreestyleEnabled;
 }
 
 int Campaign::GetOutroStarsEarned(int iIndex) const {
     if (0 <= iIndex && iIndex < m_vOutroSongs.size())
-        return m_vOutroSongs[iIndex]->mStarsEarned;
+        return m_vOutroSongs[iIndex]->m_iStarsEarned;
     return 0;
 }
 
 void Campaign::SetOutroStarsEarned(int i1, int i2) {
-    if (i1 >= 0 && i1 < m_vOutroSongs.size() && m_vOutroSongs[i1]->mStarsEarned < i2) {
-        m_vOutroSongs[i1]->mStarsEarned = i2;
+    if (i1 >= 0 && i1 < m_vOutroSongs.size() && m_vOutroSongs[i1]->m_iStarsEarned < i2) {
+        m_vOutroSongs[i1]->m_iStarsEarned = i2;
     }
 }
 
 CampaignEra *Campaign::GetCampaignEra(Symbol era) const {
-    auto it = mEraLookup.find(era);
-    if (it != mEraLookup.end()) {
+    auto it = m_mapEraLookup.find(era);
+    if (it != m_mapEraLookup.end()) {
         return GetCampaignEra(it->second);
     }
     return nullptr;
@@ -268,8 +269,8 @@ CampaignEra *Campaign::GetCampaignEra(int i_iIndex) const {
 
 void Campaign::LoadHamMoves(Symbol s) {
     MILO_ASSERT(m_pCurLoader==NULL, 0x347);
-    unkb8 = false;
-    RELEASE(unkd8);
+    m_bAllMovesKLoaded = false;
+    RELEASE(mCurLoaderDir);
     FilePath movesPath(MakeString("modular_song_data/%s_moves.milo", s.Str()));
     m_pCurLoader =
         new DirLoader(movesPath, kLoadFront, this, nullptr, nullptr, false, nullptr);
@@ -283,15 +284,15 @@ void Campaign::GatherMoveData(Symbol sym) {
     for (int i = 0; i < numSongsForEra; i++) {
         CampaignEraSongEntry *pSongEntry = pEra->GetSongEntry(i);
         MILO_ASSERT(pSongEntry, 0x2f8);
-        Symbol songEntryName = pSongEntry->GetSongName();
+        Symbol songEntryName = pSongEntry->GetSong();
         if (songEntryName != danceCrazeSong) {
-            int numSongCrazeMoves = pSongEntry->GetNumSongCrazeMoves();
+            int numSongCrazeMoves = pSongEntry->GetNumCrazeMoves();
             for (int j = 0; j < numSongCrazeMoves; j++) {
                 Symbol crazeMoveName = pSongEntry->GetCrazeMoveName(j);
                 Symbol crazeMoveVariantName = pSongEntry->GetCrazeMoveVariantName(j);
                 CampaignMove *move =
                     new CampaignMove(songEntryName, crazeMoveName, crazeMoveVariantName);
-                mCampaignMoves.push_back(move);
+                m_Moves.push_back(move);
             }
         }
     }
@@ -316,16 +317,16 @@ void Campaign::Cleanup() {
     m_vEras.clear();
     m_vIntroSongs.clear();
     m_vOutroSongs.clear();
-    mEraLookup.clear();
+    m_mapEraLookup.clear();
     m_vInstructions.clear();
-    mWinInstructions.clear();
+    m_vWinInstructions.clear();
 }
 
 int Campaign::NumCampaignSongMoves(Symbol s) {
     int moves = 0;
-    FOREACH (it, mCampaignMoves) {
+    FOREACH (it, m_Moves) {
         CampaignMove *move = *it;
-        if (move->unk10 == 3 && move->mSongName == s)
+        if (move->m_LoadStatus == kMoveLoadStatusComplete && move->m_symSongName == s)
             moves++;
     }
     return moves;
@@ -336,15 +337,15 @@ void Campaign::ConfigureCampaignData(DataArray *i_pConfig) {
     static Symbol crew("crew");
     static Symbol songs("songs");
 
-    mIntroVenue = gNullStr;
-    mIntroCrew = gNullStr;
+    m_IntroVenue = gNullStr;
+    m_IntroCrew = gNullStr;
 
     static Symbol campaign_intro("campaign_intro");
 
     DataArray *pIntroArray = i_pConfig->FindArray(campaign_intro);
     MILO_ASSERT(pIntroArray, 0x94);
-    pIntroArray->FindData(venue, mIntroVenue, false);
-    pIntroArray->FindData(crew, mIntroCrew, false);
+    pIntroArray->FindData(venue, m_IntroVenue, false);
+    pIntroArray->FindData(crew, m_IntroCrew, false);
 
     DataArray *pSongArray = pIntroArray->FindArray(songs);
     MILO_ASSERT(pSongArray, 0x99);
@@ -359,13 +360,13 @@ void Campaign::ConfigureCampaignData(DataArray *i_pConfig) {
         m_vIntroSongs.push_back(song);
     }
 
-    unk94 = gNullStr;
-    unk98 = gNullStr;
+    m_OutroVenue = gNullStr;
+    m_OutroCrew = gNullStr;
     static Symbol campaign_outro("campaign_outro");
     DataArray *pOutroArray = i_pConfig->FindArray(campaign_outro);
     MILO_ASSERT(pOutroArray, 0xAB);
-    pOutroArray->FindData(venue, unk94, false);
-    pOutroArray->FindData(crew, unk98, false);
+    pOutroArray->FindData(venue, m_OutroVenue, false);
+    pOutroArray->FindData(crew, m_OutroCrew, false);
     pSongArray = pIntroArray->FindArray(songs);
     MILO_ASSERT(pSongArray, 0xB0);
     MILO_ASSERT(pSongArray->Size() > 1, 0xB1);
@@ -410,9 +411,9 @@ void Campaign::ConfigureCampaignData(DataArray *i_pConfig) {
         } else {
             if (pCampaignEra->IsTanBattleEra()) {
                 MILO_ASSERT(m_vEras.size(), 0xE4);
-                GetCampaignEra(m_vEras.size() - 1)->SetUnk50(true);
+                GetCampaignEra(m_vEras.size() - 1)->SetFinalTimeTravelEra(true);
             }
-            mEraLookup[name] = m_vEras.size();
+            m_mapEraLookup[name] = m_vEras.size();
             m_vEras.push_back(pCampaignEra);
         }
     }
@@ -430,16 +431,16 @@ void Campaign::ConfigureCampaignData(DataArray *i_pConfig) {
     MILO_ASSERT(pWinInstructionArray, 0xfb);
     for (int i = 1; i < pWinInstructionArray->Size(); i++) {
         Symbol s = pWinInstructionArray->Sym(i);
-        mWinInstructions.push_back(s);
+        m_vWinInstructions.push_back(s);
     }
 }
 
 void Campaign::LoadCampaignDanceMoves(Symbol s) {
-    if (s != unkbc) {
-        mCampaignMoves.clear();
-        unkbc = s;
+    if (s != m_currentlyLoadedEra) {
+        m_Moves.clear();
+        m_currentlyLoadedEra = s;
         GatherMoveData(s);
-        unkb8 = false;
+        m_bAllMovesKLoaded = false;
         m_pCurLoader = nullptr;
         LoadHamMoves(s);
     }
@@ -456,13 +457,14 @@ void Campaign::CheatReloadData() {
 
 HamMove *Campaign::GetHamMove(Symbol s1, int i2) {
     int i = -1;
-    FOREACH (it, mCampaignMoves) {
+    FOREACH (it, m_Moves) {
         CampaignMove *curMove = *it;
-        if (curMove->unk10 == 3 && curMove->mSongName == s1) {
+        if (curMove->m_LoadStatus == kMoveLoadStatusComplete
+            && curMove->m_symSongName == s1) {
             i++;
         }
         if (i == i2) {
-            return curMove->mMove;
+            return curMove->m_pHamMove;
         }
     }
     return nullptr;
@@ -470,13 +472,14 @@ HamMove *Campaign::GetHamMove(Symbol s1, int i2) {
 
 Symbol Campaign::GetMoveName(Symbol s1, int i2) {
     int i = -1;
-    FOREACH (it, mCampaignMoves) {
+    FOREACH (it, m_Moves) {
         CampaignMove *curMove = *it;
-        if (curMove->unk10 == 3 && curMove->mSongName == s1) {
+        if (curMove->m_LoadStatus == kMoveLoadStatusComplete
+            && curMove->m_symSongName == s1) {
             i++;
         }
         if (i == i2) {
-            return curMove->mMoveName;
+            return curMove->m_symMoveName;
         }
     }
     return 0;
@@ -528,7 +531,7 @@ bool Campaign::UpdateEraSongUnlockInstructions(
     const CampaignProgress &campaignProgress =
         pProfile->GetCampaignProgress(pPerformer->GetDifficulty());
     int starsEarned = campaignProgress.GetEraStarsEarned(era);
-    int movesRequired = pEra->MovesRequiredForMastery();
+    int movesRequired = pEra->GetRequiredMovesForMastery();
     int i8 = Max(requiredStars - starsEarned, 0);
     int eraMovesMastered = campaignProgress.GetEraMovesMastered(era);
     if (eraMovesMastered >= movesRequired) {

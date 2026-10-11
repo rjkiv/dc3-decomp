@@ -16,14 +16,14 @@
 UIEventMgr *TheUIEventMgr;
 
 UIEventMgr::BandEvent::BandEvent(UIEventMgr::EventType t, DataArray *a1, DataArray *a2)
-    : mType(t), unk4(a1), mActive(false) {
+    : mEventType(t), mEventDef(a1), mActive(false) {
     if (a2) {
-        unk8 = a2->Clone(true, true, 0);
+        mEventInit = a2->Clone(true, true, 0);
     }
 }
 
 void UIEventMgr::BandEvent::CacheDestination() {
-    unk4->FindData("destination_screen", mDestScreen, false);
+    mEventDef->FindData("destination_screen", mDestination, false);
 }
 
 UIEventMgr::UIEventMgr() {}
@@ -43,14 +43,14 @@ bool UIEventMgr::HasActiveTransitionEvent() const {
     if (mEventQueue.empty())
         return false;
     else
-        return mEventQueue[0]->mType == 1;
+        return mEventQueue[0]->mEventType == kTransition;
 }
 
 bool UIEventMgr::HasActiveDialogEvent() const {
     if (mEventQueue.empty())
         return false;
     else
-        return mEventQueue[0]->mType == 0;
+        return mEventQueue[0]->mEventType == kDialog;
 }
 
 void UIEventMgr::Init() {
@@ -64,7 +64,7 @@ void UIEventMgr::Terminate() { RELEASE(TheUIEventMgr); }
 
 Symbol UIEventMgr::CurrentEvent() const {
     if (!mEventQueue.empty()) {
-        return mEventQueue[0]->unk4->Sym(0);
+        return mEventQueue[0]->mEventDef->Sym(0);
     } else {
         return gNullStr;
     }
@@ -73,7 +73,7 @@ Symbol UIEventMgr::CurrentEvent() const {
 bool UIEventMgr::IsTransitionEventStarted() const {
     MILO_ASSERT(HasActiveTransitionEvent(), 0xDC);
     static Symbol next_screen("next_screen");
-    const char *nextScreen = mEventQueue[0]->unk4->FindStr(next_screen);
+    const char *nextScreen = mEventQueue[0]->mEventDef->FindStr(next_screen);
     const char *bottomScreen;
     if (TheUI->BottomScreen()) {
         bottomScreen = TheUI->BottomScreen()->Name();
@@ -85,7 +85,7 @@ bool UIEventMgr::IsTransitionEventStarted() const {
 
 bool UIEventMgr::IsTransitionEventFinished() const {
     MILO_ASSERT(HasActiveTransitionEvent(), 0xD1);
-    const char *cc = mEventQueue[0]->mDestScreen.c_str();
+    const char *cc = mEventQueue[0]->mDestination.c_str();
     const char *curScreen;
     if (TheUI->CurrentScreen()) {
         curScreen = TheUI->CurrentScreen()->Name();
@@ -100,24 +100,24 @@ void UIEventMgr::ActivateFirstEvent() {
     BandEvent *firstEvent = mEventQueue[0];
     MILO_ASSERT(!firstEvent->mActive, 0x8B);
     firstEvent->mActive = true;
-    if (firstEvent->mType == 1) {
-        DataArray *initArr = firstEvent->unk4->FindArray("init", false);
+    if (firstEvent->mEventType == kTransition) {
+        DataArray *initArr = firstEvent->mEventDef->FindArray("init", false);
         if (initArr) {
-            initArr->ExecuteScript(1, nullptr, firstEvent->unk8, 2);
+            initArr->ExecuteScript(1, nullptr, firstEvent->mEventInit, 2);
         }
         firstEvent->CacheDestination();
         static Symbol next_screen("next_screen");
         TheHamUI.GotoEventScreen(
-            ObjectDir::Main()->Find<UIScreen>(firstEvent->unk4->FindStr(next_screen))
+            ObjectDir::Main()->Find<UIScreen>(firstEvent->mEventDef->FindStr(next_screen))
         );
-    } else if (firstEvent->mType == 0) {
+    } else if (firstEvent->mEventType == kDialog) {
         static Message init_msg("init");
-        static EventDialogStartMsg msg(firstEvent->unk4, init_msg);
-        msg[0] = firstEvent->unk4;
-        if (firstEvent->unk8->Size() == 0) {
-            firstEvent->unk8 = init_msg;
+        static EventDialogStartMsg msg(firstEvent->mEventDef, init_msg);
+        msg[0] = firstEvent->mEventDef;
+        if (firstEvent->mEventInit->Size() == 0) {
+            firstEvent->mEventInit = init_msg;
         }
-        msg[1] = firstEvent->unk8;
+        msg[1] = firstEvent->mEventInit;
         Export(msg, false);
     }
 }
@@ -126,7 +126,7 @@ void UIEventMgr::DismissEvent(Symbol s1) {
     MILO_ASSERT(!mEventQueue.empty(), 0x2D);
     MILO_ASSERT(mEventQueue.front()->mActive, 0x2E);
     Symbol curEvent = CurrentEvent();
-    EventType t = mEventQueue.front()->mType;
+    EventType t = mEventQueue.front()->mEventType;
     delete mEventQueue.front();
     mEventQueue.erase(mEventQueue.begin());
     if (t == 0) {
@@ -155,7 +155,7 @@ void UIEventMgr::TriggerEvent(Symbol s1, DataArray *a2) {
 
     while (!mEventQueue.empty()) {
         BandEvent *event = mEventQueue.back();
-        if (event->mType) {
+        if (event->mEventType) {
             break;
         }
         if (mEventQueue.size() == 1 && event->mActive) {

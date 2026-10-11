@@ -8,11 +8,11 @@ public:
     int Compare(const NavListItemSortCmp *, NavListNodeType) const;
 
     ChallengeScoreCmp(int type, int i, char const *name)
-        : mType(type), unk8(i), mName(name) {}
+        : mChallengeSongType(type), mScore(i), mSongName(name) {}
 
-    int mType;
-    int unk8;
-    char const *mName;
+    int mChallengeSongType; // 0x4
+    int mScore; // 0x8
+    char const *mSongName; // 0xc
 };
 
 class ChallengeSortByScore : public ChallengeSort {

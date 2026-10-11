@@ -36,7 +36,7 @@ void SetLocalizedFBText(const Symbol &s, wchar_t *wStr) {
 }
 
 KinectSharePanel::KinectSharePanel()
-    : mTex(this), unk4c(0), mBuf(0), mPreviewBuf(0), unk58(0) {
+    : mTex(this), mUploadStatus(Upload_Idle), mBuf(0), mPreviewBuf(0), mBufLen(0) {
     memset(&mOverlapped, 0, sizeof(XOVERLAPPED));
 }
 
@@ -44,7 +44,7 @@ BEGIN_HANDLERS(KinectSharePanel)
     HANDLE(upload, OnUpload)
     HANDLE(post_link, OnPostLink)
     HANDLE(cleanup, OnCleanup)
-    HANDLE_EXPR(xsocial_image_pending, XSocialImagePending())
+    HANDLE_EXPR(xsocial_image_pending, XSocialNetworkImagePostPending())
     HANDLE_MESSAGE(RockCentralOpCompleteMsg)
     HANDLE_SUPERCLASS(UIPanel)
 END_HANDLERS
@@ -55,8 +55,8 @@ END_PROPSYNCS
 
 void KinectSharePanel::Poll() {
     UIPanel::Poll();
-    switch (unk4c) {
-    case 2: {
+    switch (mUploadStatus) {
+    case Upload_Success: {
         MILO_LOG("KinectSharePanel reporting successful upload\n");
         RockCentralOpCompleteMsg msg(true, -1, 0);
         Handle(msg, true);
@@ -65,21 +65,21 @@ void KinectSharePanel::Poll() {
         TheAccomplishmentMgr->EarnAccomplishmentForProfile(
             profile, acc_photo_share, false
         );
-        unk4c = 0;
+        mUploadStatus = Upload_Idle;
         break;
     }
-    case 3: {
+    case Upload_Failure: {
         MILO_LOG("KinectSharePanel reporting failed upload\n");
         RockCentralOpCompleteMsg msg(false, -1, 0);
         Handle(msg, true);
-        unk4c = 0;
+        mUploadStatus = Upload_Idle;
         break;
     }
-    case 4: {
+    case Upload_Cancelled: {
         MILO_LOG("KinectSharePanel reporting cancelled upload\n");
         RockCentralOpCompleteMsg msg(true, -1, 1);
         Handle(msg, true);
-        unk4c = 0;
+        mUploadStatus = Upload_Idle;
         break;
     }
     default:
@@ -92,9 +92,11 @@ void KinectSharePanel::Poll() {
             "KinectSharePanel asynch I/O completed 0x%08x\n", mOverlapped.dwExtendedError
         );
         if (mOverlapped.dwExtendedError != 0) {
-            unk4c = mOverlapped.dwExtendedError == ERROR_CANCELLED ? 4 : 3;
+            mUploadStatus = mOverlapped.dwExtendedError == ERROR_CANCELLED
+                ? Upload_Cancelled
+                : Upload_Failure;
         } else {
-            unk4c = 2;
+            mUploadStatus = Upload_Success;
         }
         if (mOverlapped.hEvent) {
             CloseHandle(mOverlapped.hEvent);
@@ -120,7 +122,7 @@ void KinectSharePanel::ConvertImages() {
     if (mBuf) {
         int iref;
         LoadBitmapIntoJpeg(pixels, w, h, bpp, mBuf, iref);
-        unk58 = iref;
+        mBufLen = iref;
         mImagePostParams.FullImageByteCount = iref;
         mImagePostParams.pFullImage = (const BYTE *)mBuf;
     }
@@ -288,11 +290,11 @@ DataNode KinectSharePanel::OnPostLink(DataArray *a) {
             res = XShowSocialNetworkLinkPostUI(padnum, &mLinkPostParams, &mOverlapped);
         }
         if (res == ERROR_IO_PENDING) {
-            unk4c = 1;
+            mUploadStatus = Upload_InProgress;
         } else if (res == ERROR_SUCCESS) {
-            unk4c = 2;
+            mUploadStatus = Upload_Success;
         } else {
-            unk4c = 3;
+            mUploadStatus = Upload_Failure;
         }
     }
     return DataNode(kDataInt, 0);
@@ -370,11 +372,11 @@ DataNode KinectSharePanel::OnUpload(DataArray *arr) {
         }
 
         if (res == ERROR_IO_PENDING) {
-            unk4c = 1;
+            mUploadStatus = Upload_InProgress;
         } else if (res == ERROR_SUCCESS) {
-            unk4c = 2;
+            mUploadStatus = Upload_Success;
         } else {
-            unk4c = 3;
+            mUploadStatus = Upload_Failure;
         }
     }
     return DataNode(kDataInt, 0);

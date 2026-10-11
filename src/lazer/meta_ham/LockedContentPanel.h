@@ -36,11 +36,12 @@ protected:
 
     void TriggerTeaserText();
 
-    AppLabel *unk3c[8];
-    HamStarsDisplay *unk5c[8]; // i think this is how it works?
-    Sound *mSound; // 0x7c
-    Timer *mTimer; // 0x80
-    bool unk84;
+private:
+    AppLabel *mSongName[8]; // 0x3c
+    HamStarsDisplay *mSongStars[8]; // 0x5c
+    Sound *mSound; // 0x7c - not in pdb
+    Timer *mTimer; // 0x80 - not in pdb
+    bool mPlaying; // 0x84 - not in pdb
 };
 
 extern LockedContentPanel *TheLockedContentPanel;

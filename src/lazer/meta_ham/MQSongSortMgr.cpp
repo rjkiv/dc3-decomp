@@ -28,16 +28,16 @@ void MQSongSortMgr::Init(SongPreview &preview) {
 }
 
 void MQSongSortMgr::OnEnter() {
-    mHeadersSelectable = true;
+    mSortWithHeaders = true;
     UpdateList();
     FOREACH (it, mSorts) {
         (*it)->BuildTree();
     }
-    NavListSort *sort = mSorts[mCurrentSortIdx];
+    NavListSort *sort = mSorts[mSortIndex];
     sort->BuildItemList();
-    if (unk48) {
-        sort->SetHighlightID(unk44);
-        unk48 = false;
+    if (mSavedHighlight) {
+        sort->SetHighlightID(mSavedHighlightID);
+        mSavedHighlight = false;
     }
     sort->UpdateHighlight();
 }
@@ -59,7 +59,7 @@ bool MQSongSortMgr::SelectionIs(Symbol sym) {
 }
 
 bool MQSongSortMgr::IsCharacter(Symbol sym) const {
-    FOREACH (it, unk78) {
+    FOREACH (it, m_songsPerCharacter) {
         if (it->first == sym) {
             return true;
         }
@@ -69,9 +69,9 @@ bool MQSongSortMgr::IsCharacter(Symbol sym) const {
 
 void MQSongSortMgr::UpdateList() {
     MILO_ASSERT(TheCampaign, 0x6e);
-    unk90.clear();
-    Symbol mqCrew = TheCampaign->GetMQCrew();
-    unk78.clear();
+    m_vSongs.clear();
+    Symbol mqCrew = TheCampaign->GetMasterQuestCrew();
+    m_songsPerCharacter.clear();
     const std::vector<int> &rankedSongs = TheHamSongMgr.RankedSongs((SongType)1);
     FOREACH_CONST (it, rankedSongs) {
         const HamSongMetadata *metadata = TheHamSongMgr.Data(*it);
@@ -81,20 +81,24 @@ void MQSongSortMgr::UpdateList() {
         Symbol mqHeader = MakeString("mqheader_%s", temp);
         if (!metadata->IsFake() && crew == mqCrew
             && TheProfileMgr.IsContentUnlocked(metadata->ShortName())) {
-            unk78[mqHeader].push_back(TheHamSongMgr.GetShortNameFromSongID(*it));
+            m_songsPerCharacter[mqHeader].push_back(
+                TheHamSongMgr.GetShortNameFromSongID(*it)
+            );
         }
     }
-    FOREACH (it, unk78) {
+    FOREACH (it, m_songsPerCharacter) {
         auto &vec = it->second;
-        unk90.push_back(it->first);
+        m_vSongs.push_back(it->first);
         FOREACH (it2, vec) {
-            unk90.push_back(*it2);
+            m_vSongs.push_back(*it2);
         }
     }
 }
 
 bool MQSongSortMgr::IsSong(Symbol sym) const {
-    for (auto it = unk78.begin(); it != unk78.end() && it->first != sym; ++it) {
+    for (auto it = m_songsPerCharacter.begin();
+         it != m_songsPerCharacter.end() && it->first != sym;
+         ++it) {
         std::vector<Symbol> syms = it->second;
         FOREACH (it2, syms) {
             if (*it2 == sym) {

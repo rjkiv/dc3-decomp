@@ -5,6 +5,16 @@
 #include "rndobj/Group.h"
 #include "ui/UIPanel.h"
 
+enum letterboxState {
+    kLetterBox_Off = 0x0000,
+    kLetterBox_Activate = 0x0001,
+    kLetterBox_Active = 0x0002,
+    kLetterBox_PulseLeft = 0x0003,
+    kLetterBox_PulseTop = 0x0004,
+    kLetterBox_Hold = 0x0005,
+    kLetterBox_Deactivate = 0x0006
+};
+
 class LetterboxPanel : public HamPanel {
 public:
     LetterboxPanel();
@@ -40,13 +50,12 @@ public:
     void ToggleBlacklightMode(bool);
 
 private:
-    UIPanel *unk3c;
-    RndGroup *unk40;
+    UIPanel *mSyncedPanel; // 0x3c
+    RndGroup *mLetterboxGroup; // 0x40
     bool mIsBlacklightMode; // 0x44
-    bool unk45;
-    Timer unk48;
-    int unk78;
-    int unk7c;
-    float unk80;
-    float unk84;
+    bool mIsHeartbeatActive; // 0x45
+    Timer mBlackLightTimer; // 0x48
+    int mBlacklightActiveDurationMs; // 0x78
+    letterboxState mLetterboxState; // 0x7c
+    float mStateDuration; // 0x80
 };

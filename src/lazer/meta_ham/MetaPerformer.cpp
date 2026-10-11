@@ -117,7 +117,7 @@ BEGIN_HANDLERS(MetaPerformer)
     HANDLE_EXPR(is_no_fail_active, mNoFail)
     HANDLE_ACTION(use_no_fail, mNoFail = _msg->Int(2))
     HANDLE_EXPR(is_possible_to_fail, !mNoFail)
-    HANDLE_EXPR(is_no_flashcards_active, TheProfileMgr.NoFlashcards())
+    HANDLE_EXPR(is_no_flashcards_active, TheProfileMgr.GetNoFlashCards())
     HANDLE_EXPR(completed_song_with_no_flashcards, mCompletedSongWithNoFlashcards)
     HANDLE_EXPR(get_enrollment_index, mEnrollmentIndex[_msg->Int(2)])
     HANDLE_EXPR(is_gameplay_timer_running, IsGameplayTimerRunning())
@@ -273,7 +273,7 @@ void MetaPerformer::CompleteSong(int stars, int totalScore, int, float, bool b5)
         int padnum = pPlayer->PadNum();
         HamProfile *profile = TheProfileMgr.GetProfileFromPad(padnum);
         if (profile) {
-            TheAccomplishmentMgr->SetUnk30(padnum, false);
+            TheAccomplishmentMgr->SetProfileChanged(padnum, false);
         }
     }
 }
@@ -889,7 +889,8 @@ void MetaPerformer::CheckForFitnessAccomplishments() {
         MILO_ASSERT(pPlayerData, 0x2EC);
         int pad = pPlayerData->PadNum();
         HamProfile *profile = TheProfileMgr.GetProfileFromPad(pad);
-        if (profile && profile->InFitnessMode() && !TheAccomplishmentMgr->Unk30(pad)) {
+        if (profile && profile->InFitnessMode()
+            && !TheAccomplishmentMgr->GetProfileChanged(pad)) {
             float f88, f8c;
             if (mFitnessFilters[i].GetFitnessDataAndReset(f88, f8c)) {
                 profile->SetFitnessStats(i, f88, f8c);
@@ -1113,7 +1114,7 @@ void MetaPerformer::SaveDanceBattleScores(Symbol song) {
             MILO_ASSERT(pPlayerProvider, 0x220);
             int padnum = pPlayerData->PadNum();
             HamProfile *profile = TheProfileMgr.GetProfileFromPad(padnum);
-            if (profile && !TheAccomplishmentMgr->Unk30(padnum)) {
+            if (profile && !TheAccomplishmentMgr->GetProfileChanged(padnum)) {
                 SongStatusMgr *songStatusMgr = profile->GetSongStatusMgr();
                 MILO_ASSERT(songStatusMgr, 0x229);
                 static Symbol score("score");
@@ -1260,7 +1261,7 @@ void MetaPerformer::HandleGameplayEnded(const EndGameResult &egr) {
         }
 
         if (pProfileFromPad && pProfileFromPad->HasValidSaveData()
-            && !TheAccomplishmentMgr->Unk30(padnum)) {
+            && !TheAccomplishmentMgr->GetProfileChanged(padnum)) {
             if (0 < scoreInt) {
                 pProfileFromPad->GetMetagameStats()->HandleGameplayEnded(
                     pProfileFromPad, pPlayer, egr
@@ -1298,7 +1299,7 @@ void MetaPerformer::SaveAndUploadScores(Symbol song, int totalScore, int stars) 
         static Symbol alert_highscore_solo("alert_highscore_solo");
         static Symbol alert_highscore_coop("alert_highscore_coop");
 
-        HamProfile *pCriticalProfile = TheProfileMgr.CriticalProfile();
+        HamProfile *pCriticalProfile = TheProfileMgr.GetCriticalProfile();
         Difficulty easiestDiff = EasiestDifficulty();
         int songID = mSongMgr.GetSongIDFromShortName(song);
 
@@ -1315,7 +1316,7 @@ void MetaPerformer::SaveAndUploadScores(Symbol song, int totalScore, int stars) 
             }
             int padnum = pPlayerData->PadNum();
             HamProfile *pProfile = TheProfileMgr.GetProfileFromPad(padnum);
-            if (pProfile && !TheAccomplishmentMgr->Unk30(padnum)) {
+            if (pProfile && !TheAccomplishmentMgr->GetProfileChanged(padnum)) {
                 if (pProfile == pCriticalProfile) {
                     pCriticalProfile = nullptr;
                 }

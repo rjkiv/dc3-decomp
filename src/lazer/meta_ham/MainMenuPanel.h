@@ -19,9 +19,9 @@ public:
         MotdData();
         MotdData(const MotdData &);
 
-        Symbol unk0;
-        String unk4;
-        float unkc;
+        Symbol type; // 0x0
+        String text; // 0x4
+        float length; // 0xc
     };
 
     // Hmx::Object
@@ -48,29 +48,6 @@ public:
     MainMenuPanel();
     MainMenuProvider *GetMainMenuProvider();
 
-protected:
-    HamLabel *mMsgLabel; // 0x40
-    MainMenuProvider unk44; // 0x44
-    bool unk80;
-    bool unk81;
-    std::list<NetCacheLoader *> unk84;
-    RndTex *unk8c;
-    RndTex *unk90;
-    bool unk94;
-    bool unk95;
-    bool unk96;
-    std::map<Symbol, std::list<String> > unk98;
-    bool unkb0;
-    std::list<MotdData> mMotdData; // 0xb4
-    int unkbc;
-    int unkc0;
-    int unkc4;
-    int unkc8;
-    int unkcc;
-    int unkd0;
-    Symbol unkd4;
-    PropertyEventProvider *unkd8;
-
 private:
     void DeleteDownloadedArts();
     void DownloadMotdArt();
@@ -85,4 +62,26 @@ private:
     void MotdHandleTextScrolledOut(int);
     void MotdInitializeTexts();
     void MotdSetup(HamLabel *);
+
+    HamLabel *mMsgLabel; // 0x40
+    MainMenuProvider mProvider; // 0x44
+    bool mNeedToLoadNetCacheMgr; // 0x80
+    bool mNeedToCleanupNetCacheMgr; // 0x81 - not in pdb
+    std::list<NetCacheLoader *> mLoaders; // 0x84
+    RndTex *mDlcArt; // 0x8c
+    RndTex *mUtilityArt; // 0x90 - not in pdb
+    bool mIsDlcArtLoaded; // 0x94
+    bool mIsUtilityArtLoaded; // 0x95
+    bool mIsMiscArtLoaded; // 0x96 - not in pdb
+    std::map<Symbol, std::list<String> > mMessages; // 0x98
+    bool mMotdUpdatedNeeded; // 0xb0
+    std::list<MotdData> mMotdData; // 0xb4
+    int mMotdFreq; // 0xbc
+    int mCurrMotdFreq; // 0xc0
+    int mStatsDisplayLimit; // 0xc4
+    int mCurrStatsAccumulated; // 0xc8
+    int mCommunityDisplayLimit; // 0xcc
+    int mCurrCommunityAccumulated; // 0xd0
+    Symbol prevMotd; // 0xd4
+    PropertyEventProvider *mSettings; // 0xd8
 };

@@ -1,6 +1,7 @@
 #pragma once
 #include "obj/Data.h"
 #include "obj/Object.h"
+#include "stl/_vector.h"
 #include "ui/UIListProvider.h"
 #include "utl/Symbol.h"
 
@@ -9,9 +10,14 @@ public:
     HamStoreFilter(Symbol s);
     HamStoreFilter(DataArray const *);
 
-    Symbol unk0;
-    String unk4;
-    std::vector<Symbol> unkc;
+    const Symbol &GetName() const { return mName; }
+    const char *GetText() const { return mText.c_str(); }
+    const std::vector<Symbol> &GetSorts() const { return mSorts; }
+
+private:
+    Symbol mName; // 0x0
+    String mText; // 0x4
+    std::vector<Symbol> mSorts; // 0xc
 };
 
 class HamStoreFilterProvider : public UIListProvider, public Hmx::Object {
@@ -22,5 +28,6 @@ public:
 
     HamStoreFilterProvider(std::vector<HamStoreFilter *> *);
 
+private:
     std::vector<HamStoreFilter *> *mFilters; // 0x30
 };

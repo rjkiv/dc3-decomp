@@ -14,15 +14,15 @@ int SongCmp::Compare(const NavListItemSortCmp *cmp, NavListNodeType type) const 
 
     case kNodeHeader: {
         const SongCmp *songCmp = cmp->GetSongCmp();
-        int stringCmp = *unk4 - *songCmp->unk4;
-        if (!unk8 || 0 < stringCmp)
+        int stringCmp = *mName - *songCmp->mName;
+        if (!mOtherName || 0 < stringCmp)
             return stringCmp;
-        int stringCmp2 = *unk8 - *songCmp->unk4;
+        int stringCmp2 = *mOtherName - *songCmp->mName;
         return Min(0, stringCmp2);
     }
     case kNodeItem: {
         const SongCmp *songCmp = cmp->GetSongCmp();
-        return AlphaKeyStrCmp(unk4, songCmp->unk4, false);
+        return AlphaKeyStrCmp(mName, songCmp->mName, false);
     }
     default:
         MILO_FAIL("invalid type of node comparison.\n");
@@ -32,7 +32,7 @@ int SongCmp::Compare(const NavListItemSortCmp *cmp, NavListNodeType type) const 
 
 NavListHeaderNode *SongSortBySong::NewHeaderNode(NavListItemNode *p1) const {
     SongSortNode *node = dynamic_cast<SongSortNode *>(p1);
-    const char *title = node->Record()->Metadata()->Title();
+    const char *title = node->GetSongRecord()->GetData()->Title();
     SongCmp *cmp = new SongCmp(title, nullptr);
 
     char sortLetter[2] = { 0, 0 };
@@ -44,7 +44,7 @@ NavListHeaderNode *SongSortBySong::NewHeaderNode(NavListItemNode *p1) const {
 
 NavListShortcutNode *SongSortBySong::NewShortcutNode(NavListItemNode *p1) const {
     SongSortNode *node = dynamic_cast<SongSortNode *>(p1);
-    const char *title = node->Record()->Metadata()->Title();
+    const char *title = node->GetSongRecord()->GetData()->Title();
     SongCmp *cmp = new SongCmp(title, nullptr);
 
     char sortLetter[2] = { 0, 0 };
@@ -57,7 +57,7 @@ NavListShortcutNode *SongSortBySong::NewShortcutNode(NavListItemNode *p1) const 
 
 NavListItemNode *SongSortBySong::NewItemNode(void *p1) const {
     SongRecord *record = static_cast<SongRecord *>(p1);
-    const char *title = record->Metadata()->Title();
+    const char *title = record->GetData()->Title();
     SongCmp *cmp = new SongCmp(title, nullptr);
 
     return new SongSortNode(cmp, record);
@@ -68,8 +68,8 @@ SongSortBySong::NewHeaderNode(NavListItemNode *node, NavListItemNode *node2) con
     SongSortNode *sortNode1 = dynamic_cast<SongSortNode *>(node);
     SongSortNode *sortNode2 = dynamic_cast<SongSortNode *>(node2);
 
-    const char *title1 = sortNode1->Record()->Metadata()->Title();
-    const char *title2 = sortNode2->Record()->Metadata()->Title();
+    const char *title1 = sortNode1->GetSongRecord()->GetData()->Title();
+    const char *title2 = sortNode2->GetSongRecord()->GetData()->Title();
 
     SongCmp *cmp = new SongCmp(title1, title2);
 

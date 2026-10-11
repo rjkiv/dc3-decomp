@@ -39,7 +39,7 @@ bool HamPanel::Exiting() const {
 void HamPanel::Poll() { UIPanel::Poll(); }
 
 UIComponent *HamPanel::FocusComponent() {
-    auto pEventDialog = TheHamUI.EventDialogPanel();
+    auto pEventDialog = TheHamUI.EventDialog();
     MILO_ASSERT(pEventDialog, 60);
     if (pEventDialog->GetState() == kUp) {
         if (pEventDialog == this) {

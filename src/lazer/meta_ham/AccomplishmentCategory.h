@@ -16,8 +16,9 @@ public:
 protected:
     void Configure(DataArray const *);
 
-    int unk4;
-    Symbol mName; // 0x8
-    Symbol mGroup; // 0xc
-    Symbol mAward; // 0x10
+private:
+    int m_iIndex; // 0x4
+    Symbol m_symName; // 0x8
+    Symbol m_symGroup; // 0xc
+    Symbol m_symAward; // 0x10
 };

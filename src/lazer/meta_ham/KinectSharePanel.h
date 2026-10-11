@@ -9,12 +9,12 @@
 
 class KinectSharePanel : public UIPanel {
 public:
-    enum UploadState {
-        kUploadIdle = 0,
-        kUploadPending = 1,
-        kUploadSuccess = 2,
-        kUploadFailure = 3,
-        kUploadCancelled = 4
+    enum UploadStatus {
+        Upload_Idle = 0x0000,
+        Upload_InProgress = 0x0001,
+        Upload_Success = 0x0002,
+        Upload_Failure = 0x0003,
+        Upload_Cancelled = 0x004
     };
     KinectSharePanel();
     // Hmx::Object
@@ -27,11 +27,11 @@ public:
 
     NEW_OBJ(KinectSharePanel)
 
-    bool XSocialImagePending() const { return mOverlapped.hEvent; }
-
 private:
     void ConvertImages();
     void ConvertImagesForLinkPost();
+    // why is this private???
+    bool XSocialNetworkImagePostPending() const { return mOverlapped.hEvent; }
 
     DataNode OnUpload(DataArray *);
     DataNode OnPostLink(DataArray *);
@@ -39,10 +39,10 @@ private:
     DataNode OnMsg(const RockCentralOpCompleteMsg &);
 
     ObjPtr<RndTex> mTex; // 0x38
-    int unk4c; // 0x4c - upload state
+    UploadStatus mUploadStatus; // 0x4c - upload state
     void *mBuf; // 0x50
     void *mPreviewBuf; // 0x54
-    int unk58; // 0x58
+    int mBufLen; // 0x58
     XOVERLAPPED mOverlapped; // 0x5c
     XSOCIAL_IMAGEPOSTPARAMS mImagePostParams; // 0x78
     XSOCIAL_LINKPOSTPARAMS mLinkPostParams; // 0xa8

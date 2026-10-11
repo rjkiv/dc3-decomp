@@ -14,11 +14,11 @@ public:
     // UIListProvider
     virtual void Text(int, int, UIListLabel *, UILabel *) const;
     virtual Symbol DataSymbol(int) const;
-    virtual int NumData() const { return mFitnessOptions.size(); }
+    virtual int NumData() const { return m_vEntries.size(); }
 
     void UpdateList();
     NEW_OBJ(FitnessProvider)
 
-protected:
-    std::vector<Symbol> mFitnessOptions; // 0x30
+private:
+    std::vector<Symbol> m_vEntries; // 0x30
 };

@@ -27,7 +27,7 @@ void CampaignDiffProvider::Text(
 ) const {
     MILO_ASSERT(i_iData < NumData(), 0x34);
     Symbol diffSym = DataSymbol(i_iData);
-    Difficulty diff = (Difficulty)mDifficulties[i_iData];
+    Difficulty diff = (Difficulty)m_vDiffs[i_iData];
     if (uiListLabel->Matches("diff")) {
         uiLabel->SetTextToken(diffSym);
         if (i_iData > 2) {
@@ -87,7 +87,7 @@ void CampaignDiffProvider::Text(
 
 Symbol CampaignDiffProvider::DataSymbol(int i_iData) const {
     MILO_ASSERT_RANGE(i_iData, 0, NumData(), 0x7c);
-    return DifficultyToSym((Difficulty)mDifficulties[i_iData]);
+    return DifficultyToSym((Difficulty)m_vDiffs[i_iData]);
 }
 
 BEGIN_HANDLERS(CampaignDiffProvider)
@@ -97,15 +97,15 @@ END_HANDLERS
 
 void CampaignDiffProvider::UpdateList(bool b) {
     MILO_ASSERT(TheCampaign, 0x20);
-    mDifficulties.clear();
-    mDifficulties.push_back(kDifficultyEasy);
-    mDifficulties.push_back(kDifficultyMedium);
-    mDifficulties.push_back(kDifficultyExpert);
+    m_vDiffs.clear();
+    m_vDiffs.push_back(kDifficultyEasy);
+    m_vDiffs.push_back(kDifficultyMedium);
+    m_vDiffs.push_back(kDifficultyExpert);
     if (b) {
-        mDifficulties.push_back(kDifficultyEasy);
-        mDifficulties.push_back(kDifficultyMedium);
-        mDifficulties.push_back(kDifficultyExpert);
-        mDifficulties.push_back(kDifficultyEasy);
+        m_vDiffs.push_back(kDifficultyEasy);
+        m_vDiffs.push_back(kDifficultyMedium);
+        m_vDiffs.push_back(kDifficultyExpert);
+        m_vDiffs.push_back(kDifficultyEasy);
     }
 }
 
@@ -175,7 +175,7 @@ void CampaignDiffSelectPanel::CheatWinDiff(int i) {
     if (i > 0) {
         pPerformer->ResetAllCampaignProgress();
         int count = 0;
-        const auto &eras = TheCampaign->Eras();
+        const auto &eras = TheCampaign->GetCampaignEraVector();
         FOREACH (it, eras) {
             count++;
             if (count <= i) {

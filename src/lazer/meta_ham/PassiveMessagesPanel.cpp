@@ -4,17 +4,17 @@
 #include "obj/Object.h"
 #include "ui/UIPanel.h"
 
-PassiveMessagesPanel::PassiveMessagesPanel() { unk38 = new PassiveMessenger(this); }
+PassiveMessagesPanel::PassiveMessagesPanel() { mMessenger = new PassiveMessenger(this); }
 
-PassiveMessagesPanel::~PassiveMessagesPanel() { RELEASE(unk38); }
+PassiveMessagesPanel::~PassiveMessagesPanel() { RELEASE(mMessenger); }
 
 void PassiveMessagesPanel::Poll() {
-    unk38->Poll();
+    mMessenger->Poll();
     UIPanel::Poll();
 }
 
 BEGIN_HANDLERS(PassiveMessagesPanel)
     HANDLE_EXPR(post_setup, 0)
     HANDLE_SUPERCLASS(UIPanel)
-    HANDLE_MEMBER_PTR(unk38)
+    HANDLE_MEMBER_PTR(mMessenger)
 END_HANDLERS

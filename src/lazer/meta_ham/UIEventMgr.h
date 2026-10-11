@@ -7,16 +7,18 @@
 class UIEventMgr : public Hmx::Object {
 public:
     enum EventType {
+        kDialog = 0x0000,
+        kTransition = 0x0001
     };
     class BandEvent {
     public:
         BandEvent(EventType, DataArray *, DataArray *);
         void CacheDestination();
 
-        EventType mType; // 0x0
-        DataArray *unk4; // 0x4
-        DataArrayPtr unk8; // 0x8
-        String mDestScreen; // 0xc
+        EventType mEventType; // 0x0
+        DataArray *mEventDef; // 0x4
+        DataArrayPtr mEventInit; // 0x8
+        String mDestination; // 0xc
         bool mActive; // 0x14
     };
     UIEventMgr();

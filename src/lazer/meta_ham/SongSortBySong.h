@@ -5,14 +5,14 @@
 
 class SongCmp : public NavListItemSortCmp {
 public:
-    SongCmp(const char *c1, const char *c2) : unk4(c1), unk8(c2) {};
+    SongCmp(const char *c1, const char *c2) : mName(c1), mOtherName(c2) {};
 
     virtual ~SongCmp();
 
     virtual int Compare(const NavListItemSortCmp *, NavListNodeType) const;
 
-    const char *unk4;
-    const char *unk8;
+    const char *mName; // 0x4
+    const char *mOtherName; // 0x8
 };
 
 class SongSortBySong : public SongSort {

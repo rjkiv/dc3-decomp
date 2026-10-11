@@ -11,7 +11,9 @@ public:
     WeightInputProvider();
     virtual ~WeightInputProvider() {}
     virtual void Text(int, int, UIListLabel *, UILabel *) const;
-    virtual int NumData() const { return TheProfileMgr.GetUnk4c() ? 73 : 80; };
+    virtual int NumData() const {
+        return TheProfileMgr.GetPreferredWeightUnit() ? 73 : 80;
+    };
     virtual DataNode Handle(DataArray *, bool);
 
     float GetWeight(int) const;
@@ -36,5 +38,5 @@ public:
     void SetPreferredUnits(Symbol);
 
 private:
-    WeightInputProvider mWeightInputProvider; // 0x3c
+    WeightInputProvider mWeightProvider; // 0x3c
 };

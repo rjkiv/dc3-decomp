@@ -19,15 +19,15 @@ public:
     PassiveMessage(String text, PassiveMessageType type, Symbol channel, int);
     virtual ~PassiveMessage();
     String GetText();
-    PassiveMessageType Type() const { return mType; }
-    Symbol Channel() const { return mChannel; }
-    int Unk14() const { return unk14; }
+    PassiveMessageType GetMessageType() { return mMessageType; }
+    Symbol GetChannel() { return mChannel; }
+    int GetPriority() { return mPriority; }
 
 private:
     String mText; // 0x4
-    PassiveMessageType mType; // 0xc
+    PassiveMessageType mMessageType; // 0xc
     Symbol mChannel; // 0x10
-    int unk14; // 0x14
+    int mPriority; // 0x14
 };
 
 class PassiveMessageQueue {
@@ -42,18 +42,20 @@ public:
     void ClearRunningMessage();
     void Poll();
 
-    int NumMessagesInQueue() const { return mQueue.size(); }
+    int GetNumMessages() const { return mQueue.size(); }
     bool Running() const { return mTimer.Running(); }
 
 protected:
     void ClearPassiveMessage();
     void HandlePassiveMessage(PassiveMessage *);
 
-    float unk8;
-    float unkc; // 0xc - seconds?
+    float mMessageDuration; // 0x8
+    float mLastMessageClearTime; // 0xc - seconds?
     std::list<PassiveMessage *> mQueue; // 0x10
+
+private:
     Hmx::Object *mCallback; // 0x18
-    Symbol unk1c; // 0x1c
+    Symbol mTarget; // 0x1c
     Timer mTimer; // 0x20
 };
 

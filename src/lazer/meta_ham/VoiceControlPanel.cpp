@@ -42,8 +42,10 @@
 #include "utl/Symbol.h"
 
 VoiceControlPanel::VoiceControlPanel()
-    : unk44(0), unk48(false), unk4c(3.4028235e+38), unk50(0), unk54(false), unk55(false),
-      unk56(false), unk64(false), unk68(0), unk6c(0) {}
+    : mEnterTime(0), mEntered(false), mPickRandomSongTimer(3.4028235e+38),
+      mCycleTipTimer(0), mHasSelectedDifficulty(false), mHasSelectedMode(false),
+      mMustTurnMusicBackOn(false), mDismissOnTransitionComplete(false), mNumShellCmds(0),
+      mNumBidCmds(0) {}
 
 VoiceControlPanel::~VoiceControlPanel() {}
 
@@ -56,34 +58,34 @@ END_HANDLERS
 void VoiceControlPanel::Poll() {
     HamPanel::Poll();
     static float sFloats[] = { 0.25f, 2.0f, 4.5f };
-    if (unk48 && unk44 < sFloats[0]) {
-        unk44 = Min(sFloats[0], unk44 + TheTaskMgr.DeltaUISeconds());
+    if (mEntered && mEnterTime < sFloats[0]) {
+        mEnterTime = Min(sFloats[0], mEnterTime + TheTaskMgr.DeltaUISeconds());
     }
-    if (!unk48 && unk44 > 0) {
-        unk44 = Max(0.0f, unk44 - TheTaskMgr.DeltaUISeconds());
+    if (!mEntered && mEnterTime > 0) {
+        mEnterTime = Max(0.0f, mEnterTime - TheTaskMgr.DeltaUISeconds());
     }
-    if (mSong == gNullStr && unk48) {
-        float set = unk4c + TheTaskMgr.DeltaUISeconds();
+    if (mSong == gNullStr && mEntered) {
+        float set = mPickRandomSongTimer + TheTaskMgr.DeltaUISeconds();
         float cmp = sFloats[1];
-        unk4c = set;
-        if (unk4c > cmp) {
-            unk4c = 0;
+        mPickRandomSongTimer = set;
+        if (mPickRandomSongTimer > cmp) {
+            mPickRandomSongTimer = 0;
             Symbol song = TheHamSongMgr.GetRandomSong();
             DisplaySong(song);
         }
     }
-    if (unk48) {
-        float set = unk50 + TheTaskMgr.DeltaUISeconds();
+    if (mEntered) {
+        float set = mCycleTipTimer + TheTaskMgr.DeltaUISeconds();
         float cmp = sFloats[2];
-        unk50 = set;
-        if (unk50 > cmp) {
+        mCycleTipTimer = set;
+        if (mCycleTipTimer > cmp) {
             CycleTip();
         }
     }
 }
 
 void VoiceControlPanel::Dismiss() {
-    unk48 = false;
+    mEntered = false;
     Symbol lang = HongKongExceptionMet() ? "eng" : SystemLanguage();
     if (lang != "eng" && lang != "jpn") {
         TheSpeechMgr->DisableAndUnloadGrammars();
@@ -91,7 +93,7 @@ void VoiceControlPanel::Dismiss() {
         TheSpeechMgr->EnableAndLoadGrammars(arr);
     }
     SetRules(true);
-    if (unk56) {
+    if (mMustTurnMusicBackOn) {
         TheMetaMusic->Start();
     }
     SongPreview *songPrev = ObjectDir::Main()->Find<SongPreview>("song_preview");
@@ -111,17 +113,15 @@ bool VoiceControlPanel::DifficultyLocked() const {
         return false;
     else {
         static Symbol practice("practice");
-        if (mGameMode == practice)
+        if (mMode == practice)
             return false;
         else
-            return !TheProfileMgr.IsDifficultyUnlocked(
-                mSong, DifficultyToSym(mDifficulty)
-            );
+            return !TheProfileMgr.IsDifficultyUnlocked(mSong, DifficultyToSym(mDiff));
     }
 }
 
 bool VoiceControlPanel::ReadyToStart() const {
-    return mSong != gNullStr && mDifficulty != kNumDifficulties && mGameMode != gNullStr
+    return mSong != gNullStr && mDiff != kNumDifficulties && mMode != gNullStr
         && !DifficultyLocked();
 }
 
@@ -134,12 +134,12 @@ void VoiceControlPanel::WakeUpScreenSaver() const {
 void VoiceControlPanel::EnterGame() {
     MILO_FAIL("VoiceControlPanel::EnterGame should never be called! (I hope)\n");
     if (ReadyToStart()) {
-        TheGameMode->SetMode(mGameMode, "none");
+        TheGameMode->SetMode(mMode, "none");
         MetaPerformer::Current()->SetSong(mSong);
-        TheGameData->Player(0)->SetDifficulty(mDifficulty);
-        TheGameData->Player(1)->SetDifficulty(mDifficulty);
+        TheGameData->Player(0)->SetDifficulty(mDiff);
+        TheGameData->Player(1)->SetDifficulty(mDiff);
         static Symbol dance_battle("dance_battle");
-        if (mGameMode == dance_battle) {
+        if (mMode == dance_battle) {
             MetaPerformer::Current()->ClearCharacters();
             MultiUserGesturePanel *pMultiUserGesturePanel =
                 ObjectDir::Main()->Find<MultiUserGesturePanel>("multiuser_panel");
@@ -150,14 +150,14 @@ void VoiceControlPanel::EnterGame() {
             pMultiUserGesturePanel->SetRandomCrew(1);
         }
         static Symbol practice("practice");
-        if (mGameMode == practice) {
+        if (mMode == practice) {
             MetaPerformer::Current()->SetSkipPracticeWelcome(true);
         }
         static Symbol byo_bid("byo_bid");
         TheHamProvider->SetProperty(byo_bid, false);
         Flow *pFlow = DataDir()->Find<Flow>("sound_dance.flow");
         pFlow->Activate();
-        unk64 = true;
+        mDismissOnTransitionComplete = true;
         SetRules(false);
         static Symbol enter_gameplay("enter_gameplay");
         static DataArrayPtr dataPtr(enter_gameplay);
@@ -173,20 +173,20 @@ void VoiceControlPanel::EnterGame() {
 void VoiceControlPanel::SetRules(bool b1) {
     static bool s8a0 = false;
     static bool see0 = true;
-    if (b1 != s8a0 || see0 != unk48) {
-        see0 = unk48;
+    if (b1 != s8a0 || see0 != mEntered) {
+        see0 = mEntered;
         bool oldRecognizing = TheSpeechMgr->Recognizing();
         s8a0 = b1;
         TheSpeechMgr->SetRecognizing(false);
-        TheSpeechMgr->SetRule("voice_shell", "voice_control", !unk48 && b1);
+        TheSpeechMgr->SetRule("voice_shell", "voice_control", !mEntered && b1);
         if (TheSpeechMgr->HasGrammar("play_song_grammar")) {
-            TheSpeechMgr->SetRule("play_song_grammar", "play_song", unk48 && b1);
+            TheSpeechMgr->SetRule("play_song_grammar", "play_song", mEntered && b1);
         }
-        TheSpeechMgr->SetRule("voice_shell", "random_song", unk48 && b1);
-        TheSpeechMgr->SetRule("voice_shell", "difficulty", unk48 && b1);
-        TheSpeechMgr->SetRule("voice_shell", "mode", unk48 && b1);
-        TheSpeechMgr->SetRule("voice_shell", "dance", unk48 && b1);
-        TheSpeechMgr->SetRule("voice_shell", "back", unk48 && b1);
+        TheSpeechMgr->SetRule("voice_shell", "random_song", mEntered && b1);
+        TheSpeechMgr->SetRule("voice_shell", "difficulty", mEntered && b1);
+        TheSpeechMgr->SetRule("voice_shell", "mode", mEntered && b1);
+        TheSpeechMgr->SetRule("voice_shell", "dance", mEntered && b1);
+        TheSpeechMgr->SetRule("voice_shell", "back", mEntered && b1);
         TheSpeechMgr->SetRecognizing(oldRecognizing);
     }
 }
@@ -222,12 +222,13 @@ void VoiceControlPanel::CreatePlaySongGrammar() const {
         TheSongSortMgr->OnEnter();
     }
 
-    const std::map<Symbol, SongRecord> &songSortMembers = TheSongSortMgr->GetUnk78();
+    const std::map<Symbol, SongRecord> &songSortMembers =
+        TheSongSortMgr->GetSongRecords();
     FOREACH (it, songSortMembers) {
         const SongRecord &record = it->second;
-        std::vector<String> pronunciations = record.Metadata()->Pronunciations();
+        std::vector<String> pronunciations = record.GetData()->Pronunciations();
         const std::vector<PronunciationsLoc> &pronunciationsLoc =
-            record.Metadata()->PronunciationsLocalized();
+            record.GetData()->PronunciationsLocalized();
         for (int i = 0; i < pronunciationsLoc.size(); i++) {
             if (pronunciationsLoc[i].mLanguage == GetSongTitlePronunciationLanguage()) {
                 pronunciations = pronunciationsLoc[i].mPronunciations;
@@ -250,7 +251,7 @@ void VoiceControlPanel::CreatePlaySongGrammar() const {
 }
 
 void VoiceControlPanel::CycleTip() {
-    unk50 = 0;
+    mCycleTipTimer = 0;
     HamLabel *lbl = DataDir()->Find<HamLabel>("instructions.lbl");
     lbl->LStyle(0).mColorOverride = DataDir()->Find<UIColor>("instructions.color");
     std::vector<Symbol> syms;
@@ -262,13 +263,13 @@ void VoiceControlPanel::CycleTip() {
 
     } else if (ReadyToStart()) {
         syms.push_back("voicecontrol_dance_instruction");
-        if (!unk55) {
+        if (!mHasSelectedMode) {
             syms.push_back("voicecontrol_mode_instruction");
         }
-        if (!unk54) {
+        if (!mHasSelectedDifficulty) {
             syms.push_back("voicecontrol_difficulty_instruction");
         }
-        if (!unk55 || !unk54) {
+        if (!mHasSelectedMode || !mHasSelectedDifficulty) {
             syms.push_back("voicecontrol_random_song_instruction");
         }
     }
@@ -283,7 +284,7 @@ void VoiceControlPanel::CycleTip() {
 
 void VoiceControlPanel::PopUp() {
     if (!TheHamUI.GetOverlayPanel()) {
-        unk48 = true;
+        mEntered = true;
         TheHamUI.SetOverlayPanel(this);
         Symbol lang = HongKongExceptionMet() ? "eng" : SystemLanguage();
         if (lang != "eng" && lang != "jpn") {
@@ -296,26 +297,26 @@ void VoiceControlPanel::PopUp() {
         }
         CreatePlaySongGrammar();
         SetRules(true);
-        unk56 = TheMetaMusic->IsStarted();
+        mMustTurnMusicBackOn = TheMetaMusic->IsStarted();
         TheMetaMusic->Stop();
         SongPreview *preview = ObjectDir::Main()->Find<SongPreview>("song_preview");
         preview->SetMusicVol(SongPreview::kSilenceVal);
         mSong = gNullStr;
-        mDifficulty = DefaultDifficulty();
-        mGameMode = "perform";
-        unk54 = false;
-        unk55 = false;
+        mDiff = DefaultDifficulty();
+        mMode = "perform";
+        mHasSelectedDifficulty = false;
+        mHasSelectedMode = false;
         DataDir()->Find<RndDrawable>("song_dimmer.mesh")->SetShowing(true);
         DataDir()->Find<RndAnimatable>("selected_diff.anim")->SetFrame(0, 1);
         DataDir()->Find<RndAnimatable>("selected_mode.anim")->SetFrame(0, 1);
         CycleTip();
         WakeUpScreenSaver();
-        unk64 = false;
+        mDismissOnTransitionComplete = false;
     }
 }
 
 DataNode VoiceControlPanel::OnMsg(const UITransitionCompleteMsg &msg) {
-    if (unk64) {
+    if (mDismissOnTransitionComplete) {
         Dismiss();
         SetRules(false);
     }
@@ -326,17 +327,17 @@ DataNode VoiceControlPanel::OnMsg(const SpeechRecoMessage &msg) {
     if (!TheProfileMgr.GetDisableVoiceCommander()) {
         float thresh = TheSpeechMgr->SpeechConfThresh();
         if (msg.Confidence() >= thresh) {
-            if (mGameMode == "practice") {
-                unk6c++;
+            if (mMode == "practice") {
+                mNumBidCmds++;
             } else {
-                unk68++;
+                mNumShellCmds++;
             }
-            if (unk48) {
+            if (mEntered) {
                 WakeUpScreenSaver();
             }
             DataArray *tags = msg.Tags();
             Symbol rulename = msg.RuleName();
-            if (rulename == "voice_control" && !unk48) {
+            if (rulename == "voice_control" && !mEntered) {
                 Symbol arrSym = tags->Sym(0);
                 if (arrSym == "voice_control" && !TheHamUI.InTransition()
                     && !TheContentMgr.RefreshInProgress()) {
@@ -350,14 +351,14 @@ DataNode VoiceControlPanel::OnMsg(const SpeechRecoMessage &msg) {
                     TheHamProvider->Handle(voice_commander_help, false);
                 }
                 return 0;
-            } else if (rulename == "back" && unk48) {
+            } else if (rulename == "back" && mEntered) {
                 DataDir()->Find<Flow>("sound_back.flow")->Activate();
                 Dismiss();
                 return 0;
-            } else if (rulename == "dance" && unk48) {
+            } else if (rulename == "dance" && mEntered) {
                 EnterGame();
                 return 0;
-            } else if (rulename == "play_song" && unk48) {
+            } else if (rulename == "play_song" && mEntered) {
                 Symbol arrSym = tags->Sym(0);
                 static Symbol random_song("random_song");
                 if (arrSym == random_song) {
@@ -376,7 +377,7 @@ DataNode VoiceControlPanel::OnMsg(const SpeechRecoMessage &msg) {
                 }
                 CycleTip();
                 return 0;
-            } else if (rulename == "random_song" && unk48) {
+            } else if (rulename == "random_song" && mEntered) {
                 Symbol song = TheHamSongMgr.GetRandomSong();
                 int songID = TheHamSongMgr.GetSongIDFromShortName(song, false);
                 if (songID != 0) {
@@ -391,39 +392,37 @@ DataNode VoiceControlPanel::OnMsg(const SpeechRecoMessage &msg) {
                 }
                 CycleTip();
                 return 0;
-            } else if (rulename == "mode" && unk48 && mSong != gNullStr) {
-                mGameMode = tags->Sym(0);
+            } else if (rulename == "mode" && mEntered && mSong != gNullStr) {
+                mMode = tags->Sym(0);
                 float frame = 0;
-                if (mGameMode == "practice") {
+                if (mMode == "practice") {
                     frame = 1;
                 }
-                if (mGameMode == "dance_battle") {
+                if (mMode == "dance_battle") {
                     frame = 2;
                 }
                 DataDir()->Find<RndAnimatable>("selected_mode.anim")->SetFrame(frame, 1);
-                unk55 = true;
+                mHasSelectedMode = true;
                 DataDir()->Find<Flow>("sound_selection.flow")->Activate();
                 static Message microphoneActivityMsg("microphone_activity");
                 TheHamProvider->Handle(microphoneActivityMsg, false);
                 CycleTip();
                 return 0;
-            } else if (rulename == "difficulty" && unk48 && mSong != gNullStr) {
+            } else if (rulename == "difficulty" && mEntered && mSong != gNullStr) {
                 Symbol arrSym = tags->Sym(0);
                 if (arrSym == "beginner") {
-                    mDifficulty = kDifficultyBeginner;
+                    mDiff = kDifficultyBeginner;
                 } else if (arrSym == "easy") {
-                    mDifficulty = kDifficultyEasy;
+                    mDiff = kDifficultyEasy;
                 } else if (arrSym == "medium") {
-                    mDifficulty = kDifficultyMedium;
+                    mDiff = kDifficultyMedium;
                 } else if (arrSym == "hard") {
-                    mDifficulty = kDifficultyExpert;
+                    mDiff = kDifficultyExpert;
                 } else {
                     MILO_ASSERT(false, 0x14D);
                 }
-                DataDir()
-                    ->Find<RndAnimatable>("selected_diff.anim")
-                    ->SetFrame(mDifficulty, 1);
-                unk54 = true;
+                DataDir()->Find<RndAnimatable>("selected_diff.anim")->SetFrame(mDiff, 1);
+                mHasSelectedDifficulty = true;
                 DataDir()->Find<Flow>("sound_selection.flow")->Activate();
                 static Message microphoneActivityMsg("microphone_activity");
                 TheHamProvider->Handle(microphoneActivityMsg, false);

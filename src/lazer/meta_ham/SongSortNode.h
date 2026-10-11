@@ -23,15 +23,15 @@ public:
     virtual void SetItemCountString(UILabel *) const;
     virtual void SetCollapseStateIcon(bool) const;
 
-private:
-    u32 mDiscSongs;
-    u32 mDLCSongs;
+protected:
+    int mDiscCount; // 0x58
+    int mDownloadCount; // 0x5c
 };
 
 class SongSortNode : public NavListItemNode {
 public:
     SongSortNode(NavListItemSortCmp *cmp, SongRecord *song)
-        : NavListItemNode(cmp), unk_0x48(song), unk_0x4C(0) {}
+        : NavListItemNode(cmp), mSongRecord(song), mInPlaylist(0) {}
 
     virtual DataNode Handle(DataArray *, bool);
     virtual Symbol GetToken() const;
@@ -47,11 +47,11 @@ public:
     bool IsFake() const;
     const char *GetArtist() const;
 
-    const SongRecord *Record() const { return unk_0x48; }
+    const SongRecord *GetSongRecord() const { return mSongRecord; }
 
 private:
-    SongRecord *unk_0x48;
-    bool unk_0x4C;
+    SongRecord *mSongRecord; // 0x48
+    bool mInPlaylist; // 0x4c
 };
 
 class SongFunctionNode : public NavListFunctionNode {

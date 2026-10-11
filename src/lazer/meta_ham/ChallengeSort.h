@@ -6,15 +6,15 @@ struct SortNodeFind {
     SortNodeFind(const NavListSortNode *);
     bool operator()(const NavListSortNode *) const;
 
-    Symbol mToken; // 0x0
+    Symbol mSym; // 0x0
     NavListNodeType mType; // 0x4
 };
 
 struct NodeFind {
-    NodeFind(Symbol s) : unk0(s) {}
-    bool operator()(const NavListNode *n) { return n->GetToken() == unk0; }
+    NodeFind(Symbol s) : mSym(s) {}
+    bool operator()(const NavListNode *n) { return n->GetToken() == mSym; }
 
-    Symbol unk0;
+    Symbol mSym; // 0x0
 };
 
 class ChallengeSort : public NavListSort {
@@ -30,6 +30,4 @@ public:
     virtual void SetHighlightItem(const NavListSortNode *);
     virtual void UpdateHighlight();
     virtual void OnSelectShortcut(int);
-
-protected:
 };

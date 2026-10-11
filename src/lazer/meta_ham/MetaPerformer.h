@@ -214,6 +214,7 @@ protected:
     int mPlaylistIndex; // 0xd8
     int mPlaylistElapsedTime; // 0xdc
     bool unke0; // 0xe0
+private:
     bool mJustBeatGame; // 0xe1
     bool mSkipPracticeWelcome; // 0xe2
     bool unke3; // 0xe3

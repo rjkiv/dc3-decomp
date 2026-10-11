@@ -3,7 +3,7 @@
 #include "meta/FixedSizeSaveableStream.h"
 
 void MoveRatingHistory::SaveFixed(FixedSizeSaveableStream &fs) const {
-    int size = unk8.size();
+    int size = mMap.size();
     static int sMaxSize = 0x4000;
     if (size > 0x4000) {
         MILO_NOTIFY(
@@ -15,30 +15,30 @@ void MoveRatingHistory::SaveFixed(FixedSizeSaveableStream &fs) const {
     }
     fs.Tell();
     fs << size;
-    FOREACH (it, unk8) {
-        FixedSizeSaveable::SaveSymbolID(fs, it->first.unk0);
+    FOREACH (it, mMap) {
+        FixedSizeSaveable::SaveSymbolID(fs, it->first.mMove);
         for (int i = 0; i < 4; i++) {
-            fs << it->second.unk0[i];
+            fs << it->second.mRating[i];
         }
     }
     if (size < 0x4000) {
         FixedSizeSaveable::PadStream(fs, (0x4000 - size) * 20);
     }
-    const_cast<MoveRatingHistory *>(this)->unk20 = false;
+    const_cast<MoveRatingHistory *>(this)->mDirty = false;
 }
 
 void MoveRatingHistory::LoadFixed(FixedSizeSaveableStream &fs, int i2) {
-    if (unk8.size() > 0) {
+    if (mMap.size() > 0) {
         MILO_NOTIFY("Move award history map is not empty on load!");
-        unk8.clear();
+        mMap.clear();
     }
     int size;
     fs >> size;
     for (int i = 0; i < size; i++) {
         Key key;
-        FixedSizeSaveable::LoadSymbolFromID(fs, key.unk0);
+        FixedSizeSaveable::LoadSymbolFromID(fs, key.mMove);
         for (int j = 0; j < 4; j++) {
-            fs >> (int &)unk8[key].unk0[j];
+            fs >> (int &)mMap[key].mRating[j];
         }
     }
     if (size < 0x4000) {
@@ -47,15 +47,15 @@ void MoveRatingHistory::LoadFixed(FixedSizeSaveableStream &fs, int i2) {
 }
 
 void MoveRatingHistory::Clear() {
-    unk8.clear();
-    unk20 = false;
+    mMap.clear();
+    mDirty = false;
 }
 
 int MoveRatingHistory::GetRating(Symbol s1, int i2) {
     Key key;
-    key.unk0 = s1;
+    key.mMove = s1;
     if (HasRatingHistory(key)) {
-        return unk8[key].unk0[i2];
+        return mMap[key].mRating[i2];
     } else {
         return -1;
     }
@@ -65,11 +65,11 @@ int MoveRatingHistory::SaveSize(int) { return 0x50004; }
 
 void MoveRatingHistory::AddHistory(Symbol s1, int i2) {
     Key key;
-    key.unk0 = s1;
-    RatingHistory &history = unk8[key];
+    key.mMove = s1;
+    RatingHistory &history = mMap[key];
     for (int i = 1; i < 4; i++) {
-        history.unk0[i] = history.unk0[i - 1];
+        history.mRating[i] = history.mRating[i - 1];
     }
-    history.unk0[0] = (MoveRating)i2;
-    unk20 = true;
+    history.mRating[0] = (MoveRating)i2;
+    mDirty = true;
 }

@@ -4,6 +4,8 @@
 #include "ui/UILabel.h"
 #include "ui/UIListLabel.h"
 
+// class not in PDB :(
+
 class FitnessCalorieSort : public NavListSort {
 public:
     virtual ~FitnessCalorieSort() {}

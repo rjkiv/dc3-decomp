@@ -17,16 +17,16 @@ public:
     Symbol GetVariantFromHamMoveName(Symbol) const;
     Symbol GetHamMoveNameFromVariant(Symbol) const;
 
-    Symbol GetSongName() const { return m_symSong; }
-    Symbol GetUnk8() const { return unk8; }
-    int GetSongRequiredStars() const { return m_iRequiredStars; }
-    int GetNumSongCrazeMoves() const { return m_vCrazeMoveNames.size(); }
+    Symbol GetSong() const { return m_symSong; }
+    Symbol GetCharacterForSong() const { return m_symCharacter; }
+    int GetRequiredStars() const { return m_iRequiredStars; }
+    int GetNumCrazeMoves() const { return m_vCrazeMoveNames.size(); }
 
 private:
     void Configure(DataArray *, DataArray *);
 
     Symbol m_symSong; // 0x4
-    Symbol unk8; // 0x8
+    Symbol m_symCharacter; // 0x8
     int m_iRequiredStars; // 0xc
     std::vector<Symbol> m_vCrazeMoveNames; // 0x10
     std::vector<Symbol> m_vCrazeMoveVariantNames; // 0x1c
@@ -53,44 +53,43 @@ public:
     Symbol GetIntroMovie() const;
     Symbol GetName() const;
 
-    int GetNumSongs() { return m_vSongs.size(); }
-    CampaignEraSongEntry *SongEntryAtIndex(int idx) { return m_vSongs[idx]; }
-    Symbol Crew() const { return mCrew; }
-    Symbol Venue() const { return mVenue; }
-    int StarsRequiredForOutfits() const { return mStarsRequiredForOutfits; }
-    int StarsRequiredForMastery() const { return mStarsRequiredForMastery; }
-    Symbol CompletionAccomplishment() const { return mCompletionAccomplishment; }
-    Symbol EraSongUnlockedToken() const { return mEraSongUnlockedToken; }
-    Symbol EraSongCompleteToken() const { return mEraSongCompleteToken; }
-    int MovesRequiredForMastery() const { return mMovesRequiredForMastery; }
-    Symbol OutfitAward() const { return mOutfitAward; }
-    Symbol GetMasteryStars(Difficulty d) { return mMasteryStars[d]; }
-    bool GetUnk50() const { return unk50; }
-    void SetUnk50(bool b) { unk50 = b; }
+    int GetNumSongs() const { return m_vSongs.size(); }
+    CampaignEraSongEntry *SongEntryAtIndex(int idx) { return m_vSongs[idx]; } // hmm
+    Symbol GetCrew() const { return m_symEraCrew; }
+    Symbol GetVenue() const { return m_symEraVenue; }
+    int GetRequiredStarsForOutfits() const { return m_iOutfitStars; }
+    int GetRequiredStarsForMastery() const { return m_iMasteryStars; }
+    Symbol GetCompletionAccomplishment() const { return m_symCompletionAccomplishment; }
+    Symbol GetSongUnlockedToken() const { return m_symSongUnlocked; }
+    Symbol GetCompleteToken() const { return m_symComplete; }
+    int GetRequiredMovesForMastery() const { return m_iMasteryMoves; }
+    Symbol GetOutfitAward() const { return m_symOutfitAward; }
+    Symbol GetMasteryGoal(Difficulty d) { return m_symMasteryGoal[d]; }
+    bool IsFinalTimeTravelEra() const { return m_bIsFinalTimeTravelEra; }
+    void SetFinalTimeTravelEra(bool b) { m_bIsFinalTimeTravelEra = b; }
     const std::vector<CampaignEraSongEntry *> &Songs() const { return m_vSongs; }
-
-protected:
-    Symbol mEra; // 0x4
-    std::map<Symbol, int> unk8; // 0x8
-    std::vector<CampaignEraSongEntry *> m_vSongs; // 0x20
-    Symbol mCrew; // 0x2c
-    Symbol mVenue; // 0x30
-    Symbol mEraSongUnlockedToken; // 0x34
-    Symbol mEraSongCompleteToken; // 0x38
-    Symbol mEraIntroMovie; // 0x3c
-    String unk40;
-    String unk48;
-    bool unk50;
-    Symbol mCompletionAccomplishment; // 0x54
-    int unk58;
-    Symbol mCrazeSong; // 0x5c
-    int mStarsRequiredForMastery; // 0x60
-    Symbol mMasteryStars[3]; // 0x64
-    int mMovesRequiredForMastery; // 0x70
-    int mStarsRequiredForOutfits; // 0x74
-    Symbol mOutfitAward; // 0x78
 
 private:
     void Cleanup();
     void Configure(DataArray *, DataArray *);
+
+    Symbol m_symName; // 0x4
+    std::map<Symbol, int> m_mapSongLookup; // 0x8
+    std::vector<CampaignEraSongEntry *> m_vSongs; // 0x20
+    Symbol m_symEraCrew; // 0x2c
+    Symbol m_symEraVenue; // 0x30
+    Symbol m_symSongUnlocked; // 0x34
+    Symbol m_symComplete; // 0x38
+    Symbol m_symIntroMovie; // 0x3c
+    String m_strHighlightSound; // 0x40
+    String m_strSelectSound; // 0x48
+    bool m_bIsFinalTimeTravelEra; // 0x50
+    Symbol m_symCompletionAccomplishment; // 0x54
+    int m_iEraSongStars; // 0x58
+    Symbol m_symDanceCrazeSong; // 0x5c
+    int m_iMasteryStars; // 0x60
+    Symbol m_symMasteryGoal[3]; // 0x64
+    int m_iMasteryMoves; // 0x70
+    int m_iOutfitStars; // 0x74
+    Symbol m_symOutfitAward; // 0x78
 };

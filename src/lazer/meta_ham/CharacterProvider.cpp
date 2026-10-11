@@ -20,7 +20,7 @@
 #include "utl/Symbol.h"
 #include <cstdio>
 
-CharacterProvider::CharacterProvider() : mPlayer(0), mPanelDir(0) {}
+CharacterProvider::CharacterProvider() : mPlayerIndex(0), mPanelDir(0) {}
 
 void CharacterProvider::Text(int, int data, UIListLabel *slot, UILabel *label) const {
     MILO_ASSERT_RANGE(data, 0, mCharacters.size(), 0x93);
@@ -29,8 +29,9 @@ void CharacterProvider::Text(int, int data, UIListLabel *slot, UILabel *label) c
     Symbol charSym = mCharacters[data];
     if (slot->Matches("character")) {
         static Symbol player_present("player_present");
-        int otherPlayer = !mPlayer;
-        if (TheGameData->Player(mPlayer)->Provider()->Property(player_present)->Int() != 1
+        int otherPlayer = !mPlayerIndex;
+        if (TheGameData->Player(mPlayerIndex)->Provider()->Property(player_present)->Int()
+                != 1
             && TheGameData->Player(otherPlayer)->Provider()->Property(player_present)->Int()
                 != 0) {
             char buffer[32];
@@ -102,7 +103,7 @@ bool CharacterProvider::IsCharacterAvailable(Symbol charSym) const {
     if (charSym == character_default)
         return true;
     else {
-        int index = !mPlayer;
+        int index = !mPlayerIndex;
         HamPlayerData *pOtherPlayerData = TheGameData->Player(index);
         MILO_ASSERT(pOtherPlayerData, 0x150);
         if (TheGameMode->InMode("dance_battle", true)) {
@@ -132,7 +133,7 @@ RndMat *CharacterProvider::GetMatForCharacter(Symbol charSym) const {
 }
 
 String CharacterProvider::GetColorName() const {
-    HamPlayerData *pPlayerData = TheGameData->Player(mPlayer);
+    HamPlayerData *pPlayerData = TheGameData->Player(mPlayerIndex);
     MILO_ASSERT(pPlayerData, 0xE5);
     Hmx::Object *pPlayerProvider = pPlayerData->Provider();
     MILO_ASSERT(pPlayerProvider, 0xE8);
@@ -140,7 +141,7 @@ String CharacterProvider::GetColorName() const {
     const DataNode *pPlayerPresent = pPlayerProvider->Property(player_present);
     MILO_ASSERT(pPlayerPresent, 0xEC);
     if (pPlayerPresent->Int() != 0) {
-        if (mPlayer == 0) {
+        if (mPlayerIndex == 0) {
             return "pink";
         } else {
             return "blue";
@@ -165,7 +166,7 @@ Symbol CharacterProvider::GetRandomAvailableCharacter() const {
 }
 
 void CharacterProvider::UpdateList() {
-    HamPlayerData *pPlayerData = TheGameData->Player(mPlayer);
+    HamPlayerData *pPlayerData = TheGameData->Player(mPlayerIndex);
     MILO_ASSERT(pPlayerData, 0x44);
     Symbol crew = pPlayerData->Crew();
     std::set<Symbol> symSet;

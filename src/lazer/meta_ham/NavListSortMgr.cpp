@@ -11,17 +11,17 @@
 #include "utl/Symbol.h"
 
 NavListSortMgr::NavListSortMgr(SongPreview &songprev)
-    : mSongPreview(&songprev), mCurrentSortIdx(0), unk48(false), mHeaderMode(false),
-      mEnteringHeaderMode(false), mExitingHeaderMode(false), mHeadersSelectable(false) {
-    unk44 = new DataArray(0);
+    : mSongPreview(songprev), mSortIndex(0), mSavedHighlight(false), mHeaderMode(false),
+      mEnteringHeaderMode(false), mExitingHeaderMode(false), mSortWithHeaders(false) {
+    mSavedHighlightID = new DataArray(0);
 };
 
 NavListSortMgr::~NavListSortMgr() {
     DeleteAll(mSorts);
-    unk44->Release();
+    mSavedHighlightID->Release();
 }
 
-void NavListSortMgr::StopPreview() { mSongPreview->Start(gNullStr, 0); }
+void NavListSortMgr::StopPreview() { mSongPreview.Start(gNullStr, 0); }
 
 void NavListSortMgr::SetHeaderMode(bool b) { mHeaderMode = b; }
 
@@ -30,29 +30,29 @@ void NavListSortMgr::SetEnteringHeaderMode(bool b) { mEnteringHeaderMode = b; }
 void NavListSortMgr::SetExitingHeaderMode(bool b) { mExitingHeaderMode = b; }
 
 void NavListSortMgr::AddHeaderIndex(int idx) {
-    if (mHeadersSelectable) {
-        mHeadersA.push_back(idx);
-        mHeadersB.push_back(idx);
+    if (mSortWithHeaders) {
+        mHeaderIndicesAmongAll.push_back(idx);
+        mHeaderIndicesAlone.push_back(idx);
     }
 }
 
 int NavListSortMgr::GetHeaderIndexFromChildListIndex(int i1) {
     int ret = -1;
-    int numBs = mHeadersB.size();
+    int numBs = mHeaderIndicesAlone.size();
     for (int i = 0; i < numBs; i++) {
-        int cur = mHeadersB[i];
+        int cur = mHeaderIndicesAlone[i];
         if (cur == i1) {
             ret = i1;
             break;
         } else if (cur > i1) {
             if (i == 0) {
-                ret = mHeadersB[0];
+                ret = mHeaderIndicesAlone[0];
             } else {
-                ret = mHeadersB[i - 1];
+                ret = mHeaderIndicesAlone[i - 1];
             }
             break;
         } else if (cur < i1 && i == numBs - 1) {
-            ret = mHeadersB[numBs - 1];
+            ret = mHeaderIndicesAlone[numBs - 1];
             break;
         }
     }
@@ -60,25 +60,25 @@ int NavListSortMgr::GetHeaderIndexFromChildListIndex(int i1) {
 }
 
 bool NavListSortMgr::IsHeader(int idx) {
-    if (0 <= idx && mHeadersA.size() > idx) {
-        return mHeadersA[idx] != false;
+    if (0 <= idx && mHeaderIndicesAmongAll.size() > idx) {
+        return mHeaderIndicesAmongAll[idx] != false;
     }
     return false;
 }
 
 void NavListSortMgr::ClearHeaders() {
-    mHeadersA.clear();
-    mHeadersB.clear();
+    mHeaderIndicesAmongAll.clear();
+    mHeaderIndicesAlone.clear();
 }
 
 Symbol NavListSortMgr::GetHeaderSymbolFromChildSymbol(Symbol sym) {
-    NavListSort *sort = mSorts[mCurrentSortIdx];
+    NavListSort *sort = mSorts[mSortIndex];
     NavListSortNode *sortNode = sort->GetNode(sym);
     if (!sortNode) {
         return gNullStr;
     } else {
         NavListHeaderNode *node =
-            dynamic_cast<NavListHeaderNode *>(sort->GetNode(sym)->Parent());
+            dynamic_cast<NavListHeaderNode *>(sort->GetNode(sym)->GetParent());
         if (!node) {
             return sortNode->GetToken();
         } else {
@@ -87,10 +87,10 @@ Symbol NavListSortMgr::GetHeaderSymbolFromChildSymbol(Symbol sym) {
     }
 }
 
-NavListSort *NavListSortMgr::GetCurrentSort() { return mSorts[mCurrentSortIdx]; }
+NavListSort *NavListSortMgr::GetCurrentSort() { return mSorts[mSortIndex]; }
 
 Symbol NavListSortMgr::GetCurrentSortName() {
-    NavListSort *pCurrentSort = mSorts[mCurrentSortIdx];
+    NavListSort *pCurrentSort = mSorts[mSortIndex];
     if (!pCurrentSort) {
         MILO_ASSERT(pCurrentSort, 0x19c);
     }
@@ -99,12 +99,12 @@ Symbol NavListSortMgr::GetCurrentSortName() {
 
 void NavListSortMgr::SetSort(int idx) {
     if (idx >= 0 && idx < mSorts.size()) {
-        unk70.clear();
+        mUncollapsedHeaderIDs.clear();
         ClearIconLabels();
-        mCurrentSortIdx = idx;
+        mSortIndex = idx;
         mSorts[idx]->BuildItemList();
-        mSorts[mCurrentSortIdx]->SetHighlightedIx(0);
-        mSorts[mCurrentSortIdx]->UpdateHighlight();
+        mSorts[mSortIndex]->SetHighlightedIx(0);
+        mSorts[mSortIndex]->UpdateHighlight();
     }
 }
 
@@ -119,25 +119,25 @@ void NavListSortMgr::SetSort(Symbol sym) {
 }
 
 void NavListSortMgr::SetHeaderUncollapsed(Symbol sym) {
-    FOREACH (it, unk70) {
+    FOREACH (it, mUncollapsedHeaderIDs) {
         if (*it == sym) {
             return;
         }
     }
-    unk70.push_back(sym);
+    mUncollapsedHeaderIDs.push_back(sym);
 }
 
 void NavListSortMgr::SetHeaderCollapsed(Symbol sym) {
-    FOREACH (it, unk70) {
+    FOREACH (it, mUncollapsedHeaderIDs) {
         if (*it == sym) {
-            unk70.erase(it);
+            mUncollapsedHeaderIDs.erase(it);
             return;
         }
     }
 }
 
 bool NavListSortMgr::IsHeaderCollapsed(Symbol sym) {
-    FOREACH (it, unk70) {
+    FOREACH (it, mUncollapsedHeaderIDs) {
         if (*it == sym) {
             return false;
         }
@@ -146,8 +146,8 @@ bool NavListSortMgr::IsHeaderCollapsed(Symbol sym) {
 }
 
 bool NavListSortMgr::IsIndexHeader(int idx) {
-    if (idx >= 0 && mHeadersA.size() >= idx) {
-        return mHeadersA[idx] != 0;
+    if (idx >= 0 && mHeaderIndicesAmongAll.size() >= idx) {
+        return mHeaderIndicesAmongAll[idx] != 0;
     }
     return false;
 }
@@ -155,21 +155,21 @@ bool NavListSortMgr::IsIndexHeader(int idx) {
 void NavListSortMgr::Text(int i1, int i2, UIListLabel *listlabel, UILabel *label) const {
     if (0 <= i2 && i2 < NumData()) {
         if (listlabel->Matches("header_collapse")) {
-            mSorts[mCurrentSortIdx]->GetListFromIdx(i2)->SetCollapseIconLabel(label);
+            mSorts[mSortIndex]->GetListFromIdx(i2)->SetCollapseIconLabel(label);
         }
-        mSorts[mCurrentSortIdx]->GetListFromIdx(i2)->Text(listlabel, label);
+        mSorts[mSortIndex]->GetListFromIdx(i2)->Text(listlabel, label);
     }
 }
 
 void NavListSortMgr::UnHighlightCurrent() {
-    if (mSorts[mCurrentSortIdx]->GetUnk54()) {
-        mSorts[mCurrentSortIdx]->GetUnk54()->OnUnHighlight();
-        mSorts[mCurrentSortIdx]->SetUnk54(0);
+    if (mSorts[mSortIndex]->GetUnk54()) {
+        mSorts[mSortIndex]->GetUnk54()->OnUnHighlight();
+        mSorts[mSortIndex]->SetUnk54(0);
     }
 }
 
 void NavListSortMgr::ContentMounted(const char *c1, const char *c2) {
-    NavListSortNode *node = mSorts[mCurrentSortIdx]->GetUnk50();
+    NavListSortNode *node = mSorts[mSortIndex]->GetHighlightItem();
     if (!node) {
         return;
     }
@@ -182,45 +182,45 @@ void NavListSortMgr::DoUncollapse() {
     }
     mHeaderMode = false;
     OnEnter();
-    mSorts[mCurrentSortIdx]->BuildItemList();
+    mSorts[mSortIndex]->BuildItemList();
 }
 
 UIComponent::State
 NavListSortMgr::ComponentStateOverride(int i1, int i2, UIComponent::State state) const {
-    if (!mSorts[mCurrentSortIdx]->GetListFromIdx(i2)->IsEnabled()) {
+    if (!mSorts[mSortIndex]->GetListFromIdx(i2)->IsEnabled()) {
         return UIComponent::State::kDisabled;
     }
     return state;
 }
 
 int NavListSortMgr::GetListIndexFromHeaderIndex(int idx) {
-    int size = mHeadersB.size();
+    int size = mHeaderIndicesAlone.size();
     if (idx < 0) {
         if (0 < size) {
-            return mHeadersB.front();
+            return mHeaderIndicesAlone.front();
         }
         return 0;
     }
     if (idx >= size) {
         if (0 < size) {
-            return mHeadersB[size - 1];
+            return mHeaderIndicesAlone[size - 1];
         }
         return 0;
     }
-    return mHeadersB[idx];
+    return mHeaderIndicesAlone[idx];
 }
 
 void NavListSortMgr::OnExit() {
     NavListSortNode *node = GetHighlightItem();
     if (node) {
-        node->GetID(unk44);
-        unk48 = true;
+        node->GetID(mSavedHighlightID);
+        mSavedHighlight = true;
     }
 }
 
 void NavListSortMgr::Custom(int i1, int i2, UIListCustom *uilist, Hmx::Object *obj) const {
     if (0 <= i2 && i2 < NumData()) {
-        mSorts[mCurrentSortIdx]->GetListFromIdx(i2)->Custom(uilist, obj);
+        mSorts[mSortIndex]->GetListFromIdx(i2)->Custom(uilist, obj);
     }
 }
 
@@ -228,16 +228,16 @@ RndMat *NavListSortMgr::Mat(int i1, int i2, UIListMesh *mesh) const {
     if (0 > i2 || i2 >= NumData()) {
         return 0;
     } else {
-        return mSorts[mCurrentSortIdx]->GetListFromIdx(i2)->Mat(mesh);
+        return mSorts[mSortIndex]->GetListFromIdx(i2)->Mat(mesh);
     }
 }
 
-int NavListSortMgr::NumData() const { return mSorts[mCurrentSortIdx]->GetDataCount(); }
+int NavListSortMgr::NumData() const { return mSorts[mSortIndex]->GetDataCount(); }
 
 void NavListSortMgr::ClearIconLabels() {
     int numData = NumData();
     for (int i = 0; i < numData; i++) {
-        mSorts[mCurrentSortIdx]->GetListFromIdx(i)->SetCollapseIconLabel(nullptr);
+        mSorts[mSortIndex]->GetListFromIdx(i)->SetCollapseIconLabel(nullptr);
     }
 }
 
@@ -245,14 +245,14 @@ Symbol NavListSortMgr::OnSelect(int i1) {
     if (i1 < 0 || i1 >= NumData()) {
         return Symbol(gNullStr);
     }
-    return mSorts[mCurrentSortIdx]->GetListFromIdx(i1)->OnSelect();
+    return mSorts[mSortIndex]->GetListFromIdx(i1)->OnSelect();
 }
 
 Symbol NavListSortMgr::OnSelectDone(int i1) {
     if (i1 < 0 || i1 >= NumData()) {
         return Symbol(gNullStr);
     }
-    return mSorts[mCurrentSortIdx]->GetListFromIdx(i1)->OnSelectDone();
+    return mSorts[mSortIndex]->GetListFromIdx(i1)->OnSelectDone();
 }
 
 void NavListSortMgr::OnHighlightChanged() {
@@ -272,11 +272,11 @@ bool NavListSortMgr::IsActive(int data) const {
     if (data < 0 || data >= NumData())
         return false;
 
-    return mSorts[mCurrentSortIdx]->GetListFromIdx(data)->IsActive();
+    return mSorts[mSortIndex]->GetListFromIdx(data)->IsActive();
 }
 
 Symbol NavListSortMgr::DataSymbol(int i1) const {
-    NavListSortNode *pNode = mSorts[mCurrentSortIdx]->GetListFromIdx(i1);
+    NavListSortNode *pNode = mSorts[mSortIndex]->GetListFromIdx(i1);
     if (!pNode) {
         MILO_ASSERT(pNode, 0x9b);
     }
@@ -291,16 +291,14 @@ void NavListSortMgr::OnUnload() {
 }
 
 NavListSortNode *NavListSortMgr::GetHighlightItem() {
-    return mSorts[mCurrentSortIdx]->GetUnk50();
+    return mSorts[mSortIndex]->GetHighlightItem();
 }
 
 void NavListSortMgr::StartPreview(int idx, TexMovie *tex) {
     if (idx >= 0) {
         if (idx < NumData()) {
-            // auto something = mSorts[mCurrentSortIdx]->GetListFromIdx(i1)->GetToken();
-            mSongPreview->Start(
-                mSorts[mCurrentSortIdx]->GetListFromIdx(idx)->GetToken(), tex
-            );
+            // auto something = mSorts[mSortIndex]->GetListFromIdx(i1)->GetToken();
+            mSongPreview.Start(mSorts[mSortIndex]->GetListFromIdx(idx)->GetToken(), tex);
         }
     }
 }
@@ -309,45 +307,46 @@ Symbol NavListSortMgr::OnGetToken(int idx) {
     if (idx < 0 || NumData() <= idx) {
         return Symbol(gNullStr);
     } else {
-        return mSorts[mCurrentSortIdx]->GetListFromIdx(idx)->GetToken();
+        return mSorts[mSortIndex]->GetListFromIdx(idx)->GetToken();
     }
 }
 
 int NavListSortMgr::DataIndex(Symbol s) const {
     MILO_NOTIFY_ONCE("DataIndex is not necessarily unique\n");
-    auto node = mSorts[mCurrentSortIdx]->GetNode(s);
+    auto node = mSorts[mSortIndex]->GetNode(s);
     if (!node) {
         return -1;
     } else {
-        return node->GetStartIx();
+        return node->GetIndex();
     }
 }
 
 Symbol NavListSortMgr::GetFirstChildSymbolFromHeaderSymbol(Symbol sym) {
-    auto node = dynamic_cast<NavListHeaderNode *>(mSorts[mCurrentSortIdx]->GetNode(sym));
+    auto node = dynamic_cast<NavListHeaderNode *>(mSorts[mSortIndex]->GetNode(sym));
     if (!node) {
         return Symbol(gNullStr);
     } else {
-        std::list<NavListSortNode *> c = node->Children();
+        std::list<NavListSortNode *> c = node->GetChildren();
         return c.front()->GetToken();
     }
 }
 
 void NavListSortMgr::FinalizeHeaders() {
-    if (mHeadersSelectable) {
-        std::vector<int> tempVec(mSorts[mCurrentSortIdx]->GetDataCount(), 0);
-        for (int i = 0; i < mHeadersA.size(); i++) {
-            tempVec[mHeadersA[i]] = 1;
+    if (mSortWithHeaders) {
+        std::vector<int> tempVec(mSorts[mSortIndex]->GetDataCount(), 0);
+        for (int i = 0; i < mHeaderIndicesAmongAll.size(); i++) {
+            tempVec[mHeaderIndicesAmongAll[i]] = 1;
         }
-        mHeadersA = tempVec;
+        mHeaderIndicesAmongAll = tempVec;
     }
 }
 
 int NavListSortMgr::GetHeaderIndexFromListIndex(int idx) {
     Symbol token = OnGetToken(idx);
-    int size = mHeadersB.size();
+    int size = mHeaderIndicesAlone.size();
     for (int i = 0; i < size; i++) {
-        if (token == mSorts[mCurrentSortIdx]->GetListFromIdx(mHeadersB[i])->GetToken()) {
+        if (token
+            == mSorts[mSortIndex]->GetListFromIdx(mHeaderIndicesAlone[i])->GetToken()) {
             return i;
         }
     }
@@ -355,37 +354,37 @@ int NavListSortMgr::GetHeaderIndexFromListIndex(int idx) {
 }
 
 int NavListSortMgr::FirstDataIndex(Symbol s) {
-    NavListSortNode *node = mSorts[mCurrentSortIdx]->GetNode(s);
+    NavListSortNode *node = mSorts[mSortIndex]->GetNode(s);
     if (node) {
-        return node->GetStartIx();
+        return node->GetIndex();
     }
     return -1;
 }
 
 bool NavListSortMgr::IsDisabled(int i) {
-    return mSorts[mCurrentSortIdx]->GetListFromIdx(i)->IsEnabled();
+    return mSorts[mSortIndex]->GetListFromIdx(i)->IsEnabled();
 }
 
 void NavListSortMgr::SetHighlightedIx(int i) {
-    NavListSort *sort = mSorts[mCurrentSortIdx];
+    NavListSort *sort = mSorts[mSortIndex];
     sort->SetHighlightedIx(i);
 }
 
-int NavListSortMgr::GetHeaderCount() { return mHeadersB.size(); }
+int NavListSortMgr::GetHeaderCount() { return mHeaderIndicesAlone.size(); }
 
-void NavListSortMgr::SortWithHeaders(int i) { mHeadersSelectable = i != 0; }
+void NavListSortMgr::SortWithHeaders(int i) { mSortWithHeaders = i != 0; }
 
 void NavListSortMgr::SetHeaderMode(int i) { mHeaderMode = i != 0; }
 
 NavListSort *NavListSortMgr::GetCurrentSortHandle() {
-    NavListSort *sort = mSorts[mCurrentSortIdx];
+    NavListSort *sort = mSorts[mSortIndex];
     if (!sort) {
         return nullptr;
     }
     return sort;
 }
 
-void NavListSortMgr::NextSort() { SetSort((mCurrentSortIdx + 1) % mSorts.size()); }
+void NavListSortMgr::NextSort() { SetSort((mSortIndex + 1) % mSorts.size()); }
 
 DataNode NavListSortMgr::OnCancel() { return DATA_UNHANDLED; }
 
@@ -397,13 +396,13 @@ BEGIN_HANDLERS(NavListSortMgr)
     HANDLE_EXPR(on_select_done, OnSelectDone(_msg->Int(2)))
     HANDLE_EXPR(on_cancel, OnCancel())
     HANDLE_EXPR(move_on, MoveOn())
-    HANDLE_EXPR(clear_saved_highlight, unk48 = false)
+    HANDLE_EXPR(clear_saved_highlight, mSavedHighlight = false)
     HANDLE_ACTION(set_highlighted_ix, SetHighlightedIx(_msg->Int(2)))
     HANDLE_EXPR(get_highlight_item, GetHighlightItem())
     HANDLE_ACTION(next_sort, NextSort())
     HANDLE_ACTION(set_sort_index, SetSort(_msg->Int(2)))
     HANDLE_ACTION(set_sort_name, SetSort(_msg->Sym(2)))
-    HANDLE_EXPR(get_sort_index, mCurrentSortIdx)
+    HANDLE_EXPR(get_sort_index, mSortIndex)
     HANDLE_EXPR(get_current_sort_name, GetCurrentSortName())
     HANDLE_EXPR(get_current_sort, GetCurrentSortHandle())
     HANDLE_EXPR(are_headers_selectable, HeadersSelectable())

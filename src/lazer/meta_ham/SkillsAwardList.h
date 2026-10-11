@@ -3,6 +3,10 @@
 #include "obj/Data.h"
 
 enum SkillsAward {
+    kSkillsAward_Unplayed = 0x0000,
+    kSkillsAward_Fail = 0x0001,
+    kSkillsAward_Complete = 0x0002,
+    kSkillsAward_FastTrack = 0x0003
 };
 
 class SkillsAwardList : public FixedSizeSaveable {
@@ -14,8 +18,8 @@ public:
                 return mSongID < key.mSongID;
             } else {
                 for (int i = 0; i < 4; i++) {
-                    if (unk4[i] != key.unk4[i]) {
-                        return unk4[i] < key.unk4[i];
+                    if (mMoves[i] != key.mMoves[i]) {
+                        return mMoves[i] < key.mMoves[i];
                     }
                 }
                 return false;
@@ -23,7 +27,7 @@ public:
         }
 
         int mSongID; // 0x0
-        Symbol unk4[4];
+        Symbol mMoves[4]; // 0x4
     };
     SkillsAwardList() : mDirty(0) { mSaveSizeMethod = SaveSize; }
     virtual ~SkillsAwardList() {}
@@ -37,11 +41,11 @@ public:
     void SetAward(Symbol, DataArray *, SkillsAward);
     void Clear();
     int AwardCount(SkillsAward) const;
-    bool HasAward(const Key &key) { return mAwardList.count(key) > 0; }
+    bool HasAward(const Key &key) { return mMap.count(key) > 0; }
 
     static int SaveSize(int);
 
 protected:
-    std::map<Key, SkillsAward> mAwardList; // 0x8
+    std::map<Key, SkillsAward> mMap; // 0x8
     bool mDirty; // 0x20
 };

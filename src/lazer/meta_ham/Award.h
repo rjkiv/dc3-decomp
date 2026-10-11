@@ -18,19 +18,18 @@ public:
     Symbol GetName() const;
     bool IsSilent() const;
 
-    void SetArt(Symbol s) { mArt = s; }
-    const Symbol &GetArtName() const { return mArt; }
-
-private:
-    Symbol mName; // 0x4
-    int unk8; // 0x8
-    bool mIsSecret; // 0xc
-    bool mIsSilent; // 0xd
-    std::list<AwardEntry> mAwardEntries; // 0x10
-    Symbol mArt; // 0x18
+    bool HasArt() const { return m_symArt != gNullStr; }
 
 protected:
     virtual void Configure(DataArray *);
 
     void GrantAward(AwardEntry const &, HamProfile *);
+
+private:
+    Symbol m_symName; // 0x4
+    int m_iIndex; // 0x8
+    bool m_bIsSecret; // 0xc
+    bool m_bIsSilent; // 0xd
+    std::list<AwardEntry> m_lAwards; // 0x10
+    Symbol m_symArt; // 0x18
 };

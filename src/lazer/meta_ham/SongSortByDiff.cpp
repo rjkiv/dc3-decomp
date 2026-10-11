@@ -67,8 +67,8 @@ NavListHeaderNode *SongSortByDiff::NewHeaderNode(NavListItemNode *node) const {
 NavListItemNode *SongSortByDiff::NewItemNode(void *p1) const {
     SongRecord *record = static_cast<SongRecord *>(p1);
     int tier = record->GetTier();
-    float rank = record->Metadata()->Rank();
-    const char *title = record->Metadata()->Title();
+    float rank = record->GetData()->Rank();
+    const char *title = record->GetData()->Title();
     DifficultyCmp *cmp = new DifficultyCmp(tier, rank, title);
     return new SongSortNode(cmp, record);
 }

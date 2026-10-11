@@ -11,20 +11,20 @@
 #include "utl/Symbol.h"
 
 BEGIN_HANDLERS(MQSongHeaderNode)
-    HANDLE_EXPR(get_challenge_count, unk58)
+    HANDLE_EXPR(get_challenge_count, mCount)
     HANDLE_SUPERCLASS(NavListHeaderNode)
 END_HANDLERS
 
 MQSongHeaderNode::MQSongHeaderNode(NavListItemSortCmp *cmp, Symbol sym, bool b)
-    : NavListHeaderNode(cmp, sym, b), unk5c(0), unk58(0) {}
+    : NavListHeaderNode(cmp, sym, b), mIsHighlighted(0), mCount(0) {}
 
 void MQSongHeaderNode::OnHighlight() {
-    unk5c = true;
+    mIsHighlighted = true;
     SetCollapseStateIcon(true);
 }
 
 void MQSongHeaderNode::OnUnHighlight() {
-    unk5c = false;
+    mIsHighlighted = false;
     SetCollapseStateIcon(false);
 }
 
@@ -38,7 +38,8 @@ Symbol MQSongHeaderNode::OnSelect() {
 }
 
 Symbol MQSongHeaderNode::OnSelectDone() {
-    if (TheMQSongSortMgr->IsInHeaderMode() && !TheMQSongSortMgr->EnteringHeaderMode()) {
+    if (TheMQSongSortMgr->IsInHeaderMode()
+        && !TheMQSongSortMgr->GetEnteringHeaderMode()) {
         TheMQSongSortMgr->SetHeaderMode(false);
     }
     TheMQSongSortMgr->OnEnter();
@@ -68,13 +69,13 @@ const char *MQSongHeaderNode::GetAlbumArtPath() {
 void MQSongHeaderNode::Text(UIListLabel *listlabel, UILabel *label) const {
     if (listlabel->Matches("song")) {
         const MQSongCharCmp *cmp = mCmp->GetMQSongCharCmp();
-        const char *c = cmp->unk8;
-        Symbol s = MakeString("mqheader_%s", c);
+        Symbol c = cmp->mCharacter;
+        Symbol s = MakeString("mqheader_%s", c.Str());
         label->SetTextToken(s);
     } else if (listlabel->Matches("song_prefix")) {
         label->SetTextToken(gNullStr);
     } else if (listlabel->Matches("header_collapse")) {
-        SetCollapseStateIcon(unk5c);
+        SetCollapseStateIcon(mIsHighlighted);
     }
 }
 
@@ -104,7 +105,7 @@ void MQSongHeaderNode::SetCollapseStateIcon(bool b) const {
 }
 
 NavListSortNode *MQSongHeaderNode::GetFirstActive() {
-    FOREACH (it, Children()) {
+    FOREACH (it, GetChildren()) {
         NavListSortNode *node = (*it)->GetFirstActive();
         if (node) {
             return TheMQSongSortMgr->HeadersSelectable() ? this : node;
@@ -115,7 +116,7 @@ NavListSortNode *MQSongHeaderNode::GetFirstActive() {
 
 void MQSongHeaderNode::Renumber(std::vector<NavListSortNode *> &vec) {
     mStartIx = vec.size();
-    if (TheMQSongSortMgr->GetHeadersSelectable()) {
+    if (TheMQSongSortMgr->SortWithHeaders()) {
         vec.push_back(this);
         TheMQSongSortMgr->AddHeaderIndex(mStartIx);
     }
@@ -132,7 +133,7 @@ void MQSongSortNode::Text(UIListLabel *listlabel, UILabel *label) const {
     if (listlabel->Matches("song")) {
         AppLabel *pAppLabel = dynamic_cast<AppLabel *>(label);
         MILO_ASSERT(pAppLabel, 0x10f);
-        pAppLabel->SetBlacklightSongName(unk48, -1, false);
+        pAppLabel->SetBlacklightSongName(mSong, -1, false);
     } else if (listlabel->Matches("song_prefix")) {
         AppLabel *pAppLabel = dynamic_cast<AppLabel *>(label);
         MILO_ASSERT(pAppLabel, 0x116);
@@ -154,7 +155,7 @@ void MQSongSortNode::Custom(UIListCustom *list, Hmx::Object *obj) const {
         static DataNode &mq_difficulty = DataVariable("mq_difficulty");
         Difficulty difficulty = (Difficulty)mq_difficulty.Int();
         pStarDisplay->SetShowing(true);
-        int songID = TheSongMgr.GetSongIDFromShortName(unk48, true);
+        int songID = TheSongMgr.GetSongIDFromShortName(mSong, true);
         pStarDisplay->SetSongWithDifficulty(songID, difficulty, false);
     }
 }

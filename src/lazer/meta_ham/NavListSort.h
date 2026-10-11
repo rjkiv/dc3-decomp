@@ -10,8 +10,8 @@ public:
     NavListSort();
     virtual ~NavListSort() {}
     virtual DataNode Handle(DataArray *, bool);
-    virtual int NumData() const { return unk30.size(); }
-    virtual bool IsActive(int idx) const { return unk30[idx]->IsActive(); }
+    virtual int NumData() const { return mTree.size(); }
+    virtual bool IsActive(int idx) const { return mTree[idx]->IsActive(); }
     virtual void BuildTree() = 0;
     virtual void DeleteItemList(); // 0x70
     virtual void BuildItemList() = 0;
@@ -35,10 +35,10 @@ public:
     void DeleteTree();
     bool SetHighlightID(DataArray *);
 
-    NavListSortNode *GetUnk50() { return unk50; }
-    NavListSortNode *GetUnk54() { return unk54; }
-    void SetUnk50(NavListSortNode *sortnode) { unk50 = sortnode; }
-    void SetUnk54(NavListSortNode *sortnode) { unk54 = sortnode; }
+    NavListSortNode *GetHighlightItem() { return mHighlightNode; }
+    NavListSortNode *GetUnk54() { return mPrevHighlightNode; }
+    void SetUnk50(NavListSortNode *sortnode) { mHighlightNode = sortnode; }
+    void SetUnk54(NavListSortNode *sortnode) { mPrevHighlightNode = sortnode; }
     Symbol GetSortName() { return mSortName; }
     void SetSortName(Symbol name) { mSortName = name; }
     NavListSortNode *GetListFromIdx(int idx) { return mList[idx]; }
@@ -46,11 +46,11 @@ public:
     int GetListSize() { return mList.size(); }
 
 protected:
-    std::vector<NavListShortcutNode *> unk30;
-    std::list<NavListSortNode *> unk3c;
+    std::vector<NavListShortcutNode *> mTree; // 0x30
+    std::list<NavListSortNode *> mFunctions; // 0x3c
     std::vector<NavListSortNode *> mList; // 0x44
-    NavListSortNode *unk50; // 0x50
-    NavListSortNode *unk54; // 0x54
+    NavListSortNode *mHighlightNode; // 0x50
+    NavListSortNode *mPrevHighlightNode; // 0x54
     Symbol mSortName; // 0x58
 };
 

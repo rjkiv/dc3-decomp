@@ -16,9 +16,9 @@ public:
     virtual void InitData(RndDir *);
 
     bool IsDifficultyUnlocked(Symbol) const;
-    void SetPlayer(int player) { mPlayer = player; }
+    void SetPlayerIndex(int player) { mPlayerIndex = player; }
 
 private:
-    int mPlayer; // 0x30
+    int mPlayerIndex; // 0x30
     std::vector<Difficulty> mDifficulties; // 0x34
 };

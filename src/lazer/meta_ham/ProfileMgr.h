@@ -118,18 +118,23 @@ public:
     bool GetBassBoost() const { return mBassBoost; }
     bool GetDolby() const { return mDolby; }
     Symbol GetVenuePreference() const { return mVenuePreference; }
-    bool NoFlashcards() const { return mNoFlashcards; }
+    bool GetNoFlashCards() const { return mNoFlashcards; }
     bool GetAllUnlocked() { return mAllUnlocked; }
-    HamProfile *CriticalProfile() const { return mCriticalProfile; }
+    HamProfile *GetCriticalProfile() const { return mCriticalProfile; }
     void SetCriticalProfile(HamProfile *profile) { mCriticalProfile = profile; }
-    bool DisableVoice() const { return mDisableVoice; }
+    bool GetDisableVoice() const { return mDisableVoice; }
 
-    int GetUnk4c() { return unk4c; }
-    void SetUnk4c(int i) { unk4c = i; };
+    void SetPreferredWeightUnit(int unit) { mPreferredWeightUnit = unit; }
+    int GetPreferredWeightUnit() const { return mPreferredWeightUnit; }
     void SetGlobalOptionsDirty(bool b) { mGlobalOptionsDirty = b; }
-    bool Mono() const { return mMono; }
-    bool PhotosDisabled() const { return mDisablePhotos; }
-    bool FreestyleDisabled() const { return mDisableFreestyle; }
+    bool GetMono() const { return mMono; }
+    bool GetDisablePhotos() const { return mDisablePhotos; }
+    bool GetDisableFreestyle() const { return mDisableFreestyle; }
+
+    const float kPlatformAudioLatency; // 0x2c
+    const float kPlatformVideoLatency; // 0x30
+    const float kInGameExtraVideoLatency; // 0x34
+    const float kInGameSyncOffsetAdjustment; // 0x38
 
 private:
     void UpdateFriendsList();
@@ -137,17 +142,12 @@ private:
 
     DataNode OnMsg(const SigninChangedMsg &);
 
-protected:
-    float mPlatformAudioLatency; // 0x2c
-    float mPlatformVideoLatency; // 0x30
-    float unk34;
-    float unk38;
-    int unk3c;
+    int mHasInactiveProfile; // 0x3c
     ProfileSaveState mGlobalOptionsSaveState; // 0x40
     bool mGlobalOptionsDirty; // 0x44
-    bool unk45;
-    int mTutorialsSeen; // 0x48
-    int unk4c; // 0x4c - mPreferredWeightUnits? 0 = pounds, 1 = kilograms
+    bool mHasPlayedBefore; // 0x45
+    int mSeenTutorials; // 0x48
+    int mPreferredWeightUnit; // 0x4c - fix type to enum WeightInput later
     int mMusicVolume; // 0x50
     int mFxVolume; // 0x54
     int mCrowdVolume; // 0x58
@@ -156,7 +156,7 @@ protected:
     float mSongToTaskMgrMs; // 0x64
     bool mBassBoost; // 0x68
     bool mDolby; // 0x69
-    bool unk6a; // 0x6a
+    bool mMuteFx; // 0x6a
     int mSyncPresetIx; // 0x6c
     bool mOverscan; // 0x70
     bool mDisablePhotos; // 0x71
@@ -166,22 +166,22 @@ protected:
     bool mDisableVoicePause; // 0x75
     bool mDisableVoicePractice; // 0x76
     bool mShowVoiceTip; // 0x77
-    bool unk78; // 0x78
+    bool mForceSpeechLanguageSupport; // 0x78
     bool mDisableFreestyle; // 0x79
     Symbol mVenuePreference; // 0x7c
-    DWORD mLocale; // 0x80
-    DWORD mLanguage; // 0x84
+    DWORD mLocale; // 0x80 - not in pdb
+    DWORD mLanguage; // 0x84 - not in pdb
     DataArray *mSliderConfig; // 0x88
     DataArray *mVoiceChatSliderConfig; // 0x8c
-    std::vector<HamProfile *> unk90;
+    std::vector<HamProfile *> mProfiles; // 0x90
     HamProfile *mCriticalProfile; // 0x9c
     bool mAllUnlocked; // 0xa0
     void *mProfileSaveBuffer; // 0xa4
-    bool unka8;
-    bool unka9;
+    bool mDeferredFlauntCheckRequested; // 0xa8
+    bool mDeferredFitnessGoalCheckRequested; // 0xa9
     RndOverlay *mProfilesOverlay; // 0xac
-    bool unkb0;
-    Timer unkb8;
+    bool unkb0; // not in pdb
+    Timer unkb8; // not in pdb
 };
 
 extern ProfileMgr TheProfileMgr;

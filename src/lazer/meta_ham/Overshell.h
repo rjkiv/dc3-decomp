@@ -4,6 +4,10 @@
 #include "obj/Object.h"
 
 enum OvershellSlotState {
+    kJoinNoSkeleton = 0x0000,
+    kJoinPending = 0x0001,
+    kJoinSelDiff = 0x0002,
+    kJoinPlaying = 0x0003
 };
 
 class OvershellSlot : public Hmx::Object {
@@ -13,16 +17,16 @@ public:
     virtual DataNode Handle(DataArray *, bool);
 
     void SetState(OvershellSlotState);
-    void SetPlayerNum(int player) { mPlayerNum = player; }
+    void Init(int player) { mSlot = player; }
     void SetPlaying(bool);
     void Poll(const Skeleton *const (&)[6]);
 
-protected:
+private:
     const HamPlayerData &mPlayerData; // 0x2c
     OvershellSlotState mState; // 0x30
-    int mPlayerNum; // 0x34
-    int unk38; // 0x38
-    int unk3c; // 0x3c
+    int mSlot; // 0x34
+    Skeleton *mSkeleton; // 0x38
+    int mTrackingId; // 0x3c
 };
 
 class Overshell : public Hmx::Object {
@@ -35,6 +39,6 @@ public:
     void ResolveSkeletons();
     void Poll(const Skeleton *const (&)[6]);
 
-protected:
+private:
     OvershellSlot *mSlots[2]; // 0x2c
 };

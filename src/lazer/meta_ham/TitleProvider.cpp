@@ -11,15 +11,15 @@ TitleProvider::~TitleProvider() {}
 
 Symbol TitleProvider::DataSymbol(int i_iData) const {
     MILO_ASSERT_RANGE(i_iData, 0, NumData(), 0x44);
-    return mItems[i_iData];
+    return m_vEntries[i_iData];
 }
 
 void TitleProvider::UpdateList(bool) {
-    mItems.clear();
+    m_vEntries.clear();
     static Symbol title_screen_menu("title_screen_menu");
     static Symbol start_the_party("start_the_party");
-    mItems.push_back(title_screen_menu);
-    mItems.push_back(start_the_party);
+    m_vEntries.push_back(title_screen_menu);
+    m_vEntries.push_back(start_the_party);
 }
 
 void TitleProvider::Text(

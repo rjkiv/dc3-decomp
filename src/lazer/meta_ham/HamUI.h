@@ -20,6 +20,11 @@
 
 class HamUI : public UIManager {
 public:
+    enum SignoutError {
+        kLocalUserSignedOut = 0x0000,
+        kProfileOwnerSignedOut = 0x0001
+    };
+
     HamUI();
     virtual ~HamUI();
     virtual DataNode Handle(DataArray *, bool);
@@ -36,12 +41,12 @@ public:
 
     bool IsBlacklightMode();
     ShellInput *GetShellInput() const { return mShellInput; }
-    HelpBarPanel *GetHelpBarPanel() const { return mHelpBar; }
-    int GetPadNum() const { return mPadNum; }
-    UIPanel *EventDialogPanel() const { return mEventDialogPanel; }
-    OverlayPanel *GetOverlayPanel() const { return mOverlayPanel; }
-    LetterboxPanel *GetLetterboxPanel() const { return mLetterbox; }
-    BlacklightPanel *GetBlacklightPanel() const { return mBlacklight; }
+    HelpBarPanel *Helpbar() { return mHelpBar; }
+    int GetLastButtonDownPadNum() const { return mLastButtonDownPadNum; }
+    UIPanel *EventDialog() { return mEventDialog; }
+    OverlayPanel *GetOverlayPanel() { return mOverlayPanel; }
+    LetterboxPanel *Letterbox() const { return mLetterbox; }
+    BlacklightPanel *Blacklight() const { return mBlacklight; }
 
     void SetOverlayPanel(OverlayPanel *op) { mOverlayPanel = op; }
 
@@ -83,20 +88,20 @@ private:
     HelpBarPanel *mHelpBar; // 0xd8
     LetterboxPanel *mLetterbox; // 0xdc
     BlacklightPanel *mBlacklight; // 0xe0
-    UIPanel *mEventDialogPanel; // 0xe4
-    UIPanel *mBackgroundPanel; // 0xe8
+    UIPanel *mEventDialog; // 0xe4
+    UIPanel *mBackground; // 0xe8
     UIPanel *mContentLoadingPanel; // 0xec
     OverlayPanel *mOverlayPanel; // 0xf0
     GamePanel *mGamePanel; // 0xf4
     RndDir *mAugmentedPhoto; // 0xf8
-    bool unk_0xFC;
-    bool unk_0xFD;
+    bool mTakeSnapshotNextDraw; // 0xfc
+    bool mExtraSnapshotDrawForLag; // 0xfd
     UIScreen *mEventScreen; // 0x100
     ShellInput *mShellInput; // 0x104
-    int mPadNum; // 0x108
-    LiveCameraInput::BufferType mBufferType; // 0x10C
-    bool mFullScreenDrawActive;
-    float mSkelRot; // 0x114
+    int mLastButtonDownPadNum; // 0x108
+    LiveCameraInput::BufferType mCameraOutput; // 0x10C
+    bool mFullScreenDraw; // 0x110
+    float mSkeletonDrawRadians; // 0x114
     bool mButtonSpam; // 0x118
     RndOverlay *mUIOverlay; // 0x11c
 };

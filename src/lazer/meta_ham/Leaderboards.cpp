@@ -22,11 +22,12 @@
 #include "utl/Std.h"
 #include "utl/Symbol.h"
 
-Leaderboards::Leaderboards() : unk7c(100), unk80(0), unk84(0), unk88(2) {
-    unk54 = 0;
-    unk94 = 0;
-    unk98 = 0;
-    unk9c = 0;
+Leaderboards::Leaderboards()
+    : mMaxDownload(100), mReadingScores(0), mType(kScore), mMode(kLeaderboardsFriends) {
+    mUploadingProfile = nullptr;
+    mHideRank = false;
+    mGetLeaderboardJob = nullptr;
+    mEthernetDisconnected = false;
     SetName("leaderboards", ObjectDir::Main());
 }
 
@@ -35,9 +36,9 @@ Leaderboards::~Leaderboards() {}
 BEGIN_HANDLERS(Leaderboards)
     HANDLE_ACTION(download_scores, DownloadScores(_msg->Sym(2)))
     HANDLE_EXPR(show_gamercard, ShowGamercard(_msg->Int(2), _msg->Obj<HamProfile>(3)))
-    HANDLE_EXPR(get_type, unk84)
+    HANDLE_EXPR(get_type, mType)
     HANDLE_ACTION(set_type, SetType(_msg->Int(2)))
-    HANDLE_EXPR(get_mode, unk88)
+    HANDLE_EXPR(get_mode, mMode)
     HANDLE_ACTION(set_mode, SetMode(_msg->Int(2)))
     HANDLE_EXPR(num_scores, NumData())
     HANDLE_EXPR(has_self, HasSelf())
@@ -51,29 +52,29 @@ void Leaderboards::Text(int, int data, UIListLabel *slot, UILabel *label) const 
     if (data < NumData()) {
         if (slot->Matches("gamertag")) {
             static Symbol gamertag("gamertag");
-            label->SetTokenFmt(gamertag, unk58[data].gamertag);
+            label->SetTokenFmt(gamertag, mRows[data].gamertag);
         } else if (slot->Matches("score")) {
-            label->SetInt(unk58[data].score, false);
+            label->SetInt(mRows[data].score, false);
         } else if (slot->Matches("no_flashcards")) {
             static Symbol no_flashcards_icon("no_flashcards_icon");
-            if (unk58[data].noFlashcards) {
+            if (mRows[data].noFlashcards) {
                 label->SetTextToken(no_flashcards_icon);
             } else {
                 label->SetTextToken(gNullStr);
             }
         } else if (slot->Matches("rank")) {
-            if (unk94) {
+            if (mHideRank) {
                 label->SetTextToken(gNullStr);
 
             } else {
-                if (unk58[data].isPercentile && unk88 != 2) {
+                if (mRows[data].isPercentile && mMode != kLeaderboardsFriends) {
                     static char sBuffer[20];
-                    Hx_snprintf(sBuffer, 20, "%d%% ", unk58[data].rank);
+                    Hx_snprintf(sBuffer, 20, "%d%% ", mRows[data].rank);
                     String str58(sBuffer);
                     label->SetTextToken(str58.c_str());
                 } else {
                     static Symbol rank_fmt("rank_fmt");
-                    label->SetInt(unk58[data].rank, false);
+                    label->SetInt(mRows[data].rank, false);
                 }
             }
         } else if (slot->Matches("difficulty")) {
@@ -81,7 +82,7 @@ void Leaderboards::Text(int, int data, UIListLabel *slot, UILabel *label) const 
             static Symbol easy_short("easy_short");
             static Symbol medium_short("medium_short");
             static Symbol expert_short("expert_short");
-            Difficulty d = unk58[data].diff;
+            Difficulty d = mRows[data].diff;
             switch (d) {
             case kDifficultyEasy:
                 label->SetTextToken(easy_short);
@@ -99,8 +100,8 @@ void Leaderboards::Text(int, int data, UIListLabel *slot, UILabel *label) const 
                 MILO_NOTIFY(
                     "Bad difficulty %d retrieved from leaderboards for user                    %s at rank %d!",
                     d,
-                    unk58[data].gamertag,
-                    unk58[data].rank
+                    mRows[data].gamertag,
+                    mRows[data].rank
                 );
                 break;
             }
@@ -111,33 +112,33 @@ void Leaderboards::Text(int, int data, UIListLabel *slot, UILabel *label) const 
 }
 
 int Leaderboards::NumData() const {
-    if (!unk80) {
-        return unk58.size();
+    if (!mReadingScores) {
+        return mRows.size();
     } else {
         return 0;
     }
 }
 
 void Leaderboards::SetType(int t) {
-    if (!unk80) {
-        unk84 = t;
+    if (!mReadingScores) {
+        mType = (LeaderboardsType)t;
     }
 }
 
 void Leaderboards::SetMode(int m) {
-    if (!unk80) {
-        unk88 = m;
+    if (!mReadingScores) {
+        mMode = (LeaderboardsMode)m;
     }
 }
 
 void Leaderboards::ClearCache() {
-    unk64.clear();
-    unk9c = false;
+    mCache.clear();
+    mEthernetDisconnected = false;
 }
 
 void Leaderboards::DownloadScores(Symbol shortname) {
     int songID = 0;
-    if (unk84 != 4 && unk84 != 5) {
+    if (mType != kInfPlaylistScore && mType != kInfPlaylistTime) {
         songID = TheHamSongMgr.GetSongIDFromShortName(shortname);
     }
     GetScores(songID);
@@ -151,7 +152,7 @@ bool Leaderboards::HasSelf() const {
     bool bHasOnlineID = pProfile->IsSignedIn();
     MILO_ASSERT(bHasOnlineID, 0x1CF);
     XUID theXUID = pProfile->GetOnlineID()->GetXUID();
-    FOREACH (it, unk58) {
+    FOREACH (it, mRows) {
         if (it->xuid == theXUID) {
             ret = true;
             break;
@@ -169,7 +170,7 @@ bool Leaderboards::IsSelf(int i1) const {
     MILO_ASSERT(bHasOnlineID, 0x1EE);
     XUID theXUID = pProfile->GetOnlineID()->GetXUID();
     int idx = 0;
-    for (auto it = unk58.begin(); it != unk58.end(); ++it, ++idx) {
+    for (auto it = mRows.begin(); it != mRows.end(); ++it, ++idx) {
         if (i1 == idx && it->xuid == theXUID) {
             ret = true;
             break;
@@ -184,27 +185,27 @@ void Leaderboards::Init() {
 }
 
 void Leaderboards::Poll() {
-    if (!unk9c && !ThePlatformMgr.IsConnected()) {
+    if (!mEthernetDisconnected && !ThePlatformMgr.IsConnected()) {
         UIPanel *panel = ObjectDir::Main()->Find<UIPanel>("leaderboards.panel");
         if (panel->GetState() == UIPanel::kUp) {
             static Message ethernetDisconnectedMsg("leaderboards_ethernet_disconnected");
             TheUI->Handle(ethernetDisconnectedMsg, true);
-            unk9c = true;
+            mEthernetDisconnected = true;
         }
     }
 }
 
 void Leaderboards::UploadNextScore() {
     static Symbol ham3("ham3");
-    mRecordScoreData.mSongData = &unk30.front();
-    mRecordScoreData.mProfile = unk54;
-    mRecordScoreData.mCareerScore =
-        unk54->GetSongStatusMgr()->CalculateTotalScore(gNullStr);
-    mRecordScoreData.mCappedCareerScore =
-        unk54->GetSongStatusMgr()->CalculateTotalScore(ham3);
-    TheRockCentral.ManageJob(new RecordScoreJob(
-        this, mRecordScoreData, mRecordScoreData.mSongData->mSongID, true
-    ));
+    mScoreData.mSongData = &mScoreList.front();
+    mScoreData.mProfile = mUploadingProfile;
+    mScoreData.mCareerScore =
+        mUploadingProfile->GetSongStatusMgr()->CalculateTotalScore(gNullStr);
+    mScoreData.mCappedCareerScore =
+        mUploadingProfile->GetSongStatusMgr()->CalculateTotalScore(ham3);
+    TheRockCentral.ManageJob(
+        new RecordScoreJob(this, mScoreData, mScoreData.mSongData->mSongID, true)
+    );
 }
 
 void Leaderboards::PostProcScores() {
@@ -213,8 +214,8 @@ void Leaderboards::PostProcScores() {
     UIPanel *panel = ObjectDir::Main()->Find<UIPanel>("leaderboards_panel");
     bool b1 = false;
     if (profile) {
-        for (int i = 1; i < unk58.size(); i++) {
-            LeaderboardRow row = unk58[i];
+        for (int i = 1; i < mRows.size(); i++) {
+            LeaderboardRow row = mRows[i];
             if (panel->GetState() == UIPanel::kUp) {
                 msg[0] = i;
                 panel->HandleType(msg);
@@ -244,11 +245,11 @@ void Leaderboards::AddPendingProfile(HamProfile *pProfile) {
 
 void Leaderboards::StartUploadingNextProfile() {
     while (!mPendingProfiles.empty()) {
-        unk54 = mPendingProfiles.front();
+        mUploadingProfile = mPendingProfiles.front();
         mPendingProfiles.pop_front();
-        SongStatusMgr *mgr = unk54->GetSongStatusMgr();
-        mgr->GetScoresToUpload(unk30);
-        if (!unk30.empty()) {
+        SongStatusMgr *mgr = mUploadingProfile->GetSongStatusMgr();
+        mgr->GetScoresToUpload(mScoreList);
+        if (!mScoreList.empty()) {
             UploadNextScore();
             return;
         }
@@ -260,13 +261,13 @@ void Leaderboards::UploadScores(HamProfile *profile) {
     if (profile->IsSignedIn()) {
         if (ThePlatformMgr.IsSignedIntoLive(profile->GetPadNum())
             && !SongStatusMgr::sFakeLeaderboardUploadFailure) {
-            if (unk54 && unk54 != profile) {
+            if (mUploadingProfile && mUploadingProfile != profile) {
                 AddPendingProfile(profile);
             } else {
-                unk54 = profile;
-                unk30.clear();
-                profile->GetSongStatusMgr()->GetScoresToUpload(unk30);
-                if (!unk30.empty()) {
+                mUploadingProfile = profile;
+                mScoreList.clear();
+                profile->GetSongStatusMgr()->GetScoresToUpload(mScoreList);
+                if (!mScoreList.empty()) {
                     UploadNextScore();
                 } else {
                     StartUploadingNextProfile();
@@ -278,10 +279,10 @@ void Leaderboards::UploadScores(HamProfile *profile) {
 
 Symbol Leaderboards::ShowGamercard(int i, HamProfile *profile) {
     static Symbol display_gamercard_pad_error("display_gamercard_pad_error");
-    if ((0 <= i) && (i <= unk58.size())) {
+    if ((0 <= i) && (i <= mRows.size())) {
         if (ThePlatformMgr.IsSignedIntoLive(profile->GetPadNum())) {
-            if (unk58.size() != 0) {
-                const OnlineID id(unk58[i].xuid);
+            if (mRows.size() != 0) {
+                const OnlineID id(mRows[i].xuid);
                 ShowGamercardResult result =
                     ThePlatformMgr.ShowGamercardForPadNum(profile->GetPadNum(), &id);
                 if (result == (ShowGamercardResult)-2) {
@@ -303,22 +304,24 @@ Symbol Leaderboards::ShowGamercard(int i, HamProfile *profile) {
 }
 
 DataNode Leaderboards::OnMsg(const RCJobCompleteMsg &msg) {
-    if (msg.Job() == unk98) {
+    if (msg.Job() == mGetLeaderboardJob) {
         ReadScoresComplete(false, msg.Success() != 0);
     } else {
-        if (msg.Success() && !unk30.empty()) {
-            SongStatusData data = unk30.front();
-            if (unk54) {
-                unk54->GetSongStatusMgr()->ClearNeedUpload(data.mSongID, data.mDifficulty);
+        if (msg.Success() && !mScoreList.empty()) {
+            SongStatusData data = mScoreList.front();
+            if (mUploadingProfile) {
+                mUploadingProfile->GetSongStatusMgr()->ClearNeedUpload(
+                    data.mSongID, data.mDiff
+                );
             }
-            unk30.pop_front();
-            if (!unk30.empty()) {
+            mScoreList.pop_front();
+            if (!mScoreList.empty()) {
                 UploadNextScore();
             } else {
                 if (!mPendingProfiles.empty()) {
                     StartUploadingNextProfile();
                 } else {
-                    unk54 = nullptr;
+                    mUploadingProfile = nullptr;
                 }
             }
         }
@@ -327,18 +330,18 @@ DataNode Leaderboards::OnMsg(const RCJobCompleteMsg &msg) {
 }
 
 void Leaderboards::ReadScoresComplete(bool b1, bool b2) {
-    unk94 = false;
+    mHideRank = false;
     if (!b1) {
-        GetLeaderboardByPlayerJob *job = unk98;
-        unk58.clear();
-        job->GetRows(&unk58);
-        unk98 = nullptr;
+        GetLeaderboardByPlayerJob *job = (GetLeaderboardByPlayerJob *)mGetLeaderboardJob;
+        mRows.clear();
+        job->GetRows(&mRows);
+        mGetLeaderboardJob = nullptr;
         if (b2) {
-            unk64.insert(std::make_pair((unsigned int)job->GetChecksum(), unk58));
+            mCache.insert(std::make_pair((unsigned int)job->GetChecksum(), mRows));
         }
     }
 
-    unk80 = false;
+    mReadingScores = false;
     PostProcScores();
     static Message leaderboardsLoadedMsg("leaderboards_loaded");
     static Message leaderboardsFailedRcMsg("leaderboards_failed_rc");
@@ -353,19 +356,19 @@ void Leaderboards::ReadScoresComplete(bool b1, bool b2) {
 }
 
 void Leaderboards::GetScores(int songID) {
-    if (!unk80 && !unk98) {
-        unk58.clear();
+    if (!mReadingScores && !mGetLeaderboardJob) {
+        mRows.clear();
         HamProfile *activeProfile = TheProfileMgr.GetActiveProfile(true);
         if (!ThePlatformMgr.IsSignedIntoLive(activeProfile->GetPadNum())) {
             static Message leaderboardsFailedMsg("leaderboards_failed");
             TheUI->Handle(leaderboardsFailedMsg, false);
         } else {
-            int temp = unk84;
-            unk90 = songID;
-            unk80 = true;
-            if (unk84 == 4 || unk84 == 5) {
+            int temp = mType;
+            mCurrentSongID = songID;
+            mReadingScores = true;
+            if (mType == kInfPlaylistScore || mType == kInfPlaylistTime) {
                 temp = temp == 4 ? 0 : temp;
-                if (unk84 == 5) {
+                if (mType == kInfPlaylistTime) {
                     temp = 1;
                 }
                 songID = 0x989a6e;
@@ -373,15 +376,15 @@ void Leaderboards::GetScores(int songID) {
 
             int padnum = activeProfile->GetPadNum();
             int index =
-                (songID & ~0xFC000000) + (((((padnum << 2) + temp) << 2) + unk88) << 26);
-            auto it = unk64.find(index);
-            if (it == unk64.end()) {
-                unk98 = new GetLeaderboardByPlayerJob(
-                    this, activeProfile, songID, temp, unk88, 10, index
+                (songID & ~0xFC000000) + (((((padnum << 2) + temp) << 2) + mMode) << 26);
+            auto it = mCache.find(index);
+            if (it == mCache.end()) {
+                mGetLeaderboardJob = new GetLeaderboardByPlayerJob(
+                    this, activeProfile, songID, temp, mMode, 10, index
                 );
-                TheRockCentral.ManageJob(unk98);
+                TheRockCentral.ManageJob(mGetLeaderboardJob);
             } else {
-                unk58 = it->second;
+                mRows = it->second;
                 ReadScoresComplete(true, true);
             }
         }

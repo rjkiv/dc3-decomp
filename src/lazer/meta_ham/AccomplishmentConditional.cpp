@@ -17,10 +17,10 @@ AccomplishmentConditional::~AccomplishmentConditional() {}
 Difficulty AccomplishmentConditional::GetRequiredDifficulty() const {
     MILO_ASSERT(!m_lConditions.empty(), 0x7b);
     AccomplishmentCondition cond = m_lConditions.front();
-    if (cond.mDifficulty == kDifficultyBeginner) {
-        cond.mDifficulty = Accomplishment::GetRequiredDifficulty();
+    if (cond.m_eDifficulty == kDifficultyBeginner) {
+        cond.m_eDifficulty = Accomplishment::GetRequiredDifficulty();
     }
-    return cond.mDifficulty;
+    return cond.m_eDifficulty;
 }
 
 void AccomplishmentConditional::Configure(DataArray *i_pConfig) {
@@ -33,18 +33,18 @@ void AccomplishmentConditional::Configure(DataArray *i_pConfig) {
             MILO_ASSERT(pConditionEntryArray, 0x54);
 
             AccomplishmentCondition condition;
-            condition.mValue = 0;
-            condition.mDifficulty = kDifficultyBeginner;
-            condition.mCharacter = gNullStr;
-            condition.mMode = gNullStr;
-            condition.mNoFlashcards = false;
-            condition.mCondition = pConditionEntryArray->Node(0).Sym();
+            condition.m_iValue = 0;
+            condition.m_eDifficulty = kDifficultyBeginner;
+            condition.m_symCharacter = gNullStr;
+            condition.m_symMode = gNullStr;
+            condition.m_bNoFlashcards = false;
+            condition.m_symCondition = pConditionEntryArray->Node(0).Sym();
 
             if (pConditionEntryArray->Size() >= 2) {
                 if (pConditionEntryArray->Type(1) == kDataInt) {
-                    condition.mValue = pConditionEntryArray->Node(1).Int();
+                    condition.m_iValue = pConditionEntryArray->Node(1).Int();
                 } else if (pConditionEntryArray->Type(1) == kDataSymbol) {
-                    condition.mEra = pConditionEntryArray->Node(1).Sym();
+                    condition.m_symValue = pConditionEntryArray->Node(1).Sym();
                 } else {
                     MILO_ASSERT(false, 0x66);
                 }
@@ -76,13 +76,13 @@ void AccomplishmentConditional::UpdateConditionOptionalData(
 
         Symbol s = pEntry->Node(0).Sym();
         if (s == difficulty) {
-            condition.mDifficulty = (Difficulty)pEntry->Node(1).Int();
+            condition.m_eDifficulty = (Difficulty)pEntry->Node(1).Int();
         } else if (s == character) {
-            condition.mCharacter = pEntry->Node(1).Sym();
+            condition.m_symCharacter = pEntry->Node(1).Sym();
         } else if (s == mode) {
-            condition.mMode = pEntry->Node(1).Sym();
+            condition.m_symMode = pEntry->Node(1).Sym();
         } else if (s == no_flashcards) {
-            condition.mNoFlashcards = pEntry->Node(1).Int();
+            condition.m_bNoFlashcards = pEntry->Node(1).Int();
         } else {
             MILO_ASSERT(false, 0x40);
         }

@@ -4,6 +4,8 @@
 #include "ui/UIListLabel.h"
 #include "utl/Symbol.h"
 
+// class not in pdb :[
+
 class FitnessCalorieSortNode : public NavListItemNode {
 public:
     virtual Symbol GetToken() const;
@@ -11,11 +13,11 @@ public:
     virtual void Text(UIListLabel *, UILabel *) const;
 
     FitnessCalorieSortNode(NavListItemSortCmp *cmp, int i)
-        : NavListItemNode(cmp), unk48(i) {}
-    int GetUnk48() const { return unk48; }
+        : NavListItemNode(cmp), mCalorieNodeIndex(i) {}
+    int GetCalorieNodeIndex() const { return mCalorieNodeIndex; }
 
 protected:
-    int unk48;
+    int mCalorieNodeIndex; // 0x48
 };
 
 class FitnessCalorieHeaderNode : public NavListHeaderNode {
@@ -34,5 +36,5 @@ public:
     FitnessCalorieHeaderNode(NavListItemSortCmp *, Symbol, bool);
 
 protected:
-    int unk58;
+    int mIndex; // 0x58
 };

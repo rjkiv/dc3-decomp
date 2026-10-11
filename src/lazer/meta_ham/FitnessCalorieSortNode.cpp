@@ -12,7 +12,7 @@
 #pragma region FitnessCalorieSortNode
 
 Symbol FitnessCalorieSortNode::GetToken() const {
-    return MakeString("calorie_node_%i", unk48);
+    return MakeString("calorie_node_%i", mCalorieNodeIndex);
 }
 
 Symbol FitnessCalorieSortNode::OnSelect() { return TheFitnessCalorieSortMgr->MoveOn(); }
@@ -22,7 +22,9 @@ void FitnessCalorieSortNode::Text(UIListLabel *uiListLabel, UILabel *uiLabel) co
     MILO_ASSERT(app_label, 0xee);
     if (uiListLabel->Matches("calorie")) {
         String s = MakeString(
-            "%i %s", unk48, Localize("fitness_goal_calories_generic", 0, TheLocale)
+            "%i %s",
+            mCalorieNodeIndex,
+            Localize("fitness_goal_calories_generic", 0, TheLocale)
         );
         uiLabel->SetPrelocalizedString(s);
     } else {
@@ -36,7 +38,7 @@ void FitnessCalorieSortNode::Text(UIListLabel *uiListLabel, UILabel *uiLabel) co
 FitnessCalorieHeaderNode::FitnessCalorieHeaderNode(
     NavListItemSortCmp *cmp, Symbol s, bool b
 )
-    : NavListHeaderNode(cmp, s, b), unk58() {}
+    : NavListHeaderNode(cmp, s, b), mIndex() {}
 
 void FitnessCalorieHeaderNode::OnHighlight() { SetCollapseStateIcon(true); }
 
@@ -52,10 +54,10 @@ Symbol FitnessCalorieHeaderNode::OnSelect() {
 }
 
 Symbol FitnessCalorieHeaderNode::OnSelectDone() {
-    if (TheFitnessCalorieSortMgr->EnteringHeaderMode()) {
+    if (TheFitnessCalorieSortMgr->GetEnteringHeaderMode()) {
         TheFitnessCalorieSortMgr->SetEnteringHeaderMode(false);
     }
-    if (TheFitnessCalorieSortMgr->ExitingHeaderMode()) {
+    if (TheFitnessCalorieSortMgr->GetExitingHeaderMode()) {
         if (TheFitnessCalorieSortMgr->IsInHeaderMode()) {
             TheFitnessCalorieSortMgr->SetHeaderMode(false);
         }
@@ -99,8 +101,8 @@ void FitnessCalorieHeaderNode::Text(UIListLabel *uiListLabel, UILabel *uiLabel) 
         FitnessCalorieSortNode *backNode = ((FitnessCalorieSortNode *)mChildren.back());
         String s = MakeString(
             "%i - %i %s",
-            frontNode->GetUnk48(),
-            backNode->GetUnk48(),
+            frontNode->GetCalorieNodeIndex(),
+            backNode->GetCalorieNodeIndex(),
             Localize("fitness_goal_calories_generic", false, TheLocale)
         );
         uiLabel->SetPrelocalizedString(s);
@@ -117,7 +119,7 @@ void FitnessCalorieHeaderNode::Text(UIListLabel *uiListLabel, UILabel *uiLabel) 
 
 void FitnessCalorieHeaderNode::Renumber(std::vector<NavListSortNode *> &vec) {
     mStartIx = vec.size();
-    if (TheFitnessCalorieSortMgr->GetHeadersSelectable()) {
+    if (TheFitnessCalorieSortMgr->SortWithHeaders()) {
         vec.push_back(this);
         TheFitnessCalorieSortMgr->AddHeaderIndex(mStartIx);
     }
@@ -129,7 +131,7 @@ void FitnessCalorieHeaderNode::Renumber(std::vector<NavListSortNode *> &vec) {
 }
 
 NavListSortNode *FitnessCalorieHeaderNode::GetFirstActive() {
-    FOREACH (it, Children()) {
+    FOREACH (it, GetChildren()) {
         auto firstActive = (*it)->GetFirstActive();
         if (firstActive)
             return TheFitnessCalorieSortMgr->HeadersSelectable() ? this : firstActive;

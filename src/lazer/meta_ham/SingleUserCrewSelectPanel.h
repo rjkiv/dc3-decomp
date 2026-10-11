@@ -38,9 +38,11 @@ public:
     void RefreshUI();
     void SetCrew(Symbol, int);
 
-protected:
+    // why is this public??
     int mActiveSide; // 0x54
-    CrewProvider mCrewProviders[2]; // 0x58
-    CharacterProvider mCharProviders[2]; // 0xe0
-    OutfitProvider mOutfitProviders[2]; // 0x168
+
+private:
+    CrewProvider mCrewProvider[2]; // 0x58
+    CharacterProvider mCharProvider[2]; // 0xe0
+    OutfitProvider mOutfitProvider[2]; // 0x168
 };

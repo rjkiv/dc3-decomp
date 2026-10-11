@@ -52,23 +52,7 @@ public:
     bool AllowSortToggle() { return mSorts.size() > 1; }
     bool IsDebug();
 
-    PackSongListProvider GetPackProvider() { return unk78; }
-    HamStoreFilterProvider *GetFilterProvider() { return unk74; }
-
-protected:
-    std::vector<StoreOffer *> *unk30;
-    std::vector<HamStoreFilter *> *unk34;
-    std::map<Symbol, std::vector<StoreOffer *> *> unk38;
-    std::vector<StoreOffer *> unk50;
-    HamStoreFilter *unk5c;
-    int mSortIndex; // 0x60
-    std::vector<StoreOffer *> *mFilteredOffers; // 0x64
-    std::vector<Symbol> mSorts; // 0x68
-    HamStoreFilterProvider *unk74;
-    PackSongListProvider unk78;
-    std::vector<CartRow> *unkac;
-    std::list<StoreOffer *> unkb0;
-    StoreOffer *mCartCheckout; // 0xb8
+    HamStoreFilterProvider *GetFilterProvider() { return mFilterProvider; }
 
 private:
     StoreOffer *OnGetOffer(int);
@@ -76,4 +60,18 @@ private:
     void RefreshFilteredCartOffers();
     void PopulateOffersInCart();
     void ApplySort();
+
+    std::vector<StoreOffer *> *mOffers; // 0x30
+    std::vector<HamStoreFilter *> *mFilters; // 0x34
+    std::map<Symbol, std::vector<StoreOffer *> *> mFilterToOffersMap; // 0x38
+    std::vector<StoreOffer *> mPackSongs; // 0x50
+    const HamStoreFilter *mFilter; // 0x5c
+    int mSortIndex; // 0x60
+    std::vector<StoreOffer *> *mFilteredOffers; // 0x64
+    std::vector<Symbol> mSorts; // 0x68
+    HamStoreFilterProvider *mFilterProvider; // 0x47
+    PackSongListProvider mPackSongList; // 0x78
+    std::vector<CartRow> *mCartData; // 0xac
+    std::list<StoreOffer *> mOffersInCart; // 0xb0
+    StoreOffer *mCartCheckout; // 0xb8
 };

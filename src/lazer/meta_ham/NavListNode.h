@@ -10,14 +10,12 @@
 
 enum NavListNodeType {
     // stole these from RB3 lmao
-    kNodeNone = 0,
-    kNodeShortcut = 1,
-    kNodeHeader = 2,
-    kNodeSubheader = 3,
-    kNodeItem = 4,
-    kNodeFunction = 5,
-    kNodeSetlist = 6,
-    kNodeStoreSong = 7
+    kNodeNone = 0x0000,
+    kNodeShortcut = 0x0001,
+    kNodeHeader = 0x0002,
+    kNodeSubheader = 0x0003,
+    kNodeItem = 0x0004,
+    kNodeFunction = 0x0005
 };
 
 class NavListItemSortCmp {
@@ -91,8 +89,8 @@ public:
 
     int Compare(const NavListNode *, NavListNodeType) const;
     void GetID(DataArray *);
-    NavListItemSortCmp *GetCmp() { return mCmp; }
-    NavListNode *Parent() const { return mParent; }
+    const NavListItemSortCmp *GetCmp() const { return mCmp; }
+    NavListNode *GetParent() { return mParent; }
     void SetParent(NavListNode *parent) { mParent = parent; }
 
 protected:
@@ -129,13 +127,12 @@ public:
     virtual void FinishBuildList(NavListSort *);
 
     void SetShortcut(NavListShortcutNode *);
-    int StartIndex() const { return mStartIx; }
+    int GetIndex() { return mStartIx; }
     void SetStartIndex(int idx) { mStartIx = idx; }
     NavListShortcutNode *GetShortcut() const { return mShortcut; }
-    std::list<NavListSortNode *> &Children() { return mChildren; }
+    std::list<NavListSortNode *> &GetChildren() { return mChildren; }
     NavListSortNode *FirstChild() const { return mChildren.front(); }
     bool HasChildren() const { return !mChildren.empty(); }
-    int GetStartIx() { return mStartIx; }
     void ClearList() { mChildren.clear(); }
     bool IsFunctionType() { return GetType() == kNodeFunction; }
 
@@ -162,7 +159,7 @@ public:
     void FinishBuildList(NavListSort *);
     void FinishSort(NavListSort *);
     void Renumber(std::vector<NavListSortNode *> &);
-    std::list<NavListSortNode *> &Children() { return mChildren; }
+    std::list<NavListSortNode *> &GetChildren() { return mChildren; }
     NavListSortNode *FirstChild() const { return mChildren.front(); }
     void InsertNode(NavListSortNode *node) { mChildren.push_back(node); }
 
@@ -171,7 +168,7 @@ protected:
     bool mLocalizeToken; // 0x38
     DateTime *mDateTime; // 0x3c
     std::list<NavListSortNode *> mChildren; // 0x40
-    u32 unk44;
+    bool bActive; // 0x44
 };
 
 class NavListItemNode : public NavListSortNode {
@@ -205,16 +202,14 @@ public:
     Symbol HeaderText() const;
     bool UseQuickplayPerformer();
 
-    Symbol Header() const { return mHeader; }
-
-protected:
-    Symbol mHeader; // 0x44
+private:
+    Symbol mHeaderText; // 0x44
 };
 
 class NavListFunctionNode : public NavListSortNode {
 public:
     NavListFunctionNode(NavListItemSortCmp *cmp, Symbol s, const char *c)
-        : NavListSortNode(cmp), unk44(c), unk4c(s) {}
+        : NavListSortNode(cmp), mArtPath(c), mToken(s) {}
     virtual ~NavListFunctionNode() {}
     virtual DataNode Handle(DataArray *, bool);
     virtual NavListNodeType GetType() const { return kNodeFunction; }
@@ -228,15 +223,15 @@ public:
     virtual NavListSortNode *GetFirstActive();
     virtual bool IsEnabled() const;
     virtual bool IsActive() const { return false; }
-    virtual const char *GetAlbumArtPath() { return unk44.c_str(); }
+    virtual const char *GetAlbumArtPath() { return mArtPath.c_str(); }
     virtual void Renumber(std::vector<NavListSortNode *> &);
     virtual int GetTier() const { return -1; }
     virtual const char *GetShortcutStr() { return gNullStr; }
     virtual const char *GetArtist() const { return gNullStr; }
 
 protected:
-    String unk44;
-    Symbol unk4c;
+    String mArtPath; // 0x44
+    Symbol mToken; // 0x4c
 };
 
 class NavListHeaderNode : public NavListSortNode {
@@ -254,7 +249,9 @@ public:
     virtual Symbol OnSelectDone() { return gNullStr; }
     virtual void OnHighlight() {}
     virtual void OnUnHighlight() {}
-    virtual void SetCollapseIconLabel(UILabel *label) { mCollapseIconLabel = label; }
+    virtual void SetCollapseIconLabel(UILabel *label) {
+        mHeaderCollapseIconLabel = label;
+    }
     virtual int GetItemCount() { return 0; }
     virtual NavListSortNode *GetFirstActive() { return nullptr; }
     virtual bool IsEnabled() const;
@@ -262,15 +259,15 @@ public:
     virtual const char *GetAlbumArtPath() { return nullptr; }
     virtual void Insert(NavListItemNode *, NavListSort *);
     virtual void UpdateItemCount(NavListItemNode *) {} // 0xb8
-    virtual UILabel *GetCollapseIconLabel() const { return mCollapseIconLabel; }
+    virtual UILabel *GetCollapseIconLabel() const { return mHeaderCollapseIconLabel; }
     virtual Symbol SelectChildren(std::list<NavListSortNode *> &, int);
     virtual void SetItemCountString(UILabel *) const;
     virtual void SetCollapseStateIcon(bool) const;
 
 protected:
-    bool unk44;
+    bool mCover; // 0x44
     Symbol mToken; // 0x48
     bool mLocalizeToken; // 0x4c
     DateTime *mDateTime; // 0x50
-    UILabel *mCollapseIconLabel; // 0x54
+    UILabel *mHeaderCollapseIconLabel; // 0x54
 };

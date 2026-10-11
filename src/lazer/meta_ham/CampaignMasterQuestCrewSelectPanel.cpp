@@ -21,7 +21,7 @@
 
 #pragma region CampaignMqCrewProvider
 
-CampaignMqCrewProvider::CampaignMqCrewProvider() : mPanelDir(0) {}
+CampaignMqCrewProvider::CampaignMqCrewProvider() : m_pPanelDir(0) {}
 
 void CampaignMqCrewProvider::Text(
     int, int i_iData, UIListLabel *uiListLabel, UILabel *uiLabel
@@ -49,12 +49,12 @@ void CampaignMqCrewProvider::Text(
 
 Symbol CampaignMqCrewProvider::DataSymbol(int i_iData) const {
     MILO_ASSERT_RANGE(i_iData, 0,NumData(), 0x7d);
-    return mMQCrews[i_iData];
+    return m_vCrews[i_iData];
 }
 
 void CampaignMqCrewProvider::UpdateList() {
     MILO_ASSERT(TheCampaign, 0x36);
-    mMQCrews.clear();
+    m_vCrews.clear();
     HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
     MILO_ASSERT(pProfile, 0x3A);
     static DataNode &mq_difficulty = DataVariable("mq_difficulty");
@@ -66,9 +66,9 @@ void CampaignMqCrewProvider::UpdateList() {
             int y = 0;
             int x = 0;
             TheHamSongMgr.GetCrewStarsForDifficulty(pProfile, curSym, mqDiff, x, y);
-            TheCampaign->SetUnkC0At(curSym, y - x == 0);
+            TheCampaign->SetMasterQuestCrewComplete(curSym, y - x == 0);
             if (y) {
-                mMQCrews.push_back(curSym);
+                m_vCrews.push_back(curSym);
             }
         }
     }
@@ -78,20 +78,20 @@ void CampaignMqCrewProvider::UpdateList() {
 #pragma region CampaignMasterQuestCrewSelectPanel
 
 CampaignMasterQuestCrewSelectPanel::CampaignMasterQuestCrewSelectPanel()
-    : m_pCampaignMqCrewProvider(), mPreviewDelayFinished(false) {}
+    : m_pCampaignMqCrewProvider(), m_bDelayFinished(false) {}
 
 BEGIN_HANDLERS(CampaignMasterQuestCrewSelectPanel)
     HANDLE_EXPR(get_selected_crew, GetSelectedCrew())
     HANDLE_ACTION(update_crew_mesh, UpdateCrewMesh(_msg->Sym(2)))
-    HANDLE_EXPR(is_preview_delay_finished, mPreviewDelayFinished)
+    HANDLE_EXPR(is_preview_delay_finished, m_bDelayFinished)
     HANDLE_ACTION(refresh, Refresh())
     HANDLE_SUPERCLASS(TexLoadPanel)
 END_HANDLERS
 
 void CampaignMasterQuestCrewSelectPanel::Poll() {
     TexLoadPanel::Poll();
-    if (!mPreviewDelayFinished && 3 <= GetTimeSinceEnter())
-        mPreviewDelayFinished = true;
+    if (!m_bDelayFinished && 3 <= GetTimeSinceEnter())
+        m_bDelayFinished = true;
 }
 
 void CampaignMasterQuestCrewSelectPanel::Load() { TexLoadPanel::Load(); }
@@ -107,7 +107,7 @@ int CampaignMasterQuestCrewSelectPanel::GetTimeSinceEnter() const {
     DateTime dt;
     GetDateAndTime(dt);
     unsigned int iNow = dt.ToCode();
-    unsigned int iEnter = mDateTime.ToCode();
+    unsigned int iEnter = m_cEnterTime.ToCode();
     MILO_ASSERT(iNow >= iEnter, 0xd6);
     return iNow - iEnter;
 }

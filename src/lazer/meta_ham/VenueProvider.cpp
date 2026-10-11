@@ -9,7 +9,7 @@
 #include "utl/Symbol.h"
 #include <cstdio>
 
-VenueProvider::VenueProvider() : mPlayer(0) {}
+VenueProvider::VenueProvider() : mPlayerIndex(0) {}
 VenueProvider::~VenueProvider() {}
 
 void VenueProvider::Text(int, int data, UIListLabel *uiListLabel, UILabel *uiLabel) const {
@@ -17,8 +17,9 @@ void VenueProvider::Text(int, int data, UIListLabel *uiListLabel, UILabel *uiLab
     Symbol venueSym = DataSymbol(data);
     if (uiListLabel->Matches("venue")) {
         static Symbol player_present("player_present");
-        int otherPlayer = !mPlayer;
-        if (TheGameData->Player(mPlayer)->Provider()->Property(player_present)->Int() != 1
+        int otherPlayer = !mPlayerIndex;
+        if (TheGameData->Player(mPlayerIndex)->Provider()->Property(player_present)->Int()
+                != 1
             && TheGameData->Player(otherPlayer)->Provider()->Property(player_present)->Int()
                 != 0) {
             char buffer[32];

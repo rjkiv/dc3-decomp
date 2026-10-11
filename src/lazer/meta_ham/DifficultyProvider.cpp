@@ -14,7 +14,7 @@
 #include "utl/Symbol.h"
 #include <cstdio>
 
-DifficultyProvider::DifficultyProvider() : mPlayer(0) {}
+DifficultyProvider::DifficultyProvider() : mPlayerIndex(0) {}
 
 void DifficultyProvider::Text(
     int, int data, UIListLabel *uiListLabel, UILabel *uiLabel
@@ -25,8 +25,9 @@ void DifficultyProvider::Text(
     Symbol diffSym = DataSymbol(data);
     if (uiListLabel->Matches("difficulty")) {
         static Symbol player_present("player_present");
-        int otherPlayer = !mPlayer;
-        if (TheGameData->Player(mPlayer)->Provider()->Property(player_present)->Int() != 1
+        int otherPlayer = !mPlayerIndex;
+        if (TheGameData->Player(mPlayerIndex)->Provider()->Property(player_present)->Int()
+                != 1
             && TheGameData->Player(otherPlayer)->Provider()->Property(player_present)->Int()
                 != 0) {
             char buffer[32];

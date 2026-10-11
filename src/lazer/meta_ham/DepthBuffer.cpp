@@ -5,16 +5,17 @@
 #include "os/Debug.h"
 #include "ui/UIPanel.h"
 
-DepthBuffer::DepthBuffer() : unk2c(0), mState(kDepthBuffer_Normal), unk34(0) {}
+DepthBuffer::DepthBuffer()
+    : mCursorPanel(0), mState(kDepthBuffer_Normal), mWantGameplayStateTransition(0) {}
 
 BEGIN_HANDLERS(DepthBuffer)
-    HANDLE_ACTION(set_state, SetState(_msg->Int(2)))
+    HANDLE_ACTION(set_state, SetState((DepthBufferState)_msg->Int(2)))
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
 
 void DepthBuffer::Init(UIPanel *panel) {
     SetName("depth_buffer", ObjectDir::Main());
-    unk2c = panel;
+    mCursorPanel = panel;
 }
 
 void DepthBuffer::Poll() {
@@ -24,8 +25,8 @@ void DepthBuffer::Poll() {
     if (ispanel) {
         MILO_ASSERT(mState == kDepthBuffer_Normal, 0x3A);
     }
-    if (ispanel && (!sIsGameplayPanel || unk34)) {
-        unk34 = false;
+    if (ispanel && (!sIsGameplayPanel || mWantGameplayStateTransition)) {
+        mWantGameplayStateTransition = false;
     }
     sIsGameplayPanel = ispanel;
 }

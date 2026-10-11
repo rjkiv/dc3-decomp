@@ -18,7 +18,7 @@ void FitnessCalorieSort::Text(
 ) const {
     AppLabel *app_label = dynamic_cast<AppLabel *>(uiLabel);
     MILO_ASSERT(app_label, 0xa4);
-    app_label->SetFromGeneralSelectNode(unk30[idx]);
+    app_label->SetFromGeneralSelectNode(mTree[idx]);
 }
 void FitnessCalorieSort::DeleteItemList() {
     NavListSort::DeleteItemList();
@@ -26,18 +26,18 @@ void FitnessCalorieSort::DeleteItemList() {
 }
 
 void FitnessCalorieSort::SetHighlightedIx(int idx) {
-    unk54 = unk50;
+    mPrevHighlightNode = mHighlightNode;
     if (0 <= idx) {
         if (mList.size() >= idx) {
             if (mList.size() == 0) {
                 return;
             }
-            unk50 = mList[idx];
+            mHighlightNode = mList[idx];
             TheFitnessCalorieSortMgr->OnHighlightChanged();
             return;
         }
     }
-    unk50 = 0;
+    mHighlightNode = 0;
 }
 
 void FitnessCalorieSort::UpdateHighlight() {
@@ -55,14 +55,14 @@ void FitnessCalorieSort::OnSelectShortcut(int i) {
 }
 
 void FitnessCalorieSort::SetHighlightItem(NavListSortNode const *node) {
-    NavListSortNode *tempNode = unk50;
-    unk50 = nullptr;
-    unk54 = tempNode;
+    NavListSortNode *tempNode = mHighlightNode;
+    mHighlightNode = nullptr;
+    mPrevHighlightNode = tempNode;
     if (node) {
         if (node->GetType() == 5 || node->GetType() == 4) {
             auto find = std::find_if(mList.begin(), mList.end(), SortNodeFind(node));
             if (find != mList.end()) {
-                unk50 = *find;
+                mHighlightNode = *find;
                 TheFitnessCalorieSortMgr->OnHighlightChanged();
             }
         }
@@ -71,22 +71,22 @@ void FitnessCalorieSort::SetHighlightItem(NavListSortNode const *node) {
 
 void FitnessCalorieSort::BuildItemList() {
     Symbol sym(gNullStr);
-    auto sortNode = unk50;
+    auto sortNode = mHighlightNode;
     if (sortNode && sortNode->GetType() == 5) {
         sym = sortNode->GetToken();
     }
     DeleteItemList();
-    FOREACH (it, unk3c) {
+    FOREACH (it, mFunctions) {
         (*it)->Renumber(mList);
     }
-    FOREACH (it, unk30) {
+    FOREACH (it, mTree) {
         (*it)->Renumber(mList);
     }
-    FOREACH (it, unk30) {
+    FOREACH (it, mTree) {
         (*it)->FinishBuildList(this);
     }
     if (!sym.Null()) {
-        unk50 = GetNode(sym);
+        mHighlightNode = GetNode(sym);
     }
     TheFitnessCalorieSortMgr->FinalizeHeaders();
 }
@@ -96,7 +96,7 @@ void FitnessCalorieSort::BuildTree() {
     Init();
     std::vector<NavListItemNode *> nodes;
 
-    std::vector<int> &values = TheFitnessCalorieSortMgr->GetUnk78();
+    std::vector<int> &values = TheFitnessCalorieSortMgr->GetCalories();
     for (int i = 0; i < values.size(); i++) {
         nodes.push_back(NewItemNode(&values[i]));
     }
@@ -114,12 +114,12 @@ void FitnessCalorieSort::BuildTree() {
             it = begin + groupSize;
         }
         NavListShortcutNode *shortcutNode = NewShortcutNode(*begin);
-        unk30.push_back(shortcutNode);
+        mTree.push_back(shortcutNode);
         shortcutNode->InsertHeaderRange(begin, it, this);
         begin = it;
     }
 
-    FOREACH (it, unk30) {
+    FOREACH (it, mTree) {
         (*it)->FinishSort(this);
     }
 }

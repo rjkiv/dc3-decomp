@@ -30,37 +30,37 @@ void PlaylistSort::OnSelectShortcut(int i) {
 void PlaylistSort::Text(int, int data, UIListLabel *uiListLabel, UILabel *uiLabel) const {
     AppLabel *app_label = dynamic_cast<AppLabel *>(uiLabel);
     MILO_ASSERT(app_label, 0x96);
-    app_label->SetFromPlaylistSelectNode(unk30[data]);
+    app_label->SetFromPlaylistSelectNode(mTree[data]);
 }
 
 void PlaylistSort::SetHighlightedIx(int i) {
-    unk54 = unk50;
+    mPrevHighlightNode = mHighlightNode;
     if (i >= 0 && static_cast<unsigned int>(GetListSize()) >= i) { // lol
-        unk50 = mList[i];
+        mHighlightNode = mList[i];
         ThePlaylistSortMgr->OnHighlightChanged();
         return;
     }
-    unk50 = nullptr;
+    mHighlightNode = nullptr;
 }
 
 void PlaylistSort::BuildItemList() {
     Symbol sym(gNullStr);
-    auto sortNode = unk50;
+    NavListSortNode *sortNode = mHighlightNode;
     if (sortNode && sortNode->GetType() == 5) {
         sym = sortNode->GetToken();
     }
     DeleteItemList();
-    FOREACH (it, unk3c) {
+    FOREACH (it, mFunctions) {
         (*it)->Renumber(mList);
     }
-    FOREACH (it, unk30) {
+    FOREACH (it, mTree) {
         (*it)->Renumber(mList);
     }
-    FOREACH (it, unk30) {
+    FOREACH (it, mTree) {
         (*it)->FinishBuildList(this);
     }
     if (!sym.Null()) {
-        unk50 = GetNode(sym);
+        mHighlightNode = GetNode(sym);
     }
     ThePlaylistSortMgr->FinalizeHeaders();
 }
@@ -79,24 +79,24 @@ void PlaylistSort::BuildTree() {
         auto headerRange =
             std::equal_range(nodes.begin(), nodes.end(), *begin, CompareHeaders());
         NavListShortcutNode *node = NewShortcutNode(*begin);
-        unk30.push_back(node);
+        mTree.push_back(node);
         begin = headerRange.second;
         node->InsertHeaderRange(headerRange.first, headerRange.second, this);
     }
-    FOREACH (it, unk30) {
+    FOREACH (it, mTree) {
         (*it)->FinishSort(this);
     }
 }
 
 void PlaylistSort::SetHighlightItem(NavListSortNode const *node) {
-    NavListSortNode *tempNode = unk50;
-    unk50 = nullptr;
-    unk54 = tempNode;
+    NavListSortNode *tempNode = mHighlightNode;
+    mHighlightNode = nullptr;
+    mPrevHighlightNode = tempNode;
     if (node) {
         if (node->GetType() == 5 || node->GetType() == 4) {
             auto find = std::find_if(mList.begin(), mList.end(), SortNodeFind(node));
             if (find != mList.end()) {
-                unk50 = *find;
+                mHighlightNode = *find;
                 ThePlaylistSortMgr->OnHighlightChanged();
             }
         }

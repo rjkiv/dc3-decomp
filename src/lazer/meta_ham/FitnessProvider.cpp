@@ -38,19 +38,19 @@ void FitnessProvider::Text(
 
 Symbol FitnessProvider::DataSymbol(int i_iData) const {
     MILO_ASSERT_RANGE(i_iData, 0, NumData(), 0x92);
-    return mFitnessOptions[i_iData];
+    return m_vEntries[i_iData];
 }
 
 void FitnessProvider::UpdateList() {
-    mFitnessOptions.clear();
+    m_vEntries.clear();
     static Symbol fitness_option("fitness_option");
     static Symbol fitness_set_fitness_goals("fitness_set_fitness_goals");
     static Symbol fitness_body_profile("fitness_body_profile");
     static Symbol playlists("playlists");
-    mFitnessOptions.push_back(fitness_option);
-    mFitnessOptions.push_back(fitness_set_fitness_goals);
-    mFitnessOptions.push_back(fitness_body_profile);
-    mFitnessOptions.push_back(playlists);
+    m_vEntries.push_back(fitness_option);
+    m_vEntries.push_back(fitness_set_fitness_goals);
+    m_vEntries.push_back(fitness_body_profile);
+    m_vEntries.push_back(playlists);
 }
 BEGIN_HANDLERS(FitnessProvider)
     HANDLE_ACTION(update_list, UpdateList())

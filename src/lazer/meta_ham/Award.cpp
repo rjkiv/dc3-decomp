@@ -7,28 +7,29 @@
 #include "utl/Symbol.h"
 
 Award::Award(DataArray *d, int i)
-    : mName(""), unk8(i), mIsSecret(false), mIsSilent(false), mArt(gNullStr) {
+    : m_symName(""), m_iIndex(i), m_bIsSecret(false), m_bIsSilent(false),
+      m_symArt(gNullStr) {
     Configure(d);
 }
 
-Award::~Award() { mAwardEntries.clear(); }
+Award::~Award() { m_lAwards.clear(); }
 
 const char *Award::GetArt() const {
-    return MakeString("ui/award/award_art/%s_keep.png", mArt.Str());
+    return MakeString("ui/award/award_art/%s_keep.png", m_symArt.Str());
 }
 
 void Award::GrantAwards(class HamProfile *hp) {
-    FOREACH (it, mAwardEntries) {
+    FOREACH (it, m_lAwards) {
         GrantAward(*it, hp);
     };
 }
 
 Symbol Award::GetDisplayName() const {
     static Symbol asset("asset");
-    Symbol name = mName;
-    if (!mAwardEntries.empty()) {
-        if (mAwardEntries.size() == 1) {
-            const AwardEntry &entry = mAwardEntries.front();
+    Symbol name = m_symName;
+    if (!m_lAwards.empty()) {
+        if (m_lAwards.size() == 1) {
+            const AwardEntry &entry = m_lAwards.front();
             if (entry.m_symAwardCategory == asset) {
                 name = entry.m_symAward;
             }
@@ -39,13 +40,13 @@ Symbol Award::GetDisplayName() const {
 
 void Award::Configure(DataArray *i_pConfig) {
     MILO_ASSERT(i_pConfig, 0x21);
-    mName = i_pConfig->Sym(0);
+    m_symName = i_pConfig->Sym(0);
     static Symbol is_secret("is_secret");
-    i_pConfig->FindData(is_secret, mIsSecret, false);
+    i_pConfig->FindData(is_secret, m_bIsSecret, false);
     static Symbol is_silent("is_silent");
-    i_pConfig->FindData(is_silent, mIsSilent, false);
+    i_pConfig->FindData(is_silent, m_bIsSilent, false);
     static Symbol art("art");
-    i_pConfig->FindData(art, mArt, false);
+    i_pConfig->FindData(art, m_symArt, false);
     static Symbol asset("asset");
     static Symbol awards("awards");
     DataArray *pAwardArray = i_pConfig->FindArray(awards, false);
@@ -59,9 +60,9 @@ void Award::Configure(DataArray *i_pConfig) {
             entry.m_symAwardCategory = pAwardEntryArray->Node(0).Sym();
             entry.m_symAward = pAwardEntryArray->Node(1).Sym();
             if (entry.m_symAwardCategory == asset) {
-                TheAccomplishmentMgr->AddAssetAward(entry.m_symAward, mName);
+                TheAccomplishmentMgr->AddAssetAward(entry.m_symAward, m_symName);
             }
-            mAwardEntries.push_back(entry);
+            m_lAwards.push_back(entry);
         }
     }
 }

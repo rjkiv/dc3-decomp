@@ -59,12 +59,13 @@ namespace {
 HamUI TheHamUI;
 
 HamUI::HamUI()
-    : mHelpBar(nullptr), mLetterbox(nullptr), mBlacklight(nullptr),
-      mEventDialogPanel(nullptr), mBackgroundPanel(nullptr),
-      mContentLoadingPanel(nullptr), mOverlayPanel(nullptr), mGamePanel(nullptr),
-      mAugmentedPhoto(nullptr), unk_0xFC(false), unk_0xFD(false), mEventScreen(nullptr),
-      mShellInput(new ShellInput()), mPadNum(0), mBufferType(LiveCameraInput::kBufferOff),
-      mSkelRot(0), mButtonSpam(false), mUIOverlay(nullptr) {
+    : mHelpBar(nullptr), mLetterbox(nullptr), mBlacklight(nullptr), mEventDialog(nullptr),
+      mBackground(nullptr), mContentLoadingPanel(nullptr), mOverlayPanel(nullptr),
+      mGamePanel(nullptr), mAugmentedPhoto(nullptr), mTakeSnapshotNextDraw(false),
+      mExtraSnapshotDrawForLag(false), mEventScreen(nullptr),
+      mShellInput(new ShellInput()), mLastButtonDownPadNum(0),
+      mCameraOutput(LiveCameraInput::kBufferOff), mSkeletonDrawRadians(0),
+      mButtonSpam(false), mUIOverlay(nullptr) {
     SetFullScreenDraw(false);
 }
 
@@ -73,7 +74,7 @@ HamUI::~HamUI() { RELEASE(mAugmentedPhoto); }
 BEGIN_HANDLERS(HamUI)
     HANDLE_EXPR(display_next_camera_output, DisplayNextCameraOutput())
     HANDLE_EXPR(toggle_draw_skeletons, ToggleDrawSkeletons())
-    HANDLE_EXPR(toggle_full_screen_draw, SetFullScreenDraw(!mFullScreenDrawActive))
+    HANDLE_EXPR(toggle_full_screen_draw, SetFullScreenDraw(!mFullScreenDraw))
     HANDLE_EXPR(next_skeleton_draw_rot, NextSkeletonDrawRot())
     HANDLE_EXPR(cycle_draw_cursor, mShellInput->CycleDrawCursor())
     HANDLE_ACTION(set_button_spam, mButtonSpam = _msg->Int(2))
@@ -196,7 +197,7 @@ void HamUI::Poll() {
             mLetterbox->Poll();
         }
         mContentLoadingPanel->Poll();
-        mEventDialogPanel->Poll();
+        mEventDialog->Poll();
         if (mOverlayPanel) {
             mOverlayPanel->Poll();
         }
@@ -223,8 +224,8 @@ void HamUI::Draw() {
         UIPanel::SetFinalDrawPass(false);
         bool transitioning = TheUI->InTransition();
         if (TheUIEventMgr->HasActiveDialogEvent() && !transitioning) {
-            mBackgroundPanel->Draw();
-            mEventDialogPanel->Draw();
+            mBackground->Draw();
+            mEventDialog->Draw();
             mHelpBar->Draw();
             if (mLetterbox) {
                 mLetterbox->Draw();
@@ -269,15 +270,15 @@ void HamUI::Draw() {
                 mAugmentedPhoto->Poll();
                 mAugmentedPhoto->Draw();
             }
-            if (unk_0xFC || unk_0xFD) {
+            if (mTakeSnapshotNextDraw || mExtraSnapshotDrawForLag) {
                 LiveCameraInput *cam = TheGestureMgr->GetLiveCameraInput();
                 if (mAugmentedPhoto && cam) {
-                    if (unk_0xFC) {
+                    if (mTakeSnapshotNextDraw) {
                         cam->IncrementSnapshotCount();
-                        unk_0xFC = false;
-                        unk_0xFD = true;
+                        mTakeSnapshotNextDraw = false;
+                        mExtraSnapshotDrawForLag = true;
                     } else {
-                        unk_0xFD = false;
+                        mExtraSnapshotDrawForLag = false;
                     }
                     RndTexRenderer *renderer =
                         mAugmentedPhoto->Find<RndTexRenderer>("TexRenderer.rndtex");
@@ -349,21 +350,21 @@ bool HamUI::IsTimelineResetAllowed() const {
 }
 
 bool HamUI::SetFullScreenDraw(bool b) {
-    mFullScreenDrawActive = b;
+    mFullScreenDraw = b;
     if (b) {
         SetDrawSpace(0, 0, 1);
     } else {
         SetDrawSpace(0.5, 0.05, 0.4);
     }
-    return mFullScreenDrawActive;
+    return mFullScreenDraw;
 }
 
 float HamUI::NextSkeletonDrawRot() {
-    mSkelRot += PI / 2;
-    if (mSkelRot >= PI * 2) {
-        mSkelRot = 0;
+    mSkeletonDrawRadians += PI / 2;
+    if (mSkeletonDrawRadians >= PI * 2) {
+        mSkeletonDrawRadians = 0;
     }
-    return mSkelRot * RAD2DEG;
+    return mSkeletonDrawRadians * RAD2DEG;
 }
 
 int HamUI::NumSnapshots() {
@@ -381,7 +382,7 @@ void HamUI::ResetSnapshots() {
 
 int HamUI::TakeSnapshot() {
     MILO_ASSERT(TheGestureMgr, 602);
-    unk_0xFC = true;
+    mTakeSnapshotNextDraw = true;
     for (int i = 0; i < 2; i++) {
         HamPlayerData *pPlayer = TheGameData->Player(i);
         MILO_ASSERT(pPlayer, 609);
@@ -478,9 +479,8 @@ void HamUI::StoreDepthBufferClipAt(float f1, float f2, float f3, float f4, int i
 
 void HamUI::ReloadStrings() {
     Message reload_string("reload_string");
-    UIPanel *panels[] = { mHelpBar,          mLetterbox,       mBlacklight,
-                          mEventDialogPanel, mBackgroundPanel, mContentLoadingPanel,
-                          mOverlayPanel,     mGamePanel };
+    UIPanel *panels[] = { mHelpBar,    mLetterbox,           mBlacklight,   mEventDialog,
+                          mBackground, mContentLoadingPanel, mOverlayPanel, mGamePanel };
     for (int i = 0; i < DIM(panels); i++) {
         UIPanel *cur = panels[i];
         if (cur) {
@@ -537,9 +537,9 @@ void HamUI::ForceLetterboxOffImmediate() {
 void HamUI::InitPanels() {
     if (!mHelpBar) {
         mHelpBar = dynamic_cast<HelpBarPanel *>(FindPanel("helpbar"));
-        mEventDialogPanel = FindPanel("event_dialog_panel");
+        mEventDialog = FindPanel("event_dialog_panel");
         mContentLoadingPanel = FindPanel("content_loading_panel");
-        mBackgroundPanel = ObjectDir::Main()->Find<UIPanel>("background_panel");
+        mBackground = ObjectDir::Main()->Find<UIPanel>("background_panel");
         mGamePanel = ObjectDir::Main()->Find<GamePanel>("game_panel");
         mLetterbox = dynamic_cast<LetterboxPanel *>(FindPanel("letterbox"));
         mBlacklight = dynamic_cast<BlacklightPanel *>(FindPanel("blacklight"));
@@ -556,14 +556,14 @@ bool HamUI::IsGameActive() const {
 }
 
 void HamUI::DrawDebug() {
-    if (mBufferType < 4 || NumSnapshots() <= 0) {
-        LiveCameraInput::BufferType bt = mBufferType;
+    if (mCameraOutput < 4 || NumSnapshots() <= 0) {
+        LiveCameraInput::BufferType bt = mCameraOutput;
         if (bt < 0) {
             bt = (LiveCameraInput::BufferType)4;
         }
-        DrawGestureMgr(*TheGestureMgr, bt, mSkelRot);
+        DrawGestureMgr(*TheGestureMgr, bt, mSkeletonDrawRadians);
     } else {
-        DrawSnapshot(*TheGestureMgr, mBufferType - 4);
+        DrawSnapshot(*TheGestureMgr, mCameraOutput - 4);
     }
     mShellInput->DrawDebug();
     TheHamDirector->DrawDebug();
@@ -571,13 +571,13 @@ void HamUI::DrawDebug() {
 
 Symbol HamUI::DisplayNextCameraOutput() {
     do {
-        mBufferType = (LiveCameraInput::BufferType)(mBufferType + 1);
-    } while (mBufferType == 1 || mBufferType == 2);
+        mCameraOutput = (LiveCameraInput::BufferType)(mCameraOutput + 1);
+    } while (mCameraOutput == 1 || mCameraOutput == 2);
 
-    if (mBufferType >= NumSnapshots() + 4) {
-        mBufferType = (LiveCameraInput::BufferType)-1;
+    if (mCameraOutput >= NumSnapshots() + 4) {
+        mCameraOutput = (LiveCameraInput::BufferType)-1;
     }
-    switch (mBufferType) {
+    switch (mCameraOutput) {
     case LiveCameraInput::kBufferColor:
         return "color";
     case LiveCameraInput::kBufferDepth:
@@ -587,10 +587,10 @@ Symbol HamUI::DisplayNextCameraOutput() {
     case LiveCameraInput::kBufferPlayerColor:
         return "player color";
     default:
-        if (mBufferType < 0) {
+        if (mCameraOutput < 0) {
             return "off";
         }
-        return MakeString("snapshot %d", mBufferType - 4);
+        return MakeString("snapshot %d", mCameraOutput - 4);
     }
 }
 
@@ -685,7 +685,7 @@ DataNode HamUI::OnMsg(const ContentReadFailureMsg &msg) {
 DataNode HamUI::OnMsg(const ButtonDownMsg &msg) {
     static ResetControllerModeTimeoutMsg resetControllerModeTimeoutMsg;
     Export(resetControllerModeTimeoutMsg, true);
-    mPadNum = msg.GetPadNum();
+    mLastButtonDownPadNum = msg.GetPadNum();
     return DATA_UNHANDLED;
 }
 

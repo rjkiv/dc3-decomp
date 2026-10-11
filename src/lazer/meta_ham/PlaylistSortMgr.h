@@ -13,26 +13,26 @@
 
 struct CmdAddPlaylistToRC : public QueueableCommand {
     virtual int GetType() { return 4; }
-    CmdAddPlaylistToRC(CustomPlaylist *pl) : playlist(pl) {}
-    CustomPlaylist *playlist;
+    CmdAddPlaylistToRC(Playlist *pl) : playlist(pl) {}
+    Playlist *playlist;
 };
 
 struct CmdDeletePlaylistFromRC : public QueueableCommand {
     virtual int GetType() { return 6; }
-    CmdDeletePlaylistFromRC(int i) : num(i) {}
-    int num;
+    CmdDeletePlaylistFromRC(int id) : playlistID(id) {}
+    int playlistID;
 };
 
 struct CmdEditPlaylist : public QueueableCommand {
     virtual int GetType() { return 5; }
-    CmdEditPlaylist(CustomPlaylist *pl) : playlist(pl) {}
-    CustomPlaylist *playlist;
+    CmdEditPlaylist(Playlist *pl) : playlist(pl) {}
+    Playlist *playlist;
 };
 
 struct CmdGetPlaylistFromRC : public QueueableCommand {
     virtual int GetType() { return 3; }
-    CmdGetPlaylistFromRC(int i) : num(i) {}
-    int num;
+    CmdGetPlaylistFromRC(int id) : playlistID(id) {}
+    int playlistID;
 };
 
 struct CmdGetPlaylistsFromRC : public QueueableCommand {
@@ -59,18 +59,8 @@ public:
 
     static void Init(SongPreview &);
 
-    const std::vector<Playlist *> &GetPlaylists() const { return unk78; }
-    void AddPlaylist(Playlist *p) { unk78.push_back(p); }
-
-protected:
-    std::vector<Playlist *> unk78;
-    CustomPlaylist unk84;
-    String unkb0;
-    String unkb8;
-    std::list<QueueableCommand *> unkc0;
-    bool unkc8;
-    RCJob *unkcc;
-    std::vector<CustomPlaylist> unkd0;
+    const std::vector<Playlist *> &GetPlaylists() const { return mPlaylists; }
+    void AddPlaylist(Playlist *p) { mPlaylists.push_back(p); }
 
 private:
     virtual ~PlaylistSortMgr();
@@ -107,6 +97,15 @@ private:
     void HandleCmdGetPlaylistsFromRC();
     DataNode OnMsg(SmartGlassMsg const &);
     DataNode OnMsg(RCJobCompleteMsg const &);
+
+    std::vector<Playlist *> mPlaylists; // 0x78
+    CustomPlaylist m_cBlankPlaylist; // 0x84
+    String mCurrProfileName; // 0xb0
+    String mCurrProfileOnlineIDs; // 0xb8
+    std::list<QueueableCommand *> mCommands; // 0xc0
+    bool mIsProccessingCmd; // 0xc8
+    RCJob *mCurrJob; // 0xcc
+    std::vector<CustomPlaylist> mPlaylistsFromRC; // 0xd0
 };
 
 extern PlaylistSortMgr *ThePlaylistSortMgr;

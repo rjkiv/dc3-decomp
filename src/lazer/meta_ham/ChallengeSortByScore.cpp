@@ -14,18 +14,18 @@ int ChallengeScoreCmp::Compare(NavListItemSortCmp const *cmp, NavListNodeType ty
         break;
     case kNodeHeader:
         mCmp = cmp->GetChallengeScoreCmp();
-        if (mType == mCmp->mType) {
-            return AlphaKeyStrCmp(mName, mCmp->mName, false);
+        if (mChallengeSongType == mCmp->mChallengeSongType) {
+            return AlphaKeyStrCmp(mSongName, mCmp->mSongName, false);
         }
-        if (mType < mCmp->mType) {
+        if (mChallengeSongType < mCmp->mChallengeSongType) {
             return -1;
         }
         return 1;
         break;
     case kNodeItem:
         mCmp = cmp->GetChallengeScoreCmp();
-        if (unk8 != mCmp->unk8) {
-            if (unk8 <= mCmp->unk8) {
+        if (mScore != mCmp->mScore) {
+            if (mScore <= mCmp->mScore) {
                 return 1;
             }
             return -1;
@@ -43,7 +43,7 @@ int ChallengeScoreCmp::Compare(NavListItemSortCmp const *cmp, NavListNodeType ty
 NavListShortcutNode *ChallengeSortByScore::NewShortcutNode(NavListItemNode *node) const {
     static Symbol global_challenge("global_challenge");
     static Symbol dlc_challenge("dlc_challenge");
-    int type = node->GetCmp()->GetChallengeScoreCmp()->mType;
+    int type = node->GetCmp()->GetChallengeScoreCmp()->mChallengeSongType;
     Symbol name;
     if (type == 0) {
         name = global_challenge;
@@ -53,14 +53,14 @@ NavListShortcutNode *ChallengeSortByScore::NewShortcutNode(NavListItemNode *node
         name = node->GetToken();
     }
     ChallengeScoreCmp *cmp =
-        new ChallengeScoreCmp(type, 0, node->GetCmp()->GetChallengeScoreCmp()->mName);
+        new ChallengeScoreCmp(type, 0, node->GetCmp()->GetChallengeScoreCmp()->mSongName);
     return new NavListShortcutNode(cmp, name, true);
 }
 
 NavListHeaderNode *ChallengeSortByScore::NewHeaderNode(NavListItemNode *node) const {
     static Symbol global_challenge("global_challenge");
     static Symbol dlc_challenge("dlc_challenge");
-    int type = node->GetCmp()->GetChallengeScoreCmp()->mType;
+    int type = node->GetCmp()->GetChallengeScoreCmp()->mChallengeSongType;
     Symbol name;
     if (type == 0) {
         name = global_challenge;
@@ -68,17 +68,17 @@ NavListHeaderNode *ChallengeSortByScore::NewHeaderNode(NavListItemNode *node) co
         name = dlc_challenge;
     } else {
         name =
-            static_cast<ChallengeSortNode *>(node)->GetChallengeRecord()->GetUnk44().Str();
+            static_cast<ChallengeSortNode *>(node)->GetChallengeRecord()->GetSongTitle();
     }
     ChallengeScoreCmp *cmp =
-        new ChallengeScoreCmp(type, 0, node->GetCmp()->GetChallengeScoreCmp()->mName);
+        new ChallengeScoreCmp(type, 0, node->GetCmp()->GetChallengeScoreCmp()->mSongName);
     return new ChallengeHeaderNode(cmp, name, true);
 }
 
 NavListItemNode *ChallengeSortByScore::NewItemNode(void *p1) const {
     ChallengeRecord *record = static_cast<ChallengeRecord *>(p1);
     int score = record->GetChallengeRow().score;
-    Symbol sym = record->GetUnk44();
+    const char *songTitle = record->GetSongTitle();
     int songID = record->GetChallengeRow().songId;
 
     int type = 2;
@@ -90,6 +90,6 @@ NavListItemNode *ChallengeSortByScore::NewItemNode(void *p1) const {
             type = 1;
         }
     }
-    ChallengeScoreCmp *cmp = new ChallengeScoreCmp(type, score, sym.Str());
+    ChallengeScoreCmp *cmp = new ChallengeScoreCmp(type, score, songTitle);
     return new ChallengeSortNode(cmp, record);
 }

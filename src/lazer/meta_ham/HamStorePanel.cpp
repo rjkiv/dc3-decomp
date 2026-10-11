@@ -37,28 +37,29 @@
 static const char *sIndexString = "s_store_index_%s_%s.dtz";
 
 HamStorePanel::HamStorePanel()
-    : unka0(), mMetadata(), mOfferProvider(), unkb8(), unkc0(false), unk128(),
-      unk154(false), unk155(true), unk156(false), unk157(false), unk158(false),
-      unk159(false), unk184(-1), mXboxPurchaser() {
+    : mMetadataLoader(), mMetadata(), mOfferProvider(), mMotd(), mAllowCancel(false),
+      mReLockDuration(), mReadyToEnumCartOffer(false), mIsCartEnabled(true),
+      mCartLocked(false), mCartLoaded(false), mRemovingDLCFromCart(false),
+      mAddingDLCFromCart(false), mSpecialEnumJobID(-1), mSpecialPurchaser() {
     for (int i = 0; i < 7; i++) {
-        unk138[i] = 0;
+        mCartJobs[i] = 0;
     }
     DataArray *specialOfferArray =
         SystemConfig("store")->FindArray("special_offers", false);
     if (specialOfferArray) {
         int numOffers = specialOfferArray->Size() - 1;
         HamSpecialOffer tempOffer;
-        unk16c.resize(numOffers, tempOffer);
-        unk178.resize(numOffers, 0);
+        mSpecialOffers.resize(numOffers, tempOffer);
+        mSpecialOfferIDs.resize(numOffers, 0);
 
         for (int i = 0; i < numOffers; i++) {
             DataArray *offerArray = specialOfferArray->Array(i + 1);
-            HamSpecialOffer &offer = unk16c[i];
-            offer.unk4 = offerArray->Sym(0);
-            offer.unk14 = false;
-            offer.unk8 = StorePurchaseable::OfferStringToID(offerArray->Str(1));
-            unk178[i] = offer.unk8;
-            offer.unk10 = offerArray->ForceSym(2);
+            HamSpecialOffer &offer = mSpecialOffers[i];
+            offer.mID = offerArray->Sym(0);
+            offer.mIsOwned = false;
+            offer.mOfferId = StorePurchaseable::OfferStringToID(offerArray->Str(1));
+            mSpecialOfferIDs[i] = offer.mOfferId;
+            offer.mLocalFileName = offerArray->ForceSym(2);
         }
     }
 
@@ -74,14 +75,14 @@ END_PROPSYNCS
 void HamStorePanel::Load() {
     StorePanel::Load();
     MILO_ASSERT(!mOfferProvider, 0xd3);
-    mOfferProvider = new HamStoreProvider(&unk38, &unkac, &unk12c);
-    unkc0 = false;
-    unkc4.Restart();
+    mOfferProvider = new HamStoreProvider(&unk38, &mFilters, &mCartData);
+    mAllowCancel = false;
+    mCancelTimer.Restart();
     RefreshSpecialOfferStatus();
 }
 
 bool HamStorePanel::Exiting() const {
-    if (mXboxPurchaser != 0)
+    if (mSpecialPurchaser != 0)
         return true;
     return StorePanel::Exiting();
 }
@@ -99,25 +100,25 @@ StoreOffer *HamStorePanel::MakeNewOffer(DataArray *d) {
 }
 
 void HamStorePanel::DisableCart() {
-    if (unk157) {
+    if (mCartLoaded) {
         MILO_FAIL("Can\'t disable the cart after it is loaded");
     }
-    unk155 = false;
-    unk128 = 0;
+    mIsCartEnabled = false;
+    mReLockDuration = 0;
 }
 
 void HamStorePanel::RemoveDLCFromCart(int id) {
-    unk15c.push_back(id);
-    if (!unk158) {
-        unk158 = true;
+    mPendingRemovals.push_back(id);
+    if (!mRemovingDLCFromCart) {
+        mRemovingDLCFromCart = true;
         RemoveNextDLCFromCart();
     }
 }
 
 void HamStorePanel::AddDLCToCart(int id) {
-    unk164.push_back(id);
-    if (!unk159) {
-        unk159 = true;
+    mPendingAdds.push_back(id);
+    if (!mAddingDLCFromCart) {
+        mAddingDLCFromCart = true;
         AddNextDLCToCart();
     }
 }
@@ -129,48 +130,48 @@ void HamStorePanel::RemoveOfferFromCart(StoreOffer *offer) {
 
 bool HamStorePanel::IsCurrFilterCart(int id) {
     static Symbol store_filter_shopping_cart("store_filter_shopping_cart");
-    return unkac[id]->unk0 == store_filter_shopping_cart;
+    return mFilters[id]->GetName() == store_filter_shopping_cart;
 }
 
 void HamStorePanel::GetCart() {
     HamProfile *profile = dynamic_cast<HamProfile *>(StoreProfile());
     MILO_ASSERT(profile, 0x23d);
-    unk138[3] = new GetCartJob(this, profile);
-    TheRockCentral.ManageJob(unk138[3]);
+    mCartJobs[3] = new GetCartJob(this, profile);
+    TheRockCentral.ManageJob(mCartJobs[3]);
 }
 
 void HamStorePanel::LockCart() {
     HamProfile *profile = dynamic_cast<HamProfile *>(StoreProfile());
     MILO_ASSERT(profile, 0x246);
-    unk156 = true;
-    unk128 = 0;
-    unk138[4] = new LockCartJob(this, profile->GetOnlineID()->ToString());
-    TheRockCentral.ManageJob(unk138[4]);
+    mCartLocked = true;
+    mReLockDuration = 0;
+    mCartJobs[4] = new LockCartJob(this, profile->GetOnlineID()->ToString());
+    TheRockCentral.ManageJob(mCartJobs[4]);
 }
 
 void HamStorePanel::UnlockCart() {
     HamProfile *profile = dynamic_cast<HamProfile *>(StoreProfile());
     MILO_ASSERT(profile, 0x252);
-    unk156 = false;
-    unk138[5] = new UnlockCartJob(this, profile->GetOnlineID()->ToString());
-    TheRockCentral.ManageJob(unk138[5]);
+    mCartLocked = false;
+    mCartJobs[5] = new UnlockCartJob(this, profile->GetOnlineID()->ToString());
+    TheRockCentral.ManageJob(mCartJobs[5]);
 }
 
 void HamStorePanel::RelockCart() {
     HamProfile *profile = dynamic_cast<HamProfile *>(StoreProfile());
     MILO_ASSERT(profile, 0x25d);
-    unk156 = true;
-    unk138[6] = new LockCartJob(this, profile->GetOnlineID()->ToString());
-    TheRockCentral.ManageJob(unk138[6]);
-    unkf8.Restart();
+    mCartLocked = true;
+    mCartJobs[6] = new LockCartJob(this, profile->GetOnlineID()->ToString());
+    TheRockCentral.ManageJob(mCartJobs[6]);
+    mReLockCartTimer.Restart();
 }
 
 void HamStorePanel::EmptyCart() {
     mOfferProvider->UpdateOffersInCart(nullptr, 2);
     HamProfile *profile = dynamic_cast<HamProfile *>(StoreProfile());
     MILO_ASSERT(profile, 0x26c);
-    unk138[2] = new EmptyCartJob(this, profile->GetOnlineID()->ToString());
-    TheRockCentral.ManageJob(unk138[2]);
+    mCartJobs[2] = new EmptyCartJob(this, profile->GetOnlineID()->ToString());
+    TheRockCentral.ManageJob(mCartJobs[2]);
 }
 
 void HamStorePanel::StoreUserProfileSwappedToUser(LocalUser *) {
@@ -178,17 +179,17 @@ void HamStorePanel::StoreUserProfileSwappedToUser(LocalUser *) {
 }
 
 void HamStorePanel::ReadLockData() {
-    ((LockCartJob *)unk138[4])->GetLockData(unk128);
-    unk138[4] = nullptr;
-    unkf8.Restart();
+    ((LockCartJob *)mCartJobs[4])->GetLockData(mReLockDuration);
+    mCartJobs[4] = nullptr;
+    mReLockCartTimer.Restart();
 }
 
 void HamStorePanel::ReadCartData() {
-    GetCartJob *job = (GetCartJob *)unk138[3];
-    unk12c.clear();
-    job->GetRows(&unk12c);
-    unk138[3] = nullptr;
-    unk157 = true;
+    GetCartJob *job = (GetCartJob *)mCartJobs[3];
+    mCartData.clear();
+    job->GetRows(&mCartData);
+    mCartJobs[3] = nullptr;
+    mCartLoaded = true;
 }
 
 StoreOffer *HamStorePanel::FindOffer(Symbol offerName) const {
@@ -203,9 +204,9 @@ StoreOffer *HamStorePanel::FindOffer(Symbol offerName) const {
 
 void HamStorePanel::SetFilterToCart() {
     static Symbol store_filter_shopping_cart("store_filter_shopping_cart");
-    for (int i = unkac.size() - 1; i >= 0; i--) {
-        if (unkac[i]->unk0 == store_filter_shopping_cart) {
-            mOfferProvider->SetFilter(unkac[i]);
+    for (int i = mFilters.size() - 1; i >= 0; i--) {
+        if (mFilters[i]->GetName() == store_filter_shopping_cart) {
+            mOfferProvider->SetFilter(mFilters[i]);
             return;
         }
     }
@@ -213,9 +214,9 @@ void HamStorePanel::SetFilterToCart() {
 
 int HamStorePanel::SetFilterToSongs() {
     static Symbol songs("songs");
-    for (int i = unkac.size() - 1; i >= 0; i--) {
-        if (unkac[i]->unk0 == songs) {
-            mOfferProvider->SetFilter(unkac[i]);
+    for (int i = mFilters.size() - 1; i >= 0; i--) {
+        if (mFilters[i]->GetName() == songs) {
+            mOfferProvider->SetFilter(mFilters[i]);
             return i;
         }
     }
@@ -225,18 +226,19 @@ int HamStorePanel::SetFilterToSongs() {
 void HamStorePanel::AddNextDLCToCart() {
     HamProfile *profile = dynamic_cast<HamProfile *>(StoreProfile());
     MILO_ASSERT(profile, 0x2da);
-    unk138[0] =
-        new AddDLCToCartJob(this, profile->GetOnlineID()->ToString(), unk164.front());
-    TheRockCentral.ManageJob(unk138[0]);
+    mCartJobs[0] = new AddDLCToCartJob(
+        this, profile->GetOnlineID()->ToString(), mPendingAdds.front()
+    );
+    TheRockCentral.ManageJob(mCartJobs[0]);
 }
 
 void HamStorePanel::RemoveNextDLCFromCart() {
     HamProfile *profile = dynamic_cast<HamProfile *>(StoreProfile());
     MILO_ASSERT(profile, 0x2c0);
-    unk138[1] = new RemoveDLCFromCartJob(
-        this, profile->GetOnlineID()->ToString(), unk15c.front()
+    mCartJobs[1] = new RemoveDLCFromCartJob(
+        this, profile->GetOnlineID()->ToString(), mPendingRemovals.front()
     );
-    TheRockCentral.ManageJob(unk138[1]);
+    TheRockCentral.ManageJob(mCartJobs[1]);
 }
 
 void HamStorePanel::AddOfferToCart(StoreOffer *offer) {
@@ -270,9 +272,9 @@ void HamStorePanel::CreateCartUIs() {
     static Symbol description("description");
     static Symbol art("art");
     static Symbol store_filter_song_import_offers("store_filter_song_import_offers");
-    auto it = unkac.begin();
-    unkac.insert(it, new HamStoreFilter(store_filter_shopping_cart));
-    unkac.push_back(new HamStoreFilter(store_filter_song_import_offers));
+    auto it = mFilters.begin();
+    mFilters.insert(it, new HamStoreFilter(store_filter_shopping_cart));
+    mFilters.push_back(new HamStoreFilter(store_filter_song_import_offers));
 
     DataArrayPtr ptr;
     ptr->Insert(ptr->Size(), store_checkout);
@@ -286,9 +288,9 @@ void HamStorePanel::CreateCartUIs() {
 }
 
 bool HamStorePanel::IsSpecialOfferOwned(Symbol offer) const {
-    FOREACH (it, unk16c) {
-        if ((*it).unk4 == offer) {
-            return (*it).unk14;
+    FOREACH (it, mSpecialOffers) {
+        if ((*it).mID == offer) {
+            return (*it).mIsOwned;
         }
     }
     Symbol s = offer; // bruh
@@ -297,16 +299,16 @@ bool HamStorePanel::IsSpecialOfferOwned(Symbol offer) const {
 }
 
 void HamStorePanel::ResetCancelTimer() {
-    unkc0 = false;
-    unkc4.Restart();
+    mAllowCancel = false;
+    mCancelTimer.Restart();
 }
 
 bool HamStorePanel::ContentTitleDiscovered(unsigned int ui, Symbol s) {
     static Symbol dc2_gond("dc2_gond");
     if (ui == 0x373307d2) {
-        FOREACH (it, unk16c) {
-            if (it->unk4 == dc2_gond) {
-                it->unk10 = s;
+        FOREACH (it, mSpecialOffers) {
+            if (it->mID == dc2_gond) {
+                it->mLocalFileName = s;
                 break;
             }
         }
@@ -316,19 +318,19 @@ bool HamStorePanel::ContentTitleDiscovered(unsigned int ui, Symbol s) {
 }
 
 void HamStorePanel::ContentMounted(char const *c1, char const *c2) {
-    FOREACH (it, unk16c) {
-        if (it->unk10 == c1) {
-            Symbol s = it->unk4;
+    FOREACH (it, mSpecialOffers) {
+        if (it->mLocalFileName == c1) {
+            Symbol s = it->mID;
             MILO_LOG("Store: special offer %s on local drive.\n", s);
-            it->unk14 = true;
+            it->mIsOwned = true;
             return;
         }
     }
 }
 
 bool HamStorePanel::ContentDiscovered(Symbol s) {
-    FOREACH (it, unk16c) {
-        if (it->unk10 == s) {
+    FOREACH (it, mSpecialOffers) {
+        if (it->mLocalFileName == s) {
             return false;
         }
     }
@@ -336,16 +338,17 @@ bool HamStorePanel::ContentDiscovered(Symbol s) {
 }
 
 bool HamStorePanel::BuySpecialOffer(Symbol offer) {
-    if (mXboxPurchaser) {
+    if (mSpecialPurchaser) {
         MILO_FAIL("There is a purchase in progress.");
     }
-    FOREACH (it, unk16c) {
-        if ((*it).unk4 == offer) {
+    FOREACH (it, mSpecialOffers) {
+        if ((*it).mID == offer) {
             Profile *profile = StoreProfile();
             if (profile) {
-                mXboxPurchaser =
-                    new XboxPurchaser(profile->GetPadNum(), it->unk8, 0, 0, mSource, 0);
-                mXboxPurchaser->Initiate();
+                mSpecialPurchaser = new XboxPurchaser(
+                    profile->GetPadNum(), it->mOfferId, 0, 0, mSource, 0
+                );
+                mSpecialPurchaser->Initiate();
             }
             return true;
         }
@@ -357,10 +360,10 @@ bool HamStorePanel::BuySpecialOffer(Symbol offer) {
 
 void HamStorePanel::Poll() {
     StorePanel::Poll();
-    if (!unkc0 && unkc4.SplitMs() > 5000.0f) {
-        unkc0 = true;
+    if (!mAllowCancel && mCancelTimer.SplitMs() > 5000.0f) {
+        mAllowCancel = true;
         if (TheHamUI.FocusPanel() == this) {
-            TheHamUI.GetHelpBarPanel()->SyncToPanel(this);
+            TheHamUI.Helpbar()->SyncToPanel(this);
         }
     }
     if (!mLoadOk) {
@@ -372,54 +375,54 @@ void HamStorePanel::Poll() {
     if (unk94 != 2) {
         return;
     }
-    if (unka0) {
-        unka0->PollLoading();
-        if (unka0->IsLoaded()) {
-            mMetadata = unka0->GetData();
+    if (mMetadataLoader) {
+        mMetadataLoader->PollLoading();
+        if (mMetadataLoader->IsLoaded()) {
+            mMetadata = mMetadataLoader->GetData();
             MILO_ASSERT(mMetadata, 0xfe);
             mMetadata->AddRef();
             static Symbol motd("motd");
-            mMetadata->FindData(motd, unkb8, false);
+            mMetadata->FindData(motd, mMotd, false);
             DataArray *filterArray = mMetadata->FindArray("filters", true);
-            DeleteAll(unkac);
+            DeleteAll(mFilters);
             for (int i = 1; i < filterArray->Size(); i++) {
-                unkac.push_back(new HamStoreFilter(filterArray->Array(i)));
+                mFilters.push_back(new HamStoreFilter(filterArray->Array(i)));
             }
             DataArray *offerArray = mMetadata->FindArray("offers", true);
             PopulateOffers(offerArray, false);
             CreateCartUIs();
-            unk154 = true;
+            mReadyToEnumCartOffer = true;
         } else {
-            if (!unka0->HasFailed()) {
+            if (!mMetadataLoader->HasFailed()) {
                 goto exit;
             }
             MILO_NOTIFY("Request for %s failed.", GetIndexFile());
             ExitError((StoreError)3);
         }
-        RELEASE(unka0);
+        RELEASE(mMetadataLoader);
     } else {
         if (mMetadata == 0) {
             String indexFile = GetIndexFile();
-            unka0 = new DataNetLoader(indexFile);
-        } else if (unk154 && (unk157 || !unk155)) {
-            unk154 = false;
+            mMetadataLoader = new DataNetLoader(indexFile);
+        } else if (mReadyToEnumCartOffer && (mCartLoaded || !mIsCartEnabled)) {
+            mReadyToEnumCartOffer = false;
             unk70 = true;
         }
     }
 exit:
-    if (unk156 && unk128 != 0) {
-        if (unkf8.SplitMs() >= unk128) {
+    if (mCartLocked && mReLockDuration != 0) {
+        if (mReLockCartTimer.SplitMs() >= mReLockDuration) {
             RelockCart();
         }
     }
-    if (mXboxPurchaser) {
-        mXboxPurchaser->Poll();
-        if (!mXboxPurchaser->IsPurchasing()) {
+    if (mSpecialPurchaser) {
+        mSpecialPurchaser->Poll();
+        if (!mSpecialPurchaser->IsPurchasing()) {
             bool purchaseMade = false;
             bool needsEnum = false;
-            if (mXboxPurchaser->IsSuccess()) {
-                purchaseMade = mXboxPurchaser->PurchaseMade();
-                needsEnum = mXboxPurchaser->NeedsEnum();
+            if (mSpecialPurchaser->IsSuccess()) {
+                purchaseMade = mSpecialPurchaser->PurchaseMade();
+                needsEnum = mSpecialPurchaser->NeedsEnum();
                 if (purchaseMade && needsEnum) {
                     RefreshSpecialOfferStatus();
                 }
@@ -430,47 +433,47 @@ exit:
             msg[1] = needsEnum;
             HandleType(msg);
             TheUI->Handle(msg, false);
-            RELEASE(mXboxPurchaser);
+            RELEASE(mSpecialPurchaser);
         }
     }
 }
 
 void HamStorePanel::Unload() {
-    RELEASE(unka0);
+    RELEASE(mMetadataLoader);
     RELEASE(mOfferProvider);
     if (mMetadata) {
         mMetadata->Release();
         mMetadata = nullptr;
     }
-    DeleteAll(unkac);
-    unkc4.Stop();
-    unkc0 = false;
-    unkf8.Stop();
-    unk128 = 0;
-    unk155 = true;
-    unk154 = false;
-    unk157 = false;
-    unk158 = false;
-    unk159 = false;
-    if (unk156) {
+    DeleteAll(mFilters);
+    mCancelTimer.Stop();
+    mAllowCancel = false;
+    mReLockCartTimer.Stop();
+    mReLockDuration = 0;
+    mIsCartEnabled = true;
+    mReadyToEnumCartOffer = false;
+    mCartLoaded = false;
+    mRemovingDLCFromCart = false;
+    mAddingDLCFromCart = false;
+    if (mCartLocked) {
         UnlockCart();
     }
     StorePanel::Unload();
 }
 
 void HamStorePanel::FinishSpecialOfferEnum(std::vector<bool> const &vec, bool b) {
-    unk184 = -1;
+    mSpecialEnumJobID = -1;
     if (!b) {
         MILO_LOG("Store: failed to enum our special offers.\n");
     } else {
-        for (int i = 0; i < unk16c.size(); i++) {
-            HamSpecialOffer &offer = unk16c[i];
-            if (!offer.unk14) {
-                offer.unk14 = vec[i];
+        for (int i = 0; i < mSpecialOffers.size(); i++) {
+            HamSpecialOffer &offer = mSpecialOffers[i];
+            if (!offer.mIsOwned) {
+                offer.mIsOwned = vec[i];
             }
 
-            if (offer.unk14) {
-                MILO_LOG("Store: special offer %s is owned\n", offer.unk4);
+            if (offer.mIsOwned) {
+                MILO_LOG("Store: special offer %s is owned\n", offer.mID);
             }
         }
     }
@@ -481,11 +484,11 @@ void HamStorePanel::FinishSpecialOfferEnum(std::vector<bool> const &vec, bool b)
 
 void HamStorePanel::RefreshSpecialOfferStatus() {
     Profile *pProfile = StoreProfile();
-    if (pProfile && unk184 == -1) {
+    if (pProfile && mSpecialEnumJobID == -1) {
         SpecialOfferEnumJob *job =
-            new SpecialOfferEnumJob(this, pProfile->GetPadNum(), unk178);
+            new SpecialOfferEnumJob(this, pProfile->GetPadNum(), mSpecialOfferIDs);
         ThePlatformMgr.QueueEnumJob(job);
-        unk184 = job->ID();
+        mSpecialEnumJobID = job->ID();
     }
 }
 
@@ -503,7 +506,7 @@ void HamStorePanel::GetOfferIDsToEnumerate(std::vector<QWORD> &offerIDs, bool b)
 }
 
 DataNode HamStorePanel::OnMsg(RCJobCompleteMsg const &msg) {
-    if (msg.Job() == unk138[4]) {
+    if (msg.Job() == mCartJobs[4]) {
         if (msg.Success()) {
             ReadLockData();
             GetCart();
@@ -511,50 +514,50 @@ DataNode HamStorePanel::OnMsg(RCJobCompleteMsg const &msg) {
             MILO_LOG("[HamStorePanel::OnMsg] Cart failed to lock, disabling.\n");
             DisableCart();
         }
-    } else if (msg.Job() == unk138[5]) {
+    } else if (msg.Job() == mCartJobs[5]) {
         if (msg.Success()) {
             MILO_LOG("[HamStorePanel::OnMsg] Cart unlocked successfully.\n");
         } else {
             MILO_LOG("[HamStorePanel::OnMsg] Cart failed to unlock.\n");
         }
-    } else if (msg.Job() == unk138[6]) {
+    } else if (msg.Job() == mCartJobs[6]) {
         if (!msg.Success()) {
             MILO_LOG("[HamStorePanel::OnMsg] Cart failed to re-lock.\n");
         }
-    } else if (msg.Job() == unk138[3]) {
+    } else if (msg.Job() == mCartJobs[3]) {
         if (msg.Success()) {
             ReadCartData();
         } else {
             MILO_LOG("[HamStorePanel::OnMsg] Failed to get cart, disabling.\n");
             DisableCart();
         }
-    } else if (msg.Job() == unk138[1]) {
+    } else if (msg.Job() == mCartJobs[1]) {
         if (!msg.Success()) {
             MILO_LOG("[HamStorePanel::OnMsg] Cart failed to remove song.\n");
             ExitError(kStoreErrorCacheRemoved);
         } else {
-            unk15c.pop_front();
-            if (!unk15c.empty()) {
+            mPendingRemovals.pop_front();
+            if (!mPendingRemovals.empty()) {
                 RemoveNextDLCFromCart();
             } else {
-                unk138[1] = nullptr;
-                unk158 = false;
+                mCartJobs[1] = nullptr;
+                mRemovingDLCFromCart = false;
             }
         }
-    } else if (msg.Job() == unk138[0]) {
+    } else if (msg.Job() == mCartJobs[0]) {
         if (!msg.Success()) {
             MILO_LOG("[HamStorePanel::OnMsg] Cart failed to add song.\n");
             ExitError(kStoreErrorCacheRemoved);
         } else {
-            unk164.pop_front();
-            if (!unk164.empty()) {
+            mPendingAdds.pop_front();
+            if (!mPendingAdds.empty()) {
                 AddNextDLCToCart();
             } else {
-                unk138[0] = nullptr;
-                unk159 = false;
+                mCartJobs[0] = nullptr;
+                mAddingDLCFromCart = false;
             }
         }
-    } else if (msg.Job() == unk138[2]) {
+    } else if (msg.Job() == mCartJobs[2]) {
         if (!msg.Success()) {
             MILO_LOG("[HamStorePanel::OnMsg] Cart failed to clear.\n");
         } else {
@@ -565,13 +568,13 @@ DataNode HamStorePanel::OnMsg(RCJobCompleteMsg const &msg) {
 }
 
 StoreError HamStorePanel::UpdateOffers(std::list<EnumProduct> const &list, bool b) {
-    FOREACH (it, unk16c) {
-        if (!it->unk14) {
+    FOREACH (it, mSpecialOffers) {
+        if (!it->mIsOwned) {
             bool check = false;
             FOREACH (listIt, list) {
-                if (listIt->unk8 == it->unk8) {
+                if (listIt->unk8 == it->mOfferId) {
                     check = true;
-                    it->unk14 = (listIt->unk10 != 0);
+                    it->mIsOwned = (listIt->unk10 != 0);
                     break;
                 }
             }
@@ -579,8 +582,8 @@ StoreError HamStorePanel::UpdateOffers(std::list<EnumProduct> const &list, bool 
             if (check) {
                 MILO_LOG(
                     "Store: special offer %s is %s\n",
-                    it->unk4.Str(),
-                    (it->unk14) ? "owned" : "not owned"
+                    it->mID.Str(),
+                    (it->mIsOwned) ? "owned" : "not owned"
                 );
             }
         }
@@ -589,16 +592,16 @@ StoreError HamStorePanel::UpdateOffers(std::list<EnumProduct> const &list, bool 
 }
 
 BEGIN_HANDLERS(HamStorePanel)
-    HANDLE_EXPR(get_motd, unkb8)
-    HANDLE_ACTION(set_filter, mOfferProvider->SetFilter(unkac[_msg->Int(2)]))
+    HANDLE_EXPR(get_motd, mMotd)
+    HANDLE_ACTION(set_filter, mOfferProvider->SetFilter(mFilters[_msg->Int(2)]))
     HANDLE_ACTION(
         set_filter_pack_singles, mOfferProvider->SetFilter(_msg->Obj<StoreOffer>(2))
     )
     HANDLE_EXPR(offer_provider, (Hmx::Object *)mOfferProvider)
     HANDLE_EXPR(filter_provider, (Hmx::Object *)mOfferProvider->GetFilterProvider())
     HANDLE_ACTION(reset_cancel_timer, ResetCancelTimer())
-    HANDLE_EXPR(allow_cancel, unkc0)
-    HANDLE_EXPR(is_cart_enabled, unk155)
+    HANDLE_EXPR(allow_cancel, mAllowCancel)
+    HANDLE_EXPR(is_cart_enabled, mIsCartEnabled)
     HANDLE_ACTION(disable_cart, DisableCart())
     HANDLE_ACTION(get_cart, GetCart())
     HANDLE_ACTION(add_offer_to_cart, AddOfferToCart(_msg->Obj<StoreOffer>(2)))
@@ -626,4 +629,4 @@ END_HANDLERS
 SpecialOfferEnumJob::SpecialOfferEnumJob(
     HamStorePanel *panel, int i, std::vector<QWORD> &vec
 )
-    : MultipleItemsEnumJob(nullptr, i, vec), unk5c(panel) {}
+    : MultipleItemsEnumJob(nullptr, i, vec), mStorePanel(panel) {}

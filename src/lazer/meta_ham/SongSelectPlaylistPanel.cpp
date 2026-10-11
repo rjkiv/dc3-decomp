@@ -20,9 +20,9 @@
 
 #pragma region SongSelectPlaylistProvider
 
-SongSelectPlaylistProvider::SongSelectPlaylistProvider() : unk4c() {
+SongSelectPlaylistProvider::SongSelectPlaylistProvider() : m_cBlankPlaylist() {
     static Symbol never_use("never_use");
-    unk4c.SetName(never_use);
+    m_cBlankPlaylist.SetName(never_use);
 }
 
 int SongSelectPlaylistProvider::NumData() const { return m_vPlaylists.size(); }

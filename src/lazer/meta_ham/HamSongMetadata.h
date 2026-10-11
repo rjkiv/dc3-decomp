@@ -45,19 +45,19 @@ public:
     const char *Album() const;
     const char *Title() const;
     int YearReleased() const { return mYearReleased; }
-    int DJIntensityRank() const { return mDJIntensityRank; }
+    int DjIntensityRank() const { return mDJIntensityRank; }
 
 private:
     void InitHamSongMetadata();
     static int sHamSaveVer;
 
     /** The song's name. */
-    String mName; // 0x50
+    String mTitle; // 0x50
     /** The song's artist(s). */
     String mArtist; // 0x58
-    String unk60; // 0x60
+    String mArtistShortName; // 0x60
     /** The song's album. */
-    String mAlbumName; // 0x68
+    String mAlbum; // 0x68
     /** Is this song a Wavegroup cover? */
     bool mIsCover; // 0x70
     /** Is this song a medley/mashup? Leftover from DC1. */
@@ -76,32 +76,32 @@ private:
         Unused in DC3 in favor of default/backup characters below. */
     Symbol mCharacter; // 0x7c
     /** The assigned gender for this song. Should match the character. */
-    HamCharacter::Gender mGender; // 0x80
+    Gender mGender; // 0x80
     /** The length of this song, in ms. */
     int mLength; // 0x84
     /** The overall BPM of this song. */
     int mBpm; // 0x88
     /** Does this song have extra authoring files via an alternate path? */
-    bool mAlternatePath; // 0x8c
+    bool mHasAlternatePath; // 0x8c
     /** This song's English pronunciations. */
     std::vector<String> mPronunciations; // 0x90
     /** This song's pronunciations in other languages. */
-    std::vector<PronunciationsLoc> mPronunciationsLocalized; // 0x9c
+    std::vector<PronunciationsLoc> mPronunciationsLoc; // 0x9c
     /** This song's authored midi events. */
-    std::map<int, Symbol> mMidiEvents; // 0xa8
+    std::map<int, Symbol> mDrumMap; // 0xa8
     /** The assigned character/outfit combo for this song. */
-    Symbol mDefaultChar; // 0xc0
+    Symbol mDefaultCharacter; // 0xc0
     /** The fallback outfit for the assigned character,
         in case the original outfit is locked. */
-    Symbol mDefaultCharAlt; // 0xc4
+    Symbol mDefaultCharacterAlt; // 0xc4
     /** The fallback character/outfit combo for this song,
         in case the original character is locked. */
-    Symbol mBackupChar; // 0xc8
+    Symbol mBackupCharacter; // 0xc8
     /** The fallback outfit for the fallback character,
         in case the fallback's original outfit is locked. */
-    Symbol mBackupCharAlt; // 0xcc
+    Symbol mBackupCharacterAlt; // 0xcc
     /** The assigned venue for this song. */
-    Symbol mVenue; // 0xd0
+    Symbol mDefaultVenue; // 0xd0
     /** The fallback venue for this song, in case the original venue is locked. */
     Symbol mBackupVenue; // 0xd4
     /** The year this song came out. */

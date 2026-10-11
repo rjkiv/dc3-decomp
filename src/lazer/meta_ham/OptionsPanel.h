@@ -8,6 +8,7 @@
 #include "obj/Data.h"
 #include "obj/Msg.h"
 #include "obj/Object.h"
+#include "stl/_pair.h"
 #include "utl/JobMgr.h"
 #include "utl/Symbol.h"
 #include "xdk/win_types.h"
@@ -31,17 +32,13 @@ public:
 protected:
     DataNode OnMsg(RCJobCompleteMsg const &);
 
-    RedeemTokenJob *unk3c;
-    XboxPurchaser *unk40;
-    int unk44;
-    QWORD unk48;
-    HamProfile *unk50;
-    int unk54;
-    GetWebLinkCodeJob *unk58;
-    int unk5c;
-
 private:
     DataNode OnMsg(SingleItemEnumCompleteMsg const &);
+
+    RedeemTokenJob *mTokenJob; // 0x3c
+    XboxPurchaser *mPurchaser; // 0x40
+    std::pair<unsigned long long, const HamProfile *> mPendingPurchase; // 0x48
+    GetWebLinkCodeJob *mGetLinkingCodeJob;
 };
 
 DECLARE_MESSAGE(TokenRedeemedMsg, "token_redeemed")

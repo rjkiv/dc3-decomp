@@ -150,7 +150,7 @@ GameEndedDataPointJob::GameEndedDataPointJob(
             }
             String str1e8;
             const AccomplishmentProgress &prog = profile->GetAccomplishmentProgress();
-            const std::list<std::pair<Symbol, Symbol> > &awards = prog.NewAwards();
+            const std::list<std::pair<Symbol, Symbol> > &awards = prog.GetNewAwards();
             FOREACH (it, awards) {
                 if (it != awards.end()) {
                     str1e8 += ",";
@@ -200,8 +200,8 @@ GameEndedDataPointJob::GameEndedDataPointJob(
         static Symbol song_duration_ms("song_duration_ms");
         pt.AddPair(song_duration_ms, ms);
     }
-    pt.AddPair(photos_disabled, TheProfileMgr.PhotosDisabled());
-    pt.AddPair(freestyle_disabled, TheProfileMgr.FreestyleDisabled());
+    pt.AddPair(photos_disabled, TheProfileMgr.GetDisablePhotos());
+    pt.AddPair(freestyle_disabled, TheProfileMgr.GetDisableFreestyle());
     SetDataPoint(pt);
 }
 

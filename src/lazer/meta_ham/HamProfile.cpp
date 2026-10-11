@@ -56,9 +56,9 @@ HamProfile::HamProfile(int i1)
     mStats = new MetagameStats();
     mRank = new MetagameRank(this);
     mRatingHistory = new MoveRatingHistory();
-    mCampaignProgress[0].SetProfile(this);
-    mCampaignProgress[1].SetProfile(this);
-    mCampaignProgress[2].SetProfile(this);
+    mCampaignProgress[0].SetParent(this);
+    mCampaignProgress[1].SetParent(this);
+    mCampaignProgress[2].SetParent(this);
     ResetOutfitPrefs();
     static Symbol playlist_custom("playlist_custom");
     for (int i = 0; i < 5; i++) {
@@ -267,7 +267,7 @@ bool HamProfile::IsUnsaved() const {
         return true;
     }
 
-    return mRatingHistory->Unk20() != false;
+    return mRatingHistory->Dirty() != false;
 }
 
 bool HamProfile::HasSomethingToUpload() {
@@ -845,7 +845,7 @@ void HamProfile::UpdateFitnessWeight(HamLabel *label) {
     MILO_ASSERT(label, 0x3CE);
     if (mIsFitnessWeightEntered) {
         float weight_lbs = mFitnessPounds;
-        if (!TheProfileMgr.GetUnk4c()) {
+        if (!TheProfileMgr.GetPreferredWeightUnit()) {
             static Symbol weight_pounds("weight_pounds");
             label->SetTokenFmt(weight_pounds, (int)weight_lbs);
         } else {
@@ -995,7 +995,7 @@ void HamProfile::ResetOutfitPrefs() {
                 CharacterPref pref;
                 pref.mChar = charSym;
                 pref.mOutfit = outfit;
-                pref.mVoicemailIdx = -1;
+                pref.mVOIndex = -1;
                 mCharPrefs.push_back(pref);
                 playableCount++;
             }
@@ -1074,7 +1074,7 @@ char const *HamProfile::NextOutfitSample(Symbol s) {
         MILO_NOTIFY("Could not find vo index for %s", s);
         return gNullStr;
     } else {
-        int idx = it->mVoicemailIdx;
+        int idx = it->mVOIndex;
         if (idx == -1) {
             idx = RandomInt(0, 2);
         }
@@ -1082,7 +1082,7 @@ char const *HamProfile::NextOutfitSample(Symbol s) {
         if (set < 0) {
             set += 2;
         }
-        it->mVoicemailIdx = set;
+        it->mVOIndex = set;
         return FileLocalize(
             MakeString("sfx/loc/eng/%s/%s_voicemail_%02d.mogg", s, s, idx), nullptr
         );

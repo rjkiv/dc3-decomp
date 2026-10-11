@@ -3,7 +3,8 @@
 #include "utl/Symbol.h"
 #include <vector>
 
-enum MoveRating {
+enum MoveRating { // these are named different in the pdb, but the code in HamMove aligns
+                  // with these definitions
     kMoveRatingSuperPerfect = 0,
     kMoveRatingPerfect = 1,
     kMoveRatingAwesome = 2,

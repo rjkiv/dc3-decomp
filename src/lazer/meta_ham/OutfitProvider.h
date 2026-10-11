@@ -13,13 +13,13 @@ public:
     virtual void Text(int, int, UIListLabel *, UILabel *) const;
     virtual Symbol DataSymbol(int) const;
     virtual bool CanSelect(int) const;
-    virtual int NumData() const { return mOutfits.size(); }
+    virtual int NumData() const { return m_vOutfits.size(); }
 
     Symbol GetRandomAvailableOutfit() const;
     void UpdateList();
-    void SetPlayer(int player) { mPlayer = player; }
+    void SetPlayerIndex(int player) { mPlayerIndex = player; }
 
 private:
-    int mPlayer; // 0x30
-    std::vector<Symbol> mOutfits; // 0x34
+    int mPlayerIndex; // 0x30
+    std::vector<Symbol> m_vOutfits; // 0x34
 };

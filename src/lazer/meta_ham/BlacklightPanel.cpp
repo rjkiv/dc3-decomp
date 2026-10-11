@@ -16,9 +16,9 @@ BEGIN_PROPSYNCS(BlacklightPanel)
 END_PROPSYNCS
 
 void BlacklightPanel::Enter() {
-    if (TheHamUI.GetLetterboxPanel()) {
-        TheHamUI.GetLetterboxPanel()->AddSink(this, "enter_blacklight_mode");
-        TheHamUI.GetLetterboxPanel()->AddSink(this, "exit_blacklight_mode");
+    if (TheHamUI.Letterbox()) {
+        TheHamUI.Letterbox()->AddSink(this, "enter_blacklight_mode");
+        TheHamUI.Letterbox()->AddSink(this, "exit_blacklight_mode");
     }
     HamPanel::Enter();
 }

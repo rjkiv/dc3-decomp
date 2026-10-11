@@ -24,12 +24,14 @@
 #include "utl/TimeConversion.h"
 
 static HamMaster *sLoadingMaster; // DAT_8311A440
-static SongDB *sSongDB; // DAT_8311A444 i think, def a SongDB
+static SongDB *sLoadingSongDB; // DAT_8311A444
 
-LoadingPanel::LoadingPanel() : unk38(0), unk3c(), unk40(0) { sSongDB = new SongDB(); }
+LoadingPanel::LoadingPanel() : mSongInfo(0), mTempoMapBackup(), mBeatMapBackup(0) {
+    sLoadingSongDB = new SongDB();
+}
 
 LoadingPanel::~LoadingPanel() {
-    RELEASE(sSongDB);
+    RELEASE(sLoadingSongDB);
     RELEASE(sLoadingMaster);
 }
 
@@ -51,11 +53,11 @@ char const *LoadingPanel::GetLoadingScreen(Symbol s) {
 }
 
 void LoadingPanel::Unload() {
-    if (unk3c)
-        SetTheTempoMap(unk3c);
+    if (mTempoMapBackup)
+        SetTheTempoMap(mTempoMapBackup);
 
-    if (unk40)
-        SetTheBeatMap(unk40);
+    if (mBeatMapBackup)
+        SetTheBeatMap(mBeatMapBackup);
 
     delete sLoadingMaster;
     UIPanel::Unload();
@@ -63,7 +65,7 @@ void LoadingPanel::Unload() {
 
 void LoadingPanel::Load() {
     UIPanel::Load();
-    sLoadingMaster = new HamMaster(sSongDB->SongData(), nullptr);
+    sLoadingMaster = new HamMaster(sLoadingSongDB->SongData(), nullptr);
     PlayLoadingMusic();
     sLoadingMaster->SetMaps();
 }
@@ -113,13 +115,13 @@ void LoadingPanel::PlayLoadingMusic() {
         MILO_ASSERT(f != NULL, 0xb7);
         delete f;
     }
-    if (unk38)
-        RELEASE(unk38);
+    if (mSongInfo)
+        RELEASE(mSongInfo);
     DataArray *sysConfig = SystemConfig("synth", fileBase);
     static Symbol song("song");
     DataArray *songArray = sysConfig->FindArray(song, false);
-    unk38 = new DataArraySongInfo(songArray, nullptr, "loadmusic");
-    sLoadingMaster->Load(unk38, false, 0, false, (HamSongDataValidate)0, nullptr);
+    mSongInfo = new DataArraySongInfo(songArray, nullptr, "loadmusic");
+    sLoadingMaster->Load(mSongInfo, false, 0, false, (HamSongDataValidate)0, nullptr);
 }
 
 void LoadingPanel::Poll() {
@@ -130,13 +132,13 @@ void LoadingPanel::Poll() {
     float time = pStream->GetTime();
     TempoMap *pTempoMap = sLoadingMaster->SongData()->GetTempoMap();
     if (TheTempoMap != pTempoMap) {
-        unk3c = TheTempoMap;
+        mTempoMapBackup = TheTempoMap;
         SetTheTempoMap(pTempoMap);
     }
 
     BeatMap *pBeatMap = sLoadingMaster->SongData()->GetBeatMap();
     if (TheBeatMap != pBeatMap) {
-        unk40 = TheBeatMap;
+        mBeatMapBackup = TheBeatMap;
         SetTheBeatMap(pBeatMap);
     }
 

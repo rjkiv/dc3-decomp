@@ -24,6 +24,6 @@ protected:
 private:
     void Configure(DataArray *);
 
-    std::vector<Symbol> unk70;
-    int mSongCount; // 0x7c
+    std::vector<Symbol> m_vSongs; // 0x7c
+    int m_iRequiredSongCount; // 0x7c
 };

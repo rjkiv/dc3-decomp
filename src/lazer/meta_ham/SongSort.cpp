@@ -24,7 +24,7 @@ void SongSort::BuildTree() {
     Init();
     std::vector<NavListItemNode *> nodes;
 
-    auto &map = TheSongSortMgr->GetUnk78();
+    auto &map = TheSongSortMgr->GetSongRecords();
     FOREACH (it, map) {
         SongRecord *record = &it->second;
         NavListItemNode *node = NewItemNode(record);
@@ -55,7 +55,7 @@ void SongSort::BuildTree() {
             }
 
             NavListShortcutNode *shortcut = NewShortcutNode(*begin);
-            unk30.push_back(shortcut);
+            mTree.push_back(shortcut);
             shortcut->InsertHeaderRange(begin, it, this);
 
             count = 0;
@@ -68,7 +68,7 @@ void SongSort::BuildTree() {
         }
     }
 
-    FOREACH (it, unk30) {
+    FOREACH (it, mTree) {
         (*it)->FinishSort(this);
     }
 }
@@ -80,7 +80,7 @@ void SongSort::DeleteItemList() {
 
 void SongSort::BuildItemList() {
     Symbol sym = gNullStr;
-    NavListSortNode *sortNode = unk50;
+    NavListSortNode *sortNode = mHighlightNode;
     if (sortNode) {
         NavListNodeType type = sortNode->GetType();
         if (type == kNodeFunction) {
@@ -105,68 +105,68 @@ void SongSort::BuildItemList() {
         SongFunctionNode *randomSongNode = new SongFunctionNode(
             nullptr, random_song, "ui/image/song_select_setlist_keep.png"
         );
-        randomSongNode->SetShortcut(unk30.front());
-        unk3c.insert(unk3c.begin(), randomSongNode);
+        randomSongNode->SetShortcut(mTree.front());
+        mFunctions.insert(mFunctions.begin(), randomSongNode);
         if (inPerform) {
             static Symbol playlists("playlists");
             SongFunctionNode *playlistNode = new SongFunctionNode(
                 nullptr, playlists, "ui/image/song_select_setlist_keep.png"
             );
-            playlistNode->SetShortcut(unk30.front());
-            unk3c.insert(unk3c.begin(), playlistNode);
+            playlistNode->SetShortcut(mTree.front());
+            mFunctions.insert(mFunctions.begin(), playlistNode);
         }
     } else if (check) {
         static Symbol finish_setlist("finish_setlist");
         SongFunctionNode *finishSetlistNode = new SongFunctionNode(
             nullptr, finish_setlist, "ui/image/song_select_setlist_keep.png"
         );
-        finishSetlistNode->SetShortcut(unk30.front());
-        unk3c.insert(unk3c.begin(), finishSetlistNode);
+        finishSetlistNode->SetShortcut(mTree.front());
+        mFunctions.insert(mFunctions.begin(), finishSetlistNode);
     }
 
-    FOREACH (it, unk3c) {
+    FOREACH (it, mFunctions) {
         (*it)->Renumber(mList);
     }
 
-    FOREACH (it, unk30) {
+    FOREACH (it, mTree) {
         (*it)->Renumber(mList);
     }
 
     if (check) {
-        FOREACH (it, unk3c) {
+        FOREACH (it, mFunctions) {
             (*it)->Renumber(mList);
         }
     }
 
-    FOREACH (it, unk30) {
+    FOREACH (it, mTree) {
         (*it)->FinishBuildList(this);
     }
 
     if (!sym.Null()) {
-        unk50 = GetNode(sym);
+        mHighlightNode = GetNode(sym);
     }
 
     TheSongSortMgr->FinalizeHeaders();
 }
 
 void SongSort::SetHighlightedIx(int i1) {
-    unk54 = unk50;
+    mPrevHighlightNode = mHighlightNode;
     if (i1 >= 0 && i1 < mList.size()) {
-        unk50 = mList[i1];
+        mHighlightNode = mList[i1];
         TheSongSortMgr->OnHighlightChanged();
         return;
     }
-    unk50 = 0;
+    mHighlightNode = 0;
 };
 
 void SongSort::SetHighlightItem(const NavListSortNode *node) {
-    unk54 = unk50;
-    unk50 = nullptr;
+    mPrevHighlightNode = mHighlightNode;
+    mHighlightNode = nullptr;
     if (node) {
         if (node->GetType() == kNodeFunction || node->GetType() == kNodeItem) {
             auto findIf = std::find_if(mList.begin(), mList.end(), SortNodeFind(node));
             if (findIf != mList.end()) {
-                unk50 = *findIf;
+                mHighlightNode = *findIf;
                 TheSongSortMgr->OnHighlightChanged();
             }
         }
@@ -186,17 +186,17 @@ void SongSort::OnSelectShortcut(int i1) {
 void SongSort::Text(int i1, int i2, UIListLabel *listlabel, UILabel *uilabel) const {
     AppLabel *app_label = dynamic_cast<AppLabel *>(uilabel);
     MILO_ASSERT(app_label, 0x100);
-    app_label->SetFromSongSelectNode(unk30[i2]);
+    app_label->SetFromSongSelectNode(mTree[i2]);
 };
 
 Symbol SongSort::DetermineHeaderSymbolFromSong(Symbol sym) {
-    auto &map = TheSongSortMgr->GetUnk78();
+    auto &map = TheSongSortMgr->GetSongRecords();
     auto find = map.find(sym);
     if (find != map.end()) {
         NavListItemNode *node = NewItemNode(&find->second);
-        FOREACH (it, unk30) {
+        FOREACH (it, mTree) {
             NavListShortcutNode *shortcutNode = *it;
-            auto &children = shortcutNode->Children();
+            auto &children = shortcutNode->GetChildren();
             MILO_ASSERT(children.size() == 1, 0xea);
             NavListHeaderNode *header =
                 dynamic_cast<NavListHeaderNode *>(shortcutNode->FirstChild());

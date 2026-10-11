@@ -688,7 +688,7 @@ DataNode AppLabel::OnSetUserName(const DataArray *a) {
 }
 
 void AppLabel::SetStoreFilterName(const HamStoreFilter *filter) {
-    SetDisplayText(filter->unk4.c_str(), true);
+    SetDisplayText(filter->GetText(), true);
 }
 
 void AppLabel::SetTimeElapsedSince(unsigned int i) {

@@ -20,10 +20,10 @@ HamStoreOffer::HamStoreOffer(DataArray *d, SongMgr *s) : StoreOffer(d, s) {
     }
 
     static Symbol art("art");
-    mAlbumArtPath = "album_art/";
+    mArtPath = "album_art/";
     Symbol a = art;
     DataArray *albumArtArray = mStoreOfferData->FindArray(a);
-    mAlbumArtPath += albumArtArray->Str(1);
+    mArtPath += albumArtArray->Str(1);
 }
 
 HamStoreOffer::~HamStoreOffer() {}
@@ -72,7 +72,7 @@ bool HamStoreOffer::Cmp(StoreOffer const &rhs, Symbol s) const {
 
 BEGIN_HANDLERS(HamStoreOffer)
     HANDLE_EXPR(difficulty, Difficulty())
-    HANDLE_EXPR(art_path, mAlbumArtPath.c_str())
+    HANDLE_EXPR(art_path, mArtPath.c_str())
     HANDLE_EXPR(preview_path, mPreviewPath.c_str())
     HANDLE_SUPERCLASS(StoreOffer)
 END_HANDLERS

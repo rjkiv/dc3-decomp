@@ -21,9 +21,9 @@ RecordScoreJob::RecordScoreJob(
     Hx_snprintf(buffer, 36, "stars%03d", 0);
     pt.AddPair(buffer, data.mSongData->mStars);
     Hx_snprintf(buffer, 36, "no_flashcards%03d", 0);
-    pt.AddPair(buffer, data.mSongData->mNoFlashcards != false);
+    pt.AddPair(buffer, data.mSongData->mScoreNoFlashcards != false);
     Hx_snprintf(buffer, 36, "diff%03d", 0);
-    pt.AddPair(buffer, data.mSongData->mDifficulty);
+    pt.AddPair(buffer, data.mSongData->mDiff);
     Hx_snprintf(buffer, 36, "pid%03d", 0);
     pt.AddPair(buffer, data.mProfile ? data.mProfile->GetOnlineID()->ToString() : "N/A");
     Hx_snprintf(buffer, 36, "xp%03d", 0);

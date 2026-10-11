@@ -10,11 +10,11 @@
 #include "utl/Symbol.h"
 #include <vector>
 
-class StepMoves : public PracticeStep {
+class StepMoves {
     friend bool PropSync(StepMoves &, DataNode &, DataArray *, int, PropOp);
 
 public:
-    StepMoves() : mSelected(false), unk28(0), unk2c(0) {}
+    StepMoves() : mSelected(false), mStepNumber(0), mSongPosition(0) {}
     ~StepMoves() {}
     bool operator<(const StepMoves &) const;
 
@@ -30,10 +30,11 @@ public:
         return history >= 0 && history < 2;
     }
 
+    PracticeStep mStep; // 0x0
     std::vector<HamMove *> mMoves; // 0x18
     bool mSelected; // 0x24
-    int unk28;
-    int unk2c;
+    int mStepNumber; // 0x28
+    int mSongPosition; // 0x2c
 };
 
 class PracticeChoosePanel : public HamPanel, public UIListProvider {
@@ -65,7 +66,7 @@ public:
     int NumSelected() const;
     void ToggleSort();
     bool FindStep(int num) {
-        FOREACH (it, unk54) {
+        FOREACH (it, mLastSelected) {
             if (*it == num) {
                 return true;
             }
@@ -80,8 +81,8 @@ private:
     std::vector<HamMove *> GetMovesInStep(PracticeStep);
 
     std::vector<StepMoves> mStepMoves; // 0x40
-    Symbol unk4c; // 0x4c - song
-    Symbol unk50; // 0x50 - difficulty sym
-    std::vector<int> unk54; // 0x54 - memory?
-    RndMat *unk60; // 0x60
+    Symbol mLastSong; // 0x4c
+    Symbol mLastDiff; // 0x50
+    std::vector<int> mLastSelected; // 0x54
+    RndMat *mProblemCallout; // 0x60
 };

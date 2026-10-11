@@ -25,15 +25,16 @@ enum HamBackupDancers {
     kBackupDancersNumTypes = 4
 };
 
+enum Gender {
+    /** "female character" */
+    kHamFemale = 0,
+    /** "male character" */
+    kHamMale = 1
+};
+
 /** "Hammer main character class, can be configured to look like characters in /dancer" */
 class HamCharacter : public Character {
 public:
-    enum Gender {
-        /** "female character" */
-        kHamFemale = 0,
-        /** "male character" */
-        kHamMale = 1
-    };
     enum ClipFlags {
         kNoRetarget = 1,
         kAnimatePropBone = 2,

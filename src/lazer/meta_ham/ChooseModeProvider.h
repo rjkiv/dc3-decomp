@@ -19,11 +19,11 @@ public:
     virtual void Text(int, int, UIListLabel *, UILabel *) const;
     virtual RndMat *Mat(int, int, UIListMesh *) const;
     virtual Symbol DataSymbol(int) const;
-    virtual int NumData() const { return mModes.size(); }
+    virtual int NumData() const { return m_vEntries.size(); }
 
     void UpdateList(bool);
     NEW_OBJ(ChooseModeProvider)
 
 private:
-    std::vector<Symbol> mModes; // 0x30
+    std::vector<Symbol> m_vEntries; // 0x30
 };
