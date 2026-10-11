@@ -12,9 +12,11 @@
 #include "os/Debug.h"
 #include "os/System.h"
 #include "utl/Std.h"
+#include "vectorintrinsics.h"
 #include "xdk/NUI.h"
 #include "xdk/XAPILIB.h"
 #include "xdk/nui/nuiidentity.h"
+#include "xdk/nui/nuiskeleton.h"
 #include "xdk/win_types.h"
 #include "xdk/xapilibi/winerror.h"
 #include <cmath>
@@ -41,9 +43,9 @@ void SkeletonFrame::Init() {
     sUpVectorSmoother.ForceValue(Vector3(0, 1, 0));
 }
 
-void SkeletonFrame::Create(const NUI_SKELETON_FRAME &nui_frame, int i2) {
+void SkeletonFrame::Create(const NUI_SKELETON_FRAME &nui_frame, int elapsed_ms) {
     mFrameNumber = nui_frame.dwFrameNumber;
-    mElapsedMs = i2;
+    mElapsedMs = elapsed_ms;
     mUpVector = sUpVectorSmoother.Value();
     mFloorPlane.Set(
         nui_frame.vFloorClipPlane.x,
@@ -51,6 +53,13 @@ void SkeletonFrame::Create(const NUI_SKELETON_FRAME &nui_frame, int i2) {
         nui_frame.vFloorClipPlane.z,
         nui_frame.vFloorClipPlane.w
     );
+    XMVECTOR vec;
+    vec.x = mUpVector.x;
+    vec.y = mUpVector.y;
+    vec.z = mUpVector.z;
+    vec.w = 0;
+    XMMATRIX mtx = NuiTransformMatrixLevel(vec);
+    // something with the mtx idk vmx is hard
 }
 
 #pragma endregion
@@ -61,8 +70,8 @@ Skeleton::Skeleton() : mTracking(kSkeletonNotTracked), mTrackingID(-1), mPelvisH
 }
 
 void Skeleton::JointPos(SkeletonCoordSys cs, SkeletonJoint joint, Vector3 &pos) const {
-    MILO_ASSERT((0) <= (cs) && (cs) < (kNumCoordSys), 0xDA);
-    MILO_ASSERT((0) <= (joint) && (joint) < (kNumJoints), 0xDB);
+    MILO_ASSERT_RANGE(cs, 0, kNumCoordSys, 0xDA);
+    MILO_ASSERT_RANGE(joint, 0, kNumJoints, 0xDB);
     pos = mTrackedJoints[joint].mPos[cs];
 }
 
@@ -87,7 +96,7 @@ bool Skeleton::Displacement(
 }
 
 JointConfidence Skeleton::JointConf(SkeletonJoint joint) const {
-    MILO_ASSERT((0) <= (joint) && (joint) < (kNumJoints), 0xE1);
+    MILO_ASSERT_RANGE(joint, 0, kNumJoints, 0xE1);
     return mTrackedJoints[joint].mConfidence;
 }
 
@@ -96,7 +105,7 @@ int Skeleton::QualityFlags() const { return mQualityFlags; }
 int Skeleton::ElapsedMs() const { return mElapsedMs; }
 
 void Skeleton::CameraToPlayerXfm(SkeletonCoordSys cs, Transform &playerXfm) const {
-    MILO_ASSERT((kCoordLeftArm) <= (cs) && (cs) < (kNumCoordSys), 0x127);
+    MILO_ASSERT_RANGE(cs, kCoordLeftArm, kNumCoordSys, 0x127);
     playerXfm = mCameraToPlayer[cs - 1];
 }
 
@@ -112,7 +121,7 @@ void Skeleton::CamBoneLengths(float *lens) const {
 
 float Skeleton::BoneLength(SkeletonBone bone, SkeletonCoordSys cs) const {
     if (cs == kCoordCamera) {
-        MILO_ASSERT((0) <= (bone) && (bone) < (kNumBones), 0x12F);
+        MILO_ASSERT_RANGE(bone, 0, kNumBones, 0x12F);
         return mCameraBoneLengths[bone];
     } else
         return BaseSkeleton::BoneLength(bone, cs);
@@ -349,7 +358,7 @@ void Skeleton::Poll(int skel_idx, SkeletonFrame const &skeletonFrame) {
             }
 
             // somethin wrong in here but im fixing this later
-            for (int i = 0; i < 0x910; i++) {
+            for (int i = 0; i < kNumJoints; i++) {
                 TrackedJoint &joint = mTrackedJoints[i];
                 for (int j = 0; j < kNumCoordSys; j++) {
                     if (j == 0) {
@@ -360,11 +369,11 @@ void Skeleton::Poll(int skel_idx, SkeletonFrame const &skeletonFrame) {
                         );
                     }
                 }
-                joint.mConfidence = (JointConfidence)data.mJointConfidences[i];
+                joint.mConfidence = data.mJointConfidences[i];
                 joint.mRawCameraPos = data.mJointPositions[i];
             }
 
-            for (int i = 0; i < kNumJoints; i++) {
+            for (int i = 0; i < kNumBones; i++) {
                 mCameraBoneLengths[i] =
                     BaseSkeleton::BoneLength((SkeletonBone)i, kCoordCamera);
             }

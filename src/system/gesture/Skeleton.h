@@ -49,29 +49,34 @@ public:
     bool IsValid() const;
     bool IsSitting() const;
     bool IsSideways() const;
-    const TrackedJoint &HandJoint(SkeletonSide) const;
-    const TrackedJoint &ElbowJoint(SkeletonSide) const;
-    const TrackedJoint &ShoulderJoint(SkeletonSide) const;
-    const TrackedJoint &HipJoint(SkeletonSide) const;
-    const TrackedJoint &KneeJoint(SkeletonSide) const;
+    const TrackedJoint &HandJoint(SkeletonSide side) const;
+    const TrackedJoint &ElbowJoint(SkeletonSide side) const;
+    const TrackedJoint &ShoulderJoint(SkeletonSide side) const;
+    const TrackedJoint &HipJoint(SkeletonSide side) const;
+    const TrackedJoint &KneeJoint(SkeletonSide side) const;
     bool ProfileMatched() const;
     int GetEnrollmentIndex() const;
     bool NeedIdentify() const;
-    void ScreenPos(SkeletonJoint, Vector2 &) const;
+    void ScreenPos(SkeletonJoint joint, Vector2 &pos) const;
     bool Velocity(
-        const SkeletonHistory &, SkeletonCoordSys, SkeletonJoint, int, Vector3 &, int &
+        const SkeletonHistory &history,
+        SkeletonCoordSys cs,
+        SkeletonJoint j,
+        int desired_ms,
+        Vector3 &vel,
+        int &actual_ms
     ) const;
     bool RequestIdentity();
-    bool EnrollIdentity(int);
+    bool EnrollIdentity(int enrollmentIndex);
     void Init();
-    void Poll(int, const SkeletonFrame &);
+    void Poll(int skel_idx, const SkeletonFrame &skel_frame);
     const TrackedJoint *TrackedJoints() const { return mTrackedJoints; }
     int TrackingID() const { return mTrackingID; }
     int SkeletonIndex() const { return mSkeletonIndex; }
     SkeletonTracking TrackingState() const { return mTracking; }
     const Vector3 &Center() const { return mCenter; }
 
-    static int IdentityCallback(void *, NUI_IDENTITY_MESSAGE *);
+    static int IdentityCallback(void *pvContext, NUI_IDENTITY_MESSAGE *pMessage);
 
 protected:
     // size 0x148
@@ -81,8 +86,12 @@ protected:
         Vector3 mCameraDisplacements[kNumJoints]; // 0x8
     };
 
-    bool
-    PrevTrackedSkeleton(const SkeletonHistory *, int, int &, ArchiveSkeleton &) const;
+    bool PrevTrackedSkeleton(
+        const SkeletonHistory *history,
+        int desired_ms,
+        int &actual_ms,
+        ArchiveSkeleton &prev_skel
+    ) const;
 
     TrackedJoint mTrackedJoints[kNumJoints]; // 0x4
     float mCameraBoneLengths[kNumBones]; // 0x914
@@ -137,7 +146,7 @@ struct SkeletonUpdateData {
 
 // size 0x11c8
 struct SkeletonFrame {
-    void Create(const NUI_SKELETON_FRAME &, int);
+    void Create(const NUI_SKELETON_FRAME &nui_frame, int elapsed_ms);
     float TiltAngle() const;
     static void Init();
 
