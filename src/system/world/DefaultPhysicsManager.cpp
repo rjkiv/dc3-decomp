@@ -22,7 +22,7 @@ RayCastDefaultContainer::RayCastDefaultContainer(
             if (d->MakeWorldSphere(s, false)) {
                 if (box.Contains(s)) {
                     MILO_ASSERT(objMap.find(d) != objMap.end(), 0x73);
-                    unk4.push_back(std::make_pair(d, objMap[d]));
+                    mList.push_back(std::make_pair(d, objMap[d]));
                 }
             }
         }
@@ -36,7 +36,7 @@ Hmx::Object *RayCastDefaultContainer::FindNearest(
     f = 1;
     Segment localSegment = s;
     Hmx::Object *ret = nullptr;
-    FOREACH (it, unk4) {
+    FOREACH (it, mList) {
         RndMesh *curMesh = it->first;
         Vector3 curVec;
         Plane curPlane;
@@ -66,12 +66,12 @@ DefaultDetectionVolume::DefaultDetectionVolume(DetectionVolumeListener *dvl)
 #pragma region DefaultPhysicsManager
 
 DefaultPhysicsManager::DefaultPhysicsManager(RndDir *d)
-    : PhysicsManager(d), unk40(this, kObjListOwnerControl) {}
+    : PhysicsManager(d), mCollidableRefs(this, kObjListOwnerControl) {}
 
 bool DefaultPhysicsManager::Replace(ObjRef *from, Hmx::Object *to) {
-    if (from->Parent() != &unk40) {
+    if (from->Parent() != &mCollidableRefs) {
         Hmx::Object *obj = from->GetObj();
-        // unk40.erase(it);
+        // mCollidableRefs.erase(it);
         RemoveCollidable(obj);
         return true;
     } else {
@@ -107,7 +107,7 @@ void DefaultPhysicsManager::Poll() {
 }
 
 RayCastContainer *DefaultPhysicsManager::MakeContainer(const Box &box, unsigned int ui) {
-    return new RayCastDefaultContainer(box, mActiveCollidables, unk54);
+    return new RayCastDefaultContainer(box, mActiveCollidables, mCollidableToDirTbl);
 }
 
 DetectionVolume *DefaultPhysicsManager::MakeDetectionVolume(
@@ -152,30 +152,30 @@ void DefaultPhysicsManager::DeactivateCollidable(Hmx::Object *o) {
 }
 
 void DefaultPhysicsManager::RemoveAll() {
-    unk54.clear();
+    mCollidableToDirTbl.clear();
     mActiveCollidables.clear();
     mInactiveCollidables.clear();
-    unk40.clear();
+    mCollidableRefs.clear();
 }
 
 void DefaultPhysicsManager::AddCollidable(Hmx::Object *o, ObjectDir *dir, bool isActive) {
     RndMesh *mesh = dynamic_cast<RndMesh *>(o);
     if (mesh) {
-        if (unk54.find(mesh) == unk54.end()) {
-            unk54[mesh] = dir;
+        if (mCollidableToDirTbl.find(mesh) == mCollidableToDirTbl.end()) {
+            mCollidableToDirTbl[mesh] = dir;
             if (isActive) {
                 mActiveCollidables.push_front(mesh);
             } else {
                 mInactiveCollidables.push_front(mesh);
             }
-            unk40.insert(unk40.begin(), o);
+            mCollidableRefs.insert(mCollidableRefs.begin(), o);
         }
     }
 }
 
 void DefaultPhysicsManager::RemoveCollidable(Hmx::Object *o) {
-    auto mapIt = unk54.find(o);
-    if (mapIt != unk54.end()) {
+    auto mapIt = mCollidableToDirTbl.find(o);
+    if (mapIt != mCollidableToDirTbl.end()) {
         auto activeIt =
             std::find(mActiveCollidables.begin(), mActiveCollidables.end(), o);
 
@@ -188,7 +188,7 @@ void DefaultPhysicsManager::RemoveCollidable(Hmx::Object *o) {
                 mInactiveCollidables.erase(inactiveIt);
             }
         }
-        unk54.erase(mapIt);
-        unk40.remove(o);
+        mCollidableToDirTbl.erase(mapIt);
+        mCollidableRefs.remove(o);
     }
 }

@@ -50,7 +50,7 @@ public:
         void Animate(const EnvLightEntry &, float);
         bool operator!=(const EnvLightEntry &) const;
 
-        Hmx::Quat unk0;
+        Hmx::Quat mOrientation;
         /** "Light's position" */
         Vector3 mPosition; // 0x10
         /** "Light's color" */
@@ -81,7 +81,7 @@ public:
         unsigned char mFlags; // 0x8
         ObjPtr<RndTransformable> mTarget; // 0xc
         Hmx::Quat mOrientation; // 0x20
-        Hmx::Matrix3 unk30; // 0x30 - rotation?
+        Hmx::Matrix3 mCachedDisplayRot; // 0x30
     };
 
     struct SpotlightDrawerEntry {
@@ -123,7 +123,7 @@ public:
         float mDuration; // 0xa0
         /** "Fade-out time of the keyframe" */
         float mFadeOutTime; // 0xa4
-        float unka8; // 0xa8
+        float mFrame; // 0xa8
     };
 
     enum KeyframeCmd {

@@ -37,6 +37,6 @@ protected:
     bool mLastFrameSame; // 0x3c
     float mBlend; // 0x40
     float mOverrideFadeTime; // 0x44
-    int unk48; // 0x48
+    int mOverrideFadeState; // 0x48
     bool mIgnoreLightingEvents; // 0x4c
 };
