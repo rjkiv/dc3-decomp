@@ -300,8 +300,9 @@ Symbol GetOutfitCharacter(Symbol outfit, bool fail) {
         return gNullStr;
 }
 
-HamGameData::HamGameData() : mPlayerSidesLocked(0), unk35(0), mPlayers(this), unk50(0) {
-    GetDateAndTime(unk48);
+HamGameData::HamGameData()
+    : mPlayerSidesLocked(0), mTimeyWimey(0), mPlayers(this), mConsecutiveDaysPlayed(0) {
+    GetDateAndTime(mCurrPlayTime);
     for (int i = 0; i < kMaxPlayers; i++) {
         mPlayers.push_back(new HamPlayerData(i));
     }
@@ -385,7 +386,7 @@ void HamGameData::Clear() {
 
 Symbol HamGameData::Venue() const {
     static Symbol bid("bid");
-    return unk35 ? bid : mVenue;
+    return mTimeyWimey ? bid : mVenue;
 }
 
 const DataNode *HamGameData::PlayerProp(int index, Symbol s2) const {

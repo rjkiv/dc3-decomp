@@ -51,8 +51,8 @@ public:
 class HamDirector : public RndPollable, public RndDrawable {
 public:
     struct DircutEntry {
-        HamCamShot *unk0;
-        bool unk4;
+        HamCamShot *shot;
+        bool optional;
     };
     // Hmx::Object
     virtual ~HamDirector();
@@ -148,8 +148,8 @@ public:
     HamCamShot *CurShot() const { return mCurShot; }
     FileMerger *GetGameModeMerger() const { return mGameModeMerger; }
     void SetPickingDisabled(bool disable) { mDisablePicking = disable; }
-    bool Unk33d() const { return unk33d; }
-    void SetUnk2AC(bool b) { unk2ac = b; }
+    bool Unk33d() const { return mIsGameStartHold; }
+    void SetUnk2AC(bool b) { mPollEnabled = b; }
     PoseFatalities *GetPoseFatalities() const { return mPoseFatalities; }
     RndPostProc *GetUnk18c() const { return unk18c; }
     int StartLoopMargin() const { return mStartLoopMargin; }
@@ -277,12 +277,13 @@ protected:
     ObjPtr<HamCharacter> mPlayer1; // 0x218
     ObjPtr<HamCharacter> mBackup0; // 0x22c
     ObjPtr<HamCharacter> mBackup1; // 0x240
+    /** TRUE if backup characters are hidden - this can be toggled via cheats */
     bool mBackupsHidden; // 0x254
     /** 0-1 = players 0-1, 2-3 = backups 0-1 */
     bool mBackupState[4]; // 0x255
     bool mDisabled; // 0x259
     /** Whether or not to load asynchronously. */
-    bool mAsync; // 0x25a
+    bool mAsyncLoad; // 0x25a
     /** "currently shown camshot, nice for debugging." */
     ObjPtr<HamCamShot> mCurShot; // 0x25c
     ObjPtr<HamCamShot> mNextShot; // 0x270
@@ -291,10 +292,10 @@ protected:
     Symbol mShotCategory; // 0x298
     float mNextShotSec; // 0x29c
     bool mDisablePicking; // 0x2a0
-    bool unk2a1; // 0x2a1
-    int unk2a4; // 0x2a4
-    float unk2a8; // 0x2a8
-    bool unk2ac; // 0x2ac
+    bool mSuppressIntroShot; // 0x2a1
+    int mSuppressNextShot; // 0x2a4
+    float mNextKeyFrame; // 0x2a8
+    bool mPollEnabled; // 0x2ac
     Keys<DircutEntry, DircutEntry> mDirCutKeys; // 0x2b0
     bool mPlayerFreestyle; // 0x2bc
     bool mPausePlayerFreestyle; // 0x2bd
@@ -329,14 +330,15 @@ protected:
     bool mCollisionChecks; // 0x335
     bool mLoadedNewSong; // 0x336
     PoseFatalities *mPoseFatalities; // 0x338
-    bool unk33c; // 0x33c - camshot flag
-    bool unk33d; // 0x33d
+    bool mCamshotFlag; // 0x33c - camshot flag
+    /** Seems to be related to some campaing shenanigans */
+    bool mIsGameStartHold; // 0x33d
     ObjPtr<Character> mIconManChar; // 0x340
     ObjPtr<RndTexRenderer> mIconManTex; // 0x354
-    bool unk368; // 0x368
+    bool mVisualizerStarted; // 0x368
     bool unk369; // 0x369
     Song *mOfflineSong; // 0x36c
-    std::set<Hmx::Object *> unk370; // 0x370
+    std::set<Hmx::Object *> mObjectsAdded; // 0x370
 };
 
 extern HamDirector *TheHamDirector;

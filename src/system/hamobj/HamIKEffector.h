@@ -90,5 +90,5 @@ protected:
     /** "If hand, pointer to elbow object" */
     ObjPtr<HamIKEffector> mElbow; // 0xa8
     ObjVector<Constraint> mConstraints; // 0xbc
-    ObjPtr<Character> unkcc; // 0xcc
+    ObjPtr<Character> mMe; // 0xcc
 };

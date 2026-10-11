@@ -128,22 +128,22 @@ void CharFeedback::Poll() {
     float delta = TheTaskMgr.DeltaSeconds();
     for (int i = 0; i < 4; i++) {
         LimbState &cur = mLimbStates[i];
-        if (cur.unk4 != -1) {
-            if (cur.unk0) {
-                if (!cur.unk1) {
-                    cur.unk0 = false;
+        if (cur.mStateSeconds != -1) {
+            if (cur.mFailing) {
+                if (!cur.mCurrentlyFailing) {
+                    cur.mFailing = false;
                 }
-            } else if (cur.unk1 && secs > mFailTriggerSecs + cur.unk4) {
-                cur.unk0 = true;
+            } else if (cur.mCurrentlyFailing && secs > mFailTriggerSecs + cur.mStateSeconds) {
+                cur.mFailing = true;
             }
             float f1 = delta / mFadeSecs;
-            if (!cur.unk0) {
+            if (!cur.mFailing) {
                 f1 *= -1;
             }
-            cur.unk8 += f1;
-            ClampEq(cur.unk8, 0.0f, 1.0f);
+            cur.mMatAlpha += f1;
+            ClampEq(cur.mMatAlpha, 0.0f, 1.0f);
         } else {
-            cur.unk8 = 0;
+            cur.mMatAlpha = 0;
         }
     }
 }
@@ -164,21 +164,21 @@ void CharFeedback::TestUpdateLimbs(bool b1) {
 
 void CharFeedback::ResetErrors() {
     for (int i = 0; i < kNumLimbFeedbacks; i++) {
-        mLimbStates[i].unk1 = 0;
-        mLimbStates[i].unk0 = 0;
-        mLimbStates[i].unk4 = -1;
-        mLimbStates[i].unk8 = 0;
+        mLimbStates[i].mCurrentlyFailing = 0;
+        mLimbStates[i].mFailing = 0;
+        mLimbStates[i].mStateSeconds = -1;
+        mLimbStates[i].mMatAlpha = 0;
     }
 }
 
-void CharFeedback::UpdateLimb(int limb_index, bool b2) {
+void CharFeedback::UpdateLimb(int limb_index, bool fail) {
     MILO_ASSERT((0) <= (limb_index) && (limb_index) < (kNumLimbFeedbacks), 0x25);
     LimbState &cur = mLimbStates[limb_index];
-    if (b2 != cur.unk1) {
+    if (fail != cur.mCurrentlyFailing) {
         float secs = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
-        if (b2 || cur.unk4 == -1 || secs - cur.unk4 > mMinFailSecs) {
-            cur.unk4 = secs;
-            cur.unk1 = b2;
+        if (fail || cur.mStateSeconds == -1 || secs - cur.mStateSeconds > mMinFailSecs) {
+            cur.mStateSeconds = secs;
+            cur.mCurrentlyFailing = fail;
         }
     }
 }
@@ -188,13 +188,13 @@ void CharFeedback::Sync() {
         "left_arm.mesh", "right_arm.mesh", "left_leg.mesh", "right_leg.mesh"
     };
     for (int i = 0; i < kNumLimbFeedbacks; i++) {
-        mLimbStates[i].unkc = nullptr;
+        mLimbStates[i].mMesh = nullptr;
     }
     ResetErrors();
     if (mTarget) {
         for (int i = 0; i < kNumLimbFeedbacks; i++) {
             RndMesh *mesh = mTarget->Find<RndMesh>(sLimbMeshes[i], false);
-            mLimbStates[i].unkc = mesh;
+            mLimbStates[i].mMesh = mesh;
             if (mesh) {
                 mesh->SetShowing(false);
                 mesh->SetMat(mFailMat);
@@ -208,9 +208,9 @@ void CharFeedback::DrawShowing() {
         if (mTarget && mFailMat) {
             for (int i = 0; i < kNumLimbFeedbacks; i++) {
                 LimbState &state = mLimbStates[i];
-                if (state.unk8 > 0 && state.unkc) {
-                    mFailMat->SetAlpha(state.unk8);
-                    state.unkc->DrawShowing();
+                if (state.mMatAlpha > 0 && state.mMesh) {
+                    mFailMat->SetAlpha(state.mMatAlpha);
+                    state.mMesh->DrawShowing();
                 }
             }
         }

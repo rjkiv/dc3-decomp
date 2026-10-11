@@ -170,7 +170,7 @@ protected:
     void SetControllerFocus(int);
 
     NavInputType mNavInputType; // 0x60
-    std::vector<UIListWidget *> unk64; // 0x64
+    std::vector<UIListWidget *> mWidgets; // 0x64
     UIListState mListState; // 0x70
     std::vector<HamListRibbonDrawState> mRibbonDrawStates; // 0xb8
     /** "Mode for animations" */
@@ -207,16 +207,17 @@ protected:
     bool mAlwaysUseActiveSkeleton; // 0x1e8
     /** "This list can only be used when it is focused" */
     bool mOnlyUseWhenFocused; // 0x1e9
-    float unk1ec; // 0x1ec
-    bool unk1f0; // 0x1f0
-    Symbol unk1f4; // 0x1f4
-    int unk1f8;
-    bool unk1fc;
-    bool unk1fd;
+    float mLastDrawnTime; // 0x1ec
+    /** Real name unknown, used for initiating refreshes of the list */
+    bool mRefreshing; // 0x1f0
+    Symbol mLastSelected; // 0x1f4
+    int mLastSelectedIndex;
+    bool mLastCanSelect;
+    bool mDoubleUser;
     bool unk1fe;
     /** "Elements that match these will be bigger than the other elements" */
     std::vector<Symbol> mBigElements; // 0x200
-    std::vector<int> unk20c; // 0x20c
+    std::vector<int> mBigElementIndices; // 0x20c
 };
 
 DECLARE_MESSAGE(NavSelectMsg, "nav_select")

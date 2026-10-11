@@ -17,7 +17,7 @@
 #include "rndobj/Rnd.h"
 #include "utl/BinStream.h"
 
-HamDriver::HamDriver() : mBones(this), unk78(-kHugeFloat) {}
+HamDriver::HamDriver() : mBones(this), mOldBeat(-kHugeFloat) {}
 
 HamDriver::~HamDriver() { Clear(); }
 
@@ -85,18 +85,18 @@ bool HamDriver::Replace(ObjRef *ref, Hmx::Object *obj) {
     return replaced;
 }
 
-float HamDriver::Display(float f1) {
-    float scaledHeight = TheRnd.Height() * f1;
+float HamDriver::Display(float top) {
+    float scaledHeight = TheRnd.Height() * top;
     auto pathName = PathName(this);
     Hmx::Color color(1.0f, 1.0f, 1.0f, 1.0f);
     Vector2 screenPos(CharClipDisplay::Em(), scaledHeight);
     TheRnd.DrawString(
-        MakeString("%s beat: %.2f", pathName, unk78), screenPos, color, true
+        MakeString("%s beat: %.2f", pathName, mOldBeat), screenPos, color, true
     );
     CharClipDisplay::Init(this->Dir());
     float lineSpacing = CharClipDisplay::LineSpacing() + scaledHeight;
     if (mBones && Weight() != 0) {
-        FOREACH (it, mLayers.unk2c) {
+        FOREACH (it, mLayers.layers) {
             lineSpacing = DisplayRecurse(*it, 0, lineSpacing);
         }
     }
@@ -106,9 +106,9 @@ float HamDriver::Display(float f1) {
 void HamDriver::Poll() {
     if (mBones && Weight() > 0) {
         mLayers.Eval(Weight());
-        mBones->ScaleDown(*mBones, 1.0f - mLayers.unk8);
+        mBones->ScaleDown(*mBones, 1.0f - mLayers.usedWeight);
         mLayers.Play(*mBones);
-        unk78 = TheTaskMgr.Beat();
+        mOldBeat = TheTaskMgr.Beat();
     }
 }
 
@@ -127,46 +127,46 @@ void HamDriver::SetClipWeightMap() {
     }
 }
 
-float HamDriver::DisplayRecurse(Layer *layer, int i, float f) {
+float HamDriver::DisplayRecurse(Layer *layer, int indent, float top) {
     LayerArray *array = dynamic_cast<LayerArray *>(layer);
     if (array) {
-        if (array->unk8 != 0) {
-            float sem = i * CharClipDisplay::Em();
+        if (array->usedWeight != 0) {
+            float sem = indent * CharClipDisplay::Em();
             CharClipDisplay display;
-            display.mTop = f;
-            display.mBeat = unk78;
+            display.mTop = top;
+            display.mBeat = mOldBeat;
             display.mIndent = sem;
-            display.SetText(MakeString("(%s)", array->unkc));
-            display.SetStartEnd(unk78 - 4.0f, unk78 + 4.0f, true);
-            display.mWeight = array->unk8;
+            display.SetText(MakeString("(%s)", array->name));
+            display.SetStartEnd(mOldBeat - 4.0f, mOldBeat + 4.0f, true);
+            display.mWeight = array->usedWeight;
             display.DrawTrack();
-            display.DrawBlend(array->unk4, 1.0f);
+            display.DrawBlend(array->blendStart, 1.0f);
             display.DrawCursor();
-            f += CharClipDisplay::LineSpacing();
-            int x = i + 1;
-            FOREACH (it, array->unk2c) {
-                f = DisplayRecurse(*it, x, f);
+            top += CharClipDisplay::LineSpacing();
+            int x = indent + 1;
+            FOREACH (it, array->layers) {
+                top = DisplayRecurse(*it, x, top);
             }
         }
     } else {
         LayerClip *clip = dynamic_cast<LayerClip *>(layer);
-        if (clip && clip->unk8 != 0) {
-            float sem = i * CharClipDisplay::Em();
+        if (clip && clip->usedWeight != 0) {
+            float sem = indent * CharClipDisplay::Em();
             CharClipDisplay display;
-            float beat = (unk78 - clip->unkc) + clip->unk10->StartBeat();
+            float beat = (mOldBeat - clip->startBeat) + clip->clip->StartBeat();
             display.mIndent = sem;
             display.mBeat = beat;
-            display.mWeight = clip->unk8;
-            display.SetClip(clip->unk10, true);
-            display.mTop = f;
+            display.mWeight = clip->usedWeight;
+            display.SetClip(clip->clip, true);
+            display.mTop = top;
             display.DrawTrack();
-            float beat2 = (clip->unk10->StartBeat() + clip->unk4) - clip->unkc;
+            float beat2 = (clip->clip->StartBeat() + clip->blendStart) - clip->startBeat;
             display.DrawBlend(beat2, 1.0f);
             display.DrawCursor();
-            f += CharClipDisplay::LineSpacing();
+            top += CharClipDisplay::LineSpacing();
         }
     }
-    return f;
+    return top;
 }
 
 void HamDriver::Clear() { mLayers.Clear(); }
@@ -176,27 +176,27 @@ CharClip *HamDriver::FirstClip() { return mLayers.FirstClip(); }
 
 #pragma region HamDriver::Layer
 
-void HamDriver::Layer::OffsetSec(float f1) {
-    unk4 = SecondsToBeat(BeatToSeconds(unk4) + f1);
+void HamDriver::Layer::OffsetSec(float sec) {
+    blendStart = SecondsToBeat(BeatToSeconds(blendStart) + sec);
 }
 
 void HamDriver::SetClipMapRecurse(HamDriver::Layer *layer) {
     LayerArray *array = dynamic_cast<LayerArray *>(layer);
     if (array) {
-        if (array->unk8 != 0) {
-            FOREACH (it, array->unk2c) {
+        if (array->usedWeight != 0) {
+            FOREACH (it, array->layers) {
                 SetClipMapRecurse(*it);
             }
         }
     } else {
         LayerClip *clip = dynamic_cast<LayerClip *>(layer);
-        if (clip && clip->unk8 != 0) {
-            CharClip *c = clip->unk10;
+        if (clip && clip->usedWeight != 0) {
+            CharClip *c = clip->clip;
             auto it = mClipWeights.find(c);
             if (it != mClipWeights.end()) {
-                it->second += clip->unk8;
+                it->second += clip->usedWeight;
             } else {
-                mClipWeights.insert(std::pair<CharClip *, float>(c, clip->unk8));
+                mClipWeights.insert(std::pair<CharClip *, float>(c, clip->usedWeight));
             }
         }
     }
@@ -206,21 +206,21 @@ void HamDriver::SetClipMapRecurse(HamDriver::Layer *layer) {
 
 #pragma region HamDriver::LayerClip
 
-HamDriver::LayerClip::LayerClip(Hmx::Object *obj) : unk10(obj) {}
+HamDriver::LayerClip::LayerClip(Hmx::Object *obj) : clip(obj) {}
 
-void HamDriver::LayerClip::OffsetSec(float f1) {
-    Layer::OffsetSec(f1);
-    unkc = SecondsToBeat(BeatToSeconds(unkc) + f1);
+void HamDriver::LayerClip::OffsetSec(float sec) {
+    Layer::OffsetSec(sec);
+    startBeat = SecondsToBeat(BeatToSeconds(startBeat) + sec);
 }
 
-void HamDriver::LayerClip::Eval(float f1) {
+void HamDriver::LayerClip::Eval(float weight) {
     float beat = TheTaskMgr.Beat();
-    auto clamped = Clamp(0.0f, 1.0f, beat - unk4);
-    unk8 = EaseSigmoid(clamped, 0.0, 0.0) * f1;
+    auto clamped = Clamp(0.0f, 1.0f, beat - blendStart);
+    usedWeight = EaseSigmoid(clamped, 0.0, 0.0) * weight;
 }
 
 bool HamDriver::LayerClip::Replace(ObjRef *ref, Hmx::Object *obj) {
-    if (&unk10 == ref && !unk10.SetObj(obj)) {
+    if (&clip == ref && !clip.SetObj(obj)) {
         if (this) {
             delete this;
         }
@@ -230,10 +230,10 @@ bool HamDriver::LayerClip::Replace(ObjRef *ref, Hmx::Object *obj) {
 }
 
 void HamDriver::LayerClip::Play(CharBones &bones) {
-    if (unk8 > 0) {
-        float startbeat = unk10->StartBeat();
-        float val = (TheTaskMgr.Beat() - unkc) + startbeat;
-        bones.ScaleAdd(unk10, unk8, val, TheTaskMgr.DeltaBeat());
+    if (usedWeight > 0) {
+        float startbeat = clip->StartBeat();
+        float val = (TheTaskMgr.Beat() - startBeat) + startbeat;
+        bones.ScaleAdd(clip, usedWeight, val, TheTaskMgr.DeltaBeat());
     }
 }
 
@@ -242,20 +242,20 @@ void HamDriver::LayerClip::Play(CharBones &bones) {
 #pragma region HamDriver::LayerArray
 
 void HamDriver::LayerArray::Clear() {
-    FOREACH (it, unk2c) {
+    FOREACH (it, layers) {
         delete *it;
     }
-    unk2c.clear();
+    layers.clear();
 }
 
 bool HamDriver::LayerArray::Replace(ObjRef *ref, Hmx::Object *obj) {
-    FOREACH (it, unk2c) {
-        if (it == unk2c.end()) {
+    FOREACH (it, layers) {
+        if (it == layers.end()) {
             return false;
         }
         bool replaced = (*it)->Replace(ref, obj);
         if (replaced) {
-            unk2c.erase(it);
+            layers.erase(it);
             break;
         }
     }
@@ -263,8 +263,8 @@ bool HamDriver::LayerArray::Replace(ObjRef *ref, Hmx::Object *obj) {
 }
 
 void HamDriver::LayerArray::Play(CharBones &bones) {
-    if (unk8 > 0.0) {
-        FOREACH (it, unk2c) {
+    if (usedWeight > 0.0) {
+        FOREACH (it, layers) {
             (*it)->Play(bones);
         }
     }
@@ -272,7 +272,7 @@ void HamDriver::LayerArray::Play(CharBones &bones) {
 
 CharClip *HamDriver::LayerArray::FirstClip() {
     CharClip *clip;
-    FOREACH (it, unk2c) {
+    FOREACH (it, layers) {
         clip = (*it)->FirstClip();
         if (clip != nullptr) {
             return clip;
@@ -281,25 +281,25 @@ CharClip *HamDriver::LayerArray::FirstClip() {
     return nullptr;
 }
 
-void HamDriver::LayerArray::OffsetSec(float f1) {
-    Layer::OffsetSec(f1);
-    FOREACH (it, unk2c) {
-        (*it)->OffsetSec(f1);
+void HamDriver::LayerArray::OffsetSec(float delta) {
+    Layer::OffsetSec(delta);
+    FOREACH (it, layers) {
+        (*it)->OffsetSec(delta);
     }
 }
 
-void HamDriver::LayerArray::Eval(float f) {
-    unk8 = 0;
-    if (f > 0) {
-        float elapsed = TheTaskMgr.Beat() - unk4;
+void HamDriver::LayerArray::Eval(float weight) {
+    usedWeight = 0;
+    if (weight > 0) {
+        float elapsed = TheTaskMgr.Beat() - blendStart;
         if (elapsed > 0) {
             float val = (elapsed - 1.0f < 0) ? elapsed : 1.0f;
-            float sigmoid = EaseSigmoid(val, 0, 0) * f;
-            FOREACH (it, unk2c) {
+            float sigmoid = EaseSigmoid(val, 0, 0) * weight;
+            FOREACH (it, layers) {
                 (*it)->Eval(sigmoid);
-                float val8 = (*it)->unk8;
+                float val8 = (*it)->usedWeight;
                 float val2 = (val8 - sigmoid < 0) ? val8 : sigmoid;
-                unk8 += val2;
+                usedWeight += val2;
                 sigmoid -= val2;
             }
         }

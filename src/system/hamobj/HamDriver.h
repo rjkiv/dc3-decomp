@@ -15,7 +15,7 @@
 class HamDriver : public RndHighlightable, public CharWeightable, public CharPollable {
 public:
     struct Layer {
-        Layer() : unk4(-kHugeFloat) {}
+        Layer() : blendStart(-kHugeFloat) {}
         virtual ~Layer() {}
         virtual void Eval(float) = 0;
         virtual void Play(CharBones &) = 0;
@@ -25,12 +25,12 @@ public:
 
         MEM_OVERLOAD(Layer, 0x27)
 
-        float unk4; // 0x4 - beat?
-        float unk8;
+        float blendStart; // 0x4 - beat?
+        float usedWeight;
     };
 
     struct LayerArray : public Layer {
-        LayerArray() { unkc[0] = 0; }
+        LayerArray() { name[0] = 0; }
         virtual ~LayerArray() { Clear(); }
         virtual void Eval(float);
         virtual void Play(CharBones &);
@@ -40,8 +40,8 @@ public:
 
         void Clear();
 
-        char unkc[0x20];
-        std::list<Layer *> unk2c;
+        char name[0x20];
+        std::list<Layer *> layers;
     };
 
     struct LayerClip : public Layer {
@@ -52,8 +52,8 @@ public:
         virtual CharClip *FirstClip();
         virtual void OffsetSec(float);
 
-        float unkc;
-        ObjOwnerPtr<CharClip> unk10; // 0x10
+        float startBeat;
+        ObjOwnerPtr<CharClip> clip; // 0x10
     };
 
     // Hmx::Object
@@ -97,6 +97,6 @@ protected:
     /** "The CharBones object to add into." */
     ObjPtr<CharBonesObject> mBones; // 0x30
     LayerArray mLayers; // 0x44
-    float unk78; // 0x78 - beat?
+    float mOldBeat; // 0x78 - beat?
     std::map<CharClip *, float> mClipWeights; // 0x7c
 };

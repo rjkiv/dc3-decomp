@@ -45,7 +45,7 @@ public:
     void SetSong(Symbol song) { mSong = song; }
     Symbol GetSong() const { return mSong; }
     void SetVenue(Symbol venue) { mVenue = venue; }
-    void SetInTimeyWimey(bool set) { unk35 = set; }
+    void SetInTimeyWimey(bool set) { mTimeyWimey = set; }
 
 protected:
     HamGameData();
@@ -53,10 +53,15 @@ protected:
     Symbol mVenue; // 0x2c
     Symbol mSong; // 0x30
     bool mPlayerSidesLocked; // 0x34
-    bool unk35; // 0x35
+    /** Timey Wimey relates to the game's time-travel "mechanics", so by guessing it is
+     * true when player is traveling through time or in Rehearse mode (because the venue
+     * is timey-wimey? whether it appears in freestyle as well needs to be verified). */
+    bool mTimeyWimey; // 0x35
     ObjVector<HamPlayerData *> mPlayers; // 0x38
-    DateTime unk48; // 0x48
-    int unk50; // 0x50
+    /** This represents how much grass the player needs to touch */
+    DateTime mCurrPlayTime; // 0x48
+    /** How much you are addicted to Dance Central 3 */
+    int mConsecutiveDaysPlayed; // 0x50
 };
 
 extern HamGameData *TheGameData;

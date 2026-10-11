@@ -10,7 +10,9 @@ enum MoveMode {
 };
 
 enum FilterVersionType {
+    /** Used in DC1 songs */
     kFilterVersionHam1 = 0,
+    /** Used in DC2 and DC3 songs */
     kFilterVersionHam2 = 1,
     kNumFilterVersions = 2
 };

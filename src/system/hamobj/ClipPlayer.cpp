@@ -118,12 +118,12 @@ void ClipPlayer::PlayClip(
         mBlendCount++;
         if (!TheLoadMgr.EditMode() || (mBlendDebug <= 0 || mBlendCount == mBlendDebug)) {
             HamDriver::LayerClip *layerClip = mDriver->NewLayerClip();
-            layerClip->unk10 = clip;
-            layerClip->unkc = f50 - mOffset;
-            layerClip->unk4 = startBlend - mOffset;
-            layer->unk2c.push_front(layerClip);
+            layerClip->clip = clip;
+            layerClip->startBeat = f50 - mOffset;
+            layerClip->blendStart = startBlend - mOffset;
+            layer->layers.push_front(layerClip);
             if (TheLoadMgr.EditMode() && mBlendDebug > 0) {
-                layerClip->unk4 = -kHugeFloat;
+                layerClip->blendStart = -kHugeFloat;
             }
         }
     }
@@ -208,12 +208,12 @@ void ClipPlayer::PlayNormal(
     HamDriver::LayerArray *newArr;
     if (layer) {
         newArr = new HamDriver::LayerArray();
-        layer->unk2c.push_front(newArr);
-        strncpy(newArr->unkc, name, 0x1F);
+        layer->layers.push_front(newArr);
+        strncpy(newArr->name, name, 0x1F);
     } else {
         newArr = &mDriver->Layers();
     }
-    newArr->unk4 = blendStart - mOffset;
+    newArr->blendStart = blendStart - mOffset;
     if (!mClipKeys) {
         if (TheLoadMgr.EditMode()) {
             {

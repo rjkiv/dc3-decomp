@@ -11,7 +11,7 @@
 
 const float CharCameraInput::kDrawScale = 39.370079f;
 
-CharCameraInput::CharCameraInput(Character *c) : mChar(c), unk2430(0) {
+CharCameraInput::CharCameraInput(Character *c) : mChar(c), mFlip(0) {
     MILO_ASSERT(mChar, 0x18);
     for (int i = 0; i < kNumJoints; i++) {
         const char *name = CharBoneName((SkeletonJoint)i);
@@ -20,13 +20,13 @@ CharCameraInput::CharCameraInput(Character *c) : mChar(c), unk2430(0) {
             MILO_NOTIFY("Could not find %s", name);
         }
     }
-    memset(&unk11d8, 0, sizeof(SkeletonFrame));
-    unk11d8.mUpVector.Set(0, 1, 0);
-    unk11d8.mFloorPlane.Set(0, 0, 0, 0);
-    unk11d8.mFrameNumber = 0;
-    unk11d8.mElapsedMs = 33;
+    memset(&mFrame, 0, sizeof(SkeletonFrame));
+    mFrame.mUpVector.Set(0, 1, 0);
+    mFrame.mFloorPlane.Set(0, 0, 0, 0);
+    mFrame.mFrameNumber = 0;
+    mFrame.mElapsedMs = 33;
     for (int i = 0; i < 6; i++) { // literally why is this for loop here
-        SkeletonData &data = unk11d8.mSkeletonDatas[i];
+        SkeletonData &data = mFrame.mSkeletonDatas[i];
         if (i == 0) {
             data.mTracking = kSkeletonTracked;
             data.mQualityFlags = 0;
@@ -47,7 +47,7 @@ const SkeletonFrame *CharCameraInput::PollNewFrame() {
     MILO_ASSERT(mChar, 0x48);
     Transform t;
     Invert(mNatalXfm, t);
-    SkeletonData &data = unk11d8.mSkeletonDatas[0];
+    SkeletonData &data = mFrame.mSkeletonDatas[0];
     for (int i = 0; i < kNumJoints; i++) {
         SkeletonJoint mirrorJoint = BaseSkeleton::MirrorJoint((SkeletonJoint)i);
         RndTransformable *currBone = mBoneNames[i];
@@ -57,13 +57,13 @@ const SkeletonFrame *CharCameraInput::PollNewFrame() {
             data.mJointPositions[mirrorJoint].Zero();
         }
 
-        if (unk2430) {
+        if (mFlip) {
             data.mJointPositions[mirrorJoint].x *= -1.0f;
             data.mJointPositions[mirrorJoint].z *= -1.0f;
         }
         data.mRawJointPositions[mirrorJoint] = data.mJointPositions[mirrorJoint];
     }
-    return &unk11d8;
+    return &mFrame;
 }
 
 void CharCameraInput::ResetSkeletonCharOrigin() {

@@ -46,8 +46,8 @@ protected:
 
     Keys<float, float> mCountKeys; // 0x168
     Symbol mCountToken; // 0x174
-    String unk178; // 0x178
-    bool unk180; // 0x180
+    String mPendingDisplayText; // 0x178
+    bool mPendingClearToken; // 0x180
     bool mCanHaveFocus; // 0x181
 };
 

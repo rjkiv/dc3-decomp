@@ -13,12 +13,37 @@ class CharFeedback : public RndDrawable, public RndPollable {
 public:
     // size 0x20
     struct LimbState {
-        LimbState() : unkc(nullptr) {}
-        bool unk0; // 0x0
-        bool unk1; // 0x1
-        float unk4; // 0x4
-        float unk8; // 0x8
-        ObjPtr<RndMesh> unkc; // 0xc
+        LimbState() : mMesh(nullptr) {}
+
+        /**
+         * Indicates the current "state" - that being whether the limb is actually
+         * "outlined".
+         */
+        bool mFailing; // 0x0
+
+        /**
+         * Indicates whether the limb is currently in a "failing" state. This is used to
+         * determine when to start the "outline" effect.
+         */
+        bool mCurrentlyFailing; // 0x1
+
+        /**
+         * The time (in seconds) when the limb last changed state. This is used to
+         * determine how long the limb has been in its current state.
+         */
+        float mStateSeconds; // 0x4
+
+        /**
+         * The current alpha value for the material effect. This is used to fade the
+         * effect in and out over time.
+         */
+        float mMatAlpha; // 0x8
+
+        /**
+         * The mesh associated with this limb. This is used to apply the material effect
+         * to the correct part of the character.
+         */
+        ObjPtr<RndMesh> mMesh; // 0xc
     };
     // Hmx::Object
     virtual ~CharFeedback();

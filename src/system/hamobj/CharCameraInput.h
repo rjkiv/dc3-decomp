@@ -13,7 +13,7 @@ public:
     virtual bool NatalToWorld(Transform &) const;
 
     void ResetSkeletonCharOrigin();
-    void SetUnk2430(bool b) { unk2430 = b; }
+    void SetFlip(bool flip) { mFlip = flip; }
 
     static float const kDrawScale;
 
@@ -21,8 +21,8 @@ protected:
     virtual const SkeletonFrame *PollNewFrame();
 
     Character *mChar; // 0x11d4
-    SkeletonFrame unk11d8; // 0x11d8
+    SkeletonFrame mFrame; // 0x11d8
     RndTransformable *mBoneNames[kNumJoints]; // 0x23a0
     Transform mNatalXfm; // 0x23f0
-    bool unk2430; // 0x2430
+    bool mFlip; // 0x2430
 };
