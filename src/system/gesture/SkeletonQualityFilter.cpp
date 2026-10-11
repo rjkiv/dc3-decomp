@@ -5,6 +5,12 @@
 #include "gesture/Skeleton.h"
 #include "hamobj/HamGameData.h"
 #include "math/Vec.h"
+#include <cstdio>
+
+int dummyunusedskeletonqualityfilterlmao() {
+    char buf[50];
+    return sprintf_s<50>(buf, "");
+}
 
 SkeletonQualityFilter::SkeletonQualityFilter()
     : mMinToLose(0), mNeedToRegain(20), mValid(0), mTotalConfidence(0), mSitting(0),

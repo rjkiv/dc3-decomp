@@ -48,6 +48,7 @@ namespace std {
     using ::vprintf;
     using ::vsnprintf;
     using ::vsprintf;
+    using ::vsprintf_s;
 
     using ::fscanf;
     using ::scanf;
@@ -65,4 +66,10 @@ namespace std {
 }
 
 template <size_t size>
-int sprintf_s(char (&buffer)[size], const char *format, ...);
+int sprintf_s(char (&buffer)[size], const char *format, ...){
+    va_list args;
+    va_start(args, format);
+    int ret = vsprintf_s(buffer, size, format, args);
+    va_end(args);
+    return ret;
+}
