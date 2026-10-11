@@ -27,7 +27,6 @@
 #include "xdk/xapilibi/synchapi.h"
 
 CriticalSection SkeletonUpdateHandle::sCritSec;
-static const float sFloat = 2.0f;
 
 #pragma region SkeletonUpdateHandle
 
@@ -67,7 +66,18 @@ void SkeletonUpdateHandle::PostUpdate() { mInst->PostUpdate(); }
 #pragma endregion
 #pragma region SkeletonUpdate
 
-static bool sBool878;
+static bool sBreakSkeletonUpdateThread;
+
+void SkeletonUpdateCallbackSlowdownCB(float ms, void *param) {
+    Hmx::Object *obj = static_cast<Hmx::Object *>(param);
+    SkeletonCallback *cb = dynamic_cast<SkeletonCallback *>(obj);
+    const char *name = cb ? (obj->Name() ? obj->Name() : "none") : "null";
+    const char *className = cb
+        ? (obj->ClassName().Null() ? "unknown class" : obj->ClassName().Str())
+        : "null";
+
+    MILO_LOG("%2.2f msec %s %s\n", ms, name, className);
+}
 
 DWORD SkeletonUpdateThread(LPVOID) {
     HANDLE new_skeleton_event = SkeletonUpdate::NewSkeletonEvent();
@@ -75,14 +85,14 @@ DWORD SkeletonUpdateThread(LPVOID) {
     HANDLE skeleton_updated_event = SkeletonUpdate::SkeletonUpdatedEvent();
     MILO_ASSERT(skeleton_updated_event, 0x23);
     WaitForSingleObject(new_skeleton_event, -1);
-    while (!sBool878) {
-        SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
-        //     SkeletonUpdate::InstanceHandle(local_40);
-        //     if (local_40[0][0x539c] != (SkeletonUpdate)0x0) {
-        //       SkeletonUpdate::Update(local_40[0]);
-        //       SetEvent(hEvent);
-        //     }
-        //     CriticalSection::Exit(&SkeletonUpdateHandle::sCritSec);
+    while (!sBreakSkeletonUpdateThread) {
+        {
+            SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
+            if (handle.IsThreadedUpdate()) {
+                handle.Update();
+                SetEvent(skeleton_updated_event);
+            }
+        }
         WaitForSingleObject(new_skeleton_event, -1);
     }
     return 0;
@@ -110,7 +120,7 @@ SkeletonUpdate::SkeletonUpdate()
 }
 
 SkeletonUpdate::~SkeletonUpdate() {
-    sBool878 = true;
+    sBreakSkeletonUpdateThread = true;
     SetEvent(sNewSkeletonEvent);
     WaitForSingleObject(mSkeletonUpdateThread, -1);
     CloseHandle(mSkeletonUpdateThread);
@@ -152,8 +162,6 @@ void SkeletonUpdate::CreateInstance() {
 void SkeletonUpdate::Terminate() { RELEASE(sInstance); }
 bool SkeletonUpdate::HasInstance() { return sInstance; }
 void *SkeletonUpdate::NewSkeletonEvent() { return sNewSkeletonEvent; }
-
-void SkeletonUpdateCallbackSlowdownCB(float, void *);
 
 void SkeletonUpdate::PostUpdate() {
     MILO_ASSERT(MainThread(), 0x26F);
@@ -246,7 +254,8 @@ void SkeletonUpdate::UpdateFakeArmPos() {
     JoypadData *data = JoypadGetPadData(0);
     float sticks = data->mSticks[1][1];
     float uiSeconds = TheTaskMgr.DeltaUISeconds();
-    uiSeconds *= sFloat;
+    static const float _moveSpeed = 2.0f;
+    uiSeconds *= _moveSpeed;
     mFakeArmHeight = -(uiSeconds * sticks - mFakeArmHeight);
 
     float val = -0.25f;
@@ -286,4 +295,49 @@ void SkeletonUpdate::Update() {
         }
     }
     UpdateCallbacks();
+}
+
+void SkeletonUpdate::InsertFakeArmPos(SkeletonData &sdata) {
+    JoypadData *jData = JoypadGetPadData(0);
+    float rx = jData->RX();
+    if (rx > 0.5f) {
+        sdata.mJointPositions[kJointElbowRight].Set(
+            sdata.mJointPositions[kJointShoulderRight].x + 0.3f,
+            sdata.mJointPositions[kJointShoulderRight].y - 0.3f,
+            sdata.mJointPositions[kJointShoulderRight].z
+        );
+        sdata.mJointPositions[kJointWristRight].Set(
+            sdata.mJointPositions[kJointElbowRight].x + 0.3f,
+            sdata.mJointPositions[kJointElbowRight].y - 0.3f,
+            sdata.mJointPositions[kJointElbowRight].z
+        );
+        sdata.mJointPositions[kJointHandRight] = sdata.mJointPositions[10];
+    } else if (rx < -0.5f) {
+        sdata.mJointPositions[kJointHandRight].y = 0.65f;
+        sdata.mJointPositions[kJointHandLeft].y = 0.65f;
+        sdata.mJointPositions[kJointWristRight].y = 0.6f;
+        sdata.mJointPositions[kJointWristLeft].y = 0.6f;
+        sdata.mJointPositions[kJointElbowRight].y = 0.45f;
+        sdata.mJointPositions[kJointElbowLeft].y = 0.45f;
+    } else if (jData->RT() > 0.5f && jData->LT() > 0.5f) {
+        sdata.mJointPositions[kJointHandRight].y = 0.65f;
+        sdata.mJointPositions[kJointWristRight].y = 0.6f;
+        sdata.mJointPositions[kJointElbowRight].y = 0.45f;
+    } else {
+        Vector3 v;
+        v.z = sdata.mJointPositions[kJointElbowRight].z - 0.5f;
+        v.y = sdata.mJointPositions[kJointElbowRight].y + mFakeArmHeight;
+        v.x = sdata.mJointPositions[kJointElbowRight].x + -(jData->RT() / 2 - 0.1f);
+        sdata.mJointPositions[kJointHandRight] = v;
+        sdata.mJointPositions[kJointWristRight] = v;
+    }
+
+    if (jData->LT() > 0 && jData->RT() == 0) {
+        Vector3 v;
+        v.z = sdata.mJointPositions[kJointElbowLeft].z - 0.5f;
+        v.y = sdata.mJointPositions[kJointElbowLeft].y + mFakeArmHeight;
+        v.x = sdata.mJointPositions[kJointElbowLeft].x + -(jData->LT() / 2 - 0.25f);
+        sdata.mJointPositions[kJointHandLeft] = v;
+        sdata.mJointPositions[kJointWristLeft] = v;
+    }
 }

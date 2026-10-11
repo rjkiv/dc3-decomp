@@ -2,6 +2,7 @@
 #include "gesture/CameraInput.h"
 #include "gesture/Skeleton.h"
 #include "gesture/SkeletonHistory.h"
+#include "hamobj/Ham.h"
 #include "obj/Object.h"
 #include "os/CritSec.h"
 #include "xdk/nui/nuiskeleton.h"
@@ -68,6 +69,7 @@ private:
     void Update();
     void UpdateFakeArmPos();
     void UpdateCallbacks();
+    void InsertFakeArmPos(SkeletonData &sdata);
 
     static SkeletonUpdate *sInstance;
     static HANDLE sNewSkeletonEvent;
@@ -79,10 +81,10 @@ private:
     bool mCameraOverride; // 0x91
     std::vector<SkeletonCallback *> mCallbacks; // 0x94
     SkeletonFrame mSkeletonFrame; // 0xa0
-    Skeleton mSkeletons[6]; // 0x1268
-    const Skeleton *mPlayerSkeletons[2]; // 0x5360
-    const Skeleton *mAllSkeletons[6]; // 0x5368
-    int mPlayerSkeletonTrackingIDs[2]; // 0x5380
+    Skeleton mSkeletons[NUM_SKELETONS]; // 0x1268
+    const Skeleton *mPlayerSkeletons[MAX_NUM_PLAYERS]; // 0x5360
+    const Skeleton *mAllSkeletons[NUM_SKELETONS]; // 0x5368
+    int mPlayerSkeletonTrackingIDs[MAX_NUM_PLAYERS]; // 0x5380
     int mNumStubSkeletons; // 0x5388
     int mFakeShellSkeletonMask; // 0x538c
     bool mSwapFakeSkeletonSides; // 0x5390
@@ -124,3 +126,4 @@ inline void SkeletonUpdateHandle::SetFakeSkeletonSidesSwapped(bool swapped) {
 inline int SkeletonUpdateHandle::GetFakeSkeletonSidesSwapped() {
     return mInst->mSwapFakeSkeletonSides;
 }
+inline void SkeletonUpdateHandle::Update() { mInst->Update(); }

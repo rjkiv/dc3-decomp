@@ -1,5 +1,6 @@
 #pragma once
 #include "gesture/BaseSkeleton.h"
+#include "hamobj/Ham.h"
 #include "math/DoubleExponentialSmoother.h"
 #include "math/Plane.h"
 #include "xdk/NUI.h"
@@ -129,16 +130,16 @@ struct SkeletonData {
 
 struct SkeletonUpdateData {
     SkeletonUpdateData(
-        const Skeleton *(&players)[2],
-        const Skeleton *(&all)[6],
+        const Skeleton *(&players)[MAX_NUM_PLAYERS],
+        const Skeleton *(&all)[NUM_SKELETONS],
         const SkeletonFrame &frame,
         const SkeletonHistory &history,
         const CameraInput &camInput
     )
         : mPlayerSkeletons(players), mAllSkeletons(all), mFrame(frame), mHistory(history),
           mCamInput(camInput) {}
-    const Skeleton *(&mPlayerSkeletons)[2]; // 0x0
-    const Skeleton *(&mAllSkeletons)[6]; // 0x4
+    const Skeleton *(&mPlayerSkeletons)[MAX_NUM_PLAYERS]; // 0x0
+    const Skeleton *(&mAllSkeletons)[NUM_SKELETONS]; // 0x4
     const SkeletonFrame &mFrame; // 0x8
     const SkeletonHistory &mHistory; // 0xc
     const CameraInput &mCamInput; // 0x10
