@@ -1,6 +1,7 @@
 #pragma once
 #include "stddef.h"
 #include "wchar.h"
+#include "macros.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -122,7 +123,7 @@ int system(const char *command);
 char *getenv(const char *name);
 
 int atexit(void (*func)(void));
-__declspec(noreturn) void exit(int status);
+NORETURN void exit(int status);
 void abort(void);
 void _Exit(int exit_code);
 

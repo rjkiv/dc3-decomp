@@ -453,7 +453,7 @@ END_HANDLERS
 void LightPreset::ResetEvents() { sManualEvents.clear(); }
 
 template <class T>
-__forceinline const char *GetObjName(const ObjPtrVec<T> &vec, int idx) {
+FORCEINLINE const char *GetObjName(const ObjPtrVec<T> &vec, int idx) {
     if (idx >= vec.size())
         return "<obj index out of bounds>";
     else if (!vec[idx])

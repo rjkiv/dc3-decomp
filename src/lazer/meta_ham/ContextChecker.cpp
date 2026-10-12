@@ -274,7 +274,7 @@ struct WeightedEntry {
 
 void HandleContextUsed(Symbol ctx) { gUsedContexts.insert(ctx); }
 
-__declspec(noinline) int CheckContext(const DataArray *a) {
+NOINLINE int CheckContext(const DataArray *a) {
     gContextWeight = 10;
     return CheckContextAnd(a) ? gContextWeight : 0;
 }

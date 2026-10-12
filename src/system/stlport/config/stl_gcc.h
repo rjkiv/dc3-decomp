@@ -471,7 +471,7 @@ __GIVE_UP_WITH_STL(GCC_272);
 #endif /* GNUC_MINOR < 8 */
 
 #if !defined (_STLP_NATIVE_C_INCLUDE_PATH)
-#  define _STLP_NATIVE_C_INCLUDE_PATH ../include
+#  define _STLP_NATIVE_C_INCLUDE_PATH xdk/LIBCMT
 #endif
 
 #ifdef _SCO_ELF

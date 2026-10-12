@@ -13,6 +13,9 @@
 
 #define ALIGN(x) __declspec(align(x))
 #define INTRIN __declspec(intrin_type)
+#define FORCEINLINE __forceinline
+#define NOINLINE __declspec(noinline)
+#define NORETURN __declspec(noreturn)
 #else
 #define CDECL
 #define STDCALL
@@ -24,6 +27,9 @@
 
 #define ALIGN(x) alignas(x)
 #define INTRIN
+#define FORCEINLINE inline
+#define NOINLINE
+#define NORETURN [[noreturn]]
 #endif
 
 // #define ROTATE_LEFT(x, i) (((x) << (i)) | ((x) >> ((sizeof((x)) * 8) - (i))))

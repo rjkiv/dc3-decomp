@@ -1,13 +1,14 @@
 #pragma once
 #include <cmath>
 #include "ppcintrinsics.h"
+#include "types.h"
 
 #define kSmallFloat 0.0001f
 #define kHugeFloat 1.0e30f
 // idk where else to put this one
 #define kDbSilence -96.0f
 
-inline float ScaleUShortToFloat01(unsigned short u) { return u / 65535.0f; }
+inline float ScaleUShortToFloat01(u16 u) { return u / 65535.0f; }
 
 inline int CountBits(int num) {
     int temp_r0;
@@ -18,7 +19,7 @@ inline int CountBits(int num) {
     var_r4 = 0;
     while (var_r3 != 0U) {
         temp_r0 = var_r3 & 1;
-        var_r3 = (int)((unsigned int)var_r3 >> 1U);
+        var_r3 = (int)((uint)var_r3 >> 1U);
         var_r4 += temp_r0;
     }
     return var_r4;
@@ -229,7 +230,7 @@ inline float Limit(float f1, float f2, float f3, int &i) {
     return -(i * fsub - f3);
 }
 
-__forceinline unsigned short FloatToHalfFloat(float x) {
+FORCEINLINE unsigned short FloatToHalfFloat(float x) {
     unsigned int fInt = *(unsigned int *)&x;
     unsigned int abs = fInt & 0x7FFFFFFF;
     unsigned int sign = (fInt >> 16) & 0x8000;

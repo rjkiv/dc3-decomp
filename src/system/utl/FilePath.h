@@ -10,8 +10,8 @@ private:
 
 public:
     FilePath() : String() {}
-    __declspec(noinline) FilePath(const char *str) { Set(sRoot.c_str(), str); }
-    __declspec(noinline) FilePath(const char *cc, const char *cc2) { Set(cc, cc2); }
+    NOINLINE FilePath(const char *str) { Set(sRoot.c_str(), str); }
+    NOINLINE FilePath(const char *cc, const char *cc2) { Set(cc, cc2); }
 
     void Set(const char *, const char *);
 

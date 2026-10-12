@@ -90,7 +90,7 @@ public:
     bool InqStatString(int, String &);
     void HandleGameplayEnded(HamProfile *, HamPlayerData *, const EndGameResult &);
 
-    __forceinline void IncFavoriteStat(FavoriteStatID id, int key, int amt = 1) {
+    FORCEINLINE void IncFavoriteStat(FavoriteStatID id, int key, int amt = 1) {
         mFavoriteStats[id].mCounts[key] += amt;
         mDirty = true;
     }

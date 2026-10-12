@@ -1,5 +1,6 @@
 #pragma once
 #include "MemHeap.h"
+#include "types_compat.h"
 
 extern const char *gStlAllocName;
 extern bool gStlAllocNameLookup;
@@ -95,27 +96,27 @@ void MemOrPoolFree(
 );
 void MemOrPoolFreeSTL(int, void *mem, const char *file, int line, const char *name);
 
-void *operator new(unsigned int size);
-void *operator new[](unsigned int size);
+void *operator new(size_t size);
+void *operator new[](size_t size);
 void operator delete(void *mem);
 void operator delete[](void *mem);
 
 // for Hmx::Objects and their derivatives
 #define OBJ_MEM_OVERLOAD(line_num)                                                       \
-    static void *operator new(unsigned int s) {                                          \
+    static void *operator new(size_t s) {                                                \
         return MemAlloc(s, __FILE__, line_num, StaticClassName().Str(), 0);              \
     }                                                                                    \
-    static void *operator new(unsigned int s, void *place) { return place; }             \
+    static void *operator new(size_t s, void *place) { return place; }                   \
     static void operator delete(void *v) {                                               \
         MemFree(v, __FILE__, line_num, StaticClassName().Str());                         \
     }
 
 // for everything else
 #define MEM_OVERLOAD(class_name, line_num)                                               \
-    static void *operator new(unsigned int s) {                                          \
+    static void *operator new(size_t s) {                                                \
         return MemAlloc(s, __FILE__, line_num, #class_name, 0);                          \
     }                                                                                    \
-    static void *operator new(unsigned int s, void *place) { return place; }             \
+    static void *operator new(size_t s, void *place) { return place; }                   \
     static void operator delete(void *v) { MemFree(v, __FILE__, line_num, #class_name); }
 
 #define MEM_ARRAY_OVERLOAD(class_name, line_num)                                         \

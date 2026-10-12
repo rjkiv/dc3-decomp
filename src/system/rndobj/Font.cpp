@@ -246,7 +246,7 @@ struct MatChar {
     float height;
 };
 
-__forceinline BinStream &operator>>(BinStream &bs, MatChar &mc) {
+FORCEINLINE BinStream &operator>>(BinStream &bs, MatChar &mc) {
     char x[0x80];
     bs.ReadString(x, 0x80);
     bs >> mc.width;
@@ -254,7 +254,7 @@ __forceinline BinStream &operator>>(BinStream &bs, MatChar &mc) {
     return bs;
 }
 
-__forceinline BinStreamRev &operator>>(BinStreamRev &d, RndFontBase::KernInfo &info) {
+FORCEINLINE BinStreamRev &operator>>(BinStreamRev &d, RndFontBase::KernInfo &info) {
     if (d.rev < 0x11) {
         char x;
         d >> x;

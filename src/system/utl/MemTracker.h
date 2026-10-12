@@ -62,7 +62,7 @@ public:
     HeapStats &HeapStatsAt(int idx) { return mHeapStats[idx]; }
     short GetTimeSlice() const { return mTimeSlice; }
 
-    __forceinline void SetTopLevelFileName(const char *name) {
+    FORCEINLINE void SetTopLevelFileName(const char *name) {
         mLastTopLevelFileName = mTopLevelFileName;
         mTopLevelFileName = name;
     }

@@ -67,11 +67,13 @@ BinStreamRev &operator>>(BinStreamRev &d, Key<T> &key) {
  */
 template <class T1, class T2>
 class Keys : public std::vector<Key<T1> > {
+    typedef std::vector<Key<T1> > Base;
+
 public:
     /** Remove the key at the given index.
      * @param [in] idx The index in the vector to remove.
      */
-    void Remove(int idx) { erase(begin() + idx); }
+    void Remove(int idx) { erase(Base::begin() + idx); }
 
     /** Remove all keyframes whose frames are in the range [from, to).
      * @param [in] from The first frame to remove.
@@ -81,7 +83,7 @@ public:
     int Remove(float from, float to) {
         int startidx = KeyGreaterEq(from);
         int endidx = KeyGreaterEq(to);
-        erase(begin() + startidx, begin() + endidx);
+        erase(Base::begin() + startidx, Base::begin() + endidx);
         return startidx;
     }
 
@@ -94,10 +96,10 @@ public:
      */
     int Add(const T1 &value, float frame, bool unique) {
         int bound = KeyGreaterEq(frame);
-        if (unique && bound != size() && (*this)[bound].frame == frame) {
+        if (unique && bound != Base::size() && (*this)[bound].frame == frame) {
             (*this)[bound].value = value;
         } else {
-            while (bound < size() && (*this)[bound].frame == frame) {
+            while (bound < Base::size() && (*this)[bound].frame == frame) {
                 bound++;
             }
             insert(&(*this)[bound], Key<T1>(value, frame));
@@ -115,15 +117,15 @@ public:
      * @param [out] endKey The index of the first key whose frame >= the end frame.
      */
     void FindBounds(float &start, float &end, int &startKey, int &endKey) {
-        MILO_ASSERT(size(), 0x1AF);
+        MILO_ASSERT(size(), 431);
         if (!start && !end) {
-            start = front().frame;
-            end = back().frame;
+            start = Base::front().frame;
+            end = Base::back().frame;
             startKey = 0;
-            endKey = size() - 1;
+            endKey = Base::size() - 1;
         } else {
-            startKey = KeyLessEq(Max(start, front().frame));
-            endKey = KeyGreaterEq(Min(end, back().frame));
+            startKey = KeyLessEq(Max(start, Base::front().frame));
+            endKey = KeyGreaterEq(Min(end, Base::back().frame));
         }
     }
 
@@ -152,18 +154,18 @@ public:
      * @returns The index in the vector where this keyframe resides.
      */
     int AtFrame(float frame, const Key<T1> *&prev, const Key<T1> *&next, float &r) const {
-        if (empty()) {
+        if (Base::empty()) {
             prev = next = nullptr;
             r = 0;
             return -1;
-        } else if (frame < front().frame) {
-            prev = next = &front();
+        } else if (frame < Base::front().frame) {
+            prev = next = &Base::front();
             r = 0;
             return -1;
-        } else if (frame >= back().frame) {
-            prev = next = &back();
+        } else if (frame >= Base::back().frame) {
+            prev = next = &Base::back();
             r = 0;
-            return size() - 1;
+            return Base::size() - 1;
         } else {
             int frameIdx = KeyLessEq(frame);
             prev = &(*this)[frameIdx];
@@ -177,16 +179,16 @@ public:
 
     /** Get the first frame of the keys. */
     float FirstFrame() const {
-        if (size() != 0)
-            return front().frame;
+        if (Base::size() != 0)
+            return Base::front().frame;
         else
             return 0.0f;
     }
 
     /** Get the last frame of the keys. */
     float LastFrame() const {
-        if (size() != 0)
-            return back().frame;
+        if (Base::size() != 0)
+            return Base::back().frame;
         else
             return 0.0f;
     }
@@ -197,15 +199,15 @@ public:
      * @returns The index of the keyframe that satisfies the condition above.
      */
     int KeyGreaterEq(float frame) const {
-        if (empty() || (frame <= front().frame))
+        if (Base::empty() || (frame <= Base::front().frame))
             return 0;
         else {
-            const Key<T1> &backKey = back();
+            const Key<T1> &backKey = Base::back();
             if (frame > backKey.frame) {
-                return size();
+                return Base::size();
             } else {
                 int cnt = 0;
-                int threshold = size() - 1;
+                int threshold = Base::size() - 1;
                 while (threshold > cnt + 1) {
                     int newCnt = (cnt + threshold) >> 1;
                     if (frame > (*this)[newCnt].frame)
@@ -227,11 +229,11 @@ public:
      * @returns The index of the keyframe that satisfies the condition above.
      */
     int KeyLessEq(float frame) const {
-        if (empty() || (frame < front().frame))
+        if (Base::empty() || (frame < Base::front().frame))
             return -1;
         else {
             int cnt = 0;
-            int threshold = size();
+            int threshold = Base::size();
             while (threshold > cnt + 1) {
                 int newCnt = (cnt + threshold) >> 1;
                 if (frame < (*this)[newCnt].frame)
@@ -239,7 +241,7 @@ public:
                 else
                     cnt = newCnt;
             }
-            while (cnt + 1 < size() && (*this)[cnt + 1].frame == (*this)[cnt].frame)
+            while (cnt + 1 < Base::size() && (*this)[cnt + 1].frame == (*this)[cnt].frame)
                 cnt++;
             return cnt;
         }
@@ -256,10 +258,10 @@ public:
     void KeysLessEq(float frame, int &first, int &last) const {
         last = -1;
         first = -1;
-        if (empty() || frame < front().frame)
+        if (Base::empty() || frame < Base::front().frame)
             return;
         int i1 = 0;
-        int i2 = size();
+        int i2 = Base::size();
         while (i2 > i1 + 1) {
             int i5 = (i1 + i2) >> 1;
             const Key<T1> &cur = (*this)[i5];
@@ -274,7 +276,7 @@ public:
             i1--;
             first = i1;
         }
-        while (i1 + 1 < size() && (*this)[i1 + 1].frame == (*this)[i1].frame) {
+        while (i1 + 1 < Base::size() && (*this)[i1 + 1].frame == (*this)[i1].frame) {
             i1++;
             last = i1;
         }
@@ -289,13 +291,13 @@ public:
         int i4 = -1;
         float diff = kHugeFloat;
         int idx = KeyLessEq(frame);
-        if (idx >= 0 && idx < size()) {
+        if (idx >= 0 && idx < Base::size()) {
             if (MinEq(diff, frame - (*this)[idx].frame)) {
                 i4 = idx;
             }
         }
         int next = idx + 1;
-        if (next >= 0 && next < size()) {
+        if (next >= 0 && next < Base::size()) {
             if (MinEq(diff, (*this)[next].frame - frame)) {
                 i4 = next;
             }
@@ -315,13 +317,13 @@ public:
      * @returns False if the vector is empty, otherwise true.
      */
     bool Linear(float frame, T1 &val) const {
-        if (size() == 0)
+        if (Base::size() == 0)
             return false;
         else {
-            if (size() == 1)
-                val = front().value;
+            if (Base::size() == 1)
+                val = Base::front().value;
             else {
-                int idx = Clamp<int>(0, size() - 2, KeyLessEq(frame));
+                int idx = Clamp<int>(0, Base::size() - 2, KeyLessEq(frame));
                 const Key<T1> &keyNow = (*this)[idx];
                 const Key<T1> &keyNext = (*this)[idx + 1];
                 Interp(
@@ -342,13 +344,13 @@ public:
      * @returns False if the vector is empty, otherwise true.
      */
     bool ReverseLinear(const T1 &val, float &frame) const {
-        if (size() == 0)
+        if (Base::size() == 0)
             return false;
-        else if (size() == 1) {
-            frame = front().frame;
+        else if (Base::size() == 1) {
+            frame = Base::front().frame;
             return true;
         } else {
-            int idx = Clamp<int>(0, size() - 2, ReverseKeyLessEq(val));
+            int idx = Clamp<int>(0, Base::size() - 2, ReverseKeyLessEq(val));
             const Key<T1> &keyNow = (*this)[idx];
             const Key<T1> &keyNext = (*this)[idx + 1];
             Interp(
@@ -369,11 +371,11 @@ public:
      * if the vector is empty or the value is below the first key's value.
      */
     int ReverseKeyLessEq(const T1 &val) const {
-        if (empty() || val < front().value) {
+        if (Base::empty() || val < Base::front().value) {
             return -1;
         } else {
             int i1 = 0;
-            int i2 = size();
+            int i2 = Base::size();
             while (i2 > i1 + 1) {
                 int newCnt = (i1 + i2) >> 1;
                 if (val < (*this)[newCnt].value)
@@ -381,7 +383,7 @@ public:
                 else
                     i1 = newCnt;
             }
-            while (i1 + 1 < size() && (*this)[i1 + 1].value == (*this)[i1].value)
+            while (i1 + 1 < Base::size() && (*this)[i1 + 1].value == (*this)[i1].value)
                 i1++;
             return i1;
         }
@@ -422,7 +424,7 @@ BinStreamRev &operator>>(BinStreamRev &bs, Keys<T1, T2> &keys) {
  */
 template <class T1, class T2>
 void ScaleFrame(Keys<T1, T2> &keys, float scale) {
-    for (Keys<T1, T2>::iterator it = keys.begin(); it != keys.end(); ++it) {
+    for (typename Keys<T1, T2>::iterator it = keys.begin(); it != keys.end(); ++it) {
         (*it).frame *= scale;
     }
 }

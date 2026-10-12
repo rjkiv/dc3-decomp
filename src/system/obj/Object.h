@@ -367,7 +367,7 @@ public:
 private:
     // Node size: 0x14
     struct Node : public ObjRefConcrete<T1, T2> {
-        Node() : ObjRefConcrete(nullptr) {}
+        Node() : ObjRefConcrete<T1, T2>(nullptr) {}
         // Node(const Node&);
         virtual ~Node() {}
         virtual Hmx::Object *RefOwner() const {
@@ -380,7 +380,7 @@ private:
         virtual void Replace(Hmx::Object *obj) { parent->ReplaceNode(this, obj); }
         virtual ObjRefOwner *Parent() const { return parent; }
 
-        static void *operator new(unsigned int);
+        static void *operator new(size_t);
         //   public: static void* operator new[](uint32_t);
         static void operator delete(void *);
         //   public: static void operator delete[](void*);

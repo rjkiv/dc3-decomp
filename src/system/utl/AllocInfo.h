@@ -35,7 +35,7 @@ public:
 
     static bool bPrintCsv;
     static void SetPoolMemory(void *, int);
-    static void *operator new(unsigned int);
+    static void *operator new(size_t);
     static void operator delete(void *);
 
     int mReqSize; // 0x0
