@@ -13,7 +13,7 @@
 #include "utl/Symbol.h"
 #include "world/CameraShot.h"
 
-enum HamPlayerFlags {
+enum PlayerFlag {
     /** "Player 0" */
     kHamPlayer0 = 0,
     /** "Player 1" */
@@ -154,7 +154,7 @@ protected:
     /** "synchronization time for this camshot" */
     float mZeroTime; // 0x298
     /** "Flag to determine player configuration" */
-    HamPlayerFlags mPlayerFlag; // 0x29c
+    PlayerFlag mPlayerFlag; // 0x29c
     /** "Next camshots, in order" */
     ObjPtrList<HamCamShot> mNextShots; // 0x2a0
     ObjPtrList<HamCamShot>::iterator mNextIter; // 0x2b4

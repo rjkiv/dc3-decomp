@@ -57,15 +57,15 @@ bool MainMenuProvider::HasNewDLC() const {
     HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
     if (pProfile) {
         pProfile->UpdateOnlineID();
-        if (pProfile->IsSignedIn()) {
+        if (pProfile->HasOnlineID()) {
             int padNum = pProfile->GetPadNum();
             if (ThePlatformMgr.IsSignedIntoLive(padNum) && TheRockCentral.IsOnline()) {
                 MILO_LOG(
                     "---- Compare profile time %i and rc time %i\n",
-                    pProfile->GetProfileTime(),
+                    pProfile->GetLastNewSong(),
                     TheRockCentral.GetLastNewSong()
                 );
-                if (pProfile->GetProfileTime() < TheRockCentral.GetLastNewSong())
+                if (pProfile->GetLastNewSong() < TheRockCentral.GetLastNewSong())
                     return true;
             }
         }

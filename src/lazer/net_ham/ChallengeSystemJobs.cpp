@@ -19,7 +19,7 @@ FlauntScoreJob::FlauntScoreJob(Hmx::Object *callback, FlauntScoreData &data)
     pt.AddPair(pid, data.mProfile ? data.mProfile->GetOnlineID()->ToString() : "N/A");
     pt.AddPair(score, data.mFlauntData->mScore);
     pt.AddPair(diff, data.mFlauntData->mDiff);
-    pt.AddPair(xp, data.mProfile->GetMetagameRank()->RankNumber());
+    pt.AddPair(xp, data.mProfile->GetRank()->RankNumber());
     SetDataPoint(pt);
 }
 

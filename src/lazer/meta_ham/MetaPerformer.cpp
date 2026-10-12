@@ -66,29 +66,31 @@ MetaPerformerHook *MetaPerformer::sScriptHook;
 
 MetaPerformer::MetaPerformer(const HamSongMgr &mgr, const char *)
     : mNumRestarts(0), mSongMgr(mgr), mInstarank(0), mNoFail(0), mGotNewHighScore(0),
-      unk30(0), mGotNewBestStars(0), unk32(0), mGotMovesPassedBest(0),
-      mUnlockedNoFlashcards(0), mCompletedSongWithNoFlashcards(0),
-      mUnlockedMediumDifficulty(0), mUnlockedExpertDifficulty(0), unk38(0),
-      mPracticeOverallScore(0), mMoveScored(0), mCheckMoveScored(1), mPlaylist(0),
-      mPlaylistIndex(0), mPlaylistElapsedTime(0), unke0(0), mSkipPracticeWelcome(0),
-      unke3(0) {
-    mNumCompleted.reserve(100);
-    mSkippedSongs.clear();
-    mEnrollmentIndex[0] = -1;
-    mEnrollmentIndex[1] = -1;
-    mGameplayTimer = DateTime(0);
-    mSkillsAwards = new SkillsAwardList();
+      mGotNewScoreNoFlashcards(0), mGotNewBestStars(0), mGotNewStarsNoFlashcards(0),
+      mGotNewBestMovesPassed(0), mUnlockedNoFlashcards(0),
+      mCompletedSongWithNoFlashcards(0), mUnlockedMedium(0), mUnlockedExpert(0),
+      mLastStars(0), mPracticeOverallScore(0), mIsMoveScored(0), mCheckMoveScored(1),
+      mPlaylist(0), mPlaylistIndex(0), mPlaylistElapsedTime(0), mCheckPlaylistComplete(0),
+      mSkipPracticeWelcome(0), mPlaylistIsShuffled(0) {
+    mStars.reserve(100);
+    mPlaylistSkippedSongIndices.clear();
+    mPlayerEnrollmentIndex[0] = -1;
+    mPlayerEnrollmentIndex[1] = -1;
+    mGameplayStartTime = DateTime(0);
+    mSkillsAwardList = new SkillsAwardList();
 }
 
-MetaPerformer::~MetaPerformer() { delete mSkillsAwards; }
+MetaPerformer::~MetaPerformer() { delete mSkillsAwardList; }
 
-void MetaPerformer::HandleSkippedSong() { mSkippedSongs.insert(mPlaylistIndex); }
+void MetaPerformer::HandleSkippedSong() {
+    mPlaylistSkippedSongIndices.insert(mPlaylistIndex);
+}
 void MetaPerformer::HandleSongRestart() { mNumRestarts++; }
-bool MetaPerformer::IsGameplayTimerRunning() const { return mGameplayTimer.ToCode(); }
+bool MetaPerformer::IsGameplayTimerRunning() const { return mGameplayStartTime.ToCode(); }
 bool MetaPerformer::GetPlayedLongIntro(Symbol intro) {
-    return mLongIntrosPlayed.count(intro) > 0;
+    return mLongIntros.count(intro) > 0;
 }
-void MetaPerformer::SetPlayedLongIntro(Symbol intro) { mLongIntrosPlayed.insert(intro); }
+void MetaPerformer::SetPlayedLongIntro(Symbol intro) { mLongIntros.insert(intro); }
 
 BEGIN_HANDLERS(MetaPerformer)
     HANDLE_ACTION(set_venue_pref, TheProfileMgr.SetVenuePreference(_msg->ForceSym(2)))
@@ -96,13 +98,13 @@ BEGIN_HANDLERS(MetaPerformer)
     HANDLE_EXPR(has_instarank_data, HasInstarankData())
     HANDLE_EXPR(get_instarank, GetInstarank())
     HANDLE_ACTION(reset_songs, ResetSongs())
-    HANDLE_EXPR(num_completed, (int)mNumCompleted.size())
+    HANDLE_EXPR(num_completed, (int)mStars.size())
     HANDLE_EXPR(
         get_completed_song_id,
         TheHamSongMgr.GetSongIDFromShortName(TheGameData->GetSong(), true)
     )
     HANDLE_EXPR(get_song, GetSong())
-    HANDLE_EXPR(is_first_song, mNumCompleted.empty())
+    HANDLE_EXPR(is_first_song, mStars.empty())
     HANDLE_EXPR(is_last_song, IsLastSong())
     HANDLE_EXPR(is_set_complete, IsSetComplete())
     HANDLE_EXPR(is_winning, IsWinning())
@@ -119,12 +121,12 @@ BEGIN_HANDLERS(MetaPerformer)
     HANDLE_EXPR(is_possible_to_fail, !mNoFail)
     HANDLE_EXPR(is_no_flashcards_active, TheProfileMgr.GetNoFlashCards())
     HANDLE_EXPR(completed_song_with_no_flashcards, mCompletedSongWithNoFlashcards)
-    HANDLE_EXPR(get_enrollment_index, mEnrollmentIndex[_msg->Int(2)])
+    HANDLE_EXPR(get_enrollment_index, mPlayerEnrollmentIndex[_msg->Int(2)])
     HANDLE_EXPR(is_gameplay_timer_running, IsGameplayTimerRunning())
     HANDLE_ACTION(jump_gameplay_timer_forward, JumpGameplayTimerForward(_msg->Int(2)))
     HANDLE_EXPR(got_new_high_score, mGotNewHighScore)
     HANDLE_EXPR(got_new_best_stars, mGotNewBestStars)
-    HANDLE_EXPR(got_moves_passed_best, mGotMovesPassedBest)
+    HANDLE_EXPR(got_moves_passed_best, mGotNewBestMovesPassed)
     HANDLE_ACTION(game_init, OnGameInit())
     HANDLE_ACTION(game_reset, OnGameInit())
     HANDLE_ACTION(freestyle_picture_taken, OnFreestylePictureTaken())
@@ -153,8 +155,8 @@ BEGIN_HANDLERS(MetaPerformer)
     HANDLE_EXPR(just_beat_game, mJustBeatGame)
     HANDLE_EXPR(last_played_mode, mLastPlayedMode)
     HANDLE_EXPR(unlocked_no_flashcards, mUnlockedNoFlashcards)
-    HANDLE_EXPR(unlocked_medium_difficulty, mUnlockedMediumDifficulty)
-    HANDLE_EXPR(unlocked_expert_difficulty, mUnlockedExpertDifficulty)
+    HANDLE_EXPR(unlocked_medium_difficulty, mUnlockedMedium)
+    HANDLE_EXPR(unlocked_expert_difficulty, mUnlockedExpert)
     HANDLE_EXPR(is_difficulty_unlocked, IsDifficultyUnlocked(_msg->Sym(2)))
     HANDLE_ACTION(calculate_practice_results, CalculatePracticeResults())
     HANDLE_EXPR(get_learn_moves_passed_count, mNumLearnMovesPassed)
@@ -179,8 +181,8 @@ BEGIN_HANDLERS(MetaPerformer)
     HANDLE_EXPR(get_crew_venue, GetCrewVenue(_msg->Sym(2)))
     HANDLE_EXPR(get_crew_for_character, GetCrewForCharacter(_msg->Sym(2)))
     HANDLE_EXPR(is_crew_available, IsCrewAvailable(_msg->Sym(2)))
-    HANDLE_EXPR(is_move_scored, mMoveScored)
-    HANDLE_ACTION(set_move_scored, mMoveScored = _msg->Int(2))
+    HANDLE_EXPR(is_move_scored, mIsMoveScored)
+    HANDLE_ACTION(set_move_scored, mIsMoveScored = _msg->Int(2))
     HANDLE_EXPR(get_check_move_scored, mCheckMoveScored)
     HANDLE_ACTION(set_check_move_scored, mCheckMoveScored = _msg->Int(2))
     HANDLE_EXPR(has_playlist, HasPlaylist())
@@ -208,12 +210,12 @@ BEGIN_HANDLERS(MetaPerformer)
         GenerateRecommendedPracticeMoves(_msg->Int(2))
     )
     HANDLE_EXPR(has_recommended_practice_moves, HasRecommendedPracticeMoves()) // fix
-    HANDLE_EXPR(failed_any_practice_moves, mSkillsAwards->HasFailure())
-    HANDLE_EXPR(get_award, mSkillsAwards->GetAward(_msg->Array(2)))
+    HANDLE_EXPR(failed_any_practice_moves, mSkillsAwardList->HasFailure())
+    HANDLE_EXPR(get_award, mSkillsAwardList->GetAward(_msg->Array(2)))
     HANDLE_ACTION(
-        set_award, mSkillsAwards->SetAward(_msg->Array(2), (SkillsAward)_msg->Int(3))
+        set_award, mSkillsAwardList->SetAward(_msg->Array(2), (SkillsAward)_msg->Int(3))
     )
-    HANDLE_ACTION(clear_skills_awards, mSkillsAwards->Clear())
+    HANDLE_ACTION(clear_skills_awards, mSkillsAwardList->Clear())
     HANDLE_EXPR(should_skip_practice_welcome, mSkipPracticeWelcome)
     HANDLE_ACTION(set_skip_practice_welcome, mSkipPracticeWelcome = _msg->Int(2))
     HANDLE_EXPR(get_num_restarts, mNumRestarts)
@@ -230,7 +232,7 @@ BEGIN_HANDLERS(MetaPerformer)
 END_HANDLERS
 
 void MetaPerformer::ResetSongs() {
-    mNumCompleted.clear();
+    mStars.clear();
     mNumRestarts = 0;
     if (mInstarank) {
         RELEASE(mInstarank);
@@ -255,8 +257,8 @@ void MetaPerformer::CompleteSong(int stars, int totalScore, int, float, bool b5)
         mPlaylistElapsedTime += TheHamSongMgr.GetDuration(song);
     }
     CheckForFitnessAccomplishments();
-    HandleGameplayEnded((EndGameResult)1);
-    if (unke0 && mPlaylist) {
+    HandleGameplayEnded(kWon);
+    if (mCheckPlaylistComplete && mPlaylist) {
         if (IsLastSong() && IsPlaylistCustom()) {
             static Symbol acc_play_custom_play_list("acc_play_custom_play_list");
             TheAccomplishmentMgr->EarnAccomplishmentForAll(
@@ -318,7 +320,7 @@ void MetaPerformer::OnMovePassed(
     }
 }
 
-bool MetaPerformer::IsSetComplete() const { return mNumCompleted.size() == 1; }
+bool MetaPerformer::IsSetComplete() const { return mStars.size() == 1; }
 void MetaPerformer::RepeatCurrentPlaylistSong() {
     UpdateSongFromPlaylist();
     UpdateIsLastSong();
@@ -357,16 +359,16 @@ void MetaPerformer::SetSong(Symbol song) {
 }
 
 void MetaPerformer::StartGameplayTimer() {
-    if (mGameplayTimer.ToCode() == 0) {
-        GetDateAndTime(mGameplayTimer);
+    if (mGameplayStartTime.ToCode() == 0) {
+        GetDateAndTime(mGameplayStartTime);
     }
 }
 
 void MetaPerformer::JumpGameplayTimerForward(int secs) {
-    if (mGameplayTimer.ToCode() == 0) {
+    if (mGameplayStartTime.ToCode() == 0) {
         MILO_NOTIFY("This cheat only works while the gameplay timer is running!");
     } else {
-        mGameplayTimer = DateTime(mGameplayTimer.ToCode() - secs);
+        mGameplayStartTime = DateTime(mGameplayStartTime.ToCode() - secs);
     }
 }
 
@@ -424,8 +426,8 @@ bool MetaPerformer::IsLastSong() const {
 }
 
 void MetaPerformer::StopGameplayTimer() {
-    if (mGameplayTimer.ToCode()) {
-        unsigned int curCode = mGameplayTimer.ToCode();
+    if (mGameplayStartTime.ToCode()) {
+        unsigned int curCode = mGameplayStartTime.ToCode();
         DateTime now;
         GetDateAndTime(now);
         unsigned int nowCode = now.ToCode();
@@ -435,10 +437,10 @@ void MetaPerformer::StopGameplayTimer() {
             MILO_ASSERT(pPlayer, 0x35E);
             HamProfile *pProfile = TheProfileMgr.GetProfileFromPad(pPlayer->PadNum());
             if (pProfile && pProfile->HasValidSaveData()) {
-                pProfile->GetMetagameStats()->WriteTimePlayed(pProfile, timeDiff);
+                pProfile->GetStats()->WriteTimePlayed(pProfile, timeDiff);
             }
         }
-        mGameplayTimer = DateTime(0);
+        mGameplayStartTime = DateTime(0);
     }
 }
 
@@ -604,7 +606,7 @@ bool MetaPerformer::IsRecommendedPracticeMoveGroup(
     for (int i = 0; i < moves.size(); i++) {
         ptr->Node(i) = moves[i];
     }
-    return mSkillsAwards->GetAward(ptr) == 1;
+    return mSkillsAwardList->GetAward(ptr) == 1;
 }
 
 void MetaPerformer::SetDefaultCrews() {
@@ -622,13 +624,13 @@ void MetaPerformer::UpdateIsLastSong() {
 
 void MetaPerformer::SetPlaylist(Playlist *playlist) {
     ResetSongs();
-    if (unke3) {
+    if (mPlaylistIsShuffled) {
         RELEASE(mPlaylist);
-        unke3 = false;
+        mPlaylistIsShuffled = false;
     }
     mPlaylist = playlist;
     mPlaylistIndex = 0;
-    mSkippedSongs.clear();
+    mPlaylistSkippedSongIndices.clear();
     UpdateIsLastSong();
 }
 
@@ -638,14 +640,14 @@ void MetaPerformer::StartPlaylist() {
         MILO_ASSERT(mPlaylist, 0x713);
         MILO_ASSERT(!mPlaylist->IsEmpty(), 0x714);
         mPlaylistIndex = 0;
-        mSkippedSongs.clear();
+        mPlaylistSkippedSongIndices.clear();
         while (!mPlaylist->IsValidSong(mPlaylistIndex)) {
             mPlaylistIndex++;
             MILO_ASSERT(mPlaylistIndex < mPlaylist->GetNumSongs(), 0x71D);
         }
     }
     if (mPlaylist->GetDuration() >= 900) {
-        unke0 = true;
+        mCheckPlaylistComplete = true;
     }
     UpdateSongFromPlaylist();
     UpdateIsLastSong();
@@ -658,7 +660,7 @@ void MetaPerformer::ContinuePlaylist() {
         MILO_ASSERT(mPlaylist, 0x731);
         mPlaylistIndex++;
         while (!mPlaylist->IsValidSong(mPlaylistIndex)) {
-            mSkippedSongs.insert(mPlaylistIndex);
+            mPlaylistSkippedSongIndices.insert(mPlaylistIndex);
             mPlaylistIndex++;
             MILO_ASSERT(mPlaylistIndex < mPlaylist->GetNumSongs(), 0x73B);
         }
@@ -668,10 +670,10 @@ void MetaPerformer::ContinuePlaylist() {
 }
 
 void MetaPerformer::ShufflePlaylist() {
-    if (!unke3) {
+    if (!mPlaylistIsShuffled) {
         mPlaylist = new Playlist(*mPlaylist);
         mPlaylist->ShuffleSongs();
-        unke3 = true;
+        mPlaylistIsShuffled = true;
     }
 }
 
@@ -682,7 +684,7 @@ void MetaPerformer::SetPlaylist(Symbol playlistName) {
 }
 
 void MetaPerformer::Restart() {
-    mNumCompleted.clear();
+    mStars.clear();
     mNumRestarts++;
     if (mInstarank) {
         RELEASE(mInstarank);
@@ -808,7 +810,7 @@ END_HANDLERS
 
 void QuickplayPerformer::SelectSong(Symbol song, int) {
     TheGameData->SetSong(song);
-    if (mNumCompleted.empty()) {
+    if (mStars.empty()) {
         SetDefaultCrews();
         ChooseVenue();
     }
@@ -870,7 +872,7 @@ String MetaPerformer::GetPlaylistNameAndDuration() const {
 
 void MetaPerformer::TriggerSongCompletion(int totalScore, float stars) {
     if (!mPlaylist) {
-        unke0 = false;
+        mCheckPlaylistComplete = false;
     }
     ThePlatformMgr.RemoveSink(TheAccomplishmentMgr);
     mJustBeatGame = false;
@@ -892,7 +894,7 @@ void MetaPerformer::CheckForFitnessAccomplishments() {
         if (profile && profile->InFitnessMode()
             && !TheAccomplishmentMgr->GetProfileChanged(pad)) {
             float f88, f8c;
-            if (mFitnessFilters[i].GetFitnessDataAndReset(f88, f8c)) {
+            if (mFitnessFilter[i].GetFitnessDataAndReset(f88, f8c)) {
                 profile->SetFitnessStats(i, f88, f8c);
             }
             if (profile->IsFitnessDaysGoalMet() && profile->IsFitnessCaloriesGoalMet()) {
@@ -922,7 +924,7 @@ void MetaPerformer::SetupCharacters() {
     CalcCharacters(
         pSongData,
         b5,
-        (PlayerFlag)3,
+        kHamPlayerOff,
         p1,
         p1Crew,
         p1Char,
@@ -955,8 +957,8 @@ void MetaPerformer::OnGameInit() {
         mMovesAttempted[i] = 0;
     }
     ClearAndShrink(mRecommendedPracticeMoves);
-    mSkillsAwards->Clear();
-    ClearAndShrink(unk74);
+    mSkillsAwardList->Clear();
+    ClearAndShrink(mRecapResults);
     if (TheGameMode->IsGameplayModePractice()) {
         SetUpRecapResults();
     }
@@ -974,7 +976,7 @@ void MetaPerformer::SetUpRecapResults() {
             for (int i = 0; i < diff; i++) {
                 bVec.push_back(false);
             }
-            unk74.push_back(bVec);
+            mRecapResults.push_back(bVec);
         }
     }
 }
@@ -1037,7 +1039,7 @@ void MetaPerformer::OnReviewMovePassed(
     int i90, i80;
     GetCurrentRecapMove(i90, i80);
     if (i90 >= 0 && i80 >= 0) {
-        unk74[i90][i80] = awesome;
+        mRecapResults[i90][i80] = awesome;
     }
 }
 
@@ -1194,7 +1196,8 @@ void MetaPerformer::CalcCharacters(
             primaryPlayerChar = player2Char;
             secondaryPlayer = pPlayer1Data;
             secondaryPlayerChar = player1Char;
-        } else if (pPlayer1Data->TrackingAgeSeconds() >= pPlayer2Data->TrackingAgeSeconds()) {
+        } else if (pPlayer1Data->TrackingAgeSeconds()
+                   >= pPlayer2Data->TrackingAgeSeconds()) {
             primaryPlayer = pPlayer1Data;
             primaryPlayerChar = player1Char;
             secondaryPlayer = pPlayer2Data;
@@ -1263,7 +1266,7 @@ void MetaPerformer::HandleGameplayEnded(const EndGameResult &egr) {
         if (pProfileFromPad && pProfileFromPad->HasValidSaveData()
             && !TheAccomplishmentMgr->GetProfileChanged(padnum)) {
             if (0 < scoreInt) {
-                pProfileFromPad->GetMetagameStats()->HandleGameplayEnded(
+                pProfileFromPad->GetStats()->HandleGameplayEnded(
                     pProfileFromPad, pPlayer, egr
                 );
             }
@@ -1434,11 +1437,11 @@ void MetaPerformer::CalculatePracticeResults() {
             mNumLearnMovesTotal++;
         }
     }
-    mNumLearnMovesPassed = mSkillsAwards->AwardCount((SkillsAward)2);
-    mNumLearnMovesFastLaned = mSkillsAwards->AwardCount((SkillsAward)3);
-    for (int i = 0; i < unk74.size(); i++) {
-        for (int j = 0; j < unk74[i].size(); j++) {
-            if (unk74[i][j]) {
+    mNumLearnMovesPassed = mSkillsAwardList->AwardCount((SkillsAward)2);
+    mNumLearnMovesFastLaned = mSkillsAwardList->AwardCount((SkillsAward)3);
+    for (int i = 0; i < mRecapResults.size(); i++) {
+        for (int j = 0; j < mRecapResults[i].size(); j++) {
+            if (mRecapResults[i][j]) {
                 mNumReviewMovesPassed++;
             }
             mNumReviewMovesTotal++;

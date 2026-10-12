@@ -136,8 +136,8 @@ void MainMenuPanel::UpdateIconState(Symbol s) {
         HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
         if (pProfile) {
             mSettings->SetProperty(state, profile);
-            mSettings->SetProperty(rank, pProfile->GetMetagameRank()->RankNumber());
-            mSettings->SetProperty(tier, pProfile->GetMetagameRank()->GetTier());
+            mSettings->SetProperty(rank, pProfile->GetRank()->RankNumber());
+            mSettings->SetProperty(tier, pProfile->GetRank()->GetTier());
             mSettings->SetProperty(gamertag, pProfile->GetName());
         } else {
             mSettings->SetProperty(state, no_profile);
@@ -241,7 +241,7 @@ void MainMenuPanel::MotdSetup(HamLabel *label) {
             mMessages[community].push_back(msg);
         }
 
-        MetagameStats *playerStats = activeProfile->GetMetagameStats();
+        MetagameStats *playerStats = activeProfile->GetStats();
         MILO_ASSERT(playerStats, 0x1a9);
         int timesPlayed =
             playerStats->GetCount(MetagameStats::kCountStat_TimesPlayedPerform);

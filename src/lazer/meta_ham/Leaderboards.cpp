@@ -149,7 +149,7 @@ bool Leaderboards::HasSelf() const {
     HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
     MILO_ASSERT(pProfile, 0x1CB);
     pProfile->UpdateOnlineID();
-    bool bHasOnlineID = pProfile->IsSignedIn();
+    bool bHasOnlineID = pProfile->HasOnlineID();
     MILO_ASSERT(bHasOnlineID, 0x1CF);
     XUID theXUID = pProfile->GetOnlineID()->GetXUID();
     FOREACH (it, mRows) {
@@ -166,7 +166,7 @@ bool Leaderboards::IsSelf(int i1) const {
     HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
     MILO_ASSERT(pProfile, 0x1EA);
     pProfile->UpdateOnlineID();
-    bool bHasOnlineID = pProfile->IsSignedIn();
+    bool bHasOnlineID = pProfile->HasOnlineID();
     MILO_ASSERT(bHasOnlineID, 0x1EE);
     XUID theXUID = pProfile->GetOnlineID()->GetXUID();
     int idx = 0;
@@ -258,7 +258,7 @@ void Leaderboards::StartUploadingNextProfile() {
 
 void Leaderboards::UploadScores(HamProfile *profile) {
     profile->UpdateOnlineID();
-    if (profile->IsSignedIn()) {
+    if (profile->HasOnlineID()) {
         if (ThePlatformMgr.IsSignedIntoLive(profile->GetPadNum())
             && !SongStatusMgr::sFakeLeaderboardUploadFailure) {
             if (mUploadingProfile && mUploadingProfile != profile) {

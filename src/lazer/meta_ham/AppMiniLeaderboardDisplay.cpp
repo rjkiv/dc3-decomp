@@ -89,7 +89,7 @@ AppMiniLeaderboardDisplay::ElementStateOverride(int, int data, UIListWidgetState
     HamProfile *profile = TheProfileMgr.GetActiveProfile(true);
     if (profile) {
         profile->UpdateOnlineID();
-        bool bHasOnlineID = profile->IsSignedIn();
+        bool bHasOnlineID = profile->HasOnlineID();
         MILO_ASSERT(bHasOnlineID, 500);
         XUID xuid = profile->GetOnlineID()->GetXUID();
         if (mRows[data].xuid == xuid) {
@@ -149,7 +149,7 @@ void AppMiniLeaderboardDisplay::Update() {
 
 void AppMiniLeaderboardDisplay::UpdateLeaderboardOnline(int i1) {
     HamProfile *profile = TheProfileMgr.GetActiveProfile(true);
-    if (profile && profile->IsSignedIn() && ThePlatformMgr.IsConnected()) {
+    if (profile && profile->HasOnlineID() && ThePlatformMgr.IsConnected()) {
         TheRockCentral.ManageJob(new GetMiniLeaderboardJob(this, profile, i1));
         if (mStatus != kLeaderboardStatusPending) {
             mStatus = kLeaderboardStatusPending;
@@ -182,7 +182,7 @@ bool AppMiniLeaderboardDisplay::UpdateLeaderboard(Symbol s) {
         HamProfile *profile = TheProfileMgr.GetActiveProfile(true);
         MILO_ASSERT(profile, 0xb1);
         profile->UpdateOnlineID();
-        if (!profile->IsSignedIn()) {
+        if (!profile->HasOnlineID()) {
             if (mStatus != kLeaderboardStatusNoProfile) {
                 mStatus = kLeaderboardStatusNoProfile;
                 Flow *f = mResourceDir->Find<Flow>("no_profile.flow", true);
@@ -218,7 +218,7 @@ void AppMiniLeaderboardDisplay::UpdateSelfInRows() {
     HamProfile *pActiveProfile = TheProfileMgr.GetActiveProfile(true);
     if (pActiveProfile) {
         pActiveProfile->UpdateOnlineID();
-        bool bHasOnlineID = pActiveProfile->IsSignedIn();
+        bool bHasOnlineID = pActiveProfile->HasOnlineID();
         MILO_ASSERT(bHasOnlineID, 0x107);
         XUID xuid = pActiveProfile->GetOnlineID()->GetXUID();
         SongStatusMgr *pSongStatusMgr = pActiveProfile->GetSongStatusMgr();

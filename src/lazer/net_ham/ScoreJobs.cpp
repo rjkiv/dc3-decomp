@@ -28,7 +28,7 @@ RecordScoreJob::RecordScoreJob(
     pt.AddPair(buffer, data.mProfile ? data.mProfile->GetOnlineID()->ToString() : "N/A");
     Hx_snprintf(buffer, 36, "xp%03d", 0);
     if (data.mProfile) {
-        pt.AddPair(buffer, data.mProfile->GetMetagameRank()->RankNumber());
+        pt.AddPair(buffer, data.mProfile->GetRank()->RankNumber());
     } else {
         pt.AddPair(buffer, 0);
     }
