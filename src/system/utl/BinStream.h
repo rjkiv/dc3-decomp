@@ -13,6 +13,8 @@ namespace Hmx {
     class Object;
 }
 
+struct RevStack : public std::vector<struct ObjVersion> {};
+
 enum EofType {
     NotEof = 0,
     RealEof = 1,
@@ -144,6 +146,8 @@ public:
         return *this;
     }
 
+    //  public: BinStream& operator<<(void*);
+
 #undef BS_READ_OP
 #undef BS_WRITE_OP
 private:
@@ -165,8 +169,9 @@ private:
 
 protected:
     bool mLittleEndian; // 0x4
+private:
     Rand2 *mCrypto; // 0x8
-    std::vector<struct ObjVersion> *mRevStack; // 0xc
+    RevStack *mRevStack; // 0xc
 };
 
 inline unsigned short getHmxRev(int packed) { return packed; }
