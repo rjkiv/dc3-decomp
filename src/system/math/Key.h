@@ -117,7 +117,7 @@ public:
      * @param [out] endKey The index of the first key whose frame >= the end frame.
      */
     void FindBounds(float &start, float &end, int &startKey, int &endKey) {
-        MILO_ASSERT_FMT(Base::size(), kAssertStr, __FILE__, 431, "size()");
+        MILO_ASSERT(size(), 431);
         if (!start && !end) {
             start = Base::front().frame;
             end = Base::back().frame;
