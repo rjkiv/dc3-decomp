@@ -3,7 +3,7 @@
 
 void FxSendPitchShift360::SyncEffectParams(IXAudio2SubmixVoice *voice) const {
     PitchShiftEffectParams p;
-    p.unk0 = mRatio;
+    p.mParamPitchRatio = mRatio;
     voice->SetEffectParameters(0, &p, sizeof(p), 0);
 }
 

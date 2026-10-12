@@ -34,16 +34,16 @@ protected:
 private:
     void UpdateADSR();
 
-    std::list<Voice *> unk802c;
-    void *unk8034;
-    Voice *unk8038; // 0x8038 - slip voice?
-    Voice *unk803c;
-    int unk8040;
-    int unk8044;
+    std::list<Voice *> mOldVoices; // 0x802c
+    char *mVoiceBuffer; // 0x8034
+    Voice *mVoice; // 0x8038 - slip voice?
+    Voice *mRefVoice; // 0x803c
+    int mSampleRate; // 0x8040
+    int mNumBuffers; // 0x8044
     float mVolume; // 0x8048
     float mPan; // 0x804c
     float mSpeed; // 0x8050
     ADSRImpl mADSR; // 0x8054
-    FxSend *mSend; // 0x8078
-    bool unk807c;
+    FxSend *mFxSend; // 0x8078
+    bool mTagged; // 0x807c
 };

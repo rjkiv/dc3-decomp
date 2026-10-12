@@ -1,21 +1,21 @@
 #include "synth360/EnvelopeGenerator.h"
 
-EnvelopeGenerator::EnvelopeGenerator() : unk8c(0) {
+EnvelopeGenerator::EnvelopeGenerator() : mEnvState(0) {
     EnvelopeGeneratorParams p;
-    p.unk0 = 0;
-    p.unk4 = 0;
-    p.unk8 = 0;
-    p.unkc = 0;
-    unk84 = 0;
-    unk88 = 0;
-    unk90 = 0;
+    p.AttackRate = 0;
+    p.ReleaseRate = 0;
+    p.StartRelease = 0;
+    p.IsDone = 0;
+    mAttackSamples = 0;
+    mReleaseSamples = 0;
+    mState = kAttack;
     SetParameters(&p, sizeof(EnvelopeGeneratorParams));
 }
 
 void EnvelopeGenerator::OnSetParameters(const EnvelopeGeneratorParams &p) {
-    unk84 = p.unk0 * 48000;
-    unk88 = p.unk4 * 48000;
-    if (p.unk8 > 0.5f && unk90 != 3) {
-        unk90 = 2;
+    mAttackSamples = p.AttackRate * 48000;
+    mReleaseSamples = p.ReleaseRate * 48000;
+    if (p.StartRelease > 0.5f && mState != kDone) {
+        mState = kRelease;
     }
 }

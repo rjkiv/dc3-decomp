@@ -14,23 +14,23 @@ namespace DSP {
             float GetCorrection();
             void SetAttackSmoothing(float);
 
-            void SetTargetNote(float note) { unk4 = note; }
+            void SetTargetNote(float note) { m_fTargetNoteHz = note; }
 
         private:
-            float unk0;
-            float unk4;
-            float unk8;
-            float unkc;
-            float unk10;
-            float mReleaseSmoothing; // 0x14
-            float mTransposition; // 0x18
-            float mAmount; // 0x1c
-            float mProximityEffect; // 0x20
-            float mProximityFocus; // 0x24
-            float unk28;
-            float unk2c;
-            float unk30;
-            float unk34;
+            float m_fDetectedNoteHz; // 0x0
+            float m_fTargetNoteHz; // 0x4
+            float m_fSmoothedCorrection; // 0x8
+            float m_fBaseSmoothing; // 0xc
+            float m_fAttackSmoothing; // 0x10
+            float m_fReleaseSmoothing; // 0x14
+            float m_fTransposition; // 0x18
+            float m_fAmount; // 0x1c
+            float m_fProximityEffect; // 0x20
+            float m_fProximityFocus; // 0x24
+            float m_fTonality; // 0x28
+            float m_fEnergy; // 0x2c
+            float m_fPrevEnergy; // 0x30
+            float m_fErrorMagnitude; // 0x34
         };
     }
 }

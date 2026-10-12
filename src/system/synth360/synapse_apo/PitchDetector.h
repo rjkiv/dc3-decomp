@@ -13,20 +13,16 @@ namespace DSP {
             void Detect(unsigned int);
 
         private:
-            const std::vector<float> &unk0;
-            unsigned int unk4;
-            unsigned int unk8;
-            float unkc;
-            float unk10;
-            float unk14;
-            SpectralAnalysis unk18;
-            int unkf4;
-            int unkf8;
-            int unkfc;
-            std::vector<float> unk100;
-            std::vector<float> unk10c;
-            std::vector<float> unk118;
-            int unk124;
+            const std::vector<float> &m_delayLine; // 0x0
+            unsigned int m_sMinPitchLag; // 0x4
+            unsigned int m_sMaxPitchLag; // 0x8
+            float m_fPitchLag; // 0xc
+            float m_fTonality; // 0x10
+            float m_fEnergy; // 0x14
+            SpectralAnalysis m_spectralAnalysis; // 0x18
+            std::vector<float> m_fTemp; // 0x100
+            std::vector<float> m_fWin; // 0x10c
+            std::vector<float> m_fWin2; // 0x118
         };
     }
 }

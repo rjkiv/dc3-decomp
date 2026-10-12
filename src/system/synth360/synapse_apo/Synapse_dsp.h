@@ -27,28 +27,28 @@ namespace DSP {
             void ProcessInPlace(unsigned int, float *);
 
         private:
-            std::vector<float> unk0;
-            std::vector<float> unkc;
-            unsigned int unk18;
-            unsigned int unk1c;
-            unsigned int unk20;
-            unsigned int unk24;
-            scoped_ptr<PitchDetector> mPitchDetector; // 0x28
-            float unk2c;
-            float unk30;
-            float unk34;
-            float unk38;
-            float unk3c;
-            scoped_ptr<PeakDetector> mPeakDetector; // 0x40
-            std::vector<std::vector<float> > unk44; // 0x44
-            std::vector<float *> unk50; // 0x50
-            std::vector<PitchCorrectedVoice> mVoices; // 0x5c
-            scoped_ptr<GranularSynth> mGranularSynth; // 0x68
-            float mSampleRate; // 0x6c
-            scoped_ptr<Biquad> mLowPassBiquad; // 0x70
-            scoped_ptr<Biquad> mHighPassBiquad; // 0x74
-            float unk78;
-            float unk7c;
+            std::vector<float> m_fInputDelay; // 0x0
+            std::vector<float> m_fDnInputDelay; // 0xc
+            unsigned int m_iInputDelayOffset; // 0x18
+            unsigned int m_sMinPitchLag; // 0x1c
+            unsigned int m_sMaxPitchLag; // 0x20
+            unsigned int m_sPitchDetectionStride; // 0x24
+            scoped_ptr<PitchDetector> m_pPitchDetector; // 0x28
+            float m_fPitchLag; // 0x2c
+            float m_fTonality; // 0x30
+            float m_fEnergy; // 0x34
+            float m_fTonalityThreshold; // 0x38
+            float m_fGain; // 0x3c
+            scoped_ptr<PeakDetector> m_pPeakDetector; // 0x40
+            std::vector<std::vector<float> > m_fTempOutputs; // 0x44
+            std::vector<float *> m_pTempOutputs; // 0x50
+            std::vector<PitchCorrectedVoice> m_voices; // 0x5c
+            scoped_ptr<GranularSynth> m_pGranularSynth; // 0x68
+            float m_fSamplingRate; // 0x6c
+            scoped_ptr<Biquad> m_pPreFilterLowpass; // 0x70
+            scoped_ptr<Biquad> m_pPreFilterHighpass; // 0x74
+            float m_fAvgSignal; // 0x78
+            float m_kAvgSignalSmoothing; // 0x7c
         };
     }
 }

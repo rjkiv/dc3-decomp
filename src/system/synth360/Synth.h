@@ -6,8 +6,10 @@
 #include "synth/FxSend.h"
 #include "synth/Mic.h"
 #include "synth/Synth.h"
+#include "synth360/MeterEffect.h"
 #include "xdk/XAUDIO2.h"
 #include "xdk/XHV2.h"
+#include "xdk/xaudio2/xaudio2.h"
 
 class FxSend360;
 
@@ -39,16 +41,15 @@ public:
     virtual void EnableLevels(bool);
     virtual void RequirePushToTalk(bool, int);
 
-    IXAudio2Voice *OutputVoice() const { return mOutputVoice; }
-    IXAudio2Voice *ReverbSendVoice() const { return mReverbSendVoice; }
-    IXAudio2 *GetXAudio() const { return mXAudio; }
+    IXAudio2MasteringVoice *GetMasteringVoice() const { return mMasteringVoice; }
+    IXAudio2Voice *GetReverbDmVoice() const { return mReverbDmVoice; }
+    IXAudio2 *GetXAudio2() { return mXAudio2; }
 
     const std::vector<IXAudio2SubmixVoice *> &GetHeadsetSubmixes() const {
-        return mHeadsetSubmixes;
+        return mHeadsetSubmix;
     }
 
-    bool GetCritSecTryEnter() { return mCritSec.TryEnter(); }
-    void GetCritSecExit() { return mCritSec.Exit(); }
+    CriticalSection *GetVoiceDestructionCS() { return &mVoiceDestructionCS; }
 
     void SetGlobalReverbPreset(const char *);
     IXAudio2SubmixVoice *GetHeadsetSubmix(int);
@@ -59,23 +60,23 @@ private:
     void UpdateDolby();
     void SetupHeadsetSubmixes();
 
-    CriticalSection mCritSec; // 0xb0
+    CriticalSection mVoiceDestructionCS; // 0xb0
     std::vector<Mic *> mMics; // 0xd0
-    std::vector<IXAudio2SubmixVoice *> mHeadsetSubmixes; // 0xdc
-    IXAudio2SourceVoice *unke8; // 0xe8
-    IXAudio2 *mXAudio; // 0xec
-    IXAudio2MasteringVoice *mOutputVoice; // 0xf0
+    std::vector<IXAudio2SubmixVoice *> mHeadsetSubmix; // 0xdc
+    IXAudio2SourceVoice *mHeadsetSeedVoice; // 0xe8
+    IXAudio2 *mXAudio2; // 0xec
+    IXAudio2MasteringVoice *mMasteringVoice; // 0xf0
     IXAudio2SubmixVoice *mReverbVoice; // 0xf4
-    IXAudio2SubmixVoice *mReverbSendVoice; // 0xf8
-    IXAudio2Voice *unkfc; // 0xfc - some ixaudiovoice type
-    IUnknown *mReverbAPO; // 0x100
-    bool unk104;
-    bool unk105;
-    Timer unk108; // 0x108
-    bool unk138;
-    LevelData **unk13c; // 0x13c
+    IXAudio2SubmixVoice *mReverbDmVoice; // 0xf8
+    IXAudio2SubmixVoice *mDmVoice; // 0xfc
+    IUnknown *mReverbApo; // 0x100
+    bool mWantDolby; // 0x104
+    bool mDolbyWantChange; // 0x105
+    Timer mDolbyChangeTimer; // 0x108
+    bool mPlaybackStarted; // 0x138
+    MeterEffectParams *mMeterParams; // 0x13c
     std::vector<FxSend360 *> mFxSends; // 0x140
-    bool unk14c;
+    bool mXAudioDebugMode; // 0x14c
 };
 
 void StartSynchronizedVoices();

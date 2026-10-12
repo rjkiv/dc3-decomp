@@ -2,7 +2,7 @@
 #include "synth360/soundtouch/SoundTouch.h"
 #include <cstring>
 
-PitchShiftEffect::PitchShiftEffect() : unk68(1), unk6c(2) {
+PitchShiftEffect::PitchShiftEffect() : mLastPitch(1), mLastChannels(2) {
     mSoundTouch = new soundtouch::SoundTouch();
     mSoundTouch->setSampleRate(48000);
     mSoundTouch->setChannels(2);
@@ -14,31 +14,31 @@ PitchShiftEffect::~PitchShiftEffect() { RELEASE(mSoundTouch); }
 void PitchShiftEffect::DoProcess(
     const PitchShiftEffectParams &params, float *f, unsigned int, unsigned int channels
 ) {
-    if (unk6c != (int)channels) {
+    if (mLastChannels != (int)channels) {
         mSoundTouch->setChannels(channels);
 
-        unk6c = channels;
+        mLastChannels = channels;
     }
-    if (params.unk0 != unk68 && 0 < params.unk0) {
-        mSoundTouch->setPitch(params.unk0);
+    if (params.mParamPitchRatio != mLastPitch && 0 < params.mParamPitchRatio) {
+        mSoundTouch->setPitch(params.mParamPitchRatio);
         mSoundTouch->flush();
         mSoundTouch->clear();
-        unk64 = 0;
-        unk68 = params.unk0;
+        mStarted = 0;
+        mLastPitch = params.mParamPitchRatio;
     }
 
-    if (unk68 != 1.0f) {
+    if (mLastPitch != 1.0f) {
         mSoundTouch->putSamples(f, 0x100);
-        if (!unk64 && 0x400 <= mSoundTouch->numSamples()) {
-            unk64 = true;
+        if (!mStarted && 0x400 <= mSoundTouch->numSamples()) {
+            mStarted = true;
         }
         unsigned int size;
-        if (unk64) {
+        if (mStarted) {
             unsigned int receiveSamples = mSoundTouch->receiveSamples(f, 0x100);
             if (0x100 <= receiveSamples) {
                 return;
             }
-            unk64 = false;
+            mStarted = false;
             size = (0x100 - receiveSamples) * channels * 4;
             f = f + receiveSamples * channels;
             memset(f, 0, size);

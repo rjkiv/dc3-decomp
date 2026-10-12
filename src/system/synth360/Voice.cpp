@@ -73,14 +73,14 @@ void TerminateVoiceThread() {
 }
 
 Voice::Voice(bool xma, int chans, bool b2)
-    : unk4(0), mBuffer(0), mBufSizeBytes(0), mNumSamples(0), mSampleRate(0),
-      mSampleStart(0), mLoopStart(-1), mLoopEnd(-1), mVolume(1.0f), mPan(0), mSpeed(1.0f),
-      unk30(0.001f), unk34(0.001f), mXMA(xma), mSend(0), mReverb(false),
-      mReverbMixDb(-96.0f), unk48(false), unk49(b2), mChannels(chans), unk50(0),
-      unk54(false) {
+    : mState(kUninitialized), mBuffer(0), mBufferBytes(0), mNumSamples(0), mSampleRate(0),
+      mStartSamp(0), mLoopStart(-1), mLoopEnd(-1), mVolume(1.0f), mPan(0), mSpeed(1.0f),
+      mAttackRate(0.001f), mReleaseRate(0.001f), mXMA(xma), mSend(0),
+      mReverbEnable(false), mReverbMixDb(-96.0f), mReverbVoiceConnected(false),
+      mCoherentSet(b2), mChannels(chans), mTag(0), mHasOutputVoices(false) {
     mPoolVoice.eg = 0;
     mPoolVoice.egParams = 0;
-    mPoolVoice.voice = 0;
+    mPoolVoice.xVoice = 0;
     if (gEvent == INVALID_HANDLE_VALUE) {
         gEvent = CreateEventA(0, 0, 0, 0);
         MILO_ASSERT(gEvent, 0xfa);
@@ -95,8 +95,8 @@ Voice::Voice(bool xma, int chans, bool b2)
 }
 
 Voice::~Voice() {
-    while (unk4 == 2) {
-        if (unk49) {
+    while (mState == kPendingStart) {
+        if (mCoherentSet) {
             StartSynchronizedVoices();
         }
         Sleep(0);
@@ -106,15 +106,15 @@ Voice::~Voice() {
     }
     if (GetVoice()) {
         GetVoice()->Stop(0, 0);
-        dispose(&mPoolVoice, unk0);
+        dispose(&mPoolVoice, mFmtHash);
     }
 }
 
 // clang-format off
 void Voice::Init(bool b1) {
-    if (TheXboxSynth->OutputVoice()) {
+    if (TheXboxSynth->GetMasteringVoice()) {
         if (!b1) {
-            unk4 = 1;
+            mState = kStopped;
         }
         MILO_ASSERT(0 < mSampleRate && mSampleRate <= 48000, 0x160);
         MILO_ASSERT(mBuffer, 0x161);
@@ -126,21 +126,21 @@ void Voice::Init(bool b1) {
         desc.Flags = 0;
         IXAudio2Voice* iv;
         if(mSend){
-            iv = mSend->GetOutputVoice();
+            iv = mSend->InputVoice();
         } else {
-            iv = TheXboxSynth->OutputVoice();
+            iv = TheXboxSynth->GetMasteringVoice();
         }
         desc.pOutputVoice = iv;
         std::vector <XAUDIO2_SEND_DESCRIPTOR> descs;
         if (desc.pOutputVoice) {
             descs.push_back(desc);
         }
-        if (mReverb) {
+        if (mReverbEnable) {
             XAUDIO2_SEND_DESCRIPTOR desc2;
             desc2.Flags = 0;
-            desc2.pOutputVoice = TheXboxSynth->ReverbSendVoice();
+            desc2.pOutputVoice = TheXboxSynth->GetReverbDmVoice();
             descs.push_back(desc2);
-            unk48 = true;
+            mReverbVoiceConnected = true;
         }
         XAUDIO2_SEND_DESCRIPTOR desc3;
         desc3.Flags = 0;
@@ -161,7 +161,7 @@ void Voice::Init(bool b1) {
         if(sends.SendCount){
             sendsPtr = &sends;
         } 
-        HRESULT hr = createOrReuse(&mPoolVoice, unk0, fmtex.wfx, sendsPtr);
+        HRESULT hr = createOrReuse(&mPoolVoice, mFmtHash, fmtex.wfx, sendsPtr);
         
         MILO_ASSERT(SUCCEEDED(hr), 0x19D);
         MILO_ASSERT(GetVoice(), 0x19E);
@@ -171,10 +171,10 @@ void Voice::Init(bool b1) {
         if(GetVoice()){
             GetVoice()->SetFrequencyRatio(mSpeed, 0);
         }
-        mPoolVoice.egParams->unk0 = unk30;
-        mPoolVoice.egParams->unk4 = unk34;
-        mPoolVoice.egParams->unk8 = 0;
-        mPoolVoice.egParams->unkc = 0;
+        mPoolVoice.egParams->AttackRate = mAttackRate;
+        mPoolVoice.egParams->ReleaseRate = mReleaseRate;
+        mPoolVoice.egParams->StartRelease = 0;
+        mPoolVoice.egParams->IsDone = 0;
         hr = GetVoice()->SetEffectParameters(0, mPoolVoice.egParams, sizeof(EnvelopeGeneratorParams), 0);
         MILO_ASSERT(SUCCEEDED(hr), 0x1B0);
     }
@@ -182,29 +182,29 @@ void Voice::Init(bool b1) {
 // clang-format on
 
 void Voice::blockingStart(bool b1) {
-    if (!gShutdownVoiceThread && TheXboxSynth->OutputVoice()) {
+    if (!gShutdownVoiceThread && TheXboxSynth->GetMasteringVoice()) {
         CritSecTracker t(&gLockPendingLists);
         Init(b1);
-        HRESULT hr = GetVoice()->Start(0, unk49 != false);
+        HRESULT hr = GetVoice()->Start(0, mCoherentSet != false);
         MILO_ASSERT(SUCCEEDED(hr), 0x29B);
-        unk4 = 3;
+        mState = kPlaying;
     }
 }
 
 void Voice::Pause(bool b1) {
-    if (b1 != (unk4 == 4) && IsPlaying()) {
-        if (unk49 && unk4 == 2 && b1) {
+    if (b1 != (mState == kPaused) && IsPlaying()) {
+        if (mCoherentSet && mState == kPendingStart && b1) {
             StartSynchronizedVoices();
         }
-        while (unk4 == 2) {
+        while (mState == kPendingStart) {
             Sleep(0);
         }
         MILO_ASSERT(GetVoice(), 0x2B4);
         if (b1) {
             gHasPendingStopCommits = true;
-            HRESULT hr = GetVoice()->Stop(0, unk49 ? 2 : 0);
+            HRESULT hr = GetVoice()->Stop(0, mCoherentSet ? 2 : 0);
             MILO_ASSERT(SUCCEEDED(hr), 700);
-            unk4 = 4;
+            mState = kPaused;
         } else {
             SafeRestart();
         }
@@ -213,8 +213,8 @@ void Voice::Pause(bool b1) {
 
 void Voice::SafeRestart() {
     MILO_ASSERT(GetVoice(), 0x471);
-    GetVoice()->Start(0, unk49 != false);
-    unk4 = 3;
+    GetVoice()->Start(0, mCoherentSet != false);
+    mState = kPlaying;
 }
 
 void Voice::Stop(bool b1) {
@@ -223,14 +223,14 @@ void Voice::Stop(bool b1) {
             GetVoice()->Stop(0, 0);
         } else {
             MILO_ASSERT(mPoolVoice.egParams, 0x14D);
-            mPoolVoice.egParams->unk8 = 1;
+            mPoolVoice.egParams->StartRelease = 1;
             HRESULT hr = GetVoice()->SetEffectParameters(
                 0, mPoolVoice.egParams, sizeof(EnvelopeGeneratorParams), 0
             );
             MILO_ASSERT(SUCCEEDED(hr), 0x150);
         }
     }
-    unk4 = 1;
+    mState = kStopped;
 }
 
 void Voice::SetSampleRate(int i) {
@@ -246,8 +246,8 @@ void Voice::SetLoopRegion(int loopStart, int loopEnd) {
 }
 
 void Voice::SetReverbEnable(bool b) {
-    if (mReverb != b) {
-        mReverb = b;
+    if (mReverbEnable != b) {
+        mReverbEnable = b;
         UpdateSends();
     }
 }
@@ -274,7 +274,7 @@ void Voice::SetPan(float f) {
 void Voice::SetStartSamp(int samp) {
     MILO_ASSERT(samp >= 0, 0x31e);
     MILO_ASSERT(samp < mNumSamples, 799);
-    mSampleStart = samp;
+    mStartSamp = samp;
 }
 
 void Voice::SetReverbMixDb(float f) {
@@ -293,7 +293,7 @@ void Voice::SetData(const void *buffer, int bytes, int i) {
     MILO_ASSERT(buffer, 299);
     MILO_ASSERT(bytes >= 0, 300);
     mBuffer = buffer;
-    mBufSizeBytes = bytes;
+    mBufferBytes = bytes;
     if (i != 0) {
         mNumSamples = i;
     } else {
@@ -319,9 +319,9 @@ void Voice::SetSpeed(float f1) {
 
 void Voice::InitSourceBuffer(XAUDIO2_BUFFER &audio_buffer) {
     audio_buffer.pAudioData = (BYTE *)mBuffer;
-    audio_buffer.AudioBytes = mBufSizeBytes;
+    audio_buffer.AudioBytes = mBufferBytes;
     audio_buffer.pContext = 0;
-    audio_buffer.PlayBegin = mSampleStart;
+    audio_buffer.PlayBegin = mStartSamp;
     audio_buffer.PlayLength = 0;
     if (mLoopStart >= 0) {
         if (mLoopEnd < 0) {
@@ -372,12 +372,12 @@ bool Voice::IsPlaying() {
     START_AUTO_TIMER("voice_is_playing");
     // yeah idk how to match this rn but hey 83 is good!
     bool isPlaying;
-    if (unk4 == 2) {
+    if (mState == kPendingStart) {
         return true;
     } else {
-        if (GetVoice() || unk4 == 1) {
+        if (GetVoice() || mState == kStopped) {
             isPlaying = false;
-        } else if (unk4 == 4) {
+        } else if (mState == kPaused) {
             isPlaying = true;
         } else {
             XAUDIO2_VOICE_STATE *voiceState;
@@ -386,9 +386,9 @@ bool Voice::IsPlaying() {
                 isPlaying = false;
             } else {
                 XAUDIO2_FILTER_PARAMETERS *parameters;
-                if (TheXboxSynth->GetCritSecTryEnter()) {
+                if (TheXboxSynth->GetVoiceDestructionCS()->TryEnter()) {
                     HRESULT hr = GetVoice()->GetEffectParameters(0, parameters, 16);
-                    TheXboxSynth->GetCritSecExit();
+                    TheXboxSynth->GetVoiceDestructionCS()->Exit();
                     MILO_ASSERT(SUCCEEDED(hr), 0x2ff);
                 }
             }

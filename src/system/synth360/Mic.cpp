@@ -44,29 +44,29 @@ const static float sFloat2 = 1800.0f;
 #pragma region ChatReceiver
 
 ChatReceiver::ChatReceiver(IXHV2Engine *engine, int port)
-    : mXHV(engine), mPort(port), unk8(0), unk9(0), unkc(0), unk10(0), unk14(0), unk18(0),
-      unk50(new MemStream(true)) {
+    : mXHV(engine), mPad(port), mEnabled(0), mProcessingActivated(0), mDelay(0), mFB(0),
+      mHoldFrames(0), mFramesTalking(0), mNetBuffer(new MemStream(true)) {
     MILO_ASSERT(mXHV, 0x3F2);
 }
 
 ChatReceiver::~ChatReceiver() {
     ActivateProcessing(false);
-    RELEASE(unk50);
+    RELEASE(mNetBuffer);
 }
 
 void ChatReceiver::ActivateProcessing(bool b1) {
-    if (b1 != unk9) {
-        unk9 = b1;
+    if (b1 != mProcessingActivated) {
+        mProcessingActivated = b1;
         void *mode = _xhv_voicechat_mode;
         if (b1) {
-            HRESULT hr = mXHV->RegisterLocalTalker(mPort);
+            HRESULT hr = mXHV->RegisterLocalTalker(mPad);
             DX_ASSERT(hr, 0x40D);
-            hr = mXHV->StartLocalProcessingModes(mPort, &mode, 1);
+            hr = mXHV->StartLocalProcessingModes(mPad, &mode, 1);
             DX_ASSERT(hr, 0x40E);
         } else {
-            HRESULT hr = mXHV->StopLocalProcessingModes(mPort, &mode, 1);
+            HRESULT hr = mXHV->StopLocalProcessingModes(mPad, &mode, 1);
             DX_ASSERT(hr, 0x412);
-            hr = mXHV->UnregisterLocalTalker(mPort);
+            hr = mXHV->UnregisterLocalTalker(mPad);
             DX_ASSERT(hr, 0x413);
         }
     }
@@ -76,14 +76,15 @@ void ChatReceiver::ActivateProcessing(bool b1) {
 #pragma region MicXbox
 
 MicXbox::MicXbox(int, float volume)
-    : mRunning(false), unk10(0), mChangeNotify(false), mVoice(0), unk301c(mVoiceBuffer),
-      unk9054(1.0f), unk9058(0), unk905c(0), mSend(0), mVolume(volume), mMute(false),
-      unk906c(0), mGain(1.0f), mOutputGain(1.0f), mSensitivity(1.0f), unk907c(0),
-      mDroppedSamples(0), mName("generic_usb"), mClipping(false) {
+    : mRunning(false), mLastType(kDisconnected), mChangeNotify(false), mVoice(0),
+      mPlaybackWritePtr(mPlaybackBuffer), mVoiceSpeed(1.0f), mAvgLag(0), mLastLag(0),
+      mFxSend(0), mVolume(volume), mMute(false), mRMS(0), mGain(1.0f), mOutputGain(1.0f),
+      mSensitivity(1.0f), mLastSamp(0), mDroppedSamples(0), mName("generic_usb"),
+      mClipping(false) {
     mRingBufferRecent.Init(0xc00);
     mRingBufferContinuous.Init(0x6000);
-    unk3020.reserve(0x1800);
-    memset(mVoiceBuffer, 0, 0x3000);
+    mChatBuffer.reserve(0x1800);
+    memset(mPlaybackBuffer, 0, 0x3000);
 }
 
 MicXbox::~MicXbox() {
@@ -95,7 +96,7 @@ MicXbox::~MicXbox() {
 
 void MicXbox::Start() {
     if (!mRunning) {
-        unk301c = mVoiceBuffer;
+        mPlaybackWritePtr = mPlaybackBuffer;
         MicManagerXbox::GetInstance()->AddMic(this);
         mRunning = true;
     }
@@ -137,7 +138,7 @@ void MicXbox::SetVolume(float f) { mVolume = DbToRatio(f); }
 
 void MicXbox::SetFxSend(FxSend *send) {
     CritSecTracker t(MicManagerXbox::GetInstance()->CritSec());
-    mSend = send;
+    mFxSend = send;
     if (mVoice) {
         StopPlayback();
         StartPlayback();
@@ -153,14 +154,14 @@ void MicXbox::StartPlayback() {
     }
     Start();
     mMute = false;
-    unk9058 = unkc ? sFloat2 : sFloat1;
-    unk905c = 0;
-    unk9054 = 1.0f;
+    mAvgLag = mIsWireless ? sFloat2 : sFloat1;
+    mLastLag = 0;
+    mVoiceSpeed = 1.0f;
     mVoice = new Voice(false, 1, false);
     mVoice->SetSampleRate(48000.0f);
-    mVoice->SetData(mVoiceBuffer, sizeof(mVoiceBuffer), 0);
+    mVoice->SetData(mPlaybackBuffer, sizeof(mPlaybackBuffer), 0);
     mVoice->SetLoopRegion(0, -1);
-    mVoice->SetSend(dynamic_cast<FxSend360 *>(mSend));
+    mVoice->SetSend(dynamic_cast<FxSend360 *>(mFxSend));
     mVoice->Start();
     mVoice->SetVolume(0);
 }
@@ -168,7 +169,7 @@ void MicXbox::StartPlayback() {
 void MicXbox::StopPlayback() {
     CritSecTracker t(MicManagerXbox::GetInstance()->CritSec());
     RELEASE(mVoice);
-    memset(mVoiceBuffer, 0, sizeof(mVoiceBuffer));
+    memset(mPlaybackBuffer, 0, sizeof(mPlaybackBuffer));
 }
 
 bool MicXbox::IsPlaying() { return mVoice; }
@@ -180,21 +181,21 @@ void MicXbox::ClearBuffers() {
 
 short *MicXbox::GetRecentBuf(int &iref) {
     CritSecTracker t(MicManagerXbox::GetInstance()->CritSec());
-    mRingBufferRecent.Peek(mPlaybackBuffer, 0xC00);
+    mRingBufferRecent.Peek(mOutputBuffer, 0xC00);
     iref = 0x600;
-    return mPlaybackBuffer;
+    return mOutputBuffer;
 }
 
 short *MicXbox::GetContinuousBuf(int &iref) {
     CritSecTracker t(MicManagerXbox::GetInstance()->CritSec());
-    iref = mRingBufferContinuous.Read(mPlaybackBuffer, 0x6000) / sizeof(short);
-    return mPlaybackBuffer;
+    iref = mRingBufferContinuous.Read(mOutputBuffer, 0x6000) / sizeof(short);
+    return mOutputBuffer;
 }
 
 int MicXbox::GetDroppedSamples() { return mDroppedSamples; }
 
 void MicXbox::OnMicConnected(unsigned long ul, bool b, Symbol const &s) {
-    unkc = b;
+    mIsWireless = b;
     mName = s;
     MicManagerXbox::GetInstance()->SetMicsChanged();
 }
@@ -240,12 +241,12 @@ void MicXbox::AddData(void *v, int bytes) {
     }
 
     if (mVoice) {
-        if (unk301c < unk301c + bytes) {
+        if (mPlaybackWritePtr < mPlaybackWritePtr + bytes) {
             // is it 0???
-            XMemCpy(unk301c, v, 0);
-            XMemCpy(mVoiceBuffer, v, 0);
+            XMemCpy(mPlaybackWritePtr, v, 0);
+            XMemCpy(mPlaybackBuffer, v, 0);
         } else {
-            XMemCpy(unk301c, v, bytes);
+            XMemCpy(mPlaybackWritePtr, v, bytes);
         }
         // hmmmm
         if (!mVoice->IsPlaying()) {
@@ -253,7 +254,7 @@ void MicXbox::AddData(void *v, int bytes) {
         }
     }
 
-    AddToBuffer(unk3020, v, bytes, 0);
+    AddToBuffer(mChatBuffer, v, bytes, 0);
     mRingBufferRecent.Write(v, bytes);
     mDroppedSamples = mRingBufferContinuous.Write(v, bytes);
 }
@@ -286,7 +287,8 @@ static DataNode SetRemoteGain(DataArray *a) {
 }
 
 MicManagerXbox::MicManagerXbox()
-    : unk18(-1), mXHVEngine(0), mXHVWorkerThread(0), mMicsChanged(false), mPad(-1) {
+    : mPlayerUsingUSBChat(-1), mXHV(0), mWorkerThread(0), mMicsChanged(false),
+      mPushToTalkPad(-1) {
     for (int i = 4; i != 0; i--) {
         mChatReceivers.push_back(nullptr);
     }
@@ -318,8 +320,8 @@ void MicManagerXbox::Init() {
     params.pfnMicrophoneRawDataReady = DataReadyCallback;
     params.bCustomVADProvided = true;
     params.bRelaxPrivileges = true;
-    params.pXAudio2 = TheXboxSynth->GetXAudio();
-    HRESULT hr = XHV2CreateEngine(&params, &mXHVWorkerThread, &mXHVEngine);
+    params.pXAudio2 = TheXboxSynth->GetXAudio2();
+    HRESULT hr = XHV2CreateEngine(&params, &mWorkerThread, &mXHV);
     DX_ASSERT(hr, 0xCD);
 
     auto &headsetSubmixes = TheXboxSynth->GetHeadsetSubmixes();
@@ -342,35 +344,35 @@ void MicManagerXbox::Init() {
     }
 
     for (int i = 0; i < 16; i++) {
-        ChatReceiver *receiver = new ChatReceiver(mXHVEngine, i);
+        ChatReceiver *receiver = new ChatReceiver(mXHV, i);
         mChatReceivers[i] = receiver;
     }
 }
 
 void MicManagerXbox::RequirePushToTalk(bool req, int pad) {
-    CritSecTracker t(&mMicArrayLock);
+    CritSecTracker t(&mCritSec);
     if (req) {
         MILO_ASSERT(pad >=0, 0x2c7);
-        mPad = pad;
+        mPushToTalkPad = pad;
     } else {
-        mPad = -1;
+        mPushToTalkPad = -1;
     }
 }
 
 void MicManagerXbox::AddMic(MicXbox *mic) {
-    FOREACH (it, mMics) {
+    FOREACH (it, mInterfaces) {
         if (*it == mic) {
             return;
         }
     }
-    mMics.push_back(mic);
+    mInterfaces.push_back(mic);
     mic->SetChangeNotify(true);
 }
 
 void MicManagerXbox::RemoveMic(MicXbox *mic) {
-    FOREACH (it, mMics) {
+    FOREACH (it, mInterfaces) {
         if (*it == mic) {
-            mMics.erase(it);
+            mInterfaces.erase(it);
             mic->SetChangeNotify(false);
             return;
         }
@@ -382,9 +384,9 @@ void MicManagerXbox::Shutdown() {
     for (int i = 0; i < 4; i++) {
         RELEASE(mChatReceivers[i]);
     }
-    if (mXHVEngine) {
-        mXHVEngine->Release();
-        mXHVEngine = nullptr;
+    if (mXHV) {
+        mXHV->Release();
+        mXHV = nullptr;
     }
     sInstance = nullptr;
     delete this;
@@ -401,21 +403,22 @@ void MicManagerXbox::OnDataReady(
     unsigned long userIndex, void *v, unsigned long ul, int *i
 ) {
     MILO_ASSERT(userIndex >= 0 && userIndex < 4, 0x18a);
-    CritSecTracker tracker(&mMicArrayLock);
+    CritSecTracker tracker(&mCritSec);
     ChatReceiver *receiver = mChatReceivers[userIndex];
     MILO_ASSERT(receiver, 0x191);
-    if (receiver->GetUnk8()) {
-        if (receiver->GetIXHV2Engine()->IsHeadsetPresent(receiver->GetPort())) {
-            if (unk18 == userIndex) {
-                unk18 = -1;
+    if (receiver->GetEnabled()) {
+        if (receiver->GetIXHV2Engine()->IsHeadsetPresent(receiver->GetPad())) {
+            if (mPlayerUsingUSBChat == userIndex) {
+                mPlayerUsingUSBChat = -1;
             }
         } else {
-            if (unk18 == -1) {
-                unk18 = userIndex;
+            if (mPlayerUsingUSBChat == -1) {
+                mPlayerUsingUSBChat = userIndex;
             }
-            if (unk18 == userIndex
-                && (mPad == -1 || JoypadGetPadData(mPad)->mButtons % 2 != 0
-                    || (bool)(JoypadGetPadData(mPad)->mButtons & 2))) {
+            if (mPlayerUsingUSBChat == userIndex
+                && (mPushToTalkPad == -1
+                    || JoypadGetPadData(mPushToTalkPad)->mButtons % 2 != 0
+                    || (bool)(JoypadGetPadData(mPushToTalkPad)->mButtons & 2))) {
                 MicClientMapper *mapper = TheSynth->GetMicClientMapper();
                 for (int i = 0; i < 4; i++) {
                     MicClientID micClientID(i);
@@ -432,7 +435,7 @@ void MicManagerXbox::OnDataReady(
         }
     }
 
-    if (!receiver->GetIXHV2Engine()->IsSharedMicPresent(receiver->GetPort())) {
+    if (!receiver->GetIXHV2Engine()->IsSharedMicPresent(receiver->GetPad())) {
         receiver->ProcessChatData(v, ul, i);
     } else {
         MicXbox *mic = (MicXbox *)TheSynth->GetMic(0);
@@ -455,7 +458,7 @@ void MicManagerXbox::AddRemoteMic(
 ) {
     GainEffect *gainEffect = new GainEffect();
     // param 2 is not right
-    HRESULT registerTalker = mXHVEngine->RegisterRemoteTalker(xuid, 0, PairFX, 0);
+    HRESULT registerTalker = mXHV->RegisterRemoteTalker(xuid, 0, PairFX, 0);
     if (registerTalker != 0) {
         MILO_FAIL(
             "File: %s Line: %d Error: %s\n", "Mic.cpp", 0x150, DxRnd::Error(registerTalker)
@@ -463,7 +466,7 @@ void MicManagerXbox::AddRemoteMic(
     }
 
     // param 2 not right
-    HRESULT startRemoteProcessing = mXHVEngine->StartRemoteProcessingModes(xuid, 0, 1);
+    HRESULT startRemoteProcessing = mXHV->StartRemoteProcessingModes(xuid, 0, 1);
     if (startRemoteProcessing != 0) {
         MILO_FAIL(
             "File: %s Line: %d Error: %s\n",

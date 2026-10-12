@@ -1,9 +1,9 @@
 #include "synth360/HeadsetPlaybackEffect.h"
 #include "synth360/HeadsetXferEffect.h"
 
-HeadsetPlaybackEffect::HeadsetPlaybackEffect(HeadsetXferEffect **fx) : unk68(0) {
+HeadsetPlaybackEffect::HeadsetPlaybackEffect(HeadsetXferEffect **fx) : mFrameNum(0) {
     for (int i = 0; i < 4; i++) {
-        mEffects[i] = fx[i];
+        mXferEffects[i] = fx[i];
     }
     HeadsetPlaybackEffectParams p;
     p.unk0 = false;

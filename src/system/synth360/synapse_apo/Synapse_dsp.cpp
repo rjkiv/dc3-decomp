@@ -16,40 +16,43 @@ namespace {
     }
 }
 
-DSP::Synapse::Synapse::Synapse(float rate) : unk24(64), mSampleRate(rate) {
-    float f7 = mSampleRate * 0.4f < 0 ? -0.5f : 0.5f;
-    float f8 = mSampleRate * 0.0015384615f < 0 ? -0.5f : 0.5f;
-    float fvar1 = mSampleRate * 0.016666668f < 0 ? -0.5f : 0.5f;
-    unsigned int u25 = f7 + mSampleRate * 0.4f;
-    unk1c = (f8 + mSampleRate * 0.0015384615f);
-    unk20 = (fvar1 + mSampleRate * 0.016666668f);
-    unk0.resize(u25);
-    unkc.resize(unk0.size());
-    unk18 = 0;
-    unk3c = 1;
-    mPitchDetector = new PitchDetector(unkc, (unk1c + 3U) / 4, unk20 / 4);
-    unk30 = 0;
-    unk34 = 0;
-    unk38 = 0.35f;
-    unk2c = unk1c;
-    mPeakDetector = new PeakDetector(unk0, unk1c, unk20);
-    mVoices.resize(3);
-    unk44.resize(mVoices.size());
-    unk50.resize(mVoices.size());
-    for (int i = 0; i < unk44.size(); i++) {
-        unk44[i].resize(0x2000);
-        unk50[i] = &unk44[i][0];
+DSP::Synapse::Synapse::Synapse(float rate)
+    : m_sPitchDetectionStride(64), m_fSamplingRate(rate) {
+    float f7 = m_fSamplingRate * 0.4f < 0 ? -0.5f : 0.5f;
+    float f8 = m_fSamplingRate * 0.0015384615f < 0 ? -0.5f : 0.5f;
+    float fvar1 = m_fSamplingRate * 0.016666668f < 0 ? -0.5f : 0.5f;
+    unsigned int u25 = f7 + m_fSamplingRate * 0.4f;
+    m_sMinPitchLag = (f8 + m_fSamplingRate * 0.0015384615f);
+    m_sMaxPitchLag = (fvar1 + m_fSamplingRate * 0.016666668f);
+    m_fInputDelay.resize(u25);
+    m_fDnInputDelay.resize(m_fInputDelay.size());
+    m_iInputDelayOffset = 0;
+    m_fGain = 1;
+    m_pPitchDetector =
+        new PitchDetector(m_fDnInputDelay, (m_sMinPitchLag + 3U) / 4, m_sMaxPitchLag / 4);
+    m_fTonality = 0;
+    m_fEnergy = 0;
+    m_fTonalityThreshold = 0.35f;
+    m_fPitchLag = m_sMinPitchLag;
+    m_pPeakDetector = new PeakDetector(m_fInputDelay, m_sMinPitchLag, m_sMaxPitchLag);
+    m_voices.resize(3);
+    m_fTempOutputs.resize(m_voices.size());
+    m_pTempOutputs.resize(m_voices.size());
+    for (int i = 0; i < m_fTempOutputs.size(); i++) {
+        m_fTempOutputs[i].resize(0x2000);
+        m_pTempOutputs[i] = &m_fTempOutputs[i][0];
     }
-    mGranularSynth = new GranularSynth(unk0, mVoices.size(), unk1c, unk20);
-    for (int i = 0; i < mVoices.size(); i++) {
+    m_pGranularSynth =
+        new GranularSynth(m_fInputDelay, m_voices.size(), m_sMinPitchLag, m_sMaxPitchLag);
+    for (int i = 0; i < m_voices.size(); i++) {
     }
     float coeffs[8];
-    LowpassCoefficients(coeffs, mSampleRate, 7862.0f, 0.707f);
-    mLowPassBiquad = new Biquad(coeffs);
-    HighpassCoefficients(coeffs, mSampleRate / 4, 340.0f, 0.707f);
-    mHighPassBiquad = new Biquad(coeffs);
-    unk78 = 0;
-    unk7c = Time2IirA(0.008160001f, mSampleRate / 4);
+    LowpassCoefficients(coeffs, m_fSamplingRate, 7862.0f, 0.707f);
+    m_pPreFilterLowpass = new Biquad(coeffs);
+    HighpassCoefficients(coeffs, m_fSamplingRate / 4, 340.0f, 0.707f);
+    m_pPreFilterHighpass = new Biquad(coeffs);
+    m_fAvgSignal = 0;
+    m_kAvgSignalSmoothing = Time2IirA(0.008160001f, m_fSamplingRate / 4);
     SetAttackSmoothing(30);
     SetReleaseSmoothing(80);
 }
@@ -57,43 +60,43 @@ DSP::Synapse::Synapse::Synapse(float rate) : unk24(64), mSampleRate(rate) {
 DSP::Synapse::Synapse::~Synapse() {}
 
 void DSP::Synapse::Synapse::SetVoiceEnabled(unsigned int idx, bool enabled) {
-    mGranularSynth->SetVoiceEnabled(idx, enabled);
+    m_pGranularSynth->SetVoiceEnabled(idx, enabled);
 }
 
 void DSP::Synapse::Synapse::SetVoiceTargetNote(unsigned int idx, float note) {
-    mVoices[idx].SetTargetNote(note);
+    m_voices[idx].SetTargetNote(note);
 }
 
 void DSP::Synapse::Synapse::SetVoiceGain(unsigned int idx, float gain) {
-    mGranularSynth->SetVoiceGain(idx, gain);
+    m_pGranularSynth->SetVoiceGain(idx, gain);
 }
 
 void DSP::Synapse::Synapse::SetVoiceTransposition(unsigned int idx, float trans) {
-    mVoices[idx].SetTransposition(trans);
+    m_voices[idx].SetTransposition(trans);
 }
 
 void DSP::Synapse::Synapse::SetVoiceAmount(unsigned int idx, float amt) {
-    mVoices[idx].SetAmount(amt);
+    m_voices[idx].SetAmount(amt);
 }
 
 void DSP::Synapse::Synapse::SetVoiceProximityEffect(unsigned int idx, float effect) {
-    mVoices[idx].SetProximityEffect(effect);
+    m_voices[idx].SetProximityEffect(effect);
 }
 
 void DSP::Synapse::Synapse::SetVoiceProximityFocus(unsigned int idx, float focus) {
-    mVoices[idx].SetProximityFocus(focus);
+    m_voices[idx].SetProximityFocus(focus);
 }
 
 void DSP::Synapse::Synapse::SetAttackSmoothing(float a) {
-    float iir = Time2IirA(a / 1000 / (float)unk24, mSampleRate);
-    for (int i = 0; i < mVoices.size(); i++) {
-        mVoices[i].SetAttackSmoothing(iir);
+    float iir = Time2IirA(a / 1000 / (float)m_sPitchDetectionStride, m_fSamplingRate);
+    for (int i = 0; i < m_voices.size(); i++) {
+        m_voices[i].SetAttackSmoothing(iir);
     }
 }
 
 void DSP::Synapse::Synapse::SetReleaseSmoothing(float r) {
-    float iir = Time2IirA(r / 1000 / (float)unk24, mSampleRate);
-    for (int i = 0; i < mVoices.size(); i++) {
-        mVoices[i].SetReleaseSmoothing(iir);
+    float iir = Time2IirA(r / 1000 / (float)m_sPitchDetectionStride, m_fSamplingRate);
+    for (int i = 0; i < m_voices.size(); i++) {
+        m_voices[i].SetReleaseSmoothing(iir);
     }
 }

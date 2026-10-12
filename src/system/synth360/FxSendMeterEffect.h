@@ -23,5 +23,5 @@ protected:
     virtual IUnknown *CreateFx();
     virtual void InitParams(IXAudio2SubmixVoice *, int);
 
-    MeterEffectParams *mParams; // 0xb0
+    MeterEffectParams *mMeterParams; // 0xb0
 };

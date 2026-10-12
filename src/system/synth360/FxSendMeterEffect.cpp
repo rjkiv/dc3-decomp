@@ -6,14 +6,14 @@
 #include "synth360/MeterEffect.h"
 #include "xdk/unknwn.h"
 
-FxSendMeterEffect360::FxSendMeterEffect360() : FxSend360(this), mParams(0) {}
+FxSendMeterEffect360::FxSendMeterEffect360() : FxSend360(this), mMeterParams(0) {}
 
-FxSendMeterEffect360::~FxSendMeterEffect360() { RELEASE(mParams); }
+FxSendMeterEffect360::~FxSendMeterEffect360() { RELEASE(mMeterParams); }
 
 void FxSendMeterEffect360::SyncEffectParams(IXAudio2SubmixVoice *voice) const {
     MeterEffectParams p;
-    if (mParams) {
-        p.unk0 = mParams->unk0;
+    if (mMeterParams) {
+        p.pLevelData = mMeterParams->pLevelData;
     }
     voice->SetEffectParameters(0, &p, sizeof(p), 0);
 }
@@ -36,10 +36,10 @@ void FxSendMeterEffect360::InitParams(IXAudio2SubmixVoice *voice, int numChannel
         break;
     }
     // unsure about this part
-    RELEASE(mParams);
-    mParams = new MeterEffectParams();
-    mParams->unk0 = (void *)&mChannels[0];
-    voice->SetEffectParameters(0, mParams, sizeof(MeterEffectParams), 0);
+    RELEASE(mMeterParams);
+    mMeterParams = new MeterEffectParams;
+    mMeterParams->pLevelData = &mChannels[0];
+    voice->SetEffectParameters(0, mMeterParams, sizeof(MeterEffectParams), 0);
 }
 
 IUnknown *FxSendMeterEffect360::CreateFx() {

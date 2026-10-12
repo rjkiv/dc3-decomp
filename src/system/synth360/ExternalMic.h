@@ -19,8 +19,8 @@ public:
 private:
     HANDLE mThread; // 0x0
     DWORD mMicIndex; // 0x4
-    bool unk8;
-    bool mConnected; // 0x9
+    volatile bool mShutdown; // 0x8
+    bool mIsActive; // 0x9
     float mGain; // 0xc
     float mMinGain; // 0x10
     float mMaxGain; // 0x14
@@ -29,10 +29,15 @@ private:
 // size 0x8
 class ExternalMicClientProxy {
 public:
-    ExternalMicClientProxy(DWORD dw) : unk0(dw) {}
+    ExternalMicClientProxy(DWORD index) : mIndex(index) {}
     HRESULT OnMicConnected(DWORD, bool, const Symbol &);
 
-    DWORD unk0; // 0x0
+    bool IsConnected() const { return mConnected; }
+    void SetConnected(bool b) { mConnected = b; }
+    DWORD GetIndex() const { return mIndex; }
+
+private:
+    DWORD mIndex; // 0x0
     bool mConnected; // 0x4
 };
 

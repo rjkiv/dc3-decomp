@@ -40,7 +40,7 @@ float SampleInst360::GetProgress() {
     mVoice->GetVoice()->GetState(&state, 0);
     SIZE_T samples = state.SamplesPlayed;
     if (mVoice->GetLoopStart() >= 0) {
-        int sample_start = mVoice->GetSampleStart();
+        int sample_start = mVoice->GetStartSamp();
         samples -= sample_start;
         int loop_start = mVoice->GetLoopStart();
         int loop_end = mVoice->GetLoopEnd();

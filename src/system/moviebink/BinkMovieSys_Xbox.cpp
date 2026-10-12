@@ -5,7 +5,7 @@
 
 void BinkMovieSys::PlatformInit() {
     if (TheXboxSynth) {
-        BinkSetSoundSystem(BinkOpenXAudio2, (INT_PTR)TheXboxSynth->GetXAudio());
+        BinkSetSoundSystem(BinkOpenXAudio2, (INT_PTR)TheXboxSynth->GetXAudio2());
     }
 }
 

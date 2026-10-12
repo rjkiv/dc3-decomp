@@ -1,9 +1,11 @@
 #pragma once
 #include "xdk/XAUDIO2.h"
 
+class HeadsetXferEffect;
+
 // size 0x4
 struct HeadsetXferEffectParams {
-    void *unk0;
+    HeadsetXferEffect *effect; // 0x0
 };
 
 DEFINE_CLSID(HeadsetXferEffect, B4D4C8AA, A20D, 40A1, 84, A7, 64, 19, 35, 51, A9, BE);
@@ -18,6 +20,6 @@ public:
     );
 
 private:
-    int unk60;
-    float unk64[2][0x100];
+    int mFrameNum; // 0x60
+    float mData[512]; // 0x64
 };

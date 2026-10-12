@@ -15,47 +15,47 @@ StreamReceiver *New360Receiver(int i1, int i2, bool b3, int i4) {
 }
 
 StreamReceiver360::StreamReceiver360(int i1, int i2, bool b3)
-    : StreamReceiver(i2, b3), unk8038(0), unk803c(0), unk8040(i1), unk8044(i2),
-      mVolume(1), mPan(0), mSpeed(1), mSend(0), unk807c(0) {
+    : StreamReceiver(i2, b3), mVoice(0), mRefVoice(0), mSampleRate(i1), mNumBuffers(i2),
+      mVolume(1), mPan(0), mSpeed(1), mFxSend(0), mTagged(0) {
     int size = i2 << 0xE;
-    unk8034 = _MemAllocTemp(size, __FILE__, 0x33, "StreamBuffer", 0);
-    unk803c = new Voice(false, 1, false);
-    unk803c->SetData(unk8034, size, 0);
-    unk803c->SetLoopRegion(0, -1);
-    unk803c->SetSampleRate(unk8040);
+    mVoiceBuffer = (char *)_MemAllocTemp(size, __FILE__, 0x33, "StreamBuffer", 0);
+    mRefVoice = new Voice(false, 1, false);
+    mRefVoice->SetData(mVoiceBuffer, size, 0);
+    mRefVoice->SetLoopRegion(0, -1);
+    mRefVoice->SetSampleRate(mSampleRate);
     if (!mSlipEnabled) {
-        unk8038 = unk803c;
+        mVoice = mRefVoice;
     } else {
-        unk803c->SetVolume(0);
+        mRefVoice->SetVolume(0);
     }
 }
 
 StreamReceiver360::~StreamReceiver360() {
-    delete unk803c;
+    delete mRefVoice;
     if (mSlipEnabled) {
-        delete unk8038;
+        delete mVoice;
     }
-    DeleteAll(unk802c);
-    MemFree(unk8034);
+    DeleteAll(mOldVoices);
+    MemFree(mVoiceBuffer);
 }
 
 void StreamReceiver360::SetVolume(float volume) {
     mVolume = volume;
-    if (unk8038) {
-        unk8038->SetVolume(volume);
+    if (mVoice) {
+        mVoice->SetVolume(volume);
     }
 }
 
 void StreamReceiver360::SetPan(float pan) {
     mPan = pan;
-    if (unk8038) {
-        unk8038->SetPan(pan);
+    if (mVoice) {
+        mVoice->SetPan(pan);
     }
 }
 
 void StreamReceiver360::SetSpeed(float speed) {
     mSpeed = speed;
-    unk803c->SetSpeed(speed);
+    mRefVoice->SetSpeed(speed);
 }
 
 void StreamReceiver360::SetADSR(const ADSRImpl &impl) {
@@ -66,114 +66,114 @@ void StreamReceiver360::SetADSR(const ADSRImpl &impl) {
 void StreamReceiver360::SetSlipOffset(float off) {
     MILO_ASSERT(mSlipEnabled, 197);
     SlipStop();
-    unk8038 = new Voice(0, 1, 0);
-    if (unk807c) {
+    mVoice = new Voice(0, 1, 0);
+    if (mTagged) {
         Tag();
     }
-    unk8038->SetData(unk8034, unk8044 * 16384, 0);
-    unk8038->SetLoopRegion(0, -1);
-    unk8038->SetSampleRate(unk8040);
-    unk8038->SetStartSamp(GetPlayCursor());
-    unk8038->SetVolume(mVolume);
-    unk8038->SetPan(mPan);
-    unk8038->SetSpeed(mSpeed);
+    mVoice->SetData(mVoiceBuffer, mNumBuffers * 16384, 0);
+    mVoice->SetLoopRegion(0, -1);
+    mVoice->SetSampleRate(mSampleRate);
+    mVoice->SetStartSamp(GetPlayCursor());
+    mVoice->SetVolume(mVolume);
+    mVoice->SetPan(mPan);
+    mVoice->SetSpeed(mSpeed);
     UpdateADSR();
-    SetFXSend(mSend);
-    unk8038->Start();
+    SetFXSend(mFxSend);
+    mVoice->Start();
 }
 
 void StreamReceiver360::Tag() {
-    unk807c = true;
-    if (unk8038) {
-        if (unk803c) {
-            unk8038->SetUnk50(1);
-            unk803c->SetUnk50(2);
-        } else if (unk8038) {
-            unk8038->SetUnk50(3);
+    mTagged = true;
+    if (mVoice) {
+        if (mRefVoice) {
+            mVoice->SetTag(1);
+            mRefVoice->SetTag(2);
+        } else if (mVoice) {
+            mVoice->SetTag(3);
         } else {
-            unk803c->SetUnk50(4);
+            mRefVoice->SetTag(4);
         }
     }
 
-    if (unk803c)
-        unk803c->SetUnk50(4);
+    if (mRefVoice)
+        mRefVoice->SetTag(4);
 }
 
 void StreamReceiver360::Poll() {
     StreamReceiver::Poll();
     static int v1 = 0;
     static int v2 = 0;
-    if (unk803c && unk803c->IsPlaying()) {
+    if (mRefVoice && mRefVoice->IsPlaying()) {
         v2++;
     }
-    if (unk8038 && unk8038->IsPlaying()) {
+    if (mVoice && mVoice->IsPlaying()) {
         v1++;
     }
-    while (!unk802c.empty()) {
-        if (unk802c.front()->IsPlaying()) {
+    while (!mOldVoices.empty()) {
+        if (mOldVoices.front()->IsPlaying()) {
             break;
         }
-        delete unk802c.front();
-        unk802c.pop_front();
+        delete mOldVoices.front();
+        mOldVoices.pop_front();
     }
 }
 
 void StreamReceiver360::SlipStop() {
     MILO_ASSERT(mSlipEnabled, 0xEC);
-    if (unk8038) {
-        unk8038->Stop(false);
-        unk802c.push_back(unk8038);
-        unk8038 = nullptr;
+    if (mVoice) {
+        mVoice->Stop(false);
+        mOldVoices.push_back(mVoice);
+        mVoice = nullptr;
     }
 }
 
 void StreamReceiver360::SetSlipSpeed(float speed) {
     MILO_ASSERT(mSlipEnabled, 0xFA);
-    if (unk8038) {
-        unk8038->SetSpeed(speed);
+    if (mVoice) {
+        mVoice->SetSpeed(speed);
     }
 }
 
 void StreamReceiver360::SetFXSend(FxSend *send) {
-    mSend = send;
-    if (unk8038) {
-        unk8038->SetSend(dynamic_cast<FxSend360 *>(send));
+    mFxSend = send;
+    if (mVoice) {
+        mVoice->SetSend(dynamic_cast<FxSend360 *>(send));
     }
 }
 
-int StreamReceiver360::GetPlayCursor() { return unk803c->GetAddr(); }
+int StreamReceiver360::GetPlayCursor() { return mRefVoice->GetAddr(); }
 
 void StreamReceiver360::PauseImpl(bool b1) {
-    unk803c->Pause(b1);
-    if (mSlipEnabled && unk8038) {
-        unk8038->Pause(b1);
+    mRefVoice->Pause(b1);
+    if (mSlipEnabled && mVoice) {
+        mVoice->Pause(b1);
     }
 }
 
-void StreamReceiver360::PlayImpl() { unk803c->Start(); }
+void StreamReceiver360::PlayImpl() { mRefVoice->Start(); }
 
 void StreamReceiver360::StartSendImpl(unsigned char *bytes, int size, int i3) {
-    XMemCpy((unsigned char *)unk8034 + i3 * 0x4000, bytes, size);
+    XMemCpy((unsigned char *)mVoiceBuffer + i3 * 0x4000, bytes, size);
 }
 
 void StreamReceiver360::Init() { StreamReceiver::sFactory = New360Receiver; }
 
 void StreamReceiver360::UpdateADSR() {
-    if (unk8038) {
-        unk8038->SetAttackRate(mADSR.GetAttackRate());
-        unk8038->SetReleaseRate(mADSR.GetReleaseRate());
+    if (mVoice) {
+        mVoice->SetAttackRate(mADSR.GetAttackRate());
+        mVoice->SetReleaseRate(mADSR.GetReleaseRate());
     }
 }
 
 float StreamReceiver360::GetSlipOffset() {
     MILO_ASSERT(mSlipEnabled, 0x102);
-    if (unk8038) {
-        int addr1 = unk803c->GetAddr();
-        int addr2 = unk8038->GetAddr();
-        float val = (float)(unk8044 << 0xe) / 2;
+    if (mVoice) {
+        int addr1 = mRefVoice->GetAddr();
+        int addr2 = mVoice->GetAddr();
+        float val = (float)(mNumBuffers << 0xe) / 2;
         float negativeVal = -val;
         float f6 = Mod((addr2 - addr1) - negativeVal, (val - negativeVal));
-        return (((f6 + negativeVal) * 0.5f) / unk8040) * 1000.0f;
+        return (((f6 + negativeVal) * 0.5f) / mSampleRate) * 1000.0f;
     } else
         return 0;
 }
