@@ -31,9 +31,9 @@ public:
     void AddDynamicRuleWord(Symbol, const char *, const char *, void **, void **);
     void CommitGrammar(Symbol);
 
-    bool SpeechSupported() const { return mSpeechSupported; }
+    bool SpeechSupported() const { return mHasLanguageSupport; }
     bool Recognizing() const { return mRecognizing; }
-    float SpeechConfThresh() const { return mSpeechConfThresh; }
+    float SpeechConfThresh() const { return mConfidenceThreshold; }
     RndOverlay *Overlay() const { return mOverlay; }
     bool Enabled() const { return mEnabled; }
     int VoiceDirection() const { return mVoiceDirection; }
@@ -47,7 +47,7 @@ private:
 
         Symbol mName; // 0x0
         String mFile; // 0x4
-        NUI_SPEECH_GRAMMAR mGrammar; // 0x8
+        NUI_SPEECH_GRAMMAR mNuiGrammar; // 0x8
         bool mLoaded; // 0x14
     };
 
@@ -64,9 +64,9 @@ private:
     std::vector<Grammar> mGrammars; // 0x30
     bool mEnabled; // 0x3c
     bool mRecognizing; // 0x3d
-    bool unk3e;
-    bool mSpeechSupported; // 0x3f
-    float mSpeechConfThresh; // 0x40
+    bool mRecognitionStarted; // 0x3e - not from the pdb :)
+    bool mHasLanguageSupport; // 0x3f
+    float mConfidenceThreshold; // 0x40
     int mVoiceDirection; // 0x44
     RndOverlay *mOverlay; // 0x48
 };

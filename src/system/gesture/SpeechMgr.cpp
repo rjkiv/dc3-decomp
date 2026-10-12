@@ -44,7 +44,7 @@ void SpeechMgr::Grammar::Unload() {
     if (mLoaded) {
         MILO_ASSERT(!TheSpeechMgr->IsRecognizing(), 0xC4);
         AutoGlitchReport report(50, "SpeechMgr::Grammar::Unload");
-        HRESULT res = NuiSpeechUnloadGrammar(&mGrammar);
+        HRESULT res = NuiSpeechUnloadGrammar(&mNuiGrammar);
         MILO_ASSERT_FMT(
             SUCCEEDED(res), "NuiSpeechUnloadGrammar failed with error 0x%08x", res
         );
@@ -59,7 +59,7 @@ bool SpeechMgr::Grammar::FinishLoad(SpeechMgr *mgr) {
     MILO_ASSERT(!TheSpeechMgr->IsRecognizing(), 0x90);
     const char *ansi = mFile.c_str();
     HRESULT res = NuiSpeechLoadGrammar(
-        ANSItoWstr(ansi).c_str(), gGrammarID++, NUI_SPEECH_LOADOPTIONS_STATIC, &mGrammar
+        ANSItoWstr(ansi).c_str(), gGrammarID++, NUI_SPEECH_LOADOPTIONS_STATIC, &mNuiGrammar
     );
     mLoaded = false;
     if (res == E_INVALIDARG) {
@@ -85,11 +85,12 @@ bool SpeechMgr::Grammar::FinishLoad(SpeechMgr *mgr) {
 #pragma region SpeechMgr
 
 SpeechMgr::SpeechMgr(const DataArray *)
-    : mEnabled(0), mRecognizing(0), unk3e(0), mOverlay(RndOverlay::Find("speech_mgr")) {
+    : mEnabled(0), mRecognizing(0), mRecognitionStarted(0),
+      mOverlay(RndOverlay::Find("speech_mgr")) {
     TheSpeechMgr = this;
     SetName("speech_mgr", ObjectDir::Main());
-    mSpeechSupported = GetSpeechLanguage(mLanguage);
-    mSpeechConfThresh = DetermineSpeechConfidenceThreshold();
+    mHasLanguageSupport = GetSpeechLanguage(mLanguage);
+    mConfidenceThreshold = DetermineSpeechConfidenceThreshold();
     mOverlay->SetLines(16);
     mVoiceDirection = -1;
 }
@@ -108,8 +109,8 @@ BEGIN_HANDLERS(SpeechMgr)
         emulate_input, NuiSpeechEmulateRecognition(ANSItoWstr(_msg->Str(2)).c_str(), 1)
     )
     HANDLE_EXPR(get_voice_direction, mVoiceDirection)
-    HANDLE_EXPR(has_language_support, mSpeechSupported)
-    HANDLE_EXPR(get_confidence_threshold, mSpeechConfThresh)
+    HANDLE_EXPR(has_language_support, mHasLanguageSupport)
+    HANDLE_EXPR(get_confidence_threshold, mConfidenceThreshold)
     HANDLE_ACTION(force_language_support, ForceLanguageSupport())
     HANDLE_EXPR(is_speech_supportable, OnIsSpeechSupportable())
     HANDLE_ACTION(disable, Disable())
@@ -132,7 +133,7 @@ void SpeechMgr::CreateGrammar(Symbol name) {
     grammar.mLoaded = false;
     grammar.mName = name;
     grammar.mFile = "";
-    HRESULT res = NuiSpeechCreateGrammar(gGrammarID++, &grammar.mGrammar);
+    HRESULT res = NuiSpeechCreateGrammar(gGrammarID++, &grammar.mNuiGrammar);
     MILO_ASSERT_FMT(
         SUCCEEDED(res), "NuiSpeechCreateGrammar failed with error 0x%08x", res
     );
@@ -176,7 +177,7 @@ void SpeechMgr::DisableAndUnloadGrammars() {
 }
 
 void SpeechMgr::Enable(bool english) {
-    if (mSpeechSupported) {
+    if (mHasLanguageSupport) {
         MILO_ASSERT(mEnabled == false, 0x13F);
         NUI_SPEECH_INIT_PROPERTIES props;
         memset(&props, 0, sizeof(NUI_SPEECH_INIT_PROPERTIES));
@@ -230,7 +231,7 @@ void SpeechMgr::Disable() {
 }
 
 void SpeechMgr::InitGrammars(const DataArray *cfg) {
-    if (mSpeechSupported)
+    if (mHasLanguageSupport)
         EnableAndLoadGrammars(cfg);
 }
 
@@ -308,7 +309,7 @@ String SpeechMgr::GetSpeechLanguageDir() const {
 }
 
 void SpeechMgr::SetRecognizing(bool recognizing) {
-    if (mEnabled && unk3e) {
+    if (mEnabled && mRecognitionStarted) {
         mRecognizing = recognizing;
         if (recognizing) {
             HRESULT res = NuiSpeechStartRecognition();
@@ -331,17 +332,17 @@ void SpeechMgr::SetRecognizing(bool recognizing) {
 }
 
 void SpeechMgr::BeginRecognition() {
-    if (!unk3e) {
+    if (!mRecognitionStarted) {
         MILO_ASSERT(!mRecognizing, 0x2E2);
-        unk3e = true;
+        mRecognitionStarted = true;
         SetRecognizing(true);
     }
 }
 
 void SpeechMgr::ForceLanguageSupport() {
     if (!mEnabled) {
-        mSpeechSupported = IsSpeechSupportable(mLanguage);
-        if (mSpeechSupported) {
+        mHasLanguageSupport = IsSpeechSupportable(mLanguage);
+        if (mHasLanguageSupport) {
             EnableAndLoadGrammars(SystemConfig("kinect")->FindArray("speech"));
         }
     }
@@ -349,8 +350,8 @@ void SpeechMgr::ForceLanguageSupport() {
 
 void SpeechMgr::Reload() {
     DisableAndUnloadGrammars();
-    mSpeechSupported = IsSpeechSupportable(mLanguage);
-    if (mSpeechSupported) {
+    mHasLanguageSupport = IsSpeechSupportable(mLanguage);
+    if (mHasLanguageSupport) {
         EnableAndLoadGrammars(SystemConfig("kinect", "speech"));
     } else {
         SpeechEnableMsg msg(false);
@@ -473,7 +474,7 @@ void SpeechMgr::PrintSemanticTree(NUI_SPEECH_SEMANTICRESULT *sr, int i2) {
 void SpeechMgr::CommitGrammar(Symbol name) {
     auto it = std::find(mGrammars.begin(), mGrammars.end(), name);
     MILO_ASSERT(it != mGrammars.end(), 0x3FB);
-    HRESULT res = NuiSpeechCommitGrammar(&it->mGrammar);
+    HRESULT res = NuiSpeechCommitGrammar(&it->mNuiGrammar);
     MILO_ASSERT_FMT(
         SUCCEEDED(res), "NuiSpeechCommitGrammar failed with error 0x%08x", res
     );
@@ -488,7 +489,7 @@ void SpeechMgr::SetGrammarState(Symbol name, bool enabled) {
     auto it = std::find(mGrammars.begin(), mGrammars.end(), name);
     if (it != mGrammars.end()) {
         NuiSpeechSetGrammarState(
-            &it->mGrammar,
+            &it->mNuiGrammar,
             enabled ? NUI_SPEECH_GRAMMARSTATE_ENABLED : NUI_SPEECH_GRAMMARSTATE_DISABLED
         );
     } else {
@@ -532,9 +533,9 @@ void SpeechMgr::SetRule(Symbol s1, Symbol s2, bool b3) {
         NUI_SPEECH_RULESTATE eState =
             b3 ? NUI_SPEECH_RULESTATE_ACTIVE : NUI_SPEECH_RULESTATE_INACTIVE;
         if (b3) {
-            NuiSpeechSetGrammarState(&it->mGrammar, NUI_SPEECH_GRAMMARSTATE_ENABLED);
+            NuiSpeechSetGrammarState(&it->mNuiGrammar, NUI_SPEECH_GRAMMARSTATE_ENABLED);
         }
-        HRESULT res = NuiSpeechSetRuleState(&it->mGrammar, wstr.c_str(), eState);
+        HRESULT res = NuiSpeechSetRuleState(&it->mNuiGrammar, wstr.c_str(), eState);
         if (res != ERROR_SUCCESS) {
             MILO_NOTIFY("NuiSpeechSetRuleState failed with error 0x%08x", res);
             return;
@@ -557,7 +558,7 @@ void SpeechMgr::AddDynamicRule(Symbol name, const char *c2, void **initialState)
     MILO_ASSERT(it != mGrammars.end(), 0x3B5);
     Grammar grammar(*it);
     HRESULT res = NuiSpeechCreateRule(
-        &grammar.mGrammar, ANSItoWstr(c2).c_str(), 0x21, true, initialState
+        &grammar.mNuiGrammar, ANSItoWstr(c2).c_str(), 0x21, true, initialState
     );
     MILO_ASSERT_FMT(SUCCEEDED(res), "NuiSpeechCreateRule failed with error 0x%08x", res);
 }
@@ -572,7 +573,7 @@ void SpeechMgr::AddDynamicRuleWord(
     bool createSuccess = true;
     HRESULT res;
     if (toState) {
-        res = NuiSpeechCreateState(&grammar.mGrammar, *fromState, toState);
+        res = NuiSpeechCreateState(&grammar.mNuiGrammar, *fromState, toState);
         createSuccess = SUCCEEDED(res);
         if (!createSuccess) {
             MILO_NOTIFY(
@@ -589,7 +590,7 @@ void SpeechMgr::AddDynamicRuleWord(
         wchar_t words[1024];
         UTF8toWChar_t(words, c2);
         res = NuiSpeechAddWordTransition(
-            &grammar.mGrammar,
+            &grammar.mNuiGrammar,
             *fromState,
             toState ? *toState : nullptr,
             words,
@@ -613,10 +614,9 @@ void SpeechMgr::Poll() {
     } else {
         ULONG fetched = 0;
         NUI_SPEECH_EVENT event[5];
-        memset(&event[0], 0, sizeof(event));
-        HRESULT res = NuiSpeechGetEvents(5, event, &fetched);
-        if (SUCCEEDED(res) && fetched != 0) {
-            for (ULONG i = 0; i < fetched; i++) {
+        memset(event, 0, sizeof(event));
+        if (SUCCEEDED(NuiSpeechGetEvents(5, event, &fetched))) {
+            for (int i = 0; i < fetched; i++) {
                 NUI_SPEECH_EVENT &cur = event[i];
                 if (cur.eventId > 0x20 && (cur.eventId == 0x40 || cur.eventId == 0x80)
                     && cur.pResult) {
