@@ -32,7 +32,7 @@ SetPartyOptionsJob::SetPartyOptionsJob(Hmx::Object *callback, const char *online
 
     dataP.AddPair(pid, onlineID);
     dataP.AddPair(diff, ThePartyModeMgr->GetDifficulty());
-    dataP.AddPair(shortened, ThePartyModeMgr->UseFullLengthSongs() == 0);
+    dataP.AddPair(shortened, ThePartyModeMgr->IsUsingFullLengthSongs() == 0);
     dataP.AddPair(perform_it, ThePartyModeMgr->IsModeIncluded(perform));
     dataP.AddPair(dance_battle, ThePartyModeMgr->IsModeIncluded(dance_battle));
     dataP.AddPair(bust_a_move, ThePartyModeMgr->IsModeIncluded(bustamove));
@@ -97,7 +97,7 @@ void GetPartyOptionsJob::GetOptions() {
             }
             getByName = mJsonReader.GetByName(response, "shortened");
             if (getByName) {
-                ThePartyModeMgr->SetUseFullLengthSongs(getByName->Bool() == 0);
+                ThePartyModeMgr->UseFullLengthSongs(getByName->Bool() == 0);
             }
 
             static Symbol perform("perform");

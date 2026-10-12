@@ -448,7 +448,7 @@ Symbol ChallengeSortNode::Select() {
 
     if (activeProfile) {
         activeProfile->UpdateOnlineID();
-        if (activeProfile->IsSignedIn()
+        if (activeProfile->HasOnlineID()
             && ThePlatformMgr.IsSignedIntoLive(activeProfile->GetPadNum())) {
             if (TheRockCentral.IsOnline()) {
                 screen = store_loading_screen;

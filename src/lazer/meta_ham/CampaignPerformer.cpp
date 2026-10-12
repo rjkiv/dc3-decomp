@@ -93,7 +93,7 @@ BEGIN_HANDLERS(CampaignPerformer)
         is_dance_craze_move_mastered,
         IsDanceCrazeMoveMastered(_msg->Sym(2), _msg->Sym(3), _msg->Obj<HamMove>(4))
     )
-    HANDLE_ACTION(restart_finale_song, mNumCompleted.pop_back())
+    HANDLE_ACTION(restart_finale_song, mStars.pop_back())
     HANDLE_EXPR(get_challenge_character, GetChallengeCharacter())
     HANDLE_EXPR(was_last_move_mastered, m_bLastMoveMastered)
     HANDLE_EXPR(last_move_mastered_name, m_symLastMoveCapturedName)

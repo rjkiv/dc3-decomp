@@ -163,12 +163,12 @@ bool AccomplishmentCharacterListConditional::AreUnlockableOutfitListConditionsMe
             if (hpd->Outfit() == m_vUnlockableOutfits[i] && hpd->IsPlaying()) {
                 if (!m_vUsedUnlockableOutfits[i]) {
                     m_vUsedUnlockableOutfits[i] = true;
-                    profile->SetUnk32C(profile->GetUnk32C() + 1);
+                    profile->IncrementUsedUnlockableOutfitCount();
                 }
                 break;
             }
         }
-        if (profile->GetUnk32C() == m_vUnlockableOutfits.size()) {
+        if (profile->GetUsedUnlockableOutfitCount() == m_vUnlockableOutfits.size()) {
             return true;
         }
     }

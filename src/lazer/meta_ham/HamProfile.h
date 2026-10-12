@@ -123,27 +123,27 @@ public:
     );
 
     void IncrementSkippedSongCount() { mSkippedSongCount++; }
-    void UpdateNag() { unk368++; }
-    MoveRatingHistory *GetMoveRatingHistory() const { return mRatingHistory; }
+    void UpdateNag() { mBootsSinceLastNag++; }
+    MoveRatingHistory *GetMoveRatingHistory() const { return mMoveRatingHistory; }
     bool InFitnessMode() { return mInFitnessMode; }
-    MetagameRank *GetMetagameRank() const { return mRank; }
-    MetagameStats *GetMetagameStats() const { return mStats; }
+    MetagameRank *GetRank() const { return mRank; }
+    MetagameStats *GetStats() const { return mStats; }
     const OnlineID *GetOnlineID() const { return mOnlineID; }
-    bool IsSignedIn() const { return mSignedIn; }
-    float FitnessTime() const { return mFitnessTime; }
-    float FitnessCalories() const { return mFitnessCalories; }
-    int GetProfileTime() const { return mProfileTime; }
-    bool GetUnk360() const { return unk360; }
-    void SetUnk388(Symbol s) { unk338 = s; }
-    Symbol GetUnk388() const { return unk338; }
+    bool HasOnlineID() const { return mHasOnlineID; }
+    float GetFitnessTime() const { return mFitnessSessionSecs; }
+    float GetFitnessCalories() const { return mFitnessSessionCals; }
+    int GetLastNewSong() { return mLastNewSong; }
+    bool FitnessGoalNeedUpload() { return mFitnessGoalNeedUpload; }
+    void SetLastPracticeSong(Symbol s) { mLastPracticeSong = s; }
+    Symbol GetLastPracticeSong() { return mLastPracticeSong; }
     void SetChallengeTimestamp(int i) { mChallengeTimeStamp = i; }
-    int GetChallengeTimestamp() const { return mChallengeTimeStamp; }
-    void SetUnk334(bool b) { unk334 = b; }
-    bool GetUnk334() const { return unk334; }
-    int GetUnk330() const { return unk330; }
-    void SetUnk330(int i) { unk330 = i; }
-    int GetUnk32C() const { return unk32c; }
-    void SetUnk32C(int i) { unk32c = i; }
+    int GetChallengeTimestamp() { return mChallengeTimeStamp; }
+    void SetLastModePractice(bool b) { mLastModePractice = b; }
+    bool IsLastModePractice() { return mLastModePractice; }
+    int GetLastBestScore() { return mLastBestScore; }
+    void SetLastBestScore(int i) { mLastBestScore = i; }
+    int GetUsedUnlockableOutfitCount() { return mUsedUnlockableOutfitCount; }
+    void IncrementUsedUnlockableOutfitCount() { mUsedUnlockableOutfitCount++; }
 
 private:
     // FixedSizeSaveable
@@ -155,34 +155,34 @@ private:
 
     DataNode OnMsg(const SingleItemEnumCompleteMsg &);
 
-    SongStatusMgr *mSongStatusMgr; // 0x18
+    SongStatusMgr *mScores; // 0x18
     std::vector<Symbol> mUnlockedContent; // 0x1c
     std::vector<Symbol> mNewContent; // 0x28
-    AccomplishmentProgress mAccProgress; // 0x34
+    AccomplishmentProgress mAccomplishmentProgress; // 0x34
     CampaignProgress mCampaignProgress[kNumDifficulties]; // 0x158
     MetagameStats *mStats; // 0x208
     MetagameRank *mRank; // 0x20c
-    MoveRatingHistory *mRatingHistory; // 0x210
+    MoveRatingHistory *mMoveRatingHistory; // 0x210
     std::vector<CharacterPref> mCharPrefs; // 0x214
     CustomPlaylist mPlaylists[5]; // 0x220
-    bool unk2fc; // 0x2fc - needs refresh?
+    bool mNeedToRefreshPlaylists; // 0x2fc - not in pdb
     bool mInFitnessMode; // 0x2fd
-    float mFitnessPounds; // 0x300
+    float mFitnessLbs; // 0x300
     bool mIsFitnessWeightEntered; // 0x304
-    float mFitnessTime; // 0x308 - lifetime time?
-    float mFitnessCalories; // 0x30c - lifetime calories?
-    float unk310; // 0x310 - calories this current session?
+    float mFitnessSessionSecs; // 0x308
+    float mFitnessSessionCals; // 0x30c
+    float mFitnessSongCals; // 0x310
     int mUploadFriendsToken; // 0x314
     OnlineID *mOnlineID; // 0x318
-    bool mSignedIn; // 0x31c
-    int unk320;
+    bool mHasOnlineID; // 0x31c
+    ExportCheckState mExportChecked; // 0x320
     int mChallengeTimeStamp; // 0x324 - challenge timestamp?
     int mSkippedSongCount; // 0x328
-    int unk32c;
-    int unk330;
-    bool unk334;
-    Symbol unk338; // 0x338 - song? shortname?
-    bool mIsFitnessGoalSet; // 0x33c
+    int mUsedUnlockableOutfitCount; // 0x32c
+    int mLastBestScore; // 0x330
+    bool mLastModePractice; // 0x334
+    Symbol mLastPracticeSong; // 0x338 - song? shortname?
+    bool mHasValidFitnessGoal; // 0x33c
     /** The day/month/year from which this fitness goal started. */
     int mFitnessGoalStartDay; // 0x340
     /** The day/month/year from which this fitness goal started. */
@@ -190,18 +190,18 @@ private:
     /** The day/month/year from which this fitness goal started. */
     int mFitnessGoalStartYear; // 0x348
     /** The number of days active this profile set as a fitness goal. */
-    int mFitnessGoalDaysActive; // 0x34c
+    int mFitnessGoalTargetDays; // 0x34c
     /** The number of calories burnt this profile set as a fitness goal. */
-    int mFitnessGoalCalories; // 0x350
+    int mFitnessGoalTargetCalories; // 0x350
     /** The actual number of days this profile has spent active. */
-    int mTrackedDaysActive; // 0x354
+    int mFitnessGoalDaysActive; // 0x354
     /** The actual number of calories this profile has burnt. */
-    int mTrackedCalories; // 0x358
-    int unk35c;
-    bool unk360;
-    int mProfileTime; // 0x364
-    int unk368;
-    bool unk36c;
-    int unk370; // 0x370 - nag index?
-    int unk374; // 0x374 - nag mask?
+    int mFitnessGoalCaloriesBurned; // 0x358
+    int mFitnessGoalLastDayNumber; // 0x35c
+    bool mFitnessGoalNeedUpload; // 0x360
+    int mLastNewSong; // 0x364
+    int mBootsSinceLastNag; // 0x368
+    bool mFirstTimeNag; // 0x36c
+    int mNagType; // 0x370
+    int mAllowedNagTypes; // 0x374
 };

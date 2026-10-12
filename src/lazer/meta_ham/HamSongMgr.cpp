@@ -486,7 +486,7 @@ void HamSongMgr::InitializePlaylists() {
         HamProfile *profile = TheProfileMgr.GetProfileFromPad(padnum);
         if (profile) {
             profile->UpdateOnlineID();
-            if (profile->IsSignedIn() && ThePlatformMgr.IsSignedIntoLive(padnum)) {
+            if (profile->HasOnlineID() && ThePlatformMgr.IsSignedIntoLive(padnum)) {
                 TheRockCentral.ManageJob(new SyncAvailableDynamicPlaylistsJob(
                     nullptr, profile->GetOnlineID()->ToString(), mask
                 ));
@@ -599,7 +599,7 @@ void HamSongMgr::UploadSongLibraryToServer() {
             HamProfile *profileFromPad = TheProfileMgr.GetProfileFromPad(padNum);
             if (profileFromPad) {
                 profileFromPad->UpdateOnlineID();
-                if (profileFromPad->IsSignedIn()
+                if (profileFromPad->HasOnlineID()
                     && ThePlatformMgr.IsSignedIntoLive(padNum)) {
                     TheRockCentral.ManageJob(new SyncPlayerSongsJob(
                         nullptr, profileFromPad->GetOnlineID()->ToString(), str

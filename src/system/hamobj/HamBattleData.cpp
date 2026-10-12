@@ -10,7 +10,7 @@ BEGIN_HANDLERS(HamBattleData)
 END_HANDLERS
 
 BEGIN_CUSTOM_PROPSYNC(BattleStep)
-    SYNC_PROP_SET(players, o.mPlayers, o.mPlayers = (HamPlayerFlags)_val.Int())
+    SYNC_PROP_SET(players, o.mPlayers, o.mPlayers = (PlayerFlag)_val.Int())
     SYNC_PROP(music_range, o.mMusicRange)
     SYNC_PROP(play_range, o.mPlayRange)
     SYNC_PROP(cam, o.mCam)
@@ -53,7 +53,7 @@ END_COPYS
 BinStreamRev &operator>>(BinStreamRev &d, BattleStep &step) {
     int flags;
     d >> flags;
-    step.mPlayers = (HamPlayerFlags)flags;
+    step.mPlayers = (PlayerFlag)flags;
     d >> step.mMusicRange.start;
     d >> step.mMusicRange.end;
     d >> step.mPlayRange.start;

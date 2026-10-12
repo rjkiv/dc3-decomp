@@ -92,7 +92,7 @@ bool PlaylistSortMgr::HasValidProfile() {
     HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
     if (pProfile) {
         pProfile->UpdateOnlineID();
-        if (pProfile->IsSignedIn()) {
+        if (pProfile->HasOnlineID()) {
             int padNum = pProfile->GetPadNum();
             if (ThePlatformMgr.IsSignedIntoLive(padNum) && TheRockCentral.IsOnline()) {
                 mCurrProfileName = pProfile->GetName();
@@ -108,7 +108,7 @@ bool PlaylistSortMgr::HasValidProfile() {
 
 void PlaylistSortMgr::StartCmdGetPlaylistsFromRC() {
     HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
-    if (pProfile && pProfile->IsSignedIn()) {
+    if (pProfile && pProfile->HasOnlineID()) {
         int padNum = pProfile->GetPadNum();
         if (ThePlatformMgr.IsSignedIntoLive(padNum) && TheRockCentral.IsOnline()) {
             MILO_LOG("MY PORFILE ID: %s\n", mCurrProfileOnlineIDs.c_str());
@@ -123,7 +123,7 @@ void PlaylistSortMgr::FakeAddPlaylistsToRC() {
     HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
     if (pProfile) {
         pProfile->UpdateOnlineID();
-        if (pProfile->IsSignedIn()) {
+        if (pProfile->HasOnlineID()) {
             int padNum = pProfile->GetPadNum();
             if (ThePlatformMgr.IsSignedIntoLive(padNum) && TheRockCentral.IsOnline()) {
                 TheRockCentral.ManageJob(new AddPlaylistJob(

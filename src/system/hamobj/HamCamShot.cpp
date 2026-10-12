@@ -113,9 +113,7 @@ END_CUSTOM_PROPSYNC
 BEGIN_PROPSYNCS(HamCamShot)
     gHamCamShot = this;
     SYNC_PROP(targets, mTargets)
-    SYNC_PROP_SET(
-        player_flag, (int &)mPlayerFlag, mPlayerFlag = (HamPlayerFlags)_val.Int()
-    )
+    SYNC_PROP_SET(player_flag, (int &)mPlayerFlag, mPlayerFlag = (PlayerFlag)_val.Int())
     SYNC_PROP(zero_time, mZeroTime)
     SYNC_PROP(min_time, mMinTime)
     SYNC_PROP(max_time, mMaxTime)
@@ -197,7 +195,7 @@ BEGIN_LOADS(HamCamShot)
     if (d.rev > 1) {
         int x;
         d >> x;
-        mPlayerFlag = (HamPlayerFlags)x;
+        mPlayerFlag = (PlayerFlag)x;
     }
     if (d.rev > 2) {
         d >> mMasterAnims;
@@ -820,7 +818,8 @@ void HamCamShot::UpdateTargetsFlipped() {
                         if (strstr(name, "player0") && mPlayerFlag == kHamPlayer0) {
                             buf[6] = '1';
                             transform = worldDir->Find<RndTransformable>(buf);
-                        } else if (strstr(name, "player1") && mPlayerFlag == kHamPlayer1) {
+                        } else if (strstr(name, "player1")
+                                   && mPlayerFlag == kHamPlayer1) {
                             buf[6] = '0';
                             transform = worldDir->Find<RndTransformable>(buf);
                         }
@@ -828,7 +827,8 @@ void HamCamShot::UpdateTargetsFlipped() {
                         if (strstr(name, "player0") && mPlayerFlag == kHamPlayer1) {
                             buf[6] = '1';
                             transform = worldDir->Find<RndTransformable>(buf);
-                        } else if (strstr(name, "player1") && mPlayerFlag == kHamPlayer0) {
+                        } else if (strstr(name, "player1")
+                                   && mPlayerFlag == kHamPlayer0) {
                             buf[6] = '0';
                             transform = worldDir->Find<RndTransformable>(buf);
                         }
