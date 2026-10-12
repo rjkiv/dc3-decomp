@@ -51,6 +51,11 @@ public:
         kPropDisplayHidden = 0,
         kPropDisplayReadOnly = 1
     };
+    enum Dirty {
+        kNotDirty = 0x0000,
+        kDirtyColor = 0x0001,
+        kDirtyRest = 0x0002,
+    };
     virtual ~RndMat();
     OBJ_CLASSNAME(Mat);
     OBJ_SET_TYPE(Mat);
@@ -68,74 +73,74 @@ public:
     RndTex *GetRefractNormalMap();
     void SetZMode(ZMode mode) {
         mZMode = mode;
-        mDirty |= 2;
+        mDirty |= kDirtyRest;
     }
     void SetTexWrap(TexWrap wrap) {
         mTexWrap = wrap;
-        mDirty |= 2;
+        mDirty |= kDirtyRest;
     }
     void SetBlend(Blend blend) {
         mBlend = blend;
-        mDirty |= 2;
+        mDirty |= kDirtyRest;
     }
     void SetTexGen(TexGen gen) {
         mTexGen = gen;
-        mDirty |= 2;
+        mDirty |= kDirtyRest;
     }
     void SetAlphaWrite(bool write) {
         mAlphaWrite = write;
-        mDirty |= 2;
+        mDirty |= kDirtyRest;
     }
     void SetAlphaCut(bool cut) {
         mAlphaCut = cut;
-        mDirty |= 2;
+        mDirty |= kDirtyRest;
     }
     void SetUseEnv(bool use_env) {
         mUseEnviron = use_env;
-        mDirty |= 2;
+        mDirty |= kDirtyRest;
     }
     void SetPreLit(bool lit) {
         mPrelit = lit;
-        mDirty |= 2;
+        mDirty |= kDirtyRest;
     }
     void SetAlphaThreshold(int thresh) { mAlphaThreshold = thresh; }
     void SetPerPixelLit(bool lit) {
         mPerPixelLit = lit;
-        mDirty |= 2;
+        mDirty |= kDirtyRest;
     }
     void SetPointLights(bool lit) { mPointLights = lit; }
     void SetColor(float r, float g, float b) {
         mColor.Set(r, g, b);
-        mDirty |= 1;
+        mDirty |= kDirtyColor;
     }
     void SetAlpha(float a) {
         mColor.alpha = a;
-        mDirty |= 1;
+        mDirty |= kDirtyColor;
     }
     void SetColor(const Hmx::Color &c) {
         mColor = c;
-        mDirty |= 1;
+        mDirty |= kDirtyColor;
     }
     void SetShaderOpts(const MatShaderOptions &opts) { mShaderOptions = opts; }
     void SetTexXfm(const Transform &xfm) {
         mTexXfm = xfm;
-        mDirty |= 2;
+        mDirty |= kDirtyRest;
     }
     void SetDiffuseTex(RndTex *tex) {
         mDiffuseTex = tex;
-        mDirty |= 2;
+        mDirty |= kDirtyRest;
     }
     void SetCull(Cull cull) {
         mCull = cull;
-        mDirty |= 2;
+        mDirty |= kDirtyRest;
     }
     void SetNormalMap(RndTex *map) {
         mNormalMap = map;
-        mDirty |= 2;
+        mDirty |= kDirtyRest;
     }
     void SetColorModFlags(ColorModFlags flags) {
         mFlags = flags;
-        mDirty |= 2;
+        mDirty |= kDirtyRest;
     }
     bool Dirty() const { return mDirty; }
 
@@ -173,6 +178,7 @@ public:
         ReloadMetaMaterials();
         UpdateAllMatPropertiesFromMetaMat(dir);
     }
+    static const int kColorModNum = 3;
 
 protected:
     RndMat();
@@ -193,9 +199,9 @@ protected:
     ColorModFlags mFlags; // 0x20c
     std::vector<Hmx::Color> mColorMod; // 0x210
     MatShaderOptions mShaderOptions; // 0x21c
-    bool mToggleDisplayAllProps; // 0x224
-    bool unk225;
-    bool unk226; // 0x226 - currently updating properties?
+    bool mDisplayAllProps; // 0x224
+    bool mOwnMetaMat; // 0x225
+    bool mMetaMatIsUpdatingProps; // 0x226
     int mDirty; // 0x228
 };
 

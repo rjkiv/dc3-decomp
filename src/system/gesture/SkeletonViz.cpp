@@ -20,21 +20,32 @@
 #include "utl/Loader.h"
 #include "utl/Std.h"
 
+static const float kNatalVerticalFOV = 45.58f;
+
+float dummyskeletonvizlmao() { return kNatalVerticalFOV; }
+
 SkeletonViz::SkeletonViz()
-    : mUsePhysicalCam(0), mPhysicalCamRotation(0), unk110(0), mAxesCoordSys(kCoordCamera),
-      mUtlLine(0), mSkeletonEnv(0), mCamMesh(0), mJointMesh(0), mJointMat(0),
-      mPhysicalCam(0), unk214(0), unk218(true) {
-    unk194.Reset();
-    Multiply(Hmx::Matrix3(1, 0, 0, 0, 0, 1, 0, 1, 0), unk194.m, unk194.m);
-    unk1d4 = unk194;
+    : mUsePhysicalCam(0), mPhysicalCamRotation(0), mDesiredCamRotation(0),
+      mAxesCoordSys(kCoordCamera), mUtlLine(0), mResource(nullptr), mEnviron(0),
+      mCamMesh(0), mJointMesh(0), mJointMat(0), mPhysicalCam(0), mDrawScale(1),
+      mUseParentXfm(true) {
+    // what even is happening here
+    Vector3 x, y, z;
+    x.Set(1, 0, 0);
+    y.Set(0, 0, 1);
+    z.Set(0, 1, 0);
+    mDefaultNatalToWorld.Reset();
+    Hmx::Matrix3 rot(x, y, z);
+    Multiply(rot, mDefaultNatalToWorld.m, mDefaultNatalToWorld.m);
+    mNatalToWorld = mDefaultNatalToWorld;
     for (int i = 0; i < kNumBones; i++) {
-        mBoneLines[i] = nullptr;
+        mLines[i] = nullptr;
     }
 }
 
 SkeletonViz::~SkeletonViz() {
     for (int i = 0; i < kNumBones; i++) {
-        delete mBoneLines[i];
+        delete mLines[i];
     }
 }
 
@@ -111,7 +122,7 @@ void SkeletonViz::PreLoad(BinStream &bs) {
     if (d.altRev > 0) {
         d >> mPhysicalCamRotation;
     }
-    unk110 = mPhysicalCamRotation;
+    mDesiredCamRotation = mPhysicalCamRotation;
     if (d.rev > 4 && d.altRev < 1) {
         ObjPtr<HamCharacter> hChar(this);
         d >> hChar;
@@ -132,15 +143,15 @@ float SkeletonViz::PhysicalCamRotation() const { return mPhysicalCamRotation; }
 void SkeletonViz::SetUsePhysicalCam(bool use) { mUsePhysicalCam = use; }
 void SkeletonViz::SetPhysicalCamRotation(float rotation) {
     mPhysicalCamRotation = rotation;
-    unk110 = rotation;
+    mDesiredCamRotation = rotation;
 }
-void SkeletonViz::Rotate(float amt) { unk110 += amt; }
+void SkeletonViz::Rotate(float amt) { mDesiredCamRotation += amt; }
 void SkeletonViz::SetAxesCoordSys(SkeletonCoordSys cs) { mAxesCoordSys = cs; }
 
 void SkeletonViz::Init() {
     if (!mResource) {
         for (int i = 0; i < kNumBones; i++) {
-            mBoneLines[i] = Hmx::Object::New<RndLine>();
+            mLines[i] = Hmx::Object::New<RndLine>();
         }
         LoadResource(false);
         UpdateResource();
@@ -161,7 +172,7 @@ void SkeletonViz::UpdateResource() {
     Transform xfm;
     xfm.Reset();
     MILO_ASSERT(mResource.IsLoaded(), 0x1E8);
-    mSkeletonEnv = mResource->Find<RndEnviron>("skeleton.env", true);
+    mEnviron = mResource->Find<RndEnviron>("skeleton.env", true);
     mCamMesh = mResource->Find<RndMesh>("camera.mesh", true);
     mCamMesh->SetTransParent(this, false);
     mCamMesh->SetLocalPos(xfm.v);
@@ -175,14 +186,14 @@ void SkeletonViz::UpdateResource() {
     mUtlLine = mResource->Find<RndLine>("utl.line", true);
     mUtlLine->SetTransParent(this, false);
     mUtlLine->SetLocalXfm(xfm);
-    mSphereMesh = mResource->Find<RndMesh>("sphere.mesh", true);
+    mUtlSphere = mResource->Find<RndMesh>("sphere.mesh", true);
     RndLine *boneLine = mResource->Find<RndLine>("bone.line", true);
     for (int i = 0; i < kNumBones; i++) {
-        if (!mBoneLines[i])
-            mBoneLines[i] = Hmx::Object::New<RndLine>();
-        mBoneLines[i]->Copy(boneLine, kCopyShallow);
-        mBoneLines[i]->SetTransParent(this, false);
-        mBoneLines[i]->SetLocalXfm(xfm);
+        if (!mLines[i])
+            mLines[i] = Hmx::Object::New<RndLine>();
+        mLines[i]->Copy(boneLine, kCopyShallow);
+        mLines[i]->SetTransParent(this, false);
+        mLines[i]->SetLocalXfm(xfm);
     }
 }
 
@@ -200,8 +211,8 @@ void SkeletonViz::DrawLine3D(
     Hmx::Color *color2
 ) {
     Vector3 localVec1, localVec2;
-    Multiply(vec1, unk1d4, localVec1);
-    Multiply(vec2, unk1d4, localVec2);
+    Multiply(vec1, mNatalToWorld, localVec1);
+    Multiply(vec2, mNatalToWorld, localVec2);
     mUtlLine->SetPointPos(0, localVec1);
     mUtlLine->SetPointPos(1, localVec2);
     RndMat *mat = mUtlLine->Mat();
@@ -214,27 +225,27 @@ void SkeletonViz::DrawLine3D(
         mUtlLine->SetPointColor(0, color1, true);
         mUtlLine->SetPointColor(1, *color2, true);
     }
-    mUtlLine->SetWidth(unk214 * f);
+    mUtlLine->SetWidth(mDrawScale * f);
     mUtlLine->DrawShowing();
     mUtlLine->SetMat(mat);
 }
 
 void SkeletonViz::Poll() {
-    if (mPhysicalCamRotation < unk110) {
+    if (mPhysicalCamRotation < mDesiredCamRotation) {
         mPhysicalCamRotation += TheTaskMgr.DeltaUISeconds() * 120.0f;
-        if (mPhysicalCamRotation <= unk110) {
+        if (mPhysicalCamRotation <= mDesiredCamRotation) {
             return;
         }
     } else {
-        if (mPhysicalCamRotation <= unk110) {
+        if (mPhysicalCamRotation <= mDesiredCamRotation) {
             return;
         }
         mPhysicalCamRotation -= TheTaskMgr.DeltaUISeconds() * 120.0f;
-        if (mPhysicalCamRotation >= unk110) {
+        if (mPhysicalCamRotation >= mDesiredCamRotation) {
             return;
         }
     }
-    mPhysicalCamRotation = unk110;
+    mPhysicalCamRotation = mDesiredCamRotation;
 }
 
 void SkeletonViz::Visualize(
@@ -250,13 +261,13 @@ void SkeletonViz::Visualize(
 
     MILO_ASSERT(mResource.IsLoaded(), 0x76);
 
-    RndEnvironTracker tracker(mSkeletonEnv, 0);
-    unk218 = camInput.NatalToWorld(unk1d4) == 0;
-    if (unk218) {
-        unk1d4 = unk194;
+    RndEnvironTracker tracker(mEnviron, 0);
+    mUseParentXfm = camInput.NatalToWorld(mNatalToWorld) == 0;
+    if (mUseParentXfm) {
+        mNatalToWorld = mDefaultNatalToWorld;
     }
-    unk214 = camInput.DrawScale();
-    Transform trans = unk218 ? WorldXfm() : unk1d4;
+    mDrawScale = camInput.DrawScale();
+    Transform trans = mUseParentXfm ? WorldXfm() : mNatalToWorld;
 
     const SkeletonFrame &cachedFrame = camInput.CachedFrame();
     RndCam *currCam = RndCam::Current();
@@ -265,7 +276,7 @@ void SkeletonViz::Visualize(
         Vector3 vec2[20];
         for (int i = 0; i < 20; i++) {
             skeleton.JointPos(kCoordCamera, (SkeletonJoint)i, vec1[i]);
-            Multiply(vec1[i], unk194, vec2[i]);
+            Multiply(vec1[i], mDefaultNatalToWorld, vec2[i]);
         }
         SetCamera(cachedFrame, trans, vec2[0].y);
         DrawJoints(skeleton, vec1, vec2, b);

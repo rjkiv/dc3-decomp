@@ -47,13 +47,13 @@ namespace {
 }
 
 RndMat::RndMat()
-    : mMetaMaterial(this), mFlags(kColorModNone), mToggleDisplayAllProps(0), unk225(0),
-      unk226(0), mDirty(3) {
+    : mMetaMaterial(this), mFlags(kColorModNone), mDisplayAllProps(0), mOwnMetaMat(0),
+      mMetaMatIsUpdatingProps(0), mDirty(3) {
     ResetColors(mColorMod, 3);
 }
 
 RndMat::~RndMat() {
-    if (unk225 && mMetaMaterial) {
+    if (mOwnMetaMat && mMetaMaterial) {
         if (mMetaMaterial->RefCount() == 1) {
             RELEASE(mMetaMaterial);
         }
@@ -67,9 +67,7 @@ BEGIN_HANDLERS(RndMat)
     HANDLE_EXPR(
         prop_is_read_only, OnGetPropertyDisplay(kPropDisplayReadOnly, _msg->Sym(2))
     )
-    HANDLE_ACTION(
-        toggle_display_all_props, mToggleDisplayAllProps = !mToggleDisplayAllProps
-    )
+    HANDLE_ACTION(toggle_display_all_props, mDisplayAllProps = !mDisplayAllProps)
     HANDLE_ACTION(create_metamat, CreateMetaMaterial(true))
     HANDLE_SUPERCLASS(BaseMaterial)
 END_HANDLERS
@@ -114,7 +112,7 @@ BEGIN_PROPSYNCS(RndMat)
     SYNC_PROP_SET(
         metamaterial, mMetaMaterial.Ptr(), mMetaMaterial = _val.Obj<MetaMaterial>();
         UpdatePropertiesFromMetaMat();
-        unk225 = false;
+        mOwnMetaMat = false;
     )
     SYNC_MAT_PROP(intensify, mIntensify, 2)
     SYNC_MAT_PROP(blend, (int &)mBlend, 2)
@@ -350,7 +348,7 @@ bool RndMat::OnGetPropertyDisplay(PropDisplay display, Symbol s) {
         MatPropEditAction a = GetMetaMatPropAction(s);
         if (a == 2 || (a != 0 && a != 1)) {
             return false;
-        } else if (mToggleDisplayAllProps) {
+        } else if (mDisplayAllProps) {
             return display == kPropDisplayReadOnly;
         } else {
             return true;
@@ -395,7 +393,7 @@ void RndMat::SetSpecularMap(RndTex *tex) {
 void RndMat::SetMetaMat(MetaMaterial *mat, bool b) {
     mMetaMaterial = mat;
     UpdatePropertiesFromMetaMat();
-    unk225 = b;
+    mOwnMetaMat = b;
 }
 
 void RndMat::UpdateAllMatPropertiesFromMetaMat(ObjectDir *dir) {
@@ -515,7 +513,7 @@ MetaMaterial *RndMat::CreateMetaMaterial(bool notify) {
 }
 
 bool RndMat::IsEditable(Symbol s) {
-    if (mMetaMaterial && !unk226) {
+    if (mMetaMaterial && !mMetaMatIsUpdatingProps) {
         bool ret = mMetaMaterial->Property(s, true)->Int() == 2;
         if (!ret) {
             String str(s);
@@ -537,7 +535,7 @@ bool RndMat::IsEditable(Symbol s) {
 
 void RndMat::UpdatePropertiesFromMetaMat() {
     if (mMetaMaterial) {
-        unk226 = true;
+        mMetaMatIsUpdatingProps = true;
         String propStr;
         std::list<Symbol> matProps;
         ListProperties(matProps, "Mat", 0, nullptr, false);
@@ -561,7 +559,7 @@ void RndMat::UpdatePropertiesFromMetaMat() {
         if (!propStr.empty()) {
             propStr += ".";
         }
-        unk226 = false;
+        mMetaMatIsUpdatingProps = false;
     }
     mDirty |= 2;
 }

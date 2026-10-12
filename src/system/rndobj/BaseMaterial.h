@@ -136,7 +136,6 @@ public:
         kColorModAlphaPack = 1,
         kColorModAlphaUnpackModulate = 2,
         kColorModModulate = 3,
-        kColorModNum = 3
     };
 
     virtual ~BaseMaterial() {}
