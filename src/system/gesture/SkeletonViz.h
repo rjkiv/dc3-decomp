@@ -41,23 +41,38 @@ public:
 
     void Init();
     float PhysicalCamRotation() const;
-    void SetUsePhysicalCam(bool);
-    void SetPhysicalCamRotation(float);
-    void Rotate(float);
-    void SetAxesCoordSys(SkeletonCoordSys);
+    void SetUsePhysicalCam(bool use);
+    void SetPhysicalCamRotation(float degrees);
+    void Rotate(float delta_degress);
+    void SetAxesCoordSys(SkeletonCoordSys cs);
     void Visualize(
-        const CameraInput &, const BaseSkeleton &, std::vector<SkeletonCallback *> *, bool
+        const CameraInput &cam_input,
+        const BaseSkeleton &skeleton,
+        std::vector<SkeletonCallback *> *callbacks,
+        bool darken
     );
+    void DrawLine3D(
+        const Vector3 &p0,
+        const Vector3 &p1,
+        float size,
+        const Hmx::Color &color,
+        Hmx::Color *end_color
+    );
+    void SetPhysicalCamScreenRect(const Hmx::Rect &r);
     void
-    DrawLine3D(const Vector3 &, const Vector3 &, float, const Hmx::Color &, Hmx::Color *);
-    void SetPhysicalCamScreenRect(const Hmx::Rect &);
-    void DrawPoint3D(const Vector3 &, float, const Hmx::Color &, float);
+    DrawPoint3D(const Vector3 &p, float radius, const Hmx::Color &color, float alpha);
 
 private:
-    void LoadResource(bool);
+    void LoadResource(bool async);
     void UpdateResource();
-    void SetCamera(const SkeletonFrame &, const class Transform &, float);
-    void DrawJoints(const BaseSkeleton &, Vector3 *, Vector3 *, bool);
+    void
+    SetCamera(const SkeletonFrame &frame, const Transform &cam_origin, float hip_to_cam);
+    void DrawJoints(
+        const BaseSkeleton &skeleton,
+        Vector3 *cam_joints,
+        Vector3 *milo_joints,
+        bool darken
+    );
 
 protected:
     SkeletonViz();

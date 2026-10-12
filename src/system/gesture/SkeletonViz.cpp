@@ -5,17 +5,22 @@
 #include "hamobj/HamCharacter.h"
 #include "math/Geo.h"
 #include "math/Mtx.h"
+#include "math/Rot.h"
+#include "math/Trig.h"
 #include "math/Vec.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "os/File.h"
+#include "rndobj/BaseMaterial.h"
 #include "rndobj/Cam.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Env.h"
 #include "rndobj/Line.h"
 #include "rndobj/Mat.h"
 #include "rndobj/Poll.h"
+#include "rndobj/Rnd.h"
 #include "rndobj/Trans.h"
+#include "rndobj/Utl.h"
 #include "utl/BinStream.h"
 #include "utl/Loader.h"
 #include "utl/Std.h"
@@ -102,10 +107,10 @@ void SkeletonViz::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(6, 1)
     if (d.rev > 5) {
-        Hmx::Object::Load(bs);
+        LOAD_SUPERCLASS(Hmx::Object)
     }
-    RndDrawable::Load(bs);
-    RndTransformable::Load(bs);
+    LOAD_SUPERCLASS(RndDrawable)
+    LOAD_SUPERCLASS(RndTransformable)
     if (d.rev > 0) {
         d >> mUsePhysicalCam;
     }
@@ -252,7 +257,7 @@ void SkeletonViz::Visualize(
     const CameraInput &camInput,
     const BaseSkeleton &skeleton,
     std::vector<SkeletonCallback *> *callbacks,
-    bool b
+    bool darken
 ) {
     if (!mResource) {
         MILO_ASSERT(TheLoadMgr.EditMode(), 0x72);
@@ -272,14 +277,14 @@ void SkeletonViz::Visualize(
     const SkeletonFrame &cachedFrame = camInput.CachedFrame();
     RndCam *currCam = RndCam::Current();
     if (skeleton.IsTracked()) {
-        Vector3 vec1[20];
-        Vector3 vec2[20];
-        for (int i = 0; i < 20; i++) {
-            skeleton.JointPos(kCoordCamera, (SkeletonJoint)i, vec1[i]);
-            Multiply(vec1[i], mDefaultNatalToWorld, vec2[i]);
+        Vector3 cam_joints[kNumJoints];
+        Vector3 milo_joints[kNumJoints];
+        for (int i = 0; i < kNumJoints; i++) {
+            skeleton.JointPos(kCoordCamera, (SkeletonJoint)i, cam_joints[i]);
+            Multiply(cam_joints[i], mDefaultNatalToWorld, milo_joints[i]);
         }
-        SetCamera(cachedFrame, trans, vec2[0].y);
-        DrawJoints(skeleton, vec1, vec2, b);
+        SetCamera(cachedFrame, trans, milo_joints[0].y);
+        DrawJoints(skeleton, cam_joints, milo_joints, darken);
 
         if (callbacks) {
             FOREACH_PTR (it, callbacks) {
@@ -292,5 +297,72 @@ void SkeletonViz::Visualize(
     }
     if (currCam) {
         currCam->Select();
+    }
+}
+
+void SkeletonViz::DrawPoint3D(
+    const Vector3 &p, float radius, const Hmx::Color &color, float alpha
+) {
+    Vector3 tmp;
+    Multiply(p, mNatalToWorld, tmp);
+    if (mUseParentXfm) {
+        Multiply(tmp, WorldXfm(), tmp);
+    }
+    float scale = mDrawScale * radius;
+    mUtlSphere->Mat()->SetColor(color.red, color.green, color.blue);
+    mUtlSphere->Mat()->SetAlpha(alpha);
+    mUtlSphere->Mat()->SetCull(kCullNone);
+
+    Transform xfm;
+    xfm.Reset();
+    xfm.v = tmp;
+    Scale(Vector3(scale, scale, scale), xfm.m, xfm.m);
+
+    mUtlSphere->SetLocalXfm(xfm);
+    mUtlSphere->SetSphere(Sphere(Vector3(0, 0, 0), scale));
+    mUtlSphere->DrawShowing();
+}
+
+void SkeletonViz::SetCamera(
+    const SkeletonFrame &frame, const Transform &cam_origin, float hip_to_cam
+) {
+    if (mUsePhysicalCam) {
+        if (mUseParentXfm) {
+            Vector3 v(0, -hip_to_cam, 0);
+            RotateAboutZ(v, mPhysicalCamRotation * DEG2RAD, v);
+            v.y += hip_to_cam;
+            mPhysicalCam->SetLocalPos(v);
+            float angle = frame.TiltAngle();
+            mPhysicalCam->SetLocalRot(Vector3(angle * RAD2DEG, 0, mPhysicalCamRotation));
+            mPhysicalCam->SetFrustum(0.01f, 10, 0.7955211f, 1);
+        } else {
+            Transform xfm;
+            xfm.Reset();
+            xfm.v = mNatalToWorld.v;
+            mPhysicalCam->SetFrustum(0.5f, 1000, mPhysicalCam->YFov(), 1);
+            mPhysicalCam->SetLocalXfm(xfm);
+        }
+        mPhysicalCam->Select();
+    } else {
+        if (mAxesCoordSys == kCoordCamera || !mUseParentXfm) {
+            UtilDrawAxes(cam_origin, 5 / mDrawScale, Hmx::Color(1, 1, 1));
+        }
+        if (mUseParentXfm) {
+            mCamMesh->SetWorldPos(cam_origin.v);
+            mCamMesh->DrawShowing();
+            Vector3 end;
+            Multiply(frame.mUpVector, mNatalToWorld.m, end);
+            Add(end, cam_origin.v, end);
+            TheRnd.DrawLine(cam_origin.v, end, Hmx::Color(1, 1, 0), false);
+        }
+    }
+    if (mUseParentXfm) {
+        Plane p = frame.mFloorPlane;
+        Transform world = mNatalToWorld;
+        world.v = cam_origin.v;
+        Multiply(p, world, p);
+        Vector3 v3 = cam_origin.v;
+        v3.y += hip_to_cam;
+        UtilDrawPlane(p, v3, Hmx::Color(1, 1, 0), 5, 0.5f, false);
     }
 }
