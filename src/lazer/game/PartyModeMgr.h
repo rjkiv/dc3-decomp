@@ -1,6 +1,7 @@
 #pragma once
 #include "hamobj/Difficulty.h"
 #include "math/DoubleExponentialSmoother.h"
+#include "math/Vec.h"
 #include "meta_ham/HamProfile.h"
 #include "meta_ham/Playlist.h"
 #include "net_ham/PartyModeJobs.h"
@@ -16,14 +17,14 @@
 
 class PartyModeARObject {
 public:
-    PartyModeARObject(DataArray *a) : unk8(a) {}
+    PartyModeARObject(DataArray *a) : mData(a) {}
     const char *GetTexPath();
 
     MEM_OVERLOAD(PartyModeARObject, 0x4C);
 
-    int unk0;
-    int unk4;
-    DataArray *unk8;
+private:
+    Vector2 mOffset; // 0x0
+    const DataArray *mData; // 0x8
 };
 
 class PartyModePlayer {
@@ -32,31 +33,31 @@ public:
     ~PartyModePlayer();
 
     void PushTitle(Symbol);
-    int Index() const { return unk1c; }
-    void IncScore(int score) { unk14 += score; }
-    void StoreFramePos(float x, float y) {
-        unk20 = x;
-        unk24 = y;
+    int GetIndex() const { return mIndex; }
+    void IncScore(int score) { mScore += score; }
+    void SetFramePos(float x, float y) {
+        mFrameXPos = x;
+        mFrameYPos = y;
     }
-    void StoreFrameScale(float scale) { unk28 = scale; }
-    const char *GetTexPath() { return unk0->GetTexPath(); }
-    int GetPhotoIndex() const { return unk2c; }
-    void SetIndex(int idx) { unk1c = idx; }
-    void SetSym(Symbol s) { unk4 = s; } // rename once context known
-    void SetPhotoIndex(int idx) { unk2c = idx; }
+    void SetFrameScale(float scale) { mFrameXYScale = scale; }
+    const char *GetTexPath() { return mARObject->GetTexPath(); }
+    int GetPhotoIndex() const { return mPhotoIndex; }
+    void SetIndex(int idx) { mIndex = idx; }
+    void SetCharacterName(Symbol name) { mCharacterName = name; }
+    void SetPhotoIndex(int idx) { mPhotoIndex = idx; }
 
 private:
-    PartyModeARObject *unk0;
-    Symbol unk4;
-    std::list<Symbol> unk8;
-    DataArray *unk10;
-    int unk14;
-    int unk18;
-    int unk1c;
-    float unk20;
-    float unk24;
-    float unk28;
-    int unk2c;
+    PartyModeARObject *mARObject; // 0x0
+    Symbol mCharacterName; // 0x4
+    std::list<Symbol> mTitleTokens; // 0x8
+    DataArray *mTitleTokensArray; // 0x10
+    int mScore; // 0x14
+    int mRank; // 0x18
+    int mIndex; // 0x1c
+    float mFrameXPos; // 0x20
+    float mFrameYPos; // 0x4
+    float mFrameXYScale; // 0x28
+    int mPhotoIndex; // 0x2c
 };
 
 class PartyModeMgr : public Hmx::Object, public ContentMgr::Callback {
@@ -68,24 +69,24 @@ public:
         bool mForceCrewOutfit; // 0xc
     };
     struct SubMode {
-        SubMode() : mPlayers(0) {}
+        SubMode() : playersArray(0) {}
         ~SubMode() {
-            if (mPlayers) {
-                mPlayers->Release();
+            if (playersArray) {
+                playersArray->Release();
             }
         }
 
         MEM_OVERLOAD(SubMode, 0xE3);
 
-        Symbol mModeName; // 0x0 - mode name
-        Symbol mSubModeName; // 0x4 - sub mode name
-        Symbol mSongName; // 0x8 - song shortname
-        int mSongID; // 0xc
-        int mPlayerFlags; // 0x10
-        int mNumPlayers; // 0x14
-        int unk18;
-        std::vector<int> unk1c;
-        DataArray *mPlayers; // 0x28
+        Symbol mode; // 0x0 - mode name
+        Symbol microgame; // 0x4 - sub mode name
+        Symbol song; // 0x8 - song shortname
+        int songID; // 0xc
+        int playerFlags; // 0x10
+        int numPlayers; // 0x14
+        int timeTilInMS;
+        std::vector<int> players;
+        DataArray *playersArray; // 0x28
     };
     PartyModeMgr();
     // Hmx::Object
@@ -135,12 +136,12 @@ public:
     void SetRightTeamStarBonus();
     void SetPlaylist(Playlist *);
 
-    Difficulty GetDifficulty() const { return mDifficulty; }
+    Difficulty GetDifficulty() { return mDifficulty; }
     void SetDifficulty(Difficulty d) { mDifficulty = d; }
-    bool UseFullLengthSongs() const { return mUseFullLengthSongs; }
-    void SetUseFullLengthSongs(bool b) { mUseFullLengthSongs = b; }
+    bool IsUsingFullLengthSongs() { return mUseFullLengthSongs; }
+    void UseFullLengthSongs(bool b) { mUseFullLengthSongs = b; }
     Playlist *GetPlaylist() const { return mPlaylist; }
-    const DateTime &GetDateTime315() const { return unk315; }
+    const DateTime &GetCurrentPartyTime() const { return mCurrPartyTime; }
 
 private:
     void InitCharacters();
@@ -205,78 +206,78 @@ private:
     DataNode OnMsg(const RCJobCompleteMsg &);
     DataNode OnMsg(const SmartGlassMsg &);
 
-    DataArray *mPartyModeCfg; // 0x30
-    bool mUsePlaytestData; // 0x34
-    DataArray *mPartyModePlaytestData; // 0x38
-    DataArray *mPartyModePlaytestEvents; // 0x3c
-    bool unk40;
+    DataArray *mData; // 0x30
+    bool mPlaytestMode; // 0x34
+    DataArray *mPlaytestData; // 0x38
+    DataArray *mPlaytestEvents; // 0x3c
+    bool unk40; // 0x40 - not in pdb
     SubMode *mCurrEvent; // 0x44
     int mRoundsPlayed; // 0x48
-    int mRoundsTotal; // 0x4c
+    int mRoundsBetweenShowdowns; // 0x4c
     int mRoundsUntilShowdown; // 0x50
-    bool mIsShowdown; // 0x54
-    DataArray *mARObjects; // 0x58
+    bool mIsShowdownTime; // 0x54
+    const DataArray *mARObjectsData; // 0x58
     std::vector<PartyModePlayer *> mPlayers; // 0x5c
-    std::vector<PartyModePlayer *> mTeam1Players; // 0x68
-    std::vector<PartyModePlayer *> mTeam2Players; // 0x74
+    std::vector<PartyModePlayer *> mPlayersTeam1; // 0x68
+    std::vector<PartyModePlayer *> mPlayersTeam2; // 0x74
     float mLeftTeamPrevScore; // 0x80
     float mLeftTeamScore; // 0x84
     float mRightTeamPrevScore; // 0x88
     float mRightTeamScore; // 0x8c
     float mLeftTeamStarBonus; // 0x90
     float mRightTeamStarBonus; // 0x94
-    DataArray *mEventScoring; // 0x98
+    DataArray *mEventScoringData; // 0x98
     int mWinningSide; // 0x9c
     int mJustWonSide; // 0xa0
-    std::vector<int> unka4;
-    std::vector<int> unkb0;
-    PseudoRandomPicker<int> unkbc;
-    PseudoRandomPicker<int> unkd0; // 0xd0 - for team 1
-    PseudoRandomPicker<int> unke4; // 0xe4 - for team 2
-    PseudoRandomPicker<Symbol> unkf8;
+    std::vector<int> mRandomNextPlayerIndices; // 0xa4
+    std::vector<int> mRandomARObjectIndices; // 0xb0
+    PseudoRandomPicker<int> mPlayerPicker; // 0xbc
+    PseudoRandomPicker<int> mPlayerTeam1Picker; // 0xd0
+    PseudoRandomPicker<int> mPlayerTeam2Picker; // 0xe4
+    PseudoRandomPicker<Symbol> mSongPicker; // 0xf8
     PseudoRandomPicker<Symbol> mModePicker; // 0x10c
-    PseudoRandomPicker<Symbol> mSubModePicker; // 0x120
+    PseudoRandomPicker<Symbol> mMicrogamePicker; // 0x120
     PseudoRandomPicker<Symbol> mGoodTitlePicker; // 0x134
     PseudoRandomPicker<Symbol> mBadTitlePicker; // 0x148
     // indexed by dj intensity rank
-    PseudoRandomPicker<Symbol> mSubModeSongPickers[4]; // 0x15c
+    PseudoRandomPicker<Symbol> mSongPickers[4]; // 0x15c
     std::vector<Symbol> mCharacters; // 0x1ac
     Symbol mLeftTeamCrew; // 0x1b8
     Symbol mRightTeamCrew; // 0x1bc
     PartyModePlayer *mLeftPlayer; // 0x1c0
     PartyModePlayer *mRightPlayer; // 0x1c4
-    int unk1c8;
+    int mLastTeamPickedFrom; // 0x1c8
     DataArray *mGoodTitles; // 0x1cc
     DataArray *mBadTitles; // 0x1d0
-    std::vector<int> unk1d4;
-    Vector2DESmoother mFrameSmoothers[6]; // 0x1e0
-    Difficulty mDifficulty; // 0x2d0
+    std::vector<int> mValidSongIDs; // 0x1d4
+    Vector2DESmoother mFrameMotionSmoother[6]; // 0x1e0
+    Difficulty mDifficulty; // 0x2d0 - int in PDB but cmon... Difficulty is right here
     Playlist *mPlaylist; // 0x2d4
-    bool mIsPlaylistShuffled; // 0x2d8
+    bool mPlaylistIsShuffled; // 0x2d8
     bool mUseFullLengthSongs; // 0x2d9
-    int unk2dc;
+    int mIncludedModeFlags; // 0x2dc
     bool mPerSongDifficulty; // 0x2e0
     bool mCustomParty; // 0x2e1
-    bool mUsingPerSongOptions; // 0x2e2
-    float unk2e4;
-    float unk2e8;
-    float unk2ec;
-    float mSixStarBonus; // 0x2f0
+    bool mUsePerSongOptions; // 0x2e2
+    float mLeftTeamPrevMeterPct; // 0x2e4
+    float mRightTeamPrevMeterPct; // 0x2e8
+    float mMaxPossibleEventPoints; // 0x2ec
+    float mMaxPossibleStarBonus; // 0x2f0
     RCJob *mPartyJobs[5]; // 0x2f4
     // SetPartyOptionsJob [0] - 0x2f4
     // GetPartyOptionsJob [1] - 0x2f8
     // GetPartySongQueueJob [2] - 0x2fc
     // AddSongToPartySongQueueJob [3]-  0x300
     // DeleteSongFromPartySongQueueJob [4] - 0x304
-    std::list<SongQueueRow> unk308;
+    std::list<SongQueueRow> mPartySongQueue; // 0x308
     int mCurrSyncedSongID; // 0x310
-    bool unk314;
-    DateTime unk315;
-    DateTime unk31b;
-    DataArray *unk324; // 0x324 - intensity sequences
-    DataArray *unk328; // 0x328 - bucket sequences
-    DataArray *unk32c;
-    std::vector<ConfigHistory> mCfgHistories; // 0x330
+    bool mAddingSongToRCPartySongQueue; // 0x314
+    DateTime mCurrPartyTime; // 0x315
+    DateTime mPartyStartTime; // 0x31b
+    DataArray *mDjIntensitySequence; // 0x324 - intensity sequences
+    DataArray *mModeBucketSequence; // 0x328 - bucket sequences
+    DataArray *mPlayerSequence;
+    std::vector<ConfigHistory> mCfgHistories; // 0x330 - not in PDB
 };
 
 extern PartyModeMgr *ThePartyModeMgr;

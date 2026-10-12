@@ -994,10 +994,10 @@ void AccomplishmentManager::HandleSongCompleted(Symbol song) {
                     HandleSongCompletedForProfile(song, pPlayer, pProfile);
                 }
                 if (TheGameMode->InMode(practice)) {
-                    pProfile->SetUnk388(song);
-                    pProfile->SetUnk334(true);
+                    pProfile->SetLastPracticeSong(song);
+                    pProfile->SetLastModePractice(true);
                 } else
-                    pProfile->SetUnk334(false);
+                    pProfile->SetLastModePractice(false);
             }
         }
     }
@@ -1063,7 +1063,7 @@ void AccomplishmentManager::CheckForSpecificModesAccomplishments(
         DateTime dt;
         DateTime dt2;
         GetDateAndTime(dt);
-        dt2 = ThePartyModeMgr->GetDateTime315();
+        dt2 = ThePartyModeMgr->GetCurrentPartyTime();
         if (dt2.ToDayNumber() != dt.ToDayNumber()) {
             static Symbol acc_night_till_morning("acc_night_till_morning");
             TheAccomplishmentMgr->EarnAccomplishmentForAll(acc_night_till_morning, false);
@@ -1072,8 +1072,8 @@ void AccomplishmentManager::CheckForSpecificModesAccomplishments(
 
     if (TheGameMode->IsGameplayModePerform()) {
         if (profile) {
-            if (profile->GetUnk334() && profile->GetUnk388() == song
-                && pScoreNode->Int() > profile->GetUnk330()) {
+            if (profile->IsLastModePractice() && profile->GetLastPracticeSong() == song
+                && pScoreNode->Int() > profile->GetLastBestScore()) {
                 static Symbol acc_broken_down("acc_broken_down");
                 TheAccomplishmentMgr->EarnAccomplishmentForProfile(
                     profile, acc_broken_down, false
@@ -1084,7 +1084,7 @@ void AccomplishmentManager::CheckForSpecificModesAccomplishments(
             int bestScore = profile->GetSongStatusMgr()->GetBestScore(
                 songID, check, kDifficultyBeginner
             );
-            profile->SetUnk330(bestScore);
+            profile->SetLastBestScore(bestScore);
         }
 
         if (TheHamProvider->Property(is_in_campaign_master_quest_mode)->Int()) {

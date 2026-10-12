@@ -22,7 +22,7 @@ public:
         Options are: normal, minigame */
     Symbol mState; // 0x0
     /** "Which players are involved with this section" */
-    HamPlayerFlags mPlayers; // 0x4
+    PlayerFlag mPlayers; // 0x4
     /** "Music loop start and end" */
     Range mMusicRange; // 0x8
     /** "Playable range of the section" */

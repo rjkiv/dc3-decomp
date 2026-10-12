@@ -389,7 +389,7 @@ int HamUI::TakeSnapshot() {
         HamProfile *profile = TheProfileMgr.GetProfileFromPad(pPlayer->PadNum());
         if (profile) {
             if (profile->HasValidSaveData()) {
-                profile->GetMetagameStats()->PhotoTaken();
+                profile->GetStats()->PhotoTaken();
             }
         }
     }

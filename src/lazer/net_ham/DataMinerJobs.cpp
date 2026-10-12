@@ -50,7 +50,7 @@ GameEndedDataPointJob::GameEndedDataPointJob(
     static Symbol custom_session("custom_session");
     static Symbol challenge("challenge");
 
-    Symbol lastPlayed = MetaPerformer::Current()->LastPlayedMode();
+    Symbol lastPlayed = MetaPerformer::Current()->GetLastPlayedMode();
     float f29 = 0;
     Symbol gameDataSong = TheGameData->GetSong();
 
@@ -78,7 +78,7 @@ GameEndedDataPointJob::GameEndedDataPointJob(
         );
     } else {
         MetaPerformer *p = MetaPerformer::Current();
-        if (p->GetMoveScore(0).size() != 0) {
+        if (p->GetMoveScores(0).size() != 0) {
             MoveDir *moves = TheHamDirector->GetWorld()->Find<MoveDir>("moves");
             MILO_ASSERT(moves, 0x5A);
             PracticeSection *section = nullptr;
@@ -90,7 +90,7 @@ GameEndedDataPointJob::GameEndedDataPointJob(
             }
             MILO_ASSERT(section, 0x64);
             int numSteps = section->Steps().size();
-            int numMoveScores = p->GetMoveScore(0).size();
+            int numMoveScores = p->GetMoveScores(0).size();
             if (numMoveScores > numSteps) {
                 String str = MakeString("(%d/%d)", numMoveScores, numSteps);
                 pt.AddPair(custom_session, str);
@@ -139,7 +139,7 @@ GameEndedDataPointJob::GameEndedDataPointJob(
         int padnum = curPlayer->PadNum();
         HamProfile *profile = TheProfileMgr.GetProfileFromPad(padnum);
         if (profile && profile->HasValidSaveData()) {
-            if (profile->IsSignedIn()) {
+            if (profile->HasOnlineID()) {
                 const char *xuidStr = GetXUIDStrFromProfile(profile);
                 String xuid("xuid");
                 xuid += idx;
@@ -163,7 +163,7 @@ GameEndedDataPointJob::GameEndedDataPointJob(
                 pt.AddPair(str148.c_str(), str1e8);
             }
             const char *rankTitleStr = gNullStr;
-            MetagameRank *mr = profile->GetMetagameRank();
+            MetagameRank *mr = profile->GetRank();
             if (mr->HasNewRank()) {
                 rankTitleStr = mr->GetRankTitle().Str();
             }
@@ -211,7 +211,7 @@ bool GameEndedDataPointJob::CompileMoveRatings(
     MILO_ASSERT(playerIndex >= 0 && playerIndex < MAX_NUM_PLAYERS, 0x120);
     bool ret = false;
     const std::vector<HamMoveScore> &moveScores =
-        MetaPerformer::Current()->GetMoveScore(playerIndex);
+        MetaPerformer::Current()->GetMoveScores(playerIndex);
     if (moveScores.size() != 0) {
         char buffer[56];
         bool b4 = true;

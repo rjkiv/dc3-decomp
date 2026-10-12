@@ -45,7 +45,7 @@ bool FitnessGoalMgr::HasValidProfile() {
     HamProfile *pProfile = TheProfileMgr.GetActiveProfile(true);
     if (pProfile) {
         pProfile->UpdateOnlineID();
-        if (pProfile->IsSignedIn()) {
+        if (pProfile->HasOnlineID()) {
             int padNum = pProfile->GetPadNum();
             if (ThePlatformMgr.IsSignedIntoLive(padNum) && TheRockCentral.IsOnline()) {
                 mCurrProfileName = pProfile->GetName();
@@ -71,9 +71,9 @@ void FitnessGoalMgr::UploadNextProfile() {
 
 void FitnessGoalMgr::UpdateFitnessGoal(HamProfile *profile) {
     profile->UpdateOnlineID();
-    if (profile->IsSignedIn()) {
+    if (profile->HasOnlineID()) {
         int padNum = profile->GetPadNum();
-        if (ThePlatformMgr.IsSignedIntoLive(padNum) && profile->GetUnk360()) {
+        if (ThePlatformMgr.IsSignedIntoLive(padNum) && profile->FitnessGoalNeedUpload()) {
             if (!mUploadingProfile || mUploadingProfile == profile) {
                 mUploadingProfile = profile;
                 UploadNextProfile();
@@ -161,7 +161,7 @@ void FitnessGoalMgr::HandleCmdSendFitnessGoalToRC() {
 
 void FitnessGoalMgr::HandleCmdGetFitnessGoalFromRC() {
     HamProfile *pActiveProfile = TheProfileMgr.GetActiveProfile(true);
-    if (pActiveProfile && pActiveProfile->IsSignedIn()) {
+    if (pActiveProfile && pActiveProfile->HasOnlineID()) {
         if (ThePlatformMgr.IsSignedIntoLive(pActiveProfile->GetPadNum())
             && TheRockCentral.IsOnline()) {
             if (!(mCurrProfileName != pActiveProfile->GetName())) { // idk it says it

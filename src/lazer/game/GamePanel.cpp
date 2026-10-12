@@ -271,7 +271,8 @@ void GamePanel::Poll() {
         if (!mPauseCountInTimer->Running()) {
             mGame->Poll();
         }
-        if (mState == kGameNeedStart && TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) > -0.025f
+        if (mState == kGameNeedStart
+            && TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) > -0.025f
             && !TheHamDirector->Unk33d()) {
             StartGame();
         }
@@ -560,8 +561,8 @@ DataNode GamePanel::OnGetFitnessData(const DataArray *a) {
             HamPlayerData *pPlayerData = TheGameData->Player(index);
             MILO_ASSERT(pPlayerData, 0x4BC);
             HamProfile *profile = TheProfileMgr.GetProfileFromPad(pPlayerData->PadNum());
-            f1 += profile->FitnessCalories();
-            f2 += profile->FitnessTime();
+            f1 += profile->GetFitnessCalories();
+            f2 += profile->GetFitnessTime();
         }
         if (a->Size() > 4) {
             *a->Node(4).Var() = f1;

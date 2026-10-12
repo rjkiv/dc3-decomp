@@ -518,7 +518,7 @@ void Challenges::DownloadBadgeInfo() {
         HamProfile *profile = TheProfileMgr.GetProfileFromPad(playerData->PadNum());
         if (profile) {
             profile->UpdateOnlineID();
-            if (profile->IsSignedIn()
+            if (profile->HasOnlineID()
                 && ThePlatformMgr.IsSignedIntoLive(profile->GetPadNum())) {
                 profiles.push_back(profile);
             }
@@ -554,7 +554,7 @@ void Challenges::ReadBadgeInfo(bool b1) {
 
 void Challenges::UploadFlaunt(HamProfile *profile, bool b2) {
     profile->UpdateOnlineID();
-    if (profile->IsSignedIn() && ThePlatformMgr.IsSignedIntoLive(profile->GetPadNum())) {
+    if (profile->HasOnlineID() && ThePlatformMgr.IsSignedIntoLive(profile->GetPadNum())) {
         std::list<FlauntStatusData> flaunts;
         profile->GetSongStatusMgr()->GetFlauntsToUpload(flaunts);
         if (flaunts.empty()) {
@@ -867,7 +867,7 @@ void Challenges::DownloadPlayerChallenges() {
                 TheProfileMgr.GetProfileFromPad(playerData->PadNum());
             if (profileFromPad) {
                 profileFromPad->UpdateOnlineID();
-                if (profileFromPad->IsSignedIn()) {
+                if (profileFromPad->HasOnlineID()) {
                     int padNum = profileFromPad->GetPadNum();
                     if (ThePlatformMgr.IsSignedIntoLive(padNum)) {
                         profiles.push_back(profileFromPad);
