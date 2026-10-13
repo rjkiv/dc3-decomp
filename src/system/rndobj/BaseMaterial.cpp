@@ -173,7 +173,7 @@ BEGIN_LOADS(BaseMaterial)
     LOAD_SUPERCLASS(Hmx::Object)
     d >> (int &)mBlend;
     mBlend = CheckBlendMode(mBlend, this);
-    d.stream >> mColor >> mUseEnviron >> mPrelit;
+    d >> mColor >> mUseEnviron >> mPrelit;
     d >> (int &)mZMode;
     d >> mAlphaCut >> mAlphaThreshold >> mAlphaWrite;
     d >> (int &)mTexGen >> (int &)mTexWrap >> mTexXfm >> mDiffuseTex >> mNextPass;
@@ -186,18 +186,18 @@ BEGIN_LOADS(BaseMaterial)
         d >> (int &)mCull;
     }
     d >> mEmissiveMultiplier;
-    d.stream >> mSpecularRGB >> mNormalMap;
-    d.stream >> mEmissiveMap >> mSpecularMap;
-    d.stream >> mEnvironMap >> mEnvironMapFalloff >> mEnvironMapSpecMask;
+    d >> mSpecularRGB >> mNormalMap;
+    d >> mEmissiveMap >> mSpecularMap;
+    d >> mEnvironMap >> mEnvironMapFalloff >> mEnvironMapSpecMask;
     d >> mPerPixelLit >> (int &)mStencilMode;
-    d.stream >> mFur >> mDeNormal >> mAnisotropy;
+    d >> mFur >> mDeNormal >> mAnisotropy;
     d >> mNormDetailTiling >> mNormDetailStrength >> mNormDetailMap;
     d >> mPointLights >> mFog >> mFadeout >> mColorAdjust;
-    d.stream >> mRimRGB >> mRimMap >> mRimLightUnder;
+    d >> mRimRGB >> mRimMap >> mRimLightUnder;
     d >> mScreenAligned;
     d >> (int &)mShaderVariation;
     d >> mSpecular2RGB;
-    mPerfSettings.Load(d.stream);
+    mPerfSettings.Load(d);
     d >> mRefractEnabled;
     d >> mRefractStrength;
     d >> mRefractNormalMap;

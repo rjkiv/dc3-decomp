@@ -73,7 +73,7 @@ BEGIN_LOADS(RndDrawable)
         RndGroup *grp = dynamic_cast<RndGroup *>(this);
         for (; count != 0; count--) {
             char buf[0x80];
-            d.stream.ReadString(buf, 0x80);
+            d.ReadString(buf, 0x80);
             if (grp) {
                 Hmx::Object *found = Dir()->Find<Hmx::Object>(buf, true);
                 RndCam *cam = dynamic_cast<RndCam *>(found);

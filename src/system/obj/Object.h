@@ -885,6 +885,12 @@ extern DataArray *SystemConfig(Symbol, Symbol, Symbol);
     int dAltRev = getAltRev(revs);                                                       \
     BinStreamRev d(bs, dRev, dAltRev);
 
+#define PUSH_REVS(d) d.PushRev(packRevs(d.altRev, d.rev), this);
+
+#define POP_REVS(bs)                                                                     \
+    int revs = bs.PopRev(this);                                                          \
+    BinStreamRev d(bs, getHmxRev(revs), getAltRev(revs));
+
 #define ASSERT_REVS(rev1, rev2)                                                          \
     if (d.rev > rev1) {                                                                  \
         MILO_FAIL(                                                                       \
@@ -905,7 +911,7 @@ extern DataArray *SystemConfig(Symbol, Symbol, Symbol);
         );                                                                               \
     }
 
-#define LOAD_SUPERCLASS(parent) parent::Load(d.stream);
+#define LOAD_SUPERCLASS(parent) parent::Load(d);
 
 #define LOAD_VIRTUAL_SUPERCLASS(parent)                                                  \
     if (ClassName() == StaticClassName())                                                \
@@ -1342,15 +1348,15 @@ public:
 // hmx why??? pick one and stick with it pls
 
 template <class T>
-BinStream &operator>>(BinStreamRev &bs, ObjVector<T> &vec) {
+BinStream &operator>>(BinStreamRev &d, ObjVector<T> &vec) {
     unsigned int length;
-    bs >> length;
+    d >> length;
     vec.resize(length);
 
     for (ObjVector<T>::iterator it = vec.begin(); it != vec.end(); it++) {
-        bs >> *it;
+        d >> *it;
     }
-    return bs.stream;
+    return d;
 }
 
 template <class T>
@@ -1404,15 +1410,15 @@ public:
 };
 
 template <class T>
-BinStream &operator>>(BinStreamRev &bs, ObjList<T> &oList) {
+BinStream &operator>>(BinStreamRev &d, ObjList<T> &oList) {
     unsigned int length;
-    bs >> length;
+    d >> length;
     oList.resize(length);
 
     for (std::list<T>::iterator it = oList.begin(); it != oList.end(); ++it) {
-        bs >> *it;
+        d >> *it;
     }
-    return bs.stream;
+    return d;
 }
 
 #pragma endregion

@@ -108,7 +108,7 @@ BEGIN_LOADS(DancerSequence)
                 for (int j = 0; j < count; j++) {
                     if (j >= 6) {
                         Vector3 v;
-                        d.stream >> v >> v >> v;
+                        d >> v >> v >> v;
                     } else {
                         if (j == 0) {
                             Vector3 pos, disp;
@@ -118,7 +118,7 @@ BEGIN_LOADS(DancerSequence)
                             skeleton.SetCamJointDisplacement((SkeletonJoint)i, disp);
                         } else {
                             Vector3 v1, v2;
-                            d.stream >> v1 >> v2;
+                            d >> v1 >> v2;
                         }
                         if (skeletonRev < 4) {
                             Vector3 v;

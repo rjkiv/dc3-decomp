@@ -145,7 +145,7 @@ void CharBonesSamples::LoadHeader(BinStreamRev &d) {
     }
 
     if (d.rev > 9) {
-        ReadCounts(d.stream, d.rev > 0xF ? 7 : 10);
+        ReadCounts(d, d.rev > 0xF ? 7 : 10);
         d >> (int &)mCompression >> mNumSamples;
     } else {
         if (d.rev > 5) {
@@ -191,15 +191,15 @@ void CharBonesSamples::LoadData(BinStreamRev &d) {
         bool b;
         d >> b;
     }
-    bool cached = d.stream.Cached();
+    bool cached = d.Cached();
     if (cached && d.rev > 0xE) {
         SetSamplePointers(0);
-        ReadChunks(d.stream, mStart, AllocateSize(), mTotalSize << 7);
+        ReadChunks(d, mStart, AllocateSize(), mTotalSize << 7);
     } else {
         for (int i = 0; i < mNumSamples; i++) {
             SetSamplePointers(Min(i, mNumSamples - 1));
             if (cached) {
-                d.stream.Read(mStart, mOffsets[TYPE_END] - mOffsets[TYPE_POS]);
+                d.Read(mStart, mOffsets[TYPE_END] - mOffsets[TYPE_POS]);
             } else {
                 if (mCompression >= kCompressVects) {
                     ShortVector3 *vecEnd = (ShortVector3 *)QuatOffset();
@@ -242,7 +242,7 @@ void CharBonesSamples::LoadData(BinStreamRev &d) {
                 }
             }
             if ((i & 0x7F) == 0x7F) {
-                while (d.stream.Eof() == TempEof) {
+                while (d.Eof() == TempEof) {
                     Timer::Sleep(0);
                 }
             }

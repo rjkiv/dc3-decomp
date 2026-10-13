@@ -163,13 +163,13 @@ INIT_REVS(11, 0)
 void HamListRibbon::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(0xB, 0)
-    RndDir::PreLoad(d.stream);
-    d.PushRev(this);
+    RndDir::PreLoad(d);
+    PUSH_REVS(d);
 }
 
 void HamListRibbon::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
-    RndDir::PostLoad(d.stream);
+    POP_REVS(bs);
+    RndDir::PostLoad(d);
     d >> mSpacing;
     d >> mSwellAnim;
     d >> mSlideAnim;

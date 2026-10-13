@@ -72,7 +72,7 @@ BEGIN_LOADS(RndCamAnim)
     }
     LOAD_SUPERCLASS(RndAnimatable)
     d >> mCam;
-    d.stream >> mFovKeys >> mKeysOwner;
+    d >> mFovKeys >> mKeysOwner;
     if (d.rev < 2) {
         FOREACH (it, mFovKeys) {
             it->value = ConvertFov(it->value, 0.75);

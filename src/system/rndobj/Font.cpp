@@ -299,7 +299,7 @@ BEGIN_LOADS(RndFont)
             ObjPtr<RndMat> mat(this);
             d >> mat;
             if (d.rev > 9 && d.rev < 0xc) {
-                d.stream.ReadString(buf, 0x80);
+                d.ReadString(buf, 0x80);
                 if (!mat && buf[0] != '\0') {
                     mat = LookupOrCreateMat(buf, Dir());
                 }

@@ -591,7 +591,7 @@ BEGIN_LOADS(RndParticleSys)
     d >> mEmitRate;
     if (d.rev > 0x20) {
         d >> mMaxBurst;
-        d.stream >> mBurstInterval >> mBurstPeak >> mBurstLength;
+        d >> mBurstInterval >> mBurstPeak >> mBurstLength;
     }
     d >> mStartSize;
     if (d.rev > 0xF)
@@ -610,7 +610,7 @@ BEGIN_LOADS(RndParticleSys)
             d >> p;
         } else {
             Vector3 v1;
-            d.stream >> v1 >> p.a >> p.b >> p.c;
+            d >> v1 >> p.a >> p.b >> p.c;
             p.d = -Dot(v1, reinterpret_cast<Vector3 &>(p));
         }
         if (ba7) {
@@ -637,14 +637,14 @@ BEGIN_LOADS(RndParticleSys)
     d >> mMat;
     if (d.rev > 0x17 && d.rev < 0x19) {
         char buf[0x80];
-        d.stream.ReadString(buf, 0x80);
+        d.ReadString(buf, 0x80);
         if (!mMat && buf[0] != '\0') {
             mMat = LookupOrCreateMat(buf, Dir());
         }
     }
     if (d.rev > 0x11) {
         d >> (int &)mType >> mGrowRatio >> mShrinkRatio >> mMidColorRatio;
-        d.stream >> mMidColorLow >> mMidColorHigh;
+        d >> mMidColorLow >> mMidColorHigh;
     } else if (d.rev < 0xD) {
         int i94;
         d >> i94;
@@ -661,7 +661,7 @@ BEGIN_LOADS(RndParticleSys)
         }
     }
     if (d.rev > 3) {
-        d.stream >> mBubblePeriod >> mBubbleSize >> mBubble;
+        d >> mBubblePeriod >> mBubbleSize >> mBubble;
     }
     if (d.rev > 0x1D) {
         d >> mRotate >> mRPM;
@@ -672,7 +672,7 @@ BEGIN_LOADS(RndParticleSys)
         d >> mDrag;
     }
     if (d.rev > 0x1F) {
-        d.stream >> mStartOffset >> mEndOffset;
+        d >> mStartOffset >> mEndOffset;
         d >> mAlignWithVelocity >> mStretchWithVelocity >> mConstantArea >> mStretchScale;
     }
     if (d.rev > 0x21) {

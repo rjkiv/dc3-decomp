@@ -287,10 +287,10 @@ BEGIN_LOADS(RndMat)
     if (d.rev < 0x45) {
         LoadOld(d);
     } else {
-        BaseMaterial::Load(d.stream);
+        BaseMaterial::Load(d);
     }
     if (d.rev > 0x45) {
-        mMetaMaterial.Load(d.stream, true, sMetaMaterials);
+        mMetaMaterial.Load(d, true, sMetaMaterials);
     }
     UpdatePropertiesFromMetaMat();
 END_LOADS
@@ -565,7 +565,7 @@ void RndMat::UpdatePropertiesFromMetaMat() {
 }
 
 void RndMat::LoadOld(BinStreamRev &d) {
-    Hmx::Object::Load(d.stream);
+    Hmx::Object::Load(d);
     d >> (int &)mBlend;
     mBlend = CheckBlendMode(mBlend, this);
     d >> mColor;
@@ -579,13 +579,13 @@ void RndMat::LoadOld(BinStreamRev &d) {
     d >> (int &)mTexGen;
     d >> (int &)mTexWrap;
     d >> mTexXfm >> mDiffuseTex;
-    d.stream >> mNextPass >> mIntensify;
+    d >> mNextPass >> mIntensify;
     bool bCull;
     d >> bCull;
     mCull = (Cull)(bCull != 0);
     d >> mEmissiveMultiplier;
-    d.stream >> mSpecularRGB >> mNormalMap;
-    d.stream >> mEmissiveMap >> mSpecularMap;
+    d >> mSpecularRGB >> mNormalMap;
+    d >> mEmissiveMap >> mSpecularMap;
     if (d.rev < 0x33) {
         ObjPtr<RndTex> tex(this);
         d >> tex;

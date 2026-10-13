@@ -109,11 +109,11 @@ BEGIN_LOADS(CharLipSyncDriver) // register error
     } else
         d >> mLipSync;
     if (d.rev > 1) {
-        mTestClip.Load(d.stream, true, mClips);
+        mTestClip.Load(d, true, mClips);
         d >> mTestWeight;
     }
     if (d.rev > 2) {
-        mOverrideClip.Load(d.stream, true, mClips);
+        mOverrideClip.Load(d, true, mClips);
         if (d.rev < 5) {
             int x;
             d >> x;

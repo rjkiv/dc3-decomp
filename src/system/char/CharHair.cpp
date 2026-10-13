@@ -68,7 +68,7 @@ void operator>>(BinStreamRev &d, CharHair::Point &pt) {
         int x;
         char buf[0x100];
         d >> x;
-        d.stream.ReadString(buf, 0xff);
+        d.ReadString(buf, 0xff);
     } else if (d.rev == 3) {
         int x;
         d >> x;
@@ -87,7 +87,7 @@ void operator>>(BinStreamRev &d, CharHair::Point &pt) {
     }
     char buf[0x100];
     if (d.rev == 6) {
-        d.stream.ReadString(buf, 0xff);
+        d.ReadString(buf, 0xff);
     }
     if (d.rev < 8) {
         pt.sideLength = -1;

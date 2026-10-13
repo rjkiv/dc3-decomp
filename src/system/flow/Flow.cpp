@@ -92,7 +92,7 @@ BinStream &operator<<(BinStream &bs, const Flow::DynamicPropertyEntry &entry) {
 
 BinStreamRev &operator>>(BinStreamRev &d, Flow::DynamicPropertyEntry &entry) {
     d >> entry.mName >> (int &)entry.mType;
-    d.stream >> entry.mDefaultVal >> entry.mHelp >> entry.mObjectClass;
+    d >> entry.mDefaultVal >> entry.mHelp >> entry.mObjectClass;
     if (d.rev > 1) {
         d >> entry.mExposed >> entry.unk24;
     }
@@ -301,12 +301,12 @@ void Flow::PreLoad(BinStream &bs) {
             );
         }
     }
-    d.PushRev(this);
+    PUSH_REVS(d);
 }
 
 void Flow::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
-    ObjectDir::PostLoad(d.stream);
+    POP_REVS(bs);
+    ObjectDir::PostLoad(d);
     if (IsProxy()) {
         int unkf0 = 0;
         d >> unkf0;
@@ -353,7 +353,7 @@ void Flow::PostLoad(BinStream &bs) {
                 d >> b110;
                 if (b110) {
                     ObjPtr<Hmx::Object> ptr(this);
-                    ptr = FlowNode::LoadObjectFromMainOrDir(d.stream, Dir());
+                    ptr = FlowNode::LoadObjectFromMainOrDir(d, Dir());
                 }
             } else {
                 ObjPtr<Hmx::Object> ptr(this);

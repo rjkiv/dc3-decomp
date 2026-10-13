@@ -88,7 +88,7 @@ void Spotlight::BeamDef::Load(BinStreamRev &d) {
     d >> mMat;
     if (d.rev > 0x11 && d.rev < 0x13) {
         char name[0x80];
-        d.stream.ReadString(name, 0x80);
+        d.ReadString(name, 0x80);
     }
     d >> mOffset;
     if (d.rev < 10) {
@@ -134,11 +134,12 @@ Spotlight::Spotlight()
     : mDiscMat(this), mFlare(Hmx::Object::New<RndFlare>()), mFlareEnabled(true),
       mFlareIsBillboard(true), mFlareOffset(0), mSpotScale(30), mSpotHeight(0.25),
       mColor(1, 1, 1), mIntensity(1), mColorOwner(this, this), mLensSize(0),
-      mLensOffset(0), mLensMat(this), mBeam(this), mSlaves(this),
-      mLightCanMesh(this), mLightCanOffset(0), mTarget(this), mTargetExists(true),
-      mSpotTarget(this), mLastFloorSpotHeight(-1e33), mCastShadow(false), mLightCanSort(false),
+      mLensOffset(0), mLensMat(this), mBeam(this), mSlaves(this), mLightCanMesh(this),
+      mLightCanOffset(0), mTarget(this), mTargetExists(true), mSpotTarget(this),
+      mLastFloorSpotHeight(-1e33), mCastShadow(false), mLightCanSort(false),
       mFirstFrame(true), mDampingConstant(1), mAdditionalObjects(this),
-      mAnimateColorFromPreset(true), mAnimateOrientationFromPreset(true), mAnimatingFromPreset(false) {
+      mAnimateColorFromPreset(true), mAnimateOrientationFromPreset(true),
+      mAnimatingFromPreset(false) {
     mFlare->SetTransParent(this, false);
     mFloorSpotXfm.Reset();
     mLensXfm.Reset();
@@ -665,7 +666,8 @@ void Spotlight::Poll() {
     if (!mAnimatingFromPreset) {
         RndTransformable *target = ResolveTarget();
         if (!target
-            || (!TheLoadMgr.EditMode() && !mFirstFrame && target->WorldXfm().v == mLastTargetPosition)) {
+            || (!TheLoadMgr.EditMode() && !mFirstFrame
+                && target->WorldXfm().v == mLastTargetPosition)) {
             if (!target && !mAnimateOrientationFromPreset && !DoFloorSpot()) {
                 UpdateTransforms();
                 return;
@@ -760,8 +762,7 @@ void Spotlight::UpdateFlare() {
 }
 
 bool Spotlight::DoFloorSpot() const {
-    return mDiscMat && GetFloorSpotTarget()
-        && GetFloorSpotTarget()->WorldXfm().m.y.z;
+    return mDiscMat && GetFloorSpotTarget() && GetFloorSpotTarget()->WorldXfm().m.y.z;
 }
 
 void Spotlight::CalculateDirection(RndTransformable *target, Hmx::Matrix3 &mtx) {

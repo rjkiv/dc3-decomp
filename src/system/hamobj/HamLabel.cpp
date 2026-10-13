@@ -56,17 +56,17 @@ void HamLabel::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(17, 0)
     if (d.rev >= 17) {
-        UILabel::PreLoad(d.stream);
+        UILabel::PreLoad(d);
     } else {
         MILO_FAIL("Can't load HamLabel older than rev %d", 17);
     }
-    d.PushRev(this);
+    PUSH_REVS(d);
 }
 
 void HamLabel::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
-    UILabel::PostLoad(d.stream);
-    LoadHandlerData(d.stream);
+    POP_REVS(bs);
+    UILabel::PostLoad(d);
+    LoadHandlerData(d);
 }
 
 void HamLabel::Count(int from, int to, float timeS, Symbol s) {

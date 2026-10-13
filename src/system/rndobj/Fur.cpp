@@ -97,14 +97,14 @@ bool RndFur::LoadOld(BinStreamRev &d) {
         d >> mSlide;
         d >> mGravity;
         d >> mFluidity;
-        d.stream >> mRootsTint >> mEndsTint;
+        d >> mRootsTint >> mEndsTint;
         if (d.rev > 0x1E) {
-            d.stream >> mFurDetail >> mFurTiling;
+            d >> mFurDetail >> mFurTiling;
         }
         if (d.rev < 0x24) {
             Vector3 v;
             float f;
-            d.stream >> v >> f;
+            d >> v >> f;
         }
     }
     return ret;

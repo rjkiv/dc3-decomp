@@ -550,8 +550,8 @@ void CamShotCrowd::Load(BinStream &bs) {
 }
 
 BinStream &operator>>(BinStreamRev &d, CamShotCrowd &c) {
-    c.Load(d.stream);
-    return d.stream;
+    c.Load(d);
+    return d;
 }
 
 void CamShotCrowd::AddCrowdChars() {

@@ -203,16 +203,16 @@ void UIList::PreLoadWithRev(BinStreamRev &d) {
             gRev
         );
     }
-    UIComponent::PreLoad(d.stream);
+    UIComponent::PreLoad(d);
     if (d.rev >= 0x14) {
         d >> mListDir;
     }
-    d.PushRev(this);
+    PUSH_REVS(d);
 }
 
 void UIList::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
-    UIComponent::PostLoad(d.stream);
+    POP_REVS(bs);
+    UIComponent::PostLoad(d);
     mListDir.PostLoad(nullptr);
     bool local_scrollpastmin = false; // 0x90
     bool local_scrollpastmax = true; // 0x8f
@@ -305,7 +305,7 @@ void UIList::PostLoad(BinStream &bs) {
         d >> mExtendedCustomEntries;
     }
     if (d.rev >= 0x11) {
-        LoadHandlerData(d.stream);
+        LoadHandlerData(d);
     }
     if (d.rev >= 0x15) {
         d >> mLimitCircularDisplayNumToDataNum;

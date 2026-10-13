@@ -180,9 +180,10 @@ WorldDir::WorldDir()
     : mPresetOverrides(this), mBitmapOverrides(this), mMatOverrides(this),
       mHideOverrides(this), mCamShotOverrides(this), mPS3PerPixelShows(this),
       mPS3PerPixelHides(this), mHUDDir(0), mShowHUD(0), mHUD(this), mCameraMgr(this),
-      mMyCameraManager(0), m3DSoundMgr(this), mLightPresetMgr(this), mPhysicsMgr(0), mPhysicsManagerNeedsToEnter(0),
-      mEchoMsgs(0), mFirstPoll(0), mTestLightPreset1(this), mTestLightPreset2(this),
-      mTestAnimTime(10), mExplicitPostProc(1) {
+      mMyCameraManager(0), m3DSoundMgr(this), mLightPresetMgr(this), mPhysicsMgr(0),
+      mPhysicsManagerNeedsToEnter(0), mEchoMsgs(0), mFirstPoll(0),
+      mTestLightPreset1(this), mTestLightPreset2(this), mTestAnimTime(10),
+      mExplicitPostProc(1) {
     ClearDeltas();
 }
 
@@ -236,7 +237,9 @@ BEGIN_PROPSYNCS(WorldDir)
     SYNC_PROP(test_animation_time, mTestAnimTime)
     SYNC_PROP_MODIFY(hud, mHUD, SyncObjects())
     SYNC_PROP_SET(
-        doppler_power, m3DSoundMgr.mDopplerShiftPower, m3DSoundMgr.mDopplerShiftPower = _val.Float()
+        doppler_power,
+        m3DSoundMgr.mDopplerShiftPower,
+        m3DSoundMgr.mDopplerShiftPower = _val.Float()
     )
     SYNC_PROP_SET(
         listener,
@@ -313,17 +316,17 @@ void WorldDir::PreLoad(BinStream &bs) {
     }
     if (d.rev < 9) {
         if (d.rev > 7) {
-            OldLoadProxies(d.stream, 0);
+            OldLoadProxies(d, 0);
         } else if (d.rev > 2) {
             d >> gOldChars;
         }
     }
-    PanelDir::PreLoad(d.stream);
-    d.PushRev(this);
+    PanelDir::PreLoad(d);
+    PUSH_REVS(d);
 }
 
 void WorldDir::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
+    POP_REVS(bs);
     PanelDir::PostLoad(bs);
     if (d.rev > 4 && d.rev < 6) {
         ObjPtr<RndCam> cam(this);
@@ -337,18 +340,18 @@ void WorldDir::PostLoad(BinStream &bs) {
             MILO_ASSERT(p, 0x1AA);
             p->SetProxyFile(gOldChars[i], false);
             char buf[0x80];
-            d.stream.ReadString(buf, 0x80);
+            d.ReadString(buf, 0x80);
             p->SetName(buf, this);
-            p->RndTransformable::Load(d.stream);
+            p->RndTransformable::Load(d);
             bool showing;
             d >> showing;
             float fff;
-            d.stream >> fff;
+            d >> fff;
             if (p) {
                 p->SetShowing(showing);
                 p->SetOrder(fff);
             }
-            d.stream.ReadString(buf, 0x80);
+            d.ReadString(buf, 0x80);
             if (p && *buf != '\0') {
                 p->SetEnv(Find<RndEnviron>(buf, true));
             }
@@ -360,7 +363,7 @@ void WorldDir::PostLoad(BinStream &bs) {
             Transform tf;
             d >> tf;
         } else if (d.rev > 6 && mCam) {
-            mCam->RndTransformable::Load(d.stream);
+            mCam->RndTransformable::Load(d);
         }
     }
     if (d.rev > 0xB) {
@@ -384,7 +387,7 @@ void WorldDir::PostLoad(BinStream &bs) {
     }
     if (d.rev > 0xF) {
         SyncCamShots(false);
-        mCamShotOverrides.Load(d.stream, false, nullptr, true);
+        mCamShotOverrides.Load(d, false, nullptr, true);
         SyncCamShots(true);
     }
     if (d.rev > 0x10 && d.rev != 0x17) {

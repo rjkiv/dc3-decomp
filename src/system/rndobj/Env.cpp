@@ -170,7 +170,7 @@ BEGIN_LOADS(RndEnviron)
         LOAD_SUPERCLASS(Hmx::Object)
     }
     if (d.rev < 3) {
-        RndDrawable::DumpLoad(d.stream);
+        RndDrawable::DumpLoad(d);
     }
     if (d.rev > 0xF) {
         LOAD_SUPERCLASS(RndDrawable)
@@ -182,7 +182,7 @@ BEGIN_LOADS(RndEnviron)
         d >> mLightsReal;
         d >> mLightsApprox;
     }
-    d.stream >> mAmbientColor >> mFogStart >> mFogEnd;
+    d >> mAmbientColor >> mFogStart >> mFogEnd;
     if (d.rev < 1) {
         int dummy;
         d >> dummy;
@@ -205,7 +205,7 @@ BEGIN_LOADS(RndEnviron)
         }
     }
     if (d.rev > 8) {
-        d.stream >> mFadeRef >> mLRFade;
+        d >> mFadeRef >> mLRFade;
     }
     if (d.rev > 6) {
         d >> mAmbientFogOwner;
@@ -215,7 +215,7 @@ BEGIN_LOADS(RndEnviron)
     }
     if (d.rev > 7) {
         d >> mUseColorXfm;
-        mColorXfm.Load(d.stream);
+        mColorXfm.Load(d);
     }
     if (d.rev > 9) {
         if (d.rev < 0xD) {

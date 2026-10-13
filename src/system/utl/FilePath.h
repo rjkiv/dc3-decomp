@@ -40,6 +40,12 @@ inline BinStream &operator>>(BinStream &bs, FilePath &fp) {
     return bs;
 }
 
+inline BinStreamRev &operator>>(BinStreamRev &d, FilePath &fp) {
+    BinStream &bs = d;
+    bs >> fp;
+    return d;
+}
+
 class FilePathTracker {
 public:
     FilePathTracker(const char *root) {

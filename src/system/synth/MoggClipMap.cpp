@@ -42,7 +42,7 @@ void MoggClipMap::myLoad(BinStreamRev &bs) {
     }
 }
 
-BinStream &operator>>(BinStreamRev &bs, MoggClipMap &mogg) {
-    mogg.myLoad(bs);
-    return bs.stream;
+BinStream &operator>>(BinStreamRev &d, MoggClipMap &mogg) {
+    mogg.myLoad(d);
+    return d;
 }

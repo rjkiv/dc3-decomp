@@ -399,9 +399,9 @@ void MoveDir::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(0x23, 0)
     if (d.rev < 9) {
-        RndDir::PreLoad(d.stream);
+        RndDir::PreLoad(d);
     } else {
-        SkeletonDir::PreLoad(d.stream);
+        SkeletonDir::PreLoad(d);
     }
     Symbol song = TheGameData->GetSong();
     if (!IsProxy() && gLoadingProxyFromDisk && !song.Null()) {
@@ -417,15 +417,15 @@ void MoveDir::PreLoad(BinStream &bs) {
             }
         }
     }
-    d.PushRev(this);
+    PUSH_REVS(d);
 }
 
 void MoveDir::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
+    POP_REVS(bs);
     if (d.rev < 9) {
-        RndDir::PostLoad(d.stream);
+        RndDir::PostLoad(d);
     } else {
-        SkeletonDir::PostLoad(d.stream);
+        SkeletonDir::PostLoad(d);
     }
     if (d.rev < 5) {
         bool b;
@@ -453,7 +453,7 @@ void MoveDir::PostLoad(BinStream &bs) {
     if (IsProxy() && d.rev > 10 && d.rev < 0xD) {
         ObjPtr<Character> character(this);
         WorldDir *wDir = TheHamDirector ? TheHamDirector->GetVenueWorld() : nullptr;
-        character.Load(d.stream, true, wDir);
+        character.Load(d, true, wDir);
     }
     if (IsProxy() && d.rev > 0xC) {
         d >> mFiltersEnabled;
@@ -461,13 +461,13 @@ void MoveDir::PostLoad(BinStream &bs) {
     char buf[0x80];
     if (d.rev < 0x23) {
         if (IsProxy() && d.rev > 0xE) {
-            d.stream.ReadString(buf, 0x80);
+            d.ReadString(buf, 0x80);
         }
         if (IsProxy() && d.rev > 0xD) {
-            d.stream.ReadString(buf, 0x80);
+            d.ReadString(buf, 0x80);
         }
         if (IsProxy() && d.rev > 0x17) {
-            d.stream.ReadString(buf, 0x80);
+            d.ReadString(buf, 0x80);
         }
     }
     if (d.rev > 6) {

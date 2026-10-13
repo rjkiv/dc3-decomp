@@ -59,7 +59,7 @@ BEGIN_LOADS(CharClipGroup)
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    mClips.Load(d.stream, true, nullptr);
+    mClips.Load(d, true, nullptr);
     d >> mWhich;
     mWhich = Max(mWhich, 0);
     if (d.rev > 1) {
@@ -135,7 +135,8 @@ CharClip *CharClipGroup::GetClip(int flags) {
             if ((clip->Flags() & flags) == flags) {
                 mClips.swap(it, mWhich);
                 mClips.swap(it, mQueueStart);
-                mQueueStart = (mQueueStart + 1 < mClips.size() ? mQueueStart + 1 : mClips.size());
+                mQueueStart =
+                    (mQueueStart + 1 < mClips.size() ? mQueueStart + 1 : mClips.size());
                 return clip;
             }
         }
@@ -143,7 +144,8 @@ CharClip *CharClipGroup::GetClip(int flags) {
         if ((clip->Flags() & flags) == flags) {
             mClips.swap(it, mWhich);
             mClips.swap(it, mQueueStart);
-            mQueueStart = (mQueueStart + 1 < mClips.size() ? mQueueStart + 1 : mClips.size());
+            mQueueStart =
+                (mQueueStart + 1 < mClips.size() ? mQueueStart + 1 : mClips.size());
             return clip;
         }
     }

@@ -18,8 +18,8 @@ int waypointunusedlmao() {
 }
 
 Waypoint::Waypoint()
-    : mFlags(0), mRadius(12), mYRadius(0), mAngRadius(0), mSearchID(0), mStrictAngDelta(0),
-      mStrictRadiusDelta(0), mConnections(this, (EraseMode)1) {
+    : mFlags(0), mRadius(12), mYRadius(0), mAngRadius(0), mSearchID(0),
+      mStrictAngDelta(0), mStrictRadiusDelta(0), mConnections(this, (EraseMode)1) {
     if (RandomFloat() < 0.5f) {
         sWaypoints->push_back(this);
     } else
@@ -94,7 +94,7 @@ BEGIN_LOADS(Waypoint)
     LOAD_SUPERCLASS(Hmx::Object)
     if (d.rev < 5) {
         RndMesh *mesh = Hmx::Object::New<RndMesh>();
-        mesh->RndDrawable::Load(d.stream);
+        mesh->RndDrawable::Load(d);
         if (mesh) {
             delete mesh;
         }

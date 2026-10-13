@@ -259,7 +259,7 @@ BinStream &operator>>(BinStream &bs, EventTrigger::HideDelay &hd) {
 }
 
 BinStreamRev &operator>>(BinStreamRev &d, EventTrigger::Anim &anim) {
-    d.stream >> anim.mAnim >> anim.mBlend >> anim.mWait >> anim.mDelay;
+    d >> anim.mAnim >> anim.mBlend >> anim.mWait >> anim.mDelay;
     if (d.rev > 9) {
         d >> anim.mEnable >> (int &)anim.mRate >> anim.mStart;
         d >> anim.mEnd >> anim.mPeriod >> anim.mType >> anim.mScale;
@@ -273,7 +273,7 @@ BinStreamRev &operator>>(BinStreamRev &d, EventTrigger::ProxyCall &pc) {
     d >> pc.mProxy;
     d >> pc.mCall;
     if (d.rev > 10) {
-        pc.mEvent.Load(d.stream, true, pc.mProxy);
+        pc.mEvent.Load(d, true, pc.mProxy);
     }
     return d;
 }
@@ -614,13 +614,13 @@ void EventTrigger::LoadOldEvent(
     if (d.rev < 5) {
         bool b58;
         d >> b58;
-        LoadOldAnim(d.stream, b58 ? anim : nullptr);
+        LoadOldAnim(d, b58 ? anim : nullptr);
     } else {
         unsigned int count;
         d >> count;
         EventTrigger *curTrig = this;
         while (count-- != 0) {
-            curTrig->LoadOldAnim(d.stream, anim);
+            curTrig->LoadOldAnim(d, anim);
             if (count != 0) {
                 EventTrigger *newTrig = new EventTrigger();
                 mNextLink = newTrig;

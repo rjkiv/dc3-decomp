@@ -36,5 +36,5 @@ BinStream &operator<<(BinStream &bs, const SfxMap &s) {
 
 BinStream &operator>>(BinStreamRev &d, SfxMap &s) {
     s.Load(d);
-    return d.stream;
+    return d;
 }

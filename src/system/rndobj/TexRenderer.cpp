@@ -120,7 +120,7 @@ BEGIN_LOADS(RndTexRenderer)
         FilePath fp;
         d >> fp;
     } else {
-        mDrawable.Load(d.stream, false, nullptr);
+        mDrawable.Load(d, false, nullptr);
     }
     if (d.rev > 3) {
         d >> mCamera;

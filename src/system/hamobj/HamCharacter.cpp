@@ -159,15 +159,15 @@ INIT_REVS(3, 0)
 void HamCharacter::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(3, 0)
-    Character::PreLoad(d.stream);
+    Character::PreLoad(d);
     int hash = HashUsed();
     // these are oddly specific numbers
     Reserve((hash + 20) * 2, StringUsed() + 440);
-    d.PushRev(this);
+    PUSH_REVS(d);
 }
 
 void HamCharacter::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
+    POP_REVS(bs);
     Character::PostLoad(bs);
     if (gLoadingProxyFromDisk) {
         Symbol s;

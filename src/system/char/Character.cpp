@@ -298,7 +298,7 @@ void Character::PreLoad(BinStream &bs) {
         ObjectDir::PreLoad(bs);
         bs.PushRev(revToPush, this);
     }
-    d.PushRev(this);
+    PUSH_REVS(d);
 }
 
 void OldGroupLoad(DrawPtrVec &vec, BinStream &bs) {
@@ -318,9 +318,9 @@ BinStreamRev &operator>>(BinStreamRev &d, Character::Lod &lod) {
     if (gCharMe) {
         d >> lod.mOpaque;
     } else if (d.rev < 0x12) {
-        OldGroupLoad(lod.mOpaque, d.stream);
+        OldGroupLoad(lod.mOpaque, d);
         if (d.rev > 0xD) {
-            OldGroupLoad(lod.mTranslucent, d.stream);
+            OldGroupLoad(lod.mTranslucent, d);
         }
     } else {
         d >> lod.mOpaque;
@@ -330,9 +330,9 @@ BinStreamRev &operator>>(BinStreamRev &d, Character::Lod &lod) {
 }
 
 void Character::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
+    POP_REVS(bs);
     if (d.rev > 1) {
-        RndDir::PostLoad(d.stream);
+        RndDir::PostLoad(d);
         if (d.rev < 4 || !IsProxy()) {
             if (d.rev < 9) {
                 ObjVector<ObjVector<Lod> > lods(this);
@@ -345,7 +345,7 @@ void Character::PostLoad(BinStream &bs) {
                 d >> mLods;
             }
             if (d.rev < 0x12) {
-                OldGroupLoad(mShadow, d.stream);
+                OldGroupLoad(mShadow, d);
             } else {
                 d >> mShadow;
             }
@@ -383,7 +383,7 @@ void Character::PostLoad(BinStream &bs) {
             }
             if (d.rev > 0x10) {
                 if (d.rev < 0x12) {
-                    OldGroupLoad(mTranslucent, d.stream);
+                    OldGroupLoad(mTranslucent, d);
                 } else {
                     d >> mTranslucent;
                 }
@@ -395,14 +395,14 @@ void Character::PostLoad(BinStream &bs) {
                 d >> mProps;
             }
             if (d.rev > 9) {
-                mTest->Load(d.stream);
+                mTest->Load(d);
             }
         } else if (d.rev > 0xF) {
-            mTest->Load(d.stream);
+            mTest->Load(d);
         }
     } else {
         int otherRev = bs.PopRev(this);
-        ObjectDir::PostLoad(d.stream);
+        ObjectDir::PostLoad(d);
         if (otherRev > 4) {
             bs >> mEnv;
         }
@@ -419,7 +419,7 @@ void Character::PostLoad(BinStream &bs) {
         }
         if (otherRev > 6) {
             if (d.rev < 0x12) {
-                OldGroupLoad(mShadow, d.stream);
+                OldGroupLoad(mShadow, d);
             } else {
                 d >> mShadow;
             }

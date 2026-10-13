@@ -92,7 +92,7 @@ BEGIN_LOADS(RndCam)
     }
     LOAD_SUPERCLASS(RndTransformable)
     if (d.rev < 10) {
-        RndDrawable::DumpLoad(d.stream);
+        RndDrawable::DumpLoad(d);
     }
     if (d.rev == 8) {
         ObjPtrList<Hmx::Object> objList(this, kObjListNoNull);

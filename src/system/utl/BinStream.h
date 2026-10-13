@@ -177,40 +177,56 @@ private:
 inline unsigned short getHmxRev(int packed) { return packed; }
 inline unsigned short getAltRev(int packed) { return (unsigned int)packed >> 0x10; }
 inline int packRevs(unsigned short alt, unsigned short rev) {
-    return (rev & ~0xFFFF0000) | (alt << 0x10);
+    return (rev & 0xFFFF) | (alt << 0x10);
 }
 
-#define d_READ(obj)                                                                      \
+#define BSREV_READ(obj)                                                                  \
     BinStreamRev &operator>>(obj &x) {                                                   \
-        stream >> x;                                                                     \
+        mStream >> x;                                                                    \
         return *this;                                                                    \
     }
 
 class BinStreamRev {
 public:
-    BinStreamRev(BinStream &bs, int revs)
-        : rev(getHmxRev(revs)), altRev(getAltRev(revs)), stream(bs) {}
+    BinStreamRev(BinStream &bs, int main, int alt)
+        : rev(main), altRev(alt), mStream(bs) {}
 
-    BinStreamRev(BinStream &bs, int main, int alt) : rev(main), altRev(alt), stream(bs) {}
+    operator BinStream &() { return mStream; }
 
     BinStreamRev &operator>>(bool &b) {
         unsigned char uc;
-        *this >> uc;
+        mStream >> uc;
         b = (uc != 0);
         return *this;
     }
 
-    void PushRev(Hmx::Object *obj) { stream.PushRev(packRevs(altRev, rev), obj); }
+    BSREV_READ(Symbol);
+    BSREV_READ(String);
+    BSREV_READ(f64);
+    BSREV_READ(f32);
+    BSREV_READ(uint);
+    BSREV_READ(u32);
+    BSREV_READ(u16);
+    BSREV_READ(u8);
+    BSREV_READ(int);
+    BSREV_READ(long);
+    BSREV_READ(short);
+    BSREV_READ(char);
 
-    template <class T>
-    BinStreamRev &operator>>(T &t) {
-        stream >> t;
-        return *this;
-    }
+    void PushRev(int rev, Hmx::Object *obj) { mStream.PushRev(rev, obj); }
+    int PopRev(Hmx::Object *obj) { return mStream.PopRev(obj); }
+    void Read(void *buf, int len) { mStream.Read(buf, len); }
+    void ReadString(char *str, int len) { mStream.ReadString(str, len); }
+    bool Cached() const { return mStream.Cached(); }
+    const char *Name() const { return mStream.Name(); }
+    void Seek(int pos, BinStream::SeekType t) { mStream.Seek(pos, t); }
+    EofType Eof() { return mStream.Eof(); }
 
     int rev;
     int altRev;
-    BinStream &stream;
+
+protected:
+    BinStream &mStream;
 };
 
 template <class E> // E is an enum type
@@ -228,11 +244,11 @@ BinStream &operator>>(BinStream &bs, BinStreamEnum<E> &e) {
 }
 
 template <class E>
-BinStreamRev &operator>>(BinStreamRev &bs, BinStreamEnum<E> &e) {
+BinStreamRev &operator>>(BinStreamRev &d, BinStreamEnum<E> &e) {
     int x;
-    bs.stream >> x;
+    d >> x;
     e.mEnum = (E)x;
-    return bs;
+    return d;
 }
 
 // Note: `Allocator` here is actually the size/capacity type parameter on Wii.

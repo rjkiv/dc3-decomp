@@ -84,7 +84,7 @@ BEGIN_LOADS(TexMovie)
     LOAD_SUPERCLASS(Hmx::Object)
     LOAD_SUPERCLASS(RndDrawable)
     LOAD_SUPERCLASS(RndPollable)
-    d.stream >> mTex >> mLoop;
+    d >> mTex >> mLoop;
     if (d.rev < 4) {
         bool b;
         d >> b;
@@ -107,7 +107,7 @@ BEGIN_LOADS(TexMovie)
         d >> b;
     }
     FilePathTracker tracker(".");
-    DoBeginMovieFromFile(d.rev > 4 ? &d.stream : nullptr, kLoadFront);
+    DoBeginMovieFromFile(d.rev > 4 ? &bs : nullptr, kLoadFront);
 END_LOADS
 
 void TexMovie::DrawPreClear() {

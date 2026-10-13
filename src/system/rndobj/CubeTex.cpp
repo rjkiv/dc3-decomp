@@ -143,11 +143,11 @@ void RndCubeTex::PreLoad(BinStream &bs) {
             TheLoadMgr.AddLoader(mFile[i], kLoadFront);
         }
     }
-    d.PushRev(this);
+    PUSH_REVS(d);
 }
 
 void RndCubeTex::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
+    POP_REVS(bs);
     if (d.rev < 2) {
         bool b = false;
         d >> b;

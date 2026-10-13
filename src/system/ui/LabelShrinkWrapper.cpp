@@ -76,8 +76,8 @@ INIT_REVS(2, 0)
 void LabelShrinkWrapper::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)
-    d.stream >> m_pLabel;
-    d.stream >> m_pShow;
+    d >> m_pLabel;
+    d >> m_pShow;
     if (d.rev >= 1)
         d >> mResourceDir;
     if (d.rev >= 2) {
@@ -86,8 +86,8 @@ void LabelShrinkWrapper::PreLoad(BinStream &bs) {
         d >> mTopBorder;
         d >> mBottomBorder;
     }
-    UIComponent::PreLoad(d.stream);
-    d.PushRev(this);
+    UIComponent::PreLoad(d);
+    PUSH_REVS(d);
 }
 
 void LabelShrinkWrapper::PostLoad(BinStream &bs) {

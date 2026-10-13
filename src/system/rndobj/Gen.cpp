@@ -90,7 +90,7 @@ BEGIN_LOADS(RndGenerator)
         LOAD_SUPERCLASS(RndAnimatable)
     }
     ResetInstances();
-    d.stream >> mMesh >> mPath;
+    d >> mMesh >> mPath;
     if (d.rev < 7) {
         bool bd0;
         d >> bd0;
@@ -99,8 +99,8 @@ BEGIN_LOADS(RndGenerator)
         }
     }
     if (d.rev < 1) {
-        d.stream >> mRateGenHigh;
-        d.stream >> mScaleGenHigh;
+        d >> mRateGenHigh;
+        d >> mScaleGenHigh;
     }
     if (d.rev < 8) {
         ObjPtr<RndCam> cam(this);
@@ -110,13 +110,13 @@ BEGIN_LOADS(RndGenerator)
     }
 
     if (d.rev > 0) {
-        d.stream >> mRateGenLow;
-        d.stream >> mRateGenHigh;
-        d.stream >> mScaleGenLow;
-        d.stream >> mScaleGenHigh;
-        d.stream >> mPathVarMaxX;
-        d.stream >> mPathVarMaxY;
-        d.stream >> mPathVarMaxZ;
+        d >> mRateGenLow;
+        d >> mRateGenHigh;
+        d >> mScaleGenLow;
+        d >> mScaleGenHigh;
+        d >> mPathVarMaxX;
+        d >> mPathVarMaxY;
+        d >> mPathVarMaxZ;
         if (d.rev < 9) {
             mPathVarMaxX *= DEG2RAD;
             mPathVarMaxY *= DEG2RAD;
@@ -130,26 +130,26 @@ BEGIN_LOADS(RndGenerator)
     if (d.rev == 3) {
         int x;
         ObjPtr<Hmx::Object> obj(this);
-        d.stream >> obj >> x;
+        d >> obj >> x;
     }
     if (d.rev > 3 && d.rev < 0xB) {
         ObjPtr<Hmx::Object> obj(this);
-        d.stream >> obj;
+        d >> obj;
     }
     if (d.rev > 4 && d.rev < 0xB) {
         bool bd0;
         d >> bd0;
     }
     if (d.rev > 5) {
-        d.stream >> mPathEndFrame;
-        d.stream >> mPathStartFrame;
+        d >> mPathEndFrame;
+        d >> mPathStartFrame;
     } else {
         if (mPath)
             mPathEndFrame = mPath->EndFrame();
         mPathStartFrame = 0;
     }
     if (d.rev > 6) {
-        d.stream >> mMultiMesh >> mParticleSys;
+        d >> mMultiMesh >> mParticleSys;
     }
 END_LOADS
 

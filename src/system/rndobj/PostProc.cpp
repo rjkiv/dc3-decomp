@@ -331,7 +331,7 @@ BEGIN_LOADS(RndPostProc)
         bool b70;
         int i5c;
         // stupid and dumb
-        BinStream &bs2 = (d >> b70).stream;
+        BinStream &bs2 = (d >> b70);
         bs2 >> s >> i5c;
     } else {
         LOAD_SUPERCLASS(Hmx::Object)
@@ -507,13 +507,13 @@ void RndPostProc::LoadRev(BinStreamRev &d) {
             d >> mColorXfm.mColorXfm;
         } else {
             MILO_ASSERT_FMT(
-                mColorXfm.Load(d.stream),
+                mColorXfm.Load(d),
                 "%s can't load new %s version",
                 PathName(this),
                 ClassName()
             );
         }
-        d.stream >> mFlickerModBounds >> mFlickerTimeBounds;
+        d >> mFlickerModBounds >> mFlickerTimeBounds;
         if (d.rev < 9) {
             mFlickerModBounds.x = 1 - mFlickerModBounds.x;
             mFlickerModBounds.y = 1 - mFlickerModBounds.y;
@@ -521,7 +521,7 @@ void RndPostProc::LoadRev(BinStreamRev &d) {
         if (d.rev < 0x1D) {
             mFlickerModBounds.x = 0;
         }
-        d.stream >> mNoiseBaseScale >> mNoiseTopScale >> mNoiseIntensity;
+        d >> mNoiseBaseScale >> mNoiseTopScale >> mNoiseIntensity;
         if (d.rev > 0xC) {
             d >> mNoiseStationary;
         }
@@ -548,13 +548,13 @@ void RndPostProc::LoadRev(BinStreamRev &d) {
     }
     if (d.rev > 9) {
         if (d.rev < 0x12) {
-            d.stream >> mColorXfm.mLevelInLo >> mColorXfm.mLevelInHi;
-            d.stream >> mColorXfm.mLevelOutLo >> mColorXfm.mLevelOutHi;
+            d >> mColorXfm.mLevelInLo >> mColorXfm.mLevelInHi;
+            d >> mColorXfm.mLevelOutLo >> mColorXfm.mLevelOutHi;
         }
-        d.stream >> mPosterLevels;
+        d >> mPosterLevels;
     }
     if (d.rev > 0xD) {
-        d.stream >> mPosterMin;
+        d >> mPosterMin;
     }
     if (d.rev > 0xB) {
         if (d.rev < 0x16) {
@@ -583,20 +583,20 @@ void RndPostProc::LoadRev(BinStreamRev &d) {
         }
     }
     if (d.rev > 0x12) {
-        d.stream >> mHallOfTimeRate;
-        d.stream >> mHallOfTimeColor >> mHallOfTimeMix;
+        d >> mHallOfTimeRate;
+        d >> mHallOfTimeColor >> mHallOfTimeMix;
         if (d.rev > 0x13 && d.rev < 0x20) {
             bool b;
             d >> b;
             mHallOfTimeType = b ? 1 : 0;
         } else if (d.rev > 0x1F) {
-            d.stream >> mHallOfTimeType;
+            d >> mHallOfTimeType;
         }
     }
     if (d.rev > 0x14) {
-        d.stream >> mMotionBlurBlend;
+        d >> mMotionBlurBlend;
         if (d.rev > 0x1A) {
-            d.stream >> mMotionBlurWeight;
+            d >> mMotionBlurWeight;
             if (d.rev > 0x21) {
                 d >> mMotionBlurVelocity;
             }
@@ -604,10 +604,10 @@ void RndPostProc::LoadRev(BinStreamRev &d) {
     }
     if (d.rev > 0x16) {
         d >> mGradientMap;
-        d.stream >> mGradientMapOpacity;
-        d.stream >> mGradientMapIndex;
-        d.stream >> mGradientMapStart;
-        d.stream >> mGradientMapEnd;
+        d >> mGradientMapOpacity;
+        d >> mGradientMapIndex;
+        d >> mGradientMapStart;
+        d >> mGradientMapEnd;
     }
     if (d.rev < 0x18) {
         mBloomThreshold *= 4;
@@ -629,7 +629,7 @@ void RndPostProc::LoadRev(BinStreamRev &d) {
         }
     }
     if (d.rev > 0x1D) {
-        d.stream >> mVignetteColor >> mVignetteIntensity;
+        d >> mVignetteColor >> mVignetteIntensity;
     }
     if (d.rev > 0x20) {
         d >> mBloomGlare;

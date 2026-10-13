@@ -174,7 +174,7 @@ BEGIN_LOADS(MidiInstrument)
     d >> mMultiSampleMap;
     d >> mSend;
     d >> mPatchNumber;
-    mFaders.Load(d.stream);
+    mFaders.Load(d);
     if (d.rev >= 3) {
         d >> mReverbMixDb;
         d >> mReverbEnable;

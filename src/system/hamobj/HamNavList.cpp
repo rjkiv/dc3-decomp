@@ -206,7 +206,7 @@ INIT_REVS(10, 0)
 void HamNavList::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(10, 0)
-    UIComponent::PreLoad(d.stream);
+    UIComponent::PreLoad(d);
     if (d.rev >= 2) {
         LOAD_SUPERCLASS(RndAnimatable)
     }
@@ -215,7 +215,7 @@ void HamNavList::PreLoad(BinStream &bs) {
         d >> mListDir;
     } else {
         char buf[0x100];
-        d.stream.ReadString(buf, 0x100);
+        d.ReadString(buf, 0x100);
         mListDir.SetName(buf, true);
     }
     d >> mNavProvider;
@@ -248,7 +248,7 @@ void HamNavList::PreLoad(BinStream &bs) {
     if (d.rev >= 10) {
         d >> mSkipEnterAnim;
     }
-    d.PushRev(this);
+    PUSH_REVS(d);
 }
 
 void HamNavList::PostLoad(BinStream &bs) {

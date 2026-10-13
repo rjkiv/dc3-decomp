@@ -54,7 +54,7 @@ void SampleData::Save(BinStream &bs) const {
 }
 
 BinStreamRev &operator>>(BinStreamRev &d, SampleMarker &s) {
-    s.Load(d.stream);
+    s.Load(d);
     return d;
 }
 
