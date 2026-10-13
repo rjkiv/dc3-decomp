@@ -337,10 +337,11 @@ void Character::PostLoad(BinStream &bs) {
             if (d.rev < 9) {
                 ObjVector<ObjVector<Lod> > lods(this);
                 d >> lods;
-                if (lods.size() != 0)
+                if (lods.size() != 0) {
                     mLods = lods[0];
-                else
+                } else {
                     mLods.clear();
+                }
             } else {
                 d >> mLods;
             }
@@ -357,7 +358,11 @@ void Character::PostLoad(BinStream &bs) {
             if (d.rev > 4) {
                 ObjPtr<RndTransformable> t(this);
                 d >> t;
-                mSphereBase = t.Ptr() ? t.Ptr() : this;
+                if (t) {
+                    mSphereBase = t;
+                } else {
+                    mSphereBase = this;
+                }
             } else {
                 mSphereBase = this;
             }
@@ -401,19 +406,20 @@ void Character::PostLoad(BinStream &bs) {
             mTest->Load(d);
         }
     } else {
-        int otherRev = bs.PopRev(this);
+        int otherRev = d.PopRev(this);
         ObjectDir::PostLoad(d);
         if (otherRev > 4) {
-            bs >> mEnv;
+            d >> mEnv;
         }
         if (otherRev > 3) {
             gCharMe = otherRev < 6 ? this : nullptr;
             ObjVector<ObjVector<Character::Lod> > lods(this);
             d >> lods;
-            if (lods.size() != 0)
+            if (lods.size() != 0) {
                 mLods = lods[0];
-            else
+            } else {
                 mLods.clear();
+            }
         } else {
             mLods.clear();
         }
@@ -428,7 +434,8 @@ void Character::PostLoad(BinStream &bs) {
     if (d.rev < 8) {
         float rad = GetSphere().radius;
         for (int i = 0; i < mLods.size(); i++) {
-            mLods[i].mScreenSize /= rad;
+            Lod &lod = mLods[i];
+            lod.mScreenSize /= rad;
         }
     }
 }
