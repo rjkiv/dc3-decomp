@@ -11,11 +11,11 @@ public:
     void FftRealCcs(float const *__restrict, float *__restrict);
 
 private:
-    unsigned int unk0;
-    unsigned int unk4;
-    aligned_vector<float> unk8;
-    aligned_vector<float> unk14;
-    aligned_vector<float> unk20;
-    aligned_vector<float> unk2c;
-    aligned_vector<float> unk38;
+    int m_sFFT; // 0x0
+    unsigned int m_uOrder; // 0x4
+    aligned_vector<float> m_fReal; // 0x8
+    aligned_vector<float> m_fImaginary; // 0x14
+    aligned_vector<float> m_fTemp; // 0x20
+    aligned_vector<float> m_fUnityTable; // 0x2c
+    aligned_vector<float> m_fSinCosTable; // 0x38
 };

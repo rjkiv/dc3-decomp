@@ -20,8 +20,8 @@ public:
     void ActivateProcessing(bool);
 
     IXHV2Engine *GetIXHV2Engine() const { return mXHV; }
-    DWORD GetPort() const { return mPort; }
-    bool GetUnk8() const { return unk8; }
+    int GetPad() { return mPad; }
+    bool GetEnabled() const { return mEnabled; }
 
     friend class MicManagerXbox;
 
@@ -29,16 +29,15 @@ private:
     void ProcessChatData(void *, unsigned int, int *);
 
     IXHV2Engine *mXHV; // 0x0
-    DWORD mPort; // 0x4
-    bool unk8; // 0x8
-    bool unk9; // 0x9
-    float unkc;
-    float unk10;
-    int unk14;
-    int unk18;
-    Timer unk20;
-    MemStream *unk50;
-    int unk54;
+    int mPad; // 0x4
+    bool mEnabled; // 0x8
+    bool mProcessingActivated; // 0x9
+    float mDelay; // 0xc
+    float mFB; // 0x10
+    int mHoldFrames; // 0x14
+    int mFramesTalking; // 0x18
+    Timer mNetTimer; // 0x20
+    MemStream *mNetBuffer; // 0x50
 };
 
 // size 0x90d0
@@ -90,36 +89,35 @@ private:
     void ReadChatBuffer(void *, unsigned int);
     static bool AddToBuffer(std::vector<short> &, void *, int, int *);
 
-    bool unkc;
+    bool mIsWireless; // 0xc
     bool mRunning; // 0xd
-    int unk10;
+    Mic::Type mLastType; // 0x10
     bool mChangeNotify; // 0x14
     Voice *mVoice; // 0x18
-    short mVoiceBuffer[0x1800]; // 0x1c
-    short *unk301c; // 0x301c
-    std::vector<short> unk3020;
+    unsigned char mPlaybackBuffer[0x3000]; // 0x1c
+    unsigned char *mPlaybackWritePtr; // 0x301c
+    std::vector<short> mChatBuffer; // 0x3020
     RingBuffer mRingBufferRecent; // 0x302c
     RingBuffer mRingBufferContinuous; // 0x3040
-    short mPlaybackBuffer[0x3000]; // 0x3054
-    float unk9054; // 0x9054 - speed
-    float unk9058;
-    float unk905c;
-    FxSend *mSend; // 0x9060
+    short mOutputBuffer[0x3000]; // 0x3054
+    float mVoiceSpeed; // 0x9054 - speed
+    float mAvgLag; // 0x9058
+    float mLastLag; // 0905c
+    FxSend *mFxSend; // 0x9060
     float mVolume; // 0x9064
     bool mMute; // 0x9068
-    float unk906c;
+    float mRMS; // 0x906c
     float mGain; // 0x9070
     float mOutputGain; // 0x9074
     float mSensitivity; // 0x9078
-    short unk907c;
-    u32 unk9080;
-    u32 unk9084;
-    u32 unk9088;
-    Timer unk9090;
+    short mLastSamp; // 0x907c
+    MemStream *mOutputStream; // 0x9080
+    MemStream *mUSBStream; // 0x9084
+    MemStream *mPreFilterStream; // 0x9088
+    Timer mTimer; // 0x9090
     int mDroppedSamples; // 0x90c0
     Symbol mName; // 0x90c4
     bool mClipping; // 0x90c8
-    int unk90cc;
 };
 
 // size 0x90
@@ -127,9 +125,9 @@ class MicManagerXbox {
 public:
     // size 0x3f8
     struct ChatBuffer {
-        int unk0;
-        int unk4;
-        int unk8[252];
+        XUID mXuid; // 0x0
+        unsigned char mBuffer[1000]; // 0x8
+        unsigned int mNumBytes; // 0x3f0
     };
 
     void RequirePushToTalk(bool, int);
@@ -139,10 +137,10 @@ public:
     void Shutdown();
     void AddRemoteMic(unsigned long long const &, XAUDIO2_EFFECT_CHAIN *);
     void Init();
-    CriticalSection *CritSec() { return &mMicArrayLock; }
+    CriticalSection *CritSec() { return &mCritSec; }
     void SetMicsChanged() { mMicsChanged = true; }
-    void ClearMicsChanged() { mMicsChanged = false; }
-    bool MicsChanged() const { return mMicsChanged; }
+    void ResetMicsChanged() { mMicsChanged = false; }
+    bool DidMicsChange() const { return mMicsChanged; }
 
     static MicManagerXbox *GetInstance();
 
@@ -155,14 +153,14 @@ private:
     static void DataReadyCallback(unsigned long, void *, unsigned long, int *);
     static MicManagerXbox *sInstance;
 
-    std::vector<MicXbox *> mMics; // 0x0
+    std::vector<MicXbox *> mInterfaces; // 0x0
     std::vector<ChatReceiver *> mChatReceivers; // 0xc
-    int unk18; // 0x18 - DWORD user index?
-    IXHV2Engine *mXHVEngine; // 0x1c
+    int mPlayerUsingUSBChat; // 0x18
+    IXHV2Engine *mXHV; // 0x1c
     std::vector<ChatBuffer> mChatBuffers; // 0x20
-    HANDLE mXHVWorkerThread; // 0x2c
+    HANDLE mWorkerThread; // 0x2c
     bool mMicsChanged; // 0x30
-    Timer unk38;
-    CriticalSection mMicArrayLock; // 0x68
-    int mPad; // 0x88
+    Timer mSpoofTimer; // 0x38
+    CriticalSection mCritSec; // 0x68
+    int mPushToTalkPad; // 0x88
 };

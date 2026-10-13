@@ -6,6 +6,9 @@ namespace DSP {
     public:
         Biquad(float *);
         void SetCoefficients(float *);
-        float coefs[7];
+
+    private:
+        float m_fCoeffs[5]; // 0x0
+        float m_fW[2]; // 0x14
     };
 };

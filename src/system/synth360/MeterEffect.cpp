@@ -1,18 +1,18 @@
 #include "synth360/MeterEffect.h"
 
-MeterEffect::MeterEffect() : unk90(0) {
+MeterEffect::MeterEffect() : mSampleCount(0) {
     for (int i = 0; i < 6; i++) {
-        unk60[i] = 0;
-        unk78[i] = 0;
+        mSumSquares[i] = 0;
+        mPeaks[i] = 0;
     }
     MeterEffectParams p;
-    p.unk0 = 0;
+    p.pLevelData = nullptr;
     SetParameters(&p, sizeof(p));
 }
 
 void MeterEffect::OnSetParameters(const MeterEffectParams &params) {
-    unk90 = 0;
+    mSampleCount = 0;
     for (int i = 0; i < 6; i++) {
-        unk60[i] = 0;
+        mSumSquares[i] = 0;
     }
 }

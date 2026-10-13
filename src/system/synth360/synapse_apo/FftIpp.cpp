@@ -4,49 +4,49 @@
 #include "utl/MemMgr.h"
 #include <cstring>
 
-FftIpp::FftIpp() : unk0(0), unk4(0) {}
+FftIpp::FftIpp() : m_sFFT(0), m_uOrder(0) {}
 
 FftIpp::~FftIpp() {}
 
 void FftIpp::SetMode(int i1) {
-    unk0 = i1;
-    unk4 = 1;
-    for (; 1 << unk4 < (int)unk0; unk4++)
+    m_sFFT = i1;
+    m_uOrder = 1;
+    for (; 1 << m_uOrder < (int)m_sFFT; m_uOrder++)
         ;
-    unk8.resize(i1);
-    unk14.resize(unk0);
-    unk20.resize(unk0);
-    unk38.resize(unk0);
-    CalculateSinCosTable((int)unk0 / 2, &unk38[0]);
+    m_fReal.resize(i1);
+    m_fImaginary.resize(m_sFFT);
+    m_fTemp.resize(m_sFFT);
+    m_fSinCosTable.resize(m_sFFT);
+    CalculateSinCosTable((int)m_sFFT / 2, &m_fSinCosTable[0]);
 }
 
 void FftIpp::FftRealCcs(float const *__restrict f1, float *__restrict f2) {
-    if (unk0) {
-        memcpy(&unk20[0], f1, unk0 * 4);
+    if ((unsigned int)m_sFFT) {
+        memcpy(&m_fTemp[0], f1, m_sFFT * 4);
     }
-    int iRetVal = FFTRealForward(&unk20[0], unk0, &unk38[0]);
+    int iRetVal = FFTRealForward(&m_fTemp[0], m_sFFT, &m_fSinCosTable[0]);
     MILO_ASSERT(iRetVal == 0, 0x65);
-    if (unk0) {
-        memcpy(f2, &unk20[0], unk0 * 4);
+    if ((unsigned int)m_sFFT != 0) {
+        memcpy(f2, &m_fTemp[0], m_sFFT * 4);
     }
-    f2[unk0] = f2[1];
-    f2[unk0 + 1] = 0;
+    f2[m_sFFT] = f2[1];
+    f2[m_sFFT + 1] = 0;
     f2[1] = 0;
 }
 
 void FftIpp::FftReal(
     float const *__restrict f1, float *__restrict f2, float *__restrict f3
 ) {
-    if (unk0) {
-        memcpy(&unk20[0], f1, unk0 << 2);
+    if (m_sFFT) {
+        memcpy(&m_fTemp[0], f1, m_sFFT << 2);
     }
-    FFTRealForward(&unk20[0], unk0, &unk38[0]);
-    for (int i = 1; i < unk0 >> 1; i++) {
-        f2[i] = unk20[i];
-        f3[i] = unk20[i];
+    FFTRealForward(&m_fTemp[0], m_sFFT, &m_fSinCosTable[0]);
+    for (int i = 1; i < m_sFFT >> 1; i++) {
+        f2[i] = m_fTemp[i];
+        f3[i] = m_fTemp[i];
     }
     f3[0] = 0;
-    f2[0] = unk20[0];
-    f2[unk0] = unk20[1];
-    f3[unk0] = 0;
+    f2[0] = m_fTemp[0];
+    f2[m_sFFT] = m_fTemp[1];
+    f3[m_sFFT] = 0;
 }

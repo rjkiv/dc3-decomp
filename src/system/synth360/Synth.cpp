@@ -52,8 +52,9 @@
 Synth360 *TheXboxSynth;
 
 Synth360::Synth360()
-    : unke8(0), mXAudio(0), mOutputVoice(0), mReverbVoice(0), mReverbSendVoice(0),
-      unkfc(0), unk104(true), unk105(false), unk138(false), unk13c(0), unk14c(false) {}
+    : mHeadsetSeedVoice(0), mXAudio2(0), mMasteringVoice(0), mReverbVoice(0),
+      mReverbDmVoice(0), mDmVoice(0), mWantDolby(true), mDolbyWantChange(false),
+      mPlaybackStarted(false), mMeterParams(0), mXAudioDebugMode(false) {}
 
 BEGIN_HANDLERS(Synth360)
     HANDLE_ACTION(set_headset_target, Voice::sHeadsetTarget = _msg->Int(2))
@@ -68,8 +69,8 @@ void Synth360::PreInit() {
         mLevelData.push_back(LevelData(levelNames[i]));
     }
     // using processors 3, 4, 5 and 6 for xaudio2
-    XAudio2Create(&mXAudio, 0, 0x3C);
-    mXAudio->CreateMasteringVoice(&mOutputVoice, 0, 0, 0, 0, nullptr);
+    XAudio2Create(&mXAudio2, 0, 0x3C);
+    mXAudio2->CreateMasteringVoice(&mMasteringVoice, 0, 0, 0, 0, nullptr);
 
     XAUDIO2_EFFECT_DESCRIPTOR effectDescs[2];
     effectDescs[0].pEffect =
@@ -80,13 +81,13 @@ void Synth360::PreInit() {
     effectDescs[1].InitialState = true;
     effectDescs[1].OutputChannels = 6;
 
-    unk13c = new LevelData *; // new on some 4 sized struct
-    *unk13c = &mLevelData[0];
+    mMeterParams = new MeterEffectParams();
+    mMeterParams->pLevelData = &mLevelData[0]; // idk
 
     XAUDIO2_EFFECT_CHAIN effectChain = { 2, effectDescs };
 
-    if (mOutputVoice) {
-        mOutputVoice->SetEffectChain(&effectChain);
+    if (mMasteringVoice) {
+        mMasteringVoice->SetEffectChain(&effectChain);
     }
 
     DataArray *limiterCfg = SystemConfig("synth", "limiter");
@@ -106,8 +107,8 @@ void Synth360::PreInit() {
     p.expAttack = 0.99f;
     p.expRelease = 1.01f;
     p.gateThresholdDB = -40;
-    if (mOutputVoice) {
-        mOutputVoice->GetEffectParameters(0, &p, sizeof(p));
+    if (mMasteringVoice) {
+        mMasteringVoice->GetEffectParameters(0, &p, sizeof(p));
     }
     p.thresholdDB = threshold;
     p.ratio = ratio;
@@ -115,24 +116,24 @@ void Synth360::PreInit() {
     p.release = releaseMs;
     p.gateThresholdDB = -140;
     p.outputLevel = (1 - (1 / ratio)) * threshold + outputDb;
-    if (mOutputVoice) {
-        mOutputVoice->SetEffectParameters(0, &p, sizeof(p), 0);
+    if (mMasteringVoice) {
+        mMasteringVoice->SetEffectParameters(0, &p, sizeof(p), 0);
     }
-    if (mXAudio && mOutputVoice) {
-        XAudio2CreateReverb(&mReverbAPO);
+    if (mXAudio2 && mMasteringVoice) {
+        XAudio2CreateReverb(&mReverbApo);
         effectChain.pEffectDescriptors = effectDescs;
-        effectDescs[0].pEffect = mReverbAPO;
+        effectDescs[0].pEffect = mReverbApo;
         effectDescs[0].InitialState = true;
         effectDescs[0].OutputChannels = 2;
         effectChain.EffectCount = 1;
-        mXAudio->CreateSubmixVoice(
+        mXAudio2->CreateSubmixVoice(
             &mReverbVoice, 2, 48000, 0, 0x8000, nullptr, &effectChain
         );
         // clang-format off
         {
             XAUDIO2_SEND_DESCRIPTOR desc = { 0, mReverbVoice };
             XAUDIO2_VOICE_SENDS sends = { 1, &desc };
-            mXAudio->CreateSubmixVoice(&mReverbSendVoice, 6, 48000, 0, 0x7FFF, &sends, nullptr);
+            mXAudio2->CreateSubmixVoice(&mReverbDmVoice, 6, 48000, 0, 0x7FFF, &sends, nullptr);
             mReverbVoice->SetVolume(4, 0);
         }
         String env;
@@ -178,12 +179,12 @@ void Synth360::Init() {
 
 void Synth360::SetDolby(bool b1, bool b2) {
     if (b2) {
-        unk104 = b1;
+        mWantDolby = b1;
         UpdateDolby();
-    } else if (unk104 != b1) {
-        unk108.Restart();
-        unk104 = b1;
-        unk105 = true;
+    } else if (mWantDolby != b1) {
+        mDolbyChangeTimer.Restart();
+        mWantDolby = b1;
+        mDolbyWantChange = true;
     }
 }
 
@@ -205,35 +206,35 @@ void Synth360::Terminate() {
     if (!mMics.empty()) {
         MicManagerXbox::GetInstance()->Shutdown();
     }
-    if (!mHeadsetSubmixes.empty()) {
-        unke8->Stop(0, 0);
-        unke8->DestroyVoice();
-        unke8 = nullptr;
-        for (int i = 0; i < mHeadsetSubmixes.size(); i++) {
-            mHeadsetSubmixes[i]->DestroyVoice();
+    if (!mHeadsetSubmix.empty()) {
+        mHeadsetSeedVoice->Stop(0, 0);
+        mHeadsetSeedVoice->DestroyVoice();
+        mHeadsetSeedVoice = nullptr;
+        for (int i = 0; i < mHeadsetSubmix.size(); i++) {
+            mHeadsetSubmix[i]->DestroyVoice();
         }
-        mHeadsetSubmixes.clear();
+        mHeadsetSubmix.clear();
     }
-    if (mReverbSendVoice) {
-        mReverbSendVoice->DestroyVoice();
-        mReverbSendVoice = nullptr;
+    if (mReverbDmVoice) {
+        mReverbDmVoice->DestroyVoice();
+        mReverbDmVoice = nullptr;
     }
     if (mReverbVoice) {
         mReverbVoice->DestroyVoice();
         mReverbVoice = nullptr;
     }
-    if (unkfc) {
-        unkfc->DestroyVoice();
-        unkfc = nullptr;
+    if (mDmVoice) {
+        mDmVoice->DestroyVoice();
+        mDmVoice = nullptr;
     }
-    if (mOutputVoice) {
-        mOutputVoice->DestroyVoice();
-        mOutputVoice = nullptr;
+    if (mMasteringVoice) {
+        mMasteringVoice->DestroyVoice();
+        mMasteringVoice = nullptr;
     }
-    if (mXAudio) {
-        mXAudio->Release();
+    if (mXAudio2) {
+        mXAudio2->Release();
     }
-    RELEASE(unk13c);
+    RELEASE(mMeterParams);
 }
 
 bool Synth360::HasPendingVoices() { return Voice::HasPendingVoices(); }
@@ -281,13 +282,13 @@ bool Synth360::DidMicsChange() const {
     if (mMics.empty())
         return false;
     else {
-        return MicManagerXbox::GetInstance()->MicsChanged();
+        return MicManagerXbox::GetInstance()->DidMicsChange();
     }
 }
 
 void Synth360::ResetMicsChanged() {
     if (!mMics.empty()) {
-        MicManagerXbox::GetInstance()->ClearMicsChanged();
+        MicManagerXbox::GetInstance()->ResetMicsChanged();
     }
 }
 
@@ -346,11 +347,11 @@ void Synth360::NewStreamFile(const char *cc, File *&file, Symbol &type) {
 }
 
 void Synth360::EnableLevels(bool enable) {
-    if (mOutputVoice) {
+    if (mMasteringVoice) {
         if (enable) {
-            mOutputVoice->EnableEffect(0, 0);
+            mMasteringVoice->EnableEffect(0, 0);
         } else {
-            mOutputVoice->DisableEffect(0, 0);
+            mMasteringVoice->DisableEffect(0, 0);
         }
     }
 }
@@ -371,8 +372,8 @@ void Synth360::RemoveFxSend(FxSend360 *fx) {
 }
 
 IXAudio2SubmixVoice *Synth360::GetHeadsetSubmix(int i) {
-    if (!mHeadsetSubmixes.empty() && i != -1) {
-        return mHeadsetSubmixes[i];
+    if (!mHeadsetSubmix.empty() && i != -1) {
+        return mHeadsetSubmix[i];
     }
     return nullptr;
 }
@@ -438,7 +439,7 @@ void Synth360::UpdateDolby() {
     DWORD cfg;
     XAudioGetSpeakerConfig(&cfg);
     XCONFIG_USER_AUDIO_FLAGS flag = DolbyDigital;
-    if (!unk104) {
+    if (!mWantDolby) {
         flag = LowLatency;
     }
     if ((cfg & flag) != flag) {
@@ -447,7 +448,7 @@ void Synth360::UpdateDolby() {
 }
 
 void Synth360::SetupHeadsetSubmixes() {
-    mHeadsetSubmixes.resize(4);
+    mHeadsetSubmix.resize(4);
     for (int i = 0; i < 4; i++) {
         XAUDIO2_EFFECT_DESCRIPTOR desc;
         desc.pEffect = static_cast<CXAPOBase *>(new HeadsetXferEffect());
@@ -456,21 +457,21 @@ void Synth360::SetupHeadsetSubmixes() {
         XAUDIO2_EFFECT_CHAIN chain;
         chain.EffectCount = 1;
         chain.pEffectDescriptors = &desc;
-        mXAudio->CreateSubmixVoice(&mHeadsetSubmixes[i], 1, 48000, 0, 0, 0, &chain);
+        mXAudio2->CreateSubmixVoice(&mHeadsetSubmix[i], 1, 48000, 0, 0, 0, &chain);
     }
     // clang-format off
     std::vector<XAUDIO2_SEND_DESCRIPTOR> audioDescs;
     XAUDIO2_SEND_DESCRIPTOR audioDesc;
     audioDesc.Flags = 0;
     for(int i = 0; i < 4; i++){
-        audioDesc.pOutputVoice = mHeadsetSubmixes[i];
+        audioDesc.pOutputVoice = mHeadsetSubmix[i];
         audioDescs.push_back(audioDesc);
     }
     // clang-format on 
     IXAudio2SourceVoice* v;
     WAVEFORMATEX wav = { 1, 1, 48000, 96000, 2, 16, 0 };
     XAUDIO2_VOICE_SENDS sends = { audioDescs.size(), &audioDescs[0] };
-    HRESULT hr = mXAudio->CreateSourceVoice(&v,&wav,2,2,nullptr,&sends,nullptr);
+    HRESULT hr = mXAudio2->CreateSourceVoice(&v,&wav,2,2,nullptr,&sends,nullptr);
     MILO_ASSERT(SUCCEEDED(hr), 0x30A);
 
     static BYTE sAudioData[0x100];
@@ -485,15 +486,15 @@ void Synth360::SetupHeadsetSubmixes() {
     buffer.LoopLength = 0;
     buffer.LoopCount = 255;
     buffer.pContext = nullptr;
-    hr = unke8->SubmitSourceBuffer(&buffer, nullptr);
+    hr = mHeadsetSeedVoice->SubmitSourceBuffer(&buffer, nullptr);
     MILO_ASSERT(SUCCEEDED(hr), 0x319);
-    hr = unke8->Start(0, 0);
+    hr = mHeadsetSeedVoice->Start(0, 0);
     MILO_ASSERT(SUCCEEDED(hr), 0x31C);
 }
 
 void Synth360::Poll(){
     START_AUTO_TIMER("synth");
-    mOutputVoice->SetEffectParameters(1, unk13c, 4, 0);
+    mMasteringVoice->SetEffectParameters(1, mMeterParams, 4, 0);
     static float ratio1 = DbToRatio(-3.0f);
     static float ratio2 = DbToRatio(-1.2f);
     static float ratio3 = DbToRatio(-6.2f);

@@ -3,7 +3,7 @@
 #include "xdk/XAUDIO2.h"
 
 struct PitchShiftEffectParams {
-    float unk0;
+    float mParamPitchRatio; // 0x0
 };
 
 DEFINE_CLSID(PitchShiftEffect, B4D4C8AA, A20D, 40A1, 84, A7, 64, 19, 35, 51, A9, BD);
@@ -20,7 +20,7 @@ public:
 
 private:
     soundtouch::SoundTouch *mSoundTouch; // 0x60
-    bool unk64;
-    float unk68;
-    int unk6c; // 0x6c - num channels
+    bool mStarted; // 0x64
+    float mLastPitch; // 0x68
+    int mLastChannels; // 0x6c
 };

@@ -2,28 +2,29 @@
 #include "synth360/synapse_apo/Util.h"
 
 DSP::Synapse::PitchCorrectedVoice::PitchCorrectedVoice()
-    : unk0(0), unk4(0), unk8(0), unkc(0), unk10(0), mReleaseSmoothing(0),
-      mTransposition(0), mAmount(1), mProximityEffect(0), mProximityFocus(0.5f), unk28(0),
-      unk2c(0), unk30(0), unk34(0) {}
+    : m_fDetectedNoteHz(0), m_fTargetNoteHz(0), m_fSmoothedCorrection(0),
+      m_fBaseSmoothing(0), m_fAttackSmoothing(0), m_fReleaseSmoothing(0),
+      m_fTransposition(0), m_fAmount(1), m_fProximityEffect(0), m_fProximityFocus(0.5f),
+      m_fTonality(0), m_fEnergy(0), m_fPrevEnergy(0), m_fErrorMagnitude(0) {}
 
 DSP::Synapse::PitchCorrectedVoice::~PitchCorrectedVoice() {}
 
-void DSP::Synapse::PitchCorrectedVoice::SetAmount(float amt) { mAmount = amt; }
+void DSP::Synapse::PitchCorrectedVoice::SetAmount(float amt) { m_fAmount = amt; }
 void DSP::Synapse::PitchCorrectedVoice::SetProximityEffect(float eff) {
-    mProximityEffect = eff;
+    m_fProximityEffect = eff;
 }
 void DSP::Synapse::PitchCorrectedVoice::SetProximityFocus(float focus) {
-    mProximityFocus = focus;
+    m_fProximityFocus = focus;
 }
 void DSP::Synapse::PitchCorrectedVoice::SetReleaseSmoothing(float r) {
-    mReleaseSmoothing = r;
+    m_fReleaseSmoothing = r;
 }
 
 void DSP::Synapse::PitchCorrectedVoice::SetTransposition(float trans) {
-    mTransposition = Util::Log(2.0f) * trans * 0.083333336f;
+    m_fTransposition = Util::Log(2.0f) * trans * 0.083333336f;
 }
 
 void DSP::Synapse::PitchCorrectedVoice::SetAttackSmoothing(float r) {
-    unkc = r;
-    unk10 = r;
+    m_fBaseSmoothing = r;
+    m_fAttackSmoothing = r;
 }

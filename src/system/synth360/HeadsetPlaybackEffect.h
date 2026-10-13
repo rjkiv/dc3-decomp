@@ -4,7 +4,7 @@
 
 // size 0x1
 struct HeadsetPlaybackEffectParams {
-    bool unk0;
+    bool unk0; // not in pdb??
 };
 
 DEFINE_CLSID(HeadsetPlaybackEffect, B4D4C8AA, A20D, 40A1, 84, A7, 64, 19, 35, 51, A9, BF);
@@ -19,6 +19,6 @@ public:
     );
 
 private:
-    int unk68;
-    HeadsetXferEffect *mEffects[4];
+    HeadsetXferEffect *mXferEffects[4]; // 0x58
+    int mFrameNum; // 0x68
 };

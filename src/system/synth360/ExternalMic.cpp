@@ -24,7 +24,7 @@ std::vector<MicXbox *> ExternalMicClientMgr::mAssocMicXbox;
 #pragma region ExternalMic
 
 ExternalMic::ExternalMic(DWORD micId)
-    : mMicIndex(micId), unk8(false), mConnected(false), mGain(-1) {
+    : mMicIndex(micId), mShutdown(false), mIsActive(false), mGain(-1) {
     mThread = CreateThread(0, 0, ExternalMicThreadEntry, this, 4, 0);
     MILO_ASSERT(mThread, 0x6a);
     SetThreadPriority(mThread, 15);
@@ -33,7 +33,7 @@ ExternalMic::ExternalMic(DWORD micId)
 }
 
 ExternalMic::~ExternalMic() {
-    unk8 = true;
+    mShutdown = true;
     WaitForSingleObject(mThread, -1);
     CloseHandle(mThread);
 }
@@ -72,7 +72,7 @@ void ExternalMic::Init() {
 int ExternalMic::NumConnectedMics() {
     int numConnected = 0;
     for (int i = 0; i < gMics.size(); i++) {
-        if (gMics[i]->mConnected) {
+        if (gMics[i]->mIsActive) {
             numConnected++;
         }
     }
@@ -117,7 +117,7 @@ void ExternalMicClientMgr::Associate(int idx, MicXbox *mic) { mAssocMicXbox[idx]
 void ExternalMicClientMgr::AddAudio(DWORD idx, BYTE *data, DWORD dataSize) {
     ExternalMicClientProxy *proxy = GetMasterForIndex(idx);
     if (proxy) {
-        MicXbox *mic = mAssocMicXbox[proxy->unk0];
+        MicXbox *mic = mAssocMicXbox[proxy->GetIndex()];
         if (mic) {
             mic->AddData(data, dataSize);
         }
@@ -126,8 +126,8 @@ void ExternalMicClientMgr::AddAudio(DWORD idx, BYTE *data, DWORD dataSize) {
 
 bool ExternalMicClientMgr::ConnectedForClient(const MicXbox *mic) {
     for (int i = 0; i < mAssocMicXbox.size(); i++) {
-        if (mAssocMicXbox[i] == mic && mMicMasters[i]->unk0
-            && mMicMasters[i]->mConnected) {
+        if (mAssocMicXbox[i] == mic && mMicMasters[i]->GetIndex()
+            && mMicMasters[i]->IsConnected()) {
             return true;
         }
     }
@@ -137,8 +137,8 @@ bool ExternalMicClientMgr::ConnectedForClient(const MicXbox *mic) {
 void ExternalMicClientMgr::OnMicDisconnected(DWORD idx) {
     ExternalMicClientProxy *proxy = GetMasterForIndex(idx);
     if (proxy) {
-        proxy->mConnected = false;
-        MicXbox *mic = mAssocMicXbox[proxy->unk0];
+        proxy->SetConnected(false);
+        MicXbox *mic = mAssocMicXbox[proxy->GetIndex()];
         if (mic) {
             mic->OnMicDisconnected();
         }
@@ -153,7 +153,7 @@ void ExternalMicClientMgr::OnMicDisconnected(DWORD idx) {
 float ExternalMicClientMgr::GetRequiredGain(DWORD idx) {
     ExternalMicClientProxy *proxy = GetMasterForIndex(idx);
     if (proxy) {
-        MicXbox *mic = mAssocMicXbox[proxy->unk0];
+        MicXbox *mic = mAssocMicXbox[proxy->GetIndex()];
         if (mic) {
             return mic->GetGain();
         }
@@ -184,7 +184,7 @@ ExternalMicClientProxy *ExternalMicClientMgr::GetMasterForIndex(DWORD idx) {
 
 HRESULT ExternalMicClientProxy::OnMicConnected(DWORD dw, bool b2, const Symbol &s) {
     mConnected = true;
-    MicXbox *mic = ExternalMicClientMgr::AssociatedMic(unk0);
+    MicXbox *mic = ExternalMicClientMgr::AssociatedMic(mIndex);
     if (mic) {
         mic->OnMicConnected(dw, b2, s);
         return 0;

@@ -8,16 +8,24 @@
 
 // size 0x24
 struct PoolVoice {
-    IXAudio2SourceVoice *voice; // 0x0
+    IXAudio2SourceVoice *xVoice; // 0x0
     EnvelopeGenerator *eg; // 0x4
     EnvelopeGeneratorParams *egParams; // 0x8
-    tWAVEFORMATEX wav; // 0xc
-    DWORD unk20; // 0x20
+    tWAVEFORMATEX fmt; // 0xc
+    DWORD tickCount; // 0x20
 };
 
 // size 0x7c
 class Voice {
 public:
+    enum VoiceState {
+        kUninitialized = 0x0000,
+        kStopped = 0x0001,
+        kPendingStart = 0x0002,
+        kPlaying = 0x0003,
+        kPaused = 0x0004
+    };
+
     Voice(bool, int, bool);
     ~Voice();
     void InitSourceBuffer(XAUDIO2_BUFFER &);
@@ -41,14 +49,14 @@ public:
     void blockingStart(bool);
     void Start();
 
-    IXAudio2SourceVoice *GetVoice() { return mPoolVoice.voice; }
-    int GetSampleStart() const { return mSampleStart; }
+    IXAudio2SourceVoice *GetVoice() { return mPoolVoice.xVoice; }
+    int GetStartSamp() { return mStartSamp; }
     int GetSampleCount() const { return mNumSamples; }
     int GetLoopStart() const { return mLoopStart; }
     int GetLoopEnd() const { return mLoopEnd; }
-    void SetAttackRate(float r) { unk30 = r; }
-    void SetReleaseRate(float r) { unk34 = r; }
-    void SetUnk50(int i) { unk50 = i; }
+    void SetAttackRate(float r) { mAttackRate = r; }
+    void SetReleaseRate(float r) { mReleaseRate = r; }
+    void SetTag(int i) { mTag = i; }
 
     static bool HasPendingVoices();
     static int sHeadsetTarget;
@@ -64,29 +72,29 @@ private:
     void SetSendImpl(class FxSend360 *);
     void dispose(PoolVoice *, unsigned int);
 
-    unsigned int unk0;
-    int unk4; // 0x4 - state? 3 = started, 1 = stopped, 4 = paused
+    unsigned int mFmtHash; // 0x0
+    VoiceState mState; // 0x4
     const void *mBuffer; // 0x8
-    int mBufSizeBytes; // 0xc
+    int mBufferBytes; // 0xc
     int mNumSamples; // 0x10
     int mSampleRate; // 0x14
-    int mSampleStart; // 0x18 - play begin
+    int mStartSamp; // 0x18
     int mLoopStart; // 0x1c
     int mLoopEnd; // 0x20
     float mVolume; // 0x24
     float mPan; // 0x28
     float mSpeed; // 0x2c
-    float unk30;
-    float unk34;
+    float mAttackRate; // 0x30
+    float mReleaseRate; // 0x34
     bool mXMA; // 0x38
     FxSend360 *mSend; // 0x3c
-    bool mReverb; // 0x40
+    bool mReverbEnable; // 0x40
     float mReverbMixDb; // 0x44
-    bool unk48;
-    bool unk49;
+    bool mReverbVoiceConnected; // 0x48
+    bool mCoherentSet; // 0x49
     int mChannels; // 0x4c
-    int unk50;
-    bool unk54;
+    int mTag; // 0x50
+    bool mHasOutputVoices; // 0x54
     PoolVoice mPoolVoice; // 0x58
 };
 

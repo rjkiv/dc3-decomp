@@ -1,16 +1,19 @@
 #include "synth360/HeadsetXferEffect.h"
 #include <cstring>
 
-HeadsetXferEffect::HeadsetXferEffect() : unk60(0) {
-    memset(unk64, 0, sizeof(unk64));
+HeadsetXferEffect::HeadsetXferEffect() : mFrameNum(0) {
+    memset(mData, 0, sizeof(mData));
     HeadsetXferEffectParams p;
-    p.unk0 = this;
+    p.effect = this;
     SetParameters(&p, sizeof(p));
 }
 
 void HeadsetXferEffect::DoProcess(
-    const HeadsetXferEffectParams &, float *__restrict farr, unsigned int, unsigned int
+    const HeadsetXferEffectParams &params,
+    float *__restrict pData,
+    unsigned int cFrames,
+    unsigned int cChannels
 ) {
-    memcpy(unk64[unk60 % 2], farr, sizeof(unk64[unk60 % 2]));
-    unk60++;
+    memcpy(&mData[(mFrameNum % 2) * 256], pData, sizeof(mData) / 2);
+    mFrameNum++;
 }

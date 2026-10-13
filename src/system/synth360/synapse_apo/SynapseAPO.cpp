@@ -1,53 +1,53 @@
 #include "synth360/synapse_apo/SynapseAPO.h"
 #include "synth360/synapse_apo/Synapse_dsp.h"
 
-DSP::SynapseAPO::SynapseAPO() : mSynapse(0) { SetSamplingRate(48000); }
-DSP::SynapseAPO::~SynapseAPO() { delete mSynapse; }
+DSP::SynapseAPO::SynapseAPO() : m_pSynapse(0) { SetSamplingRate(48000); }
+DSP::SynapseAPO::~SynapseAPO() { delete m_pSynapse; }
 
 void DSP::SynapseAPO::OnSetParameters(const SynapseAPOParams &params) {
     for (unsigned int i = 0; i < 3; i++) {
-        const VoiceParams &cur = mParams.mNoteProps[i];
-        const VoiceParams &next = params.mNoteProps[i];
-        if (cur.enabled != next.enabled) {
-            mSynapse->SetVoiceEnabled(i, next.enabled);
+        const SynapseAPOVoiceParams &cur = m_params.mNoteProps[i];
+        const SynapseAPOVoiceParams &next = params.mNoteProps[i];
+        if (cur.bEnabled != next.bEnabled) {
+            m_pSynapse->SetVoiceEnabled(i, next.bEnabled);
         }
-        if (cur.gain != next.gain) {
-            mSynapse->SetVoiceGain(i, next.gain);
+        if (cur.fGain != next.fGain) {
+            m_pSynapse->SetVoiceGain(i, next.fGain);
         }
-        if (cur.targetNote != next.targetNote) {
-            mSynapse->SetVoiceTargetNote(i, next.targetNote);
+        if (cur.fNoteHz != next.fNoteHz) {
+            m_pSynapse->SetVoiceTargetNote(i, next.fNoteHz);
         }
-        if (cur.transposition != next.transposition) {
-            mSynapse->SetVoiceTransposition(i, next.transposition);
+        if (cur.fTransposition != next.fTransposition) {
+            m_pSynapse->SetVoiceTransposition(i, next.fTransposition);
         }
-        if (cur.amount != next.amount) {
-            mSynapse->SetVoiceAmount(i, next.amount);
+        if (cur.fAmount != next.fAmount) {
+            m_pSynapse->SetVoiceAmount(i, next.fAmount);
         }
-        if (cur.proximityEffect != next.proximityEffect) {
-            mSynapse->SetVoiceProximityEffect(i, next.proximityEffect);
+        if (cur.fProximityEffect != next.fProximityEffect) {
+            m_pSynapse->SetVoiceProximityEffect(i, next.fProximityEffect);
         }
-        if (cur.proximityFocus != next.proximityFocus) {
-            mSynapse->SetVoiceProximityFocus(i, next.proximityFocus);
+        if (cur.fProximityFocus != next.fProximityFocus) {
+            m_pSynapse->SetVoiceProximityFocus(i, next.fProximityFocus);
         }
     }
-    if (mParams.attackSmoothing != params.attackSmoothing) {
-        mSynapse->SetAttackSmoothing(params.attackSmoothing);
+    if (m_params.fAttackSmoothing != params.fAttackSmoothing) {
+        m_pSynapse->SetAttackSmoothing(params.fAttackSmoothing);
     }
-    if (mParams.releaseSmoothing != params.releaseSmoothing) {
-        mSynapse->SetReleaseSmoothing(params.releaseSmoothing);
+    if (m_params.fReleaseSmoothing != params.fReleaseSmoothing) {
+        m_pSynapse->SetReleaseSmoothing(params.fReleaseSmoothing);
     }
-    mParams = params;
+    m_params = params;
 }
 
 void DSP::SynapseAPO::DoProcess(
     const SynapseAPOParams &, float *__restrict f, unsigned int ui, unsigned int
 ) {
-    if (mSynapse) {
-        mSynapse->ProcessInPlace(ui, f);
+    if (m_pSynapse) {
+        m_pSynapse->ProcessInPlace(ui, f);
     }
 }
 
 void DSP::SynapseAPO::SetSamplingRate(float rate) {
-    delete mSynapse;
-    mSynapse = new Synapse::Synapse(rate);
+    delete m_pSynapse;
+    m_pSynapse = new Synapse::Synapse(rate);
 }

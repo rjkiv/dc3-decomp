@@ -27,5 +27,6 @@ protected:
     virtual void SetReverbEnableImpl(bool);
     virtual void EndLoopImpl();
 
+private:
     Voice *mVoice; // 0xa8
 };

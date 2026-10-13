@@ -123,9 +123,7 @@ namespace soundtouch {
         FIFOSampleBuffer outputBuffer;
         FIFOSampleBuffer inputBuffer;
         BOOL bQuickSeek;
-        int outDebt;
-        // BOOL bMidBufferDirty;
-
+        BOOL bMidBufferDirty;
         int sampleRate;
         int sequenceMs;
         int seekWindowMs;

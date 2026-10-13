@@ -21,18 +21,10 @@ public:
     void Refresh(std::vector<FxSend *> &);
 
     bool HasVoices() const { return !mVoices.empty(); }
-    IXAudio2Voice *GetOutputVoice() const { return mOutputVoice; }
+    IXAudio2Voice *InputVoice() { return mInputVoice; }
 
 protected:
     virtual void InitParams(IXAudio2SubmixVoice *, int) {}
-
-    IXAudio2SubmixVoice *mOutputVoice; // 0x4
-    std::vector<IXAudio2SubmixVoice *> mVoices; // 0x8
-    std::vector<int> unk14; // 0x14
-    std::vector<IUnknown *> mFx; // 0x20
-    FxSend *mThis; // 0x2c
-    bool unk30; // 0x30
-    std::vector<Voice *> mOwnerVoices; // 0x34
 
 private:
     IXAudio2Voice *OutputVoice();
@@ -40,4 +32,12 @@ private:
     void CreateInputVoice();
     void Reconnect();
     void CreateVoice(int, int);
+
+    IXAudio2SubmixVoice *mInputVoice; // 0x4
+    std::vector<IXAudio2SubmixVoice *> mVoices; // 0x8
+    std::vector<int> mVoicesChannels; // 0x14
+    std::vector<IUnknown *> mFx; // 0x20
+    FxSend *mThis; // 0x2c
+    bool mParamsDirty; // 0x30
+    std::vector<Voice *> mOwnerVoices; // 0x34
 };
