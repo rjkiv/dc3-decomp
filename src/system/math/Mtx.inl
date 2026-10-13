@@ -103,8 +103,6 @@ inline BinStream &operator>>(BinStream &bs, Transform &tf) {
     return bs;
 }
 
-// inline BinStream &operator>>(BinStreamRev &d, Transform &tf) { return d >> tf; }
-
 void Multiply(const Transform &, const Hmx::Matrix3 &, Transform &);
 
 inline void MultiplyTranspose(const Vector3 &v, const Transform &t, Vector3 &out) {
