@@ -16,8 +16,8 @@ float DirectionGestureFilter::sLastSwipeTime[6] = { -100, -100, -100, -100, -100
 DirectionGestureFilterSingleUser::DirectionGestureFilterSingleUser(
     SkeletonSide s1, SkeletonSide s2, float f3, float f4
 )
-    : unk4(s1), unkc(s2), mSwipeAmt(0), unk18(0), mEngaged(0), mAllowAboveShoulder(1),
-      mHighButtonMode(0), unk20(0.5) {
+    : mSide(s1), mDirection(s2), mPercentPulled(0), mDisplayedPercentPulled(0),
+      mEngaged(0), mAllowAboveShoulder(1), mHighButtonMode(0), mTimeBetweenSwipes(0.5) {
     Clear();
     SkeletonJoint wristJoint, elbowJoint;
     if (s1 == kSkeletonRight) {
@@ -27,7 +27,7 @@ DirectionGestureFilterSingleUser::DirectionGestureFilterSingleUser(
         elbowJoint = kJointElbowLeft;
         wristJoint = kJointWristLeft;
     }
-    mArcDetector.Initialize(s2, wristJoint, elbowJoint, f3);
+    mHandArcDetector.Initialize(s2, wristJoint, elbowJoint, f3);
 }
 
 DirectionGestureFilterSingleUser::~DirectionGestureFilterSingleUser() {
@@ -47,40 +47,43 @@ void DirectionGestureFilterSingleUser::Update(const Skeleton &skeleton, int elap
     static float sVal = 0.2f;
     mConfidence = kConfidenceTracked;
     if (IsHandValid(skeleton)) {
-        mArcDetector.Update(skeleton, elapsedMs);
+        mHandArcDetector.Update(skeleton, elapsedMs);
     }
     if (!skeleton.IsTracked()) {
         mHasDirection = false;
         mConfidence = kConfidenceNotTracked;
     } else if (!mHasDirection) {
-        mSwipeAmt = mArcDetector.GetSwipeAmount();
-        if (sLastSwipeTime[skeleton.SkeletonIndex()] + unk20 > TheTaskMgr.UISeconds()
+        mPercentPulled = mHandArcDetector.GetSwipeAmount();
+        if (sLastSwipeTime[skeleton.SkeletonIndex()] + mTimeBetweenSwipes
+                > TheTaskMgr.UISeconds()
             && sLastSwipeTime[skeleton.SkeletonIndex()] < TheTaskMgr.UISeconds()) {
             ClearSwipe();
-        } else if (mSwipeAmt >= 1.0f) {
+        } else if (mPercentPulled >= 1.0f) {
             if (print) {
-                mArcDetector.PrintJointPath();
+                mHandArcDetector.PrintJointPath();
             }
             ClearSwipe();
             mHasDirection = true;
             sLastSwipeTime[skeleton.SkeletonIndex()] = TheTaskMgr.UISeconds();
         }
-        unk18 = Clamp(0.0f, 1.0f, (mSwipeAmt - sVal) / (1.0f - sVal));
+        mDisplayedPercentPulled =
+            Clamp(0.0f, 1.0f, (mPercentPulled - sVal) / (1.0f - sVal));
     }
 }
 
 void DirectionGestureFilterSingleUser::Draw(const Skeleton &skeleton, SkeletonViz &viz) {
-    mArcDetector.Draw(skeleton, viz);
+    mHandArcDetector.Draw(skeleton, viz);
     viz.DrawPoint3D(
-        skeleton.HandJoint(unk4).mPos[0],
+        skeleton.HandJoint(mSide).mPos[0],
         0.1f,
         IsValidSwipePosition(skeleton) ? Hmx::Color(0, 1, 0) : Hmx::Color(1, 0, 0),
         0.2f
     );
-    if (sLastSwipeTime[skeleton.SkeletonIndex()] + unk20 > TheTaskMgr.UISeconds()
+    if (sLastSwipeTime[skeleton.SkeletonIndex()] + mTimeBetweenSwipes
+            > TheTaskMgr.UISeconds()
         && sLastSwipeTime[skeleton.SkeletonIndex()] < TheTaskMgr.UISeconds()) {
         viz.DrawPoint3D(
-            skeleton.HandJoint(unk4).mPos[0],
+            skeleton.HandJoint(mSide).mPos[0],
             0.1f,
             // FIXME: I need to be able to reuse the color from the first DrawPoint3D call
             IsValidSwipePosition(skeleton) ? Hmx::Color(0, 1, 0) : Hmx::Color(1, 0, 0),
@@ -96,7 +99,7 @@ static float sScrollPosCenterRadius = 0.3f;
 
 bool DirectionGestureFilterSingleUser::IsHandValid(const Skeleton &skeleton) const {
     return IsValidSwipePosition(skeleton)
-        || (mArcDetector.NumJointsInPath() > 1U
+        || (mHandArcDetector.NumJointsInPath() > 1U
             && !HandAtSide(skeleton, sValidHandRadius, sValidHandScale, 0.0f));
 }
 
@@ -111,22 +114,22 @@ bool DirectionGestureFilterSingleUser::IsValidScrollPos(const Skeleton &skeleton
 }
 
 void DirectionGestureFilterSingleUser::ClearSwipe() {
-    mSwipeAmt = 0;
+    mPercentPulled = 0;
     mHasDirection = false;
-    unk18 = 0;
-    mArcDetector.Clear();
+    mDisplayedPercentPulled = 0;
+    mHandArcDetector.Clear();
 }
 
 bool DirectionGestureFilterSingleUser::IsLockedIn() const {
-    return mArcDetector.IsLockedIn();
+    return mHandArcDetector.IsLockedIn();
 }
 
 void DirectionGestureFilterSingleUser::ResetHoverTimer() {
-    mArcDetector.ResetHoverTimer();
+    mHandArcDetector.ResetHoverTimer();
 }
 
 float DirectionGestureFilterSingleUser::UpdateOverlay(RndOverlay *overlay, float f1) {
-    return mArcDetector.UpdateOverlay(overlay, f1);
+    return mHandArcDetector.UpdateOverlay(overlay, f1);
 }
 
 bool DirectionGestureFilterSingleUser::HandAtSide(
@@ -135,10 +138,10 @@ bool DirectionGestureFilterSingleUser::HandAtSide(
     float jointVal =
         skeleton.TrackedJoints()[3].mPos[0].y - skeleton.TrackedJoints()[19].mPos[0].y;
 
-    const TrackedJoint &handJoint = skeleton.HandJoint(unk4);
-    const TrackedJoint &hipJoint = skeleton.HipJoint(unk4);
-    const TrackedJoint &kneeJoint = skeleton.KneeJoint(unk4);
-    const TrackedJoint &elbowJoint = skeleton.ElbowJoint(unk4);
+    const TrackedJoint &handJoint = skeleton.HandJoint(mSide);
+    const TrackedJoint &hipJoint = skeleton.HipJoint(mSide);
+    const TrackedJoint &kneeJoint = skeleton.KneeJoint(mSide);
+    const TrackedJoint &elbowJoint = skeleton.ElbowJoint(mSide);
     float jointX = handJoint.mPos[0].x - (f1 * f3 + elbowJoint.mPos[0].x) * f2;
     float jointY = handJoint.mPos[0].y - (kneeJoint.mPos[0].y + hipJoint.mPos[0].y) / 2;
     float jointZ = handJoint.mPos[0].z - (kneeJoint.mPos[0].z + hipJoint.mPos[0].z) / 2;
@@ -153,97 +156,97 @@ bool DirectionGestureFilterSingleUser::HandAtSide(
 DirectionGestureFilterDoubleUser::DirectionGestureFilterDoubleUser(
     SkeletonSide s1, SkeletonSide s2, float f3, float f4
 )
-    : unk4(new DirectionGestureFilterSingleUser(s1, s2, f3, f4)),
-      unk8(new DirectionGestureFilterSingleUser(s1, s2, f3, f4)) {
+    : mFilter1(new DirectionGestureFilterSingleUser(s1, s2, f3, f4)),
+      mFilter2(new DirectionGestureFilterSingleUser(s1, s2, f3, f4)) {
     for (int i = 0; i < 2; i++) {
-        unkc[i] = new StandingStillGestureFilter();
-        unkc[i]->SetRequiredMs(750);
-        unkc[i]->SetUnk4c(true);
+        mStandingStillFilters[i] = new StandingStillGestureFilter();
+        mStandingStillFilters[i]->SetRequiredMs(750);
+        mStandingStillFilters[i]->SetUnk4c(true);
     }
 }
 
 DirectionGestureFilterDoubleUser::~DirectionGestureFilterDoubleUser() {
-    delete unk4;
-    delete unk8;
+    delete mFilter1;
+    delete mFilter2;
     for (int i = 0; i < 2; i++) {
-        delete unkc[i];
+        delete mStandingStillFilters[i];
     }
 }
 
 void DirectionGestureFilterDoubleUser::Clear() {
-    unk4->Clear();
-    unk8->Clear();
+    mFilter1->Clear();
+    mFilter2->Clear();
 }
 
 JointConfidence DirectionGestureFilterDoubleUser::Confidence() const {
-    return Max(unk4->Confidence(), unk8->Confidence());
+    return Max(mFilter1->Confidence(), mFilter2->Confidence());
 }
 
 void DirectionGestureFilterDoubleUser::Update(const Skeleton &skeleton, int ms) {
     for (int i = 0; i < 2; i++) {
-        unkc[i]->Update(TheGestureMgr->GetPlayerSkeletonID(i), ms);
+        mStandingStillFilters[i]->Update(TheGestureMgr->GetPlayerSkeletonID(i), ms);
     }
     int i1, i2;
     GetValidSkeletons(i1, i2);
-    unk4->Update(TheGestureMgr->GetSkeleton(i1), ms);
-    unk8->Update(TheGestureMgr->GetSkeleton(i2), ms);
+    mFilter1->Update(TheGestureMgr->GetSkeleton(i1), ms);
+    mFilter2->Update(TheGestureMgr->GetSkeleton(i2), ms);
 }
 
 void DirectionGestureFilterDoubleUser::Draw(const Skeleton &skeleton, SkeletonViz &viz) {
-    unk4->Draw(skeleton, viz);
+    mFilter1->Draw(skeleton, viz);
 }
 
 bool DirectionGestureFilterDoubleUser::HasDirection() const {
-    return unk4->HasDirection() || unk8->HasDirection();
+    return mFilter1->HasDirection() || mFilter2->HasDirection();
 }
 
 float DirectionGestureFilterDoubleUser::GetPercentPulled() const {
-    return Max(unk4->GetPercentPulled(), unk8->GetPercentPulled());
+    return Max(mFilter1->GetPercentPulled(), mFilter2->GetPercentPulled());
 }
 
 void DirectionGestureFilterDoubleUser::ClearSwipe() {
-    unk4->ClearSwipe();
-    unk8->ClearSwipe();
+    mFilter1->ClearSwipe();
+    mFilter2->ClearSwipe();
 }
 
 bool DirectionGestureFilterDoubleUser::IsLockedIn() const {
-    return unk4->IsLockedIn() || unk8->IsLockedIn();
+    return mFilter1->IsLockedIn() || mFilter2->IsLockedIn();
 }
 
 void DirectionGestureFilterDoubleUser::SetEngaged(bool engaged) {
-    unk4->SetEngaged(engaged);
-    unk8->SetEngaged(engaged);
+    mFilter1->SetEngaged(engaged);
+    mFilter2->SetEngaged(engaged);
 }
 
 void DirectionGestureFilterDoubleUser::ResetHoverTimer() {
-    unk4->ResetHoverTimer();
-    unk8->ResetHoverTimer();
+    mFilter1->ResetHoverTimer();
+    mFilter2->ResetHoverTimer();
 }
 
 void DirectionGestureFilterDoubleUser::SetAllowAboveShoulder(bool allow) {
-    unk4->SetAllowAboveShoulder(allow);
-    unk8->SetAllowAboveShoulder(allow);
+    mFilter1->SetAllowAboveShoulder(allow);
+    mFilter2->SetAllowAboveShoulder(allow);
 }
 
 void DirectionGestureFilterDoubleUser::SetHighButtonMode(bool set) {
-    unk4->SetHighButtonMode(set);
-    unk8->SetHighButtonMode(set);
+    mFilter1->SetHighButtonMode(set);
+    mFilter2->SetHighButtonMode(set);
 }
 
 bool DirectionGestureFilterDoubleUser::IsValidScrollPos(const Skeleton &skel) const {
     int p1, p2;
     GetValidSkeletons(p1, p2);
-    return p1 >= 0 && unk4->IsValidScrollPos(TheGestureMgr->GetSkeleton(p1))
-        || p2 >= 0 && unk8->IsValidScrollPos(TheGestureMgr->GetSkeleton(p2));
+    return p1 >= 0 && mFilter1->IsValidScrollPos(TheGestureMgr->GetSkeleton(p1))
+        || p2 >= 0 && mFilter2->IsValidScrollPos(TheGestureMgr->GetSkeleton(p2));
 }
 
 bool DirectionGestureFilterDoubleUser::IsHandValid(const Skeleton &skel) const {
     int p1, p2;
     GetValidSkeletons(p1, p2);
-    return (p1 >= 0 && unk4->IsHandValid(TheGestureMgr->GetSkeleton(p1))
-            && unkc[0]->Satisfied())
-        || (p2 >= 0 && unk8->IsHandValid(TheGestureMgr->GetSkeleton(p2))
-            && unkc[1]->Satisfied());
+    return (p1 >= 0 && mFilter1->IsHandValid(TheGestureMgr->GetSkeleton(p1))
+            && mStandingStillFilters[0]->Satisfied())
+        || (p2 >= 0 && mFilter2->IsHandValid(TheGestureMgr->GetSkeleton(p2))
+            && mStandingStillFilters[1]->Satisfied());
 }
 
 void DirectionGestureFilterDoubleUser::GetValidSkeletons(int &p1, int &p2) const {
