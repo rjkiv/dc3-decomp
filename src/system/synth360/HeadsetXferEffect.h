@@ -21,5 +21,5 @@ public:
 
 private:
     int mFrameNum; // 0x60
-    float mData[512]; // 0x64
+    float mData[2][0x100]; // 0x64
 };

@@ -94,7 +94,7 @@ private:
     Mic::Type mLastType; // 0x10
     bool mChangeNotify; // 0x14
     Voice *mVoice; // 0x18
-    unsigned char mPlaybackBuffer[0x1800]; // 0x1c
+    unsigned char mPlaybackBuffer[0x3000]; // 0x1c
     unsigned char *mPlaybackWritePtr; // 0x301c
     std::vector<short> mChatBuffer; // 0x3020
     RingBuffer mRingBufferRecent; // 0x302c

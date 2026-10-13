@@ -9,9 +9,12 @@ HeadsetXferEffect::HeadsetXferEffect() : mFrameNum(0) {
 }
 
 void HeadsetXferEffect::DoProcess(
-    const HeadsetXferEffectParams &, float *__restrict farr, unsigned int, unsigned int
+    const HeadsetXferEffectParams &params,
+    float *__restrict pData,
+    unsigned int cFrames,
+    unsigned int cChannels
 ) {
     // fix
-    memcpy(&mData[mFrameNum % 2], farr, sizeof(mData[mFrameNum % 2]));
+    memcpy(&mData[mFrameNum % 2], pData, sizeof(mData[mFrameNum % 2]));
     mFrameNum++;
 }
