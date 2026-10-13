@@ -14,7 +14,6 @@ void HeadsetXferEffect::DoProcess(
     unsigned int cFrames,
     unsigned int cChannels
 ) {
-    // fix
-    memcpy(&mData[mFrameNum % 2], pData, sizeof(mData[mFrameNum % 2]));
+    memcpy(&mData[(mFrameNum % 2) * 256], pData, sizeof(mData) / 2);
     mFrameNum++;
 }
