@@ -50,7 +50,7 @@ protected:
 
     void MiloInit();
 
-    bool mMiloInitted; // 0x26c
+    bool mNeedsUpdate; // 0x26c
     /** "Test clip for in-milo visualization" */
     ObjPtr<SkeletonClip> mTestClip; // 0x270
 };

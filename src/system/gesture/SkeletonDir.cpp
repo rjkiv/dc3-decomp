@@ -15,7 +15,7 @@
 #include "utl/BinStream.h"
 #include "utl/Loader.h"
 
-SkeletonDir::SkeletonDir() : mMiloInitted(0), mTestClip(this) {}
+SkeletonDir::SkeletonDir() : mNeedsUpdate(0), mTestClip(this) {}
 
 SkeletonDir::~SkeletonDir() {
     SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
@@ -88,7 +88,7 @@ void SkeletonDir::PostLoad(BinStream &bs) {
             }
         }
     }
-    mMiloInitted = true;
+    mNeedsUpdate = true;
 }
 
 void SkeletonDir::DrawShowing() {
@@ -122,17 +122,17 @@ void SkeletonDir::MiloUpdate() {
     }
     if (!IsProxy())
         SetSkeletonClip(mTestClip);
-    mMiloInitted = false;
+    mNeedsUpdate = false;
 }
 
 void SkeletonDir::MiloInit() {
     MILO_ASSERT(TheLoadMgr.EditMode(), 0xE8);
-    mMiloInitted = true;
+    mNeedsUpdate = true;
 }
 
 void SkeletonDir::Poll() {
     RndDir::Poll();
-    if (TheLoadMgr.EditMode() && mMiloInitted) {
+    if (TheLoadMgr.EditMode() && mNeedsUpdate) {
         MiloUpdate();
     }
 }

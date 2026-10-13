@@ -312,7 +312,7 @@
             "system/gesture/SkeletonViz.cpp": "NonMatching",
             "system/gesture/SpeechMgr.cpp": "NonMatching",
             "system/gesture/StandingStillGestureFilter.cpp": "NonMatching",
-            "system/gesture/StreamRecorder.cpp": "NonMatching",
+            "system/gesture/StreamRecorder.cpp": "Matching",
             "system/gesture/StreamRenderer.cpp": "NonMatching",
             "system/gesture/StubCameraInput.cpp": "Matching",
             "system/gesture/WaveToTurnOnLight.cpp": "Matching",

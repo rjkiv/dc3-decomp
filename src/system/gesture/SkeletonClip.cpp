@@ -22,7 +22,6 @@
 #include "os/System.h"
 #include "rndobj/Anim.h"
 #include "rndobj/Poll.h"
-#include "stl/_vector.h"
 #include "utl/BinStream.h"
 #include "utl/FileStream.h"
 #include "utl/Loader.h"
@@ -30,6 +29,7 @@
 #include "utl/Str.h"
 #include "utl/Symbol.h"
 #include <cstring>
+#include <vector>
 
 // do these correspond to kNumDifficulties?
 std::vector<RecordedFrame> sFrames[4];
