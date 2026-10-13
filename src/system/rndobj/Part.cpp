@@ -611,7 +611,7 @@ BEGIN_LOADS(RndParticleSys)
         } else {
             Vector3 v1;
             d >> v1 >> p.a >> p.b >> p.c;
-            p.d = -Dot(v1, reinterpret_cast<Vector3 &>(p));
+            p.d = -Dot(reinterpret_cast<Vector3 &>(p), v1);
         }
         if (ba7) {
             bool old = TheLoadMgr.EditMode();
@@ -620,11 +620,10 @@ BEGIN_LOADS(RndParticleSys)
             mBounce = Dir()->New<RndTransformable>(bounceName);
             TheLoadMgr.SetEditMode(old);
             Transform worldXfm;
-            Vector3 v128(reinterpret_cast<Vector3 &>(p));
-            worldXfm.m.z = v128;
             worldXfm.v = p.On();
-            Cross(Vector3(0, 1, 0), v128, worldXfm.m.x);
-            Cross(v128, worldXfm.m.x, worldXfm.m.y);
+            worldXfm.m.z = reinterpret_cast<Vector3 &>(p);
+            Cross(Vector3(0, 1, 0), worldXfm.m.z, worldXfm.m.x);
+            Cross(worldXfm.m.z, worldXfm.m.x, worldXfm.m.y);
             Normalize(worldXfm.m.x, worldXfm.m.x);
             Normalize(worldXfm.m.y, worldXfm.m.y);
             mBounce->SetWorldXfm(worldXfm);
@@ -664,8 +663,7 @@ BEGIN_LOADS(RndParticleSys)
         d >> mBubblePeriod >> mBubbleSize >> mBubble;
     }
     if (d.rev > 0x1D) {
-        d >> mRotate >> mRPM;
-        d >> mRPMDrag;
+        d >> mRotate >> mRPM >> mRPMDrag;
         if (d.rev > 0x24) {
             d >> mRandomDirection;
         }
