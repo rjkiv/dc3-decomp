@@ -76,8 +76,7 @@ INIT_REVS(2, 0)
 void LabelShrinkWrapper::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(2, 0)
-    d >> m_pLabel;
-    d >> m_pShow;
+    d >> m_pLabel >> m_pShow;
     if (d.rev >= 1)
         d >> mResourceDir;
     if (d.rev >= 2) {

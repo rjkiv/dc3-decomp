@@ -312,15 +312,17 @@ BEGIN_LOADS(EventTrigger)
         d >> mAnims >> mSounds >> mShows;
     }
 
-    if (d.rev > 0xC)
+    if (d.rev > 0xC) {
         d >> mHideDelays;
-    else if (d.rev > 8) {
+    } else if (d.rev > 8) {
         mHideDelays.clear();
         int count;
         d >> count;
         mHideDelays.resize(count);
         FOREACH (it, mHideDelays) {
-            d >> it->mHide >> it->mDelay;
+            HideDelay &cur = *it;
+            d >> cur.mHide;
+            d >> cur.mDelay;
         }
     } else if (d.rev > 6) {
         ObjPtrList<RndDrawable> drawList(this);

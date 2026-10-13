@@ -75,7 +75,9 @@ void SpotDrawParams::Load(BinStreamRev &d) {
     if (d.rev < 4) {
         float x;
         Vector2 vx, vy;
-        d >> x >> vx >> vy;
+        d >> x;
+        d >> vx;
+        d >> vy;
     }
     d >> mTexture;
     d >> mProxy;
