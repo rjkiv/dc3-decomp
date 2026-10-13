@@ -166,7 +166,7 @@ void CharClip::Transitions::Load(BinStreamRev &d, int oldRev) {
             sDir = mOwner->Dir();
         }
         for (int i = 0; i < num_nodes; i++) {
-            d.stream.ReadString(buf, 0x100);
+            d.ReadString(buf, 0x100);
             CharClip *clip = mOwner->Dir()->Find<CharClip>(buf, false);
             d >> num_node_vectors;
             for (int j = 0; j < num_node_vectors; j++) {
@@ -195,7 +195,7 @@ void CharClip::Transitions::Load(BinStreamRev &d, int oldRev) {
         );
         NodeVector *it = start;
         for (int i = 0; i < num_node_vectors; i++) {
-            d.stream.ReadString(buf2, 0x100);
+            d.ReadString(buf2, 0x100);
             CharClip *clip = mOwner->Dir()->Find<CharClip>(buf2, false);
             if (clip) {
                 it = new (it) NodeVector(this); // placement new yea boi
@@ -493,7 +493,7 @@ BEGIN_LOADS(CharClip)
         d >> mRange;
     }
     if (oldRev > 5) {
-        mRelative.Load(d.stream, false, nullptr);
+        mRelative.Load(d, false, nullptr);
     } else if (oldRev > 4) {
         bool b117;
         d >> b117;
@@ -525,7 +525,7 @@ BEGIN_LOADS(CharClip)
         d >> count;
         mBeatEvents.resize(count);
         for (int i = 0; i < mBeatEvents.size(); i++) {
-            mBeatEvents[i].Load(d.stream);
+            mBeatEvents[i].Load(d);
         }
     } else {
         String str;
@@ -562,8 +562,8 @@ BEGIN_LOADS(CharClip)
         mDirty = true;
     }
     if (d.rev > 0xC) {
-        mFull.Load(d.stream);
-        mOne.Load(d.stream);
+        mFull.Load(d);
+        mOne.Load(d);
     } else {
         mFull.LoadHeader(d);
         mOne.LoadHeader(d);

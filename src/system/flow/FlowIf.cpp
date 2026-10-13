@@ -68,7 +68,7 @@ BEGIN_LOADS(FlowIf)
             if (!owner) {
                 owner = dynamic_cast<Flow *>(this);
             }
-            mValue1 = LoadObjectFromMainOrDir(d.stream, owner->LoadingDir());
+            mValue1 = LoadObjectFromMainOrDir(d, owner->LoadingDir());
         } else {
             DataNode val;
             val.Load(bs);
@@ -81,7 +81,7 @@ BEGIN_LOADS(FlowIf)
             if (!owner) {
                 owner = dynamic_cast<Flow *>(this);
             }
-            mValue2 = LoadObjectFromMainOrDir(d.stream, owner->LoadingDir());
+            mValue2 = LoadObjectFromMainOrDir(d, owner->LoadingDir());
         } else {
             DataNode val;
             val.Load(bs);

@@ -108,7 +108,7 @@ void MoggClip::PreLoad(BinStream &bs) {
     if (d.altRev > 1) {
         d >> mBufSecs;
     }
-    LoadFile(d.rev > 0 ? &d.stream : 0);
+    LoadFile(d.rev > 0 ? &bs : 0);
     if (d.altRev == 1) {
         d >> mBufSecs;
     }

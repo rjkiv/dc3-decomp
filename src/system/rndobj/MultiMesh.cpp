@@ -226,7 +226,7 @@ void RndMultiMesh::Instance::Save(BinStream &bs) const {
     bs << mXfm;
 }
 
-void RndMultiMesh::Instance::Load(BinStreamRev &bs) { LoadRev(bs.stream, bs.rev); }
+void RndMultiMesh::Instance::Load(BinStreamRev &d) { LoadRev(d, d.rev); }
 
 void RndMultiMesh::Instance::LoadRev(BinStream &bs, int rev) {
     if (rev >= 5) {

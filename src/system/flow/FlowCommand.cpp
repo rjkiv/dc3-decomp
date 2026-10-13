@@ -59,10 +59,10 @@ BEGIN_LOADS(FlowCommand)
         ObjectDir *dir = GetOwnerFlow()->LoadingDir();
         for (int i = 0; i < count; i += 2) {
             DataNode n;
-            n.Load(d.stream, dir);
+            n.Load(d, dir);
             symbols.push_back(n.Sym());
             DataNode n2;
-            n2.Load(d.stream, dir);
+            n2.Load(d, dir);
             datanodes.push_back(n2);
         }
     }
@@ -74,7 +74,7 @@ BEGIN_LOADS(FlowCommand)
         SetProperty(*sit, *dit);
     }
     if (d.rev < 1) {
-        mObject = LoadObjectFromMainOrDir(d.stream, Dir());
+        mObject = LoadObjectFromMainOrDir(d, Dir());
     } else {
         d >> mObject;
     }
@@ -82,7 +82,7 @@ BEGIN_LOADS(FlowCommand)
     if (d.rev < 2) {
         DataNode n;
         ObjectDir *dir = GetOwnerFlow()->LoadingDir();
-        n.Load(d.stream, dir);
+        n.Load(d, dir);
         if (n.Type() == kDataArray) {
             for (int i = 0; i < n.Array()->Size(); i++) {
                 SetProperty(n.Array()->Array(i)->Sym(0), n.Array()->Array(i)->Node(1));
@@ -94,9 +94,9 @@ BEGIN_LOADS(FlowCommand)
         ObjectDir *dir = GetOwnerFlow()->LoadingDir();
         for (int i = 0; i < count; i += 2) {
             DataNode n1;
-            n1.Load(d.stream, dir);
+            n1.Load(d, dir);
             DataNode n2;
-            n2.Load(d.stream, dir);
+            n2.Load(d, dir);
             SetProperty(n1.Sym(), n2.Evaluate());
         }
     }

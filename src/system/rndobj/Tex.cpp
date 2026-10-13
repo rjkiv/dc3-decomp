@@ -147,11 +147,11 @@ void RndTex::PreLoad(BinStream &bs) {
             );
         }
     }
-    d.PushRev(this);
+    PUSH_REVS(d);
 }
 
 void RndTex::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
+    POP_REVS(bs);
     if (d.rev < 5) {
         int cubemapmask;
         bs >> cubemapmask;

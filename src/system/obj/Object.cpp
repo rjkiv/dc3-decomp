@@ -168,11 +168,11 @@ void Hmx::Object::LoadType(BinStream &bs) {
     Symbol s;
     bs >> s;
     SetType(s);
-    d.PushRev(this);
+    PUSH_REVS(d);
 }
 
 void Hmx::Object::LoadRest(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
+    POP_REVS(bs);
     if (!mTypeProps) {
         mTypeProps = new TypeProps(this);
     }

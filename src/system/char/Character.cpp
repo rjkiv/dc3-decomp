@@ -298,7 +298,7 @@ void Character::PreLoad(BinStream &bs) {
         ObjectDir::PreLoad(bs);
         bs.PushRev(revToPush, this);
     }
-    d.PushRev(this);
+    PUSH_REVS(d);
 }
 
 void OldGroupLoad(DrawPtrVec &vec, BinStream &bs) {
@@ -318,9 +318,9 @@ BinStreamRev &operator>>(BinStreamRev &d, Character::Lod &lod) {
     if (gCharMe) {
         d >> lod.mOpaque;
     } else if (d.rev < 0x12) {
-        OldGroupLoad(lod.mOpaque, d.stream);
+        OldGroupLoad(lod.mOpaque, d);
         if (d.rev > 0xD) {
-            OldGroupLoad(lod.mTranslucent, d.stream);
+            OldGroupLoad(lod.mTranslucent, d);
         }
     } else {
         d >> lod.mOpaque;
@@ -330,22 +330,23 @@ BinStreamRev &operator>>(BinStreamRev &d, Character::Lod &lod) {
 }
 
 void Character::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
+    POP_REVS(bs);
     if (d.rev > 1) {
-        RndDir::PostLoad(d.stream);
+        RndDir::PostLoad(d);
         if (d.rev < 4 || !IsProxy()) {
             if (d.rev < 9) {
                 ObjVector<ObjVector<Lod> > lods(this);
                 d >> lods;
-                if (lods.size() != 0)
+                if (lods.size() != 0) {
                     mLods = lods[0];
-                else
+                } else {
                     mLods.clear();
+                }
             } else {
                 d >> mLods;
             }
             if (d.rev < 0x12) {
-                OldGroupLoad(mShadow, d.stream);
+                OldGroupLoad(mShadow, d);
             } else {
                 d >> mShadow;
             }
@@ -357,7 +358,11 @@ void Character::PostLoad(BinStream &bs) {
             if (d.rev > 4) {
                 ObjPtr<RndTransformable> t(this);
                 d >> t;
-                mSphereBase = t.Ptr() ? t.Ptr() : this;
+                if (t) {
+                    mSphereBase = t;
+                } else {
+                    mSphereBase = this;
+                }
             } else {
                 mSphereBase = this;
             }
@@ -383,7 +388,7 @@ void Character::PostLoad(BinStream &bs) {
             }
             if (d.rev > 0x10) {
                 if (d.rev < 0x12) {
-                    OldGroupLoad(mTranslucent, d.stream);
+                    OldGroupLoad(mTranslucent, d);
                 } else {
                     d >> mTranslucent;
                 }
@@ -395,31 +400,32 @@ void Character::PostLoad(BinStream &bs) {
                 d >> mProps;
             }
             if (d.rev > 9) {
-                mTest->Load(d.stream);
+                mTest->Load(d);
             }
         } else if (d.rev > 0xF) {
-            mTest->Load(d.stream);
+            mTest->Load(d);
         }
     } else {
-        int otherRev = bs.PopRev(this);
-        ObjectDir::PostLoad(d.stream);
+        int otherRev = d.PopRev(this);
+        ObjectDir::PostLoad(d);
         if (otherRev > 4) {
-            bs >> mEnv;
+            d >> mEnv;
         }
         if (otherRev > 3) {
             gCharMe = otherRev < 6 ? this : nullptr;
             ObjVector<ObjVector<Character::Lod> > lods(this);
             d >> lods;
-            if (lods.size() != 0)
+            if (lods.size() != 0) {
                 mLods = lods[0];
-            else
+            } else {
                 mLods.clear();
+            }
         } else {
             mLods.clear();
         }
         if (otherRev > 6) {
             if (d.rev < 0x12) {
-                OldGroupLoad(mShadow, d.stream);
+                OldGroupLoad(mShadow, d);
             } else {
                 d >> mShadow;
             }
@@ -428,7 +434,8 @@ void Character::PostLoad(BinStream &bs) {
     if (d.rev < 8) {
         float rad = GetSphere().radius;
         for (int i = 0; i < mLods.size(); i++) {
-            mLods[i].mScreenSize /= rad;
+            Lod &lod = mLods[i];
+            lod.mScreenSize /= rad;
         }
     }
 }

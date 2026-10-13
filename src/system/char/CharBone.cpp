@@ -87,7 +87,7 @@ BEGIN_LOADS(CharBone)
     LOAD_SUPERCLASS(Hmx::Object)
     if (d.rev < 9) {
         RndTransformableRemover t;
-        t.Load(d.stream);
+        t.Load(d);
     }
     if (d.rev > 6) {
         d >> mPositionContext;

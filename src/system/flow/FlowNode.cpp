@@ -100,7 +100,7 @@ BEGIN_LOADS(FlowNode)
     entries.reserve(numEntries);
     for (int i = 0; i < numEntries; i++) {
         DrivenPropertyEntry entry(this);
-        entry.Load(d.stream, this);
+        entry.Load(d, this);
         mDrivenPropEntries.push_back(entry);
     }
     if (d.rev > 0) {

@@ -61,11 +61,11 @@ void StarsDisplay::PreLoad(BinStream &bs) {
     if (d.rev >= 2) {
         d >> mAlpha;
     }
-    UIComponent::PreLoad(d.stream);
+    UIComponent::PreLoad(d);
     if (d.rev >= 3) {
         d >> mResourceDir;
     }
-    d.PushRev(this);
+    PUSH_REVS(d);
 }
 
 void StarsDisplay::PostLoad(BinStream &bs) {

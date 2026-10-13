@@ -83,7 +83,7 @@ void MeterDisplay::PreLoad(BinStream &bs) {
         d >> mWrapperText;
     }
     d >> mResourceDir;
-    UIComponent::PreLoad(d.stream);
+    UIComponent::PreLoad(d);
 }
 
 void MeterDisplay::PostLoad(BinStream &bs) {

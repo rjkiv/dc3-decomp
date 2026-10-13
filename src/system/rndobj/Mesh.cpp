@@ -276,49 +276,49 @@ BEGIN_COPYS(RndMesh)
 END_COPYS
 
 BinStreamRev &operator>>(BinStreamRev &d, RndMesh::Vert &vert) {
-    d.stream >> vert.pos;
+    d >> vert.pos;
     float y, z;
     if (d.rev != 10 && d.rev < 0x17) {
-        d.stream >> y;
-        d.stream >> z;
+        d >> y;
+        d >> z;
     }
-    d.stream >> vert.norm;
+    d >> vert.norm;
     if (d.rev < MESH_REV_SEP_COLOR)
-        d.stream >> vert.color;
+        d >> vert.color;
     else
-        d.stream >> vert.color;
-    d.stream >> vert.tex;
+        d >> vert.color;
+    d >> vert.tex;
     if (d.rev >= MESH_REV_SEP_COLOR) {
-        d.stream >> vert.boneWeights;
+        d >> vert.boneWeights;
     }
     if (d.rev != 10 && d.rev < 23) {
         vert.boneWeights.Set((1.0f - y) - z, y, z, 0);
     }
     if (d.rev < 0xB) {
         Vector2 v;
-        d.stream >> v;
+        d >> v;
     }
     if (d.rev > 0x1C) {
-        d.stream >> vert.boneIndices[0];
-        d.stream >> vert.boneIndices[1];
-        d.stream >> vert.boneIndices[2];
-        d.stream >> vert.boneIndices[3];
+        d >> vert.boneIndices[0];
+        d >> vert.boneIndices[1];
+        d >> vert.boneIndices[2];
+        d >> vert.boneIndices[3];
     }
     if (d.rev > 0x1D) {
-        d.stream >> vert.tangent;
+        d >> vert.tangent;
     }
     return d;
 }
 
 BinStream &operator>>(BinStreamRev &d, RndMesh::Face &face) {
-    d.stream >> face.v1;
-    d.stream >> face.v2;
-    d.stream >> face.v3;
+    d >> face.v1;
+    d >> face.v2;
+    d >> face.v3;
     if (d.rev < 1) {
         Vector3 v;
-        d.stream >> v;
+        d >> v;
     }
-    return d.stream;
+    return d;
 }
 
 BinStream &operator>>(BinStream &bs, RndBone &bone) {
@@ -372,7 +372,7 @@ BEGIN_LOADS(RndMesh)
     d >> mMat;
     if (d.rev > 0x1A && d.rev < 0x1C) {
         char buf[0x80];
-        d.stream.ReadString(buf, 0x80);
+        d.ReadString(buf, 0x80);
         if (!mMat && buf[0] != '\0') {
             mMat = LookupOrCreateMat(buf, Dir());
         }
@@ -400,7 +400,7 @@ BEGIN_LOADS(RndMesh)
     if (d.rev < 0xE) {
         ObjPtr<RndTransformable> trans1(this);
         ObjPtr<RndTransformable> trans2(this);
-        d.stream >> trans1 >> trans2;
+        d >> trans1 >> trans2;
     }
     if (d.rev < 3) {
         Vector3 v;
@@ -443,8 +443,8 @@ BEGIN_LOADS(RndMesh)
         d >> x;
     }
     LoadVertices(d);
-    if (d.stream.Cached()) {
-        CachedRead(d.stream, mFaces);
+    if (d.Cached()) {
+        CachedRead(d, mFaces);
     } else {
         d >> mFaces;
     }
@@ -457,8 +457,8 @@ BEGIN_LOADS(RndMesh)
         }
     }
     if (d.rev > 0x17) {
-        if (d.stream.Cached()) {
-            CachedRead(d.stream, mPatches);
+        if (d.Cached()) {
+            CachedRead(d, mPatches);
         } else {
             d >> mPatches;
         }
@@ -493,8 +493,8 @@ BEGIN_LOADS(RndMesh)
             mBones.resize(4);
             if (d.rev > 0x16) {
                 mBones[0].mBone = trans;
-                d.stream >> mBones[1].mBone >> mBones[2].mBone >> mBones[3].mBone;
-                d.stream >> mBones[0].mOffset >> mBones[1].mOffset >> mBones[2].mOffset
+                d >> mBones[1].mBone >> mBones[2].mBone >> mBones[3].mBone;
+                d >> mBones[0].mOffset >> mBones[1].mOffset >> mBones[2].mOffset
                     >> mBones[3].mOffset;
                 if (d.rev < 0x19) {
                     for (Vert *it = mVerts.begin(); it != mVerts.end(); ++it) {
@@ -515,7 +515,7 @@ BEGIN_LOADS(RndMesh)
                 }
                 mBones[0].mOffset.Reset();
                 mBones[1].mBone = trans;
-                d.stream >> mBones[2].mBone >> mBones[1].mOffset >> mBones[2].mOffset;
+                d >> mBones[2].mBone >> mBones[1].mOffset >> mBones[2].mOffset;
                 mBones[3].mBone = nullptr;
             }
             for (int i = 0; i < 4; i++) {
@@ -770,7 +770,7 @@ void RndMesh::LoadVertices(BinStreamRev &d) {
         if (!b3) {
             MILO_NOTIFY(
                 "Loaded stale compressed vertex data, resave mesh file \"%s\"(loaded size = %d, current = %d; loaded ver = %d, current = %d",
-                d.stream.Name(),
+                d.Name(),
                 loadedCompressedSize,
                 vertSize,
                 loadedVersion,
@@ -789,12 +789,12 @@ void RndMesh::LoadVertices(BinStreamRev &d) {
                     MemDoTempAllocations tmp;
                     mCompressedVerts = new unsigned char[compressedSize];
                 }
-                ReadChunks(d.stream, mCompressedVerts, compressedSize, i99);
+                ReadChunks(d, mCompressedVerts, compressedSize, i99);
             }
         } else {
             loadedCompressedSize *= numVerts;
             MILO_ASSERT(loadedCompressedSize> 0, 0x2E7);
-            d.stream.Seek(loadedCompressedSize, BinStream::kSeekCur);
+            d.Seek(loadedCompressedSize, BinStream::kSeekCur);
         }
     } else {
         mVerts.resize(numVerts);
@@ -803,7 +803,7 @@ void RndMesh::LoadVertices(BinStreamRev &d) {
             d >> *it;
             i5++;
             if ((i5 & 0x1FF) == 0) {
-                while (d.stream.Eof() != NotEof) {
+                while (d.Eof() != NotEof) {
                     Timer::Sleep(0);
                 }
             }

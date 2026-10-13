@@ -88,11 +88,11 @@ void HamScrollSpeedIndicator::PreLoad(BinStream &bs) {
     LOAD_REVS(bs);
     ASSERT_REVS(2, 0)
     RndDir::PreLoad(bs);
-    d.PushRev(this);
+    PUSH_REVS(d);
 }
 
 void HamScrollSpeedIndicator::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
+    POP_REVS(bs);
     RndDir::PostLoad(bs);
     if (d.rev >= 1) {
         d >> mEnterAnim;

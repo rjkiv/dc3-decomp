@@ -236,7 +236,7 @@ BEGIN_LOADS(Sfx)
         }
     }
     if (d.rev >= 9) {
-        mFaders.Load(d.stream);
+        mFaders.Load(d);
     }
     if (d.rev >= 0xC) {
         d >> mReverbMixDb >> mReverbEnable;

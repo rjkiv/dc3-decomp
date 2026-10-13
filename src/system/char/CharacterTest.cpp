@@ -102,11 +102,11 @@ BEGIN_LOADS(CharacterTest)
         );
     }
     if (d.rev != 0xD)
-        mDriver.Load(d.stream, false, mMe);
+        mDriver.Load(d, false, mMe);
 
     if (Clips()) {
-        mClip1.Load(d.stream, true, Clips());
-        mClip2.Load(d.stream, true, Clips());
+        mClip1.Load(d, true, Clips());
+        mClip2.Load(d, true, Clips());
     } else {
         Symbol s;
         d >> s;
@@ -115,7 +115,7 @@ BEGIN_LOADS(CharacterTest)
         mClip2 = nullptr;
     }
     d >> mTeleportTo;
-    mWalkPath.Load(d.stream, false, nullptr, true);
+    mWalkPath.Load(d, false, nullptr, true);
     d >> mShowDistMap;
     d >> mTransition;
     d >> mCycleTransition;
@@ -355,8 +355,10 @@ void CharacterTest::Poll() {
                 if (drivs->GetClip() != mClip1) {
                     PlayNew();
                 }
-            } else if (drivs->GetClip() != mClip1 && drivs->GetClip() != mClip2
-                       || (drivs->GetClip() == mClip2 && drivs->mBeat > mPopFrame)) {
+            } else if (
+                drivs->GetClip() != mClip1 && drivs->GetClip() != mClip2
+                || (drivs->GetClip() == mClip2 && drivs->mBeat > mPopFrame)
+            ) {
                 PlayNew();
             }
         }

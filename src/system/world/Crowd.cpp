@@ -320,7 +320,7 @@ BEGIN_LOADS(WorldCrowd)
                         d >> count;
                         instances.resize(count);
                         FOREACH (instIt, instances) {
-                            instIt->LoadRev(d.stream, 3);
+                            instIt->LoadRev(d, 3);
                         }
                     }
                 } else if (d.rev > 3) {

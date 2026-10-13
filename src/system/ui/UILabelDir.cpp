@@ -100,13 +100,13 @@ INIT_REVS(11, 0)
 void UILabelDir::PreLoad(BinStream &bs) {
     LOAD_REVS(bs);
     ASSERT_REVS(11, 0);
-    RndDir::PreLoad(d.stream);
-    d.PushRev(this);
+    RndDir::PreLoad(d);
+    PUSH_REVS(d);
 }
 
 void UILabelDir::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
-    RndDir::PostLoad(d.stream);
+    POP_REVS(bs);
+    RndDir::PostLoad(d);
     if (d.rev < 10) {
         String s;
         d >> s;
@@ -149,7 +149,7 @@ void UILabelDir::PostLoad(BinStream &bs) {
         mColors[i] = color;
     }
     if (d.rev >= 8) {
-        UIFontImporter::Load(d.stream);
+        UIFontImporter::Load(d);
     }
 }
 

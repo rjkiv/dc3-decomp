@@ -475,15 +475,15 @@ BinStream &operator<<(BinStream &bs, const ObjectStage &stage) {
     return bs;
 }
 
-BinStreamRev &operator>>(BinStreamRev &bs, ObjectStage &stage) {
+BinStreamRev &operator>>(BinStreamRev &d, ObjectStage &stage) {
     ObjectDir *dir = nullptr;
-    if (bs.rev > 8) {
+    if (d.rev > 8) {
         ObjPtr<ObjectDir> dirPtr(stage.Owner(), nullptr);
-        dirPtr.Load(bs.stream, true, dir);
+        dirPtr.Load(d, true, dir);
         dir = dirPtr.Ptr();
     }
-    stage.Load(bs.stream, true, dir);
-    return bs;
+    stage.Load(d, true, dir);
+    return d;
 }
 
 #pragma endregion

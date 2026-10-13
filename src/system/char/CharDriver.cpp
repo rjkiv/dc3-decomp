@@ -202,10 +202,10 @@ BEGIN_LOADS(CharDriver)
     }
     SyncInternalBones();
     if (d.rev > 3) {
-        mTestClip.Load(d.stream, false, mClips);
+        mTestClip.Load(d, false, mClips);
     }
     if (d.rev > 0xB) {
-        mDefaultClip.Load(d.stream, false, mClips);
+        mDefaultClip.Load(d, false, mClips);
     }
     if (d.rev > 0xD)
         d >> mDefaultPlayStarved;

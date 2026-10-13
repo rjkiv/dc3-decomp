@@ -96,7 +96,7 @@ BEGIN_LOADS(RndTransAnim)
     }
     LOAD_SUPERCLASS(RndAnimatable)
     if (d.rev < 6) {
-        RndDrawable::DumpLoad(d.stream);
+        RndDrawable::DumpLoad(d);
     }
     d >> mTrans;
     if (d.rev != 2) {
@@ -114,7 +114,7 @@ BEGIN_LOADS(RndTransAnim)
             FOREACH (it, mTransKeys) {
                 int i1, i2, i3;
                 Vector3 v1, v2;
-                d.stream >> it->value >> i1 >> i2 >> i3 >> v1 >> v2 >> it->frame;
+                d >> it->value >> i1 >> i2 >> i3 >> v1 >> v2 >> it->frame;
             }
         }
         d >> numKeys;
@@ -123,7 +123,7 @@ BEGIN_LOADS(RndTransAnim)
             FOREACH (it, mRotKeys) {
                 int i1, i2, i3;
                 Hmx::Quat v1, v2;
-                d.stream >> it->value >> i1 >> i2 >> i3 >> v1 >> v2 >> it->frame;
+                d >> it->value >> i1 >> i2 >> i3 >> v1 >> v2 >> it->frame;
             }
         }
         int c0;
@@ -151,7 +151,7 @@ BEGIN_LOADS(RndTransAnim)
                 FOREACH (it, mScaleKeys) {
                     int i1, i2, i3;
                     Vector3 v1, v2;
-                    d.stream >> it->value >> i1 >> i2 >> i3 >> v1 >> v2 >> it->frame;
+                    d >> it->value >> i1 >> i2 >> i3 >> v1 >> v2 >> it->frame;
                 }
             }
         }

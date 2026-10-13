@@ -232,7 +232,8 @@ BEGIN_LOADS(StreamRenderer)
     d >> (int &)mDisplay;
     if (d.rev > 1) {
         d >> mPlayer1DepthColor >> mPlayer2DepthColor >> mPlayer3DepthColor
-            >> mPlayerDepthNobody >> mPlayer1DepthPalette >> mPlayer1DepthPaletteOffset;
+            >> mPlayerDepthNobody;
+        d >> mPlayer1DepthPalette >> mPlayer1DepthPaletteOffset;
     }
     if (d.rev > 2) {
         d >> mBackgroundDepthPalette >> mBackgroundDepthPaletteOffset;
@@ -254,8 +255,8 @@ BEGIN_LOADS(StreamRenderer)
         d >> mPlayerOtherDepthPalette;
         d >> mPlayerOtherDepthPaletteOffset;
     } else {
-        mPlayerOtherDepthPalette = mPlayer1DepthPalette;
-        mPlayerOtherDepthPaletteOffset = mPlayer1DepthPaletteOffset;
+        mPlayerOtherDepthPalette = mPlayer2DepthPalette;
+        mPlayerOtherDepthPaletteOffset = mPlayer2DepthPaletteOffset;
     }
     if (d.rev > 7) {
         d >> mDrawPreClear;

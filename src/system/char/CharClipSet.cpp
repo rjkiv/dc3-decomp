@@ -96,13 +96,13 @@ void CharClipSet::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(24, 0)
     MILO_ASSERT(d.rev > 3, 0x97);
-    ObjectDir::PreLoad(d.stream);
-    d.PushRev(this);
+    ObjectDir::PreLoad(d);
+    PUSH_REVS(d);
 }
 
 void CharClipSet::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
-    ObjectDir::PostLoad(d.stream);
+    POP_REVS(bs);
+    ObjectDir::PostLoad(d);
     if (!IsProxy()) {
         if (d.rev < 0x11) {
             int x, y;
@@ -165,11 +165,11 @@ void CharClipSet::PostLoad(BinStream &bs) {
             d >> count;
             char buf[0x100];
             for (int i = 0; i < count; i++) {
-                d.stream.ReadString(buf, 0x100);
+                d.ReadString(buf, 0x100);
             }
             d >> count;
             for (int i = 0; i < count; i++) {
-                d.stream.ReadString(buf, 0x100);
+                d.ReadString(buf, 0x100);
             }
             bool b;
             d >> b;

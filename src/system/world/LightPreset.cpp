@@ -95,7 +95,7 @@ BinStream &operator<<(BinStream &bs, const LightPreset::EnvironmentEntry &e) {
 }
 
 BinStreamRev &operator>>(BinStreamRev &d, LightPreset::EnvironmentEntry &e) {
-    e.Load(d.stream);
+    e.Load(d);
     return d;
 }
 
@@ -154,7 +154,7 @@ BinStream &operator<<(BinStream &bs, const LightPreset::EnvLightEntry &e) {
 }
 
 BinStreamRev &operator>>(BinStreamRev &d, LightPreset::EnvLightEntry &e) {
-    e.Load(d.stream);
+    e.Load(d);
     return d;
 }
 
@@ -185,7 +185,7 @@ void LightPreset::SpotlightEntry::Load(BinStreamRev &d) {
     d >> color;
     color.alpha = 1;
     mColor = color.Pack();
-    if (!mTarget.Load(d.stream, false, nullptr)) {
+    if (!mTarget.Load(d, false, nullptr)) {
         mFlags &= ~2;
     }
     if (d.rev < 0x13) {
@@ -352,7 +352,7 @@ void LightPreset::Keyframe::Load(BinStreamRev &d) {
         d >> mTriggers;
     }
     if (d.rev > 0xB && d.rev < 0x16) {
-        LegacyLoadStageKit(d.stream);
+        LegacyLoadStageKit(d);
     }
 }
 
@@ -370,7 +370,7 @@ void LightPreset::Keyframe::LegacyLoadP9(BinStreamRev &d) {
     d >> mEnvironmentEntries;
     d >> mLightEntries;
     d >> mSpotlightDrawerEntries;
-    LegacyLoadStageKit(d.stream);
+    LegacyLoadStageKit(d);
 }
 
 BinStream &operator<<(BinStream &bs, const LightPreset::Keyframe &k) {

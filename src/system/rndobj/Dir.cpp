@@ -86,33 +86,33 @@ INIT_REVS(10, 0)
 void RndDir::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(10, 0)
-    ObjectDir::PreLoad(bs);
-    bs.PushRev(packRevs(d.altRev, d.rev), this);
+    ObjectDir::PreLoad(d);
+    PUSH_REVS(d);
 }
 
 void RndDir::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
+    POP_REVS(bs);
     ObjectDir::PostLoad(bs);
-    RndAnimatable::Load(d.stream);
-    RndDrawable::Load(d.stream);
+    RndAnimatable::Load(d);
+    RndDrawable::Load(d);
     if (d.rev > 0) {
-        RndTransformable::Load(d.stream);
+        RndTransformable::Load(d);
     }
     if (d.rev > 1) {
         if (gLoadingProxyFromDisk) {
             ObjPtr<RndEnviron> env(this);
-            env.Load(d.stream, false, nullptr);
+            env.Load(d, false, nullptr);
         } else {
-            d.stream >> mEnv;
+            d >> mEnv;
         }
     }
     if (d.rev > 2 && d.rev != 9) {
-        d.stream >> mTestEvent;
+        d >> mTestEvent;
     }
     if (d.rev > 3 && d.rev < 9) {
         Symbol s;
-        d.stream >> s;
-        d.stream >> s;
+        d >> s;
+        d >> s;
     }
     if (d.rev > 4 && d.rev < 8) {
         RndPostProc *pp = Hmx::Object::New<RndPostProc>();

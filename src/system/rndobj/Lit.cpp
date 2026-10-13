@@ -118,7 +118,7 @@ BEGIN_LOADS(RndLight)
     d >> mColor;
     if (d.rev < 2) {
         Hmx::Color col1, col2;
-        d.stream >> col1 >> col2;
+        d >> col1 >> col2;
     }
     if (d.rev < 3) {
         int i, j;

@@ -141,20 +141,19 @@ BEGIN_COPYS(SkeletonClip)
     END_COPYING_MEMBERS
 END_COPYS
 
+INIT_REVS(9, 1)
+
 BEGIN_LOADS(SkeletonClip)
     const char *pathName = PathName(this);
     Symbol className = ClassName();
-    int revs;
-    bs >> revs;
-    BinStreamRev d(bs, revs);
+    LOAD_REVS(bs);
     if (d.rev == 10) {
         d.altRev = 1;
         d.rev = 9;
     }
-    static const unsigned short gRevs[4] = { 9, 0, 1, 0 };
     if (d.rev > 9) {
         MILO_FAIL(
-            "%s can't load new %s version %d > %d", pathName, className, d.rev, gRevs[0]
+            "%s can't load new %s version %d > %d", pathName, className, d.rev, gRev
         );
     }
     if (d.altRev > 1) {
@@ -163,7 +162,7 @@ BEGIN_LOADS(SkeletonClip)
             pathName,
             className,
             d.altRev,
-            gRevs[2]
+            gAltRev
         );
     }
     RndAnimatable::Load(bs);
@@ -336,7 +335,7 @@ BinStream &operator>>(BinStreamRev &d, SkeletonClip::MoveRating &mr) {
     } else {
         mr.unkc = 2;
     }
-    return d.stream;
+    return d;
 }
 
 int SkeletonClip::NumMoveRatings() const { return mMoveRatings.size(); }

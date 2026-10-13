@@ -104,7 +104,8 @@ BEGIN_COPYS(RndLine)
 END_COPYS
 
 BinStreamRev &operator>>(BinStreamRev &d, RndLine::Point &pt) {
-    d >> pt.point >> pt.color;
+    d >> pt.point;
+    d >> pt.color;
     return d;
 }
 

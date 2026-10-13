@@ -73,16 +73,16 @@ INIT_REVS(3, 0)
 void UISlider::PreLoad(BinStream &bs) {
     LOAD_REVS(bs);
     ASSERT_REVS(3, 0);
-    UIComponent::PreLoad(d.stream);
+    UIComponent::PreLoad(d);
     if (d.rev >= 3) {
         d >> mSliderResource;
     }
-    d.PushRev(this);
+    PUSH_REVS(d);
 }
 
 void UISlider::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
-    UIComponent::PostLoad(d.stream);
+    POP_REVS(bs);
+    UIComponent::PostLoad(d);
     mSliderResource.PostLoad(nullptr);
     if (d.rev > 0) {
         d >> mSelectToScroll;

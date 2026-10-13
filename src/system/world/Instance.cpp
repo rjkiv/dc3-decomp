@@ -69,19 +69,19 @@ void WorldInstance::PreLoad(BinStream &bs) {
     } else
         d >> mDir;
 
-    RndDir::PreLoad(d.stream);
+    RndDir::PreLoad(d);
     if (ObjectDir::ProxyFile().length() != 0) {
         MILO_NOTIFY(
             "WorldInstance %s was created as RndDir. Object needs to be deleted and recreated.",
             Name()
         );
     }
-    d.PushRev(this);
+    PUSH_REVS(d);
 }
 
 void WorldInstance::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
-    RndDir::PostLoad(d.stream);
+    POP_REVS(bs);
+    RndDir::PostLoad(d);
     if (d.rev > 0) {
         auto &ptr = PostLoadInlined();
         mDir = dynamic_cast<WorldInstance *>(ptr.Ptr());
@@ -221,7 +221,7 @@ void WorldInstance::LoadPersistentObjects(BinStreamRev &d) {
             Symbol objClassName;
             d >> objClassName;
             char objName[0x80];
-            d.stream.ReadString(objName, 0x80);
+            d.ReadString(objName, 0x80);
             if (!Hmx::Object::RegisteredFactory(objClassName)) {
                 MILO_NOTIFY("%s: Can't make %s", StoredFile().c_str(), objClassName);
                 DeleteObjects();
@@ -246,8 +246,8 @@ void WorldInstance::LoadPersistentObjects(BinStreamRev &d) {
         }
         while (!objlist.empty()) {
             Hmx::Object *cur = objlist.front();
-            cur->PreLoad(d.stream);
-            cur->PostLoad(d.stream);
+            cur->PreLoad(d);
+            cur->PostLoad(d);
             objlist.pop_front();
         }
         if (mDir) {

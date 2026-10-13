@@ -126,8 +126,8 @@ void LabelNumberTicker::PreLoad(BinStream &bs) {
         d >> mTickTrigger;
         d >> mTickEvery;
     }
-    UIComponent::PreLoad(d.stream);
-    d.PushRev(this);
+    UIComponent::PreLoad(d);
+    PUSH_REVS(d);
 }
 
 void LabelNumberTicker::SnapToValue(int i) {

@@ -591,7 +591,7 @@ BEGIN_LOADS(RndParticleSys)
     d >> mEmitRate;
     if (d.rev > 0x20) {
         d >> mMaxBurst;
-        d.stream >> mBurstInterval >> mBurstPeak >> mBurstLength;
+        d >> mBurstInterval >> mBurstPeak >> mBurstLength;
     }
     d >> mStartSize;
     if (d.rev > 0xF)
@@ -610,8 +610,8 @@ BEGIN_LOADS(RndParticleSys)
             d >> p;
         } else {
             Vector3 v1;
-            d.stream >> v1 >> p.a >> p.b >> p.c;
-            p.d = -Dot(v1, reinterpret_cast<Vector3 &>(p));
+            d >> v1 >> p.a >> p.b >> p.c;
+            p.d = -Dot(reinterpret_cast<Vector3 &>(p), v1);
         }
         if (ba7) {
             bool old = TheLoadMgr.EditMode();
@@ -620,11 +620,10 @@ BEGIN_LOADS(RndParticleSys)
             mBounce = Dir()->New<RndTransformable>(bounceName);
             TheLoadMgr.SetEditMode(old);
             Transform worldXfm;
-            Vector3 v128(reinterpret_cast<Vector3 &>(p));
-            worldXfm.m.z = v128;
             worldXfm.v = p.On();
-            Cross(Vector3(0, 1, 0), v128, worldXfm.m.x);
-            Cross(v128, worldXfm.m.x, worldXfm.m.y);
+            worldXfm.m.z = reinterpret_cast<Vector3 &>(p);
+            Cross(Vector3(0, 1, 0), worldXfm.m.z, worldXfm.m.x);
+            Cross(worldXfm.m.z, worldXfm.m.x, worldXfm.m.y);
             Normalize(worldXfm.m.x, worldXfm.m.x);
             Normalize(worldXfm.m.y, worldXfm.m.y);
             mBounce->SetWorldXfm(worldXfm);
@@ -637,14 +636,14 @@ BEGIN_LOADS(RndParticleSys)
     d >> mMat;
     if (d.rev > 0x17 && d.rev < 0x19) {
         char buf[0x80];
-        d.stream.ReadString(buf, 0x80);
+        d.ReadString(buf, 0x80);
         if (!mMat && buf[0] != '\0') {
             mMat = LookupOrCreateMat(buf, Dir());
         }
     }
     if (d.rev > 0x11) {
         d >> (int &)mType >> mGrowRatio >> mShrinkRatio >> mMidColorRatio;
-        d.stream >> mMidColorLow >> mMidColorHigh;
+        d >> mMidColorLow >> mMidColorHigh;
     } else if (d.rev < 0xD) {
         int i94;
         d >> i94;
@@ -661,18 +660,17 @@ BEGIN_LOADS(RndParticleSys)
         }
     }
     if (d.rev > 3) {
-        d.stream >> mBubblePeriod >> mBubbleSize >> mBubble;
+        d >> mBubblePeriod >> mBubbleSize >> mBubble;
     }
     if (d.rev > 0x1D) {
-        d >> mRotate >> mRPM;
-        d >> mRPMDrag;
+        d >> mRotate >> mRPM >> mRPMDrag;
         if (d.rev > 0x24) {
             d >> mRandomDirection;
         }
         d >> mDrag;
     }
     if (d.rev > 0x1F) {
-        d.stream >> mStartOffset >> mEndOffset;
+        d >> mStartOffset >> mEndOffset;
         d >> mAlignWithVelocity >> mStretchWithVelocity >> mConstantArea >> mStretchScale;
     }
     if (d.rev > 0x21) {

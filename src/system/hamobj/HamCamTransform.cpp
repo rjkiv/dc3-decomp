@@ -76,7 +76,7 @@ void TransformCrowd::Save(BinStream &bs) const {
 }
 
 BinStreamRev &operator>>(BinStreamRev &d, TransformCrowd &c) {
-    c.Load(d.stream);
+    c.Load(d);
     return d;
 }
 
@@ -99,7 +99,7 @@ BinStream &operator<<(BinStream &bs, const TransformArea &a) {
 
 BinStream &operator>>(BinStreamRev &d, TransformArea &a) {
     a.Load(d);
-    return d.stream;
+    return d;
 }
 
 void TransformArea::Save(BinStream &bs) const {
@@ -112,7 +112,7 @@ void TransformArea::Save(BinStream &bs) const {
 
 void TransformArea::Load(BinStreamRev &d) {
     d >> mArea;
-    mCamshots.Load(d.stream, false, nullptr, true);
+    mCamshots.Load(d, false, nullptr, true);
     d >> mAnims;
     if (d.rev > 1) {
         d >> mCrowds;

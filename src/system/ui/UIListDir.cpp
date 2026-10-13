@@ -94,11 +94,11 @@ void UIListDir::PreLoad(BinStream &bs) {
     LOAD_REVS(bs);
     ASSERT_REVS(1, 0);
     RndDir::PreLoad(bs);
-    d.PushRev(this);
+    PUSH_REVS(d);
 }
 
 void UIListDir::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
+    POP_REVS(bs);
     RndDir::PostLoad(bs);
     int orientation;
     d >> orientation;

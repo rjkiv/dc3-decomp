@@ -37,7 +37,7 @@ BEGIN_LOADS(UITrigger)
     ASSERT_REVS(1, 0)
     if (d.rev < 1) {
         UIComponent *uiCom = Hmx::Object::New<UIComponent>();
-        uiCom->Load(d.stream);
+        uiCom->Load(d);
         delete uiCom;
         Symbol sym;
         d >> sym;

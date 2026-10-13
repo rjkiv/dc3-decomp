@@ -211,7 +211,7 @@ INIT_REVS(0x21, 1)
 void UILabel::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(0x21, 1)
-    UIComponent::PreLoad(d.stream);
+    UIComponent::PreLoad(d);
     if (d.rev > 0x1B) {
         d >> mTextToken;
         d >> mEditText;
@@ -330,7 +330,7 @@ void UILabel::PreLoad(BinStream &bs) {
             d >> Style(0).mInfo.mFontColor.alpha;
         }
         if (d.rev > 0xC) {
-            BinStream &bs2 = d.stream;
+            BinStream &bs2 = d;
             bs2 >> LStyle(0).mColorOverride;
         }
         if (d.rev > 0x10 && d.rev < 0x1D) {
@@ -368,55 +368,55 @@ void UILabel::PreLoad(BinStream &bs) {
         if (d.rev > 0x14) {
             Symbol s;
             d >> s;
-            d.stream.PushRev((int)s, this);
+            d.PushRev((int)s, this);
         }
         char name[256];
         char name2[256];
         if (d.rev > 0x15) {
             if (mLabelStyles.size() == 2) {
-                BinStream &bs2 = d.stream;
+                BinStream &bs2 = d;
                 ResourceDirPtr<UILabelDir> &rsrc = LStyle(1).mFontResource;
                 bs2.ReadString(name, 256);
                 rsrc.SetName(name, true);
             } else {
-                d.stream.ReadString(name2, 256);
+                d.ReadString(name2, 256);
             }
         }
         if (d.rev > 0x16) {
             Symbol s;
             d >> s;
-            d.stream.PushRev((int)s, this);
+            d.PushRev((int)s, this);
         }
         if (d.rev > 0x17) {
             d >> Style(1).mInfo.mItalics;
             d >> Style(1).mInfo.mFontColor.alpha;
         }
     }
-    d.PushRev(this);
+    PUSH_REVS(d);
 }
 
 void UILabel::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
+    POP_REVS(bs);
     for (int i = 0; i < mLabelStyles.size(); i++) {
         mLabelStyles[i].mFontResource.PostLoad(nullptr);
     }
     if (d.rev >= 0x1C) {
         for (int i = 0; i < mLabelStyles.size(); i++) {
             char name[256];
-            d.stream.ReadString(name, 256);
+            d.ReadString(name, 256);
             SetFontMat(name, i);
         }
     } else if (d.rev > 0x14) {
         if (d.rev > 0x16) {
-            SetFontMat((const char *)d.stream.PopRev(this), 1);
+            SetFontMat((const char *)d.PopRev(this), 1);
         }
-        SetFontMat((const char *)d.stream.PopRev(this), 0);
+        SetFontMat((const char *)d.PopRev(this), 0);
     } else {
         for (int i = 0; i < mLabelStyles.size(); i++) {
             SetFontMat("", i);
         }
     }
-    UIComponent::PostLoad(d.stream);
+    UIComponent::PostLoad(d);
     sDeferUpdate = true;
     if (mIcon[0] != 0) {
         SetText(mIcon);

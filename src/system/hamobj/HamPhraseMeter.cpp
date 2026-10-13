@@ -57,14 +57,14 @@ INIT_REVS(3, 0)
 void HamPhraseMeter::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(3, 0)
-    RndDir::PreLoad(d.stream);
-    d.PushRev(this);
+    RndDir::PreLoad(d);
+    PUSH_REVS(d);
 }
 
 void HamPhraseMeter::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
-    RndDir::PostLoad(d.stream);
-    mAnim.Load(d.stream, false, this);
+    POP_REVS(bs);
+    RndDir::PostLoad(d);
+    mAnim.Load(d, false, this);
     d >> mRatingFrac;
     d >> mRating;
     d >> mDesiredFPB;

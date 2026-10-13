@@ -55,7 +55,7 @@ BinStream &operator>>(BinStreamRev &d, InlineHelp::ActionElement &a) {
         d >> token;
         a.SetToken(token, true);
     }
-    return d.stream;
+    return d;
 }
 
 void InlineHelp::ActionElement::SetToken(Symbol token, bool secondary) {
@@ -210,8 +210,8 @@ void InlineHelp::PreLoad(BinStream &bs) {
     if (d.rev >= 5) {
         d >> mResourceDir;
     }
-    UIComponent::PreLoad(d.stream);
-    d.PushRev(this);
+    UIComponent::PreLoad(d);
+    PUSH_REVS(d);
 }
 
 void InlineHelp::PostLoad(BinStream &bs) {

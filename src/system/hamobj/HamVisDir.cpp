@@ -168,11 +168,11 @@ void HamVisDir::PreLoad(BinStream &bs) {
     } else {
         SkeletonDir::PreLoad(bs);
     }
-    d.PushRev(this);
+    PUSH_REVS(d);
 }
 
 void HamVisDir::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
+    POP_REVS(bs);
     if (d.rev < 1) {
         PanelDir::PostLoad(bs);
     } else {

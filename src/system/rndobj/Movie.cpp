@@ -73,11 +73,11 @@ void RndMovie::PreLoad(BinStream &bs) {
     if (d.rev > 7 && !mStream) {
         TheLoadMgr.AddLoader(mFile, kLoadFront);
     }
-    d.PushRev(this);
+    PUSH_REVS(d);
 }
 
 void RndMovie::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
+    POP_REVS(bs);
     if (d.rev > 5) {
         d >> mLoop;
     } else if (d.rev == 5) {

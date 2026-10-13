@@ -51,7 +51,7 @@ BEGIN_LOADS(CharDriverMidi)
     ASSERT_REVS(7, 0)
     LOAD_SUPERCLASS(CharDriver)
     if (d.rev < 7) {
-        mDefaultClip.Load(d.stream, false, mClips);
+        mDefaultClip.Load(d, false, mClips);
     }
     if (d.rev == 2) {
         String str;

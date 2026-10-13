@@ -101,13 +101,13 @@ INIT_REVS(8, 0)
 void PanelDir::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(8, 0)
-    RndDir::PreLoad(d.stream);
-    d.PushRev(this);
+    RndDir::PreLoad(d);
+    PUSH_REVS(d);
 }
 
 void PanelDir::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
-    RndDir::PostLoad(d.stream);
+    POP_REVS(bs);
+    RndDir::PostLoad(d);
     if (!IsProxy()) {
         if (d.rev > 0) {
             d >> mCam;

@@ -98,9 +98,9 @@ BEGIN_LOADS(FlowAnimate)
     ASSERT_REVS(3, 0)
     LOAD_SUPERCLASS(FlowNode)
     if (d.rev < 3) {
-        mAnim = mAnim.LoadFromMainOrDir(d.stream);
+        mAnim = mAnim.LoadFromMainOrDir(d);
     } else {
-        mAnim.LoadFromMainOrDir(d.stream);
+        mAnim.LoadFromMainOrDir(d);
     }
     d >> mBlend >> mWait >> mDelay;
     d >> (int &)mStopMode >> mEnable >> (int &)mRate >> mStart;

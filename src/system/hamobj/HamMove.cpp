@@ -44,7 +44,7 @@ BinStream &operator>>(BinStreamRev &d, Ham1NodeWeight &wt) {
         d >> wt.mHasError;
     } else
         wt.mHasError = 1;
-    return d.stream;
+    return d;
 }
 
 BinStream &operator>>(BinStreamRev &d, OldNodeWeight &wt) {
@@ -66,7 +66,7 @@ BinStream &operator>>(BinStreamRev &d, OldNodeWeight &wt) {
     } else {
         wt.mWeight = 1;
     }
-    return d.stream;
+    return d;
 }
 
 BinStream &operator<<(BinStream &bs, const Ham2FrameWeight &wt) {
@@ -112,7 +112,7 @@ BinStream &operator>>(BinStreamRev &d, Ham2FrameWeight &wt) {
             wt.mMinFeedbackOffPSNRs[i] = kHugeFloat;
         }
     }
-    return d.stream;
+    return d;
 }
 
 #pragma region MoveFrame

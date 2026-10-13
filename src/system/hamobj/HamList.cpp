@@ -39,14 +39,14 @@ void HamList::PreLoad(BinStream &bs) {
     if (d.rev <= 17) {
         UIList::PreLoadWithRev(d);
     } else {
-        UIList::PreLoad(d.stream);
+        UIList::PreLoad(d);
     }
-    d.PushRev(this);
+    PUSH_REVS(d);
 }
 
 void HamList::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
-    UIList::PostLoad(d.stream);
+    POP_REVS(bs);
+    UIList::PostLoad(d);
     if (d.rev >= 18 && d.rev < 19) {
         ObjPtr<RndAnimatable> anim(this);
         d >> anim;

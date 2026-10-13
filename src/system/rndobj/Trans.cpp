@@ -227,7 +227,7 @@ BEGIN_LOADS(RndTransformable)
     if (d.rev > 5) {
         if (gLoadingProxyFromDisk) {
             ObjPtr<RndTransformable> tPtr(this);
-            tPtr.Load(d.stream, false, nullptr);
+            tPtr.Load(d, false, nullptr);
         } else
             d >> mTarget;
     }
@@ -239,7 +239,7 @@ BEGIN_LOADS(RndTransformable)
             d >> tPtr;
             SetTransParent(tPtr, false);
         } else {
-            tPtr.Load(d.stream, false, nullptr);
+            tPtr.Load(d, false, nullptr);
         }
     } else if (d.rev > 6) {
         ObjPtr<RndTransformable> tPtr(this);

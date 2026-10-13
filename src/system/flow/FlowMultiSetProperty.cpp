@@ -48,7 +48,7 @@ BEGIN_LOADS(FlowMultiSetProperty)
     LOAD_REVS(bs)
     ASSERT_REVS(0, 0)
     LOAD_SUPERCLASS(FlowNode)
-    unk5c.Load(d.stream, true, static_cast<Flow *>(Dir())->LoadingDir());
+    unk5c.Load(d, true, static_cast<Flow *>(Dir())->LoadingDir());
     d >> unk70 >> unk78;
 END_LOADS
 

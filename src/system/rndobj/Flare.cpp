@@ -86,7 +86,7 @@ BEGIN_LOADS(RndFlare)
         mSizes.y = mSizes.x;
     }
     if (d.rev > 1) {
-        d.stream >> mRange >> mSteps;
+        d >> mRange >> mSteps;
     }
     if (d.rev > 4) {
         d >> mPointTest;

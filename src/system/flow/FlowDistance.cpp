@@ -56,8 +56,8 @@ BEGIN_LOADS(FlowDistance)
     LOAD_REVS(bs)
     ASSERT_REVS(0, 0)
     LOAD_SUPERCLASS(FlowNode)
-    mObj1.LoadFromMainOrDir(d.stream);
-    mObj2.LoadFromMainOrDir(d.stream);
+    mObj1.LoadFromMainOrDir(d);
+    mObj2.LoadFromMainOrDir(d);
     d >> mPersistent;
     d >> mDistance;
     d >> mRunInRange;

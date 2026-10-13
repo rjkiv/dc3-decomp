@@ -94,7 +94,7 @@ BEGIN_LOADS(RndMeshDeform)
         d >> mBones[i];
     }
     if (d.rev > 0) {
-        mVerts.Load(d.stream);
+        mVerts.Load(d);
     }
     d >> mMeshInverse;
     mSkipInverse = mMeshInverse.v == Vector3(0, 0, 0)

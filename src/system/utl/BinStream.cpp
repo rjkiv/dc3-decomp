@@ -212,7 +212,7 @@ BinStream::~BinStream() {
 
 void BinStream::PushRev(int revs, Hmx::Object *obj) {
     if (!mRevStack) {
-        mRevStack = new std::vector<ObjVersion>();
+        mRevStack = new RevStack();
     }
     mRevStack->push_back(ObjVersion(revs, obj));
 }

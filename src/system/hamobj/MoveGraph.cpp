@@ -41,11 +41,11 @@ BEGIN_LOADS(MoveGraph)
             Timer::Sleep(100);
         }
         MoveParent *parent = new MoveParent();
-        parent->Load(d.stream, this);
+        parent->Load(d, this);
         mNodes[parent->GetName()] = parent;
     }
     CacheLinks();
-    mLayoutData->Load(d.stream);
+    mLayoutData->Load(d);
 END_LOADS
 
 MoveGraph &MoveGraph::operator=(const MoveGraph &graph) {

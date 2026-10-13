@@ -82,11 +82,11 @@ void CharBoneDir::PreLoad(BinStream &bs) {
     LOAD_REVS(bs)
     ASSERT_REVS(4, 0)
     ObjectDir::PreLoad(bs);
-    d.PushRev(this);
+    PUSH_REVS(d);
 }
 
 void CharBoneDir::PostLoad(BinStream &bs) {
-    BinStreamRev d(bs, bs.PopRev(this));
+    POP_REVS(bs);
     ObjectDir::PostLoad(bs);
     if (d.rev < 2) {
         bool b;
