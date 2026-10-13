@@ -184,7 +184,7 @@ void LightPreset::SpotlightEntry::Load(BinStreamRev &d) {
     Hmx::Color color;
     d >> color;
     color.alpha = 1;
-    mColor = color.Pack();
+    mColor = color.PackRgb();
     if (!mTarget.Load(d, false, nullptr)) {
         mFlags &= ~2;
     }
@@ -227,7 +227,7 @@ void LightPreset::SpotlightEntry::Animate(
     Hmx::Color c38(mColor);
     Hmx::Color c48(entry.mColor);
     Interp(c38, c48, f3, c38);
-    mColor = c38.Pack();
+    mColor = c38.PackRgb();
     Hmx::Quat q58;
     CalculateDirection(spot, q58);
     Hmx::Quat q68;
@@ -493,7 +493,7 @@ BEGIN_CUSTOM_PROPSYNC(LightPreset::EnvLightEntry)
         light, GetName(gEditPreset, _prop->Int(_i - 1), LightPreset::kPresetLight),
     )
     SYNC_PROP(position, o.mPosition)
-    SYNC_PROP_SET(color, o.mColor.Pack(), )
+    SYNC_PROP_SET(color, o.mColor.PackRgb(), )
     SYNC_PROP_SET(range, o.mRange, )
     SYNC_PROP_SET(type, RndLight::TypeToStr(o.mLightType), ) {
         static Symbol _s("rotation");
@@ -1170,7 +1170,7 @@ void LightPreset::Animate(float f) {
 void LightPreset::FillSpotPresetData(Spotlight *spotlight, SpotlightEntry &entry, int i) {
     if ((i & 1) != 0) {
         entry.mIntensity = spotlight->Intensity();
-        entry.mColor = spotlight->Color().Pack();
+        entry.mColor = spotlight->Color().PackRgb();
     }
     if ((i & 2) != 0) {
         entry.mTarget = spotlight->GetTarget();
@@ -1195,7 +1195,7 @@ void LightPreset::AnimateSpotFromPreset(
         Hmx::Color color = spotlight->Color();
         float intensity = spotlight->Intensity();
         Hmx::Color color2;
-        color2.Unpack(entry.mColor);
+        color2.UnpackRgb(entry.mColor);
         if (mHue) {
             mHue->TranslateColor(color2, color2);
         }

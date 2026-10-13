@@ -157,8 +157,9 @@ void RndShader::CheckForceCull(ShaderType s) {
     int shader20 = TheShaderMgr.ForceCullMode();
     if (TheRnd.DrawMode() == Rnd::kDrawExtrude || shader20 == 1) {
         TheRenderState.SetCullMode(RndRenderState::kCullModeNone);
-    } else if (s != kShadowmapShader && shader20 != 3
-               && TheRnd.DrawMode() != Rnd::kDrawReversed) {
+    } else if (
+        s != kShadowmapShader && shader20 != 3 && TheRnd.DrawMode() != Rnd::kDrawReversed
+    ) {
         if (shader20 == 2) {
             TheRenderState.SetCullMode(RndRenderState::kCullModeCW);
         }
@@ -397,14 +398,14 @@ u64 RndShaderMultimesh::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool 
     opts.hasLightsReal = mat->UseEnviron() && env->NumLights_Real() > 0;
     opts.hasLightsApprox = mat->UseEnviron() && env->NumLights_Approx() > 0;
     if (opts.hasLightsReal || opts.hasLightsApprox) {
-        opts.specular = mat->Specular().Pack() != 0;
+        opts.specular = mat->Specular().PackRgb() != 0;
         if (TheShaderMgr.AllowPerPixel() && mat->PerPixelLighting()) {
             opts.perPixel = true;
             opts.normalMap = mat->NormalMap() ? true : false;
             opts.normDetail = mat->NormDetail();
             opts.normalFlip = mat->GetCull() == kCullBackwards ? true : false;
             opts.specularMap = opts.specular && mat->SpecularMap();
-            opts.rimlightEnabled = mat->GetRimColor().Pack() != 0;
+            opts.rimlightEnabled = mat->GetRimColor().PackRgb() != 0;
             opts.rimlightUnder = opts.rimlightEnabled && mat->GetRimLightUnder();
             opts.rimlightMap = opts.rimlightEnabled && mat->GetRimMap();
         }
@@ -498,14 +499,14 @@ u64 RndShaderStandard::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool p
     opts.hasLightsReal = mat->UseEnviron() && env->NumLights_Real() > 0;
     opts.hasLightsApprox = mat->UseEnviron() && env->NumLights_Approx() > 0;
     if (opts.hasLightsReal || opts.hasLightsApprox) {
-        opts.specular = mat->Specular().Pack() != 0;
+        opts.specular = mat->Specular().PackRgb() != 0;
         if (TheShaderMgr.AllowPerPixel() && mat->PerPixelLighting()) {
             opts.perPixel = true;
             opts.normalMap = mat->NormalMap() ? true : false;
             opts.normDetail = mat->NormDetail();
             opts.normalFlip = mat->GetCull() == kCullBackwards ? true : false;
             opts.specularMap = opts.specular && mat->SpecularMap();
-            opts.rimlightEnabled = mat->GetRimColor().Pack() != 0;
+            opts.rimlightEnabled = mat->GetRimColor().PackRgb() != 0;
             opts.rimlightUnder = opts.rimlightEnabled && mat->GetRimLightUnder();
             opts.rimlightMap = opts.rimlightEnabled && mat->GetRimMap();
             opts.shadowMap = TheRnd.GetShadowCam() ? true : false;
@@ -912,14 +913,14 @@ u64 RndShaderSyncTrack::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool 
     opts.hasLightsReal = mat->UseEnviron() && env->NumLights_Real() > 0;
     opts.hasLightsApprox = mat->UseEnviron() && env->NumLights_Approx() > 0;
     if (opts.hasLightsReal || opts.hasLightsApprox) {
-        opts.specular = mat->Specular().Pack() != 0;
+        opts.specular = mat->Specular().PackRgb() != 0;
         if (TheShaderMgr.AllowPerPixel() && mat->PerPixelLighting()) {
             opts.perPixel = true;
             opts.normalMap = mat->NormalMap() ? true : false;
             opts.normDetail = mat->NormDetail();
             opts.normalFlip = mat->GetCull() == kCullBackwards ? true : false;
             opts.specularMap = opts.specular && mat->SpecularMap();
-            opts.rimlightEnabled = mat->GetRimColor().Pack() != 0;
+            opts.rimlightEnabled = mat->GetRimColor().PackRgb() != 0;
             opts.rimlightUnder = opts.rimlightEnabled && mat->GetRimLightUnder();
             opts.rimlightMap = opts.rimlightEnabled && mat->GetRimMap();
             opts.shadowMap = TheRnd.GetShadowCam() ? true : false;

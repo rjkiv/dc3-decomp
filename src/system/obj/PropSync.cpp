@@ -31,9 +31,9 @@ bool PropSync(FilePath &fp, DataNode &node, DataArray *prop, int i, PropOp op) {
 bool PropSync(Hmx::Color &color, DataNode &node, DataArray *prop, int i, PropOp op) {
     MILO_ASSERT(i == prop->Size() && (op & (kPropSet|kPropGet|kPropInsert)), 0x26);
     if (op == kPropGet)
-        node = (int)color.Pack();
+        node = (int)color.PackRgb();
     else
-        color.Unpack(node.Int());
+        color.UnpackRgb(node.Int());
     return true;
 }
 

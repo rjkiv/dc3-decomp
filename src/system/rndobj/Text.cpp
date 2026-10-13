@@ -418,14 +418,14 @@ BEGIN_CUSTOM_PROPSYNC(RndText::Style)
     SYNC_PROP(font, o.mFont)
     SYNC_PROP(size, o.mInfo.mSize)
     SYNC_PROP_SET(
-        text_color, o.mInfo.mTextColor.Pack(), o.mInfo.mTextColor.Unpack(_val.Int())
+        text_color, o.mInfo.mTextColor.PackRgb(), o.mInfo.mTextColor.UnpackRgb(_val.Int())
     )
     SYNC_PROP_SET(
         text_alpha, o.mInfo.mTextColor.alpha, o.mInfo.mTextColor.alpha = _val.Float()
     )
     SYNC_PROP(font_color_override, o.mInfo.mFontColorOverride)
     SYNC_PROP_SET(
-        font_color, o.mInfo.mFontColor.Pack(), o.mInfo.mFontColor.Unpack(_val.Int())
+        font_color, o.mInfo.mFontColor.PackRgb(), o.mInfo.mFontColor.UnpackRgb(_val.Int())
     )
     SYNC_PROP_SET(
         font_alpha, o.mInfo.mFontColor.alpha, o.mInfo.mFontColor.alpha = _val.Float()

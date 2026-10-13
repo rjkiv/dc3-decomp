@@ -38,7 +38,7 @@ public:
     // int operator!=(const ObjDirPtr&) const;
     // void WipeWithoutDeleting();
 
-    bool IsLoaded() const;
+    bool IsLoaded() const { return mObject || (mLoader && mLoader->IsLoaded()); }
 
     void operator=(const ObjDirPtr &oPtr) { *this = (C *)oPtr; }
 

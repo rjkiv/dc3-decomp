@@ -438,7 +438,7 @@ int RndPropAnim::ValueFromFrame(PropKeys *keys, float frame, DataNode *node) {
         case PropKeys::kColor: {
             Hmx::Color col;
             ret = keys->ColorAt(frame, col);
-            *node = col.Pack();
+            *node = col.PackRgb();
             break;
         }
         case PropKeys::kObject: {
@@ -489,7 +489,7 @@ bool RndPropAnim::ValueFromIndex(PropKeys *keys, int index, DataNode *node) {
         break;
     }
     case PropKeys::kColor: {
-        *node = (*keys->AsColorKeys())[index].value.Pack();
+        *node = (*keys->AsColorKeys())[index].value.PackRgb();
         break;
     }
     case PropKeys::kObject: {

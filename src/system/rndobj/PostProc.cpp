@@ -408,7 +408,7 @@ bool RndPostProc::DoChromaticAberration() const {
 bool RndPostProc::DoVignette() const { return mVignetteIntensity != 0; }
 
 bool RndPostProc::DoMotionBlur() const {
-    return mMotionBlurBlend > 0 && mMotionBlurWeight.Pack() > 0
+    return mMotionBlurBlend > 0 && mMotionBlurWeight.PackRgb() > 0
         && !TheHiResScreen.IsActive();
 }
 
@@ -423,9 +423,9 @@ bool RndPostProc::DoHueConverge() const { return true; }
 bool RndPostProc::ColorXfmEnabled() const {
     return mColorModulation != 1 || mColorXfm.mHue != 0 || mColorXfm.mSaturation != 0
         || mColorXfm.mLightness != 0 || mColorXfm.mContrast != 0
-        || mColorXfm.mBrightness != 0 || mColorXfm.mLevelInLo.Pack() != 0
-        || mColorXfm.mLevelOutLo.Pack() != 0 || mColorXfm.mLevelInHi.Pack() != 0xffffff
-        || mColorXfm.mLevelOutHi.Pack() != 0xffffff;
+        || mColorXfm.mBrightness != 0 || mColorXfm.mLevelInLo.PackRgb() != 0
+        || mColorXfm.mLevelOutLo.PackRgb() != 0 || mColorXfm.mLevelInHi.PackRgb() != 0xffffff
+        || mColorXfm.mLevelOutHi.PackRgb() != 0xffffff;
 }
 
 void RndPostProc::UpdateTimeDelta() {

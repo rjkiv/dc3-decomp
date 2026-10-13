@@ -193,7 +193,7 @@ void RndLight::SetShadowOverride(ObjPtrList<RndDrawable> *l) { mShadowOverride =
 
 void RndLight::SetPackedColor(int packed, float scalar) {
     Hmx::Color col;
-    col.Unpack(packed);
+    col.UnpackRgb(packed);
     Multiply(col, scalar, col);
     SetColor(col);
 }
@@ -207,7 +207,7 @@ const char *RndLight::TypeToStr(Type t) {
 int RndLight::PackedColor() const {
     Hmx::Color col;
     Multiply(GetColor(), 1.0f / Intensity(), col);
-    return col.Pack();
+    return col.PackRgb();
 }
 
 float RndLight::Intensity() const {

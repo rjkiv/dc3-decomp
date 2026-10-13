@@ -46,7 +46,7 @@ namespace {
             return false;
         } else {
             Hmx::Color color = light.GetColor();
-            return color.Pack();
+            return color.PackRgb();
         }
     }
 
@@ -65,7 +65,7 @@ namespace {
             }
         }
         Hmx::Color color = light.GetColor();
-        if (color.Pack()) {
+        if (color.PackRgb()) {
             light.CheckShadowMap();
             return true;
         } else {
@@ -79,7 +79,7 @@ namespace {
             return false;
         }
         Hmx::Color color = light.GetColor();
-        if (!color.Pack()) {
+        if (!color.PackRgb()) {
             return false;
         }
         const Transform &worldXfm = light.WorldXfm();
@@ -121,7 +121,7 @@ namespace {
         }
         if (light.GetTexture() || light.GetProjectedBlend()) {
             Hmx::Color color = light.GetColor();
-            if (!color.Pack()) {
+            if (!color.PackRgb()) {
                 return false;
             }
             const Transform &world = light.WorldXfm();

@@ -212,7 +212,7 @@ BEGIN_PROPSYNCS(Spotlight)
     SYNC_PROP_MODIFY(spot_scale, mSpotScale, UpdateBounds())
     SYNC_PROP_MODIFY(spot_height, mSpotHeight, UpdateBounds())
     SYNC_PROP_MODIFY(spot_material, mDiscMat, UpdateBounds())
-    SYNC_PROP_SET(color, Color().Pack(), SetColor(_val.Int()))
+    SYNC_PROP_SET(color, Color().PackRgb(), SetColor(_val.Int()))
     SYNC_PROP_SET(intensity, Intensity(), {
         float intensity = _val.Float();
         const Hmx::Color &color = Color();
@@ -700,7 +700,7 @@ void Spotlight::SetFlareIsBillboard(bool b) {
 
 void Spotlight::SetColor(int packed) {
     Hmx::Color c;
-    c.Unpack(packed);
+    c.UnpackRgb(packed);
     c.alpha = 1;
     SetColorIntensity(c, Intensity());
 }

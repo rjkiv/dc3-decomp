@@ -19,6 +19,7 @@ void MakeColor(float h, float s, float l, Hmx::Color &color) {
         q = -(s * l - (s + l));
     }
     float p = l * 2.0f - q; // lower lightness mix
+    float *colorArr = color.AsArray();
     for (int i = 0; i < 3; i++) {
         float t; // hue offset per channel
         if (i == 0) {
@@ -36,14 +37,14 @@ void MakeColor(float h, float s, float l, Hmx::Color &color) {
         }
 
         if (t * 6.0f < 1.0f) {
-            color[i] = (q - p) * t * 6.0f + p;
+            colorArr[i] = (q - p) * t * 6.0f + p;
         } else if (t * 2.0f < 1.0f) {
-            color[i] = q;
+            colorArr[i] = q;
         } else if (t * 3.0f < 2.0f) {
             t = (2.0f / 3.0f) - t;
-            color[i] = (q - p) * t * 6.0f + p;
+            colorArr[i] = (q - p) * t * 6.0f + p;
         } else {
-            color[i] = p;
+            colorArr[i] = p;
         }
     }
 }

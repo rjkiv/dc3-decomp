@@ -393,7 +393,7 @@ void ColorKeys::SetFrame(float frame, float f2, float f3) {
         Hmx::Color col;
         int idx = ColorAt(frame, col);
         Multiply(col, f3, col);
-        mTarget->SetProperty(mProp, col.Pack());
+        mTarget->SetProperty(mProp, col.PackRgb());
         mLastKeyFrameIndex = idx;
     }
 }

@@ -3,10 +3,12 @@
 #include "gesture/BaseSkeleton.h"
 #include "gesture/Skeleton.h"
 #include "hamobj/HamCharacter.h"
+#include "math/Color.h"
 #include "math/Geo.h"
 #include "math/Mtx.h"
 #include "math/Rot.h"
 #include "math/Trig.h"
+#include "math/Utl.h"
 #include "math/Vec.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
@@ -364,5 +366,60 @@ void SkeletonViz::SetCamera(
         Vector3 v3 = cam_origin.v;
         v3.y += hip_to_cam;
         UtilDrawPlane(p, v3, Hmx::Color(1, 1, 0), 5, 0.5f, false);
+    }
+}
+
+void SkeletonViz::DrawJoints(
+    const BaseSkeleton &skeleton, Vector3 *cam_joints, Vector3 *milo_joints, bool darken
+) {
+    float f19 = darken ? 0.5f : 1.0f;
+    Hmx::Color brightness_color(f19, f19, f19);
+    float boneLens = skeleton.BoneLength(kBoneArmLowerRight, kCoordCamera)
+        + skeleton.BoneLength(kBoneHandRight, kCoordCamera)
+        + skeleton.BoneLength(kBoneArmUpperRight, kCoordCamera);
+    float f16 = kHugeFloat;
+    for (int i = 0; i < kNumBones; i++) {
+        MinEq(f16, cam_joints[i].x);
+    }
+    float f20 = f16 + boneLens;
+    float diff = f16 - f20;
+
+    for (int i = 0; i < DIM(BaseSkeleton::sBones); i++) {
+        Hmx::Color bone_color;
+        bone_color.alpha *= brightness_color.alpha;
+        float f15 = (cam_joints[BaseSkeleton::sBones[i].mStartJoint].z - f20) / diff;
+        ClampEq(f15, 0.0f, 1.0f);
+        float scale = f15 * 0.8f + 0.2f;
+        // bone_color.r/g/b = brightness_color.r/g/b * scale;
+        mLines[i]->SetPointColor(0, brightness_color, true);
+    }
+
+    int flags = skeleton.QualityFlags();
+    Hmx::Color qual_color(1, 0, 0);
+    Vector2 place(0.1f, 0.1f);
+    if (mUsePhysicalCam) {
+        place.x = mPhysicalCam->GetScreenRect().x;
+        place.y = mPhysicalCam->GetScreenRect().y;
+    }
+    if (flags & 1) {
+        place.y = TheRnd.DrawStringScreen("clipped right", place, qual_color, true).y;
+    }
+    if (flags & 2) {
+        place.y = TheRnd.DrawStringScreen("clipped left", place, qual_color, true).y;
+    }
+    if (flags & 4) {
+        place.y = TheRnd.DrawStringScreen("clipped top", place, qual_color, true).y;
+    }
+    if (flags & 8) {
+        place.y = TheRnd.DrawStringScreen("clipped bottom", place, qual_color, true).y;
+    }
+    if (mAxesCoordSys != kCoordCamera && mUseParentXfm) {
+        Transform cam_to_player;
+        skeleton.CameraToPlayerXfm(mAxesCoordSys, cam_to_player);
+        Transform axes;
+        Multiply(cam_to_player, mNatalToWorld, axes);
+        Multiply(axes, WorldXfm(), axes);
+        std::swap(axes.m.y, axes.m.z);
+        UtilDrawAxes(axes, mDrawScale / 4, Hmx::Color(1, 1, 1));
     }
 }

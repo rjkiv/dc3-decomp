@@ -766,7 +766,7 @@ DataNode Rnd::OnToggleTimersVerbose(const DataArray *) {
 DataNode Rnd::OnClearColorR(const DataArray *) { return mClearColor.red; }
 DataNode Rnd::OnClearColorG(const DataArray *) { return mClearColor.green; }
 DataNode Rnd::OnClearColorB(const DataArray *) { return mClearColor.blue; }
-DataNode Rnd::OnClearColorPacked(const DataArray *) { return mClearColor.Pack(); }
+DataNode Rnd::OnClearColorPacked(const DataArray *) { return mClearColor.PackRgb(); }
 
 DataNode Rnd::OnSetClearColor(const DataArray *da) {
     SetClearColor(Hmx::Color(da->Float(2), da->Float(3), da->Float(4)));

@@ -45,7 +45,7 @@ void BaseSkeleton::CamBoneLengths(float *bone_lengths) const {
     }
 }
 
-SkeletonJoint gMirrorJoints[kNumJoints] = {
+static const SkeletonJoint kMirrorJoints[kNumJoints] = {
     kJointHipCenter,     kJointSpine,      kJointShoulderCenter, kJointHead,
     kJointShoulderRight, kJointElbowRight, kJointWristRight,     kJointHandRight,
     kJointShoulderLeft,  kJointElbowLeft,  kJointWristLeft,      kJointHandLeft,
@@ -53,9 +53,17 @@ SkeletonJoint gMirrorJoints[kNumJoints] = {
     kJointKneeLeft,      kJointAnkleLeft,  kJointFootRight,      kJointFootLeft
 };
 
+static const SkeletonBone kMirrorBones[kNumBones] = {
+    kBoneHead,          kBoneCollarLeft,   kBoneArmUpperLeft,  kBoneArmLowerLeft,
+    kBoneHandLeft,      kBoneCollarRight,  kBoneArmUpperRight, kBoneArmLowerRight,
+    kBoneHandRight,     kBoneLegUpperLeft, kBoneLegLowerLeft,  kBoneLegUpperRight,
+    kBoneLegLowerRight, kBoneBackUpper,    kBoneBackLower,     kBoneHipLeft,
+    kBoneHipRight,      kBoneFootRight,    kBoneFootLeft
+};
+
 SkeletonJoint BaseSkeleton::MirrorJoint(SkeletonJoint joint) {
     MILO_ASSERT_RANGE(joint, 0, kNumJoints, 0xC5);
-    return gMirrorJoints[joint];
+    return kMirrorJoints[joint];
 }
 
 void BaseSkeleton::BoneVec(SkeletonBone bone, SkeletonCoordSys cs, Vector3 &vec) const {

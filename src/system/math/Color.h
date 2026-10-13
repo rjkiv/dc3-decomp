@@ -19,57 +19,72 @@ namespace Hmx {
         Color() {}
         Color(float r, float g, float b) : red(r), green(g), blue(b), alpha(1.0f) {}
         Color(float r, float g, float b, float a) : red(r), green(g), blue(b), alpha(a) {}
-        Color(int packed) : alpha(1.0f) { Unpack(packed); }
+        Color(int packed) : alpha(1.0f) { UnpackRgb(packed); }
 
-        void Set(float f1, float f2, float f3, float f4) {
-            red = f1;
-            green = f2;
-            blue = f3;
-            alpha = f4;
+        Hmx::Color &Set(float r, float g, float b) {
+            red = r;
+            green = g;
+            blue = b;
+            return *this;
         }
 
-        // all weak
+        Hmx::Color &Set(float r, float g, float b, float a) {
+            red = r;
+            green = g;
+            blue = b;
+            alpha = a;
+            return *this;
+        }
+
+        Hmx::Color &SetRgb(const Hmx::Color &c) {
+            red = c.red;
+            green = c.green;
+            blue = c.blue;
+            return *this;
+        }
+
+        bool SameRgb(const Hmx::Color &c) const {
+            return red == c.red && green == c.green && blue == c.blue;
+        }
         bool operator==(const Color &c) const {
             return red == c.red && green == c.green && blue == c.blue && alpha == c.alpha;
         }
         bool operator!=(const Color &c) const { return !(*this == c); }
 
-        void Set(float f) { red = green = blue = alpha = f; } // may go unused
-        void Reset() { red = green = blue = alpha = 1.0f; }
+        void Clear() { red = green = blue = alpha = 1.0f; }
         void Zero() { red = green = blue = alpha = 0; }
 
-        void Set(float r, float g, float b) {
-            red = r;
-            green = g;
-            blue = b;
-        }
-
-        int Pack() const {
+        int PackRgb() const {
             return (((int)(blue * 255.0f) & 0xFF) << 16)
                 | ((int)(green * 255.0f) & 0xFF) << 8 | ((int)(red * 255.0f) & 0xFF);
         }
 
-        int PackAlpha() const {
+        int PackRgba() const {
             return ((int)(alpha * 255.0f) & 0xFF) << 24
                 | ((int)(blue * 255.0f) & 0xFF) << 16
                 | ((int)(green * 255.0f) & 0xFF) << 8 | ((int)(red * 255.0f) & 0xFF);
         }
 
-        void Unpack(int packed) {
+        void UnpackRgb(int packed) {
             red = (packed & 255) / 255.0f;
             green = ((packed >> 8) & 255) / 255.0f;
             blue = ((packed >> 0x10) & 255) / 255.0f;
         }
 
-        void UnpackAlpha(int packed) {
+        void UnpackRgba(int packed) {
             red = (packed & 255) / 255.0f;
             green = ((packed >> 8) & 255) / 255.0f;
             blue = ((packed >> 0x10) & 255) / 255.0f;
             alpha = ((packed >> 0x18) & 255) / 255.0f;
         }
 
-        float &operator[](int i) { return *(&red + i); }
+        const float *AsArray() const { return &red; }
+        float *AsArray() { return &red; }
 
+        Vector3 &AsVector3() { return reinterpret_cast<Vector3 &>(*this); }
+        const Vector3 &AsVector3() const {
+            return reinterpret_cast<const Vector3 &>(*this);
+        }
         Vector4 &AsVector4() { return reinterpret_cast<Vector4 &>(*this); }
         const Vector4 &AsVector4() const {
             return reinterpret_cast<const Vector4 &>(*this);

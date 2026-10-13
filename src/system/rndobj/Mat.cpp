@@ -382,7 +382,7 @@ RndMat *LookupOrCreateMat(const char *shader, ObjectDir *dir) {
 
 void RndMat::SetSpecularMap(RndTex *tex) {
     if (tex && !mSpecularMap) {
-        if (mSpecularRGB.Pack() == 0) {
+        if (mSpecularRGB.PackRgb() == 0) {
             mSpecularRGB.Set(1, 1, 1, mSpecularRGB.alpha);
         }
     }

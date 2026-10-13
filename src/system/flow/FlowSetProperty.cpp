@@ -101,11 +101,11 @@ void PropertyTask::Poll(float f1) {
         float res = mEaseFunc(f1 / unk58, unk5c, 1);
         if (unk60) {
             Hmx::Color c;
-            c.Unpack(unk50.Int());
+            c.UnpackRgb(unk50.Int());
             Hmx::Color c2;
-            c2.Unpack(unk48.Int());
+            c2.UnpackRgb(unk48.Int());
             Add(c, c2, c);
-            int packed = c.Pack();
+            int packed = c.PackRgb();
             unk2c->SetProperty(unk40.Array(), packed);
         } else {
             DataNode n(unk48);
@@ -479,8 +479,9 @@ void FlowSetProperty::ReActivate() {
     if (mBlendTime == 0.0f && mChangePerUnit == 0.0f) {
         FLOW_LOG("Setting Value on %s\n", mTarget->Name())
         mTarget->SetProperty(mPropPath.Array(), mValue.Node());
-    } else if (mTarget->Property(mPropPath.Array(), true)->Evaluate()
-               != mValue.Node().Evaluate()) {
+    } else if (
+        mTarget->Property(mPropPath.Array(), true)->Evaluate() != mValue.Node().Evaluate()
+    ) {
         FLOW_LOG("Queueing\n")
         TheFlowMgr->QueueCommand(this, kQueue);
     }
