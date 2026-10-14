@@ -30,20 +30,17 @@ private:
     void DrawPath(std::list<Vector3>, SkeletonViz &, Hmx::Color, const Vector3 &) const;
     bool IsPathAcceptable() const;
 
-    static float _swipeRetentionFactor;
-    static float _acceptablePathErrorRatio;
-
-    SkeletonSide mSide; // 0x4
-    SkeletonJoint unk8; // 0x8
+    SkeletonSide mDirection; // 0x4
+    SkeletonJoint mTrackJoint; // 0x8
     SkeletonJoint mRefJoint; // 0xc
     std::list<Vector3> mJointPath; // 0x10
-    Vector3 mCurveStart;
-    float unk28;
-    float unk2c;
-    float unk30;
-    bool unk34;
-    bool mNeedSwipeReset;
-    float unk38;
-    int unk3c;
-    Vector3 unk40; // last frame hand pos?
+    Vector3 mCurveStart; // 0x18
+    float mArcSize; // 0x28
+    float mArcHeight; // 0x2c
+    float mDesiredLength; // 0x30
+    bool mInitialized; // 0x34
+    bool mNeedSwipeReset; // 0x35
+    float mMaxSwipePercent; // 0x38
+    int mHoverTimer; // 0x3c
+    Vector3 mLastRelativeSwipePos; // 0x40
 };

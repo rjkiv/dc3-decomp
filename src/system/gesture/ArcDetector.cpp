@@ -6,32 +6,38 @@
 #include "utl/Std.h"
 #include <stddef.h>
 
-float ArcDetector::_swipeRetentionFactor = 0.5;
-float ArcDetector::_acceptablePathErrorRatio = 0.89999998;
-int sDefaultHoverTimer = 600;
+static int _hoverTime = 600;
+static float _acceptablePathErrorRatio = 0.9f;
+static float _swipeRetentionFactor = 0.5f;
+static float _yErrorReduction = 0.2f;
 
-ArcDetector::ArcDetector()
-    : mCurveStart(0, 0, 0), unk28(0), unk2c(0), unk30(0.15f), unk34(0),
-      mNeedSwipeReset(0), unk3c(sDefaultHoverTimer) {
+ArcDetector::ArcDetector() {
+    mCurveStart.Set(0, 0, 0);
+    mArcSize = 0;
+    mArcHeight = 0;
+    mDesiredLength = 0.15f;
+    mInitialized = false;
+    mNeedSwipeReset = false;
+    mHoverTimer = _hoverTime;
     Clear();
 }
 
 ArcDetector::~ArcDetector() {}
 
-void ArcDetector::ResetHoverTimer() { unk3c = sDefaultHoverTimer; }
+void ArcDetector::ResetHoverTimer() { mHoverTimer = _hoverTime; }
 
 void ArcDetector::Initialize(
     SkeletonSide side, SkeletonJoint j1, SkeletonJoint j2, float f4
 ) {
-    unk30 = f4;
-    mSide = side;
-    unk34 = true;
-    unk8 = j1;
+    mDesiredLength = f4;
+    mDirection = side;
+    mInitialized = true;
+    mTrackJoint = j1;
     mRefJoint = j2;
 }
 
 void ArcDetector::Update(const Skeleton &skel, int playernum) {
-    if (!unk34) {
+    if (!mInitialized) {
         MILO_ASSERT(false, 74);
     }
     if (!skel.IsTracked()) {
@@ -39,21 +45,21 @@ void ArcDetector::Update(const Skeleton &skel, int playernum) {
         return;
     }
     const Vector3 &body_maybe = skel.TrackedJoints()[mRefJoint].mPos[0],
-                  &hand_maybe = skel.TrackedJoints()[unk8].mPos[0];
+                  &hand_maybe = skel.TrackedJoints()[mTrackJoint].mPos[0];
     float hpos_x = hand_maybe.x - body_maybe.x, hpos_y = hand_maybe.y - body_maybe.y,
           hpos_z = hand_maybe.z - body_maybe.z; // why
     Vector3 hand_pos(hpos_x, hpos_y, hpos_z); // in body coords? i think
-    unk40 = hand_pos;
+    mLastRelativeSwipePos = hand_pos;
     if (mJointPath.empty()) {
         TryToStartSwipe(hand_pos, skel);
     } else if (mNeedSwipeReset) {
         Vector3 unk = *mJointPath.begin();
         Clear();
         mJointPath.insert(mJointPath.begin(), hand_pos);
-        if (mSide == kSkeletonLeft && hpos_x >= unk.x + 0.01f) {
+        if (mDirection == kSkeletonLeft && hpos_x >= unk.x + 0.01f) {
             mNeedSwipeReset = false;
         }
-        if (mSide == kSkeletonRight && hpos_x <= unk.x - 0.01f) {
+        if (mDirection == kSkeletonRight && hpos_x <= unk.x - 0.01f) {
             mNeedSwipeReset = false;
         }
     } else {
@@ -66,34 +72,34 @@ void ArcDetector::Update(const Skeleton &skel, int playernum) {
             mJointPath.insert(mJointPath.begin(), hand_pos);
         }
         const Vector3 &body_maybe = skel.TrackedJoints()[mRefJoint].mPos[0],
-                      &hand_maybe = skel.TrackedJoints()[unk8].mPos[0];
+                      &hand_maybe = skel.TrackedJoints()[mTrackJoint].mPos[0];
         float hpos_x_recalc = hand_maybe.x - body_maybe.x,
               hpos_z_recalc = hand_maybe.z - body_maybe.z;
         float len = Length(Vector2(hpos_x_recalc, hpos_z_recalc));
-        unk28 = (len + unk28) / 2;
+        mArcSize = (len + mArcSize) / 2;
     }
-    unk2c =
-        skel.TrackedJoints()[unk8].mPos[0].y - skel.TrackedJoints()[mRefJoint].mPos[0].y;
+    mArcHeight = skel.TrackedJoints()[mTrackJoint].mPos[0].y
+        - skel.TrackedJoints()[mRefJoint].mPos[0].y;
     CullPath();
-    unk38 = Max(unk38, GetSwipeAmount());
+    mMaxSwipePercent = Max(mMaxSwipePercent, GetSwipeAmount());
     if (!IsPathAcceptable()) {
         SwipeFailed(skel);
     }
     if (GetSwipeAmount() < 0.1f) {
-        unk3c = Max(0, unk3c - playernum);
+        mHoverTimer = Max(0, mHoverTimer - playernum);
     }
 }
 
 Vector3 ArcDetector::GetCurveStart() const {
     MILO_ASSERT(!mJointPath.empty(), 0xE9);
-    return Vector3((mSide != kSkeletonLeft ? -1 : 1) * unk28, unk2c, 0);
+    return Vector3((mDirection != kSkeletonLeft ? -1 : 1) * mArcSize, mArcHeight, 0);
 }
 
 void ArcDetector::Clear() {
-    unk38 = 0;
+    mMaxSwipePercent = 0;
     mJointPath.clear();
-    unk2c = 0;
-    unk28 = 0;
+    mArcHeight = 0;
+    mArcSize = 0;
 }
 
 void ArcDetector::PrintJointPath() const {
@@ -115,7 +121,7 @@ void ArcDetector::PrintJointPath() const {
 }
 
 void ArcDetector::SwipeFailed(const Skeleton &skeleton) {
-    if (unk38 > 0.5)
+    if (mMaxSwipePercent > 0.5)
         mNeedSwipeReset = true;
     Vector3 vec = mJointPath.front();
     Clear();
@@ -133,10 +139,10 @@ void ArcDetector::CullPath() {
         float first = mJointPath.front().x;
         FOREACH (it, mJointPath) {
             const Vector3 &cur = *it;
-            if (mSide == kSkeletonLeft && cur.x >= first) {
+            if (mDirection == kSkeletonLeft && cur.x >= first) {
                 other.push_back(cur);
             }
-            if (mSide == kSkeletonRight && cur.x <= first) {
+            if (mDirection == kSkeletonRight && cur.x <= first) {
                 other.push_back(cur);
             }
         }
@@ -149,16 +155,15 @@ float ArcDetector::GetPathError() const {
         return 0.0f;
     }
     float accumulator = 0.0f;
-    static float unk_static = 2.0f;
-    float inv_static = 1.0f / unk_static;
+    float inv_static = 1.0f / _yErrorReduction;
     FOREACH_CONST (joint, mJointPath) {
         Vector3 this_joint = *joint;
         // the hand location relative to this joint.
         float jointspace_x = mCurveStart.x - this_joint.x;
-        if (mSide == kSkeletonRight) {
+        if (mDirection == kSkeletonRight) {
             jointspace_x *= -1.0f;
         }
-        float jspace_x_scl = jointspace_x * unk28;
+        float jspace_x_scl = jointspace_x * mArcSize;
         float jointspace_z = mCurveStart.z - this_joint.z;
         float sqrt_jspace_x = jspace_x_scl * 2 - (jointspace_x * jointspace_x);
         if (sqrt_jspace_x <= 0) {
@@ -167,7 +172,7 @@ float ArcDetector::GetPathError() const {
             sqrt_jspace_x = sqrt(sqrt_jspace_x);
         }
         jointspace_z -= sqrt_jspace_x;
-        float jspace_y = this_joint.y - unk2c;
+        float jspace_y = this_joint.y - mArcHeight;
         accumulator += LengthSquared(Vector3(0, jointspace_z, jspace_y * inv_static));
     }
     return accumulator;
@@ -176,15 +181,15 @@ float ArcDetector::GetPathError() const {
 void ArcDetector::TryToStartSwipe(const Vector3 &startpos, const Skeleton &skel) {
     MILO_ASSERT(mJointPath.empty(), 139);
     bool joint_not_tracked = true;
-    if (skel.TrackedJoints()[unk8].mConfidence != kConfidenceTracked
+    if (skel.TrackedJoints()[mTrackJoint].mConfidence != kConfidenceTracked
         || skel.TrackedJoints()[mRefJoint].mConfidence != kConfidenceTracked) {
         joint_not_tracked = false;
     }
     if (joint_not_tracked) {
         mJointPath.push_front(startpos);
         const Vector3 &ucjoint = skel.TrackedJoints()[mRefJoint].mPos[0];
-        const Vector3 &u8joint = skel.TrackedJoints()[unk8].mPos[0];
-        unk28 = Length(Vector2(u8joint.x - ucjoint.x, u8joint.z - ucjoint.z));
+        const Vector3 &u8joint = skel.TrackedJoints()[mTrackJoint].mPos[0];
+        mArcSize = Length(Vector2(u8joint.x - ucjoint.x, u8joint.z - ucjoint.z));
     }
 }
 
@@ -214,10 +219,10 @@ void ArcDetector::Draw(const Skeleton &skel, SkeletonViz &viz) {
         std::list<Vector3> joints2draw;
         Vector3 v;
         for (int i = 0; i < 100; i++) {
-            float f0 = i * unk28 * 0.02f;
-            float f13 = unk28 * f0;
+            float f0 = i * mArcSize * 0.02f;
+            float f13 = mArcSize * f0;
             // next two lines: pretty sure this is some weird intrin stuff
-            int x = mSide == kSkeletonLeft ? -1 : 1; // why is this an int...?
+            int x = mDirection == kSkeletonLeft ? -1 : 1; // why is this an int...?
 
             f13 = f13 * 2.0f - (f0 * f0);
             if (f13 <= 0) {
@@ -237,7 +242,7 @@ void ArcDetector::Draw(const Skeleton &skel, SkeletonViz &viz) {
 }
 
 bool ArcDetector::IsPathAcceptable() const {
-    static float sFloat = 0.5f;
+    static float _startRatio = 0.5f;
     if (1 >= mJointPath.size()) {
         return true;
     } else {
@@ -245,14 +250,14 @@ bool ArcDetector::IsPathAcceptable() const {
             const Vector3 &front = mJointPath.front();
             const Vector3 &back = mJointPath.back();
             float vecYsub = front.y - back.y;
-            float vecXsub = (mSide != kSkeletonLeft ? 1 : -1) * (front.x - back.x);
+            float vecXsub = (mDirection != kSkeletonLeft ? 1 : -1) * (front.x - back.x);
             float vecZsub = front.z - back.z;
             if (vecXsub < 0) {
                 return false;
             }
             if (vecYsub != 0) {
                 float f3 = 1.0f / vecYsub;
-                if (f3 * vecXsub < sFloat && vecYsub < sFloat) {
+                if (f3 * vecXsub < _startRatio && vecYsub < _startRatio) {
                     return false;
                 }
             }
