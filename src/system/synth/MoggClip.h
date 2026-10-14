@@ -66,6 +66,9 @@ public:
     bool HasStream() const { return mStream; }
     int GetNumChannels() const { return mNumChannels; }
 
+protected:
+    MoggClip();
+
 private:
     void ApplyLoop(bool, int, int);
     void KillStream();
@@ -75,8 +78,6 @@ private:
     void UpdatePanInfo();
     void LoadNumChannels();
     void LoadFile(BinStream *);
-
-    MoggClip();
 
     /** "The mogg audio file to be played." */
     FilePath mFile; // 0x38

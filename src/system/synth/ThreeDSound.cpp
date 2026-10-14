@@ -244,13 +244,13 @@ void ThreeDSound::CalculateFaderVolume() {
         volume = 0;
     } else {
         switch (mShape) {
-        case kSphere: {
+        case kCylinder: {
             if (mYZProjection > mRadius) {
                 mFader->SetVolume(-96.0f);
                 return;
             }
         }
-        case kCylinder:
+        case kSphere:
             break;
         default:
             MILO_FAIL("Calculating volume for unknown shape %d\n", mShape);
