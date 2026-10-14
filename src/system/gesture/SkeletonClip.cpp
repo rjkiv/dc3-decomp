@@ -258,14 +258,38 @@ void SkeletonClip::Poll() {
     } else {
         SkeletonDir *dir = dynamic_cast<SkeletonDir *>(Dir());
         if (mAutoplay && TheLoadMgr.EditMode() && dir && dir->TestClip() == this) {
-            mInternalFrame++;
-            float end = EndFrame() * 2;
-            if (mInternalFrame >= end) {
+            if (++mInternalFrame >= EndFrame() * 2) {
                 mInternalFrame = 0;
             }
-            SetFrame(mInternalFrame, 1);
+            SetFrame(mInternalFrame / 2, 1);
         }
     }
+}
+
+bool SkeletonClip::PrevSkeleton(
+    const Skeleton &current, int previous_ms, ArchiveSkeleton &previous, int &elapsed_ms
+) const {
+    if (current.SkeletonIndex() == 0) {
+        int index;
+        int loop_count;
+        if (CurRecordedFrame(index, loop_count)) {
+            auto &frames = *mFrames;
+            float f6 =
+                frames.back().mSeconds * (float)loop_count + frames[index].mSeconds;
+            float f5 = -((float)previous_ms / 1000 - f6);
+            const RecordedFrame *rf = RecordedFrameAt(frames, f5, index, loop_count);
+            if (rf) {
+                elapsed_ms = (f6 - f5) * 1000;
+                SkeletonFrame skeletonFrame;
+                rf->MakeSkeletonFrame(skeletonFrame, current.SkeletonIndex());
+                Skeleton skeleton;
+                skeleton.Poll(current.SkeletonIndex(), skeletonFrame);
+                previous.Set(skeleton);
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 const char *SkeletonClip::SongStr() const {
@@ -352,9 +376,12 @@ void SkeletonClip::WriteClipHeader(FileStream &stream) {
     stream << mRecordSong;
     stream << mRecordDifficulty;
     DataArray *arr = SystemConfig()->FindArray("version", false);
-    const char *str = arr ? arr->Str(1) : "milo";
-    stream << str;
-    stream << (int)mFrames->size();
+    if (arr) {
+        stream << arr->Str(1);
+    } else {
+        stream << "milo";
+    }
+    stream << mFrames->size();
 }
 
 void SkeletonClip::WriteClipFrame(FileStream &stream, const RecordedFrame &recordedFrame) {
@@ -715,4 +742,58 @@ void SkeletonClip::PollRecording(const SkeletonFrame &frame) {
             }
         }
     }
+}
+
+const RecordedFrame *SkeletonClip::CurRecordedFrame(int &index, int &loop_count) const {
+    bool active = mRecording && !mSuspended;
+    if (!active) {
+        if (TheHamDirector) {
+            float secs = MoveDir::SongSeconds();
+            return RecordedFrameAt(*mFrames, secs, index, loop_count);
+        }
+        if (mFrames->size() != 0 && mFrames->size() > GetFrame()) {
+            loop_count = 0;
+            index = GetFrame();
+            return &(*mFrames)[index];
+        }
+    }
+    return nullptr;
+}
+
+struct RecordedFrameCmp { /* Size=0x1 */
+    bool operator()(float secs, const RecordedFrame &frame) const {
+        return secs < frame.mSeconds;
+    }
+    bool operator()(const RecordedFrame &frame, float secs) const {
+        return frame.mSeconds < secs;
+    }
+};
+
+const RecordedFrame *SkeletonClip::RecordedFrameAt(
+    const std::vector<RecordedFrame> &frames,
+    float song_seconds,
+    int &index,
+    int &loop_count
+) {
+    loop_count = 0;
+    if (!frames.empty()) {
+        int numFrames = frames.size();
+        while (song_seconds > frames.back().mSeconds) {
+            if (loop_count >= numFrames) {
+                return nullptr;
+            }
+            song_seconds -= frames.back().mSeconds;
+            loop_count++;
+        }
+        auto frameBegin = frames.begin();
+        auto frameEnd = frames.end();
+        auto it =
+            std::lower_bound(frameBegin, frameEnd, song_seconds, RecordedFrameCmp());
+        if (it != frameEnd) {
+            index = it - frameBegin;
+            return it;
+        }
+    }
+
+    return nullptr;
 }
