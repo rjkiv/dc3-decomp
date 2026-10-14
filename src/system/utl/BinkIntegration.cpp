@@ -120,7 +120,7 @@ static unsigned int BinkFileReadHeader(
             scriptArr->Release();
             unsigned char key[16];
             KeyChain::getKey(pEncryptionHeader->mKeyIndex, key, masterKey);
-            TheSynth->Grinder().GrindArray(
+            TheSynth->GetGrinder().GrindArray(
                 pEncryptionHeader->mMagicA, pEncryptionHeader->mMagicB, key, 16, 12
             );
             for (int i = 0; i < 16; i++) {

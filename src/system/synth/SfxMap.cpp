@@ -3,14 +3,14 @@
 #include "utl/BinStream.h"
 
 SfxMap::SfxMap(Hmx::Object *obj)
-    : mSample(obj), mVolume(0), mPan(0), mTranspose(0), mFXCore(kFXCoreNone) {}
+    : mSample(obj), mVolume(0), mPan(0), mTranspose(0), mFx(kFXCoreNone) {}
 
 void SfxMap::Save(BinStream &bs) const {
     bs << mSample;
     bs << mVolume;
     bs << mPan;
     bs << mTranspose;
-    bs << mFXCore;
+    bs << mFx;
     bs << mADSR;
 }
 
@@ -22,7 +22,7 @@ void SfxMap::Load(BinStreamRev &d) {
         d >> mTranspose;
         int fx;
         d >> fx;
-        mFXCore = (FXCore)fx;
+        mFx = (FXCore)fx;
         if (d.rev >= 4) {
             d >> mADSR;
         }

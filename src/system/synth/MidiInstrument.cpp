@@ -27,7 +27,7 @@ NoteVoiceInst::NoteVoiceInst(
         mSample->SetBankVolume(zone->mVolume + RatioToDb(ratio / 127.0f));
         mSample->SetBankPan(zone->mPan);
         mSample->SetBankSpeed(getCalculatedSpeed(mTriggerNote));
-        mSample->SetFXCore(zone->mFXCore);
+        mSample->SetFXCore(zone->mFX);
         mSample->SetADSR(zone->mADSR);
         mSample->SetSend(owner->GetSend());
     }
@@ -103,7 +103,7 @@ MidiInstrument::MidiInstrument()
     : mMultiSampleMap(this), mPatchNumber(0), mSend(this), mReverbMixDb(kDbSilence),
       mReverbEnable(false), mActiveVoices(this), mFaders(this), mFineTuneCents(0) {
     mFaders.Add(TheSynth->MasterFader());
-    mFaders.Add(TheSynth->InstFader());
+    mFaders.Add(TheSynth->MidiInstrumentFader());
 }
 
 MidiInstrument::~MidiInstrument() { mActiveVoices.DeleteAll(); }
@@ -125,9 +125,9 @@ BEGIN_CUSTOM_PROPSYNC(SampleZone)
     SYNC_PROP(centernote, o.mCenterNote)
     SYNC_PROP(minnote, o.mMinNote)
     SYNC_PROP(maxnote, o.mMaxNote)
-    SYNC_PROP(minvelo, o.mMinVel)
-    SYNC_PROP(maxvelo, o.mMaxVel)
-    SYNC_PROP(fx_core, (int &)o.mFXCore)
+    SYNC_PROP(minvelo, o.mMinVelo)
+    SYNC_PROP(maxvelo, o.mMaxVelo)
+    SYNC_PROP(fx_core, (int &)o.mFX)
     SYNC_PROP(adsr, o.mADSR)
 END_CUSTOM_PROPSYNC
 

@@ -11,8 +11,13 @@
  * camera position." */
 class ThreeDSound : public RndTransformable, public Sound {
 public:
+    enum SoundShape {
+        kSphere = 0x0000,
+        kCylinder = 0x0001
+    };
+
     // Hmx::Object
-    virtual ~ThreeDSound() { RELEASE(unk1c8); }
+    virtual ~ThreeDSound() { RELEASE(mFader); }
     OBJ_CLASSNAME(ThreeDSound)
     OBJ_SET_TYPE(ThreeDSound)
     virtual DataNode Handle(DataArray *, bool);
@@ -40,32 +45,32 @@ public:
     void SetDistance(float, float);
 
     void EnableDoppler(bool enable) {
-        unk1c8->SetTranspose(0);
-        mDopplerEnabled = enable;
+        mFader->SetTranspose(0);
+        mEnableDoppler = enable;
     }
     void SetFalloffType(EaseType type) {
         mFalloffType = type;
         CalculateFaderVolume();
     }
     void SetFalloffParameter(float param) {
-        mFalloffParameter = param;
+        mFalloffParam = param;
         CalculateFaderVolume();
     }
     void SetMinFalloffDistance(float dist) {
         if (dist <= 0) {
             dist = 1.1754944E-38f;
         }
-        mMinFalloffDistance = Min(dist, mSilenceDistance);
+        mMinimumFalloff = Min(dist, mSilenceDistance);
         CalculateFaderVolume();
     }
     void SetSilenceDistance(float dist) {
         if (dist <= 0) {
             dist = 1.1754944E-38f;
         }
-        mSilenceDistance = Max(dist, mMinFalloffDistance);
+        mSilenceDistance = Max(dist, mMinimumFalloff);
         CalculateFaderVolume();
     }
-    void SetShape(int shape) {
+    void SetShape(SoundShape shape) {
         mShape = shape;
         CalculateFaderVolume();
     }
@@ -73,10 +78,10 @@ public:
         mRadius = rad;
         CalculateFaderVolume();
     }
-    int GetShape() const { return mShape; }
+    SoundShape GetShape() const { return mShape; }
     float GetSilenceDistance() const { return mSilenceDistance; }
-    bool PanEnabled() const { return mPanEnabled; }
-    bool DopplerEnabled() const { return mDopplerEnabled; }
+    bool PanEnabled() const { return mEnablePan; }
+    bool DopplerEnabled() const { return mEnableDoppler; }
 
 private:
     void CalculateFaderVolume();
@@ -84,32 +89,33 @@ private:
 protected:
     ThreeDSound();
 
-    bool unk194; // 0x194
-    bool unk195; // 0x195
-    float unk198; // 0x198
-    float unk19c; // 0x19c
-    float unk1a0; // 0x1a0
-    Hmx::Object *unk1a4; // 0x1a4
-    float unk1a8; // 0x1a8
+private:
+    bool mIsActive; // 0x194
+    bool mPlayWhenSilent; // 0x195
+    float mVolume; // 0x198
+    float mPan; // 0x19c
+    float mTranspose; // 0x1a0
+    Hmx::Object *mEventReceiver; // 0x1a4
+    float mDelayMs; // 0x1a8
     /** "Equation used to determine falloff.
         See http://deki/Projects/Tool_Projects/Milo/Flow/Easing_equations" */
     EaseType mFalloffType; // 0x1ac
     /** "Optional parameter for falloff equation". Ranges from 0 to 100. */
-    float mFalloffParameter; // 0x1b0
+    float mFalloffParam; // 0x1b0
     /** "Distance before any falloff is applied". Ranges from 0 to mSilenceDistance. */
-    float mMinFalloffDistance; // 0x1b4
+    float mMinimumFalloff; // 0x1b4
     /** "Distance at which this sound is silent".
         Ranges from mMinFalloffDistance to 2147483647. */
     float mSilenceDistance; // 0x1b8
     /** "Enable the doppler effect on this object" */
-    bool mDopplerEnabled; // 0x1bc
-    bool mPanEnabled; // 0x1bd
-    int mShape; // 0x1c0
+    bool mEnableDoppler; // 0x1bc
+    bool mEnablePan; // 0x1bd
+    SoundShape mShape; // 0x1c0
     float mRadius; // 0x1c4
-    Fader *unk1c8; // 0x1c8
-    Transform unk1cc; // 0x1cc
+    Fader *mFader; // 0x1c8
+    Transform mPreviousTrans; // 0x1cc
     float mDistance; // 0x20c
-    float unk210; // 0x210
-    float mDopplerPower; // 0x214
+    float mYZProjection; // 0x210
+    float mDopplerShiftPower; // 0x214
     bool mStartedPlaying; // 0x218
 };

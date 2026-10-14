@@ -2,18 +2,29 @@
 
 class MicClientID {
 public:
-    MicClientID(int i = -1, int j = -1) : unk0(i), mPlayerID(j) {}
-    MicClientID(const MicClientID &id) : unk0(id.unk0), mPlayerID(id.mPlayerID) {}
+    MicClientID(int i = -1, int j = -1) : mID(i), mPlayerNum(j) {}
+    MicClientID(const MicClientID &id) : mID(id.mID), mPlayerNum(id.mPlayerNum) {}
 
     MicClientID &operator=(const MicClientID &id) {
         if (this != &id) {
-            unk0 = id.unk0;
-            mPlayerID = id.mPlayerID;
+            mID = id.mID;
+            mPlayerNum = id.mPlayerNum;
         }
         return *this;
     }
-    int unk0; // mic id - 0, 1 or 2
-    int mPlayerID; // 0x4
+
+    static const int kNoID;
+    static const int kNoPlayerNum;
+
+    int GetID() const { return mID; }
+    int GetPlayerNum() const { return mPlayerNum; }
+
+    void SetID(int id) { mID = id; }
+    void SetPlayerNum(int num) { mPlayerNum = num; }
+
+private:
+    int mID; // 0x0
+    int mPlayerNum; // 0x4
 };
 
 class MicManagerInterface {

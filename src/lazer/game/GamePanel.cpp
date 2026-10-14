@@ -458,7 +458,7 @@ void GamePanel::SetSoundEventReceiver() {
         if (soundBank) {
             for (ObjDirItr<Sound> it(soundBank, true); it != nullptr; ++it) {
                 if (it->NumMarkers() > 0) {
-                    it->SetSoundEventReceiver(this);
+                    it->SetEventReceiver(this);
                 }
             }
             mbSoundEventReceiverSet = true;

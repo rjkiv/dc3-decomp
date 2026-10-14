@@ -18,19 +18,16 @@
 #include "utl/Str.h"
 
 enum FXMode {
-    kFXModeOff,
-    kFXModeRoom,
-    kFXModeSmallStudio,
-    kFXModeMedStudio,
-    kFXModeLargeStudio,
-    kFXModeHall,
-    kFXModeSpace,
-    kFXModeEcho,
-    kFXModeDelay,
-    kFXModePipe,
-    kFXModeChorus,
-    kFXModeWah,
-    kFXModeFlanger
+    kFXModeOff = 0x0000,
+    kFXModeRoom = 0x0001,
+    kFXModeSmallStudio = 0x0002,
+    kFXModeMedStudio = 0x0003,
+    kFXModeLargeStudio = 0x0004,
+    kFXModeHall = 0x0005,
+    kFXModeSpace = 0x0006,
+    kFXModeEcho = 0x0007,
+    kFXModeDelay = 0x0008,
+    kFXModePipe = 0x0009
 };
 
 class StreamReader;
@@ -65,7 +62,7 @@ public:
     virtual bool GetFXChain() const { return false; }
     virtual void SetChatVoiceGain(int, float) {}
     virtual float GetChatVoiceGain(int) { return 1; }
-    virtual Mic *GetMic(int idx) { return mMics[idx]; }
+    virtual Mic *GetMic(int idx) { return mNullMics[idx]; }
     virtual void SetMicFX(bool) {}
     virtual bool GetMicFX() const { return false; }
     virtual void SetMicVolume(float) {}
@@ -98,9 +95,9 @@ public:
 
     Fader *MasterFader() const { return mMasterFader; }
     Fader *SfxFader() const { return mSfxFader; }
-    Fader *InstFader() const { return mMidiInstrumentFader; }
-    void SetDir(ObjectDir *dir) { unk64 = dir; }
-    ByteGrinder &Grinder() { return mByteGrinder; }
+    Fader *MidiInstrumentFader() const { return mMidiInstrumentFader; }
+    void SetCommonBank(ObjectDir *bank) { mCommonBank = bank; }
+    ByteGrinder &GetGrinder() { return mGrinder; }
     MicClientMapper *GetMicClientMapper() const { return mMicClientMapper; }
     bool CheckCommonBank(bool warn);
     void SetMasterVolume(float);
@@ -126,20 +123,20 @@ public:
     void DrawMeterScale(float &y0);
     void DrawMeter(float &y0, float lvl, float pkLvl, const char *);
     bool TrackLevels() const { return mTrackLevels; }
-    const std::vector<LevelData> &GetLevelData() const { return mLevelData; }
+    std::vector<LevelData> &GetLevelData() { return mLevelData; }
 
     template <class T>
     T *Find(const char *name, bool fail = true) {
         if (!CheckCommonBank(false))
             return nullptr;
         else {
-            T *obj = unk64->Find<T>(name, false);
+            T *obj = mCommonBank->Find<T>(name, false);
             if (!obj && fail) {
                 MILO_FAIL(
                     "Synth::Find() - %s %s not found in %s",
                     T::StaticClassName(),
                     name,
-                    unk64->GetPathName()
+                    mCommonBank->GetPathName()
                 );
             }
             return obj;
@@ -163,26 +160,27 @@ protected:
     virtual ~Synth() {}
 
     std::vector<LevelData> mLevelData; // 0x30
-private: // a la RB2
     bool mTrackLevels; // 0x3c
-    ByteGrinder mByteGrinder; // 0x40
+
+private:
+    ByteGrinder mGrinder; // 0x40
     int mNumMics; // 0x44
     MidiSynth *mMidiSynth; // 0x48
-    std::vector<Mic *> mMics; // 0x4c
+    std::vector<Mic *> mNullMics; // 0x4c
     bool mMuted; // 0x58
-    std::list<ObjectDir *> unk5c; // 0x5c
-    ObjDirPtr<ObjectDir> unk64; // 0x64
+    std::list<ObjectDir *> mBanks; // 0x5c
+    ObjDirPtr<ObjectDir> mCommonBank; // 0x64
     std::list<SampleInst *> mZombieInsts; // 0x78
     Fader *mMasterFader; // 0x80
     Fader *mSfxFader; // 0x84
     Fader *mMidiInstrumentFader; // 0x88
     std::list<Hmx::Object *> mPlayHandlers; // 0x8c
     MicClientMapper *mMicClientMapper; // 0x94
-    int unk98; // TranscodableMixer* mSecureMixer?
+    int unk98; // TranscodableMixer* mSecureMixer? not in pdb????
     Stream *mDebugStream; // 0x9c
     RndOverlay *mHud; // 0xa0
     ADSRImpl *mADSR; // 0xa4
-    String unka8; // 0xa8
+    String m_VOEditSnd; // 0xa8
 };
 
 void SynthPreInit();

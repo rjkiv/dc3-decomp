@@ -5,6 +5,6 @@ class MidiSynth {
 public:
     MidiSynth();
 
-protected:
+private:
     std::vector<MidiChannel> mChannels; // 0x0
 };

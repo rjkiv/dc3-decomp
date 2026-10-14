@@ -18,12 +18,12 @@ class Sound : public virtual Hmx::Object, public SynthPollable {
 public:
     struct DelayArgs {
         DelayArgs(float v, float p, float t, Hmx::Object *o, float ms)
-            : unk0(v), unk4(p), unk8(t), unkc(o), unk10(ms) {}
-        float unk0;
-        float unk4;
-        float unk8;
-        Hmx::Object *unkc;
-        float unk10;
+            : volume(v), pan(p), transpose(t), receiver(o), timeLeftMs(ms) {}
+        float volume; // 0x0
+        float pan; // 0x4
+        float transpose; // 0x8
+        Hmx::Object *receiver; // 0xc
+        float timeLeftMs; // 0x10
     };
     // Hmx::Object
     virtual ~Sound();
@@ -58,12 +58,12 @@ public:
     bool IsMoggReady() const;
     SynthSample *Sample();
 
-    void SetSoundEventReceiver(Hmx::Object *rcvr) { unkb8 = rcvr; }
-    float GetVolume() const { return mVolume; }
-    bool ReverbEnabled() const { return mReverbEnable; }
+    void SetEventReceiver(Hmx::Object *rcvr) { mEventReceiver = rcvr; }
+    float GetVolume() const { return mVol; }
+    bool GetReverbEnable() const { return mReverbEnable; }
     bool Loop() const { return mLoop; }
 
-    bool SoundEmpty() const { return !mSamples.empty() || !mDelayArgs.empty(); }
+    bool SoundEmpty() const { return !mInsts.empty() || !mDelayedSounds.empty(); }
 
     OBJ_MEM_OVERLOAD(0x16)
     NEW_OBJ(Sound)
@@ -76,9 +76,9 @@ private:
 protected:
     Sound();
 
-    std::list<PlayableSample *> mSamples; // 0x10
+    std::list<PlayableSample *> mInsts; // 0x10
     /** "Volume in dB (0 is full volume, -96 is silence)". */
-    float mVolume; // 0x18
+    float mVol; // 0x18
     /** Song speed. Can be used to calculate transpose.
         Transpose: "Transpose in half steps (SynthSample only)".
             Ranges from -96 to 12.
@@ -92,27 +92,27 @@ protected:
     float mReverbMixDb; // 0x38
     /** "Enable reverb send (SynthSample only)" */
     bool mReverbEnable; // 0x3c
-    bool unk3d; // 0x3c
+    bool mCanStop; // 0x3c
     /** "Which sample to play" */
     ObjPtr<SynthSample> mSynthSample; // 0x40
     /** "Which sample to play" */
     ObjPtr<MoggClip> mMoggClip; // 0x54
     /** "Envelope for this sound (SynthSample only)" */
-    ObjPtr<ADSR> mEnvelope; // 0x68
+    ObjPtr<ADSR> mADSR; // 0x68
     FaderGroup mFaders; // 0x7c
-    AudioDuckerGroup mDuckers; // 0x94
+    AudioDuckerGroup mDuckerGrp; // 0x94
     /** "Loop this sample" */
     bool mLoop; // 0xa4
     /** "Start of the loop, in samples. Ignored if 'looped' is unchecked." */
-    int mLoopStart; // 0xa8
+    int mLoopStartSamp; // 0xa8
     /** "End of the loop, in samples.  Use -1 for the end of the sample." */
-    int mLoopEnd; // 0xac
+    int mLoopEndSamp; // 0xac
     /** "Maximum number of times this sound can be playing simultaneously.
         Use 0 for no limit. (SynthSample only)" */
     int mMaxPolyphony; // 0xb0
-    bool unkb4;
-    ObjPtr<Hmx::Object> unkb8;
-    std::list<DelayArgs *> mDelayArgs; // 0xcc
+    bool mAddZombiesOnDelete; // 0xb4
+    ObjPtr<Hmx::Object> mEventReceiver; // 0xb8
+    std::list<DelayArgs *> mDelayedSounds; // 0xcc
 };
 
 #include "obj/Msg.h"

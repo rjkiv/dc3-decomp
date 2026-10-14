@@ -116,6 +116,7 @@ public:
 protected:
     ADSR();
 
+private:
     ADSRImpl mADSR; // 0x2c
 };
 

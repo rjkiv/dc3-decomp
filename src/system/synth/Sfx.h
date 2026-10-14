@@ -25,7 +25,7 @@ public: // RB2 said so
     /** "Transpose in half steps" */
     float mTranspose; // 0x1c
     /** "Which core's digital FX should be used in playing this sample" */
-    FXCore mFXCore; // 0x20
+    FXCore mFx; // 0x20
     ADSRImpl mADSR; // 0x24
 };
 
@@ -52,7 +52,7 @@ public:
     POOL_OVERLOAD(SfxInst, 0x4E);
 
 private:
-    Sfx *mSfx; // 0x44
+    Sfx *mSfxParent; // 0x44
     std::vector<SampleInst *> mSamples; // 0x48
     float mStartProgress; // 0x54
 };
@@ -92,6 +92,7 @@ public:
 protected:
     Sfx();
 
+private:
     ObjVector<SfxMap> mMaps; // 0x80
     ObjVector<MoggClipMap> mMoggClipMaps; // 0x90
     /** "Effect chain to use" */

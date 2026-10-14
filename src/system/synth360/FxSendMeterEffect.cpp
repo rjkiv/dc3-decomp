@@ -19,16 +19,16 @@ void FxSendMeterEffect360::SyncEffectParams(IXAudio2SubmixVoice *voice) const {
 }
 
 void FxSendMeterEffect360::InitParams(IXAudio2SubmixVoice *voice, int numChannels) {
-    mChannels.clear();
+    mLevelData.clear();
     switch (numChannels) {
     case 1:
-        mChannels.push_back("center");
+        mLevelData.push_back("center");
         break;
     case 2: {
         LevelData left("left");
         LevelData right("right");
-        mChannels.push_back(left);
-        mChannels.push_back(right);
+        mLevelData.push_back(left);
+        mLevelData.push_back(right);
         break;
     }
     default:
@@ -38,7 +38,7 @@ void FxSendMeterEffect360::InitParams(IXAudio2SubmixVoice *voice, int numChannel
     // unsure about this part
     RELEASE(mMeterParams);
     mMeterParams = new MeterEffectParams;
-    mMeterParams->pLevelData = &mChannels[0];
+    mMeterParams->pLevelData = &mLevelData[0];
     voice->SetEffectParameters(0, mMeterParams, sizeof(MeterEffectParams), 0);
 }
 

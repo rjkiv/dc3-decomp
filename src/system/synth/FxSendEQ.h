@@ -35,13 +35,13 @@ protected:
     /** "Low frequency gain, in dB". Ranges from -42 to 42. */
     float mLowFreqGain; // 0x78
     /** "Low pass filter cutoff, in Hz". Ranges from 20 to 20000. */
-    float mLowPassCutoff; // 0x7c
+    float mLPFCutoff; // 0x7c
     /** "Low pass filter resonance, in dB". Ranges from -25 to 25. */
-    float mLowPassReso; // 0x80
+    float mLPFReso; // 0x80
     /** "High pass filter cutoff, in Hz". Ranges from 20 to 20000. */
-    float mHighPassCutoff; // 0x84
+    float mHPFCutoff; // 0x84
     /** "High pass filter resonance, in dB". Ranges from -25 to 25. */
-    float mHighPassReso; // 0x88
+    float mHPFReso; // 0x88
     /** "Enable or disable Linkwitz-Riley mode" */
     bool mLRMode; // 0x8c
     /** "Transition time for gain changes, in ms". Ranges from 25 to 5000. */

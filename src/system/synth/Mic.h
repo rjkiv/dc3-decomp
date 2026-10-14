@@ -13,7 +13,7 @@ public:
         kHeadset = 1,
         kUSBMic = 2
     };
-    Mic() : mInUse(0), unk8(1.0f) {}
+    Mic() : mInUse(0), mEnergyMultiplier(1.0f) {}
     virtual ~Mic() {}
     virtual void Start() = 0;
     virtual void Stop() = 0;
@@ -57,9 +57,9 @@ public:
 
     void Set(const DataArray *);
 
-protected:
+private:
     bool mInUse; // 0x4
-    float unk8; // 0x8
+    float mEnergyMultiplier; // 0x8
 };
 
 class RingBuffer {

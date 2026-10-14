@@ -23,12 +23,12 @@ BEGIN_LOADS(FxSendMeterEffect)
 END_LOADS
 
 float FxSendMeterEffect::ChannelData(int idx) {
-    if (mChannels.size() == 0)
+    if (mLevelData.size() == 0)
         return 0.0f;
-    int lastIdx = mChannels.size() - 1;
+    int lastIdx = mLevelData.size() - 1;
     if (lastIdx < idx)
         idx = lastIdx;
-    return mChannels[idx].mPeak;
+    return mLevelData[idx].mPeak;
 }
 
 BEGIN_HANDLERS(FxSendMeterEffect)

@@ -5,7 +5,7 @@
 
 SampleZone::SampleZone(Hmx::Object *owner)
     : mSample(owner), mVolume(0.0f), mPan(0.0f), mCenterNote(0x24), mMinNote(0),
-      mMaxNote(0x7f), mMinVel(0), mMaxVel(0x7f), mFXCore(kFXCoreNone) {}
+      mMaxNote(0x7f), mMinVelo(0), mMaxVelo(0x7f), mFX(kFXCoreNone) {}
 
 void SampleZone::Save(BinStream &bs) const {
     bs << mSample;
@@ -14,10 +14,10 @@ void SampleZone::Save(BinStream &bs) const {
     bs << mCenterNote;
     bs << mMinNote;
     bs << mMaxNote;
-    bs << mFXCore;
+    bs << mFX;
     bs << mADSR;
-    bs << mMinVel;
-    bs << mMaxVel;
+    bs << mMinVelo;
+    bs << mMaxVelo;
 }
 
 void SampleZone::Load(BinStreamRev &d) {
@@ -29,16 +29,16 @@ void SampleZone::Load(BinStreamRev &d) {
     d >> mMaxNote;
     int fx;
     d >> fx;
-    mFXCore = (FXCore)fx;
+    mFX = (FXCore)fx;
     d >> mADSR;
     if (d.rev >= 2) {
-        d >> mMinVel;
-        d >> mMaxVel;
+        d >> mMinVelo;
+        d >> mMaxVelo;
     }
 }
 
 bool SampleZone::Includes(unsigned char note, unsigned char vel) {
-    return mMinNote <= note && note <= mMaxNote && mMinVel <= vel && vel <= mMaxVel;
+    return mMinNote <= note && note <= mMaxNote && mMinVelo <= vel && vel <= mMaxVelo;
 }
 
 BinStream &operator<<(BinStream &bs, const SampleZone &sz) {

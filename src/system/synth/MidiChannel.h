@@ -6,16 +6,13 @@
 class MidiChannel {
 public:
     // got this from DC1
-    struct DummySample {
-        int unk0;
-    };
+    struct DummySample {};
 
     struct Note {
-        // todo: figure out what this is, it's not in the bank5/6 symbols anywhere
-        int unk0;
-        float unk4;
-        std::vector<DummySample *> unk8;
-        std::vector<float> unk10;
+        int mNoteNum; // 0x0
+        float mVolume; // 0x4
+        std::vector<DummySample *> mSamples; // 0x8
+        std::vector<float> mTransposes; // 0x14
     };
 
     MidiChannel();

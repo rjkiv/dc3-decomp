@@ -37,11 +37,11 @@ void FxSend360::RemoveOwnerVoice(Voice *v) {
 
 void FxSend360::SyncEffectParams() {
     START_AUTO_TIMER("voice_cs");
-    if (!mThis->UpdatesEnabled()) {
+    if (!mThis->GetEnableUpdates()) {
         mParamsDirty = true;
         return;
     } else {
-        if (mParamsDirty || mThis->UpdatesEnabled()) {
+        if (mParamsDirty || mThis->GetEnableUpdates()) {
             for (int i = 0; i != mVoices.size(); i++) {
                 SyncEffectParams(mVoices[i]);
             }
@@ -94,8 +94,8 @@ void FxSend360::CleanChain() {
 }
 
 IXAudio2Voice *FxSend360::OutputVoice() {
-    if (mThis->NextSend()) {
-        FxSend360 *send = dynamic_cast<FxSend360 *>(mThis->NextSend());
+    if (mThis->GetNextSend()) {
+        FxSend360 *send = dynamic_cast<FxSend360 *>(mThis->GetNextSend());
         MILO_ASSERT(send, 0x225);
         return send->mInputVoice;
     } else {
@@ -106,7 +106,7 @@ IXAudio2Voice *FxSend360::OutputVoice() {
 
 void FxSend360::Reconnect() {
     if (OutputVoice()) {
-        switch (mThis->GetChannels()) {
+        switch (mThis->Channels()) {
         case kSendAll:
         case kSendAllXMix:
             CreateVoice(0, 1);
@@ -148,9 +148,9 @@ void FxSend360::CreateInputVoice() {
         { 0, mVoices[0] }, { 0, OutputVoice() }
     };
 
-    int stage = mThis->Stage() << 1;
+    int stage = mThis->GetStage() << 1;
     XAUDIO2_VOICE_SENDS sends;
-    switch (mThis->GetChannels()) {
+    switch (mThis->Channels()) {
         default: 
             MILO_FAIL("FxSend: Unknown Channels");  
         case kSendAll: 
@@ -173,14 +173,14 @@ void FxSend360::CreateInputVoice() {
 }
 
 void FxSend360::CreateVoice(int i1, int i2) {
-    int stage = mThis->Stage() << 1;
+    int stage = mThis->GetStage() << 1;
 // clang-format off
     XAUDIO2_SEND_DESCRIPTOR desc = { 0, OutputVoice() };
     std::vector<XAUDIO2_SEND_DESCRIPTOR> descs;
     if(desc.pOutputVoice){
         descs.push_back(desc);
     }
-    if(mThis->ReverbEnabled()){
+    if(mThis->GetReverbEnable()){
         XAUDIO2_SEND_DESCRIPTOR desc2 = { 0, TheXboxSynth->GetReverbDmVoice() };
         descs.push_back(desc2);
     }
@@ -195,8 +195,8 @@ void FxSend360::UpdateVoiceMatrices() {
     if (mThis->Bypass()) {
         gain = 0.0f;
     }
-    float reverbMix = DbToRatio(mThis->ReverbMixDb());
-    SendChannels channel = mThis->GetChannels();
+    float reverbMix = DbToRatio(mThis->GetReverbMixDb());
+    SendChannels channel = mThis->Channels();
     gain = Max(gain, 1E-10f);
     reverbMix = Max(reverbMix, 1E-10f);
     switch (channel) {
@@ -221,7 +221,7 @@ void FxSend360::UpdateVoiceMatrices() {
             mVoices[2]->SetOutputMatrix(OutputVoice(), 2, 6, floats6, 0);
         }
 
-        if (mThis->ReverbEnabled()) {
+        if (mThis->GetReverbEnable()) {
             const float floats7[12] = {
                 reverbMix, 0, 0, reverbMix, 0, 0, 0, 0, 0, 0, 0, 0
             };
@@ -244,7 +244,7 @@ void FxSend360::UpdateVoiceMatrices() {
     case kSendCenter: {
         const float floats[6] = { gain / 2, gain / 2, gain, 0, gain / 4, gain / 4 };
         mInputVoice->SetOutputMatrix(mVoices[0], 6, 1, floats, 0);
-        if (mThis->ReverbEnabled()) {
+        if (mThis->GetReverbEnable()) {
             const float floats2[6] = { 0, 0, reverbMix, 0, 0, 0 };
             mVoices[0]->SetOutputMatrix(
                 TheXboxSynth->GetReverbDmVoice(), 1, 6, floats2, 0
@@ -256,7 +256,7 @@ void FxSend360::UpdateVoiceMatrices() {
         const float floats[12] = { gain, 0,    gain * 0.7f, 0, gain * 0.3f, 0,
                                    0,    gain, gain * 0.7f, 0, 0,           gain * 0.3f };
         mInputVoice->SetOutputMatrix(mVoices[0], 6, 2, floats, 0);
-        if (mThis->ReverbEnabled()) {
+        if (mThis->GetReverbEnable()) {
             const float floats2[12] = {
                 reverbMix, 0, 0, reverbMix, 0, 0, 0, 0, 0, 0, 0, 0
             };
@@ -293,7 +293,7 @@ void FxSend360::UpdateVoiceMatrices() {
             mVoices[2]->SetOutputMatrix(OutputVoice(), 2, 6, floats6, 0);
         }
 
-        if (mThis->ReverbEnabled()) {
+        if (mThis->GetReverbEnable()) {
             const float floats7[12] = {
                 reverbMix, 0, 0, reverbMix, 0, 0, 0, 0, 0, 0, 0, 0
             };

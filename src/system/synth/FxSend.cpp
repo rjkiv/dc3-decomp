@@ -28,8 +28,8 @@ BEGIN_HANDLERS(FxSend)
 END_HANDLERS
 
 BEGIN_PROPSYNCS(FxSend)
-    SYNC_PROP_SET(next_send, NextSend(), SetNextSend(_val.Obj<FxSend>()))
-    SYNC_PROP_SET(stage, Stage(), SetStage(_val.Int()))
+    SYNC_PROP_SET(next_send, GetNextSend(), SetNextSend(_val.Obj<FxSend>()))
+    SYNC_PROP_SET(stage, GetStage(), SetStage(_val.Int()))
     SYNC_PROP_MODIFY(dry_gain, mDryGain, UpdateMix())
     SYNC_PROP_MODIFY(wet_gain, mWetGain, UpdateMix())
     SYNC_PROP_MODIFY(input_gain, mInputGain, UpdateMix())
@@ -158,17 +158,17 @@ bool FxSend::CheckChain(FxSend *send, int i) {
     if (cur == this) {
         MILO_NOTIFY("Error: can't have loops in your FX chain.");
         return false;
-    } else if (send && send->Stage() <= i) {
+    } else if (send && send->GetStage() <= i) {
         MILO_NOTIFY(
             "Error: output send must be set to a higher stage (%d <= %d).",
-            send->Stage(),
+            send->GetStage(),
             i
         );
         return false;
     } else {
         FOREACH_OBJREF (it, this) {
             FxSend *rsend = dynamic_cast<FxSend *>((*it).RefOwner());
-            if (rsend && rsend->NextSend() == this && rsend->Stage() >= i) {
+            if (rsend && rsend->GetNextSend() == this && rsend->GetStage() >= i) {
                 MILO_NOTIFY(
                     "Error: stage must be higher than all input sends' stages (see %s).",
                     rsend->Name()

@@ -79,7 +79,7 @@ public:
 
     void SetVolume(float);
 
-    FaderGroup *Faders() const { return mFaders; }
+    FaderGroup &Faders() { return *mFaders; }
 
     static const float kStreamEndMs;
     static const int kStreamEndSamples;
@@ -87,5 +87,6 @@ public:
 protected:
     Stream();
 
+private:
     FaderGroup *mFaders; // 0x4
 };

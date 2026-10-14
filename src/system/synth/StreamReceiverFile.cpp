@@ -9,7 +9,7 @@ StreamReceiverFile::StreamReceiverFile(int numBuffers, bool slip)
 void StreamReceiverFile::StartSendImpl(unsigned char *data, int bufSize, int targetIdx) {
     MILO_ASSERT(mTargetBuffer, 0x1D);
     MILO_ASSERT(targetIdx * kStreamBufSize + bufSize <= mBufSize, 0x1F);
-    memcpy(targetIdx * kStreamBufSize + mTargetBuffer, data, bufSize);
+    memcpy(targetIdx * kStreamBufSize + (unsigned char *)mTargetBuffer, data, bufSize);
 }
 
 int StreamReceiverFile::GetPlayCursor() {

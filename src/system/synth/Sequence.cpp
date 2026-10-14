@@ -283,7 +283,7 @@ END_LOADS
 #pragma region RandomGroupSeq
 
 RandomGroupSeq::RandomGroupSeq()
-    : mNumSimul(1), mAllowRepeats(0), mNextIndex(-1), mForceChooseIndex(-1) {}
+    : mNumSimul(1), mAllowRepeats(0), mNextPlayIndex(-1), mForceChooseIndex(-1) {}
 
 BEGIN_HANDLERS(RandomGroupSeq)
     HANDLE_EXPR(get_next_play_index, NextIndex())
@@ -336,8 +336,8 @@ bool RandomGroupSeq::UsingSerialSequences() { return sForceSerialSequences; }
 void RandomGroupSeq::AddToPlayedHistory(int idx) {
     if (!mAllowRepeats) {
         if (mPlayHistory.size() != 0) {
-            if (mPlayHistory.size() == mChildren.size() - 1) {
-                int numChildren = mChildren.size() / 2;
+            if (mPlayHistory.size() == Children().size() - 1) {
+                int numChildren = Children().size() / 2;
                 for (int i = 0; i < numChildren; i++) {
                     mPlayHistory.pop_front();
                 }
@@ -348,9 +348,9 @@ void RandomGroupSeq::AddToPlayedHistory(int idx) {
 }
 
 int RandomGroupSeq::NextIndex() {
-    if (mNextIndex == -1 && mChildren.size() != 0)
+    if (mNextPlayIndex == -1 && Children().size() != 0)
         PickNextIndex();
-    return mNextIndex;
+    return mNextPlayIndex;
 }
 
 void RandomGroupSeq::ForceNextIndex(int i) {
@@ -358,8 +358,8 @@ void RandomGroupSeq::ForceNextIndex(int i) {
     if (i < 0 || i > Children().size() - 1) {
         MILO_NOTIFY("index out of bounds for ForceNextIndex (index = %d)", i);
     } else {
-        mPlayHistory.remove(mNextIndex);
-        mNextIndex = i;
+        mPlayHistory.remove(mNextPlayIndex);
+        mNextPlayIndex = i;
     }
 }
 
@@ -474,11 +474,11 @@ BEGIN_LOADS(SfxSeq)
         } else {
             Sequence::Load(bs);
         }
-        mChildren.clear();
+        Children().clear();
         ObjPtr<Sequence> seq(this);
         bs >> seq;
         if (seq) {
-            mChildren.push_back(seq);
+            Children().push_back(seq);
         }
         if (rev == 2) {
             bs >> mAvgVol;
@@ -497,9 +497,9 @@ END_LOADS
 #pragma region SeqInst
 
 SeqInst::SeqInst(Sequence *seq) : mOwner(seq), mVolume(0.0f), mStarted(false) {
-    mRandVol = RandomVal(mOwner->AvgVol(), mOwner->VolSpread());
-    mRandPan = RandomVal(mOwner->AvgPan(), mOwner->PanSpread());
-    mRandTp = RandomVal(mOwner->AvgTranspose(), mOwner->TransposeSpread());
+    mRandVol = RandomVal(mOwner->GetAvgVolume(), mOwner->GetVolSpread());
+    mRandPan = RandomVal(mOwner->GetAvgPan(), mOwner->GetPanSpread());
+    mRandTp = RandomVal(mOwner->GetAvgTranspose(), mOwner->GetTransposeSpread());
 }
 
 SeqInst::~SeqInst() {}
@@ -518,7 +518,7 @@ void SeqInst::SetVolume(float f) {
 #pragma region WaitSeqInst
 
 WaitSeqInst::WaitSeqInst(WaitSeq *seq) : SeqInst(seq), mEndTime(-1.0f) {
-    float rand = RandomVal(seq->AvgWaitSecs(), seq->WaitSpread());
+    float rand = RandomVal(seq->GetAvgWaitSecs(), seq->GetWaitSpread());
     mWaitMs = rand * 1000.0f;
 }
 
@@ -610,9 +610,9 @@ void RandomGroupSeqInst::Poll() {
 
 RandomIntervalGroupSeqInst::RandomIntervalGroupSeqInst(RandomIntervalGroupSeq *seq)
     : GroupSeqInst(seq, false), unk4c(seq->Children().size()), mRunning(false) {
-    mMaxSimultaneous = seq->MaxSimultaneous();
-    mAvgIntervalSecs = seq->AvgIntervalSecs();
-    mIntervalSpread = seq->IntervalSpread();
+    mMaxSimultaneous = seq->GetMaxSimul();
+    mAvgIntervalSecs = seq->GetAvgInterval();
+    mIntervalSpread = seq->GetIntervalSpread();
     for (int i = 0; i < seq->Children().size(); i++) {
         unk4c[i] = -1.0f;
     }

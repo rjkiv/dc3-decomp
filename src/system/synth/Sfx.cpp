@@ -12,7 +12,7 @@
 
 #pragma region SfxInst
 
-SfxInst::SfxInst(Sfx *sfx) : SeqInst(sfx), mSfx(sfx), mStartProgress(0) {
+SfxInst::SfxInst(Sfx *sfx) : SeqInst(sfx), mSfxParent(sfx), mStartProgress(0) {
     FOREACH (it, sfx->SfxMaps()) {
         SampleInst *inst = nullptr;
         if (it->mSample) {
@@ -22,7 +22,7 @@ SfxInst::SfxInst(Sfx *sfx) : SeqInst(sfx), mSfx(sfx), mStartProgress(0) {
             inst->SetBankVolume(it->mVolume + mRandVol);
             inst->SetBankPan(it->mPan + mRandPan);
             inst->SetBankSpeed(CalcSpeedFromTranspose(it->mTranspose + mRandTp));
-            inst->SetFXCore(it->mFXCore);
+            inst->SetFXCore(it->mFx);
             inst->SetADSR(it->mADSR);
             inst->SetSend(sfx->GetSend());
             inst->SetReverbMixDb(sfx->GetReverbMixDb());
@@ -30,7 +30,7 @@ SfxInst::SfxInst(Sfx *sfx) : SeqInst(sfx), mSfx(sfx), mStartProgress(0) {
             mSamples.push_back(inst);
         }
     }
-    FOREACH (it, mSfx->MoggClipMaps()) {
+    FOREACH (it, mSfxParent->MoggClipMaps()) {
         if (it->GetMoggClip()) {
             it->GetMoggClip()->SetSend(sfx->GetSend());
         }
@@ -43,7 +43,7 @@ void SfxInst::Stop() {
     FOREACH (it, mSamples) {
         (*it)->Stop(false);
     }
-    FOREACH (it, mSfx->MoggClipMaps()) {
+    FOREACH (it, mSfxParent->MoggClipMaps()) {
         MoggClip *clip = it->GetMoggClip();
         if (clip) {
             clip->Stop(false);
@@ -56,7 +56,7 @@ bool SfxInst::IsRunning() {
         if ((*it)->IsPlaying())
             return true;
     }
-    FOREACH (it, mSfx->MoggClipMaps()) {
+    FOREACH (it, mSfxParent->MoggClipMaps()) {
         MoggClip *clip = it->GetMoggClip();
         if (clip && clip->HasStream()) {
             return true;
@@ -69,7 +69,7 @@ void SfxInst::UpdateVolume() {
     FOREACH (it, mSamples) {
         (*it)->SetVolume(mOwner->Faders().GetVolume() + mVolume);
     }
-    FOREACH (it, mSfx->MoggClipMaps()) {
+    FOREACH (it, mSfxParent->MoggClipMaps()) {
         MoggClip *clip = it->GetMoggClip();
         if (clip) {
             clip->SetVolume(mOwner->Faders().GetVolume() + mVolume + mRandVol);
@@ -90,11 +90,11 @@ void SfxInst::StartImpl() {
         (*it)->SetStartProgress(mStartProgress);
         (*it)->Play(0);
     }
-    FOREACH (it, mSfx->MoggClipMaps()) {
+    FOREACH (it, mSfxParent->MoggClipMaps()) {
         MoggClip *clip = it->GetMoggClip();
         if (clip) {
-            clip->SetVolume(it->Volume());
-            clip->SetupPanInfo(it->Pan(), it->PanWidth(), it->Stereo());
+            clip->SetVolume(it->mVolume);
+            clip->SetupPanInfo(it->mPan, it->mPanWidth, it->mIsStereo);
             clip->Play(0);
         }
     }
@@ -104,7 +104,7 @@ void SfxInst::Pause(bool b1) {
     FOREACH (it, mSamples) {
         (*it)->Pause(b1);
     }
-    FOREACH (it, mSfx->MoggClipMaps()) {
+    FOREACH (it, mSfxParent->MoggClipMaps()) {
         MoggClip *clip = it->GetMoggClip();
         if (clip) {
             clip->Pause(b1);
@@ -167,7 +167,7 @@ BEGIN_CUSTOM_PROPSYNC(SfxMap)
     SYNC_PROP(volume, o.mVolume)
     SYNC_PROP(pan, o.mPan)
     SYNC_PROP(transpose, o.mTranspose)
-    SYNC_PROP(fx_core, (int &)o.mFXCore)
+    SYNC_PROP(fx_core, (int &)o.mFx)
     SYNC_PROP(adsr, o.mADSR)
 END_CUSTOM_PROPSYNC
 

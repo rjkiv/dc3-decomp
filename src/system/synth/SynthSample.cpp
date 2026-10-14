@@ -23,7 +23,7 @@ void *SampleAlloc(int size, const char *, int, const char *, int) {
 SynthSample::SynthSample() {}
 
 SynthSample::~SynthSample() {
-    FOREACH (it, mSampleInsts) {
+    FOREACH (it, mChildrenInsts) {
         (*it)->Stop(true);
     }
     if (sLoading == this) {
@@ -47,10 +47,10 @@ BEGIN_CUSTOM_PROPSYNC(SampleMarker)
 END_CUSTOM_PROPSYNC
 
 BEGIN_PROPSYNCS(SynthSample)
-    SYNC_PROP_MODIFY(file, mFile, Sync(sync0))
+    SYNC_PROP_MODIFY(file, mFile, Sync(kFileChanged))
     SYNC_PROP_SET(
         sample_rate,
-        mSampleData.GetSampleRate(),
+        mSampleData.SampleRate(),
         MILO_NOTIFY("can't set property %s", "sample_rate")
     )
     SYNC_PROP(markers, mSampleData.AccessMarkers())
@@ -74,7 +74,7 @@ BEGIN_COPYS(SynthSample)
             COPY_MEMBER(mFile)
         }
     END_COPYING_MEMBERS
-    Sync(sync0);
+    Sync(kFileChanged);
 END_COPYS
 
 BEGIN_LOADS(SynthSample)
@@ -110,11 +110,11 @@ void SynthSample::PreLoad(BinStream &bs) {
 void SynthSample::PostLoad(BinStream &bs) {
     sLoader = nullptr;
     sLoading = nullptr;
-    Sync(bs.Cached() ? sync1 : sync0);
+    Sync(bs.Cached() ? kLoadedInline : kFileChanged);
 }
 
 void SynthSample::Disable() { sDisabled = true; }
-int SynthSample::GetNumChannels() const { return mSampleData.NumChannels(); }
+int SynthSample::GetNumChannels() const { return mSampleData.Channels(); }
 std::vector<SampleMarker> &SynthSample::AccessMarkers() {
     return mSampleData.AccessMarkers();
 }
@@ -124,7 +124,7 @@ int SynthSample::GetPlatformSize(Platform) {
 }
 
 void SynthSample::Sync(SyncType ty) {
-    if (ty == sync0) {
+    if (ty == kFileChanged) {
         mSampleData.Reset();
         if (!sDisabled && !mFile.empty()) {
             FileLoader *fl = dynamic_cast<FileLoader *>(TheLoadMgr.ForceGetLoader(mFile));
@@ -148,12 +148,12 @@ void SynthSample::Sync(SyncType ty) {
     }
 }
 
-void SynthSample::RegisterChild(SampleInst *inst) { mSampleInsts.push_back(inst); }
+void SynthSample::RegisterChild(SampleInst *inst) { mChildrenInsts.push_back(inst); }
 
 void SynthSample::UnregisterChild(SampleInst *inst) {
-    FOREACH (it, mSampleInsts) {
+    FOREACH (it, mChildrenInsts) {
         if (*it == inst) {
-            mSampleInsts.erase(it);
+            mChildrenInsts.erase(it);
             return;
         }
     }
@@ -165,6 +165,6 @@ void SynthSample::Init() {
     SampleData::SetAllocator(SampleAlloc, MemFree);
 }
 
-int SynthSample::GetSampleRate() const { return mSampleData.GetSampleRate(); }
+int SynthSample::GetSampleRate() const { return mSampleData.SampleRate(); }
 
 #pragma endregion

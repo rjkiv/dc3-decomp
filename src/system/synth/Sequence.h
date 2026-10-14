@@ -25,12 +25,12 @@ public:
 
     static void Init();
 
-    float AvgVol() const { return mAvgVol; }
-    float VolSpread() const { return mVolSpread; }
-    float AvgTranspose() const { return mAvgTranspose; }
-    float TransposeSpread() const { return mTransposeSpread; }
-    float AvgPan() const { return mAvgPan; }
-    float PanSpread() const { return mPanSpread; }
+    float GetAvgVolume() const { return mAvgVol; }
+    float GetVolSpread() const { return mVolSpread; }
+    float GetAvgTranspose() const { return mAvgTranspose; }
+    float GetTransposeSpread() const { return mTransposeSpread; }
+    float GetAvgPan() const { return mAvgPan; }
+    float GetPanSpread() const { return mPanSpread; }
     FaderGroup &Faders() { return mFaders; }
 
     SeqInst *MakeInst();
@@ -75,13 +75,13 @@ public:
     virtual void Load(BinStream &);
     virtual SeqInst *MakeInstImpl();
 
-    float AvgWaitSecs() const { return mAvgWaitSecs; }
-    float WaitSpread() const { return mWaitSpread; }
+    float GetAvgWaitSecs() const { return mAvgWaitSecs; }
+    float GetWaitSpread() const { return mWaitSpread; }
 
     NEW_OBJ(WaitSeq)
     static void Init() { REGISTER_OBJ_FACTORY(WaitSeq) }
 
-protected:
+private:
     /** "Average wait time, in seconds" */
     float mAvgWaitSecs; // 0x80
     /** "Amount to vary the wait time, in seconds" */
@@ -101,6 +101,7 @@ public:
 protected:
     GroupSeq();
 
+private:
     /** "The children of this sequence" */
     ObjPtrList<Sequence> mChildren; // 0x80
 };
@@ -121,11 +122,11 @@ public:
     int NextIndex();
     void PickNextIndex();
     void ForceNextIndex(int);
-    int GetNumSimul() { return mNumSimul; }
-    bool AllowRepeats() const { return mAllowRepeats; }
+    int GetNumSimul() const { return mNumSimul; }
+    bool GetAllowRepeats() const { return mAllowRepeats; }
     void AddToPlayedHistory(int idx);
-    bool InPlayedHistory(int idx) const {
-        std::list<int>::const_reverse_iterator it;
+    bool HasPlayed(int idx) {
+        std::list<int>::reverse_iterator it;
         for (it = mPlayHistory.rbegin(); it != mPlayHistory.rend(); it++) {
             if (*it == idx)
                 return true;
@@ -138,13 +139,13 @@ public:
     static void ForceSerialSequences(bool);
     static bool UsingSerialSequences();
 
-protected:
+private:
     /** "Number of children to play simultaneously" */
     int mNumSimul; // 0x94
     /** "If false, you will never hear the same sequence again until all have played (only
      * if num_simul is 1)" */
     bool mAllowRepeats; // 0x98
-    int mNextIndex; // 0x9c
+    int mNextPlayIndex; // 0x9c
     int mForceChooseIndex; // 0xa0
     std::list<int> mPlayHistory; // 0xa4
 };
@@ -164,11 +165,11 @@ public:
     NEW_OBJ(RandomIntervalGroupSeq)
     static void Init() { REGISTER_OBJ_FACTORY(RandomIntervalGroupSeq) }
 
-    float AvgIntervalSecs() const { return mAvgIntervalSecs; }
-    float IntervalSpread() const { return mIntervalSpread; }
-    int MaxSimultaneous() const { return mMaxSimultaneous; }
+    float GetAvgInterval() const { return mAvgIntervalSecs; }
+    float GetIntervalSpread() const { return mIntervalSpread; }
+    int GetMaxSimul() const { return mMaxSimultaneous; }
 
-protected:
+private:
     /** "the number of seconds on average we wait to play a child cue again" */
     float mAvgIntervalSecs; // 0x94
     /** "We randomly deviate + or - this many seconds from the average when picking our
@@ -244,6 +245,8 @@ protected:
     float mRandPan; // 0x34
     float mRandTp; // 0x38
     float mVolume; // 0x3c
+
+private:
     bool mStarted; // 0x40
 };
 

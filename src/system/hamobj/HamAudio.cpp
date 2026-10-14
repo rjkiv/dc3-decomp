@@ -318,8 +318,8 @@ void HamAudio::FinishLoad() {
 
     for (int i = 0; i < 2; i++) {
         if (mSongStreams[i]) {
-            mSongStreams[i]->Faders()->Add(mMasterFader);
-            mSongStreams[i]->Faders()->Add(mCrossFaders[i]);
+            mSongStreams[i]->Faders().Add(mMasterFader);
+            mSongStreams[i]->Faders().Add(mCrossFaders[i]);
             mCrossFaders[i]->SetVolume(0);
             const auto &vols = mCurrSongInfo->GetVols();
             const auto &pans = mCurrSongInfo->GetPans();

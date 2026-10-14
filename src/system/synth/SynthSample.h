@@ -9,10 +9,8 @@ class SampleInst;
 class SynthSample : public Hmx::Object {
 public:
     enum SyncType {
-        sync0,
-        sync1,
-        sync2,
-        sync3
+        kFileChanged = 0x0000,
+        kLoadedInline = 0x0001
     };
     // Hmx::Object
     virtual ~SynthSample();
@@ -53,5 +51,5 @@ protected:
 
     FilePath mFile; // 0x2c
     SampleData mSampleData; // 0x34
-    std::list<SampleInst *> mSampleInsts; // 0x50
+    std::list<SampleInst *> mChildrenInsts; // 0x50
 };

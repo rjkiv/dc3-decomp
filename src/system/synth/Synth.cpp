@@ -139,7 +139,7 @@ BEGIN_HANDLERS(Synth)
     HANDLE_EXPR(spu_overhead, GetSPUOverhead())
     HANDLE_ACTION(set_headset_target, 0)
     HANDLE_ACTION(stop_all_sounds, StopAllSounds())
-    HANDLE_ACTION(set_vo_edit_sound, unka8 = _msg->Str(2))
+    HANDLE_ACTION(set_vo_edit_sound, m_VOEditSnd = _msg->Str(2))
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
 
@@ -175,9 +175,9 @@ void Synth::Init() {
     DataArray *cfg = SystemConfig("synth");
     mMuted = cfg->FindInt("mute");
     TheLoadMgr.RegisterFactory("wav", WavFactory);
-    mMics.resize(mNumMics);
-    for (int i = 0; i < mMics.size(); i++) {
-        mMics[i] = new MicNull();
+    mNullMics.resize(mNumMics);
+    for (int i = 0; i < mNullMics.size(); i++) {
+        mNullMics[i] = new MicNull();
     }
     mHud = RndOverlay::Find("synth_hud", true);
     mHud->SetCallback(this);
@@ -195,12 +195,12 @@ void Synth::InitSecurity() {
     }
     buf[0] = 'M';
     DataRegisterFunc(buf, returnMasterKey);
-    mByteGrinder.Init();
+    mGrinder.Init();
 }
 
 void Synth::Terminate() {
     MILO_ASSERT(mZombieInsts.empty(), 0x116);
-    DeleteAll(mMics);
+    DeleteAll(mNullMics);
     RELEASE(mMidiSynth);
     RELEASE(mMasterFader);
     RELEASE(mSfxFader);
@@ -258,7 +258,7 @@ float Synth::UpdateOverlay(RndOverlay *o, float y) {
     float f24 = (float)TheRnd.Height() * (y + 0.265f);
     if (mDebugStream) {
         DrawMeterScale(f24);
-        float volume = mDebugStream->Faders()->GetVolume();
+        float volume = mDebugStream->Faders().GetVolume();
         DrawMeter(f24, volume, 0, "stream");
         for (int i = 0; i < mDebugStream->GetNumChannels(); i++) {
             DrawMeter(
@@ -339,7 +339,7 @@ void Synth::SetMic(const DataArray *data) {
 }
 
 bool Synth::CheckCommonBank(bool notify) {
-    bool loaded = unk64 && unk64.IsLoaded();
+    bool loaded = mCommonBank && mCommonBank.IsLoaded();
     if (!loaded && notify) {
         MILO_LOG("Synth::Find() - Common sound bank not loaded!\n");
     }
@@ -363,8 +363,8 @@ int Synth::GetSPUOverhead() {
 }
 
 void Synth::StopPlaybackAllMics() {
-    if (mMicClientMapper->GetMicMgrInterface()) {
-        mMicClientMapper->GetMicMgrInterface()->SetPlayback(false);
+    if (mMicClientMapper->GetMicManager()) {
+        mMicClientMapper->GetMicManager()->SetPlayback(false);
     }
 }
 
@@ -385,7 +385,9 @@ void Synth::RunFlow(const char *flowName) {
             flow->Activate();
         } else {
             MILO_NOTIFY(
-                "Synth::RunFlow() - %s not found in %s", flowName, unk64->GetPathName()
+                "Synth::RunFlow() - %s not found in %s",
+                flowName,
+                mCommonBank->GetPathName()
             );
         }
     }
@@ -422,7 +424,7 @@ void Synth::PlaySound(const char *name, float volume, float pan, float transpose
             MILO_NOTIFY(
                 "Synth::PlaySound() - Sound %s not found in %s",
                 name,
-                unk64->GetPathName()
+                mCommonBank->GetPathName()
             );
         }
     }
@@ -479,7 +481,9 @@ DataNode Synth::OnPassthrough(DataArray *a) {
             obj->Handle(a, true);
         else
             MILO_NOTIFY(
-                "Synth::OnPassthrough() - %s not found in %s", name, unk64->GetPathName()
+                "Synth::OnPassthrough() - %s not found in %s",
+                name,
+                mCommonBank->GetPathName()
             );
         return 0;
     }

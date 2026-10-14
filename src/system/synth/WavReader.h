@@ -15,8 +15,15 @@ public:
     virtual bool Done() { return mSamplesLeft == 0; }
     virtual bool Fail() { return false; }
 
+protected:
+    virtual void Init();
+    virtual int ConsumeData(void **, int, int);
+    virtual void EndData() {}
+
     int mNumChannels; // 0x4
     int mSampleRate; // 0x8
+
+private:
     File *mInFile; // 0xc
     FileStream *mInFileStream; // 0x10
     WaveFile *mInWaveFile; // 0x14
@@ -30,9 +37,4 @@ public:
     int mTotalSamplesConsumed; // 0x38
     bool mInitted; // 0x3c
     StandardStream *mOutStream; // 0x40
-
-protected:
-    virtual void Init();
-    virtual int ConsumeData(void **, int, int);
-    virtual void EndData() {}
 };

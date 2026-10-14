@@ -35,13 +35,14 @@ typedef void (*SampleDataFreeFunc)(void *, const char *, int, const char *);
 class SampleData {
 public:
     enum Format {
-        kPCM,
-        kBigEndPCM,
-        kVAG,
-        kXMA,
-        kATRAC,
-        kMP3,
-        kNintendoADPCM
+        kPCM = 0x0000,
+        kBigEndPCM = 0x0001,
+        kVAG = 0x0002,
+        kXMA = 0x0003,
+        kATRAC = 0x0004,
+        kMP3 = 0x0005,
+        kNintendoADPCM = 0x0006,
+        kNintendoBcWav = 0x0007
     };
 
     SampleData();
@@ -54,12 +55,12 @@ public:
     int NumMarkers() const;
     const SampleMarker &GetMarker(int) const;
     void Dealloc();
-    int NumChannels() const { return mNumChannels; }
-    int GetSampleRate() const { return mSampleRate; }
+    int Channels() const { return mChannels; }
+    int SampleRate() const { return mSampleRate; }
     int NumSamples() const { return mNumSamples; }
-    int NumBytes() const { return mSizeBytes; }
+    int SizeBytes() const { return mSizeBytes; }
     Format GetFormat() const { return mFormat; }
-    const void *GetData() const { return mData; }
+    const void *Data() const { return mData; }
     std::vector<SampleMarker> &AccessMarkers() { return mMarkers; }
 
     static void SetAllocator(SampleDataAllocFunc, SampleDataFreeFunc);
@@ -68,10 +69,10 @@ private:
     static SampleDataAllocFunc sAlloc;
     static SampleDataFreeFunc sFree;
 
-    int mCRC; // 0x0
+    int mCRCName; // 0x0
     int mNumSamples; // 0x4
     int mSampleRate; // 0x8
-    int mNumChannels; // 0xc
+    int mChannels; // 0xc
     int mSizeBytes; // 0x10
     Format mFormat; // 0x14
     void *mData; // 0x18

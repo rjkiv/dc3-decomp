@@ -84,13 +84,13 @@ void CreditsPanel::Enter() {
 
 void CreditsPanel::Exit() {
     if (mStream && !mPaused) {
-        mStream->Faders()->FindLocal("fade", true)->DoFade(-96.0f, 2000.0f);
+        mStream->Faders().FindLocal("fade", true)->DoFade(-96.0f, 2000.0f);
     }
     UIPanel::Exit();
 }
 
 bool CreditsPanel::Exiting() const {
-    return mStream && mStream->Faders()->FindLocal("fade", true)->IsFading()
+    return mStream && mStream->Faders().FindLocal("fade", true)->IsFading()
         || UIPanel::Exiting();
 }
 
@@ -106,7 +106,7 @@ void CreditsPanel::Poll() {
         mStream->SetPan(0, -1);
         mStream->SetPan(1, 1);
         mStream->SetVolume(volume);
-        mStream->Faders()->AddLocal("fade");
+        mStream->Faders().AddLocal("fade");
         mStream->SetJump(Stream::kStreamEndMs, 0, 0);
     } else if (!mStream->IsPlaying() && mStream->IsReady() && !mPaused) {
         mStream->Play();

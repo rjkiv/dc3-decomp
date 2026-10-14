@@ -5,22 +5,22 @@
 #include <cstring>
 
 StreamReceiver::StreamReceiver(int numBuffers, bool slip)
-    : mSlipEnabled(slip), mNumBuffers(numBuffers), mBuffer(), mRingFreeSpace(0),
-      mState(kInit), mSendTarget(0), mWantToSend(false), mSending(false), mBuffersSent(0),
+    : mSlipEnabled(slip), mNumBuffers(numBuffers), mBuffer(), mWritePos(0), mState(kInit),
+      mSendTarget(0), mWantToSend(false), mSending(false), mBuffersSent(0),
       mStarving(false), mEndData(false), mDoneBufferCounter(0), mLastPlayCursor(0) {
     MILO_ASSERT(numBuffers > 0, 0x33);
 }
 
 StreamReceiver::~StreamReceiver() {}
 
-int StreamReceiver::BytesWriteable() { return kStreamRcvrBufSize - mRingFreeSpace; }
+int StreamReceiver::BytesWriteable() { return kStreamRcvrBufSize - mWritePos; }
 bool StreamReceiver::Ready() { return mState != kInit; }
 
 void StreamReceiver::EndData() {
     if (!mEndData) {
-        if (mRingFreeSpace < kStreamRcvrBufSize) {
-            memset(&mBuffer[mRingFreeSpace], 0, kStreamRcvrBufSize - mRingFreeSpace);
-            mRingFreeSpace = kStreamRcvrBufSize;
+        if (mWritePos < kStreamRcvrBufSize) {
+            memset(&mBuffer[mWritePos], 0, kStreamRcvrBufSize - mWritePos);
+            mWritePos = kStreamRcvrBufSize;
         }
         mEndData = true;
     }
@@ -49,8 +49,8 @@ StreamReceiver *StreamReceiver::New(int i1, int i2, bool b3, int i4) {
 
 void StreamReceiver::WriteData(void const *v, int bytes) {
     MILO_ASSERT(bytes > 0 && bytes <= BytesWriteable(), 0x51);
-    XMemCpy(mBuffer + mRingFreeSpace, v, bytes);
-    mRingFreeSpace += bytes;
+    XMemCpy(mBuffer + mWritePos, v, bytes);
+    mWritePos += bytes;
 }
 
 u64 StreamReceiver::GetBytesPlayed() {
@@ -96,7 +96,7 @@ void StreamReceiver::Poll() {
         mStarving = true;
     }
 
-    if (mWantToSend && mRingFreeSpace >= 0x4000 && !mSending) {
+    if (mWantToSend && mWritePos >= 0x4000 && !mSending) {
         StartSendImpl(mBuffer, 0x4000, mSendTarget);
         mBuffersSent++;
         if (mBuffersSent >= 700000) {
@@ -118,15 +118,15 @@ void StreamReceiver::Poll() {
             mState = kReady;
             mWantToSend = false;
         }
-        int overflow = mRingFreeSpace - 0x4000;
+        int overflow = mWritePos - 0x4000;
         MILO_ASSERT(overflow >= 0, 0x134);
         if (overflow != 0) {
             XMemCpy(mBuffer, mBuffer + 0x4000, overflow);
         }
-        mRingFreeSpace -= 0x4000;
+        mWritePos -= 0x4000;
         if (mEndData) {
-            memset(&mBuffer[mRingFreeSpace], 0, kStreamRcvrBufSize - mRingFreeSpace);
-            mRingFreeSpace = 0x8000;
+            memset(&mBuffer[mWritePos], 0, kStreamRcvrBufSize - mWritePos);
+            mWritePos = 0x8000;
             mDoneBufferCounter++;
         }
     }

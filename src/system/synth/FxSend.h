@@ -42,21 +42,21 @@ public:
 
     OBJ_MEM_OVERLOAD(0x19);
 
-    FxSend *NextSend() const { return mNextSend; }
-    int Stage() const { return mStage; }
+    FxSend *GetNextSend() { return mNextSend; }
+    int GetStage() const { return mStage; }
     void SetChannels(SendChannels);
     void EnableUpdates(bool);
     /** "Attach microphone to this send, for testing" */
     void TestWithMic();
     void SetStage(int);
-    bool UpdatesEnabled() const { return mEnableUpdates; }
-    SendChannels GetChannels() const { return mChannels; }
-    bool ReverbEnabled() const { return mReverbEnable; }
+    bool GetEnableUpdates() const { return mEnableUpdates; }
+    SendChannels Channels() const { return mChannels; }
+    bool GetReverbEnable() const { return mReverbEnable; }
     float InputGain() const { return mInputGain; }
     float DryGain() const { return mDryGain; }
     float WetGain() const { return mWetGain; }
     bool Bypass() const { return mBypass; }
-    float ReverbMixDb() const { return mReverbMixDb; }
+    float GetReverbMixDb() const { return mReverbMixDb; }
 
 protected:
     FxSend();

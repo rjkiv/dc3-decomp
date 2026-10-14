@@ -18,10 +18,10 @@ void FxSendEQ360::SyncEffectParams(IXAudio2SubmixVoice *voice) const {
     p.midFreqGain = mMidFreqGain;
     p.lowFreqCutoff = mLowFreqCutoff;
     p.lowFreqGain = mLowFreqGain;
-    p.highPassCutoff = mHighPassCutoff;
-    p.lowPassCutoff = mLowPassCutoff;
-    p.lowPassReso = mLowPassReso;
-    p.highPassReso = mHighPassReso;
+    p.highPassCutoff = mHPFCutoff;
+    p.lowPassCutoff = mLPFCutoff;
+    p.lowPassReso = mLPFReso;
+    p.highPassReso = mHPFReso;
     p.lrMode = mLRMode;
     p.transitionTime = mTransitionTime;
     voice->SetEffectParameters(0, &p, sizeof(p), 0);

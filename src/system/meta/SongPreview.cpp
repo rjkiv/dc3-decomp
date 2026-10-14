@@ -71,7 +71,7 @@ void SongPreview::SetMusicVol(float f) {
     if (unk4c == 0) {
         return;
     }
-    if (f < mMusicFader->GetLevelTarget()) {
+    if (f < mMusicFader->GetTargetVolume()) {
         mMusicFader->DoFade(f, 250.0f);
     } else {
         mMusicFader->DoFade(f, 1000.0f);
@@ -265,7 +265,7 @@ void SongPreview::PrepareSong(Symbol song) {
     DetachFader(mCrowdSingFader);
     PrepareFaders(&songInfo);
     mStream->SetVolume(-mAttenuation);
-    mStream->Faders()->Add(mFader);
+    mStream->Faders().Add(mFader);
 }
 
 void SongPreview::Poll() {

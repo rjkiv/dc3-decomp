@@ -18,16 +18,16 @@
 const float sSpeedCaps[2] = { 0.00390625f, 4.0f };
 
 Sound::Sound()
-    : mVolume(0), mSpeed(1), mPan(0), mSend(this), mReverbMixDb(kDbSilence),
-      mReverbEnable(0), unk3d(1), mSynthSample(this), mMoggClip(this), mEnvelope(this),
-      mFaders(this), mDuckers(this), mLoop(0), mLoopStart(0), mLoopEnd(-1),
-      mMaxPolyphony(0), unkb4(0), unkb8(this) {
+    : mVol(0), mSpeed(1), mPan(0), mSend(this), mReverbMixDb(kDbSilence),
+      mReverbEnable(0), mCanStop(1), mSynthSample(this), mMoggClip(this), mADSR(this),
+      mFaders(this), mDuckerGrp(this), mLoop(0), mLoopStartSamp(0), mLoopEndSamp(-1),
+      mMaxPolyphony(0), mAddZombiesOnDelete(0), mEventReceiver(this) {
     mFaders.Add(TheSynth->MasterFader());
 }
 
 Sound::~Sound() {
-    if (unkb4) {
-        FOREACH (it, mSamples) {
+    if (mAddZombiesOnDelete) {
+        FOREACH (it, mInsts) {
             (*it)->Stop(true);
             TheSynth->AddZombie(static_cast<SampleInst *>(*it));
         }
@@ -42,8 +42,8 @@ BEGIN_HANDLERS(Sound)
     HANDLE_ACTION(
         end_loop, EndLoop(_msg->Size() == 3 ? _msg->Obj<Hmx::Object>(2) : nullptr)
     )
-    HANDLE_ACTION(add_ducker, mDuckers.Add(_msg->Obj<Fader>(2), _msg->Float(3)))
-    HANDLE_ACTION(remove_ducker, mDuckers.Remove(_msg->Obj<Fader>(2)))
+    HANDLE_ACTION(add_ducker, mDuckerGrp.Add(_msg->Obj<Fader>(2), _msg->Float(3)))
+    HANDLE_ACTION(remove_ducker, mDuckerGrp.Remove(_msg->Obj<Fader>(2)))
     HANDLE_EXPR(is_mogg_ready, IsMoggReady())
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
@@ -51,13 +51,13 @@ END_HANDLERS
 BEGIN_PROPSYNCS(Sound)
     SYNC_SUPERCLASS(Hmx::Object)
     SYNC_PROP(faders, mFaders)
-    SYNC_PROP(duckers, mDuckers)
-    SYNC_PROP(envelope, mEnvelope)
+    SYNC_PROP(duckers, mDuckerGrp)
+    SYNC_PROP(envelope, mADSR)
     SYNC_PROP(loop, mLoop)
-    SYNC_PROP(loop_start, mLoopStart)
-    SYNC_PROP(loop_end, mLoopEnd)
+    SYNC_PROP(loop_start, mLoopStartSamp)
+    SYNC_PROP(loop_end, mLoopEndSamp)
     SYNC_PROP(max_polyphony, mMaxPolyphony)
-    SYNC_PROP_SET(volume, mVolume, SetVolume(_val.Float(), nullptr))
+    SYNC_PROP_SET(volume, mVol, SetVolume(_val.Float(), nullptr))
     SYNC_PROP_SET(
         transpose,
         CalcTransposeFromSpeed(mSpeed),
@@ -76,22 +76,22 @@ END_PROPSYNCS
 BEGIN_SAVES(Sound)
     SAVE_REVS(9, 0)
     SAVE_SUPERCLASS(Hmx::Object)
-    bs << mVolume;
+    bs << mVol;
     bs << CalcTransposeFromSpeed(mSpeed);
     bs << mPan;
-    bs << unk3d;
+    bs << mCanStop;
     bs << mSynthSample;
     bs << mReverbMixDb;
     bs << mReverbEnable;
-    bs << mEnvelope;
+    bs << mADSR;
     bs << mSend;
     bs << mMoggClip;
     bs << mLoop;
-    bs << mLoopStart;
-    bs << mLoopEnd;
+    bs << mLoopStartSamp;
+    bs << mLoopEndSamp;
     bs << mMaxPolyphony;
     mFaders.Save(bs);
-    mDuckers.Save(bs);
+    mDuckerGrp.Save(bs);
 END_SAVES
 
 BEGIN_COPYS(Sound)
@@ -99,25 +99,25 @@ BEGIN_COPYS(Sound)
     CREATE_COPY(Sound)
     BEGIN_COPYING_MEMBERS
         if (ty != kCopyFromMax) {
-            COPY_MEMBER(mVolume)
+            COPY_MEMBER(mVol)
             COPY_MEMBER(mSpeed)
             COPY_MEMBER(mPan)
-            COPY_MEMBER(unk3d)
+            COPY_MEMBER(mCanStop)
             COPY_MEMBER(mSynthSample)
-            unkb4 = mSynthSample;
+            mAddZombiesOnDelete = mSynthSample;
             COPY_MEMBER(mMoggClip)
             COPY_MEMBER(mReverbMixDb)
             COPY_MEMBER(mReverbEnable)
-            COPY_MEMBER(mEnvelope)
+            COPY_MEMBER(mADSR)
             COPY_MEMBER(mSend)
             COPY_MEMBER(mLoop)
-            COPY_MEMBER(mLoopStart)
-            COPY_MEMBER(mLoopEnd)
+            COPY_MEMBER(mLoopStartSamp)
+            COPY_MEMBER(mLoopEndSamp)
             COPY_MEMBER(mMaxPolyphony)
             FOREACH (it, c->mFaders.Faders()) {
                 mFaders.Add(*it);
             }
-            COPY_MEMBER(mDuckers)
+            COPY_MEMBER(mDuckerGrp)
             MILO_ASSERT(! (mSynthSample && mMoggClip), 0xB9);
         }
     END_COPYING_MEMBERS
@@ -129,21 +129,21 @@ BEGIN_LOADS(Sound)
     LOAD_REVS(bs)
     ASSERT_REVS(9, 0)
     Hmx::Object::Load(bs);
-    bs >> mVolume;
+    bs >> mVol;
     float transpose;
     bs >> transpose;
     mSpeed = Clamp(sSpeedCaps[0], sSpeedCaps[1], CalcSpeedFromTranspose(transpose));
     bs >> mPan;
-    d >> unk3d;
+    d >> mCanStop;
     bs >> mSynthSample;
-    unkb4 = mSynthSample;
+    mAddZombiesOnDelete = mSynthSample;
     if (d.rev >= 2) {
         bs >> mReverbMixDb;
         d >> mReverbEnable;
     }
-    mEnvelope = nullptr;
+    mADSR = nullptr;
     if (d.rev >= 3) {
-        bs >> mEnvelope;
+        bs >> mADSR;
     }
     mSend = nullptr;
     if (d.rev >= 4) {
@@ -154,8 +154,8 @@ BEGIN_LOADS(Sound)
     }
     if (d.rev >= 6) {
         d >> mLoop;
-        bs >> mLoopStart;
-        bs >> mLoopEnd;
+        bs >> mLoopStartSamp;
+        bs >> mLoopEndSamp;
     }
     if (d.rev >= 7) {
         bs >> mMaxPolyphony;
@@ -164,7 +164,7 @@ BEGIN_LOADS(Sound)
         mFaders.Load(bs);
     }
     if (d.rev >= 9) {
-        mDuckers.Load(bs);
+        mDuckerGrp.Load(bs);
     }
     MILO_ASSERT(! (mSynthSample && mMoggClip), 0x95);
 END_LOADS
@@ -173,33 +173,33 @@ const char *Sound::GetSoundDisplayName() { return MakeString("Sequence: %s", Nam
 
 void Sound::SynthPoll() {
     float deltaMs = TheTaskMgr.DeltaSeconds() * 1000.0f;
-    for (auto it = mDelayArgs.begin(); it != mDelayArgs.end();) {
-        (*it)->unk10 -= deltaMs;
-        if ((*it)->unk10 <= 0) {
-            Play((*it)->unk0, (*it)->unk4, (*it)->unk8, this, 0);
+    for (auto it = mDelayedSounds.begin(); it != mDelayedSounds.end();) {
+        (*it)->timeLeftMs -= deltaMs;
+        if ((*it)->timeLeftMs <= 0) {
+            Play((*it)->volume, (*it)->pan, (*it)->transpose, this, 0);
             delete *it;
-            it = mDelayArgs.erase(it);
+            it = mDelayedSounds.erase(it);
         } else {
             it++;
         }
     }
-    for (auto it = mSamples.begin(); it != mSamples.end();) {
+    for (auto it = mInsts.begin(); it != mInsts.end();) {
         PlayableSample *cur = *it;
         it++;
-        if (unkb4 || mMoggClip) {
+        if (mAddZombiesOnDelete || mMoggClip) {
             if (cur->DonePlaying()) {
-                mSamples.erase(it);
+                mInsts.erase(it);
             }
         } else {
-            mDuckers.Unduck();
+            mDuckerGrp.Unduck();
             CancelPolling();
         }
     }
     if (mFaders.Dirty()) {
-        FOREACH (it, mSamples) {
+        FOREACH (it, mInsts) {
             float faderVol, faderPan, faderTranspose;
             mFaders.GetVal(faderVol, faderPan, faderTranspose);
-            (*it)->SetVolume(mVolume + faderVol);
+            (*it)->SetVolume(mVol + faderVol);
             (*it)->SetPan(Clamp(-4.0f, sSpeedCaps[1], mPan + faderPan));
             (*it)->SetSpeed(Clamp(
                 sSpeedCaps[0],
@@ -209,8 +209,8 @@ void Sound::SynthPoll() {
         }
         mFaders.ClearDirty();
     }
-    if (mSamples.empty() && mDelayArgs.empty()) {
-        mDuckers.Unduck();
+    if (mInsts.empty() && mDelayedSounds.empty()) {
+        mDuckerGrp.Unduck();
         CancelPolling();
     }
 }
@@ -226,47 +226,47 @@ void Sound::Play(
     MILO_ASSERT(delayMs >= 0.f, 0x1B7);
 
     if (delayMs > 0.0f) {
-        mDelayArgs.push_back(new DelayArgs(volume, pan, transpose, obj, delayMs));
+        mDelayedSounds.push_back(new DelayArgs(volume, pan, transpose, obj, delayMs));
         StartPolling();
     } else {
         PlayableSample *sample = nullptr;
         if (mSynthSample) {
-            sample = mSynthSample->NewInst(mLoop, mLoopStart, mLoopEnd);
+            sample = mSynthSample->NewInst(mLoop, mLoopStartSamp, mLoopEndSamp);
             if (sample) {
                 sample->SetSend(mSend);
             }
         } else if (mMoggClip) {
             sample = mMoggClip;
             mMoggClip->SetSend(mSend);
-            mMoggClip->SetLoop(mLoop, mLoopStart, mLoopEnd);
-            mSamples.clear();
+            mMoggClip->SetLoop(mLoop, mLoopStartSamp, mLoopEndSamp);
+            mInsts.clear();
         } else {
             return;
         }
         if (sample) {
-            mDuckers.Duck();
-            mSamples.push_back(sample);
+            mDuckerGrp.Duck();
+            mInsts.push_back(sample);
             StartPolling();
             float faderVol, faderPan, faderTranspose;
             mFaders.GetVal(faderVol, faderPan, faderTranspose);
-            sample->Play(mVolume + faderVol + volume);
+            sample->Play(mVol + faderVol + volume);
             sample->SetPan(Clamp(-4.0f, sSpeedCaps[1], mPan + faderPan + pan));
             sample->SetSpeed(Clamp(
                 sSpeedCaps[0],
                 sSpeedCaps[1],
                 CalcSpeedFromTranspose(faderTranspose + transpose) * mSpeed
             ));
-            sample->SetEventReceiver(obj ? obj : unkb8);
-            if (mEnvelope) {
-                sample->SetADSR(mEnvelope->Impl());
+            sample->SetEventReceiver(obj ? obj : mEventReceiver);
+            if (mADSR) {
+                sample->SetADSR(mADSR->Impl());
             } else {
                 sample->SetADSR(*TheSynth->DefaultADSR());
             }
             sample->SetReverbMixDb(mReverbMixDb);
             sample->SetReverbEnable(mReverbEnable);
             if (mMaxPolyphony != 0) {
-                auto it = mSamples.begin();
-                for (int i = 0; i < (int)mSamples.size() - mMaxPolyphony; i++) {
+                auto it = mInsts.begin();
+                for (int i = 0; i < (int)mInsts.size() - mMaxPolyphony; i++) {
                     (*it)->Stop(false);
                     ++it;
                 }
@@ -279,13 +279,13 @@ void Sound::Play(
 }
 
 void Sound::Stop(Hmx::Object *obj, bool b2) {
-    for (auto it = mDelayArgs.begin(); it != mDelayArgs.end();) {
+    for (auto it = mDelayedSounds.begin(); it != mDelayedSounds.end();) {
         delete *it;
-        mDelayArgs.erase(it++);
+        mDelayedSounds.erase(it++);
     }
-    if ((unkb4 || mMoggClip) && (unk3d || b2)) {
+    if ((mAddZombiesOnDelete || mMoggClip) && (mCanStop || b2)) {
         if (!obj) {
-            for (auto it = mSamples.begin(); it != mSamples.end(); it) {
+            for (auto it = mInsts.begin(); it != mInsts.end(); it) {
                 PlayableSample *cur = *it;
                 it++;
                 cur->Stop(b2);
@@ -296,7 +296,7 @@ void Sound::Stop(Hmx::Object *obj, bool b2) {
                 }
             }
         } else {
-            for (auto it = mSamples.begin(); it != mSamples.end(); it) {
+            for (auto it = mInsts.begin(); it != mInsts.end(); it) {
                 if ((*it)->GetEventReceiver() == obj) {
                     PlayableSample *cur = *it;
                     it++;
@@ -312,25 +312,25 @@ void Sound::Stop(Hmx::Object *obj, bool b2) {
 }
 
 void Sound::Pause(bool b1) {
-    FOREACH (it, mSamples) {
+    FOREACH (it, mInsts) {
         (*it)->Pause(b1);
     }
 }
 
-bool Sound::IsPlaying() const { return !mSamples.empty() || !mDelayArgs.empty(); }
+bool Sound::IsPlaying() const { return !mInsts.empty() || !mDelayedSounds.empty(); }
 
 void Sound::SetVolume(float vol, Hmx::Object *obj) {
     float faderVol = mFaders.GetVolume();
     if (obj) {
-        FOREACH (it, mSamples) {
+        FOREACH (it, mInsts) {
             if ((*it)->GetEventReceiver() == obj) {
                 (*it)->SetVolume(faderVol + vol);
                 return;
             }
         }
     } else {
-        mVolume = vol;
-        FOREACH (it, mSamples) {
+        mVol = vol;
+        FOREACH (it, mInsts) {
             (*it)->SetVolume(faderVol + vol);
         }
     }
@@ -338,37 +338,37 @@ void Sound::SetVolume(float vol, Hmx::Object *obj) {
 
 void Sound::SetReverbMixDb(float db) {
     mReverbMixDb = db;
-    FOREACH (it, mSamples) {
+    FOREACH (it, mInsts) {
         (*it)->SetReverbMixDb(mReverbMixDb);
     }
 }
 
 void Sound::SetReverbEnable(bool enable) {
     mReverbEnable = enable;
-    FOREACH (it, mSamples) {
+    FOREACH (it, mInsts) {
         (*it)->SetReverbEnable(mReverbEnable);
     }
 }
 
 void Sound::EndLoop(Hmx::Object *obj) {
     if (obj) {
-        FOREACH (it, mSamples) {
+        FOREACH (it, mInsts) {
             if ((*it)->GetEventReceiver() == obj) {
                 (*it)->EndLoop();
             }
         }
     } else {
-        FOREACH (it, mSamples) {
+        FOREACH (it, mInsts) {
             (*it)->EndLoop();
         }
     }
 }
 
 float Sound::ElapsedTime() {
-    if (mSamples.empty()) {
+    if (mInsts.empty()) {
         return 0;
     } else {
-        return mSamples.front()->ElapsedTime();
+        return mInsts.front()->ElapsedTime();
     }
 }
 
@@ -377,7 +377,7 @@ void Sound::SetSend(FxSend *send) {
     if (send) {
         send->RebuildChain();
     }
-    FOREACH (it, mSamples) {
+    FOREACH (it, mInsts) {
         (*it)->SetSend(mSend);
     }
 }
@@ -386,14 +386,14 @@ void Sound::SetSynthSample(SynthSample *sample) {
     Stop(nullptr, true);
     mMoggClip = nullptr;
     mSynthSample = sample;
-    unkb4 = true;
+    mAddZombiesOnDelete = true;
 }
 
 void Sound::SetMoggClip(MoggClip *clip) {
     Stop(nullptr, true);
     mSynthSample = nullptr;
     mMoggClip = clip;
-    unkb4 = false;
+    mAddZombiesOnDelete = false;
 }
 
 int Sound::NumMarkers() const {
@@ -412,7 +412,7 @@ void Sound::OnTriggerSound(int arg) {
         Play(0, 0, 0, nullptr, 0);
         break;
     case 2:
-        if (mSamples.empty()) {
+        if (mInsts.empty()) {
             Play(0, 0, 0, nullptr, 0);
         }
         break;
@@ -423,7 +423,7 @@ void Sound::OnTriggerSound(int arg) {
 }
 
 bool Sound::DisablePan(DataArray *a) {
-    if (mMoggClip && mMoggClip->NumChannels() > 1) {
+    if (mMoggClip && mMoggClip->GetNumChannels() > 1) {
         mPan = 0;
         return true;
     } else
@@ -452,7 +452,7 @@ void Sound::SetSpeed(float f1, Hmx::Object *eventReceiver) {
     float speedTranspose = CalcSpeedFromTranspose(mFaders.GetTranspose());
     float clamped = Clamp(sSpeedCaps[0], sSpeedCaps[1], f1);
     if (eventReceiver) {
-        FOREACH (it, mSamples) {
+        FOREACH (it, mInsts) {
             if ((*it)->GetEventReceiver() == eventReceiver) {
                 (*it)->SetSpeed(
                     Clamp(sSpeedCaps[0], sSpeedCaps[1], speedTranspose * clamped)
@@ -462,7 +462,7 @@ void Sound::SetSpeed(float f1, Hmx::Object *eventReceiver) {
         }
     } else {
         mSpeed = clamped;
-        FOREACH (it, mSamples) {
+        FOREACH (it, mInsts) {
             (*it)->SetSpeed(Clamp(sSpeedCaps[0], sSpeedCaps[1], speedTranspose * mSpeed));
         }
     }
@@ -470,7 +470,7 @@ void Sound::SetSpeed(float f1, Hmx::Object *eventReceiver) {
 
 void Sound::SetPan(float pan, Hmx::Object *eventReceiver) {
     bool clipOk;
-    if (mMoggClip && mMoggClip->NumChannels() > 1) {
+    if (mMoggClip && mMoggClip->GetNumChannels() > 1) {
         clipOk = true;
         mPan = 0;
     } else {
@@ -480,7 +480,7 @@ void Sound::SetPan(float pan, Hmx::Object *eventReceiver) {
     if (!clipOk) {
         float faderPan = mFaders.GetPan();
         if (eventReceiver) {
-            FOREACH (it, mSamples) {
+            FOREACH (it, mInsts) {
                 if ((*it)->GetEventReceiver() == eventReceiver) {
                     (*it)->SetPan(Clamp(-4.0f, 4.0f, faderPan + pan));
                     return;
@@ -488,7 +488,7 @@ void Sound::SetPan(float pan, Hmx::Object *eventReceiver) {
             }
         } else {
             mPan = pan;
-            FOREACH (it, mSamples) {
+            FOREACH (it, mInsts) {
                 (*it)->SetPan(Clamp(-4.0f, 4.0f, faderPan + pan));
             }
         }

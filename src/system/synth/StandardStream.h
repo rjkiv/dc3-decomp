@@ -49,7 +49,7 @@ public:
     virtual float GetJumpBackTotalTime(float) const;
     virtual float GetInSongTime();
     virtual std::vector<struct JumpInstance> *GetJumpInstances() {
-        return &mJumpInstances;
+        return &mJumpInstList;
     }
     virtual float GetFilePos() const { return 0; }
     virtual float GetFileLength() const { return 0; }
@@ -99,7 +99,7 @@ public:
     float GetBufferAheadTime() const;
     int ConsumeData(void **, int, int);
     void SetBufSecs(float secs) { mBufSecs = secs; }
-    int NumInfoChannels() const { return mInfoChannels; }
+    int GetNumInfoChannels() { return mInfoChannels; }
 
     static const float kStreamEndMs;
 
@@ -120,7 +120,6 @@ private:
 
     static bool sReportLargeTimerErrors;
 
-protected:
     State mState; // 0x14
     File *mFile; // 0x18
     StreamReader *mRdr; // 0x1c
@@ -146,16 +145,16 @@ protected:
     bool mFloatSamples; // 0xe0
     int mVirtualChans; // 0xe4
     int mInfoChannels; // 0xe8
-    float mTotalSecs; // 0xec
+    float mInfoSeconds; // 0xec
     bool mGetInfoOnly; // 0xf0
     std::vector<void *> mVirtBufs; // 0xf4
     std::vector<std::pair<int, int> > mChanMaps; // 0x100
-    std::vector<float *> unk10c; // 0x10c
+    std::vector<float *> mFloatBufferVector; // 0x10c
     std::vector<Marker> mMarkerList; // 0x118
-    std::vector<JumpInstance> mJumpInstances; // 0x124
+    std::vector<JumpInstance> mJumpInstList; // 0x124 - Struct LoopInstance in pdb
     Marker mStartMarker; // 0x130
     Marker mEndMarker; // 0x140
-    bool unk150; // 0x150
+    bool mPollingEnabled; // 0x150
     int mTotalSamples; // 0x154
-    bool mUseFileReceivers; // 0x158
+    bool mUseStreamReceiverFile; // 0x158
 };
