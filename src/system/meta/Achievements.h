@@ -11,9 +11,9 @@ class Achievements : public Hmx::Object {
 private:
     Achievements();
 
-    int unk2c; // 0x2c
+    int mProfileSaveSize; // 0x2c
     bool mAllowAchievements; // 0x30
-    std::vector<XUSER_ACHIEVEMENT> mAchieved; // 0x34
+    std::vector<XUSER_ACHIEVEMENT> gAchievements; // 0x34
 
     XUSER_ACHIEVEMENT GetAchievementData(int, int);
 

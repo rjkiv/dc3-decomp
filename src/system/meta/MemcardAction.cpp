@@ -1,4 +1,4 @@
 #include "meta/MemcardAction.h"
 
 MemcardAction::MemcardAction(Profile *p)
-    : mResult(kMCGeneralError), unk8(0), unkc(-1), unk10(p) {}
+    : mResult(kMCGeneralError), mBuffer(0), mBufSize(-1), mProfile(p) {}

@@ -2,33 +2,33 @@
 #include "ui/UIPanel.h"
 #include "utl/DeJitter.h"
 
-DeJitterPanel::DeJitterPanel() : unkf8(true) {}
+DeJitterPanel::DeJitterPanel() : mFirstPoll(true) {}
 
 DeJitterPanel::~DeJitterPanel() {}
 
 void DeJitterPanel::Enter() {
-    unk68.Reset();
-    unkf8 = true;
-    DeJitterSetter setter(unk68, 0);
+    mJitter.Reset();
+    mFirstPoll = true;
+    DeJitterSetter setter(mJitter, 0);
     UIPanel::Enter();
 }
 
 void DeJitterPanel::Poll() {
-    if (unkf8) {
-        unk38.Restart();
+    if (mFirstPoll) {
+        mTimer.Restart();
         float f;
-        unk68.NewMs(0, f);
+        mJitter.NewMs(0, f);
     }
     {
-        DeJitterSetter setter(unk68, unkf8 ? nullptr : &unk38);
+        DeJitterSetter setter(mJitter, mFirstPoll ? nullptr : &mTimer);
         UIPanel::Poll();
     }
-    unkf8 = false;
+    mFirstPoll = false;
 }
 
 DeJitterSetter::DeJitterSetter(DeJitter &dj, Timer *t) {
-    secs = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
-    delta_secs = TheTaskMgr.DeltaSeconds();
+    oldSec = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
+    oldDt = TheTaskMgr.DeltaSeconds();
     float f1 = 0.0f;
     float f18 = 0.0f;
     if (t) {
@@ -39,5 +39,5 @@ DeJitterSetter::DeJitterSetter(DeJitter &dj, Timer *t) {
 }
 
 DeJitterSetter::~DeJitterSetter() {
-    TheTaskMgr.SetTimeAndDelta(kTaskSeconds, secs, delta_secs);
+    TheTaskMgr.SetTimeAndDelta(kTaskSeconds, oldSec, oldDt);
 }

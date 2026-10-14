@@ -9,13 +9,6 @@
 
 const int XMARKETPLACE_MAX_OFFERIDS = 6;
 
-enum PurchaseState { // just know the val of kSuccess
-    purchasestate0 = 0,
-    purchasestate1 = 1,
-    kSuccess = 2,
-    purchasestate3 = 3,
-};
-
 class StorePurchaser {
 public:
     virtual ~StorePurchaser() {}
@@ -31,12 +24,20 @@ public:
     Symbol Source() const { return mSource; }
     unsigned int PID() const { return mPID; }
 
-    Symbol mSource;
-    unsigned int mPID;
+protected:
+    Symbol mSource; // 0x4
+    unsigned int mPID; // 0x8
 };
 
 class XboxPurchaser : public StorePurchaser, public Hmx::Object {
 public:
+    enum State {
+        kIdle = 0x0000,
+        kPurchasing = 0x0001,
+        kSuccess = 0x0002,
+        kFailure = 0x0003
+    };
+
     // Hmx::Object
     virtual ~XboxPurchaser();
     virtual DataNode Handle(DataArray *, bool);
@@ -58,19 +59,23 @@ public:
         unsigned int
     );
 
-    int GetUnk48() const { return unk48; }
-
-    PurchaseState mState; // 0x38
-    u32 unk3c;
-    unsigned long long unk40;
-    DWORD unk48;
-
 private:
     DataNode OnMsg(UIChangedMsg const &);
+
+    State mState; // 0x38
+    unsigned long long mOfferID; // 0x40
+    int mPadNum; // 0x48
 };
 
 class XboxMultipleItemsPurchaser : public StorePurchaser, Hmx::Object {
 public:
+    enum State {
+        kIdle = 0x0000,
+        kPurchasing = 0x0001,
+        kSuccess = 0x0002,
+        kFailure = 0x0003
+    };
+
     // Hmx::Object
     virtual ~XboxMultipleItemsPurchaser();
     virtual DataNode Handle(DataArray *, bool);
@@ -87,13 +92,13 @@ public:
         int, std::vector<unsigned long long> &, Symbol, unsigned int
     );
 
-    PurchaseState mState; // 0x38
-    std::vector<unsigned long long> unk3c;
-    DWORD unk48;
-    HRESULT unk4c;
-
 private:
+    DataNode OnMsg(UIChangedMsg const &);
+
     static _XOVERLAPPED sOverlapped;
 
-    DataNode OnMsg(UIChangedMsg const &);
+    State mState; // 0x38
+    std::vector<unsigned long long> mOfferIDs; // 0x3c
+    int mPadNum; // 0x48
+    HRESULT mResult; // 0x4c - int in pdb
 };

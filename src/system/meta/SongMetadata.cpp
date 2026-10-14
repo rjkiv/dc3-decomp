@@ -13,7 +13,7 @@ void SongMetadata::InitSongMetadata() {
     mVersion = -1;
     mSongInfo = 0;
     mShortName = gNullStr;
-    mAge = 0;
+    mRefreshesSinceLastSeen = 0;
 }
 
 SongMetadata::~SongMetadata() { delete mSongInfo; }
@@ -74,7 +74,7 @@ void SongMetadata::Save(BinStream &d) {
     d << mPreviewStartTime;
     d << mPreviewEndTime;
     d << mShortName;
-    d << mAge;
+    d << mRefreshesSinceLastSeen;
     MILO_ASSERT(mSongInfo, 0x82);
     d << *mSongInfo;
 }
@@ -119,7 +119,7 @@ void SongMetadata::Load(BinStream &d) {
         d >> mShortName;
     }
     if (4 <= version) {
-        d >> mAge;
+        d >> mRefreshesSinceLastSeen;
     }
     if (5 <= version) {
         MILO_ASSERT(!mSongInfo, 0xC6);

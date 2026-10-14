@@ -75,7 +75,7 @@ END_PROPSYNCS
 void HamStorePanel::Load() {
     StorePanel::Load();
     MILO_ASSERT(!mOfferProvider, 0xd3);
-    mOfferProvider = new HamStoreProvider(&unk38, &mFilters, &mCartData);
+    mOfferProvider = new HamStoreProvider(&mOffers, &mFilters, &mCartData);
     mAllowCancel = false;
     mCancelTimer.Restart();
     RefreshSpecialOfferStatus();
@@ -193,7 +193,7 @@ void HamStorePanel::ReadCartData() {
 }
 
 StoreOffer *HamStorePanel::FindOffer(Symbol offerName) const {
-    FOREACH (it, unk38) {
+    FOREACH (it, mOffers) {
         StoreOffer *offer = *it;
         Symbol s = offer->StoreOfferData()->Sym(0);
         if (s == offerName)
@@ -284,7 +284,7 @@ void HamStorePanel::CreateCartUIs() {
     ptr->Insert(ptr->Size(), DataArrayPtr(album_name, ""));
     ptr->Insert(ptr->Size(), DataArrayPtr(description, ""));
     ptr->Insert(ptr->Size(), DataArrayPtr(art, "avatar_theboombox_nomip_xbox.dxt"));
-    unk38.push_back(MakeNewOffer(ptr));
+    mOffers.push_back(MakeNewOffer(ptr));
 }
 
 bool HamStorePanel::IsSpecialOfferOwned(Symbol offer) const {
@@ -366,13 +366,13 @@ void HamStorePanel::Poll() {
             TheHamUI.Helpbar()->SyncToPanel(this);
         }
     }
-    if (!mLoadOk) {
+    if (!mLoadOK) {
         return;
     }
     if (!TheNetCacheMgr->IsReady()) {
         return;
     }
-    if (unk94 != 2) {
+    if (mSessionStatus != kSessionCreated) {
         return;
     }
     if (mMetadataLoader) {
@@ -406,7 +406,7 @@ void HamStorePanel::Poll() {
             mMetadataLoader = new DataNetLoader(indexFile);
         } else if (mReadyToEnumCartOffer && (mCartLoaded || !mIsCartEnabled)) {
             mReadyToEnumCartOffer = false;
-            unk70 = true;
+            mNeedToEnumerate = true;
         }
     }
 exit:
@@ -493,11 +493,11 @@ void HamStorePanel::RefreshSpecialOfferStatus() {
 }
 
 void HamStorePanel::GetOfferIDsToEnumerate(std::vector<QWORD> &offerIDs, bool b) const {
-    const std::vector<StoreOffer *> &offers = b ? unk44 : unk38;
+    const std::vector<StoreOffer *> &offers = b ? mExtraOffers : mOffers;
     for (int i = 0; i < offers.size(); i++) {
         StorePurchaseable *purchaseable = offers[i];
         if (purchaseable->Exists()) {
-            offerIDs.push_back(purchaseable->SongID());
+            offerIDs.push_back(purchaseable->OfferID());
         }
     }
     std::sort(offerIDs.begin(), offerIDs.end());
@@ -534,7 +534,7 @@ DataNode HamStorePanel::OnMsg(RCJobCompleteMsg const &msg) {
     } else if (msg.Job() == mCartJobs[1]) {
         if (!msg.Success()) {
             MILO_LOG("[HamStorePanel::OnMsg] Cart failed to remove song.\n");
-            ExitError(kStoreErrorCacheRemoved);
+            ExitError(kStoreErrorStoreServer);
         } else {
             mPendingRemovals.pop_front();
             if (!mPendingRemovals.empty()) {
@@ -547,7 +547,7 @@ DataNode HamStorePanel::OnMsg(RCJobCompleteMsg const &msg) {
     } else if (msg.Job() == mCartJobs[0]) {
         if (!msg.Success()) {
             MILO_LOG("[HamStorePanel::OnMsg] Cart failed to add song.\n");
-            ExitError(kStoreErrorCacheRemoved);
+            ExitError(kStoreErrorStoreServer);
         } else {
             mPendingAdds.pop_front();
             if (!mPendingAdds.empty()) {
@@ -572,9 +572,9 @@ StoreError HamStorePanel::UpdateOffers(std::list<EnumProduct> const &list, bool 
         if (!it->mIsOwned) {
             bool check = false;
             FOREACH (listIt, list) {
-                if (listIt->unk8 == it->mOfferId) {
+                if (listIt->mOfferID == it->mOfferId) {
                     check = true;
-                    it->mIsOwned = (listIt->unk10 != 0);
+                    it->mIsOwned = (listIt->mPurchased != 0);
                     break;
                 }
             }

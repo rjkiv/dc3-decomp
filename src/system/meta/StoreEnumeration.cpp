@@ -8,19 +8,19 @@
 #include <cstring>
 
 XboxEnumeration::XboxEnumeration(int i, std::vector<QWORD> *offerIDs)
-    : mOfferIDCount(0), unk10(nullptr), unk14(nullptr), unk18(i), mSuccess(false),
-      mHandle(0), mBufferSizeBytes(0), mCurOffers(0) {
+    : mOfferIDCount(0), mOfferIDs(nullptr), mNextOfferID(nullptr), mPadNum(i),
+      mSuccess(false), mHandle(0), mBufSizeBytes(0), mCurOffers(0) {
     if (offerIDs) {
         mOfferIDCount = offerIDs->size();
         MILO_ASSERT(mOfferIDCount, 0x197);
-        unk10 = new QWORD[mOfferIDCount];
-        memcpy(unk10, offerIDs->begin(), mOfferIDCount * sizeof(QWORD));
-        unk14 = unk10;
+        mOfferIDs = new QWORD[mOfferIDCount];
+        memcpy(mOfferIDs, offerIDs->begin(), mOfferIDCount * sizeof(QWORD));
+        mNextOfferID = mOfferIDs;
     }
 }
 
 XboxEnumeration::~XboxEnumeration() {
-    RELEASE(unk10);
+    RELEASE(mOfferIDs);
     if (mHandle && mOverlapped.InternalLow == ERROR_IO_PENDING) {
         DWORD result = XCancelOverlapped(&mOverlapped);
         if (result != ERROR_SUCCESS) {
@@ -43,38 +43,38 @@ bool XboxEnumeration::IsSuccess() const {
 void XboxEnumeration::Start() {
     mSuccess = true;
     if (!mHandle) {
-        mBufferSizeBytes = 0;
-        if (unk14 == unk10) {
-            mContentList.clear();
+        mBufSizeBytes = 0;
+        if (mNextOfferID == mOfferIDs) {
+            mProducts.clear();
         }
         DWORD result;
-        if (!unk10) {
+        if (!mOfferIDs) {
             result = XMarketplaceCreateOfferEnumerator(
-                unk18, 0x100002, -1, 99, &mBufferSizeBytes, &mHandle
+                mPadNum, 0x100002, -1, 99, &mBufSizeBytes, &mHandle
             );
         } else {
-            int val = mOfferIDCount - (unk14 - unk10);
+            int val = mOfferIDCount - (mNextOfferID - mOfferIDs);
             if (99 <= val) {
                 val = 99;
             }
             result = XMarketplaceCreateOfferEnumeratorByOffering(
-                unk18, val, unk14, val, &mBufferSizeBytes, &mHandle
+                mPadNum, val, mNextOfferID, val, &mBufSizeBytes, &mHandle
             );
-            unk14 += val;
+            mNextOfferID += val;
         }
         MILO_ASSERT(!mCurOffers, 0x1ea);
         // mCurOffers = new HANDLE[1]; // needs to be a HANDLE[], but the total size in
-        // bytes is mBufferSizeBytes
+        // bytes is mBufSizeBytes
 
-        mCurOffers = (HANDLE *)operator new[](mBufferSizeBytes);
+        mCurOffers = (XMARKETPLACE_CONTENTOFFER_INFO *)operator new[](mBufSizeBytes);
         if (result != ERROR_SUCCESS) {
             goto thing;
         }
     }
-    memset(mCurOffers, 0, mBufferSizeBytes);
+    memset(mCurOffers, 0, mBufSizeBytes);
     memset(&mOverlapped, 0, sizeof(XOVERLAPPED));
 
-    DWORD enumerate = XEnumerate(mHandle, mCurOffers, mBufferSizeBytes, 0, &mOverlapped);
+    DWORD enumerate = XEnumerate(mHandle, mCurOffers, mBufSizeBytes, 0, &mOverlapped);
     if (enumerate == ERROR_IO_PENDING) {
         return;
     }
@@ -103,6 +103,6 @@ void XboxEnumeration::Poll() {
         // lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL
         // lpUsedDefaultChar)
 
-        mContentList.push_back(product);
+        mProducts.push_back(product);
     }
 }

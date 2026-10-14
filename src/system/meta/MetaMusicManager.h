@@ -21,8 +21,8 @@ private:
     bool IsScreenInSceneMap(Symbol) const;
     void ConfigureMetaMusicSceneData(DataArray *);
 
-    std::map<Symbol, MetaMusicScene *> m_mapScenes; // 0x1c
-    std::map<Symbol, Symbol> m_mapScreenToScene; // 0x34
+    std::map<Symbol, MetaMusicScene *> m_mapScenes; // 0x2c
+    std::map<Symbol, Symbol> m_mapScreenToScene; // 0x44
 };
 
 extern MetaMusicManager *TheMetaMusicManager;

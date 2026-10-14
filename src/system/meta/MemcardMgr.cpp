@@ -4,8 +4,8 @@
 MemcardMgr TheMemcardMgr;
 
 void MemcardMgr::SetProfileSaveBuffer(void *v, int i) {
-    unk34 = v;
-    unk38 = i;
+    mSaveDataBuffer = v;
+    mSaveDataBufferSize = i;
 }
 
 void MemcardMgr::SaveLoadProfileComplete(Profile *pProfile, int state) {

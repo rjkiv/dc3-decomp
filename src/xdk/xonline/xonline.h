@@ -50,6 +50,29 @@ typedef struct _XSTORAGE_DOWNLOAD_TO_MEMORY_RESULTS { /* Size=0x14 */
 } XSTORAGE_DOWNLOAD_TO_MEMORY_RESULTS;
 #pragma pack(pop)
 
+typedef struct _XMARKETPLACE_CONTENTOFFER_INFO { /* Size=0x68 */
+    /* 0x0000 */ QWORD qwOfferID;
+    /* 0x0008 */ QWORD qwPreviewOfferID;
+    /* 0x0010 */ DWORD dwOfferNameLength;
+    /* 0x0014 */ LPWSTR wszOfferName;
+    /* 0x0018 */ DWORD dwOfferType;
+    /* 0x001c */ unsigned char contentId[20];
+    /* 0x0030 */ BOOL fIsUnrestrictedLicense;
+    /* 0x0034 */ DWORD dwLicenseMask;
+    /* 0x0038 */ DWORD dwTitleID;
+    /* 0x003c */ DWORD dwContentCategory;
+    /* 0x0040 */ DWORD dwTitleNameLength;
+    /* 0x0044 */ LPWSTR wszTitleName;
+    /* 0x0048 */ BOOL fUserHasPurchased;
+    /* 0x004c */ DWORD dwPackageSize;
+    /* 0x0050 */ DWORD dwInstallSize;
+    /* 0x0054 */ DWORD dwSellTextLength;
+    /* 0x0058 */ LPWSTR wszSellText;
+    /* 0x005c */ DWORD dwAssetID;
+    /* 0x0060 */ DWORD dwPurchaseQuantity;
+    /* 0x0064 */ DWORD dwPointsPrice;
+} XMARKETPLACE_CONTENTOFFER_INFO;
+
 typedef enum _XSTORAGE_FACILITY {
     XSTORAGE_FACILITY_GAME_CLIP = 1,
     XSTORAGE_FACILITY_PER_TITLE = 2,

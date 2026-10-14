@@ -46,7 +46,7 @@ protected:
     bool mAudio; // 0x39
     bool mLoop; // 0x3a
     bool mFillWidth; // 0x3b
-    int mLanguage; // 0x3c
+    int mLocalizationTrack; // 0x3c
     const char *mCurrentMovie; // 0x40
     std::vector<const char *> mMovies; // 0x44
     std::list<const char *> mRecent; // 0x50

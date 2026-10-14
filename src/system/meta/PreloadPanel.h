@@ -43,14 +43,6 @@ protected:
     Symbol CurrentSong() const;
 
     PreloadResult mPreloadResult; // 0x3c
-    std::vector<String> mPreloadedFiles; // 0x40
-    bool mMounted; // 0x4c
-    std::vector<Symbol> mContentNames; // 0x50
-    Hmx::Object *mAppReadFailureHandler; // 0x5c
-    bool unk60; // 0x60
-    String unk64; // 0x64
-    bool unk6c; // 0x6c
-    int mMaxCacheSize; // 0x70
 
 private:
     void CheckTypeDef(Symbol);
@@ -60,4 +52,13 @@ private:
     DataNode OnMsg(const UITransitionCompleteMsg &);
     void OnContentMountedOrFailed(char const *);
     void StartCache();
+
+    std::vector<String> mPreloadedFiles; // 0x40
+    bool mMounted; // 0x4c
+    std::vector<Symbol> mContentNames; // 0x50
+    Hmx::Object *mAppReadFailureHandler; // 0x5c
+    bool mContentReadFailureMsgCorrupt; // 0x60
+    String mContentReadFailureMsgPackage; // 0x64
+    bool mFailedToFindSong; // 0x6c
+    int mMaxCacheSize; // 0x70
 };

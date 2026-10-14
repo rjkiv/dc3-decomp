@@ -1,7 +1,9 @@
 #include "meta/MetaMusicScene.h"
 #include "os/Debug.h"
 
-MetaMusicScene::MetaMusicScene(DataArray *da) : m_symName(""), mMix(0) { Configure(da); }
+MetaMusicScene::MetaMusicScene(DataArray *da) : m_symName(""), m_FxConfig(0) {
+    Configure(da);
+}
 
 MetaMusicScene::~MetaMusicScene() {}
 
@@ -17,7 +19,7 @@ void MetaMusicScene::Configure(DataArray *i_pConfig) {
         }
     }
     static Symbol mix("mix");
-    mMix = i_pConfig->FindArray(mix, false);
+    m_FxConfig = i_pConfig->FindArray(mix, false);
 }
 
 Symbol MetaMusicScene::GetName() const { return m_symName; }

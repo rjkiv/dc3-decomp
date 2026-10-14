@@ -18,8 +18,7 @@ enum HAQType {
     kHAQType_Button,
     kHAQType_Slider,
     kHAQType_List,
-    kHAQType_Song,
-    kHAQType_Checkbox
+    kHAQType_Song
 };
 
 class HAQManager : public Hmx::Object {

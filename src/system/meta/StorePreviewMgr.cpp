@@ -18,54 +18,55 @@
 #include <cstring>
 
 StorePreviewMgr::StorePreviewMgr()
-    : unk2c(0.0f), unk30(1), mStreamPlayer(nullptr), unk40(0), unk48(0) {
+    : mAtten(0.0f), mLoopForever(1), mStreamPlayer(nullptr), mNetCacheLoader(0),
+      mHasFailed(0) {
     mStreamPlayer = new StreamPlayer();
     MILO_ASSERT(mStreamPlayer, 0x1d);
     DataArray *d = SystemConfig("song_select", "sound");
-    d->FindData("loop_forever", unk30);
-    d->FindData("attenuation", unk2c);
+    d->FindData("loop_forever", mLoopForever);
+    d->FindData("attenuation", mAtten);
     SetName("store_preview_mgr", ObjectDir::Main());
 }
 
 StorePreviewMgr::~StorePreviewMgr() {
     RELEASE(mStreamPlayer);
-    if (unk40) {
-        TheNetCacheMgr->DeleteNetCacheLoader(unk40);
-        unk40 = 0;
+    if (mNetCacheLoader) {
+        TheNetCacheMgr->DeleteNetCacheLoader(mNetCacheLoader);
+        mNetCacheLoader = 0;
     }
 }
 
 bool StorePreviewMgr::GetLastFailure(NetCacheMgrFailType &t) {
-    if (unk48) {
-        t = unk44;
-        unk48 = false;
+    if (mHasFailed) {
+        t = mLastFailure;
+        mHasFailed = false;
         return true;
     }
     return false;
 }
 
 bool StorePreviewMgr::IsPlaying() const {
-    return (!unk34.empty() && TheNetCacheMgr->IsLocalFile(unk34.c_str()));
+    return (!mStrPathCur.empty() && TheNetCacheMgr->IsLocalFile(mStrPathCur.c_str()));
 }
 
 void StorePreviewMgr::ClearCurrentPreview() {
-    if (!unk34.empty()) {
-        unk34 = gNullStr;
+    if (!mStrPathCur.empty()) {
+        mStrPathCur = gNullStr;
         PlayCurrentPreview();
     }
 }
 
 void StorePreviewMgr::SetCurrentPreviewFile(String const &str, TexMovie *tex) {
-    if (unk34 == str && unk4c == tex)
+    if (mStrPathCur == str && mTexMovie == tex)
         return;
-    unk4c = tex;
-    unk34 = str;
+    mTexMovie = tex;
+    mStrPathCur = str;
     PlayCurrentPreview();
 }
 
 bool StorePreviewMgr::IsDownloadingFile(String const &str) {
-    if (unk40) {
-        if (str == unk40->GetRemotePath()) {
+    if (mNetCacheLoader) {
+        if (str == mNetCacheLoader->GetRemotePath()) {
             return true;
         }
     }
@@ -74,8 +75,8 @@ bool StorePreviewMgr::IsDownloadingFile(String const &str) {
 }
 
 bool StorePreviewMgr::AllowPreviewDownload(String const &str) {
-    if (unk40) {
-        if (str == unk40->GetRemotePath())
+    if (mNetCacheLoader) {
+        if (str == mNetCacheLoader->GetRemotePath())
             return false;
     }
     if (TheNetCacheMgr->IsLocalFile(str.c_str()))
@@ -87,30 +88,30 @@ bool StorePreviewMgr::AllowPreviewDownload(String const &str) {
 
 void StorePreviewMgr::PlayCurrentPreview() {
     MILO_ASSERT(mStreamPlayer, 0xd8);
-    if (unk34.empty() || !TheNetCacheMgr->IsLocalFile(unk34.c_str())) {
+    if (mStrPathCur.empty() || !TheNetCacheMgr->IsLocalFile(mStrPathCur.c_str())) {
         mStreamPlayer->StopPlaying();
-        if (unk4c) {
-            unk4c->SetFile(gNullStr);
+        if (mTexMovie) {
+            mTexMovie->SetFile(gNullStr);
         }
     } else {
-        FilePath temp_str(unk34.c_str());
-        if (unk4c) {
+        FilePath temp_str(mStrPathCur.c_str());
+        if (mTexMovie) {
             mStreamPlayer->StopPlaying();
-            unk4c->SetFile(unk34.c_str());
-            unk4c->SetVolume(-unk2c);
+            mTexMovie->SetFile(mStrPathCur.c_str());
+            mTexMovie->SetVolume(-mAtten);
         } else {
             int length = temp_str.length() - 5;
             if (temp_str.find(".mogg", length) != String::npos) {
                 temp_str.erase(length);
             }
-            mStreamPlayer->PlayFile(temp_str.c_str(), -unk2c, 0.0f, unk30);
+            mStreamPlayer->PlayFile(temp_str.c_str(), -mAtten, 0.0f, mLoopForever);
         }
     }
 }
 
 void StorePreviewMgr::AddToDownloadQueue(String const &str) {
-    if (unk40) {
-        if (str == unk40->GetRemotePath()) {
+    if (mNetCacheLoader) {
+        if (str == mNetCacheLoader->GetRemotePath()) {
             return;
         }
     }
@@ -124,23 +125,23 @@ void StorePreviewMgr::AddToDownloadQueue(String const &str) {
 void StorePreviewMgr::Poll() {
     MILO_ASSERT(mStreamPlayer, 0x6f);
     mStreamPlayer->Poll();
-    if (unk40) {
-        bool rightPath = unk34 == unk40->GetRemotePath();
-        if (unk40->IsLoaded()) {
-            TheNetCacheMgr->IsLocalFile(unk40->GetRemotePath());
-            TheNetCacheMgr->DeleteNetCacheLoader(unk40);
-            unk40 = nullptr;
+    if (mNetCacheLoader) {
+        bool rightPath = mStrPathCur == mNetCacheLoader->GetRemotePath();
+        if (mNetCacheLoader->IsLoaded()) {
+            TheNetCacheMgr->IsLocalFile(mNetCacheLoader->GetRemotePath());
+            TheNetCacheMgr->DeleteNetCacheLoader(mNetCacheLoader);
+            mNetCacheLoader = nullptr;
             if (rightPath) {
                 PlayCurrentPreview();
             }
             static PreviewDownloadCompleteMsg msg(true, false);
             msg[1] = rightPath;
             Hmx::Object::Handle(msg, false);
-        } else if (unk40->HasFailed()) {
-            unk48 = true;
-            unk44 = unk40->GetFailType();
-            TheNetCacheMgr->DeleteNetCacheLoader(unk40);
-            unk40 = nullptr;
+        } else if (mNetCacheLoader->HasFailed()) {
+            mHasFailed = true;
+            mLastFailure = mNetCacheLoader->GetFailType();
+            TheNetCacheMgr->DeleteNetCacheLoader(mNetCacheLoader);
+            mNetCacheLoader = nullptr;
             static PreviewDownloadCompleteMsg msg(false, false);
             msg[1] = rightPath;
             Hmx::Object::Handle(msg, false);
@@ -153,9 +154,9 @@ void StorePreviewMgr::Poll() {
         mDownloadQueue.pop_front();
     }
 
-    if (!unk40 && !mDownloadQueue.empty()) {
+    if (!mNetCacheLoader && !mDownloadQueue.empty()) {
         MILO_ASSERT(!TheNetCacheMgr->IsLocalFile(mDownloadQueue.front().c_str()), 0xa5);
-        unk40 = TheNetCacheMgr->AddNetCacheLoader(
+        mNetCacheLoader = TheNetCacheMgr->AddNetCacheLoader(
             mDownloadQueue.front().c_str(), (NetLoaderPos)1
         );
         mDownloadQueue.pop_front();

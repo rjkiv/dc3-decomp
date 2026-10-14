@@ -19,9 +19,10 @@ public:
 
     NEW_OBJ(DeJitterPanel)
 
-    Timer unk38;
-    DeJitter unk68;
-    bool unkf8;
+private:
+    Timer mTimer; // 0x38
+    DeJitter mJitter; // 0x68
+    bool mFirstPoll; // 0xf8
 };
 
 class DeJitterSetter {
@@ -29,6 +30,6 @@ public:
     DeJitterSetter(DeJitter &, Timer *);
     ~DeJitterSetter();
 
-    float secs; // 0x0
-    float delta_secs; // 0x4
+    float oldSec; // 0x0
+    float oldDt; // 0x4
 };
