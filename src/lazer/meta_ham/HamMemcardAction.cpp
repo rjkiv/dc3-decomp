@@ -21,7 +21,7 @@ void SaveMemcardAction::PreAction() {
     fsss << ver;
     fsss.InitializeTable();
     fsss.EnableWriteEncryption();
-    fsss << GetProfile();
+    fsss << *GetProfile();
     fsss.DisableEncryption();
     fsss.SaveTable();
     SetResult(fsss.Fail() ? kMCGeneralError : kMCNoError);

@@ -19,10 +19,10 @@ public:
     void SetPurchased(bool purchased) { mPurchased = purchased; }
     unsigned long long OfferID() const { return mOfferID; }
     void SetOfferID(unsigned long long id) { mOfferID = id; }
-    int GetPointsPrice() const { return mPointsPrice; }
+    int GetPointsPrice() { return mPointsPrice; }
     void SetPointsPrice(int price) { mPointsPrice = price; }
 
-private:
+protected:
     bool mAvailable; // 0x2c
     bool mPurchased; // 0x2d
     unsigned long long mOfferID; // 0x30

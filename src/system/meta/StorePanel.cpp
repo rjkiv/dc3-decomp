@@ -76,14 +76,14 @@ void StorePanel::Enter() {
     if (!profile) {
         if (mLoadOK) {
             mLoadOK = false;
-            ExitStore(kStoreErrorLiveServer);
+            ExitStore(kStoreErrorSignedOut);
         }
     } else {
         if (ThePlatformMgr.IsSignedIntoLive(profile->GetPadNum())
             && ThePlatformMgr.IsPadAGuest(profile->GetPadNum())) {
             if (mLoadOK) {
                 mLoadOK = false;
-                ExitError(kStoreErrorLiveServer);
+                ExitError(kStoreErrorSignedOut);
             }
         }
     }
@@ -174,7 +174,7 @@ void StorePanel::HandleNetCacheLoaderFailure(int failType) {
     case 2:
         return;
     case 3:
-        error = kStoreErrorNoMetadata;
+        error = kStoreErrorNoEthernetCable;
         goto lol;
         break;
     default:
@@ -183,7 +183,7 @@ void StorePanel::HandleNetCacheLoaderFailure(int failType) {
         break;
     }
     if (!ThePlatformMgr.IsEthernetCableConnected()) {
-        error = kStoreErrorNoMetadata;
+        error = kStoreErrorNoEthernetCable;
     }
 lol:
     ExitError(error);
@@ -202,7 +202,7 @@ void StorePanel::HandleNetCacheMgrFailure() {
         break;
     }
     case 3:
-        error = kStoreErrorNoMetadata;
+        error = kStoreErrorNoEthernetCable;
         goto lol;
         break;
     default:
@@ -210,7 +210,7 @@ void StorePanel::HandleNetCacheMgrFailure() {
         break;
     }
     if (!ThePlatformMgr.IsEthernetCableConnected()) {
-        error = kStoreErrorNoMetadata;
+        error = kStoreErrorNoEthernetCable;
     }
 lol:
     ExitError(error);
@@ -269,7 +269,7 @@ void StorePanel::EnumerateOffers(bool b) {
         if (ids.empty()) {
             if (mLoadOK) {
                 mLoadOK = false;
-                ExitStore(kStoreErrorSignedOut);
+                ExitStore(kStoreErrorNoMetadata);
             }
             return;
         }
@@ -475,7 +475,7 @@ DataNode StorePanel::OnMsg(SigninChangedMsg const &msg) {
     }
     if (mLoadOK) {
         mLoadOK = false;
-        ExitStore(kStoreErrorLiveServer);
+        ExitStore(kStoreErrorSignedOut);
     }
     return DataNode(kDataInt, 1);
 }
