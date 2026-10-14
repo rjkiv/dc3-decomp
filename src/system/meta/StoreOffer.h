@@ -13,14 +13,20 @@ public:
     bool Exists() const;
     static unsigned long long OfferStringToID(char const *);
     char const *CostStr() const;
-    bool IsAvailable() const { return isAvailable; }
-    bool IsPurchased() const { return isPurchased; }
-    unsigned long long SongID() const { return songID; }
+    bool IsAvailable() const { return mAvailable; }
+    void SetAvailable(bool available) { mAvailable = available; }
+    bool IsPurchased() const { return mPurchased; }
+    void SetPurchased(bool purchased) { mPurchased = purchased; }
+    unsigned long long OfferID() const { return mOfferID; }
+    void SetOfferID(unsigned long long id) { mOfferID = id; }
+    int GetPointsPrice() { return mPointsPrice; }
+    void SetPointsPrice(int price) { mPointsPrice = price; }
 
-    bool isAvailable; // 0x2c
-    bool isPurchased; // 0x2d
-    unsigned long long songID; // 0x30
-    int cost; // 0x38
+protected:
+    bool mAvailable; // 0x2c
+    bool mPurchased; // 0x2d
+    unsigned long long mOfferID; // 0x30
+    int mPointsPrice; // 0x38
 };
 
 class StoreOffer : public StorePurchaseable {
@@ -51,15 +57,15 @@ public:
     DataNode OnGetData(DataArray *);
     StoreOffer(DataArray *, SongMgr *);
 
-    DataArray *StoreOfferData() const { return mStoreOfferData; }
+    DataArray *StoreOfferData() const { return mData; }
     Symbol OfferType() const {
         static Symbol type("type");
-        return mStoreOfferData->FindSym(type);
+        return mData->FindSym(type);
     }
-    Symbol ShortName() const { return mStoreOfferData->Sym(0); }
+    Symbol ShortName() const { return mData->Sym(0); }
 
 protected:
-    DataArray *mStoreOfferData; // 0x40
+    DataArray *mData; // 0x40
     DateTime mReleaseDate; // 0x44
     SongMgr *mSongMgr; // 0x4c
     std::vector<int> mSongsInOffer; // 0x50

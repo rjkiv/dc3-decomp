@@ -28,37 +28,38 @@
 #include <list>
 
 StorePanel::StorePanel()
-    : unk50(false), mLoadOk(false), unk52(false), unk5c(0),
-      unk60(Hmx::Object::New<RndTex>()), mPendingArtCallback(), mJobId(-1),
-      mStorePreviewMgr(0), unk70(false), mPurchaser(0), mPendingPurchase(nullptr, nullptr),
-      mSource(gNullStr), mBackupSource(gNullStr), unk94(0), unk98(0) {}
+    : mNeedsLoad(false), mLoadOK(false), mShowTestOffers(false), mPendingArtLoader(0),
+      mAlbumTex(Hmx::Object::New<RndTex>()), mPendingArtCallback(), mCurrentEnumJobID(-1),
+      mStorePreviewMgr(0), mNeedToEnumerate(false), mPurchaser(0),
+      mPendingPurchase(nullptr, nullptr), mSource(gNullStr), mBackupSource(gNullStr),
+      mSessionStatus(kSessionNone), mPendingReenumJob(0) {}
 
 StorePanel::~StorePanel() {
-    DeleteAll(unk38);
-    DeleteAll(unk44);
-    delete unk60;
+    DeleteAll(mOffers);
+    DeleteAll(mExtraOffers);
+    delete mAlbumTex;
 }
 
 BEGIN_PROPSYNCS(StorePanel)
-    SYNC_PROP(load_ok, mLoadOk)
+    SYNC_PROP(load_ok, mLoadOK)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
 void StorePanel::Load() {
     UIPanel::Load();
-    unk50 = true;
-    // mLoadOk = true;
+    mNeedsLoad = true;
+    // mLoadOK = true;
     ThePlatformMgr.AddSink(this);
     Profile *profile = StoreProfile();
     if (!profile) {
-        if (mLoadOk) {
-            mLoadOk = false;
+        if (mLoadOK) {
+            mLoadOK = false;
             ExitError(kStoreErrorLiveServer);
         }
     } else if (!ThePlatformMgr.IsSignedIntoLive(profile->GetPadNum())) {
-        if (mLoadOk) {
-            mLoadOk = false;
-            ExitError(kStoreErrorCacheNoSpace);
+        if (mLoadOK) {
+            mLoadOK = false;
+            ExitError(kStoreErrorLiveServer);
         }
     }
     TheContentMgr.StartRefresh();
@@ -66,42 +67,42 @@ void StorePanel::Load() {
     mStorePreviewMgr = new StorePreviewMgr();
     mStorePreviewMgr->AddSink(this);
     MILO_ASSERT(!mPurchaser, 0xb1);
-    unk94 = 2;
+    mSessionStatus = kSessionCreated;
 }
 
 void StorePanel::Enter() {
     UIPanel::Enter();
     Profile *profile = StoreProfile();
     if (!profile) {
-        if (mLoadOk) {
-            mLoadOk = false;
-            ExitStore(kStoreErrorLiveServer);
+        if (mLoadOK) {
+            mLoadOK = false;
+            ExitStore(kStoreErrorSignedOut);
         }
     } else {
         if (ThePlatformMgr.IsSignedIntoLive(profile->GetPadNum())
             && ThePlatformMgr.IsPadAGuest(profile->GetPadNum())) {
-            if (mLoadOk) {
-                mLoadOk = false;
-                ExitError(kStoreErrorCacheNoSpace);
+            if (mLoadOK) {
+                mLoadOK = false;
+                ExitError(kStoreErrorSignedOut);
             }
         }
     }
 
-    if (unk50) {
+    if (mNeedsLoad) {
         TheNetCacheMgr->Load((NetCacheMgr::CacheSize)1);
-        unk50 = false;
+        mNeedsLoad = false;
     }
-    mShowing = mLoadOk;
+    mShowing = mLoadOK;
     XBackgroundDownloadSetMode(XBACKGROUND_DOWNLOAD_MODE_ALWAYS_ALLOW);
-    unk70 = false;
+    mNeedToEnumerate = false;
 }
 
 void StorePanel::Exit() {
     XBackgroundDownloadSetMode(XBACKGROUND_DOWNLOAD_MODE_AUTO);
     ThePlatformMgr.RemoveSink(this);
-    if (0 <= mJobId)
-        ThePlatformMgr.CancelEnumJob(mJobId);
-    mJobId = -1;
+    if (0 <= mCurrentEnumJobID)
+        ThePlatformMgr.CancelEnumJob(mCurrentEnumJobID);
+    mCurrentEnumJobID = -1;
     UIPanel::Exit();
 }
 
@@ -118,22 +119,22 @@ bool StorePanel::IsLoaded() const {
 }
 
 void StorePanel::Unload() {
-    if (0 <= mJobId) {
-        ThePlatformMgr.CancelEnumJob(mJobId);
+    if (0 <= mCurrentEnumJobID) {
+        ThePlatformMgr.CancelEnumJob(mCurrentEnumJobID);
     }
-    mJobId = -1;
+    mCurrentEnumJobID = -1;
     RELEASE(mPurchaser);
     mPendingPurchase.first = nullptr;
     mPendingPurchase.second = nullptr;
     mPendingPurchases.clear();
     mStorePreviewMgr->RemoveSink(this);
     RELEASE(mStorePreviewMgr);
-    FOREACH (it, unk54) {
+    FOREACH (it, mLoaders) {
         TheNetCacheMgr->DeleteNetCacheLoader(*it);
     }
-    unk54.clear();
-    DeleteAll(unk38);
-    DeleteAll(unk44);
+    mLoaders.clear();
+    DeleteAll(mOffers);
+    DeleteAll(mExtraOffers);
     TheNetCacheMgr->Unload();
     UIPanel::Unload();
 }
@@ -145,14 +146,14 @@ void StorePanel::CheckOut(StorePurchaseable *p) {
     MILO_ASSERT(profile, 0x2c4);
     mPendingPurchase.first = p;
     mPendingPurchase.second = profile;
-    mPurchaser = new XboxPurchaser(profile->GetPadNum(), p->SongID(), 0, 0, mSource, 0);
+    mPurchaser = new XboxPurchaser(profile->GetPadNum(), p->OfferID(), 0, 0, mSource, 0);
     mPurchaser->Initiate();
 }
 
 void StorePanel::ExitError(StoreError e) {
     MILO_ASSERT(e != kStoreErrorSuccess, 0x405);
-    if (mLoadOk) {
-        mLoadOk = false;
+    if (mLoadOK) {
+        mLoadOK = false;
         ExitStore(e);
     }
 }
@@ -166,42 +167,42 @@ void StorePanel::HandleNetCacheLoaderFailure(int failType) {
     switch (failType) {
     case 1: {
         error = !ThePlatformMgr.IsSignedIntoLive(StoreProfile()->GetPadNum())
-            ? kStoreErrorCacheNoSpace
-            : kStoreErrorCacheRemoved;
+            ? kStoreErrorLiveServer
+            : kStoreErrorStoreServer;
         break;
     }
     case 2:
         return;
     case 3:
-        error = kStoreErrorNoMetadata;
+        error = kStoreErrorNoEthernetCable;
         goto lol;
         break;
     default:
         MILO_NOTIFY("Unknown failure %d in a net cache loader!", failType);
-        error = kStoreErrorCacheRemoved;
+        error = kStoreErrorStoreServer;
         break;
     }
     if (!ThePlatformMgr.IsEthernetCableConnected()) {
-        error = kStoreErrorNoMetadata;
+        error = kStoreErrorNoEthernetCable;
     }
 lol:
     ExitError(error);
 }
 
 void StorePanel::HandleNetCacheMgrFailure() {
-    StoreError error = kStoreErrorCacheRemoved;
+    StoreError error = kStoreErrorStoreServer;
     NetCacheMgrFailType failType = TheNetCacheMgr->GetFailType();
 
     switch (failType) {
     case kNCMFT_StoreServer:
     case kNCMFT_ClientError: {
         error = !ThePlatformMgr.IsSignedIntoLive(StoreProfile()->GetPadNum())
-            ? kStoreErrorCacheNoSpace
-            : kStoreErrorCacheRemoved;
+            ? kStoreErrorLiveServer
+            : kStoreErrorStoreServer;
         break;
     }
     case 3:
-        error = kStoreErrorNoMetadata;
+        error = kStoreErrorNoEthernetCable;
         goto lol;
         break;
     default:
@@ -209,7 +210,7 @@ void StorePanel::HandleNetCacheMgrFailure() {
         break;
     }
     if (!ThePlatformMgr.IsEthernetCableConnected()) {
-        error = kStoreErrorNoMetadata;
+        error = kStoreErrorNoEthernetCable;
     }
 lol:
     ExitError(error);
@@ -222,7 +223,7 @@ void StorePanel::MultipleItemsCheckout(std::list<StoreOffer *> *offers) {
     std::vector<unsigned long long> songIDs;
     FOREACH (it, *offers) {
         MILO_ASSERT((*it)->IsAvailable(), 0x2ef);
-        songIDs.push_back((*it)->SongID());
+        songIDs.push_back((*it)->OfferID());
         mPendingPurchases.push_back(
             std::pair<StorePurchaseable *, const Profile *>(*it, profile)
         );
@@ -233,20 +234,20 @@ void StorePanel::MultipleItemsCheckout(std::list<StoreOffer *> *offers) {
 }
 
 void StorePanel::PopulateOffers(DataArray *d, bool b) {
-    if (mLoadOk) {
-        DeleteAll(unk44);
+    if (mLoadOK) {
+        DeleteAll(mExtraOffers);
         if (!b) {
-            DeleteAll(unk38);
+            DeleteAll(mOffers);
         }
-        std::vector<StoreOffer *> *offers = &unk44;
+        std::vector<StoreOffer *> *offers = &mExtraOffers;
         if (!b) {
-            offers = &unk38;
+            offers = &mOffers;
         }
         if (d) {
             d->AddRef();
             for (int i = 1; i < d->Size(); i++) {
                 StoreOffer *offer = MakeNewOffer(d->Array(i));
-                if (!unk52 && offer->IsTest() && !offer->ValidTitle()) {
+                if (!mShowTestOffers && offer->IsTest() && !offer->ValidTitle()) {
                     delete offer;
                 } else if (offer->ValidTitle()) {
                     offers->push_back(offer);
@@ -266,9 +267,9 @@ void StorePanel::EnumerateOffers(bool b) {
         std::vector<UINT64> ids;
         GetOfferIDsToEnumerate(ids, b);
         if (ids.empty()) {
-            if (mLoadOk) {
-                mLoadOk = false;
-                ExitStore(kStoreErrorSignedOut);
+            if (mLoadOK) {
+                mLoadOK = false;
+                ExitStore(kStoreErrorNoMetadata);
             }
             return;
         }
@@ -277,18 +278,18 @@ void StorePanel::EnumerateOffers(bool b) {
         job = new StoreEnumJob(this, profile->GetPadNum(), nullptr);
     }
     ThePlatformMgr.QueueEnumJob(job);
-    mJobId = job->ID();
+    mCurrentEnumJobID = job->ID();
     static Message msg("enum_start");
     HandleType(msg);
     TheUI->Handle(msg, false);
 }
 
 void StorePanel::FinishEnum(std::list<EnumProduct> const &enumProducts, bool b) {
-    mJobId = -1;
+    mCurrentEnumJobID = -1;
     if (b) {
         StoreError error = UpdateOffers(enumProducts, false);
         if (error == kStoreErrorSuccess || error == kStoreErrorNoContent) {
-            if (!unk44.empty()) {
+            if (!mExtraOffers.empty()) {
                 error = UpdateOffers(enumProducts, true);
             }
         }
@@ -311,9 +312,9 @@ void StorePanel::FinishEnum(std::list<EnumProduct> const &enumProducts, bool b) 
         }
     } else {
         MILO_NOTIFY("An enumeration failed!");
-        if (mLoadOk) {
-            mLoadOk = false;
-            ExitStore(kStoreErrorCacheNoSpace);
+        if (mLoadOK) {
+            mLoadOK = false;
+            ExitStore(kStoreErrorLiveServer);
         }
     }
 }
@@ -321,36 +322,36 @@ void StorePanel::FinishEnum(std::list<EnumProduct> const &enumProducts, bool b) 
 void StorePanel::UpdateFromEnumProduct(StorePurchaseable *sp, EnumProduct const *ep) {
     MILO_ASSERT(sp, 0x3f0);
     MILO_ASSERT(ep, 0x3f1);
-    sp->isPurchased = (ep->unk10 != 0);
-    sp->cost = ep->unk14;
-    sp->isAvailable = true;
+    sp->SetPurchased(ep->mPurchased != 0);
+    sp->SetPointsPrice(ep->mPrice);
+    sp->SetAvailable(true);
 }
 
 void StorePanel::StartReEnum() {
-    if (unk98 != 0) {
-        ThePlatformMgr.QueueEnumJob(unk98);
-        unk98 = nullptr;
+    if (mPendingReenumJob != 0) {
+        ThePlatformMgr.QueueEnumJob(mPendingReenumJob);
+        mPendingReenumJob = nullptr;
     }
 }
 
 void StorePanel::LoadArt(const char *c, UIPanel *panel) {
     String str(c);
-    auto it = std::find(unk54.begin(), unk54.end(), str);
-    if (it == unk54.end()) {
+    auto it = std::find(mLoaders.begin(), mLoaders.end(), str);
+    if (it == mLoaders.end()) {
         NetCacheLoader *loader = TheNetCacheMgr->AddNetCacheLoader(c, (NetLoaderPos)0);
-        unk5c = loader;
+        mPendingArtLoader = loader;
         if (loader) {
-            unk54.push_back(unk5c);
+            mLoaders.push_back(mPendingArtLoader);
         }
     } else {
-        unk5c = *it;
+        mPendingArtLoader = *it;
     }
     mPendingArtCallback = panel;
 }
 
 void StorePanel::Poll() {
     UIPanel::Poll();
-    if (mLoadOk) {
+    if (mLoadOK) {
         if (TheNetCacheMgr->HasFailed()) {
             HandleNetCacheMgrFailure();
             return;
@@ -363,11 +364,11 @@ void StorePanel::Poll() {
                     HandleNetCacheLoaderFailure(fail);
                 }
             }
-            auto it = unk54.begin();
-            while (it != unk54.end()) {
+            auto it = mLoaders.begin();
+            while (it != mLoaders.end()) {
                 NetCacheLoader *loader = *it;
                 if (loader->IsLoaded()) {
-                    if (loader == unk5c) {
+                    if (loader == mPendingArtLoader) {
                         MILO_ASSERT(mPendingArtCallback, 0x167);
                         int size = loader->GetSize();
                         char *pBuffer = loader->GetBuffer();
@@ -377,29 +378,29 @@ void StorePanel::Poll() {
                         bitmap.Load(stream);
                         bitmap.SetMip(nullptr);
                         TheNetCacheMgr->DeleteNetCacheLoader(loader);
-                        unk60->SetBitmap(bitmap, 0, false, RndTex::kRegular);
+                        mAlbumTex->SetBitmap(bitmap, 0, false, RndTex::kRegular);
                         if (mPendingArtCallback->GetState() == kUp) {
                             static Message msg("art_loaded");
                             mPendingArtCallback->Handle(msg, false);
                         }
-                        unk5c = nullptr;
+                        mPendingArtLoader = nullptr;
                         mPendingArtCallback = nullptr;
                     } else {
                         TheNetCacheMgr->DeleteNetCacheLoader(loader);
                     }
-                    it = unk54.erase(it);
+                    it = mLoaders.erase(it);
                 } else if (loader->HasFailed()) {
                     NetCacheMgrFailType f = loader->GetFailType();
                     TheNetCacheMgr->DeleteNetCacheLoader(loader);
-                    it = unk54.erase(it);
+                    it = mLoaders.erase(it);
                     HandleNetCacheLoaderFailure(f);
                 } else {
                     ++it;
                 }
             }
-            if (!mPurchaser && unk70 && mJobId == -1) {
-                unk70 = false;
-                EnumerateOffers(unk44.empty() == 0);
+            if (!mPurchaser && mNeedToEnumerate && mCurrentEnumJobID == -1) {
+                mNeedToEnumerate = false;
+                EnumerateOffers(mExtraOffers.empty() == 0);
             }
             if (mPurchaser) {
                 mPurchaser->Poll();
@@ -411,9 +412,9 @@ void StorePanel::Poll() {
                             if (mPurchaser->NeedsEnum()) {
                                 std::vector<unsigned long long> ids;
                                 for (int i = 0; i < mPendingPurchases.size(); i++) {
-                                    ids.push_back(mPendingPurchases[i].first->SongID());
+                                    ids.push_back(mPendingPurchases[i].first->OfferID());
                                 }
-                                unk98 = new MultipleItemsPostPurchaseEnumJob(
+                                mPendingReenumJob = new MultipleItemsPostPurchaseEnumJob(
                                     this,
                                     mPendingPurchases.front().second->GetPadNum(),
                                     ids,
@@ -427,16 +428,17 @@ void StorePanel::Poll() {
                                 && !mPendingPurchase.first->IsPurchased()) {
                                 if (mPurchaser->PurchaseMade()) {
                                     b1 = true;
-                                    mPendingPurchase.first->isPurchased = true;
+                                    mPendingPurchase.first->SetPurchased(true);
                                     static Message msg("enum_finished");
                                     HandleType(msg);
                                     TheUI->Handle(msg, false);
                                 } else {
-                                    if (mPurchaser->NeedsEnum() && mPendingPurchase.second) {
-                                        unk98 = new PostPurchaseEnumJob(
+                                    if (mPurchaser->NeedsEnum()
+                                        && mPendingPurchase.second) {
+                                        mPendingReenumJob = new PostPurchaseEnumJob(
                                             this,
                                             mPendingPurchase.second->GetPadNum(),
-                                            mPendingPurchase.first->songID,
+                                            mPendingPurchase.first->OfferID(),
                                             mPurchaser->Source(),
                                             mPurchaser->PID()
                                         );
@@ -471,9 +473,9 @@ DataNode StorePanel::OnMsg(SigninChangedMsg const &msg) {
             return DataNode(kDataInt, 1);
         }
     }
-    if (mLoadOk) {
-        mLoadOk = false;
-        ExitStore(kStoreErrorLiveServer);
+    if (mLoadOK) {
+        mLoadOK = false;
+        ExitStore(kStoreErrorSignedOut);
     }
     return DataNode(kDataInt, 1);
 }
@@ -484,10 +486,10 @@ DataNode StorePanel::OnMsg(SingleItemEnumCompleteMsg const &msg) {
     bool ok = msg.Success() && msg.HasOfferID();
     if (ok) {
         unsigned long long id = msg.OfferID();
-        FOREACH (it, unk38) {
+        FOREACH (it, mOffers) {
             StoreOffer *offer = *it;
-            if (offer->SongID() == id) {
-                offer->isPurchased = true;
+            if (offer->OfferID() == id) {
+                offer->SetPurchased(true);
                 static Message enumMsg("enum_finished");
                 HandleType(enumMsg);
                 TheUI->Handle(enumMsg, false);
@@ -508,11 +510,11 @@ DataNode StorePanel::OnMsg(MultipleItemsEnumCompleteMsg const &msg) {
         int numOffers = msg.NumOffers();
         for (int i = 0; i < numOffers; i++) {
             unsigned long long id = msg.OfferID(i);
-            FOREACH (it, unk38) {
+            FOREACH (it, mOffers) {
                 StoreOffer *offer = *it;
-                if (offer->SongID() == id) {
+                if (offer->OfferID() == id) {
                     if (!offer->IsPurchased()) {
-                        offer->isPurchased = msg.Purchased(i);
+                        offer->SetPurchased(msg.Purchased(i));
                     }
                     break;
                 }
@@ -530,9 +532,9 @@ DataNode StorePanel::OnMsg(MultipleItemsEnumCompleteMsg const &msg) {
 
 BEGIN_HANDLERS(StorePanel)
     HANDLE_EXPR(toggle_test_offers, ToggleTestOffers())
-    HANDLE_EXPR(test_offers, unk52)
+    HANDLE_EXPR(test_offers, mShowTestOffers)
     HANDLE_ACTION(load_art, LoadArt(_msg->Str(2), _msg->Obj<UIPanel>(3)))
-    HANDLE_EXPR(album_tex, unk60)
+    HANDLE_EXPR(album_tex, mAlbumTex)
     HANDLE_ACTION(cancel_art, CancelArt())
     HANDLE_ACTION(check_out, CheckOut(_msg->Obj<StorePurchaseable>(2)))
     HANDLE_ACTION(re_download, CheckOut(_msg->Obj<StorePurchaseable>(2)))
@@ -547,17 +549,17 @@ BEGIN_HANDLERS(StorePanel)
 END_HANDLERS
 
 StoreEnumJob::StoreEnumJob(StorePanel *panel, int i, std::vector<UINT64> *vec) {
-    mEnumeration = new XboxEnumeration(i, vec);
+    mEnum = new XboxEnumeration(i, vec);
     mStorePanel = panel;
 }
 
-StoreEnumJob::~StoreEnumJob() { delete mEnumeration; }
+StoreEnumJob::~StoreEnumJob() { delete mEnum; }
 
 bool StoreEnumJob::IsFinished() {
-    if (mEnumeration->IsEnumerating()) {
-        mEnumeration->Poll();
+    if (mEnum->IsEnumerating()) {
+        mEnum->Poll();
     }
-    return mEnumeration->IsEnumerating() == false;
+    return mEnum->IsEnumerating() == false;
 }
 
-void StoreEnumJob::Start() { mEnumeration->Start(); }
+void StoreEnumJob::Start() { mEnum->Start(); }

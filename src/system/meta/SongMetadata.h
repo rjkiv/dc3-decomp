@@ -18,15 +18,11 @@ public:
     void PreviewTimes(float &, float &) const;
     DataArraySongInfo *SongBlock() const;
     int NumVocalParts() const;
+    int GetLastSeen() { return mRefreshesSinceLastSeen; }
+    void IncLastSeen() { mRefreshesSinceLastSeen++; }
+    void ResetLastSeen() { mRefreshesSinceLastSeen = 0; }
+    int Version() const { return mVersion; }
     Symbol ShortName() const { return mShortName; }
-    int Age() const { return mAge; }
-    void IncrementAge() { mAge++; }
-    void ResetAge() { mAge = 0; }
-    short Version() const { return mVersion; }
-
-private:
-    static int sSaveVer;
-    void InitSongMetadata();
 
 protected:
     SongMetadata();
@@ -35,10 +31,15 @@ protected:
     short mVersion; // 0x2c
     int mID; // 0x30
     Symbol mShortName; // 0x34
+
+private:
+    static int sSaveVer;
+    void InitSongMetadata();
+
     bool mIsOnDisc; // 0x38
     Symbol mGameOrigin; // 0x3c
     float mPreviewStartTime; // 0x40
     float mPreviewEndTime; // 0x44
     DataArraySongInfo *mSongInfo; // 0x48
-    int mAge; // 0x4c - used for song cache?
+    int mRefreshesSinceLastSeen; // 0x4c
 };

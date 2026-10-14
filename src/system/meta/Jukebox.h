@@ -2,19 +2,19 @@
 #include <vector>
 
 struct JukeboxItem {
-    JukeboxItem(int x, int y) : unk0(x), unk4(y) {}
+    JukeboxItem(int id, int lastplayed) : mSongID(id), mLastPlayed(lastplayed) {}
     ~JukeboxItem() {}
-    bool operator==(int x) const { return unk0 == x; }
-    int unk0;
-    int unk4;
+    bool operator==(int x) const { return mSongID == x; }
+    int mSongID; // 0x0
+    int mLastPlayed; // 0x4
 };
 
 class Jukebox {
 private:
     void AddItem(int, int);
 
-    std::vector<JukeboxItem> mJukeboxItems; // 0x0
-    int unkc; // 0xc
+    std::vector<JukeboxItem> mItems; // 0x0
+    int mNumPlayed; // 0xc
 
 public:
     Jukebox(int);

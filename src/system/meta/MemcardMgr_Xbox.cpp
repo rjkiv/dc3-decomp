@@ -18,8 +18,8 @@ namespace {
 }
 
 MemcardMgr::MemcardMgr()
-    : mState(kS_None), mAction(0), unk40(0), unk88(-1), mSelectDeviceWaiting(0),
-      mSelectDeviceCallBackObj(0), mPadNum(-1), mProfile(0) {}
+    : mState(kS_None), mAction(0), mForceOverwrite(0), mSelectDevicePadOverride(-1),
+      mSelectDeviceWaiting(0), mSelectDeviceCallBackObj(0), mPadNum(-1), mProfile(0) {}
 
 MemcardMgr::~MemcardMgr() {}
 
@@ -37,9 +37,9 @@ void MemcardMgr::Init() {
     TheMC.SetContainerName("savegame");
     static Symbol title_name("title_name");
     for (int i = 0; i < 4; i++) {
-        mValidDevices[i] = false;
-        mContainers[i] = nullptr;
-        mContainerIDs[i].Set(i, 0);
+        mIsDeviceValid[i] = false;
+        mPContainerTbl[i] = nullptr;
+        mCidTbl[i].Set(i, 0);
     }
     WCHAR wideName[128];
     MultiByteToWideChar(
@@ -68,7 +68,7 @@ int MemcardMgr::ThreadStart() {
         ret = ThreadCall_LoadGame();
         break;
     case kS_DeleteSaves:
-        ret = TheMC.DeleteContainer(mContainerIDs[mPadNum]);
+        ret = TheMC.DeleteContainer(mCidTbl[mPadNum]);
         break;
     }
     return ret;
@@ -91,8 +91,8 @@ void MemcardMgr::ThreadDone(int mcResult) {
     case kS_LoadGame: {
         mAction->SetResult((MCResult)mcResult);
         mAction->PostAction();
-        if (mcResult == kMCNoError && mAction->Result() != kMCNoError) {
-            mcResult = mAction->Result();
+        if (mcResult == kMCNoError && mAction->GetResult() != kMCNoError) {
+            mcResult = mAction->GetResult();
         }
         mAction = nullptr;
         mPadNum = -1;
@@ -112,20 +112,20 @@ void MemcardMgr::ThreadDone(int mcResult) {
 }
 
 MCResult MemcardMgr::ThreadCall_SaveGame() {
-    MCContainer *c = mContainers[mPadNum];
-    ULONGLONG size = XContentCalculateSize(unk38 * sizeof(int), 0);
+    MCContainer *c = mPContainerTbl[mPadNum];
+    ULONGLONG size = XContentCalculateSize(mSaveDataBufferSize * sizeof(int), 0);
     u64 i7 = 0;
     MCResult res = c->Mount(kOsOpenExisting);
 
     switch (res) {
     case kMCNoError:
-        if (!unk40) {
+        if (!mForceOverwrite) {
             c->Unmount();
             res = kMCFileExists;
         } else {
             u64 num48 = 0;
             MCResult mountRes = c->GetPathFreeSpace("", &num48);
-            if (mountRes != kMCNoError || (i7 = num48, unk40)) {
+            if (mountRes != kMCNoError || (i7 = num48, mForceOverwrite)) {
                 int newSize = -1;
                 c->GetSize(kSaveFilename, &newSize);
                 if (newSize > 0) {
@@ -143,7 +143,7 @@ MCResult MemcardMgr::ThreadCall_SaveGame() {
         }
         break;
     case kMCCorrupt: {
-        if (unk40) {
+        if (mForceOverwrite) {
             res = TheMC.DeleteContainer(c->Cid());
             if (res != kMCNoError) {
                 return res;
@@ -163,7 +163,8 @@ MCResult MemcardMgr::ThreadCall_SaveGame() {
                     c->Unmount();
                 }
                 res = kMCNotEnoughSpace;
-            } else if (c->IsMounted() || (res = c->Mount(kOsOpenAlways)), res == kMCNoError) {
+            } else if (c->IsMounted() || (res = c->Mount(kOsOpenAlways)),
+                       res == kMCNoError) {
                 MCResult writeRes = PerformWrite(c);
                 res = c->Unmount();
                 if (writeRes != kMCNoError) {
@@ -180,7 +181,7 @@ MCResult MemcardMgr::ThreadCall_SaveGame() {
 }
 
 MCResult MemcardMgr::ThreadCall_LoadGame() {
-    MCContainer *c = mContainers[mPadNum];
+    MCContainer *c = mPContainerTbl[mPadNum];
     MCResult res = c->Mount(kOsOpenExisting);
     if (res == kMCNoError) {
         MCResult readRes = PerformRead(c);
@@ -196,10 +197,10 @@ bool MemcardMgr::IsStorageDeviceValid(Profile *pProfile) {
     MILO_ASSERT(pProfile, 0x122);
     int padNum = pProfile->GetPadNum();
     MILO_ASSERT(padNum != -1, 0x124);
-    if (mValidDevices[padNum]) {
-        mValidDevices[padNum] = TheMC.IsDeviceValid(mContainerIDs[padNum]);
+    if (mIsDeviceValid[padNum]) {
+        mIsDeviceValid[padNum] = TheMC.IsDeviceValid(mCidTbl[padNum]);
     }
-    return mValidDevices[padNum];
+    return mIsDeviceValid[padNum];
 }
 
 void MemcardMgr::OnCheckForSaveContainer(Profile *pProfile) {
@@ -234,13 +235,13 @@ void MemcardMgr::OnLoadGame(Profile *pProfile, MemcardAction *pAction) {
 
 void MemcardMgr::OnSaveGame(Profile *pProfile, MemcardAction *pAction, int i3) {
     MILO_ASSERT(pProfile, 0x26D);
-    unk40 = i3;
+    mForceOverwrite = i3;
     mProfile = pProfile;
     mPadNum = mProfile->GetPadNum();
     mAction = pAction;
     MILO_ASSERT(mAction, 0x274);
     mAction->PreAction();
-    MCResult res = mAction->Result();
+    MCResult res = mAction->GetResult();
     if (res != kMCNoError) {
         MCResultMsg msg(res);
         Export(msg, true);
@@ -270,20 +271,20 @@ void MemcardMgr::SelectDevice(
     mSelectDeviceCallBackObj = callbackObj;
     mPadNum = mProfile->GetPadNum();
     if (ThePlatformMgr.GuideShowing()) {
-        unk88 = i3;
+        mSelectDevicePadOverride = i3;
         mSelectDeviceWaiting = true;
     } else {
-        TheMC.ShowDeviceSelector(mContainerIDs[mPadNum], this, i3, waiting);
+        TheMC.ShowDeviceSelector(mCidTbl[mPadNum], this, i3, waiting);
     }
 }
 
 void MemcardMgr::SetDevice(unsigned int device) {
-    mContainerIDs[mPadNum].mDeviceId = (XCONTENTDEVICEID)device;
-    if (mContainers[mPadNum]) {
-        TheMC.DestroyContainer(mContainers[mPadNum]);
+    mCidTbl[mPadNum].mDeviceId = (XCONTENTDEVICEID)device;
+    if (mPContainerTbl[mPadNum]) {
+        TheMC.DestroyContainer(mPContainerTbl[mPadNum]);
     }
-    mContainers[mPadNum] = TheMC.CreateContainer(mContainerIDs[mPadNum]);
-    mValidDevices[mPadNum] = TheMC.IsDeviceValid(mContainerIDs[mPadNum]);
+    mPContainerTbl[mPadNum] = TheMC.CreateContainer(mCidTbl[mPadNum]);
+    mIsDeviceValid[mPadNum] = TheMC.IsDeviceValid(mCidTbl[mPadNum]);
     mPadNum = -1;
 }
 
@@ -295,12 +296,12 @@ MCResult MemcardMgr::PerformRead(MCContainer *container) {
         if (size <= 0) {
             return kMCGeneralError;
         } else {
-            if (size > unk38) {
+            if (size > mSaveDataBufferSize) {
                 MILO_LOG(
                     "%s [MemcardMgrXbox] Found save file that is %d bytes, but we only have RAM for %d bytes.\n",
                     kSaveFilename,
                     size,
-                    unk38
+                    mSaveDataBufferSize
                 );
             }
             MCResult openRes = file->Open(kSaveFilename, kAccessRead, kOsOpenExisting);
@@ -308,8 +309,8 @@ MCResult MemcardMgr::PerformRead(MCContainer *container) {
                 container->DestroyMCFile(file);
                 return openRes;
             } else {
-                int minSize = Min<int>(size, unk38);
-                MCResult readRes = file->Read(unk34, minSize);
+                int minSize = Min<int>(size, mSaveDataBufferSize);
+                MCResult readRes = file->Read(mSaveDataBuffer, minSize);
                 MCResult closeRes = file->Close();
                 container->DestroyMCFile(file);
                 return readRes == kMCNoError ? closeRes : readRes;
@@ -326,7 +327,7 @@ MCResult MemcardMgr::PerformWrite(MCContainer *container) {
         container->DestroyMCFile(file);
         return res;
     } else {
-        MCResult writeRes = file->Write(unk34, unk38);
+        MCResult writeRes = file->Write(mSaveDataBuffer, mSaveDataBufferSize);
         MCResult closeRes = file->Close();
         container->DestroyMCFile(file);
         return writeRes == kMCNoError ? closeRes : writeRes;
@@ -334,7 +335,7 @@ MCResult MemcardMgr::PerformWrite(MCContainer *container) {
 }
 
 MCResult MemcardMgr::ThreadCall_CheckForSaveContainer() {
-    MCContainer *container = mContainers[mPadNum];
+    MCContainer *container = mPContainerTbl[mPadNum];
     MCResult res = container->Mount(kOsOpenExisting);
     if (res == kMCNoError) {
         MCFile *file = container->CreateMCFile();
@@ -352,14 +353,14 @@ MCResult MemcardMgr::ThreadCall_SearchForDevice() {
     MILO_ASSERT(mSelectDeviceWaiting == false, 0x9D);
     MILO_ASSERT(mProfile, 0x9E);
     MILO_ASSERT(mPadNum != -1, 0x9F);
-    mContainerIDs[mPadNum].mDeviceId = XCONTENTDEVICE_ANY;
-    MCResult res = TheMC.FindValidUnit(&mContainerIDs[mPadNum]);
+    mCidTbl[mPadNum].mDeviceId = XCONTENTDEVICE_ANY;
+    MCResult res = TheMC.FindValidUnit(&mCidTbl[mPadNum]);
     if (res == kMCFileExists) {
-        if (mContainers[mPadNum]) {
-            TheMC.DestroyContainer(mContainers[mPadNum]);
+        if (mPContainerTbl[mPadNum]) {
+            TheMC.DestroyContainer(mPContainerTbl[mPadNum]);
         }
-        mContainers[mPadNum] = TheMC.CreateContainer(mContainerIDs[mPadNum]);
-        mValidDevices[mPadNum] = TheMC.IsDeviceValid(mContainerIDs[mPadNum]);
+        mPContainerTbl[mPadNum] = TheMC.CreateContainer(mCidTbl[mPadNum]);
+        mIsDeviceValid[mPadNum] = TheMC.IsDeviceValid(mCidTbl[mPadNum]);
     }
     return res;
 }
@@ -386,7 +387,9 @@ DataNode MemcardMgr::OnMsg(const UIChangedMsg &msg) {
     if (mSelectDeviceWaiting) {
         if (!msg.Showing()) {
             mSelectDeviceWaiting = false;
-            TheMC.ShowDeviceSelector(mContainerIDs[mPadNum], this, unk88, false);
+            TheMC.ShowDeviceSelector(
+                mCidTbl[mPadNum], this, mSelectDevicePadOverride, false
+            );
         }
     }
     return 0;
@@ -394,8 +397,8 @@ DataNode MemcardMgr::OnMsg(const UIChangedMsg &msg) {
 
 DataNode MemcardMgr::OnMsg(const StorageChangedMsg &msg) {
     for (int i = 0; i < 4; i++) {
-        if (mContainers[i]) {
-            mValidDevices[i] = TheMC.IsDeviceValid(mContainerIDs[i]);
+        if (mPContainerTbl[i]) {
+            mIsDeviceValid[i] = TheMC.IsDeviceValid(mCidTbl[i]);
         }
     }
     return 0;
@@ -415,11 +418,11 @@ DataNode MemcardMgr::OnMsg(const SigninChangedMsg &msg) {
     int mask = msg.GetMask();
     for (int i = 0; i < 4; i++) {
         if (!(mask & 1 << i)) {
-            if (mContainers[i] && !mContainers[i]->IsMounted()) {
-                TheMC.DestroyContainer(mContainers[i]);
-                mContainers[i] = nullptr;
+            if (mPContainerTbl[i] && !mPContainerTbl[i]->IsMounted()) {
+                TheMC.DestroyContainer(mPContainerTbl[i]);
+                mPContainerTbl[i] = nullptr;
             }
-            mValidDevices[i] = false;
+            mIsDeviceValid[i] = false;
         }
     }
     return 0;

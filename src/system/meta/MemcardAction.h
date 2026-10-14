@@ -10,12 +10,15 @@ public:
     virtual void PreAction() = 0;
     virtual void PostAction() = 0;
 
-    MCResult Result() const { return mResult; }
+    MCResult GetResult() { return mResult; }
     void SetResult(MCResult res) { mResult = res; }
+    char *GetBuffer() { return mBuffer; }
+    int GetBufSize() { return mBufSize; }
+    Profile *GetProfile() { return mProfile; }
 
-protected:
+private:
     MCResult mResult; // 0x4
-    int unk8;
-    int unkc;
-    Profile *unk10;
+    char *mBuffer; // 0x8
+    int mBufSize; // 0xc
+    Profile *mProfile; // 0x10
 };

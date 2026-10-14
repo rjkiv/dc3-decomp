@@ -15,7 +15,7 @@ BEGIN_HANDLERS(Achievements)
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
 
-Achievements::Achievements() : unk2c(0), mAllowAchievements(true) {}
+Achievements::Achievements() : mProfileSaveSize(0), mAllowAchievements(true) {}
 
 void Achievements::SubmitAchievementsCallback(int) { gThreadAchievements.clear(); }
 
@@ -26,9 +26,9 @@ void Achievements::Init() {
 }
 
 void Achievements::Poll() {
-    if (!mAchieved.empty() && gThreadAchievements.empty() && mAllowAchievements) {
-        gThreadAchievements = mAchieved;
-        mAchieved.clear();
+    if (!gAchievements.empty() && gThreadAchievements.empty() && mAllowAchievements) {
+        gThreadAchievements = gAchievements;
+        gAchievements.clear();
         ThreadCall(SubmitAchievementsFunc, SubmitAchievementsCallback);
     }
 }
@@ -36,6 +36,6 @@ void Achievements::Poll() {
 void Achievements::Submit(int i1, Symbol s2, int i3) {
     if (ThePlatformMgr.IsPadNumSignedIn(i1)) {
         MILO_LOG("Achievement awarded: %s (id:%d, pad:%i)\n", s2, i3, i1);
-        mAchieved.push_back(GetAchievementData(i1, i3));
+        gAchievements.push_back(GetAchievementData(i1, i3));
     }
 }

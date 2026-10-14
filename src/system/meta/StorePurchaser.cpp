@@ -21,7 +21,7 @@ XboxPurchaser::XboxPurchaser(
     Symbol s,
     unsigned int ui
 )
-    : StorePurchaser(s, ui), mState(purchasestate0), unk40(param2), unk48(param1) {}
+    : StorePurchaser(s, ui), mState(kIdle), mOfferID(param2), mPadNum(param1) {}
 
 XboxPurchaser::~XboxPurchaser() {
     static Symbol ui_changed("ui_changed");
@@ -30,18 +30,18 @@ XboxPurchaser::~XboxPurchaser() {
 
 void XboxPurchaser::Initiate() {
     MILO_ASSERT(!IsPurchasing(), 0x39a);
-    mState = purchasestate1;
+    mState = kPurchasing;
     DWORD result;
     DWORD id;
     if (PlatformMgr::sXShowCallback(id)) {
-        result = XShowNuiMarketplaceUI(id, unk48, 5, unk40, -1);
+        result = XShowNuiMarketplaceUI(id, mPadNum, 5, mOfferID, -1);
     } else {
-        result = XShowMarketplaceUI(unk48, 5, unk40, -1);
+        result = XShowMarketplaceUI(mPadNum, 5, mOfferID, -1);
     }
 
     if (result != 0) {
         MILO_NOTIFY("Error starting checkout UI: %d", result);
-        mState = purchasestate3;
+        mState = kFailure;
     }
 
     static Symbol ui_changed("ui_changed");
@@ -59,11 +59,11 @@ bool XboxPurchaser::PurchaseMade() const {
 }
 
 bool XboxPurchaser::IsPurchasing() const {
-    return !(mState == purchasestate0 || mState == kSuccess || mState == purchasestate3);
+    return !(mState == kIdle || mState == kSuccess || mState == kFailure);
 }
 
 DataNode XboxPurchaser::OnMsg(UIChangedMsg const &msg) {
-    if (mState != purchasestate1 || msg.Showing()) {
+    if (mState != kPurchasing || msg.Showing()) {
         return 0;
     } else {
         static Symbol ui_changed("ui_changed");
@@ -91,21 +91,21 @@ bool XboxMultipleItemsPurchaser::PurchaseMade() const {
 }
 
 bool XboxMultipleItemsPurchaser::IsPurchasing() const {
-    return !(mState == purchasestate0 || mState == kSuccess || mState == purchasestate3);
+    return !(mState == kIdle || mState == kSuccess || mState == kFailure);
 }
 
 void XboxMultipleItemsPurchaser::Initiate() {
     MILO_ASSERT(!IsPurchasing(), 0x343);
-    mState = purchasestate1;
+    mState = kPurchasing;
 
     memset(&sOverlapped, 0, sizeof(_XOVERLAPPED));
-    unk4c = 0;
+    mResult = 0;
     DWORD result = XShowMarketplaceDownloadItemsUI(
-        unk48, 0x3e9, &unk3c[0], unk3c.size(), &unk4c, &sOverlapped
+        mPadNum, 0x3e9, &mOfferIDs[0], mOfferIDs.size(), &mResult, &sOverlapped
     );
     if (result != 0x3e5) {
         MILO_NOTIFY("Error starting checkout UI: %d", result);
-        mState = purchasestate3;
+        mState = kFailure;
     }
     static Symbol ui_changed("ui_changed");
     ThePlatformMgr.AddSink(this, ui_changed);
@@ -119,13 +119,13 @@ XboxMultipleItemsPurchaser::~XboxMultipleItemsPurchaser() {
 XboxMultipleItemsPurchaser::XboxMultipleItemsPurchaser(
     int i, std::vector<unsigned long long> &offerIDs, Symbol s, unsigned int ui
 )
-    : StorePurchaser(s, ui), mState(purchasestate0), unk48(i) {
+    : StorePurchaser(s, ui), mState(kIdle), mPadNum(i) {
     MILO_ASSERT(offerIDs.size() >= 1 && offerIDs.size() <= XMARKETPLACE_MAX_OFFERIDS, 0x337);
-    unk3c = offerIDs;
+    mOfferIDs = offerIDs;
 }
 
 DataNode XboxMultipleItemsPurchaser::OnMsg(UIChangedMsg const &msg) {
-    if (mState != purchasestate1 || msg.Showing()) {
+    if (mState != kPurchasing || msg.Showing()) {
         return 0;
     } else {
         static Symbol ui_changed("ui_changed");

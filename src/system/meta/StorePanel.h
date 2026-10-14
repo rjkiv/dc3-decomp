@@ -17,6 +17,12 @@
 
 class StorePanel : public UIPanel {
 public:
+    enum SessionStatus {
+        kSessionNone = 0x0000,
+        kSessionCreating = 0x0001,
+        kSessionCreated = 0x0002
+    };
+
     // Hmx::Object
     virtual ~StorePanel();
     virtual DataNode Handle(DataArray *, bool);
@@ -48,11 +54,11 @@ public:
     void HandleNetCacheLoaderFailure(int);
     void MultipleItemsCheckout(std::list<StoreOffer *> *);
     bool ToggleTestOffers() {
-        unk52 = !unk52;
-        return unk52;
+        mShowTestOffers = !mShowTestOffers;
+        return mShowTestOffers;
     }
     void CancelArt() {
-        unk5c = 0;
+        mPendingArtLoader = 0;
         mPendingArtCallback = nullptr;
     }
     void SetSource(Symbol s, bool b) {
@@ -62,28 +68,6 @@ public:
         }
     }
     void SetSourceToBackup() { mSource = mBackupSource; }
-
-    int GetUnk68() const { return mJobId; }
-
-    std::vector<StoreOffer *> unk38;
-    std::vector<StoreOffer *> unk44;
-    bool unk50;
-    bool mLoadOk; // 0x51
-    bool unk52;
-    std::list<NetCacheLoader *> unk54;
-    NetCacheLoader *unk5c;
-    RndTex *unk60;
-    UIPanel *mPendingArtCallback; // 0x64
-    int mJobId; // 0x68
-    StorePreviewMgr *mStorePreviewMgr; // 0x6c
-    bool unk70;
-    StorePurchaser *mPurchaser; // 0x74
-    std::pair<StorePurchaseable *, const Profile *> mPendingPurchase; // 0x78
-    std::vector<std::pair<StorePurchaseable *, const Profile *> > mPendingPurchases; // 0x80
-    Symbol mSource; // 0x8c
-    Symbol mBackupSource; // 0x90
-    int unk94;
-    Job *unk98;
 
 protected:
     // UIPanel
@@ -100,6 +84,26 @@ protected:
     void ValidateOffers(std::vector<StoreOffer *> &);
     DataNode OnMsg(SingleItemEnumCompleteMsg const &);
     DataNode OnMsg(MultipleItemsEnumCompleteMsg const &);
+
+    std::vector<StoreOffer *> mOffers; // 0x38
+    std::vector<StoreOffer *> mExtraOffers; // 0x44
+    bool mNeedsLoad; // 0x50
+    bool mLoadOK; // 0x51
+    bool mShowTestOffers; // 0x52
+    std::list<NetCacheLoader *> mLoaders; // 0x54
+    NetCacheLoader *mPendingArtLoader; // 0x5c
+    RndTex *mAlbumTex; // 0x60
+    UIPanel *mPendingArtCallback; // 0x64
+    int mCurrentEnumJobID; // 0x68
+    StorePreviewMgr *mStorePreviewMgr; // 0x6c
+    bool mNeedToEnumerate; // 0x70
+    StorePurchaser *mPurchaser; // 0x74
+    std::pair<StorePurchaseable *, const Profile *> mPendingPurchase; // 0x78
+    std::vector<std::pair<StorePurchaseable *, const Profile *> > mPendingPurchases; // 0x80
+    Symbol mSource; // 0x8c
+    Symbol mBackupSource; // 0x90
+    SessionStatus mSessionStatus; // 0x94
+    Job *mPendingReenumJob; // 0x98
 };
 
 class StoreEnumJob : public Job {
@@ -111,7 +115,7 @@ public:
     virtual void Cancel(Hmx::Object *);
     virtual void OnCompletion(Hmx::Object *);
 
-protected:
-    XboxEnumeration *mEnumeration; // 0x8
+private:
+    XboxEnumeration *mEnum; // 0x8
     StorePanel *mStorePanel; // 0xc
 };

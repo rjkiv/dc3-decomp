@@ -4,26 +4,25 @@
 #include "utl/Str.h"
 #include "xdk/win_types.h"
 #include "xdk/xapilibi/xbase.h"
+#include "xdk/xonline/xonline.h"
 #include <list>
 
 enum StoreError {
-    kStoreErrorSuccess = 0,
-    kStoreErrorNoContent = 1,
-    kStoreErrorCacheNoSpace = 2,
-    kStoreErrorCacheRemoved = 3,
-    kStoreErrorLiveServer = 4,
-    kStoreErrorStoreServer = 5,
-    kStoreErrorSignedOut = 6,
-    kStoreErrorNoMetadata = 7,
-    kStoreErrorEcommerce = 8,
-    kStoreErrorNoEula = 9
+    kStoreErrorSuccess = 0x0000,
+    kStoreErrorNoContent = 0x0001,
+    kStoreErrorLiveServer = 0x0002,
+    kStoreErrorStoreServer = 0x0003,
+    kStoreErrorSignedOut = 0x0004,
+    kStoreErrorDroppedOut = 0x0005,
+    kStoreErrorNoMetadata = 0x0006,
+    kStoreErrorNoEthernetCable = 0x0007
 };
 
 struct EnumProduct {
-    String unk0;
-    QWORD unk8;
-    int unk10;
-    int unk14;
+    String mName; // 0x0
+    QWORD mOfferID; // 0x8
+    int mPurchased; // 0x10
+    int mPrice; // 0x14
 };
 
 class StoreEnumeration {
@@ -43,8 +42,7 @@ public:
     virtual bool IsSuccess() const = 0;
     virtual void Poll() = 0;
 
-protected:
-    std::list<EnumProduct> mContentList; // 0x4
+    std::list<EnumProduct> mProducts; // 0x4
 };
 
 class XboxEnumeration : public StoreEnumeration {
@@ -58,14 +56,16 @@ public:
 
     XboxEnumeration(int, std::vector<QWORD> *);
 
-private:
+protected:
     int mOfferIDCount; // 0xc
-    QWORD *unk10; // 0x10 - offer IDs
-    QWORD *unk14; // 0x14 - offer ID iterator?
-    int unk18; // 0x18 - padnum?
+    QWORD *mOfferIDs; // 0x10
+    QWORD *mNextOfferID; // 0x14
+    int mPadNum; // 0x18 - padnum?
     bool mSuccess; // 0x1c
+
+private:
     XOVERLAPPED mOverlapped; // 0x20
     HANDLE mHandle; // 0x3c
-    DWORD mBufferSizeBytes; // 0x40
-    HANDLE *mCurOffers; // 0x44 - array of structs of size 0x68 each
+    DWORD mBufSizeBytes; // 0x40
+    XMARKETPLACE_CONTENTOFFER_INFO *mCurOffers; // 0x44
 };

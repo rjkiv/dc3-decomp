@@ -45,6 +45,13 @@ public:
     void SelectDevice(Profile *, Hmx::Object *, int, bool);
     int GetSizeNeeded();
 
+protected:
+    DataNode OnMsg(const DeviceChosenMsg &);
+    DataNode OnMsg(const NoDeviceChosenMsg &);
+    DataNode OnMsg(const UIChangedMsg &);
+    DataNode OnMsg(const StorageChangedMsg &);
+    DataNode OnMsg(const SigninChangedMsg &);
+
 private:
     MCResult ThreadCall_SearchForDevice();
     MCResult ThreadCall_CheckForSaveContainer();
@@ -53,23 +60,16 @@ private:
     MCResult PerformRead(MCContainer *);
     MCResult PerformWrite(MCContainer *);
 
-protected:
-    DataNode OnMsg(const DeviceChosenMsg &);
-    DataNode OnMsg(const NoDeviceChosenMsg &);
-    DataNode OnMsg(const UIChangedMsg &);
-    DataNode OnMsg(const StorageChangedMsg &);
-    DataNode OnMsg(const SigninChangedMsg &);
-
     State mState; // 0x30
-    void *unk34; // 0x34 - save data?
-    int unk38; // 0x38 - save data len/bytes?
+    void *mSaveDataBuffer; // 0x34
+    int mSaveDataBufferSize; // 0x38
     MemcardAction *mAction; // 0x3c
-    int unk40;
+    int mForceOverwrite; // 0x40
     // indexed by padnums
-    ContainerId mContainerIDs[4]; // 0x44
-    MCContainer *mContainers[4]; // 0x74
-    bool mValidDevices[4]; // 0x84
-    int unk88;
+    ContainerId mCidTbl[4]; // 0x44
+    MCContainer *mPContainerTbl[4]; // 0x74
+    bool mIsDeviceValid[4]; // 0x84
+    int mSelectDevicePadOverride; // 0x88
     bool mSelectDeviceWaiting; // 0x8c
     Hmx::Object *mSelectDeviceCallBackObj; // 0x90
     int mPadNum; // 0x94

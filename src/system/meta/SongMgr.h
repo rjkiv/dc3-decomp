@@ -12,7 +12,6 @@
 #include <vector>
 #include <map>
 
-// from RB2 taken from RB3 decomp
 enum SongMgrState {
     kSongMgr_SaveMount = 0,
     kSongMgr_SaveWrite = 1,
@@ -60,8 +59,8 @@ public:
      * @param [out] names The collection of song content names.
      */
     virtual void GetContentNames(Symbol shortname, std::vector<Symbol> &names) const;
-    virtual bool SongCacheNeedsWrite() const { return mSongCacheNeedsWrite; }
-    virtual void ClearSongCacheNeedsWrite() { mSongCacheNeedsWrite = false; }
+    virtual bool SongCacheNeedsWrite() const { return mNeedCacheWrite; }
+    virtual void ClearSongCacheNeedsWrite() { mNeedCacheWrite = false; }
     virtual void ClearCachedContent();
     /** Get the song shortname associated with the supplied song ID.
      * @param [in] songID The song ID.
@@ -156,12 +155,12 @@ protected:
     */
     std::map<int, Symbol> mContentUsedForSong; // 0x94
     // key = content file name. value = root name???
-    std::map<Symbol, String> unkmap5; // 0xac - mounted content?
-    CacheID *mSongCacheID; // 0xc4
-    Cache *mSongCache; // 0xc8
-    bool unkcc; // 0xcc
-    bool mSongCacheNeedsWrite; // 0xcd
-    bool mSongCacheWriteAllowed; // 0xce
+    std::map<Symbol, String> mContentNameRoots; // 0xac - mounted content?
+    CacheID *mCacheID; // 0xc4
+    Cache *mCache; // 0xc8
+    bool mNewContentCached; // 0xcc
+    bool mNeedCacheWrite; // 0xcd
+    bool mSongCacheWriteAllowed; // 0xce - not in pdb
 };
 
 extern SongMgr &TheSongMgr;

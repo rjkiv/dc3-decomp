@@ -72,9 +72,9 @@ void MoviePanel::Load() {
     bool localize = false;
     config->FindData("localize", localize, false);
     if (localize) {
-        mLanguage = Movie::LocalizationTrack();
+        mLocalizationTrack = Movie::LocalizationTrack();
     } else {
-        mLanguage = 0;
+        mLocalizationTrack = 0;
     }
     if (sUseSubtitles && mMovies.size() == 1) {
         char pathBuffer[256];
@@ -247,7 +247,7 @@ void MoviePanel::PlayMovie() {
         mLoop,
         mPreload,
         mFillWidth,
-        mLanguage,
+        mLocalizationTrack,
         0,
         kLoadFront
     );

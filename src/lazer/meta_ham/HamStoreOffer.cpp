@@ -13,7 +13,7 @@ HamStoreOffer::HamStoreOffer(DataArray *d, SongMgr *s) : StoreOffer(d, s) {
     if (HasData(preview)) {
         mPreviewPath = "previews/";
         Symbol p = preview;
-        DataArray *previewArray = mStoreOfferData->FindArray(p);
+        DataArray *previewArray = mData->FindArray(p);
         mPreviewPath += previewArray->Str(1);
     } else {
         mPreviewPath = gNullStr;
@@ -22,7 +22,7 @@ HamStoreOffer::HamStoreOffer(DataArray *d, SongMgr *s) : StoreOffer(d, s) {
     static Symbol art("art");
     mArtPath = "album_art/";
     Symbol a = art;
-    DataArray *albumArtArray = mStoreOfferData->FindArray(a);
+    DataArray *albumArtArray = mData->FindArray(a);
     mArtPath += albumArtArray->Str(1);
 }
 
@@ -31,7 +31,7 @@ HamStoreOffer::~HamStoreOffer() {}
 int HamStoreOffer::Difficulty() const {
     static Symbol difficulty("difficulty");
     Symbol s = difficulty;
-    DataArray *diffArray = mStoreOfferData->FindArray(s);
+    DataArray *diffArray = mData->FindArray(s);
     return diffArray->Int(1);
 }
 

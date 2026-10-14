@@ -22,10 +22,10 @@ const float SongPreview::kSilenceVal = -48;
 #pragma region Hmx::Object
 
 SongPreview::SongPreview(const SongMgr &mgr)
-    : mSongMgr(mgr), mStream(0), mTexMovie(this), unk4c(0), mFader(0), mMusicFader(0),
-      mCrowdSingFader(0), mNumChannels(0), mAttenuation(0.0f), mPreviewDb(0.0f),
-      mState(kIdle), mStartMs(0.0f), mEndMs(0.0f), mStartPreviewMs(0.0f),
-      mEndPreviewMs(0.0f), mRegisteredWithCM(0), unk8d(0), mSecurePreview(0) {}
+    : mSongMgr(mgr), mStream(0), mTexMovie(this), mInited(0), mFader(0), mMusicFader(0),
+      mCrowdSingFader(0), mNumChannels(0), mAtten(0.0f), mPreviewDb(0.0f), mState(kIdle),
+      mStartMs(0.0f), mEndMs(0.0f), mStartPreviewMs(0.0f), mEndPreviewMs(0.0f),
+      mRegisteredWithCM(0), mHandleHeaders(0), mSecurePreview(0) {}
 
 SongPreview::~SongPreview() { Terminate(); }
 
@@ -68,7 +68,7 @@ bool SongPreview::IsWaitingToDelete() const { return mState == kDeletingSong; }
 bool SongPreview::IsFadingOut() const { return mState == kFadingOutSong; }
 
 void SongPreview::SetMusicVol(float f) {
-    if (unk4c == 0) {
+    if (mInited == 0) {
         return;
     }
     if (f < mMusicFader->GetTargetVolume()) {
@@ -79,13 +79,13 @@ void SongPreview::SetMusicVol(float f) {
 }
 
 void SongPreview::SetCrowdSingVol(float f) {
-    if (unk4c)
+    if (mInited)
         mCrowdSingFader->DoFade(f, 0.0f);
 }
 
 void SongPreview::Init() {
-    if (!unk4c) {
-        unk4c = true;
+    if (!mInited) {
+        mInited = true;
         mSong = 0;
         mSongContent = 0;
         RELEASE(mStream);
@@ -94,10 +94,10 @@ void SongPreview::Init() {
         mRestart = true;
         DataArray *cfg = SystemConfig("sound", "song_select");
         cfg->FindData("loop_forever", mLoopForever, true);
-        cfg->FindData("fade_time", mFadeTime, true);
-        cfg->FindData("attenuation", mAttenuation, true);
+        cfg->FindData("fade_time", mFadeMs, true);
+        cfg->FindData("attenuation", mAtten, true);
         cfg->FindData("preview_db", mPreviewDb, true);
-        mFadeTime *= 1000.0f;
+        mFadeMs *= 1000.0f;
         mFader = Hmx::Object::New<Fader>();
         mMusicFader = Hmx::Object::New<Fader>();
         mCrowdSingFader = Hmx::Object::New<Fader>();
@@ -106,8 +106,8 @@ void SongPreview::Init() {
 }
 
 void SongPreview::Terminate() {
-    if (unk4c) {
-        unk4c = 0;
+    if (mInited) {
+        mInited = 0;
         DetachFader(mMusicFader);
         DetachFader(mCrowdSingFader);
         mSong = 0;
@@ -125,11 +125,11 @@ void SongPreview::Terminate() {
 }
 
 void SongPreview::Start(Symbol song, TexMovie *texMovie) {
-    if (unk4c || !song.Null()) {
+    if (mInited || !song.Null()) {
         MILO_ASSERT(mFader && mMusicFader && mCrowdSingFader,0x6c);
         mTexMovie = texMovie;
         if (song == mSong) {
-            unk8d = true;
+            mHandleHeaders = true;
         } else {
             if (!song.Null()) {
                 if (!mSongMgr.HasSong(song, false)) {
@@ -160,7 +160,7 @@ void SongPreview::Start(Symbol song, TexMovie *texMovie) {
                 break;
             case kPlayingSong:
                 if (!song.Null()) {
-                    mFader->DoFade(kSilenceVal, mFadeTime);
+                    mFader->DoFade(kSilenceVal, mFadeMs);
                     mState = kFadingOutSong;
                 } else {
                     mFader->DoFade(kSilenceVal, 0);
@@ -240,7 +240,7 @@ void SongPreview::PrepareSong(Symbol song) {
         String str(mSongMgr.SongFilePath(song, "_prev.bik", 10));
         if (FileExists(str.c_str(), 0, nullptr)) {
             mTexMovie->SetFile(str.c_str());
-            mTexMovie->SetVolume(-mAttenuation);
+            mTexMovie->SetVolume(-mAtten);
             mTexMovie->AddFader(mFader);
             mTexMovie->AddFader(mMusicFader);
             return;
@@ -264,7 +264,7 @@ void SongPreview::PrepareSong(Symbol song) {
     DetachFader(mMusicFader);
     DetachFader(mCrowdSingFader);
     PrepareFaders(&songInfo);
-    mStream->SetVolume(-mAttenuation);
+    mStream->SetVolume(-mAtten);
     mStream->Faders().Add(mFader);
 }
 
@@ -282,10 +282,10 @@ void SongPreview::Poll() {
             } else {
                 PreparePreview();
             }
-        } else if (unk8d) {
+        } else if (mHandleHeaders) {
             mState = kFadingOutSong;
-            mFader->DoFade(kSilenceVal, mFadeTime);
-            unk8d = false;
+            mFader->DoFade(kSilenceVal, mFadeMs);
+            mHandleHeaders = false;
         }
         break;
     }
@@ -303,7 +303,7 @@ void SongPreview::Poll() {
                 return;
             }
             mFader->SetVolume(kSilenceVal);
-            mFader->DoFade(0, mFadeTime);
+            mFader->DoFade(0, mFadeMs);
             mStream->Play();
         }
         mState = kPlayingSong;
@@ -319,7 +319,7 @@ void SongPreview::Poll() {
             return;
         MILO_LOG("mSong in Poll is %s\n", mSong);
         mState = kFadingOutSong;
-        mFader->DoFade(kSilenceVal, mFadeTime);
+        mFader->DoFade(kSilenceVal, mFadeMs);
         break;
     }
     case kFadingOutSong: {

@@ -25,19 +25,20 @@ public:
     bool AllowPreviewDownload(String const &);
     void Poll();
 
-    float unk2c;
-    bool unk30;
-    String unk34;
-    StreamPlayer *mStreamPlayer; // 0x3c
-    NetCacheLoader *unk40;
-    NetCacheMgrFailType unk44;
-    bool unk48;
-    TexMovie *unk4c;
-    std::list<String> mDownloadQueue; // 0x50
-
 protected:
     void PlayCurrentPreview();
     void AddToDownloadQueue(String const &);
+
+private:
+    float mAtten; // 0x2c
+    bool mLoopForever; // 0x30
+    String mStrPathCur; // 0x34
+    StreamPlayer *mStreamPlayer; // 0x3c
+    NetCacheLoader *mNetCacheLoader; // 0x40
+    NetCacheMgrFailType mLastFailure; // 0x44
+    bool mHasFailed; // 0x48
+    TexMovie *mTexMovie; // 0x4c
+    std::list<String> mDownloadQueue; // 0x50
 };
 
 DECLARE_MESSAGE(PreviewDownloadCompleteMsg, "preview_download_complete_msg")

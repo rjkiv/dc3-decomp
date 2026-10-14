@@ -40,6 +40,8 @@ public:
 protected:
     bool mDirty; // 0xc
     int mPadNum; // 0x10
+
+private:
     ProfileSaveState mState; // 0x14
 };
 

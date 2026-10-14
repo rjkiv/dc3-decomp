@@ -48,18 +48,16 @@ private:
     const SongMgr &mSongMgr; // 0x30
     Stream *mStream; // 0x34
     ObjPtr<TexMovie> mTexMovie; // 0x38
-    bool unk4c; // 0x4c - initted?
+    bool mInited; // 0x4c - initted?
     Fader *mFader; // 0x50
     Fader *mMusicFader; // 0x54
     Fader *mCrowdSingFader; // 0x58
     int mNumChannels; // 0x5c
-    float mAttenuation; // 0x60
-    float mFadeTime; // 0x64
+    float mAtten; // 0x60
+    float mFadeMs; // 0x64
     float mPreviewDb; // 0x68
     bool mRestart; // 0x6c
     bool mLoopForever; // 0x6d
-    bool unk6e; // 0x6e
-    bool unk6f; // 0x6f
     State mState; // 0x70
     Symbol mSong; // 0x74
     Symbol mSongContent; // 0x78
@@ -68,7 +66,7 @@ private:
     float mStartPreviewMs; // 0x84
     float mEndPreviewMs; // 0x88
     bool mRegisteredWithCM; // 0x8c
-    bool unk8d; // 0x8d - preview currently playing?
+    bool mHandleHeaders; // 0x8d
     bool mSecurePreview; // 0x8e
 
     void DetachFader(Fader *);
