@@ -63,6 +63,46 @@ Hmx::Rect SkeletonExtentTracker::GetViewBox() const {
 void SkeletonExtentTracker::ApplyToMeshVerts(RndMesh *mesh, bool b2) const {
     Hmx::Rect box = GetViewBox();
     MILO_ASSERT(mesh->Verts().size() == 16, 0x43);
+    int vertIdx = 0;
+    int which = b2 ? -1 : 1;
     for (int i = 0; i < 4; i++) {
+        float fvar1;
+        switch (i) {
+        case 0:
+            fvar1 = 0;
+            break;
+        case 1:
+            fvar1 = 0.2f;
+            break;
+        case 2:
+            fvar1 = 0.8f;
+            break;
+        case 3:
+            fvar1 = 1;
+            break;
+        default:
+            break;
+        }
+        for (int j = 0; j < 4; j++, vertIdx++) {
+            float fvar2;
+            switch (j) {
+            case 0:
+                fvar2 = 0;
+                break;
+            case 1:
+                fvar2 = 0.2f;
+                break;
+            case 2:
+                fvar2 = 0.8f;
+                break;
+            case 3:
+                fvar2 = 1;
+                break;
+            default:
+                break;
+            }
+            mesh->Verts()[vertIdx].tex.x = box.w * fvar2 + box.x;
+            mesh->Verts()[vertIdx].tex.y = (box.h * fvar1 + box.y) * which;
+        }
     }
 }
