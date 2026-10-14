@@ -373,7 +373,7 @@ App::App(int argc, char **argv) {
             kLoadFront,
             false
         );
-        TheSynth->SetDir(dPtr2);
+        TheSynth->SetCommonBank(dPtr2);
         if (TheSplasher) {
             TheSplasher->Poll();
         }

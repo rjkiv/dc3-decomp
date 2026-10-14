@@ -2,13 +2,13 @@
 #include "os/Debug.h"
 #include "synth/Synth.h"
 
-MicClientMapper::MicClientMapper() : mMicManager(0), mNumPlayers(2) {
+MicClientMapper::MicClientMapper() : mMicManager(0), mNumberOfPlayers(2) {
     for (int i = 0; i < 4; i++) {
         MicMappingData data;
-        data.unk0 = i;
+        data.cClientID.SetID(i);
         mMappingData.push_back(data);
     }
-    for (int i = 0; i < mNumPlayers; i++) {
+    for (int i = 0; i < mNumberOfPlayers; i++) {
         mPlayers.push_back(PlayerMappingData());
     }
 }
@@ -99,14 +99,15 @@ void MicClientMapper::RefreshPlayerMapping() {
 
 void MicClientMapper::RefreshMics() {
     FOREACH (it, mMappingData) {
-        if (it->unk0 != -1 && it->mMicID != -1 && !TheSynth->IsMicConnected(it->mMicID)) {
+        if (it->cClientID.GetID() != -1 && it->mMicID != -1
+            && !TheSynth->IsMicConnected(it->mMicID)) {
             TheSynth->ReleaseMic(it->mMicID);
             it->mMicID = -1;
             it->bLocked = false;
         }
     }
     FOREACH (iter, mMappingData) {
-        if (iter->unk0 != -1 && iter->mMicID == -1) {
+        if (iter->cClientID.GetID() != -1 && iter->mMicID == -1) {
             iter->mMicID = TheSynth->GetNextAvailableMicID();
             MILO_ASSERT(iter->bLocked == false, 0x161);
             if (iter->mMicID != -1) {
@@ -124,19 +125,19 @@ void MicClientMapper::HandleMicsChanged() {
 }
 
 int MicClientMapper::GetMicIDForPlayerID(int playerID) const {
-    if (playerID >= mNumPlayers)
+    if (playerID >= mNumberOfPlayers)
         return -1;
     else
         return mPlayers[playerID].iActualMicID;
 }
 
 int MicClientMapper::GetMicIDForClientID(const MicClientID &clientID) const {
-    if (clientID.mPlayerID == -1) {
+    if (clientID.GetPlayerNum() == -1) {
         FOREACH (it, mMappingData) {
-            if (it->unk0 == clientID.unk0)
+            if (it->cClientID.GetID() == clientID.GetID())
                 return it->mMicID;
         }
         return -1;
     } else
-        return GetMicIDForPlayerID(clientID.mPlayerID);
+        return GetMicIDForPlayerID(clientID.GetPlayerNum());
 }

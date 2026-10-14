@@ -187,7 +187,7 @@ bool HamMaster::DetectStreamJump(float &f1, float &f2, float &f3) const {
 
 void HamMaster::AddMusicFader(Fader *fader) {
     if (GetAudio() && GetAudio()->GetSongStream()) {
-        GetAudio()->GetSongStream()->Faders()->Add(fader);
+        GetAudio()->GetSongStream()->Faders().Add(fader);
     }
 }
 
@@ -212,7 +212,7 @@ void HamMaster::LoaderPoll() {
             ObjDirPtr<ObjectDir> dir;
             DataArray *cfg = SystemConfig("sound", "banks", "common");
             dir.LoadFile(cfg->Str(1), false, true, kLoadFront, false);
-            TheSynth->SetDir(dir);
+            TheSynth->SetCommonBank(dir);
         }
         mAudio->Load(mSongInfo, mSongStream);
         mSongInfo = nullptr;

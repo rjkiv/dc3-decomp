@@ -7,12 +7,12 @@
 #pragma region Fader
 
 Fader::Fader()
-    : mLevel(0), mLevelEaseParam(2), mLevelTarget(0), mPan(0), mPanEaseParam(1),
-      mPanTarget(0), mTranspose(0), mTransposeEaseParam(1), mTransposeTarget(0),
-      unkd0(0) {
-    unkd4.clear();
-    mLevelEaseType = kEasePolyOut;
-    mLevelEaseFunc = GetEaseFunction(kEasePolyOut);
+    : mVolumeDb(0), mVolumeEaseParam(2), mTargetVolumeDb(0), mPan(0), mPanEaseParam(1),
+      mTargetPan(0), mTranspose(0), mTransposeEaseParam(1), mTargetTranspose(0),
+      mDurationMs(0) {
+    mDuckedVolumes.clear();
+    mVolumeEaseType = kEasePolyOut;
+    mVolumeEaseFunc = GetEaseFunction(kEasePolyOut);
     mPanEaseType = kEaseLinear;
     mPanEaseFunc = GetEaseFunction(kEaseLinear);
     mTransposeEaseType = kEaseLinear;
@@ -34,20 +34,20 @@ BEGIN_HANDLERS(Fader)
 END_HANDLERS
 
 BEGIN_PROPSYNCS(Fader)
-    SYNC_PROP_SET(level, mLevel, SetVolume(_val.Float()))
+    SYNC_PROP_SET(level, mVolumeDb, SetVolume(_val.Float()))
     SYNC_PROP_SET(
-        level_ease_type, mLevelEaseType, mLevelEaseType = (EaseType)_val.Int();
-        mLevelEaseFunc = GetEaseFunction(mLevelEaseType)
+        level_ease_type, mVolumeEaseType, mVolumeEaseType = (EaseType)_val.Int();
+        mVolumeEaseFunc = GetEaseFunction(mVolumeEaseType)
     )
-    SYNC_PROP_SET(level_ease_param, mLevelEaseParam, mLevelEaseParam = _val.Float())
-    SYNC_PROP_SET(level_target, mLevelTarget, mLevelTarget = _val.Float())
+    SYNC_PROP_SET(level_ease_param, mVolumeEaseParam, mVolumeEaseParam = _val.Float())
+    SYNC_PROP_SET(level_target, mTargetVolumeDb, mTargetVolumeDb = _val.Float())
     SYNC_PROP_SET(pan, mPan, SetPan(_val.Float()))
     SYNC_PROP_SET(
         pan_ease_type, mPanEaseType, mPanEaseType = (EaseType)_val.Int();
         mPanEaseFunc = GetEaseFunction(mPanEaseType)
     )
     SYNC_PROP_SET(pan_ease_param, mPanEaseParam, mPanEaseParam = _val.Float())
-    SYNC_PROP_SET(pan_target, mPanTarget, mPanTarget = _val.Float())
+    SYNC_PROP_SET(pan_target, mTargetPan, mTargetPan = _val.Float())
     SYNC_PROP_SET(transpose, mTranspose, SetTranspose(_val.Float()))
     SYNC_PROP_SET(
         transpose_ease_type,
@@ -58,7 +58,7 @@ BEGIN_PROPSYNCS(Fader)
     SYNC_PROP_SET(
         transpose_ease_param, mTransposeEaseParam, mTransposeEaseParam = _val.Float()
     )
-    SYNC_PROP_SET(transpose_target, mTransposeTarget, mTransposeTarget = _val.Float())
+    SYNC_PROP_SET(transpose_target, mTargetTranspose, mTargetTranspose = _val.Float())
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
@@ -66,18 +66,18 @@ BEGIN_SAVES(Fader)
     MILO_ASSERT_FMT(mLocalName.Null(), "can't save local fader");
     SAVE_REVS(1, 0)
     SAVE_SUPERCLASS(Hmx::Object);
-    bs << mLevel;
-    bs << mLevelEaseType;
-    bs << mLevelEaseParam;
-    bs << mLevelTarget;
+    bs << mVolumeDb;
+    bs << mVolumeEaseType;
+    bs << mVolumeEaseParam;
+    bs << mTargetVolumeDb;
     bs << mPan;
     bs << mPanEaseType;
     bs << mPanEaseParam;
-    bs << mPanTarget;
+    bs << mTargetPan;
     bs << mTranspose;
     bs << mTransposeEaseType;
     bs << mTransposeEaseParam;
-    bs << mTransposeTarget;
+    bs << mTargetTranspose;
 END_SAVES
 
 BEGIN_COPYS(Fader)
@@ -85,21 +85,21 @@ BEGIN_COPYS(Fader)
     CREATE_COPY(Fader)
     BEGIN_COPYING_MEMBERS
         if (ty != kCopyFromMax) {
-            SetVolume(c->mLevel);
-            COPY_MEMBER(mLevelEaseType)
-            mLevelEaseFunc = GetEaseFunction(mLevelEaseType);
-            COPY_MEMBER(mLevelEaseParam)
-            COPY_MEMBER(mLevelTarget)
+            SetVolume(c->mVolumeDb);
+            COPY_MEMBER(mVolumeEaseType)
+            mVolumeEaseFunc = GetEaseFunction(mVolumeEaseType);
+            COPY_MEMBER(mVolumeEaseParam)
+            COPY_MEMBER(mTargetVolumeDb)
             SetPan(c->mPan);
             COPY_MEMBER(mPanEaseType)
             mPanEaseFunc = GetEaseFunction(mPanEaseType);
             COPY_MEMBER(mPanEaseParam)
-            COPY_MEMBER(mPanTarget)
+            COPY_MEMBER(mTargetPan)
             SetTranspose(c->mTranspose);
             COPY_MEMBER(mTransposeEaseType)
             mTransposeEaseFunc = GetEaseFunction(mTransposeEaseType);
             COPY_MEMBER(mTransposeEaseParam)
-            COPY_MEMBER(mTransposeTarget)
+            COPY_MEMBER(mTargetTranspose)
         }
     END_COPYING_MEMBERS
 END_COPYS
@@ -114,49 +114,49 @@ BEGIN_LOADS(Fader)
     d >> volume;
     SetVolume(volume);
     if (d.rev >= 1) {
-        d >> (int &)mLevelEaseType;
-        mLevelEaseFunc = GetEaseFunction(mLevelEaseType);
-        d >> mLevelEaseParam;
-        d >> mLevelTarget;
+        d >> (int &)mVolumeEaseType;
+        mVolumeEaseFunc = GetEaseFunction(mVolumeEaseType);
+        d >> mVolumeEaseParam;
+        d >> mTargetVolumeDb;
         d >> mPan;
         d >> (int &)mPanEaseType;
         mPanEaseFunc = GetEaseFunction(mPanEaseType);
         d >> mPanEaseParam;
-        d >> mPanTarget;
+        d >> mTargetPan;
         d >> mTranspose;
         d >> (int &)mTransposeEaseType;
         mTransposeEaseFunc = GetEaseFunction(mTransposeEaseType);
         d >> mTransposeEaseParam;
-        d >> mTransposeTarget;
+        d >> mTargetTranspose;
     }
 END_LOADS
 
 void Fader::SynthPoll() {
-    float div = mTimer.SplitMs() / unkd0;
+    float div = mTimer.SplitMs() / mDurationMs;
     if (div >= 1) {
         CancelFade();
         div = 1;
     }
 
     // all of these are actually Interps, but using Interp causes regswaps, so...lol
-    float volume = (mLevelTarget - unk48)
-            * Clamp(0.0f, 1.0f, mLevelEaseFunc(div, mLevelEaseParam, 0))
-        + unk48;
+    float volume = (mTargetVolumeDb - mStartVolumeDb)
+            * Clamp(0.0f, 1.0f, mVolumeEaseFunc(div, mVolumeEaseParam, 0))
+        + mStartVolumeDb;
     float pan =
-        (mPanTarget - unk60) * Clamp(0.0f, 1.0f, mPanEaseFunc(div, mPanEaseParam, 0))
-        + unk60;
-    float transpose = (mTransposeTarget - unk78)
+        (mTargetPan - mStartPan) * Clamp(0.0f, 1.0f, mPanEaseFunc(div, mPanEaseParam, 0))
+        + mStartPan;
+    float transpose = (mTargetTranspose - mStartTranspose)
             * Clamp(0.0f, 1.0f, mTransposeEaseFunc(div, mTransposeEaseParam, 0))
-        + unk78;
+        + mStartTranspose;
     UpdateValue(volume, pan, transpose);
 }
 
 void Fader::DoFade(float durationMs) {
     MILO_ASSERT(durationMs >= 0.0f, 0x5B);
-    unkd0 = durationMs;
-    unk48 = mLevel;
-    unk60 = mPan;
-    unk78 = mTranspose;
+    mDurationMs = durationMs;
+    mStartVolumeDb = mVolumeDb;
+    mStartPan = mPan;
+    mStartTranspose = mTranspose;
     CancelFade();
     StartPolling();
     mTimer.Restart();
@@ -165,7 +165,7 @@ void Fader::DoFade(float durationMs) {
 
 float Fader::GetDuckedVolume() const {
     float vol = 0;
-    FOREACH (it, unkd4) {
+    FOREACH (it, mDuckedVolumes) {
         if (*it < vol) {
             vol = *it;
         }
@@ -174,12 +174,12 @@ float Fader::GetDuckedVolume() const {
 }
 
 void Fader::DoFade(float targetVol, float durationMs) {
-    mLevelTarget = targetVol;
+    mTargetVolumeDb = targetVol;
     DoFade(durationMs);
 }
 
 void Fader::UpdateValue(float vol, float pan, float transpose) {
-    mLevel = vol;
+    mVolumeDb = vol;
     mPan = pan;
     mTranspose = transpose;
     FOREACH (it, mClients) {
@@ -188,10 +188,10 @@ void Fader::UpdateValue(float vol, float pan, float transpose) {
 }
 
 void Fader::RemoveDuckedVolume(float f1) {
-    std::list<float>::iterator it = unkd4.begin();
-    for (; it != unkd4.end(); ++it) {
+    std::list<float>::iterator it = mDuckedVolumes.begin();
+    for (; it != mDuckedVolumes.end(); ++it) {
         if (*it == f1) {
-            unkd4.erase(it);
+            mDuckedVolumes.erase(it);
             FOREACH (it, mClients) {
                 (*it)->SetDirty();
             }
@@ -207,16 +207,16 @@ void Fader::SetVolume(float vol) {
 
 void Fader::SetPan(float pan) {
     CancelFade();
-    UpdateValue(mLevel, pan, mTranspose);
+    UpdateValue(mVolumeDb, pan, mTranspose);
 }
 
 void Fader::SetTranspose(float transpose) {
     CancelFade();
-    UpdateValue(mLevel, mPan, transpose);
+    UpdateValue(mVolumeDb, mPan, transpose);
 }
 
 void Fader::AddDuckedVolume(float vol) {
-    unkd4.push_back(vol);
+    mDuckedVolumes.push_back(vol);
     FOREACH (it, mClients) {
         (*it)->SetDirty();
     }
@@ -232,7 +232,7 @@ FaderGroup::~FaderGroup() {
         Fader *frontObj = mFaders.front();
         mFaders.pop_front();
         frontObj->RemoveClient(this);
-        if (!frontObj->LocalName().Null()) {
+        if (!frontObj->GetLocalName().Null()) {
             delete frontObj;
         }
     }
@@ -261,7 +261,7 @@ float FaderGroup::GetTranspose() const {
 Fader *FaderGroup::FindLocal(Symbol name, bool fail) {
     if (!name.Null()) {
         FOREACH (it, mFaders) {
-            if ((*it)->LocalName() == name) {
+            if ((*it)->GetLocalName() == name) {
                 return *it;
             }
         }
@@ -277,12 +277,12 @@ float FaderGroup::GetVolume() const {
     FOREACH (it, mFaders) {
         Fader *fader = *it;
         float duckedVol = 0;
-        FOREACH (cit, fader->unkd4) {
+        FOREACH (cit, fader->mDuckedVolumes) {
             if (*cit < duckedVol) {
                 duckedVol = *cit;
             }
         }
-        vol += fader->mLevel + duckedVol;
+        vol += fader->mVolumeDb + duckedVol;
     }
     return vol;
 }
@@ -294,12 +294,12 @@ void FaderGroup::GetVal(float &vol, float &pan, float &transpose) const {
     FOREACH (it, mFaders) {
         Fader *fader = *it;
         float val = 0;
-        FOREACH (cit, fader->unkd4) {
+        FOREACH (cit, fader->mDuckedVolumes) {
             if (*cit < val) {
                 val = *cit;
             }
         }
-        vol += fader->mLevel + val;
+        vol += fader->mVolumeDb + val;
         pan += (*it)->mPan;
         transpose += (*it)->mTranspose;
     }
@@ -308,7 +308,7 @@ void FaderGroup::GetVal(float &vol, float &pan, float &transpose) const {
 bool PropSync(FaderGroup &grp, DataNode &node, DataArray *prop, int i, PropOp op) {
     ObjPtrList<Fader> pList(grp.Faders());
     for (ObjPtrList<Fader>::iterator it = pList.begin(); it != pList.end(); it) {
-        if ((*it)->Dir() && (*it)->LocalName().Null())
+        if ((*it)->Dir() && (*it)->GetLocalName().Null())
             ++it;
         else
             it = pList.erase(it);
@@ -317,7 +317,7 @@ bool PropSync(FaderGroup &grp, DataNode &node, DataArray *prop, int i, PropOp op
     for (ObjPtrList<Fader>::iterator it = grp.Faders().begin(); it != grp.Faders().end();
          it) {
         Fader *f = *it++;
-        if (f->Dir() && f->LocalName().Null())
+        if (f->Dir() && f->GetLocalName().Null())
             grp.Remove(f);
     }
     for (ObjPtrList<Fader>::iterator it = pList.begin(); it != pList.end(); ++it) {
@@ -329,7 +329,7 @@ bool PropSync(FaderGroup &grp, DataNode &node, DataArray *prop, int i, PropOp op
 Fader *FaderGroup::AddLocal(Symbol name) {
     MILO_ASSERT(!name.Null(), 0x14F);
     FOREACH (it, mFaders) {
-        if ((*it)->LocalName() == name) {
+        if ((*it)->GetLocalName() == name) {
             return *it;
         }
     }
@@ -368,7 +368,7 @@ void FaderGroup::Save(BinStream &bs) {
     bs << 0;
     ObjPtrList<Fader> faders(mFaders);
     for (auto it = faders.begin(); it != faders.end(); it) {
-        if ((*it)->Dir() && (*it)->LocalName().Null()) {
+        if ((*it)->Dir() && (*it)->GetLocalName().Null()) {
             ++it;
         } else {
             it = faders.erase(it);
@@ -387,7 +387,7 @@ void FaderGroup::Load(BinStream &bs) {
     bs >> pList;
     for (ObjPtrList<Fader>::iterator it = mFaders.begin(); it != mFaders.end(); it) {
         Fader *f = *it++;
-        if (f->Dir() && f->LocalName().Null())
+        if (f->Dir() && f->GetLocalName().Null())
             Remove(f);
     }
     for (ObjPtrList<Fader>::iterator it = pList.begin(); it != pList.end(); ++it) {

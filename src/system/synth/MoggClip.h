@@ -13,8 +13,8 @@
 class MoggClip : public Hmx::Object, public PlayableSample {
 public:
     struct PanInfo {
-        int channel;
-        float panning;
+        int mChannel; // 0x0
+        float mPan; // 0x4
     };
     // Hmx::Object
     virtual ~MoggClip();
@@ -61,10 +61,10 @@ public:
     void AddFader(Fader *);
     void SetupPanInfo(float, float, bool);
     void SetMoggVolume(float);
-    const FilePath Path() const { return mMoggFile; }
+    const FilePath Path() const { return mFile; }
     StandardStream *GetStream() const { return mStream; }
     bool HasStream() const { return mStream; }
-    int NumChannels() const { return mNumChannels; }
+    int GetNumChannels() const { return mNumChannels; }
 
 private:
     void ApplyLoop(bool, int, int);
@@ -76,30 +76,29 @@ private:
     void LoadNumChannels();
     void LoadFile(BinStream *);
 
-protected:
     MoggClip();
 
     /** "The mogg audio file to be played." */
-    FilePath mMoggFile; // 0x38
+    FilePath mFile; // 0x38
     /** "Volume in dB (0 is full volume, -96 is silence)." */
     float mVolume; // 0x40
     float mControllerVolume; // 0x44
     StandardStream *mStream; // 0x48
-    float unk4c;
+    float mPlaybackVolumeOffset; // 0x4c
     void *mData; // 0x50
-    int mDataSize; // 0x54
+    int mSize; // 0x54
     int mNumChannels; // 0x58
     FileLoader *mLoader; // 0x5c
     std::vector<Fader *> mFaders; // 0x60
-    std::vector<PanInfo> mPanInfos; // 0x6c
-    ObjPtr<FxSend> mFxSend; // 0x78
-    Fader *mFader; // 0x8c
-    bool unk90;
-    bool mUnloadWhenFinished; // 0x91
+    std::vector<PanInfo> mPanInfo; // 0x6c
+    ObjPtr<FxSend> mSend; // 0x78
+    Fader *mFadeOutFader; // 0x8c
+    bool mFadingOut; // 0x90
+    bool mUnloadWhenFinishedPlaying; // 0x91
     bool mPlaying; // 0x92
     bool mLoop; // 0x93
-    int mLoopStart; // 0x94
-    int mLoopEnd; // 0x98
+    int mLoopStartSamp; // 0x94
+    int mLoopEndSamp; // 0x98
     Hmx::Object *mEventReceiver; // 0x9c
     /** "Number of seconds to buffer (uses default value if set to 0.0)" */
     float mBufSecs; // 0xa0

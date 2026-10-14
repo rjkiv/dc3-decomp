@@ -22,9 +22,10 @@
 MetaMusic *TheMetaMusic;
 
 MetaMusic::MetaMusic(HxMaster *hx, const char *filename)
-    : unk2c(0), unk2d(0), unk30(0), mFadeTime(1), mMuteFadeTime(1), mVolume(0),
-      mExtraFaders(this), unk60(filename), mStarted(0), unk8c(0), unk98(1), unka8(0),
-      unka9(0), mSongInfo(0), unkb0(hx) {
+    : mHasStream(0), mLoop(0), mMusicElapsedTime(0), mFadeTime(1), mMuteFadeTime(1),
+      mVolume(0), mExtraFaders(this), mShellFxPath(filename), mStarted(0),
+      mCurrentFxConfig(0), mWideStereo(1), mMuted(0), mHasPlayedBefore(0), mSongInfo(0),
+      mMaster(hx) {
     mFader = Hmx::Object::New<Fader>();
     mFaderMute = Hmx::Object::New<Fader>();
 }
@@ -47,50 +48,50 @@ BEGIN_HANDLERS(MetaMusic)
 END_HANDLERS
 
 void MetaMusic::SetQuietVolume(float vol) {
-    if (!unka8) {
+    if (!mMuted) {
         mFaderMute->DoFade(vol, 1000.0f);
     }
 }
 
 void MetaMusic::Load(float f1, bool b1, bool b2) {
-    unk2d = b2;
-    unk98 = b1;
+    mLoop = b2;
+    mWideStereo = b1;
     DataArray *cfg = SystemConfig("synth", "metamusic");
     cfg->FindData("fade_time", mFadeTime);
     cfg->FindData("mute_fade_time", mMuteFadeTime);
     cfg->FindData("volume", mVolume);
     mVolume += f1;
-    mStartTimes.clear();
+    mStartPointsMs.clear();
     DataArray *startPtsArr = cfg->FindArray("start_points_ms", false);
     if (startPtsArr) {
         for (int i = 1; i < startPtsArr->Size(); i++) {
-            mStartTimes.push_back(startPtsArr->Int(i));
+            mStartPointsMs.push_back(startPtsArr->Int(i));
         }
     }
     static Symbol song("song");
     DataArray *songArr = cfg->FindArray(song, false);
     mSongInfo = new DataArraySongInfo(songArr, nullptr, "shellmusic");
-    if (!unk60.empty()) {
-        mShellFx.LoadFile(unk60, true, true, kLoadFront, false);
+    if (!mShellFxPath.empty()) {
+        mShellFx.LoadFile(mShellFxPath, true, true, kLoadFront, false);
     }
 }
 
 bool MetaMusic::IsStarted() const { return mStarted; }
 
 void MetaMusic::Mute() {
-    unka8 = true;
+    mMuted = true;
     mFaderMute->DoFade(kDbSilence, mMuteFadeTime * 1000.0f);
-    unk30 = 0;
+    mMusicElapsedTime = 0;
 }
 
 void MetaMusic::UnMute() {
-    unka8 = false;
+    mMuted = false;
     mFaderMute->DoFade(0, mMuteFadeTime * 1000.0f);
-    unk30 = 0;
+    mMusicElapsedTime = 0;
 }
 
 bool MetaMusic::Loaded() {
-    if (unkb0->IsLoaded() && !unk60.empty()) {
+    if (mMaster->IsLoaded() && !mShellFxPath.empty()) {
         if (mShellFx.IsLoaded()) {
             if (!mShellFx) {
                 mShellFx.PostLoad(nullptr);
@@ -110,12 +111,12 @@ void MetaMusic::Start() {
             mFader->DoFade(mVolume, mFadeTime * 1000.0f);
         } else {
             UnloadStreamFx();
-            unk2c = true;
+            mHasStream = true;
             stream = GetStream();
-            stream->Faders()->Add(mFaderMute);
-            stream->Faders()->Add(mFader);
+            stream->Faders().Add(mFaderMute);
+            stream->Faders().Add(mFader);
             FOREACH (it, mExtraFaders) {
-                stream->Faders()->Add(*it);
+                stream->Faders().Add(*it);
             }
             if (mShellFx) {
                 LoadStreamFx();
@@ -125,16 +126,16 @@ void MetaMusic::Start() {
                     );
                 }
             }
-            if (unka9) {
+            if (mHasPlayedBefore) {
                 stream->Stop();
                 stream->Resync(ChooseStartMs());
             }
-            unk30 = 0;
-            if (unk2d) {
+            mMusicElapsedTime = 0;
+            if (mLoop) {
                 stream->SetJump(Stream::kStreamEndMs, 0, nullptr);
             }
             mStarted = true;
-            unka9 = true;
+            mHasPlayedBefore = true;
         }
     }
 }
@@ -144,7 +145,7 @@ void MetaMusic::Stop() {
     if (stream) {
         if (!stream->IsPlaying()) {
             UnloadStreamFx();
-            unk2c = false;
+            mHasStream = false;
         } else {
             mFader->DoFade(kDbSilence, mFadeTime * 1000.0f);
         }
@@ -187,24 +188,24 @@ void MetaMusic::Poll() {
         }
         if (stream->IsPlaying()) {
             float time = stream->GetTime();
-            unkb0->Poll(time);
+            mMaster->Poll(time);
             if (!mFader->IsFading() && mFader->DuckedValue() == kDbSilence) {
                 stream->Stop();
                 UnloadStreamFx();
-                unk2c = false;
+                mHasStream = false;
             } else {
                 UpdateMix();
             }
-            if (!unka8) {
-                unk30 += TheTaskMgr.DeltaUISeconds();
+            if (!mMuted) {
+                mMusicElapsedTime += TheTaskMgr.DeltaUISeconds();
             }
         }
     }
 }
 
 Stream *MetaMusic::GetStream() const {
-    if (unk2c) {
-        return unkb0->GetHxAudio()->GetSongStream();
+    if (mHasStream) {
+        return mMaster->GetHxAudio()->GetSongStream();
     } else {
         return nullptr;
     }
@@ -237,10 +238,10 @@ void MetaMusic::UnloadStreamFx() {
 int MetaMusic::ChooseStartMs() const {
     int startMs = 0;
 
-    if (mStartTimes.size() != 0) {
+    if (mStartPointsMs.size() != 0) {
         // pick a random element
-        int randomInt = RandomInt(0, mStartTimes.size());
-        startMs = mStartTimes[randomInt];
+        int randomInt = RandomInt(0, mStartPointsMs.size());
+        startMs = mStartPointsMs[randomInt];
     }
 
     return startMs;
@@ -250,7 +251,7 @@ void MetaMusic::UpdateMix() {
     Stream *stream = GetStream();
     if (!mShellFx) {
         if (stream && stream->GetNumChannels() == 2) {
-            if (unk98) {
+            if (mWideStereo) {
                 stream->SetPan(0, -2);
                 stream->SetPan(1, 2);
             } else {
@@ -261,20 +262,20 @@ void MetaMusic::UpdateMix() {
     } else {
         static Symbol vols("vols");
         static Symbol pans("pans");
-        if (unk8c) {
-            DataArray *vols8c = unk8c->FindArray(vols);
-            DataArray *pans8c = unk8c->FindArray(pans);
-            float f16 = ((float)unk94 / 90.0f);
-            float f15 = 1.0f - ((float)unk94 / 90.0f);
+        if (mCurrentFxConfig) {
+            DataArray *vols8c = mCurrentFxConfig->FindArray(vols);
+            DataArray *pans8c = mCurrentFxConfig->FindArray(pans);
+            float f16 = ((float)mSceneCrossfadeCounter / 90.0f);
+            float f15 = 1.0f - ((float)mSceneCrossfadeCounter / 90.0f);
             if (NumChans() == 2) {
-                if (unk90 && unk94 <= 90) {
-                    DataArray *vols90 = unk90->FindArray(vols);
-                    DataArray *pans90 = unk90->FindArray(pans);
+                if (mPrevFxConfig && mSceneCrossfadeCounter <= 90) {
+                    DataArray *vols90 = mPrevFxConfig->FindArray(vols);
+                    DataArray *pans90 = mPrevFxConfig->FindArray(pans);
                     for (int i = 0; i < 2; i++) {
                         char buf[16];
                         sprintf(buf, "channel_%d", i + 1);
-                        DataArray *buf8c = unk8c->FindArray(buf, false);
-                        DataArray *buf90 = unk90->FindArray(buf, false);
+                        DataArray *buf8c = mCurrentFxConfig->FindArray(buf, false);
+                        DataArray *buf90 = mPrevFxConfig->FindArray(buf, false);
                         if (buf8c && buf90) {
                             for (ObjDirItr<FxSend> it(mStreamChanFx[i], true);
                                  it != nullptr;
@@ -304,11 +305,11 @@ void MetaMusic::UpdateMix() {
                         float panFloat = pans90->Float(i + 1);
                         stream->SetPan(i, f15 * panFloat + f16 * pans8c->Float(i + 1));
                     }
-                } else if (unk94 == 0) {
+                } else if (mSceneCrossfadeCounter == 0) {
                     for (int i = 0; i < 2; i++) {
                         char buf[16];
                         sprintf(buf, "channel_%d", i + 1);
-                        DataArray *buf8c = unk8c->FindArray(buf, false);
+                        DataArray *buf8c = mCurrentFxConfig->FindArray(buf, false);
                         if (buf8c) {
                             for (ObjDirItr<FxSend> it(mStreamChanFx[i], true);
                                  it != nullptr;
@@ -327,7 +328,7 @@ void MetaMusic::UpdateMix() {
                         stream->SetPan(i, pans8c->Float(i + 1));
                     }
                 }
-                unk94++;
+                mSceneCrossfadeCounter++;
             }
         }
     }

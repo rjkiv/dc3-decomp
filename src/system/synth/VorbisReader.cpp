@@ -63,8 +63,9 @@ VorbisReader::VorbisReader(File *file, bool expectMap, StandardStream *stream, b
       mEnableReads(true), mDecryptBytes(0), mNeedInitDecoder(0), mDone(0),
       mStream(stream), mOggSync(0), mOggStream(0), mVorbisInfo(0), mVorbisComment(0),
       mVorbisDsp(0), mVorbisBlock(0), mDecodePending(0), mSeekTarget(-1),
-      mSamplesToSkip(0), mHdrSize(0), mHdrBuf(0), mCtrState(0), unkec(b2), unked(0),
-      mEof(0), mFail(0), mBufStartSample(-1), mConsumedSamples(0) {
+      mSamplesToSkip(0), mHdrSize(0), mHdrBuf(0), mCtrState(0), mRealtimeThrottle(b2),
+      mAllowDecode(0), mEof(0), mFail(0), mThreadBufferStart(-1),
+      mThreadBufferConsumed(0) {
     MILO_ASSERT(mFile, 0xEC);
     if (expectMap) {
         mHdrBuf = new char[60000];
@@ -90,7 +91,7 @@ VorbisReader::VorbisReader(File *file, bool expectMap, StandardStream *stream, b
 
 VorbisReader::~VorbisReader() {
     mPendingRemoval = true;
-    unked = false;
+    mAllowDecode = false;
     while (mPendingRemoval) {
         SetEvent(gEvent);
     }
@@ -154,9 +155,9 @@ void VorbisReader::Poll(float until) {
         } else {
             mNumChannels = mVorbisInfo->channels;
             mSampleRate = mVorbisInfo->rate;
-            mChannelBufs.resize(mNumChannels);
+            mThreadBuffers.resize(mNumChannels);
             for (int i = 0; i < mNumChannels; i++) {
-                mChannelBufs[i].reserve(0x1000);
+                mThreadBuffers[i].reserve(0x1000);
             }
             Init();
             mNeedInitDecoder = true;
@@ -168,25 +169,25 @@ void VorbisReader::Poll(float until) {
         std::vector<short *> shorts;
         shorts.resize(mNumChannels);
         int i12 = 0;
-        while (mConsumedSamples < mChannelBufs[0].size() && i12 < 0x800) {
+        while (mThreadBufferConsumed < mThreadBuffers[0].size() && i12 < 0x800) {
             for (int c = 0; c < mNumChannels; c++) {
-                shorts[c] = &mChannelBufs[c][mConsumedSamples];
+                shorts[c] = &mThreadBuffers[c][mThreadBufferConsumed];
             }
             int i8;
-            if (mBufStartSample == -1) {
+            if (mThreadBufferStart == -1) {
                 i8 = -1;
             } else {
-                i8 = mBufStartSample + mConsumedSamples;
+                i8 = mThreadBufferStart + mThreadBufferConsumed;
             }
             int ret = ConsumeData(
-                (void **)&shorts[0], mChannelBufs[0].size() - mConsumedSamples, i8
+                (void **)&shorts[0], mThreadBuffers[0].size() - mThreadBufferConsumed, i8
             );
             i12 += ret;
-            mConsumedSamples += ret;
+            mThreadBufferConsumed += ret;
             if (ret == 0)
                 break;
         }
-        unked = true;
+        mAllowDecode = true;
     }
 }
 
@@ -197,12 +198,12 @@ void VorbisReader::Seek(int sample) {
     MILO_ASSERT(sample >= 0, 0x1BF);
     mSeekTarget = sample;
     mDone = false;
-    unked = false;
+    mAllowDecode = false;
 }
 
 void VorbisReader::Init() {
     MILO_ASSERT(mStream, 0x41F);
-    mStream->InitInfo(mNumChannels, mSampleRate, false, mOggMap.GetSongLengthSamples());
+    mStream->InitInfo(mNumChannels, mSampleRate, false, mMap.GetSongLengthSamples());
 }
 
 int VorbisReader::ConsumeData(void **pcm, int samples, int startSamp) {
@@ -231,7 +232,7 @@ void VorbisReader::setupCypher(int moggVersion) {
     buf118Arr->Evaluate(0);
     buf118Arr->Release();
     KeyChain::getKey(mKeyIndex, gKey, masterKey);
-    TheSynth->Grinder().GrindArray(mMagicA, mMagicB, gKey, 0x10, moggVersion);
+    TheSynth->GetGrinder().GrindArray(mMagicA, mMagicB, gKey, 0x10, moggVersion);
     for (int i = 0; i < 16; i++) {
         gKey[i] ^= mKeyMask[i];
     }
@@ -296,7 +297,7 @@ bool VorbisReader::DoSeek() {
     DoFileRead();
     if (!mFail && !mReadBuffer) {
         int i1, i2;
-        mOggMap.GetSeekPos(mSeekTarget, i1, i2);
+        mMap.GetSeekPos(mSeekTarget, i1, i2);
         DoRawSeek(i1);
         mSamplesToSkip = mSeekTarget - i2;
         MILO_ASSERT(mSamplesToSkip >= 0, 0x3C2);
@@ -375,7 +376,7 @@ bool VorbisReader::TryDecode() {
             }
         }
     } else if (mEof && !mReadBuffer && QueuedOutputSamples() == 0 && !mDone
-               && mConsumedSamples >= mChannelBufs[0].size()) {
+               && mThreadBufferConsumed >= mThreadBuffers[0].size()) {
         EndData();
         mDone = true;
     }
@@ -396,10 +397,10 @@ void VorbisReader::DoRawSeek(int byte) {
         mEnableReads = true;
     }
     for (int i = 0; i < mNumChannels; i++) {
-        mChannelBufs[i].clear();
+        mThreadBuffers[i].clear();
     }
-    mConsumedSamples = 0;
-    mBufStartSample = -1;
+    mThreadBufferConsumed = 0;
+    mThreadBufferStart = -1;
     int streamErr = ogg_stream_reset(mOggStream);
     if (streamErr < 0)
         VORBIS_FAIL("StreamReset", streamErr);
@@ -440,7 +441,7 @@ bool VorbisReader::CheckHmxHeader() {
             MILO_ASSERT(mVersion <= 16, 0x23A);
             MILO_ASSERT(mHdrSize <= kMaxHeader, 0x23B);
             MILO_ASSERT(mHdrSize >= 0, 0x23C);
-            mOggMap.Read(bs);
+            mMap.Read(bs);
             mKeyIndex = 0;
             memset(mKeyMask, 0, sizeof(mKeyMask));
             mMagicA = mMagicB = 0;
@@ -457,7 +458,7 @@ bool VorbisReader::CheckHmxHeader() {
                 bs.Read(stuff, sizeof(stuff));
                 bs >> idx;
                 mKeyIndex = (int)idx % 6 + 6;
-                TheSynth->Grinder().HvDecrypt(stuff, mKeyMask, mVersion);
+                TheSynth->GetGrinder().HvDecrypt(stuff, mKeyMask, mVersion);
                 gCipher = register_cipher(&rijndael_desc);
                 MILO_ASSERT(gCipher >= 0, 0x268);
                 mCtrState = new symmetric_CTR;
@@ -568,16 +569,16 @@ bool VorbisReader::DecodeThreadPoll() {
         InitDecoder();
         mNeedInitDecoder = false;
     }
-    if (!unked) {
+    if (!mAllowDecode) {
         return false;
     }
     for (int i = 0; i < mNumChannels; i++) {
-        mChannelBufs[i].clear(); // ???
+        mThreadBuffers[i].clear(); // ???
     }
-    if (mBufStartSample != -1) {
-        mBufStartSample += mConsumedSamples;
+    if (mThreadBufferStart != -1) {
+        mThreadBufferStart += mThreadBufferConsumed;
     }
-    mConsumedSamples = 0;
+    mThreadBufferConsumed = 0;
     bool ret = TryDecode();
     if (QueuedOutputSamples() > 0) {
         float **pcmPtr;

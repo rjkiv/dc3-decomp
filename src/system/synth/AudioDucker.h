@@ -14,7 +14,6 @@ public:
     void Save(BinStream &) const;
     void Load(BinStream &);
 
-private:
     /** "Fader that will be ducked." */
     ObjPtr<Fader> mFader; // 0x0
     /** "Ducking volume level in dB". Ranges from -96 to 6. */
@@ -45,7 +44,6 @@ public:
     void Add(Fader *, float);
     void Remove(Fader *);
 
-protected:
     ObjVector<AudioDucker> mDuckers; // 0x0
 };
 
@@ -67,5 +65,5 @@ public:
 protected:
     AudioDuckerTrigger();
 
-    AudioDuckerGroup mDuckerGroup; // 0x2c
+    AudioDuckerGroup mDuckerGrp; // 0x2c
 };

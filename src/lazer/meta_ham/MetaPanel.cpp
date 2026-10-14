@@ -197,7 +197,7 @@ void MetaPanel::Load() {
         TheMetaMusic = new MetaMusic(sHamMaster, "sfx/shell_fx.milo");
         TheMetaMusic->Load(0.0f, true, true);
         sHamMaster->Load(
-            TheMetaMusic->SongInfo(), true, 0, false, (HamSongDataValidate)0, nullptr
+            TheMetaMusic->GetSongInfo(), true, 0, false, (HamSongDataValidate)0, nullptr
         );
     }
     mSongPreview.Init();
@@ -401,7 +401,7 @@ BEGIN_HANDLERS(MetaPanel)
     HANDLE_ACTION(
         load_meta_music,
         sHamMaster->Load(
-            TheMetaMusic->SongInfo(), true, 0, false, (HamSongDataValidate)0, 0
+            TheMetaMusic->GetSongInfo(), true, 0, false, (HamSongDataValidate)0, 0
         )
     )
     HANDLE_ACTION(init_songpreview, mSongPreview.Init())

@@ -24,11 +24,11 @@ void SynthSample360::Init() {
 }
 
 int SynthSample360::GetNumSamples() const { return mSampleData.NumSamples(); }
-const void *SynthSample360::GetData() const { return mSampleData.GetData(); }
-int SynthSample360::GetNumBytes() const { return mSampleData.NumBytes(); }
+const void *SynthSample360::GetData() const { return mSampleData.Data(); }
+int SynthSample360::GetNumBytes() const { return mSampleData.SizeBytes(); }
 
 SampleInst *SynthSample360::NewInst(bool b1, int i2, int i3) {
-    if (mSampleData.GetData()) {
+    if (mSampleData.Data()) {
         return new SampleInst360(this, b1, i2, i3);
     } else {
         return nullptr;
@@ -36,7 +36,7 @@ SampleInst *SynthSample360::NewInst(bool b1, int i2, int i3) {
 }
 
 float SynthSample360::LengthMs() const {
-    if (mSampleData.GetData()) {
+    if (mSampleData.Data()) {
         float numSamples = mSampleData.NumSamples();
         float rate = GetSampleRate();
         return (numSamples * 1000) / rate;

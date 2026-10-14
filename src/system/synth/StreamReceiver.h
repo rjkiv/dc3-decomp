@@ -51,11 +51,14 @@ public:
 
 protected:
     static StreamReceiverFactoryFunc *sFactory;
+    static StreamReceiverFactoryFunc *sFactorySecure;
 
     bool mSlipEnabled; // 0x4
     int mNumBuffers; // 0x8
+
+private:
     unsigned char mBuffer[kStreamRcvrBufSize]; // 0xc
-    int mRingFreeSpace; // 0x800c
+    int mWritePos; // 0x800c
     State mState; // 0x8010
     int mSendTarget; // 0x8014
     bool mWantToSend; // 0x8018

@@ -25,11 +25,11 @@ public: // this isn't in RB2, making everything public based RB3 retail and over
     /** "Highest zone note" */
     int mMaxNote; // 0x24
     /** "Lowest zone velocity" */
-    int mMinVel; // 0x28
+    int mMinVelo; // 0x28
     /** "Highest zone velocity" */
-    int mMaxVel; // 0x2c
+    int mMaxVelo; // 0x2c
     /** "Which core's digital FX should be used in playing this sample" */
-    FXCore mFXCore; // 0x30
+    FXCore mFX; // 0x30
     ADSRImpl mADSR; // 0x34
 };
 

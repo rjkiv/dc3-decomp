@@ -12,12 +12,11 @@ public:
     void CancelPolling();
 
     static void PollAll();
-    static std::list<SynthPollable *> &Pollables() { return sPollables; }
+    static const std::list<SynthPollable *> &Pollables() { return sPollables; }
 
 private:
     static std::list<SynthPollable *> sPollables;
 
-protected:
     std::list<SynthPollable *>::iterator mItr; // 0x4
     bool mIsActive; // 0x8
 };

@@ -7,9 +7,8 @@
 FxSendEQ::FxSendEQ()
     : mHighFreqCutoff(12000.0f), mHighFreqGain(0.0f), mMidFreqCutoff(8000.0f),
       mMidFreqBandwidth(1000.0f), mMidFreqGain(0.0f), mLowFreqCutoff(2000.0f),
-      mLowFreqGain(0.0f), mLowPassCutoff(20000.0f), mLowPassReso(0.0f),
-      mHighPassCutoff(20.0f), mHighPassReso(0.0f), mLRMode(false),
-      mTransitionTime(25.0f) {}
+      mLowFreqGain(0.0f), mLPFCutoff(20000.0f), mLPFReso(0.0f), mHPFCutoff(20.0f),
+      mHPFReso(0.0f), mLRMode(false), mTransitionTime(25.0f) {}
 
 FxSendEQ::~FxSendEQ() {}
 
@@ -24,10 +23,10 @@ BEGIN_COPYS(FxSendEQ)
         COPY_MEMBER(mMidFreqGain)
         COPY_MEMBER(mLowFreqCutoff)
         COPY_MEMBER(mLowFreqGain)
-        COPY_MEMBER(mLowPassCutoff)
-        COPY_MEMBER(mLowPassReso)
-        COPY_MEMBER(mHighPassCutoff)
-        COPY_MEMBER(mHighPassReso)
+        COPY_MEMBER(mLPFCutoff)
+        COPY_MEMBER(mLPFReso)
+        COPY_MEMBER(mHPFCutoff)
+        COPY_MEMBER(mHPFReso)
         COPY_MEMBER(mLRMode)
         COPY_MEMBER(mTransitionTime)
     END_COPYING_MEMBERS
@@ -43,10 +42,10 @@ BEGIN_SAVES(FxSendEQ)
     bs << mMidFreqGain;
     bs << mLowFreqCutoff;
     bs << mLowFreqGain;
-    bs << mLowPassCutoff;
-    bs << mLowPassReso;
-    bs << mHighPassCutoff;
-    bs << mHighPassReso;
+    bs << mLPFCutoff;
+    bs << mLPFReso;
+    bs << mHPFCutoff;
+    bs << mHPFReso;
     bs << mLRMode;
     bs << mTransitionTime;
 END_SAVES
@@ -60,7 +59,7 @@ BEGIN_LOADS(FxSendEQ)
     d >> mHighFreqCutoff >> mHighFreqGain >> mMidFreqCutoff >> mMidFreqBandwidth
         >> mMidFreqGain >> mLowFreqCutoff >> mLowFreqGain;
     if (d.rev >= 2) {
-        d >> mLowPassCutoff >> mLowPassReso >> mHighPassCutoff >> mHighPassReso;
+        d >> mLPFCutoff >> mLPFReso >> mHPFCutoff >> mHPFReso;
     }
     if (d.rev >= 3) {
         d >> mLRMode;
@@ -81,10 +80,10 @@ BEGIN_PROPSYNCS(FxSendEQ)
     SYNC_PROP_MODIFY(mid_gain, mMidFreqGain, OnParametersChanged())
     SYNC_PROP_MODIFY(low_frequency, mLowFreqCutoff, OnParametersChanged())
     SYNC_PROP_MODIFY(low_gain, mLowFreqGain, OnParametersChanged())
-    SYNC_PROP_MODIFY(low_pass_cutoff, mLowPassCutoff, OnParametersChanged())
-    SYNC_PROP_MODIFY(low_pass_reso, mLowPassReso, OnParametersChanged())
-    SYNC_PROP_MODIFY(high_pass_cutoff, mHighPassCutoff, OnParametersChanged())
-    SYNC_PROP_MODIFY(high_pass_reso, mHighPassReso, OnParametersChanged())
+    SYNC_PROP_MODIFY(low_pass_cutoff, mLPFCutoff, OnParametersChanged())
+    SYNC_PROP_MODIFY(low_pass_reso, mLPFReso, OnParametersChanged())
+    SYNC_PROP_MODIFY(high_pass_cutoff, mHPFCutoff, OnParametersChanged())
+    SYNC_PROP_MODIFY(high_pass_reso, mHPFReso, OnParametersChanged())
     SYNC_PROP_MODIFY(lr_mode, mLRMode, OnParametersChanged())
     SYNC_PROP_MODIFY(transition_time, mTransitionTime, OnParametersChanged())
     SYNC_SUPERCLASS(FxSend)

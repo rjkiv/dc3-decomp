@@ -12,7 +12,7 @@
 SampleDataAllocFunc SampleData::sAlloc = nullptr;
 SampleDataFreeFunc SampleData::sFree = nullptr;
 
-SampleData::SampleData() : mCRC(0), mData(0), mMarkers() { Reset(); }
+SampleData::SampleData() : mCRCName(0), mData(0), mMarkers() { Reset(); }
 SampleData::~SampleData() { Dealloc(); }
 
 void SampleData::SetAllocator(SampleDataAllocFunc a, SampleDataFreeFunc f) {
@@ -27,7 +27,7 @@ void SampleData::Reset() {
     mSizeBytes = 0;
     mSampleRate = 0;
     mNumSamples = 0;
-    mNumChannels = 1;
+    mChannels = 1;
     mMarkers.clear();
 }
 
@@ -42,7 +42,7 @@ BinStream &operator<<(BinStream &bs, const SampleMarker &s) {
 
 void SampleData::Save(BinStream &bs) const {
     SAVE_REVS(0x10, 0);
-    bs << mCRC;
+    bs << mCRCName;
     bs << mFormat << mNumSamples << mSampleRate << mSizeBytes;
     bool hasData = mData;
     bs << hasData;
@@ -50,7 +50,7 @@ void SampleData::Save(BinStream &bs) const {
         WriteChunks(bs, mData, mSizeBytes, 0x8000);
     }
     bs << mMarkers;
-    bs << mNumChannels;
+    bs << mChannels;
 }
 
 BinStreamRev &operator>>(BinStreamRev &d, SampleMarker &s) {
@@ -72,9 +72,9 @@ void SampleData::Load(BinStream &bs, const FilePath &fp) {
         );
     }
     if (d.rev > 0xE) {
-        d >> mCRC;
+        d >> mCRCName;
     } else {
-        mCRC = Hmx::CRC(FileRelativePath(FileExecRoot(), fp.c_str()));
+        mCRCName = Hmx::CRC(FileRelativePath(FileExecRoot(), fp.c_str()));
     }
     int fmt;
     d >> fmt >> mNumSamples >> mSampleRate;
@@ -85,8 +85,8 @@ void SampleData::Load(BinStream &bs, const FilePath &fp) {
         d >> b70;
     }
     if (b70) {
-        if (mCRC) {
-            TheWavMgr->CreateSample(mCRC, mData, mSizeBytes);
+        if (mCRCName) {
+            TheWavMgr->CreateSample(mCRCName, mData, mSizeBytes);
         } else {
             mData = sAlloc(mSizeBytes, __FILE__, 0x6F, "SampleData", 0);
         }
@@ -96,7 +96,7 @@ void SampleData::Load(BinStream &bs, const FilePath &fp) {
         d >> mMarkers;
     }
     if (d.rev >= 0x10) {
-        d >> mNumChannels;
+        d >> mChannels;
     }
 }
 
@@ -111,17 +111,17 @@ void SampleData::LoadWAV(BinStream &bs, const FilePath &fp, bool b3) {
         return;
     } else {
         if (!b3) {
-            mCRC = Hmx::CRC(FileRelativePath(FileExecRoot(), fp.c_str()));
+            mCRCName = Hmx::CRC(FileRelativePath(FileExecRoot(), fp.c_str()));
         } else {
-            mCRC = Hmx::CRC();
+            mCRCName = Hmx::CRC();
         }
         mFormat = kPCM;
-        mNumChannels = waveFile.NumChannels();
+        mChannels = waveFile.NumChannels();
         mNumSamples = waveFile.NumSamples();
         mSampleRate = waveFile.SamplesPerSec();
         mSizeBytes = SizeAs(kPCM);
-        if (mCRC) {
-            if (!TheWavMgr->CreateSample(mCRC, mData, mSizeBytes)) {
+        if (mCRCName) {
+            if (!TheWavMgr->CreateSample(mCRCName, mData, mSizeBytes)) {
                 WaveFileData data(waveFile);
                 data.Read(mData, mSizeBytes);
             }
@@ -139,33 +139,33 @@ void SampleData::LoadWAV(BinStream &bs, const FilePath &fp, bool b3) {
 }
 
 void SampleData::Dealloc() {
-    if (!mCRC || !TheWavMgr->ReleaseRes(mCRC)) {
+    if (!mCRCName || !TheWavMgr->ReleaseRes(mCRCName)) {
         sFree(mData, __FILE__, 0xC4, "SampleData");
     }
     mData = nullptr;
-    mCRC = 0;
+    mCRCName = 0;
 }
 
 int SampleData::SizeAs(Format f) const {
     switch (f) {
     case kPCM:
     case kBigEndPCM:
-        return mNumChannels * mNumSamples * 2;
+        return mChannels * mNumSamples * 2;
     case kVAG:
-        return ((mNumSamples + 0x6f) / 0x70) * mNumChannels * 64;
+        return ((mNumSamples + 0x6f) / 0x70) * mChannels * 64;
     case kATRAC:
-        return ((mNumSamples + 0x3ff) / 1024) * mNumChannels * 0xc0;
+        return ((mNumSamples + 0x3ff) / 1024) * mChannels * 0xc0;
     case kXMA:
         MILO_NOTIFY("don't know size as XMA");
         return mNumSamples / 5;
     case kMP3:
-        return ((mNumSamples + 0x3ff) / 1024) * mNumChannels * 0xc0;
-    case 7: {
-        int ret = ((mNumChannels * mNumSamples) * 2) / 3.4f;
+        return ((mNumSamples + 0x3ff) / 1024) * mChannels * 0xc0;
+    case kNintendoBcWav: {
+        int ret = ((mChannels * mNumSamples) * 2) / 3.4f;
         return ret + 0x60;
     }
     case kNintendoADPCM: {
-        int ret = ((mNumChannels * mNumSamples) * 2) / 3.4f;
+        int ret = ((mChannels * mNumSamples) * 2) / 3.4f;
         return ret + 0x60;
     }
     default:

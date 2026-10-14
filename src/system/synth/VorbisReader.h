@@ -24,6 +24,19 @@ public:
     bool PendingRemoval() const { return mPendingRemoval; }
     void SetPendingRemoval(bool b) { mPendingRemoval = b; }
 
+    volatile bool mPendingRemoval; // 0x24 yes this is public
+
+protected:
+    virtual void Init();
+    virtual int ConsumeData(void **pcm, int samples, int startSamp);
+    virtual void EndData() {}
+
+    void setupCypher(int);
+    void DoRawSeek(int byte);
+
+    int mNumChannels; // 0x28
+    int mSampleRate; // 0x2c
+
 private:
     bool TryReadHeader();
     bool TryReadPacket(ogg_packet &);
@@ -35,20 +48,6 @@ private:
     bool CheckHmxHeader();
     void Decrypt(unsigned char *, int);
 
-protected:
-    virtual void Init();
-    virtual int ConsumeData(void **pcm, int samples, int startSamp);
-    virtual void EndData() {}
-
-    void setupCypher(int);
-    void DoRawSeek(int byte);
-
-    // volatile so the dtor matches.
-    // doesn't seem to affect any other function so i guess it's fine
-    volatile bool mPendingRemoval;
-    int mNumChannels; // 0x28
-    int mSampleRate; // 0x2c
-private:
     File *mFile; // 0x30
     int mHeadersRead; // 0x34
     unsigned char *mReadBuffer; // 0x38
@@ -73,19 +72,19 @@ private:
     bool mDecodePending; // 0xa0
     int mSeekTarget; // 0xa4
     int mSamplesToSkip; // 0xa8
-    OggMap mOggMap; // 0xac
+    OggMap mMap; // 0xac
     int mHdrSize; // 0xc0
     char *mHdrBuf; // 0xc4
     symmetric_CTR *mCtrState; // 0xc8
     unsigned char mNonce[16]; // 0xcc
     unsigned char mKeyMask[16]; // 0xdc
-    bool unkec; // 0xec
-    bool unked; // 0xed
+    bool mRealtimeThrottle; // 0xec
+    bool mAllowDecode; // 0xed
     bool mEof; // 0xee
     bool mFail; // 0xef
     /** The mogg's encryption version. */
     int mVersion; // 0xf0
-    std::vector<std::vector<short> > mChannelBufs; // 0xf4
-    s64 mBufStartSample;
-    int mConsumedSamples;
+    std::vector<std::vector<short> > mThreadBuffers; // 0xf4
+    s64 mThreadBufferStart; // 0x100
+    int mThreadBufferConsumed; // 0x108
 };

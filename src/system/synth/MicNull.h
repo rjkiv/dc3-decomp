@@ -35,9 +35,9 @@ public:
     virtual void SetEarpiece(bool) {}
     virtual bool GetEarpiece() const { return false; }
 
-    short mRecentBuf[0x600]; // 0xc
-    short mContinuousBuf[0x600]; // 0xc0c
-    char filler[0x4224]; // 0x120c
-    Timer mTimer; // 0x5a30
-    short mBuf[10000]; // 0x5a60
+private:
+    short mRecentBuf[1536]; // 0xc
+    short mContinuousBuf[10000]; // 0xc0c
+    Timer mContinuousTimer; // 0x5a30
+    short mReadBuf[10000]; // 0x5a60
 };

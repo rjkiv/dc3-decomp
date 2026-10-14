@@ -50,7 +50,8 @@ protected:
 
     void UpdateVolume();
 
-    ObjPtr<SynthSample> mSample; // 0x38
+    ObjPtr<SynthSample> mOwner; // 0x38
+private:
     float mVolume; // 0x4c
     float mBankVolume; // 0x50
     float mPan; // 0x54
@@ -59,10 +60,9 @@ protected:
     float mBankSpeed; // 0x60
     ObjPtr<FxSend> mSend; // 0x64
     float mReverbMixDb; // 0x78
-    bool mReverbEnabled; // 0x7c
+    bool mReverbEnable; // 0x7c
     ObjPtr<Hmx::Object> mEventReceiver; // 0x80
-    int unk94; // 0x94
-    double unk98; // 0x98
-    bool unka0; // 0xa0
-    bool unka1; // 0xa1
+    double mLastKnownPosition; // 0x98
+    bool mWasJustPlaying; // 0xa0
+    bool mStarted; // 0xa1
 };

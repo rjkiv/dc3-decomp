@@ -73,12 +73,12 @@ bool PropSync(AudioDuckerGroup &o, DataNode &_val, DataArray *_prop, int _i, Pro
 #pragma endregion
 #pragma region AudioDuckerTrigger
 
-AudioDuckerTrigger::AudioDuckerTrigger() : mDuckerGroup(this) {}
+AudioDuckerTrigger::AudioDuckerTrigger() : mDuckerGrp(this) {}
 AudioDuckerTrigger::~AudioDuckerTrigger() {}
 
 BEGIN_HANDLERS(AudioDuckerTrigger)
-    HANDLE_ACTION(duck, mDuckerGroup.Duck())
-    HANDLE_ACTION(unduck, mDuckerGroup.Unduck())
+    HANDLE_ACTION(duck, mDuckerGrp.Duck())
+    HANDLE_ACTION(unduck, mDuckerGrp.Unduck())
     HANDLE_SUPERCLASS(Hmx::Object)
 END_HANDLERS
 
@@ -88,21 +88,21 @@ BEGIN_CUSTOM_PROPSYNC(AudioDucker)
 END_CUSTOM_PROPSYNC
 
 BEGIN_PROPSYNCS(AudioDuckerTrigger)
-    SYNC_PROP(duckers, mDuckerGroup)
+    SYNC_PROP(duckers, mDuckerGrp)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
 BEGIN_SAVES(AudioDuckerTrigger)
     SAVE_REVS(1, 0)
     SAVE_SUPERCLASS(Hmx::Object)
-    mDuckerGroup.Save(bs);
+    mDuckerGrp.Save(bs);
 END_SAVES
 
 BEGIN_COPYS(AudioDuckerTrigger)
     COPY_SUPERCLASS(Hmx::Object)
     CREATE_COPY(AudioDuckerTrigger)
     BEGIN_COPYING_MEMBERS
-        COPY_MEMBER(mDuckerGroup)
+        COPY_MEMBER(mDuckerGrp)
     END_COPYING_MEMBERS
 END_COPYS
 
@@ -112,7 +112,7 @@ BEGIN_LOADS(AudioDuckerTrigger)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)
     LOAD_SUPERCLASS(Hmx::Object)
-    mDuckerGroup.Load(bs);
+    mDuckerGrp.Load(bs);
 END_LOADS
 
 #pragma endregion

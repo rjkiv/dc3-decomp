@@ -34,19 +34,19 @@ StandardStream::ChannelParams::ChannelParams()
 StandardStream::StandardStream(
     File *f, float f1, float f2, Symbol ext, bool b1, bool b2, bool b3
 )
-    : unk150(b2), mUseFileReceivers(b3) {
+    : mPollingEnabled(b2), mUseStreamReceiverFile(b3) {
     MILO_ASSERT(f, 0x4A);
     mExt = ext;
     mFile = f;
     mInfoChannels = -1;
-    mTotalSecs = -1;
+    mInfoSeconds = -1;
     Init(f1, f2, ext, false);
 }
 
 StandardStream::~StandardStream() {
     RELEASE(mFile);
-    for (int i = 0; i < unk10c.size(); i++) {
-        delete unk10c[i];
+    for (int i = 0; i < mFloatBufferVector.size(); i++) {
+        delete mFloatBufferVector[i];
     }
     Destroy();
     DeleteAll(mChanParams);
@@ -359,7 +359,7 @@ void StandardStream::Init(float f1, float f2, Symbol s, bool b4) {
     mJumpToSamples = 0;
     mCurrentSamp = 0;
     mThrottle = SystemConfig("synth", "oggvorbis")->FindFloat("throttle");
-    if (unk150) {
+    if (mPollingEnabled) {
         StartPolling();
     }
     mRdr = TheSynth->NewStreamDecoder(mFile, this, s);
@@ -369,7 +369,7 @@ void StandardStream::InitInfo(int numChannels, int sampleRate, bool floatSamples
     mTotalSamples = i4;
     numChannels = mVirtualChans + numChannels;
     mInfoChannels = numChannels;
-    mTotalSecs = (float)i4 / sampleRate;
+    mInfoSeconds = (float)i4 / sampleRate;
     if (!mGetInfoOnly) {
         if (mSampleRate == 0) {
             mFloatSamples = floatSamples;
@@ -381,7 +381,7 @@ void StandardStream::InitInfo(int numChannels, int sampleRate, bool floatSamples
             SystemConfig("synth", "iop")->FindInt("max_slip");
             for (int i = 0; i < numChannels; i++) {
                 bool slip = mChanParams[i]->mSlipEnabled;
-                if (mUseFileReceivers) {
+                if (mUseStreamReceiverFile) {
                     mChannels.push_back(new StreamReceiverFile(numBufs, slip));
                 } else {
                     mChannels.push_back(StreamReceiver::New(numBufs, sampleRate, slip, i));
@@ -417,7 +417,7 @@ void StandardStream::InitInfo(int numChannels, int sampleRate, bool floatSamples
         if (mCurrentSamp != 0) {
             mRdr->Seek(mCurrentSamp);
         }
-        mFaders->SetDirty();
+        Faders().SetDirty();
         UpdateFXSends();
     }
 }
@@ -427,7 +427,7 @@ void StandardStream::ClearJumpMarkers() {
     mStartMarker.name = "";
     mEndMarker.position = 0;
     mEndMarker.name = "";
-    mJumpInstances.clear();
+    mJumpInstList.clear();
 }
 
 void StandardStream::Destroy() {
@@ -509,29 +509,29 @@ void StandardStream::DoJump() {
     JumpInstance instance;
     instance.mFromMs = mJumpFromMs;
     instance.mToMs = mJumpToMs;
-    if (!mJumpInstances.empty()) {
+    if (!mJumpInstList.empty()) {
         instance.mTotalOffsetMs =
-            (instance.mToMs - instance.mFromMs) + mJumpInstances.back().mTotalOffsetMs;
-        instance.mPlayedMs = (instance.mFromMs - mJumpInstances.back().mToMs)
-            + mJumpInstances.back().mPlayedMs;
+            (instance.mToMs - instance.mFromMs) + mJumpInstList.back().mTotalOffsetMs;
+        instance.mPlayedMs = (instance.mFromMs - mJumpInstList.back().mToMs)
+            + mJumpInstList.back().mPlayedMs;
     } else {
         instance.mTotalOffsetMs = instance.mToMs - instance.mFromMs;
         instance.mPlayedMs = instance.mFromMs;
     }
-    mJumpInstances.push_back(instance);
+    mJumpInstList.push_back(instance);
 }
 
 void StandardStream::UpdateVolumes() {
     static Symbol _parent("_parent");
     static Symbol _default("_default");
-    if (mFaders->Dirty()) {
-        float volume = mFaders->GetVolume();
+    if (Faders().Dirty()) {
+        float volume = Faders().GetVolume();
         FOREACH (it, mChanParams) {
             ChannelParams *params = *it;
             Fader *local = params->mFaders.FindLocal(_parent, true);
             local->SetVolume(volume);
         }
-        mFaders->ClearDirty();
+        Faders().ClearDirty();
     }
 
     for (int i = 0; i < mChannels.size(); i++) {

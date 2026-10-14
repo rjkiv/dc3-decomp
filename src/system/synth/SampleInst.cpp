@@ -6,45 +6,46 @@
 #include "synth/SynthSample.h"
 
 SampleInst::SampleInst(SynthSample *sample)
-    : mSample(this, sample), mVolume(1), mBankVolume(1), mPan(0), mBankPan(0), mSpeed(1),
-      mBankSpeed(1), mSend(this), mEventReceiver(this), unk98(-1), unka0(0), unka1(0) {
-    if (mSample) {
-        mSample->RegisterChild(this);
+    : mOwner(this, sample), mVolume(1), mBankVolume(1), mPan(0), mBankPan(0), mSpeed(1),
+      mBankSpeed(1), mSend(this), mEventReceiver(this), mLastKnownPosition(-1),
+      mWasJustPlaying(0), mStarted(0) {
+    if (mOwner) {
+        mOwner->RegisterChild(this);
     }
 }
 
 SampleInst::~SampleInst() {
-    if (mSample) {
-        mSample->UnregisterChild(this);
+    if (mOwner) {
+        mOwner->UnregisterChild(this);
     }
 }
 
 void SampleInst::SynthPoll() {
     if (IsPlaying() && mEventReceiver) {
-        int sampleRate = mSample->GetSampleRate();
+        int sampleRate = mOwner->GetSampleRate();
         double f10 = GetProgress();
-        f10 = mSample->LengthMs() * f10 * sampleRate * 0.001;
+        f10 = mOwner->LengthMs() * f10 * sampleRate * 0.001;
         static Message msg("on_marker_event", 0);
-        std::vector<SampleMarker> markers(mSample->AccessMarkers());
+        std::vector<SampleMarker> markers(mOwner->AccessMarkers());
         FOREACH (it, markers) {
             double sample = it->Sample();
-            if (unk98 < sample && sample <= f10) {
+            if (mLastKnownPosition < sample && sample <= f10) {
                 msg[0] = Symbol(it->Name().c_str());
                 mEventReceiver->Handle(msg, false);
             }
         }
-        if (f10 < unk98) {
+        if (f10 < mLastKnownPosition) {
             msg[0] = Symbol("looped");
             mEventReceiver->Handle(msg, false);
         }
-        unk98 = f10;
+        mLastKnownPosition = f10;
     } else if (mEventReceiver) {
-        if (unka0) {
+        if (mWasJustPlaying) {
             static Message msg("on_marker_event", Symbol("ended"));
             mEventReceiver->Handle(msg, false);
         }
     }
-    unka0 = IsPlaying();
+    mWasJustPlaying = IsPlaying();
 }
 
 void SampleInst::Play(float f1) {
@@ -52,8 +53,8 @@ void SampleInst::Play(float f1) {
     Stop(false);
     StartImpl();
     StartPolling();
-    unka1 = true;
-    unka0 = true;
+    mStarted = true;
+    mWasJustPlaying = true;
 }
 
 void SampleInst::Stop(bool b1) {
@@ -62,7 +63,7 @@ void SampleInst::Stop(bool b1) {
 }
 
 bool SampleInst::DonePlaying() {
-    bool ret = unka1 && !IsPlaying();
+    bool ret = mStarted && !IsPlaying();
     if (ret) {
         delete this;
     }
@@ -90,8 +91,8 @@ void SampleInst::SetReverbMixDb(float db) {
 }
 
 void SampleInst::SetReverbEnable(bool b) {
-    mReverbEnabled = b;
-    SetReverbEnableImpl(mReverbEnabled);
+    mReverbEnable = b;
+    SetReverbEnableImpl(mReverbEnable);
 }
 
 void SampleInst::SetSend(FxSend *send) {

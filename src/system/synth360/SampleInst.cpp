@@ -31,7 +31,7 @@ float SampleInst360::ElapsedTime() {
     XAUDIO2_VOICE_STATE state;
     mVoice->GetVoice()->GetState(&state, 0);
     float samples = state.SamplesPlayed;
-    float rate = mSample->GetSampleRate();
+    float rate = mOwner->GetSampleRate();
     return samples / rate;
 }
 
@@ -52,8 +52,8 @@ float SampleInst360::GetProgress() {
         samples -= loop_count * loop_size;
         samples += sample_start;
     }
-    float len = mSample->LengthMs();
-    float rate = mSample->GetSampleRate();
+    float len = mOwner->LengthMs();
+    float rate = mOwner->GetSampleRate();
     return (samples * 1000.0f) / (rate * len);
 }
 

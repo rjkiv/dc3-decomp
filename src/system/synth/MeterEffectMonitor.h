@@ -27,6 +27,6 @@ protected:
 
     /** "FxSendMeterEffect for this object to monitor" */
     ObjPtr<FxSendMeterEffect> mMeterEffect; // 0x8
-    float unk1c; // 0x1c
-    float unk20; // 0x20
+    float mLastChannel1; // 0x1c
+    float mLastChannel2; // 0x20
 };

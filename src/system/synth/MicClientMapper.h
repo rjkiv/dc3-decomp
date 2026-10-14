@@ -5,12 +5,11 @@
 class MicClientMapper {
 public:
     struct MicMappingData {
-        MicMappingData() : unk0(0), unk4(-1), mMicID(-1), bLocked(false) {}
+        MicMappingData() : cClientID(0, -1), mMicID(-1), bLocked(false) {}
         MicMappingData(const MicMappingData &d)
-            : unk0(d.unk0), unk4(d.unk4), mMicID(d.mMicID), bLocked(d.bLocked) {}
+            : cClientID(d.cClientID), mMicID(d.mMicID), bLocked(d.bLocked) {}
 
-        int unk0;
-        int unk4;
+        MicClientID cClientID;
         int mMicID; // 0x8
         bool bLocked; // 0xc
     };
@@ -33,7 +32,9 @@ public:
     void UnlockAllMicIDs();
     bool IsMicIDLocked(int) const;
     bool GetFirstUnlockedMicID(int &) const;
-    MicManagerInterface *GetMicMgrInterface() const { return mMicManager; }
+    MicManagerInterface *GetMicManager() { return mMicManager; }
+
+    static const int kNumberOfMicClients;
 
 private:
     void LockMicID(int);
@@ -41,9 +42,8 @@ private:
     void RefreshPlayerMapping();
     void RefreshMics();
 
-protected:
     MicManagerInterface *mMicManager; // 0x0
     std::vector<MicMappingData> mMappingData; // 0x4
     std::vector<PlayerMappingData> mPlayers; // 0xc
-    int mNumPlayers; // 0x14
+    int mNumberOfPlayers; // 0x14
 };
