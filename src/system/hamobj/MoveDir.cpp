@@ -144,7 +144,7 @@ namespace {
             clipName += MakeString(
                 " (bar %i: expected=%s)",
                 bar,
-                rating.mExpected.Null() ? "<none>" : rating.mExpected
+                rating.mExpectedRating.Null() ? "<none>" : rating.mExpectedRating
             );
         } else {
             clipName += " (no rating overrides)";
@@ -211,7 +211,7 @@ void SetupRecordClip(
 ) {
     clip = Hmx::Object::New<SkeletonClip>();
     clip->EnableAlternateRecord(i1);
-    clip->SetUnk11fc(i2);
+    clip->SetRecordingPlayer(i2);
     String clipName = RecordClipName(cc, i1);
     clipName += ".clp";
     clip->SetName(clipName.c_str(), dir);

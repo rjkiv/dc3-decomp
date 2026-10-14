@@ -18,10 +18,19 @@ protected:
 
 class SkeletonHistory {
 public:
-    virtual bool PrevSkeleton(const Skeleton &, int, ArchiveSkeleton &, int &) const = 0;
+    virtual bool PrevSkeleton(
+        const Skeleton &current,
+        int previous_ms,
+        ArchiveSkeleton &previous,
+        int &elapsed_ms
+    ) const = 0;
 
 protected:
-    bool
-    PrevFromArchive(const SkeletonHistoryArchive &, const Skeleton &, int, ArchiveSkeleton &, int &)
-        const;
+    bool PrevFromArchive(
+        const SkeletonHistoryArchive &history,
+        const Skeleton &current,
+        int previous_ms,
+        ArchiveSkeleton &previous,
+        int &elapsed_ms
+    ) const;
 };

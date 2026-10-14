@@ -48,29 +48,30 @@ void ReserveFrames() {
 void RecordedFrame::MakeSkeletonFrame(SkeletonFrame &frame, int skel_idx) const {
     MILO_ASSERT_RANGE(skel_idx, 0, 6, 0x2e);
     memset(&frame, 0, sizeof(SkeletonFrame));
-    frame.mFrameNumber = unk0;
-    frame.mElapsedMs = unk4;
-    frame.mUpVector = unk8;
-    frame.mFloorPlane = unk18;
+    frame.mFrameNumber = mFrameNumber;
+    frame.mElapsedMs = mElapsedMs;
+    frame.mUpVector = mUpVector;
+    frame.mFloorPlane = mFloorPlane;
     SkeletonData &data = frame.mSkeletonDatas[skel_idx];
-    data.mTracking = unk28 ? kSkeletonTracked : kSkeletonNotTracked;
-    memcpy(data.mJointPositions, unk2c, 0x140);
-    memcpy(data.mJointConfidences, unk16c, 0x50);
-    data.mQualityFlags = unk1bc;
-    data.mTrackingID = unk1c0;
+    data.mTracking = mTracked ? kSkeletonTracked : kSkeletonNotTracked;
+    memcpy(data.mJointPositions, mJointPositions, 0x140);
+    memcpy(data.mJointConfidences, mJointConfidences, 0x50);
+    data.mQualityFlags = mQualityFlags;
+    data.mTrackingID = mTrackingID;
     data.mCenter = data.mJointPositions[0];
 }
 
 SkeletonClip::SkeletonClip()
-    : mRecordedFrames(sFrames), unk11f4(sCamFrame), unk11f8(sLoadedFile), unk11fc(-1),
-      mDifficulty(kNumDifficulties), mWeighted(0), unk1230(0), unk1231(0),
-      mFileStream(nullptr), unk1240(0), mAutoplay(false) {
+    : mFrames(sFrames), mCamFrame(sCamFrame), mLoadedFile(sLoadedFile),
+      mRecordingPlayer(-1), mRecordDifficulty(kNumDifficulties),
+      mWeighting(kClipNotWeighted), mSuspended(0), mRecording(0), mFileStream(nullptr),
+      mInternalFrame(0), mAutoplay(false) {
     SetRate(k30_fps);
 }
 
 SkeletonClip::~SkeletonClip() {
-    if (*unk11f8 == mFile)
-        *unk11f8 = gNullStr;
+    if (*mLoadedFile == mFile)
+        *mLoadedFile = gNullStr;
     RELEASE(mFileStream);
 }
 
@@ -88,23 +89,25 @@ BEGIN_HANDLERS(SkeletonClip)
 END_HANDLERS
 
 BEGIN_CUSTOM_PROPSYNC(SkeletonClip::MoveRating)
-    SYNC_PROP(move_name, o.mName)
-    SYNC_PROP(expected, o.mExpected)
+    SYNC_PROP(move_name, o.mMoveName)
+    SYNC_PROP(expected, o.mExpectedRating)
 END_CUSTOM_PROPSYNC
 
 BEGIN_PROPSYNCS(SkeletonClip)
     SYNC_PROP(file, mFile)
     SYNC_PROP_SET(autoplay, mAutoplay, SetAutoplay(_val.Int()))
     SYNC_PROP_SET(time_recorded, DateTimeStr(), )
-    SYNC_PROP_SET(build, mBuild, )
-    SYNC_PROP_SET(song, Song(), )
+    SYNC_PROP_SET(build, mRecordBuild, )
+    SYNC_PROP_SET(song, SongStr(), )
     SYNC_PROP_SET(difficulty, DifficultyStr(), )
-    SYNC_PROP(default_rating, mDefaultRating)
-    SYNC_PROP_SET(weighted, mWeighted, mWeighted = _val.Int())
+    SYNC_PROP(default_rating, mDefaultExpectedRating)
+    SYNC_PROP_SET(weighted, mWeighting, mWeighting = (SkeletonClipWeighting)_val.Int())
     SYNC_PROP(move_ratings, mMoveRatings)
     SYNC_PROP_SET(song_start_seconds, SongStartSeconds(), )
     SYNC_PROP_SET(song_end_seconds, SongEndSeconds(), )
-    SYNC_PROP_SET(override_diff, mOverrideDiff, mOverrideDiff = _val.Int())
+    SYNC_PROP_SET(
+        override_diff, mOverrideDifficulty, mOverrideDifficulty = (Difficulty)_val.Int()
+    )
     SYNC_SUPERCLASS(RndAnimatable)
     SYNC_SUPERCLASS(RndPollable)
     SYNC_SUPERCLASS(CameraInput)
@@ -122,10 +125,10 @@ BEGIN_SAVES(SkeletonClip)
         std::vector<MoveRating> moves;
         bs << moves;
     }
-    bs << unk1240;
+    bs << mInternalFrame;
     bs << mAutoplay;
-    bs << mDefaultRating;
-    bs << mWeighted;
+    bs << mDefaultExpectedRating;
+    bs << mWeighting;
 END_SAVES
 
 BEGIN_COPYS(SkeletonClip)
@@ -136,8 +139,8 @@ BEGIN_COPYS(SkeletonClip)
         COPY_MEMBER(mFile)
         COPY_MEMBER(mMoveRatings)
         COPY_MEMBER(mAutoplay)
-        COPY_MEMBER(mDefaultRating)
-        COPY_MEMBER(mWeighted)
+        COPY_MEMBER(mDefaultExpectedRating)
+        COPY_MEMBER(mWeighting)
     END_COPYING_MEMBERS
 END_COPYS
 
@@ -165,9 +168,9 @@ BEGIN_LOADS(SkeletonClip)
             gAltRev
         );
     }
-    RndAnimatable::Load(bs);
-    Hmx::Object::Load(bs);
-    bs >> mFile;
+    LOAD_SUPERCLASS(RndAnimatable)
+    LOAD_SUPERCLASS(Hmx::Object)
+    d >> mFile;
     if (d.rev < 5) {
         mFile = MakeString(
             "%s/%s",
@@ -193,7 +196,7 @@ BEGIN_LOADS(SkeletonClip)
         d >> mMoveRatings;
     }
     if (d.rev > 0) {
-        d >> unk1240;
+        d >> mInternalFrame;
         d >> mAutoplay;
         if (d.rev < 4) {
             bool b;
@@ -206,21 +209,23 @@ BEGIN_LOADS(SkeletonClip)
         d >> x;
     }
     if (d.rev > 5) {
-        d >> mDefaultRating;
+        d >> mDefaultExpectedRating;
     }
     if (d.altRev > 0) {
-        bs >> mWeighted;
-    } else {
-        if (d.rev > 8) {
-            static Symbol weighted("weighted");
-            Symbol s;
-            bs >> s;
-            if (s != weighted) {
-                mWeighted = 0;
-            }
+        int w;
+        d >> w;
+        mWeighting = (SkeletonClipWeighting)w;
+    } else if (d.rev > 8) {
+        static Symbol weighted("weighted");
+        Symbol s;
+        d >> s;
+        if (s == weighted) {
+            mWeighting = kClipWeighted;
         } else {
-            mWeighted = 1;
+            mWeighting = kClipNotWeighted;
         }
+    } else {
+        mWeighting = kClipWeighted;
     }
 END_LOADS
 
@@ -236,12 +241,12 @@ void SkeletonClip::StartAnim() {
 }
 
 void SkeletonClip::SetFrame(float frame, float blend) {
-    if ((int)mRecordedFrames->size() > (int)frame && frame >= 0) {
+    if ((int)mFrames->size() > (int)frame && frame >= 0) {
         RndAnimatable::SetFrame(frame, blend);
     }
 }
 
-float SkeletonClip::EndFrame() { return mRecordedFrames->size(); }
+float SkeletonClip::EndFrame() { return mFrames->size(); }
 
 void SkeletonClip::Poll() {
     if (IsRecording()) {
@@ -253,27 +258,27 @@ void SkeletonClip::Poll() {
     } else {
         SkeletonDir *dir = dynamic_cast<SkeletonDir *>(Dir());
         if (mAutoplay && TheLoadMgr.EditMode() && dir && dir->TestClip() == this) {
-            unk1240++;
+            mInternalFrame++;
             float end = EndFrame() * 2;
-            if (unk1240 >= end) {
-                unk1240 = 0;
+            if (mInternalFrame >= end) {
+                mInternalFrame = 0;
             }
-            SetFrame(unk1240, 1);
+            SetFrame(mInternalFrame, 1);
         }
     }
 }
 
-const char *SkeletonClip::Song() const {
+const char *SkeletonClip::SongStr() const {
     if (mFile.empty()) {
         return gNullStr;
-    } else if (!mSong.Null()) {
-        return mSong.Str();
+    } else if (!mRecordSong.Null()) {
+        return mRecordSong.Str();
     } else {
         return "N/A";
     }
 }
 
-bool SkeletonClip::IsRecording() const { return unk1231 && !unk1230; }
+bool SkeletonClip::IsRecording() const { return mRecording && !mSuspended; }
 const String &SkeletonClip::Path() const { return mFile; }
 
 String SkeletonClip::DateTimeStr() const {
@@ -281,7 +286,7 @@ String SkeletonClip::DateTimeStr() const {
         return gNullStr;
     else {
         String ret;
-        mTimeRecorded.ToString(ret);
+        mRecordDateTime.ToString(ret);
         return ret;
     }
 }
@@ -289,15 +294,15 @@ String SkeletonClip::DateTimeStr() const {
 const char *SkeletonClip::DifficultyStr() const {
     if (mFile.empty())
         return gNullStr;
-    else if (mDifficulty == kNumDifficulties)
+    else if (mRecordDifficulty == kNumDifficulties)
         return "N/A";
     else
-        return DifficultyToSym(mDifficulty).Str();
+        return DifficultyToSym(mRecordDifficulty).Str();
 }
 
 bool SkeletonClip::IsFailClip() const {
     static Symbol move_bad("move_bad");
-    return mDefaultRating == move_bad;
+    return mDefaultExpectedRating == move_bad;
 }
 
 void SkeletonClip::SetPath(const char *path) { mFile = path; }
@@ -305,35 +310,35 @@ void SkeletonClip::SetPath(const char *path) { mFile = path; }
 void SkeletonClip::EnableAlternateRecord(int recordingBuffer) {
     MILO_ASSERT(mFile.empty(), 0x7F);
     MILO_ASSERT_RANGE(recordingBuffer, 0, 4, 0x80);
-    mRecordedFrames = &sFrames[recordingBuffer];
-    unk11f4 = &sCamFrame[recordingBuffer];
-    unk11f8 = &sLoadedFile[recordingBuffer];
+    mFrames = &sFrames[recordingBuffer];
+    mCamFrame = &sCamFrame[recordingBuffer];
+    mLoadedFile = &sLoadedFile[recordingBuffer];
 }
 
 BinStream &operator<<(BinStream &bs, const SkeletonClip::MoveRating &mr) {
-    bs << mr.mName << mr.mExpected << mr.unkc;
+    bs << mr.mMoveName << mr.mExpectedRating << mr.mWeighting;
     return bs;
 }
 
 BinStream &operator>>(BinStreamRev &d, SkeletonClip::MoveRating &mr) {
-    d >> mr.mName;
-    d >> mr.mExpected;
+    d >> mr.mMoveName;
+    d >> mr.mExpectedRating;
     if (d.altRev > 0) {
         int x;
         d >> x;
-        mr.unkc = x;
+        mr.mWeighting = (SkeletonClipWeighting)x;
     } else if (d.rev > 8) {
         Symbol s;
         d >> s;
         if (s == "weighted") {
-            mr.unkc = 1;
+            mr.mWeighting = kClipWeighted;
         } else if (s == "unweighted") {
-            mr.unkc = 0;
+            mr.mWeighting = kClipNotWeighted;
         } else {
-            mr.unkc = 2;
+            mr.mWeighting = kClipDefaultWeighting;
         }
     } else {
-        mr.unkc = 2;
+        mr.mWeighting = kClipDefaultWeighting;
     }
     return d;
 }
@@ -342,37 +347,37 @@ int SkeletonClip::NumMoveRatings() const { return mMoveRatings.size(); }
 
 void SkeletonClip::WriteClipHeader(FileStream &stream) {
     stream << 8;
-    GetDateAndTime(mTimeRecorded);
-    stream << mTimeRecorded;
-    stream << mSong;
-    stream << mDifficulty;
+    GetDateAndTime(mRecordDateTime);
+    stream << mRecordDateTime;
+    stream << mRecordSong;
+    stream << mRecordDifficulty;
     DataArray *arr = SystemConfig()->FindArray("version", false);
     const char *str = arr ? arr->Str(1) : "milo";
     stream << str;
-    stream << (int)mRecordedFrames->size();
+    stream << (int)mFrames->size();
 }
 
 void SkeletonClip::WriteClipFrame(FileStream &stream, const RecordedFrame &recordedFrame) {
-    stream << recordedFrame.unk0;
-    stream << recordedFrame.unk4;
-    stream << recordedFrame.unk8;
-    stream << recordedFrame.unk18;
-    stream << recordedFrame.unk28;
-    if (recordedFrame.unk28) {
+    stream << recordedFrame.mFrameNumber;
+    stream << recordedFrame.mElapsedMs;
+    stream << recordedFrame.mUpVector;
+    stream << recordedFrame.mFloorPlane;
+    stream << recordedFrame.mTracked;
+    if (recordedFrame.mTracked) {
         for (int i = 0; i < kNumJoints; i++) {
-            stream << recordedFrame.unk2c[i];
-            stream << recordedFrame.unk16c[i];
+            stream << recordedFrame.mJointPositions[i];
+            stream << recordedFrame.mJointConfidences[i];
         }
-        stream << recordedFrame.unk1bc;
-        stream << recordedFrame.unk1c0;
+        stream << recordedFrame.mQualityFlags;
+        stream << recordedFrame.mTrackingID;
     }
-    stream << recordedFrame.unk1c4;
+    stream << recordedFrame.mSeconds;
 }
 
 void SkeletonClip::WriteClip(FileStream &stream) {
     WriteClipHeader(stream);
-    for (int i = 0; i < mRecordedFrames->size(); i++) {
-        WriteClipFrame(stream, (*mRecordedFrames)[i]);
+    for (int i = 0; i < mFrames->size(); i++) {
+        WriteClipFrame(stream, (*mFrames)[i]);
     }
 }
 
@@ -382,7 +387,7 @@ const SkeletonClip::MoveRating &SkeletonClip::GetMoveRating(int bar) const {
 }
 
 void SkeletonClip::StopRecordingNoClear() {
-    unk1231 = false;
+    mRecording = false;
     mFileStream = new FileStream(mFile.c_str(), FileStream::kWrite, true);
     if (mFileStream->Fail()) {
         MILO_FAIL("Recording failed; could not open output file (%s).", mFile.c_str());
@@ -394,7 +399,7 @@ void SkeletonClip::StopRecordingNoClear() {
 }
 
 void SkeletonClip::FlushMoveRecord(const char *name) {
-    if (!mRecordedFrames->empty()) {
+    if (!mFrames->empty()) {
         StopRecordingNoClear();
         String clipStr(name);
         const char *clipPath = MakeString("devkit:\\%s.clp", clipStr);
@@ -406,8 +411,7 @@ void SkeletonClip::FlushMoveRecord(const char *name) {
 
 bool SkeletonClip::SkeletonFrameAt(float f1, SkeletonFrame &frame) const {
     int idk1, idk2;
-    const RecordedFrame *recordedFrame =
-        RecordedFrameAt(*mRecordedFrames, f1, idk1, idk2);
+    const RecordedFrame *recordedFrame = RecordedFrameAt(*mFrames, f1, idk1, idk2);
     if (recordedFrame) {
         recordedFrame->MakeSkeletonFrame(frame, 0);
         return true;
@@ -420,16 +424,16 @@ void SkeletonClip::StopRecording() {
         MILO_NOTIFY("You must start recording first");
     } else {
         StopRecordingNoClear();
-        mRecordedFrames->clear();
+        mFrames->clear();
     }
 }
 
 const SkeletonFrame *SkeletonClip::PollNewFrame() {
     int idk1, idk2;
     const RecordedFrame *recordedFrame = CurRecordedFrame(idk1, idk2);
-    if (recordedFrame && recordedFrame->unk28) {
-        recordedFrame->MakeSkeletonFrame(*unk11f4, 0);
-        return unk11f4;
+    if (recordedFrame && recordedFrame->mTracked) {
+        recordedFrame->MakeSkeletonFrame(*mCamFrame, 0);
+        return mCamFrame;
     } else
         return nullptr;
 }
@@ -473,43 +477,47 @@ void SkeletonClip::LoadClipFromFile(String str, SkeletonClip *clip) {
             if (version > 3) {
                 DateTime dt;
                 fs >> dt;
-                if (clip)
-                    clip->SetRecordedTime(dt);
+                if (clip) {
+                    clip->mRecordDateTime = dt;
+                }
                 Symbol sym;
                 fs >> sym;
-                if (clip)
-                    clip->SetSong(sym);
+                if (clip) {
+                    clip->mRecordSong = sym;
+                }
                 Difficulty d;
                 fs >> (int &)d;
-                if (clip)
-                    clip->SetDifficulty(d);
+                if (clip) {
+                    clip->mRecordDifficulty = d;
+                }
             }
             String ext;
             if (version > 5) {
                 fs >> ext;
             } else
                 ext = "milo";
-            if (clip)
-                clip->SetBuild(ext);
+            if (clip) {
+                clip->mRecordBuild = ext;
+            }
             if (version > 4) {
                 int numFrames;
                 fs >> numFrames;
-                if (numFrames > mRecordedFrames->capacity()) {
+                if (numFrames > mFrames->capacity()) {
                     MILO_NOTIFY(
                         "%i recorded frames greater than capacity %i",
                         numFrames,
-                        mRecordedFrames->capacity()
+                        mFrames->capacity()
                     );
                 }
-                mRecordedFrames->resize(numFrames);
+                mFrames->resize(numFrames);
                 for (int i = 0; i < numFrames; i++) {
-                    LoadFrame(fs, (*mRecordedFrames)[i], version);
+                    LoadFrame(fs, (*mFrames)[i], version);
                     if (fs.Fail()) {
                         MILO_NOTIFY(
                             "Bad clip data, truncating from %d frames to %d", numFrames, i
                         );
                         numFrames = i;
-                        mRecordedFrames->resize(numFrames);
+                        mFrames->resize(numFrames);
                         break;
                     }
                 }
@@ -517,7 +525,7 @@ void SkeletonClip::LoadClipFromFile(String str, SkeletonClip *clip) {
                 while (fs.Eof() == NotEof) {
                     RecordedFrame frame;
                     LoadFrame(fs, frame, version);
-                    mRecordedFrames->push_back(frame);
+                    mFrames->push_back(frame);
                 }
             }
         }
@@ -529,10 +537,10 @@ void SkeletonClip::LoadClip(bool tool_sync) {
     if (IsRecording()) {
         MILO_NOTIFY("Cannot open file while still recording");
     } else {
-        mRecordedFrames->clear();
+        mFrames->clear();
         if (Dir()) {
             LoadClipFromFile(mFile, this);
-            *unk11f8 = mFile;
+            *mLoadedFile = mFile;
         }
     }
 }
@@ -552,7 +560,7 @@ void SkeletonClip::SetAutoplay(bool b1) {
 void SkeletonClip::StartXboxRecording(const char *cc) {
     MILO_ASSERT(!IsRecording(), 0x2F2);
     mFile = cc;
-    unk1231 = true;
+    mRecording = true;
     if (TheLoadMgr.EditMode()) {
         SkeletonDir *dir = dynamic_cast<SkeletonDir *>(Dir());
         if (dir) {
@@ -560,24 +568,24 @@ void SkeletonClip::StartXboxRecording(const char *cc) {
         }
     }
     if (TheGameData && TheHamDirector) {
-        mSong = TheGameData->GetSong();
-        mDifficulty = TheGameData->Player(0)->GetDifficulty();
+        mRecordSong = TheGameData->GetSong();
+        mRecordDifficulty = TheGameData->Player(0)->GetDifficulty();
     } else {
-        mSong = gNullStr;
-        mDifficulty = kNumDifficulties;
+        mRecordSong = gNullStr;
+        mRecordDifficulty = kNumDifficulties;
     }
 }
 
 float SkeletonClip::SongStartSeconds() const {
-    if (!mFile.empty() && !mRecordedFrames->empty() && !mSong.Null()) {
-        return mRecordedFrames->front().unk1c4;
+    if (!mFile.empty() && !mFrames->empty() && !mRecordSong.Null()) {
+        return mFrames->front().mSeconds;
     }
     return 0;
 }
 
 float SkeletonClip::SongEndSeconds() const {
-    if (!mFile.empty() && !mRecordedFrames->empty() && !mSong.Null()) {
-        float f = mRecordedFrames->back().unk1c4;
+    if (!mFile.empty() && !mFrames->empty() && !mRecordSong.Null()) {
+        float f = mFrames->back().mSeconds;
         if (IsFailClip()) {
             f *= 1000.0f;
         }
@@ -587,7 +595,7 @@ float SkeletonClip::SongEndSeconds() const {
 }
 
 void SkeletonClip::FillMoveRatings() {
-    if (mDifficulty == kNumDifficulties) {
+    if (mRecordDifficulty == kNumDifficulties) {
         MILO_NOTIFY("Can\'t fill move ratings, this is not a song recording");
         return;
     }
@@ -596,20 +604,13 @@ void SkeletonClip::FillMoveRatings() {
         MoveDir *moveDir = dynamic_cast<MoveDir *>(Dir());
         if (moveDir) {
             std::vector<HamMoveKey> keys;
-            TheHamDirector->MoveKeys(mDifficulty, moveDir, keys);
+            TheHamDirector->MoveKeys(mRecordDifficulty, moveDir, keys);
             static Symbol Default("default");
-            MoveRating rating;
-            auto &ratings = mMoveRatings;
-            if (keys.size() < ratings.size()) {
-                ratings.erase(ratings.begin() + keys.size(), ratings.end());
-            } else {
-                ratings.insert(ratings.end(), keys.size() - ratings.size(), rating);
-            }
-
+            mMoveRatings.resize(keys.size());
             for (int i = 0; i < keys.size(); i++) {
-                ratings[i].mName = keys[i].move->Name();
-                ratings[i].mExpected = Default;
-                ratings[i].unkc = 2;
+                mMoveRatings[i].mMoveName = keys[i].move->Name();
+                mMoveRatings[i].mExpectedRating = Default;
+                mMoveRatings[i].mWeighting = kClipDefaultWeighting;
             }
         }
     }
@@ -617,43 +618,43 @@ void SkeletonClip::FillMoveRatings() {
 
 void SkeletonClip::LoadFrame(BinStream &bs, RecordedFrame &frame, int i) {
     if (i > 6) {
-        bs >> frame.unk0;
+        bs >> frame.mFrameNumber;
     } else {
-        frame.unk0 = 0;
+        frame.mFrameNumber = 0;
     }
 
     if (i > 1) {
-        bs >> frame.unk4;
-        bs >> frame.unk8;
-        bs >> frame.unk18;
+        bs >> frame.mElapsedMs;
+        bs >> frame.mUpVector;
+        bs >> frame.mFloorPlane;
     } else {
-        frame.unk4 = 0x21;
-        frame.unk8.Set(0, 1.0f, 0);
-        frame.unk18.Set(0, 0, 0, 0);
+        frame.mElapsedMs = 0x21;
+        frame.mUpVector.Set(0, 1.0f, 0);
+        frame.mFloorPlane.Set(0, 0, 0, 0);
     }
 
-    bs >> frame.unk28;
-    if (frame.unk28 || i < 2) {
+    bs >> frame.mTracked;
+    if (frame.mTracked || i < 2) {
         for (int i = 0; i < kNumJoints; i++) {
-            bs >> frame.unk2c[i];
-            bs >> frame.unk16c[i];
+            bs >> frame.mJointPositions[i];
+            bs >> (int &)frame.mJointConfidences[i];
         }
-        bs >> frame.unk1bc;
-        bs >> frame.unk1c0;
+        bs >> frame.mQualityFlags;
+        bs >> frame.mTrackingID;
     }
 
     if (i == 1) {
         String s = "";
         bs >> s;
     } else if (i > 2) {
-        bs >> frame.unk1c4;
+        bs >> frame.mSeconds;
     }
 }
 
 void SkeletonClip::SwapMoveRecord() {
-    int size = mRecordedFrames->size() - 400;
+    int size = mFrames->size() - 400;
     if (size > 0) {
-        mRecordedFrames->erase(mRecordedFrames->begin(), mRecordedFrames->begin() + size);
+        mFrames->erase(mFrames->begin(), mFrames->begin() + size);
     }
 }
 
@@ -663,22 +664,22 @@ void SkeletonClip::PollRecording(const SkeletonFrame &frame) {
         if (TheHamDirector) {
             songSeconds = MoveDir::SongSeconds();
         }
-        if (TheHamDirector && !mRecordedFrames->empty()
-            && mRecordedFrames->back().unk1c4 >= songSeconds) {
+        if (TheHamDirector && !mFrames->empty()
+            && mFrames->back().mSeconds >= songSeconds) {
             return;
         }
 
         RecordedFrame recordedFrame;
-        recordedFrame.unk0 = frame.mFrameNumber;
-        recordedFrame.unk4 = frame.mElapsedMs;
-        recordedFrame.unk8 = frame.mUpVector;
-        recordedFrame.unk18 = frame.mFloorPlane;
+        recordedFrame.mFrameNumber = frame.mFrameNumber;
+        recordedFrame.mElapsedMs = frame.mElapsedMs;
+        recordedFrame.mUpVector = frame.mUpVector;
+        recordedFrame.mFloorPlane = frame.mFloorPlane;
 
         int active_skel_idx = -1;
-        if (unk11fc == -1) {
+        if (mRecordingPlayer == -1) {
             active_skel_idx = TheGestureMgr->GetActiveSkeletonIndex();
         } else {
-            HamPlayerData *player = TheGameData->Player(unk11fc);
+            HamPlayerData *player = TheGameData->Player(mRecordingPlayer);
             active_skel_idx = TheGestureMgr->GetSkeletonIndexByTrackingID(
                 player->GetSkeletonTrackingID()
             );
@@ -687,19 +688,30 @@ void SkeletonClip::PollRecording(const SkeletonFrame &frame) {
         if (active_skel_idx != -1) {
             MILO_ASSERT_RANGE(active_skel_idx, 0, 6, 0x2a9);
             const SkeletonData &data = frame.mSkeletonDatas[active_skel_idx];
-            recordedFrame.unk28 = data.mTracking == kSkeletonTracked;
-            memcpy(recordedFrame.unk2c, data.mJointPositions, 0x140);
-            memcpy(recordedFrame.unk16c, data.mJointConfidences, 0x50);
-            recordedFrame.unk1bc = data.mQualityFlags;
-            recordedFrame.unk1c0 = data.mTrackingID;
-            recordedFrame.unk1c4 = songSeconds;
+            recordedFrame.mTracked = data.mTracking == kSkeletonTracked;
+            memcpy(
+                recordedFrame.mJointPositions,
+                data.mJointPositions,
+                sizeof(Vector3) * kNumJoints
+            );
+            memcpy(
+                recordedFrame.mJointConfidences,
+                data.mJointConfidences,
+                sizeof(JointConfidence) * kNumJoints
+            );
+            recordedFrame.mQualityFlags = data.mQualityFlags;
+            recordedFrame.mTrackingID = data.mTrackingID;
+            recordedFrame.mSeconds = songSeconds;
 
-            // why is this off right here
-            if (mRecordedFrames->size() == mRecordedFrames->capacity()) {
-                auto c = mRecordedFrames->capacity();
-                MILO_LOG("Can\'t record any more frames, reached capacity (%i)\n", c);
+            int size = mFrames->size();
+            int cap = mFrames->capacity();
+            if (cap == size) {
+                MILO_LOG(
+                    "Can't record any more frames, reached capacity (%i)\n",
+                    mFrames->capacity()
+                );
             } else {
-                mRecordedFrames->push_back(recordedFrame);
+                mFrames->push_back(recordedFrame);
             }
         }
     }
