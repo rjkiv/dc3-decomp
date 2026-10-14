@@ -4,21 +4,22 @@
 
 class FreestyleMotionFilter : public Hmx::Object {
 public:
+    FreestyleMotionFilter();
     // Hmx::Object
     virtual ~FreestyleMotionFilter();
     virtual DataNode Handle(DataArray *, bool);
     virtual bool SyncProperty(DataNode &, DataArray *, int, PropOp);
 
-    FreestyleMotionFilter();
     void Clear();
     void Activate();
     void Deactivate();
     bool IsActive() const;
     bool Detected();
-    void UpdateFilters(SkeletonUpdateData const &);
+    void UpdateFilters(const SkeletonUpdateData &data);
 
-    float unk2c;
-    float unk30;
-    float unk34;
-    bool mIsActive; // 0x38
+private:
+    float mVelocityThreshold; // 0x2c
+    float mFrameMoveMs; // 0x30
+    float mMovement; // 0x34
+    bool mActive; // 0x38
 };
