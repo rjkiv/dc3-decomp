@@ -3,6 +3,11 @@
 #include "net/HttpReq.h"
 #include "utl/Str.h"
 
+struct ResponseDataT {
+    char *memory; // 0x0
+    unsigned int size; // 0x4
+};
+
 class HttpReqCurl : public HttpReq {
 public:
     HttpReqCurl(ReqType type, unsigned int ip, unsigned short port, const char *url);
@@ -24,8 +29,7 @@ public:
 private:
     curl_slist *mHeaders; // 0x50
     CURL *mReq; // 0x54
-    char *mBuffer; // 0x58 - file the output should be written to
-    unsigned int mBufferLength; // 0x5c
+    ResponseDataT mBuffer; // 0x58
     String mSSLCertPath; // 0x60
     String mSSLCertName; // 0x68
     unsigned short mSSLVerifyPeer; // 0x70

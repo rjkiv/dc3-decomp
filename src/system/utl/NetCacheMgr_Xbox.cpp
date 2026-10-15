@@ -1,4 +1,5 @@
 #include "utl/NetCacheMgr_Xbox.h"
+#include "net/XLSPConnection.h"
 #include "os/Debug.h"
 #include "os/PlatformMgr.h"
 #include "utl/NetCacheMgr.h"
@@ -52,4 +53,6 @@ unsigned int NetCacheMgrXbox::GetIP() {
     }
 }
 
-bool NetCacheMgrXbox::IsDoneUnloading() const { return mConnection.GetUnk8() == 0; }
+bool NetCacheMgrXbox::IsDoneUnloading() const {
+    return mConnection.GetStateDesired() == XLSPConnection::kS_Disconnected;
+}

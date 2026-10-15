@@ -8,15 +8,6 @@
 
 class WebSvcRequest : public Hmx::Object {
 public:
-    enum State {
-        kNotStarted = 0,
-        kRunning = 1,
-        kFinished = 2,
-        kReadyForRemoval = 3,
-        kReadyForDeletion = 4,
-        kNumStates = -1,
-    };
-
     WebSvcRequest(const char *url, const char *additional_hdr, Hmx::Object *callback);
     virtual ~WebSvcRequest();
     virtual void Start();
@@ -51,7 +42,7 @@ public:
     HttpReq *GetHttpReq() const { return mHttpReq; }
     bool HasHttpReq() const { return mHttpReq; }
     Hmx::Object *GetCallback() const { return mCallback; }
-    State GetState() const { return mState; }
+    int GetState() const { return mState; }
 
     void OnSuccess() {
         MarkSuccess();
@@ -83,7 +74,13 @@ protected:
     ObjPtr<Hmx::Object> mCallback; // 0x34
     String mBaseUrl; // 0x48
     HttpReq *mHttpReq; // 0x50
-    State mState; // 0x54
+    enum {
+        kNotStarted = 0x0000,
+        kRunning = 0x0001,
+        kFinished = 0x0002,
+        kReadyForRemoval = 0x0003,
+        kReadyForDeletion = 0x0004,
+    } mState; // 0x54
     String mAdditionalHdr; // 0x58
     unsigned int mResponseStatusCode; // 0x60
     std::map<String, String> mCookies; // 0x64

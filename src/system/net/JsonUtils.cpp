@@ -9,39 +9,39 @@
 #pragma region JsonObject
 
 JsonObject::EType JsonObject::GetType() const {
-    if (mObject)
-        return (JsonObject::EType)json_object_get_type(mObject);
+    if (m_pJsonObject)
+        return (JsonObject::EType)json_object_get_type(m_pJsonObject);
     else
         return kType_Null;
 }
 
 char const *JsonObject::Str() const {
     MILO_ASSERT(GetType() == kType_String, 0x20);
-    return json_object_get_string(mObject);
+    return json_object_get_string(m_pJsonObject);
 }
 
 bool JsonObject::Bool() const {
     MILO_ASSERT(GetType() == kType_Boolean, 0x26);
-    return json_object_get_boolean(mObject);
+    return json_object_get_boolean(m_pJsonObject);
 }
 
 int JsonObject::Int() const {
     MILO_ASSERT(GetType() == kType_Int, 0x2c);
-    return json_object_get_int(mObject);
+    return json_object_get_int(m_pJsonObject);
 }
 
 #pragma endregion JsonObject
 #pragma region JsonArray
 
-JsonArray::JsonArray() { mObject = json_object_new_array(); }
+JsonArray::JsonArray() { m_pJsonObject = json_object_new_array(); }
 
 JsonArray::~JsonArray() {
-    for (int i = json_object_array_length(mObject) - 1; i >= 0; i--) {
-        json_object_put(json_object_array_get_idx(mObject, i));
+    for (int i = json_object_array_length(m_pJsonObject) - 1; i >= 0; i--) {
+        json_object_put(json_object_array_get_idx(m_pJsonObject, i));
     }
 }
 
-int JsonArray::GetSize() const { return json_object_array_length(mObject); }
+int JsonArray::GetSize() const { return json_object_array_length(m_pJsonObject); }
 
 #pragma endregion JsonArray
 #pragma region JsonConverter
@@ -49,10 +49,10 @@ int JsonArray::GetSize() const { return json_object_array_length(mObject); }
 JsonConverter::JsonConverter() {}
 
 JsonConverter::~JsonConverter() {
-    if (mObjects.size() > 0) {
-        for (int i = mObjects.size() - 1; i >= 0; i--) {
-            mObjects[i]->Release();
-            delete mObjects[i];
+    if (m_Objects.size() > 0) {
+        for (int i = m_Objects.size() - 1; i >= 0; i--) {
+            m_Objects[i]->Release();
+            delete m_Objects[i];
         }
     }
 }
@@ -72,7 +72,7 @@ JsonObject *JsonConverter::LoadFromString(const String &str) {
             jObj->Set(obj);
             printbuf_free(buf);
             jObj->AddRef();
-            mObjects.push_back(jObj);
+            m_Objects.push_back(jObj);
             return jObj;
         }
     }
@@ -101,7 +101,7 @@ JsonObject *JsonConverter::GetByName(JsonObject *j, const char *cc) {
             JsonObject *jObj = new JsonObject();
             jObj->Set(obj);
             jObj->AddRef();
-            mObjects.push_back(jObj);
+            m_Objects.push_back(jObj);
             return jObj;
         } else {
             return nullptr;
@@ -111,7 +111,7 @@ JsonObject *JsonConverter::GetByName(JsonObject *j, const char *cc) {
 
 void JsonConverter::PushObject(JsonObject *obj) {
     obj->AddRef();
-    mObjects.push_back(obj);
+    m_Objects.push_back(obj);
 }
 
 #pragma endregion JsonConverter

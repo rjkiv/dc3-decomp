@@ -19,10 +19,11 @@ GetPlaylistsJob::GetPlaylistsJob(Hmx::Object *callback, char const *onlineID)
 }
 
 void GetPlaylistsJob::GetPlaylists(std::vector<CustomPlaylist> *playlists) {
-    if (mResult != 1 || !mJsonResponse) {
-        return;
+    if (mResult == 1) {
+        auto response = GetJsonResponse();
+        if (response)
+            ::GetPlaylists(GetJsonConverter(), response, playlists);
     }
-    ::GetPlaylists(mJsonReader, mJsonResponse, playlists);
 }
 
 GetPlaylistJob::GetPlaylistJob(Hmx::Object *callback, char const *onlineID, int playlistID)
@@ -36,10 +37,11 @@ GetPlaylistJob::GetPlaylistJob(Hmx::Object *callback, char const *onlineID, int 
 }
 
 void GetPlaylistJob::GetPlaylist(CustomPlaylist *customP) {
-    if (mResult != 1 || !mJsonResponse) {
-        return;
+    if (mResult == 1) {
+        auto response = GetJsonResponse();
+        if (response)
+            ::GetPlaylist(GetJsonConverter(), response, customP);
     }
-    ::GetPlaylist(mJsonReader, mJsonResponse, customP);
 }
 
 AddPlaylistJob::AddPlaylistJob(
@@ -79,11 +81,14 @@ AddPlaylistJob::AddPlaylistJob(
 }
 
 void AddPlaylistJob::GetPlaylistID(CustomPlaylist *customP) {
-    if (mResult == 1 && mJsonResponse) {
-        JsonObject *obj = mJsonReader.GetByName(mJsonResponse, "id");
-        if (obj) {
-            MILO_LOG("===== Added playlistID %i\n", obj->Int());
-            customP->SetOnlineID(obj->Int());
+    if (mResult == 1) {
+        auto response = GetJsonResponse();
+        if (response) {
+            JsonObject *obj = GetJsonConverter().GetByName(response, "id");
+            if (obj) {
+                MILO_LOG("===== Added playlistID %i\n", obj->Int());
+                customP->SetOnlineID(obj->Int());
+            }
         }
     }
 }

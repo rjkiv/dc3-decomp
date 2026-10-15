@@ -24,9 +24,10 @@ void AuthenticateReqJob::Start() {
 
 bool AuthenticateReqJob::ParseResponse() {
     mSessionID = "";
-    if (mJsonResponse) {
-        if (mJsonResponseVersion == 1) {
-            JsonObject *o = mJsonReader.GetByName(mJsonResponse, "session_id");
+    auto response = GetJsonResponse();
+    if (response) {
+        if (GetJsonResponseVersion() == 1) {
+            JsonObject *o = GetJsonConverter().GetByName(response, "session_id");
             if (o) {
                 mSessionID = o->Str();
                 return true;

@@ -4,6 +4,23 @@
 #include "utl/JobMgr.h"
 #include "utl/Str.h"
 
+enum XboxAuthStateT {
+    kServerXboxObtainingServiceID = 0x0000,
+    kServerXboxConnectingToXLSP = 0x0001,
+    kServerXboxXLSPConnected = 0x0002,
+};
+
+enum XBLSubmitStateT {
+    kServerXBLSubmitState_Idle = 0x0000,
+    kServerXBLSubmitState_CreatingSession = 0x0001,
+    kServerXBLSubmitState_JoiningSession = 0x0002,
+    kServerXBLSubmitState_StartingSession = 0x0003,
+    kServerXBLSubmitState_SubmittingScore = 0x0004,
+    kServerXBLSubmitState_EndingSession = 0x0005,
+    kServerXBLSubmitState_UnjoiningSession = 0x0006,
+    kServerXBLSubmitState_DeletingSession = 0x0007,
+};
+
 class DingoSvrXbox : public DingoServer {
 public:
     DingoSvrXbox();
@@ -30,28 +47,27 @@ public:
     virtual void DeleteSessionComplete(bool success);
     virtual void StartUploadCareerScore(u64 career_score);
 
-private:
-    int GetValidLoginCandidate(char *, u64 &) const;
-    void CreateSession();
-
 protected:
     virtual void FillAuthParams(DataPoint &pt);
     virtual bool FillAuthParamsFromPadNum(DataPoint &pt, int padnum);
     virtual void OnAuthSuccess();
 
-    int mState; // 0xb0
-    int unkb4;
+private:
+    int GetValidLoginCandidate(char *, u64 &) const;
+    void CreateSession();
+
+    XboxAuthStateT mState; // 0xb0
     XUID mXUID; // 0xb8
-    String mUserName; // 0xc0
-    XLSPConnection unkc8;
+    String mProfileName; // 0xc0
+    XLSPConnection mXlspConnection; // 0xc8
     String mXLSPFilter; // 0x140
     unsigned int mDingoServiceID; // 0x148
     JobMgr mJobMgr; // 0x14c
-    int unk15c; // 0x15c - state? last job type queued?
-    u64 unk160;
-    u64 unk168;
-    HANDLE unk170;
-    float mMsBetweenReconnDingo; // 0x174
+    XBLSubmitStateT mLeaderboardSubmitState; // 0x15c
+    XUID mLeaderboardXuid; // 0x160
+    u64 mLeaderboardScore; // 0x168
+    HANDLE mSessionHandle; // 0x170
+    float mTimeBetweenReconn; // 0x174
     unsigned int mLeaderboardID; // 0x178
     unsigned int mLeaderboardScorePropID; // 0x17c
 };

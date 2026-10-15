@@ -5,12 +5,27 @@
 #include "utl/Str.h"
 
 enum HttpGetFailType {
+    kHttpGetFail_Unknown = 0x0000,
+    kHttpGetFail_SocketError = 0x0001,
+    kHttpGetFail_TimeOut = 0x0002,
+    kHttpGetFail_ClientError = 0x0003,
+    kHttpGetFail_ServerError = 0x0004
 };
 
 class HttpGet {
 public:
     enum State {
-        kHttpGet_Nil = -1,
+        kS_Connecting = 0x0000,
+        kS_StartSending = 0x0001,
+        kS_Sending = 0x0002,
+        kS_WaitToReceive = 0x0003,
+        kS_Receiving = 0x0004,
+        kS_Done = 0x0005,
+        kS_Failure = 0x0006,
+        kS_FailureRetry = 0x0007,
+        kS_WaitToSend = 0x0008,
+        kS_Max = 0x0009,
+        kS_Nil = -1
     };
 
     HttpGet(unsigned int ip, unsigned short port, const char *, const char *);
@@ -29,16 +44,10 @@ public:
     unsigned int GetBufferSize();
     void SetTimeout(float);
     HttpGetFailType FailType() const { return mFailType; }
-    State PrevState() const { return mPrevState; }
+    State PrevState() const { return mFailState; }
+    int GetRetryCount() { return mRetryCount; }
 
     MEM_OVERLOAD(HttpGet, 0x1C);
-
-private:
-    void AddRequiredHeaders();
-
-    static const float kDefaultTimeoutMs;
-    static const int kMaxRetries;
-    static const int kRecvBufSize;
 
 protected:
     virtual bool CanRetry();
@@ -54,24 +63,34 @@ protected:
     bool HasTimedOut();
     void SetState(State);
 
+    void SetFailType(HttpGetFailType type) { mFailType = type; }
+
     NetworkSocket *mSocket; // 0x8
-    String unkc; // 0xc
+    String mStrRemoteFile; // 0xc
     unsigned short mPort; // 0x14
     State mState; // 0x18
-    bool unk1c;
-    Timer mStateTimer;
+    unsigned char mIgnoreResponse; // 0x1c
+
+private:
+    void AddRequiredHeaders();
+
+    static const float kDefaultTimeoutMs;
+    static const int kMaxRetries;
+    static const int kRecvBufSize;
+
+    Timer mTimer; // 0x20
     float mTimeoutMs; // 0x50
     unsigned int mIP; // 0x54
-    String unk58;
-    void *unk60;
+    String mOptionalHeader; // 0x58
+    char *mRecvBuf; // 0x60
     int mRecvBufPos; // 0x64
-    u32 unk68;
+    unsigned int mStatusCode; // 0x68
     char *mFileBuf; // 0x6c
     int mFileBufSize; // 0x70
     int mFileBufRecvPos; // 0x74
-    int mRetryCount;
+    int mRetryCount; // 0x78
     HttpGetFailType mFailType; // 0x7c
-    State mPrevState; // 0x80
+    State mFailState; // 0x80
 };
 
 class HttpPost : public HttpGet {
@@ -88,7 +107,9 @@ protected:
 
     const char *mContent; // 0x88
     unsigned int mContentLength; // 0x8c
-    int unk90; // 0x90
-    String unk94; // 0x94
-    int unk9c;
+    int mContentBytesLeftToSend; // 0x90
+
+private:
+    String mHeader; // 0x94
+    int mHeaderLength;
 };

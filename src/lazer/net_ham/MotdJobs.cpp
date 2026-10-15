@@ -40,8 +40,8 @@ void GetMotdJob::GetMotdData(
     motdImageAux = gNullStr;
     motdSoundAux = gNullStr;
     if (mResult == 1) {
-        JsonConverter &c = mJsonReader;
-        JsonObject *o = mJsonResponse;
+        JsonConverter &c = GetJsonConverter();
+        JsonObject *o = GetJsonResponse();
         if (o) {
             JsonObject *intervalName = c.GetByName(o, "challenge_interval");
             if (intervalName) {

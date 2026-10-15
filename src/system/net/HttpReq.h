@@ -3,13 +3,11 @@
 #include <map>
 
 enum ReqType {
-    kHttpReqType_POST = 0,
-    kHttpReqType_GET = 1,
-    kHttpReqType_PUT = 2,
-    kHttpReqType_HTTPS_POST = 3,
-    kHttpReqType_HTTPS_GET = 4,
-    kHttpReqType_HTTPS_PUT = 5,
-    kHttpReqType_NIL = -1
+    kHttpReqType_POST = 0x0000,
+    kHttpReqType_GET = 0x0001,
+    kHttpReqType_HTTPS_POST = 0x0002,
+    kHttpReqType_HTTPS_GET = 0x0003,
+    kHttpReqType_NIL = 0xff
 };
 
 class HttpReq {
@@ -54,22 +52,26 @@ public:
     void SetStatusCode(unsigned int code) { mStatusCode = code; }
     const char *GetHostName() const { return mHostName.c_str(); }
     unsigned int GetIPAddr() const { return mIPAddr; }
-    const char *GetURL() const { return mURL.c_str(); }
+    const char *GetURL() const { return mUrl.c_str(); }
     void SetIPAddr(unsigned int ip) { mIPAddr = ip; }
-    void SetURL(const char *url) { mURL = url; }
+    void SetURL(const char *url) { mUrl = url; }
     void MarkSuccess() { mState = kHttpReq_Done; }
     void MarkFailure() { mState = kHttpReq_Failure; }
 
 protected:
+    void SetState(State state) { mState = state; }
+
     String mHostName; // 0x4
     unsigned int mIPAddr; // 0xc
     unsigned int mPort; // 0x10
-    String mURL; // 0x14
+    String mUrl; // 0x14
     ReqType mType; // 0x1c
     String mUserAgent; // 0x20
     const char *mContent; // 0x28
     unsigned int mContentLength; // 0x2c
     unsigned int mStatusCode; // 0x30
     std::map<String, String> mCookies; // 0x34
+
+private:
     State mState; // 0x4c
 };

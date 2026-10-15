@@ -20,7 +20,7 @@ static const char *sStr = "1";
 DingoJob::DingoJob(char const *url, Hmx::Object *callback)
     : WebSvcRequest(url, "", callback), mResult(0), mDataPoint(0), mJsonResponse(0),
       mJsonResponseVersion(0), mTimeoutMs(10000) {
-    unk84 = 0;
+    mParams = 0;
 }
 
 DingoJob::~DingoJob() { RELEASE(mDataPoint); }
@@ -30,7 +30,7 @@ void DingoJob::Start() {
     MILO_ASSERT(strlen(GetURL()) != 0, 0x4A);
 
     const char *url = GetURL();
-    const char *s = TheServer.GetUnk40();
+    const char *s = TheServer.GetSessionID();
     WebSvcRequest::SetURL(
         MakeString("/%s/%s/%s/%s", sStr, TheServer.GetPlatform(), s, url)
     );
@@ -60,8 +60,8 @@ void DingoJob::SendCallback(bool success, bool cancelled) {
                 pt.AddPair("mResponseStr", mResponseStr.c_str());
                 pt.AddPair("mBaseUrl", mBaseUrl.c_str());
                 pt.AddPair("mResponseStatusCode", (int)GetResponseStatusCode());
-                pt.AddPair("session_id", TheServer.GetUnk40());
-                OnlineID id = TheServer.GetOnlineID();
+                pt.AddPair("session_id", TheServer.GetSessionID());
+                OnlineID id = TheServer.GetPlayerID();
                 pt.AddPair("player", id.ToString());
                 pt.AddPair("severity", "warn");
                 pt.AddPair("project", "sync");
@@ -97,7 +97,7 @@ bool DingoJob::CheckReqResult() {
     if (mResult == -3) {
         bool authenticating = TheServer.IsAuthenticating();
         if (!authenticating) {
-            int padnum = TheServer.GetUnk74();
+            int padnum = TheServer.GetPadLoggedIn();
             TheServer.Logout();
             authenticating = TheServer.Authenticate(padnum);
         } else {
@@ -132,7 +132,7 @@ void DingoJob::AddContent(HttpReq *httpReq) {
     String str1, str2;
     mDataPoint->ToJSON(str1);
     URLEncode(str1.c_str(), str2, false);
-    unk84 = new char[str2.length()];
+    mParams = new char[str2.length()];
 }
 
 void DingoJob::SetDataPoint(const DataPoint &point) {
@@ -142,7 +142,7 @@ void DingoJob::SetDataPoint(const DataPoint &point) {
 }
 
 void DingoJob::ParseResponse() {
-    ParseResponse(&mJsonReader, &mJsonResponse, &mJsonResponseVersion);
+    ParseResponse(&mJsonConverter, &mJsonResponse, &mJsonResponseVersion);
 }
 
 void DingoJob::ParseResponse(JsonConverter *json, JsonObject **response, int *iptr) {

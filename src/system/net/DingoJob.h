@@ -17,11 +17,8 @@ public:
     virtual void SendCallback(bool success, bool cancelled);
 
     const char *GetResponseString();
-    int GetTimeoutMs() const { return mTimeoutMs; }
-    int GetResult() const { return mResult; }
-
-private:
-    void ParseResponse(JsonConverter *reader, JsonObject **response, int *retVersion);
+    int GetTimeout() { return mTimeoutMs; }
+    int GetResult() { return mResult; }
 
 protected:
     virtual void CleanUp(bool success);
@@ -34,12 +31,19 @@ protected:
 
     void ParseResponse();
     void SetDataPoint(const DataPoint &pt);
+    JsonConverter &GetJsonConverter() { return mJsonConverter; }
+    JsonObject *GetJsonResponse() const { return mJsonResponse; }
+    int GetJsonResponseVersion() const { return mJsonResponseVersion; }
 
     int mResult; // 0x7c
+
+private:
+    void ParseResponse(JsonConverter *reader, JsonObject **response, int *retVersion);
+
     DataPoint *mDataPoint; // 0x80
-    char *unk84;
+    char *mParams;
     String mResponseStr; // 0x88
-    JsonConverter mJsonReader; // 0x90
+    JsonConverter mJsonConverter; // 0x90
     JsonObject *mJsonResponse; // 0xa4
     int mJsonResponseVersion; // 0xa8
     int mTimeoutMs; // 0xac

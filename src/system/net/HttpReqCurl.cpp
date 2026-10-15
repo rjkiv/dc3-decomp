@@ -20,8 +20,8 @@ HttpReqCurl::HttpReqCurl(
 )
     : HttpReq(type, ip, port, url), mHeaders(0), mReq(0), mSSLVerifyPeer(0),
       mSSLVerifyHost(0), mTimeoutMs(10000) {
-    mBuffer = 0;
-    mBufferLength = 0;
+    mBuffer.memory = 0;
+    mBuffer.size = 0;
 }
 
 HttpReqCurl::HttpReqCurl(
@@ -29,8 +29,8 @@ HttpReqCurl::HttpReqCurl(
 )
     : HttpReq(type, hostname, port, url), mHeaders(0), mReq(0), mSSLVerifyPeer(0),
       mSSLVerifyHost(0), mTimeoutMs(10000) {
-    mBuffer = 0;
-    mBufferLength = 0;
+    mBuffer.memory = 0;
+    mBuffer.size = 0;
 }
 
 HttpReqCurl::~HttpReqCurl() {
@@ -38,11 +38,11 @@ HttpReqCurl::~HttpReqCurl() {
         curl_easy_cleanup(mReq);
         mReq = nullptr;
     }
-    if (mBuffer) {
-        MemFree(mBuffer, __FILE__, 0x6E);
-        mBuffer = nullptr;
+    if (mBuffer.memory) {
+        MemFree(mBuffer.memory, __FILE__, 0x6E);
+        mBuffer.memory = nullptr;
     }
-    mBufferLength = 0;
+    mBuffer.size = 0;
 }
 
 void HttpReqCurl::Start() {
@@ -58,7 +58,7 @@ void HttpReqCurl::Start() {
     if (mIPAddr == 0) {
         MILO_ASSERT(mHostName.size(), 0x8A);
         urlStr = MakeString(
-            "http%s://%s:%d%s", str60.c_str(), mHostName.c_str(), mPort, mURL.c_str()
+            "http%s://%s:%d%s", str60.c_str(), mHostName.c_str(), mPort, mUrl.c_str()
         );
     } else {
         urlStr = MakeString(
@@ -66,7 +66,7 @@ void HttpReqCurl::Start() {
             str60.c_str(),
             NetworkSocket::IPIntToString(mIPAddr).c_str(),
             mPort,
-            mURL.c_str()
+            mUrl.c_str()
         );
     }
     curl_easy_setopt(mReq, CURLOPT_URL, urlStr.c_str());
@@ -96,8 +96,8 @@ void HttpReqCurl::Start() {
         curl_easy_setopt(mReq, CURLOPT_HTTPHEADER, mHeaders);
     }
 
-    if (mType != kHttpReqType_GET && mType != kHttpReqType_HTTPS_POST) {
-        if (mType == kHttpReqType_POST || mType == kHttpReqType_PUT) {
+    if (mType != kHttpReqType_GET && mType != kHttpReqType_HTTPS_GET) {
+        if (mType == kHttpReqType_POST || mType == kHttpReqType_HTTPS_POST) {
             curl_easy_setopt(mReq, CURLOPT_POST, 1);
             curl_easy_setopt(mReq, CURLOPT_POSTFIELDS, mContent);
             curl_easy_setopt(mReq, CURLOPT_POSTFIELDSIZE, mContentLength);
@@ -111,9 +111,9 @@ void HttpReqCurl::Do() {
     MILO_ASSERT(mReq, 0x122);
     int ret = curl_easy_perform(mReq);
     if (ret == 0) {
-        mState = kHttpReq_Done;
+        SetState(kHttpReq_Done);
     } else {
-        mState = kHttpReq_Failure;
+        SetState(kHttpReq_Failure);
     }
 }
 
@@ -123,11 +123,11 @@ void HttpReqCurl::Reset() {
         curl_easy_cleanup(mReq);
         mReq = nullptr;
     }
-    if (mBuffer) {
-        MemFree(mBuffer, __FILE__, 0xEA);
-        mBuffer = nullptr;
+    if (mBuffer.memory) {
+        MemFree(mBuffer.memory, __FILE__, 0xEA);
+        mBuffer.memory = nullptr;
     }
-    mBufferLength = 0;
+    mBuffer.size = 0;
 }
 
 char *HttpReqCurl::DetachBuffer() {
@@ -135,15 +135,15 @@ char *HttpReqCurl::DetachBuffer() {
     if (!HasSucceeded()) {
         return nullptr;
     } else {
-        char *ret = mBuffer;
-        mBuffer = nullptr;
+        char *ret = mBuffer.memory;
+        mBuffer.memory = nullptr;
         return ret;
     }
 }
 
 unsigned int HttpReqCurl::GetBufferSize() {
     MILO_ASSERT(mReq, 0x141);
-    return mBufferLength;
+    return mBuffer.size;
 }
 
 void HttpReqCurl::SetTimeout(unsigned int timeout) {
