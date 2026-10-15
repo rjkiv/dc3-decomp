@@ -14,12 +14,12 @@ void AppNavProvider::Text(int i1, int data, UIListLabel *slot, UILabel *label) c
     AppLabel *applabel = dynamic_cast<AppLabel *>(label);
     if (slot->Matches("practice_diff")) {
         const NavItem &cur = mNavItems[data];
-        if (cur.unkc == 2) {
+        if (cur.mScoreDisplayMode == kScoreDisplay_Practice) {
             applabel->SetBestPracticeDifficulty(cur.mSongID);
         }
     } else if (slot->Matches("practice_score")) {
         const NavItem &cur = mNavItems[data];
-        if (cur.unkc == 2) {
+        if (cur.mScoreDisplayMode == kScoreDisplay_Practice) {
             applabel->SetPracticeScore(cur.mSongID, kNumDifficulties);
         }
     } else if (slot->Matches("song") && mNavItems[data].mLabels.size() == 2) {
@@ -35,7 +35,7 @@ void AppNavProvider::Custom(
 ) const {
     if (listcustom->Matches("stars")) {
         HamStarsDisplay *hsd = dynamic_cast<HamStarsDisplay *>(obj);
-        if (mNavItems[i2].unkc == 1) {
+        if (mNavItems[i2].mScoreDisplayMode == kScoreDisplay_Perform) {
             hsd->SetSong(mNavItems[i2].mSongID);
         }
     }

@@ -44,9 +44,9 @@ void MocapSkeletonIterator::operator++() {
 }
 
 bool MocapSkeletonIterator::PrevSkeleton(
-    const Skeleton &s, int i2, ArchiveSkeleton &as, int &i3
+    const Skeleton &current, int previous_ms, ArchiveSkeleton &previous, int &elapsed_ms
 ) const {
-    return PrevFromArchive(*this, s, i2, as, i3);
+    return PrevFromArchive(*this, current, previous_ms, previous, elapsed_ms);
 }
 
 void MocapSkeletonIterator::Update() {

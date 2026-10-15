@@ -27,7 +27,7 @@ public:
     NEW_OBJ(TransConstraint)
     void SnapToParent();
     void SetParent(RndTransformable *parent) { mParent = parent; }
-    void SetUnk52(bool b1) { unk52 = b1; }
+    void SetEnabled(bool enabled) { mEnabled = enabled; }
 
 private:
     void SetScaleVectorOnTransform(RndTransformable *, Vector3 &);
@@ -49,5 +49,5 @@ protected:
     bool mAffectScale; // 0x50
     /** "Whether or not to use UI timing.  Default is to use game time." */
     bool mUseUITime; // 0x51
-    bool unk52; // 0x52
+    bool mEnabled; // 0x52
 };

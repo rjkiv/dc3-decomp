@@ -43,9 +43,9 @@ namespace {
     }
 }
 
-Symbol HamWardrobe::GetBackupOutfitOverride(int x) {
-    if (x >= 0 && x < 2) {
-        return mBackupOverrideOutfits[x];
+Symbol HamWardrobe::GetBackupOutfitOverride(int index) {
+    if (index >= 0 && index < 2) {
+        return mBackupOverrideOutfits[index];
     } else
         return gNullStr;
 }
@@ -92,8 +92,9 @@ Symbol GetDanceBattleBackupOutfit(Symbol s1, Symbol s2) {
 }
 
 HamWardrobe::HamWardrobe()
-    : mCrowdMembers(this), mMainCharacters(this, (EraseMode)1, kObjListAllowNull),
-      mTempo("medium"), unk38(0), mCrowdForceState(gNullStr), unk40(0) {
+    : mCrowd(this), mMainCharacters(this, (EraseMode)1, kObjListAllowNull),
+      mTempo("medium"), mCrowdOverride(0), mCrowdForceState(gNullStr),
+      mLastCrowdPlayFlags(0) {
     static DataNode &n = DataVariable("hamwardrobe");
     if (TheHamWardrobe) {
         MILO_NOTIFY("Trying to make > 1 HamWardrobe, which should be single");
@@ -120,7 +121,7 @@ BEGIN_HANDLERS(HamWardrobe)
     HANDLE_EXPR(get_character, GetCharacter(_msg->Int(2)))
     HANDLE_EXPR(get_backup, GetBackup(_msg->Int(2)))
     HANDLE(add_crowd, OnAddCrowd)
-    HANDLE_ACTION(set_force_character, mCharOverrideOutfit = _msg->Sym(2))
+    HANDLE_ACTION(set_force_character, mForceCharacter = _msg->Sym(2))
     HANDLE_ACTION(crowd, PlayCrowdAnimation(_msg->Sym(2), 1, false))
     HANDLE_ACTION(crowd_end_override, EndCrowdOverride())
     HANDLE_ACTION(crowd_force_state_enable, ForceCrowdAnimationStart(_msg->Sym(2)))
@@ -134,7 +135,7 @@ BEGIN_HANDLERS(HamWardrobe)
 END_HANDLERS
 
 BEGIN_PROPSYNCS(HamWardrobe)
-    SYNC_PROP(crowd_members, mCrowdMembers)
+    SYNC_PROP(crowd_members, mCrowd)
     SYNC_PROP_SET(overlay_enabled, mOverlay->Showing(), mOverlay->SetShowing(_val.Int()))
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
@@ -168,21 +169,21 @@ void HamWardrobe::SetBackupOverrideOutfits(Symbol outfit1, Symbol outfit2) {
     mBackupOverrideOutfits[1] = outfit2;
 }
 
-HamCharacter *HamWardrobe::GetBackup(int i) const {
-    return Dir()->Find<HamCharacter>(MakeString("backup%d", i), false);
+HamCharacter *HamWardrobe::GetBackup(int which) const {
+    return Dir()->Find<HamCharacter>(MakeString("backup%d", which), false);
 }
 
 void HamWardrobe::EndCrowdOverride() {
-    if (unk38) {
+    if (mCrowdOverride) {
         if (mCrowdForceState == gNullStr) {
-            unk38 = false;
+            mCrowdOverride = false;
             int flags;
-            if (unk40 & 2) {
-                flags = (unk40 & 0xfffffffc) | 1;
+            if (mLastCrowdPlayFlags & 2) {
+                flags = (mLastCrowdPlayFlags & 0xfffffffc) | 1;
             } else {
-                flags = unk40;
+                flags = mLastCrowdPlayFlags;
             }
-            PlayCrowdAnimation(unk44, flags, false);
+            PlayCrowdAnimation(mLastCrowdGroup, flags, false);
         }
     }
 }
@@ -260,9 +261,9 @@ HamCharacter *HamWardrobe::GetCharacter(int i) const {
 void HamWardrobe::ClearCrowdClips() { LoadCrowdClips(gNullStr, gNullStr, false); }
 
 void HamWardrobe::ClearCrowd() {
-    mCrowdMembers.clear();
+    mCrowd.clear();
     mCrowdForceState = gNullStr;
-    unk38 = false;
+    mCrowdOverride = false;
 }
 
 void HamWardrobe::SyncInterestObjects(ObjectDir *dir) {
@@ -290,7 +291,7 @@ void HamWardrobe::SyncInterestObjects(ObjectDir *dir) {
 
 void HamWardrobe::UpdateOverlay() {
     if (mOverlay && mOverlay->Showing()) {
-        FOREACH (it, mCrowdMembers) {
+        FOREACH (it, mCrowd) {
             Character *cur = *it;
             if (cur) {
                 *mOverlay << cur->Name() << ": ";
@@ -344,18 +345,18 @@ void HamWardrobe::SetDir(ObjectDir *dir) {
 }
 
 void HamWardrobe::PlayCrowdAnimation(Symbol s1, int i2, bool b3) {
-    if (!mCrowdMembers.empty()) {
-        unk44 = s1;
-        unk40 = i2;
-        if ((b3 || !unk38) && mCrowdForceState == gNullStr) {
-            unk38 = b3;
+    if (!mCrowd.empty()) {
+        mLastCrowdGroup = s1;
+        mLastCrowdPlayFlags = i2;
+        if ((b3 || !mCrowdOverride) && mCrowdForceState == gNullStr) {
+            mCrowdOverride = b3;
             float f6;
             if ((i2 & 0xF0) == 0x10) {
                 f6 = 0;
             } else {
                 f6 = 4;
             }
-            FOREACH (it, mCrowdMembers) {
+            FOREACH (it, mCrowd) {
                 Character *cur = *it;
                 if (s1.Null()) {
                     cur->Enter();
@@ -412,8 +413,8 @@ void HamWardrobe::LoadCharacters(
     Symbol venue,
     bool async
 ) {
-    if (!mCharOverrideOutfit.Null()) {
-        outfit1 = mCharOverrideOutfit;
+    if (!mForceCharacter.Null()) {
+        outfit1 = mForceCharacter;
     }
     outfit1 = HandleRobot(outfit1);
     outfit2 = HandleRobot(outfit2);
@@ -516,8 +517,8 @@ DataNode HamWardrobe::OnAddCrowd(DataArray *arr) {
     FOREACH (it, chars) {
         Character *curChar = it->mDef.mChar;
         if (curChar) {
-            if (mCrowdMembers.find(curChar) == mCrowdMembers.end()) {
-                mCrowdMembers.push_back(curChar);
+            if (mCrowd.find(curChar) == mCrowd.end()) {
+                mCrowd.push_back(curChar);
             }
         }
     }

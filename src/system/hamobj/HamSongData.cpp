@@ -17,8 +17,8 @@
 #include "utl/TempoMap.h"
 
 HamSongData::HamSongData()
-    : unk10(0), mSongInfo(0), mTempoMap(nullptr), mMeasureMap(nullptr), mBeatMap(nullptr),
-      mStream(0), mMidiReader(0) {
+    : mLoaded(0), mSongInfo(0), mTempoMap(nullptr), mMeasureMap(nullptr),
+      mBeatMap(nullptr), mStream(0), mMidiReader(0) {
     sInstance = this;
 }
 
@@ -33,7 +33,7 @@ HamSongData::~HamSongData() {
     RELEASE(mBeatMap);
 }
 
-SongPos HamSongData::CalcSongPos(HxMaster *master, float f1) {
+SongPos HamSongData::CalcSongPos(HxMaster *master, float ms) {
     MILO_ASSERT(mTempoMap, 0xB9);
     MILO_ASSERT(mMeasureMap, 0xBA);
     MILO_ASSERT(mBeatMap, 0xBB);
@@ -41,10 +41,10 @@ SongPos HamSongData::CalcSongPos(HxMaster *master, float f1) {
     if (hamMaster) {
         Stream *stream = hamMaster->GetAudio()->GetSongStream();
         if (stream) {
-            f1 += stream->GetJumpBackTotalTime(f1);
+            ms += stream->GetJumpBackTotalTime(ms);
         }
     }
-    float tick = mTempoMap->TimeToTick(f1);
+    float tick = mTempoMap->TimeToTick(ms);
     int m, b, t, bpm;
     mMeasureMap->TickToMeasureBeatTick(tick, m, b, t, bpm);
     float beat = mBeatMap->Beat((int)tick);
@@ -74,7 +74,7 @@ void HamSongData::PostLoad() {
     RELEASE(mStream);
     MILO_ASSERT(mTempoMap, 0xA5);
     mTempoMap->Finalize();
-    unk10 = true;
+    mLoaded = true;
 }
 
 void Validate(MemStream *ms, const char *cc, bool b) {
@@ -90,8 +90,8 @@ void Validate(MemStream *ms, const char *cc, bool b) {
     }
 }
 
-void HamSongData::Load(const char *cc, const SongInfo *info, bool b3) {
-    mSongInfo = info;
+void HamSongData::Load(const char *name, const SongInfo *song_info, bool synchronous) {
+    mSongInfo = song_info;
     ResetTheTempoMap();
     ResetTheBeatMap();
     RELEASE(mTempoMap);
@@ -100,24 +100,26 @@ void HamSongData::Load(const char *cc, const SongInfo *info, bool b3) {
     mBeatMap = new BeatMap();
     MidiParserMgr *mgr = TheMidiParserMgr;
     MidiReceiver *rcvr = mgr ? mgr : (MidiReceiver *)this;
-    mMidiReader = new MidiReader(*mStream, *rcvr, cc);
-    if (b3) {
+    mMidiReader = new MidiReader(*mStream, *rcvr, name);
+    if (synchronous) {
         while (!Poll())
             ;
     }
 }
 
-void HamSongData::Load(const SongInfo *info, bool b2, HamSongDataValidate v) {
-    const char *midi = FakeSongMgr::MidiFile(info);
+void HamSongData::Load(
+    const SongInfo *song_info, bool synchronous, HamSongDataValidate validateMode
+) {
+    const char *midi = FakeSongMgr::MidiFile(song_info);
     FileStream fStream(midi, FileStream::kRead, false);
     mStream = new MemStream();
     {
         MemDoTempAllocations tmp;
         mStream->Resize(fStream.Size());
         fStream.Read((void *)mStream->Buffer(), fStream.Size());
-        if (v == 2 || v == 1) {
-            Validate(mStream, midi, v == 1);
+        if (validateMode == 2 || validateMode == 1) {
+            Validate(mStream, midi, validateMode == 1);
         }
     }
-    Load(midi, info, b2);
+    Load(midi, song_info, synchronous);
 }

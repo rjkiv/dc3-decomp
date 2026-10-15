@@ -45,16 +45,18 @@ void MiniGameMgr::Init() {
     }
 }
 
-void MiniGameMgr::LoadMoveOptions(std::set<const MoveVariant *> &options, bool b2) {
+void MiniGameMgr::LoadMoveOptions(
+    std::set<const MoveVariant *> &movesNeeded, bool load_transitions
+) {
     mCategory = TheMoveMgr->PickRandomCategory();
     TheMoveMgr->GenerateMoveChoice(mCategory, mValidMoves, mInvalidMoves);
     MILO_ASSERT(mValidMoves.size() > 0, 0x4E);
     MILO_ASSERT(mInvalidMoves.size() > mNumMovesNeeded - 1, 0x4F);
-    options.insert(mValidMoves[0]);
+    movesNeeded.insert(mValidMoves[0]);
     for (int i = 0; i < mNumMovesNeeded - 1; i++) {
-        options.insert(mInvalidMoves[i]);
+        movesNeeded.insert(mInvalidMoves[i]);
     }
-    TheHamDirector->LoadRoutineBuilderData(options, b2);
+    TheHamDirector->LoadRoutineBuilderData(movesNeeded, load_transitions);
 }
 
 void MiniGameMgr::InitNTD(int numMovesNeeded) {
@@ -130,7 +132,7 @@ void MiniGameMgr::GetMoveOptions(DataArray *a1, DataArray *a2) {
     LoadMoveOptions(options, false);
 }
 
-void MiniGameMgr::LoadValidMoves(bool b1) {
+void MiniGameMgr::LoadValidMoves(bool load_transitions) {
     for (int i = 0; mValidMoves.size() < mNumMovesNeeded + mBlockingFactor;) {
         const MoveVariant *cur = mMovePool[i++];
         mValidMoves.push_back(cur);
@@ -140,7 +142,7 @@ void MiniGameMgr::LoadValidMoves(bool b1) {
     FOREACH (it, mValidMoves) {
         moveVariants.insert(*it);
     }
-    TheHamDirector->LoadRoutineBuilderData(moveVariants, b1);
+    TheHamDirector->LoadRoutineBuilderData(moveVariants, load_transitions);
 }
 
 void MiniGameMgr::GetCascadeMoveList(DataArray *a1, DataArray *a2) {

@@ -9,18 +9,18 @@
 #include "utl/Loader.h"
 
 HamRibbon::HamRibbon()
-    : unk4c(-1), mNumSides(4), mMat(this), mWidth(1), unk70(1), mActive(1), unk78(this),
-      mNumSegments(0), mDecay(1), mFollowA(this), mFollowB(this), mFollowWeight(0),
-      mTaper(0) {
+    : mLastSeconds(-1), mNumSides(4), mMat(this), mWidth(1), mDirty(1), mActive(1),
+      mTransList(this), mNumSegments(0), mDecay(1), mFollowA(this), mFollowB(this),
+      mFollowWeight(0), mTaper(0) {
     mMesh = Hmx::Object::New<RndMesh>();
-    unk48 = false;
+    mCreateTranss = false;
 }
 
 HamRibbon::~HamRibbon() { RELEASE(mMesh); }
 
 BEGIN_HANDLERS(HamRibbon)
     HANDLE_ACTION(expose_mesh, ExposeMesh())
-    HANDLE_ACTION(create_transs, unk48 = true)
+    HANDLE_ACTION(create_transs, mCreateTranss = true)
     HANDLE_ACTION(reset, Reset())
     HANDLE_SUPERCLASS(RndDrawable)
     HANDLE_SUPERCLASS(RndPollable)
@@ -29,10 +29,10 @@ END_HANDLERS
 
 BEGIN_PROPSYNCS(HamRibbon)
     SYNC_PROP_SET(active, mActive, SetActive(_val.Int()))
-    SYNC_PROP_MODIFY(num_sides, mNumSides, unk70 |= 1)
-    SYNC_PROP_MODIFY(num_segments, mNumSegments, unk70 |= 1)
+    SYNC_PROP_MODIFY(num_sides, mNumSides, mDirty |= 1)
+    SYNC_PROP_MODIFY(num_segments, mNumSegments, mDirty |= 1)
     SYNC_PROP_MODIFY(mat, mMat, mMesh->SetMat(mMat))
-    SYNC_PROP_MODIFY(width, mWidth, unk70 |= 2)
+    SYNC_PROP_MODIFY(width, mWidth, mDirty |= 2)
     SYNC_PROP(follow_a, mFollowA)
     SYNC_PROP(follow_b, mFollowB)
     SYNC_PROP(follow_weight, mFollowWeight)
@@ -80,7 +80,7 @@ BEGIN_LOADS(HamRibbon)
     }
     mMesh->SetMat(mMat);
     ConstructMesh();
-    unk70 = 0;
+    mDirty = 0;
 END_LOADS
 
 BEGIN_COPYS(HamRibbon)
@@ -102,12 +102,12 @@ BEGIN_COPYS(HamRibbon)
 END_COPYS
 
 void HamRibbon::Poll() {
-    if (unk70 & 1) {
+    if (mDirty & 1) {
         ConstructMesh();
-        unk70 = 0;
+        mDirty = 0;
     }
     UpdateChase();
-    unk70 = 0;
+    mDirty = 0;
 }
 
 void HamRibbon::DrawShowing() {
@@ -116,7 +116,7 @@ void HamRibbon::DrawShowing() {
     }
 }
 
-void HamRibbon::Reset() { unk8c.clear(); }
+void HamRibbon::Reset() { mHistory.clear(); }
 
 void HamRibbon::ExposeMesh() {
     if (!mMesh->Dir()) {
@@ -126,14 +126,14 @@ void HamRibbon::ExposeMesh() {
 
 void HamRibbon::SetActive(bool active) {
     if (mActive != active) {
-        unk8c.clear();
-        unk4c = -1;
+        mHistory.clear();
+        mLastSeconds = -1;
     }
     mActive = active;
 }
 
 void HamRibbon::ConstructMesh() {
-    unk78.DeleteAll();
+    mTransList.DeleteAll();
     if (mNumSegments > 0) {
         mMesh->SetLocalXfm(Transform::GetIdentity());
         mMesh->SetNumBones(mNumSegments);
@@ -141,7 +141,7 @@ void HamRibbon::ConstructMesh() {
             RndTransformable *t = Hmx::Object::New<RndTransformable>();
             t->SetLocalXfm(Transform::GetIdentity());
             mMesh->SetBone(i, t, true);
-            unk78.push_back(t);
+            mTransList.push_back(t);
         }
         mMesh->Verts().resize(mNumSides * mNumSegments * 2);
         mMesh->Faces().resize(mNumSides * mNumSegments * 2);

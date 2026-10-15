@@ -38,22 +38,23 @@ public:
     Range mMeasureRange; // 0x0
     /** "Pattern start and end" */
     Range mPatternRange; // 0x8
-    /** "The pattern this section is using" */
-    Symbol mPattern; // 0x10
-    SongPattern *unk14; // 0x14
+    /** "The pattern name this section is using" */
+    Symbol mPatternName; // 0x10
+    /** "The pattern object this section is using" */
+    SongPattern *mPattern; // 0x14
 };
 
 struct MoveReplacer {
-    MoveReplacer() : unk0(Symbol()), unk4(Symbol()), unk8(nullptr) {}
+    MoveReplacer() : mOriginal(Symbol()), mReplace(Symbol()), mReplaceMove(nullptr) {}
     MoveReplacer(Symbol from, Symbol to = Symbol())
-        : unk0(from), unk4(to), unk8(nullptr) {}
+        : mOriginal(from), mReplace(to), mReplaceMove(nullptr) {}
     void SetToFrom(Symbol to, Symbol from) {
-        unk4 = to;
-        unk0 = from;
+        mReplace = to;
+        mOriginal = from;
     }
-    Symbol unk0; // 0x0 - from
-    Symbol unk4; // 0x4 - to
-    const MoveParent *unk8; // 0x8
+    Symbol mOriginal; // 0x0 - from
+    Symbol mReplace; // 0x4 - to
+    const MoveParent *mReplaceMove; // 0x8
     std::vector<int> mMeasures; // 0xc
 };
 

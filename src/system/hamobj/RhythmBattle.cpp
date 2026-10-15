@@ -74,13 +74,14 @@ void ClearJump() {
 }
 
 RhythmBattle::RhythmBattle()
-    : mCommandLabel(this), mIntroLine2Label(this), mPlayerOne(this), mPlayerTwo(this),
-      mBoxyLeadHeadTrans(this), unk6c(this), unk80(this), unk94(this),
-      mSwagJack1BarP2ToP1Anim(this), mSwagJack1BarP1ToP2Anim(this),
-      mSwagJack2BarP2ToP1Anim(this), mSwagJack2BarP1ToP2Anim(this), mGoofy(false),
-      mFullKTB(true), mFinale(false), mActive(false), unk101(false), unk102(false),
-      unk10c(0), unk110(0), mHalftimeBeat(0), mAlmostOverBeat(0), unk11c(0), unk120(0),
-      unk124(-1), unk128(0), unk130(0), unk148(0), unk14c(0) {}
+    : mCommandLabel(this), mCommandLabel2(this), mPlayer0(this), mPlayer1(this),
+      mBoxyLeadHead(this), mInAnim(this), mOutAnim(this), mTugAnim(this),
+      mJackAnim1R(this), mJackAnim1L(this), mJackAnim2R(this), mJackAnim2L(this),
+      mGoofySide(false), mFullOnKtB(true), mFinale(false), mActive(false),
+      mOutroBegun(false), mPaused(false), mMindControlProgress(0),
+      mLastMindControlVOTime(0), mMidwayBeat(0), mAlmostOverBeat(0), mBeatCount(0),
+      mSynchronizedRating(0), mJackState(kNoJack), mWarnJackCounter(0), mRecorder(0),
+      mBeatsToNextScriptedStage(0), mScriptedStageNum(0) {}
 
 RhythmBattle::~RhythmBattle() { End(); }
 
@@ -96,7 +97,7 @@ BEGIN_HANDLERS(RhythmBattle)
     HANDLE_ACTION(clear_jump, ClearJump())
     HANDLE_EXPR(
         both_players_dancing_bad,
-        !(mPlayerOne->InTheZone() == 0 && mPlayerTwo->InTheZone() == 0)
+        !(mPlayer0->InTheZone() == 0 && mPlayer1->InTheZone() == 0)
     )
     HANDLE_SUPERCLASS(RndPollable)
     HANDLE_SUPERCLASS(Hmx::Object)
@@ -104,9 +105,9 @@ END_HANDLERS
 
 BEGIN_PROPSYNCS(RhythmBattle)
     SYNC_PROP(command_label, mCommandLabel)
-    SYNC_PROP(player0, mPlayerOne)
-    SYNC_PROP(player1, mPlayerTwo)
-    SYNC_PROP(full_ktb, mFullKTB)
+    SYNC_PROP(player0, mPlayer0)
+    SYNC_PROP(player1, mPlayer1)
+    SYNC_PROP(full_ktb, mFullOnKtB)
     SYNC_PROP(finale, mFinale)
     SYNC_SUPERCLASS(RndPollable)
     SYNC_SUPERCLASS(Hmx::Object)
@@ -116,17 +117,17 @@ BEGIN_SAVES(RhythmBattle)
     SAVE_REVS(3, 0)
     SAVE_SUPERCLASS(Hmx::Object)
     bs << mCommandLabel;
-    bs << mPlayerOne;
-    bs << mPlayerTwo;
-    bs << mFullKTB;
+    bs << mPlayer0;
+    bs << mPlayer1;
+    bs << mFullOnKtB;
 END_SAVES
 
 BEGIN_COPYS(RhythmBattle)
     COPY_SUPERCLASS(Hmx::Object)
     CREATE_COPY_AS(RhythmBattle, c)
     BEGIN_COPYING_MEMBERS_FROM(c)
-        COPY_MEMBER(mPlayerOne)
-        COPY_MEMBER(mPlayerTwo)
+        COPY_MEMBER(mPlayer0)
+        COPY_MEMBER(mPlayer1)
         COPY_MEMBER(mCommandLabel)
     END_COPYING_MEMBERS
 END_COPYS
@@ -139,8 +140,8 @@ BEGIN_LOADS(RhythmBattle)
     LOAD_SUPERCLASS(RndPollable)
     if (d.rev >= 2) {
         d >> mCommandLabel;
-        d >> mPlayerOne;
-        d >> mPlayerTwo;
+        d >> mPlayer0;
+        d >> mPlayer1;
     } else if (d.rev == 1) {
         ObjPtr<RhythmDetectorGroup> group1(this);
         ObjPtr<RhythmDetectorGroup> group2(this);
@@ -164,55 +165,56 @@ BEGIN_LOADS(RhythmBattle)
         d >> label4;
     }
     if (d.rev >= 3) {
-        d >> mFullKTB;
+        d >> mFullOnKtB;
     }
 END_LOADS
 
 void RhythmBattle::Poll() {
     if (!TheLoadMgr.EditMode()) {
-        if (mActive && !unk102) {
+        if (mActive && !mPaused) {
             bool goofy = GetGoofy();
-            if (goofy != mGoofy) {
-                mPlayerOne->SwapObjs(mPlayerTwo);
-                mGoofy = goofy;
+            if (goofy != mGoofySide) {
+                mPlayer0->SwapObjs(mPlayer1);
+                mGoofySide = goofy;
             }
             Symbol leader = GetLeader();
             static Symbol left("left");
             static Symbol right("right");
-            mLeader = leader;
+            mLastLeader = leader;
             static UIPanel *sRhythmDetectorPanel =
                 ObjectDir::Main()->Find<UIPanel>("rhythm_detector_panel", false);
-            if (unk130 != 0) {
+            if (mRecorder != 0) {
                 static Symbol playing("playing");
-                if (TheUI->FocusPanel() && unk100 && !unk101) {
+                if (TheUI->FocusPanel() && mIntroOver && !mOutroBegun) {
                     const Skeleton *skeleton1 = TheGameData->Player(0)->GetSkeleton();
                     if (skeleton1) {
-                        unk130->SetVal44(skeleton1->SkeletonIndex());
+                        mRecorder->SetVal44(skeleton1->SkeletonIndex());
                     } else {
-                        unk130->SetVal44(-1);
+                        mRecorder->SetVal44(-1);
                     }
-                    unk130->Poll();
+                    mRecorder->Poll();
                     Skeleton *skeleton2 = TheGestureMgr->GetSkeletonByTrackingID(
                         TheGameData->Player(1)->GetSkeletonTrackingID()
                     );
                     if (skeleton2) {
-                        unk134.push_back(ArchiveSkeleton());
-                        ArchiveSkeleton &back = unk134.back();
-                        if (unk134.size() > 200) {
+                        mRecorderPair.push_back(ArchiveSkeleton());
+                        ArchiveSkeleton &back = mRecorderPair.back();
+                        if (mRecorderPair.size() > 200) {
                             MILO_WARN(
-                                "bustajack recordings are getting big %d\n", unk134.size()
+                                "bustajack recordings are getting big %d\n",
+                                mRecorderPair.size()
                             );
                         }
                         back.Set(*skeleton2);
                     } else {
-                        unk134.clear();
+                        mRecorderPair.clear();
                     }
                 }
             }
             int beat = TheTaskMgr.Beat();
-            if (beat != unk144 && beat != 0) {
+            if (beat != mLastBeat && beat != 0) {
                 OnBeat();
-                unk144 = beat;
+                mLastBeat = beat;
             }
             UpdateMindControl();
         }
@@ -226,13 +228,13 @@ void RhythmBattle::Poll() {
 
 void RhythmBattle::Enter() {
     RndPollable::Enter();
-    if (mPlayerOne)
-        mPlayerOne->OnReset(this);
-    if (mPlayerTwo)
-        mPlayerTwo->OnReset(this);
-    unk10c = 0.0f;
+    if (mPlayer0)
+        mPlayer0->OnReset(this);
+    if (mPlayer1)
+        mPlayer1->OnReset(this);
+    mMindControlProgress = 0.0f;
     CheckIsFinale();
-    if (mFullKTB)
+    if (mFullOnKtB)
         Begin();
 }
 
@@ -240,7 +242,7 @@ void RhythmBattle::Exit() {
     static Symbol mind_control("mind_control");
     static Symbol gameplay_mode("gameplay_mode");
     Symbol mindControlCheck = TheHamProvider->Property(gameplay_mode)->Sym();
-    if (mFullKTB || mindControlCheck == mind_control) {
+    if (mFullOnKtB || mindControlCheck == mind_control) {
         End();
     }
     RndPollable::Exit();
@@ -259,8 +261,8 @@ Symbol RhythmBattle::GetLeader() const {
     static Symbol right("right");
     bool goofy = GetGoofy();
     Symbol ret = both;
-    int p1 = mPlayerOne ? mPlayerOne->Unk280() : 0;
-    int p2 = mPlayerTwo ? mPlayerTwo->Unk280() : 0;
+    int p1 = mPlayer0 ? mPlayer0->GetScore() : 0;
+    int p2 = mPlayer1 ? mPlayer1->GetScore() : 0;
     if (p1 != p2) {
         bool u4 = p2 < p1;
         if (goofy) {
@@ -272,24 +274,24 @@ Symbol RhythmBattle::GetLeader() const {
 }
 
 void RhythmBattle::ResetCombo() {
-    if (mPlayerOne)
-        mPlayerOne->ResetCombo();
-    if (mPlayerTwo)
-        mPlayerTwo->ResetCombo();
+    if (mPlayer0)
+        mPlayer0->ResetCombo();
+    if (mPlayer1)
+        mPlayer1->ResetCombo();
 }
 
 void RhythmBattle::End() {
     if (mActive) {
         mActive = false;
-        if (mPlayerOne)
-            mPlayerOne->SetActive(false);
-        if (mPlayerTwo)
-            mPlayerTwo->SetActive(false);
-        if (unk130) {
-            unk130->Free();
-            RELEASE(unk130);
+        if (mPlayer0)
+            mPlayer0->SetActive(false);
+        if (mPlayer1)
+            mPlayer1->SetActive(false);
+        if (mRecorder) {
+            mRecorder->Free();
+            RELEASE(mRecorder);
         }
-        if (!unk102) {
+        if (!mPaused) {
             static UIPanel *panel =
                 ObjectDir::Main()->Find<UIPanel>("rhythm_detector_panel", false);
             if (panel && panel->LoadedDir()) {
@@ -306,51 +308,51 @@ void RhythmBattle::End() {
             hudPanel->Find<RndDir>("score_right")->SetShowing(true);
             hudPanel->Find<RndDir>("score_left")->SetShowing(true);
         }
-        unk102 = false;
+        mPaused = false;
     }
 }
 
 void RhythmBattle::OnReset() {
-    if (unk102) {
+    if (mPaused) {
         OnUnpause();
     }
     CheckIsFinale();
     if (!mActive) {
         Begin();
     }
-    unkfc = false;
-    unkfd = false;
-    unk144 = TheTaskMgr.Beat();
-    unk128 = 0;
-    unk124 = -1;
-    unkfe = false;
-    unk120 = 0.0f;
-    unkff = false;
-    unk100 = false;
-    unk101 = false;
-    unk148 = 0;
-    unk14c = 0;
-    unk140 = 0;
-    if (mPlayerOne)
-        mPlayerOne->OnReset(this);
-    if (mPlayerTwo)
-        mPlayerTwo->OnReset(this);
-    if (unk80) {
-        unk80->Animate(unk80->EndFrame(), unk80->EndFrame(), unk80->Units());
+    mAnimIn = false;
+    mIntroVO = false;
+    mLastBeat = TheTaskMgr.Beat();
+    mWarnJackCounter = 0;
+    mJackState = kNoJack;
+    mMidwayVO = false;
+    mSynchronizedRating = 0.0f;
+    mAlmostOverVO = false;
+    mIntroOver = false;
+    mOutroBegun = false;
+    mBeatsToNextScriptedStage = 0;
+    mScriptedStageNum = 0;
+    mStealCooldown = 0;
+    if (mPlayer0)
+        mPlayer0->OnReset(this);
+    if (mPlayer1)
+        mPlayer1->OnReset(this);
+    if (mOutAnim) {
+        mOutAnim->Animate(mOutAnim->EndFrame(), mOutAnim->EndFrame(), mOutAnim->Units());
     }
     static Symbol gameplay_mode("gameplay_mode");
     static Symbol rhythm_battle("rhythm_battle");
     static Symbol mind_control("mind_control");
 
     Symbol gameplay_sym = TheHamProvider->Property(gameplay_mode)->Sym();
-    if (TheHamDirector && unk11c == 0) {
+    if (TheHamDirector && mBeatCount == 0) {
         RndPropAnim *songAnim = TheHamDirector->SongAnimByDifficulty(kDifficultyEasy);
         if (songAnim) {
-            unk11c = songAnim->GetNumKeys(TheHamDirector, "move");
+            mBeatCount = songAnim->GetNumKeys(TheHamDirector, "move");
         }
     }
     if (gameplay_sym == mind_control || mFinale) {
-        float moveKeys = unk11c;
+        float moveKeys = mBeatCount;
         if (moveKeys >= 1) {
             mStartBeat = 0;
             mEndBeat = (moveKeys - 2.0f) * 4.0f;
@@ -363,10 +365,10 @@ void RhythmBattle::OnReset() {
         if (mCommandLabel) {
             mCommandLabel->SetTextToken(gNullStr);
         }
-        if (mIntroLine2Label) {
-            mIntroLine2Label->SetTextToken(gNullStr);
+        if (mCommandLabel2) {
+            mCommandLabel2->SetTextToken(gNullStr);
         }
-        unk150.clear();
+        mFinaleVOQueue.clear();
         static Symbol finale_intro_01("finale_intro_01");
         static Symbol finale_intro_02("finale_intro_02");
         QueueFinaleVO(finale_intro_01);
@@ -383,8 +385,8 @@ void RhythmBattle::OnReset() {
         if (mCommandLabel) {
             mCommandLabel->SetTextToken(rhythm_battle_title);
         }
-        if (mIntroLine2Label) {
-            mIntroLine2Label->SetTextToken(gNullStr);
+        if (mCommandLabel2) {
+            mCommandLabel2->SetTextToken(gNullStr);
         }
     }
 }
@@ -393,25 +395,25 @@ void RhythmBattle::PlayMindControlVO(Symbol s) {
     static Message mind_control_vo("mind_control_vo", 0);
     mind_control_vo[0] = s;
     TheHamProvider->Handle(mind_control_vo, false);
-    unk110 = 0;
+    mLastMindControlVOTime = 0;
 }
 
-void RhythmBattle::UpdateFinaleVO(int &i) {
-    if (!unk150.empty() && i > 500) {
+void RhythmBattle::UpdateFinaleVO(int &vo_ms) {
+    if (!mFinaleVOQueue.empty() && vo_ms > 500) {
         UIPanel *game_panel = TheUI->FocusPanel();
         MILO_ASSERT(game_panel != NULL, 0x708);
-        Symbol first = unk150.front();
-        unk150.erase(unk150.begin());
+        Symbol first = mFinaleVOQueue.front();
+        mFinaleVOQueue.erase(mFinaleVOQueue.begin());
         static Message play_finale_vo("play_finale_vo", 0);
         play_finale_vo[0] = first;
         game_panel->HandleType(play_finale_vo);
-        i = -1;
+        vo_ms = -1;
     }
 }
 
 void RhythmBattle::OnPause() {
     if (mActive) {
-        unk102 = true;
+        mPaused = true;
         static UIPanel *panel =
             ObjectDir::Main()->Find<UIPanel>("rhythm_detector_panel", false);
         if (panel && panel->LoadedDir()) {
@@ -426,9 +428,9 @@ void RhythmBattle::OnPause() {
 }
 
 void RhythmBattle::OnUnpause() {
-    if (unk102) {
+    if (mPaused) {
         MILO_ASSERT(mActive, 0x7cc);
-        unk102 = false;
+        mPaused = false;
         static UIPanel *panel =
             ObjectDir::Main()->Find<UIPanel>("rhythm_detector_panel", false);
         if (panel && panel->LoadedDir()) {
@@ -445,13 +447,13 @@ void RhythmBattle::OnUnpause() {
 void RhythmBattle::QueueFinaleVO(Symbol s) {
     if (mFinale) {
         bool b = false;
-        for (int i = 0; i < unk150.size(); i++) {
-            if (unk150[i] == s)
+        for (int i = 0; i < mFinaleVOQueue.size(); i++) {
+            if (mFinaleVOQueue[i] == s)
                 b = true;
         }
 
         if (!b)
-            unk150.push_back(s);
+            mFinaleVOQueue.push_back(s);
     }
 }
 
@@ -467,19 +469,19 @@ void RhythmBattle::UpdateMindControl() {
     if (gameplaySym != mind_control) {
         return;
     }
-    if (mPlayerOne) {
-        mPlayerOne->SetActive(true);
+    if (mPlayer0) {
+        mPlayer0->SetActive(true);
     }
-    if (mPlayerTwo) {
-        mPlayerTwo->SetActive(true);
+    if (mPlayer1) {
+        mPlayer1->SetActive(true);
     }
     HamCamShot *curShot = TheHamDirector->CurShot();
     if (stageSym != playing) {
-        unk110 = 0;
-        unk10c = 0;
+        mLastMindControlVOTime = 0;
+        mMindControlProgress = 0;
     } else if (curShot && strcmp(curShot->Category().Str(), "CAMP_MINDCONTROL") == 0) {
-        unk10c = 0;
-        unk110 = 0;
+        mMindControlProgress = 0;
+        mLastMindControlVOTime = 0;
         if (curShot->ShotOver()) {
             if (strcmp(curShot->Name(), "CAMP_6.3_DCI_mind_control_03.shot")) {
                 TheHamDirector->ForceShot(gNullStr);
@@ -487,8 +489,8 @@ void RhythmBattle::UpdateMindControl() {
                 TheHamDirector->SetProperty("shot", CAMP_MINDCONTROL_DANCE);
             }
         }
-    } else if (mPlayerOne->Unk260() || mPlayerTwo->Unk260()) {
-        unk10c += TheTaskMgr.DeltaBeat() / 10.0f;
+    } else if (mPlayer0->GetGrooveState() || mPlayer1->GetGrooveState()) {
+        mMindControlProgress += TheTaskMgr.DeltaBeat() / 10.0f;
     }
     for (int i = 0; i < 2; i++) {
         HamCharacter *hc = TheHamDirector->GetCharacter(i);
@@ -496,57 +498,58 @@ void RhythmBattle::UpdateMindControl() {
             hc ? hc->Find<RndAnimatable>("mind_control.anim", false) : nullptr;
         float f10 = sin(TheTaskMgr.UISeconds() * 18.84955596923828f);
         f10 = f10 * 0.4f + 0.6f;
-        f10 *= unk10c;
+        f10 *= mMindControlProgress;
         if (mcAnim) {
             mcAnim->SetFrame(f10, 1);
         }
         RndAnimatable *mcSoundAnim =
             hc ? hc->Find<RndAnimatable>("mind_control_sound.anim", false) : nullptr;
         if (mcSoundAnim) {
-            mcSoundAnim->SetFrame(unk10c, 1);
+            mcSoundAnim->SetFrame(mMindControlProgress, 1);
         }
     }
 
-    if (unk10c > 0.5f && unk10c < 0.95f && unk110 > 5.0f) {
+    if (mMindControlProgress > 0.5f && mMindControlProgress < 0.95f
+        && mLastMindControlVOTime > 5.0f) {
         static Symbol grooving("grooving");
         PlayMindControlVO(grooving);
-    } else if (0.2f > unk10c && unk110 > 12.0f) {
+    } else if (0.2f > mMindControlProgress && mLastMindControlVOTime > 12.0f) {
         static Symbol not_grooving("not_grooving");
         PlayMindControlVO(not_grooving);
     }
-    unk110 += TheTaskMgr.DeltaSeconds();
+    mLastMindControlVOTime += TheTaskMgr.DeltaSeconds();
 }
 
 void RhythmBattle::CheckIsFinale() {
     DataArray *arr = new DataArray(1);
     arr->Node(0) = "is_finale";
-    mFinale = arr->Execute(false).Int() && mFullKTB;
+    mFinale = arr->Execute(false).Int() && mFullOnKtB;
     arr->Release();
 }
 
-void RhythmBattle::PlayTanClip(int i1, bool b2) {
+void RhythmBattle::PlayTanClip(int clipIndex, bool blend) {
     TheHamProvider->SetProperty("use_char_projection", true);
     static Message showCharProjection("show_char_projection");
     TheHamProvider->Handle(showCharProjection, false);
     CharDriver *driver = TheHamDirector->GetCharacter(0)->Driver();
     String str88;
     float fvar;
-    if (i1 == 0) {
+    if (clipIndex == 0) {
         str88 = "tan_rigged_01";
         fvar = 28;
         static Message tanPhaseIn("tan_finale_phasein01");
         TheHamProvider->Handle(tanPhaseIn, false);
-    } else if (i1 == 1) {
+    } else if (clipIndex == 1) {
         str88 = "tan_rigged_02";
         fvar = 22;
         static Message tanPhaseIn("tan_finale_phasein02");
         TheHamProvider->Handle(tanPhaseIn, false);
-    } else if (i1 == 2) {
+    } else if (clipIndex == 2) {
         str88 = "tan_rigged_03";
         fvar = 40;
         static Message tanPhaseIn("tan_finale_phasein03");
         TheHamProvider->Handle(tanPhaseIn, false);
-    } else if (i1 == 3) {
+    } else if (clipIndex == 3) {
         str88 = "tan_rigged_04";
         fvar = kHugeFloat;
     } else {
@@ -554,13 +557,13 @@ void RhythmBattle::PlayTanClip(int i1, bool b2) {
         fvar = 2.7f;
     }
     CharClip *clip = driver->FindClip(str88.c_str());
-    driver->Play(clip, b2 ? 1 : 2, -1, fvar, 0);
+    driver->Play(clip, blend ? 1 : 2, -1, fvar, 0);
 }
 
 void RhythmBattle::Begin() {
     if (!mActive) {
         mActive = true;
-        if (mFullKTB) {
+        if (mFullOnKtB) {
             PropKeys *keys = TheHamDirector->GetPropKeys(kDifficultyExpert, "move");
             if (keys) {
                 Keys<Symbol, Symbol> *symKeys = keys->AsSymbolKeys();
@@ -602,34 +605,34 @@ void RhythmBattle::Begin() {
                 }
                 float diff = jumpEnd - jumpStart;
                 float f28 = mEndBeat - mStartBeat - diff;
-                mHalftimeBeat = (f28 / 2.0f) + mStartBeat;
+                mMidwayBeat = (f28 / 2.0f) + mStartBeat;
                 mAlmostOverBeat = (f28 * 0.8f) + mStartBeat;
-                if (mHalftimeBeat > jumpStart) {
-                    mHalftimeBeat += diff;
+                if (mMidwayBeat > jumpStart) {
+                    mMidwayBeat += diff;
                 }
                 if (mAlmostOverBeat > jumpStart) {
                     mAlmostOverBeat += diff;
                 }
             }
-            mPlayerOne->SetInTheZone(-1, false, false);
-            mPlayerTwo->SetInTheZone(-1, false, false);
+            mPlayer0->SetInTheZone(-1, false, false);
+            mPlayer1->SetInTheZone(-1, false, false);
         } else {
-            unkfd = true;
-            unkfc = true;
+            mIntroVO = true;
+            mAnimIn = true;
             mStartBeat = -1;
             mEndBeat = -1;
-            mHalftimeBeat = -1;
+            mMidwayBeat = -1;
             mAlmostOverBeat = -1;
-            mPlayerOne->SetActive(true);
-            mPlayerTwo->SetActive(true);
+            mPlayer0->SetActive(true);
+            mPlayer1->SetActive(true);
         }
-        mIntroLine2Label = Dir()->Find<HamLabel>("intro_line2.lbl", false);
+        mCommandLabel2 = Dir()->Find<HamLabel>("intro_line2.lbl", false);
         if (TheHamDirector) {
             WorldDir *wdir = TheHamDirector->GetVenueWorld();
             if (wdir) {
                 RndDir *boxy = wdir->Find<RndDir>("boxyman", false);
                 if (boxy) {
-                    mBoxyLeadHeadTrans =
+                    mBoxyLeadHead =
                         boxy->Find<RndTransformable>("boxyleadhead.trans", false);
                 }
             }
@@ -640,14 +643,10 @@ void RhythmBattle::Begin() {
         HamLabel *mr2x = Dir()->Find<HamLabel>("multiplier_R_2X.lbl", false);
         HamLabel *mr3x = Dir()->Find<HamLabel>("multiplier_R_3X.lbl", false);
         HamLabel *mr4x = Dir()->Find<HamLabel>("multiplier_R_4X.lbl", false);
-        mSwagJack1BarP1ToP2Anim =
-            Dir()->Find<RndAnimatable>("swag_jack_1bar_p1_to_p2.anim", false);
-        mSwagJack1BarP2ToP1Anim =
-            Dir()->Find<RndAnimatable>("swag_jack_1bar_p2_to_p1.anim", false);
-        mSwagJack2BarP1ToP2Anim =
-            Dir()->Find<RndAnimatable>("swag_jack_2bar_p1_to_p2.anim", false);
-        mSwagJack2BarP2ToP1Anim =
-            Dir()->Find<RndAnimatable>("swag_jack_2bar_p2_to_p1.anim", false);
+        mJackAnim1L = Dir()->Find<RndAnimatable>("swag_jack_1bar_p1_to_p2.anim", false);
+        mJackAnim1R = Dir()->Find<RndAnimatable>("swag_jack_1bar_p2_to_p1.anim", false);
+        mJackAnim2L = Dir()->Find<RndAnimatable>("swag_jack_2bar_p1_to_p2.anim", false);
+        mJackAnim2R = Dir()->Find<RndAnimatable>("swag_jack_2bar_p2_to_p1.anim", false);
         if (ml2x) {
             ml2x->SetTextToken("2x");
         }
@@ -666,11 +665,11 @@ void RhythmBattle::Begin() {
         if (mr4x) {
             mr4x->SetTextToken("4x");
         }
-        unk6c = nullptr;
-        unk80 = nullptr;
-        unk94 = nullptr;
-        if (mFullKTB && !mFinale) {
-            unk130 = new FreestyleMoveRecorder();
+        mInAnim = nullptr;
+        mOutAnim = nullptr;
+        mTugAnim = nullptr;
+        if (mFullOnKtB && !mFinale) {
+            mRecorder = new FreestyleMoveRecorder();
         }
         static UIPanel *sRhythmDetectorPanel =
             ObjectDir::Main()->Find<UIPanel>("rhythm_detector_panel", false);
@@ -690,17 +689,17 @@ void RhythmBattle::OnBeat() {
     static Symbol playing("playing");
     UIPanel *focusPanel = TheUI->FocusPanel();
     bool goofy = GetGoofy();
-    if (!focusPanel || !mPlayerOne || !mPlayerTwo)
+    if (!focusPanel || !mPlayer0 || !mPlayer1)
         return;
     static Symbol gameplay_mode("gameplay_mode");
     static Symbol mind_control("mind_control");
     bool inMindControl = TheHamProvider->Property(gameplay_mode)->Sym() == mind_control;
-    if (!mFullKTB || mFinale || inMindControl) {
-        mPlayerOne->SetUnk2a5(true);
-        mPlayerTwo->SetUnk2a5(true);
+    if (!mFullOnKtB || mFinale || inMindControl) {
+        mPlayer0->SetUnk2a5(true);
+        mPlayer1->SetUnk2a5(true);
     } else {
-        mPlayerOne->SetUnk2a5(false);
-        mPlayerTwo->SetUnk2a5(false);
+        mPlayer0->SetUnk2a5(false);
+        mPlayer1->SetUnk2a5(false);
     }
     static Message remaining_vo_ms("remaining_vo_ms");
     DataNode handled = focusPanel->HandleType(remaining_vo_ms);
@@ -725,17 +724,17 @@ void RhythmBattle::OnBeat() {
     }
     UpdateFinaleVO(remainingValue);
     Symbol leader = GetLeader();
-    if (remainingValue > 0 && !unkfd) {
+    if (remainingValue > 0 && !mIntroVO) {
         static Symbol intro("intro");
         play_vo[0] = intro;
         if (!mFinale) {
             focusPanel->HandleType(play_vo);
             remainingValue = -1;
         }
-        unkfd = true;
+        mIntroVO = true;
     }
     if (remainingValue > 2000) {
-        if (!unkfe && mHalftimeBeat < curBeat) {
+        if (!mMidwayVO && mMidwayBeat < curBeat) {
             static Symbol halftime("halftime");
             play_vo[0] = halftime;
             play_vo[1] = leader;
@@ -743,9 +742,9 @@ void RhythmBattle::OnBeat() {
                 focusPanel->HandleType(play_vo);
                 remainingValue = -1;
             }
-            unkfe = true;
+            mMidwayVO = true;
         }
-        if (remainingValue > 2000 && !unkff && mAlmostOverBeat < curBeat) {
+        if (remainingValue > 2000 && !mAlmostOverVO && mAlmostOverBeat < curBeat) {
             static Symbol almost_over("almost_over");
             play_vo[0] = almost_over;
             play_vo[1] = leader;
@@ -753,69 +752,71 @@ void RhythmBattle::OnBeat() {
                 focusPanel->HandleType(play_vo);
                 remainingValue = -1;
             }
-            unkff = true;
+            mAlmostOverVO = true;
         }
     }
     bool b22 = false;
     bool bd4 = false;
     RndAnimatable *r28;
     if (mStartBeat > curBeat) {
-        if (!unkfc) {
-            if (mStartBeat <= mPlayerOne->InAnimBeatLength() + curBeat) {
-                mPlayerOne->AnimateIn();
-                mPlayerTwo->AnimateIn();
-                if (unk6c) {
-                    unk6c->Animate(unk6c->GetFrame(), unk6c->EndFrame(), unk6c->Units());
+        if (!mAnimIn) {
+            if (mStartBeat <= mPlayer0->InAnimBeatLength() + curBeat) {
+                mPlayer0->AnimateIn();
+                mPlayer1->AnimateIn();
+                if (mInAnim) {
+                    mInAnim->Animate(
+                        mInAnim->GetFrame(), mInAnim->EndFrame(), mInAnim->Units()
+                    );
                 }
-                unkfc = true;
+                mAnimIn = true;
             } else {
-                mPlayerOne->SetActive(false);
-                mPlayerTwo->SetActive(false);
+                mPlayer0->SetActive(false);
+                mPlayer1->SetActive(false);
             }
         }
         return;
     }
-    if (!unk100) {
+    if (!mIntroOver) {
         b22 = true;
-        unk100 = true;
+        mIntroOver = true;
         inMindControl = false;
         if (mCommandLabel) {
             mCommandLabel->SetTextToken(gNullStr);
         }
-        if (mIntroLine2Label) {
-            mIntroLine2Label->SetTextToken(gNullStr);
+        if (mCommandLabel2) {
+            mCommandLabel2->SetTextToken(gNullStr);
         }
         mCommandLabel = nullptr;
-        mIntroLine2Label = nullptr;
-        mPlayerOne->SetActive(true);
-        mPlayerTwo->SetActive(true);
-        mPlayerOne->SetInTheZone(0, false, false);
-        mPlayerTwo->SetInTheZone(0, false, false);
+        mCommandLabel2 = nullptr;
+        mPlayer0->SetActive(true);
+        mPlayer1->SetActive(true);
+        mPlayer0->SetInTheZone(0, false, false);
+        mPlayer1->SetInTheZone(0, false, false);
         static Message finish_intro("finished_intro");
         focusPanel->HandleType(finish_intro);
     }
-    if (mFullKTB) {
+    if (mFullOnKtB) {
         if (mEndBeat >= curBeat || mFinale) {
             if (!mFinale) {
-                mPlayerOne->SetActive(true);
-                mPlayerTwo->SetActive(true);
+                mPlayer0->SetActive(true);
+                mPlayer1->SetActive(true);
             } else {
-                if (unk148 == 0 || (int)curBeat > 0x10) {
-                    mPlayerOne->SetActive(true);
+                if (mBeatsToNextScriptedStage == 0 || (int)curBeat > 0x10) {
+                    mPlayer0->SetActive(true);
                 } else {
-                    mPlayerOne->SetActive(false);
+                    mPlayer0->SetActive(false);
                 }
-                if (unk148 == 0 || (int)curBeat > 0x10) {
-                    mPlayerTwo->SetActive(true);
+                if (mBeatsToNextScriptedStage == 0 || (int)curBeat > 0x10) {
+                    mPlayer1->SetActive(true);
                 } else {
-                    mPlayerOne->SetActive(false);
+                    mPlayer0->SetActive(false);
                 }
             }
         } else {
-            unk101 = true;
-            mPlayerOne->SetActive(false);
-            mPlayerTwo->SetActive(false);
-            if (unkfc) {
+            mOutroBegun = true;
+            mPlayer0->SetActive(false);
+            mPlayer1->SetActive(false);
+            if (mAnimIn) {
                 static Symbol winner("winner");
                 play_vo[0] = winner;
                 play_vo[1] = leader;
@@ -823,46 +824,50 @@ void RhythmBattle::OnBeat() {
                     focusPanel->HandleType(play_vo);
                     remainingValue = -1;
                 }
-                mPlayerOne->AnimateOut();
-                mPlayerTwo->AnimateOut();
-                r28 = unk80;
+                mPlayer0->AnimateOut();
+                mPlayer1->AnimateOut();
+                r28 = mOutAnim;
                 if (r28) {
-                    unk80->Animate(unk80->StartFrame(), unk80->EndFrame(), unk80->Units());
+                    mOutAnim->Animate(
+                        mOutAnim->StartFrame(), mOutAnim->EndFrame(), mOutAnim->Units()
+                    );
                 }
-                unkfc = false;
+                mAnimIn = false;
             }
         }
     }
-    mPlayerOne->HackPlayerQuit();
-    mPlayerTwo->HackPlayerQuit();
+    mPlayer0->HackPlayerQuit();
+    mPlayer1->HackPlayerQuit();
     bool b40 = false;
     if (inMindControl) {
         // there is a LOT that happens in here
-        if (mFullKTB && !mFinale) {
+        if (mFullOnKtB && !mFinale) {
             if (!b22) {
-                unk130->StopRecording();
-                if (unk140 && (mPlayerOne->InTheZone() || mPlayerTwo->InTheZone())) {
+                mRecorder->StopRecording();
+                if (mStealCooldown && (mPlayer0->InTheZone() || mPlayer1->InTheZone())) {
                     b22 = true;
                 } else {
                     b22 = false;
                 }
                 float f48 = 0;
-                if (b22 && unk130) { // more checks go on in this if statement
+                if (b22 && mRecorder) { // more checks go on in this if statement
                     float f45 = 0.10f;
-                    for (int i = 0; i < unk134.size(); i++) {
+                    for (int i = 0; i < mRecorderPair.size(); i++) {
                         DancerSkeleton dancerSkeleton;
                         if (i > 0) {
-                            f45 += (float)unk134[i].ElapsedMs() / 1000.0f;
+                            f45 += (float)mRecorderPair[i].ElapsedMs() / 1000.0f;
                         }
                         for (int j = 0; j < kNumJoints; j++) {
                             Vector3 v;
-                            unk134[i].JointPos(kCoordCamera, (SkeletonJoint)j, v);
+                            mRecorderPair[i].JointPos(kCoordCamera, (SkeletonJoint)j, v);
                             dancerSkeleton.SetCamJointPos((SkeletonJoint)j, v);
                             dancerSkeleton.SetCamJointDisplacement((SkeletonJoint)j, v);
                         }
-                        dancerSkeleton.SetDisplacementElapsedMs(unk134[i].ElapsedMs());
-                        dancerSkeleton.Set(unk134[i]);
-                        f48 = unk130->GetScore(&dancerSkeleton, 1, f45, false);
+                        dancerSkeleton.SetDisplacementElapsedMs(
+                            mRecorderPair[i].ElapsedMs()
+                        );
+                        dancerSkeleton.Set(mRecorderPair[i]);
+                        f48 = mRecorder->GetScore(&dancerSkeleton, 1, f45, false);
                     }
                 }
                 static bool autojack = OptionBool("autojack", false);
@@ -870,27 +875,27 @@ void RhythmBattle::OnBeat() {
                     f48 = 1;
                 }
                 if (f48 > 0.70f) {
-                    RhythmBattlePlayer *jacker = mPlayerOne;
-                    RhythmBattlePlayer *jackee = mPlayerTwo;
+                    RhythmBattlePlayer *jacker = mPlayer0;
+                    RhythmBattlePlayer *jackee = mPlayer1;
                     // some logic here checking the players' InTheZone's
                     MILO_ASSERT(jackee->InTheZone(), 0x398);
                     b40 = true;
-                    unk140 = 4;
+                    mStealCooldown = 4;
                 }
-                unk134.clear();
-                unk130->ClearRecording();
-                unk130->ClearFrameScores();
-                unk140--;
-                if (unk140 < 0) {
-                    unk140 = 0;
+                mRecorderPair.clear();
+                mRecorder->ClearRecording();
+                mRecorder->ClearFrameScores();
+                mStealCooldown--;
+                if (mStealCooldown < 0) {
+                    mStealCooldown = 0;
                 }
             }
-            if (!unk101) {
-                unk130->StartRecording();
+            if (!mOutroBegun) {
+                mRecorder->StartRecording();
             }
         }
-        mPlayerOne->UpdateScore(focusPanel);
-        mPlayerTwo->UpdateScore(focusPanel);
+        mPlayer0->UpdateScore(focusPanel);
+        mPlayer1->UpdateScore(focusPanel);
     }
     static Message bars_between_vo_suggestion("bars_between_vo_suggestion");
     handled = focusPanel->HandleType(bars_between_vo_suggestion);
@@ -900,28 +905,28 @@ void RhythmBattle::OnBeat() {
     bool p1Update = false;
     bool p2Update = false;
     if (inMindControl) {
-        p1Update = mPlayerOne->UpdateState();
-        p2Update = mPlayerTwo->UpdateState();
+        p1Update = mPlayer0->UpdateState();
+        p2Update = mPlayer1->UpdateState();
     }
-    int i16 = p1Update ? mPlayerOne->Unk260() : -1;
-    int i19 = p2Update ? mPlayerTwo->Unk260() : -1;
+    int i16 = p1Update ? mPlayer0->GetGrooveState() : -1;
+    int i19 = p2Update ? mPlayer1->GetGrooveState() : -1;
     int i6b4;
     if (i19 < i16) {
         if (p1Update) {
-            i6b4 = mPlayerOne->Unk260();
+            i6b4 = mPlayer0->GetGrooveState();
         } else {
             i6b4 = -1;
         }
     } else {
         if (p2Update) {
-            i6b4 = mPlayerTwo->Unk260();
+            i6b4 = mPlayer1->GetGrooveState();
         } else {
             i6b4 = -1;
         }
     }
-    int i28 = Max(mPlayerOne->Unk260(), mPlayerTwo->Unk260());
-    bool i35 = i6b4 == mPlayerOne->Unk260();
-    bool i27 = i6b4 == mPlayerTwo->Unk260();
+    int i28 = Max(mPlayer0->GetGrooveState(), mPlayer1->GetGrooveState());
+    bool i35 = i6b4 == mPlayer0->GetGrooveState();
+    bool i27 = i6b4 == mPlayer1->GetGrooveState();
     bool b6f0 = i35;
     if (goofy) {
         b6f0 = i27;
@@ -930,47 +935,48 @@ void RhythmBattle::OnBeat() {
         i27 = tmp;
     }
     if (b40) {
-        unk128++;
+        mWarnJackCounter++;
         if (inMindControl) {
-            unk128 = 0;
-            if (unk124 == -1 || (unk124 > 2 && unk124 < 5)) {
+            mWarnJackCounter = 0;
+            if (mJackState == kNoJack
+                || (mJackState > 2 && mJackState < kJackPenaltyLeft)) {
                 bool b36 = true;
-                RhythmBattlePlayer *first = mPlayerOne;
-                RhythmBattlePlayer *second = mPlayerTwo;
-                if (mPlayerOne->InTheZone() && !mPlayerTwo->InTheZone()
-                    || (mPlayerTwo->InTheZone()
-                        && mPlayerTwo->Unk280() < mPlayerOne->Unk280())) {
+                RhythmBattlePlayer *first = mPlayer0;
+                RhythmBattlePlayer *second = mPlayer1;
+                if (mPlayer0->InTheZone() && !mPlayer1->InTheZone()
+                    || (mPlayer1->InTheZone()
+                        && mPlayer1->GetScore() < mPlayer0->GetScore())) {
                     b36 = false;
-                    first = mPlayerTwo;
-                    second = mPlayerOne;
+                    first = mPlayer1;
+                    second = mPlayer0;
                 }
                 if (goofy) {
                     b36 = !b36;
                 }
-                unk124 = b36 == 0 ? 5 : 6;
+                mJackState = b36 == 0 ? kJackPenaltyLeft : kJackPenaltyRight;
                 first->SwagJackedBonus(
                     focusPanel,
-                    (RhythmBattleJackState)unk124,
-                    second->SwagJacked(focusPanel, (RhythmBattleJackState)unk124)
+                    (RhythmBattleJackState)mJackState,
+                    second->SwagJacked(focusPanel, (RhythmBattleJackState)mJackState)
                 );
-                i6b4 = (int)unk124;
+                i6b4 = (int)mJackState;
                 b6f0 = !b36;
                 i27 = !b6f0;
                 i35 = b6f0;
-                unk124 = -1;
+                mJackState = kNoJack;
             }
         }
     } else {
-        unk128 = 0;
-        unk124 = -1;
+        mWarnJackCounter = 0;
+        mJackState = kNoJack;
     }
     bool b43 = i6b4 == 1 || i6b4 == 2;
     if ((i28 != 0 && i28 != 1 && i28 != 2) || b43 || (mEndBeat < curBeat + 12.0f)) {
         remainingValue = -1;
     }
     play_vo[0] = none;
-    if (i27 || i35 || (mPlayerOne->ZoneValue() != 0 && mPlayerOne->Unk26c() == 0)
-        || (mPlayerTwo->ZoneValue() != 0 && mPlayerTwo->Unk26c() == 0)) {
+    if (i27 || i35 || (mPlayer0->ZoneValue() != 0 && mPlayer0->GetLastInTheZone() == 0)
+        || (mPlayer1->ZoneValue() != 0 && mPlayer1->GetLastInTheZone() == 0)) {
         static Symbol rhythmbattle_off_beat_p1p2("rhythmbattle_off_beat_p1p2");
         static Symbol rhythmbattle_off_beat_p1("rhythmbattle_off_beat_p1");
         static Symbol rhythmbattle_off_beat_p2("rhythmbattle_off_beat_p2");
@@ -1150,18 +1156,18 @@ void RhythmBattle::OnBeat() {
         if (play_vo[0].Sym() != intro && remainingValue > 0) {
             static Symbol inzone("inzone");
             static Symbol inzone_warning("inzone_warning");
-            if ((mPlayerOne->ZoneValue() && !mPlayerOne->Unk26c())
-                || (mPlayerTwo->ZoneValue() && !mPlayerTwo->Unk26c())) {
+            if ((mPlayer0->ZoneValue() && !mPlayer0->GetLastInTheZone())
+                || (mPlayer1->ZoneValue() && !mPlayer1->GetLastInTheZone())) {
                 bool b43 = false;
                 bool b42 = false;
-                if (mPlayerOne->InTheZone() || mPlayerTwo->InTheZone()) {
-                    if (!mPlayerOne->InTheZone() || !mPlayerTwo->InTheZone()) {
+                if (mPlayer0->InTheZone() || mPlayer1->InTheZone()) {
+                    if (!mPlayer0->InTheZone() || !mPlayer1->InTheZone()) {
                         play_vo[0] = inzone_warning;
                     } else {
                         play_vo[0] = inzone;
                     }
-                    b42 = mPlayerOne->InTheZone();
-                    b43 = mPlayerTwo->InTheZone();
+                    b42 = mPlayer0->InTheZone();
+                    b43 = mPlayer1->InTheZone();
                 }
                 bool b5 = b42;
                 if (goofy) {
@@ -1186,13 +1192,13 @@ void RhythmBattle::OnBeat() {
             remainingValue = -1;
         }
     }
-    int zone1 = mPlayerOne->InTheZone();
-    int zone2 = mPlayerTwo->InTheZone();
+    int zone1 = mPlayer0->InTheZone();
+    int zone2 = mPlayer1->InTheZone();
     if (r28) {
-        mPlayerOne->UpdateComboProgress();
-        mPlayerTwo->UpdateComboProgress();
-        mPlayerOne->UpdateAnimations(focusPanel);
-        mPlayerTwo->UpdateAnimations(focusPanel);
+        mPlayer0->UpdateComboProgress();
+        mPlayer1->UpdateComboProgress();
+        mPlayer0->UpdateAnimations(focusPanel);
+        mPlayer1->UpdateAnimations(focusPanel);
     }
 
     if (play_vo[0].Sym() == none && remainingValue > 15000) {
@@ -1201,17 +1207,17 @@ void RhythmBattle::OnBeat() {
         static Symbol new_groove_working("new_groove_working");
         static Symbol inzone("inzone");
         static Symbol inzone_warning("inzone_warning");
-        if (zone1 != mPlayerOne->InTheZone() || zone2 != mPlayerTwo->InTheZone()) {
+        if (zone1 != mPlayer0->InTheZone() || zone2 != mPlayer1->InTheZone()) {
             bool b42 = false;
             bool b43 = false;
-            if (mPlayerOne->InTheZone() || mPlayerTwo->InTheZone()) {
-                if (!mPlayerOne->InTheZone() || !mPlayerTwo->InTheZone()) {
+            if (mPlayer0->InTheZone() || mPlayer1->InTheZone()) {
+                if (!mPlayer0->InTheZone() || !mPlayer1->InTheZone()) {
                     play_vo[0] = inzone_warning;
                 } else {
                     play_vo[0] = inzone;
                 }
-                b42 = mPlayerOne->InTheZone();
-                b43 = mPlayerTwo->InTheZone();
+                b42 = mPlayer0->InTheZone();
+                b43 = mPlayer1->InTheZone();
             }
             bool b5 = b42;
             if (goofy) {
@@ -1232,17 +1238,17 @@ void RhythmBattle::OnBeat() {
         }
     }
 
-    if (inMindControl && (mPlayerOne->InTheZone() || mPlayerTwo->InTheZone())) {
+    if (inMindControl && (mPlayer0->InTheZone() || mPlayer1->InTheZone())) {
         static bool s14bc = false;
     }
-    if (inMindControl && !unk101) {
-        mPlayerOne->SetWindow(curBeat, curBeat + 4.0f);
-        mPlayerTwo->SetWindow(curBeat, curBeat + 4.0f);
+    if (inMindControl && !mOutroBegun) {
+        mPlayer0->SetWindow(curBeat, curBeat + 4.0f);
+        mPlayer1->SetWindow(curBeat, curBeat + 4.0f);
     }
-    if (unk101) {
+    if (mOutroBegun) {
         End();
     }
-    float min84 = Min(mPlayerOne->Unk284(), mPlayerTwo->Unk284());
+    float min84 = Min(mPlayer0->GetInTheZoneProgress(), mPlayer1->GetInTheZoneProgress());
     static UIPanel *sLoadingPanel =
         ObjectDir::Main()->Find<UIPanel>("loading_panel", false);
     if (sLoadingPanel && sLoadingPanel->LoadedDir()) {
@@ -1252,8 +1258,8 @@ void RhythmBattle::OnBeat() {
     }
     if (DataVariable("reset_finale").Int()) {
         DataVariable("reset_finale") = 0;
-        unk14c = 0;
-        unk148 = 0;
+        mScriptedStageNum = 0;
+        mBeatsToNextScriptedStage = 0;
     }
     if (mFinale) {
         TheHamDirector->GetVenueWorld()->Find<Flow>("show_timeywimey.flow")->Activate();
@@ -1263,32 +1269,32 @@ void RhythmBattle::OnBeat() {
     }
 
     if (inMindControl || mFinale) {
-        if (unk148 >= 0) {
-            unk148--;
+        if (mBeatsToNextScriptedStage >= 0) {
+            mBeatsToNextScriptedStage--;
             if (mFinale) {
-                if (unk148 == 0x16) {
+                if (mBeatsToNextScriptedStage == 0x16) {
                     TheHamDirector->GetVenueWorld()->Find<RndDir>("boxyman")->SetShowing(
                         false
                     );
                 }
-                if (unk148 == 0x11 && unk14c < 3) {
-                    PlayTanClip(unk14c, false);
+                if (mBeatsToNextScriptedStage == 0x11 && mScriptedStageNum < 3) {
+                    PlayTanClip(mScriptedStageNum, false);
                 }
-                if (unk148 == 0x10) {
+                if (mBeatsToNextScriptedStage == 0x10) {
                     static Message charProjectionActive("char_projection_move_active");
                     TheHamProvider->Handle(charProjectionActive, false);
                 }
-                if (unk148 == 0xc && unk14c < 2) {
+                if (mBeatsToNextScriptedStage == 0xc && mScriptedStageNum < 2) {
                     TheHamDirector->SetPlayerSpotlightsEnabled(true);
                 }
-                if (unk148 == 8 && unk14c == 2) {
+                if (mBeatsToNextScriptedStage == 8 && mScriptedStageNum == 2) {
                     TheHamDirector->SetPlayerSpotlightsEnabled(true);
                 }
-                if (unk148 == 4) {
+                if (mBeatsToNextScriptedStage == 4) {
                     static Symbol finale_tandance_01("finale_tandance_01");
                     static Symbol finale_tandance_02("finale_tandance_02");
                     static Symbol finale_tandance_03("finale_tandance_03");
-                    switch (unk14c) {
+                    switch (mScriptedStageNum) {
                     case 0:
                         QueueFinaleVO(finale_tandance_01);
                         break;
@@ -1302,27 +1308,27 @@ void RhythmBattle::OnBeat() {
                         break;
                     }
                 }
-                if (unk148 == 3 && unk14c < 2) {
+                if (mBeatsToNextScriptedStage == 3 && mScriptedStageNum < 2) {
                     TheHamDirector->SetPlayerSpotlightsEnabled(false);
                 }
-                if (unk14c == 3 && unk148 == 0x14) {
+                if (mScriptedStageNum == 3 && mBeatsToNextScriptedStage == 0x14) {
                     PlayTanClip(3, true);
                 }
-                if (unk14c == 3 && unk148 == 0x14) {
+                if (mScriptedStageNum == 3 && mBeatsToNextScriptedStage == 0x14) {
                     TheHamDirector->SetPlayerSpotlightsEnabled(false);
                 }
-                if (unk14c == 3 && unk148 == 4) {
+                if (mScriptedStageNum == 3 && mBeatsToNextScriptedStage == 4) {
                     PlayTanClip(4, true);
                     static Message destroyCharProjection("destroy_char_projection");
                     TheHamProvider->Handle(destroyCharProjection, false);
                 }
             }
-            if (unk148) {
+            if (mBeatsToNextScriptedStage) {
                 UpdateFinaleVO(remainingValue);
                 return;
             }
-            unk14c++;
-            if (unk14c == 1) {
+            mScriptedStageNum++;
+            if (mScriptedStageNum == 1) {
                 if (!mFinale) {
                     static Symbol finale_phaseout_01("finale_phaseout_01");
                     static Symbol finale_phaseout_01b("finale_phaseout_01b");
@@ -1334,10 +1340,10 @@ void RhythmBattle::OnBeat() {
                     TheHamProvider->Handle(hideCharProjection, false);
                     static Message tanPhaseOut("tan_finale_phaseout01");
                     TheHamProvider->Handle(tanPhaseOut, false);
-                    mPlayerOne->SetUnk2a4(false);
-                    mPlayerTwo->SetUnk2a4(false);
+                    mPlayer0->SetForceFail(false);
+                    mPlayer1->SetForceFail(false);
                 }
-            } else if (unk14c == 2) {
+            } else if (mScriptedStageNum == 2) {
                 if (!mFinale) {
                     static Symbol finale_phaseout_02("finale_phaseout_02");
                     static Symbol finale_phaseout_02b("finale_phaseout_02b");
@@ -1349,11 +1355,11 @@ void RhythmBattle::OnBeat() {
                     TheHamProvider->Handle(hideCharProjection, false);
                     static Message tanPhaseOut("tan_finale_phaseout02");
                     TheHamProvider->Handle(tanPhaseOut, false);
-                    mPlayerOne->SetUnk2a4(false);
-                    mPlayerTwo->SetUnk2a4(false);
+                    mPlayer0->SetForceFail(false);
+                    mPlayer1->SetForceFail(false);
                 }
                 ResetCombo();
-            } else if (unk14c == 3) {
+            } else if (mScriptedStageNum == 3) {
                 if (mFinale) {
                     static Symbol finale_phaseout_03("finale_phaseout_03");
                     static Symbol finale_phaseout_03b("finale_phaseout_03b");
@@ -1361,7 +1367,7 @@ void RhythmBattle::OnBeat() {
                     QueueFinaleVO(finale_phaseout_03b);
                     static Symbol tan_destroyed("tan_destroyed");
                     TheUI->FocusPanel()->SetProperty(tan_destroyed, true);
-                    unk148 = 0x1c;
+                    mBeatsToNextScriptedStage = 0x1c;
                     UpdateFinaleVO(remainingValue);
                 } else {
                     static Message game_outro_mind_control("game_outro_mind_control");
@@ -1369,7 +1375,7 @@ void RhythmBattle::OnBeat() {
                     UpdateFinaleVO(remainingValue);
                 }
                 return;
-            } else if (unk14c == 4) {
+            } else if (mScriptedStageNum == 4) {
                 MILO_ASSERT(mFinale, 0x66C);
                 static Message game_outro_finale("game_outro_finale");
                 focusPanel->HandleType(game_outro_finale);
@@ -1383,24 +1389,25 @@ void RhythmBattle::OnBeat() {
             if (mFinale && r28) {
                 TheHamDirector->GetVenueWorld()->Find<RndDir>("boxyman")->SetShowing(true);
             }
-            if ((!mFinale || min84 != 16.0f) && (mFinale || unk10c < 1 || unk110 <= 5)) {
+            if ((!mFinale || min84 != 16.0f)
+                && (mFinale || mMindControlProgress < 1 || mLastMindControlVOTime <= 5)) {
                 UpdateFinaleVO(remainingValue);
                 return;
             }
             if (mFinale) {
-                mPlayerOne->SetUnk2a4(true);
-                mPlayerTwo->SetUnk2a4(true);
-                if (unk14c == 0) {
+                mPlayer0->SetForceFail(true);
+                mPlayer1->SetForceFail(true);
+                if (mScriptedStageNum == 0) {
                     static Symbol finale_setcomplete_01("finale_setcomplete_01");
                     static Symbol finale_phasein_01("finale_phasein_01");
                     QueueFinaleVO(finale_setcomplete_01);
                     QueueFinaleVO(finale_phasein_01);
-                } else if (unk14c == 1) {
+                } else if (mScriptedStageNum == 1) {
                     static Symbol finale_setcomplete_02("finale_setcomplete_02");
                     static Symbol finale_phasein_02("finale_phasein_02");
                     QueueFinaleVO(finale_setcomplete_02);
                     QueueFinaleVO(finale_phasein_02);
-                } else if (unk14c == 2) {
+                } else if (mScriptedStageNum == 2) {
                     static Symbol finale_setcomplete_03("finale_setcomplete_03");
                     static Symbol finale_phasein_03("finale_phasein_03");
                     QueueFinaleVO(finale_setcomplete_03);
@@ -1408,8 +1415,8 @@ void RhythmBattle::OnBeat() {
                 }
                 TheHamDirector->ForceShot("tan_finale.shot");
             } else {
-                mPlayerOne->OnReset(this);
-                mPlayerTwo->OnReset(this);
+                mPlayer0->OnReset(this);
+                mPlayer1->OnReset(this);
                 static UIPanel *sRhythmDetectorPanel =
                     ObjectDir::Main()->Find<UIPanel>("rhythm_detector_panel", false);
                 if (sRhythmDetectorPanel && sRhythmDetectorPanel->LoadedDir()) {
@@ -1422,7 +1429,7 @@ void RhythmBattle::OnBeat() {
                 }
                 static Symbol working("working");
                 static Message mindControlCompleteMsg("mind_control_complete");
-                switch (unk14c) {
+                switch (mScriptedStageNum) {
                 case 0:
                     PlayMindControlVO(working);
                     TheHamDirector->ForceShot("CAMP_6.3_DCI_mind_control_01.shot");
@@ -1439,7 +1446,7 @@ void RhythmBattle::OnBeat() {
                     break;
                 }
             }
-            unk148 = mFinale;
+            mBeatsToNextScriptedStage = mFinale;
         }
     }
     UpdateFinaleVO(remainingValue);

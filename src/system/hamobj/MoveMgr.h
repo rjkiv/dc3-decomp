@@ -95,8 +95,8 @@ public:
     Keys<Symbol, Symbol> *mClipKeys[kNumDifficultiesDC2]; // 0x2c
     ObjectDir *mClipsDir; // 0x38
     Keys<Symbol, Symbol> *mExpertPracticeKeys; // 0x3c
-    SongLayout *unk40; // 0x40
-    SongLayout *unk44; // 0x44
+    SongLayout *mLayout; // 0x40
+    SongLayout *mSongLayout; // 0x44
     Keys<Symbol, Symbol> *mMoveKeys[kNumDifficultiesDC2]; // 0x48
     std::map<int, MoveVariant *> mMoveLayout[kNumDifficultiesDC2]; // 0x54
     MoveDir *mMovesDir; // 0x9c

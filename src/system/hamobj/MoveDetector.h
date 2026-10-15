@@ -26,8 +26,8 @@ public:
             for (int i = 0; i < 2; i++) {
                 mLastDetectFracs[i] = 0;
             }
-            unk8 = -1;
-            unkc = -1;
+            mActiveBar = -1;
+            mActiveBeat = -1;
             mActive = true;
         }
     }
@@ -36,15 +36,15 @@ public:
             for (int i = 0; i < 2; i++) {
                 mLastDetectFracs[i] = 0;
             }
-            unk8 = -1;
-            unkc = -1;
+            mActiveBar = -1;
+            mActiveBeat = -1;
             mActive = false;
         }
     }
     void ClearLoopedRatingFrac() {
         for (int i = 0; i < 2; i++) {
             for (int j = 0; j < 4; j++) {
-                unk3c[i][j] = 0;
+                maPrevBeatDetectFrac[i][j] = 0;
             }
         }
     }
@@ -52,12 +52,12 @@ public:
 protected:
     const HamMove *mMove; // 0x0
     bool mActive; // 0x4
-    int unk8; // 0x8
-    int unkc; // 0xc
+    int mActiveBar; // 0x8
+    int mActiveBeat; // 0xc
     std::vector<DancerFrame> mDancerFrames; // 0x10
     std::vector<DetectFrame> mPlayerDetectFrames[2]; // 0x1c
     float mLastDetectFracs[2]; // 0x34
-    float unk3c[2][4]; // 0x3c
+    float maPrevBeatDetectFrac[2][4]; // 0x3c
 };
 
 // size 0x28

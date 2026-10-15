@@ -15,26 +15,26 @@
 #include "utl/Symbol.h"
 
 HamPlayerData::HamPlayerData(int i)
-    : unk40(i), mChar(gNullStr), unk48(gNullStr), mPreferredOutfit(gNullStr),
-      mOutfit(gNullStr), mDifficulty(DefaultDifficulty()), unk5c(-1),
-      mSkeletonTrackingID(-1), mProvider(this), mPadNum(-1), mSameRatingCount(0),
-      mLastRatingIdx(0x19) {
+    : mPlayerIdx(i), mCharacter(gNullStr), mPreferredCharacter(gNullStr),
+      mPreferredOutfit(gNullStr), mOutfit(gNullStr), mDifficulty(DefaultDifficulty()),
+      mTrackingIDTimestamp(-1), mSkeletonTrackingID(-1), mProvider(this), mPadNum(-1),
+      mSameRatingCount(0), mLastRatingIdx(0x19) {
     DataArray *dancerDta = DataReadFile("devkit:\\dancers.dta", false);
     if (dancerDta) {
         for (int i = 0; i < dancerDta->Size(); i++) {
-            unk34.push_back(dancerDta->Str(i));
+            mTestDancers.push_back(dancerDta->Str(i));
         }
         dancerDta->Release();
     }
-    if (!unk34.empty()) {
-        unk2c = unk34.front();
+    if (!mTestDancers.empty()) {
+        mCurTestDancer = mTestDancers.front();
     }
 }
 
 BEGIN_HANDLERS(HamPlayerData)
     HANDLE_ACTION(set_character_outfit, SetCharacterOutfit(_msg->Sym(2)))
     HANDLE_ACTION(set_dancer, SetCharacter(_msg->Sym(2)))
-    HANDLE_EXPR(get_dancer, mChar)
+    HANDLE_EXPR(get_dancer, mCharacter)
     HANDLE_EXPR(get_same_rating_count, mSameRatingCount)
     HANDLE_ACTION(increment_same_rating_count, mSameRatingCount++)
     HANDLE_ACTION(clear_same_rating_count, mSameRatingCount = 0)
@@ -44,13 +44,13 @@ BEGIN_HANDLERS(HamPlayerData)
 END_HANDLERS
 
 BEGIN_PROPSYNCS(HamPlayerData)
-    SYNC_PROP(character, mChar)
+    SYNC_PROP(character, mCharacter)
     SYNC_PROP(outfit, mOutfit)
     SYNC_PROP(pad_num, mPadNum)
     SYNC_PROP_SET(crew, mCrew, SetCrew(_val.Sym()))
     SYNC_PROP_SET(difficulty, mDifficulty, SetDifficulty((Difficulty)_val.Int()))
     SYNC_PROP_SET(playing, IsPlaying(), SetPlaying(_val.Int()))
-    SYNC_PROP(autoplay, mAutoplay)
+    SYNC_PROP(autoplay, mAutoplayRating)
     SYNC_PROP(provider, mProvider)
     SYNC_PROP(skeleton_tracking_id, mSkeletonTrackingID)
     if (mProvider && mProvider->SyncProperty(_val, _prop, _i, _op))
@@ -93,10 +93,10 @@ void HamPlayerData::SetCharacterOutfit(Symbol outfit) {
     if (!outfit.Null()) {
         Symbol charOutfit = GetOutfitCharacter(outfit, true);
         mOutfit = outfit;
-        mChar = charOutfit;
+        mCharacter = charOutfit;
         mCrew = GetCrewForCharacter(charOutfit, true);
     } else {
-        mChar = gNullStr;
+        mCharacter = gNullStr;
         mOutfit = gNullStr;
         mCrew = gNullStr;
     }
@@ -114,7 +114,7 @@ Symbol HamPlayerData::CharacterOutfit(Symbol crew) const {
     Symbol outfit = mOutfit;
     if (outfit.Null()) {
         MILO_ASSERT(!crew.Null(), 0x4D);
-        Symbol crewChar = GetCrewCharacter(crew, unk40);
+        Symbol crewChar = GetCrewCharacter(crew, mPlayerIdx);
         outfit = GetCharacterOutfit(crewChar, 0, true);
     }
     return outfit;
@@ -134,10 +134,10 @@ SkeletonSide HamPlayerData::Side() const {
 void HamPlayerData::SetPlaying(bool) { MILO_ASSERT(false, 0xE1); }
 
 void HamPlayerData::SetCharacter(Symbol character) {
-    mChar = character;
+    mCharacter = character;
     if (mProvider) {
         static Symbol dancer("dancer");
-        mProvider->SetProperty(dancer, mChar);
+        mProvider->SetProperty(dancer, mCharacter);
     }
 }
 
@@ -145,11 +145,11 @@ void HamPlayerData::SetSkeletonTrackingID(int id) {
     int oldID = mSkeletonTrackingID;
     mSkeletonTrackingID = id;
     if (mSkeletonTrackingID <= 0) {
-        unk5c = -1;
+        mTrackingIDTimestamp = -1;
         static Symbol identifying("identifying");
         mProvider->SetProperty(identifying, 0);
     } else if (oldID <= 0) {
-        unk5c = TheTaskMgr.UISeconds();
+        mTrackingIDTimestamp = TheTaskMgr.UISeconds();
     }
 }
 
@@ -175,14 +175,14 @@ void HamPlayerData::SetDifficulty(Difficulty d) {
 }
 
 float HamPlayerData::TrackingAgeSeconds() const {
-    if (unk5c <= 0)
+    if (mTrackingIDTimestamp <= 0)
         return -1;
     else
-        return TheTaskMgr.UISeconds() - unk5c;
+        return TheTaskMgr.UISeconds() - mTrackingIDTimestamp;
 }
 
 bool HamPlayerData::IsPlaying() const {
-    if (!TheLoadMgr.EditMode() && mAutoplay.Null()
+    if (!TheLoadMgr.EditMode() && mAutoplayRating.Null()
         && TheGestureMgr->PauseOnSkeletonLoss()
             != GestureMgr::kSkelLoss_NoPauseFlashcardsDontDropOut) {
         return mSkeletonTrackingID > 0;

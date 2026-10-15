@@ -38,16 +38,16 @@ protected:
     void SetActive(bool);
     void ExposeMesh();
 
-    bool unk48; // 0x48
-    float unk4c; // 0x4c
+    bool mCreateTranss; // 0x48
+    float mLastSeconds; // 0x4c
     int mNumSides; // 0x50
     RndMesh *mMesh; // 0x54
     ObjPtr<RndMat> mMat; // 0x58
     float mWidth; // 0x6c
-    int unk70; // 0x70
+    int mDirty; // 0x70
     bool mActive; // 0x74
-    ObjPtrList<RndTransformable> unk78; // 0x78
-    Keys<Transform, Transform> unk8c; // 0x8c
+    ObjPtrList<RndTransformable> mTransList; // 0x78
+    Keys<Transform, Transform> mHistory; // 0x8c
     int mNumSegments; // 0x98
     float mDecay; // 0x9c
     ObjPtr<RndTransformable> mFollowA; // 0xa0

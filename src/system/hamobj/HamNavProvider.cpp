@@ -97,17 +97,17 @@ BEGIN_LOADS(HamNavProvider)
         mNavList->Refresh();
 END_LOADS
 
-void HamNavProvider::Text(int i1, int i2, UIListLabel *list, UILabel *label) const {
-    if (list->Matches("label")) {
-        if (mNavItems[i2].unk14) {
-            mNavItems[i2].unk14->Node(0) = mNavItems[i2].mLabel;
-            Message msg("set_token_fmt", mNavItems[i2].unk14);
+void HamNavProvider::Text(int showing, int data, UIListLabel *slot, UILabel *label) const {
+    if (slot->Matches("label")) {
+        if (mNavItems[data].mFmtArgs) {
+            mNavItems[data].mFmtArgs->Node(0) = mNavItems[data].mLabel;
+            Message msg("set_token_fmt", mNavItems[data].mFmtArgs);
             label->Handle(msg, false);
         } else {
-            label->SetTextToken(mNavItems[i2].mLabel);
+            label->SetTextToken(mNavItems[data].mLabel);
         }
-    } else if (list->Matches("checkbox")) {
-        switch (mNavItems[i2].mCheckboxState) {
+    } else if (slot->Matches("checkbox")) {
+        switch (mNavItems[data].mCheckboxState) {
         case 0:
             label->SetIcon('\0');
             break;
@@ -120,20 +120,20 @@ void HamNavProvider::Text(int i1, int i2, UIListLabel *list, UILabel *label) con
         default:
             break;
         }
-    } else if (list->Matches("song")) {
-        if (mNavItems[i2].unk14) {
-            mNavItems[i2].unk14->Node(0) = mNavItems[i2].mLabel;
-            Message msg("set_token_fmt", mNavItems[i2].unk14);
+    } else if (slot->Matches("song")) {
+        if (mNavItems[data].mFmtArgs) {
+            mNavItems[data].mFmtArgs->Node(0) = mNavItems[data].mLabel;
+            Message msg("set_token_fmt", mNavItems[data].mFmtArgs);
             label->Handle(msg, false);
         } else {
-            label->SetTextToken(mNavItems[i2].mLabel);
+            label->SetTextToken(mNavItems[data].mLabel);
         }
     } else {
         label->SetTextToken(gNullStr);
     }
 }
 
-UIListProvider *HamNavProvider::Provider(int, int data, UIListSubList *) const {
+UIListProvider *HamNavProvider::Provider(int showing, int data, UIListSubList *) const {
     MILO_ASSERT(data < mNavItems.size(), 0x81);
     return mNavItems[data].mLabelProvider;
 }
@@ -170,8 +170,8 @@ bool HamNavProvider::IsHidden(int idx) const {
 
 void HamNavProvider::Init() { REGISTER_OBJ_FACTORY(HamNavProvider); }
 
-void HamNavProvider::CreateSubListProvider(int i1) {
-    NavItem &curItem = mNavItems[i1];
+void HamNavProvider::CreateSubListProvider(int index) {
+    NavItem &curItem = mNavItems[index];
     if (!curItem.mLabelProvider) {
         int numLabels = curItem.mLabels.size();
         DataArray *arr = new DataArray(numLabels);
@@ -199,17 +199,17 @@ int HamNavProvider::FindLabel(Symbol s) {
     return -1;
 }
 
-void HamNavProvider::SetLabel(int elementIndex, int i2, Symbol s) {
+void HamNavProvider::SetLabel(int elementIndex, int labelIndex, Symbol s) {
     MILO_ASSERT(elementIndex >= 0 && elementIndex < mNavItems.size(), 0xEF);
     NavItem &curItem = mNavItems[elementIndex];
     curItem.mLabels.clear();
     curItem.mLabels.push_back(s);
     if (curItem.mLabelProvider) {
-        if (i2 < curItem.mLabelProvider->Data()->Size()) {
+        if (labelIndex < curItem.mLabelProvider->Data()->Size()) {
             DataProvider *prov = curItem.mLabelProvider;
             DataArray *provData = prov->Data();
             DataArray *cloned = prov->Data()->Clone(true, false, 0);
-            cloned->Node(i2) = s;
+            cloned->Node(labelIndex) = s;
             curItem.mLabelProvider->SetData(cloned);
             cloned->Release();
         }
@@ -262,9 +262,9 @@ void HamNavProvider::SetStars(Symbol s, int songID, bool b3) {
     int index = FindLabel(s);
     mNavItems[index].mSongID = songID;
     if (b3) {
-        mNavItems[index].unkc = 3;
+        mNavItems[index].mScoreDisplayMode = kScoreDisplay_Multiplayer;
     } else {
-        mNavItems[index].unkc = 1;
+        mNavItems[index].mScoreDisplayMode = kScoreDisplay_Perform;
     }
     if (mNavList) {
         mNavList->Refresh();
@@ -286,10 +286,10 @@ void HamNavProvider::SetLabel(int index, Symbol label) {
     }
 }
 
-void HamNavProvider::SetEnabled(int index, bool b2) {
+void HamNavProvider::SetEnabled(int index, bool enabled) {
     MILO_ASSERT(index >= 0 && index < mNavItems.size(), 0x123);
-    mNavItems[index].mEnabled = b2;
-    if (!b2) {
+    mNavItems[index].mEnabled = enabled;
+    if (!enabled) {
         if (mNavItems[index].mLabelProvider) {
             DataArray *data = mNavItems[index].mLabelProvider->Data();
             for (int i = 0; i < data->Size(); i++) {
@@ -307,9 +307,9 @@ bool HamNavProvider::IsEnabled(int index) const {
     return mNavItems[index].mEnabled;
 }
 
-void HamNavProvider::SetHidden(int index, bool b2) {
+void HamNavProvider::SetHidden(int index, bool enabled) {
     MILO_ASSERT(index >= 0 && index < mNavItems.size(), 0x14D);
-    mNavItems[index].mHidden = b2;
+    mNavItems[index].mHidden = enabled;
     if (mNavList) {
         mNavList->Refresh();
     }
@@ -346,17 +346,17 @@ DataNode HamNavProvider::OnSetFormatArgs(const DataArray *a) {
 
     MILO_ASSERT(index >= 0 && index < mNavItems.size(), 0x16d);
 
-    if (mNavItems[index].unk14) {
-        mNavItems[index].unk14->Release();
-        mNavItems[index].unk14 = nullptr;
+    if (mNavItems[index].mFmtArgs) {
+        mNavItems[index].mFmtArgs->Release();
+        mNavItems[index].mFmtArgs = nullptr;
     }
 
     if (a->Size() > 3) {
-        mNavItems[index].unk14 = new DataArray(a->Size() - 2);
-        mNavItems[index].unk14->Node(0) = mNavItems[index].mLabel;
+        mNavItems[index].mFmtArgs = new DataArray(a->Size() - 2);
+        mNavItems[index].mFmtArgs->Node(0) = mNavItems[index].mLabel;
 
         for (int i = 3; i < a->Size(); i++) {
-            mNavItems[index].unk14->Node(i - 2) = a->Node(i).Evaluate();
+            mNavItems[index].mFmtArgs->Node(i - 2) = a->Node(i).Evaluate();
         }
     }
 

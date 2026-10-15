@@ -21,7 +21,7 @@
 #include <algorithm>
 #include <climits>
 
-MoveMgr::MoveMgr() : unk40(nullptr), mPrevMoveVariant(nullptr) {
+MoveMgr::MoveMgr() : mLayout(nullptr), mPrevMoveVariant(nullptr) {
     mMovesDir = nullptr;
     for (int i = 0; i < kNumDifficultiesDC2; i++) {
         mMoveLayout[i].clear();
@@ -34,7 +34,7 @@ MoveMgr::MoveMgr() : unk40(nullptr), mPrevMoveVariant(nullptr) {
     mRemixer = Hmx::Object::New<SuperEasyRemixer>();
     mRemixer->SetType("easeup_remixer");
     mMoveData = nullptr;
-    unk44 = dynamic_cast<SongLayout *>(Hmx::Object::NewObject("SongLayout"));
+    mSongLayout = dynamic_cast<SongLayout *>(Hmx::Object::NewObject("SongLayout"));
 }
 
 MoveMgr::~MoveMgr() {
@@ -52,7 +52,7 @@ MoveMgr::~MoveMgr() {
     }
     mExpertPracticeKeys = nullptr;
     mMoveData = nullptr;
-    RELEASE(unk44);
+    RELEASE(mSongLayout);
 }
 
 BEGIN_HANDLERS(MoveMgr)
@@ -111,7 +111,7 @@ void MoveMgr::Clear() {
         mClipKeys[i] = nullptr;
     }
     mExpertPracticeKeys = nullptr;
-    unk40 = 0;
+    mLayout = 0;
     mMovesNeeded.clear();
     for (int i = 0; i < 2; i++) {
         mRoutine[i].clear();
@@ -129,9 +129,9 @@ void MoveMgr::Clear() {
     mMoveData = nullptr;
 }
 
-bool MoveVariantsWithHamMove(const MoveVariant *var, void *v) {
-    int tag = var->GetHamMoveName();
-    int *iv = (int *)v;
+bool MoveVariantsWithHamMove(const MoveVariant *nodeToEvaluate, void *userData) {
+    int tag = nodeToEvaluate->GetHamMoveName();
+    int *iv = (int *)userData;
     return tag == *iv;
 }
 
@@ -142,20 +142,22 @@ bool MoveMgr::HasRoutine() const {
         && TheHamProvider->Property(gameplay_mode, true)->Sym() != practice;
 }
 
-void MoveMgr::InsertMoveInSong(const MoveVariant *var, int measure, int player) {
+void MoveMgr::InsertMoveInSong(
+    const MoveVariant *pMoveVariant, int iMeasure, int iPlayer
+) {
     static Symbol clip("clip");
     static Symbol move("move");
     static Symbol practice("practice");
-    if (var) {
-        Symbol name = var->GetName();
-        float beat = measure * 4;
+    if (pMoveVariant) {
+        Symbol name = pMoveVariant->GetName();
+        float beat = iMeasure * 4;
         float f4 = BeatToFrame(beat);
-        float f6 = BeatToFrame(measure > 0 ? beat - 1 : 0);
-        RndPropAnim *anim = TheHamDirector->SongAnim(player);
+        float f6 = BeatToFrame(iMeasure > 0 ? beat - 1 : 0);
+        RndPropAnim *anim = TheHamDirector->SongAnim(iPlayer);
         DataArrayPtr ptr90(clip);
         DataArrayPtr ptr88(move);
         anim->SetKeyVal(TheHamDirector, ptr90, f6, name, true);
-        anim->SetKeyVal(TheHamDirector, ptr88, f4, var->GetHamMoveName(), true);
+        anim->SetKeyVal(TheHamDirector, ptr88, f4, pMoveVariant->GetHamMoveName(), true);
     }
 }
 
@@ -309,10 +311,10 @@ void MoveMgr::Init(const char *filename) {
     }
 }
 
-const MoveVariant *MoveMgr::GetRoutinePreferredVariant(int i1, int i2) const {
-    if (i2 < mRoutinePreferredVariants[i1].size()) {
-        const MoveVariant *var = mRoutinePreferredVariants[i1][i2];
-        if (var && var->GetParent() != mRoutineParents[i1].at(i2)) {
+const MoveVariant *MoveMgr::GetRoutinePreferredVariant(int aPlayer, int aMeasure) const {
+    if (aMeasure < mRoutinePreferredVariants[aPlayer].size()) {
+        const MoveVariant *var = mRoutinePreferredVariants[aPlayer][aMeasure];
+        if (var && var->GetParent() != mRoutineParents[aPlayer].at(aMeasure)) {
             return nullptr;
         } else {
             return var;
@@ -323,39 +325,39 @@ const MoveVariant *MoveMgr::GetRoutinePreferredVariant(int i1, int i2) const {
 
 void MoveMgr::LoadSongData() { ImportMoveData("../meta/move_data.dta", true); }
 
-void MoveMgr::ComputePotentialMoves(std::set<const MoveParent *> &moves, int i2) {
-    if (mRoutineParents[0].size() < i2 + 1) {
-        mRoutineParents[0].resize(i2 + 1);
+void MoveMgr::ComputePotentialMoves(std::set<const MoveParent *> &result, int iMoveIndex) {
+    if (mRoutineParents[0].size() < iMoveIndex + 1) {
+        mRoutineParents[0].resize(iMoveIndex + 1);
     }
-    if (mRoutineParents[0][i2]) {
-        moves.insert(mRoutineParents[0][i2]);
+    if (mRoutineParents[0][iMoveIndex]) {
+        result.insert(mRoutineParents[0][iMoveIndex]);
     } else {
-        if (mTempSongChoices.size() < i2 + 1) {
-            mTempSongChoices.resize(i2 + 1);
+        if (mTempSongChoices.size() < iMoveIndex + 1) {
+            mTempSongChoices.resize(iMoveIndex + 1);
         }
-        MoveChoiceSet &curChoice = mTempSongChoices[i2];
+        MoveChoiceSet &curChoice = mTempSongChoices[iMoveIndex];
         if (curChoice.mMoves[0]) {
             for (int i = 0; i < kNumDifficulties; i++) {
                 if (curChoice.mMoves[i]) {
-                    moves.insert(curChoice.mMoves[i]);
+                    result.insert(curChoice.mMoves[i]);
                 }
             }
         } else {
-            if (i2 > 0) {
-                if (mRoutineParents[0][i2 - 1]) {
-                    const MoveParent *prev = mRoutineParents[0][i2 - 1];
+            if (iMoveIndex > 0) {
+                if (mRoutineParents[0][iMoveIndex - 1]) {
+                    const MoveParent *prev = mRoutineParents[0][iMoveIndex - 1];
                     FOREACH (adj, prev->mNext) {
                         if ((*adj)->IsValidForMiniGame()) {
-                            moves.insert(*adj);
+                            result.insert(*adj);
                         }
                     }
                 }
             }
-            if (moves.size() < 1) {
+            if (result.size() < 1) {
                 FOREACH (it, mWholeMoveGraph.mNodes) {
                     MoveParent *cur = it->second;
                     if (cur->IsValidForMiniGame()) {
-                        moves.insert(cur);
+                        result.insert(cur);
                     }
                 }
             }
@@ -379,14 +381,14 @@ void MoveMgr::AutoFillParents() {
 }
 
 SongLayout *MoveMgr::GetSongLayout() {
-    if (!unk40) {
-        unk40 = unk44;
-        unk44->SetDefaultPattern(0x40);
+    if (!mLayout) {
+        mLayout = mSongLayout;
+        mSongLayout->SetDefaultPattern(0x40);
     }
-    if (unk40->NumReplacers() == 0) {
-        unk40->SetDefaultReplacer();
+    if (mLayout->NumReplacers() == 0) {
+        mLayout->SetDefaultReplacer();
     }
-    return unk40;
+    return mLayout;
 }
 
 Symbol MoveMgr::PickRandomGenre() {
@@ -456,14 +458,14 @@ void MoveMgr::PrepareNextChoiceSet(int measure) {
     TheHamDirector->LoadRoutineBuilderData(mMovesNeeded, true);
 }
 
-void MoveMgr::FillRoutineFromParents(int x) {
-    if (x < 0) {
-        x = mRoutineParents[0].size() - 1;
+void MoveMgr::FillRoutineFromParents(int highest_measure) {
+    if (highest_measure < 0) {
+        highest_measure = mRoutineParents[0].size() - 1;
     }
-    for (int i = 0; i <= x; i++) {
+    for (int i = 0; i <= highest_measure; i++) {
         FillInRoutineAt(0, i);
     }
-    for (int i = 0; i <= x; i++) {
+    for (int i = 0; i <= highest_measure; i++) {
         const MoveVariant *var = mRoutine[0][i].first;
         for (int j = 0; j < 2; j++) {
             InsertMoveInSong(var, i, j);
@@ -477,11 +479,11 @@ void MoveMgr::ResetRemixer() {
         mRemixer->Reset();
 }
 
-void MoveMgr::RegisterSongLayout(SongLayout *sl) { unk40 = sl; }
+void MoveMgr::RegisterSongLayout(SongLayout *sl) { mLayout = sl; }
 
 void MoveMgr::UnRegisterSongLayout(SongLayout *sl) {
-    if (unk40 == sl) {
-        unk40 = nullptr;
+    if (mLayout == sl) {
+        mLayout = nullptr;
     }
 }
 
@@ -663,8 +665,8 @@ void MoveMgr::InitSong() {
     mTempSongChoices.clear();
     int i12 = INT_MAX;
     int i13 = 0;
-    unk40 = GetSongLayout();
-    FOREACH (it, unk40->SongSections()) {
+    mLayout = GetSongLayout();
+    FOREACH (it, mLayout->SongSections()) {
         if (i12 >= it->mMeasureRange.start) {
             i12 = it->mMeasureRange.start;
         }
@@ -726,30 +728,30 @@ void MoveMgr::LoadSubCategoryData() {
     }
 }
 
-void MoveMgr::FillRoutineFromReplacer(int x) {
-    FOREACH (it, unk40->MoveReplacers()) {
-        if (it->unk8) {
+void MoveMgr::FillRoutineFromReplacer(int highest_measure) {
+    FOREACH (it, mLayout->MoveReplacers()) {
+        if (it->mReplaceMove) {
             FOREACH (measure, it->mMeasures) {
-                mRoutineParents[0][*measure] = it->unk8;
+                mRoutineParents[0][*measure] = it->mReplaceMove;
             }
         }
     }
-    FillRoutineFromParents(x);
+    FillRoutineFromParents(highest_measure);
 }
 
-void MoveMgr::FillRoutineFromVerses(int x) {
-    FOREACH (it, unk40->SongSections()) {
+void MoveMgr::FillRoutineFromVerses(int highest_measure) {
+    FOREACH (it, mLayout->SongSections()) {
         int secLen = (it->mMeasureRange.end - it->mMeasureRange.start) + 1;
         int patLen = (it->mPatternRange.end - it->mPatternRange.start) + 1;
         MILO_ASSERT(patLen == secLen, 0x428);
-        for (int i = 0; i < it->unk14->mNumMoves; i++) {
+        for (int i = 0; i < it->mPattern->mNumMoves; i++) {
             int measureIdx = it->mMeasureRange.start + i;
             int patternIdx = (it->mPatternRange.start + i) - 1;
-            if (patternIdx >= it->unk14->mElements.size() - 1) {
-                patternIdx = it->unk14->mElements.size() - 1;
+            if (patternIdx >= it->mPattern->mElements.size() - 1) {
+                patternIdx = it->mPattern->mElements.size() - 1;
             }
-            mRoutineParents[0][measureIdx] = it->unk14->mMoveParents[patternIdx];
+            mRoutineParents[0][measureIdx] = it->mPattern->mMoveParents[patternIdx];
         }
     }
-    FillRoutineFromParents(x);
+    FillRoutineFromParents(highest_measure);
 }

@@ -42,6 +42,6 @@ protected:
 
     RndMat *mPracticeMats[kNumPracticeOptions]; // 0x40
     Symbol mPracticeOptions[kNumPracticeOptions]; // 0x50
-    bool unk60;
+    bool mVideoReplay;
     bool mDisablePrevious; // 0x61
 };

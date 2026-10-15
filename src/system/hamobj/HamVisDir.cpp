@@ -27,89 +27,90 @@ PoseOwner::~PoseOwner() {
 }
 
 HamVisDir::HamVisDir()
-    : mFilter(0), mRunning(0), mPlayer1Right(this), mPlayer1Left(this),
-      mPlayer2Right(this), mPlayer2Left(this), mMiloManualFrame(1), mGrooviness(0) {
+    : mFreestyleFilter(0), mRunning(0), mPlayer1GestureRight(this),
+      mPlayer1GestureLeft(this), mPlayer2GestureRight(this), mPlayer2GestureLeft(this),
+      mMiloManualFrame(1), mGroove(0) {
     SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
     if (!handle.HasCallback(this)) {
         handle.AddCallback(this);
     }
     for (int i = 0; i < 2; i++) {
-        mSquatPoses[i].name = MakeString("pose_squat_%i", i);
-        mSquatPoses[i].pose = new Pose(10, (Pose::ScoreMode)1);
-        mSquatPoses[i].pose->AddElement(
+        mPoseSquat[i].name = MakeString("pose_squat_%i", i);
+        mPoseSquat[i].pose = new Pose(10, (Pose::ScoreMode)1);
+        mPoseSquat[i].pose->AddElement(
             new JointDistPoseElement(kJointHead, kJointKneeRight, 0, 0.9)
         );
-        mSquatPoses[i].pose->AddElement(
+        mPoseSquat[i].pose->AddElement(
             new JointDistPoseElement(kJointHead, kJointKneeLeft, 0, 0.9)
         );
-        mSquatPoses[i].pose->AddElement(new CamDistancePoseElement(1, 2));
+        mPoseSquat[i].pose->AddElement(new CamDistancePoseElement(1, 2));
 
-        mSquatPoses[i].holder = new Pose(10, (Pose::ScoreMode)0);
-        mSquatPoses[i].holder->AddElement(
+        mPoseSquat[i].holder = new Pose(10, (Pose::ScoreMode)0);
+        mPoseSquat[i].holder->AddElement(
             new JointDistPoseElement(kJointHead, kJointKneeRight, 0, 0.94)
         );
-        mSquatPoses[i].holder->AddElement(
+        mPoseSquat[i].holder->AddElement(
             new JointDistPoseElement(kJointHead, kJointKneeLeft, 0, 0.94)
         );
-        mSquatPoses[i].holder->AddElement(new CamDistancePoseElement(1, 1.6f));
+        mPoseSquat[i].holder->AddElement(new CamDistancePoseElement(1, 1.6f));
 
-        mYPoses[i].name = MakeString("pose_y_%i", i);
-        mYPoses[i].pose = new Pose(10, (Pose::ScoreMode)1);
-        mYPoses[i].pose->AddElement(new BoneAngleRangePoseElement(
+        mPoseY[i].name = MakeString("pose_y_%i", i);
+        mPoseY[i].pose = new Pose(10, (Pose::ScoreMode)1);
+        mPoseY[i].pose->AddElement(new BoneAngleRangePoseElement(
             kBoneArmLowerRight, Vector3(1, 1, 0), 0.7853981852531433, 1
         ));
-        mYPoses[i].pose->AddElement(new BoneAngleRangePoseElement(
+        mPoseY[i].pose->AddElement(new BoneAngleRangePoseElement(
             kBoneArmLowerLeft, Vector3(-1, 1, 0), 0.7853981852531433, 1
         ));
-        mYPoses[i].pose->AddElement(new BoneAngleRangePoseElement(
+        mPoseY[i].pose->AddElement(new BoneAngleRangePoseElement(
             kBoneArmUpperRight, Vector3(1, 1, 0), 0.7853981852531433, 1
         ));
-        mYPoses[i].pose->AddElement(new BoneAngleRangePoseElement(
+        mPoseY[i].pose->AddElement(new BoneAngleRangePoseElement(
             kBoneArmUpperLeft, Vector3(-1, 1, 0), 0.7853981852531433, 1
         ));
-        mYPoses[i].pose->AddElement(new BoneAngleRangePoseElement(
+        mPoseY[i].pose->AddElement(new BoneAngleRangePoseElement(
             kBoneLegLowerRight, Vector3(1, -1, 0), 0.7853981852531433, 1
         ));
-        mYPoses[i].pose->AddElement(new BoneAngleRangePoseElement(
+        mPoseY[i].pose->AddElement(new BoneAngleRangePoseElement(
             kBoneLegLowerLeft, Vector3(-1, -1, 0), 0.7853981852531433, 1
         ));
-        mYPoses[i].pose->AddElement(new BoneAngleRangePoseElement(
+        mPoseY[i].pose->AddElement(new BoneAngleRangePoseElement(
             kBoneLegUpperRight, Vector3(1, -1, 0), 0.7853981852531433, 1
         ));
-        mYPoses[i].pose->AddElement(new BoneAngleRangePoseElement(
+        mPoseY[i].pose->AddElement(new BoneAngleRangePoseElement(
             kBoneLegUpperLeft, Vector3(-1, -1, 0), 0.7853981852531433, 1
         ));
 
-        mYPoses[i].holder = new Pose(10, (Pose::ScoreMode)0);
-        mYPoses[i].holder->AddElement(new BoneAngleRangePoseElement(
+        mPoseY[i].holder = new Pose(10, (Pose::ScoreMode)0);
+        mPoseY[i].holder->AddElement(new BoneAngleRangePoseElement(
             kBoneArmLowerRight, Vector3(1, 1, 0), 1.047197580337524, 1
         ));
-        mYPoses[i].holder->AddElement(new BoneAngleRangePoseElement(
+        mPoseY[i].holder->AddElement(new BoneAngleRangePoseElement(
             kBoneArmLowerLeft, Vector3(-1, 1, 0), 1.047197580337524, 1
         ));
-        mYPoses[i].holder->AddElement(new BoneAngleRangePoseElement(
+        mPoseY[i].holder->AddElement(new BoneAngleRangePoseElement(
             kBoneArmUpperRight, Vector3(1, 1, 0), 1.047197580337524, 1
         ));
-        mYPoses[i].holder->AddElement(new BoneAngleRangePoseElement(
+        mPoseY[i].holder->AddElement(new BoneAngleRangePoseElement(
             kBoneArmUpperLeft, Vector3(-1, 1, 0), 1.047197580337524, 1
         ));
-        mYPoses[i].holder->AddElement(new BoneAngleRangePoseElement(
+        mPoseY[i].holder->AddElement(new BoneAngleRangePoseElement(
             kBoneLegLowerRight, Vector3(1, -1, 0), 1.047197580337524, 1
         ));
-        mYPoses[i].holder->AddElement(new BoneAngleRangePoseElement(
+        mPoseY[i].holder->AddElement(new BoneAngleRangePoseElement(
             kBoneLegLowerLeft, Vector3(-1, -1, 0), 1.047197580337524, 1
         ));
-        mYPoses[i].holder->AddElement(new BoneAngleRangePoseElement(
+        mPoseY[i].holder->AddElement(new BoneAngleRangePoseElement(
             kBoneLegUpperRight, Vector3(1, -1, 0), 1.047197580337524, 1
         ));
-        mYPoses[i].holder->AddElement(new BoneAngleRangePoseElement(
+        mPoseY[i].holder->AddElement(new BoneAngleRangePoseElement(
             kBoneLegUpperLeft, Vector3(-1, -1, 0), 1.047197580337524, 1
         ));
     }
 }
 
 HamVisDir::~HamVisDir() {
-    RELEASE(mFilter);
+    RELEASE(mFreestyleFilter);
     SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
     if (handle.HasCallback(this)) {
         handle.RemoveCallback(this);
@@ -122,14 +123,14 @@ END_HANDLERS
 
 BEGIN_PROPSYNCS(HamVisDir)
     SYNC_PROP(milo_manual_frame, mMiloManualFrame)
-    SYNC_PROP(player1_right, mPlayer1Right)
-    SYNC_PROP(player1_left, mPlayer1Left)
-    SYNC_PROP(player2_right, mPlayer2Right)
-    SYNC_PROP(player2_left, mPlayer2Left)
-    SYNC_PROP(in_pose_squat_0, mSquatPoses[0].in_pose)
-    SYNC_PROP(in_pose_y_0, mYPoses[0].in_pose)
-    SYNC_PROP(in_pose_squat_1, mSquatPoses[1].in_pose)
-    SYNC_PROP(in_pose_y_1, mYPoses[1].in_pose)
+    SYNC_PROP(player1_right, mPlayer1GestureRight)
+    SYNC_PROP(player1_left, mPlayer1GestureLeft)
+    SYNC_PROP(player2_right, mPlayer2GestureRight)
+    SYNC_PROP(player2_left, mPlayer2GestureLeft)
+    SYNC_PROP(in_pose_squat_0, mPoseSquat[0].in_pose)
+    SYNC_PROP(in_pose_y_0, mPoseY[0].in_pose)
+    SYNC_PROP(in_pose_squat_1, mPoseSquat[1].in_pose)
+    SYNC_PROP(in_pose_y_1, mPoseY[1].in_pose)
     SYNC_SUPERCLASS(SkeletonDir)
 END_PROPSYNCS
 
@@ -137,8 +138,8 @@ BEGIN_SAVES(HamVisDir)
     SAVE_REVS(0xD, 0)
     SAVE_SUPERCLASS(SkeletonDir)
     bs << mMiloManualFrame;
-    bs << mPlayer1Left << mPlayer1Right;
-    bs << mPlayer2Left << mPlayer2Right;
+    bs << mPlayer1GestureLeft << mPlayer1GestureRight;
+    bs << mPlayer2GestureLeft << mPlayer2GestureRight;
 END_SAVES
 
 BEGIN_COPYS(HamVisDir)
@@ -146,10 +147,10 @@ BEGIN_COPYS(HamVisDir)
     CREATE_COPY(HamVisDir)
     BEGIN_COPYING_MEMBERS
         COPY_MEMBER(mMiloManualFrame)
-        COPY_MEMBER(mPlayer1Left)
-        COPY_MEMBER(mPlayer1Right)
-        COPY_MEMBER(mPlayer2Left)
-        COPY_MEMBER(mPlayer2Right)
+        COPY_MEMBER(mPlayer1GestureLeft)
+        COPY_MEMBER(mPlayer1GestureRight)
+        COPY_MEMBER(mPlayer2GestureLeft)
+        COPY_MEMBER(mPlayer2GestureRight)
     END_COPYING_MEMBERS
 END_COPYS
 
@@ -203,10 +204,10 @@ void HamVisDir::PostLoad(BinStream &bs) {
         d >> mMiloManualFrame;
     }
     if (d.rev > 7) {
-        d >> mPlayer1Left;
-        d >> mPlayer1Right;
-        d >> mPlayer2Left;
-        d >> mPlayer2Right;
+        d >> mPlayer1GestureLeft;
+        d >> mPlayer1GestureRight;
+        d >> mPlayer2GestureLeft;
+        d >> mPlayer2GestureRight;
     }
     if (d.rev < 0xD) {
         if (d.rev > 8) {
@@ -235,13 +236,13 @@ void HamVisDir::Enter() {
     PanelDir::Enter();
     mRunning = TheLoadMgr.EditMode();
     if (!TheLoadMgr.EditMode() && TheGestureMgr) {
-        mFilter =
+        mFreestyleFilter =
             ObjectDir::Main()->Find<FreestyleMotionFilter>("freestyle_filter", false);
-        if (!mFilter) {
-            mFilter = new FreestyleMotionFilter();
-            mFilter->SetName("freestyle_filter", Main());
+        if (!mFreestyleFilter) {
+            mFreestyleFilter = new FreestyleMotionFilter();
+            mFreestyleFilter->SetName("freestyle_filter", Main());
         }
-        mFilter->Deactivate();
+        mFreestyleFilter->Deactivate();
     }
 }
 
@@ -251,9 +252,9 @@ void HamVisDir::PostUpdate(const SkeletonUpdateData *data) {
             MILO_ASSERT(TheGameData, 0xEE);
             TheGameData->AutoAssignSkeletons(data);
         }
-        if ((!mFilter || mFilter->IsActive()) || mRunning) {
-            if (mFilter) {
-                mFilter->UpdateFilters(*data);
+        if ((!mFreestyleFilter || mFreestyleFilter->IsActive()) || mRunning) {
+            if (mFreestyleFilter) {
+                mFreestyleFilter->UpdateFilters(*data);
             }
             if (mRunning) {
                 bool b4 = false;
@@ -270,12 +271,12 @@ void HamVisDir::PostUpdate(const SkeletonUpdateData *data) {
                                 i8 = 0;
                             }
                             UpdateGestureFilter(*cur, i8);
-                            mSquatPoses[i].pose->Update(*cur);
-                            mSquatPoses[i].holder->Update(*cur);
-                            mYPoses[i].pose->Update(*cur);
-                            mYPoses[i].holder->Update(*cur);
-                            CheckPose(i, mSquatPoses[i]);
-                            CheckPose(i, mYPoses[i]);
+                            mPoseSquat[i].pose->Update(*cur);
+                            mPoseSquat[i].holder->Update(*cur);
+                            mPoseY[i].pose->Update(*cur);
+                            mPoseY[i].holder->Update(*cur);
+                            CheckPose(i, mPoseSquat[i]);
+                            CheckPose(i, mPoseY[i]);
                         }
                     }
                 }
@@ -285,35 +286,35 @@ void HamVisDir::PostUpdate(const SkeletonUpdateData *data) {
 }
 
 void HamVisDir::SetGrooviness(float groove) {
-    mGrooviness = (groove - 0.5f) * (2.0f / 3.0f);
-    ClampEq<float>(mGrooviness, 0.0f, 1.0f);
+    mGroove = (groove - 0.5f) * (2.0f / 3.0f);
+    ClampEq<float>(mGroove, 0.0f, 1.0f);
     for (ObjDirItr<DepthBuffer3D> it(this, true); it != nullptr; ++it) {
         it->SetGrooviness(groove);
     }
 }
 
-void HamVisDir::CheckPose(int i1, PoseOwner &po) {
+void HamVisDir::CheckPose(int player, PoseOwner &poseOwner) {
     bool flag = false;
-    if (po.in_pose || po.pose->CurrentScore() <= 9.0f / 10.0f) {
-        if (po.in_pose && po.holder->CurrentScore() <= 9.0f / 10.0f) {
+    if (poseOwner.in_pose || poseOwner.pose->CurrentScore() <= 9.0f / 10.0f) {
+        if (poseOwner.in_pose && poseOwner.holder->CurrentScore() <= 9.0f / 10.0f) {
             flag = true;
-            po.in_pose = false;
+            poseOwner.in_pose = false;
         }
     } else {
         flag = true;
-        po.in_pose = true;
-        TheGameData->HandlePoseFound(i1);
+        poseOwner.in_pose = true;
+        TheGameData->HandlePoseFound(player);
     }
     if (flag) {
         static Message msg("whatever");
-        msg.SetType(MakeString("%s_state_changed", po.name));
+        msg.SetType(MakeString("%s_state_changed", poseOwner.name));
         Export(msg, true);
     }
 }
 
 void HamVisDir::Run(bool run) { mRunning = run; }
 
-void HamVisDir::CalcArmLengths(std::vector<float> &vec, const Skeleton &skel) {
+void HamVisDir::CalcArmLengths(std::vector<float> &lengths, const Skeleton &skel) {
     struct {
         SkeletonBone upper;
         SkeletonBone lower;
@@ -322,7 +323,7 @@ void HamVisDir::CalcArmLengths(std::vector<float> &vec, const Skeleton &skel) {
     for (unsigned int i = 0; i < 2; i++) { // it actually is unsigned here.... what
         MILO_ASSERT_RANGE(arms[i].upper, 0, kNumJoints, 0x12d);
         MILO_ASSERT_RANGE(arms[i].lower, 0, kNumJoints, 0x12e);
-        vec[i] = skel.BoneLength(arms[i].upper, kCoordCamera)
+        lengths[i] = skel.BoneLength(arms[i].upper, kCoordCamera)
             + skel.BoneLength(arms[i].lower, kCoordCamera);
     }
 }
@@ -331,11 +332,11 @@ void HamVisDir::UpdateGestureFilter(Skeleton const &skeleton, int player) {
     RndAnimatable *leftPlayer;
     RndAnimatable *rightPlayer;
     if (player == 0) {
-        leftPlayer = mPlayer1Left;
-        rightPlayer = mPlayer1Right;
+        leftPlayer = mPlayer1GestureLeft;
+        rightPlayer = mPlayer1GestureRight;
     } else {
-        leftPlayer = mPlayer2Left;
-        rightPlayer = mPlayer2Right;
+        leftPlayer = mPlayer2GestureLeft;
+        rightPlayer = mPlayer2GestureRight;
     }
 
     if ((leftPlayer || rightPlayer) && (!TheLoadMgr.EditMode() || !mMiloManualFrame)) {
@@ -349,7 +350,7 @@ void HamVisDir::UpdateGestureFilter(Skeleton const &skeleton, int player) {
         wrists[1] = skeleton.TrackedJoints()[kJointWristRight].mPos[0].y;
         for (int i = 0; i < 2; i++) {
             RndAnimatable *animatable = (i == 0) ? leftPlayer : rightPlayer;
-            float val = mGrooviness * 100.0f;
+            float val = mGroove * 100.0f;
             if (animatable) {
                 animatable->SetFrame(val, 1.0f);
             }

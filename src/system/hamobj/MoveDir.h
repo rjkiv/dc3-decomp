@@ -143,6 +143,7 @@ protected:
 
     virtual void MiloUpdate();
 
+    /** Ham1 (DC1) or Ham2 (DC2/DC3) filters */
     FilterVersion *mFilterVer; // 0x288
     /** "Show debugging overlay for the current HamMove" */
     bool mShowMoveOverlay; // 0x28c
@@ -151,50 +152,52 @@ protected:
     /** A bitmask of ErrorNodeType enums */
     int mErrorNodeInfo; // 0x290
     /** "Clip to play back in sync with the song" */
-    ObjPtr<SkeletonClip> mPlayClip; // 0x294
+    ObjPtr<SkeletonClip> mSongPlayClip; // 0x294
     /** "Clip to use for song recording" */
-    ObjPtr<SkeletonClip> mRecordClip; // 0x2a8
-    ObjPtr<SkeletonClip> unk2bc; // 0x2bc
-    ObjPtr<SkeletonClip> unk2d0; // 0x2d0
-    int unk2e4; // 0x2e4
+    ObjPtr<SkeletonClip> mSongRecordClip; // 0x2a8
+    ObjPtr<SkeletonClip> mSongRecordClip2; // 0x2bc
+    ObjPtr<SkeletonClip> mSongRecordClip3; // 0x2d0
+    int mMoveRecordClipIdx; // 0x2e4
     /** "If set, report will be limited to this move" */
     ObjPtr<HamMove> mReportMove; // 0x2e8
     /** "The pre-recorded .clp file to import" */
     String mImportClipPath; // 0x2fc
     bool mFiltersEnabled; // 0x304
     Hmx::Object *mGamePanel; // 0x308
-    float unk30c; // 0x30c
-    float unk310; // 0x310
+    float mLastResultSeconds; // 0x30c
+    float mLastMoveSeconds; // 0x310
     FilterQueue *mFilterQueue; // 0x314
     MovePlayerData mMovePlayerData[2]; // 0x318
     MoveAsyncDetector *mAsyncDetector; // 0x390
     DirLoader *mUpdateLoader; // 0x394
-    std::list<ObjDirPtr<UILabelDir> > mUpdateFonts; // 0x398
+    std::list<ObjDirPtr<UILabelDir> > mAltFontDirs; // 0x398
     /** Smoothed normalized results of the current move. */
-    DoubleExponentialSmoother mCurMoveSmoothers[2]; // 0x3a0
+    DoubleExponentialSmoother mSmoothers[2]; // 0x3a0
 
-    // current move stuffs vs last move stuffs?
-    HamMove *filler[2]; // 0x3c8
+    // current move stuffs vs last move stuffs? yes.
+    HamMove *mPrevMove[2]; // 0x3c8
     HamMove *mCurMove[2]; // 0x3d0
     float mCurMoveNormalizedResult[2]; // 0x3d8
-    float unk3e8[2]; // 0x3e8
+    float mCurMovePrevNormalizedResult[2]; // 0x3e8
     MoveRating mCurMoveRating[2]; // 0x3e0
-    int unk3f0[2]; // 0x3f0
+    int mCurMovePrevRating[2]; // 0x3f0
 
     int mFinishingMoveMeasure; // 0x3f8
     RndOverlay *mMoveOverlay; // 0x3fc
-    ObjPtr<DancerSequence> mDancerSeq; // 0x400
-    const DancerSkeleton *unk414; // 0x414
+    /** Before DC3 MoveGraph-based songs, you had one DancerSequence per song, per
+     * difficulty - this probably holds expert. */
+    ObjPtr<DancerSequence> mDancerSequence; // 0x400
+    const DancerSkeleton *mDrawDancerSkeleton; // 0x414
     SkeletonViz *mDancerViz; // 0x418
-    DetectFrame *unk41c; // 0x41c
+    DetectFrame *mVizDetectFrame; // 0x41c
     /** "Offset debug skeleton by latency offset" */
     bool mDebugLatencyOffset; // 0x420
-    Skeleton unk424; // 0x424
+    Skeleton mVizSkeleton; // 0x424
     bool mDebugLoop; // 0xef8
     float mLastPollMs; // 0xefc
     /** "Show collision debug" */
     bool mDebugCollision; // 0xf00
-    Transform unkf04[2]; // 0xf04
-    int unkf84; // 0xf84
-    std::set<DetectFrame *> unkf88; // 0xf88
+    Transform mDebugCollisionXfms[2]; // 0xf04
+    int mDebugCollisionBeat; // 0xf84
+    std::set<DetectFrame *> mCurDetectFrames; // 0xf88
 };

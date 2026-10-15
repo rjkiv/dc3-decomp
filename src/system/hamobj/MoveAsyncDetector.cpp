@@ -12,7 +12,7 @@
 MoveDetector::MoveDetector(
     const FilterVersion *fv, const HamMove *move, const DancerFrame *&dancer_frame
 )
-    : mMove(move), mActive(false), unk8(-1), unkc(-1) {
+    : mMove(move), mActive(false), mActiveBar(-1), mActiveBeat(-1) {
     MILO_ASSERT(mMove, 0x18);
     MoveMirrored mirrored = move->Mirrored();
     const std::vector<MoveFrame> &moveFrames = mMove->GetMoveFrames();
@@ -39,7 +39,7 @@ MoveDetector::MoveDetector(
     }
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 4; j++) {
-            unk3c[i][j] = 0;
+            maPrevBeatDetectFrac[i][j] = 0;
         }
     }
 }
@@ -71,8 +71,8 @@ float MoveDetector::Last4BeatsDetectFrac(int player) const {
     int i8 = 0;
     float f3 = 0;
     for (int i = 0; i < 4; i++) {
-        f3 += unk3c[player][i];
-        if (unk3c[player][i] < 0.13f) {
+        f3 += maPrevBeatDetectFrac[player][i];
+        if (maPrevBeatDetectFrac[player][i] < 0.13f) {
             i8++;
         }
     }
@@ -80,7 +80,7 @@ float MoveDetector::Last4BeatsDetectFrac(int player) const {
         float f2 = (f3 / 4) * 1.15f;
         f3 = 0;
         for (int i = 0; i < 4; i++) {
-            f3 += Clamp(0.0f, f2, unk3c[player][i]);
+            f3 += Clamp(0.0f, f2, maPrevBeatDetectFrac[player][i]);
         }
         return Clamp(0.0f, 1.0f, f3);
     } else {
@@ -90,28 +90,28 @@ float MoveDetector::Last4BeatsDetectFrac(int player) const {
 
 void MoveDetector::Poll(int i1, int i2, MoveDir *moveDir) {
     if (mActive) {
-        if (i2 != unkc) {
-            if (unkc != -1) {
+        if (i2 != mActiveBeat) {
+            if (mActiveBeat != -1) {
                 for (int i = 0; i < 2; i++) {
                     float f12 = ActiveDetectFrac(i, moveDir);
-                    if (unk3c[i][3] < f12) {
-                        f12 -= unk3c[i][3];
+                    if (maPrevBeatDetectFrac[i][3] < f12) {
+                        f12 -= maPrevBeatDetectFrac[i][3];
                     }
                     for (int j = 1; j < 4; j++) {
-                        unk3c[i][j - 1] = unk3c[i][j];
+                        maPrevBeatDetectFrac[i][j - 1] = maPrevBeatDetectFrac[i][j];
                     }
-                    unk3c[i][3] = f12;
+                    maPrevBeatDetectFrac[i][3] = f12;
                 }
             }
-            unkc = i2;
+            mActiveBeat = i2;
         }
-        if (i1 != unk8) {
-            if (unk8 != -1) {
+        if (i1 != mActiveBar) {
+            if (mActiveBar != -1) {
                 for (int i = 0; i < 2; i++) {
                     mLastDetectFracs[i] = ActiveDetectFrac(i, moveDir);
                 }
             }
-            unk8 = i1;
+            mActiveBar = i1;
             float f11 = (float)i1 * 4.0f;
             FOREACH (it, mDancerFrames) {
                 it->mMoveIdx = i1;

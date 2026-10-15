@@ -38,8 +38,10 @@ protected:
     float mDesiredFPB; // 0x218
     /** "Value of the first frame of a perfect rating" */
     float mFirstPerfectFrame; // 0x21c
-    float unk220; // 0x220
-    float unk224; // 0x224
+    /** Desired frame to animate to */
+    float mDesiredFrame; // 0x220
+    /** Actual animation speed (frames per beat) */
+    float mActualFPB; // 0x224
     /** "Player index this phrase meter is for". Is either 0 or 1. */
     int mPlayerIndex; // 0x228
 };

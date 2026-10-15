@@ -9,6 +9,11 @@
 /** "Class to do regulation on a HamCharacter.  Has two modes of operation" */
 class HamRegulate : public RndHighlightable, public CharPollable {
 public:
+    enum RegulateMode {
+        kModeNormal = 0,
+        kModePos = 1
+    };
+
     // Hmx::Object
     virtual ~HamRegulate();
     OBJ_CLASSNAME(HamRegulate);
@@ -29,7 +34,7 @@ public:
     NEW_OBJ(HamRegulate)
 
     void RegulateWay(Waypoint *, float);
-    void SetWaypoint(Waypoint *w) { unk14 = w; }
+    void SetWaypoint(Waypoint *w) { mWay = w; }
 
 protected:
     HamRegulate();
@@ -38,14 +43,14 @@ protected:
 
     void Regulate(Vector3 &, float &);
 
-    Character *unk10; // 0x10
-    ObjPtr<Waypoint> unk14; // 0x14
-    int unk28;
-    float unk2c;
-    Vector3 unk30;
-    Vector3 unk40;
-    int unk50;
-    float unk54;
+    Character *mMe; // 0x10
+    ObjPtr<Waypoint> mWay; // 0x14
+    RegulateMode mMode; // 0x28
+    float mBeats; // 0x2c
+    Vector3 mPos; // 0x30
+    Vector3 mAccumulator; // 0x40
+    int mLastFrozenFeet; // 0x50
+    float mMaxSpeed; // 0x54
     ObjPtr<CharIKFoot> mLeftFoot; // 0x58
     ObjPtr<CharIKFoot> mRightFoot; // 0x6c
 };

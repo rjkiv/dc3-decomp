@@ -1806,14 +1806,14 @@ void HamDirector::SetPlayerSpotlightsEnabled(bool enabled) {
             if (enabled) {
                 constraints[i]->SetParent(players[i]);
                 constraints[i]->SnapToParent();
-                constraints[i]->SetUnk52(true);
+                constraints[i]->SetEnabled(true);
                 constraints[i]->SnapToParent();
                 phraseMeters[i]->SetShowing(true);
                 moveFeedbacks[i]->SetShowing(true);
             } else {
                 constraints[i]->SetParent(nullptr);
                 constraints[i]->SnapToParent();
-                constraints[i]->SetUnk52(false);
+                constraints[i]->SetEnabled(false);
                 Vector3 v(-1000000.0f, -1000000.0f, 0);
                 phraseMeters[i]->SetLocalPos(v);
                 phraseMeters[i]->SetShowing(false);

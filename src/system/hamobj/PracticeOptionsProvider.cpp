@@ -7,7 +7,8 @@
 #include "ui/UIListLabel.h"
 #include "utl/Symbol.h"
 
-PracticeOptionsProvider::PracticeOptionsProvider() : unk60(0), mDisablePrevious(0) {
+PracticeOptionsProvider::PracticeOptionsProvider()
+    : mVideoReplay(0), mDisablePrevious(0) {
     mPracticeOptions[0] = "ingame_slowmo";
     mPracticeOptions[1] = "ingame_skip";
     mPracticeOptions[2] = "ingame_previous";
@@ -43,12 +44,14 @@ BEGIN_LOADS(PracticeOptionsProvider)
     LOAD_SUPERCLASS(HamNavProvider)
 END_LOADS
 
-void PracticeOptionsProvider::Text(int, int idx, UIListLabel *list, UILabel *label) const {
-    if (list->Matches("label")) {
-        label->SetTextToken(mPracticeOptions[idx]);
-    } else if (list->Matches("checkbox")) {
-        if (idx == 3) {
-            if (unk60) {
+void PracticeOptionsProvider::Text(
+    int showing, int data, UIListLabel *slot, UILabel *label
+) const {
+    if (slot->Matches("label")) {
+        label->SetTextToken(mPracticeOptions[data]);
+    } else if (slot->Matches("checkbox")) {
+        if (data == 3) {
+            if (mVideoReplay) {
                 label->SetIcon('b');
             } else {
                 label->SetIcon('a');
@@ -61,10 +64,10 @@ void PracticeOptionsProvider::Text(int, int idx, UIListLabel *list, UILabel *lab
     }
 }
 
-RndMat *PracticeOptionsProvider::Mat(int, int idx, UIListMesh *) const {
+RndMat *PracticeOptionsProvider::Mat(int showing, int data, UIListMesh *slot) const {
     static Symbol ingame_slowmo("ingame_slowmo");
     static Symbol ingame_speedup("ingame_speedup");
-    switch (idx) {
+    switch (data) {
     case 0:
         if (mPracticeOptions[0] == ingame_slowmo) {
             return mPracticeMats[0];
@@ -124,5 +127,5 @@ void PracticeOptionsProvider::SetVideoReplay(bool replay) {
     } else {
         mPracticeOptions[3] = ingame_video;
     }
-    unk60 = replay;
+    mVideoReplay = replay;
 }
