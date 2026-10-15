@@ -207,7 +207,9 @@ void GetSongQueue(JsonConverter &c, const JsonObject *o, std::list<SongQueueRow>
 }
 
 void GetPartySongQueueJob::GetSongQueue(std::list<SongQueueRow> *rows) {
-    if (mResult == 1 && GetJsonResponse()) {
-        ::GetSongQueue(GetJsonConverter(), GetJsonResponse(), rows);
+    if (mResult == 1) {
+        auto response = GetJsonResponse();
+        if (response)
+            ::GetSongQueue(GetJsonConverter(), response, rows);
     }
 }

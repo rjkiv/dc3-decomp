@@ -16,7 +16,7 @@ public:
         kS_Failure = 0x0004,
         kS_RequestDisconnect = 0x0005,
         kS_Max = 0x0006,
-        kS_Nil = 0xff
+        kS_Nil = -1
     };
     XLSPConnection();
     virtual ~XLSPConnection();

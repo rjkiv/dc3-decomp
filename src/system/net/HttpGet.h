@@ -25,7 +25,7 @@ public:
         kS_FailureRetry = 0x0007,
         kS_WaitToSend = 0x0008,
         kS_Max = 0x0009,
-        kS_Nil = 0xff
+        kS_Nil = -1
     };
 
     HttpGet(unsigned int ip, unsigned short port, const char *, const char *);

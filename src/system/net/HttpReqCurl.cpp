@@ -96,7 +96,7 @@ void HttpReqCurl::Start() {
         curl_easy_setopt(mReq, CURLOPT_HTTPHEADER, mHeaders);
     }
 
-    if (mType != kHttpReqType_GET && mType != kHttpReqType_HTTPS_POST) {
+    if (mType != kHttpReqType_GET && mType != kHttpReqType_HTTPS_GET) {
         if (mType == kHttpReqType_POST || mType == kHttpReqType_HTTPS_POST) {
             curl_easy_setopt(mReq, CURLOPT_POST, 1);
             curl_easy_setopt(mReq, CURLOPT_POSTFIELDS, mContent);

@@ -271,8 +271,10 @@ void GetBadgeInfo(
 void GetChallengeBadgeCountsJob::GetBadgeInfo(
     std::map<String, ChallengeBadgeInfo> &badgeInfos
 ) {
-    if (mResult == 1 && GetJsonResponse()) {
-        ::GetBadgeInfo(GetJsonConverter(), GetJsonResponse(), badgeInfos);
+    if (mResult == 1) {
+        auto response = GetJsonResponse();
+        if (response)
+            ::GetBadgeInfo(GetJsonConverter(), response, badgeInfos);
     }
 }
 
@@ -332,7 +334,9 @@ void GetRows(
 void GetPlayerChallengesJob::GetRows(
     std::map<String, std::vector<ChallengeRow> > &challengeRows, bool &bref
 ) {
-    if (mResult == 1 && GetJsonResponse()) {
-        ::GetRows(GetJsonConverter(), GetJsonResponse(), challengeRows, bref);
+    if (mResult == 1) {
+        auto response = GetJsonResponse();
+        if (response)
+            ::GetRows(GetJsonConverter(), response, challengeRows, bref);
     }
 }
