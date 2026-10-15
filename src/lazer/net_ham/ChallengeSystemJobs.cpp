@@ -47,8 +47,8 @@ void GetOfficialChallengesJob::GetRows(
     std::vector<ChallengeRow> &rows, double &dref, bool &bref
 ) {
     if (mResult == 1) {
-        JsonConverter &reader = mJsonReader;
-        JsonObject *response = mJsonResponse;
+        JsonConverter &reader = GetJsonConverter();
+        JsonObject *response = GetJsonResponse();
         if (response) {
             static Symbol challenge_gold("challenge_gold");
             static Symbol challenge_silver("challenge_silver");
@@ -271,8 +271,8 @@ void GetBadgeInfo(
 void GetChallengeBadgeCountsJob::GetBadgeInfo(
     std::map<String, ChallengeBadgeInfo> &badgeInfos
 ) {
-    if (mResult == 1 && mJsonResponse) {
-        ::GetBadgeInfo(mJsonReader, mJsonResponse, badgeInfos);
+    if (mResult == 1 && GetJsonResponse()) {
+        ::GetBadgeInfo(GetJsonConverter(), GetJsonResponse(), badgeInfos);
     }
 }
 
@@ -332,7 +332,7 @@ void GetRows(
 void GetPlayerChallengesJob::GetRows(
     std::map<String, std::vector<ChallengeRow> > &challengeRows, bool &bref
 ) {
-    if (mResult == 1 && mJsonResponse) {
-        ::GetRows(mJsonReader, mJsonResponse, challengeRows, bref);
+    if (mResult == 1 && GetJsonResponse()) {
+        ::GetRows(GetJsonConverter(), GetJsonResponse(), challengeRows, bref);
     }
 }

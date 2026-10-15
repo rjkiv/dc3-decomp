@@ -106,7 +106,7 @@ void RockCentral::SetLoginPassword(const char *password) {
 void RockCentral::Login() {
     mState = kConnecting;
     mHasLoggedIn = false;
-    if (!TheServer.Authenticate(TheServer.GetUnk74())) { // should be TheServer->unk74
+    if (!TheServer.Authenticate(TheServer.GetPadLoggedIn())) {
         Export(ServerStatusChangedMsg((ServerStatusResult)4), false);
     }
 }

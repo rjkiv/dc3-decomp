@@ -14,7 +14,7 @@ public:
     bool ParseResponse();
     void SetSessionID(String id) { mSessionID = id; }
 
-    const char *SessionID() { return mSessionID.c_str(); }
+    const char *GetSessionID() { return mSessionID.c_str(); }
 
 private:
     String mSessionID; // 0xb0

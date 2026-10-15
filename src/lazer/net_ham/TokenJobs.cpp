@@ -16,11 +16,11 @@ RedeemTokenJob::RedeemTokenJob(Hmx::Object *callback, int, String str)
 
 bool RedeemTokenJob::GetRedeemTokenData(int &iref, String &sref) {
     iref = mResult;
-    JsonConverter &reader = mJsonReader;
-    if (!mJsonResponse) {
+    JsonConverter &reader = GetJsonConverter();
+    if (!GetJsonResponse()) {
         return false;
     } else {
-        JsonObject *obj = reader.GetByName(mJsonResponse, "offers");
+        JsonObject *obj = reader.GetByName(GetJsonResponse(), "offers");
         if (obj) {
             if (obj->GetType() == JsonObject::kType_String) {
                 sref = obj->Str();

@@ -107,7 +107,7 @@ void WebSvcMgr::Poll() {
     while (it != mRequests.end()) {
         WebSvcRequest *req = *it;
         if (!b) {
-            if (req->GetState() == WebSvcRequest::kNotStarted) {
+            if (req->GetState() == 0) {
                 if (i >= 5) {
                     return;
                 }
@@ -116,11 +116,11 @@ void WebSvcMgr::Poll() {
             req->Poll();
         }
 
-        if (req->IsDeleteReady() || req->GetState() == WebSvcRequest::kReadyForRemoval) {
+        if (req->IsDeleteReady() || req->GetState() == 3) {
             it = mRequests.erase(it);
             if (req->IsDeleteReady()) {
                 OnReqFinished(req);
-            } else if (req->GetState() == WebSvcRequest::kReadyForRemoval) {
+            } else if (req->GetState() == 3) {
                 req->OnReset();
             }
         } else {

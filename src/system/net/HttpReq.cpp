@@ -2,11 +2,11 @@
 #include "macros.h"
 
 HttpReq::HttpReq(ReqType type, unsigned int ip, unsigned short port, char const *url)
-    : mHostName(), mIPAddr(ip), mPort(port), mURL(url), mType(type), mContent(0),
+    : mHostName(), mIPAddr(ip), mPort(port), mUrl(url), mType(type), mContent(0),
       mContentLength(0), mStatusCode(0), mState(kHttpReq_Nil) {}
 
 HttpReq::HttpReq(ReqType type, char const *hostname, unsigned short port, char const *url)
-    : mHostName(hostname), mIPAddr(0), mPort(port), mURL(url), mType(type), mContent(0),
+    : mHostName(hostname), mIPAddr(0), mPort(port), mUrl(url), mType(type), mContent(0),
       mContentLength(0), mStatusCode(0), mState(kHttpReq_Nil) {}
 
 HttpReq::~HttpReq() { RELEASE(mContent); }

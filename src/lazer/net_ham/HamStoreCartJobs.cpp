@@ -17,8 +17,9 @@ LockCartJob::LockCartJob(Hmx::Object *callback, const char *onlineID)
 }
 
 void LockCartJob::GetLockData(int &reLockDuration) {
-    if (mResult == 1 && mJsonResponse) {
-        JsonObject *pJsonObj = mJsonReader.GetByName(mJsonResponse, "lock_duration");
+    if (mResult == 1 && GetJsonResponse()) {
+        JsonObject *pJsonObj =
+            GetJsonConverter().GetByName(GetJsonResponse(), "lock_duration");
         if (pJsonObj) {
             reLockDuration = (pJsonObj->Int() - 60) * 1000;
         }
@@ -86,7 +87,7 @@ void GetRows(JsonConverter &c, const JsonObject *o, std::vector<CartRow> *rows) 
 }
 
 void GetCartJob::GetRows(std::vector<CartRow> *rows) {
-    if (mResult == 1 && mJsonResponse) {
-        ::GetRows(mJsonReader, mJsonResponse, rows);
+    if (mResult == 1 && GetJsonResponse()) {
+        ::GetRows(GetJsonConverter(), GetJsonResponse(), rows);
     }
 }

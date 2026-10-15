@@ -14,10 +14,10 @@ GetWebLinkCodeJob::GetWebLinkCodeJob(Hmx::Object *callback, int)
 bool GetWebLinkCodeJob::GetWebLinkCodeData(String &str) {
     if (mResult != 1) {
         return false;
-    } else if (!mJsonResponse) {
+    } else if (!GetJsonResponse()) {
         return false;
     } else {
-        str = mJsonResponse->Str();
+        str = GetJsonResponse()->Str();
         return true;
     }
 }

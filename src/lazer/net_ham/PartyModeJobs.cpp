@@ -88,14 +88,14 @@ GetPartyOptionsJob::GetPartyOptionsJob(Hmx::Object *callback, const char *online
 
 void GetPartyOptionsJob::GetOptions() {
     if (mResult == 1) {
-        JsonObject *response = mJsonResponse;
-        JsonConverter &reader = mJsonReader;
+        JsonObject *response = GetJsonResponse();
+        JsonConverter &reader = GetJsonConverter();
         if (response) {
             JsonObject *getByName = reader.GetByName(response, "diff");
             if (getByName) {
                 ThePartyModeMgr->SetDifficulty((Difficulty)getByName->Int());
             }
-            getByName = mJsonReader.GetByName(response, "shortened");
+            getByName = GetJsonConverter().GetByName(response, "shortened");
             if (getByName) {
                 ThePartyModeMgr->UseFullLengthSongs(getByName->Bool() == 0);
             }
@@ -107,33 +107,33 @@ void GetPartyOptionsJob::GetOptions() {
             static Symbol holla_back("holla_back");
             static Symbol strike_a_pose("strike_a_pose");
 
-            getByName = mJsonReader.GetByName(response, "perform_it");
+            getByName = GetJsonConverter().GetByName(response, "perform_it");
             if (getByName) {
                 ThePartyModeMgr->ToggleIncludedModeOn(perform, getByName->Bool());
             }
-            getByName = mJsonReader.GetByName(response, "dance_battle");
+            getByName = GetJsonConverter().GetByName(response, "dance_battle");
             if (getByName) {
                 ThePartyModeMgr->ToggleIncludedModeOn(dance_battle, getByName->Bool());
             }
-            getByName = mJsonReader.GetByName(response, "bust_a_move");
+            getByName = GetJsonConverter().GetByName(response, "bust_a_move");
             if (getByName) {
                 ThePartyModeMgr->ToggleIncludedModeOn(bustamove, getByName->Bool());
             }
-            getByName = mJsonReader.GetByName(response, "rhythm_battle");
+            getByName = GetJsonConverter().GetByName(response, "rhythm_battle");
             if (getByName) {
                 ThePartyModeMgr->ToggleIncludedModeOn(rhythm_battle, getByName->Bool());
             }
-            getByName = mJsonReader.GetByName(response, "holla_back");
+            getByName = GetJsonConverter().GetByName(response, "holla_back");
             if (getByName) {
                 ThePartyModeMgr->ToggleIncludedModeOn(holla_back, getByName->Bool());
             }
-            getByName = mJsonReader.GetByName(response, "strike_a_pose");
+            getByName = GetJsonConverter().GetByName(response, "strike_a_pose");
             if (getByName) {
                 ThePartyModeMgr->ToggleIncludedModeOn(strike_a_pose, getByName->Bool());
             }
-            getByName = mJsonReader.GetByName(response, "playlist_id");
+            getByName = GetJsonConverter().GetByName(response, "playlist_id");
             if (getByName && getByName->Int() != 0) {
-                getByName = mJsonReader.GetByName(response, "playlist_name");
+                getByName = GetJsonConverter().GetByName(response, "playlist_name");
                 if (getByName) {
                     Playlist *playlist =
                         TheHamSongMgr.GetPlaylistWithLocalizedName(getByName->Str());
@@ -207,7 +207,7 @@ void GetSongQueue(JsonConverter &c, const JsonObject *o, std::list<SongQueueRow>
 }
 
 void GetPartySongQueueJob::GetSongQueue(std::list<SongQueueRow> *rows) {
-    if (mResult == 1 && mJsonResponse) {
-        ::GetSongQueue(mJsonReader, mJsonResponse, rows);
+    if (mResult == 1 && GetJsonResponse()) {
+        ::GetSongQueue(GetJsonConverter(), GetJsonResponse(), rows);
     }
 }

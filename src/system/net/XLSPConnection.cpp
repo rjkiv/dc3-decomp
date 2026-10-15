@@ -23,74 +23,75 @@ const int XLSPConnection::kTitleServerEnumMaxCount = 8;
 std::map<unsigned long, int> XLSPConnection::mXLSPRefCountMap;
 
 XLSPConnection::XLSPConnection()
-    : unk4((State)-1), unk8(0), unk14(0), unk18(INVALID_HANDLE_VALUE), unk1c(0),
-      unk20(0) {
-    memset(&mXOverlapped, 0, sizeof(XOVERLAPPED));
-    memset(&unk44, 0, sizeof(IN_ADDR));
-    unk48.Reset();
-    SetState((State)0);
+    : mState(kS_Nil), mStateDesired(kS_Disconnected), mServiceId(0),
+      mHEnum(INVALID_HANDLE_VALUE), mEnumBuf(0), mEnumBufSize(0) {
+    memset(&mEnumXO, 0, sizeof(XOVERLAPPED));
+    memset(&mSecureAddr, 0, sizeof(IN_ADDR));
+    mThrottleTimer.Reset();
+    SetState(kS_Disconnected);
 }
 
-XLSPConnection::~XLSPConnection() { SetState((State)-1); }
+XLSPConnection::~XLSPConnection() { SetState(kS_Nil); }
 
 int XLSPConnection::ThreadStart() {
-    if (unk4 != 5) {
-        MILO_FAIL("Unhandled state %d in ThreadStart", unk4);
+    if (mState != kS_RequestDisconnect) {
+        MILO_FAIL("Unhandled state %d in ThreadStart", mState);
     } else {
-        XCancelOverlapped(&mXOverlapped);
+        XCancelOverlapped(&mEnumXO);
     }
     return 0;
 }
 
 void XLSPConnection::ThreadDone(int i1) {
-    if (unk4 != 5) {
-        MILO_FAIL("Unhandled state %d in ThreadStart", unk4);
+    if (mState != kS_RequestDisconnect) {
+        MILO_FAIL("Unhandled state %d in ThreadStart", mState);
     } else {
-        memset(&mXOverlapped, 0, sizeof(XOVERLAPPED));
-        CloseHandle(unk18);
-        unk20 = 0;
-        unk18 = INVALID_HANDLE_VALUE;
-        if (unk1c) {
-            MemFree(unk1c, __FILE__, 299);
-            unk1c = nullptr;
+        memset(&mEnumXO, 0, sizeof(XOVERLAPPED));
+        CloseHandle(mHEnum);
+        mEnumBufSize = 0;
+        mHEnum = INVALID_HANDLE_VALUE;
+        if (mEnumBuf) {
+            MemFree(mEnumBuf, __FILE__, 299);
+            mEnumBuf = nullptr;
         }
-        SetState((State)0);
+        SetState(kS_Disconnected);
     }
 }
 
 void XLSPConnection::Connect(const char *cc, unsigned int ui) {
-    unkc = cc;
-    unk14 = ui;
-    if (unk8 != 3) {
-        unk8 = 3;
+    mStrServerFilter = cc;
+    mServiceId = ui;
+    if (mStateDesired != kS_Connected) {
+        mStateDesired = kS_Connected;
     }
-    if (unk4 == 0) {
-        SetState((State)1);
+    if (mState == kS_Disconnected) {
+        SetState(kS_Enumerating);
     }
 }
 
 void XLSPConnection::Disconnect() {
-    if (unk8 != 0) {
-        unk8 = 0;
+    if (mStateDesired != kS_Disconnected) {
+        mStateDesired = kS_Disconnected;
     }
-    if (unk4 > 0 && unk4 <= 4) {
-        SetState((State)5);
+    if (mState > kS_Disconnected && mState <= kS_Failure) {
+        SetState(kS_RequestDisconnect);
     }
 }
 
 void XLSPConnection::StartEnumeration() {
-    DWORD res = XTitleServerCreateEnumerator(unkc.c_str(), 8, &unk20, &unk18);
+    DWORD res =
+        XTitleServerCreateEnumerator(mStrServerFilter.c_str(), 8, &mEnumBufSize, &mHEnum);
     if (res != ERROR_SUCCESS) {
         MILO_NOTIFY("XTitleServerCreateEnumerator failed with error %d", res);
-        SetState((State)4);
+        SetState(kS_Failure);
     } else {
-        unk1c = (XTITLE_SERVER_INFO *)_MemAllocTemp(
-            unk20, __FILE__, 0x1CB, "XLSPConnection", 0
+        mEnumBuf = (XTITLE_SERVER_INFO *)_MemAllocTemp(
+            mEnumBufSize, __FILE__, 0x1CB, "XLSPConnection", 0
         );
-        res = XEnumerate(unk18, unk1c, unk20, nullptr, &mXOverlapped);
+        res = XEnumerate(mHEnum, mEnumBuf, mEnumBufSize, nullptr, &mEnumXO);
         if (res != ERROR_IO_PENDING) {
             MILO_NOTIFY("XEnumerate failed with error %d", res);
-            SetState((State)4);
+            SetState(kS_Failure);
         }
     }
 }
@@ -138,45 +139,45 @@ int XLSPConnection::StartGatewayConnection(in_addr a) {
 }
 
 void XLSPConnection::Poll() {
-    switch (unk4) {
-    case 0:
-        if (unk8 == 3)
-            SetState((State)1);
+    switch (mState) {
+    case kS_Disconnected:
+        if (mStateDesired == kS_Connected)
+            SetState(kS_Enumerating);
         break;
-    case 1: {
-        if (unk18 != INVALID_HANDLE_VALUE
-            && mXOverlapped.InternalLow != ERROR_IO_PENDING) {
+    case kS_Enumerating: {
+        if (mHEnum != INVALID_HANDLE_VALUE && mEnumXO.InternalLow != ERROR_IO_PENDING) {
             DWORD word = 0;
-            DWORD overlapResult = XGetOverlappedResult(&mXOverlapped, &word, false);
+            DWORD overlapResult = XGetOverlappedResult(&mEnumXO, &word, false);
             if (overlapResult != 0) {
-                XGetOverlappedExtendedError(&mXOverlapped);
+                XGetOverlappedExtendedError(&mEnumXO);
             } else {
-                memset(&mXOverlapped, 0, sizeof(XOVERLAPPED));
+                memset(&mEnumXO, 0, sizeof(XOVERLAPPED));
                 if (word != 0) {
                     DWORD random = RandomInt(0, word);
-                    if ((unsigned int)
-                            XNetServerToInAddr(unk1c[random].inaServer, unk14, &unk44)
+                    if ((unsigned int)XNetServerToInAddr(
+                            mEnumBuf[random].inaServer, mServiceId, &mSecureAddr
+                        )
                         == 0) {
-                        CloseHandle(unk18);
-                        unk18 = INVALID_HANDLE_VALUE;
-                        if (unk1c) {
-                            MemFree(unk1c, __FILE__, 0xaa);
-                            unk1c = nullptr;
+                        CloseHandle(mHEnum);
+                        mHEnum = INVALID_HANDLE_VALUE;
+                        if (mEnumBuf) {
+                            MemFree(mEnumBuf, __FILE__, 0xaa);
+                            mEnumBuf = nullptr;
                         }
-                        SetState((State)2);
+                        SetState(kS_ConnectingToGateway);
                         return;
                     }
                 }
             }
-            SetState((State)4);
-        } else if (unk8 == 0) {
-            SetState((State)5);
+            SetState(kS_Failure);
+        } else if (mStateDesired == kS_Disconnected) {
+            SetState(kS_RequestDisconnect);
         }
         break;
     }
-    case 3: {
-        if (unk8 != 0) {
-            DWORD connectStatus = XNetGetConnectStatus(unk44);
+    case kS_Connected: {
+        if (mStateDesired != kS_Disconnected) {
+            DWORD connectStatus = XNetGetConnectStatus(mSecureAddr);
             switch (connectStatus) {
             case 0:
             case 1:
@@ -190,21 +191,21 @@ void XLSPConnection::Poll() {
                 MILO_NOTIFY("XNetGetConnectStatus() unhandled return: %d", connectStatus);
                 return;
             }
-            SetState((State)4);
+            SetState(kS_Failure);
         } else {
-            SetState((State)5);
+            SetState(kS_RequestDisconnect);
         }
     } break;
-    case 2: {
-        if (unk8 != 0) {
-            DWORD connectStatus = XNetGetConnectStatus(unk44);
+    case kS_ConnectingToGateway: {
+        if (mStateDesired != 0) {
+            DWORD connectStatus = XNetGetConnectStatus(mSecureAddr);
             switch (connectStatus) {
             case 0:
                 break;
             case 1:
                 return;
             case 2:
-                SetState((State)3);
+                SetState(kS_Connected);
                 return;
             case 3:
                 break;
@@ -212,76 +213,76 @@ void XLSPConnection::Poll() {
                 MILO_NOTIFY("XNetGetConnectStatus() unhandled return: %d", connectStatus);
                 return;
             }
-            SetState((State)4);
+            SetState(kS_Failure);
         } else {
-            SetState((State)5);
+            SetState(kS_RequestDisconnect);
         }
     } break;
 
-    case 4:
-        if (unk8 == 0)
-            SetState((State)5);
+    case kS_Failure:
+        if (mStateDesired == kS_Disconnected)
+            SetState(kS_RequestDisconnect);
         break;
     }
 }
 
 void XLSPConnection::SetState(State s) {
-    while (unk4 != s) {
-        switch (unk4) {
+    while (mState != s) {
+        switch (mState) {
         case 1: {
             bool b = false;
-            if (unk18 != INVALID_HANDLE_VALUE) {
-                if (mXOverlapped.InternalLow == ERROR_IO_PENDING) {
-                    if (s == (State)5) {
+            if (mHEnum != INVALID_HANDLE_VALUE) {
+                if (mEnumXO.InternalLow == ERROR_IO_PENDING) {
+                    if (s == kS_RequestDisconnect) {
                         b = true;
                     } else {
-                        XCancelOverlapped(&mXOverlapped);
+                        XCancelOverlapped(&mEnumXO);
                     }
                 }
                 if (!b) {
-                    memset(&mXOverlapped, 0, sizeof(XOVERLAPPED));
-                    CloseHandle(unk18);
-                    unk18 = INVALID_HANDLE_VALUE;
+                    memset(&mEnumXO, 0, sizeof(XOVERLAPPED));
+                    CloseHandle(mHEnum);
+                    mHEnum = INVALID_HANDLE_VALUE;
                 }
             }
             if (!b) {
-                unk20 = 0;
-                if (unk1c) {
-                    MemFree(unk1c, __FILE__, 0x167);
-                    unk1c = nullptr;
+                mEnumBufSize = 0;
+                if (mEnumBuf) {
+                    MemFree(mEnumBuf, __FILE__, 0x167);
+                    mEnumBuf = nullptr;
                 }
             }
         } break;
         case 2:
-            if (s != (State)3) {
-                SecureDisconnect(unk44);
+            if (s != kS_Connected) {
+                SecureDisconnect(mSecureAddr);
             }
             break;
         case 3:
-            SecureDisconnect(unk44);
+            SecureDisconnect(mSecureAddr);
             break;
         }
 
-        unk4 = s;
+        mState = s;
         switch (s) {
         case 1:
             StartEnumeration();
             return;
         case 2:
-            if (StartGatewayConnection(unk44) == 0) {
+            if (StartGatewayConnection(mSecureAddr) == 0) {
                 return;
             }
-            s = (State)4;
+            s = kS_Failure;
             break;
         case 4:
-            unk48.Restart();
+            mThrottleTimer.Restart();
             return;
         case 5: {
-            if (unk18 != INVALID_HANDLE_VALUE) {
+            if (mHEnum != INVALID_HANDLE_VALUE) {
                 ThreadCall(this);
                 return;
             }
-            s = (State)0;
+            s = kS_Disconnected;
         } break;
         default:
             return;
