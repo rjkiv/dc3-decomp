@@ -2,6 +2,8 @@
 #include "obj/Object.h"
 #include "utl/MemMgr.h"
 
+/** In party mode, songs are not played in their full duration - jumps are used to
+ * skip/cut parts of the song. */
 class HamPartyJumpData : public Hmx::Object {
 public:
     // Hmx::Object

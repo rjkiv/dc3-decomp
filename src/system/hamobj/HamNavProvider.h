@@ -14,23 +14,32 @@ public:
         kCheckbox_Disabled = 1,
         kCheckbox_Enabled = 2
     };
+
+    enum ScoreDisplayMode {
+        kScoreDisplay_None = 0,
+        kScoreDisplay_Perform = 1,
+        kScoreDisplay_Practice = 2,
+        kScoreDisplay_Multiplayer = 3,
+    };
+
     struct NavItem {
         NavItem()
-            : mLabel(gNullStr), mCheckboxState(kCheckbox_None), unkc(0), mEnabled(true),
-              mHidden(false), unk14(0), mLabelProvider(0) {}
+            : mLabel(gNullStr), mCheckboxState(kCheckbox_None),
+              mScoreDisplayMode(kScoreDisplay_None), mEnabled(true), mHidden(false),
+              mFmtArgs(0), mLabelProvider(0) {}
         NavItem(const NavItem &other)
             : mLabel(other.mLabel), mCheckboxState(other.mCheckboxState),
-              mSongID(other.mSongID), unkc(other.unkc), mEnabled(other.mEnabled),
-              mHidden(other.mHidden), unk14(other.unk14), mLabels(other.mLabels),
-              mLabelProvider(other.mLabelProvider) {
-            if (unk14) {
-                unk14->AddRef();
+              mSongID(other.mSongID), mScoreDisplayMode(other.mScoreDisplayMode),
+              mEnabled(other.mEnabled), mHidden(other.mHidden), mFmtArgs(other.mFmtArgs),
+              mLabels(other.mLabels), mLabelProvider(other.mLabelProvider) {
+            if (mFmtArgs) {
+                mFmtArgs->AddRef();
             }
         }
         ~NavItem() {
-            if (unk14) {
-                unk14->Release();
-                unk14 = nullptr;
+            if (mFmtArgs) {
+                mFmtArgs->Release();
+                mFmtArgs = nullptr;
             }
         }
 
@@ -38,10 +47,10 @@ public:
         Symbol mLabel; // 0x0
         CheckboxMode mCheckboxState; // 0x4
         int mSongID; // 0x8
-        int unkc; // 0xc - some sort of state/enum?
+        ScoreDisplayMode mScoreDisplayMode; // 0xc - some sort of state/enum?
         bool mEnabled; // 0x10
         bool mHidden; // 0x11
-        DataArray *unk14;
+        DataArray *mFmtArgs;
         /** "used for a list entry with a list of labels" */
         std::vector<Symbol> mLabels; // 0x18
         DataProvider *mLabelProvider; // 0x24

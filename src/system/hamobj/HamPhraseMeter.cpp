@@ -8,7 +8,7 @@
 
 HamPhraseMeter::HamPhraseMeter()
     : mAnim(this), mRatingFrac(0), mRating("move_bad"), mDesiredFPB(480),
-      mFirstPerfectFrame(1920), unk220(0), mPlayerIndex(0) {}
+      mFirstPerfectFrame(1920), mDesiredFrame(0), mPlayerIndex(0) {}
 
 BEGIN_HANDLERS(HamPhraseMeter)
     HANDLE_SUPERCLASS(RndDir)
@@ -78,11 +78,11 @@ void HamPhraseMeter::Poll() {
     RndDir::Poll();
     if (mAnim) {
         float frame = mAnim->GetFrame();
-        float delta = TheTaskMgr.DeltaBeat() * unk224;
-        if (frame < unk220) {
-            frame = Min(delta + frame, unk220);
-        } else if (frame > unk220) {
-            frame = Max(frame - delta, unk220);
+        float delta = TheTaskMgr.DeltaBeat() * mActualFPB;
+        if (frame < mDesiredFrame) {
+            frame = Min(delta + frame, mDesiredFrame);
+        } else if (frame > mDesiredFrame) {
+            frame = Max(frame - delta, mDesiredFrame);
         }
         mAnim->SetFrame(frame, 1);
     }
@@ -91,21 +91,21 @@ void HamPhraseMeter::Poll() {
 void HamPhraseMeter::Enter() {
     RndDir::Enter();
     SetRatingFrac(0, -1);
-    unk224 = mDesiredFPB;
+    mActualFPB = mDesiredFPB;
 }
 
-void HamPhraseMeter::SetRatingFrac(float f1, float f2) {
+void HamPhraseMeter::SetRatingFrac(float frac, float beats_remaining) {
     if (mAnim) {
-        if (f1 == 1) {
-            unk220 = mAnim->EndFrame();
+        if (frac == 1) {
+            mDesiredFrame = mAnim->EndFrame();
         } else {
-            unk220 = (mFirstPerfectFrame - mAnim->StartFrame()) * f1;
+            mDesiredFrame = (mFirstPerfectFrame - mAnim->StartFrame()) * frac;
         }
-        if (f2 <= 0) {
-            mAnim->SetFrame(unk220, 1);
+        if (beats_remaining <= 0) {
+            mAnim->SetFrame(mDesiredFrame, 1);
         } else {
-            float div = std::fabs(unk220 - mAnim->GetFrame());
-            unk224 = Max<float>(mDesiredFPB, div / f2);
+            float div = std::fabs(mDesiredFrame - mAnim->GetFrame());
+            mActualFPB = Max<float>(mDesiredFPB, div / beats_remaining);
         }
     }
 }

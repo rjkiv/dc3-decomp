@@ -74,18 +74,18 @@ protected:
 
     /** "The CharBones object to add into." */
     ObjPtr<CharBonesObject> mBones; // 0x14
-    int unk28; // 0x28
-    ObjPtr<HamCharacter> unk2c; // 0x2c
-    Transform unk40; // 0x40
-    Vector3 mJointPos[kNumJoints]; // 0x80
-    Transform mBoneXfms[kNumJoints]; // 0x1c0
-    std::vector<RndTransformable *> mBoneTrans; // 0x6c0
-    RndTransformable *unk6cc; // 0x6cc
-    Transform unk6d0; // 0x6d0
-    Vector3 unk710[2]; // 0x710
-    Vector3 unk730[2]; // 0x730
-    bool unk750;
-    bool unk751;
-    float unk754;
-    float unk758;
+    int mSkeletonIndex; // 0x28
+    ObjPtr<HamCharacter> mCharacter; // 0x2c
+    Transform mNatalToWorld; // 0x40
+    Vector3 mMiloJoints[kNumJoints]; // 0x80
+    Transform mMiloWorldXfms[kNumJoints]; // 0x1c0
+    std::vector<RndTransformable *> mMeshPtrs; // 0x6c0
+    RndTransformable *mPelvisMesh; // 0x6cc
+    Transform mPelvisWorldXfm; // 0x6d0
+    Vector3 mFootDestRots[2]; // 0x710
+    Vector3 mFootRots[2]; // 0x730
+    bool mIsActive;
+    bool mIsCaptured;
+    float mCamPelvisHeight;
+    float mPelvisMiloHeight;
 };

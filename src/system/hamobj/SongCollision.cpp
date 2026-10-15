@@ -71,13 +71,13 @@ bool AreDancersColliding1D(
 #pragma region BeatCollisionData
 
 void BeatCollisionData::Set(
-    float minX, float maxX, const Transform &start_xfm, const Transform &end_xfm
+    float min_x, float max_x, const Transform &start_xfm, const Transform &end_xfm
 ) {
     using namespace Hmx;
     MILO_ASSERT(start_xfm.m == Matrix3::GetIdentity(), 0x62);
     MILO_ASSERT(end_xfm.m == Matrix3::GetIdentity(), 0x63);
-    mMinX = minX;
-    mMaxX = maxX;
+    mMinX = min_x;
+    mMaxX = max_x;
     Subtract(start_xfm.v, end_xfm.v, mOffset);
 }
 

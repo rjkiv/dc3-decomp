@@ -12,7 +12,8 @@
 #include "rndobj/Utl.h"
 
 TransConstraint::TransConstraint()
-    : mParent(this), mChild(this), mSpeed(10), mAffectScale(0), mUseUITime(0), unk52(1) {
+    : mParent(this), mChild(this), mSpeed(10), mAffectScale(0), mUseUITime(0),
+      mEnabled(1) {
     mStaticCube.Zero();
     for (int i = 0; i < 3; i++) {
         mTracks[i] = false;
@@ -123,7 +124,7 @@ void TransConstraint::Highlight() {
 }
 
 void TransConstraint::Poll() {
-    if (mParent && mChild && unk52) {
+    if (mParent && mChild && mEnabled) {
         float f12 = mUseUITime ? TheTaskMgr.DeltaUISeconds() : TheTaskMgr.DeltaSeconds();
         Vector3 va0 = mParent->WorldXfm().v;
         Vector3 ve0 = mChild->WorldXfm().v;

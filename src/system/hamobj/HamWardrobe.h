@@ -60,15 +60,15 @@ protected:
     DataNode OnAddCrowd(DataArray *);
     DataNode OnLoadCharacters(DataArray *);
 
-    ObjPtrList<Character> mCrowdMembers; // 0x4
+    ObjPtrList<Character> mCrowd; // 0x4
     ObjPtrVec<HamCharacter> mMainCharacters; // 0x18
     /** How fast the crowd moves. */
     Symbol mTempo; // 0x34
-    bool unk38; // 0x38 - active crowd override?
+    bool mCrowdOverride; // 0x38 - active crowd override?
     Symbol mCrowdForceState; // 0x3c
-    int unk40; // 0x40 - some sort of flags
-    Symbol unk44; // 0x44 - current crowd state?
-    Symbol mCharOverrideOutfit; // 0x48
+    int mLastCrowdPlayFlags; // 0x40 - some sort of flags
+    Symbol mLastCrowdGroup; // 0x44 - current crowd state?
+    Symbol mForceCharacter; // 0x48
     Symbol mBackupOverrideOutfits[2]; // 0x4c
     RndOverlay *mOverlay; // 0x54
 };

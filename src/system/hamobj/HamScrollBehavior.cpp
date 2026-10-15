@@ -31,9 +31,13 @@ float HamScrollBehavior::mSlowFastThreshold = 0;
 float HamScrollBehavior::sScrollSettleTime = 0.1f;
 
 HamScrollBehavior::HamScrollBehavior(HamNavList *nav, UIListState *state)
-    : unk0(0), unk4(0), unk5(0), unk8(1), unkc(0), unk10(0.3), unk14(0), unk18(0),
-      unk1c(0), unk1d(0), unk20(0), unk24(0), unk28(0), unk2c(0), unk30(0),
-      unk34(0, 10, 0), unk48(2), unk4c(state), unk50(nav) {}
+    : mScrollingSettledTimer(0), mAtTop(false), mAtBottom(false), mScrollAmount(1),
+      mScrollTimer(0), mScrollDelayBefore(0.3), mScrollDelayBetween(0),
+      mScrollProgress(0), mOnScrollButton(false), mJustOnScrollButton(false),
+      mScrollFrame(0), mScrollDir(kScrollDir_None), mBufferedScrollDir(kScrollDir_None),
+      mLastScrollDir(kScrollDir_None), mHandScrollPos(kScrollDir_None),
+      mScrollSpeedFrame(0, 10, 0), mScrollState(kScrollState_None), mListState(state),
+      mOwner(nav) {}
 
 void HamScrollBehavior::Init() {
     static Symbol ui("ui");
@@ -76,195 +80,205 @@ void HamScrollBehavior::Init() {
     }
 }
 
-bool HamScrollBehavior::ScrollUp(bool b) {
-    if (unk18 > 0.0f && !b)
+bool HamScrollBehavior::ScrollUp(bool interrupt) {
+    if (mScrollProgress > 0.0f && !interrupt)
         return false;
-    int i = unk4c->FirstShowing() - unk8;
+    int i = mListState->FirstShowing() - mScrollAmount;
     if (i < 0)
         return false;
-    unk4c->Scroll(-1, false);
-    unk4c->Poll(0.0f);
-    unk50->HandleHighlightChanged(i);
-    unk24 = 1;
-    unk0 = sScrollSettleTime;
+    mListState->Scroll(-1, false);
+    mListState->Poll(0.0f);
+    mOwner->HandleHighlightChanged(i);
+    mScrollDir = kScrollDir_Up;
+    mScrollingSettledTimer = sScrollSettleTime;
     return true;
 }
 
-bool HamScrollBehavior::ScrollDown(bool b1) {
-    if (unk18 > 0.0f && !b1)
+bool HamScrollBehavior::ScrollDown(bool interrupt) {
+    if (mScrollProgress > 0.0f && !interrupt)
         return false;
-    int i2 = unk4c->FirstShowing() + unk8 + HamListRibbon::sNumListSelectable - 1;
-    if (i2 - unk8 >= unk4c->NumShowing())
+    int i2 = mListState->FirstShowing() + mScrollAmount
+        + HamListRibbon::sNumListSelectable - 1;
+    if (i2 - mScrollAmount >= mListState->NumShowing())
         return false;
-    unk50->HandleHighlightChanged(i2);
-    unk24 = 2;
-    unk0 = sScrollSettleTime;
+    mOwner->HandleHighlightChanged(i2);
+    mScrollDir = kScrollDir_Down;
+    mScrollingSettledTimer = sScrollSettleTime;
     return true;
 }
 
 bool HamScrollBehavior::IsScrolling() const {
-    return unk24 != 0 || (unk30 == 1 && unk4c->FirstShowing() != 0)
-        || (unk30 == 2 && !AtBottom());
+    return mScrollDir != kScrollDir_None
+        || (mHandScrollPos == kScrollDir_Up && mListState->FirstShowing() != 0)
+        || (mHandScrollPos == kScrollDir_Down && !AtBottom());
 }
 
-bool HamScrollBehavior::AtTop() const { return unk4c->FirstShowing() == 0; }
+bool HamScrollBehavior::AtTop() const { return mListState->FirstShowing() == 0; }
 
 bool HamScrollBehavior::AtBottom() const {
-    return unk4c->FirstShowing()
-        == unk4c->NumShowing() - HamListRibbon::sNumListSelectable;
+    return mListState->FirstShowing()
+        == mListState->NumShowing() - HamListRibbon::sNumListSelectable;
 }
 
 void HamScrollBehavior::Enter() {
-    unk50->SetScrollSoundFrame(0);
-    unk50->PlayScrollSound();
+    mOwner->SetScrollSoundFrame(0);
+    mOwner->PlayScrollSound();
 }
 
 void HamScrollBehavior::Exit() {
     Reset();
-    unk50->StopScrollSound();
+    mOwner->StopScrollSound();
 }
 
 void HamScrollBehavior::Reset() {
-    unk30 = 0;
-    unk2c = 0;
-    unk28 = 0;
-    unk0 = 0;
-    unk24 = 0;
-    unk34.ForceValue(0);
-    unk50->SetScrollSoundFrame(unk34.Value());
-    unkc = 0;
-    unk4 = false;
-    unk20 = 0;
-    unk5 = false;
-    unk18 = 0;
-    unk48 = 2;
+    mHandScrollPos = kScrollDir_None;
+    mLastScrollDir = kScrollDir_None;
+    mBufferedScrollDir = kScrollDir_None;
+    mScrollingSettledTimer = 0;
+    mScrollDir = kScrollDir_None;
+    mScrollSpeedFrame.ForceValue(0);
+    mOwner->SetScrollSoundFrame(mScrollSpeedFrame.Value());
+    mScrollTimer = 0;
+    mAtTop = false;
+    mScrollFrame = 0;
+    mAtBottom = false;
+    mScrollProgress = 0;
+    mScrollState = kScrollState_None;
 }
 
-void HamScrollBehavior::Update(float f1) {
-    int i28 = unk30;
-    if (unk0 > 0 && unk24 == 0) {
-        if (unk5 || unk4) {
-            unk0 = 0;
+void HamScrollBehavior::Update(float handHeight) {
+    ListScrollDirection handScrollPos = mHandScrollPos;
+    if (mScrollingSettledTimer > 0 && mScrollDir == kScrollDir_None) {
+        if (mAtBottom || mAtTop) {
+            mScrollingSettledTimer = 0;
         }
-        unk0 = unk0 - TheTaskMgr.DeltaUISeconds();
-        bool check = unk0 <= 0;
+        mScrollingSettledTimer = mScrollingSettledTimer - TheTaskMgr.DeltaUISeconds();
+        bool check = mScrollingSettledTimer <= 0;
         if (check) {
             static Message scrollingSettledMsg("scrolling_settled");
             if (TheUI->CurrentScreen()) {
                 TheUI->CurrentScreen()->Handle(scrollingSettledMsg, false);
             }
-            if (unk50) {
-                unk50->SendHighlightSettledMsg(unk4c->SelectedData());
+            if (mOwner) {
+                mOwner->SendHighlightSettledMsg(mListState->SelectedData());
             }
         }
     }
-    if (i28 != 0) {
-        unk2c = i28;
-        float f16;
-        if (i28 == 1) {
-            f16 = mNeutralToSlowUpDelay;
+    if (handScrollPos != kScrollDir_None) {
+        mLastScrollDir = handScrollPos;
+        float neutralToSlowDownDelay;
+        if (handScrollPos == kScrollDir_Up) {
+            neutralToSlowDownDelay = mNeutralToSlowUpDelay;
         } else {
-            f16 = mNeutralToSlowDownDelay;
+            neutralToSlowDownDelay = mNeutralToSlowDownDelay;
         }
-        unkc += TheTaskMgr.DeltaUISeconds();
-        if ((!unk1c && unkc >= f16) || (unk1c && unkc >= unk14)) {
-            if (!unk1c) {
-                unk1d = true;
+        mScrollTimer += TheTaskMgr.DeltaUISeconds();
+        if ((!mOnScrollButton && mScrollTimer >= neutralToSlowDownDelay)
+            || (mOnScrollButton && mScrollTimer >= mScrollDelayBetween)) {
+            if (!mOnScrollButton) {
+                mJustOnScrollButton = true;
             } else {
-                unk1d = false;
+                mJustOnScrollButton = false;
             }
-            unkc = 0;
-            unk1c = true;
-            if (i28 == 1) {
+            mScrollTimer = 0;
+            mOnScrollButton = true;
+            if (handScrollPos == kScrollDir_Up) {
                 ScrollUp(false);
-            } else if (i28 == 2) {
+            } else if (handScrollPos == kScrollDir_Down) {
                 ScrollDown(false);
             }
         }
     } else {
-        unk1c = false;
-        unk1d = false;
-        unkc = 0;
+        mOnScrollButton = false;
+        mJustOnScrollButton = false;
+        mScrollTimer = 0;
     }
 
     float f7;
-    if (f1 > 0.5f) {
-        f7 = Clamp(0.0f, 1.0f, (f1 - 1) / mScrollDownCap);
+    if (handHeight > 0.5f) {
+        f7 = Clamp(0.0f, 1.0f, (handHeight - 1) / mScrollDownCap);
     } else {
-        f7 = Clamp(-1.0f, 0.0f, (f1 / mScrollUpCap));
+        f7 = Clamp(-1.0f, 0.0f, (handHeight / mScrollUpCap));
     }
     f7 = fabsf(f7);
 
     float f9;
-    float f10;
+    float normalScrollSpeed;
 
-    if (TheGestureMgr && !TheGestureMgr->InControllerMode() && unk1c) {
-        if (unkc <= 0.001f) {
-            if (f7 < mSlowFastThreshold || unk48 == 2) {
-                f10 = mSlowScrollSpeed;
-                if (unk1d) {
-                    unk14 = i28 == 1 ? mSlowUpFirstTickDelay : mSlowDownFirstTickDelay;
+    if (TheGestureMgr && !TheGestureMgr->InControllerMode() && mOnScrollButton) {
+        if (mScrollTimer <= 0.001f) {
+            if (f7 < mSlowFastThreshold || mScrollState == kScrollState_None) {
+                normalScrollSpeed = mSlowScrollSpeed;
+                if (mJustOnScrollButton) {
+                    mScrollDelayBetween = handScrollPos == kScrollDir_Up
+                        ? mSlowUpFirstTickDelay
+                        : mSlowDownFirstTickDelay;
                 } else {
-                    unk14 = i28 == 1 ? mSlowUpTickDelay : mSlowDownTickDelay;
+                    mScrollDelayBetween = handScrollPos == kScrollDir_Up
+                        ? mSlowUpTickDelay
+                        : mSlowDownTickDelay;
                 }
                 f9 = 0;
-                unk48 = i28 == 1 ? 1 : 3;
+                mScrollState =
+                    handScrollPos == kScrollDir_Up ? kScrollState_Up : kScrollState_Down;
             } else {
-                f10 = mFastScrollSpeedScalar * f7 + mFastScrollSpeedBase;
-                unk14 = i28 == 1 ? mFastUpTickDelay : mFastDownTickDelay;
+                normalScrollSpeed = mFastScrollSpeedScalar * f7 + mFastScrollSpeedBase;
+                mScrollDelayBetween = handScrollPos == kScrollDir_Up ? mFastUpTickDelay
+                                                                     : mFastDownTickDelay;
                 f9 = (f7 - mSlowFastThreshold) / (1 - mSlowFastThreshold);
-                unk48 = i28 == 1 ? 0 : 4;
+                mScrollState = handScrollPos == kScrollDir_Up ? kScrollState_FastUp
+                                                              : kScrollState_FastDown;
             }
         } else {
-            switch (unk48) {
+            switch (mScrollState) {
             case 0:
             case 4:
-                f10 = mFastScrollSpeedScalar * f7 + mFastScrollSpeedBase;
+                normalScrollSpeed = mFastScrollSpeedScalar * f7 + mFastScrollSpeedBase;
                 f9 = (f7 - mSlowFastThreshold) / (1 - mSlowFastThreshold);
                 break;
             case 1:
             case 3:
-                f10 = mSlowScrollSpeed;
+                normalScrollSpeed = mSlowScrollSpeed;
                 f9 = 0;
                 break;
             default:
-                f10 = 0;
+                normalScrollSpeed = 0;
                 f9 = 0;
                 break;
             }
         }
     } else {
         f9 = 0;
-        f10 = mNormalScrollSpeed;
-        unk14 = 0;
-        unk48 = 2;
+        normalScrollSpeed = mNormalScrollSpeed;
+        mScrollDelayBetween = 0;
+        mScrollState = kScrollState_None;
     }
 
-    unk34.Smooth(f9, TheTaskMgr.DeltaUISeconds());
-    unk50->SetScrollSoundFrame(unk34.Value());
+    mScrollSpeedFrame.Smooth(f9, TheTaskMgr.DeltaUISeconds());
+    mOwner->SetScrollSoundFrame(mScrollSpeedFrame.Value());
 
-    RndAnimatable *anim = unk50->GetScrollSoundAnim();
+    RndAnimatable *anim = mOwner->GetScrollSoundAnim();
     if (anim) {
-        switch (unk48) {
+        switch (mScrollState) {
         case 0:
-            anim->SetFrame(-1 - unk34.Value(), 1);
+            anim->SetFrame(-1 - mScrollSpeedFrame.Value(), 1);
             break;
         case 1:
             anim->SetFrame(-1, 1);
             break;
         case 2:
-            if (f1 > 0.5f) {
+            if (handHeight > 0.5f) {
                 if (AtBottom()
-                    || unk50->GetRibbonMode() == HamListRibbon::kRibbonDisengaged) {
+                    || mOwner->GetRibbonMode() == HamListRibbon::kRibbonDisengaged) {
                     anim->SetFrame(0, 1);
                 } else {
-                    anim->SetFrame(unk50->CalculateSwell(5), 1);
+                    anim->SetFrame(mOwner->CalculateSwell(5), 1);
                 }
             } else {
-                if (unk4c->FirstShowing() == 0) {
+                if (mListState->FirstShowing() == 0) {
                     anim->SetFrame(0, 1);
                 } else {
-                    anim->SetFrame(-unk50->CalculateSwell(0), 1);
+                    anim->SetFrame(-mOwner->CalculateSwell(0), 1);
                 }
             }
             break;
@@ -272,30 +286,31 @@ void HamScrollBehavior::Update(float f1) {
             anim->SetFrame(1, 1);
             break;
         case 4:
-            anim->SetFrame(unk34.Value() + 1, 1);
+            anim->SetFrame(mScrollSpeedFrame.Value() + 1, 1);
             break;
         default:
             break;
         }
     }
 
-    if (unk24) {
-        unk18 = TheTaskMgr.DeltaUISeconds() * f10 + unk18;
-        if (unk18 > 1) {
-            unk20 = 0;
-            if (unk24 == 2) {
-                unk4c->SetSelected(
-                    unk4c->FirstShowing() + HamListRibbon::sNumListSelectable - 1,
-                    unk4c->FirstShowing(),
+    if (mScrollDir) {
+        mScrollProgress =
+            TheTaskMgr.DeltaUISeconds() * normalScrollSpeed + mScrollProgress;
+        if (mScrollProgress > 1) {
+            mScrollFrame = 0;
+            if (mScrollDir == kScrollDir_Down) {
+                mListState->SetSelected(
+                    mListState->FirstShowing() + HamListRibbon::sNumListSelectable - 1,
+                    mListState->FirstShowing(),
                     true
                 );
-                unk4c->Scroll(1, false);
-                unk4c->Poll(0);
+                mListState->Scroll(1, false);
+                mListState->Poll(0);
             }
             bool b5 = false;
-            if (unk28 == unk24) {
-                unk18 -= 1;
-                if (unk24 == 2) {
+            if (mBufferedScrollDir == mScrollDir) {
+                mScrollProgress -= 1;
+                if (mScrollDir == kScrollDir_Down) {
                     b5 = ScrollDown(true);
                 } else {
                     b5 = ScrollUp(true);
@@ -303,24 +318,24 @@ void HamScrollBehavior::Update(float f1) {
             }
 
             if (b5) {
-                if (unk24 == 1) {
-                    unk20 = 1 - unk18;
+                if (mScrollDir == kScrollDir_Up) {
+                    mScrollFrame = 1 - mScrollProgress;
                 } else {
-                    unk20 = unk18;
+                    mScrollFrame = mScrollProgress;
                 }
-                unk28 = 0;
+                mBufferedScrollDir = kScrollDir_None;
             } else {
-                unk18 = 0;
-                unk24 = 0;
-                unk28 = 0;
+                mScrollProgress = 0;
+                mScrollDir = kScrollDir_None;
+                mBufferedScrollDir = kScrollDir_None;
             }
             return;
         }
-        if (unk24 == 1) {
-            unk20 = 1 - unk18;
+        if (mScrollDir == kScrollDir_Up) {
+            mScrollFrame = 1 - mScrollProgress;
         } else {
-            unk20 = unk18;
+            mScrollFrame = mScrollProgress;
         }
     }
-    unk28 = 0;
+    mBufferedScrollDir = kScrollDir_None;
 }

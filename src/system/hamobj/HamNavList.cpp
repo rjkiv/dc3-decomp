@@ -279,14 +279,14 @@ void HamNavList::DrawShowing() {
         }
         if (mListRibbon) {
             mListRibbon->SetFrame(GetFrame(), 1);
-            mListRibbon->SetScrollAnimFrame(mScrollBehavior.GetUnk20());
+            mListRibbon->SetScrollAnimFrame(mScrollBehavior.GetScrollFrame());
             mListRibbon->SetDisengageFrame(mDisengageAmount.Value());
             mListRibbon->SetMode(mRibbonMode);
             mListRibbon->Draw(WorldXfm(), mRibbonDrawStates, false, false);
         }
         if (mHeaderRibbon) {
             mHeaderRibbon->SetFrame(GetFrame(), 1);
-            mHeaderRibbon->SetScrollAnimFrame(mScrollBehavior.GetUnk20());
+            mHeaderRibbon->SetScrollAnimFrame(mScrollBehavior.GetScrollFrame());
             mHeaderRibbon->SetDisengageFrame(mDisengageAmount.Value());
             mHeaderRibbon->SetMode(mRibbonMode);
             mHeaderRibbon->Draw(WorldXfm(), mRibbonDrawStates, true, false);
@@ -864,11 +864,11 @@ void HamNavList::Poll() {
             if (mScrollSpeedIndicator) {
                 if ((mRibbonMode == HamListRibbon::kRibbonDisengaged
                      || !mListState.ScrollPastMinDisplay())
-                    && mScrollSpeedIndicator->GetUnk1FC()) {
+                    && mScrollSpeedIndicator->GetIsShowing()) {
                     mScrollSpeedIndicator->Show(false);
                 } else if (
                     mRibbonMode == HamListRibbon::kRibbonSwell
-                    && !mScrollSpeedIndicator->GetUnk1FC()
+                    && !mScrollSpeedIndicator->GetIsShowing()
                     && mListState.ScrollPastMinDisplay()
                 ) {
                     mScrollSpeedIndicator->Show(true);
@@ -882,7 +882,7 @@ void HamNavList::Poll() {
             }
         } else if (!InVoiceMode()) {
             Disengage();
-            if (mScrollSpeedIndicator && mScrollSpeedIndicator->GetUnk1FC()) {
+            if (mScrollSpeedIndicator && mScrollSpeedIndicator->GetIsShowing()) {
                 mScrollSpeedIndicator->Show(false);
             }
         }
@@ -905,7 +905,7 @@ void HamNavList::Poll() {
 
     if (GetRibbonMode() == HamListRibbon::kRibbonDisengaged || InControllerMode()
         || InVoiceMode()) {
-        mScrollBehavior.SetUnk30(0);
+        mScrollBehavior.SetHandScrollPos(kScrollDir_None);
     }
     if (GetRibbonMode() == HamListRibbon::kRibbonDisengaged) {
         if (InControllerMode()) {
@@ -1137,7 +1137,7 @@ float HamNavList::GetTargetSwellAmount(int i) {
                     }
                 } else if (mRibbonMode != 3) {
                     if (i == mListState.SelectedDisplay()
-                        && mScrollBehavior.GetUnk30() == 0) {
+                        && mScrollBehavior.GetHandScrollPos() == 0) {
                         return 1.0f;
                     }
                     if (mRibbonMode == 0 && i < mListState.NumShowing()) {
@@ -1289,9 +1289,9 @@ void HamNavList::DetermineHighlightedItem() {
     f8 = f8 / (float)i2;
     i2 = GetHighlightItem();
     if (mListState.ScrollPastMinDisplay() && !mScrollBehavior.AtTop()
-        && (i2 != 0 || mScrollBehavior.GetUnk30() != 1)) {
+        && (i2 != 0 || mScrollBehavior.GetHandScrollPos() != 1)) {
         if (i2 == HamListRibbon::sNumListSelectable - 1
-            && mScrollBehavior.GetUnk30() == 2) {
+            && mScrollBehavior.GetHandScrollPos() == 2) {
             i2 = HamListRibbon::sNumListSelectable + 1;
         } else {
             i2++;
@@ -1310,18 +1310,18 @@ void HamNavList::DetermineHighlightedItem() {
             i7 = i7 - 1;
         }
         if (i7 == -1) {
-            mScrollBehavior.SetUnk30(1);
+            mScrollBehavior.SetHandScrollPos(kScrollDir_Up);
         } else if (i7 == HamListRibbon::sNumListSelectable) {
-            mScrollBehavior.SetUnk30(2);
+            mScrollBehavior.SetHandScrollPos(kScrollDir_Down);
         } else {
-            mScrollBehavior.SetUnk30(0);
+            mScrollBehavior.SetHandScrollPos(kScrollDir_None);
         }
         i7 = Clamp(0, HamListRibbon::sNumListSelectable - 1, i7);
     }
 
     if (fabsf(mHandHeight - f10) < f8 / 2 + sFloat) {
         if (mScrollBehavior.AtBottom()) {
-            mScrollBehavior.SetUnk30(0);
+            mScrollBehavior.SetHandScrollPos(kScrollDir_None);
         }
     } else {
         int i3 = GetDisabledCount(i7) + mListState.FirstShowing() + i7;
@@ -1398,7 +1398,7 @@ void HamNavList::UpdateGestures(const Skeleton *skeleton) {
         if (b6) {
             bool cmp =
                 !mDirectionFilter->IsLockedIn() && !mDirectionFilter->HasDirection()
-                || mScrollBehavior.GetUnk30();
+                || mScrollBehavior.GetHandScrollPos();
             if (cmp) {
                 SetSwelling();
                 return;

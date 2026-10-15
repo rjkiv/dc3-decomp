@@ -39,10 +39,10 @@ public:
     void Draw(const Transform &);
     void Update(float, float, float);
 
-    bool GetUnk1FC() const { return unk1fc; }
+    bool GetIsShowing() const { return mIsShowing; }
 
 protected:
-    bool unk1fc; // 0x1fc
+    bool mIsShowing; // 0x1fc
     /** "Frame at which the bar reaches the slow-scroll indicator" */
     float mSlowScrollThresholdFrame; // 0x200
     /** "Frame at which the bar reaches the fast-scroll indicator" */

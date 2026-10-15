@@ -10,6 +10,8 @@ class MoveVariant;
 
 typedef bool MoveVariantFunc(const MoveVariant *, void *);
 
+/** MoveGraph is an object that orchestrates the choreography in the game. It contains
+ * MoveParents and MoveVariants as well as the routine itself written in DTA. */
 class MoveGraph : public Hmx::Object {
 private:
     MoveParent *GetNonConstMoveParent(Symbol) const;
@@ -52,6 +54,10 @@ public:
     DataArrayPtr mLayoutData; // 0x5c
 };
 
+/** MoveParent represents a move (with variants, see MoveVariant), it is shared between
+ * difficulties and can be generally said to be some kind of a "group" based on one
+ * HamMove.
+ */
 class MoveParent {
 public:
     MoveParent();
@@ -87,6 +93,7 @@ public:
     std::vector<const MoveParent *> mPrev; // 0x40
 };
 
+/** MoveCandidate represents a possible move before or after a given move.  */
 struct MoveCandidate {
     enum Flags {
         kMC_IsCached = 1,
@@ -121,6 +128,14 @@ private:
     unsigned int mAdjacencyFlag; // 0x4
 };
 
+/** MoveVariant represents a specific move in it's appearence.
+
+Generally, one move can have different variants, example:
+
+twisted_charleston_r_omg_v0 and twisted_charleston_r_omg_v1 are two variants of the same
+move, twisted_charleston_r_omg. vX represents the appearence of the move in expert
+routine, with exception of finishing moves.
+*/
 class MoveVariant {
     enum Flags {
         kMV_IsCached = 0,
@@ -182,10 +197,14 @@ public:
     std::vector<MoveCandidate> mNextCandidates; // 0x24
     Symbol m_HamMoveName; // 0x30
     Symbol m_HamMoveMiloName; // 0x34
+    /** Linking example is where choreography goes like A -> B -> C -> B -> D - B is
+     * linked to C */
     union {
         const MoveVariant *mLinkedTo;
         const char *mLinkedToName;
     }; // 0x38
+    /** Linking example is where choreography goes like A -> B -> C -> B -> D - B is
+     * linked from C */
     union {
         const MoveVariant *mLinkedFrom;
         const char *mLinkedFromName;

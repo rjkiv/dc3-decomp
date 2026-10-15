@@ -79,10 +79,10 @@ void OriginalChoreoRemixer::PostMoveFinished() {
     }
 }
 
-bool OriginalChoreoRemixer::ScoredDanceMeasure(int x, int y) const {
-    int idx = JumpedMoveIdx(y - 1);
+bool OriginalChoreoRemixer::ScoredDanceMeasure(int player, int measure) const {
+    int idx = JumpedMoveIdx(measure - 1);
     if (idx >= mIntroMeasures && idx <= mFinishingMoveIdx) {
-        return DanceRemixer::ScoredDanceMeasure(x, y);
+        return DanceRemixer::ScoredDanceMeasure(player, measure);
     } else
         return false;
 }

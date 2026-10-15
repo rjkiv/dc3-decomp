@@ -7,7 +7,7 @@
 #include "utl/BinStream.h"
 
 HamScrollSpeedIndicator::HamScrollSpeedIndicator()
-    : unk1fc(0), mEnterAnim(this), mExitAnim(this), mIndicatorAnim(this) {}
+    : mIsShowing(0), mEnterAnim(this), mExitAnim(this), mIndicatorAnim(this) {}
 
 BEGIN_HANDLERS(HamScrollSpeedIndicator)
     HANDLE_SUPERCLASS(RndDir)
@@ -72,11 +72,11 @@ void HamScrollSpeedIndicator::Show(bool enter) {
         mEnterAnim->Animate(0, false, 0, nullptr, kEaseLinear, 0, false);
     } else
         mExitAnim->Animate(0, false, 0, nullptr, kEaseLinear, 0, false);
-    unk1fc = enter;
+    mIsShowing = enter;
 }
 
-void HamScrollSpeedIndicator::Draw(const Transform &xfm) {
-    SetWorldXfm(xfm);
+void HamScrollSpeedIndicator::Draw(const Transform &worldXfm) {
+    SetWorldXfm(worldXfm);
     FOREACH (it, mDraws) {
         (*it)->Draw();
     }
@@ -105,29 +105,31 @@ void HamScrollSpeedIndicator::PostLoad(BinStream &bs) {
     }
 }
 
-void HamScrollSpeedIndicator::Update(float f1, float f2, float f3) {
+void HamScrollSpeedIndicator::Update(
+    float handHeight, float scrollUpCap, float scrollDownCap
+) {
     float range = (mIndicatorAnim->EndFrame() - mIndicatorAnim->StartFrame()) / 2;
     float f9;
 
-    if (f1 >= 0.1f && f1 <= 0.9f) {
-        f9 = (f1 - 0.1f) * 1.25f;
+    if (handHeight >= 0.1f && handHeight <= 0.9f) {
+        f9 = (handHeight - 0.1f) * 1.25f;
         f9 = -(f9 * mSlowScrollThresholdFrame * 2 - mSlowScrollThresholdFrame);
     } else {
-        if (f1 > 0.5f) {
+        if (handHeight > 0.5f) {
             float fvar3 = range - mSlowScrollThresholdFrame;
-            f1 -= 0.9f;
-            f3 = f3 + 1 - 0.9f;
-            f9 = -(f1 / f3);
+            handHeight -= 0.9f;
+            scrollDownCap = scrollDownCap + 1 - 0.9f;
+            f9 = -(handHeight / scrollDownCap);
             f9 = f9 * fvar3 - mSlowScrollThresholdFrame;
         } else {
             float fvar3 = range - mSlowScrollThresholdFrame;
-            f1 -= 0.1f;
-            f2 += 0.1f;
-            f9 = -(f1 / f2);
+            handHeight -= 0.1f;
+            scrollUpCap += 0.1f;
+            f9 = -(handHeight / scrollUpCap);
             f9 = f9 * fvar3 + mSlowScrollThresholdFrame;
         }
     }
-    if (unk1fc) {
+    if (mIsShowing) {
         float frame = Clamp(mIndicatorAnim->StartFrame(), mIndicatorAnim->EndFrame(), f9);
         mIndicatorAnim->SetFrame(frame, 1);
     }

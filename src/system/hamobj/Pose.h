@@ -20,11 +20,11 @@ protected:
 
 class CamDistancePoseElement : public PoseElement {
 public:
-    CamDistancePoseElement(float f1, float f2) : PoseElement(f1), unk8(f2) {}
+    CamDistancePoseElement(float f1, float f2) : PoseElement(f1), mDistance(f2) {}
     virtual float Score(const Skeleton &) const;
 
 protected:
-    float unk8;
+    float mDistance; // 0x8
 };
 
 class JointDistPoseElement : public PoseElement {
@@ -33,11 +33,11 @@ public:
     virtual float Score(const Skeleton &) const;
 
 protected:
-    SkeletonJoint unk8;
-    SkeletonJoint unkc;
-    float unk10;
-    float unk14;
-    SkeletonCoordSys unk18;
+    SkeletonJoint mJointA; // 0x8
+    SkeletonJoint mJointB; // 0xc
+    float mMin; // 0x10
+    float mMax; // 0x14
+    SkeletonCoordSys mCoordSys; // 0x18
 };
 
 class BoneAngleRangePoseElement : public PoseElement {
@@ -46,9 +46,9 @@ public:
     virtual float Score(const Skeleton &) const;
 
 protected:
-    SkeletonBone unk8; // 0x8
+    SkeletonBone mBone; // 0x8
     Vector3 mAngle; // 0xc
-    float unk1c; // 0x1c
+    float mTolerance; // 0x1c
 };
 
 class Pose {
@@ -64,7 +64,7 @@ public:
 
 protected:
     std::vector<PoseElement *> mElements; // 0x4
-    std::list<float> unk10; // 0x10
-    int unk18; // 0x18
+    std::list<float> mScores; // 0x10
+    int mNumFrames; // 0x18
     ScoreMode mScoreMode; // 0x1c
 };

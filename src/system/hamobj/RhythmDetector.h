@@ -15,20 +15,20 @@
 class RhythmDetector : public RndPollable, public SkeletonCallback {
 public:
     struct Frame {
-        float unk0; // 0x0 time created?
+        float mBeat; // 0x0 time created?
         std::vector<Vector3> mJointVelocities; // 0x4 - could be vec<vec3> - ghidra
                                                // doesnt make it clear
     };
 
     struct RecordData {
-        float unk0; // 0x0 - window start
-        float unk4; // 0x4 - window end
-        float unk8; // 0x8
-        float unkc; // 0xc
-        float unk10; // 0x10
+        float mStartBeat; // 0x0 - window start
+        float mEndBeat; // 0x4 - window end
+        float mStartSeconds; // 0x8
+        float mEndSeconds; // 0xc
+        float mRating; // 0x10
         float unk14; // 0x14
-        bool unk18; // 0x18
-        std::vector<Frame> frames; // 0x1c
+        bool mFinalized; // 0x18
+        std::vector<Frame> mFrameData; // 0x1c
     };
 
     // Hmx::Object
@@ -62,7 +62,7 @@ public:
     void RemoveDebugGraphs();
     void ClearData();
     const RecordData &GetRecord(float, float, bool, Symbol, TextStream *);
-    void SetSkeletonID(int skelID) { mSkeletonID = skelID; }
+    void SetSkeletonID(int skelID) { mUseSkeletonIndex = skelID; }
 
 protected:
     RhythmDetector();
@@ -73,31 +73,31 @@ protected:
     virtual void PostUpdate(const struct SkeletonUpdateData *);
     virtual void Draw(const BaseSkeleton &, class SkeletonViz &) {}
 
-    bool mTracked; // 0xc
+    bool mHasSkeleton; // 0xc
     char mRecording; // 0xd - used in recording funcs
-    int mSkeletonID; // 0x10
-    std::list<Frame> unk14; // 0x14
-    Frame unk1c; // 0x1c
-    std::vector<Frame> unk2c; // 0x2c
+    int mUseSkeletonIndex; // 0x10
+    std::list<Frame> mFrames; // 0x14
+    Frame mLastFrame; // 0x1c
+    std::vector<Frame> mFrameData; // 0x2c
     std::vector<Frame> unk38; // 0x38
-    float mBeats; // 0x44
-    float mGroove; // 0x48
+    float mNumBeatsToCover; // 0x44
+    float mRhythmRating; // 0x48
     float mRhythmDecay; // 0x4c
-    int mFold; // 0x50
+    int mBeatFold; // 0x50
     float mToleranceFactor; // 0x54
-    Vector3 mDirection; // 0x58
-    float unk68; // 0x68 - used in cleardata
-    DebugGraph *mDebugGraphA; // 0x6c
-    DebugGraph *mDebugGraphB; // 0x70
-    DebugGraph *mDebugGraphC; // 0x74
-    DebugGraph *mDebugGraphD; // 0x78
-    DebugGraph *mDebugGraphE; // 0x7c
-    int unk80; // 0x80
-    Vector3 unk84[8][kNumJoints]; // 0x84
+    Vector3 mDir; // 0x58
+    float mThreadTotalSkelBeat; // 0x68 - used in cleardata
+    DebugGraph *mGraphVelX; // 0x6c
+    DebugGraph *mGraphFolded; // 0x70
+    DebugGraph *mGraphStdDev; // 0x74
+    DebugGraph *mGraphStdDevBeat; // 0x78
+    DebugGraph *mGraphRating; // 0x7c
+    int mCurrIdx; // 0x80
+    Vector3 mCamJointPos[8][kNumJoints]; // 0x84
     float unka84[8]; // 0xa84
     int unkaa4; // 0xaa4 - index into the above arrays
     float unkaa8; // 0xaa8 - mLastBeatTime?
-    Vector3 unkaac[kNumJoints]; // 0xaac
+    Vector3 mScreenJointPos[kNumJoints]; // 0xaac
     RecordData mRecordData; // 0xbec
 
 private:

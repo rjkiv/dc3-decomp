@@ -57,7 +57,7 @@ bool SongLayout::MeasureInPattern(int measure, int pattern) const {
 BEGIN_CUSTOM_PROPSYNC(SongSection)
     SYNC_PROP(measure_range, o.mMeasureRange)
     SYNC_PROP(pattern_range, o.mPatternRange)
-    SYNC_PROP(pattern, o.mPattern)
+    SYNC_PROP(pattern, o.mPatternName)
 END_CUSTOM_PROPSYNC
 
 BEGIN_CUSTOM_PROPSYNC(SongPattern)
@@ -85,7 +85,7 @@ BinStream &operator<<(BinStream &bs, const SongSection &s) {
     bs << s.mMeasureRange.end;
     bs << s.mPatternRange.start;
     bs << s.mPatternRange.end;
-    bs << s.mPattern;
+    bs << s.mPatternName;
     return bs;
 }
 
@@ -125,7 +125,7 @@ BinStreamRev &operator>>(BinStreamRev &d, SongSection &s) {
     d >> s.mMeasureRange.end;
     d >> s.mPatternRange.start;
     d >> s.mPatternRange.end;
-    d >> s.mPattern;
+    d >> s.mPatternName;
     return d;
 }
 
@@ -139,8 +139,8 @@ BEGIN_LOADS(SongLayout)
     d >> mSongSections;
     FOREACH (it, mSongSections) {
         FOREACH (pit, mSongPatterns) {
-            if (pit->mName == it->mPattern) {
-                it->unk14 = pit;
+            if (pit->mName == it->mPatternName) {
+                it->mPattern = pit;
                 break;
             }
         }
@@ -186,13 +186,13 @@ void SongLayout::DumpPatterns() const {
     }
 }
 
-void SongLayout::AddPatternMove(int i1, Symbol s2) {
-    if (mSongPatterns[i1].mNumMoves < mSongPatterns[i1].mElements.size()) {
-        int numMoves = mSongPatterns[i1].mNumMoves;
-        mSongPatterns[i1].mElements[numMoves] = s2;
-        mSongPatterns[i1].mMoveParents[numMoves] =
-            TheMoveMgr->mWholeMoveGraph.GetMoveParent(s2);
-        mSongPatterns[i1].mNumMoves++;
+void SongLayout::AddPatternMove(int pn, Symbol s) {
+    if (mSongPatterns[pn].mNumMoves < mSongPatterns[pn].mElements.size()) {
+        int numMoves = mSongPatterns[pn].mNumMoves;
+        mSongPatterns[pn].mElements[numMoves] = s;
+        mSongPatterns[pn].mMoveParents[numMoves] =
+            TheMoveMgr->mWholeMoveGraph.GetMoveParent(s);
+        mSongPatterns[pn].mNumMoves++;
     }
 }
 
@@ -201,15 +201,15 @@ void SongLayout::SetReplacerMove(int i, Symbol s2) {
     MILO_LOG(
         "Replacer %d replacing %s with %s at measures:",
         i,
-        mMoveReplacers[i].unk0.Str(),
+        mMoveReplacers[i].mOriginal.Str(),
         s2.Str()
     );
     for (int n = 0; n < mMoveReplacers[i].mMeasures.size(); n++) {
         MILO_LOG(" %d", mMoveReplacers[i].mMeasures[n] + 1);
     }
     MILO_LOG("\n");
-    mMoveReplacers[i].unk4 = s2;
-    mMoveReplacers[i].unk8 = TheMoveMgr->mWholeMoveGraph.GetMoveParent(s2);
+    mMoveReplacers[i].mReplace = s2;
+    mMoveReplacers[i].mReplaceMove = TheMoveMgr->mWholeMoveGraph.GetMoveParent(s2);
 }
 
 int SongLayout::ReplacerFirstMeasure(int i) const {
@@ -233,7 +233,7 @@ int SongLayout::FirstUnfilledPattern() const {
 
 int SongLayout::FirstUnfilledReplacer() const {
     for (int i = 0; i < mMoveReplacers.size(); i++) {
-        if (mMoveReplacers[i].unk8 == 0) {
+        if (mMoveReplacers[i].mReplaceMove == 0) {
             return i;
         }
     }
@@ -261,21 +261,21 @@ void SongLayout::SetDefaultReplacer() {
         }
         std::vector<MoveReplacer>::iterator mover = mMoveReplacers.begin();
         for (; mover != (mMoveReplacers).end(); (++mover)) {
-            if (mover->unk0 == this_key) {
+            if (mover->mOriginal == this_key) {
                 mover->mMeasures.push_back(i);
                 break;
             }
         }
         if (mover == mMoveReplacers.end()) {
             MoveReplacer mr;
-            mr.unk0 = this_key;
+            mr.mOriginal = this_key;
             mr.mMeasures.push_back(i);
             mMoveReplacers.push_back(mr);
         }
     }
 }
 
-void SongLayout::SetDefaultPattern(int patnum) {
+void SongLayout::SetDefaultPattern(int song_measures) {
     ClearChosenPatterns();
     MoveParent *mp = nullptr;
     u32 unk_r29 = 5;
@@ -292,15 +292,15 @@ void SongLayout::SetDefaultPattern(int patnum) {
         unk_r29 += 5;
         mSongPatterns.push_back(sp);
     }
-    for (int i = 5; i < patnum;) {
+    for (int i = 5; i < song_measures;) {
         SongSection ss;
         ss.mPatternRange.start = 0;
         ss.mPatternRange.end = 0;
         SongPattern sp2 = mSongPatterns[(i - 5) % 2];
-        ss.mPattern = sp2.mName;
-        ss.unk14 = &sp2;
+        ss.mPatternName = sp2.mName;
+        ss.mPattern = &sp2;
         ss.mMeasureRange.start = i + 1;
-        i += (patnum - i <= 4) ? patnum - i : 4;
+        i += (song_measures - i <= 4) ? song_measures - i : 4;
         ss.mMeasureRange.end = i;
         mSongSections.push_back(ss);
     }
@@ -326,7 +326,7 @@ DataNode SongLayout::AddSection(DataArray *a) {
     SongSection section;
     section.mMeasureRange.start = arr->Int(0);
     section.mMeasureRange.end = arr->Int(1);
-    section.mPattern = arr->Sym(2);
+    section.mPatternName = arr->Sym(2);
     section.mPatternRange.start = arr->Int(3);
     section.mPatternRange.end = arr->Int(4);
     mSongSections.push_back(section);

@@ -90,22 +90,34 @@ namespace {
 
     float sOverlayWidth = sRect.y - sRect.x;
 
-    float DrawOverlayBar(float f1, float f2, float f3, const Hmx::Color &c, float f4) {
+    float DrawOverlayBar(
+        float top_y, float left_x, float right_x, const Hmx::Color &c, float height
+    ) {
         TheRnd.DrawRectScreen(
-            Hmx::Rect(f2, f1, (f3 - f2), f4), c, nullptr, nullptr, nullptr
+            Hmx::Rect(left_x, top_y, (right_x - left_x), height),
+            c,
+            nullptr,
+            nullptr,
+            nullptr
         );
-        UtilDrawLine(Vector2(f2, f1), Vector2(f2, f1 + f4), sGray);
-        UtilDrawLine(Vector2(f3, f1), Vector2(f3, f1 + f4), sGray);
-        return f4;
+        UtilDrawLine(Vector2(left_x, top_y), Vector2(left_x, top_y + height), sGray);
+        UtilDrawLine(Vector2(right_x, top_y), Vector2(right_x, top_y + height), sGray);
+        return height;
     }
 
     float DrawDetectedBar(
-        float f1, const char *c2, float f3, float f4, float f5, bool b6, bool b7
+        float top_y,
+        const char *name,
+        float frac,
+        float left_x,
+        float right_x,
+        bool dim,
+        bool percentage
     ) {
         Hmx::Color gray = sDarkerGray;
         Hmx::Color green = sGreen;
         Hmx::Color lightGray = sLightGray;
-        if (b6) {
+        if (dim) {
             Multiply(sDarkerGray, 0.5f, gray);
             gray.alpha = sDarkerGray.alpha;
             Multiply(sGreen, 0.5f, green);
@@ -113,30 +125,30 @@ namespace {
             Multiply(sLightGray, 0.5f, lightGray);
             lightGray.alpha = sLightGray.alpha;
         }
-        String str(c2);
-        if (b7) {
-            str += MakeString(": %.2f%%", f3 * 100);
+        String str(name);
+        if (percentage) {
+            str += MakeString(": %.2f%%", frac * 100);
         } else {
-            str += MakeString(": %.2f", f3);
+            str += MakeString(": %.2f", frac);
         }
-        float fvar5 = (f5 - f4) * f3;
-        DrawOverlayBar(f1, f4, (f5 - f4) + f4, gray, sFloat);
-        DrawOverlayBar(f1, f4, fvar5 + f4, green, sFloat);
-        TheRnd.DrawStringScreen(str.c_str(), Vector2(f4, f1), lightGray, true);
-        return sFloat + f1;
+        float fvar5 = (right_x - left_x) * frac;
+        DrawOverlayBar(top_y, left_x, (right_x - left_x) + left_x, gray, sFloat);
+        DrawOverlayBar(top_y, left_x, fvar5 + left_x, green, sFloat);
+        TheRnd.DrawStringScreen(str.c_str(), Vector2(left_x, top_y), lightGray, true);
+        return sFloat + top_y;
     }
 
-    void DrawBeatLine(float f1, float f2, float f3, const Hmx::Color &c) {
+    void DrawBeatLine(float top_y, float height, float beat, const Hmx::Color &color) {
         Vector2 v20;
-        v20.x = Interp(sRect.x, sRect.y, (sRect.w + f3) / (sRect.h + sRect.w + 4));
-        v20.y = f1 + f2;
+        v20.x = Interp(sRect.x, sRect.y, (sRect.w + beat) / (sRect.h + sRect.w + 4));
+        v20.y = top_y + height;
         Vector2 v18;
         v18.x = v20.x;
-        v18.y = f1;
-        UtilDrawLine(v18, v20, c);
+        v18.y = top_y;
+        UtilDrawLine(v18, v20, color);
     }
 
-    float DrawPlayClip(float f, SkeletonClip *clip, int bar) {
+    float DrawPlayClip(float top_y, SkeletonClip *clip, int bar) {
         MILO_ASSERT(clip, 0x762);
         String clipName = clip->Name();
         if (bar < clip->NumMoveRatings()) {
@@ -149,10 +161,10 @@ namespace {
         } else {
             clipName += " (no rating overrides)";
         }
-        Hmx::Rect rect(0.01f, f, 0.9f, sFloat);
+        Hmx::Rect rect(0.01f, top_y, 0.9f, sFloat);
         TheRnd.DrawRectScreen(rect, sDarkGray, nullptr, nullptr, nullptr);
         const Vector2 &stringScreen = TheRnd.DrawStringScreen(
-            clipName.c_str(), Vector2(0.01f, f), sLightGray, true
+            clipName.c_str(), Vector2(0.01f, top_y), sLightGray, true
         );
         return stringScreen.y;
     }
@@ -167,7 +179,7 @@ namespace {
 
 }
 
-String RecordClipName(const char *cc, int i2) {
+String RecordClipName(const char *mode, int player) {
     DateTime dt;
     GetDateAndTime(dt);
     Difficulty playerDiff = TheGameData->Player(0)->GetDifficulty();
@@ -178,7 +190,7 @@ String RecordClipName(const char *cc, int i2) {
         diff = DifficultyToSym(playerDiff).Str()[0];
     }
     const char *prefix = "";
-    switch (i2) {
+    switch (player) {
     case 1:
         prefix = "b";
         break;
@@ -194,7 +206,7 @@ String RecordClipName(const char *cc, int i2) {
     unsigned int dtCode = dt.ToCode();
     Symbol song = TheGameData->GetSong();
     const String &x = TheGameData->Player(0)->Unk2c();
-    String ret(MakeString("%s%d~%s~%c~%s~%s", prefix, dtCode, song, diff, x, cc));
+    String ret(MakeString("%s%d~%s~%c~%s~%s", prefix, dtCode, song, diff, x, mode));
     if (ret.length() > 38) {
         ret.resize(38);
     }
@@ -207,37 +219,42 @@ MoveMode CurrentMoveMode() {
 }
 
 void SetupRecordClip(
-    ObjPtr<SkeletonClip> &clip, int i1, int i2, const char *cc, ObjectDir *dir
+    ObjPtr<SkeletonClip> &clip,
+    int recordBuf,
+    int player,
+    const char *mode,
+    ObjectDir *owner
 ) {
     clip = Hmx::Object::New<SkeletonClip>();
-    clip->EnableAlternateRecord(i1);
-    clip->SetRecordingPlayer(i2);
-    String clipName = RecordClipName(cc, i1);
+    clip->EnableAlternateRecord(recordBuf);
+    clip->SetRecordingPlayer(player);
+    String clipName = RecordClipName(mode, recordBuf);
     clipName += ".clp";
-    clip->SetName(clipName.c_str(), dir);
+    clip->SetName(clipName.c_str(), owner);
     const char *path = MakeString("devkit:\\%s", clip->Name());
     MILO_LOG("Starting song recording: %s\n", path);
     clip->StartXboxRecording(path);
 }
 
 MoveDir::MoveDir()
-    : mShowMoveOverlay(0), mErrorNodeInfo(0), mPlayClip(this), mRecordClip(this),
-      unk2bc(this), unk2d0(this), unk2e4(0), mReportMove(this), mFiltersEnabled(0),
-      mGamePanel(0), unk30c(0), mFilterQueue(0), mAsyncDetector(0), mUpdateLoader(0),
-      mFinishingMoveMeasure(10000), mMoveOverlay(RndOverlay::Find("ham_move")),
-      mDancerSeq(this), unk414(0), mDancerViz(Hmx::Object::New<SkeletonViz>()), unk41c(0),
-      mDebugLatencyOffset(0), mDebugLoop(0), mLastPollMs(0), mDebugCollision(0),
-      unkf84(-1) {
+    : mShowMoveOverlay(0), mErrorNodeInfo(0), mSongPlayClip(this), mSongRecordClip(this),
+      mSongRecordClip2(this), mSongRecordClip3(this), mMoveRecordClipIdx(0),
+      mReportMove(this), mFiltersEnabled(0), mGamePanel(0), mLastResultSeconds(0),
+      mFilterQueue(0), mAsyncDetector(0), mUpdateLoader(0), mFinishingMoveMeasure(10000),
+      mMoveOverlay(RndOverlay::Find("ham_move")), mDancerSequence(this),
+      mDrawDancerSkeleton(0), mDancerViz(Hmx::Object::New<SkeletonViz>()),
+      mVizDetectFrame(0), mDebugLatencyOffset(0), mDebugLoop(0), mLastPollMs(0),
+      mDebugCollision(0), mDebugCollisionBeat(-1) {
     for (int i = 0; i < 2; i++) {
         mMovePlayerData[i].Reset();
-        mCurMoveSmoothers[i].SetSmoothParameters(1, 0);
-        filler[i] = 0;
+        mSmoothers[i].SetSmoothParameters(1, 0);
+        mPrevMove[i] = 0;
         mCurMoveNormalizedResult[i] = 0;
-        unk3e8[i] = 0;
+        mCurMovePrevNormalizedResult[i] = 0;
         mCurMove[i] = 0;
         mCurMoveRating[i] = kMoveRatingOk;
-        unk3f0[i] = kMoveRatingOk;
-        unkf04[i].Reset();
+        mCurMovePrevRating[i] = kMoveRatingOk;
+        mDebugCollisionXfms[i].Reset();
     }
     SetFilterVersion("ham2");
 }
@@ -319,9 +336,7 @@ BEGIN_HANDLERS(MoveDir)
             _msg->Int(2), (MoveAsyncDetector::RatingBar)2, _msg->Obj<HamMove>(3)
         )
     )
-    HANDLE_EXPR(
-        cur_move_normalized_result_smoothed, mCurMoveSmoothers[_msg->Int(2)].Value()
-    )
+    HANDLE_EXPR(cur_move_normalized_result_smoothed, mSmoothers[_msg->Int(2)].Value())
     HANDLE_ACTION(
         detector_clear_looped_result,
         mAsyncDetector->ClearLoopedRatingFrac(_msg->Obj<HamMove>(2))
@@ -348,9 +363,11 @@ BEGIN_PROPSYNCS(MoveDir)
     SYNC_PROP(debug_collision, mDebugCollision)
     SYNC_PROP(debug_node_types, mErrorNodeInfo)
     SYNC_PROP(debug_node_joints, mErrorNodeInfo)
-    SYNC_PROP_SET(play_clip, mPlayClip.Ptr(), SetSongPlayClip(_val.Obj<SkeletonClip>()))
+    SYNC_PROP_SET(
+        play_clip, mSongPlayClip.Ptr(), SetSongPlayClip(_val.Obj<SkeletonClip>())
+    )
     SYNC_PROP(report_move, mReportMove)
-    SYNC_PROP(record_clip, mRecordClip)
+    SYNC_PROP(record_clip, mSongRecordClip)
     SYNC_PROP(import_clip_path, mImportClipPath)
     SYNC_SUPERCLASS(SkeletonDir)
 END_PROPSYNCS
@@ -380,10 +397,10 @@ BEGIN_COPYS(MoveDir)
         COPY_MEMBER(mErrorNodeInfo)
         COPY_MEMBER(mImportClipPath)
         COPY_MEMBER(mFiltersEnabled)
-        COPY_MEMBER(mPlayClip)
-        COPY_MEMBER(mRecordClip)
-        COPY_MEMBER(unk2bc)
-        COPY_MEMBER(unk2d0)
+        COPY_MEMBER(mSongPlayClip)
+        COPY_MEMBER(mSongRecordClip)
+        COPY_MEMBER(mSongRecordClip2)
+        COPY_MEMBER(mSongRecordClip3)
         COPY_MEMBER(mReportMove)
     END_COPYING_MEMBERS
 END_COPYS
@@ -599,7 +616,7 @@ void MoveDir::PostLoad(BinStream &bs) {
                     RndFontBase *font = labelDirPtr->FontObj(gNullStr);
                     MILO_ASSERT(font, 0xA52);
                     ReplaceObject(font, updateFont, false, false, true);
-                    mUpdateFonts.push_back(labelDirPtr);
+                    mAltFontDirs.push_back(labelDirPtr);
                 }
             }
         }
@@ -614,7 +631,7 @@ void MoveDir::PostLoad(BinStream &bs) {
             MiloInit();
         }
     } else {
-        mRecordClip = nullptr;
+        mSongRecordClip = nullptr;
     }
 }
 
@@ -624,13 +641,13 @@ void MoveDir::DrawShowing() {
             SongCollision *col = Find<SongCollision>("SongCollision", false);
             if (col) {
                 int beat = TheTaskMgr.Beat();
-                if (unkf84 != beat) {
-                    unkf84 = beat;
+                if (mDebugCollisionBeat != beat) {
+                    mDebugCollisionBeat = beat;
                     MILO_ASSERT(TheHamDirector, 0xAB1);
                     for (int i = 0; i < 2; i++) {
                         HamCharacter *hChar = TheHamDirector->GetCharacter(i);
                         if (hChar) {
-                            unkf04[i] = hChar->WorldXfm();
+                            mDebugCollisionXfms[i] = hChar->WorldXfm();
                         }
                     }
                 }
@@ -639,7 +656,9 @@ void MoveDir::DrawShowing() {
                     diffs[i] = TheGameData->Player(i)->GetDifficulty();
                 }
                 std::vector<SongCollisionOutput> songCollisionOutputs;
-                col->IsCollision(beat, beat + 1, diffs, unkf04, &songCollisionOutputs);
+                col->IsCollision(
+                    beat, beat + 1, diffs, mDebugCollisionXfms, &songCollisionOutputs
+                );
                 for (int i = 0; i < songCollisionOutputs.size(); i++) {
                     SongCollisionOutput &curOutput = songCollisionOutputs[i];
                     Hmx::Color color(0.8f, 0.8f, 0.8f);
@@ -670,12 +689,12 @@ void MoveDir::DrawShowing() {
             }
         }
     } else if (TheLoadMgr.EditMode()) {
-        if (mDancerSeq) {
+        if (mDancerSequence) {
             ObjDirItr<SkeletonViz> it(this, true);
             if (it) {
                 StubCameraInput input;
                 input.PollTracking();
-                const DancerSkeleton *skel = mDancerSeq->CurSkeleton();
+                const DancerSkeleton *skel = mDancerSequence->CurSkeleton();
                 if (skel) {
                     it->Visualize(input, *skel, nullptr, false);
                 }
@@ -694,7 +713,7 @@ void MoveDir::Poll() {
         for (int i = 0; i < 2; i++) {
             HamMove *oldMove = mCurMove[i];
             mCurMove[i] = nullptr;
-            filler[i] = oldMove;
+            mPrevMove[i] = oldMove;
             MovePlayerData &curPlayerData = mMovePlayerData[i];
             auto &keys = curPlayerData.mMoveKeys;
             if (curMeasure >= 0 && curMeasure < keys.size()) {
@@ -702,10 +721,10 @@ void MoveDir::Poll() {
             }
             MoveRating oldRating = mCurMoveRating[i];
             mCurMoveRating[i] = kMoveRatingOk;
-            unk3f0[i] = oldRating;
+            mCurMovePrevRating[i] = oldRating;
             float oldRes = mCurMoveNormalizedResult[i];
             mCurMoveNormalizedResult[i] = 0;
-            unk3e8[i] = oldRes;
+            mCurMovePrevNormalizedResult[i] = oldRes;
 
             if (mCurMove[i]) {
                 std::pair<DetectFrame *, DetectFrame *> frames;
@@ -716,13 +735,13 @@ void MoveDir::Poll() {
                 mCurMoveNormalizedResult[i] =
                     DetectFracToRatingFrac(frac, mCurMove[i]->RatingOverride());
             }
-            mCurMoveSmoothers[i].Smooth(
+            mSmoothers[i].Smooth(
                 mCurMoveNormalizedResult[i],
                 TheMaster && TheMaster->Pos1().GetBeat() == 3
                     ? TheTaskMgr.DeltaUISeconds() * 4.0f
                     : TheTaskMgr.DeltaUISeconds()
             );
-            if (mCurMoveRating[i] <= kMoveRatingPerfect && unk3f0[i] > 1) {
+            if (mCurMoveRating[i] <= kMoveRatingPerfect && mCurMovePrevRating[i] > 1) {
                 static Symbol passed_move_p1("passed_move_p1");
                 static Symbol passed_move_p2("passed_move_p2");
                 TheHamProvider->Export(
@@ -731,8 +750,8 @@ void MoveDir::Poll() {
                 );
             }
         }
-        if ((mCurMoveRating[0] <= 1 || mCurMoveRating[1] <= 1) && unk3f0[0] > 1
-            && unk3f0[1] > 1) {
+        if ((mCurMoveRating[0] <= 1 || mCurMoveRating[1] <= 1)
+            && mCurMovePrevRating[0] > 1 && mCurMovePrevRating[1] > 1) {
             static Message msg_passed_move("passed_move");
             TheHamProvider->Export(msg_passed_move, true);
         }
@@ -771,7 +790,7 @@ void MoveDir::Enter() {
         mGamePanel = ObjectDir::Main()->Find<Hmx::Object>("game_panel", false);
         mErrorNodeInfo = 0;
         SetFiltersEnabled(true);
-        unk310 = -1;
+        mLastMoveSeconds = -1;
     } else {
         mGamePanel = nullptr;
     }
@@ -828,32 +847,32 @@ void MoveDir::Update(const SkeletonUpdateData &data) {
 
 void MoveDir::PostUpdate(const SkeletonUpdateData *data) {
     if (data) {
-        if (mRecordClip) {
-            mRecordClip->PollRecording(data->mFrame);
+        if (mSongRecordClip) {
+            mSongRecordClip->PollRecording(data->mFrame);
         }
-        if (unk2bc) {
-            unk2bc->PollRecording(data->mFrame);
+        if (mSongRecordClip2) {
+            mSongRecordClip2->PollRecording(data->mFrame);
         }
-        if (unk2d0) {
-            unk2d0->PollRecording(data->mFrame);
+        if (mSongRecordClip3) {
+            mSongRecordClip3->PollRecording(data->mFrame);
         }
         if (TheLoadMgr.EditMode()) {
             MILO_ASSERT(TheGameData, 0x387);
             TheGameData->AutoAssignSkeletons(data);
         }
         if (mMoveOverlay->Showing()) {
-            if (mPlayClip && mDebugLatencyOffset) {
+            if (mSongPlayClip && mDebugLatencyOffset) {
                 SkeletonFrame skeletonFrame;
-                if (mPlayClip->SkeletonFrameAt(
+                if (mSongPlayClip->SkeletonFrameAt(
                         sLatencySeconds + SongSeconds(), skeletonFrame
                     )) {
-                    unk424.Poll(0, skeletonFrame);
+                    mVizSkeleton.Poll(0, skeletonFrame);
                 }
             } else {
                 const Skeleton *playerSkeleton =
                     TheGameData->Player(0)->GetSkeleton(data->mAllSkeletons);
                 if (playerSkeleton) {
-                    unk424 = *playerSkeleton;
+                    mVizSkeleton = *playerSkeleton;
                 }
             }
         }
@@ -871,24 +890,24 @@ void MoveDir::PostUpdate(const SkeletonUpdateData *data) {
 }
 
 void MoveDir::Draw(const BaseSkeleton &baseSkeleton, SkeletonViz &skeletonViz) {
-    if (unk414) {
-        int disp_ms = unk414->ElapsedMs();
+    if (mDrawDancerSkeleton) {
+        int disp_ms = mDrawDancerSkeleton->ElapsedMs();
         if (disp_ms != -1) {
             for (int i = 0; i < kNumJoints; i++) {
                 Vector3 vdisp;
                 int actual_ms;
-                unk414->Displacement(
+                mDrawDancerSkeleton->Displacement(
                     nullptr, kCoordCamera, (SkeletonJoint)i, disp_ms, vdisp, actual_ms
                 );
                 MILO_ASSERT(disp_ms == actual_ms, 0x50F);
-                Vector3 camJointPos = unk414->CamJointPos((SkeletonJoint)i);
+                Vector3 camJointPos = mDrawDancerSkeleton->CamJointPos((SkeletonJoint)i);
                 Vector3 vdiff;
                 Subtract(camJointPos, vdisp, vdiff);
                 Hmx::Color color(0.3f, 0.6f, 0.3f);
                 mDancerViz->DrawLine3D(vdiff, camJointPos, 0.01f, color, nullptr);
             }
         }
-    } else if (mFiltersEnabled && unk41c) {
+    } else if (mFiltersEnabled && mVizDetectFrame) {
         MILO_ASSERT(TheGestureMgr, 0x51A);
         MILO_ASSERT(TheHamDirector, 0x51B);
         MoveMode moveMode = CurrentMoveMode();
@@ -897,21 +916,24 @@ void MoveDir::Draw(const BaseSkeleton &baseSkeleton, SkeletonViz &skeletonViz) {
         SkeletonUpdateHandle handle = SkeletonUpdate::InstanceHandle();
         float songSpeed = SongSpeed();
         ErrorFrameInput input(
-            handle.History(), unk41c->mDancerFrame->mSkeleton, *player_skel, songSpeed
+            handle.History(),
+            mVizDetectFrame->mDancerFrame->mSkeleton,
+            *player_skel,
+            songSpeed
         );
         ErrorNode **errorNodes = mFilterVer->mNodes;
         for (int i = 0; i < mFilterVer->NumNodes(); i++) {
             ErrorNode *node = errorNodes[i];
             if (node->IsTypeJointMatch(mErrorNodeInfo)) {
                 ErrorNodeInput nodeInput;
-                mFilterVer->NodeInput(i, unk41c, moveMode, nodeInput);
+                mFilterVer->NodeInput(i, mVizDetectFrame, moveMode, nodeInput);
                 node->VizError(skeletonViz, input, nodeInput);
             }
         }
     }
 }
 
-float MoveDir::UpdateOverlay(RndOverlay *overlay, float f2) {
+float MoveDir::UpdateOverlay(RndOverlay *overlay, float top_y) {
     if (mFiltersEnabled) {
         HamMove *curMove = mMovePlayerData[0].mCurMove;
         if (curMove) {
@@ -925,16 +947,20 @@ float MoveDir::UpdateOverlay(RndOverlay *overlay, float f2) {
             MoveMirrored mirrored =
                 curMove->Mirrored() != false ? kMoveMirrored : kMoveNotMirrored;
             if (sFloat == 0) {
-                Vector2 v =
-                    TheRnd.DrawStringScreen("W", Vector2(sRect.x, f2), sLightGray, false);
-                sFloat = (v.y - f2) * 0.8f;
+                Vector2 v = TheRnd.DrawStringScreen(
+                    "W", Vector2(sRect.x, top_y), sLightGray, false
+                );
+                sFloat = (v.y - top_y) * 0.8f;
             }
-            if (mPlayClip) {
-                f2 = DrawPlayClip(f2, mPlayClip, TheTaskMgr.CurrentMeasure());
+            if (mSongPlayClip) {
+                top_y = DrawPlayClip(top_y, mSongPlayClip, TheTaskMgr.CurrentMeasure());
             }
 
             TheRnd.DrawStringScreen(
-                MakeString("%s", fv->mName), Vector2(sRect.x - 0.05f, f2), sLightGray, true
+                MakeString("%s", fv->mName),
+                Vector2(sRect.x - 0.05f, top_y),
+                sLightGray,
+                true
             );
 
             for (int i = 0; i < 4; i++) {
@@ -942,19 +968,21 @@ float MoveDir::UpdateOverlay(RndOverlay *overlay, float f2) {
                 float threshold;
                 RatingStateThreshold(i, ratingState, threshold, curMove->RatingOverride());
                 Vector2 v88, v98;
-                v88.y = f2;
-                v98.y = sFloat + f2;
+                v88.y = top_y;
+                v98.y = sFloat + top_y;
                 float f33 = (sRect.y - sRect.x) / (sRect.h + sRect.w + 4) + sRect.x;
                 v98.x = (0.99f - f33) * (threshold + f33);
                 v88.x = v98.x;
                 UtilDrawLine(v88, v98, sGray);
                 const char *str = strstr(ratingState.Str(), "_");
                 if (str) {
-                    TheRnd.DrawStringScreen(str + 1, Vector2(v98.x, f2), sLightGray, true);
+                    TheRnd.DrawStringScreen(
+                        str + 1, Vector2(v98.x, top_y), sLightGray, true
+                    );
                 }
             }
 
-            float f44 = sFloat + f2;
+            float f44 = sFloat + top_y;
             float f49 = (sRect.y - sRect.x) / (sRect.h + sRect.w + 4) + sRect.x;
             float f33 = 0.99f - f49;
             float f34 = curMove->IsRest() ? 0 : DetectFrac(0, -1);
@@ -1093,7 +1121,7 @@ float MoveDir::UpdateOverlay(RndOverlay *overlay, float f2) {
             static Symbol merge_moves("merge_moves");
             int mergeMovesProp = TheHamProvider->Property(merge_moves)->Int();
             const DancerSkeleton *skelPtr = nullptr;
-            unk41c = nullptr;
+            mVizDetectFrame = nullptr;
             if (mergeMovesProp) {
                 if (curMove->GetDancerSequence()) {
                     float f41 = f38 / 4;
@@ -1151,12 +1179,12 @@ float MoveDir::UpdateOverlay(RndOverlay *overlay, float f2) {
                     input.PollTracking();
                     std::vector<SkeletonCallback *> callbacks;
                     callbacks.push_back(this);
-                    unk414 = skelPtr;
+                    mDrawDancerSkeleton = skelPtr;
                     mDancerViz->Visualize(input, *skelPtr, &callbacks, false);
-                    unk414 = nullptr;
+                    mDrawDancerSkeleton = nullptr;
                 }
             } else {
-                int numDFs = unkf88.size();
+                int numDFs = mCurDetectFrames.size();
                 TheRnd.DrawStringScreen(
                     MakeString("asyc: %d", numDFs), mfVec, sLightGray, true
                 );
@@ -1164,7 +1192,7 @@ float MoveDir::UpdateOverlay(RndOverlay *overlay, float f2) {
                     mDancerViz->SetUsePhysicalCam(true);
                     int ceiled = ceilf(sqrtf((float)numDFs));
                     // more stuff and more things
-                    FOREACH (it, unkf88) {
+                    FOREACH (it, mCurDetectFrames) {
                     }
                 }
             }
@@ -1176,7 +1204,9 @@ float MoveDir::UpdateOverlay(RndOverlay *overlay, float f2) {
             TheRnd.DrawRectScreen(r2, sDarkGray, nullptr, nullptr, nullptr);
             mDancerViz->SetUsePhysicalCam(true);
             mDancerViz->SetPhysicalCamScreenRect(r2);
-            mDancerViz->Visualize(*handle.GetCameraInput(), *unk414, &callbacks, false);
+            mDancerViz->Visualize(
+                *handle.GetCameraInput(), *mDrawDancerSkeleton, &callbacks, false
+            );
             const Vector2 &vret = TheRnd.DrawStringScreen(
                 MakeString("latency offset: %s", mDebugLatencyOffset ? "ON" : "OFF"),
                 Vector2(r2.x, r2.y),
@@ -1192,7 +1222,7 @@ float MoveDir::UpdateOverlay(RndOverlay *overlay, float f2) {
             return f34 + f39;
         }
     }
-    return f2;
+    return top_y;
 }
 
 DataNode OnDetectFracToRating(DataArray *a) {
@@ -1261,11 +1291,11 @@ void MoveDir::SetFilterVersion(Symbol version) {
     MILO_FAIL("Could not find filter version %s", version);
 }
 
-const FilterVersion *MoveDir::FindFilterVersion(FilterVersionType t) {
+const FilterVersion *MoveDir::FindFilterVersion(FilterVersionType fvt) {
     for (std::vector<FilterVersion *>::iterator it = sFilterVersions.begin();
          it != sFilterVersions.end();
          ++it) {
-        if ((*it)->mType == t)
+        if ((*it)->mType == fvt)
             return *it;
     }
     return nullptr;
@@ -1287,7 +1317,7 @@ void MoveDir::SetMoveOverlay(bool overlay) {
     mMoveOverlay->SetShowing(overlay);
 }
 
-SkeletonClip *MoveDir::ImportClip(bool b1) {
+SkeletonClip *MoveDir::ImportClip(bool prompt) {
     if (mImportClipPath.empty()) {
         MILO_NOTIFY("Set import_clip_path first");
         return nullptr;
@@ -1306,17 +1336,17 @@ SkeletonClip *MoveDir::ImportClip(bool b1) {
 }
 
 void MoveDir::StopSongRecord() {
-    if (mRecordClip && mRecordClip->IsRecording()) {
-        mRecordClip->StopRecording();
-        if (unk2bc)
-            unk2bc->StopRecording();
+    if (mSongRecordClip && mSongRecordClip->IsRecording()) {
+        mSongRecordClip->StopRecording();
+        if (mSongRecordClip2)
+            mSongRecordClip2->StopRecording();
     } else {
         MILO_NOTIFY("Start recording first");
     }
 }
 
 void MoveDir::FlushMoveRecord() {
-    SkeletonClip *clip = unk2d0;
+    SkeletonClip *clip = mSongRecordClip3;
     if (clip) {
         String clipName = RecordClipName("ktb", -1);
         clip->FlushMoveRecord(clipName.c_str());
@@ -1326,7 +1356,7 @@ void MoveDir::FlushMoveRecord() {
 }
 
 void MoveDir::SwapMoveRecord() {
-    SkeletonClip *clip = unk2d0;
+    SkeletonClip *clip = mSongRecordClip3;
     if (clip) {
         clip->SwapMoveRecord();
     } else {
@@ -1334,12 +1364,12 @@ void MoveDir::SwapMoveRecord() {
     }
 }
 
-HamMove *MoveDir::GetMoveAtMeasure(int player, int i2) {
+HamMove *MoveDir::GetMoveAtMeasure(int player, int measure) {
     static Symbol move("move");
     HamPlayerData *hpd = TheGameData->Player(player);
     Keys<Symbol, Symbol> *keys =
         TheHamDirector->GetPropKeys(hpd->GetDifficulty(), move)->AsSymbolKeys();
-    return Find<HamMove>((*keys)[i2].value.Str(), false);
+    return Find<HamMove>((*keys)[measure].value.Str(), false);
     return nullptr;
 }
 
@@ -1352,17 +1382,17 @@ DancerSequence *MoveDir::PerformanceSequence(Difficulty diff) {
 
 void MoveDir::FinishGameRecord() {
     MILO_ASSERT(!TheLoadMgr.EditMode(), 0x604);
-    if (mRecordClip) {
-        MILO_LOG("Finishing song recording: %s\n", mRecordClip->Path());
-        mRecordClip->StopRecording();
-        RELEASE(mRecordClip);
+    if (mSongRecordClip) {
+        MILO_LOG("Finishing song recording: %s\n", mSongRecordClip->Path());
+        mSongRecordClip->StopRecording();
+        RELEASE(mSongRecordClip);
     }
-    if (unk2bc) {
-        MILO_LOG("Finishing song recording: %s\n", unk2bc->Path());
-        unk2bc->StopRecording();
-        RELEASE(unk2bc);
+    if (mSongRecordClip2) {
+        MILO_LOG("Finishing song recording: %s\n", mSongRecordClip2->Path());
+        mSongRecordClip2->StopRecording();
+        RELEASE(mSongRecordClip2);
     }
-    RELEASE(unk2d0);
+    RELEASE(mSongRecordClip3);
 }
 
 void MoveDir::SetupSongRecordClip() {
@@ -1381,22 +1411,22 @@ void MoveDir::SetupSongRecordClip() {
             modeStr = "bid";
         } else
             modeStr = "pi";
-        if (sGameRecord && !mRecordClip) {
+        if (sGameRecord && !mSongRecordClip) {
             unsigned int x = sGameRecord2Player;
             if (x) {
-                SetupRecordClip(mRecordClip, 0, 0, modeStr, this);
-                SetupRecordClip(unk2bc, 1, 1, modeStr, this);
+                SetupRecordClip(mSongRecordClip, 0, 0, modeStr, this);
+                SetupRecordClip(mSongRecordClip2, 1, 1, modeStr, this);
             } else {
-                SetupRecordClip(mRecordClip, x, -1, modeStr, this);
+                SetupRecordClip(mSongRecordClip, x, -1, modeStr, this);
             }
         }
-        if (b1 && !unk2d0) {
-            SetupRecordClip(unk2d0, 2, 0, modeStr, this);
+        if (b1 && !mSongRecordClip3) {
+            SetupRecordClip(mSongRecordClip3, 2, 0, modeStr, this);
         }
     }
 }
 
-void MoveDir::SetDancerSequence(DancerSequence *seq) { mDancerSeq = seq; }
+void MoveDir::SetDancerSequence(DancerSequence *seq) { mDancerSequence = seq; }
 
 void MoveDir::LoadScoring(const DataArray *cfg) {
     static Symbol min_frame_dist_beats("min_frame_dist_beats");
@@ -1449,10 +1479,10 @@ void MoveDir::SetSongPlayClip(SkeletonClip *clip) {
     if (!mFiltersEnabled && clip) {
         SetFiltersEnabled(true);
     }
-    if (mRecordClip && mRecordClip->IsRecording()) {
+    if (mSongRecordClip && mSongRecordClip->IsRecording()) {
         MILO_NOTIFY("Can't set play clip while recording");
     } else {
-        mPlayClip = clip;
+        mSongPlayClip = clip;
         SetSkeletonClip(clip);
         ResetDetection();
         TheGameData->UnassignSkeletons();
@@ -1464,13 +1494,13 @@ void MoveDir::MiloUpdate() {
     MILO_ASSERT(TheGestureMgr, 0xB14);
     SetCurrentMove(0, mMovePlayerData[0].mCurMove);
     SetMoveOverlay(mShowMoveOverlay);
-    SetSongPlayClip(mPlayClip);
+    SetSongPlayClip(mSongPlayClip);
 }
 
 DataNode MoveDir::OnStreamJump(const DataArray *) {
     if (mDebugLoop) {
         ResetDetection();
-        unk310 = -1;
+        mLastMoveSeconds = -1;
     }
     return 0;
 }
@@ -1479,24 +1509,24 @@ void MoveDir::OnBeat() {
     if (TheMaster && (int)TheMaster->TotalBeat2() % 4 == 3
         && (int)TheMaster->TotalBeat1() % 4 == 0) {
         for (int i = 0; i < 2; i++) {
-            mCurMoveSmoothers[i].ForceValue(0);
+            mSmoothers[i].ForceValue(0);
         }
     }
 }
 
 void MoveDir::SetDebugLoop(bool loop) { mDebugLoop = loop; }
 
-PracticeSection *MoveDir::GetPracticeSection(Difficulty d) {
+PracticeSection *MoveDir::GetPracticeSection(Difficulty diff) {
     for (ObjDirItr<PracticeSection> it(this, true); it != nullptr; ++it) {
-        if (it->GetDifficulty() == d) {
+        if (it->GetDifficulty() == diff) {
             return it;
         }
     }
     return nullptr;
 }
 
-DancerSequence *MoveDir::SkillsSequence(Difficulty d, Symbol s1, Symbol s2) {
-    PracticeSection *section = GetPracticeSection(d);
+DancerSequence *MoveDir::SkillsSequence(Difficulty diff, Symbol s1, Symbol s2) {
+    PracticeSection *section = GetPracticeSection(diff);
     if (section) {
         return section->SequenceForDetection(s1, s2);
     } else {
@@ -1629,9 +1659,7 @@ MoveFrame *MoveDir::ClosestMoveFrame() {
 }
 
 float MoveDir::DetectFrac(
-    int player,
-    const HamMove *move,
-    const std::pair<DetectFrame *, DetectFrame *> &detectFrames
+    int player, const HamMove *move, const std::pair<DetectFrame *, DetectFrame *> &range
 ) {
     MILO_ASSERT_RANGE(player, 0, 2, 0x187);
     MILO_ASSERT(TheGameData, 0x188);
@@ -1639,9 +1667,9 @@ float MoveDir::DetectFrac(
     const FilterVersion *fv = move->FilterVer();
     float frac;
     if (fv->mType == kFilterVersionHam2) {
-        frac = move->PSNRToDetectFrac(DetectRangePSNR(detectFrames, fv));
+        frac = move->PSNRToDetectFrac(DetectRangePSNR(range, fv));
     } else {
-        frac = DetectRangeFrac(detectFrames, fv);
+        frac = DetectRangeFrac(range, fv);
     }
     Symbol autoplay = TheGameData->Player(player)->Autoplay();
     if (!autoplay.Null()) {
@@ -1651,10 +1679,10 @@ float MoveDir::DetectFrac(
         } else {
             frac = RatingToDetectFrac(autoplay, move->RatingOverride());
         }
-        if (detectFrames.first != detectFrames.second) {
+        if (range.first != range.second) {
             int i8 = 0;
             int i7 = 0;
-            for (DetectFrame *it = detectFrames.first; it != detectFrames.second; ++it) {
+            for (DetectFrame *it = range.first; it != range.second; ++it) {
                 const Ham2FrameWeight &wt = it->mMoveFrame->FrameWeight(it->mMirrored);
                 if (wt.mWeight != 0) {
                     i8++;
@@ -1674,37 +1702,39 @@ float MoveDir::DetectFrac(
 void MoveDir::DetectRange(
     std::vector<DetectFrame> &frames,
     std::pair<DetectFrame *, DetectFrame *> &range,
-    int low,
-    int high
+    int start_move_idx,
+    int end_move_idx
 ) {
-    range.first =
-        std::lower_bound(frames.begin(), frames.end(), low, DetectFrameMoveIdxCmp());
-    range.second =
-        std::upper_bound(frames.begin(), frames.end(), high, DetectFrameMoveIdxCmp());
+    range.first = std::lower_bound(
+        frames.begin(), frames.end(), start_move_idx, DetectFrameMoveIdxCmp()
+    );
+    range.second = std::upper_bound(
+        frames.begin(), frames.end(), end_move_idx, DetectFrameMoveIdxCmp()
+    );
 }
 
-float MoveDir::DetectFrac(int player, int i2) {
+float MoveDir::DetectFrac(int player, int bar) {
     MILO_ASSERT_RANGE(player, 0, 2, 0x16A);
     int u2 = TheTaskMgr.CurrentMeasure();
-    if (i2 == -1) {
-        i2 = u2;
+    if (bar == -1) {
+        bar = u2;
     }
 
     MovePlayerData &mpd = mMovePlayerData[player];
     auto &keys = mpd.mMoveKeys;
     HamMove *move = nullptr;
-    if (i2 >= 0 && i2 < keys.size()) {
-        move = keys[i2].move;
+    if (bar >= 0 && bar < keys.size()) {
+        move = keys[bar].move;
     }
 
     if (!move) {
         return 0;
     } else {
         std::pair<DetectFrame *, DetectFrame *> range;
-        DetectRange(mpd.mDetectFrames, range, i2, i2);
+        DetectRange(mpd.mDetectFrames, range, bar, bar);
         if (range.first == range.second) {
             return mAsyncDetector->MoveRatingFrac(
-                player, (MoveAsyncDetector::RatingBar)(u2 != i2), move
+                player, (MoveAsyncDetector::RatingBar)(u2 != bar), move
             );
         } else {
             return DetectFrac(player, move, range);
@@ -1713,7 +1743,10 @@ float MoveDir::DetectFrac(int player, int i2) {
 }
 
 void MoveDir::EnqueueDetectFrames(
-    float f1, int player, std::vector<DetectFrame> &frames, const FilterVersion *fv
+    float seconds,
+    int player,
+    std::vector<DetectFrame> &detect_frames,
+    const FilterVersion *fv
 ) {
     MILO_ASSERT(mFilterQueue, 0x536);
     MILO_ASSERT_RANGE(player, 0, 2, 0x537);
@@ -1721,20 +1754,20 @@ void MoveDir::EnqueueDetectFrames(
 
     std::pair<DetectFrame *, DetectFrame *> range;
     int measure = TheTaskMgr.CurrentMeasure();
-    DetectRange(frames, range, measure - 1, measure + 1);
+    DetectRange(detect_frames, range, measure - 1, measure + 1);
     CurrentMoveMode();
     DetectFrame *toInsert = nullptr;
     for (DetectFrame *it = range.first; it != range.second; ++it) {
-        float f12 = ScaleDistToError(fv->mTimeErrorOp, fabsf(it->mSeconds - f1));
+        float f12 = ScaleDistToError(fv->mTimeErrorOp, fabsf(it->mSeconds - seconds));
         if (f12 < 1) {
-            mFilterQueue->EnqueueFrame(player, f12, f1 - it->mSeconds, it, fv);
+            mFilterQueue->EnqueueFrame(player, f12, seconds - it->mSeconds, it, fv);
             if (f12 <= 1000) {
                 toInsert = it;
             }
         }
     }
     if (toInsert) {
-        unkf88.insert(toInsert);
+        mCurDetectFrames.insert(toInsert);
     }
 }
 
@@ -1747,7 +1780,7 @@ void MoveDir::ResetDetectFrames(int player, Difficulty diff) {
         mFilterQueue->CancelJob();
     }
     auto &mpd = mMovePlayerData[player];
-    unk310 = -1;
+    mLastMoveSeconds = -1;
     mpd.mState = 0;
     mpd.mDetectFrames.clear();
     if (diff != kDifficultyBeginner) {
@@ -1881,7 +1914,8 @@ void MoveDir::FinalPoseStateMachine() {
                                 curMove->Name()
                             );
                         }
-                        if (dist <= unk30c || f13 >= 4 - HamMove::sMinFrameDistBeats) {
+                        if (dist <= mLastResultSeconds
+                            || f13 >= 4 - HamMove::sMinFrameDistBeats) {
                             static Symbol final_pose_rating("final_pose_rating");
                             TheGameData->Player(player)->Provider()->SetProperty(
                                 final_pose_rating,
@@ -1901,7 +1935,7 @@ void MoveDir::FinalPoseStateMachine() {
 void MoveDir::PostUpdateFilters() {
     if (mFilterQueue) {
         if (!mFilterQueue->HasJob()) {
-            unkf88.clear();
+            mCurDetectFrames.clear();
             bool b15 = false;
             for (int i = 0; i < 2; i++) {
                 if (mMovePlayerData[i].mCurMove) {
@@ -1913,10 +1947,10 @@ void MoveDir::PostUpdateFilters() {
                 && TheMaster->GetAudio()->IsReady()) {
                 MILO_ASSERT(TheGameData, 0x3D9);
                 float f32 = SongSeconds() - sLatencySeconds;
-                bool cmp = f32 > unk310;
+                bool cmp = f32 > mLastMoveSeconds;
                 if (cmp || TheLoadMgr.EditMode()) {
                     if (cmp) {
-                        unk310 = f32;
+                        mLastMoveSeconds = f32;
                     }
                     mFilterQueue->EnqueueNewJob(f32, SongSpeed(), CurrentMoveMode());
                     for (int i = 0; i < 2; i++) {
@@ -1955,7 +1989,7 @@ void MoveDir::PostUpdateFilters() {
             }
 
             DetectFrame *frames[2];
-            if (mFilterQueue->GetResults(unk30c, frames, sPLFMinTimeError)) {
+            if (mFilterQueue->GetResults(mLastResultSeconds, frames, sPLFMinTimeError)) {
                 static Symbol flip_camshot_targets("flip_camshot_targets");
                 const DataNode *prop = TheHamProvider->Property(flip_camshot_targets);
                 bool b15 = prop ? prop->Int() != 0 : false;

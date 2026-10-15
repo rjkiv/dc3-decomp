@@ -19,6 +19,17 @@
 class RhythmBattle;
 
 enum RhythmBattleJackState {
+    kNoJack = -1,
+    kJackBonusLeft = 3,
+    kJackBonusRight = 4,
+    kJackPenaltyLeft = 5,
+    kJackPenaltyRight = 6,
+};
+
+enum RhythmBattleScoreState {
+    kNoGroove = 0,
+    kFreshMoves = 1,
+    kSwitchUp = 2,
 };
 
 /** "The state of a player in Rhythm Battle." */
@@ -58,11 +69,11 @@ public:
     void SetActive(bool);
     void AnimateOut();
     bool Unk2a8Check() const { return unk2a5 && unk2a8 > 12; }
-    int Unk280() const { return unk280; }
-    int Unk260() const { return unk260; }
-    int Unk26c() const { return unk26c; }
-    float Unk284() const { return unk284; }
-    void SetUnk2a4(bool b) { unk2a4 = b; }
+    int GetScore() const { return mScore; }
+    int GetGrooveState() const { return mGrooveState; }
+    int GetLastInTheZone() const { return mLastInTheZone; }
+    float GetInTheZoneProgress() const { return mInTheZoneProgress; }
+    void SetForceFail(bool b) { mForceFail = b; }
     void SetUnk2a5(bool b) { unk2a5 = b; }
     int ZoneValue() const { return mInTheZone; }
 
@@ -74,26 +85,26 @@ private:
     void UpdateScore(int);
 
     /** "instruction display" */
-    ObjPtr<RndAnimatable> mComboPosAnim; // 0x8
+    ObjPtr<RndAnimatable> mComboPositionAnim; // 0x8
     /** "instruction display" */
     ObjPtr<RndAnimatable> mComboColorAnim; // 0x1c
     /** "instruction display" */
-    ObjPtr<RndAnimatable> mResetComboAnim; // 0x30
+    ObjPtr<RndAnimatable> mOneXComboEventAnim; // 0x30
     /** "instruction display" */
-    ObjPtr<RndAnimatable> m2xMultAnim; // 0x44
+    ObjPtr<RndAnimatable> mTwoXComboEventAnim; // 0x44
     /** "instruction display" */
-    ObjPtr<RndAnimatable> m3xMultAnim; // 0x58
+    ObjPtr<RndAnimatable> mThreeXComboEventAnim; // 0x58
     /** "instruction display" */
-    ObjPtr<RndAnimatable> m4xMultAnim; // 0x6c
-    ObjPtr<RndAnimatable> mRhythmBattleAnim; // 0x80
-    ObjPtr<RndAnimatable> unk94; // 0x94
-    ObjPtr<RndAnimatable> mBattleMeterStaleAnim; // 0xa8
-    ObjPtr<RndAnimatable> mBattleMeterInAnim; // 0xbc
-    ObjPtr<RndAnimatable> mShowScoreAnim; // 0xd0
-    ObjPtr<RndAnimatable> mBattleMeterOutAnim; // 0xe4
+    ObjPtr<RndAnimatable> mFourXComboEventAnim; // 0x6c
+    ObjPtr<RndAnimatable> mInTheZoneAnim; // 0x80
+    ObjPtr<RndAnimatable> mLoopingMultAnim; // 0x94
+    ObjPtr<RndAnimatable> mStaleAnim; // 0xa8
+    ObjPtr<RndAnimatable> mInAnim; // 0xbc
+    ObjPtr<RndAnimatable> mInAnim2; // 0xd0
+    ObjPtr<RndAnimatable> mOutAnim; // 0xe4
     /** "override the world boxydir" */
     ObjPtr<RndDir> mBoxyDir; // 0xf8
-    ObjPtr<HamLabel> unk10c;
+    ObjPtr<HamLabel> mComboLabel; // 0x10c
     /** "instruction display" */
     ObjPtr<HamLabel> mScoreLabel; // 0x120
     ObjPtr<Flow> mInTheZoneFlow; // 0x134
@@ -107,37 +118,37 @@ private:
     ObjPtr<DepthBuffer3D> mBoxyman2; // 0x1d4
     ObjPtr<ObjectDir> mTextFeedback; // 0x1e8
     ObjPtr<ObjectDir> mMoveFeedback; // 0x1fc
-    ObjPtr<RndParticleSys> mStealPart; // 0x210
+    ObjPtr<RndParticleSys> mStealPartSys; // 0x210
     ObjPtr<RndAnimatable> mStealAnim; // 0x224
     /** "which player is this" */
     int mPlayer; // 0x238
     RhythmBattle *mRhythmBattle; // 0x23c
-    bool unk240; // 0x240 - active?
-    float unk244;
-    float unk248;
-    float unk24c;
-    float unk250;
-    float unk254;
-    float unk258;
-    float unk25c;
-    int unk260;
-    int unk264;
+    bool mActive; // 0x240 - active?
+    float mGroove; // 0x244
+    float mFreshness; // 0x248
+    float mBeatGrooveAccum; // 0x24c
+    float mBeatFreshAccum; // 0x250
+    float mBeatMoveAccum; // 0x254
+    float mAccumBeat; // 0x258
+    float mLastPollBeat; // 0x25c
+    RhythmBattleScoreState mGrooveState; // 0x260
+    RhythmBattleScoreState mLastGrooveState; // 0x264
     int mInTheZone; // 0x268
-    int unk26c;
-    float unk270;
-    float unk274;
-    float unk278;
-    Symbol unk27c;
-    int unk280;
-    float unk284;
-    bool unk288;
-    float unk28c;
-    float unk290;
-    int unk294;
-    Symbol unk298;
-    int unk29c;
-    float unk2a0;
-    bool unk2a4;
-    bool unk2a5;
-    int unk2a8;
+    int mLastInTheZone; // 0x26c
+    float mMeasureGroove; // 0x270
+    float mMeasureFresh; // 0x274
+    float mMeasureMove; // 0x278
+    Symbol mMeasureTrick; // 0x27c
+    int mScore; // 0x280
+    float mInTheZoneProgress; // 0x284
+    bool mGoofySwap; // 0x288
+    float mMeasureStartBeat; // 0x28c
+    float mMeasureEndBeat; // 0x290
+    int mDebugInt; // 0x294
+    Symbol mToken; // 0x298
+    int mSwitchUpCooldown; // 0x29c
+    float mLastFeets; // 0x2a0
+    bool mForceFail; // 0x2a4
+    bool unk2a5; // 0x2a5
+    int unk2a8; // 0x2a8
 };

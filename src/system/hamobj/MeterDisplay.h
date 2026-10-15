@@ -40,12 +40,12 @@ protected:
 
     void UpdateDisplay();
 
-    RndAnimatable *mMeterAnim; // 0x44
+    RndAnimatable *mMeshAnim; // 0x44
     /** "length of value change animation, in seconds" */
     float mAnimPeriod; // 0x48
-    float unk4c; // 0x4c
-    int unk50; // 0x50
-    HamLabel *unk54; // 0x54
+    float mAnimStart; // 0x4c
+    int mAnimGoal; // 0x50
+    HamLabel *mMeterLabel; // 0x54
     /** "whether or not to show text" */
     bool mShowText; // 0x58
     /** "whether or not to show text in percentage form" */
@@ -57,6 +57,6 @@ protected:
     /** "current value of meter" */
     int mCurrentValue; // 0x60
     /** "max value of meter" */
-    int mMaxValue; // 0x64
+    int mMax; // 0x64
     ResourceDirPtr<RndDir> mResourceDir; // 0x68
 };
