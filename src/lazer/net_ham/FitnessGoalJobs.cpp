@@ -64,8 +64,8 @@ UpdateFitnessGoalJob::UpdateFitnessGoalJob(Hmx::Object *callback, HamProfile *hp
 
 void GetFitnessGoalJob::GetFitnessGoal(HamProfile *profile) {
     if (mResult == 1) {
-        JsonObject *response = mJsonResponse;
-        JsonConverter &reader = mJsonReader;
+        JsonObject *response = GetJsonResponse();
+        JsonConverter &reader = GetJsonConverter();
         if (response) {
             if (profile) {
                 MILO_LOG(">>>>>>>>>> %s\'s fitness goal info.\n", profile->GetName());
@@ -85,27 +85,27 @@ void GetFitnessGoalJob::GetFitnessGoal(HamProfile *profile) {
                 if (getByName) {
                     startDay = getByName->Int();
                 }
-                getByName = mJsonReader.GetByName(response, "start_month");
+                getByName = GetJsonConverter().GetByName(response, "start_month");
                 if (getByName) {
                     startMonth = getByName->Int();
                 }
-                getByName = mJsonReader.GetByName(response, "start_year");
+                getByName = GetJsonConverter().GetByName(response, "start_year");
                 if (getByName) {
                     startYear = getByName->Int();
                 }
-                getByName = mJsonReader.GetByName(response, "days_active");
+                getByName = GetJsonConverter().GetByName(response, "days_active");
                 if (getByName) {
                     daysActive = getByName->Int();
                 }
-                getByName = mJsonReader.GetByName(response, "calories");
+                getByName = GetJsonConverter().GetByName(response, "calories");
                 if (getByName) {
                     calories = getByName->Int();
                 }
-                getByName = mJsonReader.GetByName(response, "days_active_td");
+                getByName = GetJsonConverter().GetByName(response, "days_active_td");
                 if (getByName) {
                     daysActiveTd = getByName->Int();
                 }
-                getByName = mJsonReader.GetByName(response, "cals_burned_td");
+                getByName = GetJsonConverter().GetByName(response, "cals_burned_td");
                 if (getByName) {
                     calsBurnedTd = getByName->Int();
                 }

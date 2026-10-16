@@ -24,7 +24,7 @@ KinectShare::KinectShare(
     mContentLength = len;
     mHeaderSize = 0x97;
     mHeaderBytesLeftToSend = 0x97;
-    unk90 = len;
+    mContentBytesLeftToSend = len;
     mHeaderData.Flags = 0x80;
     mHeaderData.MajorVersion = 0;
     mHeaderData.MinorVersion = 7;
@@ -72,7 +72,7 @@ KinectShare::KinectShare(
 }
 
 bool KinectShare::CanRetry() {
-    if ((mHeaderBytesLeftToSend || unk90) && HttpPost::CanRetry()) {
+    if ((mHeaderBytesLeftToSend || mContentBytesLeftToSend) && HttpPost::CanRetry()) {
         mHeaderBytesLeftToSend = mHeaderSize;
         return true;
     } else {
@@ -88,7 +88,7 @@ void KinectShare::Sending() {
             mHeaderBytesLeftToSend
         );
         if (ret == -1) {
-            mFailType = (HttpGetFailType)1;
+            SetFailType(kHttpGetFail_SocketError);
             SetState((State)7);
         } else if (ret != mHeaderBytesLeftToSend) {
             mHeaderBytesLeftToSend -= ret;

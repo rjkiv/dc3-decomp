@@ -68,13 +68,13 @@ void GetRows(JsonConverter &c, const JsonObject *o, std::vector<LeaderboardRow> 
 }
 
 void GetLeaderboardByPlayerJob::GetRows(std::vector<LeaderboardRow> *rows) {
-    if (mResult == 1 && mJsonResponse) {
-        ::GetRows(mJsonReader, mJsonResponse, rows);
+    if (mResult == 1 && GetJsonResponse()) {
+        ::GetRows(GetJsonConverter(), GetJsonResponse(), rows);
     }
 }
 
 void GetMiniLeaderboardJob::GetRows(std::vector<LeaderboardRow> *rows) {
-    if (mResult == 1 && mJsonResponse) {
-        ::GetRows(mJsonReader, mJsonResponse, rows);
+    if (mResult == 1 && GetJsonResponse()) {
+        ::GetRows(GetJsonConverter(), GetJsonResponse(), rows);
     }
 }

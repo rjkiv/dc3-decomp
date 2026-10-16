@@ -100,10 +100,10 @@ namespace {
 };
 
 HttpGet::HttpGet(unsigned int ip, unsigned short port, const char *c1, const char *c2)
-    : mSocket(0), unkc(c1), mPort(port), mState(kHttpGet_Nil), unk1c(false),
-      mTimeoutMs(kDefaultTimeoutMs), mIP(ip), unk58(c2), unk60(0), mRecvBufPos(0),
-      mFileBuf(0), mFileBufSize(0), mFileBufRecvPos(0), mRetryCount(0), mFailType(),
-      mPrevState(kHttpGet_Nil) {
+    : mSocket(0), mStrRemoteFile(c1), mPort(port), mState(kS_Nil), mIgnoreResponse(0),
+      mTimeoutMs(kDefaultTimeoutMs), mIP(ip), mOptionalHeader(c2), mRecvBuf(0),
+      mRecvBufPos(0), mFileBuf(0), mFileBufSize(0), mFileBufRecvPos(0), mRetryCount(0),
+      mFailType(), mFailState(kS_Nil) {
     SetState((State)0);
     AddRequiredHeaders();
 }
@@ -111,9 +111,10 @@ HttpGet::HttpGet(unsigned int ip, unsigned short port, const char *c1, const cha
 HttpGet::HttpGet(
     unsigned int ip, unsigned short port, const char *c1, unsigned char uc, const char *c2
 )
-    : mSocket(0), unkc(c1), mPort(port), mState(kHttpGet_Nil), unk1c(uc & 3),
-      mTimeoutMs(kDefaultTimeoutMs), mIP(ip), unk58(c2), unk60(0), mRecvBufPos(0),
-      mFileBuf(0), mFileBufSize(0), mFileBufRecvPos(0), mRetryCount(0), mFailType() {
+    : mSocket(0), mStrRemoteFile(c1), mPort(port), mState(kS_Nil),
+      mIgnoreResponse(uc & 3), mTimeoutMs(kDefaultTimeoutMs), mIP(ip),
+      mOptionalHeader(c2), mRecvBuf(0), mRecvBufPos(0), mFileBuf(0), mFileBufSize(0),
+      mFileBufRecvPos(0), mRetryCount(0), mFailType() {
     State s;
     if ((uc & 4) == 0) {
         s = (State)8;
@@ -134,12 +135,12 @@ void HttpGet::StartSending() {
         return;
     }
     String str("GET ");
-    str += unkc;
+    str += mStrRemoteFile;
     str += " ";
     str += "HTTP/1.1";
-    if (!unk58.empty()) {
+    if (!mOptionalHeader.empty()) {
         str += "\r\n";
-        str += unk58;
+        str += mOptionalHeader;
     }
     str += "\r\n\r\n";
     int len = str.length();
@@ -181,11 +182,11 @@ char *HttpGet::DetachBuffer() {
 }
 
 void HttpGet::StartReceiving() {
-    if (unk60) {
-        MemFree(unk60, __FILE__, 0x344);
-        unk60 = nullptr;
+    if (mRecvBuf) {
+        MemFree(mRecvBuf, __FILE__, 0x344);
+        mRecvBuf = nullptr;
     }
-    unk60 = _MemAllocTemp(0x1000, __FILE__, 0x346, "HttpGet", 0);
+    mRecvBuf = (char *)_MemAllocTemp(0x1000, __FILE__, 0x346, "HttpGet", 0);
 }
 
 void HttpGet::SafeDisconnect() {
@@ -193,9 +194,9 @@ void HttpGet::SafeDisconnect() {
         mSocket->Disconnect();
         RELEASE(mSocket);
     }
-    if (unk60) {
-        MemFree(unk60, __FILE__, 0x351);
-        unk60 = nullptr;
+    if (mRecvBuf) {
+        MemFree(mRecvBuf, __FILE__, 0x351);
+        mRecvBuf = nullptr;
     }
     mRecvBufPos = 0;
 }
@@ -212,8 +213,8 @@ void HttpGet::StartConnection() {
 }
 
 bool HttpGet::HasTimedOut() {
-    mStateTimer.Split();
-    return mStateTimer.Ms() > mTimeoutMs;
+    mTimer.Split();
+    return mTimer.Ms() > mTimeoutMs;
 }
 
 void HttpGet::SetTimeout(float timeout) { mTimeoutMs = timeout; }
@@ -223,7 +224,7 @@ HttpPost::HttpPost(unsigned int ip, unsigned short port, const char *cc, unsigne
     String newLine;
     newLine = MakeString("\r\n");
     String post("POST ");
-    post += unkc.c_str();
+    post += mStrRemoteFile.c_str();
     post += " ";
     post += "HTTP/1.1";
     post += newLine;
@@ -236,7 +237,7 @@ HttpPost::HttpPost(unsigned int ip, unsigned short port, const char *cc, unsigne
     post += newLine;
     post += "Connection: close";
     post += newLine;
-    unk94 = post.c_str();
+    mHeader = post.c_str();
 }
 
 HttpPost::~HttpPost() {}
@@ -244,15 +245,15 @@ HttpPost::~HttpPost() {}
 void HttpPost::SetContentLength(unsigned int len) {
     MILO_ASSERT(mContent, 0x3C1);
     mContentLength = len;
-    unk90 = len;
-    unk94 += "Content-Length: ";
-    unk94 += MakeString("%d\r\n", mContentLength);
-    unk94 += MakeString("\r\n");
+    mContentBytesLeftToSend = len;
+    mHeader += "Content-Length: ";
+    mHeader += MakeString("%d\r\n", mContentLength);
+    mHeader += MakeString("\r\n");
 }
 
 bool HttpPost::CanRetry() {
-    if (mRetryCount < 3) {
-        unk90 = mContentLength;
+    if (GetRetryCount() < 3) {
+        mContentBytesLeftToSend = mContentLength;
         return true;
     } else {
         return false;
@@ -262,12 +263,12 @@ bool HttpPost::CanRetry() {
 void HttpPost::StartSending() {
     MILO_ASSERT(mSocket, 0x3CD);
     if (!mSocket->CanSend()) {
-        mFailType = (HttpGetFailType)1;
+        SetFailType(kHttpGetFail_SocketError);
         SetState((State)7);
     } else {
-        unk9c = unk94.length();
-        if (mSocket->Send(unk94.c_str(), unk9c) != unk9c) {
-            mFailType = (HttpGetFailType)1;
+        mHeaderLength = mHeader.length();
+        if (mSocket->Send(mHeader.c_str(), mHeaderLength) != mHeaderLength) {
+            SetFailType(kHttpGetFail_SocketError);
             SetState((State)7);
         } else {
             SetState((State)2);
@@ -278,21 +279,24 @@ void HttpPost::StartSending() {
 void HttpPost::Sending() {
     MILO_ASSERT(mSocket, 0x3ef);
     String str;
-    for (int i = (int)mContentLength - unk90; i < (int)mContentLength; i++) {
+    for (int i = (int)mContentLength - mContentBytesLeftToSend; i < (int)mContentLength;
+         i++) {
         str += MakeString("%c", mContent[i]);
     }
 
-    int socketSend = mSocket->Send(mContent + mContentLength - unk90, unk90);
+    int socketSend = mSocket->Send(
+        mContent + mContentLength - mContentBytesLeftToSend, mContentBytesLeftToSend
+    );
     State s;
     if (socketSend == -1) {
         s = (State)7;
-        mFailType = (HttpGetFailType)1;
-    } else if (socketSend != unk90) {
-        unk90 -= socketSend;
+        SetFailType(kHttpGetFail_SocketError);
+    } else if (socketSend != mContentBytesLeftToSend) {
+        mContentBytesLeftToSend -= socketSend;
         return;
     } else {
         s = (State)3;
-        unk90 = 0;
+        mContentBytesLeftToSend = 0;
     }
     SetState(s);
 }
@@ -309,7 +313,7 @@ void HttpGet::AddRequiredHeaders() {
     header += newLine;
     header += "Connection: close";
     header += newLine;
-    unk58 += header.c_str();
+    mOptionalHeader += header.c_str();
 }
 
 bool HttpGet::CanRetry() { return mRetryCount < 3; }
@@ -344,14 +348,14 @@ void HttpGet::SetState(State s) {
     }
     if ((s == (State)6 || s == (State)7) && (mState != (State)6)
         && (mState != (State)7)) {
-        mPrevState = mState;
+        mFailState = mState;
     }
 
     mState = s;
-    mStateTimer.Restart();
+    mTimer.Restart();
 
     switch (s) {
-    case kHttpGet_Nil:
+    case kS_Nil:
         SafeShutdown();
         break;
     case 0:

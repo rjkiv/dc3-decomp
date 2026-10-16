@@ -17,9 +17,10 @@
 #include "utl/Symbol.h"
 #include <cstring>
 
-DingoServer::DingoServer() : mAuthState(kServerUnauthed), mPort(0), unk70(-1), unk74(-1) {
-    for (int i = 0; i < DIM(unk78); i++) {
-        unk78[i] = false;
+DingoServer::DingoServer()
+    : mAuthState(kServerNotAuthed), mPort(0), mPadLoggingIn(-1), mPadLoggedIn(-1) {
+    for (int i = 0; i < DIM(mPlayerLoginState); i++) {
+        mPlayerLoginState[i] = false;
     }
 }
 
@@ -39,13 +40,13 @@ void DingoServer::Init() {
 }
 
 void DingoServer::Logout() {
-    unk40 = "";
-    mAuthState = kServerUnauthed;
-    unk74 = -1;
-    for (int i = 0; i < DIM(unk78); i++) {
-        unk78[i] = false;
+    mSessionID = "";
+    mAuthState = kServerNotAuthed;
+    mPadLoggedIn = -1;
+    for (int i = 0; i < DIM(mPlayerLoginState); i++) {
+        mPlayerLoginState[i] = false;
     }
-    mOnlineId.Clear();
+    mOnlineID.Clear();
 }
 
 void DingoServer::ManageJob(DingoJob *job) {
@@ -65,7 +66,7 @@ void DingoServer::ManageJob(DingoJob *job) {
         if (!IsAuthenticated()) {
             MILO_NOTIFY("ManageJob without authentication.");
             if (ThePlatformMgr.IsConnected()) {
-                c4 = TheServer.Authenticate(unk74);
+                c4 = TheServer.Authenticate(mPadLoggedIn);
                 b8 = true;
             } else {
                 c4 = false;
@@ -94,11 +95,11 @@ void DingoServer::DoAdditionalLogin() {
     if (mAuthState == kServerAuthed) {
         if (mAuthUrl.length() != 0) {
             for (int i = 0; i < 4; i++) {
-                if (!unk78[i]) {
+                if (!mPlayerLoginState[i]) {
                     DataPoint pt;
                     if (FillAuthParamsFromPadNum(pt, i)
                         && SendAuthenticateMsg(mAuthUrl.c_str(), pt, nullptr)) {
-                        unk78[i] = true;
+                        mPlayerLoginState[i] = true;
                     }
                 }
             }
@@ -120,7 +121,7 @@ void DingoServer::CancelDelayedCalls() {
 void DingoServer::AddDelayedCalls() {
     FOREACH (it, mDelayedJobs) {
         DingoJob *req = *it;
-        bool addReq = TheWebSvcMgr.AddRequest(req, req->GetTimeoutMs(), false, false);
+        bool addReq = TheWebSvcMgr.AddRequest(req, req->GetTimeout(), false, false);
         if (!addReq) {
             MILO_NOTIFY("Unable to add delayed job!");
             req->Cancel(true);
@@ -134,7 +135,7 @@ bool DingoServer::InitAndAddJob(DingoJob *job, bool immediate, bool delay) {
     ReqType type = kHttpReqType_POST;
     unsigned short port = GetPort();
     if (GetSSLEnable()) {
-        type = kHttpReqType_PUT;
+        type = kHttpReqType_HTTPS_POST;
         port = 0x1bb;
     }
     bool success;
@@ -149,14 +150,14 @@ bool DingoServer::InitAndAddJob(DingoJob *job, bool immediate, bool delay) {
             DelayJob(job);
             return true;
         }
-        return TheWebSvcMgr.AddRequest(job, job->GetTimeoutMs(), immediate, false);
+        return TheWebSvcMgr.AddRequest(job, job->GetTimeout(), immediate, false);
     }
     MILO_NOTIFY("InitAndAddJob failed.");
     return false;
 }
 
 bool DingoServer::Authenticate(int padnum, const char *url) {
-    if (mAuthState != kServerUnauthed) {
+    if (mAuthState != kServerNotAuthed) {
         return true;
     }
     mAuthState = kServerAuthenticating;
@@ -192,12 +193,12 @@ DataNode DingoServer::OnMsg(const SigninChangedMsg &msg) {
     if (!IsAuthenticated()) {
         return 0;
     } else {
-        if (((1 << unk74) & mask) == 0) {
+        if (((1 << mPadLoggedIn) & mask) == 0) {
             Logout();
         } else {
             for (int i = 0; i < 4; i++) {
-                if ((i != unk74) && ((1 << i) & changedMask) != 0) {
-                    unk78[i] = false;
+                if ((i != mPadLoggedIn) && ((1 << i) & changedMask) != 0) {
+                    mPlayerLoginState[i] = false;
                 }
             }
             DoAdditionalLogin();
@@ -216,7 +217,7 @@ DataNode DingoServer::OnMsg(const DingoJobCompleteMsg &msg) {
             MILO_ASSERT(job, 0x14e);
             job->ParseResponse();
             if (job->GetResult() == 1) {
-                unk40 = job->SessionID();
+                mSessionID = job->GetSessionID();
                 mAuthState = kServerAuthed;
                 OnAuthSuccess();
                 AddDelayedCalls();

@@ -12,18 +12,6 @@
 
 class DingoServer : public Hmx::Object {
 public:
-    enum AuthState {
-        //   kUserDingoAuthUnauthenticated = 0x0000,
-        //   kUserDingoAuthAuthenticating = 0x0001,
-        //   kUserDingoAuthAuthenticated = 0x0002,
-        //   kUserDingoAuthAuthFailedInvalidUserName = 0x0003,
-        //   kUserDingoAuthAuthFailedInvalidPassword = 0x0004,
-        //   kUserDingoAuthAuthFailedDuplicateUserName = 0x0005,
-        //   kUserDingoAuthAuthFailed = 0x0006,
-        kServerUnauthed = 0,
-        kServerAuthenticating = 3,
-        kServerAuthed = 4
-    };
     DingoServer();
     virtual ~DingoServer() {}
     virtual DataNode Handle(DataArray *, bool);
@@ -35,7 +23,9 @@ public:
     virtual void Disconnect() {}
     virtual void Poll() {} // 0x70
     virtual void ManageJob(DingoJob *job);
-    virtual bool IsAuthenticated() { return mAuthState == kServerAuthed && unk74 != -1; }
+    virtual bool IsAuthenticated() {
+        return mAuthState == kServerAuthed && mPadLoggedIn != -1;
+    }
     virtual bool IsAuthenticating() { return mAuthState == kServerAuthenticating; }
     virtual const char *GetPlatform() = 0;
     virtual const char *GetHostName() const { return mHostName.c_str(); }
@@ -65,16 +55,13 @@ public:
     virtual void DeleteSessionComplete(bool success) {}
     virtual void StartUploadCareerScore(u64 career_score) {}
 
-    int GetUnk74() const { return unk74; }
-    const char *GetUnk40() const { return unk40.c_str(); }
-    OnlineID &GetOnlineID() { return mOnlineId; }
+    int GetPadLoggedIn() const { return mPadLoggedIn; }
+    const char *GetSessionID() { return mSessionID.c_str(); }
+    OnlineID &GetPlayerID() { return mOnlineID; }
 
     void DelayJob(DingoJob *job);
     void CancelDelayedCalls();
     void AddDelayedCalls();
-
-private:
-    bool SendAuthenticateMsg(const char *url, DataPoint &pt, Hmx::Object *callback);
 
 protected:
     virtual void FillAuthParams(DataPoint &pt);
@@ -89,20 +76,30 @@ protected:
     bool InitAndAddJob(DingoJob *job, bool immediate, bool delay);
     bool Authenticate(int padnum, const char *url);
 
-    AuthState mAuthState; // 0x2c
+    enum {
+        kServerNotAuthed = 0x0000,
+        kServerPlatformAuthenticating = 0x0001,
+        kServerCreatingAccount = 0x0002,
+        kServerAuthenticating = 0x0003,
+        kServerAuthed = 0x0004,
+    } mAuthState; // 0x2c
     String mHostName; // 0x30
     unsigned int mIPAddr; // 0x38
     unsigned int mPort; // 0x3c
-    String unk40;
+    String mSessionID; // 0x40
     String mAuthUrl; // 0x48
-    String unk50;
+    String mUsername; // 0x50
     String mLocale; // 0x58
     String mLanguage; // 0x60
     String mUserAgent; // 0x68
-    int unk70; // 0x70 - padnum?
-    int unk74; // 0x74
-    bool unk78[4]; // 0x78
-    OnlineID mOnlineId; // 0x80
+    int mPadLoggingIn; // 0x70 - padnum?
+    int mPadLoggedIn; // 0x74
+    bool mPlayerLoginState[4]; // 0x78
+    OnlineID mOnlineID; // 0x80
+
+private:
+    bool SendAuthenticateMsg(const char *url, DataPoint &pt, Hmx::Object *callback);
+
     std::vector<String> mDisabledUrls; // 0x98
     std::vector<DingoJob *> mDelayedJobs; // 0xa4
 };

@@ -45,15 +45,16 @@ public:
     bool
     AddRequest(WebSvcRequest *req, unsigned int timeout_ms, bool immediate, bool resolve);
 
-private:
-    bool ResolveHostname(WebSvcRequest *req);
-
 protected:
     virtual void Start(WebSvcRequest *req);
     NetAddress
     ResolveHostname(const char *hostname, const char *domain, unsigned short port);
 
     std::list<WebSvcRequest *> mRequests; // 0x2c
+
+private:
+    bool ResolveHostname(WebSvcRequest *req);
+
     std::map<String, NetAddress> mHostCache; // 0x34
 };
 
