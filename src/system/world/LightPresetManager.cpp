@@ -23,8 +23,10 @@ void PrintPreset(const char *str, LightPreset *preset) {
 }
 
 LightPresetManager::LightPresetManager(WorldDir *dir)
-    : mParent(dir), mPresetOverride(0), mPresetNew(0), mPresetPrev(0), mPresetNewStartTime(0), mPresetPrevStartTime(0),
-      mPresetOverrideStartTime(0), mLastFrameSame(0), mBlend(1.0f), mOverrideFadeTime(0), mOverrideFadeState(0), mIgnoreLightingEvents(0) {
+    : mParent(dir), mPresetOverride(0), mPresetNew(0), mPresetPrev(0),
+      mPresetNewStartTime(0), mPresetPrevStartTime(0), mPresetOverrideStartTime(0),
+      mLastFrameSame(0), mBlend(1.0f), mOverrideFadeTime(0),
+      mOverrideFadeState(kOverrideFadeIn), mIgnoreLightingEvents(0) {
     MILO_ASSERT(mParent, 0x22);
 }
 
@@ -48,7 +50,7 @@ void LightPresetManager::Reset() {
     mLastCategory = Symbol();
     mIgnoreLightingEvents = false;
     mBlend = 1.0f;
-    mOverrideFadeState = 0;
+    mOverrideFadeState = kOverrideFadeIn;
     mOverrideFadeTime = 0;
 }
 
@@ -93,17 +95,17 @@ void LightPresetManager::StartPreset(LightPreset *preset, bool b) {
 
 void LightPresetManager::ForcePreset(LightPreset *p, float f) {
     if (p) {
-        if (mPresetOverride != p || mOverrideFadeState == 1) {
+        if (mPresetOverride != p || mOverrideFadeState == kOverrideFadeOut) {
             mPresetOverride = p;
             mPresetOverrideStartTime = TheTaskMgr.Time(p->Units());
             mOverrideFadeTime = f;
-            mOverrideFadeState = 0;
+            mOverrideFadeState = kOverrideFadeIn;
         }
         return;
     } else if (mPresetOverride) {
         mPresetOverrideStartTime = TheTaskMgr.Time(mPresetOverride->Units());
         mOverrideFadeTime = f;
-        mOverrideFadeState = 1;
+        mOverrideFadeState = kOverrideFadeOut;
     }
 }
 
@@ -122,7 +124,7 @@ void LightPresetManager::Poll() {
             f7 = 1;
         }
         f7 = Clamp(0.0f, 1.0f, f7);
-        if (mOverrideFadeState == 1) {
+        if (mOverrideFadeState == kOverrideFadeOut) {
             f7 = 1.0f - f7;
         }
         if (f7 > 0.0f) {
@@ -131,11 +133,11 @@ void LightPresetManager::Poll() {
             u34 = u30;
             u30 = mPresetOverrideStartTime;
             blend = f7;
-        } else if (mOverrideFadeState == 1) {
+        } else if (mOverrideFadeState == kOverrideFadeOut) {
             mPresetOverride = 0;
             mPresetOverrideStartTime = 0;
             mOverrideFadeTime = 0;
-            mOverrideFadeState = 0;
+            mOverrideFadeState = kOverrideFadeIn;
         }
     }
     if (pnew) {

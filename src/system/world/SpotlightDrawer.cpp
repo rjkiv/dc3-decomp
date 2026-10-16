@@ -300,7 +300,7 @@ void SpotlightDrawer::DrawAdditional(
     MILO_ASSERT(spotIter != spotEnd, 0x298);
     for (; spotIter != spotEnd; ++spotIter) {
         Spotlight *sl = spotIter->mLight;
-        FOREACH (it, sl->GetAdditionalObjects()) {
+        FOREACH (it, sl->AdditionalObjects()) {
             RndDrawable *add = *it;
             MILO_ASSERT(add != sl, 0x2a3);
             if (add != sl)
@@ -348,8 +348,8 @@ void SpotlightDrawer::DrawFlares(
     MILO_ASSERT(spotIter != spotEnd, 0x2f4);
     for (; spotIter != spotEnd; ++spotIter) {
         Spotlight *sl = spotIter->mLight;
-        if (sl->GetFlare() && sl->GetFlare()->GetMat()) {
-            sl->GetFlare()->Draw();
+        if (sl->Flare() && sl->Flare()->GetMat()) {
+            sl->Flare()->Draw();
         }
     }
 }
@@ -418,9 +418,9 @@ void SpotlightDrawer::ApplyLightingApprox(BoxMapLighting &boxMap, float f2) cons
     for (; it != itEnd; ++it) {
         Spotlight *sl = it->mLight;
         const Transform &xfm = sl->WorldXfm();
-        Hmx::Color color(sl->Color());
+        Hmx::Color color(sl->GetColor());
         Multiply(color, f2, color);
-        Multiply(color, sl->Intensity(), color);
+        Multiply(color, sl->GetIntensity(), color);
         BoxMapLighting::LightParams_Spot *params;
         if (!boxMap.ParamsAt(params)) {
             break;
@@ -430,7 +430,7 @@ void SpotlightDrawer::ApplyLightingApprox(BoxMapLighting &boxMap, float f2) cons
         params->mColor = color;
         auto &beam = sl->GetBeam();
         params->unk54 = beam.mTopRadius;
-        params->unk58 = beam.mBottomRadius * 2;
+        params->unk58 = beam.mRadius * 2;
         params->unk50 = beam.mLength * 2;
         boxMap.CacheData(*params);
     }

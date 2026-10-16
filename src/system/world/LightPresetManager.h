@@ -6,6 +6,11 @@ class WorldDir;
 
 class LightPresetManager {
 public:
+    enum OverrideFadeState {
+        kOverrideFadeIn = 0x0000,
+        kOverrideFadeOut = 0x0001,
+    };
+
     LightPresetManager(WorldDir *);
     virtual DataNode Handle(DataArray *, bool);
     virtual ~LightPresetManager();
@@ -37,6 +42,6 @@ protected:
     bool mLastFrameSame; // 0x3c
     float mBlend; // 0x40
     float mOverrideFadeTime; // 0x44
-    int mOverrideFadeState; // 0x48
+    OverrideFadeState mOverrideFadeState; // 0x48
     bool mIgnoreLightingEvents; // 0x4c
 };

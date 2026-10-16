@@ -60,7 +60,9 @@ void RayCastDefaultContainer::SetFilter(int) {
 #pragma region DefaultDetectionVolume
 
 DefaultDetectionVolume::DefaultDetectionVolume(DetectionVolumeListener *dvl)
-    : mListener(dvl), mActiveState(false) {}
+    : mActiveState(false) {
+    mListener = dvl;
+}
 
 #pragma endregion
 #pragma region DefaultPhysicsManager

@@ -37,20 +37,21 @@ public:
 
     OBJ_MEM_OVERLOAD(0x3F)
     NEW_OBJ(WorldInstance)
+
+protected:
+    WorldInstance();
+
 private:
     void SavePersistentObjects(BinStream &);
     void LoadPersistentObjects(BinStreamRev &);
     void DeleteTransientObjects();
     void SyncDir();
 
-protected:
-    WorldInstance();
-
     /** "Which file we instance, only set in instances" */
     ObjDirPtr<WorldInstance> mDir; // 0x1fc
     /** "Pointer to shared group, if any" */
     SharedGroup *mSharedGroup; // 0x210
-    SharedGroup *mSharedGroup2; // 0x214
+    SharedGroup *mGroup; // 0x214
 };
 
 class SharedGroup : public RndPollable {

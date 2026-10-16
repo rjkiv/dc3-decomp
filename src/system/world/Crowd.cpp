@@ -509,14 +509,14 @@ void WorldCrowd::CollideList(const Segment &seg, std::list<Collision> &colls) {
                 float fl;
                 Plane pl;
                 if (curChar->CollideShowing(seg, fl, pl)) {
-                    if (!it->m3DChars[i].m3DCrowdHandle) {
-                        it->m3DChars[i].m3DCrowdHandle =
+                    if (!it->m3DChars[i].mHandle) {
+                        it->m3DChars[i].mHandle =
                             Hmx::Object::New<WorldCrowd3DCharHandle>();
-                        it->m3DChars[i].m3DCrowdHandle->Set3DChar(
+                        it->m3DChars[i].mHandle->Set3DChar(
                             this, it, i, it->m3DChars[i].mXfm
                         );
                     }
-                    colls.push_back(Collision(it->m3DChars[i].m3DCrowdHandle, fl, pl));
+                    colls.push_back(Collision(it->m3DChars[i].mHandle, fl, pl));
                 }
             }
         }
@@ -573,7 +573,7 @@ void WorldCrowd::Delete3DCrowdHandles() {
     if (TheLoadMgr.EditMode()) {
         FOREACH (it, mCharacters) {
             for (int i = 0; i != it->m3DChars.size(); i++) {
-                RELEASE(it->m3DChars[i].m3DCrowdHandle);
+                RELEASE(it->m3DChars[i].mHandle);
             }
         }
     }

@@ -46,7 +46,7 @@ public:
         /** "Radius at the top of the beam/cone" */
         float mTopRadius; // 0xc
         /** "Radius at the bottom of the beam/cone" */
-        float mBottomRadius; // 0x10
+        float mRadius; // 0x10
         /** "For beams, length of the side transparency border
             at the top of the beam" */
         float mTopSideBorder; // 0x14
@@ -108,11 +108,11 @@ public:
     OBJ_MEM_OVERLOAD(0x22)
     NEW_OBJ(Spotlight)
 
-    const Hmx::Color &Color() const { return mColorOwner->mColor; }
-    float Intensity() const { return mColorOwner->mIntensity; }
+    const Hmx::Color &GetColor() const { return mColorOwner->mColor; }
+    float GetIntensity() const { return mColorOwner->mIntensity; }
     BeamDef &GetBeam() { return mBeam; }
-    RndFlare *GetFlare() const { return mFlare; }
-    const ObjPtrList<RndDrawable> &GetAdditionalObjects() const {
+    RndFlare *Flare() const { return mFlare; }
+    const ObjPtrList<RndDrawable> &AdditionalObjects() const {
         return mAdditionalObjects;
     }
     void SetFlareIsBillboard(bool);
@@ -125,24 +125,25 @@ public:
     }
     RndTransformable *GetTarget() const { return mTarget; }
     void SetTarget(RndTransformable *trans) { mTarget = trans; }
-    RndMat *LensMesh() const { return mLensMat; }
+    RndMat *LensMesh() { return mLensMat; }
     bool GetCastShadow() const { return mCastShadow; }
     bool FlareEnabled() const { return mFlareEnabled; }
-    void SetUnk2F0(bool b) { mTargetExists = b; }
-    void SetUnk36E(bool b) { mAnimatingFromPreset = b; }
+    void SetTargetExists(bool b) { mTargetExists = b; }
+    void SetAnimatingFromPreset(bool b) { mAnimatingFromPreset = b; }
     RndTransformable *ResolveTarget();
     void SetFlareEnabled(bool);
     Hmx::Color IntensifiedColor() const {
-        const Hmx::Color &c = Color();
-        float intensity = Intensity();
+        const Hmx::Color &c = GetColor();
+        float intensity = GetIntensity();
         return Hmx::Color(c.red * intensity, c.green * intensity, c.blue * intensity, 1);
     }
     bool GetAnimateFromPreset() const {
-        return mAnimateColorFromPreset || mAnimateOrientationFromPreset;
+        return mAnimateColorFromPreset || mAnimateOrientFromPreset;
     }
-    bool AnimateColorFromPreset() const { return mAnimateColorFromPreset; }
-    bool AnimateOrientationFromPreset() const { return mAnimateOrientationFromPreset; }
-    Hmx::Quat &GetUnk370() { return mPresetOrient; }
+    bool GetAnimateColorFromPreset() const { return mAnimateColorFromPreset; }
+    bool GetAnimateOrientFromPreset() const { return mAnimateOrientFromPreset; }
+    const Hmx::Quat &PresetOrient() const { return mPresetOrient; }
+    void SetPresetOrient(const Hmx::Quat &quat) { mPresetOrient = quat; }
     static void RemoveFromLists(Spotlight *);
     static RndMesh *GetDiskMesh() { return sDiskMesh; }
 
@@ -226,7 +227,7 @@ protected:
     /** "Whether this spotlight coloring should be animated by light presets." */
     bool mAnimateColorFromPreset; // 0x36c
     /** "Whether this spotlight position/rotation should be animated by light presets." */
-    bool mAnimateOrientationFromPreset; // 0x36d
+    bool mAnimateOrientFromPreset; // 0x36d
     bool mAnimatingFromPreset; // 0x36e
     Hmx::Quat mPresetOrient; // 0x370
 };

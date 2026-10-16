@@ -1,7 +1,8 @@
 #include "world/Crowd3DCharHandle.h"
 #include "obj/Object.h"
 
-WorldCrowd3DCharHandle::WorldCrowd3DCharHandle() : mCrowd(0), mCharItr(0), mCharIdx(-1) {}
+WorldCrowd3DCharHandle::WorldCrowd3DCharHandle()
+    : mCrowd(0), mCrowdCharItr(0), mCrowdChar3DIdx(-1) {}
 
 BEGIN_HANDLERS(WorldCrowd3DCharHandle)
 END_HANDLERS
@@ -20,15 +21,15 @@ END_LOADS
 
 void WorldCrowd3DCharHandle::UpdatedWorldXfm() {
     if (mCrowd) {
-        mCrowd->Set3DCharXfm(mCharItr, mCharIdx, WorldXfm());
+        mCrowd->Set3DCharXfm(mCrowdCharItr, mCrowdChar3DIdx, WorldXfm());
     }
 }
 
 void WorldCrowd3DCharHandle::DrawShowing() {
     if (mCrowd) {
-        Character *theChar = mCharItr->mDef.mChar;
+        Character *theChar = mCrowdCharItr->mDef.mChar;
         if (theChar) {
-            mCrowd->Apply3DCharXfm(mCharItr, mCharIdx, RndCam::Current());
+            mCrowd->Apply3DCharXfm(mCrowdCharItr, mCrowdChar3DIdx, RndCam::Current());
             theChar->DrawShowing();
         }
     }
@@ -43,6 +44,6 @@ void WorldCrowd3DCharHandle::Set3DChar(
     mCrowd = nullptr;
     SetWorldXfm(worldXfm);
     mCrowd = crowd;
-    mCharItr = iter;
-    mCharIdx = i3;
+    mCrowdCharItr = iter;
+    mCrowdChar3DIdx = i3;
 }

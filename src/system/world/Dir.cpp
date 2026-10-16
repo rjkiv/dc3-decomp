@@ -82,10 +82,10 @@ void WorldDir::MatOverride::Sync(bool b) {
     if (!mat || !mesh)
         return;
     else if (!b) {
-        if (mat2)
-            mesh->SetMat(mat2);
+        if (origMat)
+            mesh->SetMat(origMat);
     } else {
-        mat2 = mesh->Mat();
+        origMat = mesh->Mat();
         mesh->SetMat(mat);
     }
 }
@@ -179,23 +179,23 @@ BinStream &operator>>(BinStream &bs, WorldDir::BitmapOverride &c) {
 WorldDir::WorldDir()
     : mPresetOverrides(this), mBitmapOverrides(this), mMatOverrides(this),
       mHideOverrides(this), mCamShotOverrides(this), mPS3PerPixelShows(this),
-      mPS3PerPixelHides(this), mHUDDir(0), mShowHUD(0), mHUD(this), mCameraMgr(this),
-      mMyCameraManager(0), m3DSoundMgr(this), mLightPresetMgr(this), mPhysicsMgr(0),
-      mPhysicsManagerNeedsToEnter(0), mEchoMsgs(0), mFirstPoll(0),
-      mTestLightPreset1(this), mTestLightPreset2(this), mTestAnimTime(10),
-      mExplicitPostProc(1) {
+      mPS3PerPixelHides(this), mFakeHudDir(0), mShowFakeHud(0), mHud(this),
+      mCameraManager(this), mMyCameraManager(0), mSoundManager(this),
+      mPresetManager(this), mPhysicsManager(0), mPhysicsManagerNeedsToEnter(0),
+      mEchoMsgs(0), mFirstPoll(0), mTestPreset1(this), mTestPreset2(this),
+      mTestPresetBlend(10), mExplicitPostProc(1) {
     ClearDeltas();
 }
 
 WorldDir::~WorldDir() {
-    RELEASE(mHUDDir);
+    RELEASE(mFakeHudDir);
     SpotlightDrawer::Current()->ClearLights();
     if (TheWorld == this) {
         SetTheWorld(nullptr);
     }
-    RELEASE(mPhysicsMgr);
+    RELEASE(mPhysicsManager);
     if (mMyCameraManager) {
-        RELEASE(mCameraMgr);
+        RELEASE(mCameraManager);
     }
 }
 
@@ -204,7 +204,7 @@ BEGIN_HANDLERS(WorldDir)
         MILO_LOG("World msg: %s\n", sym);
     }
     HANDLE(get_physics_mgr, OnGetPhysicsManager)
-    HANDLE_ACTION(sync_physics, mPhysicsMgr->SyncObjects(_msg->Int(2)))
+    HANDLE_ACTION(sync_physics, mPhysicsManager->SyncObjects(_msg->Int(2)))
     HANDLE_ACTION(
         reset_collidable_trans, GetPhysicsManager()->ResetTrans(_msg->Obj<Hmx::Object>(2))
     )
@@ -216,14 +216,14 @@ BEGIN_HANDLERS(WorldDir)
         set_anim_driven, GetPhysicsManager()->MakeAnimDriven(_msg->Obj<Hmx::Object>(2))
     )
     HANDLE_ACTION(reset_trans, GetPhysicsManager()->ResetTrans(_msg->Obj<Hmx::Object>(2)))
-    HANDLE_EXPR(get_camera_mgr, mCameraMgr)
-    HANDLE_MEMBER_PTR((&mLightPresetMgr))
+    HANDLE_EXPR(get_camera_mgr, GetCameraManager())
+    HANDLE_MEMBER_PTR((&mPresetManager))
     HANDLE_SUPERCLASS(PanelDir)
 END_HANDLERS
 
 BEGIN_PROPSYNCS(WorldDir)
-    SYNC_PROP_MODIFY(hud_filename, mHUDFilename, SyncHUD())
-    SYNC_PROP_MODIFY(show_hud, mShowHUD, SyncHUD())
+    SYNC_PROP_MODIFY(hud_filename, mFakeHudFilename, SyncHUD())
+    SYNC_PROP_MODIFY(show_hud, mShowFakeHud, SyncHUD())
     SYNC_PROP(echo_msgs, mEchoMsgs)
     SYNC_PROP_OVERRIDE(hide_overrides, mHideOverrides, SyncHides)
     SYNC_PROP(bitmap_overrides, mBitmapOverrides)
@@ -232,19 +232,19 @@ BEGIN_PROPSYNCS(WorldDir)
     SYNC_PROP_OVERRIDE(camshot_overrides, mCamShotOverrides, SyncCamShots)
     SYNC_PROP(ps3_per_pixel_hides, mPS3PerPixelHides)
     SYNC_PROP(ps3_per_pixel_shows, mPS3PerPixelShows)
-    SYNC_PROP(test_light_preset_1, mTestLightPreset1)
-    SYNC_PROP(test_light_preset_2, mTestLightPreset2)
-    SYNC_PROP(test_animation_time, mTestAnimTime)
-    SYNC_PROP_MODIFY(hud, mHUD, SyncObjects())
+    SYNC_PROP(test_light_preset_1, mTestPreset1)
+    SYNC_PROP(test_light_preset_2, mTestPreset2)
+    SYNC_PROP(test_animation_time, mTestPresetBlend)
+    SYNC_PROP_MODIFY(hud, mHud, SyncObjects())
     SYNC_PROP_SET(
         doppler_power,
-        m3DSoundMgr.mDopplerShiftPower,
-        m3DSoundMgr.mDopplerShiftPower = _val.Float()
+        mSoundManager.mDopplerShiftPower,
+        mSoundManager.mDopplerShiftPower = _val.Float()
     )
     SYNC_PROP_SET(
         listener,
-        m3DSoundMgr.mListener.Ptr(),
-        m3DSoundMgr.SetListener(_val.Obj<RndTransformable>())
+        mSoundManager.mListener.Ptr(),
+        mSoundManager.SetListener(_val.Obj<RndTransformable>())
     )
     SYNC_PROP(explicit_postproc, mExplicitPostProc)
     SYNC_SUPERCLASS(PanelDir)
@@ -252,14 +252,14 @@ END_PROPSYNCS
 
 BEGIN_SAVES(WorldDir)
     SAVE_REVS(0x1D, 1)
-    bs << mHUDFilename;
+    bs << mFakeHudFilename;
     SAVE_SUPERCLASS(PanelDir)
     bs << mHideOverrides << mBitmapOverrides << mMatOverrides << mPresetOverrides;
     bs << mCamShotOverrides << mPS3PerPixelHides << mPS3PerPixelShows;
-    bs << mTestLightPreset1 << mTestLightPreset2 << mTestAnimTime;
-    bs << mHUD;
-    bs << m3DSoundMgr.mDopplerShiftPower;
-    ObjPtr<RndTransformable> listener(this, m3DSoundMgr.mListener);
+    bs << mTestPreset1 << mTestPreset2 << mTestPresetBlend;
+    bs << mHud;
+    bs << mSoundManager.mDopplerShiftPower;
+    ObjPtr<RndTransformable> listener(this, mSoundManager.mListener);
     bs << listener;
     bs << mExplicitPostProc;
 END_SAVES
@@ -268,7 +268,7 @@ BEGIN_COPYS(WorldDir)
     COPY_SUPERCLASS(PanelDir)
     CREATE_COPY(WorldDir)
     BEGIN_COPYING_MEMBERS
-        COPY_MEMBER(mHUDFilename)
+        COPY_MEMBER(mFakeHudFilename)
         SyncHides(false);
         COPY_MEMBER(mHideOverrides)
         SyncHides(true);
@@ -286,12 +286,12 @@ BEGIN_COPYS(WorldDir)
         SyncCamShots(true);
         COPY_MEMBER(mPS3PerPixelHides)
         COPY_MEMBER(mPS3PerPixelShows)
-        COPY_MEMBER(mTestLightPreset1)
-        COPY_MEMBER(mTestLightPreset2)
-        COPY_MEMBER(mTestAnimTime)
-        COPY_MEMBER(mHUD)
-        COPY_MEMBER(m3DSoundMgr.mDopplerShiftPower)
-        m3DSoundMgr.SetListener(c->m3DSoundMgr.mListener);
+        COPY_MEMBER(mTestPreset1)
+        COPY_MEMBER(mTestPreset2)
+        COPY_MEMBER(mTestPresetBlend)
+        COPY_MEMBER(mHud)
+        COPY_MEMBER(mSoundManager.mDopplerShiftPower)
+        mSoundManager.SetListener(c->mSoundManager.mListener);
         SyncHUD();
         COPY_MEMBER(mExplicitPostProc)
     END_COPYING_MEMBERS
@@ -312,7 +312,7 @@ void WorldDir::PreLoad(BinStream &bs) {
         d >> x >> y;
     }
     if (d.rev > 9) {
-        d >> mHUDFilename;
+        d >> mFakeHudFilename;
     }
     if (d.rev < 9) {
         if (d.rev > 7) {
@@ -398,10 +398,10 @@ void WorldDir::PostLoad(BinStream &bs) {
         d >> s;
     }
     if (d.rev > 0x12) {
-        d >> mTestLightPreset1 >> mTestLightPreset2 >> mTestAnimTime;
+        d >> mTestPreset1 >> mTestPreset2 >> mTestPresetBlend;
     }
     if (d.rev > 0x13) {
-        d >> mHUD;
+        d >> mHud;
     }
     SyncHUD();
     if (d.rev == 0x1A) {
@@ -411,12 +411,12 @@ void WorldDir::PostLoad(BinStream &bs) {
     if (d.rev >= 0x1C) {
         float x;
         d >> x;
-        m3DSoundMgr.mDopplerShiftPower = x;
+        mSoundManager.mDopplerShiftPower = x;
     }
     if (d.rev >= 0x1D) {
         ObjPtr<RndTransformable> trans(this);
         d >> trans;
-        m3DSoundMgr.SetListener(trans);
+        mSoundManager.SetListener(trans);
     }
     if (d.altRev > 0) {
         d >> mExplicitPostProc;
@@ -428,38 +428,38 @@ void WorldDir::PostLoad(BinStream &bs) {
 void WorldDir::SyncObjects() {
     PanelDir::SyncObjects();
     if (!mMyCameraManager) {
-        mCameraMgr = nullptr;
+        mCameraManager = nullptr;
     }
     if (IsSubDir())
         return;
-    if (!mCameraMgr) {
+    if (!mCameraManager) {
         for (ObjDirItr<CameraManager> it(this, true); it != nullptr; ++it) {
             if (it) {
-                mCameraMgr = it;
+                mCameraManager = it;
             }
             break;
         }
     }
-    if (!mCameraMgr) {
+    if (!mCameraManager) {
         mMyCameraManager = true;
-        mCameraMgr = new CameraManager(this);
+        mCameraManager = new CameraManager(this);
     }
-    if (mCameraMgr) {
-        mCameraMgr->SyncObjects(this);
+    if (mCameraManager) {
+        mCameraManager->SyncObjects(this);
     }
-    m3DSoundMgr.SyncObjects();
-    mLightPresetMgr.SyncObjects();
-    if (mPhysicsMgr) {
-        mPhysicsMgr->SyncObjects(false);
+    mSoundManager.SyncObjects();
+    mPresetManager.SyncObjects();
+    if (mPhysicsManager) {
+        mPhysicsManager->SyncObjects(false);
     } else if (CreatePhysicsManager) {
-        mPhysicsMgr = CreatePhysicsManager(this);
+        mPhysicsManager = CreatePhysicsManager(this);
         if (mPhysicsManagerNeedsToEnter) {
-            mPhysicsMgr->Enter();
+            mPhysicsManager->Enter();
         }
-        mPhysicsMgr->SyncObjects(false);
+        mPhysicsManager->SyncObjects(false);
     }
-    if (mHUD) {
-        VectorRemove(mDraws, mHUD);
+    if (mHud) {
+        VectorRemove(mDraws, mHud);
     }
 }
 
@@ -474,10 +474,10 @@ void WorldDir::DrawShowing() {
     } else {
         SetTheWorld(this);
         CamShot *shot = nullptr;
-        if (mCameraMgr) {
-            shot = mCameraMgr->MiloCamera();
+        if (mCameraManager) {
+            shot = mCameraManager->MiloCamera();
             if (!shot) {
-                shot = mCameraMgr->CurrentShot();
+                shot = mCameraManager->GetCurrentShot();
             }
             if (shot) {
                 shot = shot->CurrentShot();
@@ -502,9 +502,9 @@ void WorldDir::DrawShowing() {
             if (shot) {
                 Spotlight *glowSpot = shot->GlowSpot();
                 if (glowSpot && sGlowMat && glowSpot->Showing()
-                    && glowSpot->Intensity() > 0) {
+                    && glowSpot->GetIntensity() > 0) {
                     Hmx::Rect r(0, 0, TheRnd.Width(), TheRnd.Height());
-                    Hmx::Color c = glowSpot->Color();
+                    Hmx::Color c = glowSpot->GetColor();
                     c.alpha = 0.25f;
                     TheRnd.DrawRect(r, c, sGlowMat, nullptr, nullptr);
                 }
@@ -522,12 +522,12 @@ void WorldDir::DrawShowing() {
             }
         }
         RndGraph::SetCamera(RndCam::Current());
-        if (mHUDDir) {
-            mHUDDir->DrawShowing();
+        if (mFakeHudDir) {
+            mFakeHudDir->DrawShowing();
         }
-        if (mHUD && mHUD->Showing()) {
+        if (mHud && mHud->Showing()) {
             START_AUTO_TIMER("hud_draw");
-            mHUD->DrawShowing();
+            mHud->DrawShowing();
         }
         if (TheRnd.ProcCmds() & kProcessPost && SpotlightDrawer::Current()) {
             SpotlightDrawer::Current()->DeSelect();
@@ -555,19 +555,19 @@ void WorldDir::Poll() {
             }
             static Message select_camera("select_camera");
             HandleType(select_camera);
-            if (mCameraMgr) {
-                mCameraMgr->PrePoll();
+            if (mCameraManager) {
+                mCameraManager->PrePoll();
             }
-            m3DSoundMgr.Poll();
-            mLightPresetMgr.Poll();
+            mSoundManager.Poll();
+            mPresetManager.Poll();
             RndDir::Poll();
-            if (mCameraMgr) {
-                mCameraMgr->Poll();
+            if (mCameraManager) {
+                mCameraManager->Poll();
             }
             {
                 START_AUTO_TIMER("phys_mgr_poll");
-                if (mPhysicsMgr) {
-                    mPhysicsMgr->Poll();
+                if (mPhysicsManager) {
+                    mPhysicsManager->Poll();
                 }
             }
             RestoreDeltas(deltas);
@@ -583,12 +583,12 @@ void WorldDir::Enter() {
         static DataNode &n = DataVariable("world.last_entered");
         n = this;
     }
-    mLightPresetMgr.Enter();
-    if (mCameraMgr) {
-        mCameraMgr->Enter();
+    mPresetManager.Enter();
+    if (mCameraManager) {
+        mCameraManager->Enter();
     }
-    if (mPhysicsMgr) {
-        mPhysicsMgr->Enter();
+    if (mPhysicsManager) {
+        mPhysicsManager->Enter();
     } else {
         mPhysicsManagerNeedsToEnter = true;
     }
@@ -650,13 +650,13 @@ void WorldDir::RestoreDeltas(float *f) {
 }
 
 void WorldDir::SyncHUD() {
-    RELEASE(mHUDDir);
-    if (mShowHUD && !mHUDFilename.empty()) {
-        mHUDDir = dynamic_cast<RndDir *>(
-            DirLoader::LoadObjects(mHUDFilename, nullptr, nullptr)
+    RELEASE(mFakeHudDir);
+    if (mShowFakeHud && !mFakeHudFilename.empty()) {
+        mFakeHudDir = dynamic_cast<RndDir *>(
+            DirLoader::LoadObjects(mFakeHudFilename, nullptr, nullptr)
         );
-        if (mHUDDir)
-            mHUDDir->Enter();
+        if (mFakeHudDir)
+            mFakeHudDir->Enter();
     }
 }
 
@@ -672,6 +672,6 @@ void WorldDir::SyncCamShots(bool b) {
     }
 }
 
-DataNode WorldDir::OnGetPhysicsManager(const DataArray *) { return mPhysicsMgr; }
+DataNode WorldDir::OnGetPhysicsManager(const DataArray *) { return mPhysicsManager; }
 
 #pragma endregion

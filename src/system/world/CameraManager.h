@@ -17,8 +17,8 @@ public:
     public:
         bool operator<(const Category &c) const { return mCategory < c.mCategory; }
 
-        Symbol mCategory;
-        ObjPtrList<CamShot> *mShots;
+        Symbol mCategory; // 0x0
+        ObjPtrList<CamShot> *mShots; // 0x4
     };
 
     struct PropertyFilter {
@@ -43,8 +43,8 @@ public:
     static Rand sRand;
     static int sSeed;
 
-    CamShot *NextShot() const { return mNextShot; }
-    CamShot *CurrentShot() const { return mCurrentCam; }
+    CamShot *GetNextShot() const { return mNextShot; }
+    CamShot *GetCurrentShot() const { return mCurrentCam; }
     bool HasFreeCam() const { return mFreeCam; }
     void ForceCamShot(CamShot *);
     FreeCamera *GetFreeCam(int);
@@ -64,6 +64,9 @@ public:
     CamShot *PickCameraShot(Symbol, const std::vector<PropertyFilter> &);
     void Poll();
 
+protected:
+    CameraManager();
+
 private:
     void StartShot_(CamShot *);
     float CalcFrame();
@@ -81,12 +84,9 @@ private:
     Symbol MakeCategoryAndFilters(DataArray *da, std::vector<PropertyFilter> &, float *);
     ObjPtrList<CamShot> &FindOrAddCategory(Symbol);
 
-protected:
-    CameraManager();
-
     /** "Controlling world object" */
     WorldDir *mParent; // 0x2c
-    std::vector<Category> mCameraShotCategories; // 0x30
+    std::vector<Category> mCategories; // 0x30
     /** "Which shot to play right now" */
     ObjPtr<CamShot> mNextShot; // 0x3c
     /** "Next camera blend time in units of camera, is run-time, not serialized" */
