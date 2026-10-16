@@ -12,6 +12,8 @@ typedef struct _NUIAUDIO_RESULTS { /* Size=0x10 */
     /* 0x000c */ FLOAT Confidence;
 } NUIAUDIO_RESULTS;
 
+typedef unsigned char NUIAUDIO_HANDLE[4];
+
 typedef void NUIAUDIO_ERROR_CALLBACK(HRESULT);
 typedef void NUIAUDIO_CALLBACK(NUIAUDIO_RESULTS *);
 
@@ -19,15 +21,15 @@ HRESULT NuiAudioCreate(
     UINT32 uHardwareThreadRequested,
     NUIAUDIO_ERROR_CALLBACK *pfnErrorCallback,
     DWORD Flags,
-    HANDLE Handle,
+    NUIAUDIO_HANDLE Handle,
     UINT32 *pHardwareThreadUsed
 );
-void NuiAudioRelease(const HANDLE Handle);
+void NuiAudioRelease(const NUIAUDIO_HANDLE Handle);
 void NuiAudioRegisterCallbacks(
-    const HANDLE Handle, DWORD Flags, NUIAUDIO_CALLBACK *pfnProcessingCallback
+    const NUIAUDIO_HANDLE Handle, DWORD Flags, NUIAUDIO_CALLBACK *pfnProcessingCallback
 );
 void NuiAudioUnregisterCallbacks(
-    const HANDLE Handle, NUIAUDIO_CALLBACK *pfnProcessingCallback
+    const NUIAUDIO_HANDLE Handle, NUIAUDIO_CALLBACK *pfnProcessingCallback
 );
 
 #ifdef __cplusplus

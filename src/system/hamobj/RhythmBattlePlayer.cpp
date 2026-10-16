@@ -304,10 +304,10 @@ void RhythmBattlePlayer::Enter() {
             DepthBuffer3DAttachment attachment;
             attachment.obj = mBoxyWaistTrans;
             attachment.player = mPlayer;
-            attachment.unk8 = 0;
-            attachment.unkc = Vector3::GetZero();
-            attachment.unk1c = 0;
-            attachment.unk20 = 0;
+            attachment.bone = kJointHipCenter;
+            attachment.offset = Vector3::GetZero();
+            attachment.offset_from_ground = false;
+            attachment.prev_parent = nullptr;
             mBoxyman1->AddAttachment(attachment);
         }
     }

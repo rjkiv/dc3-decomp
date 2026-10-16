@@ -9,8 +9,10 @@
 #include "obj/Object.h"
 #include "os/Debug.h"
 #include "rnddx9/Rnd.h"
+#include "rndobj/BaseMaterial.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Rnd_NG.h"
+#include "rndobj/ShaderMgr.h"
 #include "rndobj/Tex.h"
 #include "rndobj/Trans.h"
 #include <list>
@@ -20,19 +22,28 @@ LargeQuadRenderData DepthBuffer3D::mQuad;
 namespace {
     void JointToVertexData(Vector3 &, const Skeleton &, SkeletonJoint, const Vector4 &);
     void VertexToWorld(Vector3 &, const Transform &, float, const Vector4 &);
-    RndMat *SetUpWorkingMat();
+
+    RndMat *SetUpWorkingMat() {
+        RndMat *work = TheShaderMgr.GetWork();
+        work->SetBlend(BaseMaterial::kBlendSrc);
+        work->SetZMode(kZModeDisable);
+        work->SetTexWrap(kTexWrapClamp);
+        return work;
+    }
 }
 
 DepthBuffer3D::DepthBuffer3D()
     : mDrawSheet(0), mDrawPlayer1(1), mDrawPlayer2(1), mDrawNonPlayers(1),
-      mDebugLayout(0), mNobodyColor(0, 0, 0, 0), mPlayerPalette(this), unk12c(this),
-      unk140(1), mPlayerPaletteOffset(0), mPlayerPaletteScale(1), mMinimalMat(this),
-      mMesh(this), mStretchNearCamera(1), mOpacity(1), unk17c(0), unk180(0),
-      unk184(0xfffffc19), unk188(1), unk18c(this), mTile(1.5, 1.5), mScaleVoxel(1),
-      mScaleVoxelGap(1), mFishEyeX(0), mFishEyeY(0), unk1d8(this), unk1ec(this),
-      unk20c(80, 4, 4), unk220(40, 4, 4), unk234(60, 3, 3), unk248(30, 3, 3),
-      unk25c(2048, 204.8f, 204.8f), unk270(4096, 204.8f, 204.8f), mMaxZoom(1),
-      mMaxDepthZoom(1), unk28c(0) {}
+      mDebugLayout(0), mNobodyCol(0, 0, 0, 0), mPlayerPalette(this),
+      mLastPlayerPalette(this), mAnimPerc(1), mPlayerPaletteOffset(0),
+      mPlayerPaletteScale(1), mMinimalMat(this), mMesh(this), mStretchNearCamera(1),
+      mOpacity(1), mPlayer1Groove(0), mPlayer2Groove(0), mForceDrawSkeletonIndex(-999),
+      mDrawOthersOnForce(1), mTexSource(this), mTiles(1.5, 1.5), mVoxelScale(1),
+      mVoxelSeparation(1), mFisheyeX(0), mFisheyeY(0), mGroove1(this), mGroove2(this),
+      mZoomWidth(80, 4, 4), mZoomXCenter(40, 4, 4), mZoomHeight(60, 3, 3),
+      mZoomYCenter(30, 3, 3), mZoomZCenter(2048, 204.8f, 204.8f),
+      mZoomDepth(4096, 204.8f, 204.8f), mMaxZoom(1), mMaxDepthZoom(1),
+      mHasPrevSmoothData(0) {}
 
 DepthBuffer3D::~DepthBuffer3D() {}
 
@@ -43,8 +54,8 @@ BEGIN_HANDLERS(DepthBuffer3D)
 END_HANDLERS
 
 BEGIN_PROPSYNCS(DepthBuffer3D)
-    SYNC_PROP(nobody_color, mNobodyColor)
-    SYNC_PROP(nobody_alpha, mNobodyColor.alpha)
+    SYNC_PROP(nobody_color, mNobodyCol)
+    SYNC_PROP(nobody_alpha, mNobodyCol.alpha)
     SYNC_PROP_SET(
         player_palette, mPlayerPalette.Ptr(), SetPlayerPalette(_val.Obj<RndTex>())
     )
@@ -58,12 +69,12 @@ BEGIN_PROPSYNCS(DepthBuffer3D)
     SYNC_PROP(draw_player_1, mDrawPlayer1)
     SYNC_PROP(draw_player_2, mDrawPlayer2)
     SYNC_PROP(draw_non_players, mDrawNonPlayers)
-    SYNC_PROP(tile_x, mTile.x)
-    SYNC_PROP(tile_y, mTile.y)
-    SYNC_PROP(scale_voxel, mScaleVoxel)
-    SYNC_PROP(scale_voxelgap, mScaleVoxelGap)
-    SYNC_PROP(fisheye_x, mFishEyeX)
-    SYNC_PROP(fisheye_y, mFishEyeY)
+    SYNC_PROP(tile_x, mTiles.x)
+    SYNC_PROP(tile_y, mTiles.y)
+    SYNC_PROP(scale_voxel, mVoxelScale)
+    SYNC_PROP(scale_voxelgap, mVoxelSeparation)
+    SYNC_PROP(fisheye_x, mFisheyeX)
+    SYNC_PROP(fisheye_y, mFisheyeY)
     SYNC_PROP(max_zoom, mMaxZoom)
     SYNC_PROP(max_depth_zoom, mMaxDepthZoom)
     SYNC_PROP(debug_layout, mDebugLayout)
@@ -78,7 +89,7 @@ BEGIN_COPYS(DepthBuffer3D)
     COPY_SUPERCLASS(RndTransformable)
     CREATE_COPY(DepthBuffer3D)
     BEGIN_COPYING_MEMBERS
-        COPY_MEMBER(mNobodyColor)
+        COPY_MEMBER(mNobodyCol)
         COPY_MEMBER(mPlayerPalette)
         COPY_MEMBER(mPlayerPaletteOffset)
         COPY_MEMBER(mPlayerPaletteScale)
@@ -90,11 +101,11 @@ BEGIN_COPYS(DepthBuffer3D)
         COPY_MEMBER(mDrawPlayer1)
         COPY_MEMBER(mDrawPlayer2)
         COPY_MEMBER(mDrawNonPlayers)
-        COPY_MEMBER(mTile)
-        COPY_MEMBER(mScaleVoxel)
-        COPY_MEMBER(mScaleVoxelGap)
-        COPY_MEMBER(mFishEyeX)
-        COPY_MEMBER(mFishEyeY)
+        COPY_MEMBER(mTiles)
+        COPY_MEMBER(mVoxelScale)
+        COPY_MEMBER(mVoxelSeparation)
+        COPY_MEMBER(mFisheyeX)
+        COPY_MEMBER(mFisheyeY)
     END_COPYING_MEMBERS
 END_COPYS
 
@@ -115,7 +126,7 @@ void DepthBuffer3D::UpdateAttachment(
         Skeleton &skeleton = TheGestureMgr->GetSkeleton(skelIdx);
         Vector3 localPos = LocalXfm().v;
         Vector3 pos;
-        JointToVertexData(pos, skeleton, (SkeletonJoint)attachment.unk8, v1);
+        JointToVertexData(pos, skeleton, (SkeletonJoint)attachment.bone, v1);
         VertexToWorld(pos, LocalXfm(), mStretchNearCamera, v2);
         Add(pos, localPos, newPos);
         attachment.obj->SetTransConstraint(TransConstraint(), nullptr, false);
@@ -128,51 +139,55 @@ void DepthBuffer3D::UpdateAttachment(
     attachment.obj->SetLocalPos(newPos);
 }
 
-void DepthBuffer3D::AddAttachment(const DepthBuffer3DAttachment &attachment) {
-    MILO_ASSERT(attachment.obj, 0x390);
-    bool found = false;
-    FOREACH (it, unk200) {
-        if (it->obj == attachment.obj) {
-            found = true;
-            break;
+DepthBuffer3DAttachment *DepthBuffer3D::GetAttachment(const RndTransformable *t) {
+    FOREACH (it, mAttachments) {
+        if (it->obj == t) {
+            return &*it;
         }
     }
-    if (!found) {
-        unk200.resize(unk200.size() + 1);
-        unk200.back() = attachment;
-        unk200.back().obj->SetTransParent(this, false);
-        unk200.back().obj->SetTransConstraint(TransConstraint(), nullptr, false);
+    return nullptr;
+}
+
+void DepthBuffer3D::AddAttachment(const DepthBuffer3DAttachment &attachment) {
+    MILO_ASSERT(attachment.obj, 0x390);
+    if (!GetAttachment(attachment.obj)) {
+        mAttachments.resize(mAttachments.size() + 1);
+        DepthBuffer3DAttachment &back = mAttachments[mAttachments.size() - 1];
+        back = attachment;
+        back.prev_parent = back.obj->TransParent();
+        back.obj->SetTransParent(TransParent(), false);
+        back.obj->SetTransConstraint(TransConstraint(), nullptr, false);
     }
 }
 
 void DepthBuffer3D::SetPlayerPalette(RndTex *tex) {
     if (tex && mPlayerPalette != tex) {
-        if (unk140 != 1) {
-            MILO_WARN_ONCE("dropping boxyman palette animation %f\n", unk140);
+        if (mAnimPerc != 1) {
+            MILO_WARN_ONCE("dropping boxyman palette animation %f\n", mAnimPerc);
         }
-        unk140 = 0;
-        if (unk12c) {
-            unk12c = mPlayerPalette;
+        mAnimPerc = 0;
+        if (mLastPlayerPalette) {
+            mLastPlayerPalette = mPlayerPalette;
         }
         mPlayerPalette = tex;
     }
 }
 
 void DepthBuffer3D::SetGrooviness(float f1) {
-    unk17c = f1;
-    unk180 = f1;
-    unk1d8 = nullptr;
-    unk1ec = nullptr;
+    mPlayer1Groove = f1;
+    mPlayer2Groove = f1;
+    mGroove1 = nullptr;
+    mGroove2 = nullptr;
 }
 
 void DepthBuffer3D::SetGrooviness(RhythmDetector *r1, RhythmDetector *r2) {
-    unk1d8 = r1;
-    unk1ec = r2;
+    mGroove1 = r1;
+    mGroove2 = r2;
 }
 
 void DepthBuffer3D::ForceDrawSkeletonIndex(int i1, bool b2) {
-    unk184 = i1;
-    unk188 = b2;
+    mForceDrawSkeletonIndex = i1;
+    mDrawOthersOnForce = b2;
 }
 
 void DepthBuffer3D::ListDrawChildren(std::list<RndDrawable *> &list) {

@@ -10,9 +10,10 @@
 
 struct CamTexClip {
     CamTexClip() : mTex(nullptr) {}
-    void StoreTextureClip(RndTex *, float, float, float, float);
+    void
+    StoreTextureClip(RndTex *pTex, float xoff, float yoff, float width, float height);
 
-    Transform mXfm; // 0x0
+    Transform mTexGen; // 0x0
     RndTex *mTex; // 0x40
 };
 
@@ -20,7 +21,6 @@ struct CamTexClip {
 class LiveCameraInput : public CameraInput {
 public:
     enum BufferType {
-        kBufferOff = -1,
         kBufferColor = 0,
         kBufferDepth = 1,
         kBufferPlayer = 2,
@@ -28,82 +28,90 @@ public:
         kBufferNum = 4,
     };
     struct LockedRect {
-        int pitch;
-        VOID *bits;
+        INT mPitch; // 0x0
+        VOID *mBits; // 0x4
     };
     // size 0x18
-    struct Buffer {
-        HANDLE mStreamHandle;
-        const NUI_IMAGE_FRAME *mFrames[2];
-        int mWriteIdx;
-        int mReleaseIdx;
-        RndMat *mMat;
+    struct StreamData {
+        HANDLE mStreamHandle; // 0x0
+        const NUI_IMAGE_FRAME *mImageFrames[2]; // 0x4
+        int mCurrentPing; // 0xc
+        int mCurrentPong; // 0x10
+        RndMat *mMat; // 0x14
     };
     class TextureStore {
     public:
-        TextureStore() : mTex(0) {}
+        TextureStore() : mTex(nullptr) {}
         ~TextureStore() { RELEASE(mTex); }
-        void StoreTexture(RndTex *);
-        void StoreColorBuffer(LiveCameraInput *);
-        void StoreColorBufferClip(LiveCameraInput *, float, float, float, float);
-        void StoreDepthBuffer(LiveCameraInput *);
-        void StoreDepthBufferClip(LiveCameraInput *, float, float, float, float);
-        void UpdateFromColorBuffer(LiveCameraInput *);
-        void UpdateFromColorBufferClip(LiveCameraInput *, float, float);
-        void UpdateFromDepthBuffer(LiveCameraInput *);
-        void UpdateFromDepthBufferClip(LiveCameraInput *, float, float);
+        void StoreTexture(RndTex *pTex);
+        void StoreColorBuffer(LiveCameraInput *pCam);
+        void StoreColorBufferClip(
+            LiveCameraInput *pCam, float xoff, float yoff, float xdim, float ydim
+        );
+        void StoreDepthBuffer(LiveCameraInput *pCam);
+        void StoreDepthBufferClip(
+            LiveCameraInput *pCam, float xoff, float yoff, float xdim, float ydim
+        );
+        void UpdateFromColorBuffer(LiveCameraInput *pCam);
+        void UpdateFromColorBufferClip(LiveCameraInput *pCam, float xoff, float yoff);
+        void UpdateFromDepthBuffer(LiveCameraInput *pCam);
+        void UpdateFromDepthBufferClip(LiveCameraInput *pCam, float xoff, float yoff);
 
         RndTex *mTex; // 0x0
     };
-    virtual bool IsConnected() const { return mConnected; }
+    virtual bool IsConnected() const { return mCameraConnected; }
     virtual void PollTracking();
 
     int MaxSnapshots() const { return mMaxSnapshots; }
     int NumSnapshots() const;
-    RndMat *GetSnapshot(int) const;
-    int GetSnapshotBatchStartingIndex(int) const;
-    RndTex *GetStoredTexture(int) const;
-    void InitSnapshots(int);
+    RndMat *GetSnapshot(int index) const;
+    int GetSnapshotBatchStartingIndex(int batch) const;
+    RndTex *GetStoredTexture(int index) const;
+    void InitSnapshots(int numSnapshots);
     void ClearSnapshots();
-    void InitTextureStore(int);
+    void InitTextureStore(int maxStoreSize);
     void ClearTextureStore();
     void StartSnapshotBatch();
     int NumStoredTextures() const;
-    int StoreTexture(RndTex *);
-    void StoreTextureAt(RndTex *, int);
-    void StoreTextureClipAt(float, float, float, float, int, int);
-    void ApplyTextureClip(RndMat *, int) const;
-    void StoreColorBuffer(int);
-    void StoreColorBufferClip(float, float, float, float, int);
-    void StoreDepthBuffer(int);
-    void StoreDepthBufferClip(float, float, float, float, int);
+    int StoreTexture(RndTex *pTex);
+    void StoreTextureAt(RndTex *pTex, int index);
+    void StoreTextureClipAt(
+        float xoff, float yoff, float width, float height, int srcIndex, int dstIndex
+    );
+    void ApplyTextureClip(RndMat *pMat, int index) const;
+    void StoreColorBuffer(int index);
+    void StoreColorBufferClip(float xoff, float yoff, float xwid, float yhit, int index);
+    void StoreDepthBuffer(int index);
+    void StoreDepthBufferClip(float xoff, float yoff, float xwid, float yhit, int index);
     void ResetSnapshots();
     int NumSnapshotBatches() const;
     bool GetTweakedAutoexposure() const;
-    bool SetTweakedAutoexposure(bool);
-    void SetExposureRegion(float, float, float, float);
-    bool SetAutoexposure(bool);
+    bool SetTweakedAutoexposure(bool tweak);
+    void SetExposureRegion(float left, float top, float width, float height);
+    bool SetAutoexposure(bool on);
     bool GetAutoexposure() const;
     void DumpProperties();
-    void SetTrackedSkeletons(int, int) const;
+    void SetTrackedSkeletons(int trackingID1, int trackingID2) const;
     void IncrementSnapshotCount();
-    void SetNewFrame(const SkeletonFrame *);
-    void PollNewStream(BufferType);
-    void *StreamBufferData(BufferType) const;
-    RndMat *DisplayMat(BufferType) const;
-    RndTex *DisplayTex(BufferType) const;
-    RndTex *GetStreamTex(BufferType) const;
-    void LockStream(const void *, LockedRect &);
-    void UnlockStream(const void *);
+    void SetNewFrame(const SkeletonFrame *new_frame);
+    void PollNewStream(BufferType buf);
+    void *StreamBufferData(BufferType type) const;
+    RndMat *DisplayMat(BufferType type) const;
+    RndTex *DisplayTex(BufferType type) const;
+    RndTex *GetStreamTex(BufferType type) const;
+    void LockStream(const void *stream, LockedRect &rect);
+    void UnlockStream(const void *stream);
 
     static void PreInit();
     static void Init();
-    static void NuiAudioErrorCallback(HRESULT);
-    static void NuiAudioDataCallback(NUIAUDIO_RESULTS *);
+    static void NuiAudioErrorCallback(HRESULT hr);
+    static void NuiAudioDataCallback(NUIAUDIO_RESULTS *pNuiAudioResults);
     static LiveCameraInput *sInstance;
 
-    bool Unk11E9() const { return unk11e9; }
-    bool Unk11EA() const { return unk11ea; }
+    bool ColorBufferPolled() const { return mColorBufferPolled; }
+    bool DepthBufferPolled() const { return mDepthBufferPolled; }
+    bool NewColorBuffer() const { return mNewColorBuffer; }
+    bool NewDepthBuffer() const { return mNewDepthBuffer; }
 
 protected:
     LiveCameraInput();
@@ -112,29 +120,29 @@ protected:
 
     static void Terminate();
 
-    int unk11d4;
-    HANDLE unk11d8;
-    int unk11dc;
-    int unk11e0;
-    int unk11e4;
-    bool mConnected; // 0x11e8
-    bool unk11e9;
-    bool unk11ea;
-    bool unk11eb;
-    bool unk11ec;
+    BOOL m_bNuiAudioInitialized; // 0x11d4
+    NUIAUDIO_HANDLE m_hNuiAudio; // 0x11d8
+    int m_NuiAudioPipelineStatus; // 0x11dc
+    float m_fBeamDirection; // 0x11e0
+    float m_fConfidence; // 0x11e4
+    bool mCameraConnected; // 0x11e8
+    bool mColorBufferPolled; // 0x11e9
+    bool mDepthBufferPolled; // 0x11ea
+    bool mNewColorBuffer; // 0x11eb
+    bool mNewDepthBuffer; // 0x11ec
     int mMaxSnapshots; // 0x11f0
     std::vector<RndMat *> mSnapshots; // 0x11f4
     int mNumSnapshots; // 0x1200
     std::vector<int> mSnapshotBatches; // 0x1204
-    int mMaxTextures; // 0x1210
+    int mMaxStoredTextures; // 0x1210
     std::vector<TextureStore> mTextureStore; // 0x1214
     int mNumStoredTextures; // 0x1220
-    CamTexClip mTexClips[8]; // 0x1224
+    CamTexClip mTextureClips[8]; // 0x1224
     SpeechMgr *mSpeechMgr; // 0x1444
-    Buffer mStreams[kBufferNum]; // 0x1448
-    DxTex *unk14a8;
-    DxTex *unk14ac;
-    RndTex *unk14b0;
+    StreamData mStreams[kBufferNum]; // 0x1448
+    DxTex *mColorStreamTexture; // 0x14a8
+    DxTex *mDepthStreamTexture; // 0x14ac
+    RndTex *mDepthDebugTexture; // 0x14b0
 };
 
 void CameraDump(const char *);

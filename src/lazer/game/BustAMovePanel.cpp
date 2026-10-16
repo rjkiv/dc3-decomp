@@ -305,7 +305,7 @@ void BustAMovePanel::CacheObjects() {
     mVisualizer->DataDir()->Find<RndAnimatable>("num_players.anim")->SetFrame(1, 1);
     for (ObjDirItr<DepthBuffer3D> it(mVisualizer->DataDir(), true); it != nullptr; ++it) {
         it->SetGrooviness(1.0f);
-        it->SetUnk18C(nullptr);
+        it->SetTexSource(nullptr);
     }
     TheMaster->AddSink(this, "beat");
     mStatus = DataDir()->Find<HamLabel>("status.lbl");
@@ -977,7 +977,7 @@ void BustAMovePanel::OnBeat() {
                         for (ObjDirItr<DepthBuffer3D> it(mVisualizer->DataDir(), true);
                              it != nullptr;
                              ++it) {
-                            it->SetUnk18C(nullptr);
+                            it->SetTexSource(nullptr);
                             it->SetShowing(true);
                         }
                     } else {
@@ -987,9 +987,9 @@ void BustAMovePanel::OnBeat() {
                             DepthBuffer3D *cur = it;
                             if (strstr(cur->Name(), "live")) {
                                 cur->SetShowing(!DataVariable("hide_bam_ghost").Int());
-                                cur->SetUnk18C(nullptr);
+                                cur->SetTexSource(nullptr);
                             } else {
-                                cur->SetUnk18C(mRecorder->GetOutputTex());
+                                cur->SetTexSource(mRecorder->GetOutputTex());
                             }
                         }
                     }
@@ -1049,7 +1049,7 @@ void BustAMovePanel::OnBeat() {
                     for (ObjDirItr<DepthBuffer3D> it(mVisualizer->DataDir(), true);
                          it != nullptr;
                          ++it) {
-                        it->SetUnk18C(mRecorder->GetOutputTex());
+                        it->SetTexSource(mRecorder->GetOutputTex());
                     }
                     break;
 
@@ -1105,7 +1105,7 @@ void BustAMovePanel::OnBeat() {
                     for (ObjDirItr<DepthBuffer3D> it(mVisualizer->DataDir(), true);
                          it != nullptr;
                          ++it) {
-                        it->SetUnk18C(nullptr);
+                        it->SetTexSource(nullptr);
                         it->SetShowing(true);
                     }
                     if (mReps == 0) {
@@ -1248,7 +1248,7 @@ void BustAMovePanel::OnBeat() {
                             for (ObjDirItr<DepthBuffer3D> it(dataDir, true);
                                  it != nullptr;
                                  ++it) {
-                                it->SetUnk18C(nullptr);
+                                it->SetTexSource(nullptr);
                             }
                             DataDir()
                                 ->Find<RndAnimatable>("num_players.anim")
@@ -1386,7 +1386,7 @@ void BustAMovePanel::OnBeat() {
                         for (ObjDirItr<DepthBuffer3D> it(mVisualizer->DataDir(), true);
                              it != nullptr;
                              ++it) {
-                            it->SetUnk18C(mRecorder->GetOutputTex());
+                            it->SetTexSource(mRecorder->GetOutputTex());
                             it->SetShowing(true);
                         }
                         mRecorder->SetFreestyleMove(mFlashcardImage.back());
