@@ -33,7 +33,7 @@ void CopyBottomMip(RndBitmap &dst, const RndBitmap &src) {
 #pragma region RndTex
 
 RndTex::RndTex()
-    : mMipMapK(-8.0f), mType(kRegular), mWidth(0), mHeight(0), mBpp(32), mFilepath(),
+    : mMipMapK(-8.0f), mType(kRegular), mWidth(0), mHeight(0), mBpp(32), mFile(),
       mNumMips(0), mOptimizeForPS3(0), mLoader(0) {}
 
 RndTex::~RndTex() { delete mLoader; }
@@ -41,8 +41,8 @@ RndTex::~RndTex() { delete mLoader; }
 BEGIN_HANDLERS(RndTex)
     HANDLE(set_bitmap, OnSetBitmap)
     HANDLE(set_rendered, OnSetRendered)
-    HANDLE_EXPR(file_path, mFilepath.c_str())
-    HANDLE_ACTION(set_file_path, mFilepath.Set(FilePath::Root().c_str(), _msg->Str(2)))
+    HANDLE_EXPR(file_path, mFile.c_str())
+    HANDLE_ACTION(set_file_path, mFile.Set(FilePath::Root().c_str(), _msg->Str(2)))
     HANDLE_EXPR(size_kb, SizeKb())
     HANDLE_EXPR(tex_type, mType)
     HANDLE_ACTION(save_bmp, SaveBitmap(_msg->Str(2)))
@@ -59,7 +59,7 @@ BEGIN_PROPSYNCS(RndTex)
     }
     SYNC_PROP(mip_map_k, mMipMapK)
     SYNC_PROP(optimize_for_ps3, mOptimizeForPS3)
-    SYNC_PROP_MODIFY(file_path, mFilepath, SetBitmap(mFilepath))
+    SYNC_PROP_MODIFY(file_path, mFile, SetBitmap(mFile))
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
@@ -68,7 +68,7 @@ DataNode RndTex::OnSetSize(int, int) { return 0; }
 BEGIN_SAVES(RndTex)
     SAVE_REVS(11, 0)
     SAVE_SUPERCLASS(Hmx::Object)
-    bs << mWidth << mHeight << mBpp << mFilepath << mMipMapK << mType;
+    bs << mWidth << mHeight << mBpp << mFile << mMipMapK << mType;
     bs << (bool)mNumMips;
     bs << mOptimizeForPS3;
     if (bs.Cached()) {
@@ -86,12 +86,12 @@ BEGIN_COPYS(RndTex)
             return;
         }
         PresyncBitmap();
-        COPY_MEMBER(unk2c)
+        COPY_MEMBER(mBitmapName)
         COPY_MEMBER(mType)
         COPY_MEMBER(mWidth)
         COPY_MEMBER(mHeight)
         COPY_MEMBER(mBpp)
-        COPY_MEMBER(mFilepath)
+        COPY_MEMBER(mFile)
         COPY_MEMBER(mNumMips)
         COPY_MEMBER(mOptimizeForPS3)
         mBitmap.Create(c->mBitmap, c->mBitmap.Bpp(), c->mBitmap.Order(), nullptr);
@@ -109,7 +109,7 @@ void RndTex::Print() {
     TheDebug << "   height: " << mHeight << "\n";
     TheDebug << "   bpp: " << mBpp << "\n";
     TheDebug << "   mipMapK: " << mMipMapK << "\n";
-    TheDebug << "   file: " << mFilepath << "\n";
+    TheDebug << "   file: " << mFile << "\n";
     TheDebug << "   type: " << mType << "\n";
 }
 
@@ -132,12 +132,12 @@ void RndTex::PreLoad(BinStream &bs) {
         d >> mHeight;
     }
     d >> mBpp;
-    d >> mFilepath;
+    d >> mFile;
     if (d.rev > 9) {
         if (!bs.Cached()) {
             mLoader = new FileLoader(
-                mFilepath,
-                CacheResource(mFilepath.c_str(), this),
+                mFile,
+                CacheResource(mFile.c_str(), this),
                 kLoadFront,
                 0,
                 false,
@@ -155,15 +155,15 @@ void RndTex::PostLoad(BinStream &bs) {
     if (d.rev < 5) {
         int cubemapmask;
         bs >> cubemapmask;
-        if (cubemapmask != 0 && !mFilepath.empty()) {
+        if (cubemapmask != 0 && !mFile.empty()) {
             if (cubemapmask & 1) {
                 MILO_NOTIFY("%s: kTransparentWhite no longer supported", Name());
             } else if (cubemapmask & 2) {
-                mFilepath.insert(mFilepath.find('.'), "_tb");
+                mFile.insert(mFile.find('.'), "_tb");
             } else if (cubemapmask & 0x10) {
-                mFilepath.insert(mFilepath.find('.'), "_ga");
+                mFile.insert(mFile.find('.'), "_ga");
             } else if (cubemapmask & 0x20) {
-                mFilepath.insert(mFilepath.find('.'), "_gw");
+                mFile.insert(mFile.find('.'), "_gw");
             } else if (cubemapmask & 0x40) {
                 MILO_NOTIFY("%s: kCubeMap no longer supported", Name());
             }
@@ -215,7 +215,7 @@ void RndTex::PostLoad(BinStream &bs) {
         }
         mNumMips = mBitmap.NumMips();
         SyncBitmap();
-    } else if (mFilepath.empty() || mType != kRegular) {
+    } else if (mFile.empty() || mType != kRegular) {
         SetBitmap(mWidth, mHeight, mBpp, mType, b7, nullptr);
     } else if (TheLoadMgr.GetPlatform() != kPlatformNone) {
         SetBitmap(mLoader);
@@ -404,17 +404,17 @@ void RndTex::SetBitmap(FileLoader *fl) {
     mType = kRegular;
     char *buffer;
     if (fl) {
-        mFilepath = fl->LoaderFile();
+        mFile = fl->LoaderFile();
         TheLoadMgr.PollUntilLoaded(fl, nullptr);
         buffer = fl->GetBuffer(nullptr);
         if (!TheLoadMgr.EditMode() && fl != mLoader) {
-            if (!strstr(mFilepath.c_str(), "_keep")) {
-                MILO_NOTIFY("%s will not be included on a disc build", mFilepath);
+            if (!strstr(mFile.c_str(), "_keep")) {
+                MILO_NOTIFY("%s will not be included on a disc build", mFile);
             }
         }
         delete fl;
     } else {
-        mFilepath.Set(FilePath::Root().c_str(), "");
+        mFile.Set(FilePath::Root().c_str(), "");
         buffer = nullptr;
     }
 
@@ -427,16 +427,14 @@ void RndTex::SetBitmap(FileLoader *fl) {
             mBitmap.Create(buffer);
         }
         if (!mBitmap.Name()) {
-            if (!mFilepath.empty()) {
-                mBitmap.SetName(
-                    Hmx::CRC(FileRelativePath(FileExecRoot(), mFilepath.c_str()))
-                );
+            if (!mFile.empty()) {
+                mBitmap.SetName(Hmx::CRC(FileRelativePath(FileExecRoot(), mFile.c_str())));
             }
         }
         if (!mBitmap.Name() && mType == kRegular) {
             MILO_LOG(
                 "Bitmap %s, does not have name set, it will not be cached!\n",
-                FileRelativePath(FileRoot(), mFilepath.c_str())
+                FileRelativePath(FileRoot(), mFile.c_str())
             );
         }
         mWidth = mBitmap.Width();
@@ -463,7 +461,7 @@ void RndTex::SetBitmap(int w, int h, int bpp, Type ty, bool useMips, const char 
     mHeight = h;
     mBpp = bpp;
     mType = ty;
-    mFilepath.Set(FilePath::Root().c_str(), "");
+    mFile.Set(FilePath::Root().c_str(), "");
     mNumMips = 0;
     mBitmap.Reset();
     if (mType & 8) {
@@ -505,7 +503,7 @@ void RndTex::SetBitmap(const RndBitmap &bmap, const char *path, bool b, Type ty)
     mHeight = bmap.Height();
     mBpp = bmap.Bpp();
     mType = ty;
-    mFilepath.Set(FilePath::Root().c_str(), "");
+    mFile.Set(FilePath::Root().c_str(), "");
     mNumMips = bmap.NumMips();
     const char *err = CheckSize(mWidth, mHeight, mBpp, mNumMips, mType, false);
     if (err) {

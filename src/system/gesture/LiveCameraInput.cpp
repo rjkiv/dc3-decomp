@@ -163,7 +163,7 @@ void LiveCameraInput::TextureStore::StoreTexture(RndTex *tex) {
     if (tex) {
         mTex = Hmx::Object::New<RndTex>();
         RndBitmap bitmap;
-        tex->LockBitmap(bitmap, 1);
+        tex->LockBitmap(bitmap, RndTex::kReadPixels);
         mTex->SetBitmap(bitmap, nullptr, true, RndTex::kRenderedNoZ);
         tex->UnlockBitmap();
     } else {

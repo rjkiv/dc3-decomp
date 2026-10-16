@@ -199,7 +199,7 @@ void HiResScreen::Accumulate() {
             RndTex *tex = Hmx::Object::New<RndTex>();
             RndBitmap bm;
             tex->SetBitmap(0, 0, 0, RndTex::kFrontBuffer, false, 0);
-            tex->LockBitmap(bm, true);
+            tex->LockBitmap(bm, RndTex::kReadPixels);
             delete tex;
             int tileX = prevTile % mTiling;
             int tileY = prevTile / mTiling;

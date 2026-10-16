@@ -29,6 +29,20 @@ public:
         kRegularLinear = 0x2000
     };
     enum AlphaCompress {
+        kNoAlpha = 0x0000,
+        kLowQualityAlpha = 0x0001,
+        kBetterQualityAlpha = 0x0002,
+    };
+    enum LockFlags {
+        kNone = 0x0000,
+        kReadPixels = 0x0001,
+        kReadPalette = 0x0002,
+        kWritePixels = 0x0004,
+        kWritePalette = 0x0008,
+    };
+    enum MipMapKValue {
+        kMipMapKDefault = 0xf8,
+        kMipMapKPS3Linear = 0x029a,
     };
 
     virtual ~RndTex();
@@ -42,16 +56,16 @@ public:
     virtual void Print();
     virtual void PreLoad(BinStream &);
     virtual void PostLoad(BinStream &);
-    virtual void SetMipMapK(float f) { mMipMapK = f; }
-    virtual void LockBitmap(RndBitmap &, int);
+    virtual void SetMipMapK(float k) { mMipMapK = k; }
+    virtual void LockBitmap(RndBitmap &bm, int flags);
     virtual void UnlockBitmap() {}
     virtual void MakeDrawTarget() {}
     virtual void FinishDrawTarget() {}
-    virtual void Compress(AlphaCompress) {}
-    virtual bool TexelsLock(void *&) { return false; }
+    virtual void Compress(AlphaCompress alphaCompress) {}
+    virtual bool TexelsLock(void *&texels) { return false; }
     virtual void TexelsUnlock() {}
     virtual unsigned int TexelsPitch() const { return 0; }
-    virtual void Select(int) {}
+    virtual void Select(int sampler) {}
 
     OBJ_MEM_OVERLOAD(0x1C)
     NEW_OBJ(RndTex)
@@ -72,11 +86,11 @@ public:
      * @param [in] b TODO: currently unknown.
      */
     void SetBitmap(const RndBitmap &bmap, const char *path, bool b);
-    void SetBitmap(FileLoader *);
-    void SetBitmap(const FilePath &);
-    void SetBitmap(const RndBitmap &, const char *, bool, Type);
-    /** Unused. Presumably saves the bitmap of this texture to a supplied filename. */
-    void SaveBitmap(const char *);
+    void SetBitmap(FileLoader *l);
+    void SetBitmap(const FilePath &file);
+    void SetBitmap(const RndBitmap &bm, const char *path, bool bUseBMPFormat, Type type);
+    /** Saves the bitmap of this texture to a supplied filename. */
+    void SaveBitmap(const char *path);
     /** Determine whether this texture's dimensions are both powers of 2. */
     void SetPowerOf2();
 
@@ -105,7 +119,7 @@ public:
     int Width() const { return mWidth; }
     int Height() const { return mHeight; }
     Type GetType() const { return mType; }
-    const FilePath &File() const { return mFilepath; }
+    const FilePath &File() const { return mFile; }
     int NumMips() const { return mNumMips; }
     int Bpp() const { return mBpp; }
     bool PowerOf2();
@@ -136,9 +150,9 @@ protected:
      * Example usage: {$this set_rendered}
      */
     DataNode OnSetRendered(const DataArray *);
-    DataNode OnSetSize(int, int);
+    DataNode OnSetSize(int width, int height);
 
-    Hmx::CRC unk2c; // 0x2c
+    Hmx::CRC mBitmapName; // 0x2c
     /** The bitmap associated with this texture. */
     RndBitmap mBitmap; // 0x30
     float mMipMapK; // 0x50
@@ -151,7 +165,7 @@ protected:
     /** The texture's bits per pixel. */
     int mBpp; // 0x60
     /** The texture's file. */
-    FilePath mFilepath; // 0x64
+    FilePath mFile; // 0x64
     /** The number of mips in this texture's mipmap. */
     int mNumMips; // 0x6c
     // /** Whether or not this texture's width and height are powers of 2. */

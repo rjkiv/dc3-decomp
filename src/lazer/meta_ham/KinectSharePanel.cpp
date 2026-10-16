@@ -109,7 +109,7 @@ void KinectSharePanel::ConvertImages() {
     MILO_ASSERT(mTex.Ptr(), 0x2B);
     RndBitmap bitmapa0;
     RndBitmap bitmap80;
-    mTex->LockBitmap(bitmapa0, true);
+    mTex->LockBitmap(bitmapa0, RndTex::kReadPixels);
     EndianSwapBitmap(bitmapa0);
     bitmap80.Create(bitmapa0, 24, 1, nullptr);
     int w = bitmap80.Width();

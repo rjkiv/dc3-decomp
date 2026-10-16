@@ -413,7 +413,7 @@ void Rnd::ScreenDump(const char *file) {
     RndTex *tex = Hmx::Object::New<RndTex>();
     RndBitmap bmap;
     tex->SetBitmap(0, 0, 0, RndTex::kFrontBuffer, false, nullptr);
-    tex->LockBitmap(bmap, 1);
+    tex->LockBitmap(bmap, RndTex::kReadPixels);
     FileStream stream(file, FileStream::kWrite, true);
     if (stream.Fail()) {
         MILO_NOTIFY("Screenshot failed; could not open destination file (%s).", file);
@@ -1146,18 +1146,18 @@ void Rnd::TestPoint(const Vector3 &v, RndFlare *flare) {
 RndTex *Rnd::CreateDefaultTexture(DefaultTextureType textureType) {
     MILO_ASSERT(textureType < kDefaultTex_Max, 0x5E4);
     // clang-format off
-    static const int sDefSize[kDefaultTex_Max][2] = { 
-        8, 8, 
-        8, 8,   
+    static const int sDefSize[kDefaultTex_Max][2] = {
         8, 8,
-        8, 8, 
-        8, 8,   
+        8, 8,
+        8, 8,
+        8, 8,
+        8, 8,
         0x40, 0x40,
-        0x100, 8, 
+        0x100, 8,
         0x80, 0x80
     };
     static const unsigned char sDefColor[kDefaultTex_Max][4] = {
-        0, 0, 0, 0xFF, 
+        0, 0, 0, 0xFF,
         0, 0, 0, 0,
         0xff, 0xff, 0xff, 0xff,
         0xff, 0xff, 0xff, 0,
