@@ -69,6 +69,13 @@ BEGIN_LOADS(RndAnimatable)
         mRate = (Rate)(!rate);
     }
     if (d.rev < 1) {
+        enum Type {
+            kScaleOffset = 0x0000,
+            kMinMaxLoop = 0x0001,
+            kZeroOrder = 0x0002,
+            kFirstOrder = 0x0003,
+            kSecondOrder = 0x0004,
+        };
         int count;
         d >> count;
         float theScale = 1.0f;
@@ -81,20 +88,20 @@ BEGIN_LOADS(RndAnimatable)
         while (count-- != 0) {
             d >> read;
             switch (read) {
-            case 0:
+            case kScaleOffset:
                 d >> theScale >> theOffset;
                 break;
-            case 1:
+            case kMinMaxLoop:
                 d >> theMin >> theMax;
                 d >> theLoop;
                 break;
-            case 2:
+            case kZeroOrder:
                 d >> unused1 >> unused2;
                 break;
-            case 3:
+            case kFirstOrder:
                 d >> unused3 >> unused4;
                 break;
-            case 4:
+            case kSecondOrder:
                 d >> unused5 >> unused6 >> unused7;
                 break;
             default:
@@ -169,7 +176,7 @@ void RndAnimatable::FireFlowLabel(Symbol s) {
             Hmx::Object *owner = it->RefOwner();
             if (owner && owner->ClassName() == "AnimTask") {
                 AnimTask *task = static_cast<AnimTask *>(owner);
-                owner = task->Listener();
+                owner = task->GetEventReceiver();
                 if (owner) {
                     owner->Handle(Message("on_anim_event", s), false);
                     break;
@@ -278,26 +285,26 @@ AnimTask::AnimTask(
     float fpu,
     bool loop,
     float blend,
-    Hmx::Object *listener,
+    Hmx::Object *event_reciever,
     EaseType easeType,
     float easePower,
     bool wrap
 )
-    : mAnim(this), mListener(this), mAnimTarget(this), mBlendTask(this),
+    : mAnim(this), mEventReciever(this), mAnimTarget(this), mBlendTask(this),
       mBlendPeriod(blend), mLoop(loop), mEasePower(easePower) {
     mBlending = false;
     mBlendTime = 0;
-    unka8 = wrap;
-    unkb0 = true;
+    mWrap = wrap;
+    mFirstFrame = true;
     mEaseFunc = GetEaseFunction(easeType);
-    mListener = listener;
+    mEventReciever = event_reciever;
     MILO_ASSERT(anim, 0x213);
     mMin = Min(start, end);
     mMax = Max(start, end);
     if (NearlyZero(fpu)) {
         fpu = 1;
     }
-    unkac = (mMax - mMin) / fpu;
+    mEndTime = (mMax - mMin) / fpu;
     if (start < end) {
         mScale = fpu;
         mOffset = mMin;
@@ -342,10 +349,10 @@ bool AnimTask::Replace(ObjRef *from, Hmx::Object *to) {
 
 void AnimTask::Poll(float f1) {
     if (mAnim) {
-        if (unkb0) {
+        if (mFirstFrame) {
             mAnim->StartAnim();
-            unk9c = mAnim->GetFrame();
-            unkb0 = false;
+            mLastFrame = mAnim->Frame();
+            mFirstFrame = false;
         }
         float f14 = 1;
         float f7 = 1;
@@ -366,8 +373,8 @@ void AnimTask::Poll(float f1) {
             TheTaskMgr.QueueTaskDelete(mBlendTask);
         }
 
-        if (!mLoop && f1 <= unkac && unkac != 0) {
-            f7 = mEaseFunc(f1 / unkac, mEasePower, f7) * mScale * unkac + mOffset;
+        if (!mLoop && f1 <= mEndTime && mEndTime != 0) {
+            f7 = mEaseFunc(f1 / mEndTime, mEasePower, f7) * mScale * mEndTime + mOffset;
         } else {
             f7 = mScale * f1 + mOffset;
         }
@@ -375,15 +382,15 @@ void AnimTask::Poll(float f1) {
         if (mLoop) {
             float f12 = ModRange(mMin, mMax, f7);
             mAnim->SetFrame(f12, f14);
-            if (mListener) {
-                if ((int)(unk9c / (mMax - mMin)) != (int)(f7 / (mMax - mMin))) {
+            if (mEventReciever) {
+                if ((int)(mLastFrame / (mMax - mMin)) != (int)(f7 / (mMax - mMin))) {
                     static Message msg("on_anim_event", Symbol("looped"));
-                    mListener->Handle(msg, false);
+                    mEventReciever->Handle(msg, false);
                 }
             }
         } else {
             float frame;
-            if (unka8) {
+            if (mWrap) {
                 float start = mAnim->StartFrame();
                 float end = mAnim->EndFrame();
                 float min = Min(start, end);
@@ -394,7 +401,7 @@ void AnimTask::Poll(float f1) {
                     } else {
                         frame = fmodf(mMax, max - min);
                     }
-                } else if (f1 >= unkac) {
+                } else if (f1 >= mEndTime) {
                     if (mScale > 0) {
                         frame = fmodf(mMax, max - min);
                     } else {
@@ -408,14 +415,14 @@ void AnimTask::Poll(float f1) {
             }
             mAnim->SetFrame(frame, f14);
         }
-        unk9c = f7;
+        mLastFrame = f7;
         if (!mAnimTarget
             || (!mLoop && !mBlending && mBlendPeriod == 0
-                && (f1 > unkac || mScale == 0))) {
-            if (mListener) {
+                && (f1 > mEndTime || mScale == 0))) {
+            if (mEventReciever) {
                 static Message msg("on_anim_event", Symbol("ended"));
-                mListener->Handle(msg, false);
-                mListener = nullptr;
+                mEventReciever->Handle(msg, false);
+                mEventReciever = nullptr;
             }
             TheTaskMgr.QueueTaskDelete(this);
         }
@@ -426,10 +433,10 @@ float AnimTask::TimeUntilEnd() {
     float time;
     if (mScale > 0.0f) {
         float fpu = mAnim->FramesPerUnit();
-        time = (mMax - mAnim->GetFrame()) / fpu;
+        time = (mMax - mAnim->Frame()) / fpu;
     } else {
         float fpu = mAnim->FramesPerUnit();
-        time = (mAnim->GetFrame() - mMin) / fpu;
+        time = (mAnim->Frame() - mMin) / fpu;
     }
     return time;
 }
@@ -523,7 +530,7 @@ DataNode RndAnimatable::OnAnimate(DataArray *arr) {
     }
     r = arr->FindArray(dest, false);
     if (r) {
-        animTaskStart = GetFrame();
+        animTaskStart = Frame();
         animTaskEnd = r->Float(1);
         animTaskLoop = false;
     }

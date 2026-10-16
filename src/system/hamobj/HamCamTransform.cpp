@@ -181,7 +181,7 @@ void HamCamTransform::Setup(bool b) {
             HamCamShot *shot = result.Obj<HamCamShot>();
             if (shot) {
                 shot->StartAnim();
-                shot->SetFrame(shot->GetFrame(), 1.0f);
+                shot->SetFrame(shot->Frame(), 1.0f);
             }
         }
     }

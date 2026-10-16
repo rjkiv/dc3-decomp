@@ -754,7 +754,7 @@ int LightPreset::GetCurrentKeyframe() const {
         int i;
         int ret;
         float f;
-        GetKey(GetFrame(), i, ret, f);
+        GetKey(Frame(), i, ret, f);
         return ret;
     }
 }
@@ -789,7 +789,7 @@ int LightPreset::NextManualFrame(LightPreset::KeyframeCmd cmd) const {
 void LightPreset::AdvanceManual(LightPreset::KeyframeCmd cmd) {
     MILO_ASSERT(mManual, 0x2c0);
     if (cmd != kPresetKeyframeFirst || mManualFrame) {
-        mManualFrameStart = GetFrame();
+        mManualFrameStart = Frame();
         mLastManualFrame = mManualFrame;
         mManualFrame = NextManualFrame(cmd);
     }

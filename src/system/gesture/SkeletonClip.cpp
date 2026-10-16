@@ -751,9 +751,9 @@ const RecordedFrame *SkeletonClip::CurRecordedFrame(int &index, int &loop_count)
             float secs = MoveDir::SongSeconds();
             return RecordedFrameAt(*mFrames, secs, index, loop_count);
         }
-        if (mFrames->size() != 0 && mFrames->size() > GetFrame()) {
+        if (mFrames->size() != 0 && mFrames->size() > Frame()) {
             loop_count = 0;
-            index = GetFrame();
+            index = Frame();
             return &(*mFrames)[index];
         }
     }

@@ -111,7 +111,7 @@ END_LOADS
 #pragma region RndAnimatable
 
 void Song::SetFrame(float frame, float blend) {
-    float curFrame = GetFrame();
+    float curFrame = Frame();
     bool paused = false;
     if (mHxMaster) {
         paused = !mHxMaster->GetHxAudio()->Paused();
@@ -260,7 +260,7 @@ DataNode Song::GetMidiParsers() {
 void Song::Play() {
     if (mHxMaster) {
         sCallback->SongPlay(true);
-        mHxMaster->Jump(GetFrame() * 1000.0f);
+        mHxMaster->Jump(Frame() * 1000.0f);
         while (!mHxMaster->GetHxAudio()->IsReady()) {
             TheSynth->Poll();
             mHxMaster->GetHxAudio()->Poll();
@@ -288,7 +288,7 @@ float Song::GetBeat() {
     if (!GetTempoMap()) {
         return 0;
     } else {
-        float tick = GetTempoMap()->TimeToTick(GetFrame() * 1000.0f);
+        float tick = GetTempoMap()->TimeToTick(Frame() * 1000.0f);
         return GetBeatMap()->Beat(tick);
     }
 }
@@ -433,7 +433,7 @@ void Song::SyncState() {
         if (worldDir) {
             camMgr = worldDir->GetCameraManager();
             lightMgr = worldDir->GetLightPresetManager();
-            if (GetFrame() == 0) {
+            if (Frame() == 0) {
                 worldDir->Enter();
             } else {
                 lightMgr->Enter();
@@ -452,7 +452,7 @@ void Song::SyncState() {
                 }
             }
         }
-        int tick = GetTempoMap()->TimeToTick(GetFrame() * 1000);
+        int tick = GetTempoMap()->TimeToTick(Frame() * 1000);
         float seconds = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
         float deltaSecs = TheTaskMgr.DeltaSeconds();
         float deltaBeat = TheTaskMgr.DeltaBeat();
@@ -477,7 +477,7 @@ void Song::SyncState() {
         TheTaskMgr.SetDeltaTime(kTaskBeats, deltaBeat);
         if (mHxMaster) {
             mHxMaster->GetHxAudio()->SetPaused(true);
-            mHxMaster->Jump(GetFrame() * 1000);
+            mHxMaster->Jump(Frame() * 1000);
             if (!mFastSync) {
                 while (!mHxMaster->GetHxAudio()->IsReady()) {
                     TheSynth->Poll();

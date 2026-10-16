@@ -127,7 +127,7 @@ void ShellInput::Poll() {
     static bool sHasSkeleton = false;
 
     if (TheUI->FocusPanel() == TheGamePanel) {
-        if (mWrongHandPositionAnim->GetFrame() > 0.0f) {
+        if (mWrongHandPositionAnim->Frame() > 0.0f) {
             mWrongHandPositionAnim->SetFrame(0.0f, 1.0f);
             mLastWrongHandPosition = false;
         }
@@ -359,7 +359,7 @@ void ShellInput::SetCursorAlpha(float f1) const {
         if (dir) {
             RndAnimatable *anim =
                 dir->DataDir()->Find<RndAnimatable>("cursor_alpha.anim");
-            float frame = anim->GetFrame();
+            float frame = anim->Frame();
             frame = TheTaskMgr.DeltaUISeconds() * (f1 - frame) * 10.0f + frame;
             anim->SetFrame(frame, 1);
         }

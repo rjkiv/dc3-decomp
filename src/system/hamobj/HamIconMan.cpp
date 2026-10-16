@@ -88,7 +88,7 @@ void HamIconMan::DrawShowing() {
             if (mBPMOverride > 0) {
                 beat = TheTaskMgr.UISeconds() * (mBPMOverride * 0.016666668f);
             } else {
-                beat = FrameToBeat(TheHamDirector->SongAnim(0)->GetFrame());
+                beat = FrameToBeat(TheHamDirector->SongAnim(0)->Frame());
             }
             beat = (float)fmod(beat, 4.0f) + 1.0f;
             if (mPlayIntroTransition && beat > 4.5f) {
@@ -98,7 +98,7 @@ void HamIconMan::DrawShowing() {
                 mCharClip, mCharClip->StartBeat() + beat, mTexture, true, nullptr, 0, 0
             );
         } else {
-            float clamp = Clamp(0.0f, mEndBeat - mStartBeat, GetFrame());
+            float clamp = Clamp(0.0f, mEndBeat - mStartBeat, Frame());
             float beat = mStartBeat + clamp;
             if (mMoveName != "") {
                 TheHamDirector->DrawIconMan(

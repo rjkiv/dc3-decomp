@@ -20,7 +20,7 @@ FlowAnimate::~FlowAnimate() { TheFlowMgr->CancelCommand(this); }
 
 bool FlowAnimate::Replace(ObjRef *from, Hmx::Object *to) {
     if (from == &unk5c) {
-        if (unk5c && unk5c->Listener() == this) {
+        if (unk5c && unk5c->GetEventReceiver() == this) {
             OnAnimEvent("interrupted");
         }
         unk5c = nullptr;
@@ -169,7 +169,7 @@ bool FlowAnimate::Activate() {
 void FlowAnimate::Deactivate(bool b1) {
     FLOW_LOG("Deactivate\n");
     if (unk5c) {
-        unk5c->SetListener(nullptr);
+        unk5c->SetEventReciever(nullptr);
         AnimTask *task = unk5c;
         unk5c = nullptr;
         delete task;
@@ -231,7 +231,7 @@ void FlowAnimate::Execute(QueueState state) {
     FLOW_LOG("Execute: state = %i\n", (int)state);
     if (IsRunning()) {
         if (unk5c && state == kIgnore) {
-            unk5c->SetListener(nullptr);
+            unk5c->SetEventReciever(nullptr);
             if (mStopMode != 4) {
                 delete unk5c;
             }
@@ -336,7 +336,7 @@ void FlowAnimate::OnAnimEvent(Symbol s) {
     }
     if (s == ended) {
         if (unk5c) {
-            unk5c->SetListener(nullptr);
+            unk5c->SetEventReciever(nullptr);
         }
         unk5c = nullptr;
         if (mRunningNodes.empty() && !mImmediateRelease) {
@@ -353,7 +353,7 @@ void FlowAnimate::OnAnimEvent(Symbol s) {
         unk94 = false;
     } else if (s == looped) {
         if (unkc4 && unk5c) {
-            unk5c->SetListener(nullptr);
+            unk5c->SetEventReciever(nullptr);
             delete unk5c;
             FLOW_TIMED_RELEASE_FROM_PARENT;
         } else {

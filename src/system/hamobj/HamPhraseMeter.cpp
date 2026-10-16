@@ -77,7 +77,7 @@ void HamPhraseMeter::PostLoad(BinStream &bs) {
 void HamPhraseMeter::Poll() {
     RndDir::Poll();
     if (mAnim) {
-        float frame = mAnim->GetFrame();
+        float frame = mAnim->Frame();
         float delta = TheTaskMgr.DeltaBeat() * mActualFPB;
         if (frame < mDesiredFrame) {
             frame = Min(delta + frame, mDesiredFrame);
@@ -104,7 +104,7 @@ void HamPhraseMeter::SetRatingFrac(float frac, float beats_remaining) {
         if (beats_remaining <= 0) {
             mAnim->SetFrame(mDesiredFrame, 1);
         } else {
-            float div = std::fabs(mDesiredFrame - mAnim->GetFrame());
+            float div = std::fabs(mDesiredFrame - mAnim->Frame());
             mActualFPB = Max<float>(mDesiredFPB, div / beats_remaining);
         }
     }

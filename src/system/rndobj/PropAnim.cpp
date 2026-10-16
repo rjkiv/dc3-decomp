@@ -137,7 +137,7 @@ END_SAVES
 BEGIN_COPYS(RndPropAnim)
     COPY_SUPERCLASS(Hmx::Object)
     COPY_SUPERCLASS(RndAnimatable)
-    mLastFrame = GetFrame();
+    mLastFrame = Frame();
     RemoveKeys();
     CREATE_COPY(RndPropAnim)
     BEGIN_COPYING_MEMBERS
@@ -160,7 +160,7 @@ BEGIN_LOADS(RndPropAnim)
     LOAD_SUPERCLASS(Hmx::Object)
     LOAD_SUPERCLASS(RndAnimatable)
     ObjOwnerPtr<Hmx::Object> obj(this);
-    mLastFrame = GetFrame();
+    mLastFrame = Frame();
     DeleteAll(mPropKeys);
     if (d.rev < 7) {
         LoadPre7(d);
@@ -207,7 +207,7 @@ void RndPropAnim::SetFrame(float frame, float blend) {
     if (!mInSetFrame) {
         mInSetFrame = true;
         AdvanceFrame(frame);
-        float myframe = GetFrame();
+        float myframe = Frame();
         FOREACH (it, mPropKeys) {
             if ((*it)->GetExceptionID() == PropKeys::kDirEvent) {
                 ObjKeys *objkeys = (*it)->AsObjectKeys();

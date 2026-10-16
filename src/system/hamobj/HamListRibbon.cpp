@@ -21,7 +21,7 @@ void HamListRibbon::ScrollAnims::SetScrollFrame(float frame) {
 
 void HamListRibbon::ScrollAnims::SetAnims(int i1) {
     if (mScrollAnim) {
-        float frame = mScrollAnim->GetFrame();
+        float frame = mScrollAnim->Frame();
         if (i1 == 0) {
             if (mScrollFade)
                 mScrollFade->SetFrame(1 - frame, 1);
@@ -236,7 +236,7 @@ void HamListRibbon::DrawShowing() {
             if (i == mTestSelectedIndex) {
                 drawStates[i].mHighlight = true;
                 if (mMode == kRibbonSwell && !mTestEntering) {
-                    drawStates[i].mSwellAmount.ForceValue(GetFrame());
+                    drawStates[i].mSwellAmount.ForceValue(Frame());
                 } else {
                     drawStates[i].mSwellAmount.ForceValue(1);
                 }
@@ -363,19 +363,19 @@ void HamListRibbon::PlaySelectSound(int idx) {
 bool HamListRibbon::IsScrollable(int i1) const { return i1 > 6; }
 
 void HamListRibbon::ResetAnims(bool b1) {
-    if (mSelectInactiveAnim && (mSelectInactiveAnim->GetFrame() != 0 || b1)) {
+    if (mSelectInactiveAnim && (mSelectInactiveAnim->Frame() != 0 || b1)) {
         mSelectInactiveAnim->SetFrame(0, 1);
     }
-    if (mSelectAnim && (mSelectAnim->GetFrame() != 0 || b1)) {
+    if (mSelectAnim && (mSelectAnim->Frame() != 0 || b1)) {
         mSelectAnim->SetFrame(0, 1);
     }
-    if (mSelectToggleAnim && (mSelectToggleAnim->GetFrame() != 0 || b1)) {
+    if (mSelectToggleAnim && (mSelectToggleAnim->Frame() != 0 || b1)) {
         mSelectToggleAnim->SetFrame(0, 1);
     }
-    if (mSlideAnim && (mSlideAnim->GetFrame() != 0 || b1)) {
+    if (mSlideAnim && (mSlideAnim->Frame() != 0 || b1)) {
         mSlideAnim->SetFrame(0, 1);
     }
-    if (mSwellAnim && (mSwellAnim->GetFrame() != 0 || b1)) {
+    if (mSwellAnim && (mSwellAnim->Frame() != 0 || b1)) {
         mSwellAnim->SetFrame(0, 1);
     }
 }
@@ -388,18 +388,18 @@ void HamListRibbon::SetAnims(bool b1, float f2) {
     }
     if (b1) {
         if (mMode == 1 && mSlideAnim) {
-            mSlideAnim->SetFrame(GetFrame(), 1);
+            mSlideAnim->SetFrame(Frame(), 1);
         }
         if (mMode == 2) {
             if (mUseToggleAnim && mSelectToggleAnim) {
-                mSelectToggleAnim->SetFrame(GetFrame(), 1);
+                mSelectToggleAnim->SetFrame(Frame(), 1);
             } else if (mSelectAnim) {
-                mSelectAnim->SetFrame(GetFrame(), 1);
+                mSelectAnim->SetFrame(Frame(), 1);
             }
         }
     } else {
         if (mMode == 2 && !mUseToggleAnim && mSelectInactiveAnim) {
-            mSelectInactiveAnim->SetFrame(GetFrame(), 1);
+            mSelectInactiveAnim->SetFrame(Frame(), 1);
         }
     }
 }
@@ -484,13 +484,13 @@ void HamListRibbon::Draw(
     RndEnvironTracker t(mEnv, nullptr);
     if (mSelectAllAnim) {
         if (mMode == kRibbonSelect && !mTestEntering && !mUseToggleAnim) {
-            mSelectAllAnim->SetFrame(GetFrame(), 1);
+            mSelectAllAnim->SetFrame(Frame(), 1);
         } else {
             mSelectAllAnim->SetFrame(0, 1);
         }
     }
     if (mTestEntering && mEnterAnim) {
-        mEnterAnim->SetFrame(GetFrame(), 1);
+        mEnterAnim->SetFrame(Frame(), 1);
     }
 
     int numDrawStates = drawStates.size();
@@ -570,7 +570,7 @@ void HamListRibbon::Draw(
     if (TheLoadMgr.EditMode()) {
         SetAnims(true, 1);
         if (mScrollAnims.mScrollAnim) {
-            float frame = mScrollAnims.mScrollAnim->GetFrame();
+            float frame = mScrollAnims.mScrollAnim->Frame();
             if (mScrollAnims.mScrollFade) {
                 mScrollAnims.mScrollFade->SetFrame(1 - frame, 1);
             }

@@ -57,7 +57,7 @@ void ContentLoadingPanel::Poll() {
     if (mShowing) {
         UIPanel::Poll();
         RndGroup *progressGroup = LoadedDir()->Find<RndGroup>("progress.grp");
-        float frame = progressGroup->GetFrame();
+        float frame = progressGroup->Frame();
         static float sFloat = 100.0f;
         float f;
         if (mCount > 0) {
