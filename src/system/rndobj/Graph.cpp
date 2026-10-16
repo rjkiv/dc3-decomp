@@ -4,34 +4,100 @@
 #include "os/Debug.h"
 #include "rndobj/Utl.h"
 #include "utl/MemMgr.h"
+#include "utl/Str.h"
 
 static RndGraph *sOneFrame = nullptr;
 static std::list<RndGraph *> *sGraphs = nullptr;
 static std::list<FakeGraph> sFakes;
 static ObjPtr<RndCam> sCam(nullptr);
 
-void *Drawable::operator new(unsigned int s) {
-    return MemAlloc(s, __FILE__, 0xA9, "Drawable");
-}
-void Drawable::operator delete(void *v) { MemFree(v, __FILE__, 0xA9, "Drawable"); }
-void ScreenLine::Draw() { UtilDrawLine(mA, mB, mCol); }
-void ScreenLine::DrawFixedZ(float) { UtilDrawLine(mA, mB, mCol); }
-void RectFilled2D::Draw() {
-    TheRnd.DrawRectScreen(mRect, mCol, nullptr, nullptr, nullptr);
-}
-void RectFilled2D::DrawFixedZ(float) {
-    TheRnd.DrawRectScreen(mRect, mCol, nullptr, nullptr, nullptr);
-}
-void DrawSphere::Draw() { UtilDrawSphere(mCenter, mRadius, mCol, nullptr); }
-void DrawString::Draw() { TheRnd.DrawString(mText.c_str(), mPos, mCol, true); }
-void DrawString3D::Draw() { UtilDrawString(mText.c_str(), mPos, mCol); }
-void Line::Draw() { TheRnd.DrawLine(mA, mB, mCol, mZBuf); }
-void Line::DrawFixedZ(float f) {
-    TheRnd.DrawLine(Vector3(mA.x, mA.y, f), Vector3(mB.x, mB.y, f), mCol, mZBuf);
-}
-void DrawSphere::DrawFixedZ(float f) {
-    UtilDrawSphere(Vector3(mCenter.x, mCenter.z, f), mRadius, mCol, nullptr);
-}
+class Drawable {
+public:
+    Drawable() {}
+    virtual ~Drawable() {}
+    virtual void Draw() = 0;
+    virtual void DrawFixedZ(float) = 0;
+
+    MEM_OVERLOAD(Drawable, 0xA9);
+};
+
+class Line : public Drawable {
+public:
+    Line(const Vector3 &va, const Vector3 &vb, const Hmx::Color &clr, bool b)
+        : mA(va), mB(vb), mCol(clr), mZBuf(b) {}
+    virtual void Draw() { TheRnd.DrawLine(mA, mB, mCol, mZBuf); }
+    virtual void DrawFixedZ(float f) {
+        TheRnd.DrawLine(Vector3(mA.x, mA.y, f), Vector3(mB.x, mB.y, f), mCol, mZBuf);
+    }
+
+    Vector3 mA;
+    Vector3 mB;
+    Hmx::Color mCol;
+    bool mZBuf;
+};
+
+class ScreenLine : public Drawable {
+public:
+    ScreenLine(const Vector2 &va, const Vector2 &vb, const Hmx::Color &clr, bool b)
+        : mA(va), mB(vb), mCol(clr), mZBuf(b) {}
+    virtual void Draw() { UtilDrawLine(mA, mB, mCol); }
+    virtual void DrawFixedZ(float) { UtilDrawLine(mA, mB, mCol); }
+
+    Vector2 mA;
+    Vector2 mB;
+    Hmx::Color mCol;
+    bool mZBuf;
+};
+
+class RectFilled2D : public Drawable {
+public:
+    RectFilled2D(const Hmx::Rect &r, const Hmx::Color &c) : mRect(r), mCol(c) {}
+    virtual void Draw() { TheRnd.DrawRectScreen(mRect, mCol, nullptr, nullptr, nullptr); }
+    virtual void DrawFixedZ(float) {
+        TheRnd.DrawRectScreen(mRect, mCol, nullptr, nullptr, nullptr);
+    }
+
+    Hmx::Rect mRect; // 0x4
+    Hmx::Color mCol; // 0x14
+};
+
+class DrawString : public Drawable {
+public:
+    DrawString(const char *cc, const Vector2 &v, const Hmx::Color &clr)
+        : mPos(v), mText(cc), mCol(clr) {}
+    virtual void Draw() { TheRnd.DrawString(mText.c_str(), mPos, mCol, true); }
+    virtual void DrawFixedZ(float) { Draw(); }
+
+    Vector2 mPos;
+    String mText;
+    Hmx::Color mCol;
+};
+
+class DrawString3D : public Drawable {
+public:
+    DrawString3D(const char *cc, const Vector3 &v, const Hmx::Color &clr)
+        : mPos(v), mText(cc), mCol(clr) {}
+    virtual void Draw() { UtilDrawString(mText.c_str(), mPos, mCol); }
+    virtual void DrawFixedZ(float) { Draw(); }
+
+    Vector3 mPos;
+    String mText;
+    Hmx::Color mCol;
+};
+
+class DrawSphere : public Drawable {
+public:
+    DrawSphere(const Vector3 &v, float r, const Hmx::Color &clr)
+        : mCenter(v), mRadius(r), mCol(clr) {}
+    virtual void Draw() { UtilDrawSphere(mCenter, mRadius, mCol, nullptr); }
+    virtual void DrawFixedZ(float f) {
+        UtilDrawSphere(Vector3(mCenter.x, mCenter.z, f), mRadius, mCol, nullptr);
+    }
+
+    Vector3 mCenter; // 0x4
+    float mRadius; // 0x14
+    Hmx::Color mCol; // 0x18
+};
 
 void RndGraph::Draw() {
     for (int i = 0; i < mStuff.size(); i++) {
@@ -51,8 +117,7 @@ RndGraph *RndGraph::GetOneFrame() {
 }
 
 RndGraph *RndGraph::Get(const void *v) {
-    for (std::list<RndGraph *>::iterator it = sGraphs->begin(); it != sGraphs->end();
-         ++it) {
+    FOREACH_PTR (it, sGraphs) {
         if ((*it)->mId == v)
             return *it;
     }
@@ -117,15 +182,14 @@ void RndGraph::Reset() {
 void RndGraph::DrawAll() {
     if (sCam)
         sCam->Select();
-    for (std::list<RndGraph *>::iterator it = sGraphs->begin(); it != sGraphs->end();
-         ++it) {
+    FOREACH_PTR (it, sGraphs) {
         (*it)->Draw();
     }
     if (sOneFrame) {
         sOneFrame->Draw();
         sOneFrame->Reset();
     }
-    for (std::list<FakeGraph>::iterator it = sFakes.begin(); it != sFakes.end(); ++it) {
+    FOREACH (it, sFakes) {
         it->mDrawCallback();
     }
     sCam = nullptr;
@@ -148,15 +212,14 @@ void RndGraph::ResetAll() {
 void RndGraph::Free(const void *id, bool notify) {
     if (sGraphs == nullptr)
         return;
-    for (std::list<RndGraph *>::iterator it = sGraphs->begin(); it != sGraphs->end();
-         ++it) {
+    FOREACH_PTR (it, sGraphs) {
         if ((*it)->mId == id) {
             delete *it;
             sGraphs->erase(it);
             return;
         }
     }
-    for (std::list<FakeGraph>::iterator it = sFakes.begin(); it != sFakes.end(); ++it) {
+    FOREACH (it, sFakes) {
         if (it->mId == id) {
             sFakes.erase(it);
             return;
