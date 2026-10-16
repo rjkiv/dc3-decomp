@@ -75,9 +75,9 @@ END_PROPSYNCS
 BEGIN_SAVES(RndCubeTex)
     SAVE_REVS(2, 0)
     SAVE_SUPERCLASS(Hmx::Object)
-    props.Save(bs);
+    mBaseProps.Save(bs);
     for (int i = 0; i < kNumCubeFaces; i++) {
-        moreprops[i].Save(bs);
+        mFaceProps[i].Save(bs);
     }
     for (int i = 0; i < kNumCubeFaces; i++) {
         bs << mFile[i];
@@ -93,9 +93,9 @@ BEGIN_COPYS(RndCubeTex)
     COPY_SUPERCLASS(Hmx::Object)
     CREATE_COPY(RndCubeTex)
     BEGIN_COPYING_MEMBERS
-        COPY_MEMBER(props)
+        COPY_MEMBER(mBaseProps)
         for (int i = 0; i < kNumCubeFaces; i++) {
-            COPY_MEMBER(moreprops[i])
+            COPY_MEMBER(mFaceProps[i])
             COPY_MEMBER(mFile[i])
             mBitmap[i].Create(
                 c->mBitmap[i], c->mBitmap[i].Bpp(), c->mBitmap[i].Order(), 0
@@ -118,9 +118,9 @@ void RndCubeTex::PreLoad(BinStream &bs) {
     LOAD_SUPERCLASS(Hmx::Object)
     if (d.rev > 1) {
         if (bs.Cached()) {
-            props.Load(bs);
+            mBaseProps.Load(bs);
             for (int i = 0; i < kNumCubeFaces; i++) {
-                moreprops[i].Load(bs);
+                mFaceProps[i].Load(bs);
             }
         } else {
             CubeTexProperties ctprops;
@@ -133,9 +133,9 @@ void RndCubeTex::PreLoad(BinStream &bs) {
         int i, j;
         bs >> i;
         bs >> j;
-        props.mWidth = i;
-        props.mHeight = i;
-        props.mBpp = j;
+        mBaseProps.mWidth = i;
+        mBaseProps.mHeight = i;
+        mBaseProps.mBpp = j;
     }
     for (int i = 0; i < kNumCubeFaces; i++) {
         bs >> mFile[i];
@@ -159,7 +159,7 @@ void RndCubeTex::PostLoad(BinStream &bs) {
             SetBitmap((CubeFace)i, mFile[i], false);
         }
         if (d.rev < 2) {
-            props = moreprops[i];
+            mBaseProps = mFaceProps[i];
         }
     }
     Update();
@@ -193,25 +193,30 @@ bool RndCubeTex::LoadBitmap(const FilePath &fp, RndBitmap &bmap) {
     return ret;
 }
 
-bool RndCubeTex::ValidateBitmapProperties(std::vector<CubeFace> &faces) {
-    if (props.mWidth == 0 || props.mHeight == 0)
+bool RndCubeTex::ValidateBitmapProperties(std::vector<CubeFace> &invalidFaces) {
+    if (mBaseProps.mWidth == 0 || mBaseProps.mHeight == 0)
         return false;
     else {
         const char *sizeStr = RndTex::CheckSize(
-            props.mWidth, props.mHeight, props.mBpp, props.mNumMips, RndTex::kRegular, false
+            mBaseProps.mWidth,
+            mBaseProps.mHeight,
+            mBaseProps.mBpp,
+            mBaseProps.mNumMips,
+            RndTex::kRegular,
+            false
         );
         if (sizeStr) {
             MILO_NOTIFY(sizeStr, Name());
             return false;
         } else {
             for (int i = 1; i < kNumCubeFaces; i++) {
-                CubeTexProperties &propsToAnalyze = moreprops[i];
-                if (props.mWidth != propsToAnalyze.mWidth
-                    || props.mHeight != propsToAnalyze.mHeight
-                    || props.mBpp != propsToAnalyze.mBpp
-                    || props.mNumMips != propsToAnalyze.mNumMips
-                    || props.mOrder != propsToAnalyze.mOrder) {
-                    faces.push_back((CubeFace)i);
+                CubeTexProperties &propsToAnalyze = mFaceProps[i];
+                if (mBaseProps.mWidth != propsToAnalyze.mWidth
+                    || mBaseProps.mHeight != propsToAnalyze.mHeight
+                    || mBaseProps.mBpp != propsToAnalyze.mBpp
+                    || mBaseProps.mNumMips != propsToAnalyze.mNumMips
+                    || mBaseProps.mOrder != propsToAnalyze.mOrder) {
+                    invalidFaces.push_back((CubeFace)i);
                     return false;
                 }
             }
@@ -226,7 +231,7 @@ void RndCubeTex::Update() {
         Reset();
         return;
     } else {
-        props = moreprops[0];
+        mBaseProps = mFaceProps[0];
         Sync();
         return;
     }
@@ -235,16 +240,16 @@ void RndCubeTex::Update() {
 void RndCubeTex::SetBitmap(CubeFace face, const FilePath &fp, bool update) {
     if (LoadBitmap(fp, mBitmap[face])) {
         mFile[face] = fp;
-        moreprops[face].Set(mBitmap[face]);
-        props = moreprops[face];
+        mFaceProps[face].Set(mBitmap[face]);
+        mBaseProps = mFaceProps[face];
     }
     if (update)
         Update();
 }
 
 void RndCubeTex::UpdateFace(CubeFace face) {
-    moreprops[face].Set(mBitmap[face]);
-    props = moreprops[face];
+    mFaceProps[face].Set(mBitmap[face]);
+    mBaseProps = mFaceProps[face];
     Update();
 }
 

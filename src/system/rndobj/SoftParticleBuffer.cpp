@@ -36,8 +36,8 @@ void RndSoftParticleBuffer::DoPost() {
             Rnd::Mode mode = TheRnd.DrawMode();
             TheRnd.SetDrawMode(Rnd::kDrawSoftDepth);
             TheShaderMgr.SetPConstant((PShaderConstant)9, TheNgRnd.PreDepthTexture());
-            TheRenderState.SetTextureFilter(9, RndRenderState::kFilterModePoint, false);
-            TheRenderState.SetTextureClamp(9, RndRenderState::kClampModeClamp);
+            TheRenderState.SetTextureFilter(9, RndRenderState::kPoint, false);
+            TheRenderState.SetTextureClamp(9, RndRenderState::kClamp);
             Vector4 values;
             cam->GetDepthRangeValues(values);
             TheShaderMgr.SetPConstant((PShaderConstant)0x59, values);
@@ -50,8 +50,8 @@ void RndSoftParticleBuffer::DoPost() {
             BlurSurface();
             TheShaderMgr.SetPostSoftDepth(true);
             TheShaderMgr.SetPConstant((PShaderConstant)4, mSurfaces[0]);
-            TheRenderState.SetTextureFilter(4, RndRenderState::kFilterModeLinear, false);
-            TheRenderState.SetTextureClamp(4, RndRenderState::kClampModeClamp);
+            TheRenderState.SetTextureFilter(4, RndRenderState::kLinear, false);
+            TheRenderState.SetTextureClamp(4, RndRenderState::kClamp);
         }
     }
     unk3c.clear();

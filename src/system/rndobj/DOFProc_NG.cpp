@@ -14,31 +14,34 @@
 #include "rndobj/Tex.h"
 #include "ui/UI.h"
 
-void SetVHBlurWeights(bool b1, int i2, int i3) {
+static const float DOF_TARGET_WIDTH = 320;
+static const float DOF_TARGET_HEIGHT = 180;
+
+void SetVHBlurWeights(bool vertical, int width, int height) {
     float constants[] = { 0.125f, 0.125f, 0.125f, 0.125f, 0.125f, 0.125f, 0.125f, 0.125f };
-    Vector2 *floatsToUse;
-    if (b1) {
-        static Vector2 sFloats1[] = {
+    const Vector2 *floatsToUse;
+    if (vertical) {
+        static const Vector2 sampleOffsets[] = {
             Vector2(-0.94201624f, -0.39906216f), Vector2(0.9455861f, -0.76890725f),
             Vector2(-0.0941841f, -0.9293887f),   Vector2(0.34495938f, 0.2938776f),
             Vector2(-0.9158858f, 0.45771432f),   Vector2(-0.8154423f, -0.87912464f),
             Vector2(-0.38277543f, 0.27676845f),  Vector2(0.974844f, 0.7564838f)
         };
-        floatsToUse = sFloats1;
+        floatsToUse = sampleOffsets;
     } else {
-        static Vector2 sFloats2[] = {
+        static const Vector2 sampleOffsets[] = {
             Vector2(0.44323325f, -0.97511554f), Vector2(0.5374298f, -0.4737342f),
             Vector2(-0.2649691f, -0.41893023f), Vector2(0.79197514f, 0.19090188f),
             Vector2(-0.2418884f, 0.99706507f),  Vector2(-0.81409955f, 0.9143759f),
             Vector2(0.19984126f, 0.78641367f),  Vector2(0.14383161f, -0.1410079f)
         };
-        floatsToUse = sFloats2;
+        floatsToUse = sampleOffsets;
     }
-    static float sScale = 0.666f;
-    float blurScale = RndPostProc::DOFOverrides().GetBlurWidthScale() * sScale;
+    static float scaleHack = 0.666f;
+    float blurScale = RndPostProc::DOFOverrides().GetBlurWidthScale() * scaleHack;
     TheShaderMgr.SetNumTaps(8);
-    float f22 = (float)i2 * blurScale * 4.8828124e-06f;
-    float f21 = (float)i3 * blurScale * 1.5432099e-05f;
+    float f22 = (float)width * blurScale * 4.8828124e-06f;
+    float f21 = (float)height * blurScale * 1.5432099e-05f;
     for (int i = 0; i < 8; i++) {
         Vector2 cur = floatsToUse[i];
         TheShaderMgr.SetPConstant(
@@ -52,8 +55,8 @@ void SetVHBlurWeights(bool b1, int i2, int i3) {
 }
 
 NgDOFProc::NgDOFProc()
-    : mEnabled(0), unk34(1), unk38(0), mFocalPlane(1), mBlurDepth(1), mMinBlur(0),
-      mMaxBlur(1) {
+    : mDepthOfField(0), mFocalPlaneDist(1), mNearBlurPlaneDist(0), mFocalPlane(1),
+      mBlurDepth(1), mMinBlur(0), mMaxBlur(1) {
     TheRnd.RegisterPostProcessor(this);
     MILO_ASSERT(TheNgRnd.PreProcessTexture(), 0x41);
     int w = TheNgRnd.PreProcessTexture()->Width() >> 2;
@@ -90,7 +93,7 @@ void NgDOFProc::Set(
             + RndPostProc::DOFOverrides().GetMinBlurOffset()
     );
     if (mMaxBlur > 0 && TheUI->IsGameScreenActive()) {
-        mEnabled = true;
+        mDepthOfField = true;
     }
     if (mBlurDepth <= 0.001f) {
         mBlurDepth = 0.001f;
@@ -104,20 +107,20 @@ void NgDOFProc::Set(
         f6 = 0;
     } else {
         float t = -((far / mFocalPlane) * near - far) / (far - near);
-        f6 = Interp(cam->GetZRange().x, cam->GetZRange().y, t);
+        f6 = Interp(cam->ZRange().x, cam->ZRange().y, t);
     }
-    unk34 = f6;
+    mFocalPlaneDist = f6;
 
     float f3 = -(mFocalPlane * mBlurDepth - mFocalPlane);
     if (f3 < near) {
         f6 = 0;
     } else {
         float t = -((far / f3) * near - far) / (far - near);
-        f6 = Interp(cam->GetZRange().x, cam->GetZRange().y, t);
+        f6 = Interp(cam->ZRange().x, cam->ZRange().y, t);
     }
-    unk38 = f6;
-    if (unk34 < unk38 + 0.001f) {
-        unk34 = unk38 + 0.001f;
+    mNearBlurPlaneDist = f6;
+    if (mFocalPlaneDist < mNearBlurPlaneDist + 0.001f) {
+        mFocalPlaneDist = mNearBlurPlaneDist + 0.001f;
     }
 }
 
@@ -126,7 +129,7 @@ void NgDOFProc::DoPost() {
 
     if (!n.Int() && TheNgRnd.PreProcessTexture() && TheNgRnd.PreDepthTexture()) {
         MILO_ASSERT(mBlurTex[0] && mBlurTex[1], 0x10E);
-        bool ngEnabled = mEnabled;
+        bool ngEnabled = mDepthOfField;
         if (ngEnabled) {
             unsigned int w = mBlurTex[0]->Width();
             unsigned int h = mBlurTex[0]->Height();
@@ -139,12 +142,12 @@ void NgDOFProc::DoPost() {
             tmp.mMaxZ = 1;
             TheNgRnd.SetViewport(tmp);
 
-            float x = 1 / (unk34 - unk38);
+            float x = 1 / (mFocalPlaneDist - mNearBlurPlaneDist);
             TheShaderMgr.SetPConstant(
                 (PShaderConstant)0x18,
                 Vector4(
                     x,
-                    -(unk34 * x),
+                    -(mFocalPlaneDist * x),
                     Min(mMaxBlur, mMinBlur),
                     mMaxBlur < 0.0f ? 1.0f : mMaxBlur
                 )
@@ -175,8 +178,8 @@ void NgDOFProc::DoPost() {
             mBlurTex[0]->FinishDrawTarget();
             TheShaderMgr.SetNumTaps(1);
             TheShaderMgr.SetPConstant((PShaderConstant)8, mBlurTex[0]);
-            TheRenderState.SetTextureFilter(8, RndRenderState::kFilterModeLinear, false);
-            TheRenderState.SetTextureClamp(8, RndRenderState::kClampModeClamp);
+            TheRenderState.SetTextureFilter(8, RndRenderState::kLinear, false);
+            TheRenderState.SetTextureClamp(8, RndRenderState::kClamp);
             TheNgRnd.SetViewport(old);
         }
         TheShaderMgr.SetPostDOF(ngEnabled);

@@ -23,12 +23,12 @@ public:
     virtual void Copy(const Hmx::Object *, Hmx::Object::CopyType);
     virtual void Load(BinStream &);
     virtual void Highlight() { RndTransformable::Highlight(); }
-    virtual void Select(const Vector3 *);
-    virtual void UpdateApproxLighting(const Vector3 *);
-    virtual int NumLights_Real() const { return mLightsReal.size(); }
-    virtual int NumLights_Approx() const { return mLightsApprox.size(); }
-    virtual bool IsFake(RndLight *) const;
-    virtual bool IsReal(RndLight *) const;
+    virtual void Select(const Vector3 *pos);
+    virtual void UpdateApproxLighting(const Vector3 *pos);
+    virtual int NumLights_Real() const { return mLights_Real.size(); }
+    virtual int NumLights_Approx() const { return mLights_Approx.size(); }
+    virtual bool IsFake(RndLight *l) const;
+    virtual bool IsReal(RndLight *l) const;
     virtual void Draw();
 
     OBJ_MEM_OVERLOAD(0x1B);
@@ -41,6 +41,7 @@ public:
         else
             return nullptr;
     }
+    static BoxMapLighting &GetGlobalBoxMap() { return sGlobalLighting; }
 
     void SetUseApproxLocal(bool b) { mUseApprox_Local = b; }
     void SetUseApproxGlobal(bool b) { mUseApprox_Global = b; }
@@ -55,8 +56,8 @@ public:
     const Transform &ColorXfm() const;
     bool FogEnable() const;
     Transform LRFadeRef() const;
-    void RemoveLight(RndLight *);
-    void AddLight(RndLight *);
+    void RemoveLight(RndLight *l);
+    void AddLight(RndLight *l);
     bool IsValidRealLight(const RndLight *l) const;
     const Hmx::Color &AmbientColor() const { return mAmbientFogOwner->mAmbientColor; }
     void SetAmbientColor(const Hmx::Color &col) {
@@ -69,7 +70,6 @@ public:
     bool GetUseToneMapping() const { return mUseToneMapping; }
     float FadeStart() const { return mFadeStart; }
     float FadeEnd() const { return mFadeEnd; }
-    static BoxMapLighting &GetGlobalLighting() { return sGlobalLighting; }
     bool GetAnimateFromPreset() const { return mAnimateFromPreset; }
     const Hmx::Color &FogColor() const { return mAmbientFogOwner->mFogColor; }
     float GetFogStart() const { return mAmbientFogOwner->mFogStart; }
@@ -78,13 +78,15 @@ public:
         mAmbientFogOwner->mFogStart = start;
         mAmbientFogOwner->mFogEnd = end;
     }
-    const ObjPtrList<RndLight> &LightsReal() const { return mLightsReal; }
-    const ObjPtrList<RndLight> &LightsApprox() const { return mLightsApprox; }
+    ObjPtrList<RndLight> &Lights_Real() { return mLights_Real; }
+    const ObjPtrList<RndLight> &Lights_Real() const { return mLights_Real; }
+    ObjPtrList<RndLight> &Lights_Approx() { return mLights_Approx; }
+    const ObjPtrList<RndLight> &Lights_Approx() const { return mLights_Approx; }
 
 protected:
     RndEnviron();
 
-    bool IsLightInList(const RndLight *, const ObjPtrList<RndLight> &) const;
+    bool IsLightInList(const RndLight *light, const ObjPtrList<RndLight> &list) const;
     void OnRemoveAllLights();
     void ReclassifyLights();
     DataNode OnAllowableLights_Real(const DataArray *);
@@ -95,9 +97,9 @@ protected:
     static Vector3 sCurrentPos;
     static bool sCurrentPosSet;
 
-    ObjPtrList<RndLight> mLightsReal; // 0x100
-    ObjPtrList<RndLight> mLightsApprox; // 0x114
-    ObjPtrList<RndLight> mLightsOld; // 0x128
+    ObjPtrList<RndLight> mLights_Real; // 0x100
+    ObjPtrList<RndLight> mLights_Approx; // 0x114
+    ObjPtrList<RndLight> mLights_Old; // 0x128
     Hmx::Color mAmbientColor; // 0x13c
     ObjOwnerPtr<RndEnviron> mAmbientFogOwner; // 0x14c
     bool mFogEnable; // 0x160
@@ -108,7 +110,7 @@ protected:
     float mFadeStart; // 0x180
     float mFadeEnd; // 0x184
     float mFadeMax; // 0x188
-    ObjPtr<RndTransformable> mFadeRef; // 0x18c
+    ObjPtr<RndTransformable> mLRFadeRef; // 0x18c
     Vector4 mLRFade; // 0x1a0, mLeftOut, mLeftOpaque, mRightOpaque, mRightOut
     RndColorXfm mColorXfm; // 0x1b0
     bool mUseColorXfm; // 0x244
@@ -127,7 +129,7 @@ protected:
 
 class RndEnvironTracker {
 public:
-    RndEnvironTracker(RndEnviron *env, const Vector3 *v3)
+    RndEnvironTracker(RndEnviron *env, const Vector3 *pos)
         : mOld(RndEnviron::Current()), mOldPosSet(RndEnviron::CurrentPos()) {
         if (mOldPosSet) {
             mOldPos = *RndEnviron::CurrentPos();
@@ -135,8 +137,9 @@ public:
             mOldPos.Zero();
         }
         if (env) {
-            if (env != RndEnviron::Current() || !VecEqual(v3, RndEnviron::CurrentPos())) {
-                env->Select(v3);
+            if (env != RndEnviron::Current()
+                || !VecEqual(pos, RndEnviron::CurrentPos())) {
+                env->Select(pos);
             }
         }
     }
@@ -151,11 +154,11 @@ public:
     }
 
 protected:
-    bool VecEqual(const Vector3 *v1, const Vector3 *v2) const {
-        if (v1 && v2) {
-            return *v1 == *v2;
+    bool VecEqual(const Vector3 *a, const Vector3 *b) const {
+        if (a && b) {
+            return *a == *b;
         } else
-            return v1 == v2;
+            return a == b;
     }
 
     RndEnviron *mOld; // 0x0

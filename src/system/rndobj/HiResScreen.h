@@ -10,20 +10,25 @@ class HiResScreen {
 public:
     class BmpCache {
     public:
-        BmpCache(unsigned int, unsigned int);
+        BmpCache(unsigned int nWidth, unsigned int nHeight);
         virtual ~BmpCache();
 
         MEM_OVERLOAD(BmpCache, 0x6b)
 
         void DeleteCache();
         void GetLoadedRange(uint &, uint &) const;
-        void LoadCache(uint);
+        void LoadCache(uint pixelRowIndex);
         void FlushCache();
         void GetPixelColor(
-            int, int, unsigned char &, unsigned char &, unsigned char &, unsigned char &
+            int x,
+            int y,
+            unsigned char &r,
+            unsigned char &g,
+            unsigned char &b,
+            unsigned char &a
         ) const;
         void SetPixelColor(
-            int, int, unsigned char, unsigned char, unsigned char, unsigned char
+            int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a
         );
 
         String *mFileNames; // 0x4
@@ -43,18 +48,26 @@ public:
           mCurrTile(0), mEvenOddDisabled(0), mShrinkToSafe(1), mConsoleShowing(0),
           mCache(nullptr) {}
     virtual ~HiResScreen() {}
-    void TakeShot(const char *, int);
-    void GetBorderForTile(int, int, int &, int &, int &, int &) const;
+    void TakeShot(const char *fileBase, int tiling);
+    void GetBorderForTile(
+        int tileX,
+        int tileY,
+        int &borderLeft,
+        int &borderTop,
+        int &borderRight,
+        int &borderBottom
+    ) const;
     void Accumulate();
     void Finish();
     int GetPaddingX() const;
     int GetPaddingY() const;
-    void CurrentTileRect(const Hmx::Rect &, Hmx::Rect &, Hmx::Rect &) const;
-    Hmx::Rect ScreenRect(const RndCam *, const Hmx::Rect &) const;
+    void
+    CurrentTileRect(const Hmx::Rect &srcRect, Hmx::Rect &ratio, Hmx::Rect &outRect) const;
+    Hmx::Rect ScreenRect(const RndCam *cam, const Hmx::Rect &rect) const;
     Hmx::Rect ScreenRect() const;
     Hmx::Rect InvScreenRect() const;
-    bool IsActive() const { return mActive; }
-    int GetTiling() const { return mTiling; }
+    bool Active() const { return mActive; }
+    int Tiling() const { return mTiling; }
 
 protected:
     void Merge(const RndBitmap &, int, int, int, int, int, int, int, int);

@@ -27,7 +27,7 @@ void RndShaderMgr::PreInit() {
         mNumTaps = 1;
         mDepthVolume = 0;
         mDepthShape = 0;
-        mCull = 0;
+        mCull = kUnForced;
         mSubtract = 0;
         mPostSpotlight = 0;
         mPostDOF = 0;
@@ -88,41 +88,23 @@ void RndShaderMgr::Terminate() {
 }
 
 void RndShaderMgr::UpdateCache(const Transform &xfm, int idx) {
-    // i put this here because the asm indexes by increments of 0x30
-    struct ShaderCache {
-        float xx, yx, zx, vx;
-        float xy, yy, zy, vy;
-        float xz, yz, zz, vz;
-    };
-    ShaderCache *cacheArr = (ShaderCache *)mConstantCache;
-    ShaderCache *cacheIdx = &cacheArr[idx];
+    const Vector3 x(xfm.m.x.x, xfm.m.y.x, xfm.m.z.x);
+    const Vector3 y(xfm.m.x.y, xfm.m.y.y, xfm.m.z.y);
+    const Vector3 z(xfm.m.x.z, xfm.m.y.z, xfm.m.z.z);
+    const Vector3 v(xfm.v.x, xfm.v.y, xfm.v.z);
 
-    // yeah i hate this too don't you worry
-    float vx = xfm.v.x;
-    float xx = xfm.m.x.x;
-    float yx = xfm.m.y.x;
-    float zx = xfm.m.z.x;
-    float vy = xfm.v.y;
-    float xy = xfm.m.x.y;
-    float yy = xfm.m.y.y;
-    float zy = xfm.m.z.y;
-    float vz = xfm.v.z;
-    float xz = xfm.m.x.z;
-    float yz = xfm.m.y.z;
-    float zz = xfm.m.z.z;
-
-    cacheIdx->xx = xx;
-    cacheIdx->yx = yx;
-    cacheIdx->zx = zx;
-    cacheIdx->vx = vx;
-    cacheIdx->xy = xy;
-    cacheIdx->yy = yy;
-    cacheIdx->zy = zy;
-    cacheIdx->vy = vy;
-    cacheIdx->xz = xz;
-    cacheIdx->yz = yz;
-    cacheIdx->zz = zz;
-    cacheIdx->vz = vz;
+    mConstantCache[idx * 12 + 0] = x.x;
+    mConstantCache[idx * 12 + 1] = x.y;
+    mConstantCache[idx * 12 + 2] = x.z;
+    mConstantCache[idx * 12 + 3] = v.x;
+    mConstantCache[idx * 12 + 4] = y.x;
+    mConstantCache[idx * 12 + 5] = y.y;
+    mConstantCache[idx * 12 + 6] = y.z;
+    mConstantCache[idx * 12 + 7] = v.y;
+    mConstantCache[idx * 12 + 8] = z.x;
+    mConstantCache[idx * 12 + 9] = z.y;
+    mConstantCache[idx * 12 + 10] = z.z;
+    mConstantCache[idx * 12 + 11] = v.z;
 }
 
 void RndShaderMgr::ShaderPoolAlloc(int i) { mPendingShaderPoolCount = i; }

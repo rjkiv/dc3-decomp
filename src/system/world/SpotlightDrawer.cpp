@@ -401,11 +401,9 @@ void SpotlightDrawer::ClearLights() {
 
 void SpotlightDrawer::UpdateBoxMap() {
     if (sNeedBoxMap != TheRnd.GetFrameID()) {
-        RndEnviron::GetGlobalLighting().Clear();
+        RndEnviron::GetGlobalBoxMap().Clear();
         if (mParams.mLightingInfluence > 0) {
-            ApplyLightingApprox(
-                RndEnviron::GetGlobalLighting(), mParams.mLightingInfluence
-            );
+            ApplyLightingApprox(RndEnviron::GetGlobalBoxMap(), mParams.mLightingInfluence);
         }
         sNeedBoxMap = TheRnd.GetFrameID();
     }

@@ -156,15 +156,15 @@ void RndShader::SelectConfig(RndMat *mat, ShaderType shader_type, bool b3) {
 void RndShader::CheckForceCull(ShaderType s) {
     int shader20 = TheShaderMgr.ForceCullMode();
     if (TheRnd.DrawMode() == Rnd::kDrawExtrude || shader20 == 1) {
-        TheRenderState.SetCullMode(RndRenderState::kCullModeNone);
+        TheRenderState.SetCullMode(RndRenderState::kNone);
     } else if (
         s != kShadowmapShader && shader20 != 3 && TheRnd.DrawMode() != Rnd::kDrawReversed
     ) {
         if (shader20 == 2) {
-            TheRenderState.SetCullMode(RndRenderState::kCullModeCW);
+            TheRenderState.SetCullMode(RndRenderState::kCW);
         }
     } else {
-        TheRenderState.SetCullMode(RndRenderState::kCullModeCCW);
+        TheRenderState.SetCullMode(RndRenderState::kCCW);
     }
 }
 
@@ -299,7 +299,7 @@ u64 RndShaderSimple::CalcShaderOpts(NgMat *mat, ShaderType stype, bool) {
     default:
         break;
     }
-    opts.hiResScreen = TheHiResScreen.IsActive();
+    opts.hiResScreen = TheHiResScreen.Active();
     if (TheRnd.DrawMode() == Rnd::kDrawShadowColor) {
         opts.value = 0;
     }
@@ -316,7 +316,7 @@ void RndShaderSimple::Select(RndMat *mat, ShaderType s, bool b) {
             mat = TheRnd.DefaultMat();
         }
     }
-    TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
+    TheRenderState.SetFillMode(RndRenderState::kSolid);
     bool isSkinned =
         TheShaderMgr.NumBones() && (s == kErrorShader || s == kShadowmapShader);
     if (!RedundantState(mat, s, isSkinned, TheShaderMgr.UseAO(), b)) {
@@ -368,7 +368,7 @@ u64 RndShaderParticles::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool 
         opts.value = 0;
     }
     opts.showShaderCost = TheRnd.ShowShaderCost();
-    opts.hiResScreen = TheHiResScreen.IsActive();
+    opts.hiResScreen = TheHiResScreen.Active();
     return opts.value;
 }
 
@@ -376,7 +376,7 @@ void RndShaderParticles::Select(RndMat *mat, ShaderType s, bool b) {
     if (!mat) {
         mat = TheRnd.DefaultMat();
     }
-    TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
+    TheRenderState.SetFillMode(RndRenderState::kSolid);
     if (!RedundantState(mat, s, false, false, b)) {
         TheNgStats->mMats++;
         NgMat *ngMat = static_cast<NgMat *>(mat);
@@ -450,7 +450,7 @@ u64 RndShaderMultimesh::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool 
     bool projLights = mat->PerfSettings().mRecvProjLights && env->NumLights_Proj() > 0;
     opts.numLightProj = projLights ? env->NumLights_Proj() : 0;
     opts.showShaderCost = TheRnd.ShowShaderCost();
-    opts.hiResScreen = TheHiResScreen.IsActive();
+    opts.hiResScreen = TheHiResScreen.Active();
     return opts.value;
 }
 
@@ -458,7 +458,7 @@ void RndShaderMultimesh::Select(RndMat *mat, ShaderType s, bool b) {
     if (!mat) {
         mat = TheRnd.DefaultMat();
     }
-    TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
+    TheRenderState.SetFillMode(RndRenderState::kSolid);
     if (!RedundantState(mat, s, false, TheShaderMgr.UseAO(), b)) {
         TheNgStats->mMats++;
         NgMat *ngMat = static_cast<NgMat *>(mat);
@@ -554,7 +554,7 @@ u64 RndShaderStandard::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool p
     }
     CheckDistortionOpts(mat, opts);
     opts.showShaderCost = TheRnd.ShowShaderCost();
-    opts.hiResScreen = TheHiResScreen.IsActive();
+    opts.hiResScreen = TheHiResScreen.Active();
     return opts.value;
 }
 
@@ -562,7 +562,7 @@ void RndShaderStandard::Select(RndMat *mat, ShaderType shader_type, bool b) {
     if (!mat) {
         mat = TheRnd.DefaultMat();
     }
-    TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
+    TheRenderState.SetFillMode(RndRenderState::kSolid);
     if (!RedundantState(
             mat, shader_type, TheShaderMgr.NumBones() != 0, TheShaderMgr.UseAO(), b
         )) {
@@ -651,7 +651,7 @@ u64 RndShaderPostProc::CalcShaderOpts(NgMat *, ShaderType, bool) {
     opts.hallOfTime = hallOfTime;
     opts.vignette = vignette;
     opts.softDepthBlend = softDepthBlend;
-    opts.hiResScreen = TheHiResScreen.IsActive();
+    opts.hiResScreen = TheHiResScreen.Active();
     return opts.value;
 }
 
@@ -659,7 +659,7 @@ void RndShaderPostProc::Select(RndMat *mat, ShaderType s, bool b) {
     if (!mat) {
         mat = TheRnd.DefaultMat();
     }
-    TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
+    TheRenderState.SetFillMode(RndRenderState::kSolid);
     if (!RedundantState(mat, s, false, false, b)) {
         TheNgStats->mMats++;
         NgMat *ngMat = static_cast<NgMat *>(mat);
@@ -681,7 +681,7 @@ u64 RndShaderDrawRect::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool p
         precache ? TheShaderMgr.GetPrecacheOffscreen() : TheNgRnd.Offscreen();
     opts.hdr = !offscreen && mat->AllowHDR();
     opts.showShaderCost = TheRnd.ShowShaderCost();
-    opts.hiResScreen = TheHiResScreen.IsActive();
+    opts.hiResScreen = TheHiResScreen.Active();
     return opts.value;
 }
 
@@ -689,7 +689,7 @@ void RndShaderDrawRect::Select(RndMat *mat, ShaderType s, bool b) {
     if (!mat) {
         mat = TheShaderMgr.DrawRectMat();
     }
-    TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
+    TheRenderState.SetFillMode(RndRenderState::kSolid);
     if (!RedundantState(mat, s, false, false, b)) {
         TheNgStats->mMats++;
         NgMat *ngMat = static_cast<NgMat *>(mat);
@@ -707,7 +707,7 @@ u64 RndShaderUnwrapUV::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool p
     ShaderOptions opts;
     opts.diffuseMap = mat->GetDiffuseTex() ? true : false;
     opts.prelit = true;
-    opts.hiResScreen = TheHiResScreen.IsActive();
+    opts.hiResScreen = TheHiResScreen.Active();
     return opts.value;
 }
 
@@ -715,7 +715,7 @@ void RndShaderUnwrapUV::Select(RndMat *mat, ShaderType s, bool b) {
     if (!mat) {
         mat = TheRnd.DefaultMat();
     }
-    TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
+    TheRenderState.SetFillMode(RndRenderState::kSolid);
     if (!RedundantState(mat, s, false, false, b)) {
         TheNgStats->mMats++;
         NgMat *ngMat = static_cast<NgMat *>(mat);
@@ -737,7 +737,7 @@ void RndShaderUnwrapUV::Select(RndMat *mat, ShaderType s, bool b) {
 u64 RndShaderVelocity::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool precache) {
     ShaderOptions opts;
     opts.skinned = TheShaderMgr.NumBones() > 0;
-    opts.hiResScreen = TheHiResScreen.IsActive();
+    opts.hiResScreen = TheHiResScreen.Active();
     return opts.value;
 }
 
@@ -745,7 +745,7 @@ void RndShaderVelocity::Select(RndMat *mat, ShaderType s, bool b) {
     if (!mat) {
         mat = TheRnd.DefaultMat();
     }
-    TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
+    TheRenderState.SetFillMode(RndRenderState::kSolid);
     if (!RedundantState(mat, s, TheShaderMgr.NumBones() != 0, false, b)) {
         TheNgStats->mMats++;
         NgMat *ngMat = static_cast<NgMat *>(mat);
@@ -761,7 +761,7 @@ u64 RndShaderVelocityCamera::CalcShaderOpts(
     NgMat *mat, ShaderType shader_type, bool precache
 ) {
     ShaderOptions opts;
-    opts.hiResScreen = TheHiResScreen.IsActive();
+    opts.hiResScreen = TheHiResScreen.Active();
     return opts.value;
 }
 
@@ -769,7 +769,7 @@ void RndShaderVelocityCamera::Select(RndMat *mat, ShaderType s, bool b) {
     if (!mat) {
         mat = TheRnd.DefaultMat();
     }
-    TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
+    TheRenderState.SetFillMode(RndRenderState::kSolid);
     if (!RedundantState(mat, s, false, false, b)) {
         TheNgStats->mMats++;
         NgMat *ngMat = static_cast<NgMat *>(mat);
@@ -788,7 +788,7 @@ u64 RndShaderDepthVolume::CalcShaderOpts(
     opts.shape = TheShaderMgr.DepthShape();
     opts.skinned = TheShaderMgr.NumBones() ? true : false;
     opts.extrude = TheRnd.DrawMode() == Rnd::kDrawExtrude;
-    opts.hiResScreen = TheHiResScreen.IsActive();
+    opts.hiResScreen = TheHiResScreen.Active();
     return opts.value;
 }
 
@@ -796,7 +796,7 @@ void RndShaderDepthVolume::Select(RndMat *mat, ShaderType s, bool b) {
     if (!mat) {
         mat = TheRnd.DefaultMat();
     }
-    TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
+    TheRenderState.SetFillMode(RndRenderState::kSolid);
     if (!RedundantState(mat, s, TheShaderMgr.NumBones() != 0, false, b)) {
         TheNgStats->mMats++;
         NgMat *ngMat = static_cast<NgMat *>(mat);
@@ -805,16 +805,16 @@ void RndShaderDepthVolume::Select(RndMat *mat, ShaderType s, bool b) {
         SetColorWriteMask(opts, mat);
         if (TheShaderMgr.DepthVolume()) {
             if (TheShaderMgr.Subtract()) {
-                TheRenderState.SetBlendOp(RndRenderState::kBlendOpRevSubtract);
+                TheRenderState.SetBlendOp(RndRenderState::kReverseSub);
             } else {
-                TheRenderState.SetBlendOp(RndRenderState::kBlendOpAdd);
+                TheRenderState.SetBlendOp(RndRenderState::kAdd);
             }
             TheRenderState.SetBlendEnable(true);
             TheRenderState.SetBlend(
-                RndRenderState::kBlendOne,
-                RndRenderState::kBlendOne,
-                RndRenderState::kBlendOne,
-                RndRenderState::kBlendOne
+                RndRenderState::kOne,
+                RndRenderState::kOne,
+                RndRenderState::kOne,
+                RndRenderState::kOne
             );
             TheRenderState.SetDepthTestEnable(false);
             TheRenderState.SetDepthWriteEnable(false);
@@ -873,7 +873,7 @@ u64 RndShaderFur::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool precac
         opts.fade = mat->GetFadeType();
     }
     opts.showShaderCost = TheRnd.ShowShaderCost();
-    opts.hiResScreen = TheHiResScreen.IsActive();
+    opts.hiResScreen = TheHiResScreen.Active();
     return opts.value;
 }
 
@@ -881,7 +881,7 @@ void RndShaderFur::Select(RndMat *mat, ShaderType s, bool b) {
     if (!mat) {
         mat = TheRnd.DefaultMat();
     }
-    TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
+    TheRenderState.SetFillMode(RndRenderState::kSolid);
     if (!RedundantState(mat, s, TheShaderMgr.NumBones() != 0, false, b)) {
         TheNgStats->mMats++;
         NgMat *ngMat = static_cast<NgMat *>(mat);
@@ -967,7 +967,7 @@ u64 RndShaderSyncTrack::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool 
         opts.fade = mat->GetFadeType();
     }
     opts.showShaderCost = TheRnd.ShowShaderCost();
-    opts.hiResScreen = TheHiResScreen.IsActive();
+    opts.hiResScreen = TheHiResScreen.Active();
     opts.fitToSpline = true;
     RndSpline *spline = RndSpline::GlobalDefaultSpline();
     if (spline) {
@@ -981,7 +981,7 @@ void RndShaderSyncTrack::Select(RndMat *mat, ShaderType shader_type, bool b) {
     if (!mat) {
         mat = TheRnd.DefaultMat();
     }
-    TheRenderState.SetFillMode(RndRenderState::kFillModeSolid);
+    TheRenderState.SetFillMode(RndRenderState::kSolid);
     if (!RedundantState(
             mat, shader_type, TheShaderMgr.NumBones() != 0, TheShaderMgr.UseAO(), b
         )) {

@@ -100,8 +100,8 @@ void NgLight::BlurShadowRT() {
                 Vector4(sFloats[j], sFloats[j], sFloats[j], sFloats[j])
             );
         }
-        TheRenderState.SetTextureFilter(0, RndRenderState::kFilterModeLinear, false);
-        TheRenderState.SetTextureFilter(6, RndRenderState::kFilterModeLinear, false);
+        TheRenderState.SetTextureFilter(0, RndRenderState::kLinear, false);
+        TheRenderState.SetTextureFilter(6, RndRenderState::kLinear, false);
         tex3->MakeDrawTarget();
         RndMat *work = TheShaderMgr.GetWork();
         work->SetDiffuseTex(tex2);

@@ -7,11 +7,6 @@
 
 class RndShaderProgram;
 
-#define PS3_SHADERS_TYPE 'PS3S'
-#define PS3_SHADERS_VERSION 1
-#define XBOX_SHADERS_TYPE 'XBOX'
-#define XBOX_SHADERS_VERSION 1
-
 // vertex shader constant
 // each VShaderConstant directly corresponds to a D3DConstants' VertexShaderX
 // 256 possible float values (VertexShaderF)
@@ -208,6 +203,14 @@ enum PShaderConstant {
 
 class RndShaderMgr {
 public:
+    enum CullMode {
+        kUnForced = 0x0000,
+        kNone = 0x0001,
+        kNormal = 0x0002,
+        kCW = 0x0002,
+        kReversed = 0x0003,
+        kCCW = 0x0003,
+    };
     // A binary search tree for a particular shader type.
     struct ShaderTree {
         ShaderType shaderType; // the shader type
@@ -239,21 +242,26 @@ public:
     virtual RndMat *DrawHighlightMat() { return mHighlight; }
     virtual RndMat *DrawRectMat() { return mDrawRect; }
 
-    float *ConstantCache() const { return mConstantCache; }
+    static const unsigned int PS3_SHADERS_TYPE = 'PS3S';
+    static const unsigned int PS3_SHADERS_VERSION = 1;
+    static const unsigned int XBOX_SHADERS_TYPE = 'XBOX';
+    static const unsigned int XBOX_SHADERS_VERSION = 1;
+
+    const float *GetCache() const { return mConstantCache; }
     bool CacheShaders() const { return mCacheShaders; }
-    void UpdateCache(const Transform &, int);
-    void SetMeshInfo(int, bool);
-    void SetShaderErrorDisplay(bool);
+    void UpdateCache(const Transform &trans, int index);
+    void SetMeshInfo(int numBones, bool useAO);
+    void SetShaderErrorDisplay(bool override);
     bool GetShaderErrorDisplay();
     unsigned long InitShaders();
-    void SetTransform(const Transform &);
+    void SetTransform(const Transform &xfm);
     void Invalidate(ShaderType);
     void ToggleShowMetaMatErrors() { mShowMetaMatErrors = !mShowMetaMatErrors; }
     void ToggleShowShaderErrors() { mShowShaderErrors = !mShowShaderErrors; }
-    RndShaderProgram &FindShader(ShaderType, const ShaderOptions &);
+    RndShaderProgram &FindShader(ShaderType shader, const ShaderOptions &opts);
     void *AllocShader();
     void SetNumTaps(int taps) { mNumTaps = taps; }
-    void SetForceCullMode(int mode) { mCull = mode; }
+    void SetForceCullMode(CullMode mode) { mCull = mode; }
     void SetDepthVolume(bool b) { mDepthVolume = b; }
     void SetDepthShape(int shape) { mDepthShape = shape; }
     void SetSubtract(bool b) { mSubtract = b; }
@@ -284,7 +292,7 @@ public:
     int NumTaps() const { return mNumTaps; }
     bool DepthVolume() const { return mDepthVolume; }
     int DepthShape() const { return mDepthShape; }
-    int ForceCullMode() const { return mCull; }
+    CullMode ForceCullMode() const { return mCull; }
     bool Subtract() const { return mSubtract; }
     bool PostSpotlight() const { return mPostSpotlight; }
     bool PostDOF() const { return mPostDOF; }
@@ -317,23 +325,23 @@ public:
 
 protected:
     virtual void LoadShaders(const char *filename);
-    virtual void LoadShaderFile(FileStream &);
+    virtual void LoadShaderFile(FileStream &file);
     virtual RndShaderProgram *NewShaderProgram() = 0;
 
-    void ShaderPoolAlloc(int);
+    void ShaderPoolAlloc(int count);
 
     // The collection of ShaderTrees; 1 ShaderTree per ShaderType.
     std::list<ShaderTree> mShaderTrees; // 0x4
     bool mUseAO; // 0xc
     int mNumBones; // 0x10
     int mNumTaps; // 0x14
-    bool mDepthVolume;
-    int mDepthShape;
-    int mCull; // 0x20 - some sort of enum
-    bool mSubtract;
+    bool mDepthVolume; // 0x18
+    int mDepthShape; // 0x1c
+    CullMode mCull; // 0x20
+    bool mSubtract; // 0x24
 
     // all of these are various postproc flags
-    bool mPostSpotlight;
+    bool mPostSpotlight; // 0x25
     bool mPostDOF; // 0x26
     bool mPostBloom; // 0x27 - bloom related
     bool mPostGlare; // 0x28 - bloom related
@@ -341,23 +349,23 @@ protected:
     bool mPostHueConverge; // 0x2a
     bool mPostPosterize; // 0x2b
     bool mPostKaleidoscope; // 0x2c
-    bool mPostNoise;
-    bool mPostNoiseMidtone;
-    bool mPostBlendPrevious;
-    bool mPostCopyPrevious;
-    bool mPostResamp;
-    int mPostHallOfTime;
+    bool mPostNoise; // 0x2d
+    bool mPostNoiseMidtone; // 0x2e
+    bool mPostBlendPrevious; // 0x2f
+    bool mPostCopyPrevious; // 0x30
+    bool mPostResamp; // 0x31
+    int mPostHallOfTime; // 0x34
     bool mPostMotionBlur; // 0x38
-    bool mPostVelocity;
+    bool mPostVelocity; // 0x39
     bool mPostGradientMap; // 0x3a
     bool mPostRefract; // 0x3b
     bool mPostChromaticAberration; // 0x3c
     bool mPostChromaticSharpen; // 0x3d
     bool mPostVignette; // 0x3e
-    bool mPostSoftDepth;
+    bool mPostSoftDepth; // 0x3f
 
     bool mAllowPerPixel; // 0x40
-    bool mPrecacheOffscreen;
+    bool mPrecacheOffscreen; // 0x41
     bool mShaderErrorDisplay; // 0x42
     RndMat *mWork; // 0x44
     RndMat *mPostProc; // 0x48
@@ -365,10 +373,10 @@ protected:
     RndMat *mDrawRect; // 0x50
     void *mShaderPool; // 0x54
     int mShaderPoolCount; // 0x58
-    int mPendingShaderPoolCount; // 0x5c - shader pool alloc
-    int mShaderSize;
+    int mPendingShaderPoolCount; // 0x5c
+    unsigned int mShaderSize; // 0x60
     float *mConstantCache; // 0x64
-    int mCacheSize;
+    unsigned int mCacheSize; // 0x68
     bool mCacheShaders; // 0x6c
     bool mPreInitialized; // 0x6d
     bool mShowShaderErrors; // 0x6e

@@ -1,6 +1,7 @@
 #include "rndobj/Cam.h"
 #include "Rnd.h"
 #include "Utl.h"
+#include "math/Geo.h"
 #include "math/Mtx.h"
 #include "math/Rot.h"
 
@@ -10,18 +11,19 @@
 #include "os/Debug.h"
 #include "os/System.h"
 #include "rndobj/Draw.h"
+#include "rndobj/HiResScreen.h"
 #include "rndobj/Trans.h"
 
-RndCam *RndCam::sCurrent;
+RndCam *RndCam::sCurrent = nullptr;
 float RndCam::sDefaultNearPlane = 1;
 float RndCam::sMaxFarNearPlaneRatio = 1000;
 static Transform sFlipYZ(Hmx::Matrix3(1, 0, 0, 0, 0, 1, 0, 1, 0), Vector3(0, 0, 0));
 
 RndCam::RndCam()
     : mNearPlane(sDefaultNearPlane), mFarPlane(mNearPlane * sMaxFarNearPlaneRatio),
-      mYFov(0.6024178), unk2cc(1), mZRange(0.0f, 1.0f),
-      mScreenRect(0.0f, 0.0f, 1.0f, 1.0f), mTargetTex(this), unk300(Hmx::Matrix4::ID()),
-      unk340(Hmx::Matrix4::ID()) {
+      mYFov(0.6024178), mYRatioMult(1), mZRange(0.0f, 1.0f),
+      mScreenRect(0.0f, 0.0f, 1.0f, 1.0f), mTargetTex(this),
+      mViewProj(Hmx::Matrix4::ID()), mInvTransposeViewProj(Hmx::Matrix4::ID()) {
     UpdateLocal();
 }
 
@@ -145,7 +147,7 @@ void RndCam::Select() {
     }
     WorldXfm();
     sCurrent = this;
-    if (TheRnd.GetAspect() != mAspect) {
+    if (TheRnd.GetAspect() != mLastAspect) {
         UpdateLocal();
     }
 }
@@ -157,9 +159,9 @@ Transform RndCam::GetInvViewXfm() {
 }
 
 void RndCam::SetViewProj(const Hmx::Matrix4 &mtx) {
-    unk300 = mtx;
-    Invert(unk300, unk340);
-    Transpose(unk340, unk340);
+    mViewProj = mtx;
+    Invert(mViewProj, mInvTransposeViewProj);
+    Transpose(mInvTransposeViewProj, mInvTransposeViewProj);
 }
 
 void RndCam::SetTargetTex(RndTex *tex) {
@@ -183,25 +185,25 @@ void RndCam::Init() {
     DataRegisterFunc("cam_get_max_far_near_ratio", OnGetMaxFarNearPlaneRatio);
 }
 
-void RndCam::SetFrustum(float near, float far, float yfov, float f4) {
-    if (far - 0.0001f > sMaxFarNearPlaneRatio * near) {
+void RndCam::SetFrustum(float nearPlane, float farPlane, float yFov, float yRatioMult) {
+    if (farPlane - 0.0001f > sMaxFarNearPlaneRatio * nearPlane) {
         MILO_NOTIFY_ONCE(
             "%s: %f/%f plane ratio exceeds %d",
             Name(),
-            far,
-            near,
+            farPlane,
+            nearPlane,
             (int)sMaxFarNearPlaneRatio
         );
-        if (far == mFarPlane) {
-            near = far / sMaxFarNearPlaneRatio;
+        if (farPlane == mFarPlane) {
+            nearPlane = farPlane / sMaxFarNearPlaneRatio;
         } else {
-            far = sMaxFarNearPlaneRatio * near;
+            farPlane = sMaxFarNearPlaneRatio * nearPlane;
         }
     }
-    mNearPlane = near;
-    mFarPlane = far;
-    mYFov = yfov;
-    unk2cc = f4;
+    mNearPlane = nearPlane;
+    mFarPlane = farPlane;
+    mYFov = yFov;
+    mYRatioMult = yRatioMult;
     UpdateLocal();
 }
 
@@ -247,15 +249,17 @@ void RndCam::GetInfiniteViewProj(Hmx::Matrix4 &m4) const {
 
 void RndCam::GetCamFrustum(Vector3 &v1, Vector3 (&varr)[4]) {
     v1 = WorldXfm().v;
-    static Vector2 sV2s[] = { Vector2(0, 0), Vector2(0, 1), Vector2(1, 0), Vector2(1, 1) };
-    for (int i = 0; i < DIM(sV2s); i++) {
-        ScreenToWorld(sV2s[i], mFarPlane, varr[i]);
+    static Vector2 screenCorner[] = {
+        Vector2(0, 0), Vector2(0, 1), Vector2(1, 0), Vector2(1, 1)
+    };
+    for (int i = 0; i < DIM(screenCorner); i++) {
+        ScreenToWorld(screenCorner[i], mFarPlane, varr[i]);
         Subtract(varr[i], v1, varr[i]);
     }
 }
 
 void RndCam::UpdateLocal() {
-    float f2 = (mScreenRect.h / mScreenRect.w) * unk2cc;
+    float f2 = (mScreenRect.h / mScreenRect.w) * mYRatioMult;
     if (mTargetTex) {
         f2 *= (float)mTargetTex->Height() / (float)mTargetTex->Width();
     } else {
@@ -279,7 +283,44 @@ void RndCam::UpdateLocal() {
         mInvLocalProjectXfm.m.z.y = 1;
     }
     UpdatedWorldXfm();
-    mAspect = TheRnd.GetAspect();
+    mLastAspect = TheRnd.GetAspect();
+}
+
+void RndCam::GetViewProjectXfms(Transform &view, Hmx::Matrix4 &proj) const {
+    Multiply(mInvWorldXfm, sFlipYZ, view);
+    proj.Zero();
+    float near = mNearPlane;
+    float far = mFarPlane;
+    float ratio;
+    if (mYFov == 0) {
+        proj.m[3].w = 1;
+        ratio = 1 / (far - near);
+    } else {
+        proj.m[2].w = 1;
+        ratio = far / (far - near);
+    }
+    Hmx::Rect screenRect = mScreenRect;
+    screenRect = TheHiResScreen.ScreenRect(this, screenRect);
+    float f14 = mScreenRect.h / 2 + mScreenRect.y;
+    float f13 = mScreenRect.w / 2 + mScreenRect.x;
+    float xfm1 = (mScreenRect.w * mLocalProjectXfm.m.x.x * 2);
+    float xfm2 = (-(mScreenRect.h * mLocalProjectXfm.m.z.y) * 2);
+
+    float x_adjusted = Max(screenRect.x, 0.0f);
+    float y_adjusted = Max(screenRect.y, 0.0f);
+    float h_adjusted = Min(screenRect.w + screenRect.x, 1.0f);
+    float v_adjusted = Min(screenRect.h + screenRect.y, 1.0f);
+    float f5 = (x_adjusted - f13) * 2;
+    float f6 = (y_adjusted - f14) * 2;
+    float f7 = (h_adjusted - f13) * 2;
+    float f8 = (v_adjusted - f14) * 2;
+
+    proj.m[0].x = xfm1 / (f7 - f5);
+    proj.m[1].y = xfm2 / (f8 - f6);
+    proj.m[2].x = -((f7 + f5) / (f7 - f5));
+    proj.m[2].y = (f8 + f6) / (f8 - f6);
+    proj.m[2].z = ratio;
+    proj.m[3].z = -(mNearPlane * ratio);
 }
 
 DataNode RndCam::OnGetDefaultNearPlane(DataArray *) { return sDefaultNearPlane; }

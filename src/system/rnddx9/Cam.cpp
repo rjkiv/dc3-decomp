@@ -46,7 +46,7 @@ void DxCam::Select() {
     if (GetGfxMode() == kNewGfx) {
         SetViewProj(xfm * mtx);
         Transform inv = GetInvViewXfm();
-        TheShaderMgr.SetVConstant((VShaderConstant)4, unk300);
+        TheShaderMgr.SetVConstant((VShaderConstant)4, mViewProj);
         TheShaderMgr.SetVConstant((VShaderConstant)16, Hmx::Matrix4(inv));
         Hmx::Rect r = TheHiResScreen.ScreenRect();
         TheShaderMgr.SetVConstant((VShaderConstant)0x46, Vector4(r.x, r.y, r.w, r.h));

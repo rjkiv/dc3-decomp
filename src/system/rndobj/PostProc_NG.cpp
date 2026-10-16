@@ -148,7 +148,7 @@ void NgPostProc::CheckBlendPrevious() {
 }
 void NgPostProc::DoVelocity() {
     TheShaderMgr.SetPostVelocity(false);
-    if (mMotionBlurVelocity != false && TheHiResScreen.IsActive() == false) {
+    if (mMotionBlurVelocity != false && TheHiResScreen.Active() == false) {
         bool flag = RndVelocityBuffer::Singleton().Draw(
             TheRnd.GetWorldCamCopy(), mMotionBlurObjects
         );
@@ -186,8 +186,8 @@ void NgPostProc::CheckNoise() {
             TheShaderMgr.SetPConstant((PShaderConstant)0x71, v50);
         }
         TheShaderMgr.SetPConstant((PShaderConstant)0xD, mNoiseMap);
-        TheRenderState.SetTextureFilter(13, RndRenderState::kFilterModeLinear, false);
-        TheRenderState.SetTextureClamp(13, RndRenderState::kClampModeWrap);
+        TheRenderState.SetTextureFilter(13, RndRenderState::kLinear, false);
+        TheRenderState.SetTextureClamp(13, RndRenderState::kWrap);
     }
     TheShaderMgr.SetPostNoise(flag);
     TheShaderMgr.SetPostNoiseMidtone(flag ? mNoiseMidtone : false);
@@ -286,8 +286,8 @@ void NgPostProc::CheckRefract() {
         TheShaderMgr.SetPConstant((PShaderConstant)0x77, v50);
         TheShaderMgr.SetPConstant((PShaderConstant)0x78, v40);
         TheShaderMgr.SetPConstant((PShaderConstant)1, mRefractionMap);
-        TheRenderState.SetTextureFilter(1, RndRenderState::kFilterModeLinear, false);
-        TheRenderState.SetTextureClamp(1, RndRenderState::kClampModeWrap);
+        TheRenderState.SetTextureFilter(1, RndRenderState::kLinear, false);
+        TheRenderState.SetTextureClamp(1, RndRenderState::kWrap);
         TheShaderMgr.SetPostRefract(true);
     } else {
         mRefractAccumDistance.x = 0;
@@ -396,7 +396,7 @@ void NgPostProc::DoBloom() {
     } else {
         b2 = false;
     }
-    if (mBloomGlare && !TheHiResScreen.IsActive()) {
+    if (mBloomGlare && !TheHiResScreen.Active()) {
         b1 = true;
     } else {
         b1 = false;
@@ -455,14 +455,14 @@ void NgPostProc::DoBloom() {
         TheShaderMgr.SetPConstant(
             (PShaderConstant)15, TheRnd.GetDefaultTex(Rnd::kDefaultTex_Black)
         );
-        TheRenderState.SetTextureFilter(7, RndRenderState::kFilterModeLinear, false);
-        TheRenderState.SetTextureClamp(7, RndRenderState::kClampModeClamp);
-        TheRenderState.SetTextureFilter(7, RndRenderState::kFilterModeLinear, false);
-        TheRenderState.SetTextureClamp(7, RndRenderState::kClampModeClamp);
-        TheRenderState.SetTextureFilter(11, RndRenderState::kFilterModeLinear, false);
-        TheRenderState.SetTextureClamp(11, RndRenderState::kClampModeClamp);
-        TheRenderState.SetTextureFilter(15, RndRenderState::kFilterModeLinear, false);
-        TheRenderState.SetTextureClamp(15, RndRenderState::kClampModeClamp);
+        TheRenderState.SetTextureFilter(7, RndRenderState::kLinear, false);
+        TheRenderState.SetTextureClamp(7, RndRenderState::kClamp);
+        TheRenderState.SetTextureFilter(7, RndRenderState::kLinear, false);
+        TheRenderState.SetTextureClamp(7, RndRenderState::kClamp);
+        TheRenderState.SetTextureFilter(11, RndRenderState::kLinear, false);
+        TheRenderState.SetTextureClamp(11, RndRenderState::kClamp);
+        TheRenderState.SetTextureFilter(15, RndRenderState::kLinear, false);
+        TheRenderState.SetTextureClamp(15, RndRenderState::kClamp);
         RndTex *preProcessTex = TheNgRnd.PreProcessTexture();
         if (preProcessTex) {
             if (b1) {

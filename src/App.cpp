@@ -480,7 +480,7 @@ void App::CaptureHiRes() {
 
     DrawRegular();
 
-    int tiles = TheHiResScreen.GetTiling() * TheHiResScreen.GetTiling();
+    int tiles = TheHiResScreen.Tiling() * TheHiResScreen.Tiling();
 
     for (int i = 0; i <= tiles; i++) {
         DrawRegular();
@@ -548,7 +548,7 @@ void App::RunWithoutDebugging() {
                 h.PostUpdate();
             }
             FileDiscSpinUp();
-            if (TheHiResScreen.IsActive()) {
+            if (TheHiResScreen.Active()) {
                 CaptureHiRes();
             } else {
                 DrawRegular();

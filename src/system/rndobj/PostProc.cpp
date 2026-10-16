@@ -388,11 +388,11 @@ DataNode RndPostProc::OnAllowedNormalMap(const DataArray *) {
 }
 
 bool RndPostProc::BlendPrevious() const {
-    return mTrailThreshold < 1 && mTrailDuration > 0 && !TheHiResScreen.IsActive();
+    return mTrailThreshold < 1 && mTrailDuration > 0 && !TheHiResScreen.Active();
 }
 
 float RndPostProc::BloomIntensity() const {
-    if (mBloomGlare && TheHiResScreen.IsActive()) {
+    if (mBloomGlare && TheHiResScreen.Active()) {
         return mBloomIntensity / 3.0f;
     } else
         return mBloomIntensity;
@@ -406,7 +406,7 @@ bool RndPostProc::DoVignette() const { return mVignetteIntensity != 0; }
 
 bool RndPostProc::DoMotionBlur() const {
     return mMotionBlurBlendAmount > 0 && mMotionBlurBlendWeight.PackRgb() > 0
-        && !TheHiResScreen.IsActive();
+        && !TheHiResScreen.Active();
 }
 
 bool RndPostProc::DoGradientMap() const { return mGradMapOpacity > 0 && mGradientMap; }
@@ -655,10 +655,10 @@ void RndPostProc::Interp(const RndPostProc *p1, const RndPostProc *p2, float f3)
         mMotionBlurVelocity = p5->mMotionBlurVelocity;
         mChromaticSharpen = p5->mChromaticSharpen;
         mBloomIntensity = ::Interp(
-            p1->mBloomGlare && TheHiResScreen.IsActive() ? p1->mBloomIntensity / 3.0f
-                                                         : p1->mBloomIntensity,
-            p2->mBloomGlare && TheHiResScreen.IsActive() ? p2->mBloomIntensity / 3.0f
-                                                         : p2->mBloomIntensity,
+            p1->mBloomGlare && TheHiResScreen.Active() ? p1->mBloomIntensity / 3.0f
+                                                       : p1->mBloomIntensity,
+            p2->mBloomGlare && TheHiResScreen.Active() ? p2->mBloomIntensity / 3.0f
+                                                       : p2->mBloomIntensity,
             f3
         );
         ::Interp(p1->mBloomColor, p2->mBloomColor, f3, mBloomColor);

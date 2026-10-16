@@ -443,7 +443,7 @@ void Rnd::BeginDrawing() {
     mProcCmds = mProcCounter.ProcCommands();
     mDefaultCam->Select();
     mDefaultEnv->Select(nullptr);
-    if (!TheHiResScreen.IsActive()) {
+    if (!TheHiResScreen.Active()) {
         mPointTests.clear();
     }
     mDrawCount++;
@@ -493,7 +493,7 @@ void Rnd::EndDrawing() {
 }
 
 void Rnd::RemovePointTest(RndFlare *flare) {
-    if (!TheHiResScreen.IsActive()) {
+    if (!TheHiResScreen.Active()) {
         for (std::list<PointTest>::iterator it = mPointTests.begin();
              it != mPointTests.end();) {
             if (it->unkc == flare) {
@@ -1120,7 +1120,7 @@ void Rnd::Modal(Debug::ModalType &t, FixedString &msg, bool wait) {
 }
 
 void Rnd::TestPoint(const Vector3 &v, RndFlare *flare) {
-    if (!TheHiResScreen.IsActive()) {
+    if (!TheHiResScreen.Active()) {
         if (RndCam::Current()->TargetTex()) {
             MILO_NOTIFY_ONCE("Flare %s can't be drawn in rendered texture", flare->Name());
             flare->SetVisible(false);

@@ -218,7 +218,7 @@ void RndTexBlender::DrawShowing() {
                     work->SetAlpha(1);
                     if (RndCam::Current()) {
                         TheShaderMgr.SetVConstant(
-                            (VShaderConstant)4, RndCam::Current()->GetMatrix300()
+                            (VShaderConstant)4, RndCam::Current()->ViewProj()
                         );
                     }
                 }
@@ -253,7 +253,7 @@ void RndTexBlender::DrawShowing() {
                     work->SetAlpha(1);
                     if (RndCam::Current()) {
                         TheShaderMgr.SetVConstant(
-                            (VShaderConstant)4, RndCam::Current()->GetMatrix300()
+                            (VShaderConstant)4, RndCam::Current()->ViewProj()
                         );
                     }
                 }
@@ -314,9 +314,7 @@ void RndTexBlender::DrawBlendList(
         }
         work->SetAlpha(1);
         if (RndCam::Current()) {
-            TheShaderMgr.SetVConstant(
-                (VShaderConstant)4, RndCam::Current()->GetMatrix300()
-            );
+            TheShaderMgr.SetVConstant((VShaderConstant)4, RndCam::Current()->ViewProj());
         }
     }
 }

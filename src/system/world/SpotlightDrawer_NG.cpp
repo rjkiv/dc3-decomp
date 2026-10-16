@@ -106,8 +106,8 @@ void NgSpotlightDrawer::SetXSectionTexture(const Spotlight::BeamDef &def) {
         tex = SR().mWhite;
     }
     TheShaderMgr.SetPConstant((PShaderConstant)0xB, tex);
-    TheRenderState.SetTextureClamp(0xB, RndRenderState::kClampModeClamp);
-    TheRenderState.SetTextureFilter(0xB, RndRenderState::kFilterModeLinear, false);
+    TheRenderState.SetTextureClamp(0xB, RndRenderState::kClamp);
+    TheRenderState.SetTextureFilter(0xB, RndRenderState::kLinear, false);
 }
 
 bool NgSpotlightDrawer::RestoreCam() {
@@ -162,7 +162,7 @@ void NgSpotlightDrawer::SetupFogDensityState() {
 
     if (mFogDensityMap) {
         TheShaderMgr.SetPConstant(kPShader_FogDensityMap, mFogDensityMap);
-        TheRenderState.SetTextureClamp(5, RndRenderState::kClampModeClamp);
+        TheRenderState.SetTextureClamp(5, RndRenderState::kClamp);
     }
 
     RndCam::Current()->GetInfiniteViewProj(viewProj);
