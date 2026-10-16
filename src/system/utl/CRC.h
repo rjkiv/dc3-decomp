@@ -9,22 +9,16 @@ namespace Hmx {
             MILO_ASSERT(ValidateCRC(mCRC, cstr), 0x20);
         }
         CRC(int crc) : mCRC(crc) {}
-        // CRC(const FixedString&);
 
         operator int() const { return mCRC; }
-        // bool IsValid() const;
         // bool Null() const;
         // bool operator==(int) const;
         // bool operator!=(int) const;
-        // int GetHash();
         // const char* Str() const;
 
-        // a bunch of AddData funcs, see RBVR if you need to use them
-
-        static bool ValidateCRC(int, const char *); // just returns true
-        static int ComputeHash(const char *, unsigned int);
+        static bool ValidateCRC(int crc, const char *str); // just returns true
+        static int ComputeHash(const char *data, unsigned int size);
         // static const char* LookupCRC(int);
-        // static const int kInvalidCRC;
 
     private:
         int mCRC; // 0x0

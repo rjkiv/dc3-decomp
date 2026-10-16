@@ -37,9 +37,7 @@ BinStream &RndBitmap::LoadHeader(BinStream &bs, u8 &numMips) {
     bs.Tell();
     bs >> rev;
     if (rev > 1) {
-        // stupid. lol. lmao even
-        int &crc = reinterpret_cast<int &>(mName);
-        bs >> crc;
+        bs >> mName;
     }
     bs >> mBpp;
     if (rev > 0)

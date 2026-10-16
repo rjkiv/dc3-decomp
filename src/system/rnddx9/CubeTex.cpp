@@ -59,7 +59,7 @@ void DxCubeTex::Sync() {
                 nullptr
             );
             mTex->UnlockRect((D3DCUBEMAP_FACES)i, j);
-            bmp = bmp->nextMip();
+            bmp = bmp->Mip();
         }
         mBitmap[i].Reset();
     }

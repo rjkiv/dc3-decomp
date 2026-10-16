@@ -947,7 +947,8 @@ void TransformKeys(RndTransAnim *tanim, const Transform &tf) {
 
 void EndianSwapBitmap(RndBitmap &bmap) {
     for (int i = 0; i < bmap.Height(); i++) {
-        unsigned int *curRow = (unsigned int *)(bmap.Pixels() + bmap.RowBytes() * i);
+        unsigned int *curRow =
+            (unsigned int *)((char *)bmap.Pixels() + bmap.RowBytes() * i);
         for (int j = 0; j < bmap.Width(); j++) {
             EndianSwapEq(curRow[j]);
         }

@@ -25,8 +25,8 @@ bool UseBottomMip() {
 void CopyBottomMip(RndBitmap &dst, const RndBitmap &src) {
     MILO_ASSERT(&src != &dst, 0x25);
     const RndBitmap *srcPtr = &src;
-    while (srcPtr->nextMip())
-        srcPtr = srcPtr->nextMip();
+    while (srcPtr->Mip())
+        srcPtr = srcPtr->Mip();
     dst.Create(*srcPtr, srcPtr->Bpp(), srcPtr->Order(), nullptr);
 }
 
@@ -208,7 +208,7 @@ void RndTex::PostLoad(BinStream &bs) {
         } else {
             d >> mBitmap;
         }
-        if (!mBitmap.HasName() && mType == kRegular) {
+        if (!mBitmap.Name() && mType == kRegular) {
             MILO_LOG(
                 "Bitmap %s, does not have name set, it will not be cached!\n", Name()
             );
@@ -426,14 +426,14 @@ void RndTex::SetBitmap(FileLoader *fl) {
         } else {
             mBitmap.Create(buffer);
         }
-        if (!mBitmap.HasName()) {
+        if (!mBitmap.Name()) {
             if (!mFilepath.empty()) {
                 mBitmap.SetName(
                     Hmx::CRC(FileRelativePath(FileExecRoot(), mFilepath.c_str()))
                 );
             }
         }
-        if (!mBitmap.HasName() && mType == kRegular) {
+        if (!mBitmap.Name() && mType == kRegular) {
             MILO_LOG(
                 "Bitmap %s, does not have name set, it will not be cached!\n",
                 FileRelativePath(FileRoot(), mFilepath.c_str())
