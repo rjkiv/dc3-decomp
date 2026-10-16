@@ -432,7 +432,7 @@ void Song::SyncState() {
         WorldDir *worldDir = dynamic_cast<WorldDir *>(MainDir());
         if (worldDir) {
             camMgr = worldDir->GetCameraManager();
-            lightMgr = worldDir->GetLightPresetManager();
+            lightMgr = worldDir->GetPresetManager();
             if (Frame() == 0) {
                 worldDir->Enter();
             } else {
