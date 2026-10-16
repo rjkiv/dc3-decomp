@@ -349,7 +349,7 @@ void WorldDir::PostLoad(BinStream &bs) {
             d >> fff;
             if (p) {
                 p->SetShowing(showing);
-                p->SetOrder(fff);
+                p->SetDrawOrder(fff);
             }
             d.ReadString(buf, 0x80);
             if (p && *buf != '\0') {
