@@ -178,7 +178,7 @@ const std::vector<DancerFrame> &DancerSequence::GetDancerFrames() const {
 }
 
 const DancerSkeleton *DancerSequence::CurSkeleton() const {
-    int idx = GetFrame();
+    int idx = Frame();
     if (idx >= 0 && idx < mDancerFrames.size()) {
         return &mDancerFrames[idx].mSkeleton;
     } else {

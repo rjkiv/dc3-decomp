@@ -210,9 +210,9 @@ bool RndGroup::MakeWorldSphere(Sphere &s, bool b) {
 
 void RndGroup::Draw() {
     if (Showing()) {
-        TheRnd.PushClipPlanes(ClipPlanes());
+        TheRnd.PushClipPlanes(mClipPlanes);
         RndGroup::DrawShowing();
-        TheRnd.PopClipPlanes(ClipPlanes());
+        TheRnd.PopClipPlanes(mClipPlanes);
     }
 }
 

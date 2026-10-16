@@ -1,4 +1,5 @@
 #pragma once
+#include "gesture/BaseSkeleton.h"
 #include "hamobj/RhythmDetector.h"
 #include "math/Color.h"
 #include "math/DoubleExponentialSmoother.h"
@@ -12,12 +13,15 @@
 #include "utl/MemMgr.h"
 
 struct DepthBuffer3DAttachment {
+    // DepthBuffer3DAttachment(RndTransformable*, int, SkeletonJoint, Vector3, bool);
+    // DepthBuffer3DAttachment();
+
     RndTransformable *obj; // 0x0
     int player; // 0x4
-    int unk8;
-    Vector3 unkc;
-    bool unk1c;
-    int unk20;
+    SkeletonJoint bone; // 0x8
+    Vector3 offset; // 0xc
+    bool offset_from_ground; // 0x1c
+    RndTransformable *prev_parent; // 0x20
 };
 
 /** "Render the Kinect depth buffer as a 3D mesh" */
@@ -42,19 +46,24 @@ public:
     static void Init();
     NEW_OBJ(DepthBuffer3D)
 
-    void SetPlayerPalette(RndTex *);
-    void AddAttachment(const DepthBuffer3DAttachment &);
-    void SetGrooviness(float);
+    void SetPlayerPalette(RndTex *newTex);
+    void AddAttachment(const DepthBuffer3DAttachment &attachment);
+    void SetGrooviness(float groove);
     void SetGrooviness(RhythmDetector *, RhythmDetector *);
-    void ForceDrawSkeletonIndex(int, bool);
+    void ForceDrawSkeletonIndex(int index, bool drawOthers);
 
-    ObjPtr<RndTex> GetUnk18C() const { return unk18c; }
-    void SetUnk18C(RndTex *tex) { unk18c = tex; }
+    void SetTexSource(RndTex *tex) { mTexSource = tex; }
+
+    DepthBuffer3DAttachment *GetAttachment(const RndTransformable *t);
 
 protected:
     DepthBuffer3D();
 
-    void UpdateAttachment(DepthBuffer3DAttachment &, const Vector4 &, const Vector4 &);
+    void UpdateAttachment(
+        DepthBuffer3DAttachment &att,
+        const Vector4 &texZoomParams,
+        const Vector4 &depthZoomParams
+    );
 
     static LargeQuadRenderData mQuad;
 
@@ -69,11 +78,11 @@ protected:
     /** "enabled alters xbox rendering to display every voxel" */
     bool mDebugLayout; // 0x104
     /** "Color for non-player pixels (i.e. the background)" */
-    Hmx::Color mNobodyColor; // 0x108
+    Hmx::Color mNobodyCol; // 0x108
     /** "1D palette for player depth" */
     ObjPtr<RndTex> mPlayerPalette; // 0x118
-    ObjPtr<RndTex> unk12c;
-    float unk140;
+    ObjPtr<RndTex> mLastPlayerPalette; // 0x12c
+    float mAnimPerc; // 0x140
     /** "Starting point for palette". Ranges from -1 to 1. */
     float mPlayerPaletteOffset; // 0x144
     /** "Scale the coordinate used to look up the palette value.
@@ -90,41 +99,34 @@ protected:
     float mStretchNearCamera; // 0x174
     /** "Multiply palette alpha by this value.". Ranges from 0 to 1. */
     float mOpacity; // 0x178
-    float unk17c;
-    float unk180;
-    int unk184;
-    bool unk188;
-    ObjPtr<RndTex> unk18c;
-    int unk1a0;
-    int unk1a4;
-    int unk1a8;
-    int unk1ac;
-    int unk1b0;
-    int unk1b4;
-    int unk1b8;
-    int unk1bc;
+    float mPlayer1Groove; // 0x17c
+    float mPlayer2Groove; // 0x180
+    int mForceDrawSkeletonIndex; // 0x184
+    bool mDrawOthersOnForce; // 0x188
+    ObjPtr<RndTex> mTexSource; // 0x18c
+    Vector3 mFootPos[2]; // 0x1a0
     /** "How many times to tile the mesh in the x-axis/y-axis" */
-    Vector2 mTile; // 0x1c0
+    Vector2 mTiles; // 0x1c0
     /** "Voxel scalar" */
-    float mScaleVoxel; // 0x1c8
+    float mVoxelScale; // 0x1c8
     /** "Voxel gap scalar" */
-    float mScaleVoxelGap; // 0x1cc
+    float mVoxelSeparation; // 0x1cc
     /** "horizontal fisheye coefficient" */
-    float mFishEyeX; // 0x1d0
+    float mFisheyeX; // 0x1d0
     /** "vertical fisheye coefficient" */
-    float mFishEyeY; // 0x1d4
-    ObjPtr<RhythmDetector> unk1d8;
-    ObjPtr<RhythmDetector> unk1ec;
-    std::vector<DepthBuffer3DAttachment> unk200;
-    DoubleExponentialSmoother unk20c;
-    DoubleExponentialSmoother unk220;
-    DoubleExponentialSmoother unk234;
-    DoubleExponentialSmoother unk248;
-    DoubleExponentialSmoother unk25c;
-    DoubleExponentialSmoother unk270;
+    float mFisheyeY; // 0x1d4
+    ObjPtr<RhythmDetector> mGroove1; // 0x1d8
+    ObjPtr<RhythmDetector> mGroove2; // 0x1ec
+    std::vector<DepthBuffer3DAttachment> mAttachments; // 0x200
+    DoubleExponentialSmoother mZoomWidth; // 0x20c
+    DoubleExponentialSmoother mZoomXCenter; // 0x220
+    DoubleExponentialSmoother mZoomHeight; // 0x234
+    DoubleExponentialSmoother mZoomYCenter; // 0x248
+    DoubleExponentialSmoother mZoomZCenter; // 0x25c
+    DoubleExponentialSmoother mZoomDepth; // 0x270
     /** "maximum uv zooming" */
     float mMaxZoom; // 0x284
     /** "maximum uv zooming" */
     float mMaxDepthZoom; // 0x288
-    bool unk28c;
+    bool mHasPrevSmoothData; // 0x28c
 };

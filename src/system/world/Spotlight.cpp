@@ -147,7 +147,7 @@ Spotlight::Spotlight()
     mLastDirection.Identity();
     mLastTargetPosition.Zero();
     mPresetOrient.Reset();
-    SetOrder(-1000);
+    SetDrawOrder(-1000);
 }
 
 Spotlight::~Spotlight() {

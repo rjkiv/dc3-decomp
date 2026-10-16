@@ -1176,7 +1176,7 @@ DataNode HamDirector::OnSelectCamera(DataArray *a) {
     if (!mDisabled) {
         float frame = Max(0.0f, BeatToFrame(TheTaskMgr.Beat()));
         if (TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) >= 0 || TheLoadMgr.EditMode()) {
-            if (anim && (!TheLoadMgr.EditMode() || frame != anim->GetFrame())) {
+            if (anim && (!TheLoadMgr.EditMode() || frame != anim->Frame())) {
                 START_AUTO_TIMER("song_anim");
                 anim->SetFrame(frame, 1);
             }
@@ -1184,7 +1184,7 @@ DataNode HamDirector::OnSelectCamera(DataArray *a) {
                 Difficulty diff = (Difficulty)i;
                 if (mDancerFaceAnims[diff]
                     && (!TheLoadMgr.EditMode()
-                        || frame != mDancerFaceAnims[diff]->GetFrame())) {
+                        || frame != mDancerFaceAnims[diff]->Frame())) {
                     mDancerFaceAnims[diff]->SetFrame(frame, 1);
                 }
             }
@@ -1501,8 +1501,7 @@ Symbol HamDirector::ClosestMove() {
             SymbolKeys *keys =
                 dynamic_cast<SymbolKeys *>(GetPropKeys(playerDiff, "move"));
             if (keys) {
-                Key<Symbol> *nearest =
-                    keys->KeyNearest(mSongAnims[playerDiff]->GetFrame());
+                Key<Symbol> *nearest = keys->KeyNearest(mSongAnims[playerDiff]->Frame());
                 if (nearest) {
                     strcpy(buf, nearest->value.Str());
                     char *chr = strchr(buf, '.');
@@ -2359,7 +2358,7 @@ void HamDirector::PlayNextShot() {
 
 void HamDirector::SetShot(Symbol s) {
     if (TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) >= 0
-        && !(SongAnim(0) && SongAnim(0)->GetFrame() < 0)) {
+        && !(SongAnim(0) && SongAnim(0)->Frame() < 0)) {
         static Symbol review("review");
         static Symbol skills_mode("skills_mode");
         bool inReview = TheHamProvider->Property(skills_mode, true)->Sym() == review;
@@ -2628,7 +2627,7 @@ void HamDirector::Poll() {
                     if (songAnim0 != -1) {
                         if (clipPlayer0.Init(0)) {
                             clipPlayer0.PlayAnims(
-                                character0, songAnim->GetFrame(), mLastFrame, mBlendDebug
+                                character0, songAnim->Frame(), mLastFrame, mBlendDebug
                             );
                         }
                     }
@@ -2639,10 +2638,7 @@ void HamDirector::Poll() {
                         if (!getPracFrames) {
                             if (clipPlayer1.Init(1)) {
                                 clipPlayer1.PlayAnims(
-                                    character1,
-                                    songAnim->GetFrame(),
-                                    mLastFrame,
-                                    mBlendDebug
+                                    character1, songAnim->Frame(), mLastFrame, mBlendDebug
                                 );
                             }
                         }
@@ -2664,7 +2660,7 @@ void HamDirector::Poll() {
                                 break;
                             }
                             float whiteNoise = RndWind::GetWhiteNoise(
-                                (((songAnim->GetFrame() / 300) + i * 534.46f))
+                                (((songAnim->Frame() / 300) + i * 534.46f))
                             );
                             float val = (whiteNoise - 0.5f) * mBackupDrift * 0.14f;
                             if (0 < val) {
@@ -2672,7 +2668,7 @@ void HamDirector::Poll() {
                             }
                             backupPlayer->PlayAnims(
                                 backup,
-                                songAnim->GetFrame() - val * 30.0f,
+                                songAnim->Frame() - val * 30.0f,
                                 mLastFrame - val * 30.0f,
                                 mBlendDebug
                             );
@@ -2681,7 +2677,7 @@ void HamDirector::Poll() {
                     }
                 }
             }
-            mLastFrame = songAnim->GetFrame();
+            mLastFrame = songAnim->Frame();
             if (0 <= TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo)) {
                 float seconds = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
                 if (seconds - TheTaskMgr.DeltaSeconds() < 0) {

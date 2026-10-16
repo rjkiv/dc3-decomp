@@ -11,11 +11,11 @@
 class RndCam;
 
 enum HighlightStyle {
-    kHighlightWireframe,
-    kHighlightSphere,
-    kHighlightNone,
-    kHighlightWireframeWithNormals,
-    kNumHighlightStyles
+    kHighlightWireframe = 0x0000,
+    kHighlightSphere = 0x0001,
+    kHighlightNone = 0x0002,
+    kHighlightWireframeWithNormals = 0x0003,
+    kNumHighlightStyles = 0x0004,
 };
 
 /**
@@ -44,21 +44,21 @@ public:
     virtual void Load(BinStream &);
     /** "Calculates the bounding sphere for the object." */
     virtual void UpdateSphere() { mSphere.Zero(); }
-    virtual float GetDistanceToPlane(const Plane &, Vector3 &) { return 0; }
-    virtual bool MakeWorldSphere(Sphere &s, bool zero) { return false; }
+    virtual float GetDistanceToPlane(const Plane &plane, Vector3 &v) { return 0; }
+    virtual bool MakeWorldSphere(Sphere &s, bool calc) { return false; }
     /** Get the current camera to use. */
     virtual RndCam *CamOverride() { return nullptr; }
-    virtual void Mats(std::list<class RndMat *> &, bool) {}
+    virtual void Mats(std::list<class RndMat *> &mats, bool allocTempMats) {}
     virtual void Draw();
     virtual void DrawShowing() {}
-    virtual void DrawShadow(const Transform &light, float shadowPlane) {}
+    virtual void DrawShadow(const Transform &light, float zOffset) {}
     /** Get the list of this Object's children that are drawable. */
     virtual void ListDrawChildren(std::list<RndDrawable *> &) {}
     virtual RndDrawable *CollideShowing(const Segment &s, float &dist, Plane &plane) {
         return nullptr;
     }
-    virtual int CollidePlane(const Plane &);
-    virtual void CollideList(const Segment &, std::list<Collision> &);
+    virtual int CollidePlane(const Plane &plane);
+    virtual void CollideList(const Segment &s, std::list<Collision> &collisions);
     virtual void DrawPreClear() {}
     virtual void UpdatePreClearState() {}
     virtual void Highlight();
@@ -69,13 +69,12 @@ public:
 
     void SetShowing(bool);
     bool Showing() const { return mShowing; }
-    void SetOrder(float order) { mOrder = order; }
-    float GetOrder() const { return mOrder; }
+    void SetDrawOrder(float order) { mOrder = order; }
+    float DrawOrder() const { return mOrder; }
     RndDrawable *Collide(const Segment &, float &, Plane &);
     bool CollideSphere(const Segment &);
     void SetSphere(const Sphere &s) { mSphere = s; }
     const Sphere &GetSphere() const { return mSphere; }
-    ObjPtrVec<RndTransformable> &ClipPlanes() { return mClipPlanes; }
 
     static void DumpLoad(BinStream &bs);
     static HighlightStyle GetHighlightStyle() { return sHighlightStyle; }
@@ -124,7 +123,6 @@ protected:
     DataNode OnZeroSphere(const DataArray *);
     DataNode OnGetDrawChildren(const DataArray *);
 
-private:
     /** "Whether the object and its Draw children are drawn or collided with." */
     bool mShowing; // 0x8
     /** "bounding sphere" */
@@ -149,6 +147,8 @@ public:
             (*it)->Draw();
         }
     }
+
+    void PushBack(std::list<RndDrawable *> &) const;
 
     RndDrawable *CollideShowing(const Segment &, float &, Plane &) const;
     void CollideList(const Segment &s, std::list<RndDrawable::Collision> &c) const {

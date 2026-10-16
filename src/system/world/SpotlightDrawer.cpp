@@ -93,7 +93,7 @@ void SpotDrawParams::Load(BinStreamRev &d) {
 #pragma endregion
 #pragma region SpotlightDrawer
 
-SpotlightDrawer::SpotlightDrawer() : mParams(this) { SetOrder(-100000); }
+SpotlightDrawer::SpotlightDrawer() : mParams(this) { SetDrawOrder(-100000); }
 
 SpotlightDrawer::~SpotlightDrawer() {
     if (sCurrent == this) {
@@ -151,7 +151,7 @@ BEGIN_LOADS(SpotlightDrawer)
     } else {
         LOAD_SUPERCLASS(Hmx::Object)
     }
-    SetOrder(-100000);
+    SetDrawOrder(-100000);
     mParams.Load(d);
 END_LOADS
 

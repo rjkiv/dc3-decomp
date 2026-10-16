@@ -167,7 +167,7 @@ void StreamRecorder::CompressTextures() {
         unkcc.pop_front();
         MILO_ASSERT(index >= 0 && index < mBuffers.size(), 0x32);
         RndTex::AlphaCompress compress =
-            mUseAlpha ? (RndTex::AlphaCompress)1 : (RndTex::AlphaCompress)0;
+            mUseAlpha ? RndTex::kLowQualityAlpha : RndTex::kNoAlpha;
         TheRnd.CompressTexture(mBuffers[index], compress, this);
     }
 }
@@ -177,7 +177,7 @@ void StreamRecorder::Reset() {
     mBuffers.reserve(mMaxFrames);
     for (int i = 0; i < mMaxFrames; i++) {
         RndTex *tex = Hmx::Object::New<RndTex>();
-        tex->SetMipMapK(666);
+        tex->SetMipMapK(RndTex::kMipMapKPS3Linear);
         mBuffers.push_back(tex);
     }
     StopRecordingImmediate();

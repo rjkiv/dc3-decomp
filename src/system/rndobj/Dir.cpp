@@ -229,7 +229,7 @@ void RndDir::OldLoadProxies(BinStream &bs, int rev) {
         loadedDir->SetName(name.c_str(), this);
         loadedDir->SetLocalXfm(localXfm);
         loadedDir->SetTransParent(Find<RndTransformable>(transName.c_str(), false), false);
-        loadedDir->SetOrder(order);
+        loadedDir->SetDrawOrder(order);
         loadedDir->SetShowing(showing);
         loadedDir->SetEnv(Find<RndEnviron>(envName.c_str(), false));
         loadedDir->SetProxyFile(path, true);

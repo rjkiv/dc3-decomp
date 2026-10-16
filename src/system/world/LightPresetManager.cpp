@@ -9,13 +9,13 @@ void PrintPreset(const char *str, LightPreset *preset) {
             MILO_LOG(
                 "Manual (Keyframe: %d), frame %f\n",
                 preset->GetCurrentKeyframe(),
-                preset->GetFrame()
+                preset->Frame()
             );
         } else {
             MILO_LOG(
                 "Animated (Keyframe: %d), frame %f\n",
                 preset->GetCurrentKeyframe(),
-                preset->GetFrame()
+                preset->Frame()
             );
         }
     } else

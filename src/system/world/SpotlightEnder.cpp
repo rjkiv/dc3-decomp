@@ -4,7 +4,7 @@
 #include "obj/Object.h"
 #include "rndobj/Draw.h"
 
-SpotlightEnder::SpotlightEnder() { SetOrder(-900); }
+SpotlightEnder::SpotlightEnder() { SetDrawOrder(-900); }
 
 BEGIN_HANDLERS(SpotlightEnder)
     HANDLE_SUPERCLASS(RndDrawable)

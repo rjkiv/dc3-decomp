@@ -11,8 +11,10 @@
 #include "rndobj/Utl.h"
 #include "utl/BinStream.h"
 
-RndDrawable::RndDrawable()
-    : mShowing(true), mOrder(0), mClipPlanes(this, (EraseMode)0, kObjListNoNull) {
+HighlightStyle RndDrawable::sHighlightStyle = kHighlightWireframe;
+bool RndDrawable::sForceSubpartSelection = false;
+
+RndDrawable::RndDrawable() : mShowing(true), mOrder(0), mClipPlanes(this) {
     mSphere.Zero();
 }
 

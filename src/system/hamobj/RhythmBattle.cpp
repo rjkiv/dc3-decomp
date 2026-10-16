@@ -765,7 +765,7 @@ void RhythmBattle::OnBeat() {
                 mPlayer1->AnimateIn();
                 if (mInAnim) {
                     mInAnim->Animate(
-                        mInAnim->GetFrame(), mInAnim->EndFrame(), mInAnim->Units()
+                        mInAnim->Frame(), mInAnim->EndFrame(), mInAnim->Units()
                     );
                 }
                 mAnimIn = true;

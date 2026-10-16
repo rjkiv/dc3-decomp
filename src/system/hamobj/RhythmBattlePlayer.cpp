@@ -304,10 +304,10 @@ void RhythmBattlePlayer::Enter() {
             DepthBuffer3DAttachment attachment;
             attachment.obj = mBoxyWaistTrans;
             attachment.player = mPlayer;
-            attachment.unk8 = 0;
-            attachment.unkc = Vector3::GetZero();
-            attachment.unk1c = 0;
-            attachment.unk20 = 0;
+            attachment.bone = kJointHipCenter;
+            attachment.offset = Vector3::GetZero();
+            attachment.offset_from_ground = false;
+            attachment.prev_parent = nullptr;
             mBoxyman1->AddAttachment(attachment);
         }
     }
@@ -329,7 +329,7 @@ void RhythmBattlePlayer::HackPlayerQuit() {
     int trackingID = player->GetSkeletonTrackingID();
     int skelIdx = TheGestureMgr->GetSkeletonIndexByTrackingID(trackingID);
     if (skelIdx != -1 && mInAnim2) {
-        mInAnim2->Animate(mInAnim2->GetFrame(), mInAnim2->EndFrame(), mInAnim2->Units());
+        mInAnim2->Animate(mInAnim2->Frame(), mInAnim2->EndFrame(), mInAnim2->Units());
     }
 }
 

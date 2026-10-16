@@ -64,7 +64,7 @@ HamUI::HamUI()
       mGamePanel(nullptr), mAugmentedPhoto(nullptr), mTakeSnapshotNextDraw(false),
       mExtraSnapshotDrawForLag(false), mEventScreen(nullptr),
       mShellInput(new ShellInput()), mLastButtonDownPadNum(0),
-      mCameraOutput(LiveCameraInput::kBufferOff), mSkeletonDrawRadians(0),
+      mCameraOutput(LiveCameraInput::BufferType(-1)), mSkeletonDrawRadians(0),
       mButtonSpam(false), mUIOverlay(nullptr) {
     SetFullScreenDraw(false);
 }

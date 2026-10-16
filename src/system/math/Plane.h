@@ -38,9 +38,13 @@ public:
         return ret;
     }
 
+    // DC3
+    // void Normalize();
     //   public: const Vector3& Normal() const;
     //   public: Vector3& Normal();
     //   public: bool operator==(const Plane&) const;
+
+    // RBVR
     //   public: bool operator!=(const Plane&) const;
 
     Vector4 &AsVector4() { return reinterpret_cast<Vector4 &>(*this); }

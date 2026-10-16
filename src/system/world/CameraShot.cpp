@@ -365,7 +365,7 @@ void CamShotFrame::BuildTransform(
         float f12 = mCamShot->PathFrame();
         if (f12 < 0) {
             if (0 < mCamShot->Duration()) {
-                f12 = mCamShot->GetFrame() / mCamShot->Duration();
+                f12 = mCamShot->Frame() / mCamShot->Duration();
             } else {
                 f12 = 0;
             }

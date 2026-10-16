@@ -423,8 +423,8 @@ RndMat *GetMat(RndDrawable *draw) {
 }
 
 bool SortDraws(RndDrawable *draw1, RndDrawable *draw2) {
-    if (draw1->GetOrder() != draw2->GetOrder())
-        return draw1->GetOrder() < draw2->GetOrder();
+    if (draw1->DrawOrder() != draw2->DrawOrder())
+        return draw1->DrawOrder() < draw2->DrawOrder();
     else {
         RndMat *mat1 = GetMat(draw1);
         RndMat *mat2 = GetMat(draw2);
@@ -947,7 +947,8 @@ void TransformKeys(RndTransAnim *tanim, const Transform &tf) {
 
 void EndianSwapBitmap(RndBitmap &bmap) {
     for (int i = 0; i < bmap.Height(); i++) {
-        unsigned int *curRow = (unsigned int *)(bmap.Pixels() + bmap.RowBytes() * i);
+        unsigned int *curRow =
+            (unsigned int *)((char *)bmap.Pixels() + bmap.RowBytes() * i);
         for (int j = 0; j < bmap.Width(); j++) {
             EndianSwapEq(curRow[j]);
         }

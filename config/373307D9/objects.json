@@ -567,7 +567,7 @@
             "system/rnddx9/TexMgr.cpp": "Matching",
             "system/rnddx9/Utl.cpp": "Matching",
             "system/rndobj/AmbientOcclusion.cpp": "NonMatching",
-            "system/rndobj/Anim.cpp": "NonMatching",
+            "system/rndobj/Anim.cpp": "Matching",
             "system/rndobj/AnimFilter.cpp": "Matching",
             "system/rndobj/BaseMaterial.cpp": "Matching",
             "system/rndobj/Bitmap.cpp": "NonMatching",
