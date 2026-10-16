@@ -283,7 +283,7 @@ const Transform &RndEnviron::ColorXfm() const {
     static Vector3 z(0, 0, 1);
     static Transform ident(Hmx::Matrix3(x, y, z), Vector3(0, 0, 0));
     if (mUseColorXfm)
-        return mColorXfm.mColorXfm;
+        return mColorXfm.Xfm();
     else
         return ident;
 }

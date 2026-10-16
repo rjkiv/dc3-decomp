@@ -5,14 +5,14 @@
 #include "rndobj/Tex.h"
 
 enum BloomBlurStyle {
-    kBloomBlurStyle0,
-    kBloomBlurStyle1,
-    kBloomBlurStyle2,
+    kBloomBlurStyle_Gaussian = 0x0000,
+    kBloomBlurStyle_Streak = 0x0001,
+    kBloomBlurStyle_Glare = 0x0002,
 };
 
 enum BloomBlurDirection {
-    kBloomBlurDirection0,
-    kBloomBlurDirection1,
+    kBloomBlurDirection_Horizontal = 0x0000,
+    kBloomBlurDirection_Vertical = 0x0001,
 };
 
 class NgPostProc : public RndPostProc {
@@ -24,7 +24,7 @@ public:
 
         void AllocateTextures(unsigned int, unsigned int);
         void FreeTextures();
-        RndTex *Tex(int idx) { return mBloomTexture[idx]; }
+        RndTex *GetTex(unsigned int idx) { return mBloomTexture[idx]; }
 
     private:
         RndTex *mBloomTexture[2]; // 0x4
@@ -36,28 +36,28 @@ public:
         BloomTextures() {}
         virtual ~BloomTextures() {
             for (int i = 0; i < N; i++) {
-                mTextures[i].FreeTextures();
+                mBloomSet[i].FreeTextures();
             }
         }
 
         void AllocateTextures(unsigned int w, unsigned int h) {
-            for (int i = 0; i < DIM(mTextures); i++) {
+            for (int i = 0; i < DIM(mBloomSet); i++) {
                 w /= 4;
                 h /= 4;
-                mTextures[i].AllocateTextures(w, h);
+                mBloomSet[i].AllocateTextures(w, h);
             }
         }
 
         void FreeTextures() {
-            for (int i = 0; i < DIM(mTextures); i++) {
-                mTextures[i].FreeTextures();
+            for (int i = 0; i < DIM(mBloomSet); i++) {
+                mBloomSet[i].FreeTextures();
             }
         }
 
-        RndTex *Tex(int i, int j) { return mTextures[i].Tex(j); }
+        RndTex *GetTex(unsigned int i, unsigned int j) { return mBloomSet[i].GetTex(j); }
 
     private:
-        BloomTextureSet mTextures[N];
+        BloomTextureSet mBloomSet[N];
     };
 
     NgPostProc();
@@ -100,8 +100,8 @@ protected:
     void CheckChromaticAberration();
     void CheckPosterizeAndKaleidoscope();
 
-    Vector2 unk22c; // 0x22c
-    Vector2 unk234; // 0x234
-    ObjPtrList<RndDrawable> unk23c; // 0x23c
-    bool unk250; // 0x250
+    Vector2 mPhase; // 0x22c
+    Vector2 mRefractAccumDistance; // 0x234
+    ObjPtrList<RndDrawable> mMotionBlurObjects; // 0x23c
+    bool mFirstFrame; // 0x250
 };

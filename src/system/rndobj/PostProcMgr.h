@@ -27,6 +27,9 @@ public:
     void CopyFromPostProc(RndPostProc *);
     void BlendToPostProc(RndPostProc *, float);
 
+protected:
+    RndPostProcMgr();
+
 private:
     bool IsEnabled() const;
     RndPostProc *MsgToPostProc(DataArray *);
@@ -34,14 +37,11 @@ private:
     DataNode OnCopyFromPostProc(DataArray *);
     DataNode OnBlendToPostProc(DataArray *);
 
-protected:
-    RndPostProcMgr();
-
     /** "Primary postproc to use.  When blending,
         the blend result will be written into this postproc." */
     ObjPtr<RndPostProc> mSelectedPostProc; // 0x8
-    RndPostProc *unk1c; // 0x1c
-    ObjPtr<RndPostProc> unk20; // 0x20
-    float unk34; // 0x34
-    float unk38; // 0x38
+    RndPostProc *mFromPostProc; // 0x1c
+    ObjPtr<RndPostProc> mToPostProc; // 0x20
+    float mPostProcBlendTime; // 0x34
+    float mPostProcBlendStartTime; // 0x38
 };

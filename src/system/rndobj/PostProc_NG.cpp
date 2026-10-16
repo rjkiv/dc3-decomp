@@ -47,24 +47,25 @@ void NgPostProc::BloomTextureSet::AllocateTextures(unsigned int w, unsigned int 
 void NgPostProc::BloomTextureSet::FreeTextures() { RELEASE(mBloomTexture[0]); }
 
 NgPostProc::NgPostProc()
-    : unk22c(RandomFloat(), RandomFloat()), unk234(0, 0), unk23c(this), unk250(1) {}
+    : mPhase(RandomFloat(), RandomFloat()), mRefractAccumDistance(0, 0),
+      mMotionBlurObjects(this), mFirstFrame(1) {}
 
 NgPostProc::~NgPostProc() {}
 
 void NgPostProc::Select() {
     RndPostProc::Select();
-    unk22c.x = RandomFloat();
-    unk22c.y = RandomFloat();
+    mPhase.x = RandomFloat();
+    mPhase.y = RandomFloat();
 }
 
 void NgPostProc::OnSelect() {
     RndPostProc::OnSelect();
-    unk23c.clear();
+    mMotionBlurObjects.clear();
 }
 
 void NgPostProc::OnUnselect() {
     RndPostProc::OnUnselect();
-    unk23c.clear();
+    mMotionBlurObjects.clear();
 }
 
 void NgPostProc::Init() {
@@ -107,9 +108,7 @@ void NgPostProc::SetBloomColor() {
 
 void NgPostProc::CheckGradientMap() {
     if (DoGradientMap()) {
-        Vector4 vec(
-            mGradientMapStart, mGradientMapEnd, mGradientMapIndex, mGradientMapOpacity
-        );
+        Vector4 vec(mGradMapDepthStart, mGradMapDepthEnd, mGradMapIndex, mGradMapOpacity);
         TheShaderMgr.SetPConstant((PShaderConstant)3, mGradientMap.Ptr());
         TheShaderMgr.SetPConstant((PShaderConstant)118, vec);
         TheShaderMgr.SetPostGradientMap(mGradientMap.Ptr());
@@ -131,12 +130,12 @@ void NgPostProc::CheckVignette() {
 
 void NgPostProc::CheckMotionBlur() {
     if (DoMotionBlur()) {
-        float blend = mMotionBlurBlend;
+        float blend = mMotionBlurBlendAmount;
         Vector4 vec(
-            mMotionBlurWeight.red * blend,
-            mMotionBlurWeight.green * blend,
-            mMotionBlurWeight.blue * blend,
-            mMotionBlurWeight.alpha
+            mMotionBlurBlendWeight.red * blend,
+            mMotionBlurBlendWeight.green * blend,
+            mMotionBlurBlendWeight.blue * blend,
+            mMotionBlurBlendWeight.alpha
         );
         TheShaderMgr.SetPConstant((PShaderConstant)105, vec);
         TheShaderMgr.SetPostMotionBlur(true);
@@ -150,7 +149,9 @@ void NgPostProc::CheckBlendPrevious() {
 void NgPostProc::DoVelocity() {
     TheShaderMgr.SetPostVelocity(false);
     if (mMotionBlurVelocity != false && TheHiResScreen.IsActive() == false) {
-        bool flag = RndVelocityBuffer::Singleton().Draw(TheRnd.GetWorldCamCopy(), unk23c);
+        bool flag = RndVelocityBuffer::Singleton().Draw(
+            TheRnd.GetWorldCamCopy(), mMotionBlurObjects
+        );
         if (flag) {
             TheShaderMgr.SetPostVelocity(true);
             Vector4 vec(
@@ -162,8 +163,8 @@ void NgPostProc::DoVelocity() {
             TheShaderMgr.SetPConstant((PShaderConstant)122, vec);
         }
     }
-    if (!unk23c.empty())
-        unk23c.clear();
+    if (!mMotionBlurObjects.empty())
+        mMotionBlurObjects.clear();
 }
 
 void NgPostProc::CheckNoise() {
@@ -177,7 +178,7 @@ void NgPostProc::CheckNoise() {
             );
             TheShaderMgr.SetPConstant((PShaderConstant)0x71, v70);
         } else {
-            Vector4 v60(unk22c.x, unk22c.y, unk22c.x, unk22c.y);
+            Vector4 v60(mPhase.x, mPhase.y, mPhase.x, mPhase.y);
 
             // Vector4 v60(unk22c, unk230, unk22c, unk230);
             TheShaderMgr.SetPConstant((PShaderConstant)0x70, v60);
@@ -193,7 +194,7 @@ void NgPostProc::CheckNoise() {
 }
 
 void NgPostProc::CheckHallOfTime() {
-    if (HallOfTime() && !unk250) {
+    if (HallOfTime() && !mFirstFrame) {
         Vector4 c1(mHallOfTimeRate, mHallOfTimeMix, 0.0f, 0.0f);
         TheShaderMgr.SetPConstant((PShaderConstant)0x73, c1);
 
@@ -223,12 +224,12 @@ void NgPostProc::DoPost() {
     CheckVignette();
     TheShaderMgr.SetPostColorXfm(ColorXfmEnabled());
     TheShaderMgr.SetPostBlendPrevious(BlendPrevious());
-    unk250 = false;
+    mFirstFrame = false;
 }
 
 void NgPostProc::QueueMotionBlurObject(RndDrawable *drawable) {
-    if (unk23c.find(drawable) == unk23c.end()) {
-        unk23c.push_back(drawable);
+    if (mMotionBlurObjects.find(drawable) == mMotionBlurObjects.end()) {
+        mMotionBlurObjects.push_back(drawable);
     }
 }
 
@@ -240,13 +241,13 @@ void NgPostProc::CheckPosterizeAndKaleidoscope() {
         v30.x = mPosterLevels;
         v30.y = mPosterLevels * mPosterMin;
     }
-    if (mKaleidoscopeComplexity > 0) {
+    if (mKaleidoComplexity > 0) {
         TheShaderMgr.SetPostKaleidoscope(true);
-        v30.z = (2 * PI) / mKaleidoscopeComplexity;
-        v30.w = mKaleidoscopeSize;
-        v20.x = mKaleidoscopeAngle * DEG2RAD;
-        v20.y = mKaleidoscopeRadius;
-        if (mKaleidoscopeFlipUVs) {
+        v30.z = (2 * PI) / mKaleidoComplexity;
+        v30.w = mKaleidoKernelSize;
+        v20.x = mKaleidoAngle * DEG2RAD;
+        v20.y = mKaleidoRadius;
+        if (mKaleidoFlipUVs) {
             v20.z = 2;
         } else {
             v20.z = 1;
@@ -271,26 +272,26 @@ void NgPostProc::CheckRefract() {
         float x = mRefractAngle * DEG2RAD;
         float sinx = sinf(x);
         float cosx = cosf(x);
-        Vector4 v50(x, sinx, cosx, mRefractDist);
-        unk234.x += mRefractVelocity.x * mDeltaSecs;
-        unk234.y += mRefractVelocity.y * mDeltaSecs;
-        unk234.x = fmodf(unk234.x, 1);
-        unk234.y = fmodf(unk234.y, 1);
+        Vector4 v50(x, sinx, cosx, mRefractDistance);
+        mRefractAccumDistance.x += mRefractVelocity.x * mDeltaSecs;
+        mRefractAccumDistance.y += mRefractVelocity.y * mDeltaSecs;
+        mRefractAccumDistance.x = fmodf(mRefractAccumDistance.x, 1);
+        mRefractAccumDistance.y = fmodf(mRefractAccumDistance.y, 1);
         Vector4 v40(
             mRefractScale.x,
             mRefractScale.y,
-            unk234.x + mRefractPanning.x,
-            mRefractPanning.y + unk234.y
+            mRefractAccumDistance.x + mRefractPanning.x,
+            mRefractPanning.y + mRefractAccumDistance.y
         );
         TheShaderMgr.SetPConstant((PShaderConstant)0x77, v50);
         TheShaderMgr.SetPConstant((PShaderConstant)0x78, v40);
-        TheShaderMgr.SetPConstant((PShaderConstant)1, mRefractMap);
+        TheShaderMgr.SetPConstant((PShaderConstant)1, mRefractionMap);
         TheRenderState.SetTextureFilter(1, RndRenderState::kFilterModeLinear, false);
         TheRenderState.SetTextureClamp(1, RndRenderState::kClampModeWrap);
         TheShaderMgr.SetPostRefract(true);
     } else {
-        unk234.x = 0;
-        unk234.y = 0;
+        mRefractAccumDistance.x = 0;
+        mRefractAccumDistance.y = 0;
     }
 }
 
@@ -370,13 +371,13 @@ void Bloom_Blur(
     float w = texDst->Width();
     float h = texDst->Height();
     switch (bloomStyle) {
-    case kBloomBlurStyle0:
+    case kBloomBlurStyle_Gaussian:
         SetBloomBlurWeights(b1, w, h);
         break;
-    case kBloomBlurStyle1:
+    case kBloomBlurStyle_Streak:
         SetBloomBlurWeightsStreak(b1, w, h, f6, ui5, f7);
         break;
-    case kBloomBlurStyle2:
+    case kBloomBlurStyle_Glare:
         shader = kBloomGlareShader;
         break;
     }
@@ -465,41 +466,41 @@ void NgPostProc::DoBloom() {
         RndTex *preProcessTex = TheNgRnd.PreProcessTexture();
         if (preProcessTex) {
             if (b1) {
-                Bloom_Downsample(kBloomShader, preProcessTex, sBloom.Tex(0, 1));
+                Bloom_Downsample(kBloomShader, preProcessTex, sBloom.GetTex(0, 1));
                 // clang-format off
-                Bloom_Blur(sBloom.Tex(0, 1), sBloom.Tex(0, 0), kBloomBlurStyle0, kBloomBlurDirection0, 0, 0, 0);
-                Bloom_Blur(sBloom.Tex(0, 0), sBloom.Tex(0, 1), kBloomBlurStyle0, kBloomBlurDirection1, 0, 0, 0);
-                Bloom_Blur(sBloom.Tex(0, 1), sBloom.Tex(0, 0), kBloomBlurStyle2, kBloomBlurDirection0, 0, 0, 0);
+                Bloom_Blur(sBloom.GetTex(0, 1), sBloom.GetTex(0, 0), kBloomBlurStyle_Gaussian, kBloomBlurDirection_Horizontal, 0, 0, 0);
+                Bloom_Blur(sBloom.GetTex(0, 0), sBloom.GetTex(0, 1), kBloomBlurStyle_Gaussian, kBloomBlurDirection_Vertical, 0, 0, 0);
+                Bloom_Blur(sBloom.GetTex(0, 1), sBloom.GetTex(0, 0), kBloomBlurStyle_Glare, kBloomBlurDirection_Horizontal, 0, 0, 0);
                 // clang-format on
-                TheShaderMgr.SetPConstant((PShaderConstant)7, sBloom.Tex(0, 0));
+                TheShaderMgr.SetPConstant((PShaderConstant)7, sBloom.GetTex(0, 0));
             } else if (mBloomStreak && !mBloomGlare) {
-                Bloom_Downsample(kBloomShader, preProcessTex, sBloom.Tex(0, 1));
+                Bloom_Downsample(kBloomShader, preProcessTex, sBloom.GetTex(0, 1));
                 // clang-format off
-                Bloom_Blur(sBloom.Tex(0, 1), sBloom.Tex(0, 0), kBloomBlurStyle1, kBloomBlurDirection0, 0, mBloomStreakAttenuation, mBloomStreakAngle);
-                Bloom_Blur(sBloom.Tex(0, 0), sBloom.Tex(0, 1), kBloomBlurStyle1, kBloomBlurDirection0, 1, mBloomStreakAttenuation, mBloomStreakAngle);
-                Bloom_Blur(sBloom.Tex(0, 1), sBloom.Tex(0, 0), kBloomBlurStyle1, kBloomBlurDirection0, 2, mBloomStreakAttenuation, mBloomStreakAngle);
-                Bloom_Downsample(kBloomShader, preProcessTex, sBloom.Tex(1, 1));
-                Bloom_Blur(sBloom.Tex(1, 1), sBloom.Tex(1, 0), kBloomBlurStyle1, kBloomBlurDirection1, 0, mBloomStreakAttenuation, mBloomStreakAngle);
-                Bloom_Blur(sBloom.Tex(1, 0), sBloom.Tex(1, 1), kBloomBlurStyle1, kBloomBlurDirection1, 1, mBloomStreakAttenuation, mBloomStreakAngle);
-                Bloom_Blur(sBloom.Tex(1, 1), sBloom.Tex(1, 0), kBloomBlurStyle1, kBloomBlurDirection1, 2, mBloomStreakAttenuation, mBloomStreakAngle);
+                Bloom_Blur(sBloom.GetTex(0, 1), sBloom.GetTex(0, 0), kBloomBlurStyle_Streak, kBloomBlurDirection_Horizontal, 0, mBloomStreakAtten, mBloomStreakAngle);
+                Bloom_Blur(sBloom.GetTex(0, 0), sBloom.GetTex(0, 1), kBloomBlurStyle_Streak, kBloomBlurDirection_Horizontal, 1, mBloomStreakAtten, mBloomStreakAngle);
+                Bloom_Blur(sBloom.GetTex(0, 1), sBloom.GetTex(0, 0), kBloomBlurStyle_Streak, kBloomBlurDirection_Horizontal, 2, mBloomStreakAtten, mBloomStreakAngle);
+                Bloom_Downsample(kBloomShader, preProcessTex, sBloom.GetTex(1, 1));
+                Bloom_Blur(sBloom.GetTex(1, 1), sBloom.GetTex(1, 0), kBloomBlurStyle_Streak, kBloomBlurDirection_Vertical, 0, mBloomStreakAtten, mBloomStreakAngle);
+                Bloom_Blur(sBloom.GetTex(1, 0), sBloom.GetTex(1, 1), kBloomBlurStyle_Streak, kBloomBlurDirection_Vertical, 1, mBloomStreakAtten, mBloomStreakAngle);
+                Bloom_Blur(sBloom.GetTex(1, 1), sBloom.GetTex(1, 0), kBloomBlurStyle_Streak, kBloomBlurDirection_Vertical, 2, mBloomStreakAtten, mBloomStreakAngle);
                 // clang-format on
-                TheShaderMgr.SetPConstant((PShaderConstant)7, sBloom.Tex(0, 0));
-                TheShaderMgr.SetPConstant((PShaderConstant)11, sBloom.Tex(1, 0));
+                TheShaderMgr.SetPConstant((PShaderConstant)7, sBloom.GetTex(0, 0));
+                TheShaderMgr.SetPConstant((PShaderConstant)11, sBloom.GetTex(1, 0));
             } else {
-                Bloom_Downsample(kBloomShader, preProcessTex, sBloom.Tex(0, 0));
+                Bloom_Downsample(kBloomShader, preProcessTex, sBloom.GetTex(0, 0));
                 // clang-format off
-                Bloom_Blur(sBloom.Tex(0, 0), sBloom.Tex(0, 1), kBloomBlurStyle0, kBloomBlurDirection0, 0, 0, 0);
-                Bloom_Blur(sBloom.Tex(0, 1), sBloom.Tex(0, 0), kBloomBlurStyle0, kBloomBlurDirection1, 0, 0, 0);
-                Bloom_Downsample(kDownsample4xShader, sBloom.Tex(0, 0), sBloom.Tex(1, 0));
-                Bloom_Blur(sBloom.Tex(1, 0), sBloom.Tex(1, 1), kBloomBlurStyle0, kBloomBlurDirection0, 0, 0, 0);
-                Bloom_Blur(sBloom.Tex(1, 1), sBloom.Tex(1, 0), kBloomBlurStyle0, kBloomBlurDirection1, 0, 0, 0);
-                Bloom_Downsample(kDownsample4xShader, sBloom.Tex(1, 0), sBloom.Tex(2, 0));
-                Bloom_Blur(sBloom.Tex(2, 0), sBloom.Tex(2, 1), kBloomBlurStyle0, kBloomBlurDirection0, 0, 0, 0);
-                Bloom_Blur(sBloom.Tex(2, 1), sBloom.Tex(2, 0), kBloomBlurStyle0, kBloomBlurDirection1, 0, 0, 0);
+                Bloom_Blur(sBloom.GetTex(0, 0), sBloom.GetTex(0, 1), kBloomBlurStyle_Gaussian, kBloomBlurDirection_Horizontal, 0, 0, 0);
+                Bloom_Blur(sBloom.GetTex(0, 1), sBloom.GetTex(0, 0), kBloomBlurStyle_Gaussian, kBloomBlurDirection_Vertical, 0, 0, 0);
+                Bloom_Downsample(kDownsample4xShader, sBloom.GetTex(0, 0), sBloom.GetTex(1, 0));
+                Bloom_Blur(sBloom.GetTex(1, 0), sBloom.GetTex(1, 1), kBloomBlurStyle_Gaussian, kBloomBlurDirection_Horizontal, 0, 0, 0);
+                Bloom_Blur(sBloom.GetTex(1, 1), sBloom.GetTex(1, 0), kBloomBlurStyle_Gaussian, kBloomBlurDirection_Vertical, 0, 0, 0);
+                Bloom_Downsample(kDownsample4xShader, sBloom.GetTex(1, 0), sBloom.GetTex(2, 0));
+                Bloom_Blur(sBloom.GetTex(2, 0), sBloom.GetTex(2, 1), kBloomBlurStyle_Gaussian, kBloomBlurDirection_Horizontal, 0, 0, 0);
+                Bloom_Blur(sBloom.GetTex(2, 1), sBloom.GetTex(2, 0), kBloomBlurStyle_Gaussian, kBloomBlurDirection_Vertical, 0, 0, 0);
                 // clang-format on
-                TheShaderMgr.SetPConstant((PShaderConstant)7, sBloom.Tex(0, 0));
-                TheShaderMgr.SetPConstant((PShaderConstant)11, sBloom.Tex(1, 0));
-                TheShaderMgr.SetPConstant((PShaderConstant)15, sBloom.Tex(2, 0));
+                TheShaderMgr.SetPConstant((PShaderConstant)7, sBloom.GetTex(0, 0));
+                TheShaderMgr.SetPConstant((PShaderConstant)11, sBloom.GetTex(1, 0));
+                TheShaderMgr.SetPConstant((PShaderConstant)15, sBloom.GetTex(2, 0));
             }
         }
     } else {

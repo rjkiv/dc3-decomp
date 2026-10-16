@@ -18,6 +18,9 @@ public:
     void Save(BinStream &) const;
     bool Load(BinStream &);
 
+    Transform &Xfm() { return mColorXfm; }
+    const Transform &Xfm() const { return mColorXfm; }
+
     float mHue; // 0x0
     float mSaturation; // 0x4
     float mLightness; // 0x8

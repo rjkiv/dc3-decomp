@@ -17,6 +17,12 @@ enum ProcessCmd {
     kProcessAll = 7
 };
 
+enum PostProcHallOfTime {
+    kHOTBlended = 0x0000,
+    kHOTSolidRingsDepth = 0x0001,
+    kHOTSolidRingsAlpha = 0x0002,
+};
+
 class ProcCounter {
 public:
     ProcCounter();
@@ -29,7 +35,7 @@ public:
     bool EvenOddDisabled() const { return mEvenOddDisabled; }
 
 private:
-    unsigned int SetEmulateFPS(int);
+    unsigned int SetEmulateFPS(int fps);
 
     bool mProcAndLock; // 0x0
     int mCount; // 0x4
@@ -124,7 +130,7 @@ protected:
     bool mBloomStreak; // 0x4D
     /** "Attenuation (scattering amount) of light streak.
         0.9 to 0.95 is the sweet spot.". Ranges from -2 to 2. */
-    float mBloomStreakAttenuation; // 0x50
+    float mBloomStreakAtten; // 0x50
     /** "Angle for light streak". Ranges from -360 to 360. */
     float mBloomStreakAngle; // 0x54
     bool mForceCurrentInterp; // 0x58
@@ -146,17 +152,17 @@ protected:
     /** "Kaleidoscope settings" */
     /** "Number of slices in kaleidoscope, 0 turns off, 2 for vertical mirror". Ranges
      * from 0 to 64. */
-    float mKaleidoscopeComplexity; // 0xf8
+    float mKaleidoComplexity; // 0xf8
     /** "Smaller size means more repeated areas, but each area is smaller". Ranges
      * from 1.0e-2 to 64. */
-    float mKaleidoscopeSize; // 0xfc
+    float mKaleidoKernelSize; // 0xfc
     /** "Additional clockwise degrees of rotation around center.".
         Ranges from 0 to 360. */
-    float mKaleidoscopeAngle; // 0x100
+    float mKaleidoAngle; // 0x100
     /** "Additional distance from center". Ranges from -0.5 to 0.5. */
-    float mKaleidoscopeRadius; // 0x104
+    float mKaleidoRadius; // 0x104
     /** "Flip texture UV coords when reflect" */
-    bool mKaleidoscopeFlipUVs; // 0x108
+    bool mKaleidoFlipUVs; // 0x108
     /** "Min and max intensity range [0..1], 0.0 to disable" */
     Vector2 mFlickerModBounds; // 0x10c
     /** "Min and max number of seconds for a light to dark cycle" */
@@ -187,9 +193,8 @@ protected:
     float mDeltaSecs; // 0x170
 
     /** "Video feedback effect" */
-    /** "Should the effect be blended, or should it produce solid colors?". Options are
-     * kHOTBlended, kHOTSolidRingsDepth, kHOTSolidRingsAlpha */
-    int mHallOfTimeType; // 0x174
+    /** "Should the effect be blended, or should it produce solid colors?" */
+    PostProcHallOfTime mHallOfTimeType; // 0x174
     /** "Speed of effect.  0 is off.  1 is regular speed.". Ranges from -10 to 10. */
     float mHallOfTimeRate; // 0x178
     /** "Seconds for the trails to last." */
@@ -202,11 +207,11 @@ protected:
     /** "The weighting for individual color channels in the previous frame blend." */
     /** The color's alpha field: "The weighting for bright pixels in the previous frame
      * blend.". Ranges from 0 to 1. */
-    Hmx::Color mMotionBlurWeight; // 0x190
+    Hmx::Color mMotionBlurBlendWeight; // 0x190
     /** "The amount of the previous frame to blend into the current frame. This can be
      * used to efficiently simulate motion blur or other effects. Set to zero to
      * disable.". Ranges from 0 to 1. */
-    float mMotionBlurBlend; // 0x1a0
+    float mMotionBlurBlendAmount; // 0x1a0
     /** "Whether or not to use the velocity motion blur effect. Should be enabled
     almost
      * all the time." */
@@ -218,25 +223,25 @@ protected:
      * to use when the pixel is black is on the left and white is on the right." */
     ObjPtr<RndTex> mGradientMap; // 0x1a8
     /** "The opacity of the gradient map effect.". Ranges from 0 to 1. */
-    float mGradientMapOpacity; // 0x1bc
+    float mGradMapOpacity; // 0x1bc
     /** "This indexes veritically into the gradient map texture. This is useful for
      * storing multiple gradient map textures in a single texture, and to blend between
      * them.". Ranges from 0 to 1. */
-    float mGradientMapIndex; // 0x1c0
+    float mGradMapIndex; // 0x1c0
     /** "The depth where the gradient map will begin to take effect.". Ranges from 0
     to 1.
      */
-    float mGradientMapStart; // 0x1c4
+    float mGradMapDepthStart; // 0x1c4
     /** "The depth where the gradient map will no longer take effect.". Ranges from 0
      * to 1. */
-    float mGradientMapEnd; // 0x1c8
+    float mGradMapDepthEnd; // 0x1c8
 
     /** "Full-screen refraction settings" */
     /** "This is a normal map used to distort the screen." */
-    ObjPtr<RndTex> mRefractMap; // 0x1cc
+    ObjPtr<RndTex> mRefractionMap; // 0x1cc
     /** "The distance to refract each pixel of the screen. This can also be negative to
      * reverse the direction. Set to zero to disable." */
-    float mRefractDist; // 0x1e0
+    float mRefractDistance; // 0x1e0
     /** "This scales the refraction texture before distorting the screen,
         in the X and Y directions." */
     Vector2 mRefractScale; // 0x1e4

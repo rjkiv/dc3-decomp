@@ -8,15 +8,16 @@
 #include "rndobj/PostProc.h"
 
 RndPostProcMgr::RndPostProcMgr()
-    : mSelectedPostProc(this), unk1c(nullptr), unk20(this), unk34(-1), unk38(-1) {
-    unk1c = Hmx::Object::New<RndPostProc>();
+    : mSelectedPostProc(this), mFromPostProc(nullptr), mToPostProc(this),
+      mPostProcBlendTime(-1), mPostProcBlendStartTime(-1) {
+    mFromPostProc = Hmx::Object::New<RndPostProc>();
 }
 
 RndPostProcMgr::~RndPostProcMgr() {
     if (mSelectedPostProc) {
         mSelectedPostProc->Unselect();
     }
-    RELEASE(unk1c);
+    RELEASE(mFromPostProc);
 }
 
 BEGIN_HANDLERS(RndPostProcMgr)
@@ -66,15 +67,18 @@ void RndPostProcMgr::Poll() {
         } else {
             mSelectedPostProc->Unselect();
         }
-        if (unk20) {
+        if (mToPostProc) {
             float f4 = Clamp(
-                0.0f, 1.0f, (TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) - unk38) / unk34
+                0.0f,
+                1.0f,
+                (TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) - mPostProcBlendStartTime)
+                    / mPostProcBlendTime
             );
-            mSelectedPostProc->Interp(unk1c, unk20, f4);
+            mSelectedPostProc->Interp(mFromPostProc, mToPostProc, f4);
             if (NearlyEqual(f4, 1)) {
-                unk20 = nullptr;
-                unk34 = -1;
-                unk38 = -1;
+                mToPostProc = nullptr;
+                mPostProcBlendTime = -1;
+                mPostProcBlendStartTime = -1;
             }
         }
     }
@@ -111,10 +115,10 @@ void RndPostProcMgr::BlendToPostProc(RndPostProc *iPostProc, float iBlendTime) {
         if (NearlyZero(iBlendTime)) {
             CopyFromPostProc(iPostProc);
         } else if (mSelectedPostProc) {
-            unk1c->Copy(mSelectedPostProc, kCopyShallow);
-            unk20 = iPostProc;
-            unk34 = iBlendTime;
-            unk38 = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
+            mFromPostProc->Copy(mSelectedPostProc, kCopyShallow);
+            mToPostProc = iPostProc;
+            mPostProcBlendTime = iBlendTime;
+            mPostProcBlendStartTime = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo);
         }
     }
 }

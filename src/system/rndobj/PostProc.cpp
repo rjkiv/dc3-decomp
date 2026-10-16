@@ -107,23 +107,22 @@ ProcessCmd ProcCounter::ProcCommands() {
 
 RndPostProc::RndPostProc()
     : mPriority(1), mBloomColor(1, 1, 1, 0), mBloomThreshold(4), mBloomIntensity(0),
-      mBloomGlare(0), mBloomStreak(0), mBloomStreakAttenuation(0.9f),
-      mBloomStreakAngle(0), mForceCurrentInterp(0), mColorXfm(), mPosterLevels(0),
-      mPosterMin(1), mKaleidoscopeComplexity(0), mKaleidoscopeSize(0.5f),
-      mKaleidoscopeAngle(0), mKaleidoscopeRadius(0), mKaleidoscopeFlipUVs(1),
-      mFlickerModBounds(0, 0), mFlickerTimeBounds(0.001f, 0.007f), mFlickerSeconds(0, 0),
-      mColorModulation(1), mNoiseBaseScale(32, 24), mNoiseTopScale(1.35914f),
-      mNoiseIntensity(0), mNoiseStationary(0), mNoiseMidtone(1), mNoiseMap(this, 0),
-      mTrailThreshold(1), mTrailDuration(0), mBlendVec(1, 1, 0), mEmulateFPS(30),
-      mLastRender(0), mHallOfTimeType(0), mHallOfTimeRate(0),
-      mHallOfTimeColor(1, 1, 1, 0), mHallOfTimeMix(0), mMotionBlurWeight(1, 1, 1, 0),
-      mMotionBlurBlend(0), mMotionBlurVelocity(1), mGradientMap(this, 0),
-      mGradientMapOpacity(0), mGradientMapIndex(0), mGradientMapStart(0),
-      mGradientMapEnd(1), mRefractMap(this, 0), mRefractDist(0.05f), mRefractScale(1, 1),
-      mRefractPanning(0, 0), mRefractVelocity(0, 0), mRefractAngle(0),
-      mChromaticAberrationOffset(0), mChromaticSharpen(0), mVignetteColor(0, 0, 0, 0),
-      mVignetteIntensity(0), mHueTarget(-75), mHueFocus(0.958), mBlendAmount(0),
-      mBrightnessPower(1) {
+      mBloomGlare(0), mBloomStreak(0), mBloomStreakAtten(0.9f), mBloomStreakAngle(0),
+      mForceCurrentInterp(0), mColorXfm(), mPosterLevels(0), mPosterMin(1),
+      mKaleidoComplexity(0), mKaleidoKernelSize(0.5f), mKaleidoAngle(0),
+      mKaleidoRadius(0), mKaleidoFlipUVs(1), mFlickerModBounds(0, 0),
+      mFlickerTimeBounds(0.001f, 0.007f), mFlickerSeconds(0, 0), mColorModulation(1),
+      mNoiseBaseScale(32, 24), mNoiseTopScale(1.35914f), mNoiseIntensity(0),
+      mNoiseStationary(0), mNoiseMidtone(1), mNoiseMap(this, 0), mTrailThreshold(1),
+      mTrailDuration(0), mBlendVec(1, 1, 0), mEmulateFPS(30), mLastRender(0),
+      mHallOfTimeType(kHOTBlended), mHallOfTimeRate(0), mHallOfTimeColor(1, 1, 1, 0),
+      mHallOfTimeMix(0), mMotionBlurBlendWeight(1, 1, 1, 0), mMotionBlurBlendAmount(0),
+      mMotionBlurVelocity(1), mGradientMap(this, 0), mGradMapOpacity(0), mGradMapIndex(0),
+      mGradMapDepthStart(0), mGradMapDepthEnd(1), mRefractionMap(this, 0),
+      mRefractDistance(0.05f), mRefractScale(1, 1), mRefractPanning(0, 0),
+      mRefractVelocity(0, 0), mRefractAngle(0), mChromaticAberrationOffset(0),
+      mChromaticSharpen(0), mVignetteColor(0, 0, 0, 0), mVignetteIntensity(0),
+      mHueTarget(-75), mHueFocus(0.958), mBlendAmount(0), mBrightnessPower(1) {
     mColorXfm.Reset();
 }
 
@@ -154,7 +153,7 @@ BEGIN_PROPSYNCS(RndPostProc)
     SYNC_PROP(bloom_intensity, mBloomIntensity)
     SYNC_PROP(bloom_glare, mBloomGlare)
     SYNC_PROP(bloom_streak, mBloomStreak)
-    SYNC_PROP(bloom_streak_attenuation, mBloomStreakAttenuation)
+    SYNC_PROP(bloom_streak_attenuation, mBloomStreakAtten)
     SYNC_PROP(bloom_streak_angle, mBloomStreakAngle)
     SYNC_PROP_MODIFY(hue, mColorXfm.mHue, mColorXfm.AdjustColorXfm())
     SYNC_PROP_MODIFY(saturation, mColorXfm.mSaturation, mColorXfm.AdjustColorXfm())
@@ -167,11 +166,11 @@ BEGIN_PROPSYNCS(RndPostProc)
     SYNC_PROP_MODIFY(out_hi, mColorXfm.mLevelOutHi, mColorXfm.AdjustColorXfm())
     SYNC_PROP(num_levels, mPosterLevels)
     SYNC_PROP(min_intensity, mPosterMin)
-    SYNC_PROP(kaleidoscope_complexity, mKaleidoscopeComplexity)
-    SYNC_PROP(kaleidoscope_size, mKaleidoscopeSize)
-    SYNC_PROP(kaleidoscope_angle, mKaleidoscopeAngle)
-    SYNC_PROP(kaleidoscope_radius, mKaleidoscopeRadius)
-    SYNC_PROP(kaleidoscope_flipUVs, mKaleidoscopeFlipUVs)
+    SYNC_PROP(kaleidoscope_complexity, mKaleidoComplexity)
+    SYNC_PROP(kaleidoscope_size, mKaleidoKernelSize)
+    SYNC_PROP(kaleidoscope_angle, mKaleidoAngle)
+    SYNC_PROP(kaleidoscope_radius, mKaleidoRadius)
+    SYNC_PROP(kaleidoscope_flipUVs, mKaleidoFlipUVs)
     SYNC_PROP(flicker_intensity, mFlickerModBounds)
     SYNC_PROP(flicker_secs_range, mFlickerTimeBounds)
     SYNC_PROP(noise_base_scale, mNoiseBaseScale)
@@ -182,21 +181,21 @@ BEGIN_PROPSYNCS(RndPostProc)
     SYNC_PROP(threshold, mTrailThreshold)
     SYNC_PROP(duration, mTrailDuration)
     SYNC_PROP(emulate_fps, mEmulateFPS)
-    SYNC_PROP(hall_of_time_type, mHallOfTimeType)
+    SYNC_PROP(hall_of_time_type, (int &)mHallOfTimeType)
     SYNC_PROP(hall_of_time_rate, mHallOfTimeRate)
     SYNC_PROP(hall_of_time_color, mHallOfTimeColor)
     SYNC_PROP(hall_of_time_mix, mHallOfTimeMix)
-    SYNC_PROP(motion_blur_blend, mMotionBlurBlend)
-    SYNC_PROP(motion_blur_weight, mMotionBlurWeight)
-    SYNC_PROP(motion_blur_exposure, mMotionBlurWeight.alpha)
+    SYNC_PROP(motion_blur_blend, mMotionBlurBlendAmount)
+    SYNC_PROP(motion_blur_weight, mMotionBlurBlendWeight)
+    SYNC_PROP(motion_blur_exposure, mMotionBlurBlendWeight.alpha)
     SYNC_PROP(motion_blur_velocity, mMotionBlurVelocity)
     SYNC_PROP(gradient_map, mGradientMap)
-    SYNC_PROP(gradient_map_opacity, mGradientMapOpacity)
-    SYNC_PROP(gradient_map_index, mGradientMapIndex)
-    SYNC_PROP(gradient_map_start, mGradientMapStart)
-    SYNC_PROP(gradient_map_end, mGradientMapEnd)
-    SYNC_PROP(refract_map, mRefractMap)
-    SYNC_PROP(refract_dist, mRefractDist)
+    SYNC_PROP(gradient_map_opacity, mGradMapOpacity)
+    SYNC_PROP(gradient_map_index, mGradMapIndex)
+    SYNC_PROP(gradient_map_start, mGradMapDepthStart)
+    SYNC_PROP(gradient_map_end, mGradMapDepthEnd)
+    SYNC_PROP(refract_map, mRefractionMap)
+    SYNC_PROP(refract_dist, mRefractDistance)
     SYNC_PROP(refract_scale, mRefractScale)
     SYNC_PROP(refract_panning, mRefractPanning)
     SYNC_PROP(refract_velocity, mRefractVelocity)
@@ -228,20 +227,20 @@ BEGIN_SAVES(RndPostProc)
     bs << mEmulateFPS;
     bs << mPosterLevels;
     bs << mPosterMin;
-    bs << mKaleidoscopeComplexity << mKaleidoscopeSize << mKaleidoscopeAngle;
-    bs << mKaleidoscopeRadius << mKaleidoscopeFlipUVs;
+    bs << mKaleidoComplexity << mKaleidoKernelSize << mKaleidoAngle;
+    bs << mKaleidoRadius << mKaleidoFlipUVs;
     bs << mHallOfTimeRate << mHallOfTimeColor << mHallOfTimeMix;
     bs << mHallOfTimeType;
-    bs << mMotionBlurBlend;
-    bs << mMotionBlurWeight;
+    bs << mMotionBlurBlendAmount;
+    bs << mMotionBlurBlendWeight;
     bs << mMotionBlurVelocity;
     bs << mGradientMap;
-    bs << mGradientMapOpacity;
-    bs << mGradientMapIndex;
-    bs << mGradientMapStart;
-    bs << mGradientMapEnd;
-    bs << mRefractMap;
-    bs << mRefractDist;
+    bs << mGradMapOpacity;
+    bs << mGradMapIndex;
+    bs << mGradMapDepthStart;
+    bs << mGradMapDepthEnd;
+    bs << mRefractionMap;
+    bs << mRefractDistance;
     bs << mRefractScale;
     bs << mRefractPanning;
     bs << mRefractAngle;
@@ -251,7 +250,7 @@ BEGIN_SAVES(RndPostProc)
     bs << mVignetteColor;
     bs << mVignetteIntensity;
     bs << mBloomGlare;
-    bs << mBloomStreak << mBloomStreakAttenuation << mBloomStreakAngle;
+    bs << mBloomStreak << mBloomStreakAtten << mBloomStreakAngle;
     bs << mHueTarget;
     bs << mHueFocus;
     bs << mBlendAmount;
@@ -268,7 +267,7 @@ BEGIN_COPYS(RndPostProc)
         COPY_MEMBER(mBloomThreshold)
         COPY_MEMBER(mBloomGlare)
         COPY_MEMBER(mBloomStreak)
-        COPY_MEMBER(mBloomStreakAttenuation)
+        COPY_MEMBER(mBloomStreakAtten)
         COPY_MEMBER(mBloomStreakAngle)
         COPY_MEMBER(mColorXfm)
         COPY_MEMBER(mFlickerModBounds)
@@ -284,25 +283,25 @@ BEGIN_COPYS(RndPostProc)
         COPY_MEMBER(mEmulateFPS)
         COPY_MEMBER(mPosterLevels)
         COPY_MEMBER(mPosterMin)
-        COPY_MEMBER(mKaleidoscopeComplexity)
-        COPY_MEMBER(mKaleidoscopeSize)
-        COPY_MEMBER(mKaleidoscopeAngle)
-        COPY_MEMBER(mKaleidoscopeRadius)
-        COPY_MEMBER(mKaleidoscopeFlipUVs)
+        COPY_MEMBER(mKaleidoComplexity)
+        COPY_MEMBER(mKaleidoKernelSize)
+        COPY_MEMBER(mKaleidoAngle)
+        COPY_MEMBER(mKaleidoRadius)
+        COPY_MEMBER(mKaleidoFlipUVs)
         COPY_MEMBER(mHallOfTimeRate)
         COPY_MEMBER(mHallOfTimeColor)
         COPY_MEMBER(mHallOfTimeMix)
         COPY_MEMBER(mHallOfTimeType)
-        COPY_MEMBER(mMotionBlurBlend)
-        COPY_MEMBER(mMotionBlurWeight)
+        COPY_MEMBER(mMotionBlurBlendAmount)
+        COPY_MEMBER(mMotionBlurBlendWeight)
         COPY_MEMBER(mMotionBlurVelocity)
         COPY_MEMBER(mGradientMap)
-        COPY_MEMBER(mGradientMapIndex)
-        COPY_MEMBER(mGradientMapOpacity)
-        COPY_MEMBER(mGradientMapStart)
-        COPY_MEMBER(mGradientMapEnd)
-        COPY_MEMBER(mRefractMap)
-        COPY_MEMBER(mRefractDist)
+        COPY_MEMBER(mGradMapIndex)
+        COPY_MEMBER(mGradMapOpacity)
+        COPY_MEMBER(mGradMapDepthStart)
+        COPY_MEMBER(mGradMapDepthEnd)
+        COPY_MEMBER(mRefractionMap)
+        COPY_MEMBER(mRefractDistance)
         COPY_MEMBER(mRefractScale)
         COPY_MEMBER(mRefractPanning)
         COPY_MEMBER(mRefractVelocity)
@@ -330,9 +329,7 @@ BEGIN_LOADS(RndPostProc)
         Sphere s;
         bool b70;
         int i5c;
-        // stupid and dumb
-        BinStream &bs2 = (d >> b70);
-        bs2 >> s >> i5c;
+        d >> b70 >> s >> i5c;
     } else {
         LOAD_SUPERCLASS(Hmx::Object)
     }
@@ -408,15 +405,13 @@ bool RndPostProc::DoChromaticAberration() const {
 bool RndPostProc::DoVignette() const { return mVignetteIntensity != 0; }
 
 bool RndPostProc::DoMotionBlur() const {
-    return mMotionBlurBlend > 0 && mMotionBlurWeight.PackRgb() > 0
+    return mMotionBlurBlendAmount > 0 && mMotionBlurBlendWeight.PackRgb() > 0
         && !TheHiResScreen.IsActive();
 }
 
-bool RndPostProc::DoGradientMap() const {
-    return mGradientMapOpacity > 0 && mGradientMap;
-}
+bool RndPostProc::DoGradientMap() const { return mGradMapOpacity > 0 && mGradientMap; }
 
-bool RndPostProc::DoRefraction() const { return mRefractMap && mRefractDist; }
+bool RndPostProc::DoRefraction() const { return mRefractionMap && mRefractDistance; }
 
 bool RndPostProc::DoHueConverge() const { return true; }
 
@@ -424,7 +419,8 @@ bool RndPostProc::ColorXfmEnabled() const {
     return mColorModulation != 1 || mColorXfm.mHue != 0 || mColorXfm.mSaturation != 0
         || mColorXfm.mLightness != 0 || mColorXfm.mContrast != 0
         || mColorXfm.mBrightness != 0 || mColorXfm.mLevelInLo.PackRgb() != 0
-        || mColorXfm.mLevelOutLo.PackRgb() != 0 || mColorXfm.mLevelInHi.PackRgb() != 0xffffff
+        || mColorXfm.mLevelOutLo.PackRgb() != 0
+        || mColorXfm.mLevelInHi.PackRgb() != 0xffffff
         || mColorXfm.mLevelOutHi.PackRgb() != 0xffffff;
 }
 
@@ -504,7 +500,7 @@ void RndPostProc::LoadRev(BinStreamRev &d) {
     }
     if (d.rev > 6) {
         if (d.rev < 0x12) {
-            d >> mColorXfm.mColorXfm;
+            d >> mColorXfm.Xfm();
         } else {
             MILO_ASSERT_FMT(
                 mColorXfm.Load(d),
@@ -561,14 +557,14 @@ void RndPostProc::LoadRev(BinStreamRev &d) {
             float f8;
             d >> f8;
             if (f8 != 0) {
-                mKaleidoscopeComplexity = 2;
+                mKaleidoComplexity = 2;
             }
         } else {
-            d >> mKaleidoscopeComplexity;
-            d >> mKaleidoscopeSize;
-            d >> mKaleidoscopeAngle;
-            d >> mKaleidoscopeRadius;
-            d >> mKaleidoscopeFlipUVs;
+            d >> mKaleidoComplexity;
+            d >> mKaleidoKernelSize;
+            d >> mKaleidoAngle;
+            d >> mKaleidoRadius;
+            d >> mKaleidoFlipUVs;
         }
     }
 
@@ -588,15 +584,15 @@ void RndPostProc::LoadRev(BinStreamRev &d) {
         if (d.rev > 0x13 && d.rev < 0x20) {
             bool b;
             d >> b;
-            mHallOfTimeType = b ? 1 : 0;
+            mHallOfTimeType = b ? kHOTSolidRingsDepth : kHOTBlended;
         } else if (d.rev > 0x1F) {
-            d >> mHallOfTimeType;
+            d >> (int &)mHallOfTimeType;
         }
     }
     if (d.rev > 0x14) {
-        d >> mMotionBlurBlend;
+        d >> mMotionBlurBlendAmount;
         if (d.rev > 0x1A) {
-            d >> mMotionBlurWeight;
+            d >> mMotionBlurBlendWeight;
             if (d.rev > 0x21) {
                 d >> mMotionBlurVelocity;
             }
@@ -604,17 +600,17 @@ void RndPostProc::LoadRev(BinStreamRev &d) {
     }
     if (d.rev > 0x16) {
         d >> mGradientMap;
-        d >> mGradientMapOpacity;
-        d >> mGradientMapIndex;
-        d >> mGradientMapStart;
-        d >> mGradientMapEnd;
+        d >> mGradMapOpacity;
+        d >> mGradMapIndex;
+        d >> mGradMapDepthStart;
+        d >> mGradMapDepthEnd;
     }
     if (d.rev < 0x18) {
         mBloomThreshold *= 4;
     }
     if (d.rev > 0x18) {
-        d >> mRefractMap;
-        d >> mRefractDist;
+        d >> mRefractionMap;
+        d >> mRefractDistance;
         d >> mRefractScale;
         d >> mRefractPanning;
         d >> mRefractAngle;
@@ -635,7 +631,7 @@ void RndPostProc::LoadRev(BinStreamRev &d) {
         d >> mBloomGlare;
     }
     if (d.rev > 0x23) {
-        d >> mBloomStreak >> mBloomStreakAttenuation >> mBloomStreakAngle;
+        d >> mBloomStreak >> mBloomStreakAtten >> mBloomStreakAngle;
     }
     if (d.altRev > 1) {
         d >> mHueTarget >> mHueFocus >> mBlendAmount >> mBrightnessPower;
@@ -654,7 +650,7 @@ void RndPostProc::Interp(const RndPostProc *p1, const RndPostProc *p2, float f3)
         mNoiseStationary = p5->mNoiseStationary;
         mNoiseMap = p5->mNoiseMap.Ptr();
         mGradientMap = p5->mGradientMap.Ptr();
-        mRefractMap = p5->mRefractMap.Ptr();
+        mRefractionMap = p5->mRefractionMap.Ptr();
         mBloomGlare = p5->mBloomGlare;
         mMotionBlurVelocity = p5->mMotionBlurVelocity;
         mChromaticSharpen = p5->mChromaticSharpen;
@@ -677,19 +673,11 @@ void RndPostProc::Interp(const RndPostProc *p1, const RndPostProc *p2, float f3)
         ::Interp(p1->mNoiseBaseScale, p2->mNoiseBaseScale, f7, mNoiseBaseScale);
         ::Interp(p1->mNoiseTopScale, p2->mNoiseTopScale, f7, mNoiseTopScale);
         ::Interp(p1->mNoiseIntensity, p2->mNoiseIntensity, f7, mNoiseIntensity);
-        ::Interp(
-            p1->mKaleidoscopeComplexity,
-            p2->mKaleidoscopeComplexity,
-            f3,
-            mKaleidoscopeComplexity
-        );
-        ::Interp(p1->mKaleidoscopeSize, p2->mKaleidoscopeSize, f3, mKaleidoscopeSize);
-        ::Interp(p1->mKaleidoscopeAngle, p2->mKaleidoscopeAngle, f3, mKaleidoscopeAngle);
-        ::Interp(
-            p1->mKaleidoscopeRadius, p2->mKaleidoscopeRadius, f3, mKaleidoscopeRadius
-        );
-        mKaleidoscopeFlipUVs =
-            f3 < 1 ? p1->mKaleidoscopeFlipUVs : p2->mKaleidoscopeFlipUVs;
+        ::Interp(p1->mKaleidoComplexity, p2->mKaleidoComplexity, f3, mKaleidoComplexity);
+        ::Interp(p1->mKaleidoKernelSize, p2->mKaleidoKernelSize, f3, mKaleidoKernelSize);
+        ::Interp(p1->mKaleidoAngle, p2->mKaleidoAngle, f3, mKaleidoAngle);
+        ::Interp(p1->mKaleidoRadius, p2->mKaleidoRadius, f3, mKaleidoRadius);
+        mKaleidoFlipUVs = f3 < 1 ? p1->mKaleidoFlipUVs : p2->mKaleidoFlipUVs;
         ::Interp(p1->mEmulateFPS, p2->mEmulateFPS, f3, mEmulateFPS);
         ::Interp(p1->mPosterLevels, p2->mPosterLevels, f3, mPosterLevels);
         ::Interp(p1->mPosterMin, p2->mPosterMin, f3, mPosterMin);
@@ -720,19 +708,27 @@ void RndPostProc::Interp(const RndPostProc *p1, const RndPostProc *p2, float f3)
             p1->mColorXfm.mLevelOutHi, p2->mColorXfm.mLevelOutHi, f3, mColorXfm.mLevelOutHi
         );
         mColorXfm.AdjustColorXfm();
-        ::Interp(
-            p1->mGradientMapOpacity, p2->mGradientMapOpacity, f3, mGradientMapOpacity
-        );
-        ::Interp(p1->mGradientMapIndex, p2->mGradientMapIndex, f3, mGradientMapIndex);
-        ::Interp(p1->mGradientMapStart, p2->mGradientMapStart, f3, mGradientMapStart);
-        ::Interp(p1->mGradientMapEnd, p2->mGradientMapEnd, f3, mGradientMapEnd);
-        ::Interp(p1->mRefractDist, p2->mRefractDist, f3, mRefractDist);
+        ::Interp(p1->mGradMapOpacity, p2->mGradMapOpacity, f3, mGradMapOpacity);
+        ::Interp(p1->mGradMapIndex, p2->mGradMapIndex, f3, mGradMapIndex);
+        ::Interp(p1->mGradMapDepthStart, p2->mGradMapDepthStart, f3, mGradMapDepthStart);
+        ::Interp(p1->mGradMapDepthEnd, p2->mGradMapDepthEnd, f3, mGradMapDepthEnd);
+        ::Interp(p1->mRefractDistance, p2->mRefractDistance, f3, mRefractDistance);
         ::Interp(p1->mRefractScale, p2->mRefractScale, f3, mRefractScale);
         ::Interp(p1->mRefractPanning, p2->mRefractPanning, f3, mRefractPanning);
         ::Interp(p1->mRefractVelocity, p2->mRefractVelocity, f3, mRefractVelocity);
         ::Interp(p1->mRefractAngle, p2->mRefractAngle, f3, mRefractAngle);
-        ::Interp(p1->mMotionBlurBlend, p2->mMotionBlurBlend, f3, mMotionBlurBlend);
-        ::Interp(p1->mMotionBlurWeight, p2->mMotionBlurWeight, f3, mMotionBlurWeight);
+        ::Interp(
+            p1->mMotionBlurBlendAmount,
+            p2->mMotionBlurBlendAmount,
+            f3,
+            mMotionBlurBlendAmount
+        );
+        ::Interp(
+            p1->mMotionBlurBlendWeight,
+            p2->mMotionBlurBlendWeight,
+            f3,
+            mMotionBlurBlendWeight
+        );
         ::Interp(
             p1->mChromaticAberrationOffset,
             p2->mChromaticAberrationOffset,
