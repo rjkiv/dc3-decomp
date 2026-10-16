@@ -36,7 +36,8 @@ public:
 protected:
     WorldCrowd3DCharHandle();
 
+private:
     WorldCrowd *mCrowd; // 0x100
-    std::list<WorldCrowd::CharData>::iterator mCharItr; // 0x104
-    int mCharIdx; // 0x108
+    std::list<WorldCrowd::CharData>::iterator mCrowdCharItr; // 0x104
+    int mCrowdChar3DIdx; // 0x108
 };

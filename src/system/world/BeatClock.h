@@ -11,7 +11,7 @@
 /** "Class that provides a beat using the taskmgr time or uses the taskmgr beat" */
 class BeatClock : public RndPollable {
 public:
-    enum SyncMode {
+    enum BeatClockSyncMode {
         /** "Copy only the fractional part of the current beat over" */
         kSync_TicksOnly = 0,
         /** "Copy over beat and ticks" */

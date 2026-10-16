@@ -29,14 +29,14 @@ RndEnviron *Spotlight::sEnviron;
 #pragma region BeamDef
 
 Spotlight::BeamDef::BeamDef(Hmx::Object *owner)
-    : mBeam(nullptr), mIsCone(false), mLength(100), mTopRadius(4), mBottomRadius(30),
+    : mBeam(nullptr), mIsCone(false), mLength(100), mTopRadius(4), mRadius(30),
       mTopSideBorder(0.1), mBottomSideBorder(0.3), mBottomBorder(0.5), mOffset(0),
       mTargetOffset(0, 0), mBrighten(1), mExpand(1), mShape(), mNumSections(0),
       mNumSegments(0), mXSection(owner), mCutouts(owner), mMat(owner) {}
 
 Spotlight::BeamDef::BeamDef(const Spotlight::BeamDef &def)
     : mBeam(0), mIsCone(def.mIsCone), mLength(def.mLength), mTopRadius(def.mTopRadius),
-      mBottomRadius(def.mBottomRadius), mTopSideBorder(def.mTopSideBorder),
+      mRadius(def.mRadius), mTopSideBorder(def.mTopSideBorder),
       mBottomSideBorder(def.mBottomSideBorder), mBottomBorder(def.mBottomBorder),
       mOffset(def.mOffset), mTargetOffset(def.mTargetOffset), mBrighten(def.mBrighten),
       mExpand(def.mExpand), mShape(def.mShape), mNumSections(def.mNumSections),
@@ -60,7 +60,7 @@ void Spotlight::BeamDef::OnSetMat(RndMat *mat) {
 void Spotlight::BeamDef::Save(BinStream &bs) const {
     bs << mIsCone;
     bs << mLength;
-    bs << mBottomRadius;
+    bs << mRadius;
     bs << mTopRadius;
     bs << mTopSideBorder;
     bs << mBottomSideBorder;
@@ -80,7 +80,7 @@ void Spotlight::BeamDef::Save(BinStream &bs) const {
 void Spotlight::BeamDef::Load(BinStreamRev &d) {
     d >> mIsCone;
     d >> mLength;
-    d >> mBottomRadius;
+    d >> mRadius;
     d >> mTopRadius;
     d >> mTopSideBorder;
     d >> mBottomSideBorder;
@@ -118,7 +118,7 @@ void Spotlight::BeamDef::Load(BinStreamRev &d) {
 Vector2 Spotlight::BeamDef::NGRadii() const {
     Vector2 v;
     float vx = mTopRadius * mExpand;
-    float vy = mBottomRadius * mExpand;
+    float vy = mRadius * mExpand;
     if (!mIsCone) {
         vy *= 1.0f - mBottomSideBorder * 0.7f;
         vx *= 1.0f - mTopSideBorder * 0.7f;
@@ -138,7 +138,7 @@ Spotlight::Spotlight()
       mLightCanOffset(0), mTarget(this), mTargetExists(true), mSpotTarget(this),
       mLastFloorSpotHeight(-1e33), mCastShadow(false), mLightCanSort(false),
       mFirstFrame(true), mDampingConstant(1), mAdditionalObjects(this),
-      mAnimateColorFromPreset(true), mAnimateOrientationFromPreset(true),
+      mAnimateColorFromPreset(true), mAnimateOrientFromPreset(true),
       mAnimatingFromPreset(false) {
     mFlare->SetTransParent(this, false);
     mFloorSpotXfm.Reset();
@@ -179,7 +179,7 @@ END_HANDLERS
 BEGIN_PROPSYNCS(Spotlight)
     SYNC_PROP_MODIFY(length, mBeam.mLength, Generate())
     SYNC_PROP_MODIFY(top_radius, mBeam.mTopRadius, Generate())
-    SYNC_PROP_MODIFY(bottom_radius, mBeam.mBottomRadius, Generate())
+    SYNC_PROP_MODIFY(bottom_radius, mBeam.mRadius, Generate())
     SYNC_PROP_MODIFY(top_side_border, mBeam.mTopSideBorder, Generate())
     SYNC_PROP_MODIFY(bottom_side_border, mBeam.mBottomSideBorder, Generate())
     SYNC_PROP_MODIFY(bottom_border, mBeam.mBottomBorder, Generate())
@@ -212,10 +212,10 @@ BEGIN_PROPSYNCS(Spotlight)
     SYNC_PROP_MODIFY(spot_scale, mSpotScale, UpdateBounds())
     SYNC_PROP_MODIFY(spot_height, mSpotHeight, UpdateBounds())
     SYNC_PROP_MODIFY(spot_material, mDiscMat, UpdateBounds())
-    SYNC_PROP_SET(color, Color().PackRgb(), SetColor(_val.Int()))
-    SYNC_PROP_SET(intensity, Intensity(), {
+    SYNC_PROP_SET(color, GetColor().PackRgb(), SetColor(_val.Int()))
+    SYNC_PROP_SET(intensity, GetIntensity(), {
         float intensity = _val.Float();
-        const Hmx::Color &color = Color();
+        const Hmx::Color &color = GetColor();
         SetColorIntensity(color, intensity);
     })
     SYNC_PROP(color_owner, mColorOwner)
@@ -225,7 +225,7 @@ BEGIN_PROPSYNCS(Spotlight)
     SYNC_PROP_MODIFY(lens_material, mLensMat, UpdateBounds())
     SYNC_PROP(additional_objects, mAdditionalObjects)
     SYNC_PROP(slaves, mSlaves)
-    SYNC_PROP(animate_orientation_from_preset, mAnimateOrientationFromPreset)
+    SYNC_PROP(animate_orientation_from_preset, mAnimateOrientFromPreset)
     SYNC_PROP(animate_color_from_preset, mAnimateColorFromPreset)
     SYNC_SUPERCLASS(RndDrawable)
     SYNC_SUPERCLASS(RndTransformable)
@@ -269,7 +269,7 @@ BEGIN_SAVES(Spotlight)
     bs << mSlaves;
     bs << mCastShadow;
     bs << mAnimateColorFromPreset;
-    bs << mAnimateOrientationFromPreset;
+    bs << mAnimateOrientFromPreset;
     bs << mColorOwner;
 END_SAVES
 
@@ -287,8 +287,8 @@ BEGIN_COPYS(Spotlight)
             COPY_MEMBER(mSpotTarget)
             COPY_MEMBER(mSpotScale)
             COPY_MEMBER(mSpotHeight)
-            const Hmx::Color &color = c->Color();
-            SetColorIntensity(color, c->Intensity());
+            const Hmx::Color &color = c->GetColor();
+            SetColorIntensity(color, c->GetIntensity());
             COPY_MEMBER(mDiscMat)
             COPY_MEMBER(mDampingConstant)
             COPY_MEMBER(mLensSize)
@@ -301,12 +301,12 @@ BEGIN_COPYS(Spotlight)
             UpdateFlare();
             COPY_MEMBER(mCastShadow)
             COPY_MEMBER(mAnimateColorFromPreset)
-            COPY_MEMBER(mAnimateOrientationFromPreset)
+            COPY_MEMBER(mAnimateOrientFromPreset)
             COPY_MEMBER(mAdditionalObjects)
             COPY_MEMBER(mSlaves)
             COPY_MEMBER(mBeam.mIsCone)
             COPY_MEMBER(mBeam.mLength)
-            COPY_MEMBER(mBeam.mBottomRadius)
+            COPY_MEMBER(mBeam.mRadius)
             COPY_MEMBER(mBeam.mTopRadius)
             COPY_MEMBER(mBeam.mTopSideBorder)
             COPY_MEMBER(mBeam.mBottomSideBorder)
@@ -444,10 +444,10 @@ BEGIN_LOADS(Spotlight)
         }
         if (d.rev > 0x19) {
             d >> mAnimateColorFromPreset;
-            d >> mAnimateOrientationFromPreset;
+            d >> mAnimateOrientFromPreset;
         } else if (d.rev > 0x10) {
             d >> mAnimateColorFromPreset;
-            mAnimateOrientationFromPreset = mAnimateColorFromPreset;
+            mAnimateOrientFromPreset = mAnimateColorFromPreset;
         }
         if (d.rev > 0x1D) {
             d >> mColorOwner;
@@ -568,8 +568,8 @@ void Spotlight::DrawShowing() {
         return;
     } else {
         UpdateTransforms();
-        Hmx::Color c48(Color());
-        Multiply(c48, Intensity(), c48);
+        Hmx::Color c48(GetColor());
+        Multiply(c48, GetIntensity(), c48);
         sEnviron->SetAmbientColor(c48);
         RndEnvironTracker tracker(sEnviron, nullptr);
         FOREACH (it, mAdditionalObjects) {
@@ -668,7 +668,7 @@ void Spotlight::Poll() {
         if (!target
             || (!TheLoadMgr.EditMode() && !mFirstFrame
                 && target->WorldXfm().v == mLastTargetPosition)) {
-            if (!target && !mAnimateOrientationFromPreset && !DoFloorSpot()) {
+            if (!target && !mAnimateOrientFromPreset && !DoFloorSpot()) {
                 UpdateTransforms();
                 return;
             }
@@ -702,9 +702,9 @@ void Spotlight::SetColor(int packed) {
     Hmx::Color c;
     c.UnpackRgb(packed);
     c.alpha = 1;
-    SetColorIntensity(c, Intensity());
+    SetColorIntensity(c, GetIntensity());
 }
-void Spotlight::SetIntensity(float f) { SetColorIntensity(Color(), f); }
+void Spotlight::SetIntensity(float f) { SetColorIntensity(GetColor(), f); }
 
 void Spotlight::SetColorIntensity(const Hmx::Color &c, float f) {
     mColorOwner->mColor = c;

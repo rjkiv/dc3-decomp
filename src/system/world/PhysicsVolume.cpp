@@ -22,8 +22,8 @@ PhysicsVolume::PhysicsVolume()
     : mVolume(nullptr), mShapeType(kPhysicsVolumeBox), mOverlapping(0),
       mDirectionalForce(Vector3::GetZero()), mTangentialForce(Vector3::GetZero()),
       mDirectionalVelocity(Vector3::GetZero()), mRadialForce(0),
-      mCollisionFilter(kCollidePhysicsVolumeDynamicFixed), mActive(true),
-      mReportOnOverlaps(false) {}
+      mCollisionFilter(COL_FILTER_PHYSICS_VOLUME_DF), mActive(true),
+      mReportOverlaps(false) {}
 
 PhysicsVolume::~PhysicsVolume() { DestroyPhysicsVolume(); }
 
@@ -47,9 +47,11 @@ void PhysicsVolume::SetCollisionFilter(CollisionFilter cf) {
 
 BEGIN_PROPSYNCS(PhysicsVolume)
     SYNC_PROP_SET(active, mActive, SetActiveState(_val.Int()))
-    SYNC_PROP(report_on_overlaps, mReportOnOverlaps)
+    SYNC_PROP(report_on_overlaps, mReportOverlaps)
     SYNC_PROP_SET(
-        collision_filter, (int &)mCollisionFilter, SetCollisionFilter((CollisionFilter)_val.Int())
+        collision_filter,
+        (int &)mCollisionFilter,
+        SetCollisionFilter((CollisionFilter)_val.Int())
     )
     SYNC_PROP(radial_force, mRadialForce)
     SYNC_PROP(directional_force, mDirectionalForce)
@@ -72,7 +74,7 @@ BEGIN_SAVES(PhysicsVolume)
     bs << mDirectionalForce;
     bs << mDirectionalVelocity;
     bs << mShapeType;
-    bs << mReportOnOverlaps;
+    bs << mReportOverlaps;
     bs << mCollisionFilter;
     bs << mTangentialForce;
 END_SAVES
@@ -91,7 +93,7 @@ BEGIN_COPYS(PhysicsVolume)
         COPY_MEMBER(mDirectionalVelocity)
         COPY_MEMBER(mRadialForce)
         COPY_MEMBER(mActive)
-        COPY_MEMBER(mReportOnOverlaps)
+        COPY_MEMBER(mReportOverlaps)
         COPY_MEMBER(mCollisionFilter)
     END_COPYING_MEMBERS
     DestroyPhysicsVolume();
@@ -124,7 +126,7 @@ BEGIN_LOADS(PhysicsVolume)
         d >> (int &)mShapeType;
     }
     if (d.rev > 4) {
-        d >> mReportOnOverlaps;
+        d >> mReportOverlaps;
     }
     if (d.rev > 5) {
         int filter;
@@ -200,7 +202,7 @@ void PhysicsVolume::Poll() {
             }
         }
         if (mOverlapping) {
-            if (mReportOnOverlaps) {
+            if (mReportOverlaps) {
                 static Symbol while_has_overlaps("while_has_overlaps");
                 Handle(Message(while_has_overlaps, this), false);
             }

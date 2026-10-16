@@ -58,9 +58,9 @@ public:
         /** "Falloff distance for point lights" */
         float mRange; // 0x30
         /** "Light type" */
-        RndLight::Type mLightType; // 0x34
+        RndLight::Type mType; // 0x34
         /** "Light transform" */
-        Hmx::Matrix3 mRotation; // 0x38
+        Hmx::Matrix3 mCachedDisplayRot; // 0x38
     };
 
     struct SpotlightEntry {
@@ -91,13 +91,13 @@ public:
         bool operator!=(const SpotlightDrawerEntry &) const;
 
         /** "Global intensity scale" */
-        float mTotalIntensity; // 0x0
+        float mTotal; // 0x0
         /** "Intensity of smokeless beam" */
         float mBaseIntensity; // 0x4
         /** "Intensity from smoke" */
         float mSmokeIntensity; // 0x8
         /** "The amount the spotlights will influence the real lighting of the world" */
-        float mLightInfluence; // 0xc
+        float mLightingInfluence; // 0xc
     };
 
     struct Keyframe {
@@ -155,7 +155,7 @@ public:
     // RndAnimatable
     virtual void StartAnim();
     virtual void SetFrame(float, float);
-    virtual float EndFrame() { return mEndFrame; }
+    virtual float EndFrame() { return mCachedDuration; }
 
     OBJ_MEM_OVERLOAD(0x1B)
     NEW_OBJ(LightPreset)
@@ -232,7 +232,7 @@ protected:
     int mManualFrame; // 0xf8
     int mLastManualFrame; // 0xfc
     float mManualFadeTime; // 0x100
-    float mEndFrame; // 0x104
+    float mCachedDuration; // 0x104
     /** "Whether the keyframes are locked (no editing allowed)" */
     bool mLocked; // 0x108
     LightHue *mHue; // 0x10c

@@ -24,19 +24,19 @@ Rand CameraManager::sRand(0);
 int CameraManager::sSeed;
 
 CameraManager::CameraManager()
-    : mParent(nullptr), mNextShot(this), mBlendTime(0), mNextShotChanged(true), mCurrentCam(this),
-      mCamStartTime(0), mFreeCam(nullptr), mCrowds(this) {}
+    : mParent(nullptr), mNextShot(this), mBlendTime(0), mNextShotChanged(true),
+      mCurrentCam(this), mCamStartTime(0), mFreeCam(nullptr), mCrowds(this) {}
 
 CameraManager::CameraManager(WorldDir *parent)
-    : mParent(parent), mNextShot(this), mBlendTime(0), mNextShotChanged(true), mCurrentCam(this),
-      mCamStartTime(0), mFreeCam(nullptr), mCrowds(this) {
+    : mParent(parent), mNextShot(this), mBlendTime(0), mNextShotChanged(true),
+      mCurrentCam(this), mCamStartTime(0), mFreeCam(nullptr), mCrowds(this) {
     MILO_ASSERT(mParent, 0x34);
 }
 
 CameraManager::~CameraManager() {
     StartShot_(nullptr);
     RELEASE(mFreeCam);
-    FOREACH (it, mCameraShotCategories) {
+    FOREACH (it, mCategories) {
         delete it->mShots;
     }
 }
@@ -45,8 +45,8 @@ BEGIN_HANDLERS(CameraManager)
     HANDLE(pick_shot, OnPickCameraShot)
     HANDLE(find_shot, OnFindCameraShot)
     HANDLE_ACTION(force_shot, ForceCamShot(_msg->Obj<CamShot>(2)))
-    HANDLE_EXPR(current_shot, CurrentShot())
-    HANDLE_EXPR(next_shot, NextShot())
+    HANDLE_EXPR(current_shot, GetCurrentShot())
+    HANDLE_EXPR(next_shot, GetNextShot())
     HANDLE_EXPR(get_free_cam, GetFreeCam(_msg->Int(2)))
     HANDLE_EXPR(has_free_cam, HasFreeCam())
     HANDLE_ACTION(delete_free_cam, DeleteFreeCam())
@@ -243,7 +243,8 @@ Symbol CameraManager::MakeCategoryAndFilters(
                 if (filt.prop.Type() == kDataSymbol && filt.prop.Sym() == flags_exact) {
                     filt.mask = currArr->Int(1);
                     filt.match = currArr->Int(2);
-                } else if (filt.prop.Type() == kDataSymbol && filt.prop.Sym() == flags_any) {
+                } else if (filt.prop.Type() == kDataSymbol
+                           && filt.prop.Sym() == flags_any) {
                     filt.mask = currArr->Int(1);
                     filt.match = 1;
                 } else {
@@ -336,16 +337,13 @@ CameraManager::FindCameraShot(Symbol s, const std::vector<PropertyFilter> &filts
 ObjPtrList<CamShot> &CameraManager::FindOrAddCategory(Symbol cat) {
     Category targetCat;
     targetCat.mCategory = cat;
-    Category *lowerCat = std::lower_bound(
-        mCameraShotCategories.begin(), mCameraShotCategories.end(), targetCat
-    );
-    if (lowerCat == mCameraShotCategories.end() || lowerCat->mCategory != cat) {
+    Category *lowerCat =
+        std::lower_bound(mCategories.begin(), mCategories.end(), targetCat);
+    if (lowerCat == mCategories.end() || lowerCat->mCategory != cat) {
         targetCat.mShots = new ObjPtrList<CamShot>(mParent);
-        mCameraShotCategories.push_back(targetCat);
-        std::sort(mCameraShotCategories.begin(), mCameraShotCategories.end());
-        lowerCat = std::lower_bound(
-            mCameraShotCategories.begin(), mCameraShotCategories.end(), targetCat
-        );
+        mCategories.push_back(targetCat);
+        std::sort(mCategories.begin(), mCategories.end());
+        lowerCat = std::lower_bound(mCategories.begin(), mCategories.end(), targetCat);
     }
     return *lowerCat->mShots;
 }
@@ -358,8 +356,7 @@ int CameraManager::NumCameraShots(
     int num = 0;
     FOREACH (it, camlist) {
         CamShot *cur = *it;
-        if (cur->Disabled() == 0 && ShotMatches(cur, filts)
-            && cur->ShotOk(mCurrentCam)) {
+        if (cur->Disabled() == 0 && ShotMatches(cur, filts) && cur->ShotOk(mCurrentCam)) {
             shots->push_back(cur);
             num++;
         }
@@ -369,7 +366,7 @@ int CameraManager::NumCameraShots(
 
 void CameraManager::Randomize() {
     sRand.Seed(sSeed);
-    FOREACH (it, mCameraShotCategories) {
+    FOREACH (it, mCategories) {
         RandomizeCategory(*it->mShots);
     }
 }
@@ -428,8 +425,8 @@ void CameraManager::Poll() {
 
 void CameraManager::SyncObjects(WorldDir *parent) {
     mParent = parent;
-    mCameraShotCategories.clear();
-    mCameraShotCategories.reserve(100);
+    mCategories.clear();
+    mCategories.reserve(100);
     mCrowds.clear();
     for (ObjDirItr<Hmx::Object> it(mParent, true); it != nullptr; ++it) {
         CamShot *shot = dynamic_cast<CamShot *>(&*it);
@@ -502,7 +499,7 @@ DataNode CameraManager::OnRandomSeed(DataArray *da) {
 
 DataNode CameraManager::OnGetShotList(DataArray *a) {
     DataArray *list = new DataArray(0);
-    FOREACH (it, mCameraShotCategories) {
+    FOREACH (it, mCategories) {
         FOREACH_PTR (shotIt, it->mShots) {
             list->Insert(list->Size(), *shotIt);
         }
@@ -517,7 +514,7 @@ DataNode CameraManager::OnGetShotList(DataArray *a) {
 DataNode CameraManager::OnIterateShot(DataArray *da) {
     DataNode *var = da->Var(2);
     DataNode d28(*var);
-    FOREACH (it, mCameraShotCategories) {
+    FOREACH (it, mCategories) {
         FOREACH_PTR (lit, it->mShots) {
             *var = *lit;
             for (int i = 3; i < da->Size(); i++) {
