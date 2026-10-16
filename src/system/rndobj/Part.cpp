@@ -483,7 +483,7 @@ BEGIN_COPYS(RndParticleSys)
             }
         }
         COPY_MEMBER(mNumActive)
-        unk138 = GetFrame();
+        unk138 = Frame();
         if (ty != kCopyFromMax) {
             COPY_MEMBER(mLife)
             COPY_MEMBER(mScreenAspect)
@@ -776,7 +776,7 @@ BEGIN_LOADS(RndParticleSys)
         SetPool(mMaxParticles, mType);
     }
     unk144 = 0;
-    unk138 = GetFrame();
+    unk138 = Frame();
 END_LOADS
 
 void RndParticleSys::SetFrame(float frame, float blend) {
@@ -966,7 +966,7 @@ void RndParticleSys::SetShrinkRatio(float f) {
 void RndParticleSys::SetFrameDrive(bool b) {
     mFrameDrive = b;
     if (mFrameDrive) {
-        unk138 = GetFrame();
+        unk138 = Frame();
     } else
         unk13c = 0;
     unk144 = 0;

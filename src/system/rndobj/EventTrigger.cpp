@@ -1,6 +1,7 @@
 #include "rndobj/EventTrigger.h"
 #include "math/Easing.h"
 #include "math/Rand.h"
+#include "math/Utl.h"
 #include "obj/Data.h"
 #include "obj/DataFunc.h"
 #include "obj/Dir.h"
@@ -403,14 +404,14 @@ void EventTrigger::SetName(const char *name, class ObjectDir *dir) {
 }
 
 void EventTrigger::StartAnim() {
-    ResetFrame();
+    mFrame = kHugeFloat;
     if (mAnimTrigger == kTriggerAnimStart) {
         Trigger();
     }
 }
 
 void EventTrigger::EndAnim() {
-    ResetFrame();
+    mFrame = kHugeFloat;
     if (mAnimTrigger == kTriggerAnimEnd) {
         Trigger();
     } else if (mAnimTrigger == kTriggerAnimStart) {
@@ -419,10 +420,10 @@ void EventTrigger::EndAnim() {
 }
 
 void EventTrigger::SetFrame(float frame, float blend) {
-    float oldframe = GetFrame();
+    float oldframe = Frame();
     RndAnimatable::SetFrame(frame, blend);
     if (mAnimTrigger == kTriggerAnimFrame && oldframe < mAnimFrame
-        && GetFrame() >= mAnimFrame) {
+        && Frame() >= mAnimFrame) {
         Trigger();
     }
 }

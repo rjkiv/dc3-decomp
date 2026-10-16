@@ -329,7 +329,7 @@ void RhythmBattlePlayer::HackPlayerQuit() {
     int trackingID = player->GetSkeletonTrackingID();
     int skelIdx = TheGestureMgr->GetSkeletonIndexByTrackingID(trackingID);
     if (skelIdx != -1 && mInAnim2) {
-        mInAnim2->Animate(mInAnim2->GetFrame(), mInAnim2->EndFrame(), mInAnim2->Units());
+        mInAnim2->Animate(mInAnim2->Frame(), mInAnim2->EndFrame(), mInAnim2->Units());
     }
 }
 

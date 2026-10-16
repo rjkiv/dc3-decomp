@@ -54,7 +54,7 @@ void UITransitionHandler::StartValueChange() {
             FinishValueChange();
         else {
             mOutAnim->Animate(
-                mOutAnim->GetFrame(),
+                mOutAnim->Frame(),
                 mOutAnim->StartFrame(),
                 mOutAnim->Units(),
                 0.0f,

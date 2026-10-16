@@ -108,20 +108,13 @@ public:
     // weak getters and setters
     Rate GetRate() { return mRate; }
     void SetRate(Rate r) { mRate = r; }
-    float GetFrame() const { return mFrame; }
-    void ResetFrame() { mFrame = kHugeFloat; }
+    float Frame() const { return mFrame; }
 
     static TaskUnits RateToTaskUnits(Rate);
 
-private: // RB2 said so
-    /** "Frame of animation". It ranges from 0 to what EndFrame() returns. */
-    float mFrame; // 0x8
-    /** "Rate to animate" */
-    Rate mRate; // 0xc
-
 protected:
     RndAnimatable();
-    void FireFlowLabel(Symbol);
+    void FireFlowLabel(Symbol flowLabelName);
     /** Create a new AnimTask using the configuration in the supplied DataArray.
      * @param [in] arr The supplied DataArray.
      * @returns A DataNode housing the newly created task.
@@ -136,6 +129,11 @@ protected:
      */
     DataNode OnAnimate(DataArray *arr);
     DataNode OnConvertFrames(DataArray *);
+
+    /** "Frame of animation". It ranges from 0 to what EndFrame() returns. */
+    float mFrame; // 0x8
+    /** "Rate to animate" */
+    Rate mRate; // 0xc
 };
 
 /** A task meant for animating. */
@@ -148,28 +146,29 @@ public:
         float fpu,
         bool loop,
         float blend,
-        Hmx::Object *listener,
-        EaseType easeType,
-        float easePower,
-        bool wait
+        Hmx::Object *event_reciever,
+        EaseType ease_type,
+        float ease_power,
+        bool wrap
     );
     virtual ~AnimTask();
     virtual bool Replace(ObjRef *, Hmx::Object *);
     OBJ_CLASSNAME(AnimTask);
-    virtual void Poll(float);
+    virtual void Poll(float time);
 
     float TimeUntilEnd();
     AnimTask *BlendTask() const { return mBlendTask; }
     RndAnimatable *Anim() const { return mAnim; }
     Hmx::Object *AnimTarget() const { return mAnimTarget; }
-    Hmx::Object *Listener() const { return mListener; }
-    void SetListener(Hmx::Object *l) { mListener = l; }
+    Hmx::Object *GetEventReceiver() const { return mEventReciever; }
+    void SetEventReciever(Hmx::Object *l) { mEventReciever = l; }
 
     POOL_OVERLOAD(AnimTask, 0x75);
 
+protected:
     /** The animatable this task should be animating. */
     ObjOwnerPtr<RndAnimatable> mAnim; // 0x2c
-    ObjPtr<Hmx::Object> mListener; // 0x40
+    ObjPtr<Hmx::Object> mEventReciever; // 0x40
     ObjPtr<Hmx::Object> mAnimTarget; // 0x54
     /** The anim task to blend into. */
     ObjPtr<AnimTask> mBlendTask; // 0x68
@@ -188,10 +187,10 @@ public:
     float mOffset; // 0x94
     /** Whether or not the animation should loop. */
     bool mLoop; // 0x98
-    float unk9c; // 0x9c
+    float mLastFrame; // 0x9c
     EaseFunc *mEaseFunc; // 0xa0
     float mEasePower; // 0xa4
-    bool unka8; // 0xa8
-    float unkac; // 0xac
-    bool unkb0; // 0xb0
+    bool mWrap; // 0xa8
+    float mEndTime; // 0xac
+    bool mFirstFrame; // 0xb0
 };

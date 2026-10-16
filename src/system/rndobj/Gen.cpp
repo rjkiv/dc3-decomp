@@ -287,7 +287,7 @@ void RndGenerator::DrawShowing() {
         if (func) {
             int i11 = mPathEndFrame - mPathStartFrame > 0 ? 1 : -1;
             FOREACH (it, mInstances) {
-                float f13 = GetFrame() - it->frameOrg;
+                float f13 = Frame() - it->frameOrg;
                 Transform xfm;
                 mPath->MakeTransform((float)i11 * f13 + mPathStartFrame, xfm, true, 1);
                 Scale(it->scale, xfm.m, xfm.m);
@@ -398,6 +398,6 @@ DataNode RndGenerator::OnSetPathVar(const DataArray *da) {
 }
 
 DataNode RndGenerator::OnGenerate(const DataArray *da) {
-    Generate(GetFrame());
+    Generate(Frame());
     return 0;
 }

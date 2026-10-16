@@ -278,14 +278,14 @@ void HamNavList::DrawShowing() {
             }
         }
         if (mListRibbon) {
-            mListRibbon->SetFrame(GetFrame(), 1);
+            mListRibbon->SetFrame(Frame(), 1);
             mListRibbon->SetScrollAnimFrame(mScrollBehavior.GetScrollFrame());
             mListRibbon->SetDisengageFrame(mDisengageAmount.Value());
             mListRibbon->SetMode(mRibbonMode);
             mListRibbon->Draw(WorldXfm(), mRibbonDrawStates, false, false);
         }
         if (mHeaderRibbon) {
-            mHeaderRibbon->SetFrame(GetFrame(), 1);
+            mHeaderRibbon->SetFrame(Frame(), 1);
             mHeaderRibbon->SetScrollAnimFrame(mScrollBehavior.GetScrollFrame());
             mHeaderRibbon->SetDisengageFrame(mDisengageAmount.Value());
             mHeaderRibbon->SetMode(mRibbonMode);
@@ -1123,7 +1123,7 @@ float HamNavList::GetTargetSwellAmount(int i) {
     if (TheLoadMgr.EditMode()) {
         if (i == mListState.SelectedDisplay()) {
             if (mRibbonMode == HamListRibbon::RibbonMode::kRibbonSwell) {
-                return GetFrame();
+                return Frame();
             }
             return 1.0f;
         }
@@ -1340,7 +1340,7 @@ void HamNavList::UpdateGestures(const Skeleton *skeleton) {
             if (IsAnimating()) {
                 return;
             }
-            if (GetFrame() == EndFrame()) {
+            if (Frame() == EndFrame()) {
                 return;
             }
         }

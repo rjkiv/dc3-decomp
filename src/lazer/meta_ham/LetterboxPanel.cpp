@@ -228,7 +228,7 @@ void LetterboxPanel::SyncToPanel(UIPanel *panel) {
         if (ShouldShowHandHelp()) {
             RndPropAnim *anim = LoadedDir()->Find<RndPropAnim>("handDown_icon_show.anim");
             if (anim) {
-                float cur = anim->GetFrame();
+                float cur = anim->Frame();
                 float end = anim->EndFrame();
                 anim->Animate(
                     cur, end, kTaskUISeconds, 0, 0, nullptr, kEaseLinear, 0, false
@@ -238,7 +238,7 @@ void LetterboxPanel::SyncToPanel(UIPanel *panel) {
             RndPropAnim *anim = LoadedDir()->Find<RndPropAnim>("handDown_icon_show.anim");
             if (anim) {
                 anim->Animate(
-                    anim->GetFrame(), 0, kTaskUISeconds, 0, 0, nullptr, kEaseLinear, 0, false
+                    anim->Frame(), 0, kTaskUISeconds, 0, 0, nullptr, kEaseLinear, 0, false
                 );
             }
         }

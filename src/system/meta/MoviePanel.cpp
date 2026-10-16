@@ -207,7 +207,7 @@ void MoviePanel::SetPaused(bool b) { mMovie.SetPaused(b); }
 void MoviePanel::HideHint() {
     mShowHint = false;
     mPauseHintAnim->Animate(
-        mPauseHintAnim->GetFrame(),
+        mPauseHintAnim->Frame(),
         mPauseHintAnim->StartFrame(),
         mPauseHintAnim->Units(),
         0,
@@ -224,7 +224,7 @@ void MoviePanel::ShowHint() {
         mShowHint = true;
         mTimeShowHintStarted = TheTaskMgr.UISeconds();
         mPauseHintAnim->Animate(
-            mPauseHintAnim->GetFrame(),
+            mPauseHintAnim->Frame(),
             mPauseHintAnim->EndFrame(),
             mPauseHintAnim->Units(),
             0.0f,
