@@ -265,8 +265,8 @@ void CharLipSyncDriver::Poll() {
                 if (TheWorld) {
                     CameraManager *mgr = TheWorld->GetCameraManager();
                     if (mgr) {
-                        shot = mgr->CurrentShot();
-                        if (!mgr->CurrentShot()) {
+                        shot = mgr->GetCurrentShot();
+                        if (!mgr->GetCurrentShot()) {
                             shot = mgr->MiloCamera();
                         }
                     }

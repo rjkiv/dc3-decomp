@@ -102,11 +102,11 @@ BinStreamRev &operator>>(BinStreamRev &d, LightPreset::EnvironmentEntry &e) {
 #pragma endregion
 #pragma region EnvLightEntry
 
-LightPreset::EnvLightEntry::EnvLightEntry() : mRange(0), mLightType(RndLight::kPoint) {
+LightPreset::EnvLightEntry::EnvLightEntry() : mRange(0), mType(RndLight::kPoint) {
     mOrientation.Reset();
     mPosition.Zero();
     mColor.Zero();
-    mRotation.Zero();
+    mCachedDisplayRot.Zero();
 }
 
 void LightPreset::EnvLightEntry::Save(BinStream &bs) const {
@@ -114,7 +114,7 @@ void LightPreset::EnvLightEntry::Save(BinStream &bs) const {
     bs << mPosition;
     bs << mColor;
     bs << mRange;
-    bs << mLightType;
+    bs << mType;
 }
 
 void LightPreset::EnvLightEntry::Load(BinStream &bs) {
@@ -123,7 +123,7 @@ void LightPreset::EnvLightEntry::Load(BinStream &bs) {
     bs >> mColor;
     mColor.alpha = 1;
     bs >> mRange;
-    bs >> (int &)mLightType;
+    bs >> (int &)mType;
 }
 
 void LightPreset::EnvLightEntry::Animate(
@@ -138,7 +138,7 @@ void LightPreset::EnvLightEntry::Animate(
 bool LightPreset::EnvLightEntry::operator!=(const LightPreset::EnvLightEntry &e) const {
     if (mRange != e.mRange)
         return true;
-    else if ((unsigned int)mLightType != e.mLightType)
+    else if ((unsigned int)mType != e.mType)
         return true;
     else if (mOrientation != e.mOrientation)
         return true;
@@ -258,23 +258,23 @@ BinStreamRev &operator>>(BinStreamRev &d, LightPreset::SpotlightEntry &e) {
 #pragma region SpotlightDrawerEntry
 
 LightPreset::SpotlightDrawerEntry::SpotlightDrawerEntry()
-    : mTotalIntensity(0), mBaseIntensity(0), mSmokeIntensity(0), mLightInfluence(0) {}
+    : mTotal(0), mBaseIntensity(0), mSmokeIntensity(0), mLightingInfluence(0) {}
 
 void LightPreset::SpotlightDrawerEntry::Save(BinStream &bs) const {
     bs << mBaseIntensity;
     bs << mSmokeIntensity;
-    bs << mTotalIntensity;
-    bs << mLightInfluence;
+    bs << mTotal;
+    bs << mLightingInfluence;
 }
 
 void LightPreset::SpotlightDrawerEntry::Load(BinStreamRev &d) {
     d >> mBaseIntensity;
     d >> mSmokeIntensity;
-    d >> mTotalIntensity;
+    d >> mTotal;
     if (d.rev > 0xF) {
-        d >> mLightInfluence;
+        d >> mLightingInfluence;
     } else {
-        mLightInfluence = 1;
+        mLightingInfluence = 1;
     }
 }
 
@@ -285,9 +285,9 @@ bool LightPreset::SpotlightDrawerEntry::operator!=(
         return true;
     else if (mSmokeIntensity != e.mSmokeIntensity)
         return true;
-    else if (mLightInfluence != e.mLightInfluence)
+    else if (mLightingInfluence != e.mLightingInfluence)
         return true;
-    else if (mTotalIntensity != e.mTotalIntensity)
+    else if (mTotal != e.mTotal)
         return true;
     else
         return false;
@@ -393,7 +393,7 @@ LightPreset::LightPreset()
       mPlatformOnly(kPlatformNone), mSelectTriggers(this), mManual(0),
       mSpotlightState(this), mLastKeyframe(0), mLastBlend(-1), mStartBeat(0),
       mManualFrameStart(0), mManualFrame(0), mLastManualFrame(-1), mManualFadeTime(0),
-      mEndFrame(0), mLocked(0), mHue(0) {}
+      mCachedDuration(0), mLocked(0), mHue(0) {}
 
 LightPreset::~LightPreset() { Clear(); }
 
@@ -495,11 +495,11 @@ BEGIN_CUSTOM_PROPSYNC(LightPreset::EnvLightEntry)
     SYNC_PROP(position, o.mPosition)
     SYNC_PROP_SET(color, o.mColor.PackRgb(), )
     SYNC_PROP_SET(range, o.mRange, )
-    SYNC_PROP_SET(type, RndLight::TypeToStr(o.mLightType), ) {
+    SYNC_PROP_SET(type, RndLight::TypeToStr(o.mType), ) {
         static Symbol _s("rotation");
         if (sym == _s) {
-            MakeRotMatrix(o.mOrientation, o.mRotation);
-            if (PropSync(o.mRotation, _val, _prop, _i + 1, _op))
+            MakeRotMatrix(o.mOrientation, o.mCachedDisplayRot);
+            if (PropSync(o.mCachedDisplayRot, _val, _prop, _i + 1, _op))
                 return true;
             else
                 return false;
@@ -532,10 +532,10 @@ BEGIN_CUSTOM_PROPSYNC(LightPreset::SpotlightDrawerEntry)
         spotlight_drawer,
         GetName(gEditPreset, _prop->Int(_i - 1), LightPreset::kPresetSpotlightDrawer),
     )
-    SYNC_PROP_SET(total, o.mTotalIntensity, )
+    SYNC_PROP_SET(total, o.mTotal, )
     SYNC_PROP_SET(base_intensity, o.mBaseIntensity, )
     SYNC_PROP_SET(smoke_intensity, o.mSmokeIntensity, )
-    SYNC_PROP_SET(light_influence, o.mLightInfluence, )
+    SYNC_PROP_SET(light_influence, o.mLightingInfluence, )
 END_CUSTOM_PROPSYNC
 
 BEGIN_CUSTOM_PROPSYNC(LightPreset::Keyframe)
@@ -800,7 +800,7 @@ void LightPreset::FillLightPresetData(RndLight *light, LightPreset::EnvLightEntr
     entry.mOrientation = Hmx::Quat(light->WorldXfm().m);
     entry.mPosition = light->WorldXfm().v;
     entry.mRange = light->Range();
-    entry.mLightType = light->GetType();
+    entry.mType = light->GetType();
 }
 
 void LightPreset::RemoveLight(int idx) {
@@ -885,8 +885,8 @@ void LightPreset::FillSpotlightDrawerPresetData(
 ) {
     e.mBaseIntensity = sd->Params().mBaseIntensity;
     e.mSmokeIntensity = sd->Params().mSmokeIntensity;
-    e.mLightInfluence = sd->Params().mLightingInfluence;
-    e.mTotalIntensity = sd->Params().mIntensity;
+    e.mLightingInfluence = sd->Params().mLightingInfluence;
+    e.mTotal = sd->Params().mIntensity;
 }
 
 void LightPreset::AddSpotlightDrawer(SpotlightDrawer *sd) {
@@ -1093,7 +1093,7 @@ void LightPreset::CacheFrames() {
         }
     }
 
-    mEndFrame = f;
+    mCachedDuration = f;
 }
 
 void LightPreset::SyncKeyframeTargets() {
@@ -1169,8 +1169,8 @@ void LightPreset::Animate(float f) {
 
 void LightPreset::FillSpotPresetData(Spotlight *spotlight, SpotlightEntry &entry, int i) {
     if ((i & 1) != 0) {
-        entry.mIntensity = spotlight->Intensity();
-        entry.mColor = spotlight->Color().PackRgb();
+        entry.mIntensity = spotlight->GetIntensity();
+        entry.mColor = spotlight->GetColor().PackRgb();
     }
     if ((i & 2) != 0) {
         entry.mTarget = spotlight->GetTarget();
@@ -1191,9 +1191,9 @@ void LightPreset::FillSpotPresetData(Spotlight *spotlight, SpotlightEntry &entry
 void LightPreset::AnimateSpotFromPreset(
     Spotlight *spotlight, const LightPreset::SpotlightEntry &entry, float f
 ) {
-    if (spotlight->AnimateColorFromPreset()) {
-        Hmx::Color color = spotlight->Color();
-        float intensity = spotlight->Intensity();
+    if (spotlight->GetAnimateColorFromPreset()) {
+        Hmx::Color color = spotlight->GetColor();
+        float intensity = spotlight->GetIntensity();
         Hmx::Color color2;
         color2.UnpackRgb(entry.mColor);
         if (mHue) {
@@ -1202,17 +1202,17 @@ void LightPreset::AnimateSpotFromPreset(
         Interp(color, color2, f, color);
         Interp(intensity, entry.mIntensity, f, intensity);
         spotlight->SetColorIntensity(color, intensity);
-        if (spotlight->GetFlare() && f == 1.0f) {
+        if (spotlight->Flare() && f == 1.0f) {
             spotlight->SetFlareEnabled(entry.mFlags & 1);
         }
     }
 
-    if (spotlight->AnimateOrientationFromPreset()) {
+    if (spotlight->GetAnimateOrientFromPreset()) {
         Hmx::Quat quat(0, 0, 0, 0);
         Hmx::Quat quat2;
 
         if ((entry.mFlags & 2) == 0) {
-            spotlight->SetUnk2F0(false);
+            spotlight->SetTargetExists(false);
             quat2.Reset();
         } else {
             if (entry.mOrientation != quat) {
@@ -1222,12 +1222,12 @@ void LightPreset::AnimateSpotFromPreset(
             }
         }
 
-        Interp(spotlight->GetUnk370(), quat2, f, quat2);
-        spotlight->GetUnk370() = quat2;
+        Interp(spotlight->PresetOrient(), quat2, f, quat2);
+        spotlight->SetPresetOrient(quat2);
         if (f == 1.0f) {
             spotlight->SetTarget(entry.mTarget);
         }
-        spotlight->SetUnk36E(true);
+        spotlight->SetAnimatingFromPreset(true);
     }
 }
 
@@ -1267,17 +1267,12 @@ void LightPreset::AnimateState(
                     entry2.mSmokeIntensity
                 );
                 Interp(
-                    entry2.mLightInfluence,
-                    entry.mLightInfluence,
+                    entry2.mLightingInfluence,
+                    entry.mLightingInfluence,
                     f,
-                    entry2.mLightInfluence
+                    entry2.mLightingInfluence
                 );
-                Interp(
-                    entry2.mTotalIntensity,
-                    entry.mTotalIntensity,
-                    f,
-                    entry2.mTotalIntensity
-                );
+                Interp(entry2.mTotal, entry.mTotal, f, entry2.mTotal);
             }
         }
     }

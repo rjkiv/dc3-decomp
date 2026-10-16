@@ -61,8 +61,8 @@ HamCamShot::HamCamShot()
       mCachedTotalDuration(0), mListingNextShots(0), mSetPreFrameCalled(0),
       mMasterAnims(this), mOriginalNumNextShots(0), unk2f8(this), unk30c(this),
       unk320(this), unk340(this), unk354(this), unk368(this), unk388(false) {
-    mNearPlane = 10;
-    mFarPlane = 10000;
+    mNear = 10;
+    mFar = 10000;
     mNextIter = 0;
 }
 

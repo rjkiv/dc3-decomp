@@ -4,8 +4,8 @@
 #include "utl/MemMgr.h"
 
 struct ColorSet {
-    Hmx::Color mPrimary;
-    Hmx::Color mSecondary;
+    Hmx::Color mPrimary; // 0x0
+    Hmx::Color mSecondary; // 0x10
 };
 
 /**

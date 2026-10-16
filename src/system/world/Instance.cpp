@@ -16,12 +16,12 @@
 
 #pragma region WorldInstance
 
-WorldInstance::WorldInstance() : mSharedGroup(0), mSharedGroup2(0) {}
+WorldInstance::WorldInstance() : mSharedGroup(0), mGroup(0) {}
 
 WorldInstance::~WorldInstance() {
-    if (mSharedGroup2)
-        mSharedGroup2->ClearPollMaster();
-    delete mSharedGroup2;
+    if (mGroup)
+        mGroup->ClearPollMaster();
+    delete mGroup;
 }
 
 BEGIN_HANDLERS(WorldInstance)
@@ -287,10 +287,10 @@ void WorldInstance::SyncDir() {
         mSharedGroup = nullptr;
         if (mDir) {
             RndGroup *grp = mDir->Find<RndGroup>("shared.grp", false);
-            if (!mDir->mSharedGroup2 && grp) {
-                mDir->mSharedGroup2 = new SharedGroup(grp);
+            if (!mDir->mGroup && grp) {
+                mDir->mGroup = new SharedGroup(grp);
             }
-            mSharedGroup = mDir->mSharedGroup2;
+            mSharedGroup = mDir->mGroup;
             Sphere sphere = mDir->GetSphere();
             Vector3 v98;
             MakeScale(WorldXfm().m, v98);

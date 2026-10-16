@@ -24,8 +24,9 @@ protected:
     virtual void AddCollidable(Hmx::Object *, ObjectDir *, bool);
     virtual void RemoveCollidable(Hmx::Object *);
 
+private:
     ObjPtrList<Hmx::Object> mCollidableRefs; // 0x40
-    std::map<Hmx::Object *, ObjectDir *> mCollidableToDirTbl; // 0x54 - mCollidableMap?
+    std::map<Hmx::Object *, ObjectDir *> mCollidableToDirTbl; // 0x54
     std::list<RndMesh *> mActiveCollidables; // 0x6c
     std::list<RndMesh *> mInactiveCollidables; // 0x74
 };
@@ -39,7 +40,6 @@ public:
     virtual Hmx::Object *FindNearest(const Segment &, float &, Vector3 &, Hmx::Object *&);
     virtual void SetFilter(int);
 
-protected:
     std::list<std::pair<RndMesh *, ObjectDir *> > mList; // 0x4
 };
 
@@ -53,7 +53,6 @@ public:
     virtual void ApplyRadialForce(float) {}
     virtual void Release() { delete this; }
 
-protected:
-    DetectionVolumeListener *mListener; // 0x2c
+private:
     bool mActiveState; // 0x30
 };

@@ -47,14 +47,14 @@ public:
     };
 
     struct MatOverride {
-        MatOverride(Hmx::Object *owner) : mesh(owner), mat(owner), mat2(owner) {}
+        MatOverride(Hmx::Object *owner) : mesh(owner), mat(owner), origMat(owner) {}
         void Sync(bool);
 
         /** "Subdir mesh to modify" */
         ObjPtr<RndMesh> mesh; // 0x0
         /** "Curdir material to set" */
         ObjPtr<RndMat> mat; // 0x14
-        ObjPtr<RndMat> mat2; // 0x28
+        ObjPtr<RndMat> origMat; // 0x28
     };
 
     WorldDir();
@@ -82,9 +82,9 @@ public:
     static void Init();
 
     void ClearDeltas();
-    CameraManager *GetCameraManager() const { return mCameraMgr; }
-    PhysicsManager *GetPhysicsManager() const { return mPhysicsMgr; }
-    LightPresetManager *GetLightPresetManager() { return &mLightPresetMgr; }
+    CameraManager *GetCameraManager() { return mCameraManager; }
+    PhysicsManager *GetPhysicsManager() { return mPhysicsManager; }
+    LightPresetManager *GetPresetManager() { return &mPresetManager; }
 
     DataNode OnGetPhysicsManager(const DataArray *);
 
@@ -100,7 +100,6 @@ private:
 
     static RndMat *sGlowMat;
 
-protected:
     ObjList<PresetOverride> mPresetOverrides; // 0x268
     ObjList<BitmapOverride> mBitmapOverrides; // 0x274
     ObjList<MatOverride> mMatOverrides; // 0x280
@@ -113,27 +112,27 @@ protected:
     /** "Things to hide when ps3_per_pixel on CamShot" */
     ObjPtrList<RndDrawable> mPS3PerPixelHides; // 0x2c8
     /** "HUD Preview Dir" */
-    FilePath mHUDFilename; // 0x2dc
-    RndDir *mHUDDir; // 0x2e4
+    FilePath mFakeHudFilename; // 0x2dc
+    RndDir *mFakeHudDir; // 0x2e4
     /** "Whether to draw the HUD preview" */
-    bool mShowHUD; // 0x2e8
+    bool mShowFakeHud; // 0x2e8
     /** "hud to be drawn last" */
-    ObjPtr<RndDir> mHUD; // 0x2ec
-    ObjPtr<CameraManager> mCameraMgr; // 0x300
+    ObjPtr<RndDir> mHud; // 0x2ec
+    ObjPtr<CameraManager> mCameraManager; // 0x300
     bool mMyCameraManager; // 0x314
-    ThreeDSoundManager m3DSoundMgr; // 0x318
-    LightPresetManager mLightPresetMgr; // 0x38c
-    PhysicsManager *mPhysicsMgr; // 0x3dc
+    ThreeDSoundManager mSoundManager; // 0x318
+    LightPresetManager mPresetManager; // 0x38c
+    PhysicsManager *mPhysicsManager; // 0x3dc
     bool mPhysicsManagerNeedsToEnter; // 0x3E0
     bool mEchoMsgs; // 0x3e1
     float mDeltaSincePoll[4]; // 0x3e4
     bool mFirstPoll; // 0x3F4
     /** "The first light preset to start" */
-    ObjPtr<LightPreset> mTestLightPreset1; // 0x3f8
+    ObjPtr<LightPreset> mTestPreset1; // 0x3f8
     /** "The second light preset to start" */
-    ObjPtr<LightPreset> mTestLightPreset2; // 0x40c
+    ObjPtr<LightPreset> mTestPreset2; // 0x40c
     /** "animation time in beats" */
-    float mTestAnimTime; // 0x420
+    float mTestPresetBlend; // 0x420
     /** "TRUE if we explicitly do the postprocing" */
     bool mExplicitPostProc; // 0x424
 };

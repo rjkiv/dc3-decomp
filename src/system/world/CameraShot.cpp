@@ -43,12 +43,12 @@ inline float ScaleToFOV(float scale) {
 #pragma region AutoPrepTarget
 
 AutoPrepTarget::AutoPrepTarget(CamShotFrame &frame)
-    : mFrame(&frame), mShot(frame.mCamShot) {
+    : mFrame(frame), mShot(frame.mCamShot) {
     mShot->StartAnim();
     mOldFilter = mShot->Filter();
     mOldCamHeight = mShot->ClampHeight();
-    mOldZoomFov = mFrame->mZoomFOV;
-    mFrame->mZoomFOV = 0;
+    mOldZoomFov = mFrame.mZoomFOV;
+    mFrame.mZoomFOV = 0;
     mShot->mFilter = 0;
     mShot->mClampHeight = -1.0f;
     mShot->mLastDesiredShakeOffset.Set(0, 0, 0);
@@ -56,16 +56,16 @@ AutoPrepTarget::AutoPrepTarget(CamShotFrame &frame)
     mShot->mLastShakeOffset.Set(0, 0, 0);
     mShot->mLastShakeAngOffset.Set(0, 0, 0);
     sChanging = true;
-    mFrame->UpdateTarget();
-    mShot->SetFrame(mFrame->mFrame, 1.0f);
+    mFrame.UpdateTarget();
+    mShot->SetFrame(mFrame.mFrame, 1.0f);
 }
 
 AutoPrepTarget::~AutoPrepTarget() {
-    mShot->SetPos(*mFrame, nullptr);
-    mFrame->UpdateTarget();
+    mShot->SetPos(mFrame, nullptr);
+    mFrame.UpdateTarget();
     mShot->mFilter = mOldFilter;
     mShot->mClampHeight = mOldCamHeight;
-    mFrame->mZoomFOV = mOldZoomFov;
+    mFrame.mZoomFOV = mOldZoomFov;
     sChanging = false;
     mShot->EndAnim();
 }
@@ -75,10 +75,10 @@ AutoPrepTarget::~AutoPrepTarget() {
 
 CamShotFrame::CamShotFrame(Hmx::Object *owner)
     : mDuration(0), mBlend(0), mBlendEase(0), mBlendEaseMode(kBlendEaseInAndOut),
-      mFrame(-1), mFOV(1.2217305f), mZoomFOV(0), mShakeNoiseFreq(0), mShakeNoiseAmp(0),
-      mShakeMaxAngle(0, 0), mBlurDepth(0.35), mMaxBlur(1), mMinBlur(0),
-      mFocusBlurMultiplier(0), mTargets(owner), mParent(owner), mFocalTarget(owner),
-      mUseParentRotation(false), mParentFirstFrame(false),
+      mFrame(-1), mFieldOfView(1.2217305f), mZoomFOV(0), mTargetNoiseFreq(0),
+      mTargetNoiseAmp(0), mMaxAngularOffset(0, 0), mBlurDepth(0.35), mMaxBlur(1),
+      mMinBlur(0), mFocusedFocalPlaneMultiplier(0), mTargets(owner), mParent(owner),
+      mFocusTarget(owner), mUseParentRotation(false), mParentFirstFrameOnly(false),
       mCamShot(dynamic_cast<CamShot *>(owner)) {
     mWorldOffset.Reset();
     mScreenOffset.Zero();
@@ -87,14 +87,14 @@ CamShotFrame::CamShotFrame(Hmx::Object *owner)
 
 CamShotFrame::CamShotFrame(Hmx::Object *shotOwner, const CamShotFrame &other)
     : mDuration(other.mDuration), mBlend(other.mBlend), mBlendEase(other.mBlendEase),
-      mBlendEaseMode(other.mBlendEaseMode), mFOV(other.mFOV), mZoomFOV(other.mZoomFOV),
-      mWorldOffset(other.mWorldOffset), mScreenOffset(other.mScreenOffset),
-      mShakeNoiseFreq(other.mShakeNoiseFreq), mShakeNoiseAmp(other.mShakeNoiseAmp),
-      mShakeMaxAngle(other.mShakeMaxAngle), mBlurDepth(other.mBlurDepth),
-      mMaxBlur(other.mMaxBlur), mMinBlur(other.mMinBlur),
-      mFocusBlurMultiplier(other.mFocusBlurMultiplier), mTargets(other.mTargets),
-      mParent(other.mParent), mFocalTarget(other.mFocalTarget),
-      mUseParentRotation(other.mUseParentRotation), mParentFirstFrame(false) {
+      mBlendEaseMode(other.mBlendEaseMode), mFieldOfView(other.mFieldOfView),
+      mZoomFOV(other.mZoomFOV), mWorldOffset(other.mWorldOffset),
+      mScreenOffset(other.mScreenOffset), mTargetNoiseFreq(other.mTargetNoiseFreq),
+      mTargetNoiseAmp(other.mTargetNoiseAmp), mMaxAngularOffset(other.mMaxAngularOffset),
+      mBlurDepth(other.mBlurDepth), mMaxBlur(other.mMaxBlur), mMinBlur(other.mMinBlur),
+      mFocusedFocalPlaneMultiplier(other.mFocusedFocalPlaneMultiplier),
+      mTargets(other.mTargets), mParent(other.mParent), mFocusTarget(other.mFocusTarget),
+      mUseParentRotation(other.mUseParentRotation), mParentFirstFrameOnly(false) {
     mCamShot = dynamic_cast<CamShot *>(shotOwner);
 }
 
@@ -103,22 +103,22 @@ void CamShotFrame::Save(BinStream &bs) const {
     bs << mBlend;
     bs << mBlendEase;
     bs << mBlendEaseMode;
-    bs << mFOV;
+    bs << mFieldOfView;
     bs << mWorldOffset;
     bs << mScreenOffset;
     bs << mBlurDepth;
     bs << mMaxBlur;
     bs << mMinBlur;
-    bs << mFocusBlurMultiplier;
+    bs << mFocusedFocalPlaneMultiplier;
     bs << mTargets;
-    bs << mFocalTarget;
+    bs << mFocusTarget;
     bs << mParent;
     bs << mUseParentRotation;
-    bs << mShakeNoiseAmp;
-    bs << mShakeNoiseFreq;
-    bs << mShakeMaxAngle;
+    bs << mTargetNoiseAmp;
+    bs << mTargetNoiseFreq;
+    bs << mMaxAngularOffset;
     bs << mZoomFOV;
-    bs << mParentFirstFrame;
+    bs << mParentFirstFrameOnly;
 }
 
 RndTransformable *LoadSubPart(BinStreamRev &d, CamShot *shot) {
@@ -172,7 +172,7 @@ void CamShotFrame::Load(BinStreamRev &d) {
     if (d.rev > 0x2D) {
         d >> (int &)mBlendEaseMode;
     }
-    d >> mFOV;
+    d >> mFieldOfView;
     d >> mWorldOffset;
     Transform zeroXfm;
     zeroXfm.Zero();
@@ -197,9 +197,9 @@ void CamShotFrame::Load(BinStreamRev &d) {
         mMinBlur = 0;
     }
     if (d.rev > 0x14) {
-        d >> mFocusBlurMultiplier;
+        d >> mFocusedFocalPlaneMultiplier;
     } else {
-        mFocusBlurMultiplier = 0;
+        mFocusedFocalPlaneMultiplier = 0;
     }
     if (d.rev < 0x17) {
         int x;
@@ -220,9 +220,9 @@ void CamShotFrame::Load(BinStreamRev &d) {
     }
     if (d.rev > 0x1A) {
         if (d.rev > 0x2B) {
-            d >> mFocalTarget;
+            d >> mFocusTarget;
         } else {
-            mFocalTarget = LoadSubPart(d, mCamShot);
+            mFocusTarget = LoadSubPart(d, mCamShot);
         }
     }
     if (d.rev > 0x2B) {
@@ -232,15 +232,15 @@ void CamShotFrame::Load(BinStreamRev &d) {
     }
     d >> mUseParentRotation;
     if (d.rev > 0x11) {
-        d >> mShakeNoiseAmp;
-        d >> mShakeNoiseFreq;
-        d >> mShakeMaxAngle;
+        d >> mTargetNoiseAmp;
+        d >> mTargetNoiseFreq;
+        d >> mMaxAngularOffset;
     }
     if (d.rev > 0x15) {
         d >> mZoomFOV;
     }
     if (d.rev > 0x28) {
-        d >> mParentFirstFrame;
+        d >> mParentFirstFrameOnly;
     }
 }
 
@@ -297,7 +297,7 @@ void CamShotFrame::UpdateTarget() const {
     CamShotFrame *me = const_cast<CamShotFrame *>(this);
     GetCurrentTargetPosition(me->mLastTargetPos);
     if (mParent) {
-        me->mTargetXfm = mParent->WorldXfm();
+        me->mLastParentPos = mParent->WorldXfm();
     }
 }
 
@@ -379,14 +379,14 @@ void CamShotFrame::BuildTransform(
     }
 
     if (mParent) {
-        bool b2 = !mParentFirstFrame || mCamShot->ShotStarted();
-        Transform locXfm = b2 ? mParent->WorldXfm() : mTargetXfm;
+        bool b2 = !mParentFirstFrameOnly || mCamShot->ShotStarted();
+        Transform locXfm = b2 ? mParent->WorldXfm() : mLastParentPos;
         if (b2) {
             if (mCamShot->Filter() != 0) {
-                ::Interp(mTargetXfm.m, locXfm.m, f9, locXfm.m);
-                ::Interp(mTargetXfm.v, locXfm.v, f9, locXfm.v);
+                ::Interp(mLastParentPos.m, locXfm.m, f9, locXfm.m);
+                ::Interp(mLastParentPos.v, locXfm.v, f9, locXfm.v);
             }
-            const_cast<CamShotFrame *>(this)->mTargetXfm = locXfm;
+            const_cast<CamShotFrame *>(this)->mLastParentPos = locXfm;
         }
         if (mUseParentRotation) {
             Multiply(position, locXfm, position);
@@ -494,25 +494,31 @@ BEGIN_CUSTOM_PROPSYNC(CamShotFrame)
             return true;
         }
     }
-    SYNC_PROP(focal_target, o.mFocalTarget)
+    SYNC_PROP(focal_target, o.mFocusTarget)
     SYNC_PROP(use_parent_rotation, o.mUseParentRotation)
-    SYNC_PROP(parent_first_frame, o.mParentFirstFrame)
-    SYNC_PROP_SET(field_of_view, o.mFOV * RAD2DEG, o.mFOV = _val.Float() * DEG2RAD)
-    SYNC_PROP_SET(lens_mm, ComputeFOVScale(o.mFOV), o.mFOV = ScaleToFOV(_val.Float()))
-    SYNC_PROP_SET(lens_preset, FOV_to_LensSym(o.mFOV), {
+    SYNC_PROP(parent_first_frame, o.mParentFirstFrameOnly)
+    SYNC_PROP_SET(
+        field_of_view, o.mFieldOfView * RAD2DEG, o.mFieldOfView = _val.Float() * DEG2RAD
+    )
+    SYNC_PROP_SET(
+        lens_mm,
+        ComputeFOVScale(o.mFieldOfView),
+        o.mFieldOfView = ScaleToFOV(_val.Float())
+    )
+    SYNC_PROP_SET(lens_preset, FOV_to_LensSym(o.mFieldOfView), {
         float fov = LensSym_to_FOV(_val.Sym());
         if (fov != -1.0f)
-            o.mFOV = fov;
+            o.mFieldOfView = fov;
         else
-            o.mFOV += 0.00010011921f;
+            o.mFieldOfView += 0.00010011921f;
     })
     SYNC_PROP(blur_depth, o.mBlurDepth)
     SYNC_PROP(max_blur, o.mMaxBlur)
     SYNC_PROP(min_blur, o.mMinBlur)
-    SYNC_PROP(focus_blur_multiplier, o.mFocusBlurMultiplier)
-    SYNC_PROP(shake_noisefreq, o.mShakeNoiseFreq)
-    SYNC_PROP(shake_noiseamp, o.mShakeNoiseAmp)
-    SYNC_PROP(shake_maxangle, o.mShakeMaxAngle)
+    SYNC_PROP(focus_blur_multiplier, o.mFocusedFocalPlaneMultiplier)
+    SYNC_PROP(shake_noisefreq, o.mTargetNoiseFreq)
+    SYNC_PROP(shake_noiseamp, o.mTargetNoiseAmp)
+    SYNC_PROP(shake_maxangle, o.mMaxAngularOffset)
     SYNC_PROP_SET(zoom_fov, o.mZoomFOV * RAD2DEG, o.mZoomFOV = _val.Float() * DEG2RAD)
 END_CUSTOM_PROPSYNC
 
@@ -667,13 +673,12 @@ END_CUSTOM_PROPSYNC
 
 CamShot::CamShot()
     : mKeyframes(this), mLooping(false), mLoopKeyframe(0),
-      mNearPlane(RndCam::DefaultNearPlane()),
-      mFarPlane(mNearPlane * RndCam::MaxFarNearPlaneRatio()), mUseDepthOfField(true),
-      mFilter(0.9), mClampHeight(-1), mAnims(this), mPath(this), mPathFrame(-1),
-      mPlatform(kPlatformNone), mHideList(this), mShowList(this), mGenHideList(this),
-      mDrawOverrides(this), mPostProcOverrides(this), mWorldDir(this), mCrowds(this),
-      mCrowdStateOverride(gNullStr), mPS3PerPixel(true), mGlowSpot(this), mFlags(0),
-      mEndHideList(this), mEndShowList(this), mLastShakeOffset(0, 0, 0),
+      mNear(RndCam::DefaultNearPlane()), mFar(mNear * RndCam::MaxFarNearPlaneRatio()),
+      mDepthOfField(true), mFilter(0.9), mClampHeight(-1), mAnims(this), mPath(this),
+      mPathFrame(-1), mPlatformOnly(kPlatformNone), mHideList(this), mShowList(this),
+      mGenHideList(this), mDrawOverrides(this), mPostProcOverrides(this), mWorldDir(this),
+      mCrowds(this), mCrowdStateOverride(gNullStr), mPS3PerPixel(true), mGlowSpot(this),
+      mFlags(0), mEndHideList(this), mEndShowList(this), mLastShakeOffset(0, 0, 0),
       mLastShakeAngOffset(0, 0, 0), mLastDesiredShakeOffset(0, 0, 0),
       mLastDesiredShakeAngOffset(0, 0, 0), mShakeVelocity(0, 0, 0),
       mShakeAngVelocity(0, 0, 0), mLastNext(0), mLastPrev(0), mDuration(0), mDisabled(0),
@@ -728,16 +733,16 @@ BEGIN_PROPSYNCS(CamShot)
     SYNC_PROP_SET(category, mCategory, mCategory = _val.ForceSym())
     SYNC_PROP(filter, mFilter)
     SYNC_PROP(clamp_height, mClampHeight)
-    SYNC_PROP(near_plane, mNearPlane)
-    SYNC_PROP(far_plane, mFarPlane) {
+    SYNC_PROP(near_plane, mNear)
+    SYNC_PROP(far_plane, mFar) {
         static Symbol _s("duration");
         if (sym == _s && _op & kPropGet)
             return PropSync(mDuration, _val, _prop, _i + 1, _op);
     }
-    SYNC_PROP(use_depth_of_field, mUseDepthOfField)
+    SYNC_PROP(use_depth_of_field, mDepthOfField)
     SYNC_PROP(path, mPath)
     SYNC_PROP(path_frame, mPathFrame)
-    SYNC_PROP(platform_only, (int &)mPlatform)
+    SYNC_PROP(platform_only, (int &)mPlatformOnly)
     SYNC_PROP_LIST(hide_list, mHideList)
     SYNC_PROP_LIST(show_list, mShowList)
     SYNC_PROP_LIST(gen_hide_list, mGenHideList)
@@ -763,14 +768,14 @@ BEGIN_SAVES(CamShot)
     bs << mKeyframes;
     bs << mLooping;
     bs << mLoopKeyframe;
-    bs << mNearPlane;
-    bs << mFarPlane;
-    bs << mUseDepthOfField;
+    bs << mNear;
+    bs << mFar;
+    bs << mDepthOfField;
     bs << mFilter;
     bs << mClampHeight;
     bs << mPath;
     bs << mCategory;
-    bs << mPlatform;
+    bs << mPlatformOnly;
     bs << mHideList;
     MILO_ASSERT(mGenHideVector.empty(), 0x3CE);
     if (bs.Cached()) {
@@ -808,13 +813,13 @@ BEGIN_COPYS(CamShot)
             mCrowds.push_back(CamShotCrowd(this, c->mCrowds[i]));
         }
         COPY_MEMBER(mCrowdStateOverride)
-        COPY_MEMBER(mNearPlane)
-        COPY_MEMBER(mFarPlane)
-        COPY_MEMBER(mUseDepthOfField)
+        COPY_MEMBER(mNear)
+        COPY_MEMBER(mFar)
+        COPY_MEMBER(mDepthOfField)
         COPY_MEMBER(mFilter)
         COPY_MEMBER(mClampHeight)
         COPY_MEMBER(mPath)
-        COPY_MEMBER(mPlatform)
+        COPY_MEMBER(mPlatformOnly)
         COPY_MEMBER(mCategory)
         COPY_MEMBER(mHideList)
         COPY_MEMBER(mGenHideList)
@@ -879,8 +884,8 @@ BEGIN_LOADS(CamShot)
         if (dRev < 0x28) {
             bs >> f3f4;
         }
-        bs >> mNearPlane >> mFarPlane;
-        d >> mUseDepthOfField;
+        bs >> mNear >> mFar;
+        d >> mDepthOfField;
         bs >> mFilter >> mClampHeight;
     } else {
         mLooping = false;
@@ -903,8 +908,8 @@ BEGIN_LOADS(CamShot)
             bs >> f3f4;
 
         float fdummy1;
-        bs >> fdummy1 >> mNearPlane >> mFarPlane;
-        d >> mUseDepthOfField;
+        bs >> fdummy1 >> mNear >> mFar;
+        d >> mDepthOfField;
         float someotherfloat = 1.0f;
         if (dRev > 9) {
             float newblurdepth;
@@ -941,11 +946,11 @@ BEGIN_LOADS(CamShot)
             csf1.mBlend = fdummy1;
             csf1.mWorldOffset = tf1;
             csf1.mScreenOffset = vec1;
-            csf1.mFOV = fov1;
+            csf1.mFieldOfView = fov1;
             csf1.mBlurDepth = someotherfloat;
             csf1.mMaxBlur = 1;
             csf1.mMinBlur = 0;
-            csf1.mFocusBlurMultiplier = 0.0f;
+            csf1.mFocusedFocalPlaneMultiplier = 0.0f;
             csf1.mTargets = pList;
             csf1.mParent = ptr;
             csf1.mUseParentRotation = somebool;
@@ -955,11 +960,11 @@ BEGIN_LOADS(CamShot)
         csf2.mBlend = 0.0f;
         csf2.mWorldOffset = tf2;
         csf2.mScreenOffset = vec2;
-        csf2.mFOV = fov2;
+        csf2.mFieldOfView = fov2;
         csf2.mBlurDepth = someotherfloat;
         csf2.mMaxBlur = 1;
         csf2.mMinBlur = 0;
-        csf2.mFocusBlurMultiplier = 0.0f;
+        csf2.mFocusedFocalPlaneMultiplier = 0.0f;
         csf2.mTargets = pList;
         csf2.mParent = ptr;
         csf2.mUseParentRotation = somebool;
@@ -979,16 +984,16 @@ BEGIN_LOADS(CamShot)
         }
     }
     if (dRev > 0x22) {
-        bs >> (int &)mPlatform;
+        bs >> (int &)mPlatformOnly;
     } else if (dRev > 0x21) {
         int state;
         bs >> state;
         if (state == 1) {
-            mPlatform = kPlatformXBox;
+            mPlatformOnly = kPlatformXBox;
         } else if (state == 2) {
-            mPlatform = kPlatformPS3;
+            mPlatformOnly = kPlatformPS3;
         } else {
-            mPlatform = kPlatformNone;
+            mPlatformOnly = kPlatformNone;
         }
     }
     if (dRev < 1) {
@@ -1049,15 +1054,15 @@ BEGIN_LOADS(CamShot)
         bs >> f250;
         bs >> f254;
         for (int i = 0; i != mKeyframes.size(); i++) {
-            mKeyframes[i].mShakeNoiseAmp = f254;
-            mKeyframes[i].mShakeNoiseFreq = f250;
+            mKeyframes[i].mTargetNoiseAmp = f254;
+            mKeyframes[i].mTargetNoiseFreq = f250;
         }
     }
     if (dRev > 0x10 && dRev < 0x12) {
         Vector2 v210;
         bs >> v210;
         for (int i = 0; i != mKeyframes.size(); i++) {
-            mKeyframes[i].mShakeMaxAngle = v210;
+            mKeyframes[i].mMaxAngularOffset = v210;
         }
     }
     if (dRev > 0x13)
@@ -1229,13 +1234,13 @@ bool CamShot::CheckShotStarted() { return mFirstFrame; }
 bool CamShot::CheckShotOver(float f) { return !mShotOver && !mLooping && f >= mDuration; }
 
 bool CamShot::PlatformOk() const {
-    if (TheLoadMgr.EditMode() || mPlatform == kPlatformNone
+    if (TheLoadMgr.EditMode() || mPlatformOnly == kPlatformNone
         || TheLoadMgr.GetPlatform() == kPlatformNone)
         return true;
     Platform plat = TheLoadMgr.GetPlatform();
     if (TheLoadMgr.GetPlatform() == kPlatformPC)
         plat = kPlatformXBox;
-    return plat == mPlatform;
+    return plat == mPlatformOnly;
 }
 
 float CamShot::GetDurationSeconds() const {
@@ -1469,7 +1474,7 @@ NOINLINE bool CamShot::SetPos(CamShotFrame &frame, RndCam *cam) {
         } else {
             frame.mScreenOffset.Zero();
         }
-        frame.mFOV = shotCam->YFov();
+        frame.mFieldOfView = shotCam->YFov();
         RndTransformable *frameParent = frame.mParent;
         if (frameParent) {
             Transform tf70(frameParent->WorldXfm());

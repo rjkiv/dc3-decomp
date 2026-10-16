@@ -2,6 +2,7 @@
 #include "obj/Object.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Env.h"
+#include "rndobj/Mat.h"
 #include "rndobj/Mesh.h"
 #include "rndobj/PostProc.h"
 #include "utl/BinStream.h"
@@ -11,7 +12,7 @@ class Spotlight;
 class SpotlightDrawer;
 
 class SpotDrawParams {
-public: // according to RB2
+public:
     SpotDrawParams(SpotlightDrawer *);
     SpotDrawParams &operator=(const SpotDrawParams &);
     void Save(BinStream &);
@@ -32,7 +33,7 @@ public: // according to RB2
 class SpotlightDrawer : public RndDrawable, public PostProcessor {
 public:
     // size 0x50
-    class SpotMeshEntry { // from RB2 DWARF
+    class SpotMeshEntry {
     public:
         SpotMeshEntry() : mMesh(0), mEnv(0), mLight(0) {}
 
@@ -43,7 +44,7 @@ public:
         Transform mXfm; // 0x10
     };
 
-    class SpotlightEntry { // from RB2 DWARF
+    class SpotlightEntry {
     public:
         SpotlightEntry() : mPackedColor(0), mLight(0) {}
         unsigned int mPackedColor; // 0x0
@@ -104,7 +105,9 @@ protected:
 
     static SpotlightDrawer *sCurrent;
     static SpotlightDrawer *sDefault;
+    static SpotlightDrawer *sLastDrawn;
     static RndEnviron *sEnviron;
+    static RndMat *sEditorMat;
     static bool sNeedDraw;
     static std::vector<SpotlightEntry> sLights;
     static std::vector<SpotMeshEntry> sCans;

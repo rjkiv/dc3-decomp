@@ -28,7 +28,7 @@ namespace {
 
 PhysicsManager::PhysicsManager(RndDir *dir)
     : mWorldDir(dir), mClampTime(30), mWorldIsBuild(0), mIsFixedRate(0), mFixedRate(30),
-      mTimeUnits(0) {
+      mTimeUnits(kTaskSeconds) {
     if (SystemConfig()) {
         DataArray *physicsCfg = SystemConfig()->FindArray("physics", false);
         if (physicsCfg) {

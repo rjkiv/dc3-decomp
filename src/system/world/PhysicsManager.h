@@ -4,6 +4,7 @@
 #include "math/Vec.h"
 #include "obj/Data.h"
 #include "obj/Object.h"
+#include "obj/Task.h"
 #include "rndobj/Dir.h"
 #include "rndobj/Mesh.h"
 #include "utl/MemMgr.h"
@@ -138,7 +139,7 @@ protected:
     bool mWorldIsBuild; // 0x34
     bool mIsFixedRate; // 0x35
     float mFixedRate; // 0x38
-    int mTimeUnits; // 0x3c
+    TaskUnits mTimeUnits; // 0x3c
 };
 
 typedef PhysicsManager *PhysicsManagerCreator(RndDir *);

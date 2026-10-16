@@ -14,24 +14,25 @@ enum PhysicsVolumeType {
 };
 
 enum CollisionFilter {
-    kCollideAll = 0,
-    kCollideFixed = 1,
-    kCollideFixedDetectable = 2,
-    kCollideAnimated = 3,
-    kCollideDynamic = 4,
-    kCollideDynamicFast = 5,
-    kCollideDynamicAll = 6,
-    kCollidePhysicsVolumeAll = 7,
-    kCollidePhysicsVolumeFixed = 8,
-    kCollidePhysicsVolumeDynamic = 9,
-    kCollidePhysicsVolumeKeyframed = 10,
-    kCollidePhysicsVolumeDynamicKeyframed = 11,
-    kCollidePhysicsVolumeDynamicFixed = 12,
-    kCollidePhysicsVolumeKeyframedFixed = 13,
-    kCollidePlayer = 14,
-    kCollidePlayerCast = 15,
-    kCollideVolumeDetectable = 16,
-    kCollideLightningFast = 17
+    COL_FILTER_ALL = 0,
+    COL_FILTER_FIXED = 1,
+    COL_FILTER_FIXED_DETECTABLE = 2,
+    COL_FILTER_KEYFRAMED = 3,
+    COL_FILTER_DYNAMIC = 4,
+    COL_FILTER_DYNAMIC_FAST = 5,
+    COL_FILTER_DYNAMIC_ALL = 6,
+    COL_FILTER_PHYSICS_VOLUME_ALL = 7,
+    COL_FILTER_PHYSICS_VOLUME_F = 8,
+    COL_FILTER_PHYSICS_VOLUME_D = 9,
+    COL_FILTER_PHYSICS_VOLUME_K = 10,
+    COL_FILTER_PHYSICS_VOLUME_DK = 11,
+    COL_FILTER_PHYSICS_VOLUME_DF = 12,
+    COL_FILTER_PHYSICS_VOLUME_KF = 13,
+    COL_FILTER_PLAYER = 14,
+    COL_FILTER_PLAYER_CAST = 15,
+    COL_FILTER_VOLUME_DETECTABLE = 16,
+    COL_FILTER_LIGHTNING_CAST = 17,
+    COL_FILTER_RAYCAST_GROUND = 18
 };
 
 class DetectionVolumeListener {
@@ -56,6 +57,9 @@ public:
     virtual void SetCollisionFilter(CollisionFilter) {} // 0x7c
     virtual void GetOverlaps(std::list<std::pair<Hmx::Object *, ObjectDir *> > &) {
     } // 0x80
+
+protected:
+    DetectionVolumeListener *mListener; // 0x2c
 };
 
 /** "Physics Volume Trigger, fire events when things enter/exit me" */
@@ -127,5 +131,5 @@ protected:
     bool mActive; // 0x170
     /** "calls 'while_has_overlaps' handler while
         there are collision objects overlapping the volume" */
-    bool mReportOnOverlaps; // 0x171
+    bool mReportOverlaps; // 0x171
 };
