@@ -83,6 +83,19 @@ BEGIN_PROPSYNCS(DepthBuffer3D)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
+BEGIN_SAVES(DepthBuffer3D)
+    SAVE_REVS(11, 0)
+    SAVE_SUPERCLASS(Hmx::Object)
+    SAVE_SUPERCLASS(RndDrawable)
+    SAVE_SUPERCLASS(RndTransformable)
+    bs << mNobodyCol << mPlayerPalette << mPlayerPaletteOffset;
+    bs << mMinimalMat << mDrawSheet << mMesh;
+    bs << mPlayerPaletteScale << mStretchNearCamera << mOpacity;
+    bs << mDrawPlayer1 << mDrawPlayer2 << mDrawNonPlayers;
+    bs << mTiles << mVoxelScale << mVoxelSeparation << mFisheyeX << mFisheyeY;
+    bs << mMaxZoom << mDebugLayout << mMaxDepthZoom;
+END_SAVES
+
 BEGIN_COPYS(DepthBuffer3D)
     COPY_SUPERCLASS(Hmx::Object)
     COPY_SUPERCLASS(RndDrawable)
@@ -109,34 +122,86 @@ BEGIN_COPYS(DepthBuffer3D)
     END_COPYING_MEMBERS
 END_COPYS
 
+INIT_REVS(11, 0)
+
+BEGIN_LOADS(DepthBuffer3D)
+    LOAD_REVS(bs)
+    ASSERT_REVS(11, 0)
+    LOAD_SUPERCLASS(Hmx::Object)
+    LOAD_SUPERCLASS(RndDrawable)
+    LOAD_SUPERCLASS(RndTransformable)
+    if (d.rev > 1) {
+        d >> mNobodyCol >> mPlayerPalette >> mPlayerPaletteOffset >> mMinimalMat;
+        if (d.rev < 3) {
+            int x;
+            d >> x;
+        }
+    }
+    if (d.rev > 2) {
+        d >> mDrawSheet >> mMesh;
+    }
+    if (d.rev > 3) {
+        d >> mPlayerPaletteScale >> mStretchNearCamera;
+    }
+    if (d.rev > 4) {
+        d >> mOpacity;
+    }
+    if (d.rev > 5) {
+        d >> mDrawPlayer1 >> mDrawPlayer2 >> mDrawNonPlayers;
+    }
+    if (d.rev > 6) {
+        d >> mTiles >> mVoxelScale >> mVoxelSeparation;
+    }
+    if (d.rev > 7) {
+        d >> mFisheyeX;
+    }
+    if (d.rev > 8) {
+        d >> mFisheyeY;
+    }
+    if (d.rev > 9) {
+        d >> mMaxZoom >> mDebugLayout;
+    }
+    if (d.rev > 10) {
+        d >> mMaxDepthZoom;
+    }
+END_LOADS
+
+void DepthBuffer3D::ListDrawChildren(std::list<RndDrawable *> &draws) {
+    if (mMesh) {
+        draws.push_back(mMesh);
+    }
+}
+
 void DepthBuffer3D::Init() {
     REGISTER_OBJ_FACTORY(DepthBuffer3D);
     TheNgRnd.CreateLargeQuad(0x140, 0xF0, mQuad);
 }
 
 void DepthBuffer3D::UpdateAttachment(
-    DepthBuffer3DAttachment &attachment, const Vector4 &v1, const Vector4 &v2
+    DepthBuffer3DAttachment &att,
+    const Vector4 &texZoomParams,
+    const Vector4 &depthZoomParams
 ) {
     int skelIdx = TheGestureMgr->GetSkeletonIndexByTrackingID(
-        TheGameData->Player(attachment.player)->GetSkeletonTrackingID()
+        TheGameData->Player(att.player)->GetSkeletonTrackingID()
     );
     bool b5 = false;
     Vector3 newPos;
     if (skelIdx + 1 > 0) {
-        Skeleton &skeleton = TheGestureMgr->GetSkeleton(skelIdx);
+        Skeleton &skeleton = TheGestureMgr->GetSkeleton(skelIdx - 1);
         Vector3 localPos = LocalXfm().v;
         Vector3 pos;
-        JointToVertexData(pos, skeleton, (SkeletonJoint)attachment.bone, v1);
-        VertexToWorld(pos, LocalXfm(), mStretchNearCamera, v2);
+        JointToVertexData(pos, skeleton, att.bone, texZoomParams);
+        VertexToWorld(pos, LocalXfm(), mStretchNearCamera, depthZoomParams);
         Add(pos, localPos, newPos);
-        attachment.obj->SetTransConstraint(TransConstraint(), nullptr, false);
-        Normalize(LocalXfm().m, attachment.obj->DirtyLocalXfm().m);
+        att.obj->SetTransConstraint(TransConstraint(), nullptr, false);
+        Normalize(LocalXfm().m, att.obj->DirtyLocalXfm().m);
         b5 = true;
     }
     if (!b5) {
         newPos.Set(100000, 100000, 100000);
     }
-    attachment.obj->SetLocalPos(newPos);
+    att.obj->SetLocalPos(newPos);
 }
 
 DepthBuffer3DAttachment *DepthBuffer3D::GetAttachment(const RndTransformable *t) {
@@ -188,10 +253,4 @@ void DepthBuffer3D::SetGrooviness(RhythmDetector *r1, RhythmDetector *r2) {
 void DepthBuffer3D::ForceDrawSkeletonIndex(int i1, bool b2) {
     mForceDrawSkeletonIndex = i1;
     mDrawOthersOnForce = b2;
-}
-
-void DepthBuffer3D::ListDrawChildren(std::list<RndDrawable *> &list) {
-    if (mMesh) {
-        list.push_back(mMesh);
-    }
 }
