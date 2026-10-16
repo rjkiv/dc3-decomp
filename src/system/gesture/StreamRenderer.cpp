@@ -577,32 +577,32 @@ void StreamRenderer::DrawToTexture() {
             work->SetNormalMap(cam->GetStreamTex((LiveCameraInput::BufferType)0));
         }
 
-        TheRenderState.SetTextureFilter(0, RndRenderState::kFilterModePoint, false);
-        TheRenderState.SetTextureClamp(0, RndRenderState::kClampModeClamp);
+        TheRenderState.SetTextureFilter(0, RndRenderState::kPoint, false);
+        TheRenderState.SetTextureClamp(0, RndRenderState::kClamp);
         TheShaderMgr.SetPConstant(
             PShaderConstant(10), SetPaletteTexture(mPlayer1Palette, mDisplay)
         );
 
-        TheRenderState.SetTextureFilter(10, RndRenderState::kFilterModeLinear, false);
-        TheRenderState.SetTextureClamp(10, RndRenderState::kClampModeWrap);
+        TheRenderState.SetTextureFilter(10, RndRenderState::kLinear, false);
+        TheRenderState.SetTextureClamp(10, RndRenderState::kWrap);
         TheShaderMgr.SetPConstant(
             PShaderConstant(12), SetPaletteTexture(mPlayer2Palette, mDisplay)
         );
 
-        TheRenderState.SetTextureFilter(12, RndRenderState::kFilterModeLinear, false);
-        TheRenderState.SetTextureClamp(12, RndRenderState::kClampModeWrap);
+        TheRenderState.SetTextureFilter(12, RndRenderState::kLinear, false);
+        TheRenderState.SetTextureClamp(12, RndRenderState::kWrap);
         TheShaderMgr.SetPConstant(
             PShaderConstant(14), SetPaletteTexture(mPlayerOtherPalette, mDisplay)
         );
 
-        TheRenderState.SetTextureFilter(14, RndRenderState::kFilterModeLinear, false);
-        TheRenderState.SetTextureClamp(14, RndRenderState::kClampModeWrap);
+        TheRenderState.SetTextureFilter(14, RndRenderState::kLinear, false);
+        TheRenderState.SetTextureClamp(14, RndRenderState::kWrap);
         TheShaderMgr.SetPConstant(
             PShaderConstant(11), SetPaletteTexture(mPlayerOtherPalette, mDisplay)
         );
 
-        TheRenderState.SetTextureFilter(11, RndRenderState::kFilterModeLinear, false);
-        TheRenderState.SetTextureClamp(11, RndRenderState::kClampModeWrap);
+        TheRenderState.SetTextureFilter(11, RndRenderState::kLinear, false);
+        TheRenderState.SetTextureClamp(11, RndRenderState::kWrap);
 
         TheShaderMgr.SetPConstant(
             PShaderConstant(0x40),

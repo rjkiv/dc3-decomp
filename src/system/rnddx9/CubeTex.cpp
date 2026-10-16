@@ -23,9 +23,9 @@ void DxCubeTex::Reset() {
 void DxCubeTex::Sync() {
     PhysMemTypeTracker tracker("D3D(phys):CubeTex");
     D3DFORMAT fmt = TheDxRnd.D3DFormatForBitmap(mBitmap[kCubeFaceRight]);
-    int numLevels = props.mNumMips + 1;
+    int numLevels = mBaseProps.mNumMips + 1;
     HRESULT hr = TheDxRnd.Device()->CreateCubeTexture(
-        props.mWidth, numLevels, 0, fmt, 0, &mTex, nullptr
+        mBaseProps.mWidth, numLevels, 0, fmt, 0, &mTex, nullptr
     );
     DX_ASSERT(hr, 0x38);
     XGTEXTURE_DESC desc;

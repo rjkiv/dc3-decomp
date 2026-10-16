@@ -206,8 +206,8 @@ bool PathCompare(DataArray *arr1, DataArray *arr2) {
     if (arr1size != arr2->Size())
         return false;
     for (int i = 0; i < arr1size; i++) {
-        DataType arr1type = CONST_ARRAY(arr1)->Node(i).Type();
-        if (arr1type != CONST_ARRAY(arr2)->Node(i).Type())
+        DataType arr1type = arr1->Type(i);
+        if (arr1type != arr2->Type(i))
             return false;
         else
             switch (arr1type) {

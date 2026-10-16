@@ -24,13 +24,18 @@ public:
     public:
         MEM_ARRAY_OVERLOAD(kdTriList, 0xC6);
 
-        kdTriList() : mData(0) {}
+        kdTriList(const Triangle *t = nullptr) : mData(t) {}
 
         kdTriList *GetNext() {
             kdTriList *cur = this;
             return &cur[1];
         }
+        const kdTriList *GetNext() const {
+            kdTriList *cur = this;
+            return &cur[1];
+        }
         bool IsEnd() const { return (int)mData == -1; }
+        const Triangle *GetData() const { return mData; }
         void SetData(const Triangle *t) { mData = t; }
 
         static kdTriList *Allocate(unsigned int inNumNodes) {
@@ -39,6 +44,7 @@ public:
             return list;
         }
 
+    private:
         const Triangle *mData; // 0x0
     };
 
@@ -139,6 +145,9 @@ public:
             }
             return true;
         }
+
+        bool
+        FindSplitMedian(const Box &inDimensions, const std::list<Triangle *> &inTriList);
 
         bool
         FindSplit_SAH(const Box &inDimensions, const std::list<Triangle *> &inTriList) {
@@ -255,12 +264,15 @@ public:
 
         bool GetIsLeaf() const { return mLeaf_Index >> 15; }
         unsigned short GetIndex() const { return mLeaf_Index & 0x7FFF; }
-        unsigned int GetSplitAxis() const { return mSplitAxis & 0x3; }
+        unsigned char GetSplitAxis() const { return mSplitAxis & 0x3; }
         float GetSplitValue() const { return mSplitValue; }
         void SetIsLeaf(unsigned int leaf) {
             mLeaf_Index = (mLeaf_Index & 0x7FFF) | (leaf << 15);
         }
-        void SetSplitAxis(SplitPlaneType t) {
+        void SetIndex(unsigned short idx) {
+            mLeaf_Index = (mLeaf_Index & 0x8000) | (idx & 0x7FFF);
+        }
+        void SetSplitAxis(unsigned char t) {
             mSplitAxis = (mSplitAxis & 0xfffffffc) | (t & 3);
         }
         void SetSplitValue(float value) {
@@ -272,8 +284,15 @@ public:
 
         // from RB3 bank 5
         kdTreeNode *GetChild_0(kdTreeNode *n) { return &n[GetIndex() * 2 + 1]; }
+        const kdTreeNode *GetChild_0(kdTreeNode *n) const {
+            return &n[GetIndex() * 2 + 1];
+        }
         kdTreeNode *GetChild_1(kdTreeNode *n) { return &n[GetIndex() * 2 + 2]; }
+        const kdTreeNode *GetChild_1(kdTreeNode *n) const {
+            return &n[GetIndex() * 2 + 2];
+        }
 
+    private:
         union {
             float mSplitValue;
             unsigned int mSplitAxis;
@@ -288,14 +307,16 @@ public:
         mAABB.Set(box.mMin, box.mMax);
         mNodeArray = new kdTreeNode[0x8000];
         for (unsigned short i = 0; i < 0x8000; i++) {
-            kdTreeNode &node = mNodeArray[i];
-            node.mLeaf_Index = (node.mLeaf_Index & 0x8000) | (i & 0x7FFF);
+            mNodeArray[i].SetIndex(i);
         }
     }
     ~kdTree() { delete[] mNodeArray; }
 
     // from RB3 bank 5 and DC1 debug
-    void Build(SplitPlaneType splitType);
+    void Build(SplitPlaneType splitType) {
+        mNodeArray->Pack(splitType, mAABB, mInitialList, mNodeArray, 0);
+    }
+
     void Insert(T *inTri) { mInitialList.push_back(inTri); }
 
     bool Intersect(const Vector3 &v1, const Vector3 &v2, float f3, float &f4) const {
@@ -343,7 +364,7 @@ public:
                     for (kdTriList *tri = it->GetTriList(); !tri->IsEnd();
                          tri = tri->GetNext()) {
                         float f98 = FLT_MAX;
-                        if (::Intersect(v1, v2, *(tri->mData), f98)) {
+                        if (::Intersect(v1, v2, *(tri->GetData()), f98)) {
                             ret = true;
                             f4 = Min(f4, f98);
                         }
@@ -361,11 +382,6 @@ public:
         } else {
             return false;
         }
-    }
-
-    // guessed/inferred
-    void PackNodes(SplitPlaneType splitType, unsigned char depth) {
-        mNodeArray->Pack(splitType, mAABB, mInitialList, mNodeArray, depth);
     }
 
 private:

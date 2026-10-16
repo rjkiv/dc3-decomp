@@ -36,14 +36,14 @@ bool RndShadowMap::PrepShadow(RndDrawable *draw, RndEnviron *env) {
     if (GetGfxMode() == kNewGfx && sLightCam && sShadowTex) {
         RndEnviron *envToUse = env ? env : RndEnviron::Current();
         RndLight *lit = nullptr;
-        FOREACH (it, envToUse->LightsApprox()) {
+        FOREACH (it, envToUse->Lights_Approx()) {
             if ((*it)->GetType() == RndLight::kFloorSpot) {
                 lit = *it;
                 break;
             }
         }
         if (!lit) {
-            FOREACH (it, envToUse->LightsReal()) {
+            FOREACH (it, envToUse->Lights_Real()) {
                 if ((*it)->GetType() == RndLight::kDirectional
                     || (*it)->GetType() == RndLight::kPoint) {
                     lit = *it;

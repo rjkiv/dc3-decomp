@@ -19,9 +19,8 @@
 NgMat *NgMat::sCurrent;
 
 RndRenderState::ClampMode sTexWrapClampModes[6] = {
-    RndRenderState::kClampModeClamp,  RndRenderState::kClampModeWrap,
-    RndRenderState::kClampModeBorder, RndRenderState::kClampModeBorder,
-    RndRenderState::kClampModeMirror, RndRenderState::kClampModeWrap
+    RndRenderState::kClamp,  RndRenderState::kWrap,   RndRenderState::kBorder,
+    RndRenderState::kBorder, RndRenderState::kMirror, RndRenderState::kWrap
 };
 
 void MakeTex3(const Transform &xfm, bool b2, Hmx::Matrix4 &mtx) {
@@ -79,16 +78,16 @@ void NgMat::SetBasicState() {
     RndRenderState::CullMode cm;
     switch (mCull) {
     case kCullNone:
-        cm = RndRenderState::kCullModeNone;
+        cm = RndRenderState::kNone;
         break;
     case kCullRegular:
-        cm = RndRenderState::kCullModeCW;
+        cm = RndRenderState::kCW;
         break;
     case kCullBackwards:
-        cm = RndRenderState::kCullModeCCW;
+        cm = RndRenderState::kCCW;
         break;
     default:
-        cm = RndRenderState::kCullModeCW;
+        cm = RndRenderState::kCW;
         break;
     }
     TheRenderState.SetCullMode(cm);
@@ -97,7 +96,7 @@ void NgMat::SetBasicState() {
     TheRenderState.SetBlend(mBlendA, mBlendB, mBlendA, mBlendB);
     TheRenderState.SetAlphaTestEnable(mAlphaCut);
     if (mAlphaCut) {
-        TheRenderState.SetAlphaFunc(RndRenderState::kTestFuncGreater, mAlphaThreshold);
+        TheRenderState.SetAlphaFunc(RndRenderState::kGreater, mAlphaThreshold);
     }
     TheRenderState.SetDepthTestEnable(mDepthTestEnable);
     TheRenderState.SetDepthWriteEnable(mDepthWriteEnable);
@@ -108,7 +107,7 @@ void NgMat::SetBasicState() {
         TheRenderState.SetStencilTestEnable(true);
         TheRenderState.SetStencilFunc(mStencilFunc, 0);
         TheRenderState.SetStencilOp(
-            RndRenderState::kStencilOpKeep, RndRenderState::kStencilOpKeep, mStencilPass
+            RndRenderState::kKeep, RndRenderState::kKeep, mStencilPass
         );
     }
     RndRenderState::ClampMode cur = sTexWrapClampModes[mTexWrap];
@@ -163,12 +162,12 @@ void NgMat::SetRegularShaderConst(bool b1) {
         TheShaderMgr.SetPConstant((PShaderConstant)1, mNormalMap);
         float val = 1 - mDeNormal;
         TheShaderMgr.SetPConstant((PShaderConstant)0xE, Vector4(val, val, val, val));
-        TheRenderState.SetTextureFilter(1, RndRenderState::kFilterModeLinear, false);
+        TheRenderState.SetTextureFilter(1, RndRenderState::kLinear, false);
     }
     if (mNormDetailMap) {
         TheShaderMgr.SetPConstant((PShaderConstant)0xE, mNormDetailMap);
-        TheRenderState.SetTextureFilter(0xE, RndRenderState::kFilterModeLinear, false);
-        TheRenderState.SetTextureClamp(0xE, RndRenderState::kClampModeWrap);
+        TheRenderState.SetTextureFilter(0xE, RndRenderState::kLinear, false);
+        TheRenderState.SetTextureClamp(0xE, RndRenderState::kWrap);
         TheShaderMgr.SetPConstant(
             (PShaderConstant)0x6A, Vector4(mNormDetailStrength, mNormDetailTiling, 1, 1)
         );
@@ -189,10 +188,10 @@ void NgMat::SetRegularShaderConst(bool b1) {
     TheShaderMgr.SetPConstant((PShaderConstant)0, mDiffuseTex);
     TheShaderMgr.SetPConstant((PShaderConstant)6, mDiffuseTex2);
     TheRenderState.SetTextureFilter(
-        0, RndRenderState::kFilterModeLinear, mPerfSettings.mPS3ForceTrilinear
+        0, RndRenderState::kLinear, mPerfSettings.mPS3ForceTrilinear
     );
     TheRenderState.SetTextureFilter(
-        6, RndRenderState::kFilterModeLinear, mPerfSettings.mPS3ForceTrilinear
+        6, RndRenderState::kLinear, mPerfSettings.mPS3ForceTrilinear
     );
     TheShaderMgr.SetPConstant((PShaderConstant)0xF, mTexelOffsets);
 
@@ -220,7 +219,7 @@ void NgMat::SetRegularShaderConst(bool b1) {
     );
     if (mSpecularMap) {
         TheShaderMgr.SetPConstant((PShaderConstant)2, mSpecularMap);
-        TheRenderState.SetTextureFilter(2, RndRenderState::kFilterModeLinear, false);
+        TheRenderState.SetTextureFilter(2, RndRenderState::kLinear, false);
     }
     Hmx::Color rimColor = mRimRGB;
     rimColor.alpha = Max(rimColor.alpha, 0.5f);
@@ -234,7 +233,7 @@ void NgMat::SetRegularShaderConst(bool b1) {
     );
     if (mRimMap) {
         TheShaderMgr.SetPConstant((PShaderConstant)0xF, mRimMap);
-        TheRenderState.SetTextureFilter(0xF, RndRenderState::kFilterModeLinear, false);
+        TheRenderState.SetTextureFilter(0xF, RndRenderState::kLinear, false);
     }
     if (mFlags != kColorModNone) {
         for (int i = 0; i < kColorModNum; i++) {
@@ -251,7 +250,7 @@ void NgMat::SetRegularShaderConst(bool b1) {
     }
     if (mEnvironMap) {
         TheShaderMgr.SetPConstant((PShaderConstant)4, mEnvironMap);
-        TheRenderState.SetTextureFilter(4, RndRenderState::kFilterModeLinear, false);
+        TheRenderState.SetTextureFilter(4, RndRenderState::kLinear, false);
     }
     if (mShaderVariation != kShaderVariationNone) {
         TheShaderMgr.SetVConstant(
@@ -284,14 +283,14 @@ void NgMat::SetRegularShaderConst(bool b1) {
     }
     if (GetRefractEnabled(false)) {
         RndTex *refractMap = GetRefractNormalMap();
-        RndTex *frameTex = TheRnd.GetCurrentFrameTex(TheHiResScreen.IsActive());
+        RndTex *frameTex = TheRnd.GetCurrentFrameTex(TheHiResScreen.Active());
         if (refractMap && frameTex) {
             TheShaderMgr.SetPConstant((PShaderConstant)1, refractMap);
-            TheRenderState.SetTextureFilter(1, RndRenderState::kFilterModeLinear, false);
+            TheRenderState.SetTextureFilter(1, RndRenderState::kLinear, false);
             TheRenderState.SetTextureClamp(1, sTexWrapClampModes[mTexWrap]);
             TheShaderMgr.SetPConstant((PShaderConstant)6, frameTex);
-            TheRenderState.SetTextureFilter(6, RndRenderState::kFilterModeLinear, false);
-            TheRenderState.SetTextureClamp(6, RndRenderState::kClampModeClamp);
+            TheRenderState.SetTextureFilter(6, RndRenderState::kLinear, false);
+            TheRenderState.SetTextureClamp(6, RndRenderState::kClamp);
             float strength = GetRefractStrength();
             TheShaderMgr.SetPConstant(
                 (PShaderConstant)0x77, Vector4(strength, strength, strength, strength)
@@ -313,69 +312,69 @@ void NgMat::RefreshState() {
     }
     switch (mBlend) {
     case kBlendDest:
-        mBlendA = RndRenderState::kBlendZero;
-        mBlendOp = RndRenderState::kBlendOpAdd;
-        mBlendB = RndRenderState::kBlendOne;
+        mBlendA = RndRenderState::kZero;
+        mBlendOp = RndRenderState::kAdd;
+        mBlendB = RndRenderState::kOne;
         mBlendEnable = true;
         break;
     case kBlendSrc:
-        mBlendA = RndRenderState::kBlendOne;
-        mBlendB = RndRenderState::kBlendZero;
-        mBlendOp = RndRenderState::kBlendOpAdd;
+        mBlendA = RndRenderState::kOne;
+        mBlendB = RndRenderState::kZero;
+        mBlendOp = RndRenderState::kAdd;
         mBlendEnable = false;
         break;
     case kBlendAdd:
-        mBlendOp = RndRenderState::kBlendOpAdd;
-        mBlendA = RndRenderState::kBlendOne;
-        mBlendB = RndRenderState::kBlendOne;
+        mBlendOp = RndRenderState::kAdd;
+        mBlendA = RndRenderState::kOne;
+        mBlendB = RndRenderState::kOne;
         mBlendEnable = true;
         break;
     case kBlendSrcAlpha:
-        mBlendOp = RndRenderState::kBlendOpAdd;
-        mBlendA = RndRenderState::kBlendSrcAlpha;
-        mBlendB = RndRenderState::kBlendInvSrcAlpha;
+        mBlendOp = RndRenderState::kAdd;
+        mBlendA = RndRenderState::kSrcAlpha;
+        mBlendB = RndRenderState::kInvSrcAlpha;
         mBlendEnable = true;
         break;
     case kBlendSrcAlphaAdd:
-        mBlendOp = RndRenderState::kBlendOpAdd;
-        mBlendA = RndRenderState::kBlendSrcAlpha;
-        mBlendB = RndRenderState::kBlendOne;
+        mBlendOp = RndRenderState::kAdd;
+        mBlendA = RndRenderState::kSrcAlpha;
+        mBlendB = RndRenderState::kOne;
         mBlendEnable = true;
         break;
     case kBlendSubtract:
-        mBlendOp = RndRenderState::kBlendOpRevSubtract;
-        mBlendA = RndRenderState::kBlendOne;
-        mBlendB = RndRenderState::kBlendOne;
+        mBlendOp = RndRenderState::kReverseSub;
+        mBlendA = RndRenderState::kOne;
+        mBlendB = RndRenderState::kOne;
         mBlendEnable = true;
         break;
     case kBlendMultiply:
-        mBlendA = RndRenderState::kBlendZero;
-        mBlendB = RndRenderState::kBlendSrcColor;
-        mBlendOp = RndRenderState::kBlendOpAdd;
+        mBlendA = RndRenderState::kZero;
+        mBlendB = RndRenderState::kSrcColor;
+        mBlendOp = RndRenderState::kAdd;
         mBlendEnable = true;
         break;
     case kPreMultAlpha:
-        mBlendA = RndRenderState::kBlendOne;
-        mBlendOp = RndRenderState::kBlendOpAdd;
-        mBlendB = RndRenderState::kBlendInvSrcAlpha;
+        mBlendA = RndRenderState::kOne;
+        mBlendOp = RndRenderState::kAdd;
+        mBlendB = RndRenderState::kInvSrcAlpha;
         mBlendEnable = true;
         break;
     case kScreen:
-        mBlendOp = RndRenderState::kBlendOpAdd;
-        mBlendA = RndRenderState::kBlendInvDestColor;
-        mBlendB = RndRenderState::kBlendOne;
+        mBlendOp = RndRenderState::kAdd;
+        mBlendA = RndRenderState::kInvDestColor;
+        mBlendB = RndRenderState::kOne;
         mBlendEnable = true;
         break;
     case kLighten:
-        mBlendOp = RndRenderState::kBlendOpMax;
-        mBlendA = RndRenderState::kBlendOne;
-        mBlendB = RndRenderState::kBlendOne;
+        mBlendOp = RndRenderState::kMax;
+        mBlendA = RndRenderState::kOne;
+        mBlendB = RndRenderState::kOne;
         mBlendEnable = true;
         break;
     case kDarken:
-        mBlendOp = RndRenderState::kBlendOpMin;
-        mBlendA = RndRenderState::kBlendOne;
-        mBlendB = RndRenderState::kBlendOne;
+        mBlendOp = RndRenderState::kMin;
+        mBlendA = RndRenderState::kOne;
+        mBlendB = RndRenderState::kOne;
         mBlendEnable = true;
         break;
     default:
@@ -384,38 +383,38 @@ void NgMat::RefreshState() {
     switch (mZMode) {
     case kZModeDisable:
         mDepthTestEnable = false;
-        mDepthFunc = RndRenderState::kTestFuncLess;
+        mDepthFunc = RndRenderState::kLess;
         mDepthWriteEnable = false;
         break;
     case kZModeNormal:
         mDepthTestEnable = true;
         mDepthWriteEnable = true;
-        mDepthFunc = RndRenderState::kTestFuncLess;
+        mDepthFunc = RndRenderState::kLess;
         break;
     case kZModeTransparent:
         mDepthTestEnable = true;
-        mDepthFunc = RndRenderState::kTestFuncLessEqual;
+        mDepthFunc = RndRenderState::kLessEq;
         mDepthWriteEnable = false;
         break;
     case kZModeForce:
         mDepthTestEnable = true;
         mDepthWriteEnable = true;
-        mDepthFunc = RndRenderState::kTestFuncAlways;
+        mDepthFunc = RndRenderState::kAlways;
         break;
     case kZModeDecal:
         mDepthTestEnable = true;
         mDepthWriteEnable = true;
-        mDepthFunc = RndRenderState::kTestFuncLessEqual;
+        mDepthFunc = RndRenderState::kLessEq;
         break;
     default:
         break;
     }
     if (mStencilMode == kStencilWrite) {
-        mStencilFunc = RndRenderState::kTestFuncAlways;
-        mStencilPass = RndRenderState::kStencilOpIncrSat;
+        mStencilFunc = RndRenderState::kAlways;
+        mStencilPass = RndRenderState::kIncSat;
     } else {
-        mStencilFunc = RndRenderState::kTestFuncNotEqual;
-        mStencilPass = RndRenderState::kStencilOpKeep;
+        mStencilFunc = RndRenderState::kNotEqual;
+        mStencilPass = RndRenderState::kKeep;
     }
     static Transform sStateXfm(Hmx::Matrix3(1, 0, 0, 0, 0, 1, 0, 1, 0), Vector3(0, 0, 0));
     mCachedXfmNorm.Identity();

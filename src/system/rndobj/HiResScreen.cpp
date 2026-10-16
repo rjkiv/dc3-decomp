@@ -415,7 +415,7 @@ Hmx::Rect HiResScreen::ScreenRect(const RndCam *cam, const Hmx::Rect &r) const {
 
 Hmx::Rect HiResScreen::ScreenRect() const {
     const RndCam *cam = RndCam::Current();
-    Hmx::Rect r = cam->GetScreenRect();
+    Hmx::Rect r = cam->ScreenRect();
     return ScreenRect(cam, r);
 }
 

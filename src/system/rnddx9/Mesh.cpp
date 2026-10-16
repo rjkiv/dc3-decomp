@@ -508,11 +508,9 @@ void DxMesh::SetTransforms() {
             i4 = 1;
         }
     }
-    TheShaderMgr.SetVConstant((VShaderConstant)0x5C, TheShaderMgr.ConstantCache(), i4 * 3);
+    TheShaderMgr.SetVConstant((VShaderConstant)0x5C, TheShaderMgr.GetCache(), i4 * 3);
     if (oldShouldCache) {
-        RndVelocityBuffer::Singleton().CacheTransform(
-            this, TheShaderMgr.ConstantCache(), i4
-        );
+        RndVelocityBuffer::Singleton().CacheTransform(this, TheShaderMgr.GetCache(), i4);
     }
 }
 

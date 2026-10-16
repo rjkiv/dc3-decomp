@@ -92,10 +92,10 @@ unsigned int GatherObject(Hmx::Object *object, std::vector<T *> &objects) {
 
 RndAmbientOcclusion::RndAmbientOcclusion()
     : mDontCastAO(this), mDontReceiveAO(this), mTessellate(this),
-      mIgnoreTransparent(true), mIgnorePrelit(true), mIgnoreHidden(true),
-      mUseMeshNormals(true), mIntersectBackFaces(false), mTessellateTriLimit(8),
-      mTessellateTriError(0.67625f), mTessellateTriLarge(gUnitsPerMeter * 2.0f),
-      mTessellateTriSmall(gUnitsPerMeter * 0.5f), mTree(0), mQuality((Quality)1) {}
+      mIgnoreTransparent(true), mIgnorePrelitMats(true), mIgnoreHidden(true),
+      mUseMeshNormals(true), mIntersectBackFaces(false), mTessTriLimit(8),
+      mTessTriError(0.67625f), mTessTriSizeMax(gUnitsPerMeter * 2.0f),
+      mTessTriSizeMin(gUnitsPerMeter * 0.5f), mTree(0), mQuality((Quality)1) {}
 
 RndAmbientOcclusion::~RndAmbientOcclusion() { Clean(); }
 
@@ -113,14 +113,14 @@ BEGIN_PROPSYNCS(RndAmbientOcclusion)
     SYNC_PROP(dont_receive_ao, mDontReceiveAO)
     SYNC_PROP(tessellate, mTessellate)
     SYNC_PROP(ignore_transparent, mIgnoreTransparent)
-    SYNC_PROP(ignore_prelit, mIgnorePrelit)
+    SYNC_PROP(ignore_prelit, mIgnorePrelitMats)
     SYNC_PROP(ignore_hidden, mIgnoreHidden)
     SYNC_PROP(use_mesh_normals, mUseMeshNormals)
     SYNC_PROP(intersect_back_faces, mIntersectBackFaces)
-    SYNC_PROP(tessellate_tri_limit, mTessellateTriLimit)
-    SYNC_PROP(tessellate_tri_error, mTessellateTriError)
-    SYNC_PROP(tessellate_tri_large, mTessellateTriLarge)
-    SYNC_PROP(tessellate_tri_small, mTessellateTriSmall)
+    SYNC_PROP(tessellate_tri_limit, mTessTriLimit)
+    SYNC_PROP(tessellate_tri_error, mTessTriError)
+    SYNC_PROP(tessellate_tri_large, mTessTriSizeMax)
+    SYNC_PROP(tessellate_tri_small, mTessTriSizeMin)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
@@ -131,14 +131,14 @@ BEGIN_SAVES(RndAmbientOcclusion)
     bs << mDontCastAO;
     bs << mTessellate;
     bs << mIgnoreTransparent;
-    bs << mIgnorePrelit;
+    bs << mIgnorePrelitMats;
     bs << mIgnoreHidden;
     bs << mUseMeshNormals;
     bs << mIntersectBackFaces;
-    bs << mTessellateTriLimit;
-    bs << mTessellateTriError;
-    bs << mTessellateTriLarge;
-    bs << mTessellateTriSmall;
+    bs << mTessTriLimit;
+    bs << mTessTriError;
+    bs << mTessTriSizeMax;
+    bs << mTessTriSizeMin;
     bs << mQuality;
 END_SAVES
 
@@ -150,14 +150,14 @@ BEGIN_COPYS(RndAmbientOcclusion)
         COPY_MEMBER(mDontCastAO)
         COPY_MEMBER(mTessellate)
         COPY_MEMBER(mIgnoreTransparent)
-        COPY_MEMBER(mIgnorePrelit)
+        COPY_MEMBER(mIgnorePrelitMats)
         COPY_MEMBER(mIgnoreHidden)
         COPY_MEMBER(mUseMeshNormals)
         COPY_MEMBER(mIntersectBackFaces)
-        COPY_MEMBER(mTessellateTriLimit)
-        COPY_MEMBER(mTessellateTriError)
-        COPY_MEMBER(mTessellateTriLarge)
-        COPY_MEMBER(mTessellateTriSmall)
+        COPY_MEMBER(mTessTriLimit)
+        COPY_MEMBER(mTessTriError)
+        COPY_MEMBER(mTessTriSizeMax)
+        COPY_MEMBER(mTessTriSizeMin)
         COPY_MEMBER(mQuality)
     END_COPYING_MEMBERS
 END_COPYS
@@ -172,17 +172,17 @@ BEGIN_LOADS(RndAmbientOcclusion)
     d >> mDontCastAO;
     d >> mTessellate;
     d >> mIgnoreTransparent;
-    d >> mIgnorePrelit;
+    d >> mIgnorePrelitMats;
     d >> mIgnoreHidden;
     d >> mUseMeshNormals;
     if (d.rev > 3) {
         d >> mIntersectBackFaces;
     }
     if (d.rev > 1) {
-        d >> mTessellateTriLimit;
-        d >> mTessellateTriError;
-        d >> mTessellateTriLarge;
-        d >> mTessellateTriSmall;
+        d >> mTessTriLimit;
+        d >> mTessTriError;
+        d >> mTessTriSizeMax;
+        d >> mTessTriSizeMin;
     }
     if (d.rev > 2) {
         d >> (int &)mQuality;
@@ -203,7 +203,7 @@ void RndAmbientOcclusion::BuildTrees(Quality quality) {
         timer.Restart();
         MILO_LOG("RndAmbientOcclusion: Building kd-Tree...\n");
         kdTree<Triangle>::SplitPlaneType whichType = sSplitTypes[quality];
-        BuildSphereStratified(sNumSamples[quality], mSampleDirs);
+        BuildSphereStratified(sNumSamples[quality], mSphere);
         Vector3 maxNeg(-FLT_MAX, -FLT_MAX, -FLT_MAX);
         Vector3 maxPos(FLT_MAX, FLT_MAX, FLT_MAX);
         Box box(maxPos, maxNeg);
@@ -244,7 +244,7 @@ void RndAmbientOcclusion::BuildTrees(Quality quality) {
         FOREACH (it, mTriList) {
             mTree->Insert(&*it);
         }
-        mTree->PackNodes(whichType, 0);
+        mTree->Build(whichType);
         MILO_LOG(
             "RndAmbientOcclusion: Built kd-Tree in %0.2f seconds\n",
             timer.SplitMs() * 0.001f
@@ -263,7 +263,7 @@ void RndAmbientOcclusion::Clean() {
     mObjectsReceive.clear();
     mObjectsTessellate.clear();
     mTriList.clear();
-    mSampleDirs.clear();
+    mSphere.clear();
 }
 
 bool RndAmbientOcclusion::IsValid_AOCast(const RndMesh *mesh) const {
@@ -299,7 +299,7 @@ bool RndAmbientOcclusion::IsValid_AOReceive(const RndMesh *mesh) const {
         c4 = mat->PreLit();
     }
     if ((!mIgnoreHidden || mesh->Showing()) && (!mIgnoreTransparent || !b2)
-        && (!mIgnorePrelit || !c4)) {
+        && (!mIgnorePrelitMats || !c4)) {
         return true;
     }
     return false;
@@ -596,8 +596,9 @@ void RndAmbientOcclusion::BurnTransform(
                     Transform tfa0;
                     if (cur->TransConstraint() == RndTransformable::kConstraintNone) {
                         Multiply(cur->LocalXfm(), tfe0, tfa0);
-                    } else if (cur->TransConstraint()
-                               == RndTransformable::kConstraintParentWorld) {
+                    } else if (
+                        cur->TransConstraint() == RndTransformable::kConstraintParentWorld
+                    ) {
                         tfa0 = tfe0;
                         cur->SetTransConstraint(
                             RndTransformable::kConstraintNone,
@@ -621,11 +622,11 @@ void RndAmbientOcclusion::CalculateAOAtPoint(
     float f16 = gUnitsPerMeter * 50;
     Vector3 vb0;
     ScaleAdd(v1, v2, 0.001, vb0);
-    unsigned int numVectors = mSampleDirs.size();
+    unsigned int numVectors = mSphere.size();
     float f14 = 1 / f16;
     double f90[4] = { 0, 0, 0, 0 };
     for (int i = 0; i != numVectors; i++) {
-        const Vector3 &curVec = mSampleDirs[i];
+        const Vector3 &curVec = mSphere[i];
         float dot = Dot(v2, curVec);
         if (dot > 0) {
             float fref;

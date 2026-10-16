@@ -11,7 +11,7 @@ NgFur::NgFur() {}
 
 bool NgFur::Prep(RndMesh *, RndMat *) const {
     TheShaderMgr.SetPConstant((PShaderConstant)12, mFurDetail);
-    TheRenderState.SetTextureFilter(12, RndRenderState::kFilterModeLinear, false);
+    TheRenderState.SetTextureFilter(12, RndRenderState::kLinear, false);
     return true;
 }
 
@@ -79,14 +79,14 @@ bool NgFur::Shell(int i1, RndMesh *mesh, RndMat *mat) const {
     RndShader::SelectConfig(mat, kFurShader, false);
     if (i1 == 0) {
         TheRenderState.SetBlend(
-            RndRenderState::kBlendOne,
-            RndRenderState::kBlendZero,
-            RndRenderState::kBlendOne,
-            RndRenderState::kBlendOne
+            RndRenderState::kOne,
+            RndRenderState::kZero,
+            RndRenderState::kOne,
+            RndRenderState::kOne
         );
         TheRenderState.SetDepthTestEnable(true);
         TheRenderState.SetDepthWriteEnable(true);
-        TheRenderState.SetDepthFunc(RndRenderState::kTestFuncLess);
+        TheRenderState.SetDepthFunc(RndRenderState::kLess);
         NgMat::SetCurrent(nullptr);
     }
     return true;

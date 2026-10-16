@@ -101,7 +101,11 @@ void DxRnd::PushClipPlanesInternal(ObjPtrVec<RndTransformable> &planes) {
             Vector3 tmp;
             Scale(worldXfm.m.z, -1, tmp);
             Plane p70(worldXfm.v, tmp);
-            Multiply(p70.AsVector4(), RndCam::Current()->GetMatrix340(), p70.AsVector4());
+            Multiply(
+                p70.AsVector4(),
+                RndCam::Current()->InverseTransposeViewProj(),
+                p70.AsVector4()
+            );
             float plane[4] = { p70.a, p70.b, p70.c, p70.d };
             mD3DDevice->SetClipPlane(unk408, plane);
             mask |= (1 << unk408++);

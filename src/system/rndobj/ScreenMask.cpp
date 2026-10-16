@@ -71,7 +71,7 @@ void RndScreenMask::DrawShowing() {
             fh = RndCam::Current()->TargetTex()->Height();
         }
         if (!mUseCamRect && RndCam::Current()->TargetTex()) {
-            if (RndCam::Current()->GetScreenRect() != Hmx::Rect(0, 0, 1, 1)) {
+            if (RndCam::Current()->ScreenRect() != Hmx::Rect(0, 0, 1, 1)) {
                 MILO_NOTIFY_ONCE(
                     "%s: Overriding camera screen_rect not supported with render texture",
                     Name()

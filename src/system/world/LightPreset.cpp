@@ -1109,13 +1109,13 @@ void LightPreset::SyncKeyframeTargets() {
         if (mEnvironments.find(env) == mEnvironments.cend()) {
             AddEnvironment(env);
         }
-        FOREACH (it2, env->LightsReal()) {
+        FOREACH (it2, env->Lights_Real()) {
             RndLight *light = *it2;
             if (mLights.find(light) == mLights.cend()) {
                 AddLight(light);
             }
         }
-        FOREACH (it2, env->LightsApprox()) {
+        FOREACH (it2, env->Lights_Approx()) {
             RndLight *light = *it2;
             if (mLights.find(light) == mLights.cend()) {
                 AddLight(light);

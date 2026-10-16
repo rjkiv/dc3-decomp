@@ -560,10 +560,6 @@ bool DataArrayDefined();
 const char *DataVarName(const DataNode *var);
 void DataAppendStackTrace(FixedString &);
 
-// to properly generate DataArray::Node const vs non-const
-#define CONST_ARRAY(array) ((const DataArray *)(array))
-#define UNCONST_ARRAY(array) ((DataArray *)(array))
-
 /** A smart pointer that manages the lifetime of a DataArray. */
 class DataArrayPtr {
 private:

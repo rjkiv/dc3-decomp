@@ -809,7 +809,7 @@ void DxRnd::DoPointTests() {
         mD3DDevice->BlockOnFence(sPointTestFence);
         sPointTestFence = -1;
     }
-    if (mOcclusionQueryMgr && !TheHiResScreen.IsActive()) {
+    if (mOcclusionQueryMgr && !TheHiResScreen.Active()) {
         FOREACH (it, unk20c) {
             unsigned int uiRef;
             if (mOcclusionQueryMgr->GetQueryResults(it->unk4, uiRef)) {
@@ -863,7 +863,7 @@ void DxRnd::DoPointTests() {
             TheDxRnd.Device()->SetRenderState(D3DRS_HALFPIXELOFFSET, 0);
             if (RndCam::Current()) {
                 TheShaderMgr.SetVConstant(
-                    (VShaderConstant)4, RndCam::Current()->GetMatrix300()
+                    (VShaderConstant)4, RndCam::Current()->ViewProj()
                 );
             }
         }

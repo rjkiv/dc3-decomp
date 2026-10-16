@@ -24,8 +24,8 @@ namespace {
 
     void ClearPointCubeTex() {
         TheShaderMgr.SetPConstant((PShaderConstant)0xD, TheRnd.GetCubeTexWhite());
-        TheRenderState.SetTextureClamp(0xD, RndRenderState::kClampModeMirror);
-        TheRenderState.SetTextureFilter(0xD, RndRenderState::kFilterModeLinear, false);
+        TheRenderState.SetTextureClamp(0xD, RndRenderState::kMirror);
+        TheRenderState.SetTextureFilter(0xD, RndRenderState::kLinear, false);
     }
 
     void ClearLightRegisters(int i1) {
@@ -105,8 +105,8 @@ namespace {
         );
         if (light.GetCubeTexture() && i1 == 0) {
             TheShaderMgr.SetPConstant((PShaderConstant)0xD, light.GetCubeTexture());
-            TheRenderState.SetTextureClamp(0xD, RndRenderState::kClampModeMirror);
-            TheRenderState.SetTextureFilter(0xD, RndRenderState::kFilterModeLinear, false);
+            TheRenderState.SetTextureClamp(0xD, RndRenderState::kMirror);
+            TheRenderState.SetTextureFilter(0xD, RndRenderState::kLinear, false);
             Transform tfd0 = light.WorldXfm();
             TheShaderMgr.SetVConstant4x3((VShaderConstant)0xDD, Hmx::Matrix4(tfd0));
             TheShaderMgr.SetPConstant4x3((PShaderConstant)0xDD, Hmx::Matrix4(tfd0));
@@ -143,24 +143,20 @@ namespace {
                 (PShaderConstant)(i2 * 3 + 0x5F), Hmx::Matrix4(projection)
             );
             TheShaderMgr.SetPConstant((PShaderConstant)(i2 + 5), light.GetShadowMap());
-            TheRenderState.SetTextureFilter(
-                i2 + 5, RndRenderState::kFilterModeLinear, false
-            );
+            TheRenderState.SetTextureFilter(i2 + 5, RndRenderState::kLinear, false);
             if (light.GetProjectedBlend() == 0) {
                 TheShaderMgr.SetPConstant((PShaderConstant)(i2 + 10), light.GetTexture());
-                TheRenderState.SetTextureClamp(i2 + 10, RndRenderState::kClampModeBorder);
+                TheRenderState.SetTextureClamp(i2 + 10, RndRenderState::kBorder);
                 TheRenderState.SetBorderColor(i2 + 10, false);
-                TheRenderState.SetTextureFilter(
-                    i2 + 10, RndRenderState::kFilterModeLinear, false
-                );
-                TheRenderState.SetTextureClamp(i2 + 5, RndRenderState::kClampModeBorder);
+                TheRenderState.SetTextureFilter(i2 + 10, RndRenderState::kLinear, false);
+                TheRenderState.SetTextureClamp(i2 + 5, RndRenderState::kBorder);
                 TheRenderState.SetBorderColor(i2 + 5, true);
             } else if (light.GetProjectedBlend() == 1) {
                 TheShaderMgr.SetPConstant(
                     (PShaderConstant)(i2 + 10),
                     TheRnd.GetDefaultTex(Rnd::kDefaultTex_White)
                 );
-                TheRenderState.SetTextureClamp(i2 + 5, RndRenderState::kClampModeBorder);
+                TheRenderState.SetTextureClamp(i2 + 5, RndRenderState::kBorder);
                 TheRenderState.SetBorderColor(i2 + 5, false);
             }
             return true;
@@ -171,14 +167,14 @@ namespace {
 }
 
 NgEnviron::NgEnviron()
-    : mProjectedBlend(), mNumLightsReal(0), mNumLightsApprox(0), mNumLightsPoint(0),
-      mNumLightsProj(0), mHasPointCubeTex(0) {}
+    : mProjectedBlend(), mNumLights_Real(0), mNumLights_Approx(0), mNumLights_Point(0),
+      mNumLights_Proj(0), mHasPointCubeTex(0) {}
 
 void NgEnviron::Select(const Vector3 *vptr) {
-    mNumLightsReal = 0;
-    mNumLightsApprox = 0;
-    mNumLightsPoint = 0;
-    mNumLightsProj = 0;
+    mNumLights_Real = 0;
+    mNumLights_Approx = 0;
+    mNumLights_Point = 0;
+    mNumLights_Proj = 0;
     mHasPointCubeTex = false;
     mProjectedBlend = (RndLight::ProjectedBlend)0;
     if (TheRnd.DrawMode() != Rnd::kDrawShadowColor
@@ -190,7 +186,7 @@ void NgEnviron::Select(const Vector3 *vptr) {
         int projLightCount = 0;
         NgLight *pointLights[3];
         NgLight *projLights[1];
-        FOREACH (it, mLightsReal) {
+        FOREACH (it, mLights_Real) {
             NgLight *cur = static_cast<NgLight *>(*it);
             switch (cur->GetType()) {
             case RndLight::kPoint:
@@ -228,15 +224,15 @@ void NgEnviron::Select(const Vector3 *vptr) {
         }
         for (int i = 0; i < projLightCount; i++) {
             if (SetProjLightRegisters(3 - i, i, *projLights[i])) {
-                mNumLightsProj++;
-                mNumLightsReal++;
+                mNumLights_Proj++;
+                mNumLights_Real++;
             }
         }
         for (int i = 0; i < pointLightCount; i++) {
             bool b3;
-            if (SetPointLightRegisters(mNumLightsPoint, *pointLights[i], b3)) {
-                mNumLightsPoint++;
-                mNumLightsReal++;
+            if (SetPointLightRegisters(mNumLights_Point, *pointLights[i], b3)) {
+                mNumLights_Point++;
+                mNumLights_Real++;
                 if (b3) {
                     mHasPointCubeTex = true;
                 }
@@ -244,8 +240,8 @@ void NgEnviron::Select(const Vector3 *vptr) {
         }
         UpdateApproxLighting(vptr);
         NgMat::SetCurrent(nullptr);
-        TheNgStats->mLightsReal += mNumLightsReal;
-        TheNgStats->mLightsApprox += mNumLightsApprox;
+        TheNgStats->mLightsReal += mNumLights_Real;
+        TheNgStats->mLightsApprox += mNumLights_Approx;
         if (FogEnable()) {
             float fogEnd = GetFogEnd();
             TheShaderMgr.SetVConstant(
@@ -320,14 +316,14 @@ void NgEnviron::Select(const Vector3 *vptr) {
     } else {
         RndEnviron::Select(vptr);
         NgMat::SetCurrent(nullptr);
-        TheNgStats->mLightsReal += mNumLightsReal;
-        TheNgStats->mLightsApprox += mNumLightsApprox;
+        TheNgStats->mLightsReal += mNumLights_Real;
+        TheNgStats->mLightsApprox += mNumLights_Approx;
     }
 }
 
 void NgEnviron::UpdateApproxLighting(const Vector3 *vptr) {
-    mNumLightsApprox = 0;
-    bool b2 = mLightsReal.size() || mLightsApprox.size();
+    mNumLights_Approx = 0;
+    bool b2 = mLights_Real.size() || mLights_Approx.size();
     bool b1 = mUseApprox_Local || mUseApprox_Global;
 
     if (b1 && b2) {
@@ -340,18 +336,18 @@ void NgEnviron::UpdateApproxLighting(const Vector3 *vptr) {
         }
         if (mUseApprox_Local) {
             boxLight.Clear();
-            FOREACH (it, mLightsApprox) {
+            FOREACH (it, mLights_Approx) {
                 if (boxLight.QueueLight(*it, 1)) {
-                    mNumLightsApprox++;
+                    mNumLights_Approx++;
                 }
             }
             boxLight.ApplyQueuedLights(boxResults, vptr);
         }
         if (mUseApprox_Global) {
-            int numInQueue = RndEnviron::GetGlobalLighting().NumQueuedLights();
+            int numInQueue = RndEnviron::GetGlobalBoxMap().NumQueuedLights();
             if (numInQueue != 0) {
-                mNumLightsApprox += numInQueue;
-                RndEnviron::GetGlobalLighting().ApplyQueuedLights(boxResults, vptr);
+                mNumLights_Approx += numInQueue;
+                RndEnviron::GetGlobalBoxMap().ApplyQueuedLights(boxResults, vptr);
             }
         }
         for (int i = 0; i < 6; i++) {
@@ -378,7 +374,7 @@ void NgEnviron::UpdateApproxLighting(const Vector3 *vptr) {
             );
         }
     }
-    if (mNumLightsReal > 0) {
-        mNumLightsApprox = Max(1, mNumLightsApprox);
+    if (mNumLights_Real > 0) {
+        mNumLights_Approx = Max(1, mNumLights_Approx);
     }
 }

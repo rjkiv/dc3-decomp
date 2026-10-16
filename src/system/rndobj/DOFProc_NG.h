@@ -11,7 +11,7 @@ public:
     OBJ_CLASSNAME(DOFProc);
     OBJ_SET_TYPE(DOFProc);
     // DOFProc
-    virtual bool Enabled() const { return mEnabled; }
+    virtual bool Enabled() const { return mDepthOfField; }
     virtual float FocalPlane() { return mFocalPlane; }
     virtual float BlurDepth() { return mBlurDepth; }
     virtual float MaxBlur() { return mMaxBlur; }
@@ -26,11 +26,11 @@ public:
 
 protected:
     virtual void Set(const RndCam *, float, float, float, float);
-    virtual void UnSet() { mEnabled = false; }
+    virtual void UnSet() { mDepthOfField = false; }
 
-    bool mEnabled; // 0x30
-    float unk34; // 0x34
-    float unk38; // 0x38
+    bool mDepthOfField; // 0x30
+    float mFocalPlaneDist; // 0x34
+    float mNearBlurPlaneDist; // 0x38
     float mFocalPlane; // 0x3c
     float mBlurDepth; // 0x40
     float mMinBlur; // 0x44

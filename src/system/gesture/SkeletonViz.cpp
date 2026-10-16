@@ -398,8 +398,8 @@ void SkeletonViz::DrawJoints(
     Hmx::Color qual_color(1, 0, 0);
     Vector2 place(0.1f, 0.1f);
     if (mUsePhysicalCam) {
-        place.x = mPhysicalCam->GetScreenRect().x;
-        place.y = mPhysicalCam->GetScreenRect().y;
+        place.x = mPhysicalCam->ScreenRect().x;
+        place.y = mPhysicalCam->ScreenRect().y;
     }
     if (flags & 1) {
         place.y = TheRnd.DrawStringScreen("clipped right", place, qual_color, true).y;

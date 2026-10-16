@@ -24,22 +24,22 @@ public:
     virtual void Load(BinStream &);
     virtual void UpdatedWorldXfm();
     virtual void Select();
-    virtual unsigned int ProjectZ(float) { return 0; }
+    virtual unsigned int ProjectZ(float d) { return 0; }
 
     float NearPlane() const { return mNearPlane; }
     float FarPlane() const { return mFarPlane; }
     float YFov() const { return mYFov; }
 
-    void SetViewProj(const Hmx::Matrix4 &);
+    void SetViewProj(const Hmx::Matrix4 &m);
     Transform GetInvViewXfm();
-    float WorldToScreen(const Vector3 &, Vector2 &) const;
-    void ScreenToWorld(const Vector2 &, float, Vector3 &) const;
-    void GetCamFrustum(Vector3 &, Vector3 (&)[4]);
-    void SetTargetTex(RndTex *);
-    void SetFrustum(float, float, float, float);
-    void GetViewProjectXfms(Transform &, Hmx::Matrix4 &) const;
-    void GetDepthRangeValues(Vector4 &) const;
-    void GetInfiniteViewProj(Hmx::Matrix4 &) const;
+    float WorldToScreen(const Vector3 &v, Vector2 &v2) const;
+    void ScreenToWorld(const Vector2 &v, float dist, Vector3 &v2) const;
+    void GetCamFrustum(Vector3 &camPos, Vector3 (&camCorner)[4]);
+    void SetTargetTex(RndTex *tex);
+    void SetFrustum(float nearPlane, float farPlane, float yFov, float yRatioMult);
+    void GetViewProjectXfms(Transform &view, Hmx::Matrix4 &proj) const;
+    void GetDepthRangeValues(Vector4 &depthRange) const;
+    void GetInfiniteViewProj(Hmx::Matrix4 &infViewProj) const;
     Transform &LocalProjectXfm() { return mLocalProjectXfm; }
     RndTex *TargetTex() const { return mTargetTex; }
     const Frustum &WorldFrustum() const { return mWorldFrustum; }
@@ -48,7 +48,7 @@ public:
         mScreenRect = rect;
         UpdateLocal();
     }
-    const Hmx::Rect &GetScreenRect() const { return mScreenRect; }
+    const Hmx::Rect &ScreenRect() const { return mScreenRect; }
     float CalcScreenHeight(const Sphere &s) {
         float r = mLocalProjectXfm.m.z.y * s.radius;
         float dist = CalcDistTo(s.center);
@@ -61,6 +61,9 @@ public:
     float CalcDistTo(const Vector3 &v) {
         return Dot(v, WorldXfm().m.y) + mInvWorldXfm.v.y;
     }
+    const Hmx::Matrix4 &ViewProj() const { return mViewProj; }
+    const Hmx::Matrix4 &InverseTransposeViewProj() const { return mInvTransposeViewProj; }
+    const Vector2 &ZRange() const { return mZRange; }
 
     NEW_OBJ(RndCam);
     OBJ_MEM_OVERLOAD(0x1B);
@@ -68,9 +71,6 @@ public:
     static RndCam *Current() { return sCurrent; }
     static float DefaultNearPlane() { return sDefaultNearPlane; }
     static float MaxFarNearPlaneRatio() { return sMaxFarNearPlaneRatio; }
-    const Hmx::Matrix4 &GetMatrix300() const { return unk300; }
-    const Hmx::Matrix4 &GetMatrix340() const { return unk340; }
-    const Vector2 &GetZRange() const { return mZRange; }
 
 protected:
     RndCam();
@@ -116,7 +116,7 @@ protected:
      */
     float mFarPlane; // 0x2c4
     float mYFov; // 0x2c8
-    float unk2cc; // 0x2cc
+    float mYRatioMult; // 0x2cc
     /**
      * @brief
      * Original _objects description:
@@ -130,7 +130,7 @@ protected:
     Vector2 mZRange; // 0x2d0
     Hmx::Rect mScreenRect; // 0x2d8
     ObjPtr<RndTex> mTargetTex; // 0x2e8
-    Rnd::Aspect mAspect; // 0x2fc
-    Hmx::Matrix4 unk300; // 0x300
-    Hmx::Matrix4 unk340; // 0x340
+    Rnd::Aspect mLastAspect; // 0x2fc
+    Hmx::Matrix4 mViewProj; // 0x300
+    Hmx::Matrix4 mInvTransposeViewProj; // 0x340
 };

@@ -51,36 +51,47 @@ public:
     virtual void Load(BinStream &);
 
     void Clean();
-    void BuildTrees(Quality);
+    void BuildTrees(Quality quality);
     void BuildObjectLists();
-    bool IsSerializable(const RndMesh *) const;
-    void CalculateAO(float *);
-    void Tessellate(float *, float *);
+    bool IsSerializable(const RndMesh *mesh) const;
+    void CalculateAO(float *timeElapsed);
+    void Tessellate(float *timeTessellation, float *timePatching);
 
     OBJ_MEM_OVERLOAD(0x15);
     NEW_OBJ(RndAmbientOcclusion)
     static void Init() { REGISTER_OBJ_FACTORY(RndAmbientOcclusion) }
-    static void BlendVert(const RndMesh::Vert &, const RndMesh::Vert &, RndMesh::Vert &);
+    static void BlendVert(
+        const RndMesh::Vert &inputVert0,
+        const RndMesh::Vert &inputVert1,
+        RndMesh::Vert &outputVert
+    );
 
 protected:
     RndAmbientOcclusion();
 
-    void OnCalculate(bool);
-    void BuildSHCoeff(const Vector3 &, float *) const;
-    bool IsValid_Mesh(const RndMesh *) const;
-    bool IsValid_AOCast(const RndMesh *) const;
-    bool IsValid_AOReceive(const RndMesh *) const;
-    bool IsValid_Tessellate(const RndMesh *, const ObjectDir *) const;
-    void TransformNormal(const Vector3 &, const Hmx::Matrix3 &, Vector3 &) const;
-    void DumpObjList(const char *, const std::vector<RndMesh *> &) const;
-    bool IsMeshAnimated(const RndMesh *) const;
-    bool CanBurnXfm(const RndMesh *) const;
+    void OnCalculate(bool prompt);
+    void BuildSHCoeff(const Vector3 &inVector, float *outResult) const;
+    bool IsValid_Mesh(const RndMesh *mesh) const;
+    bool IsValid_AOCast(const RndMesh *mesh) const;
+    bool IsValid_AOReceive(const RndMesh *mesh) const;
+    bool IsValid_Tessellate(const RndMesh *mesh, const ObjectDir *objDir) const;
+    void
+    TransformNormal(const Vector3 &norm, const Hmx::Matrix3 &m, Vector3 &result) const;
+    void DumpObjList(const char *title, const std::vector<RndMesh *> &objList) const;
+    bool IsMeshAnimated(const RndMesh *mesh) const;
+    bool CanBurnXfm(const RndMesh *mesh) const;
     void PreprocessMesh();
-    void BurnTransform(RndMesh *, std::list<RndMesh *> &) const;
-    float
-    DistanceSH(const Vector4 &, const Vector3 &, const Vector4 &, const Vector3 &) const;
-    void CalculateAOAtPoint(const Vector3 &, const Vector3 &, float *) const;
-    void SmoothResults(RndMesh *) const;
+    void BurnTransform(RndMesh *currMesh, std::list<RndMesh *> &burnList) const;
+    float DistanceSH(
+        const Vector4 &inSH_A,
+        const Vector3 &inNormal_A,
+        const Vector4 &inSH_B,
+        const Vector3 &inNormal_B
+    ) const;
+    void CalculateAOAtPoint(
+        const Vector3 &inWorldPos, const Vector3 &inWorldNormal, float *outSHResults
+    ) const;
+    void SmoothResults(RndMesh *mesh) const;
 
     DataNode OnGetValidObjects(DataArray *) const;
     DataNode OnGetRecvMeshes(DataArray *);
@@ -94,7 +105,7 @@ protected:
     /** "Ignore transparent objects when casting shadows." */
     bool mIgnoreTransparent; // 0x68
     /** "Ignore prelit materials when receiving shadows." */
-    bool mIgnorePrelit; // 0x69
+    bool mIgnorePrelitMats; // 0x69
     /** "Ignore hidden objects when casting or receiving shadows." */
     bool mIgnoreHidden; // 0x6a
     /** "Use the mesh normals when calculating. Otherwise,
@@ -107,22 +118,22 @@ protected:
         This is a multiplier of the current poly count.
         A value of 2 will generate a maximum of 2x the polys."
         Ranges from 2 to 32. */
-    int mTessellateTriLimit; // 0x70
+    int mTessTriLimit; // 0x70
     /** "The error threshold for the ambient occlusion calculation.
         Error larger than this value will result in a triangle being split."
         Ranges from 0.1 to 15.0. */
-    float mTessellateTriError; // 0x74
+    float mTessTriError; // 0x74
     /** "Triangles larger than this size will always be split."
         Ranges from 1 to 500. */
-    float mTessellateTriLarge; // 0x78
+    float mTessTriSizeMax; // 0x78
     /** "Triangles smaller than this size will not be split any further."
         Ranges from 0.1 to 500. */
-    float mTessellateTriSmall; // 0x7c
+    float mTessTriSizeMin; // 0x7c
     std::vector<RndMesh *> mObjectsCast; // 0x80
     std::vector<RndMesh *> mObjectsReceive; // 0x8c
     std::vector<RndMesh *> mObjectsTessellate; // 0x98
     std::vector<Triangle> mTriList; // 0xa4
     kdTree<Triangle> *mTree; // 0xb0
     Quality mQuality; // 0xb4
-    std::vector<Vector3> mSampleDirs;
+    std::vector<Vector3> mSphere;
 };

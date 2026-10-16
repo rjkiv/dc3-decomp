@@ -50,7 +50,8 @@ void RndOverlay::Clear() {
     mCursorChar = -1;
 }
 
-static const float sDrawFloats[2] = { 0.025f, 0.0134f };
+static const float OFFSET_X = 0.025f;
+static const float OFFSET_Y = 0.0134f;
 
 float RndOverlay::Draw(float topY) {
     if (mTimeout > 0 && mShowing) {
@@ -69,7 +70,7 @@ float RndOverlay::Draw(float topY) {
     }
     Hmx::Rect rect(0, topY, 1, Height());
     TheRnd.DrawRectScreen(rect, mBackColor, TheRnd.OverlayMat(), nullptr, nullptr);
-    Vector2 pos(sDrawFloats[0], sDrawFloats[1] + topY);
+    Vector2 pos(OFFSET_X, OFFSET_Y + topY);
     if (mCursorChar > -1 && !mLines.empty()) {
         String str4c;
         for (int i = 0; i < mCursorChar; i++) {
