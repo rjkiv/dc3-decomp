@@ -32,18 +32,18 @@ protected:
     FlowDistance();
 
     /** "First object to compare" */
-    FlowPtr<RndTransformable> mObj1; // 0x5c
+    FlowPtr<RndTransformable> mOne; // 0x5c
     /** "Second object to compare" */
-    FlowPtr<RndTransformable> mObj2; // 0x7c
+    FlowPtr<RndTransformable> mTwo; // 0x7c
     /** "Distance for comparison" */
     float mDistance; // 0x9c
     /** "Is the node persistent?" */
     bool mPersistent; // 0xa0
-    bool unka1; // 0xa1
-    bool unka2; // 0xa2
+    bool mIsRunning; // 0xa1
+    bool mInRange; // 0xa2
     /** "Run children when closer than distance value" */
     bool mRunInRange; // 0xa3
     /** "Applies current distance to flow intensity, closer being higher intensity" */
     bool mDriveIntensity; // 0xa4
-    float unka8; // 0xa8
+    float mIntensity; // 0xa8
 };

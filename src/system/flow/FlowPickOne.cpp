@@ -7,7 +7,7 @@
 #include "utl/Std.h"
 
 FlowPickOne::FlowPickOne()
-    : unk5c(this), mChoiceType(kChoiceRandom), mIndex(0), mChance(1) {}
+    : mJukeList(this), mChoiceType(kChoiceRandom), mChildIdx(0), mChance(1) {}
 FlowPickOne::~FlowPickOne() {}
 
 BEGIN_HANDLERS(FlowPickOne)
@@ -16,7 +16,7 @@ END_HANDLERS
 
 BEGIN_PROPSYNCS(FlowPickOne)
     SYNC_PROP_MODIFY(choice_type, (int &)mChoiceType, OnChoiceTypeChanged())
-    SYNC_PROP(index, mIndex)
+    SYNC_PROP(index, mChildIdx)
     SYNC_PROP(chance, mChance)
     SYNC_SUPERCLASS(FlowNode)
 END_PROPSYNCS
@@ -65,48 +65,48 @@ bool FlowPickOne::Activate() {
     switch (mChoiceType) {
     case kChoiceOrdered: {
         if (!ValidIndex()) {
-            mIndex = 0;
+            mChildIdx = 0;
         }
-        ActivateChild(mChildNodes[mIndex]);
-        mIndex++;
+        ActivateChild(mChildNodes[mChildIdx]);
+        mChildIdx++;
         break;
     }
     case kChoiceRandom: {
-        mIndex = RandomInt(0, mChildNodes.size());
-        ActivateChild(mChildNodes[mIndex]);
+        mChildIdx = RandomInt(0, mChildNodes.size());
+        ActivateChild(mChildNodes[mChildIdx]);
         break;
     }
     case kChoiceRandomNoRepeat: {
         if (mChildNodes.size() > 1) {
             int randInt;
-            while (randInt = RandomInt(0, mChildNodes.size()), randInt == mIndex)
+            while (randInt = RandomInt(0, mChildNodes.size()), randInt == mChildIdx)
                 ;
-            mIndex = randInt;
+            mChildIdx = randInt;
         } else {
-            mIndex = 0;
+            mChildIdx = 0;
         }
-        ActivateChild(mChildNodes[mIndex]);
+        ActivateChild(mChildNodes[mChildIdx]);
         break;
     }
     case kChoiceRandomJukeBox: {
         int numNodes = mChildNodes.size();
         if (numNodes > 1) {
             if (!ValidIndex()) {
-                FlowNode *first = unk5c.front();
-                unk5c.clear();
+                FlowNode *first = mJukeList.front();
+                mJukeList.clear();
                 std::vector<FlowNode *> nodes;
                 FOREACH (it, mChildNodes) {
                     nodes.push_back(*it);
                 }
                 std::random_shuffle(nodes.begin(), nodes.end());
-                FOREACH_REVERSE(it, nodes) { unk5c.push_back(*it); }
-                mIndex = 0;
-                if (first == unk5c.front()) {
-                    mIndex = 1;
+                FOREACH_REVERSE(it, nodes) { mJukeList.push_back(*it); }
+                mChildIdx = 0;
+                if (first == mJukeList.front()) {
+                    mChildIdx = 1;
                 }
             }
             ActivateChild(mChildNodes[0]);
-            mIndex++;
+            mChildIdx++;
         }
         if (numNodes == 1) {
             ActivateChild(mChildNodes[0]);
@@ -114,8 +114,8 @@ bool FlowPickOne::Activate() {
         break;
     }
     case kChoiceUseIndex: {
-        mIndex = mIndex % mChildNodes.size();
-        ActivateChild(*NextItr(mChildNodes.begin(), mIndex));
+        mChildIdx = mChildIdx % mChildNodes.size();
+        ActivateChild(*NextItr(mChildNodes.begin(), mChildIdx));
         break;
     }
     default: {
@@ -130,7 +130,7 @@ bool FlowPickOne::Activate() {
 void FlowPickOne::OnChoiceTypeChanged() {
     if (mChoiceType != kChoiceUseIndex) {
         FOREACH (it, mDrivenPropEntries) {
-            if (it->Node().Array()->Sym(0) == "index") {
+            if (it->mDrivenProperty.Array()->Sym(0) == "index") {
                 mDrivenPropEntries.erase(it);
                 return;
             }

@@ -55,57 +55,57 @@ void ScanForOutPorts(ObjPtrVec<FlowOutPort> &ports, FlowNode *node, Flow *flow) 
 
 Flow::DynamicPropertyEntry::DynamicPropertyEntry(Hmx::Object *obj)
     : mName(""), mType(kInt), mHelp(""), mExposed(false) {
-    mObjectClass = "Object";
-    mObjectType = Symbol();
+    mClassFilter = "Object";
+    mObjType = Symbol();
 }
 
 BEGIN_CUSTOM_PROPSYNC(Flow::DynamicPropertyEntry)
     SYNC_PROP_SET(name, o.mName, o.SetName(_val))
     SYNC_PROP_MODIFY(type, (int &)o.mType, o.ResetDefaultValues())
-    SYNC_PROP_SET(default_int, o.mDefaultVal.Int(), o.mDefaultVal = _val)
-    SYNC_PROP_SET(default_bool, o.mDefaultVal.Int(), o.mDefaultVal = _val)
-    SYNC_PROP_SET(default_color, o.mDefaultVal.Int(), o.mDefaultVal = _val)
-    SYNC_PROP_SET(default_float, o.mDefaultVal.Float(), o.mDefaultVal = _val)
+    SYNC_PROP_SET(default_int, o.mDefaultValue.Int(), o.mDefaultValue = _val)
+    SYNC_PROP_SET(default_bool, o.mDefaultValue.Int(), o.mDefaultValue = _val)
+    SYNC_PROP_SET(default_color, o.mDefaultValue.Int(), o.mDefaultValue = _val)
+    SYNC_PROP_SET(default_float, o.mDefaultValue.Float(), o.mDefaultValue = _val)
     SYNC_PROP_SET(
         default_string,
-        o.mDefaultVal.Type() == kDataString ? o.mDefaultVal.Str() : "",
-        o.mDefaultVal = _val
+        o.mDefaultValue.Type() == kDataString ? o.mDefaultValue.Str() : "",
+        o.mDefaultValue = _val
     )
     SYNC_PROP_SET(
         default_object,
-        o.mDefaultVal.Type() == kDataObject ? o.mDefaultVal.GetObj() : NULL_OBJ,
-        o.mDefaultVal = _val
+        o.mDefaultValue.Type() == kDataObject ? o.mDefaultValue.GetObj() : NULL_OBJ,
+        o.mDefaultValue = _val
     )
-    SYNC_PROP_SET(default_symbol, o.GetDefaultValueSymbol(), o.mDefaultVal = _val)
-    SYNC_PROP_SET(object_class, o.mObjectClass, o.SetClassFilter(_val))
-    SYNC_PROP(object_type, o.mObjectType)
+    SYNC_PROP_SET(default_symbol, o.GetDefaultValueSymbol(), o.mDefaultValue = _val)
+    SYNC_PROP_SET(object_class, o.mClassFilter, o.SetClassFilter(_val))
+    SYNC_PROP(object_type, o.mObjType)
     SYNC_PROP(help, o.mHelp)
     SYNC_PROP(exposed, o.mExposed)
     SYNC_PROP_SET(get_symbol_list, o.GetSymbolList(), )
 END_CUSTOM_PROPSYNC
 
 BinStream &operator<<(BinStream &bs, const Flow::DynamicPropertyEntry &entry) {
-    bs << entry.mName << entry.mType << entry.mDefaultVal << entry.mHelp
-       << entry.mObjectClass << entry.mExposed << entry.unk24 << entry.mObjectType;
+    bs << entry.mName << entry.mType << entry.mDefaultValue << entry.mHelp
+       << entry.mClassFilter << entry.mExposed << entry.mSymbolList << entry.mObjType;
     return bs;
 }
 
 BinStreamRev &operator>>(BinStreamRev &d, Flow::DynamicPropertyEntry &entry) {
     d >> entry.mName >> (int &)entry.mType;
-    d >> entry.mDefaultVal >> entry.mHelp >> entry.mObjectClass;
+    d >> entry.mDefaultValue >> entry.mHelp >> entry.mClassFilter;
     if (d.rev > 1) {
-        d >> entry.mExposed >> entry.unk24;
+        d >> entry.mExposed >> entry.mSymbolList;
     }
     if (d.rev > 5) {
-        d >> entry.mObjectType;
+        d >> entry.mObjType;
     }
     return d;
 }
 
 void Flow::DynamicPropertyEntry::SetClassFilter(DataNode &filter) {
-    if (filter.Sym() != mObjectClass) {
-        mObjectClass = filter.Sym();
-        mObjectType = Symbol();
+    if (filter.Sym() != mClassFilter) {
+        mClassFilter = filter.Sym();
+        mObjType = Symbol();
     }
 }
 
@@ -120,19 +120,19 @@ void Flow::DynamicPropertyEntry::SetName(DataNode &name) {
     mName = str;
 }
 
-void Flow::DynamicPropertyEntry::ResetDefaultValues() { mDefaultVal = 0; }
+void Flow::DynamicPropertyEntry::ResetDefaultValues() { mDefaultValue = 0; }
 
 Symbol Flow::DynamicPropertyEntry::GetDefaultValueSymbol() {
-    if (mDefaultVal.Type() == kDataSymbol) {
-        return mDefaultVal.Sym();
+    if (mDefaultValue.Type() == kDataSymbol) {
+        return mDefaultValue.Sym();
     } else {
         return Symbol();
     }
 }
 
 DataNode Flow::DynamicPropertyEntry::GetSymbolList() {
-    if (unk24.Type() == kDataArray) {
-        return unk24.Array();
+    if (mSymbolList.Type() == kDataArray) {
+        return mSymbolList.Array();
     } else {
         DataArrayPtr ptr(new DataArray(1));
         ptr->Node(0) = Symbol();
@@ -144,8 +144,8 @@ DataNode Flow::DynamicPropertyEntry::GetSymbolList() {
 #pragma region Flow
 
 Flow::Flow()
-    : mDynamicProperties(this), mFlowLabels(this), mFlowOutPorts(this), mObjects(this),
-      unk170(0), mPrivate(1), mHardStop(0), unk178(0) {}
+    : mDynamicProperties(this), mLabels(this), mOutPorts(this), mStateListeners(this),
+      mStartMode(kStartNone), mPrivate(1), mHardStop(0), mParamIdx(0) {}
 
 Flow::~Flow() {
     if (!mRunningNodes.empty()) {
@@ -168,8 +168,12 @@ END_HANDLERS
 
 BEGIN_PROPSYNCS(Flow)
     SYNC_PROP(dynamic_properties, mDynamicProperties)
-    SYNC_PROP_SET(start_on_enter, unk170 != 0, StartOnEnter(_val.Int()))
-    SYNC_PROP_SET(start_after_game_code, unk170 == 2, StartAfterGameCode(_val.Int()))
+    SYNC_PROP_SET(start_on_enter, mStartMode != kStartNone, StartOnEnter(_val.Int()))
+    SYNC_PROP_SET(
+        start_after_game_code,
+        mStartMode == kStartAfterGameCode,
+        StartAfterGameCode(_val.Int())
+    )
     SYNC_PROP(hard_stop, mHardStop)
     SYNC_PROP(intensity, FlowNode::sIntensity)
     SYNC_PROP(private, mPrivate)
@@ -224,8 +228,8 @@ BEGIN_SAVES(Flow)
                     bs << *prop;
                 }
             } else {
-                bs << it->mDefaultVal.Type();
-                bs << it->mDefaultVal;
+                bs << it->mDefaultValue.Type();
+                bs << it->mDefaultValue;
             }
         }
 
@@ -233,7 +237,7 @@ BEGIN_SAVES(Flow)
         SAVE_SUPERCLASS(FlowQueueable)
         bs << mHardStop;
         bs << mDynamicProperties;
-        bs << unk170;
+        bs << mStartMode;
         bs << mPrivate;
     }
 END_SAVES
@@ -248,7 +252,7 @@ BEGIN_COPYS(Flow)
             Symbol prop(it->mName.c_str());
             SetProperty(prop, *c->Property(prop, false));
         }
-        COPY_MEMBER(unk170)
+        COPY_MEMBER(mStartMode)
         while (!mChildNodes.empty()) {
             delete mChildNodes[0];
         }
@@ -271,7 +275,7 @@ BEGIN_COPYS(Flow)
         COPY_MEMBER(mHardStop)
         RefreshPortLabelLists();
         if (!NoProxyFile()) {
-            mInterrupt = (QueueState)5;
+            mInterruptMode = kNotQueueable;
         }
     END_COPYING_MEMBERS
 END_COPYS
@@ -389,12 +393,12 @@ void Flow::PostLoad(BinStream &bs) {
             bool b110;
             d >> b110;
             if (b110) {
-                unk170 = 2;
+                mStartMode = kStartAfterGameCode;
             } else {
-                unk170 = 0;
+                mStartMode = kStartNone;
             }
         } else {
-            d >> unk170;
+            d >> (int &)mStartMode;
         }
         if (d.rev > 0) {
             d >> mPrivate;
@@ -402,12 +406,12 @@ void Flow::PostLoad(BinStream &bs) {
             mPrivate = false;
         }
     }
-    if (unk170 != 0) {
+    if (mStartMode != kStartNone) {
         mPrivate = true;
     }
     RefreshPortLabelLists();
     if (!NoProxyFile()) {
-        mInterrupt = (QueueState)5;
+        mInterruptMode = kNotQueueable;
     }
 }
 
@@ -439,7 +443,7 @@ void Flow::SyncObjects() {
                     if (Property(ptr, false)) {
                         loadingDir->SetProperty(ptr, *Property(ptr, true));
                     } else {
-                        loadingDir->SetProperty(ptr, it->mDefaultVal);
+                        loadingDir->SetProperty(ptr, it->mDefaultValue);
                     }
                 } else {
                     SetProperty(ptr, *loadingDir->Property(ptr, true));
@@ -471,11 +475,11 @@ bool Flow::Activate() {
 void Flow::Deactivate(bool b1) { FlowQueueable::Deactivate(b1); }
 
 void Flow::Enter() {
-    if (NoProxyFile() && unk170 != 0) {
-        if (unk170 == 1) {
-            Execute(kQueue);
+    if (NoProxyFile() && mStartMode != kStartNone) {
+        if (mStartMode == kStartOnEnter) {
+            Execute(FlowNode::kQueue);
         } else {
-            TheFlowMgr->QueueCommand(this, kQueue);
+            TheFlowMgr->QueueCommand(this, FlowNode::kQueue);
         }
     }
 }
@@ -575,9 +579,9 @@ void Flow::ToggleRunning(int type) {
 }
 
 FlowLabel *Flow::GetLabelForSym(Symbol sym) {
-    FOREACH (it, mFlowLabels) {
+    FOREACH (it, mLabels) {
         FlowLabel *cur = *it;
-        if (cur->Label() == sym) {
+        if (cur->GetLabel() == sym) {
             return cur;
         }
     }
@@ -585,13 +589,13 @@ FlowLabel *Flow::GetLabelForSym(Symbol sym) {
 }
 
 void Flow::RefreshPortLabelLists() {
-    mFlowOutPorts.clear();
-    mFlowLabels.clear();
-    ScanForOutPorts(mFlowOutPorts, this, this);
+    mOutPorts.clear();
+    mLabels.clear();
+    ScanForOutPorts(mOutPorts, this, this);
     FOREACH (it, mChildNodes) {
         if ((*it)->ClassName() == "FlowLabel") {
             FlowNode *cur = *it;
-            mFlowLabels.push_back(static_cast<FlowLabel *>(cur));
+            mLabels.push_back(static_cast<FlowLabel *>(cur));
         }
     }
 }
@@ -629,7 +633,7 @@ void Flow::OnInternalPropertyChanged(DataArray *a) {
 }
 
 void Flow::ApplyParams(DataArray *msg, FlowTrigger *trigger) {
-    unk178++;
+    mParamIdx++;
     if (msg && msg->Size() >= 3) {
         DataArray *def = trigger->GetEventEditorDef(MsgSinks::CurrentExportEvent());
         if (def) {

@@ -8,8 +8,8 @@
 #include "obj/Object.h"
 
 FlowSwitchCase::FlowSwitchCase()
-    : mToValue(0), mFromValue(0), mOperator(kEqual), mUseLastValue(0),
-      mUnregisterParent(0), unk9a(0) {
+    : mToValue(0), mFromValue(0), mOperator(kEquals), mUseLastValue(0),
+      mUnregisterParent(0), mIsRunning(0) {
     mFlowParent = nullptr;
 }
 
@@ -118,7 +118,7 @@ bool FlowSwitchCase::Activate() {
     mRequestingStop = false;
     if (mFlowParent->ClassName() == FlowWhile::StaticClassName()
         && mOperator != kTransition) {
-        unk9a = true;
+        mIsRunning = true;
         FlowNode::Activate();
         if (mUnregisterParent) {
             TheFlowMgr->QueueCommand(this, kQueue);
@@ -130,16 +130,16 @@ bool FlowSwitchCase::Activate() {
 }
 
 void FlowSwitchCase::Deactivate(bool b1) {
-    unk9a = false;
+    mIsRunning = false;
     FlowNode::Deactivate(b1);
 }
 
 void FlowSwitchCase::ChildFinished(FlowNode *n) {
     FLOW_LOG("Child Finished of class:%s\n", n->ClassName());
-    if (unk9a && mOperator != kTransition) {
+    if (mIsRunning && mOperator != kTransition) {
         mRunningNodes.remove(n);
     } else {
-        unk9a = false;
+        mIsRunning = false;
         FlowNode::ChildFinished(n);
     }
 }
@@ -147,7 +147,7 @@ void FlowSwitchCase::ChildFinished(FlowNode *n) {
 void FlowSwitchCase::RequestStop() {
     FLOW_LOG("RequestStop\n");
     FlowNode::RequestStop();
-    if (unk9a) {
+    if (mIsRunning) {
         TheFlowMgr->QueueCommand(this, kIgnore);
     }
 }
@@ -163,19 +163,19 @@ void FlowSwitchCase::Execute(QueueState qs) {
     if (qs == kQueue) {
         FlowWhile *propEventListener = static_cast<FlowWhile *>(mFlowParent);
         propEventListener->UnregisterSelf();
-        if (!unk9a)
+        if (!mIsRunning)
             return;
     } else if (qs != kIgnore) {
         return;
     }
-    unk9a = false;
+    mIsRunning = false;
     if (!FlowNode::IsRunning() && mFlowParent->HasRunningNode(this)) {
         mFlowParent->ChildFinished(this);
     }
 }
 
 bool FlowSwitchCase::IsRunning() {
-    if (unk9a)
+    if (mIsRunning)
         return true;
     else
         return FlowNode::IsRunning();

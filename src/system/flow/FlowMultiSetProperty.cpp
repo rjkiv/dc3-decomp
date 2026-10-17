@@ -8,7 +8,7 @@
 #include "obj/Object.h"
 
 FlowMultiSetProperty::FlowMultiSetProperty()
-    : unk5c(this, (EraseMode)1, kObjListNoNull) {}
+    : mTargetObjects(this, (EraseMode)1, kObjListNoNull) {}
 
 FlowMultiSetProperty::~FlowMultiSetProperty() {}
 
@@ -17,28 +17,28 @@ BEGIN_HANDLERS(FlowMultiSetProperty)
 END_HANDLERS
 
 BEGIN_PROPSYNCS(FlowMultiSetProperty)
-    SYNC_PROP_MODIFY(targets, unk5c, {
-        unk5c.sort(ObjNameSort());
-        unk5c.unique();
+    SYNC_PROP_MODIFY(targets, mTargetObjects, {
+        mTargetObjects.sort(ObjNameSort());
+        mTargetObjects.unique();
     })
-    SYNC_PROP(value, unk78)
+    SYNC_PROP(value, mValue)
     SYNC_SUPERCLASS(FlowNode)
 END_PROPSYNCS
 
 BEGIN_SAVES(FlowMultiSetProperty)
     SAVE_REVS(0, 0)
     SAVE_SUPERCLASS(FlowNode)
-    bs << unk5c;
-    bs << unk70 << unk78;
+    bs << mTargetObjects;
+    bs << mProperty << mValue;
 END_SAVES
 
 BEGIN_COPYS(FlowMultiSetProperty)
     COPY_SUPERCLASS(FlowNode)
     CREATE_COPY_AS(FlowMultiSetProperty, c)
     BEGIN_COPYING_MEMBERS_FROM(c)
-        COPY_MEMBER(unk5c)
-        COPY_MEMBER(unk70)
-        COPY_MEMBER(unk78)
+        COPY_MEMBER(mTargetObjects)
+        COPY_MEMBER(mProperty)
+        COPY_MEMBER(mValue)
     END_COPYING_MEMBERS
 END_COPYS
 
@@ -48,23 +48,23 @@ BEGIN_LOADS(FlowMultiSetProperty)
     LOAD_REVS(bs)
     ASSERT_REVS(0, 0)
     LOAD_SUPERCLASS(FlowNode)
-    unk5c.Load(d, true, static_cast<Flow *>(Dir())->LoadingDir());
-    d >> unk70 >> unk78;
+    mTargetObjects.Load(d, true, static_cast<Flow *>(Dir())->LoadingDir());
+    d >> mProperty >> mValue;
 END_LOADS
 
 bool FlowMultiSetProperty::Activate() {
     FLOW_LOG("Activate\n");
     mRequestingStop = false;
-    if (!unk5c.empty()) {
+    if (!mTargetObjects.empty()) {
         if (GetDrivenEntry("value")) {
-            Hmx::Object *o = unk5c[0];
-            unk78 = o->Property(unk70.Array())->Evaluate();
+            Hmx::Object *o = mTargetObjects[0];
+            mValue = o->Property(mProperty.Array())->Evaluate();
         }
     }
     FlowNode::PushDrivenProperties();
-    FOREACH (it, unk5c) {
+    FOREACH (it, mTargetObjects) {
         if (*it) {
-            (*it)->SetProperty(unk70.Array(), unk78);
+            (*it)->SetProperty(mProperty.Array(), mValue);
         }
     }
     return false;

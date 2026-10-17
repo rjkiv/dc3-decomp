@@ -29,8 +29,8 @@ protected:
     bool ActivateTransitionCases(DataNode &, DataNode &);
 
     /** "The left hand side value of the comparison" */
-    DataNode mValue; // 0x5c
-    DataNode unk64; // 0x64
+    DataNode mCurrentValue; // 0x5c
+    DataNode mLastValue; // 0x64
     /** "When true, the first case to be valid is the only one activated" */
     bool mFirstValidCaseOnly; // 0x6c
 };

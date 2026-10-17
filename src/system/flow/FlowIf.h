@@ -1,5 +1,6 @@
 #pragma once
 #include "flow/FlowNode.h"
+#include "flow/FlowSwitchCase.h"
 
 /** "a single case decision node" */
 class FlowIf : public FlowNode {
@@ -23,9 +24,9 @@ protected:
     FlowIf();
 
     /** "left hand value in comparison" */
-    DataNodeObjTrack mValue1; // 0x5c
+    DataNodeObjTrack mFirstValue; // 0x5c
     /** "right hand value in comparison" */
-    DataNodeObjTrack mValue2; // 0x78
+    DataNodeObjTrack mSecondValue; // 0x78
     /** "equality case to use for comparison" */
-    OperatorType mOperator; // 0x94
+    FlowSwitchCase::FlowSwitchCaseComparison mOperator; // 0x94
 };

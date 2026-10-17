@@ -32,16 +32,16 @@ public:
 protected:
     void SetProperty(DataNode &);
 
-    ObjOwnerPtr<Hmx::Object> unk2c; // 0x2c
-    DataNode unk40; // 0x40
-    DataNode unk48; // 0x48
-    DataNode unk50; // 0x50
-    float unk58;
-    float unk5c;
-    bool unk60;
-    ObjPtr<Hmx::Object> unk64; // 0x64
-    DataType unk78; // 0x78
-    EaseFunc *mEaseFunc; // 0x7c
+    ObjOwnerPtr<Hmx::Object> mTarget; // 0x2c
+    DataNode mProp; // 0x40
+    DataNode mTargetValue; // 0x48
+    DataNode mStartValue; // 0x50
+    float mTime; // 0x58
+    float mEasePower; // 0x5c
+    bool mUseColorInterp; // 0x60
+    ObjPtr<Hmx::Object> mEventReciever; // 0x64
+    DataType mTargetType; // 0x78
+    EaseFunc *pt2EaseFuncion; // 0x7c
 };
 
 class FlowSetProperty : public FlowNode, public PropertyEventListener {
@@ -76,17 +76,17 @@ protected:
     FlowSetProperty();
 
     u32 unk_0x74; // might be fake.
-    FlowPtr<Hmx::Object> mTarget; // 0x78
-    DataNode mPropPath; // 0x98
+    FlowPtr<Hmx::Object> mTargetObject; // 0x78
+    DataNode mProperty; // 0x98
     DataNodeObjTrack mValue; // 0xA0
-    bool mPersistent; // 0xBC
+    bool mRegisterPEPs; // 0xBC
     RndAnimatable::Rate mRate; // 0xC0
-    f32 mBlendTime; // 0xC4
-    f32 mChangePerUnit; // 0xC8
-    ObjOwnerPtr<Task> unk_0xCC;
+    float mBlendTime; // 0xC4
+    float mChangePerUnit; // 0xC8
+    ObjOwnerPtr<Task> mSpawnedTask; // 0xcc
     EaseType mEase; // 0xE0
-    f32 mEasePower; // 0xE4
-    bool unk_0xE8;
+    float mEasePower; // 0xE4
+    bool mUseColorInterp; // 0xe8
     StopMode mStopMode; // 0xEC
 
     void OnTargetChanged(void);

@@ -39,9 +39,9 @@ protected:
     bool mImmediateRelease; // 0x5c
     /** "How should we handle stop requests?" */
     StopMode mStopMode; // 0x60
-    bool unk64;
-    int unk68;
-    bool unk6c;
+    bool mPassedStopMarker; // 0x64
+    StopMode mQueuedStop; // 0x68
+    bool mStopOnLoop; // 0x6c
     /** "The sound file to play" */
     FlowPtr<Sound> mSound; // 0x70
     /** "Volume of the sound, in Db" */
@@ -50,10 +50,10 @@ protected:
     float mTranspose; // 0x94
     /** "Pan of the sound, -4 to +4" */
     float mPan; // 0x98
-    bool unk9c;
+    bool mPlaying; // 0x9c
     /** "If true, we stop all instances of this sound from playing" */
     bool mForceStop; // 0x9d
     /** "Do we pass on running intensity to volume?" */
     bool mUseIntensity; // 0x9e
-    float unka0;
+    float mIntensity; // 0xa0
 };

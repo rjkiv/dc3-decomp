@@ -2,21 +2,22 @@
 #include "flow/FlowNode.h"
 #include "obj/Object.h"
 
+enum FlowChoiceTypes {
+    /** "Picked in order" */
+    kChoiceOrdered = 0,
+    /** "Pick randomly (can repeat)" */
+    kChoiceRandom = 1,
+    /** "Pick randomly, but don't repeat" */
+    kChoiceRandomNoRepeat = 2,
+    /** "Only repeat when everything from the list has been chosen" */
+    kChoiceRandomJukeBox = 3,
+    /** "Use the index property to decide which one to pick" */
+    kChoiceUseIndex = 4
+};
+
 /** "Picks certain children and activates them" */
 class FlowPickOne : public FlowNode {
 public:
-    enum ChoiceType {
-        /** "Picked in order" */
-        kChoiceOrdered = 0,
-        /** "Pick randomly (can repeat)" */
-        kChoiceRandom = 1,
-        /** "Pick randomly, but don't repeat" */
-        kChoiceRandomNoRepeat = 2,
-        /** "Only repeat when everything from the list has been chosen" */
-        kChoiceRandomJukeBox = 3,
-        /** "Use the index property to decide which one to pick" */
-        kChoiceUseIndex = 4
-    };
     // Hmx::Object
     virtual ~FlowPickOne();
     OBJ_CLASSNAME(FlowPickOne)
@@ -36,13 +37,13 @@ protected:
     FlowPickOne();
 
     void OnChoiceTypeChanged();
-    bool ValidIndex() const { return mIndex >= 0 && mIndex < mChildNodes.size(); }
+    bool ValidIndex() const { return mChildIdx >= 0 && mChildIdx < mChildNodes.size(); }
 
-    ObjPtrVec<FlowNode> unk5c; // 0x5c
+    ObjPtrVec<FlowNode> mJukeList; // 0x5c
     /** "Style of choice made" */
-    ChoiceType mChoiceType; // 0x78
+    FlowChoiceTypes mChoiceType; // 0x78
     /** "The child to pick (0 is first child)" */
-    int mIndex; // 0x7c
+    int mChildIdx; // 0x7c
     /** "0 to 1 value representing the chance this node runs when activated" */
     float mChance; // 0x80
 };

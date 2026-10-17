@@ -18,7 +18,7 @@ public:
 protected:
     PropertyEventProvider();
 
-    std::map<Symbol, float> unk4; // 0x4
+    std::map<Symbol, float> mPerfReport; // 0x4
 };
 
 extern PropertyEventProvider *TheHamProvider;

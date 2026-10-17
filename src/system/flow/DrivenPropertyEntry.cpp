@@ -8,14 +8,14 @@
 
 DrivenPropertyEntry::DrivenPropertyEntry(Hmx::Object *owner) : mMathOps(owner) {
     static Symbol none("none");
-    unk0 = none;
+    mDrivenProperty = none;
 }
 
 DrivenPropertyEntry::~DrivenPropertyEntry() { mMathOps.clear(); }
 
 BEGIN_SAVES(DrivenPropertyEntry)
     SAVE_REVS(0, 0)
-    bs << unk0;
+    bs << mDrivenProperty;
     bs << mMathOps.size();
     FOREACH (it, mMathOps) {
         it->Save(bs);
@@ -45,7 +45,7 @@ void DrivenPropertyEntry::Load(BinStream &bs, FlowNode *n) {
             gAltRev
         );
     }
-    d >> unk0;
+    d >> mDrivenProperty;
     int numOps;
     d >> numOps;
     mMathOps.clear();

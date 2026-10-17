@@ -11,7 +11,7 @@
 
 FlowTrigger::FlowTrigger()
     : mEventProvider(this), mTriggerProperties(this), mStopProperties(this), mHardStop(0),
-      unkb1(0) {}
+      mEnabled(0) {}
 FlowTrigger::~FlowTrigger() {}
 
 BEGIN_HANDLERS(FlowTrigger)
@@ -115,7 +115,7 @@ BEGIN_LOADS(FlowTrigger)
                 defn.mProvider = mEventProvider;
                 DataArrayPtr ptr(new DataArray(1));
                 ptr->Node(0) = Symbol(cur.c_str());
-                defn.unk20 = ptr;
+                defn.mPropPath = ptr;
                 mTriggerProperties.push_back(defn);
                 mTriggerEvents.erase(it);
             }
@@ -168,10 +168,10 @@ flow_event:
 }
 
 DataNode FlowTrigger::PropTriggerDefn::GetPathDisplay(DataArray *a) {
-    if (mProvider && unk20.Type() == kDataArray) {
-        if (unk20.Array()->Size() != 0) {
+    if (mProvider && mPropPath.Type() == kDataArray) {
+        if (mPropPath.Array()->Size() != 0) {
             String str;
-            unk20.Print(str, true, 0);
+            mPropPath.Print(str, true, 0);
             return MakeString("%s->%s", mProvider->Name(), str.c_str());
         }
     }
@@ -221,7 +221,7 @@ DataArray *FlowTrigger::GetEventEditorDef(Symbol s) {
 }
 
 void FlowTrigger::RegisterEvents() {
-    if (unkb1) {
+    if (mEnabled) {
         FLOW_LOG("Registering Events\n");
         static Symbol activate("activate");
         static Symbol deactivate("deactivate");
@@ -243,22 +243,22 @@ void FlowTrigger::RegisterEvents() {
         }
         FOREACH (it, mTriggerProperties) {
             Hmx::Object *prov = it->mProvider;
-            if (prov && it->unk20.Type() == kDataArray) {
-                prov->AddPropertySink(this, it->unk20.Array(), activate);
+            if (prov && it->mPropPath.Type() == kDataArray) {
+                prov->AddPropertySink(this, it->mPropPath.Array(), activate);
             }
         }
         if (mHardStop) {
             FOREACH (it, mStopProperties) {
                 Hmx::Object *prov = it->mProvider;
-                if (prov && it->unk20.Type() == kDataArray) {
-                    prov->AddPropertySink(this, it->unk20.Array(), deactivate);
+                if (prov && it->mPropPath.Type() == kDataArray) {
+                    prov->AddPropertySink(this, it->mPropPath.Array(), deactivate);
                 }
             }
         } else {
             FOREACH (it, mStopProperties) {
                 Hmx::Object *prov = it->mProvider;
-                if (prov && it->unk20.Type() == kDataArray) {
-                    prov->AddPropertySink(this, it->unk20.Array(), request_stop);
+                if (prov && it->mPropPath.Type() == kDataArray) {
+                    prov->AddPropertySink(this, it->mPropPath.Array(), request_stop);
                 }
             }
         }
@@ -278,14 +278,14 @@ void FlowTrigger::UnregisterEvents() {
     }
     FOREACH (it, mTriggerProperties) {
         Hmx::Object *prov = it->mProvider;
-        if (prov && it->unk20.Type() == kDataArray) {
-            prov->RemovePropertySink(this, it->unk20.Array());
+        if (prov && it->mPropPath.Type() == kDataArray) {
+            prov->RemovePropertySink(this, it->mPropPath.Array());
         }
     }
     FOREACH (it, mStopProperties) {
         Hmx::Object *prov = it->mProvider;
-        if (prov && it->unk20.Type() == kDataArray) {
-            prov->RemovePropertySink(this, it->unk20.Array());
+        if (prov && it->mPropPath.Type() == kDataArray) {
+            prov->RemovePropertySink(this, it->mPropPath.Array());
         }
     }
 }

@@ -7,9 +7,9 @@
 #include "obj/Object.h"
 
 bool FlowPtrBase::RefreshParamObject() {
-    Flow *owner = mOwnerNode->GetOwnerFlow();
-    if (owner && mState != owner->GetNumParams()) {
-        mState = owner->GetNumParams();
+    Flow *owner = mOwner->GetOwnerFlow();
+    if (owner && mParamIdx != owner->GetParamIdx()) {
+        mParamIdx = owner->GetParamIdx();
         return true;
     } else
         return false;
@@ -23,28 +23,28 @@ int FlowPtrBase::GetInitialState(Hmx::Object *obj) {
 }
 
 Hmx::Object *FlowPtrBase::GetObject() {
-    if (!mObjName.Null()) {
-        ObjectDir *owner = mOwnerNode->GetOwnerFlow();
+    if (!mSymbol.Null()) {
+        ObjectDir *owner = mOwner->GetOwnerFlow();
         if (owner) {
-            const DataNode *prop = owner->Property(mObjName, false);
+            const DataNode *prop = owner->Property(mSymbol, false);
             if (prop && prop->Type() == kDataObject) {
                 Hmx::Object *obj = prop->GetObj();
                 if (obj)
                     return obj;
             }
         }
-        ObjectDir *owner2 = mOwnerNode->GetOwnerFlow();
+        ObjectDir *owner2 = mOwner->GetOwnerFlow();
         if (owner2) {
             ObjectDir *dir = owner2->Dir();
             if (dir) {
-                Hmx::Object *obj = dir->FindObject(mObjName.Str(), false, true);
+                Hmx::Object *obj = dir->FindObject(mSymbol.Str(), false, true);
                 if (obj) {
-                    mState = -2;
+                    mParamIdx = -2;
                     return obj;
                 }
             }
         }
-        mState = -1;
+        mParamIdx = -1;
     }
     return nullptr;
 }
@@ -58,34 +58,34 @@ ObjectDir *FlowPtrGetLoadingDir(ObjectDir *dir) {
 }
 
 Hmx::Object *FlowPtrBase::LoadObject(BinStream &bs) {
-    bs >> mObjName;
-    ObjectDir *loadingDir = mOwnerNode->Dir();
-    Hmx::Object *obj = loadingDir->FindObject(mObjName.Str(), false, true);
+    bs >> mSymbol;
+    ObjectDir *loadingDir = mOwner->Dir();
+    Hmx::Object *obj = loadingDir->FindObject(mSymbol.Str(), false, true);
     if (obj) {
-        mState = -2;
+        mParamIdx = -2;
         return obj;
     } else {
         loadingDir = FlowPtrGetLoadingDir(loadingDir);
         if (loadingDir) {
-            obj = loadingDir->FindObject(mObjName.Str(), false, true);
+            obj = loadingDir->FindObject(mSymbol.Str(), false, true);
             if (obj) {
-                mState = -2;
+                mParamIdx = -2;
                 return obj;
             } else {
                 loadingDir = FlowPtrGetLoadingDir(loadingDir);
                 if (loadingDir) {
-                    obj = loadingDir->FindObject(mObjName.Str(), false, true);
+                    obj = loadingDir->FindObject(mSymbol.Str(), false, true);
                     if (obj) {
-                        mState = -2;
+                        mParamIdx = -2;
                         return obj;
                     } else {
-                        obj = ObjectDir::Main()->FindObject(mObjName.Str(), false, true);
+                        obj = ObjectDir::Main()->FindObject(mSymbol.Str(), false, true);
                         if (obj) {
-                            mState = -2;
+                            mParamIdx = -2;
                             return obj;
                         } else {
-                            if (!mObjName.Null()) {
-                                mState = -1;
+                            if (!mSymbol.Null()) {
+                                mParamIdx = -1;
                                 return obj;
                             } else
                                 return nullptr;

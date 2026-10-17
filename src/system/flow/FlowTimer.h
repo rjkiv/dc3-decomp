@@ -34,13 +34,13 @@ public:
     OBJ_MEM_OVERLOAD(0x17)
     NEW_OBJ(FlowTimer)
 
+protected:
+    FlowTimer();
+
     StopMode mStopMode; // 0x5c
     ObjPtr<Task> mTask; // 0x60
     RndAnimatable::Rate mRate; // 0x74
     float mTotalTime; // 0x78
-
-protected:
-    FlowTimer();
 };
 
 class EventTask : public Task {
@@ -54,7 +54,7 @@ public:
 
 protected:
     ObjPtr<FlowTimer> mOwner; // 0x2c
-    ObjPtrVec<FlowNode> *unk40; // 0x40
+    ObjPtrVec<FlowNode> *mCases; // 0x40
     ObjPtrVec<FlowNode>::iterator mItr; // 0x44
-    float unk48; // 0x48
+    float mTime; // 0x48
 };

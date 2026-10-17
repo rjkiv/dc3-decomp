@@ -6,10 +6,10 @@
 class PropertyEventListener {
 public:
     struct AutoPropEntry {
-        AutoPropEntry(Hmx::Object *obj) : unk0(0), unk4(obj) {}
+        AutoPropEntry(Hmx::Object *obj) : mPropPath(0), mProvider(obj) {}
 
-        DataArray *unk0;
-        ObjPtr<Hmx::Object> unk4;
+        DataArray *mPropPath; // 0x0
+        ObjPtr<Hmx::Object> mProvider; // 0x4
     };
     PropertyEventListener(Hmx::Object *);
     virtual ~PropertyEventListener() {}
@@ -21,5 +21,5 @@ protected:
     void UnregisterEvents(FlowNode *);
 
     ObjVector<AutoPropEntry> mAutoPropEntries; // 0x4
-    bool mEventsRegistered; // 0x14
+    bool mRegistered; // 0x14
 };

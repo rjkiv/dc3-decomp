@@ -9,7 +9,7 @@
 #include "obj/Object.h"
 #include "os/Debug.h"
 
-FlowWhile::FlowWhile() : PropertyEventListener(this), mEntryCount(0) {}
+FlowWhile::FlowWhile() : PropertyEventListener(this), mReentranceCount(0) {}
 
 FlowWhile::~FlowWhile() {}
 
@@ -59,23 +59,23 @@ bool FlowWhile::Activate() {
     } else if (mDrivenPropEntries.empty())
         return false;
     else {
-        if (!mEventsRegistered) {
+        if (!mRegistered) {
             RegisterEvents(this);
         }
         PushDrivenProperties();
-        if (mValue.NotNull()) {
-            if (unk64.Type() != mValue.Type()) {
-                unk64 = mValue;
+        if (mCurrentValue.NotNull()) {
+            if (mLastValue.Type() != mCurrentValue.Type()) {
+                mLastValue = mCurrentValue;
             }
-        } else if (mValue.Type() == kDataObject) {
-            unk64 = NULL_OBJ;
+        } else if (mCurrentValue.Type() == kDataObject) {
+            mLastValue = NULL_OBJ;
         } else {
-            unk64 = 0;
+            mLastValue = 0;
         }
-        DataNode n(unk64);
-        unk64 = mValue;
-        ActivateValueCases(mValue, n);
-        if (mEventsRegistered) {
+        DataNode n(mLastValue);
+        mLastValue = mCurrentValue;
+        ActivateValueCases(mCurrentValue, n);
+        if (mRegistered) {
             return true;
         } else {
             return FlowNode::IsRunning();
@@ -86,34 +86,34 @@ bool FlowWhile::Activate() {
 void FlowWhile::Deactivate(bool b) {
     if (!b)
         PropertyEventListener::UnregisterEvents(this);
-    mEventsRegistered = false;
+    mRegistered = false;
     FlowNode::Deactivate(b);
 }
 
 void FlowWhile::ChildFinished(FlowNode *n) {
     FLOW_LOG("Child Finished of class:%s\n", n->ClassName());
-    if (!mEventsRegistered) {
+    if (!mRegistered) {
         FlowNode::ChildFinished(n);
     } else {
         PushDrivenProperties();
         mRunningNodes.remove(n);
         FlowSwitchCase *fsc = static_cast<FlowSwitchCase *>(n);
-        if (fsc && fsc->Op() == kTransition) {
-            if (mValue != unk64) {
-                DataNode dupe(unk64);
-                unk64 = mValue;
-                if (!ActivateTransitionCases(mValue, dupe)) {
-                    ActivateValueCases(mValue, dupe);
+        if (fsc && fsc->GetOperator() == kTransition) {
+            if (mCurrentValue != mLastValue) {
+                DataNode dupe(mLastValue);
+                mLastValue = mCurrentValue;
+                if (!ActivateTransitionCases(mCurrentValue, dupe)) {
+                    ActivateValueCases(mCurrentValue, dupe);
                 }
             } else {
-                ActivateValueCases(mValue, mValue);
+                ActivateValueCases(mCurrentValue, mCurrentValue);
             }
         } else {
-            if (mValue != unk64) {
-                DataNode dupe(unk64);
-                unk64 = mValue;
-                if (!ActivateTransitionCases(mValue, dupe)) {
-                    ActivateValueCases(mValue, dupe);
+            if (mCurrentValue != mLastValue) {
+                DataNode dupe(mLastValue);
+                mLastValue = mCurrentValue;
+                if (!ActivateTransitionCases(mCurrentValue, dupe)) {
+                    ActivateValueCases(mCurrentValue, dupe);
                 }
             }
         }
@@ -122,7 +122,7 @@ void FlowWhile::ChildFinished(FlowNode *n) {
 
 void FlowWhile::RequestStop() {
     UnregisterEvents(this);
-    mEventsRegistered = false;
+    mRegistered = false;
     if (!FlowNode::IsRunning()) {
         mFlowParent->ChildFinished(this);
     } else {
@@ -132,12 +132,12 @@ void FlowWhile::RequestStop() {
 
 void FlowWhile::RequestStopCancel() {
     FlowNode::RequestStopCancel();
-    if (!mEventsRegistered)
+    if (!mRegistered)
         PropertyEventListener::RegisterEvents(this);
 }
 
 bool FlowWhile::IsRunning() {
-    return (mEventsRegistered || FlowNode::IsRunning()) ? true : false;
+    return (mRegistered || FlowNode::IsRunning()) ? true : false;
 }
 
 void FlowWhile::MiloPreRun() {
@@ -162,32 +162,32 @@ void FlowWhile::ReActivate() {
     Timer timer;
     timer.Restart();
     PushDrivenProperties();
-    mEntryCount++;
-    if (mEntryCount > 8) {
+    mReentranceCount++;
+    if (mReentranceCount > 8) {
         MILO_NOTIFY(
             "While reentrance count > 8 in flow %s, did you mean to use a switch? Aborting while node behavior",
             PathName(Dir())
         );
-        mEntryCount--;
+        mReentranceCount--;
         return;
     }
     if (mRunningNodes.empty()) {
-        if (unk64.Equal(mValue, nullptr, true)) {
-            mEntryCount--;
+        if (mLastValue.Equal(mCurrentValue, nullptr, true)) {
+            mReentranceCount--;
             return;
         }
-        if (!ActivateTransitionCases(mValue, unk64)) {
-            ActivateValueCases(mValue, unk64);
+        if (!ActivateTransitionCases(mCurrentValue, mLastValue)) {
+            ActivateValueCases(mCurrentValue, mLastValue);
         }
-        unk64 = mValue;
+        mLastValue = mCurrentValue;
     } else if (mFirstValidCaseOnly) {
         FlowSwitchCase *first = static_cast<FlowSwitchCase *>(mRunningNodes.front());
-        if (first->Op() != kTransition) {
+        if (first->GetOperator() != kTransition) {
             FlowSwitchCase *cur = nullptr;
             FOREACH (it, mChildNodes) {
                 FlowSwitchCase *switchCase =
                     static_cast<FlowSwitchCase *>((FlowNode *)*it);
-                if (switchCase->IsValidCase(this, &mValue, &mValue, true)) {
+                if (switchCase->IsValidCase(this, &mCurrentValue, &mCurrentValue, true)) {
                     cur = switchCase;
                     break;
                 }
@@ -199,7 +199,7 @@ void FlowWhile::ReActivate() {
     } else {
         FOREACH (it, mChildNodes) {
             FlowSwitchCase *cur = static_cast<FlowSwitchCase *>((FlowNode *)*it);
-            if (!cur->IsValidCase(this, &mValue, &unk64, true)) {
+            if (!cur->IsValidCase(this, &mCurrentValue, &mLastValue, true)) {
                 if (cur->IsRunning()) {
                     cur->RequestStop();
                 }
@@ -215,7 +215,7 @@ void FlowWhile::ReActivate() {
             }
         }
     }
-    mEntryCount--;
+    mReentranceCount--;
     timer.Stop();
     FlowNode *n = this;
     Flow *topFlow;

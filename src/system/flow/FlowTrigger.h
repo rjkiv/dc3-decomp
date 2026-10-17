@@ -8,13 +8,13 @@
 class FlowTrigger : public FlowQueueable {
 public:
     struct PropTriggerDefn {
-        PropTriggerDefn(Hmx::Object *owner) : mProvider(owner) { unk20 = 0; }
+        PropTriggerDefn(Hmx::Object *owner) : mProvider(owner) { mPropPath = 0; }
 
         DataNode GetPathDisplay(DataArray *);
 
         /** "The object providing the properties" */
         FlowPtr<Hmx::Object> mProvider; // 0x0
-        DataNode unk20; // 0x20 - property?
+        DataNode mPropPath; // 0x20 - property?
     };
     // Hmx::Object
     virtual ~FlowTrigger();
@@ -50,15 +50,15 @@ protected:
     ObjList<PropTriggerDefn> mStopProperties; // 0xa4
     /** "force things to stop immediately?" */
     bool mHardStop; // 0xb0
-    bool unkb1; // 0xb1
+    bool mEnabled; // 0xb1
 };
 
 inline BinStream &operator<<(BinStream &bs, const FlowTrigger::PropTriggerDefn &defn) {
-    bs << defn.mProvider << defn.unk20;
+    bs << defn.mProvider << defn.mPropPath;
     return bs;
 }
 
 inline BinStream &operator>>(BinStream &bs, FlowTrigger::PropTriggerDefn &defn) {
-    bs >> defn.mProvider >> defn.unk20;
+    bs >> defn.mProvider >> defn.mPropPath;
     return bs;
 }
