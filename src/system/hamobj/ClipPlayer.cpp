@@ -216,12 +216,9 @@ void ClipPlayer::PlayNormal(
     newArr->blendStart = blendStart - mOffset;
     if (!mClipKeys) {
         if (TheLoadMgr.EditMode()) {
-            {
-                static DebugNotifyOncer _dw;
-                _dw << MakeStringNotInlined(
-                    "No 'clips' keyframes in your song.anim.  Please don't save this song!"
-                );
-            }
+            MILO_NOTIFY_ONCE(
+                "No 'clips' keyframes in your song.anim.  Please don't save this song!"
+            );
         }
     } else {
         static Symbol merge_moves("merge_moves");

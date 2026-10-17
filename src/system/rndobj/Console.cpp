@@ -325,6 +325,45 @@ void RndConsole::InsertBreak(DataArray *arr, int i) {
     mBreakpoints.back().index = i;
 }
 
+void RndConsole::Break(DataArray *arr) {
+    if (mDebugging) {
+        MILO_FAIL("Can't break while debugging, did you mean set_break?");
+    }
+    if (arr->Node(0).FuncValue() != DataNop) {
+        bool drawing = TheRnd.Drawing();
+        bool showing = mShowing;
+        Hmx::Color oldClear = TheRnd.GetClearColor();
+        if (drawing) {
+            TheRnd.EndDrawing();
+        }
+        if (!showing) {
+            SetShowing(true);
+        }
+        TheRnd.SetClearColor(Hmx::Color(0, 0, 0));
+        mDebugging = arr;
+        mLevel = 0;
+        gPreExecuteFunc = nullptr;
+        mInput->Clear();
+        if (arr->Node(0).FuncValue() == DataBreak) {
+            *mInput << "Break at ";
+        } else
+            *mInput << "Step to ";
+        *mInput << arr->File() << ":" << arr->Line() << "\n";
+        List();
+        while (mDebugging) {
+            KeyboardPoll();
+            TheRnd.BeginDrawing();
+            TheRnd.EndDrawing();
+        }
+        mOutput->Clear();
+        TheRnd.SetClearColor(oldClear);
+        if (!showing)
+            SetShowing(false);
+        if (drawing)
+            TheRnd.BeginDrawing();
+    }
+}
+
 void RndConsole::SetBreak(DataArray *arr) {
     if (arr->Size() > 1) {
         DataArray *arr9 = nullptr;
@@ -361,46 +400,6 @@ void RndConsole::SetBreak(DataArray *arr) {
         }
     }
     MILO_FAIL("Can't insert break");
-}
-
-void RndConsole::Break(DataArray *arr) {
-    if (mDebugging)
-        TheDebugFailer << MakeStringNotInlined(
-            "Can't break while debugging, did you mean set_break?"
-        );
-    if (arr->Node(0).FuncValue() != DataNop) {
-        bool drawing = TheRnd.Drawing();
-        bool showing = mShowing;
-        Hmx::Color oldClear = TheRnd.GetClearColor();
-        if (drawing) {
-            TheRnd.EndDrawing();
-        }
-        if (!showing) {
-            SetShowing(true);
-        }
-        TheRnd.SetClearColor(Hmx::Color(0, 0, 0));
-        mDebugging = arr;
-        mLevel = 0;
-        gPreExecuteFunc = nullptr;
-        mInput->Clear();
-        if (arr->Node(0).FuncValue() == DataBreak) {
-            *mInput << "Break at ";
-        } else
-            *mInput << "Step to ";
-        *mInput << arr->File() << ":" << arr->Line() << "\n";
-        List();
-        while (mDebugging) {
-            KeyboardPoll();
-            TheRnd.BeginDrawing();
-            TheRnd.EndDrawing();
-        }
-        mOutput->Clear();
-        TheRnd.SetClearColor(oldClear);
-        if (!showing)
-            SetShowing(false);
-        if (drawing)
-            TheRnd.BeginDrawing();
-    }
 }
 
 void RndConsole::ExecuteLine() {

@@ -47,9 +47,6 @@ void InitMakeString();
 bool MakeStringInitted();
 void TerminateMakeString();
 
-// hack lmfao
-const char *MakeStringNotInlined(const char *c);
-
 inline const char *MakeString(const char *c) {
     FormatString fs(c);
     return fs.Str();

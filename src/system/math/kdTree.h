@@ -202,7 +202,7 @@ public:
                 } else if (splitType == kSplitPlane_SAH) {
                     find = FindSplit_SAH(inDimensions, inTriList);
                 } else {
-                    TheDebugFailer << MakeStringNotInlined("Invalid split plane type");
+                    MILO_FAIL("Invalid split plane type");
                 }
                 if (find && GetSplitValue() >= inDimensions.mMin[GetSplitAxis()]
                     && GetSplitValue() <= inDimensions.mMax[GetSplitAxis()]) {
