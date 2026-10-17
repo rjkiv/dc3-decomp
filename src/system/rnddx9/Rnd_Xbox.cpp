@@ -62,26 +62,27 @@ void CreateBackBuffers(
 );
 
 DxRnd::DxRnd()
-    : unk220(0), mD3DDevice(nullptr), unk22c(0), mDeviceType(D3DDEVTYPE_HAL),
-      unk_0x301(1), unk360(0), mAsyncSwapCurrent(0), mPerfCounterStart(0),
-      mPerfCounterEnd(0), mGPUTimer(0), unk370(0), unk374(0), mCreatedPerfCounters(0),
-      unk3a4(0), unk3f4(0), unk3f7(0), unk404(0), unk408(0) {
-    unk220 = 1;
-    mFrontBuffers[0] = 0;
-    mFrontBuffers[1] = 0;
-    mBackBuffer = 0;
-    unk388 = 0;
-    unk384 = 0;
-    unk38c = 0;
-    unk37c = 0;
-    unk35c = 0;
+    : mD3D(0), mD3DDevice(nullptr), mWnd(0), mDevType(D3DDEVTYPE_HAL), mInverseZ(1),
+      mAsyncSwapDesired(0), mAsyncSwapCurrent(0), mPerfCounterStart(0),
+      mPerfCounterEnd(0), mGPUTimer(0), mMsGPUBusy(0), mMsGPUCycles(0),
+      mCreatedPerfCounters(0), mDrawingUI(0), mSuspended(0), mGPUCaptureInProgress(0),
+      mPreInitialized(0), mNumClipPlanes(0) {
+    mD3D = (Direct3D *)1;
+    mFrontBuffer[0] = 0;
+    mFrontBuffer[1] = 0;
+    mBackBuffer_World = 0;
+    mDepthBuffer_World = 0;
+    mBackBuffer_UI = 0;
+    mDepthBuffer_UI = 0;
+    mBackBufferFlags = 0;
+    mCurrFront = 0;
     mNumTiles = 0;
-    unk34d = true;
+    mHdrEnabled = true;
 }
 
 DxRnd::~DxRnd() {
-    if ((unsigned int)unk220) {
-        unk220 = 0;
+    if ((unsigned int)mD3D) {
+        mD3D = 0;
     }
 }
 
@@ -93,8 +94,8 @@ void CDError() {
 void DxModal(Debug::ModalType &t, FixedString &s, bool b) { TheDxRnd.Modal(t, s, b); }
 
 void DxRnd::PreInit(HWND__ *) {
-    if (!unk404) {
-        unk404 = true;
+    if (!mPreInitialized) {
+        mPreInitialized = true;
         DataArray *cfg = SystemConfig("rnd");
         mDefaultVSRegAlloc = 32;
         mDefaultPSRegAlloc = 96;
@@ -107,10 +108,10 @@ void DxRnd::PreInit(HWND__ *) {
         MILO_ASSERT(mDefaultVSRegAlloc >= 16, 0x1F1);
         MILO_ASSERT(mDefaultPSRegAlloc >= 16, 0x1F2);
         SetDiskErrorCallback(CDError);
-        unk3f5 = OptionBool("print_glitches", false);
-        unk3f6 = false;
+        mPrintGlitches = OptionBool("print_glitches", false);
+        mCaptureNextGpuFrame = false;
         mD3DDevice = nullptr;
-        unk22c = 0;
+        mWnd = 0;
         NgRnd::PreInit();
         InitBuffers();
         TheShaderMgr.PreInit();
@@ -143,7 +144,7 @@ void DxRnd::Init(HWND__ *h) {
     mQueryManager = new DxRndOcclusionQueryMgr();
     NgRnd::Init();
     DxTex::Init();
-    unk360 = false;
+    mAsyncSwapDesired = false;
 }
 
 void DxRnd::Terminate() {
@@ -152,9 +153,9 @@ void DxRnd::Terminate() {
     DxMultiMesh::Shutdown();
     NgPostProc::Terminate();
     NgRnd::Terminate();
-    RELEASE(mPreProcessTex);
-    RELEASE(mPostProcessTex);
-    RELEASE(mPreDepthTex);
+    RELEASE(mPreProcessTexture);
+    RELEASE(mPostProcessTexture);
+    RELEASE(mPreDepthTexture);
     TerminateBuffers();
 }
 
@@ -169,17 +170,17 @@ void DxRnd::BeginDrawing() {
     }
     {
         static Timer *t = AutoTimer::GetTimer("cpu");
-        if (unk3f4) {
+        if (mSuspended) {
             Resume();
-        } else if (unk3f5) {
+        } else if (mPrintGlitches) {
             if (t->Ms() > 66.0f) {
                 MILO_LOG("GLITCH: %i ms\n", (int)t->Ms());
             }
         }
     }
-    if (unk3f6) {
+    if (mCaptureNextGpuFrame) {
         PIXCaptureGpuFrame("capture.pix2");
-        unk3f6 = false;
+        mCaptureNextGpuFrame = false;
     }
     Present();
     if (MainThread()) {
@@ -193,8 +194,8 @@ void DxRnd::BeginDrawing() {
     DrawPreClear();
     Hmx::Color c = mClearColor;
     mD3DDevice->Clear(0, nullptr, 0x31, MakeColor(c), 0, 0);
-    if (mRegAlloc != 1) {
-        mRegAlloc = (RegisterAlloc)1;
+    if (mRegisterAlloc != 1) {
+        mRegisterAlloc = kRegDefault;
         mD3DDevice->SetShaderGPRAllocation(0, mDefaultVSRegAlloc, mDefaultPSRegAlloc);
     }
     ResetStats();
@@ -228,12 +229,12 @@ void DxRnd::EndDrawing() {
         DrawSafeArea(0.95f, false, green);
     }
     Rnd::EndDrawing();
-    unk3a4 = false;
-    EndTiling(mFrontBuffers[unk35c - 1 & 1], 0);
-    Device()->SetRenderTarget(0, mBackBuffer);
-    Device()->SetDepthStencilSurface(unk388);
-    if (mRegAlloc != 0) {
-        mRegAlloc = (RegisterAlloc)0;
+    mDrawingUI = false;
+    EndTiling(mFrontBuffer[mCurrFront - 1 & 1], 0);
+    Device()->SetRenderTarget(0, mBackBuffer_World);
+    Device()->SetDepthStencilSurface(mDepthBuffer_World);
+    if (mRegisterAlloc != 0) {
+        mRegisterAlloc = kRegInit;
         mD3DDevice->SetShaderGPRAllocation(0, 0, 0);
     }
     static Timer *drawTimer = AutoTimer::GetTimer("draw");
@@ -301,47 +302,47 @@ void DxRnd::DoWorldEnd() {
 void DxRnd::DoPostProcess() {
     SetFrameBuffersAsSource();
     if (mProcCmds & kProcessPost) {
-        if (mRegAlloc != 2) {
-            mRegAlloc = (RegisterAlloc)2;
+        if (mRegisterAlloc != 2) {
+            mRegisterAlloc = kRegPostProc;
             mD3DDevice->SetShaderGPRAllocation(0, 0x10, 0x70);
         }
         NgRnd::DoPostProcess();
         FinishPostProcess();
     }
-    mD3DDevice->SetRenderTarget(0, unk384);
-    mD3DDevice->SetDepthStencilSurface(unk38c);
+    mD3DDevice->SetRenderTarget(0, mBackBuffer_UI);
+    mD3DDevice->SetDepthStencilSurface(mDepthBuffer_UI);
     BeginTiling(Hmx::Color(0, 0, 0.3), 0, 0);
     CopyPostProcess();
-    if (mRegAlloc != 1) {
-        mRegAlloc = (RegisterAlloc)1;
+    if (mRegisterAlloc != 1) {
+        mRegisterAlloc = kRegDefault;
         mD3DDevice->SetShaderGPRAllocation(0, mDefaultVSRegAlloc, mDefaultPSRegAlloc);
     }
-    unk3a4 = true;
+    mDrawingUI = true;
 }
 
 void DxRnd::Suspend() {
     if (mD3DDevice && !mAsyncSwapCurrent) {
         MILO_ASSERT(!mDrawing, 0x695);
-        if (!unk3f4) {
+        if (!mSuspended) {
             static Timer *cpuTimer = AutoTimer::GetTimer("cpu");
-            if (unk3f5 && cpuTimer->SplitMs() > 30.0f) {
+            if (mPrintGlitches && cpuTimer->SplitMs() > 30.0f) {
                 MILO_LOG("GLITCH (pre-suspend): %i ms\n", (int)cpuTimer->SplitMs());
             }
-            unk360 = false;
+            mAsyncSwapDesired = false;
             mD3DDevice->Suspend();
         }
-        unk3f4 = true;
+        mSuspended = true;
     }
 }
 
 void DxRnd::Resume() {
     if (Device()) {
-        if (unk3f4) {
+        if (mSuspended) {
             MILO_ASSERT(mAsyncSwapCurrent == false, 0x6AE);
             mD3DDevice->Resume();
-            unk360 = false;
+            mAsyncSwapDesired = false;
         }
-        unk3f4 = false;
+        mSuspended = false;
     }
 }
 
@@ -364,17 +365,17 @@ void DxRnd::UpdateScalerParams() {
 }
 
 D3DSurface *DxRnd::BackBuffer() const {
-    mBackBuffer->AddRef();
-    return mBackBuffer;
+    mBackBuffer_World->AddRef();
+    return mBackBuffer_World;
 }
 
-D3DTexture *DxRnd::FrontBuffer() { return mFrontBuffers[unk35c - 1 & 1]; }
-D3DTexture *DxRnd::NotFrontBuffer() { return mFrontBuffers[unk35c]; }
+D3DTexture *DxRnd::FrontBuffer() { return mFrontBuffer[mCurrFront - 1 & 1]; }
+D3DTexture *DxRnd::NotFrontBuffer() { return mFrontBuffer[mCurrFront]; }
 
 const char *DxRnd::Error(HRESULT code) { return MakeString("code %d", code); }
 
 void DxRnd::Present() {
-    unk35c = (unk35c - 1) & 1;
+    mCurrFront = (mCurrFront - 1) & 1;
     if (mAsyncSwapCurrent) {
         static D3DSWAP_STATUS sSwapStatus;
         while (mD3DDevice->QuerySwapStatus(&sSwapStatus),
@@ -386,12 +387,12 @@ void DxRnd::Present() {
         mD3DDevice->SynchronizeToPresentationInterval();
     }
     mD3DDevice->Swap(NotFrontBuffer(), nullptr);
-    if (mAsyncSwapCurrent != unk360) {
-        mAsyncSwapCurrent = unk360;
+    if (mAsyncSwapCurrent != mAsyncSwapDesired) {
+        mAsyncSwapCurrent = mAsyncSwapDesired;
         mD3DDevice->BlockUntilIdle();
         mD3DDevice->SetSwapMode(mAsyncSwapCurrent);
     }
-    unk3f7 = (PIXGetCaptureState() & 2) > 0;
+    mGPUCaptureInProgress = (PIXGetCaptureState() & 2) > 0;
 }
 
 void DxRnd::TerminateBuffers() {
@@ -445,8 +446,8 @@ void DxRnd::BeginTiling(const Hmx::Color &c, float f, unsigned int ui) {
         v.v[1] = c.green;
         v.v[2] = c.blue;
         v.v[3] = c.alpha;
-        mD3DDevice->BeginTiling(0, mNumTiles, &unk3b4, &v, f, ui);
-        unk34c = true;
+        mD3DDevice->BeginTiling(0, mNumTiles, mTileRects, &v, f, ui);
+        mTiling = true;
     }
 }
 
@@ -474,7 +475,7 @@ void DxRnd::PerfCountersStart() {
     MILO_ASSERT(mGPUTimer != NULL, 0x24B);
     MILO_ASSERT(mPerfCounterStart != NULL, 0x24C);
     MILO_ASSERT(mPerfCounterEnd != NULL, 0x24D);
-    mGPUTimer->SetLastMs(unk370 * 1.075f);
+    mGPUTimer->SetLastMs(mMsGPUBusy * 1.075f);
     mD3DDevice->QueryPerfCounters(mPerfCounterStart, 1);
 }
 
@@ -497,8 +498,8 @@ void DxRnd::PerfCountersStop() {
         endLargeIntegers[i].QuadPart =
             endLargeIntegers[i].QuadPart - startLargeIntegers[i].QuadPart;
     }
-    unk370 = endLargeIntegers[1].QuadPart * 2e-06f;
-    unk374 = endLargeIntegers[2].QuadPart * 2e-06f;
+    mMsGPUBusy = endLargeIntegers[1].QuadPart * 2e-06f;
+    mMsGPUCycles = endLargeIntegers[2].QuadPart * 2e-06f;
 }
 
 void DxRnd::EndTiling(D3DBaseTexture *tex, int i2) {
@@ -506,11 +507,11 @@ void DxRnd::EndTiling(D3DBaseTexture *tex, int i2) {
     if (tex && i2) {
         l2 = (i2 & 0x3F) << 0x1A;
     }
-    if (unk34c) {
+    if (mTiling) {
         MILO_ASSERT(mNumTiles > 0, 0x480);
         HRESULT hr = mD3DDevice->EndTiling(l2, nullptr, tex, nullptr, 0, 0, nullptr);
         DX_ASSERT(hr, 0x481);
-        unk34c = false;
+        mTiling = false;
     } else {
         MILO_ASSERT(mNumTiles == 0, 0x486);
         mD3DDevice->Resolve(l2, nullptr, tex, nullptr, 0, 0, nullptr, 0, 0, nullptr);
@@ -520,7 +521,7 @@ void DxRnd::EndTiling(D3DBaseTexture *tex, int i2) {
 void DxRnd::SavePreBuffer() {
     Hmx::Color clearColor = mClearColor;
     mD3DDevice->Resolve(
-        0x14, nullptr, mFrontBufferDepth, nullptr, 0, 0, nullptr, 1, 0, nullptr
+        0x14, nullptr, mDepthFrontBuffer, nullptr, 0, 0, nullptr, 1, 0, nullptr
     );
     mD3DDevice->Resolve(
         0x300,
@@ -544,8 +545,8 @@ void DxRnd::SavePostBuffer() {
 
 void DxRnd::SetShaderRegisterAlloc(RegisterAlloc s) {
     MILO_ASSERT(s >=0 && s < kNumRegAlloc, 0x6BA);
-    if (mRegAlloc != s) {
-        mRegAlloc = s;
+    if (mRegisterAlloc != s) {
+        mRegisterAlloc = s;
         switch (s) {
         case 0:
             mD3DDevice->SetShaderGPRAllocation(0, 0, 0);
@@ -567,7 +568,7 @@ void DxRnd::SetShaderRegisterAlloc(RegisterAlloc s) {
 }
 
 RndTex *DxRnd::GetCurrentFrameTex(bool b1) {
-    if (!unk3a4) {
+    if (!mDrawingUI) {
         if (b1) {
             mD3DDevice->Resolve(
                 0, nullptr, mPreProcessBuffer, nullptr, 0, 0, nullptr, 0, 0, nullptr
@@ -579,7 +580,7 @@ RndTex *DxRnd::GetCurrentFrameTex(bool b1) {
 }
 
 bool DxRnd::CanModal(Debug::ModalType t) {
-    if (unk34c) {
+    if (mTiling) {
         if (t == Debug::kModalFail) {
             EndTiling(FrontBuffer(), 0);
         } else {
@@ -590,13 +591,13 @@ bool DxRnd::CanModal(Debug::ModalType t) {
 }
 
 void DxRnd::ModalDraw(Debug::ModalType t, const char *cc) {
-    bool d3f4 = unk3f4;
+    bool d3f4 = mSuspended;
     Resume();
     D3DSurface *renderTarget;
     mD3DDevice->GetRenderTarget(0, &renderTarget);
     D3DSurface *stencilSurface;
     mD3DDevice->GetDepthStencilSurface(&stencilSurface);
-    mD3DDevice->SetRenderTarget(0, mBackBuffer);
+    mD3DDevice->SetRenderTarget(0, mBackBuffer_World);
     mD3DDevice->SetDepthStencilSurface(nullptr);
     Hmx::Color color(0, 0.1, 0.5, 0);
     if (t == Debug::kModalFail) {
@@ -608,8 +609,8 @@ void DxRnd::ModalDraw(Debug::ModalType t, const char *cc) {
     Rnd::DrawStringScreen(cc, Vector2(0.025f, 0.025f), Hmx::Color(1, 1, 1, 1), true);
     RndOverlay::DrawAll(true);
     mD3DDevice->Resolve(0, nullptr, FrontBuffer(), nullptr, 0, 0, nullptr, 0, 0, nullptr);
-    if (mRegAlloc != 0) {
-        mRegAlloc = (RegisterAlloc)0;
+    if (mRegisterAlloc != 0) {
+        mRegisterAlloc = kRegInit;
         mD3DDevice->SetShaderGPRAllocation(0, 0, 0);
     }
     Present();
@@ -632,11 +633,11 @@ void DxRnd::InitBuffers() {
         mVideoMode.fIsHiDef = true;
         mVideoMode.fIsWideScreen = true;
     } else if (SystemConfig(rnd)->FindInt(low_res) != 0) {
-        unk37c |= 1;
+        mBackBufferFlags |= 1;
     }
-    mWideScreenDisplay = unk37c;
+    mWideScreenDisplay = mBackBufferFlags;
     mAspect = mWideScreenDisplay ? kWidescreen : kRegular;
-    mScreenHeight = unk37c & 1 ? 540 : 720;
+    mScreenHeight = mBackBufferFlags & 1 ? 540 : 720;
     int i11, i10;
     if (mVideoMode.fIsHiDef || mWideScreenDisplay) {
         i11 = (mScreenHeight << 4) / 9;
@@ -646,10 +647,10 @@ void DxRnd::InitBuffers() {
         i10 = (mScreenHeight << 2) / 3;
     }
     mScreenWidth = i11;
-    if (!(unk37c & 1)) {
+    if (!(mBackBufferFlags & 1)) {
         mNumTiles = 2;
         // stuff
-        if (!(unk37c & 2)) {
+        if (!(mBackBufferFlags & 2)) {
             // things
         }
     }
@@ -677,26 +678,25 @@ void DxRnd::InitBuffers() {
     //   *(this + 0x2ac) = 0;
     //   (**(*this + 0x154))(this);
     UpdateScalerParams();
-    unk228 = GetCurrentThreadId();
+    mDeviceOwningThread = GetCurrentThreadId();
     {
         BeginMemTrackObjectName("D3D->CreateDevice");
-        HRESULT hr = Direct3D::CreateDevice(
-            0, mDeviceType, &unk22c, 1, &mPresentParams, &mD3DDevice
-        );
+        HRESULT hr =
+            Direct3D::CreateDevice(0, mDevType, &mWnd, 1, &mPresentParams, &mD3DDevice);
         DX_ASSERT(hr, 0x367);
         EndMemTrackObjectName();
     }
-    if (!(unk37c & 1)) {
+    if (!(mBackBufferFlags & 1)) {
         MILO_ASSERT(mNumTiles > 0, 0x36D);
         BeginMemTrackObjectName("CreateBackBuffers:World");
         CreateBackBuffers(
             mScreenWidth,
             mScreenHeight,
             D3DMULTISAMPLE_NONE,
-            unk3a8,
-            unk3ac,
-            mBackBuffer,
-            unk388
+            mEDRamBase,
+            mHierZBase,
+            mBackBuffer_World,
+            mDepthBuffer_World
         );
         EndMemTrackObjectName();
         BeginMemTrackObjectName("CreateBackBuffers:UI");
@@ -707,10 +707,10 @@ void DxRnd::InitBuffers() {
             mScreenWidth,
             mScreenHeight,
             D3DMULTISAMPLE_2_SAMPLES,
-            unk3a8,
-            unk3ac,
-            mBackBuffer,
-            unk388
+            mEDRamBase,
+            mHierZBase,
+            mBackBuffer_World,
+            mDepthBuffer_World
         );
         EndMemTrackObjectName();
         BeginMemTrackObjectName("CreateBackBuffers:UI");
@@ -719,10 +719,10 @@ void DxRnd::InitBuffers() {
         mScreenWidth,
         mScreenHeight,
         D3DMULTISAMPLE_2_SAMPLES,
-        unk3a8,
-        unk3ac,
-        unk384,
-        unk38c
+        mEDRamBase,
+        mHierZBase,
+        mBackBuffer_UI,
+        mDepthBuffer_UI
     );
     EndMemTrackObjectName();
     {
@@ -764,7 +764,7 @@ void DxRnd::InitBuffers() {
             0,
             D3DFMT_LE_A8R8G8B8,
             0,
-            &mFrontBuffers[i],
+            &mFrontBuffer[i],
             nullptr
         );
         DX_ASSERT(hr, 0x39C);
@@ -773,29 +773,29 @@ void DxRnd::InitBuffers() {
 
     BeginMemTrackObjectName("CreateTexture:FrontBufferDepth");
     HRESULT hr = TheDxRnd.Device()->CreateTexture(
-        mScreenWidth, mScreenHeight, 1, 0, D3DFMT_D24FS8, 0, &mFrontBufferDepth, nullptr
+        mScreenWidth, mScreenHeight, 1, 0, D3DFMT_D24FS8, 0, &mDepthFrontBuffer, nullptr
     );
     DX_ASSERT(hr, 0x3A2);
     EndMemTrackObjectName();
     PostDeviceReset();
     for (int i = 0; i < 2; i++) {
     }
-    mRegAlloc = (RegisterAlloc)0;
+    mRegisterAlloc = kRegInit;
     mD3DDevice->SetShaderGPRAllocation(0, 0, 0);
     Present();
     SetSync(mSync);
 }
 
 void DxRnd::CreatePostTextures() {
-    RELEASE(mPreProcessTex);
-    mPreProcessTex = Hmx::Object::New<DxTex>();
-    mPreProcessTex->SetDeviceTex(mPreProcessBuffer);
-    RELEASE(mPreDepthTex);
-    mPreDepthTex = Hmx::Object::New<DxTex>();
-    mPreDepthTex->SetDeviceTex(mFrontBufferDepth);
-    RELEASE(mPostProcessTex);
-    mPostProcessTex = Hmx::Object::New<DxTex>();
-    mPostProcessTex->SetDeviceTex(mPostProcessBuffer);
+    RELEASE(mPreProcessTexture);
+    mPreProcessTexture = Hmx::Object::New<DxTex>();
+    mPreProcessTexture->SetDeviceTex(mPreProcessBuffer);
+    RELEASE(mPreDepthTexture);
+    mPreDepthTexture = Hmx::Object::New<DxTex>();
+    mPreDepthTexture->SetDeviceTex(mDepthFrontBuffer);
+    RELEASE(mPostProcessTexture);
+    mPostProcessTexture = Hmx::Object::New<DxTex>();
+    mPostProcessTexture->SetDeviceTex(mPostProcessBuffer);
 }
 
 void DxRnd::SetFrameBuffersAsSource() {
@@ -805,7 +805,7 @@ void DxRnd::SetFrameBuffersAsSource() {
     TheDxRnd.Device()->SetSamplerState(6, D3DSAMP_ADDRESSU, 2);
     TheDxRnd.Device()->SetSamplerState(6, D3DSAMP_ADDRESSV, 2);
 
-    mD3DDevice->SetTexture(9, mFrontBufferDepth);
+    mD3DDevice->SetTexture(9, mDepthFrontBuffer);
     TheDxRnd.Device()->SetSamplerState(9, D3DSAMP_MINFILTER, 0);
     TheDxRnd.Device()->SetSamplerState(9, D3DSAMP_MAGFILTER, 0);
     TheDxRnd.Device()->SetSamplerState(9, D3DSAMP_ADDRESSU, 2);
@@ -819,8 +819,8 @@ void DxRnd::SetFrameBuffersAsSource() {
 }
 
 void DxRnd::CopyPostProcess() {
-    if (mRegAlloc != 2) {
-        mRegAlloc = (RegisterAlloc)2;
+    if (mRegisterAlloc != 2) {
+        mRegisterAlloc = kRegPostProc;
         mD3DDevice->SetShaderGPRAllocation(0, 0x10, 0x70);
     }
     Hmx::Rect r(0, 0, mScreenWidth, mScreenHeight);
@@ -835,8 +835,8 @@ void DxRnd::CopyPostProcess() {
         TheDxRnd.Device()->SetSamplerState(0xE, D3DSAMP_MAGFILTER, 1);
     }
     DrawRect(r, mat, kPostprocessShader, Hmx::Color(), nullptr, nullptr);
-    if (mRegAlloc != 1) {
-        mRegAlloc = (RegisterAlloc)1;
+    if (mRegisterAlloc != 1) {
+        mRegisterAlloc = kRegDefault;
         mD3DDevice->SetShaderGPRAllocation(0, mDefaultVSRegAlloc, mDefaultPSRegAlloc);
     }
 }
@@ -880,7 +880,7 @@ void DxRnd::DoPointTests() {
             TheDxRnd.Device()->SetRenderState(D3DRS_ZWRITEENABLE, 0);
             TheDxRnd.Device()->SetRenderState(D3DRS_ZENABLE, 1);
             TheDxRnd.Device()->SetRenderState(
-                D3DRS_ZFUNC, unk_0x301 ? D3DCMP_GREATER : D3DCMP_LESS
+                D3DRS_ZFUNC, mInverseZ ? D3DCMP_GREATER : D3DCMP_LESS
             );
             float ptSize = 1;
             TheDxRnd.Device()->SetRenderState(D3DRS_POINTSIZE, *(DWORD *)&ptSize);

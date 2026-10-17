@@ -61,7 +61,7 @@ unsigned int DxCam::ProjectZ(float f) {
         mZRange.y,
         (mFarPlane / (mFarPlane - mNearPlane)) * ((f - mNearPlane) / f)
     );
-    if (TheDxRnd.Unk301() != 0) {
+    if (TheDxRnd.InverseZ() != 0) {
         fvar1 = 1.0f - fvar1;
     }
     return fvar1 * 16777215.0f;

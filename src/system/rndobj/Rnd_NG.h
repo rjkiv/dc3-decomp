@@ -9,7 +9,12 @@
 #include "rndobj/SoftParticleBuffer.h"
 #include "rndobj/Tex.h"
 
-struct LargeQuadRenderData;
+struct LargeQuadRenderData {
+    void *mIndexBuffer; // 0x0
+    void *mVertBuffer; // 0x4
+    int mWidth; // 0x8
+    int mHeight; // 0xc
+};
 
 class NgRnd : public Rnd {
 public:

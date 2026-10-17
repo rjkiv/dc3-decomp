@@ -70,7 +70,7 @@ void DxTex::MakeDrawTarget() {
         } else {
             TheDxRnd.Device()->SetDepthStencilSurface(nullptr);
         }
-        TheDxRnd.SetUnk301(mType != kShadowMap);
+        TheDxRnd.SetInverseZ(mType != kShadowMap);
         NgMat::SetCurrent(nullptr);
     }
 }
@@ -79,7 +79,7 @@ void DxTex::FinishDrawTarget() {
     MILO_ASSERT(mType & kRendered, 0x122);
     ResolveMipChain();
     TheDxRnd.Device()->SetPredication(0);
-    TheDxRnd.SetUnk301(true);
+    TheDxRnd.SetInverseZ(true);
 }
 
 void DxTex::Compress(AlphaCompress a) {

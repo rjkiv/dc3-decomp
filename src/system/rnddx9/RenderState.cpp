@@ -78,7 +78,7 @@ void RndRenderState::SetDepthWriteEnable(bool b) {
 }
 
 void RndRenderState::SetDepthFunc(TestFunc tf) {
-    TheDxRnd.Device()->SetRenderState(D3DRS_ZFUNC, sFuncs[TheDxRnd.Unk301() * 8 + tf]);
+    TheDxRnd.Device()->SetRenderState(D3DRS_ZFUNC, sFuncs[TheDxRnd.InverseZ() * 8 + tf]);
 }
 
 void RndRenderState::SetStencilTestEnable(bool b) {
@@ -88,7 +88,7 @@ void RndRenderState::SetStencilTestEnable(bool b) {
 void RndRenderState::SetStencilFunc(TestFunc tf, unsigned char ref) {
     TheDxRnd.Device()->SetRenderState(D3DRS_STENCILREF, ref);
     TheDxRnd.Device()->SetRenderState(
-        D3DRS_STENCILFUNC, sFuncs[TheDxRnd.Unk301() * 8 + tf]
+        D3DRS_STENCILFUNC, sFuncs[TheDxRnd.InverseZ() * 8 + tf]
     );
 }
 

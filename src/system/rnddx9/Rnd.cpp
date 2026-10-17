@@ -32,7 +32,7 @@ END_HANDLERS
 
 void DxRnd::Clear(unsigned int ui, const Hmx::Color &c) {
     float z;
-    if (unk_0x301) {
+    if (mInverseZ) {
         z = 0;
     } else {
         z = 1;
@@ -79,18 +79,18 @@ void DxRnd::DrawLine(const Vector3 &v1, const Vector3 &v2, const Hmx::Color &c, 
 
 void DxRnd::MakeDrawTarget() {
     if (mWorldEnded) {
-        mD3DDevice->SetRenderTarget(0, unk384);
-        mD3DDevice->SetDepthStencilSurface(unk38c);
+        mD3DDevice->SetRenderTarget(0, mBackBuffer_UI);
+        mD3DDevice->SetDepthStencilSurface(mDepthBuffer_UI);
     } else {
-        mD3DDevice->SetRenderTarget(0, mBackBuffer);
-        mD3DDevice->SetDepthStencilSurface(unk388);
+        mD3DDevice->SetRenderTarget(0, mBackBuffer_World);
+        mD3DDevice->SetDepthStencilSurface(mDepthBuffer_World);
     }
     NgMat::SetCurrent(nullptr);
 }
 
 void DxRnd::PushClipPlanesInternal(ObjPtrVec<RndTransformable> &planes) {
     int mask = 0;
-    for (int i = 0; i < unk408; i++) {
+    for (int i = 0; i < mNumClipPlanes; i++) {
         mask |= (1 << i);
     }
     for (int i = 0; i < planes.size() && i < 6; i++) {
@@ -107,8 +107,8 @@ void DxRnd::PushClipPlanesInternal(ObjPtrVec<RndTransformable> &planes) {
                 p70.AsVector4()
             );
             float plane[4] = { p70.a, p70.b, p70.c, p70.d };
-            mD3DDevice->SetClipPlane(unk408, plane);
-            mask |= (1 << unk408++);
+            mD3DDevice->SetClipPlane(mNumClipPlanes, plane);
+            mask |= (1 << mNumClipPlanes++);
         }
     }
     TheDxRnd.Device()->SetRenderState(D3DRS_CLIPPLANEENABLE, mask);
@@ -118,11 +118,11 @@ void DxRnd::PopClipPlanesInternal(ObjPtrVec<RndTransformable> &planes) {
     for (int i = 0; i < planes.size() && i < 6; i++) {
         RndTransformable *cur = planes[i];
         if (cur) {
-            unk408--;
+            mNumClipPlanes--;
         }
     }
     int mask = 0;
-    for (int i = 0; i < unk408; i++) {
+    for (int i = 0; i < mNumClipPlanes; i++) {
         mask |= (1 << i);
     }
     TheDxRnd.Device()->SetRenderState(D3DRS_CLIPPLANEENABLE, mask);
@@ -137,7 +137,7 @@ void DxRnd::SetViewport(const Viewport &v) {
     dxViewport.Y = v.mY;
     dxViewport.Width = v.mWidth;
     dxViewport.Height = v.mHeight;
-    if (unk_0x301) {
+    if (mInverseZ) {
         dxViewport.MinZ = 1.0f - v.mMinZ;
         dxViewport.MaxZ = 1.0f - v.mMaxZ;
     } else {
@@ -264,10 +264,10 @@ void DxRnd::CreateLargeQuad(int i1, int i2, LargeQuadRenderData &quadData) {
         }
     }
     vertexBuffer->Unlock();
-    quadData.unk0 = indexBuffer;
-    quadData.unk4 = vertexBuffer;
-    quadData.unk8 = i1;
-    quadData.unkc = i2;
+    quadData.mIndexBuffer = indexBuffer;
+    quadData.mVertBuffer = vertexBuffer;
+    quadData.mWidth = i1;
+    quadData.mHeight = i2;
 }
 
 void DxRnd::DrawLargeQuad(
@@ -276,15 +276,17 @@ void DxRnd::DrawLargeQuad(
     RndMat *next = mat ? mat->NextPass() : nullptr;
     while (mat != nullptr) {
         RndShader::SelectConfig(mat, s, false);
-        mD3DDevice->SetIndices(data.unk0);
-        mD3DDevice->SetStreamSource(0, data.unk4, 0, 20);
+        mD3DDevice->SetIndices(static_cast<D3DIndexBuffer *>(data.mIndexBuffer));
+        mD3DDevice->SetStreamSource(
+            0, static_cast<D3DVertexBuffer *>(data.mVertBuffer), 0, 20
+        );
         mD3DDevice->SetFVF(D3DFVF_TEX1 | D3DFVF_XYZ);
         TheShaderMgr.SetVConstant((VShaderConstant)0x5c, Hmx::Matrix4(tf));
         DxTex *tex = static_cast<DxTex *>(mat->GetDiffuseTex());
         mD3DDevice->SetTexture(16, tex->Tex());
         mD3DDevice->SetTexture(0, tex->Tex());
         mD3DDevice->DrawIndexedVertices(
-            D3DPT_QUADLIST, 0, 0, (data.unkc - 1) * (data.unk8 - 1) * 4
+            D3DPT_QUADLIST, 0, 0, (data.mHeight - 1) * (data.mWidth - 1) * 4
         );
         if (next) {
             mat = next;
@@ -307,14 +309,14 @@ void DxRnd::PreDeviceReset() {
     if (mQueryManager) {
         mQueryManager->ReleaseQueries();
     }
-    FOREACH (it, unk2b0) {
+    FOREACH (it, mObjects) {
         (*it)->PreDeviceReset();
     }
     ReleaseAutoRelease();
 }
 
 void DxRnd::PostDeviceReset() {
-    FOREACH (it, unk2b0) {
+    FOREACH (it, mObjects) {
         (*it)->PostDeviceReset();
     }
     MakeDrawTarget();
@@ -394,7 +396,7 @@ void DxRnd::ResetDevice() {
 }
 
 HRESULT DxRnd::GetDeviceCaps(D3DCAPS9 *cap) {
-    return Direct3D::GetDeviceCaps(0, mDeviceType, cap);
+    return Direct3D::GetDeviceCaps(0, mDevType, cap);
 }
 
 void DxRnd::DrawSafeArea(float percent, bool widescreen, const Hmx::Color &color) {
