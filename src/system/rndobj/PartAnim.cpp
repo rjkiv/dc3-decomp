@@ -3,6 +3,7 @@
 #include "os/Debug.h"
 #include "rndobj/Anim.h"
 #include "rndobj/Part.h"
+#include "utl/BinStream.h"
 
 #pragma region Hmx::Object
 
@@ -75,25 +76,27 @@ BEGIN_LOADS(RndParticleSysAnim)
     LOAD_SUPERCLASS(RndAnimatable)
     d >> mParticleSys >> mStartColorKeys >> mEndColorKeys;
     if (d.rev < 2) {
-        Keys<float, float> floatKeys;
+        Keys<float, float> emitRateKeys;
         float scale = 1;
-        d >> floatKeys >> mKeysOwner;
+        d >> emitRateKeys >> mKeysOwner;
         if (d.rev == 1) {
             d >> scale;
         }
         mEmitRateKeys.clear();
-        mEmitRateKeys.reserve(floatKeys.size());
-        FOREACH (it, floatKeys) {
-            Key<Vector2> vecKey;
-            vecKey.value = Vector2(it->value, it->value * scale);
-            vecKey.frame = it->frame;
-            mEmitRateKeys.push_back(vecKey);
+        mEmitRateKeys.reserve(emitRateKeys.size());
+        FOREACH (it, emitRateKeys) {
+            Key<Vector2> k;
+            k.value.x = it->value;
+            k.value.y = it->value * scale;
+            k.frame = it->frame;
+            mEmitRateKeys.push_back(k);
         }
     } else {
         d >> mEmitRateKeys >> mKeysOwner;
     }
-    if (!mKeysOwner)
+    if (!mKeysOwner) {
         mKeysOwner = this;
+    }
     if (d.rev > 1) {
         d >> mSpeedKeys >> mLifeKeys >> mStartSizeKeys;
     }

@@ -169,7 +169,12 @@ int RndMeshDeform::VertArray::AppendWeights(
     for (int i = 0; i < num; i++) {
         for (int j = i + 1; j < num; j++) {
             if (bones[j] == bones[i]) {
-                weights[i] += weights[j];
+                // microsoft sucks at everything by nakeyjakey
+                float f = weights[i];
+                float f2 = weights[j];
+                f += f2;
+                weights[i] = f;
+
                 num--;
                 bones[j] = bones[num];
                 weights[j] = weights[num];
