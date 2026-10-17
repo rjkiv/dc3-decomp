@@ -133,10 +133,10 @@ WorldCrowd::WorldCrowd()
         mat->SetPreLit(false);
         mat->SetUseEnv(true);
         mat->SetBlend(RndMat::kBlendSrc);
-        mat->SetZMode(kZModeNormal);
+        mat->SetZMode(BaseMaterial::kNormal);
         mat->SetAlphaCut(true);
         mat->SetAlphaThreshold(0x80);
-        mat->SetTexWrap(kTexWrapClamp);
+        mat->SetTexWrap(BaseMaterial::kClamp);
         mat->SetPerPixelLit(false);
         mat->SetPointLights(true);
         CreateAndSetMetaMat(mat);

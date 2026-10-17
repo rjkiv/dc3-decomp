@@ -251,12 +251,12 @@ void DxTex::ResolveMipChain() {
             dRect.y2 = desc.Height;
             RndMat *workMat = TheShaderMgr.GetWork();
             workMat->SetDiffuseTex(this);
-            workMat->SetTexWrap(kTexWrapClamp);
+            workMat->SetTexWrap(BaseMaterial::kClamp);
             workMat->SetBlend(RndMat::kBlendSrc);
             if (mType == kShadowMap) {
-                workMat->SetZMode(kZModeForce);
+                workMat->SetZMode(BaseMaterial::kForce);
             } else {
-                workMat->SetZMode(kZModeDisable);
+                workMat->SetZMode(BaseMaterial::kDisable);
             }
             Hmx::Rect rect(0, 0, desc.Width, desc.Height);
             if (mType != kShadowMap) {

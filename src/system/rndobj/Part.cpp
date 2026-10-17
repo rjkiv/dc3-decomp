@@ -680,7 +680,7 @@ BEGIN_LOADS(RndParticleSys)
     if (d.rev > 4 && d.rev < 0xF) {
         bool baf;
         d >> baf;
-        ZMode z = baf ? kZModeTransparent : kZModeDisable;
+        BaseMaterial::ZMode z = baf ? BaseMaterial::kTransparent : BaseMaterial::kDisable;
         if (mMat)
             mMat->SetZMode(z);
     }

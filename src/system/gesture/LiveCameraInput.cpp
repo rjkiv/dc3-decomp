@@ -717,7 +717,7 @@ void LiveCameraInput::ApplyTextureClip(RndMat *mat, int idx) const {
             "LiveCameraInput::GetStoredTexture: index %d out of bounds [max=%d]\n", 7
         );
     }
-    mat->SetTexGen(kTexGenXfmOrigin);
+    mat->SetTexGen(BaseMaterial::kXfmOrigin);
     mat->SetTexXfm(mTextureClips[idx].mTexGen);
     mat->SetDiffuseTex(mTextureClips[idx].mTex);
 }

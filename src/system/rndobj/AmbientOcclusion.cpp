@@ -273,8 +273,8 @@ bool RndAmbientOcclusion::IsValid_AOCast(const RndMesh *mesh) const {
     }
     RndMat *mat = mesh->Mat();
     if (mat) {
-        ZMode zMode = mat->GetZMode();
-        b2 = zMode == kZModeDisable || zMode == kZModeTransparent;
+        BaseMaterial::ZMode zMode = mat->GetZMode();
+        b2 = zMode == BaseMaterial::kDisable || zMode == BaseMaterial::kTransparent;
     }
     if ((!mIgnoreHidden || mesh->Showing()) && (!mIgnoreTransparent || !b2)) {
         return true;
@@ -294,8 +294,9 @@ bool RndAmbientOcclusion::IsValid_AOReceive(const RndMesh *mesh) const {
 
     RndMat *mat = mesh->Mat();
     if (mat) {
-        ZMode zMode = mat->GetZMode();
-        b2 = zMode == kZModeDisable || zMode == kZModeTransparent || mat->Alpha() == 0;
+        BaseMaterial::ZMode zMode = mat->GetZMode();
+        b2 = zMode == BaseMaterial::kDisable || zMode == BaseMaterial::kTransparent
+            || mat->Alpha() == 0;
         c4 = mat->PreLit();
     }
     if ((!mIgnoreHidden || mesh->Showing()) && (!mIgnoreTransparent || !b2)

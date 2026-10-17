@@ -100,7 +100,7 @@ void RndVelocityBuffer::AllocateData(
     mMat = Hmx::Object::New<RndMat>();
     mMat->SetPerPixelLit(false);
     mMat->SetBlend(BaseMaterial::kBlendSrc);
-    mMat->SetZMode(kZModeDisable);
+    mMat->SetZMode(BaseMaterial::kDisable);
     CreateAndSetMetaMat(mMat);
 }
 
@@ -108,7 +108,7 @@ void RndVelocityBuffer::DrawMesh(RndMesh *mesh) const {
     MILO_ASSERT(mesh, 0x123);
     MILO_ASSERT(mesh->Showing(), 0x124);
     MILO_ASSERT(TheRnd.DrawMode() == Rnd::kDrawVelocity, 0x125);
-    if (mesh->Mat() && mesh->Mat()->GetZMode() != kZModeTransparent) {
+    if (mesh->Mat() && mesh->Mat()->GetZMode() != BaseMaterial::kTransparent) {
         int numBones = mesh->NumBones();
         int i10 = Max(1, numBones);
         const float *fptr;

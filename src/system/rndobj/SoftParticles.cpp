@@ -6,7 +6,7 @@
 #include "rndobj/SoftParticleBuffer.h"
 
 RndSoftParticles::RndSoftParticles()
-    : mParticles(this), mBlend(BaseMaterial::kBlendSrcAlphaAdd) {}
+    : mParticles(this), mBlendMode(BaseMaterial::kBlendSrcAlphaAdd) {}
 
 BEGIN_HANDLERS(RndSoftParticles)
     HANDLE_SUPERCLASS(RndDrawable)
@@ -15,7 +15,7 @@ END_HANDLERS
 
 BEGIN_PROPSYNCS(RndSoftParticles)
     SYNC_PROP(particles, mParticles)
-    SYNC_PROP(blend_mode, (int &)mBlend)
+    SYNC_PROP(blend_mode, (int &)mBlendMode)
     SYNC_SUPERCLASS(RndDrawable)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
@@ -25,7 +25,7 @@ BEGIN_SAVES(RndSoftParticles)
     SAVE_SUPERCLASS(Hmx::Object)
     SAVE_SUPERCLASS(RndDrawable)
     bs << mParticles;
-    bs << mBlend;
+    bs << mBlendMode;
 END_SAVES
 
 BEGIN_COPYS(RndSoftParticles)
@@ -34,7 +34,7 @@ BEGIN_COPYS(RndSoftParticles)
     CREATE_COPY(RndSoftParticles)
     BEGIN_COPYING_MEMBERS
         COPY_MEMBER(mParticles)
-        COPY_MEMBER(mBlend)
+        COPY_MEMBER(mBlendMode)
     END_COPYING_MEMBERS
 END_COPYS
 
@@ -46,14 +46,14 @@ BEGIN_LOADS(RndSoftParticles)
     LOAD_SUPERCLASS(Hmx::Object)
     LOAD_SUPERCLASS(RndDrawable)
     bs >> mParticles;
-    bs >> (int &)mBlend;
+    bs >> (int &)mBlendMode;
 END_LOADS
 
 void RndSoftParticles::DrawShowing() {
     RndSoftParticleBuffer *buffer = TheNgRnd.ParticleBuffer();
     if (buffer) {
         FOREACH (it, mParticles) {
-            buffer->Queue(*it, mBlend);
+            buffer->Queue(*it, mBlendMode);
         }
     }
 }

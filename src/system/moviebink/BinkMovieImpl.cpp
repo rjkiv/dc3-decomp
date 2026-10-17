@@ -176,8 +176,8 @@ MovieInternalBuffers *MovieInternalBuffers::New(std::vector<BINK *> binks) {
         ret->unk40->SetUseEnv(false);
         ret->unk40->SetBlend(RndMat::kBlendSrc);
         ret->unk40->SetAlphaWrite(false);
-        ret->unk40->SetZMode(kZModeDisable);
-        ret->unk40->SetTexWrap(kTexWrapClamp);
+        ret->unk40->SetZMode(BaseMaterial::kDisable);
+        ret->unk40->SetTexWrap(BaseMaterial::kClamp);
         CreateAndSetMetaMat(ret->unk40);
         return ret;
     }
@@ -220,8 +220,9 @@ void BinkMovieLoader::DoneLoading() {}
 
 BinkMovieImpl::BinkMovieImpl()
     : mLoader(0), mMovieLoader(0), mBink(0), mPreload(0), mPreloadBuf(0), mBufferSize(0),
-      mOwnPreloadBuf(0), mFrameNum(0), mWidth(0), mHeight(0), mPaused(0), mBinkHandle(kNoHandle), mLoadPending(0),
-      mMidFrame(0), mThreadId(gMainThreadID), mVolume(0x8000), mInternalBufs(0) {
+      mOwnPreloadBuf(0), mFrameNum(0), mWidth(0), mHeight(0), mPaused(0),
+      mBinkHandle(kNoHandle), mLoadPending(0), mMidFrame(0), mThreadId(gMainThreadID),
+      mVolume(0x8000), mInternalBufs(0) {
     CHECK_THREAD;
 }
 

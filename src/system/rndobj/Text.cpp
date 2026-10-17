@@ -604,7 +604,9 @@ BEGIN_LOADS(RndText)
             RndFont *oldfont2d = dynamic_cast<RndFont *>(fontBase.Ptr());
             MILO_ASSERT(oldfont2d, 0xBC1);
             if (oldfont2d->NumMats() && oldfont2d->Mat(0)) {
-                fontBase->Mat()->SetZMode(b ? kZModeTransparent : kZModeDisable);
+                fontBase->Mat()->SetZMode(
+                    b ? BaseMaterial::kTransparent : BaseMaterial::kDisable
+                );
             }
         }
     }

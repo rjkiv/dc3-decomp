@@ -313,7 +313,7 @@ void SkeletonViz::DrawPoint3D(
     float scale = mDrawScale * radius;
     mUtlSphere->Mat()->SetColor(color.red, color.green, color.blue);
     mUtlSphere->Mat()->SetAlpha(alpha);
-    mUtlSphere->Mat()->SetCull(kCullNone);
+    mUtlSphere->Mat()->SetCull(BaseMaterial::kCullNone);
 
     Transform xfm;
     xfm.Reset();

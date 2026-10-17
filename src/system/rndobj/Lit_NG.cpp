@@ -106,8 +106,8 @@ void NgLight::BlurShadowRT() {
         RndMat *work = TheShaderMgr.GetWork();
         work->SetDiffuseTex(tex2);
         work->SetBlend(BaseMaterial::kBlendSrc);
-        work->SetZMode(kZModeDisable);
-        work->SetTexWrap(kTexWrapClamp);
+        work->SetZMode(BaseMaterial::kDisable);
+        work->SetTexWrap(BaseMaterial::kClamp);
         TheNgRnd.DrawRect(r, work, kBlurShader, Hmx::Color(), nullptr, nullptr);
         tex3->FinishDrawTarget();
         TheShaderMgr.SetNumTaps(1);

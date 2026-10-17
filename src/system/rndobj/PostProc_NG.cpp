@@ -332,8 +332,8 @@ void Bloom_Downsample(ShaderType shader, RndTex *texSrc, RndTex *texDst) {
 
     RndMat *work = TheShaderMgr.GetWork();
     work->SetBlend(BaseMaterial::kBlendSrc);
-    work->SetZMode(kZModeDisable);
-    work->SetTexWrap(kTexWrapClamp);
+    work->SetZMode(BaseMaterial::kDisable);
+    work->SetTexWrap(BaseMaterial::kClamp);
     texDst->MakeDrawTarget();
     TheShaderMgr.SetPConstant((PShaderConstant)7, texSrc);
     work->SetDiffuseTex(texSrc);
@@ -361,8 +361,8 @@ void Bloom_Blur(
     MILO_ASSERT(TheShaderMgr.NumTaps() == 1, 0x1B6);
 
     RndMat *work = TheShaderMgr.GetWork();
-    work->SetZMode(kZModeDisable);
-    work->SetTexWrap(kTexWrapClamp);
+    work->SetZMode(BaseMaterial::kDisable);
+    work->SetTexWrap(BaseMaterial::kClamp);
     work->SetBlend(BaseMaterial::kBlendSrc);
     texDst->MakeDrawTarget();
     work->SetDiffuseTex(texSrc);

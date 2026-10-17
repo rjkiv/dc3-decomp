@@ -699,7 +699,7 @@ void RndFont::BleedTest() {
         BitmapLocker locker(this, curCharInfo.page);
         RndBitmap *bitmap = locker.PtrToBitmap();
         if (bitmap) {
-            bool isClamp = mMats[curCharInfo.page]->GetTexWrap() == kTexWrapClamp;
+            bool isClamp = mMats[curCharInfo.page]->GetTexWrap() == BaseMaterial::kClamp;
             int i7 = Round((float)bitmap->Height() * curCharInfo.normY);
             int i8 = Round((float)bitmap->Width() * curCharInfo.normX);
             int i6 = Round(mCellSize.x * curCharInfo.charWidth) + i8;

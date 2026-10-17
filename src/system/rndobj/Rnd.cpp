@@ -951,7 +951,7 @@ void Rnd::CreateDefaults() {
     mOverlayMat->SetUseEnv(false);
     mOverlayMat->SetPreLit(true);
     mOverlayMat->SetBlend(RndMat::kBlendSrcAlpha);
-    mOverlayMat->SetZMode(kZModeForce);
+    mOverlayMat->SetZMode(BaseMaterial::kForce);
     CreateAndSetMetaMat(mOverlayMat);
     mOverdrawMat = Hmx::Object::New<RndMat>();
     mOverdrawMat->SetUseEnv(false);

@@ -103,7 +103,7 @@ public:
         mPrelit = lit;
         mDirty |= kDirtyRest;
     }
-    void SetAlphaThreshold(int thresh) { mAlphaThreshold = thresh; }
+    void SetAlphaThreshold(int thresh) { mAlphaThresh = thresh; }
     void SetPerPixelLit(bool lit) {
         mPerPixelLit = lit;
         mDirty |= kDirtyRest;
@@ -130,7 +130,7 @@ public:
         mDiffuseTex = tex;
         mDirty |= kDirtyRest;
     }
-    void SetCull(Cull cull) {
+    void SetCull(CullType cull) {
         mCull = cull;
         mDirty |= kDirtyRest;
     }
@@ -153,22 +153,22 @@ public:
     TexGen GetTexGen() const { return mTexGen; }
     bool Intensify() const { return mIntensify; }
     bool PerPixelLighting() const { return mPerPixelLit; }
-    const Hmx::Color &Specular() const { return mSpecularRGB; }
+    const Hmx::Color &Specular() const { return mSpecular; }
     RndTex *SpecularMap() const { return mSpecularMap; }
     RndCubeTex *EnvironMap() const { return mEnvironMap; }
     bool EnvironMapFalloff() const { return mEnvironMapFalloff; }
     bool EnvironMapSpecMask() const { return mEnvironMapSpecMask; }
     RndTex *EmissiveMap() const { return mEmissiveMap; }
-    const Hmx::Color &GetRimColor() const { return mRimRGB; }
+    const Hmx::Color &GetRimColor() const { return mRimColor; }
     const RndTex *GetRimMap() const { return mRimMap; }
     bool GetRimLightUnder() const { return mRimLightUnder; }
     ColorModFlags GetColorModFlags() const { return mFlags; }
     ShaderVariation GetShaderVariation() const { return mShaderVariation; }
     bool ScreenAligned() const { return mScreenAligned; }
     float Anisotropy() const { return mAnisotropy; }
-    bool NormDetail() const { return mNormDetailMap && mNormDetailStrength > 0; }
+    bool NormDetail() const { return mNormDetail && mNormDetailStrength > 0; }
     bool Fog() const { return mFog; }
-    bool ColorXfm() const { return mColorAdjust; }
+    bool ColorXfm() const { return mColorXfm; }
 
     static void Init();
     static void Terminate();

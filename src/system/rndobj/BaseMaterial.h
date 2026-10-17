@@ -9,78 +9,14 @@
 #include "rndobj/Tex.h"
 #include "utl/BinStream.h"
 
-enum Cull {
-    /** "No culling.  User sees both front and back of polygon." */
-    kCullNone = 0,
-    /** "Only the front face is drawn.  The back face of the polygon is not drawn." */
-    kCullRegular = 1,
-    /** "The back face of polygone is drawn, but not the front." */
-    kCullBackwards = 2
-};
-
 // extra variation of the standard and multimesh shaders
 // these presumably subtly change lighting, if they are anything but None second speuclar
 // (specular2_rgb) comes into play
 enum ShaderVariation {
-    kShaderVariationNone = 0,
-    kShaderVariationSkin = 1,
-    kShaderVariationHair = 2,
-    kShaderVariationWorldProjection = 3
-};
-
-// stencil buffer usage modes
-enum StencilMode {
-    // ignore the stencil buffer entirely
-    kStencilIgnore = 0,
-    // write to the stencil buffer
-    kStencilWrite = 1,
-    // test against the stencil buffer without actually writing
-    kStencilTest = 2,
-};
-
-enum TexGen {
-    /** "use vertex UV unchanged" */
-    kTexGenNone = 0,
-    /** "transform vertex UV about center with stage xfm" */
-    kTexGenXfm = 1,
-    /** "sphere map that rotates around object with camera, xfm is direction of map, fast
-     * on gs slow on cpu, flips at poles" */
-    kTexGenSphere = 2,
-    /** "project from direction of stage xfm in world coords" */
-    kTexGenProjected = 3,
-    /** "like Xfm but about origin rather than center" */
-    kTexGenXfmOrigin = 4,
-    /** "reflection map, like sphere map but perspective correct and does not flip, fast
-     * on cpu but slow on gs" */
-    kTexGenEnviron = 5,
-};
-
-enum TexWrap {
-    /** "UVs outside the range [0,1] are clamped" */
-    kTexWrapClamp = 0,
-    /** "The image repeats itself across the surface" */
-    kTexWrapRepeat = 1,
-    /** "texels outside the UV range [0,1] are black" */
-    kTexBorderBlack = 2,
-    /** "texels outside the UV range [0,1] are white" */
-    kTexBorderWhite = 3,
-    /** "The image repeats itself, but is flipped every other repetition" */
-    kTexWrapMirror = 4
-};
-
-enum ZMode {
-    /** "always draw but don't update z-buffer" */
-    kZModeDisable = 0,
-    /** "draw and update z-buffer if closer than z-buffer" */
-    kZModeNormal = 1,
-    /** "draw if closer than or equal z-buffer but don't update z-buffer. Often used
-     * with SrcAlpha or Add blending so those objects don't occlude other similar
-     * objects" */
-    kZModeTransparent = 2,
-    /** "always draw and update z-buffer" */
-    kZModeForce = 3,
-    /** "draw and update z-buffer if closer than or equal to z-buffer" */
-    kZModeDecal = 4,
+    kShaderVariation_None = 0,
+    kShaderVariation_Skin = 1,
+    kShaderVariation_Hair = 2,
+    kShaderVariation_WorldProjection = 3
 };
 
 struct MatPerfSettings {
@@ -90,6 +26,14 @@ struct MatPerfSettings {
     void LoadOld(BinStreamRev &);
     void Load(BinStream &);
 
+    bool GetRecvProjLights() const { return mRecvProjLights; }
+    bool GetRecvPointCubeTex() const { return mRecvPointCubeTex; }
+    bool GetPS3ForceTrilinear() const { return mPS3ForceTrilinear; }
+    void SetRecvProjLights(bool b) { mRecvProjLights = b; }
+    void SetRecvPointCubeTex(bool b) { mRecvPointCubeTex = b; }
+    void SetPS3ForceTrilinear(bool b) { mPS3ForceTrilinear = b; }
+
+private:
     /** "Check this option to allow the material to receive projected lighting" */
     bool mRecvProjLights;
     /** "Check this option to allow the material to receive projected cube maps from a
@@ -138,6 +82,70 @@ public:
         kColorModModulate = 3,
     };
 
+    enum CullType {
+        /** "No culling.  User sees both front and back of polygon." */
+        kCullNone = 0,
+        /** "Only the front face is drawn.  The back face of the polygon is not drawn." */
+        kCullCW = 1,
+        /** "The back face of polygone is drawn, but not the front." */
+        kCullCCW = 2
+    };
+
+    // stencil buffer usage modes
+    enum StencilMode {
+        // ignore the stencil buffer entirely
+        kIgnore = 0,
+        // write to the stencil buffer
+        kWrite = 1,
+        // test against the stencil buffer without actually writing
+        kTest = 2,
+    };
+
+    enum TexGen {
+        /** "use vertex UV unchanged" */
+        kNone = 0,
+        /** "transform vertex UV about center with stage xfm" */
+        kXfm = 1,
+        /** "sphere map that rotates around object with camera, xfm is direction of map,
+         * fast on gs slow on cpu, flips at poles" */
+        kSphere = 2,
+        /** "project from direction of stage xfm in world coords" */
+        kProjected = 3,
+        /** "like Xfm but about origin rather than center" */
+        kXfmOrigin = 4,
+        /** "reflection map, like sphere map but perspective correct and does not flip,
+         * fast on cpu but slow on gs" */
+        kEnviron = 5,
+    };
+
+    enum TexWrap {
+        /** "UVs outside the range [0,1] are clamped" */
+        kClamp = 0,
+        /** "The image repeats itself across the surface" */
+        kRepeat = 1,
+        /** "texels outside the UV range [0,1] are black" */
+        kBorderBlack = 2,
+        /** "texels outside the UV range [0,1] are white" */
+        kBorderWhite = 3,
+        /** "The image repeats itself, but is flipped every other repetition" */
+        kMirror = 4
+    };
+
+    enum ZMode {
+        /** "always draw but don't update z-buffer" */
+        kDisable = 0,
+        /** "draw and update z-buffer if closer than z-buffer" */
+        kNormal = 1,
+        /** "draw if closer than or equal z-buffer but don't update z-buffer. Often used
+         * with SrcAlpha or Add blending so those objects don't occlude other similar
+         * objects" */
+        kTransparent = 2,
+        /** "always draw and update z-buffer" */
+        kForce = 3,
+        /** "draw and update z-buffer if closer than or equal to z-buffer" */
+        kDecal = 4,
+    };
+
     virtual ~BaseMaterial() {}
     OBJ_CLASSNAME(BaseMaterial);
     OBJ_SET_TYPE(BaseMaterial);
@@ -163,14 +171,14 @@ public:
     float Alpha() const { return mColor.alpha; }
     bool UseEnviron() const { return mUseEnviron; }
     bool PointLights() const { return mPointLights; }
-    bool ColorAdjust() const { return mColorAdjust; }
+    bool ColorAdjust() const { return mColorXfm; }
     bool FadeOut() const { return mFadeout; }
     float ShockwaveMult() const { return mShockwaveMult; }
     bool NeverFitToSpline() const { return mNeverFitToSpline; }
     bool AllowDistortionEffects() const { return mAllowDistortionEffects; }
     bool AlphaWrite() const { return mAlphaWrite; }
     bool ForceAlphaWrite() const { return mForceAlphaWrite; }
-    Cull GetCull() const { return mCull; }
+    CullType GetCull() const { return mCull; }
     RndFur *Fur() const { return mFur; }
     TexWrap GetTexWrap() const { return mTexWrap; }
     bool PreLit() const { return mPrelit; }
@@ -212,7 +220,7 @@ protected:
     bool mAlphaWrite; // 0xbd
     bool mForceAlphaWrite; // 0xbe
     /** "Alpha level below which gets cut". Ranges from 0 to 255. */
-    int mAlphaThreshold; // 0xc0
+    int mAlphaThresh; // 0xc0
     /** "Next material for object" */
     ObjPtr<BaseMaterial> mNextPass; // 0xc4
 
@@ -230,7 +238,7 @@ protected:
     /** "Is the Mat affected its Environment's fade_out?" */
     bool mFadeout; // 0xda
     /** "Is the Mat affected its Environment's color adjust?" */
-    bool mColorAdjust; // 0xdb
+    bool mColorXfm; // 0xdb
 
     // Performance:
     /** "Performance options for this material" */
@@ -257,9 +265,9 @@ protected:
      * exaggerates". Ranges from -3 to 1. */
     float mDeNormal; // 0x10c
     /** "Detail map texture" */
-    ObjPtr<RndTex> mNormDetailMap; // 0x110
+    ObjPtr<RndTex> mNormDetail; // 0x110
     /** "Texture tiling scale for the detail map" */
-    float mNormDetailTiling; // 0x124
+    float mNormDetailTile; // 0x124
     /** "Strength of the detail map bumpiness" */
     float mNormDetailStrength; // 0x128
 
@@ -270,10 +278,10 @@ protected:
     /** Specular power: "This is the maximum level of 'shininess' of the surface; higher
      * numbers represent a shinier surface. If a specular texture is present, this value
      * is multiplied by the specular texture alpha channel." */
-    Hmx::Color mSpecularRGB; // 0x12c
+    Hmx::Color mSpecular; // 0x12c
     /** "Secondary specular color.  Only valid for certain shader variations." */
     /** "Secondary specular power.  Only valid for certain shader variations." */
-    Hmx::Color mSpecular2RGB; // 0x13c
+    Hmx::Color mSpecularSecondary; // 0x13c
     /** "Texture map for specular color (RGB channels) and glossiness (Alpha channel).
      * Requires per-pixel lighting." */
     ObjPtr<RndTex> mSpecularMap; // 0x14c
@@ -289,7 +297,7 @@ protected:
      * higher numbers result in a sharper rim lighting effect. If a rim texture is
      * present, this value is multiplied by the rim texture alpha channel."
      * Ranges from 0 to 64. */
-    Hmx::Color mRimRGB; // 0x164
+    Hmx::Color mRimColor; // 0x164
     /** "Texture map that defines the rim lighting color (in the RGB channels) and power
      * (in the Alpha channel)." */
     ObjPtr<RndTex> mRimMap; // 0x174
@@ -330,13 +338,13 @@ protected:
     bool mNeverFitToSpline; // 0x1d4
     bool mAllowDistortionEffects; // 0x1d5
     float mShockwaveMult; // 0x1d8
-    float mWorldProjectionTiling; // 0x1dc
+    float mWorldProjectionTile; // 0x1dc
     float mWorldProjectionStartBlend; // 0x1e0
     float mWorldProjectionEndBlend; // 0x1e4
     /** "Projected material from camera's POV" */
     bool mScreenAligned; // 0x1e8
     /** "Cull backface polygons" */
-    Cull mCull; // 0x1ec
+    CullType mCull; // 0x1ec
     /** "How to read and write the stencil buffer" */
     StencilMode mStencilMode; // 0x1f0
     /** "Multiplier to apply to bloom" */

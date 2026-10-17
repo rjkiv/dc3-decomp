@@ -237,13 +237,13 @@ void DxShaderMgr::PreInit() {
     RELEASE(mHighlight);
     mHighlight = Hmx::Object::New<RndMat>();
     mHighlight->SetUseEnv(false);
-    mHighlight->SetZMode(kZModeForce);
+    mHighlight->SetZMode(BaseMaterial::kForce);
     mHighlight->SetBlend(BaseMaterial::kBlendSrc);
     mHighlight->SetAlphaCut(false);
     CreateAndSetMetaMat(mHighlight);
     RELEASE(mDrawRect);
     mDrawRect = Hmx::Object::New<RndMat>();
-    mDrawRect->SetZMode(kZModeDisable);
+    mDrawRect->SetZMode(BaseMaterial::kDisable);
     mDrawRect->SetUseEnv(false);
     mDrawRect->SetPreLit(true);
     mDrawRect->SetBlend(BaseMaterial::kBlendSrcAlpha);

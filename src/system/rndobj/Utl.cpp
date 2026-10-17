@@ -703,7 +703,7 @@ void UtilDrawSphere(const Vector3 &v1, float scale, const Hmx::Color &c, RndMat 
         } else {
             sSphereMesh->Mat()->SetColor(c.red, c.green, c.blue);
             sSphereMesh->Mat()->SetAlpha(0.2f);
-            sSphereMesh->Mat()->SetCull(kCullNone);
+            sSphereMesh->Mat()->SetCull(BaseMaterial::kCullNone);
         }
         sSphereMesh->SetLocalXfm(tf);
         sSphereMesh->SetSphere(Sphere(Vector3(0, 0, 0), scale));
@@ -724,7 +724,7 @@ void UtilDrawCylinder(
         sCylinderMesh->Mat()->SetColor(c.red, c.green, c.blue);
         sCylinderMesh->Mat()->SetAlpha(0.2f);
         Scale(Vector3(height, base, base), tfb0.m, tfb0.m);
-        sCylinderMesh->Mat()->SetCull(kCullNone);
+        sCylinderMesh->Mat()->SetCull(BaseMaterial::kCullNone);
         sCylinderMesh->SetLocalXfm(tfb0);
         sCylinderMesh->SetSphere(Sphere(Vector3(0, 0, 0), base));
         sCylinderMesh->Draw();
