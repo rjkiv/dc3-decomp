@@ -37,15 +37,15 @@ bool RndShadowMap::PrepShadow(RndDrawable *draw, RndEnviron *env) {
         RndEnviron *envToUse = env ? env : RndEnviron::Current();
         RndLight *lit = nullptr;
         FOREACH (it, envToUse->Lights_Approx()) {
-            if ((*it)->GetType() == RndLight::kFloorSpot) {
+            if ((*it)->LightType() == RndLight::kFloorSpot) {
                 lit = *it;
                 break;
             }
         }
         if (!lit) {
             FOREACH (it, envToUse->Lights_Real()) {
-                if ((*it)->GetType() == RndLight::kDirectional
-                    || (*it)->GetType() == RndLight::kPoint) {
+                if ((*it)->LightType() == RndLight::kDirectional
+                    || (*it)->LightType() == RndLight::kPoint) {
                     lit = *it;
                     break;
                 }
@@ -63,7 +63,7 @@ bool RndShadowMap::PrepShadow(RndDrawable *draw, RndEnviron *env) {
             return false;
         } else {
             Transform xfm(lit->WorldXfm().m, s.center);
-            if (lit->GetType() == RndLight::kPoint) {
+            if (lit->LightType() == RndLight::kPoint) {
                 Subtract(s.center, lit->WorldXfm().v, xfm.m.y);
                 Normalize(xfm.m, xfm.m);
             }
@@ -83,7 +83,7 @@ bool RndShadowMap::PrepShadow(RndDrawable *draw, RndEnviron *env) {
             curCam->Select();
             static Hmx::Color sColor(0, 0, 0, 0);
             Hmx::Color colorToUse =
-                lit->GetType() == RndLight::kFloorSpot ? lit->GetColor() : sColor;
+                lit->LightType() == RndLight::kFloorSpot ? lit->GetColor() : sColor;
             colorToUse.Set(1 - colorToUse.red, 1 - colorToUse.green, 1 - colorToUse.blue);
             TheRnd.SetShadowMap(sShadowTex, sLightCam, &colorToUse);
             return true;

@@ -15,7 +15,7 @@ bool BoxMapLighting::QueueLight(RndLight *light, float colorScale) {
         lightColor.red *= colorScale;
         lightColor.green *= colorScale;
         lightColor.blue *= colorScale;
-        switch (light->GetType()) {
+        switch (light->LightType()) {
         case RndLight::kDirectional:
         case RndLight::kFakeSpot:
             LightParams_Directional *paramsDirectional;

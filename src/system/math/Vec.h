@@ -136,8 +136,9 @@ public:
     // public: void Zero();
     // public: const float* operator const float *() const;
     // public: bool operator==(const Vector4&) const;
-    // public: const Vector3& AsVector3() const;
-    // public: Vector3& AsVector3();
+
+    const Vector3 &AsVector3() const { return reinterpret_cast<const Vector3 &>(*this); }
+    Vector3 &AsVector3() { return reinterpret_cast<Vector3 &>(*this); }
 
     static const Vector4 &GetXAxis() { return sX; }
     static const Vector4 &GetYAxis() { return sY; }

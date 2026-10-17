@@ -24,18 +24,18 @@ public:
 
 protected:
     NgLight();
-    virtual void RenderShadows(std::vector<RndDrawable *> &);
+    virtual void RenderShadows(std::vector<RndDrawable *> &shadowCasters);
     virtual void SetAndClearShadowViewport();
     virtual void BlurShadowRT();
 
     bool WantShadows() const;
-    bool SphereConeTest(const Vector3 &, float);
+    bool SphereConeTest(const Vector3 &pos, float radius);
     RndTex *CreateShadowTex();
     void SetShadowTransforms();
-    bool HaveShadows(std::vector<RndDrawable *> &);
+    bool HaveShadows(std::vector<RndDrawable *> &shadows);
 
     RndTex *mShadowRT; // 0x180
     RndTex *mShadowMap; // 0x184
-    RndTex *unk188; // 0x188
-    int unk18c; // 0x18c
+    RndTex *mShadowScratch; // 0x188
+    int mLastDraw; // 0x18c
 };

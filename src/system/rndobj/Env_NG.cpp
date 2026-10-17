@@ -54,7 +54,7 @@ namespace {
         if (!light.Showing()) {
             return false;
         }
-        if (light.GetProjectedBlend() == 0 && !light.GetTexture()) {
+        if (light.GetProjectedBlend() == 0 && !light.ProjectedTex()) {
             return false;
         }
         if (light.GetProjectedBlend() == 1) {
@@ -103,8 +103,8 @@ namespace {
         TheShaderMgr.SetPConstant(
             (PShaderConstant)(0x42 + i1), Vector4(color.red, color.green, color.blue, f9)
         );
-        if (light.GetCubeTexture() && i1 == 0) {
-            TheShaderMgr.SetPConstant((PShaderConstant)0xD, light.GetCubeTexture());
+        if (light.CubeTex() && i1 == 0) {
+            TheShaderMgr.SetPConstant((PShaderConstant)0xD, light.CubeTex());
             TheRenderState.SetTextureClamp(0xD, RndRenderState::kMirror);
             TheRenderState.SetTextureFilter(0xD, RndRenderState::kLinear, false);
             Transform tfd0 = light.WorldXfm();
@@ -119,7 +119,7 @@ namespace {
         if (!light.Showing()) {
             return false;
         }
-        if (light.GetTexture() || light.GetProjectedBlend()) {
+        if (light.ProjectedTex() || light.GetProjectedBlend()) {
             Hmx::Color color = light.GetColor();
             if (!color.PackRgb()) {
                 return false;
@@ -145,7 +145,9 @@ namespace {
             TheShaderMgr.SetPConstant((PShaderConstant)(i2 + 5), light.GetShadowMap());
             TheRenderState.SetTextureFilter(i2 + 5, RndRenderState::kLinear, false);
             if (light.GetProjectedBlend() == 0) {
-                TheShaderMgr.SetPConstant((PShaderConstant)(i2 + 10), light.GetTexture());
+                TheShaderMgr.SetPConstant(
+                    (PShaderConstant)(i2 + 10), light.ProjectedTex()
+                );
                 TheRenderState.SetTextureClamp(i2 + 10, RndRenderState::kBorder);
                 TheRenderState.SetBorderColor(i2 + 10, false);
                 TheRenderState.SetTextureFilter(i2 + 10, RndRenderState::kLinear, false);
@@ -188,7 +190,7 @@ void NgEnviron::Select(const Vector3 *vptr) {
         NgLight *projLights[1];
         FOREACH (it, mLights_Real) {
             NgLight *cur = static_cast<NgLight *>(*it);
-            switch (cur->GetType()) {
+            switch (cur->LightType()) {
             case RndLight::kPoint:
                 if (pointLightCount < 3 && CheckPointLight(*cur)) {
                     pointLights[pointLightCount] = cur;

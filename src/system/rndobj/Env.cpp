@@ -311,7 +311,7 @@ void RndEnviron::OnRemoveAllLights() {
 
 bool RndEnviron::IsValidRealLight(const RndLight *l) const {
     bool ret = false;
-    RndLight::Type ty = l->GetType();
+    RndLight::Type ty = l->LightType();
     if (ty == RndLight::kPoint || ty == RndLight::kFakeSpot)
         ret = true;
     return ret;

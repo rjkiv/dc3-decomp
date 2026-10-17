@@ -800,7 +800,7 @@ void LightPreset::FillLightPresetData(RndLight *light, LightPreset::EnvLightEntr
     entry.mOrientation = Hmx::Quat(light->WorldXfm().m);
     entry.mPosition = light->WorldXfm().v;
     entry.mRange = light->Range();
-    entry.mType = light->GetType();
+    entry.mType = light->LightType();
 }
 
 void LightPreset::RemoveLight(int idx) {

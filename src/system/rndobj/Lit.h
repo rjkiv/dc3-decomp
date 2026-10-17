@@ -39,12 +39,12 @@ public:
     const Hmx::Color &GetColor() const { return mColorOwner->mColor; }
     float Range() const { return mRange; }
     float FalloffStart() const { return mFalloffStart; }
-    Type GetType() const { return mType; }
+    Type LightType() const { return mType; }
     void SetShowing(bool b) { mShowing = b; }
     float Intensity() const;
-    void SetProjectedBlend(int i) { mProjectedBlend = i; }
-    int GetProjectedBlend() const { return mProjectedBlend; }
-    RndTex *GetTexture() const { return mTexture; }
+    void SetProjectedBlend(ProjectedBlend i) { mProjectedBlend = i; }
+    ProjectedBlend GetProjectedBlend() const { return mProjectedBlend; }
+    RndTex *ProjectedTex() const { return mProjection; }
     bool GetAnimateFromPreset() const {
         return mAnimateColorFromPreset || mAnimatePositionFromPreset
             || mAnimateRangeFromPreset;
@@ -53,13 +53,23 @@ public:
     bool AnimateColorFromPreset() const { return mAnimateColorFromPreset; }
     bool AnimatePosFromPreset() const { return mAnimatePositionFromPreset; }
     bool AnimateRangeFromPreset() const { return mAnimateRangeFromPreset; }
-    ObjPtrList<RndDrawable> *GetShadowOverride() const { return mShadowOverride; }
+    const ObjPtrList<RndDrawable> *GetShadowOverride() const { return mShadowOverride; }
     const ObjPtrList<RndDrawable> &GetShadowObjects() const { return mShadowObjects; }
-    RndCubeTex *GetCubeTexture() const { return mCubeTexture; }
+    RndCubeTex *CubeTex() const { return mCubeTex; }
 
     Transform Projection();
 
-    static const char *TypeToStr(Type);
+    //  public: float TopRadius() const;
+    //  public: float BotRadius() const;
+    //  public: bool GetAnimateColorFromPreset() const;
+    //  public: void SetAnimateColorFromPreset(bool);
+    //  public: bool GetAnimatePositionFromPreset() const;
+    //  public: void SetAnimatePositionFromPreset(bool);
+    //  public: bool GetAnimateRangeFromPreset() const;
+    //  public: void SetAnimateRangeFromPreset(bool);
+    //  public: void SetShadowOverride(ObjPtrList<RndDrawable,ObjectDir>*);
+
+    static const char *TypeToStr(Type t);
 
     OBJ_MEM_OVERLOAD(0x1A);
     NEW_OBJ(RndLight)
@@ -69,7 +79,7 @@ protected:
     RndLight();
 
     int PackedColor() const;
-    void SetPackedColor(int, float);
+    void SetPackedColor(int packed, float intensity);
 
     Hmx::Color mColor; // 0xc0
     ObjOwnerPtr<RndLight> mColorOwner; // 0xd0
@@ -80,12 +90,12 @@ protected:
     bool mAnimatePositionFromPreset; // 0xf1
     bool mAnimateRangeFromPreset; // 0xf2
     bool mShowing; // 0xf3
-    ObjPtr<RndTex> mTexture; // 0xf4
-    ObjPtr<RndCubeTex> mCubeTexture; // 0x108
+    ObjPtr<RndTex> mProjection; // 0xf4
+    ObjPtr<RndCubeTex> mCubeTex; // 0x108
     ObjPtrList<RndDrawable> *mShadowOverride; // 0x11c
     ObjPtrList<RndDrawable> mShadowObjects; // 0x120
-    Transform mTextureXfm; // 0x134
+    Transform mTextureTransform; // 0x134
     float mTopRadius; // 0x174
     float mBotRadius; // 0x178
-    int mProjectedBlend; // 0x17c
+    ProjectedBlend mProjectedBlend; // 0x17c
 };

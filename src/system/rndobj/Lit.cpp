@@ -9,10 +9,10 @@
 RndLight::RndLight()
     : mColor(1, 1, 1), mColorOwner(this, this), mRange(1000.0f), mFalloffStart(0),
       mType(kPoint), mAnimateColorFromPreset(1), mAnimatePositionFromPreset(1),
-      mAnimateRangeFromPreset(1), mShowing(1), mTexture(this), mCubeTexture(this),
+      mAnimateRangeFromPreset(1), mShowing(1), mProjection(this), mCubeTex(this),
       mShadowOverride(nullptr), mShadowObjects(this, kObjListNoNull), mTopRadius(0),
-      mBotRadius(30.0f), mProjectedBlend(0) {
-    mTextureXfm.Reset();
+      mBotRadius(30.0f), mProjectedBlend(kAdd) {
+    mTextureTransform.Reset();
 }
 
 bool RndLight::Replace(ObjRef *from, Hmx::Object *to) {
@@ -51,10 +51,14 @@ BEGIN_PROPSYNCS(RndLight)
     SYNC_PROP_SET(topradius, mTopRadius, SetTopRadius(_val.Float()))
     SYNC_PROP_SET(botradius, mBotRadius, SetBotRadius(_val.Float()))
     SYNC_PROP(color_owner, mColorOwner)
-    SYNC_PROP(texture, mTexture)
-    SYNC_PROP(cube_texture, mCubeTexture)
-    SYNC_PROP(texture_xfm, mTextureXfm)
-    SYNC_PROP_SET(projected_blend, mProjectedBlend, SetProjectedBlend(_val.Int()))
+    SYNC_PROP(texture, mProjection)
+    SYNC_PROP(cube_texture, mCubeTex)
+    SYNC_PROP(texture_xfm, mTextureTransform)
+    SYNC_PROP_SET(
+        projected_blend,
+        (int &)mProjectedBlend,
+        SetProjectedBlend((ProjectedBlend)_val.Int())
+    )
     SYNC_PROP(shadow_objects, mShadowObjects)
     SYNC_SUPERCLASS(RndTransformable)
     SYNC_SUPERCLASS(Hmx::Object)
@@ -69,10 +73,10 @@ BEGIN_SAVES(RndLight)
     bs << mAnimateColorFromPreset;
     bs << mAnimatePositionFromPreset;
     bs << mTopRadius << mBotRadius;
-    bs << mTexture;
+    bs << mProjection;
     bs << mColorOwner;
-    bs << mTextureXfm;
-    bs << mCubeTexture;
+    bs << mTextureTransform;
+    bs << mCubeTex;
     bs << mShadowObjects;
     bs << mProjectedBlend;
     bs << mAnimateRangeFromPreset;
@@ -94,8 +98,8 @@ BEGIN_COPYS(RndLight)
     COPY_MEMBER_FROM(l, mFalloffStart)
     COPY_MEMBER_FROM(l, mTopRadius)
     COPY_MEMBER_FROM(l, mBotRadius)
-    COPY_MEMBER_FROM(l, mTexture)
-    COPY_MEMBER_FROM(l, mCubeTexture)
+    COPY_MEMBER_FROM(l, mProjection)
+    COPY_MEMBER_FROM(l, mCubeTex)
     COPY_MEMBER_FROM(l, mShadowOverride)
     COPY_MEMBER_FROM(l, mShadowObjects)
     COPY_MEMBER_FROM(l, mProjectedBlend)
@@ -160,7 +164,7 @@ BEGIN_LOADS(RndLight)
         }
     }
     if (d.rev > 7) {
-        d >> mTexture;
+        d >> mProjection;
         if (d.rev == 9) {
             ObjPtrList<RndDrawable> drawList(this);
             d >> drawList;
@@ -175,13 +179,13 @@ BEGIN_LOADS(RndLight)
             mColorOwner = this;
     }
     if (d.rev > 0xC)
-        d >> mTextureXfm;
+        d >> mTextureTransform;
     if (d.rev > 0xD) {
-        d >> mCubeTexture;
+        d >> mCubeTex;
     }
     if (d.rev > 0xE) {
         d >> mShadowObjects;
-        d >> mProjectedBlend;
+        d >> (int &)mProjectedBlend;
     }
     if (d.rev > 0xF)
         d >> mAnimateRangeFromPreset;
@@ -235,11 +239,11 @@ Transform RndLight::Projection() {
         out.m.z.Set(mx.z, mz.z, my.z);
         out.v.Set(-Dot(mx, v), -Dot(mz, v), mTopRadius - Dot(my, v));
 
-        Multiply(out, mTextureXfm, out);
-        static Transform sXfm(
+        Multiply(out, mTextureTransform, out);
+        static Transform sProjBias(
             Hmx::Matrix3(0.5f, 0, 0, 0, 0.5f, 0, 0.5f, 0.5f, 1), Vector3(0, 0, 0)
         );
-        Multiply(out, sXfm, out);
+        Multiply(out, sProjBias, out);
         return out;
     }
 }

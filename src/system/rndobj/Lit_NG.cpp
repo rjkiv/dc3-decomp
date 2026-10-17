@@ -17,11 +17,11 @@
 #include "rndobj/ShaderMgr.h"
 #include "rndobj/ShaderOptions.h"
 
-NgLight::NgLight() : mShadowRT(0), mShadowMap(0), unk188(0), unk18c(-1) {}
+NgLight::NgLight() : mShadowRT(0), mShadowMap(0), mShadowScratch(0), mLastDraw(-1) {}
 
 NgLight::~NgLight() {
     RELEASE(mShadowRT);
-    RELEASE(unk188);
+    RELEASE(mShadowScratch);
 }
 
 BEGIN_COPYS(NgLight)
@@ -75,9 +75,9 @@ void NgLight::BlurShadowRT() {
         RndTex *tex3;
         if (i == 0) {
             tex2 = mShadowRT;
-            tex3 = unk188;
+            tex3 = mShadowScratch;
         } else {
-            tex2 = unk188;
+            tex2 = mShadowScratch;
             tex3 = mShadowRT;
             std::swap(f13, f12);
         }
@@ -140,15 +140,15 @@ RndTex *NgLight::CreateShadowTex() {
 void NgLight::CheckShadowMap() {
     if (TheRnd.Drawing() && TheShaderMgr.AllowPerPixel()) {
         if (mType == kFakeSpot) {
-            if (TheRnd.GetDrawCount() != unk18c) {
+            if (TheRnd.GetDrawCount() != mLastDraw) {
                 bool b3 = !mShadowOverride && !mShadowObjects.empty();
                 if (b3) {
                     mShadowOverride = &mShadowObjects;
                 }
                 if (WantShadows()) {
-                    if (!mShadowRT && !unk188) {
+                    if (!mShadowRT && !mShadowScratch) {
                         mShadowRT = CreateShadowTex();
-                        unk188 = CreateShadowTex();
+                        mShadowScratch = CreateShadowTex();
                     }
                     std::vector<RndDrawable *> draws;
                     if (HaveShadows(draws)) {
@@ -164,7 +164,7 @@ void NgLight::CheckShadowMap() {
                     mShadowMap = TheRnd.GetDefaultTex(Rnd::kDefaultTex_WhiteTransparent);
                     MILO_ASSERT(mShadowMap, 0x91);
                 }
-                unk18c = TheRnd.GetDrawCount();
+                mLastDraw = TheRnd.GetDrawCount();
                 if (b3) {
                     mShadowOverride = nullptr;
                 }
