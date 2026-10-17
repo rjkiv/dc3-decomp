@@ -529,7 +529,7 @@ RndMat *RndFont::Mat(int idx) const {
 
 RndTex *RndFont::ValidTexture(int idx) const {
     if (Mat(idx)) {
-        return Mat(idx)->GetDiffuseTex();
+        return Mat(idx)->DiffuseTex();
     } else
         return nullptr;
 }
@@ -554,7 +554,7 @@ void RndFont::SetBitmapSize(const Vector2 &size) {
     }
     for (int i = 0; i < mMats.size(); i++) {
         RndMat *curMat = mMats[i];
-        RndTex *curTex = curMat ? curMat->GetDiffuseTex() : nullptr;
+        RndTex *curTex = curMat ? curMat->DiffuseTex() : nullptr;
         if (curTex && curTex->Width() && curTex->Height()) {
             unk98[i].x = mCellSize.x / (float)curTex->Width();
             unk98[i].y = mCellSize.y / (float)curTex->Height();
@@ -699,7 +699,7 @@ void RndFont::BleedTest() {
         BitmapLocker locker(this, curCharInfo.page);
         RndBitmap *bitmap = locker.PtrToBitmap();
         if (bitmap) {
-            bool isClamp = mMats[curCharInfo.page]->GetTexWrap() == kTexWrapClamp;
+            bool isClamp = mMats[curCharInfo.page]->GetTexWrap() == BaseMaterial::kClamp;
             int i7 = Round((float)bitmap->Height() * curCharInfo.normY);
             int i8 = Round((float)bitmap->Width() * curCharInfo.normX);
             int i6 = Round(mCellSize.x * curCharInfo.charWidth) + i8;

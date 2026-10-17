@@ -630,7 +630,7 @@ void WorldDir::Init() {
     SetTheWorld(nullptr);
     sGlowMat = Hmx::Object::New<RndMat>();
     sGlowMat->SetBlend(BaseMaterial::kBlendSrcAlpha);
-    sGlowMat->SetZMode(kZModeDisable);
+    sGlowMat->SetZMode(BaseMaterial::kDisable);
     sGlowMat->SetPreLit(true);
     CreateAndSetMetaMat(sGlowMat);
 }

@@ -156,9 +156,9 @@ void NgDOFProc::DoPost() {
             RndMat *work = TheShaderMgr.GetWork();
             mBlurTex[0]->MakeDrawTarget();
             work->SetDiffuseTex(TheNgRnd.PreProcessTexture());
-            work->SetZMode(kZModeDisable);
+            work->SetZMode(BaseMaterial::kDisable);
             work->SetBlend(BaseMaterial::kBlendSrc);
-            work->SetTexWrap(kTexWrapClamp);
+            work->SetTexWrap(BaseMaterial::kClamp);
             TheNgRnd.DrawRect(
                 r100, work, kDownsample4xShader, Hmx::Color(), nullptr, nullptr
             );
@@ -166,8 +166,8 @@ void NgDOFProc::DoPost() {
             mBlurTex[1]->MakeDrawTarget();
             work->SetDiffuseTex(mBlurTex[0]);
             work->SetBlend(BaseMaterial::kBlendSrc);
-            work->SetZMode(kZModeDisable);
-            work->SetTexWrap(kTexWrapClamp);
+            work->SetZMode(BaseMaterial::kDisable);
+            work->SetTexWrap(BaseMaterial::kClamp);
             SetVHBlurWeights(false, w, h);
             TheNgRnd.DrawRect(r100, work, kBlurShader, Hmx::Color(), nullptr, nullptr);
             mBlurTex[1]->FinishDrawTarget();

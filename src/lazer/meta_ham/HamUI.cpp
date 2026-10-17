@@ -284,7 +284,7 @@ void HamUI::Draw() {
                         mAugmentedPhoto->Find<RndTexRenderer>("TexRenderer.rndtex");
                     RndMat *snapshot = cam->GetSnapshot(cam->NumSnapshots() - 1);
                     renderer->SetOutputTexture(
-                        snapshot ? snapshot->GetDiffuseTex() : nullptr
+                        snapshot ? snapshot->DiffuseTex() : nullptr
                     );
                     StreamRenderer *streamRenderer =
                         mAugmentedPhoto->Find<StreamRenderer>("StreamRendererColor.sr");

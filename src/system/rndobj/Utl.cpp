@@ -701,9 +701,9 @@ void UtilDrawSphere(const Vector3 &v1, float scale, const Hmx::Color &c, RndMat 
         if (mat) {
             sSphereMesh->SetMat(mat);
         } else {
-            sSphereMesh->Mat()->SetColor(c.red, c.green, c.blue);
+            sSphereMesh->Mat()->SetColor(c);
             sSphereMesh->Mat()->SetAlpha(0.2f);
-            sSphereMesh->Mat()->SetCull(kCullNone);
+            sSphereMesh->Mat()->SetCull(BaseMaterial::kCullNone);
         }
         sSphereMesh->SetLocalXfm(tf);
         sSphereMesh->SetSphere(Sphere(Vector3(0, 0, 0), scale));
@@ -721,10 +721,10 @@ void UtilDrawCylinder(
         MILO_NOTIFY_ONCE("Sphere mesh is not loaded");
     } else {
         Transform tfb0 = xfm;
-        sCylinderMesh->Mat()->SetColor(c.red, c.green, c.blue);
+        sCylinderMesh->Mat()->SetColor(c);
         sCylinderMesh->Mat()->SetAlpha(0.2f);
         Scale(Vector3(height, base, base), tfb0.m, tfb0.m);
-        sCylinderMesh->Mat()->SetCull(kCullNone);
+        sCylinderMesh->Mat()->SetCull(BaseMaterial::kCullNone);
         sCylinderMesh->SetLocalXfm(tfb0);
         sCylinderMesh->SetSphere(Sphere(Vector3(0, 0, 0), base));
         sCylinderMesh->Draw();

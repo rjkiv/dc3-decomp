@@ -92,8 +92,8 @@ void RndSoftParticleBuffer::Queue(RndDrawable *draw, BaseMaterial::Blend blend) 
 void RndSoftParticleBuffer::BlurSurface() {
     RndMat *work = TheShaderMgr.GetWork();
     work->SetBlend(BaseMaterial::kBlendSrc);
-    work->SetZMode(kZModeDisable);
-    work->SetTexWrap(kTexWrapClamp);
+    work->SetZMode(BaseMaterial::kDisable);
+    work->SetTexWrap(BaseMaterial::kClamp);
     for (unsigned int i = 0; i < 2; i++) {
         RndTex *curSurface = mSurfaces[i - 1 & 1];
         work->SetDiffuseTex(mSurfaces[i & 1]);

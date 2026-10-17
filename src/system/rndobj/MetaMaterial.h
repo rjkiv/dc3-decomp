@@ -98,7 +98,7 @@ protected:
         More shaders means more memory is used." */
     int CalcApproxNumShaders();
     void Init();
-    void SetEditAction(MatProp, MatPropEditAction);
+    void SetEditAction(MatProp propNum, MatPropEditAction action);
 
-    std::vector<MatPropEditAction> mMatPropEditActions; // 0x1f8
+    std::vector<MatPropEditAction> mPropActions; // 0x1f8
 };

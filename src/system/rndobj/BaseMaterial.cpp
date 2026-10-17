@@ -39,21 +39,20 @@ void MatPerfSettings::Load(BinStream &bs) {
 
 BaseMaterial::BaseMaterial()
     : mColor(1, 1, 1), mUseEnviron(true), mPrelit(false), mDiffuseTex(this),
-      mDiffuseTex2(this), mIntensify(false), mTexWrap(kTexWrapRepeat),
-      mTexGen(kTexGenNone), mBlend(kBlendSrc), mZMode(kZModeNormal), mAlphaCut(false),
-      mAlphaWrite(false), mForceAlphaWrite(false), mAlphaThreshold(0), mNextPass(this),
-      mPointLights(false), mFog(false), mFadeout(false), mColorAdjust(false),
+      mDiffuseTex2(this), mIntensify(false), mTexWrap(BaseMaterial::kRepeat),
+      mTexGen(kNone), mBlend(kBlendSrc), mZMode(kNormal), mAlphaCut(false),
+      mAlphaWrite(false), mForceAlphaWrite(false), mAlphaThresh(0), mNextPass(this),
+      mPointLights(false), mFog(false), mFadeout(false), mColorXfm(false),
       mPerPixelLit(false), mEmissiveMultiplier(1), mEmissiveMap(this), mNormalMap(this),
-      mDeNormal(0), mNormDetailMap(this), mNormDetailTiling(1), mNormDetailStrength(0),
-      mSpecularRGB(0, 0, 0, 10), mSpecular2RGB(0, 0, 0, 10), mSpecularMap(this),
-      mAnisotropy(0), mRimRGB(0, 0, 0, 10), mRimMap(this), mRimLightUnder(false),
+      mDeNormal(0), mNormDetail(this), mNormDetailTile(1), mNormDetailStrength(0),
+      mSpecular(0, 0, 0, 10), mSpecularSecondary(0, 0, 0, 10), mSpecularMap(this),
+      mAnisotropy(0), mRimColor(0, 0, 0, 10), mRimMap(this), mRimLightUnder(false),
       mEnvironMap(this), mEnvironMapFalloff(false), mEnvironMapSpecMask(false),
       mRefractEnabled(false), mRefractStrength(0), mRefractNormalMap(this),
-      mShaderVariation(kShaderVariationNone), mFur(this), mNeverFitToSpline(false),
-      mAllowDistortionEffects(true), mShockwaveMult(1), mWorldProjectionTiling(0.125),
+      mShaderVariation(kShaderVariation_None), mFur(this), mNeverFitToSpline(false),
+      mAllowDistortionEffects(true), mShockwaveMult(1), mWorldProjectionTile(0.125),
       mWorldProjectionStartBlend(0.8), mWorldProjectionEndBlend(0.9),
-      mScreenAligned(false), mCull(kCullRegular), mStencilMode(kStencilIgnore),
-      mBloomMultiplier(1) {
+      mScreenAligned(false), mCull(kCullCW), mStencilMode(kIgnore), mBloomMultiplier(1) {
     mTexXfm.Reset();
 }
 
@@ -72,23 +71,23 @@ BEGIN_SAVES(BaseMaterial)
     SAVE_REVS(8, 0)
     SAVE_SUPERCLASS(Hmx::Object)
     bs << mBlend << mColor << mUseEnviron << mPrelit;
-    bs << mZMode << mAlphaCut << mAlphaThreshold << mAlphaWrite;
+    bs << mZMode << mAlphaCut << mAlphaThresh << mAlphaWrite;
     bs << mTexGen << mTexWrap << mTexXfm << mDiffuseTex << mNextPass;
     bs << mIntensify << mCull << mEmissiveMultiplier;
-    bs << mSpecularRGB << mNormalMap;
+    bs << mSpecular << mNormalMap;
     bs << mEmissiveMap << mSpecularMap;
     bs << mEnvironMap << mEnvironMapFalloff << mEnvironMapSpecMask;
     bs << mPerPixelLit << mStencilMode;
     bs << mFur << mDeNormal << mAnisotropy;
-    bs << mNormDetailTiling << mNormDetailStrength << mNormDetailMap;
-    bs << mPointLights << mFog << mFadeout << mColorAdjust;
-    bs << mRimRGB << mRimMap << mRimLightUnder;
-    bs << mScreenAligned << mShaderVariation << mSpecular2RGB;
+    bs << mNormDetailTile << mNormDetailStrength << mNormDetail;
+    bs << mPointLights << mFog << mFadeout << mColorXfm;
+    bs << mRimColor << mRimMap << mRimLightUnder;
+    bs << mScreenAligned << mShaderVariation << mSpecularSecondary;
     mPerfSettings.Save(bs);
     bs << mRefractEnabled << mRefractStrength << mRefractNormalMap;
     bs << mBloomMultiplier << mNeverFitToSpline;
     bs << mAllowDistortionEffects << mShockwaveMult;
-    bs << mWorldProjectionTiling;
+    bs << mWorldProjectionTile;
     bs << mWorldProjectionStartBlend;
     bs << mWorldProjectionEndBlend;
     bs << mDiffuseTex2;
@@ -114,7 +113,7 @@ BEGIN_COPYS(BaseMaterial)
             COPY_MEMBER(mPrelit)
             COPY_MEMBER(mUseEnviron)
             COPY_MEMBER(mAlphaCut)
-            COPY_MEMBER(mAlphaThreshold)
+            COPY_MEMBER(mAlphaThresh)
             COPY_MEMBER(mAlphaWrite)
             COPY_MEMBER(mForceAlphaWrite)
             COPY_MEMBER(mTexGen)
@@ -125,8 +124,8 @@ BEGIN_COPYS(BaseMaterial)
             COPY_MEMBER(mNextPass)
             COPY_MEMBER(mCull)
             COPY_MEMBER(mEmissiveMultiplier)
-            COPY_MEMBER(mSpecularRGB)
-            COPY_MEMBER(mSpecular2RGB)
+            COPY_MEMBER(mSpecular)
+            COPY_MEMBER(mSpecularSecondary)
             COPY_MEMBER(mNormalMap)
             COPY_MEMBER(mEmissiveMap)
             COPY_MEMBER(mSpecularMap)
@@ -138,14 +137,14 @@ BEGIN_COPYS(BaseMaterial)
             COPY_MEMBER(mFur)
             COPY_MEMBER(mDeNormal)
             COPY_MEMBER(mAnisotropy)
-            COPY_MEMBER(mNormDetailTiling)
+            COPY_MEMBER(mNormDetailTile)
             COPY_MEMBER(mNormDetailStrength)
-            COPY_MEMBER(mNormDetailMap)
+            COPY_MEMBER(mNormDetail)
             COPY_MEMBER(mPointLights)
             COPY_MEMBER(mFog)
             COPY_MEMBER(mFadeout)
-            COPY_MEMBER(mColorAdjust)
-            COPY_MEMBER(mRimRGB)
+            COPY_MEMBER(mColorXfm)
+            COPY_MEMBER(mRimColor)
             COPY_MEMBER(mRimMap)
             COPY_MEMBER(mRimLightUnder)
             COPY_MEMBER(mScreenAligned)
@@ -158,7 +157,7 @@ BEGIN_COPYS(BaseMaterial)
             COPY_MEMBER(mNeverFitToSpline)
             COPY_MEMBER(mAllowDistortionEffects)
             COPY_MEMBER(mShockwaveMult)
-            COPY_MEMBER(mWorldProjectionTiling)
+            COPY_MEMBER(mWorldProjectionTile)
             COPY_MEMBER(mWorldProjectionStartBlend)
             COPY_MEMBER(mWorldProjectionEndBlend)
         }
@@ -175,28 +174,28 @@ BEGIN_LOADS(BaseMaterial)
     mBlend = CheckBlendMode(mBlend, this);
     d >> mColor >> mUseEnviron >> mPrelit;
     d >> (int &)mZMode;
-    d >> mAlphaCut >> mAlphaThreshold >> mAlphaWrite;
+    d >> mAlphaCut >> mAlphaThresh >> mAlphaWrite;
     d >> (int &)mTexGen >> (int &)mTexWrap >> mTexXfm >> mDiffuseTex >> mNextPass;
     d >> mIntensify;
     if (d.rev < 3) {
         bool cull;
         d >> cull;
-        mCull = (Cull)(cull != 0);
+        mCull = (CullType)(cull != 0);
     } else {
         d >> (int &)mCull;
     }
     d >> mEmissiveMultiplier;
-    d >> mSpecularRGB >> mNormalMap;
+    d >> mSpecular >> mNormalMap;
     d >> mEmissiveMap >> mSpecularMap;
     d >> mEnvironMap >> mEnvironMapFalloff >> mEnvironMapSpecMask;
     d >> mPerPixelLit >> (int &)mStencilMode;
     d >> mFur >> mDeNormal >> mAnisotropy;
-    d >> mNormDetailTiling >> mNormDetailStrength >> mNormDetailMap;
-    d >> mPointLights >> mFog >> mFadeout >> mColorAdjust;
-    d >> mRimRGB >> mRimMap >> mRimLightUnder;
+    d >> mNormDetailTile >> mNormDetailStrength >> mNormDetail;
+    d >> mPointLights >> mFog >> mFadeout >> mColorXfm;
+    d >> mRimColor >> mRimMap >> mRimLightUnder;
     d >> mScreenAligned;
     d >> (int &)mShaderVariation;
-    d >> mSpecular2RGB;
+    d >> mSpecularSecondary;
     mPerfSettings.Load(d);
     d >> mRefractEnabled;
     d >> mRefractStrength;
@@ -217,7 +216,7 @@ BEGIN_LOADS(BaseMaterial)
         }
     }
     if (d.rev > 6) {
-        d >> mWorldProjectionTiling;
+        d >> mWorldProjectionTile;
         d >> mWorldProjectionStartBlend;
         d >> mWorldProjectionEndBlend;
         d >> mDiffuseTex2;

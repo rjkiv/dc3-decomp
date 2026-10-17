@@ -381,8 +381,9 @@ BEGIN_LOADS(RndMesh)
     if (!mGeomOwner) {
         mGeomOwner = this;
     }
-    if (d.rev < 0x14 && mMat && (i22 == 0 || mMat->GetZMode() != kZModeDisable)) {
-        mMat->SetZMode((ZMode)i22);
+    if (d.rev < 0x14 && mMat
+        && (i22 == 0 || mMat->GetZMode() != BaseMaterial::kDisable)) {
+        mMat->SetZMode((BaseMaterial::ZMode)i22);
     }
     if (d.rev < 0xD) {
         ObjOwnerPtr<RndMesh> mesh(this);
@@ -675,7 +676,7 @@ RndDrawable *RndMesh::CollideShowing(const Segment &seg, float &f, Plane &pl) {
         if (GetVolume() == kVolumeTriangles) {
             f = 1.0f;
             bool b1 = false;
-            bool bbb = mMat && mMat->GetCull() != kCullNone;
+            bool bbb = mMat && mMat->GetCull() != BaseMaterial::kCullNone;
             FOREACH (it, Faces()) {
                 const Vert &vert0 = Verts(it->v1);
                 const Vert &vert1 = Verts(it->v2);

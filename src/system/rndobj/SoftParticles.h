@@ -27,5 +27,5 @@ protected:
     /** "The list of particle objects to draw" */
     ObjPtrList<RndDrawable> mParticles; // 0x40
     /** "Blending to use for the particle system" */
-    BaseMaterial::Blend mBlend; // 0x54
+    BaseMaterial::Blend mBlendMode; // 0x54
 };

@@ -26,8 +26,8 @@ namespace {
     RndMat *SetUpWorkingMat() {
         RndMat *work = TheShaderMgr.GetWork();
         work->SetBlend(BaseMaterial::kBlendSrc);
-        work->SetZMode(kZModeDisable);
-        work->SetTexWrap(kTexWrapClamp);
+        work->SetZMode(BaseMaterial::kDisable);
+        work->SetTexWrap(BaseMaterial::kClamp);
         return work;
     }
 }

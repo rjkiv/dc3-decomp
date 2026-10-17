@@ -27,7 +27,7 @@ DynamicTex::DynamicTex(const char *c1, const char *c2, bool b)
     }
     if (b) {
         mMat = Hmx::Object::New<RndMat>();
-        mMat->SetZMode(kZModeDisable);
+        mMat->SetZMode(BaseMaterial::kDisable);
         mMat->SetBlend(BaseMaterial::kBlendSrcAlpha);
         CreateAndSetMetaMat(mMat);
     }

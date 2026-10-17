@@ -171,7 +171,7 @@ void RndMatAnim::SetFrame(float f1, float f2) {
             if (f2 != 1.0f) {
                 Interp(mMat->GetColor(), col, f2, col);
             }
-            mMat->SetColor(col.red, col.green, col.blue);
+            mMat->SetColor(col);
         }
         if (!AlphaKeys().empty()) {
             float alpha = mMat->Alpha();
@@ -198,7 +198,7 @@ void RndMatAnim::SetKey(float frame) {
         TransKeys().Add(mMat->TexXfm().v, frame, true);
         RotKeys().Add(v28, frame, true);
         ScaleKeys().Add(v34, frame, true);
-        GetTexKeys().Add(mMat->GetDiffuseTex(), frame, true);
+        GetTexKeys().Add(mMat->DiffuseTex(), frame, true);
         ColorKeys().Add(mMat->GetColor(), frame, true);
         AlphaKeys().Add(mMat->Alpha(), frame, true);
     }

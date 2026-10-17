@@ -97,8 +97,8 @@ namespace {
     RndMat *SetUpWorkingMat() {
         RndMat *work = TheShaderMgr.GetWork();
         work->SetBlend(BaseMaterial::kBlendSrc);
-        work->SetZMode(kZModeDisable);
-        work->SetTexWrap(kTexWrapClamp);
+        work->SetZMode(BaseMaterial::kDisable);
+        work->SetTexWrap(BaseMaterial::kClamp);
         return work;
     }
 
@@ -772,9 +772,9 @@ void StreamRenderer::DrawToTexture() {
         );
         mCam->SetTargetTex(nullptr);
         RndMat *curWork = TheShaderMgr.GetWork();
-        curWork->SetTexWrap(kTexWrapClamp);
+        curWork->SetTexWrap(BaseMaterial::kClamp);
         curWork->SetBlend(BaseMaterial::kBlendSrc);
-        curWork->SetZMode(kZModeDisable);
+        curWork->SetZMode(BaseMaterial::kDisable);
 
         for (int i = 0; i < mNumBlurs; i++) {
             RndTex *blur = i & 1 ? mBlurRT[1] : mBlurRT[0];

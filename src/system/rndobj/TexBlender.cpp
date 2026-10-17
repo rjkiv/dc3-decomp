@@ -269,10 +269,10 @@ void RndTexBlender::DrawShowing() {
 #pragma region RndTexBlender
 
 RndMat *RndTexBlender::SetupMaterial(RndMat *mat, RndTex *tex) {
-    mat->SetZMode(kZModeDisable);
+    mat->SetZMode(BaseMaterial::kDisable);
     mat->SetBlend(RndMat::kBlendSrc);
-    mat->SetCull(kCullNone);
-    mat->SetTexWrap(kTexWrapClamp);
+    mat->SetCull(BaseMaterial::kCullNone);
+    mat->SetTexWrap(BaseMaterial::kClamp);
     mat->SetDiffuseTex(tex);
     return mat;
 }

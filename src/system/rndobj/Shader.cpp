@@ -216,7 +216,7 @@ void RndShader::CheckForceCull(ShaderType s) {
 bool RndShader::RedundantState(
     const RndMat *mat, ShaderType s, bool skinned, bool useAO, bool b5
 ) {
-    if (!b5 && mat && (NgMat *)mat == NgMat::Current() && !mat->Dirty()
+    if (!b5 && mat && (NgMat *)mat == NgMat::Current() && !mat->IsDirty()
         && s == sCurrentShader && skinned == sCurrentSkinned && useAO == sCurrentUseAO) {
         if (s == kStandardShader || s == kStandardBBShader || s == kParticlesShader
             || s == kMultimeshShader || s == kMultimeshBBShader || s == kSyncTrackShader
@@ -308,13 +308,13 @@ void RndShader::Cache(ShaderType s, ShaderOptions opts, RndMat *mat) {
 }
 
 // which TEX_GEN variation of the shader handles this tex gen mode
-static int TexGenOption(TexGen texGen) {
+static int TexGenOption(BaseMaterial::TexGen texGen) {
     switch (texGen) {
-    case kTexGenSphere:
+    case BaseMaterial::kSphere:
         return 1;
-    case kTexGenProjected:
+    case BaseMaterial::kProjected:
         return 2;
-    case kTexGenEnviron:
+    case BaseMaterial::kEnviron:
         return 3;
     default:
         return 0;
@@ -355,7 +355,7 @@ void RndShaderSimple::Select(RndMat *mat, ShaderType s, bool b) {
     if (!mat) {
         if (s == kLineNozShader) {
             mat = TheShaderMgr.DrawHighlightMat();
-            mat->SetZMode(kZModeForce);
+            mat->SetZMode(BaseMaterial::kForce);
             s = kLineShader;
         } else {
             mat = TheRnd.DefaultMat();
@@ -377,7 +377,7 @@ void RndShaderSimple::Select(RndMat *mat, ShaderType s, bool b) {
 
 u64 RndShaderParticles::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool precache) {
     ShaderOptions opts;
-    opts.diffuseMap = mat->GetDiffuseTex() ? true : false;
+    opts.diffuseMap = mat->DiffuseTex() ? true : false;
     opts.prelit = true;
     opts.texGen = TexGenOption(mat->GetTexGen());
     opts.hasLightsReal = false;
@@ -438,7 +438,7 @@ u64 RndShaderMultimesh::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool 
     }
     NgEnviron *env = (NgEnviron *)RndEnviron::Current();
     ShaderOptions opts;
-    opts.diffuseMap = mat->GetDiffuseTex() ? true : false;
+    opts.diffuseMap = mat->DiffuseTex() ? true : false;
     opts.prelit = mat->PreLit();
     opts.hasLightsReal = mat->UseEnviron() && env->NumLights_Real() > 0;
     opts.hasLightsApprox = mat->UseEnviron() && env->NumLights_Approx() > 0;
@@ -448,7 +448,7 @@ u64 RndShaderMultimesh::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool 
             opts.perPixel = true;
             opts.normalMap = mat->NormalMap() ? true : false;
             opts.normDetail = mat->NormDetail();
-            opts.normalFlip = mat->GetCull() == kCullBackwards ? true : false;
+            opts.normalFlip = mat->GetCull() == BaseMaterial::kCullCCW ? true : false;
             opts.specularMap = opts.specular && mat->SpecularMap();
             opts.rimlightEnabled = mat->GetRimColor().PackRgb() != 0;
             opts.rimlightUnder = opts.rimlightEnabled && mat->GetRimLightUnder();
@@ -492,7 +492,8 @@ u64 RndShaderMultimesh::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool 
         opts.fade = mat->GetFadeType();
     }
     CheckDistortionOpts(mat, opts);
-    bool projLights = mat->PerfSettings().mRecvProjLights && env->NumLights_Proj() > 0;
+    bool projLights =
+        mat->PerfSettings().GetRecvProjLights() && env->NumLights_Proj() > 0;
     opts.numLightProj = projLights ? env->NumLights_Proj() : 0;
     opts.showShaderCost = TheRnd.ShowShaderCost();
     opts.hiResScreen = TheHiResScreen.Active();
@@ -524,7 +525,7 @@ u64 RndShaderStandard::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool p
         return opts.value;
     }
     if (TheRnd.DrawMode() == Rnd::kDrawFastAndCheap) {
-        opts.diffuseMap = mat->GetDiffuseTex() ? true : false;
+        opts.diffuseMap = mat->DiffuseTex() ? true : false;
         opts.prelit = mat->PreLit();
         if (mat->UseEnviron()) {
             opts.fastAndCheapLighting = true;
@@ -539,7 +540,7 @@ u64 RndShaderStandard::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool p
     }
     opts.hdr = mat->AllowHDR() && !fade
         && !(precache ? TheShaderMgr.GetPrecacheOffscreen() : TheNgRnd.Offscreen());
-    opts.diffuseMap = mat->GetDiffuseTex() ? true : false;
+    opts.diffuseMap = mat->DiffuseTex() ? true : false;
     opts.prelit = mat->PreLit();
     opts.hasLightsReal = mat->UseEnviron() && env->NumLights_Real() > 0;
     opts.hasLightsApprox = mat->UseEnviron() && env->NumLights_Approx() > 0;
@@ -549,7 +550,7 @@ u64 RndShaderStandard::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool p
             opts.perPixel = true;
             opts.normalMap = mat->NormalMap() ? true : false;
             opts.normDetail = mat->NormDetail();
-            opts.normalFlip = mat->GetCull() == kCullBackwards ? true : false;
+            opts.normalFlip = mat->GetCull() == BaseMaterial::kCullCCW ? true : false;
             opts.specularMap = opts.specular && mat->SpecularMap();
             opts.rimlightEnabled = mat->GetRimColor().PackRgb() != 0;
             opts.rimlightUnder = opts.rimlightEnabled && mat->GetRimLightUnder();
@@ -562,8 +563,8 @@ u64 RndShaderStandard::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool p
             opts.environMapSpecMask = opts.specularMap && mat->EnvironMapSpecMask();
         }
         bool projLights =
-            mat->PerfSettings().mRecvProjLights && env->NumLights_Proj() > 0;
-        bool pointCubeTex = mat->PerfSettings().mRecvPointCubeTex
+            mat->PerfSettings().GetRecvProjLights() && env->NumLights_Proj() > 0;
+        bool pointCubeTex = mat->PerfSettings().GetRecvPointCubeTex()
             && env->NumLights_Point() > 0 && env->HasPointCubeTex();
         opts.anisotropic = mat->Anisotropy() > 0;
         opts.numLightPoint = env->NumLights_Point();
@@ -720,7 +721,7 @@ u64 RndShaderDrawRect::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool p
         return 0;
     }
     ShaderOptions opts;
-    opts.diffuseMap = mat->GetDiffuseTex() ? true : false;
+    opts.diffuseMap = mat->DiffuseTex() ? true : false;
     opts.prelit = mat->PreLit();
     bool offscreen =
         precache ? TheShaderMgr.GetPrecacheOffscreen() : TheNgRnd.Offscreen();
@@ -750,7 +751,7 @@ void RndShaderDrawRect::Select(RndMat *mat, ShaderType s, bool b) {
 
 u64 RndShaderUnwrapUV::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool precache) {
     ShaderOptions opts;
-    opts.diffuseMap = mat->GetDiffuseTex() ? true : false;
+    opts.diffuseMap = mat->DiffuseTex() ? true : false;
     opts.prelit = true;
     opts.hiResScreen = TheHiResScreen.Active();
     return opts.value;
@@ -879,7 +880,7 @@ u64 RndShaderFur::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool precac
     if (TheRnd.DrawMode() == Rnd::kDrawShadowColor) {
         return opts.value;
     }
-    opts.diffuseMap = mat->GetDiffuseTex() ? true : false;
+    opts.diffuseMap = mat->DiffuseTex() ? true : false;
     opts.prelit = mat->PreLit();
     opts.hasLightsReal = mat->UseEnviron() && env->NumLights_Real() > 0;
     opts.hasLightsApprox = mat->UseEnviron() && env->NumLights_Approx() > 0;
@@ -889,8 +890,8 @@ u64 RndShaderFur::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool precac
             opts.shadowMap = TheRnd.GetShadowCam() ? true : false;
         }
         bool projLights =
-            mat->PerfSettings().mRecvProjLights && env->NumLights_Proj() > 0;
-        bool pointCubeTex = mat->PerfSettings().mRecvPointCubeTex
+            mat->PerfSettings().GetRecvProjLights() && env->NumLights_Proj() > 0;
+        bool pointCubeTex = mat->PerfSettings().GetRecvPointCubeTex()
             && env->NumLights_Point() > 0 && env->HasPointCubeTex();
         opts.anisotropic = mat->Anisotropy() > 0;
         opts.numLightPoint = env->NumLights_Point();
@@ -953,7 +954,7 @@ u64 RndShaderSyncTrack::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool 
     }
     opts.hdr = mat->AllowHDR() && !fade
         && !(precache ? TheShaderMgr.GetPrecacheOffscreen() : TheNgRnd.Offscreen());
-    opts.diffuseMap = mat->GetDiffuseTex() ? true : false;
+    opts.diffuseMap = mat->DiffuseTex() ? true : false;
     opts.prelit = mat->PreLit();
     opts.hasLightsReal = mat->UseEnviron() && env->NumLights_Real() > 0;
     opts.hasLightsApprox = mat->UseEnviron() && env->NumLights_Approx() > 0;
@@ -963,7 +964,7 @@ u64 RndShaderSyncTrack::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool 
             opts.perPixel = true;
             opts.normalMap = mat->NormalMap() ? true : false;
             opts.normDetail = mat->NormDetail();
-            opts.normalFlip = mat->GetCull() == kCullBackwards ? true : false;
+            opts.normalFlip = mat->GetCull() == BaseMaterial::kCullCCW ? true : false;
             opts.specularMap = opts.specular && mat->SpecularMap();
             opts.rimlightEnabled = mat->GetRimColor().PackRgb() != 0;
             opts.rimlightUnder = opts.rimlightEnabled && mat->GetRimLightUnder();
@@ -976,8 +977,8 @@ u64 RndShaderSyncTrack::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool 
             opts.environMapSpecMask = opts.specularMap && mat->EnvironMapSpecMask();
         }
         bool projLights =
-            mat->PerfSettings().mRecvProjLights && env->NumLights_Proj() > 0;
-        bool pointCubeTex = mat->PerfSettings().mRecvPointCubeTex
+            mat->PerfSettings().GetRecvProjLights() && env->NumLights_Proj() > 0;
+        bool pointCubeTex = mat->PerfSettings().GetRecvPointCubeTex()
             && env->NumLights_Point() > 0 && env->HasPointCubeTex();
         opts.anisotropic = mat->Anisotropy() > 0;
         opts.numLightPoint = env->NumLights_Point();

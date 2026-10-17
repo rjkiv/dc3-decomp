@@ -80,10 +80,10 @@ void NgMat::SetBasicState() {
     case kCullNone:
         cm = RndRenderState::kNone;
         break;
-    case kCullRegular:
+    case kCullCW:
         cm = RndRenderState::kCW;
         break;
-    case kCullBackwards:
+    case kCullCCW:
         cm = RndRenderState::kCCW;
         break;
     default:
@@ -96,12 +96,12 @@ void NgMat::SetBasicState() {
     TheRenderState.SetBlend(mBlendA, mBlendB, mBlendA, mBlendB);
     TheRenderState.SetAlphaTestEnable(mAlphaCut);
     if (mAlphaCut) {
-        TheRenderState.SetAlphaFunc(RndRenderState::kGreater, mAlphaThreshold);
+        TheRenderState.SetAlphaFunc(RndRenderState::kGreater, mAlphaThresh);
     }
     TheRenderState.SetDepthTestEnable(mDepthTestEnable);
     TheRenderState.SetDepthWriteEnable(mDepthWriteEnable);
     TheRenderState.SetDepthFunc(mDepthFunc);
-    if (mStencilMode == kStencilIgnore) {
+    if (mStencilMode == kIgnore) {
         TheRenderState.SetStencilTestEnable(false);
     } else {
         TheRenderState.SetStencilTestEnable(true);
@@ -127,7 +127,7 @@ void NgMat::SetBasicState() {
         TheRenderState.SetTextureClamp(3, cur);
     }
     if (cur == 6) {
-        bool white = mTexWrap == kTexBorderWhite;
+        bool white = mTexWrap == kBorderWhite;
         TheRenderState.SetBorderColor(0, white);
         TheRenderState.SetBorderColor(6, white);
         TheRenderState.SetBorderColor(1, white);
@@ -164,12 +164,12 @@ void NgMat::SetRegularShaderConst(bool b1) {
         TheShaderMgr.SetPConstant((PShaderConstant)0xE, Vector4(val, val, val, val));
         TheRenderState.SetTextureFilter(1, RndRenderState::kLinear, false);
     }
-    if (mNormDetailMap) {
-        TheShaderMgr.SetPConstant((PShaderConstant)0xE, mNormDetailMap);
+    if (mNormDetail) {
+        TheShaderMgr.SetPConstant((PShaderConstant)0xE, mNormDetail);
         TheRenderState.SetTextureFilter(0xE, RndRenderState::kLinear, false);
         TheRenderState.SetTextureClamp(0xE, RndRenderState::kWrap);
         TheShaderMgr.SetPConstant(
-            (PShaderConstant)0x6A, Vector4(mNormDetailStrength, mNormDetailTiling, 1, 1)
+            (PShaderConstant)0x6A, Vector4(mNormDetailStrength, mNormDetailTile, 1, 1)
         );
     }
     if (mEmissiveMap) {
@@ -188,15 +188,15 @@ void NgMat::SetRegularShaderConst(bool b1) {
     TheShaderMgr.SetPConstant((PShaderConstant)0, mDiffuseTex);
     TheShaderMgr.SetPConstant((PShaderConstant)6, mDiffuseTex2);
     TheRenderState.SetTextureFilter(
-        0, RndRenderState::kLinear, mPerfSettings.mPS3ForceTrilinear
+        0, RndRenderState::kLinear, mPerfSettings.GetPS3ForceTrilinear()
     );
     TheRenderState.SetTextureFilter(
-        6, RndRenderState::kLinear, mPerfSettings.mPS3ForceTrilinear
+        6, RndRenderState::kLinear, mPerfSettings.GetPS3ForceTrilinear()
     );
     TheShaderMgr.SetPConstant((PShaderConstant)0xF, mTexelOffsets);
 
-    Hmx::Color specularColor = mSpecularRGB;
-    Hmx::Color specularColor2 = mSpecular2RGB;
+    Hmx::Color specularColor = mSpecular;
+    Hmx::Color specularColor2 = mSpecularSecondary;
     MaxEq(specularColor.alpha, 0.5f);
     MaxEq(specularColor2.alpha, 0.5f);
 
@@ -221,7 +221,7 @@ void NgMat::SetRegularShaderConst(bool b1) {
         TheShaderMgr.SetPConstant((PShaderConstant)2, mSpecularMap);
         TheRenderState.SetTextureFilter(2, RndRenderState::kLinear, false);
     }
-    Hmx::Color rimColor = mRimRGB;
+    Hmx::Color rimColor = mRimColor;
     rimColor.alpha = Max(rimColor.alpha, 0.5f);
     TheShaderMgr.SetVConstant(
         (VShaderConstant)0x3D,
@@ -252,7 +252,7 @@ void NgMat::SetRegularShaderConst(bool b1) {
         TheShaderMgr.SetPConstant((PShaderConstant)4, mEnvironMap);
         TheRenderState.SetTextureFilter(4, RndRenderState::kLinear, false);
     }
-    if (mShaderVariation != kShaderVariationNone) {
+    if (mShaderVariation != kShaderVariation_None) {
         TheShaderMgr.SetVConstant(
             (VShaderConstant)0x13,
             Vector4(
@@ -274,7 +274,7 @@ void NgMat::SetRegularShaderConst(bool b1) {
         float y = 1 / (mWorldProjectionEndBlend - mWorldProjectionStartBlend);
         TheShaderMgr.SetPConstant(
             (PShaderConstant)0xDC,
-            Vector4(mWorldProjectionTiling, y, -(mWorldProjectionStartBlend * y), 0)
+            Vector4(mWorldProjectionTile, y, -(mWorldProjectionStartBlend * y), 0)
         );
     }
     TheShaderMgr.SetVConstant((VShaderConstant)0x14, mCachedXfm);
@@ -381,27 +381,27 @@ void NgMat::RefreshState() {
         break;
     }
     switch (mZMode) {
-    case kZModeDisable:
+    case kDisable:
         mDepthTestEnable = false;
         mDepthFunc = RndRenderState::kLess;
         mDepthWriteEnable = false;
         break;
-    case kZModeNormal:
+    case kNormal:
         mDepthTestEnable = true;
         mDepthWriteEnable = true;
         mDepthFunc = RndRenderState::kLess;
         break;
-    case kZModeTransparent:
+    case kTransparent:
         mDepthTestEnable = true;
         mDepthFunc = RndRenderState::kLessEq;
         mDepthWriteEnable = false;
         break;
-    case kZModeForce:
+    case kForce:
         mDepthTestEnable = true;
         mDepthWriteEnable = true;
         mDepthFunc = RndRenderState::kAlways;
         break;
-    case kZModeDecal:
+    case kDecal:
         mDepthTestEnable = true;
         mDepthWriteEnable = true;
         mDepthFunc = RndRenderState::kLessEq;
@@ -409,7 +409,7 @@ void NgMat::RefreshState() {
     default:
         break;
     }
-    if (mStencilMode == kStencilWrite) {
+    if (mStencilMode == kWrite) {
         mStencilFunc = RndRenderState::kAlways;
         mStencilPass = RndRenderState::kIncSat;
     } else {
@@ -420,26 +420,26 @@ void NgMat::RefreshState() {
     mCachedXfmNorm.Identity();
     Transform tf160;
     switch (mTexGen) {
-    case kTexGenNone:
+    case kNone:
         mCachedXfm.Zero();
         mCachedXfm.m[3].w = 1;
         mCachedXfm.m[2].z = 1;
         mCachedXfm.m[1].y = 1;
         mCachedXfm.m[0].x = 1;
         break;
-    case kTexGenXfm:
-    case kTexGenXfmOrigin: {
-        MakeTex3(mTexXfm, mTexGen == kTexGenXfm, mCachedXfm);
+    case kXfm:
+    case kXfmOrigin: {
+        MakeTex3(mTexXfm, mTexGen == kXfm, mCachedXfm);
         tf160.v.Zero();
         Normalize(mTexXfm.m, tf160.m);
-        MakeTex3(tf160, mTexGen == kTexGenXfm, mCachedXfmNorm);
+        MakeTex3(tf160, mTexGen == kXfm, mCachedXfmNorm);
         break;
     }
-    case kTexGenSphere:
-    case kTexGenEnviron: {
+    case kSphere:
+    case kEnviron: {
         Transpose(mTexXfm.m, tf160.m);
         Multiply(RndCam::Current()->WorldXfm().m, tf160.m, tf160.m);
-        if (mTexGen == kTexGenSphere) {
+        if (mTexGen == kSphere) {
             Vector3 v1a0;
             MakeEuler(tf160.m, v1a0);
             v1a0.x = LimitAng(v1a0.x) / 2;
@@ -455,7 +455,7 @@ void NgMat::RefreshState() {
         mCachedXfm = Hmx::Matrix4(tf160);
         break;
     }
-    case kTexGenProjected: {
+    case kProjected: {
         FastInvert(mTexXfm, tf160);
         Transform tf120 = sStateXfm;
         tf120.m.z.y = -1;

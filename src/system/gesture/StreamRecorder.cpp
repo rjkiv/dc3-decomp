@@ -146,7 +146,7 @@ bool StreamRecorder::SetFrame(int index) {
     if (index <= i4 && mOutputMat) {
         MILO_ASSERT(index < mBuffers.size(), 0x46);
         RndTex *cur = mBuffers[index];
-        if (cur != mOutputMat->GetDiffuseTex()) {
+        if (cur != mOutputMat->DiffuseTex()) {
             mOutputMat->SetDiffuseTex(cur);
         }
         return true;

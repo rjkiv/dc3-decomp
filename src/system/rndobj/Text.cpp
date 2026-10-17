@@ -604,7 +604,9 @@ BEGIN_LOADS(RndText)
             RndFont *oldfont2d = dynamic_cast<RndFont *>(fontBase.Ptr());
             MILO_ASSERT(oldfont2d, 0xBC1);
             if (oldfont2d->NumMats() && oldfont2d->Mat(0)) {
-                fontBase->Mat()->SetZMode(b ? kZModeTransparent : kZModeDisable);
+                fontBase->Mat()->SetZMode(
+                    b ? BaseMaterial::kTransparent : BaseMaterial::kDisable
+                );
             }
         }
     }
@@ -790,7 +792,7 @@ void RndText::DrawShowing() {
                 for (int i = 0; i < font->NumMaterials(); i++) {
                     RndMat *mat = font->Material(i);
                     Hmx::Color *curColor = (Hmx::Color *)&colors[i * 4];
-                    mat->SetColor(*curColor);
+                    mat->SetRGBA(*curColor);
                 }
             }
         }
@@ -817,7 +819,7 @@ void RndText::DrawShowing() {
             for (int i = 0; i < (*it)->NumMaterials(); i++) {
                 RndMat *mat = (*it)->Material(i);
                 Hmx::Color *curColor = (Hmx::Color *)&colors[i * 4];
-                mat->SetColor(curColor->red, curColor->green, curColor->blue);
+                mat->SetColor(*curColor);
             }
         }
     }
@@ -1548,7 +1550,7 @@ void RndText::DrawBlacklight() {
         if (packet.unk1c && packet.unk1c != RndCam::Current()) {
             packet.unk1c->Select();
         }
-        packet.unk0->Mat()->SetColor(packet.unk4.red, packet.unk4.green, packet.unk4.blue);
+        packet.unk0->Mat()->SetColor(packet.unk4);
         DrawMesh(packet.unk0, packet.unk14, packet.unk18);
     }
     if (cur && cur != RndCam::Current()) {

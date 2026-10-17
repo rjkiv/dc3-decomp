@@ -97,12 +97,12 @@ END_HANDLERS
             if (_op == kPropSet) {                                                       \
                 Symbol action(#s "_edit_action");                                        \
                 if (IsEditable(action)) {                                                \
-                    member = _val.Int() > 0;                                             \
+                    mPerfSettings.Set##member(_val.Int() > 0);                           \
                 }                                                                        \
             } else {                                                                     \
                 if (_op == (PropOp)0x40)                                                 \
                     return false;                                                        \
-                _val = member;                                                           \
+                _val = mPerfSettings.Get##member();                                      \
             }                                                                            \
             return true;                                                                 \
         }                                                                                \
@@ -128,7 +128,7 @@ BEGIN_PROPSYNCS(RndMat)
     SYNC_MAT_PROP(diffuse_tex2, mDiffuseTex2, 2)
     SYNC_MAT_PROP(prelit, mPrelit, 2)
     SYNC_MAT_PROP(alpha_cut, mAlphaCut, 2)
-    SYNC_PROP_MODIFY(alpha_threshold, mAlphaThreshold, mDirty |= 2)
+    SYNC_PROP_MODIFY(alpha_threshold, mAlphaThresh, mDirty |= kDirtyRest)
     SYNC_MAT_PROP(alpha_write, mAlphaWrite, 2) {
         static Symbol _s("force_alpha_write");
         if (sym == _s)
@@ -148,10 +148,10 @@ BEGIN_PROPSYNCS(RndMat)
     SYNC_MAT_PROP(cull, (int &)mCull, 2)
     SYNC_MAT_PROP(per_pixel_lit, mPerPixelLit, 2)
     SYNC_MAT_PROP(emissive_multiplier, mEmissiveMultiplier, 2)
-    SYNC_MAT_PROP(specular_rgb, mSpecularRGB, 1)
-    SYNC_MAT_PROP(specular_power, mSpecularRGB.alpha, 1)
-    SYNC_MAT_PROP(specular2_rgb, mSpecular2RGB, 1)
-    SYNC_MAT_PROP(specular2_power, mSpecular2RGB.alpha, 1)
+    SYNC_MAT_PROP(specular_rgb, mSpecular, 1)
+    SYNC_MAT_PROP(specular_power, mSpecular.alpha, 1)
+    SYNC_MAT_PROP(specular2_rgb, mSpecularSecondary, 1)
+    SYNC_MAT_PROP(specular2_power, mSpecularSecondary.alpha, 1)
     SYNC_MAT_PROP(normal_map, mNormalMap, 2)
     SYNC_MAT_PROP(emissive_map, mEmissiveMap, 2) {
         static Symbol _s("specular_map");
@@ -173,11 +173,11 @@ BEGIN_PROPSYNCS(RndMat)
     SYNC_MAT_PROP(environ_map_specmask, mEnvironMapSpecMask, 2)
     SYNC_MAT_PROP(de_normal, mDeNormal, 2)
     SYNC_MAT_PROP(anisotropy, mAnisotropy, 2)
-    SYNC_MAT_PROP(norm_detail_tiling, mNormDetailTiling, 2)
+    SYNC_MAT_PROP(norm_detail_tiling, mNormDetailTile, 2)
     SYNC_MAT_PROP(norm_detail_strength, mNormDetailStrength, 2)
-    SYNC_MAT_PROP(norm_detail_map, mNormDetailMap, 2)
-    SYNC_MAT_PROP(rim_rgb, mRimRGB, 2)
-    SYNC_MAT_PROP(rim_power, mRimRGB.alpha, 2)
+    SYNC_MAT_PROP(norm_detail_map, mNormDetail, 2)
+    SYNC_MAT_PROP(rim_rgb, mRimColor, 2)
+    SYNC_MAT_PROP(rim_power, mRimColor.alpha, 2)
     SYNC_MAT_PROP(rim_map, mRimMap, 2)
     SYNC_MAT_PROP(rim_light_under, mRimLightUnder, 2)
     SYNC_MAT_PROP(refract_enabled, mRefractEnabled, 2)
@@ -221,7 +221,7 @@ BEGIN_PROPSYNCS(RndMat)
             if (!(_op & (kPropSize | kPropGet)) && !IsEditable(action)) {
                 return true;
             }
-            return PropSync(mColorAdjust, _val, _prop, _i + 1, _op) != false;
+            return PropSync(mColorXfm, _val, _prop, _i + 1, _op) != false;
         }
     }
     {
@@ -234,14 +234,14 @@ BEGIN_PROPSYNCS(RndMat)
             return PropSync(mFur, _val, _prop, _i + 1, _op) != false;
         }
     }
-    SYNC_PERF_PROP(recv_proj_lights, mPerfSettings.mRecvProjLights)
-    SYNC_PERF_PROP(recv_point_cube_tex, mPerfSettings.mRecvPointCubeTex)
-    SYNC_PERF_PROP(ps3_force_trilinear, mPerfSettings.mPS3ForceTrilinear)
+    SYNC_PERF_PROP(recv_proj_lights, RecvProjLights)
+    SYNC_PERF_PROP(recv_point_cube_tex, RecvPointCubeTex)
+    SYNC_PERF_PROP(ps3_force_trilinear, PS3ForceTrilinear)
     SYNC_MAT_PROP(bloom_multiplier, mBloomMultiplier, 2)
     SYNC_MAT_PROP(never_fit_to_spline, mNeverFitToSpline, 2)
     SYNC_MAT_PROP(allow_distortion_effects, mAllowDistortionEffects, 2)
     SYNC_MAT_PROP(shockwave_mult, mShockwaveMult, 2)
-    SYNC_MAT_PROP(world_projection_tiling, mWorldProjectionTiling, 2)
+    SYNC_MAT_PROP(world_projection_tiling, mWorldProjectionTile, 2)
     SYNC_MAT_PROP(world_projection_start_blend, mWorldProjectionStartBlend, 2)
     SYNC_MAT_PROP(world_projection_end_blend, mWorldProjectionEndBlend, 2)
     SYNC_SUPERCLASS(BaseMaterial)
@@ -382,8 +382,8 @@ RndMat *LookupOrCreateMat(const char *shader, ObjectDir *dir) {
 
 void RndMat::SetSpecularMap(RndTex *tex) {
     if (tex && !mSpecularMap) {
-        if (mSpecularRGB.PackRgb() == 0) {
-            mSpecularRGB.Set(1, 1, 1, mSpecularRGB.alpha);
+        if (mSpecular.PackRgb() == 0) {
+            mSpecular.Set(1, 1, 1, mSpecular.alpha);
         }
     }
     mSpecularMap = tex;
@@ -573,7 +573,7 @@ void RndMat::LoadOld(BinStreamRev &d) {
     d >> (int &)mZMode;
     d >> mAlphaCut;
     if (d.rev > 0x25) {
-        d >> mAlphaThreshold;
+        d >> mAlphaThresh;
     }
     d >> mAlphaWrite;
     d >> (int &)mTexGen;
@@ -582,9 +582,9 @@ void RndMat::LoadOld(BinStreamRev &d) {
     d >> mNextPass >> mIntensify;
     bool bCull;
     d >> bCull;
-    mCull = (Cull)(bCull != 0);
+    mCull = (CullType)(bCull != 0);
     d >> mEmissiveMultiplier;
-    d >> mSpecularRGB >> mNormalMap;
+    d >> mSpecular >> mNormalMap;
     d >> mEmissiveMap >> mSpecularMap;
     if (d.rev < 0x33) {
         ObjPtr<RndTex> tex(this);
@@ -599,7 +599,7 @@ void RndMat::LoadOld(BinStreamRev &d) {
     }
     if (d.rev < 0x25) {
         if (mSpecularMap) {
-            mSpecularRGB.Set(1, 1, 1, mSpecularRGB.alpha);
+            mSpecular.Set(1, 1, 1, mSpecular.alpha);
         }
     }
     if (d.rev > 0x19) {
@@ -653,7 +653,7 @@ void RndMat::LoadOld(BinStreamRev &d) {
             bool b150;
             d >> b150;
         }
-        d >> mNormDetailTiling;
+        d >> mNormDetailTile;
         d >> mNormDetailStrength;
         if (d.rev < 0x2A) {
             int x;
@@ -661,7 +661,7 @@ void RndMat::LoadOld(BinStreamRev &d) {
             d >> x;
             d >> c;
         }
-        d >> mNormDetailMap;
+        d >> mNormDetail;
         if (d.rev < 0x2A) {
             ObjPtr<RndTex> tex(this);
             d >> tex;
@@ -688,28 +688,28 @@ void RndMat::LoadOld(BinStreamRev &d) {
             d >> b150;
         }
         if (d.rev > 0x2E) {
-            d >> mColorAdjust;
+            d >> mColorXfm;
         }
     }
     if (d.rev > 0x2F) {
-        d >> mRimRGB;
+        d >> mRimColor;
         d >> mRimMap;
         if (d.rev > 0x39) {
             d >> mRimLightUnder;
         } else {
             bool b150;
             d >> b150;
-            float red = mRimRGB.red * 2.857143f;
-            float green = mRimRGB.green * 2.857143f;
-            float blue = mRimRGB.blue * 2.857143f;
-            mRimRGB.red = Min(red, 1.0f);
-            mRimRGB.green = Min(green, 1.0f);
-            mRimRGB.blue = Min(blue, 1.0f);
+            float red = mRimColor.red * 2.857143f;
+            float green = mRimColor.green * 2.857143f;
+            float blue = mRimColor.blue * 2.857143f;
+            mRimColor.red = Min(red, 1.0f);
+            mRimColor.green = Min(green, 1.0f);
+            mRimColor.blue = Min(blue, 1.0f);
         }
         if (d.rev < 0x3B) {
-            mRimRGB.red = 0;
-            mRimRGB.green = 0;
-            mRimRGB.blue = 0;
+            mRimColor.red = 0;
+            mRimColor.green = 0;
+            mRimColor.blue = 0;
         }
     }
     if (d.rev > 0x30) {
@@ -719,12 +719,12 @@ void RndMat::LoadOld(BinStreamRev &d) {
         bool b150;
         d >> b150;
         if (b150) {
-            mShaderVariation = kShaderVariationSkin;
+            mShaderVariation = kShaderVariation_Skin;
         }
     }
     if (d.rev > 0x32) {
         d >> (int &)mShaderVariation;
-        d >> mSpecular2RGB;
+        d >> mSpecularSecondary;
     }
     if (d.rev > 0x33 && d.rev < 0x44) {
         std::vector<Hmx::Color> colors;
@@ -750,7 +750,7 @@ void RndMat::LoadOld(BinStreamRev &d) {
     if (d.rev > 0x36 && d.rev < 0x3F) {
         bool b150;
         d >> b150;
-        mPerfSettings.mPS3ForceTrilinear = b150;
+        mPerfSettings.SetPS3ForceTrilinear(b150);
     }
     if (d.rev > 0x37 && d.rev < 0x39) {
         int x, y;

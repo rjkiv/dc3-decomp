@@ -103,21 +103,22 @@ public:
         mPrelit = lit;
         mDirty |= kDirtyRest;
     }
-    void SetAlphaThreshold(int thresh) { mAlphaThreshold = thresh; }
+    void SetAlphaThreshold(int thresh) { mAlphaThresh = thresh; }
     void SetPerPixelLit(bool lit) {
         mPerPixelLit = lit;
         mDirty |= kDirtyRest;
     }
     void SetPointLights(bool lit) { mPointLights = lit; }
-    void SetColor(float r, float g, float b) {
-        mColor.Set(r, g, b);
+
+    void SetColor(const Hmx::Color &c) {
+        mColor.Set(c.red, c.green, c.blue);
         mDirty |= kDirtyColor;
     }
     void SetAlpha(float a) {
         mColor.alpha = a;
         mDirty |= kDirtyColor;
     }
-    void SetColor(const Hmx::Color &c) {
+    void SetRGBA(const Hmx::Color &c) {
         mColor = c;
         mDirty |= kDirtyColor;
     }
@@ -130,7 +131,7 @@ public:
         mDiffuseTex = tex;
         mDirty |= kDirtyRest;
     }
-    void SetCull(Cull cull) {
+    void SetCull(CullType cull) {
         mCull = cull;
         mDirty |= kDirtyRest;
     }
@@ -142,7 +143,7 @@ public:
         mFlags = flags;
         mDirty |= kDirtyRest;
     }
-    bool Dirty() const { return mDirty; }
+    bool IsDirty() const { return mDirty; }
 
     void SetColorMod(const Hmx::Color &, int);
     void SetSpecularMap(RndTex *);
@@ -153,27 +154,45 @@ public:
     TexGen GetTexGen() const { return mTexGen; }
     bool Intensify() const { return mIntensify; }
     bool PerPixelLighting() const { return mPerPixelLit; }
-    const Hmx::Color &Specular() const { return mSpecularRGB; }
+    const Hmx::Color &Specular() const { return mSpecular; }
     RndTex *SpecularMap() const { return mSpecularMap; }
     RndCubeTex *EnvironMap() const { return mEnvironMap; }
     bool EnvironMapFalloff() const { return mEnvironMapFalloff; }
     bool EnvironMapSpecMask() const { return mEnvironMapSpecMask; }
     RndTex *EmissiveMap() const { return mEmissiveMap; }
-    const Hmx::Color &GetRimColor() const { return mRimRGB; }
+    const Hmx::Color &GetRimColor() const { return mRimColor; }
     const RndTex *GetRimMap() const { return mRimMap; }
     bool GetRimLightUnder() const { return mRimLightUnder; }
     ColorModFlags GetColorModFlags() const { return mFlags; }
     ShaderVariation GetShaderVariation() const { return mShaderVariation; }
     bool ScreenAligned() const { return mScreenAligned; }
     float Anisotropy() const { return mAnisotropy; }
-    bool NormDetail() const { return mNormDetailMap && mNormDetailStrength > 0; }
+    bool NormDetail() const { return mNormDetail && mNormDetailStrength > 0; }
     bool Fog() const { return mFog; }
-    bool ColorXfm() const { return mColorAdjust; }
+    bool ColorXfm() const { return mColorXfm; }
+    RndTex *DiffuseTex() const { return mDiffuseTex; }
+    RndTex *NormalMap() const { return mNormalMap; }
+    ZMode GetZMode() const { return mZMode; }
+    const Hmx::Color &GetColor() const { return mColor; }
+    float Alpha() const { return mColor.alpha; }
+    bool UseEnviron() const { return mUseEnviron; }
+    bool PointLights() const { return mPointLights; }
+    bool ColorAdjust() const { return mColorXfm; }
+    bool FadeOut() const { return mFadeout; }
+    float ShockwaveMult() const { return mShockwaveMult; }
+    bool NeverFitToSpline() const { return mNeverFitToSpline; }
+    bool AllowDistortionEffects() const { return mAllowDistortionEffects; }
+    bool AlphaWrite() const { return mAlphaWrite; }
+    bool ForceAlphaWrite() const { return mForceAlphaWrite; }
+    CullType GetCull() const { return mCull; }
+    RndFur *Fur() const { return mFur; }
+    TexWrap GetTexWrap() const { return mTexWrap; }
+    bool PreLit() const { return mPrelit; }
 
     static void Init();
     static void Terminate();
     static void ReloadMetaMaterials();
-    static void UpdateAllMatPropertiesFromMetaMat(ObjectDir *);
+    static void UpdateAllMatPropertiesFromMetaMat(ObjectDir *dir);
     static void ReloadAndUpdateMat(ObjectDir *dir) {
         ReloadMetaMaterials();
         UpdateAllMatPropertiesFromMetaMat(dir);
@@ -183,9 +202,9 @@ public:
 protected:
     RndMat();
 
-    bool IsEditable(Symbol);
-    MatPropEditAction GetMetaMatPropAction(Symbol);
-    bool OnGetPropertyDisplay(PropDisplay, Symbol);
+    bool IsEditable(Symbol propEditAction);
+    MatPropEditAction GetMetaMatPropAction(Symbol propName);
+    bool OnGetPropertyDisplay(PropDisplay display, Symbol propName);
     void UpdatePropertiesFromMetaMat();
     void LoadOld(BinStreamRev &);
 
@@ -205,4 +224,4 @@ protected:
     int mDirty; // 0x228
 };
 
-RndMat *LookupOrCreateMat(const char *, ObjectDir *);
+RndMat *LookupOrCreateMat(const char *shader, ObjectDir *dir);

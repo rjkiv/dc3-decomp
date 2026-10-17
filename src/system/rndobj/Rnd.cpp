@@ -951,12 +951,12 @@ void Rnd::CreateDefaults() {
     mOverlayMat->SetUseEnv(false);
     mOverlayMat->SetPreLit(true);
     mOverlayMat->SetBlend(RndMat::kBlendSrcAlpha);
-    mOverlayMat->SetZMode(kZModeForce);
+    mOverlayMat->SetZMode(BaseMaterial::kForce);
     CreateAndSetMetaMat(mOverlayMat);
     mOverdrawMat = Hmx::Object::New<RndMat>();
     mOverdrawMat->SetUseEnv(false);
     mOverdrawMat->SetBlend(RndMat::kBlendSrcAlpha);
-    mOverdrawMat->SetColor(1, 0, 0);
+    mOverdrawMat->SetColor(Hmx::Color(1, 0, 0));
     mOverdrawMat->SetAlpha(0.2);
     CreateAndSetMetaMat(mOverdrawMat);
     for (unsigned int i = 0; i < kDefaultTex_Max; i++) {
