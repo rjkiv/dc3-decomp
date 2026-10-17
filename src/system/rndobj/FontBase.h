@@ -37,7 +37,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1C)
     NEW_OBJ(RndFontBase)
-    static void Init() { REGISTER_OBJ_FACTORY(RndFontBase) }
+    REGISTER_OBJ(RndFontBase)
 
     void SetBaseKerning(float);
     void SetKerning(const std::vector<KernInfo> &);

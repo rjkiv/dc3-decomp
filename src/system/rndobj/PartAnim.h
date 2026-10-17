@@ -25,7 +25,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x18)
     NEW_OBJ(RndParticleSysAnim)
-    static void Init() { REGISTER_OBJ_FACTORY(RndParticleSysAnim) }
+    REGISTER_OBJ(RndParticleSysAnim)
 
     void SetParticleSys(RndParticleSys *);
     Keys<Hmx::Color, Hmx::Color> &StartColorKeys() { return mKeysOwner->mStartColorKeys; }

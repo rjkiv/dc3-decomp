@@ -65,7 +65,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x25);
     NEW_OBJ(RndDrawable);
-    static void Init() { REGISTER_OBJ_FACTORY(RndDrawable); }
+    REGISTER_OBJ(RndDrawable)
 
     void SetShowing(bool);
     bool Showing() const { return mShowing; }

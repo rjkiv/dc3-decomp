@@ -45,7 +45,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1F)
     NEW_OBJ(RndGenerator)
-    static void Init() { REGISTER_OBJ_FACTORY(RndGenerator) }
+    REGISTER_OBJ(RndGenerator)
 
     void Generate(float);
     void GetRateVar(float &lo, float &hi) {

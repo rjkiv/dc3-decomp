@@ -571,7 +571,7 @@ void EventTrigger::CleanupHideShow() {
 }
 
 void EventTrigger::Init() {
-    REGISTER_OBJ_FACTORY(EventTrigger);
+    EventTrigger::Register();
     DataRegisterFunc("cleanup_triggers", Cleanup);
 }
 

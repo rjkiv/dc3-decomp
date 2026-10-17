@@ -21,7 +21,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1D);
     NEW_OBJ(RndShockwave)
-    static void Init() { REGISTER_OBJ_FACTORY(RndShockwave) }
+    REGISTER_OBJ(RndShockwave)
     static RndShockwave *Selected() { return sSelected; }
 
     void PrepareShader(float);

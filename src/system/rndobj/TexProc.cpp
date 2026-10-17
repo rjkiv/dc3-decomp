@@ -118,7 +118,7 @@ void TexProc::Poll() {
 }
 
 void TexProc::Init() {
-    REGISTER_OBJ_FACTORY(TexProc);
+    TexProc::Register();
     MILO_ASSERT(!mCam, 0x3A);
     mCam = ObjectDir::Main()->New<RndCam>("[tex proc cam]");
 }

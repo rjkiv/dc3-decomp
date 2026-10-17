@@ -301,6 +301,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x19);
     NEW_OBJ(RndText);
+    REGISTER_OBJ(RndText)
 
     String TextASCII() const;
     void SetTextASCII(const char *);

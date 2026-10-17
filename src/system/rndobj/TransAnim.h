@@ -31,7 +31,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x19)
     NEW_OBJ(RndTransAnim)
-    static void Init() { REGISTER_OBJ_FACTORY(RndTransAnim) }
+    REGISTER_OBJ(RndTransAnim)
     RndTransformable *Trans() const { return mTrans; }
     Keys<Vector3, Vector3> &TransKeys() { return mKeysOwner->mTransKeys; }
     Keys<Hmx::Quat, Hmx::Quat> &RotKeys() { return mKeysOwner->mRotKeys; }

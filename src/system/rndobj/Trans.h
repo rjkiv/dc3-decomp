@@ -113,6 +113,7 @@ public:
 
     static void Init();
     NEW_OBJ(RndTransformable);
+    REGISTER_OBJ(RndTransformable)
 
 private:
     static Plane sShadowPlane;

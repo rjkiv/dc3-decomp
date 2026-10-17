@@ -23,7 +23,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x22);
     NEW_OBJ(RndPostProcMgr)
-    static void Init() { REGISTER_OBJ_FACTORY(RndPostProcMgr) }
+    REGISTER_OBJ(RndPostProcMgr)
     void CopyFromPostProc(RndPostProc *);
     void BlendToPostProc(RndPostProc *, float);
 

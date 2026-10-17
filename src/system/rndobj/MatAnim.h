@@ -44,7 +44,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x17)
     NEW_OBJ(RndMatAnim)
-    static void Init() { REGISTER_OBJ_FACTORY(RndMatAnim) }
+    REGISTER_OBJ(RndMatAnim)
 
     Keys<Vector3, Vector3> &TransKeys() { return mKeysOwner->mTransKeys; }
     Keys<Vector3, Vector3> &ScaleKeys() { return mKeysOwner->mScaleKeys; }

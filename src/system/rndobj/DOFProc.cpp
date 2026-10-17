@@ -9,7 +9,7 @@ DOFProc::DOFProc() {}
 DOFProc::~DOFProc() {}
 
 void DOFProc::Init() {
-    REGISTER_OBJ_FACTORY(DOFProc);
+    DOFProc::Register();
     if (!TheDOFProc) {
         TheDOFProc = Hmx::Object::New<DOFProc>();
         static DataNode &n = DataVariable("the_dof_proc");

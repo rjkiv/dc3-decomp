@@ -56,7 +56,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1A);
     NEW_OBJ(RndLine)
-    static void Init() { REGISTER_OBJ_FACTORY(RndLine) }
+    REGISTER_OBJ(RndLine)
 
     int NumPoints() const { return mPoints.size(); }
     Point &PointAt(int idx) { return mPoints[idx]; }

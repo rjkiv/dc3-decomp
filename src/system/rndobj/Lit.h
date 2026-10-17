@@ -63,7 +63,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1A);
     NEW_OBJ(RndLight)
-    static void Init() { REGISTER_OBJ_FACTORY(RndLight) }
+    REGISTER_OBJ(RndLight)
 
 protected:
     RndLight();

@@ -149,7 +149,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x2E);
     NEW_OBJ(RndMesh)
-    static void Init() { REGISTER_OBJ_FACTORY(RndMesh) }
+    REGISTER_OBJ(RndMesh)
 
     int EstimatedSizeKb() const;
     void SetMat(RndMat *);

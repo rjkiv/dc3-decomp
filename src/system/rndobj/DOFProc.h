@@ -21,6 +21,7 @@ public:
     virtual float MinBlur() { return 0; }
 
     NEW_OBJ(DOFProc);
+    REGISTER_OBJ(DOFProc)
 
     static void Init();
     static void Terminate();

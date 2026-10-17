@@ -296,7 +296,7 @@ BEGIN_LOADS(RndMat)
 END_LOADS
 
 void RndMat::Init() {
-    REGISTER_OBJ_FACTORY(RndMat);
+    RndMat::Register();
     RndMat *mat = Hmx::Object::New<RndMat>();
     BaseMaterial::SetDefaultMat(mat);
     RELEASE(sMetaMaterials);

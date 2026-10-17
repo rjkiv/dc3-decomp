@@ -42,7 +42,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x18);
     NEW_OBJ(RndGroup)
-    static void Init() { REGISTER_OBJ_FACTORY(RndGroup) }
+    REGISTER_OBJ(RndGroup)
 
     void Merge(const RndGroup *);
     /** Remove an object from this group.

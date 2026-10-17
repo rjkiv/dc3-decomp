@@ -37,7 +37,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1A)
     NEW_OBJ(RndTexRenderer)
-    static void Init() { REGISTER_OBJ_FACTORY(RndTexRenderer) }
+    REGISTER_OBJ(RndTexRenderer)
 
     void DrawToTexture();
     RndTex *GetOutputTexture() const { return mOutputTexture; }

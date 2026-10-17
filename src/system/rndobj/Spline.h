@@ -44,7 +44,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x18);
     NEW_OBJ(RndSpline)
-    static void Init() { REGISTER_OBJ_FACTORY(RndSpline) }
+    REGISTER_OBJ(RndSpline)
     static RndSpline *GlobalDefaultSpline() { return sGlobalDefaultSpline; }
 
     void SetStartCtrlPoint(int);

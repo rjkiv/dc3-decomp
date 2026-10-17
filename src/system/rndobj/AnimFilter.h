@@ -31,7 +31,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1B)
     NEW_OBJ(RndAnimFilter)
-    static void Init() { REGISTER_OBJ_FACTORY(RndAnimFilter) }
+    REGISTER_OBJ(RndAnimFilter)
 
     /** Set the animatable object to receive this filter. */
     void SetAnim(RndAnimatable *);

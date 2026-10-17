@@ -865,7 +865,7 @@ int RndText::CollidePlane(const Plane &p) {
 void RndText::Highlight() { RndDrawable::Highlight(); }
 
 void RndText::Init() {
-    REGISTER_OBJ_FACTORY(RndText)
+    RndText::Register();
     SystemConfig("rnd")->FindData("text_superscript_scale", gSuperscriptScale, false);
     SystemConfig("rnd")->FindData("text_guitar_scale", gGuitarScale, false);
     SystemConfig("rnd")->FindData("text_guitar_z_offset", gGuitarZOffset, false);
