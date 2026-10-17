@@ -23,7 +23,8 @@ RndCam::RndCam()
     : mNearPlane(sDefaultNearPlane), mFarPlane(mNearPlane * sMaxFarNearPlaneRatio),
       mYFov(0.6024178), mYRatioMult(1), mZRange(0.0f, 1.0f),
       mScreenRect(0.0f, 0.0f, 1.0f, 1.0f), mTargetTex(this),
-      mViewProj(Hmx::Matrix4::ID()), mInvTransposeViewProj(Hmx::Matrix4::ID()) {
+      mViewProj(Hmx::Matrix4::GetIdentity()),
+      mInvTransposeViewProj(Hmx::Matrix4::GetIdentity()) {
     UpdateLocal();
 }
 

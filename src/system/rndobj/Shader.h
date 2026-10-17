@@ -22,23 +22,27 @@ public:
     };
 
     virtual ~RndShader() {}
-    virtual bool CheckError(MatFlagErrorType) { return false; }
+    virtual bool CheckError(MatFlagErrorType err) { return false; }
 
     static void Init();
-    static void SelectConfig(RndMat *, ShaderType, bool);
+    static void SelectConfig(RndMat *mat, ShaderType shader_type, bool precache);
 
 protected:
-    virtual void Select(RndMat *, ShaderType shader_type, bool) = 0;
-    virtual u64 CalcShaderOpts(NgMat *, ShaderType, bool) = 0;
+    virtual void Select(RndMat *mat, ShaderType shader_type, bool precache) = 0;
+    virtual u64 CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool precache) = 0;
 
-    void CheckForceCull(ShaderType);
-    void Cache(ShaderType, ShaderOptions, RndMat *);
-    bool RedundantState(const RndMat *, ShaderType, bool, bool, bool);
+    void CheckForceCull(ShaderType shader_type);
+    void Cache(ShaderType shader_type, ShaderOptions opts, RndMat *mat);
+    bool RedundantState(
+        const RndMat *mat, ShaderType shader_type, bool skinned, bool useAO, bool precache
+    );
 
-    static void ShaderWarn(const char *);
-    static void WarnMatProp(const char *, NgMat *, class NgEnviron *, ShaderType);
-    static bool MatShaderFlagsOK(RndMat *, ShaderType);
-    static bool DisplayMatShaderFlagsError(RndMat *, ShaderType);
+    static void ShaderWarn(const char *msg);
+    static void WarnMatProp(
+        const char *prop, NgMat *mat, class NgEnviron *ngEnv, ShaderType shader_type
+    );
+    static bool MatShaderFlagsOK(RndMat *mat, ShaderType shader_type);
+    static bool DisplayMatShaderFlagsError(RndMat *mat, ShaderType shader_type);
 
     static bool sCurrentSkinned;
     static bool sCurrentUseAO;

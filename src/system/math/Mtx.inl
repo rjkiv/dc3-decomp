@@ -218,6 +218,8 @@ namespace Hmx {
         return out;
     }
 
+    Hmx::Matrix4 operator*(const Hmx::Matrix4 &, const Hmx::Matrix4 &);
+
 }
 
 #pragma endregion

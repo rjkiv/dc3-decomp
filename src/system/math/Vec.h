@@ -116,6 +116,8 @@ public:
     Vector4() {}
     Vector4(float xIn, float yIn, float zIn, float wIn)
         : x(xIn), y(yIn), z(zIn), w(wIn) {}
+    Vector4(const Vector3 &, float);
+
     void Set(float xIn, float yIn, float zIn, float wIn) {
         x = xIn;
         y = yIn;
@@ -123,12 +125,25 @@ public:
         w = wIn;
     }
 
-    static const Vector4 &GetZero() { return sZero; }
-
     const float &operator[](int i) const {
         MILO_ASSERT_RANGE(i, 0, 4, 0x1AC);
         return *(&x + i);
     }
+    // public: float& operator[](int32_t);
+
+    // public: float Dot3(const Vector4&) const;
+    // public: float Dot4(const Vector4&) const;
+    // public: void Zero();
+    // public: const float* operator const float *() const;
+    // public: bool operator==(const Vector4&) const;
+    // public: const Vector3& AsVector3() const;
+    // public: Vector3& AsVector3();
+
+    static const Vector4 &GetXAxis() { return sX; }
+    static const Vector4 &GetYAxis() { return sY; }
+    static const Vector4 &GetZAxis() { return sZ; }
+    static const Vector4 &GetWAxis() { return sW; }
+    static const Vector4 &GetZero() { return sZero; }
 
     float x; // 0x0
     float y; // 0x4

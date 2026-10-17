@@ -1,7 +1,9 @@
 #include "rndobj/Shader.h"
 #include "Rnd.h"
+#include "math/Mtx.h"
 #include "math/Utl.h"
 #include "os/System.h"
+#include "rndobj/Cam.h"
 #include "rndobj/RenderState.h"
 #include "rndobj/Env.h"
 #include "rndobj/Mat_NG.h"
@@ -20,6 +22,13 @@
 #include "utl/Loader.h"
 #include "utl/Str.h"
 #include <set>
+
+bool RndShader::sCurrentSkinned = false;
+bool RndShader::sCurrentUseAO = false;
+bool RndShader::sMatShadersOK = false;
+ModalCallbackFunc *RndShader::mModalCallback = nullptr;
+RndShader *RndShader::sShaders[kMaxShaderTypes];
+ShaderType RndShader::sCurrentShader = kMaxShaderTypes;
 
 std::set<unsigned int> sWarnings;
 RndShaderSimple gShaderSimple;
@@ -81,8 +90,44 @@ void SetColorWriteMask(const ShaderOptions &opts, RndMat *mat) {
     );
 }
 
-void CheckShadow();
-void CheckExtrude();
+void CheckShadow() {
+    RndCam *cam = TheRnd.GetShadowCam();
+    if (cam) {
+        Transform view;
+        Hmx::Matrix4 proj;
+        cam->GetViewProjectXfms(view, proj);
+        Hmx::Matrix4 viewProj = view * proj;
+        static Hmx::Matrix4 texAdj(
+            Vector4(0.5f, 0, 0, 0),
+            Vector4(0, -0.5f, 0, 0),
+            Vector4(0, 0, 1, 0),
+            Vector4(0.50097656f, 0.50097656f, 0, 1)
+        );
+        viewProj = viewProj * texAdj;
+        TheShaderMgr.SetVConstant(kVShader_WorldToLightProj, viewProj);
+    }
+}
+
+void CheckExtrude() {
+    if (TheRnd.DrawMode() == Rnd::kDrawExtrude) {
+        TheRenderState.SetDepthTestEnable(true);
+        TheRenderState.SetDepthWriteEnable(true);
+        TheRenderState.SetBlendEnable(true);
+        TheRenderState.SetBlend(
+            RndRenderState::kZero,
+            RndRenderState::kOne,
+            RndRenderState::kOne,
+            RndRenderState::kOne
+        );
+        TheRenderState.SetDepthFunc(RndRenderState::kLess);
+        TheRenderState.SetAlphaTestEnable(false);
+        Transform view;
+        Hmx::Matrix4 proj;
+        RndCam::Current()->GetViewProjectXfms(view, proj);
+        Hmx::Matrix4 viewProj = view * proj;
+        TheShaderMgr.SetVConstant(kVShader_ViewProj, viewProj);
+    }
+}
 
 void RndShader::Init() {
     sShaders[kBloomShader] = &gShaderSimple;

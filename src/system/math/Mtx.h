@@ -84,6 +84,9 @@ namespace Hmx {
         Matrix4() {}
         Matrix4(const Transform &xfm);
 
+        // public: Matrix4(const D3DXMATRIX&);
+        // public: Matrix4(const float*);
+
         Matrix4(
             const Vector4 &v1, const Vector4 &v2, const Vector4 &v3, const Vector4 &v4
         ) {
@@ -114,11 +117,23 @@ namespace Hmx {
             m[0].x = m[1].y = m[2].z = m[3].w = 1;
         }
 
+        Vector4 &operator[](int idx) { return m[idx]; }
+        const Vector4 &operator[](int idx) const { return m[idx]; }
+
         Vector3 Col3(int idx) const { return Vector3(m[0][idx], m[1][idx], m[2][idx]); }
 
-        static const Hmx::Matrix4 &ID() { return sID; }
+        // public: const Vector3& Row3(int32_t) const;
+        // public: Vector3& Row3(int32_t);
+        // public: const Vector4& Row4(int32_t) const;
+        // public: Vector4& Row4(int32_t);
+        // public: Vector4 Col4(int32_t) const;
+        // public: Hmx::Matrix4 Transpose() const;
+        // public: const float& operator()(int32_t, int32_t) const;
+        // public: float& operator()(int32_t, int32_t);
+        // public: const float* operator const float *() const;
 
-        // RBVR says this is an array
+        static const Hmx::Matrix4 &GetIdentity() { return sID; }
+
         Vector4 m[4];
 
     private:
