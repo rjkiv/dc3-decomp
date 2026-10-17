@@ -359,7 +359,7 @@ LiveCameraInput::~LiveCameraInput() {
     SkeletonUpdate::Terminate();
     for (int i = 0; i < 4; i++) {
         RndMat *curMat = mStreams[i].mMat;
-        RndTex *diffuseTex = curMat ? curMat->GetDiffuseTex() : nullptr;
+        RndTex *diffuseTex = curMat ? curMat->DiffuseTex() : nullptr;
         delete diffuseTex;
         delete curMat;
         if (mStreams[i].mStreamHandle) {
@@ -572,7 +572,7 @@ RndMat *LiveCameraInput::DisplayMat(BufferType type) const {
 RndTex *LiveCameraInput::DisplayTex(BufferType type) const {
     RndMat *mat = DisplayMat(type);
     if (mat) {
-        return mat->GetDiffuseTex();
+        return mat->DiffuseTex();
     } else {
         return nullptr;
     }
@@ -844,7 +844,7 @@ bool LiveCameraInput::SetTweakedAutoexposure(bool b) {
 void LiveCameraInput::ClearSnapshots() {
     for (int i = 0; i < mSnapshots.size(); i++) {
         RndMat *snapshot = mSnapshots[i];
-        RndTex *diffTex = snapshot ? snapshot->GetDiffuseTex() : nullptr;
+        RndTex *diffTex = snapshot ? snapshot->DiffuseTex() : nullptr;
         RELEASE(diffTex);
         RELEASE(snapshot);
     }

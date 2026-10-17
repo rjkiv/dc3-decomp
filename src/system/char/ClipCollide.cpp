@@ -266,7 +266,7 @@ void ClipCollide::Collide() {
                             if (mesh) {
                                 RndMat *mat = mesh->Mat();
                                 if (mat) {
-                                    if (!mat->GetDiffuseTex() && mat->Alpha() <= 0) {
+                                    if (!mat->DiffuseTex() && mat->Alpha() <= 0) {
                                         donotadd = true;
                                     }
                                 }

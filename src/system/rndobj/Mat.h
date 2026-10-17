@@ -109,6 +109,12 @@ public:
         mDirty |= kDirtyRest;
     }
     void SetPointLights(bool lit) { mPointLights = lit; }
+
+    void SetColor(const Hmx::Color &c) {
+        mColor.SetRgb(c);
+        mDirty |= kDirtyColor;
+    }
+
     void SetColor(float r, float g, float b) {
         mColor.Set(r, g, b);
         mDirty |= kDirtyColor;
@@ -117,7 +123,7 @@ public:
         mColor.alpha = a;
         mDirty |= kDirtyColor;
     }
-    void SetColor(const Hmx::Color &c) {
+    void SetRGBA(const Hmx::Color &c) {
         mColor = c;
         mDirty |= kDirtyColor;
     }
@@ -142,7 +148,7 @@ public:
         mFlags = flags;
         mDirty |= kDirtyRest;
     }
-    bool Dirty() const { return mDirty; }
+    bool IsDirty() const { return mDirty; }
 
     void SetColorMod(const Hmx::Color &, int);
     void SetSpecularMap(RndTex *);
@@ -169,11 +175,29 @@ public:
     bool NormDetail() const { return mNormDetail && mNormDetailStrength > 0; }
     bool Fog() const { return mFog; }
     bool ColorXfm() const { return mColorXfm; }
+    RndTex *DiffuseTex() const { return mDiffuseTex; }
+    RndTex *NormalMap() const { return mNormalMap; }
+    ZMode GetZMode() const { return mZMode; }
+    const Hmx::Color &GetColor() const { return mColor; }
+    float Alpha() const { return mColor.alpha; }
+    bool UseEnviron() const { return mUseEnviron; }
+    bool PointLights() const { return mPointLights; }
+    bool ColorAdjust() const { return mColorXfm; }
+    bool FadeOut() const { return mFadeout; }
+    float ShockwaveMult() const { return mShockwaveMult; }
+    bool NeverFitToSpline() const { return mNeverFitToSpline; }
+    bool AllowDistortionEffects() const { return mAllowDistortionEffects; }
+    bool AlphaWrite() const { return mAlphaWrite; }
+    bool ForceAlphaWrite() const { return mForceAlphaWrite; }
+    CullType GetCull() const { return mCull; }
+    RndFur *Fur() const { return mFur; }
+    TexWrap GetTexWrap() const { return mTexWrap; }
+    bool PreLit() const { return mPrelit; }
 
     static void Init();
     static void Terminate();
     static void ReloadMetaMaterials();
-    static void UpdateAllMatPropertiesFromMetaMat(ObjectDir *);
+    static void UpdateAllMatPropertiesFromMetaMat(ObjectDir *dir);
     static void ReloadAndUpdateMat(ObjectDir *dir) {
         ReloadMetaMaterials();
         UpdateAllMatPropertiesFromMetaMat(dir);
@@ -183,9 +207,9 @@ public:
 protected:
     RndMat();
 
-    bool IsEditable(Symbol);
-    MatPropEditAction GetMetaMatPropAction(Symbol);
-    bool OnGetPropertyDisplay(PropDisplay, Symbol);
+    bool IsEditable(Symbol propEditAction);
+    MatPropEditAction GetMetaMatPropAction(Symbol propName);
+    bool OnGetPropertyDisplay(PropDisplay display, Symbol propName);
     void UpdatePropertiesFromMetaMat();
     void LoadOld(BinStreamRev &);
 
@@ -205,4 +229,4 @@ protected:
     int mDirty; // 0x228
 };
 
-RndMat *LookupOrCreateMat(const char *, ObjectDir *);
+RndMat *LookupOrCreateMat(const char *shader, ObjectDir *dir);

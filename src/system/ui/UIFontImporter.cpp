@@ -552,8 +552,8 @@ void UIFontImporter::HandmadeFontChanged() {
 DataNode UIFontImporter::OnGetGennedBitmapPath(DataArray *da) {
     if ((unsigned int)mGennedFonts.size() > 0) {
         RndFont *font = static_cast<RndFont *>(*mGennedFonts.begin());
-        if (font && font->Mat(0) && font->Mat(0)->GetDiffuseTex()) {
-            RndTex *tex = font->Mat(0)->GetDiffuseTex();
+        if (font && font->Mat(0) && font->Mat(0)->DiffuseTex()) {
+            RndTex *tex = font->Mat(0)->DiffuseTex();
             if (tex) {
                 return tex->File().c_str();
             }

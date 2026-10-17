@@ -165,25 +165,6 @@ public:
     bool IsNextPass(BaseMaterial *m);
     const DataNode *GetDefaultPropVal(Symbol);
 
-    RndTex *GetDiffuseTex() const { return mDiffuseTex; }
-    RndTex *NormalMap() const { return mNormalMap; }
-    ZMode GetZMode() const { return mZMode; }
-    const Hmx::Color &GetColor() const { return mColor; }
-    float Alpha() const { return mColor.alpha; }
-    bool UseEnviron() const { return mUseEnviron; }
-    bool PointLights() const { return mPointLights; }
-    bool ColorAdjust() const { return mColorXfm; }
-    bool FadeOut() const { return mFadeout; }
-    float ShockwaveMult() const { return mShockwaveMult; }
-    bool NeverFitToSpline() const { return mNeverFitToSpline; }
-    bool AllowDistortionEffects() const { return mAllowDistortionEffects; }
-    bool AlphaWrite() const { return mAlphaWrite; }
-    bool ForceAlphaWrite() const { return mForceAlphaWrite; }
-    CullType GetCull() const { return mCull; }
-    RndFur *Fur() const { return mFur; }
-    TexWrap GetTexWrap() const { return mTexWrap; }
-    bool PreLit() const { return mPrelit; }
-
 protected:
     BaseMaterial();
     bool PropValDifferent(Symbol, BaseMaterial *);

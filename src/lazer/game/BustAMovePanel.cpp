@@ -350,7 +350,7 @@ void BustAMovePanel::CacheObjects() {
         String flashcardSlotBG = MakeString("flashcard_slot_background%i.mat", i);
         RndMat *mat = DataDir()->Find<RndMat>(flashcardSlotBG.c_str());
         const Hmx::Color &color = DataDir()->Find<UIColor>("gray.color")->GetColor();
-        mat->SetColor(color.red, color.green, color.blue);
+        mat->SetColor(color);
     }
     mRecorder->SetSongName(MetaPerformer::Current()->GetSong());
     for (int i = 0; i < 2; i++) {
@@ -433,7 +433,7 @@ void BustAMovePanel::AnimateFlashcard(int i) {
 
     RndMat *pFlashcardCapBgMat =
         DataDir()->Find<RndMat>("flashcard_capture_background.mat");
-    pFlashcardCapBgMat->SetColor(color.red, color.green, color.blue);
+    pFlashcardCapBgMat->SetColor(color);
 
     HamLabel *pFlashcardCapLabel = DataDir()->Find<HamLabel>("flashcard_capture.lbl");
     Symbol moveDataSym = GetMoveNameData(i)->Sym(1);
@@ -446,7 +446,7 @@ void BustAMovePanel::AnimateFlashcard(int i) {
 
     String flashcardSlotBgStr = MakeString("flashcard_slot_background%i.mat", i);
     RndMat *pFlashcardSlotBg = DataDir()->Find<RndMat>(flashcardSlotBgStr.c_str());
-    pFlashcardSlotBg->SetColor(color.red, color.green, color.blue);
+    pFlashcardSlotBg->SetColor(color);
 
     String flashcardSlotLblStr = MakeString("flashcard_slot%i.lbl", i);
     HamLabel *pFlashcardSlotLabel =
@@ -563,7 +563,7 @@ void BustAMovePanel::SetFlashcardImage(int side, int index, int i3) {
     }
 
     flashcardMat->SetDiffuseTex(flashcardTex);
-    flashcardBgMat->SetColor(color.red, color.green, color.blue);
+    flashcardBgMat->SetColor(color);
     flashcardBgMat->SetDiffuseTex(bgTex);
 
     // Handle the other side
@@ -576,7 +576,7 @@ void BustAMovePanel::SetFlashcardImage(int side, int index, int i3) {
     if (mState == kBAMState_ShowMoveSequence
         || mState == kBAMState_ShowMoveSequenceSetup) {
         otherFlashcardMat->SetDiffuseTex(flashcardTex);
-        otherBgMat->SetColor(color.red, color.green, color.blue);
+        otherBgMat->SetColor(color);
         otherBgMat->SetDiffuseTex(bgTex);
     } else {
         otherFlashcardMat->SetDiffuseTex(blankTex);

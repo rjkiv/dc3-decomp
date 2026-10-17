@@ -27,7 +27,7 @@ public:
     bool AllowHDR() const;
     const Hmx::Color &FadeColor() const { return mFadeColor; }
     FadeType GetFadeType() const { return mFadeType; }
-    void SetupShader(bool, bool);
+    void SetupShader(bool allowPerPixel, bool setRegularShaderConsts);
 
     NEW_OBJ(NgMat);
     REGISTER_OBJ(NgMat)
@@ -40,9 +40,9 @@ protected:
     void SetupAmbient();
     void SetBasicState();
     void RefreshState();
-    void SetRegularShaderConst(bool);
+    void SetRegularShaderConst(bool allowPerPixel);
 
-    Vector4 mTexelOffsets;
+    Vector4 mTexelOffsets; // 0x22c
     RndRenderState::Blend mBlendA; // 0x23c
     RndRenderState::Blend mBlendB; // 0x240
     bool mDepthTestEnable; // 0x244
@@ -50,8 +50,8 @@ protected:
     RndRenderState::TestFunc mDepthFunc; // 0x248
     RndRenderState::TestFunc mStencilFunc; // 0x24c
     RndRenderState::StencilOp mStencilPass; // 0x250
-    Hmx::Matrix4 mCachedXfm;
-    Hmx::Matrix4 mCachedXfmNorm;
+    Hmx::Matrix4 mCachedXfm; // 0x254
+    Hmx::Matrix4 mCachedXfmNorm; // 0x294
     FadeType mFadeType; // 0x2d4
     Hmx::Color mFadeColor; // 0x2d8
     RndRenderState::BlendOp mBlendOp; // 0x2e8

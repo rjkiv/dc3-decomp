@@ -216,7 +216,7 @@ void RndShader::CheckForceCull(ShaderType s) {
 bool RndShader::RedundantState(
     const RndMat *mat, ShaderType s, bool skinned, bool useAO, bool b5
 ) {
-    if (!b5 && mat && (NgMat *)mat == NgMat::Current() && !mat->Dirty()
+    if (!b5 && mat && (NgMat *)mat == NgMat::Current() && !mat->IsDirty()
         && s == sCurrentShader && skinned == sCurrentSkinned && useAO == sCurrentUseAO) {
         if (s == kStandardShader || s == kStandardBBShader || s == kParticlesShader
             || s == kMultimeshShader || s == kMultimeshBBShader || s == kSyncTrackShader
@@ -377,7 +377,7 @@ void RndShaderSimple::Select(RndMat *mat, ShaderType s, bool b) {
 
 u64 RndShaderParticles::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool precache) {
     ShaderOptions opts;
-    opts.diffuseMap = mat->GetDiffuseTex() ? true : false;
+    opts.diffuseMap = mat->DiffuseTex() ? true : false;
     opts.prelit = true;
     opts.texGen = TexGenOption(mat->GetTexGen());
     opts.hasLightsReal = false;
@@ -438,7 +438,7 @@ u64 RndShaderMultimesh::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool 
     }
     NgEnviron *env = (NgEnviron *)RndEnviron::Current();
     ShaderOptions opts;
-    opts.diffuseMap = mat->GetDiffuseTex() ? true : false;
+    opts.diffuseMap = mat->DiffuseTex() ? true : false;
     opts.prelit = mat->PreLit();
     opts.hasLightsReal = mat->UseEnviron() && env->NumLights_Real() > 0;
     opts.hasLightsApprox = mat->UseEnviron() && env->NumLights_Approx() > 0;
@@ -525,7 +525,7 @@ u64 RndShaderStandard::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool p
         return opts.value;
     }
     if (TheRnd.DrawMode() == Rnd::kDrawFastAndCheap) {
-        opts.diffuseMap = mat->GetDiffuseTex() ? true : false;
+        opts.diffuseMap = mat->DiffuseTex() ? true : false;
         opts.prelit = mat->PreLit();
         if (mat->UseEnviron()) {
             opts.fastAndCheapLighting = true;
@@ -540,7 +540,7 @@ u64 RndShaderStandard::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool p
     }
     opts.hdr = mat->AllowHDR() && !fade
         && !(precache ? TheShaderMgr.GetPrecacheOffscreen() : TheNgRnd.Offscreen());
-    opts.diffuseMap = mat->GetDiffuseTex() ? true : false;
+    opts.diffuseMap = mat->DiffuseTex() ? true : false;
     opts.prelit = mat->PreLit();
     opts.hasLightsReal = mat->UseEnviron() && env->NumLights_Real() > 0;
     opts.hasLightsApprox = mat->UseEnviron() && env->NumLights_Approx() > 0;
@@ -721,7 +721,7 @@ u64 RndShaderDrawRect::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool p
         return 0;
     }
     ShaderOptions opts;
-    opts.diffuseMap = mat->GetDiffuseTex() ? true : false;
+    opts.diffuseMap = mat->DiffuseTex() ? true : false;
     opts.prelit = mat->PreLit();
     bool offscreen =
         precache ? TheShaderMgr.GetPrecacheOffscreen() : TheNgRnd.Offscreen();
@@ -751,7 +751,7 @@ void RndShaderDrawRect::Select(RndMat *mat, ShaderType s, bool b) {
 
 u64 RndShaderUnwrapUV::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool precache) {
     ShaderOptions opts;
-    opts.diffuseMap = mat->GetDiffuseTex() ? true : false;
+    opts.diffuseMap = mat->DiffuseTex() ? true : false;
     opts.prelit = true;
     opts.hiResScreen = TheHiResScreen.Active();
     return opts.value;
@@ -880,7 +880,7 @@ u64 RndShaderFur::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool precac
     if (TheRnd.DrawMode() == Rnd::kDrawShadowColor) {
         return opts.value;
     }
-    opts.diffuseMap = mat->GetDiffuseTex() ? true : false;
+    opts.diffuseMap = mat->DiffuseTex() ? true : false;
     opts.prelit = mat->PreLit();
     opts.hasLightsReal = mat->UseEnviron() && env->NumLights_Real() > 0;
     opts.hasLightsApprox = mat->UseEnviron() && env->NumLights_Approx() > 0;
@@ -954,7 +954,7 @@ u64 RndShaderSyncTrack::CalcShaderOpts(NgMat *mat, ShaderType shader_type, bool 
     }
     opts.hdr = mat->AllowHDR() && !fade
         && !(precache ? TheShaderMgr.GetPrecacheOffscreen() : TheNgRnd.Offscreen());
-    opts.diffuseMap = mat->GetDiffuseTex() ? true : false;
+    opts.diffuseMap = mat->DiffuseTex() ? true : false;
     opts.prelit = mat->PreLit();
     opts.hasLightsReal = mat->UseEnviron() && env->NumLights_Real() > 0;
     opts.hasLightsApprox = mat->UseEnviron() && env->NumLights_Approx() > 0;

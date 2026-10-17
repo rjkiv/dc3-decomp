@@ -792,7 +792,7 @@ void RndText::DrawShowing() {
                 for (int i = 0; i < font->NumMaterials(); i++) {
                     RndMat *mat = font->Material(i);
                     Hmx::Color *curColor = (Hmx::Color *)&colors[i * 4];
-                    mat->SetColor(*curColor);
+                    mat->SetRGBA(*curColor);
                 }
             }
         }

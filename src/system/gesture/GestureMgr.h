@@ -112,7 +112,7 @@ public:
     }
     RndTex *SnapshotTex(int idx) const {
         RndMat *mat = mLiveCamInput->GetSnapshot(idx);
-        return mat ? mat->GetDiffuseTex() : nullptr;
+        return mat ? mat->DiffuseTex() : nullptr;
     }
     bool InControllerMode() const { return mInControllerMode; }
     bool InDoubleUserMode() const { return mInDoubleUserMode; }

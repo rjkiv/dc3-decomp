@@ -283,7 +283,7 @@ void DxRnd::DrawLargeQuad(
         );
         mD3DDevice->SetFVF(D3DFVF_TEX1 | D3DFVF_XYZ);
         TheShaderMgr.SetVConstant((VShaderConstant)0x5c, Hmx::Matrix4(tf));
-        DxTex *tex = static_cast<DxTex *>(mat->GetDiffuseTex());
+        DxTex *tex = static_cast<DxTex *>(mat->DiffuseTex());
         mD3DDevice->SetTexture(16, tex->Tex());
         mD3DDevice->SetTexture(0, tex->Tex());
         mD3DDevice->DrawIndexedVertices(
