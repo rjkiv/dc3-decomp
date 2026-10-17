@@ -13,11 +13,11 @@ namespace {
     // size 0x10
     struct PropAction {
         PropAction(MatProp p, MatPropEditAction e, const char *n, int x)
-            : prop(p), edit_action(e), name(n), unkc(x) {}
-        MatProp prop;
-        MatPropEditAction edit_action;
-        const char *name;
-        int unkc;
+            : propEnum(p), propAction(e), propName(n), numShaderCombos(x) {}
+        MatProp propEnum; // 0x0
+        MatPropEditAction propAction; // 0x4
+        const char *propName; // 0x8
+        int numShaderCombos; // 0xc
     };
 
     PropAction gDefaultProps[] = {
@@ -91,8 +91,8 @@ namespace {
     };
     Symbol GetPropName(MatProp p) {
         for (int i = 0; i < DIM(gDefaultProps); i++) {
-            if (p == gDefaultProps[i].prop) {
-                return gDefaultProps[i].name;
+            if (p == gDefaultProps[i].propEnum) {
+                return gDefaultProps[i].propName;
             }
         }
         MILO_FAIL("PropAction %d not found in MetaMaterial", p);
@@ -108,15 +108,13 @@ END_HANDLERS
 
 #define SYNC_MAT_PROP_EDIT_ACTION(s, idx)                                                \
     SYNC_PROP_SET(                                                                       \
-        s,                                                                               \
-        mMatPropEditActions[idx],                                                        \
-        SetEditAction((MatProp)idx, (MatPropEditAction)_val.Int())                       \
+        s, mPropActions[idx], SetEditAction((MatProp)idx, (MatPropEditAction)_val.Int()) \
     )
 
 #define SYNC_MAT_PROP(s, member, idx)                                                    \
     SYNC_PROP_SET(                                                                       \
         s##_edit_action,                                                                 \
-        mMatPropEditActions[idx],                                                        \
+        mPropActions[idx],                                                               \
         SetEditAction((MatProp)idx, (MatPropEditAction)_val.Int())                       \
     )                                                                                    \
     SYNC_PROP(s, member)
@@ -217,14 +215,14 @@ END_PROPSYNCS
 BEGIN_SAVES(MetaMaterial)
     SAVE_REVS(2, 0)
     SAVE_SUPERCLASS(BaseMaterial)
-    bs << mMatPropEditActions;
+    bs << mPropActions;
 END_SAVES
 
 BEGIN_COPYS(MetaMaterial)
     COPY_SUPERCLASS(BaseMaterial)
     CREATE_COPY(MetaMaterial)
     BEGIN_COPYING_MEMBERS
-        COPY_MEMBER(mMatPropEditActions)
+        COPY_MEMBER(mPropActions)
     END_COPYING_MEMBERS
 END_COPYS
 
@@ -240,19 +238,19 @@ BEGIN_LOADS(MetaMaterial)
     ASSERT_REVS(2, 0)
     LOAD_SUPERCLASS(BaseMaterial)
     if (d.rev > 1) {
-        d >> mMatPropEditActions;
+        d >> mPropActions;
     }
 END_LOADS
 
 int MetaMaterial::CalcApproxNumShaders() {
     int num = 1;
     for (int i = 0; i < DIM(gDefaultProps); i++) {
-        String str(gDefaultProps[i].name);
+        String str(gDefaultProps[i].propName);
         str += "_edit_action";
         const DataNode *node = Property(str.c_str());
         MILO_ASSERT(node && node->Type() == kDataInt, 0xFB);
         if (node->Int() == 2) {
-            num *= gDefaultProps[i].unkc;
+            num *= gDefaultProps[i].numShaderCombos;
         }
     }
     return num;
@@ -288,18 +286,18 @@ void MetaMaterial::SetEditAction(MatProp propNum, MatPropEditAction action) {
             action = useDefault ? kPropDefault : action;
         }
     }
-    mMatPropEditActions[propNum] = action;
+    mPropActions[propNum] = action;
 }
 
 void MetaMaterial::Init() {
-    mMatPropEditActions.resize(kMatPropMax);
-    for (int i = 0; i < mMatPropEditActions.size(); i++) {
+    mPropActions.resize(kMatPropMax);
+    for (int i = 0; i < mPropActions.size(); i++) {
         if (i != kMatPropMax) {
             SetEditAction((MatProp)i, kNumEditActions);
         }
     }
     for (int i = 0; i < DIM(gDefaultProps); i++) {
-        SetEditAction(gDefaultProps[i].prop, gDefaultProps[i].edit_action);
+        SetEditAction(gDefaultProps[i].propEnum, gDefaultProps[i].propAction);
     }
 }
 

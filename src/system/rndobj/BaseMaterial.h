@@ -161,12 +161,13 @@ public:
 
     MatPerfSettings &PerfSettings() { return mPerfSettings; }
     const MatPerfSettings &PerfSettings() const { return mPerfSettings; }
+    const Transform &TexXfm() const { return mTexXfm; }
+    bool IsNextPass(BaseMaterial *m);
     const DataNode *GetDefaultPropVal(Symbol);
+
     RndTex *GetDiffuseTex() const { return mDiffuseTex; }
     RndTex *NormalMap() const { return mNormalMap; }
     ZMode GetZMode() const { return mZMode; }
-    bool IsNextPass(BaseMaterial *m);
-    const Transform &TexXfm() const { return mTexXfm; }
     const Hmx::Color &GetColor() const { return mColor; }
     float Alpha() const { return mColor.alpha; }
     bool UseEnviron() const { return mUseEnviron; }
