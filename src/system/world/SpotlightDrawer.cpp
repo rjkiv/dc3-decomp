@@ -420,16 +420,16 @@ void SpotlightDrawer::ApplyLightingApprox(BoxMapLighting &boxMap, float f2) cons
         Multiply(color, f2, color);
         Multiply(color, sl->GetIntensity(), color);
         BoxMapLighting::LightParams_Spot *params;
-        if (!boxMap.ParamsAt(params)) {
+        if (!boxMap.QueueLight(params)) {
             break;
         }
-        params->unk40 = xfm.v;
-        params->unk0 = xfm.m.y;
+        params->mLightPos = xfm.v;
+        params->mDirection = xfm.m.y;
         params->mColor = color;
         auto &beam = sl->GetBeam();
-        params->unk54 = beam.mTopRadius;
-        params->unk58 = beam.mRadius * 2;
-        params->unk50 = beam.mLength * 2;
+        params->mRadiusTop = beam.mTopRadius;
+        params->mRadiusBottom = beam.mRadius * 2;
+        params->mRange = beam.mLength * 2;
         boxMap.CacheData(*params);
     }
 }

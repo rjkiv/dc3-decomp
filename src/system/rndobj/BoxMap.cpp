@@ -1,12 +1,13 @@
 #include "rndobj/BoxMap.h"
+#include "math/Vec.inl"
 #include "rndobj/Lit.h"
 
 BoxMapLighting::BoxMapLighting() { Clear(); }
 
 void BoxMapLighting::Clear() {
-    mQueued_Directional.Clear();
-    mQueued_Point.Clear();
-    mQueued_Spot.Clear();
+    mQueued_Directional.clear();
+    mQueued_Point.clear();
+    mQueued_Spot.clear();
 }
 
 bool BoxMapLighting::QueueLight(RndLight *light, float colorScale) {
@@ -19,7 +20,7 @@ bool BoxMapLighting::QueueLight(RndLight *light, float colorScale) {
         case RndLight::kDirectional:
         case RndLight::kFakeSpot:
             LightParams_Directional *paramsDirectional;
-            if (ParamsAt(paramsDirectional)) {
+            if (QueueLight(paramsDirectional)) {
                 paramsDirectional->mColor = lightColor;
                 Negate(light->WorldXfm().m.y, paramsDirectional->mDirection);
                 return true;
@@ -27,8 +28,8 @@ bool BoxMapLighting::QueueLight(RndLight *light, float colorScale) {
             break;
         case RndLight::kPoint:
             LightParams_Point *paramsPoint;
-            if (ParamsAt(paramsPoint)) {
-                paramsPoint->unk0 = light->WorldXfm().v;
+            if (QueueLight(paramsPoint)) {
+                paramsPoint->mLightPos = light->WorldXfm().v;
                 paramsPoint->mColor = lightColor;
                 paramsPoint->mRange = light->Range();
                 paramsPoint->mFalloffStart = light->FalloffStart();
@@ -43,40 +44,41 @@ bool BoxMapLighting::QueueLight(RndLight *light, float colorScale) {
 }
 
 bool BoxMapLighting::CacheData(LightParams_Spot &spot) {
-    if (spot.unk50 > 0 && spot.unk58 >= spot.unk54
-        && (spot.mColor.red > 0.003921569f || spot.mColor.green > 0.003921569f
-            || spot.mColor.blue > 0.003921569f)) {
-        float f3 = (spot.unk54 * spot.unk50) / (spot.unk58 - spot.unk54);
+    if (spot.mRange > 0 && spot.mRadiusBottom >= spot.mRadiusTop
+        && (spot.mColor.red > (1 / 255.0f) || spot.mColor.green > (1 / 255.0f)
+            || spot.mColor.blue > (1 / 255.0f))) {
+        float f3 =
+            (spot.mRadiusTop * spot.mRange) / (spot.mRadiusBottom - spot.mRadiusTop);
         Vector3 v58;
-        Scale(spot.unk0, f3, v58);
+        Scale(spot.mDirection, f3, v58);
         Vector3 v4c;
-        Subtract(spot.unk40, v58, v4c);
-        float f1 = spot.unk58 / (spot.unk50 + f3);
+        Subtract(spot.mLightPos, v58, v4c);
+        float f1 = spot.mRadiusBottom / (spot.mRange + f3);
         f1 *= f1;
-        float f2 = 1.0f / (spot.unk50 * 2.0f);
+        float f2 = 1.0f / (spot.mRange * 2.0f);
         f1 = (1.0f - f1) / (f1 + 1.0f);
-        spot.unk20 = v4c;
-        spot.unk30 = f1;
-        spot.unk34 = 1.0f / (1.0f - f1);
-        spot.unk38 = f2;
-        spot.unk3c = f3 * f2;
+        spot.mCachedData.mTipPosition = v4c;
+        spot.mCachedData.mCosTheta = f1;
+        spot.mCachedData.mOneOverOneSubCos = 1.0f / (1.0f - f1);
+        spot.mCachedData.mOneOverRange2x = f2;
+        spot.mCachedData.mTipOverRange2x = f3 * f2;
         return true;
     } else {
-        mQueued_Spot.RemoveEntry();
+        mQueued_Spot.pop();
         return false;
     }
 }
 
-static int s278 = 0;
-static Vector3 sDirections[150];
-static Hmx::Color sColors[150];
+static unsigned int s_arraySize = 0;
+static Vector3 s_arrayDir[150];
+static Hmx::Color s_arrayCol[150];
 
 void BoxMapLighting::ApplyLight(
     const BoxLightArray<BoxMapLighting::LightParams_Directional, 50> &boxArray
 ) const {
-    for (int i = 0; i < boxArray.NumElements(); i++) {
-        sDirections[s278] = boxArray[i].mDirection;
-        sColors[s278++] = boxArray[i].mColor;
+    for (int i = 0; i < boxArray.size(); i++) {
+        s_arrayDir[s_arraySize] = boxArray[i].mDirection;
+        s_arrayCol[s_arraySize++] = boxArray[i].mColor;
     }
 }
 
@@ -84,19 +86,19 @@ void BoxMapLighting::ApplyLight(
     const BoxLightArray<BoxMapLighting::LightParams_Point, 50> &boxArray,
     const Vector3 &vec
 ) const {
-    for (int i = 0; i < boxArray.NumElements(); i++) {
+    for (int i = 0; i < boxArray.size(); i++) {
         if (boxArray[i].mRange > boxArray[i].mFalloffStart) {
-            Subtract(boxArray[i].unk0, vec, sDirections[s278]);
-            float lensq = LengthSquared(sDirections[s278]);
+            Subtract(boxArray[i].mLightPos, vec, s_arrayDir[s_arraySize]);
+            float lensq = LengthSquared(s_arrayDir[s_arraySize]);
             if (lensq > 0) {
                 float inv = __frsqrte(lensq);
                 float f3 = Min(0.0f, inv * lensq - boxArray[i].mFalloffStart);
                 float f4 =
                     Min(0.0f, 1 - f3 / (boxArray[i].mRange - boxArray[i].mFalloffStart));
-                sColors[s278].red = boxArray[i].mColor.red * f4;
-                sColors[s278].green = boxArray[i].mColor.green * f4;
-                sColors[s278].blue = boxArray[i].mColor.blue * f4;
-                sDirections[s278++] *= inv;
+                s_arrayCol[s_arraySize].red = boxArray[i].mColor.red * f4;
+                s_arrayCol[s_arraySize].green = boxArray[i].mColor.green * f4;
+                s_arrayCol[s_arraySize].blue = boxArray[i].mColor.blue * f4;
+                s_arrayDir[s_arraySize++] *= inv;
             }
         }
     }
