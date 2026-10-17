@@ -398,11 +398,11 @@ HRESULT DxRnd::GetDeviceCaps(D3DCAPS9 *cap) {
 }
 
 void DxRnd::DrawSafeArea(float percent, bool widescreen, const Hmx::Color &color) {
-    if (mShrinkToSafe) {
+    if (mShrinkToSafeArea) {
         percent *= 1.0526316f;
     }
 
-    float realAspect = (float)mHeight / (float)mWidth;
+    float realAspect = (float)mScreenHeight / (float)mScreenWidth;
     float targetAspect = widescreen ? 16.0f / 9.0f : 4.0f / 3.0f;
     float mult = targetAspect * realAspect;
     float set = (1.0f - percent) / 2.0f;

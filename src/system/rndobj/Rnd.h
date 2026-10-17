@@ -32,10 +32,12 @@ public:
 class Rnd : public Hmx::Object, public RndOverlay::Callback {
 public:
     enum Aspect {
-        kSquare,
-        kRegular,
-        kWidescreen,
-        kLetterbox
+        kSquare = 0x0000,
+        kRegular = 0x0001,
+        kWidescreen = 0x0002,
+        kLetterbox = 0x0003,
+        k5_3 = 0x0004,
+        kNumAspects = 0x0005,
     };
     enum DefaultTextureType {
         kDefaultTex_Black = 0,
@@ -73,12 +75,12 @@ public:
     };
 
     struct PointTest {
-        PointTest() : unk0(0), unk4(0), unk8(0), unkc(0) {}
+        PointTest() : x(0), y(0), z(0), flare(0) {}
 
-        int unk0; // 0x0 - width
-        int unk4; // 0x4 - height
-        unsigned int unk8; // 0x8 - z projection?
-        RndFlare *unkc; // 0xc - flare
+        int x; // 0x0
+        int y; // 0x4
+        unsigned int z; // 0x8
+        RndFlare *flare; // 0xc
     };
 
     struct CompressTextureCallback {
@@ -88,18 +90,18 @@ public:
 
     struct CompressTexDesc {
         CompressTexDesc(RndTex *tex, RndTex::AlphaCompress a, CompressTextureCallback *cb)
-            : tex(nullptr, tex), alpha(a), callback(cb) {}
+            : tex(nullptr, tex), alphaCompress(a), cb(cb) {}
         ~CompressTexDesc() {
-            if (callback) {
-                callback->TextureCompressed((int)this);
+            if (cb) {
+                cb->TextureCompressed((int)this);
             }
         }
 
         MEM_OVERLOAD(CompressTexDesc, 0x1E4)
 
         ObjPtr<RndTex> tex; // 0x0
-        RndTex::AlphaCompress alpha; // 0x14
-        CompressTextureCallback *callback; // 0x18
+        RndTex::AlphaCompress alphaCompress; // 0x14
+        CompressTextureCallback *cb; // 0x18
     };
 
     Rnd();
@@ -109,12 +111,12 @@ public:
     virtual void ReInit() {}
     virtual void Terminate();
     virtual void SetClearColor(const Hmx::Color &c) { mClearColor = c; }
-    virtual void Clear(unsigned int, const Hmx::Color &) = 0;
+    virtual void Clear(unsigned int flags, const Hmx::Color &color) = 0;
     virtual void ForceColorClear() {}
     virtual void ScreenDump(const char *file);
     virtual void ScreenDumpUnique(const char *file);
     virtual void DrawRect(
-        const Hmx::Rect &r,
+        const Hmx::Rect &rect,
         const Hmx::Color &c,
         RndMat *mat,
         const Hmx::Color *right,
@@ -124,7 +126,7 @@ public:
         const char *s, const Vector2 &place, const Hmx::Color &c, bool draw
     ); // 0x80
     virtual void
-    DrawLine(const Vector3 &start, const Vector3 &end, const Hmx::Color &c, bool no_z) {
+    DrawLine(const Vector3 &start, const Vector3 &end, const Hmx::Color &c, bool zBuf) {
     } // 0x84
     virtual void BeginDrawing();
     virtual void EndDrawing();
@@ -135,11 +137,12 @@ public:
     virtual void BeginDrawPass() {}
     virtual void EndDrawPass() {}
     virtual unsigned int GetFrameID() const { return mFrameID; }
-    virtual bool ShouldDrawPanel(const UIPanel *) { return true; }
-    virtual RndTex *GetCurrentFrameTex(bool) { return nullptr; }
+    virtual bool ShouldDrawPanel(const UIPanel *panel) { return true; }
+    virtual RndTex *GetCurrentFrameTex(bool resolveTexture) { return nullptr; }
     virtual void ReleaseOwnership() {}
     virtual void AcquireOwnership() {}
-    virtual void SetShadowMap(RndTex *, RndCam *, const Hmx::Color *) {}
+    virtual void
+    SetShadowMap(RndTex *shadowMap, RndCam *shadowCam, const Hmx::Color *color) {}
     virtual void SetGSTiming(bool b) { mGsTiming = b; }
     virtual void CaptureNextGpuFrame() {}
     virtual void RemovePointTest(RndFlare *flare);
@@ -148,18 +151,20 @@ public:
     virtual float YRatio();
     virtual RndTex *GetShadowMap() { return nullptr; }
     virtual RndCam *GetShadowCam() { return nullptr; }
-    virtual void SetShrinkToSafeArea(bool shrink) { mShrinkToSafe = shrink; }
+    virtual void SetShrinkToSafeArea(bool shrink) { mShrinkToSafeArea = shrink; }
     virtual void SetInGame(bool game) { mInGame = game; }
-    virtual int BeginQuery(RndDrawable *) { return -1; }
-    virtual bool EndQuery(int) { return false; }
-    virtual bool VisibleSets(std::vector<RndDrawable *> &, std::vector<RndDrawable *> &) {
+    virtual int BeginQuery(RndDrawable *object) { return -1; }
+    virtual bool EndQuery(int handle) { return false; }
+    virtual bool VisibleSets(
+        std::vector<RndDrawable *> &visibles, std::vector<RndDrawable *> &invisibles
+    ) {
         return false;
     }
 
-    bool ShrinkToSafeArea() const { return mShrinkToSafe; }
+    bool ShrinkToSafeArea() const { return mShrinkToSafeArea; }
     bool TimersShowing() { return mTimersOverlay->Showing(); }
-    int Width() const { return mWidth; }
-    int Height() const { return mHeight; }
+    int Width() const { return mScreenWidth; }
+    int Height() const { return mScreenHeight; }
     int Bpp() const { return mScreenBpp; }
     bool WorldEnded() const { return mWorldEnded; }
     bool Splashing() const { return mSplashing; }
@@ -168,7 +173,7 @@ public:
     Mode DrawMode() { return mDrawMode; }
     void SetDrawMode(Mode d) { mDrawMode = d; }
     RndCam *GetDefaultCam() const { return mDefaultCam; }
-    RndCam *GetWorldCamCopy() const { return mWorldCamCopy; }
+    RndCam *GetWorldCamCopy() const { return mWorldCam; }
     ProcessCmd ProcCmds() const { return mProcCmds; }
     bool DisablePP() const { return mDisablePostProc; }
     DataArray *Font() const { return mFont; }
@@ -186,33 +191,36 @@ public:
     void ShowConsole(bool);
     bool ConsoleShowing();
     void EndWorld();
-    void SetShowTimers(bool, bool);
-    void SetProcAndLock(bool);
+    void SetShowTimers(bool show, bool verbose);
+    void SetProcAndLock(bool b);
     bool ProcAndLock() const;
     void ResetProcCounter();
     bool GetEvenOddDisabled() const;
-    void SetEvenOddDisabled(bool);
+    void SetEvenOddDisabled(bool b);
     void DrawRectScreen(
-        const Hmx::Rect &,
-        const Hmx::Color &,
-        RndMat *,
-        const Hmx::Color *,
-        const Hmx::Color *
+        const Hmx::Rect &rect,
+        const Hmx::Color &color,
+        RndMat *mat,
+        const Hmx::Color *right,
+        const Hmx::Color *bottom
     );
-    const Vector2 &
-    DrawStringScreen(const char *s, const Vector2 &v, const Hmx::Color &color, bool draw);
+    const Vector2 &DrawStringScreen(
+        const char *str, const Vector2 &place, const Hmx::Color &color, bool draw
+    );
     RndPostProc *GetPostProcOverride();
     RndPostProc *GetSelectedPostProc();
-    void CopyWorldCam(RndCam *);
+    void CopyWorldCam(RndCam *srcCam);
     void RegisterPostProcessor(PostProcessor *pp);
     void UnregisterPostProcessor(PostProcessor *pp);
     void SetPostProcOverride(RndPostProc *pp);
     void SetPostProcBlacklightOverride(RndPostProc *pp);
-    void PreClearDrawAddOrRemove(RndDrawable *, bool, bool);
+    void PreClearDrawAddOrRemove(RndDrawable *object, bool add, bool splash);
     RndTex *GetNullTexture();
-    int CompressTexture(RndTex *, RndTex::AlphaCompress, CompressTextureCallback *);
-    void Modal(Debug::ModalType &modalType, FixedString &msg, bool wait);
-    void TestPoint(const Vector3 &, RndFlare *flare);
+    int CompressTexture(
+        RndTex *tex, RndTex::AlphaCompress alphaCompress, CompressTextureCallback *cb
+    );
+    void Modal(Debug::ModalType &mt, FixedString &msg, bool wait);
+    void TestPoint(const Vector3 &v, RndFlare *flare);
     void PushClipPlanes(ObjPtrVec<RndTransformable> &planes) {
         if (planes.size() > 0) {
             PushClipPlanesInternal(planes);
@@ -227,17 +235,17 @@ public:
     static int sPostProcPanelCount;
 
 protected:
-    virtual void PushClipPlanesInternal(ObjPtrVec<RndTransformable> &) {}
-    virtual void PopClipPlanesInternal(ObjPtrVec<RndTransformable> &) {}
+    virtual void PushClipPlanesInternal(ObjPtrVec<RndTransformable> &iClipPlanes) {}
+    virtual void PopClipPlanesInternal(ObjPtrVec<RndTransformable> &iClipPlanes) {}
     virtual void DoWorldBegin();
     virtual void DoWorldEnd();
     virtual void DoPostProcess();
     virtual void DrawPreClear();
-    virtual bool CanModal(Debug::ModalType) { return false; }
-    virtual void ModalDraw(Debug::ModalType, const char *) {}
+    virtual bool CanModal(Debug::ModalType mt) { return false; }
+    virtual void ModalDraw(Debug::ModalType mt, const char *msg) {}
     virtual unsigned int GetDefaultTexBitmapOrder() const { return 0; }
 
-    virtual float UpdateOverlay(RndOverlay *, float);
+    virtual float UpdateOverlay(RndOverlay *o, float topY);
 
     void UpdateRate();
     void UpdateHeap();
@@ -245,7 +253,7 @@ protected:
     void CreateDefaults();
     void SetupFont();
     void CreateCubeTextures();
-    RndTex *CreateDefaultTexture(DefaultTextureType);
+    RndTex *CreateDefaultTexture(DefaultTextureType textureType);
 
     DataNode OnShowConsole(const DataArray *);
     DataNode OnToggleTimers(const DataArray *);
@@ -271,8 +279,8 @@ protected:
     DataNode OnToggleWatch(const DataArray *);
 
     Hmx::Color mClearColor; // 0x30
-    int mWidth; // 0x40
-    int mHeight; // 0x44
+    int mScreenWidth; // 0x40
+    int mScreenHeight; // 0x44
     int mScreenBpp; // 0x48
     int mDrawCount; // 0x4c
     Timer mDrawTimer; // 0x50
@@ -287,7 +295,7 @@ protected:
     RndMat *mOverlayMat; // 0xd8
     RndMat *mOverdrawMat; // 0xdc
     RndCam *mDefaultCam; // 0xe0
-    RndCam *mWorldCamCopy; // 0xe4
+    RndCam *mWorldCam; // 0xe4
     RndEnviron *mDefaultEnv; // 0xe8
     RndLight *mDefaultLit; // 0xec
     RndTex *mDefaultTex[kDefaultTex_Max]; // 0xf0 - 0x10c, inclusive
@@ -301,20 +309,20 @@ protected:
     DataArray *mFont; // 0x12c
     int mSync; // 0x130
     bool mGsTiming; // 0x134
-    bool mShowSafeArea; // 0x135
+    bool mSafeArea; // 0x135
     bool mDrawing; // 0x136
     bool mWorldEnded; // 0x137
     Aspect mAspect; // 0x138
     Mode mDrawMode; // 0x13c
     bool mShowShaderCost; // 0x140
     bool mShowOverdraw; // 0x141
-    bool mShrinkToSafe; // 0x142
+    bool mShrinkToSafeArea; // 0x142
     bool mInGame; // 0x143
     bool mVerboseTimers; // 0x144
     bool mDisablePostProc; // 0x145
-    bool unk146;
-    bool unk147;
-    bool unk148;
+    bool mShowBones; // 0x146
+    bool mCopiedWorldCam; // 0x147
+    bool mDrawingPreClear; // 0x148
     void (*mWorldEndCallback)(); // 0x14c
     void (*mDrawPreClearCallback)(); // 0x150
     std::list<PointTest> mPointTests; // 0x154
@@ -327,7 +335,7 @@ protected:
     ProcCounter mProcCounter; // 0x1b8
     ProcessCmd mProcCmds; // 0x1d0
     ProcessCmd mLastProcCmds; // 0x1d4
-    std::list<CompressTexDesc *> mCompressTexDescs; // 0x1d8
+    std::list<CompressTexDesc *> mCompressTextures; // 0x1d8
 };
 
 extern Rnd &TheRnd;

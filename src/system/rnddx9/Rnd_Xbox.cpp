@@ -215,7 +215,7 @@ void DxRnd::BeginDrawing() {
 
 void DxRnd::EndDrawing() {
     EndWorld();
-    if (mShowSafeArea) {
+    if (mSafeArea) {
         Hmx::Color red(1, 0, 0);
         Hmx::Color green(0, 1, 0);
         if (mAspect == 2) {
@@ -280,7 +280,7 @@ void DxRnd::SetAspect(Aspect a) {
 }
 
 void DxRnd::SetShrinkToSafeArea(bool shrink) {
-    if (shrink != mShrinkToSafe) {
+    if (shrink != mShrinkToSafeArea) {
         Rnd::SetShrinkToSafeArea(shrink);
         UpdateScalerParams();
         ResetDevice();
@@ -352,7 +352,7 @@ void DxRnd::UpdateScalerParams() {
     if (b3 && w * 0.5625f < h) {
         h = w * 0.5625f;
     }
-    if (mShrinkToSafe) {
+    if (mShrinkToSafeArea) {
         w *= 0.95f;
         if (!b3) {
             h *= 0.95f;
@@ -636,16 +636,16 @@ void DxRnd::InitBuffers() {
     }
     unk1f8 = unk37c;
     mAspect = unk1f8 ? kWidescreen : kRegular;
-    mHeight = unk37c & 1 ? 540 : 720;
+    mScreenHeight = unk37c & 1 ? 540 : 720;
     int i11, i10;
     if (mVideoMode.fIsHiDef || unk1f8) {
-        i11 = (mHeight << 4) / 9;
-        i10 = (mHeight << 4) / 9;
+        i11 = (mScreenHeight << 4) / 9;
+        i10 = (mScreenHeight << 4) / 9;
     } else {
-        i11 = (mHeight << 2) / 3;
-        i10 = (mHeight << 2) / 3;
+        i11 = (mScreenHeight << 2) / 3;
+        i10 = (mScreenHeight << 2) / 3;
     }
-    mWidth = i11;
+    mScreenWidth = i11;
     if (!(unk37c & 1)) {
         mNumTiles = 2;
         // stuff
@@ -656,8 +656,8 @@ void DxRnd::InitBuffers() {
     mPresentParams.Windowed = 0;
     mPresentParams.DisableAutoBackBuffer = 1;
     mPresentParams.DisableAutoFrontBuffer = 1;
-    mPresentParams.BackBufferWidth = mWidth;
-    mPresentParams.BackBufferHeight = mHeight;
+    mPresentParams.BackBufferWidth = mScreenWidth;
+    mPresentParams.BackBufferHeight = mScreenHeight;
     mPresentParams.PresentationInterval = 0;
     mPresentParams.SwapEffect = D3DSWAPEFFECT_DISCARD;
     // D3DPRESENT_PARAMETERS mPresentParams; // 0x234
@@ -690,7 +690,13 @@ void DxRnd::InitBuffers() {
         MILO_ASSERT(mNumTiles > 0, 0x36D);
         BeginMemTrackObjectName("CreateBackBuffers:World");
         CreateBackBuffers(
-            mWidth, mHeight, D3DMULTISAMPLE_NONE, unk3a8, unk3ac, mBackBuffer, unk388
+            mScreenWidth,
+            mScreenHeight,
+            D3DMULTISAMPLE_NONE,
+            unk3a8,
+            unk3ac,
+            mBackBuffer,
+            unk388
         );
         EndMemTrackObjectName();
         BeginMemTrackObjectName("CreateBackBuffers:UI");
@@ -698,19 +704,38 @@ void DxRnd::InitBuffers() {
         MILO_ASSERT(mNumTiles == 0, 0x37E);
         BeginMemTrackObjectName("CreateBackBuffers:World");
         CreateBackBuffers(
-            mWidth, mHeight, D3DMULTISAMPLE_2_SAMPLES, unk3a8, unk3ac, mBackBuffer, unk388
+            mScreenWidth,
+            mScreenHeight,
+            D3DMULTISAMPLE_2_SAMPLES,
+            unk3a8,
+            unk3ac,
+            mBackBuffer,
+            unk388
         );
         EndMemTrackObjectName();
         BeginMemTrackObjectName("CreateBackBuffers:UI");
     }
     CreateBackBuffers(
-        mWidth, mHeight, D3DMULTISAMPLE_2_SAMPLES, unk3a8, unk3ac, unk384, unk38c
+        mScreenWidth,
+        mScreenHeight,
+        D3DMULTISAMPLE_2_SAMPLES,
+        unk3a8,
+        unk3ac,
+        unk384,
+        unk38c
     );
     EndMemTrackObjectName();
     {
         BeginMemTrackObjectName("CreateTexture:PreProcessBuffer");
         HRESULT hr = TheDxRnd.Device()->CreateTexture(
-            mWidth, mHeight, 1, 0, D3DFMT_A8R8G8B8, 0, &mPreProcessBuffer, nullptr
+            mScreenWidth,
+            mScreenHeight,
+            1,
+            0,
+            D3DFMT_A8R8G8B8,
+            0,
+            &mPreProcessBuffer,
+            nullptr
         );
         DX_ASSERT(hr, 0x390);
         EndMemTrackObjectName();
@@ -718,7 +743,14 @@ void DxRnd::InitBuffers() {
     {
         BeginMemTrackObjectName("CreateTexture:PostProcessBuffer");
         HRESULT hr = TheDxRnd.Device()->CreateTexture(
-            mWidth, mHeight, 1, 0, D3DFMT_A8R8G8B8, 0, &mPostProcessBuffer, nullptr
+            mScreenWidth,
+            mScreenHeight,
+            1,
+            0,
+            D3DFMT_A8R8G8B8,
+            0,
+            &mPostProcessBuffer,
+            nullptr
         );
         DX_ASSERT(hr, 0x394);
         EndMemTrackObjectName();
@@ -726,7 +758,14 @@ void DxRnd::InitBuffers() {
     for (int i = 0; i < 2; i++) {
         BeginMemTrackObjectName("CreateTexture:FrontBuffer");
         HRESULT hr = TheDxRnd.Device()->CreateTexture(
-            mWidth, mHeight, 1, 0, D3DFMT_LE_A8R8G8B8, 0, &mFrontBuffers[i], nullptr
+            mScreenWidth,
+            mScreenHeight,
+            1,
+            0,
+            D3DFMT_LE_A8R8G8B8,
+            0,
+            &mFrontBuffers[i],
+            nullptr
         );
         DX_ASSERT(hr, 0x39C);
         EndMemTrackObjectName();
@@ -734,7 +773,7 @@ void DxRnd::InitBuffers() {
 
     BeginMemTrackObjectName("CreateTexture:FrontBufferDepth");
     HRESULT hr = TheDxRnd.Device()->CreateTexture(
-        mWidth, mHeight, 1, 0, D3DFMT_D24FS8, 0, &mFrontBufferDepth, nullptr
+        mScreenWidth, mScreenHeight, 1, 0, D3DFMT_D24FS8, 0, &mFrontBufferDepth, nullptr
     );
     DX_ASSERT(hr, 0x3A2);
     EndMemTrackObjectName();
@@ -784,7 +823,7 @@ void DxRnd::CopyPostProcess() {
         mRegAlloc = (RegisterAlloc)2;
         mD3DDevice->SetShaderGPRAllocation(0, 0x10, 0x70);
     }
-    Hmx::Rect r(0, 0, mWidth, mHeight);
+    Hmx::Rect r(0, 0, mScreenWidth, mScreenHeight);
     RndMat *mat = TheShaderMgr.GetPostProcMat();
     mat->SetBlend(RndMat::kBlendSrc);
     mat->SetZMode(kZModeDisable);
