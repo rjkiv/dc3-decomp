@@ -242,16 +242,16 @@ float RndMeshAnim::EndFrame() {
 int RndMeshAnim::NumVerts() {
     int num = 0;
     if (VertPointsKeys().size() != 0) {
-        MaxEq<int>(num, VertPointsKeys().size());
+        MaxEq<int>(num, VertPointsKeys().front().value.size());
     }
     if (VertNormalsKeys().size() != 0) {
-        MaxEq<int>(num, VertNormalsKeys().size());
+        MaxEq<int>(num, VertNormalsKeys().front().value.size());
     }
     if (VertTexsKeys().size() != 0) {
-        MaxEq<int>(num, VertTexsKeys().size());
+        MaxEq<int>(num, VertTexsKeys().front().value.size());
     }
     if (VertColorsKeys().size() != 0) {
-        MaxEq<int>(num, VertColorsKeys().size());
+        MaxEq<int>(num, VertColorsKeys().front().value.size());
     }
     return num;
 }
