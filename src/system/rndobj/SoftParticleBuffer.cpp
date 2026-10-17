@@ -14,7 +14,7 @@
 #include "rndobj/Tex.h"
 
 RndSoftParticleBuffer::RndSoftParticleBuffer()
-    : unk38(BaseMaterial::kBlendSrcAlphaAdd), unk3c(this) {
+    : mBlendMode(BaseMaterial::kBlendSrcAlphaAdd), mQueuedObjects(this) {
     for (int i = 0; i < 2; i++) {
         mSurfaces[i] = nullptr;
     }
@@ -27,7 +27,7 @@ RndSoftParticleBuffer::~RndSoftParticleBuffer() { FreeData(); }
 
 void RndSoftParticleBuffer::DoPost() {
     TheShaderMgr.SetPostSoftDepth(false);
-    if (!unk3c.empty()) {
+    if (!mQueuedObjects.empty()) {
         if (TheNgRnd.PreDepthTexture() && mSurfaces[0]) {
             RndCam *curCam = RndCam::Current();
             RndCam *cam = TheRnd.GetWorldCamCopy();
@@ -35,13 +35,15 @@ void RndSoftParticleBuffer::DoPost() {
             cam->Select();
             Rnd::Mode mode = TheRnd.DrawMode();
             TheRnd.SetDrawMode(Rnd::kDrawSoftDepth);
-            TheShaderMgr.SetPConstant((PShaderConstant)9, TheNgRnd.PreDepthTexture());
-            TheRenderState.SetTextureFilter(9, RndRenderState::kPoint, false);
-            TheRenderState.SetTextureClamp(9, RndRenderState::kClamp);
+            TheShaderMgr.SetPConstant(kPShader_DepthHalf, TheNgRnd.PreDepthTexture());
+            TheRenderState.SetTextureFilter(
+                kPShader_DepthHalf, RndRenderState::kPoint, false
+            );
+            TheRenderState.SetTextureClamp(kPShader_DepthHalf, RndRenderState::kClamp);
             Vector4 values;
             cam->GetDepthRangeValues(values);
-            TheShaderMgr.SetPConstant((PShaderConstant)0x59, values);
-            FOREACH (it, unk3c) {
+            TheShaderMgr.SetPConstant(kPShader_ZRange, values);
+            FOREACH (it, mQueuedObjects) {
                 (*it)->Draw();
             }
             TheRnd.SetDrawMode(mode);
@@ -49,12 +51,14 @@ void RndSoftParticleBuffer::DoPost() {
             curCam->Select();
             BlurSurface();
             TheShaderMgr.SetPostSoftDepth(true);
-            TheShaderMgr.SetPConstant((PShaderConstant)4, mSurfaces[0]);
-            TheRenderState.SetTextureFilter(4, RndRenderState::kLinear, false);
-            TheRenderState.SetTextureClamp(4, RndRenderState::kClamp);
+            TheShaderMgr.SetPConstant(kPShader_SoftDepthMap, mSurfaces[0]);
+            TheRenderState.SetTextureFilter(
+                kPShader_SoftDepthMap, RndRenderState::kLinear, false
+            );
+            TheRenderState.SetTextureClamp(kPShader_SoftDepthMap, RndRenderState::kClamp);
         }
     }
-    unk3c.clear();
+    mQueuedObjects.clear();
 }
 
 void RndSoftParticleBuffer::FreeData() {
@@ -78,9 +82,9 @@ void RndSoftParticleBuffer::AllocateData(
 }
 
 void RndSoftParticleBuffer::Queue(RndDrawable *draw, BaseMaterial::Blend blend) {
-    if (blend == unk38) {
-        if (unk3c.find(draw) == unk3c.end()) {
-            unk3c.push_back(draw);
+    if (blend == mBlendMode) {
+        if (mQueuedObjects.find(draw) == mQueuedObjects.end()) {
+            mQueuedObjects.push_back(draw);
         }
     }
 }
@@ -91,40 +95,43 @@ void RndSoftParticleBuffer::BlurSurface() {
     work->SetZMode(kZModeDisable);
     work->SetTexWrap(kTexWrapClamp);
     for (unsigned int i = 0; i < 2; i++) {
-        RndTex *curSurface = mSurfaces[(i - 1) & 1];
+        RndTex *curSurface = mSurfaces[i - 1 & 1];
         work->SetDiffuseTex(mSurfaces[i & 1]);
         curSurface->MakeDrawTarget();
-        float w = curSurface->Width();
-        float h = curSurface->Height();
-        float invw = 1 / w;
-        float invh = 1 / h;
-        Hmx::Rect rect(1, 1, w, h);
+        Hmx::Rect blurRect(1, 1, curSurface->Width(), curSurface->Height());
+        float invw = 1 / blurRect.w;
+        float invh = 1 / blurRect.h;
 
-        static Vector2 sVecs[] = { Vector2(0.1f, -1.5f),
-                                   Vector2(0.25f, -0.5f),
-                                   Vector2(0.3f, 0.5f),
-                                   Vector2(0.25f, 1.5f),
-                                   Vector2(0.1f, 2.5f) };
+        static const float kBaseOffset = 0.5f;
+        // pdb says this is a float [5][2], but maybe they made it a Vector2 later on
+        static const Vector2 kBlurWeightOffset[5] = { Vector2(0.1f, -1.5f),
+                                                      Vector2(0.25f, -0.5f),
+                                                      Vector2(0.3f, 0.5f),
+                                                      Vector2(0.25f, 1.5f),
+                                                      Vector2(0.1f, 2.5f) };
 
         bool b1 = !(i & 1);
         for (unsigned int j = 0; j < 5; j++) {
-            float f20 = sVecs[j].x;
+            float f20 = kBlurWeightOffset[j].x;
             float x, y;
 
             if (b1) {
-                x = sVecs[j].y * invw;
-                y = 0.5f * invh;
+                x = kBlurWeightOffset[j].y * invw;
+                y = kBaseOffset * invh;
             } else {
-                x = 0.5f * invh;
-                y = sVecs[j].y * invw;
+                x = kBaseOffset * invh;
+                y = kBlurWeightOffset[j].y * invw;
             }
-            TheShaderMgr.SetPConstant((PShaderConstant)(0x8A + j), Vector4(x, y, 1, 1));
             TheShaderMgr.SetPConstant(
-                (PShaderConstant)(0x9A + j), Vector4(f20, f20, f20, f20)
+                (PShaderConstant)(kPShader_BlurSampleOffsets + j), Vector4(x, y, 1, 1)
+            );
+            TheShaderMgr.SetPConstant(
+                (PShaderConstant)(kPShader_BlurSampleWeights + j),
+                Vector4(f20, f20, f20, f20)
             );
         }
         TheShaderMgr.SetNumTaps(5);
-        TheNgRnd.DrawRect(rect, work, kBlurShader, Hmx::Color(), nullptr, nullptr);
+        TheNgRnd.DrawRect(blurRect, work, kBlurShader, Hmx::Color(), nullptr, nullptr);
         TheShaderMgr.SetNumTaps(1);
         curSurface->FinishDrawTarget();
     }

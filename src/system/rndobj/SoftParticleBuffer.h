@@ -18,14 +18,16 @@ public:
 
     NEW_OBJ(RndSoftParticleBuffer)
     REGISTER_OBJ(RndSoftParticleBuffer)
-    void Queue(RndDrawable *, BaseMaterial::Blend);
+    void Queue(RndDrawable *draw, BaseMaterial::Blend blendMode);
 
 private:
-    void AllocateData(unsigned int, unsigned int, unsigned int);
+    void AllocateData(unsigned int width, unsigned int height, unsigned int bpp);
     void FreeData();
     void BlurSurface();
 
+    // private: static const uint32_t kNumSurfaces;
+
     RndTex *mSurfaces[2]; // 0x30
-    BaseMaterial::Blend unk38; // 0x38
-    ObjPtrList<RndDrawable> unk3c; // 0x3c
+    BaseMaterial::Blend mBlendMode; // 0x38
+    ObjPtrList<RndDrawable> mQueuedObjects; // 0x3c
 };
