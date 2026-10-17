@@ -18,9 +18,7 @@ BEGIN_HANDLERS(RndShockwave)
 END_HANDLERS
 
 BEGIN_PROPSYNCS(RndShockwave)
-    SYNC_PROP_SET(
-        selected, sSelected == this, sSelected = _val.Int() != 0 ? this : nullptr
-    )
+    SYNC_PROP_SET(selected, IsSelected(), SetSelected(_val.Int()))
     SYNC_PROP(auto_select, mAutoSelect)
     SYNC_PROP(radius, mRadius)
     SYNC_PROP(amplitude, mAmplitude)
@@ -71,21 +69,34 @@ BEGIN_LOADS(RndShockwave)
 END_LOADS
 
 void RndShockwave::Enter() {
-    if (mAutoSelect)
+    if (mAutoSelect) {
         sSelected = this;
+    }
 }
 
 void RndShockwave::Exit() {
-    if (sSelected == this)
+    if (sSelected == this) {
         sSelected = nullptr;
+    }
 }
 
-void RndShockwave::PrepareShader(float f1) {
+void RndShockwave::PrepareShader(float iAmplitudeMult) {
     const Vector3 &v = WorldXfm().v;
-    TheShaderMgr.SetVConstant((VShaderConstant)0x1E, Vector4(v.x, v.y, v.z, 0));
+    Vector4 v1;
+    v1.x = v.x;
+    v1.y = v.y;
+    v1.z = v.z;
+    v1.w = 0;
+    TheShaderMgr.SetVConstant(kVShader_ShockwaveCenter, v1);
     const Vector3 &mz = WorldXfm().m.z;
-    TheShaderMgr.SetVConstant((VShaderConstant)0x1F, Vector4(mz.x, mz.y, mz.z, 0));
+    Vector4 v2;
+    v2.x = mz.x;
+    v2.y = mz.y;
+    v2.z = mz.z;
+    v2.w = 0;
+    TheShaderMgr.SetVConstant(kVShader_ShockwaveAxis, v2);
     TheShaderMgr.SetVConstant(
-        (VShaderConstant)0x20, Vector4(mRadius, mAmplitude * f1, 1.0f / mWavelength, 0)
+        kVShader_ShockwaveParams,
+        Vector4(mRadius, mAmplitude * iAmplitudeMult, 1.0f / mWavelength, 0)
     );
 }

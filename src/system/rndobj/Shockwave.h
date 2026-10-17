@@ -24,14 +24,22 @@ public:
     REGISTER_OBJ(RndShockwave)
     static RndShockwave *Selected() { return sSelected; }
 
-    void PrepareShader(float);
+    void PrepareShader(float iAmplitudeMult);
     float Amplitude() const { return mAmplitude; }
-
-private:
-    static RndShockwave *sSelected;
+    bool IsSelected() const { return this == sSelected; }
+    void SetSelected(bool s) {
+        if (s) {
+            sSelected = this;
+        } else if (sSelected == this) {
+            sSelected = nullptr;
+        }
+    }
 
 protected:
     RndShockwave();
+
+private:
+    static RndShockwave *sSelected;
 
     /** "Automatically select this shockwave object on Enter." */
     bool mAutoSelect; // 0xc8

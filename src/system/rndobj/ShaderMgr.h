@@ -247,6 +247,25 @@ public:
     static const unsigned int XBOX_SHADERS_TYPE = 'XBOX';
     static const unsigned int XBOX_SHADERS_VERSION = 1;
 
+    // from the pdb
+    // void SetVConstant(VShaderConstant, Transform const &);
+    // void SetVConstant(VShaderConstant, Hmx::Rect const &);
+    // void SetVConstant(VShaderConstant, Vector3 const &, float);
+    // void SetVConstant(VShaderConstant, Vector3 const &);
+    // void SetVConstant(VShaderConstant, Hmx::Color const &);
+    // void SetVConstant(VShaderConstant, float);
+    // void SetVConstant(__int32, void *);
+    // void SetVConstant4x3(VShaderConstant, Transform const &);
+    // void SetPConstant(PShaderConstant, Transform const &);
+    // void SetPConstant(PShaderConstant, Hmx::Rect const &);
+    // void SetPConstant(PShaderConstant, Vector3 const &, float);
+    // void SetPConstant(PShaderConstant, Vector3 const &);
+    // void SetPConstant(PShaderConstant, Vector2 const &);
+    // void SetPConstant(PShaderConstant, Hmx::Color const &);
+    // void SetPConstant(PShaderConstant, float);
+    // void SetPConstant(__int32, void *);
+    // void SetPConstant4x3(PShaderConstant, Transform const &);
+
     const float *GetCache() const { return mConstantCache; }
     bool CacheShaders() const { return mCacheShaders; }
     void UpdateCache(const Transform &trans, int index);
