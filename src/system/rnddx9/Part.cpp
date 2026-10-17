@@ -142,7 +142,7 @@ void DxParticleSys::DrawParticles(const Hmx::Color &col) {
             upload->uv0.y = p->vel.x * 2;
             upload->uv0.z = p->vel.y * 2;
             upload->uv0.w = p->vel.z * 2;
-            upload->uv1 = p->tileIdx;
+            upload->uv1 = p->tileIndex;
         }
     } else {
         for (RndParticle *p = mActiveParticles; p != nullptr; p = p->next, upload++) {
@@ -159,7 +159,7 @@ void DxParticleSys::DrawParticles(const Hmx::Color &col) {
             upload->uv0.x = p->size;
             upload->uv0.y = p->angle;
             upload->uv0.z = p->swingArm;
-            upload->uv1 = p->tileIdx;
+            upload->uv1 = p->tileIndex;
         }
     }
     TheDxRnd.Device()->EndVertices();

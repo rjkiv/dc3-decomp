@@ -41,7 +41,7 @@ namespace {
             );
             MILO_LOG(
                 "   %d particles active, %d is the high water mark.\n",
-                gParticlePool->NumActiveParticles(),
+                gParticlePool->NumUsed(),
                 gParticlePool->HighWaterMark()
             );
             MILO_LOG(
@@ -63,10 +63,6 @@ void InitParticleSystem() {
     DataRegisterFunc("print_particle_pool_size", PrintParticlePoolSize);
 }
 
-PartOverride::PartOverride()
-    : mask(0), life(0), speed(0), deltaSize(0), startColor(0), midColor(0), endColor(0),
-      pitch(0, 0), yaw(0, 0), mesh(0), box(Vector3(0, 0, 0), Vector3(0, 0, 0)) {}
-
 BinStream &operator<<(BinStream &bs, const RndParticle &p) {
     bs << p.pos << p.col << p.size;
     return bs;
@@ -79,10 +75,10 @@ BinStream &operator>>(BinStream &bs, RndParticle &p) {
 
 bool RndParticleSys::Burst::Set(float f1, float f2) {
     if (f2 > 0) {
-        unk0 = f1;
-        unk4 = f2 / 2;
-        unk8 = 1 / unk4;
-        unkc = f2;
+        mPeak = f1;
+        mHalfLength = f2 / 2;
+        mNorm = 1 / mHalfLength;
+        mTimeToLive = f2;
         return true;
     } else {
         return false;
@@ -90,16 +86,16 @@ bool RndParticleSys::Burst::Set(float f1, float f2) {
 }
 
 float RndParticleSys::Burst::Emit(float f1) {
-    unkc -= f1;
-    if (unkc < 0) {
+    mTimeToLive -= f1;
+    if (mTimeToLive < 0) {
         return -1;
     }
-    float fvar1 = unkc;
-    if (fvar1 > unk4) {
-        fvar1 = unk4 * 2.0f - fvar1;
+    float fvar1 = mTimeToLive;
+    if (fvar1 > mHalfLength) {
+        fvar1 = mHalfLength * 2.0f - fvar1;
     }
-    fvar1 *= unk8;
-    return (fvar1 * fvar1 * 3.0f - fvar1 * fvar1 * fvar1 * 2.0f) * unk0 * f1;
+    fvar1 *= mNorm;
+    return (fvar1 * fvar1 * 3.0f - fvar1 * fvar1 * fvar1 * 2.0f) * mPeak * f1;
 }
 
 void ParticleCommonPool::InitPool() {
@@ -120,10 +116,10 @@ RndParticle *ParticleCommonPool::AllocateParticle() {
     if (mPoolFreeParticles) {
         mPoolFreeParticles = (RndFancyParticle *)mPoolFreeParticles->next;
         cur->prev = cur;
-        mNumActiveParticles++;
+        mNumUsed++;
         ret = cur;
-        if (mNumActiveParticles > mHighWaterMark) {
-            mHighWaterMark = mNumActiveParticles;
+        if (mNumUsed > mHighWaterMark) {
+            mHighWaterMark = mNumUsed;
         }
     }
     return ret;
@@ -137,7 +133,7 @@ RndParticle *ParticleCommonPool::FreeParticle(RndParticle *p) {
         p->next = mPoolFreeParticles;
         p->prev = nullptr;
         mPoolFreeParticles = (RndFancyParticle *)p;
-        mNumActiveParticles--;
+        mNumUsed--;
         return ret;
     }
 }
@@ -845,7 +841,7 @@ bool RndParticleSys::MakeWorldSphere(Sphere &s, bool z) {
         s.Zero();
         for (RndParticle *p = mActiveParticles; p != nullptr; p = p->next) {
             Sphere curSphere;
-            Multiply(p->Pos3(), mRelativeXfm, curSphere.center);
+            Multiply(p->Pos(), mRelativeXfm, curSphere.center);
             curSphere.radius = p->size / 2;
             s.GrowToContain(curSphere);
         }
@@ -1221,7 +1217,7 @@ void RndParticleSys::InitParticle(
         mesh = partOverride.mesh;
     }
     if (mesh && !mesh->Faces().empty()) {
-        RandomPointOnMesh(mesh, particle->Pos3(), particle->Vel3());
+        RandomPointOnMesh(mesh, particle->Pos(), particle->Vel());
     } else {
         if (partOverride.mask & 0x200) {
             particle->pos.x =
@@ -1250,7 +1246,7 @@ void RndParticleSys::InitParticle(
         particle->vel.y = cosPitch * FastCos(f9);
         particle->vel.z = FastSin(f8);
     }
-    particle->Vel3() *=
+    particle->Vel() *=
         partOverride.mask & 2 ? partOverride.speed : RandomFloat(mSpeed.x, mSpeed.y);
     float f11 = particle->deathFrame != particle->birthFrame
         ? 1.0f / (particle->deathFrame - particle->birthFrame)
@@ -1307,7 +1303,7 @@ void RndParticleSys::InitParticle(
     }
     if (mType == kFancy) {
         RndFancyParticle *fancyParticle = (RndFancyParticle *)particle;
-        fancyParticle->unkb8 = unk2b4;
+        fancyParticle->momentum = unk2b4;
         if (mBubble) {
             fancyParticle->bubbleFreq =
                 (2 * PI) / RandomFloat(mBubblePeriod.x, mBubblePeriod.y);
@@ -1318,11 +1314,11 @@ void RndParticleSys::InitParticle(
             Scale(
                 Vector3(f14, 0, f20),
                 RandomFloat(mBubbleSize.x, mBubbleSize.y),
-                fancyParticle->Bubble3()
+                fancyParticle->BubbleDir()
             );
             Vector3 toAdd;
-            Scale(fancyParticle->Bubble3(), FastSin(fancyParticle->bubblePhase), toAdd);
-            Add(fancyParticle->Pos3(), toAdd, fancyParticle->Pos3());
+            Scale(fancyParticle->BubbleDir(), FastSin(fancyParticle->bubblePhase), toAdd);
+            Add(fancyParticle->Pos(), toAdd, fancyParticle->Pos());
             fancyParticle->bubblePhase =
                 -(f1 * fancyParticle->bubbleFreq - fancyParticle->bubblePhase);
         }
@@ -1427,18 +1423,18 @@ void RndParticleSys::InitParticle(
         MakeLocToRel(loc);
         xfm = &loc;
     }
-    Multiply(particle->Pos3(), *xfm, particle->Pos3());
-    Multiply(particle->Vel3(), xfm->m, particle->Vel3());
+    Multiply(particle->Pos(), *xfm, particle->Pos());
+    Multiply(particle->Vel(), xfm->m, particle->Vel());
     if (mBubble && mType == kFancy) {
         RndFancyParticle *fancyParticle = (RndFancyParticle *)particle;
-        Multiply(fancyParticle->Bubble3(), xfm->m, fancyParticle->Bubble3());
+        Multiply(fancyParticle->BubbleDir(), xfm->m, fancyParticle->BubbleDir());
     }
     if (mRandomAnimStart) {
-        particle->tileIdx = RandomInt(0, mNumTilesTotal);
+        particle->tileIndex = RandomInt(0, mNumTilesTotal);
     } else {
-        particle->tileIdx = mStartingTile;
+        particle->tileIndex = mStartingTile;
     }
-    particle->unk64 = 0;
+    particle->animTime = 0;
 }
 
 void RndParticleSys::MoveParticles(float f1, float f2) {
@@ -1469,21 +1465,21 @@ void RndParticleSys::MoveParticles(float f1, float f2) {
                 p = FreeParticle(p);
             } else {
                 if (mAnimateUVs) {
-                    p->unk64 += f2;
-                    if (p->tileIdx < i20 && p->unk64 > mTileHoldTime) {
-                        p->tileIdx++;
-                        if (p->tileIdx >= i20) {
-                            p->tileIdx = mLoopUVAnim ? mStartingTile : i20 - 1;
+                    p->animTime += f2;
+                    if (p->tileIndex < i20 && p->animTime > mTileHoldTime) {
+                        p->tileIndex++;
+                        if (p->tileIndex >= i20) {
+                            p->tileIndex = mLoopUVAnim ? mStartingTile : i20 - 1;
                         }
-                        p->unk64 = fmod(p->unk64, mTileHoldTime);
+                        p->animTime = fmod(p->animTime, mTileHoldTime);
                     }
                 }
                 if (fancy && mBirthMomentum) {
                     RndFancyParticle *fp = (RndFancyParticle *)p;
                     float f46 = mBirthMomentumAmount * f2 * 0.03333333507180214f;
-                    ScaleAddEq(fp->Pos3(), fp->unkb8, f46);
+                    ScaleAddEq(fp->Pos(), fp->momentum, f46);
                 }
-                ScaleAddEq(p->Pos3(), p->Vel3(), f2);
+                ScaleAddEq(p->Pos(), p->Vel(), f2);
                 // some more math
                 for (int i = 0; i < mAttractors.size(); i++) {
                     Attractor &cur = mAttractors[i];

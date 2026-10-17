@@ -17,8 +17,13 @@ class RndParticle {
 public:
     MEM_ARRAY_OVERLOAD(Particle, 0x1E);
 
-    Vector3 &Pos3() { return reinterpret_cast<Vector3 &>(pos); }
-    Vector3 &Vel3() { return reinterpret_cast<Vector3 &>(vel); }
+    RndParticle *Next() const { return next; }
+    // bool Active() const;
+    const Vector3 &Pos() const { return pos.AsVector3(); }
+    Vector3 &Pos() { return pos.AsVector3(); }
+    const Vector3 &Vel() const { return vel.AsVector3(); }
+    Vector3 &Vel() { return vel.AsVector3(); }
+    // RndParticle();
 
     Hmx::Color col; // 0x0
     Hmx::Color colVel; // 0x10
@@ -32,14 +37,15 @@ public:
     float swingArm; // 0x54
     RndParticle *prev; // 0x58
     RndParticle *next; // 0x5c
-    int tileIdx; // 0x60
-    float unk64;
+    int tileIndex; // 0x60
+    float animTime; // 0x64
 };
 
 // size 0xc8
 class RndFancyParticle : public RndParticle {
 public:
-    Vector3 &Bubble3() { return reinterpret_cast<Vector3 &>(bubbleDir); }
+    const Vector3 &BubbleDir() const { return bubbleDir.AsVector3(); }
+    Vector3 &BubbleDir() { return bubbleDir.AsVector3(); }
 
     float growFrame; // 0x68
     float growVel; // 0x6c
@@ -55,31 +61,48 @@ public:
     float bubblePhase; // 0xac
     float RPF; // 0xb0
     float swingArmVel; // 0xb4
-    Vector3 unkb8;
+    Vector3 momentum; // 0xb8
 };
 
 class ParticleCommonPool {
 public:
     ParticleCommonPool()
-        : mPoolParticles(nullptr), mPoolFreeParticles(nullptr), mNumActiveParticles(0),
+        : mPoolParticles(nullptr), mPoolFreeParticles(nullptr), mNumUsed(0),
           mHighWaterMark(0) {}
     void InitPool();
     RndParticle *AllocateParticle();
     RndParticle *FreeParticle(RndParticle *);
-    int NumActiveParticles() const { return mNumActiveParticles; }
+    int NumUsed() const { return mNumUsed; }
     int HighWaterMark() const { return mHighWaterMark; }
+
     MEM_OVERLOAD(ParticleCommonPool, 0x254)
 
-private:
     RndFancyParticle *mPoolParticles; // 0x0
     RndFancyParticle *mPoolFreeParticles; // 0x4
-    int mNumActiveParticles; // 0x8
+protected:
+    int mNumUsed; // 0x8
     int mHighWaterMark; // 0xc
 };
 
 class PartOverride {
 public:
-    PartOverride();
+    enum ParticleOverride {
+        kLife = 0x0001,
+        kSpeed = 0x0002,
+        kSize = 0x0004,
+        kDeltaSize = 0x0008,
+        kStartColor = 0x0010,
+        kMidColor = 0x0020,
+        kEndColor = 0x0040,
+        kEmitDirection = 0x0080,
+        kMeshEmitter = 0x0100,
+        kBoxEmitter = 0x0200,
+    };
+
+    PartOverride()
+        : mask(0), life(0), speed(0), deltaSize(0), startColor(0), midColor(0),
+          endColor(0), pitch(0, 0), yaw(0, 0), mesh(0),
+          box(Vector3(0, 0, 0), Vector3(0, 0, 0)) {}
 
     unsigned int mask; // 0x0
     float life; // 0x4
@@ -124,13 +147,14 @@ public:
     };
     class Burst {
     public:
-        bool Set(float, float);
-        float Emit(float);
+        bool Set(float peak, float length);
+        float Emit(float deltaFrame);
 
-        float unk0;
-        float unk4;
-        float unk8;
-        float unkc;
+    protected:
+        float mPeak; // 0x0
+        float mHalfLength; // 0x4
+        float mNorm; // 0x8
+        float mTimeToLive; // 0xc
     };
     // Hmx::Object
     virtual ~RndParticleSys();
