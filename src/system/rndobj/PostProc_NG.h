@@ -72,6 +72,7 @@ public:
 
     static void Init();
     NEW_OBJ(NgPostProc);
+    REGISTER_OBJ(NgPostProc)
     static void RebuildTex();
     static void Terminate();
 

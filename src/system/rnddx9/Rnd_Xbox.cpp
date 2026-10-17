@@ -140,7 +140,7 @@ void DxRnd::PreInit(HWND__ *) {
 
 void DxRnd::Init(HWND__ *h) {
     PreInit(h);
-    mOcclusionQueryMgr = new DxRndOcclusionQueryMgr();
+    mQueryManager = new DxRndOcclusionQueryMgr();
     NgRnd::Init();
     DxTex::Init();
     unk360 = false;
@@ -348,7 +348,7 @@ void DxRnd::Resume() {
 void DxRnd::UpdateScalerParams() {
     float w = mVideoMode.dwDisplayWidth;
     float h = mVideoMode.dwDisplayHeight;
-    bool b3 = mAspect == 3 && !unk1f8;
+    bool b3 = mAspect == 3 && !mWideScreenDisplay;
     if (b3 && w * 0.5625f < h) {
         h = w * 0.5625f;
     }
@@ -634,11 +634,11 @@ void DxRnd::InitBuffers() {
     } else if (SystemConfig(rnd)->FindInt(low_res) != 0) {
         unk37c |= 1;
     }
-    unk1f8 = unk37c;
-    mAspect = unk1f8 ? kWidescreen : kRegular;
+    mWideScreenDisplay = unk37c;
+    mAspect = mWideScreenDisplay ? kWidescreen : kRegular;
     mScreenHeight = unk37c & 1 ? 540 : 720;
     int i11, i10;
-    if (mVideoMode.fIsHiDef || unk1f8) {
+    if (mVideoMode.fIsHiDef || mWideScreenDisplay) {
         i11 = (mScreenHeight << 4) / 9;
         i10 = (mScreenHeight << 4) / 9;
     } else {
@@ -848,23 +848,23 @@ void DxRnd::DoPointTests() {
         mD3DDevice->BlockOnFence(sPointTestFence);
         sPointTestFence = -1;
     }
-    if (mOcclusionQueryMgr && !TheHiResScreen.Active()) {
-        FOREACH (it, unk20c) {
+    if (mQueryManager && !TheHiResScreen.Active()) {
+        FOREACH (it, mLastPointTests) {
             unsigned int uiRef;
-            if (mOcclusionQueryMgr->GetQueryResults(it->unk4, uiRef)) {
-                it->unk0->SetVisible(uiRef);
+            if (mQueryManager->GetQueryResults(it->mQueryIndexPoint, uiRef)) {
+                it->mFlare->SetVisible(uiRef);
             }
-            if (mOcclusionQueryMgr->GetQueryResults(it->unk4, uiRef)) {
-                RndFlare *flare = it->unk0;
+            if (mQueryManager->GetQueryResults(it->mQueryIndexPoint, uiRef)) {
+                RndFlare *flare = it->mFlare;
                 flare->SetVisibleArea(uiRef);
             }
         }
-        mOcclusionQueryMgr->ToggleFrameIndex();
-        mOcclusionQueryMgr->OnEndFrame();
-        mOcclusionQueryMgr->IncrementFrameCounter();
-        mOcclusionQueryMgr->OnBeginFrame();
+        mQueryManager->ToggleFrameIndex();
+        mQueryManager->OnEndFrame();
+        mQueryManager->IncrementFrameCounter();
+        mQueryManager->OnBeginFrame();
 
-        unk20c.resize(mPointTests.size());
+        mLastPointTests.resize(mPointTests.size());
 
         if (!mPointTests.empty()) {
             Transform xfm;
@@ -890,9 +890,9 @@ void DxRnd::DoPointTests() {
                 TheNgStats->mFlares++;
 
                 unsigned int uiRef;
-                if (mOcclusionQueryMgr->CreateQuery(uiRef)) {
-                    mOcclusionQueryMgr->BeginQuery(uiRef);
-                    mOcclusionQueryMgr->EndQuery(uiRef);
+                if (mQueryManager->CreateQuery(uiRef)) {
+                    mQueryManager->BeginQuery(uiRef);
+                    mQueryManager->EndQuery(uiRef);
                 }
             }
             sPointTestFence = mD3DDevice->InsertFence();

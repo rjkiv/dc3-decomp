@@ -13,6 +13,7 @@ public:
     virtual bool Shell(int, RndMesh *, RndMat *) const;
 
     NEW_OBJ(NgFur)
+    REGISTER_OBJ(NgFur)
 
 protected:
     NgFur();

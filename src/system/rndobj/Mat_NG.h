@@ -30,6 +30,7 @@ public:
     void SetupShader(bool, bool);
 
     NEW_OBJ(NgMat);
+    REGISTER_OBJ(NgMat)
     static NgMat *Current() { return sCurrent; }
     static void SetCurrent(NgMat *c) { sCurrent = c; }
 

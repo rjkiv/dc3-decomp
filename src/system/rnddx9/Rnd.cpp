@@ -304,8 +304,8 @@ void DxRnd::SetVertShaderTex(RndTex *tex, int i2) {
 }
 
 void DxRnd::PreDeviceReset() {
-    if (mOcclusionQueryMgr) {
-        mOcclusionQueryMgr->ReleaseQueries();
+    if (mQueryManager) {
+        mQueryManager->ReleaseQueries();
     }
     FOREACH (it, unk2b0) {
         (*it)->PreDeviceReset();

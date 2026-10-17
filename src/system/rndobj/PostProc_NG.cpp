@@ -69,7 +69,7 @@ void NgPostProc::OnUnselect() {
 }
 
 void NgPostProc::Init() {
-    REGISTER_OBJ_FACTORY(NgPostProc);
+    NgPostProc::Register();
     PhysMemTypeTracker tracker("D3D(phys):NgPostProc");
     RebuildTex();
 }

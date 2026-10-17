@@ -187,7 +187,7 @@ void NgDOFProc::DoPost() {
 }
 
 void NgDOFProc::Init() {
-    REGISTER_OBJ_FACTORY(NgDOFProc);
+    NgDOFProc::Register();
     if (TheDOFProc && !dynamic_cast<NgDOFProc *>(TheDOFProc)) {
         RELEASE(TheDOFProc);
         TheDOFProc = Hmx::Object::New<DOFProc>();
