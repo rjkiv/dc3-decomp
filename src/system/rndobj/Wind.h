@@ -23,6 +23,7 @@ public:
     OBJ_MEM_OVERLOAD(0x1A);
     static void Init();
     NEW_OBJ(RndWind)
+    REGISTER_OBJ(RndWind)
 
     static float GetWind(float);
     static float GetWhiteNoise(float);

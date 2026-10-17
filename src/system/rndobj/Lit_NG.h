@@ -14,6 +14,7 @@ public:
     virtual void Load(BinStream &);
 
     NEW_OBJ(NgLight);
+    REGISTER_OBJ(NgLight)
 
     void CheckShadowMap();
     RndTex *GetShadowMap() const { return mShadowMap; }

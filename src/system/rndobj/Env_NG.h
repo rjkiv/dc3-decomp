@@ -19,6 +19,7 @@ public:
     virtual RndLight::ProjectedBlend GetProjectedBlend() const { return mProjectedBlend; }
 
     NEW_OBJ(NgEnviron)
+    REGISTER_OBJ(NgEnviron)
 
 protected:
     NgEnviron();

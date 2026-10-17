@@ -63,7 +63,7 @@ void NgLight::RenderShadows(std::vector<RndDrawable *> &shadowCasters) {
 
 void NgLight::SetAndClearShadowViewport() {
     auto harness_tmp_0 = mShadowRT->Width();
-    TheNgRnd.SetViewport(NgRnd ::Viewport(0, 0, harness_tmp_0, mShadowRT->Height(), 0, 1));
+    TheNgRnd.SetViewport(NgRnd::Viewport(0, 0, harness_tmp_0, mShadowRT->Height(), 0, 1));
     TheNgRnd.Clear(1, Hmx::Color(0, 0, 0, 0));
 }
 
@@ -246,7 +246,7 @@ bool NgLight::SphereConeTest(const Vector3 &v1, float f2) {
 }
 
 void NgLight::Init() {
-    REGISTER_OBJ_FACTORY(NgLight);
+    NgLight::Register();
     PhysMemTypeTracker tracker("D3D(phys):NgLight");
 }
 

@@ -28,7 +28,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1A)
     NEW_OBJ(RndFur)
-    static void Init() { REGISTER_OBJ_FACTORY(RndFur); }
+    REGISTER_OBJ(RndFur)
 
     float Fluidity() const { return mFluidity; }
     RndWind *Wind() const { return mWind; }

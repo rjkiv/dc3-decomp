@@ -25,7 +25,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1A)
     NEW_OBJ(RndLightAnim)
-    static void Init() { REGISTER_OBJ_FACTORY(RndLightAnim) }
+    REGISTER_OBJ(RndLightAnim)
 
     Keys<Hmx::Color, Hmx::Color> &ColorKeys() { return mKeysOwner->mColorKeys; }
     RndLightAnim *KeysOwner() const { return mKeysOwner; }

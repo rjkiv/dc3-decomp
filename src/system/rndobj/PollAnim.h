@@ -30,7 +30,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x16);
     NEW_OBJ(RndPollAnim)
-    static void Init() { REGISTER_OBJ_FACTORY(RndPollAnim) }
+    REGISTER_OBJ(RndPollAnim)
 
 protected:
     RndPollAnim();

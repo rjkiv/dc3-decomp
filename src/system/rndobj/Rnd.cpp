@@ -129,16 +129,17 @@ DataNode FailRestartConsole(DataArray *) {
 }
 
 Rnd::Rnd()
-    : mClearColor(0.3f, 0.3f, 0.3f), mWidth(640), mHeight(480), mScreenBpp(16),
-      mDrawCount(0), mDrawTimer(), mTimersOverlay(0), mRateOverlay(0), mHeapOverlay(0),
-      mWatchOverlay(0), mStatsOverlay(0), mDefaultMat(0), mOverlayMat(0), mOverdrawMat(0),
-      mDefaultCam(0), mWorldCamCopy(0), mDefaultEnv(0), mDefaultLit(0),
+    : mClearColor(0.3f, 0.3f, 0.3f), mScreenWidth(640), mScreenHeight(480),
+      mScreenBpp(16), mDrawCount(0), mDrawTimer(), mTimersOverlay(0), mRateOverlay(0),
+      mHeapOverlay(0), mWatchOverlay(0), mStatsOverlay(0), mDefaultMat(0), mOverlayMat(0),
+      mOverdrawMat(0), mDefaultCam(0), mWorldCam(0), mDefaultEnv(0), mDefaultLit(0),
       mCubeTex_Black(nullptr), mCubeTex_White(nullptr), mRateTotal(0), mRateCount(5),
       mFrameID(0), mRateGate("    "), mFont(nullptr), mSync(1), mGsTiming(0),
-      mShowSafeArea(0), mDrawing(0), mWorldEnded(1), mAspect(kWidescreen),
-      mDrawMode(kDrawNormal), mShowShaderCost(0), mShowOverdraw(0), mShrinkToSafe(1),
-      mInGame(0), mVerboseTimers(0), mDisablePostProc(0), unk146(0), unk147(0), unk148(0),
-      mWorldEndCallback(0), mDrawPreClearCallback(0), mPostProcOverride(this),
+      mSafeArea(0), mDrawing(0), mWorldEnded(1), mAspect(kWidescreen),
+      mDrawMode(kDrawNormal), mShowShaderCost(0), mShowOverdraw(0), mShrinkToSafeArea(1),
+      mInGame(0), mVerboseTimers(0), mDisablePostProc(0), mShowBones(0),
+      mCopiedWorldCam(0), mDrawingPreClear(0), mWorldEndCallback(0),
+      mDrawPreClearCallback(0), mPostProcOverride(this),
       mPostProcBlackLightOverride(nullptr), mPreClearList(this),
       mSplashPreClearList(this), mSplashing(0), mProcCmds(kProcessAll),
       mLastProcCmds(kProcessAll) {
@@ -180,8 +181,8 @@ BEGIN_HANDLERS(Rnd)
     )
     HANDLE_ACTION(set_aspect, SetAspect((Aspect)_msg->Int(2)))
     HANDLE_EXPR(aspect, mAspect)
-    HANDLE_EXPR(screen_width, mWidth)
-    HANDLE_EXPR(screen_height, mHeight)
+    HANDLE_EXPR(screen_width, mScreenWidth)
+    HANDLE_EXPR(screen_height, mScreenHeight)
     HANDLE_EXPR(highlight_style, RndDrawable::GetHighlightStyle())
     HANDLE_ACTION(
         set_highlight_style, RndDrawable::SetHighlightStyle((HighlightStyle)_msg->Int(2))
@@ -203,8 +204,8 @@ BEGIN_HANDLERS(Rnd)
     HANDLE(toggle_overlay_position, OnToggleOverlayPosition)
     HANDLE(toggle_timers_verbose, OnToggleTimersVerbose)
     HANDLE(toggle_overlay, OnToggleOverlay)
-    HANDLE_EXPR(show_safe_area, mShowSafeArea)
-    HANDLE_ACTION(set_show_safe_area, mShowSafeArea = _msg->Int(2))
+    HANDLE_EXPR(show_safe_area, mSafeArea)
+    HANDLE_ACTION(set_show_safe_area, mSafeArea = _msg->Int(2))
     HANDLE(show_overlay, OnShowOverlay)
     HANDLE_EXPR(overlay_showing, RndOverlay::Find(_msg->Str(2))->Showing())
     HANDLE(overlay_print, OnOverlayPrint)
@@ -273,77 +274,78 @@ void Rnd::PreInit() {
     TheDebug.AddExitCallback(TerminateCallback);
     DataArray *rndcfg = SystemConfig("rnd");
     rndcfg->FindData("bpp", mScreenBpp);
-    rndcfg->FindData("height", mHeight);
+    rndcfg->FindData("height", mScreenHeight);
     rndcfg->FindData("clear_color", mClearColor);
     rndcfg->FindData("sync", mSync);
     rndcfg->FindData("aspect", (int &)mAspect);
     if (OptionBool("widescreen", false)) {
         mAspect = kWidescreen;
     }
-    mWidth = ((float)mHeight / Rnd::YRatio()) + 0.5f;
+    mScreenWidth = ((float)mScreenHeight / Rnd::YRatio()) + 0.5f;
     MILO_ASSERT((mScreenBpp == 16) || (mScreenBpp == 32), 0x209);
     SetupFont();
     RndGraph::Init();
     RndUtlPreInit();
-    RndDrawable::Init();
-    RndFur::Init();
+    RndDrawable::Register();
+    RndFur::Register();
     RndTransformable::Init();
-    RndSet::Init();
-    RndAnimFilter::Init();
-    RndFlare::Init();
+    RndSet::Register();
+    RndAnimFilter::Register();
+    RndFlare::Register();
     RndCam::Init();
-    RndMesh::Init();
-    RndMeshDeform::Init();
+    RndMesh::Register();
+    RndMeshDeform::Register();
     RndText::Init();
-    RndFontBase::Init();
-    RndFont::Init();
-    RndFont3d::Init();
-    RndEnviron::Init();
-    RndTex::Init();
-    RndCubeTex::Init();
-    RndMovie::Init();
-    RndLight::Init();
-    RndTransAnim::Init();
-    RndLightAnim::Init();
-    RndMeshAnim::Init();
-    RndMatAnim::Init();
-    RndTransProxy::Init();
-    RndPartLauncher::Init();
-    RndLine::Init();
-    RndGenerator::Init();
-    RndParticleSys::Init();
-    RndParticleSysAnim::Init();
-    RndRibbon::Init();
-    RndMultiMesh::Init();
-    RndMultiMeshProxy::Init();
-    RndMorph::Init();
-    RndCamAnim::Init();
-    REGISTER_OBJ_FACTORY(RndTransformable)
-    RndGroup::Init();
-    RndDir::Init();
-    RndMotionBlur::Init();
-    RndTexBlendController::Init();
-    RndTexBlender::Init();
-    RndTexRenderer::Init();
-    RndScreenMask::Init();
-    RndSoftParticles::Init();
-    REGISTER_OBJ_FACTORY(RndPostProc)
-    RndPostProcMgr::Init();
-    RndAmbientOcclusion::Init();
+    RndFontBase::Register();
+    RndFont::Register();
+    RndFont3d::Register();
+    RndEnviron::Register();
+    RndTex::Register();
+    RndCubeTex::Register();
+    RndMovie::Register();
+    RndLight::Register();
+    RndTransAnim::Register();
+    RndLightAnim::Register();
+    RndMeshAnim::Register();
+    RndMatAnim::Register();
+    RndTransProxy::Register();
+    RndPartLauncher::Register();
+    RndLine::Register();
+    RndGenerator::Register();
+    RndParticleSys::Register();
+    RndParticleSysAnim::Register();
+    RndRibbon::Register();
+    RndMultiMesh::Register();
+    RndMultiMeshProxy::Register();
+    RndMorph::Register();
+    RndCamAnim::Register();
+    RndTransformable::Register();
+    RndGroup::Register();
+    RndDir::Register();
+    RndMotionBlur::Register();
+    RndTexBlendController::Register();
+    RndTexBlender::Register();
+    RndTexRenderer::Register();
+    RndScreenMask::Register();
+    RndSoftParticles::Register();
+    RndPostProc::Register();
+    RndPostProcMgr::Register();
+    RndAmbientOcclusion::Register();
     RndOverlay::Init();
-    RndPropAnim::Init();
+    RndPropAnim::Register();
     EventTrigger::Init();
     RndWind::Init();
-    RndPollAnim::Init();
-    BaseMaterial::Init();
-    REGISTER_OBJ_FACTORY(MetaMaterial)
-    RndEnterable::Init();
+    RndPollAnim::Register();
+    BaseMaterial::Register();
+    MetaMaterial::Register();
+    RndEnterable::Register();
     RndMat::Init();
-    RndSpline::Init();
-    RndShockwave::Init();
+    RndSpline::Register();
+    RndShockwave::Register();
     DOFProc::Init();
     TexProc::Init();
     // this is likely some other rndobj without a NewObject overload
+    // likeliest candidate would be RndAnimatable, but I can't confirm for sure
     REGISTER_OBJ_FACTORY(Hmx::Object)
     InitShaderOptions();
     mRateOverlay = RndOverlay::Find("rate");
@@ -496,7 +498,7 @@ void Rnd::RemovePointTest(RndFlare *flare) {
     if (!TheHiResScreen.Active()) {
         for (std::list<PointTest>::iterator it = mPointTests.begin();
              it != mPointTests.end();) {
-            if (it->unkc == flare) {
+            if (it->flare == flare) {
                 it = mPointTests.erase(it);
             } else
                 ++it;
@@ -556,14 +558,16 @@ void Rnd::DrawRectScreen(
     const Hmx::Color *cptr1,
     const Hmx::Color *cptr2
 ) {
-    Hmx::Rect rect(r.x * mWidth, r.y * mHeight, r.w * mWidth, r.h * mHeight);
+    Hmx::Rect rect(
+        r.x * mScreenWidth, r.y * mScreenHeight, r.w * mScreenWidth, r.h * mScreenHeight
+    );
     DrawRect(rect, c1, mat, cptr1, cptr2);
 }
 
 const Vector2 &
 Rnd::DrawStringScreen(const char *c, const Vector2 &v, const Hmx::Color &color, bool b4) {
-    float fwidth = mWidth;
-    float fheight = mHeight;
+    float fwidth = mScreenWidth;
+    float fheight = mScreenHeight;
     Vector2 &vres = DrawString(c, Vector2(v.x * fwidth, v.y * fheight), color, b4);
     vres.x /= fwidth;
     vres.y /= fheight;
@@ -597,10 +601,10 @@ void Rnd::DoWorldBegin() {
 }
 
 void Rnd::DoWorldEnd() {
-    if (!unk147) {
+    if (!mCopiedWorldCam) {
         CopyWorldCam(nullptr);
     }
-    unk147 = false;
+    mCopiedWorldCam = false;
     if (mPostProcBlackLightOverride) {
         mPostProcBlackLightOverride->EndWorld();
     } else if (mPostProcOverride) {
@@ -636,29 +640,29 @@ void Rnd::DrawPreClear() {
         sTexture->FinishCompress(sCompressDesc);
         sCompressDesc = nullptr;
         MILO_ASSERT(sTexture, 0x481);
-        CompressTexDesc *cur = mCompressTexDescs.front();
+        CompressTexDesc *cur = mCompressTextures.front();
         if (cur->tex) {
             RndTex *cTex = cur->tex;
             ReplaceObject(cTex, sTexture, false, false, false);
             sTexture = static_cast<DxTex *>(cTex);
         }
-        mCompressTexDescs.pop_front();
+        mCompressTextures.pop_front();
         delete cur;
         RELEASE(sTexture);
         sCompressDone = false;
     }
-    if (!sTexture && !mCompressTexDescs.empty()) {
-        for (auto it = mCompressTexDescs.begin(); it != mCompressTexDescs.end();) {
+    if (!sTexture && !mCompressTextures.empty()) {
+        for (auto it = mCompressTextures.begin(); it != mCompressTextures.end();) {
             CompressTexDesc *cur = *it;
-            if (cur->tex && cur->callback) {
+            if (cur->tex && cur->cb) {
                 ++it;
             } else {
-                it = mCompressTexDescs.erase(it);
+                it = mCompressTextures.erase(it);
                 delete cur;
             }
         }
-        if (mCompressTexDescs.size() != 0) {
-            CompressTexDesc *desc = mCompressTexDescs.front();
+        if (mCompressTextures.size() != 0) {
+            CompressTexDesc *desc = mCompressTextures.front();
             sTexture = static_cast<DxTex *>(desc->tex.Ptr());
             RndTex *rTex;
             {
@@ -666,14 +670,14 @@ void Rnd::DrawPreClear() {
                 rTex = Hmx::Object::New<RndTex>();
             }
             ReplaceObject(sTexture, rTex, false, false, false);
-            sCompressDesc = sTexture->StartCompress(desc->alpha);
+            sCompressDesc = sTexture->StartCompress(desc->alphaCompress);
             MILO_ASSERT(!sCompressDone, 0x4C3);
             SetEvent(gRndTextureEvent);
         }
     }
     auto &drawList = mSplashing ? mPreClearList : mSplashPreClearList;
     if (!drawList.empty()) {
-        unk148 = true;
+        mDrawingPreClear = true;
         RndCam *cam = RndCam::Current();
         FOREACH (it, drawList) {
             RndDrawable *cur = *it;
@@ -684,7 +688,7 @@ void Rnd::DrawPreClear() {
         if (cam && cam != RndCam::Current()) {
             cam->Select();
         }
-        unk148 = false;
+        mDrawingPreClear = false;
     }
 }
 
@@ -837,9 +841,9 @@ void Rnd::CopyWorldCam(RndCam *cam) {
         if (!cam) {
             cam = RndCam::Current();
         }
-        mWorldCamCopy->Copy(cam, kCopyShallow);
-        mWorldCamCopy->SetTransParent(nullptr, false);
-        unk147 = true;
+        mWorldCam->Copy(cam, kCopyShallow);
+        mWorldCam->SetTransParent(nullptr, false);
+        mCopiedWorldCam = true;
     }
 }
 
@@ -923,14 +927,14 @@ void Rnd::SetPostProcBlacklightOverride(RndPostProc *pp) {
 }
 
 void Rnd::CreateDefaults() {
-    RELEASE(mWorldCamCopy);
+    RELEASE(mWorldCam);
     RELEASE(mDefaultCam);
     RELEASE(mDefaultEnv);
     RELEASE(mDefaultLit);
     RELEASE(mDefaultMat);
     RELEASE(mOverlayMat);
     RELEASE(mOverdrawMat);
-    mWorldCamCopy = ObjectDir::Main()->New<RndCam>("[world cam copy]");
+    mWorldCam = ObjectDir::Main()->New<RndCam>("[world cam copy]");
     mDefaultCam = ObjectDir::Main()->New<RndCam>("[default cam]");
     mDefaultEnv = ObjectDir::Main()->New<RndEnviron>("[default env]");
     mDefaultLit = ObjectDir::Main()->New<RndLight>("[default lit]");
@@ -967,13 +971,13 @@ void Rnd::CreateDefaults() {
 int Rnd::CompressTexture(
     RndTex *tex, RndTex::AlphaCompress a, CompressTextureCallback *cb
 ) {
-    FOREACH (it, mCompressTexDescs) {
+    FOREACH (it, mCompressTextures) {
         if (tex == (*it)->tex) {
             MILO_NOTIFY("%s: texture added to compression twice", PathName(tex));
         }
     }
     CompressTexDesc *desc = new CompressTexDesc(tex, a, cb);
-    mCompressTexDescs.push_back(desc);
+    mCompressTextures.push_back(desc);
     return (int)desc;
 }
 
@@ -1132,10 +1136,10 @@ void Rnd::TestPoint(const Vector3 &v, RndFlare *flare) {
                 && v2.x < 1 && v2.y < 1) {
                 mPointTests.push_back(PointTest());
                 PointTest &back = mPointTests.back();
-                back.unkc = flare;
-                back.unk0 = mWidth * v2.x;
-                back.unk4 = mHeight * v2.y;
-                back.unk8 = cur->ProjectZ(f7);
+                back.flare = flare;
+                back.x = mScreenWidth * v2.x;
+                back.y = mScreenHeight * v2.y;
+                back.z = cur->ProjectZ(f7);
                 return;
             }
             flare->SetVisible(false);

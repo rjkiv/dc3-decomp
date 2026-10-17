@@ -27,7 +27,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x18)
     NEW_OBJ(RndMovie)
-    static void Init() { REGISTER_OBJ_FACTORY(RndMovie) }
+    REGISTER_OBJ(RndMovie)
 
 protected:
     RndMovie();

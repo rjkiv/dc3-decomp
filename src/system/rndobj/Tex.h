@@ -69,7 +69,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1C)
     NEW_OBJ(RndTex)
-    static void Init() { REGISTER_OBJ_FACTORY(RndTex) }
+    REGISTER_OBJ(RndTex)
 
     /** Set this texture's bitmap using the supplied parameters.
      * @param [in] w The texture's width.

@@ -10,5 +10,5 @@ public:
     virtual DataNode Handle(DataArray *, bool);
 
     NEW_OBJ(RndEnterable)
-    static void Init() { REGISTER_OBJ_FACTORY(RndEnterable) }
+    REGISTER_OBJ(RndEnterable)
 };

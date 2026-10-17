@@ -51,7 +51,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x17);
     NEW_OBJ(RndCubeTex)
-    static void Init() { REGISTER_OBJ_FACTORY(RndCubeTex) }
+    REGISTER_OBJ(RndCubeTex)
 
     void SetBitmap(CubeFace f, const FilePath &file, bool update);
     void UpdateFace(CubeFace f);

@@ -39,7 +39,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x16);
     NEW_OBJ(RndMorph)
-    static void Init() { REGISTER_OBJ_FACTORY(RndMorph) }
+    REGISTER_OBJ(RndMorph)
     int NumPoses() const { return mPoses.size(); }
     void SetNumPoses(int num) { mPoses.resize(num); }
     Pose &PoseAt(int idx) { return mPoses[idx]; }

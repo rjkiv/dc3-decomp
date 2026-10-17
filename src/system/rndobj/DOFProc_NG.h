@@ -23,6 +23,7 @@ public:
     static void Init();
     static void Terminate();
     NEW_OBJ(NgDOFProc)
+    REGISTER_OBJ(NgDOFProc)
 
 protected:
     virtual void Set(const RndCam *, float, float, float, float);

@@ -11,20 +11,25 @@
 #include "xdk/D3D9.h"
 #include "xdk/D3DX9.h"
 #include "xdk/XGRAPHICS.h"
+#include "xdk/d3d9i/d3d9.h"
+#include "xdk/d3d9i/d3d9types.h"
+#include "xdk/win_types.h"
 #include "xdk/xapilibi/xbase.h"
 #include <types.h>
 
-struct LargeQuadRenderData {
-    D3DIndexBuffer *unk0;
-    D3DVertexBuffer *unk4;
-    int unk8;
-    int unkc;
-};
-
 class DxRnd : public NgRnd {
 public:
+    enum BufferConfig {
+        kBufferConfig_Default = 0x0000,
+        kBufferConfig_LoRes = 0x0001,
+        kBufferConfig_Tiles_Horiz = 0x0002,
+    };
     enum RegisterAlloc {
-        kNumRegAlloc = 4
+        kRegInit = 0x0000,
+        kRegDefault = 0x0001,
+        kRegPostProc = 0x0002,
+        kRegStream = 0x0003,
+        kNumRegAlloc = 0x0004,
     };
     DxRnd();
     virtual ~DxRnd();
@@ -49,7 +54,7 @@ public:
     virtual void MakeDrawTarget();
     virtual void SetSync(int sync);
     virtual RndTex *GetCurrentFrameTex(bool);
-    virtual void CaptureNextGpuFrame() { unk3f6 = true; }
+    virtual void CaptureNextGpuFrame() { mCaptureNextGpuFrame = true; }
     virtual void SetAspect(Aspect a);
     virtual void SetShrinkToSafeArea(bool shrink);
     virtual void PushClipPlanesInternal(ObjPtrVec<RndTransformable> &);
@@ -68,9 +73,9 @@ public:
         const Vector3 &, const Vector3 (&)[4], const Vector4 &, RndMat *, ShaderType
     );
     virtual bool Offscreen() const;
-    virtual RndTex *PreProcessTexture() { return mPreProcessTex; }
-    virtual RndTex *PostProcessTexture() { return mPostProcessTex; }
-    virtual RndTex *PreDepthTexture() { return mPreDepthTex; }
+    virtual RndTex *PreProcessTexture() { return mPreProcessTexture; }
+    virtual RndTex *PostProcessTexture() { return mPostProcessTexture; }
+    virtual RndTex *PreDepthTexture() { return mPreDepthTexture; }
     virtual void Suspend();
     virtual void Resume();
     virtual void CreateLargeQuad(int, int, LargeQuadRenderData &);
@@ -79,14 +84,14 @@ public:
     virtual void SetVertShaderTex(RndTex *, int);
     virtual void UpdateScalerParams();
 
-    D3DDevice *Device() { return mD3DDevice; }
+    D3DDevice *Device() const { return mD3DDevice; }
     void AutoRelease(D3DResource *r) {
         if (r) {
             if (mSplashing) {
                 MILO_ASSERT(CurrentThreadId() != TheSplasher->SplashThreadId(), 0xF4);
                 r->Release();
             } else {
-                unk304.push_back(r);
+                mAutoRel.push_back(r);
             }
         }
     }
@@ -111,13 +116,14 @@ public:
                 PhysicalFreeTracked((void *)data, __FILE__, 0x109, "");
                 delete t;
             } else {
-                unk310.push_back(t);
+                mAutoDel.push_back(t);
             }
         }
     }
 
-    bool Unk301() const { return unk_0x301; }
-    void SetUnk301(bool b) { unk_0x301 = b; }
+    D3DDevice *operator->() const { return mD3DDevice; }
+    bool InverseZ() const { return mInverseZ; }
+    void SetInverseZ(bool b) { mInverseZ = b; }
     D3DSurface *BackBuffer() const;
     void PreInit(HWND__ *);
     void Init(HWND__ *);
@@ -166,74 +172,61 @@ private:
 
     static D3DXMATRIX sIdentityMtx;
 
-    int unk220;
+    Direct3D *mD3D; // 0x220
     D3DDevice *mD3DDevice; // 0x224
-    int unk228; // 0x228 - current thread id?
-    void *unk22c;
-    D3DDEVTYPE mDeviceType; // 0x230
+    DWORD mDeviceOwningThread; // 0x228
+    HWND__ *mWnd; // 0x22c
+    D3DDEVTYPE mDevType; // 0x230
     D3DPRESENT_PARAMETERS mPresentParams; // 0x234
-    std::list<DxObject *> unk2b0;
-    int unk2b8;
-    int unk2bc;
-    int unk2c0;
-    int unk2c4;
-    int unk2c8;
-    int unk2cc;
-    Timer unk2d0;
-    bool unk300;
-    bool unk_0x301; // 0x301 - invert the TestFunc greater/less than check for renderstate
-    std::vector<D3DResource *> unk304; // 0x304 - released resources?
-    std::vector<D3DBaseTexture *> unk310; // 0x310 - deleted textures?
+    std::list<DxObject *> mObjects; // 0x2b0
+    int mStatPolys; // 0x2b8
+    int mStatMats; // 0x2bc
+    int mStatMulti; // 0x2c0
+    int mStatMeshes; // 0x2c4
+    float mSyncMs; // 0x2c8
+    Timer mSyncTimer; // 0x2d0
+    bool mMaxFrameRate; // 0x300
+    bool mInverseZ; // 0x301
+    std::vector<D3DResource *> mAutoRel; // 0x304
+    std::vector<D3DBaseTexture *> mAutoDel; // 0x310 - deleted textures?
     XVIDEO_MODE mVideoMode; // 0x31c
-    bool unk34c;
-    bool unk34d;
-    D3DTexture *mFrontBuffers[2]; // 0x350
-    D3DTexture *mFrontBufferDepth; // 0x358
-    int unk35c; // 0x35c - buffer idx?
-    bool unk360;
+    bool mTiling; // 0x34c
+    bool mHdrEnabled; // 0x34d
+    D3DTexture *mFrontBuffer[2]; // 0x350
+    D3DTexture *mDepthFrontBuffer; // 0x358
+    unsigned int mCurrFront; // 0x35c
+    bool mAsyncSwapDesired; // 0x360
     bool mAsyncSwapCurrent; // 0x361
     D3DPerfCounters *mPerfCounterStart; // 0x364
     D3DPerfCounters *mPerfCounterEnd; // 0x368
     Timer *mGPUTimer; // 0x36c
-    float unk370;
-    float unk374;
+    float mMsGPUBusy; // 0x370
+    float mMsGPUCycles; // 0x374
     bool mCreatedPerfCounters; // 0x378
-    int unk37c; // 0x37c - flags
-    D3DSurface *mBackBuffer; // 0x380
-    D3DSurface *unk384;
-    D3DSurface *unk388;
-    D3DSurface *unk38c;
+    unsigned int mBackBufferFlags; // 0x37c
+    D3DSurface *mBackBuffer_World; // 0x380
+    D3DSurface *mBackBuffer_UI; // 0x384
+    D3DSurface *mDepthBuffer_World; // 0x388
+    D3DSurface *mDepthBuffer_UI; // 0x38c
     D3DTexture *mPreProcessBuffer; // 0x390
     D3DTexture *mPostProcessBuffer; // 0x394
-    DxTex *mPreProcessTex; // 0x398
-    DxTex *mPostProcessTex; // 0x39c
-    DxTex *mPreDepthTex; // 0x3a0
-    bool unk3a4;
-    unsigned int unk3a8;
-    unsigned int unk3ac;
+    DxTex *mPreProcessTexture; // 0x398
+    DxTex *mPostProcessTexture; // 0x39c
+    DxTex *mPreDepthTexture; // 0x3a0
+    bool mDrawingUI; // 0x3a4
+    unsigned int mEDRamBase; // 0x3a8
+    unsigned int mHierZBase; // 0x3ac
     int mNumTiles; // 0x3b0
-    D3DRECT unk3b4; // 0x3b4
-    int unk3c4;
-    int unk3c8;
-    int unk3cc;
-    int unk3d0;
-    int unk3d4;
-    int unk3d8;
-    int unk3dc;
-    int unk3e0;
-    int unk3e4;
-    int unk3e8;
-    int unk3ec;
-    int unk3f0;
-    bool unk3f4;
-    bool unk3f5;
-    bool unk3f6;
-    bool unk3f7;
-    RegisterAlloc mRegAlloc; // 0x3f8
+    D3DRECT mTileRects[4]; // 0x3b4
+    bool mSuspended; // 0x3f4
+    bool mPrintGlitches; // 0x3f5
+    bool mCaptureNextGpuFrame; // 0x3f6
+    bool mGPUCaptureInProgress; // 0x3f7
+    RegisterAlloc mRegisterAlloc; // 0x3f8
     int mDefaultVSRegAlloc; // 0x3fc
     int mDefaultPSRegAlloc; // 0x400
-    bool unk404;
-    int unk408; // 0x408 - clipping plane index
+    bool mPreInitialized; // 0x404
+    int mNumClipPlanes; // 0x408
 };
 
 extern DxRnd TheDxRnd;

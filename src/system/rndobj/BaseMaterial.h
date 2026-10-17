@@ -149,7 +149,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x3C);
     NEW_OBJ(BaseMaterial)
-    static void Init() { REGISTER_OBJ_FACTORY(BaseMaterial) }
+    REGISTER_OBJ(BaseMaterial)
 
     MatPerfSettings &PerfSettings() { return mPerfSettings; }
     const MatPerfSettings &PerfSettings() const { return mPerfSettings; }

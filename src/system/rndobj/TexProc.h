@@ -31,6 +31,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1D);
     NEW_OBJ(TexProc);
+    REGISTER_OBJ(TexProc)
 
     void SetRegisters();
     bool CheckParams(DataArray *, bool);

@@ -14,7 +14,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x15);
     NEW_OBJ(RndMotionBlur)
-    static void Init() { REGISTER_OBJ_FACTORY(RndMotionBlur) }
+    REGISTER_OBJ(RndMotionBlur)
 
 protected:
     RndMotionBlur();

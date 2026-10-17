@@ -22,7 +22,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x15);
     NEW_OBJ(RndTexBlendController)
-    static void Init() { REGISTER_OBJ_FACTORY(RndTexBlendController) }
+    REGISTER_OBJ(RndTexBlendController)
 
     BlendState GetBlendState(float &, float) const;
     RndTex *Tex() const { return mTex; }

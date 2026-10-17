@@ -30,7 +30,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x19)
     NEW_OBJ(RndRibbon)
-    static void Init() { REGISTER_OBJ_FACTORY(RndRibbon) }
+    REGISTER_OBJ(RndRibbon)
 
     void ConstructMesh();
     void UpdateChase();

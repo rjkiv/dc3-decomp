@@ -34,7 +34,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x17);
     NEW_OBJ(RndPropAnim)
-    static void Init() { REGISTER_OBJ_FACTORY(RndPropAnim) }
+    REGISTER_OBJ(RndPropAnim)
 
     void AdvanceFrame(float);
     void RemoveKeys();

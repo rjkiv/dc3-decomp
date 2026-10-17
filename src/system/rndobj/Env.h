@@ -33,7 +33,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1B);
     NEW_OBJ(RndEnviron)
-    static void Init() { REGISTER_OBJ_FACTORY(RndEnviron) }
+    REGISTER_OBJ(RndEnviron)
     static RndEnviron *Current() { return sCurrent; }
     static Vector3 *CurrentPos() {
         if (sCurrentPosSet)

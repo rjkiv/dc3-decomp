@@ -22,7 +22,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x14)
     NEW_OBJ(RndTransProxy)
-    static void Init() { REGISTER_OBJ_FACTORY(RndTransProxy) }
+    REGISTER_OBJ(RndTransProxy)
 
     void SetProxy(ObjectDir *);
     void SetPart(Symbol);

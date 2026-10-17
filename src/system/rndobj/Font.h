@@ -77,7 +77,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x7C)
     NEW_OBJ(RndFont)
-    static void Init() { REGISTER_OBJ_FACTORY(RndFont) }
+    REGISTER_OBJ(RndFont)
 
     RndMat *Mat(int) const;
     RndTex *ValidTexture(int) const;
@@ -143,7 +143,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x10A)
     NEW_OBJ(RndFont3d)
-    static void Init() { REGISTER_OBJ_FACTORY(RndFont3d) }
+    REGISTER_OBJ(RndFont3d)
 
 protected:
     RndFont3d();

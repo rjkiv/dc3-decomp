@@ -162,7 +162,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x90)
     NEW_OBJ(RndParticleSys)
-    static void Init() { REGISTER_OBJ_FACTORY(RndParticleSys) }
+    REGISTER_OBJ(RndParticleSys)
 
     void SetRelativeMotion(float, RndTransformable *);
     void SetSubSamples(int);

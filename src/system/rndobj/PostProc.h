@@ -80,6 +80,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x22);
     NEW_OBJ(RndPostProc)
+    REGISTER_OBJ(RndPostProc)
 
     void Interp(const RndPostProc *, const RndPostProc *, float);
     void LoadRev(BinStreamRev &);

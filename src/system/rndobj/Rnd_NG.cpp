@@ -24,21 +24,21 @@ NgStats gNgStats[3];
 NgStats *TheNgStats = &gNgStats[0];
 
 NgRnd::NgRnd()
-    : unk1f8(0), mShadowMap(0), mShadowCam(0), mOcclusionQueryMgr(0), unk208(0),
-      unk218(0) {}
+    : mWideScreenDisplay(0), mShadowMap(0), mShadowCam(0), mQueryManager(0),
+      mParticleBuffer(0), mPreInitialized(0) {}
 
 NgRnd::~NgRnd() {}
 
 void NgRnd::PreInit() {
-    if (!unk218) {
-        unk218 = true;
+    if (!mPreInitialized) {
+        mPreInitialized = true;
         Rnd::PreInit();
-        REGISTER_OBJ_FACTORY(NgEnviron)
-        REGISTER_OBJ_FACTORY(NgMat)
+        NgEnviron::Register();
+        NgMat::Register();
         NgLight::Init();
-        REGISTER_OBJ_FACTORY(NgFur)
+        NgFur::Register();
         RndShadowMap::Init();
-        REGISTER_OBJ_FACTORY(RndSoftParticleBuffer)
+        RndSoftParticleBuffer::Register();
         CreateDefaults();
     }
 }
@@ -46,16 +46,16 @@ void NgRnd::PreInit() {
 void NgRnd::Init() {
     PreInit();
     TheShaderMgr.Init();
-    unk20c.reserve(0x200);
+    mLastPointTests.reserve(0x200);
     Rnd::Init();
-    unk208 = Hmx::Object::New<RndSoftParticleBuffer>();
+    mParticleBuffer = Hmx::Object::New<RndSoftParticleBuffer>();
 }
 
 void NgRnd::ReInit() { TheShaderMgr.InitShaders(); }
 
 void NgRnd::Terminate() {
-    RELEASE(mOcclusionQueryMgr);
-    RELEASE(unk208);
+    RELEASE(mQueryManager);
+    RELEASE(mParticleBuffer);
     TheShaderMgr.Terminate();
     NgPostProc::Terminate();
     NgDOFProc::Terminate();
@@ -83,11 +83,11 @@ void NgRnd::SetShadowMap(RndTex *tex, RndCam *cam, const Hmx::Color *color) {
 
 void NgRnd::RemovePointTest(RndFlare *flare) {
     Rnd::RemovePointTest(flare);
-    FOREACH (it, unk20c) {
-        if (it->unk0 == flare) {
-            mOcclusionQueryMgr->ReleaseQuery(it->unk8);
-            mOcclusionQueryMgr->ReleaseQuery(it->unk4);
-            unk20c.erase(it);
+    FOREACH (it, mLastPointTests) {
+        if (it->mFlare == flare) {
+            mQueryManager->ReleaseQuery(it->mQueryIndexArea);
+            mQueryManager->ReleaseQuery(it->mQueryIndexPoint);
+            mLastPointTests.erase(it);
             return;
         }
     }

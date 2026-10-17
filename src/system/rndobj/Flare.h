@@ -26,7 +26,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x18);
     NEW_OBJ(RndFlare)
-    static void Init() { REGISTER_OBJ_FACTORY(RndFlare) }
+    REGISTER_OBJ(RndFlare)
 
     RndMat *GetMat() const { return mMat; }
     void SetMat(RndMat *mat);

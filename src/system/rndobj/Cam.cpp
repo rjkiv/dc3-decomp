@@ -176,7 +176,7 @@ void RndCam::SetTargetTex(RndTex *tex) {
 }
 
 void RndCam::Init() {
-    REGISTER_OBJ_FACTORY(RndCam);
+    RndCam::Register();
     if (SystemConfig()) {
         DataArray *cfg = SystemConfig("rnd");
         cfg->FindData("cam_default_near_plane", sDefaultNearPlane, true);

@@ -88,6 +88,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x5E);
     NEW_OBJ(MetaMaterial)
+    REGISTER_OBJ(MetaMaterial)
 
     bool IsEquivalent(MetaMaterial *);
 

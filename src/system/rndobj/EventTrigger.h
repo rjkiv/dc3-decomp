@@ -96,6 +96,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x17);
     NEW_OBJ(EventTrigger);
+    REGISTER_OBJ(EventTrigger)
 
     void SetNextLink(EventTrigger *);
     bool HasTriggerEvents() const { return !mTriggerEvents.empty(); }

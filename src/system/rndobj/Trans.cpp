@@ -535,7 +535,7 @@ DataNode RndTransformable::OnSetLocalRotIndex(const DataArray *a) {
 }
 
 void RndTransformable::Init() {
-    REGISTER_OBJ_FACTORY(RndTransformable);
+    RndTransformable::Register();
     DataArray *cfg = SystemConfig("rnd");
     cfg->FindData("shadow_plane", sShadowPlane, true);
 }

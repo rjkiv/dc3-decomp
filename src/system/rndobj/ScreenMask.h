@@ -18,7 +18,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x17);
     NEW_OBJ(RndScreenMask)
-    static void Init() { REGISTER_OBJ_FACTORY(RndScreenMask) }
+    REGISTER_OBJ(RndScreenMask)
 
 protected:
     RndScreenMask();

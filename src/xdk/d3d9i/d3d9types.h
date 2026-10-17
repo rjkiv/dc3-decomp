@@ -677,6 +677,12 @@ typedef enum _D3DSTENCILOP {
 #pragma endregion
 #pragma region D3D Structs
 
+typedef struct _D3DVECTOR { /* Size=0xc */
+    /* 0x0000 */ float x;
+    /* 0x0004 */ float y;
+    /* 0x0008 */ float z;
+} D3DVECTOR;
+
 typedef struct _D3DTAGCOLLECTION { /* Size=0x28 */
     /* 0x0000 */ UINT64 m_Mask[5];
 } D3DTAGCOLLECTION;

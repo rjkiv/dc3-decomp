@@ -20,7 +20,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x13)
     NEW_OBJ(RndPartLauncher)
-    static void Init() { REGISTER_OBJ_FACTORY(RndPartLauncher) }
+    REGISTER_OBJ(RndPartLauncher)
     void LaunchParticles();
 
 protected:

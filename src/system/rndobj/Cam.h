@@ -66,6 +66,7 @@ public:
     const Vector2 &ZRange() const { return mZRange; }
 
     NEW_OBJ(RndCam);
+    REGISTER_OBJ(RndCam)
     OBJ_MEM_OVERLOAD(0x1B);
     static void Init();
     static RndCam *Current() { return sCurrent; }
