@@ -25,13 +25,13 @@ public:
 protected:
     FlowSequence();
 
-    ObjPtrVec<FlowNode>::iterator mItr; // 0x5c
+    ObjPtrVec<FlowNode>::iterator mSeqItr; // 0x5c
     /** "Loop forever?" */
     bool mLooping; // 0x60
     /** "how many times to reapeat this sequence" */
-    int mRepeats; // 0x64
-    int mRepeatCount; // 0x68
+    int mRepeatCount; // 0x64
+    int mCurCycle; // 0x68
     /** "How should we handle stop requests?" */
     StopMode mStopMode; // 0x6c
-    bool mActivatingChildren;
+    bool mInActivation; // 0x70
 };

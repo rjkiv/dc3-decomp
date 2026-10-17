@@ -3,6 +3,15 @@
 
 class FlowQueueable : public FlowNode {
 public:
+    enum FlowInterruptType {
+        kIgnore = 0x0000,
+        kQueue = 0x0001,
+        kQueueOne = 0x0002,
+        kImmediate = 0x0003,
+        kWhenAble = 0x0004,
+        kNotQueueable = 0x0005
+    };
+
     // Hmx::Object
     virtual ~FlowQueueable();
     OBJ_CLASSNAME(FlowQueueable)
@@ -29,6 +38,6 @@ protected:
     FlowQueueable();
 
     /** "Determines how we handle re-triggering of this label" */
-    QueueState mInterrupt; // 0x5c
-    std::list<Hmx::Object *> mQueuedListeners; // 0x60
+    FlowInterruptType mInterruptMode; // 0x5c
+    std::list<Hmx::Object *> mListeners; // 0x60
 };

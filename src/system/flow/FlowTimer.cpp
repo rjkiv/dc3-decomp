@@ -11,9 +11,9 @@
 #pragma region EventTask
 
 EventTask::EventTask(FlowTimer *t, ObjPtrVec<FlowNode> *v, TaskUnits u, float f4)
-    : mOwner(this), unk40(v), mItr(0), unk48(f4) {
+    : mOwner(this), mCases(v), mItr(0), mTime(f4) {
     mOwner = t;
-    mItr = unk40->begin();
+    mItr = mCases->begin();
     TheTaskMgr.Start(this, u, 0);
 }
 
@@ -21,12 +21,12 @@ void EventTask::Poll(float f1) {
     if (!mOwner) {
         MILO_NOTIFY("EventTask::Poll NULL mOwner");
     } else {
-        for (; mItr != unk40->end()
-             && f1 >= static_cast<FlowValueCase *>((FlowNode *)*mItr)->Value();
+        for (; mItr != mCases->end()
+             && f1 >= static_cast<FlowValueCase *>((FlowNode *)*mItr)->GetValue();
              ++mItr) {
             mOwner->OnKeyframe(*mItr);
         }
-        if (f1 >= unk48) {
+        if (f1 >= mTime) {
             mOwner->OnTimerEnd();
         } else {
             return;

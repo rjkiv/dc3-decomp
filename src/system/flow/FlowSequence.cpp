@@ -5,8 +5,8 @@
 #include "os/Debug.h"
 
 FlowSequence::FlowSequence()
-    : mItr(nullptr), mLooping(0), mRepeats(0), mRepeatCount(0), mStopMode(kStopImmediate),
-      mActivatingChildren(0) {}
+    : mSeqItr(nullptr), mLooping(0), mRepeatCount(0), mCurCycle(0),
+      mStopMode(kStopImmediate), mInActivation(0) {}
 
 FlowSequence::~FlowSequence() {}
 
@@ -16,7 +16,7 @@ END_HANDLERS
 
 BEGIN_PROPSYNCS(FlowSequence)
     SYNC_PROP(looping, mLooping)
-    SYNC_PROP(repeats, mRepeats)
+    SYNC_PROP(repeats, mRepeatCount)
     SYNC_PROP(stop_mode, (int &)mStopMode)
     SYNC_SUPERCLASS(FlowNode)
 END_PROPSYNCS
@@ -25,7 +25,7 @@ BEGIN_SAVES(FlowSequence)
     SAVE_REVS(1, 0)
     SAVE_SUPERCLASS(FlowNode)
     bs << mLooping;
-    bs << mRepeats;
+    bs << mRepeatCount;
     bs << mStopMode;
 END_SAVES
 
@@ -34,7 +34,7 @@ BEGIN_COPYS(FlowSequence)
     CREATE_COPY(FlowSequence)
     BEGIN_COPYING_MEMBERS
         COPY_MEMBER(mLooping)
-        COPY_MEMBER(mRepeats)
+        COPY_MEMBER(mRepeatCount)
         COPY_MEMBER(mStopMode)
     END_COPYING_MEMBERS
 END_COPYS
@@ -46,7 +46,7 @@ BEGIN_LOADS(FlowSequence)
     ASSERT_REVS(1, 0)
     LOAD_SUPERCLASS(FlowNode)
     d >> mLooping;
-    d >> mRepeats;
+    d >> mRepeatCount;
     if (d.rev > 0)
         d >> (int &)mStopMode;
 END_LOADS
@@ -61,22 +61,22 @@ bool FlowSequence::Activate() {
         Deactivate(false);
         return false;
     }
-    if (mRepeatCount == 0) {
+    if (mCurCycle == 0) {
         PushDrivenProperties();
     }
-    mRepeatCount = 0;
+    mCurCycle = 0;
     if (mChildNodes.empty()) {
         return false;
     }
-    mActivatingChildren = true;
-    for (mItr = mChildNodes.begin();; ++mItr) {
+    mInActivation = true;
+    for (mSeqItr = mChildNodes.begin();; ++mSeqItr) {
         do {
-            if (mItr == mChildNodes.end() || !mRunningNodes.empty()
-                || (ActivateChild(*mItr), mRequestingStop)) {
-                mActivatingChildren = false;
+            if (mSeqItr == mChildNodes.end() || !mRunningNodes.empty()
+                || (ActivateChild(*mSeqItr), mRequestingStop)) {
+                mInActivation = false;
                 MILO_ASSERT(mRunningNodes.size() < 2, 0x50);
-                if (mItr == mChildNodes.end() && mRunningNodes.empty()) {
-                    if (!mLooping && mRepeats == 0) {
+                if (mSeqItr == mChildNodes.end() && mRunningNodes.empty()) {
+                    if (!mLooping && mRepeatCount == 0) {
                         return false;
                     }
                     MILO_NOTIFY_ONCE(
@@ -96,7 +96,7 @@ void FlowSequence::ChildFinished(FlowNode *node) {
     );
     mRunningNodes.remove(node);
     MILO_ASSERT(mRunningNodes.empty(), 0x74);
-    if (mActivatingChildren)
+    if (mInActivation)
         return;
     if (mRequestingStop) {
         mRequestingStop = false;
@@ -104,27 +104,27 @@ void FlowSequence::ChildFinished(FlowNode *node) {
         mFlowParent->ChildFinished(this);
         return;
     }
-    if (mItr != mChildNodes.end()) {
-        ++mItr;
+    if (mSeqItr != mChildNodes.end()) {
+        ++mSeqItr;
     }
     FLOW_LOG("Advancing sequence\n");
-    mActivatingChildren = true;
-    for (; mItr != mChildNodes.end(); ++mItr) {
-        ActivateChild(*mItr);
+    mInActivation = true;
+    for (; mSeqItr != mChildNodes.end(); ++mSeqItr) {
+        ActivateChild(*mSeqItr);
         if (mRequestingStop || !mRunningNodes.empty())
             break;
     }
-    mActivatingChildren = false;
+    mInActivation = false;
     if (!mRequestingStop || !mRunningNodes.empty()) {
-        if (mItr != mChildNodes.end())
+        if (mSeqItr != mChildNodes.end())
             goto ret;
-        if (!mLooping && mRepeatCount >= mRepeats - 1) {
+        if (!mLooping && mCurCycle >= mRepeatCount - 1) {
             MILO_ASSERT(mRunningNodes.empty(), 0xA1);
             FLOW_LOG("Releasing\n");
         } else {
-            int count = mRepeatCount;
+            int count = mCurCycle;
             if (Activate()) {
-                mRepeatCount = count + 1;
+                mCurCycle = count + 1;
                 goto ret;
             }
         }

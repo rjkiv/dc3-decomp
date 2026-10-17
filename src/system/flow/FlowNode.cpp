@@ -216,8 +216,8 @@ void FlowNode::MoveIntoDir(ObjectDir *o1, ObjectDir *o2) {
             (*it)->MoveIntoDir(o1, o2);
         }
         FOREACH (it, mDrivenPropEntries) {
-            FOREACH (op, it->MathOps()) {
-                FlowPtr<Hmx::Object> &ptr = op->GetUnk18();
+            FOREACH (op, it->mMathOps) {
+                FlowPtr<Hmx::Object> &ptr = op->mPropertyProvider;
                 if (ptr == o2) {
                     ptr = o1;
                 }
@@ -238,38 +238,38 @@ void FlowNode::PushDrivenProperties() {
     sPushDrivenProperties = true;
     FOREACH (it, mDrivenPropEntries) {
         DataNode n;
-        auto op = it->MathOps().begin();
-        Hmx::Object *obj = op->GetUnk18();
+        auto op = it->mMathOps.begin();
+        Hmx::Object *obj = op->mPropertyProvider;
         if (obj) {
-            const DataNode *prop = obj->Property(op->RHS().Array(), false);
+            const DataNode *prop = obj->Property(op->mPropertyPath.Array(), false);
             if (prop) {
                 n = *prop;
             } else {
-                n = op->GetUnk0();
+                n = op->mValue;
             }
         } else {
-            n = op->GetUnk0();
+            n = op->mValue;
         }
-        if (op != it->MathOps().end()) {
+        if (op != it->mMathOps.end()) {
             if (n.CompatibleType(kDataFloat)) {
                 float sum = n.LiteralFloat();
-                while (op != it->MathOps().end()) {
+                while (op != it->mMathOps.end()) {
                     sum += op->Apply(sum);
                 }
                 n = sum;
             }
-            const DataNode *prop = Property(it->Node().Array());
+            const DataNode *prop = Property(it->mDrivenProperty.Array());
             if (prop->Type() == n.Type()) {
-                SetProperty(it->Node().Array(), n);
+                SetProperty(it->mDrivenProperty.Array(), n);
             } else if (n.Type() == kDataFloat || n.Type() == kDataInt) {
                 if (prop->Type() == kDataFloat) {
-                    SetProperty(it->Node().Array(), n);
+                    SetProperty(it->mDrivenProperty.Array(), n);
                 } else {
-                    SetProperty(it->Node().Array(), Round(n.LiteralFloat()));
+                    SetProperty(it->mDrivenProperty.Array(), Round(n.LiteralFloat()));
                 }
             }
         } else {
-            SetProperty(it->Node().Array(), n);
+            SetProperty(it->mDrivenProperty.Array(), n);
         }
     }
     sPushDrivenProperties = false;
@@ -297,8 +297,8 @@ DrivenPropertyEntry *FlowNode::GetDrivenEntry(Symbol s) {
 
 DrivenPropertyEntry *FlowNode::GetDrivenEntry(DataArray *a) {
     FOREACH (it, mDrivenPropEntries) {
-        if (it->Node().Type() == kDataArray) {
-            DataArray *curArr = it->Node().Array();
+        if (it->mDrivenProperty.Type() == kDataArray) {
+            DataArray *curArr = it->mDrivenProperty.Array();
             if (curArr->Size() == a->Size()) {
                 bool b1 = true;
                 for (int i = 0; i < curArr->Size(); i++) {
@@ -329,7 +329,7 @@ Flow *FlowNode::GetTopFlow() {
 }
 
 void FlowNode::ActivateLabel(FlowLabel *label) {
-    FLOW_LOG("Activating Label:%s\n", label->Label());
+    FLOW_LOG("Activating Label:%s\n", label->GetLabel());
     mRequestingStop = false;
     mRunningNodes.push_back(label);
     if (!label->Activate(this)) {

@@ -7,8 +7,8 @@
 #include "utl/BinStream.h"
 
 FlowDistance::FlowDistance()
-    : mObj1(this, nullptr), mObj2(this, nullptr), mDistance(10), mPersistent(0), unka1(0),
-      unka2(0), mRunInRange(1), mDriveIntensity(0), unka8(0) {}
+    : mOne(this, nullptr), mTwo(this, nullptr), mDistance(10), mPersistent(0),
+      mIsRunning(0), mInRange(0), mRunInRange(1), mDriveIntensity(0), mIntensity(0) {}
 
 FlowDistance::~FlowDistance() {}
 
@@ -17,8 +17,8 @@ BEGIN_HANDLERS(FlowDistance)
 END_HANDLERS
 
 BEGIN_PROPSYNCS(FlowDistance)
-    SYNC_PROP(one, mObj1)
-    SYNC_PROP(two, mObj2)
+    SYNC_PROP(one, mOne)
+    SYNC_PROP(two, mTwo)
     SYNC_PROP(distance, mDistance)
     SYNC_PROP(persistent, mPersistent)
     SYNC_PROP(run_in_range, mRunInRange)
@@ -29,8 +29,8 @@ END_PROPSYNCS
 BEGIN_SAVES(FlowDistance)
     SAVE_REVS(0, 0)
     SAVE_SUPERCLASS(FlowNode)
-    bs << mObj1;
-    bs << mObj2;
+    bs << mOne;
+    bs << mTwo;
     bs << mPersistent;
     bs << mDistance;
     bs << mRunInRange;
@@ -41,8 +41,8 @@ BEGIN_COPYS(FlowDistance)
     COPY_SUPERCLASS(FlowNode)
     CREATE_COPY(FlowDistance)
     BEGIN_COPYING_MEMBERS
-        COPY_MEMBER(mObj1)
-        COPY_MEMBER(mObj2)
+        COPY_MEMBER(mOne)
+        COPY_MEMBER(mTwo)
         COPY_MEMBER(mPersistent)
         COPY_MEMBER(mDistance)
         COPY_MEMBER(mRunInRange)
@@ -56,8 +56,8 @@ BEGIN_LOADS(FlowDistance)
     LOAD_REVS(bs)
     ASSERT_REVS(0, 0)
     LOAD_SUPERCLASS(FlowNode)
-    mObj1.LoadFromMainOrDir(d);
-    mObj2.LoadFromMainOrDir(d);
+    mOne.LoadFromMainOrDir(d);
+    mTwo.LoadFromMainOrDir(d);
     d >> mPersistent;
     d >> mDistance;
     d >> mRunInRange;
@@ -69,18 +69,18 @@ bool FlowDistance::Activate() {
     mRequestingStop = false;
     PushDrivenProperties();
     mRequestingStop = false;
-    if (mObj1 && mObj2) {
+    if (mOne && mTwo) {
         if (mPersistent) {
             TheFlowMgr->AddPollable(this);
-            unka1 = true;
+            mIsRunning = true;
         }
         Vector3 diff;
-        Subtract(mObj1->WorldXfm().v, mObj2->WorldXfm().v, diff);
+        Subtract(mOne->WorldXfm().v, mTwo->WorldXfm().v, diff);
         Vector3 harness_reduction_vector;
         harness_reduction_vector.x = diff.y;
         harness_reduction_vector.y = diff.z;
         harness_reduction_vector.z = diff.x;
-        unka2 = Length(harness_reduction_vector) > mDistance;
+        mInRange = Length(harness_reduction_vector) > mDistance;
         Execute(kWhenAble);
         if (mPersistent) {
             return true;
@@ -94,7 +94,7 @@ bool FlowDistance::Activate() {
 void FlowDistance::Deactivate(bool b) {
     FLOW_LOG("Deactivated\n");
     TheFlowMgr->RemovePollable(this);
-    unka1 = false;
+    mIsRunning = false;
     FlowNode::Deactivate(b);
 }
 
@@ -102,11 +102,11 @@ void FlowDistance::ChildFinished(FlowNode *n) {
     FLOW_LOG("Child Finished of class:%s\n", n->ClassName());
     mRunningNodes.remove(n);
     if (mRunningNodes.empty()) {
-        if (unka1) {
+        if (mIsRunning) {
             TheFlowMgr->RemovePollable(this);
         }
         if (!mPersistent || mRequestingStop) {
-            unka1 = false;
+            mIsRunning = false;
             mFlowParent->ChildFinished(this);
         }
     }
@@ -123,14 +123,14 @@ void FlowDistance::RequestStopCancel() {
 }
 
 bool FlowDistance::IsRunning() {
-    if (mPersistent && unka1)
+    if (mPersistent && mIsRunning)
         return true;
     return FlowNode::IsRunning();
 }
 
 void FlowDistance::UpdateIntensity() {
     float oldIntensity = FlowNode::sIntensity;
-    FlowNode::sIntensity *= unka8;
+    FlowNode::sIntensity *= mIntensity;
     FlowNode::UpdateIntensity();
     FlowNode::sIntensity = oldIntensity;
 }

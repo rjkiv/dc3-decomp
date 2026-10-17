@@ -4,6 +4,17 @@
 /** "a case for a flow switch" */
 class FlowSwitchCase : public FlowNode {
 public:
+    enum FlowSwitchCaseComparison {
+        kEquals = 0,
+        kNotEquals,
+        kGreaterThan,
+        kGreaterThanOrEquals,
+        kLessThan,
+        kLessThanOrEquals,
+        kTransition,
+        kDefault
+    };
+
     // Hmx::Object
     virtual ~FlowSwitchCase();
     OBJ_CLASSNAME(FlowSwitchCase)
@@ -24,7 +35,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x24)
     NEW_OBJ(FlowSwitchCase)
-    OperatorType Op() const { return mOperator; }
+    FlowSwitchCaseComparison GetOperator() { return mOperator; }
     bool IsValidCase(FlowNode *, DataNode *, const DataNode *, bool);
 
 protected:
@@ -37,9 +48,9 @@ protected:
     /** "the value we're transitioning from" */
     DataNodeObjTrack mFromValue; // 0x78
     /** "equality case to use for comparison" */
-    OperatorType mOperator; // 0x94
+    FlowSwitchCaseComparison mOperator; // 0x94
     /** "Use the last value to compare against" */
     bool mUseLastValue; // 0x98
     bool mUnregisterParent; // 0x99
-    bool unk9a; // 0x9a
+    bool mIsRunning; // 0x9a
 };

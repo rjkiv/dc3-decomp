@@ -4,33 +4,33 @@
 #include "obj/Object.h"
 
 PropertyEventListener::PropertyEventListener(Hmx::Object *owner)
-    : mAutoPropEntries(owner), mEventsRegistered(0) {}
+    : mAutoPropEntries(owner), mRegistered(0) {}
 
 void PropertyEventListener::RegisterEvents(FlowNode *node) {
     static Symbol reactivate("reactivate");
-    if (!mEventsRegistered) {
+    if (!mRegistered) {
         if (!mAutoPropEntries.empty()) {
             FOREACH (it, mAutoPropEntries) {
-                if (it->unk4) {
-                    it->unk4->AddPropertySink(node, it->unk0, reactivate);
+                if (it->mProvider) {
+                    it->mProvider->AddPropertySink(node, it->mPropPath, reactivate);
                 }
             }
         }
     }
-    mEventsRegistered = true;
+    mRegistered = true;
 }
 
 void PropertyEventListener::UnregisterEvents(FlowNode *node) {
-    if (mEventsRegistered) {
+    if (mRegistered) {
         if (!mAutoPropEntries.empty()) {
             FOREACH (it, mAutoPropEntries) {
-                if (it->unk4) {
-                    it->unk4->RemovePropertySink(node, it->unk0);
+                if (it->mProvider) {
+                    it->mProvider->RemovePropertySink(node, it->mPropPath);
                 }
             }
         }
     }
-    mEventsRegistered = false;
+    mRegistered = false;
 }
 
 void PropertyEventListener::GenerateAutoNames(FlowNode *node, bool clear) {
@@ -38,7 +38,7 @@ void PropertyEventListener::GenerateAutoNames(FlowNode *node, bool clear) {
         mAutoPropEntries.clear();
     }
     FOREACH (it, node->DrivenPropEntries()) {
-        FOREACH (op, it->MathOps()) {
+        FOREACH (op, it->mMathOps) {
             AutoPropEntry entry(node);
             mAutoPropEntries.push_back(entry);
         }

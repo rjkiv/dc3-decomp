@@ -36,5 +36,5 @@ protected:
 
     void ReActivate();
 
-    unsigned char mEntryCount; // 0x88
+    unsigned char mReentranceCount; // 0x88
 };

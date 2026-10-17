@@ -120,5 +120,5 @@ protected:
         timer.Start();                                                                   \
         mFlowParent->ChildFinished(this);                                                \
         timer.Stop();                                                                    \
-        TheFlowMgr->AddMs(timer.Ms());                                                   \
+        TheFlowMgr->AddReleaseTime(timer.Ms());                                          \
     }

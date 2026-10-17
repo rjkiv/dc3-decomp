@@ -12,7 +12,7 @@ bool SliderChildSort(FlowNode *, FlowNode *);
 
 FlowSlider::FlowSlider()
     : PropertyEventListener(this), mPersistent(1), mAlwaysRun(0), mValue(0),
-      mEaseType(kEasePolyOut), mEasePower(2) {
+      mEase(kEasePolyOut), mEasePower(2) {
     UpdateEase();
 }
 
@@ -26,7 +26,7 @@ END_HANDLERS
 BEGIN_PROPSYNCS(FlowSlider)
     SYNC_PROP(persistent, mPersistent)
     SYNC_PROP(always_run, mAlwaysRun)
-    SYNC_PROP_MODIFY(ease, (int &)mEaseType, UpdateEase())
+    SYNC_PROP_MODIFY(ease, (int &)mEase, UpdateEase())
     SYNC_PROP(ease_power, mEasePower)
     SYNC_PROP_MODIFY(value, mValue, UpdateActivations())
     SYNC_SUPERCLASS(FlowNode)
@@ -38,7 +38,7 @@ BEGIN_SAVES(FlowSlider)
     bs << mPersistent;
     bs << mAlwaysRun;
     bs << mValue;
-    bs << mEaseType;
+    bs << mEase;
     bs << mEasePower;
 END_SAVES
 
@@ -49,7 +49,7 @@ BEGIN_COPYS(FlowSlider)
         COPY_MEMBER(mPersistent)
         COPY_MEMBER(mAlwaysRun)
         COPY_MEMBER(mValue)
-        COPY_MEMBER(mEaseType)
+        COPY_MEMBER(mEase)
         COPY_MEMBER(mEasePower)
     END_COPYING_MEMBERS
 END_COPYS
@@ -63,7 +63,7 @@ BEGIN_LOADS(FlowSlider)
     d >> mPersistent;
     d >> mAlwaysRun;
     d >> mValue;
-    d >> (int &)mEaseType;
+    d >> (int &)mEase;
     d >> mEasePower;
     GenerateAutoNames(this, true);
     mChildNodes.sort(SliderChildSort);
@@ -83,7 +83,7 @@ bool FlowSlider::Activate() {
         PushDrivenProperties();
         if (mPersistent) {
             RegisterEvents(this);
-            mEventsRegistered = true;
+            mRegistered = true;
         }
         UpdateActivations();
         if (mAlwaysRun) {
@@ -96,7 +96,7 @@ bool FlowSlider::Activate() {
 
 void FlowSlider::Deactivate(bool b) {
     FLOW_LOG("Deactivated\n");
-    if (mEventsRegistered)
+    if (mRegistered)
         PropertyEventListener::UnregisterEvents(this);
     FlowNode::Deactivate(b);
 }
@@ -105,11 +105,11 @@ void FlowSlider::ChildFinished(FlowNode *n) {
     FLOW_LOG("Child Finished of class:%s\n", n->ClassName());
     mRunningNodes.remove(n);
     if (mRunningNodes.empty()) {
-        if (mEventsRegistered && mRequestingStop) {
+        if (mRegistered && mRequestingStop) {
             UnregisterEvents(this);
-            mEventsRegistered = false;
+            mRegistered = false;
             mRequestingStop = false;
-        } else if (mEventsRegistered) {
+        } else if (mRegistered) {
             return;
         }
         mFlowParent->ChildFinished(this);
@@ -127,7 +127,7 @@ void FlowSlider::RequestStopCancel() {
 }
 
 bool FlowSlider::IsRunning() {
-    if (mEventsRegistered)
+    if (mRegistered)
         return true;
     return FlowNode::IsRunning();
 }
@@ -137,7 +137,7 @@ void FlowSlider::UpdateIntensity() {
     UpdateActivations();
 }
 
-void FlowSlider::UpdateEase() { mEaseFunc = GetEaseFunction(mEaseType); }
+void FlowSlider::UpdateEase() { pt2EaseFuncion = GetEaseFunction(mEase); }
 
 void FlowSlider::ReActivate() {
     Timer timer;

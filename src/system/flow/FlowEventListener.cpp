@@ -9,8 +9,8 @@
 #include "obj/Object.h"
 
 FlowEventListener::FlowEventListener()
-    : unkb4(0), mStartOnActivate(0), mEventCount(0), unkbc(0) {
-    unkb1 = true;
+    : mRegistered(0), mStartOnActivate(0), mEventCount(0), mEventIdx(0) {
+    mEnabled = true;
 }
 
 FlowEventListener::~FlowEventListener() {}
@@ -76,8 +76,8 @@ END_LOADS
 
 bool FlowEventListener::Activate() {
     FLOW_LOG("Activate\n");
-    unkb4 = true;
-    unkbc = 0;
+    mRegistered = true;
+    mEventIdx = 0;
     RegisterEvents();
     if (mStartOnActivate) {
         ActivateTrigger();
@@ -88,15 +88,15 @@ bool FlowEventListener::Activate() {
 void FlowEventListener::Deactivate(bool b1) {
     FLOW_LOG("Deactivated\n");
     FlowQueueable::Deactivate(b1);
-    if (unkb4 && !b1) {
-        unkb4 = false;
+    if (mRegistered && !b1) {
+        mRegistered = false;
         UnregisterEvents();
     }
 }
 
 void FlowEventListener::ChildFinished(FlowNode *node) {
     FLOW_LOG("Child Finished of class:%s\n", node->ClassName());
-    if (!unkb4) {
+    if (!mRegistered) {
         FlowNode::ChildFinished(node);
     } else {
         FlowQueueable::ChildFinished(node);
@@ -105,8 +105,8 @@ void FlowEventListener::ChildFinished(FlowNode *node) {
 
 void FlowEventListener::RequestStop() {
     FLOW_LOG("RequestStop\n");
-    if (unkb4) {
-        unkb4 = false;
+    if (mRegistered) {
+        mRegistered = false;
         UnregisterEvents();
         if (mRunningNodes.empty()) {
             mFlowParent->ChildFinished(this);
@@ -118,25 +118,25 @@ void FlowEventListener::RequestStop() {
 
 void FlowEventListener::RequestStopCancel() {
     FLOW_LOG("RequestStopCancel\n");
-    if (!unkb4) {
-        unkb4 = true;
+    if (!mRegistered) {
+        mRegistered = true;
         FlowQueueable::RequestStopCancel();
         RegisterEvents();
     }
 }
 
-bool FlowEventListener::IsRunning() { return unkb4 || !mRunningNodes.empty(); }
+bool FlowEventListener::IsRunning() { return mRegistered || !mRunningNodes.empty(); }
 
 bool FlowEventListener::ActivateTrigger() {
     FLOW_LOG("Reactivate\n");
     mRequestingStop = false;
-    unkbc++;
-    if (mEventCount > 0 && unkbc >= mEventCount) {
+    mEventIdx++;
+    if (mEventCount > 0 && mEventIdx >= mEventCount) {
         UnregisterEvents();
-        unkb4 = false;
+        mRegistered = false;
     }
     FlowNode::Activate();
-    if (!FlowNode::IsRunning() && mEventCount > 0 && unkbc >= mEventCount) {
+    if (!FlowNode::IsRunning() && mEventCount > 0 && mEventIdx >= mEventCount) {
         FLOW_LOG("releasing\n");
         FLOW_TIMED_RELEASE_FROM_PARENT;
     }

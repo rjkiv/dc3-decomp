@@ -4,7 +4,7 @@
 /** "Runs code when a flow is deactivated or requested to stop" */
 class FlowOnStop : public FlowNode {
 public:
-    enum RunMode {
+    enum OnStopMode {
         /** "Only runs when deactivated (hard, forced stop)" */
         kDeactivateOnly = 0,
         /** "Only runs when request stop is called (latent stop)" */
@@ -37,6 +37,6 @@ protected:
     FlowOnStop();
 
     /** "Do we only work on interuption request, or when forced to stop immediately" */
-    RunMode mMode; // 0x5c
-    bool unk60; // 0x60
+    OnStopMode mMode; // 0x5c
+    bool mIsRunning; // 0x60
 };

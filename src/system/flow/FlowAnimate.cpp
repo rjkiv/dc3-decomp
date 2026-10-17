@@ -8,22 +8,23 @@
 #include "rndobj/Anim.h"
 
 FlowAnimate::FlowAnimate()
-    : unk5c(this), mAnim(this), mStopMode(kStopLastFrame), unk98(0), mBlend(0), mWait(0),
-      mDelay(0), mEnable(0), mRate(RndAnimatable::k30_fps), mStart(0), mEnd(0),
-      mPeriod(0), mScale(1), unkc4(0), mEase(kEaseLinear), mEasePower(2), mWrap(0),
-      mImmediateRelease(0) {
+    : mSpawnedTask(this), mAnim(this), mStopMode(kStopLastFrame),
+      mQueuedStop(kStopImmediate), mBlend(0), mWait(0), mDelay(0), mFilterEnable(0),
+      mFilterRate(RndAnimatable::k30_fps), mFilterStart(0), mFilterEnd(0),
+      mFilterPeriod(0), mFilterScale(1), mStopOnLoop(0), mEase(kEaseLinear),
+      mEasePower(2), mWrap(0), mImmediateRelease(0) {
     static Symbol range("range");
-    mType = range;
+    mFilterType = range;
 }
 
 FlowAnimate::~FlowAnimate() { TheFlowMgr->CancelCommand(this); }
 
 bool FlowAnimate::Replace(ObjRef *from, Hmx::Object *to) {
-    if (from == &unk5c) {
-        if (unk5c && unk5c->GetEventReceiver() == this) {
+    if (from == &mSpawnedTask) {
+        if (mSpawnedTask && mSpawnedTask->GetEventReceiver() == this) {
             OnAnimEvent("interrupted");
         }
-        unk5c = nullptr;
+        mSpawnedTask = nullptr;
         return true;
     } else {
         return Hmx::Object::Replace(from, to);
@@ -42,13 +43,13 @@ BEGIN_PROPSYNCS(FlowAnimate)
     SYNC_PROP(wait, mWait)
     SYNC_PROP(delay, mDelay)
     SYNC_PROP(stop_mode, (int &)mStopMode)
-    SYNC_PROP(enable, mEnable)
-    SYNC_PROP(rate, (int &)mRate)
-    SYNC_PROP(start, mStart)
-    SYNC_PROP(end, mEnd)
-    SYNC_PROP(scale, mScale)
-    SYNC_PROP(period, mPeriod)
-    SYNC_PROP(type, mType)
+    SYNC_PROP(enable, mFilterEnable)
+    SYNC_PROP(rate, (int &)mFilterRate)
+    SYNC_PROP(start, mFilterStart)
+    SYNC_PROP(end, mFilterEnd)
+    SYNC_PROP(scale, mFilterScale)
+    SYNC_PROP(period, mFilterPeriod)
+    SYNC_PROP(type, mFilterType)
     SYNC_PROP(ease, (int &)mEase)
     SYNC_PROP(ease_power, mEasePower)
     SYNC_PROP(wrap, mWrap)
@@ -60,11 +61,11 @@ BEGIN_SAVES(FlowAnimate)
     SAVE_REVS(3, 0)
     SAVE_SUPERCLASS(FlowNode)
     bs << mAnim << mBlend << mWait << mDelay;
-    bs << mStopMode << mEnable;
-    bs << mRate << mStart;
-    bs << mEnd << mPeriod;
-    bs << mType;
-    bs << mScale << mEase << mEasePower;
+    bs << mStopMode << mFilterEnable;
+    bs << mFilterRate << mFilterStart;
+    bs << mFilterEnd << mFilterPeriod;
+    bs << mFilterType;
+    bs << mFilterScale << mEase << mEasePower;
     bs << mWrap;
     bs << mImmediateRelease;
 END_SAVES
@@ -77,13 +78,13 @@ BEGIN_COPYS(FlowAnimate)
         COPY_MEMBER(mBlend)
         COPY_MEMBER(mDelay)
         COPY_MEMBER(mStopMode)
-        COPY_MEMBER(mEnable)
-        COPY_MEMBER(mRate)
-        COPY_MEMBER(mStart)
-        COPY_MEMBER(mEnd)
-        COPY_MEMBER(mPeriod)
-        COPY_MEMBER(mType)
-        COPY_MEMBER(mScale)
+        COPY_MEMBER(mFilterEnable)
+        COPY_MEMBER(mFilterRate)
+        COPY_MEMBER(mFilterStart)
+        COPY_MEMBER(mFilterEnd)
+        COPY_MEMBER(mFilterPeriod)
+        COPY_MEMBER(mFilterType)
+        COPY_MEMBER(mFilterScale)
         COPY_MEMBER(mEase)
         COPY_MEMBER(mEasePower)
         COPY_MEMBER(mWrap)
@@ -103,9 +104,9 @@ BEGIN_LOADS(FlowAnimate)
         mAnim.LoadFromMainOrDir(d);
     }
     d >> mBlend >> mWait >> mDelay;
-    d >> (int &)mStopMode >> mEnable >> (int &)mRate >> mStart;
-    d >> mEnd >> mPeriod;
-    d >> mType >> mScale;
+    d >> (int &)mStopMode >> mFilterEnable >> (int &)mFilterRate >> mFilterStart;
+    d >> mFilterEnd >> mFilterPeriod;
+    d >> mFilterType >> mFilterScale;
     if (d.rev > 0) {
         d >> (int &)mEase >> mEasePower >> mWrap;
     }
@@ -120,19 +121,19 @@ bool FlowAnimate::Activate() {
     PushDrivenProperties();
     if (mAnim) {
         if (mImmediateRelease) {
-            unk5c = nullptr;
-            if (mEnable) {
-                if (mPeriod) {
+            mSpawnedTask = nullptr;
+            if (mFilterEnable) {
+                if (mFilterPeriod) {
                     mAnim->Animate(
                         mBlend,
                         mWait,
                         mDelay,
-                        mRate,
-                        mStart,
-                        mEnd,
-                        mPeriod,
+                        mFilterRate,
+                        mFilterStart,
+                        mFilterEnd,
+                        mFilterPeriod,
                         1,
-                        mType,
+                        mFilterType,
                         this,
                         mEase,
                         mEasePower,
@@ -143,12 +144,12 @@ bool FlowAnimate::Activate() {
                         mBlend,
                         mWait,
                         mDelay,
-                        mRate,
-                        mStart,
-                        mEnd,
+                        mFilterRate,
+                        mFilterStart,
+                        mFilterEnd,
                         0,
-                        mScale,
-                        mType,
+                        mFilterScale,
+                        mFilterType,
                         this,
                         mEase,
                         mEasePower,
@@ -168,10 +169,10 @@ bool FlowAnimate::Activate() {
 
 void FlowAnimate::Deactivate(bool b1) {
     FLOW_LOG("Deactivate\n");
-    if (unk5c) {
-        unk5c->SetEventReciever(nullptr);
-        AnimTask *task = unk5c;
-        unk5c = nullptr;
+    if (mSpawnedTask) {
+        mSpawnedTask->SetEventReciever(nullptr);
+        AnimTask *task = mSpawnedTask;
+        mSpawnedTask = nullptr;
         delete task;
     }
     TheFlowMgr->CancelCommand(this);
@@ -181,31 +182,31 @@ void FlowAnimate::Deactivate(bool b1) {
 void FlowAnimate::ChildFinished(FlowNode *n) {
     FLOW_LOG("Child Finished of class:%s\n", n->ClassName());
     mRunningNodes.remove(n);
-    if (mRunningNodes.empty() && !unk5c && !mImmediateRelease) {
+    if (mRunningNodes.empty() && !mSpawnedTask && !mImmediateRelease) {
         FLOW_TIMED_RELEASE_FROM_PARENT;
     }
 }
 
 void FlowAnimate::RequestStop() {
-    if (unk5c) {
+    if (mSpawnedTask) {
         switch (mStopMode) {
         case kStopImmediate:
             TheFlowMgr->QueueCommand(this, kIgnore);
             break;
         case kStopLastFrame:
-            unkc4 = true;
+            mStopOnLoop = true;
             break;
         case kStopBetweenMarkers:
-            if (unk94) {
+            if (mPassedStopMarker) {
                 TheFlowMgr->QueueCommand(this, kIgnore);
             } else {
-                unk98 = 3;
-                unkc4 = true;
+                mQueuedStop = kStopBetweenMarkers;
+                mStopOnLoop = true;
             }
             break;
         case kStopOnMarker:
-            unk98 = 2;
-            unkc4 = true;
+            mQueuedStop = kStopOnMarker;
+            mStopOnLoop = true;
             break;
         case kReleaseAndContinue:
             TheFlowMgr->QueueCommand(this, kIgnore);
@@ -221,8 +222,8 @@ void FlowAnimate::RequestStop() {
 void FlowAnimate::RequestStopCancel() {
     FLOW_LOG("RequestStopCancel\n");
     TheFlowMgr->QueueCommand(this, kQueue);
-    if (unkc4) {
-        unkc4 = false;
+    if (mStopOnLoop) {
+        mStopOnLoop = false;
     }
     FlowNode::RequestStopCancel();
 }
@@ -230,31 +231,31 @@ void FlowAnimate::RequestStopCancel() {
 void FlowAnimate::Execute(QueueState state) {
     FLOW_LOG("Execute: state = %i\n", (int)state);
     if (IsRunning()) {
-        if (unk5c && state == kIgnore) {
-            unk5c->SetEventReciever(nullptr);
+        if (mSpawnedTask && state == kIgnore) {
+            mSpawnedTask->SetEventReciever(nullptr);
             if (mStopMode != 4) {
-                delete unk5c;
+                delete mSpawnedTask;
             }
-            unk5c = nullptr;
+            mSpawnedTask = nullptr;
             FLOW_TIMED_RELEASE_FROM_PARENT;
         }
     } else {
         if (state == kQueue) {
-            unkc4 = false;
-            unk98 = 0;
+            mStopOnLoop = false;
+            mQueuedStop = kStopImmediate;
             Task *task;
-            if (mEnable) {
-                if (mPeriod) {
+            if (mFilterEnable) {
+                if (mFilterPeriod) {
                     task = mAnim->Animate(
                         mBlend,
                         mWait,
                         mDelay,
-                        mRate,
-                        mStart,
-                        mEnd,
-                        mPeriod,
+                        mFilterRate,
+                        mFilterStart,
+                        mFilterEnd,
+                        mFilterPeriod,
                         1,
-                        mType,
+                        mFilterType,
                         this,
                         mEase,
                         mEasePower,
@@ -265,12 +266,12 @@ void FlowAnimate::Execute(QueueState state) {
                         mBlend,
                         mWait,
                         mDelay,
-                        mRate,
-                        mStart,
-                        mEnd,
+                        mFilterRate,
+                        mFilterStart,
+                        mFilterEnd,
                         0,
-                        mScale,
-                        mType,
+                        mFilterScale,
+                        mFilterType,
                         this,
                         mEase,
                         mEasePower,
@@ -280,7 +281,7 @@ void FlowAnimate::Execute(QueueState state) {
             } else {
                 task = mAnim->Animate(mBlend, mWait, mDelay, this);
             }
-            unk5c = static_cast<AnimTask *>(task);
+            mSpawnedTask = static_cast<AnimTask *>(task);
         } else if (state == kIgnore) {
             mFlowParent->ChildFinished(this);
         }
@@ -289,7 +290,7 @@ void FlowAnimate::Execute(QueueState state) {
 
 bool FlowAnimate::IsRunning() {
     if (!FlowNode::IsRunning()) {
-        return unk5c;
+        return mSpawnedTask;
     } else {
         return true;
     }
@@ -297,17 +298,17 @@ bool FlowAnimate::IsRunning() {
 
 void FlowAnimate::ResetAnim() {
     if (mAnim && !FlowNode::sPushDrivenProperties) {
-        mRate = mAnim->GetRate();
-        mStart = mAnim->StartFrame();
-        mEnd = mAnim->EndFrame();
+        mFilterRate = mAnim->GetRate();
+        mFilterStart = mAnim->StartFrame();
+        mFilterEnd = mAnim->EndFrame();
         mEase = kEaseLinear;
         mWrap = false;
-        mPeriod = 0;
-        mScale = 1;
+        mFilterPeriod = 0;
+        mFilterScale = 1;
         mEasePower = 2;
         static Symbol range("range");
         static Symbol loop("loop");
-        mType = mAnim->Loop() ? loop : range;
+        mFilterType = mAnim->Loop() ? loop : range;
     }
 }
 
@@ -317,7 +318,7 @@ void FlowAnimate::OnAnimEvent(Symbol s) {
         FlowNode *cur = *it;
         if (cur->ClassName() == FlowLabel::StaticClassName()) {
             FlowLabel *label = static_cast<FlowLabel *>((FlowNode *)*it);
-            if (label->Label() == s) {
+            if (label->GetLabel() == s) {
                 ActivateLabel(label);
                 break;
             }
@@ -329,35 +330,35 @@ void FlowAnimate::OnAnimEvent(Symbol s) {
     static Symbol interrupted("interrupted");
     static Symbol looped("looped");
     if (s == interrupted) {
-        unk5c = nullptr;
+        mSpawnedTask = nullptr;
         if (mRunningNodes.empty() && !mImmediateRelease) {
             FLOW_TIMED_RELEASE_FROM_PARENT;
         }
     }
     if (s == ended) {
-        if (unk5c) {
-            unk5c->SetEventReciever(nullptr);
+        if (mSpawnedTask) {
+            mSpawnedTask->SetEventReciever(nullptr);
         }
-        unk5c = nullptr;
+        mSpawnedTask = nullptr;
         if (mRunningNodes.empty() && !mImmediateRelease) {
             FLOW_TIMED_RELEASE_FROM_PARENT;
         }
     } else if (s == stop) {
-        if (unk98 == 2 || unk98 == 3) {
+        if (mQueuedStop == kStopOnMarker || mQueuedStop == kStopBetweenMarkers) {
             TheFlowMgr->QueueCommand(this, kIgnore);
         }
-        unk98 = 0;
-        unk94 = true;
+        mQueuedStop = kStopImmediate;
+        mPassedStopMarker = true;
     } else if (s == no_stop) {
-        unk98 = 0;
-        unk94 = false;
+        mQueuedStop = kStopImmediate;
+        mPassedStopMarker = false;
     } else if (s == looped) {
-        if (unkc4 && unk5c) {
-            unk5c->SetEventReciever(nullptr);
-            delete unk5c;
+        if (mStopOnLoop && mSpawnedTask) {
+            mSpawnedTask->SetEventReciever(nullptr);
+            delete mSpawnedTask;
             FLOW_TIMED_RELEASE_FROM_PARENT;
         } else {
-            unk94 = false;
+            mPassedStopMarker = false;
         }
     }
 }

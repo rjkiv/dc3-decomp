@@ -5,7 +5,7 @@
 #include "os/Debug.h"
 #include <list>
 
-FlowQueueable::FlowQueueable() : mInterrupt(kImmediate) {}
+FlowQueueable::FlowQueueable() : mInterruptMode(kImmediate) {}
 FlowQueueable::~FlowQueueable() {}
 
 BEGIN_HANDLERS(FlowQueueable)
@@ -13,21 +13,21 @@ BEGIN_HANDLERS(FlowQueueable)
 END_HANDLERS
 
 BEGIN_PROPSYNCS(FlowQueueable)
-    SYNC_PROP(interrupt, (int &)mInterrupt)
+    SYNC_PROP(interrupt, (int &)mInterruptMode)
     SYNC_SUPERCLASS(FlowNode)
 END_PROPSYNCS
 
 BEGIN_SAVES(FlowQueueable)
     SAVE_REVS(0, 0)
     SAVE_SUPERCLASS(FlowNode)
-    bs << mInterrupt;
+    bs << mInterruptMode;
 END_SAVES
 
 BEGIN_COPYS(FlowQueueable)
     COPY_SUPERCLASS(FlowNode)
     CREATE_COPY(FlowQueueable)
     BEGIN_COPYING_MEMBERS
-        COPY_MEMBER(mInterrupt)
+        COPY_MEMBER(mInterruptMode)
     END_COPYING_MEMBERS
 END_COPYS
 
@@ -37,12 +37,12 @@ BEGIN_LOADS(FlowQueueable)
     LOAD_REVS(bs)
     ASSERT_REVS(0, 0)
     LOAD_SUPERCLASS(FlowNode)
-    d >> (int &)mInterrupt;
+    d >> (int &)mInterruptMode;
 END_LOADS
 
 void FlowQueueable::Deactivate(bool b1) {
-    std::list<Hmx::Object *> objects(mQueuedListeners);
-    mQueuedListeners.clear();
+    std::list<Hmx::Object *> objects(mListeners);
+    mListeners.clear();
     while (objects.size() != 0) {
         ReleaseListener(objects.back());
         objects.pop_back();
@@ -52,14 +52,14 @@ void FlowQueueable::Deactivate(bool b1) {
 
 void FlowQueueable::ChildFinished(FlowNode *n) {
     FLOW_LOG("Child Finished of class:%s\n", n->ClassName());
-    if (mInterrupt == 5) {
+    if (mInterruptMode == kNotQueueable) {
         FlowNode::ChildFinished(n);
     } else {
         mRunningNodes.remove(n);
         if (mRunningNodes.empty()) {
             if (mRequestingStop) {
-                std::list<Hmx::Object *> objects(mQueuedListeners);
-                mQueuedListeners.clear();
+                std::list<Hmx::Object *> objects(mListeners);
+                mListeners.clear();
                 while (objects.size() != 0) {
                     ReleaseListener(objects.back());
                     objects.pop_back();
@@ -69,24 +69,23 @@ void FlowQueueable::ChildFinished(FlowNode *n) {
                     FLOW_LOG("Releasing\n");
                     mFlowParent->ChildFinished(this);
                 }
-            } else if (mQueuedListeners.size() > 1) {
-                Hmx::Object *obj = mQueuedListeners.front();
+            } else if (mListeners.size() > 1) {
+                Hmx::Object *obj = mListeners.front();
                 bool found = false;
-                for (auto it = ++mQueuedListeners.begin(); it != mQueuedListeners.end();
-                     ++it) {
+                for (auto it = ++mListeners.begin(); it != mListeners.end(); ++it) {
                     if (*it == obj) {
                         found = true;
                         break;
                     }
                 }
                 if (!found) {
-                    ReleaseListener(mQueuedListeners.front());
+                    ReleaseListener(mListeners.front());
                 }
-                mQueuedListeners.pop_front();
+                mListeners.pop_front();
                 ActivateTrigger();
-            } else if (!mQueuedListeners.empty()) {
-                ReleaseListener(mQueuedListeners.front());
-                mQueuedListeners.pop_front();
+            } else if (!mListeners.empty()) {
+                ReleaseListener(mListeners.front());
+                mListeners.pop_front();
             }
         }
     }
@@ -105,18 +104,18 @@ bool FlowQueueable::Activate(Hmx::Object *obj) {
     mRequestingStop = false;
     if (mRunningNodes.empty()) {
         if (obj) {
-            mQueuedListeners.push_back(obj);
+            mListeners.push_back(obj);
         } else {
-            mQueuedListeners.push_back(nullptr);
+            mListeners.push_back(nullptr);
         }
         if (ActivateTrigger()) {
             return true;
         } else {
-            mQueuedListeners.clear();
+            mListeners.clear();
             return false;
         }
     } else {
-        switch (mInterrupt) {
+        switch (mInterruptMode) {
         case kIgnore:
             FLOW_LOG("Ignoring trigger\n");
             ReleaseListener(obj);
@@ -124,43 +123,43 @@ bool FlowQueueable::Activate(Hmx::Object *obj) {
         case kQueue:
             FLOW_LOG("Queueing trigger\n");
             if (obj) {
-                mQueuedListeners.push_back(obj);
+                mListeners.push_back(obj);
             } else {
-                mQueuedListeners.push_back(nullptr);
+                mListeners.push_back(nullptr);
             }
             return true;
         case kQueueOne:
             FLOW_LOG("Queue One\n");
-            while (mQueuedListeners.size() > 1) {
-                ReleaseListener(mQueuedListeners.back());
-                mQueuedListeners.pop_back();
+            while (mListeners.size() > 1) {
+                ReleaseListener(mListeners.back());
+                mListeners.pop_back();
             }
             if (obj) {
-                mQueuedListeners.push_back(obj);
+                mListeners.push_back(obj);
             } else {
-                mQueuedListeners.push_back(nullptr);
+                mListeners.push_back(nullptr);
             }
             return true;
         case kImmediate:
             FLOW_LOG("Immediate Interrupt\n");
             FlowQueueable::Deactivate(false);
             if (obj) {
-                mQueuedListeners.push_back(obj);
+                mListeners.push_back(obj);
             } else {
-                mQueuedListeners.push_back(nullptr);
+                mListeners.push_back(nullptr);
             }
             ActivateTrigger();
             return !mRunningNodes.empty();
         case kWhenAble:
             FLOW_LOG("When Able Interruption\n");
-            while (mQueuedListeners.size() > 1) {
-                ReleaseListener(mQueuedListeners.back());
-                mQueuedListeners.pop_back();
+            while (mListeners.size() > 1) {
+                ReleaseListener(mListeners.back());
+                mListeners.pop_back();
             }
             if (obj) {
-                mQueuedListeners.push_back(obj);
+                mListeners.push_back(obj);
             } else {
-                mQueuedListeners.push_back(nullptr);
+                mListeners.push_back(nullptr);
             }
             RequestStop();
             return true;

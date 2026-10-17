@@ -44,10 +44,10 @@ protected:
     /** "position on slider" */
     float mValue; // 0x78
     /** "Easing to apply to slider intensity output" */
-    EaseType mEaseType; // 0x7c
+    EaseType mEase; // 0x7c
     /** "Modifier to easing equation" */
     float mEasePower; // 0x80
-    EaseFunc *mEaseFunc; // 0x84
+    EaseFunc *pt2EaseFuncion; // 0x84
 };
 
 bool SliderChildSort(FlowNode *, FlowNode *);

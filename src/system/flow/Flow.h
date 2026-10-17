@@ -17,16 +17,22 @@ class Flow : public FlowQueueable,
              public FlowLabelProvider,
              public RndPollable {
 public:
+    enum StartMode {
+        kStartNone = 0x0000,
+        kStartOnEnter = 0x0001,
+        kStartAfterGameCode = 0x0002
+    };
+    enum DynamicPropertyType {
+        kInt,
+        kFloat,
+        kBool,
+        kString,
+        kColor,
+        kObject,
+        kSymbolList
+    };
+
     struct DynamicPropertyEntry {
-        enum PropType {
-            kInt,
-            kFloat,
-            kBool,
-            kString,
-            kColor,
-            kObject,
-            kSymbolList
-        };
         DynamicPropertyEntry(Hmx::Object *);
 
         void SetName(DataNode &);
@@ -38,15 +44,15 @@ public:
         /** "Name for the property" */
         String mName; // 0x0
         /** "type of the property" */
-        PropType mType; // 0x8
-        DataNode mDefaultVal; // 0xc
+        DynamicPropertyType mType; // 0x8
+        DataNode mDefaultValue; // 0xc
         /** "Help string for the user" */
         String mHelp; // 0x14
         /** "Is this property exposed to the proxy using this flow?" */
         bool mExposed; // 0x1c
-        Symbol mObjectClass; // 0x20
-        DataNode unk24; // 0x24
-        Symbol mObjectType; // 0x2c
+        Symbol mClassFilter; // 0x20
+        DataNode mSymbolList; // 0x24
+        Symbol mObjType; // 0x2c
     };
     // Hmx::Object
     virtual ~Flow();
@@ -79,26 +85,26 @@ public:
     OBJ_MEM_OVERLOAD(0x39)
     NEW_OBJ(Flow)
 
-    int GetNumParams() const { return unk178; }
+    int GetParamIdx() { return mParamIdx; }
     void RefreshPortLabelLists();
     FlowLabel *GetLabelForSym(Symbol);
     void ApplyParams(DataArray *, FlowTrigger *);
 
-    ObjectDir *LoadingDir() const {
+    ObjectDir *LoadingDir() {
         DirLoader *dl = Loader();
         return dl ? dl->ProxyDir() : Dir();
     }
 
     void StartOnEnter(bool start) {
         if (start)
-            unk170 = 2;
+            mStartMode = kStartAfterGameCode;
         else
-            unk170 = 0;
+            mStartMode = kStartNone;
     }
 
     void StartAfterGameCode(bool start) {
-        if (unk170 != 0)
-            unk170 = start ? 2 : 1;
+        if (mStartMode != kStartNone)
+            mStartMode = start ? kStartAfterGameCode : kStartOnEnter;
     }
 
     const ObjVector<DynamicPropertyEntry> &DynamicPropEntries() const {
@@ -117,15 +123,15 @@ protected:
     static bool sReflectingProperty;
 
     ObjVector<DynamicPropertyEntry> mDynamicProperties; // 0x10c
-    ObjPtrVec<FlowLabel> mFlowLabels; // 0x11c
-    ObjPtrVec<FlowOutPort> mFlowOutPorts; // 0x138
-    ObjPtrVec<Hmx::Object> mObjects; // 0x154
-    int unk170; // 0x170
+    ObjPtrVec<FlowLabel> mLabels; // 0x11c
+    ObjPtrVec<FlowOutPort> mOutPorts; // 0x138
+    ObjPtrVec<Hmx::Object> mStateListeners; // 0x154
+    StartMode mStartMode; // 0x170
     /** "Are we hidden from run nodes?" */
     bool mPrivate; // 0x174
     /** "force things to stop immediately?" */
     bool mHardStop; // 0x175
-    int unk178; // 0x178
+    int mParamIdx; // 0x178
 };
 
 // FLOW_PROPANIM_COMMANDS_ENUM

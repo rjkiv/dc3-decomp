@@ -15,15 +15,15 @@ FlowMathOp::~FlowMathOp() {}
 
 BEGIN_SAVES(FlowMathOp)
     SAVE_REVS(6, 0)
-    bs << unk_0x4;
-    bs << unk_0x0;
-    bs << unk_0x18;
-    bs << rhs;
-    bs << lhs;
+    bs << mType;
+    bs << mValue;
+    bs << mPropertyProvider;
+    bs << mPropertyPath;
+    bs << mCustom;
 END_SAVES
 
 FlowMathOp::FlowMathOp(Hmx::Object *obj)
-    : unk_0x0(0.0f), unk_0x4(0), unk_0x18(obj, nullptr) {}
+    : mValue(0.0f), mType(kAdd), mPropertyProvider(obj, nullptr) {}
 
 INIT_REVS(6, 0)
 
@@ -47,52 +47,52 @@ void FlowMathOp::Load(BinStream &bs, ObjectDir *dir) {
             gAltRev
         );
     }
-    d >> unk_0x4;
-    if (d.rev < 1 && unk_0x4 == 8) {
-        unk_0x4 = -1;
+    d >> (int &)mType;
+    if (d.rev < 1 && mType == kRound) {
+        mType = kInitValue;
     }
     if (d.rev < 2) {
-        if (unk_0x4 == 4) {
-            unk_0x4 = 8;
-        } else if (unk_0x4 > 4) {
-            unk_0x4--;
+        if (mType == kVariance) {
+            mType = kRound;
+        } else if (mType > kVariance) {
+            mType = (MathOpTypes)((int)mType - 1);
         }
     }
-    if (d.rev < 3 && unk_0x4 > 2) {
-        unk_0x4++;
+    if (d.rev < 3 && mType > kMultiply) {
+        mType = (MathOpTypes)((int)mType + 1);
     }
-    d >> unk_0x0;
+    d >> mValue;
     if (d.rev < 6) {
         bool b;
         d >> b;
-        unk_0x18 = b ? FlowNode::LoadObjectFromMainOrDir(bs, dir) : nullptr;
-        d >> rhs;
+        mPropertyProvider = b ? FlowNode::LoadObjectFromMainOrDir(bs, dir) : nullptr;
+        d >> mPropertyPath;
         Symbol s;
         if (d.rev > 3) {
             d >> s;
         }
         if (d.rev > 4) {
-            d >> lhs;
+            d >> mCustom;
         }
     } else {
-        d >> unk_0x18;
-        d >> rhs;
-        d >> lhs;
+        d >> mPropertyProvider;
+        d >> mPropertyPath;
+        d >> mCustom;
     }
 }
 
 float FlowMathOp::Apply(float f1) {
-    float y = unk_0x0;
-    if (unk_0x18 && rhs.Type() == kDataArray) {
-        const DataNode *prop = unk_0x18->Property(rhs.Array(), false);
+    float y = mValue;
+    if (mPropertyProvider && mPropertyPath.Type() == kDataArray) {
+        const DataNode *prop = mPropertyProvider->Property(mPropertyPath.Array(), false);
         if (prop && prop->CompatibleType(kDataFloat)) {
             y = prop->LiteralFloat();
         }
     }
-    switch (unk_0x4) {
-    case 0x11: {
-        if (lhs.Type() == kDataString) {
-            String str = lhs.Str();
+    switch (mType) {
+    case kScript: {
+        if (mCustom.Type() == kDataString) {
+            String str = mCustom.Str();
             DataNode n;
             if (!str.empty()) {
                 DataVariable("val") = f1;
@@ -110,7 +110,7 @@ float FlowMathOp::Apply(float f1) {
                     MILO_NOTIFY(
                         "Bad script expression in mathop : %s, expression is: %s",
                         msg,
-                        lhs.Str()
+                        mCustom.Str()
                     );
                 }
                 return ret;
@@ -120,83 +120,83 @@ float FlowMathOp::Apply(float f1) {
         }
         return f1;
     }
-    case 0:
+    case kAdd:
         return f1 + y;
-    case 1:
+    case kSubtract:
         return f1 - y;
-    case 2:
+    case kMultiply:
         return f1 * y;
-    case 3:
+    case kDivide:
         if (y == 0) {
             y = 0.0001f;
         }
         return f1 / y;
-    case 4:
+    case kVariance:
         return RandomFloat(0, y * 2) - y + f1;
-    case 5:
+    case kClampMin:
         if (f1 >= y) {
             return f1;
         } else {
             return y;
         }
-    case -1:
+    case kInitValue:
         return y;
-    case 6:
+    case kClampMax:
         if (f1 <= y) {
             return f1;
         } else {
             return y;
         }
-    case 7:
+    case kWrap:
         if (y <= 0) {
             return f1;
         } else {
             return fmod(f1, y);
         }
-    case 8: {
+    case kRound: {
         if (y == 0) {
             y = 1;
         }
         int num = (((y / 2) + f1) / y);
         return (float)num * y;
     }
-    case 9:
+    case kRoundDown:
         if (y <= 0) {
             y = 1;
         }
         return floorf(f1 / y) * y;
-    case 10:
+    case kRoundUp:
         if (y <= 0) {
             y = 1;
         }
         return ceilf(f1 / y) * y;
-    case 11: {
+    case kRangeToDb: {
         float clamped = Clamp(0.0f, y, f1);
         if (y != 0) {
             clamped = clamped / y;
         }
         return RatioToDb(clamped);
     }
-    case 12: {
+    case kRangeToInverseDb: {
         float clamped = Clamp(0.0f, y, f1);
         if (y != 0) {
             clamped = clamped / y;
         }
         return RatioToDb(1.0f - clamped);
     }
-    case 13:
+    case kAbsoluteValue:
         return fabs(f1);
-    case 14:
+    case kSine:
         return sin(f1);
-    case 15:
+    case kCoSine:
         return cos(f1);
-    case 16:
+    case kPower:
         return pow(f1, y);
-    case 100:
+    case kCustom:
     script:
-        if (lhs.Type() == kDataSymbol) {
+        if (mCustom.Type() == kDataSymbol) {
             DataArray *cfg = SystemConfig("objects", "FlowNode", "mathops");
-            DataArray *mathOpArray = cfg->FindArray(lhs.Sym(), false);
+            DataArray *mathOpArray = cfg->FindArray(mCustom.Sym(), false);
             if (mathOpArray) {
                 DataArray *scriptArr = mathOpArray->FindArray("script");
                 DataVariable("val") = f1;

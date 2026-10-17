@@ -4,7 +4,7 @@
 #include "flow/FlowNode.h"
 #include "obj/Object.h"
 
-FlowOnStop::FlowOnStop() : mMode(kAlways), unk60(0) {}
+FlowOnStop::FlowOnStop() : mMode(kAlways), mIsRunning(0) {}
 FlowOnStop::~FlowOnStop() {}
 
 BEGIN_HANDLERS(FlowOnStop)
@@ -42,13 +42,13 @@ END_LOADS
 bool FlowOnStop::Activate() {
     FLOW_LOG("Activate\n");
     mRequestingStop = false;
-    unk60 = true;
+    mIsRunning = true;
     return true;
 }
 
 void FlowOnStop::Deactivate(bool b1) {
     FLOW_LOG("Deactivated, which can cause this node to activate!\n");
-    if (unk60) {
+    if (mIsRunning) {
         if (mMode != kRequestStopOnly) {
             FOREACH (it, mChildNodes) {
                 ActivateChild(*it);
@@ -57,7 +57,7 @@ void FlowOnStop::Deactivate(bool b1) {
             }
             FlowNode::Deactivate(b1);
         }
-        unk60 = false;
+        mIsRunning = false;
     }
 }
 
@@ -65,7 +65,7 @@ void FlowOnStop::ChildFinished(FlowNode *n) {
     FLOW_LOG("Child Finished of class:%s\n", n->ClassName());
     mRunningNodes.remove(n);
     if (mRunningNodes.empty()) {
-        unk60 = false;
+        mIsRunning = false;
         FLOW_TIMED_RELEASE_FROM_PARENT;
     }
 }
@@ -77,7 +77,7 @@ void FlowOnStop::RequestStop() {
             mRequestingStop = true;
             TheFlowMgr->QueueCommand(this, kQueue);
         } else {
-            unk60 = false;
+            mIsRunning = false;
             mFlowParent->ChildFinished(this);
         }
     } else {
@@ -93,7 +93,7 @@ void FlowOnStop::RequestStopCancel() {
 void FlowOnStop::Execute(QueueState qs) {
     if (qs == kQueue && mRequestingStop) {
         mRequestingStop = false;
-        unk60 = false;
+        mIsRunning = false;
         FlowNode::Activate();
         if (mRunningNodes.empty()) {
             FLOW_TIMED_RELEASE_FROM_PARENT;
@@ -101,4 +101,4 @@ void FlowOnStop::Execute(QueueState qs) {
     }
 }
 
-bool FlowOnStop::IsRunning() { return unk60 || FlowNode::IsRunning(); }
+bool FlowOnStop::IsRunning() { return mIsRunning || FlowNode::IsRunning(); }

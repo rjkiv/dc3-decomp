@@ -27,10 +27,10 @@ public:
 protected:
     FlowEventListener();
 
-    bool unkb4;
+    bool mRegistered; // 0xb4
     /** "When true, we will start our children when we begin listening for events" */
     bool mStartOnActivate; // 0xb5
     /** "How many events do we process before disabling ourselves? 0 is infinite" */
     int mEventCount; // 0xb8
-    int unkbc;
+    int mEventIdx; // 0xbc
 };
