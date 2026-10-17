@@ -24,8 +24,8 @@ BEGIN_PROPSYNCS(RndMeshDeform)
 END_PROPSYNCS
 
 void operator<<(BinStream &bs, const RndMeshDeform::BoneDesc &desc) {
-    bs << desc.unk0;
-    bs << desc.unk14 << desc.unk54;
+    bs << desc.bone;
+    bs << desc.offset << desc.parent;
 }
 
 BEGIN_SAVES(RndMeshDeform)
@@ -54,8 +54,8 @@ BEGIN_COPYS(RndMeshDeform)
 END_COPYS
 
 void operator>>(BinStream &bs, RndMeshDeform::BoneDesc &desc) {
-    bs >> desc.unk0;
-    bs >> desc.unk14 >> desc.unk54;
+    bs >> desc.bone;
+    bs >> desc.offset >> desc.parent;
 }
 
 INIT_REVS(1, 0)
@@ -117,17 +117,16 @@ void RndMeshDeform::Print() {
     for (int i = 0; i < mBones.size(); i++) {
         BoneDesc &cur = mBones[i];
         TheDebug << "bone" << i << ":\n";
-        TheDebug << "   " << cur.unk0.Ptr() << "\n";
-        TheDebug << "   " << cur.unk14 << "\n";
-        TheDebug << "   " << cur.unk54 << "\n";
+        TheDebug << "   " << cur.bone.Ptr() << "\n";
+        TheDebug << "   " << cur.offset << "\n";
+        TheDebug << "   " << cur.parent << "\n";
     }
     int i = 0;
-    for (auto it = mVerts.begin(); it < mVerts.end(); ++it, ++i) {
+    for (VertArray::Vert *it = mVerts.Begin(); it < mVerts.End(); it = it->Next(), ++i) {
         TheDebug << "weights" << i << ": ";
-        VertArray::Vert *vert = reinterpret_cast<VertArray::Vert *>(*it);
-        for (int j = 0; j < vert->num; j++) {
-            float wt = vert->weights[j].weight * 0.003921568859368563f;
-            TheDebug << "(" << vert->weights[j].bone << " " << wt << ") ";
+        for (int j = 0; j < it->num; j++) {
+            TheDebug << "(" << it->weights[j].bone << " " << it->weights[j].GetWeight()
+                     << ") ";
         }
         TheDebug << "\n";
     }
@@ -152,7 +151,7 @@ void RndMeshDeform::VertArray::SetSize(int size) {
     if (mSize != size) {
         mSize = size;
         MemFree(mData);
-        mData = (unsigned char *)MemAlloc(mSize, __FILE__, 0x99, "RndMeshDeform");
+        mData = MemAlloc(mSize, __FILE__, 0x99, "RndMeshDeform");
     }
 }
 
@@ -168,13 +167,13 @@ int RndMeshDeform::VertArray::AppendWeights(
     int numVerts = NumVerts();
     float weightSum = 0;
     for (int i = 0; i < num; i++) {
-        for (int j = i; j < num; j++) {
+        for (int j = i + 1; j < num; j++) {
             if (bones[j] == bones[i]) {
-                num--;
                 weights[i] += weights[j];
-                j--;
+                num--;
                 bones[j] = bones[num];
                 weights[j] = weights[num];
+                j--;
             }
         }
         if (weights[i] <= 0) {
@@ -188,7 +187,7 @@ int RndMeshDeform::VertArray::AppendWeights(
         }
         weightSum += weights[i];
     }
-    if (fabs(weightSum - 1.0f) > 0.05f) {
+    if (fabsf(weightSum - 1.0f) > 0.05f) {
         MILO_NOTIFY(
             "%s vert %d weights sum to %g, not close enough to 1, check the skinning",
             PathName(mParent),
@@ -197,12 +196,12 @@ int RndMeshDeform::VertArray::AppendWeights(
         );
     }
     float div = 1 / weightSum;
-    unsigned char *mem = (unsigned char *)MemResizeElem(
-        (void *&)mData,
+    void *mem = MemResizeElem(
+        mData,
         mSize,
-        end(),
+        End(),
         0,
-        num * sizeof(WeightPair) + 1,
+        num * sizeof(VertArray::Vert::WeightPair) + 1,
         __FILE__,
         0x85,
         "RndMeshDeform"
@@ -211,7 +210,7 @@ int RndMeshDeform::VertArray::AppendWeights(
     vert->num = num;
     for (int i = 0; i < num; i++) {
         vert->weights[i].bone = bones[i];
-        vert->weights[i].weight = Clamp(0.0f, 1.0f, weights[i] * div) * 255.0f + 0.5f;
+        vert->weights[i].SetWeight(Clamp(0.0f, 1.0f, weights[i] * div));
     }
     return numVerts;
 }

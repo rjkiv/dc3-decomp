@@ -14,10 +14,30 @@ public:
         enum {
             kMaxWeights = 0x40
         };
+        struct Vert {
+            struct WeightPair {
+                unsigned char bone; // 0x0
+                unsigned char weight; // 0x1
+
+                float GetWeight() const { return weight / 255.0f; }
+                void SetWeight(float wt) { weight = wt * 255.0f + 0.5f; }
+            };
+
+            Vert *Next() const {
+                // skips to the next Vert over,
+                // based on the number of WeightPairs in this current Vert
+                return (Vert *)((unsigned char *)this + num * sizeof(WeightPair) + 1);
+            }
+
+            int Size() const;
+
+            unsigned char num; // 0x0
+            WeightPair weights[kMaxWeights]; // 0x1
+        };
+
         VertArray(RndMeshDeform *md) : mSize(0), mData(nullptr), mParent(md) {}
         ~VertArray() { MemFree(mData); }
         void Clear() { SetSize(0); }
-        void *FindVert(int);
         void CopyVert(int, int, VertArray &);
         int AppendWeights(int num, int *const bones, float *const weights);
         void Copy(const VertArray &);
@@ -25,71 +45,42 @@ public:
         void Load(BinStream &);
         int NumVerts() {
             int num = 0;
-            auto itEnd = end();
-            for (auto it = begin(); it < itEnd; ++it) {
+            for (Vert *it = Begin(); it < End(); it = it->Next()) {
                 num++;
             }
             return num;
         }
+        Vert *Begin() { return (Vert *)mData; }
+        Vert *End() { return (Vert *)((unsigned char *)mData + mSize); }
+        int Size() const { return mSize; }
 
-        struct WeightPair {
-            unsigned char bone; // 0x0
-            unsigned char weight; // 0x1
-        };
-
-        struct Vert {
-            unsigned char num; // 0x0
-            WeightPair weights[kMaxWeights]; // 0x1
-        };
-
-        class iterator {
-        private:
-            unsigned char *data;
-
-        public:
-            iterator() : data(nullptr) {}
-            iterator(unsigned char *d) : data(d) {}
-            operator unsigned char *() const { return data; }
-            unsigned char *&operator*() { return data; }
-
-            iterator &operator++() {
-                // skips to the next Vert over,
-                // based on the number of WeightPairs in this current Vert
-                Vert *cur = (Vert *)data;
-                data += (cur->num * sizeof(WeightPair)) + 1;
-                return *this;
-            }
-
-            bool operator!=(const iterator &it) { return data != it.data; }
-            bool operator==(const iterator &it) { return data == it.data; }
-        };
-
-        iterator begin() const { return mData; }
-        iterator end() const { return mData + mSize; }
+        // public: void ShrinkVerts(int32_t);
 
     protected:
         void SetSize(int);
+        Vert *FindVert(int);
 
         int mSize; // 0x0
         // mData is a tightly packed series of Verts
-        // the reason this is unsigned char* and not Vert* is
+        // the reason this is void* and not Vert* is
         // so it doesn't take up the full kMaxWeights sized array in memory.
         // it only takes up however many weights the Vert has,
         // and you access it via a reinterpret_cast to a Vert
-        unsigned char *mData; // 0x4
+        void *mData; // 0x4
         RndMeshDeform *mParent; // 0x8
     };
 
     // size 0x6c
     struct BoneDesc {
-        BoneDesc(Hmx::Object *owner) : unk0(owner) {
-            unk14.Reset();
-            unk54.Reset();
+        BoneDesc(Hmx::Object *owner) : bone(owner) {
+            offset.Reset();
+            parent.Reset();
         }
+        // void ExportWorldXfm(Transform&);
 
-        ObjPtr<RndTransformable> unk0;
-        Transform unk14;
-        Transform unk54;
+        ObjPtr<RndTransformable> bone; // 0x0
+        Transform offset; // 0x14
+        Transform parent; // 0x54
     };
 
     virtual ~RndMeshDeform();
@@ -115,7 +106,7 @@ protected:
     ObjPtr<RndMesh> mMesh; // 0x2c
     Transform mMeshInverse; // 0x40
     ObjVector<BoneDesc> mBones; // 0x80
-    VertArray mVerts; // 0x94
-    bool mSkipInverse;
-    bool mDeformed;
+    VertArray mVerts; // 0x90
+    bool mSkipInverse; // 0x9c
+    bool mDeformed; // 0x9d
 };
