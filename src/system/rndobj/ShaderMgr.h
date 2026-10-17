@@ -224,21 +224,21 @@ public:
     virtual RndMat *GetWork() { return mWork; }
     virtual RndMat *GetPostProcMat() { return mPostProc; }
     // genuinely i do not understand the vtable offset ordering going on here
-    virtual void SetVConstant(VShaderConstant, RndTex *) = 0;
-    virtual void SetVConstant(VShaderConstant, int) = 0;
+    virtual void SetVConstant(VShaderConstant, RndTex *) = 0; // 0x1c
+    virtual void SetVConstant(VShaderConstant, int) = 0; // 0x28
     virtual void SetVConstant(VShaderConstant, const Vector4 &) = 0; // 0x24
     virtual void
     SetVConstant(VShaderConstant, const float *__restrict, unsigned int) = 0; // 0x20
-    virtual void SetVConstant(VShaderConstant, bool) = 0;
+    virtual void SetVConstant(VShaderConstant, bool) = 0; // 0x2c
     virtual void SetVConstant(VShaderConstant, const Hmx::Matrix4 &) = 0; // 0x18
     virtual void SetVConstant4x3(VShaderConstant, const Hmx::Matrix4 &) = 0; // 0x30
-    virtual void SetPConstant(PShaderConstant, const Hmx::Matrix4 &) = 0; // 0x48
-    virtual void SetPConstant(PShaderConstant, int) = 0;
-    virtual void SetPConstant(PShaderConstant, const Vector4 &) = 0; // 0x40
+    virtual void SetPConstant(PShaderConstant, int) = 0; // 0x44
     virtual void SetPConstant(PShaderConstant, RndTex *) = 0; // 0x3c
+    virtual void SetPConstant(PShaderConstant, const Vector4 &) = 0; // 0x40
     virtual void SetPConstant(PShaderConstant, RndCubeTex *) = 0; // 0x38
-    virtual void SetPConstant(PShaderConstant, bool) = 0;
+    virtual void SetPConstant(PShaderConstant, bool) = 0; // 0x48
     virtual void SetPConstant4x3(PShaderConstant, const Hmx::Matrix4 &) = 0; // 0x4c
+    virtual void SetPConstant(PShaderConstant, const Hmx::Matrix4 &) = 0; // 0x34
     virtual RndMat *DrawHighlightMat() { return mHighlight; }
     virtual RndMat *DrawRectMat() { return mDrawRect; }
 
