@@ -349,8 +349,7 @@ void BustAMovePanel::CacheObjects() {
         label->SetTextToken(gNullStr);
         String flashcardSlotBG = MakeString("flashcard_slot_background%i.mat", i);
         RndMat *mat = DataDir()->Find<RndMat>(flashcardSlotBG.c_str());
-        const Hmx::Color &color = DataDir()->Find<UIColor>("gray.color")->GetColor();
-        mat->SetColor(color);
+        mat->SetColor(DataDir()->Find<UIColor>("gray.color")->GetColor());
     }
     mRecorder->SetSongName(MetaPerformer::Current()->GetSong());
     for (int i = 0; i < 2; i++) {

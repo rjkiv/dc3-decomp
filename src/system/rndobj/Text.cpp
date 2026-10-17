@@ -819,7 +819,7 @@ void RndText::DrawShowing() {
             for (int i = 0; i < (*it)->NumMaterials(); i++) {
                 RndMat *mat = (*it)->Material(i);
                 Hmx::Color *curColor = (Hmx::Color *)&colors[i * 4];
-                mat->SetColor(curColor->red, curColor->green, curColor->blue);
+                mat->SetColor(*curColor);
             }
         }
     }
@@ -1550,7 +1550,7 @@ void RndText::DrawBlacklight() {
         if (packet.unk1c && packet.unk1c != RndCam::Current()) {
             packet.unk1c->Select();
         }
-        packet.unk0->Mat()->SetColor(packet.unk4.red, packet.unk4.green, packet.unk4.blue);
+        packet.unk0->Mat()->SetColor(packet.unk4);
         DrawMesh(packet.unk0, packet.unk14, packet.unk18);
     }
     if (cur && cur != RndCam::Current()) {

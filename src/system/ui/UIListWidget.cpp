@@ -212,8 +212,7 @@ void UIListWidget::DrawMesh(
         if (col) {
             RndMat *mat = mesh->Mat();
             if (mat) {
-                const Hmx::Color &uiColor = col->GetColor();
-                mat->SetColor(uiColor.red, uiColor.green, uiColor.blue);
+                mat->SetColor(col->GetColor());
             }
         }
         mesh->DrawShowing();

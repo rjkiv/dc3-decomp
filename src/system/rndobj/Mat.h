@@ -111,12 +111,7 @@ public:
     void SetPointLights(bool lit) { mPointLights = lit; }
 
     void SetColor(const Hmx::Color &c) {
-        mColor.SetRgb(c);
-        mDirty |= kDirtyColor;
-    }
-
-    void SetColor(float r, float g, float b) {
-        mColor.Set(r, g, b);
+        mColor.Set(c.red, c.green, c.blue);
         mDirty |= kDirtyColor;
     }
     void SetAlpha(float a) {

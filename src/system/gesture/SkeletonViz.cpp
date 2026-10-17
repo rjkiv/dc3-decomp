@@ -226,7 +226,7 @@ void SkeletonViz::DrawLine3D(
     MILO_ASSERT(mat, 0x178);
 
     if (!color2) {
-        mat->SetColor(color1.red, color1.green, color1.blue);
+        mat->SetColor(color1);
     } else {
         mUtlLine->SetMat(0);
         mUtlLine->SetPointColor(0, color1, true);
@@ -311,7 +311,7 @@ void SkeletonViz::DrawPoint3D(
         Multiply(tmp, WorldXfm(), tmp);
     }
     float scale = mDrawScale * radius;
-    mUtlSphere->Mat()->SetColor(color.red, color.green, color.blue);
+    mUtlSphere->Mat()->SetColor(color);
     mUtlSphere->Mat()->SetAlpha(alpha);
     mUtlSphere->Mat()->SetCull(BaseMaterial::kCullNone);
 

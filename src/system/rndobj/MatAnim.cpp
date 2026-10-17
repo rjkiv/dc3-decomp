@@ -171,7 +171,7 @@ void RndMatAnim::SetFrame(float f1, float f2) {
             if (f2 != 1.0f) {
                 Interp(mMat->GetColor(), col, f2, col);
             }
-            mMat->SetColor(col.red, col.green, col.blue);
+            mMat->SetColor(col);
         }
         if (!AlphaKeys().empty()) {
             float alpha = mMat->Alpha();

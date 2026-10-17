@@ -101,8 +101,7 @@ void UIListMeshElement::Draw(const Transform &tf, float f, UIColor *col, Box *bo
         mesh->SetMat(mMat);
         mMat->SetAlpha(alpha * f);
         if (col) {
-            const Hmx::Color &uiColor = col->GetColor();
-            mMat->SetColor(uiColor.red, uiColor.green, uiColor.blue);
+            mMat->SetColor(col->GetColor());
         }
         mesh->DrawShowing();
         mMat->SetAlpha(alpha);
