@@ -57,24 +57,27 @@ void DxRnd::DrawRect(
     DrawRect(rect, mat, kDrawRectShader, colorRef, colorPtr1, colorPtr2);
 }
 
+struct LineVert {
+    D3DVECTOR p; // 0x0
+    DWORD c; // 0xc
+};
+
 void DxRnd::DrawLine(const Vector3 &v1, const Vector3 &v2, const Hmx::Color &c, bool b4) {
-    DxLineVertex vertices[2];
-    vertices[0].x = v1.x;
-    vertices[0].y = v1.y;
-    vertices[0].z = v1.z;
-    vertices[0].diffuse = MakeColor(c);
-    vertices[1].x = v2.x;
-    vertices[1].y = v2.y;
-    vertices[1].z = v2.z;
-    vertices[1].diffuse = vertices[0].diffuse;
+    LineVert verts[2];
+    verts[0].p.x = v1.x;
+    verts[0].p.y = v1.y;
+    verts[0].p.z = v1.z;
+    verts[0].c = MakeColor(c);
+    verts[1].p.x = v2.x;
+    verts[1].p.y = v2.y;
+    verts[1].p.z = v2.z;
+    verts[1].c = verts[0].c;
     Transform xfm;
     xfm.Reset();
     TheShaderMgr.SetTransform(xfm);
     RndShader::SelectConfig(nullptr, b4 ? kLineShader : kLineNozShader, false);
     mD3DDevice->SetFVF(D3DFVF_DIFFUSE | D3DFVF_XYZ);
-    mD3DDevice->DrawVerticesUP(
-        D3DPT_LINELIST, DIM(vertices), vertices, sizeof(DxLineVertex)
-    );
+    mD3DDevice->DrawVerticesUP(D3DPT_LINELIST, DIM(verts), verts, sizeof(LineVert));
 }
 
 void DxRnd::MakeDrawTarget() {
@@ -150,74 +153,72 @@ void DxRnd::SetViewport(const Viewport &v) {
 // DrawRect
 
 // size 0x30
-struct DxRectVertex {
-    float posX, posY, posZ;
-    float tex1X, tex1Y, tex1Z;
-    float tex2X, tex2Y, tex2Z;
-    float tex3X, tex3Y, tex3Z;
+struct DepthRectVert {
+    D3DVECTOR pos; // 0x0
+    D3DVECTOR uv; // 0xc
+    D3DVECTOR camPos; // 0x18
+    D3DVECTOR camDelta; // 0x24
 };
 
-static D3DVertexDeclaration *sRectDecl;
-
-static D3DVERTEXELEMENT9 sRectElements[] = { { 0,
-                                               offsetof(DxRectVertex, posX),
-                                               D3DDECLTYPE_FLOAT3,
-                                               D3DDECLMETHOD_DEFAULT,
-                                               D3DDECLUSAGE_POSITION,
-                                               0 },
-                                             { 0,
-                                               offsetof(DxRectVertex, tex1X),
-                                               D3DDECLTYPE_FLOAT3,
-                                               D3DDECLMETHOD_DEFAULT,
-                                               D3DDECLUSAGE_TEXCOORD,
-                                               0 },
-                                             { 0,
-                                               offsetof(DxRectVertex, tex2X),
-                                               D3DDECLTYPE_FLOAT3,
-                                               D3DDECLMETHOD_DEFAULT,
-                                               D3DDECLUSAGE_TEXCOORD,
-                                               1 },
-                                             { 0,
-                                               offsetof(DxRectVertex, tex3X),
-                                               D3DDECLTYPE_FLOAT3,
-                                               D3DDECLMETHOD_DEFAULT,
-                                               D3DDECLUSAGE_TEXCOORD,
-                                               2 },
-                                             D3DDECL_END() };
-
 void DxRnd::DrawRectDepth(
-    const Vector3 &v3,
-    const Vector3 (&varr)[4],
-    const Vector4 &v4,
+    const Vector3 &camPos,
+    const Vector3 (&camCorner)[4],
+    const Vector4 &depthRange,
     RndMat *mat,
-    ShaderType shaderType
+    ShaderType shader
 ) {
-    TheShaderMgr.SetPConstant((PShaderConstant)0x59, v4);
+    TheShaderMgr.SetPConstant(kPShader_ZRange, depthRange);
 
-    static DxRectVertex sRectVertices[] = {
+    static D3DVertexDeclaration *sVertexDecl = nullptr;
+    static D3DVERTEXELEMENT9 sVertexElements[] = { { 0,
+                                                     offsetof(DepthRectVert, pos),
+                                                     D3DDECLTYPE_FLOAT3,
+                                                     D3DDECLMETHOD_DEFAULT,
+                                                     D3DDECLUSAGE_POSITION,
+                                                     0 },
+                                                   { 0,
+                                                     offsetof(DepthRectVert, uv),
+                                                     D3DDECLTYPE_FLOAT3,
+                                                     D3DDECLMETHOD_DEFAULT,
+                                                     D3DDECLUSAGE_TEXCOORD,
+                                                     0 },
+                                                   { 0,
+                                                     offsetof(DepthRectVert, camPos),
+                                                     D3DDECLTYPE_FLOAT3,
+                                                     D3DDECLMETHOD_DEFAULT,
+                                                     D3DDECLUSAGE_TEXCOORD,
+                                                     1 },
+                                                   { 0,
+                                                     offsetof(DepthRectVert, camDelta),
+                                                     D3DDECLTYPE_FLOAT3,
+                                                     D3DDECLMETHOD_DEFAULT,
+                                                     D3DDECLUSAGE_TEXCOORD,
+                                                     2 },
+                                                   D3DDECL_END() };
+    static DepthRectVert verts[] = {
         { -1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
         { -1, -1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0 },
         { 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0 },
         { 1, -1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0 },
     };
 
-    for (int i = 0; i < DIM(sRectVertices); i++) {
-        sRectVertices[i].tex2X = v3.x;
-        sRectVertices[i].tex2Y = v3.y;
-        sRectVertices[i].tex2Z = v3.z;
-        sRectVertices[i].tex3X = varr[i].x;
-        sRectVertices[i].tex3Y = varr[i].y;
-        sRectVertices[i].tex3Z = varr[i].z;
+    for (int i = 0; i < DIM(verts); i++) {
+        verts[i].camPos.x = camPos.x;
+        verts[i].camPos.y = camPos.y;
+        verts[i].camPos.z = camPos.z;
+        verts[i].camDelta.x = camCorner[i].x;
+        verts[i].camDelta.y = camCorner[i].y;
+        verts[i].camDelta.z = camCorner[i].z;
     }
-    RndShader::SelectConfig(mat, shaderType, false);
-    if (!sRectDecl) {
-        HRESULT hr = mD3DDevice->CreateVertexDeclaration(sRectElements, &sRectDecl);
+    RndShader::SelectConfig(mat, shader, false);
+    if (!sVertexDecl) {
+        HRESULT hr = mD3DDevice->CreateVertexDeclaration(sVertexElements, &sVertexDecl);
         DX_ASSERT(hr, 0x2C3);
     }
     TheDxRnd.Device()->SetRenderState(D3DRS_HALFPIXELOFFSET, 1);
-    mD3DDevice->SetVertexDeclaration(sRectDecl);
+    mD3DDevice->SetVertexDeclaration(sVertexDecl);
     mD3DDevice->DrawVerticesUP(
-        D3DPT_TRIANGLESTRIP, DIM(sRectVertices), sRectVertices, sizeof(DxRectVertex)
+        D3DPT_TRIANGLESTRIP, DIM(verts), verts, sizeof(DepthRectVert)
     );
     TheDxRnd.Device()->SetRenderState(D3DRS_HALFPIXELOFFSET, 0);
 }
