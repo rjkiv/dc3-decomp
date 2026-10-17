@@ -17,10 +17,10 @@ public:
 // An individual node in a RndShaderMgr::ShaderTree.
 class RndShaderProgram {
 public:
-    RndShaderProgram() : mFlags(-1), mLeft(0), mRight(0), mCached(0) {}
+    RndShaderProgram() : key(-1), lhs(0), rhs(0), mCached(0) {}
     virtual ~RndShaderProgram() {
-        delete mLeft;
-        delete mRight;
+        delete lhs;
+        delete rhs;
     }
     virtual void Select(bool vertexOnly) = 0;
     virtual void Copy(const RndShaderProgram &src) = 0;
@@ -36,26 +36,26 @@ public:
      * @param [in] size The size in bytes of the data to read in.
      * @param [out] buffer The shader buffer.
      */
-    void LoadShaderBuffer(BinStream &bs, int size, RndShaderBuffer *&buffer);
+    void LoadShaderBuffer(BinStream &bs, int size, RndShaderBuffer *&buff);
     bool Cache(
-        ShaderType type,
-        const ShaderOptions &options,
-        RndShaderBuffer *bufVertex,
-        RndShaderBuffer *bufPixel
+        ShaderType shader,
+        const ShaderOptions &opts,
+        RndShaderBuffer *vsh,
+        RndShaderBuffer *psh
     );
     bool Cached() const { return mCached; }
 
     static unsigned long InitModTime();
 
-    u64 mFlags; // 0x8
-    RndShaderProgram *mLeft; // 0x10
-    RndShaderProgram *mRight; // 0x14
+    s64 key; // 0x8
+    RndShaderProgram *lhs; // 0x10
+    RndShaderProgram *rhs; // 0x14
+protected:
     bool mCached; // 0x18
 
-protected:
-    void CopyErrorShader(ShaderType, const ShaderOptions &);
+    void CopyErrorShader(ShaderType shader, const ShaderOptions &opts);
     /** Save the shader buffer data to a file. */
-    void SaveShaderBuffer(const char *file, RndShaderBuffer &buffer);
+    void SaveShaderBuffer(const char *file, RndShaderBuffer &buff);
     /** Load shader info from a file into a buffer. */
-    void LoadShaderBuffer(const char *file, RndShaderBuffer *&buffer);
+    void LoadShaderBuffer(const char *file, RndShaderBuffer *&buff);
 };

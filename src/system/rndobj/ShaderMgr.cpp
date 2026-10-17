@@ -245,22 +245,22 @@ RndShaderProgram &RndShaderMgr::FindShader(ShaderType t, const ShaderOptions &op
         if (it->shaderType == t) {
             RndShaderProgram *p = it->tree;
             while (true) {
-                if (flags < p->mFlags) {
-                    if (p->mLeft) {
-                        p = p->mLeft;
+                if (flags < p->key) {
+                    if (p->lhs) {
+                        p = p->lhs;
                     } else {
                         RndShaderProgram *ret = NewShaderProgram();
-                        p->mLeft = ret;
-                        ret->mFlags = flags;
+                        p->lhs = ret;
+                        ret->key = flags;
                         return *ret;
                     }
-                } else if (flags > p->mFlags) {
-                    if (p->mRight) {
-                        p = p->mRight;
+                } else if (flags > p->key) {
+                    if (p->rhs) {
+                        p = p->rhs;
                     } else {
                         RndShaderProgram *ret = NewShaderProgram();
-                        p->mRight = ret;
-                        ret->mFlags = flags;
+                        p->rhs = ret;
+                        ret->key = flags;
                         return *ret;
                     }
                 } else {
@@ -273,7 +273,7 @@ RndShaderProgram &RndShaderMgr::FindShader(ShaderType t, const ShaderOptions &op
     ShaderTree tree;
     tree.shaderType = t;
     RndShaderProgram *p = NewShaderProgram();
-    p->mFlags = flags;
+    p->key = flags;
     tree.tree = p;
     // we wanna prioritize standard shaders
     if (t == kStandardShader) {

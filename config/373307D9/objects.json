@@ -631,7 +631,7 @@
             "system/rndobj/Shader.cpp": "NonMatching",
             "system/rndobj/ShaderMgr.cpp": "Matching",
             "system/rndobj/ShaderOptions.cpp": "Matching",
-            "system/rndobj/ShaderProgram.cpp": "NonMatching",
+            "system/rndobj/ShaderProgram.cpp": "Matching",
             "system/rndobj/ShadowMap.cpp": "NonMatching",
             "system/rndobj/Shockwave.cpp": "Matching",
             "system/rndobj/SoftParticleBuffer.cpp": "NonMatching",

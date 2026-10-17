@@ -16,7 +16,8 @@
 #include "utl/FileStream.h"
 #include "utl/Loader.h"
 #include "utl/MemMgr.h"
-#include "math/Utl.h"
+
+static unsigned long gModTime;
 
 void RndShaderProgram::SaveShaderBuffer(const char *file, RndShaderBuffer &buffer) {
     FileMkDir(FileGetPath(file));
@@ -38,9 +39,7 @@ void RndShaderProgram::LoadShaderBuffer(const char *file, RndShaderBuffer *&buff
     LoadShaderBuffer(stream, stream.Size(), buffer);
 }
 
-unsigned long gModTime;
-
-void ShaderRecurseCB(const char *dir, const char *file) {
+static void ShaderRecurseCB(const char *dir, const char *file) {
     FileStat stat;
     MILO_ASSERT(FileGetStat(MakeString("%s/%s", dir, file), &stat) == 0, 0x1B);
     if (stat.st_mtime > gModTime) {
@@ -56,34 +55,6 @@ unsigned long RndShaderProgram::InitModTime() {
         );
     }
     return gModTime;
-}
-
-void RndShaderProgram::CopyErrorShader(ShaderType shader, const ShaderOptions &opts) {
-    if (!MainThread()) {
-        MILO_NOTIFY(
-            "missing shader %s_%llx cannot be cached (not used in main thread).",
-            ShaderTypeName(shader),
-            opts.value
-        );
-    }
-    MILO_ASSERT(shader != kErrorShader && shader != kPostprocessErrorShader, 0x12F);
-    ShaderType errorType = kPostprocessShader ? kPostprocessErrorShader : kErrorShader;
-    u64 mask = (errorType == kErrorShader && opts.value & 0x1000) ? 0x1000 : 0;
-    mask |= TheShaderMgr.GetShaderErrorDisplay() << 0x23;
-    ShaderOptions newOpts(mask);
-    RndShaderProgram &program = TheShaderMgr.FindShader(errorType, newOpts);
-    if (!program.Cached()) {
-        if (!TheShaderMgr.CacheShaders()) {
-            MILO_LOG(
-                "FAILURE: Error shader cannot be cached. Unable to handle missing shaders!\n"
-            );
-            MILO_FAIL(
-                "FAILURE: Error shader cannot be cached. Unable to handle missing shaders!\n"
-            );
-        }
-        Cache(errorType, newOpts, nullptr, nullptr);
-    }
-    Copy(program);
 }
 
 bool RndShaderProgram::Cache(
@@ -106,9 +77,7 @@ bool RndShaderProgram::Cache(
                 CopyErrorShader(t, opts);
                 String str;
                 ShaderMakeOptionsString(t, opts, str);
-                // the original wraps this in another MakeString,
-                // but our standalone MakeString is always inlined
-                TheDebugNotifier << MakeStringNotInlined(MakeString(
+                MILO_NOTIFY(MakeString(
                     "Missing shader %s_%llx\n(material: %s)\n(environment: %s)\n(compile options: %s)",
                     ShaderTypeName(t),
                     opts.value,
@@ -194,4 +163,35 @@ bool RndShaderProgram::Cache(
         }
     }
     return true;
+}
+
+void RndShaderProgram::CopyErrorShader(ShaderType shader, const ShaderOptions &opts) {
+    if (!MainThread()) {
+        MILO_NOTIFY(
+            "missing shader %s_%llx cannot be cached (not used in main thread).",
+            ShaderTypeName(shader),
+            opts.value
+        );
+    }
+    MILO_ASSERT(shader != kErrorShader && shader != kPostprocessErrorShader, 0x12F);
+    ShaderType errorType =
+        shader == kPostprocessShader ? kPostprocessErrorShader : kErrorShader;
+    ShaderOptions errorOpts;
+    if (errorType == kErrorShader && opts.skinned) {
+        errorOpts.skinned = true;
+    }
+    errorOpts.displayError = TheShaderMgr.GetShaderErrorDisplay();
+    RndShaderProgram &program = TheShaderMgr.FindShader(errorType, errorOpts);
+    if (!program.Cached()) {
+        if (!TheShaderMgr.CacheShaders()) {
+            MILO_LOG(
+                "FAILURE: Error shader cannot be cached. Unable to handle missing shaders!\n"
+            );
+            MILO_FAIL(
+                "FAILURE: Error shader cannot be cached. Unable to handle missing shaders!\n"
+            );
+        }
+        program.Cache(errorType, errorOpts, nullptr, nullptr);
+    }
+    Copy(program);
 }
