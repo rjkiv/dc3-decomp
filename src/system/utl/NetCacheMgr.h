@@ -76,12 +76,13 @@ public:
     };
 
     enum RefType {
+        kRefCache = 0,
+        kRefNet = 1,
     };
 
     enum CacheSize {
         kCacheSize_Small = 0x0000,
         kCacheSize_Large = 0x0001,
-        kCacheSize_Huge = 0x0002,
     };
 
     NetCacheMgr();
@@ -110,12 +111,6 @@ public:
 
     bool HasFailed() const { return mHasFailed; }
 
-private:
-    void EnterLoadState();
-    bool IsUnloadStateDone() const;
-    void EnterUnloadState();
-    NetCacheMgr::ServerData const &Server() const;
-
 protected:
     virtual void LoadInit() {}
     virtual bool IsDoneLoading() const { return true; }
@@ -129,13 +124,20 @@ protected:
     void PollLoaders();
     void DebugClearCache();
     NetLoaderRef *AddLoaderRef(const char *, RefType, NetLoaderPos);
+    NetCacheMgrState GetState() const { return mState; }
+
+private:
+    void EnterLoadState();
+    bool IsUnloadStateDone() const;
+    void EnterUnloadState();
+    NetCacheMgr::ServerData const &Server() const;
 
     NetCacheMgrState mState; // 0x2c
     bool mHasFailed; // 0x30
     NetCacheMgrFailType mFailType; // 0x34
     String mXLSPFilter; // 0x38
     unsigned int mServiceId; // 0x40
-    bool unk44;
+    bool mXLSPServiceIdFound; // 0x44
     std::list<ServerData> mServers; // 0x48
     Symbol mServerType; // 0x50
     int mLoadCacheSize; // 0x54

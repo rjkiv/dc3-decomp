@@ -13,13 +13,13 @@
 #include "utl/NetLoader.h"
 #include "utl/Symbol.h"
 
-NetCacheMgr *TheNetCacheMgr;
+NetCacheMgr *TheNetCacheMgr = nullptr;
 
 #pragma region NetCacheMgr
 
 NetCacheMgr::NetCacheMgr()
     : mState(kNCMS_Nil), mHasFailed(0), mFailType(kNCMFT_Unknown), mServiceId(0),
-      unk44(0), mLoadCacheSize(0), mCache(0), mLoadCount(0) {
+      mXLSPServiceIdFound(0), mLoadCacheSize(0), mCache(0), mLoadCount(0) {
     SetName("net_cache_mgr", ObjectDir::Main());
 }
 
@@ -34,8 +34,8 @@ BEGIN_HANDLERS(NetCacheMgr)
 END_HANDLERS
 
 void NetCacheMgr::Poll() {
-    if (!unk44) {
-        unk44 = ThePlatformMgr.GetServiceID("store", mServiceId);
+    if (!mXLSPServiceIdFound) {
+        mXLSPServiceIdFound = ThePlatformMgr.GetServiceID("store", mServiceId);
     }
     PollLoaders();
     switch (mState) {
@@ -213,7 +213,7 @@ NetCacheLoader *NetCacheMgr::AddNetCacheLoader(const char *cc, NetLoaderPos pos)
 void NetCacheMgr::SetState(NetCacheMgrState state) {
     if (mState != state) {
         while (true) {
-            if (mState == 2) {
+            if (mState == kNCMS_Unload) {
                 mHasFailed = false;
             }
             if (mState == kNCMS_Nil && state == kNCMS_Unload) {
@@ -232,13 +232,13 @@ void NetCacheMgr::SetState(NetCacheMgrState state) {
                 return;
         }
         switch (state) {
-        case 0:
+        case kNCMS_Load:
             EnterLoadState();
             break;
-        case 1:
+        case kNCMS_Ready:
             ReadyInit();
             break;
-        case 2:
+        case kNCMS_Unload:
             EnterUnloadState();
             break;
         default:

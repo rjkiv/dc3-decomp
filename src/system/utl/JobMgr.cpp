@@ -30,13 +30,13 @@ void JobMgr::CancelJob(int id) {
         Job *toBeCancelled = *it;
         if (toBeCancelled->ID() == id) {
             int firstID = mJobQueue.front()->ID();
-            auto erased = mJobQueue.erase(it);
+            it = mJobQueue.erase(it);
             bool wasPreventingStart = mPreventStart;
             mPreventStart = true;
             toBeCancelled->Cancel(mCallback);
             mPreventStart = wasPreventingStart;
-            if (firstID == id && !wasPreventingStart && erased != mJobQueue.end()) {
-                (*erased)->Start();
+            if (firstID == id && !wasPreventingStart && it != mJobQueue.end()) {
+                (*it)->Start();
             }
             delete toBeCancelled;
             return;

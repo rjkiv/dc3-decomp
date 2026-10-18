@@ -4,20 +4,20 @@
 #include "os/PlatformMgr.h"
 #include "utl/NetCacheMgr.h"
 
-NetCacheMgrXbox::NetCacheMgrXbox() : mDoneLoading(false) {}
+NetCacheMgrXbox::NetCacheMgrXbox() : mIsConnected(false) {}
 NetCacheMgrXbox::~NetCacheMgrXbox() {}
 
 void NetCacheMgrXbox::Poll() {
     NetCacheMgr::Poll();
-    mConnection.Poll();
-    if (mState < 2U) {
+    mXLSPConnection.Poll();
+    if (GetState() < 2U) {
         if (IsServerLocal()) {
-            mDoneLoading = true;
+            mIsConnected = true;
         } else {
-            if (!mDoneLoading && mConnection.GetState() == 3) {
-                mDoneLoading = true;
+            if (!mIsConnected && mXLSPConnection.GetState() == 3) {
+                mIsConnected = true;
             }
-            if (!mHasFailed && mConnection.GetState() == 4) {
+            if (!HasFailed() && mXLSPConnection.GetState() == 4) {
                 if (!ThePlatformMgr.IsEthernetCableConnected()) {
                     SetFail(kNCMFT_NoEthernetCable);
                 } else {
@@ -29,9 +29,9 @@ void NetCacheMgrXbox::Poll() {
 }
 
 void NetCacheMgrXbox::LoadInit() {
-    mDoneLoading = false;
+    mIsConnected = false;
     if (!IsServerLocal()) {
-        mConnection.Connect(
+        mXLSPConnection.Connect(
             TheNetCacheMgr->GetXLSPFilter(), TheNetCacheMgr->GetServiceId()
         );
     }
@@ -39,20 +39,20 @@ void NetCacheMgrXbox::LoadInit() {
 
 void NetCacheMgrXbox::UnloadInit() {
     if (!IsServerLocal()) {
-        mConnection.Disconnect();
+        mXLSPConnection.Disconnect();
     }
 }
 
 unsigned int NetCacheMgrXbox::GetIP() {
     MILO_ASSERT(!IsServerLocal(), 0x48);
-    if (mConnection.GetState() == 4) {
+    if (mXLSPConnection.GetState() == 4) {
         MILO_NOTIFY("NetCacheMgr Error: XLSPConnection Failed");
         return 0;
     } else {
-        return mConnection.GetServiceIP();
+        return mXLSPConnection.GetServiceIP();
     }
 }
 
 bool NetCacheMgrXbox::IsDoneUnloading() const {
-    return mConnection.GetStateDesired() == XLSPConnection::kS_Disconnected;
+    return mXLSPConnection.GetStateDesired() == XLSPConnection::kS_Disconnected;
 }

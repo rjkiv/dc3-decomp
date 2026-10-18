@@ -800,7 +800,7 @@
             "system/utl/FileStream.cpp": "Matching",
             "system/utl/GlitchFinder.cpp": "NonMatching",
             "system/utl/HxGuid.cpp": "Matching",
-            "system/utl/JobMgr.cpp": "NonMatching",
+            "system/utl/JobMgr.cpp": "Matching",
             "system/utl/JsonEncode.cpp": "Matching",
             "system/utl/KnownIssues.cpp": "Matching",
             "system/utl/Licenses.cpp": "Matching",
