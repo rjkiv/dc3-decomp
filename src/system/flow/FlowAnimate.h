@@ -31,6 +31,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1C)
     NEW_OBJ(FlowAnimate)
+    REGISTER_OBJ(FlowAnimate)
 
 protected:
     FlowAnimate();

@@ -27,6 +27,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1D)
     NEW_OBJ(FlowDistance)
+    REGISTER_OBJ(FlowDistance)
 
 protected:
     FlowDistance();

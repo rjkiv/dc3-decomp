@@ -21,6 +21,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x17)
     NEW_OBJ(FlowSequence)
+    REGISTER_OBJ(FlowSequence)
 
 protected:
     FlowSequence();

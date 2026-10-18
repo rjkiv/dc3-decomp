@@ -24,6 +24,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1F)
     NEW_OBJ(FlowWhile)
+    REGISTER_OBJ(FlowWhile)
 
     void UnregisterSelf() { UnregisterEvents(this); }
 

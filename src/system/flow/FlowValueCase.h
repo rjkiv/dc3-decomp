@@ -16,6 +16,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1E)
     NEW_OBJ(FlowValueCase)
+    REGISTER_OBJ(FlowValueCase)
 
     float GetValue() { return mValue; }
 

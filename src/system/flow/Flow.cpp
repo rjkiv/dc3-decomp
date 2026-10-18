@@ -55,7 +55,8 @@ void ScanForOutPorts(ObjPtrVec<FlowOutPort> &ports, FlowNode *node, Flow *flow) 
 
 Flow::DynamicPropertyEntry::DynamicPropertyEntry(Hmx::Object *obj)
     : mName(""), mType(kInt), mHelp(""), mExposed(false) {
-    mClassFilter = "Object";
+    Symbol Object("Object");
+    mClassFilter = Object;
     mObjType = Symbol();
 }
 
@@ -650,29 +651,29 @@ void Flow::ApplyParams(DataArray *msg, FlowTrigger *trigger) {
 
 void FlowInit() {
     TheFlowMgr = new FlowManager();
-    REGISTER_OBJ_FACTORY(FlowNode);
-    REGISTER_OBJ_FACTORY(FlowEventListener);
-    REGISTER_OBJ_FACTORY(FlowSequence);
-    REGISTER_OBJ_FACTORY(FlowAnimate);
-    REGISTER_OBJ_FACTORY(FlowPickOne);
-    REGISTER_OBJ_FACTORY(Flow);
-    REGISTER_OBJ_FACTORY(FlowSwitch);
-    REGISTER_OBJ_FACTORY(FlowSwitchCase);
-    REGISTER_OBJ_FACTORY(FlowSound);
-    REGISTER_OBJ_FACTORY(FlowRun);
-    REGISTER_OBJ_FACTORY(FlowTimer);
-    REGISTER_OBJ_FACTORY(FlowValueCase);
-    REGISTER_OBJ_FACTORY(FlowOutPort);
-    REGISTER_OBJ_FACTORY(FlowSetProperty);
-    REGISTER_OBJ_FACTORY(FlowMultiSetProperty);
-    REGISTER_OBJ_FACTORY(FlowWhile);
-    REGISTER_OBJ_FACTORY(FlowLabel);
-    REGISTER_OBJ_FACTORY(FlowCommand);
-    REGISTER_OBJ_FACTORY(FlowIf);
-    REGISTER_OBJ_FACTORY(FlowOnStop);
-    REGISTER_OBJ_FACTORY(FlowSlider);
-    REGISTER_OBJ_FACTORY(FlowDistance);
-    REGISTER_OBJ_FACTORY(PropertyEventProvider);
+    FlowNode::Register();
+    FlowEventListener::Register();
+    FlowSequence::Register();
+    FlowAnimate::Register();
+    FlowPickOne::Register();
+    Flow::Register();
+    FlowSwitch::Register();
+    FlowSwitchCase::Register();
+    FlowSound::Register();
+    FlowRun::Register();
+    FlowTimer::Register();
+    FlowValueCase::Register();
+    FlowOutPort::Register();
+    FlowSetProperty::Register();
+    FlowMultiSetProperty::Register();
+    FlowWhile::Register();
+    FlowLabel::Register();
+    FlowCommand::Register();
+    FlowIf::Register();
+    FlowOnStop::Register();
+    FlowSlider::Register();
+    FlowDistance::Register();
+    PropertyEventProvider::Register();
     if (streq(FileRoot(), FileSystemRoot())) {
         PropertyEventProvider *prov = Hmx::Object::New<PropertyEventProvider>();
         prov->SetType("example");

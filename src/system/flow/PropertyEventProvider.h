@@ -15,6 +15,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1C)
     NEW_OBJ(PropertyEventProvider)
+    REGISTER_OBJ(PropertyEventProvider)
 protected:
     PropertyEventProvider();
 

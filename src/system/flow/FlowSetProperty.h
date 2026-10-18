@@ -71,6 +71,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x20)
     NEW_OBJ(FlowSetProperty)
+    REGISTER_OBJ(FlowSetProperty)
 
 protected:
     FlowSetProperty();

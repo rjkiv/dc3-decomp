@@ -23,6 +23,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x16)
     NEW_OBJ(FlowEventListener)
+    REGISTER_OBJ(FlowEventListener)
 
 protected:
     FlowEventListener();

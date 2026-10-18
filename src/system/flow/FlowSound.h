@@ -28,6 +28,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x19)
     NEW_OBJ(FlowSound)
+    REGISTER_OBJ(FlowSound)
 
 protected:
     FlowSound();

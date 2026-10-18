@@ -25,6 +25,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x17)
     NEW_OBJ(FlowRun)
+    REGISTER_OBJ(FlowRun)
 
     void ResolveTarget();
 

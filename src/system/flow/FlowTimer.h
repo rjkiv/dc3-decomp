@@ -33,6 +33,7 @@ public:
     void OnTimerEnd();
     OBJ_MEM_OVERLOAD(0x17)
     NEW_OBJ(FlowTimer)
+    REGISTER_OBJ(FlowTimer)
 
 protected:
     FlowTimer();

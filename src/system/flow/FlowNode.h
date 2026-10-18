@@ -71,6 +71,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x9F)
     NEW_OBJ(FlowNode)
+    REGISTER_OBJ(FlowNode)
 
     static FlowNode *DuplicateChild(FlowNode *);
     static Hmx::Object *LoadObjectFromMainOrDir(BinStream &, ObjectDir *);

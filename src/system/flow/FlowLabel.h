@@ -22,6 +22,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x20)
     NEW_OBJ(FlowLabel)
+    REGISTER_OBJ(FlowLabel)
 
     bool Activate(FlowNode *);
     Symbol GetLabel() { return mLabel; }

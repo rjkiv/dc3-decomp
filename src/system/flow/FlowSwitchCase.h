@@ -35,6 +35,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x24)
     NEW_OBJ(FlowSwitchCase)
+    REGISTER_OBJ(FlowSwitchCase)
     FlowSwitchCaseComparison GetOperator() { return mOperator; }
     bool IsValidCase(FlowNode *, DataNode *, const DataNode *, bool);
 

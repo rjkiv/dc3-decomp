@@ -32,6 +32,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1F)
     NEW_OBJ(FlowPickOne)
+    REGISTER_OBJ(FlowPickOne)
 
 protected:
     FlowPickOne();

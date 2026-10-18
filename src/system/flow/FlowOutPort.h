@@ -23,6 +23,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x2D)
     NEW_OBJ(FlowOutPort)
+    REGISTER_OBJ(FlowOutPort)
 
 protected:
     FlowOutPort();

@@ -24,6 +24,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x16)
     NEW_OBJ(FlowMultiSetProperty)
+    REGISTER_OBJ(FlowMultiSetProperty)
 
     ObjPtrVec<Hmx::Object> mTargetObjects; // 0x5c
     DataNode mProperty; // 0x70

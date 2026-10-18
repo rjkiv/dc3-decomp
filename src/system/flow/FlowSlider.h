@@ -29,6 +29,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1B)
     NEW_OBJ(FlowSlider)
+    REGISTER_OBJ(FlowSlider)
 
 protected:
     FlowSlider();

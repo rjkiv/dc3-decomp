@@ -20,6 +20,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1C)
     NEW_OBJ(FlowSwitch)
+    REGISTER_OBJ(FlowSwitch)
 
 protected:
     FlowSwitch();

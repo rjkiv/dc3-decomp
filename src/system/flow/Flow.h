@@ -84,6 +84,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x39)
     NEW_OBJ(Flow)
+    REGISTER_OBJ(Flow)
 
     int GetParamIdx() { return mParamIdx; }
     void RefreshPortLabelLists();

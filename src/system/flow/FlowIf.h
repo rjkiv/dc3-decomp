@@ -19,6 +19,7 @@ public:
 
     OBJ_MEM_OVERLOAD(0x1B)
     NEW_OBJ(FlowIf)
+    REGISTER_OBJ(FlowIf)
 
 protected:
     FlowIf();
