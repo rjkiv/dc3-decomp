@@ -32,7 +32,7 @@ float CalcSpline(float t, float *const pts) {
 PropKeys::PropKeys(Hmx::Object *targetOwner, Hmx::Object *target)
     : mTarget(targetOwner, target), mProp(nullptr), mKeysType(kFloat),
       mInterpolation(kLinear), mPropExceptionID(kNoException), mTrans(nullptr),
-      mLastKeyFrameIndex(-2), unk34(false) {}
+      mLastKeyFrameIndex(-2), mUIHidden(false) {}
 
 PropKeys::~PropKeys() {
     if (mProp) {
@@ -58,7 +58,7 @@ void PropKeys::Save(BinStream &bs) {
     bs << mInterpolation;
     bs << mInterpHandler;
     bs << mPropExceptionID;
-    bs << unk34;
+    bs << mUIHidden;
 }
 
 void PropKeys::Load(BinStreamRev &d) {
@@ -98,7 +98,7 @@ void PropKeys::Load(BinStreamRev &d) {
         }
 
         if (d.rev > 0xC) {
-            d >> unk34;
+            d >> mUIHidden;
         }
         SetPropExceptionID();
     }
@@ -108,7 +108,7 @@ void PropKeys::Copy(const PropKeys *keys) {
     mInterpolation = keys->mInterpolation;
     mInterpHandler = keys->mInterpHandler;
     mPropExceptionID = keys->mPropExceptionID;
-    unk34 = keys->unk34;
+    mUIHidden = keys->mUIHidden;
 }
 
 void PropKeys::ReSort() {
@@ -333,7 +333,7 @@ void FloatKeys::SetToCurrentVal(int i) {
 void FloatKeys::Copy(const PropKeys *keys) {
     PropKeys::Copy(keys);
     clear();
-    if (keys->KeysType() == mKeysType) {
+    if (keys->mKeysType == mKeysType) {
         const FloatKeys *newKeys = dynamic_cast<const FloatKeys *>(keys);
         insert(begin(), newKeys->begin(), newKeys->end());
     }
@@ -417,7 +417,7 @@ void ColorKeys::SetToCurrentVal(int i) {
 void ColorKeys::Copy(const PropKeys *keys) {
     PropKeys::Copy(keys);
     clear();
-    if (keys->KeysType() == mKeysType) {
+    if (keys->mKeysType == mKeysType) {
         const ColorKeys *newKeys = dynamic_cast<const ColorKeys *>(keys);
         insert(begin(), newKeys->begin(), newKeys->end());
     }
@@ -550,7 +550,7 @@ void ObjectKeys::SetToCurrentVal(int i) {
 void ObjectKeys::Copy(const PropKeys *keys) {
     PropKeys::Copy(keys);
     clear();
-    if (keys->KeysType() == mKeysType) {
+    if (keys->mKeysType == mKeysType) {
         const ObjectKeys *newKeys = dynamic_cast<const ObjectKeys *>(keys);
         insert(begin(), newKeys->begin(), newKeys->end());
     }
@@ -610,7 +610,7 @@ void BoolKeys::SetToCurrentVal(int i) {
 void BoolKeys::Copy(const PropKeys *keys) {
     PropKeys::Copy(keys);
     clear();
-    if (keys->KeysType() == mKeysType) {
+    if (keys->mKeysType == mKeysType) {
         const BoolKeys *newKeys = dynamic_cast<const BoolKeys *>(keys);
         insert(begin(), newKeys->begin(), newKeys->end());
     }
@@ -637,10 +637,10 @@ void QuatKeys::SetFrame(float frame, float f2, float f3) {
             }
             Vector3 v48;
             MakeScale(mTrans->LocalXfm().m, v48);
-            if (NearlyEqual(mVec, v48, 0.001f)) {
-                v48 = mVec;
+            if (NearlyEqual(mPreservedScale, v48, 0.001f)) {
+                v48 = mPreservedScale;
             } else
-                mVec = v48;
+                mPreservedScale = v48;
             Hmx::Quat quat;
             Hmx::Matrix3 mtx;
             idx = QuatAt(frame, quat);
@@ -681,7 +681,7 @@ void QuatKeys::SetToCurrentVal(int i) {
 void QuatKeys::Copy(const PropKeys *keys) {
     PropKeys::Copy(keys);
     clear();
-    if (keys->KeysType() == mKeysType) {
+    if (keys->mKeysType == mKeysType) {
         const QuatKeys *newKeys = dynamic_cast<const QuatKeys *>(keys);
         insert(begin(), newKeys->begin(), newKeys->end());
     }
@@ -797,7 +797,7 @@ void Vector3Keys::SetToCurrentVal(int i) {
 void Vector3Keys::Copy(const PropKeys *keys) {
     PropKeys::Copy(keys);
     clear();
-    if (keys->KeysType() == mKeysType) {
+    if (keys->mKeysType == mKeysType) {
         const Vector3Keys *newKeys = dynamic_cast<const Vector3Keys *>(keys);
         insert(begin(), newKeys->begin(), newKeys->end());
     }
@@ -877,19 +877,19 @@ void SymbolKeys::SetFrame(float frame, float blend, float) {
                 KeysLessEq(frame, loc8c, loc90);
                 if (loc8c != -1) {
                     int i = loc8c;
-                    if (unk30) {
-                        MinEq(loc8c, unk2c + 1);
+                    if (mPlayAll) {
+                        MinEq(loc8c, mLastKeyFrameIndexMax + 1);
                         i = loc8c;
                     }
                     for (; i <= loc90; i++) {
                         Key<Symbol> &cur = (*this)[i];
-                        if (i < unk28 || i > unk2c) {
+                        if (i < mLastKeyFrameIndexMin || i > mLastKeyFrameIndexMax) {
                             mTarget->SetProperty(mProp, cur.value);
                         }
                     }
                 }
-                unk28 = loc8c;
-                unk2c = loc90;
+                mLastKeyFrameIndexMin = loc8c;
+                mLastKeyFrameIndexMax = loc90;
                 break;
             }
             case kLinear: {
@@ -931,7 +931,7 @@ void SymbolKeys::SetToCurrentVal(int i) {
 void SymbolKeys::Copy(const PropKeys *keys) {
     PropKeys::Copy(keys);
     clear();
-    if (keys->KeysType() == mKeysType) {
+    if (keys->mKeysType == mKeysType) {
         const SymbolKeys *newKeys = dynamic_cast<const SymbolKeys *>(keys);
         insert(begin(), newKeys->begin(), newKeys->end());
     }
