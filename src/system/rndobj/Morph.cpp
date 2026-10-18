@@ -28,7 +28,7 @@ BEGIN_PROPSYNCS(RndMorph)
 END_PROPSYNCS
 
 BinStream &operator<<(BinStream &bs, const RndMorph::Pose &p) {
-    bs << p.mesh << p.weights;
+    bs << p.mesh << p.weightKeys;
     return bs;
 }
 
@@ -51,14 +51,14 @@ BEGIN_COPYS(RndMorph)
     COPY_MEMBER_FROM(f, mIntensity)
 END_COPYS
 
-BinStreamRev &operator>>(BinStreamRev &bs, RndMorph::Pose &pose) {
-    bs >> pose.mesh;
-    if (bs.rev < 2) {
+BinStreamRev &operator>>(BinStreamRev &d, RndMorph::Pose &pose) {
+    d >> pose.mesh;
+    if (d.rev < 2) {
         Keys<Weight, Weight> weightKeys;
-        bs >> weightKeys;
-        pose.weights.resize(weightKeys.size());
+        d >> weightKeys;
+        pose.weightKeys.resize(weightKeys.size());
         Keys<Weight, Weight>::iterator it = weightKeys.begin();
-        Keys<float, float>::iterator poseIt = pose.weights.begin();
+        Keys<float, float>::iterator poseIt = pose.weightKeys.begin();
         for (; it != weightKeys.end(); ++it, ++poseIt) {
             Key<Weight> &curWeight = *it;
             Key<float> &curKey = *poseIt;
@@ -66,9 +66,9 @@ BinStreamRev &operator>>(BinStreamRev &bs, RndMorph::Pose &pose) {
             curKey.value = curWeight.value.weight;
         }
     } else {
-        bs >> pose.weights;
+        d >> pose.weightKeys;
     }
-    return bs;
+    return d;
 }
 
 INIT_REVS(4, 0)
@@ -90,7 +90,7 @@ BEGIN_LOADS(RndMorph)
 END_LOADS
 
 FORCEINLINE TextStream &operator<<(TextStream &ts, const RndMorph::Pose &pose) {
-    ts << "mesh:" << pose.mesh << " weightKeys:" << pose.weights;
+    ts << "mesh:" << pose.mesh << " weightKeys:" << pose.weightKeys;
     return ts;
 }
 
@@ -108,7 +108,7 @@ DataNode RndMorph::OnSetIntensity(const DataArray *arr) {
 }
 
 DataNode RndMorph::OnPoseMesh(const DataArray *arr) {
-    return PoseAt(arr->Int(2)).mesh.Ptr();
+    return GetPose(arr->Int(2)).mesh.Ptr();
 }
 
 DataNode RndMorph::OnSetTarget(const DataArray *arr) {
@@ -117,12 +117,12 @@ DataNode RndMorph::OnSetTarget(const DataArray *arr) {
 }
 
 DataNode RndMorph::OnSetPoseMesh(const DataArray *arr) {
-    PoseAt(arr->Int(2)).mesh = arr->Obj<RndMesh>(3);
+    GetPose(arr->Int(2)).mesh = arr->Obj<RndMesh>(3);
     return 0;
 }
 
 DataNode RndMorph::OnSetPoseWeight(const DataArray *arr) {
-    Keys<float, float> &curWeights = PoseAt(arr->Int(2)).weights;
+    Keys<float, float> &curWeights = GetPose(arr->Int(2)).weightKeys;
     float frame = arr->Float(3);
     float weightVal = arr->Float(4);
     Keys<float, float>::iterator it = curWeights.begin();

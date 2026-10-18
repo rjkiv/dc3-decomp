@@ -310,7 +310,7 @@ void RndTexBlender::DrawBlendList(
                     mesh->Name()
                 );
             }
-            mesh->GetGeomOwner()->DrawFacesInRange(0, -1);
+            mesh->GeomOwner()->DrawFacesInRange(0, -1);
         }
         work->SetAlpha(1);
         if (RndCam::Current()) {

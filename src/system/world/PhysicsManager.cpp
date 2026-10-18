@@ -14,11 +14,11 @@
 
 namespace {
     NOINLINE bool HasKeepMeshData(const RndMesh *mesh) {
-        for (; mesh != nullptr; mesh = mesh->GetGeomOwner()) {
+        for (; mesh != nullptr; mesh = mesh->GeomOwner()) {
             if (mesh->GetKeepMeshData()) {
                 return true;
             }
-            if (mesh == mesh->GetGeomOwner()) {
+            if (mesh == mesh->GeomOwner()) {
                 return false;
             }
         }
@@ -67,8 +67,8 @@ void PhysicsManager::HarvestCollidables(ObjectDir *parentProxy) {
                 if (prop->Int() == 1) {
                     bool u2 = true;
                     if (!mesh->GetKeepMeshData()) {
-                        if (mesh != mesh->GetGeomOwner()) {
-                            u2 = HasKeepMeshData(mesh->GetGeomOwner());
+                        if (mesh != mesh->GeomOwner()) {
+                            u2 = HasKeepMeshData(mesh->GeomOwner());
                         } else {
                             u2 = false;
                         }

@@ -6,6 +6,7 @@
 #include "os/System.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Mat.h"
+#include "rndobj/ShaderOptions.h"
 #include "rndobj/Trans.h"
 #include "utl/MemMgr.h"
 
@@ -40,54 +41,62 @@ public:
  */
 class RndMesh : public RndDrawable, public RndTransformable {
 public:
+    enum Flags {
+        kNone = 0x0000,
+        kVerts = 0x001f,
+        kFaces = 0x0020,
+        kAll = 0x003f,
+        kKeepPatches = 0x0080,
+        kFastPatch = 0x0100,
+        kKeepVertsFaces = 0x0200,
+    };
     enum Volume {
-        kVolumeEmpty,
-        kVolumeTriangles,
-        kVolumeBSP,
-        kVolumeBox
+        kEmpty = 0x0000,
+        kTriangles = 0x0001,
+        kBSP = 0x0002,
+        kBox = 0x0003,
     };
 
     class Vert {
     public:
         Vert()
             : pos(0, 0, 0), norm(0, 1, 0), boneWeights(0, 0, 0, 0), color(1, 1, 1, 1),
-              tex(0, 0) {
-            boneIndices[0] = 0;
-            boneIndices[1] = 1;
-            boneIndices[2] = 2;
-            boneIndices[3] = 3;
-            tangent.Set(1, 0, 0, 1);
-        }
+              tex(0, 0), bone0(0), bone1(1), bone2(2), bone3(3), tangent(1, 0, 0, 1) {}
 
-        static void *operator new(unsigned int s) {
-            return _MemAllocTemp(s, __FILE__, 0x78, "Vert", 0);
-        }
-        static void *operator new(unsigned int s, void *place) { return place; }
-        static void *operator new[](unsigned int s) {
-            return _MemAllocTemp(s, __FILE__, 0x78, "Vert", 0);
-        }
-        static void operator delete(void *v) { MemFree(v, __FILE__, 0x78, "Vert"); }
-        static void operator delete[](void *v) { MemFree(v, __FILE__, 0x78, "Vert"); }
+        MEM_TEMP_OVERLOAD(Vert, 0x78);
+        static void *operator new(unsigned int s, Vert *&place) { return place; }
+
+        bool operator==(const Vert &) const;
+        bool operator!=(const Vert &) const;
 
         Vector3 pos; // 0x0
         Vector3 norm; // 0x10
         Vector4 boneWeights; // 0x20
         Hmx::Color color; // 0x30
         Vector2 tex; // 0x40
-        short boneIndices[4]; // 0x48
+        short bone0; // 0x48
+        short bone1; // 0x4a
+        short bone2; // 0x4c
+        short bone3; // 0x4e
         Vector4 tangent; // 0x50
     };
 
     /** A triangle mesh face. */
     class Face {
     public:
-        Face(int inv1 = 0, int inv2 = 0, int inv3 = 0) : v1(inv1), v2(inv2), v3(inv3) {}
+        Face() : v1(0), v2(0), v3(0) {}
+        Face(int inv1, int inv2, int inv3) : v1(inv1), v2(inv2), v3(inv3) {}
         unsigned short &operator[](int i) { return *(&v1 + i); }
+        const unsigned short operator[](int i) const { return *(&v1 + i); }
         void Set(int i0, int i1, int i2) {
             v1 = i0;
             v2 = i1;
             v3 = i2;
         }
+
+        // public: bool Contains(int32_t);
+        // public: bool operator==(const RndMesh::Face&);
+        // public: void Replace(int32_t, int32_t);
 
         /** The three points that make up the face. */
         unsigned short v1, v2, v3;
@@ -96,29 +105,44 @@ public:
     /** A specialized vector for RndMesh vertices. */
     class VertVector { // more custom STL! woohoo!!!! i crave death
         friend bool PropSync(
-            RndMesh ::VertVector &o, DataNode &_val, DataArray *_prop, int _i, PropOp _op
+            RndMesh::VertVector &o, DataNode &_val, DataArray *_prop, int _i, PropOp _op
         );
 
     public:
-        VertVector() : mVerts(nullptr), mNumVerts(0), mCapacity(0), unkc(0) {}
+        VertVector() : mVerts(nullptr), mNumVerts(0), mCapacity(0), mDirty(0) {}
+        // VertVector(int);
         ~VertVector() {
             mCapacity = 0;
             clear();
         }
-        int size() const { return mNumVerts; }
         bool empty() const { return mNumVerts == 0; }
-        Vert &operator[](int i) { return mVerts[i]; }
-        const Vert &operator[](int i) const { return mVerts[i]; }
+        // void push_back(const Vert&);
         void clear() { resize(0); }
+        int size() const { return mNumVerts; }
         void resize(int);
+        // void reserve(int);
+        // int capacity() const;
+        // const Vert& front() const;
+        // Vert& front();
+        // const Vert& back() const;
+        // Vert& back();
+        const Vert &operator[](int i) const { return mVerts[i]; }
+        Vert &operator[](int i) { return mVerts[i]; }
+        const Vert *begin() const { return &mVerts[0]; }
         Vert *begin() { return &mVerts[0]; }
+        const Vert *end() const { return &mVerts[mNumVerts]; }
         Vert *end() { return &mVerts[mNumVerts]; }
         void operator=(const VertVector &);
+        // void swap(VertVector&);
+        // Vert* detach();
+        void setdirty(bool d) { mDirty = d; }
+        bool dirty() { return mDirty; }
 
+    private:
         Vert *mVerts; // 0x0
         int mNumVerts; // 0x4
         int mCapacity; // 0x8
-        bool unkc;
+        bool mDirty;
     };
 
     virtual ~RndMesh();
@@ -156,10 +180,14 @@ public:
     void SetGeomOwner(RndMesh *);
     void SetKeepMeshData(bool);
     void SetNumBones(int);
-    void SetBone(int, RndTransformable *, bool);
+    void SetBone(int i, RndTransformable *bone, bool calcOffset);
+    const VertVector &Verts() const { return mGeomOwner->mVerts; }
+    const Vert &Verts(int idx) const { return mGeomOwner->mVerts[idx]; }
     VertVector &Verts() { return mGeomOwner->mVerts; }
-    std::vector<Face> &Faces() { return mGeomOwner->mFaces; }
     Vert &Verts(int idx) { return mGeomOwner->mVerts[idx]; }
+    const std::vector<Face> &Faces() const { return mGeomOwner->mFaces; }
+    std::vector<Face> &Faces() { return mGeomOwner->mFaces; }
+    const Face &Faces(int idx) const { return mGeomOwner->mFaces[idx]; }
     Face &Faces(int idx) { return mGeomOwner->mFaces[idx]; }
     Volume GetVolume() const { return mGeomOwner->mVolume; }
     BSPNode *GetBSPTree() const { return mGeomOwner->mBSPTree; }
@@ -172,26 +200,26 @@ public:
     int Mutable() const { return mGeomOwner->mMutable; }
     bool HasAOCalc() const { return mGeomOwner->mHasAOCalc; }
     void SetHasAOCalc(bool calc) { mGeomOwner->mHasAOCalc = calc; }
-    RndMesh *GetGeomOwner() const { return mGeomOwner; }
+    RndMesh *GeomOwner() const { return mGeomOwner; }
     MotionBlurCache &GetBlurCache() { return mMotionCache; }
-    RndTransformable *BoneTransAt(int idx) { return mBones[idx].mBone; }
-    Transform &BoneOffsetAt(int idx) { return mBones[idx].mOffset; }
+    RndTransformable *Bone(int idx) const { return mBones[idx].mBone; }
+    const Transform *Offset(int idx) const { return &mBones[idx].mOffset; }
     void InstanceGeomOwnerBones();
-    void DeleteBones(bool);
+    void DeleteBones(bool deleteRoot);
     void BurnXfm();
     void ResetNormals();
     void Tessellate();
     void ClearAO();
     void CopyGeometryFromOwner();
-    void Sync(int);
+    void Sync(int flags);
     void SetVolume(Volume);
-    void CopyBones(const RndMesh *);
-    void CopyGeometry(const RndMesh *, bool);
+    void CopyBones(const RndMesh *m);
+    void CopyGeometry(const RndMesh *m, bool updateVolume);
     void SetZeroWeightBones();
-    int CollidePlane(const RndMesh::Face &, const Plane &);
-    Vector3 SkinVertex(const RndMesh::Vert &, Vector3 *);
-    void ScaleBones(float);
-    int GetBoneIndex(const RndTransformable *);
+    int CollidePlane(const RndMesh::Face &f, const Plane &pl);
+    Vector3 SkinVertex(const RndMesh::Vert &vert, Vector3 *normal);
+    void ScaleBones(float s);
+    int GetBoneIndex(const RndTransformable *bone);
     RndMultiMesh *CreateMultiMesh();
 
 protected:
@@ -200,9 +228,9 @@ protected:
     virtual void OnSync(int flags);
 
     void ClearCompressedVerts();
-    bool PatchOkay(int i, int j) { return i * 4.31 + j * 0.25 < 329.0; }
+    bool PatchOkay(int verts, int faces) { return verts * 4.31 + faces * 0.25 < 329.0; }
     bool HasInstancedBones();
-    bool HasValidBones(unsigned int *) const;
+    bool HasValidBones(unsigned int *invalidBoneIndex) const;
     void SetNumVerts(int verts);
     void SetNumFaces(int faces);
     void RemoveInvalidBones();
@@ -245,7 +273,7 @@ protected:
     bool mHasAOCalc; // 0x170
     bool mKeepMeshData; // 0x171
     MotionBlurCache mMotionCache; // 0x174
-    int unk180;
+    ShaderType mShaderOverride; // 0x180
     unsigned char *mCompressedVerts; // 0x184
     unsigned int mNumCompressedVerts; // 0x188
 };
@@ -273,9 +301,9 @@ public:
     }
 
 protected:
-    int GreaterEq(int iii) const {
-        if (!mPatchVerts.empty() && iii > mPatchVerts.front()) {
-            if (iii > mPatchVerts.back()) {
+    int GreaterEq(int val) const {
+        if (!mPatchVerts.empty() && val > mPatchVerts.front()) {
+            if (val > mPatchVerts.back()) {
                 return mPatchVerts.size();
             } else {
                 int u5 = 0;
@@ -283,7 +311,7 @@ protected:
                 while (u2 > u5 + 1) {
                     int u4 = (u5 + u2) >> 1;
                     int curVert = mPatchVerts[u4];
-                    if (iii > curVert) {
+                    if (val > curVert) {
                         u5 = u4;
                     } else {
                         u2 = u4;

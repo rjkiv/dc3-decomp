@@ -1419,7 +1419,7 @@ void ConvertBonesToTranses(ObjectDir *dir, bool b2) {
                 RndMesh *curRefOwner = dynamic_cast<RndMesh *>(rit->RefOwner());
                 if (curRefOwner) {
                     for (int i = 0; i < curRefOwner->NumBones(); i++) {
-                        if (curRefOwner->BoneTransAt(i) == t) {
+                        if (curRefOwner->Bone(i) == t) {
                             meshes.push_back(it);
                             b1 = true;
                             break;
@@ -1609,7 +1609,7 @@ void RandomPointOnMesh(RndMesh *m, Vector3 &v1, Vector3 &v2) {
 }
 
 void MakeTangentsLate(RndMesh *mesh) {
-    if (mesh && mesh->GetGeomOwner() == mesh && !mesh->Verts().empty()
+    if (mesh && mesh->GeomOwner() == mesh && !mesh->Verts().empty()
         && GetGfxMode() != kOldGfx) {
         std::vector<Vector4> vectors(mesh->Faces().size());
 
@@ -1744,7 +1744,7 @@ void RndScaleObject(Hmx::Object *obj, float scale, float frameScale) {
     }
     RndMesh *mesh = dynamic_cast<RndMesh *>(obj);
     if (mesh) {
-        if (mesh->GetGeomOwner() == mesh) {
+        if (mesh->GeomOwner() == mesh) {
             FOREACH (vert, mesh->Verts()) {
                 vert->pos *= scale;
             }
@@ -1775,7 +1775,7 @@ void RndScaleObject(Hmx::Object *obj, float scale, float frameScale) {
     RndMorph *morph = dynamic_cast<RndMorph *>(obj);
     if (morph) {
         for (int i = 0; i < morph->NumPoses(); i++) {
-            ScaleFrame(morph->PoseAt(i).weights, frameScale);
+            ScaleFrame(morph->GetPose(i).weightKeys, frameScale);
         }
         return;
     }
@@ -1876,7 +1876,7 @@ void RndScaleObject(Hmx::Object *obj, float scale, float frameScale) {
 }
 
 void MakeNormals(RndMesh *mesh) {
-    if (mesh && mesh->GetGeomOwner() == mesh && !mesh->Verts().empty()) {
+    if (mesh && mesh->GeomOwner() == mesh && !mesh->Verts().empty()) {
         bool lefty = LeftHanded(mesh->WorldXfm().m);
         std::vector<int> ints(mesh->Verts().size());
 
@@ -1934,7 +1934,7 @@ void MakeNormals(RndMesh *mesh) {
 }
 
 void ResetNormals(RndMesh *mesh) {
-    if (mesh && mesh->GetGeomOwner() == mesh && !mesh->Verts().empty()) {
+    if (mesh && mesh->GeomOwner() == mesh && !mesh->Verts().empty()) {
         bool lefty = LeftHanded(mesh->WorldXfm().m);
 
         std::vector<Vector4> vectors(mesh->Faces().size());
