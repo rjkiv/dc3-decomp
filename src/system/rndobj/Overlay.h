@@ -44,7 +44,7 @@ public:
 private:
     RndOverlay(const DataArray *);
 
-    float Draw(float);
+    float Draw(float topY);
 
     static bool sTopAligned;
     static std::list<RndOverlay *> sOverlays;
