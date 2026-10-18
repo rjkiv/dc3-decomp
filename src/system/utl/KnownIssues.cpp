@@ -37,9 +37,7 @@ void KnownIssues::Draw() {
             Vector2(0.15, 0.13),
             Hmx::Color(1, 1, 1, 1)
         );
-        graph->AddScreenString(
-            mIssue.c_str(), Vector2(0.2, 0.2), Hmx::Color(1, 1, 1, 1)
-        );
+        graph->AddScreenString(mIssue.c_str(), Vector2(0.2, 0.2), Hmx::Color(1, 1, 1, 1));
         graph->AddScreenString(
             "Press 'k' to hide/show this", Vector2(0.15, 0.86), Hmx::Color(1, 1, 1, 1)
         );
@@ -62,22 +60,11 @@ DataNode KnownIssues::OnDisplayKnownIssues(DataArray *msg) {
 }
 
 DataNode KnownIssues::OnToggleLastKnownIssues(DataArray *) {
-    float f10 = 0;
-    if (TheKnownIssues.mDisplayTime == 0)
-        f10 = -1;
-    bool ret = !TheKnownIssues.mDisplayTime;
-    TheKnownIssues.mDisplayTime = f10;
-    return ret;
+    return TheKnownIssues.ToggleLastShowing();
 }
 
 DataNode KnownIssues::OnToggleAllowKnownIssues(DataArray *) {
-    if (!TheKnownIssues.mAllowed) {
-        TheKnownIssues.mAllowed = true;
-    } else {
-        TheKnownIssues.mDisplayTime = 0;
-        TheKnownIssues.mAllowed = false;
-    }
-    return TheKnownIssues.mAllowed;
+    return TheKnownIssues.ToggleAllow();
 }
 
 void KnownIssues::Init() {

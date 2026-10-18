@@ -802,7 +802,7 @@
             "system/utl/HxGuid.cpp": "Matching",
             "system/utl/JobMgr.cpp": "NonMatching",
             "system/utl/JsonEncode.cpp": "Matching",
-            "system/utl/KnownIssues.cpp": "NonMatching",
+            "system/utl/KnownIssues.cpp": "Matching",
             "system/utl/Licenses.cpp": "Matching",
             "system/utl/Loader.cpp": "NonMatching",
             "system/utl/Locale.cpp": "NonMatching",

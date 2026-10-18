@@ -10,6 +10,26 @@ public:
     void Display(String, float);
     void Init();
 
+    bool ToggleAllow() {
+        if (!mAllowed) {
+            mAllowed = true;
+        } else {
+            mDisplayTime = 0;
+            mAllowed = false;
+        }
+        return mAllowed;
+    }
+
+    bool ToggleLastShowing() {
+        if (mDisplayTime == 0) {
+            mDisplayTime = -1;
+            return true;
+        } else {
+            mDisplayTime = 0;
+            return false;
+        }
+    }
+
     static DataNode OnDisplayKnownIssues(DataArray *);
     static DataNode OnToggleLastKnownIssues(DataArray *);
     static DataNode OnToggleAllowKnownIssues(DataArray *);
