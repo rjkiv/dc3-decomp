@@ -34,7 +34,7 @@ public:
     void PrintForReport(FILE *) const;
 
     static bool bPrintCsv;
-    static void SetPoolMemory(void *, int);
+    static void SetPoolMemory(void *mem, int bytes);
     static void *operator new(size_t);
     static void operator delete(void *);
 
@@ -48,9 +48,9 @@ public:
     unsigned char mStrat; // 0x14
     const char *mFile; // 0x15
     int mLine; // 0x19
-    unsigned int unk1d; // 0x1d
-    unsigned int unk21; // 0x21
-    int mStackTrace[0x10]; // 0x25
+    unsigned int mObjName; // 0x1d
+    unsigned int mObjFile; // 0x21
+    unsigned int mStackTrace[0x10]; // 0x25
 };
 #pragma pack(pop)
 
@@ -58,7 +58,6 @@ TextStream &operator<<(TextStream &, const AllocInfo &);
 
 class AllocInfoVec {
 public:
-    // AllocInfoVec() : mStart(0), mEnd(0), mEndOfStorage(0) {}
     AllocInfoVec(void *mem, int size)
         : mStart((AllocInfo **)mem), mEnd((AllocInfo **)mem),
           mEndOfStorage((AllocInfo **)mem + size) {}
@@ -71,6 +70,9 @@ public:
         MILO_ASSERT(mEnd < mEndOfStorage, 0x61);
         *mEnd++ = info;
     }
+
+    unsigned int size();
+    void clear();
 
     void delete_and_clear() {
         for (auto it = mStart; it != mEnd; ++it) {

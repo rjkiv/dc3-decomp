@@ -138,8 +138,7 @@ void Trie::remove(unsigned int node) {
                                     delete_node(u7);
                                     dec_count(u3);
                                     u3 = first_child(1);
-                                    for (int j = 0; j < count(first_child(1));
-                                         j++) {
+                                    for (int j = 0; j < count(first_child(1)); j++) {
                                         set_parent(u3, 1);
                                         u3 = sibling(u3);
                                     }
@@ -148,9 +147,7 @@ void Trie::remove(unsigned int node) {
                                 }
                             } else {
                                 set_first_child(parent(node), sibling(node));
-                                set_count(
-                                    first_child(parent(node)), count(node) - 1
-                                );
+                                set_count(first_child(parent(node)), count(node) - 1);
                                 delete_node(node);
                             }
                             return;

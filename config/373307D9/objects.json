@@ -775,7 +775,7 @@
             "system/ui/UITransitionHandler.cpp": "Matching",
             "system/ui/UITrigger.cpp": "Matching",
             "system/ui/Utl.cpp": "Matching",
-            "system/utl/AllocInfo.cpp": "NonMatching",
+            "system/utl/AllocInfo.cpp": "Matching",
             "system/utl/BeatMap.cpp": "Matching",
             "system/utl/BinStream.cpp": "Matching",
             "system/utl/BinkIntegration.cpp": "NonMatching",

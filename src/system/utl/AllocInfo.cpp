@@ -11,9 +11,9 @@
 static Trie *s_pTrie = nullptr;
 bool AllocInfo::bPrintCsv;
 
-Pool &GetPool() {
-    static void *sMem = nullptr;
-    static Pool sPool(4, sMem, 4);
+static Pool &GetPool() {
+    static char gDefaultMem[4];
+    static Pool sPool(4, gDefaultMem, 4);
     return sPool;
 }
 
@@ -32,15 +32,15 @@ AllocInfo::AllocInfo(
 )
     : mReqSize(requestedSize), mActSize(actualSize), mType(type), mMem(mem), mHeap(heap),
       mPooled(pooled), mStrat(strat), mFile(file), mLine(line),
-      unk1d(s_pTrie->store(str1.c_str())), unk21(s_pTrie->store(str2.c_str())) {
+      mObjName(s_pTrie->store(str1.c_str())), mObjFile(s_pTrie->store(str2.c_str())) {
     mTimeSlice = gMemTracker->GetTimeSlice();
     FillStackTrace();
 }
 
 AllocInfo::~AllocInfo() {
     MILO_ASSERT(s_pTrie, 0x6D);
-    s_pTrie->remove(unk1d);
-    s_pTrie->remove(unk21);
+    s_pTrie->remove(mObjName);
+    s_pTrie->remove(mObjFile);
 }
 
 void *AllocInfo::operator new(unsigned int size) {
@@ -61,8 +61,8 @@ void AllocInfo::PrintCsv(TextStream &ts) const {
     MILO_ASSERT(s_pTrie, 0xC6);
     char buf1d[0x80];
     char buf21[0x80];
-    char *buf1 = s_pTrie->get(unk1d, buf1d, sizeof(buf1d));
-    char *buf2 = s_pTrie->get(unk21, buf21, sizeof(buf21));
+    char *buf1 = s_pTrie->get(mObjName, buf1d, sizeof(buf1d));
+    char *buf2 = s_pTrie->get(mObjFile, buf21, sizeof(buf21));
     ts << ", actual, " << mActSize << ", heap, " << mHeap << ", " << mFile << ", "
        << mLine << ", " << buf1 << ", " << buf2;
     if (mPooled) {
@@ -94,8 +94,8 @@ void AllocInfo::PrintForReport(TextStream &ts) const {
     MILO_ASSERT(s_pTrie, 0xD1);
     char buf1d[0x80];
     char buf21[0x80];
-    char *buf1 = s_pTrie->get(unk1d, buf1d, sizeof(buf1d));
-    char *buf2 = s_pTrie->get(unk21, buf21, sizeof(buf21));
+    char *buf1 = s_pTrie->get(mObjName, buf1d, sizeof(buf1d));
+    char *buf2 = s_pTrie->get(mObjFile, buf21, sizeof(buf21));
     char printbuf[0x140];
     Hx_snprintf(
         printbuf,
@@ -119,8 +119,8 @@ void AllocInfo::PrintForReport(FILE *file) const {
     MILO_ASSERT(s_pTrie, 0xDE);
     char buf1d[0x80];
     char buf21[0x80];
-    char *buf1 = s_pTrie->get(unk1d, buf1d, sizeof(buf1d));
-    char *buf2 = s_pTrie->get(unk21, buf21, sizeof(buf21));
+    char *buf1 = s_pTrie->get(mObjName, buf1d, sizeof(buf1d));
+    char *buf2 = s_pTrie->get(mObjFile, buf21, sizeof(buf21));
     fprintf(
         file,
         "addr\t0x%lX\t%s\tbytes\t%d\tactual\t%d\theap\t%d\t%s\t%d\t%s\t%s\t%s\n",
@@ -178,13 +178,13 @@ int AllocInfo::StackCompare(const AllocInfo &other) const {
         return result;
     }
     for (int i = 0; i < 16; i++) {
-        if (mStackTrace[i] < other.mStackTrace[i]) {
+        if ((int)mStackTrace[i] < (int)other.mStackTrace[i]) {
             return -1;
         }
-        if (mStackTrace[i] > other.mStackTrace[i]) {
+        if ((int)mStackTrace[i] > (int)other.mStackTrace[i]) {
             return 1;
         }
-        if (mStackTrace[i] == 0 && other.mStackTrace[i] == 0) {
+        if ((int)mStackTrace[i] == 0 && (int)other.mStackTrace[i] == 0) {
             break;
         }
     }
