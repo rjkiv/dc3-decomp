@@ -63,14 +63,14 @@ void UITrigger::Trigger() {
     FOREACH (it, mAnims) {
         if (it->mAnim) {
             float f4;
-            if (it->mEnable) {
-                f4 = it->mPeriod * 30;
+            if (it->mFilterEnable) {
+                f4 = it->mFilterPeriod * 30;
                 if (f4 == 0) {
-                    f4 = it->mScale;
+                    f4 = it->mFilterScale;
                     if (f4 == 0) {
                         f4 = 1;
                     }
-                    f4 = fabsf(it->mStart - it->mEnd) / f4;
+                    f4 = fabsf(it->mFilterStart - it->mFilterEnd) / f4;
                 }
             } else {
                 f4 = fabsf(it->mAnim->StartFrame() - it->mAnim->EndFrame());
@@ -106,7 +106,7 @@ void UITrigger::CheckAnims() {
             }
             anim->SetRate(RndAnimatable::k30_fps_ui);
         }
-        curAnim.mRate = RndAnimatable::k30_fps_ui;
+        curAnim.mFilterRate = RndAnimatable::k30_fps_ui;
     }
 }
 
@@ -150,9 +150,9 @@ void UITrigger::PlayStartOfAnims() {
         if (anim) {
             float f3 = anim->StartFrame();
             float f4 = 0.0099999998f;
-            if (curAnim.mEnable) {
-                f3 = curAnim.mStart;
-                if (f3 > curAnim.mEnd) {
+            if (curAnim.mFilterEnable) {
+                f3 = curAnim.mFilterStart;
+                if (f3 > curAnim.mFilterEnd) {
                     f4 *= -1;
                 }
             }
@@ -168,9 +168,9 @@ void UITrigger::PlayEndOfAnims() {
         if (anim) {
             float f3 = anim->EndFrame();
             float f4 = 0.0099999998f;
-            if (curAnim.mEnable) {
-                f3 = curAnim.mEnd;
-                if (curAnim.mStart > f3) {
+            if (curAnim.mFilterEnable) {
+                f3 = curAnim.mFilterEnd;
+                if (curAnim.mFilterStart > f3) {
                     f4 *= -1;
                 }
             }

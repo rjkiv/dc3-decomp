@@ -15,7 +15,7 @@ RndLine *gLine;
 
 RndLine::RndLine()
     : mWidth(1), mHasCaps(true), mLinePairs(false), mFoldAngle(PI / 2), mMat(this),
-      mLineUpdate(true) {
+      mUpdate(true) {
     mMesh = Hmx::Object::New<RndMesh>();
     mMesh->SetMutable(0x1F);
     mMesh->SetTransParent(this, false);
@@ -28,7 +28,7 @@ BEGIN_HANDLERS(RndLine)
         set_point_pos,
         SetPointPos(_msg->Int(2), Vector3(_msg->Float(3), _msg->Float(4), _msg->Float(5)))
     )
-    HANDLE_EXPR(point_color, mPoints[_msg->Int(2)].color.PackRgba())
+    HANDLE_EXPR(point_color, mPoints[_msg->Int(2)].c.PackRgba())
     HANDLE_ACTION(
         set_point_color,
         SetPointColor(
@@ -53,11 +53,9 @@ BEGIN_HANDLERS(RndLine)
 END_HANDLERS
 
 BEGIN_CUSTOM_PROPSYNC(RndLine::Point)
-    SYNC_PROP(point, o.point)
-    SYNC_PROP_MODIFY(color, o.color, gLine->UpdatePointColor(_prop->Int(_i - 1), true))
-    SYNC_PROP_MODIFY(
-        alpha, o.color.alpha, gLine->UpdatePointColor(_prop->Int(_i - 1), true)
-    )
+    SYNC_PROP(point, o.v)
+    SYNC_PROP_MODIFY(color, o.c, gLine->UpdatePointColor(_prop->Int(_i - 1), true))
+    SYNC_PROP_MODIFY(alpha, o.c.alpha, gLine->UpdatePointColor(_prop->Int(_i - 1), true))
 END_CUSTOM_PROPSYNC
 
 BEGIN_PROPSYNCS(RndLine)
@@ -75,7 +73,7 @@ BEGIN_PROPSYNCS(RndLine)
 END_PROPSYNCS
 
 BinStream &operator<<(BinStream &bs, const RndLine::Point &pt) {
-    bs << pt.point << pt.color;
+    bs << pt.v << pt.c;
     return bs;
 }
 
@@ -104,8 +102,8 @@ BEGIN_COPYS(RndLine)
 END_COPYS
 
 BinStreamRev &operator>>(BinStreamRev &d, RndLine::Point &pt) {
-    d >> pt.point;
-    d >> pt.color;
+    d >> pt.v;
+    d >> pt.c;
     return d;
 }
 
@@ -138,7 +136,7 @@ BEGIN_LOADS(RndLine)
 END_LOADS
 
 inline TextStream &operator<<(TextStream &ts, const RndLine::Point &pt) {
-    ts << "\n\tv:" << pt.point << "\n\tc:" << pt.color;
+    ts << "\n\tv:" << pt.v << "\n\tc:" << pt.c;
     return ts;
 }
 
@@ -170,7 +168,7 @@ float RndLine::GetDistanceToPlane(const Plane &p, Vector3 &v3) {
     bool first = true;
     float ret = 0;
     FOREACH (it, mPoints) {
-        const Vector3 &pt = it->point;
+        const Vector3 &pt = it->v;
         // stupid but matches
         const Vector3 &planeV = reinterpret_cast<const Vector3 &>(p);
         float dot = Dot(planeV, pt) + p.d;
@@ -187,7 +185,7 @@ bool RndLine::MakeWorldSphere(Sphere &s, bool b2) {
     if (b2) {
         s.Zero();
         FOREACH (it, mPoints) {
-            s.GrowToContain(Sphere(it->point, mWidth));
+            s.GrowToContain(Sphere(it->v, mWidth));
         }
         return true;
     } else {
@@ -207,7 +205,7 @@ void RndLine::Mats(std::list<class RndMat *> &mats, bool) {
 
 void RndLine::DrawShowing() {
     if (mPoints.size() >= 2) {
-        if (mLineUpdate) {
+        if (mUpdate) {
             RndCam *cam = RndCam::Current();
             UpdateLine(cam->WorldXfm(), cam->NearPlane());
             mMesh->SetWorldXfm(cam->WorldXfm());
@@ -232,8 +230,8 @@ void RndLine::SetMat(RndMat *mat) {
 }
 
 void RndLine::SetUpdate(bool b1) {
-    mLineUpdate = b1;
-    if (!mLineUpdate) {
+    mUpdate = b1;
+    if (!mUpdate) {
         Transform xfm(WorldXfm());
         static Vector3 offset(0, -1, 0);
         Multiply(offset, xfm, xfm.v);
@@ -244,12 +242,12 @@ void RndLine::SetUpdate(bool b1) {
 
 void RndLine::SetPointPos(int i, const Vector3 &pos) {
     MILO_ASSERT((i >= 0) && (i < mPoints.size()), 0x1CE);
-    mPoints[i].point = pos;
+    mPoints[i].v = pos;
 }
 
 void RndLine::SetPointColor(int i, const Hmx::Color &color, bool sync) {
     MILO_ASSERT((i >= 0) && (i < mPoints.size()), 0x1D5);
-    mPoints[i].color = color;
+    mPoints[i].c = color;
     UpdatePointColor(i, sync);
 }
 
@@ -257,11 +255,11 @@ void RndLine::UpdatePointColor(int i, bool sync) {
     const Point &pt = mPoints[i];
     VertsMap vmap;
     MapVerts(i, vmap);
-    vmap.v++->color = pt.color;
-    vmap.v++->color = pt.color;
+    vmap.v++->color = pt.c;
+    vmap.v++->color = pt.c;
     if (vmap.t != 0) {
-        vmap.v++->color = pt.color;
-        vmap.v++->color = pt.color;
+        vmap.v++->color = pt.c;
+        vmap.v++->color = pt.c;
     }
     if (sync) {
         mMesh->Sync(0x1F);
@@ -275,7 +273,7 @@ void RndLine::SetPointsColor(int start, int end, const Hmx::Color &color) {
     }
     for (int i = start; i <= end; i++) {
         Point &pt = mPoints[i];
-        pt.color = color;
+        pt.c = color;
         VertsMap vmap;
         MapVerts(i, vmap);
         vmap.v++->color = color;
@@ -292,21 +290,21 @@ void RndLine::SetPointsColor(int start, int end, const Hmx::Color &color) {
 void RndLine::MapVerts(int idx, VertsMap &map) {
     if (mHasCaps) {
         if (mLinePairs) {
-            map.t = (idx & 1) ? 2 : 1;
+            map.t = (idx & 1) ? VertsMap::kCapsLast : VertsMap::kCapsFirst;
             map.v = &mMesh->Verts(idx * 4);
         } else if (idx == 0) {
-            map.t = 1;
+            map.t = VertsMap::kCapsFirst;
             map.v = mMesh->Verts().begin();
         } else if (idx + 1 == mPoints.size()) {
-            map.t = 2;
+            map.t = VertsMap::kCapsLast;
             auto &verts = mMesh->Verts();
             map.v = &verts[verts.size() - 4];
         } else {
-            map.t = 0;
+            map.t = VertsMap::kNoCaps;
             map.v = &mMesh->Verts((idx + 1) * 2);
         }
     } else {
-        map.t = 0;
+        map.t = VertsMap::kNoCaps;
         map.v = &mMesh->Verts(idx * 2);
     }
 }
@@ -333,19 +331,19 @@ void RndLine::SetNumPoints(int num) {
             MapVerts(i, vmap);
             if (vmap.t == 1) {
                 vmap.v->tex.Set(0, 1);
-                vmap.v++->color = mPoints[i].color;
+                vmap.v++->color = mPoints[i].c;
                 vmap.v->tex.Set(0, 0);
-                vmap.v++->color = mPoints[i].color;
+                vmap.v++->color = mPoints[i].c;
             }
             vmap.v->tex.Set(0.5f, 1);
-            vmap.v++->color = mPoints[i].color;
+            vmap.v++->color = mPoints[i].c;
             vmap.v->tex.Set(0.5f, 0);
-            vmap.v++->color = mPoints[i].color;
+            vmap.v++->color = mPoints[i].c;
             if (vmap.t == 2) {
                 vmap.v->tex.Set(1, 1);
-                vmap.v++->color = mPoints[i].color;
+                vmap.v++->color = mPoints[i].c;
                 vmap.v->tex.Set(1, 0);
-                vmap.v++->color = mPoints[i].color;
+                vmap.v++->color = mPoints[i].c;
             }
         }
         if (mLinePairs) {

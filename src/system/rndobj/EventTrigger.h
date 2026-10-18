@@ -40,19 +40,19 @@ public:
         bool mWait; // 0x18
         float mDelay; // 0x1c
         /** "Enable animation filtering" */
-        bool mEnable; // 0x20
+        bool mFilterEnable; // 0x20
         /** "Rate to animate" */
-        RndAnimatable::Rate mRate; // 0x24
+        RndAnimatable::Rate mFilterRate; // 0x24
         /** "Start frame of animation" */
-        float mStart; // 0x28
+        float mFilterStart; // 0x28
         /** "End frame of animation" */
-        float mEnd; // 0x2c
+        float mFilterEnd; // 0x2c
         /** "Period of animation if non-zero" */
-        float mPeriod; // 0x30
+        float mFilterPeriod; // 0x30
         /** "Scale of animation" */
-        float mScale; // 0x34
+        float mFilterScale; // 0x34
         /** "Type of animation" */
-        Symbol mType; // 0x38
+        Symbol mFilterType; // 0x38
     };
     struct ProxyCall {
         ProxyCall(Hmx::Object *);
@@ -73,7 +73,7 @@ public:
         /** "seconds to delay hiding" */
         float mDelay; // 0x14
         /** "rate by which to measure delay" */
-        int mRate; // 0x18
+        RndAnimatable::Rate mRate; // 0x18
     };
 
     virtual bool Replace(ObjRef *, Hmx::Object *);
@@ -98,7 +98,7 @@ public:
     NEW_OBJ(EventTrigger);
     REGISTER_OBJ(EventTrigger)
 
-    void SetNextLink(EventTrigger *);
+    void SetNextLink(EventTrigger *next);
     bool HasTriggerEvents() const { return !mTriggerEvents.empty(); }
 
     static void Init();
@@ -110,12 +110,13 @@ protected:
 
     void RegisterEvents();
     void UnregisterEvents();
-    void CleanupEventCase(std::list<Symbol> &);
+    void CleanupEventCase(std::list<Symbol> &events);
     void CleanupHideShow();
     void TriggerSelf();
     void ConvertParticleTriggerType();
-    void LoadOldAnim(BinStream &, RndAnimatable *);
-    void LoadOldEvent(BinStreamRev &, Hmx::Object *, const char *, ObjectDir *);
+    void LoadOldAnim(BinStream &d, RndAnimatable *target);
+    void
+    LoadOldEvent(BinStreamRev &d, Hmx::Object *target, const char *base, ObjectDir *dir);
 
     DataNode OnTrigger(DataArray *);
     DataNode OnProxyCalls(DataArray *);
@@ -144,7 +145,7 @@ protected:
     ObjPtr<EventTrigger> mNextLink; // 0xa4
     Symbol mHandler; // 0xb8
     ObjPtrList<RndPartLauncher> mPartLaunchers; // 0xbc
-    bool unkd0;
+    bool mConvertedParticleTriggerType; // 0xd0
     TriggerAnim mAnimTrigger; // 0xd4
     float mAnimFrame; // 0xd8
     bool mEnabled; // 0xdc

@@ -17,17 +17,25 @@ public:
     // size 0x48
     class Point {
     public:
-        Point() : point(0, 0, 0), color(1, 1, 1) {}
+        Point() : v(0, 0, 0), c(1, 1, 1) {}
         /** "Position of point" */
-        Vector3 point; // 0x0
+        Vector3 v; // 0x0
         /** "Color of point" */
-        Hmx::Color color; // 0x10
-        int unk[10];
+        Hmx::Color c; // 0x10
+        Vector3 cam; // 0x20
+        Vector2 base; // 0x30
+        Vector2 dir; // 0x38
+        Vector2 delta; // 0x40
     };
 
     class VertsMap {
     public:
-        int t; // 0x0 - Type
+        enum Type {
+            kNoCaps = 0x0000,
+            kCapsFirst = 0x0001,
+            kCapsLast = 0x0002,
+        };
+        Type t; // 0x0
         RndMesh::Vert *v; // 0x4
     };
 
@@ -98,5 +106,5 @@ protected:
     float mFoldCos; // 0x11c
     /** "Material the line uses." */
     ObjPtr<RndMat> mMat; // 0x120
-    bool mLineUpdate; // 0x134
+    bool mUpdate; // 0x134
 };

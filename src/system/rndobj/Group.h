@@ -44,23 +44,22 @@ public:
     NEW_OBJ(RndGroup)
     REGISTER_OBJ(RndGroup)
 
-    void Merge(const RndGroup *);
+    void Merge(const RndGroup *other);
     /** Remove an object from this group.
      * @param [in] obj The object to remove.
      */
     void RemoveObject(Hmx::Object *obj);
     /** Add an object to this group.
      * @param [in] add The object to add.
-     * @param [in] after The object currently in the group to place add after. If null,
+     * @param [in] insert The object currently in the group to place add after. If null,
      * add will be appended.
      */
-    void AddObject(Hmx::Object *add, Hmx::Object *after = nullptr);
+    void AddObject(Hmx::Object *add, Hmx::Object *insert = nullptr);
     /** Completely empty the group. */
     void ClearObjects();
     /** "Sort objects by draw_order and material" */
     void SortDraws();
-    int MoveObject(Hmx::Object *, int);
-    bool HasObject(Hmx::Object *obj) { return mObjects.find(obj) != mObjects.end(); }
+    int MoveObject(Hmx::Object *obj, int numDown);
     const ObjPtrList<Hmx::Object> &Objects() const { return mObjects; }
     const std::vector<RndDrawable *> &Draws() const { return mDraws; }
 

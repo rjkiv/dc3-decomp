@@ -70,8 +70,18 @@ public:
     int Tiling() const { return mTiling; }
 
 protected:
-    void Merge(const RndBitmap &, int, int, int, int, int, int, int, int);
-    void DownSample(RndBitmap &);
+    void Merge(
+        const RndBitmap &src,
+        int dstX,
+        int dstY,
+        int srcX,
+        int srcY,
+        int srcXEnd,
+        int srcYEnd,
+        int blendX,
+        int blendY
+    );
+    void DownSample(RndBitmap &dst);
 
 private:
     bool mActive; // 0x4

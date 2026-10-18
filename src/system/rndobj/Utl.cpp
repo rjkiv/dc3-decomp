@@ -76,7 +76,7 @@ RndGroup *GroupOwner(Hmx::Object *o) {
         FOREACH_OBJREF (it, o) {
             RndGroup *grp = dynamic_cast<RndGroup *>(it->RefOwner());
             if (grp) {
-                if (grp->HasObject(o)) {
+                if (grp->Objects().find(o) != grp->Objects().end()) {
                     return grp;
                 }
             }
@@ -1726,7 +1726,7 @@ void RndScaleObject(Hmx::Object *obj, float scale, float frameScale) {
         line->SetWidth(line->GetWidth() * scale);
         for (int i = 0; i < line->NumPoints(); i++) {
             Vector3 pos;
-            Scale(line->PointAt(i).point, scale, pos);
+            Scale(line->PointAt(i).v, scale, pos);
             line->SetPointPos(i, pos);
         }
         return;

@@ -23,10 +23,10 @@ static DataArray *gSupportedEvents = nullptr;
 #pragma region EventTrigger Structs
 
 EventTrigger::Anim::Anim(Hmx::Object *o)
-    : mAnim(o), mBlend(0), mDelay(0), mWait(0), mEnable(0), mRate(k30_fps), mStart(0),
-      mEnd(0), mPeriod(0), mScale(1) {
+    : mAnim(o), mBlend(0), mDelay(0), mWait(0), mFilterEnable(0), mFilterRate(k30_fps),
+      mFilterStart(0), mFilterEnd(0), mFilterPeriod(0), mFilterScale(1) {
     static Symbol range("range");
-    mType = range;
+    mFilterType = range;
 }
 
 EventTrigger::Anim &EventTrigger::Anim::operator=(const EventTrigger::Anim &a) {
@@ -34,13 +34,13 @@ EventTrigger::Anim &EventTrigger::Anim::operator=(const EventTrigger::Anim &a) {
     mBlend = a.mBlend;
     mWait = a.mWait;
     mDelay = a.mDelay;
-    mEnable = a.mEnable;
-    mRate = a.mRate;
-    mStart = a.mStart;
-    mEnd = a.mEnd;
-    mPeriod = a.mPeriod;
-    mScale = a.mScale;
-    mType = a.mType;
+    mFilterEnable = a.mFilterEnable;
+    mFilterRate = a.mFilterRate;
+    mFilterStart = a.mFilterStart;
+    mFilterEnd = a.mFilterEnd;
+    mFilterPeriod = a.mFilterPeriod;
+    mFilterScale = a.mFilterScale;
+    mFilterType = a.mFilterType;
     return *this;
 }
 
@@ -54,7 +54,8 @@ EventTrigger::ProxyCall::operator=(const EventTrigger::ProxyCall &p) {
     return *this;
 }
 
-EventTrigger::HideDelay::HideDelay(Hmx::Object *o) : mHide(o, 0), mDelay(0), mRate(0) {}
+EventTrigger::HideDelay::HideDelay(Hmx::Object *o)
+    : mHide(o, 0), mDelay(0), mRate(k30_fps) {}
 
 EventTrigger::HideDelay &
 EventTrigger::HideDelay::operator=(const EventTrigger::HideDelay &h) {
@@ -69,8 +70,8 @@ EventTrigger::HideDelay::operator=(const EventTrigger::HideDelay &h) {
 EventTrigger::EventTrigger()
     : mAnims(this), mSpawnedTasks(this), mProxyCalls(this), mSounds(this), mShows(this),
       mResetTriggers(this), mHideDelays(this), mNextLink(this), mPartLaunchers(this),
-      unkd0(false), mAnimTrigger(kTriggerAnimNone), mAnimFrame(0), mEnabled(true),
-      mEnabledAtStart(true), mWaiting(false), mHidden(this), mShown(this),
+      mConvertedParticleTriggerType(false), mAnimTrigger(kTriggerAnimNone), mAnimFrame(0),
+      mEnabled(true), mEnabledAtStart(true), mWaiting(false), mHidden(this), mShown(this),
       mTriggered(false), mTriggerOrder(kTriggerRandom), mLastTriggerIndex(-1) {
     RegisterEvents();
 }
@@ -116,14 +117,14 @@ END_HANDLERS
 
 void ResetAnim(EventTrigger::Anim &anim) {
     if (anim.mAnim) {
-        anim.mRate = anim.mAnim->GetRate();
-        anim.mStart = anim.mAnim->StartFrame();
-        anim.mEnd = anim.mAnim->EndFrame();
-        anim.mPeriod = 0.0f;
-        anim.mScale = 1.0f;
+        anim.mFilterRate = anim.mAnim->GetRate();
+        anim.mFilterStart = anim.mAnim->StartFrame();
+        anim.mFilterEnd = anim.mAnim->EndFrame();
+        anim.mFilterPeriod = 0.0f;
+        anim.mFilterScale = 1.0f;
         static Symbol range("range");
         static Symbol loop("loop");
-        anim.mType = anim.mAnim->Loop() ? loop : range;
+        anim.mFilterType = anim.mAnim->Loop() ? loop : range;
     }
 }
 
@@ -132,13 +133,13 @@ BEGIN_CUSTOM_PROPSYNC(EventTrigger::Anim)
     SYNC_PROP(blend, o.mBlend)
     SYNC_PROP(wait, o.mWait)
     SYNC_PROP(delay, o.mDelay)
-    SYNC_PROP(enable, o.mEnable)
-    SYNC_PROP(rate, (int &)o.mRate)
-    SYNC_PROP(start, o.mStart)
-    SYNC_PROP(end, o.mEnd)
-    SYNC_PROP(scale, o.mScale)
-    SYNC_PROP(period, o.mPeriod)
-    SYNC_PROP(type, o.mType)
+    SYNC_PROP(enable, o.mFilterEnable)
+    SYNC_PROP(rate, (int &)o.mFilterRate)
+    SYNC_PROP(start, o.mFilterStart)
+    SYNC_PROP(end, o.mFilterEnd)
+    SYNC_PROP(scale, o.mFilterScale)
+    SYNC_PROP(period, o.mFilterPeriod)
+    SYNC_PROP(type, o.mFilterType)
 END_CUSTOM_PROPSYNC
 
 BEGIN_CUSTOM_PROPSYNC(EventTrigger::ProxyCall)
@@ -150,7 +151,7 @@ END_CUSTOM_PROPSYNC
 BEGIN_CUSTOM_PROPSYNC(EventTrigger::HideDelay)
     SYNC_PROP(hide, o.mHide)
     SYNC_PROP(delay, o.mDelay)
-    SYNC_PROP(rate, o.mRate)
+    SYNC_PROP(rate, (int &)o.mRate)
 END_CUSTOM_PROPSYNC
 
 #define SYNC_PROP_TRIGGER(s, member)                                                     \
@@ -199,11 +200,11 @@ BinStream &operator<<(BinStream &bs, const EventTrigger::HideDelay &e) {
 
 BinStream &operator<<(BinStream &bs, const EventTrigger::Anim &e) {
     bs << e.mAnim << e.mBlend << e.mWait << e.mDelay;
-    bs << e.mEnable;
-    bs << e.mRate << e.mStart;
-    bs << e.mEnd << e.mPeriod;
-    bs << e.mType;
-    bs << e.mScale;
+    bs << e.mFilterEnable;
+    bs << e.mFilterRate << e.mFilterStart;
+    bs << e.mFilterEnd << e.mFilterPeriod;
+    bs << e.mFilterType;
+    bs << e.mFilterScale;
     return bs;
 }
 
@@ -255,15 +256,16 @@ BEGIN_COPYS(EventTrigger)
 END_COPYS
 
 BinStream &operator>>(BinStream &bs, EventTrigger::HideDelay &hd) {
-    bs >> hd.mHide >> hd.mDelay >> hd.mRate;
+    bs >> hd.mHide >> hd.mDelay >> (int &)hd.mRate;
     return bs;
 }
 
 BinStreamRev &operator>>(BinStreamRev &d, EventTrigger::Anim &anim) {
     d >> anim.mAnim >> anim.mBlend >> anim.mWait >> anim.mDelay;
     if (d.rev > 9) {
-        d >> anim.mEnable >> (int &)anim.mRate >> anim.mStart;
-        d >> anim.mEnd >> anim.mPeriod >> anim.mType >> anim.mScale;
+        d >> anim.mFilterEnable >> (int &)anim.mFilterRate >> anim.mFilterStart;
+        d >> anim.mFilterEnd >> anim.mFilterPeriod >> anim.mFilterType
+            >> anim.mFilterScale;
     } else {
         ResetAnim(anim);
     }
@@ -577,22 +579,22 @@ void EventTrigger::Init() {
 
 void EventTrigger::LoadOldAnim(BinStream &bs, RndAnimatable *anim) {
     Anim eventAnim(this);
-    bs >> (int &)eventAnim.mRate;
+    bs >> (int &)eventAnim.mFilterRate;
     int i48;
     bs >> i48;
-    bs >> eventAnim.mStart;
-    bs >> eventAnim.mEnd;
-    bs >> eventAnim.mPeriod;
+    bs >> eventAnim.mFilterStart;
+    bs >> eventAnim.mFilterEnd;
+    bs >> eventAnim.mFilterPeriod;
     bs >> eventAnim.mBlend;
     bool b88;
     bs >> b88;
     bs >> eventAnim.mDelay;
     if (i48 == 0) {
-        eventAnim.mType = "range";
+        eventAnim.mFilterType = "range";
     } else if (b88) {
-        eventAnim.mType = "dest";
+        eventAnim.mFilterType = "dest";
     } else {
-        eventAnim.mType = "loop";
+        eventAnim.mFilterType = "loop";
     }
     if (anim) {
         eventAnim.mAnim = anim;
@@ -674,7 +676,7 @@ void EventTrigger::LoadOldEvent(
 }
 
 void EventTrigger::ConvertParticleTriggerType() {
-    if (!unkd0) {
+    if (!mConvertedParticleTriggerType) {
         if (Type() == "particle_trigger") {
             MILO_NOTIFY(
                 "Converting particle trigger %s to standard EventTrigger; should re-save %s",
@@ -691,7 +693,7 @@ void EventTrigger::ConvertParticleTriggerType() {
             SetTypeDef(nullptr);
         }
     }
-    unkd0 = true;
+    mConvertedParticleTriggerType = true;
 }
 
 void EventTrigger::TriggerSelf() {
@@ -712,17 +714,17 @@ void EventTrigger::TriggerSelf() {
     }
     FOREACH (it, mAnims) {
         if (it->mAnim) {
-            if (it->mEnable) {
+            if (it->mFilterEnable) {
                 mSpawnedTasks.push_back(it->mAnim->Animate(
                     it->mBlend,
                     it->mWait,
                     it->mDelay,
-                    (RndAnimatable::Rate)it->mRate,
-                    it->mStart,
-                    it->mEnd,
-                    it->mPeriod,
-                    it->mScale,
-                    it->mType
+                    it->mFilterRate,
+                    it->mFilterStart,
+                    it->mFilterEnd,
+                    it->mFilterPeriod,
+                    it->mFilterScale,
+                    it->mFilterType
                 ));
             } else {
                 mSpawnedTasks.push_back(
@@ -832,18 +834,18 @@ DataNode EventTrigger::Cleanup(DataArray *arr) {
                 if (ref == filter->EndRef()
                     && filter->GetType() != RndAnimFilter::kShuttle) {
                     anim->mAnim = filter->Anim();
-                    anim->mEnable = true;
-                    anim->mRate = filter->GetRate();
-                    anim->mStart = filter->Start();
-                    anim->mEnd = filter->End();
-                    anim->mPeriod = filter->Period();
-                    anim->mScale = filter->Property("scale")->Float();
+                    anim->mFilterEnable = true;
+                    anim->mFilterRate = filter->GetRate();
+                    anim->mFilterStart = filter->Start();
+                    anim->mFilterEnd = filter->End();
+                    anim->mFilterPeriod = filter->Period();
+                    anim->mFilterScale = filter->Property("scale")->Float();
                     static Symbol range("range");
                     static Symbol loop("loop");
                     if (filter->GetType() == RndAnimFilter::kLoop)
-                        anim->mType = loop;
+                        anim->mFilterType = loop;
                     else
-                        anim->mType = range;
+                        anim->mFilterType = range;
                     delete filter;
                 }
             }

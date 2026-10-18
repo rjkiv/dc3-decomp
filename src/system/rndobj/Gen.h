@@ -65,7 +65,7 @@ public:
         mPathVarMaxY = y;
         mPathVarMaxZ = z;
     }
-    void SetPath(RndTransAnim *, float, float);
+    void SetPath(RndTransAnim *pPath, float startFrame, float endFrame);
 
 protected:
     RndGenerator();
