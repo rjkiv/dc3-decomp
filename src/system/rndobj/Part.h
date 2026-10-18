@@ -181,28 +181,28 @@ public:
     virtual void Highlight() { RndDrawable::Highlight(); }
 
     virtual void SetPreserveParticles(bool b) { mPreserveParticles = b; }
-    virtual void SetPool(int, Type);
-    virtual void SetPersistentPool(int, Type);
+    virtual void SetPool(int n, Type t);
+    virtual void SetPersistentPool(int n, Type t);
 
     OBJ_MEM_OVERLOAD(0x90)
     NEW_OBJ(RndParticleSys)
     REGISTER_OBJ(RndParticleSys)
 
-    void SetRelativeMotion(float, RndTransformable *);
-    void SetSubSamples(int);
-    void SetMesh(RndMesh *);
+    void SetRelativeMotion(float r, RndTransformable *parent);
+    void SetSubSamples(int s);
+    void SetMesh(RndMesh *m);
     void FreeAllParticles();
-    void SetAnimatedUV(bool);
+    void SetAnimatedUV(bool v);
     void SetTileHoldTime(float);
-    void SetNumTiles(int);
+    void SetNumTiles(int v);
     void SetGrowRatio(float);
     void SetShrinkRatio(float);
     void SetFrameDrive(bool);
     void SetPauseOffscreen(bool);
     RndParticle *AllocParticle();
-    RndParticle *FreeParticle(RndParticle *);
-    void MakeLocToRel(Transform &);
-    void ExplicitParticles(int, bool, PartOverride &);
+    RndParticle *FreeParticle(RndParticle *p);
+    void MakeLocToRel(Transform &xfm);
+    void ExplicitParticles(int cnt, bool now, PartOverride &po);
     void InitParticle(RndParticle *, const Transform *);
     void SetMat(RndMat *mat) { mMat = mat; }
     RndMat *GetMat() const { return mMat; }
@@ -295,11 +295,12 @@ protected:
 
     void UpdateParticles();
     void UpdateRelativeXfm();
-    void InitParticle(float, RndParticle *, const Transform *, PartOverride &);
-    float CheckBursts(float);
-    void CreateParticles(float, float, const Transform &);
+    void
+    InitParticle(float frame, RndParticle *p, const Transform *locToRel, PartOverride &po);
+    float CheckBursts(float deltaFrame);
+    void CreateParticles(float frame, float deltaFrame, const Transform &xfm);
     void RunFastForward();
-    void MoveParticles(float, float);
+    void MoveParticles(float frame, float deltaFrame);
 
     DataNode OnSetStartColor(const DataArray *);
     DataNode OnSetStartColorInt(const DataArray *);
