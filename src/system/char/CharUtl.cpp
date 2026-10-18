@@ -32,22 +32,22 @@ void CharUtlInit() {
 
 void CharUtlMergeBones(ObjectDir *dir1, ObjectDir *dir2, int i) {
     for (ObjDirItr<CharBone> it(dir1, true); it != nullptr; ++it) {
-        if (it->Target()) {
+        if (it->GetTarget()) {
             CharBone *bone = GrabBone(it, dir2);
             if (bone) {
-                if (!bone->Target()) {
-                    const char *name = it->Target()->Name();
+                if (!bone->GetTarget()) {
+                    const char *name = it->GetTarget()->Name();
                     CharBone *findbone = CharUtlFindBone(name, dir2);
                     if (!findbone)
                         MILO_NOTIFY("could not find target %s in dest, must merge", name);
                     bone->SetTarget(findbone);
                 } else {
-                    if (!streq(it->Target()->Name(), bone->Target()->Name())) {
+                    if (!streq(it->GetTarget()->Name(), bone->GetTarget()->Name())) {
                         MILO_NOTIFY(
                             "%s has different targets %s v %s, must resolve",
                             it->Name(),
-                            it->Target()->Name(),
-                            bone->Target()->Name()
+                            it->GetTarget()->Name(),
+                            bone->GetTarget()->Name()
                         );
                     }
                 }
@@ -63,16 +63,16 @@ void CharUtlMergeBones(ObjectDir *dir1, ObjectDir *dir2, int i) {
             if (bone)
                 bone->SetPositionContext(bone->ScaleContext() | i);
         }
-        if (it->RotationContext() != 0 && it->RotationType() != CharBones::TYPE_END) {
+        if (it->RotationContext() != 0 && it->Rotation() != CharBones::TYPE_END) {
             CharBone *bone = GrabBone(it, dir2);
             if (bone) {
-                if (bone->RotationType() != CharBones::TYPE_END
-                    && bone->RotationType() != it->RotationType()) {
+                if (bone->Rotation() != CharBones::TYPE_END
+                    && bone->Rotation() != it->Rotation()) {
                     MILO_NOTIFY(
                         "bones %s have different rotations, must hand resolve", it->Name()
                     );
                 } else {
-                    bone->SetRotationType(it->RotationType());
+                    bone->SetRotation(it->Rotation());
                     bone->SetRotationContext(bone->RotationContext() | i);
                 }
             }
@@ -92,7 +92,7 @@ RndTransformable *CharUtlFindBoneTrans(const char *cc, ObjectDir *dir) {
         strcpy(dst, ".cb");
         CharBone *bone = dir->Find<CharBone>(buf, false);
         if (bone)
-            return bone->BoneTrans();
+            return bone->Trans();
         else {
             strcpy(dst, ".trans");
             RndTransformable *trans = dir->Find<RndTransformable>(buf, false);

@@ -7,18 +7,17 @@
 #include "rndobj/Utl.h"
 #include <cstring>
 
-CharCollide::CharCollide()
-    : mShape(kCollideSphere), mFlags(0), mMesh(this), mMeshYBias(false) {
+CharCollide::CharCollide() : mShape(kSphere), mFlags(0), mMesh(this), mMeshYBias(false) {
     for (int i = 0; i < 2; i++) {
-        mOrigLength[i] = 0;
-        mOrigRadius[i] = 0;
+        mOriginalLengths[i] = 0;
+        mOriginalRadii[i] = 0;
     }
     CopyOriginalToCur();
     for (int i = 0; i < 8; i++) {
-        unkStructs[i].unk0 = 0;
-        unkStructs[i].unk4.Zero();
+        mVertData[i].vertIndex = 0;
+        mVertData[i].offset.Zero();
     }
-    unk1a0.Reset();
+    mInvParentXfm.Reset();
 }
 
 CharCollide::~CharCollide() {}
@@ -31,10 +30,10 @@ END_HANDLERS
 BEGIN_PROPSYNCS(CharCollide)
     SYNC_PROP_MODIFY(shape, (int &)mShape, SyncShape())
     SYNC_PROP(flags, mFlags)
-    SYNC_PROP_MODIFY(radius0, mOrigRadius[0], SyncShape())
-    SYNC_PROP_MODIFY(radius1, mOrigRadius[1], SyncShape())
-    SYNC_PROP_MODIFY(length0, mOrigLength[0], SyncShape())
-    SYNC_PROP_MODIFY(length1, mOrigLength[1], SyncShape())
+    SYNC_PROP_MODIFY(radius0, mOriginalRadii[0], SyncShape())
+    SYNC_PROP_MODIFY(radius1, mOriginalRadii[1], SyncShape())
+    SYNC_PROP_MODIFY(length0, mOriginalLengths[0], SyncShape())
+    SYNC_PROP_MODIFY(length1, mOriginalLengths[1], SyncShape())
     SYNC_PROP_MODIFY(mesh, mMesh, SyncShape())
     SYNC_PROP_MODIFY(mesh_y_bias, mMeshYBias, SyncShape())
     SYNC_SUPERCLASS(RndTransformable)
@@ -46,22 +45,22 @@ BEGIN_SAVES(CharCollide)
     SAVE_SUPERCLASS(Hmx::Object)
     SAVE_SUPERCLASS(RndTransformable)
     bs << mShape;
-    bs << mOrigRadius[0];
-    bs << mOrigLength[0];
-    bs << mOrigLength[1];
+    bs << mOriginalRadii[0];
+    bs << mOriginalLengths[0];
+    bs << mOriginalLengths[1];
     bs << mFlags;
-    bs << mCurRadius[0];
-    bs << mOrigRadius[1];
-    bs << mCurRadius[1];
-    bs << mCurLength[0];
-    bs << mCurLength[1];
-    bs << unk1a0;
+    bs << mCurRadii[0];
+    bs << mOriginalRadii[1];
+    bs << mCurRadii[1];
+    bs << mCurLengths[0];
+    bs << mCurLengths[1];
+    bs << mInvParentXfm;
     bs << mMesh;
     for (int i = 0; i < 8; i++) {
-        bs << unkStructs[i].unk0;
-        bs << unkStructs[i].unk4;
+        bs << mVertData[i].vertIndex;
+        bs << mVertData[i].offset;
     }
-    bs << mDigest;
+    bs << mMeshHash;
     bs << mMeshYBias;
 END_SAVES
 
@@ -72,11 +71,11 @@ BEGIN_COPYS(CharCollide)
     BEGIN_COPYING_MEMBERS
         COPY_MEMBER(mShape)
         COPY_MEMBER(mFlags)
-        memcpy(mOrigRadius, c->mOrigRadius, 8);
-        memcpy(mOrigLength, c->mOrigLength, 8);
-        memcpy(mCurRadius, c->mCurRadius, 8);
-        memcpy(mCurLength, c->mCurLength, 8);
-        COPY_MEMBER(unk1a0)
+        memcpy(mOriginalRadii, c->mOriginalRadii, 8);
+        memcpy(mOriginalLengths, c->mOriginalLengths, 8);
+        memcpy(mCurRadii, c->mCurRadii, 8);
+        memcpy(mCurLengths, c->mCurLengths, 8);
+        COPY_MEMBER(mInvParentXfm)
         COPY_MEMBER(mMeshYBias)
         COPY_MEMBER(mMesh)
     END_COPYING_MEMBERS
@@ -90,37 +89,37 @@ BEGIN_LOADS(CharCollide)
     LOAD_SUPERCLASS(Hmx::Object)
     LOAD_SUPERCLASS(RndTransformable)
     d >> (int &)mShape;
-    d >> mOrigRadius[0];
+    d >> mOriginalRadii[0];
     if (d.rev > 4)
-        d >> mOrigLength[0];
+        d >> mOriginalLengths[0];
     if (d.rev > 2)
-        d >> mOrigLength[1];
+        d >> mOriginalLengths[1];
     if (d.rev > 1)
         d >> mFlags;
     else
         mFlags = 0;
     if (d.rev > 3)
-        d >> mCurRadius[0];
+        d >> mCurRadii[0];
     else
-        mCurRadius[0] = mOrigRadius[0];
+        mCurRadii[0] = mOriginalRadii[0];
 
     if (d.rev > 5) {
-        d >> mOrigRadius[1];
-        d >> mCurRadius[1];
-        d >> mCurLength[0];
-        d >> mCurLength[1];
-        d >> unk1a0;
+        d >> mOriginalRadii[1];
+        d >> mCurRadii[1];
+        d >> mCurLengths[0];
+        d >> mCurLengths[1];
+        d >> mInvParentXfm;
         d >> mMesh;
         for (int i = 0; i < 8; i++) {
-            d >> unkStructs[i].unk0;
-            d >> unkStructs[i].unk4;
+            d >> mVertData[i].vertIndex;
+            d >> mVertData[i].offset;
         }
-        d >> mDigest;
+        d >> mMeshHash;
         d >> mMeshYBias;
         if (d.rev < 7)
             CopyOriginalToCur();
     } else {
-        mOrigRadius[1] = mOrigRadius[0];
+        mOriginalRadii[1] = mOriginalRadii[0];
         CopyOriginalToCur();
     }
 END_LOADS
@@ -129,21 +128,21 @@ void CharCollide::Highlight() {
     Hmx::Color white(1, 1, 1);
     Hmx::Color red(1, 0, 0);
     switch (mShape) {
-    case kCollidePlane: {
+    case kPlane: {
         Plane plane(WorldXfm().v, WorldXfm().m.x);
         UtilDrawPlane(plane, WorldXfm().v, red, 1, 12, false);
         break;
     }
-    case kCollideSphere:
-    case kCollideInsideSphere: {
-        UtilDrawSphere(WorldXfm().v, mOrigRadius[0], red, nullptr);
-        UtilDrawSphere(WorldXfm().v, mCurRadius[0], white, nullptr);
+    case kSphere:
+    case kInsideSphere: {
+        UtilDrawSphere(WorldXfm().v, mOriginalRadii[0], red, nullptr);
+        UtilDrawSphere(WorldXfm().v, mCurRadii[0], white, nullptr);
         break;
     }
-    case kCollideCigar:
-    case kCollideInsideCigar: {
-        UtilDrawCigar(WorldXfm(), mOrigRadius, mOrigLength, red, 8);
-        UtilDrawCigar(WorldXfm(), mCurRadius, mCurLength, white, 8);
+    case kCigar:
+    case kInsideCigar: {
+        UtilDrawCigar(WorldXfm(), mOriginalRadii, mOriginalLengths, red, 8);
+        UtilDrawCigar(WorldXfm(), mCurRadii, mCurLengths, white, 8);
         break;
     }
     default:
@@ -153,28 +152,31 @@ void CharCollide::Highlight() {
         int l7 = NumSpheres(mShape) * 4;
         for (int i = 0; i < l7; i++) {
             UtilDrawSphere(
-                mMesh->Verts()[unkStructs[i].unk0].pos, 0.1f, Hmx::Color(0, 0, 1), nullptr
+                mMesh->Verts()[mVertData[i].vertIndex].pos,
+                0.1f,
+                Hmx::Color(0, 0, 1),
+                nullptr
             );
         }
     }
 }
 
 void CharCollide::SyncShape() {
-    if (mCurLength[0] > mCurLength[1]) {
-        mCurLength[0] = mCurLength[1];
+    if (mCurLengths[0] > mCurLengths[1]) {
+        mCurLengths[0] = mCurLengths[1];
     }
     CopyOriginalToCur();
 }
 
 void CharCollide::CopyOriginalToCur() {
-    memcpy(mCurRadius, mOrigRadius, 8);
-    memcpy(mCurLength, mOrigLength, 8);
+    memcpy(mCurRadii, mOriginalRadii, 8);
+    memcpy(mCurLengths, mOriginalLengths, 8);
 }
 
 int CharCollide::NumSpheres(Shape s) const {
-    if (s == kCollideCigar || s == kCollideInsideCigar) {
+    if (s == kCigar || s == kInsideCigar) {
         return 2;
     } else {
-        return s == kCollideSphere || s == kCollideInsideSphere;
+        return s == kSphere || s == kInsideSphere;
     }
 }

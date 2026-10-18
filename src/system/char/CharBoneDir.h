@@ -15,6 +15,14 @@ public:
     public:
         Recenter(Hmx::Object *o) : mTargets(o), mAverage(o), mSlide(0) {}
 
+        friend bool PropSync(Recenter &, DataNode &, DataArray *, int, PropOp);
+        friend BinStream &operator>>(BinStream &bs, CharBoneDir::Recenter &r);
+        ObjPtrList<CharBone> &Targets() { return mTargets; }
+        ObjPtrList<CharBone> &Average() { return mAverage; }
+        bool Slide() const { return mSlide; }
+        void SetSlide(bool slide) { mSlide = slide; }
+
+    protected:
         /** "bones to recenter, ie, bone_pelvis" */
         ObjPtrList<CharBone> mTargets; // 0x0
         /** "bones to average to find the new center" */

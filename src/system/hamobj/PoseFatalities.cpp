@@ -673,12 +673,12 @@ void PoseFatalities::UpdateClipDriver(int player) {
     CharClipDriver *clipDriver = character->Driver()->First();
     if (clipDriver) {
         while (clipDriver != 0) {
-            if (strstr(clipDriver->GetClip()->Name(), "pose_fatalities_")) {
+            if (strstr(clipDriver->Clip()->Name(), "pose_fatalities_")) {
                 break;
             }
             clipDriver = clipDriver->Next();
         }
-        if (clipDriver && clipDriver->GetClip()) {
+        if (clipDriver && clipDriver->Clip()) {
             MILO_ASSERT(NUM_FATALITIES == clipDriver->NumBeatEvents(), 0x123);
             int num = mFatalityIndex[player];
             clipDriver->SetBeatOffset(

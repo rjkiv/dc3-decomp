@@ -32,15 +32,15 @@ public:
     OBJ_MEM_OVERLOAD(0x19)
     NEW_OBJ(CharBlendBone);
 
+protected:
+    CharBlendBone();
+
     ObjVector<ConstraintSystem> mTargets; // 0x8
-    ObjPtr<RndTransformable> mSrc1; // 0x18
-    ObjPtr<RndTransformable> mSrc2; // 0x2c
+    ObjPtr<RndTransformable> mSourceOne; // 0x18
+    ObjPtr<RndTransformable> mSourceTwo; // 0x2c
     bool mTransX; // 0x40
     bool mTransY; // 0x41
     bool mTransZ; // 0x42
     bool mRotation; // 0x43
     bool mSetLocal; // 0x44
-
-protected:
-    CharBlendBone();
 };

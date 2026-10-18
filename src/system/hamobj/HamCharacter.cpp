@@ -210,7 +210,7 @@ void HamCharacter::SyncObjects() {
     if (Find<CharLipSyncDriver>("face.lipdrv", false)) {
         CharFaceServo *servo = Find<CharFaceServo>("face.faceservo", false);
         CharLipSyncDriver *lipDrv = Find<CharLipSyncDriver>("face.lipdrv", false);
-        EnableFacialAnimation(lipDrv->LipSync(), 0);
+        EnableFacialAnimation(lipDrv->GetLipSync(), 0);
         SetBlinking(servo && IsServoBlinking(servo));
     }
     mCrewCard = Find<RndMesh>(kCrewCardMeshName, false);
@@ -275,7 +275,7 @@ void HamCharacter::Poll() {
     RndMat *robotFaceMat = Find<RndMat>("robot_face.mat", false);
     if (robotFaceMat) {
         CharLipSyncDriver *driver = Find<CharLipSyncDriver>("face.lipdrv", false);
-        CharLipSync::PlayBack *playback = driver->GetPlayBack();
+        CharLipSync::PlayBack *playback = driver->GetSongPlayer();
         const char *name = "base";
         if (playback) {
             float val = 0;
@@ -311,7 +311,7 @@ void HamCharacter::Poll() {
 void HamCharacter::Enter() {
     Character::Enter();
     if (BoneServo()) {
-        BoneServo()->SetRegulateWaypoint(nullptr);
+        BoneServo()->Regulate(nullptr);
     }
     if (Regulator()) {
         Regulator()->SetWaypoint(nullptr);
@@ -528,13 +528,13 @@ void HamCharacter::SetLipsyncOffset(float offset) {
 void HamCharacter::SetFaceOverrideWeight(float weight) {
     CharLipSyncDriver *driver = Find<CharLipSyncDriver>("face.lipdrv", false);
     if (driver) {
-        driver->SetOverrideWeight(weight);
+        driver->SetOverrideClipWeight(weight);
     }
 }
 
 float HamCharacter::GetFaceOverrideWeight() {
     CharLipSyncDriver *driver = Find<CharLipSyncDriver>("face.lipdrv", false);
-    return driver ? driver->GetOverrideWeight() : 0;
+    return driver ? driver->GetOverrideClipWeight() : 0;
 }
 
 void HamCharacter::SetUseCameraSkeleton(bool use) {
@@ -549,7 +549,7 @@ void HamCharacter::SetUseCameraSkeleton(bool use) {
 Symbol HamCharacter::GetFaceOverrideClip() {
     CharLipSyncDriver *driver = Find<CharLipSyncDriver>("face.lipdrv", false);
     if (driver) {
-        CharClip *clip = driver->OverrideClip();
+        CharClip *clip = driver->GetOverrideClip();
         if (clip) {
             return clip->Name();
         }
@@ -630,7 +630,7 @@ void HamCharacter::SetPropShowing(int prop, bool show) {
 }
 
 void HamCharacter::ApplyBlendedSkeletons(HamDriver *driver, CharClip *clip, float f) {
-    if (clip->Unk18CSize() != 0) {
+    if (clip->NumSamples() != 0) {
         auto &layers = driver->Layers();
         FOREACH (it, layers.layers) {
             HamDriver::LayerClip *layerClip;
@@ -659,8 +659,8 @@ void HamCharacter::BlendInFaceOverrideClip(Symbol s, float f1, float f2) {
             faceDriver->SetOverrideClip(nullptr);
         } else {
             for (ObjDirItr<CharClip> it(
-                     faceDriver->OverrideOptions() ? faceDriver->OverrideOptions()
-                                                   : faceDriver->Clips(),
+                     faceDriver->GetOverrideOptions() ? faceDriver->GetOverrideOptions()
+                                                      : faceDriver->GetClips(),
                      false
                  );
                  it != nullptr;
@@ -699,8 +699,8 @@ void HamCharacter::SetFaceOverrideClip(Symbol s, bool notify) {
             faceDriver->SetOverrideClip(nullptr);
         } else {
             for (ObjDirItr<CharClip> it(
-                     faceDriver->OverrideOptions() ? faceDriver->OverrideOptions()
-                                                   : faceDriver->Clips(),
+                     faceDriver->GetOverrideOptions() ? faceDriver->GetOverrideOptions()
+                                                      : faceDriver->GetClips(),
                      false
                  );
                  it != nullptr;
@@ -815,14 +815,14 @@ DataNode HamCharacter::OnConfigureFileMerger(DataArray *a) {
         FileMerger::Merger *merger = mFileMerger->FindMerger("vo_bank", false);
         if (merger) {
             if (sLoadVO) {
-                merger->SetSelected(voPath, false);
+                merger->Select(voPath, false);
             } else {
-                merger->SetSelected(gNullStr, false);
+                merger->Select(gNullStr, false);
             }
         }
         FileMerger::Merger *visemeMerger = mFileMerger->FindMerger("viseme", false);
         if (visemeMerger) {
-            visemeMerger->SetSelected(visemePath, false);
+            visemeMerger->Select(visemePath, false);
         }
         return 0;
     }

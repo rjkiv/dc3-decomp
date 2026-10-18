@@ -17,10 +17,6 @@ public:
     void Once(Hmx::Object *);
     void Init();
 
-    ObjPtrList<Hmx::Object> mObjects; // 0x4
-    ObjPtrList<Hmx::Object> mOnce; // 0x18
-    RndOverlay *mOverlay; // 0x2c
-
 private:
     virtual float UpdateOverlay(RndOverlay *, float);
 
@@ -29,6 +25,10 @@ private:
     void AddObject(Hmx::Object *, bool);
     void SetObjects(DataArray *);
     void DisplayObject(Hmx::Object *);
+
+    ObjPtrList<Hmx::Object> mObjects; // 0x4
+    ObjPtrList<Hmx::Object> mOnce; // 0x18
+    RndOverlay *mOverlay; // 0x2c
 };
 
 extern CharDebug TheCharDebug;

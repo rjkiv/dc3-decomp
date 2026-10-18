@@ -7,7 +7,7 @@
 #pragma region CharBlendBone
 
 CharBlendBone::CharBlendBone()
-    : mTargets(this), mSrc1(this), mSrc2(this), mTransX(false), mTransY(false),
+    : mTargets(this), mSourceOne(this), mSourceTwo(this), mTransX(false), mTransY(false),
       mTransZ(false), mRotation(false), mSetLocal(false) {}
 
 CharBlendBone::ConstraintSystem::ConstraintSystem(Hmx::Object *o)
@@ -24,8 +24,8 @@ END_CUSTOM_PROPSYNC
 
 BEGIN_PROPSYNCS(CharBlendBone)
     SYNC_PROP(target, mTargets)
-    SYNC_PROP(src_one, mSrc1)
-    SYNC_PROP(src_two, mSrc2)
+    SYNC_PROP(src_one, mSourceOne)
+    SYNC_PROP(src_two, mSourceTwo)
     SYNC_PROP(trans_x, mTransX)
     SYNC_PROP(trans_y, mTransY)
     SYNC_PROP(trans_z, mTransZ)
@@ -44,8 +44,8 @@ BEGIN_SAVES(CharBlendBone)
     SAVE_REVS(4, 0)
     SAVE_SUPERCLASS(Hmx::Object)
     bs << mTargets;
-    bs << mSrc1;
-    bs << mSrc2;
+    bs << mSourceOne;
+    bs << mSourceTwo;
     bs << mTransX;
     bs << mTransY;
     bs << mTransZ;
@@ -58,8 +58,8 @@ BEGIN_COPYS(CharBlendBone)
     CREATE_COPY(CharBlendBone)
     BEGIN_COPYING_MEMBERS
         COPY_MEMBER(mTargets)
-        COPY_MEMBER(mSrc1)
-        COPY_MEMBER(mSrc2)
+        COPY_MEMBER(mSourceOne)
+        COPY_MEMBER(mSourceTwo)
         COPY_MEMBER(mTransX)
         COPY_MEMBER(mTransY)
         COPY_MEMBER(mTransZ)
@@ -82,8 +82,8 @@ BEGIN_LOADS(CharBlendBone)
     MILO_ASSERT(d.rev > 2, 0x66);
     LOAD_SUPERCLASS(Hmx::Object)
     d >> mTargets;
-    d >> mSrc1;
-    d >> mSrc2;
+    d >> mSourceOne;
+    d >> mSourceTwo;
     d >> mTransX;
     d >> mTransY;
     d >> mTransZ;
@@ -96,9 +96,9 @@ END_LOADS
 void CharBlendBone::Poll() {
     FOREACH (it, mTargets) {
         RndTransformable *target = it->mTarget;
-        if (target && mSrc1 && mSrc2) {
-            const Transform &src1Xfm = mSrc1->WorldXfm();
-            const Transform &src2Xfm = mSrc2->WorldXfm();
+        if (target && mSourceOne && mSourceTwo) {
+            const Transform &src1Xfm = mSourceOne->WorldXfm();
+            const Transform &src2Xfm = mSourceTwo->WorldXfm();
             Transform targetXfm = target->WorldXfm();
             if (mTransX || mTransY || mTransZ) {
                 if (mTransX) {
@@ -132,8 +132,8 @@ void CharBlendBone::Poll() {
 void CharBlendBone::PollDeps(
     std::list<Hmx::Object *> &changedBy, std::list<Hmx::Object *> &change
 ) {
-    changedBy.push_back(mSrc1);
-    changedBy.push_back(mSrc2);
+    changedBy.push_back(mSourceOne);
+    changedBy.push_back(mSourceTwo);
     FOREACH (it, mTargets) {
         change.push_back(it->mTarget);
     }

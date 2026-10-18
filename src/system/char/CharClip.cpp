@@ -298,13 +298,13 @@ void CharClip::FacingSet::FacingBones::Set(bool b) {
 #pragma region BeatEvent
 
 void CharClip::BeatEvent::Save(BinStream &bs) {
-    bs << event;
-    bs << beat;
+    bs << mEvent;
+    bs << mBeat;
 }
 
 void CharClip::BeatEvent::Load(BinStream &bs) {
-    bs >> event;
-    bs >> beat;
+    bs >> mEvent;
+    bs >> mBeat;
 }
 
 #pragma endregion
@@ -313,7 +313,7 @@ void CharClip::BeatEvent::Load(BinStream &bs) {
 CharClip::CharClip()
     : mTransitions(this), mFramesPerSec(30), mFlags(0), mPlayFlags(0), mRange(0),
       mRelative(this), mDirty(true), mOldVer(-1), mDoNotCompress(false), mSyncAnim(this),
-      unk198(0) {
+      mBitmask(0) {
     mBeatTrack.resize(1);
     mBeatTrack[0].frame = 0;
     mBeatTrack[0].value = 0;
@@ -378,8 +378,8 @@ bool PropSync(
 }
 
 BEGIN_CUSTOM_PROPSYNC(CharClip::BeatEvent)
-    SYNC_PROP_SET(beat, o.beat, o.beat = _val.Float())
-    SYNC_PROP_SET(event, o.event, o.event = _val.Sym())
+    SYNC_PROP_SET(mBeat, o.Beat(), o.SetBeat(_val.Float()))
+    SYNC_PROP_SET(mEvent, o.Handler(), o.SetHandler(_val.Sym()))
 END_CUSTOM_PROPSYNC
 
 BEGIN_PROPSYNCS(CharClip)
@@ -429,7 +429,7 @@ BEGIN_SAVES(CharClip)
     bs << mBeatTrack;
     bs << mSyncAnim;
     bs << mSkeletonSamples;
-    bs << unk198;
+    bs << mBitmask;
 END_SAVES
 
 BEGIN_COPYS(CharClip)
@@ -458,7 +458,7 @@ BEGIN_COPYS(CharClip)
         mFacing.Set(mFull);
         mDirty = true;
         COPY_MEMBER(mSkeletonSamples)
-        COPY_MEMBER(unk198)
+        COPY_MEMBER(mBitmask)
     END_COPYING_MEMBERS
 END_COPYS
 
@@ -531,11 +531,11 @@ BEGIN_LOADS(CharClip)
         String str;
         d >> str;
         if (!str.empty()) {
-            MILO_NOTIFY("%s has old enter event %s, must port", PathName(this), str);
+            MILO_NOTIFY("%s has old enter mEvent %s, must port", PathName(this), str);
         }
         d >> str;
         if (!str.empty()) {
-            MILO_NOTIFY("%s has old exit event %s, must port", PathName(this), str);
+            MILO_NOTIFY("%s has old exit mEvent %s, must port", PathName(this), str);
         }
         float f1 = -kHugeFloat;
         int count;
@@ -546,7 +546,7 @@ BEGIN_LOADS(CharClip)
             d >> str;
             if (!str.empty()) {
                 MILO_NOTIFY(
-                    "%s has old frame %.2f event %s, must port", PathName(this), x, str
+                    "%s has old frame %.2f mEvent %s, must port", PathName(this), x, str
                 );
             }
             if (x < f1) {
@@ -612,7 +612,7 @@ BEGIN_LOADS(CharClip)
         d >> mSkeletonSamples;
     }
     if (d.rev > 0x15) {
-        d >> unk198;
+        d >> mBitmask;
     }
 END_LOADS
 
@@ -680,7 +680,7 @@ void CharClip::SetBeatAlignMode(int align) {
 
 struct SortByFrame {
     bool operator()(const CharClip::BeatEvent &e1, const CharClip::BeatEvent &e2) const {
-        return e1.beat < e2.beat;
+        return e1.Beat() < e2.Beat();
     }
 };
 
@@ -717,22 +717,22 @@ int CharClip::GetContext() const {
     return 0;
 }
 
-const CharGraphNode *CharClip::FindFirstNode(CharClip *clip, float beat) const {
+const CharGraphNode *CharClip::FindFirstNode(CharClip *clip, float mBeat) const {
     NodeVector *nodes = mTransitions.FindNodes(clip);
     if (nodes) {
         for (int i = 0; i < nodes->size; i++) {
-            if (nodes->nodes[i].curBeat >= beat)
+            if (nodes->nodes[i].curBeat >= mBeat)
                 return &nodes->nodes[i];
         }
     }
     return nullptr;
 }
 
-const CharGraphNode *CharClip::FindLastNode(CharClip *clip, float beat) const {
+const CharGraphNode *CharClip::FindLastNode(CharClip *clip, float mBeat) const {
     NodeVector *nodes = mTransitions.FindNodes(clip);
     if (nodes) {
         for (int i = nodes->size - 1; i >= 0; i--) {
-            if (nodes->nodes[i].curBeat >= beat)
+            if (nodes->nodes[i].curBeat >= mBeat)
                 return &nodes->nodes[i];
         }
     }
@@ -784,7 +784,7 @@ int CharClip::TransitionVersion() {
 }
 
 const CharGraphNode *
-CharClip::FindNode(CharClip *clip, float beat, int flags, float f2) const {
+CharClip::FindNode(CharClip *clip, float mBeat, int flags, float f2) const {
     const CharGraphNode *n = nullptr;
     int blendMode = flags & 0xF;
     switch (blendMode) {
@@ -795,14 +795,14 @@ CharClip::FindNode(CharClip *clip, float beat, int flags, float f2) const {
     case kPlayNoBlend:
         return nullptr;
     case kPlayFirst: {
-        n = FindFirstNode(clip, beat);
+        n = FindFirstNode(clip, mBeat);
         if (n) {
             return n;
         }
         break;
     }
     case kPlayLast: {
-        n = FindLastNode(clip, beat);
+        n = FindLastNode(clip, mBeat);
         if (n) {
             return n;
         }
@@ -815,7 +815,7 @@ CharClip::FindNode(CharClip *clip, float beat, int flags, float f2) const {
     if (!n) {
         static CharGraphNode node;
         f2 /= 2;
-        node.curBeat = beat;
+        node.curBeat = mBeat;
         if (blendMode == kPlayLast) {
             MaxEq(node.curBeat, EndBeat() - f2);
         }
@@ -845,24 +845,24 @@ float CharClip::FrameToBeat(float frame) const {
     return ret;
 }
 
-float CharClip::BeatToFrame(float beat) const {
+float CharClip::BeatToFrame(float mBeat) const {
     float ret = 0;
-    mBeatTrack.ReverseLinear(beat, ret);
+    mBeatTrack.ReverseLinear(mBeat, ret);
     return ret;
 }
 
-float CharClip::DeltaSecondsToDeltaBeat(float f1, float beat) {
+float CharClip::DeltaSecondsToDeltaBeat(float f1, float mBeat) {
     if (mBeatTrack.size() == 1)
         return f1;
     else {
-        float ret = FrameToBeat(f1 * StartBeat() + BeatToFrame(beat));
-        ret -= beat;
+        float ret = FrameToBeat(f1 * StartBeat() + BeatToFrame(mBeat));
+        ret -= mBeat;
         return ret;
     }
 }
 
-int CharClip::BeatToSample(float beat, float *fracPtr) const {
-    float frame = BeatToFrame(beat);
+int CharClip::BeatToSample(float mBeat, float *fracPtr) const {
+    float frame = BeatToFrame(mBeat);
     float frac = 0;
     if (mBeatTrack.back().frame != 0) {
         frac = frame / mBeatTrack.back().frame;
@@ -871,32 +871,32 @@ int CharClip::BeatToSample(float beat, float *fracPtr) const {
     return mFull.FracToSample(fracPtr);
 }
 
-void CharClip::EvaluateChannel(void *dst, const void *data, float beat) {
+void CharClip::EvaluateChannel(void *dst, const void *data, float mBeat) {
     float fp;
-    int sample = BeatToSample(beat, &fp);
+    int sample = BeatToSample(mBeat, &fp);
     EvaluateChannel(dst, data, sample, fp);
 }
 
-void CharClip::RotateBy(CharBones &bones, float beat) {
+void CharClip::RotateBy(CharBones &bones, float mBeat) {
     float frac;
-    int samp = BeatToSample(beat, &frac);
+    int samp = BeatToSample(mBeat, &frac);
     MILO_ASSERT(frac == 0, 0x36E);
     mFull.RotateBy(bones, samp);
     mOne.RotateBy(bones, 0);
 }
 
-void CharClip::RotateTo(CharBones &bones, float f1, float beat) {
+void CharClip::RotateTo(CharBones &bones, float f1, float mBeat) {
     float fp;
-    int sample = BeatToSample(beat, &fp);
+    int sample = BeatToSample(mBeat, &fp);
     mFull.RotateTo(bones, f1, sample, fp);
     mOne.RotateTo(bones, f1, 0, 0);
 }
 
-void CharClip::ScaleAdd(CharBones &bones, float weight, float beat, float dbeat) {
+void CharClip::ScaleAdd(CharBones &bones, float weight, float mBeat, float dbeat) {
     float fp;
     float fp2;
-    int samp1 = BeatToSample(beat, &fp);
-    int samp2 = BeatToSample(beat - dbeat, &fp2);
+    int samp1 = BeatToSample(mBeat, &fp);
+    int samp2 = BeatToSample(mBeat - dbeat, &fp2);
     ScaleAddSample(bones, weight, samp1, fp, samp2, fp2);
 }
 
@@ -929,12 +929,12 @@ void CharClip::StuffBones(CharBones &bones) {
     bones.AddBones(blist);
 }
 
-void CharClip::PoseMeshes(ObjectDir *dir, float beat) {
+void CharClip::PoseMeshes(ObjectDir *dir, float mBeat) {
     CharBonesMeshes meshes;
     meshes.SetName("tmp_viseme_bones", dir);
     StuffBones(meshes);
     ScaleDown(meshes, 0.0f);
-    ScaleAdd(meshes, 1.0f, beat, 0.0f);
+    ScaleAdd(meshes, 1.0f, mBeat, 0.0f);
     meshes.PoseMeshes();
 }
 
@@ -954,10 +954,10 @@ DataNode CharClip::GetClipEvents() {
 }
 
 void CharClip::ApplyBlendedSkeletons(
-    CharClip **clips, CharBones &bones, float beat, float frac
+    CharClip **clips, CharBones &bones, float mBeat, float frac
 ) {
     float f60;
-    int sample = BeatToSample(beat, &frac);
+    int sample = BeatToSample(mBeat, &frac);
     float f7 = 0;
     std::map<int, float> &curMap = mSkeletonSamples[sample];
     float f6 = 1;

@@ -21,7 +21,7 @@ CharHair::Strand *gStrand;
 CharHair::Point::Point(Hmx::Object *owner)
     : bone(owner), collides(owner), length(0), radius(0), outerRadius(0), sideLength(-1) {
     pos.Zero();
-    force.Zero();
+    accel.Zero();
     lastFriction.Zero();
     lastZ.Zero();
     pose.Zero();
@@ -34,7 +34,7 @@ CharHair::Point::Point(const CharHair::Point &pt) : bone(pt.bone), collides(pt.c
     collides = pt.collides;
     radius = pt.radius;
     outerRadius = pt.outerRadius;
-    force = pt.force;
+    accel = pt.accel;
     lastFriction = pt.lastFriction;
     lastZ = pt.lastZ;
     sideLength = pt.sideLength;
@@ -109,7 +109,7 @@ void operator>>(BinStreamRev &d, CharHair::Point &pt) {
         d >> pt.pose;
     }
     pt.collides.clear();
-    pt.force.Zero();
+    pt.accel.Zero();
     pt.lastFriction.Zero();
     pt.lastZ.Zero();
 }
@@ -469,7 +469,7 @@ void CharHair::DoReset(int reset) {
                 Cross(v8c, v98, pt.lastZ);
                 Normalize(pt.lastZ, pt.lastZ);
                 Cross(v98, pt.lastZ, v8c);
-                pt.force.Zero();
+                pt.accel.Zero();
                 pt.lastFriction.Zero();
             }
         }
@@ -516,7 +516,7 @@ void CharHair::SimulateInternal(float f) {
             for (int j = 0; j < points.size(); j++) {
                 Point &thisPoint = points[j];
                 Vector3 v140(thisPoint.pos);
-                thisPoint.pos += thisPoint.force;
+                thisPoint.pos += thisPoint.accel;
                 thisPoint.pos.x += vec134.x;
                 thisPoint.pos.y += vec134.y;
                 thisPoint.pos.z += vec134.z;
@@ -546,7 +546,7 @@ void CharHair::SimulateInternal(float f) {
                 float rsa = RecipSqrtAccurate(LengthSquared(m128.y));
                 float rsalen = thisPoint.length * rsa - 1.0f;
                 if (j > 0) {
-                    ScaleAddEq(points[j - 1].force, m128.y, -sixtyover * 0.5f * rsalen);
+                    ScaleAddEq(points[j - 1].accel, m128.y, -sixtyover * 0.5f * rsalen);
                 }
                 ScaleAddEq(thisPoint.pos, m128.y, rsalen);
                 Vector3 v158;
@@ -563,7 +563,7 @@ void CharHair::SimulateInternal(float f) {
                         Vector3 v164;
                         float collideRad = thisCollide->GetRadius(thisPoint.pos, v164);
                         switch (thisCollide->GetShape()) {
-                        case CharCollide::kCollidePlane: // 0
+                        case CharCollide::kPlane: // 0
                             if (maxRad > collideRad) {
                                 ScaleAddEq(
                                     thisPoint.pos,
@@ -572,8 +572,8 @@ void CharHair::SimulateInternal(float f) {
                                 );
                             }
                             break;
-                        case CharCollide::kCollideCigar: // 3
-                        case CharCollide::kCollideSphere: { // 1
+                        case CharCollide::kCigar: // 3
+                        case CharCollide::kSphere: { // 1
                             float v164sq = LengthSquared(v164);
                             float sumRad = collideRad + maxRad;
                             if (v164sq < sumRad * sumRad) {
@@ -603,8 +603,8 @@ void CharHair::SimulateInternal(float f) {
                             }
                             break;
                         }
-                        case CharCollide::kCollideInsideCigar: // 4
-                        case CharCollide::kCollideInsideSphere: { // 2
+                        case CharCollide::kInsideCigar: // 4
+                        case CharCollide::kInsideSphere: { // 2
                             float v164sq42 = LengthSquared(v164);
                             float minusRad = collideRad - maxRad;
                             if (v164sq42 > minusRad * minusRad) {
@@ -647,15 +647,15 @@ void CharHair::SimulateInternal(float f) {
                     thisPoint.lastZ = t100.m.z;
                     if (thisPoint.bone)
                         thisPoint.bone->SetWorldXfm(t100);
-                    Subtract(v158, thisPoint.pos, thisPoint.force);
+                    Subtract(v158, thisPoint.pos, thisPoint.accel);
                     Vector3 v170;
-                    Subtract(thisPoint.lastFriction, thisPoint.force, v170);
-                    thisPoint.lastFriction = thisPoint.force;
-                    thisPoint.force *= 1.0f - powed;
-                    ScaleAddEq(thisPoint.force, v170, -mFriction);
+                    Subtract(thisPoint.lastFriction, thisPoint.accel, v170);
+                    thisPoint.lastFriction = thisPoint.accel;
+                    thisPoint.accel *= 1.0f - powed;
+                    ScaleAddEq(thisPoint.accel, v170, -mFriction);
                     Vector3 v17c;
                     Subtract(thisPoint.pos, v140, v17c);
-                    ScaleAddEq(thisPoint.force, v17c, mInertia);
+                    ScaleAddEq(thisPoint.accel, v17c, mInertia);
                     t100.v = thisPoint.pos;
                 }
             }

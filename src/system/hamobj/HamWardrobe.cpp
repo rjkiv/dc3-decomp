@@ -309,7 +309,7 @@ void HamWardrobe::UpdateOverlay() {
                 std::set<String> strings;
                 for (CharClipDriver *it = driver->First(); it != nullptr;
                      it = it->Next()) {
-                    String cur(it->GetClip() ? it->GetClip()->Name() : "<NULL>");
+                    String cur(it->Clip() ? it->Clip()->Name() : "<NULL>");
                     if (strings.find(cur) != strings.end()) {
                         continue;
                     } else {

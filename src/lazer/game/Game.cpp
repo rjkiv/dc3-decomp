@@ -573,7 +573,7 @@ void Game::LoadNewSongMoves(Symbol s1, bool b2) {
             FileMerger *fm = TheHamDirector->GetWorld()->Find<FileMerger>("world.fm");
             FileMerger::Merger *merger = fm->FindMerger(song, true);
             merger->Clear(true);
-            merger->SetSelected(milo, true);
+            merger->Select(milo, true);
             fm->StartLoad(true);
         }
     }

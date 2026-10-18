@@ -47,25 +47,25 @@ protected:
 };
 
 void FileMerger::Merger::Clear(bool b1) {
-    mLoaded.Set(FilePath::Root().c_str(), "");
-    Hmx::Object *owner = mLoadedObjects.Owner();
+    loaded.Set(FilePath::Root().c_str(), "");
+    Hmx::Object *owner = loadedObjects.Owner();
     if (owner != sFmDeleting) {
         static Message msg("on_pre_clear", 0);
-        msg[0] = mName;
+        msg[0] = name;
         owner->HandleType(msg);
     }
-    while (!mLoadedObjects.empty()) {
-        delete mLoadedObjects.front();
+    while (!loadedObjects.empty()) {
+        delete loadedObjects.front();
     }
-    ObjectDir *mergerDir = MergerDir();
+    ObjectDir *mergerDir = ToDir();
     if (mergerDir) {
-        while (!mLoadedSubdirs.empty()) {
-            ObjectDir *curSubdir = mLoadedSubdirs.front();
-            mLoadedSubdirs.pop_front();
+        while (!loadedSubdirs.empty()) {
+            ObjectDir *curSubdir = loadedSubdirs.front();
+            loadedSubdirs.pop_front();
             mergerDir->RemoveSubDir(curSubdir);
         }
     } else {
-        mLoadedSubdirs.clear();
+        loadedSubdirs.clear();
     }
     if (b1 && !TheRnd.Splashing()) {
         TheRnd.BeginDrawing();
@@ -87,7 +87,7 @@ FileMerger::~FileMerger() {
 }
 
 BEGIN_HANDLERS(FileMerger)
-    HANDLE_EXPR(loaded, FindMerger(_msg->Sym(2), true)->mLoaded)
+    HANDLE_EXPR(loaded, FindMerger(_msg->Sym(2), true)->loaded)
     HANDLE(select, OnSelect)
     HANDLE(start_load, OnStartLoad)
     HANDLE_ACTION(clear, Clear())
@@ -99,17 +99,17 @@ BEGIN_HANDLERS(FileMerger)
 END_HANDLERS
 
 BEGIN_CUSTOM_PROPSYNC(FileMerger::Merger)
-    SYNC_PROP(name, o.mName)
-    SYNC_PROP(selected, o.mSelected)
-    SYNC_PROP(loaded, o.mLoaded)
-    SYNC_PROP(dir, o.mDir)
-    SYNC_PROP(proxy, o.mProxy)
-    SYNC_PROP(subdirs, (int &)o.mSubdirs)
-    SYNC_PROP(preclear, o.mPreClear)
-    SYNC_PROP(loaded_objects, o.mLoadedObjects) {
+    SYNC_PROP(name, o.name)
+    SYNC_PROP(selected, o.selected)
+    SYNC_PROP(loaded, o.loaded)
+    SYNC_PROP(dir, o.dir)
+    SYNC_PROP(proxy, o.proxy)
+    SYNC_PROP(subdirs, (int &)o.subdirs)
+    SYNC_PROP(preclear, o.preclear)
+    SYNC_PROP(loaded_objects, o.loadedObjects) {
         static Symbol _s("loaded_subdirs");
         if (sym == _s && (_op & (kPropGet | kPropSize)))
-            return PropSync(o.mLoadedSubdirs, _val, _prop, _i + 1, _op);
+            return PropSync(o.loadedSubdirs, _val, _prop, _i + 1, _op);
     }
 END_CUSTOM_PROPSYNC
 
@@ -122,13 +122,13 @@ BEGIN_PROPSYNCS(FileMerger)
 END_PROPSYNCS
 
 BinStream &operator<<(BinStream &bs, const FileMerger::Merger &fm) {
-    bs << fm.mName;
-    bs << fm.mSelected;
-    bs << fm.mLoaded;
-    bs << fm.mDir;
-    bs << fm.mProxy;
-    bs << fm.mSubdirs;
-    bs << fm.mPreClear;
+    bs << fm.name;
+    bs << fm.selected;
+    bs << fm.loaded;
+    bs << fm.dir;
+    bs << fm.proxy;
+    bs << fm.subdirs;
+    bs << fm.preclear;
     return bs;
 }
 
@@ -155,17 +155,17 @@ void FileMerger::PreSave(BinStream &) { Clear(); }
 void FileMerger::PostSave(BinStream &) { StartLoadInternal(false, false); }
 
 BinStreamRev &operator>>(BinStreamRev &d, FileMerger::Merger &fm) {
-    d >> fm.mName;
-    d >> fm.mSelected;
-    d >> fm.mLoaded;
-    d >> fm.mDir;
+    d >> fm.name;
+    d >> fm.selected;
+    d >> fm.loaded;
+    d >> fm.dir;
     if (d.rev > 0) {
         if (d.rev != 4) {
-            d >> fm.mProxy;
+            d >> fm.proxy;
         }
-        d >> (int &)fm.mSubdirs;
+        d >> (int &)fm.subdirs;
         if (d.rev > 2) {
-            d >> fm.mPreClear;
+            d >> fm.preclear;
         }
     }
     return d;
@@ -189,7 +189,7 @@ void FileMerger::FinishLoading(Loader *ldr) {
     DirLoader *dl = dynamic_cast<DirLoader *>(ldr);
     Merger *merger = NotifyFileLoaded(ldr, dl);
     if (dl && !sDisableAll) {
-        if (merger->mProxy) {
+        if (merger->proxy) {
             MILO_ASSERT(dl->GetDir(), 0x236);
             ObjectDir *dir = Dir()->Find<ObjectDir>(dl->GetDir()->Name(), false);
             if (dir) {
@@ -200,10 +200,10 @@ void FileMerger::FinishLoading(Loader *ldr) {
                 ObjectDir *dlDir = dl->GetDir();
                 ReserveToFit(nullptr, Dir(), 2);
                 dlDir->SetName(dlDir->Name(), Dir());
-                merger->mLoadedObjects.push_back(dlDir);
+                merger->loadedObjects.push_back(dlDir);
             }
         } else {
-            ObjectDir *mergerDir = merger->MergerDir();
+            ObjectDir *mergerDir = merger->ToDir();
             ReserveToFit(dl->GetDir(), mergerDir, 0);
             MergeDirs(dl->GetDir(), mergerDir, *this);
         }
@@ -215,7 +215,7 @@ void FileMerger::FailedLoading(Loader *l) {
     MILO_ASSERT(l == mCurLoader, 0x204);
     MILO_ASSERT(l->LoaderFile() == mFilesPending.front()->loading, 0x205);
     static Message msg("on_load_failed", 0);
-    msg[0] = mFilesPending.front()->mName;
+    msg[0] = mFilesPending.front()->name;
     HandleType(msg);
     PostMerge(mFilesPending.front(), dynamic_cast<DirLoader *>(l), false);
 }
@@ -228,7 +228,7 @@ MergeFilter::Action FileMerger::Filter(Hmx::Object *o1, Hmx::Object *o2, ObjectD
         a = MergeAction(o1, o2, dir);
     }
     if (a == 1 && !o2) {
-        mFilesPending.front()->mLoadedObjects.push_back(o1);
+        mFilesPending.front()->loadedObjects.push_back(o1);
     }
     return a;
 }
@@ -239,10 +239,10 @@ MergeFilter::SubdirAction FileMerger::FilterSubdir(ObjectDir *o1, ObjectDir *o2)
     if (mFilter) {
         a = mFilter->FilterSubdir(o1, o2);
     } else {
-        a = MergeFilter::DefaultSubdirAction(o1, merger->mSubdirs);
+        a = MergeFilter::DefaultSubdirAction(o1, merger->subdirs);
     }
     if (a == 1 && !o2->HasSubDir(o1)) {
-        mFilesPending.front()->mLoadedSubdirs.push_back(o1);
+        mFilesPending.front()->loadedSubdirs.push_back(o1);
     }
     return a;
 }
@@ -250,7 +250,7 @@ MergeFilter::SubdirAction FileMerger::FilterSubdir(ObjectDir *o1, ObjectDir *o2)
 bool FileMerger::OriginalPath(Hmx::Object *obj, String &str) {
     Merger *merger = InMerger(obj);
     if (merger) {
-        str = merger->mLoaded;
+        str = merger->loaded;
         return true;
     } else {
         return false;
@@ -282,7 +282,7 @@ FileMerger::Merger *FileMerger::FindMerger(Symbol name, bool warn) {
 
 void FileMerger::ClearSelections() {
     for (int i = 0; i < mMergers.size(); i++) {
-        mMergers[i].mSelected.Set(FilePath::Root().c_str(), "");
+        mMergers[i].selected.Set(FilePath::Root().c_str(), "");
     }
     if (mCurLoader) {
         Merger *front = mFilesPending.front();
@@ -294,7 +294,7 @@ void FileMerger::ClearSelections() {
 
 int FileMerger::FindMergerIndex(Symbol name, bool warn) {
     for (int i = 0; i < mMergers.size(); i++) {
-        if (mMergers[i].mName == name) {
+        if (mMergers[i].name == name) {
             return i;
         }
     }
@@ -307,7 +307,7 @@ int FileMerger::FindMergerIndex(Symbol name, bool warn) {
 FileMerger::Merger *FileMerger::InMerger(Hmx::Object *o) {
     for (int i = 0; i < mMergers.size(); i++) {
         Merger &cur = mMergers[i];
-        if (cur.IsObjectLoaded(o)) {
+        if (cur.Has(o)) {
             return &cur;
         }
     }
@@ -370,10 +370,10 @@ FileMerger::MergeAction(Hmx::Object *o1, Hmx::Object *o2, ObjectDir *dir) {
 bool FileMerger::NeedsLoading(FileMerger::Merger &merger) {
     FOREACH (it, mFilesPending) {
         if (*it == &merger) {
-            return merger.mSelected != merger.loading || merger.unk21;
+            return merger.selected != merger.loading || merger.force;
         }
     }
-    return merger.mLoaded != merger.mSelected || merger.unk21;
+    return merger.loaded != merger.selected || merger.force;
 }
 
 void FileMerger::LaunchNextLoader() {
@@ -403,7 +403,7 @@ void FileMerger::LaunchNextLoader() {
 void FileMerger::Select(Symbol name, const FilePath &fp, bool b3) {
     Merger *merger = FindMerger(name, true);
     if (merger) {
-        merger->SetSelected(fp, b3);
+        merger->Select(fp, b3);
     }
 }
 
@@ -456,19 +456,19 @@ FileMerger::Merger *FileMerger::NotifyFileLoaded(Loader *l, DirLoader *dl) {
     m->Clear(false);
     if (!sDisableAll) {
         static Message msg("on_pre_merge", 0, 0, 0);
-        msg[0] = m->mName;
+        msg[0] = m->name;
         ObjectDir *dir = dl ? dl->GetDir() : nullptr;
         msg[1] = dir;
-        msg[2] = m->MergerDir();
+        msg[2] = m->ToDir();
         HandleType(msg);
-        m->mLoaded = m->loading;
+        m->loaded = m->loading;
         m->loading.SetRoot("");
     }
     return m;
 }
 
 void FileMerger::AppendLoader(FileMerger::Merger &merger) {
-    merger.unk21 = false;
+    merger.force = false;
     FOREACH (it, mFilesPending) {
         if (*it == &merger) {
             if (mCurLoader) {
@@ -481,14 +481,14 @@ void FileMerger::AppendLoader(FileMerger::Merger &merger) {
             break;
         }
     }
-    merger.loading = merger.mSelected;
-    if (merger.mPreClear)
+    merger.loading = merger.selected;
+    if (merger.preclear)
         merger.Clear(!mAsyncLoad);
     mFilesPending.push_back(&merger);
     if (TheLoadMgr.EditMode()) {
         static Message checkSync("check_sync", "", "");
         checkSync[0] = merger.loading;
-        checkSync[1] = merger.mName;
+        checkSync[1] = merger.name;
         HandleType(checkSync);
     }
 }
@@ -500,14 +500,14 @@ void FileMerger::PostMerge(FileMerger::Merger *merger, DirLoader *dl, bool b3) {
     if (b3) {
         {
             static Message msg("on_post_merge", 0, 0, 0);
-            msg[0] = merger->mName;
+            msg[0] = merger->name;
             ObjectDir *dir = dl ? dl->GetDir() : nullptr;
             msg[1] = dir;
-            msg[2] = merger->MergerDir();
+            msg[2] = merger->ToDir();
             HandleType(msg);
         }
         if (dl) {
-            if (!merger->mProxy) {
+            if (!merger->proxy) {
                 ObjectDir *dir = dl->GetDir();
                 if (dir) {
                     delete dir;
@@ -518,8 +518,8 @@ void FileMerger::PostMerge(FileMerger::Merger *merger, DirLoader *dl, bool b3) {
         }
         {
             static Message msg("on_post_delete", 0, 0, 0);
-            msg[0] = merger->mName;
-            msg[1] = merger->MergerDir();
+            msg[0] = merger->name;
+            msg[1] = merger->ToDir();
             msg[2] = mFilesPending.empty();
             HandleType(msg);
         }

@@ -44,14 +44,14 @@ public:
     void BlendOutOverrides(float);
     void ScaleAddViseme(CharClip *, float);
     void SetSongOffset(float offset) { mSongOffset = offset; }
-    void SetOverrideWeight(float weight) { mOverrideWeight = weight; }
-    float GetOverrideWeight() const { return mOverrideWeight; }
-    CharClip *OverrideClip() const { return mOverrideClip; }
+    void SetOverrideClipWeight(float weight) { mOverrideWeight = weight; }
+    float GetOverrideClipWeight() const { return mOverrideWeight; }
+    CharClip *GetOverrideClip() const { return mOverrideClip; }
     void SetOverrideClip(CharClip *c) { mOverrideClip = c; }
-    CharLipSync *LipSync() const { return mLipSync; }
-    ObjectDir *OverrideOptions() const { return mOverrideOptions; }
-    ObjectDir *Clips() const { return mClips; }
-    CharLipSync::PlayBack *GetPlayBack() const { return unk88; }
+    CharLipSync *GetLipSync() const { return mLipSync; }
+    ObjectDir *GetOverrideOptions() const { return mOverrideOptions; }
+    ObjectDir *GetClips() const { return mClips; }
+    CharLipSync::PlayBack *GetSongPlayer() const { return mSongPlayer; }
 
 protected:
     CharLipSyncDriver();
@@ -70,10 +70,10 @@ protected:
     float mSongOffset; // 0x80
     /** "should we loop this song, resets on song change" */
     bool mLoop; // 0x84
-    CharLipSync::PlayBack *unk88; // 0x88
-    bool unk8c; // 0x8c
-    float unk90; // 0x90
-    CharLipSync::PlayBack *unk94; // 0x94
+    CharLipSync::PlayBack *mSongPlayer; // 0x88
+    bool unk8c; // 0x8c - not in pdb
+    float unk90; // 0x90 - not in pdb
+    CharLipSync::PlayBack *mMainLipsyncPlayer; // 0x94
     /** "The CharBones object to add or blend into." */
     ObjPtr<CharBonesObject> mBones; // 0x98
     /** "Test charclip to apply, does nothing else" */
@@ -81,11 +81,11 @@ protected:
     /** "weight to apply this clip with" */
     float mTestWeight; // 0xc0
     float mOverallOverrideWeight; // 0xc4
-    bool unkc8; // 0xc8
-    bool unkc9; // 0xc9
-    float unkcc; // 0xcc
-    bool unkd0; // 0xd0
-    float unkd4; // 0xd4
+    bool mOverallOverrideBlendIn; // 0xc8
+    bool mOverallOverrideBlendOut; // 0xc9
+    float mOverallOverrideBlendMs; // 0xcc
+    bool mInitOverallOverrideBlending; // 0xd0
+    float mOverallOverrideBlendStartTime; // 0xd4
     /** "default clip to be used as the override - maybe be overriden programatically" */
     ObjPtr<CharClip> mOverrideClip; // 0xd8
     /** "weight to blend override clip. this is mostly here for testing,
@@ -97,11 +97,11 @@ protected:
     /** "is the override clip applied addtively on top of face mocap?
         If false, it will blend." */
     bool mApplyOverrideAdditively; // 0x104
-    ObjPtr<CharClip> unk108; // 0x108
-    float unk11c; // 0x11c
-    float unk120; // 0x120
-    float unk124; // 0x124
-    bool unk128; // 0x128
+    ObjPtr<CharClip> mBlendInOverrideClip; // 0x108
+    float mBlendInOverrideWeight; // 0x11c
+    float mOverrideClipBlendMs; // 0x120
+    float mBlendStartTime; // 0x124
+    bool mInitOverrideBlending; // 0x128
     /** "This will be used instead of the song, if set" */
     ObjPtr<CharDriver> mAlternateDriver; // 0x12c
 };

@@ -142,7 +142,7 @@ void CharClipDisplay::DrawTrack() {
         auto &beatEvents = mClip->BeatEvents();
         for (int i = 0; i < beatEvents.size(); i++) {
             auto &cur = beatEvents[i];
-            float xBeat = GetX(cur.beat);
+            float xBeat = GetX(cur.Beat());
             float emdiv = sEm / 2;
             TheRnd.DrawRect(
                 Hmx::Rect(xBeat, topProxy - emdiv, 1, 0.2f),
@@ -152,11 +152,11 @@ void CharClipDisplay::DrawTrack() {
                 nullptr
             );
             if (b1
-                && (cur.beat > mBeat
-                    || (i == 0 && mBeat > mClip->BeatEvents().back().beat))) {
+                && (cur.Beat() > mBeat
+                    || (i == 0 && mBeat > mClip->BeatEvents().back().Beat()))) {
                 b1 = false;
                 TheRnd.DrawString(
-                    cur.event.Str(),
+                    cur.Handler().Str(),
                     Vector2(xBeat, topProxy - (10.0f + emdiv)),
                     Hmx::Color(0.2f, 0.2f, 1),
                     true
@@ -187,12 +187,12 @@ void CharClipDisplay::DrawTrack() {
                 float x1c = GetX(mBeat);
                 if (leftIk) {
                     const char *dataStr =
-                        MakeString("L: %.1f", fdata[leftIk->DataIndex()]);
+                        MakeString("L: %.1f", fdata[leftIk->GetDataIndex()]);
                     TheRnd.DrawString(dataStr, Vector2(x1c - 90, mTop + 10), yellow, true);
                 }
                 if (rightIk) {
                     const char *dataStr =
-                        MakeString("R: %.1f", fdata[rightIk->DataIndex()]);
+                        MakeString("R: %.1f", fdata[rightIk->GetDataIndex()]);
                     TheRnd.DrawString(dataStr, Vector2(x1c - 40, mTop + 10), yellow, true);
                 }
             }

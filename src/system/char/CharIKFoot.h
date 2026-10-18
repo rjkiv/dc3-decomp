@@ -7,6 +7,12 @@
 /** "Remedial foot skate ik, not yet ready for prime time." */
 class CharIKFoot : public CharIKHand {
 public:
+    enum State {
+        kFootFollow = 0x0000,
+        kFootFrozen = 0x0001,
+        kFootCatchup = 0x0002
+    };
+
     // Hmx::Object
     virtual ~CharIKFoot();
     OBJ_CLASSNAME(CharIKFoot);
@@ -27,7 +33,7 @@ public:
     NEW_OBJ(CharIKFoot)
 
     RndTransformable *GetData() const { return mData; }
-    int DataIndex() const { return mDataIndex; }
+    int GetDataIndex() const { return mDataIndex; }
 
 protected:
     CharIKFoot();
@@ -35,7 +41,7 @@ protected:
     void DoFSM(Character *, Transform &);
 
     ObjPtr<RndTransformable> mDummy; // 0xb0
-    int mState; // 0xc4, PDB says CharIKFoot::State 
+    State mState; // 0xc4, PDB says CharIKFoot::State
     ObjPtr<RndTransformable> mData; // 0xc8
     int mDataIndex; // 0xdc
     Vector3 mFreezePos; // 0xe0

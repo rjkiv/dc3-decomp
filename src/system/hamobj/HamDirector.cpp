@@ -2934,11 +2934,11 @@ void HamDirector::OnPopulateMoves() {
                         "modular_song_data/transition_charclips/%s.milo", s1300
                     ));
                     FileMerger::Merger fm(mMoveMerger);
-                    fm.mName = transition_charclips;
-                    fm.mDir = clipDir;
-                    fm.mSubdirs = MergeFilter::kAllSubdirs;
-                    fm.mPreClear = true;
-                    fm.SetSelected(fp, true);
+                    fm.name = transition_charclips;
+                    fm.dir = clipDir;
+                    fm.subdirs = MergeFilter::kAllSubdirs;
+                    fm.preclear = true;
+                    fm.Select(fp, true);
                     mMoveMerger->Mergers().push_back(fm);
                     gMoveMergeMap[s1300]++;
                 }
@@ -2946,11 +2946,11 @@ void HamDirector::OnPopulateMoves() {
             if (gMoveMergeMap[clipName] == 0) {
                 FilePath fp(MakeString("modular_song_data/charclips/%s.milo", clipName));
                 FileMerger::Merger fm(mMoveMerger);
-                fm.mName = charclips;
-                fm.mDir = clipDir;
-                fm.mSubdirs = MergeFilter::kAllSubdirs;
-                fm.mPreClear = true;
-                fm.SetSelected(fp, true);
+                fm.name = charclips;
+                fm.dir = clipDir;
+                fm.subdirs = MergeFilter::kAllSubdirs;
+                fm.preclear = true;
+                fm.Select(fp, true);
                 mMoveMerger->Mergers().push_back(fm);
                 gMoveMergeMap[clipName]++;
             }
@@ -2961,11 +2961,11 @@ void HamDirector::OnPopulateMoves() {
                     MakeString("modular_song_data/hammoves/%s.milo", hamMoveMiloName)
                 );
                 FileMerger::Merger fm(mMoveMerger);
-                fm.mName = hammoves;
-                fm.mDir = moveDir;
-                fm.mSubdirs = MergeFilter::kAllSubdirs;
-                fm.mPreClear = true;
-                fm.SetSelected(fp, true);
+                fm.name = hammoves;
+                fm.dir = moveDir;
+                fm.subdirs = MergeFilter::kAllSubdirs;
+                fm.preclear = true;
+                fm.Select(fp, true);
                 mMoveMerger->Mergers().push_back(fm);
                 gMoveMergeMap[hamMoveMiloName]++;
             }

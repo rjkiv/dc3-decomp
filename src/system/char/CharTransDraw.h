@@ -27,12 +27,12 @@ public:
     OBJ_MEM_OVERLOAD(0x14)
     NEW_OBJ(CharTransDraw);
 
+protected:
+    CharTransDraw();
+
     /** "The Characters whose translucent bits we will draw" */
     ObjPtrList<Character> mChars; // 0x40
     /** "True if the transparent pieces should be drawn
         even if the character is not showing" */
     bool mForceDraw; // 0x54
-
-protected:
-    CharTransDraw();
 };

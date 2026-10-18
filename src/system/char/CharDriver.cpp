@@ -236,7 +236,7 @@ void CharDriver::PollDeps(std::list<Hmx::Object *> &, std::list<Hmx::Object *> &
 
 CharClip *CharDriver::FirstClip() {
     if (mFirst)
-        return mFirst->GetClip();
+        return mFirst->Clip();
     else
         return nullptr;
 }
@@ -277,15 +277,15 @@ float CharDriver::TopClipFrame() {
     else {
         while (it->Next())
             it = it->Next();
-        if (!it->GetClip())
+        if (!it->Clip())
             return 0;
         else {
-            float avg = it->GetClip()->AverageBeatsPerSecond();
+            float avg = it->Clip()->AverageBeatsPerSecond();
             float frame = 0;
             if (avg < 0)
                 return frame;
             else
-                frame = (it->mBeat - it->GetClip()->StartBeat()) / avg;
+                frame = (it->mBeat - it->Clip()->StartBeat()) / avg;
             return frame;
         }
     }
@@ -320,7 +320,7 @@ CharClipDriver *CharDriver::Play(CharClip *clip, int i, float f1, float f2, floa
             f1 = mBlendWidth;
         if (mPlayMultipleClips) {
             for (CharClipDriver *it = mFirst; it != nullptr; it = it->Next()) {
-                if (clip == it->GetClip())
+                if (clip == it->Clip())
                     return nullptr;
             }
         }
@@ -371,7 +371,7 @@ float CharDriver::EvaluateFlags(int i) {
     float ret = 0;
     for (CharClipDriver *it = mFirst; it != nullptr; it = it->Next()) {
         float sigmoid = EaseSigmoid(it->mBlendFrac, 0, 0);
-        if ((it->GetClip()->Flags() & i) != 0) {
+        if ((it->Clip()->Flags() & i) != 0) {
             ret += sigmoid * mult;
         }
         mult *= 1 - sigmoid;
@@ -429,7 +429,7 @@ CharClip *CharDriver::FirstPlayingClip() {
         }
     }
     if (it != nullptr) {
-        return it->GetClip();
+        return it->Clip();
     } else {
         return nullptr;
     }
@@ -438,7 +438,7 @@ CharClip *CharDriver::FirstPlayingClip() {
 void CharDriver::SetClipWeightMap() {
     mClipWeightMap.clear();
     for (CharClipDriver *d = mFirst; d != nullptr; d = d->Next()) {
-        CharClip *c = d->GetClip();
+        CharClip *c = d->Clip();
         auto it = mClipWeightMap.find(c);
         if (it != mClipWeightMap.end()) {
             it->second += d->mWeight;
@@ -467,7 +467,7 @@ float CharDriver::Display(float top) {
     for (CharClipDriver *d = mFirst; d != nullptr; d = d->Next()) {
         clips.push_back(CharClipDisplay());
         clips.back().SetBeat(d->mBeat);
-        clips.back().SetClip(d->GetClip(), false);
+        clips.back().SetClip(d->Clip(), false);
         clips.back().SetWeight(d->mBlendFrac);
     }
     float lineSpacing = CharClipDisplay::LineSpacing();
@@ -493,8 +493,7 @@ float CharDriver::Display(float top) {
         CharClipDriver *next = d->Next();
         CharClipDisplay &from = clips[n];
         CharClipDisplay &to = clips[n + 1];
-        CharClip::NodeVector *nodes =
-            next->GetClip()->GetTransitions().FindNodes(d->GetClip());
+        CharClip::NodeVector *nodes = next->Clip()->GetTransitions().FindNodes(d->Clip());
         if (nodes) {
             for (int i = 0; i < nodes->size; i++) {
                 int toOffset = 0;
@@ -540,7 +539,7 @@ DataNode CharDriver::OnSetFirstBeatOffset(DataArray *msg) {
 DataNode CharDriver::OnPrint(const DataArray *) {
     MILO_LOG("%s\n", PathName(this));
     for (CharClipDriver *it = mFirst; it != nullptr; it = it->Next()) {
-        MILO_LOG("   clip %s blend %.3f\n", it->GetClip()->Name(), it->mBlendFrac);
+        MILO_LOG("   clip %s blend %.3f\n", it->Clip()->Name(), it->mBlendFrac);
     }
     return 0;
 }

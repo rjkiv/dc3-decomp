@@ -25,6 +25,7 @@ public:
     void SetBeat(float beat) { mBeat = beat; }
     void SetWeight(float weight) { mWeight = weight; }
     void SetTop(float top) { mTop = top; }
+    void SetIndent(float indent) { mIndent = indent; }
     float GetY() const { return mTop; }
 
     /** "Zoom value for the highlight display" */
@@ -33,6 +34,10 @@ public:
     static float LineSpacing();
     static void Init(ObjectDir *);
     static Hmx::Object *FindSource(Hmx::Object *);
+
+protected:
+    static float sEm;
+    static ObjectDir *sDir;
 
     CharClip *mClip; // 0x0
     float mStart; // 0x4
@@ -45,8 +50,4 @@ public:
     float mWeight; // 0x20
     char mText[64]; // 0x24
     float mIndent; // 0x64
-
-protected:
-    static float sEm;
-    static ObjectDir *sDir;
 };

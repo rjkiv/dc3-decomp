@@ -86,7 +86,7 @@ protected:
         keeps the local pivot z axis down to prevent rolling.
         Eyeballs can't roll, for instance, but heads can." */
     bool mAllowRoll; // 0xe0
-    bool mClamped;
+    bool mClamped; // 0xe1
     /** "If enabled, high frequency noise is added to pitch and/or yaw each frame" */
     bool mEnableJitter; // 0xe2
     /** "if enable_jitter is on, random noise from

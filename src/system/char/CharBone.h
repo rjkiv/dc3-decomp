@@ -10,12 +10,12 @@
 class CharBone : public Hmx::Object {
 public:
     struct WeightContext {
-        WeightContext() : mContext(0), mWeight(0) {}
+        WeightContext() : context(0), weight(0) {}
 
         /** "context for this bone weight" */
-        int mContext; // 0x0
+        int context; // 0x0
         /** "bone weight for this context" */
-        float mWeight; // 0x4
+        float weight; // 0x4
     };
     OBJ_CLASSNAME(CharBone);
     OBJ_SET_TYPE(CharBone);
@@ -30,16 +30,16 @@ public:
 
     int PositionContext() const { return mPositionContext; }
     int ScaleContext() const { return mScaleContext; }
-    CharBones::Type RotationType() const { return mRotation; }
+    CharBones::Type Rotation() const { return mRotation; }
     int RotationContext() const { return mRotationContext; }
-    CharBone *Target() const { return mTarget; }
-    RndTransformable *BoneTrans() { return mTrans; }
+    CharBone *GetTarget() const { return mTarget; }
+    RndTransformable *Trans() { return mTrans; }
     void SetTrans(RndTransformable *t) { mTrans = t; }
     void SetTarget(CharBone *b) { mTarget = b; }
     void SetPositionContext(int c) { mPositionContext = c; }
     void SetRotationContext(int c) { mRotationContext = c; }
-    void SetRotationType(CharBones::Type ty) { mRotation = ty; }
-    bool BakeOutAsTopLevel() const { return mBakeOutAsTopLevel; }
+    void SetRotation(CharBones::Type ty) { mRotation = ty; }
+    bool BakeOutAsTopLevel() { return mBakeOutAsTopLevel; }
     void ClearContext(int);
     void StuffBones(std::list<CharBones::Bone> &, int) const;
     float GetWeight(int) const;

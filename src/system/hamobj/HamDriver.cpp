@@ -133,12 +133,12 @@ float HamDriver::DisplayRecurse(Layer *layer, int indent, float top) {
         if (array->usedWeight != 0) {
             float sem = indent * CharClipDisplay::Em();
             CharClipDisplay display;
-            display.mTop = top;
-            display.mBeat = mOldBeat;
-            display.mIndent = sem;
+            display.SetTop(top);
+            display.SetBeat(mOldBeat);
+            display.SetIndent(sem);
             display.SetText(MakeString("(%s)", array->name));
             display.SetStartEnd(mOldBeat - 4.0f, mOldBeat + 4.0f, true);
-            display.mWeight = array->usedWeight;
+            display.SetWeight(array->usedWeight);
             display.DrawTrack();
             display.DrawBlend(array->blendStart, 1.0f);
             display.DrawCursor();
@@ -154,11 +154,11 @@ float HamDriver::DisplayRecurse(Layer *layer, int indent, float top) {
             float sem = indent * CharClipDisplay::Em();
             CharClipDisplay display;
             float beat = (mOldBeat - clip->startBeat) + clip->clip->StartBeat();
-            display.mIndent = sem;
-            display.mBeat = beat;
-            display.mWeight = clip->usedWeight;
+            display.SetIndent(sem);
+            display.SetBeat(beat);
+            display.SetWeight(clip->usedWeight);
             display.SetClip(clip->clip, true);
-            display.mTop = top;
+            display.SetTop(top);
             display.DrawTrack();
             float beat2 = (clip->clip->StartBeat() + clip->blendStart) - clip->startBeat;
             display.DrawBlend(beat2, 1.0f);

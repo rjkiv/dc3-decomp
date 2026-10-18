@@ -28,8 +28,8 @@ BEGIN_HANDLERS(CharBoneDir)
 END_HANDLERS
 
 BEGIN_CUSTOM_PROPSYNC(CharBoneDir::Recenter)
-    SYNC_PROP(targets, o.mTargets)
-    SYNC_PROP(average, o.mAverage)
+    SYNC_PROP(targets, o.Targets())
+    SYNC_PROP(average, o.Average())
     SYNC_PROP(slide, o.mSlide)
 END_CUSTOM_PROPSYNC
 
@@ -45,9 +45,9 @@ BEGIN_PROPSYNCS(CharBoneDir)
 END_PROPSYNCS
 
 BinStream &operator<<(BinStream &bs, CharBoneDir::Recenter &r) {
-    bs << r.mTargets;
-    bs << r.mAverage;
-    bs << r.mSlide;
+    bs << r.Targets();
+    bs << r.Average();
+    bs << r.Slide();
     return bs;
 }
 
@@ -70,8 +70,8 @@ BEGIN_COPYS(CharBoneDir)
 END_COPYS
 
 BinStream &operator>>(BinStream &bs, CharBoneDir::Recenter &r) {
-    bs >> r.mTargets;
-    bs >> r.mAverage;
+    bs >> r.Targets();
+    bs >> r.Average();
     bs >> r.mSlide;
     return bs;
 }
@@ -251,7 +251,7 @@ void CharBoneDir::SyncFilter() {
     mFilterBones.clear();
     for (ObjDirItr<CharBone> it(this, true); it != nullptr; ++it) {
         if (mFilterContext & it->PositionContext() || mFilterContext & it->ScaleContext()
-            || (it->RotationType() != CharBones::TYPE_END
+            || (it->Rotation() != CharBones::TYPE_END
                 && mFilterContext & it->RotationContext())) {
             mFilterBones.push_back(it);
         }

@@ -16,9 +16,9 @@ public:
         IKTarget(ObjPtr<RndTransformable>, float);
 
         /** "Where to move the hand to" */
-        ObjPtr<RndTransformable> mTarget; // 0x0
+        ObjPtr<RndTransformable> targetTrans; // 0x0
         /** "Distance along the negative z axis of the transform to snap to" */
-        float mExtent; // 0x14
+        float extent; // 0x14
     };
     // Hmx::Object
     virtual ~CharIKHand();
@@ -68,24 +68,21 @@ protected:
     /** "Range to swing the elbow in radians to hit target, better looking suggest .7" */
     float mElbowSwing; // 0x6c
     /** "Turn this on to do IK calcs even if weight is 0" */
-    bool mAlwaysIKElbow; // 0x70
+    bool mAlwaysIK; // 0x70
     /** "Are we allowed to pull the shoulder to reach goal,
         or do we lock the elbow when goal is too far?" */
     bool mPullShoulder; // 0x71
     bool mHandChanged; // 0x72
-    float unk74;
-    float unk78;
-    float unk7c;
-    float unk80;
-    float unk84;
-    float unk88;
-    float unk8c;
+    Vector3 mWorldDst; // 0x74
+    float mInv2ab; // 0x84
+    float mAAPlusBB; // 0x88
+    float mArmLength; // 0x8c
     /** "Constrain the wrist rotation to be believable" */
     bool mConstrainWrist; // 0x90
     /** "Constrain wrist rotation to this angle (in radians)" */
     float mWristRadians; // 0x94
     /** "Collision sphere that elbow won't enter." */
-    ObjPtr<CharCollide> mElbowCollide; // 0x98
+    ObjPtr<CharCollide> mElbowCollisionObj; // 0x98
     /** "Choose the clockwise solution for the collision detection" */
     bool mClockwise; // 0xac
 };

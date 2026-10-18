@@ -19,6 +19,7 @@ protected:
 class FileMergerOrganizer : public Hmx::Object, public Loader::Callback {
 public:
     enum OrganizedState {
+        kStartLoad = 0,
         kFinishLoad = 1,
         kFailedLoad = 2,
         kPendingLoad = 3
@@ -48,17 +49,17 @@ public:
     void StartLoad();
     void AddFileMerger(FileMerger *);
 
-private:
-    void Dispatch(OrganizedFileMerger *);
-    void RemoveFileMerger(OrganizedFileMerger *);
-    void CheckDone();
-
 protected:
     FileMergerOrganizer();
 
     FileMerger::Merger *FrontInactiveMerger(OrganizedFileMerger *);
 
-    std::list<OrganizedFileMerger> mOrganizedFileMergers; // 0x30
+private:
+    void Dispatch(OrganizedFileMerger *);
+    void RemoveFileMerger(OrganizedFileMerger *);
+    void CheckDone();
+
+    std::list<OrganizedFileMerger> mFileMergers; // 0x30
     OrganizedFileMerger *mActiveOrg; // 0x38
     FileMergerOrganizerLoader *mStartOrg; // 0x3c
 };

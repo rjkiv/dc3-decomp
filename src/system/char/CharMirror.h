@@ -27,15 +27,15 @@ public:
     OBJ_MEM_OVERLOAD(0x18)
     NEW_OBJ(CharMirror);
 
-    ObjPtr<CharServoBone> mServo; // 0x28
-    ObjPtr<CharServoBone> mMirrorServo; // 0x2c
-    CharBonesAlloc mBones; // 0x50
-    std::vector<MirrorOp> mOps; // 0xdc
-
     void SetServo(CharServoBone *);
     void SetMirrorServo(CharServoBone *);
 
 protected:
     CharMirror();
     void SyncBones();
+
+    ObjPtr<CharServoBone> mServo; // 0x28
+    ObjPtr<CharServoBone> mMirrorServo; // 0x2c
+    CharBonesAlloc mBones; // 0x50
+    std::vector<MirrorOp> mOps; // 0xdc
 };

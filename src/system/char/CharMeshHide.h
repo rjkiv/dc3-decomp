@@ -12,7 +12,7 @@ public:
         Hide(const Hide &);
         Hide &operator=(const Hide &);
 
-        ObjPtr<RndDrawable> mDraw; // 0x0
+        ObjPtr<RndDrawable> mDrawable; // 0x0
         int mFlags; // 0x14
         bool mShow; // 0x18
     };

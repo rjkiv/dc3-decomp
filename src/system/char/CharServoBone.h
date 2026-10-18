@@ -35,10 +35,21 @@ public:
     void MoveToFacing(Transform &);
     void MoveToDeltaFacing(Transform &);
     void ZeroDeltas();
-    void SetRegulateWaypoint(Waypoint *wp) { mRegulate = wp; }
+    void Regulate(Waypoint *wp) { mWay = wp; }
+    bool MovingSelf() const { return mMoveSelf; }
 
     OBJ_MEM_OVERLOAD(0x1B)
     NEW_OBJ(CharServoBone)
+
+protected:
+    // CharBonesMeshes
+    virtual void ReallocateInternal();
+
+    void RegulateInternal(class Character *);
+    void
+    DoRegulate(class Character *, class Waypoint *, class CharClipDriver *, float, float);
+
+    CharServoBone();
 
     RndTransformable *mPelvis; // 0x84
     float *mFacingRotDelta; // 0x88
@@ -51,15 +62,5 @@ public:
     /** "What degrees of freedom we can accomodate" */
     Symbol mClipType; // 0x9c
     /** "Waypoint to regulate to" */
-    ObjPtr<Waypoint> mRegulate; // 0xa0
-
-protected:
-    // CharBonesMeshes
-    virtual void ReallocateInternal();
-
-    void RegulateInternal(class Character *);
-    void
-    DoRegulate(class Character *, class Waypoint *, class CharClipDriver *, float, float);
-
-    CharServoBone();
+    ObjPtr<Waypoint> mWay; // 0xa0
 };

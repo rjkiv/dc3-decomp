@@ -10,16 +10,16 @@
 class CharCollide : public RndTransformable {
 public:
     enum Shape {
-        kCollidePlane = 0,
-        kCollideSphere = 1,
-        kCollideInsideSphere = 2,
-        kCollideCigar = 3,
-        kCollideInsideCigar = 4
+        kPlane = 0x0000,
+        kSphere = 0x0001,
+        kInsideSphere = 0x0002,
+        kCigar = 0x0003,
+        kInsideCigar = 0x0004
     };
 
-    struct CharCollideStruct {
-        int unk0;
-        Vector3 unk4;
+    struct VertData {
+        int vertIndex; // 0x0
+        Vector3 offset; // 0x4
     };
 
     // Hmx::Object
@@ -40,33 +40,33 @@ public:
     void SyncShape();
     void CopyOriginalToCur();
 
-    const Vector3 &Axis() const { return unk1fc; }
+    const Vector3 &Axis() const { return mAxis; }
     Shape GetShape() const { return mShape; }
-    float Radius() const { return mCurRadius[0]; }
+    float Radius() const { return mCurRadii[0]; }
 
     float GetRadius(const Vector3 &v1, Vector3 &vout) const {
-        Subtract(v1, unk20c, vout);
-        float ret = mCurRadius[0];
-        if (mShape >= kCollideCigar) {
+        Subtract(v1, mPos, vout);
+        float ret = mCurRadii[0];
+        if (mShape >= kCigar) {
             float clamped =
-                Clamp(mCurLength[0], mCurLength[1], unk1f8 * Dot(vout, unk1fc));
-            ScaleAddEq(vout, unk1fc, -clamped);
-            Interp(ret, mCurRadius[1], unk1f4 * (clamped - mCurLength[0]), ret);
-        } else if (mShape == kCollidePlane) {
-            ret = Dot(vout, unk1fc);
-            Scale(unk1fc, ret, vout);
+                Clamp(mCurLengths[0], mCurLengths[1], mInvAxis2 * Dot(vout, mAxis));
+            ScaleAddEq(vout, mAxis, -clamped);
+            Interp(ret, mCurRadii[1], mInvLength * (clamped - mCurLengths[0]), ret);
+        } else if (mShape == kPlane) {
+            ret = Dot(vout, mAxis);
+            Scale(mAxis, ret, vout);
         }
         return ret;
     }
 
     void SyncWorldState() {
-        unk20c = WorldXfm().v;
-        if (mShape >= kCollideCigar || mShape == kCollidePlane) {
-            unk1fc = WorldXfm().m.x;
-            unk1f8 = 1.0f / LengthSquared(unk1fc);
+        mPos = WorldXfm().v;
+        if (mShape >= kCigar || mShape == kPlane) {
+            mAxis = WorldXfm().m.x;
+            mInvAxis2 = 1.0f / LengthSquared(mAxis);
         }
-        if (mShape >= kCollideCigar) {
-            unk1f4 = 1.0f / (mCurLength[1] - mCurLength[0]);
+        if (mShape >= kCigar) {
+            mInvLength = 1.0f / (mCurLengths[1] - mCurLengths[0]);
         }
     }
 
@@ -81,25 +81,25 @@ protected:
         If this is set, make sure you are not parented to any bone with scale,
         such as an exo bone" */
     ObjPtr<RndMesh> mMesh; // 0xc8
-    CSHA1::Digest mDigest; // 0xdc
-    CharCollideStruct unkStructs[8]; // 0xe0
+    CSHA1::Digest mMeshHash; // 0xdc
+    VertData mVertData[8]; // 0xe0
     /** radius0: "Radius of the sphere, or of length0 hemisphere if cigar" */
     /** radius1: "cigar: Radius of length1 hemisphere" */
-    float mOrigRadius[2]; // 0x190
+    float mOriginalRadii[2]; // 0x190
     /** length0: "cigar: placement of radius0 hemisphere along X axis,
         must be < than length0, not used for sphere shapes" */
     /** length1: "cigar: placement of radius1 hemisphere along X axis,
         must be >= length0" */
-    float mOrigLength[2]; // 0x198
-    Transform unk1a0; // 0x1a0
-    float mCurRadius[2]; // 0x1e0
-    float mCurLength[2]; // 0x1e8
+    float mOriginalLengths[2]; // 0x198
+    Transform mInvParentXfm; // 0x1a0
+    float mCurRadii[2]; // 0x1e0
+    float mCurLengths[2]; // 0x1e8
     /** "For spheres + cigars, finds mesh points along positive y axis (the green one),
         makes a better fit for spheres where only one side should be the fit,
         like for chest and back collision volumes" */
     bool mMeshYBias; // 0x1f0
-    float unk1f4; // 0x1f4
-    float unk1f8; // 0x1f8
-    Vector3 unk1fc; // 0x1fc
-    Vector3 unk20c; // 0x20c
+    float mInvLength; // 0x1f4
+    float mInvAxis2; // 0x1f8
+    Vector3 mAxis; // 0x1fc
+    Vector3 mPos; // 0x20c
 };

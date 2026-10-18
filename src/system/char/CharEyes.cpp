@@ -25,9 +25,9 @@ static const float sFloats[] = { 30, 3, 1 };
 float chareyesdummyfunclmao() { return sFloats[0]; }
 
 bool CharEyes::CharInterestState::IsInRefractoryPeriod() {
-    if (mInterest && unk14 >= 0) {
-        float secs = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) - unk14;
-        if (secs < mInterest->RefractoryPeriod()) {
+    if (interest && mLastTimeStamp >= 0) {
+        float secs = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) - mLastTimeStamp;
+        if (secs < interest->RefractoryPeriod()) {
             return true;
         }
     }
@@ -35,26 +35,30 @@ bool CharEyes::CharInterestState::IsInRefractoryPeriod() {
 }
 
 float CharEyes::CharInterestState::RefractoryTimeRemaining() {
-    if (mInterest && unk14 >= 0) {
-        float secs = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) - unk14;
-        if (secs < mInterest->RefractoryPeriod()) {
-            return mInterest->RefractoryPeriod() - secs;
+    if (interest && mLastTimeStamp >= 0) {
+        float secs = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) - mLastTimeStamp;
+        if (secs < interest->RefractoryPeriod()) {
+            return interest->RefractoryPeriod() - secs;
         }
     }
     return 0;
 }
 
 CharEyes::CharEyes()
-    : mEyes(this), mInterests(this), mFaceServo(this), mCamWeight(this), unk78(0, 0, 0),
-      mDefaultFilterFlags(0), mViewDirection(this), mHeadLookAt(this),
-      mMaxExtrapolation(19.5), mMinTargetDist(35), mUpperLidTrackUp(1),
-      mUpperLidTrackDown(1), mLowerLidTrackUp(0.75), mLowerLidTrackDown(0.75),
-      mLowerLidTrackRotate(false), mInterestFilterFlags(0), mLastFacing(0, 0, 0), mLastLook(0),
-      mLastBlinkWeight(0), mBlinkDetect(0), mTargetTooClose(0), mCurInterest(this), mFocusInterest(this), mCurFocusPriorityClass(-1), mNewFocusInterest(0),
-      mLastExtrapolatedDir(0, 1, 0), mLastHeadIKWeight(0), mDarting(0), mDartNextEventTime(-1), mDartsRemaining(-1), mProceduralBlink(0),
-      mBlinkTimestamp(-1), mBlinkWindowCount(0), mBlinkWindowSecsRemaining(-1), mLastBlinkDetectTime(-1), mInterestFiltersChanged(0), mBlinksEnabled(1) {
+    : mEyes(this), mInterests(this), mFaceServo(this), mCamWeight(this), mTarget(0, 0, 0),
+      mDefaultInterestFilterFlags(0), mViewDirBone(this), mHeadLookAt(this),
+      mMaxExtrapolationAngle(19.5), mMinTargetDistance(35), mUpperLidTrackUpScale(1),
+      mUpperLidTrackDownScale(1), mLowerLidTrackUpScale(0.75),
+      mLowerLidTrackDownScale(0.75), mLLidTrackRotate(false), mCurInterestFilterFlags(0),
+      mLastFacing(0, 0, 0), mLastLook(0), mLastBlinkWeight(0), mBlinkDetect(0),
+      mTargetTooClose(0), mCurInterest(this), mFocusInterest(this),
+      mCurFocusPriorityClass(-1), mNewFocusInterest(0), mLastExtrapolatedDir(0, 1, 0),
+      mLastHeadIKWeight(0), mDarting(0), mDartNextEventTime(-1), mDartsRemaining(-1),
+      mProceduralBlink(0), mBlinkTimestamp(-1), mBlinkWindowCount(0),
+      mBlinkWindowSecsRemaining(-1), mLastBlinkDetectTime(-1), mInterestFiltersChanged(0),
+      mBlinksEnabled(1) {
     mMaxEyeCang = std::cos(0.5235987715423107);
-    mEyeStatusOverlay = RndOverlay::Find("eye_status", false);
+    mOverlay = RndOverlay::Find("eye_status", false);
 }
 
 CharEyes::~CharEyes() {}
@@ -62,11 +66,11 @@ CharEyes::~CharEyes() {}
 bool CharEyes::Replace(ObjRef *from, Hmx::Object *to) {
     if (mEyes.size() != 0) {
         EyeDesc *cur = &mEyes[0];
-        int diff = from - &cur->mEye;
+        int diff = from - &cur->eye;
         if (diff < mEyes.size()) {
             cur = &mEyes[diff / sizeof(EyeDesc)];
         }
-        if (!cur->mEye.SetObj(to)) {
+        if (!cur->eye.SetObj(to)) {
             mEyes.erase(cur);
         }
         return true;
@@ -84,53 +88,53 @@ BEGIN_HANDLERS(CharEyes)
 END_HANDLERS
 
 BEGIN_CUSTOM_PROPSYNC(CharEyes::EyeDesc)
-    SYNC_PROP(eye, o.mEye)
-    SYNC_PROP(upper_lid, o.mUpperLid)
-    SYNC_PROP(lower_lid, o.mLowerLid)
-    SYNC_PROP(upper_lid_blink, o.mUpperLidBlink)
-    SYNC_PROP(lower_lid_blink, o.mLowerLidBlink)
+    SYNC_PROP(eye, o.eye)
+    SYNC_PROP(upper_lid, o.upperLid)
+    SYNC_PROP(lower_lid, o.lowerLid)
+    SYNC_PROP(upper_lid_blink, o.upperLidBlink)
+    SYNC_PROP(lower_lid_blink, o.lowerLidBlink)
 END_CUSTOM_PROPSYNC
 
 BEGIN_CUSTOM_PROPSYNC(CharEyes::CharInterestState)
-    SYNC_PROP(interest, o.mInterest)
+    SYNC_PROP(interest, o.interest)
 END_CUSTOM_PROPSYNC
 
 BEGIN_PROPSYNCS(CharEyes)
     SYNC_PROP(eyes, mEyes)
-    SYNC_PROP(view_direction, mViewDirection)
+    SYNC_PROP(view_direction, mViewDirBone)
     SYNC_PROP(interests, mInterests)
     SYNC_PROP(face_servo, mFaceServo)
     SYNC_PROP(camera_weight, mCamWeight)
-    SYNC_PROP_BITFIELD(default_interest_categories, mDefaultFilterFlags, 0x685)
+    SYNC_PROP_BITFIELD(default_interest_categories, mDefaultInterestFilterFlags, 0x685)
     SYNC_PROP(head_lookat, mHeadLookAt)
-    SYNC_PROP(max_extrapolation, mMaxExtrapolation)
+    SYNC_PROP(max_extrapolation, mMaxExtrapolationAngle)
     SYNC_PROP(disable_eye_dart, sDisableEyeDart)
     SYNC_PROP(disable_eye_jitter, sDisableEyeJitter)
     SYNC_PROP(disable_interest_objects, sDisableInterestObjects)
     SYNC_PROP(disable_procedural_blink, sDisableProceduralBlink)
     SYNC_PROP(disable_eye_clamping, sDisableEyeClamping)
-    SYNC_PROP_BITFIELD(interest_filter_testing, mInterestFilterFlags, 0x68E)
-    SYNC_PROP(min_target_dist, mMinTargetDist)
-    SYNC_PROP(ulid_track_up, mUpperLidTrackUp)
-    SYNC_PROP(ulid_track_down, mUpperLidTrackDown)
-    SYNC_PROP(llid_track_up, mLowerLidTrackUp)
-    SYNC_PROP(llid_track_down, mLowerLidTrackDown)
-    SYNC_PROP(llid_track_rotate, mLowerLidTrackRotate)
+    SYNC_PROP_BITFIELD(interest_filter_testing, mCurInterestFilterFlags, 0x68E)
+    SYNC_PROP(min_target_dist, mMinTargetDistance)
+    SYNC_PROP(ulid_track_up, mUpperLidTrackUpScale)
+    SYNC_PROP(ulid_track_down, mUpperLidTrackDownScale)
+    SYNC_PROP(llid_track_up, mLowerLidTrackUpScale)
+    SYNC_PROP(llid_track_down, mLowerLidTrackDownScale)
+    SYNC_PROP(llid_track_rotate, mLLidTrackRotate)
     SYNC_SUPERCLASS(CharWeightable)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
 BinStream &operator<<(BinStream &bs, const CharEyes::EyeDesc &desc) {
-    bs << desc.mEye;
-    bs << desc.mUpperLid;
-    bs << desc.mLowerLid;
-    bs << desc.mUpperLidBlink;
-    bs << desc.mLowerLidBlink;
+    bs << desc.eye;
+    bs << desc.upperLid;
+    bs << desc.lowerLid;
+    bs << desc.upperLidBlink;
+    bs << desc.lowerLidBlink;
     return bs;
 }
 
 BinStream &operator<<(BinStream &bs, const CharEyes::CharInterestState &state) {
-    bs << state.mInterest;
+    bs << state.interest;
     return bs;
 }
 
@@ -142,16 +146,16 @@ BEGIN_SAVES(CharEyes)
     bs << mInterests;
     bs << mFaceServo;
     bs << mCamWeight;
-    bs << mDefaultFilterFlags;
-    bs << mViewDirection;
+    bs << mDefaultInterestFilterFlags;
+    bs << mViewDirBone;
     bs << mHeadLookAt;
-    bs << mMaxExtrapolation;
-    bs << mMinTargetDist;
-    bs << mUpperLidTrackUp;
-    bs << mUpperLidTrackDown;
-    bs << mLowerLidTrackUp;
-    bs << mLowerLidTrackDown;
-    bs << mLowerLidTrackRotate;
+    bs << mMaxExtrapolationAngle;
+    bs << mMinTargetDistance;
+    bs << mUpperLidTrackUpScale;
+    bs << mUpperLidTrackDownScale;
+    bs << mLowerLidTrackUpScale;
+    bs << mLowerLidTrackDownScale;
+    bs << mLLidTrackRotate;
 END_SAVES
 
 BEGIN_COPYS(CharEyes)
@@ -165,34 +169,34 @@ BEGIN_COPYS(CharEyes)
         COPY_MEMBER(mLastFacing)
         COPY_MEMBER(mLastLook)
         COPY_MEMBER(mCamWeight)
-        COPY_MEMBER(mDefaultFilterFlags)
-        COPY_MEMBER(mViewDirection)
+        COPY_MEMBER(mDefaultInterestFilterFlags)
+        COPY_MEMBER(mViewDirBone)
         COPY_MEMBER(mHeadLookAt)
-        COPY_MEMBER(mMaxExtrapolation)
-        COPY_MEMBER(mMinTargetDist)
-        COPY_MEMBER(mUpperLidTrackUp)
-        COPY_MEMBER(mUpperLidTrackDown)
-        COPY_MEMBER(mLowerLidTrackUp)
-        COPY_MEMBER(mLowerLidTrackDown)
-        COPY_MEMBER(mLowerLidTrackRotate)
+        COPY_MEMBER(mMaxExtrapolationAngle)
+        COPY_MEMBER(mMinTargetDistance)
+        COPY_MEMBER(mUpperLidTrackUpScale)
+        COPY_MEMBER(mUpperLidTrackDownScale)
+        COPY_MEMBER(mLowerLidTrackUpScale)
+        COPY_MEMBER(mLowerLidTrackDownScale)
+        COPY_MEMBER(mLLidTrackRotate)
     END_COPYING_MEMBERS
 END_COPYS
 
 BinStreamRev &operator>>(BinStreamRev &d, CharEyes::EyeDesc &desc) {
-    d >> desc.mEye;
-    d >> desc.mUpperLid;
+    d >> desc.eye;
+    d >> desc.upperLid;
     if (d.rev > 6) {
-        d >> desc.mLowerLid;
+        d >> desc.lowerLid;
     }
     if (d.rev > 15) {
-        d >> desc.mUpperLidBlink;
-        d >> desc.mLowerLidBlink;
+        d >> desc.upperLidBlink;
+        d >> desc.lowerLidBlink;
     }
     return d;
 }
 
 BinStream &operator>>(BinStream &bs, CharEyes::CharInterestState &s) {
-    bs >> s.mInterest;
+    bs >> s.interest;
     return bs;
 }
 
@@ -213,11 +217,11 @@ BEGIN_LOADS(CharEyes)
         mEyes.resize(lookats.size());
         int idx = 0;
         FOREACH (it, lookats) {
-            mEyes[idx].mEye = *it;
-            mEyes[idx].mUpperLid = nullptr;
-            mEyes[idx].mLowerLid = nullptr;
-            mEyes[idx].mUpperLidBlink = nullptr;
-            mEyes[idx].mLowerLidBlink = nullptr;
+            mEyes[idx].eye = *it;
+            mEyes[idx].upperLid = nullptr;
+            mEyes[idx].lowerLid = nullptr;
+            mEyes[idx].upperLidBlink = nullptr;
+            mEyes[idx].lowerLidBlink = nullptr;
             ++idx;
         }
     }
@@ -247,31 +251,31 @@ BEGIN_LOADS(CharEyes)
         d >> mCamWeight;
     }
     if (d.rev > 9) {
-        d >> mDefaultFilterFlags;
+        d >> mDefaultInterestFilterFlags;
     }
     if (d.rev > 10) {
-        d >> mViewDirection;
+        d >> mViewDirBone;
     }
     if (d.rev > 11) {
         d >> mHeadLookAt;
     }
     if (d.rev > 12) {
-        d >> mMaxExtrapolation;
+        d >> mMaxExtrapolationAngle;
     }
     if (d.rev > 13) {
-        d >> mMinTargetDist;
+        d >> mMinTargetDistance;
     }
     if (d.rev > 14) {
-        d >> mUpperLidTrackUp >> mUpperLidTrackDown >> mLowerLidTrackUp;
+        d >> mUpperLidTrackUpScale >> mUpperLidTrackDownScale >> mLowerLidTrackUpScale;
         if (d.rev < 17) {
             int x, y;
-            d >> x >> mLowerLidTrackDown >> y;
+            d >> x >> mLowerLidTrackDownScale >> y;
         } else {
-            d >> mLowerLidTrackDown;
+            d >> mLowerLidTrackDownScale;
         }
     }
     if (d.rev > 17) {
-        d >> mLowerLidTrackRotate;
+        d >> mLLidTrackRotate;
     }
 END_LOADS
 
@@ -280,13 +284,13 @@ void CharEyes::Highlight() {
         RndGraph *oneframe = RndGraph::GetOneFrame();
         RndTransformable *trans = nullptr;
         FOREACH (it, mEyes) {
-            trans = it->mEye->GetSource();
+            trans = it->eye->GetSource();
             if (trans) {
                 const Transform &tf1 = trans->WorldXfm();
                 const Transform &tf2 = trans->WorldXfm();
                 Vector3 v100;
                 ScaleAdd(tf2.v, tf1.m.y, 3, v100);
-                if (it->mEye->Clamped())
+                if (it->eye->Clamped())
                     oneframe->AddLine(
                         trans->WorldXfm().v, v100, Hmx::Color(1.0f, 0.0f, 0.0f), true
                     );
@@ -298,11 +302,14 @@ void CharEyes::Highlight() {
         }
         Vector3 v10c(GetHead()->WorldXfm().v);
         if (trans) {
-            bool fcmp = mLastCang >= (mCurInterest ? mCurInterest->MaxViewAngleCos() : mMaxEyeCang);
+            bool fcmp = mLastCang
+                >= (mCurInterest ? mCurInterest->MaxViewAngleCos() : mMaxEyeCang);
             if (mDarting) {
-                oneframe->AddSphere(unk78, mCurDartRuleset.mMaxRadius, Hmx::Color(0.9f, 0.9f, 0.9f));
+                oneframe->AddSphere(
+                    mTarget, mCurDartRuleset.mMaxRadius, Hmx::Color(0.9f, 0.9f, 0.9f)
+                );
                 Vector3 v118;
-                Add(unk78, mCurDartOffset, v118);
+                Add(mTarget, mCurDartOffset, v118);
                 EnforceMinimumTargetDistance(v10c, v118, v118);
                 oneframe->AddSphere(v118, 0.5f, Hmx::Color(0.0f, 0.0f, 1.0f));
                 oneframe->AddLine(
@@ -314,7 +321,7 @@ void CharEyes::Highlight() {
             } else {
                 oneframe->AddLine(
                     trans->WorldXfm().v,
-                    unk78,
+                    mTarget,
                     fcmp ? Hmx::Color(1, 1, 1) : Hmx::Color(1, 0, 0),
                     true
                 );
@@ -330,13 +337,17 @@ void CharEyes::Highlight() {
             if (mFocusInterest != mCurInterest) {
                 const char *nametouse = mCurInterest ? mCurInterest->Name() : "GENERATED";
                 oneframe->AddString3D(
-                    MakeString("focus = '%s' (looking at %s)", mFocusInterest->Name(), nametouse),
+                    MakeString(
+                        "focus = '%s' (looking at %s)", mFocusInterest->Name(), nametouse
+                    ),
                     v10c,
                     Hmx::Color(1, 0, 0)
                 );
             } else {
                 oneframe->AddString3D(
-                    MakeString("focus = '%s'", mFocusInterest->Name()), v10c, Hmx::Color(0, 1, 0)
+                    MakeString("focus = '%s'", mFocusInterest->Name()),
+                    v10c,
+                    Hmx::Color(0, 1, 0)
                 );
             }
         } else {
@@ -355,37 +366,37 @@ void CharEyes::Highlight() {
             Normalize(headMY, headMY);
             Vector3 va0 = headXfm.v;
             FOREACH (it, mInterests) {
-                bool b7 = it->mInterest->IsMatchingFilterFlags(mInterestFilterFlags)
-                    || ((mInterestFilterFlags == mDefaultFilterFlags)
-                        && !it->mInterest->CategoryFlags());
-                if (mCurInterest == it->mInterest) {
+                bool b7 = it->interest->IsMatchingFilterFlags(mCurInterestFilterFlags)
+                    || ((mCurInterestFilterFlags == mDefaultInterestFilterFlags)
+                        && !it->interest->CategoryFlags());
+                if (mCurInterest == it->interest) {
                     oneframe->AddSphere(
-                        it->mInterest->WorldXfm().v, 2, Hmx::Color(0, 1, 0)
+                        it->interest->WorldXfm().v, 2, Hmx::Color(0, 1, 0)
                     );
                     Vector2 v2;
-                    if (RndCam::Current()->WorldToScreen(it->mInterest->WorldXfm().v, v2)
+                    if (RndCam::Current()->WorldToScreen(it->interest->WorldXfm().v, v2)
                         > 0) {
                         v2.x *= TheRnd.Width();
                         v2.y *= TheRnd.Height();
                         v2.y += 15.0;
                         v2.x -= 30.0;
                         oneframe->AddString(
-                            MakeString("%s", it->mInterest->Name()),
+                            MakeString("%s", it->interest->Name()),
                             v2,
                             Hmx::Color(1, 1, 1)
                         );
                     }
                 } else {
-                    if (it->mInterest->IsWithinViewCone(va0, mLastExtrapolatedDir)
-                        && it->mInterest->IsWithinViewCone(va0, headMY)) {
+                    if (it->interest->IsWithinViewCone(va0, mLastExtrapolatedDir)
+                        && it->interest->IsWithinViewCone(va0, headMY)) {
                         oneframe->AddSphere(
-                            it->mInterest->WorldXfm().v,
+                            it->interest->WorldXfm().v,
                             2,
                             b7 ? Hmx::Color(1, 1, 0) : Hmx::Color(1, 0.64705884f, 0)
                         );
                     } else {
                         oneframe->AddSphere(
-                            it->mInterest->WorldXfm().v,
+                            it->interest->WorldXfm().v,
                             2,
                             b7 ? Hmx::Color(1, 0, 0)
                                : Hmx::Color(0.6901961f, 0.1882353f, 0.3764706f)
@@ -395,7 +406,7 @@ void CharEyes::Highlight() {
                 if (it->IsInRefractoryPeriod()) {
                     oneframe->AddString3D(
                         MakeString("r=%f", it->RefractoryTimeRemaining()),
-                        it->mInterest->WorldXfm().v,
+                        it->interest->WorldXfm().v,
                         Hmx::Color(1, 1, 1)
                     );
                 }
@@ -435,7 +446,7 @@ void CharEyes::Poll() {
 
     const Transform &headXfm = head->WorldXfm();
     Vector3 ve0;
-    Subtract(unk78, headXfm.v, ve0);
+    Subtract(mTarget, headXfm.v, ve0);
     Normalize(ve0, ve0);
     Vector3 vf8 = headXfm.m.y;
     Normalize(vf8, vf8);
@@ -489,11 +500,11 @@ next:
     DartUpdate();
     if (mCurInterest) {
         if (!mProceduralBlink) {
-            unk78 = mCurInterest->WorldXfm().v;
+            mTarget = mCurInterest->WorldXfm().v;
         } else {
             mDelayedTarget = mCurInterest->WorldXfm().v;
         }
-        EnforceMinimumTargetDistance(headXfm.v, unk78, unk78);
+        EnforceMinimumTargetDistance(headXfm.v, mTarget, mTarget);
     }
     RndTransformable *target = GetTarget();
     if (target) {
@@ -514,7 +525,7 @@ next:
                 target->SetWorldXfm(xfm);
             }
         } else {
-            Vector3 vf82 = unk78;
+            Vector3 vf82 = mTarget;
             if (mDarting) {
                 Add(vf82, mCurDartOffset, vf82);
                 EnforceMinimumTargetDistance(headXfm.v, vf82, vf82);
@@ -527,7 +538,7 @@ next:
     ProceduralBlinkUpdate();
     CharLookAt::SetDisableJitter(sDisableEyeJitter);
     FOREACH (it, mEyes) {
-        it->mEye->Poll();
+        it->eye->Poll();
         LidTrackAndClampingUpdate(*it, f14);
     }
     CharLookAt::SetDisableJitter(false);
@@ -536,7 +547,7 @@ next:
 
 bool CharEyes::EitherEyeClamped() {
     FOREACH (it, mEyes) {
-        if (it->mEye && it->mEye->Clamped()) {
+        if (it->eye && it->eye->Clamped()) {
             return true;
         }
     }
@@ -559,7 +570,7 @@ void CharEyes::Enter() {
     mBlinkTimestamp = -1;
     mBlinkWindowSecsRemaining = -1;
     mLastBlinkDetectTime = -1;
-    mInterestFilterFlags = mDefaultFilterFlags;
+    mCurInterestFilterFlags = mDefaultInterestFilterFlags;
     mLastHeadIKWeight = 0;
     mInterestFiltersChanged = false;
     mNewFocusInterest = false;
@@ -569,10 +580,10 @@ void CharEyes::Enter() {
         Normalize(mLastFacing, mLastFacing);
     }
     FOREACH (it, mEyes) {
-        it->mEye->Enter();
+        it->eye->Enter();
     }
     FOREACH (it, mInterests) {
-        it->unk14 = 0;
+        it->SetLastTimeStamp(0);
     }
     RndPollable::Enter();
 }
@@ -582,22 +593,22 @@ void CharEyes::Exit() {
     mCurFocusPriorityClass = -1;
     mInterests.clear();
     FOREACH (it, mEyes) {
-        it->mEye->Exit();
+        it->eye->Exit();
     }
     RndPollable::Exit();
 }
 
 void CharEyes::ListPollChildren(std::list<RndPollable *> &children) const {
     FOREACH (it, mEyes) {
-        children.push_back(it->mEye);
+        children.push_back(it->eye);
     }
 }
 
 RndTransformable *CharEyes::GetTarget() {
-    if (mEyes.empty() || !mEyes[0].mEye)
+    if (mEyes.empty() || !mEyes[0].eye)
         return nullptr;
     else {
-        return mEyes[0].mEye->Target();
+        return mEyes[0].eye->Target();
     }
 }
 
@@ -605,9 +616,9 @@ void CharEyes::PollDeps(
     std::list<Hmx::Object *> &changedBy, std::list<Hmx::Object *> &change
 ) {
     FOREACH (it, mInterests) {
-        ObjectDir *dir = it->mInterest->Dir();
+        ObjectDir *dir = it->interest->Dir();
         if (dir == Dir()) {
-            changedBy.push_back(it->mInterest);
+            changedBy.push_back(it->interest);
         }
     }
     if (!mEyes.empty()) {
@@ -635,7 +646,7 @@ void CharEyes::SetEnableBlinks(bool b1, bool b2) {
     if (b2 && !b1 && mProceduralBlink && mFaceServo) {
         mFaceServo->SetProceduralBlinkWeight(0.0f);
         mProceduralBlink = false;
-        unk78 = mDelayedTarget;
+        mTarget = mDelayedTarget;
     }
 }
 
@@ -659,14 +670,14 @@ bool CharEyes::SetFocusInterest(CharInterest *interest, int i) {
 void CharEyes::AddInterestObject(CharInterest *interest) {
     if (interest) {
         CharInterestState state(this);
-        state.mInterest = interest;
+        state.interest = interest;
         mInterests.push_back(state);
     }
 }
 
 void CharEyes::ToggleInterestsDebugOverlay() {
-    if (mEyeStatusOverlay)
-        mEyeStatusOverlay->SetShowing(!mEyeStatusOverlay->Showing());
+    if (mOverlay)
+        mOverlay->SetShowing(!mOverlay->Showing());
 }
 
 bool CharEyes::IsHeadIKWeightIncreasing() {
@@ -680,10 +691,10 @@ bool CharEyes::IsHeadIKWeightIncreasing() {
 void CharEyes::ClearAllInterestObjects() { mInterests.clear(); }
 
 RndTransformable *CharEyes::GetHead() {
-    if (mViewDirection) {
-        return mViewDirection;
-    } else if (!mEyes.empty() && mEyes[0].mEye) {
-        RndTransformable *src = mEyes[0].mEye->GetSource();
+    if (mViewDirBone) {
+        return mViewDirBone;
+    } else if (!mEyes.empty() && mEyes[0].eye) {
+        RndTransformable *src = mEyes[0].eye->GetSource();
         if (src) {
             return src->TransParent();
         }
@@ -704,7 +715,8 @@ CharInterest *CharEyes::GetCurrentInterest() {
 void CharEyes::ProceduralBlinkUpdate() {
     static DataNode &disableCheat = DataVariable("cheat.disable_procedural_blinks");
 
-    if (!sDisableProceduralBlink && disableCheat.Int() == 0 && (mBlinksEnabled || mProceduralBlink)) {
+    if (!sDisableProceduralBlink && disableCheat.Int() == 0
+        && (mBlinksEnabled || mProceduralBlink)) {
         mBlinkWindowSecsRemaining = mBlinkWindowSecsRemaining - TheTaskMgr.DeltaSeconds();
         if (mBlinkWindowSecsRemaining < 0.0f) {
             mBlinkWindowCount = 0;
@@ -721,12 +733,12 @@ void CharEyes::ProceduralBlinkUpdate() {
                 float t = Clamp(0.0f, 1.0f, 1.0f - (elapsed - 0.115f) * 5.4054055f);
                 float ease = EaseSigmoid(t, 0, 0);
                 mFaceServo->SetProceduralBlinkWeight(ease);
-                unk78 = mDelayedTarget;
+                mTarget = mDelayedTarget;
             } else {
                 // Blink complete
                 mFaceServo->SetProceduralBlinkWeight(0.0f);
                 mProceduralBlink = false;
-                unk78 = mDelayedTarget;
+                mTarget = mDelayedTarget;
             }
         }
     }
@@ -743,7 +755,7 @@ void CharEyes::EnforceMinimumTargetDistance(
     if (mCurInterest && mCurInterest->OverridesMinTargetDist()) {
         f1 = mCurInterest->MinTargetDistOverride();
     } else {
-        f1 = mMinTargetDist;
+        f1 = mMinTargetDistance;
     }
     if (len < f1) {
         Vector3 scaled;
@@ -762,22 +774,30 @@ void CharEyes::DartUpdate() {
                 if (--mDartsRemaining < 0) {
                     mDarting = false;
                     mDartNextEventTime = RandomFloat(
-                        mCurDartRuleset.mMinSecsBetweenSequences, mCurDartRuleset.mMaxSecsBetweenSequences
+                        mCurDartRuleset.mMinSecsBetweenSequences,
+                        mCurDartRuleset.mMaxSecsBetweenSequences
                     );
                 } else {
                     mDartNextEventTime = RandomFloat(
-                        mCurDartRuleset.mMinSecsBetweenDarts, mCurDartRuleset.mMaxSecsBetweenDarts
+                        mCurDartRuleset.mMinSecsBetweenDarts,
+                        mCurDartRuleset.mMaxSecsBetweenDarts
                     );
                     mCurDartOffset = GenerateDartOffset();
                 }
             }
         } else {
-            if (mDartNextEventTime < 0 && EyesOnTarget(mCurDartRuleset.mOnTargetAngleThresh) && !mProceduralBlink) {
+            if (mDartNextEventTime < 0
+                && EyesOnTarget(mCurDartRuleset.mOnTargetAngleThresh)
+                && !mProceduralBlink) {
                 mDarting = true;
-                mDartsRemaining =
-                    RandomInt(mCurDartRuleset.mMinDartsPerSequence, mCurDartRuleset.mMaxDartsPerSequence);
-                mDartNextEventTime =
-                    RandomFloat(mCurDartRuleset.mMinSecsBetweenDarts, mCurDartRuleset.mMaxSecsBetweenDarts);
+                mDartsRemaining = RandomInt(
+                    mCurDartRuleset.mMinDartsPerSequence,
+                    mCurDartRuleset.mMaxDartsPerSequence
+                );
+                mDartNextEventTime = RandomFloat(
+                    mCurDartRuleset.mMinSecsBetweenDarts,
+                    mCurDartRuleset.mMaxSecsBetweenDarts
+                );
                 mCurDartOffset = GenerateDartOffset();
             }
         }
@@ -789,7 +809,7 @@ Vector3 CharEyes::GenerateDartOffset() {
     float max = mCurDartRuleset.mMaxRadius;
     if (mCurDartRuleset.mScaleWithDistance && mCurDartRuleset.mReferenceDistance > 0.1f) {
         Vector3 sub;
-        Subtract(unk78, GetHead()->WorldXfm().v, sub);
+        Subtract(mTarget, GetHead()->WorldXfm().v, sub);
         float scalar = Length(sub) / mCurDartRuleset.mReferenceDistance;
         min *= scalar;
         max *= scalar;
@@ -803,10 +823,10 @@ Vector3 CharEyes::GenerateDartOffset() {
 
 bool CharEyes::EyesOnTarget(float f) {
     FOREACH (it, mEyes) {
-        RndTransformable *src = it->mEye->GetSource();
+        RndTransformable *src = it->eye->GetSource();
         if (src) {
             Vector3 v80;
-            Subtract(unk78, src->WorldXfm().v, v80);
+            Subtract(mTarget, src->WorldXfm().v, v80);
             Vector3 v8c(src->WorldXfm().m.y);
             Vector3 v98(v80);
             v98.z = 0;
@@ -822,48 +842,48 @@ bool CharEyes::EyesOnTarget(float f) {
 }
 
 void CharEyes::UpdateOverlay() {
-    if (mEyeStatusOverlay && mEyeStatusOverlay->Showing()) {
-        *mEyeStatusOverlay << Dir()->Name() << ": ";
+    if (mOverlay && mOverlay->Showing()) {
+        *mOverlay << Dir()->Name() << ": ";
         if (mCurInterest) {
             if (mFocusInterest && streq(mCurInterest->Name(), mFocusInterest->Name())) {
-                *mEyeStatusOverlay << "Look(FOC) ";
+                *mOverlay << "Look(FOC) ";
             } else {
-                *mEyeStatusOverlay << "Look(" << mCurInterest->Name() << ") ";
+                *mOverlay << "Look(" << mCurInterest->Name() << ") ";
             }
         } else {
-            *mEyeStatusOverlay << "Look(GEN) ";
+            *mOverlay << "Look(GEN) ";
         }
         if (mFocusInterest) {
             const Transform &headXfm = GetHead()->WorldXfm();
             Vector3 v = headXfm.m.y;
             Normalize(v, v);
             const char *str = mFocusInterest->IsWithinViewCone(headXfm.v, v) ? "t" : "f";
-            *mEyeStatusOverlay << "Foc(" << mFocusInterest->Name() << " p(" << mCurFocusPriorityClass << ") v("
-                               << str << ")) ";
+            *mOverlay << "Foc(" << mFocusInterest->Name() << " p("
+                      << mCurFocusPriorityClass << ") v(" << str << ")) ";
         } else {
-            *mEyeStatusOverlay << "Foc(NA) ";
+            *mOverlay << "Foc(NA) ";
         }
-        *mEyeStatusOverlay << "t(" << mLastLook << ") ";
+        *mOverlay << "t(" << mLastLook << ") ";
         Vector3 headV = GetHead()->WorldXfm().v;
         Vector3 v4c;
-        Vector3 v58(unk78);
+        Vector3 v58(mTarget);
         RndTransformable *target = GetTarget();
         if (target) {
             v58 = target->WorldXfm().v;
         }
         Subtract(v58, headV, v4c);
         float len = Length(v4c);
-        *mEyeStatusOverlay << "Dist(" << len << ") ";
+        *mOverlay << "Dist(" << len << ") ";
         if (mProceduralBlink) {
-            *mEyeStatusOverlay << "P Blink! ";
+            *mOverlay << "P Blink! ";
         }
         if (mDarting) {
-            *mEyeStatusOverlay << "Dart! ";
+            *mOverlay << "Dart! ";
         }
         if (mTargetTooClose) {
-            *mEyeStatusOverlay << "Close! ";
+            *mOverlay << "Close! ";
         }
-        *mEyeStatusOverlay << "\n";
+        *mOverlay << "\n";
     }
 }
 

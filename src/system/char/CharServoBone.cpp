@@ -16,7 +16,7 @@
 
 CharServoBone::CharServoBone()
     : mPelvis(0), mFacingRotDelta(0), mFacingPosDelta(0), mFacingRot(0), mFacingPos(0),
-      mMoveSelf(false), mDeltaChanged(false), mRegulate(this) {}
+      mMoveSelf(false), mDeltaChanged(false), mWay(this) {}
 
 CharServoBone::~CharServoBone() {}
 
@@ -29,7 +29,7 @@ BEGIN_PROPSYNCS(CharServoBone)
     SYNC_PROP_SET(clip_type, mClipType, SetClipType(_val.Sym()))
     SYNC_PROP_SET(move_self, mMoveSelf, SetMoveSelf(_val.Int()))
     SYNC_PROP(delta_changed, mDeltaChanged)
-    SYNC_PROP(regulate, mRegulate)
+    SYNC_PROP(regulate, mWay)
     SYNC_SUPERCLASS(CharBonesMeshes)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
@@ -135,7 +135,7 @@ void CharServoBone::ReallocateInternal() {
 
 void CharServoBone::Enter() {
     ZeroDeltas();
-    SetRegulateWaypoint(nullptr);
+    Regulate(nullptr);
     mDeltaChanged = false;
     mMoveSelf = mFacingPosDelta;
 }
@@ -184,21 +184,17 @@ void CharServoBone::MoveToFacing(Transform &tf) {
 }
 
 void CharServoBone::RegulateInternal(Character *c) {
-    if (mRegulate) {
+    if (mWay) {
         CharDriver *charDriver = c->Driver();
         CharClipDriver *beforeLast = charDriver->Before(charDriver->Last());
         CharClipDriver *next =
             beforeLast && beforeLast->mRampIn > 0 ? beforeLast->Next() : nullptr;
         if (next) {
             DoRegulate(
-                c,
-                mRegulate,
-                next,
-                beforeLast->mRampIn,
-                Max(2.0f, beforeLast->mRampIn / 1.5f)
+                c, mWay, next, beforeLast->mRampIn, Max(2.0f, beforeLast->mRampIn / 1.5f)
             );
         }
-        mRegulate->Constrain(c->DirtyLocalXfm());
+        mWay->Constrain(c->DirtyLocalXfm());
     }
 }
 
@@ -206,7 +202,7 @@ void CharServoBone::DoRegulate(
     Character *c, Waypoint *w, CharClipDriver *driver, float f3, float f4
 ) {
     Transform &charXfm = c->DirtyLocalXfm();
-    ClipPredict pred(driver->GetClip(), charXfm.v, GetZAngle(charXfm.m));
+    ClipPredict pred(driver->Clip(), charXfm.v, GetZAngle(charXfm.m));
     pred.Predict(driver->mBeat, driver->mBeat + f3);
     float ang = pred.Angle();
     Vector3 v90 = pred.Pos();

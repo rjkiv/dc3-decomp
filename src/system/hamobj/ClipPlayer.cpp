@@ -343,7 +343,7 @@ bool ClipPlayer::PushRoutineBuilderClip(int index, HamDriver::LayerArray *layer)
         int i14;
         CharClip *c = GetPrevRoutineTransition(index);
         if (c) {
-            c = c->GetUnk198() & (1 << d) ? c : nullptr;
+            c = c->GetBitmask() & (1 << d) ? c : nullptr;
         }
         CharClip *c13 = nullptr;
         bool b7 = false;
@@ -366,7 +366,7 @@ bool ClipPlayer::PushRoutineBuilderClip(int index, HamDriver::LayerArray *layer)
             Key<Symbol> &keyNext = mClipKeys->at(i10);
             c13 = GetRoutineTransition(c2->Name(), &keyNext);
             if (c13) {
-                c13 = c13->GetUnk198() & (1 << d) ? c13 : nullptr;
+                c13 = c13->GetBitmask() & (1 << d) ? c13 : nullptr;
             }
             f24 = FrameToBeat(keyNext.frame);
         } else {
