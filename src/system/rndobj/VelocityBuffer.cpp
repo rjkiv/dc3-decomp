@@ -17,55 +17,56 @@ static const int sMaxBones = 40;
 
 bool RndXfmCache::GetXfms(
     const RndMesh *__restrict mesh,
-    unsigned int ui2,
-    unsigned int ui3,
-    const float *&floats
+    unsigned int key,
+    unsigned int numXfms,
+    const float *&xfmArray
 ) const {
-    if (ui2 + ui3 <= unk1b580) {
-        const RndMesh *ui2_mesh = unk0[ui2];
-        const RndMesh *__restrict what = unk0[ui2 + ui3 - 1];
-        if (ui2_mesh == mesh && what == mesh) {
-            floats = unk1f40[ui2];
+    if (key + numXfms <= mEntryCount) {
+        const RndMesh *__restrict start = mEntries_Mesh[key];
+        const RndMesh *__restrict end = mEntries_Mesh[key + numXfms - 1];
+        if (start == mesh && end == mesh) {
+            xfmArray = &mEntries_Xfm[key * 12];
             return true;
         }
     }
-    floats = nullptr;
+    xfmArray = nullptr;
     return false;
 }
 
 bool RndXfmCache::CacheXfms(
     const RndMesh *__restrict mesh,
-    const float *__restrict floats,
-    unsigned int ui3,
-    unsigned int &uiref
+    const float *__restrict xfmArray,
+    unsigned int numXfms,
+    unsigned int &key
 ) {
-    uiref = -1;
-    if (unk1b580 + ui3 <= 2000) {
-        uiref = unk1b580;
-        float *which = unk1f40[unk1b580];
-        float diff = floats[0] - which[0];
-        for (int i = 0; i < ui3; i++) {
-            which[i] += diff;
+    key = -1;
+    if (mEntryCount + numXfms <= kMaxItems) {
+        key = mEntryCount;
+        int start = mEntryCount;
+
+        float *xfmPtr = &mEntries_Xfm[start * 12];
+        for (int i = 0; i < numXfms * 12; i++) {
+            xfmPtr[i] = xfmArray[i];
         }
-        if (ui3) {
-            int *unkPtr = &unk19640[unk1b580 - 1];
-            RndMesh **meshPtr = &unk0[unk1b580 - 1];
-            for (int i = 0; i < ui3; i++) {
-                meshPtr[i] = (RndMesh *)mesh;
-            }
-            for (int i = 0; i < ui3; i++) {
-                unkPtr[i] = 0;
-            }
+
+        unsigned int *bonePtr = &mEntries_Bone[start];
+        const RndMesh **meshPtr = &mEntries_Mesh[start];
+        int boneIdx = 0;
+        for (int i = 0; i < numXfms; i++) {
+            meshPtr[i] = mesh;
         }
-        unk1b580 += ui3;
+        for (; boneIdx < numXfms; boneIdx++) {
+            bonePtr[boneIdx] = boneIdx;
+        }
+        mEntryCount = start + numXfms;
     }
-    return uiref < 2000;
+    return key < kMaxItems;
 }
 
 RndVelocityBuffer::RndVelocityBuffer()
-    : unk36be8(0), unk36c6c(0), mFrame(0), mVelocityTex(nullptr), mMat(nullptr),
-      unk36c7c(nullptr) {
-    memset(&unk8, 0, 0xa4);
+    : mIntensity(0), mFrame(0), mNumFrames(0), mVelocityTex(nullptr), mMat(nullptr),
+      mLastCamera(nullptr) {
+    memset(&mCamSettings, 0, sizeof(mCamSettings));
 }
 
 void RndVelocityBuffer::CacheCameraSettings(RndCam *camera) {
@@ -73,21 +74,21 @@ void RndVelocityBuffer::CacheCameraSettings(RndCam *camera) {
     Transform tfa0;
     Hmx::Matrix4 me0;
     camera->GetViewProjectXfms(tfa0, me0);
-    unk8 = tfa0 * me0;
-    camera->GetDepthRangeValues(unk48);
-    camera->GetCamFrustum(unk58, unk68);
-    mCam = camera;
+    mCamSettings.mViewProj = tfa0 * me0;
+    camera->GetDepthRangeValues(mCamSettings.mZRange);
+    camera->GetCamFrustum(mCamSettings.mCamPos, mCamSettings.mCamCorner);
+    mCamSettings.mCachedCam = camera;
 }
 
 bool RndVelocityBuffer::AdvanceFrame(RndCam *cam) {
-    unk36c80 = false;
-    unk36c6c ^= 1;
-    mFrame++;
-    if (cam != unk36c7c) {
-        unk36c7c = cam;
-        mFrame = 0;
+    mReadyToUse = false;
+    mFrame ^= 1;
+    mNumFrames++;
+    if (cam != mLastCamera) {
+        mLastCamera = cam;
+        mNumFrames = 0;
     }
-    return mFrame >= 2;
+    return mNumFrames >= 2;
 }
 
 void RndVelocityBuffer::AllocateData(
@@ -108,15 +109,30 @@ void RndVelocityBuffer::DrawMesh(RndMesh *mesh) const {
     MILO_ASSERT(mesh, 0x123);
     MILO_ASSERT(mesh->Showing(), 0x124);
     MILO_ASSERT(TheRnd.DrawMode() == Rnd::kDrawVelocity, 0x125);
-    if (mesh->Mat() && mesh->Mat()->GetZMode() != BaseMaterial::kTransparent) {
+    RndMat *mat = mesh->Mat();
+    if (mat && mat->GetZMode() != BaseMaterial::kTransparent) {
+        mesh->GetBlurCache().mShouldCache = true;
+        unsigned int otherFrame = mFrame ^ 1;
+        unsigned int frame = otherFrame ^ 1;
         int numBones = mesh->NumBones();
-        int i10 = Max(1, numBones);
-        const float *fptr;
-        if (mXfmCaches[unk36c6c].GetXfms(mesh, 0, i10, fptr)) {
+        const RndXfmCache &otherCache = mCache[otherFrame];
+        const RndXfmCache &cache = mCache[frame];
+        unsigned int otherKey = mesh->GetBlurCache().mCacheKey[otherFrame];
+        unsigned int key = mesh->GetBlurCache().mCacheKey[frame];
+        int numXfms = Max(1, numBones);
+        const float *xfmCurr;
+        const float *xfmPrev;
+        if (otherCache.GetXfms(mesh, otherKey, numXfms, xfmCurr)
+            && cache.GetXfms(mesh, key, numXfms, xfmPrev)) {
             if (numBones <= 40) {
                 TheShaderMgr.SetMeshInfo(numBones, false);
                 RndShader::SelectConfig(mMat, kVelocityObjectShader, false);
-                mesh->DrawFacesInRange(0, -1);
+                TheShaderMgr.SetVConstant((VShaderConstant)9, xfmCurr, numXfms * 3);
+                TheShaderMgr.SetVConstant((VShaderConstant)0x81, xfmPrev, numXfms * 3);
+                TheShaderMgr.SetVConstant((VShaderConstant)0, mViewProj[otherFrame]);
+                TheShaderMgr.SetVConstant(kVShader_ViewProj, mViewProj[frame]);
+                TheShaderMgr.SetPConstant((PShaderConstant)8, mCamSettings.mZRange);
+                mesh->GeomOwner()->DrawFacesInRange(0, -1);
                 TheNgStats->mMotionBlurs++;
             } else {
                 MILO_NOTIFY_ONCE(
@@ -136,15 +152,16 @@ void RndVelocityBuffer::FreeData() {
     RELEASE(mMat);
 }
 
-void RndVelocityBuffer::ResetFrame() { mFrame = 0; }
+void RndVelocityBuffer::ResetFrame() { mNumFrames = 0; }
 
 void RndVelocityBuffer::CacheTransform(
-    class RndMesh *__restrict mesh, const float *__restrict floats, unsigned int ui3
+    RndMesh *__restrict mesh, const float *__restrict xfmArray, unsigned int numXfms
 ) {
-    if ((TheRnd.ProcCmds() & kProcessWorld) > 0) {
-        unsigned int uiref;
-        if (mXfmCaches[unk36c6c].CacheXfms(mesh, floats, ui3, uiref)) {
-            mesh->GetBlurCache().mCacheKey[unk36c6c] = uiref;
+    if ((TheRnd.ProcCmds() & kProcessWorld) > kProcessNone) {
+        unsigned int frame = mFrame;
+        unsigned int key;
+        if (mCache[frame].CacheXfms(mesh, xfmArray, numXfms, key)) {
+            mesh->GetBlurCache().mCacheKey[frame] = key;
         }
     }
 }

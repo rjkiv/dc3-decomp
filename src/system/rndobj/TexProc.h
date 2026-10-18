@@ -4,15 +4,17 @@
 #include "rndobj/Tex.h"
 #include "utl/MemMgr.h"
 
+enum TextProcShader {
+    /** "Swirly, twirly distortion" */
+    kShaderTwirl = 0,
+    /** "Leaves color untouched but sets all alpha values to 1" */
+    kShaderKillAlpha = 1,
+    kShaderMax = 2
+};
+
 /** "Applies a shader to the specified texture." */
 class TexProc : public RndDrawable {
 public:
-    enum TexProcShaderType {
-        /** "Swirly, twirly distortion" */
-        kShaderTwirl = 0,
-        /** "Leaves color untouched but sets all alpha values to 1" */
-        kShaderKillAlpha = 1
-    };
     virtual ~TexProc() {}
     OBJ_CLASSNAME(TexProc);
     OBJ_SET_TYPE(TexProc);
@@ -34,8 +36,8 @@ public:
     REGISTER_OBJ(TexProc)
 
     void SetRegisters();
-    bool CheckParams(DataArray *, bool);
-    void SetParams(DataArray *, DataArray *);
+    bool CheckParams(DataArray *params, bool topLevel);
+    void SetParams(DataArray *copyTo, DataArray *copyFrom);
     DataNode OnSetParams(DataArray *);
 
     static void Init();
@@ -49,18 +51,18 @@ protected:
     static RndCam *mCam;
 
     /** "texture to read from" */
-    ObjPtr<RndTex> mInputTex; // 0x40
+    ObjPtr<RndTex> mInputTexture; // 0x40
     /** "texture to write to" */
-    ObjPtr<RndTex> mOutputTex; // 0x54
+    ObjPtr<RndTex> mOutputTexture; // 0x54
     /** "Shader to apply" */
-    TexProcShaderType mShaderType; // 0x68
+    TextProcShader mShader; // 0x68
     bool mDrawPreClear; // 0x6c
-    DataArray *unk70; // 0x70
+    DataArray *mParams; // 0x70
     /** "Wave frequency (for twirl shader only!)" */
     float mFrequency; // 0x74
-    float unk78; // 0x78
+    float mAmplitude; // 0x78
     /** "Wave amplitude (for twirl shader only!)" */
-    float mAmplitude; // 0x7c
+    float mAmplitudeBase; // 0x7c
     /** "Wave amplitude (for twirl shader only!)" */
     float mAmplitudeBump; // 0x80
     /** "Wave phase (for twirl shader only!)" */

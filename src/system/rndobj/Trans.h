@@ -14,38 +14,38 @@ class RndTransformable : public virtual RndHighlightable {
 public:
     enum Constraint {
         /** "no constraint" */
-        kConstraintNone = 0,
+        kNone = 0,
         /** "Uses own local rotation as world rotation" */
-        kConstraintLocalRotate = 1,
+        kLocalRotate = 1,
         /** "Uses [trans_parent] world xfm as own" */
-        kConstraintParentWorld = 2,
+        kParentWorld = 2,
         /** "Points Y axis at [trans_target]" */
-        kConstraintLookAtTarget = 3,
+        kLookAtTarget = 3,
         /** "Flattens self onto the plane specified by [trans_target]" */
-        kConstraintShadowTarget = 4,
+        kShadowTarget = 4,
         /** "Billboard about Z axis only, relative to [trans_target] if set, otherwise
          * relative to current camera" */
-        kConstraintBillboardZ = 5,
+        kBillboardZ = 5,
         /** "Billboard about XZ axes only (no roll), relative to [trans_target] if set,
          * otherwise relative to current camera" */
-        kConstraintBillboardXZ = 6,
+        kBillboardXZ = 6,
         /** "Billboards about XYZ axes, relative to [trans_target] if set, otherwise
          * relative to current camera" */
-        kConstraintBillboardXYZ = 7,
+        kBillboardXYZ = 7,
         /** "Billboards w/o perspective correction, relative to [trans_target] if set,
          * otherwise relative to current camera" */
-        kConstraintFastBillboardXYZ = 8,
+        kFastBillboardXYZ = 8,
         /** "Uses [trans_target] world xfm as own" */
-        kConstraintTargetWorld = 9,
+        kTargetWorld = 9,
         /** "Ignores [trans_parent] rotation" */
-        kConstraintNoParentRotation = 10,
+        kNoParentRotation = 10,
         /** "Uses current camera as though it were [trans_parent], ignoring its rotation,
          * relative to [trans_target] if set, otherwise relative to current camera" */
-        kConstraintSkyBox = 11,
+        kSkyBox = 11,
         /** "Uses current camera as though it were [trans_parent], ignoring its rotation,
          * and ignoring the z value, good for skybox bases, relative to [trans_target] if
          * set, otherwise relative to current camera" */
-        kConstraintSkyBoxXY = 12
+        kSkyBoxXY = 12
     };
 
     virtual ~RndTransformable();
@@ -93,23 +93,22 @@ public:
     }
 
     bool HasDynamicConstraint() {
-        return mConstraint >= kConstraintBillboardZ
-            || (mConstraint >= kConstraintLookAtTarget && mTarget);
+        return mConstraint >= kBillboardZ || (mConstraint >= kLookAtTarget && mTarget);
     }
 
     RndTransformable *GetTarget() const { return mTarget; }
     bool PreserveScale() const { return mPreserveScale; }
 
-    void GetLocalRot(Vector3 &) const;
-    void SetWorldXfm(const Transform &);
-    void SetWorldPos(const Vector3 &);
-    void SetTransConstraint(Constraint, RndTransformable *, bool);
-    void SetTransParent(RndTransformable *, bool);
+    void GetLocalRot(Vector3 &e) const;
+    void SetWorldXfm(const Transform &t);
+    void SetWorldPos(const Vector3 &v);
+    void SetTransConstraint(Constraint b, RndTransformable *t, bool scale);
+    void SetTransParent(RndTransformable *t, bool recalcLocal);
     void SetLocalRot(Vector3);
-    void SetLocalRotIndex(int, float);
+    void SetLocalRotIndex(int index, float deg);
     void ComputeLocalXfm(const Transform &tf);
-    void DistributeChildren(bool, float);
-    void TransformTransAnims(const Transform &);
+    void DistributeChildren(bool horizontal, float amount);
+    void TransformTransAnims(const Transform &newXfm);
 
     static void Init();
     NEW_OBJ(RndTransformable);
@@ -157,7 +156,7 @@ protected:
 
     virtual void UpdatedWorldXfm() {}
 
-private: // per RB2
+private:
     Transform mLocalXfm; // 0x8
     Transform mWorldXfm; // 0x48
     ObjOwnerPtr<RndTransformable> mParent; // 0x88

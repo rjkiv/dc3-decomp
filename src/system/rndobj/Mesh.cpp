@@ -509,7 +509,7 @@ BEGIN_LOADS(RndMesh)
                     }
                 }
             } else {
-                if (TransConstraint() == RndTransformable::kConstraintParentWorld) {
+                if (TransConstraint() == RndTransformable::kParentWorld) {
                     mBones[0].mBone = TransParent();
                 } else {
                     mBones[0].mBone = this;

@@ -869,9 +869,7 @@ RndMesh *WorldCrowd::BuildBillboard(Character *c, float f) {
     faces[1].Set(1, 3, 2);
     mesh->Sync(0x3F);
     mesh->SetMat(gImpostorMat);
-    mesh->SetTransConstraint(
-        RndTransformable::kConstraintFastBillboardXYZ, gImpostorCamera, false
-    );
+    mesh->SetTransConstraint(RndTransformable::kFastBillboardXYZ, gImpostorCamera, false);
     return mesh;
 }
 

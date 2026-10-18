@@ -595,14 +595,12 @@ void RndAmbientOcclusion::BurnTransform(
                     BurnTransform(cur, meshes);
                     Transform tfe0(Hmx::Matrix3(mesh->LocalXfm().m), Vector3(0, 0, 0));
                     Transform tfa0;
-                    if (cur->TransConstraint() == RndTransformable::kConstraintNone) {
+                    if (cur->TransConstraint() == RndTransformable::kNone) {
                         Multiply(cur->LocalXfm(), tfe0, tfa0);
-                    } else if (
-                        cur->TransConstraint() == RndTransformable::kConstraintParentWorld
-                    ) {
+                    } else if (cur->TransConstraint() == RndTransformable::kParentWorld) {
                         tfa0 = tfe0;
                         cur->SetTransConstraint(
-                            RndTransformable::kConstraintNone,
+                            RndTransformable::kNone,
                             cur->GetTarget(),
                             cur->PreserveScale()
                         );

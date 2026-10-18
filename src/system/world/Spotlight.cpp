@@ -884,10 +884,10 @@ void Spotlight::BuildNGShaft(Spotlight::BeamDef &def) {
         BuildNGSheet(def);
         break;
     case BeamDef::kBeamQuadXYZ:
-        BuildNGQuad(def, RndTransformable::kConstraintBillboardXYZ);
+        BuildNGQuad(def, RndTransformable::kBillboardXYZ);
         break;
     case BeamDef::kBeamQuadZ:
-        BuildNGQuad(def, RndTransformable::kConstraintBillboardZ);
+        BuildNGQuad(def, RndTransformable::kBillboardZ);
         break;
     default:
         int num = def.mNumSegments;

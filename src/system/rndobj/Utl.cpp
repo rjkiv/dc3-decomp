@@ -324,8 +324,8 @@ MatShaderOptions GetDefaultMatShaderOpts(const Hmx::Object *obj, RndMat *mat) {
             const RndMesh *mesh = multimesh->Mesh();
             if (mesh && mesh->Mat()) {
                 if (mesh->Mat() == mat) {
-                    int mask = mesh->TransConstraint()
-                            == RndTransformable::kConstraintFastBillboardXYZ
+                    int mask =
+                        mesh->TransConstraint() == RndTransformable::kFastBillboardXYZ
                         ? kMultimeshBBShader
                         : kMultimeshShader;
                     opts.shaderType = mask;

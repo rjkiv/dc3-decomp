@@ -1,4 +1,5 @@
 #pragma once
+#include "math/Mtx.h"
 #include "rndobj/Cam.h"
 #include "rndobj/Draw.h"
 #include "rndobj/Mesh.h"
@@ -9,62 +10,83 @@
 class RndXfmCache {
     friend class RndVelocityBuffer;
 
-    RndXfmCache() : unk0(), unk1f40(), unk19640(), unk1b580(0) {}
+    RndXfmCache() { Reset(); }
+
+    void Reset() {
+        memset(mEntries_Mesh, 0, sizeof(mEntries_Mesh));
+        memset(mEntries_Xfm, 0, sizeof(mEntries_Xfm));
+        memset(mEntries_Bone, 0, sizeof(mEntries_Bone));
+        mEntryCount = 0;
+    }
 
     bool GetXfms(
-        const RndMesh *__restrict mesh, unsigned int, unsigned int, const float *&
+        const RndMesh *__restrict mesh,
+        unsigned int key,
+        unsigned int numXfms,
+        const float *&xfmArray
     ) const;
 
     bool CacheXfms(
         const RndMesh *__restrict mesh,
-        const float *__restrict floats,
-        unsigned int,
-        unsigned int &
+        const float *__restrict xfmArray,
+        unsigned int numXfms,
+        unsigned int &key
     );
 
-    RndMesh *unk0[2000]; // 0x0
-    float unk1f40[2000][12]; // 0x1f40
-    int unk19640[2000]; // 0x19640
-    unsigned int unk1b580; // 0x1b580
+    static const unsigned int kMaxItems = 2000;
+
+    // 1 mesh entry per compacted xfm
+    const RndMesh *mEntries_Mesh[kMaxItems]; // 0x0
+    // 1 compacted xfm == 12 floats
+    float mEntries_Xfm[kMaxItems * 12]; // 0x1f40
+    unsigned int mEntries_Bone[kMaxItems]; // 0x19640
+    unsigned int mEntryCount; // 0x1b580
 };
 
 // size 0x36c84
 class RndVelocityBuffer {
 public:
+    // size 0xa4
+    struct CameraSettings {
+        Hmx::Matrix4 mViewProj; // 0x0
+        Vector4 mZRange; // 0x40
+        Vector3 mCamPos; // 0x50
+        Vector3 mCamCorner[4]; // 0x60
+        RndCam *mCachedCam; // 0xa0
+    };
+
     virtual ~RndVelocityBuffer() { FreeData(); }
 
-    void CacheCameraSettings(RndCam *);
-    void AllocateData(unsigned int, unsigned int, unsigned int);
+    void CacheCameraSettings(RndCam *camera);
+    void AllocateData(unsigned int nWidth, unsigned int nHeight, unsigned int nBpp);
     void FreeData();
     void ResetFrame();
-    bool Draw(RndCam *, ObjPtrList<RndDrawable> &);
-    void DrawMesh(RndMesh *) const;
-    void CacheTransform(class RndMesh *__restrict, float const *__restrict, unsigned int);
+    bool Draw(RndCam *camera, ObjPtrList<RndDrawable> &drawList);
+    void DrawMesh(RndMesh *mesh) const;
+    void CacheTransform(
+        RndMesh *__restrict mesh, const float *__restrict xfmArray, unsigned int numXfms
+    );
 
     static RndVelocityBuffer &Singleton() { return sSingleton; }
 
-    float GetUnk36be8() { return unk36be8; };
+    float GetIntensity() { return mIntensity; };
 
 private:
     RndVelocityBuffer();
 
-    bool AdvanceFrame(RndCam *);
+    bool AdvanceFrame(RndCam *camera);
 
     static RndVelocityBuffer sSingleton;
 
-    Hmx::Matrix4 unk8; // 0x8
-    Vector4 unk48; // 0x48
-    Vector3 unk58; // 0x58
-    Vector3 unk68[4]; // 0x68
-    RndCam *mCam; // 0xa8
-    RndXfmCache mXfmCaches[2]; // 0xac
+    CameraSettings mCamSettings; // 0x8
+    RndXfmCache mCache[2]; // 0xac
     Timer mTimer; // 0x36bb8
-    float unk36be8; // 0x36be8
-    Hmx::Matrix4 unk36bec[2]; // 0x36bec
-    int unk36c6c; // 0x36c6c - which xfmcache
-    int mFrame; // 0x36c70 - frame
+    float mIntensity; // 0x36be8
+    Hmx::Matrix4 mViewProj[2]; // 0x36bec
+    unsigned int mFrame; // 0x36c6c
+    unsigned int mNumFrames; // 0x36c70
     RndTex *mVelocityTex; // 0x36c74
     RndMat *mMat; // 0x36c78
-    RndCam *unk36c7c; // 0x36c7c
-    bool unk36c80; // 0x36c80
+    RndCam *mLastCamera; // 0x36c7c
+    bool mReadyToUse; // 0x36c80
 };

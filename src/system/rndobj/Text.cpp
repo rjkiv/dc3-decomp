@@ -134,9 +134,7 @@ void RndText::FontMap::AllocateMeshes(RndText *text, int fixedLength) {
         page.unk8 = 0;
         if (mesh) {
             mesh->SetTransParent(text, false);
-            mesh->SetTransConstraint(
-                RndTransformable::kConstraintParentWorld, nullptr, false
-            );
+            mesh->SetTransConstraint(RndTransformable::kParentWorld, nullptr, false);
             if (mFont) {
                 mesh->SetMat(mFont->Mat(i));
             }
@@ -256,7 +254,7 @@ void RndText::FontMap::SetupScrolling() {
     for (int i = 0; i < NumMeshes(); i++) {
         RndMesh *mesh = Mesh(i);
         if (mesh) {
-            mesh->SetTransConstraint(RndTransformable::kConstraintNone, nullptr, false);
+            mesh->SetTransConstraint(RndTransformable::kNone, nullptr, false);
         }
     }
 }
@@ -308,7 +306,7 @@ void RndText::FontMap3d::AllocateMeshes(RndText *text, int i2) {
         }
         RndMesh *cur = mMeshes[i];
         cur->SetTransParent(text, false);
-        cur->SetTransConstraint(kConstraintNone, nullptr, false);
+        cur->SetTransConstraint(kNone, nullptr, false);
         cur->SetMat(mFont->Mat());
         cur->SetShowing(true);
     }
