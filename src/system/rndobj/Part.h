@@ -264,7 +264,7 @@ public:
     const Vector2 &BurstPeak() const { return mBurstPeak; }
     void SetBurstPeak(float x, float y) { mBurstPeak.x = x; mBurstPeak.y = y; }
     const Vector2 &BurstLength() const { return mBurstLength; }
-    void SetBurstLength(float x, float y) { mBurstLength.x = x; mBurstPeak.y = y; }
+    void SetBurstLength(float x, float y) { mBurstLength.x = x; mBurstLength.y = y; }
     float AngularDrag() const { return mRotDrag; }
     void SetAngularDrag(float f) { mRotDrag = f; }
     const Vector2 &AngularSpeed() const { return mRotSpeed; }
