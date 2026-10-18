@@ -68,7 +68,7 @@ void DxParticleSys::DrawShowing() {
         bool is_fancy = mType == kFancy;
         inv_rel_mtx.x *= 0.5f;
         inv_rel_mtx.y *= 0.5f;
-        inv_rel_mtx.z *= 0.5f * mScreenAspect;
+        inv_rel_mtx.z *= 0.5f * mHeightRatio;
         is_fancy &= mStretchWithVelocity;
         bool align_with_vel = mAlignWithVelocity == 0;
         bool constant_area = mConstantArea;
@@ -97,14 +97,9 @@ void DxParticleSys::DrawShowing() {
         );
         TheShaderMgr.SetVConstant(
             (VShaderConstant)0x32,
-            Vector4(
-                mNumTilesAcross,
-                mNumTilesDown,
-                1.0f / mNumTilesAcross,
-                1.0f / mNumTilesDown
-            )
+            Vector4(mTilesAcross, mTilesDown, 1.0f / mTilesAcross, 1.0f / mTilesDown)
         );
-        float do_uv_anim = mAnimateUVs ? 1.0f : 0.0f;
+        float do_uv_anim = mAnimatedUVs ? 1.0f : 0.0f;
         TheShaderMgr.SetVConstant(
             (VShaderConstant)0x33, Vector4(do_uv_anim, do_uv_anim, do_uv_anim, do_uv_anim)
         );

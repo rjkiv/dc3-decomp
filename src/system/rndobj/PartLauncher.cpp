@@ -217,19 +217,19 @@ void RndPartLauncher::CopyPropsFromPart() {
             mPartOverride.yaw = mPart->Yaw();
         }
         if (!(mPartOverride.mask & PartOverride::kMeshEmitter)) {
-            mPartOverride.mesh = mPart->GetMesh();
+            mPartOverride.mesh = mPart->Mesh();
         }
         if (!(mPartOverride.mask & PartOverride::kBoxEmitter)) {
-            mPartOverride.box.mMin = mPart->BoxExtent1();
-            mPartOverride.box.mMax = mPart->BoxExtent2();
+            mPartOverride.box.mMin = mPart->PosLow();
+            mPartOverride.box.mMax = mPart->PosHigh();
         }
     }
 }
 
 void RndPartLauncher::LaunchParticles() {
     if (mPart) {
-        Vector3 box1(mPart->BoxExtent1());
-        Vector3 box2(mPart->BoxExtent2());
+        Vector3 box1(mPart->PosLow());
+        Vector3 box2(mPart->PosHigh());
         if (mTrans) {
             Vector3 partvec(mPart->WorldXfm().v);
             Vector3 transvec(mTrans->WorldXfm().v);
@@ -239,7 +239,7 @@ void RndPartLauncher::LaunchParticles() {
             Vector3 sumvec2(box2);
             sumvec += transvec;
             sumvec2 += transvec;
-            mPart->SetBoxExtent(sumvec, sumvec2);
+            mPart->SetPos(sumvec, sumvec2);
         }
 
         mPartOverride.mesh = mMeshEmitter;
@@ -247,7 +247,7 @@ void RndPartLauncher::LaunchParticles() {
         mPartOverride.mesh = nullptr;
 
         if (mTrans) {
-            mPart->SetBoxExtent(box1, box2);
+            mPart->SetPos(box1, box2);
         }
     }
 }
