@@ -103,41 +103,44 @@ void operator delete[](void *mem);
 
 // for Hmx::Objects and their derivatives
 #define OBJ_MEM_OVERLOAD(line_num)                                                       \
-    static void *operator new(size_t s) {                                                \
-        return MemAlloc(s, __FILE__, line_num, StaticClassName().Str(), 0);              \
+    static void *operator new(size_t iSize) {                                            \
+        return MemAlloc(iSize, __FILE__, line_num, StaticClassName().Str(), 0);          \
     }                                                                                    \
-    static void *operator new(size_t s, void *place) { return place; }                   \
-    static void operator delete(void *v) {                                               \
-        MemFree(v, __FILE__, line_num, StaticClassName().Str());                         \
+    static void *operator new[](size_t iSize) {                                          \
+        return MemAlloc(iSize, __FILE__, line_num, StaticClassName().Str(), 0);          \
+    }                                                                                    \
+    static void operator delete(void *iMem) {                                            \
+        MemFree(iMem, __FILE__, line_num, StaticClassName().Str());                      \
+    }                                                                                    \
+    static void operator delete[](void *iMem) {                                          \
+        MemFree(iMem, __FILE__, line_num, StaticClassName().Str());                      \
     }
 
 // for everything else
 #define MEM_OVERLOAD(class_name, line_num)                                               \
-    static void *operator new(size_t s) {                                                \
-        return MemAlloc(s, __FILE__, line_num, #class_name, 0);                          \
+    static void *operator new(size_t iSize) {                                            \
+        return MemAlloc(iSize, __FILE__, line_num, #class_name, 0);                      \
     }                                                                                    \
-    static void *operator new(size_t s, void *place) { return place; }                   \
-    static void operator delete(void *v) { MemFree(v, __FILE__, line_num, #class_name); }
-
-#define MEM_ARRAY_OVERLOAD(class_name, line_num)                                         \
-    static void *operator new[](unsigned int s) {                                        \
-        return MemAlloc(s, __FILE__, line_num, #class_name, 0);                          \
+    static void *operator new[](size_t iSize) {                                          \
+        return MemAlloc(iSize, __FILE__, line_num, #class_name, 0);                      \
     }                                                                                    \
-    static void *operator new[](unsigned int s, void *place) { return place; }           \
-    static void operator delete[](void *v) {                                             \
-        MemFree(v, __FILE__, line_num, #class_name);                                     \
+    static void operator delete(void *iMem) {                                            \
+        MemFree(iMem, __FILE__, line_num, #class_name);                                  \
+    }                                                                                    \
+    static void operator delete[](void *iMem) {                                          \
+        MemFree(iMem, __FILE__, line_num, #class_name);                                  \
     }
 
 #define MEM_TEMP_OVERLOAD(class_name, line_num)                                          \
-    static void *operator new(unsigned int s) {                                          \
-        return _MemAllocTemp(s, __FILE__, line_num, #class_name, 0);                     \
+    static void *operator new(size_t iSize) {                                            \
+        return _MemAllocTemp(iSize, __FILE__, line_num, #class_name, 0);                 \
     }                                                                                    \
-    static void *operator new(unsigned int s, void *place) { return place; }             \
-    static void operator delete(void *v) { MemFree(v, __FILE__, line_num, #class_name); }
-
-// #define NEW_ARRAY_OVERLOAD \
-//     void *operator new[](size_t t) { return _MemAlloc(t, 0); } \ void *operator
-//     new[](size_t, void *place) { return place; }
-
-// #define DELETE_ARRAY_OVERLOAD \
-//     void operator delete[](void *v) { _MemFree(v); }
+    static void *operator new[](size_t iSize) {                                          \
+        return _MemAllocTemp(iSize, __FILE__, line_num, #class_name, 0);                 \
+    }                                                                                    \
+    static void operator delete(void *iMem) {                                            \
+        MemFree(iMem, __FILE__, line_num, #class_name);                                  \
+    }                                                                                    \
+    static void operator delete[](void *iMem) {                                          \
+        MemFree(iMem, __FILE__, line_num, #class_name);                                  \
+    }

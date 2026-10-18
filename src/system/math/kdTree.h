@@ -22,7 +22,7 @@ public:
 
     class kdTriList {
     public:
-        MEM_ARRAY_OVERLOAD(kdTriList, 0xC6);
+        MEM_OVERLOAD(kdTriList, 0xC6);
 
         kdTriList(const Triangle *t = nullptr) : mData(t) {}
 
@@ -260,7 +260,7 @@ public:
             }
         }
 
-        MEM_ARRAY_OVERLOAD(kdTreeNode, 0xEC);
+        MEM_OVERLOAD(kdTreeNode, 0xEC);
 
         bool GetIsLeaf() const { return mLeaf_Index >> 15; }
         unsigned short GetIndex() const { return mLeaf_Index & 0x7FFF; }

@@ -15,7 +15,7 @@
 // size 0x68
 class RndParticle {
 public:
-    MEM_ARRAY_OVERLOAD(Particle, 0x1E);
+    MEM_OVERLOAD(Particle, 0x1E);
 
     RndParticle *Next() const { return next; }
     // bool Active() const;

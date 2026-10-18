@@ -64,7 +64,6 @@ struct MidiMessage {
     unsigned long dwParam2;
     unsigned int wTimeMs;
 
-    MEM_ARRAY_OVERLOAD(MidiMessage, 0x12)
     MEM_OVERLOAD(MidiMessage, 0x12)
 };
 

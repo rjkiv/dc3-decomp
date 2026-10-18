@@ -9,7 +9,7 @@ public:
         DataNode pos; // 0x8
         DataNode str; // 0x10
 
-        MEM_ARRAY_OVERLOAD(OrderedLocaleChunk, 0x1d)
+        MEM_OVERLOAD(OrderedLocaleChunk, 0x1d)
     };
 
     // FIXME: this needs to not be static
