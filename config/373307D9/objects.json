@@ -277,7 +277,7 @@
             "system/flow/FlowTimer.cpp": "NonMatching",
             "system/flow/FlowTrigger.cpp": "NonMatching",
             "system/flow/FlowValueCase.cpp": "Matching",
-            "system/flow/FlowWhile.cpp": "NonMatching",
+            "system/flow/FlowWhile.cpp": "Matching",
             "system/flow/PropertyEventListener.cpp": "NonMatching",
             "system/flow/PropertyEventProvider.cpp": "Matching",
             "system/gesture/ArcDetector.cpp": "NonMatching",
