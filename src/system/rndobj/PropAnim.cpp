@@ -19,8 +19,7 @@ static DataNode sKeyReplace;
 #pragma region Hmx::Object
 
 RndPropAnim::RndPropAnim()
-    : mLastFrame(0), mInSetFrame(false), mLoop(false), mFireFlowLabel(""), mIntensity(1) {
-}
+    : mLastFrame(0), mInSetFrame(false), mLoop(false), mCurFlowLabel(""), mIntensity(1) {}
 
 RndPropAnim::~RndPropAnim() { DeleteAll(mPropKeys); }
 
@@ -113,7 +112,7 @@ END_HANDLERS
 
 BEGIN_PROPSYNCS(RndPropAnim)
     SYNC_PROP(loop, mLoop)
-    SYNC_PROP_MODIFY(fire_flow_label, mFireFlowLabel, FireFlowLabel(mFireFlowLabel))
+    SYNC_PROP_MODIFY(fire_flow_label, mCurFlowLabel, FireFlowLabel(mCurFlowLabel))
     SYNC_PROP(flow_labels, mFlowLabels)
     SYNC_PROP(intensity, mIntensity)
     SYNC_SUPERCLASS(RndAnimatable)

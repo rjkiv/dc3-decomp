@@ -40,7 +40,7 @@ protected:
     void ExposeMesh(void);
     void SetActive(bool);
 
-    float unk48; // 0x48
+    float mLastSeconds; // 0x48
     /** "Number of sides, the more sides, the more cylindrical it is".
         Ranges from 3 to 20. */
     int mNumSides; // 0x4c
@@ -51,13 +51,13 @@ protected:
     float mWidth; // 0x68
     int mDirty; // 0x6c
     bool mActive; // 0x70
-    Keys<Transform, Transform> mTransforms; // 0x74
+    Keys<Transform, Transform> mHistory; // 0x74
     /** "Number of segments it's built out of". Ranges from 0 to 1000. */
     int mNumSegments; // 0x80
     /** "The ribbon ends after this many seconds.
         Each segment gets an equal fraction of this time".
         Ranges from 1e-3 to 10. */
-    float mDecay; // 0x84
+    float mDecayTime; // 0x84
     /** "Which Trans to follow" */
     ObjPtr<RndTransformable> mFollowA; // 0x88
     /** "Another Trans to follow" */

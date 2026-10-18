@@ -10,6 +10,10 @@ public:
     static void EndShadow();
     static bool PrepShadow(RndDrawable *, RndEnviron *);
 
+    // public: static const int32_t kShadowBufferWidth;
+    // public: static const int32_t kShadowBufferHeight;
+    // public: static const int32_t kShadowBufferBpp;
+
 protected:
     static RndCam *sLightCam;
     static RndTex *sShadowTex;

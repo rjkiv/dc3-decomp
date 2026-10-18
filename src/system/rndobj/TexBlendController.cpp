@@ -4,7 +4,7 @@
 
 RndTexBlendController::RndTexBlendController()
     : mMesh(this), mObject1(this), mObject2(this), mReferenceDistance(0), mMinDistance(0),
-      mMaxDistance(0), mTex(this) {}
+      mMaxDistance(0), mOverrideMap(this) {}
 
 BEGIN_HANDLERS(RndTexBlendController)
     HANDLE_ACTION(set_min_distance, UpdateMinDistance())
@@ -21,7 +21,7 @@ BEGIN_PROPSYNCS(RndTexBlendController)
     SYNC_PROP(base_distance, mReferenceDistance)
     SYNC_PROP(min_distance, mMinDistance)
     SYNC_PROP(max_distance, mMaxDistance)
-    SYNC_PROP(override_map, mTex)
+    SYNC_PROP(override_map, mOverrideMap)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
 
@@ -34,7 +34,7 @@ BEGIN_SAVES(RndTexBlendController)
     bs << mReferenceDistance;
     bs << mMinDistance;
     bs << mMaxDistance;
-    bs << mTex;
+    bs << mOverrideMap;
 END_SAVES
 
 BEGIN_COPYS(RndTexBlendController)
@@ -47,7 +47,7 @@ BEGIN_COPYS(RndTexBlendController)
         COPY_MEMBER(mReferenceDistance)
         COPY_MEMBER(mMinDistance)
         COPY_MEMBER(mMaxDistance)
-        COPY_MEMBER(mTex)
+        COPY_MEMBER(mOverrideMap)
     END_COPYING_MEMBERS
 END_COPYS
 
@@ -64,7 +64,7 @@ BEGIN_LOADS(RndTexBlendController)
     d >> mMinDistance;
     d >> mMaxDistance;
     if (d.rev > 1) {
-        d >> mTex;
+        d >> mOverrideMap;
     }
 END_LOADS
 
@@ -72,7 +72,7 @@ bool RndTexBlendController::IsValid() const {
     if (!mMesh) {
         return false;
     }
-    if (!mTex) {
+    if (!mOverrideMap) {
         if (mMinDistance > mReferenceDistance && mMaxDistance < mReferenceDistance) {
             return mObject1 && mObject2 && mReferenceDistance > 0;
         }

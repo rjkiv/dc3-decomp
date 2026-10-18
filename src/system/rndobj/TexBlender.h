@@ -9,6 +9,10 @@
 class RndTexBlender : public RndDrawable {
 public:
     enum TexState {
+        kTexState_Base = 0x0001,
+        kTexState_Near = 0x0002,
+        kTexState_Far = 0x0004,
+        kTexState_Override = 0x0008,
     };
     // Hmx::Object
     OBJ_CLASSNAME(TexBlender);
@@ -31,9 +35,10 @@ protected:
     RndTexBlender();
 
     void DrawBlendList(
-        const std::vector<std::pair<RndTexBlendController *, float> > &, TexState
+        const std::vector<std::pair<RndTexBlendController *, float> > &list,
+        TexState state
     );
-    RndMat *SetupMaterial(RndMat *, RndTex *);
+    RndMat *SetupMaterial(RndMat *mat, RndTex *tex);
     DataNode OnGetRenderTextures(DataArray *);
 
     static RndMat *sBlendMaterial;
@@ -47,7 +52,7 @@ protected:
         than the default distance" */
     ObjPtr<RndTex> mFarMap; // 0x68
     /** "The final result output texture" */
-    ObjPtr<RndTex> mOutputTextures; // 0x7c
+    ObjPtr<RndTex> mOutputTexture; // 0x7c
     /** "The list of controller objects used to render
         pieces of a mesh to the output texture" */
     ObjPtrList<RndTexBlendController> mControllerList; // 0x90
@@ -58,7 +63,7 @@ protected:
     ObjPtr<RndDrawable> mOwner; // 0xa4
     /** "Global strength of the blending effect for each controller".
         Ranges from 0 to 1. */
-    float mControllerInfluence; // 0xb8
-    int unkbc; // 0xbc
-    bool unkc0;
+    float mFactorScale; // 0xb8
+    unsigned int mOutputTexState; // 0xbc
+    bool mDirty; // 0xc0
 };
