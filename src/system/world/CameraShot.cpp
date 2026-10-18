@@ -595,7 +595,7 @@ void CamShotCrowd::GetSelectedCrowd(
     std::list<std::pair<RndMultiMesh *, std::list<RndMultiMesh::Instance>::iterator> >
         &crowdChars
 ) {
-    FOREACH (it, RndMultiMesh::ProxyPool()) {
+    FOREACH (it, RndMultiMesh::GetProxyPool()) {
         RndMultiMeshProxy *proxy = it->first;
         MILO_ASSERT(proxy, 0xA06);
         RndMultiMesh *multiMesh = proxy->MultiMesh();

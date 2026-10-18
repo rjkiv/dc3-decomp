@@ -10,9 +10,9 @@
 #pragma region CtrlPoint
 
 RndSpline::CtrlPoint::CtrlPoint()
-    : mPos(Vector3::GetZero()), mRoll(0), unk14(1), mDirtyConstants(1),
-      unk18(Vector4::GetZero()), unk28(Vector4::GetZero()), unk38(Vector4::GetZero()),
-      unk48(Vector4::GetZero()) {}
+    : mPos(Vector3::GetZero()), mRoll(0), mNew(1), mDirtyConstants(1),
+      mA(Vector4::GetZero()), mB(Vector4::GetZero()), mC(Vector4::GetZero()),
+      mD(Vector4::GetZero()) {}
 
 void RndSpline::CtrlPoint::Save(BinStream &bs) const {
     bs << mPos;
@@ -22,7 +22,7 @@ void RndSpline::CtrlPoint::Save(BinStream &bs) const {
 void RndSpline::CtrlPoint::Load(BinStreamRev &d) {
     d >> mPos;
     d >> mRoll;
-    unk14 = false;
+    mNew = false;
 }
 
 void RndSpline::CtrlPoint::Interp(const CtrlPoint &p1, const CtrlPoint &p2, float r) {
@@ -38,8 +38,8 @@ static const float sSplineFloats[3] = { 10, 10, 4 };
 RndSpline::RndSpline()
     : mManual(false), mPulseLength(sSplineFloats[0]), mPulseAmplitude(sSplineFloats[0]),
       mStartCtrlPoint(-1), mEndCtrlPoint(-1), mYOffset(0),
-      mYPerCtrlPoint(sSplineFloats[0]), unk144(0), unk145(0), mPulse(0), unk148(-1000),
-      unk14c(0) {}
+      mYPerCtrlPoint(sSplineFloats[0]), mDeformedCtrlPointsDirtyStart(0),
+      mDeformedCtrlPointsDirtyEnd(0), mPulse(0), mPulseT(-1000), mTestPulse(0) {}
 
 BEGIN_HANDLERS(RndSpline)
     HANDLE(test_pulse, OnTestPulse)
@@ -54,7 +54,7 @@ BEGIN_CUSTOM_PROPSYNC(RndSpline::CtrlPoint)
 END_CUSTOM_PROPSYNC
 
 BEGIN_PROPSYNCS(RndSpline)
-    SYNC_PROP_MODIFY(ctrl_points, mCtrlPoints, SyncPristineCtrlPoints())
+    SYNC_PROP_MODIFY(ctrl_points, mPristineCtrlPoints, SyncPristineCtrlPoints())
     SYNC_PROP(manual, mManual)
     SYNC_PROP(pulse_length, mPulseLength)
     SYNC_PROP(pulse_amplitude, mPulseAmplitude)
@@ -75,7 +75,7 @@ BinStream &operator<<(BinStream &bs, const RndSpline::CtrlPoint &pt) {
 BEGIN_SAVES(RndSpline)
     SAVE_REVS(1, 0)
     SAVE_SUPERCLASS(RndPollable)
-    bs << mCtrlPoints;
+    bs << mPristineCtrlPoints;
     bs << mManual;
     bs << mPulseLength;
     bs << mPulseAmplitude;
@@ -91,7 +91,7 @@ BEGIN_COPYS(RndSpline)
         COPY_SUPERCLASS(RndPollable)
         CREATE_COPY(RndSpline)
         BEGIN_COPYING_MEMBERS
-            COPY_MEMBER(mCtrlPoints)
+            COPY_MEMBER(mPristineCtrlPoints)
             COPY_MEMBER(mManual)
             COPY_MEMBER(mPulseLength)
             COPY_MEMBER(mPulseAmplitude)
@@ -115,7 +115,7 @@ BEGIN_LOADS(RndSpline)
     LOAD_REVS(bs)
     ASSERT_REVS(1, 0)
     LOAD_SUPERCLASS(RndPollable)
-    d >> mCtrlPoints;
+    d >> mPristineCtrlPoints;
     d >> mManual;
     if (d.rev >= 1) {
         d >> mPulseLength;
@@ -134,19 +134,19 @@ BEGIN_LOADS(RndSpline)
 END_LOADS
 
 void RndSpline::Poll() {
-    if (unk14c && mPulse) {
-        unk148 += 0.033333335f;
-        if (unk148 > (float)mCtrlPoints.size()) {
-            unk14c = false;
+    if (mTestPulse && mPulse) {
+        mPulseT += 0.033333335f;
+        if (mPulseT > (float)mPristineCtrlPoints.size()) {
+            mTestPulse = false;
             mPulse = false;
-            unk148 = -1000;
+            mPulseT = -1000;
         }
     }
 }
 
 void RndSpline::SetStartCtrlPoint(int idx) {
     if (idx != -1) {
-        idx = Clamp(0, (int)mCtrlPoints.size() - 2, idx);
+        idx = Clamp(0, (int)mPristineCtrlPoints.size() - 2, idx);
     }
     if (idx != mStartCtrlPoint) {
         mStartCtrlPoint = idx;
@@ -162,7 +162,7 @@ void RndSpline::SetStartCtrlPoint(int idx) {
 
 void RndSpline::SetEndCtrlPoint(int idx) {
     if (idx != -1) {
-        idx = Clamp(1, (int)mCtrlPoints.size() - 1, idx);
+        idx = Clamp(1, (int)mPristineCtrlPoints.size() - 1, idx);
     }
     if (idx != mEndCtrlPoint) {
         mEndCtrlPoint = idx;
@@ -182,11 +182,11 @@ const RndSpline::CtrlPoint &RndSpline::GetDeformedCtrlPoint(int iIndex) const {
 const RndSpline::CtrlPoint &RndSpline::GetDeformedCtrlPointOrDummy(int iIndex) const {
     MILO_ASSERT_RANGE_EQ(iIndex, -1, (int)(mDeformedCtrlPoints.size()) + 1, 0x2F7);
     if (iIndex == -1) {
-        return unk3c;
+        return mDummyStart;
     } else if (iIndex == (int)mDeformedCtrlPoints.size()) {
-        return unk94;
+        return mDummyEnd1;
     } else if (iIndex == (int)mDeformedCtrlPoints.size() + 1) {
-        return unkec;
+        return mDummyEnd2;
     } else {
         return mDeformedCtrlPoints[iIndex];
     }
@@ -197,27 +197,27 @@ void RndSpline::SyncDeformedDummyCtrlPoints(int iStartIndex, int iEndIndex) cons
     MILO_ASSERT_RANGE(iEndIndex, 0, (int)mDeformedCtrlPoints.size(), 0x2C6);
     MILO_ASSERT(iStartIndex <= iEndIndex, 0x2C7);
     if (mDeformedCtrlPoints.size() >= 2) {
-        if (unk144 && iStartIndex == 0) {
+        if (mDeformedCtrlPointsDirtyStart && iStartIndex == 0) {
             RndSpline *me = const_cast<RndSpline *>(this);
             CtrlPoint &cur = me->mDeformedCtrlPoints[0];
             CtrlPoint &next = me->mDeformedCtrlPoints[1];
-            me->unk144 = false;
+            me->mDeformedCtrlPointsDirtyStart = false;
             Vector3 posDiff;
             Subtract(cur.mPos, next.mPos, posDiff);
             Add(cur.mPos, posDiff, cur.mPos);
             cur.mRoll = next.mRoll;
             cur.mDirtyConstants = true;
         }
-        if (unk145 && mDeformedCtrlPoints.size() - 2 <= iEndIndex) {
+        if (mDeformedCtrlPointsDirtyEnd && mDeformedCtrlPoints.size() - 2 <= iEndIndex) {
             RndSpline *me = const_cast<RndSpline *>(this);
             CtrlPoint &last = me->mDeformedCtrlPoints[mDeformedCtrlPoints.size() - 1];
             CtrlPoint &prev = me->mDeformedCtrlPoints[mDeformedCtrlPoints.size() - 2];
-            me->unk145 = false;
+            me->mDeformedCtrlPointsDirtyEnd = false;
             Vector3 posDiff;
             Subtract(last.mPos, prev.mPos, posDiff);
             Add(last.mPos, posDiff, last.mPos);
-            Subtract(unk94.mPos, last.mPos, posDiff);
-            Add(unk94.mPos, posDiff, (Vector3 &)unkec.mPos);
+            Subtract(mDummyEnd1.mPos, last.mPos, posDiff);
+            Add(mDummyEnd1.mPos, posDiff, (Vector3 &)mDummyEnd2.mPos);
             prev.mDirtyConstants = true;
             last.mDirtyConstants = true;
         }
@@ -227,17 +227,18 @@ void RndSpline::SyncDeformedDummyCtrlPoints(int iStartIndex, int iEndIndex) cons
 void RndSpline::PrepareShader(float f1, float f2) const {
     if (mDeformedCtrlPoints.size() >= 2) {
         int startCtrlPt = mStartCtrlPoint == -1 ? 0 : mStartCtrlPoint;
-        int endCtrlPt = mEndCtrlPoint == -1 ? mCtrlPoints.size() - 1 : mEndCtrlPoint;
+        int endCtrlPt =
+            mEndCtrlPoint == -1 ? mPristineCtrlPoints.size() - 1 : mEndCtrlPoint;
         SyncDeformedCtrlPoints(startCtrlPt, endCtrlPt);
         MILO_ASSERT(((endCtrlPt - startCtrlPt) + 1) < kVShader_SplineMaxCtrlPoints, 0x1C1);
         int shaderConstant = 0xAE;
         for (int i = startCtrlPt; i <= endCtrlPt; i++, shaderConstant += 4) {
             const CtrlPoint &pt = GetDeformedCtrlPoint(i);
             MILO_ASSERT(!pt.mDirtyConstants, 0x1CF);
-            TheShaderMgr.SetVConstant((VShaderConstant)(shaderConstant - 1), pt.unk18);
-            TheShaderMgr.SetVConstant((VShaderConstant)(shaderConstant), pt.unk28);
-            TheShaderMgr.SetVConstant((VShaderConstant)(shaderConstant + 1), pt.unk38);
-            TheShaderMgr.SetVConstant((VShaderConstant)(shaderConstant + 2), pt.unk48);
+            TheShaderMgr.SetVConstant((VShaderConstant)(shaderConstant - 1), pt.mA);
+            TheShaderMgr.SetVConstant((VShaderConstant)(shaderConstant), pt.mB);
+            TheShaderMgr.SetVConstant((VShaderConstant)(shaderConstant + 1), pt.mC);
+            TheShaderMgr.SetVConstant((VShaderConstant)(shaderConstant + 2), pt.mD);
         }
         TheShaderMgr.SetVConstant(
             (VShaderConstant)0x19, Vector4(endCtrlPt - startCtrlPt, f1, 1.0f / f2, 0)
@@ -246,7 +247,7 @@ void RndSpline::PrepareShader(float f1, float f2) const {
             TheShaderMgr.SetVConstant(
                 (VShaderConstant)0x1A,
                 Vector4(
-                    unk148 - startCtrlPt,
+                    mPulseT - startCtrlPt,
                     (mYPerCtrlPoint / mPulseLength) * 2.0f,
                     mPulseAmplitude,
                     0
@@ -257,10 +258,10 @@ void RndSpline::PrepareShader(float f1, float f2) const {
 }
 
 DataNode RndSpline::OnTestPulse(DataArray *) {
-    if (!unk14c) {
-        unk14c = true;
+    if (!mTestPulse) {
+        mTestPulse = true;
         mPulse = true;
-        unk148 = -1;
+        mPulseT = -1;
     }
     return 0;
 }

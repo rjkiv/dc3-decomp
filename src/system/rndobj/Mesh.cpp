@@ -27,6 +27,7 @@
 #include "utl/Std.h"
 
 PatchVerts gPatchVerts;
+bool RndMesh::sRawCollide = false;
 int RndMesh::sLastCollide = -1;
 int MESH_REV_SEP_COLOR = 0x25;
 CompressedVertex_Xbox gCompressedVertexXbox;
@@ -102,7 +103,7 @@ bool PropSync(
         if (i < prop->Size() || op & (kPropGet | kPropSet | kPropSize)) {
             if (vec.size() > 0) {
                 if (op & kPropSet) {
-                    vec.unkc = true;
+                    vec.mDirty = true;
                 }
                 return PropSync(vert, node, prop, i, op);
             } else {
@@ -122,10 +123,10 @@ bool PropSync(
 #pragma region RndMesh
 
 RndMesh::RndMesh()
-    : mMat(this), mGeomOwner(this, this), mBones(this), mMutable(0),
-      mVolume(kVolumeTriangles), mBSPTree(nullptr), mMultiMesh(nullptr), mHasAOCalc(0),
-      mKeepMeshData(0), mCompressedVerts(nullptr), mNumCompressedVerts(0) {
-    unk180 = 0x26;
+    : mMat(this), mGeomOwner(this, this), mBones(this), mMutable(0), mVolume(kTriangles),
+      mBSPTree(nullptr), mMultiMesh(nullptr), mHasAOCalc(0), mKeepMeshData(0),
+      mCompressedVerts(nullptr), mNumCompressedVerts(0) {
+    mShaderOverride = kMaxShaderTypes;
 }
 
 RndMesh::~RndMesh() {
@@ -184,7 +185,7 @@ BEGIN_HANDLERS(RndMesh)
 END_HANDLERS
 
 FORCEINLINE bool RndMesh::HasInstancedBones() {
-    return mGeomOwner && !mBones.empty() && mGeomOwner->BoneTransAt(0) != BoneTransAt(0);
+    return mGeomOwner && !mBones.empty() && mGeomOwner->Bone(0) != Bone(0);
 }
 
 BEGIN_CUSTOM_PROPSYNC(RndBone)
@@ -216,9 +217,8 @@ BinStream &operator<<(BinStream &bs, const RndMesh::Face &face) {
 
 BinStream &operator<<(BinStream &bs, const RndMesh::Vert &vert) {
     bs << vert.pos << vert.norm;
-    bs << vert.color << vert.tex << vert.boneWeights << vert.boneIndices[0]
-       << vert.boneIndices[1] << vert.boneIndices[2] << vert.boneIndices[3]
-       << vert.tangent;
+    bs << vert.color << vert.tex << vert.boneWeights << vert.bone0 << vert.bone1
+       << vert.bone2 << vert.bone3 << vert.tangent;
     return bs;
 }
 
@@ -299,10 +299,10 @@ BinStreamRev &operator>>(BinStreamRev &d, RndMesh::Vert &vert) {
         d >> v;
     }
     if (d.rev > 0x1C) {
-        d >> vert.boneIndices[0];
-        d >> vert.boneIndices[1];
-        d >> vert.boneIndices[2];
-        d >> vert.boneIndices[3];
+        d >> vert.bone0;
+        d >> vert.bone1;
+        d >> vert.bone2;
+        d >> vert.bone3;
     }
     if (d.rev > 0x1D) {
         d >> vert.tangent;
@@ -426,7 +426,7 @@ BEGIN_LOADS(RndMesh)
     } else if (d.rev > 0xB) {
         bool b;
         d >> b;
-        mMutable = b ? 31 : 0;
+        mMutable = b ? kVerts : kNone;
     }
     if (d.rev > 0x11) {
         d >> (int &)mVolume;
@@ -509,7 +509,7 @@ BEGIN_LOADS(RndMesh)
                     }
                 }
             } else {
-                if (TransConstraint() == RndTransformable::kConstraintParentWorld) {
+                if (TransConstraint() == RndTransformable::kParentWorld) {
                     mBones[0].mBone = TransParent();
                 } else {
                     mBones[0].mBone = this;
@@ -565,17 +565,17 @@ BEGIN_LOADS(RndMesh)
     if (d.rev > 0x25) {
         d >> mHasAOCalc;
     }
-    Sync(0xBF);
+    Sync(kKeepPatches | kAll);
 END_LOADS
 
 FORCEINLINE TextStream &operator<<(TextStream &ts, RndMesh::Volume v) {
-    if (v == RndMesh::kVolumeEmpty)
+    if (v == RndMesh::kEmpty)
         ts << "Empty";
-    else if (v == RndMesh::kVolumeTriangles)
+    else if (v == RndMesh::kTriangles)
         ts << "Triangles";
-    else if (v == RndMesh::kVolumeBSP)
+    else if (v == RndMesh::kBSP)
         ts << "BSP";
-    else if (v == RndMesh::kVolumeBox)
+    else if (v == RndMesh::kBox)
         ts << "Box";
     return ts;
 }
@@ -673,7 +673,7 @@ RndDrawable *RndMesh::CollideShowing(const Segment &seg, float &f, Plane &pl) {
             return this;
         }
     } else {
-        if (GetVolume() == kVolumeTriangles) {
+        if (GetVolume() == kTriangles) {
             f = 1.0f;
             bool b1 = false;
             bool bbb = mMat && mMat->GetCull() != BaseMaterial::kCullNone;
@@ -717,7 +717,7 @@ int RndMesh::CollidePlane(const Plane &plane) {
     FastInvert(WorldXfm(), tf48);
     Plane pl58;
     Multiply(plane, tf48, pl58);
-    if (GetVolume() == kVolumeTriangles) {
+    if (GetVolume() == kTriangles) {
         auto &faces = Faces();
         if (faces.empty())
             return -1;
@@ -966,12 +966,12 @@ void RndMesh::SetKeepMeshData(bool keep) {
 
 void RndMesh::SetNumVerts(int num) {
     Verts().resize(num);
-    Sync(0x3F);
+    Sync(kAll);
 }
 
 void RndMesh::SetNumFaces(int num) {
     mGeomOwner->mFaces.resize(num);
-    Sync(0x3F);
+    Sync(kAll);
 }
 
 void RndMesh::SetNumBones(int num) {
@@ -992,11 +992,11 @@ void RndMesh::SetZeroWeightBones() {
         for (int i = 0; i < mVerts.size(); i++) {
             Vert &curvert = mVerts[i];
             if (curvert.boneWeights.y == 0)
-                curvert.boneIndices[1] = curvert.boneIndices[0];
+                curvert.bone1 = curvert.bone0;
             if (curvert.boneWeights.z == 0)
-                curvert.boneIndices[2] = curvert.boneIndices[0];
+                curvert.bone2 = curvert.bone0;
             if (curvert.boneWeights.w == 0)
-                curvert.boneIndices[3] = curvert.boneIndices[0];
+                curvert.bone3 = curvert.bone0;
         }
     }
 }
@@ -1036,11 +1036,11 @@ int RndMesh::GetBoneIndex(const RndTransformable *t) {
 
 void RndMesh::Sync(int flags) {
     if (mKeepMeshData) {
-        flags |= 0x200;
+        flags |= kKeepVertsFaces;
     }
     OnSync(flags);
-    if (flags | 0x1F) {
-        Verts().unkc = 0;
+    if (flags | kVerts) {
+        Verts().setdirty(false);
     }
 }
 
@@ -1103,7 +1103,7 @@ void RndMesh::RemoveInvalidBones() {
 void RndMesh::CopyGeometryFromOwner() {
     if (mGeomOwner != this) {
         CopyGeometry(mGeomOwner, true);
-        Sync(0x3F);
+        Sync(kAll);
     }
 }
 
@@ -1141,15 +1141,15 @@ Vector3 RndMesh::SkinVertex(const RndMesh::Vert &vert, Vector3 *vptr) {
     if (NumBones() > 0) {
         Transform xfm;
         xfm.Zero();
-        short *boneItr = (short *)&vert.boneIndices;
+        short *boneItr = (short *)&vert.bone0;
         float *weightItr = (float *)&vert.boneWeights;
         for (int i = 0; i < 4; i++) {
             short boneIdx = boneItr[i];
             if (boneIdx < NumBones()) {
-                RndTransformable *curBoneTrans = BoneTransAt(boneIdx);
+                RndTransformable *curBoneTrans = Bone(boneIdx);
                 if (weightItr[i] && curBoneTrans) {
                     Transform tf90;
-                    Multiply(BoneOffsetAt(boneIdx), curBoneTrans->WorldXfm(), tf90);
+                    Multiply(*Offset(boneIdx), curBoneTrans->WorldXfm(), tf90);
                     ScaleAddEq(xfm, tf90, weightItr[i]);
                 }
             }
@@ -1173,11 +1173,11 @@ void RndMesh::DeleteBones(bool b1) {
         std::vector<RndTransformable *> transes;
         transes.resize(mBones.size());
         for (int i = 0; i < transes.size(); i++) {
-            transes[i] = BoneTransAt(i);
+            transes[i] = Bone(i);
         }
         RndTransformable *t = nullptr;
         if (b1) {
-            for (RndTransformable *parent = BoneTransAt(0); parent != nullptr;
+            for (RndTransformable *parent = Bone(0); parent != nullptr;
                  parent = parent->TransParent()) {
                 if (dynamic_cast<RndDir *>(parent->TransParent())) {
                     t = parent;
@@ -1215,7 +1215,7 @@ void RndMesh::InstanceGeomOwnerBones() {
 
         RndTransformable *oldRoot = nullptr;
         RndTransformable *parent;
-        for (parent = mGeomOwner->BoneTransAt(0); parent != nullptr;
+        for (parent = mGeomOwner->Bone(0); parent != nullptr;
              parent = parent->TransParent()) {
             if (dynamic_cast<RndDir *>(parent->TransParent())) {
                 oldRoot = parent;
@@ -1231,15 +1231,12 @@ void RndMesh::InstanceGeomOwnerBones() {
 
         for (int i = 0; i < mBones.size(); i++) {
             RndTransformable *curNewTrans = Hmx::Object::New<RndTransformable>();
-            curNewTrans->SetName(
-                NextName(mGeomOwner->BoneTransAt(i)->Name(), Dir()), Dir()
-            );
-            curNewTrans->Copy(mGeomOwner->BoneTransAt(i), kCopyShallow);
+            curNewTrans->SetName(NextName(mGeomOwner->Bone(i)->Name(), Dir()), Dir());
+            curNewTrans->Copy(mGeomOwner->Bone(i), kCopyShallow);
             mBones[i].mBone = curNewTrans;
-            int boneIdx =
-                mGeomOwner->GetBoneIndex(mGeomOwner->BoneTransAt(i)->TransParent());
+            int boneIdx = mGeomOwner->GetBoneIndex(mGeomOwner->Bone(i)->TransParent());
             RndTransformable *parentToSet =
-                boneIdx == -1 ? newTrans : mGeomOwner->BoneTransAt(boneIdx);
+                boneIdx == -1 ? newTrans : mGeomOwner->Bone(boneIdx);
             mBones[i].mBone->SetTransParent(parentToSet, false);
         }
     }
@@ -1252,7 +1249,7 @@ void RndMesh::SetVolume(Volume v) {
         mVolume = v;
         RELEASE(mBSPTree);
         if (!mVerts.empty() && !mFaces.empty()) {
-            if (mVolume == kVolumeBox) {
+            if (mVolume == kBox) {
                 Box box;
                 FOREACH (it, mVerts) {
                     box.GrowToContain(it->pos, it == mVerts.begin());
@@ -1272,7 +1269,7 @@ void RndMesh::SetVolume(Volume v) {
                         n = n->back;
                     }
                 }
-            } else if (mVolume == kVolumeBSP) {
+            } else if (mVolume == kBSP) {
                 std::list<BSPFace> bspFaces;
                 for (int i = mFaces.size() - 1; i >= 0; i--) {
                     Face &curFace = mFaces[i];
@@ -1308,7 +1305,7 @@ void RndMesh::SetVolume(Volume v) {
                     );
                 } else {
                     MILO_NOTIFY("Couldn't make BSP tree for \"%s\"", Name());
-                    mVolume = kVolumeEmpty;
+                    mVolume = kEmpty;
                 }
             }
         }
@@ -1420,7 +1417,7 @@ DataNode RndMesh::OnSetFace(const DataArray *da) {
     f->v1 = da->Int(3);
     f->v2 = da->Int(4);
     f->v3 = da->Int(5);
-    Sync(32);
+    Sync(kFaces);
     return 0;
 }
 
@@ -1450,7 +1447,7 @@ DataNode RndMesh::OnConfigureMesh(const DataArray *da) {
         mVerts[1].pos = v60;
         mVerts[2].pos = v6c;
         mVerts[3].pos = v78;
-        Sync(0x3F);
+        Sync(kAll);
     }
     return 0;
 }

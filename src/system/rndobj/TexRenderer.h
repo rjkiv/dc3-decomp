@@ -64,13 +64,12 @@ protected:
     /** "If [draw] will not get enter, exit, or poll automatically,
         it will be up to script hooks to do any of that" */
     bool mNoPoll; // 0x5D / -0x87
-    bool unk_0x5E, unk_0x5F; // 0x5E/5F; -0x86/85
     /** "Height for imposter rendering with current camera" */
     float mImpostorHeight; // 0x60; -0x84
     /** "Texture to write to" */
     ObjPtr<RndTex> mOutputTexture; // 0x64; -0x80
     /** "Draw Object to render to texture" */
-    ObjPtr<RndDrawable> mDrawable; // 0x78; -0x6C
+    ObjPtr<RndDrawable> mDraw; // 0x78; -0x6C
     /** "Camera to use, if you want specific one,
         defaults to proxy cam, if none and draw is proxy" */
     ObjPtr<RndCam> mCamera; // 0x8C; -0x58

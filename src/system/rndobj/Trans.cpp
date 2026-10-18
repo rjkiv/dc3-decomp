@@ -14,7 +14,7 @@
 #include "utl/TextStream.h"
 
 RndTransformable::RndTransformable()
-    : mParent(this), mTarget(this), mConstraint(kConstraintNone), mPreserveScale(false),
+    : mParent(this), mTarget(this), mConstraint(kNone), mPreserveScale(false),
       mDirty(true) {
     mLocalXfm.Reset();
     mWorldXfm.Reset();
@@ -153,19 +153,19 @@ BEGIN_LOADS(RndTransformable)
     } else if (d.rev > 6) {
         d >> (int &)mConstraint;
         if (mConstraint == 4) {
-            mConstraint = kConstraintNone;
+            mConstraint = kNone;
         } else if (mConstraint > 1 && mConstraint < 5) {
-            mConstraint = (Constraint)(mConstraint + kConstraintLocalRotate);
+            mConstraint = (Constraint)(mConstraint + kLocalRotate);
         }
     } else if (d.rev == 6) {
         d >> (int &)mConstraint;
-        mPreserveScale = mConstraint > kConstraintTargetWorld;
+        mPreserveScale = mConstraint > kTargetWorld;
         if (mConstraint > 9) {
-            mConstraint = (Constraint)(mConstraint - kConstraintBillboardZ);
+            mConstraint = (Constraint)(mConstraint - kBillboardZ);
         } else if (mConstraint > 2) {
-            mConstraint = (Constraint)(mConstraint - kConstraintLocalRotate);
+            mConstraint = (Constraint)(mConstraint - kLocalRotate);
         } else if (mConstraint == 2) {
-            mConstraint = kConstraintParentWorld;
+            mConstraint = kParentWorld;
         }
     } else if (d.rev >= 3) {
         int unkb0;
@@ -174,25 +174,25 @@ BEGIN_LOADS(RndTransformable)
         switch (unkb0) {
         case 0x4:
         case 0x84:
-            mConstraint = kConstraintBillboardZ;
+            mConstraint = kBillboardZ;
             break;
         case 0x8:
         case 0x88:
-            mConstraint = kConstraintBillboardXZ;
+            mConstraint = kBillboardXZ;
             break;
         case 0x10:
         case 0x90:
-            mConstraint = kConstraintBillboardXYZ;
+            mConstraint = kBillboardXYZ;
             break;
         case 0x20:
         case 0xA0:
-            mConstraint = kConstraintFastBillboardXYZ;
+            mConstraint = kFastBillboardXYZ;
             break;
         case 0x40:
-            mConstraint = kConstraintLocalRotate;
+            mConstraint = kLocalRotate;
             break;
         default:
-            mConstraint = kConstraintNone;
+            mConstraint = kNone;
             break;
         }
     } else if (d.rev > 0) {
@@ -200,7 +200,7 @@ BEGIN_LOADS(RndTransformable)
         d >> numb4;
         int sp80[6] = { 0, 0, 0, 5, 6, 7 };
         if (numb4 >= 0x18) {
-            mConstraint = kConstraintNone;
+            mConstraint = kNone;
         } else {
             mConstraint = (Constraint)sp80[numb4];
         }
@@ -246,9 +246,9 @@ BEGIN_LOADS(RndTransformable)
         d >> tPtr;
         if (tPtr != this) {
             SetTransParent(tPtr, false);
-            mConstraint = kConstraintParentWorld;
+            mConstraint = kParentWorld;
         }
-    } else if (d.rev == 6 && mConstraint == kConstraintParentWorld) {
+    } else if (d.rev == 6 && mConstraint == kParentWorld) {
         SetTransParent(mTarget, false);
     }
 END_LOADS
@@ -256,23 +256,23 @@ END_LOADS
 void RndTransformable::Highlight() { UtilDrawAxes(WorldXfm(), 3, Hmx::Color(1, 1, 1)); }
 
 FORCEINLINE TextStream &operator<<(TextStream &ts, RndTransformable::Constraint c) {
-    if (c == RndTransformable::kConstraintNone) {
+    if (c == RndTransformable::kNone) {
         ts << "None";
-    } else if (c == RndTransformable::kConstraintLocalRotate) {
+    } else if (c == RndTransformable::kLocalRotate) {
         ts << "LocalRotate";
-    } else if (c == RndTransformable::kConstraintLookAtTarget) {
+    } else if (c == RndTransformable::kLookAtTarget) {
         ts << "LookAtTarget";
-    } else if (c == RndTransformable::kConstraintShadowTarget) {
+    } else if (c == RndTransformable::kShadowTarget) {
         ts << "ShadowTarget";
-    } else if (c == RndTransformable::kConstraintParentWorld) {
+    } else if (c == RndTransformable::kParentWorld) {
         ts << "ParentWorld";
-    } else if (c == RndTransformable::kConstraintBillboardZ) {
+    } else if (c == RndTransformable::kBillboardZ) {
         ts << "BillboardZ";
-    } else if (c == RndTransformable::kConstraintBillboardXZ) {
+    } else if (c == RndTransformable::kBillboardXZ) {
         ts << "BillboardXZ";
-    } else if (c == RndTransformable::kConstraintBillboardXYZ) {
+    } else if (c == RndTransformable::kBillboardXYZ) {
         ts << "BillboardXYZ";
-    } else if (c == RndTransformable::kConstraintFastBillboardXYZ) {
+    } else if (c == RndTransformable::kFastBillboardXYZ) {
         ts << "FastBillboardXYZ";
     }
     return ts;
@@ -623,12 +623,12 @@ const Transform &RndTransformable::WorldXfm_Force() {
     mDirty = false;
     if (!mParent) {
         mWorldXfm = mLocalXfm;
-    } else if (mConstraint == kConstraintParentWorld) {
+    } else if (mConstraint == kParentWorld) {
         mWorldXfm = mParent->WorldXfm();
-    } else if (mConstraint == kConstraintLocalRotate) {
+    } else if (mConstraint == kLocalRotate) {
         Multiply(mLocalXfm.v, mParent->WorldXfm(), mWorldXfm.v);
         mWorldXfm.m = mLocalXfm.m;
-    } else if (mConstraint == kConstraintNoParentRotation) {
+    } else if (mConstraint == kNoParentRotation) {
         Add(mLocalXfm.v, mParent->WorldXfm().v, mWorldXfm.v);
         mWorldXfm.m = mLocalXfm.m;
     } else {
@@ -642,11 +642,11 @@ const Transform &RndTransformable::WorldXfm_Force() {
 }
 
 void RndTransformable::ApplyDynamicConstraint() {
-    if (mConstraint == kConstraintTargetWorld) {
+    if (mConstraint == kTargetWorld) {
         if (mTarget) {
             mWorldXfm = mTarget->WorldXfm();
         }
-    } else if (mConstraint == kConstraintShadowTarget) {
+    } else if (mConstraint == kShadowTarget) {
         Transform tf40;
         if (mTarget) {
             Transpose(mTarget->WorldXfm(), tf40);
@@ -674,13 +674,13 @@ void RndTransformable::ApplyDynamicConstraint() {
             MakeScale(mWorldXfm.m, v60);
         }
         switch (mConstraint) {
-        case kConstraintLookAtTarget:
+        case kLookAtTarget:
             if (mTarget) {
                 Subtract(mTarget->WorldXfm().v, mWorldXfm.v, mWorldXfm.m.y);
                 Normalize(mWorldXfm.m, mWorldXfm.m);
             }
             break;
-        case kConstraintBillboardZ:
+        case kBillboardZ:
             Subtract(mWorldXfm.v, curWorld.v, mWorldXfm.m.y);
             if (mPreserveScale) {
                 Normalize(mWorldXfm.m.z, mWorldXfm.m.z);
@@ -689,26 +689,26 @@ void RndTransformable::ApplyDynamicConstraint() {
             Normalize(mWorldXfm.m.x, mWorldXfm.m.x);
             Cross(mWorldXfm.m.z, mWorldXfm.m.x, mWorldXfm.m.y);
             break;
-        case kConstraintBillboardXZ:
+        case kBillboardXZ:
             Subtract(mWorldXfm.v, curWorld.v, mWorldXfm.m.y);
             Normalize(mWorldXfm.m.y, mWorldXfm.m.y);
             Cross(mWorldXfm.m.y, mWorldXfm.m.z, mWorldXfm.m.x);
             Normalize(mWorldXfm.m.x, mWorldXfm.m.x);
             Cross(mWorldXfm.m.x, mWorldXfm.m.y, mWorldXfm.m.z);
             break;
-        case kConstraintBillboardXYZ:
+        case kBillboardXYZ:
             Subtract(mWorldXfm.v, curWorld.v, mWorldXfm.m.y);
             mWorldXfm.m.z = curWorld.m.z;
             Normalize(mWorldXfm.m, mWorldXfm.m);
             break;
-        case kConstraintFastBillboardXYZ:
+        case kFastBillboardXYZ:
             mWorldXfm.m = curWorld.m;
             break;
-        case kConstraintSkyBox:
+        case kSkyBox:
             Add(mLocalXfm.v, curWorld.v, mWorldXfm.v);
             mWorldXfm.m = mLocalXfm.m;
             break;
-        case kConstraintSkyBoxXY:
+        case kSkyBoxXY:
             Add(mLocalXfm.v, curWorld.v, mWorldXfm.v);
             mWorldXfm.v.z = mLocalXfm.v.z;
             mWorldXfm.m = mLocalXfm.m;

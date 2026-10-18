@@ -11,7 +11,7 @@
 class DxRndOcclusionQueryMgr : public RndOcclusionQueryMgr {
 public:
     DxRndOcclusionQueryMgr() {
-        for (unsigned int i = 0; i < 256; i++) {
+        for (unsigned int i = 0; i < kMaxQueries; i++) {
             for (int j = 0; j < 2; j++) {
                 mDXQueryArray[i][j] = 0;
             }
@@ -28,9 +28,9 @@ protected:
         GetDXQuery(queryIndex)->Issue(2);
     }
     virtual void OnEndQuery(unsigned int queryIndex) { GetDXQuery(queryIndex)->Issue(1); }
-    virtual bool OnGetQueryResult(unsigned int queryIndex, unsigned int &uiRef) {
-        uiRef = 0;
-        return GetDXQuery(queryIndex)->GetData(&uiRef, 4, 0) == ERROR_SUCCESS;
+    virtual bool OnGetQueryResult(unsigned int queryIndex, unsigned int &queryResult) {
+        queryResult = 0;
+        return GetDXQuery(queryIndex)->GetData(&queryResult, 4, 0) == ERROR_SUCCESS;
     }
     virtual bool OnIsValidQuery(unsigned int queryIndex) const {
         return mDXQueryArray[queryIndex][mCurrentFrameIndex];
@@ -62,5 +62,5 @@ private:
         return mDXQueryArray[queryIndex][mCurrentFrameIndex];
     }
 
-    D3DQuery *mDXQueryArray[256][2]; // 0x1810
+    D3DQuery *mDXQueryArray[kMaxQueries][2]; // 0x1810
 };

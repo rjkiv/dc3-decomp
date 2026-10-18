@@ -40,43 +40,43 @@ void DxMesh::VertexBufferData::Release() {
 
 static D3DVERTEXELEMENT9 sVertexElements[] = {
     { 0,
-      offsetof(CompressedVertex_Xbox, x),
+      offsetof(CompressedVertex_Xbox, mPosX),
       D3DDECLTYPE_FLOAT3,
       D3DDECLMETHOD_DEFAULT,
       D3DDECLUSAGE_POSITION,
       0 },
     { 0,
-      offsetof(CompressedVertex_Xbox, color),
+      offsetof(CompressedVertex_Xbox, mColor),
       D3DDECLTYPE_D3DCOLOR,
       D3DDECLMETHOD_DEFAULT,
       D3DDECLUSAGE_COLOR,
       0 },
     { 0,
-      offsetof(CompressedVertex_Xbox, tex),
+      offsetof(CompressedVertex_Xbox, mTex),
       D3DDECLTYPE_FLOAT16_2,
       D3DDECLMETHOD_DEFAULT,
       D3DDECLUSAGE_TEXCOORD,
       0 },
     { 0,
-      offsetof(CompressedVertex_Xbox, norm),
+      offsetof(CompressedVertex_Xbox, mNormal),
       D3DDECLTYPE_DEC4N,
       D3DDECLMETHOD_DEFAULT,
       D3DDECLUSAGE_NORMAL,
       0 },
     { 0,
-      offsetof(CompressedVertex_Xbox, tangent),
+      offsetof(CompressedVertex_Xbox, mTangent),
       D3DDECLTYPE_DEC4N,
       D3DDECLMETHOD_DEFAULT,
       D3DDECLUSAGE_TANGENT,
       0 },
     { 0,
-      offsetof(CompressedVertex_Xbox, boneWeights),
+      offsetof(CompressedVertex_Xbox, mWeight),
       D3DDECLTYPE_UDEC4N,
       D3DDECLMETHOD_DEFAULT,
       D3DDECLUSAGE_BLENDWEIGHT,
       0 },
     { 0,
-      offsetof(CompressedVertex_Xbox, boneIndices),
+      offsetof(CompressedVertex_Xbox, mIndices),
       D3DDECLTYPE_UBYTE4,
       D3DDECLMETHOD_DEFAULT,
       D3DDECLUSAGE_BLENDINDICES,
@@ -110,7 +110,7 @@ static D3DVERTEXELEMENT9 sMutableVertexElements[] = {
       D3DDECLUSAGE_TEXCOORD,
       0 },
     { 0,
-      offsetof(RndMesh::Vert, boneIndices),
+      offsetof(RndMesh::Vert, bone0),
       D3DDECLTYPE_SHORT4,
       D3DDECLMETHOD_DEFAULT,
       D3DDECLUSAGE_BLENDINDICES,
@@ -150,7 +150,7 @@ static D3DVERTEXELEMENT9 sMutableSkinnedVertexElements[] = {
       D3DDECLUSAGE_TEXCOORD,
       0 },
     { 0,
-      offsetof(RndMesh::Vert, boneIndices),
+      offsetof(RndMesh::Vert, bone0),
       D3DDECLTYPE_SHORT4,
       D3DDECLMETHOD_DEFAULT,
       D3DDECLUSAGE_BLENDINDICES,
@@ -164,7 +164,7 @@ static D3DVERTEXELEMENT9 sMutableSkinnedVertexElements[] = {
     D3DDECL_END()
 };
 
-DxMesh::DxMesh() : mNumVerts(0), mNumFaces(0), unk1ac(0), unk1b0(0) {
+DxMesh::DxMesh() : mNumVerts(0), mNumFaces(0), mIBFaces(0), mIBMultimeshFaces(0) {
     if (!sVertexDecl) {
         HRESULT hr =
             TheDxRnd.Device()->CreateVertexDeclaration(sVertexElements, &sVertexDecl);
@@ -185,8 +185,8 @@ DxMesh::DxMesh() : mNumVerts(0), mNumFaces(0), unk1ac(0), unk1b0(0) {
 }
 
 DxMesh::~DxMesh() {
-    DX_RELEASE(unk1ac);
-    DX_RELEASE(unk1b0);
+    DX_RELEASE(mIBFaces);
+    DX_RELEASE(mIBMultimeshFaces);
 }
 
 BEGIN_COPYS(DxMesh)
@@ -194,16 +194,17 @@ BEGIN_COPYS(DxMesh)
     CREATE_COPY(DxMesh)
     if (c && this == mGeomOwner && mMutable == 0) {
         PhysMemTypeTracker t("D3D(phys):Mesh");
-        mVertexBufferData.Release();
+        mVBVerts.Release();
         COPY_MEMBER(mNumVerts)
         if (mNumVerts != 0) {
-            D3DVertexBuffer *buffer = CloneVertexBuffer(c->mVertexBufferData.mBuffer);
-            mVertexBufferData.SetData(buffer, c->mVertexBufferData.mSize);
+            D3DVertexBuffer *buffer =
+                CloneVertexBuffer((D3DVertexBuffer *)c->mVBVerts.GetBuffer());
+            mVBVerts.SetData(buffer, c->mVBVerts.GetSize());
         }
-        DX_RELEASE(unk1ac);
+        DX_RELEASE(mIBFaces);
         COPY_MEMBER(mNumFaces)
         if (mNumFaces != 0) {
-            unk1ac = CloneIndexBuffer(c->unk1ac);
+            mIBFaces = CloneIndexBuffer(c->mIBFaces);
         }
     }
 END_COPYS
@@ -211,7 +212,7 @@ END_COPYS
 void DxMesh::DrawShowing() {
     DxMesh *owner = static_cast<DxMesh *>(mGeomOwner.Ptr());
     if (owner->CanDraw()) {
-        if (owner->Verts().unkc) {
+        if (owner->Verts().dirty()) {
             Sync(0x1F);
         }
         if (TheRnd.DrawMode() == Rnd::kDrawVelocity) {
@@ -224,8 +225,8 @@ void DxMesh::DrawShowing() {
                 } else {
                     RndMat *next = it->NextPass();
                     ShaderType t = kStandardShader;
-                    if (unk180 != kMaxShaderTypes) {
-                        t = (ShaderType)unk180;
+                    if (mShaderOverride != kMaxShaderTypes) {
+                        t = mShaderOverride;
                     }
                     if (TheRnd.DrawMode() == Rnd::kDrawAllWhite) {
                         t = kAllWhiteShader;
@@ -273,9 +274,8 @@ void DxMesh::DrawFacesInRange(int x, int y) {
         if (y == -1) {
             y = mNumFaces;
         }
-        device->SetIndices(unk1ac);
-        D3DVertexBuffer *buffer = mVertexBufferData.mBuffer;
-        device->SetStreamSource(0, buffer, 0, VertSize());
+        device->SetIndices(mIBFaces);
+        device->SetStreamSource(0, mVBVerts.GetBuffer(), 0, VertSize());
         device->SetVertexDeclaration(sVertexDecl);
         TheNgStats->mRegMeshes++;
         TheNgStats->mFaces += y;
@@ -320,18 +320,18 @@ void DxMesh::OnSync(int flags) {
                         size = VertSize();
                         b4 = true;
                     } else {
-                        mVertexBufferData.Release();
+                        mVBVerts.Release();
                     }
                 }
-                if (!mVertexBufferData.mBuffer || mVertexBufferData.mSize != size * num) {
-                    mVertexBufferData.Release();
+                if (!mVBVerts.GetBuffer() || mVBVerts.GetSize() != size * num) {
+                    mVBVerts.Release();
                     if (num) {
                         D3DVertexBuffer *buffer =
                             MakeVertexBuffer(num, size, VertFVF(), false);
-                        mVertexBufferData.SetData(buffer, size * num);
+                        mVBVerts.SetData(buffer, size * num);
                     }
                 }
-                if (mVertexBufferData.mBuffer) {
+                if (mVBVerts.GetBuffer()) {
                     if (b4) {
                         FillCompressedVerts();
                     } else {
@@ -341,12 +341,12 @@ void DxMesh::OnSync(int flags) {
             }
 
             if (flags & 0x20) {
-                DX_RELEASE(unk1ac);
+                DX_RELEASE(mIBFaces);
                 mNumFaces = faces.size();
                 if (mNumFaces) {
                     MILO_ASSERT(mNumFaces <= 0xFFFF, 0x17E);
-                    unk1ac = MakeIndexBuffer(mNumFaces, 6, D3DFMT_INDEX16);
-                    IBLock<RndMesh::Face> bLock(unk1ac, 0);
+                    mIBFaces = MakeIndexBuffer(mNumFaces, 6, D3DFMT_INDEX16);
+                    IBLock<RndMesh::Face> bLock(mIBFaces, 0);
                     RndMesh::Face *faceItr = bLock.Data();
                     for (int i = 0; i < mNumFaces; i++) {
                         faceItr[i] = faces[i];
@@ -368,7 +368,7 @@ void DxMesh::OnSync(int flags) {
 }
 
 void DxMesh::Fill(RndMesh::Vert *v1, RndMesh::Vert *v2) {
-    VBLock<CompressedVertex_Xbox> lock(mVertexBufferData.mBuffer, 0);
+    VBLock<CompressedVertex_Xbox> lock(mVBVerts.GetBuffer(), 0);
     if (v1 != v2) {
         CompressedVertex_Xbox *xboxIt = lock.Data();
         for (; v1 != v2; ++v1, ++xboxIt) {
@@ -380,7 +380,7 @@ void DxMesh::Fill(RndMesh::Vert *v1, RndMesh::Vert *v2) {
 void DxMesh::FillCompressedVerts() {
     MILO_ASSERT(mNumCompressedVerts > 0, 0x115);
     MILO_ASSERT(mCompressedVerts != NULL, 0x116);
-    VBLock<CompressedVertex_Xbox> lock(mVertexBufferData.mBuffer, 0);
+    VBLock<CompressedVertex_Xbox> lock(mVBVerts.GetBuffer(), 0);
     memcpy(lock.Data(), mCompressedVerts, mNumCompressedVerts * VertSize());
 }
 
@@ -403,28 +403,29 @@ unsigned int DxMesh::VertFVF() const {
 }
 
 bool DxMesh::CanDraw() const {
-    D3DVertexBuffer *buf = mVertexBufferData.mBuffer;
-    bool lmao = buf && unk1ac;
+    bool lmao = mVBVerts.GetBuffer() && mIBFaces;
     return lmao || mMutable;
 }
 
 D3DVertexBuffer *DxMesh::GetMultimeshFaces() {
     MILO_ASSERT(!Mutable(), 0x1A7);
-    if (unk1b0) {
-        return unk1b0;
+    if (mIBMultimeshFaces) {
+        return mIBMultimeshFaces;
     } else {
         unsigned int faces = mNumFaces * 3;
-        TheDxRnd.Device()->CreateVertexBuffer(faces * 4, 0, 0, 0, &unk1b0, nullptr);
+        TheDxRnd.Device()->CreateVertexBuffer(
+            faces * 4, 0, 0, 0, &mIBMultimeshFaces, nullptr
+        );
         int *vertexData;
-        unk1b0->Lock(0, 0, (void **)&vertexData, 0);
+        mIBMultimeshFaces->Lock(0, 0, (void **)&vertexData, 0);
         unsigned short *indexData;
-        unk1ac->Lock(0, 0, (void **)&indexData, 0x10);
+        mIBFaces->Lock(0, 0, (void **)&indexData, 0x10);
         while (faces-- != 0) {
             *vertexData++ = *indexData++;
         }
-        unk1ac->Unlock();
-        unk1b0->Unlock();
-        return unk1b0;
+        mIBFaces->Unlock();
+        mIBMultimeshFaces->Unlock();
+        return mIBMultimeshFaces;
     }
 }
 

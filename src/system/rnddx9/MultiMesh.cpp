@@ -39,43 +39,43 @@ void DxMultiMesh::DrawShowing() {
 
 static D3DVERTEXELEMENT9 sVertexElement[] = {
     { 0,
-      offsetof(CompressedVertex_Xbox, x),
+      offsetof(CompressedVertex_Xbox, mPosX),
       D3DDECLTYPE_FLOAT3,
       D3DDECLMETHOD_DEFAULT,
       D3DDECLUSAGE_POSITION,
       0 },
     { 0,
-      offsetof(CompressedVertex_Xbox, color),
+      offsetof(CompressedVertex_Xbox, mColor),
       D3DDECLTYPE_D3DCOLOR,
       D3DDECLMETHOD_DEFAULT,
       D3DDECLUSAGE_COLOR,
       0 },
     { 0,
-      offsetof(CompressedVertex_Xbox, tex),
+      offsetof(CompressedVertex_Xbox, mTex),
       D3DDECLTYPE_FLOAT16_2,
       D3DDECLMETHOD_DEFAULT,
       D3DDECLUSAGE_TEXCOORD,
       0 },
     { 0,
-      offsetof(CompressedVertex_Xbox, norm),
+      offsetof(CompressedVertex_Xbox, mNormal),
       D3DDECLTYPE_DEC4N,
       D3DDECLMETHOD_DEFAULT,
       D3DDECLUSAGE_NORMAL,
       0 },
     { 0,
-      offsetof(CompressedVertex_Xbox, tangent),
+      offsetof(CompressedVertex_Xbox, mTangent),
       D3DDECLTYPE_DEC4N,
       D3DDECLMETHOD_DEFAULT,
       D3DDECLUSAGE_TANGENT,
       0 },
     { 0,
-      offsetof(CompressedVertex_Xbox, boneWeights),
+      offsetof(CompressedVertex_Xbox, mWeight),
       D3DDECLTYPE_UDEC4N,
       D3DDECLMETHOD_DEFAULT,
       D3DDECLUSAGE_BLENDWEIGHT,
       0 },
     { 0,
-      offsetof(CompressedVertex_Xbox, boneIndices),
+      offsetof(CompressedVertex_Xbox, mIndices),
       D3DDECLTYPE_UBYTE4,
       D3DDECLMETHOD_DEFAULT,
       D3DDECLUSAGE_BLENDINDICES,
@@ -116,7 +116,7 @@ static D3DVERTEXELEMENT9 sMutableVertexElement[] = {
       D3DDECLUSAGE_TEXCOORD,
       0 },
     { 0,
-      offsetof(RndMesh::Vert, boneIndices),
+      offsetof(RndMesh::Vert, bone0),
       D3DDECLTYPE_SHORT4,
       D3DDECLMETHOD_DEFAULT,
       D3DDECLUSAGE_BLENDINDICES,
@@ -154,7 +154,7 @@ void DxMultiMesh::Shutdown() {
 
 void DxMultiMesh::UpdateGeometryBuffers() {
     PhysMemTypeTracker t("D3D(phys):Mesh");
-    DxMesh *owner = static_cast<DxMesh *>(mMesh->GetGeomOwner());
+    DxMesh *owner = static_cast<DxMesh *>(mMesh->GeomOwner());
     MILO_ASSERT(!owner->IsSkinned(), 0x21A);
     MILO_ASSERT(owner->Mutable(), 0x21B);
     int idx = unk60 % 3;

@@ -10,6 +10,10 @@
 class RndTexBlendController : public Hmx::Object {
 public:
     enum BlendState {
+        kBlendStateNone = 0x0000,
+        kBlendStateNear = 0x0001,
+        kBlendStateFar = 0x0002,
+        kBlendStateOverride = 0x0003,
     };
     virtual ~RndTexBlendController() {}
     OBJ_CLASSNAME(TexBlendController);
@@ -24,9 +28,9 @@ public:
     NEW_OBJ(RndTexBlendController)
     REGISTER_OBJ(RndTexBlendController)
 
-    BlendState GetBlendState(float &, float) const;
-    RndTex *Tex() const { return mTex; }
-    RndMesh *Mesh() const { return mMesh; }
+    BlendState GetBlendState(float &factor, float scale) const;
+    RndTex *GetOverrideMap() const { return mOverrideMap; }
+    RndMesh *GetMesh() const { return mMesh; }
 
 protected:
     RndTexBlendController();
@@ -52,5 +56,5 @@ protected:
     float mMinDistance; // 0x6c
     /** "The distance where the 'far' texture map will be fully visible" */
     float mMaxDistance; // 0x70
-    ObjPtr<RndTex> mTex; // 0x74
+    ObjPtr<RndTex> mOverrideMap; // 0x74
 };

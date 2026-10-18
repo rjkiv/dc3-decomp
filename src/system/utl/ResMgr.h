@@ -7,16 +7,14 @@
 template <class T>
 class RefRes {
 private:
-    int mRefs; // 0x0
-    T *mRes; // 0x4
+    unsigned int mRefCount; // 0x0
+    T *mData; // 0x4
 public:
-    RefRes() : mRefs(0), mRes(0) {}
-
-    T *Data() { return mRes; }
-    u32 Data_() { return reinterpret_cast<u32>(mRes); } // hack
-    void AddRef() { mRefs++; }
-    void SetData(T *data) { mRes = data; }
-    uint NumRefs() const { return mRefs; }
+    RefRes() : mRefCount(0), mData(0) {}
+    unsigned int RefCount() const { return mRefCount; }
+    void AddRef() { mRefCount++; }
+    // bool RemoveRef();
+    T *&Data() { return mData; }
 };
 
 template <class T>
@@ -29,8 +27,8 @@ public:
         MILO_LOG("-------------------------------------------\n");
         FOREACH (it, mResources) {
             RefRes<T> &data = it->second;
-            if (data.NumRefs()) {
-                MILO_LOG("%d: %d\n", it->first, data.NumRefs());
+            if (data.RefCount()) {
+                MILO_LOG("%d: %d\n", it->first, data.RefCount());
             }
         }
         MILO_LOG("\n\n");
@@ -48,17 +46,8 @@ public:
 
     void ReserveRes(Hmx::CRC key, T *data) {
         RefRes<T> &res = mResources[key];
-        do {
-            if (!(res.Data_() == NULL)) {
-                TheDebugFailer << MakeString(
-                    kAssertStr,
-                    "/drvs/sda1/projects_2/dc3-decomp/src/system/utl/ResMgr.h",
-                    0x50,
-                    "res.Data() == NULL"
-                );
-            }
-        } while (0);
-        res.SetData(data);
+        MILO_ASSERT(res.Data() == NULL, 0x50);
+        res.Data() = data;
         res.AddRef();
     }
 

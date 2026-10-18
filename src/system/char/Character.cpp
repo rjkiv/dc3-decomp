@@ -946,7 +946,7 @@ void Character::SyncShadow() {
             if (mesh) {
                 if (mesh->NumBones() != 0) {
                     for (int i = 0; i < mesh->NumBones(); i++) {
-                        mesh->SetBone(i, AddShadowBone(mesh->BoneTransAt(i)), false);
+                        mesh->SetBone(i, AddShadowBone(mesh->Bone(i)), false);
                     }
                 } else {
                     mesh->SetTransParent(AddShadowBone(mesh->TransParent()), false);

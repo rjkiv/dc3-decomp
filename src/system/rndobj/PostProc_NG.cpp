@@ -155,10 +155,10 @@ void NgPostProc::DoVelocity() {
         if (flag) {
             TheShaderMgr.SetPostVelocity(true);
             Vector4 vec(
-                RndVelocityBuffer::Singleton().GetUnk36be8(),
-                RndVelocityBuffer::Singleton().GetUnk36be8(),
-                RndVelocityBuffer::Singleton().GetUnk36be8(),
-                RndVelocityBuffer::Singleton().GetUnk36be8()
+                RndVelocityBuffer::Singleton().GetIntensity(),
+                RndVelocityBuffer::Singleton().GetIntensity(),
+                RndVelocityBuffer::Singleton().GetIntensity(),
+                RndVelocityBuffer::Singleton().GetIntensity()
             );
             TheShaderMgr.SetPConstant((PShaderConstant)122, vec);
         }

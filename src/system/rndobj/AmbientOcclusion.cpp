@@ -310,7 +310,7 @@ bool RndAmbientOcclusion::IsValid_Tessellate(
     const RndMesh *mesh, const ObjectDir *dir
 ) const {
     return IsValid_AOCast(mesh) && IsValid_AOReceive(mesh) && !mesh->IsSkinned()
-        && mesh->GetGeomOwner() == mesh && mesh->Dir() != dir;
+        && mesh->GeomOwner() == mesh && mesh->Dir() != dir;
 }
 
 void RndAmbientOcclusion::BuildSHCoeff(const Vector3 &inVector, float *fArr) const {
@@ -414,7 +414,7 @@ void RndAmbientOcclusion::DumpObjList(
 }
 
 bool RndAmbientOcclusion::IsSerializable(const RndMesh *mesh) const {
-    if (mesh->GetGeomOwner() != mesh) {
+    if (mesh->GeomOwner() != mesh) {
         return false;
     }
     if (mesh->Dir() == Dir()) {
@@ -595,14 +595,12 @@ void RndAmbientOcclusion::BurnTransform(
                     BurnTransform(cur, meshes);
                     Transform tfe0(Hmx::Matrix3(mesh->LocalXfm().m), Vector3(0, 0, 0));
                     Transform tfa0;
-                    if (cur->TransConstraint() == RndTransformable::kConstraintNone) {
+                    if (cur->TransConstraint() == RndTransformable::kNone) {
                         Multiply(cur->LocalXfm(), tfe0, tfa0);
-                    } else if (
-                        cur->TransConstraint() == RndTransformable::kConstraintParentWorld
-                    ) {
+                    } else if (cur->TransConstraint() == RndTransformable::kParentWorld) {
                         tfa0 = tfe0;
                         cur->SetTransConstraint(
-                            RndTransformable::kConstraintNone,
+                            RndTransformable::kNone,
                             cur->GetTarget(),
                             cur->PreserveScale()
                         );
@@ -662,8 +660,8 @@ void RndAmbientOcclusion::CalculateAO(float *fptr) {
         unsigned int i5 = 0;
         FOREACH (it, mObjectsReceive) {
             RndMesh *mesh = *it;
-            if (mesh->GetGeomOwner() != mesh) {
-                mesh->CopyGeometry(mesh->GetGeomOwner(), true);
+            if (mesh->GeomOwner() != mesh) {
+                mesh->CopyGeometry(mesh->GeomOwner(), true);
                 mesh->Sync(0x3F);
             }
             i5 += mesh->Verts().size();

@@ -7,8 +7,8 @@
 #include "utl/Loader.h"
 
 RndRibbon::RndRibbon()
-    : unk48(-1.0f), mNumSides(4), mMat(this), mWidth(1), mDirty(1), mActive(true),
-      mNumSegments(0), mDecay(1), mFollowA(this), mFollowB(this), mFollowWeight(0),
+    : mLastSeconds(-1.0f), mNumSides(4), mMat(this), mWidth(1), mDirty(1), mActive(true),
+      mNumSegments(0), mDecayTime(1), mFollowA(this), mFollowB(this), mFollowWeight(0),
       mTaper(0) {
     mMesh = Hmx::Object::New<RndMesh>();
     mMesh->SetMutable(0x1F);
@@ -33,7 +33,7 @@ BEGIN_PROPSYNCS(RndRibbon)
     SYNC_PROP(follow_b, mFollowB)
     SYNC_PROP(follow_weight, mFollowWeight)
     SYNC_PROP(taper, mTaper)
-    SYNC_PROP(decay, mDecay)
+    SYNC_PROP(decay, mDecayTime)
     SYNC_SUPERCLASS(RndDrawable)
     SYNC_SUPERCLASS(RndPollable)
     SYNC_SUPERCLASS(Hmx::Object)
@@ -52,7 +52,7 @@ BEGIN_SAVES(RndRibbon)
     bs << mFollowB;
     bs << mFollowWeight;
     bs << mTaper;
-    bs << mDecay;
+    bs << mDecayTime;
 END_SAVES
 
 BEGIN_COPYS(RndRibbon)
@@ -69,7 +69,7 @@ BEGIN_COPYS(RndRibbon)
         COPY_MEMBER(mFollowB)
         COPY_MEMBER(mFollowWeight)
         COPY_MEMBER(mTaper)
-        COPY_MEMBER(mDecay)
+        COPY_MEMBER(mDecayTime)
     END_COPYING_MEMBERS
 END_COPYS
 
@@ -89,7 +89,7 @@ BEGIN_LOADS(RndRibbon)
     bs >> mFollowB;
     bs >> mFollowWeight;
     d >> mTaper;
-    bs >> mDecay;
+    bs >> mDecayTime;
     mDirty = 1;
     mMesh->SetMat(mMat);
 END_LOADS
@@ -111,8 +111,8 @@ void RndRibbon::DrawShowing() {
 
 void RndRibbon::SetActive(bool b) {
     if (mActive != b) {
-        mTransforms.clear();
-        unk48 = -1.0;
+        mHistory.clear();
+        mLastSeconds = -1.0;
     }
     mActive = b;
 }

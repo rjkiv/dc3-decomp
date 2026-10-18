@@ -16,11 +16,16 @@ public:
     struct VertexBufferData {
         VertexBufferData() : mBuffer(0), mSize(0) {}
         ~VertexBufferData() { Release(); }
-        void Release();
+        // void GetBuffer(D3DVertexBuffer *&) const;
+        D3DVertexBuffer *GetBuffer() { return mBuffer; }
+        const D3DVertexBuffer *GetBuffer() const { return mBuffer; }
+        unsigned int GetSize() const { return mSize; }
         void SetData(D3DVertexBuffer *, unsigned int);
+        void Release();
 
-        D3DVertexBuffer *mBuffer;
-        unsigned int mSize;
+    private:
+        D3DVertexBuffer *mBuffer; // 0x0
+        unsigned int mSize; // 0x4
     };
     // Hmx::Object
     virtual ~DxMesh();
@@ -66,7 +71,7 @@ protected:
     std::vector<Transform> mTransformCache; // 0x190
     int mNumVerts; // 0x19c
     int mNumFaces; // 0x1a0
-    VertexBufferData mVertexBufferData; // 0x1a4
-    D3DIndexBuffer *unk1ac; // 0x1ac
-    D3DVertexBuffer *unk1b0; // 0x1b0
+    VertexBufferData mVBVerts; // 0x1a4
+    D3DIndexBuffer *mIBFaces; // 0x1ac
+    D3DVertexBuffer *mIBMultimeshFaces; // 0x1b0
 };

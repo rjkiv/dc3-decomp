@@ -234,7 +234,7 @@ void CharDebug::DisplayObject(Hmx::Object *obj) {
                     mesh->Verts()[i].pos.Set(
                         (floats[0] + 1) * 20, 0, -(floats[1] * 20 - 60)
                     );
-                    memcpy(mesh->Verts()[i].boneIndices, floats, sizeof(floats));
+                    memcpy(&mesh->Verts()[i].bone0, floats, sizeof(floats));
                     mesh->Verts()[i].norm.Set(0, -1, 0);
                     mesh->Verts()[i].boneWeights.Set(0, 0, 0, 0);
                     mesh->Verts()[i].color.Set(1, 1, 1, 1);

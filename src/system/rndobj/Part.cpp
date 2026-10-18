@@ -982,7 +982,7 @@ void RndParticleSys::SetAnimatedUV(bool b) {
 void RndParticleSys::SetMesh(RndMesh *mesh) {
     if (mesh) {
         SetTransParent(mesh, false);
-        SetTransConstraint(RndTransformable::kConstraintParentWorld, 0, false);
+        SetTransConstraint(RndTransformable::kParentWorld, 0, false);
         if (!mesh->GetKeepMeshData()) {
             MILO_NOTIFY(
                 "keep_mesh_data should be checked for %s.  It's the mesh emitter for %s.\n",
@@ -992,7 +992,7 @@ void RndParticleSys::SetMesh(RndMesh *mesh) {
         }
     } else if (mMesh) {
         SetTransParent(0, false);
-        SetTransConstraint(RndTransformable::kConstraintNone, 0, false);
+        SetTransConstraint(RndTransformable::kNone, 0, false);
     }
     mMesh = mesh;
 }

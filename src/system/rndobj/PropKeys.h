@@ -13,8 +13,15 @@
 class ObjKeys : public Keys<ObjectStage, Hmx::Object *> {
 public:
     ObjKeys(Hmx::Object *o) : mOwner(o) {}
-    ~ObjKeys() {}
-    Hmx::Object *mOwner; // 0x8
+    // ~ObjKeys() {}
+
+    int Add(Hmx::Object *obj, float f, bool b) {
+        Hmx::Object *oldOwner = ObjectStage::sOwner;
+        ObjectStage::sOwner = mOwner;
+        int add = Keys<ObjectStage, Hmx::Object *>::Add(obj, f, b);
+        ObjectStage::sOwner = oldOwner;
+        return add;
+    }
 
     void operator=(const ObjKeys &keys) {
         if (this != &keys) {
@@ -29,13 +36,10 @@ public:
         }
     }
 
-    int Add(Hmx::Object *obj, float f, bool b) {
-        Hmx::Object *oldOwner = ObjectStage::sOwner;
-        ObjectStage::sOwner = mOwner;
-        int add = Keys<ObjectStage, Hmx::Object *>::Add(obj, f, b);
-        ObjectStage::sOwner = oldOwner;
-        return add;
-    }
+    Hmx::Object *Owner() { return mOwner; }
+
+private:
+    Hmx::Object *mOwner; // 0x8
 };
 
 /**
@@ -46,36 +50,36 @@ public:
 class PropKeys : public ObjRefOwner {
 public:
     enum AnimKeysType {
-        kFloat,
-        kColor,
-        kObject,
-        kBool,
-        kQuat,
-        kVector3,
-        kSymbol
+        kFloat = 0,
+        kColor = 1,
+        kObject = 2,
+        kBool = 3,
+        kQuat = 4,
+        kVector3 = 5,
+        kSymbol = 6
     };
 
     enum Interpolation {
-        kStep,
-        kLinear,
-        kSpline,
-        kSlerp,
-        kHermite,
-        kEaseIn,
-        kEaseOut
+        kStep = 0,
+        kLinear = 1,
+        kSpline = 2,
+        kSlerp = 3,
+        kHermite = 4,
+        kEaseIn = 5,
+        kEaseOut = 6
     };
 
     enum ExceptionID {
-        kNoException,
-        kTransQuat,
-        kTransScale,
-        kTransPos,
-        kDirEvent,
-        kHandleInterp,
-        kMacro
+        kNoException = 0,
+        kTransQuat = 1,
+        kTransScale = 2,
+        kTransPos = 3,
+        kDirEvent = 4,
+        kHandleInterp = 5,
+        kMacro = 6
     };
 
-    PropKeys(Hmx::Object *targetOwner, Hmx::Object *target);
+    PropKeys(Hmx::Object *parent, Hmx::Object *target);
     virtual ~PropKeys();
     virtual Hmx::Object *RefOwner() const { return nullptr; }
     virtual bool Replace(ObjRef *, Hmx::Object *) { return false; }
@@ -89,7 +93,7 @@ public:
      * @returns True if the index exists in the keys, false if not.
      */
     virtual bool FrameFromIndex(int index, float &frame) { return false; }
-    virtual void SetFrame(float, float, float) {}
+    virtual void SetFrame(float frame, float blend, float intensity) {}
     /** Duplicate the key at the given index. */
     virtual void CloneKey(int idx) {}
     /** Given a supplied frame, get the corresponding key index. */
@@ -99,13 +103,13 @@ public:
      * @returns The new amount of keys.
      */
     virtual int RemoveKey(int idx) { return 0; }
-    virtual int RemoveRange(float, float) { return 0; }
+    virtual int RemoveRange(float from, float to) { return 0; }
     /** Get the number of keys. */
     virtual int NumKeys() { return 0; }
     /** Set the value of the keyframe at the supplied index, to the current value of
      * mTarget's property mProp. */
-    virtual void SetToCurrentVal(int idx) {}
-    virtual int SetFrameException(float) { return 0; }
+    virtual void SetToCurrentVal(int index) {}
+    virtual int SetFrameException(float frame) { return 0; }
     /** Save the keys to a BinStream. */
     virtual void Save(BinStream &);
     /** Load the keys from a BinStream. */
@@ -226,24 +230,21 @@ public:
     /** Re-sort the keys in ascending frame order. */
     void ReSort();
     /** Set the interp handler. */
-    void SetInterpHandler(Symbol);
+    void SetInterpHandler(Symbol handler);
     /** Print the keys member data and keyframes to the debug console. */
     void Print();
 
-    AnimKeysType KeysType() const { return mKeysType; }
-    void ResetLastKeyFrameIndex() { mLastKeyFrameIndex = -2; }
-    Hmx::Object *Target() const { return mTarget; }
-    DataArray *Prop() const { return mProp; }
-    Interpolation GetInterpolation() const { return mInterpolation; }
-    void SetInterpolation(Interpolation interp) { mInterpolation = interp; }
-    Symbol InterpHandler() const { return mInterpHandler; }
-    ExceptionID GetExceptionID() const { return mPropExceptionID; }
-    ObjRef *TargetRef() { return &mTarget; }
+    Symbol InterpHandler() { return mInterpHandler; }
+    int GetLastKeyFrameIndex() const { return mLastKeyFrameIndex; }
+    bool IsHiddenUI() const { return mUIHidden; }
+    void SetHiddenUI(bool b) { mUIHidden = b; }
 
-    static ExceptionID PropExceptionID(Hmx::Object *, DataArray *);
+    // public: bool Validate();
+    // public: void StartAnim();
+
+    static ExceptionID PropExceptionID(Hmx::Object *o, DataArray *path);
     static Message sInterpMessage;
 
-protected:
     /** The target object to animate properties on. */
     ObjOwnerPtr<Hmx::Object> mTarget; // 0x4
     /** The property of the target object to animate. */
@@ -258,7 +259,7 @@ protected:
     Symbol mInterpHandler; // 0x2c
     /** The index of the last keyframe that was modified. */
     int mLastKeyFrameIndex; // 0x30
-    bool unk34; // 0x34
+    bool mUIHidden; // 0x34
 };
 
 /** A collection of float keys to animate on its target object's properties. */
@@ -396,7 +397,7 @@ public:
     virtual void Load(BinStreamRev &bs) {
         PropKeys::Load(bs);
         Hmx::Object *oldOwner = ObjectStage::sOwner;
-        ObjectStage::sOwner = mOwner;
+        ObjectStage::sOwner = Owner();
         Keys<ObjectStage, Hmx::Object *> &me = *this;
         bs >> me;
         ObjectStage::sOwner = oldOwner;
@@ -458,7 +459,7 @@ public:
 class QuatKeys : public PropKeys, public Keys<Hmx::Quat, Hmx::Quat> {
 public:
     QuatKeys(Hmx::Object *targetOwner, Hmx::Object *target)
-        : PropKeys(targetOwner, target), mVec(Vector3::GetZero()) {
+        : PropKeys(targetOwner, target), mPreservedScale(Vector3::GetZero()) {
         mKeysType = kQuat;
     }
     virtual ~QuatKeys() {}
@@ -500,7 +501,8 @@ public:
     virtual Keys<Hmx::Quat, Hmx::Quat> *AsQuatKeys() { return this ? this : nullptr; }
     virtual int QuatAt(float, Hmx::Quat &);
 
-    Vector3 mVec; // 0x28
+protected:
+    Vector3 mPreservedScale; // 0x28
 };
 
 /** A collection of Vector3 keys to animate on its target object's properties. */
@@ -557,9 +559,9 @@ public:
         : PropKeys(targetOwner, target) {
         mKeysType = kSymbol;
         mInterpolation = kStep;
-        unk28 = -1;
-        unk2c = -1;
-        unk30 = 0;
+        mLastKeyFrameIndexMin = -1;
+        mLastKeyFrameIndexMax = -1;
+        mPlayAll = 0;
     }
     virtual ~SymbolKeys() {}
     virtual float StartFrame() { return FirstFrame(); }
@@ -600,7 +602,8 @@ public:
     virtual Keys<Symbol, Symbol> *AsSymbolKeys() { return this ? this : nullptr; }
     virtual int SymbolAt(float, Symbol &);
 
-    int unk28; // 0x28
-    int unk2c; // 0x2c
-    bool unk30; // 0x30
+protected:
+    int mLastKeyFrameIndexMin; // 0x28
+    int mLastKeyFrameIndexMax; // 0x2c
+    bool mPlayAll; // 0x30
 };

@@ -1,15 +1,18 @@
 #include "wordwrap.h"
 
-uint (*GetWidthW)(wchar_t character);
-uint (*Reserved)();
-uint lbl_830E1CD4 = 0;
-uint lbl_830E1CD8 = 0;
-uint lbl_830E1CDC = 0;
-
 uint g_uOption = 1;
-char s_wordwraplib_ident[] = "%%%WORDWRAPLIB:091027:%%%";
+static char signature[] = "%%%WORDWRAPLIB:091027:%%%";
 
-KinsokuEntry kinsokuChars[0x91] = {
+struct BreakInfo {
+    /** The unicode character to associate with start/end rules. */
+    wchar_t wch;
+    /** Indicates if the character cannot start a line. */
+    bool isNonBeginningChar;
+    /** Indicates if the character cannot end a line. */
+    bool isNonEndingChar;
+};
+
+BreakInfo breakArray[0x91] = {
     { 0x0021, 1, 0 }, { 0x0024, 0, 1 }, { 0x0025, 1, 0 }, { 0x0027, 1, 1 },
     { 0x0028, 0, 1 }, { 0x0029, 1, 0 }, { 0x002C, 1, 0 }, { 0x002E, 1, 0 },
     { 0x002F, 1, 1 }, { 0x003A, 1, 0 }, { 0x003B, 1, 0 }, { 0x003F, 1, 0 },
@@ -51,7 +54,9 @@ KinsokuEntry kinsokuChars[0x91] = {
 
 void WordWrap_SetOption(uint option) { g_uOption = option; }
 
-bool IsEastAsianChar(wchar_t character) {
+/** Checks to see if the provided character is considered an East Asian / CJK unicode
+    character. */
+static bool IsEastAsianChar(wchar_t character) {
     if ((g_uOption & 4) != 0
         && (character >= 0x1100u && character <= 0x11FFu
             || character >= 0x3130u && character <= 0x318Fu
@@ -91,10 +96,10 @@ bool WordWrap_CanBreakLineAt(wchar_t const *beforeBreak, wchar_t const *afterBre
             hi = 145;
             do {
                 mid = (hi - lo) / 2 + lo;
-                if (beforeBreak[1] == kinsokuChars[mid].key) {
+                if (beforeBreak[1] == breakArray[mid].wch) {
                     break;
                 }
-                if ((u16)beforeBreak[1] < (u16)kinsokuChars[mid].key) {
+                if ((u16)beforeBreak[1] < (u16)breakArray[mid].wch) {
                     hi = mid - 1;
                 } else {
                     lo = mid + 1;
@@ -103,7 +108,7 @@ bool WordWrap_CanBreakLineAt(wchar_t const *beforeBreak, wchar_t const *afterBre
                     goto IsCheckCharEmpty_1;
                 }
             } while (lo <= hi);
-            checkChar = kinsokuChars[mid].noStart;
+            checkChar = breakArray[mid].isNonBeginningChar;
         } else {
         IsCheckCharEmpty_1:
             checkChar = 0;
@@ -153,11 +158,11 @@ bool WordWrap_CanBreakLineAt(wchar_t const *beforeBreak, wchar_t const *afterBre
                 hi = 145;
                 do {
                     mid = (hi - lo) / 2 + lo;
-                    if (currentChar == kinsokuChars[mid].key) {
-                        checkChar = kinsokuChars[mid].noStart;
+                    if (currentChar == breakArray[mid].wch) {
+                        checkChar = breakArray[mid].isNonBeginningChar;
                         goto EndRuleCheck;
                     }
-                    if ((u16)currentChar < (u16)kinsokuChars[mid].key) {
+                    if ((u16)currentChar < (u16)breakArray[mid].wch) {
                         hi = mid - 1;
                     } else {
                         lo = mid + 1;
@@ -173,11 +178,11 @@ bool WordWrap_CanBreakLineAt(wchar_t const *beforeBreak, wchar_t const *afterBre
                     hi = 145;
                     do {
                         mid = (hi - lo) / 2 + lo;
-                        if (prevChar == (u16)kinsokuChars[mid].key) {
-                            checkChar = kinsokuChars[mid].noEnd;
+                        if (prevChar == (u16)breakArray[mid].wch) {
+                            checkChar = breakArray[mid].isNonEndingChar;
                             goto IsCheckCharEmpty_2;
                         }
-                        if (prevChar < (u16)kinsokuChars[mid].key) {
+                        if (prevChar < (u16)breakArray[mid].wch) {
                             hi = mid - 1;
                         } else {
                             lo = mid + 1;

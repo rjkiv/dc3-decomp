@@ -21,7 +21,7 @@ public:
         Pose(Hmx::Object *owner) : mesh(owner) {}
 
         ObjPtr<RndMesh> mesh; // 0x0
-        Keys<float, float> weights; // 0x14
+        Keys<float, float> weightKeys; // 0x14
     };
 
     // Hmx::Object
@@ -40,11 +40,20 @@ public:
     OBJ_MEM_OVERLOAD(0x16);
     NEW_OBJ(RndMorph)
     REGISTER_OBJ(RndMorph)
+
+    float InterpWeight(const Keys<float, float> &weightKeys, float frame);
+
     int NumPoses() const { return mPoses.size(); }
     void SetNumPoses(int num) { mPoses.resize(num); }
-    Pose &PoseAt(int idx) { return mPoses[idx]; }
-    void SetIntensity(float intensity) { mIntensity = intensity; }
+    Pose &GetPose(int idx) { return mPoses[idx]; }
     void SetTarget(RndMesh *target) { mTarget = target; }
+    RndMesh *Target() { return mTarget; }
+    void SetNormals(bool b) { mNormals = b; }
+    bool Normals() { return mNormals; }
+    void SetSpline(bool b) { mSpline = b; }
+    bool Spline() { return mSpline; }
+    void SetIntensity(float intensity) { mIntensity = intensity; }
+    float Intensity() { return mIntensity; }
 
 protected:
     RndMorph();

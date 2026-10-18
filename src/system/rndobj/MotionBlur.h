@@ -19,7 +19,7 @@ public:
 protected:
     RndMotionBlur();
 
-    bool CanMotionBlur(RndDrawable *);
+    bool CanMotionBlur(RndDrawable *draw);
     DataNode OnAllowedDrawable(const DataArray *);
 
     ObjPtrList<RndDrawable> mDrawList; // 0x40

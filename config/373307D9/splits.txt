@@ -3758,12 +3758,12 @@ system/rndobj/wordwrap.cpp:
 	.pdata      start:0x822E19E0 end:0x822E19E8
 	.text       start:0x82731648 end:0x82731998
 	.data       start:0x82F16AB0 end:0x82F16D14
-	.data       start:0x830E1CCC end:0x830E1CE0 rename:.bss
 
 system/rndobj/ShaderProgram.cpp:
 	.rdata      start:0x820B3FF0 end:0x820B4344
 	.pdata      start:0x822E19E8 end:0x822E1A88
 	.text       start:0x82731998 end:0x82732800
+	.data       start:0x830E1CCC end:0x830E1CE0 rename:.bss
 
 system/rndobj/Fur_NG.cpp:
 	.rdata      start:0x820B4344 end:0x820B43F0

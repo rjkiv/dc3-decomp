@@ -18,9 +18,9 @@
 #pragma region Hmx::Object
 
 RndTexBlender::RndTexBlender()
-    : mBaseMap(this), mNearMap(this), mFarMap(this), mOutputTextures(this),
-      mControllerList(this), mOwner(this), mControllerInfluence(1), unkbc(0),
-      unkc0(true) {}
+    : mBaseMap(this), mNearMap(this), mFarMap(this), mOutputTexture(this),
+      mControllerList(this), mOwner(this), mFactorScale(1), mOutputTexState(0),
+      mDirty(true) {}
 
 BEGIN_HANDLERS(RndTexBlender)
     HANDLE(get_render_textures, OnGetRenderTextures)
@@ -32,10 +32,10 @@ BEGIN_PROPSYNCS(RndTexBlender)
     SYNC_PROP(base_map, mBaseMap)
     SYNC_PROP(near_map, mNearMap)
     SYNC_PROP(far_map, mFarMap)
-    SYNC_PROP(output_texture, mOutputTextures)
+    SYNC_PROP(output_texture, mOutputTexture)
     SYNC_PROP(controller_list, mControllerList)
     SYNC_PROP(owner, mOwner)
-    SYNC_PROP(controller_influence, mControllerInfluence)
+    SYNC_PROP(controller_influence, mFactorScale)
     SYNC_SUPERCLASS(RndDrawable)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
@@ -44,13 +44,13 @@ BEGIN_SAVES(RndTexBlender)
     SAVE_REVS(2, 0)
     SAVE_SUPERCLASS(Hmx::Object)
     SAVE_SUPERCLASS(RndDrawable)
-    bs << mOutputTextures;
+    bs << mOutputTexture;
     bs << mBaseMap;
     bs << mNearMap;
     bs << mFarMap;
     bs << mControllerList;
     bs << mOwner;
-    bs << mControllerInfluence;
+    bs << mFactorScale;
 END_SAVES
 
 BEGIN_COPYS(RndTexBlender)
@@ -58,15 +58,15 @@ BEGIN_COPYS(RndTexBlender)
     COPY_SUPERCLASS(RndDrawable)
     CREATE_COPY(RndTexBlender)
     BEGIN_COPYING_MEMBERS
-        COPY_MEMBER(mOutputTextures)
+        COPY_MEMBER(mOutputTexture)
         COPY_MEMBER(mBaseMap)
         COPY_MEMBER(mNearMap)
         COPY_MEMBER(mFarMap)
         COPY_MEMBER(mControllerList)
         COPY_MEMBER(mOwner)
-        COPY_MEMBER(mControllerInfluence)
+        COPY_MEMBER(mFactorScale)
     END_COPYING_MEMBERS
-    unkbc = 0;
+    mOutputTexState = 0;
 END_COPYS
 
 INIT_REVS(2, 0)
@@ -76,17 +76,17 @@ BEGIN_LOADS(RndTexBlender)
     ASSERT_REVS(2, 0);
     LOAD_SUPERCLASS(Hmx::Object)
     LOAD_SUPERCLASS(RndDrawable)
-    d >> mOutputTextures;
+    d >> mOutputTexture;
     d >> mBaseMap;
     d >> mNearMap;
     d >> mFarMap;
     d >> mControllerList;
     d >> mOwner;
     if (d.rev > 1)
-        d >> mControllerInfluence;
+        d >> mFactorScale;
     else
-        mControllerInfluence = 0.7071068f;
-    unkbc = 0;
+        mFactorScale = 0.7071068f;
+    mOutputTexState = 0;
 END_LOADS
 
 #pragma endregion
@@ -118,21 +118,21 @@ struct BlendSorter {
 void RndTexBlender::DrawShowing() {
     if (TheRnd.DrawMode() == Rnd::kDrawNormal
         && ((TheRnd.ProcCmds() & kProcessWorld) != 0 || TheRnd.ProcCmds() == 0)
-        && mOutputTextures) {
-        if ((mOutputTextures->GetType() & RndTex::kRenderedNoZ) != RndTex::kRenderedNoZ) {
+        && mOutputTexture) {
+        if ((mOutputTexture->GetType() & RndTex::kRenderedNoZ) != RndTex::kRenderedNoZ) {
             MILO_NOTIFY_ONCE(
                 "%s: \"%s\" must be renderable with no z-buffer",
                 PathName(this),
-                mOutputTextures->Name()
+                mOutputTexture->Name()
             );
         } else {
-            if (0x40000 < mOutputTextures->Width() * mOutputTextures->Height()) {
+            if (0x40000 < mOutputTexture->Width() * mOutputTexture->Height()) {
                 MILO_NOTIFY_ONCE(
                     "%s: \"%s\" is %d x %d, must be no larger than 512 x 512",
                     PathName(this),
-                    mOutputTextures->Name(),
-                    mOutputTextures->Height(),
-                    mOutputTextures->Width()
+                    mOutputTexture->Name(),
+                    mOutputTexture->Height(),
+                    mOutputTexture->Width()
                 );
             }
             std::vector<std::pair<RndTexBlendController *, float> > pairs1b0, pairs1c0,
@@ -141,7 +141,7 @@ void RndTexBlender::DrawShowing() {
                 RndTexBlendController *curCtrlr = *it;
                 float second;
                 RndTexBlendController::BlendState state =
-                    curCtrlr->GetBlendState(second, mControllerInfluence);
+                    curCtrlr->GetBlendState(second, mFactorScale);
                 switch (state) {
                 case 1:
                     pairs1b0.push_back(std::make_pair(curCtrlr, second));
@@ -154,9 +154,9 @@ void RndTexBlender::DrawShowing() {
                     break;
                 }
             }
-            if (unkc0 || !pairs1b0.empty() || !pairs1c0.empty() || !pairs1d0.empty()
-                || unkbc != 1) {
-                unkc0 = false;
+            if (mDirty || !pairs1b0.empty() || !pairs1c0.empty() || !pairs1d0.empty()
+                || mOutputTexState != 1) {
+                mDirty = false;
                 RndCam *cam = TheRnd.GetDefaultCam();
                 RndTex *targetTex = RndCam::Current()->TargetTex();
                 if (targetTex) {
@@ -167,28 +167,26 @@ void RndTexBlender::DrawShowing() {
                         PathName(targetTex)
                     );
                 }
-                cam->SetTargetTex(mOutputTextures);
+                cam->SetTargetTex(mOutputTexture);
                 cam->Select();
                 if (mBaseMap) {
                     RndMat *work = TheShaderMgr.GetWork();
                     SetupMaterial(work, mBaseMap);
                     work->SetAlpha(1);
                     TheNgRnd.DrawRect(
-                        Hmx::Rect(
-                            0, 0, mOutputTextures->Width(), mOutputTextures->Height()
-                        ),
+                        Hmx::Rect(0, 0, mOutputTexture->Width(), mOutputTexture->Height()),
                         work,
                         (ShaderType)6,
                         Hmx::Color(1, 1, 1),
                         nullptr,
                         nullptr
                     );
-                    unkbc = 1;
+                    mOutputTexState = 1;
                 }
                 std::sort(pairs1b0.begin(), pairs1b0.end(), BlendSorter());
                 std::sort(pairs1c0.begin(), pairs1c0.end(), BlendSorter());
                 if (mNearMap && !pairs1b0.empty()) {
-                    unkbc |= 2;
+                    mOutputTexState |= 2;
                     RndMat *work = TheShaderMgr.GetWork();
                     Transform xfm;
                     xfm.Reset();
@@ -205,7 +203,7 @@ void RndTexBlender::DrawShowing() {
                             RndShader::SelectConfig(work, (ShaderType)0x16, false);
                             alpha = f17;
                         }
-                        RndMesh *mesh = blendCtrlr->Mesh();
+                        RndMesh *mesh = blendCtrlr->GetMesh();
                         if (mesh->IsSkinned()) {
                             MILO_NOTIFY_ONCE(
                                 "%s: \"%s\" should not be a skinned mesh",
@@ -223,7 +221,7 @@ void RndTexBlender::DrawShowing() {
                     }
                 }
                 if (mFarMap && !pairs1c0.empty()) {
-                    unkbc |= 4;
+                    mOutputTexState |= 4;
                     RndMat *work = TheShaderMgr.GetWork();
                     Transform xfm;
                     xfm.Reset();
@@ -240,7 +238,7 @@ void RndTexBlender::DrawShowing() {
                             RndShader::SelectConfig(work, (ShaderType)0x16, false);
                             alpha = f17;
                         }
-                        RndMesh *mesh = blendCtrlr->Mesh();
+                        RndMesh *mesh = blendCtrlr->GetMesh();
                         if (mesh->IsSkinned()) {
                             MILO_NOTIFY_ONCE(
                                 "%s: \"%s\" should not be a skinned mesh",
@@ -282,7 +280,7 @@ void RndTexBlender::DrawBlendList(
 ) {
     RndTex *which = state == 2 ? mNearMap : mFarMap;
     if ((which || (state == 8)) && !pairs.empty()) {
-        unkbc |= state;
+        mOutputTexState |= state;
         RndMat *work = TheShaderMgr.GetWork();
         Transform xfm;
         xfm.Reset();
@@ -295,14 +293,14 @@ void RndTexBlender::DrawBlendList(
             RndTexBlendController *blendCtrlr = it->first;
             float f12 = it->second;
             if (state == 8) {
-                work->SetDiffuseTex(blendCtrlr->Tex());
+                work->SetDiffuseTex(blendCtrlr->GetOverrideMap());
             }
             if (f12 != f11 || state == 8) {
                 work->SetAlpha(f12);
                 RndShader::SelectConfig(work, kUnwrapUVShader, false);
                 f11 = f12;
             }
-            RndMesh *mesh = blendCtrlr->Mesh();
+            RndMesh *mesh = blendCtrlr->GetMesh();
             if (mesh->IsSkinned()) {
                 MILO_NOTIFY_ONCE(
                     "%s: \"%s\" should not be a skinned mesh",
@@ -310,7 +308,7 @@ void RndTexBlender::DrawBlendList(
                     mesh->Name()
                 );
             }
-            mesh->GetGeomOwner()->DrawFacesInRange(0, -1);
+            mesh->GeomOwner()->DrawFacesInRange(0, -1);
         }
         work->SetAlpha(1);
         if (RndCam::Current()) {

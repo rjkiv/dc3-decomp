@@ -8,26 +8,31 @@
 
 // size 0x24
 struct CompressedVertex_Xbox {
-    float x, y, z; // 0x0 - packed pos
-    DWORD color; // 0xc
-    DWORD tex; // 0x10
-    unsigned int norm; // 0x14
-    unsigned int tangent; // 0x18
-    unsigned int boneWeights; // 0x1c
-    unsigned int boneIndices; // 0x20
+    enum {
+        kVersion = 1
+    };
+    float mPosX; // 0x0
+    float mPosY; // 0x4
+    float mPosZ; // 0x8
+    unsigned int mColor; // 0xc
+    unsigned int mTex; // 0x10
+    unsigned int mNormal; // 0x14
+    unsigned int mTangent; // 0x18
+    unsigned int mWeight; // 0x1c
+    unsigned int mIndices; // 0x20
 };
 
 #define kBitsOutput 32
 
 // defined twice in rndobj and rnddx9, guess they forgot to inline it
 void PackVector(
-    unsigned int &packed,
+    unsigned int &outValue,
     const Vector4 &vec,
     unsigned char bitsX,
     unsigned char bitsY,
     unsigned char bitsZ,
     unsigned char bitsW,
-    bool
+    bool isSigned
 ) {
     MILO_ASSERT((bitsX + bitsY + bitsZ + bitsW) == kBitsOutput, 0x39);
     int kOffsetX = 0;
@@ -41,29 +46,27 @@ void PackVector(
 static void
 FillCompressedVertex(CompressedVertex_Xbox &vertXbox, const RndMesh::Vert &vert, bool b3) {
     const Hmx::Color &c = vert.color;
-    vertXbox.color = D3DCOLOR_COLORVALUE(c.red, c.green, c.blue, c.alpha);
-    PackVector(vertXbox.boneWeights, vert.boneWeights, 10, 10, 10, 2, false);
-    vertXbox.x = vert.pos.x;
-    vertXbox.y = vert.pos.y;
-    vertXbox.z = vert.pos.z;
-    vertXbox.tex = (FloatToHalfFloat(vert.tex.x) << 0x10) | FloatToHalfFloat(vert.tex.y);
+    vertXbox.mColor = D3DCOLOR_COLORVALUE(c.red, c.green, c.blue, c.alpha);
+    PackVector(vertXbox.mWeight, vert.boneWeights, 10, 10, 10, 2, false);
+    vertXbox.mPosX = vert.pos.x;
+    vertXbox.mPosY = vert.pos.y;
+    vertXbox.mPosZ = vert.pos.z;
+    vertXbox.mTex = (FloatToHalfFloat(vert.tex.x) << 0x10) | FloatToHalfFloat(vert.tex.y);
     Vector4 norm(vert.norm.x, vert.norm.y, vert.norm.z, 0);
-    PackVector(vertXbox.norm, norm, 10, 10, 10, 2, true);
-    PackVector(vertXbox.tangent, vert.tangent, 10, 10, 10, 2, true);
+    PackVector(vertXbox.mNormal, norm, 10, 10, 10, 2, true);
+    PackVector(vertXbox.mTangent, vert.tangent, 10, 10, 10, 2, true);
     // terrible way of basically just packing the indices, 8 bits per index
     // if you do the way MAKEFOURCC does, with << 24, << 16, etc, it won't match
-    vertXbox.boneIndices =
-        (((((vert.boneIndices[3] << 8) + vert.boneIndices[2]) << 8) + vert.boneIndices[1])
-         << 8)
-        + vert.boneIndices[0];
+    vertXbox.mIndices =
+        (((((vert.bone3 << 8) + vert.bone2) << 8) + vert.bone1) << 8) + vert.bone0;
 }
 
 inline void SaveCompressedVertex(const CompressedVertex_Xbox &vert, BinStream &bs) {
-    bs << vert.x << vert.y << vert.z;
-    bs << vert.color;
-    bs << vert.tex;
-    bs << vert.norm;
-    bs << vert.tangent;
-    bs << vert.boneWeights;
-    bs << vert.boneIndices;
+    bs << vert.mPosX << vert.mPosY << vert.mPosZ;
+    bs << vert.mColor;
+    bs << vert.mTex;
+    bs << vert.mNormal;
+    bs << vert.mTangent;
+    bs << vert.mWeight;
+    bs << vert.mIndices;
 }

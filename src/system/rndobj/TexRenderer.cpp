@@ -20,9 +20,9 @@ float ComputeAngle(const Vector3 &v1, const Vector3 &v2, const Vector3 &v3) {
 
 RndTexRenderer::RndTexRenderer()
     : mImpostorHeight(0), mDirty(1), mForce(0), mDrawPreClear(1), mDrawWorldOnly(0),
-      mDrawResponsible(1), mNoPoll(0), mOutputTexture(this), mDrawable(this),
-      mCamera(this), mEnviron(this), mFirstDraw(1), mPrimeDraw(0), mForceMips(0),
-      mMirrorCam(this), mClearBuffer(0), mClearColor(0, 0, 0) {}
+      mDrawResponsible(1), mNoPoll(0), mOutputTexture(this), mDraw(this), mCamera(this),
+      mEnviron(this), mFirstDraw(1), mPrimeDraw(0), mForceMips(0), mMirrorCam(this),
+      mClearBuffer(0), mClearColor(0, 0, 0) {}
 
 BEGIN_HANDLERS(RndTexRenderer)
     HANDLE_SUPERCLASS(RndAnimatable)
@@ -33,7 +33,7 @@ BEGIN_HANDLERS(RndTexRenderer)
 END_HANDLERS
 
 BEGIN_PROPSYNCS(RndTexRenderer)
-    SYNC_PROP_MODIFY(draw, mDrawable, mDirty = true; mFirstDraw = true)
+    SYNC_PROP_MODIFY(draw, mDraw, mDirty = true; mFirstDraw = true)
     SYNC_PROP_MODIFY(cam, mCamera, mDirty = true)
     SYNC_PROP_MODIFY(output_texture, mOutputTexture, InitTexture())
     SYNC_PROP_MODIFY(force, mForce, mDirty = true)
@@ -61,7 +61,7 @@ BEGIN_SAVES(RndTexRenderer)
     SAVE_SUPERCLASS(RndAnimatable)
     SAVE_SUPERCLASS(RndDrawable)
     SAVE_SUPERCLASS(RndPollable)
-    bs << mDrawable;
+    bs << mDraw;
     bs << mCamera;
     bs << mOutputTexture;
     bs << mForce;
@@ -85,7 +85,7 @@ BEGIN_COPYS(RndTexRenderer)
     COPY_SUPERCLASS(RndPollable)
     CREATE_COPY(RndTexRenderer)
     BEGIN_COPYING_MEMBERS
-        COPY_MEMBER(mDrawable)
+        COPY_MEMBER(mDraw)
         COPY_MEMBER(mCamera)
         COPY_MEMBER(mOutputTexture)
         COPY_MEMBER(mForce)
@@ -120,7 +120,7 @@ BEGIN_LOADS(RndTexRenderer)
         FilePath fp;
         d >> fp;
     } else {
-        mDrawable.Load(d, false, nullptr);
+        mDraw.Load(d, false, nullptr);
     }
     if (d.rev > 3) {
         d >> mCamera;
@@ -174,8 +174,8 @@ void RndTexRenderer::DrawShowing() {
 }
 
 void RndTexRenderer::ListDrawChildren(std::list<RndDrawable *> &list) {
-    if (mDrawable != nullptr && mDrawResponsible) {
-        list.insert(list.end(), mDrawable);
+    if (mDraw != nullptr && mDrawResponsible) {
+        list.insert(list.end(), mDraw);
     }
 }
 
@@ -185,7 +185,7 @@ void RndTexRenderer::UpdatePreClearState() {
 }
 
 void RndTexRenderer::SetFrame(float frame, float blend) {
-    RndAnimatable *anim = dynamic_cast<RndAnimatable *>(mDrawable.Ptr());
+    RndAnimatable *anim = dynamic_cast<RndAnimatable *>(mDraw.Ptr());
     if (anim != nullptr) {
         anim->SetFrame(frame, blend);
         mDirty = true;
@@ -193,7 +193,7 @@ void RndTexRenderer::SetFrame(float frame, float blend) {
 }
 
 float RndTexRenderer::StartFrame(void) {
-    RndAnimatable *anim = dynamic_cast<RndAnimatable *>(mDrawable.Ptr());
+    RndAnimatable *anim = dynamic_cast<RndAnimatable *>(mDraw.Ptr());
     if (anim != nullptr) {
         return anim->StartFrame();
     } else
@@ -201,7 +201,7 @@ float RndTexRenderer::StartFrame(void) {
 }
 
 float RndTexRenderer::EndFrame(void) {
-    RndAnimatable *anim = dynamic_cast<RndAnimatable *>(mDrawable.Ptr());
+    RndAnimatable *anim = dynamic_cast<RndAnimatable *>(mDraw.Ptr());
     if (anim != nullptr) {
         return anim->EndFrame();
     } else
@@ -209,14 +209,14 @@ float RndTexRenderer::EndFrame(void) {
 }
 
 void RndTexRenderer::ListAnimChildren(std::list<RndAnimatable *> &list) const {
-    RndAnimatable *anim = dynamic_cast<RndAnimatable *>(mDrawable.Ptr());
+    RndAnimatable *anim = dynamic_cast<RndAnimatable *>(mDraw.Ptr());
     if (anim != nullptr) {
         list.insert(list.end(), anim);
     }
 }
 void RndTexRenderer::ListPollChildren(std::list<RndPollable *> &list) const {
-    if (mDrawable != nullptr && mNoPoll) {
-        RndPollable *poll = dynamic_cast<RndPollable *>(mDrawable.Ptr());
+    if (mDraw != nullptr && mNoPoll) {
+        RndPollable *poll = dynamic_cast<RndPollable *>(mDraw.Ptr());
         if (poll != nullptr) {
             list.insert(list.end(), poll);
         }

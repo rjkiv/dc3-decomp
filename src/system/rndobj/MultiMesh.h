@@ -76,13 +76,13 @@ class RndMultiMesh : public RndDrawable {
 public:
     struct Instance {
         Instance();
-        Instance(const Transform &t) : unk0(1), mXfm(t) {}
+        Instance(const Transform &t) : mShowing(true), mXfm(t) {}
 
         void Save(BinStream &) const;
         void Load(BinStreamRev &);
         void LoadRev(BinStream &, int);
 
-        bool unk0; // 0x0
+        bool mShowing; // 0x0
         Transform mXfm; // 0x4
     };
 
@@ -112,7 +112,7 @@ public:
     NEW_OBJ(RndMultiMesh)
     REGISTER_OBJ(RndMultiMesh)
     static void Terminate();
-    static const std::list<std::pair<class RndMultiMeshProxy *, int> > &ProxyPool() {
+    static const std::list<std::pair<class RndMultiMeshProxy *, int> > &GetProxyPool() {
         return sProxyPool;
     }
 
@@ -120,7 +120,10 @@ public:
     void SetMesh(RndMesh *);
     InstanceList &Instances() { return mInstances; }
     Instance &Instances(int idx) { return *NextItr(mInstances.begin(), idx); }
+    // void RemoveInstance(InstanceList::iterator it);
     void RemoveInstance(int idx) { mInstances.erase(NextItr(mInstances.begin(), idx)); }
+    // InstanceList::iterator InstancePushFront(const Transform&);
+    // InstanceList::iterator InstancePushBack(const Transform&);
     void InvalidateProxies();
 
 protected:

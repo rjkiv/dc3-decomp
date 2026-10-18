@@ -36,13 +36,13 @@ public:
     NEW_OBJ(RndPropAnim)
     REGISTER_OBJ(RndPropAnim)
 
-    void AdvanceFrame(float);
+    void AdvanceFrame(float frame);
     void RemoveKeys();
-    void SetKey(Hmx::Object *, DataArray *, float);
-    void RemoveKey(Hmx::Object *, DataArray *, int);
-    void RemoveRange(Hmx::Object *, DataArray *, float, float);
-    bool ChangePropPath(Hmx::Object *, DataArray *, DataArray *);
-    int GetNumKeys(Hmx::Object *, Symbol);
+    void SetKey(Hmx::Object *obj, DataArray *prop, float frame);
+    void RemoveKey(Hmx::Object *obj, DataArray *prop, int index);
+    void RemoveRange(Hmx::Object *obj, DataArray *prop, float from, float to);
+    bool ChangePropPath(Hmx::Object *obj, DataArray *from, DataArray *to);
+    int GetNumKeys(Hmx::Object *obj, Symbol anim_channel);
 
     /** Get the PropKeys from our collection that has the supplied target and prop.
      * @param [in] obj The target object the PropKeys must have.
@@ -170,7 +170,7 @@ protected:
     /** "Do I self loop on SetFrame" */
     bool mLoop; // 0x1d
     /** "fire flow labels in sync with the anim" */
-    Symbol mFireFlowLabel; // 0x20
+    Symbol mCurFlowLabel; // 0x20
     /** "Scales all animation keyframe values by this #" */
     float mIntensity; // 0x24
     /** "the names of possible flow labels you can place on this timeline

@@ -859,10 +859,9 @@ void DxRnd::DoPointTests() {
                 flare->SetAreaVisible(uiRef);
             }
         }
-        mQueryManager->ToggleFrameIndex();
-        mQueryManager->OnEndFrame();
-        mQueryManager->IncrementFrameCounter();
-        mQueryManager->OnBeginFrame();
+
+        mQueryManager->EndFrame();
+        mQueryManager->BeginFrame();
 
         mLastPointTests.resize(mPointTests.size());
 

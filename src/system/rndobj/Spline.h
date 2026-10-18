@@ -11,20 +11,23 @@ class RndSpline : public RndPollable {
 public:
     // size 0x58
     class CtrlPoint {
+        friend class RndSpline;
+
     public:
         CtrlPoint();
         void Save(BinStream &) const;
         void Load(BinStreamRev &);
-        void Interp(const CtrlPoint &, const CtrlPoint &, float);
+        void Interp(const CtrlPoint &iA, const CtrlPoint &iB, float iBlend);
 
         Vector3 mPos; // 0x0
         float mRoll; // 0x10
-        bool unk14;
+    private:
+        bool mNew; // 0x14
         bool mDirtyConstants; // 0x15
-        Vector4 unk18;
-        Vector4 unk28;
-        Vector4 unk38;
-        Vector4 unk48;
+        Vector4 mA; // 0x18
+        Vector4 mB; // 0x28
+        Vector4 mC; // 0x38
+        Vector4 mD; // 0x48
     };
     // Hmx::Object
     virtual ~RndSpline() {
@@ -47,26 +50,26 @@ public:
     REGISTER_OBJ(RndSpline)
     static RndSpline *GlobalDefaultSpline() { return sGlobalDefaultSpline; }
 
-    void SetStartCtrlPoint(int);
-    void SetEndCtrlPoint(int);
-    void PrepareShader(float, float) const;
+    void SetStartCtrlPoint(int iStartCtrlPt);
+    void SetEndCtrlPoint(int iEndCtrlPt);
+    void PrepareShader(float iYOffset, float iYPerCtrlPt) const;
     void PrepareShader() const {
         PrepareShader(Max(mStartCtrlPoint, 0) * mYPerCtrlPoint - mYOffset, mYPerCtrlPoint);
     }
-    int NumCtrlPts() const { return mCtrlPoints.size(); }
+    int NumCtrlPts() const { return mPristineCtrlPoints.size(); }
     bool Manual() const { return mManual; }
     bool HasPulse() const { return mPulse; }
 
-    const CtrlPoint &GetDeformedCtrlPoint(int) const;
+    const CtrlPoint &GetDeformedCtrlPoint(int iIndex) const;
 
 protected:
     RndSpline();
 
 private:
     void SyncPristineCtrlPoints();
-    void SyncDeformedCtrlPoints(int, int) const;
-    void SyncDeformedDummyCtrlPoints(int, int) const;
-    const CtrlPoint &GetDeformedCtrlPointOrDummy(int) const;
+    void SyncDeformedCtrlPoints(int iStartIndex, int iEndIndex) const;
+    void SyncDeformedDummyCtrlPoints(int iStartIndex, int iEndIndex) const;
+    const CtrlPoint &GetDeformedCtrlPointOrDummy(int iIndex) const;
 
     DataNode OnTestPulse(DataArray *);
     DataNode OnSetGlobalDefaultSpline(DataArray *);
@@ -74,7 +77,7 @@ private:
 
     static RndSpline *sGlobalDefaultSpline;
 
-    std::vector<CtrlPoint> mCtrlPoints; // 0x8
+    std::vector<CtrlPoint> mPristineCtrlPoints; // 0x8
     bool mManual; // 0x14
     float mPulseLength; // 0x18
     float mPulseAmplitude; // 0x1c
@@ -85,12 +88,12 @@ private:
     float mYOffset; // 0x28
     float mYPerCtrlPoint; // 0x2c
     std::vector<CtrlPoint> mDeformedCtrlPoints; // 0x30
-    CtrlPoint unk3c; // 0x3c
-    CtrlPoint unk94; // 0x94
-    CtrlPoint unkec; // 0xec
-    bool unk144;
-    bool unk145;
-    bool mPulse;
-    float unk148;
-    bool unk14c;
+    CtrlPoint mDummyStart; // 0x3c
+    CtrlPoint mDummyEnd1; // 0x94
+    CtrlPoint mDummyEnd2; // 0xec
+    bool mDeformedCtrlPointsDirtyStart; // 0x144
+    bool mDeformedCtrlPointsDirtyEnd; // 0x145
+    bool mPulse; // 0x146
+    float mPulseT; // 0x148
+    bool mTestPulse; // 0x14c
 };
