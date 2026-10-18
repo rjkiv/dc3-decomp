@@ -1,4 +1,5 @@
 #include "rndobj/PartLauncher.h"
+#include "math/Color.h"
 #include "math/Rand.h"
 #include "obj/Object.h"
 #include "rndobj/MultiMesh.h"
@@ -183,6 +184,13 @@ void RndPartLauncher::Poll() {
     }
 }
 
+// TODO:
+
+// get rid of Inits that just call Register
+// implement Register alongside NewObject
+
+// augment OBJ_MEM_OVERLOAD to include new[] and delete[] overloads
+
 void RndPartLauncher::CopyPropsFromPart() {
     if (mPart) {
         if (!(mPartOverride.mask & PartOverride::kLife)) {
@@ -198,19 +206,19 @@ void RndPartLauncher::CopyPropsFromPart() {
             mPartOverride.deltaSize = Average(mPart->DeltaSize());
         }
         if (!(mPartOverride.mask & PartOverride::kStartColor)) {
-            mPartOverride.startColor = Average(
-                mPartOverride.startColor, mPart->StartColorLow(), mPart->StartColorHigh()
-            );
+            Hmx::Color tmp;
+            Average(tmp, mPart->StartColorLow(), mPart->StartColorHigh());
+            mPartOverride.startColor = tmp;
         }
         if (!(mPartOverride.mask & PartOverride::kMidColor)) {
-            mPartOverride.midColor = Average(
-                mPartOverride.midColor, mPart->MidColorLow(), mPart->MidColorHigh()
-            );
+            Hmx::Color tmp;
+            Average(tmp, mPart->MidColorLow(), mPart->MidColorHigh());
+            mPartOverride.midColor = tmp;
         }
         if (!(mPartOverride.mask & PartOverride::kEndColor)) {
-            mPartOverride.endColor = Average(
-                mPartOverride.endColor, mPart->EndColorLow(), mPart->EndColorHigh()
-            );
+            Hmx::Color tmp;
+            Average(tmp, mPart->EndColorLow(), mPart->EndColorHigh());
+            mPartOverride.endColor = tmp;
         }
         if (!(mPartOverride.mask & PartOverride::kEmitDirection)) {
             mPartOverride.pitch = mPart->Pitch();

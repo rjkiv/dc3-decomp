@@ -614,7 +614,7 @@
             "system/rndobj/Overlay.cpp": "Matching",
             "system/rndobj/Part.cpp": "NonMatching",
             "system/rndobj/PartAnim.cpp": "NonMatching",
-            "system/rndobj/PartLauncher.cpp": "NonMatching",
+            "system/rndobj/PartLauncher.cpp": "Matching",
             "system/rndobj/Poll.cpp": "Matching",
             "system/rndobj/PollAnim.cpp": "Matching",
             "system/rndobj/PostProc.cpp": "Matching",
