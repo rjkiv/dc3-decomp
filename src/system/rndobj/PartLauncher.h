@@ -23,15 +23,17 @@ public:
     REGISTER_OBJ(RndPartLauncher)
     void LaunchParticles();
 
+    bool GetBit(unsigned int mask) const { return mPartOverride.mask & mask; }
+    void SetBit(unsigned int bitmask, bool high) {
+        if (high) {
+            mPartOverride.mask |= bitmask;
+        } else {
+            mPartOverride.mask &= ~bitmask;
+        }
+    }
+
 protected:
     RndPartLauncher();
-
-    void SetBit(unsigned int bitmask, bool high) {
-        if (high)
-            mPartOverride.mask |= bitmask;
-        else
-            mPartOverride.mask &= ~bitmask;
-    }
 
     void CopyPropsFromPart();
 

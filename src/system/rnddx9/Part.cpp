@@ -68,7 +68,7 @@ void DxParticleSys::DrawShowing() {
         bool is_fancy = mType == kFancy;
         inv_rel_mtx.x *= 0.5f;
         inv_rel_mtx.y *= 0.5f;
-        inv_rel_mtx.z *= 0.5f * mScreenAspect;
+        inv_rel_mtx.z *= 0.5f * mHeightRatio;
         is_fancy &= mStretchWithVelocity;
         bool align_with_vel = mAlignWithVelocity == 0;
         bool constant_area = mConstantArea;
@@ -97,14 +97,9 @@ void DxParticleSys::DrawShowing() {
         );
         TheShaderMgr.SetVConstant(
             (VShaderConstant)0x32,
-            Vector4(
-                mNumTilesAcross,
-                mNumTilesDown,
-                1.0f / mNumTilesAcross,
-                1.0f / mNumTilesDown
-            )
+            Vector4(mTilesAcross, mTilesDown, 1.0f / mTilesAcross, 1.0f / mTilesDown)
         );
-        float do_uv_anim = mAnimateUVs ? 1.0f : 0.0f;
+        float do_uv_anim = mAnimatedUVs ? 1.0f : 0.0f;
         TheShaderMgr.SetVConstant(
             (VShaderConstant)0x33, Vector4(do_uv_anim, do_uv_anim, do_uv_anim, do_uv_anim)
         );
@@ -142,7 +137,7 @@ void DxParticleSys::DrawParticles(const Hmx::Color &col) {
             upload->uv0.y = p->vel.x * 2;
             upload->uv0.z = p->vel.y * 2;
             upload->uv0.w = p->vel.z * 2;
-            upload->uv1 = p->tileIdx;
+            upload->uv1 = p->tileIndex;
         }
     } else {
         for (RndParticle *p = mActiveParticles; p != nullptr; p = p->next, upload++) {
@@ -159,7 +154,7 @@ void DxParticleSys::DrawParticles(const Hmx::Color &col) {
             upload->uv0.x = p->size;
             upload->uv0.y = p->angle;
             upload->uv0.z = p->swingArm;
-            upload->uv1 = p->tileIdx;
+            upload->uv1 = p->tileIndex;
         }
     }
     TheDxRnd.Device()->EndVertices();

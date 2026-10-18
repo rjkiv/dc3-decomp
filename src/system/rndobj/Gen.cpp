@@ -341,7 +341,7 @@ void RndGenerator::SetPath(RndTransAnim *path, float start, float end) {
 
 void RndGenerator::DrawParticleSys(Transform &xfm, float f2) {
     if (mCurParticle) {
-        mCurParticle->Pos3() = xfm.v;
+        mCurParticle->Pos() = xfm.v;
         mCurParticle = mCurParticle->next;
     }
 }

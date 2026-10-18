@@ -336,7 +336,7 @@ MatShaderOptions GetDefaultMatShaderOpts(const Hmx::Object *obj, RndMat *mat) {
         } else {
             const RndParticleSys *partSys = dynamic_cast<const RndParticleSys *>(obj);
             if (partSys) {
-                if (partSys->GetMat() == mat) {
+                if (partSys->Mat() == mat) {
                     opts.shaderType = kParticlesShader;
                 }
             } else {
@@ -1789,9 +1789,9 @@ void RndScaleObject(Hmx::Object *obj, float scale, float frameScale) {
     RndParticleSys *partSys = dynamic_cast<RndParticleSys *>(obj);
     if (partSys) {
         // this whole block needs fixing
-        Vector3 forceDir = partSys->ForceDir();
+        Vector3 forceDir = partSys->Force();
         forceDir *= (scale / frameScale) / frameScale;
-        partSys->SetForceDir(forceDir);
+        partSys->SetForce(forceDir);
         partSys->SetBubbleSize(
             partSys->BubbleSize().x * scale, partSys->BubbleSize().y * scale
         );
@@ -1803,8 +1803,8 @@ void RndScaleObject(Hmx::Object *obj, float scale, float frameScale) {
             partSys->EmitRate().x / frameScale, partSys->EmitRate().y / frameScale
         );
         Vector3 box1, box2;
-        Scale(partSys->BoxExtent1(), scale, box1);
-        Scale(partSys->BoxExtent2(), scale, box2);
+        Scale(partSys->PosLow(), scale, box1);
+        Scale(partSys->PosHigh(), scale, box2);
         partSys->SetStartSize(
             partSys->StartSize().x * scale, partSys->StartSize().y * scale
         );
@@ -1815,7 +1815,7 @@ void RndScaleObject(Hmx::Object *obj, float scale, float frameScale) {
         partSys->SetDeltaSize(
             partSys->DeltaSize().x * scale, partSys->DeltaSize().y * scale
         );
-        partSys->SetBoxExtent(box1, box2);
+        partSys->SetPos(box1, box2);
         return;
 
         // from ghidra
