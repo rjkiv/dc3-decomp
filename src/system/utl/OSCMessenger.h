@@ -23,8 +23,8 @@ private:
     OSCValue *GetValue(String);
     int MakeOSCAddress(String, char *);
 
-    NetworkSocket *mSocket1; // 0x4
-    NetworkSocket *mSocket2; // 0x8
+    NetworkSocket *mSocketIn; // 0x4
+    NetworkSocket *mSocketOut; // 0x8
     std::list<OSCValue> mValues; // 0xc
 };
 

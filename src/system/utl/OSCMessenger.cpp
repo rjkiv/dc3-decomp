@@ -8,27 +8,27 @@
 OSCMessenger TheOSCMessenger;
 
 OSCMessenger::~OSCMessenger() {
-    delete mSocket1;
-    delete mSocket2;
+    delete mSocketIn;
+    delete mSocketOut;
 }
 
 void OSCMessenger::Connect() {
     if (!UsingCD()) {
         int ip = HolmesResolveIP().GetIP();
         if (ip != 0) {
-            mSocket1 = NetworkSocket::Create(false);
-            mSocket1->Bind(0x303A);
-            mSocket1->Listen();
-            mSocket2 = NetworkSocket::Create(false);
-            mSocket2->Connect(ip, 0x3039);
+            mSocketIn = NetworkSocket::Create(false);
+            mSocketIn->Bind(0x303A);
+            mSocketIn->Listen();
+            mSocketOut = NetworkSocket::Create(false);
+            mSocketOut->Connect(ip, 0x3039);
         }
     }
 }
 
 void OSCMessenger::Poll() {
-    if (mSocket1 && mSocket1->CanRead()) {
+    if (mSocketIn && mSocketIn->CanRead()) {
         char data[0x80];
-        mSocket1->Recv(data, 0x80);
+        mSocketIn->Recv(data, 0x80);
         char str[0x80];
         strncpy(str, data, 0x80);
         str[0x7f] = 0;
@@ -114,7 +114,7 @@ float OSCMessenger::GetFloat(String str, float floatValue) {
 
 void OSCMessenger::SendOSCFloat(String str, float floatValue) {
     char buffer[256];
-    if (mSocket2) {
+    if (mSocketOut) {
         int addr = MakeOSCAddress(str, buffer);
         char *bufPtr = &buffer[addr];
         *bufPtr++ = ',';
@@ -122,7 +122,7 @@ void OSCMessenger::SendOSCFloat(String str, float floatValue) {
         *bufPtr++ = '\0';
         *bufPtr++ = '\0';
         memcpy(bufPtr, &floatValue, 4);
-        mSocket2->Send(buffer, addr + 8);
+        mSocketOut->Send(buffer, addr + 8);
     }
 }
 

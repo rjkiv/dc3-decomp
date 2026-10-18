@@ -1000,7 +1000,7 @@ DEF_DATA_FUNC(DataHandle) {
 
 DEF_DATA_FUNC(DataHandleRet) {
     DataArray *a = array->Array(1);
-    Hmx ::Object *o;
+    Hmx::Object *o;
     const DataNode &n = a->Evaluate(0);
     if (n.Type() == kDataObject)
         o = n.ObjectValue();
