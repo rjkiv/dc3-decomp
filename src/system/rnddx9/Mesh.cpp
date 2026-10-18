@@ -450,7 +450,7 @@ float DxMesh::FurWeight(RndMat *mat) {
             if (CheckFurTransformCache()) {
                 return 1;
             }
-            return 1.0f / (it->Fur()->Fluidity() * 6.5f + 1.0f);
+            return 1.0f / (it->Fur()->mFluidity * 6.5f + 1.0f);
         }
     }
     return -1;
@@ -472,9 +472,9 @@ void DxMesh::CacheFurTransform(const Transform &xfm, int i, float f3) {
     }
 
     RndFur *fur = mMat->Fur();
-    if (fur->Wind()) {
+    if (fur->mWind) {
         Vector3 v2;
-        fur->Wind()->GetWind(xfm.v, TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo), v2);
+        fur->mWind->GetWind(xfm.v, TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo), v2);
         ScaleAddEq(cur.v, v2, 0.05f);
     }
 }
@@ -552,7 +552,7 @@ DxMat *DxMesh::DrawFur(DxMat *mat) {
             TheDxRnd.Device()->SetSamplerState(
                 0, D3DSAMP_MIPMAPLODBIAS, *reinterpret_cast<DWORD *>(&sDefaultBias)
             );
-            int numPasses = fur->NumPasses();
+            int numPasses = fur->mNumPasses;
             MILO_ASSERT(numPasses > 0, 0x243);
             DxMat *ret = static_cast<DxMat *>(mat->NextPass());
             for (int i = 0; i < numPasses; i++) {

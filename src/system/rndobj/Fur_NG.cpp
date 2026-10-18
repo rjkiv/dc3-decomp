@@ -20,7 +20,7 @@ bool NgFur::Shell(int i1, RndMesh *mesh, RndMat *mat) const {
     float f4;
 
     if (i1 != 0) {
-        f4 = (float)i1 / (float)(mLayers - 1);
+        f4 = (float)i1 / (float)(mNumPasses - 1);
     } else {
         f4 = 0;
     }
@@ -37,9 +37,9 @@ bool NgFur::Shell(int i1, RndMesh *mesh, RndMat *mat) const {
     TheShaderMgr.SetVConstant((VShaderConstant)0x32, v90);
 
     Hmx::Color v80;
-    Subtract(mEndsTint, mRootsTint, v80);
+    Subtract(mEndTint, mBaseTint, v80);
     Multiply(v80, f4, v80);
-    Add(mRootsTint, v80, v80);
+    Add(mBaseTint, v80, v80);
     TheShaderMgr.SetPConstant((PShaderConstant)0xC, v80.AsVector4());
 
     Vector4 v70;
@@ -48,7 +48,7 @@ bool NgFur::Shell(int i1, RndMesh *mesh, RndMat *mat) const {
     if (i1 != 0) {
         x = mThickness * powf(f4, exp);
     } else {
-        x = mThickness / (float)mLayers;
+        x = mThickness / (float)mNumPasses;
     }
     int bones = mesh->NumBones();
     if (bones > 1) {
@@ -65,7 +65,7 @@ bool NgFur::Shell(int i1, RndMesh *mesh, RndMat *mat) const {
     exp = mAlphaFalloff * 2 + 1;
     float f2;
     if (i1 != 0) {
-        f2 = powf((float)i1 / (float)mLayers, exp);
+        f2 = powf((float)i1 / (float)mNumPasses, exp);
     } else {
         f2 = 0;
     }

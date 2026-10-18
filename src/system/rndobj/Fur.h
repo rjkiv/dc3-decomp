@@ -13,6 +13,9 @@ class RndMesh;
 // size 0x9c
 /** "Parameters for fur shading, to be set on a material" */
 class RndFur : public Hmx::Object {
+protected:
+    RndFur();
+
 public:
     OBJ_CLASSNAME(Fur);
     OBJ_SET_TYPE(Fur);
@@ -30,16 +33,8 @@ public:
     NEW_OBJ(RndFur)
     REGISTER_OBJ(RndFur)
 
-    float Fluidity() const { return mFluidity; }
-    RndWind *Wind() const { return mWind; }
-    int NumPasses() const { return mLayers; }
-
-protected:
-    RndFur();
-
-public:
     /** "Number of passes" */
-    int mLayers; // 0x2c
+    int mNumPasses; // 0x2c
     /** "Length of fur" */
     float mThickness; // 0x30
     /** "Curvature exponent". Ranges from 0 to 3. */
@@ -57,9 +52,9 @@ public:
     /** "Langor of motion". Ranges from 0 to 1. */
     float mFluidity; // 0x4c
     /** "Tint at hair roots" */
-    Hmx::Color mRootsTint; // 0x50
+    Hmx::Color mBaseTint; // 0x50
     /** "Tint at hair ends" */
-    Hmx::Color mEndsTint; // 0x60
+    Hmx::Color mEndTint; // 0x60
     /** "Detail map for finer fur.  Only the alpha channel is used." */
     ObjPtr<RndTex> mFurDetail; // 0x70
     /** "Tiling for fur detail map.

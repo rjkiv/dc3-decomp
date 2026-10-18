@@ -856,7 +856,7 @@ void DxRnd::DoPointTests() {
             }
             if (mQueryManager->GetQueryResults(it->mQueryIndexPoint, uiRef)) {
                 RndFlare *flare = it->mFlare;
-                flare->SetVisibleArea(uiRef);
+                flare->SetAreaVisible(uiRef);
             }
         }
         mQueryManager->ToggleFrameIndex();

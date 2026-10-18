@@ -9,7 +9,7 @@
 #include "utl/BinStream.h"
 
 RndScreenMask::RndScreenMask()
-    : mMat(this), mColor(1, 1, 1, 1), mRect(0, 0, 1, 1), mUseCamRect(false) {}
+    : mMat(this), mColor(1, 1, 1, 1), mRect(0, 0, 1, 1), mUseCurrentRect(false) {}
 
 BEGIN_HANDLERS(RndScreenMask)
     HANDLE_SUPERCLASS(RndDrawable)
@@ -21,7 +21,7 @@ BEGIN_PROPSYNCS(RndScreenMask)
     SYNC_PROP(color, mColor)
     SYNC_PROP(alpha, mColor.alpha)
     SYNC_PROP(screen_rect, mRect)
-    SYNC_PROP(use_cam_rect, mUseCamRect)
+    SYNC_PROP(use_cam_rect, mUseCurrentRect)
     SYNC_SUPERCLASS(RndDrawable)
     SYNC_SUPERCLASS(Hmx::Object)
 END_PROPSYNCS
@@ -30,7 +30,7 @@ BEGIN_SAVES(RndScreenMask)
     SAVE_REVS(2, 0)
     SAVE_SUPERCLASS(Hmx::Object)
     SAVE_SUPERCLASS(RndDrawable)
-    bs << mMat << mColor << mRect << mUseCamRect;
+    bs << mMat << mColor << mRect << mUseCurrentRect;
 END_SAVES
 
 BEGIN_COPYS(RndScreenMask)
@@ -41,7 +41,7 @@ BEGIN_COPYS(RndScreenMask)
         COPY_MEMBER(mMat)
         COPY_MEMBER(mColor)
         COPY_MEMBER(mRect)
-        COPY_MEMBER(mUseCamRect)
+        COPY_MEMBER(mUseCurrentRect)
     END_COPYING_MEMBERS
 END_COPYS
 
@@ -58,7 +58,7 @@ BEGIN_LOADS(RndScreenMask)
         d >> mRect;
     }
     if (d.rev > 1) {
-        d >> mUseCamRect;
+        d >> mUseCurrentRect;
     }
 END_LOADS
 
@@ -70,7 +70,7 @@ void RndScreenMask::DrawShowing() {
             fw = RndCam::Current()->TargetTex()->Width();
             fh = RndCam::Current()->TargetTex()->Height();
         }
-        if (!mUseCamRect && RndCam::Current()->TargetTex()) {
+        if (!mUseCurrentRect && RndCam::Current()->TargetTex()) {
             if (RndCam::Current()->ScreenRect() != Hmx::Rect(0, 0, 1, 1)) {
                 MILO_NOTIFY_ONCE(
                     "%s: Overriding camera screen_rect not supported with render texture",
@@ -79,7 +79,7 @@ void RndScreenMask::DrawShowing() {
             }
         }
         RndCam *cur = RndCam::Current();
-        if (!mUseCamRect && !cur->TargetTex()) {
+        if (!mUseCurrentRect && !cur->TargetTex()) {
             TheRnd.GetDefaultCam()->Select();
             Hmx::Rect inv = TheHiResScreen.InvScreenRect();
             Hmx::Rect rndRect;

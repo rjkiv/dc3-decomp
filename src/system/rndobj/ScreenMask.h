@@ -30,5 +30,5 @@ protected:
     /** "The area of the screen in normalized coordinates (0 to 1) to draw into." */
     Hmx::Rect mRect; // 0x64
     /** "Use current camera screen_rect instead of the full screen" */
-    bool mUseCamRect; // 0x74
+    bool mUseCurrentRect; // 0x74
 };

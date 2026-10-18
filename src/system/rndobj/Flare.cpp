@@ -12,9 +12,9 @@
 
 RndFlare::RndFlare()
     : mPointTest(true), mAreaTest(true), mVisible(false), mSizes(0.1, 0.1), mMat(this),
-      mRange(0, 0), mOffset(0), mSteps(1), mStep(0), unk144(0), mTestDone(false),
-      mLastDone(false), unk17c(1, 1) {
-    mMatrix.Identity();
+      mRange(0, 0), mOffset(0), mSteps(1), mStep(0), mAreaVisible(0), mTestDone(false),
+      mLastDone(false), mCacheScale(1, 1) {
+    mCacheRot.Identity();
 }
 
 RndFlare::~RndFlare() { TheRnd.RemovePointTest(this); }
@@ -139,12 +139,12 @@ bool RndFlare::RectOffscreen(const Hmx::Rect &r) const {
 }
 
 void RndFlare::CalcScale() {
-    if (mMatrix != WorldXfm().m) {
-        mMatrix = WorldXfm().m;
-        float len = Length(mMatrix.z);
+    if (mCacheRot != WorldXfm().m) {
+        mCacheRot = WorldXfm().m;
+        float len = Length(mCacheRot.z);
         Vector3 vtmp;
-        Cross(mMatrix.x, mMatrix.y, vtmp);
-        unk17c.Set(Length(mMatrix.x), Dot(vtmp, mMatrix.z) > 0.0f ? len : -len);
+        Cross(mCacheRot.x, mCacheRot.y, vtmp);
+        mCacheScale.Set(Length(mCacheRot.x), Dot(vtmp, mCacheRot.z) > 0.0f ? len : -len);
     }
 }
 

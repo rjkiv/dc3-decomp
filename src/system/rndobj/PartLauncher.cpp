@@ -184,13 +184,6 @@ void RndPartLauncher::Poll() {
     }
 }
 
-// TODO:
-
-// get rid of Inits that just call Register
-// implement Register alongside NewObject
-
-// augment OBJ_MEM_OVERLOAD to include new[] and delete[] overloads
-
 void RndPartLauncher::CopyPropsFromPart() {
     if (mPart) {
         if (!(mPartOverride.mask & PartOverride::kLife)) {

@@ -42,8 +42,8 @@ public:
         SetTestDone();
         mVisible = v;
     }
-    void SetVisibleArea(float area) {
-        unk144 = area;
+    void SetAreaVisible(float area) {
+        mAreaVisible = area;
         mVisible = true;
     }
 
@@ -70,9 +70,9 @@ protected:
     int mSteps; // 0x12c
     int mStep; // 0x130
     Hmx::Rect mArea; // 0x134
-    float unk144; // 0x144 - mAreaVisible
+    float mAreaVisible; // 0x144
     bool mTestDone; // 0x148
     bool mLastDone; // 0x149
-    Hmx::Matrix3 mMatrix; // 0x14c
-    Vector2 unk17c; // 0x17c
+    Hmx::Matrix3 mCacheRot; // 0x14c
+    Vector2 mCacheScale; // 0x17c
 };
