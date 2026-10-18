@@ -937,9 +937,8 @@ void RndParticleSys::SetPersistentPool(int max, Type ty) {
 void RndParticleSys::SetTileHoldTime(float f1) {
     mTileAnimSpeed = f1;
     mLoopSpeed = mNumTiles * mTileAnimSpeed;
-    float &fref = mLoopSpeed; // this is terrible lmao, but hey it matches
-    mLoopSpeed = Max(fref, 0.0001f);
-    mInvLoopSpeed = 1.0f / fref;
+    MaxEq(mLoopSpeed, 0.0001f);
+    mInvLoopSpeed = 1.0f / mLoopSpeed;
 }
 
 void RndParticleSys::SetNumTiles(int num) {
