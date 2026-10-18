@@ -134,7 +134,7 @@ CharClipDriver *CharClipDriver::Exit(bool stack) {
     }
     CharClipDriver *ret = mNext;
     ExecuteEvent(exit);
-    RndAnimatable *syncAnim = mClip->SyncAnim();
+    RndAnimatable *syncAnim = mClip->GetAnim();
     if (syncAnim) {
         syncAnim->EndAnim();
     }
@@ -169,7 +169,7 @@ float CharClipDriver::AlignToBeat(float beat) {
 
 void CharClipDriver::PlayEvents(float oldBeat) {
     if (mNextEvent == -1) {
-        RndAnimatable *anim = mClip->SyncAnim();
+        RndAnimatable *anim = mClip->GetAnim();
         if (anim) {
             anim->StartAnim();
         }
@@ -179,8 +179,8 @@ void CharClipDriver::PlayEvents(float oldBeat) {
     }
     for (; mNextEvent < mClip->BeatEvents().size(); mNextEvent++) {
         CharClip *clip = mClip;
-        if (clip->BeatEvents()[mNextEvent].beat <= mBeat) {
-            ExecuteEvent(clip->BeatEvents()[mNextEvent].event);
+        if (clip->BeatEvents()[mNextEvent].Beat() <= mBeat) {
+            ExecuteEvent(clip->BeatEvents()[mNextEvent].Handler());
         } else {
             return;
         }
@@ -204,8 +204,8 @@ void CharClipDriver::SetBeatOffset(float offset, TaskUnits units, Symbol beatEve
         if (!beatEvent.Null()) {
             int i = 0;
             for (; i < mClip->BeatEvents().size(); i++) {
-                if (mClip->BeatEvents()[i].event == beatEvent) {
-                    mBeat = mClip->BeatEvents()[i].beat;
+                if (mClip->BeatEvents()[i].Handler() == beatEvent) {
+                    mBeat = mClip->BeatEvents()[i].Beat();
                     break;
                 }
             }
@@ -286,7 +286,7 @@ CharClipDriver *CharClipDriver::PreEvaluate(float beat, float dbeat, float dt) {
         mBeat += align;
         mAdvanceBeat += align;
         PlayEvents(oldBeat);
-        RndAnimatable *anim = mClip->SyncAnim();
+        RndAnimatable *anim = mClip->GetAnim();
         if (anim) {
             anim->SetFrame(mClip->BeatToFrame(mBeat), 1);
         }

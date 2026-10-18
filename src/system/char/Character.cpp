@@ -603,7 +603,7 @@ void Character::Teleport(Waypoint *wp) {
         SetLocalXfm(worldXfm);
     }
     if (BoneServo()) {
-        BoneServo()->SetRegulateWaypoint(wp);
+        BoneServo()->Regulate(wp);
     }
     mTeleported = true;
 }
@@ -713,7 +713,7 @@ void Character::SetInterestFilterFlags(int i) {
     CharEyes *eyes = GetEyes();
     if (eyes) {
         eyes->SetInterestFilterFlags(i);
-        eyes->SetUnk1b0(true);
+        eyes->SetInterestFiltersChanged(true);
     }
 }
 

@@ -30,18 +30,18 @@ public:
     OBJ_MEM_OVERLOAD(0x1E)
     NEW_OBJ(CharSleeve)
 
+protected:
+    CharSleeve();
+
     ObjPtr<RndTransformable> mSleeve; // 0x10
     ObjPtr<RndTransformable> mTopSleeve; // 0x24
-    Vector3 mPos;
-    Vector3 mLastPos;
-    float mLastDT;
-    float mInertia; // unk5c
+    Vector3 mPos; // 0x38
+    Vector3 mLastPos; // 0x48
+    float mLastDT; // 0x58
+    float mInertia; // 0x5c
     float mGravity; // 0x60
     float mRange; // 0x64
     float mNegLength; // 0x68
     float mPosLength; // 0x6c
     float mStiffness; // 0x70
-
-protected:
-    CharSleeve();
 };

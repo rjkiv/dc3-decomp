@@ -22,79 +22,78 @@ class FileMerger : public Hmx::Object,
                                       // public
 
 public:
-    struct Merger { // taken from RB3 decomp
+    struct Merger {
         struct SortBySelected {
             bool operator()(const Merger &a, const Merger &b) {
-                return stricmp(a.mSelected.c_str(), b.mSelected.c_str()) < 0;
+                return stricmp(a.selected.c_str(), b.selected.c_str()) < 0;
             }
         };
 
         Merger(Hmx::Object *o)
-            : mProxy(0), mPreClear(0),
-              mSubdirs(MergeFilter::kMergeInlinedMoveSharedSubdirs), mDir(o),
-              mLoadedObjects(o), mLoadedSubdirs(o) {}
+            : proxy(0), preclear(0), subdirs(MergeFilter::kMergeInlinedMoveSharedSubdirs),
+              dir(o), loadedObjects(o), loadedSubdirs(o) {}
         Merger(const Merger &m)
-            : mDir(m.mDir.Owner()), mLoadedObjects(m.mLoadedObjects.Owner()),
-              mLoadedSubdirs(m.mLoadedSubdirs.Owner()) {
+            : dir(m.dir.Owner()), loadedObjects(m.loadedObjects.Owner()),
+              loadedSubdirs(m.loadedSubdirs.Owner()) {
             *this = m;
         }
         ~Merger() {}
         Merger &operator=(const Merger &m) {
-            mName = m.mName;
-            filler = m.filler;
-            mSelected = m.mSelected;
+            name = m.name;
+            uniqueName = m.uniqueName;
+            selected = m.selected;
             loading = m.loading;
-            mLoaded = m.mLoaded;
-            mDir = m.mDir;
-            mProxy = m.mProxy;
-            mSubdirs = m.mSubdirs;
-            mLoadedObjects = m.mLoadedObjects;
-            mLoadedSubdirs = m.mLoadedSubdirs;
-            mPreClear = m.mPreClear;
-            unk21 = m.unk21;
+            loaded = m.loaded;
+            dir = m.dir;
+            proxy = m.proxy;
+            subdirs = m.subdirs;
+            loadedObjects = m.loadedObjects;
+            loadedSubdirs = m.loadedSubdirs;
+            preclear = m.preclear;
+            force = m.force;
             return *this;
         }
 
         void Clear(bool);
 
-        ObjectDir *MergerDir() {
-            if (mDir)
-                return mDir;
+        ObjectDir *ToDir() {
+            if (dir)
+                return dir;
             else
-                return mDir.Owner()->Dir();
+                return dir.Owner()->Dir();
         }
 
-        // gross and convoluted way to basically check if this object is in mLoadedObjects
-        bool IsObjectLoaded(Hmx::Object *obj) { return !mLoadedObjects.find(obj).Null(); }
+        // gross and convoluted way to basically check if this object is in loadedObjects
+        bool Has(Hmx::Object *obj) const { return !loadedObjects.find(obj).Null(); }
 
-        void SetSelected(const FilePath &fp, bool b) {
-            mSelected = fp;
-            unk21 = b;
+        void Select(const FilePath &fp, bool b) {
+            selected = fp;
+            force = b;
         }
 
-        bool IsProxy() const { return mProxy; }
+        bool Proxy() const { return proxy; }
 
         /** "Name of the merger, just for identification" */
-        Symbol mName; // 0x0
-        Symbol filler; // 0x4
+        Symbol name; // 0x0
+        Symbol uniqueName; // 0x4
         /** "The file you want to merge" */
-        FilePath mSelected; // 0x8
+        FilePath selected; // 0x8
         FilePath loading; // 0x10
         /** "currently loaded file" */
-        FilePath mLoaded; // 0x18
+        FilePath loaded; // 0x18
         /** "If true, merges the Dir in as a proxy, rather than the individual objects" */
-        bool mProxy; // 0x20
-        bool unk21; // 0x21
+        bool proxy; // 0x20
+        bool force; // 0x21
         /** "Delete the old objects right at StartLoad time" */
-        bool mPreClear; // 0x22
+        bool preclear; // 0x22
         /** "How to treat subdirs in the source" */
-        MergeFilter::Subdirs mSubdirs; // 0x24
+        MergeFilter::Subdirs subdirs; // 0x24
         /** "Dir to merge into, proxy, for instance" */
-        ObjPtr<ObjectDir> mDir; // 0x28
+        ObjPtr<ObjectDir> dir; // 0x28
         /** "loaded objects that will be deleted when file changes" */
-        ObjPtrList<Hmx::Object> mLoadedObjects; // 0x3c
+        ObjPtrList<Hmx::Object> loadedObjects; // 0x3c
         /** "moved subdirs that will be removed when file changes" */
-        ObjPtrList<ObjectDir> mLoadedSubdirs; // 0x50
+        ObjPtrList<ObjectDir> loadedSubdirs; // 0x50
     };
     // Hmx::Object
     virtual ~FileMerger();

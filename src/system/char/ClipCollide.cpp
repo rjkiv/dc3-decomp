@@ -113,18 +113,18 @@ void ClipCollide::SyncWaypoint() {
         Waypoint *w = mWaypoint;
         mChar->Teleport(w);
         Transform xfm = w->WorldXfm();
-        float r = w->YRadius();
+        float r = w->GetYRadius();
         if (r <= 0) {
-            r = w->Radius();
+            r = w->GetRadius();
         }
         if (mPosition == front) {
             ScaleAddEq(xfm.v, xfm.m.y, r);
         } else if (mPosition == back) {
             ScaleAddEq(xfm.v, xfm.m.y, -r);
         } else if (mPosition == left) {
-            ScaleAddEq(xfm.v, xfm.m.x, w->Radius());
+            ScaleAddEq(xfm.v, xfm.m.x, w->GetRadius());
         } else {
-            ScaleAddEq(xfm.v, xfm.m.x, -w->Radius());
+            ScaleAddEq(xfm.v, xfm.m.x, -w->GetRadius());
         }
         mChar->SetLocalXfm(xfm);
     }

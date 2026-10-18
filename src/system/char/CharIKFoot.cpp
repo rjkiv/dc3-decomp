@@ -9,7 +9,7 @@
 
 static const float sFSMFloat = 0.5f;
 
-CharIKFoot::CharIKFoot() : mDummy(this), mState(0), mData(this), mDataIndex(0) {
+CharIKFoot::CharIKFoot() : mDummy(this), mState(kFootFollow), mData(this), mDataIndex(0) {
     mDummy = Hmx::Object::New<RndTransformable>();
     mDummy->DirtyLocalXfm().Reset();
 }
@@ -67,7 +67,7 @@ BEGIN_LOADS(CharIKFoot)
 END_LOADS
 
 void CharIKFoot::Enter() {
-    mState = 0;
+    mState = kFootFollow;
     mLastDist = 0.0f;
 }
 
@@ -88,7 +88,7 @@ void CharIKFoot::Poll() {
 void CharIKFoot::DoFSM(Character *c, Transform &tf) {
     mLastTrans = mFinger->WorldXfm();
     if (c && c->Teleported()) {
-        mState = 0;
+        mState = kFootFollow;
     }
     float secs = TheTaskMgr.DeltaSeconds();
     if (secs < 0) {
@@ -101,21 +101,21 @@ void CharIKFoot::DoFSM(Character *c, Transform &tf) {
     float vecIdx = mData->LocalXfm().v[mDataIndex];
     if (vecIdx >= 0.98f) {
         b7 = true;
-    } else if (vecIdx > 0 && tf.v.z < (mState == 1 ? 0.6f : sFSMFloat)) {
+    } else if (vecIdx > 0 && tf.v.z < (mState == kFootFrozen ? 0.6f : sFSMFloat)) {
         b7 = true;
     }
-    if (mState == 0) {
+    if (mState == kFootFollow) {
         const Transform &fingerXfm = mFinger->WorldXfm();
         tf.v.x = fingerXfm.v.x;
         tf.v.y = fingerXfm.v.y;
         if (b7) {
             mFreezePos = tf.v;
-            mState = 1;
+            mState = kFootFrozen;
         }
     }
-    if (mState == 1) {
+    if (mState == kFootFrozen) {
         if (!b7) {
-            mState = 2;
+            mState = kFootCatchup;
             mLastDist = Distance(mFinger->WorldXfm().v, tf.v);
         } else {
             Vector3 v3c;
@@ -129,19 +129,19 @@ void CharIKFoot::DoFSM(Character *c, Transform &tf) {
             return;
         }
     }
-    if (mState == 2) {
+    if (mState == kFootCatchup) {
         Vector3 v48;
         Subtract(mFinger->WorldXfm().v, tf.v, v48);
         float len = Length(v48);
         mLastDist = Min(-(secs * 25.0f - mLastDist), len);
         if (mLastDist <= 0.0f)
-            mState = 0;
+            mState = kFootFollow;
         else
             v48 *= (len - mLastDist) / len;
         tf.v += v48;
         if (b7) {
             mFreezePos = tf.v;
-            mState = 1;
+            mState = kFootFrozen;
         }
     }
 }

@@ -4,33 +4,33 @@
 
 #pragma region CharMeshHide::Hide
 
-CharMeshHide::Hide::Hide(Hmx::Object *o) : mDraw(o), mFlags(0), mShow(0) {}
+CharMeshHide::Hide::Hide(Hmx::Object *o) : mDrawable(o), mFlags(0), mShow(0) {}
 
 CharMeshHide::Hide::Hide(const CharMeshHide::Hide &hide)
-    : mDraw(hide.mDraw), mFlags(hide.mFlags), mShow(hide.mShow) {}
+    : mDrawable(hide.mDrawable), mFlags(hide.mFlags), mShow(hide.mShow) {}
 
 CharMeshHide::Hide &CharMeshHide::Hide::operator=(const CharMeshHide::Hide &hide) {
-    mDraw = hide.mDraw;
+    mDrawable = hide.mDrawable;
     mFlags = hide.mFlags;
     mShow = hide.mShow;
     return *this;
 }
 
 BEGIN_CUSTOM_PROPSYNC(CharMeshHide::Hide)
-    SYNC_PROP(drawable, o.mDraw)
+    SYNC_PROP(drawable, o.mDrawable)
     SYNC_PROP(flags, o.mFlags)
     SYNC_PROP(show, o.mShow)
 END_CUSTOM_PROPSYNC
 
 BinStream &operator<<(BinStream &bs, const CharMeshHide::Hide &hide) {
-    bs << hide.mDraw;
+    bs << hide.mDrawable;
     bs << hide.mFlags;
     bs << hide.mShow;
     return bs;
 }
 
 BinStreamRev &operator>>(BinStreamRev &d, CharMeshHide::Hide &hide) {
-    d >> hide.mDraw;
+    d >> hide.mDrawable;
     d >> hide.mFlags;
     if (d.rev > 1) {
         d >> hide.mShow;

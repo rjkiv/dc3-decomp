@@ -8,6 +8,7 @@
 #include "utl/BinStream.h"
 #include "utl/MemMgr.h"
 #include "char/CharBonesSamples.h"
+#include "utl/Symbol.h"
 
 struct CharGraphNode {
     CharGraphNode() {}
@@ -23,7 +24,6 @@ struct CharGraphNode {
  *  better storage, interpolation, etc." */
 class CharClip : public Hmx::Object {
 public:
-    // per RB2, all the fields are public
     class NodeVector {
     public:
         NodeVector(ObjRefOwner *owner) : clip(owner) {}
@@ -61,24 +61,30 @@ public:
 
     class BeatEvent {
     public:
-        BeatEvent() : beat(0) {}
+        BeatEvent() : mBeat(0) {}
         BeatEvent(const BeatEvent &e) {
-            event = e.event;
-            beat = e.beat;
+            mEvent = e.mEvent;
+            mBeat = e.mBeat;
         }
         BeatEvent &operator=(const BeatEvent &e) {
-            event = e.event;
-            beat = e.beat;
+            mEvent = e.mEvent;
+            mBeat = e.mBeat;
             return *this;
         }
         void Save(BinStream &);
         void Load(BinStream &);
 
+        float Beat() const { return mBeat; }
+        void SetBeat(float beat) { mBeat = beat; }
+        Symbol Handler() const { return mEvent; }
+        void SetHandler(Symbol s) { mEvent = s; }
+
+    protected:
         /** "The event argument for the {clip_event <event> <clip>}
             message exported to the controlling Character" */
-        Symbol event;
+        Symbol mEvent; // 0x0
         /** "Clip Beat the event should trigger" */
-        float beat;
+        float mBeat; // 0x4
     };
 
     class FacingSet {
@@ -177,14 +183,14 @@ public:
     }
     int Flags() const { return mFlags; }
     Transitions &GetTransitions() { return mTransitions; }
-    int PlayFlags() { return mPlayFlags; }
+    int PlayFlags() const { return mPlayFlags; }
     CharClip *Relative() const { return mRelative; }
     float Range() const { return mRange; }
-    const std::vector<BeatEvent> &BeatEvents() const { return mBeatEvents; }
+    const std::vector<BeatEvent> &BeatEvents() { return mBeatEvents; }
     int NumBeatEvents() { return mBeatEvents.size(); }
-    int Unk18CSize() { return mSkeletonSamples.size(); }
-    RndAnimatable *SyncAnim() const { return mSyncAnim; }
-    float FramesPerSec() { return mFramesPerSec; }
+    int NumSamples() const { return mSkeletonSamples.size(); }
+    RndAnimatable *GetAnim() { return mSyncAnim; }
+    float FramesPerSecond() { return mFramesPerSec; }
 
     int InGroups();
     bool SharesGroups(CharClip *);
@@ -220,7 +226,7 @@ public:
     void StuffBones(CharBones &bones);
     void PoseMeshes(ObjectDir *dir, float beat);
     CharBoneDir *GetResource() const;
-    int GetUnk198() const { return unk198; } // bitmask, indexed by Difficulty
+    int GetBitmask() const { return mBitmask; } // bitmask, indexed by Difficulty
 
     static const float kBeatAccuracy;
     static DataNode GetClipEvents();
@@ -271,5 +277,5 @@ protected:
     FacingSet mFacing; // 0x170
     std::vector<CharBones::Bone> mZeros; // 0x180
     std::vector<std::map<int, float> > mSkeletonSamples; // 0x18c
-    int unk198; // 0x198
+    int mBitmask; // 0x198 - not in pdb
 };

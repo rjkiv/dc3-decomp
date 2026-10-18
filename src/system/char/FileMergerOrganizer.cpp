@@ -73,7 +73,7 @@ void FileMergerOrganizer::FinishLoading(Loader *l) {
 
 void FileMergerOrganizer::FailedLoading(Loader *l) {
     OrganizedFileMerger *org = nullptr;
-    FOREACH (it, mOrganizedFileMergers) {
+    FOREACH (it, mFileMergers) {
         org = &*it;
         if (org->merger->mCurLoader && org->merger->mCurLoader == l)
             break;
@@ -92,7 +92,7 @@ void FileMergerOrganizer::FailedLoading(Loader *l) {
         oldOrg = nullptr;
     mActiveOrg = oldOrg;
     if (!mActiveOrg && !mStartOrg) {
-        FOREACH (it, mOrganizedFileMergers) {
+        FOREACH (it, mFileMergers) {
             OrganizedFileMerger *curr = &*it;
             MILO_ASSERT(curr->state != kPendingLoad, 0x193);
         }
@@ -131,7 +131,7 @@ void FileMergerOrganizer::Dispatch(FileMergerOrganizer::OrganizedFileMerger *ofm
     MILO_ASSERT(mActiveOrg == NULL, 0xC4);
     mActiveOrg = ofm;
     if (mActiveOrg->state != kFailedLoad) {
-        FOREACH (it, mOrganizedFileMergers) {
+        FOREACH (it, mFileMergers) {
             OrganizedFileMerger *curr = &*it;
             MILO_ASSERT(curr->state != kPendingLoad, 0xCD);
         }
@@ -156,9 +156,9 @@ void FileMergerOrganizer::RemoveFileMerger(FileMergerOrganizer::OrganizedFileMer
     FileMerger *merger = ofm->merger;
     if (!merger->mCurLoader) {
         merger->mOrganizer = merger;
-        FOREACH (it, mOrganizedFileMergers) {
+        FOREACH (it, mFileMergers) {
             if (&*it == ofm) {
-                mOrganizedFileMergers.erase(it);
+                mFileMergers.erase(it);
                 break;
             }
         }
@@ -172,7 +172,7 @@ void FileMergerOrganizer::CheckDone() {
     MILO_ASSERT(mStartOrg == NULL, 0x98);
     OrganizedFileMerger *o5 = nullptr;
     FileMerger::Merger *m4 = nullptr;
-    FOREACH (it, mOrganizedFileMergers) {
+    FOREACH (it, mFileMergers) {
         OrganizedFileMerger *curr = &*it;
         MILO_ASSERT(curr->state != kPendingLoad, 0xA3);
         FileMerger::Merger *front = FrontInactiveMerger(curr);
@@ -196,7 +196,7 @@ void FileMergerOrganizer::AddFileMerger(FileMerger *fm) {
     else {
         MILO_ASSERT(fm->mOrganizer == fm, 0xFD);
         MILO_ASSERT(fm->mCurLoader == NULL, 0xFE);
-        FOREACH (it, mOrganizedFileMergers) {
+        FOREACH (it, mFileMergers) {
             OrganizedFileMerger *curr = &*it;
             MILO_ASSERT(curr->merger != fm, 0x102);
         }
@@ -204,7 +204,7 @@ void FileMergerOrganizer::AddFileMerger(FileMerger *fm) {
         OrganizedFileMerger ofm;
         ofm.merger = fm;
         ofm.state = (OrganizedState)0;
-        mOrganizedFileMergers.push_back(ofm);
+        mFileMergers.push_back(ofm);
         if (mActiveOrg == 0 && !mStartOrg) {
             mStartOrg = new FileMergerOrganizerLoader();
         }
@@ -214,18 +214,18 @@ void FileMergerOrganizer::AddFileMerger(FileMerger *fm) {
 bool FileMergerSort::operator()(
     const FileMerger::Merger *aMerger, const FileMerger::Merger *bMerger
 ) {
-    CatData &aRef = gCatPriority[aMerger->mName];
-    CatData &bRef = gCatPriority[bMerger->mName];
+    CatData &aRef = gCatPriority[aMerger->name];
+    CatData &bRef = gCatPriority[bMerger->name];
     if (bRef.priority == 0) {
         if (gOrganizing) {
-            MILO_NOTIFY("unknown file merger organizer category %s", bMerger->mName);
+            MILO_NOTIFY("unknown file merger organizer category %s", bMerger->name);
         }
         bRef.priority = gNextCatPriority++;
         bRef.unk4 = false;
     }
     if (aRef.priority == 0) {
         if (gOrganizing) {
-            MILO_NOTIFY("unknown file merger organizer category %s", aMerger->mName);
+            MILO_NOTIFY("unknown file merger organizer category %s", aMerger->name);
         }
         aRef.priority = gNextCatPriority++;
         aRef.unk4 = false;

@@ -17,7 +17,7 @@ public:
         Point(const Point &);
 
         Vector3 pos; // 0x0
-        Vector3 force; // 0x10
+        Vector3 accel; // 0x10
         Vector3 lastFriction; // 0x20
         Vector3 lastZ; // 0x30
         /** "hair bone we set the transform of" */
@@ -66,7 +66,6 @@ public:
         int NumPoints() const { return mPoints.size(); }
         Point &PointAt(int i) { return mPoints[i]; }
 
-    private:
         /** "show the points as spheres" */
         bool mShowSpheres; // 0x0
         /** "show the collision shapes" */
@@ -74,6 +73,8 @@ public:
         /** "Show the original pose when hilit,
             good for adjusting angle to match the pose" */
         bool mShowPose; // 0x2
+
+    protected:
         /** "The root Trans for the hair strand" */
         ObjPtr<RndTransformable> mRoot; // 0x4
         /** "Angle in degrees of starting flip, this is to counter gravity,

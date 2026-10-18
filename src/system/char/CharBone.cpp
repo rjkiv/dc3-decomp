@@ -24,8 +24,8 @@ BEGIN_HANDLERS(CharBone)
 END_HANDLERS
 
 BEGIN_CUSTOM_PROPSYNC(CharBone::WeightContext)
-    SYNC_PROP(context, o.mContext)
-    SYNC_PROP(weight, o.mWeight)
+    SYNC_PROP(context, o.context)
+    SYNC_PROP(weight, o.weight)
 END_CUSTOM_PROPSYNC
 
 BEGIN_PROPSYNCS(CharBone)
@@ -41,8 +41,8 @@ BEGIN_PROPSYNCS(CharBone)
 END_PROPSYNCS
 
 BinStream &operator<<(BinStream &bs, const CharBone::WeightContext &ctx) {
-    bs << ctx.mContext;
-    bs << ctx.mWeight;
+    bs << ctx.context;
+    bs << ctx.weight;
     return bs;
 }
 
@@ -75,7 +75,7 @@ BEGIN_COPYS(CharBone)
 END_COPYS
 
 BinStream &operator>>(BinStream &d, CharBone::WeightContext &w) {
-    d >> w.mContext >> w.mWeight;
+    d >> w.context >> w.weight;
     return d;
 }
 
@@ -177,7 +177,7 @@ void CharBone::StuffBones(std::list<CharBones::Bone> &bones, int mask) const {
 
 const CharBone::WeightContext *CharBone::FindWeight(int ctx) const {
     FOREACH (it, mWeights) {
-        if (it->mContext & ctx) {
+        if (it->context & ctx) {
             return &*it;
         }
     }
@@ -187,7 +187,7 @@ const CharBone::WeightContext *CharBone::FindWeight(int ctx) const {
 float CharBone::GetWeight(int mask) const {
     const WeightContext *ctx = FindWeight(mask);
     if (ctx) {
-        return ctx->mWeight;
+        return ctx->weight;
     } else {
         return 1.0f;
     }

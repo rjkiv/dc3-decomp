@@ -4,8 +4,8 @@
 #include "utl/BinStream.h"
 
 CharSignalApplier::CharSignalApplier()
-    : mSignal(0), mSignalMin(-1.0f), mSignalMax(1.0f), mDoSmoothing(false),
-      mSmoothIncrement(0.1f), unk3c(0), mBoneOps(this) {}
+    : mSignalValue(0), mSignalMin(-1.0f), mSignalMax(1.0f), mUseSmoothing(false),
+      mPollSignalStep(0.1f), mSmoothedSignal(0), mBoneOps(this) {}
 
 BEGIN_HANDLERS(CharSignalApplier)
     HANDLE_SUPERCLASS(CharWeightable)
@@ -15,16 +15,16 @@ END_HANDLERS
 BEGIN_CUSTOM_PROPSYNC(CharSignalApplier::BoneOp)
     SYNC_PROP(bone, o.mBone)
     SYNC_PROP(op, o.mOp)
-    SYNC_PROP(apply_percent, o.mApplyPercent)
+    SYNC_PROP(apply_percent, o.mApplyPct)
     SYNC_PROP(min_angle, o.mMinAngle)
     SYNC_PROP(max_angle, o.mMaxAngle)
 END_CUSTOM_PROPSYNC
 
 BEGIN_PROPSYNCS(CharSignalApplier)
     SYNC_PROP(bone_ops, mBoneOps)
-    SYNC_PROP(signal, mSignal)
-    SYNC_PROP(do_smoothing, mDoSmoothing)
-    SYNC_PROP(smooth_increment, mSmoothIncrement)
+    SYNC_PROP(signal, mSignalValue)
+    SYNC_PROP(do_smoothing, mUseSmoothing)
+    SYNC_PROP(smooth_increment, mPollSignalStep)
     SYNC_PROP(signal_min, mSignalMin)
     SYNC_PROP(signal_max, mSignalMax)
     SYNC_SUPERCLASS(CharWeightable)
@@ -34,7 +34,7 @@ END_PROPSYNCS
 BinStream &operator<<(BinStream &bs, const CharSignalApplier::BoneOp &op) {
     bs << op.mBone;
     bs << op.mOp;
-    bs << op.mApplyPercent;
+    bs << op.mApplyPct;
     bs << op.mMinAngle;
     bs << op.mMaxAngle;
     return bs;
@@ -45,11 +45,11 @@ BEGIN_SAVES(CharSignalApplier)
     SAVE_SUPERCLASS(Hmx::Object)
     SAVE_SUPERCLASS(CharWeightable)
     bs << mBoneOps;
-    bs << mSignal;
+    bs << mSignalValue;
     bs << mSignalMin;
     bs << mSignalMax;
-    bs << mDoSmoothing;
-    bs << mSmoothIncrement;
+    bs << mUseSmoothing;
+    bs << mPollSignalStep;
 END_SAVES
 
 BEGIN_COPYS(CharSignalApplier)
@@ -58,18 +58,18 @@ BEGIN_COPYS(CharSignalApplier)
     CREATE_COPY_AS(CharSignalApplier, c)
     BEGIN_COPYING_MEMBERS
         COPY_MEMBER(mBoneOps)
-        COPY_MEMBER(mSignal)
+        COPY_MEMBER(mSignalValue)
         COPY_MEMBER(mSignalMin)
         COPY_MEMBER(mSignalMax)
-        COPY_MEMBER(mDoSmoothing)
-        COPY_MEMBER(mSmoothIncrement)
+        COPY_MEMBER(mUseSmoothing)
+        COPY_MEMBER(mPollSignalStep)
     END_COPYING_MEMBERS
 END_COPYS
 
 BinStreamRev &operator>>(BinStreamRev &d, CharSignalApplier::BoneOp &op) {
     d >> op.mBone;
     d >> op.mOp;
-    d >> op.mApplyPercent;
+    d >> op.mApplyPct;
     d >> op.mMinAngle;
     d >> op.mMaxAngle;
     return d;
@@ -83,11 +83,11 @@ BEGIN_LOADS(CharSignalApplier)
     LOAD_SUPERCLASS(Hmx::Object)
     LOAD_SUPERCLASS(CharWeightable)
     d >> mBoneOps;
-    d >> mSignal;
+    d >> mSignalValue;
     d >> mSignalMin;
     d >> mSignalMax;
-    d >> mDoSmoothing;
-    d >> mSmoothIncrement;
+    d >> mUseSmoothing;
+    d >> mPollSignalStep;
 END_LOADS
 
 void CharSignalApplier::Poll() {}

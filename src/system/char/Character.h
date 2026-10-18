@@ -46,7 +46,9 @@ public:
         kCharDrawNone,
         kCharDrawOpaque,
         kCharDrawTranslucent,
-        kCharDrawAll
+        kCharDrawAll,
+        kCharDrawShadow,
+        kCharDrawOpaqueOrShadow
     };
     enum PollState {
         kCharCreated = 0,
@@ -54,6 +56,7 @@ public:
         kCharEntered = 2,
         kCharPolled = 3,
         kCharExited = 4,
+        kCharDrawn = 5
     };
 
     Character();
@@ -180,8 +183,8 @@ protected:
     /** "select an interest object here and select 'force_interest' below
         to force the character to look at it." */
     Symbol mInterestToForce; // 0x29c
-    ObjPtr<RndEnviron> mOpaqueEnv;
-    Vector3 *mOpaquePos;
+    ObjPtr<RndEnviron> mOpaqueEnv; // 0x2a0
+    const Vector3 *mOpaquePos; // 0x2b4
     /** "Props to show and hide for cut scenes" */
     DrawPtrVec mProps; // 0x2b8
     bool mDebugDrawInterestObjects; // 0x2d4

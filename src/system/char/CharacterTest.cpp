@@ -172,7 +172,7 @@ void CharacterTest::Recenter() {
     xfm.Reset();
     mMe->SetLocalXfm(xfm);
     if (mMe->BoneServo()) {
-        mMe->BoneServo()->SetRegulateWaypoint(nullptr);
+        mMe->BoneServo()->Regulate(nullptr);
     }
 }
 
@@ -307,7 +307,7 @@ void CharacterTest::Draw() {
 }
 
 bool CharacterTest::MovingSelf() const {
-    return mMe->BoneServo() ? mMe->BoneServo()->mMoveSelf : false;
+    return mMe->BoneServo() ? mMe->BoneServo()->MovingSelf() : false;
 }
 
 void CharacterTest::SetDistMap(Symbol s) {
@@ -352,13 +352,11 @@ void CharacterTest::Poll() {
             PlayNew();
         } else {
             if (!mClip2) {
-                if (drivs->GetClip() != mClip1) {
+                if (drivs->Clip() != mClip1) {
                     PlayNew();
                 }
-            } else if (
-                drivs->GetClip() != mClip1 && drivs->GetClip() != mClip2
-                || (drivs->GetClip() == mClip2 && drivs->mBeat > mPopFrame)
-            ) {
+            } else if (drivs->Clip() != mClip1 && drivs->Clip() != mClip2
+                       || (drivs->Clip() == mClip2 && drivs->mBeat > mPopFrame)) {
                 PlayNew();
             }
         }
@@ -367,7 +365,7 @@ void CharacterTest::Poll() {
             xfm.v.Zero();
             mMe->SetLocalXfm(xfm);
             if (mMe->BoneServo()) {
-                mMe->BoneServo()->SetRegulateWaypoint(nullptr);
+                mMe->BoneServo()->Regulate(nullptr);
             }
             Recenter();
         }
@@ -386,7 +384,7 @@ void CharacterTest::Sync() {
         mFilterGroup = nullptr;
     }
     if (mMe->BoneServo()) {
-        mMe->BoneServo()->SetRegulateWaypoint(nullptr);
+        mMe->BoneServo()->Regulate(nullptr);
     }
     if (mClip1 || mClip2) {
         mOverlay->SetCallback(this);

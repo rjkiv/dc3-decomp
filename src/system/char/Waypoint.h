@@ -26,8 +26,8 @@ public:
     void SetAngRadius(float r) { mAngRadius = r; }
     void SetStrictAngDelta(float d) { mStrictAngDelta = d; }
     void SetYRadius(float r) { mYRadius = r; }
-    float Radius() const { return mRadius; }
-    float YRadius() const { return mYRadius; }
+    float GetRadius() const { return mRadius; }
+    float GetYRadius() const { return mYRadius; }
 
     float ShapeDelta(float);
     void ShapeDelta(Vector3 const &, Vector3 &);
@@ -37,9 +37,13 @@ public:
     static void Terminate();
     static Waypoint *FindNearest(const Vector3 &, int);
 
+protected:
+    Waypoint();
+
 private:
     static std::list<Waypoint *> *sWaypoints;
     static int sSearchID;
+    static bool sShowNames;
 
     static Waypoint *Find(int);
     static DataNode OnWaypointFind(DataArray *);
@@ -48,9 +52,6 @@ private:
 
     float ShapeDeltaAng(float, float);
     void ShapeDeltaBox(Vector3 const &, float, float, Vector3 &);
-
-protected:
-    Waypoint();
 
     /** "Flags for this waypoint, should be a bitfield per app" */
     int mFlags; // 0xc0

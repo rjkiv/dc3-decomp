@@ -19,15 +19,17 @@
 
 CharLipSyncDriver::CharLipSyncDriver()
     : mLipSync(this), mClips(this), mBlinkClip(this), mSongOwner(this), mSongOffset(0),
-      mLoop(0), unk88(0), unk8c(0), unk90(1), unk94(0), mBones(this), mTestClip(this),
-      mTestWeight(1), mOverallOverrideWeight(0), unkc8(0), unkc9(0), unkcc(0), unkd4(0),
-      mOverrideClip(this), mOverrideWeight(0), mOverrideOptions(this),
-      mApplyOverrideAdditively(0), unk108(this), unk11c(0), unk120(0), unk124(0),
-      unk128(0), mAlternateDriver(this) {}
+      mLoop(0), mSongPlayer(0), unk8c(0), unk90(1), mMainLipsyncPlayer(0), mBones(this),
+      mTestClip(this), mTestWeight(1), mOverallOverrideWeight(0),
+      mOverallOverrideBlendIn(0), mOverallOverrideBlendOut(0), mOverallOverrideBlendMs(0),
+      mOverallOverrideBlendStartTime(0), mOverrideClip(this), mOverrideWeight(0),
+      mOverrideOptions(this), mApplyOverrideAdditively(0), mBlendInOverrideClip(this),
+      mBlendInOverrideWeight(0), mOverrideClipBlendMs(0), mBlendStartTime(0),
+      mInitOverrideBlending(0), mAlternateDriver(this) {}
 
 CharLipSyncDriver::~CharLipSyncDriver() {
-    RELEASE(unk88);
-    RELEASE(unk94);
+    RELEASE(mSongPlayer);
+    RELEASE(mMainLipsyncPlayer);
 }
 
 BEGIN_HANDLERS(CharLipSyncDriver)
@@ -141,42 +143,51 @@ void CharLipSyncDriver::Poll() {
             return;
         } else {
             float f15 = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) * 1000;
-            if (unkd0) {
-                unkd4 = f15;
-                unkd0 = false;
+            if (mInitOverallOverrideBlending) {
+                mOverallOverrideBlendStartTime = f15;
+                mInitOverallOverrideBlending = false;
             }
-            if (unkc8) {
-                if (f15 > unkcc + unkd4) {
+            if (mOverallOverrideBlendIn) {
+                if (f15 > mOverallOverrideBlendMs + mOverallOverrideBlendStartTime) {
                     mOverallOverrideWeight = 1;
-                    unkc8 = false;
+                    mOverallOverrideBlendIn = false;
                 } else {
-                    float f11 = Clamp(0.0f, 1.0f, (f15 - unkd4) / unkcc);
+                    float f11 = Clamp(
+                        0.0f,
+                        1.0f,
+                        (f15 - mOverallOverrideBlendStartTime) / mOverallOverrideBlendMs
+                    );
                     if (f11 > mOverallOverrideWeight) {
                         mOverallOverrideWeight = f11;
                     }
                 }
-            } else if (unkc9) {
-                if (f15 > unkcc + unkd4) {
+            } else if (mOverallOverrideBlendOut) {
+                if (f15 > mOverallOverrideBlendMs + mOverallOverrideBlendStartTime) {
                     mOverallOverrideWeight = 1;
-                    unkc9 = false;
+                    mOverallOverrideBlendOut = false;
                 } else {
-                    float f11 = 1.0f - Clamp(0.0f, 1.0f, (f15 - unkd4) / unkcc);
+                    float f11 = 1.0f
+                        - Clamp(0.0f,
+                                1.0f,
+                                (f15 - mOverallOverrideBlendStartTime)
+                                    / mOverallOverrideBlendMs);
                     if (f11 < mOverallOverrideWeight) {
                         mOverallOverrideWeight = f11;
                     }
                 }
             }
-            if (unk11c > 0) {
-                if (unk128) {
-                    unk124 = f15;
-                    unk128 = false;
+            if (mBlendInOverrideWeight > 0) {
+                if (mInitOverrideBlending) {
+                    mBlendStartTime = f15;
+                    mInitOverrideBlending = false;
                 }
-                if (f15 > unk120 + unk124) {
-                    mOverrideClip = unk108;
-                    mOverrideWeight = unk11c;
-                    unk11c = 0;
-                } else if (unk88) {
-                    float pct = Clamp(0.0f, 1.0f, (f15 - unk124) / unk120);
+                if (f15 > mOverrideClipBlendMs + mBlendStartTime) {
+                    mOverrideClip = mBlendInOverrideClip;
+                    mOverrideWeight = mBlendInOverrideWeight;
+                    mBlendInOverrideWeight = 0;
+                } else if (mSongPlayer) {
+                    float pct =
+                        Clamp(0.0f, 1.0f, (f15 - mBlendStartTime) / mOverrideClipBlendMs);
                     if (mOverrideClip) {
                         if (mOverrideWeight > 0) {
                             float f11 =
@@ -198,7 +209,7 @@ void CharLipSyncDriver::Poll() {
                             ScaleAddViseme(mOverrideClip, f11);
                         }
                     }
-                    if (unk108 && mOverrideWeight > 0) {
+                    if (mBlendInOverrideClip && mOverrideWeight > 0) {
                         float f11 = mOverrideWeight * mOverallOverrideWeight;
                         MILO_ASSERT_FMT(
                             mOverallOverrideWeight >= 0,
@@ -211,7 +222,7 @@ void CharLipSyncDriver::Poll() {
                             mOverrideWeight
                         );
                         MILO_ASSERT_FMT(pct >= f11, "pct = %f", pct);
-                        ScaleAddViseme(unk108, f11);
+                        ScaleAddViseme(mBlendInOverrideClip, f11);
                     }
                     if (mOverallOverrideWeight >= 1) {
                         ApplyBlinks();
@@ -235,14 +246,14 @@ void CharLipSyncDriver::Poll() {
             if (f11 <= 0) {
                 return;
             } else {
-                UpdatePlayback(unk88, unk90 * f11, mSongOffset);
-                if (!unk8c && unk88) {
-                    if (unk88->mLipSync
+                UpdatePlayback(mSongPlayer, unk90 * f11, mSongOffset);
+                if (!unk8c && mSongPlayer) {
+                    if (mSongPlayer->mLipSync
                         && TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo) + mSongOffset
-                            >= unk88->mLipSync->Duration()) {
+                            >= mSongPlayer->mLipSync->Duration()) {
                         MILO_LOG(
                             "CharLipSyncDriver::Poll() - Triggering VO Lip Sync FadeOut - Name:%s\n",
-                            unk88->mLipSync ? unk88->mLipSync->Name() : ""
+                            mSongPlayer->mLipSync ? mSongPlayer->mLipSync->Name() : ""
                         );
                         unk8c = true;
                     }
@@ -251,9 +262,9 @@ void CharLipSyncDriver::Poll() {
                     if (unk90 < 0.001f) {
                         MILO_LOG(
                             "CharLipSyncDriver::Poll() - Deleting VO Lip Sync track because it finished and faded out - Name:%s\n",
-                            unk88->mLipSync ? unk88->mLipSync->Name() : ""
+                            mSongPlayer->mLipSync ? mSongPlayer->mLipSync->Name() : ""
                         );
-                        RELEASE(unk88);
+                        RELEASE(mSongPlayer);
                         mLipSync = nullptr;
                         unk90 = 1;
                         unk8c = false;
@@ -271,19 +282,21 @@ void CharLipSyncDriver::Poll() {
                         }
                     }
                 }
-                bool updated = unk88 && unk88->mLipSync && shot && shot->Name()
-                    && strneq(shot->Name(), "battle_", 7);
+                bool updated = mSongPlayer && mSongPlayer->mLipSync && shot
+                    && shot->Name() && strneq(shot->Name(), "battle_", 7);
                 if (!updated) {
-                    UpdatePlayback(unk94, f11, 0);
+                    UpdatePlayback(mMainLipsyncPlayer, f11, 0);
                 }
-                if (mSongOwner && mSongOwner->unk88) {
+                if (mSongOwner && mSongOwner->mSongPlayer) {
                     float f15 = TheTaskMgr.Seconds(TaskMgr::kTaskTRVideo)
                         + mSongOwner->mSongOffset;
                     if (unk8c) {
-                        f15 = Mod(f15, mSongOwner->unk88->mLipSync->Duration() - 0.001f);
+                        f15 =
+                            Mod(f15,
+                                mSongOwner->mSongPlayer->mLipSync->Duration() - 0.001f);
                     }
-                    mSongOwner->unk88->Poll(f15);
-                    auto &weights = mSongOwner->unk88->mWeights;
+                    mSongOwner->mSongPlayer->Poll(f15);
+                    auto &weights = mSongOwner->mSongPlayer->mWeights;
                     for (int i = 0; i < weights.size(); i++) {
                         CharLipSync::PlayBack::Weight &wt = weights[i];
                         float cur = wt.current;
@@ -323,7 +336,7 @@ bool CharLipSyncDriver::SetLipSync(CharLipSync *sync) {
             "CharLipSyncDriver::SetLipSync() - previous VO Lipsync was fading out.  Deleting now - Name:%s\n",
             mLipSync ? mLipSync->Name() : "NULL"
         );
-        RELEASE(unk88);
+        RELEASE(mSongPlayer);
         mLipSync = nullptr;
         unk8c = false;
         unk90 = 1;
@@ -332,10 +345,10 @@ bool CharLipSyncDriver::SetLipSync(CharLipSync *sync) {
         && (streq(sync->Name(), "player1_cam.lipsync")
             || streq(sync->Name(), "player2_cam.lipsync")
             || streq(sync->Name(), "dancer_face.lipsync"))) {
-        RELEASE(unk94);
-        unk94 = new CharLipSync::PlayBack();
-        unk94->Set(sync, mClips);
-        unk94->Reset();
+        RELEASE(mMainLipsyncPlayer);
+        mMainLipsyncPlayer = new CharLipSync::PlayBack();
+        mMainLipsyncPlayer->Set(sync, mClips);
+        mMainLipsyncPlayer->Reset();
         return true;
     } else if (sync != mLipSync) {
         mLipSync = sync;
@@ -356,15 +369,15 @@ void CharLipSyncDriver::ApplyBlinks() {
 }
 
 void CharLipSyncDriver::ResetOverrideBlend() {
-    unk108 = nullptr;
-    unk11c = 0;
+    mBlendInOverrideClip = nullptr;
+    mBlendInOverrideWeight = 0;
 }
 
 void CharLipSyncDriver::BlendInOverrideClip(CharClip *clip, float f1, float f2) {
-    unk108 = clip;
-    unk11c = f1;
-    unk120 = f2;
-    unk128 = true;
+    mBlendInOverrideClip = clip;
+    mBlendInOverrideWeight = f1;
+    mOverrideClipBlendMs = f2;
+    mInitOverrideBlending = true;
 }
 
 void CharLipSyncDriver::Sync() {
@@ -373,39 +386,39 @@ void CharLipSyncDriver::Sync() {
     } else {
         mBlinkClip = nullptr;
     }
-    RELEASE(unk88);
-    if (unk94 && mClips) {
-        unk94->SetClips(mClips);
+    RELEASE(mSongPlayer);
+    if (mMainLipsyncPlayer && mClips) {
+        mMainLipsyncPlayer->SetClips(mClips);
     }
     if (mLipSync && mClips) {
-        unk88 = new CharLipSync::PlayBack();
-        unk88->Set(mLipSync, mClips);
-        unk88->Reset();
+        mSongPlayer = new CharLipSync::PlayBack();
+        mSongPlayer->Set(mLipSync, mClips);
+        mSongPlayer->Reset();
         unk8c = false;
         unk90 = 1;
     }
 }
 
 void CharLipSyncDriver::ClearLipSync() {
-    RELEASE(unk94);
-    RELEASE(unk88);
+    RELEASE(mMainLipsyncPlayer);
+    RELEASE(mSongPlayer);
     mLipSync = nullptr;
     unk8c = false;
     unk90 = 1;
 }
 
 void CharLipSyncDriver::BlendInOverrides(float f) {
-    unkcc = f;
-    unkc8 = true;
-    unkc9 = false;
-    unkd0 = true;
+    mOverallOverrideBlendMs = f;
+    mOverallOverrideBlendIn = true;
+    mOverallOverrideBlendOut = false;
+    mInitOverallOverrideBlending = true;
 }
 
 void CharLipSyncDriver::BlendOutOverrides(float f) {
-    unkcc = f;
-    unkc9 = true;
-    unkc8 = false;
-    unkd0 = true;
+    mOverallOverrideBlendMs = f;
+    mOverallOverrideBlendOut = true;
+    mOverallOverrideBlendIn = false;
+    mInitOverallOverrideBlending = true;
 }
 
 void CharLipSyncDriver::Highlight() {
@@ -416,10 +429,12 @@ void CharLipSyncDriver::Highlight() {
         Vector2 v2(5.0f, gCharHighlightY);
         float y = TheRnd.DrawString(MakeString("%s:", PathName(this)), v2, white, true).y;
         v2.y += y;
-        if (unk88) {
-            TheRnd.DrawString(MakeString("frame %d", unk88->mFrame), v2, white, true);
+        if (mSongPlayer) {
+            TheRnd.DrawString(
+                MakeString("frame %d", mSongPlayer->mFrame), v2, white, true
+            );
             v2.y += y;
-            std::vector<CharLipSync::PlayBack::Weight> &weights = unk88->mWeights;
+            std::vector<CharLipSync::PlayBack::Weight> &weights = mSongPlayer->mWeights;
             for (int i = 0; i < weights.size(); i++) {
                 CharLipSync::PlayBack::Weight &curWeight = weights[i];
                 float f14 = curWeight.last;
@@ -444,7 +459,7 @@ void CharLipSyncDriver::ScaleAddViseme(CharClip *clip, float f1) {
     } else {
         dVar2 = 0;
     }
-    length = clip->FrameToBeat(clip->FramesPerSec() * dVar2);
+    length = clip->FrameToBeat(clip->FramesPerSecond() * dVar2);
     mBones->ScaleAdd(clip, f1, length, 0);
 }
 

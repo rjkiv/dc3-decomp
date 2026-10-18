@@ -22,6 +22,7 @@ public:
     CharUtlBoneSaver(ObjectDir *);
     ~CharUtlBoneSaver();
 
+protected:
     ObjectDir *mDir; // 0x0
     std::vector<Transform> mXfms; // 0x4
 };

@@ -20,44 +20,48 @@ class CharEyes : public RndHighlightable, public CharWeightable, public CharPoll
 public:
     struct EyeDesc {
         EyeDesc(Hmx::Object *owner)
-            : mEye(owner), mUpperLid(owner), mLowerLid(owner), mLowerLidBlink(owner),
-              mUpperLidBlink(owner) {}
+            : eye(owner), upperLid(owner), lowerLid(owner), lowerLidBlink(owner),
+              upperLidBlink(owner) {}
         EyeDesc &operator=(const EyeDesc &desc) {
-            mEye = desc.mEye.Ptr();
-            mUpperLid = desc.mUpperLid;
-            mLowerLid = desc.mLowerLid;
-            mUpperLidBlink = desc.mUpperLidBlink;
-            mLowerLidBlink = desc.mLowerLidBlink;
+            eye = desc.eye.Ptr();
+            upperLid = desc.upperLid;
+            lowerLid = desc.lowerLid;
+            upperLidBlink = desc.upperLidBlink;
+            lowerLidBlink = desc.lowerLidBlink;
             return *this;
         }
 
         /** "Eye to retarget" */
-        ObjOwnerPtr<CharLookAt> mEye; // 0x0
+        ObjOwnerPtr<CharLookAt> eye; // 0x0
         /** "corresponding upper lid bone, must rotate about Z" */
-        ObjPtr<RndTransformable> mUpperLid; // 0x14
+        ObjPtr<RndTransformable> upperLid; // 0x14
         /** "corresponding lower lid bone, must rotate about Z" */
-        ObjPtr<RndTransformable> mLowerLid; // 0x28
+        ObjPtr<RndTransformable> lowerLid; // 0x28
         /** "optional - child of lower_lid, placed at edge of lower lid geometry.
             It will be used to detect and resolve interpenetration of the lids" */
-        ObjPtr<RndTransformable> mLowerLidBlink; // 0x3c
+        ObjPtr<RndTransformable> lowerLidBlink; // 0x3c
         /** "optional - child of upper_lid, placed at edge of upper lid geometry.
             It will be used to detect and resolve interpenetration of the lids" */
-        ObjPtr<RndTransformable> mUpperLidBlink; // 0x50
+        ObjPtr<RndTransformable> upperLidBlink; // 0x50
     };
+
     struct CharInterestState {
-        CharInterestState(Hmx::Object *owner) : mInterest(owner), unk14(-1) {}
+        CharInterestState(Hmx::Object *owner) : interest(owner), mLastTimeStamp(-1) {}
         CharInterestState(const CharInterestState &s)
-            : mInterest(s.mInterest), unk14(-1) {}
+            : interest(s.interest), mLastTimeStamp(-1) {}
         CharInterestState &operator=(const CharInterestState &s) {
-            mInterest = s.mInterest.Ptr();
+            interest = s.interest.Ptr();
             return *this;
         }
 
         bool IsInRefractoryPeriod();
         float RefractoryTimeRemaining();
+        void SetLastTimeStamp(float time) { mLastTimeStamp = time; }
 
-        ObjOwnerPtr<CharInterest> mInterest; // 0x0
-        float unk14; // 0x14
+        ObjOwnerPtr<CharInterest> interest; // 0x0
+
+    protected:
+        float mLastTimeStamp; // 0x14
     };
 
     // Hmx::Object
@@ -82,9 +86,11 @@ public:
     OBJ_MEM_OVERLOAD(0x20)
     NEW_OBJ(CharEyes)
 
-    void SetInterestFilterFlags(int i) { mInterestFilterFlags = i; }
-    void ClearInterestFilterFlags() { mInterestFilterFlags = mDefaultFilterFlags; }
-    void SetUnk1b0(bool b) { mInterestFiltersChanged = b; } // change once context found
+    void SetInterestFilterFlags(int i) { mCurInterestFilterFlags = i; }
+    void ClearInterestFilterFlags() {
+        mCurInterestFilterFlags = mDefaultInterestFilterFlags;
+    }
+    void SetInterestFiltersChanged(bool b) { mInterestFiltersChanged = b; }
 
     void ForceBlink();
     CharInterest *GetCurrentInterest();
@@ -95,7 +101,7 @@ public:
     void AddInterestObject(CharInterest *);
     int NumInterests() const { return mInterests.size(); }
     CharInterest *GetInterest(int idx) {
-        return idx >= mInterests.size() ? 0 : mInterests[idx].mInterest.Ptr();
+        return idx >= mInterests.size() ? 0 : mInterests[idx].interest.Ptr();
     }
 
 protected:
@@ -134,62 +140,62 @@ protected:
     ObjPtr<CharFaceServo> mFaceServo; // 0x50
     /** "The weight setter for eyes tracking the camera" */
     ObjPtr<CharWeightSetter> mCamWeight; // 0x64
-    Vector3 unk78; // 0x78
-    int mDefaultFilterFlags; // 0x88
+    Vector3 mTarget; // 0x78
+    int mDefaultInterestFilterFlags; // 0x88
     /** "optional bone that serves as the reference for which direction
         the character is looking. If not set, one of the eyes will be used" */
-    ObjPtr<RndTransformable> mViewDirection; // 0x8c
+    ObjPtr<RndTransformable> mViewDirBone; // 0x8c
     /** "optionally supply a head lookat to inform eyes what the head is doing.
         used primarily to coordinate eye lookats with head ones..." */
     ObjPtr<CharLookAt> mHeadLookAt; // 0xa0
     /** "in degrees, the maximum angle we can offset the current view direction
         when extrapolating for generated interests". Ranges from 0 to 90. */
-    float mMaxExtrapolation; // 0xb4
+    float mMaxExtrapolationAngle; // 0xb4
     /** "the minimum distance, in inches, that this interest can be from the eyes.
         If the interest is less than this distance, the eyes look in the same direction,
         but projected out to this distance.  May be overridden per interest object." */
-    float mMinTargetDist; // 0xb8
+    float mMinTargetDistance; // 0xb8
     /** "affects rotation applied to upper lid when eyes rotate up".
         Ranges from 0 to 10. */
-    float mUpperLidTrackUp; // 0xbc
+    float mUpperLidTrackUpScale; // 0xbc
     /** "affects rotation applied to upper lid when eyes rotate down".
         Ranges from 0 to 10. */
-    float mUpperLidTrackDown; // 0xc0
+    float mUpperLidTrackDownScale; // 0xc0
     /** "translates lower lids up/down when eyes rotate up".
         Ranges from 0 to 10. */
-    float mLowerLidTrackUp; // 0xc4
+    float mLowerLidTrackUpScale; // 0xc4
     /** "translates lower lids up/down when eyes rotate down".
         Ranges from 0 to 10. */
-    float mLowerLidTrackDown; // 0xc8
+    float mLowerLidTrackDownScale; // 0xc8
     /** "if checked, lower lid tracking is done by rotation instead of translation" */
-    bool mLowerLidTrackRotate; // 0xcc
-    RndOverlay *mEyeStatusOverlay; // 0xd0
-    int mInterestFilterFlags; // 0xd4
+    bool mLLidTrackRotate; // 0xcc
+    RndOverlay *mOverlay; // 0xd0
+    int mCurInterestFilterFlags; // 0xd4
     Vector3 mLastFacing; // 0xd8
-    float mLastCang;
-    float mLastLook;
-    float mMaxEyeCang;
-    float mAvDelta;
-    float mLastBlinkWeight;
-    bool mBlinkDetect;
-    bool mTargetTooClose;
+    float mLastCang; // 0xe8
+    float mLastLook; // 0xec
+    float mMaxEyeCang; // 0xf0
+    float mAvDelta; // 0xf4
+    float mLastBlinkWeight; // 0xf8
+    bool mBlinkDetect; // 0xfc
+    bool mTargetTooClose; // 0xfd
     ObjPtr<CharInterest> mCurInterest; // 0x100
-    ObjPtr<CharInterest> mFocusInterest; // 0x114 - focus interest
-    int mCurFocusPriorityClass;
-    bool mNewFocusInterest;
-    Vector3 mLastExtrapolatedDir;
-    float mLastHeadIKWeight;
+    ObjPtr<CharInterest> mFocusInterest; // 0x114
+    int mCurFocusPriorityClass; // 0x128
+    bool mNewFocusInterest; // 0x12c
+    Vector3 mLastExtrapolatedDir; // 0x130
+    float mLastHeadIKWeight; // 0x140
     CharEyeDartRuleset::EyeDartRulesetData mCurDartRuleset; // 0x144
-    bool mDarting;
-    float mDartNextEventTime;
-    int mDartsRemaining;
-    Vector3 mCurDartOffset;
-    bool mProceduralBlink;
-    float mBlinkTimestamp;
-    int mBlinkWindowCount;
-    float mBlinkWindowSecsRemaining;
-    float mLastBlinkDetectTime;
-    Vector3 mDelayedTarget;
-    bool mInterestFiltersChanged;
-    bool mBlinksEnabled;
+    bool mDarting; // 0x170
+    float mDartNextEventTime; // 0x174
+    int mDartsRemaining; // 0x178
+    Vector3 mCurDartOffset; // 0x17c
+    bool mProceduralBlink; // 0x18c
+    float mBlinkTimestamp; // 0x190
+    int mBlinkWindowCount; // 0x194
+    float mBlinkWindowSecsRemaining; // 0x198
+    float mLastBlinkDetectTime; // 0x19c
+    Vector3 mDelayedTarget; // 0x1a0
+    bool mInterestFiltersChanged; // 0x1b0
+    bool mBlinksEnabled; // 0x1b1
 };

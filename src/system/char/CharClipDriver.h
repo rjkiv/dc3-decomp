@@ -32,7 +32,7 @@ public:
     CharClipDriver *PreEvaluate(float beat, float dbeat, float dt);
 
     CharClipDriver *Next() const { return mNext; }
-    CharClip *GetClip() const { return mClip; }
+    CharClip *Clip() const { return mClip; }
 
     POOL_OVERLOAD(CharClipDriver, 0x17);
 
