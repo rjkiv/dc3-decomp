@@ -35,27 +35,6 @@ namespace STLPORT {
         // ...but still has the destructor
         ~StlNodeAlloc() {}
 
-#ifdef VERSION_SZBE69
-        // This is the only way to make allocator conversions
-        // work in retail without using constructors
-        template <class T2>
-        operator StlNodeAlloc<T2>() const {
-            return StlNodeAlloc<T2>();
-        }
-#endif
-
-        template <class T2>
-        StlNodeAlloc<T> &operator=(const StlNodeAlloc<T2> &right) {}
-
-        template <class T2>
-        bool operator==(const StlNodeAlloc<T2> &) const {
-            return true;
-        }
-        template <class T2>
-        bool operator!=(const StlNodeAlloc<T2> &) const {
-            return false;
-        }
-
         pointer address(reference value) const { return &value; }
         const_pointer address(const_reference value) const { return &value; }
         size_type max_size() const { return size_type(-1) / sizeof(T); }

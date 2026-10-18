@@ -116,7 +116,7 @@ public:
     Vector4() {}
     Vector4(float xIn, float yIn, float zIn, float wIn)
         : x(xIn), y(yIn), z(zIn), w(wIn) {}
-    Vector4(const Vector3 &, float);
+    Vector4(const Vector3 &v3, float wIn) : x(v3.x), y(v3.y), z(v3.z), w(wIn) {}
 
     void Set(float xIn, float yIn, float zIn, float wIn) {
         x = xIn;

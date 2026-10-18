@@ -52,8 +52,7 @@ FillCompressedVertex(CompressedVertex_Xbox &vertXbox, const RndMesh::Vert &vert,
     vertXbox.mPosY = vert.pos.y;
     vertXbox.mPosZ = vert.pos.z;
     vertXbox.mTex = (FloatToHalfFloat(vert.tex.x) << 0x10) | FloatToHalfFloat(vert.tex.y);
-    Vector4 norm(vert.norm.x, vert.norm.y, vert.norm.z, 0);
-    PackVector(vertXbox.mNormal, norm, 10, 10, 10, 2, true);
+    PackVector(vertXbox.mNormal, Vector4(vert.norm, 0), 10, 10, 10, 2, true);
     PackVector(vertXbox.mTangent, vert.tangent, 10, 10, 10, 2, true);
     // terrible way of basically just packing the indices, 8 bits per index
     // if you do the way MAKEFOURCC does, with << 24, << 16, etc, it won't match
