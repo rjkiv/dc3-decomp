@@ -4,12 +4,12 @@
 #include "rndobj/FontBase.h"
 
 bool RndFont3d::HasChar(unsigned short us) const {
-    return mCharInfoMap.find(us) != mCharInfoMap.end();
+    return mCharInfos.find(us) != mCharInfos.end();
 }
 
 RndFont3d::RndFont3d()
-    : unk44(this), mTextureOwner(this, this), unk6c(0, 0, 0), unk7c(0, 0, 0),
-      unk8c(0, 0, 0) {}
+    : mMat(this), mCharGeomOwner(this, this), mCellSize(0, 0, 0), mNormalize(0, 0, 0),
+      mCharOriginOffset(0, 0, 0) {}
 
 BEGIN_HANDLERS(RndFont3d)
     HANDLE_SUPERCLASS(RndFontBase)
@@ -22,19 +22,19 @@ END_PROPSYNCS
 BEGIN_SAVES(RndFont3d)
     SAVE_REVS(0, 0)
     SAVE_SUPERCLASS(RndFontBase)
-    bs << unk44;
-    bs << mTextureOwner;
-    bs << unk6c;
-    bs << unk7c;
-    bs << unk8c;
-    bs << mCharInfoMap.size();
-    FOREACH (it, mCharInfoMap) {
+    bs << mMat;
+    bs << mCharGeomOwner;
+    bs << mCellSize;
+    bs << mNormalize;
+    bs << mCharOriginOffset;
+    bs << mCharInfos.size();
+    FOREACH (it, mCharInfos) {
         bs << it->first;
         CharInfo *value = it->second;
-        bs << value->unk0;
-        bs << value->unk20;
-        bs << value->unk24;
-        bs << value->unk38;
+        bs << value->bbox;
+        bs << value->charAdvance;
+        bs << value->mesh;
+        bs << value->handmade;
     }
 END_SAVES
 
@@ -42,23 +42,23 @@ BEGIN_COPYS(RndFont3d)
     COPY_SUPERCLASS(RndFontBase)
     CREATE_COPY_AS(RndFont3d, f)
     MILO_ASSERT(f, 0x91);
-    COPY_MEMBER_FROM(f, unk44)
-    COPY_MEMBER_FROM(f, unk6c)
-    COPY_MEMBER_FROM(f, unk7c)
-    COPY_MEMBER_FROM(f, unk8c)
-    FOREACH (it, mCharInfoMap) {
+    COPY_MEMBER_FROM(f, mMat)
+    COPY_MEMBER_FROM(f, mCellSize)
+    COPY_MEMBER_FROM(f, mNormalize)
+    COPY_MEMBER_FROM(f, mCharOriginOffset)
+    FOREACH (it, mCharInfos) {
         delete it->second;
     }
-    mCharInfoMap.clear();
-    FOREACH (it, f->mCharInfoMap) {
+    mCharInfos.clear();
+    FOREACH (it, f->mCharInfos) {
         CharInfo *c = new CharInfo(this);
         *c = *(it->second);
-        mCharInfoMap[it->first] = c;
+        mCharInfos[it->first] = c;
     }
-    if (ty == kCopyShallow || (ty == kCopyFromMax && f->mTextureOwner != f)) {
-        mTextureOwner = f->mTextureOwner.Ptr();
+    if (ty == kCopyShallow || (ty == kCopyFromMax && f->mCharGeomOwner != f)) {
+        mCharGeomOwner = f->mCharGeomOwner.Ptr();
     } else {
-        mTextureOwner = this;
+        mCharGeomOwner = this;
     }
 END_COPYS
 
@@ -68,50 +68,50 @@ BEGIN_LOADS(RndFont3d)
     LOAD_REVS(bs)
     ASSERT_REVS(0, 0)
     LOAD_SUPERCLASS(RndFontBase)
-    d >> unk44;
-    d >> mTextureOwner;
-    d >> unk6c;
-    d >> unk7c;
-    d >> unk8c;
+    d >> mMat;
+    d >> mCharGeomOwner;
+    d >> mCellSize;
+    d >> mNormalize;
+    d >> mCharOriginOffset;
     size_t numMapEntries;
     d >> numMapEntries;
     for (int i = 0; i < numMapEntries; i++) {
         unsigned short key;
         d >> key;
         CharInfo *c = new CharInfo(this);
-        d >> c->unk0;
-        d >> c->unk20;
-        d >> c->unk24;
-        d >> c->unk38;
-        mCharInfoMap[key] = c;
+        d >> c->bbox;
+        d >> c->charAdvance;
+        d >> c->mesh;
+        d >> c->handmade;
+        mCharInfos[key] = c;
     }
 END_LOADS
 
 float RndFont3d::CharWidth(unsigned short c) const {
-    if (mTextureOwner != this) {
-        return mTextureOwner->CharWidth(c);
+    if (mCharGeomOwner != this) {
+        return mCharGeomOwner->CharWidth(c);
     } else {
         MILO_ASSERT(HasChar(c), 0xCA);
-        auto it = mTextureOwner->mCharInfoMap.find(c);
-        float w = Max(it->second->unk0.mMax.x, 0.0f);
+        auto it = mCharGeomOwner->mCharInfos.find(c);
+        float w = Max(it->second->bbox.mMax.x, 0.0f);
         MILO_ASSERT(w >= 0.f, 0xCC);
         return w * FontUnitInverse();
     }
 }
 
 bool RndFont3d::CharAdvance(unsigned short us1, unsigned short us2, float &fref) const {
-    if (mTextureOwner != this) {
-        return mTextureOwner->CharAdvance(us1, us2, fref);
+    if (mCharGeomOwner != this) {
+        return mCharGeomOwner->CharAdvance(us1, us2, fref);
     } else {
-        auto it = mCharInfoMap.find(us2);
-        if (it != mCharInfoMap.end()) {
+        auto it = mCharInfos.find(us2);
+        if (it != mCharInfos.end()) {
             CharInfo *c = it->second;
-            float vol = c->unk0.Volume();
-            if (vol > 0 || c->unk20 > 0) {
+            float vol = c->bbox.Volume();
+            if (vol > 0 || c->charAdvance > 0) {
                 if (mMonospace) {
                     fref = 1;
                 } else {
-                    fref = FontUnitInverse() * c->unk20;
+                    fref = FontUnitInverse() * c->charAdvance;
                 }
                 fref += Kerning(us1, us2);
                 return true;
@@ -122,14 +122,14 @@ bool RndFont3d::CharAdvance(unsigned short us1, unsigned short us2, float &fref)
 }
 
 float RndFont3d::CharAdvance(unsigned short c) const {
-    if (mTextureOwner != this) {
-        return mTextureOwner->CharAdvance(c);
+    if (mCharGeomOwner != this) {
+        return mCharGeomOwner->CharAdvance(c);
     } else {
         MILO_ASSERT(HasChar(c), 0xD5);
         if (mMonospace) {
             return 1;
         } else {
-            float a = mCharInfoMap.find(c)->second->unk20;
+            float a = mCharInfos.find(c)->second->charAdvance;
             MILO_ASSERT(a >= 0.f, 0xDB);
             return a * FontUnitInverse();
         }
@@ -137,34 +137,34 @@ float RndFont3d::CharAdvance(unsigned short c) const {
 }
 
 float RndFont3d::Kerning(unsigned short us1, unsigned short us2) const {
-    if (mTextureOwner != this) {
-        return mTextureOwner->Kerning(us1, us2);
+    if (mCharGeomOwner != this) {
+        return mCharGeomOwner->Kerning(us1, us2);
     } else {
-        return unk7c.x * RndFontBase::Kerning(us1, us2);
+        return mNormalize.x * RndFontBase::Kerning(us1, us2);
     }
 }
 
 float RndFont3d::AspectRatio() const {
-    return mTextureOwner->unk6c.z / mTextureOwner->unk6c.x;
+    return mCharGeomOwner->mCellSize.z / mCharGeomOwner->mCellSize.x;
 }
 
 void RndFont3d::Clear() {
-    FOREACH (it, mCharInfoMap) {
+    FOREACH (it, mCharInfos) {
         delete it->second;
     }
-    mCharInfoMap.clear();
+    mCharInfos.clear();
     mChars.clear();
-    RELEASE(mKerningTable);
+    RELEASE(mKerning);
 }
 
 RndFont3d::CharInfo *RndFont3d::GetCharInfo(unsigned short us1) const {
-    if (mTextureOwner != this) {
+    if (mCharGeomOwner != this) {
         // aintnoway
         while (true)
             ;
     }
-    auto it = mCharInfoMap.find(us1);
-    if (it != mCharInfoMap.end()) {
+    auto it = mCharInfos.find(us1);
+    if (it != mCharInfos.end()) {
         return it->second;
     } else {
         return nullptr;
@@ -172,11 +172,11 @@ RndFont3d::CharInfo *RndFont3d::GetCharInfo(unsigned short us1) const {
 }
 
 Vector3 RndFont3d::CharOriginOffset() const {
-    if (mTextureOwner != this) {
-        return mTextureOwner->CharOriginOffset();
+    if (mCharGeomOwner != this) {
+        return mCharGeomOwner->CharOriginOffset();
     } else {
         Vector3 out;
-        Scale(unk8c, FontUnitInverse(), out);
+        Scale(mCharOriginOffset, FontUnitInverse(), out);
         return out;
     }
 }
@@ -184,17 +184,17 @@ Vector3 RndFont3d::CharOriginOffset() const {
 bool RndFont3d::CharWidthAdvanceMesh(
     unsigned short us1, float &f2, float &f3, RndMesh **meshPtr
 ) const {
-    if (mTextureOwner != this) {
-        return mTextureOwner->CharWidthAdvanceMesh(us1, f2, f3, meshPtr);
+    if (mCharGeomOwner != this) {
+        return mCharGeomOwner->CharWidthAdvanceMesh(us1, f2, f3, meshPtr);
     }
-    auto it = mCharInfoMap.find(us1);
-    if (it != mCharInfoMap.end()) {
+    auto it = mCharInfos.find(us1);
+    if (it != mCharInfos.end()) {
         CharInfo *c = it->second;
-        float f7 = c->unk0.Volume();
-        if (f7 > 0 || c->unk20 > 0) {
-            f2 = FontUnitInverse() * Max(c->unk0.mMax.x, 0.0f);
-            f3 = mMonospace ? 1 : FontUnitInverse() * c->unk20;
-            *meshPtr = c->unk24;
+        float f7 = c->bbox.Volume();
+        if (f7 > 0 || c->charAdvance > 0) {
+            f2 = FontUnitInverse() * Max(c->bbox.mMax.x, 0.0f);
+            f3 = mMonospace ? 1 : FontUnitInverse() * c->charAdvance;
+            *meshPtr = c->mesh;
             return true;
         }
     }

@@ -5,7 +5,7 @@
 #include "utl/BinStream.h"
 #include "utl/UTF8.h"
 
-RndFontBase::RndFontBase() : mMonospace(0), mBaseKerning(0), mKerningTable(nullptr) {}
+RndFontBase::RndFontBase() : mMonospace(0), mBaseKerning(0), mKerning(nullptr) {}
 
 BEGIN_HANDLERS(RndFontBase)
     HANDLE_SUPERCLASS(Hmx::Object)
@@ -21,9 +21,9 @@ BEGIN_SAVES(RndFontBase)
     bs << mChars;
     bs << mMonospace;
     bs << mBaseKerning;
-    bs << (mKerningTable != nullptr);
-    if (mKerningTable) {
-        mKerningTable->Save(bs);
+    bs << (mKerning != nullptr);
+    if (mKerning) {
+        mKerning->Save(bs);
     }
 END_SAVES
 
@@ -55,8 +55,8 @@ BEGIN_LOADS(RndFontBase)
     bool newKerning;
     d >> newKerning;
     if (newKerning) {
-        mKerningTable = new KerningTable();
-        mKerningTable->Load(d, this);
+        mKerning = new KerningTable();
+        mKerning->Load(d, this);
     }
 END_LOADS
 
@@ -65,8 +65,8 @@ float RndFontBase::Kerning(unsigned short us1, unsigned short us2) const {
         return DataOwner()->Kerning(us1, us2);
     } else if (us1 == 0 || us2 == 0)
         return 0;
-    else if (!mMonospace && mKerningTable) {
-        return mBaseKerning + mKerningTable->Kerning(us1, us2);
+    else if (!mMonospace && mKerning) {
+        return mBaseKerning + mKerning->Kerning(us1, us2);
     } else
         return mBaseKerning;
 }
@@ -93,12 +93,12 @@ void RndFontBase::SetBaseKerning(float f1) {
 void RndFontBase::SetKerning(const std::vector<KernInfo> &kernInfo) {
     MILO_ASSERT(DataOwner() == this, 0x7C);
     if (kernInfo.empty()) {
-        RELEASE(mKerningTable);
+        RELEASE(mKerning);
     } else {
-        if (!mKerningTable) {
-            mKerningTable = new KerningTable();
+        if (!mKerning) {
+            mKerning = new KerningTable();
         }
-        mKerningTable->SetKerning(kernInfo, this);
+        mKerning->SetKerning(kernInfo, this);
     }
 }
 
@@ -126,8 +126,8 @@ void RndFontBase::GetKerning(std::vector<KernInfo> &kernInfo) const {
     const RndFontBase *owner;
     for (owner = this; owner->DataOwner() != owner; owner = owner->DataOwner())
         ;
-    if (owner->mKerningTable) {
-        owner->mKerningTable->GetKerning(kernInfo);
+    if (owner->mKerning) {
+        owner->mKerning->GetKerning(kernInfo);
     } else {
         kernInfo.clear();
     }

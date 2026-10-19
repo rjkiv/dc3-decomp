@@ -20,13 +20,13 @@ public:
     virtual void Save(BinStream &);
     virtual void Copy(const Hmx::Object *, Hmx::Object::CopyType);
     virtual void Load(BinStream &);
-    virtual float CharWidth(unsigned short) const { return 0; }
-    virtual float CharAdvance(unsigned short) const { return 0; } // 0x60
-    virtual bool CharAdvance(unsigned short, unsigned short, float &) const {
+    virtual float CharWidth(unsigned short c) const { return 0; }
+    virtual float CharAdvance(unsigned short c) const { return 0; } // 0x60
+    virtual bool CharAdvance(unsigned short a, unsigned short b, float &advance) const {
         return false;
     } // 0x5c
-    virtual float Kerning(unsigned short, unsigned short) const;
-    virtual bool CharDefined(unsigned short) const;
+    virtual float Kerning(unsigned short a, unsigned short b) const;
+    virtual bool CharDefined(unsigned short a) const;
     virtual float AspectRatio() const { return 0; }
     virtual RndMat *Mat() const { return nullptr; }
     virtual const RndFontBase *DataOwner() const { return this; }
@@ -40,8 +40,8 @@ public:
     REGISTER_OBJ(RndFontBase)
 
     void SetBaseKerning(float);
-    void SetKerning(const std::vector<KernInfo> &);
-    void GetKerning(std::vector<KernInfo> &) const;
+    void SetKerning(const std::vector<KernInfo> &info);
+    void GetKerning(std::vector<KernInfo> &info) const;
     const std::vector<unsigned short> &Chars() const { return mChars; }
     float BaseKerning() const { return mBaseKerning; }
     bool Monospace() const { return mMonospace; }
@@ -56,5 +56,5 @@ protected:
     std::vector<unsigned short> mChars; // 0x2c
     bool mMonospace; // 0x38
     float mBaseKerning; // 0x3c
-    class KerningTable *mKerningTable; // 0x40
+    class KerningTable *mKerning; // 0x40
 };

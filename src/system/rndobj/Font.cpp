@@ -161,7 +161,7 @@ RndFont::RndFont()
     : mMats(this, (EraseMode)0, kObjListNoNull), mTextureOwner(this, this),
       mCellSize(1, 1), mDeprecatedSize(0), mPacked(0) {}
 
-RndFont::~RndFont() { RELEASE(mKerningTable); }
+RndFont::~RndFont() { RELEASE(mKerning); }
 
 bool RndFont::Replace(ObjRef *from, Hmx::Object *to) {
     if (&mTextureOwner == from) {
@@ -211,9 +211,9 @@ BEGIN_SAVES(RndFont)
     } else {
         bs << 0 << 0;
     }
-    bs << unk98;
-    bs << mCharInfoMap.size();
-    FOREACH (it, mCharInfoMap) {
+    bs << mNormCellSize;
+    bs << mCharInfos.size();
+    FOREACH (it, mCharInfos) {
         bs << it->first;
         CharInfo &info = it->second;
         bs << info.page;
@@ -230,10 +230,10 @@ BEGIN_COPYS(RndFont)
     MILO_ASSERT(f, 0x451);
     COPY_MEMBER_FROM(f, mMats)
     COPY_MEMBER_FROM(f, mCellSize)
-    COPY_MEMBER_FROM(f, unk98)
+    COPY_MEMBER_FROM(f, mNormCellSize)
     COPY_MEMBER_FROM(f, mDeprecatedSize)
     COPY_MEMBER_FROM(f, mPacked)
-    COPY_MEMBER_FROM(f, mCharInfoMap)
+    COPY_MEMBER_FROM(f, mCharInfos)
     if (ty == kCopyShallow || (ty == kCopyFromMax && f->mTextureOwner != f)) {
         mTextureOwner = f->mTextureOwner.Ptr();
     } else {
@@ -358,8 +358,8 @@ BEGIN_LOADS(RndFont)
         bool hasKerning;
         d >> hasKerning;
         if (hasKerning) {
-            mKerningTable = new KerningTable();
-            mKerningTable->Load(d, this);
+            mKerning = new KerningTable();
+            mKerning->Load(d, this);
         }
     }
     if (d.rev > 8) {
@@ -387,16 +387,16 @@ BEGIN_LOADS(RndFont)
             }
         }
     }
-    unk98.resize(mMats.size());
+    mNormCellSize.resize(mMats.size());
     if (d.rev > 0xd) {
         if (d.altRev < 1) {
-            d >> unk98[0];
+            d >> mNormCellSize[0];
         } else {
-            d >> unk98;
+            d >> mNormCellSize;
         }
         if (d.rev < 0x11) {
             for (int i = 0; i < 0x100; i++) {
-                CharInfo &info = mCharInfoMap[i];
+                CharInfo &info = mCharInfos[i];
                 info.page = 0;
                 d >> info.normX;
                 d >> info.normY;
@@ -419,7 +419,7 @@ BEGIN_LOADS(RndFont)
             for (unsigned int i = 0; i < count; i++) {
                 unsigned short keyChar;
                 d >> keyChar;
-                CharInfo &info = mCharInfoMap[keyChar];
+                CharInfo &info = mCharInfos[keyChar];
                 if (d.altRev > 0) {
                     d >> info.page;
                 } else {
@@ -435,9 +435,9 @@ BEGIN_LOADS(RndFont)
         MILO_LOG("NOTIFY: %s is old version, please resave\n", PathName(this));
         UpdateChars();
     }
-    mCharInfoMap[0x20];
-    mCharInfoMap[0xa0];
-    mCharInfoMap[0xa0] = mCharInfoMap[0x20];
+    mCharInfos[0x20];
+    mCharInfos[0xa0];
+    mCharInfos[0xa0] = mCharInfos[0x20];
     if (d.rev < 0x10) {
         std::vector<KernInfo> kernInfos;
         GetKerning(kernInfos);
@@ -452,7 +452,7 @@ END_LOADS
 
 float RndFont::CharWidth(unsigned short c) const {
     MILO_ASSERT(HasChar(c), 0x143);
-    CharInfo &info = mTextureOwner->mCharInfoMap[c];
+    CharInfo &info = mTextureOwner->mCharInfos[c];
     float w = info.charWidth;
     MILO_ASSERT(w >= 0, 0x146);
     return w;
@@ -462,8 +462,8 @@ bool RndFont::CharAdvance(unsigned short u1, unsigned short c, float &f3) const 
     if (mTextureOwner != this) {
         return mTextureOwner->CharAdvance(u1, c, f3);
     } else {
-        auto it = mCharInfoMap.find(c);
-        if (it != mCharInfoMap.end()
+        auto it = mCharInfos.find(c);
+        if (it != mCharInfos.end()
             && (it->second.normX != 0 || it->second.normY != 0
                 || it->second.charAdvance != 0)) {
             f3 = mMonospace ? 1 : it->second.charAdvance;
@@ -479,13 +479,13 @@ float RndFont::CharAdvance(unsigned short c) const {
     if (mMonospace) {
         return 1;
     } else {
-        return mTextureOwner->mCharInfoMap[c].charAdvance;
+        return mTextureOwner->mCharInfos[c].charAdvance;
     }
 }
 
 bool RndFont::CharDefined(unsigned short c) const {
     if (HasChar(c)) {
-        auto it = mCharInfoMap.find(c);
+        auto it = mCharInfos.find(c);
         const CharInfo &info = it->second;
         return info.normX != 0 || info.normY != 0 || info.charAdvance != 0;
     } else {
@@ -512,7 +512,7 @@ void RndFont::Print() const {
 }
 
 bool RndFont::HasChar(unsigned short c) const {
-    return mCharInfoMap.find(c) != mCharInfoMap.end();
+    return mCharInfos.find(c) != mCharInfos.end();
 }
 
 void RndFont::SetASCIIChars(String str) {
@@ -541,7 +541,7 @@ void RndFont::SetCellSize(float x, float y) {
 
 int RndFont::CharPage(unsigned short c) const {
     if (HasChar(c)) {
-        return mCharInfoMap.find(c)->second.page;
+        return mCharInfos.find(c)->second.page;
     } else {
         return -1;
     }
@@ -549,15 +549,15 @@ int RndFont::CharPage(unsigned short c) const {
 
 void RndFont::SetBitmapSize(const Vector2 &size) {
     mCellSize = size;
-    if (unk98.size() != mMats.size()) {
-        unk98.resize(mMats.size());
+    if (mNormCellSize.size() != mMats.size()) {
+        mNormCellSize.resize(mMats.size());
     }
     for (int i = 0; i < mMats.size(); i++) {
         RndMat *curMat = mMats[i];
         RndTex *curTex = curMat ? curMat->DiffuseTex() : nullptr;
         if (curTex && curTex->Width() && curTex->Height()) {
-            unk98[i].x = mCellSize.x / (float)curTex->Width();
-            unk98[i].y = mCellSize.y / (float)curTex->Height();
+            mNormCellSize[i].x = mCellSize.x / (float)curTex->Width();
+            mNormCellSize[i].y = mCellSize.y / (float)curTex->Height();
         }
     }
 }
@@ -568,16 +568,16 @@ bool RndFont::CharWidthAdvanceCoords(
     if (mTextureOwner != this) {
         return mTextureOwner->CharWidthAdvanceCoords(key, f1, f2, v1, v2);
     }
-    auto it = mCharInfoMap.find(key);
-    if (it != mCharInfoMap.end()) {
+    auto it = mCharInfos.find(key);
+    if (it != mCharInfos.end()) {
         const CharInfo &cur = it->second;
         if (cur.normX || cur.normY || cur.charAdvance) {
             f1 = cur.charWidth;
             f2 = mMonospace ? 1 : cur.charAdvance;
             v1.x = cur.normX;
-            v2.x = unk98[cur.page].x * cur.charWidth + cur.normX;
+            v2.x = mNormCellSize[cur.page].x * cur.charWidth + cur.normX;
             v1.y = cur.normY;
-            v2.y = unk98[cur.page].y + cur.normY;
+            v2.y = mNormCellSize[cur.page].y + cur.normY;
             return true;
         }
     }
@@ -643,17 +643,17 @@ void RndFont::UpdateChars() {
             );
             mChars[0] = L' ';
         }
-        mCharInfoMap.clear();
+        mCharInfos.clear();
         int i12 = 0;
         BitmapLocker locker(this, 0);
-        RndBitmap *bmap = locker.PtrToBitmap();
+        RndBitmap *bmap = locker.Bitmap();
         if (bmap) {
-            if (unk98.size() != mMats.size()) {
-                unk98.resize(mMats.size());
+            if (mNormCellSize.size() != mMats.size()) {
+                mNormCellSize.resize(mMats.size());
             }
             Vector2 v120(0, 0);
-            unk98[0].x = mCellSize.x / (float)bmap->Width();
-            unk98[0].y = mCellSize.y / (float)bmap->Height();
+            mNormCellSize[0].x = mCellSize.x / (float)bmap->Width();
+            mNormCellSize[0].y = mCellSize.y / (float)bmap->Height();
             for (int i = 0; i < mChars.size(); i++) {
                 unsigned short curChar = mChars[i];
                 if (mCellSize.x + v120.x > bmap->Width()) {
@@ -672,18 +672,18 @@ void RndFont::UpdateChars() {
                     locker.LoadPage(i12);
                     v120.x = 0;
                     v120.y = 0;
-                    bmap = locker.PtrToBitmap();
-                    unk98[i12].x = mCellSize.x / (float)bmap->Width();
-                    unk98[i12].y = mCellSize.y / (float)bmap->Height();
+                    bmap = locker.Bitmap();
+                    mNormCellSize[i12].x = mCellSize.x / (float)bmap->Width();
+                    mNormCellSize[i12].y = mCellSize.y / (float)bmap->Height();
                 }
-                SetCharInfo(&mCharInfoMap[curChar], *bmap, v120, i12);
+                SetCharInfo(&mCharInfos[curChar], *bmap, v120, i12);
                 v120.x += mCellSize.x;
                 if (curChar == 0x20) {
-                    mCharInfoMap[curChar].charWidth = 0;
+                    mCharInfos[curChar].charWidth = 0;
                 } else if (curChar == 9) {
                     MILO_ASSERT(HasChar(L' ' ), 0x284);
-                    mCharInfoMap[curChar] = mCharInfoMap[L' '];
-                    mCharInfoMap[curChar].charAdvance *= 3;
+                    mCharInfos[curChar] = mCharInfos[L' '];
+                    mCharInfos[curChar].charAdvance *= 3;
                 }
             }
         }
@@ -695,9 +695,9 @@ void RndFont::BleedTest() {
     String str;
     for (int i = 0; i < mChars.size(); i++) {
         unsigned short curChar = mChars[i];
-        CharInfo &curCharInfo = mCharInfoMap[curChar];
+        CharInfo &curCharInfo = mCharInfos[curChar];
         BitmapLocker locker(this, curCharInfo.page);
-        RndBitmap *bitmap = locker.PtrToBitmap();
+        RndBitmap *bitmap = locker.Bitmap();
         if (bitmap) {
             bool isClamp = mMats[curCharInfo.page]->GetTexWrap() == BaseMaterial::kClamp;
             int i7 = Round((float)bitmap->Height() * curCharInfo.normY);

@@ -285,7 +285,7 @@ void RndText::FontMap3d::SetFont(RndFontBase *f) {
 
 void RndText::FontMap3d::IncrementDisplayableChars(unsigned short us1) {
     RndFont3d::CharInfo *info = mFont->GetCharInfo(us1);
-    if (info && info->unk24) {
+    if (info && info->mesh) {
         mDisplayableChars++;
     }
 }
