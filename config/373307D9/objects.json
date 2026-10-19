@@ -824,7 +824,7 @@
             "system/utl/NetCacheMgr_Xbox.cpp": "Matching",
             "system/utl/NetLoader.cpp": "Matching",
             "system/utl/NetLoader_Xbox.cpp": "Matching",
-            "system/utl/OSCMessenger.cpp": "NonMatching",
+            "system/utl/OSCMessenger.cpp": "Matching",
             "system/utl/Option.cpp": "Matching",
             "system/utl/Pool.cpp": "Matching",
             "system/utl/PoolAlloc.cpp": "NonMatching",

@@ -29,42 +29,48 @@ void OSCMessenger::Poll() {
     if (mSocketIn && mSocketIn->CanRead()) {
         char data[0x80];
         mSocketIn->Recv(data, 0x80);
-        char str[0x80];
-        strncpy(str, data, 0x80);
-        str[0x7f] = 0;
-        int pos = strlen(str) / 4 + 1;
+        char address[0x80];
+        strncpy(address, data, 0x80);
+        address[0x7f] = 0;
+        int pos = strlen(address);
+        pos = pos - (pos % 4) + 4;
         OSCValue value;
-        value.mAddress = str;
-        value.mFresh = 1;
+        value.mAddress = address;
+        value.mFresh = true;
         MILO_ASSERT(data[pos] == ',', 0x46);
-        char c4 = data[pos + 1];
-        if (c4 == 's') {
+        char inType = data[pos + 1];
+        if (inType == 's') {
             MILO_ASSERT(data[pos+2] == 0, 0x49);
             MILO_ASSERT(data[pos+3] == 0, 0x4A);
-            strncpy(value.mValue.s, &data[pos + 4], 0x80);
+            int dataIdx = pos + 4;
+            strncpy(value.mValue.s, &data[dataIdx], sizeof(OSCValue::Type));
             value.mType = 's';
-        } else if (c4 == 'i') {
+        } else if (inType == 'i') {
             MILO_ASSERT(data[pos+2] == 0, 0x51);
             MILO_ASSERT(data[pos+3] == 0, 0x52);
             value.mType = 'i';
-            value.mValue.i = data[pos + 4];
-        } else if (c4 == 'f') {
-            if (data[pos + 2] == 'f' && data[pos + 3] == 'f') {
-                value.mType = 'v';
-                float *dataIn = (float *)data;
-                value.mValue.v[0] = dataIn[1];
-                value.mValue.v[1] = dataIn[2];
-                value.mValue.v[1] = dataIn[3];
-            } else {
-                MILO_ASSERT(data[pos+2] == 0, 0x67);
-                MILO_ASSERT(data[pos+3] == 0, 0x68);
-                value.mType = 'f';
-                value.mValue.f = data[pos + 4];
-            }
+            int dataIdx = pos + 4;
+            memcpy(&value.mValue.i, &data[dataIdx], sizeof(int));
+        } else if (inType == 'f' && data[pos + 2] == 'f' && data[pos + 3] == 'f') {
+            value.mType = 'v';
+            // i would rather just use memcpy wtf is this
+            int *dst = (int *)value.mValue.v;
+            int dataIdx = pos + 8;
+            dst[0] = *(int *)&data[dataIdx];
+            dataIdx += 4;
+            dst[1] = *(int *)&data[dataIdx];
+            dataIdx += 4;
+            dst[2] = *(int *)&data[dataIdx];
+        } else if (inType == 'f') {
+            MILO_ASSERT(data[pos+2] == 0, 0x67);
+            MILO_ASSERT(data[pos+3] == 0, 0x68);
+            value.mType = 'f';
+            int dataIdx = pos + 4;
+            memcpy(&value.mValue.f, &data[dataIdx], sizeof(float));
         }
         bool found = false;
         FOREACH (it, mValues) {
-            if (it->mAddress == str) {
+            if (it->mAddress == address) {
                 memcpy(&it->mValue, &value.mValue, 0x80);
                 found = true;
                 it->mFresh = true;
@@ -72,7 +78,7 @@ void OSCMessenger::Poll() {
             }
         }
         if (!found) {
-            mValues.push_back(value);
+            mValues.push_front(value);
         }
     }
 }
@@ -81,7 +87,7 @@ int OSCMessenger::GetInt(String address, int intValue) {
     OSCValue *val = GetValue(address);
     if (val) {
         MILO_ASSERT(val->mType == 'i', 0x131);
-        val->mFresh = 0;
+        val->mFresh = false;
         return val->mValue.i;
     } else {
         OSCValue newValue;
@@ -98,7 +104,7 @@ float OSCMessenger::GetFloat(String address, float floatValue) {
     OSCValue *val = GetValue(address);
     if (val) {
         MILO_ASSERT(val->mType == 'f', 0x149);
-        val->mFresh = 0;
+        val->mFresh = false;
         return val->mValue.f;
     } else {
         OSCValue newValue;
