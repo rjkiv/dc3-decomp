@@ -113,7 +113,7 @@ protected:
     ObjPtr<DetectionVolume> mVolume; // 0x10c
     /** "Volume type generated from PhysicsVolume's transform" */
     PhysicsVolumeType mShapeType; // 0x120
-    int mOverlapping;
+    int mOverlapping; // 0x124
     Vector3 mHalfExtends; // 0x128
     /** "Directional force applied to overlapping physics objects" */
     Vector3 mDirectionalForce; // 0x138

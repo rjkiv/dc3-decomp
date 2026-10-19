@@ -25,9 +25,8 @@ enum PlatformRegion {
 };
 
 enum NotifyLocation {
-    kNotify0,
-    kNotify1,
-    kNotify2
+    kOSNotifyTopRight = 0x0000,
+    kOSNotifyBottomCenter = 0x0001
 };
 
 enum QuitType {
@@ -39,7 +38,10 @@ enum QuitType {
 };
 
 enum ShowGamercardResult {
-    kGamercardResultPrivelegeError = -1
+    kGamercardPadError = -3,
+    kGamercardPrivilegeError = -2,
+    kGamercardShowError = -1,
+    kGamercardSuccessful = 0
 };
 
 typedef bool XCallbackFunc(DWORD &);

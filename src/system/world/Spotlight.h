@@ -146,6 +146,7 @@ public:
     void SetPresetOrient(const Hmx::Quat &quat) { mPresetOrient = quat; }
     static void RemoveFromLists(Spotlight *);
     static RndMesh *GetDiskMesh() { return sDiskMesh; }
+    bool HasBeam() const { return 0 < mBeam.mLength; }
 
 protected:
     Spotlight();

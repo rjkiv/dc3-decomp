@@ -47,19 +47,20 @@ END_PROPSYNCS
 
 void StorePanel::Load() {
     UIPanel::Load();
+    mLoadOK = true;
     mNeedsLoad = true;
-    // mLoadOK = true;
+
     ThePlatformMgr.AddSink(this);
     Profile *profile = StoreProfile();
     if (!profile) {
         if (mLoadOK) {
             mLoadOK = false;
-            ExitError(kStoreErrorLiveServer);
+            ExitStore(kStoreErrorSignedOut);
         }
     } else if (!ThePlatformMgr.IsSignedIntoLive(profile->GetPadNum())) {
         if (mLoadOK) {
             mLoadOK = false;
-            ExitError(kStoreErrorLiveServer);
+            ExitStore(kStoreErrorLiveServer);
         }
     }
     TheContentMgr.StartRefresh();
@@ -78,13 +79,12 @@ void StorePanel::Enter() {
             mLoadOK = false;
             ExitStore(kStoreErrorSignedOut);
         }
-    } else {
-        if (ThePlatformMgr.IsSignedIntoLive(profile->GetPadNum())
-            && ThePlatformMgr.IsPadAGuest(profile->GetPadNum())) {
-            if (mLoadOK) {
-                mLoadOK = false;
-                ExitError(kStoreErrorSignedOut);
-            }
+
+    } else if (!ThePlatformMgr.IsSignedIntoLive(profile->GetPadNum())
+               || ThePlatformMgr.IsPadAGuest(profile->GetPadNum())) {
+        if (mLoadOK) {
+            mLoadOK = false;
+            ExitStore(kStoreErrorLiveServer);
         }
     }
 
@@ -233,28 +233,28 @@ void StorePanel::MultipleItemsCheckout(std::list<StoreOffer *> *offers) {
     mPurchaser->Initiate();
 }
 
-void StorePanel::PopulateOffers(DataArray *d, bool b) {
+void StorePanel::PopulateOffers(DataArray *offers, bool extra) {
+    std::vector<StoreOffer *> *container;
     if (mLoadOK) {
         DeleteAll(mExtraOffers);
-        if (!b) {
+        if (!extra) {
             DeleteAll(mOffers);
         }
-        std::vector<StoreOffer *> *offers = &mExtraOffers;
-        if (!b) {
-            offers = &mOffers;
-        }
-        if (d) {
-            d->AddRef();
-            for (int i = 1; i < d->Size(); i++) {
-                StoreOffer *offer = MakeNewOffer(d->Array(i));
-                if (!mShowTestOffers && offer->IsTest() && !offer->ValidTitle()) {
-                    delete offer;
-                } else if (offer->ValidTitle()) {
-                    offers->push_back(offer);
+
+        container = extra ? &mExtraOffers : &mOffers;
+
+        if (offers) {
+            offers->AddRef();
+            for (int i = 1; i < offers->Size(); i++) {
+                StoreOffer *newOffer = MakeNewOffer(offers->Array(i));
+                if ((!mShowTestOffers && newOffer->IsTest())) {
+                    delete newOffer;
+                } else if (newOffer->ValidTitle()) {
+                    container->push_back(newOffer);
                 }
             }
-            ValidateOffers(*offers);
-            d->Release();
+            ValidateOffers(*container);
+            offers->Release();
         }
     }
 }

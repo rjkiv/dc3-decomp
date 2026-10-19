@@ -859,7 +859,7 @@
             "system/world/LightPreset.cpp": "NonMatching",
             "system/world/LightPresetManager.cpp": "Matching",
             "system/world/PhysicsManager.cpp": "Matching",
-            "system/world/PhysicsVolume.cpp": "NonMatching",
+            "system/world/PhysicsVolume.cpp": "Matching",
             "system/world/PostProcer.cpp": "Matching",
             "system/world/Reflection.cpp": "Matching",
             "system/world/Spotlight.cpp": "NonMatching",

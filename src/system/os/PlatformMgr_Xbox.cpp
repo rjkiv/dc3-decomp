@@ -114,7 +114,9 @@ namespace {
         return -1;
     }
 
-    bool XPrivilegeCheck(XPRIVILEGE_TYPE xprivilege, XPRIVILEGE_TYPE xprivilege_friends_only, XUID xuid) {
+    bool XPrivilegeCheck(
+        XPRIVILEGE_TYPE xprivilege, XPRIVILEGE_TYPE xprivilege_friends_only, XUID xuid
+    ) {
         BOOL result = false;
         XUserCheckPrivilege(0xFF, xprivilege, &result);
         if (!result) {
@@ -423,7 +425,8 @@ void SingleItemEnumJob::Poll() {
 PostPurchaseEnumJob::PostPurchaseEnumJob(
     Hmx::Object *callback, int pad_num, QWORD offerID, Symbol pid, unsigned int purchaser
 )
-    : SingleItemEnumJob(callback, pad_num, offerID), mSource(pid), mPurchaser(purchaser) {}
+    : SingleItemEnumJob(callback, pad_num, offerID), mSource(pid), mPurchaser(purchaser) {
+}
 
 void PostPurchaseEnumJob::OnCompletion(Hmx::Object *callback) {
     if (mState == 2) {
@@ -554,8 +557,8 @@ MultipleItemsPostPurchaseEnumJob::MultipleItemsPostPurchaseEnumJob(
     Symbol pid,
     unsigned int purchaser
 )
-    : MultipleItemsEnumJob(callback, pad_num, offerIDs), mSource(pid), mPurchaser(purchaser) {
-}
+    : MultipleItemsEnumJob(callback, pad_num, offerIDs), mSource(pid),
+      mPurchaser(purchaser) {}
 
 void MultipleItemsPostPurchaseEnumJob::OnCompletion(Hmx::Object *callback) {
     if (mState == 2) {
@@ -722,8 +725,7 @@ void PlatformMgr::ShowFriendsUI(int padNum) {
 
 void PlatformMgr::SetBackgroundDownloadPriority(bool always) {
     XBackgroundDownloadSetMode(
-        always ? XBACKGROUND_DOWNLOAD_MODE_ALWAYS_ALLOW
-                    : XBACKGROUND_DOWNLOAD_MODE_AUTO
+        always ? XBACKGROUND_DOWNLOAD_MODE_ALWAYS_ALLOW : XBACKGROUND_DOWNLOAD_MODE_AUTO
     );
 }
 
@@ -884,7 +886,12 @@ DWORD PlatformMgr::ShowDeviceSelectorUI(
         );
     } else {
         ret = XShowDeviceSelectorUI(
-            dwUserIndex, dwContentType, dwContentFlags, uliBytesRequested, pDeviceID, pOverlapped
+            dwUserIndex,
+            dwContentType,
+            dwContentFlags,
+            uliBytesRequested,
+            pDeviceID,
+            pOverlapped
         );
     }
 
@@ -911,7 +918,9 @@ const char *PlatformMgr::GetName(int padnum) const {
     return MakeString("%s %i", Localize(player, nullptr, TheLocale), padnum + 1);
 }
 
-void PlatformMgr::SmartGlassSend(DWORD clientId, const DataArray *msg) { XbcSendMsg(clientId, msg); }
+void PlatformMgr::SmartGlassSend(DWORD clientId, const DataArray *msg) {
+    XbcSendMsg(clientId, msg);
+}
 
 bool PlatformMgr::QueryXSocialCapabilities() {
     mSocialCapabilities = 0;
@@ -953,7 +962,9 @@ bool PlatformMgr::QueryXSocialCapabilities() {
     }
 }
 
-void PlatformMgr::SetPadProperty(int padNum, int propertyID, const unsigned short *name) const {
+void PlatformMgr::SetPadProperty(
+    int padNum, int propertyID, const unsigned short *name
+) const {
     if (padNum != -1 && ThePlatformMgr.IsSignedIn(padNum)) {
         int len = Min<int>(wcslen((wchar_t *)name) * 2, 126);
         XUserSetPropertyEx(padNum, propertyID, len, name, nullptr);
@@ -1035,16 +1046,16 @@ PlatformMgr::ShowGamercardForPadNum(int padNum, const OnlineID *onlineID) {
     DWORD dw;
     MILO_ASSERT(onlineID, 0x7C6);
     if (!onlineID->GetIsValid()) {
-        return (ShowGamercardResult)-1;
+        return kGamercardShowError;
     }
     if (!IsSignedIntoLive(padNum)) {
-        return (ShowGamercardResult)-3;
+        return kGamercardPadError;
     } else {
         XUID xuid = onlineID->GetXUID();
         if (!XPrivilegeCheck(
                 XPRIVILEGE_PROFILE_VIEWING, XPRIVILEGE_PROFILE_VIEWING_FRIENDS_ONLY, xuid
             )) {
-            return (ShowGamercardResult)-2;
+            return kGamercardPrivilegeError;
         }
         DWORD i4;
         if (sXShowCallback(dw)) {
@@ -1053,12 +1064,12 @@ PlatformMgr::ShowGamercardForPadNum(int padNum, const OnlineID *onlineID) {
             i4 = XShowGamerCardUI(padNum, xuid);
         }
         if (i4 != 0) {
-            return (ShowGamercardResult)-1;
+            return kGamercardShowError;
         } else {
-            return (ShowGamercardResult)0;
+            return kGamercardSuccessful;
         }
     }
-    return (ShowGamercardResult)-1;
+    return kGamercardShowError;
 }
 
 void PlatformMgr::ShowControllerRequiredUI(Hmx::Object *callback) {
@@ -1080,7 +1091,9 @@ void PlatformMgr::ShowControllerRequiredUI(Hmx::Object *callback) {
     }
 }
 
-void PlatformMgr::EnumerateFriends(int padNum, std::vector<Friend *> &friends, Hmx::Object *callback) {
+void PlatformMgr::EnumerateFriends(
+    int padNum, std::vector<Friend *> &friends, Hmx::Object *callback
+) {
     mFriendEnumRequests.push_back(new FriendEnumRequest(padNum, &friends, callback));
 }
 

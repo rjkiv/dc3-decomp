@@ -68,6 +68,7 @@ public:
     Hmx::Rect InvScreenRect() const;
     bool Active() const { return mActive; }
     int Tiling() const { return mTiling; }
+    void SetOverride(bool override) { mOverride = override; }
 
 protected:
     void Merge(

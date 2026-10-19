@@ -1,17 +1,33 @@
 #include "world/SpotlightDrawer_NG.h"
 #include "macros.h"
 #include "math/Color.h"
+#include "math/Utl.h"
 #include "math/Vec.h"
 #include "obj/Object.h"
 #include "os/Debug.h"
+#include "os/Memory.h"
+#include "os/Timer.h"
 #include "rnddx9/Rnd.h"
+#include "rnddx9/Tex.h"
+#include "rndobj/Draw.h"
+#include "rndobj/HiResScreen.h"
 #include "rndobj/RenderState.h"
 #include "rndobj/Cam.h"
 #include "rndobj/Rnd.h"
 #include "rndobj/Rnd_NG.h"
 #include "rndobj/ShaderMgr.h"
+#include "rndobj/Tex.h"
+#include "utl/Loader.h"
+#include "world/Dir.h"
 #include "world/Spotlight.h"
 #include "world/SpotlightDrawer.h"
+#include "xdk/d3d9i/d3d9.h"
+#include "xdk/d3d9i/d3d9types.h"
+#include "xdk/win_types.h"
+#include "xdk/xapilibi/winerror.h"
+
+static float kFogIllumScale = 0.1f;
+static float thickness = 1.0f;
 
 void GetLightPosition(Spotlight *s, Vector3 &v) {
     v = s->WorldXfm().v;
@@ -51,9 +67,11 @@ void NgSpotlightDrawer::EndWorld() {
 void NgSpotlightDrawer::DoPost() { RenderScene(); }
 
 void NgSpotlightDrawer::SetAmbientColor(const Hmx::Color &color) {
-    Vector4 v4(color.red, color.green, color.blue, color.alpha);
+    Hmx::Color amb = color;
     sEnviron->SetAmbientColor(color);
-    TheShaderMgr.SetVConstant(kVShader_AmbientCol, v4);
+    Vector4 vec(amb.red, amb.green, amb.blue, amb.alpha);
+    TheShaderMgr.SetVConstant(kVShader_AmbientCol, vec);
+    Vector4 v4(amb.red, amb.green, amb.blue, amb.alpha);
     TheShaderMgr.SetPConstant(kPShader_AmbientCol, v4);
 }
 
@@ -178,4 +196,154 @@ void NgSpotlightDrawer::SetupFogDensityMap() {
     float x = mParams.mBaseIntensity * 0.01f;
     float y = mParams.mSmokeIntensity * 0.01f;
     TheShaderMgr.SetPConstant(kPShader_FogDensity, Vector4(x, y * (1.0f - x), 0.0f, 0.0f));
+}
+
+bool NgSpotlightDrawer::CheckCam() {
+    mHoldCam = RndCam::Current();
+    RndCam *cam;
+    if (TheLoadMgr.EditMode()) {
+        cam = RndCam::Current();
+    } else if (TheWorld && TheWorld->Cam()) {
+        cam = TheWorld->Cam();
+    } else {
+        cam = !RndCam::Current() ? TheRnd.GetDefaultCam() : RndCam::Current();
+    }
+    mCam->Copy(cam, Hmx::Object::kCopyShallow);
+    mCam->SetTransParent(nullptr, false);
+    return true;
+}
+
+void NgSpotlightDrawer::RenderFogProxy() {
+    static float fadeDist = 10.0f;
+    RndDrawable *proxy = mParams.mProxy;
+    if (mParams.mProxy) {
+        MILO_ASSERT(mFogDensityMap == SR().mDensityMap, 0x400);
+        TheShaderMgr.SetPConstant(kPShader_FogDensityMap, (RndTex *)0);
+        Vector4 range(mCam->NearPlane(), -1.0f / mCam->NearPlane(), 1.0f, 0);
+        TheShaderMgr.SetVConstant(kVShader_FadeRange, range);
+        Vector4 fogVec(
+            1.0f / fadeDist, 1.0f, 0, 0 < mCam->FarPlane() ? 1.0f / mCam->FarPlane() : 0
+        );
+        TheShaderMgr.SetPConstant(kPShader_FogRange, fogVec);
+        mCam->SetTargetTex(mFogDensityMap);
+        mCam->Select();
+        proxy->Draw();
+        RestoreCam();
+        if (mFogDensityMap) {
+            TheShaderMgr.SetPConstant(kPShader_FogDensityMap, mFogDensityMap);
+            TheRenderState.SetTextureClamp(5, RndRenderState::kClamp);
+        }
+    }
+}
+
+void NgSpotlightDrawer::RenderSphere(Spotlight *sl) {
+    MILO_ASSERT(sl->HasBeam(), 0x470);
+    Vector4 fogVec(0, 0, 0.625f, sl->GetBeam().mTopRadius * thickness);
+    TheShaderMgr.SetPConstant(kPShader_FogRange, fogVec);
+
+    TheShaderMgr.SetForceCullMode(RndShaderMgr::kNone);
+
+    SetXSectionTexture(sl->GetBeam());
+    sl->GetBeam().mBeam->DrawShowing();
+}
+
+void NgSpotlightDrawer::RenderScene() {
+    Vector4 zRange;
+    static const float kFogHalf = 0.125f;
+    START_AUTO_TIMER("world_draw");
+    sActiveFrame = false;
+
+    int size = sLights.size();
+    if (size == 0) {
+        ClearPostProc();
+        return;
+    }
+
+    if (mShowing && CheckSharedResources() && CheckFogTexture()) {
+        MILO_ASSERT(sEnviron->GetUseApprox() == false, 0x595);
+        sEnviron->Select(nullptr);
+        TheShaderMgr.SetPostSpotlight(true);
+        TheHiResScreen.SetOverride(true);
+        TheRenderState.SetTextureFilter(9, RndRenderState::kPoint, false);
+        TheRenderState.SetTextureClamp(9, RndRenderState::kClamp);
+
+        Vector4 screenSize(
+            mCam->NearPlane(), mCam->FarPlane(), 1.0f / RTHeight(), 1.0f / RTHeight()
+        );
+        TheShaderMgr.SetPConstant(kPShader_ScreenSize, screenSize);
+        mCam->GetDepthRangeValues(zRange);
+        TheShaderMgr.SetPConstant(kPShader_ZRange, zRange);
+        TheShaderMgr.SetPConstant(
+            kPShader_DepthHalf, Vector4(kFogHalf, kFogHalf, kFogHalf, kFogHalf)
+        );
+        RenderFogProxy();
+        mCam->SetTargetTex(SR().mDepthRT);
+        mCam->Select();
+        RenderBeams(RndCam::Current()->ViewProj());
+        TheRenderState.SetTextureFilter(9, RndRenderState::kPoint, false);
+        TheRenderState.SetTextureClamp(9, RndRenderState::kClamp);
+        RestoreCam();
+        TheHiResScreen.SetOverride(false);
+        SetupForPostProcess();
+    } else {
+        ClearPostProc();
+    }
+}
+
+void NgSpotlightDrawer::SetupForPostProcess() {
+    static float kFogExpand = 32.0f;
+    TheShaderMgr.SetPConstant(kPShader_FogColor, Vector4(0, 0, 0, 0));
+    BlurRT();
+    Vector4 fogVec(
+        mParams.mIntensity * kFogExpand,
+        mCam->FarPlane(),
+        0,
+        0 < mCam->FarPlane() ? 1.0f / mCam->FarPlane() : 0
+    );
+    TheShaderMgr.SetPConstant(kPShader_FogRange, fogVec);
+    auto color = mParams.mColor;
+    Vector4 fogColor(color.red, color.green, color.blue, color.alpha);
+    TheShaderMgr.SetPConstant(kPShader_FogAmbient, fogColor);
+    TheShaderMgr.SetPConstant(kPShader_FogDepth, SR().mDepthRT);
+    TheRenderState.SetTextureFilter(0xc, RndRenderState::kLinear, false);
+    TheRenderState.SetTextureClamp(0xc, RndRenderState::kClamp);
+    TheRenderState.SetTextureFilter(5, RndRenderState::kLinear, false);
+    TheRenderState.SetTextureClamp(5, RndRenderState::kClamp);
+    ClearPostProc();
+    sActiveFrame = true;
+}
+
+bool NgSpotlightDrawer::CheckRTs(SpotlightResources *sr) {
+    PhysMemTypeTracker t("D3D(phys):NgSpotlightDrawer");
+    DxTex::SetEDRamChecksEnabled(false);
+    int width = RTWidth();
+    int height = RTHeight();
+    if (!sr->mDepthRT) {
+        RndTex *tex = Hmx::Object::New<RndTex>();
+        tex->SetBitmap(width, height, 0x20, RndTex::kDepthVolumeMap, false, 0);
+        sr->mDepthRT = (DxTex *)tex;
+    }
+    DxTex::SetEDRamChecksEnabled(true);
+    if (!sr->mDepthTex) {
+        D3DSURFACE_DESC desc;
+        sr->mDepthRT->GetDepthRT()->GetDesc(&desc);
+        HRESULT hr = TheDxRnd->CreateTexture(
+            RTWidth(), RTHeight(), 1, 0, desc.Format, 0, &sr->mDepthTex, nullptr
+        );
+        DX_ASSERT(hr, 300);
+    }
+    if (!sr->mBlack) {
+        sr->mBlack = TheRnd.GetDefaultTex(0);
+    }
+    if (!sr->mWhite) {
+        sr->mWhite = TheRnd.GetDefaultTex(2);
+    }
+    sr->mFarDepth = sr->mBlack;
+    if (!sr->mDensityMap) {
+        sr->mDensityMap = Hmx::Object::New<RndTex>();
+        sr->mDensityMap->SetBitmap(
+            RTWidth() >> 1, RTHeight() >> 1, 0x20, RndTex::kDensityMap, false, 0
+        );
+    }
+    return true;
 }
