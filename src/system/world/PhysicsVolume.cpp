@@ -1,5 +1,6 @@
 #include "world/PhysicsVolume.h"
 #include "math/Color.h"
+#include "math/Vec.inl"
 #include "obj/Data.h"
 #include "os/Debug.h"
 #include "rndobj/Utl.h"
@@ -158,25 +159,25 @@ bool PhysicsVolume::MakeWorldSphere(Sphere &s, bool b) {
 
 void PhysicsVolume::DrawShowing() {
     if (sShowing) {
-        Vector3 v40;
-        Hmx::Color c30;
+        Vector3 scale;
+        Hmx::Color color;
         if (!mActive) {
-            v40.Set(0.5f, 0.5f, 0.5f);
-            c30 = Hmx::Color(0.5f, 0.5f, 0.5f);
+            color = Hmx::Color(0.5f, 0.5f, 0.5f, 1.0f);
         } else if (mOverlapping != 0) {
-            v40.Set(1, 0, 0);
-            c30 = Hmx::Color(1, 0, 0);
+            color = Hmx::Color(1.0f, 0, 0, 1.0f);
         } else {
-            v40.Set(1, 1, 0);
-            c30 = Hmx::Color(1, 1, 0);
+            color = Hmx::Color(1.0f, 1.0f, 0, 1.0f);
         }
+
         if (mShapeType == kPhysicsVolumeBox) {
-            UtilDrawBox(WorldXfm(), gPhysicsVolumeBox, c30, true);
+            UtilDrawBox(WorldXfm(), gPhysicsVolumeBox, color, true);
         } else {
-            MakeScale(WorldXfm().m, v40);
-            v40 /= 2.0f;
-            float len = Length(v40);
-            UtilDrawSphere(WorldXfm().v, len, c30, nullptr);
+            MakeScale(WorldXfm().m, scale);
+            scale.x /= 2.0f;
+            scale.z /= 2.0f;
+            scale.y /= 2.0f; // literally why is it x z y
+            float length = Length(scale);
+            UtilDrawSphere(WorldXfm().v, length, color, nullptr);
         }
     }
 }

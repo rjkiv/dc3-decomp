@@ -95,9 +95,9 @@ void XboxEnumeration::Poll() {
     if (mOverlapped.InternalLow == ERROR_IO_PENDING) {
         return;
     }
-    DWORD dwResult = 0;
-    DWORD res = XGetOverlappedResult(&mOverlapped, &dwResult, false);
-    for (int i = 0; i < dwResult; i++) {
+    DWORD num = 0;
+    DWORD res = XGetOverlappedResult(&mOverlapped, &num, false);
+    for (int i = 0; i < num; i++) {
         EnumProduct product;
         // WideCharToMultiByte(0, 0, LPCWSTR lpWideCharStr, int cchWideChar, LPSTR
         // lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL

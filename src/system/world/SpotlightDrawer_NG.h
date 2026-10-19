@@ -17,7 +17,7 @@ public:
         SpotlightResources()
             : mDepthTex(0), mDepthRT(0), mDensityMap(0), mBlack(0), mWhite(0),
               mFarDepth(0) {}
-        virtual ~SpotlightResources() {}
+        virtual ~SpotlightResources() { Clear(); }
         void Clear();
 
         MEM_OVERLOAD(SpotlightResources, 0x3B);

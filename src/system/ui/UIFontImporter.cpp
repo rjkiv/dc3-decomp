@@ -463,7 +463,7 @@ RndFontBase *UIFontImporter::GetGennedFont(Symbol s) const {
     if (s.Null()) {
         return *mGennedFonts.begin();
     } else {
-        int idx = GetMatVariationIdx(s);
+        unsigned int idx = GetMatVariationIdx(s);
         if (idx == -1) {
             return nullptr;
         } else {
