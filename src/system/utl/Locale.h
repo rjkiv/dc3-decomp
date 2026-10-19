@@ -14,16 +14,6 @@ enum LocaleNumber {
 };
 
 class Locale {
-private:
-    int mSize; // 0x0
-    Symbol *mSymTable; // 0x4
-    const char **mStrTable; // 0x8
-    StringTable *mStringData; // 0xc
-    bool *mUploadedFlags; // 0x10
-    Symbol mFile; // 0x14
-    int mNumFilesLoaded; // 0x18
-    bool mInitialized; // 0x1c - checked in Init
-    DataArray *mMagnuStrings; // 0x20
 public:
     Locale() {}
     ~Locale() {
@@ -48,6 +38,16 @@ protected:
     bool FindDataIndex(Symbol sym, int &index, bool fail = true) const;
 
     static bool sVerboseNotify;
+
+    int mSize; // 0x0
+    Symbol *mSymTable; // 0x4
+    const char **mStrTable; // 0x8
+    StringTable *mStringData; // 0xc
+    bool *mUploadedFlags; // 0x10
+    Symbol mFile; // 0x14
+    int mNumFilesLoaded; // 0x18
+    bool mEnableLocaleFilesLoading; // 0x1c
+    DataArray *mMagnuStrings; // 0x20
 };
 
 extern Locale TheLocale;

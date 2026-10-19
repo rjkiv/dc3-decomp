@@ -678,7 +678,7 @@
             "system/synth/MidiChannel.cpp": "Matching",
             "system/synth/MidiInstrument.cpp": "Matching",
             "system/synth/MidiSynth.cpp": "Matching",
-            "system/synth/MoggClip.cpp": "NonMatching",
+            "system/synth/MoggClip.cpp": "Matching",
             "system/synth/MoggClipMap.cpp": "Matching",
             "system/synth/OggMap.cpp": "Matching",
             "system/synth/Pollable.cpp": "Matching",

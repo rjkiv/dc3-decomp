@@ -164,7 +164,7 @@ void Locale::Init() {
             MemDoTempAllocations t;
             std::vector<DataArray *> arrays(localeCfg->Size() - 1);
             mNumFilesLoaded = arrays.size();
-            if (mInitialized) {
+            if (mEnableLocaleFilesLoading) {
                 for (int i = 1; i < localeCfg->Size(); i++) {
                     const char *curStr = localeCfg->Str(i);
                     const char *curPath =
