@@ -18,20 +18,22 @@ class TextHolder {
 public:
     TextHolder() {}
     virtual ~TextHolder() {}
-    virtual void SetTextToken(Symbol) = 0;
-    virtual void SetInt(int, bool) = 0;
+    virtual void SetTextToken(Symbol s) = 0;
+    virtual void SetInt(int num, bool comma_separate) = 0;
 };
 
 class RndText : public virtual RndDrawable, public virtual RndTransformable {
 public:
-    enum Alignment {
+    enum _Alignment {
         kLeft = 1,
         kCenter = 2,
         kRight = 4,
         kTop = 0x10,
         kMiddle = 0x20,
         kBottom = 0x40,
+    };
 
+    enum Alignment {
         kTopLeft = 0x11,
         kTopCenter = 0x12,
         kTopRight = 0x14,
@@ -131,55 +133,59 @@ public:
     // size 0x20
     class BlacklightPacket {
     public:
-        RndMesh *unk0; // 0x0
-        Hmx::Color unk4; // 0x4
-        float unk14; // 0x14
-        int unk18; // 0x18
-        RndCam *unk1c; // 0x1c
+        RndMesh *mpMesh; // 0x0
+        Hmx::Color mColor; // 0x4
+        float mCloneOffset; // 0x14
+        int mNumClones; // 0x18
+        RndCam *mpCam; // 0x1c
     };
 
     // size 0x14
     class Line {
     public:
-        unsigned short *unk0;
-        unsigned short *unk4;
-        float unk8;
-        float unkc;
-        float unk10;
+        unsigned short *start; // 0x0
+        unsigned short *end; // 0x4
+        float width; // 0x8
+        float x; // 0xc
+        float z; // 0x10
     };
 
     class FontMapBase {
     public:
-        FontMapBase() : mBlacklight(false) {}
+        FontMapBase() : m_IsBlacklight(false) {}
         virtual ~FontMapBase() {}
         virtual Symbol ClassName() const = 0;
-        virtual void SetFont(RndFontBase *) = 0;
+        virtual void SetFont(RndFontBase *f) = 0;
         virtual RndFontBase *Font() const = 0;
         virtual int NumMeshes() const = 0;
-        virtual RndMesh *Mesh(int) const = 0;
+        virtual RndMesh *Mesh(int i) const = 0;
         virtual int NumMaterials() const = 0;
-        virtual RndMat *Material(int) const = 0;
+        virtual RndMat *Material(int i) const = 0;
         virtual void ResetDisplayableChars() = 0;
-        virtual void IncrementDisplayableChars(unsigned short) = 0;
-        virtual void AllocateMeshes(RndText *, int) = 0;
+        virtual void IncrementDisplayableChars(unsigned short w) = 0;
+        virtual void AllocateMeshes(RndText *parent, int fixedLength) = 0;
         virtual void CleanupSyncMeshes() = 0;
         virtual void SetupCharacter(
-            unsigned short,
-            float &,
-            float,
-            const StyleState &state,
-            unsigned short,
-            float circle,
+            unsigned short c,
+            float &x,
+            float baseZ,
+            const StyleState &style,
+            unsigned short prevChar,
+            float circleCircumference,
             FitType fitType,
             float indentation
         ) = 0;
         virtual bool SupportsScrolling() const = 0;
         virtual void SetupScrolling() = 0;
-        virtual void UpdateScrolling(float) = 0;
+        virtual void UpdateScrolling(float offset) = 0;
+
+        bool IsBlacklight() { return m_IsBlacklight; }
+        void SetBlacklight(bool b) { m_IsBlacklight = b; }
 
         MEM_OVERLOAD(FontMapBase, 0xD7);
 
-        bool mBlacklight; // 0x4
+    private:
+        bool m_IsBlacklight; // 0x4
     };
 
     // size 0x18
@@ -198,19 +204,19 @@ public:
 
             RndMesh *mesh; // 0x0
             int displayableChars; // 0x4
-            RndMesh::Vert *unk8; // 0x8 - vert iterator/pointer?
-            int unkc; // 0xc - mesh sync flags?
+            RndMesh::Vert *vertIt; // 0x8
+            int syncFlags; // 0xc
         };
 
-        FontMap() : mFont(nullptr) {}
+        FontMap() : font(nullptr) {}
         virtual ~FontMap();
         virtual Symbol ClassName() const { return StaticClassName(); }
         virtual void SetFont(RndFontBase *);
-        virtual RndFontBase *Font() const { return mFont; }
-        virtual int NumMeshes() const { return mPages.size(); }
-        virtual RndMesh *Mesh(int idx) const { return mPages[idx]->mesh; }
-        virtual int NumMaterials() const { return mPages.size(); }
-        virtual RndMat *Material(int idx) const { return mFont->Mat(idx); }
+        virtual RndFontBase *Font() const { return font; }
+        virtual int NumMeshes() const { return pages.size(); }
+        virtual RndMesh *Mesh(int idx) const { return pages[idx]->mesh; }
+        virtual int NumMaterials() const { return pages.size(); }
+        virtual RndMat *Material(int idx) const { return font->Mat(idx); }
         virtual void ResetDisplayableChars();
         virtual void IncrementDisplayableChars(unsigned short);
         virtual void AllocateMeshes(RndText *, int);
@@ -234,26 +240,26 @@ public:
             return name;
         }
 
-        RndFont *mFont; // 0x8
-        std::vector<Page *> mPages; // 0xc
+        RndFont *font; // 0x8
+        std::vector<Page *> pages; // 0xc
     };
 
     // size 0x20
     class FontMap3d : public FontMapBase {
     public:
-        FontMap3d() : mFont(nullptr), mDisplayableChars(0) {}
+        FontMap3d() : font(nullptr), displayableChars(0) {}
         virtual ~FontMap3d();
         virtual Symbol ClassName() const { return StaticClassName(); }
         virtual void SetFont(RndFontBase *);
-        virtual RndFontBase *Font() const { return mFont; }
-        virtual int NumMeshes() const { return mMeshes.size(); }
-        virtual RndMesh *Mesh(int idx) const { return mMeshes[idx]; }
-        virtual int NumMaterials() const { return mFont && mFont->Mat(); }
+        virtual RndFontBase *Font() const { return font; }
+        virtual int NumMeshes() const { return meshes.size(); }
+        virtual RndMesh *Mesh(int idx) const { return meshes[idx]; }
+        virtual int NumMaterials() const { return font && font->Mat(); }
         virtual RndMat *Material(int i) const {
             MILO_ASSERT(i==0, 0x150);
-            return mFont->Mat();
+            return font->Mat();
         }
-        virtual void ResetDisplayableChars() { mDisplayableChars = 0; }
+        virtual void ResetDisplayableChars() { displayableChars = 0; }
         virtual void IncrementDisplayableChars(unsigned short);
         virtual void AllocateMeshes(RndText *, int);
         virtual void CleanupSyncMeshes();
@@ -276,10 +282,10 @@ public:
             return name;
         }
 
-        RndFont3d *mFont; // 0x8
-        int mDisplayableChars; // 0xc
-        std::vector<RndMesh *> mMeshes; // 0x10
-        std::vector<RndMesh *>::iterator mMeshItr; // 0x1c
+        RndFont3d *font; // 0x8
+        int displayableChars; // 0xc
+        std::vector<RndMesh *> meshes; // 0x10
+        std::vector<RndMesh *>::iterator meshIt; // 0x1c
     };
 
     // Hmx::Object

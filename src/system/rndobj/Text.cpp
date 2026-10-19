@@ -99,59 +99,59 @@ bool CalcScreenHeight(float f1, RndMesh *mesh, float &fref) {
 #pragma region FontMap
 
 RndText::FontMap::~FontMap() {
-    while (mPages.size() != 0) {
-        delete mPages.back();
-        mPages.pop_back();
+    while (pages.size() != 0) {
+        delete pages.back();
+        pages.pop_back();
     }
 }
 
 void RndText::FontMap::SetFont(RndFontBase *f) {
     MILO_ASSERT(f->ClassName() == RndFont::StaticClassName(), 0x75);
-    mFont = static_cast<RndFont *>(f);
-    while (mPages.size() > mFont->NumMats()) {
-        delete mPages.back();
-        mPages.pop_back();
+    font = static_cast<RndFont *>(f);
+    while (pages.size() > font->NumMats()) {
+        delete pages.back();
+        pages.pop_back();
     }
-    mPages.reserve(mFont->NumMats());
-    while (mPages.size() < mFont->NumMats()) {
-        mPages.push_back(new Page());
+    pages.reserve(font->NumMats());
+    while (pages.size() < font->NumMats()) {
+        pages.push_back(new Page());
     }
 }
 
 void RndText::FontMap::ResetDisplayableChars() {
-    for (int i = 0; i < mPages.size(); i++) {
-        mPages[i]->displayableChars = 0;
+    for (int i = 0; i < pages.size(); i++) {
+        pages[i]->displayableChars = 0;
     }
 }
 
 void RndText::FontMap::IncrementDisplayableChars(unsigned short num) {
-    int page = mFont->CharPage(num);
+    int page = font->CharPage(num);
     if (page >= 0) {
-        mPages[page]->displayableChars++;
+        pages[page]->displayableChars++;
     }
 }
 
 void RndText::FontMap::AllocateMeshes(RndText *text, int fixedLength) {
-    for (int i = 0; i < mPages.size(); i++) {
-        Page &page = *(mPages[i]);
-        if (!page.mesh && mFont && page.displayableChars > 0) {
+    for (int i = 0; i < pages.size(); i++) {
+        Page &page = *(pages[i]);
+        if (!page.mesh && font && page.displayableChars > 0) {
             page.mesh = Hmx::Object::New<RndMesh>();
         }
         RndMesh *mesh = page.mesh;
-        page.unkc = 0x1F;
-        page.unk8 = 0;
+        page.syncFlags = 0x1F;
+        page.vertIt = 0;
         if (mesh) {
             mesh->SetTransParent(text, false);
             mesh->SetTransConstraint(RndTransformable::kParentWorld, nullptr, false);
-            if (mFont) {
-                mesh->SetMat(mFont->Mat(i));
+            if (font) {
+                mesh->SetMat(font->Mat(i));
             }
             mesh->SetShowing(page.displayableChars > 0);
             if (fixedLength == 0) {
                 int numFaces = page.displayableChars * 2;
                 mesh->SetMutable(0);
                 ResetFontMapPageMeshFaces(mesh, numFaces);
-                page.unkc |= 0xA0;
+                page.syncFlags |= 0xA0;
                 mesh->Verts().resize(numFaces * 2);
             } else if (
                 (mesh->Mutable() & 0x1F) == 0 || mesh->Verts().size() != fixedLength * 4
@@ -159,10 +159,10 @@ void RndText::FontMap::AllocateMeshes(RndText *text, int fixedLength) {
                 int numFaces = fixedLength * 2;
                 mesh->SetMutable(0x1F);
                 ResetFontMapPageMeshFaces(mesh, numFaces);
-                page.unkc |= 0xA0;
+                page.syncFlags |= 0xA0;
                 mesh->Verts().resize(numFaces * 2);
             }
-            page.unk8 = mesh->Verts().begin();
+            page.vertIt = mesh->Verts().begin();
             MILO_ASSERT(mesh->Verts().size() >= page.displayableChars * 4, 0xD2);
         }
         MILO_ASSERT(!fixedLength || (page.displayableChars <= fixedLength), 0xD5);
@@ -170,14 +170,14 @@ void RndText::FontMap::AllocateMeshes(RndText *text, int fixedLength) {
 }
 
 void RndText::FontMap::CleanupSyncMeshes() {
-    for (int i = 0; i < mPages.size(); i++) {
-        Page *page = mPages[i];
+    for (int i = 0; i < pages.size(); i++) {
+        Page *page = pages[i];
         RndMesh *mesh = page->mesh;
         if (mesh) {
-            while (page->unk8 != mesh->Verts().end()) {
-                page->unk8++->pos.Set(0, 0, 0);
+            while (page->vertIt != mesh->Verts().end()) {
+                page->vertIt++->pos.Set(0, 0, 0);
             }
-            mesh->Sync(page->unkc);
+            mesh->Sync(page->syncFlags);
         }
     }
 }
@@ -195,19 +195,19 @@ void RndText::FontMap::SetupCharacter(
     if (fitType == 7 && us2 == 10) {
         f3 += indentation;
     } else {
-        int i5 = mFont->CharPage(us2);
+        int i5 = font->CharPage(us2);
         if (i5 < 0) {
             return;
         }
-        Page *page = mPages[i5];
+        Page *page = pages[i5];
         float fc0, fbc;
-        if (!mFont->CharWidthAdvanceCoords(
-                us2, fc0, fbc, page->unk8[0].tex, page->unk8[2].tex
+        if (!font->CharWidthAdvanceCoords(
+                us2, fc0, fbc, page->vertIt[0].tex, page->vertIt[2].tex
             )) {
             return;
         }
 
-        float f11 = mFont->Kerning(us6, us2);
+        float f11 = font->Kerning(us6, us2);
         f3 += f11 + state.kerning * state.size;
         if (fc0 > 0) {
             f11 = fc0;
@@ -215,7 +215,7 @@ void RndText::FontMap::SetupCharacter(
             f11 = fbc;
         }
         float f8 = 0;
-        if (mFont->Monospace()) {
+        if (font->Monospace()) {
             f8 = Min((fbc - f11) / 2.0f, 0.0f);
         }
         float fvar9 = state.size;
@@ -225,35 +225,36 @@ void RndText::FontMap::SetupCharacter(
             return;
         }
         float f13 = state.zOffset * fvar9 + f4;
-        float aspect8 = mFont->AspectRatio();
+        float aspect8 = font->AspectRatio();
         float f10 = state.italics * fvar9;
-        page->unk8->pos.Set(f10 + f11 + f3, 0, f13);
+        page->vertIt->pos.Set(f10 + f11 + f3, 0, f13);
         float fvar1 = f13 - (aspect8 * indentation);
-        reinterpret_cast<Vector3 &>(page->unk8->tangent).Set((f11 + f3) - f10, 0, fvar1);
-        reinterpret_cast<Vector3 &>(page->unk8[1].tangent)
+        reinterpret_cast<Vector3 &>(page->vertIt->tangent).Set((f11 + f3) - f10, 0, fvar1);
+        reinterpret_cast<Vector3 &>(page->vertIt[1].tangent)
             .Set(((f11 + f3) - f10) + fc0, fvar1, 0);
-        reinterpret_cast<Vector3 &>(page->unk8[2].tangent)
+        reinterpret_cast<Vector3 &>(page->vertIt[2].tangent)
             .Set(((f11 + f3) + fc0) + fvar1, 0, f13);
         if (circle != 0) {
-            float fvar10 = (page->unk8[2].tangent.x - page->unk8[0].tangent.x) / 2
-                + page->unk8[0].tangent.x;
+            float fvar10 = (page->vertIt[2].tangent.x - page->vertIt[0].tangent.x) / 2
+                + page->vertIt[0].tangent.x;
             Transform xfm = XfmOnCircleEdge(circle, fvar10);
             Vector3 tmp;
             Scale(xfm.m.x, fvar10, tmp);
             xfm.v -= tmp;
-            Multiply(page->unk8[0].pos, xfm, page->unk8[0].pos);
-            Multiply(page->unk8[1].pos, xfm, page->unk8[1].pos);
-            Multiply(page->unk8[2].pos, xfm, page->unk8[2].pos);
-            Multiply(page->unk8[3].pos, xfm, page->unk8[3].pos);
+            Multiply(page->vertIt[0].pos, xfm, page->vertIt[0].pos);
+            Multiply(page->vertIt[1].pos, xfm, page->vertIt[1].pos);
+            Multiply(page->vertIt[2].pos, xfm, page->vertIt[2].pos);
+            Multiply(page->vertIt[3].pos, xfm, page->vertIt[3].pos);
         }
-        page->unk8[1].tex.Set(page->unk8[0].tex.x, page->unk8[2].tex.y);
-        page->unk8[3].tex.Set(page->unk8[2].tex.x, page->unk8[0].tex.y);
-        page->unk8[0].norm.Set(0, -1, 0);
-        page->unk8[1].norm = page->unk8[2].norm = page->unk8[3].norm = page->unk8[0].norm;
-        page->unk8[0].color = page->unk8[1].color = page->unk8[2].color =
-            page->unk8[3].color = state.textColor;
+        page->vertIt[1].tex.Set(page->vertIt[0].tex.x, page->vertIt[2].tex.y);
+        page->vertIt[3].tex.Set(page->vertIt[2].tex.x, page->vertIt[0].tex.y);
+        page->vertIt[0].norm.Set(0, -1, 0);
+        page->vertIt[1].norm = page->vertIt[2].norm = page->vertIt[3].norm =
+            page->vertIt[0].norm;
+        page->vertIt[0].color = page->vertIt[1].color = page->vertIt[2].color =
+            page->vertIt[3].color = state.textColor;
         // advance to the next set of 4 verts
-        page->unk8 = &page->unk8[4];
+        page->vertIt = &page->vertIt[4];
         f3 += state.size * fbc;
     }
 }
@@ -279,51 +280,51 @@ void RndText::FontMap::UpdateScrolling(float f1) {
 }
 
 RndText::FontMap3d::~FontMap3d() {
-    for (int i = 0; i < mMeshes.size(); i++) {
-        if (mMeshes[i]) {
-            delete mMeshes[i];
+    for (int i = 0; i < meshes.size(); i++) {
+        if (meshes[i]) {
+            delete meshes[i];
         }
     }
 }
 
 void RndText::FontMap3d::SetFont(RndFontBase *f) {
     MILO_ASSERT(f->ClassName() == RndFont3d::StaticClassName(), 0x17D);
-    mFont = static_cast<RndFont3d *>(f);
+    font = static_cast<RndFont3d *>(f);
 }
 
 void RndText::FontMap3d::IncrementDisplayableChars(unsigned short us1) {
-    RndFont3d::CharInfo *info = mFont->GetCharInfo(us1);
+    RndFont3d::CharInfo *info = font->GetCharInfo(us1);
     if (info && info->mesh) {
-        mDisplayableChars++;
+        displayableChars++;
     }
 }
 
 void RndText::FontMap3d::AllocateMeshes(RndText *text, int i2) {
     int i9 = 0;
-    if (mFont) {
-        i9 = i2 ? i2 : mDisplayableChars;
+    if (font) {
+        i9 = i2 ? i2 : displayableChars;
     }
-    for (int i = i9; i < mMeshes.size(); i++) {
-        delete mMeshes[i];
+    for (int i = i9; i < meshes.size(); i++) {
+        delete meshes[i];
     }
-    int numMeshes = mMeshes.size();
-    mMeshes.resize(i9);
-    for (int i = 0; i < mMeshes.size(); i++) {
+    int numMeshes = meshes.size();
+    meshes.resize(i9);
+    for (int i = 0; i < meshes.size(); i++) {
         if (i >= numMeshes) {
-            mMeshes[i] = Hmx::Object::New<RndMesh>();
+            meshes[i] = Hmx::Object::New<RndMesh>();
         }
-        RndMesh *cur = mMeshes[i];
+        RndMesh *cur = meshes[i];
         cur->SetTransParent(text, false);
         cur->SetTransConstraint(kNone, nullptr, false);
-        cur->SetMat(mFont->Mat());
+        cur->SetMat(font->Mat());
         cur->SetShowing(true);
     }
-    mMeshItr = mMeshes.begin();
+    meshIt = meshes.begin();
 }
 
 void RndText::FontMap3d::CleanupSyncMeshes() {
-    for (; mMeshItr != mMeshes.end(); ++mMeshItr) {
-        (*mMeshItr)->SetShowing(false);
+    for (; meshIt != meshes.end(); ++meshIt) {
+        (*meshIt)->SetShowing(false);
     }
 }
 
@@ -339,12 +340,12 @@ void RndText::FontMap3d::SetupCharacter(
 ) {
     float f100, ffc;
     RndMesh *localf8;
-    if (mFont->CharWidthAdvanceMesh(us2, f100, ffc, &localf8)) {
-        float kerning = mFont->Kerning(us6, us2);
+    if (font->CharWidthAdvanceMesh(us2, f100, ffc, &localf8)) {
+        float kerning = font->Kerning(us6, us2);
         f3 += (kerning + state.kerning) * state.size;
         kerning = f100 > 0 ? f100 : ffc;
         float f5 = 0;
-        if (mFont->Monospace()) {
+        if (font->Monospace()) {
             f5 = Min((ffc - kerning) / 2, 0.0f);
         }
         float fvar6 = state.size;
@@ -352,15 +353,15 @@ void RndText::FontMap3d::SetupCharacter(
         kerning = fvar6 * f5;
         if (f100 > 0) {
             f4 += state.zOffset * fvar6;
-            if (localf8 && mMeshItr != mMeshes.end()) {
-                RndMesh *it = *mMeshItr++;
+            if (localf8 && meshIt != meshes.end()) {
+                RndMesh *it = *meshIt++;
                 it->SetGeomOwner(localf8);
                 Transform tff0;
-                tff0.v = mFont->CharOriginOffset();
+                tff0.v = font->CharOriginOffset();
                 tff0.v *= state.size;
                 tff0.v.x += kerning + f3;
                 tff0.v.z += f4;
-                tff0.m.x.x = mFont->FontUnitInverse() * state.size;
+                tff0.m.x.x = font->FontUnitInverse() * state.size;
                 tff0.m.x.y = tff0.m.x.x * 0;
                 tff0.m.x.z = tff0.m.x.y;
                 tff0.m.y.x = tff0.m.x.y;
@@ -804,7 +805,7 @@ void RndText::DrawShowing() {
         for (int i = 0; i < (*it)->NumMeshes(); i++) {
             RndMesh *curMesh = (*it)->Mesh(i);
             if (curMesh) {
-                if (sBlacklightModeEnabled && (*it)->mBlacklight
+                if (sBlacklightModeEnabled && (*it)->IsBlacklight()
                     && TheUI->BlacklightScreenEnabled()) {
                     QueueBlacklightPacket(curMesh, unk58, unk5c);
                 } else {
@@ -900,7 +901,7 @@ void RndText::DoBasicMarkup() {
 
 int RndText::FontMapIndex(RndFontBase *f, bool b) {
     for (int i = 0; i < mFontMaps.size(); i++) {
-        if (mFontMaps[i]->Font() == f && mFontMaps[i]->mBlacklight == b) {
+        if (mFontMaps[i]->Font() == f && mFontMaps[i]->IsBlacklight() == b) {
             return i;
         }
     }
@@ -965,7 +966,7 @@ void RndText::BuildFontMaps(bool b1) {
             if (font) {
                 if (FontMapIndex(font, mStyles[i].blacklight) == -1) {
                     FontMapBase *map = AcquireFontMap(font);
-                    map->mBlacklight = mStyles[i].blacklight;
+                    map->SetBlacklight(mStyles[i].blacklight);
                     mFontMaps.push_back(map);
                 }
             }
@@ -998,9 +999,9 @@ void RndText::ConstructMeshes(
         for (int i = 0; i < lines.size(); i++) {
             const Line &curLine = lines[i];
             unsigned short usIt = 0;
-            float f10 = curLine.unk10;
-            float fc = curLine.unkc;
-            for (const unsigned short *it = curLine.unk0; it != curLine.unk4;) {
+            float f10 = curLine.z;
+            float fc = curLine.x;
+            for (const unsigned short *it = curLine.start; it != curLine.end;) {
                 unsigned short cur = *it;
                 if (cur == 0x3C && mMarkup) {
                     it = ParseMarkup(it, state, cur);
@@ -1531,11 +1532,11 @@ void RndText::QueueBlacklightPacket(RndMesh *mesh, float f2, int i3) {
         sBlacklightPacketPool.resize(newsize);
     }
     BlacklightPacket &packet = sBlacklightPacketPool[sBlacklightPacketCount++];
-    packet.unk0 = mesh;
-    packet.unk4 = mesh->Mat()->GetColor();
-    packet.unk14 = f2;
-    packet.unk18 = i3;
-    packet.unk1c = RndCam::Current();
+    packet.mpMesh = mesh;
+    packet.mColor = mesh->Mat()->GetColor();
+    packet.mCloneOffset = f2;
+    packet.mNumClones = i3;
+    packet.mpCam = RndCam::Current();
 }
 
 void RndText::ClearBlacklight() { sBlacklightPacketCount = 0; }
@@ -1544,11 +1545,11 @@ void RndText::DrawBlacklight() {
     RndCam *cur = RndCam::Current();
     for (int i = 0; i < sBlacklightPacketCount; i++) {
         BlacklightPacket &packet = sBlacklightPacketPool[i];
-        if (packet.unk1c && packet.unk1c != RndCam::Current()) {
-            packet.unk1c->Select();
+        if (packet.mpCam && packet.mpCam != RndCam::Current()) {
+            packet.mpCam->Select();
         }
-        packet.unk0->Mat()->SetColor(packet.unk4);
-        DrawMesh(packet.unk0, packet.unk14, packet.unk18);
+        packet.mpMesh->Mat()->SetColor(packet.mColor);
+        DrawMesh(packet.mpMesh, packet.mCloneOffset, packet.mNumClones);
     }
     if (cur && cur != RndCam::Current()) {
         cur->Select();
