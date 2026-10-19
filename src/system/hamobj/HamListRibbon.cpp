@@ -413,7 +413,7 @@ void HamListRibbon::SetDisengageFrame(float f1) {
 float HamListRibbon::GetLabelTotalAlpha() const {
     float ret = 1;
     for (unsigned int i = 0; i < mLabelPlaceholder->NumStyles(); i++) {
-        ret *= mLabelPlaceholder->Style(i).mInfo.mFontColor.alpha;
+        ret *= mLabelPlaceholder->Style(i).fontColor.alpha;
     }
     return ret;
 }
@@ -460,8 +460,8 @@ void HamListRibbon::DrawRibbon(
     }
     float alpha = 0;
     if (TheLoadMgr.EditMode() && mLabelPlaceholder) {
-        alpha = mLabelPlaceholder->Style(0).mInfo.mFontColor.alpha;
-        mLabelPlaceholder->Style(0).mInfo.mFontColor.alpha = GetLabelTotalAlpha();
+        alpha = mLabelPlaceholder->Style(0).fontColor.alpha;
+        mLabelPlaceholder->Style(0).fontColor.alpha = GetLabelTotalAlpha();
     }
     SetWorldXfm(tfa0);
     if (!drawState.mHide) {
@@ -470,7 +470,7 @@ void HamListRibbon::DrawRibbon(
         }
     }
     if (TheLoadMgr.EditMode() && mLabelPlaceholder) {
-        mLabelPlaceholder->Style(0).mInfo.mFontColor.alpha = alpha;
+        mLabelPlaceholder->Style(0).fontColor.alpha = alpha;
         mLabelPlaceholder->SetShowing(true);
     }
 }

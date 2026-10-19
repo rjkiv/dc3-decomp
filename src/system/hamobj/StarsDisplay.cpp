@@ -85,9 +85,12 @@ void StarsDisplay::SetAlphaColor(float alpha, UIColor *) { mAlpha = alpha; }
 
 void StarsDisplay::DrawShowing() {
     HamLabel *s = mStarsLabel;
-    s->Style(0).SetAlpha(mAlpha);
-    mDiffLabel->Style(0).SetAlpha(mAlpha);
-    mNoFlashcardsLabel->Style(0).SetAlpha(mAlpha);
+    float a = mAlpha;
+    s->Style(0).fontColor.alpha = a;
+    float a2 = mAlpha;
+    mDiffLabel->Style(0).fontColor.alpha = a2;
+    float a3 = mAlpha;
+    mNoFlashcardsLabel->Style(0).fontColor.alpha = a3;
     if (mStarsLabel->Showing()) {
         mStarsLabel->DrawShowing();
     }

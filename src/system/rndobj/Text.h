@@ -25,7 +25,13 @@ public:
 class RndText : public virtual RndDrawable, public virtual RndTransformable {
 public:
     enum Alignment {
+        kLeft = 1,
         kCenter = 2,
+        kRight = 4,
+        kTop = 0x10,
+        kMiddle = 0x20,
+        kBottom = 0x40,
+
         kTopLeft = 0x11,
         kTopCenter = 0x12,
         kTopRight = 0x14,
@@ -49,7 +55,7 @@ public:
     enum FitType {
         /** "Performs normal line wrapping if [width] is set" */
         kFitWrap = 0,
-        // where 1 lol
+        kFitStretchObsolete = 1,
         /** "Shrinks the text until it fits within [width] and [height].
             Note that this is a very expensive process, super slow,
             and so should never be used on dynamically changing text when in game" */
@@ -67,60 +73,58 @@ public:
         kFitScrollMarqueeWrapAlways = 7
     };
 
-    struct StyleInfo {
-        StyleInfo()
-            : mSize(30), mTextColor(1, 1, 1), mFontColorOverride(false),
-              mFontColor(1, 1, 1), mItalics(0), mKerning(0), mZOffset(0) {}
+    class StyleBase {
+    public:
+        StyleBase()
+            : size(30), textColor(1, 1, 1), fontColorOverride(false), fontColor(1, 1, 1),
+              italics(0), kerning(0), zOffset(0) {}
 
         /** "Size of the text" */
-        float mSize; // 0x0
+        float size; // 0x0
         /** "Color of the text, put into mesh verts.
             Modifed by <color=r,g,b,a> markup .
             This will only work if the font mat has [prelit] set true
             and [use_environment] set false" */
-        Hmx::Color mTextColor; // 0x4
+        Hmx::Color textColor; // 0x4
         /** "If true, and if there's a font,
             you can change color and alpha during the draw" */
-        bool mFontColorOverride; // 0x14
+        bool fontColorOverride; // 0x14
         /** "Color of the font during draw, can be changed dynamically" */
-        Hmx::Color mFontColor; // 0x18
+        Hmx::Color fontColor; // 0x18
         /** "Defines the slant of the text, changed by <it> tag".
             Ranges from -5 to 5. */
-        float mItalics; // 0x28
+        float italics; // 0x28
         /** "Extra kerning for the text" */
-        float mKerning; // 0x2c
+        float kerning; // 0x2c
         /** "vertical offset as fraction of size" */
-        float mZOffset; // 0x30
+        float zOffset; // 0x30
     };
 
-    class Style {
+    class Style : public StyleBase {
     public:
         Style(Hmx::Object *owner);
         Style &operator=(const Style &s) {
-            mFont = s.mFont;
-            mBlacklight = s.mBlacklight;
-            mInfo = s.mInfo;
+            font = s.font;
+            blacklight = s.blacklight;
+            StyleBase &me = *this;
+            const StyleBase &rhs = s;
+            me = rhs;
             return *this;
         }
-        void SetAlpha(float alpha) { mInfo.mFontColor.alpha = alpha; }
 
-        StyleInfo mInfo; // 0x0
         /** "Font to use for this style" */
-        ObjPtr<RndFontBase> mFont; // 0x34
+        ObjPtr<RndFontBase> font; // 0x34
         /** "draw in blacklight pass?" */
-        bool mBlacklight; // 0x48
+        bool blacklight; // 0x48
     };
 
-    class StyleState {
-        friend class RndText;
-
+    class StyleState : public StyleBase {
     public:
-        StyleState(RndText *, float);
+        StyleState(RndText *text, float s);
 
-        StyleInfo mInfo; // 0x0
-        Style *unk34; // 0x34
-        int unk38; // 0x38
-        float unk3c; // 0x3c
+        Style *curStyle; // 0x34
+        int fontMapIndex; // 0x38
+        float scale; // 0x3c
         bool brk; // 0x40
     };
 

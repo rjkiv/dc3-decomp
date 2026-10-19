@@ -32,17 +32,25 @@ static float gSuperscriptScale = 0.7f;
 static float gGuitarScale = 0.7f;
 static float gGuitarZOffset = 0.2f;
 
-float SegmentLength(int i1, int i2, const float *f3, const unsigned short *us4, float f5) {
-    for (const unsigned short *p = us4 + i1; *p == 0x20 && i1 < i2; i1++, p++)
+float SegmentLength(
+    int startOff,
+    int endOff,
+    const float *charWidths,
+    const unsigned short *in,
+    float scale
+) {
+    for (const unsigned short *p = in + startOff; *p == ' ' && startOff < endOff;
+         startOff++, p++)
         ;
-    for (const unsigned short *p = us4 + i2 - 1; *p == 0x20 && i1 < i2; i2--, p--)
+    for (const unsigned short *p = in + endOff - 1; *p == ' ' && startOff < endOff;
+         endOff--, p--)
         ;
-    return (f3[i2] - f3[i1]) * f5;
+    return (charWidths[endOff] - charWidths[startOff]) * scale;
 }
 
-void ResetFontMapPageMeshFaces(RndMesh *mesh, int i2) {
+void ResetFontMapPageMeshFaces(RndMesh *mesh, int numFaces) {
     MILO_ASSERT(mesh, 0x96);
-    mesh->Faces().resize(i2);
+    mesh->Faces().resize(numFaces);
 
     auto it = mesh->Faces().begin();
     auto itEnd = mesh->Faces().end();
@@ -53,15 +61,15 @@ void ResetFontMapPageMeshFaces(RndMesh *mesh, int i2) {
     }
 }
 
-Transform XfmOnCircleEdge(float f1, float f2) {
+Transform XfmOnCircleEdge(float circleCircumference, float distAround) {
     Transform out;
-    float f10 = f1 < 0 ? -1.0f : 1.0f;
+    float f10 = circleCircumference < 0 ? -1.0f : 1.0f;
     out.m.z.Set(0, 0, 1);
-    float f9 = (f2 / f1) * 2 * PI + (f10 * (-PI / 2));
+    float f9 = (distAround / circleCircumference) * (2 * PI) + (f10 * (-PI / 2));
     out.v.Set(Cosine(f9), Sine(f9), 0);
     Scale(out.v, -f10, out.m.y);
     Cross(out.m.y, out.m.z, out.m.x);
-    out.v *= f10 * f1 * 0.15915494f;
+    out.v *= f10 * circleCircumference / (2 * PI);
     return out;
 }
 
@@ -200,7 +208,7 @@ void RndText::FontMap::SetupCharacter(
         }
 
         float f11 = mFont->Kerning(us6, us2);
-        f3 += f11 + state.mInfo.mKerning * state.mInfo.mSize;
+        f3 += f11 + state.kerning * state.size;
         if (fc0 > 0) {
             f11 = fc0;
         } else {
@@ -210,15 +218,15 @@ void RndText::FontMap::SetupCharacter(
         if (mFont->Monospace()) {
             f8 = Min((fbc - f11) / 2.0f, 0.0f);
         }
-        float fvar9 = state.mInfo.mSize;
+        float fvar9 = state.size;
         fc0 = fvar9 * f11;
         f11 = fvar9 * f8;
         if (fc0 <= 0) {
             return;
         }
-        float f13 = state.mInfo.mZOffset * fvar9 + f4;
+        float f13 = state.zOffset * fvar9 + f4;
         float aspect8 = mFont->AspectRatio();
-        float f10 = state.mInfo.mItalics * fvar9;
+        float f10 = state.italics * fvar9;
         page->unk8->pos.Set(f10 + f11 + f3, 0, f13);
         float fvar1 = f13 - (aspect8 * indentation);
         reinterpret_cast<Vector3 &>(page->unk8->tangent).Set((f11 + f3) - f10, 0, fvar1);
@@ -243,10 +251,10 @@ void RndText::FontMap::SetupCharacter(
         page->unk8[0].norm.Set(0, -1, 0);
         page->unk8[1].norm = page->unk8[2].norm = page->unk8[3].norm = page->unk8[0].norm;
         page->unk8[0].color = page->unk8[1].color = page->unk8[2].color =
-            page->unk8[3].color = state.mInfo.mTextColor;
+            page->unk8[3].color = state.textColor;
         // advance to the next set of 4 verts
         page->unk8 = &page->unk8[4];
-        f3 += state.mInfo.mSize * fbc;
+        f3 += state.size * fbc;
     }
 }
 
@@ -333,26 +341,26 @@ void RndText::FontMap3d::SetupCharacter(
     RndMesh *localf8;
     if (mFont->CharWidthAdvanceMesh(us2, f100, ffc, &localf8)) {
         float kerning = mFont->Kerning(us6, us2);
-        f3 += (kerning + state.mInfo.mKerning) * state.mInfo.mSize;
+        f3 += (kerning + state.kerning) * state.size;
         kerning = f100 > 0 ? f100 : ffc;
         float f5 = 0;
         if (mFont->Monospace()) {
             f5 = Min((ffc - kerning) / 2, 0.0f);
         }
-        float fvar6 = state.mInfo.mSize;
+        float fvar6 = state.size;
         f100 = fvar6 * kerning;
         kerning = fvar6 * f5;
         if (f100 > 0) {
-            f4 += state.mInfo.mZOffset * fvar6;
+            f4 += state.zOffset * fvar6;
             if (localf8 && mMeshItr != mMeshes.end()) {
                 RndMesh *it = *mMeshItr++;
                 it->SetGeomOwner(localf8);
                 Transform tff0;
                 tff0.v = mFont->CharOriginOffset();
-                tff0.v *= state.mInfo.mSize;
+                tff0.v *= state.size;
                 tff0.v.x += kerning + f3;
                 tff0.v.z += f4;
-                tff0.m.x.x = mFont->FontUnitInverse() * state.mInfo.mSize;
+                tff0.m.x.x = mFont->FontUnitInverse() * state.size;
                 tff0.m.x.y = tff0.m.x.x * 0;
                 tff0.m.x.z = tff0.m.x.y;
                 tff0.m.y.x = tff0.m.x.y;
@@ -369,7 +377,7 @@ void RndText::FontMap3d::SetupCharacter(
                 }
                 it->SetLocalXfm(tff0);
             }
-            f3 += state.mInfo.mSize * ffc;
+            f3 += state.size * ffc;
         }
     }
 }
@@ -378,13 +386,13 @@ void RndText::FontMap3d::SetupCharacter(
 
 #pragma region RndText
 
-RndText::Style::Style(Hmx::Object *owner) : mFont(owner), mBlacklight(false) {}
+RndText::Style::Style(Hmx::Object *owner) : font(owner), blacklight(false) {}
 
 RndText::StyleState::StyleState(RndText *text, float f2)
-    : mInfo(text->mStyles[0].mInfo), unk34(&text->mStyles[0]) {
-    unk38 = text->FontMapIndex(unk34->mFont, unk34->mBlacklight);
-    unk3c = f2;
-    mInfo.mSize *= f2;
+    : StyleBase(text->mStyles[0]), curStyle(&text->mStyles[0]) {
+    fontMapIndex = text->FontMapIndex(curStyle->font, curStyle->blacklight);
+    scale = f2;
+    size *= f2;
     brk = true;
 }
 
@@ -413,25 +421,17 @@ BEGIN_HANDLERS(RndText)
 END_HANDLERS
 
 BEGIN_CUSTOM_PROPSYNC(RndText::Style)
-    SYNC_PROP(font, o.mFont)
-    SYNC_PROP(size, o.mInfo.mSize)
-    SYNC_PROP_SET(
-        text_color, o.mInfo.mTextColor.PackRgb(), o.mInfo.mTextColor.UnpackRgb(_val.Int())
-    )
-    SYNC_PROP_SET(
-        text_alpha, o.mInfo.mTextColor.alpha, o.mInfo.mTextColor.alpha = _val.Float()
-    )
-    SYNC_PROP(font_color_override, o.mInfo.mFontColorOverride)
-    SYNC_PROP_SET(
-        font_color, o.mInfo.mFontColor.PackRgb(), o.mInfo.mFontColor.UnpackRgb(_val.Int())
-    )
-    SYNC_PROP_SET(
-        font_alpha, o.mInfo.mFontColor.alpha, o.mInfo.mFontColor.alpha = _val.Float()
-    )
-    SYNC_PROP(italics, o.mInfo.mItalics)
-    SYNC_PROP(kerning, o.mInfo.mKerning)
-    SYNC_PROP(z_offset, o.mInfo.mZOffset)
-    SYNC_PROP(blacklight, o.mBlacklight)
+    SYNC_PROP(font, o.font)
+    SYNC_PROP(size, o.size)
+    SYNC_PROP_SET(text_color, o.textColor.PackRgb(), o.textColor.UnpackRgb(_val.Int()))
+    SYNC_PROP_SET(text_alpha, o.textColor.alpha, o.textColor.alpha = _val.Float())
+    SYNC_PROP(font_color_override, o.fontColorOverride)
+    SYNC_PROP_SET(font_color, o.fontColor.PackRgb(), o.fontColor.UnpackRgb(_val.Int()))
+    SYNC_PROP_SET(font_alpha, o.fontColor.alpha, o.fontColor.alpha = _val.Float())
+    SYNC_PROP(italics, o.italics)
+    SYNC_PROP(kerning, o.kerning)
+    SYNC_PROP(z_offset, o.zOffset)
+    SYNC_PROP(blacklight, o.blacklight)
 END_CUSTOM_PROPSYNC
 
 BEGIN_PROPSYNCS(RndText)
@@ -457,15 +457,15 @@ BEGIN_PROPSYNCS(RndText)
 END_PROPSYNCS
 
 BinStream &operator<<(BinStream &bs, const RndText::Style &s) {
-    bs << s.mFont;
-    bs << s.mInfo.mSize;
-    bs << s.mInfo.mTextColor;
-    bs << s.mInfo.mFontColorOverride;
-    bs << s.mInfo.mFontColor;
-    bs << s.mInfo.mItalics;
-    bs << s.mInfo.mKerning;
-    bs << s.mInfo.mZOffset;
-    bs << s.mBlacklight;
+    bs << s.font;
+    bs << s.size;
+    bs << s.textColor;
+    bs << s.fontColorOverride;
+    bs << s.fontColor;
+    bs << s.italics;
+    bs << s.kerning;
+    bs << s.zOffset;
+    bs << s.blacklight;
     return bs;
 }
 
@@ -520,16 +520,16 @@ BEGIN_COPYS(RndText)
 END_COPYS
 
 BinStream &operator>>(BinStream &bs, RndText::Style &s) {
-    bs >> s.mFont;
-    bs >> s.mInfo.mSize;
-    bs >> s.mInfo.mTextColor;
-    bs >> s.mInfo.mFontColorOverride;
-    bs >> s.mInfo.mFontColor;
-    bs >> s.mInfo.mItalics;
-    bs >> s.mInfo.mKerning;
-    bs >> s.mInfo.mZOffset;
+    bs >> s.font;
+    bs >> s.size;
+    bs >> s.textColor;
+    bs >> s.fontColorOverride;
+    bs >> s.fontColor;
+    bs >> s.italics;
+    bs >> s.kerning;
+    bs >> s.zOffset;
     if (TEXT_REV >= 0x19) {
-        bs >> s.mBlacklight;
+        bs >> s.blacklight;
     }
     return bs;
 }
@@ -540,7 +540,7 @@ BEGIN_LOADS(RndText)
     LOAD_REVS(bs)
     ASSERT_REVS(0x1C, 1)
     TEXT_REV = d.rev;
-    StyleInfo info;
+    StyleBase info;
     ObjPtr<RndFontBase> fontBase(this);
     if (d.rev > 0xF) {
         LOAD_SUPERCLASS(Hmx::Object)
@@ -578,7 +578,7 @@ BEGIN_LOADS(RndText)
         WideVectorToUTF8(vec, mText);
     }
     if (d.rev > 0 && d.rev < 0x16) {
-        d >> info.mTextColor;
+        d >> info.textColor;
     }
     if (d.rev > 0xC) {
         d >> mWidth;
@@ -626,19 +626,19 @@ BEGIN_LOADS(RndText)
     }
 
     if (d.rev > 9 && d.rev < 0x16) {
-        d >> info.mItalics;
+        d >> info.italics;
     }
     if (d.rev < 0x16) {
         if (d.rev > 0xC) {
-            d >> info.mSize;
+            d >> info.size;
         } else if (fontBase) {
             RndFont *oldfont2d = dynamic_cast<RndFont *>(fontBase.Ptr());
             MILO_ASSERT(oldfont2d, 0xBE9);
-            info.mSize = oldfont2d->DeprecatedSize();
+            info.size = oldfont2d->DeprecatedSize();
         }
     }
     if (d.rev < 0xD) {
-        info.mItalics /= info.mSize;
+        info.italics /= info.size;
     }
     if (d.rev > 0xD) {
         d >> mMarkup;
@@ -678,9 +678,10 @@ BEGIN_LOADS(RndText)
         d >> mStyles;
     } else if (d.rev < 0x16) {
         mStyles.resize(1);
-        info.mZOffset = 0;
-        mStyles[0].mInfo = info;
-        mStyles[0].mFont = fontBase;
+        info.zOffset = 0;
+        StyleBase &base = mStyles[0];
+        base = info;
+        mStyles[0].font = fontBase;
     }
     if (d.rev >= 0x1A) {
         d >> mScrollDelay;
@@ -782,8 +783,8 @@ void RndText::DrawShowing() {
     }
     bool b3 = false;
     FOREACH (it, mStyles) {
-        if (it->mFont && it->mInfo.mFontColorOverride) {
-            int idx = FontMapIndex(it->mFont, it->mBlacklight);
+        if (it->font && it->fontColorOverride) {
+            int idx = FontMapIndex(it->font, it->blacklight);
             if (idx != -1) {
                 b3 = true;
                 FontMapBase *font = mFontMaps[idx];
@@ -908,8 +909,8 @@ int RndText::FontMapIndex(RndFontBase *f, bool b) {
 
 float RndText::ComputeHeight(int i1, float f2, float &f3) {
     float f1;
-    if (mStyles[0].mFont) {
-        f1 = mStyles[0].mFont->AspectRatio() * mStyles[0].mInfo.mSize * f2;
+    if (mStyles[0].font) {
+        f1 = mStyles[0].font->AspectRatio() * mStyles[0].size * f2;
     } else {
         f1 = 0;
     }
@@ -960,11 +961,11 @@ void RndText::BuildFontMaps(bool b1) {
     }
     if (mFontMaps.empty()) {
         for (int i = 0; i < mStyles.size(); i++) {
-            RndFontBase *font = mStyles[i].mFont ? mStyles[i].mFont : mStyles[0].mFont;
+            RndFontBase *font = mStyles[i].font ? mStyles[i].font : mStyles[0].font;
             if (font) {
-                if (FontMapIndex(font, mStyles[i].mBlacklight) == -1) {
+                if (FontMapIndex(font, mStyles[i].blacklight) == -1) {
                     FontMapBase *map = AcquireFontMap(font);
-                    map->mBlacklight = mStyles[i].mBlacklight;
+                    map->mBlacklight = mStyles[i].blacklight;
                     mFontMaps.push_back(map);
                 }
             }
@@ -992,7 +993,7 @@ void RndText::ConstructMeshes(
     FOREACH (it, mFontMaps) {
         (*it)->AllocateMeshes(this, mFixedLength);
     }
-    if (mStyles[0].mFont) {
+    if (mStyles[0].font) {
         StyleState state(this, f3);
         for (int i = 0; i < lines.size(); i++) {
             const Line &curLine = lines[i];
@@ -1008,7 +1009,7 @@ void RndText::ConstructMeshes(
                     }
                 }
                 if (cur != 0) {
-                    mFontMaps[state.unk38]->SetupCharacter(
+                    mFontMaps[state.fontMapIndex]->SetupCharacter(
                         cur, fc, f10, state, usIt, mCircle, mFitType, mIndentation
                     );
                     usIt = cur;
@@ -1034,7 +1035,7 @@ void RndText::SizeCheck() {
                 if (curMesh) {
                     float fref;
                     if (CalcScreenHeight(
-                            curFontBase->AspectRatio() * state.mInfo.mSize, curMesh, fref
+                            curFontBase->AspectRatio() * state.size, curMesh, fref
                         )) {
                         float f11 = curFontBase->FontUnit() * curFontBase->AspectRatio();
                         float f10 = fref < 127.5f ? fref : 127.5f;
@@ -1120,7 +1121,7 @@ void RndText::UpdateText() {
         FitTextJust();
         return;
     }
-    if (mStyles[0].mInfo.mSize > 0 && mWidth > 0) {
+    if (mStyles[0].size > 0 && mWidth > 0) {
         if (mFitType == kFitEllipsis) {
             FitTextEllipsis();
             return;
@@ -1129,8 +1130,7 @@ void RndText::UpdateText() {
             || mFitType == kFitScrollPingPong
             || mFitType == kFitScrollMarqueeWrapAlways) {
             for (int i = 0; i < mStyles.size(); i++) {
-                RndFontBase *font =
-                    mStyles[i].mFont ? mStyles[i].mFont : mStyles[0].mFont;
+                RndFontBase *font = mStyles[i].font ? mStyles[i].font : mStyles[0].font;
 
                 if (font && font->ClassName() == RndFont::StaticClassName()) {
                     continue;
@@ -1173,14 +1173,14 @@ void RndText::FitTextJust() {
     OnComputeCharWidths(wide.begin(), floats, false);
     Hmx::Rect rect;
     WrapText(wide.begin(), ret, floats, lines, rect, 1);
-    float f10 = mStyles[0].mInfo.mSize;
+    float f10 = mStyles[0].size;
     float f7 = 0.2f;
     if ((mWidth && rect.w > mWidth) || (mHeight && rect.h > mHeight)) {
-        float f11 = mStyles[0].mInfo.mSize;
+        float f11 = mStyles[0].size;
         float f6 = 0.2f;
         while (f10 - f7 > 0.2f) {
             f11 = (f6 + f10) / 2;
-            f9 = f11 / mStyles[0].mInfo.mSize;
+            f9 = f11 / mStyles[0].size;
             WrapText(wide.begin(), ret, floats, lines, rect, f9);
             if ((mWidth && rect.w > mWidth) || (mHeight && rect.h > mHeight)) {
                 f7 = f6;
@@ -1189,7 +1189,7 @@ void RndText::FitTextJust() {
             f6 = f7;
         }
         if (f10 == f11) {
-            f9 = f7 / mStyles[0].mInfo.mSize;
+            f9 = f7 / mStyles[0].size;
             WrapText(wide.begin(), ret, floats, lines, rect, f9);
         }
     }
@@ -1214,14 +1214,14 @@ void RndText::FitTextScroll() {
     if (floats[ret] > f11 || mFitType == kFitScrollMarqueeWrapAlways) {
         mWidth = 0;
         unk40 = true;
-        RndFontBase *font = mStyles[0].mFont;
+        RndFontBase *font = mStyles[0].font;
         MILO_ASSERT(font, 0xA9E);
         if (font) {
             unsigned short us;
             DecodeUTF8(us, "8");
             float fref;
             font->CharAdvance(us, us, fref);
-            rect.x = mStyles[0].mInfo.mSize;
+            rect.x = mStyles[0].size;
             f12 = (rect.x + 0x2c + fref) * rect.x;
         }
     }
@@ -1361,43 +1361,42 @@ RndText::ParseMarkup(const unsigned short *us1, StyleState &state, unsigned shor
     usref = 0;
     if (WStrniCmp(p, (const unsigned short *)L"sup", 3) == 0) {
         if (is2f) {
-            state.mInfo.mSize = state.unk3c * state.unk34->mInfo.mSize;
+            state.size = state.scale * state.curStyle->size;
         } else {
-            state.mInfo.mSize =
-                state.unk3c * state.unk34->mInfo.mSize * gSuperscriptScale;
+            state.size = state.scale * state.curStyle->size * gSuperscriptScale;
         }
         p += 3;
     } else if (WStrniCmp(p, (const unsigned short *)L"gtr", 3) == 0) {
         if (is2f) {
-            state.mInfo.mSize = state.unk3c * state.unk34->mInfo.mSize;
+            state.size = state.scale * state.curStyle->size;
         } else {
-            state.mInfo.mSize = state.unk3c * state.unk34->mInfo.mSize * gGuitarScale;
+            state.size = state.scale * state.curStyle->size * gGuitarScale;
         }
         if (is2f) {
-            state.mInfo.mZOffset = state.mInfo.mZOffset;
+            state.zOffset = state.zOffset;
         } else {
-            state.mInfo.mZOffset = gGuitarZOffset;
+            state.zOffset = gGuitarZOffset;
         }
         p += 3;
     } else if (WStrniCmp(p, (const unsigned short *)L"it", 2) == 0) {
         if (is2f) {
-            state.mInfo.mItalics = state.unk34->mInfo.mItalics;
+            state.italics = state.curStyle->italics;
         } else {
-            state.mInfo.mItalics = state.unk34->mInfo.mItalics + 0.1f;
+            state.italics = state.curStyle->italics + 0.1f;
         }
         p += 2;
     } else if (WStrniCmp(p, (const unsigned short *)L"color", 5) == 0) {
         if (is2f) {
-            state.mInfo.mTextColor = state.unk34->mInfo.mTextColor;
+            state.textColor = state.curStyle->textColor;
             p += 5;
         } else {
             int r, g, b;
-            int a = state.mInfo.mTextColor.alpha * 256.0f;
+            int a = state.textColor.alpha * 256.0f;
             swscanf((const wchar_t *)p, L"%d %d %d %d", r, g, b, a);
-            state.mInfo.mTextColor.red = (float)r * 0.003921569f;
-            state.mInfo.mTextColor.green = (float)g * 0.003921569f;
-            state.mInfo.mTextColor.blue = (float)b * 0.003921569f;
-            state.mInfo.mTextColor.alpha = (float)a * 0.003921569f;
+            state.textColor.red = (float)r * 0.003921569f;
+            state.textColor.green = (float)g * 0.003921569f;
+            state.textColor.blue = (float)b * 0.003921569f;
+            state.textColor.alpha = (float)a * 0.003921569f;
             p += 6;
         }
     } else if (WStrniCmp(p, (const unsigned short *)L"&#", 2) == 0) {
@@ -1447,8 +1446,8 @@ void RndText::ReplaceMissingCharacters(std::vector<unsigned short> &vec) {
             unsigned short ref = curUS;
             vecIt = (unsigned short *)ParseMarkup(vecIt, state, ref);
             vecIt--;
-        } else if (curUS != 10 && state.unk38 != -1) {
-            FontMapBase *base = mFontMaps[state.unk38];
+        } else if (curUS != 10 && state.fontMapIndex != -1) {
+            FontMapBase *base = mFontMaps[state.fontMapIndex];
             if (base) {
                 RndFontBase *font = base->Font();
                 if (font && !font->CharDefined(curUS)) {

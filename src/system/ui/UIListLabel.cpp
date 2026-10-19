@@ -98,7 +98,7 @@ void UIListLabelElement::Draw(const Transform &tf, float f3, UIColor *col, Box *
 
         for (int i = 0; i < mLabel->Styles().size(); i++) {
             RndText::Style &curStyle = mLabel->Style(i);
-            alphas[i] = curStyle.mInfo.mFontColor.alpha;
+            alphas[i] = curStyle.fontColor.alpha;
         }
         mLabel->LStyle(0).mColorOverride = col;
         if (mListLabel->GetUnk8c()) {
@@ -107,11 +107,11 @@ void UIListLabelElement::Draw(const Transform &tf, float f3, UIColor *col, Box *
             }
         }
         for (int i = 0; i < mLabel->Styles().size(); i++) {
-            mLabel->Style(i).mInfo.mFontColor.alpha *= f3;
+            mLabel->Style(i).fontColor.alpha *= f3;
         }
         mLabel->DrawShowing();
         for (int i = 0; i < mLabel->Styles().size(); i++) {
-            mLabel->Style(i).mInfo.mFontColor.alpha = alphas[i];
+            mLabel->Style(i).fontColor.alpha = alphas[i];
         }
     }
 }
