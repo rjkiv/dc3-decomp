@@ -6,22 +6,29 @@
 class OSCMessenger {
 public:
     struct OSCValue {
-        String unk0; // 0x0
-        char buffer[0x80]; // 0x8
+        union Type {
+            char s[128];
+            int i;
+            float f;
+            float v[3];
+        };
+
+        String mAddress; // 0x0
+        Type mValue; // 0x8
         char mType; // 0x88
-        bool unk89; // 0x89
+        bool mFresh; // 0x89
     };
     virtual ~OSCMessenger();
 
     void Connect();
     void Poll();
-    int GetInt(String, int);
-    float GetFloat(String, float);
+    int GetInt(String address, int defaultValue);
+    float GetFloat(String address, float defaultValue);
     void SendOSCFloat(String, float);
 
 private:
-    OSCValue *GetValue(String);
-    int MakeOSCAddress(String, char *);
+    OSCValue *GetValue(String address);
+    int MakeOSCAddress(String address, char *out);
 
     NetworkSocket *mSocketIn; // 0x4
     NetworkSocket *mSocketOut; // 0x8

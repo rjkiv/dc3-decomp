@@ -17,10 +17,10 @@ void OSCMessenger::Connect() {
         int ip = HolmesResolveIP().GetIP();
         if (ip != 0) {
             mSocketIn = NetworkSocket::Create(false);
-            mSocketIn->Bind(0x303A);
+            mSocketIn->Bind(12346);
             mSocketIn->Listen();
             mSocketOut = NetworkSocket::Create(false);
-            mSocketOut->Connect(ip, 0x3039);
+            mSocketOut->Connect(ip, 12345);
         }
     }
 }
@@ -34,41 +34,40 @@ void OSCMessenger::Poll() {
         str[0x7f] = 0;
         int pos = strlen(str) / 4 + 1;
         OSCValue value;
-        value.unk0 = str;
-        value.unk89 = 1;
+        value.mAddress = str;
+        value.mFresh = 1;
         MILO_ASSERT(data[pos] == ',', 0x46);
         char c4 = data[pos + 1];
         if (c4 == 's') {
             MILO_ASSERT(data[pos+2] == 0, 0x49);
             MILO_ASSERT(data[pos+3] == 0, 0x4A);
-            strncpy(value.buffer, &data[pos + 4], 0x80);
+            strncpy(value.mValue.s, &data[pos + 4], 0x80);
             value.mType = 's';
         } else if (c4 == 'i') {
             MILO_ASSERT(data[pos+2] == 0, 0x51);
             MILO_ASSERT(data[pos+3] == 0, 0x52);
             value.mType = 'i';
-            value.buffer[0] = data[pos + 4];
+            value.mValue.i = data[pos + 4];
         } else if (c4 == 'f') {
             if (data[pos + 2] == 'f' && data[pos + 3] == 'f') {
                 value.mType = 'v';
-                int *valueBuffer = (int *)value.buffer;
-                int *dataIn = (int *)data;
-                valueBuffer[1] = dataIn[2];
-                valueBuffer[0] = dataIn[1];
-                valueBuffer[2] = dataIn[3];
+                float *dataIn = (float *)data;
+                value.mValue.v[0] = dataIn[1];
+                value.mValue.v[1] = dataIn[2];
+                value.mValue.v[1] = dataIn[3];
             } else {
                 MILO_ASSERT(data[pos+2] == 0, 0x67);
                 MILO_ASSERT(data[pos+3] == 0, 0x68);
                 value.mType = 'f';
-                value.buffer[0] = data[pos + 4];
+                value.mValue.f = data[pos + 4];
             }
         }
         bool found = false;
         FOREACH (it, mValues) {
-            if (it->unk0 == str) {
-                memcpy(it->buffer, value.buffer, 0x80);
+            if (it->mAddress == str) {
+                memcpy(&it->mValue, &value.mValue, 0x80);
                 found = true;
-                it->unk89 = 1;
+                it->mFresh = true;
                 break;
             }
         }
@@ -78,59 +77,66 @@ void OSCMessenger::Poll() {
     }
 }
 
-int OSCMessenger::GetInt(String str, int intValue) {
-    OSCValue *val = GetValue(str);
+int OSCMessenger::GetInt(String address, int intValue) {
+    OSCValue *val = GetValue(address);
     if (val) {
         MILO_ASSERT(val->mType == 'i', 0x131);
-        val->unk89 = 0;
-        return ((int *)val->buffer)[0];
+        val->mFresh = 0;
+        return val->mValue.i;
     } else {
         OSCValue newValue;
-        newValue.unk0 = str;
-        ((int *)newValue.buffer)[0] = intValue;
-        newValue.unk89 = 0;
+        newValue.mAddress = address;
+        newValue.mValue.i = intValue;
+        newValue.mFresh = false;
         newValue.mType = 'i';
         mValues.push_front(newValue);
         return intValue;
     }
 }
 
-float OSCMessenger::GetFloat(String str, float floatValue) {
-    OSCValue *val = GetValue(str);
+float OSCMessenger::GetFloat(String address, float floatValue) {
+    OSCValue *val = GetValue(address);
     if (val) {
         MILO_ASSERT(val->mType == 'f', 0x149);
-        val->unk89 = 0;
-        return ((float *)val->buffer)[0];
+        val->mFresh = 0;
+        return val->mValue.f;
     } else {
         OSCValue newValue;
-        newValue.unk0 = str;
-        ((float *)newValue.buffer)[0] = floatValue;
-        newValue.unk89 = 0;
+        newValue.mAddress = address;
+        newValue.mValue.f = floatValue;
+        newValue.mFresh = false;
         newValue.mType = 'f';
         mValues.push_front(newValue);
         return floatValue;
     }
 }
 
-void OSCMessenger::SendOSCFloat(String str, float floatValue) {
-    char buffer[256];
+void OSCMessenger::SendOSCFloat(String address, float floatValue) {
+    char message[256];
     if (mSocketOut) {
-        int addr = MakeOSCAddress(str, buffer);
-        char *bufPtr = &buffer[addr];
-        *bufPtr++ = ',';
-        *bufPtr++ = 'f';
-        *bufPtr++ = '\0';
-        *bufPtr++ = '\0';
-        memcpy(bufPtr, &floatValue, 4);
-        mSocketOut->Send(buffer, addr + 8);
+        int addr = MakeOSCAddress(address, message);
+        message[addr++] = ',';
+        message[addr++] = 'f';
+        message[addr++] = '\0';
+        message[addr++] = '\0';
+        memcpy(&message[addr], &floatValue, sizeof(float));
+        mSocketOut->Send(message, addr + 4);
     }
 }
 
-OSCMessenger::OSCValue *OSCMessenger::GetValue(String str) {
+OSCMessenger::OSCValue *OSCMessenger::GetValue(String address) {
     FOREACH (it, mValues) {
-        if (it->unk0 == str) {
+        if (it->mAddress == address) {
             return &*it;
         }
     }
     return nullptr;
+}
+
+int OSCMessenger::MakeOSCAddress(String address, char *out) {
+    int len = address.length();
+    strncpy(out, address.c_str(), 0x80);
+    int mod = len % 4;
+    memset(&out[len], 0, 4 - mod);
+    return len - mod + 4;
 }
