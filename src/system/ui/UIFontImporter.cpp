@@ -26,21 +26,23 @@ int ConvertPctHeightToHeightNG(float f) { return -Round(f * HEIGHT_HD); }
 int ConvertPctHeightToHeightOG(float f) { return -Round(f * HEIGHT_SD); }
 
 UIFontImporter::UIFontImporter()
-    : mUpperCaseAthroughZ(1), mLowerCaseAthroughZ(1), mNumbers0through9(1),
-      mPunctuation(1), mUpperEuro(1), mLowerEuro(1), mRussian(0), mPolish(0),
-      mIncludeLocale(0), mIncludeFile(""), mFontName("Arial"),
-      mFontPctSize(ConvertHeightNGToPctHeight(12)), mFontWeight(400), mItalics(false),
-      mDropShadow(0), mDropShadowOpacity(128), mFontQuality(0), mPitchAndFamily(34),
-      mFontCharset(0), mFontSupersample(0), mLeft(0), mRight(0), mTop(0), mBottom(0),
-      mFillWithSafeWhite(false), mFontToImportFrom(this), mBitmapSavePath("ui/image/"),
-      mBitMapSaveName("temp.bmp"), mGennedFonts(this), mReferenceKerning(this),
-      mMatVariations(this), mHandmadeFont(this), mCheckNG(false), mLastGenWasNG(true) {
+    : mIncludeUpperCase(1), mIncludeLowerCase(1), mIncludeNumbers(1),
+      mIncludePunctuation(1), mIncludeUpperEuro(1), mIncludeLowerEuro(1),
+      mIncludeRussian(0), mIncludePolish(0), mIncludeLocaleData(0), mIncludeDataFile(""),
+      mFontName("Arial"), mFontPctSize(ConvertHeightNGToPctHeight(12)), mFontWeight(400),
+      mIsFontItalic(false), mDropShadow(0), mDropShadowOpacity(128),
+      mFontQuality(kFontQuality_AntiAliased), mPitchAndFamily(34), mFontCharset(0),
+      mFontSupersample(kFontSuperSample_None), mTexPadLeft(0), mTexPadRight(0),
+      mTexPadTop(0), mTexPadBottom(0), mFillWithSafeWhite(false),
+      mImportSettingsFont(this), mBitmapPath("ui/image/"), mBitmapFileName("temp.bmp"),
+      mGennedFonts(this), mKerningReference(this), mMatVariations(this),
+      mHandmadeFont(this), mCheckNG(false), mLastGenWasNG(true) {
     static Symbol objects("objects");
     static Symbol default_bitmap_path("default_bitmap_path");
     DataArray *cfgArr =
         SystemConfig(objects, StaticClassName())->FindArray(default_bitmap_path, false);
     if (cfgArr) {
-        mBitmapSavePath = cfgArr->Str(1);
+        mBitmapPath = cfgArr->Str(1);
     }
     GenerateBitmapFilename();
 }
@@ -64,18 +66,18 @@ BEGIN_HANDLERS(UIFontImporter)
 END_HANDLERS
 
 BEGIN_PROPSYNCS(UIFontImporter)
-    SYNC_PROP(UPPER_CASE_A_Z, mUpperCaseAthroughZ)
-    SYNC_PROP(lower_case_a_z, mLowerCaseAthroughZ)
-    SYNC_PROP(numbers_0_9, mNumbers0through9)
-    SYNC_PROP(punctuation, mPunctuation)
-    SYNC_PROP(UPPER_EURO, mUpperEuro)
-    SYNC_PROP(lower_euro, mLowerEuro)
-    SYNC_PROP(russian, mRussian)
-    SYNC_PROP(polish, mPolish)
-    SYNC_PROP(include_locale, mIncludeLocale)
-    SYNC_PROP(include_file, mIncludeFile)
-    SYNC_PROP_SET(plus, GetASCIIPlusChars(), ASCIItoWideVector(mPlus, _val.Str()))
-    SYNC_PROP_SET(minus, GetASCIIMinusChars(), ASCIItoWideVector(mMinus, _val.Str()))
+    SYNC_PROP(UPPER_CASE_A_Z, mIncludeUpperCase)
+    SYNC_PROP(lower_case_a_z, mIncludeLowerCase)
+    SYNC_PROP(numbers_0_9, mIncludeNumbers)
+    SYNC_PROP(punctuation, mIncludePunctuation)
+    SYNC_PROP(UPPER_EURO, mIncludeUpperEuro)
+    SYNC_PROP(lower_euro, mIncludeLowerEuro)
+    SYNC_PROP(russian, mIncludeRussian)
+    SYNC_PROP(polish, mIncludePolish)
+    SYNC_PROP(include_locale, mIncludeLocaleData)
+    SYNC_PROP(include_file, mIncludeDataFile)
+    SYNC_PROP_SET(plus, GetASCIIPlusChars(), ASCIItoWideVector(mPlusChars, _val.Str()))
+    SYNC_PROP_SET(minus, GetASCIIMinusChars(), ASCIItoWideVector(mMinusChars, _val.Str()))
     SYNC_PROP(font_name, mFontName)
     SYNC_PROP_MODIFY(font_pct_size, mFontPctSize, GenerateBitmapFilename())
     SYNC_PROP_SET(
@@ -100,23 +102,23 @@ BEGIN_PROPSYNCS(UIFontImporter)
 
         GenerateBitmapFilename()
     )
-    SYNC_PROP_MODIFY(italics, mItalics, GenerateBitmapFilename())
+    SYNC_PROP_MODIFY(italics, mIsFontItalic, GenerateBitmapFilename())
     SYNC_PROP_MODIFY(drop_shadow, mDropShadow, GenerateBitmapFilename())
     SYNC_PROP(drop_shadow_opacity, mDropShadowOpacity)
     SYNC_PROP(font_quality, (int &)mFontQuality)
     SYNC_PROP(pitch_and_family, mPitchAndFamily)
     SYNC_PROP(font_charset, mFontCharset)
     SYNC_PROP_MODIFY(font_supersample, (int &)mFontSupersample, GenerateBitmapFilename())
-    SYNC_PROP(left, mLeft)
-    SYNC_PROP(right, mRight)
-    SYNC_PROP(top, mTop)
-    SYNC_PROP(bottom, mBottom)
+    SYNC_PROP(left, mTexPadLeft)
+    SYNC_PROP(right, mTexPadRight)
+    SYNC_PROP(top, mTexPadTop)
+    SYNC_PROP(bottom, mTexPadBottom)
     SYNC_PROP(fill_with_safe_white, mFillWithSafeWhite)
-    SYNC_PROP(font_to_import_from, mFontToImportFrom)
-    SYNC_PROP(bitmap_save_path, mBitmapSavePath)
-    SYNC_PROP(bitmap_save_name, mBitMapSaveName)
+    SYNC_PROP(font_to_import_from, mImportSettingsFont)
+    SYNC_PROP(bitmap_save_path, mBitmapPath)
+    SYNC_PROP(bitmap_save_name, mBitmapFileName)
     SYNC_PROP(gened_fonts, mGennedFonts)
-    SYNC_PROP(reference_kerning, mReferenceKerning)
+    SYNC_PROP(reference_kerning, mKerningReference)
     SYNC_PROP_MODIFY(mat_variations, mMatVariations, SyncWithGennedFonts())
     SYNC_PROP_MODIFY(handmade_font, mHandmadeFont, HandmadeFontChanged())
     SYNC_PROP(resource_name, mSyncResource)
@@ -126,40 +128,40 @@ END_PROPSYNCS
 
 BEGIN_SAVES(UIFontImporter)
     SAVE_REVS(10, 4)
-    bs << mLowerCaseAthroughZ;
-    bs << mUpperCaseAthroughZ;
-    bs << mNumbers0through9;
-    bs << mPunctuation;
-    bs << mUpperEuro;
-    bs << mLowerEuro;
-    bs << mRussian;
-    bs << mPolish;
-    bs << mIncludeLocale;
-    bs << mIncludeFile;
+    bs << mIncludeLowerCase;
+    bs << mIncludeUpperCase;
+    bs << mIncludeNumbers;
+    bs << mIncludePunctuation;
+    bs << mIncludeUpperEuro;
+    bs << mIncludeLowerEuro;
+    bs << mIncludeRussian;
+    bs << mIncludePolish;
+    bs << mIncludeLocaleData;
+    bs << mIncludeDataFile;
     String utf8;
-    WideVectorToUTF8(mPlus, utf8);
+    WideVectorToUTF8(mPlusChars, utf8);
     bs << utf8;
-    WideVectorToUTF8(mMinus, utf8);
+    WideVectorToUTF8(mMinusChars, utf8);
     bs << utf8;
     bs << mFontName;
     bs << mFontPctSize;
     bs << mFontWeight;
-    bs << mItalics;
+    bs << mIsFontItalic;
     bs << mDropShadow;
     bs << mDropShadowOpacity;
     bs << mPitchAndFamily;
     bs << mFontQuality;
     bs << mFontCharset;
     bs << mFontSupersample;
-    bs << mBitmapSavePath;
-    bs << mBitMapSaveName;
-    bs << mLeft;
-    bs << mRight;
-    bs << mTop;
-    bs << mBottom;
+    bs << mBitmapPath;
+    bs << mBitmapFileName;
+    bs << mTexPadLeft;
+    bs << mTexPadRight;
+    bs << mTexPadTop;
+    bs << mTexPadBottom;
     bs << mFillWithSafeWhite;
     bs << mGennedFonts;
-    bs << mReferenceKerning;
+    bs << mKerningReference;
     bs << mMatVariations;
     bs << mHandmadeFont;
     bs << mSyncResource;
@@ -169,38 +171,38 @@ END_SAVES
 BEGIN_COPYS(UIFontImporter)
     CREATE_COPY(UIFontImporter)
     BEGIN_COPYING_MEMBERS
-        COPY_MEMBER(mLowerCaseAthroughZ)
-        COPY_MEMBER(mUpperCaseAthroughZ)
-        COPY_MEMBER(mNumbers0through9)
-        COPY_MEMBER(mPunctuation)
-        COPY_MEMBER(mUpperEuro)
-        COPY_MEMBER(mLowerEuro)
-        COPY_MEMBER(mRussian)
-        COPY_MEMBER(mPolish)
-        COPY_MEMBER(mIncludeLocale)
-        COPY_MEMBER(mIncludeFile)
-        COPY_MEMBER(mPlus)
-        COPY_MEMBER(mMinus)
+        COPY_MEMBER(mIncludeLowerCase)
+        COPY_MEMBER(mIncludeUpperCase)
+        COPY_MEMBER(mIncludeNumbers)
+        COPY_MEMBER(mIncludePunctuation)
+        COPY_MEMBER(mIncludeUpperEuro)
+        COPY_MEMBER(mIncludeLowerEuro)
+        COPY_MEMBER(mIncludeRussian)
+        COPY_MEMBER(mIncludePolish)
+        COPY_MEMBER(mIncludeLocaleData)
+        COPY_MEMBER(mIncludeDataFile)
+        COPY_MEMBER(mPlusChars)
+        COPY_MEMBER(mMinusChars)
         COPY_MEMBER(mFontName)
         COPY_MEMBER(mFontPctSize)
         COPY_MEMBER(mFontWeight)
-        COPY_MEMBER(mItalics)
+        COPY_MEMBER(mIsFontItalic)
         COPY_MEMBER(mDropShadow)
         COPY_MEMBER(mDropShadowOpacity)
         COPY_MEMBER(mFontQuality)
         COPY_MEMBER(mPitchAndFamily)
         COPY_MEMBER(mFontQuality)
         COPY_MEMBER(mFontCharset)
-        COPY_MEMBER(mBitmapSavePath)
-        COPY_MEMBER(mBitMapSaveName)
+        COPY_MEMBER(mBitmapPath)
+        COPY_MEMBER(mBitmapFileName)
         COPY_MEMBER(mFontSupersample)
-        COPY_MEMBER(mLeft)
-        COPY_MEMBER(mRight)
-        COPY_MEMBER(mTop)
-        COPY_MEMBER(mBottom)
+        COPY_MEMBER(mTexPadLeft)
+        COPY_MEMBER(mTexPadRight)
+        COPY_MEMBER(mTexPadTop)
+        COPY_MEMBER(mTexPadBottom)
         COPY_MEMBER(mFillWithSafeWhite)
         COPY_MEMBER(mGennedFonts)
-        COPY_MEMBER(mReferenceKerning)
+        COPY_MEMBER(mKerningReference)
         COPY_MEMBER(mMatVariations)
         COPY_MEMBER(mHandmadeFont)
         COPY_MEMBER(mSyncResource)
@@ -213,28 +215,28 @@ INIT_REVS(10, 4)
 BEGIN_LOADS(UIFontImporter)
     LOAD_REVS(bs)
     ASSERT_REVS(10, 4)
-    d >> mLowerCaseAthroughZ;
-    d >> mUpperCaseAthroughZ;
-    d >> mNumbers0through9;
-    d >> mPunctuation;
-    d >> mUpperEuro;
-    d >> mLowerEuro;
+    d >> mIncludeLowerCase;
+    d >> mIncludeUpperCase;
+    d >> mIncludeNumbers;
+    d >> mIncludePunctuation;
+    d >> mIncludeUpperEuro;
+    d >> mIncludeLowerEuro;
     if (d.altRev > 0) {
-        d >> mRussian;
-        d >> mPolish;
-        d >> mIncludeLocale;
-        d >> mIncludeFile;
+        d >> mIncludeRussian;
+        d >> mIncludePolish;
+        d >> mIncludeLocaleData;
+        d >> mIncludeDataFile;
     }
     String plus;
     String minus;
     d >> plus;
     d >> minus;
     if (d.altRev < 4) {
-        ASCIItoWideVector(mPlus, plus.c_str());
-        ASCIItoWideVector(mMinus, minus.c_str());
+        ASCIItoWideVector(mPlusChars, plus.c_str());
+        ASCIItoWideVector(mMinusChars, minus.c_str());
     } else {
-        UTF8toWideVector(mPlus, plus.c_str());
-        UTF8toWideVector(mMinus, minus.c_str());
+        UTF8toWideVector(mPlusChars, plus.c_str());
+        UTF8toWideVector(mMinusChars, minus.c_str());
     }
     d >> mFontName;
     if (d.rev <= 4) {
@@ -245,7 +247,7 @@ BEGIN_LOADS(UIFontImporter)
         d >> mFontPctSize;
     }
     d >> mFontWeight;
-    d >> mItalics;
+    d >> mIsFontItalic;
     if (d.altRev > 1) {
         d >> mDropShadow;
     }
@@ -253,24 +255,24 @@ BEGIN_LOADS(UIFontImporter)
         d >> mDropShadowOpacity;
     }
     d >> mPitchAndFamily;
-    d >> mFontQuality;
+    d >> (int &)mFontQuality;
     d >> mFontCharset;
     if (d.rev > 1) {
-        d >> mFontSupersample;
+        d >> (int &)mFontSupersample;
     }
-    d >> mBitmapSavePath;
-    d >> mBitMapSaveName;
-    d >> mLeft;
-    d >> mRight;
-    d >> mTop;
-    d >> mBottom;
+    d >> mBitmapPath;
+    d >> mBitmapFileName;
+    d >> mTexPadLeft;
+    d >> mTexPadRight;
+    d >> mTexPadTop;
+    d >> mTexPadBottom;
     d >> mFillWithSafeWhite;
     if (d.rev < 8) {
-        d >> mFontToImportFrom;
+        d >> mImportSettingsFont;
     }
     if (d.rev > 2) {
         d >> mGennedFonts;
-        d >> mReferenceKerning;
+        d >> mKerningReference;
     }
     if (d.rev == 3) {
         ObjPtr<RndMat> mat(this);
@@ -340,7 +342,7 @@ void UIFontImporter::AttachImporterToFont(RndFontBase *font) {
             mGennedFonts.clear();
             mMatVariations.clear();
             mGennedFonts.push_back(font);
-            mReferenceKerning = font;
+            mKerningReference = font;
             ImportSettingsFromFont(font);
         }
     }
@@ -357,10 +359,10 @@ void UIFontImporter::GenerateBitmapFilename() {
     s28.ReplaceAll('.', '_');
     const char *s = mDropShadow ? "S" : "";
     const char *b = (mFontWeight > 500) ? "B" : "";
-    const char *i = mItalics ? "I" : "";
-    mBitMapSaveName =
+    const char *i = mIsFontItalic ? "I" : "";
+    mBitmapFileName =
         MakeString("%s(%s)%s%s%s%s.bmp", mFontName.c_str(), s28.c_str(), i, b, s, mult);
-    mBitMapSaveName.ReplaceAll(' ', '_');
+    mBitmapFileName.ReplaceAll(' ', '_');
 }
 
 RndFontBase *UIFontImporter::FindFontForMat(RndMat *mat) const {
@@ -382,19 +384,19 @@ RndFontBase *UIFontImporter::FindFontForMat(RndMat *mat) const {
 }
 
 void UIFontImporter::OnSetCharsetUTF8(String const &s) {
-    mLowerEuro = false;
-    mUpperEuro = false;
-    mPunctuation = false;
-    mNumbers0through9 = false;
-    mLowerCaseAthroughZ = false;
-    mUpperCaseAthroughZ = false;
-    mIncludeLocale = false;
-    mPolish = false;
-    mRussian = false;
-    mIncludeFile = "";
-    mMinus.clear();
-    mPlus.clear();
-    UTF8toWideVector(mPlus, s.c_str());
+    mIncludeLowerEuro = false;
+    mIncludeUpperEuro = false;
+    mIncludePunctuation = false;
+    mIncludeNumbers = false;
+    mIncludeLowerCase = false;
+    mIncludeUpperCase = false;
+    mIncludeLocaleData = false;
+    mIncludePolish = false;
+    mIncludeRussian = false;
+    mIncludeDataFile = "";
+    mMinusChars.clear();
+    mPlusChars.clear();
+    UTF8toWideVector(mPlusChars, s.c_str());
 }
 
 RndText *UIFontImporter::FindTextForFont(RndFontBase *font) const {
@@ -415,25 +417,37 @@ RndText *UIFontImporter::FindTextForFont(RndFontBase *font) const {
 
 String UIFontImporter::GetASCIIPlusChars() {
     static String plusChars;
-    plusChars = WideVectorToASCII(mPlus);
+    plusChars = WideVectorToASCII(mPlusChars);
     return plusChars;
 }
 
 String UIFontImporter::GetASCIIMinusChars() {
     static String minusChars;
-    minusChars = WideVectorToASCII(mMinus);
+    minusChars = WideVectorToASCII(mMinusChars);
     return minusChars;
 }
 
-Symbol UIFontImporter::GetMatVariationName(unsigned int ui) const {
-    if (ui >= mMatVariations.size()) {
+Symbol UIFontImporter::GetMatVariationName(unsigned int idx) const {
+    if (idx >= mMatVariations.size()) {
         return Symbol();
     } else {
         auto it = mMatVariations.begin();
-        for (int i = 0; i < ui; i++) {
+        for (int i = 0; i < idx; i++) {
             ++it;
         }
         return FileGetBase((*it)->Name());
+    }
+}
+
+RndFontBase *UIFontImporter::GetGennedFont(unsigned int idx) const {
+    if (idx >= mGennedFonts.size()) {
+        return nullptr;
+    } else {
+        auto it = mGennedFonts.begin();
+        for (int i = 0; i < idx; i++) {
+            ++it;
+        }
+        return *it;
     }
 }
 
@@ -441,9 +455,7 @@ const char *UIFontImporter::GetMatVariationName(RndFontBase *font) const {
     if (font && font->Mat()) {
         RndMat *mat = font->Mat();
         if (mGennedFonts.size() > 0) {
-            RndFontBase *front =
-                mGennedFonts.size() != 0 ? *mGennedFonts.begin() : nullptr;
-            if (mat == front->Mat()) {
+            if (mat == GetGennedFont(0)->Mat()) {
                 return "";
             }
         }
@@ -459,6 +471,18 @@ const char *UIFontImporter::GetMatVariationName(RndFontBase *font) const {
     return "";
 }
 
+RndMat *UIFontImporter::GetMatVariation(unsigned int idx) const {
+    if (idx >= mMatVariations.size()) {
+        return nullptr;
+    } else {
+        auto it = mMatVariations.begin();
+        for (int i = 0; i != idx; i++) {
+            ++it;
+        }
+        return *it;
+    }
+}
+
 RndFontBase *UIFontImporter::GetGennedFont(Symbol s) const {
     if (s.Null()) {
         return *mGennedFonts.begin();
@@ -467,17 +491,7 @@ RndFontBase *UIFontImporter::GetGennedFont(Symbol s) const {
         if (idx == -1) {
             return nullptr;
         } else {
-            RndMat *mat;
-            if (idx >= mMatVariations.size()) {
-                mat = nullptr;
-            } else {
-                auto it = mMatVariations.begin();
-                for (int i = 0; i != idx; i++) {
-                    ++it;
-                }
-                mat = *it;
-            }
-            return FindFontForMat(mat);
+            return FindFontForMat(GetMatVariation(idx));
         }
     }
 }
@@ -530,21 +544,21 @@ void UIFontImporter::HandmadeFontChanged() {
         } else {
             mGennedFonts.push_back(mHandmadeFont);
         }
-        mReferenceKerning = mHandmadeFont;
-        mLowerEuro = false;
-        mUpperEuro = false;
-        mPunctuation = false;
-        mNumbers0through9 = false;
-        mLowerCaseAthroughZ = false;
-        mUpperCaseAthroughZ = false;
-        mIncludeLocale = false;
-        mPolish = false;
-        mRussian = false;
-        mIncludeFile = "";
-        mMinus.clear();
-        mPlus = mHandmadeFont->Chars();
+        mKerningReference = mHandmadeFont;
+        mIncludeLowerEuro = false;
+        mIncludeUpperEuro = false;
+        mIncludePunctuation = false;
+        mIncludeNumbers = false;
+        mIncludeLowerCase = false;
+        mIncludeUpperCase = false;
+        mIncludeLocaleData = false;
+        mIncludePolish = false;
+        mIncludeRussian = false;
+        mIncludeDataFile = "";
+        mMinusChars.clear();
+        mPlusChars = mHandmadeFont->Chars();
     }
-    if (HandMadeFontExists()) {
+    if (IsHandmade()) {
         mHandmadeFont->ClassName() == RndFont3d::StaticClassName();
     }
 }
@@ -563,7 +577,7 @@ DataNode UIFontImporter::OnGetGennedBitmapPath(DataArray *da) {
 }
 
 DataNode UIFontImporter::OnImportSettings(DataArray *da) {
-    ImportSettingsFromFont(mFontToImportFrom);
+    ImportSettingsFromFont(mImportSettingsFont);
     return 0;
 }
 
@@ -573,7 +587,7 @@ DataNode UIFontImporter::OnForgetGened(DataArray *) {
 }
 
 DataNode UIFontImporter::OnAttachToImportFont(DataArray *) {
-    AttachImporterToFont(mFontToImportFrom);
+    AttachImporterToFont(mImportSettingsFont);
     return 0;
 }
 
@@ -609,42 +623,42 @@ DataNode UIFontImporter::OnSyncWithResourceFile(DataArray *a) {
             ObjDirPtr<UILabelDir> labelDir;
             labelDir.LoadFile(path, false, true, kLoadFront, false);
             if (labelDir.IsLoaded()) {
-                mLowerCaseAthroughZ = labelDir->mLowerCaseAthroughZ;
-                mUpperCaseAthroughZ = labelDir->mUpperCaseAthroughZ;
-                mNumbers0through9 = labelDir->mNumbers0through9;
-                mPunctuation = labelDir->mPunctuation;
-                mUpperEuro = labelDir->mUpperEuro;
-                mLowerEuro = labelDir->mLowerEuro;
-                mRussian = labelDir->mRussian;
-                mPolish = labelDir->mPolish;
-                mIncludeLocale = labelDir->mIncludeLocale;
-                mIncludeFile = labelDir->mIncludeFile;
-                mPlus = labelDir->mPlus;
-                mMinus = labelDir->mMinus;
+                mIncludeLowerCase = labelDir->mIncludeLowerCase;
+                mIncludeUpperCase = labelDir->mIncludeUpperCase;
+                mIncludeNumbers = labelDir->mIncludeNumbers;
+                mIncludePunctuation = labelDir->mIncludePunctuation;
+                mIncludeUpperEuro = labelDir->mIncludeUpperEuro;
+                mIncludeLowerEuro = labelDir->mIncludeLowerEuro;
+                mIncludeRussian = labelDir->mIncludeRussian;
+                mIncludePolish = labelDir->mIncludePolish;
+                mIncludeLocaleData = labelDir->mIncludeLocaleData;
+                mIncludeDataFile = labelDir->mIncludeDataFile;
+                mPlusChars = labelDir->mPlusChars;
+                mMinusChars = labelDir->mMinusChars;
                 mFontName = labelDir->mFontName;
                 mFontPctSize = labelDir->mFontPctSize;
                 mFontWeight = labelDir->mFontWeight;
-                mItalics = labelDir->mItalics;
+                mIsFontItalic = labelDir->mIsFontItalic;
                 mDropShadow = labelDir->mDropShadow;
                 mDropShadowOpacity = labelDir->mDropShadowOpacity;
                 mFontQuality = labelDir->mFontQuality;
                 mPitchAndFamily = labelDir->mPitchAndFamily;
                 mFontQuality = labelDir->mFontQuality;
                 mFontCharset = labelDir->mFontCharset;
-                mBitmapSavePath = labelDir->mBitmapSavePath;
-                mBitMapSaveName = labelDir->mBitMapSaveName;
+                mBitmapPath = labelDir->mBitmapPath;
+                mBitmapFileName = labelDir->mBitmapFileName;
                 mFontSupersample = labelDir->mFontSupersample;
-                mLeft = labelDir->mLeft;
-                mRight = labelDir->mRight;
-                mTop = labelDir->mTop;
-                mBottom = labelDir->mBottom;
+                mTexPadLeft = labelDir->mTexPadLeft;
+                mTexPadRight = labelDir->mTexPadRight;
+                mTexPadTop = labelDir->mTexPadTop;
+                mTexPadBottom = labelDir->mTexPadBottom;
                 mFillWithSafeWhite = labelDir->mFillWithSafeWhite;
-                if (mReferenceKerning && labelDir->mReferenceKerning) {
+                if (mKerningReference && labelDir->mKerningReference) {
                     std::vector<RndFontBase::KernInfo> kernInfo;
-                    labelDir->mReferenceKerning->GetKerning(kernInfo);
-                    mReferenceKerning->SetKerning(kernInfo);
-                    mReferenceKerning->SetBaseKerning(
-                        labelDir->mReferenceKerning->BaseKerning()
+                    labelDir->mKerningReference->GetKerning(kernInfo);
+                    mKerningReference->SetKerning(kernInfo);
+                    mKerningReference->SetBaseKerning(
+                        labelDir->mKerningReference->BaseKerning()
                     );
                 }
             }

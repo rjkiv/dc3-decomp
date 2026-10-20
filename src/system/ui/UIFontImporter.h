@@ -7,20 +7,21 @@
 #include "utl/MemMgr.h"
 #include "utl/Str.h"
 
+enum FontQuality {
+    kFontQuality_AntiAliased,
+    kFontQuality_ClearType,
+    kFontQuality_Default
+};
+
+enum FontSuperSample {
+    kFontSuperSample_None,
+    kFontSuperSample_2x,
+    kFontSuperSample_4x
+};
+
 /** "Class supporting font importing.  To be included in font resource file classes." */
 class UIFontImporter : public virtual Hmx::Object {
 public:
-    enum FontQuality {
-        kFontQuality_AntiAliased,
-        kFontQuality_ClearType,
-        kFontQuality_Default
-    };
-
-    enum FontSuperSample {
-        kFontSuperSample_None,
-        kFontSuperSample_2x,
-        kFontSuperSample_4x
-    };
     // Hmx::Object
     virtual ~UIFontImporter() {}
     OBJ_CLASSNAME(UIFontImporter);
@@ -34,16 +35,18 @@ public:
     NEW_OBJ(UIFontImporter)
     OBJ_MEM_OVERLOAD(0x2A);
 
-    void ImportSettingsFromFont(RndFontBase *);
-    Symbol GetMatVariationName(unsigned int) const;
-    const char *GetMatVariationName(RndFontBase *) const;
-    int GetMatVariationIdx(Symbol) const;
-    RndFontBase *GetGennedFont(Symbol) const;
-    void AttachImporterToFont(RndFontBase *);
+    void ImportSettingsFromFont(RndFontBase *f);
+    Symbol GetMatVariationName(unsigned int idx) const;
+    const char *GetMatVariationName(RndFontBase *font) const;
+    int GetMatVariationIdx(Symbol name) const;
+    RndFontBase *GetGennedFont(Symbol matName) const;
+    RndFontBase *GetGennedFont(unsigned int idx) const;
+    // public: RndText* GetGennedText(Symbol) const;
+    RndMat *GetMatVariation(unsigned int idx) const;
+    void AttachImporterToFont(RndFontBase *f);
 
     int NumMatVariations() const { return mMatVariations.size(); }
-    int NumGennedFonts() const { return mGennedFonts.size(); }
-    bool HandMadeFontExists() const { return mHandmadeFont; }
+    bool IsHandmade() const { return mHandmadeFont; }
 
 protected:
     UIFontImporter();
@@ -53,7 +56,7 @@ protected:
     String GetASCIIMinusChars();
     void SyncWithGennedFonts();
     void HandmadeFontChanged();
-    RndFontBase *FindFontForMat(RndMat *) const;
+    RndFontBase *FindFontForMat(RndMat *mat) const;
     DataNode OnShowFontPicker(DataArray *);
     DataNode OnGenerate(DataArray *);
     DataNode OnGenerateOG(DataArray *);
@@ -62,54 +65,54 @@ protected:
     DataNode OnImportSettings(DataArray *);
     DataNode OnForgetGened(DataArray *);
     DataNode OnAttachToImportFont(DataArray *);
-    void OnSetCharsetUTF8(String const &);
+    void OnSetCharsetUTF8(const String &utf8chars);
     DataNode OnSyncWithResourceFile(DataArray *);
-    RndText *FindTextForFont(RndFontBase *) const;
+    RndText *FindTextForFont(RndFontBase *font) const;
 
     /** "include uppercase letters" */
-    bool mUpperCaseAthroughZ; // 0x4
+    bool mIncludeUpperCase; // 0x4
     /** "include lowercase letters" */
-    bool mLowerCaseAthroughZ; // 0x5
+    bool mIncludeLowerCase; // 0x5
     /** "include the number 0-9" */
-    bool mNumbers0through9; // 0x6
+    bool mIncludeNumbers; // 0x6
     /** "include punctuation characters" */
-    bool mPunctuation; // 0x7
+    bool mIncludePunctuation; // 0x7
     /** "include uppercase euro chars" */
-    bool mUpperEuro; // 0x8
+    bool mIncludeUpperEuro; // 0x8
     /** "include lowercase euro chars" */
-    bool mLowerEuro; // 0x9
-    bool mRussian; // 0xa
-    bool mPolish; // 0xb
-    bool mIncludeLocale; // 0xc
-    String mIncludeFile; // 0x10
-    std::vector<unsigned short> mPlus; // 0x18
-    std::vector<unsigned short> mMinus; // 0x24
+    bool mIncludeLowerEuro; // 0x9
+    bool mIncludeRussian; // 0xa
+    bool mIncludePolish; // 0xb
+    bool mIncludeLocaleData; // 0xc
+    String mIncludeDataFile; // 0x10
+    std::vector<unsigned short> mPlusChars; // 0x18
+    std::vector<unsigned short> mMinusChars; // 0x24
     String mFontName; // 0x30
     float mFontPctSize; // 0x38
     int mFontWeight; // 0x3c
-    bool mItalics; // 0x40
+    bool mIsFontItalic; // 0x40
     int mDropShadow; // 0x44
     int mDropShadowOpacity; // 0x48
-    int mFontQuality; // 0x4c
+    FontQuality mFontQuality; // 0x4c
     int mPitchAndFamily; // 0x50
     int mFontCharset; // 0x54
-    int mFontSupersample; // 0x58
+    FontSuperSample mFontSupersample; // 0x58
     /** "pixels of padding on the left side of each character" */
-    int mLeft; // 0x5c
+    int mTexPadLeft; // 0x5c
     /** "pixels of padding on the left side of each character" */
-    int mRight; // 0x60
+    int mTexPadRight; // 0x60
     /** "pixels of padding on the left side of each character" */
-    int mTop; // 0x64
+    int mTexPadTop; // 0x64
     /** "pixels of padding on the left side of each character" */
-    int mBottom; // 0x68
+    int mTexPadBottom; // 0x68
     bool mFillWithSafeWhite; // 0x6c
-    ObjPtr<RndFont> mFontToImportFrom; // 0x70
+    ObjPtr<RndFont> mImportSettingsFont; // 0x70
     /** "path to save bitmap to (i.e. ui/image/)" */
-    String mBitmapSavePath; // 0x84
+    String mBitmapPath; // 0x84
     /** "name of the bitmap file (i.e. Arial(12).BMP)" */
-    String mBitMapSaveName; // 0x8c
+    String mBitmapFileName; // 0x8c
     ObjPtrList<RndFontBase> mGennedFonts; // 0x94
-    ObjPtr<RndFontBase> mReferenceKerning; // 0xa8
+    ObjPtr<RndFontBase> mKerningReference; // 0xa8
     ObjPtrList<RndMat> mMatVariations; // 0xbc
     ObjPtr<RndFontBase> mHandmadeFont; // 0xd0
     bool mCheckNG; // 0xe4
