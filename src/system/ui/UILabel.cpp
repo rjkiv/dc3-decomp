@@ -54,7 +54,7 @@ BEGIN_HANDLERS(UILabel)
         get_font_mats, UILabelDir::GetMatVariations(LStyle(_msg->Int(2)).mFontResource)
     )
     HANDLE(set_height_from_text, OnSetHeightFromText)
-    HANDLE_EXPR(draw_rect_width, mDrawRect.w)
+    HANDLE_EXPR(draw_rect_width, mCachedRect.w)
     HANDLE_ACTION(reload_string, (SetTextToken(mTextToken), mDirty = true))
     HANDLE_SUPERCLASS(UIComponent)
 END_HANDLERS
@@ -126,7 +126,7 @@ BEGIN_PROPSYNCS(UILabel)
     SYNC_PROP_SET(edit_text, mEditText.c_str(), SetEditText(_val.Str()))
     SYNC_PROP_MODIFY(width, mWidth, Update())
     SYNC_PROP_MODIFY(height, mHeight, Update())
-    SYNC_PROP_MODIFY(circle, mCircle, Update())
+    SYNC_PROP_MODIFY(circle, mCircleCircumference, Update())
     SYNC_PROP_MODIFY(alignment, (int &)mAlignment, Update())
     SYNC_PROP_MODIFY(fit_type, (int &)mFitType, Update())
     SYNC_PROP_MODIFY(caps_mode, (int &)mCapsMode, Update())
@@ -138,7 +138,7 @@ BEGIN_PROPSYNCS(UILabel)
     SYNC_PROP_MODIFY(indentation, mIndentation, Update())
     SYNC_PROP_MODIFY(basic_markup, mBasicMarkup, Update())
     SYNC_PROP_SET(fixed_length, mFixedLength, SetFixedLength(_val.Int()); Update())
-    SYNC_PROP(draw_width, mDrawRect.w)
+    SYNC_PROP(draw_width, mCachedRect.w)
     gMe = this;
     SYNC_PROP(styles, mLabelStyles)
     SYNC_SUPERCLASS(UIComponent)
@@ -161,7 +161,7 @@ BEGIN_SAVES(UILabel)
     bs << mMarkup;
     bs << mCapsMode;
     bs << mHeight;
-    bs << mCircle;
+    bs << mCircleCircumference;
     bs << mFitType;
     bs << mLabelStyles.size();
     for (int i = 0; i < mLabelStyles.size(); i++) {
@@ -224,7 +224,7 @@ void UILabel::PreLoad(BinStream &bs) {
         d >> (int &)mCapsMode;
         d >> mHeight;
         if (d.altRev > 0) {
-            d >> mCircle;
+            d >> mCircleCircumference;
         }
         d >> (int &)mFitType;
         int numLabelStyles;
@@ -654,8 +654,8 @@ void UILabel::CenterWithLabel(UILabel *label, bool b2, float f3) {
     int add = b2 ? -1 : 1;
     Transform myXfm = LocalXfm();
     Transform labelXfm = label->LocalXfm();
-    myXfm.v.x = (label->mDrawRect.w / 2 + f3 / 2) * (float)add + labelXfm.v.x;
-    labelXfm.v.x = -((mDrawRect.w / 2 + f3 / 2) * (float)add - labelXfm.v.x);
+    myXfm.v.x = (label->mCachedRect.w / 2 + f3 / 2) * (float)add + labelXfm.v.x;
+    labelXfm.v.x = -((mCachedRect.w / 2 + f3 / 2) * (float)add - labelXfm.v.x);
     SetLocalXfm(myXfm);
     label->SetLocalXfm(labelXfm);
 }
@@ -808,7 +808,7 @@ DataNode UILabel::OnSetTimeHMS(const DataArray *da) {
 DataNode UILabel::OnSetHeightFromText(DataArray *a) {
     if (mFitType == 0 && Style(0).font) {
         float fl;
-        mHeight = ComputeHeight(unkc4, 1.0f, fl);
+        mHeight = ComputeHeight(mCachedNumLines, 1.0f, fl);
     } else {
         MILO_NOTIFY(
             "Could not set height, either no default font set, or fit type is not kFitWrap"

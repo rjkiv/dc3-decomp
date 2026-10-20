@@ -25,6 +25,9 @@
 #include "wordwrap.h"
 #include <set>
 
+bool RndText::sBlacklightModeEnabled = false;
+int RndText::sBlacklightPacketCount = 0;
+
 std::vector<RndText::BlacklightPacket> RndText::sBlacklightPacketPool;
 std::list<RndText::FontMapBase *> RndText::sFontMapCache;
 int TEXT_REV = 0;
@@ -398,23 +401,24 @@ RndText::StyleState::StyleState(RndText *text, float f2)
 }
 
 RndText::RndText()
-    : mWidth(0), mHeight(0), mCircle(0), mAlignment(kMiddleCenter), mFitType(kFitWrap),
-      mCapsMode(kCapsModeNone), mLeading(1), mFixedLength(0), mMarkup(true),
-      mBasicMarkup(true), mScrollDelay(0), mScrollRate(1), mScrollPause(0), unk40(0),
-      unk58(0), unk5c(0), unk60(0), mIndentation(0), unk78(nullptr), unk8c(0), unk90(-1),
-      unk94(-1), mStyles(this), mDrawRect(0, 0, 0, 0), unkc4(0), unkc8(0) {
+    : mWidth(0), mHeight(0), mCircleCircumference(0), mAlignment(kMiddleCenter),
+      mFitType(kFitWrap), mCapsMode(kCapsModeNone), mLeading(1), mFixedLength(0),
+      mMarkup(true), mBasicMarkup(true), mScrollDelay(0), mScrollRate(1), mScrollPause(0),
+      mScrollEnabled(0), mCloneOffset(0), mNumClones(0), mNumSubTexts(0), mIndentation(0),
+      mEventReceiver(nullptr), mEnterOffset(0), mEnteredIdx(-1), mExitedIdx(-1),
+      mStyles(this), mCachedRect(0, 0, 0, 0), mCachedNumLines(0), unkc8(0) {
     mStyles.resize(1);
-    mFontMaps.reserve(1);
+    mFontMap.reserve(1);
 }
 
 RndText::~RndText() {
-    FOREACH (it, mFontMaps) {
+    FOREACH (it, mFontMap) {
         delete *it;
     }
 }
 
 BEGIN_HANDLERS(RndText)
-    HANDLE_EXPR(get_text_size, GetTextSize())
+    HANDLE_EXPR(get_text_size, Max<int>(mFixedLength, mText.length()))
     HANDLE_ACTION(update_text, UpdateText())
     HANDLE_SUPERCLASS(RndDrawable)
     HANDLE_SUPERCLASS(RndTransformable)
@@ -442,7 +446,7 @@ BEGIN_PROPSYNCS(RndText)
     SYNC_PROP(caps_mode, (int &)mCapsMode)
     SYNC_PROP(width, mWidth)
     SYNC_PROP(height, mHeight)
-    SYNC_PROP(circle, mCircle)
+    SYNC_PROP(circle, mCircleCircumference)
     SYNC_PROP(fit_type, (int &)mFitType)
     SYNC_PROP(leading, mLeading)
     SYNC_PROP(indentation, mIndentation)
@@ -483,7 +487,7 @@ BEGIN_SAVES(RndText)
     bs << mMarkup;
     bs << mCapsMode;
     bs << mHeight;
-    bs << mCircle;
+    bs << mCircleCircumference;
     bs << mFitType;
     bs << mStyles;
     bs << mScrollDelay;
@@ -505,7 +509,7 @@ BEGIN_COPYS(RndText)
             COPY_MEMBER(mFitType)
             COPY_MEMBER(mWidth)
             COPY_MEMBER(mHeight)
-            COPY_MEMBER(mCircle)
+            COPY_MEMBER(mCircleCircumference)
             COPY_MEMBER(mLeading)
             COPY_MEMBER(mMarkup)
             SetFixedLength(c->mFixedLength);
@@ -622,7 +626,7 @@ BEGIN_LOADS(RndText)
         if (b) {
             SetFixedLength(mText.length());
         } else {
-            ClearFixedLength();
+            SetFixedLength(0);
         }
     }
 
@@ -671,7 +675,7 @@ BEGIN_LOADS(RndText)
                     d >> str;
                 }
                 if (d.altRev > 0) {
-                    d >> mCircle;
+                    d >> mCircleCircumference;
                 }
                 d >> (int &)mFitType;
             }
@@ -701,7 +705,7 @@ END_LOADS
 void RndText::UpdateSphere() {
     Sphere s;
     s.Zero();
-    FOREACH (it, mFontMaps) {
+    FOREACH (it, mFontMap) {
         for (int i = 0; i < (*it)->NumMeshes(); i++) {
             RndMesh *mesh = (*it)->Mesh(i);
             if (mesh) {
@@ -714,12 +718,12 @@ void RndText::UpdateSphere() {
 }
 
 float RndText::GetDistanceToPlane(const Plane &pl, Vector3 &v) {
-    if (mFontMaps.empty()) {
+    if (mFontMap.empty()) {
         return 0;
     } else {
         float f6 = 0;
         bool b1 = true;
-        FOREACH (it, mFontMaps) {
+        FOREACH (it, mFontMap) {
             for (int i = 0; i < (*it)->NumMeshes(); i++) {
                 RndMesh *mesh = (*it)->Mesh(i);
                 if (mesh) {
@@ -739,7 +743,7 @@ float RndText::GetDistanceToPlane(const Plane &pl, Vector3 &v) {
 
 bool RndText::MakeWorldSphere(Sphere &s, bool zero) {
     s.Zero();
-    FOREACH (it, mFontMaps) {
+    FOREACH (it, mFontMap) {
         for (int i = 0; i < (*it)->NumMeshes(); i++) {
             RndMesh *mesh = (*it)->Mesh(i);
             if (mesh) {
@@ -757,7 +761,7 @@ bool RndText::MakeWorldSphere(Sphere &s, bool zero) {
 }
 
 void RndText::Mats(std::list<class RndMat *> &mats, bool) {
-    FOREACH (it, mFontMaps) {
+    FOREACH (it, mFontMap) {
         for (int i = 0; i < (*it)->NumMaterials(); i++) {
             RndMat *mat = (*it)->Material(i);
             if (mat) {
@@ -770,12 +774,12 @@ void RndText::Mats(std::list<class RndMat *> &mats, bool) {
 void RndText::DrawShowing() {
     SizeCheck();
     int i11 = 0;
-    FOREACH (it, mFontMaps) {
+    FOREACH (it, mFontMap) {
         i11 += (*it)->NumMaterials();
     }
     // Hmx::Color *colors = (Hmx::Color *)_alloca(i11 * sizeof(Hmx::Color));
     float *colors = (float *)_alloca(i11 * sizeof(Hmx::Color));
-    FOREACH (it, mFontMaps) {
+    FOREACH (it, mFontMap) {
         for (int i = 0; i < (*it)->NumMaterials(); i++) {
             RndMat *mat = (*it)->Material(i);
             Hmx::Color *curColor = (Hmx::Color *)&colors[i * 4];
@@ -788,7 +792,7 @@ void RndText::DrawShowing() {
             int idx = FontMapIndex(it->font, it->blacklight);
             if (idx != -1) {
                 b3 = true;
-                FontMapBase *font = mFontMaps[idx];
+                FontMapBase *font = mFontMap[idx];
                 for (int i = 0; i < font->NumMaterials(); i++) {
                     RndMat *mat = font->Material(i);
                     Hmx::Color *curColor = (Hmx::Color *)&colors[i * 4];
@@ -797,25 +801,25 @@ void RndText::DrawShowing() {
             }
         }
     }
-    if (unk40) {
+    if (mScrollEnabled) {
         UpdateScrollOffsets();
     }
 
-    FOREACH (it, mFontMaps) {
+    FOREACH (it, mFontMap) {
         for (int i = 0; i < (*it)->NumMeshes(); i++) {
             RndMesh *curMesh = (*it)->Mesh(i);
             if (curMesh) {
                 if (sBlacklightModeEnabled && (*it)->IsBlacklight()
                     && TheUI->BlacklightScreenEnabled()) {
-                    QueueBlacklightPacket(curMesh, unk58, unk5c);
+                    QueueBlacklightPacket(curMesh, mCloneOffset, mNumClones);
                 } else {
-                    DrawMesh(curMesh, unk58, unk5c);
+                    DrawMesh(curMesh, mCloneOffset, mNumClones);
                 }
             }
         }
     }
     if (b3) {
-        FOREACH (it, mFontMaps) {
+        FOREACH (it, mFontMap) {
             for (int i = 0; i < (*it)->NumMaterials(); i++) {
                 RndMat *mat = (*it)->Material(i);
                 Hmx::Color *curColor = (Hmx::Color *)&colors[i * 4];
@@ -826,7 +830,7 @@ void RndText::DrawShowing() {
 }
 
 RndDrawable *RndText::CollideShowing(const Segment &s, float &f, Plane &p) {
-    FOREACH (it, mFontMaps) {
+    FOREACH (it, mFontMap) {
         for (int i = 0; i < (*it)->NumMeshes(); i++) {
             RndMesh *mesh = (*it)->Mesh(i);
             if (mesh && mesh->CollideShowing(s, f, p)) {
@@ -839,7 +843,7 @@ RndDrawable *RndText::CollideShowing(const Segment &s, float &f, Plane &p) {
 
 int RndText::CollidePlane(const Plane &p) {
     int ret = 0;
-    FOREACH (it, mFontMaps) {
+    FOREACH (it, mFontMap) {
         for (int i = 0; i < (*it)->NumMeshes(); i++) {
             RndMesh *mesh = (*it)->Mesh(i);
             if (mesh) {
@@ -900,8 +904,8 @@ void RndText::DoBasicMarkup() {
 }
 
 int RndText::FontMapIndex(RndFontBase *f, bool b) {
-    for (int i = 0; i < mFontMaps.size(); i++) {
-        if (mFontMaps[i]->Font() == f && mFontMaps[i]->IsBlacklight() == b) {
+    for (int i = 0; i < mFontMap.size(); i++) {
+        if (mFontMap[i]->Font() == f && mFontMap[i]->IsBlacklight() == b) {
             return i;
         }
     }
@@ -954,20 +958,19 @@ String RndText::TextASCII() const {
 
 void RndText::BuildFontMaps(bool b1) {
     if (b1) {
-        for (auto it = mFontMaps.begin(); it != mFontMaps.end();
-             it = mFontMaps.erase(it)) {
+        for (auto it = mFontMap.begin(); it != mFontMap.end(); it = mFontMap.erase(it)) {
             FontMapBase *cur = *it;
             sFontMapCache.push_back(cur);
         }
     }
-    if (mFontMaps.empty()) {
+    if (mFontMap.empty()) {
         for (int i = 0; i < mStyles.size(); i++) {
-            RndFontBase *font = mStyles[i].font ? mStyles[i].font : mStyles[0].font;
+            RndFontBase *font = GetSafeFont(mStyles[i]);
             if (font) {
                 if (FontMapIndex(font, mStyles[i].blacklight) == -1) {
                     FontMapBase *map = AcquireFontMap(font);
                     map->SetBlacklight(mStyles[i].blacklight);
-                    mFontMaps.push_back(map);
+                    mFontMap.push_back(map);
                 }
             }
         }
@@ -989,9 +992,9 @@ void RndText::ConstructMeshes(
     const std::vector<RndText::Line> &lines, const Hmx::Rect &rect, float f3
 ) {
     unkc8 = f3;
-    unkc4 = lines.size();
-    mDrawRect = rect;
-    FOREACH (it, mFontMaps) {
+    mCachedNumLines = lines.size();
+    mCachedRect = rect;
+    FOREACH (it, mFontMap) {
         (*it)->AllocateMeshes(this, mFixedLength);
     }
     if (mStyles[0].font) {
@@ -1010,8 +1013,15 @@ void RndText::ConstructMeshes(
                     }
                 }
                 if (cur != 0) {
-                    mFontMaps[state.fontMapIndex]->SetupCharacter(
-                        cur, fc, f10, state, usIt, mCircle, mFitType, mIndentation
+                    mFontMap[state.fontMapIndex]->SetupCharacter(
+                        cur,
+                        fc,
+                        f10,
+                        state,
+                        usIt,
+                        mCircleCircumference,
+                        mFitType,
+                        mIndentation
                     );
                     usIt = cur;
                     it++;
@@ -1019,7 +1029,7 @@ void RndText::ConstructMeshes(
             }
         }
     }
-    FOREACH (it, mFontMaps) {
+    FOREACH (it, mFontMap) {
         (*it)->CleanupSyncMeshes();
     }
 }
@@ -1028,7 +1038,7 @@ void RndText::SizeCheck() {
     static float s6590;
     static RndText *s6594;
     StyleState state(this, unkc8);
-    FOREACH (it, mFontMaps) {
+    FOREACH (it, mFontMap) {
         RndFontBase *curFontBase = (*it)->Font();
         if (curFontBase && curFontBase->BitmapFont()) {
             for (int i = 0; i < (*it)->NumMeshes(); i++) {
@@ -1068,22 +1078,22 @@ void RndText::ReFitTextScroll(String str) {
     } else {
         SetText(str.c_str());
         FitTextScroll();
-        unk50 = 0;
-        unk8c = 0;
-        while (mWidth - unk8c >= unk68.front()) {
-            unk90++;
-            if (unk90 >= unk60) {
-                unk90 = 0;
+        mScrollOffset = 0;
+        mEnterOffset = 0;
+        while (mWidth - mEnterOffset >= mEnterCheckPts.front()) {
+            mEnteredIdx++;
+            if (mEnteredIdx >= mNumSubTexts) {
+                mEnteredIdx = 0;
             }
-            if (unk68.front() == unk54) {
-                unk8c += mWidth;
+            if (mEnterCheckPts.front() == mFullStringLength) {
+                mEnterOffset += mWidth;
             }
-            if (unk60 == unk68.size()) {
-                unk68.push_back(unk68.front());
+            if (mNumSubTexts == mEnterCheckPts.size()) {
+                mEnterCheckPts.push_back(mEnterCheckPts.front());
             }
-            unk68.pop_front();
+            mEnterCheckPts.pop_front();
         }
-        unk44 = unk48;
+        mScrollTimeMs = mScrollTriggerTime;
     }
 }
 
@@ -1131,7 +1141,7 @@ void RndText::UpdateText() {
             || mFitType == kFitScrollPingPong
             || mFitType == kFitScrollMarqueeWrapAlways) {
             for (int i = 0; i < mStyles.size(); i++) {
-                RndFontBase *font = mStyles[i].font ? mStyles[i].font : mStyles[0].font;
+                RndFontBase *font = GetSafeFont(mStyles[i]);
 
                 if (font && font->ClassName() == RndFont::StaticClassName()) {
                     continue;
@@ -1203,18 +1213,18 @@ void RndText::FitTextScroll() {
     std::vector<unsigned short> wide;
     int ret = ConvertTextToWide(mText.c_str(), wide);
     float *floats = (float *)_alloca((ret + 2) * sizeof(float));
-    unk60 = 0;
-    unk68.clear();
-    unk70.clear();
+    mNumSubTexts = 0;
+    mEnterCheckPts.clear();
+    mExitCheckPts.clear();
     OnComputeCharWidths(wide.begin(), floats, false);
-    unk40 = false;
+    mScrollEnabled = false;
     float f12 = 0;
     float f11 = mWidth;
     float f13 = f12;
     Hmx::Rect rect;
     if (floats[ret] > f11 || mFitType == kFitScrollMarqueeWrapAlways) {
         mWidth = 0;
-        unk40 = true;
+        mScrollEnabled = true;
         RndFontBase *font = mStyles[0].font;
         MILO_ASSERT(font, 0xA9E);
         if (font) {
@@ -1228,127 +1238,127 @@ void RndText::FitTextScroll() {
     }
     WrapText(wide.begin(), ret, floats, lines, rect, 1);
     ConstructMeshes(lines, rect, 1);
-    if (unk40) {
+    if (mScrollEnabled) {
         mWidth = f11;
-        unk5c = 1;
-        unk44 = f13;
-        unk4c = mScrollRate * f12 * -0.001f;
+        mNumClones = 1;
+        mScrollTimeMs = f13;
+        mScrollSpeed = mScrollRate * f12 * -0.001f;
         if (mFitType == kFitScrollMarqueeWrapAlways) {
-            unk50 = f11;
-            unk8c = f11;
-            unk60++;
-            unk54 = mIndentation * (float)unk60 + floats[ret];
-            unk68.push_back(unk54);
-            unk68.push_back(f13);
-            unk70.push_back(unk54);
-            unk58 = unk54;
+            mScrollOffset = f11;
+            mEnterOffset = f11;
+            mNumSubTexts++;
+            mFullStringLength = mIndentation * (float)mNumSubTexts + floats[ret];
+            mEnterCheckPts.push_back(mFullStringLength);
+            mEnterCheckPts.push_back(f13);
+            mExitCheckPts.push_back(mFullStringLength);
+            mCloneOffset = mFullStringLength;
             f11 = f12;
             if (f13 < f12) {
-                while (f13 < unk54) {
+                while (f13 < mFullStringLength) {
                     if (mWidth < f11)
                         break;
                     f11 += f12;
-                    unk5c++;
+                    mNumClones++;
                 }
             }
-            unk90 = -1;
-            unk94 = -1;
+            mEnteredIdx = -1;
+            mExitedIdx = -1;
         } else {
-            unk50 = f13;
-            unk54 = floats[ret];
-            unk58 = f13;
+            mScrollOffset = f13;
+            mFullStringLength = floats[ret];
+            mCloneOffset = f13;
         }
-        unk48 = mScrollDelay;
-        for (int i = 0; i < mFontMaps.size(); i++) {
-            mFontMaps[i]->SetupScrolling();
+        mScrollTriggerTime = mScrollDelay;
+        for (int i = 0; i < mFontMap.size(); i++) {
+            mFontMap[i]->SetupScrolling();
         }
     }
 }
 
 void RndText::UpdateScrollOffsets() {
     float delta = TheTaskMgr.DeltaUISeconds();
-    unk44 += delta;
-    if (unk44 >= unk48) {
+    mScrollTimeMs += delta;
+    if (mScrollTimeMs >= mScrollTriggerTime) {
         bool b11 = false;
-        float widthDiff = unk54 - mWidth;
-        float f13 = unk4c * delta * 1000;
-        unk50 += f13;
+        float widthDiff = mFullStringLength - mWidth;
+        float f13 = mScrollSpeed * delta * 1000;
+        mScrollOffset += f13;
         switch (mFitType) {
         case kFitScrollMarqueeWrap:
-            if (unk50 < -unk54) {
-                unk50 = 0;
+            if (mScrollOffset < -mFullStringLength) {
+                mScrollOffset = 0;
             }
-            unk58 = unk54;
+            mCloneOffset = mFullStringLength;
             break;
         case kFitScrollMarqueeReset:
-            if (unk50 < -(unk54 + 20)) {
-                unk50 = 0;
+            if (mScrollOffset < -(mFullStringLength + 20)) {
+                mScrollOffset = 0;
                 b11 = true;
             }
             break;
         case kFitScrollPingPong:
-            if (unk4c >= 0) {
-                if (unk4c > 0 && unk50 >= 0) {
-                    unk4c = -unk4c;
-                    unk50 = 0;
+            if (mScrollSpeed >= 0) {
+                if (mScrollSpeed > 0 && mScrollOffset >= 0) {
+                    mScrollSpeed = -mScrollSpeed;
+                    mScrollOffset = 0;
                     b11 = true;
                 }
-            } else if (unk50 < -widthDiff) {
-                unk50 = -widthDiff;
-                unk4c = -unk4c;
+            } else if (mScrollOffset < -widthDiff) {
+                mScrollOffset = -widthDiff;
+                mScrollSpeed = -mScrollSpeed;
                 b11 = true;
             }
             break;
         case kFitScrollMarqueeWrapAlways: {
             static Message textScrolledIn("text_scrolled_in", -1);
             static Message textScrolledOut("text_scrolled_out", -1);
-            float old8c = unk8c;
-            unk8c += f13;
-            float f14 = unk68.front();
+            float old8c = mEnterOffset;
+            mEnterOffset += f13;
+            float f14 = mEnterCheckPts.front();
             if (mWidth - (old8c + f13) >= f14) {
-                unk90++;
-                if (unk90 >= unk60) {
-                    unk90 = 0;
+                mEnteredIdx++;
+                if (mEnteredIdx >= mNumSubTexts) {
+                    mEnteredIdx = 0;
                 }
-                textScrolledIn[0] = unk90;
-                if (f14 == unk54) {
-                    unk8c = mWidth;
+                textScrolledIn[0] = mEnteredIdx;
+                if (f14 == mFullStringLength) {
+                    mEnterOffset = mWidth;
                 }
-                if (unk60 == unk68.size()) {
-                    unk68.push_back(unk54);
+                if (mNumSubTexts == mEnterCheckPts.size()) {
+                    mEnterCheckPts.push_back(mFullStringLength);
                 }
-                unk68.pop_front();
-                if (unk78) {
-                    unk78->Handle(textScrolledIn, false);
+                mEnterCheckPts.pop_front();
+                if (mEventReceiver) {
+                    mEventReceiver->Handle(textScrolledIn, false);
                 }
             }
-            float f15 = unk70.front();
-            if (unk50 <= -f15) {
-                unk94++;
-                textScrolledOut[0] = unk94;
-                if (f15 == unk54) {
-                    unk50 = 0;
-                    unk94 = -1;
+            float f15 = mExitCheckPts.front();
+            if (mScrollOffset <= -f15) {
+                mExitedIdx++;
+                textScrolledOut[0] = mExitedIdx;
+                if (f15 == mFullStringLength) {
+                    mScrollOffset = 0;
+                    mExitedIdx = -1;
                 }
-                unk70.push_back(unk50);
-                unk70.pop_front();
-                if (unk78) {
-                    unk78->Handle(textScrolledOut, false);
+                mExitCheckPts.push_back(mScrollOffset);
+                mExitCheckPts.pop_front();
+                if (mEventReceiver) {
+                    mEventReceiver->Handle(textScrolledOut, false);
                 }
             }
             break;
         }
         default:
-            unk50 = 0;
+            mScrollOffset = 0;
             break;
         }
 
         if (b11) {
-            unk44 = 0;
+            mScrollTimeMs = 0;
         }
     }
-    FOREACH (it, mFontMaps) {
-        (*it)->UpdateScrolling(unk50);
+    FOREACH (it, mFontMap) {
+        (*it)->UpdateScrolling(mScrollOffset);
     }
 }
 
@@ -1448,7 +1458,7 @@ void RndText::ReplaceMissingCharacters(std::vector<unsigned short> &vec) {
             vecIt = (unsigned short *)ParseMarkup(vecIt, state, ref);
             vecIt--;
         } else if (curUS != 10 && state.fontMapIndex != -1) {
-            FontMapBase *base = mFontMaps[state.fontMapIndex];
+            FontMapBase *base = mFontMap[state.fontMapIndex];
             if (base) {
                 RndFontBase *font = base->Font();
                 if (font && !font->CharDefined(curUS)) {

@@ -315,7 +315,7 @@ void MainMenuPanel::MotdHandleTextScrolledOut(int) {
 
         mMotdData.pop_front();
         float f = 0.0f;
-        float width = mMsgLabel->Width() * 2.0f;
+        float width = mMsgLabel->GetWidth() * 2.0f;
         auto motdIt = mMotdData.begin();
         if (motdIt == mMotdData.end()) {
             MotdPickNextText();
@@ -412,19 +412,21 @@ void MainMenuPanel::MotdInitializeTexts() {
         );
         mMsgLabel->SetFitType(RndText::FitType::kFitScrollMarqueeWrapAlways);
     }
-    mMsgLabel->SetUnk78(nullptr);
+    mMsgLabel->SetEventReceiver(nullptr);
     mMotdUpdatedNeeded = false;
     mMotdData.clear();
     if (!mMessages[no_profile].empty()) {
         mMsgLabel->SetPrelocalizedString(mMessages[no_profile].front());
-    } else if (mMessages[dlc].empty() && mMessages[utility].empty()
-               && mMessages[community].size() + mMessages[stats].size() == 1) {
+    } else if (
+        mMessages[dlc].empty() && mMessages[utility].empty()
+        && mMessages[community].size() + mMessages[stats].size() == 1
+    ) {
         mMsgLabel->SetPrelocalizedString(mMessages[stats].front());
     } else {
         mMotdUpdatedNeeded = true;
-        mMsgLabel->SetUnk78(this);
+        mMsgLabel->SetEventReceiver(this);
 
-        float width = mMsgLabel->Width() * 2.0f;
+        float width = mMsgLabel->GetWidth() * 2.0f;
         mMotdFreq = TheRockCentral.GetMotdFreq();
         int commStatSize = mMessages[community].size() + mMessages[stats].size();
         if (mMessages[dlc].empty() && mMessages[utility].empty()) {
@@ -495,8 +497,8 @@ float MainMenuPanel::MotdPickNextText() {
         Symbol key = prevMotd == utility ? dlc : utility;
         motdData.type = key;
         motdData.text = mMessages[key].front();
-        motdData.length =
-            mMsgLabel->ComputeCharWidthsForText(motdData.text) + mMsgLabel->Indentation();
+        motdData.length = mMsgLabel->ComputeCharWidthsForText(motdData.text)
+            + mMsgLabel->GetIndentation();
         prevMotd = key;
         mCurrMotdFreq = 1;
     } else {
@@ -536,8 +538,8 @@ float MainMenuPanel::MotdPickNextText() {
             }
             motdData.text = *it;
         }
-        motdData.length =
-            mMsgLabel->ComputeCharWidthsForText(motdData.text) + mMsgLabel->Indentation();
+        motdData.length = mMsgLabel->ComputeCharWidthsForText(motdData.text)
+            + mMsgLabel->GetIndentation();
         mMessages[key].push_back(*it);
         mMessages[key].erase(it);
         if (mMotdFreq != 0) {
